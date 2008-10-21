@@ -1,0 +1,31 @@
+
+echo Setting up build environment with default configuration ...
+
+# SDK_LOCAL is the local staging area (i.e., view private) for private
+# builds and installs of the corelibs libraries.  The path should be
+# relative to VOB_BASE_DIR.  Set to a default value if it is not set
+if (! $?SDK_LOCAL) then
+  setenv SDK_LOCAL $PWD
+  echo Set SDK_LOCAL to $SDK_LOCAL ...
+else
+  echo SDK_LOCAL already defined as $SDK_LOCAL
+endif
+
+# Set CFG_DIR
+#
+setenv CFG_DIR $PWD
+echo Set CFG_DIR to $CFG_DIR ...
+
+# For picking the node registry and tunables, set this flag
+#
+setenv FORMAT nj
+
+setenv ANDROID_BASE /opt/environments/nj/android
+echo Set ANDROID_BASE to $ANDROID_BASE
+
+setenv KERNEL_HEADERS $ANDROID_BASE/device/system/kernel_headers
+echo Set KERNEL_HEADERS to $KERNEL_HEADERS
+
+# Setup the default environment
+#
+source ../default/setup

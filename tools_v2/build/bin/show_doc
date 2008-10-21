@@ -1,0 +1,30 @@
+#!/bin/sh
+#
+# show_doc - Dump the documentation from a GNUmake template to the
+# standard output
+#
+WHOAMI=`basename $0`
+
+if [ $# -ne 1 ]; then
+	echo usage: $WHOAMI filename 2>&1
+	exit 1
+fi
+
+if [ -r $1 ]; then
+
+	awk '
+		BEGIN			{ indoc = 0; }
+
+		$0 == "#BEGINDOC"	{ indoc = 1; continue }
+
+		$0 == "#ENDDOC"		{ indoc = 0; continue }
+
+		indoc == 1 {
+			print $0
+		}
+	' $1 | sed -e 's/^# *//g'
+
+else
+	echo $WHOAMI: Can\'t open $1 2>&1
+	exit 1
+fi

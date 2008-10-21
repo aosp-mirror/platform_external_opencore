@@ -1,0 +1,25 @@
+ : # Use perl
+   eval 'exec perl -w -S $0 "$@"'
+   if 0;
+# -*- perl -*-
+#
+# Test to see whether a file is a link.  Not all systems have
+# arguments to /bin/test that do this.  Also, some systems that
+# do have different flags from others that do.  (For example,
+# it's test -h in Solaris 1, test -l on SGI IRIX 4, and absent
+# on Ultrix 4.3.)
+#
+
+{
+    local(@whoami) = split('/', $0);
+    $whoami = pop(@whoami);
+};
+
+if (scalar(@ARGV) != 1)
+{
+    print STDERR "Usage: $whoami file\n";
+    exit 1;
+}	 
+
+$file = $ARGV[0];
+exit ((-l $file) ? 0 : 1);

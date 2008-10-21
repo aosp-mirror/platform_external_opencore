@@ -1,0 +1,85 @@
+ : # Use perl
+   eval 'exec perl -w -S $0 "$@"'
+   if 0;
+# -*- perl -*-
+
+use File::Basename;
+
+$debug=0;
+{
+    local(@whoami) = split('/', $0);
+    $whoami = pop(@whoami);
+};
+
+&usage if (scalar(@ARGV) < 3 || scalar(@ARGV) > 5);
+
+# defined($arch = $ENV{"ARCH"}) || die "\$ARCH must be defined.\n";
+
+($compiler, $target, $src) = (@ARGV);
+
+if (scalar(@ARGV) > 3)
+{
+    $depdir = "$ARGV[3]/";
+}
+else
+{
+    $depdir = '';
+}
+
+print STDERR "$0 (debug) : COMPILER : $compiler\n" if $debug;
+print  STDERR "$0 (debug) : TARGET   : $target\n" if $debug;
+print  STDERR "$0 (debug) : SOURCE   : $src\n" if $debug;
+
+if (scalar(@ARGV) > 4)
+{
+    $libflag = $ARGV[4];
+}
+else
+{
+    $libflag = 0;
+}
+
+$is_library = ($target =~ m/\.a$/);
+$srcbase = basename($src);
+$srcbase =~ s/\.[^\.]*$//;
+$dep = "$depdir$srcbase.d";
+
+$obj = ($is_library &&  (! $libflag) ) ? "$target($depdir$srcbase.o)" : "$depdir$srcbase.o";
+
+unlink($dep);
+
+open(COMPILE, "$compiler $src 2>$dep.tmp2 |") || die "Can't run $compiler\n";
+open(TMP1, ">$dep.tmp1") || die "Can't open $dep.tmp1\n";
+
+while (<COMPILE>)
+{
+    s/^$srcbase\.o/$obj $dep/g;
+    print TMP1;
+}
+      
+close(TMP1);
+close(COMPILE);
+$comp_failed = ($? != 0);
+print STDERR "Done running $compiler\n" if $debug;
+system("cat $dep.tmp2 1>&2") if (-s "$dep.tmp2");
+unlink("$dep.tmp2");
+
+print STDERR "unlinked $dep.tmp2\n" if $debug;
+if ($comp_failed)
+{
+    unlink("$dep.tmp1");
+}
+else
+{
+    rename("$dep.tmp1", $dep);
+    chmod(0664, $dep);
+}
+
+exit((-f $dep) ? 0 : 1);
+
+
+sub usage {
+    print STDERR "Usage: $whoami compile target src\n";
+    print STDERR "  Generate dependencies for src\n";
+    exit 1;
+}
