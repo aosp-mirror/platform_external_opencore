@@ -2,11 +2,6 @@
    eval 'exec perl -w -S $0 "$@"'
    if 0;
 # -*- perl -*-
-#
-# $Id: find_file,v 1.3 1998/06/08 20:03:22 sherwood Exp $
-# $Source: /icl-tools/build/bin/RCS/find_file,v $
-# $Author: sherwood $
-#
 
 {
     local(@whoami) = split('/', $0);
