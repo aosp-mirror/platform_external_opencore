@@ -4,7 +4,7 @@
 OpenCore is the multmedia framework of Android 
 originally contributed by PacketVideo.  It provides 
 an extensible framework for multimedia rendering and 
-authoriing and will add video telephony (3G-324M) support
+authoring and will add video telephony (3G-324M) support
 in a future release.
 
 The following is a brief overview of the directory 
@@ -19,6 +19,8 @@ __
   |             handling, messaging across thread boundaries, etc]
   |-- codecs_v2 [Contains the implementations of PV's audio and video 
   |              codecs as well as the OpenMax IL interface layer]
+  |-- doc       [Contains the documentation required to interface with
+  |              OpenCore]
   |-- engines   [Contains the implementation of the player and author 
   |              engines as well as a utility for metadata.]
   |-- extern_libs_v2 [Contains 3rd-party libraries used by OpenCore. 
