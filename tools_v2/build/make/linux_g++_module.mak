@@ -9,7 +9,8 @@ BUILD_ARCH = $(ARCHITECTURE)
 override CXX = g++
 
 SHARED_LINK = g++
-SHARED_LDFLAGS = -shared
-SONAME_ARG = -nostdlib -Wl-soname,$(SONAME) -Wl,-shared,-Bsymbolic --no-undefined -Wl,--whole-archive
+SHARED_LDFLAGS = -shared -Wl,-Bsymbolic --no-undefined -Wl,--whole-archive
+SONAME_ARG = -Wl-soname,$(SONAME) 
+POST_SHARED_LDFLAGS = -Wl,--no-whole-archive
 
 include $(MK)/module.mk
