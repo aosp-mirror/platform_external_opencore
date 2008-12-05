@@ -59,7 +59,7 @@ $(SOTARGET):
 
 define build_shared
 	-$(RM) $@
-	$(SHARED_LINK) $(SONAME_ARG) $(XLDFLAGS) -o $@ $(LIBS_LINKED) $(MODS_LINKED) $(POST_LIBDIRS)
+	$(SHARED_LINK) $(SONAME_ARG) $(XLDFLAGS) -o $@ $(LIBS_LINKED) $(MODS_LINKED) $(POST_LIBDIRS) $(POST_SHARED_LDFLAGS)
 	-chmod g+w $@
 endef
 .PHONY:: entire

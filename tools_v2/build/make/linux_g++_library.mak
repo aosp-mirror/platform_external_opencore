@@ -16,6 +16,6 @@ SHARED_LDFLAGS = -shared
 SONAME_ARG = -Wl,-h,$(SONAME)
 
 #Make all warnings into errors.
-FLAG_COMPILE_WARNINGS_AS_ERRORS = -Werror
+#FLAG_COMPILE_WARNINGS_AS_ERRORS = -Werror
 
 include $(MK)/linux_library.mk
