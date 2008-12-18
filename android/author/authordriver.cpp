@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2008, The Android Open Source Project
+ * Copyright (C) 2008, The Android Open Source Project
+ * Copyright (C) 2008 HTC Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); 
  * you may not use this file except in compliance with the License. 
@@ -14,8 +15,14 @@
  * limitations under the License.
  */
 
+//#define LOG_NDEBUG 0
+#define LOG_TAG "AuthorDriver"
+
+#include <media/thread_init.h>
+#include <ui/ISurface.h>
+#include <ui/ICamera.h>
+#include "pv_omxmastercore.h"
 #include "authordriver.h"
-#include <sys/prctl.h>
 
 using namespace android;
 
@@ -41,29 +48,11 @@ status_t AuthorDriverWrapper::enqueueCommand(author_command *ac, media_completio
     return mAuthorDriver->enqueueCommand(ac, comp, cookie);
 }
 
-static void pv_global_init()
-{
-    OsclBase::Init();
-    OsclErrorTrap::Init();
-    OsclMem::Init();
-    PVLogger::Init();
-}
-
-static void pv_global_cleanup()
-{
-    OsclScheduler::Cleanup();
-    PVLogger::Cleanup();
-    OsclMem::Cleanup();
-    OsclErrorTrap::Cleanup();
-    OsclBase::Cleanup();
-}
-
 AuthorDriver::AuthorDriver()
              : OsclActiveObject(OsclActiveObject::EPriorityNominal, "AuthorDriver"),
                mAuthor(NULL),
                mVideoInputMIO(NULL),
                mVideoNode(NULL),
-               mAudioInputMIO(NULL),
                mAudioNode(NULL),
                mSelectedComposer(NULL),
                mComposerConfig(NULL),
@@ -174,7 +163,7 @@ void AuthorDriver::Run()
     switch(ac->which) {
     case AUTHOR_INIT:
         handleInit(ac);
-        break; 
+        break;
 
     case AUTHOR_SET_AUDIO_SOURCE:
         handleSetAudioSource((set_audio_source_command *)ac);
@@ -211,6 +200,11 @@ void AuthorDriver::Run()
         FinishNonAsyncCommand(ac);
         return;
 
+    case AUTHOR_SET_CAMERA:
+        handleSetCamera((set_camera_command *)ac);
+        FinishNonAsyncCommand(ac);
+        return;
+
     case AUTHOR_SET_OUTPUT_FILE:
         handleSetOutputFile((set_output_file_command *)ac);
         FinishNonAsyncCommand(ac);
@@ -219,6 +213,7 @@ void AuthorDriver::Run()
     case AUTHOR_PREPARE: handlePrepare(ac); break;
     case AUTHOR_START: handleStart(ac); break;
     case AUTHOR_STOP: handleStop(ac); break;
+    case AUTHOR_CLOSE: handleClose(ac); break;
     case AUTHOR_RESET: handleReset(ac); break;
     case AUTHOR_QUIT: handleQuit(ac); return;
 
@@ -231,6 +226,7 @@ void AuthorDriver::Run()
 
 void AuthorDriver::commandFailed(author_command *ac)
 {
+    LOGE("Command (%d) failed", ac->which);
     ac->comp(UNKNOWN_ERROR, ac->cookie);
     delete ac;
 }
@@ -250,9 +246,9 @@ void AuthorDriver::handleSetAudioSource(set_audio_source_command *ac)
     case AUDIO_SOURCE_DEFAULT:
     case AUDIO_SOURCE_MIC:
         mAudioInputMIO = new AndroidAudioInput();
-        if(mAudioInputMIO){
+        if(mAudioInputMIO != NULL){
             LOGV("create mio input audio");
-            mAudioNode = PvmfMediaInputNodeFactory::Create(mAudioInputMIO);
+            mAudioNode = PvmfMediaInputNodeFactory::Create(static_cast<PvmiMIOControl *>(mAudioInputMIO.get()));
             if(mAudioNode){
                 break;
             }
@@ -307,8 +303,9 @@ void AuthorDriver::handleSetOutputFormat(set_output_format_command *ac)
     int error = 0;
     OSCL_HeapString<OsclMemAllocator> iComposerMimeType;
 
-    if (ac->of == OUTPUT_FORMAT_DEFAULT)
+    if (ac->of == OUTPUT_FORMAT_DEFAULT) {
         ac->of = OUTPUT_FORMAT_THREE_GPP;
+    }
 
     switch(ac->of) {
     case OUTPUT_FORMAT_THREE_GPP:
@@ -319,7 +316,12 @@ void AuthorDriver::handleSetOutputFormat(set_output_format_command *ac)
         iComposerMimeType = "/x-pvmf/ff-mux/mp4";
         break;
 
+    case OUTPUT_FORMAT_RAW_AMR:
+        iComposerMimeType = "/x-pvmf/ff-mux/amr-nb"; 
+        break;
+
     default:
+        LOGE("Ln %d unsupported file format: %d", __LINE__, ac->of);
         commandFailed(ac);
         return;
     }
@@ -384,9 +386,9 @@ void AuthorDriver::handleSetVideoEncoder(set_video_encoder_command *ac)
         commandFailed(ac);
         return;
     }
-   
+
     mVideoEncoder = ac->ve;
- 
+
     OSCL_TRY(error, mAuthor->AddMediaTrack(*mVideoNode, iVideoEncoderMimeType, mSelectedComposer, mVideoEncoderConfig, ac));
     OSCL_FIRST_CATCH_ANY(error, commandFailed(ac));
 }
@@ -410,6 +412,11 @@ void AuthorDriver::handleSetVideoFrameRate(set_video_frame_rate_command *ac)
     mVideoFrameRate = ac->rate;
 
     ((AndroidCameraInput *)mVideoInputMIO)->SetFrameRate(ac->rate);
+}
+
+void AuthorDriver::handleSetCamera(set_camera_command *ac)
+{
+    mCamera = ac->camera;
 }
 
 void AuthorDriver::handleSetPreviewSurface(set_preview_surface_command *ac)
@@ -436,13 +443,11 @@ void AuthorDriver::handleSetOutputFile(set_output_file_command *ac)
         return;
     }
 
-    PVMp4FFCNClipConfigInterface *config = OSCL_STATIC_CAST(PVMp4FFCNClipConfigInterface*, mComposerConfig);
+    PvmfFileOutputNodeConfigInterface *config = OSCL_STATIC_CAST(PvmfFileOutputNodeConfigInterface*, mComposerConfig);
     if (!config) {
         commandFailed(ac);
         return;
     }
-
-    config->SetPresentationTimescale(1000);
 
     oscl_wchar output[512];
     OSCL_wHeapString<OsclMemAllocator> wFileName;
@@ -489,6 +494,13 @@ void AuthorDriver::handleStop(author_command *ac)
     OSCL_FIRST_CATCH_ANY(error, commandFailed(ac));
 }
 
+void AuthorDriver::handleClose(author_command *ac)
+{
+    int error = 0;
+    OSCL_TRY(error, mAuthor->Close(ac));
+    OSCL_FIRST_CATCH_ANY(error, commandFailed(ac));
+}
+
 void AuthorDriver::handleReset(author_command *ac)
 {
     int error = 0;
@@ -513,7 +525,16 @@ int AuthorDriver::authorThread()
 {
     int error;
 
-    pv_global_init();
+    LOGV("InitializeForThread");
+    if (!InitializeForThread()) {
+        LOGE("InitializeForThread failed");
+        mAuthor = NULL;
+        mSyncSem->Signal();
+        return -1;
+    }
+
+    LOGV("OMX_Init");
+    PV_MasterOMX_Init();
 
     OsclScheduler::Init("AndroidAuthorDriver");
     LOGV("Create author ...");
@@ -543,8 +564,7 @@ int AuthorDriver::authorThread()
     if (mAudioNode) {
         PvmfMediaInputNodeFactory::Delete(mAudioNode);
         mAudioNode = NULL;
-        delete mAudioInputMIO;
-        mAudioInputMIO = NULL;
+        mAudioInputMIO.clear();
     }
 
     // Let the destructor know that we're out
@@ -562,7 +582,8 @@ int AuthorDriver::authorThread()
 
    //moved below delete this, similar code on playerdriver.cpp caused a crash.
    //cleanup of oscl should happen at the end.
-    pv_global_cleanup();
+    PV_MasterOMX_Deinit();
+    UninitializeForThread();
     return 0;
 }
 
@@ -581,10 +602,13 @@ void AuthorDriver::CommandCompleted(const PVCmdResponse& aResponse)
     // XXX do we want to make this illegal?  combo commands like
     // SETUP_DEFAULT_SINKS will need some changing
     if (ac == NULL) {
-        // LOGD("ac == NULL\n");
+        // NULL command may be expected from the author engine from
+        // time to time?
+        // LOGE("Unexpected NULL command");
         return;
     }
 
+    LOGV("Command (%d) completed with status(%d)", ac->which, aResponse.GetCmdStatus());
     if (ac->which == AUTHOR_SET_OUTPUT_FORMAT) {
         mSelectedComposer = aResponse.GetResponseData();
     }
@@ -594,14 +618,43 @@ void AuthorDriver::CommandCompleted(const PVCmdResponse& aResponse)
         case VIDEO_ENCODER_H263: {
             PVMp4H263EncExtensionInterface *config = OSCL_STATIC_CAST(PVMp4H263EncExtensionInterface*,
                                                                       mVideoEncoderConfig);
+            // TODO:
+            // fix the hardcoded bit rate settings.
             if (config) {
+                int bitrate_setting = 192000;
+                if (mVideoWidth >= 480) {
+                    bitrate_setting = 420000; // unstable
+                } else if (mVideoWidth >= 352) {
+                    bitrate_setting = 360000;
+                } else if (mVideoWidth >= 320) {
+                    bitrate_setting = 320000;
+                }
                 config->SetNumLayers(1);
-                config->SetOutputBitRate(0, 58850);    //XXX
+                config->SetOutputBitRate(0, bitrate_setting);
                 config->SetOutputFrameSize(0, mVideoWidth, mVideoHeight);
                 config->SetOutputFrameRate(0, mVideoFrameRate);
                 config->SetIFrameInterval(mVideoFrameRate);
             }
-            } break;
+        } break;
+        case VIDEO_ENCODER_MPEG_4_SP: {
+            PVMp4H263EncExtensionInterface *config = OSCL_STATIC_CAST(PVMp4H263EncExtensionInterface*,
+                                                                      mVideoEncoderConfig);
+            if (config) {
+                int bitrate_setting = 192000;
+                if (mVideoWidth >= 480) {
+                    bitrate_setting = 420000; // unstable
+                } else if (mVideoWidth >= 352) {
+                    bitrate_setting = 360000;
+                } else if (mVideoWidth >= 320) {
+                    bitrate_setting = 320000;
+                }
+                config->SetNumLayers(1);
+                config->SetOutputBitRate(0, bitrate_setting);
+                config->SetOutputFrameSize(0, mVideoWidth, mVideoHeight);
+                config->SetOutputFrameRate(0, mVideoFrameRate);
+                config->SetIFrameInterval(mVideoFrameRate);
+            }
+        } break;
 
         default:
             break;
@@ -658,11 +711,10 @@ void AuthorDriver::HandleInformationalEvent(const PVAsyncInformationalEvent& aEv
 
 status_t AuthorDriver::getMaxAmplitude(int *max)
 {
-    if (!mAudioInputMIO) {
+    if (mAudioInputMIO == NULL) {
         return android::UNKNOWN_ERROR;
     }
-    AndroidAudioInput *audioInput = static_cast<AndroidAudioInput*>(mAudioInputMIO);
-    *max = audioInput->maxAmplitude();
+    *max = mAudioInputMIO->maxAmplitude();
     return android::OK;
 }
 

@@ -25,5 +25,7 @@ LOCAL_COPY_HEADERS := \
 	include/pvauthorenginefactory.h \
 	include/pvauthorengineinterface.h
 
+LOCAL_SHARED_LIBRARIES := libcutils libutils
+
 include $(BUILD_STATIC_LIBRARY)
 

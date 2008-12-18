@@ -1,5 +1,22 @@
+/*
+ * Copyright (C) 2008, The Android Open Source Project
+ * Copyright (C) 2008 HTC Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 /* authordriver.h
- * 
+ *
  * The glue between the Android MediaRecorder and PVAuthorInterface
  */
 
@@ -30,20 +47,22 @@
 #include "android_camera_input.h"
 #include "android_audio_input.h"
 #include "pvmf_media_input_node_factory.h"
+#include "pvmf_fileoutput_factory.h"
 #include "pvmf_node_interface.h"
 #include "pvmp4h263encextension.h"
 #include "pvmp4ffcn_clipconfig.h"
+#include "pvmf_fileoutput_config.h"
 #include "pvmfamrencnode_extension.h"
 
 namespace android {
 
 template<class DestructClass>
-class LogAppenderDestructDealloc : public OsclDestructDealloc 
+class LogAppenderDestructDealloc : public OsclDestructDealloc
 {
 public:
-    virtual void destruct_and_dealloc(OsclAny *ptr) 
-    { 
-        delete((DestructClass*)ptr); 
+    virtual void destruct_and_dealloc(OsclAny *ptr)
+    {
+        delete((DestructClass*)ptr);
     }
 };
 
@@ -51,6 +70,7 @@ public:
 //
 enum author_command_type {
     AUTHOR_INIT = 1,
+    AUTHOR_SET_CAMERA,
     AUTHOR_SET_VIDEO_SOURCE,
     AUTHOR_SET_AUDIO_SOURCE,
     AUTHOR_SET_OUTPUT_FORMAT,
@@ -64,6 +84,7 @@ enum author_command_type {
     AUTHOR_START,
     AUTHOR_STOP,
     AUTHOR_RESET,
+    AUTHOR_CLOSE,
     AUTHOR_QUIT = 100
 };
 
@@ -130,14 +151,20 @@ struct set_video_frame_rate_command : author_command
 struct set_preview_surface_command : author_command
 {
     set_preview_surface_command() : author_command(AUTHOR_SET_PREVIEW_SURFACE) {};
-    sp<Surface>                      surface;
+    sp<ISurface>                     surface;
+};
+
+struct set_camera_command : author_command
+{
+    set_camera_command() : author_command(AUTHOR_SET_CAMERA) {};
+    sp<ICamera>                      camera;
 };
 
 class AuthorDriver :
-    public OsclActiveObject,
-    public PVCommandStatusObserver,
-    public PVInformationalEventObserver,
-    public PVErrorEventObserver
+public OsclActiveObject,
+public PVCommandStatusObserver,
+public PVInformationalEventObserver,
+public PVErrorEventObserver
 {
 public:
     AuthorDriver();
@@ -153,6 +180,7 @@ public:
     void commandFailed(author_command *ac);
     void handleInit(author_command *ac);
     void handleSetAudioSource(set_audio_source_command *ac);
+    void handleSetCamera(set_camera_command *ac);
     void handleSetVideoSource(set_video_source_command *ac);
     void handleSetOutputFormat(set_output_format_command *ac);
     void handleSetAudioEncoder(set_audio_encoder_command *ac);
@@ -165,6 +193,7 @@ public:
     void handleStart(author_command *ac);
     void handleStop(author_command *ac);
     void handleReset(author_command *ac);
+    void handleClose(author_command *ac);
     void handleQuit(author_command *ac);
 
     void endOfData();
@@ -172,7 +201,7 @@ public:
     void CommandCompleted(const PVCmdResponse& aResponse);
     void HandleErrorEvent(const PVAsyncErrorEvent& aEvent);
     void HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent);
-    
+
     status_t getMaxAmplitude(int *max);
 
 private:
@@ -191,9 +220,9 @@ private:
 
     PVAuthorEngineInterface    *mAuthor;
 
-    PvmiMIOControl            *mVideoInputMIO;
+    PvmiMIOControl           *mVideoInputMIO;
     PVMFNodeInterface        *mVideoNode;
-    PvmiMIOControl            *mAudioInputMIO;
+    sp<AndroidAudioInput>    mAudioInputMIO;
     PVMFNodeInterface        *mAudioNode;
 
     void                    *mSelectedComposer;
@@ -218,6 +247,8 @@ private:
     // Command queue and its lock.
     List<author_command *>  mCommandQueue;
     Mutex                   mQueueLock;
+
+    sp<ICamera>             mCamera;
 };
 
 class AuthorDriverWrapper

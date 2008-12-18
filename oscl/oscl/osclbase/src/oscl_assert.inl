@@ -15,7 +15,16 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
+
+#ifndef LOG_TAG
+#define LOG_TAG "OpenCore"
+#endif
+
+#include <utils/Log.h>
+
 OSCL_COND_EXPORT_REF OSCL_INLINE void _OSCL_Abort()
 {
-    abort();
+    // cause a segfault
+    LOGV("_OSCL_Abort");
+    *(char*) 0 = 0;
 }

@@ -2,6 +2,7 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := \
+	autodetect.cpp \
 	metadatadriver.cpp \
 	playerdriver.cpp \
 	thread_init.cpp \
@@ -23,11 +24,12 @@ LOCAL_C_INCLUDES := $(PV_INCLUDES) \
 	$(PV_TOP)/nodes/pvmp4ffcomposernode/include \
 	$(PV_TOP)/engines/player/include \
 	$(PV_TOP)/nodes/common/include \
+	external/icu4c/common \
 	external/tremor/Tremor \
 	libs/drm/mobile1/include \
 	$(call include-path-for, graphics corecg)
 
-LOCAL_SHARED_LIBRARIES := libmedia libvorbisidec
+LOCAL_SHARED_LIBRARIES := libmedia libvorbisidec libicuuc
 
 LOCAL_MODULE := libandroidpv
 

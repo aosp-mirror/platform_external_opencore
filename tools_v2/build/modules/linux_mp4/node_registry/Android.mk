@@ -6,7 +6,7 @@ LOCAL_SRC_FILES := src/pvmfmp4nodereg.cpp
 
 LOCAL_WHOLE_STATIC_LIBRARIES := libpvmp4ffrecognizer
 
-LOCAL_SHARED_LIBRARIES := libopencoreplayer libopencorecommon
+LOCAL_SHARED_LIBRARIES := liblog libopencoreplayer libopencorecommon
 
 LOCAL_MODULE := libopencoremp4reg
 

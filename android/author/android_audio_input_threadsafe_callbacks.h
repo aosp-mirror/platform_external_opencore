@@ -15,6 +15,8 @@
 
 #define PROCESS_MULTIPLE_EVENTS_IN_CALLBACK 1
 
+namespace android {
+
 const char AudioInputCallbackAOName[] = "AndroidAudioInputTSCAO_Name";
 
 class AndroidAudioInputThreadSafeCallbackAO : public ThreadSafeCallbackAO
@@ -36,7 +38,7 @@ public:
     ThreadSafeMemPoolFixedChunkAllocator *iMemoryPool;
 };
 
-
+}; // namespace android
 
 #endif //ANDROID_AUDIO_INPUT_THREADSAFE_CALLBACK_H_INCLUDED
 

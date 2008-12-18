@@ -4401,7 +4401,7 @@ PVMFStatus PVPlayerEngine::DoInit(PVPlayerEngineCommand& aCmd)
 
     iRollOverState = RollOverStateIdle;
 
-    if (GetPVPlayerState() != PVP_STATE_IDLE)
+    if ((GetPVPlayerState() != PVP_STATE_IDLE) || (iSourceNode == NULL))
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoInit() Wrong engine state"));
         return PVMFErrInvalidState;

@@ -32,8 +32,8 @@
 #ifndef PVAUTHORENGINE_H_INCLUDED
 #include "pvauthorengine.h"
 #endif
-#ifndef PVMF_VIDEOENC_NODE_FACTORY_H_INCLUDED
-#include "pvmf_videoenc_node_factory.h"
+#ifndef PVMF_OMX_VIDEOENC_NODE_FACTORY_H_INCLUDED
+#include "pvmf_omx_videoenc_node_factory.h"
 #endif
 #ifndef PVMP4FFCN_FACTORY_H_INCLUDED
 #include "pvmp4ffcn_factory.h"
@@ -69,9 +69,9 @@ class PVAuthorEngineNodeFactoryUtility
         static PVMFNodeInterface* CreateEncoder(const PVUuid& aUuid)
         {
             PVMFNodeInterface* node = NULL;
-            if (aUuid == PVMFVideoEncNodeUuid)
+            if (aUuid == PVMFOMXVideoEncNodeUuid)
             {
-                node = PVMFVideoEncNodeFactory::CreateVideoEncNode();
+                node = PVMFOMXVideoEncNodeFactory::CreateVideoEncNode();
             }
             else if (aUuid == PvmfAmrEncNodeUuid)
             {
@@ -101,12 +101,14 @@ class PVAuthorEngineNodeFactoryUtility
 
         static bool Delete(const PVUuid& aUuid, PVMFNodeInterface* aNode)
         {
-            if (!aNode)
-                return false;
-
-            if (aUuid == PVMFVideoEncNodeUuid)
+            if(!aNode)
             {
-                return PVMFVideoEncNodeFactory::DeleteVideoEncNode(aNode);
+                return false;
+            }
+
+            if (aUuid == PVMFOMXVideoEncNodeUuid)
+            {
+                return PVMFOMXVideoEncNodeFactory::DeleteVideoEncNode(aNode);
             }
             else if (aUuid == PVMFAvcEncNodeUuid)
             {
@@ -131,14 +133,14 @@ class PVAuthorEngineNodeFactoryUtility
         static bool QueryRegistry(const PvmfMimeString& aMimeType, PVUuid& aUuid)
         {
             if (CompareMimeTypes(aMimeType, OSCL_HeapString<OsclMemAllocator>(KMp4ComposerMimeType)) ||
-                    CompareMimeTypes(aMimeType, OSCL_HeapString<OsclMemAllocator>(K3gpComposerMimeType)))
+                CompareMimeTypes(aMimeType, OSCL_HeapString<OsclMemAllocator>(K3gpComposerMimeType)))
             {
                 aUuid = KPVMp4FFComposerNodeUuid;
             }
             else if (CompareMimeTypes(aMimeType, OSCL_HeapString<OsclMemAllocator>(KMp4EncMimeType)) ||
                      CompareMimeTypes(aMimeType, OSCL_HeapString<OsclMemAllocator>(KH263EncMimeType)))
             {
-                aUuid = PVMFVideoEncNodeUuid;
+                aUuid = PVMFOMXVideoEncNodeUuid;
             }
             else if (CompareMimeTypes(aMimeType, OSCL_HeapString<OsclMemAllocator>(KH264EncMimeType)))
             {
@@ -176,7 +178,7 @@ class PVAuthorEngineNodeFactoryUtility
                 aConfigUuid = PvmfFileOutputNodeConfigUuid;
                 status = true;
             }
-            else if ((aNodeUuid == PVMFVideoEncNodeUuid) || (aNodeUuid == PVMFAvcEncNodeUuid))
+            else if ((aNodeUuid == PVMFOMXVideoEncNodeUuid) || (aNodeUuid == PVMFAvcEncNodeUuid))
             {
                 aConfigUuid = PVMp4H263EncExtensionUUID;
                 status = true;

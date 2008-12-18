@@ -258,7 +258,7 @@ void AndroidAudioOutput::setParametersSync(PvmiMIOSession aSession, PvmiKvp* aPa
     AndroidAudioMIO::setParametersSync(aSession, aParameters, num_elements, aRet_kvp);
 
     // initialize thread when we have enough information
-    if (iAudioSamplingRateValid && iAudioNumChannelsValid) {
+    if (iAudioSamplingRateValid && iAudioNumChannelsValid && iAudioFormat != PVMF_FORMAT_UNKNOWN) {
         LOGV("start audio thread");
         OsclThread AudioOutput_Thread;
         iExitAudioThread = false;
@@ -325,15 +325,16 @@ int AndroidAudioOutput::audout_thread_func()
     setpriority(PRIO_PROCESS, gettid(), ANDROID_PRIORITY_AUDIO);
 #endif
 
-    if (iAudioNumChannelsValid == false || iAudioSamplingRateValid == false) {
+    if (iAudioNumChannelsValid == false || iAudioSamplingRateValid == false || iAudioFormat == PVMF_FORMAT_UNKNOWN) {
         LOGE("channel count or sample rate is invalid");
         return -1;
     }
 
     LOGV("Creating AudioTrack object: rate=%d, channels=%d, buffers=%d", iAudioSamplingRate, iAudioNumChannels, kNumOutputBuffers);
-    status_t ret = mAudioSink->open(iAudioSamplingRate, iAudioNumChannels, kNumOutputBuffers);
+    status_t ret = mAudioSink->open(iAudioSamplingRate, iAudioNumChannels, ((iAudioFormat==PVMF_PCM8)?AudioSystem::PCM_8_BIT:AudioSystem::PCM_16_BIT), kNumOutputBuffers);
     iAudioSamplingRateValid = false; // purpose of these flags is over here, reset these for next validation recording.
     iAudioNumChannelsValid  = false;
+    iAudioFormat = PVMF_FORMAT_UNKNOWN;
     if (ret != 0) {
         iAudioThreadCreated = false;
         LOGE("Error creating AudioTrack");
@@ -341,8 +342,7 @@ int AndroidAudioOutput::audout_thread_func()
     }
 
     // calculate timing data
-    int bufferSizeInSamples = iAudioNumChannels * mAudioSink->frameCount();
-    int outputFrameSizeInBytes = iAudioNumChannels * sizeof(int16_t);
+    int outputFrameSizeInBytes = mAudioSink->frameSize();
     float msecsPerFrame = mAudioSink->msecsPerFrame();
     uint32_t latency = mAudioSink->latency();
     LOGV("driver latency = %u", latency);
@@ -354,13 +354,6 @@ int AndroidAudioOutput::audout_thread_func()
     // this must be set after iActiveTiming->setFrameRate to prevent race
     // condition in Run()
     iInputFrameSizeInBytes = outputFrameSizeInBytes;
-
-    // handle 8-bit conversion
-    int16_t* conversionBuffer = NULL;
-    if (iAudioFormat == PVMF_PCM8) {
-        conversionBuffer = new int16_t[bufferSizeInSamples];
-        iInputFrameSizeInBytes = iAudioNumChannels;
-    }
 
     // buffer management
     uint32 bytesAvailInBuffer = 0;
@@ -398,9 +391,13 @@ int AndroidAudioOutput::audout_thread_func()
                         len = 0;
                     }
                 }
-                LOGV("start");
-                mAudioSink->start();
-                state = STARTED;
+                if (iDataQueued) {
+                    LOGV("start");
+                    mAudioSink->start();
+                    state = STARTED;
+                } else {
+                    LOGV("clock running and no data queued - don't start track");
+                }
             }
             break;
         case OsclClock::STOPPED:
@@ -488,38 +485,19 @@ int AndroidAudioOutput::audout_thread_func()
 
             // always align to AudioFlinger buffer boundary
             if (bytesAvailInBuffer == 0)
-                bytesAvailInBuffer = bufferSizeInSamples * sizeof(int16_t);
+                bytesAvailInBuffer = mAudioSink->bufferSize();
 
-            // handle 16-bit audio
-            if (conversionBuffer == NULL) {
-                bytesToWrite = bytesAvailInBuffer > len ? len : bytesAvailInBuffer;
-                //LOGV("16 bit :: len = %u, bytesAvailInBuffer = %u, bytesToWrite = %u", len, bytesAvailInBuffer, bytesToWrite);
-                bytesWritten = mAudioSink->write(data, bytesToWrite);
-                if (bytesWritten != bytesToWrite) {
-                    LOGE("Error writing audio data");
-                    iAudioThreadSem->Wait();
-                }
-                data += bytesWritten;
-                len -= bytesWritten;
-                iClockTimeOfWriting_ns = systemTime(SYSTEM_TIME_MONOTONIC);
-
-            } else {
-                // AudioFlinger doesn't support 8 bit, do conversion here
-                int16 *dst = conversionBuffer;
-                uint8 *src = data;
-                bytesToWrite = bytesAvailInBuffer > len * 2 ? len * 2 : bytesAvailInBuffer;
-                //LOGV("8 bit :: len = %u, bytesAvailInBuffer = %u, bytesToWrite = %u", len, bytesAvailInBuffer, bytesToWrite);
-                for (uint32 i = 0; i < bytesToWrite / 2; i++)
-                    *dst++ = (int(*src++) - 128) * 256;
-                bytesWritten = mAudioSink->write(conversionBuffer, bytesToWrite);
-                if (bytesWritten != bytesToWrite) {
-                    LOGE("Error writing audio data");
-                    iAudioThreadSem->Wait();
-                }
-                data += bytesWritten / 2;
-                len -= bytesWritten / 2;
-                iClockTimeOfWriting_ns = systemTime(SYSTEM_TIME_MONOTONIC);
+            bytesToWrite = bytesAvailInBuffer > len ? len : bytesAvailInBuffer;
+            //
+            LOGV("8/16 bit :: len = %u, bytesAvailInBuffer = %u, bytesToWrite = %u", len, bytesAvailInBuffer, bytesToWrite);
+            bytesWritten = mAudioSink->write(data, bytesToWrite);
+            if (bytesWritten != bytesToWrite) {
+                LOGE("Error writing audio data");
+                iAudioThreadSem->Wait();
             }
+            data += bytesWritten;
+            len -= bytesWritten;
+            iClockTimeOfWriting_ns = systemTime(SYSTEM_TIME_MONOTONIC);
 
             // count bytes sent
             bytesAvailInBuffer -= bytesWritten;
@@ -539,7 +517,6 @@ int AndroidAudioOutput::audout_thread_func()
     LOGV("stop and delete track");
     mAudioSink->stop();
     iClockTimeOfWriting_ns = 0;
-    delete [] conversionBuffer;
 
     // LOGD("audout_thread_func exit");
     iAudioThreadTermSem->Signal();

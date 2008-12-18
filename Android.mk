@@ -55,6 +55,7 @@ include $(PV_TOP)//pvmi/recognizer/plugins/pvmp4ffrecognizer/Android.mk
 include $(PV_TOP)//codecs_v2/video/m4v_h263/dec/Android.mk
 include $(PV_TOP)//nodes/pvmp4ffparsernode/Android.mk
 include $(PV_TOP)//codecs_v2/omx/omx_m4v/Android.mk
+include $(PV_TOP)//codecs_v2/audio/sbc/enc/Android.mk
 #include $(PV_TOP)//engines/player/sample_app/Android.mk
 #include $(PV_TOP)//engines/player/test/Android.mk
 #include $(PV_TOP)//engines/adapters/player/framemetadatautility/test/Android.mk

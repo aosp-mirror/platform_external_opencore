@@ -23,7 +23,7 @@
 
 using namespace android;
 
-typedef void (*media_completion_f)(status_t status, void *cookie);
+typedef void (*media_completion_f)(status_t status, void *cookie, bool cancelled);
 
 // Commands that MediaPlayer sends to the PlayerDriver
 class PlayerCommand
@@ -55,7 +55,7 @@ public:
     media_completion_f  callback() { return mCallback; }
     void*               cookie() { return mCookie; }
     bool                hasCompletionHook() { return mCallback == 0; }
-    void                complete(status_t status) { mCallback(status, mCookie); }
+    void                complete(status_t status, bool cancelled) { mCallback(status, mCookie, cancelled); }
                         void set(media_completion_f cbf, void* cookie) { mCallback = cbf; mCookie = cookie; }
 protected:
                         PlayerCommand(player_command_type command, media_completion_f cbf, void* cookie) :

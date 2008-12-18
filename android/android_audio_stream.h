@@ -51,7 +51,6 @@ private:
 
     // number of bytes in an input frame
     int iInputFrameSizeInBytes;
-    int16_t* mConversionBuffer;
     bool mClockUpdated;
 };
 

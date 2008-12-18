@@ -53,7 +53,7 @@ ifeq ($(VALUE_ADD),1)
 LOCAL_WHOLE_STATIC_LIBRARIES += libomx_wmv_component_interface
 endif
 
-LOCAL_SHARED_LIBRARIES := libutils libcutils libui libhardware libandroid_runtime libdrm1 libmedia libsgl libvorbisidec libsonivox libopencorecommon
+LOCAL_SHARED_LIBRARIES := libutils libcutils libui libhardware libandroid_runtime libdrm1 libmedia libsgl libvorbisidec libsonivox libopencorecommon libicuuc
 ifeq ($(TARGET_OS)-$(TARGET_SIMULATOR),linux-true)
 LOCAL_LDLIBS += -ldl
 endif
@@ -61,8 +61,10 @@ ifneq ($(TARGET_SIMULATOR),true)
 LOCAL_SHARED_LIBRARIES += libdl
 endif
 
-# include board-specific opencore extensions
-LOCAL_SHARED_LIBRARIES += $(BOARD_OPENCORE_LIBRARIES)
+# Include Qualcomm codec
+ifeq ($(TARGET_DEVICE),dream)
+LOCAL_SHARED_LIBRARIES += libOmxCore
+endif
 
 
 LOCAL_MODULE := libopencoreplayer

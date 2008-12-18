@@ -38,7 +38,7 @@ static uint32 kConversionBufferSize = 4096;
 */
 OSCL_EXPORT_REF AndroidAudioStream::AndroidAudioStream() :
     AndroidAudioMIO("AndroidAudioStream"),
-    iActiveTiming(NULL), mConversionBuffer(0), mClockUpdated(false)
+    iActiveTiming(NULL), mClockUpdated(false)
 {
     // create active timing object
     LOGV("constructor");
@@ -58,7 +58,6 @@ OSCL_EXPORT_REF AndroidAudioStream::~AndroidAudioStream()
         OsclMemAllocator alloc;
         alloc.deallocate(iActiveTiming);
     }
-    delete [] mConversionBuffer;
 }
 
 PVMFCommandId AndroidAudioStream::QueryInterface(const PVUuid& aUuid, PVInterface*& aInterfacePtr, const OsclAny* aContext)
@@ -93,43 +92,19 @@ void AndroidAudioStream::setParametersSync(PvmiMIOSession aSession, PvmiKvp* aPa
     AndroidAudioMIO::setParametersSync(aSession, aParameters, num_elements, aRet_kvp);
 
     // initialize audio sink when we have enough information
-    if (iAudioSamplingRateValid && iAudioNumChannelsValid) {
-        mAudioSink->open(iAudioSamplingRate, iAudioNumChannels);
+    if (iAudioSamplingRateValid && iAudioNumChannelsValid && iAudioFormat != PVMF_FORMAT_UNKNOWN) {
+        mAudioSink->open(iAudioSamplingRate, iAudioNumChannels, ((iAudioFormat==PVMF_PCM8)?AudioSystem::PCM_8_BIT:AudioSystem::PCM_16_BIT));
 
         // reset flags for next time
         iAudioSamplingRateValid = false;
         iAudioNumChannelsValid  = false;
-
-        // handle 8-bit conversion
-        if (iAudioFormat == PVMF_PCM8) {
-            if (mConversionBuffer == 0) {
-                mConversionBuffer = new int16_t[kConversionBufferSize];
-            }
-        } else {
-            delete [] mConversionBuffer;
-            mConversionBuffer = 0;
-        }
+        iAudioFormat = PVMF_FORMAT_UNKNOWN;
     }
 }
 
 void AndroidAudioStream::writeAudioBuffer(uint8* aData, uint32 aDataLen, PVMFCommandId cmdId, OsclAny* aContext, PVMFTimestamp aTimestamp)
 {
-    // handle 16-bit audio
-    if (mConversionBuffer == 0) {
-        mAudioSink->write(aData, aDataLen);
-    } else {
-        // AudioFlinger doesn't support 8 bit, do conversion here
-        int16 *dst = mConversionBuffer;
-        uint8 *src = aData;
-        while (aDataLen) {
-            uint32 count = aDataLen > kConversionBufferSize ? kConversionBufferSize : aDataLen;
-            for (uint32 i = 0; i < count; i++) {
-                *dst++ = (int(*src++) - 128) * 256;
-            }
-            mAudioSink->write(mConversionBuffer, count * 2);
-            aDataLen -= count;
-        }
-    }
+	mAudioSink->write(aData, aDataLen);
     sendResponse(cmdId, aContext, aTimestamp);
 }
 

@@ -6,7 +6,7 @@ LOCAL_SRC_FILES := src/pvmfdownloadnodes.cpp
 
 LOCAL_WHOLE_STATIC_LIBRARIES := libpvdownloadmanagernode
 
-LOCAL_SHARED_LIBRARIES := libopencorenet_support libopencoreplayer libopencorecommon
+LOCAL_SHARED_LIBRARIES := liblog libopencorenet_support libopencoreplayer libopencorecommon
 
 LOCAL_MODULE := libopencoredownload
 

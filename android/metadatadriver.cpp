@@ -15,13 +15,14 @@
 ** limitations under the License.
 */
 
-#include "metadatadriver.h"
-#ifdef LOG_TAG
-#undef LOG_TAG
+//#define LOG_NDEBUG 0
 #define LOG_TAG "MediaMetadataDriver"
-#endif
 
 #include <media/thread_init.h>
+#include <graphics/SkBitmap.h>
+#include <private/media/VideoFrame.h>
+
+#include "metadatadriver.h"
 
 using namespace android;
 
@@ -40,22 +41,26 @@ const char* MetadataDriver::METADATA_KEYS[] = {
         "duration",
         "num-tracks",
         "drm/is-protected",
-        "track-info/codec-name"
+        "track-info/codec-name",
+        "rating",
+        "comment",
+        "copyright",
 };
 
 static void dumpkeystolog(PVPMetadataList list)
 {
+    LOGV("dumpkeystolog");
     uint32 n = list.size();
     for(uint32 i = 0; i < n; ++i) {
         LOGI("@@@@@ wma key: %s", list[i].get_cstr());
     }
 }
 
-MetadataDriver::MetadataDriver(uint32 mode): OsclTimerObject(OsclActiveObject::EPriorityNominal, "MetadataDriverTimerObject")
+MetadataDriver::MetadataDriver(uint32 mode): OsclActiveObject(OsclActiveObject::EPriorityNominal, "MetadataDriver")
 {
+    LOGV("constructor");
     mMode = mode;
     mUtil = NULL;
-    mBitmap = NULL;
     mDataSource = NULL;
 #if BEST_THUMBNAIL_MODE
     mLocalDataSource = NULL;
@@ -63,30 +68,61 @@ MetadataDriver::MetadataDriver(uint32 mode): OsclTimerObject(OsclActiveObject::E
     mCmdId = 0;
     mContextObjectRefValue = 0x5C7A; // Some random number
     mContextObject = mContextObjectRefValue;
-    mMediaAlbumArt = new MediaAlbumArt();
-    LOGV("MetadataDriver: Mode (%d).", mMode);
-
-    InitializeForThread();
-    PV_MasterOMX_Init();
+    mMediaAlbumArt = NULL;
+    mVideoFrame = NULL;
+    for (uint32 i = 0; i < NUM_METADATA_KEYS; ++i) {
+        mMetadataValues[i][0] = '\0';
+    }
+    LOGV("constructor: Mode (%d).", mMode);
 }
+
+/*static*/ int MetadataDriver::startDriverThread(void *cookie)
+{
+    LOGV("startDriverThread");
+    MetadataDriver *driver = (MetadataDriver *)cookie;
+    return driver->retrieverThread();
+}
+
+int MetadataDriver::retrieverThread()
+{
+    LOGV("retrieverThread");
+    if (!InitializeForThread()) {
+        LOGV("InitializeForThread fail");
+        mSyncSem->Signal();
+        return -1;
+    }
+
+    PV_MasterOMX_Init();
+    OsclScheduler::Init("PVAuthorEngineWrapper");
+    mState = STATE_CREATE;
+    AddToScheduler();
+    RunIfNotReady();
+    OsclExecScheduler *sched = OsclExecScheduler::Current();
+    sched->StartScheduler();
+
+    mSyncSem->Signal();  // Signal that doSetDataSource() is done.
+    OsclScheduler::Cleanup();
+    PV_MasterOMX_Deinit();
+    UninitializeForThread();
+    return 0;
+}
+
 
 MetadataDriver::~MetadataDriver()
 {
-    if (mBitmap) {
-        delete mBitmap;
-        mBitmap = NULL;
-    }
-    if (mMediaAlbumArt) {
-        delete mMediaAlbumArt;
-        mMediaAlbumArt = NULL;
-    }
-
-    // UninitializeForThread gets called automatically when the current thread exits, so don't call it from here.
-    PV_MasterOMX_Deinit();
+    LOGV("destructor");
+    mCmdId = 0;
+    delete mVideoFrame;
+    mVideoFrame = NULL;
+    delete mMediaAlbumArt;
+    mMediaAlbumArt = NULL;
+    delete mSyncSem;
+    mSyncSem = NULL;
 }
 
 const char* MetadataDriver::extractMetadata(int keyCode)
 {
+    LOGV("extractMetadata");
     char *value = NULL;
     if (mMode & GET_METADATA_ONLY) {
         // Comparing int with unsigned int
@@ -102,19 +138,25 @@ const char* MetadataDriver::extractMetadata(int keyCode)
     return value;
 }
 
-MediaAlbumArt* MetadataDriver::extractAlbumArt()
+MediaAlbumArt *MetadataDriver::extractAlbumArt()
 {
-    if (mMode & GET_METADATA_ONLY) {
-        if (mMediaAlbumArt && mMediaAlbumArt->getLength() > 0) {  // Copy out.
+    LOGV("extractAlbumArt");
+    if (mMode & GET_METADATA_ONLY) {  // copy out
+        if (mMediaAlbumArt != NULL && mMediaAlbumArt->mSize > 0) {
             return new MediaAlbumArt(*mMediaAlbumArt);
+        } else {
+            LOGE("failed to extract album art");
+            return NULL;
         }
     }
+    LOGE("extractAlbumArt: invalid mode (%d) to extract album art", mMode);
     return NULL;
 }
 
 // How to better manage these constant strings?
 bool MetadataDriver::containsSupportedKey(const OSCL_HeapString<OsclMemAllocator>& str) const
 {
+    LOGV("containsSupportedKey");
     const char* cStr = str.get_cstr();
     for (uint32 i = 0; i < NUM_METADATA_KEYS; ++i) {
         if (strcasestr(cStr, METADATA_KEYS[i])) {
@@ -133,11 +175,12 @@ bool MetadataDriver::containsSupportedKey(const OSCL_HeapString<OsclMemAllocator
 // retrieving all metadata values for all metadata keys
 void MetadataDriver::trimKeys()
 {
+    LOGV("trimKeys");
     //dumpkeystolog(mMetadataKeyList);
     mActualMetadataKeyList.clear();
     uint32 n = mMetadataKeyList.size();
     mActualMetadataKeyList.reserve(n);
-    for(uint32 i = 0; i < n; ++i) {
+    for (uint32 i = 0; i < n; ++i) {
         if (containsSupportedKey(mMetadataKeyList[i])) {
             mActualMetadataKeyList.push_back(mMetadataKeyList[i]);
         }
@@ -153,6 +196,7 @@ void MetadataDriver::trimKeys()
 //    a. If metadata value(s) is found
 status_t MetadataDriver::extractMetadata(const char* key, char* value, uint32 valueLength)
 {
+    LOGV("extractMetadata");
     bool found = false;
     value[0] = '\0';
     for (uint32 i = 0, n = mMetadataValueList.size(); i < n; ++i) {
@@ -221,12 +265,13 @@ status_t MetadataDriver::extractMetadata(const char* key, char* value, uint32 va
 
 void MetadataDriver::cacheMetadataRetrievalResults()
 {
-#if 0
+    LOGV("cacheMetadataRetrievalResults");
+#if _METADATA_DRIVER_INTERNAL_DEBUG_ENABLE_
     for (uint32 i = 0, n = mMetadataValueList.size(); i < n; ++i) {
         LOGV("Value %d:   Key string: %s.", (i+1), mMetadataValueList[i].key);
     }
 #endif
-    for(uint32 i = 0; i < NUM_METADATA_KEYS; ++i) {
+    for (uint32 i = 0; i < NUM_METADATA_KEYS; ++i) {
         LOGV("extract metadata key: %s", METADATA_KEYS[i]);
         extractMetadata(METADATA_KEYS[i], mMetadataValues[i], MAX_METADATA_STRING_LENGTH - 1);
     }
@@ -235,51 +280,62 @@ void MetadataDriver::cacheMetadataRetrievalResults()
 
 status_t MetadataDriver::extractEmbeddedAlbumArt(const PvmfApicStruct* apic)
 {
+    LOGV("extractEmbeddedAlbumArt");
     char* buf  = (char*) apic->iGraphicData;
     uint32 size = apic->iGraphicDataLen;
     LOGV("extractEmbeddedAlbumArt: Embedded graphic or album art (%d bytes) is found.", size);
     if (size && buf) {
-        return mMediaAlbumArt->setData(size, buf);
+        delete mMediaAlbumArt;
+        mMediaAlbumArt = new MediaAlbumArt();
+        if (mMediaAlbumArt == NULL) {
+            LOGE("extractEmbeddedAlbumArt: Not enough memory to hold a MediaAlbumArt object");
+            return NO_MEMORY;
+        }
+        mMediaAlbumArt->mSize = size;
+        mMediaAlbumArt->mData = new uint8[size];
+        if (mMediaAlbumArt->mData == NULL) {
+            LOGE("extractEmbeddedAlbumArt: Not enough memory to hold the binary data of a MediaAlbumArt object");
+            delete mMediaAlbumArt;
+            mMediaAlbumArt = NULL;
+            return NO_MEMORY;
+        }
+        memcpy(mMediaAlbumArt->mData, buf, size);
+        return NO_ERROR;
     }
-    return UNKNOWN_ERROR;
+    return BAD_VALUE;
 }
 
 status_t MetadataDriver::extractExternalAlbumArt(const char* url)
 {
     LOGV("extractExternalAlbumArt: External graphic or album art is found: %s.", url);
-    if (mMediaAlbumArt) {
-        delete mMediaAlbumArt;
-    }
+    delete mMediaAlbumArt;
     mMediaAlbumArt = new MediaAlbumArt(url);
-    return (mMediaAlbumArt && mMediaAlbumArt->getLength() > 0)? OK: UNKNOWN_ERROR;
+    return (mMediaAlbumArt && mMediaAlbumArt->mSize > 0)? OK: BAD_VALUE; 
 }
 
 // Finds the first album art and extract it.
 status_t MetadataDriver::doExtractAlbumArt()
 {
-    if (mMediaAlbumArt) {
-        mMediaAlbumArt->clearData();  // Clear data from previous retrieval.
-        status_t status = UNKNOWN_ERROR;
-        for (uint32 i = 0, n = mMetadataValueList.size(); i < n; ++i) {
-            if (strcasestr(mMetadataValueList[i].key, ALBUM_ART_KEY)) {
-                LOGV("doExtractAlbumArt: album art key: %s", mMetadataValueList[i].key);
-                if (PVMI_KVPVALTYPE_KSV == GetValTypeFromKeyString(mMetadataValueList[i].key)) {
-                    mMediaAlbumArt->clearData();  // Here may be visited multiple times.
-                    const char* embeddedKey = "graphic;format=APIC;valtype=ksv";
-                    const char* externalKey = "graphic;valtype=char*";
-                    if(strstr(mMetadataValueList[i].key, embeddedKey) && mMetadataValueList[i].value.key_specific_value) {
-                        // Embedded album art.
-                        status = extractEmbeddedAlbumArt(((PvmfApicStruct*)mMetadataValueList[i].value.key_specific_value));
-                    } else if (strstr(mMetadataValueList[i].key, externalKey)) {
-                        // Album art linked with an external url.
-                        status = extractExternalAlbumArt(mMetadataValueList[i].value.pChar_value);
-                    } 
-                    
-                    if (status != OK) {
-                        continue;
-                    }
-                    return status;  // Found the album art.
+    LOGV("doExtractAlbumArt");
+    status_t status = UNKNOWN_ERROR;
+    for (uint32 i = 0, n = mMetadataValueList.size(); i < n; ++i) {
+        if (strcasestr(mMetadataValueList[i].key, ALBUM_ART_KEY)) {
+            LOGV("doExtractAlbumArt: album art key: %s", mMetadataValueList[i].key);
+            if (PVMI_KVPVALTYPE_KSV == GetValTypeFromKeyString(mMetadataValueList[i].key)) {
+                const char* embeddedKey = "graphic;format=APIC;valtype=ksv";
+                const char* externalKey = "graphic;valtype=char*";
+                if (strstr(mMetadataValueList[i].key, embeddedKey) && mMetadataValueList[i].value.key_specific_value) {
+                    // Embedded album art.
+                    status = extractEmbeddedAlbumArt(((PvmfApicStruct*)mMetadataValueList[i].value.key_specific_value));
+                } else if (strstr(mMetadataValueList[i].key, externalKey)) {
+                    // Album art linked with an external url.
+                    status = extractExternalAlbumArt(mMetadataValueList[i].value.pChar_value);
                 }
+
+                if (status != OK) {
+                    continue;
+                }
+                return status;  // Found the album art.
             }
         }
     }
@@ -288,10 +344,11 @@ status_t MetadataDriver::doExtractAlbumArt()
 
 void MetadataDriver::clearCache()
 {
-    if (mBitmap) {
-        delete mBitmap;
-        mBitmap = NULL;
-    }
+    LOGV("clearCache");
+    delete mVideoFrame;
+    mVideoFrame = NULL;
+    delete mMediaAlbumArt;
+    mMediaAlbumArt = NULL;
     for(uint32 i = 0; i < NUM_METADATA_KEYS; ++i) {
         mMetadataValues[i][0] = '\0';
     }
@@ -299,6 +356,7 @@ void MetadataDriver::clearCache()
 
 status_t MetadataDriver::setDataSource(const char* srcUrl)
 {
+    LOGV("setDataSource");
     // Don't let somebody trick us in to reading some random block of memory.
     if (strncmp("mem://", srcUrl, 6) == 0) {
         LOGE("setDataSource: Invalid url (%s).", srcUrl);
@@ -314,6 +372,7 @@ status_t MetadataDriver::setDataSource(const char* srcUrl)
 
 status_t MetadataDriver::doSetDataSource(const char* dataSrcUrl)
 {
+    LOGV("doSetDataSource");
     if (mMode & GET_FRAME_ONLY) {
 #if BEST_THUMBNAIL_MODE
         mFrameSelector.iSelectionMethod = PVFrameSelector::SPECIFIC_FRAME;
@@ -327,64 +386,91 @@ status_t MetadataDriver::doSetDataSource(const char* dataSrcUrl)
     oscl_wchar tmpWCharBuf[MAX_STRING_LENGTH];
     oscl_UTF8ToUnicode(dataSrcUrl, oscl_strlen(dataSrcUrl), tmpWCharBuf, sizeof(tmpWCharBuf));
     mDataSourceUrl.set(tmpWCharBuf, oscl_strlen(tmpWCharBuf));
-    OsclScheduler::Init("MetadataDriverScheduler", NULL, 3);
-    OsclExecScheduler *sched = OsclExecScheduler::Current();
-    if (!sched) {
-        LOGE("doSetDataSource: No scheduler is installed.");
-        return UNKNOWN_ERROR;
-    }
-    mState = STATE_CREATE;
-    AddToScheduler();
-    RunIfNotReady();
-    sched->StartScheduler();  // Block until StopScheduler is called.
-
-    OsclScheduler::Cleanup();
+    mSyncSem = new OsclSemaphore();
+    mSyncSem->Create();
+    createThreadEtc(MetadataDriver::startDriverThread, this, "PVMetadataRetriever");
+    mSyncSem->Wait();
     return mIsSetDataSourceSuccessful? OK: UNKNOWN_ERROR;
 }
 
-SkBitmap *MetadataDriver::captureFrame()
+VideoFrame* MetadataDriver::captureFrame()
 {
-    if (mMode & GET_FRAME_ONLY) {
-        if(mBitmap) {  // Copy out
-            LOGV("captureFrame: Copy out");
-            return new SkBitmap(*mBitmap);
+    LOGV("captureFrame");
+    if (mMode & GET_FRAME_ONLY) {  // copy out
+        if (mVideoFrame != NULL && mVideoFrame->mSize > 0) {
+            return new VideoFrame(*mVideoFrame);
+        } else {
+            LOGE("failed to capture frame");
+            return NULL;
         }
     }
-    LOGV("captureFrame: return NULL");
+    LOGE("captureFrame: invalid mode (%d) to capture a frame", mMode);
     return NULL;
 }
 
 void MetadataDriver::doColorConversion()
 {
+    LOGV("doColorConversion");
+    // Do color conversion using PV's color conversion utility
     int width  = mFrameBufferProp.iFrameWidth;
     int height = mFrameBufferProp.iFrameHeight;
     int displayWidth  = mFrameBufferProp.iDisplayWidth;
     int displayHeight = mFrameBufferProp.iDisplayHeight;
-    mBitmap = new SkBitmap();
-    if (mBitmap) {
-        mBitmap->setConfig(SkBitmap::kRGB_565_Config, displayWidth, displayHeight);
-        mBitmap->allocPixels();
-
-        // Do color conversion.
-        ColorConvertBase* colorConverter = ColorConvert16::NewL();
-        if (colorConverter) {
-            colorConverter->Init(displayWidth, displayHeight, width, displayWidth, displayHeight, displayWidth, CCROTATE_NONE);
-            colorConverter->SetMode(1);
-            colorConverter->Convert(mFrameBuffer, (uint8*)mBitmap->getPixels());
-            delete colorConverter;
-        } else {
-            LOGE("doColorConversion: Cannot instantiate a ColorConvertBase object.");
-            delete mBitmap;
-            mBitmap = NULL;
-        }
-    } else {
-        LOGE("doColorConversion: Cannot instantiate a SkBitmap object.");
+    SkBitmap *bitmap = new SkBitmap();
+    if (!bitmap) {
+        LOGE("doColorConversion: cannot instantiate a SkBitmap object.");
+        return;
     }
+    bitmap->setConfig(SkBitmap::kRGB_565_Config, displayWidth, displayHeight);
+    if (!bitmap->allocPixels()) {
+        LOGE("allocPixels failed");
+        delete bitmap;
+        return;
+    }
+    ColorConvertBase* colorConverter = ColorConvert16::NewL();
+    if (!colorConverter ||
+        !colorConverter->Init(width, height, width, displayWidth, displayHeight, displayWidth, CCROTATE_NONE) ||
+        !colorConverter->SetMode(1) ||
+        !colorConverter->Convert(mFrameBuffer, (uint8*)bitmap->getPixels())) {
+        LOGE("failed to do color conversion");
+        delete colorConverter;
+        delete bitmap;
+        return;
+    }
+    delete colorConverter;
+
+    // Store the SkBitmap pixels in a private shared structure with known
+    // internal memory layout so that the pixels can be sent across the
+    // binder interface
+    delete mVideoFrame;
+    mVideoFrame = new VideoFrame();
+    if (!mVideoFrame) {
+        LOGE("failed to allocate memory for a VideoFrame object");
+        delete bitmap;
+        return;
+    }
+    mVideoFrame->mWidth = width;
+    mVideoFrame->mHeight = height;
+    mVideoFrame->mDisplayWidth  = displayWidth;
+    mVideoFrame->mDisplayHeight = displayHeight;
+    mVideoFrame->mSize = bitmap->getSize();
+    LOGV("display width (%d) and height (%d), and size (%d)", displayWidth, displayHeight, mVideoFrame->mSize);
+    mVideoFrame->mData = new uint8[mVideoFrame->mSize];
+    if (!mVideoFrame->mData) {
+        LOGE("doColorConversion: cannot allocate buffer to hold SkBitmap pixels");
+        delete bitmap;
+        delete mVideoFrame;
+        mVideoFrame = NULL;
+        return;
+    }
+    memcpy(mVideoFrame->mData, (uint8*) bitmap->getPixels(), mVideoFrame->mSize);
+    delete bitmap;
 }
 
 // Instantiate a frame and metadata utility object.
 void MetadataDriver::handleCreate()
 {
+    LOGV("handleCreate");
     int error = 0;
     OSCL_HeapString<OsclMemAllocator> outputFrameTypeString;
     GetFormatString(PVMF_YUV420, outputFrameTypeString);
@@ -400,6 +486,7 @@ void MetadataDriver::handleCreate()
 // Create a data source and add it.
 void MetadataDriver::handleAddDataSource()
 {
+    LOGV("handleAddDataSource");
     int error = 0;
     mDataSource = new PVPlayerDataSourceURL;
     if (mDataSource) {
@@ -420,6 +507,7 @@ void MetadataDriver::handleAddDataSource()
 
 void MetadataDriver::handleRemoveDataSource()
 {
+    LOGV("handleRemoveDataSource");
     int error = 0;
     OSCL_TRY(error, mCmdId = mUtil->RemoveDataSource(*mDataSource, (OsclAny*)&mContextObject));
     OSCL_FIRST_CATCH_ANY(error, handleCommandFailure());
@@ -428,7 +516,8 @@ void MetadataDriver::handleRemoveDataSource()
 // Clean up, due to either failure or task completion.
 void MetadataDriver::handleCleanUp()
 {
-    if(mUtil)
+    LOGV("handleCleanUp");
+    if (mUtil)
     {
         PVFrameAndMetadataFactory::DeleteFrameAndMetadataUtility(mUtil);
         mUtil = NULL;
@@ -449,6 +538,7 @@ void MetadataDriver::handleCleanUp()
 // Retrieve all the available metadata keys.
 void MetadataDriver::handleGetMetadataKeys()
 {
+    LOGV("handleGetMetadataKeys");
     int error = 0;
     mMetadataKeyList.clear();
     OSCL_TRY(error, mCmdId = mUtil->GetMetadataKeys(mMetadataKeyList, 0, -1, NULL, (OsclAny*)&mContextObject));
@@ -458,6 +548,7 @@ void MetadataDriver::handleGetMetadataKeys()
 // Retrieve a frame and store the contents into an internal buffer.
 void MetadataDriver::handleGetFrame()
 {
+    LOGV("handleGetFrame");
     int error = 0;
     mFrameBufferSize = MAX_VIDEO_FRAME_SIZE;
     OSCL_TRY(error, mCmdId = mUtil->GetFrame(mFrameSelector, mFrameBuffer, mFrameBufferSize, mFrameBufferProp, (OsclAny*)&mContextObject));
@@ -467,6 +558,7 @@ void MetadataDriver::handleGetFrame()
 // Retrieve all the available metadata values associated with the given keys.
 void MetadataDriver::handleGetMetadataValues()
 {
+    LOGV("handleGetMetadataValues");
     int error = 0;
     mNumMetadataValues = 0;
     mMetadataValueList.clear();
@@ -477,6 +569,7 @@ void MetadataDriver::handleGetMetadataValues()
 
 void MetadataDriver::Run()
 {
+    LOGV("Run (%d)", mState);
     switch(mState) {
         case STATE_CREATE:
             handleCreate();
@@ -504,11 +597,12 @@ void MetadataDriver::Run()
 
 bool MetadataDriver::isCommandSuccessful(const PVCmdResponse& aResponse) const
 {
+    LOGV("isCommandSuccessful");
     bool success = ((aResponse.GetCmdId() == mCmdId) &&
             (aResponse.GetCmdStatus() == PVMFSuccess) &&
             (aResponse.GetContext() == (OsclAny*)&mContextObject));
     if (!success) {
-        LOGE("isCommandSuccessful: Command id(%d and expected %d) and status (%d and expected %d), data corruption (%s) at state (%d).", 
+        LOGE("isCommandSuccessful: Command id(%d and expected %d) and status (%d and expected %d), data corruption (%s) at state (%d).",
              aResponse.GetCmdId(), mCmdId, aResponse.GetCmdStatus(), PVMFSuccess, (aResponse.GetContext() == (OsclAny*)&mContextObject)? "false": "true", mState);
     }
     return success;
@@ -516,6 +610,7 @@ bool MetadataDriver::isCommandSuccessful(const PVCmdResponse& aResponse) const
 
 void MetadataDriver::handleCommandFailure()
 {
+    LOGV("handleCommandFailure");
     if (mState == STATE_REMOVE_DATA_SOURCE) {
         mState = STATE_CLEANUP_AND_COMPLETE;
     }
@@ -528,6 +623,7 @@ void MetadataDriver::handleCommandFailure()
 // Callback handler for a request completion by frameandmetadatautility.
 void MetadataDriver::CommandCompleted(const PVCmdResponse& aResponse)
 {
+    LOGV("CommandCompleted (%d)", mState);
     if (!isCommandSuccessful(aResponse)) {
         handleCommandFailure();
         return;
@@ -583,10 +679,127 @@ void MetadataDriver::HandleInformationalEvent(const PVAsyncInformationalEvent& a
     LOGV("HandleInformationalEvent: Event [type(%d), response type(%d)] received.", aEvent.GetEventType(), aEvent.GetResponseType());
 }
 
-// Exported so that can be called outside as a global method through libraries.
-// See file mediametadataretriever.cpp for details.
-extern "C" {
-    void* createRetriever() {
-        return new MetadataDriver();
-    }
+
+//------------------------------------------------------------------------------
+#include <media/PVMetadataRetriever.h>
+
+namespace android {
+
+//#define LOG_NDEBUG 0
+//#define LOG_TAG "PVMetadataRetriever"
+
+// A concrete subclass of MediaMetadataRetrieverInterface implementation
+// Use the MetadataDriver object as a delegate and forward related calls
+// to the MetadataDriver object.
+PVMetadataRetriever::PVMetadataRetriever()
+{
+    LOGV("constructor");
+    mMetadataDriver = new MetadataDriver();
 }
+
+PVMetadataRetriever::~PVMetadataRetriever()
+{
+    LOGV("destructor");
+    Mutex::Autolock lock(mLock);
+    delete mMetadataDriver;
+}
+
+status_t PVMetadataRetriever::setDataSource(const char *url)
+{
+    LOGV("setDataSource (%s)", url);
+    Mutex::Autolock lock(mLock);
+    if (mMetadataDriver == 0) {
+        LOGE("No MetadataDriver available");
+        return INVALID_OPERATION;
+    }
+    if (url == 0) {
+        LOGE("Null pointer is passed as argument");
+        return INVALID_OPERATION;
+    }
+    return mMetadataDriver->setDataSource(url);
+}
+
+status_t PVMetadataRetriever::setDataSource(int fd, int64_t offset, int64_t length)
+{
+    LOGV("setDataSource fd(%d), offset(%lld), length(%lld)", fd, offset, length);
+    Mutex::Autolock lock(mLock);
+    if (mMetadataDriver == 0) {
+        LOGE("No MetadataDriver available");
+        return INVALID_OPERATION;
+    }
+    if (offset < 0 || length < 0) {
+        if (offset < 0) {
+            LOGE("negative offset (%lld)", offset);
+        }
+        if (length < 0) {
+            LOGE("negative length (%lld)", length);
+        }
+        return INVALID_OPERATION;
+    }
+    return NO_ERROR;
+}
+
+status_t PVMetadataRetriever::setMode(int mode)
+{
+    LOGV("setMode (%d)", mode);
+    Mutex::Autolock lock(mLock);
+    if (mMetadataDriver == 0) {
+        LOGE("No MetadataDriver available");
+        return INVALID_OPERATION;
+    }
+    if (mode < 0x00 || mode > 0x03) {
+        LOGE("set to invalid mode (%d)", mode);
+        return INVALID_OPERATION;
+    }
+    return mMetadataDriver->setMode(mode);
+}
+
+status_t PVMetadataRetriever::getMode(int* mode) const
+{
+    LOGV("getMode");
+    Mutex::Autolock lock(mLock);
+    if (mMetadataDriver == 0) {
+        LOGE("No MetadataDriver available");
+        return INVALID_OPERATION;
+    }
+    if (mode == 0) {
+        LOGE("Null pointer is passed as argument");
+        return INVALID_OPERATION;
+    }
+    return mMetadataDriver->getMode(mode);
+}
+
+VideoFrame *PVMetadataRetriever::captureFrame()
+{
+    LOGV("captureFrame");
+    Mutex::Autolock lock(mLock);
+    if (mMetadataDriver == 0) {
+        LOGE("No MetadataDriver available");
+        return NULL;
+    }
+    return mMetadataDriver->captureFrame();
+}
+
+MediaAlbumArt *PVMetadataRetriever::extractAlbumArt()
+{
+    LOGV("extractAlbumArt");
+    Mutex::Autolock lock(mLock);
+    if (mMetadataDriver == 0) {
+        LOGE("No MetadataDriver available");
+        return NULL;
+    }
+    return mMetadataDriver->extractAlbumArt();
+}
+
+const char* PVMetadataRetriever::extractMetadata(int keyCode)
+{
+    LOGV("extractMetadata");
+    Mutex::Autolock lock(mLock);
+    if (mMetadataDriver == 0) {
+        LOGE("No MetadataDriver available");
+        return NULL;
+    }
+    return mMetadataDriver->extractMetadata(keyCode);
+}
+
+};  // android
