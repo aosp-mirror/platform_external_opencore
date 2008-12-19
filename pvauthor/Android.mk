@@ -11,14 +11,15 @@ LOCAL_WHOLE_STATIC_LIBRARIES := \
 	libpvmp4ffcomposer \
 	libpvamrencnode \
 	libpvmp4ffcomposernode \
-	libpvvideoencnode \
+	libpvomxvideoencnode \
 	libpvavcencnode \
 	libpvmediainputnode \
 	libandroidpvauthor 
 
 LOCAL_LDLIBS := -lpthread
 
-LOCAL_SHARED_LIBRARIES := libutils libcutils libui libhardware libandroid_runtime libdrm1 libmedia libsgl libvorbisidec libsonivox libopencorecommon
+LOCAL_SHARED_LIBRARIES := libutils libcutils libui libhardware libandroid_runtime libdrm1 libmedia libsgl libvorbisidec libsonivox libopencorecommon 
+
 ifeq ($(TARGET_OS)-$(TARGET_SIMULATOR),linux-true)
 LOCAL_LDLIBS += -ldl
 endif
@@ -26,8 +27,10 @@ ifneq ($(TARGET_SIMULATOR),true)
 LOCAL_SHARED_LIBRARIES += libdl
 endif
 
-# Include board-specific extensions
-LOCAL_SHARED_LIBRARIES += $(BOARD_OPENCORE_LIBRARIES)
+# Include Qualcomm codec
+ifeq ($(TARGET_DEVICE),dream)
+LOCAL_SHARED_LIBRARIES += libOmxCore
+endif
 
 
 LOCAL_MODULE := libopencoreauthor
@@ -41,6 +44,7 @@ include $(PV_TOP)//fileformats/mp4/composer/Android.mk
 include $(PV_TOP)//nodes/pvamrencnode/Android.mk
 include $(PV_TOP)//nodes/pvmp4ffcomposernode/Android.mk
 include $(PV_TOP)//nodes/pvvideoencnode/Android.mk
+include $(PV_TOP)//nodes/pvomxvideoencnode/Android.mk
 include $(PV_TOP)//nodes/pvavcencnode/Android.mk
 include $(PV_TOP)//nodes/pvmediainputnode/Android.mk
 #include $(PV_TOP)//pvmi/media_io/pvmi_mio_fileinput/Android.mk

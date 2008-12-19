@@ -1,6 +1,8 @@
 #include "android_audio_input_threadsafe_callbacks.h"
 #include "android_audio_input.h"
 
+namespace android {
+
 AndroidAudioInputThreadSafeCallbackAO::AndroidAudioInputThreadSafeCallbackAO(void* aObserver,
                                                                                uint32 aDepth, 
                                                                                const char* aAOname,
@@ -84,4 +86,5 @@ OsclAny* AndroidAudioInputThreadSafeCallbackAO::Dequeue(OsclReturnCode &status)
 }
 #endif
 
+}; // namespace android
 

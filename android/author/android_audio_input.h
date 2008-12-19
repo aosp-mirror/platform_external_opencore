@@ -57,7 +57,13 @@
 #include "android_audio_input_threadsafe_callbacks.h"
 #endif
 
+#include <utils/RefBase.h>
+
+namespace android {
+
 class AndroidAudioInput;
+class Mutex;
+class Condition;
 
 /**
  * Enumerated list of asychronous commands for AndroidAudioInput
@@ -188,7 +194,8 @@ public:
 class AndroidAudioInput : public OsclTimerObject,
     public PvmiMIOControl,
     public PvmiMediaTransfer,
-    public PvmiCapabilityAndConfig
+    public PvmiCapabilityAndConfig,
+    public RefBase
 {
 public:
     AndroidAudioInput();
@@ -407,6 +414,15 @@ private:
 
     volatile int iMaxAmplitude;
     volatile bool iTrackMaxAmplitude;
+
+    // synchronize startup of audio input thread, so we can return an error
+    // from DoStart() if something goes wrong
+    Mutex *iAudioThreadStartLock;
+    Condition *iAudioThreadStartCV;
+    volatile status_t iAudioThreadStartResult;
+    volatile bool iAudioThreadStarted;
 };
+
+}; // namespace android
 
 #endif // ANDROID_AUDIO_INPUT_H_INCLUDED

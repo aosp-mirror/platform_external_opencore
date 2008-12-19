@@ -14,8 +14,9 @@ LOCAL_MODULE := libomx_common_lib
 
 LOCAL_CFLAGS :=   $(PV_CFLAGS)
 
-# board-specific configuration
-LOCAL_CFLAGS += $(BOARD_OPENCORE_FLAGS)
+ifeq ($(TARGET_DEVICE),dream)
+LOCAL_CFLAGS += -DHARDWARE_OMX=1
+endif
 
 LOCAL_ARM_MODE := arm
 

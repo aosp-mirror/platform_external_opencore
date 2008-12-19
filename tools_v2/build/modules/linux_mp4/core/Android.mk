@@ -10,7 +10,7 @@ LOCAL_WHOLE_STATIC_LIBRARIES := \
 	libpvmp4ffparsernode \
 	
 
-LOCAL_SHARED_LIBRARIES := libopencoremp4reg libopencoreplayer libopencorecommon
+LOCAL_SHARED_LIBRARIES := liblog libopencoremp4reg libopencoreplayer libopencorecommon
 
 LOCAL_MODULE := libopencoremp4
 

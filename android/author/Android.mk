@@ -3,12 +3,21 @@ include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := \
 	authordriver.cpp \
-	mediarecorder.cpp \
+	PVMediaRecorder.cpp \
 	android_camera_input.cpp \
 	android_audio_input.cpp \
-        android_audio_input_threadsafe_callbacks.cpp
+    android_audio_input_threadsafe_callbacks.cpp \
+	../thread_init.cpp \
+	pv_encomxmastercore.cpp \
+	qc_omxcore.cpp
 
 LOCAL_CFLAGS := $(PV_CFLAGS)
+
+ifeq ($(TARGET_DEVICE),dream)
+LOCAL_CFLAGS += -DHARDWARE_OMX=1
+endif
+
+LOCAL_ARM_MODE := arm
 
 LOCAL_C_INCLUDES := $(PV_INCLUDES) \
 	$(PV_TOP)/engines/common/include \
@@ -21,7 +30,7 @@ LOCAL_C_INCLUDES := $(PV_INCLUDES) \
 	$(PV_TOP)/nodes/common/include \
 	external/tremor/Tremor \
 	libs/drm/mobile1/include \
-	$(call include-path-for, graphics corecg)
+    $(call include-path-for, graphics corecg)
 
 LOCAL_SHARED_LIBRARIES := libmedia
 

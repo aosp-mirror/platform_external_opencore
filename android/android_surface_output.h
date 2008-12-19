@@ -85,6 +85,21 @@ typedef struct PLATFORM_PRIVATE_LIST
     PLATFORM_PRIVATE_ENTRY* entryList;
 } PLATFORM_PRIVATE_LIST;
 
+// define bits, mask and validity check for video parameters
+#define VIDEO_PARAMETERS_INVALID 0
+#define VIDEO_SUBFORMAT_VALID (1 << 0)
+#define DISPLAY_HEIGHT_VALID (1 << 1)
+#define DISPLAY_WIDTH_VALID (1 << 2)
+#define VIDEO_HEIGHT_VALID (1 << 3)
+#define VIDEO_WIDTH_VALID (1 << 4)
+#define VIDEO_PARAMETERS_MASK (VIDEO_SUBFORMAT_VALID | DISPLAY_HEIGHT_VALID | \
+        DISPLAY_WIDTH_VALID | VIDEO_HEIGHT_VALID | VIDEO_WIDTH_VALID)
+#define VIDEO_PARAMETERS_VALID (VIDEO_SUBFORMAT_VALID | DISPLAY_HEIGHT_VALID | \
+        DISPLAY_WIDTH_VALID | VIDEO_HEIGHT_VALID | VIDEO_WIDTH_VALID)
+
+namespace android {
+    class PVPlayer;
+}
 
 class PVLogger;
 class OsclClock;
@@ -134,7 +149,7 @@ class AndroidSurfaceOutput :    public OsclTimerObject
 
 {
 public:
-    OSCL_IMPORT_REF AndroidSurfaceOutput(const sp<ISurface>& surface);
+    OSCL_IMPORT_REF AndroidSurfaceOutput(android::PVPlayer* pvPlayer, const sp<ISurface>& surface);
 
     // For Frame Buffer
     OSCL_IMPORT_REF bool initCheck();
@@ -244,6 +259,8 @@ public:
 
 private:
     void initData();
+    void resetVideoParameterFlags();
+    bool checkVideoParameterFlags();
 
     // From OsclTimerObject
     void Run();
@@ -313,16 +330,13 @@ private:
     bool iFileOpened;
 
     // Video parameters
+    uint32 iVideoParameterFlags;
     OSCL_HeapString<OsclMemAllocator> iVideoFormatString;
     PVMFFormatType iVideoFormat;
     int32 iVideoHeight;
-    bool iVideoHeightValid;
     int32 iVideoWidth;
-    bool iVideoWidthValid;
     int32 iVideoDisplayHeight;
-    bool iVideoDisplayHeightValid;
     int32 iVideoDisplayWidth;
-    bool iVideoDisplayWidthValid;
 
     // hardware specific
     PVMFFormatType iVideoSubFormat;
@@ -339,6 +353,7 @@ private:
     // software color conversion for software codecs
     ColorConvertBase* iColorConverter;
 
+    android::PVPlayer*          mPvPlayer;
     bool                        mInitialized;
     bool                        mEmulation;
     sp<ISurface>                mSurface;

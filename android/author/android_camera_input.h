@@ -1,3 +1,20 @@
+/*
+ * Copyright (C) 2008, The Android Open Source Project
+ * Copyright (C) 2008 HTC Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #ifndef ANDROID_CAMERA_INPUT_H_INCLUDED
 #define ANDROID_CAMERA_INPUT_H_INCLUDED
 
@@ -22,9 +39,6 @@
 #ifndef OSCL_VECTOR_H_INCLUDED
 #include "oscl_vector.h"
 #endif
-#ifndef PVLOGGER_H_INCLUDED
-#include "pvlogger.h"
-#endif
 #ifndef PVMI_MIO_CONTROL_H_INCLUDED
 #include "pvmi_mio_control.h"
 #endif
@@ -38,9 +52,10 @@
 #include "pvmf_simple_media_buffer.h"
 #endif
 
-#include <ui/SurfaceComposerClient.h>
-#include "cczoomrotation16.h"
-#include "ccyuv422toyuv420.h"
+using namespace android;
+
+class ISurface;
+class ICamera;
 
 /**
  * Enumerated list of asychronous commands for AndroidCameraInput
@@ -61,11 +76,10 @@ typedef enum
     INVALID_CMD
 } AndroidCameraInputCmdType;
 
-#define DEFAULT_FRAME_WIDTH        176
-#define DEFAULT_FRAME_HEIGHT       144
-#define DEFAULT_FRAME_RATE         15.0
-
-#define ANDROID_VIDEO_FORMAT            PVMF_YUV422
+#define DEFAULT_FRAME_WIDTH        320
+#define DEFAULT_FRAME_HEIGHT       240
+#define DEFAULT_FRAME_RATE         20.0
+#define ANDROID_VIDEO_FORMAT       PVMF_YUV420
 
 #if ANDROID_VIDEO_FORMAT == PVMF_RGB16
 #error PV does not support RGB16
@@ -79,10 +93,10 @@ class AndroidCameraInputCmd
 public:
     AndroidCameraInputCmd()
     {
-        iId = 0;
-        iType = INVALID_CMD;
+        iId      = 0;
+        iType    = INVALID_CMD;
         iContext = NULL;
-        iData1 = NULL;
+        iData    = NULL;
     }
 
     AndroidCameraInputCmd(const AndroidCameraInputCmd& aCmd)
@@ -91,26 +105,26 @@ public:
     }
 
     ~AndroidCameraInputCmd() {}
-    
+
     AndroidCameraInputCmd& operator=(const AndroidCameraInputCmd& aCmd)
     {
         Copy(aCmd);
         return (*this);
     }
 
-    PVMFCommandId iId; /** ID assigned to this command */
-    int32 iType;  /** AndroidCameraInputCmdType value */
-    OsclAny* iContext;  /** Other data associated with this command */
-    OsclAny* iData1;  /** Other data associated with this command */
+    PVMFCommandId iId;       /** ID assigned to this command */
+    int32         iType;     /** AndroidCameraInputCmdType value */
+    OsclAny*      iContext;  /** Other data associated with this command */
+    OsclAny*      iData;     /** Other data associated with this command */
 
 private:
 
     void Copy(const AndroidCameraInputCmd& aCmd)
     {
-        iId = aCmd.iId;
-        iType = aCmd.iType;
+        iId      = aCmd.iId;
+        iType    = aCmd.iType;
         iContext = aCmd.iContext;
-        iData1 = aCmd.iData1;
+        iData    = aCmd.iData;
     }
 };
 
@@ -130,110 +144,161 @@ public:
     }
 
     PVMFCommandId iId;
-    OsclAny* iData;
+    OsclAny*      iData;
 };
 
-class AndroidCameraInput : public OsclTimerObject,
-                         public PvmiMIOControl,
-                         public PvmiMediaTransfer,
-                         public PvmiCapabilityAndConfig
+class AndroidCameraInput
+    : public OsclTimerObject,
+      public PvmiMIOControl,
+      public PvmiMediaTransfer,
+      public PvmiCapabilityAndConfig
 {
 public:
     AndroidCameraInput();
     virtual ~AndroidCameraInput();
-    
+
     // Pure virtuals from PvmiMIOControl
-    OSCL_IMPORT_REF PVMFStatus connect(PvmiMIOSession& aSession, PvmiMIOObserver* aObserver);
+    OSCL_IMPORT_REF PVMFStatus connect(PvmiMIOSession& aSession,
+        PvmiMIOObserver* aObserver);
+
     OSCL_IMPORT_REF PVMFStatus disconnect(PvmiMIOSession aSession);
-    OSCL_IMPORT_REF PvmiMediaTransfer* createMediaTransfer(PvmiMIOSession& aSession, 
-                                                         PvmiKvp* read_formats=NULL,
-                                                         int32 read_flags=0,
-                                                         PvmiKvp* write_formats=NULL,
-                                                         int32 write_flags=0);
+    OSCL_IMPORT_REF PvmiMediaTransfer* createMediaTransfer(PvmiMIOSession& aSession,
+        PvmiKvp* read_formats = NULL,
+        int32 read_flags = 0,
+        PvmiKvp* write_formats = NULL,
+        int32 write_flags = 0);
+
     OSCL_IMPORT_REF void deleteMediaTransfer(PvmiMIOSession& aSession,
-                                           PvmiMediaTransfer* media_transfer);
-    OSCL_IMPORT_REF PVMFCommandId QueryUUID(const PvmfMimeString& aMimeType, 
-                                          Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids,
-                                          bool aExactUuidsOnly=false,
-                                          const OsclAny* aContext=NULL);
+                                             PvmiMediaTransfer* media_transfer);
+    
+    OSCL_IMPORT_REF PVMFCommandId QueryUUID(const PvmfMimeString& aMimeType,
+        Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids,
+        bool aExactUuidsOnly = false,
+        const OsclAny* aContext = NULL);
+
     OSCL_IMPORT_REF PVMFCommandId QueryInterface(const PVUuid& aUuid,
-                                               PVInterface*& aInterfacePtr,
-                                               const OsclAny* aContext=NULL);
+        PVInterface*& aInterfacePtr,
+        const OsclAny* aContext = NULL);
+
     OSCL_IMPORT_REF PVMFCommandId Init(const OsclAny* aContext=NULL);
     OSCL_IMPORT_REF PVMFCommandId Start(const OsclAny* aContext=NULL);
     OSCL_IMPORT_REF PVMFCommandId Reset(const OsclAny* aContext=NULL);
     OSCL_IMPORT_REF PVMFCommandId Pause(const OsclAny* aContext=NULL);
     OSCL_IMPORT_REF PVMFCommandId Flush(const OsclAny* aContext=NULL);
-    OSCL_IMPORT_REF PVMFCommandId DiscardData(PVMFTimestamp aTimestamp, const OsclAny* aContext=NULL);
-    OSCL_IMPORT_REF PVMFCommandId DiscardData(const OsclAny* aContext=NULL);
-    OSCL_IMPORT_REF PVMFCommandId Stop(const OsclAny* aContext=NULL);
-    OSCL_IMPORT_REF PVMFCommandId CancelCommand(PVMFCommandId aCmdId, const OsclAny* aContext=NULL);
-    OSCL_IMPORT_REF PVMFCommandId CancelAllCommands(const OsclAny* aContext=NULL);
+    OSCL_IMPORT_REF PVMFCommandId DiscardData(PVMFTimestamp aTimestamp,
+        const OsclAny* aContext=NULL);
+
+    OSCL_IMPORT_REF PVMFCommandId DiscardData(const OsclAny* aContext = NULL);
+    OSCL_IMPORT_REF PVMFCommandId Stop(const OsclAny* aContext = NULL);
+    OSCL_IMPORT_REF PVMFCommandId CancelCommand(PVMFCommandId aCmdId,
+        const OsclAny* aContext=NULL);
+
+    OSCL_IMPORT_REF PVMFCommandId CancelAllCommands(const OsclAny* aContext = NULL);
     OSCL_IMPORT_REF void ThreadLogon();
     OSCL_IMPORT_REF void ThreadLogoff();
 
     // Pure virtuals from PvmiMediaTransfer
     OSCL_IMPORT_REF void setPeer(PvmiMediaTransfer* aPeer);
-    OSCL_IMPORT_REF void useMemoryAllocators(OsclMemAllocator* write_alloc=NULL);
-    OSCL_IMPORT_REF PVMFCommandId writeAsync(uint8 format_type, int32 format_index,
-                                           uint8* data, uint32 data_len,
-                                           const PvmiMediaXferHeader& data_header_info, 
-                                           OsclAny* aContext=NULL);
-    OSCL_IMPORT_REF void writeComplete(PVMFStatus aStatus, PVMFCommandId write_cmd_id,
-                                     OsclAny* aContext);
-    OSCL_IMPORT_REF PVMFCommandId readAsync(uint8* data, uint32 max_data_len, OsclAny* aContext=NULL,
-                                          int32* formats=NULL, uint16 num_formats=0);
-    OSCL_IMPORT_REF void readComplete(PVMFStatus aStatus, PVMFCommandId read_cmd_id, 
-                                    int32 format_index,
-                                    const PvmiMediaXferHeader& data_header_info,
-                                    OsclAny* aContext);
+    OSCL_IMPORT_REF void useMemoryAllocators(OsclMemAllocator* write_alloc = NULL);
+    OSCL_IMPORT_REF PVMFCommandId writeAsync(uint8 format_type,
+        int32 format_index,
+        uint8* data,
+        uint32 data_len,
+        const PvmiMediaXferHeader& data_header_info,
+        OsclAny* aContext = NULL);
+
+    OSCL_IMPORT_REF void writeComplete(PVMFStatus aStatus,
+        PVMFCommandId write_cmd_id,
+        OsclAny* aContext);
+
+    OSCL_IMPORT_REF PVMFCommandId readAsync(uint8* data,
+        uint32 max_data_len,
+        OsclAny* aContext = NULL,
+        int32* formats = NULL,
+        uint16 num_formats = 0);
+
+    OSCL_IMPORT_REF void readComplete(PVMFStatus aStatus,
+        PVMFCommandId read_cmd_id,
+        int32 format_index,
+        const PvmiMediaXferHeader& data_header_info,
+        OsclAny* aContext);
+
     OSCL_IMPORT_REF void statusUpdate(uint32 status_flags);
     OSCL_IMPORT_REF void cancelCommand(PVMFCommandId aCmdId);
     OSCL_IMPORT_REF void cancelAllCommands();
-    
+
     // Pure virtuals from PvmiCapabilityAndConfig
     OSCL_IMPORT_REF void setObserver (PvmiConfigAndCapabilityCmdObserver* aObserver);
-    OSCL_IMPORT_REF PVMFStatus getParametersSync(PvmiMIOSession aSession, PvmiKeyType aIdentifier,
-                                               PvmiKvp*& aParameters, int& num_parameter_elements,
-                                               PvmiCapabilityContext aContext);
-    OSCL_IMPORT_REF PVMFStatus releaseParameters(PvmiMIOSession aSession, PvmiKvp* aParameters, 
-                                               int num_elements);
-    OSCL_IMPORT_REF void createContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext);
-    OSCL_IMPORT_REF void setContextParameters(PvmiMIOSession aSession, PvmiCapabilityContext& aContext, 
-                                            PvmiKvp* aParameters, int num_parameter_elements);
-    OSCL_IMPORT_REF void DeleteContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext);
-    OSCL_IMPORT_REF void setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, 
-                                         int num_elements, PvmiKvp * & aRet_kvp);
-    OSCL_IMPORT_REF PVMFCommandId setParametersAsync(PvmiMIOSession aSession, PvmiKvp* aParameters, 
-                                                   int num_elements, PvmiKvp*& aRet_kvp, 
-                                                   OsclAny* context=NULL);
+    OSCL_IMPORT_REF PVMFStatus getParametersSync(PvmiMIOSession aSession,
+        PvmiKeyType aIdentifier,
+        PvmiKvp*& aParameters, int& num_parameter_elements,
+        PvmiCapabilityContext aContext);
+
+    OSCL_IMPORT_REF PVMFStatus releaseParameters(PvmiMIOSession aSession,
+        PvmiKvp* aParameters,
+        int num_elements);
+
+    OSCL_IMPORT_REF void createContext(PvmiMIOSession aSession,
+        PvmiCapabilityContext& aContext);
+
+    OSCL_IMPORT_REF void setContextParameters(PvmiMIOSession aSession,
+        PvmiCapabilityContext& aContext,
+        PvmiKvp* aParameters,
+        int num_parameter_elements);
+
+    OSCL_IMPORT_REF void DeleteContext(PvmiMIOSession aSession,
+        PvmiCapabilityContext& aContext);
+
+    OSCL_IMPORT_REF void setParametersSync(PvmiMIOSession aSession,
+        PvmiKvp* aParameters,
+        int num_elements,
+        PvmiKvp * & aRet_kvp);
+
+    OSCL_IMPORT_REF PVMFCommandId setParametersAsync(PvmiMIOSession aSession,
+        PvmiKvp* aParameters,
+        int num_elements,
+        PvmiKvp*& aRet_kvp,
+        OsclAny* context = NULL);
+
     OSCL_IMPORT_REF uint32 getCapabilityMetric (PvmiMIOSession aSession);
     OSCL_IMPORT_REF PVMFStatus verifyParametersSync (PvmiMIOSession aSession,
-                                                   PvmiKvp* aParameters, int num_elements);
+        PvmiKvp* aParameters,
+        int num_elements);
 
     // Android-specific stuff
-    void SetPreviewSurface(const android::sp<android::Surface>& surface);
+    void SetPreviewSurface(const sp<android::ISurface>& surface);
     void SetFrameSize(int w, int h);
     void SetFrameRate(int frames_per_second);
- 
+    void SetCamera(const sp<android::ICamera>& camera);
+
+    // add for Camcorder
+    PVMFStatus              postWriteAsync(const sp<IMemory>& frame);
+
+    bool isRecorderStarting() { return iState==STATE_STARTED?true:false; }
+
 private:
     void Run();
     void FrameSizeChanged();
 
-    PVMFCommandId AddCmdToQueue(AndroidCameraInputCmdType aType, const OsclAny* aContext, OsclAny* aData1 = NULL);
+    PVMFCommandId AddCmdToQueue(AndroidCameraInputCmdType aType,
+        const OsclAny* aContext,
+        OsclAny* aData1 = NULL);
+
     void AddDataEventToQueue(uint32 aMicroSecondsToEvent);
-    void DoRequestCompleted(const AndroidCameraInputCmd& aCmd, PVMFStatus aStatus, OsclAny* aEventData=NULL);
-    PVMFStatus DoInit();                                                                                                                  
+    void DoRequestCompleted(const AndroidCameraInputCmd& aCmd,
+        PVMFStatus aStatus, OsclAny* aEventData=NULL);
+
+    PVMFStatus DoInit();
     PVMFStatus DoStart();
     PVMFStatus DoReset();
-    PVMFStatus DoPause();                                                                                                                        
+    PVMFStatus DoPause();
     PVMFStatus DoFlush();
     PVMFStatus DoStop();
     PVMFStatus DoRead();
 
     /**
      * Allocate a specified number of key-value pairs and set the keys
-     * 
+     *
      * @param aKvp Output parameter to hold the allocated key-value pairs
      * @param aKey Key for the allocated key-value pairs
      * @param aNumParams Number of key-value pairs to be allocated
@@ -255,30 +320,15 @@ private:
     // Command queue
     uint32 iCmdIdCounter;
     Oscl_Vector<AndroidCameraInputCmd, OsclMemAllocator> iCmdQueue;
-    
+
     // PvmiMIO sessions
     Oscl_Vector<PvmiMIOObserver*, OsclMemAllocator> iObservers;
 
     PvmiMediaTransfer* iPeer;
-   
-    ColorConvertBase* iColorConverter; 
-    ColorConvertBase* iYuv422toYuv420; 
-    uint8*	camera_output_buf;
+
     // Thread logon
     bool iThreadLoggedOn;
 
-    int iCameraFd;
-
-    android::sp<android::Surface> mSurface;
-    int32   mSurfaceWidth;
-    int32   mSurfaceHeight;
-
-    int32   mFrameWidth;
-    int32   mFrameHeight;
-
-    float   mFrameRate;
-
-    int32 iFrameSize;
     int32 iDataEventCounter;
     int32 iStartTickCount;
 
@@ -286,15 +336,24 @@ private:
     int32 iMilliSecondsPerDataEvent;
     int32 iMicroSecondsPerDataEvent;
     PVMFTimestamp iTimeStamp;
-    
+
     // Allocator for simple media data buffer
     OsclMemAllocator iAlloc;
-    OsclMemPoolFixedChunkAllocator* iMediaBufferMemPool;
 
     Oscl_Vector<AndroidCameraInputMediaData, OsclMemAllocator> iSentMediaData;
 
-    // Logger
-    PVLogger* iLogger;
+    // Camera specific stuff
+    int                     iCameraFd;
+    sp<android::ISurface>   mSurface;
+    int32                   mSurfaceWidth;
+    int32                   mSurfaceHeight;
+    int32                   mFrameWidth;
+    int32                   mFrameHeight;
+    float                   mFrameRate;
+    sp<android::Camera>     mCamera;
+    sp<IMemoryHeap>         mHeap;
+    int32                   mFrameRefCount;
+
 
     // State machine
     enum AndroidCameraInputState
@@ -308,6 +367,7 @@ private:
     };
 
     AndroidCameraInputState iState;
+
 };
 
 #endif // ANDROID_CAMERA_INPUT_H_INCLUDED
