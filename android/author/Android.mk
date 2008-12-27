@@ -13,9 +13,8 @@ LOCAL_SRC_FILES := \
 
 LOCAL_CFLAGS := $(PV_CFLAGS)
 
-ifeq ($(TARGET_DEVICE),dream)
-LOCAL_CFLAGS += -DHARDWARE_OMX=1
-endif
+# board-specific configuration
+LOCAL_CFLAGS += $(BOARD_OPENCORE_FLAGS)
 
 LOCAL_ARM_MODE := arm
 

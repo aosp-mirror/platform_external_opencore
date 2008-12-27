@@ -61,10 +61,8 @@ ifneq ($(TARGET_SIMULATOR),true)
 LOCAL_SHARED_LIBRARIES += libdl
 endif
 
-# Include Qualcomm codec
-ifeq ($(TARGET_DEVICE),dream)
-LOCAL_SHARED_LIBRARIES += libOmxCore
-endif
+# Include board-specific extensions
+LOCAL_SHARED_LIBRARIES += $(BOARD_OPENCORE_LIBRARIES)
 
 
 LOCAL_MODULE := libopencoreplayer
