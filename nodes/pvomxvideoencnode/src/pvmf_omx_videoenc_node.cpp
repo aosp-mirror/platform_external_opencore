@@ -847,6 +847,7 @@ OSCL_EXPORT_REF bool PVMFOMXVideoEncNode::SetOutputFrameSize(uint32 aLayer, uint
 ////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF bool PVMFOMXVideoEncNode::SetOutputFrameRate(uint32 aLayer, OsclFloat aFrameRate)
 {
+    LOGV("SetOutputFrameRate: %f", aFrameRate);
     switch (iInterfaceState)
     {
         case EPVMFNodeStarted:
@@ -1879,6 +1880,8 @@ void PVMFOMXVideoEncNode::DoPrepare(PVMFVideoEncNodeCommand& aCmd)
 			/* Allocate output buffers */
 			if(!CreateOutputMemPool(iNumOutputBuffers))
 			{
+
+                                LOGE("DoPrepare(): failed in allocating mempool for output buffers!");
 				PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
 					(0,"PVMFOMXVideoEncNode::DoPrepare() Can't allocate mempool for output buffers!"));
 
@@ -1895,6 +1898,8 @@ void PVMFOMXVideoEncNode::DoPrepare(PVMFVideoEncNodeCommand& aCmd)
 										  false // this is not input
 										  ))
 			{
+
+                                LOGE("DoPrepare(): OMX component failed in using output buffers!");
 				PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
 					(0,"PVMFOMXVideoEncNode::DoPrepare() Component can't use output buffers!"));
 
@@ -2790,6 +2795,7 @@ PVMFStatus PVMFOMXVideoEncNode::SetInputFrameSize(uint32 aWidth, uint32 aHeight,
 ////////////////////////////////////////////////////////////////////////////
 PVMFStatus PVMFOMXVideoEncNode::SetInputFrameRate(OsclFloat aFrameRate)
 {
+    LOGV("SetInputFrameRate(%f)", aFrameRate);
     switch (iInterfaceState)
     {
         case EPVMFNodeStarted:
@@ -2800,6 +2806,10 @@ PVMFStatus PVMFOMXVideoEncNode::SetInputFrameRate(OsclFloat aFrameRate)
             break;
     }
 
+    if (aFrameRate < MIN_FRAME_RATE_IN_FPS) {
+        LOGE("intended input frame rate is too low");
+        return false;
+    }
     iInputFormat.iFrameRate = OSCL_STATIC_CAST(float, aFrameRate);
     iEncodeParam.iNoFrameSkip = iEncodeParam.iNoCurrentSkip = false;
     return true;
@@ -2835,12 +2845,13 @@ uint32 PVMFOMXVideoEncNode::GetOutputBitRate(uint32 aLayer)
 ////////////////////////////////////////////////////////////////////////////
 OsclFloat PVMFOMXVideoEncNode::GetOutputFrameRate(uint32 aLayer)
 {
+    LOGV("GetOutputFrameRate");
     if ((int32)aLayer >= iEncodeParam.iNumLayer)
     {
         LOG_ERR((0, "PVMFOMXVideoEncNode::GetOutputFrameRate: Error Invalid layer number"));
         return 0;
     }
-
+   
     return (OsclFloat)iEncodeParam.iFrameRate[aLayer];
 }
 
@@ -3196,6 +3207,19 @@ bool PVMFOMXVideoEncNode::NegotiateComponentParameters()
         iNumOutputBuffers = NUMBER_OUTPUT_BUFFER;
 
     iOMXComponentOutputBufferSize = iParamPort.nBufferSize;
+
+    // FIXME:
+    // Allocate larger output buffer to reduce the chance that qualcomm encoder
+    // overflows the supplied buffers. This should never happen, if qualcomm
+    // encoder checks the buffer size before writing output data to the buffer. 
+    if (iInputFormat.iFrameRate > MIN_FRAME_RATE_IN_FPS) {
+        // Qualcomm encoder rate control assumes fixed frame rate; thus, we have to
+        // consider the worst case for buffer size allocation. The required buffer size
+        // according to Qualcomm is inversely proportional to the input frame rate. 
+        iOMXComponentOutputBufferSize *= (iInputFormat.iFrameRate / MIN_FRAME_RATE_IN_FPS);
+    }
+    iParamPort.nBufferSize = iOMXComponentOutputBufferSize;  // Keep encoder informed of the updated size
+    
     if (iNumOutputBuffers < iParamPort.nBufferCountMin)
         iNumOutputBuffers = iParamPort.nBufferCountMin;
 
@@ -3207,6 +3231,7 @@ bool PVMFOMXVideoEncNode::NegotiateComponentParameters()
     Err = OMX_SetParameter (iOMXVideoEncoder, OMX_IndexParamPortDefinition, &iParamPort);
     if (Err != OMX_ErrorNone)
     {
+        LOGE("NegotiateComponentParameters(): failed in setting parameters in output port %d ", iOutputPortIndex);
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                         (0, "PVMFOMXVideoEncNode::NegotiateComponentParameters() Problem setting parameters in output port %d ", iOutputPortIndex));
         return false;
@@ -3330,11 +3355,10 @@ bool PVMFOMXVideoEncNode::CreateOutputMemPool(uint32 num_buffers)
 	{
 		PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
 			(0,"PVMFOMXVideoEncNode::CreateOutMemPool() Allocating output buffers of size %d as well",iOMXComponentOutputBufferSize));
-
-		//pre-negotiated output buffer size
+		// Actual output buffer size is based on pre-negotiated output buffer size
 		iOutputAllocSize += (iOMXComponentOutputBufferSize + 4096);
-        // FIXME: workaround
 	}
+        LOGD("@@@@@@@@@@@@ iOutputAllocSize = %d and iOMXComponentOutputBufferSize = %d @@@@@@@@@@@@@", iOutputAllocSize, iOMXComponentOutputBufferSize);
 
 	// for media data wrapper
 	if (iMediaDataMemPool)
@@ -4620,7 +4644,7 @@ PVMFStatus PVMFOMXVideoEncNode::HandleProcessingState()
 					/* Allocate output buffers */
 				if(!CreateOutputMemPool(iNumOutputBuffers))
 				{
-
+                                        LOGE("HandleProcessingState(): port reconfiguration -> Cannot allocate output buffers");
 					PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
 						(0,"PVMFOMXVideoEncNode::HandleProcessingState() Port Reconfiguration -> Cannot allocate output buffers "));
 
@@ -4639,7 +4663,7 @@ PVMFStatus PVMFOMXVideoEncNode::HandleProcessingState()
 										  ))
 				{
 
-
+                                        LOGE("HandleProcessingState(): port reconfiguration -> Cannot provide output buffers to component");
 					PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
 						(0,"PVMFOMXVideoEncNode::HandleProcessingState() Port Reconfiguration -> Cannot provide output buffers to component"));
 

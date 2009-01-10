@@ -16,10 +16,12 @@
 */
 
 //#define LOG_NDEBUG 0
-#define LOG_TAG "MediaMetadataDriver"
+#undef LOG_TAG
+#define LOG_TAG "MetadataDriver"
+#include <utils/Log.h>
 
 #include <media/thread_init.h>
-#include <graphics/SkBitmap.h>
+#include <core/SkBitmap.h>
 #include <private/media/VideoFrame.h>
 
 #include "metadatadriver.h"
@@ -28,7 +30,7 @@ using namespace android;
 
 const char* MetadataDriver::ALBUM_ART_KEY = "graphic";
 
-const char* MetadataDriver::METADATA_KEYS[] = {
+const char* MetadataDriver::METADATA_KEYS[NUM_METADATA_KEYS] = {
         "tracknumber",
         "album",
         "artist",
@@ -45,6 +47,11 @@ const char* MetadataDriver::METADATA_KEYS[] = {
         "rating",
         "comment",
         "copyright",
+        "track-info/bit-rate",
+        "track-info/frame-rate",
+        "track-info/video/format",
+        "track-info/video/height",
+        "track-info/video/width",
 };
 
 static void dumpkeystolog(PVPMetadataList list)
@@ -176,7 +183,7 @@ bool MetadataDriver::containsSupportedKey(const OSCL_HeapString<OsclMemAllocator
 void MetadataDriver::trimKeys()
 {
     LOGV("trimKeys");
-    //dumpkeystolog(mMetadataKeyList);
+    dumpkeystolog(mMetadataKeyList);
     mActualMetadataKeyList.clear();
     uint32 n = mMetadataKeyList.size();
     mActualMetadataKeyList.reserve(n);

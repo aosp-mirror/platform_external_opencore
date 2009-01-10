@@ -208,6 +208,13 @@ private:
     // Finish up a non-async command in such a way that
     // the event loop will keep running.
     void FinishNonAsyncCommand(author_command *ec);
+ 
+    // remove input video and/or audio source(s)
+    void removeDataSources(author_command *ac);
+
+    // Release resources acquired in a recording session
+    // Can be called only in the IDLE state of the authoring engine
+    void doCleanUp();
 
     // Starts the PV scheduler thread.
     static int startAuthorThread(void *cookie);
@@ -225,7 +232,7 @@ private:
     sp<AndroidAudioInput>    mAudioInputMIO;
     PVMFNodeInterface        *mAudioNode;
 
-    void                    *mSelectedComposer;
+    void                       *mSelectedComposer;
     PVInterface                *mComposerConfig;
     PVInterface                *mVideoEncoderConfig;
     PVInterface                *mAudioEncoderConfig;

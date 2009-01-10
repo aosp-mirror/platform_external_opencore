@@ -18,9 +18,6 @@
 #ifndef ANDROID_METADATADRIVER_H
 #define ANDROID_METADATADRIVER_H
 
-//#define LOG_NDEBUG 0
-#define LOG_TAG "MediaMetadataDriver"
-#include <utils/Log.h>
 #include <media/mediametadataretriever.h>
 
 #include "pv_frame_metadata_interface.h"
@@ -123,7 +120,7 @@ private:
     static const uint32 MAX_VIDEO_FRAME_SIZE = 640 * 480 * 4;  // Big enough?
     static const uint32 MAX_METADATA_STRING_LENGTH = 128;
     static const uint32 MAX_STRING_LENGTH = 512;
-    static const uint32 NUM_METADATA_KEYS = 16;
+    static const uint32 NUM_METADATA_KEYS = 21;
     static const char* METADATA_KEYS[NUM_METADATA_KEYS];
     static const char* ALBUM_ART_KEY;
 

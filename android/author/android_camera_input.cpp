@@ -37,7 +37,6 @@ using namespace android;
 // Define entry point for this DLL
 OSCL_DLL_ENTRY_POINT_DEFAULT()
 
-
 AndroidCameraInput::AndroidCameraInput()
     : OsclTimerObject(OsclActiveObject::EPriorityNominal, "AndroidCameraInput")
 {
@@ -57,6 +56,8 @@ AndroidCameraInput::AndroidCameraInput()
     mCamera = NULL;
     mHeap = 0;
     mFrameRefCount = 0;
+    iFrameQueue.reserve(5);
+    iFrameQueueMutex.Create();
 }
 
 AndroidCameraInput::~AndroidCameraInput()
@@ -71,6 +72,7 @@ AndroidCameraInput::~AndroidCameraInput()
     if (mFrameRefCount != 0) {
         LOGW("mHeap reference count is not zero?!");
     }
+    iFrameQueueMutex.Close();
 }
 
 OSCL_EXPORT_REF
@@ -281,7 +283,7 @@ PVMFCommandId AndroidCameraInput::Stop(const OsclAny* aContext)
 {
     LOGV("Stop");
     if (iState != STATE_STARTED && iState != STATE_PAUSED) {
-        LOGE("Start called in an invalid state(%d)", iState);
+        LOGE("Stop called in an invalid state(%d)", iState);
         OSCL_LEAVE(OsclErrInvalidState);
         return -1;
     }
@@ -394,11 +396,16 @@ void AndroidCameraInput::writeComplete(PVMFStatus aStatus,
     if (mFrameRefCount) {
         --mFrameRefCount;
     }
-    LOGV("@@@@@@@@@@@@@ decrementing frame reference count: %d @@@@@@@@@@@@", mFrameRefCount);
+    //LOGV("@@@@@@@@@@@@@ decrementing frame reference count: %d @@@@@@@@@@@@", mFrameRefCount);
     if (mFrameRefCount <= 0) {
-        LOGV("decrement the reference count for mHeap");
+        //LOGV("decrement the reference count for mHeap");
         mFrameRefCount = 0;
         mHeap.clear();
+        if (iState == STATE_STOPPING) {
+            mCamera->stopPreview();
+            iState = STATE_STOPPED;
+            DoRequestCompleted(iPendingCmd, PVMFSuccess);
+        }
      }
 
     iSentMediaData.erase(iSentMediaData.begin());
@@ -693,6 +700,27 @@ void AndroidCameraInput::FrameSizeChanged()
 void AndroidCameraInput::Run()
 {
     LOGV("Run");
+
+    // dequeue frame buffers and write to peer
+    iFrameQueueMutex.Lock();
+    if (!iFrameQueue.empty()) {
+        AndroidCameraInputMediaData data = iFrameQueue[0];
+        iFrameQueue.erase(iFrameQueue.begin());
+
+        uint32 writeAsyncID = 0;
+        int32 error = 0;
+        OSCL_TRY(error,writeAsyncID = iPeer->writeAsync(0, 0, (uint8*)data.iFrameBuffer,
+                    data.iFrameSize, data.iXferHeader););
+
+        if (!error) {
+            data.iId = writeAsyncID;
+            iSentMediaData.push_back(data);
+            ++mFrameRefCount;
+        }
+    }
+    iFrameQueueMutex.Unlock();
+    PVMFStatus status = PVMFFailure;
+
     if (!iCmdQueue.empty()) {
         AndroidCameraInputCmd cmd = iCmdQueue[0];
         iCmdQueue.erase(iCmdQueue.begin());
@@ -700,45 +728,49 @@ void AndroidCameraInput::Run()
         switch(cmd.iType) {
 
         case CMD_INIT:
-            DoRequestCompleted(cmd, DoInit());
+            status = DoInit();
             break;
 
         case CMD_START:
-            DoRequestCompleted(cmd, DoStart());
+            status = DoStart();
             break;
 
         case CMD_PAUSE:
-            DoRequestCompleted(cmd, DoPause());
+            status = DoPause();
             break;
 
         case CMD_FLUSH:
-            DoRequestCompleted(cmd, DoFlush());
+            status = DoFlush(cmd);
             break;
 
         case CMD_RESET:
-            DoRequestCompleted(cmd, DoReset());
+            status = DoReset();
             break;
 
         case CMD_STOP:
-            DoRequestCompleted(cmd, DoStop());
+            status = DoStop(cmd);
             break;
 
         case DATA_EVENT:
+            // this is internal only - don't send RequestCompleted
             DoRead();
+            status = PVMFPending;
             break;
 
         case CMD_QUERY_UUID:
         case CMD_QUERY_INTERFACE:
-            DoRequestCompleted(cmd, PVMFSuccess);
+            status = PVMFSuccess;
             break;
 
+        // these commands all fail
         case CMD_CANCEL_ALL_COMMANDS:
         case CMD_CANCEL_COMMAND:
-            DoRequestCompleted(cmd, PVMFFailure);
-            break;
-
         default:
             break;
+        }
+        // do RequestCompleted unless command is still pending
+        if (status != PVMFPending) {
+            DoRequestCompleted(cmd, status);
         }
     }
 
@@ -787,9 +819,7 @@ void AndroidCameraInput::AddDataEventToQueue(uint32 aMicroSecondsToEvent)
     RunIfNotReady(aMicroSecondsToEvent);
 }
 
-void AndroidCameraInput::DoRequestCompleted(const AndroidCameraInputCmd& aCmd,
-        PVMFStatus aStatus,
-        OsclAny* aEventData)
+void AndroidCameraInput::DoRequestCompleted(const AndroidCameraInputCmd& aCmd, PVMFStatus aStatus, OsclAny* aEventData)
 {
     LOGV("DoRequestCompleted");
     PVMFCmdResp response(aCmd.iId, aCmd.iContext, aStatus, aEventData);
@@ -839,8 +869,6 @@ PVMFStatus AndroidCameraInput::DoInit()
     CameraParameters newCameraParam(mCamera->getParameters());
     newCameraParam.getPreviewSize(&mFrameWidth, &mFrameHeight);
     LOGD("Actual mFrameWidth=%d, mFrameHe=%d ",mFrameWidth, mFrameHeight);
-    mCamera->setFrameCallback(preview_callback,
-                              this, FRAME_CALLBACK_FLAG_CAMCORDER);
     mCamera->startPreview();
     return PVMFSuccess;
 }
@@ -849,6 +877,7 @@ PVMFStatus AndroidCameraInput::DoStart()
 {
     LOGV("DoStart");
     iState = STATE_STARTED;
+    mCamera->setFrameCallback(preview_callback, this, FRAME_CALLBACK_FLAG_CAMCORDER);
     AddDataEventToQueue(iMilliSecondsPerDataEvent);
     return PVMFSuccess;
 
@@ -865,10 +894,11 @@ PVMFStatus AndroidCameraInput::DoPause()
 PVMFStatus AndroidCameraInput::DoReset()
 {
     LOGV("DoReset");
+    iState = STATE_IDLE;
     return PVMFSuccess;
 }
 
-PVMFStatus AndroidCameraInput::DoFlush()
+PVMFStatus AndroidCameraInput::DoFlush(const AndroidCameraInputCmd& aCmd)
 {
     LOGV("DoFlush");
     // This method should stop capturing media data but continue to send
@@ -876,17 +906,26 @@ PVMFStatus AndroidCameraInput::DoFlush()
     // stopped state.
     // However, in this case of file input we do not have such a buffer for
     // captured data, so this behaves the same way as stop.
-    return DoStop();
+    return DoStop(aCmd);
 }
 
-PVMFStatus AndroidCameraInput::DoStop()
+PVMFStatus AndroidCameraInput::DoStop(const AndroidCameraInputCmd& aCmd)
 {
     LOGV("DoStop");
     iDataEventCounter = 0;
     mCamera->setFrameCallback(NULL, this);
-    mCamera->stopPreview();
-    iState = STATE_STOPPED;
-    return PVMFSuccess;
+
+    // if no buffers pending, complete the stop command
+    if (mFrameRefCount == 0) {
+        mCamera->stopPreview();
+        iState = STATE_STOPPED;
+        return PVMFSuccess;
+    }
+
+    // need to wait for buffers to come back before we stop preview
+    iPendingCmd = aCmd;
+    iState = STATE_STOPPING;
+    return PVMFPending;
 }
 
 PVMFStatus AndroidCameraInput::DoRead()
@@ -983,6 +1022,10 @@ PVMFStatus AndroidCameraInput::postWriteAsync(const sp<IMemory>& frame)
         LOGE("frame is a NULL pointer");
         return PVMFFailure;
     }
+    if (!iPeer) {
+        LOGW("iPeer is NULL");
+        return PVMFSuccess;
+    }
 
     // if first event, set timestamp to zero
     uint32 timeStamp = 0;
@@ -992,54 +1035,38 @@ PVMFStatus AndroidCameraInput::postWriteAsync(const sp<IMemory>& frame)
         timeStamp = OsclTickCount::TicksToMsec(
             OsclTickCount::TickCount()-iStartTickCount);
     }
-    ++iDataEventCounter;
 
-    // send data to Peer & store the id
-    PvmiMediaXferHeader data_hdr;
-    data_hdr.seq_num   = iDataEventCounter - 1;
-    data_hdr.timestamp = timeStamp;
-    data_hdr.flags     = 0;
-    data_hdr.duration  = 0;
-    data_hdr.stream_id = 0;
-
+    // get memory offset for frame buffer
     ssize_t offset = 0;
-    size_t size    = 0;
+    size_t size = 0;
     sp<IMemoryHeap> heap = frame->getMemory(&offset, &size);
-    LOGV("ID = %d, base = %p, offset = %p, size = %d",
-        heap->getHeapID(), heap->base(), offset, size);
-    uint8* data = NULL;
-    uint32 frameSize = (int32)size;
-    data = (uint8_t *) heap->base() + offset;
+    //LOGV("ID = %d, base = %p, offset = %p, size = %d", heap->getHeapID(), heap->base(), offset, size);
 
-    // TODO:
-    // why check iPeer here but not at the beginning? 
-    if (!iPeer) {
-        return PVMFSuccess;
-    }
-
-    uint32 writeAsyncID = 0;
-    int32 error         = 0;
-    OSCL_TRY(error,writeAsyncID = iPeer->writeAsync(0, 0, data, frameSize, data_hdr););
-    if (!error) {
-        // Save the id and data pointer on iSentMediaData queue for writeComplete call
-        AndroidCameraInputMediaData sentData;
-        sentData.iId = writeAsyncID;
-        sentData.iData = NULL;
-        iSentMediaData.push_back(sentData);
- 
-        LOGV("@@@@@@@@@@@@@ incrementing reference count (%d) @@@@@@@@@@@@@@@", mFrameRefCount);
-        if (mHeap == 0) {
-            LOGV("initializ the reference to frame heap memory");
-        } else if (mHeap != heap) {
-            LOGE("mHeap != heap");
-            return PVMFFailure;
-        }
+    //LOGV("@@@@@@@@@@@@@ incrementing reference count (%d) @@@@@@@@@@@@@@@", mFrameRefCount);
+    if (mHeap == 0) {
+        //LOGV("initialize the reference to frame heap memory");
         mHeap = heap;
-        ++mFrameRefCount;
-
+    } else if (mHeap != heap) {
+        LOGE("mHeap != heap");
+        return PVMFFailure;
     }
 
-    AddDataEventToQueue(0);
+    // queue data to be sent to peer
+    AndroidCameraInputMediaData data;
+    data.iXferHeader.seq_num = iDataEventCounter++;
+    data.iXferHeader.timestamp = timeStamp;
+    data.iXferHeader.flags = 0;
+    data.iXferHeader.duration = 0;
+    data.iXferHeader.stream_id = 0;
+    data.iFrameBuffer = frame->pointer();
+    data.iFrameSize = size;
+
+    // lock mutex and queue frame buffer
+    iFrameQueueMutex.Lock();
+    iFrameQueue.push_back(data);
+    iFrameQueueMutex.Unlock();
+    RunIfNotReady();
+
     return PVMFSuccess; 
 }
 

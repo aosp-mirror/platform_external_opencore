@@ -42,6 +42,12 @@
 #define MAX_NUM_INPUTDATA	2
 #define MAX_NUM_OUTPUTDATA	2
 
+// This defines the minimum frame rate that will be always used in compute
+// the required buffer size by Qualcomm rate control so as to reduce the
+// chance of buffer overflow (Qualcomm encoder should prevent this from 
+// happening in the first place). This is different from DEFAULT_FRAME_RATE.
+#define MIN_FRAME_RATE_IN_FPS 5.0
+
 #define PVVIDENC_MEDIADATA_POOLNUM 8
 #define PVVIDENC_MEDIADATA_CHUNKSIZE 128
 #define PVVIDENC_MEDIABUFFER_CHUNKSIZE (MAX_OUTBUF_SIZE+128)
