@@ -6,10 +6,8 @@ LOCAL_SRC_FILES := \
 	PVMediaRecorder.cpp \
 	android_camera_input.cpp \
 	android_audio_input.cpp \
-    android_audio_input_threadsafe_callbacks.cpp \
+	android_audio_input_threadsafe_callbacks.cpp \
 	../thread_init.cpp \
-	pv_encomxmastercore.cpp \
-	qc_omxcore.cpp
 
 LOCAL_CFLAGS := $(PV_CFLAGS)
 
@@ -20,6 +18,7 @@ LOCAL_ARM_MODE := arm
 
 LOCAL_C_INCLUDES := $(PV_INCLUDES) \
 	$(PV_TOP)/engines/common/include \
+	$(PV_TOP)/codecs_v2/omx/omx_common/include \
 	$(PV_TOP)/fileformats/mp4/parser/include \
 	$(PV_TOP)/pvmi/media_io/pvmiofileoutput/include \
 	$(PV_TOP)/nodes/pvmediaoutputnode/include \

@@ -44,6 +44,9 @@ void PVFMVideoMIO::InitData()
     iColorConverter = NULL;
     iCCRGBFormatType = PVMF_FORMAT_UNKNOWN;
 
+    // hardware specific information
+    iVideoSubFormat = PVMF_FORMAT_UNKNOWN;
+
     iCommandCounter = 0;
     iLogger = NULL;
     iCommandResponseQueue.reserve(5);
@@ -71,6 +74,7 @@ void PVFMVideoMIO::ResetData()
     // Reset all the received media parameters.
     iVideoFormatString = PVMF_MIME_FORMAT_UNKNOWN;
     iVideoFormat = PVMF_FORMAT_UNKNOWN;
+    iVideoSubFormat = PVMF_FORMAT_UNKNOWN;
     iVideoHeightValid = false;
     iVideoWidthValid = false;
     iVideoDisplayHeightValid = false;
@@ -774,7 +778,14 @@ PVMFStatus PVFMVideoMIO::CopyVideoFrameData(uint8* aSrcBuffer, uint32 aSrcSize, 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFMVideoMIO::CopyVideoFrameData() Color converter instantiation did a leave"));
             return PVMFErrArgument;
         }
-        oscl_memcpy(aDestBuffer, aSrcBuffer, aSrcSize);
+
+        // check for special hardware format
+        if (iVideoSubFormat == PVMF_YUV420_SEMIPLANAR_YVU) {
+            LOGV("@@@@@ Need special color conversion @@@@@");
+            convertFrame(aSrcBuffer, aDestBuffer, aSrcSize);
+        } else {
+            oscl_memcpy(aDestBuffer, aSrcBuffer, aSrcSize);
+        }
         aDestSize = aSrcSize;
     }
     else if (aSrcFormat == PVMF_YUV420 &&
@@ -1109,6 +1120,13 @@ void PVFMVideoMIO::setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParamete
         {
             //	iOutputFile.Write(aParameters[i].value.pChar_value, sizeof(uint8), (int32)aParameters[i].capacity);
         }
+        else if (pv_mime_strcmp(aParameters[i].key, MOUT_VIDEO_SUBFORMAT_KEY) == 0)
+        {
+            iVideoSubFormat = (PVMFFormatType) aParameters[i].value.uint32_value;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0,"AndroidSurfaceOutput::setParametersSync() Video SubFormat Key, Value %d",iVideoSubFormat));
+LOGV("VIDEO SUBFORMAT SET TO %d\n",iVideoSubFormat);
+        }
         else
         {
             // If we get here the key is unrecognized.
@@ -1229,8 +1247,26 @@ void PVFMVideoMIO::Run()
     }
 }
 
+static inline void* byteOffset(void* p, size_t offset) { return (void*)((uint8_t*)p + offset); }
 
+// convert a frame in YUV420 semiplanar format with VU ordering to YUV420 planar format
+void PVFMVideoMIO::convertFrame(void* src, void* dst, size_t len)
+{
+    // copy the Y plane
+    size_t y_plane_size = iVideoWidth * iVideoHeight;
+    //LOGV("len=%u, y_plane_size=%u", len, y_plane_size);
+    memcpy(dst, src, y_plane_size + iVideoWidth);
 
+    // re-arrange U's and V's
+    uint32_t* p = (uint32_t*)byteOffset(src, y_plane_size);
+    uint16_t* pu = (uint16_t*)byteOffset(dst, y_plane_size);
+    uint16_t* pv = (uint16_t*)byteOffset(pu, y_plane_size / 4);
 
-
-
+    int count = y_plane_size / 8;
+    //LOGV("u = %p, v = %p, p = %p, count = %d", pu, pv, p, count);
+    do {
+        uint32_t uvuv = *p++;
+        *pu++ = (uint16_t) (((uvuv >> 8) & 0xff) | ((uvuv >> 16) & 0xff00));
+        *pv++ = (uint16_t) ((uvuv & 0xff) | ((uvuv >> 8) & 0xff00));
+    } while (--count);
+}

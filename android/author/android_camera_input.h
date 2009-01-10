@@ -128,23 +128,34 @@ private:
     }
 };
 
+// NOTE: The copy function does a shallow copy, it does not copy the data
+// pointed to by iFrameBuffer. This is as intended, the memory is safe to use
+// until camera preview is stopped.
 class AndroidCameraInputMediaData
 {
 public:
-    AndroidCameraInputMediaData()
-    {
-        iId = 0;
-        iData = NULL;
+    AndroidCameraInputMediaData() {
+        memset(this, 0, sizeof(this));
     }
 
-    AndroidCameraInputMediaData(const AndroidCameraInputMediaData& aData)
-    {
-        iId = aData.iId;
-        iData = aData.iData;
+    AndroidCameraInputMediaData(const AndroidCameraInputMediaData& aData) {
+       Copy(aData); 
     }
 
-    PVMFCommandId iId;
-    OsclAny*      iData;
+    AndroidCameraInputMediaData& operator=(const AndroidCameraInputMediaData& aData) {
+        Copy(aData);
+        return (*this);
+    }
+
+    PVMFCommandId           iId;
+    PvmiMediaXferHeader     iXferHeader;
+    void*                   iFrameBuffer;
+    size_t                  iFrameSize;
+
+private:
+    void Copy(const AndroidCameraInputMediaData& aData) {
+        memcpy(this, &aData, sizeof(AndroidCameraInputMediaData));
+    }
 };
 
 class AndroidCameraInput
@@ -285,15 +296,14 @@ private:
         OsclAny* aData1 = NULL);
 
     void AddDataEventToQueue(uint32 aMicroSecondsToEvent);
-    void DoRequestCompleted(const AndroidCameraInputCmd& aCmd,
-        PVMFStatus aStatus, OsclAny* aEventData=NULL);
+    void DoRequestCompleted(const AndroidCameraInputCmd& aCmd, PVMFStatus aStatus, OsclAny* aEventData=NULL);
 
     PVMFStatus DoInit();
     PVMFStatus DoStart();
     PVMFStatus DoReset();
     PVMFStatus DoPause();
-    PVMFStatus DoFlush();
-    PVMFStatus DoStop();
+    PVMFStatus DoFlush(const AndroidCameraInputCmd& aCmd);
+    PVMFStatus DoStop(const AndroidCameraInputCmd& aCmd);
     PVMFStatus DoRead();
 
     /**
@@ -342,6 +352,11 @@ private:
 
     Oscl_Vector<AndroidCameraInputMediaData, OsclMemAllocator> iSentMediaData;
 
+    Oscl_Vector<AndroidCameraInputMediaData, OsclMemAllocator> iFrameQueue;
+    OsclMutex iFrameQueueMutex;
+
+    AndroidCameraInputCmd iPendingCmd;
+
     // Camera specific stuff
     int                     iCameraFd;
     sp<android::ISurface>   mSurface;
@@ -363,6 +378,7 @@ private:
         STATE_STARTED,
         STATE_FLUSHING,
         STATE_PAUSED,
+        STATE_STOPPING,
         STATE_STOPPED
     };
 

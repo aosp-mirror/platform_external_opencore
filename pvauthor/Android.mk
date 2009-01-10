@@ -18,7 +18,7 @@ LOCAL_WHOLE_STATIC_LIBRARIES := \
 
 LOCAL_LDLIBS := -lpthread
 
-LOCAL_SHARED_LIBRARIES := libutils libcutils libui libhardware libandroid_runtime libdrm1 libmedia libsgl libvorbisidec libsonivox libopencorecommon 
+LOCAL_SHARED_LIBRARIES := libopencoreplayer libutils libcutils libui libhardware libandroid_runtime libdrm1 libmedia libsgl libopencorecommon 
 
 ifeq ($(TARGET_OS)-$(TARGET_SIMULATOR),linux-true)
 LOCAL_LDLIBS += -ldl
