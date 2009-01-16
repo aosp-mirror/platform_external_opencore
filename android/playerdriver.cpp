@@ -75,6 +75,11 @@ using namespace android;
 #  define PAGESIZE              4096
 # endif
 
+// library and function name to retrieve device-specific MIOs
+static const char* MIO_LIBRARY_NAME = "libopencorehal";
+static const char* VIDEO_MIO_FACTORY_NAME = "createVideoMio";
+typedef AndroidSurfaceOutput* (*VideoMioFactory)();
+
 class PlayerDriver :
     public OsclActiveObject,
     public PVCommandStatusObserver,
@@ -177,6 +182,8 @@ private:
     int                     mRecentSeek;
     bool                    mSeekComp;
     bool                    mSeekPending;
+
+    void*                   mLibHandle;
 };
 
 PlayerDriver::PlayerDriver(PVPlayer* pvPlayer) :
@@ -206,6 +213,9 @@ PlayerDriver::PlayerDriver(PVPlayer* pvPlayer) :
     mPlayerCapConfig = NULL;
     mDownloadContextData = NULL;
 
+    // attempt to open device-specific library
+    mLibHandle = ::dlopen(MIO_LIBRARY_NAME, RTLD_NOW);
+
     // start player thread
     LOGV("start player thread");
     createThreadEtc(PlayerDriver::startPlayerThread, this, "PV player");
@@ -217,6 +227,9 @@ PlayerDriver::PlayerDriver(PVPlayer* pvPlayer) :
 PlayerDriver::~PlayerDriver()
 {
     LOGV("destructor");
+    if (mLibHandle != NULL) {
+        ::dlclose(mLibHandle);
+    }
 }
 
 PlayerCommand* PlayerDriver::dequeueCommand()
@@ -582,8 +595,32 @@ void PlayerDriver::handleInit(PlayerInit* ec)
 void PlayerDriver::handleSetVideoSurface(PlayerSetVideoSurface* ec)
 {
     int error = 0;
+    AndroidSurfaceOutput* mio = NULL;
 
-    mVideoOutputMIO = new AndroidSurfaceOutput(mPvPlayer, ec->surface());
+    // attempt to load device-specific video MIO
+    if (mLibHandle != NULL) {
+        VideoMioFactory f = (VideoMioFactory) ::dlsym(mLibHandle, VIDEO_MIO_FACTORY_NAME);
+        if (f != NULL) {
+            mio = f();
+        }
+    }
+
+    // if no device-specific MIO was created, use the generic one
+    if (mio == NULL) {
+        LOGW("Using generic video MIO");
+        mio = new AndroidSurfaceOutput();
+    }
+
+    // initialize the MIO parameters
+    status_t ret = mio->set(mPvPlayer, ec->surface());
+    if (ret != NO_ERROR) {
+        LOGE("Video MIO set failed");
+        commandFailed(ec);
+        delete mio;
+        return;
+    }
+    mVideoOutputMIO = mio;
+
     mVideoNode = PVMediaOutputNodeFactory::CreateMediaOutputNode(mVideoOutputMIO);
     mVideoSink = new PVPlayerDataSinkPVMFNode;
 

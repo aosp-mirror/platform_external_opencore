@@ -149,7 +149,10 @@ class AndroidSurfaceOutput :    public OsclTimerObject
 
 {
 public:
-    OSCL_IMPORT_REF AndroidSurfaceOutput(android::PVPlayer* pvPlayer, const sp<ISurface>& surface);
+    OSCL_IMPORT_REF AndroidSurfaceOutput();
+
+    // parameter initialization
+    virtual status_t set(android::PVPlayer* pvPlayer, const sp<ISurface>& surface);
 
     // For Frame Buffer
     OSCL_IMPORT_REF bool initCheck();

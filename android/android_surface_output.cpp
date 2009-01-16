@@ -51,26 +51,30 @@ static const char* pmem = "/dev/pmem";
 // This class implements the reference media IO for file output
 // This class constitutes the Media IO component
 
-OSCL_EXPORT_REF AndroidSurfaceOutput::AndroidSurfaceOutput(
-        PVPlayer* pvPlayer, const sp<ISurface>& surface) :
+OSCL_EXPORT_REF AndroidSurfaceOutput::AndroidSurfaceOutput() :
     OsclTimerObject(OsclActiveObject::EPriorityNominal, "androidsurfaceoutput")
 {
-    LOGV("AndroidAudioSurfaceOutput surface=%p", surface.get());
     initData();
 
     iColorConverter = NULL;
     mInitialized = false;
     mEmulation = false;
     mHardwareCodec = false;
-    mSurface = surface;
-    mPvPlayer = pvPlayer;
+    mPvPlayer = NULL;
 
     // running in emulation?
     char value[PROPERTY_VALUE_MAX];
     if (property_get("ro.kernel.qemu", value, 0)) {
-        LOGV("Running in emulation - fallback to software codecs");
+        LOGV("Emulation mode - using software codecs");
         mEmulation = true;
     }
+}
+
+status_t AndroidSurfaceOutput::set(PVPlayer* pvPlayer, const sp<ISurface>& surface)
+{
+    mPvPlayer = pvPlayer;
+    mSurface = surface;
+    return NO_ERROR;
 }
 
 void AndroidSurfaceOutput::initData()
