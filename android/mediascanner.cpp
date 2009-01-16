@@ -14,6 +14,7 @@
 #include "oscl_assert.h"
 #include "oscl_lock_base.h"
 #include "oscl_snprintf.h"
+#include "oscl_string_utf8.h"
 #include "pvmf_return_codes.h"
 #include "pv_mime_string_utils.h"
 #include "pv_id3_parcom_constants.h"
@@ -101,23 +102,34 @@ static PVMFStatus parseMP3(const char *filename, MediaScannerClient& client)
     for (uint32 i = 0; i < num_frames;i++)
     {
         const char* key = framevector[i]->key;
+        bool validUtf8 = true;
 
         // type should follow first semicolon
         const char* type = strchr(key, ';') + 1;
         if (type == 0) continue;
+        
+        const char* value = framevector[i]->value.pChar_value;
 
-        // KVP_VALTYPE_UTF8_CHAR check must be first, since KVP_VALTYPE_ISO88591_CHAR is a substring of KVP_VALTYPE_UTF8_CHAR
-        // similarly, KVP_VALTYPE_UTF16BE_WCHAR must be checked before KVP_VALTYPE_UTF16_WCHAR
+        // KVP_VALTYPE_UTF8_CHAR check must be first, since KVP_VALTYPE_ISO88591_CHAR 
+        // is a substring of KVP_VALTYPE_UTF8_CHAR.
+        // Similarly, KVP_VALTYPE_UTF16BE_WCHAR must be checked before KVP_VALTYPE_UTF16_WCHAR
         if (oscl_strncmp(type, KVP_VALTYPE_UTF8_CHAR, KVP_VALTYPE_UTF8_CHAR_LEN) == 0) {
-            // utf8
-            // pass through directly
-            if (!client.handleStringTag(key, framevector[i]->value.pChar_value)) goto failure;
-        } else if (oscl_strncmp(type, KVP_VALTYPE_ISO88591_CHAR, KVP_VALTYPE_ISO88591_CHAR_LEN) == 0) {
+            // utf8 can be passed through directly
+            // but first validate to make sure it is legal utf8
+            uint32 valid_chars;
+            validUtf8 = oscl_str_is_valid_utf8((const uint8 *)value, valid_chars);
+            if (validUtf8 && !client.handleStringTag(key, value)) goto failure;
+        } 
+
+        // if the value is not valid utf8, then we will treat it as iso-8859-1 
+        // and our native encoding detection will try to figure out what it is
+        if (oscl_strncmp(type, KVP_VALTYPE_ISO88591_CHAR, KVP_VALTYPE_ISO88591_CHAR_LEN) == 0 
+                || !validUtf8) {
             // iso-8859-1
             // convert to utf8
             // worse case is 2x inflation
-            const unsigned char* src = (const unsigned char *)framevector[i]->value.pChar_value;
-            char* temp = (char *)alloca(strlen(framevector[i]->value.pChar_value) * 2 + 1);
+            const unsigned char* src = (const unsigned char *)value;
+            char* temp = (char *)alloca(strlen(value) * 2 + 1);
             if (temp) {
                 char* dest = temp;
                 unsigned int uch;

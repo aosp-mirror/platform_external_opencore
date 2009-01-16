@@ -203,6 +203,7 @@ public:
     void HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent);
 
     status_t getMaxAmplitude(int *max);
+    PVAEState getAuthorEngineState();
 
 private:
     // Finish up a non-async command in such a way that
@@ -237,6 +238,9 @@ private:
     PVInterface                *mVideoEncoderConfig;
     PVInterface                *mAudioEncoderConfig;
 
+    char                    *mOutputFileName;
+    bool                    mKeepOutputFile;
+
     int                     mVideoWidth;
     int                     mVideoHeight;
     int                     mVideoFrameRate;
@@ -267,6 +271,8 @@ public:
     status_t getMaxAmplitude(int *max);
 
 private:
+    void resetAndClose();
+
     AuthorDriver    *mAuthorDriver;
 };
 

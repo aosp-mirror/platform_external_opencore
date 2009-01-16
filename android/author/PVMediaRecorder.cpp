@@ -271,6 +271,19 @@ status_t PVMediaRecorder::start()
 status_t PVMediaRecorder::stop()
 {
     LOGV("stop");
+    status_t ret = doStop();
+    if (OK == ret) {
+        ret = reset();
+        if (OK == ret) {
+            ret = close();
+        }
+    }
+    return ret;
+}
+
+status_t PVMediaRecorder::doStop()
+{
+    LOGV("doStop");
     if (mAuthorDriverWrapper == NULL) {
         LOGE("author driver wrapper is not initialized yet");
         return UNKNOWN_ERROR;

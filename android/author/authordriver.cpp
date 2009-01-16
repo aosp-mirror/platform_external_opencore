@@ -18,6 +18,7 @@
 //#define LOG_NDEBUG 0
 #define LOG_TAG "AuthorDriver"
 
+#include <unistd.h>
 #include <media/thread_init.h>
 #include <ui/ISurface.h>
 #include <ui/ICamera.h>
@@ -31,21 +32,52 @@ AuthorDriverWrapper::AuthorDriverWrapper()
     mAuthorDriver = new AuthorDriver();
 }
 
+void AuthorDriverWrapper::resetAndClose()
+{
+    mAuthorDriver->enqueueCommand(new author_command(AUTHOR_RESET), NULL, NULL);
+    mAuthorDriver->enqueueCommand(new author_command(AUTHOR_CLOSE), NULL, NULL);
+}
+
 AuthorDriverWrapper::~AuthorDriverWrapper()
 {
-    author_command *ac = new author_command(AUTHOR_QUIT);
-    enqueueCommand(ac, NULL, NULL); // will wait on mSyncSem, signaled by author thread
-    delete ac; // have to delete this manually because CommandCompleted won't be called
+    if (mAuthorDriver) {
+        // set the authoring engine to the IDLE state.
+        PVAEState state = mAuthorDriver->getAuthorEngineState();
+        switch (state) {
+        case PVAE_STATE_IDLE:
+            break;
+
+        case PVAE_STATE_RECORDING:
+            mAuthorDriver->enqueueCommand(new author_command(AUTHOR_STOP),  NULL, NULL);
+            resetAndClose();
+            break;
+
+        default:
+            resetAndClose();
+            break;
+        }
+
+        // now it is safe to quit.
+        author_command *ac = new author_command(AUTHOR_QUIT);
+        enqueueCommand(ac, NULL, NULL); // will wait on mSyncSem, signaled by author thread
+        delete ac; // have to delete this manually because CommandCompleted won't be called
+    }
 }
 
 status_t AuthorDriverWrapper::getMaxAmplitude(int *max)
 {
-    return mAuthorDriver->getMaxAmplitude(max);
+    if (mAuthorDriver) {
+        return mAuthorDriver->getMaxAmplitude(max);
+    }
+    return NO_INIT;
 }
 
 status_t AuthorDriverWrapper::enqueueCommand(author_command *ac, media_completion_f comp, void *cookie)
 {
-    return mAuthorDriver->enqueueCommand(ac, comp, cookie);
+    if (mAuthorDriver) {
+        return mAuthorDriver->enqueueCommand(ac, comp, cookie);
+    }
+    return NO_INIT;
 }
 
 AuthorDriver::AuthorDriver()
@@ -58,6 +90,8 @@ AuthorDriver::AuthorDriver()
                mComposerConfig(NULL),
                mVideoEncoderConfig(NULL),
                mAudioEncoderConfig(NULL),
+               mOutputFileName(NULL),
+               mKeepOutputFile(false),
                mVideoWidth(DEFAULT_FRAME_WIDTH),
                mVideoHeight(DEFAULT_FRAME_HEIGHT),
                mVideoFrameRate((int)DEFAULT_FRAME_RATE),
@@ -452,10 +486,11 @@ void AuthorDriver::handleSetOutputFile(set_output_file_command *ac)
     ret = config->SetOutputFileName(wFileName);
 
 exit:
-    free(ac->path);
     if (ret == PVMFSuccess) {
+        mOutputFileName = ac->path;
         FinishNonAsyncCommand(ac);
     } else {
+        free(ac->path);
         commandFailed(ac);
     }
 }
@@ -477,10 +512,10 @@ void AuthorDriver::handleStart(author_command *ac)
 void AuthorDriver::handleStop(author_command *ac)
 {
     int error = 0;
-    OSCL_TRY(error, mAuthor->Stop());
+    OSCL_TRY(error, mAuthor->Stop(ac));
     OSCL_FIRST_CATCH_ANY(error, commandFailed(ac));
-    handleReset(ac);
-    handleClose(ac);
+
+    mKeepOutputFile = true;
 }
 
 void AuthorDriver::handleClose(author_command *ac)
@@ -502,6 +537,15 @@ void AuthorDriver::handleReset(author_command *ac)
 
 void AuthorDriver::removeDataSources(author_command *ac)
 {
+    if (mOutputFileName) {
+        if (!mKeepOutputFile) {
+            LOGV("remove output filei(%s)", mOutputFileName);
+            unlink(mOutputFileName);
+        }
+        free(mOutputFileName);
+        mOutputFileName = NULL;
+    }
+
     if (mComposerConfig) {
         mComposerConfig->removeRef();
         mComposerConfig = NULL;
@@ -751,6 +795,12 @@ status_t AuthorDriver::getMaxAmplitude(int *max)
     return android::OK;
 }
 
-
+PVAEState AuthorDriver::getAuthorEngineState()
+{
+    if (mAuthor) {
+        return mAuthor->GetPVAuthorState();
+    }
+    return PVAE_STATE_IDLE;
+}
 
 
