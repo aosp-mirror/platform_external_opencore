@@ -56,6 +56,7 @@ AndroidCameraInput::AndroidCameraInput()
     mCamera = NULL;
     mHeap = 0;
     mFrameRefCount = 0;
+    mFlags = 0;
     iFrameQueue.reserve(5);
     iFrameQueueMutex.Create();
 }
@@ -65,8 +66,18 @@ AndroidCameraInput::~AndroidCameraInput()
     LOGV("destructor");
     if (mCamera != NULL) {
         mCamera->setFrameCallback(NULL, this, FRAME_CALLBACK_FLAG_NOOP);
-        mCamera->stopPreview();
-        mCamera->disconnect();
+        if ((mFlags & FLAGS_HOT_CAMERA) == 0) {
+            LOGV("camera was cold when we started, stopping preview");
+            mCamera->stopPreview();
+        }
+        if (mFlags & FLAGS_SET_CAMERA) {
+            LOGV("unlocking camera to return to app");
+            mCamera->unlock();
+        } else {
+            LOGV("disconnect from camera");
+            mCamera->disconnect();
+        }
+        mFlags = 0;
         mCamera.clear();
     }
     if (mFrameRefCount != 0) {
@@ -402,7 +413,6 @@ void AndroidCameraInput::writeComplete(PVMFStatus aStatus,
         mFrameRefCount = 0;
         mHeap.clear();
         if (iState == STATE_STOPPING) {
-            mCamera->stopPreview();
             iState = STATE_STOPPED;
             DoRequestCompleted(iPendingCmd, PVMFSuccess);
         }
@@ -917,7 +927,6 @@ PVMFStatus AndroidCameraInput::DoStop(const AndroidCameraInputCmd& aCmd)
 
     // if no buffers pending, complete the stop command
     if (mFrameRefCount == 0) {
-        mCamera->stopPreview();
         iState = STATE_STOPPED;
         return PVMFSuccess;
     }
@@ -1007,8 +1016,25 @@ void AndroidCameraInput::SetPreviewSurface(const sp<android::ISurface>& surface)
 void AndroidCameraInput::SetCamera(const sp<android::ICamera>& camera)
 {
     LOGV("SetCamera");
+    mFlags &= ~ FLAGS_SET_CAMERA | FLAGS_HOT_CAMERA;
+    if (camera == NULL) {
+        LOGV("camera is NULL");
+        return;
+    }
+
     // Connect our client to the camera remote
     mCamera = new Camera(camera);
+    if (mCamera == NULL) {
+        LOGE("Unable to connect to camera");
+        return;
+    }
+
+    LOGV("Connected to camera");
+    mFlags |= FLAGS_SET_CAMERA;
+    if (mCamera->previewEnabled()) {
+        mFlags |= FLAGS_HOT_CAMERA;
+        LOGV("camera is hot");
+    }
 }
 
 PVMFStatus AndroidCameraInput::postWriteAsync(const sp<IMemory>& frame)

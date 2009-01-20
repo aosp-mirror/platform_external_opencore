@@ -4,48 +4,48 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
 LOCAL_WHOLE_STATIC_LIBRARIES := \
-	libpvplayer_engine \
-	libgetactualaacconfig \
-	libpvavcdecoder \
-	libpv_aac_dec \
-	libpvdecoder_gsmamr \
-	libpvamrwbdecoder \
-	libpvmp3 \
-	libm4v_config \
-	libpv_video_config_parser \
-	libomx_common_lib \
-	libomx_queue_lib \
-	libomx_avc_component_lib \
-	libomx_aac_component_lib \
-	libomx_amr_component_lib \
-	libomx_mp3_component_lib \
-	libomx_m4v_component_interface \
-	libpvomx_proxy_lib \
-	libcpm \
-	libpassthru_oma1 \
-	libfile_mediaio \
-	libpvfileparserutils \
-	libpvid3parcom \
-	libpvgsmamrparser \
-	libpvmp3ff \
-	libpvmp4ff \
-	libpvaacparser \
-	libpvwav \
-	libpvaacffparsernode \
-	libpvmp3ffparsernode \
-	libpvamrffparsernode \
-	libpvmediaoutputnode \
-	libpvomxvideodecnode \
-	libpvomxaudiodecnode \
-	libpvwavffparsernode \
-	libpvmfrecognizer \
-	libpvamrffrecognizer \
-	libpvmp3ffrecognizer \
-	libpvwavffrecognizer \
-	libpvframemetadatautility \
-	libpvlatmpayloadparser \
-	libandroidpv \
-	libkmj_oma1 
+        libpvplayer_engine \
+        libgetactualaacconfig \
+        libpvavcdecoder \
+        libpv_aac_dec \
+        libpvdecoder_gsmamr \
+        libpvamrwbdecoder \
+        libpvmp3 \
+        libm4v_config \
+        libpv_video_config_parser \
+        libomx_common_lib \
+        libomx_queue_lib \
+        libomx_avc_component_lib \
+        libomx_aac_component_lib \
+        libomx_amr_component_lib \
+        libomx_mp3_component_lib \
+        libomx_m4v_component_interface \
+        libpvomx_proxy_lib \
+        libcpm \
+        libpassthru_oma1 \
+        libfile_mediaio \
+        libpvfileparserutils \
+        libpvid3parcom \
+        libpvgsmamrparser \
+        libpvmp3ff \
+        libpvmp4ff \
+        libpvaacparser \
+        libpvwav \
+        libpvaacffparsernode \
+        libpvmp3ffparsernode \
+        libpvamrffparsernode \
+        libpvmediaoutputnode \
+        libpvomxvideodecnode \
+        libpvomxaudiodecnode \
+        libpvwavffparsernode \
+        libpvmfrecognizer \
+        libpvamrffrecognizer \
+        libpvmp3ffrecognizer \
+        libpvwavffrecognizer \
+        libpvframemetadatautility \
+        libpvlatmpayloadparser \
+        libandroidpv \
+        libkmj_oma1
 
 LOCAL_LDLIBS := -lpthread
 
@@ -62,7 +62,7 @@ LOCAL_SHARED_LIBRARIES += libdl
 endif
 
 # Include Qualcomm codec
-ifeq ($(TARGET_DEVICE),dream)
+ifneq (,$(filter $(TARGET_DEVICE),dream sapphire surf))
 LOCAL_SHARED_LIBRARIES += libOmxCore
 endif
 
