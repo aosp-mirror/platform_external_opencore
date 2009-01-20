@@ -4,17 +4,17 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
 LOCAL_WHOLE_STATIC_LIBRARIES := \
-	libpvauthorengine \
-	libpvm4vencoder \
-	libpvencoder_gsmamr \
-	libpvavch264enc \
-	libpvmp4ffcomposer \
-	libpvamrencnode \
-	libpvmp4ffcomposernode \
-	libpvomxvideoencnode \
-	libpvavcencnode \
-	libpvmediainputnode \
-	libandroidpvauthor 
+        libpvauthorengine \
+        libpvm4vencoder \
+        libpvencoder_gsmamr \
+        libpvavch264enc \
+        libpvmp4ffcomposer \
+        libpvamrencnode \
+        libpvmp4ffcomposernode \
+        libpvomxvideoencnode \
+        libpvavcencnode \
+        libpvmediainputnode \
+        libandroidpvauthor
 
 LOCAL_LDLIBS := -lpthread
 

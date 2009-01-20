@@ -4,24 +4,24 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
 LOCAL_WHOLE_STATIC_LIBRARIES := \
-	libosclbase \
-	libosclerror \
-	libosclmemory \
-	libosclutil \
-	libpvlogger \
-	libosclproc \
-	libosclio \
-	libosclregcli \
-	libosclregserv \
-	liboscllib \
-	libpvmf \
-	libpvmimeutils \
-	libpvfileoutputnode \
-	libpvmediadatastruct \
-	libthreadsafe_callback_ao \
-	libcolorconvert \
-	libpv_amr_nb_common_lib \
-	libpv_avc_common_lib 
+        libosclbase \
+        libosclerror \
+        libosclmemory \
+        libosclutil \
+        libpvlogger \
+        libosclproc \
+        libosclio \
+        libosclregcli \
+        libosclregserv \
+        liboscllib \
+        libpvmf \
+        libpvmimeutils \
+        libpvfileoutputnode \
+        libpvmediadatastruct \
+        libthreadsafe_callback_ao \
+        libcolorconvert \
+        libpv_amr_nb_common_lib \
+        libpv_avc_common_lib
 
 LOCAL_LDLIBS := -lpthread
 

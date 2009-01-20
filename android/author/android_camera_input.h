@@ -357,8 +357,12 @@ private:
 
     AndroidCameraInputCmd iPendingCmd;
 
+    enum AndroidCameraFlags {
+        FLAGS_SET_CAMERA        = 1L << 0,
+        FLAGS_HOT_CAMERA        = 1L << 1,
+    };
+
     // Camera specific stuff
-    int                     iCameraFd;
     sp<android::ISurface>   mSurface;
     int32                   mSurfaceWidth;
     int32                   mSurfaceHeight;
@@ -368,6 +372,7 @@ private:
     sp<android::Camera>     mCamera;
     sp<IMemoryHeap>         mHeap;
     int32                   mFrameRefCount;
+    int32                   mFlags;
 
 
     // State machine
