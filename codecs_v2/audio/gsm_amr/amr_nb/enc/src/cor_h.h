@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,44 +26,6 @@ Portions of this file are derived from the following 3GPP standard:
 Permission to distribute, modify and use this file under the standard license
 terms listed above has been obtained from the copyright holder.
 ****************************************************************************************/
-/*
-
- Pathname: ./audio/gsm-amr/c/include/cor_h.h
-
-     Date: 09/07/2000
-
-------------------------------------------------------------------------------
- REVISION HISTORY
-
- Description: Created separate header file for cor_h_x. Sync'ed up with the
-	      PV header template. Added include to cor_h_x.h for legacy files
-	      that include cor_h.h when invoking cor_h_x function.
-
- Description: Added cor_h_x2.h in the include section.
-
- Description: Removed cnst.h in the Include section. Putting it here confuses
-              Visual C++ when building the unit test. The source code
-              includes cnst.h prior to cor_h.h.
-
- Description: Updated copyright year and pathname.
-
- Description: Updated function prototype to reflect
- inclusion of pOverflow flag.
-
- Description: Updated template to make it build in Symbian. Updated copyright
-              year.
-
- Description: Moved _cplusplus #ifdef after Include section.
-
- Description:
-
-------------------------------------------------------------------------------
- INCLUDE DESCRIPTION
-
- This file contains prototype declaration for cor_h function.
-
-------------------------------------------------------------------------------
-*/
 /*----------------------------------------------------------------------------
 ; CONTINUE ONLY IF NOT ALREADY DEFINED
 ----------------------------------------------------------------------------*/

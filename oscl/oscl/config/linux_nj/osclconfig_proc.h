@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,5 @@
 
 #include "osclconfig_proc_check.h"
 
-#include <sys/prctl.h>
-#define OSCL_SET_THREAD_NAME(name) prctl(PR_SET_NAME,(unsigned long)name,0,0,0)
 
 #endif

@@ -99,7 +99,7 @@ int MetadataDriver::retrieverThread()
         return -1;
     }
 
-    PV_MasterOMX_Init();
+    OMX_Init();
     OsclScheduler::Init("PVAuthorEngineWrapper");
     mState = STATE_CREATE;
     AddToScheduler();
@@ -109,7 +109,7 @@ int MetadataDriver::retrieverThread()
 
     mSyncSem->Signal();  // Signal that doSetDataSource() is done.
     OsclScheduler::Cleanup();
-    PV_MasterOMX_Deinit();
+    OMX_Deinit();
     UninitializeForThread();
     return 0;
 }
@@ -479,9 +479,7 @@ void MetadataDriver::handleCreate()
 {
     LOGV("handleCreate");
     int error = 0;
-    OSCL_HeapString<OsclMemAllocator> outputFrameTypeString;
-    GetFormatString(PVMF_YUV420, outputFrameTypeString);
-    OSCL_TRY(error, mUtil = PVFrameAndMetadataFactory::CreateFrameAndMetadataUtility(outputFrameTypeString.get_str(), this, this, this));
+    OSCL_TRY(error, mUtil = PVFrameAndMetadataFactory::CreateFrameAndMetadataUtility((char*)PVMF_MIME_YUV420, this, this, this));
     if (error || mUtil->SetMode(PV_FRAME_METADATA_INTERFACE_MODE_SOURCE_METADATA_AND_THUMBNAIL) != PVMFSuccess) {
         handleCommandFailure();
     } else {
@@ -498,7 +496,7 @@ void MetadataDriver::handleAddDataSource()
     mDataSource = new PVPlayerDataSourceURL;
     if (mDataSource) {
         mDataSource->SetDataSourceURL(mDataSourceUrl);
-        mDataSource->SetDataSourceFormatType(PVMF_FORMAT_UNKNOWN);
+        mDataSource->SetDataSourceFormatType((char*)PVMF_MIME_FORMAT_UNKNOWN);
         if (mMode & GET_FRAME_ONLY) {
 #if BEST_THUMBNAIL_MODE
             // Set the intent to thumbnails.

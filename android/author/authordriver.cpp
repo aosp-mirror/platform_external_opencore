@@ -22,8 +22,10 @@
 #include <media/thread_init.h>
 #include <ui/ISurface.h>
 #include <ui/ICamera.h>
-#include "pv_omxmastercore.h"
 #include "authordriver.h"
+#include "pv_omxcore.h"
+#include <sys/prctl.h>
+
 
 using namespace android;
 
@@ -615,7 +617,7 @@ int AuthorDriver::authorThread()
     }
 
     LOGV("OMX_Init");
-    PV_MasterOMX_Init();
+    OMX_Init();
 
     OsclScheduler::Init("AndroidAuthorDriver");
     LOGV("Create author ...");
@@ -652,7 +654,7 @@ int AuthorDriver::authorThread()
 
    //moved below delete this, similar code on playerdriver.cpp caused a crash.
    //cleanup of oscl should happen at the end.
-    PV_MasterOMX_Deinit();
+    OMX_Deinit();
     UninitializeForThread();
     return 0;
 }
@@ -802,5 +804,4 @@ PVAEState AuthorDriver::getAuthorEngineState()
     }
     return PVAE_STATE_IDLE;
 }
-
 

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,7 +93,6 @@ ExpandableBaseClass::readSizeOfClassFromFileStream(MP4_FF_FILE *fp)
 
     }
 
-    // Fix to be compatible with 1.0, 2.0, and Philips
     // Size field only size of descriptor data - not including tag and
     // size field itself.  Need to add tag and size field to _sizeOfClass
     // so we can handle the descriptors as we did in 1.0

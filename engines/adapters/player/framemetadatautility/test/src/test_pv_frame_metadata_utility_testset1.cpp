@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,6 +83,11 @@ void pvframemetadata_async_test_getmetadata::StartTest()
 {
     AddToScheduler();
     iState = STATE_CREATE;
+
+    // Retrieve the logger object
+    iLogger = PVLogger::GetLoggerObject("PVFrameAndMetadataUtilityTest");
+    iPerfLogger = PVLogger::GetLoggerObject("fmutestdiagnostics");
+
     RunIfNotReady();
 }
 
@@ -98,6 +103,9 @@ void pvframemetadata_async_test_getmetadata::Run()
             iFrameMetadataUtil = NULL;
 
             OSCL_TRY(error, iFrameMetadataUtil = PVFrameAndMetadataFactory::CreateFrameAndMetadataUtility(iOutputFrameTypeString.get_str(), this, this, this));
+
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
+                            (0, "PVFrameAndMetadataUtilityTest::Create Called Tick=%d", OsclTickCount::TickCount()));
             if (error)
             {
                 PVFMUATB_TEST_IS_TRUE(false);
@@ -189,6 +197,9 @@ void pvframemetadata_async_test_getmetadata::Run()
             iDataSource->SetDataSourceURL(wFileName);
             iDataSource->SetDataSourceFormatType(iFileType);
 
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
+                            (0, "PVFrameAndMetadataUtilityTest::AddDataSource Issued Tick=%d", OsclTickCount::TickCount()));
+
             OSCL_TRY(error, iCurrentCmdId = iFrameMetadataUtil->AddDataSource(*iDataSource, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVFMUATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
         }
@@ -199,6 +210,9 @@ void pvframemetadata_async_test_getmetadata::Run()
         {
             // Retrieve all the available metadata keys
             iMetadataKeyList.clear();
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
+                            (0, "PVFrameAndMetadataUtilityTest::GetMetadataKeys Issued Tick=%d", OsclTickCount::TickCount()));
+
             OSCL_TRY(error, iCurrentCmdId = iFrameMetadataUtil->GetMetadataKeys(iMetadataKeyList, 0, 50, NULL, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVFMUATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
         }
@@ -209,6 +223,9 @@ void pvframemetadata_async_test_getmetadata::Run()
             // Retrieve the values
             iMetadataValueList.clear();
             iNumValues = 0;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
+                            (0, "PVFrameAndMetadataUtilityTest::GetMetadataValues Issued Tick=%d", OsclTickCount::TickCount()));
+
             OSCL_TRY(error, iCurrentCmdId = iFrameMetadataUtil->GetMetadataValues(iMetadataKeyList, 0, 50, iNumValues, iMetadataValueList, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVFMUATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
         }
@@ -220,6 +237,10 @@ void pvframemetadata_async_test_getmetadata::Run()
             iFrameSelector.iSelectionMethod = PVFrameSelector::SPECIFIC_FRAME;
             iFrameSelector.iFrameInfo.iFrameIndex = 0;
             iFrameBufferSize = MAX_VIDEO_FRAME_SIZE;
+
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
+                            (0, "PVFrameAndMetadataUtilityTest::GetFrame Issued Tick=%d", OsclTickCount::TickCount()));
+
             OSCL_TRY(error, iCurrentCmdId = iFrameMetadataUtil->GetFrame(iFrameSelector, iFrameBuffer, iFrameBufferSize, iFrameBufferProp, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVFMUATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
         }
@@ -227,6 +248,9 @@ void pvframemetadata_async_test_getmetadata::Run()
 
         case STATE_REMOVEDATASOURCE:
         {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
+                            (0, "PVFrameAndMetadataUtilityTest::RemoveDataSource Issued Tick=%d", OsclTickCount::TickCount()));
+
             OSCL_TRY(error, iCurrentCmdId = iFrameMetadataUtil->RemoveDataSource(*iDataSource, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVFMUATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
         }
@@ -242,6 +266,9 @@ void pvframemetadata_async_test_getmetadata::Run()
 
             delete iDataSource;
             iDataSource = NULL;
+
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
+                            (0, "PVFrameAndMetadataUtilityTest::CleanUpAndComplete Called Tick=%d", OsclTickCount::TickCount()));
 
             // Close the output file handles
             iMetadataFile.Close();
@@ -298,6 +325,9 @@ void pvframemetadata_async_test_getmetadata::CommandCompleted(const PVCmdRespons
         case STATE_ADDDATASOURCE:
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
+                                (0, "PVFrameAndMetadataUtilityTest::AddDataSource completed sucessfully Tick=%d", OsclTickCount::TickCount()));
+
                 iState = STATE_GETMETADATAKEYS1;
                 RunIfNotReady();
             }
@@ -305,6 +335,9 @@ void pvframemetadata_async_test_getmetadata::CommandCompleted(const PVCmdRespons
             {
                 // AddDataSource failed
                 PVFMUATB_TEST_IS_TRUE(false);
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
+                                (0, "PVFrameAndMetadataUtilityTest::AddDataSource failed Tick=%d", OsclTickCount::TickCount()));
+
                 iState = STATE_CLEANUPANDCOMPLETE;
                 RunIfNotReady();
             }
@@ -313,12 +346,16 @@ void pvframemetadata_async_test_getmetadata::CommandCompleted(const PVCmdRespons
         case STATE_GETMETADATAKEYS1:
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
+                                (0, "PVFrameAndMetadataUtilityTest::GetMetaDataKeys completed sucessfully Tick=%d", OsclTickCount::TickCount()));
                 iState = STATE_GETMETADATAVALUES1;
                 RunIfNotReady();
             }
             else
             {
                 // GetMetadataKeys failed
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
+                                (0, "PVFrameAndMetadataUtilityTest::GetMetadataKeys failed Tick=%d", OsclTickCount::TickCount()));
                 PVFMUATB_TEST_IS_TRUE(false);
                 iState = STATE_CLEANUPANDCOMPLETE;
                 RunIfNotReady();
@@ -328,6 +365,8 @@ void pvframemetadata_async_test_getmetadata::CommandCompleted(const PVCmdRespons
         case STATE_GETMETADATAVALUES1:
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
+                                (0, "PVFrameAndMetadataUtilityTest::GetMetaDataValues completed sucessfully Tick=%d", OsclTickCount::TickCount()));
                 oscl_snprintf(iTextOutputBuf, 512, "After AddDataSource():\n");
                 iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
                 SaveMetadataInfo();
@@ -344,6 +383,8 @@ void pvframemetadata_async_test_getmetadata::CommandCompleted(const PVCmdRespons
             else
             {
                 // GetMetadataValues failed
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
+                                (0, "PVFrameAndMetadataUtilityTest::GetMetadataValues failed Tick=%d", OsclTickCount::TickCount()));
                 PVFMUATB_TEST_IS_TRUE(false);
                 iState = STATE_CLEANUPANDCOMPLETE;
                 RunIfNotReady();
@@ -353,6 +394,8 @@ void pvframemetadata_async_test_getmetadata::CommandCompleted(const PVCmdRespons
         case STATE_GETFRAME:
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
+                                (0, "PVFrameAndMetadataUtilityTest::GetFrame completed sucessfully Tick=%d", OsclTickCount::TickCount()));
                 SaveVideoFrame();
                 iState = STATE_REMOVEDATASOURCE;
                 RunIfNotReady();
@@ -360,6 +403,8 @@ void pvframemetadata_async_test_getmetadata::CommandCompleted(const PVCmdRespons
             else
             {
                 // GetFrame failed
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
+                                (0, "PVFrameAndMetadataUtilityTest::GetFrame failed Tick=%d", OsclTickCount::TickCount()));
                 PVFMUATB_TEST_IS_TRUE(false);
                 iState = STATE_CLEANUPANDCOMPLETE;
                 RunIfNotReady();
@@ -369,6 +414,8 @@ void pvframemetadata_async_test_getmetadata::CommandCompleted(const PVCmdRespons
         case STATE_REMOVEDATASOURCE:
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
+                                (0, "PVFrameAndMetadataUtilityTest::RemoveDataSource completed sucessfully Tick=%d", OsclTickCount::TickCount()));
                 PVFMUATB_TEST_IS_TRUE(true);
                 iState = STATE_CLEANUPANDCOMPLETE;
                 RunIfNotReady();
@@ -376,6 +423,8 @@ void pvframemetadata_async_test_getmetadata::CommandCompleted(const PVCmdRespons
             else
             {
                 // RemoveDataSource failed
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
+                                (0, "PVFrameAndMetadataUtilityTest::RemoveDataSource failed Tick=%d", OsclTickCount::TickCount()));
                 PVFMUATB_TEST_IS_TRUE(false);
                 iState = STATE_CLEANUPANDCOMPLETE;
                 RunIfNotReady();
@@ -4021,6 +4070,13 @@ void pvframemetadata_async_test_settimeout_getframe::CommandCompleted(const PVCm
                 iState = STATE_REMOVEDATASOURCE;
                 RunIfNotReady();
             }
+            else if (aResponse.GetCmdStatus() == PVMFErrMaxReached)
+            {
+                // Test could not be excercised fully since we recvd EOS before timeout error
+                fprintf(iTestMsgOutputFile, "\nTest could not be excercised fully since we recvd EOS before timeout error\n\n");
+                iState = STATE_REMOVEDATASOURCE;
+                RunIfNotReady();
+            }
             else
             {
                 // GetFrame failed
@@ -4081,6 +4137,218 @@ void pvframemetadata_async_test_settimeout_getframe::SaveVideoFrame()
     iFrameFile.Write(iFrameBuffer, 1, iFrameBufferSize);
     iFrameFile.Flush();
 }
+
+
+//
+// pvframemetadata_async_test_set_player_key section
+//
+void pvframemetadata_async_test_set_player_key::StartTest()
+{
+    AddToScheduler();
+    iState = STATE_CREATE;
+    RunIfNotReady();
+}
+
+
+void pvframemetadata_async_test_set_player_key::Run()
+{
+    int error = 0;
+
+    switch (iState)
+    {
+        case STATE_CREATE:
+        {
+            iFrameMetadataUtil = NULL;
+
+            OSCL_TRY(error, iFrameMetadataUtil = PVFrameAndMetadataFactory::CreateFrameAndMetadataUtility(iOutputFrameTypeString.get_str(), this, this, this));
+            if (error)
+            {
+                PVFMUATB_TEST_IS_TRUE(false);
+                iObserver->TestCompleted(*iTestCase);
+            }
+            else
+            {
+                uint32 mode = PV_FRAME_METADATA_INTERFACE_MODE_SOURCE_METADATA_ONLY;
+                iFrameMetadataUtil->SetMode(mode);
+
+                iState = STATE_QUERYINTERFACE;
+                RunIfNotReady();
+            }
+        }
+        break;
+
+        case STATE_QUERYINTERFACE:
+        {
+            PVUuid capconfigifuuid = PVMI_CAPABILITY_AND_CONFIG_PVUUID;
+            OSCL_TRY(error, iCurrentCmdId = iFrameMetadataUtil->QueryInterface(capconfigifuuid, (PVInterface*&)iFMUCapConfigIF, (OsclAny*) & iContextObject));
+            OSCL_FIRST_CATCH_ANY(error, PVFMUATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
+        }
+        break;
+
+        case STATE_ADDDATASOURCE:
+        {
+            // Create a player data source and add it
+            iDataSource = new PVPlayerDataSourceURL;
+
+            // Convert the source file name to UCS2 and extract the filename part
+            oscl_UTF8ToUnicode(iFileName, oscl_strlen(iFileName), iTempWCharBuf, 512);
+            wFileName.set(iTempWCharBuf, oscl_strlen(iTempWCharBuf));
+
+            iDataSource->SetDataSourceURL(wFileName);
+            iDataSource->SetDataSourceFormatType(iFileType);
+
+            OSCL_TRY(error, iCurrentCmdId = iFrameMetadataUtil->AddDataSource(*iDataSource, (OsclAny*) & iContextObject));
+            OSCL_FIRST_CATCH_ANY(error, PVFMUATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
+        }
+
+        break;
+
+        case STATE_SETPLAYERKEY:
+        {
+            // Any key understood by the player
+            iKeyStringSetAsync = _STRLIT_CHAR("x-pvmf/player/nodecmd_timeout;valtype=uint32");
+            iKVPSetAsync.key = iKeyStringSetAsync.get_str();
+            iKVPSetAsync.value.uint32_value = 4421;
+            iErrorKVP = NULL;
+            OSCL_TRY(error, iFMUCapConfigIF->setParametersSync(NULL, &iKVPSetAsync, 1, iErrorKVP));
+            OSCL_FIRST_CATCH_ANY(error, PVFMUATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady(); return);
+
+            iState = STATE_REMOVEDATASOURCE;
+            RunIfNotReady();
+        }
+        break;
+
+        case STATE_REMOVEDATASOURCE:
+        {
+            OSCL_TRY(error, iCurrentCmdId = iFrameMetadataUtil->RemoveDataSource(*iDataSource, (OsclAny*) & iContextObject));
+            OSCL_FIRST_CATCH_ANY(error, PVFMUATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
+        }
+        break;
+
+        case STATE_CLEANUPANDCOMPLETE:
+        {
+            PVFMUATB_TEST_IS_TRUE(PVFrameAndMetadataFactory::DeleteFrameAndMetadataUtility(iFrameMetadataUtil));
+            iFrameMetadataUtil = NULL;
+
+            delete iDataSource;
+            iDataSource = NULL;
+
+            iObserver->TestCompleted(*iTestCase);
+        }
+        break;
+
+        default:
+            break;
+
+    }
+}
+
+
+void pvframemetadata_async_test_set_player_key::CommandCompleted(const PVCmdResponse& aResponse)
+{
+    if (aResponse.GetCmdId() != iCurrentCmdId)
+    {
+        // Wrong command ID.
+        PVFMUATB_TEST_IS_TRUE(false);
+        iState = STATE_CLEANUPANDCOMPLETE;
+        RunIfNotReady();
+        return;
+    }
+
+    if (aResponse.GetContext() != NULL)
+    {
+        if (aResponse.GetContext() == (OsclAny*)&iContextObject)
+        {
+            if (iContextObject != iContextObjectRefValue)
+            {
+                // Context data value was corrupted
+                PVFMUATB_TEST_IS_TRUE(false);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
+                return;
+            }
+        }
+        else
+        {
+            // Context data pointer was corrupted
+            PVFMUATB_TEST_IS_TRUE(false);
+            iState = STATE_CLEANUPANDCOMPLETE;
+            RunIfNotReady();
+            return;
+        }
+    }
+
+    switch (iState)
+    {
+        case STATE_QUERYINTERFACE:
+            if (aResponse.GetCmdStatus() == PVMFSuccess)
+            {
+                iState = STATE_ADDDATASOURCE;
+                RunIfNotReady();
+            }
+            else
+            {
+                // QueryInterface failed
+                PVFMUATB_TEST_IS_TRUE(false);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
+            }
+            break;
+
+        case STATE_ADDDATASOURCE:
+            if (aResponse.GetCmdStatus() == PVMFSuccess)
+            {
+                iState = STATE_SETPLAYERKEY;
+                RunIfNotReady();
+            }
+            else
+            {
+                // AddDataSource failed
+                PVFMUATB_TEST_IS_TRUE(false);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
+            }
+            break;
+
+        case STATE_REMOVEDATASOURCE:
+            if (aResponse.GetCmdStatus() == PVMFSuccess)
+            {
+                PVFMUATB_TEST_IS_TRUE(true);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
+            }
+            else
+            {
+                // RemoveDataSource failed
+                PVFMUATB_TEST_IS_TRUE(false);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
+            }
+            break;
+
+        default:
+        {
+            // Testing error if this is reached
+            PVFMUATB_TEST_IS_TRUE(false);
+            iState = STATE_CLEANUPANDCOMPLETE;
+            RunIfNotReady();
+        }
+        break;
+    }
+}
+
+
+void pvframemetadata_async_test_set_player_key::HandleErrorEvent(const PVAsyncErrorEvent& aEvent)
+{
+    OSCL_UNUSED_ARG(aEvent);
+}
+
+
+void pvframemetadata_async_test_set_player_key::HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent)
+{
+    OSCL_UNUSED_ARG(aEvent);
+}
+
 
 
 

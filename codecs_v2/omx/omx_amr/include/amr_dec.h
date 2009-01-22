@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,8 +39,6 @@
 #endif
 
 
-//Taken this value from iFrameSizeVector size in fileinput node
-#define TOC_TABLE_SIZE				500
 
 class OmxAmrDecoder
 {
@@ -66,13 +64,13 @@ class OmxAmrDecoder
 
     private:
 
-        Frame_Type_3GPP GetFrameTypeLength(OMX_U8*, OMX_S32*);
+        Frame_Type_3GPP GetFrameTypeLength(OMX_U8* &ptr, OMX_S32 *pLength);
         void GetStartPointsForIETFCombinedMode(OMX_U8* aPtrIn, OMX_U32 aLength,
                                                OMX_U8* &aTocPtr, OMX_S32* aNumOfBytes);
 
         OMX_S16 iOmxInputFormat;
-        OMX_U8  iTocTable[TOC_TABLE_SIZE];
-        OMX_S32 iBytesProcessed;
+        OMX_U8  *iTocTablePtr;
+        OMX_S32 iAMRFramesinTOC;
 
 
         //CDecoder_AMR_NB* iAudioAmrDecoder;
@@ -81,6 +79,9 @@ class OmxAmrDecoder
 
         OMX_U32 iOutputFrameSize;
         OMX_BOOL iNarrowBandFlag;
+
+        OMX_S16 iDecHomingFlag;
+        OMX_S16 iDecHomingFlagOld;
 
 };
 

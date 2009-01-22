@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,8 @@ class PvmiMIOObserver
          * @param aResponse Completion response containing status and other data
          */
         virtual void RequestCompleted(const PVMFCmdResp& aResponse) = 0;
+        virtual void ReportErrorEvent(PVMFEventType aEventType, PVInterface* aExtMsg = NULL) = 0;
+        virtual void ReportInfoEvent(PVMFEventType aEventType, PVInterface* aExtMsg = NULL) = 0;
 };
 
 #endif // PVMI_MEDIA_IO_OBSERVER_H_INCLUDED

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*********************************************************************************/
 /*
     This PVA_FF_MediaInformationAtom Class contains all the objects that declare
     characteristic information about the media data within the stream.
@@ -137,14 +136,16 @@ class PVA_FF_MediaInformationAtom : public PVA_FF_Atom
             _psampleTableAtom->setH263ProfileLevel(profile, level);
         }
 
-        void setBIFSODSampleDuration(int32 duration)
-        {
-            _psampleTableAtom->setBIFSODSampleDuration(duration);
-        }
-
         void setESID(uint16 esid)
         {
             _psampleTableAtom->setESID(esid);
+        }
+        void SetMaxSampleSize(uint32);
+        void writeMaxSampleSize(MP4_AUTHOR_FF_FILE_IO_WRAP*);
+
+        uint32 getSampleCount() const
+        {
+            return _psampleTableAtom->getSampleCount();
         }
 
     private:

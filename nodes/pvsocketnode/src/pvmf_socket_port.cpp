@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,14 +67,19 @@ PVMFSocketPort::~PVMFSocketPort()
 ////////////////////////////////////////////////////////////////////////////
 bool PVMFSocketPort::IsFormatSupported(PVMFFormatType aFmt)
 {
-    return (aFmt == PVMF_INET_UDP) || (aFmt == PVMF_INET_TCP);
+    bool formatSupported = false;
+    if ((aFmt == PVMF_MIME_INET_UDP) || (aFmt == PVMF_MIME_INET_TCP))
+    {
+        formatSupported = true;
+    }
+    return formatSupported;
 }
 
 ////////////////////////////////////////////////////////////////////////////
 void PVMFSocketPort::FormatUpdated()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_INFO
-                    , (0, "PVMFSocketPort::FormatUpdated %d", iFormat));
+                    , (0, "PVMFSocketPort::FormatUpdated %s", iFormat.getMIMEStrPtr()));
 }
 
 void PVMFSocketPort::setParametersSync(PvmiMIOSession aSession,
@@ -82,6 +87,7 @@ void PVMFSocketPort::setParametersSync(PvmiMIOSession aSession,
                                        int num_elements,
                                        PvmiKvp * & aRet_kvp)
 {
+    OSCL_UNUSED_ARG(aSession);
     PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_INFO, (0, "PVMFSocketPort::getParametersSync: aSession=0x%x, aParameters=0x%x, num_elements=%d, aRet_kvp=0x%x",
                     aSession, aParameters, num_elements, aRet_kvp));
 
@@ -95,12 +101,6 @@ void PVMFSocketPort::setParametersSync(PvmiMIOSession aSession,
     {
         aRet_kvp = aParameters;
         OSCL_LEAVE(OsclErrArgument);
-    }
-    else
-    {
-        aRet_kvp = NULL;
-        iAllocSharedPtr =
-            *((OsclSharedPtr<PVMFSharedSocketDataBufferAlloc>*)(aParameters->value.key_specific_value));
     }
 }
 
@@ -134,6 +134,7 @@ PVMFStatus PVMFSocketPort::releaseParameters(PvmiMIOSession aSession,
         PvmiKvp* aParameters,
         int num_elements)
 {
+    OSCL_UNUSED_ARG(aSession);
     PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_INFO, (0, "PVMFSocketPort::releaseParameters: aSession=0x%x, aParameters=0x%x, num_elements=%d",
                     aSession, aParameters, num_elements));
 
@@ -260,3 +261,4 @@ bool PVMFSocketPort::IsOutgoingQueueBusy()
     }
     return (PvmfPortBaseImpl::IsOutgoingQueueBusy());;
 }
+

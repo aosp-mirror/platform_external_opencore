@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,8 @@
 #ifndef OSCL_BASE_H_INCLUDED
 #include "oscl_base.h"
 #endif
-#ifndef OSCL_CLOCK_H_INCLUDED
-#include "oscl_clock.h"
+#ifndef PVMF_MEDIA_CLOCK_H_INCLUDED
+#include "pvmf_media_clock.h"
 #endif
 #ifndef OSCL_STRING_CONTAINERS_H_INCLUDED
 #include "oscl_string_containers.h"
@@ -41,9 +41,6 @@
 #endif
 #ifndef SDP_INFO_H_INCLUDED
 #include "sdp_info.h"
-#endif
-#ifndef PVMF_SM_CONFIG_H_INCLUDED
-#include "pvmf_sm_config.h"
 #endif
 
 typedef struct tagPVMFSMClientParams
@@ -89,8 +86,8 @@ class PVMFStreamingManagerExtensionInterface : public PVInterface
         OSCL_IMPORT_REF virtual PVMFStatus resetJitterBuffer() = 0;
         OSCL_IMPORT_REF virtual PVMFStatus setPayloadParserRegistry(PayloadParserRegistry*) = 0;
 
-        OSCL_IMPORT_REF virtual PVMFStatus setDataPortLogging(bool logEnable,
-                OSCL_String* logPath = NULL) = 0;
+        OSCL_IMPORT_REF virtual PVMFStatus setDataPortLogging(bool logEnable, OSCL_String* logPath = NULL) = 0;
+        OSCL_IMPORT_REF virtual PVMFStatus switchStreams(uint32 aSrcStreamID, uint32 aDestStreamID) = 0;
 
         OSCL_IMPORT_REF virtual void addRef() = 0;
         OSCL_IMPORT_REF virtual void removeRef() = 0;

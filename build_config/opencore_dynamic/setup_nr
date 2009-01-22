@@ -1,0 +1,40 @@
+# This file is suitable for tcsh, csh, etc.
+
+echo Setting up build environment with default configuration ...
+echo Using $PWD as top directory ...
+
+setenv PROJECT_DIR $PWD
+echo Set PROJECT_DIR to $PROJECT_DIR ...
+
+setenv CFG_DIR $PWD
+echo Set CFG_DIR to $CFG_DIR ...
+
+# In this case, set it based on the first argument if it is present
+if ($# >= 1) then
+   setenv BASE_DIR `echo $1 | sed 's/\/$//'`
+else if ($?BASE_DIR) then
+   echo  BASE_DIR already defined as $BASE_DIR ...
+else
+   echo ERROR - Must provide the BASE_DIR value as a argument or env variable
+   exit 1
+endif
+
+setenv BUILD_ROOT $PROJECT_DIR/build
+echo Set BUILD_ROOT to $BUILD_ROOT ...
+
+setenv SRC_ROOT $BASE_DIR
+echo Set SRC_ROOT to $SRC_ROOT ...
+
+setenv MK $BASE_DIR/tools_v2/build/make_nr/tools_v2/build/make
+echo Set MK to $MK ...
+
+set extern_tools_path = $BASE_DIR/extern_tools_v2/bin/linux
+set path = ($extern_tools_path $path)
+unset extern_tools_path
+
+rehash
+rehash
+
+echo 
+echo "Environment is ready if no errors reported"
+echo 

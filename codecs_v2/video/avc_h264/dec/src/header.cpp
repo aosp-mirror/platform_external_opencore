@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -973,7 +973,7 @@ AVCDec_Status dec_ref_pic_marking(AVCCommonObj *video, AVCDecBitstream *stream, 
                 i++;
             }
             while (sliceHdr->memory_management_control_operation[i-1] != 0 && i < MAX_DEC_REF_PIC_MARKING);
-            if (i == MAX_DEC_REF_PIC_MARKING && sliceHdr->memory_management_control_operation[i-1] != 0)
+            if (i >= MAX_DEC_REF_PIC_MARKING)
             {
                 return AVCDEC_FAIL; /* we're screwed!!, not enough memory */
             }

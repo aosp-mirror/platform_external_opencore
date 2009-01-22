@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,14 +79,9 @@
 #include "pvmi_kvp.h"
 #endif
 
-#ifndef OSCL_CLOCK_H_INCLUDED
-#include "oscl_clock.h"
+#ifndef PVMF_MEDIA_CLOCK_H_INCLUDED
+#include "pvmf_media_clock.h"
 #endif
-
-/**
- UUID for pvPlayer error and information event type codes
- **/
-#define PVPlayerErrorInfoEventTypesUUID PVUuid(0x46fca5ac,0x5b57,0x4cc2,0x82,0xc3,0x03,0x10,0x60,0xb7,0xb5,0x98)
 
 
 // CLASS DECLARATION
@@ -105,23 +100,6 @@ class PVPlayerInterface
          * Releases all resources prior to destruction
          **/
         virtual ~PVPlayerInterface() {};
-
-        /**
-         * Returns SDK version information about pvPlayer.
-         * This command request is asynchronous. PVCommandStatusObserver's CommandCompleted()
-         * callback handler will be called when this command request completes.
-         *
-         * @param aSDKInfo
-         *         A reference to a PVSDKInfo structure which contains product name, supported hardware platform,
-         *         supported software platform, version, part number, and PV UUID. These fields will contain info
-         *        .for the currently instantiated pvPlayer engine when this function returns success.
-         * @param aContextData
-         *         Optional opaque data that will be passed back to the user with the command response
-         * @leave This method can leave with one of the following error codes
-         *         OsclErrNoMemory if the pvPlayer engine failed to allocate memory during this operation
-         * @returns A unique command ID for asynchronous completion
-         **/
-        virtual PVCommandId GetSDKInfo(PVSDKInfo &aSDKInfo, const OsclAny* aContextData = NULL) = 0;
 
         /**
          * Returns information about all modules currently used by pvPlayer SDK.
@@ -281,10 +259,8 @@ class PVPlayerInterface
 
         /**
          * This API is to allow the user to cancel all pending requests in pvPlayer. The current request being
-         * processed, if any, will also be aborted. If a request being processed is cancelled, pvPlayer will reset
-         * everything and go to PVP_STATE_IDLE state.
-         * If this API is called when there is no request being processing (just pending requests or no pending requests),
-         * the engine will not change the state and report this command to complete successfully.
+         * processed, if any, will also be aborted. The user of PV-SDK should get the state of
+         * PVPlayer Engine after the command completes and before issuing any other command.
          * This command request is asynchronous. PVCommandStatusObserver's CommandCompleted()
          * callback handler will be called when this command request completes.
          *
@@ -347,6 +323,7 @@ class PVPlayerInterface
          * the data source is being initialized to obtain metadata and track information of the source media.
          * If initialization fails, pvPlayer will revert to PVP_STATE_IDLE state and the data source
          * will be closed.
+         * The Command should only be called in PVP_STATE_IDLE.
          * This command request is asynchronous. PVCommandStatusObserver's CommandCompleted()
          * callback handler will be called when this command request completes.
          *
@@ -409,13 +386,36 @@ class PVPlayerInterface
          *         Reference to a vector of KVP to place the specified metadata values
          * @param aContextData
          *         Optional opaque data that will be passed back to the user with the command response
+         * @param aMetadataValuesCopiedInCallBack
+         *	       Boolean to let engine know if metadata values are copied by User of SDK in command complete callback.
+         *         By default the SDK assumes this to be the case. If this argument is set to false by the caller,
+         *         then SDK assumes that user will call ReleaseMetaDataValues at a later point.
          * @leave This method can leave with one of the following error codes
          *         OsclErrInvalidState if invoked in the incorrect state
          *         OsclErrNoMemory if the SDK failed to allocate memory during this operation
          * @returns A unique command id for asynchronous completion
          **/
         virtual PVCommandId GetMetadataValues(PVPMetadataList& aKeyList, int32 aStartingValueIndex, int32 aMaxValueEntries, int32& aNumAvailableValueEntries,
-                                              Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList, const OsclAny* aContextData = NULL) = 0;
+                                              Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList, const OsclAny* aContextData = NULL, bool aMetadataValuesCopiedInCallBack = true) = 0;
+
+        /**
+         * The function makes a request to release the metadata value(s) specified by the passed in metadata value list.
+         * This command request is asynchronous. PVCommandStatusObserver's CommandCompleted()
+         * callback handler will be called when this command request completes.If a GetMetaDataValues were called in
+         * PVP_STATE_INITIALIZED state, then corresponding ReleaseMetaDataValues must be called before Reset.
+         * If a GetMetaDataValues were called in PVP_STATE_PREPARED, PVP_STATE_STARTED, PVP_STATE_PAUSED states,
+         * then corresponding ReleaseMetaDataValues must be called before Stop.
+         *
+         * @param aValueList
+         *         Reference to a vector of KVP to place the specified metadata values
+         * @param aContextData
+         *         Optional opaque data that will be passed back to the user with the command response
+         * @leave This method can leave with one of the following error codes
+         *         OsclErrInvalidState if invoked in the incorrect state
+         *         OsclErrNoMemory if the SDK failed to allocate memory during this operation
+         * @returns A unique command id for asynchronous completion
+         **/
+        virtual PVCommandId ReleaseMetadataValues(Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList, const OsclAny* aContextData = NULL) = 0;
 
         /**
          * This function allows a player data sink to be specified for playback. This function must be called
@@ -442,12 +442,14 @@ class PVPlayerInterface
          * PVP_STATE_STARTED, or PVP_STATE_PAUSED state. The specified positions must be between beginning of clip and
          * clip duration. The units of position is specified in the passed-in parameter PVPPlaybackPosition.
          * If either of the positions is indeterminate, use the indeterminate flag in PVPPlaybackPosition structure.
-         * The current or queued playback range can be changed and aQueueRange flag is used to choose between the two.
+         * The queued playback range can be done using aQueueRange flag which is Not Supported as of now by PV-SDK.
          * This function will overwrite any previous playback range info. The only exception is the changing of end position
          * for the current playback range during playback.
-         * Indeterminate begin position will be mapped to the beginning of the clip (time 0). Only exception to this behavior
-         * is when changing the end position for the current playback range during playback.
-         * Indeterminate end position will be mapped to the end of the clip (clip duration).
+         * Command if called in player state as PVP_STATE_INITIALISED or PVP_STATE_PAUSED, will complete in one Engine AO run without actually
+         * changing the position. The change in position will come into affect when Prepare or Resume respectively is called on Engine by the app.
+         * If reposition request is not honored by the source node during Prepare or Resume, engine will continue to complete Prepare or Resume
+         * but will send an informational event "PVMFInfoChangePlaybackPositionNotSupported" to the app informing that the SetPlaybackRange request
+         * could not be honored.
          * This command request is asynchronous. PVCommandStatusObserver's CommandCompleted()
          * callback handler will be called when this command request completes.
          *
@@ -511,20 +513,25 @@ class PVPlayerInterface
          * means 4X, 25000 means 0.25X, and -100000 means 1X backward.
          * The playback rate can also be modified by specifying the timebase to use for the playback
          * clock. This is accomplished by  setting the aRate parameter to 0 and passing in a pointer
-         * to an OsclTimebase.
-         * This function can be called when pvPlayer is in
-         * PVP_STATE_PREPARED, PVP_STATE_STARTED, or PVP_STATE_PAUSED state.  Changing to or from an outside
-         * timebase is only allowed in PVP_STATE_PREPARED.
+         * to an PVMFTimebase.
+         * This function can be called when pvPlayer is in PVP_STATE_PREPARED, PVP_STATE_STARTED, or PVP_STATE_PAUSED state.
+         * Changing to or from an outside timebase is only allowed in PVP_STATE_PREPARED.
+         * Command if called in player state PVP_STATE_PAUSED with a direction change, will complete in one Engine AO run without actually
+         * changing the direction. The change in direction will come into affect when Resume is called on Engine by the app. If the request
+         * is not honored by the source node during Resume, engine will continue to complete Resume but will send an informational event
+         * "PVMFInfoChangePlaybackPositionNotSupported" to the app informing that the SetPlaybackRate request could not be honored.
          * This command request is asynchronous. PVCommandStatusObserver's CommandCompleted()
          * callback handler will be called when this command request completes.
          *
          * @param aRate
          *         The playback rate specified as millipercent of "real-time".
+         *         A millipercent is 1/1000 of a percent. So 2X = 200% of realtime is
+         *         200,000 millipercent. The motivation is to povide precision with an integer parameter.
          *         Negative rates specify backward playback.
          *         The valid range of absolute value of playback rates will be limited to the
          *         minimum and maximum returned by GetPlaybackMinMaxRate().
          * @param aTimebase
-         *         Reference to an OsclTimebase which will be used to drive the playback clock. aRate must be
+         *         Reference to an PVMFTimebase which will be used to drive the playback clock. aRate must be
          *         set to 0, 1X, or -1X to use the timebase.
          * @param aContextData
          *         Optional opaque data that will be passed back to the user with the command response
@@ -532,13 +539,13 @@ class PVPlayerInterface
          *         OsclErrArgument if rate or timebase is invalid
          * @returns A unique command id for asynchronous completion
          **/
-        virtual PVCommandId SetPlaybackRate(int32 aRate, OsclTimebase* aTimebase = NULL, const OsclAny* aContextData = NULL) = 0;
+        virtual PVCommandId SetPlaybackRate(int32 aRate, PVMFTimebase* aTimebase = NULL, const OsclAny* aContextData = NULL) = 0;
 
         /**
          * This function retrieves the current playback rate setting. If the playback rate is set as a millipercent of "real-time"
          * playback rate, then aRate will be filled in with the milliperecent value when this command completes
          * successfully. If the playback rate is set by an outside timebase, aRate will be set to 0 and aTimebase pointer
-         * will point to the OsclTimebase being used when the command completes successfully.
+         * will point to the PVMFTimebase being used when the command completes successfully.
          * This function can be called when pvPlayer is in
          * PVP_STATE_PREPARED, PVP_STATE_STARTED, or PVP_STATE_PAUSED state.
          * This command request is asynchronous. PVCommandStatusObserver's CommandCompleted()
@@ -549,7 +556,7 @@ class PVPlayerInterface
          *         as millipercent of "real-time" playback rate. If an outside timebase is being used, aRate would
          *         be set to 0.
          * @param aTimebase
-         *         Reference to an OsclTimebase pointer which will be valid if an outside timebase is being used
+         *         Reference to an PVMFTimebase pointer which will be valid if an outside timebase is being used
          *         for the playback clock.
          * @param aContextData
          *         Optional opaque data that will be passed back to the user with the command response
@@ -557,7 +564,7 @@ class PVPlayerInterface
          *
          * @returns A unique command id for asynchronous completion
          **/
-        virtual PVCommandId GetPlaybackRate(int32& aRate, OsclTimebase*& aTimebase, const OsclAny* aContextData = NULL) = 0;
+        virtual PVCommandId GetPlaybackRate(int32& aRate, PVMFTimebase*& aTimebase, const OsclAny* aContextData = NULL) = 0;
 
         /**
          * This function retrieves the minimum and maximum playback rate expressed as  a millipercent of "real-time"
@@ -598,6 +605,7 @@ class PVPlayerInterface
          * the data source to queue the media data for playback(e.g. for 3GPP streaming, fills the jitter buffer).
          * pvPlayer also checks to make sure each component needed for
          * playback is ready and capable. When successful, pvPlayer will be in PVP_STATE_PREPARED state,
+         * The command should be called only in PVP_STATE_INITIALISED.
          * This command request is asynchronous. PVCommandStatusObserver's CommandCompleted()
          * callback handler will be called when this command request completes.
          *
@@ -613,6 +621,7 @@ class PVPlayerInterface
         /**
          * This function kicks off the actual playback. Media data are sent out from the data source to the data sink(s).
          * pvPlayer will transition to PVP_STATE_STARTED state after playback starts successfully.
+         * The command should be called only in PVP_STATE_PREPARED.
          * This command request is asynchronous. PVCommandStatusObserver's CommandCompleted()
          * callback handler will be called when this command request completes.
          *
@@ -628,9 +637,6 @@ class PVPlayerInterface
         /**
          * This function pauses the currently ongoing playback. pvPlayer must be in PVP_STATE_STARTED state
          * to call this function. When pause successfully completes, pvPlayer will be in PVP_STATE_PAUSED state.
-         * Even in PVP_STATE_STARTED state, the pause request might fail with invalid state error if pvPlayer is
-         * auto-paused due to source data underflow. One can know if pvPlayer is auto-paused by listening for
-         * PVMFInfoUnderflow informational event from pvPlayer.
          * This command request is asynchronous. PVCommandStatusObserver's CommandCompleted()
          * callback handler will be called when this command request completes.
          *
@@ -662,7 +668,7 @@ class PVPlayerInterface
         /**
          * This function stops the current playback and transitions pvPlayer to the PVP_STATE_INITIALIZED
          * state. During the transition, data transmission from data source to all data sinks are
-         * terminated and any queued data is flushed. Also all connections between data source and data sinks
+         * terminated. Also all connections between data source and data sinks
          * are torn down.
          * This command request is asynchronous. PVCommandStatusObserver's CommandCompleted()
          * callback handler will be called when this command request completes.
@@ -696,19 +702,17 @@ class PVPlayerInterface
         virtual PVCommandId RemoveDataSink(PVPlayerDataSink& aDataSink, const OsclAny* aContextData = NULL) = 0;
 
         /**
-         * This function cleans up resources used for playback to transition pvPlayer from PVP_STATE_INITIALIZED state
-         * to PVP_STATE_IDLE state. While processing this command, pvPlayer is in the PVP_STATE_RESETTING state.
+         * This function cleans up resources used for playback to transition pvPlayer to PVP_STATE_IDLE state.
+         * While processing this command, pvPlayer is in the PVP_STATE_RESETTING state.
          * If any data sinks are still referenced by pvPlayer when this function is called, the data sinks
          * will be closed and removed from pvPlayer during the Reset.
-         * pvPlayer must be in PVP_STATE_INITIALIZED state to call this function. If playback is occurring, Stop must be
-         * called first. If already in PVP_STATE_IDLE state, then nothing will occur.
+         * If already in PVP_STATE_IDLE state, then nothing will occur.
          * This command request is asynchronous. PVCommandStatusObserver's CommandCompleted()
          * callback handler will be called when this command request completes.
          *
          * @param aContextData
          *         Optional opaque data that will be passed back to the user with the command response
          * @leave This method can leave with one of the following error codes
-         *         OsclErrInvalidState if invoked in the incorrect state
          *         OsclErrNoMemory if the SDK failed to allocate memory during this operation
          * @returns A unique command id for asynchronous completion
          **/
@@ -732,10 +736,21 @@ class PVPlayerInterface
          * @returns A unique command id for asynchronous completion
          **/
         virtual PVCommandId RemoveDataSource(PVPlayerDataSource& aDataSource, const OsclAny* aContextData = NULL) = 0;
+
+        /**
+         * Returns SDK version information about pvPlayer.
+         *
+         * @param aSDKInfo
+         *         A reference to a PVSDKInfo structure which contains product name, supported hardware platform,
+         *         supported software platform, version, part number, and PV UUID. These fields will contain info
+         *        .for the currently instantiated pvPlayer engine when this function returns success.
+         *
+         **/
+        OSCL_IMPORT_REF static void GetSDKInfo(PVSDKInfo& aSDKInfo);
+
 };
 
 
 
+
 #endif // PV_PLAYER_INTERFACE_H_INCLUDED
-
-

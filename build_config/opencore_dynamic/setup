@@ -1,0 +1,28 @@
+
+echo Setting up build environment with default configuration ...
+
+# SDK_LOCAL is the local staging area (i.e., view private) for private
+# builds and installs of the corelibs libraries. 
+setenv SDK_LOCAL $PWD
+echo Set SDK_LOCAL to $SDK_LOCAL ...
+
+
+# Set CFG_DIR
+#
+setenv CFG_DIR $PWD
+echo Set CFG_DIR to $CFG_DIR ...
+
+
+# For picking the node registry and tunables, set this flag
+#
+setenv FORMAT nj
+
+# Setup the default environment
+#
+if (! $?DEFAULT_SETUP_PATH) then
+  setenv DEFAULT_SETUP_PATH ../default
+endif
+
+source $DEFAULT_SETUP_PATH/setup
+
+# END OF SCRIPT - NO CODE BEYOND THIS POINT 

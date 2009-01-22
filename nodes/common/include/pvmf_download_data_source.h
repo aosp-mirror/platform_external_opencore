@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -107,6 +107,7 @@ class PVMFDownloadDataSourceHTTP : public PVInterface
 
 class CPVXInfo;
 
+//Source data for Fasttrack download (format type PVMF_DATA_SOURCE_PVX_FILE)
 class PVMFDownloadDataSourcePVX : public PVInterface
 {
     public:

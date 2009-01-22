@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,10 @@
  */
 #ifndef AAC_DEC_H_INCLUDED
 #define AAC_DEC_H_INCLUDED
+
+#ifndef OSCL_BASE_H_INCLUDED
+#include "oscl_base.h"
+#endif
 
 #ifndef OMX_Component_h
 #include "omx_component.h"
@@ -46,7 +50,7 @@ class OmxAacDecoder
                             OMX_U32* aInBufSize, OMX_S32* aIsFirstBuffer,
                             OMX_AUDIO_PARAM_PCMMODETYPE* aAudioPcmParam,
                             OMX_AUDIO_PARAM_AACPROFILETYPE* aAudioAacParam,
-                            OMX_S32* aSamplesPerFrame, OMX_BOOL* aResizeFlag);
+                            OMX_U32* aSamplesPerFrame, OMX_BOOL* aResizeFlag);
 
         void UpdateAACPlusEnabled(OMX_BOOL flag);
 
@@ -63,6 +67,7 @@ class OmxAacDecoder
         tPVMP4AudioDecoderExternal  iExt;
         OMX_U32 iNumOfChannels;
         OMX_U32  iMemReq;
+        OMX_S32 iConfigUpSamplingFactor;
 
 };
 

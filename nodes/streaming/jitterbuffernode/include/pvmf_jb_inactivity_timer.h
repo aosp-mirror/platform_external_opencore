@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,8 @@
 #ifndef OSCL_BASE_H_INCLUDED
 #include "oscl_base.h"
 #endif
-#ifndef OSCL_CLOCK_H_INCLUDED
-#include "oscl_clock.h"
+#ifndef PVMF_MEDIA_CLOCK_H_INCLUDED
+#include "pvmf_media_clock.h"
 #endif
 #ifndef PVLOGGER_H_INCLUDED
 #include "pvlogger.h"
@@ -36,57 +36,6 @@
 #ifndef PVMF_SM_TUNABLES_H_INCLUDED
 #include "pvmf_sm_tunables.h"
 #endif
-
-/**
- * Observer class for the inactivity timer AO
- */
-class PvmfJBInactivityTimerObserver
-{
-    public:
-        virtual ~PvmfJBInactivityTimerObserver() {}
-        /**
-         * A timer event, indicating that the inactivity timer has expired.
-         */
-        virtual void PVMFJBInactivityTimerEvent() = 0;
-};
-
-/**
- * Inactivity timer object to Jitter Buffer node. This object generates event
- * on remote inactivity (no UDP traffic from server for a certain time)
- */
-class PvmfJBInactivityTimer : public OsclTimerObject
-{
-    public:
-        PvmfJBInactivityTimer(PvmfJBInactivityTimerObserver* aObserver);
-
-        virtual ~PvmfJBInactivityTimer();
-
-        /** Start Timer */
-        PVMFStatus Start();
-
-        PVMFStatus setMaxInactivityDurationInMS(uint32 duration);
-
-        uint32 getMaxInactivityDurationInMS()
-        {
-            return iInactivityDurationInMS;
-        }
-
-        /** Stop Timer events */
-        PVMFStatus Stop();
-
-        bool IsTimerStarted()
-        {
-            return iStarted;
-        }
-
-    private:
-        void Run();
-
-        uint32 iInactivityDurationInMS;
-        PvmfJBInactivityTimerObserver* iObserver;
-        PVLogger* iLogger;
-        bool iStarted;
-};
 
 
 /**
@@ -133,14 +82,14 @@ class PvmfJBSessionDurationTimer : public OsclTimerObject
             return iStarted;
         }
 
-        void SetEstimatedServerClock(OsclClock* aEstimatedServerClock)
+        void SetEstimatedServerClock(PVMFMediaClock* aEstimatedServerClock)
         {
             iEstimatedServerClock = aEstimatedServerClock;
         }
 
         void EstimatedServerClockUpdated();
 
-        uint64 GetExpectedEstimatedServClockValAtSessionEnd()
+        uint32 GetExpectedEstimatedServClockValAtSessionEnd()
         {
             return iExpectedEstimatedServClockValAtSessionEnd;
         }
@@ -165,7 +114,7 @@ class PvmfJBSessionDurationTimer : public OsclTimerObject
             return iElapsedSessionDurationInMS;
         }
 
-        uint64 GetEstimatedServClockValAtLastCancel()
+        uint32 GetEstimatedServClockValAtLastCancel()
         {
             return iEstimatedServClockValAtLastCancel;
         }
@@ -175,8 +124,10 @@ class PvmfJBSessionDurationTimer : public OsclTimerObject
             iEstimatedServClockValAtLastCancel = 0;
             if (iEstimatedServerClock != NULL)
             {
-                uint64 timebase64 = 0;
-                iEstimatedServerClock->GetCurrentTime64(iEstimatedServClockValAtLastCancel, OSCLCLOCK_MSEC, timebase64);
+                uint32 timebase32 = 0;
+                bool overflowFlag = false;
+                iEstimatedServerClock->GetCurrentTime32(iEstimatedServClockValAtLastCancel, overflowFlag,
+                                                        PVMF_MEDIA_CLOCK_MSEC, timebase32);
             }
         }
 
@@ -190,122 +141,18 @@ class PvmfJBSessionDurationTimer : public OsclTimerObject
         PVLogger* iLogger;
         bool iStarted;
 
-        OsclClock iClock;
-        OsclTimebase_Tickcount iClockTimeBase;
-        uint64 iTimerStartTimeInMS;
+        PVMFMediaClock iClock;
+        PVMFTimebase_Tickcount iClockTimeBase;
+        uint32 iTimerStartTimeInMS;
         uint64 iMonitoringIntervalElapsed;
 
-        OsclClock* iEstimatedServerClock;
-        uint64 iEstimatedServClockValAtLastCancel;
-        uint64 iExpectedEstimatedServClockValAtSessionEnd;
+        PVMFMediaClock* iEstimatedServerClock;
+        uint32 iEstimatedServClockValAtLastCancel;
+        uint32 iExpectedEstimatedServClockValAtSessionEnd;
 
         PVLogger *iClockLoggerSessionDuration;
 };
 
-/**
- * Observer class for the jitter buffer duration timer AO
- */
-class PvmfJBJitterBufferDurationTimerObserver
-{
-    public:
-        virtual ~PvmfJBJitterBufferDurationTimerObserver() {}
-        /**
-         * A timer event, indicating that the timer has expired.
-         */
-        virtual void PVMFJBJitterBufferDurationTimerEvent() = 0;
-};
-
-/**
- * Bufferingduration timer object to Jitter Buffer node.
- * This object generates event when the jitter buffer duration expires
- */
-class PvmfJBJitterBufferDurationTimer : public OsclTimerObject
-{
-    public:
-        PvmfJBJitterBufferDurationTimer(PvmfJBJitterBufferDurationTimerObserver* aObserver);
-
-        virtual ~PvmfJBJitterBufferDurationTimer();
-
-        /** Start Timer */
-        PVMFStatus Start();
-
-        PVMFStatus setJitterBufferDurationInMS(uint32 duration);
-
-        uint32 getJitterBufferDurationInMS()
-        {
-            return iJitterBufferDurationInMS;
-        }
-
-        /** Stop Timer events */
-        PVMFStatus Stop();
-
-        bool IsTimerStarted()
-        {
-            return iStarted;
-        }
-
-    private:
-        void Run();
-
-        uint32 iJitterBufferDurationInMS;
-        PvmfJBJitterBufferDurationTimerObserver* iObserver;
-        PVLogger* iLogger;
-        bool iStarted;
-
-        OsclClock iRunClock;
-        OsclTimebase_Tickcount iRunClockTimeBase;
-};
-
-/**
- * Observer class for the firewall packet timer AO
- */
-class PvmfFirewallPacketTimerObserver
-{
-    public:
-        virtual ~PvmfFirewallPacketTimerObserver() {}
-        /**
-         * A timer event, indicating that the timer has expired.
-         */
-        virtual void PvmfFirewallPacketTimerEvent() = 0;
-};
-
-/**
- * FirewallPacketTimer object to Jitter Buffer node.
- * This object generates event when the Firewall packet recv timeout expires
- */
-class PvmfFirewallPacketTimer : public OsclTimerObject
-{
-    public:
-        PvmfFirewallPacketTimer(PvmfFirewallPacketTimerObserver* aObserver);
-
-        virtual ~PvmfFirewallPacketTimer();
-
-        /** Start Timer */
-        PVMFStatus Start();
-
-        PVMFStatus setFirewallPacketRecvTimeOutInMS(uint32 aRecvTimeOut);
-
-        uint32 getFirewallPacketRecvTimeOutInMS()
-        {
-            return iFirewallPacketRecvTimeOutInMS;
-        }
-
-        /** Stop Timer events */
-        PVMFStatus Stop();
-
-        bool IsTimerStarted()
-        {
-            return iStarted;
-        }
-
-    private:
-        void Run();
-
-        uint32 iFirewallPacketRecvTimeOutInMS;
-        PvmfFirewallPacketTimerObserver* iObserver;
-        PVLogger* iLogger;
-        bool iStarted;
-};
 
 #endif // PVMF_JB_INACTIVITY_TIMER_H_INCLUDED
 

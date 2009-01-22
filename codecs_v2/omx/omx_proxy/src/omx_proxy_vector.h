@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,11 @@
 #include "oscl_base_alloc.h"
 #endif
 
+#ifndef PV_OMXDEFS_H_INCLUDED
+#include "pv_omxdefs.h"
+#endif
+
+#if PROXY_INTERFACE
 
 //Memory allocator/deallocator class that don't use OSCL TLS
 class Oscl_Vector_Allocator : public Oscl_DefAlloc
@@ -265,6 +270,6 @@ class Oscl_Vector_New
         }
 
 };
-
+#endif //PROXY_INTERFACE
 #endif
 

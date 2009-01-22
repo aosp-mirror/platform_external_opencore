@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,6 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*									                                        */
-/*   =====================================================================  */
-/*	File: SDPParser.h						                                */
-/*	Description:							                                */
-/*									                                        */
-/*									                                        */
-/*	Rev:								                                    */
-/*	Created: 05/24/01						                                */
-/*   =====================================================================  */
-/*									                                        */
-/*	Revision History:						                                */
-/*									                                        */
-/*	Rev:								                                    */
-/*	Date:								                                    */
-/*	Description:							                                */
-/*									                                        */
-/* //////////////////////////////////////////////////////////////////////// */
 
 #ifndef SDP_PARSER_H
 #define SDP_PARSER_H
@@ -71,21 +54,15 @@ typedef struct _movieInfo
     mbchar movieName[MAX_STRING_LEN];
     mbchar creationDate[MAX_STRING_LEN];
     playTime duration;
-    uint8 majorVersion;
-    uint8 minorVersion;
 }movieInfo;
 
 class SDP_Parser
 {
     private:
         PVLogger* iLogger;
-        registrar *reg;
-        SDPMediaParserRegistry *_pSDPMediaParserRegistry;
+        SDPMediaParserRegistry *& _pSDPMediaParserRegistry;
         int mediaArrayIndex;
-        bool registrar_locally_allocated;
         SDP_ERROR_CODE(*sessionParser)(const char *sdp_text, int length, SDPInfo& sdp);	/*Used to parse session information*/
-        bool memflag;
-        bool localRegAllocation;
         bool applicationFlag;
 
         bool parse_rtpmap(const char *start, const char *end, int& rtp_payload,
@@ -96,27 +73,11 @@ class SDP_Parser
 
         //  void print_memfrag(MemoryFragment& memfrag);
         int convertToMilliSec(RtspRangeType range , int &startTime, int &stopTime);
-
-        SDPAMRMediaParserFactory        *_pAMRMediaParserFactory;
-        SDPEVRCMediaParserFactory       *_pEVRCMediaParserFactory;
-        SDPAACMediaParserFactory        *_pAACMediaParserFactory;
-        SDPASFMediaParserFactory        *_pASFMediaParserFactory;
-        SDPH263MediaParserFactory       *_pH263MediaParserFactory;
-        SDPMPEG4MediaParserFactory      *_pMPEG4MediaParserFactory;
-        SDPRFC3640MediaParserFactory     *_pRFC3640MediaParserFactory;
-        SDPStillImageMediaParserFactory *_pStillImageMediaParserFactory;
-        SDPH264MediaParserFactory       *_pH264MediaParserFactory;
-        SDPPCMAMediaParserFactory       *_pPCMAMediaParserFactory;
-        SDPPCMUMediaParserFactory       *_pPCMUMediaParserFactory;
-
         bool isSipSdp;
     public:
 
         OSCL_IMPORT_REF
-        SDP_Parser(bool sipSdp = false);
-
-        OSCL_IMPORT_REF
-        SDP_Parser(SDPMediaParserRegistry *regTable, bool sipSdp = false);
+        SDP_Parser(SDPMediaParserRegistry*& regTable, bool sipSdp = false);
 
         OSCL_IMPORT_REF
         ~SDP_Parser();
@@ -135,5 +96,6 @@ class SDP_Parser
 
         OSCL_IMPORT_REF
         bool allocateRegistrar();                       //Used to allocate new parser.
+
 };
 #endif

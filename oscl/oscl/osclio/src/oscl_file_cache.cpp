@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -313,7 +313,6 @@ int32 OsclFileCache::Write(const void* inputBuffer, uint32 size, uint32 numeleme
     }
 
     //return number of whole elements written.
-    // PNSC-106: Fix division of 0 problem if size is 0
     return (size) ? ((size*numelements - bytesToWrite) / size) : 0;
 
 }

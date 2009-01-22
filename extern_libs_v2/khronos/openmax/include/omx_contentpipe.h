@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
  * -------------------------------------------------------------------
  */
 /*
- * Copyright (c) 2006 The Khronos Group Inc. 
+ * Copyright (c) 2008 The Khronos Group Inc. 
  * 
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -38,7 +38,7 @@
  *
  */
 
-/** OMX_ContentPipe.h - OpenMax IL version 1.1
+/** omx_contentpipe.h - OpenMax IL version 1.1.2
  *  The OMX_ContentPipe header file contains the definitions used to define
  *  the public interface for content piples.  This header file is intended to
  *  be used by the component.
@@ -46,6 +46,38 @@
 
 #ifndef OMX_CONTENTPIPE_H
 #define OMX_CONTENTPIPE_H
+
+#ifndef KD_EACCES
+/* OpenKODE error codes. CPResult values may be zero (indicating success
+   or one of the following values) */
+#define KD_EACCES (1)
+#define KD_EADDRINUSE (2)
+#define KD_EAGAIN (5)
+#define KD_EBADF (7)
+#define KD_EBUSY (8)
+#define KD_ECONNREFUSED (9)
+#define KD_ECONNRESET (10)
+#define KD_EDEADLK (11)
+#define KD_EDESTADDRREQ (12)
+#define KD_ERANGE (35)
+#define KD_EEXIST (13)
+#define KD_EFBIG (14)
+#define KD_EHOSTUNREACH (15)
+#define KD_EINVAL (17)
+#define KD_EIO (18)
+#define KD_EISCONN (20)
+#define KD_EISDIR (21)
+#define KD_EMFILE (22)
+#define KD_ENAMETOOLONG (23)
+#define KD_ENOENT (24)
+#define KD_ENOMEM (25)
+#define KD_ENOSPC (26)
+#define KD_ENOSYS (27)
+#define KD_ENOTCONN (28)
+#define KD_EPERM (33)
+#define KD_ETIMEDOUT (36)
+#define KD_EILSEQ (19)
+#endif
 
 /** Map types from OMX standard types only here so interface is as generic as possible. */
 typedef OMX_U32    CPresult;
@@ -63,6 +95,8 @@ typedef enum CP_ORIGINTYPE {
     CP_OriginBegin,      
     CP_OriginCur,      
     CP_OriginEnd,      
+    CP_OriginKhronosExtensions = 0x6F000000, /**< Reserved region for introducing Khronos Standard Extensions */ 
+    CP_OriginVendorStartUnused = 0x7F000000, /**< Reserved region for introducing Vendor Extensions */
     CP_OriginMax = 0X7FFFFFFF
 } CP_ORIGINTYPE;
 
@@ -73,6 +107,8 @@ typedef enum CP_ACCESSTYPE {
     CP_AccessRead,      
     CP_AccessWrite,  
     CP_AccessReadWrite ,  
+    CP_AccessKhronosExtensions = 0x6F000000, /**< Reserved region for introducing Khronos Standard Extensions */ 
+    CP_AccessVendorStartUnused = 0x7F000000, /**< Reserved region for introducing Vendor Extensions */
     CP_AccessMax = 0X7FFFFFFF
 } CP_ACCESSTYPE;
 
@@ -93,6 +129,8 @@ typedef enum CP_CHECKBYTESRESULTTYPE
     CP_CheckBytesAtEndOfStream,         /**< The pipe has reached the end of stream
                                               and no more bytes are available. */
     CP_CheckBytesOutOfBuffers,          /**< All read/write buffers are currently in use. */
+    CP_CheckBytesKhronosExtensions = 0x6F000000, /**< Reserved region for introducing Khronos Standard Extensions */ 
+    CP_CheckBytesVendorStartUnused = 0x7F000000, /**< Reserved region for introducing Vendor Extensions */
     CP_CheckBytesMax = 0X7FFFFFFF
 } CP_CHECKBYTESRESULTTYPE;
 
@@ -103,6 +141,8 @@ typedef enum CP_EVENTTYPE{
     CP_BytesAvailable,      	    /** bytes requested in a CheckAvailableBytes call are now available*/
     CP_Overflow,  		           /** enumeration of content pipe events sent to the client callback*/
     CP_PipeDisconnected  ,  		    /** enumeration of content pipe events sent to the client callback*/
+    CP_EventKhronosExtensions = 0x6F000000, /**< Reserved region for introducing Khronos Standard Extensions */ 
+    CP_EventVendorStartUnused = 0x7F000000, /**< Reserved region for introducing Vendor Extensions */
     CP_EventMax = 0X7FFFFFFF
 } CP_EVENTTYPE;
 

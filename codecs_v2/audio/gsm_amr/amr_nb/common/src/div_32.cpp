@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,12 +28,7 @@ terms listed above has been obtained from the copyright holder.
 ****************************************************************************************/
 /*
 
-
-
-
  Filename: /audio/gsm_amr/c/src/div_32.c
-
-     Date: 09/07/2000
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
@@ -52,6 +47,7 @@ terms listed above has been obtained from the copyright holder.
 
  Description:  Added casting to eliminate warnings
 
+ Who:                           Date:
  Description:
 
 

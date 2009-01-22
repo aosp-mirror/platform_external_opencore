@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,20 +18,11 @@
 #include "oscl_types.h"
 #include "avc_dec.h"
 #include "avcdec_int.h"
-#include "pv_omxcore.h"
 
 
 /*************************************/
 /* functions needed for video engine */
 /*************************************/
-// init static members of AvcDecoder class
-OMX_TICKS AvcDecoder_OMX::CurrInputTimestamp = 0;
-uint8* AvcDecoder_OMX::pDpbBuffer = NULL;
-uint32 AvcDecoder_OMX::FrameSize = 0;
-OMX_U32 AvcDecoder_OMX::iAvcDecoderCounterInstance = 0;
-OMX_TICKS	AvcDecoder_OMX::DisplayTimestampArray[] = {0};
-AVCHandle	AvcDecoder_OMX::AvcHandle;
-AVCDecSPSInfo	AvcDecoder_OMX::SeqInfo;
 
 /* These two functions are for callback functions of AvcHandle */
 int32 CBAVC_Malloc_OMX(void* aUserData, int32 aSize, int32 aAttribute)
@@ -59,14 +50,18 @@ AVCDec_Status CBAVCDec_GetData_OMX(void* aUserData, uint8** aBuffer, uint* aSize
     return AVCDEC_FAIL;  /* nothing for now */
 }
 
-
 int32 AvcDecoder_OMX::AllocateBuffer_OMX(void* aUserData, int32 i, uint8** aYuvBuffer)
 {
-    OSCL_UNUSED_ARG(aUserData);
-    //printf("Index %d\n", i);
-    *aYuvBuffer = pDpbBuffer + i * FrameSize;
+    AvcDecoder_OMX* pAvcDecoder_OMX = (AvcDecoder_OMX*)aUserData;
+
+    if (NULL == pAvcDecoder_OMX)
+    {
+        return 0;
+    }
+
+    *aYuvBuffer = pAvcDecoder_OMX->pDpbBuffer + i * pAvcDecoder_OMX->FrameSize;
     //Store the input timestamp at the correct index
-    DisplayTimestampArray[i] = CurrInputTimestamp;
+    pAvcDecoder_OMX->DisplayTimestampArray[i] = pAvcDecoder_OMX->CurrInputTimestamp;
     return 1;
 }
 
@@ -80,19 +75,25 @@ void UnbindBuffer_OMX(void* aUserData, int32 i)
 
 int32 AvcDecoder_OMX::ActivateSPS_OMX(void* aUserData, uint aSizeInMbs, uint aNumBuffers)
 {
-    OSCL_UNUSED_ARG(aUserData);
-    PVAVCDecGetSeqInfo(&(AvcHandle), &(SeqInfo));
+    AvcDecoder_OMX* pAvcDecoder_OMX = (AvcDecoder_OMX*)aUserData;
 
-    if (pDpbBuffer)
+    if (NULL == pAvcDecoder_OMX)
     {
-        oscl_free(pDpbBuffer);
-        pDpbBuffer = NULL;
+        return 0;
     }
 
-    FrameSize = (aSizeInMbs << 7) * 3;
-    pDpbBuffer = (uint8*) oscl_malloc(aNumBuffers * (FrameSize));
-    return 1;
+    PVAVCDecGetSeqInfo(&(pAvcDecoder_OMX->AvcHandle), &(pAvcDecoder_OMX->SeqInfo));
 
+    if (pAvcDecoder_OMX->pDpbBuffer)
+    {
+        oscl_free(pAvcDecoder_OMX->pDpbBuffer);
+        pAvcDecoder_OMX->pDpbBuffer = NULL;
+    }
+
+    pAvcDecoder_OMX->FrameSize = (aSizeInMbs << 7) * 3;
+    pAvcDecoder_OMX->pDpbBuffer = (uint8*) oscl_malloc(aNumBuffers * (pAvcDecoder_OMX->FrameSize));
+
+    return 1;
 }
 
 /* initialize video decoder */
@@ -100,7 +101,7 @@ OMX_BOOL AvcDecoder_OMX::InitializeVideoDecode_OMX()
 {
     /* Initialize AvcHandle */
     AvcHandle.AVCObject = NULL;
-    AvcHandle.userData = NULL;
+    AvcHandle.userData = (void*)this;
     AvcHandle.CBAVC_DPBAlloc = ActivateSPS_OMX;
     AvcHandle.CBAVC_FrameBind = AllocateBuffer_OMX;
     AvcHandle.CBAVC_FrameUnbind = UnbindBuffer_OMX;
@@ -159,9 +160,6 @@ OMX_ERRORTYPE AvcDecoder_OMX::AvcDecInit_OMX()
     //Set up the cleanup object in order to do clean up work automatically
     pCleanObject = OSCL_NEW(AVCCleanupObject_OMX, (&AvcHandle));
 
-    DecodeSliceFlag = OMX_FALSE;
-    pNalBufferTemp = NULL;
-
     return OMX_ErrorNone;
 }
 
@@ -176,9 +174,9 @@ OMX_BOOL AvcDecoder_OMX::AvcDecodeVideo_OMX(OMX_U8* aOutBuffer, OMX_U32* aOutput
     OMX_S32 Width, Height;
     OMX_S32 crop_top, crop_bottom, crop_right, crop_left;
     uint8* pNalBuffer;
-    int32 NalSize, NalType, NalRefId, PicType;
+    int32 NalSize, NalType, NalRefId;
+    //int32 PicType;
     AVCDecObject* pDecVid;
-    static int32 FrameNo;
 
     *aResizeFlag = OMX_FALSE;
     OMX_U32 OldWidth, OldHeight;
@@ -186,25 +184,6 @@ OMX_BOOL AvcDecoder_OMX::AvcDecodeVideo_OMX(OMX_U8* aOutBuffer, OMX_U32* aOutput
     OldWidth = 	aPortParam->format.video.nFrameWidth;
     OldHeight = aPortParam->format.video.nFrameHeight;
 
-
-    if (OMX_TRUE == DecodeSliceFlag)
-    {
-        Status = (AVCDec_Status) FlushOutput_OMX(aOutBuffer, aOutputLength, aOutTimestamp, OldWidth, OldHeight);
-
-        if ((Status = PVAVCDecodeSlice(&(AvcHandle), pNalBufferTemp, NalSizeTemp)) == AVCDEC_PICTURE_OUTPUT_READY)
-        {
-            DecodeSliceFlag = OMX_TRUE;
-        }
-        else
-        {
-            if (pNalBufferTemp)
-                oscl_free(pNalBufferTemp);
-            pNalBufferTemp = NULL;
-            DecodeSliceFlag = OMX_FALSE;
-        }
-
-        return OMX_TRUE;
-    }
 
     if (!aMarkerFlag)
     {
@@ -277,7 +256,7 @@ OMX_BOOL AvcDecoder_OMX::AvcDecodeVideo_OMX(OMX_U8* aOutBuffer, OMX_U32* aOutput
         // FORCE RESIZE ALWAYS FOR SPS
         *aResizeFlag = OMX_TRUE;
 
-        *iFrameCount = 1;
+        (*iFrameCount)++;
 
     }
 
@@ -294,22 +273,30 @@ OMX_BOOL AvcDecoder_OMX::AvcDecodeVideo_OMX(OMX_U8* aOutBuffer, OMX_U32* aOutput
     {
         if ((Status = PVAVCDecodeSlice(&(AvcHandle), pNalBuffer, NalSize)) == AVCDEC_PICTURE_OUTPUT_READY)
         {
-            Status = (AVCDec_Status) FlushOutput_OMX(aOutBuffer, aOutputLength, aOutTimestamp, OldWidth, OldHeight);
+            FlushOutput_OMX(aOutBuffer, aOutputLength, aOutTimestamp, OldWidth, OldHeight);
 
-            if ((Status = PVAVCDecodeSlice(&(AvcHandle), pNalBuffer, NalSize)) == AVCDEC_PICTURE_OUTPUT_READY)
+            //Input buffer not consumed yet, do not mark it free.
+            if (aMarkerFlag)
             {
-                pNalBufferTemp = (uint8*) oscl_malloc(NalSize);
-                oscl_memcpy(pNalBufferTemp, pNalBuffer, NalSize);
-                NalSizeTemp = NalSize;
-                DecodeSliceFlag = OMX_TRUE;
-
+                *aInBufSize = NalSize;
+            }
+            else
+            {
+                *aInBufSize += InputBytesConsumed;
+                aInputBuf -= InputBytesConsumed;
             }
         }
 
         if (Status == AVCDEC_PICTURE_READY)
         {
-            FrameNo++;
-            //printf("decode frame %d \n", FrameNo);
+            (*iFrameCount)++;
+        }
+
+        if ((AVCDEC_NO_DATA == Status) || (AVCDEC_PACKET_LOSS == Status) ||
+                (AVCDEC_NO_BUFFER == Status) || (AVCDEC_MEMORY_FAIL == Status) ||
+                (AVCDEC_FAIL == Status))
+        {
+            return OMX_FALSE;
         }
     }
 
@@ -323,18 +310,21 @@ OMX_BOOL AvcDecoder_OMX::AvcDecodeVideo_OMX(OMX_U8* aOutBuffer, OMX_U32* aOutput
 
     else if ((AVCNalUnitType)NalType == AVC_NALTYPE_AUD)
     {
-        PicType = pNalBuffer[1] >> 5;
+        //PicType = pNalBuffer[1] >> 5;
     }
 
-    else if ((AVCNalUnitType)NalType == AVC_NALTYPE_EOSTREAM) // end of stream
+    else if ((AVCNalUnitType)NalType == AVC_NALTYPE_EOSTREAM || // end of stream
+             (AVCNalUnitType)NalType == AVC_NALTYPE_EOSEQ || // end of sequence
+             (AVCNalUnitType)NalType == AVC_NALTYPE_FILL) // filler data
     {
         return OMX_TRUE;
     }
 
-    else
-    {
-        printf("\nNAL_type = %d, unsupported nal type or not sure what to do for this type\n", NalType);
-    }
+    //else
+    //{
+    //printf("\nNAL_type = %d, unsupported nal type or not sure what to do for this type\n", NalType);
+    //	return OMX_FALSE;
+    //}
     return OMX_TRUE;
 
 }
@@ -360,7 +350,6 @@ OMX_ERRORTYPE AvcDecoder_OMX::AvcDecDeinit_OMX()
 
 AVCDec_Status AvcDecoder_OMX::GetNextFullNAL_OMX(uint8** aNalBuffer, int32* aNalSize, OMX_U8* aInputBuf, OMX_U32* aInBufSize)
 {
-    uint32 BuffConsumed;
     uint8* pBuff = aInputBuf;
     OMX_U32 InputSize;
 
@@ -374,9 +363,9 @@ AVCDec_Status AvcDecoder_OMX::GetNextFullNAL_OMX(uint8** aNalBuffer, int32* aNal
         return AVCDEC_FAIL;
     }
 
-    BuffConsumed = ((*aNalSize) + (int32)(*aNalBuffer - pBuff));
-    aInputBuf += BuffConsumed;
-    *aInBufSize = InputSize - BuffConsumed;
+    InputBytesConsumed = ((*aNalSize) + (int32)(*aNalBuffer - pBuff));
+    aInputBuf += InputBytesConsumed;
+    *aInBufSize = InputSize - InputBytesConsumed;
 
     return AVCDEC_SUCCESS;
 }
@@ -385,5 +374,10 @@ AVCCleanupObject_OMX::~AVCCleanupObject_OMX()
 {
     PVAVCCleanUpDecoder(ipavcHandle);
 
+}
+
+void AvcDecoder_OMX::ResetDecoder()
+{
+    PVAVCDecReset(&(AvcHandle));
 }
 

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,37 +15,11 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/* //////////////////////////////////////////////////////////////////////// */
-/*	=====================================================================   */
-/*	File: rfc3640MediaInfoParser.cpp										*/
-/*	Description:															*/
-/*																			*/
-/*																			*/
-/*	Rev:																	*/
-/*	Created: 04/26/07														*/
-/*	=====================================================================	*/
-/*																			*/
-/*	Revision History:														*/
-/*																			*/
-/*	Rev:																	*/
-/*	Date:																	*/
-/*	Description:															*/
-/*																			*/
-/* //////////////////////////////////////////////////////////////////////// */
-
 #include "rfc3640_media_info_parser.h"
 #include "oscl_string_utils.h"
 #include "oscl_string_containers.h"
 #include "sdp_error.h"
 
-/* ======================================================================== */
-/*	Function : parseMediaInfo		                                        */
-/*	Date     : 04/26/2007													*/
-/*	Purpose  : Parses rfc3640 text and fills out the rfc3640 media structure*/
-/*	In/out   :																*/
-/*	Return   :																*/
-/*	Modified :																*/
-/* ======================================================================== */
 SDP_ERROR_CODE
 SDPRFC3640MediaInfoParser::parseMediaInfo(const char *buff, const int index, SDPInfo *sdp, payloadVector payload_vec, bool isSipSdp, int alt_id, bool alt_def_id)
 {
@@ -60,7 +34,7 @@ SDPRFC3640MediaInfoParser::parseMediaInfo(const char *buff, const int index, SDP
     bool indexDeltaLength_found_in_fmtp = false;
     SDPAllocDestructDealloc<uint8> SDP_alloc;
     int strmType = 5;
-    OsclMemoryFragment modeMemFrag;
+    OsclMemoryFragment modeMemFrag = {NULL, 0};
     int decLength = 0;
 
 
@@ -152,7 +126,6 @@ SDPRFC3640MediaInfoParser::parseMediaInfo(const char *buff, const int index, SDP
                         }
                         modeMemFrag.ptr = (void*)temp;
                         modeMemFrag.len = (tmp_end_line - temp);
-
                     }
 
                     if (tmp_end_line != line_end_ptr) temp = tmp_end_line + 1;
@@ -175,6 +148,12 @@ SDPRFC3640MediaInfoParser::parseMediaInfo(const char *buff, const int index, SDP
     {
         PVMF_SDP_PARSER_LOGERROR((0, "SDPRFC3640MediaInfoParser::parseMediaInfo - No fmtp line found"));
         return SDP_BAD_MEDIA_FORMAT;
+    }
+
+    if (NULL == modeMemFrag.ptr)
+    {
+        PVMF_SDP_PARSER_LOGERROR((0, "SDPRFC3640MediaInfoParser::parseMediaInfo - Bad a=fmtp line format - No mode field"));
+        return SDP_BAD_MEDIA_FMTP;
     }
 
     if (VOLLength < 0)

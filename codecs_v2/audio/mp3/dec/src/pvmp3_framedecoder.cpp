@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -349,12 +349,13 @@ ERROR_CODE pvmp3_framedecoder(tPVMP3DecoderExternal *pExt,
                     }
                     else
                     {
+                        int32 * tmp = pVars->Scratch_mem;
                         pvmp3_mpeg2_get_scale_factors(&pVars->scaleFactors[ch],
                                                       &pVars->sideInfo,
                                                       gr,
                                                       ch,
                                                       info,
-                                                      (uint32 *)pVars->Scratch_mem,
+                                                      (uint32 *)tmp,
                                                       &pVars->mainDataStream);
                     }
 
@@ -398,12 +399,13 @@ ERROR_CODE pvmp3_framedecoder(tPVMP3DecoderExternal *pExt,
                     }
                     else
                     {
+                        int32 * tmp = pVars->Scratch_mem;
                         pvmp3_mpeg2_stereo_proc(pChVars[ LEFT]->work_buf_int32,
                                                 pChVars[RIGHT]->work_buf_int32,
                                                 &pVars->scaleFactors[RIGHT],
                                                 &pVars->sideInfo.ch[ LEFT].gran[gr],
                                                 &pVars->sideInfo.ch[RIGHT].gran[gr],
-                                                (uint32 *)pVars->Scratch_mem,
+                                                (uint32 *)tmp,
                                                 used_freq_lines,
                                                 info);
                     }

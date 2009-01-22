@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
  * -------------------------------------------------------------------
  */
 /*
- * Copyright (c) 2005 The Khronos Group Inc. 
+ * Copyright (c) 2008 The Khronos Group Inc. 
  * 
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -38,7 +38,7 @@
  *
  */
 
-/** OMX_Types.h - OpenMax IL version 1.1
+/** omx_types.h - OpenMax IL version 1.1.2
  *  The OMX_Types header file contains the primitive type definitions used by 
  *  the core, the application and the component.  This file may need to be
  *  modified to be used on systems that do not have "char" set to 8 bits, 
@@ -55,62 +55,59 @@ extern "C" {
 /** The OMX_API and OMX_APIENTRY are platform specific definitions used
  *  to declare OMX function prototypes.  They are modified to meet the
  *  requirements for a particular platform */
-#ifdef _WIN32
+#ifdef __SYMBIAN32__   
 #   ifdef __OMX_EXPORTS
 #       define OMX_API __declspec(dllexport)
 #   else
-//#       define OMX_API __declspec(dllimport)
-#define OMX_API 
+#       ifdef _WIN32
+#           define OMX_API __declspec(dllexport) 
+#       else
+#           define OMX_API __declspec(dllimport)
+#       endif
 #   endif
 #else
-#   ifdef __OMX_EXPORTS
-#       define OMX_API
+#   ifdef _WIN32
+#      ifdef __OMX_EXPORTS
+#          define OMX_API __declspec(dllexport)
+#      else
+//#          define OMX_API __declspec(dllimport)
+#define OMX_API
+#      endif
 #   else
-#       define OMX_API extern
+#      ifdef __OMX_EXPORTS
+#          define OMX_API
+#      else
+#          define OMX_API extern
+#      endif
 #   endif
 #endif
 
-#ifdef __SYMBIAN32__
-#   ifdef __OMX_EXPORTS
-#       define OMX_API EXPORT_C
-#   else
-#       define OMX_API IMPORT_C
-#   endif
-#elif defined(_WIN32)
-#   ifdef __OMX_EXPORTS
-#       define OMX_API __declspec(dllexport)
-#   else
-//#       define OMX_API __declspec(dllimport)
-#define OMX_API 
-#   endif
-#else
-#   ifdef __OMX_EXPORTS
-#       define OMX_API
-#   else
-#       define OMX_API extern
-#   endif
-#endif
-
-
+#ifndef OMX_APIENTRY
 #define OMX_APIENTRY 
-
+#endif 
 
 /** OMX_IN is used to identify inputs to an OMX function.  This designation 
     will also be used in the case of a pointer that points to a parameter 
     that is used as an output. */
+#ifndef OMX_IN
 #define OMX_IN
+#endif
 
 /** OMX_OUT is used to identify outputs from an OMX function.  This 
     designation will also be used in the case of a pointer that points 
     to a parameter that is used as an input. */
+#ifndef OMX_OUT
 #define OMX_OUT
+#endif
 
 
 /** OMX_INOUT is used to identify parameters that may be either inputs or
     outputs from an OMX function at the same time.  This designation will 
     also be used in the case of a pointer that  points to a parameter that 
     is used both as an input and an output. */
+#ifndef OMX_INOUT
 #define OMX_INOUT
+#endif
 
 /** OMX_ALL is used to as a wildcard to select all entities of the same type
  *  when specifying the index, or referring to a object by an index.  (i.e.

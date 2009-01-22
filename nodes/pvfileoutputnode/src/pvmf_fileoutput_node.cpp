@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ PVMFFileOutputNode::PVMFFileOutputNode(int32 aPriority)
         , iFileOpened(0)
         , iFirstMediaData(false)
         , iLogger(NULL)
-        , iFormat(PVMF_FORMAT_UNKNOWN)
+        , iFormat(PVMF_MIME_FORMAT_UNKNOWN)
         , iExtensionRefCount(0)
         , iMaxFileSizeEnabled(false)
         , iMaxDurationEnabled(false)
@@ -212,25 +212,26 @@ PVMFStatus PVMFFileOutputNode::GetCapability(PVMFNodeCapability& aNodeCapability
     PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_INFO, (0, "PVMFFileOutputNode:GetCapability"));
     iCapability.iInputFormatCapability.clear();
 
-    if (iFormat != PVMF_FORMAT_UNKNOWN)
+    if (iFormat != PVMF_MIME_FORMAT_UNKNOWN)
     {
         // Format is already set, so return only that one
         iCapability.iInputFormatCapability.push_back(iFormat);
     }
     else
     {
-        iCapability.iInputFormatCapability.push_back(PVMF_AMR_IETF);
-        iCapability.iInputFormatCapability.push_back(PVMF_M4V);
-        iCapability.iInputFormatCapability.push_back(PVMF_PCM8);
-        iCapability.iInputFormatCapability.push_back(PVMF_PCM16);
-        iCapability.iInputFormatCapability.push_back(PVMF_YUV420);
-        iCapability.iInputFormatCapability.push_back(PVMF_ADTS);
-        iCapability.iInputFormatCapability.push_back(PVMF_H263);
-        iCapability.iInputFormatCapability.push_back(PVMF_H264_RAW);
-        iCapability.iInputFormatCapability.push_back(PVMF_H264_MP4);
-        iCapability.iInputFormatCapability.push_back(PVMF_H264);
-        iCapability.iInputFormatCapability.push_back(PVMF_PCM);
-        iCapability.iInputFormatCapability.push_back(PVMF_3GPP_TIMEDTEXT);
+        iCapability.iInputFormatCapability.push_back(PVMF_MIME_AMR_IETF);
+        iCapability.iInputFormatCapability.push_back(PVMF_MIME_M4V);
+        iCapability.iInputFormatCapability.push_back(PVMF_MIME_PCM8);
+        iCapability.iInputFormatCapability.push_back(PVMF_MIME_PCM16);
+        iCapability.iInputFormatCapability.push_back(PVMF_MIME_YUV420);
+        iCapability.iInputFormatCapability.push_back(PVMF_MIME_ADTS);
+        iCapability.iInputFormatCapability.push_back(PVMF_MIME_H2631998);
+        iCapability.iInputFormatCapability.push_back(PVMF_MIME_H2632000);
+        iCapability.iInputFormatCapability.push_back(PVMF_MIME_H264_VIDEO_RAW);
+        iCapability.iInputFormatCapability.push_back(PVMF_MIME_H264_VIDEO_MP4);
+        iCapability.iInputFormatCapability.push_back(PVMF_MIME_H264_VIDEO);
+        iCapability.iInputFormatCapability.push_back(PVMF_MIME_PCM);
+        iCapability.iInputFormatCapability.push_back(PVMF_MIME_3GPP_TIMEDTEXT);
     }
     aNodeCapability = iCapability;
     return PVMFSuccess;
@@ -514,7 +515,7 @@ void PVMFFileOutputNode::GetDurationProgressReportConfig(bool& aEnable, uint32& 
 }
 
 ////////////////////////////////////////////////////////////////////////////
-PVMFStatus PVMFFileOutputNode::SetClock(OsclClock* aClock)
+PVMFStatus PVMFFileOutputNode::SetClock(PVMFMediaClock* aClock)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "PVMFFileOutputNode::SetClock: aClock=0x%x", aClock));
@@ -531,6 +532,7 @@ PVMFStatus PVMFFileOutputNode::SetClock(OsclClock* aClock)
 ///////////////////////////////////////////////////////////////////////////
 PVMFStatus PVMFFileOutputNode::ChangeClockRate(int32 aRate)
 {
+    OSCL_UNUSED_ARG(aRate);
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "PVMFFileOutputNode::ChangeClockRate: aRate=%d", aRate));
 
@@ -579,16 +581,14 @@ void PVMFFileOutputNode::ClockStopped(void)
 
 ////////////////////////////////////////////////////////////////////////////
 PVMFCommandId PVMFFileOutputNode::SkipMediaData(PVMFSessionId aSessionId,
-        PVMFTimestamp aStartingTimestamp,
         PVMFTimestamp aResumeTimestamp,
         uint32 aStreamID,
-        bool aRenderSkippedData,
         bool aPlayBackPositionContinuous,
         OsclAny* aContext)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "PVMFFileOutputNode::SkipMediaData: aStartingTimestamp=%d, aResumeTimestamp=%d, aRenderSkippedData=%d, aContext=0x%x",
-                     aStartingTimestamp, aResumeTimestamp, aRenderSkippedData, aContext));
+                    (0, "PVMFFileOutputNode::SkipMediaData: aResumeTimestamp=%d, aContext=0x%x",
+                     aResumeTimestamp, aContext));
 
     if (!iInPort)
     {
@@ -603,7 +603,7 @@ PVMFCommandId PVMFFileOutputNode::SkipMediaData(PVMFSessionId aSessionId,
         case EPVMFNodeStarted:
         case EPVMFNodeInitialized:
         case EPVMFNodePaused:
-            return ((PVMFFileOutputInPort*)iInPort)->SkipMediaData(aSessionId, aStartingTimestamp, aResumeTimestamp, aStreamID, aRenderSkippedData, aPlayBackPositionContinuous, aContext);
+            return ((PVMFFileOutputInPort*)iInPort)->SkipMediaData(aSessionId, aResumeTimestamp, aStreamID, aPlayBackPositionContinuous, aContext);
 
         default:
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
@@ -761,15 +761,17 @@ PVMFStatus PVMFFileOutputNode::ProcessIncomingData(PVMFSharedMediaDataPtr aMedia
                     }
                 }
 
-                switch (((PVMFFileOutputInPort*)iInPort)->iFormat)
+                if (((PVMFFileOutputInPort*)iInPort)->iFormat == PVMF_MIME_3GPP_TIMEDTEXT)
                 {
-                    case PVMF_3GPP_TIMEDTEXT:
+                    PVMFTimedTextMediaData* textmediadata = (PVMFTimedTextMediaData*)(frag.getMemFragPtr());
+                    // Output the text sample entry
+                    if (textmediadata->iTextSampleEntry.GetRep() != NULL)
                     {
                         PVMFTimedTextMediaData* textmediadata = (PVMFTimedTextMediaData*)(frag.getMemFragPtr());
                         // Output the text sample entry
                         if (textmediadata->iTextSampleEntry.GetRep() != NULL)
                         {
-                            // TODO Write out the text sample entry in a better format
+                            // @TODO Write out the text sample entry in a better format
                             status = WriteData((OsclAny*)(textmediadata->iTextSampleEntry.GetRep()), sizeof(PVMFTimedTextSampleEntry));
                             if (status == PVMFFailure)
                             {
@@ -783,21 +785,20 @@ PVMFStatus PVMFFileOutputNode::ProcessIncomingData(PVMFSharedMediaDataPtr aMedia
                         if (status == PVMFFailure)
                         {
                             PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
-                                            (0, "PVMFFileOutputNode::ProcessIncomingData: Error - WriteData failed for text sample data"));
+                                            (0, "PVMFFileOutputNode::ProcessIncomingData: Error - WriteData failed for text sample entry"));
                             return PVMFFailure;
                         }
                     }
-                    break;
-
-                    default:
-                        status = WriteData(frag, aMediaData->getTimestamp());
-                        if (status == PVMFFailure)
-                        {
-                            PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
-                                            (0, "PVMFFileOutputNode::ProcessIncomingData: Error - WriteData failed"));
-                            return PVMFFailure;
-                        }
-                        break;
+                }
+                else
+                {
+                    status = WriteData(frag, aMediaData->getTimestamp());
+                    if (status == PVMFFailure)
+                    {
+                        PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
+                                        (0, "PVMFFileOutputNode::ProcessIncomingData: Error - WriteData failed"));
+                        return PVMFFailure;
+                    }
                 }
 
                 break;
@@ -848,85 +849,83 @@ PVMFStatus PVMFFileOutputNode::WriteFormatSpecificInfo(OsclAny* aPtr, uint32 aSi
     if (iFirstMediaData)
     {
         // Add the amr header if required
-        switch (((PVMFFileOutputInPort*)iInPort)->iFormat)
+        if (((PVMFFileOutputInPort*)iInPort)->iFormat == PVMF_MIME_AMR_IETF)
         {
-            case PVMF_AMR_IETF:
-                // Check if the incoming data has "#!AMR\n" string
-                if (aSize < AMR_HEADER_SIZE ||
-                        oscl_strncmp((const char*)aPtr, AMR_HEADER, AMR_HEADER_SIZE) != 0)
+            // Check if the incoming data has "#!AMR\n" string
+            if (aSize < AMR_HEADER_SIZE ||
+                    oscl_strncmp((const char*)aPtr, AMR_HEADER, AMR_HEADER_SIZE) != 0)
+            {
+                // AMR header not found, add AMR header to file first
+                status = WriteData((OsclAny*)AMR_HEADER, AMR_HEADER_SIZE);
+                if (status != PVMFSuccess)
                 {
-                    // AMR header not found, add AMR header to file first
-                    status = WriteData((OsclAny*)AMR_HEADER, AMR_HEADER_SIZE);
-                    if (status != PVMFSuccess)
-                    {
-                        PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
-                                        (0, "PVMFFileOutputNode::WriteFormatSpecificInfo: Error - WriteData failed"));
-                        return status;
-                    }
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
+                                    (0, "PVMFFileOutputNode::WriteFormatSpecificInfo: Error - WriteData failed"));
+                    return status;
                 }
-                iFirstMediaData = false;
-                break;
-
-            case PVMF_M4V:
-                if (aSize > 0)
+            }
+            iFirstMediaData = false;
+        }
+        else if (((PVMFFileOutputInPort*)iInPort)->iFormat == PVMF_MIME_M4V)
+        {
+            if (aSize > 0)
+            {
+                status = WriteData(aPtr, aSize);
+                if (status != PVMFSuccess)
                 {
-                    status = WriteData(aPtr, aSize);
-                    if (status != PVMFSuccess)
-                    {
-                        PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
-                                        (0, "PVMFFileOutputNode::WriteFormatSpecificInfo: Error - WriteData failed"));
-                        return status;
-                    }
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
+                                    (0, "PVMFFileOutputNode::WriteFormatSpecificInfo: Error - WriteData failed"));
+                    return status;
                 }
-                iFirstMediaData = false;
-                break;
-
-            case PVMF_PCM8:
-                if (aSize > 0)
+            }
+            iFirstMediaData = false;
+        }
+        else if (((PVMFFileOutputInPort*)iInPort)->iFormat == PVMF_MIME_PCM8)
+        {
+            if (aSize > 0)
+            {
+                status = WriteData(aPtr, aSize);
+                if (status != PVMFSuccess)
                 {
-                    status = WriteData(aPtr, aSize);
-                    if (status != PVMFSuccess)
-                    {
-                        PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
-                                        (0, "PVMFFileOutputNode::WriteFormatSpecificInfo: Error - WriteData failed"));
-                        return status;
-                    }
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
+                                    (0, "PVMFFileOutputNode::WriteFormatSpecificInfo: Error - WriteData failed"));
+                    return status;
                 }
-                iFirstMediaData = false;
-                break;
-
-            case PVMF_PCM16:
-                if (aSize > 0)
+            }
+            iFirstMediaData = false;
+        }
+        else if (((PVMFFileOutputInPort*)iInPort)->iFormat == PVMF_MIME_PCM16)
+        {
+            if (aSize > 0)
+            {
+                status = WriteData(aPtr, aSize);
+                if (status != PVMFSuccess)
                 {
-                    status = WriteData(aPtr, aSize);
-                    if (status != PVMFSuccess)
-                    {
-                        PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
-                                        (0, "PVMFFileOutputNode::WriteFormatSpecificInfo: Error - WriteData failed"));
-                        return status;
-                    }
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
+                                    (0, "PVMFFileOutputNode::WriteFormatSpecificInfo: Error - WriteData failed"));
+                    return status;
                 }
-                iFirstMediaData = false;
-                break;
-
-            case PVMF_3GPP_TIMEDTEXT:
-                if (aSize > 0)
+            }
+            iFirstMediaData = false;
+        }
+        else if (((PVMFFileOutputInPort*)iInPort)->iFormat == PVMF_MIME_3GPP_TIMEDTEXT)
+        {
+            if (aSize > 0)
+            {
+                // TODO Write out the text track level info in some formatted way
+                status = WriteData(aPtr, aSize);
+                if (status != PVMFSuccess)
                 {
-                    // TODO Write out the text track level info in some formatted way
-                    status = WriteData(aPtr, aSize);
-                    if (status != PVMFSuccess)
-                    {
-                        PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
-                                        (0, "PVMFFileOutputNode::WriteFormatSpecificInfo: Error - WriteData failed"));
-                        return status;
-                    }
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
+                                    (0, "PVMFFileOutputNode::WriteFormatSpecificInfo: Error - WriteData failed"));
+                    return status;
                 }
-                iFirstMediaData = false;
-                break;
-
-            default:
-                iFirstMediaData = false;
-                break;
+            }
+            iFirstMediaData = false;
+        }
+        else
+        {
+            iFirstMediaData = false;
         }
     }
     return status;
@@ -1078,6 +1077,7 @@ PVMFStatus PVMFFileOutputNode::WriteData(OsclRefCounterMemFrag aMemFrag, uint32 
 //////////////////////////////////////////////////////////////////////////////////
 void PVMFFileOutputNode::ClearPendingPortActivity()
 {
+    // index starts at 1 because the current command (i.e. iCmdQueue[0]) will be erased inside Run
     while (!iInputCommands.empty())
     {
         CommandComplete(iInputCommands, iInputCommands.front(), PVMFFailure);
@@ -1173,10 +1173,25 @@ PVMFStatus PVMFFileOutputNode::ProcessIncomingMsg(PVMFPortInterface* aPort)
                         (0, "0x%x PVMFFileOutputNode::ProcessIncomingMsg: Error - DequeueIncomingMsg failed", this));
         return status;
     }
+    /*
+       INFORMATION!!!
+       The FileOutputNode is generally used by the engine unit tests as SinkNode
+       For now, most of the unit tests have OBSOLETED the use of FileOutputNode,
+       But still some of the tests are using the FileOutputNode in place of,
+       MIO (RefFileOutput).
+
+       Since the usage FileOutputNode is not defined yet, we are adding support for
+       BOS Message as a NO-OP so that the node should be able to handle Any and all
+       the BOS Messages gracefully.
+
+       IMPORTANT!!!,
+       For Complete support of BOS in the FileOutputNode, we need to make more changes.
+       Those changes will be done only once the life scope of FileOutputNode is defined.
+    */
     if (msg->getFormatID() == PVMF_MEDIA_CMD_BOS_FORMAT_ID)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVFileOutputNode::ProcessIncomingMsg BOS Recieved"));
+                        (0, "PVFileOutputNode::ProcessIncomingMsg BOS Received"));
         return PVMFSuccess;
     }
 
@@ -1422,23 +1437,25 @@ void PVMFFileOutputNode::DoStop(PVMFFileOutputNodeCommand& aCmd)
         case EPVMFNodeStarted:
         case EPVMFNodePaused:
             // Stop data source
-        {
-            ((PVMFFileOutputInPort*)iInPort)->Stop();
-            CloseOutputFile();
-        }
+            if (iInPort)
+            {
 
-        // Clear queued messages in ports
-        uint32 i;
-        for (i = 0; i < iPortVector.size(); i++)
-            iPortVector[i]->ClearMsgQueues();
+                ((PVMFFileOutputInPort*)iInPort)->Stop();
+                CloseOutputFile();
+            }
 
-        // Clear scheduled port activities
-        iPortActivityQueue.clear();
+            // Clear queued messages in ports
+            uint32 i;
+            for (i = 0; i < iPortVector.size(); i++)
+                iPortVector[i]->ClearMsgQueues();
 
-        //transition to Initialized state
-        SetState(EPVMFNodePrepared);
-        CommandComplete(iInputCommands, aCmd, PVMFSuccess);
-        break;
+            // Clear scheduled port activities
+            iPortActivityQueue.clear();
+
+            //transition to Initialized state
+            SetState(EPVMFNodePrepared);
+            CommandComplete(iInputCommands, aCmd, PVMFSuccess);
+            break;
         case EPVMFNodePrepared:
             CommandComplete(iInputCommands, aCmd, PVMFSuccess);
             break;
@@ -1521,7 +1538,6 @@ void PVMFFileOutputNode::DoReset(PVMFFileOutputNodeCommand& aCmd)
 
         //logoff & go back to Created state.
         SetState(EPVMFNodeIdle);
-        ThreadLogoff();
         CommandComplete(iInputCommands, aCmd, PVMFSuccess);
     }
     else
@@ -1565,13 +1581,13 @@ void PVMFFileOutputNode::DoRequestPort(PVMFFileOutputNodeCommand& aCmd)
 
     // Create and configure output port
     int32 err;
-    PVMFFormatType fmt = PVMF_FORMAT_UNKNOWN;
+    PVMFFormatType fmt = PVMF_MIME_FORMAT_UNKNOWN;
     if (portconfig)
     {
-        fmt = GetFormatIndex(portconfig->get_str());
+        fmt = portconfig->get_str();
     }
 
-    if (iFormat != PVMF_FORMAT_UNKNOWN &&
+    if (iFormat != PVMF_MIME_FORMAT_UNKNOWN &&
             iFormat != fmt)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
@@ -1595,8 +1611,8 @@ void PVMFFileOutputNode::DoRequestPort(PVMFFileOutputNodeCommand& aCmd)
     //if format was provided in mimestring, set it now.
     if (portconfig)
     {
-        PVMFFormatType fmt = GetFormatIndex(portconfig->get_str());
-        if (fmt != PVMF_FORMAT_UNKNOWN
+        PVMFFormatType fmt = portconfig->get_str();
+        if (fmt != PVMF_MIME_FORMAT_UNKNOWN
                 && ((PVMFFileOutputInPort*)iInPort)->IsFormatSupported(fmt))
         {
             ((PVMFFileOutputInPort*)iInPort)->iFormat = fmt;

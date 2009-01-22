@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,19 +46,43 @@ struct MP4ComposerNodeKeyStringData
     PvmiKvpValueType iValueType;
 };
 
+#ifdef _TEST_AE_ERROR_HANDLING
+#define MP4COMPOSERNODECONFIG_BASE_NUMKEYS 10
+#else
 #define MP4COMPOSERNODECONFIG_BASE_NUMKEYS 2
+#endif
 #define MP4CONFIG_KEYSTRING_SIZE 128
 
 static const MP4ComposerNodeKeyStringData MP4ComposerNodeConfig_BaseKeys[] =
 {
     {"presentation-timescale", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_UINT32},
     {"pv-cache-size", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_UINT32}
+#ifdef _TEST_AE_ERROR_HANDLING
+    , {"error_start_addmemfrag", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_BOOL}
+    , {"error_start_addtrack", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_BOOL}
+    , {"error-addtrack", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_CHARPTR}
+    , {"error-node-cmd", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_UINT32}
+    , {"error-create-composer", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_BOOL}
+    , {"error-render-to-file", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_BOOL}
+    , {"error-addsample", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_UINT32}
+    , {"data-path-stall", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_UINT32}
+#endif
 };
 
 enum BaseKeys_IndexMapType
 {
     PRESENTATION_TIMESCALE = 0,
     PV_CACHE_SIZE
+#ifdef _TEST_AE_ERROR_HANDLING
+    , ERROR_START_ADDMEMFRAG
+    , ERROR_START_ADDTRACK
+    , ERROR_ADDTRACK
+    , ERROR_NODE_CMD
+    , ERROR_CREATE_COMPOSER
+    , ERROR_RENDERTOFILE
+    , ERROR_ADD_SAMPLE
+    , ERROR_DATAPATH_STALL
+#endif
 };
 
 
@@ -90,7 +114,7 @@ PVMFStatus PVMp4FFComposerNode::GetConfigParameter(PvmiKvp*& aParameters, int& a
     aParameters[0].key = memblock;
 
     // Copy the key string
-    oscl_strncat(aParameters[0].key, _STRLIT_CHAR("fileio/"), 7);
+    oscl_strncat(aParameters[0].key, _STRLIT_CHAR("x-pvmf/composer/mp4/"), 7);
     oscl_strncat(aParameters[0].key, MP4ComposerNodeConfig_BaseKeys[aIndex].iString, oscl_strlen(MP4ComposerNodeConfig_BaseKeys[aIndex].iString));
     oscl_strncat(aParameters[0].key, _STRLIT_CHAR(";type=value;valtype="), 20);
     switch (MP4ComposerNodeConfig_BaseKeys[aIndex].iValueType)
@@ -112,6 +136,9 @@ PVMFStatus PVMp4FFComposerNode::GetConfigParameter(PvmiKvp*& aParameters, int& a
             {
                 oscl_strncat(aParameters[0].key, _STRLIT_CHAR(PVMI_KVPVALTYPE_INT32_STRING), oscl_strlen(PVMI_KVPVALTYPE_RANGE_UINT32_STRING));
             }
+            break;
+        case PVMI_KVPVALTYPE_CHARPTR:
+            oscl_strncat(aParameters[0].key, _STRLIT_CHAR(PVMI_KVPVALTYPE_CHARPTR_STRING), oscl_strlen(PVMI_KVPVALTYPE_CHARPTR_STRING));
             break;
         case PVMI_KVPVALTYPE_UINT32:
         default:
@@ -138,6 +165,7 @@ PVMFStatus PVMp4FFComposerNode::GetConfigParameter(PvmiKvp*& aParameters, int& a
             }
             else if (PVMI_KVPATTR_DEF == aReqattr)
             {
+                // return default
             }
             else
             {
@@ -173,7 +201,40 @@ PVMFStatus PVMp4FFComposerNode::GetConfigParameter(PvmiKvp*& aParameters, int& a
                 aParameters[0].value.key_specific_value = (void*)rui32;
             }
             break;
-
+#ifdef _TEST_AE_ERROR_HANDLING
+        case ERROR_START_ADDMEMFRAG:
+            if (PVMI_KVPATTR_CUR == aReqattr)
+            {
+                // Return current value
+                aParameters[0].value.bool_value = iErrorHandlingAddMemFrag;
+            }
+            else if (PVMI_KVPATTR_DEF == aReqattr)
+            {
+                // return default
+                aParameters[0].value.bool_value  = true;
+            }
+            else
+            {
+                // Return capability
+            }
+            break;
+        case ERROR_START_ADDTRACK:
+            if (PVMI_KVPATTR_CUR == aReqattr)
+            {
+                // Return current value
+                aParameters[0].value.bool_value = iErrorHandlingAddTrack;
+            }
+            else if (PVMI_KVPATTR_DEF == aReqattr)
+            {
+                // return default
+                aParameters[0].value.bool_value  = true;
+            }
+            else
+            {
+                // Return capability
+            }
+            break;
+#endif
         default:
             // Invalid index
             oscl_free(aParameters[0].key);
@@ -203,7 +264,7 @@ PVMFStatus PVMp4FFComposerNode::VerifyAndSetConfigParameter(PvmiKvp& aParameter,
 
     // Retrieve the fourth component from the key string
     char* compstr = NULL;
-    pv_mime_string_extract_type(1, aParameter.key, compstr);
+    pv_mime_string_extract_type(3, aParameter.key, compstr);
 
     int32 mp4comp4ind;
     for (mp4comp4ind = 0; mp4comp4ind < MP4COMPOSERNODECONFIG_BASE_NUMKEYS; ++mp4comp4ind)
@@ -248,7 +309,100 @@ PVMFStatus PVMp4FFComposerNode::VerifyAndSetConfigParameter(PvmiKvp& aParameter,
                 iCacheSize = aParameter.value.uint32_value ;
             }
             break;
+#ifdef _TEST_AE_ERROR_HANDLING
+        case ERROR_START_ADDMEMFRAG:
+            // change the parameter
+            if (aSetParam)
+            {
+                // set any parameter here
+                iErrorHandlingAddMemFrag = aParameter.value.bool_value ;
+            }
+            break;
+        case ERROR_START_ADDTRACK:
+            // change the parameter
+            if (aSetParam)
+            {
+                // set any parameter here
+                iErrorHandlingAddTrack = aParameter.value.bool_value ;
+            }
+            break;
+        case ERROR_ADDTRACK: //error in AddTrack()
+            if (aSetParam)
+            {
+                //char* paramstr = NULL;
+                char* val_key = aParameter.value.pChar_value;
+                if (pv_mime_strcmp(val_key, "PVMF_MIME_H264_VIDEO_MP4") == 0)
+                {
+                    iErrorAddTrack = PVMF_MIME_H264_VIDEO_MP4;
+                }
+                if (pv_mime_strcmp(val_key, "PVMF_MIME_3GPP_TIMEDTEXT") == 0)
+                {
+                    iErrorAddTrack = PVMF_MIME_3GPP_TIMEDTEXT;
+                }
+                if (pv_mime_strcmp(val_key, "PVMF_MIME_M4V") == 0)
+                {
+                    iErrorAddTrack = PVMF_MIME_M4V;
+                }
+                if (pv_mime_strcmp(val_key, "PVMF_MIME_H2631998") == 0)
+                {
+                    iErrorAddTrack = PVMF_MIME_H2631998;
+                }
+                if (pv_mime_strcmp(val_key, "PVMF_MIME_H2632000") == 0)
+                {
+                    iErrorAddTrack = PVMF_MIME_H2632000;
+                }
+                if (pv_mime_strcmp(val_key, "PVMF_MIME_AMR_IETF") == 0)
+                {
+                    iErrorAddTrack = PVMF_MIME_AMR_IETF;
+                }
 
+            }
+            break;
+        case ERROR_NODE_CMD:
+            if (aSetParam)
+            {
+                iErrorNodeCmd = aParameter.value.uint32_value;
+            }
+            break;
+        case ERROR_CREATE_COMPOSER:
+            if (aSetParam)
+            {
+                iErrorCreateComposer = aParameter.value.bool_value ;
+            }
+            break;
+        case ERROR_RENDERTOFILE:
+            if (aSetParam)
+            {
+                iErrorRenderToFile = aParameter.value.bool_value ;
+            }
+            break;
+        case ERROR_ADD_SAMPLE:
+            if (aSetParam)
+            {
+                char* paramstr = NULL;
+                OSCL_HeapString<OsclMemAllocator> mode1 = "mode=filesize";
+                OSCL_HeapString<OsclMemAllocator> mode2 = "mode=duration";
+
+                if (pv_mime_string_parse_param(aParameter.key, mode1.get_str(), paramstr) > 0)
+                {
+                    iFileSize = aParameter.value.uint32_value;
+                    iErrorAddSample = 1;
+                }
+                else if (pv_mime_string_parse_param(aParameter.key, mode2.get_str(), paramstr) > 0)
+                {
+                    iFileDuration = aParameter.value.uint32_value;
+                    iErrorAddSample = 2;
+                }
+
+            }
+            break;
+        case ERROR_DATAPATH_STALL:
+            if (aSetParam)
+            {
+                iErrorDataPathStall = aParameter.value.uint32_value;
+            }
+            break;
+#endif
         default:
             OSCL_ASSERT(0);
     }
@@ -332,9 +486,9 @@ PVMFStatus PVMp4FFComposerNode::verifyParametersSync(PvmiMIOSession aSession, Pv
         char* compstr = NULL;
         pv_mime_string_extract_type(0, aParameters[paramind].key, compstr);
 
-        if ((pv_mime_strcmp(compstr, _STRLIT_CHAR("fileio")) < 0) || compcount < 2)
+        if ((pv_mime_strcmp(compstr, _STRLIT_CHAR("x-pvmf/composer/mp4")) < 0) || compcount < 2)
         {
-            // First 2 components should be "fileio" and there must
+            // First 2 components should be "x-pvmf/composer/mp4" and there must
             // be at least four components
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMp4FFComposerNode::verifyParametersSync() Unsupported key"));
             return PVMFErrNotSupported;
@@ -380,9 +534,9 @@ PVMFStatus PVMp4FFComposerNode::releaseParameters(PvmiMIOSession aSession, PvmiK
     char* compstr = NULL;
     pv_mime_string_extract_type(0, aParameters[0].key, compstr);
 
-    if ((pv_mime_strcmp(compstr, _STRLIT_CHAR("fileio")) < 0) || compcount < 2)
+    if ((pv_mime_strcmp(compstr, _STRLIT_CHAR("x-pvmf/composer/mp4")) < 0) || compcount < 2)
     {
-        // First 2 component should be "fileio" and there must
+        // First 2 component should be "x-pvmf/composer/mp4" and there must
         // be at least two components
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMp4FFComposerNode::releaseParameters() Unsupported key"));
         return PVMFErrNotSupported;
@@ -427,7 +581,7 @@ PVMFStatus PVMp4FFComposerNode::releaseParameters(PvmiMIOSession aSession, PvmiK
                 aParameters[ii].value.key_specific_value = NULL;
                 oscl_free(rui32);
             }
-            // TODO Add more types if composer node starts returning more types
+            // @TODO Add more types if composer node starts returning more types
         }
     }
 
@@ -460,9 +614,9 @@ PVMFStatus PVMp4FFComposerNode::getParametersSync(PvmiMIOSession aSession, PvmiK
     char* compstr = NULL;
     pv_mime_string_extract_type(0, aIdentifier, compstr);
 
-    if ((pv_mime_strcmp(compstr, _STRLIT_CHAR("fileio")) < 0) || compcount < 2)
+    if ((pv_mime_strcmp(compstr, _STRLIT_CHAR("x-pvmf/composer/mp4")) < 0) || compcount < 2)
     {
-        // First 2 components should be "fileio" and there must
+        // First 2 components should be "x-pvmf/composer/mp4" and there must
         // be at least 2 components
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMp4FFComposerNode::getParametersSync() Invalid key string"));
         return PVMFErrNotSupported;
@@ -539,16 +693,16 @@ void PVMp4FFComposerNode::setParametersSync(PvmiMIOSession aSession, PvmiKvp* aP
         char* compstr = NULL;
         pv_mime_string_extract_type(0, aParameters[paramind].key, compstr);
 
-        if ((pv_mime_strcmp(compstr, _STRLIT_CHAR("fileio")) < 0) || compcount < 2)
+        if ((pv_mime_strcmp(compstr, _STRLIT_CHAR("x-pvmf/composer/mp4")) < 0) || compcount < 2)
         {
-            // First 2 components should be "fileio" and there must
+            // First 2 components should be "x-pvmf/composer/mp4" and there must
             // be at least 2 components
             aRetKVP = &aParameters[paramind];
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMp4FFComposerNode::setParametersSync() Unsupported key"));
             return;
         }
 
-        if (2 == compcount)
+        if (4 == compcount)
         {
             // Verify and set the passed-in mp4 composer node setting
             PVMFStatus retval = VerifyAndSetConfigParameter(aParameters[paramind], true);

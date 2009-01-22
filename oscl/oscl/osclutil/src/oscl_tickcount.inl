@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,10 @@
 
 #ifndef OSCLCONFIG_H_INCLUDED
 #include "osclconfig.h"
+#endif
+
+#ifndef OSCL_SINGLETON_H_INCLUDED
+#include "oscl_singleton.h"
 #endif
 
 
@@ -46,6 +50,11 @@ OSCL_COND_EXPORT_REF OSCL_INLINE uint32 OsclTickCount::TickCount()
 {
 #if   PV_USE_GETTIMEOFDAY
 #define ROLLBACK_THRESHOLD 0x80000000
+    // lock this function against other threads changing the static variables
+    // ignore return value and error code
+    int32 errorCode = 0;
+    OsclSingletonRegistry::lockAndGetInstance(OSCL_SINGLETON_ID_TICKCOUNT, errorCode);
+
     struct timeval tv;
 
     static struct timeval stv = {0, 0};
@@ -65,6 +74,7 @@ OSCL_COND_EXPORT_REF OSCL_INLINE uint32 OsclTickCount::TickCount()
         clk_val = prev_val;
     }
     prev_val = clk_val;
+    OsclSingletonRegistry::registerInstanceAndUnlock(0, OSCL_SINGLETON_ID_TICKCOUNT, errorCode);
 
     return clk_val;
 

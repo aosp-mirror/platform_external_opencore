@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -105,7 +105,7 @@
 
 #define KCAI_CODEC_INIT_FAILURE -1
 
-// Use default DLL entry point for Symbian
+// Use default DLL entry point
 #include "oscl_dll.h"
 OSCL_DLL_ENTRY_POINT_DEFAULT()
 

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -146,14 +146,14 @@ class PVMFProtocolEngineNode :  public PVMFNodeInterface,
         PVMFStatus SetSourceInitializationData(OSCL_wString& aSourceURL,
                                                PVMFFormatType& aSourceFormat,
                                                OsclAny* aSourceData);
-        PVMFStatus SetClientPlayBackClock(OsclClock* aClientClock);
+        PVMFStatus SetClientPlayBackClock(PVMFMediaClock* aClientClock);
 
         // From PVMFProtocolEngineNodeExtensionInterface and
         // From PVMFProtocolEngineNodeMSHTTPStreamingExtensionInterface
         PVMFStatus GetHTTPHeader(uint8*& aHeader, uint32& aHeaderLen);
         void GetFileSize(uint32& aFileSize)
         {
-            aFileSize = iInterfacingObjectContainer.getFileSize();
+            aFileSize = (iInterfacingObjectContainer == NULL ? 0 : iInterfacingObjectContainer->getFileSize());
         }
         bool GetSocketConfig(OSCL_String &aPortConfig);
         bool GetSocketConfigForLogging(OSCL_String &aPortConfig);
@@ -165,11 +165,11 @@ class PVMFProtocolEngineNode :  public PVMFNodeInterface,
         {
             uint32 timeout = aTimeout;
             if ((int32)timeout < 0) timeout = 0x7fffffff;
-            iInterfacingObjectContainer.setKeepAliveTimeout(timeout);
+            if (iInterfacingObjectContainer) iInterfacingObjectContainer->setKeepAliveTimeout(timeout);
         }
         void SetNumRedirectTrials(const uint32 aNumTrials)
         {
-            iInterfacingObjectContainer.setNumRedirectTrials(aNumTrials);
+            if (iInterfacingObjectContainer) iInterfacingObjectContainer->setNumRedirectTrials(aNumTrials);
         }
         void SetHttpExtensionHeaderField(OSCL_String &aFieldKey, OSCL_String &aFieldValue, const HttpMethod aMethod = HTTP_GET, const bool aPurgeOnRedirect = false);
         void SetLoggingURL(OSCL_wString& aSourceURL);
@@ -179,11 +179,11 @@ class PVMFProtocolEngineNode :  public PVMFNodeInterface,
         }
         bool SetStreamingProxy(OSCL_wString& aProxyURL, const uint32 aProxyPort)
         {
-            return iInterfacingObjectContainer.setStreamingProxy(aProxyURL, aProxyPort);
+            return (iInterfacingObjectContainer == NULL ? false : iInterfacingObjectContainer->setStreamingProxy(aProxyURL, aProxyPort));
         }
         void DisableHttpHeadRequest(const bool aDisableHeadRequest = true)
         {
-            iInterfacingObjectContainer.setHttpHeadRequestDisabled(aDisableHeadRequest);
+            if (iInterfacingObjectContainer) iInterfacingObjectContainer->setHttpHeadRequestDisabled(aDisableHeadRequest);
         }
         bool GetASFHeader(Oscl_Vector<OsclRefCounterMemFrag, OsclMemAllocator> &aHeader)
         {
@@ -191,7 +191,7 @@ class PVMFProtocolEngineNode :  public PVMFNodeInterface,
         }
         bool SetStreamParams(const PVMFProtocolEngineNodeMSHTTPStreamingParams &aParams)
         {
-            iInterfacingObjectContainer.setStreamParams((PVMFProtocolEngineNodeMSHTTPStreamingParams &)aParams);
+            if (iInterfacingObjectContainer) iInterfacingObjectContainer->setStreamParams((PVMFProtocolEngineNodeMSHTTPStreamingParams &)aParams);
             return true;
         }
         PVMFCommandId Seek(PVMFSessionId aSessionId, uint64 aNPTInMS, uint32& aFirstSeqNumAfterSeek, OsclAny* aContext);
@@ -200,25 +200,35 @@ class PVMFProtocolEngineNode :  public PVMFNodeInterface,
         PVMFStatus SetMediaMsgAllocatorNumBuffers(PVMFPortInterface* aPort, uint32 aNumBuffersInAllocator)
         {
             OSCL_UNUSED_ARG(aPort);
-            iInterfacingObjectContainer.setMediaMsgAllocatorNumBuffers(aNumBuffersInAllocator);
+            if (iInterfacingObjectContainer) iInterfacingObjectContainer->setMediaMsgAllocatorNumBuffers(aNumBuffersInAllocator);
             return PVMFSuccess;
         }
         void SetMaxASFHeaderSize(const uint32 aMaxASFHeaderSize = PVPROTOCOLENGINE_DEFAULT_MAXIMUM_ASF_HEADER_SIZE)
         {
-            iInterfacingObjectContainer.setMaxASFHeaderSize(aMaxASFHeaderSize);
+            if (iInterfacingObjectContainer) iInterfacingObjectContainer->setMaxASFHeaderSize(aMaxASFHeaderSize);
         }
         void SetUserAuthInfo(OSCL_String &aUserID, OSCL_String &aPasswd)
         {
-            iInterfacingObjectContainer.setUserAuthInfo(aUserID, aPasswd);
+            if (iInterfacingObjectContainer) iInterfacingObjectContainer->setUserAuthInfo(aUserID, aPasswd);
         }
         bool IsWMServerVersion4();
         void SetAccelBitrate(const uint32 aAccelBitrate)
         {
-            iInterfacingObjectContainer.SetAccelBitrate(aAccelBitrate);
+            if (iInterfacingObjectContainer) iInterfacingObjectContainer->SetAccelBitrate(aAccelBitrate);
         }
         void SetAccelDuration(const uint32 aAccelDuration)
         {
-            iInterfacingObjectContainer.SetAccelDuration(aAccelDuration);
+            if (iInterfacingObjectContainer) iInterfacingObjectContainer->SetAccelDuration(aAccelDuration);
+        }
+
+        void SetNumBuffersInMediaDataPoolSMCalc(uint32 aVal)
+        {
+            iInterfacingObjectContainer->setNumBuffersInMediaDataPoolSMCalc(aVal);
+        }
+
+        void SetMaxHttpStreamingSize(const uint32 aMaxHttpStreamingSize)
+        {
+            if (iInterfacingObjectContainer) iInterfacingObjectContainer->SetMaxHttpStreamingSize(aMaxHttpStreamingSize);
         }
 
         // From PVMIDatastreamuserInterface
@@ -227,7 +237,7 @@ class PVMFProtocolEngineNode :  public PVMFNodeInterface,
         // From PVMFDownloadProgressInterface
         void setFormatDownloadSupportInterface(PVMFFormatProgDownloadSupportInterface* download_support_interface);
         void setClipDuration(const uint32 aClipDurationMsec);
-        OsclSharedPtr<OsclClock> getDownloadProgressClock();
+        OsclSharedPtr<PVMFMediaClock> getDownloadProgressClock();
         void requestResumeNotification(const uint32 currentNPTReadPosition,
                                        bool& aDownloadComplete);
         void cancelResumeNotification();
@@ -253,7 +263,7 @@ class PVMFProtocolEngineNode :  public PVMFNodeInterface,
         void HandlePortActivity(const PVMFPortActivity& aActivity);
 
         //From PVMFDataSourceInitializationExtensionInterface, the following two APIs are not used in this node
-        PVMFStatus SetEstimatedServerClock(OsclClock* aClientClock)
+        PVMFStatus SetEstimatedServerClock(PVMFMediaClock* aClientClock)
         {
             OSCL_UNUSED_ARG(aClientClock);
             OSCL_LEAVE(OsclErrNotSupported);
@@ -269,8 +279,11 @@ class PVMFProtocolEngineNode :  public PVMFNodeInterface,
         // Port processing
         bool ProcessPortActivity();
         void QueuePortActivity(const PVMFPortActivity& aActivity);
+        void QueueActivityIncomingMessage(const PVMFStatus aStatus, const PVMFPortActivity &aActivity); // called by ProcessPortActivity()
+        void QueueActivityOutgoingMessage(const PVMFStatus aStatus, const PVMFPortActivity &aActivity); // called by ProcessPortActivity()
         PVMFStatus ProcessIncomingMsg(PVMFPortInterface* aPort);
         PVMFStatus ProcessOutgoingMsg(PVMFPortInterface* aPort);
+        PVMFStatus PostProcessForMsgSentSuccess(PVMFPortInterface* aPort, PVMFSharedMediaMsgPtr &aMsg);
         void SendOutgoingQueueReadyEvent(PVMFPortInterface* aPort);
         bool SearchPortActivityInQueue(const PVMFPortActivityType aType);
         void ProcessOutgoingQueueReady();
@@ -284,7 +297,8 @@ class PVMFProtocolEngineNode :  public PVMFNodeInterface,
                              PVMFProtocolEngineNodeCommand&,
                              PVMFStatus, OsclAny* aData = NULL,
                              PVUuid* aEventUUID = NULL,
-                             int32* aEventCode = NULL);
+                             int32* aEventCode = NULL,
+                             int32 aEventDataLen = 0);
         int32 HandleCommandComplete(PVMFProtocolEngineNodeCmdQ& aCmdQ,
                                     PVMFProtocolEngineNodeCommand& aCmd,
                                     int32 aStatus);
@@ -308,8 +322,6 @@ class PVMFProtocolEngineNode :  public PVMFNodeInterface,
         PVMFStatus DoSeek(PVMFProtocolEngineNodeCommand&);
         PVMFStatus DoBitsteamSwitch(PVMFProtocolEngineNodeCommand&);
         PVMFStatus DoReposition(PVMFProtocolEngineNodeCommand&);
-        void StartDataFlowByCommand(const bool needDoSocketReconnect = true);
-        void RescheduleNewDataFlow();
         bool CheckAvailabilityOfDoStart(PVMFProtocolEngineNodeCommand& aCmd); // called in DoStart() only
         inline bool IsDataFlowEventAlreadyInQueue(const PVProtocolEngineNodeInternalEventType aEventType);
 
@@ -317,8 +329,8 @@ class PVMFProtocolEngineNode :  public PVMFNodeInterface,
         void HandleRunFlush();
 
         // Event reporting
-        void ReportErrorEvent(PVMFEventType aEventType, OsclAny* aEventData = NULL, int32 aEventCode = 0);
-        void ReportInfoEvent(PVMFEventType aEventType, OsclAny* aEventData = NULL, int32 aEventCode = 0);
+        void ReportInfoEvent(PVMFEventType aEventType, OsclAny* aEventData = NULL, const int32 aEventCode = 0, OsclAny* aEventLocalBuffer = NULL, const uint32 aEventLocalBufferSize = 0);
+        void ReportErrorEvent(PVMFEventType aEventType, OsclAny* aEventData = NULL, const int32 aEventCode = 0, int32 aEventDataLen = 0);
         void SetState(TPVMFNodeInterfaceState);
 
         // From ProtocolObserver
@@ -332,6 +344,7 @@ class PVMFProtocolEngineNode :  public PVMFNodeInterface,
         void OutputBufferAvailable();
         void OutputBufferPoolFull();
         void ReadyToUpdateDownloadControl();
+        bool QueueOutgoingMsgSentSuccess(PVMFProtocolEnginePort *aPort, PVMFSharedMediaMsgPtr &aMsg);
 
         // From OsclTimerObserver
         void TimeoutOccurred(int32 timerID, int32 timeoutInfo);
@@ -355,6 +368,8 @@ class PVMFProtocolEngineNode :  public PVMFNodeInterface,
         bool RecreateProtocolObjectsForProgressiveStreaming(OsclAny* aSourceData);
         ProtocolContainerFactory* CreateProtocolContainerFactory(const uint32 aProtocolType);
         bool SendPortMediaCommand(PVMFProtocolEnginePort *aPort, PVUid32 aCmdId, const bool isForLogging = false);
+        void RerunForPostProcessAfterOutgoingMsgSent(PVMFProtocolEnginePort *aPort, PVMFSharedMediaMsgPtr &aMsg);
+        void LogPortMediaCmdQueued(PVMFProtocolEnginePort *aPort, PVUid32 aCmdId);
         bool CheckFormatSpecificInfoForMediaCommand(PVMFSharedMediaCmdPtr &aCmdPtr, PVUid32 aCmdId, const bool isForLogging = false);
         void ClearPorts(const bool aNeedDelete = false);
         void Clear(const bool aNeedDelete = false);
@@ -366,7 +381,7 @@ class PVMFProtocolEngineNode :  public PVMFNodeInterface,
         PVProtocolEngineNodePrcoessingState iProcessingState;
 
         // this object container contains the multiple input data from node user and output data to node user
-        InterfacingObjectContainer iInterfacingObjectContainer;
+        InterfacingObjectContainer *iInterfacingObjectContainer;
 
         friend class ProtocolContainer;
         friend class DownloadContainer;
@@ -390,6 +405,7 @@ class PVMFProtocolEngineNode :  public PVMFNodeInterface,
         friend class EndOfDataProcessingHandler;
         friend class ServerResponseErrorBypassingHandler;
         friend class CheckResumeNotificationHandler;
+        friend class OutgoingMsgSentSuccessHandler;
 
         HttpBasedProtocol *iProtocol;
         ProtocolContainer *iProtocolContainer;

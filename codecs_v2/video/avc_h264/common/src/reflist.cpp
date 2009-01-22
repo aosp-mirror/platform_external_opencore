@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -231,22 +231,27 @@ AVCStatus ReorderRefPicList(AVCCommonObj *video, int isL1)
     int i;
     int maxPicNum, currPicNum, picNumLXNoWrap, picNumLXPred, picNumLX;
     int refIdxLX = 0;
+    void* tmp;
 
     if (!isL1) /* list 0 */
     {
         list_size = &(video->refList0Size);
         num_ref_idx_lX_active_minus1 = sliceHdr->num_ref_idx_l0_active_minus1;
         remapping_of_pic_nums_idc = sliceHdr->reordering_of_pic_nums_idc_l0;
-        abs_diff_pic_num_minus1 = (int*)sliceHdr->abs_diff_pic_num_minus1_l0;
-        long_term_pic_idx = (int*)sliceHdr->long_term_pic_num_l0;
+        tmp = (void*)sliceHdr->abs_diff_pic_num_minus1_l0;
+        abs_diff_pic_num_minus1 = (int*) tmp;
+        tmp = (void*)sliceHdr->long_term_pic_num_l0;
+        long_term_pic_idx = (int*) tmp;
     }
     else
     {
         list_size = &(video->refList1Size);
         num_ref_idx_lX_active_minus1 = sliceHdr->num_ref_idx_l1_active_minus1;
         remapping_of_pic_nums_idc = sliceHdr->reordering_of_pic_nums_idc_l1;
-        abs_diff_pic_num_minus1 = (int*)sliceHdr->abs_diff_pic_num_minus1_l1;
-        long_term_pic_idx = (int*)sliceHdr->long_term_pic_num_l1;
+        tmp = (void*) sliceHdr->abs_diff_pic_num_minus1_l1;
+        abs_diff_pic_num_minus1 = (int*) tmp;
+        tmp = (void*) sliceHdr->long_term_pic_num_l1;
+        long_term_pic_idx = (int*)tmp;
     }
 
     maxPicNum = video->MaxPicNum;

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -143,6 +143,11 @@ OSCL_EXPORT_REF TPVSocketEvent OsclUDPSocket::RecvFrom(
 OSCL_EXPORT_REF void OsclUDPSocket::CancelRecvFrom()
 {
     iUDPSocket->CancelRecvFrom();
+}
+
+OSCL_EXPORT_REF int32 OsclUDPSocket::SetRecvBufferSize(uint32 size)
+{
+    return iUDPSocket->SetRecvBufferSize(size);
 }
 
 OSCL_EXPORT_REF OsclTCPSocket *OsclTCPSocket::NewL(Oscl_DefAlloc &alloc,
@@ -292,6 +297,7 @@ OSCL_EXPORT_REF void OsclTCPSocket::CancelRecv()
 {
     iTCPSocket->CancelRecv();
 }
+
 
 
 

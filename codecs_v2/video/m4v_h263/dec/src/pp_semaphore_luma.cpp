@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@
 		   luminance frame (uint8)
 	pstprcTypPrv = pointer the previous frame's post processing type
 	               (uint8)
-	ll = pointer to the buffer containing ?? (int)
+	ll = pointer to the buffer (int)
 	mv_loc = flag indicating location of the motion compensated
 		 (x,y) position with respect to the luminance MB (int);
 		 0 -> inside MB, 1 -> outside MB

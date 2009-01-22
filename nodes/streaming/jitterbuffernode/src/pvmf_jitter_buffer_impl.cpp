@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,10 +77,19 @@ PVMFJitterBufferImpl::PVMFJitterBufferImpl(const PvmfMimeString* aMimeType,
     iPrevPacketTS = 0;
     iPrevPacketRecvTime = 0;
 
+    iPlayListRTPTimeBaseSet = false;
+    iPlayListRTPTimeBase = 0;
+
+    isPrevNptTimeSet = false;
+    isPrevRtpTimeSet = false;
+    iPrevNptTimeInRTPTimeScale = 0;
+    iPrevRtpTimeBase = 0;
+
     iLogger = PVLogger::GetLoggerObject("JitterBuffer");
     iDataPathLoggerIn = PVLogger::GetLoggerObject("datapath.sourcenode.jitterbuffer.in");
     iDataPathLoggerOut = PVLogger::GetLoggerObject("datapath.sourcenode.jitterbuffer.out");
     iClockLogger = PVLogger::GetLoggerObject("clock.jitterbuffer");
+    iClockLoggerRebuff = PVLogger::GetLoggerObject("clock.jitterbuffernode.rebuffer");
 
     iHeaderFormat = PVMF_JITTER_BUFFER_TRANSPORT_HEADER_FORMAT_UNKNOWN;
     iSeqNum = 0;
@@ -94,8 +103,8 @@ PVMFJitterBufferImpl::PVMFJitterBufferImpl(const PvmfMimeString* aMimeType,
     }
     iBroadCastSession = false;
 
-    OsclExclusivePtr<OsclClock> arrivalClockAutoPtr;
-    PVMF_JITTER_BUFFER_NEW(NULL, OsclClock, (), iPacketArrivalClock);
+    OsclExclusivePtr<PVMFMediaClock> arrivalClockAutoPtr;
+    PVMF_JITTER_BUFFER_NEW(NULL, PVMFMediaClock, (), iPacketArrivalClock);
     arrivalClockAutoPtr.set(iPacketArrivalClock);
 
     uint32 numNodes = 0;
@@ -168,11 +177,12 @@ PVMFJitterBufferImpl::~PVMFJitterBufferImpl()
     iDataPathLoggerIn = NULL;
     iDataPathLoggerOut = NULL;
     iClockLogger = NULL;
+    iClockLoggerRebuff = NULL;
     iPacketArrivalClock->Stop();
     iServerClockUpdateNotificationObserver = NULL;
 
     PVMF_JITTER_BUFFER_TEMPLATED_DELETE(NULL, PVMFDynamicCircularArray<PVMFJitterBufferNodeAllocator>, PVMFDynamicCircularArray, iJitterBuffer);
-    PVMF_JITTER_BUFFER_DELETE(NULL, OsclClock, iPacketArrivalClock);
+    PVMF_JITTER_BUFFER_DELETE(NULL, PVMFMediaClock, iPacketArrivalClock);
 
     if (iInPlaceProcessing == false)
     {
@@ -202,12 +212,21 @@ PVMFJitterBufferImpl::ResetJitterBuffer()
     iJitterBuffer->ResetJitterBufferStats();
     oEOS = false;
     iRTPInfoParamsVec.clear();
-    seqNumLock = false;
+    iPlayListRTPTimeBaseSet = false;
+    iPlayListRTPTimeBase = 0;
+    if (iHeaderFormat != PVMF_JITTER_BUFFER_TRANSPORT_HEADER_ASF)
+    {
+        seqNumLock = false;
+    }
     iMonotonicTimeStamp = 0;
     iPrevPacketTS = 0;
     iPrevTSOut = 0;
     iSeqNum = 0;
     iMaxAdjustedRTPTS = 0;
+    isPrevNptTimeSet = false;
+    iPrevNptTimeInRTPTimeScale = 0;
+    isPrevRtpTimeSet = false;
+    iPrevRtpTimeBase = 0;
     UpdateEstimatedServerClockDiscrete(true);
     iFirstASFPacketAfterRepos = true;
 }
@@ -238,7 +257,7 @@ PVMFJitterBufferImpl::addPacket(PVMFSharedMediaDataPtr& dataPacket)
             status = iJitterBuffer->addElement(dataPacket, iFirstSeqNum);
             if (status == PVMF_JITTER_BUFFER_ADD_ELEM_SUCCESS)
             {
-                PVMF_JBNODE_LOGDATATRAFFIC_IN((0, "PVMFJitterBufferImpl::addPacket: MimeType=%s TS=%d, SEQNUM= %d",
+                PVMF_JBNODE_LOGDATATRAFFIC_IN((0, "PVMFJitterBufferImpl::addPacket: MimeType=%s TS=%u, SEQNUM= %d",
                                                iMimeType.get_cstr(), dataPacket->getTimestamp(), dataPacket->getSeqNum()));
 
                 if (iRTPInfoParamsVec.size() > 0)
@@ -251,8 +270,20 @@ PVMFJitterBufferImpl::addPacket(PVMFSharedMediaDataPtr& dataPacket)
                     ComputeMaxAdjustedRTPTS();
                 }
             }
+            else if (status == PVMF_JITTER_BUFFER_ADD_ELEM_ERR_LATE_PACKET)
+            {
+                PVMF_JBNODE_LOGDATATRAFFIC_IN_E((0, "PVMFJitterBufferImpl::addPacket - Late: MimeType=%s TS=%d, SEQNUM= %d",
+                                                 iMimeType.get_cstr(), dataPacket->getTimestamp(), dataPacket->getSeqNum()));
+            }
+            else if (status == PVMF_JITTER_BUFFER_ADD_ELEM_PACKET_OVERWRITE)
+            {
+                PVMF_JBNODE_LOGDATATRAFFIC_IN_E((0, "PVMFJitterBufferImpl::addPacket - OverWrite: MimeType=%s TS=%d, SEQNUM= %d",
+                                                 iMimeType.get_cstr(), dataPacket->getTimestamp(), dataPacket->getSeqNum()));
+            }
             else if (status == PVMF_JITTER_BUFFER_ADD_ELEM_UNEXPECTED_DATA)
             {
+                PVMF_JBNODE_LOGDATATRAFFIC_IN_E((0, "PVMFJitterBufferImpl::addPacket - Unexpected: MimeType=%s TS=%d, SEQNUM= %d",
+                                                 iMimeType.get_cstr(), dataPacket->getTimestamp(), dataPacket->getSeqNum()));
                 return PVMF_JITTER_BUFFER_ADD_PKT_UNEXPECTED_DATA;
             }
 
@@ -270,7 +301,7 @@ PVMFJitterBufferImpl::addPacket(PVMFSharedMediaDataPtr& dataPacket)
         // Add packet to temporary array
         iFirstDataPackets.push_back(dataPacket);
 
-        const uint cPktNeededForVote = 2;
+        const uint cPktNeededForVote = 5;
         if (iFirstDataPackets.size() < cPktNeededForVote)
             return PVMF_JITTER_BUFFER_ADD_PKT_SUCCESS;
 
@@ -347,6 +378,11 @@ PVMFJitterBufferImpl::addPacket(PVMFSharedMediaDataPtr& dataPacket)
                 it = iRTPInfoParamsVec.begin();
                 iFirstSeqNum = (it->seqNumBaseSet) ? it->seqNum : my_ssrc[first_ssrc_index][2];
                 seqLockTimeStamp = (it->rtpTimeBaseSet) ? it->rtpTime : my_ssrc[first_ssrc_index][3];
+            }
+            else
+            {
+                iFirstSeqNum = my_ssrc[first_ssrc_index][2];
+                seqLockTimeStamp = my_ssrc[first_ssrc_index][3];
             }
             // iFirstSeqNum must be initialized when we come here
             iJitterBuffer->setFirstSeqNumAdded(iFirstSeqNum);
@@ -453,15 +489,39 @@ PVMFTimestamp PVMFJitterBufferImpl::peekNextElementTimeStamp()
     }
 }
 
+PVMFTimestamp PVMFJitterBufferImpl::peekMaxElementTimeStamp()
+{
+    if (iJitterBuffer->getNumElements() > 0)
+    {
+        PVMFTimestamp currTS;
+        PVMFTimestamp maxTS;
+        PVMFTimestamp prevTS;
+        uint32 aSeqNum;
+        iJitterBuffer->peekNextElementTimeStamp(currTS, aSeqNum);
+        DeterminePrevTimeStampPeek(aSeqNum, prevTS);
+        iJitterBuffer->peekMaxElementTimeStamp(maxTS, aSeqNum);
+        uint64 ts64 = iMonotonicTimeStamp;
+        ts64 += (maxTS - prevTS);
+        PVMFTimestamp adjTS =
+            (PVMFTimestamp)(Oscl_Int64_Utils::get_uint64_lower32(ts64));
+        return (adjTS);
+    }
+    else
+    {
+        PVMFTimestamp adjTS =
+            (PVMFTimestamp)(Oscl_Int64_Utils::get_uint64_lower32(iMonotonicTimeStamp));
+        return (adjTS);
+    }
+}
+
 void PVMFJitterBufferImpl::UpdateInterArrivalJitter(PVMFTimestamp currPacketTS)
 {
     /* D(i-1,i) = (RecvT(i) - RTP_TS(i)) -
     			  (RecvT(i-1) - RTP_TS(i-1)) */
-    uint64 currPacketRecvTime;
-    iPacketArrivalClock->GetCurrentTime64(currPacketRecvTime,
-                                          OSCLCLOCK_MSEC);
-    uint32 currPacketRecvTime32 =
-        Oscl_Int64_Utils::get_uint64_lower32(currPacketRecvTime);
+    uint32 currPacketRecvTime32;
+    bool overflowFlag = false;
+    iPacketArrivalClock->GetCurrentTime32(currPacketRecvTime32, overflowFlag,
+                                          PVMF_MEDIA_CLOCK_MSEC);
 
     int32 ts_diff = currPacketTS - iPrevPacketTS;
     int32 arrival_diff = currPacketRecvTime32 - iPrevPacketRecvTime;
@@ -615,11 +675,11 @@ bool PVMFJitterBufferImpl::ParseRTPHeader(PVMFSharedMediaDataPtr& rtpPacket,
     if (iInPlaceProcessing == false)
     {
         OsclSharedPtr<PVMFMediaDataImpl> mediaDataOut;
-        int32 err;
-        OSCL_TRY(err,
-                 mediaDataOut = iMediaDataGroupAlloc->allocate());
+        PVMFStatus status;
 
-        if (err != OsclErrNone)
+        status = Allocate(mediaDataOut);
+
+        if (status == false)
         {
             PVMF_JBNODE_LOGERROR((0, "0x%x PVMFJitterBufferImpl::ParseRTPHeader: Jitter Buffer Full", this));
             return false;
@@ -635,15 +695,16 @@ bool PVMFJitterBufferImpl::ParseRTPHeader(PVMFSharedMediaDataPtr& rtpPacket,
         if (mbit == 1) markerInfo |= PVMF_MEDIA_DATA_MARKER_INFO_M_BIT;
         mediaDataOut->setMarkerInfo(markerInfo);
 
-        OSCL_TRY(err,
-                 dataPacket = PVMFMediaData::createMediaData(mediaDataOut,
-                              iMediaMsgMemPool););
+        bool retVal;
 
-        if (err != OsclErrNone)
+        retVal = CreateMediaData(dataPacket, mediaDataOut);
+
+        if (retVal == false)
         {
             PVMF_JBNODE_LOGERROR((0, "0x%x PVMFJitterBufferImpl::ParseRTPHeader: Jitter Buffer Full", this));
             return false;
         }
+
 
         dataPacket->setTimestamp(rtpTimeStamp);
         dataPacket->setStreamID(SSRC);
@@ -664,8 +725,45 @@ bool PVMFJitterBufferImpl::ParseRTPHeader(PVMFSharedMediaDataPtr& rtpPacket,
         rtpPacket->setSeqNum(seqNum);
     }
 
-    PVMF_JBNODE_LOGDATATRAFFIC_IN((0, "PVMFJitterBufferImpl::ParseRTPHeader: SSRC=%d, rtpSeqNum=%d, rtpTs=%d, rtpPacketLen=%d",
+    PVMF_JBNODE_LOGDATATRAFFIC_IN((0, "PVMFJitterBufferImpl::ParseRTPHeader: SSRC=%u, rtpSeqNum=%d, rtpTs=%u, rtpPacketLen=%d",
                                    SSRC, seqNum, rtpTimeStamp, rtpPacketLen));
+
+    return true;
+}
+
+bool PVMFJitterBufferImpl::CreateMediaData(PVMFSharedMediaDataPtr& dataPacket, OsclSharedPtr<PVMFMediaDataImpl>& mediaDataOut)
+{
+    int32 err;
+
+    OSCL_TRY(err,
+             dataPacket = PVMFMediaData::createMediaData(mediaDataOut,
+                          iMediaMsgMemPool););
+
+    if (err != OsclErrNone)
+    {
+        return false;
+    }
+
+    return true;
+}
+
+
+bool PVMFJitterBufferImpl::Allocate(OsclSharedPtr<PVMFMediaDataImpl>& mediaDataOut)
+{
+    int32 err;
+    OSCL_TRY(err,
+             mediaDataOut = iMediaDataGroupAlloc->allocate());
+
+    if (err != OsclErrNone)
+    {
+        return false;
+    }
+
+    // If there is no memory left return false
+    if (mediaDataOut.GetRep() == NULL)
+    {
+        return false;
+    }
 
     return true;
 }
@@ -738,10 +836,41 @@ void PVMFJitterBufferImpl::DeterminePrevTimeStamp(uint32 aSeqNum)
         }
         if (rtpInfoParams->seqNum > iPrevSeqNumBaseOut)
         {
+            /* We need to adjust iMonotonicTimeStamp as well for resume */
+            if (rtpInfoParams->isPlayAfterPause && rtpInfoParams->nptTimeBaseSet && isPrevNptTimeSet && isPrevRtpTimeSet)
+            {
+                uint64 CurrNptTime, PrevNptTime;
+                Oscl_Int64_Utils::set_uint64(CurrNptTime, 0, rtpInfoParams->nptTimeInRTPTimeScale);
+                Oscl_Int64_Utils::set_uint64(PrevNptTime, 0, iPrevNptTimeInRTPTimeScale + iPrevTSOut - iPrevRtpTimeBase);
+                iMonotonicTimeStamp = iMonotonicTimeStamp + CurrNptTime - PrevNptTime;
+                PVMF_JBNODE_LOGINFO((0, "PVMFJitterBufferImpl::DeterminePrevTimeStamp: TS adjustment for resume"
+                                     "nptTimeInRTPTimeScale=%d, iPrevNptTimeInRTPTimeScale=%d, iPrevRtpTimeBase=%d, iPrevTSOut=%d", rtpInfoParams->nptTimeInRTPTimeScale, iPrevNptTimeInRTPTimeScale, iPrevRtpTimeBase, iPrevTSOut));
+            }
+            if (rtpInfoParams->nptTimeBaseSet)
+            {
+                iPrevNptTimeInRTPTimeScale = rtpInfoParams->nptTimeInRTPTimeScale;
+                isPrevNptTimeSet = true;
+            }
+            else
+            {
+                isPrevNptTimeSet = false;
+            }
+            if (rtpInfoParams->rtpTimeBaseSet)
+            {
+                iPrevRtpTimeBase = rtpInfoParams->rtpTime;
+                isPrevRtpTimeSet = true;
+            }
+            else
+            {
+                isPrevRtpTimeSet = false;
+            }
+            PVMF_JBNODE_LOGINFO((0, "PVMFJitterBufferImpl::DeterminePrevTimeStamp: TS update for "
+                                 "iPrevNptTimeInRTPTimeScale=%d, iPrevRtpTimeBase=%d", rtpInfoParams->nptTimeInRTPTimeScale, rtpInfoParams->rtpTime));
             iPrevSeqNumBaseOut = rtpInfoParams->seqNum;
             iPrevTSOut = rtpInfoParams->rtpTime;
         }
-        PVMF_JBNODE_LOGINFO((0, "PVMFJitterBufferImpl::DeterminePrevTimeStamp: RTPInfoSeqNum=%d, iPrevSeqNumBaseOut=%d, iPrevTSOut=%d", rtpInfoParams->seqNum, iPrevSeqNumBaseOut, iPrevTSOut));
+        PVMF_JBNODE_LOGINFO((0, "PVMFJitterBufferImpl::DeterminePrevTimeStamp: RTPInfoSeqNum=%d, iPrevSeqNumBaseOut=%d, iPrevTSOut=%u",
+                             rtpInfoParams->seqNum, iPrevSeqNumBaseOut, iPrevTSOut));
     }
 }
 
@@ -770,7 +899,7 @@ void PVMFJitterBufferImpl::ComputeMaxAdjustedRTPTS()
     iMaxAdjustedRTPTS += (aTS - iPrevAdjustedRTPTS);
     iPrevAdjustedRTPTS = aTS;
 
-    PVMF_JBNODE_LOGINFO((0, "PVMFJitterBufferImpl::ComputeMaxAdjustedRTPTS - maxTimeStampRegistered=%d, iPrevAdjustedRTPTS=%d, iMaxAdjustedRTPTS=%d, Mime=%s",
+    PVMF_JBNODE_LOGINFO((0, "PVMFJitterBufferImpl::ComputeMaxAdjustedRTPTS - maxTimeStampRegistered=%u, iPrevAdjustedRTPTS=%u, iMaxAdjustedRTPTS=%u, Mime=%s",
                          aTS, iPrevAdjustedRTPTS, iMaxAdjustedRTPTS, iMimeType.get_cstr()));
 
     UpdateEstimatedServerClock();
@@ -780,7 +909,7 @@ void
 PVMFJitterBufferImpl::PurgeElementsWithSeqNumsLessThan(uint32 aSeqNum,
         uint32 aPlayerClockMS)
 {
-    iJitterBuffer->PurgeElementsWithSeqNumsLessThan(aSeqNum);
+    iJitterBuffer->PurgeElementsWithSeqNumsLessThan(aSeqNum, iPrevSeqNumBaseOut);
 
     {
         iMaxAdjustedRTPTS =
@@ -790,7 +919,9 @@ PVMFJitterBufferImpl::PurgeElementsWithSeqNumsLessThan(uint32 aSeqNum,
          * at a later point, via the "AdjustRTPTimeStamp" API call from
          * jitter buffer node.
          */
+        OSCL_UNUSED_ARG(aPlayerClockMS);
     }
+
     PVMF_JBNODE_LOGDATATRAFFIC_IN((0, "PVMFJitterBufferImpl::PurgeElementsWithSeqNumsLessThan - SeqNum=%d",
                                    aSeqNum));
 }
@@ -798,23 +929,33 @@ PVMFJitterBufferImpl::PurgeElementsWithSeqNumsLessThan(uint32 aSeqNum,
 void
 PVMFJitterBufferImpl::PurgeElementsWithTimestampLessThan(PVMFTimestamp aTS)
 {
-    PVMFRTPInfoParams* rtpInfoParams = FindRTPInfoParams(0x80000000);
-    PVMFTimestamp rtpTS = rtpInfoParams->rtpTime + aTS;
+    PVMFTimestamp rtpTS;
+    if (iPlayListRTPTimeBaseSet)
+    {
+        rtpTS = iPlayListRTPTimeBase + aTS;
+    }
+    else
+    {
+        rtpTS = aTS;
+    }
+
     iJitterBuffer->PurgeElementsWithTimestampLessThan(rtpTS);
     iMaxAdjustedRTPTS = aTS;
+    //iPrevAdjustedRTPTS = rtpTS;
     UpdateEstimatedServerClock(true);
-    iMonotonicTimeStamp += (rtpTS - iPrevTSOut);
+    iMonotonicTimeStamp = aTS;
     iPrevTSOut = rtpTS;
-    PVMF_JBNODE_LOGDATATRAFFIC_IN((0, "PVMFJitterBufferImpl::PurgeElementsWithTimestampLessThan - ntpTS=%d, rtpTS=%d",
+    PVMF_JBNODE_LOGDATATRAFFIC_IN((0, "PVMFJitterBufferImpl::PurgeElementsWithTimestampLessThan - ntpTS=%u, rtpTS=%u",
                                    aTS, rtpTS));
 }
 
 void PVMFJitterBufferImpl::UpdateEstimatedServerClock(bool oFreshStart)
 {
     uint32 rtpTSInMS;
-    uint64 currentTime64 = 0;
-    uint64 currentTimeBase64 = 0;
-    uint64 adjustTime64 = 0;
+    uint32 currentTime32 = 0;
+    uint32 currentTimeBase32 = 0;
+    uint32 adjustTime32 = 0;
+    bool overflowFlag = false;
 
     if (oFreshStart)
     {
@@ -822,38 +963,60 @@ void PVMFJitterBufferImpl::UpdateEstimatedServerClock(bool oFreshStart)
         iEstServClockMediaClockConvertor.set_clock(iMaxAdjustedRTPTS, in_wrap_count);
         rtpTSInMS = iEstServClockMediaClockConvertor.get_converted_ts(1000);
         iEstimatedServerClock->Stop();
+
         iEstimatedServerClock->SetStartTime32(rtpTSInMS,
-                                              OSCLCLOCK_MSEC);
+                                              PVMF_MEDIA_CLOCK_MSEC, overflowFlag);
         iEstimatedServerClock->Start();
-        PVMF_JBNODE_LOGCLOCK((0, "PVMFJitterBufferImpl::UpdateEstimatedServerClock - Setting start time - MaxAdjustedRTPTS=%d, StartTime=%d",
+        PVMF_JBNODE_LOGCLOCK((0, "PVMFJitterBufferImpl::UpdateEstimatedServerClock - Setting start time - MaxAdjustedRTPTS=%u, StartTime=%d",
                               iMaxAdjustedRTPTS, rtpTSInMS));
     }
     else
     {
         iEstServClockMediaClockConvertor.update_clock(iMaxAdjustedRTPTS);
         rtpTSInMS = iEstServClockMediaClockConvertor.get_converted_ts(1000);
-        Oscl_Int64_Utils::set_uint64(adjustTime64, 0, rtpTSInMS);
-        iEstimatedServerClock->GetCurrentTime64(currentTime64,
-                                                OSCLCLOCK_MSEC,
-                                                currentTimeBase64);
+        adjustTime32 = rtpTSInMS;
+        bool overflowFlag = false;
+        iEstimatedServerClock->GetCurrentTime32(currentTime32, overflowFlag,
+                                                PVMF_MEDIA_CLOCK_MSEC,
+                                                currentTimeBase32);
+        if (iHeaderFormat == PVMF_JITTER_BUFFER_TRANSPORT_HEADER_ASF)
         {
-            iEstimatedServerClock->AdjustClockTime64(currentTime64,
-                    currentTimeBase64,
-                    adjustTime64,
-                    OSCLCLOCK_MSEC);
+            if (currentTime32 > adjustTime32)
+            {
+                iEstimatedServerClock->Stop();
+                iEstimatedServerClock->SetStartTime32(adjustTime32, PVMF_MEDIA_CLOCK_MSEC, overflowFlag);
+                iEstimatedServerClock->Start();
+            }
+            else
+            {
+
+                iEstimatedServerClock->AdjustClockTime32(currentTime32,
+                        currentTimeBase32,
+                        adjustTime32,
+                        PVMF_MEDIA_CLOCK_MSEC,
+                        overflowFlag);
+            }
         }
-        iEstimatedServerClock->GetCurrentTime64(currentTime64,
-                                                OSCLCLOCK_MSEC,
-                                                currentTimeBase64);
+        else
+        {
+            iEstimatedServerClock->AdjustClockTime32(currentTime32,
+                    currentTimeBase32,
+                    adjustTime32,
+                    PVMF_MEDIA_CLOCK_MSEC,
+                    overflowFlag);
+        }
+        iEstimatedServerClock->GetCurrentTime32(currentTime32, overflowFlag,
+                                                PVMF_MEDIA_CLOCK_MSEC,
+                                                currentTimeBase32);
 
         PVMF_JBNODE_LOGINFO((0, "PVMFJitterBufferImpl::UpdateEstimatedServerClock - Mime=%s",
                              iMimeType.get_cstr()));
-        PVMF_JBNODE_LOGINFO((0, "PVMFJitterBufferImpl::UpdateEstimatedServerClock - EstServClock=%2d",
-                             currentTime64));
-        PVMF_JBNODE_LOGINFO((0, "PVMFJitterBufferImpl::UpdateEstimatedServerClock - RTPTime64=%2d",
-                             adjustTime64));
-        PVMF_JBNODE_LOGINFO((0, "PVMFJitterBufferImpl::UpdateEstimatedServerClock - Adjusting Clock - iMaxAdjustedRTPTS=%d, currentTimeBase64=%2d",
-                             iMaxAdjustedRTPTS, currentTimeBase64));
+        PVMF_JBNODE_LOGINFO((0, "PVMFJitterBufferImpl::UpdateEstimatedServerClock - EstServClock=%d",
+                             currentTime32));
+        PVMF_JBNODE_LOGINFO((0, "PVMFJitterBufferImpl::UpdateEstimatedServerClock - RTPTime32=%u",
+                             adjustTime32));
+        PVMF_JBNODE_LOGINFO((0, "PVMFJitterBufferImpl::UpdateEstimatedServerClock - Adjusting Clock - iMaxAdjustedRTPTS=%u, currentTimeBase32=%d",
+                             iMaxAdjustedRTPTS, currentTimeBase32));
     }
     if (iServerClockUpdateNotificationObserver != NULL)
     {
@@ -864,9 +1027,10 @@ void PVMFJitterBufferImpl::UpdateEstimatedServerClock(bool oFreshStart)
 void PVMFJitterBufferImpl::UpdateEstimatedServerClockDiscrete(bool oFreshStart)
 {
     uint32 rtpTSInMS;
-    uint64 currentTime64 = 0;
-    uint64 currentTimeBase64 = 0;
-    uint64 adjustTime64 = 0;
+    uint32 currentTime32 = 0;
+    uint32 currentTimeBase32 = 0;
+    uint32 adjustTime32 = 0;
+    bool overflowFlag = false;
 
     if (oFreshStart)
     {
@@ -875,7 +1039,7 @@ void PVMFJitterBufferImpl::UpdateEstimatedServerClockDiscrete(bool oFreshStart)
         rtpTSInMS = iEstServClockMediaClockConvertor.get_converted_ts(1000);
         iEstimatedServerClock->Stop();
         iEstimatedServerClock->SetStartTime32(rtpTSInMS,
-                                              OSCLCLOCK_MSEC);
+                                              PVMF_MEDIA_CLOCK_MSEC, overflowFlag);
         iEstimatedServerClock->Start();
         iEstimatedServerClock->Pause();
         PVMF_JBNODE_LOGCLOCK((0, "PVMFJitterBufferImpl::UpdateEstimatedServerClock - Setting start time - MaxAdjustedRTPTS=%d, StartTime=%d",
@@ -885,25 +1049,25 @@ void PVMFJitterBufferImpl::UpdateEstimatedServerClockDiscrete(bool oFreshStart)
     {
         iEstServClockMediaClockConvertor.update_clock(iMaxAdjustedRTPTS);
         rtpTSInMS = iEstServClockMediaClockConvertor.get_converted_ts(1000);
-        Oscl_Int64_Utils::set_uint64(adjustTime64, 0, rtpTSInMS);
-        iEstimatedServerClock->GetCurrentTime64(currentTime64,
-                                                OSCLCLOCK_MSEC,
-                                                currentTimeBase64);
+        adjustTime32 = rtpTSInMS;
+        iEstimatedServerClock->GetCurrentTime32(currentTime32, overflowFlag,
+                                                PVMF_MEDIA_CLOCK_MSEC,
+                                                currentTimeBase32);
         iEstimatedServerClock->Stop();
-        iEstimatedServerClock->SetStartTime64(adjustTime64, OSCLCLOCK_MSEC);
+        iEstimatedServerClock->SetStartTime32(adjustTime32, PVMF_MEDIA_CLOCK_MSEC, overflowFlag);
         iEstimatedServerClock->Start();
         iEstimatedServerClock->Pause();
-        iEstimatedServerClock->GetCurrentTime64(currentTime64,
-                                                OSCLCLOCK_MSEC,
-                                                currentTimeBase64);
+        iEstimatedServerClock->GetCurrentTime32(currentTime32, overflowFlag,
+                                                PVMF_MEDIA_CLOCK_MSEC,
+                                                currentTimeBase32);
         PVMF_JBNODE_LOGINFO((0, "PVMFJitterBufferImpl::UpdateEstimatedServerClockDiscrete - Mime=%s",
                              iMimeType.get_cstr()));
         PVMF_JBNODE_LOGINFO((0, "PVMFJitterBufferImpl::UpdateEstimatedServerClockDiscrete - EstServClock=%2d",
-                             currentTime64));
+                             currentTime32));
         PVMF_JBNODE_LOGINFO((0, "PVMFJitterBufferImpl::UpdateEstimatedServerClockDiscrete - RTPTime64=%2d",
-                             adjustTime64));
-        PVMF_JBNODE_LOGINFO((0, "PVMFJitterBufferImpl::UpdateEstimatedServerClockDiscrete - Adjusting Clock - iMaxAdjustedRTPTS=%d, currentTimeBase64=%2d",
-                             iMaxAdjustedRTPTS, currentTimeBase64));
+                             adjustTime32));
+        PVMF_JBNODE_LOGINFO((0, "PVMFJitterBufferImpl::UpdateEstimatedServerClockDiscrete - Adjusting Clock - iMaxAdjustedRTPTS=%d, currentTimeBase32=%2d",
+                             iMaxAdjustedRTPTS, currentTimeBase32));
     }
     if (iServerClockUpdateNotificationObserver != NULL)
     {

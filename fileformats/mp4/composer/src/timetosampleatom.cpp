@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*********************************************************************************/
 /*
     This PVA_FF_TimeToSampleAtom Class contains a compact version of a table that allows
     indexing from decoding to sample number.
@@ -26,7 +25,6 @@
 
 #include "timetosampleatom.h"
 #include "atomutils.h"
-#include "videoutils.h"
 #include "a_atomdefs.h"
 #include "objectdescriptorupdate.h"
 
@@ -64,7 +62,6 @@ PVA_FF_TimeToSampleAtom::nextSample(uint32 ts)
         case MEDIA_TYPE_AUDIO: // sample fp an IMediaSample
         case MEDIA_TYPE_VISUAL: // sample fp an IMediaSample
         case MEDIA_TYPE_TEXT:	// sample fp an IMediatextSample for timed text
-        case MEDIA_TYPE_IPMP: // Sample fp an IPMP Message
         {
             if (_firstEntry)
             {
@@ -83,17 +80,6 @@ PVA_FF_TimeToSampleAtom::nextSample(uint32 ts)
         }
         break;
 
-        case MEDIA_TYPE_OBJECT_DESCRIPTOR: // Sample fp an PVA_FF_ObjectDescriptor Command
-        case MEDIA_TYPE_SCENE_DESCRIPTION: // Sample fp an BIFS Command
-            break;
-        case MEDIA_TYPE_CLOCK_REFERENCE:
-            break;
-        case MEDIA_TYPE_MPEG7:
-            break;
-        case MEDIA_TYPE_OBJECT_CONTENT_INFO:
-            break;
-        case MEDIA_TYPE_MPEG_J:
-            break;
         case MEDIA_TYPE_UNKNOWN:
         default:
             break;
@@ -106,24 +92,13 @@ void
 PVA_FF_TimeToSampleAtom::updateLastTSEntry(uint32 ts)
 {
     if (((uint32) _mediaType == MEDIA_TYPE_AUDIO) ||
-            ((uint32) _mediaType == MEDIA_TYPE_VISUAL) ||
-            ((uint32) _mediaType == MEDIA_TYPE_IPMP))
+            ((uint32) _mediaType == MEDIA_TYPE_VISUAL))
     {
         int32 delta = ts - _currentTimestamp;
         addDelta(delta);
     }
 
     _lastTSUpdated = true;
-}
-
-void
-PVA_FF_TimeToSampleAtom::setBIFSODSampleDuration(int32 duration)
-{
-    if (((uint32) _mediaType == MEDIA_TYPE_OBJECT_DESCRIPTOR) ||
-            ((uint32) _mediaType == MEDIA_TYPE_SCENE_DESCRIPTION))
-    {
-        addDelta(duration);
-    }
 }
 
 // Add delta to the table - logic contained within if shoudl just update table entries
@@ -162,10 +137,6 @@ PVA_FF_TimeToSampleAtom::addEntry(uint32 count, int32 delta)
 {
     _psampleDeltaVec->push_back(delta);
     _psampleCountVec->push_back(count);
-
-    //(*_psampleDeltaVec) += (delta);
-    //(*_psampleCountVec) += (count);
-
     _entryCount++;
     recomputeSize();
 }
@@ -186,8 +157,7 @@ PVA_FF_TimeToSampleAtom::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
     // This is required to comply with w3850 Sec 13.2.3.16
     // "Note that the time to sample atoms must give durations for all
     // samples including the last one"
-    if (((uint32) _mediaType != MEDIA_TYPE_OBJECT_DESCRIPTOR) &&
-            ((uint32) _mediaType != MEDIA_TYPE_SCENE_DESCRIPTION) && (_lastTSUpdated == false))
+    if (_lastTSUpdated == false)
     {
         if (_entryCount > 0)
         {
@@ -202,6 +172,11 @@ PVA_FF_TimeToSampleAtom::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
     rendered += 4;
 
     // Render the vectors of counts and deltas
+    if ((_psampleCountVec->size() < _entryCount) ||
+            (_psampleDeltaVec->size() < _entryCount))
+    {
+        return false;
+    }
     for (uint32 i = 0; i < _entryCount; i++)
     {
         if (!PVA_FF_AtomUtils::render32(fp, (*_psampleCountVec)[i]))
@@ -241,5 +216,3 @@ PVA_FF_TimeToSampleAtom::recomputeSize()
         _pparent->recomputeSize();
     }
 }
-
-

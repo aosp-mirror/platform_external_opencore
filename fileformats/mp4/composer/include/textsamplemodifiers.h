@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@
 
 #include "oscl_file_io.h"
 #include "atom.h"
-
 #include "atomutils.h"
 #include "a_atomdefs.h"
 #include "boxrecord.h"
@@ -242,12 +241,5 @@ class PVA_FF_BlinkBox : public PVA_FF_Atom
         uint16  _pstartCharOffset;
         uint16  _pendCharOffset;
 };
-
-/*class TextSampleModifiers :PVA_FF_ISucceedFail
-{
-
-};*/
-
-
 
 #endif

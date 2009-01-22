@@ -102,7 +102,7 @@ namespace android {
 }
 
 class PVLogger;
-class OsclClock;
+class PVMFMediaClock;
 class AndroidSurfaceOutput;
 
 using namespace android;
@@ -120,7 +120,7 @@ public:
     {}
 
     //from PvmiClockExtensionInterface
-    OSCL_IMPORT_REF PVMFStatus SetClock(OsclClock *clockVal) ;
+    OSCL_IMPORT_REF PVMFStatus SetClock(PVMFMediaClock* clockVal) ;
 
     //from PVInterface
     OSCL_IMPORT_REF void addRef() ;
@@ -133,7 +133,7 @@ public:
 
     uint32 iQueueLimit;
 
-    OsclClock* iClock;
+    PVMFMediaClock* iClock;
 };
 
 
@@ -372,6 +372,8 @@ private:
     uint32                      mOffset;
 
     void convertFrame(void* src, void* dst, size_t len);
+    //This bool is set true when all necassary parameters have been received.
+    bool iIsMIOConfigured;
 
 #ifdef PERFORMANCE_MEASUREMENTS_ENABLED
         PVProfile PVOmapVideoProfile;

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1068,9 +1068,9 @@ bool MM_Audit_Imp::validate(void *ptrIn)
         static_cast<MM_AllocBlockFence*>(static_cast<void*>(pMem +
                                          CONTROL_HEADER_SIZE));
     status = fence->check_fence();
-    OSCL_ASSERT(status);
     if (!status)
     {
+        OSCL_ASSERT(status);
         return status;
     }
 
@@ -1080,9 +1080,9 @@ bool MM_Audit_Imp::validate(void *ptrIn)
                                          BLOCK_HDR_SIZE
                                          + size));
     status = fence->check_fence();
-    OSCL_ASSERT(status);
     if (!status)
     {
+        OSCL_ASSERT(status);
         return status;
     }
 #endif

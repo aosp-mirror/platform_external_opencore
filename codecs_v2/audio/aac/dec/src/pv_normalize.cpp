@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,14 @@
  * -------------------------------------------------------------------
  */
 /*
-------------------------------------------------------------------------------
-
-
 
  Filename: pv_normalize.c
-
-     Date: 12/10/2004
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
 
 
+ Who:                                   Date: MM/DD/YYYY
  Description:
 
 ------------------------------------------------------------------------------
@@ -102,8 +98,7 @@ Returns
 ----------------------------------------------------------------------------*/
 
 #if defined(_ARM)
-#elif defined(_ARM_GCC)
-
+#elif (defined(PV_ARM_GCC_V5)||defined(PV_ARM_GCC_V4))
 /* function is inlined in header file */
 
 

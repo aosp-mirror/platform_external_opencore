@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -167,10 +167,10 @@ extern "C"
 
     void RunLevel(VideoEncData *video, Int intra, Int intraDC_decision, Int ncoefblck[]);
     Int IntraDC_dpcm(Int val, Int lum, BitstreamEncVideo *bitstream);
-    Void DCACPred(VideoEncData *video, UChar Mode, Int *intraDC_decision);
+    Void DCACPred(VideoEncData *video, UChar Mode, Int *intraDC_decision, Int intraDCVlcQP);
     Void find_pmvs(VideoEncData *video, Int block, Int *mvx, Int *mvy);
     Void  WriteMVcomponent(Int f_code, Int dmv, BitstreamEncVideo *bs);
-    static Bool IntraDCSwitch_Decision(Int Mode, Int intra_dc_vlc_thr, Int Qp);
+    static Bool IntraDCSwitch_Decision(Int Mode, Int intra_dc_vlc_threshold, Int intraDCVlcQP);
 
     Void ScaleMVD(Int  f_code, Int  diff_vector, Int  *residual, Int  *vlc_code_mag);
 
@@ -880,7 +880,6 @@ Int PutLevelCoeff_Intra_Last(Int run, Int level, BitstreamEncVideo *bitstream)
 
 void MBVlcEncodeDataPar_I_VOP(
     VideoEncData *video,
-    Int	QP_prev,
     Int ncoefblck[],
     void *blkCodePtr)
 {
@@ -900,14 +899,21 @@ void MBVlcEncodeDataPar_I_VOP(
     BlockCodeCoeffPtr BlockCodeCoeff =	(BlockCodeCoeffPtr) blkCodePtr;
 
     /* DC and AC Prediction, 5/28/01, compute CBP, intraDC_decision*/
-    DCACPred(video, Mode, &intraDC_decision);
+    DCACPred(video, Mode, &intraDC_decision, video->QP_prev);
 
     /* CBP, Run, Level, and Sign */
     RunLevel(video, 1, intraDC_decision, ncoefblck);
     CBP = video->headerInfo.CBP[mbnum];
 
     /* Compute DQuant */
-    dquant = video->QPMB[mbnum] - QP_prev; /* 3/15/01, QP_prev may not equal QPMB[mbnum-1] if mbnum-1 is skipped*/
+    dquant = video->QPMB[mbnum] - video->QP_prev; /* 3/15/01, QP_prev may not equal QPMB[mbnum-1] if mbnum-1 is skipped*/
+
+    video->QP_prev = video->QPMB[mbnum];
+
+    if (dquant && Mode == MODE_INTRA)
+    {
+        Mode = MODE_INTRA_Q;
+    }
 
     if (dquant >= 0)
         dquant = (PV_ABS(dquant) + 1);
@@ -950,7 +956,7 @@ void MBVlcEncodeDataPar_I_VOP(
     for (i = 0;i < 6;i++)
     {
         if (CBP&(1 << (5 - i)))
-            (*BlockCodeCoeff)(&(RLB[i]), bs3, 1, ncoefblck[i], Mode);/* Code Intra AC*/
+            (*BlockCodeCoeff)(&(RLB[i]), bs3, 1 - intraDC_decision, ncoefblck[i], Mode);/* Code Intra AC*/
     }
 
     return ;
@@ -962,7 +968,6 @@ void MBVlcEncodeDataPar_I_VOP(
 
 void MBVlcEncodeDataPar_P_VOP(
     VideoEncData *video,
-    Int QP_prev,
     Int ncoefblck[],
     void *blkCodePtr)
 {
@@ -971,10 +976,11 @@ void MBVlcEncodeDataPar_P_VOP(
     BitstreamEncVideo *bs2 = video->bitstream2;
     BitstreamEncVideo *bs3 = video->bitstream3;
     int i;
-    UChar Mode = video->headerInfo.Mode[video->mbnum];
+    Int mbnum = video->mbnum;
+    UChar Mode = video->headerInfo.Mode[mbnum];
+    Int QP_tmp = video->QPMB[mbnum];
     UChar CBP;
 //	MacroBlock *MB=video->outputMB;
-    Int mbnum = video->mbnum;
     Int intra, intraDC_decision, DC;
     Int pmvx, pmvy;
 //	int temp;
@@ -987,7 +993,14 @@ void MBVlcEncodeDataPar_P_VOP(
     /* DC and AC Prediction, 5/28/01, compute CBP, intraDC_decision*/
 
     if (intra)
-        DCACPred(video, Mode, &intraDC_decision);
+    {
+        if (video->usePrevQP)
+        {
+            QP_tmp = video->QPMB[mbnum-1];
+        }
+
+        DCACPred(video, Mode, &intraDC_decision, QP_tmp);
+    }
     else
         intraDC_decision = 0; /* used in RunLevel */
 
@@ -996,7 +1009,12 @@ void MBVlcEncodeDataPar_P_VOP(
     CBP = video->headerInfo.CBP[mbnum];
 
     /* Compute DQuant */
-    dquant = video->QPMB[mbnum] - QP_prev; /* 3/15/01, QP_prev may not equal QPMB[mbnum-1] if mbnum-1 is skipped*/
+    dquant = video->QPMB[mbnum] - video->QP_prev; /* 3/15/01, QP_prev may not equal QPMB[mbnum-1] if mbnum-1 is skipped*/
+
+    if (dquant && (Mode == MODE_INTRA || Mode == MODE_INTER))
+    {
+        Mode += 2;  /* make it MODE_INTRA_Q and MODE_INTER_Q */
+    }
 
     if (dquant >= 0)
         dquant = (PV_ABS(dquant) + 1);
@@ -1024,6 +1042,9 @@ void MBVlcEncodeDataPar_P_VOP(
     }
     else
         BitstreamPut1Bits(bs1, 0); /* not_coded =0 */
+
+    video->QP_prev = video->QPMB[mbnum];
+    video->usePrevQP = 1;
 
     PutMCBPC_Inter(CBP, Mode, bs1); /* MCBPC */
 
@@ -1057,7 +1078,7 @@ void MBVlcEncodeDataPar_P_VOP(
 
         if (Mode == MODE_INTRA_Q)
             BitstreamPutBits(bs2, 2, dquant);  /* dquant, 3/15/01*/
-        //intraDC_decision = IntraDCSwitch_Decision(Mode,video->currVop->intraDCVlcThr,video->QPMB[mbnum]);
+
         if (intraDC_decision == 0)
         {
             for (i = 0; i < 6; i++)
@@ -1076,7 +1097,7 @@ void MBVlcEncodeDataPar_P_VOP(
         for (i = 0;i < 6;i++)
         {
             if (CBP&(1 << (5 - i)))
-                (*BlockCodeCoeff)(&(RLB[i]), bs3, 1, ncoefblck[i], Mode);/* Code Intra AC*/
+                (*BlockCodeCoeff)(&(RLB[i]), bs3, 1 - intraDC_decision, ncoefblck[i], Mode);/* Code Intra AC*/
         }
     }
     else
@@ -1105,7 +1126,6 @@ void MBVlcEncodeDataPar_P_VOP(
 
 void MBVlcEncodeCombined_I_VOP(
     VideoEncData *video,
-    Int QP_prev,
     Int ncoefblck[],
     void *blkCodePtr)
 {
@@ -1130,7 +1150,7 @@ void MBVlcEncodeCombined_I_VOP(
 
 #ifndef H263_ONLY
     if (!shortVideoHeader)
-        DCACPred(video, Mode, &intraDC_decision);
+        DCACPred(video, Mode, &intraDC_decision, video->QP_prev);
     else
 #endif
     {
@@ -1143,7 +1163,14 @@ void MBVlcEncodeCombined_I_VOP(
     CBP = video->headerInfo.CBP[mbnum];
 
     /* Compute DQuant */
-    dquant = video->QPMB[mbnum] - QP_prev; /* 3/15/01, QP_prev may not equal QPMB[mbnum-1] if mbnum-1 is skipped*/
+    dquant = video->QPMB[mbnum] - video->QP_prev; /* 3/15/01, QP_prev may not equal QPMB[mbnum-1] if mbnum-1 is skipped*/
+
+    video->QP_prev = video->QPMB[mbnum];
+
+    if (dquant && Mode == MODE_INTRA)
+    {
+        Mode = MODE_INTRA_Q;
+    }
 
     if (dquant >= 0)
         dquant = (PV_ABS(dquant) + 1);
@@ -1215,7 +1242,6 @@ void MBVlcEncodeCombined_I_VOP(
 
 void MBVlcEncodeCombined_P_VOP(
     VideoEncData *video,
-    Int QP_prev,
     Int ncoefblck[],
     void *blkCodePtr)
 {
@@ -1224,10 +1250,11 @@ void MBVlcEncodeCombined_P_VOP(
 //	BitstreamEncVideo *bs2 = video->bitstream2;
 //	BitstreamEncVideo *bs3 = video->bitstream3;
     int i;
-    UChar Mode = video->headerInfo.Mode[video->mbnum];
+    Int mbnum = video->mbnum;
+    UChar Mode = video->headerInfo.Mode[mbnum];
+    Int QP_tmp = video->QPMB[mbnum];
     UChar CBP ;
 //	MacroBlock *MB=video->outputMB;
-    Int mbnum = video->mbnum;
     Int intra, intraDC_decision;
     Int pmvx, pmvy;
 //	int temp;
@@ -1242,7 +1269,13 @@ void MBVlcEncodeCombined_P_VOP(
     /* DC and AC Prediction, 5/28/01, compute intraDC_decision*/
 #ifndef H263_ONLY
     if (!shortVideoHeader && intra)
-        DCACPred(video, Mode, &intraDC_decision);
+    {
+        if (video->usePrevQP)
+        {
+            QP_tmp = video->QPMB[mbnum-1];
+        }
+        DCACPred(video, Mode, &intraDC_decision, QP_tmp);
+    }
     else
 #endif
         intraDC_decision = 0;
@@ -1253,7 +1286,11 @@ void MBVlcEncodeCombined_P_VOP(
     CBP = video->headerInfo.CBP[mbnum];
 
     /* Compute DQuant */
-    dquant = video->QPMB[mbnum] - QP_prev; /* 3/15/01, QP_prev may not equal QPMB[mbnum-1] if mbnum-1 is skipped*/
+    dquant = video->QPMB[mbnum] - video->QP_prev; /* 3/15/01, QP_prev may not equal QPMB[mbnum-1] if mbnum-1 is skipped*/
+    if (dquant && (Mode == MODE_INTRA || Mode == MODE_INTER))
+    {
+        Mode += 2;  /* make it MODE_INTRA_Q and MODE_INTER_Q */
+    }
 
     if (dquant >= 0)
         dquant = (PV_ABS(dquant) + 1);
@@ -1278,6 +1315,9 @@ void MBVlcEncodeCombined_P_VOP(
     }
     else
         BitstreamPut1Bits(bs1, 0); /* not_coded =0 */
+
+    video->QP_prev = video->QPMB[mbnum];
+    video->usePrevQP = 1;
 
     PutMCBPC_Inter(CBP, Mode, bs1);	/* mcbpc P_VOP */
 
@@ -1883,7 +1923,7 @@ void RunLevel(VideoEncData *video, Int intra, Int intraDC_decision, Int ncoefblc
 extern "C"
 {
 #endif
-    static Bool IntraDCSwitch_Decision(Int Mode, Int intra_dc_vlc_thr, Int Qp)
+    static Bool IntraDCSwitch_Decision(Int Mode, Int intra_dc_vlc_thr, Int intraDCVlcQP)
     {
         Bool switched = FALSE;
 
@@ -1891,7 +1931,7 @@ extern "C"
         {
             if (intra_dc_vlc_thr != 0)
             {
-                switched = (intra_dc_vlc_thr == 7 || Qp >= intra_dc_vlc_thr * 2 + 11);
+                switched = (intra_dc_vlc_thr == 7 || intraDCVlcQP >= intra_dc_vlc_thr * 2 + 11);
             }
         }
 
@@ -1958,34 +1998,42 @@ Int IntraDC_dpcm(Int val, Int lum, BitstreamEncVideo *bitstream)
 		UChar			Mode												*/
 /*	Return   :																*/
 /*																			*/
-/*	Modified :	8/13/01,  remove Idir_Enc, use multiply-shift instead
-				of division and check QP and QPtmp							*/
 /* ======================================================================== */
 Int cal_dc_scalerENC(Int QP, Int type) ;
-const static short scaleArrayQP[32] = {0, 16384, 8192, 5462,  /* 15 */
+
+#if 0 // optimize div by QP, doesn't work. 
+const static short scaleArrayQP[32] = {0, 16384, 8192, 5462,  /* 14 */
                                        4096, 3277, 2731, 2341,
-                                       4096, 3641, 3277, 2979,  /* 16 */
+                                       4096, 3641, 3277, 2979,  /* 15 */
                                        2731, 2521, 2341, 2185,
-                                       4096, 3856, 3641, 3450,  /* 17 */
+                                       4096, 3856, 3641, 3450,  /* 16 */
                                        3277, 3121, 2979, 2850,
-                                       5462, 5243, 5042, 4855,  /* 18 */
+                                       5462, 5243, 5042, 4855,  /* 17 */
                                        4682, 4520, 4370, 4229
                                       };
-
-
 #define PREDICT_AC  for (m = 0; m < 7; m++){ \
 						tmp = DCAC[0]*QPtmp;\
-						if(tmp<0)	tmp = (tmp-QP);\
-						else		tmp = (tmp+QP);\
+						if(tmp<0)	tmp = (tmp-(QP/2));\
+						else		tmp = (tmp+(QP/2));\
 						tmp = tmp*scaleQP;\
 						tmp>>=shiftQP;\
 						tmp+=((UInt)tmp>>31);\
+                        pred[m] = tmp;\
+						DCAC++;\
+					}
+#else
+
+#define PREDICT_AC  for (m = 0; m < 7; m++){ \
+						tmp = DCAC[0]*QPtmp;\
+						if(tmp<0)	tmp = (tmp-(QP/2))/QP;\
+						else		tmp = (tmp+(QP/2))/QP;\
 						pred[m] = tmp;\
 						DCAC++;\
 					}
 
+#endif
 
-Void DCACPred(VideoEncData *video, UChar Mode, Int *intraDC_decision)
+Void DCACPred(VideoEncData *video, UChar Mode, Int *intraDC_decision, Int intraDCVlcQP)
 {
     MacroBlock *MB = video->outputMB;
     Int mbnum = video->mbnum;
@@ -2000,10 +2048,13 @@ Void DCACPred(VideoEncData *video, UChar Mode, Int *intraDC_decision)
     Int x_pos = video->outputMB->mb_x; /* 5/28/01 */
     Int y_pos = video->outputMB->mb_y;
     UChar QP = video->QPMB[mbnum];
+#if 0
     Int	  scaleQP = scaleArrayQP[QP];
-    Int	  shiftQP = 15 + (QP >> 3);
+    Int	  shiftQP = 14 + (QP >> 3);
+#endif
     UChar *QPMB = video->QPMB;
     UChar *slice_nb = video->sliceNo;
+    Bool bACPredEnable = video->encParams->ACDCPrediction;
     Int *ACpred_flag = video->acPredFlag;
     Int mid_grey = 128 << 3;
     Int m;
@@ -2054,7 +2105,10 @@ Void DCACPred(VideoEncData *video, UChar Mode, Int *intraDC_decision)
             *DCAC++ = mid_grey;
             *DCAC++ = mid_grey;
             /* set to 0 DCAC_row[x_pos][0..3] */
-            M4VENC_MEMSET(DCAC_row[x_pos][0], 0, sizeof(Short) << 5);
+            if (bACPredEnable == TRUE)
+            {
+                M4VENC_MEMSET(DCAC_row[x_pos][0], 0, sizeof(Short) << 5);
+            }
         }
     }
     if (x_pos > 0)
@@ -2070,9 +2124,15 @@ Void DCACPred(VideoEncData *video, UChar Mode, Int *intraDC_decision)
             *DCAC++ = mid_grey;
             *DCAC++ = mid_grey;
             /* set to 0 DCAC_col[x_pos][0..3] */
-            M4VENC_MEMSET(DCAC_col[0][0], 0, sizeof(Short) << 5);
+            if (bACPredEnable == TRUE)
+            {
+                M4VENC_MEMSET(DCAC_col[0][0], 0, sizeof(Short) << 5);
+            }
         }
     }
+
+    S1 = 0;
+    S2 = 0;
 
     for (comp = 0; comp < 6; comp++)
     {
@@ -2167,287 +2227,281 @@ Void DCACPred(VideoEncData *video, UChar Mode, Int *intraDC_decision)
         qcoeff[0] -= (DC_pred + QPtmp / 2) / QPtmp;
 
 
-        /***********************/
-        /* Find AC prediction  */
-        /***********************/
-
-        if ((x_pos == 0) && y_pos == 0) 	/* top left corner */
+        if (bACPredEnable)
         {
-            if (direction[comp] == 0)
+            /***********************/
+            /* Find AC prediction  */
+            /***********************/
+
+            if ((x_pos == 0) && y_pos == 0) 	/* top left corner */
             {
-                if (comp == 1 || comp == 3)
+                if (direction[comp] == 0)
                 {
-                    QPtmp = QPMB[mbnum+x_offset] << 1;
-                    DCAC = DCAC_col[0][b_ytab];
-                    if (QPtmp != QP)
+                    if (comp == 1 || comp == 3)
                     {
-                        predptr = pred;
-                        PREDICT_AC
+                        QPtmp = QPMB[mbnum+x_offset];
+                        DCAC = DCAC_col[0][b_ytab];
+                        if (QPtmp != QP)
+                        {
+                            predptr = pred;
+                            PREDICT_AC
+                        }
+                        else
+                        {
+                            predptr = DCAC;
+                        }
                     }
                     else
                     {
-                        predptr = DCAC;
+                        predptr = pred;
+                        pred[0] = pred[1] = pred[2] = pred[3] = pred[4] = pred[5] = pred[6] = 0;
                     }
                 }
                 else
                 {
-                    predptr = pred;
-                    pred[0] = pred[1] = pred[2] = pred[3] = pred[4] = pred[5] = pred[6] = 0;
+                    if (comp == 2 || comp == 3)
+                    {
+                        QPtmp = QPMB[mbnum+ y_offset];
+                        DCAC = DCAC_row[x_pos][b_xtab];
+                        if (QPtmp != QP)
+                        {
+                            predptr = pred;
+                            PREDICT_AC
+                        }
+                        else
+                        {
+                            predptr = DCAC;
+                        }
+                    }
+                    else
+                    {
+                        predptr = pred;
+                        pred[0] = pred[1] = pred[2] = pred[3] = pred[4] = pred[5] = pred[6] = 0;
+                    }
+                }
+            }
+            else if (x_pos == 0) 	/* left edge */
+            {
+                if (direction[comp] == 0)
+                {
+                    if (comp == 1 || comp == 3)
+                    {
+                        QPtmp = QPMB[mbnum+x_offset];
+                        DCAC = DCAC_col[0][b_ytab];
+                        if (QPtmp != QP)
+                        {
+                            predptr = pred;
+                            PREDICT_AC
+                        }
+                        else
+                        {
+                            predptr = DCAC;
+                        }
+                    }
+                    else
+                    {
+                        predptr = pred;
+                        pred[0] = pred[1] = pred[2] = pred[3] = pred[4] = pred[5] = pred[6] = 0;
+                    }
+                }
+                else
+                {
+
+                    if ((Pos0[comp] && (slice_nb[mbnum] == slice_nb[mbnum-nMBPerRow]))
+                            || comp == 2 || comp == 3)
+                    {
+                        QPtmp = QPMB[mbnum+y_offset];
+                        DCAC = DCAC_row[x_pos][b_xtab];
+                        if (QPtmp != QP)
+                        {
+                            predptr = pred;
+                            PREDICT_AC
+                        }
+                        else
+                        {
+                            predptr = DCAC;
+                        }
+                    }
+                    else
+                    {
+                        predptr = pred;
+                        pred[0] = pred[1] = pred[2] = pred[3] = pred[4] = pred[5] = pred[6] = 0;
+                    }
+                }
+            }
+            else if (y_pos == 0)  /* top row */
+            {
+                if (direction[comp] == 0)
+                {
+                    if ((Pos1[comp] && (slice_nb[mbnum] == slice_nb[mbnum-1]))
+                            || comp == 1 || comp == 3)
+                    {
+                        QPtmp = QPMB[mbnum+x_offset];
+                        DCAC = DCAC_col[0][b_ytab];
+                        if (QPtmp != QP)
+                        {
+                            predptr = pred;
+                            PREDICT_AC
+                        }
+                        else
+                        {
+                            predptr = DCAC;
+                        }
+                    }
+                    else
+                    {
+                        predptr = pred;
+                        pred[0] = pred[1] = pred[2] = pred[3] = pred[4] = pred[5] = pred[6] = 0;
+                    }
+                }
+                else
+                {
+                    if (comp == 2 || comp == 3)
+                    {
+                        QPtmp = QPMB[mbnum+y_offset];
+                        DCAC = DCAC_row[x_pos][b_xtab];
+                        if (QPtmp != QP)
+                        {
+                            predptr = pred;
+                            PREDICT_AC
+                        }
+                        else
+                        {
+                            predptr = DCAC;
+                        }
+                    }
+                    else
+                    {
+                        predptr = pred;
+                        pred[0] = pred[1] = pred[2] = pred[3] = pred[4] = pred[5] = pred[6] = 0;
+                    }
                 }
             }
             else
             {
-                if (comp == 2 || comp == 3)
+                if (direction[comp] == 0)
                 {
-                    QPtmp = QPMB[mbnum+ y_offset] << 1;
-                    DCAC = DCAC_row[x_pos][b_xtab];
-                    if (QPtmp != QP)
+                    if ((Pos1[comp] && (slice_nb[mbnum] == slice_nb[mbnum-1]))
+                            || comp == 1 || comp == 3)
                     {
-                        predptr = pred;
-                        PREDICT_AC
+                        QPtmp = QPMB[mbnum+x_offset];
+                        DCAC = DCAC_col[0][b_ytab];
+                        if (QPtmp != QP)
+                        {
+                            predptr = pred;
+                            PREDICT_AC
+                        }
+                        else
+                        {
+                            predptr = DCAC;
+                        }
                     }
                     else
                     {
-                        predptr = DCAC;
+                        predptr = pred;
+                        pred[0] = pred[1] = pred[2] = pred[3] = pred[4] = pred[5] = pred[6] = 0;
                     }
                 }
                 else
                 {
-                    predptr = pred;
-                    pred[0] = pred[1] = pred[2] = pred[3] = pred[4] = pred[5] = pred[6] = 0;
-                }
-            }
-        }
-        else if (x_pos == 0) 	/* left edge */
-        {
-            if (direction[comp] == 0)
-            {
-                if (comp == 1 || comp == 3)
-                {
-                    QPtmp = QPMB[mbnum+x_offset] << 1;
-                    DCAC = DCAC_col[0][b_ytab];
-                    if (QPtmp != QP)
+                    if ((Pos0[comp] && (slice_nb[mbnum] == slice_nb[mbnum-nMBPerRow]))
+                            || comp  == 2 || comp == 3)
                     {
-                        predptr = pred;
-                        PREDICT_AC
+                        QPtmp = QPMB[mbnum+y_offset];
+                        DCAC = DCAC_row[x_pos][b_xtab];
+                        if (QPtmp != QP)
+                        {
+                            predptr = pred;
+                            PREDICT_AC
+                        }
+                        else
+                        {
+                            predptr = DCAC;
+                        }
                     }
                     else
                     {
-                        predptr = DCAC;
-                    }
-                }
-                else
-                {
-                    predptr = pred;
-                    pred[0] = pred[1] = pred[2] = pred[3] = pred[4] = pred[5] = pred[6] = 0;
-                }
-            }
-            else
-            {
-
-                if ((Pos0[comp] && (slice_nb[mbnum] == slice_nb[mbnum-nMBPerRow]))
-                        || comp == 2 || comp == 3)
-                {
-                    QPtmp = QPMB[mbnum+y_offset] << 1;
-                    DCAC = DCAC_row[x_pos][b_xtab];
-                    if (QPtmp != QP)
-                    {
                         predptr = pred;
-                        PREDICT_AC
+                        pred[0] = pred[1] = pred[2] = pred[3] = pred[4] = pred[5] = pred[6] = 0;
                     }
-                    else
-                    {
-                        predptr = DCAC;
-                    }
-                }
-                else
-                {
-                    predptr = pred;
-                    pred[0] = pred[1] = pred[2] = pred[3] = pred[4] = pred[5] = pred[6] = 0;
                 }
             }
-        }
-        else if (y_pos == 0)  /* top row */
-        {
-            if (direction[comp] == 0)
-            {
-                if ((Pos1[comp] && (slice_nb[mbnum] == slice_nb[mbnum-1]))
-                        || comp == 1 || comp == 3)
-                {
-                    QPtmp = QPMB[mbnum+x_offset] << 1;
-                    DCAC = DCAC_col[0][b_ytab];
-                    if (QPtmp != QP)
-                    {
-                        predptr = pred;
-                        PREDICT_AC
-                    }
-                    else
-                    {
-                        predptr = DCAC;
-                    }
-                }
-                else
-                {
-                    predptr = pred;
-                    pred[0] = pred[1] = pred[2] = pred[3] = pred[4] = pred[5] = pred[6] = 0;
-                }
-            }
-            else
-            {
-                if (comp == 2 || comp == 3)
-                {
-                    QPtmp = QPMB[mbnum+y_offset] << 1;
-                    DCAC = DCAC_row[x_pos][b_xtab];
-                    if (QPtmp != QP)
-                    {
-                        predptr = pred;
-                        PREDICT_AC
-                    }
-                    else
-                    {
-                        predptr = DCAC;
-                    }
-                }
-                else
-                {
-                    predptr = pred;
-                    pred[0] = pred[1] = pred[2] = pred[3] = pred[4] = pred[5] = pred[6] = 0;
-                }
-            }
-        }
-        else
-        {
-            if (direction[comp] == 0)
-            {
-                if ((Pos1[comp] && (slice_nb[mbnum] == slice_nb[mbnum-1]))
-                        || comp == 1 || comp == 3)
-                {
-                    QPtmp = QPMB[mbnum+x_offset] << 1;
-                    DCAC = DCAC_col[0][b_ytab];
-                    if (QPtmp != QP)
-                    {
-                        predptr = pred;
-                        PREDICT_AC
-                    }
-                    else
-                    {
-                        predptr = DCAC;
-                    }
-                }
-                else
-                {
-                    predptr = pred;
-                    pred[0] = pred[1] = pred[2] = pred[3] = pred[4] = pred[5] = pred[6] = 0;
-                }
-            }
-            else
-            {
-                if ((Pos0[comp] && (slice_nb[mbnum] == slice_nb[mbnum-nMBPerRow]))
-                        || comp  == 2 || comp == 3)
-                {
-                    QPtmp = QPMB[mbnum+y_offset] << 1;
-                    DCAC = DCAC_row[x_pos][b_xtab];
-                    if (QPtmp != QP)
-                    {
-                        predptr = pred;
-                        PREDICT_AC
-                    }
-                    else
-                    {
-                        predptr = DCAC;
-                    }
-                }
-                else
-                {
-                    predptr = pred;
-                    pred[0] = pred[1] = pred[2] = pred[3] = pred[4] = pred[5] = pred[6] = 0;
-                }
-            }
-        }
 
-        /****************************/
-        /*  Store DCAC coefficients */
-        /****************************/
-        /* Store coeff values for Intra MB */
-        DCAC = DCAC_row[x_pos][b_xtab];
-        DCAC[0] = qcoeff[1];
-        DCAC[1] = qcoeff[2];
-        DCAC[2] = qcoeff[3];
-        DCAC[3] = qcoeff[4];
-        DCAC[4] = qcoeff[5];
-        DCAC[5] = qcoeff[6];
-        DCAC[6] = qcoeff[7];
+            /************************************/
+            /* Decide and Perform AC prediction */
+            /************************************/
+            newCBP[comp] = 0;
 
-        DCAC = DCAC_col[0][b_ytab];
-        DCAC[0] = qcoeff[8];
-        DCAC[1] = qcoeff[16];
-        DCAC[2] = qcoeff[24];
-        DCAC[3] = qcoeff[32];
-        DCAC[4] = qcoeff[40];
-        DCAC[5] = qcoeff[48];
-        DCAC[6] = qcoeff[56];
-
-        /************************************/
-        /* Decide and Perform AC prediction */
-        /************************************/
-
-        S1 = 0;
-        S2 = 0;
-        newCBP[comp] = 0;
-
-        if (direction[comp] == 0)  	/* Horizontal, left COLUMN of block A */
-        {
-            DCAC = pcoeff + comp * 7;
-            qcoeff += 8;
-            for (m = 0; m < 7; m++)
+            if (direction[comp] == 0)  	/* Horizontal, left COLUMN of block A */
             {
-                QPtmp = qcoeff[m<<3];
-                if (QPtmp > 0)	S1 += QPtmp;
-                else		S1 -= QPtmp;
-                QPtmp -= predptr[m];
-                DCAC[m] = QPtmp;
-                if (QPtmp)	newCBP[comp] = 1;
-                diff = PV_ABS(QPtmp);
-                if (diff > 2047)
+                DCAC = pcoeff + comp * 7; /* re-use DCAC as local var */
+                qcoeff += 8;
+                for (m = 0; m < 7; m++)
                 {
-                    S = -1;
-                    break;
+                    QPtmp = qcoeff[m<<3];
+                    if (QPtmp > 0)	S1 += QPtmp;
+                    else		S1 -= QPtmp;
+                    QPtmp -= predptr[m];
+                    DCAC[m] = QPtmp; /* save prediction residue to pcoeff*/
+                    if (QPtmp)	newCBP[comp] = 1;
+                    diff = PV_ABS(QPtmp);
+                    S2 += diff;
                 }
-                S2 += diff;
             }
-        }
-        else  			/* Vertical, top ROW of block C */
-        {
-            qcoeff++;
-            DCAC = pcoeff + comp * 7;
-            for (m = 0; m < 7; m++)
+            else  			/* Vertical, top ROW of block C */
             {
-                QPtmp = qcoeff[m];
-                if (QPtmp > 0)	S1 += QPtmp;
-                else		S1 -= QPtmp;
-                QPtmp -= predptr[m];
-                DCAC[m] = QPtmp;
-                if (QPtmp)	newCBP[comp] = 1;
-                diff = PV_ABS(QPtmp);
-                if (diff > 2047)
+                qcoeff++;
+                DCAC = pcoeff + comp * 7; /* re-use DCAC as local var */
+                for (m = 0; m < 7; m++)
                 {
-                    S = -1;
-                    break;
+                    QPtmp = qcoeff[m];
+                    if (QPtmp > 0)	S1 += QPtmp;
+                    else		S1 -= QPtmp;
+                    QPtmp -= predptr[m];
+                    DCAC[m] = QPtmp; /* save prediction residue to pcoeff*/
+                    if (QPtmp)	newCBP[comp] = 1;
+                    diff = PV_ABS(QPtmp);
+                    S2 += diff;
                 }
-                S2 += diff;
             }
-        }
 
-        if (diff > 2047)
-            break;
-        S += (S1 - S2);
+            /****************************/
+            /*  Store DCAC coefficients */
+            /****************************/
+            /* Store coeff values for Intra MB */
+            qcoeff = MB->block[comp];
+            DCAC = DCAC_row[x_pos][b_xtab];
+            DCAC[0] = qcoeff[1];
+            DCAC[1] = qcoeff[2];
+            DCAC[2] = qcoeff[3];
+            DCAC[3] = qcoeff[4];
+            DCAC[4] = qcoeff[5];
+            DCAC[5] = qcoeff[6];
+            DCAC[6] = qcoeff[7];
+
+            DCAC = DCAC_col[0][b_ytab];
+            DCAC[0] = qcoeff[8];
+            DCAC[1] = qcoeff[16];
+            DCAC[2] = qcoeff[24];
+            DCAC[3] = qcoeff[32];
+            DCAC[4] = qcoeff[40];
+            DCAC[5] = qcoeff[48];
+            DCAC[6] = qcoeff[56];
+
+
+        } /* bACPredEnable */
+
     } /* END COMP FOR LOOP */
 
+    //if (diff > 2047)
+    //    break;
+    S += (S1 - S2);
 
-    if (S >= 0)
+
+    if (S >= 0 && bACPredEnable == TRUE)
     {
         ACpred_flag[mbnum] = 1;
-        DCAC = pcoeff;
+        DCAC = pcoeff; /* prediction residue */
         qcoeff = MB->block[0];
 
         for (comp = 0; comp < 6; comp++)
@@ -2484,7 +2538,7 @@ Void DCACPred(VideoEncData *video, UChar Mode, Int *intraDC_decision)
         ACpred_flag[mbnum] = 0;
     }
 
-    *intraDC_decision = IntraDCSwitch_Decision(Mode, video->currVop->intraDCVlcThr, QP);
+    *intraDC_decision = IntraDCSwitch_Decision(Mode, video->currVop->intraDCVlcThr, intraDCVlcQP);
     if (*intraDC_decision) /* code DC with AC , 5/28/01*/
     {
         qcoeff = MB->block[0];

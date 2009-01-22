@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ class OsclIPSocketI
         //Synchronous methods.
         int32 Bind(OsclNetworkAddress& aAddress);
         int32 Join(OsclNetworkAddress& aAddress);
+        int32 SetRecvBufferSize(uint32 size);
         virtual int32 Close() = 0;
         virtual uint8 *GetRecvData(int32 *aLength) = 0;
         virtual uint8 *GetSendData(int32 *aLength) = 0;
@@ -77,4 +78,5 @@ class OsclIPSocketI
 
 
 #endif
+
 

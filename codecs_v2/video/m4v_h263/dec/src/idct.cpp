@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,8 @@
 ------------------------------------------------------------------------------
  MODULE DESCRIPTION
 
- This file contains the functions that transform an 8x8 image block from
- dequantized DCT coefficients to spatial domain pixel values by calculating
+ This file contains the functions that transform an 8r8 image block from
+ dequantized DCT coefficients to spatial domain pirel values by calculating
  inverse discrete cosine transform (IDCT).
 
 ------------------------------------------------------------------------------
@@ -41,7 +41,7 @@
 
  Inputs:
  	blk = pointer to the buffer containing the dequantized DCT
-	      coefficients of type int for an 8x8 image block;
+	      coefficients of type int for an 8r8 image block;
 	      values range from (-2048, 2047) which defined as standard.
 
  Local Stores/Buffers/Pointers Needed:
@@ -54,7 +54,7 @@
 	None
 
  Pointers and Buffers Modified:
-	blk points to the found IDCT values for an 8x8 image block.
+	blk points to the found IDCT values for an 8r8 image block.
 
  Local Stores Modified:
 	None
@@ -65,12 +65,12 @@
 ------------------------------------------------------------------------------
  FUNCTION DESCRIPTION FOR idct
 
- This function transforms an 8x8 image block from dequantized DCT coefficients
- (F(u,v)) to spatial domain pixel values (f(x,y)) by performing the two
+ This function transforms an 8r8 image block from dequantized DCT coefficients
+ (F(u,v)) to spatial domain pirel values (f(r,y)) by performing the two
  dimensional inverse discrete cosine transform (IDCT).
 
 		 _7_ _7_      C(u) C(v)
-	f(x,y) = \   \	F(u,v)---- ----cos[(2x+1)*u*pi/16]cos[(2y+1)*v*pi/16]
+	f(r,y) = \   \	F(u,v)---- ----cos[(2r+1)*u*pi/16]cos[(2y+1)*v*pi/16]
 		 /__ /__	2    2
 		 u=0 v=0
 
@@ -79,11 +79,11 @@
 
  2-D IDCT can be separated as horizontal(row-wise) and vertical(column-wise)
  1-D IDCTs. Therefore, 2-D IDCT values are found by the following two steps:
- 1. Find horizontal 1-D IDCT values for each row from 8x8 dequantized DCT
+ 1. Find horizontal 1-D IDCT values for each row from 8r8 dequantized DCT
     coefficients by row IDCT operation.
 
  		  _7_        C(u)
-	g(x,v) =  \   F(u,v) ---- cos[(2x+1)*u*pi/16]
+	g(r,v) =  \   F(u,v) ---- cos[(2r+1)*u*pi/16]
 		  /__ 	      2
 		  u=0
 
@@ -91,7 +91,7 @@
     by column IDCT operation.
 
     		  _7_ 	     C(v)
-	f(x,y) =  \   g(x,v) ---- cos[(2y+1)*v*pi/16]
+	f(r,y) =  \   g(r,v) ---- cos[(2y+1)*v*pi/16]
 		  /__ 	      2
 		  v=0
 
@@ -110,7 +110,7 @@
  11 mults, 29 adds per DCT
  sE, 18.8.91
 
- coefficients extended to 12 bit for IEEE1180-1990
+ coefficients ertended to 12 bit for IEEE1180-1990
  compliance                           sE,  2.1.94
 */
 
@@ -128,7 +128,7 @@ void idct_intra(
     int	i;
     int32	tmpBLK[64];
     int32	*tmpBLK32 = &tmpBLK[0];
-    int32	x0, x1, x2, x3, x4, x5, x6, x7, x8;	/* butterfly nodes */
+    int32	r0, r1, r2, r3, r4, r5, r6, r7, r8;	/* butterfly nodes */
     int32	a;
     int offset = width - 8;
     /*----------------------------------------------------------------------------
@@ -142,23 +142,23 @@ void idct_intra(
     {
         /* initialize butterfly nodes at first stage */
 
-        x1 = blk[B_SIZE * 4 + i] << 11;
+        r1 = blk[B_SIZE * 4 + i] << 11;
         /* since row IDCT results have net left shift by 3 */
         /* this left shift by 8 gives net left shift by 11 */
         /* in order to maintain the same scale as that of  */
         /* coefficients Wi */
 
-        x2 = blk[B_SIZE * 6 + i];
-        x3 = blk[B_SIZE * 2 + i];
-        x4 = blk[B_SIZE * 1 + i];
-        x5 = blk[B_SIZE * 7 + i];
-        x6 = blk[B_SIZE * 5 + i];
-        x7 = blk[B_SIZE * 3 + i];
+        r2 = blk[B_SIZE * 6 + i];
+        r3 = blk[B_SIZE * 2 + i];
+        r4 = blk[B_SIZE * 1 + i];
+        r5 = blk[B_SIZE * 7 + i];
+        r6 = blk[B_SIZE * 5 + i];
+        r7 = blk[B_SIZE * 3 + i];
 
-        if (!(x1 | x2 | x3 | x4 | x5 | x6 | x7))
+        if (!(r1 | r2 | r3 | r4 | r5 | r6 | r7))
         {
             /* shortcut */
-            /* execute if values of g(x,1) to g(x,7) in a column*/
+            /* execute if values of g(r,1) to g(r,7) in a column*/
             /* are all zeros */
 
             /* make output of IDCT >>3 or scaled by 1/8 and */
@@ -175,39 +175,39 @@ void idct_intra(
         }
         else
         {
-            x0 = (blk[8 * 0 + i] << 11) + 128;
+            r0 = (blk[8 * 0 + i] << 11) + 128;
 
             /* first stage */
 
-            x8 = W7 * (x4 + x5);
-            x4 = (x8 + (W1 - W7) * x4);
+            r8 = W7 * (r4 + r5);
+            r4 = (r8 + (W1 - W7) * r4);
             /* Multiplication with Wi increases the net left */
             /* shift from 11 to 14,we have to shift back by 3*/
-            x5 = (x8 - (W1 + W7) * x5);
-            x8 = W3 * (x6 + x7);
-            x6 = (x8 - (W3 - W5) * x6);
-            x7 = (x8 - (W3 + W5) * x7);
+            r5 = (r8 - (W1 + W7) * r5);
+            r8 = W3 * (r6 + r7);
+            r6 = (r8 - (W3 - W5) * r6);
+            r7 = (r8 - (W3 + W5) * r7);
 
             /* second stage */
-            x8 = x0 + x1;
-            x0 -= x1;
+            r8 = r0 + r1;
+            r0 -= r1;
 
-            x1 = W6 * (x3 + x2);
-            x2 = (x1 - (W2 + W6) * x2);
-            x3 = (x1 + (W2 - W6) * x3);
+            r1 = W6 * (r3 + r2);
+            r2 = (r1 - (W2 + W6) * r2);
+            r3 = (r1 + (W2 - W6) * r3);
 
-            x1 = x4 + x6;
-            x4 -= x6;
-            x6 = x5 + x7;
-            x5 -= x7;
+            r1 = r4 + r6;
+            r4 -= r6;
+            r6 = r5 + r7;
+            r5 -= r7;
 
             /* third stage */
-            x7 = x8 + x3;
-            x8 -= x3;
-            x3 = x0 + x2;
-            x0 -= x2;
-            x2 = (181 * (x4 + x5) + 128) >> 8;	/* rounding */
-            x4 = (181 * (x4 - x5) + 128) >> 8;
+            r7 = r8 + r3;
+            r8 -= r3;
+            r3 = r0 + r2;
+            r0 -= r2;
+            r2 = (181 * (r4 + r5) + 128) >> 8;	/* rounding */
+            r4 = (181 * (r4 - r5) + 128) >> 8;
 
             /* fourth stage */
             /* net shift of IDCT is >>3 after the following	*/
@@ -215,14 +215,14 @@ void idct_intra(
             /* scaled by 1/8, that is scaled twice by       */
             /* 1/(2*sqrt(2)) for row IDCT and column IDCT.  */
             /* see detail analysis in design doc.	        */
-            tmpBLK32[0 + i] = (x7 + x1) >> 8;
-            tmpBLK32[(1<<3) + i] = (x3 + x2) >> 8;
-            tmpBLK32[(2<<3) + i] = (x0 + x4) >> 8;
-            tmpBLK32[(3<<3) + i] = (x8 + x6) >> 8;
-            tmpBLK32[(4<<3) + i] = (x8 - x6) >> 8;
-            tmpBLK32[(5<<3) + i] = (x0 - x4) >> 8;
-            tmpBLK32[(6<<3) + i] = (x3 - x2) >> 8;
-            tmpBLK32[(7<<3) + i] = (x7 - x1) >> 8;
+            tmpBLK32[0 + i] = (r7 + r1) >> 8;
+            tmpBLK32[(1<<3) + i] = (r3 + r2) >> 8;
+            tmpBLK32[(2<<3) + i] = (r0 + r4) >> 8;
+            tmpBLK32[(3<<3) + i] = (r8 + r6) >> 8;
+            tmpBLK32[(4<<3) + i] = (r8 - r6) >> 8;
+            tmpBLK32[(5<<3) + i] = (r0 - r4) >> 8;
+            tmpBLK32[(6<<3) + i] = (r3 - r2) >> 8;
+            tmpBLK32[(7<<3) + i] = (r7 - r1) >> 8;
         }
     }
     /* row (horizontal) IDCT */
@@ -230,20 +230,20 @@ void idct_intra(
     {
         /* initialize butterfly nodes at the first stage */
 
-        x1 = ((int32)tmpBLK32[4+(i<<3)]) << 8;
-        /* x1 left shift by 11 is to maintain the same	*/
+        r1 = ((int32)tmpBLK32[4+(i<<3)]) << 8;
+        /* r1 left shift by 11 is to maintain the same	*/
         /* scale as that of coefficients (W1,...W7)	*/
         /* since blk[4] won't multiply with Wi.		*/
         /* see detail diagram in design document.	*/
 
-        x2 = tmpBLK32[6+(i<<3)];
-        x3 = tmpBLK32[2+(i<<3)];
-        x4 = tmpBLK32[1+(i<<3)];
-        x5 = tmpBLK32[7+(i<<3)];
-        x6 = tmpBLK32[5+(i<<3)];
-        x7 = tmpBLK32[3+(i<<3)];
+        r2 = tmpBLK32[6+(i<<3)];
+        r3 = tmpBLK32[2+(i<<3)];
+        r4 = tmpBLK32[1+(i<<3)];
+        r5 = tmpBLK32[7+(i<<3)];
+        r6 = tmpBLK32[5+(i<<3)];
+        r7 = tmpBLK32[3+(i<<3)];
 
-        if (!(x1 | x2 | x3 | x4 | x5 | x6 | x7))
+        if (!(r1 | r2 | r3 | r4 | r5 | r6 | r7))
         {
             /* shortcut */
             /* execute if values of F(1,v) to F(7,v) in a row*/
@@ -267,65 +267,65 @@ void idct_intra(
         else
         {
             /* for proper rounding in the fourth stage */
-            x0 = (((int32)tmpBLK32[0+(i<<3)]) << 8) + 8192;
+            r0 = (((int32)tmpBLK32[0+(i<<3)]) << 8) + 8192;
 
             /* first stage */
 
-            x8 = W7 * (x4 + x5) + 4;
-            x4 = (x8 + (W1 - W7) * x4) >> 3;
-            x5 = (x8 - (W1 + W7) * x5) >> 3;
+            r8 = W7 * (r4 + r5) + 4;
+            r4 = (r8 + (W1 - W7) * r4) >> 3;
+            r5 = (r8 - (W1 + W7) * r5) >> 3;
 
-            x8 = W3 * (x6 + x7) + 4;
-            x6 = (x8 - (W3 - W5) * x6) >> 3;
-            x7 = (x8 - (W3 + W5) * x7) >> 3;
+            r8 = W3 * (r6 + r7) + 4;
+            r6 = (r8 - (W3 - W5) * r6) >> 3;
+            r7 = (r8 - (W3 + W5) * r7) >> 3;
 
             /* second stage */
-            x8 = x0 + x1;
-            x0 -= x1;
+            r8 = r0 + r1;
+            r0 -= r1;
 
-            x1 = W6 * (x3 + x2) + 4;
-            x2 = (x1 - (W2 + W6) * x2) >> 3;
-            x3 = (x1 + (W2 - W6) * x3) >> 3;
+            r1 = W6 * (r3 + r2) + 4;
+            r2 = (r1 - (W2 + W6) * r2) >> 3;
+            r3 = (r1 + (W2 - W6) * r3) >> 3;
 
-            x1 = x4 + x6;
-            x4 -= x6;
-            x6 = x5 + x7;
-            x5 -= x7;
+            r1 = r4 + r6;
+            r4 -= r6;
+            r6 = r5 + r7;
+            r5 -= r7;
 
             /* third stage */
-            x7 = x8 + x3;
-            x8 -= x3;
-            x3 = x0 + x2;
-            x0 -= x2;
-            x2 = (181 * (x4 + x5) + 128) >> 8;    /* rounding */
-            x4 = (181 * (x4 - x5) + 128) >> 8;
+            r7 = r8 + r3;
+            r8 -= r3;
+            r3 = r0 + r2;
+            r0 -= r2;
+            r2 = (181 * (r4 + r5) + 128) >> 8;    /* rounding */
+            r4 = (181 * (r4 - r5) + 128) >> 8;
 
             /* fourth stage */
             /* net shift of this function is <<3 after the	  */
             /* following shift operation, it makes output of  */
             /* row IDCT scaled by 8 to retain 3 bits precision*/
-            a = ((x7 + x1) >> 14);
+            a = ((r7 + r1) >> 14);
             CLIP_RESULT(a)
             *comp++ = a;
-            a = ((x3 + x2) >> 14);
+            a = ((r3 + r2) >> 14);
             CLIP_RESULT(a)
             *comp++ = a;
-            a = ((x0 + x4) >> 14);
+            a = ((r0 + r4) >> 14);
             CLIP_RESULT(a)
             *comp++ = a;
-            a = ((x8 + x6) >> 14);
+            a = ((r8 + r6) >> 14);
             CLIP_RESULT(a)
             *comp++ = a;
-            a = ((x8 - x6) >> 14);
+            a = ((r8 - r6) >> 14);
             CLIP_RESULT(a)
             *comp++ = a;
-            a = ((x0 - x4) >> 14);
+            a = ((r0 - r4) >> 14);
             CLIP_RESULT(a)
             *comp++ = a;
-            a = ((x3 - x2) >> 14);
+            a = ((r3 - r2) >> 14);
             CLIP_RESULT(a)
             *comp++ = a;
-            a = ((x7 - x1) >> 14);
+            a = ((r7 - r1) >> 14);
             CLIP_RESULT(a)
             *comp++ = a;
 
@@ -350,7 +350,7 @@ void idct(
     int	i;
     int32	tmpBLK[64];
     int32	*tmpBLK32 = &tmpBLK[0];
-    int32	x0, x1, x2, x3, x4, x5, x6, x7, x8;	/* butterfly nodes */
+    int32	r0, r1, r2, r3, r4, r5, r6, r7, r8;	/* butterfly nodes */
     int32	a;
     int res;
 
@@ -365,23 +365,23 @@ void idct(
     {
         /* initialize butterfly nodes at first stage */
 
-        x1 = blk[B_SIZE * 4 + i] << 11;
+        r1 = blk[B_SIZE * 4 + i] << 11;
         /* since row IDCT results have net left shift by 3 */
         /* this left shift by 8 gives net left shift by 11 */
         /* in order to maintain the same scale as that of  */
         /* coefficients Wi */
 
-        x2 = blk[B_SIZE * 6 + i];
-        x3 = blk[B_SIZE * 2 + i];
-        x4 = blk[B_SIZE * 1 + i];
-        x5 = blk[B_SIZE * 7 + i];
-        x6 = blk[B_SIZE * 5 + i];
-        x7 = blk[B_SIZE * 3 + i];
+        r2 = blk[B_SIZE * 6 + i];
+        r3 = blk[B_SIZE * 2 + i];
+        r4 = blk[B_SIZE * 1 + i];
+        r5 = blk[B_SIZE * 7 + i];
+        r6 = blk[B_SIZE * 5 + i];
+        r7 = blk[B_SIZE * 3 + i];
 
-        if (!(x1 | x2 | x3 | x4 | x5 | x6 | x7))
+        if (!(r1 | r2 | r3 | r4 | r5 | r6 | r7))
         {
             /* shortcut */
-            /* execute if values of g(x,1) to g(x,7) in a column*/
+            /* execute if values of g(r,1) to g(r,7) in a column*/
             /* are all zeros */
 
             /* make output of IDCT >>3 or scaled by 1/8 and */
@@ -398,39 +398,39 @@ void idct(
         }
         else
         {
-            x0 = (blk[8 * 0 + i] << 11) + 128;
+            r0 = (blk[8 * 0 + i] << 11) + 128;
 
             /* first stage */
 
-            x8 = W7 * (x4 + x5);
-            x4 = (x8 + (W1 - W7) * x4);
+            r8 = W7 * (r4 + r5);
+            r4 = (r8 + (W1 - W7) * r4);
             /* Multiplication with Wi increases the net left */
             /* shift from 11 to 14,we have to shift back by 3*/
-            x5 = (x8 - (W1 + W7) * x5);
-            x8 = W3 * (x6 + x7);
-            x6 = (x8 - (W3 - W5) * x6);
-            x7 = (x8 - (W3 + W5) * x7);
+            r5 = (r8 - (W1 + W7) * r5);
+            r8 = W3 * (r6 + r7);
+            r6 = (r8 - (W3 - W5) * r6);
+            r7 = (r8 - (W3 + W5) * r7);
 
             /* second stage */
-            x8 = x0 + x1;
-            x0 -= x1;
+            r8 = r0 + r1;
+            r0 -= r1;
 
-            x1 = W6 * (x3 + x2);
-            x2 = (x1 - (W2 + W6) * x2);
-            x3 = (x1 + (W2 - W6) * x3);
+            r1 = W6 * (r3 + r2);
+            r2 = (r1 - (W2 + W6) * r2);
+            r3 = (r1 + (W2 - W6) * r3);
 
-            x1 = x4 + x6;
-            x4 -= x6;
-            x6 = x5 + x7;
-            x5 -= x7;
+            r1 = r4 + r6;
+            r4 -= r6;
+            r6 = r5 + r7;
+            r5 -= r7;
 
             /* third stage */
-            x7 = x8 + x3;
-            x8 -= x3;
-            x3 = x0 + x2;
-            x0 -= x2;
-            x2 = (181 * (x4 + x5) + 128) >> 8;	/* rounding */
-            x4 = (181 * (x4 - x5) + 128) >> 8;
+            r7 = r8 + r3;
+            r8 -= r3;
+            r3 = r0 + r2;
+            r0 -= r2;
+            r2 = (181 * (r4 + r5) + 128) >> 8;	/* rounding */
+            r4 = (181 * (r4 - r5) + 128) >> 8;
 
             /* fourth stage */
             /* net shift of IDCT is >>3 after the following	*/
@@ -438,14 +438,14 @@ void idct(
             /* scaled by 1/8, that is scaled twice by       */
             /* 1/(2*sqrt(2)) for row IDCT and column IDCT.  */
             /* see detail analysis in design doc.	        */
-            tmpBLK32[0 + i] = (x7 + x1) >> 8;
-            tmpBLK32[(1<<3) + i] = (x3 + x2) >> 8;
-            tmpBLK32[(2<<3) + i] = (x0 + x4) >> 8;
-            tmpBLK32[(3<<3) + i] = (x8 + x6) >> 8;
-            tmpBLK32[(4<<3) + i] = (x8 - x6) >> 8;
-            tmpBLK32[(5<<3) + i] = (x0 - x4) >> 8;
-            tmpBLK32[(6<<3) + i] = (x3 - x2) >> 8;
-            tmpBLK32[(7<<3) + i] = (x7 - x1) >> 8;
+            tmpBLK32[0 + i] = (r7 + r1) >> 8;
+            tmpBLK32[(1<<3) + i] = (r3 + r2) >> 8;
+            tmpBLK32[(2<<3) + i] = (r0 + r4) >> 8;
+            tmpBLK32[(3<<3) + i] = (r8 + r6) >> 8;
+            tmpBLK32[(4<<3) + i] = (r8 - r6) >> 8;
+            tmpBLK32[(5<<3) + i] = (r0 - r4) >> 8;
+            tmpBLK32[(6<<3) + i] = (r3 - r2) >> 8;
+            tmpBLK32[(7<<3) + i] = (r7 - r1) >> 8;
         }
     }
     /* row (horizontal) IDCT */
@@ -453,20 +453,20 @@ void idct(
     {
         /* initialize butterfly nodes at the first stage */
 
-        x1 = ((int32)tmpBLK32[4+(i<<3)]) << 8;
-        /* x1 left shift by 11 is to maintain the same	*/
+        r1 = ((int32)tmpBLK32[4+(i<<3)]) << 8;
+        /* r1 left shift by 11 is to maintain the same	*/
         /* scale as that of coefficients (W1,...W7)	*/
         /* since blk[4] won't multiply with Wi.		*/
         /* see detail diagram in design document.	*/
 
-        x2 = tmpBLK32[6+(i<<3)];
-        x3 = tmpBLK32[2+(i<<3)];
-        x4 = tmpBLK32[1+(i<<3)];
-        x5 = tmpBLK32[7+(i<<3)];
-        x6 = tmpBLK32[5+(i<<3)];
-        x7 = tmpBLK32[3+(i<<3)];
+        r2 = tmpBLK32[6+(i<<3)];
+        r3 = tmpBLK32[2+(i<<3)];
+        r4 = tmpBLK32[1+(i<<3)];
+        r5 = tmpBLK32[7+(i<<3)];
+        r6 = tmpBLK32[5+(i<<3)];
+        r7 = tmpBLK32[3+(i<<3)];
 
-        if (!(x1 | x2 | x3 | x4 | x5 | x6 | x7))
+        if (!(r1 | r2 | r3 | r4 | r5 | r6 | r7))
         {
             /* shortcut */
             /* execute if values of F(1,v) to F(7,v) in a row*/
@@ -488,51 +488,51 @@ void idct(
         else
         {
             /* for proper rounding in the fourth stage */
-            x0 = (((int32)tmpBLK32[0+(i<<3)]) << 8) + 8192;
+            r0 = (((int32)tmpBLK32[0+(i<<3)]) << 8) + 8192;
 
             /* first stage */
 
-            x8 = W7 * (x4 + x5) + 4;
-            x4 = (x8 + (W1 - W7) * x4) >> 3;
-            x5 = (x8 - (W1 + W7) * x5) >> 3;
+            r8 = W7 * (r4 + r5) + 4;
+            r4 = (r8 + (W1 - W7) * r4) >> 3;
+            r5 = (r8 - (W1 + W7) * r5) >> 3;
 
-            x8 = W3 * (x6 + x7) + 4;
-            x6 = (x8 - (W3 - W5) * x6) >> 3;
-            x7 = (x8 - (W3 + W5) * x7) >> 3;
+            r8 = W3 * (r6 + r7) + 4;
+            r6 = (r8 - (W3 - W5) * r6) >> 3;
+            r7 = (r8 - (W3 + W5) * r7) >> 3;
 
             /* second stage */
-            x8 = x0 + x1;
-            x0 -= x1;
+            r8 = r0 + r1;
+            r0 -= r1;
 
-            x1 = W6 * (x3 + x2) + 4;
-            x2 = (x1 - (W2 + W6) * x2) >> 3;
-            x3 = (x1 + (W2 - W6) * x3) >> 3;
+            r1 = W6 * (r3 + r2) + 4;
+            r2 = (r1 - (W2 + W6) * r2) >> 3;
+            r3 = (r1 + (W2 - W6) * r3) >> 3;
 
-            x1 = x4 + x6;
-            x4 -= x6;
-            x6 = x5 + x7;
-            x5 -= x7;
+            r1 = r4 + r6;
+            r4 -= r6;
+            r6 = r5 + r7;
+            r5 -= r7;
 
             /* third stage */
-            x7 = x8 + x3;
-            x8 -= x3;
-            x3 = x0 + x2;
-            x0 -= x2;
-            x2 = (181 * (x4 + x5) + 128) >> 8;    /* rounding */
-            x4 = (181 * (x4 - x5) + 128) >> 8;
+            r7 = r8 + r3;
+            r8 -= r3;
+            r3 = r0 + r2;
+            r0 -= r2;
+            r2 = (181 * (r4 + r5) + 128) >> 8;    /* rounding */
+            r4 = (181 * (r4 - r5) + 128) >> 8;
 
             /* fourth stage */
             /* net shift of this function is <<3 after the	  */
             /* following shift operation, it makes output of  */
             /* row IDCT scaled by 8 to retain 3 bits precision*/
-            blk[0+(i<<3)] = (x7 + x1) >> 14;
-            blk[1+(i<<3)] = (x3 + x2) >> 14;
-            blk[2+(i<<3)] = (x0 + x4) >> 14;
-            blk[3+(i<<3)] = (x8 + x6) >> 14;
-            blk[4+(i<<3)] = (x8 - x6) >> 14;
-            blk[5+(i<<3)] = (x0 - x4) >> 14;
-            blk[6+(i<<3)] = (x3 - x2) >> 14;
-            blk[7+(i<<3)] = (x7 - x1) >> 14;
+            blk[0+(i<<3)] = (r7 + r1) >> 14;
+            blk[1+(i<<3)] = (r3 + r2) >> 14;
+            blk[2+(i<<3)] = (r0 + r4) >> 14;
+            blk[3+(i<<3)] = (r8 + r6) >> 14;
+            blk[4+(i<<3)] = (r8 - r6) >> 14;
+            blk[5+(i<<3)] = (r0 - r4) >> 14;
+            blk[6+(i<<3)] = (r3 - r2) >> 14;
+            blk[7+(i<<3)] = (r7 - r1) >> 14;
         }
         /*  add with prediction ,  08/03/05 */
         res = (*pred++ + block[0+(i<<3)]);

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,11 +28,9 @@
  *  @brief This file contains the implementation of the actual MP3
  *  file parser.
  */
-
 /***********************************************************************
  * Include Files
  ***********************************************************************/
-#include "oscl_tickcount.h"
 #include "mp3parser.h"
 #include "mp3fileio.h"
 
@@ -221,6 +219,9 @@ static const int32 spfIndexTable[4][4] =
  * FUNCTION:    SwapFileToHostByteOrderInt32
  * DESCRIPTION: Swaps the bytes in an integer to the correct host
  *				byte order
+ * INPUT/OUTPUT PARAMETERS:
+ * RETURN VALUE:
+ * SIDE EFFECTS:
  ***********************************************************************/
 static uint32 SwapFileToHostByteOrderInt32(uint8 * pBuf2)
 {
@@ -245,6 +246,9 @@ static uint32 SwapFileToHostByteOrderInt32(uint8 * pBuf2)
 /***********************************************************************
  * FUNCTION:    ReadBuffer
  * DESCRIPTION: Read data from buffer
+ * INPUT/OUTPUT PARAMETERS:
+ * RETURN VALUE:
+ * SIDE EFFECTS:
  ***********************************************************************/
 static uint32 ReadBuffer(uint8 * pBuf2, int32 length, int32 &pos)
 {
@@ -269,6 +273,9 @@ static uint32 ReadBuffer(uint8 * pBuf2, int32 length, int32 &pos)
 /***********************************************************************
  * FUNCTION:    SwapFileToHostByteOrderInt16
  * DESCRIPTION: Swaps the bytes in an integer to the correct host byte order
+ * INPUT/OUTPUT PARAMETERS:
+ * RETURN VALUE:
+ * SIDE EFFECTS:
  ***********************************************************************/
 static uint16 SwapFileToHostByteOrderInt16(uint8 * pBuf2)
 {
@@ -290,6 +297,10 @@ static uint16 SwapFileToHostByteOrderInt16(uint8 * pBuf2)
 
 /***********************************************************************
  * FUNCTION:    Constructor
+ * DESCRIPTION:
+ * INPUT/OUTPUT PARAMETERS:
+ * RETURN VALUE:
+ * SIDE EFFECTS:
  ***********************************************************************/
 MP3Parser::MP3Parser(PVFile* aFileHandle)
 {
@@ -310,6 +321,7 @@ MP3Parser::MP3Parser(PVFile* aFileHandle)
     iAvgBitrateInbps = 0;
     iAvgBitrateInbpsFromRandomScan = 0;
     iAvgBitrateInbpsFromCompleteScan = 0;
+    iScannedFrameCount = 0;
     // scan completion flag
     iDurationScanComplete = false;
     // duration values from various sources
@@ -320,8 +332,17 @@ MP3Parser::MP3Parser(PVFile* aFileHandle)
     iClipDurationFromRandomScan = 0;
     iClipDurationFromMetadata = 0;
 
+    iSamplesPerFrame = 0;
+    iSamplingRate = 0;
+
     iTimestamp = 0;
     iFirstScan = true;
+
+    iTOC = NULL;
+    iTOCFilledCount = 0;
+    iTimestampPrev = 0;
+    iScanTimestamp = 0;
+    iBinWidth = 0;
 
     iVbriHeader.TOC = NULL;
     oscl_memset(&iMP3ConfigInfo, 0, sizeof(iMP3ConfigInfo));
@@ -335,6 +356,10 @@ MP3Parser::MP3Parser(PVFile* aFileHandle)
 
 /***********************************************************************
  * FUNCTION:    Destructor
+ * DESCRIPTION:
+ * INPUT/OUTPUT PARAMETERS:
+ * RETURN VALUE:
+ * SIDE EFFECTS:
  ***********************************************************************/
 MP3Parser::~MP3Parser()
 {
@@ -359,6 +384,12 @@ MP3Parser::~MP3Parser()
     }
     iMaxSyncBufferSize = 0;
 
+    if (iTOC)
+    {
+        OSCL_ARRAY_DELETE(iTOC);
+        iTOC = NULL;
+    }
+
     oscl_memset(&iMP3ConfigInfo, 0, sizeof(iMP3ConfigInfo));
     oscl_memset(&iMP3HeaderInfo, 0, sizeof(iMP3HeaderInfo));
     oscl_memset(&iXingHeader, 0, sizeof(iXingHeader));
@@ -371,6 +402,9 @@ MP3Parser::~MP3Parser()
  * DESCRIPTION: This function MUST be called after the Constructor and before
  *				any other public function is called. Otherwise the object's
  *				member data will be uninitialized.
+ * INPUT/OUTPUT PARAMETERS:
+ * RETURN VALUE:
+ * SIDE EFFECTS:
  ***********************************************************************/
 MP3ErrorType MP3Parser::ParseMP3File(PVFile * fpUsed, bool aEnableCRC)
 {
@@ -414,15 +448,21 @@ MP3ErrorType MP3Parser::ParseMP3File(PVFile * fpUsed, bool aEnableCRC)
                 return MP3_END_OF_FILE;
             }
         }
-        else
-        {
-            iLocalFileSize = 0;
-            return MP3_ERROR_UNKNOWN;
-        }
     }
 
-    // set the length of initial search to the min between default and filesize
-    iInitSearchFileSize = OSCL_MIN(iInitSearchFileSize, iLocalFileSize);
+    if (iLocalFileSizeSet)
+    {
+        // set the length of initial search to the min between default and filesize
+        iInitSearchFileSize = OSCL_MIN(iInitSearchFileSize, iLocalFileSize);
+    }
+    else
+    {
+        uint32 remBytes = 0;
+        if (fp->GetRemainingBytes(remBytes))
+        {
+            iInitSearchFileSize = OSCL_MIN(iInitSearchFileSize, remBytes);
+        }
+    }
 
     MP3ErrorType err = MP3Utils::SeektoOffset(fp, 0);
     if (MP3_SUCCESS != err)
@@ -481,7 +521,7 @@ MP3ErrorType MP3Parser::ParseMP3File(PVFile * fpUsed, bool aEnableCRC)
     if (!GetMP3Header(firstHeader, iMP3HeaderInfo))
     {
         uint32 seekOffset = 0;
-        MP3ErrorType err = mp3FindSync(StartOffset, seekOffset);
+        MP3ErrorType err = mp3FindSync(StartOffset, seekOffset, fp);
         if (err == MP3_SUCCESS)
         {
             StartOffset += seekOffset;
@@ -502,13 +542,17 @@ MP3ErrorType MP3Parser::ParseMP3File(PVFile * fpUsed, bool aEnableCRC)
                 return MP3_FILE_HDR_READ_ERR;
             }
         }
-        else if (err == MP3_INSUFFICIENT_DATA)
+        else if (err == MP3_INSUFFICIENT_DATA ||
+                 err == MP3_END_OF_FILE)
         {
+            // in eof scenario parser reports eof error to the user
+            // eof will be reported in case when no valid sync
+            // word is find in the maximum specified search limit
             return err;
         }
     }
 
-    if (! DecodeMP3Header(iMP3HeaderInfo, iMP3ConfigInfo, false))
+    if (!DecodeMP3Header(iMP3HeaderInfo, iMP3ConfigInfo, false))
     {
         return MP3_FILE_HDR_DECODE_ERR;
     }
@@ -536,7 +580,6 @@ MP3ErrorType MP3Parser::ParseMP3File(PVFile * fpUsed, bool aEnableCRC)
         int32 actualBufferSize = bufferSize + VBRI_HEADER_OFFSET + VBR_HEADER_SIZE;
         uint8* tempBuf = OSCL_ARRAY_NEW(uint8, actualBufferSize);
 
-        uint32 currFileSize = 0;
         MP3ErrorType err = MP3Utils::SeektoOffset(fp, StartOffset);
         if (MP3_SUCCESS != err)
         {
@@ -627,6 +670,37 @@ MP3ErrorType MP3Parser::ParseMP3File(PVFile * fpUsed, bool aEnableCRC)
             else
                 mp3Type = EXINGType;
         }
+        // Check for INFO Header, same as XING Header
+        if ((oscl_memcmp(pBuf, STR_INFO_HEADER_IDENTIFIER, VBR_HEADER_SIZE) == 0))
+        {
+            MP3ErrorType err = MP3Utils::SeektoOffset(fp, StartOffset + offset);
+            if (MP3_SUCCESS != err)
+            {
+                return err;
+            }
+
+            if (!MP3FileIO::readByteData(fp, 128, pFirstFrame))
+            {
+                return MP3_INSUFFICIENT_DATA;
+            }
+
+            if (!DecodeXINGHeader(pFirstFrame, iXingHeader, iMP3HeaderInfo))
+                return MP3_FILE_XING_HDR_ERR;
+            else
+                mp3Type = EXINGType;
+        }
+    }
+
+    // Calculate the sampling rate and samples per frame.
+    iSamplesPerFrame = spfIndexTable[iMP3HeaderInfo.frameVer][iMP3HeaderInfo.layerID];
+    iSamplingRate = srIndexTable[((iMP3HeaderInfo.frameVer)*4) + iMP3HeaderInfo.srIndex];
+
+    if (mp3Type != EXINGType && mp3Type != EVBRIType)
+    {
+        // if XING or VBRI Headers are not present then we need to build our own TOC for
+        // repositioning.
+        iTOC = OSCL_ARRAY_NEW(int32, MAX_TOC_ENTRY_COUNT + 1);
+        oscl_memset(iTOC, 0, sizeof(iTOC));
     }
 
     iAvgBitrateInbps = iMP3ConfigInfo.BitRate;
@@ -648,27 +722,39 @@ MP3ErrorType MP3Parser::ParseMP3File(PVFile * fpUsed, bool aEnableCRC)
  *  Input	 : fpUsed
  *  Output	 : iClipDurationComputed
  *	Return   : error code
+ *	Modified :
  ***********************************************************************/
 MP3ErrorType MP3Parser::ScanMP3File(PVFile * fpUsed, uint32 aFramesToScan)
 {
-    if (iClipDurationFromVBRIHeader || iClipDurationFromMetadata)
+    int32 currentFilePosn = 0;
+    uint32 firstHeader = 0;
+    uint8 pFrameHeader[4];
+    int32 startOffset = 0;
+    uint32 seekOffset = 0;
+    MP3HeaderType mp3HeaderInfo;
+    MP3ConfigInfoType mp3ConfigInfo;
+
+    if (iClipDurationFromMetadata || (iClipDurationFromVBRIHeader &&
+                                      ((iVbriHeader.entriesTOC >= 0) ||
+                                       (iXingHeader.flags & TOC_FLAG)))
+       )
     {
         // if Duration can be obtained from either VBRI/XING Headers or from metadata,
         // we will not scan the file for duration
         return MP3_DURATION_PRESENT;
     }
+
+    if (iTOCFilledCount == MAX_TOC_ENTRY_COUNT)
+    {
+        FillTOCTable(0, 0);
+        return MP3_SUCCESS;
+    }
+
     if (iFirstScan)
     {
-        currentFilePosn = 0; // current file position
-        firstHeader = 0;
-        startOffset = 0;
-        seekOffset = 0;
-        frameCount = 0;
-
         if (iTagSize > 0)
         {
             startOffset = iTagSize;
-            //fpUsed->Seek(startOffset, Oscl_File::SEEKSET);
             MP3ErrorType err = MP3Utils::SeektoOffset(fpUsed, startOffset);
             if (MP3_SUCCESS != err)
             {
@@ -687,7 +773,6 @@ MP3ErrorType MP3Parser::ScanMP3File(PVFile * fpUsed, uint32 aFramesToScan)
     if (iFirstScan)
     {
         iFirstScan = false;
-
         currentFilePosn = startOffset;
 
         MP3ErrorType err = mp3FindSync(startOffset, seekOffset, fpUsed);
@@ -710,12 +795,13 @@ MP3ErrorType MP3Parser::ScanMP3File(PVFile * fpUsed, uint32 aFramesToScan)
         }
     }
     currentFilePosn = MP3Utils::getCurrentFilePosition(fpUsed);
-    int32 numFrames = 0;
+    uint32 numFrames = 0;
     int32 bitrate = 0;
+    uint32 frameDur = 0;
 
     while (numFrames < aFramesToScan)
     {
-        firstHeader = NULL;
+        firstHeader = 0;
         oscl_memset(&pFrameHeader, 0, sizeof(pFrameHeader));
 
         if (fpUsed->Read(pFrameHeader, 1, MP3_FRAME_HEADER_SIZE) != MP3_FRAME_HEADER_SIZE)
@@ -724,18 +810,18 @@ MP3ErrorType MP3Parser::ScanMP3File(PVFile * fpUsed, uint32 aFramesToScan)
             {
                 iDurationScanComplete = true;
             }
+            FillTOCTable(startOffset, 0);
             return MP3_INSUFFICIENT_DATA;
         }
-
         firstHeader = SwapFileToHostByteOrderInt32(pFrameHeader);
+        uint32 offset = MP3Utils::getCurrentFilePosition(fpUsed);
         if (!GetMP3Header(firstHeader, mp3HeaderInfo))
         {
-            MP3ErrorType err = mp3FindSync(startOffset, seekOffset, fpUsed);
+            MP3ErrorType err = mp3FindSync(offset, seekOffset, fpUsed);
             if (err == MP3_SUCCESS)
             {
-                startOffset += seekOffset;
-                //fpUsed->Seek(startOffset, Oscl_File::SEEKSET);
-                err = MP3Utils::SeektoOffset(fpUsed, startOffset);
+                offset += seekOffset;
+                err = MP3Utils::SeektoOffset(fpUsed, offset);
                 if (MP3_SUCCESS != err)
                 {
                     return err;
@@ -744,6 +830,7 @@ MP3ErrorType MP3Parser::ScanMP3File(PVFile * fpUsed, uint32 aFramesToScan)
                 if (!MP3FileIO::readByteData(fpUsed, 4, pFrameHeader))
                 {
                     iDurationScanComplete = true;
+                    FillTOCTable(offset, iScanTimestamp);
                     return MP3_INSUFFICIENT_DATA;
                 }
 
@@ -751,12 +838,14 @@ MP3ErrorType MP3Parser::ScanMP3File(PVFile * fpUsed, uint32 aFramesToScan)
                 if (! GetMP3Header(firstHeader, mp3HeaderInfo))
                 {
                     iDurationScanComplete = true;
+                    FillTOCTable(offset, iScanTimestamp);
                     return MP3_FILE_HDR_READ_ERR;
                 }
             }
             else
             {
                 iDurationScanComplete = true;
+                FillTOCTable(offset, iScanTimestamp);
                 return err;
             }
         }
@@ -764,35 +853,47 @@ MP3ErrorType MP3Parser::ScanMP3File(PVFile * fpUsed, uint32 aFramesToScan)
         if (!DecodeMP3Header(mp3HeaderInfo, mp3ConfigInfo, false))
         {
             iDurationScanComplete = true;
+            FillTOCTable(offset, iScanTimestamp);
             return MP3_FILE_HDR_DECODE_ERR;
         }
 
         fpUsed->Seek(mp3ConfigInfo.FrameLengthInBytes - 4, Oscl_File::SEEKCUR);
         bitrate = mp3ConfigInfo.BitRate;
+        frameDur = frameDur + (uint32)((OsclFloat) mp3ConfigInfo.FrameLengthInBytes * 8000.00f / mp3ConfigInfo.BitRate);
         iLastScanPosition = fpUsed->Tell();
         numFrames++;
-        frameCount++;
+        iScannedFrameCount++;
 
-        if (frameCount > 1)
+        if (iScannedFrameCount > 1)
         {
             if (bitrate != iAvgBitrateInbpsFromCompleteScan)
             {
-                iAvgBitrateInbpsFromCompleteScan += (int32)((int32)bitrate - (int32)iAvgBitrateInbpsFromCompleteScan) / (int32)frameCount;
+                iAvgBitrateInbpsFromCompleteScan += (int32)((int32)bitrate - (int32)iAvgBitrateInbpsFromCompleteScan) / (int32)iScannedFrameCount;
             }
         }
         else
         {
             iAvgBitrateInbpsFromCompleteScan = bitrate;
+            mp3Type = ECBRType;
         }
     }
+
+    // After scan of frames we need to fill the TOC table
+    FillTOCTable(startOffset, iScanTimestamp);
+    iScanTimestamp = iScanTimestamp + frameDur;
+
     return MP3_SUCCESS;
 }
+
 
 
 /***********************************************************************
  * FUNCTION:    GetMP3Header
  * DESCRIPTION: Parse Header Bit fields into a structure (Pass in 4 bytes)
  *	            Validate ranges and reserved fields.
+ * INPUT/OUTPUT PARAMETERS:
+ * RETURN VALUE:
+ * SIDE EFFECTS:
  ***********************************************************************/
 bool MP3Parser::GetMP3Header(uint32 &aFrameHeader, MP3HeaderType &aMP3HeaderInfo)
 {
@@ -830,6 +931,9 @@ bool MP3Parser::GetMP3Header(uint32 &aFrameHeader, MP3HeaderType &aMP3HeaderInfo
  * FUNCTION:    DecodeMP3Header
  * DESCRIPTION: Decode the MP3 Header struct and place the derived values
  *              into the supplied MP3 Config data structure.
+ * INPUT/OUTPUT PARAMETERS:
+ * RETURN VALUE:
+ * SIDE EFFECTS:
  ***********************************************************************/
 bool MP3Parser::DecodeMP3Header(MP3HeaderType &aMP3HeaderInfo, MP3ConfigInfoType &aMP3ConfigInfo, bool aComputeAvgBitrate)
 {
@@ -927,7 +1031,7 @@ bool MP3Parser::DecodeMP3Header(MP3HeaderType &aMP3HeaderInfo, MP3ConfigInfoType
                 if (iId3TagParser.IsID3V1Present())
                 {
                     // The TAG in an ID3V1.x MP3 File is 128 bytes long
-                    audioDataSize -= ID3_V1_TAG_SIZE;
+                    audioDataSize -= 128;
                 }
                 iNumberOfFrames = audioDataSize / (aMP3ConfigInfo.FrameLengthInBytes);
 
@@ -956,6 +1060,9 @@ bool MP3Parser::DecodeMP3Header(MP3HeaderType &aMP3HeaderInfo, MP3ConfigInfoType
  * FUNCTION:    DecodeVBRIHeader
  * DESCRIPTION:	Decode VBRI Header and store TOC entries used for
 				repositioning
+ * INPUT/OUTPUT PARAMETERS:
+ * RETURN VALUE:
+ * SIDE EFFECTS:
  ***********************************************************************/
 bool MP3Parser::DecodeVBRIHeader(uint8 *VbriBuffer, VBRIHeaderType &vbriHDType,
                                  MP3HeaderType &aMP3HeaderInfo)
@@ -995,6 +1102,10 @@ bool MP3Parser::DecodeVBRIHeader(uint8 *VbriBuffer, VBRIHeaderType &vbriHDType,
 
 /***********************************************************************
  * FUNCTION:    DecodeXINGHeader
+ * DESCRIPTION:
+ * INPUT/OUTPUT PARAMETERS:
+ * RETURN VALUE:
+ * SIDE EFFECTS:
  ***********************************************************************/
 bool  MP3Parser::DecodeXINGHeader(uint8 *XingBuffer,
                                   XINGHeaderType &mp3XingHD,
@@ -1045,6 +1156,9 @@ bool  MP3Parser::DecodeXINGHeader(uint8 *XingBuffer,
 /***********************************************************************
  * FUNCTION:    GetMP3FileHeader
  * DESCRIPTION: Returns information necessary to configure the audio device
+ * INPUT/OUTPUT PARAMETERS:
+ * RETURN VALUE:
+ * SIDE EFFECTS:
  ***********************************************************************/
 bool MP3Parser::GetMP3FileHeader(MP3ConfigInfoType * pMP3Config)
 {
@@ -1117,11 +1231,25 @@ bool MP3Parser::GetMP3FileHeader(MP3ConfigInfoType * pMP3Config)
 }
 
 /***********************************************************************
+ *	Function : GetChannelMode
+ *	Purpose  : Fetch Channel mode for the clip
+ *  Input	 : None
+ *  Output	 :
+ *	Return   : ChannelMode
+ *	Modified :
+ ***********************************************************************/
+uint32 MP3Parser::GetChannelMode() const
+{
+    return iMP3HeaderInfo.chMode;
+}
+
+/***********************************************************************
  *	Function : GetDurationFromMetadata
  *	Purpose  : Fetch duration value from id3 frame (TLEN - track length)
  *  Input	 : None
  *  Output	 : iClipDurationFromMetadata
  *	Return   : clip duration
+ *	Modified :
  ***********************************************************************/
 uint32 MP3Parser::GetDurationFromMetadata()
 {
@@ -1140,6 +1268,45 @@ uint32 MP3Parser::GetDurationFromMetadata()
 }
 
 /***********************************************************************
+ *	Function : ConvertSizeToTime
+ *	Purpose  : Fetches duration of the clip playing
+ *			   Duration is returned, by different
+ *			   means by the pre-defined priorities
+ *  Input	 : aMetadataDuration, true if duration from metadata is needed
+ *  Output	 : None
+ *	Return   : Clip duration
+ *	Modified :
+ **********************************************************************/
+int32 MP3Parser::ConvertSizeToTime(uint32 aFileSize, uint32& aNPTInMS)
+{
+    uint32 duration = 0;
+    uint32 fileSize = aFileSize;
+
+    if (iId3TagParser.IsID3V2Present())
+    {
+        if (iTagSize > fileSize)
+        {
+            return -1;
+        }
+        fileSize -= iTagSize;
+    }
+    if (iId3TagParser.IsID3V1Present())
+    {
+        // id3v1.x tags are 128 bytes long
+        fileSize -= ID3_V1_TAG_SIZE;
+    }
+
+    if (iAvgBitrateInbps > 0)
+    {
+        duration = (uint32)((OsclFloat)(fileSize * 8000.00f / iAvgBitrateInbps));
+        aNPTInMS = duration;
+        return 0;
+    }
+
+    return -1;
+}
+
+/***********************************************************************
  *	Function : GetDuration
  *	Purpose  : Fetches duration of the clip playing
  *			   Duration is returned, by different
@@ -1147,6 +1314,7 @@ uint32 MP3Parser::GetDurationFromMetadata()
  *  Input	 : aMetadataDuration, true if duration from metadata is needed
  *  Output	 : None
  *	Return   : Clip duration
+ *	Modified :
  **********************************************************************/
 uint32 MP3Parser::GetDuration(bool aMetadataDuration)
 {
@@ -1176,18 +1344,20 @@ uint32 MP3Parser::GetDuration(bool aMetadataDuration)
             if (clipDuration == 0 && GetDurationFromMetadata() > 0)
             {
                 clipDuration = iClipDurationFromMetadata;
-            }
-            if (clipDuration == 0)
-            {
-                if (MP3_SUCCESS != GetDurationFromRandomScan(clipDuration))
-                {
-                    clipDuration = 0;
-                }
-            }
-            if ((iAvgBitrateInbpsFromRandomScan == 0) && (clipDuration != 0))
-            {
                 // random scan will not be performed,
                 // estimate bitrate from filesize and duration
+            }
+            else if (clipDuration == 0)
+            {
+                if (MP3_SUCCESS == GetDurationFromRandomScan(clipDuration))
+                {
+                    iClipDurationInMsec = clipDuration;
+                    return clipDuration;
+                }
+            }
+            // if control gets here, that means avg bit rate from random scan is not calculated.
+            if (iAvgBitrateInbpsFromRandomScan <= 0)
+            {
                 uint32 fileSize = iLocalFileSize;
                 if (iId3TagParser.IsID3V2Present())
                 {
@@ -1198,7 +1368,7 @@ uint32 MP3Parser::GetDuration(bool aMetadataDuration)
                     // id3v1.x tags are 128 bytes long
                     fileSize -= ID3_V1_TAG_SIZE;
                 }
-                iAvgBitrateInbpsFromRandomScan = fileSize * 8000.00f / clipDuration;
+                iAvgBitrateInbpsFromRandomScan = (int32)((OsclFloat)(fileSize * 8000.00f) / clipDuration);
             }
         }
         else
@@ -1234,8 +1404,9 @@ uint32 MP3Parser::GetDuration(bool aMetadataDuration)
  *  Input	 : None
  *  Output	 : aSize, size of metadata
  *	Return   : error code
+ *	Modified :
  ***********************************************************************/
-MP3ErrorType MP3Parser::GetMetadataSize(int32 &aMetadataSize)
+MP3ErrorType MP3Parser::GetMetadataSize(uint32 &aMetadataSize)
 {
     if (fp)
     {
@@ -1245,7 +1416,7 @@ MP3ErrorType MP3Parser::GetMetadataSize(int32 &aMetadataSize)
             return MP3_SUCCESS;
         }
     }
-    aMetadataSize = -1;
+    aMetadataSize = 0;
     return MP3_METADATA_NOTPARSED;
 }
 
@@ -1255,14 +1426,26 @@ MP3ErrorType MP3Parser::GetMetadataSize(int32 &aMetadataSize)
  *  Input	 : None
  *  Output	 : None
  *	Return   : aSize, size of max mp3 frame
+ *	Modified :
  ***********************************************************************/
-uint32 MP3Parser::GetMinBytesRequired()
+uint32 MP3Parser::GetMinBytesRequired(bool aNextBytes)
 {
-    return KMAX_MP3FRAME_LENGTH_IN_BYTES;
+    uint32 minBytes = KMAX_MP3FRAME_LENGTH_IN_BYTES;
+    if (aNextBytes && fp)
+    {
+        // case where parse file has failed due to lack of data
+        // in that case request next n bytes.
+        minBytes += fp->Tell();
+    }
+    return minBytes;
 }
 
 /***********************************************************************
  * FUNCTION: GetNextBundledAccessUnits
+ * DESCRIPTION:
+ * INPUT/OUTPUT PARAMETERS:
+ * RETURN VALUE:
+ * SIDE EFFECTS:
  ***********************************************************************/
 int32 MP3Parser::GetNextBundledAccessUnits(uint32 *n, GAU *pgau, MP3ErrorType &error)
 {
@@ -1279,7 +1462,6 @@ int32 MP3Parser::GetNextBundledAccessUnits(uint32 *n, GAU *pgau, MP3ErrorType &e
 
     uint8 * pOutputBuffer = (uint8 *)pgau->buf.fragments[0].ptr;
     int32 iLength = pgau->buf.fragments[0].len;
-
     for (i = 0; (i < (int32)*n) && (iLength > 0); i++)
     {
         pgau->numMediaSamples = i;
@@ -1307,9 +1489,12 @@ int32 MP3Parser::GetNextBundledAccessUnits(uint32 *n, GAU *pgau, MP3ErrorType &e
     *n = i;
     return nBytesReadTotal;
 }
-
 /***********************************************************************
  * FUNCTION: PeekNextBundledAccessUnits
+ * DESCRIPTION:
+ * INPUT/OUTPUT PARAMETERS:
+ * RETURN VALUE:
+ * SIDE EFFECTS:
  ***********************************************************************/
 int32  MP3Parser::PeekNextBundledAccessUnits(uint32 *n, MediaMetaInfo *mInfo)
 {
@@ -1327,6 +1512,7 @@ int32  MP3Parser::PeekNextBundledAccessUnits(uint32 *n, MediaMetaInfo *mInfo)
         }
 
         mInfo->ts = GetTimestampForSample(iCurrFrameNumber + i);
+        // Don't care
         mInfo->layer = 0;
         // Maximum Frame Length
         mInfo->len   = (iMP3ConfigInfo.FrameLengthInBytes + MP3_FRAME_HEADER_SIZE);
@@ -1341,6 +1527,10 @@ int32  MP3Parser::PeekNextBundledAccessUnits(uint32 *n, MediaMetaInfo *mInfo)
 
 /***********************************************************************
  * FUNCTION:    GetNextMediaSample
+ * DESCRIPTION:
+ * INPUT/OUTPUT PARAMETERS:
+ * RETURN VALUE:
+ * SIDE EFFECTS:
  ***********************************************************************/
 MP3ErrorType MP3Parser::GetNextMediaSample(uint8 *buffer, uint32 size, uint32& framesize, uint32& timestamp)
 {
@@ -1356,15 +1546,15 @@ BEGIN:
 
     framesize = 0;
     timestamp = 0;
-    uint32 remBytes = 0;
     // Read and Decode the MP3 Frame Header to obtain the
     // correct number of bytes in this frame.
     currentFilePosn = MP3Utils::getCurrentFilePosition(fp);
 
+    // If content length is known (non-0), avoid reading beyond EOF
     uint32 contentLength = MP3FileIO::getContentLength(fp);
     if (0 != contentLength)
     {
-        // if content length is known, check for reading beyond EOF
+        // check for reading beyond EOF
         if ((currentFilePosn + MP3_FRAME_HEADER_SIZE) >= contentLength)
         {
             return MP3_END_OF_FILE;
@@ -1387,7 +1577,7 @@ BEGIN:
         // ////////////////////////////////////////////////////////////////////////////
         // If we don't find a valid MP3 Marker point we will attempt recovery.
         uint32 seekOffset = 0;
-        MP3ErrorType err = mp3FindSync(currentFilePosn, seekOffset);
+        MP3ErrorType err = mp3FindSync(currentFilePosn, seekOffset, fp);
 
         if (err == MP3_SUCCESS)
         {
@@ -1460,7 +1650,7 @@ BEGIN:
         }
 
         uint32 seekOffset = 0;
-        MP3ErrorType err = mp3FindSync(currentFilePosn, seekOffset);
+        MP3ErrorType err = mp3FindSync(currentFilePosn, seekOffset, fp);
         if (err == MP3_SUCCESS)
         {
             currentFilePosn += seekOffset;
@@ -1469,7 +1659,6 @@ BEGIN:
             {
                 return err;
             }
-
             goto BEGIN;
         }
         else
@@ -1503,7 +1692,7 @@ BEGIN:
         timestamp = GetTimestampForCurrentSample();
         if (mp3CDInfo.BitRate > 0)
         {
-            iTimestamp = timestamp + (OsclFloat) mp3CDInfo.FrameLengthInBytes * 8000.00f / mp3CDInfo.BitRate;
+            iTimestamp = uint32(timestamp + (OsclFloat) mp3CDInfo.FrameLengthInBytes * 8000.00f / mp3CDInfo.BitRate);
         }
         if (0 != contentLength)
         {
@@ -1530,7 +1719,7 @@ BEGIN:
     // calculate frameDuration
     if (mp3CDInfo.BitRate > 0)
     {
-        iTimestamp = timestamp + (OsclFloat) mp3CDInfo.FrameLengthInBytes * 8000.00f / mp3CDInfo.BitRate;
+        iTimestamp = uint32(timestamp + (OsclFloat) mp3CDInfo.FrameLengthInBytes * 8000.00f / mp3CDInfo.BitRate);
     }
 
     // Take into account the header (4 Bytes) already read up front
@@ -1543,7 +1732,6 @@ BEGIN:
             return MP3_END_OF_FILE;
         }
     }
-
 
     // Take into account the header (4 Bytes) already read up front
     // to obtain the correct Frame Size in Bytes
@@ -1559,6 +1747,10 @@ BEGIN:
 
 /***********************************************************************
  * FUNCTION:    SeekToTimestamp
+ * DESCRIPTION:
+ * INPUT/OUTPUT PARAMETERS:
+ * RETURN VALUE:
+ * SIDE EFFECTS:
  ***********************************************************************/
 uint32  MP3Parser::SeekToTimestamp(uint32 timestampInMsec)
 {
@@ -1580,12 +1772,25 @@ uint32  MP3Parser::SeekToTimestamp(uint32 timestampInMsec)
 
 /***********************************************************************
  * FUNCTION:    SeekPointFromTimestamp
+ * DESCRIPTION:
+ * INPUT/OUTPUT PARAMETERS:
+ * RETURN VALUE:
+ * SIDE EFFECTS:
  ***********************************************************************/
 uint32 MP3Parser::SeekPointFromTimestamp(uint32 &timestamp)
 {
     uint32 seekPoint = 0;
     uint32 seekOffset = 0;
     OsclFloat percent = 0;
+    uint32 binNo = 0;
+
+    bool bUseTOCForRepos = false;
+
+    uint32 maxTSInTOC = iTOCFilledCount * iBinWidth;
+    if (iTOCFilledCount > 1 && (timestamp < maxTSInTOC || iDurationScanComplete))
+    {
+        bUseTOCForRepos = true;
+    }
 
     // XING - Use VBR TOC Header
     if ((mp3Type == EXINGType) && (iXingHeader.flags & TOC_FLAG))
@@ -1665,13 +1870,29 @@ uint32 MP3Parser::SeekPointFromTimestamp(uint32 &timestamp)
         seekPoint -= (int)((OsclFloat)iVbriHeader.TOC[i-1] * (OsclFloat)(fraction)
                            / (OsclFloat)iVbriHeader.fTableEntry);
     }
+    else if (bUseTOCForRepos)
+    {
+        // Use TOC for calculating seek point.
+        OsclFloat fpc = (OsclFloat)timestamp / (OsclFloat)iClipDurationInMsec;
+        binNo = (uint32)(fpc * iTOCFilledCount);
+        uint32 TScurr = binNo * iBinWidth;
+        while (TScurr > timestamp)
+        {
+            binNo--;
+            TScurr = binNo * iBinWidth;
+        }
+
+        uint32 offsetDiff = iTOC[binNo+1] - iTOC[binNo];
+        uint32 tsDiff = timestamp - TScurr;
+        seekPoint = iTOC[binNo] + tsDiff * (offsetDiff / iBinWidth);
+    }
     else
     {
         /**
          * vbri and xing headers are not present. seek offset will be
          * calculated on the basis of average bit rate
          **/
-        uint32 avgBR = 0;
+        int32 avgBR = 0;
         if (fp->GetCPM())
         {
             avgBR = iAvgBitrateInbps;
@@ -1687,7 +1908,7 @@ uint32 MP3Parser::SeekPointFromTimestamp(uint32 &timestamp)
                 avgBR = iAvgBitrateInbpsFromRandomScan;
             }
         }
-        seekPoint = (OsclFloat)(avgBR * (OsclFloat)timestamp) / 8000.0f;
+        seekPoint = (uint32)((OsclFloat)(avgBR * (OsclFloat)timestamp) / 8000.0f);
     }
 
     /**
@@ -1698,10 +1919,17 @@ uint32 MP3Parser::SeekPointFromTimestamp(uint32 &timestamp)
     **/
     if (seekPoint > 0 && !fp->GetCPM())
     {
-        uint32 retVal = mp3FindSync(StartOffset + seekPoint, seekOffset);
+        uint32 retVal = mp3FindSync(seekPoint + StartOffset, seekOffset);
         if (retVal == MP3_SUCCESS)
         {
             seekPoint += seekOffset;
+            MP3Utils::SeektoOffset(fp, seekPoint);
+
+            if (iDurationScanComplete)
+            {
+                uint32 offsetDiff = iTOC[binNo+1] - iTOC[binNo];
+                timestamp = (binNo * iBinWidth) + (iBinWidth * (seekPoint - iTOC[binNo]) / offsetDiff);
+            }
         }
         else if (retVal == MP3_INSUFFICIENT_DATA || retVal == MP3_END_OF_FILE)
         {
@@ -1725,7 +1953,7 @@ uint32 MP3Parser::SeekPointFromTimestamp(uint32 &timestamp)
     {
         if (iMP3ConfigInfo.FrameSizeUnComp > 0  && iMP3ConfigInfo.SamplingRate > 0)
         {
-            iCurrFrameNumber = timestamp * (iMP3ConfigInfo.SamplingRate / iMP3ConfigInfo.FrameSizeUnComp) / 1000.00f;
+            iCurrFrameNumber = (int32)(timestamp * (iMP3ConfigInfo.SamplingRate / iMP3ConfigInfo.FrameSizeUnComp) / 1000.00f);
         }
     }
     else
@@ -1743,23 +1971,19 @@ uint32 MP3Parser::SeekPointFromTimestamp(uint32 &timestamp)
  * DESCRIPTION: This function reads the whole file searching for a sync
  *				word. Once it finds one, it check for 4 continuous sync
  *				words to avoid a false synchronization
+ * INPUT/OUTPUT PARAMETERS:
+ * RETURN VALUE:
+ * SIDE EFFECTS:
  ***********************************************************************/
 MP3ErrorType MP3Parser::mp3FindSync(uint32 seekPoint, uint32 &syncOffset, PVFile* aFile)
 {
-    PVFile* fpused = fp;
-    if (aFile)
-    {
-        fpused = aFile;
-    }
     iMaxSyncBufferSize = 627;   /* default for 192 kbps, 44.1 kHz */
 
     if (!aFile)
     {
-        if (fpused->GetCPM() != NULL)
+        if (fp->GetCPM() != NULL)
         {
-            uint32 temp = 0;
-            iLocalFileSizeSet = (int32)MP3Utils::getCurrentFileSize(fpused, temp);
-            iLocalFileSize = (int32)temp;
+            iLocalFileSizeSet = (int32)MP3Utils::getCurrentFileSize(fp, iLocalFileSize);
         }
 
         uint32 contentLength = MP3FileIO::getContentLength(fp);
@@ -1791,13 +2015,26 @@ MP3ErrorType MP3Parser::mp3FindSync(uint32 seekPoint, uint32 &syncOffset, PVFile
         return MP3_ERROR_UNKNOWN;  /* buffer couldn't be allocated */
     }
 
+    PVFile* fpused = (aFile) ? aFile : fp;
     uint32 i = 0;
     uint32 j = 0;
     uint32 BufferSize = 0;
     pSyncBuffer[0] = 0;
     bool syncFound = false;
     MP3ErrorType mp3Err = MP3_SUCCESS;
-    uint32 b = OSCL_MIN(iInitSearchFileSize, iLocalFileSize - seekPoint);
+    uint32 b = 0;
+    if (iLocalFileSizeSet)
+    {
+        b = OSCL_MIN(iInitSearchFileSize, iLocalFileSize - seekPoint);
+    }
+    else
+    {
+        uint32 remBytes = 0;
+        if (fp->GetRemainingBytes(remBytes))
+        {
+            b = OSCL_MAX(iInitSearchFileSize, fpused->Tell() + remBytes - seekPoint);
+        }
+    }
 
     for (j = 0; j < b; j += iMaxSyncBufferSize)
     {
@@ -1805,13 +2042,21 @@ MP3ErrorType MP3Parser::mp3FindSync(uint32 seekPoint, uint32 &syncOffset, PVFile
         MP3ErrorType err = MP3Utils::SeektoOffset(fpused, seekPoint + j);
         if (MP3_SUCCESS != err)
         {
+            if (pSyncBuffer)
+            {
+                OSCL_ARRAY_DELETE(pSyncBuffer);
+                pSyncBuffer = NULL;
+            }
             return err;
         }
 
         if (!MP3FileIO::readByteData(fpused, iMaxSyncBufferSize, &pSyncBuffer[1], &BufferSize))
         {
-            OSCL_ARRAY_DELETE(pSyncBuffer);
-            pSyncBuffer = NULL;
+            if (pSyncBuffer)
+            {
+                OSCL_ARRAY_DELETE(pSyncBuffer);
+                pSyncBuffer = NULL;
+            }
             return MP3_ERROR_UNKNOWN_OBJECT;
         }
         // Find the first Sync Marker by doing a byte by byte search.
@@ -1825,20 +2070,24 @@ MP3ErrorType MP3Parser::mp3FindSync(uint32 seekPoint, uint32 &syncOffset, PVFile
             {
                 if (pSyncBuffer[i] == 0xFF)
                 {
-                    uint32 currPos = MP3Utils::getCurrentFilePosition(fpused);
                     // MPEG 1, 2
                     if ((pSyncBuffer[i+1] & 0xF0) == 0xF0)
                     {
                         // if partial match is found verify that 4 consecutives sync word are valid
+                        int32 currPos = fpused->Tell();
                         mp3Err = IsValidFrame(&(pSyncBuffer[i]), j + i - 1, seekPoint, fpused);
+                        fpused->Seek(currPos, Oscl_File::SEEKSET);
                         if (mp3Err == MP3_SUCCESS)
                         {
                             break;
                         }
                         else if (mp3Err == MP3_INSUFFICIENT_DATA)
                         {
-                            OSCL_ARRAY_DELETE(pSyncBuffer);
-                            pSyncBuffer = NULL;
+                            if (pSyncBuffer)
+                            {
+                                OSCL_ARRAY_DELETE(pSyncBuffer);
+                                pSyncBuffer = NULL;
+                            }
                             return mp3Err;
                         }
                         else
@@ -1850,15 +2099,21 @@ MP3ErrorType MP3Parser::mp3FindSync(uint32 seekPoint, uint32 &syncOffset, PVFile
                     else if ((pSyncBuffer[i+1] & 0xF0) == 0xE0)
                     {
                         // if partial match is found verify that 4 consecutives sync word are valid
+                        int32 currPos = fpused->Tell();
                         mp3Err = IsValidFrame(&(pSyncBuffer[i]), j + i - 1, seekPoint, fpused);
+                        fpused->Seek(currPos, Oscl_File::SEEKSET);
+
                         if (mp3Err == MP3_SUCCESS)
                         {
                             break;
                         }
                         else if (mp3Err == MP3_INSUFFICIENT_DATA)
                         {
-                            OSCL_ARRAY_DELETE(pSyncBuffer);
-                            pSyncBuffer = NULL;
+                            if (pSyncBuffer)
+                            {
+                                OSCL_ARRAY_DELETE(pSyncBuffer);
+                                pSyncBuffer = NULL;
+                            }
                             return mp3Err;
                         }
                         else
@@ -1892,8 +2147,20 @@ MP3ErrorType MP3Parser::mp3FindSync(uint32 seekPoint, uint32 &syncOffset, PVFile
         return MP3_END_OF_FILE;  /* File does not have any valid sync word */
     }
 
-    /* One valid frame was found -> reset initial size to file size */
-    iInitSearchFileSize = iLocalFileSize;
+    if (iLocalFileSizeSet)
+    {
+        /* One valid frame was found -> reset initial size to file size */
+        iInitSearchFileSize = iLocalFileSize;
+    }
+    else
+    {
+        uint32 remBytes = 0;
+        if (fp->GetRemainingBytes(remBytes))
+        {
+            /* One valid frame was found -> reset initial size remaining file size*/
+            iInitSearchFileSize = OSCL_MIN(iInitSearchFileSize, remBytes);
+        }
+    }
 
     syncOffset = j + i - 1;  /*  set offset */
     return MP3_SUCCESS;
@@ -1902,6 +2169,10 @@ MP3ErrorType MP3Parser::mp3FindSync(uint32 seekPoint, uint32 &syncOffset, PVFile
 
 /***********************************************************************
  * FUNCTION:   IsValidFrame
+ * DESCRIPTION:
+ * INPUT/OUTPUT PARAMETERS:
+ * RETURN VALUE:
+ * SIDE EFFECTS:
  ***********************************************************************/
 MP3ErrorType MP3Parser::IsValidFrame(uint8 * pBuffer,
                                      uint32 offset,
@@ -1922,6 +2193,9 @@ MP3ErrorType MP3Parser::IsValidFrame(uint8 * pBuffer,
  *				of the following 3 headers. Then, if the sampling frequencies
  *				and number of channels match for all headers, the frame header
  *				is considered valid
+ * INPUT/OUTPUT PARAMETERS:
+ * RETURN VALUE:
+ * SIDE EFFECTS:
  ***********************************************************************/
 MP3ErrorType MP3Parser::IsValidFrameHeader(uint8 *mp3Frame,
         bool &bCRCPresent,
@@ -1940,6 +2214,7 @@ MP3ErrorType MP3Parser::IsValidFrameHeader(uint8 *mp3Frame,
     MP3ConfigInfoType mp3CDInfo3 = {0, 0, 0, 0, 0};
     MP3ConfigInfoType mp3CDInfo4 = {0, 0, 0, 0, 0};
     int32 offset, flength;
+    bool status;
 
     uint32 mp3Header = SwapFileToHostByteOrderInt32(mp3Frame);
 
@@ -1964,7 +2239,6 @@ MP3ErrorType MP3Parser::IsValidFrameHeader(uint8 *mp3Frame,
      *  really latch on a valid sync word
      */
     offset = mp3CDInfo.FrameLengthInBytes;
-    uint32 currFileSize = 0;
     MP3ErrorType err = MP3Utils::SeektoOffset(fpUsed, seekPoint + firstSyncOffset + offset);
     if (MP3_SUCCESS != err)
     {
@@ -1978,15 +2252,8 @@ MP3ErrorType MP3Parser::IsValidFrameHeader(uint8 *mp3Frame,
 
     mp3Header = SwapFileToHostByteOrderInt32((uint8 *) & mp3Header);
 
-    if (!GetMP3Header(mp3Header, mp3HeaderInfo))
-    {
-        return MP3_FILE_HDR_READ_ERR;
-    }
-
-    if (!DecodeMP3Header(mp3HeaderInfo, mp3CDInfo2, false))
-    {
-        return MP3_FILE_HDR_READ_ERR;
-    }
+    status = GetMP3Header(mp3Header, mp3HeaderInfo);
+    status = DecodeMP3Header(mp3HeaderInfo, mp3CDInfo2, false);
 
     flength = mp3CDInfo2.FrameLengthInBytes;
     offset += flength;
@@ -2005,15 +2272,8 @@ MP3ErrorType MP3Parser::IsValidFrameHeader(uint8 *mp3Frame,
 
     mp3Header = SwapFileToHostByteOrderInt32((uint8 *) & mp3Header);
 
-    if (!GetMP3Header(mp3Header, mp3HeaderInfo))
-    {
-        return MP3_FILE_HDR_READ_ERR;
-    }
-
-    if (!DecodeMP3Header(mp3HeaderInfo, mp3CDInfo3, false))
-    {
-        return MP3_FILE_HDR_READ_ERR;
-    }
+    status = GetMP3Header(mp3Header, mp3HeaderInfo);
+    status = DecodeMP3Header(mp3HeaderInfo, mp3CDInfo3, false);
 
     offset += mp3CDInfo3.FrameLengthInBytes;
 
@@ -2031,15 +2291,8 @@ MP3ErrorType MP3Parser::IsValidFrameHeader(uint8 *mp3Frame,
 
     mp3Header = SwapFileToHostByteOrderInt32((uint8 *) & mp3Header);
 
-    if (!GetMP3Header(mp3Header, mp3HeaderInfo))
-    {
-        return MP3_FILE_HDR_READ_ERR;
-    }
-
-    if (!DecodeMP3Header(mp3HeaderInfo, mp3CDInfo4, false))
-    {
-        return MP3_FILE_HDR_READ_ERR;
-    }
+    status = GetMP3Header(mp3Header, mp3HeaderInfo);
+    status = DecodeMP3Header(mp3HeaderInfo, mp3CDInfo4, false);
 
 
     /*
@@ -2065,8 +2318,11 @@ MP3ErrorType MP3Parser::IsValidFrameHeader(uint8 *mp3Frame,
 
 /***********************************************************************
  * FUNCTION:   mp3VerifyCRC
+ * DESCRIPTION:
  * INPUT/OUTPUT PARAMETERS: verifies the crc if crc check is enabled and
  *							crc flag is present
+ * RETURN VALUE:
+ * SIDE EFFECTS:
  ***********************************************************************/
 MP3ErrorType MP3Parser::mp3VerifyCRC(MP3HeaderType mp3HdrInfo, MP3ConfigInfoType mp3CI)
 {
@@ -2092,6 +2348,7 @@ MP3ErrorType MP3Parser::mp3VerifyCRC(MP3HeaderType mp3HdrInfo, MP3ConfigInfoType
         case MPEG_LAYER_II:
             // no check for Layer II
             return MP3_SUCCESS;
+
         case MPEG_LAYER_III:
             numberOfBits = (mp3HdrInfo.frameVer == FRAME_VESION_MPEG_1) ?
                            (mp3HdrInfo.chMode == CHANNEL_MODE_MONO ? 17 * 8 : 32 * 8) :
@@ -2190,6 +2447,10 @@ uint16 MP3Parser::CalcCRC16(uint8* pBuffer, uint32 dwBitSize)
 
 /***********************************************************************
  * FUNCTION:    GetSampleCountInFile
+ * DESCRIPTION:
+ * INPUT/OUTPUT PARAMETERS:
+ * RETURN VALUE:
+ * SIDE EFFECTS:
  ***********************************************************************/
 uint32 MP3Parser::GetSampleCountInFile()
 {
@@ -2198,6 +2459,10 @@ uint32 MP3Parser::GetSampleCountInFile()
 
 /***********************************************************************
  * FUNCTION:    GetMaximumDecodeBufferSize
+ * DESCRIPTION:
+ * INPUT/OUTPUT PARAMETERS:
+ * RETURN VALUE:
+ * SIDE EFFECTS:
  ***********************************************************************/
 uint32 MP3Parser::GetMaximumDecodeBufferSize()
 {
@@ -2234,6 +2499,10 @@ uint32 MP3Parser::GetMaximumDecodeBufferSize()
 
 /***********************************************************************
  * FUNCTION:    GetFileSize
+ * DESCRIPTION:
+ * INPUT/OUTPUT PARAMETERS:
+ * RETURN VALUE:
+ * SIDE EFFECTS:
  ***********************************************************************/
 uint32 MP3Parser::GetFileSize()
 {
@@ -2242,6 +2511,10 @@ uint32 MP3Parser::GetFileSize()
 
 /***********************************************************************
  * FUNCTION:    GetTimestampForCurrentSample
+ * DESCRIPTION:
+ * INPUT/OUTPUT PARAMETERS:
+ * RETURN VALUE:
+ * SIDE EFFECTS:
  ***********************************************************************/
 uint32 MP3Parser::GetTimestampForCurrentSample() const
 {
@@ -2259,6 +2532,10 @@ uint32 MP3Parser::GetTimestampForSample(int32 aFrameNumber) const
 
 /***********************************************************************
  * FUNCTION:    GetDecoderSpecificInfoSize
+ * DESCRIPTION:
+ * INPUT/OUTPUT PARAMETERS:
+ * RETURN VALUE:
+ * SIDE EFFECTS:
  ***********************************************************************/
 uint32  MP3Parser::GetDecoderSpecificInfoSize()
 {
@@ -2267,6 +2544,10 @@ uint32  MP3Parser::GetDecoderSpecificInfoSize()
 
 /***********************************************************************
  * FUNCTION:    GetDecoderSpecificInfoContent
+ * DESCRIPTION:
+ * INPUT/OUTPUT PARAMETERS:
+ * RETURN VALUE:
+ * SIDE EFFECTS:
  ***********************************************************************/
 uint8 const * MP3Parser::GetDecoderSpecificInfoContent() const
 {
@@ -2300,13 +2581,13 @@ int32 MP3Parser :: CalculateBufferSizeForHeader(uint8 *VbriHead)
  * 			   aInitSearchFileSize, amount of data to use for verification
  *  Output	 : None
  *	Return   : error code
+ *	Modified :
  ***********************************************************************/
 MP3ErrorType MP3Parser::IsMp3File(MP3_FF_FILE* aFile, uint32 aInitSearchFileSize)
 {
     MP3ErrorType errCode = MP3_SUCCESS;
     uint8 pFrameHeader[MP3_FRAME_HEADER_SIZE];
     uint32 firstHeader = 0;
-    iLocalFileSizeSet = true;
 
     // get the file pointer
     fp = &(aFile->_pvfile);
@@ -2315,6 +2596,7 @@ MP3ErrorType MP3Parser::IsMp3File(MP3_FF_FILE* aFile, uint32 aInitSearchFileSize
     int32 err = fp->Seek(0, Oscl_File::SEEKEND);
     if (err == 0)
     {
+        iLocalFileSizeSet = true;
         iLocalFileSize =  MP3Utils::getCurrentFilePosition(fp);
         if (iLocalFileSize == 0)
         {
@@ -2326,7 +2608,18 @@ MP3ErrorType MP3Parser::IsMp3File(MP3_FF_FILE* aFile, uint32 aInitSearchFileSize
         iLocalFileSize = 0;
     }
     //set the initial file search size
-    iInitSearchFileSize = OSCL_MIN(aInitSearchFileSize, iLocalFileSize);
+    if (iLocalFileSizeSet)
+    {
+        iInitSearchFileSize = OSCL_MIN(aInitSearchFileSize, iLocalFileSize);
+    }
+    else
+    {
+        uint32 remBytes = 0;
+        if (fp->GetRemainingBytes(remBytes))
+        {
+            iInitSearchFileSize = OSCL_MIN(iInitSearchFileSize, remBytes);
+        }
+    }
 
     // seek to the begining position in the file
     fp->Seek(0, Oscl_File::SEEKSET);
@@ -2431,6 +2724,7 @@ uint32  MP3Parser::GetFileOffsetForAutoResume(uint32& aOffset)
  *	Return   : error code
  *  Input	 : aFileSize
  *  Output	 : None
+ *	Modified :
  ***********************************************************************/
 MP3ErrorType MP3Parser::SetFileSize(const uint32 aFileSize)
 {
@@ -2445,6 +2739,7 @@ MP3ErrorType MP3Parser::SetFileSize(const uint32 aFileSize)
  *	Return   : error code
  *	Input	 : None
  *	Output	 : Clip duration
+ *	Modified :
  **/
 MP3ErrorType MP3Parser::EstimateDurationFromExternalFileSize(uint32 &aClipDuration)
 {
@@ -2477,7 +2772,7 @@ MP3ErrorType MP3Parser::EstimateDurationFromExternalFileSize(uint32 &aClipDurati
         return MP3_SUCCESS;
     }
 
-    iClipDurationFromEstimation = (OsclFloat)(fileSize * 8000.00f / iAvgBitrateInbps);
+    iClipDurationFromEstimation = (uint32)((OsclFloat)(fileSize * 8000.00f / iAvgBitrateInbps));
     aClipDuration = iClipDurationFromEstimation;
     return MP3_SUCCESS;
 }
@@ -2488,6 +2783,7 @@ MP3ErrorType MP3Parser::EstimateDurationFromExternalFileSize(uint32 &aClipDurati
  *	Return   : error code
  *	Input	 : None
  *	Output	 : Clip duration
+ *	Modified :
  ***********************************************************************/
 MP3ErrorType MP3Parser::GetDurationFromVBRIHeader(uint32 &aClipDuration)
 {
@@ -2514,10 +2810,7 @@ MP3ErrorType MP3Parser::GetDurationFromVBRIHeader(uint32 &aClipDuration)
         return MP3_ERROR_UNKNOWN;
     }
 
-    int32 samplesPerFrame = spfIndexTable[iMP3HeaderInfo.frameVer][iMP3HeaderInfo.layerID];
-    int32 samplingRate = srIndexTable[((iMP3HeaderInfo.frameVer)*4) + iMP3HeaderInfo.srIndex];
-
-    iClipDurationFromVBRIHeader = iNumberOfFrames * samplesPerFrame / samplingRate * 1000;
+    iClipDurationFromVBRIHeader = iNumberOfFrames * iSamplesPerFrame / iSamplingRate * 1000;
     aClipDuration = iClipDurationFromVBRIHeader;
     return MP3_SUCCESS;
 }
@@ -2530,6 +2823,7 @@ MP3ErrorType MP3Parser::GetDurationFromVBRIHeader(uint32 &aClipDuration)
  *	Return   : error code
  *	Input	 : None
  *	Output	 : Clip duration
+ *	Modified :
  ***********************************************************************/
 MP3ErrorType MP3Parser::GetDurationFromRandomScan(uint32 &aClipDuration)
 {
@@ -2544,7 +2838,7 @@ MP3ErrorType MP3Parser::GetDurationFromRandomScan(uint32 &aClipDuration)
     if (MP3_ERROR_UNKNOWN != ComputeDurationFromNRandomFrames(fp))
     {
         uint32 fileSz = iLocalFileSize - iTagSize;
-        iClipDurationFromRandomScan =  fileSz * 8000.00f / iAvgBitrateInbpsFromRandomScan;
+        iClipDurationFromRandomScan = (uint32)(fileSz * 8000.00f / iAvgBitrateInbpsFromRandomScan);
         aClipDuration = iClipDurationFromRandomScan;
         MP3ErrorType status = MP3Utils::SeektoOffset(fp, currFilePos);
         return status;
@@ -2560,17 +2854,17 @@ MP3ErrorType MP3Parser::GetDurationFromRandomScan(uint32 &aClipDuration)
  *	Return   : error code
  *	Input	 : numFrames
  *	Output	 : iAvgBitrateInbpsFromRandomScan
+ *	Modified :
  ***********************************************************************/
 MP3ErrorType MP3Parser::ComputeDurationFromNRandomFrames(PVFile * fpUsed, int32 aNumFrames, int32 aNumRandomLoc)
 {
     uint32 firstHeader = 0;
     uint8 pFrameHeader[MP3_FRAME_HEADER_SIZE];
-    int32 startOffset = 0;
+    uint32 startOffset = 0;
     int32 totBR = 0;
-    int32 avgBR = 0;
     int32 avgBitRate = 0;
     int32 framecount = 0;
-    int32 randomByteOffset = 0;
+    uint32 randomByteOffset = 0;
     int32 audioDataSize = 0;
     MP3HeaderType mp3HeaderInfo;
     MP3ConfigInfoType mp3ConfigInfo;
@@ -2656,21 +2950,10 @@ MP3ErrorType MP3Parser::ComputeDurationFromNRandomFrames(PVFile * fpUsed, int32 
                 avgBitRate += (mp3ConfigInfo.BitRate - avgBitRate) / framecount;
             }
         }
-
         totBR += avgBitRate;
-        if (avgBR <= 0)
-        {
-            avgBR = avgBitRate;
-        }
-
-        if (avgBR != avgBitRate)
-        {
-            avgBR = (avgBR + avgBitRate) / 2;
-            mp3Type = EVBRType;
-        }
-
         numSearchLoc++;
     }
+    // calculate average bitrate
     iAvgBitrateInbpsFromRandomScan = totBR / numSearchLoc;
     if (!iAvgBitrateInbpsFromRandomScan)
     {
@@ -2686,13 +2969,55 @@ void MP3Parser::GetDurationFromCompleteScan(uint32 &aClipDuration)
         aClipDuration = iClipDurationComputed;
         return;
     }
+    uint32 samplesPerFrame = spfIndexTable[iMP3HeaderInfo.frameVer][iMP3HeaderInfo.layerID];
+    uint32 samplingRate = srIndexTable[((iMP3HeaderInfo.frameVer)*4) + iMP3HeaderInfo.srIndex];
+    OsclFloat samplingRateinKHz = (OsclFloat)samplingRate / 1000;
 
-    uint32 audioDataSz = iLocalFileSize - iTagSize;
-    if (iId3TagParser.IsID3V1Present())
-    {
-        // The TAG in an ID3V1.x MP3 File is 128 bytes long
-        audioDataSz -= 128;
-    }
-    iClipDurationComputed = (int32)((OsclFloat)(audioDataSz * 8000.0f) / iAvgBitrateInbpsFromCompleteScan);
+    iClipDurationComputed = (uint32)(iScannedFrameCount * (OsclFloat)(samplesPerFrame / samplingRateinKHz));
     aClipDuration = iClipDurationComputed;
 }
+
+void MP3Parser::FillTOCTable(uint32 aFilePos, uint32 aTimeStampToFrame)
+{
+    if (iDurationScanComplete)
+    {
+        iTOC[iTOCFilledCount] = aFilePos;
+        iTOCFilledCount++;
+        if (0 == iTimestampPrev)
+        {
+            GetDurationFromCompleteScan(iBinWidth);
+        }
+        return;
+    }
+
+    if ((iTOCFilledCount < MAX_TOC_ENTRY_COUNT) && ((aTimeStampToFrame - iTimestampPrev) >= iBinWidth))
+    {
+        if (iTimestampPrev != aTimeStampToFrame)
+        {
+            if ((aTimeStampToFrame - iTimestampPrev) > iBinWidth)
+            {
+                iBinWidth = aTimeStampToFrame - iTimestampPrev;
+            }
+        }
+        // push the file offset into TOC table
+        iTOC[iTOCFilledCount] = aFilePos - StartOffset;
+        iTOCFilledCount++;
+        iTimestampPrev = aTimeStampToFrame;
+    }
+    else if (iTOCFilledCount == MAX_TOC_ENTRY_COUNT)
+    {
+        // run the compaction algorithm to compress the TOC table
+        for (uint32 i = 0; i < (MAX_TOC_ENTRY_COUNT / 2); i++)
+        {
+            iTOC[i] = iTOC[2*i];
+        }
+        iTimestampPrev = iTimestampPrev - iBinWidth;
+        iBinWidth = 2 * iBinWidth;
+        iTOCFilledCount = MAX_TOC_ENTRY_COUNT / 2;
+        return;
+    }
+}
+
+
+
+

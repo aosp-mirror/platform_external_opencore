@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,54 +37,6 @@ terms listed above has been obtained from the copyright holder.
            dtx_dec
            dtx_dec_activity_update
            rx_dtx_handler
-
-     Date: 04/17/2000
-
-------------------------------------------------------------------------------
- REVISION HISTORY
-
- Description: First attempt at optimization.
-
- Description: Made changes based on comments from the review.
-
- Description: Synchronized file with UMTS version 3.2.0. Updated coding
-              template. Removed unnecessary include files.
-
- Description: Made the following changes per comments from Phase 2/3 review:
-              1. Modified FOR loops to count down.
-              2. Made some cosmetic changes.
-              3. Replaced call to "abs" with "abs_s".
-              4. Added lsp.tab and q_plsf_5.tab to the Include section.
-              5. Fixed typecasting issue with TI C compiler.
-              6. Replaced basic_op.h and oper_32b.h with the header files
-                 of the math functions used by the file.
-
- Description: Removed the functions dtx_dec_init and dtx_dec_exit.
- The dtx_dec related structure is no longer dynamically allocated.
-
- Description: Made the following changes to make code bit-exact:
-              1. Fixed inlining of shl() function in parts of dtx_dec and
-                 dtx_dec_activity_update functions.
-              2. Fixed optimazation bugs in dtx_dec function.
-              3. Modified some FOR loops in dtx_dec to count up.
-              4. Added call to add() function in rx_dtx_handler function.
-              5. Updated copyright year.
-
- Description: Passing in pOverflow rather than accessing it as a global
-              variable.
-
- Description: Synchronized file with UMTS (3GPP) version 3.3.0 == GSM version
-              7.6.0 == 3GPP Release 4, version 4.1.0.
-
- Description: Removed call to test() on line 843.
-
- Description:  Replaced OSCL mem type functions and eliminated include
-               files that now are chosen by OSCL definitions
-
- Description:  Replaced "int" and/or "char" with defined types.
-               Added proper casting (Word32) to some left shifting operations
-
- Description:
 
 ------------------------------------------------------------------------------
  MODULE DESCRIPTION

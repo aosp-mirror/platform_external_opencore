@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,21 +59,19 @@ OSCL_EXPORT_REF OsclAny* PVMFMemPoolFixedChunkAllocator::allocate(const uint32 n
 {
     OsclAny* freechunk = NULL;
 
-    int32 leavecode = 0;
+    int32 leavecode = OsclErrNone;
     OSCL_TRY_NO_TLS(iOsclErrorTrapImp, leavecode, freechunk = OsclMemPoolFixedChunkAllocator::allocate(n));
-    if (leavecode != 0)
+    if (OsclErrNone != leavecode)
     {
-        if (leavecode == OsclErrNoResources)
+        if (OsclErrNoResources == leavecode)
         {
             // No free chunk is available
             MPLOGDATAPATH((0, "MEMP %s Allocate %d chunk failed--No Free Chunks!", iName.get_cstr(), n));
             OSCL_LEAVE(leavecode);
-            // return NULL;	This statement was removed to avoid compiler warning for Unreachable Code
         }
         else
         {
             OSCL_LEAVE(leavecode);
-            // return freechunk;	This statement was removed to avoid compiler warning for Unreachable Code
         }
     }
 
@@ -86,18 +84,18 @@ OSCL_EXPORT_REF OsclAny* PVMFMemPoolFixedChunkAllocator::allocate(const uint32 n
 
 OSCL_EXPORT_REF void PVMFMemPoolFixedChunkAllocator::deallocate(OsclAny* p)
 {
-    OsclMemPoolFixedChunkAllocator::deallocate(p);
-
     if (iRefCount > 0)
     {
         MPLOGDATAPATH((0, "MEMP %s Chunk freed, %d/%d in use"
                        , iName.get_cstr(), iNumChunk - iFreeMemChunkList.size(), iNumChunk));
     }
+    OsclMemPoolFixedChunkAllocator::deallocate(p);
 }
 
 
 OSCL_EXPORT_REF void PVMFMemPoolFixedChunkAllocator::LogMediaDataInfo(PVMFSharedMediaDataPtr aMediaData)
 {
+    OSCL_UNUSED_ARG(aMediaData);
     MPLOGDATAPATH(
         (0, "MEMP %s MediaData SeqNum %d, SId %d, TS %d", iName.get_cstr()
          , aMediaData->getSeqNum()

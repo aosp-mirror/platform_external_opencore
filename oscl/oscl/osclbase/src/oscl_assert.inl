@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,11 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-
-#ifndef LOG_TAG
-#define LOG_TAG "OpenCore"
+#if(OSCL_HAS_ERROR_HOOK)
+#include "oscl_tls.h"
 #endif
-
-#include <utils/Log.h>
 
 OSCL_COND_EXPORT_REF OSCL_INLINE void _OSCL_Abort()
 {
-    // cause a segfault
-    LOGV("_OSCL_Abort");
-    *(char*) 0 = 0;
+    abort();
 }

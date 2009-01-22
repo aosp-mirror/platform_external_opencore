@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -778,16 +778,15 @@ class OsclMemAudit
         /**
         *	Constructor, create the root node in statistics table
         */
-        OsclMemAudit(OsclLockBase *lock)
+        OsclMemAudit()
         {
             void * p = _oscl_malloc(sizeof(MM_Audit_Imp));
             OsclError::LeaveIfNull(p);
 
             // this will invoke system placement new operator
             _pMM_Audit_Imp = OSCL_PLACEMENT_NEW(p, MM_Audit_Imp());
-            iLock = lock;
-            if (!iLock)
-                iLock = &iNullLock;
+            iLock = &iSingletonLock;
+            iRefCount = 1;
         };
 
         /**
@@ -1115,6 +1114,15 @@ class OsclMemAudit
             iLock->Unlock();
         };
 
+        int32 MM_GetRefCount()
+        {
+            int32 count;
+            iLock->Lock();
+            count = iRefCount;
+            iLock->Unlock();
+            return count;
+        }
+
         /**
         *	API to obtain mem lock ptr
         *
@@ -1260,12 +1268,15 @@ class OsclMemAudit
         * The following are private data members
         */
 
-        /**
-        *  Use OSCL thread version
-        */
-        OsclLockBase *iLock;
         MM_Audit_Imp *_pMM_Audit_Imp;
-        OsclNullLock iNullLock;//default
+        OsclLockBase *iLock;
+
+        /**
+        *  Use OSCL singleton version
+        */
+        _OsclBasicLock iSingletonLock;
+        int32 iRefCount;
+        friend class OsclMemGlobalAuditObject;
 
 };
 #endif

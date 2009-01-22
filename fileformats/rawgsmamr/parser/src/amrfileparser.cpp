@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@
 //----------------------------------------------------------------------------
 #include "amrfileparser.h"
 
+// Use default DLL entry point for Symbian
 #include "oscl_dll.h"
 OSCL_DLL_ENTRY_POINT_DEFAULT()
 
@@ -389,6 +390,15 @@ int32 bitstreamObject::getFileInfo(int32& fileSize, int32& format, int32& frame_
 // FUNCTION DESCRIPTION
 //
 //  Constructor for CAMRFileParser class
+//----------------------------------------------------------------------------
+// REQUIREMENTS
+//
+//----------------------------------------------------------------------------
+// REFERENCES
+//
+//------------------------------------------------------------------------------
+// CAUTION
+//
 //------------------------------------------------------------------------------
 OSCL_EXPORT_REF CAMRFileParser::CAMRFileParser(void)
 {
@@ -426,6 +436,15 @@ OSCL_EXPORT_REF CAMRFileParser::CAMRFileParser(void)
 // FUNCTION DESCRIPTION
 //
 //  Destructor for CAMRFileParser class
+//----------------------------------------------------------------------------
+// REQUIREMENTS
+//
+//----------------------------------------------------------------------------
+// REFERENCES
+//
+//------------------------------------------------------------------------------
+// CAUTION
+//
 //------------------------------------------------------------------------------
 OSCL_EXPORT_REF CAMRFileParser::~CAMRFileParser(void)
 {
@@ -456,6 +475,15 @@ OSCL_EXPORT_REF CAMRFileParser::~CAMRFileParser(void)
 //
 //  This function opens the AMR file, checks for AMR format type, calculates
 //  the track duration, and sets the AMR bitrate value.
+//
+//----------------------------------------------------------------------------
+// REQUIREMENTS
+//
+//----------------------------------------------------------------------------
+// REFERENCES
+//
+//------------------------------------------------------------------------------
+// CAUTION
 //
 //------------------------------------------------------------------------------
 OSCL_EXPORT_REF bool CAMRFileParser::InitAMRFile(OSCL_wString& aClip, bool aInitParsingEnable, Oscl_FileServer* aFileSession, PVMFCPMPluginAccessInterfaceFactory*aCPM, OsclFileHandle*aHandle, uint32 countToClaculateRDATimeInterval)
@@ -606,7 +634,7 @@ bool CAMRFileParser::CalculateDuration(bool aInitParsingEnable, uint32 countToCl
 }
 
 //----------------------------------------------------------------------------
-// FUNCTION NAME: CAMRFileParser::RetreiveAMRFileInfo
+// FUNCTION NAME: CAMRFileParser::RetrieveAMRFileInfo
 //----------------------------------------------------------------------------
 // INPUT AND OUTPUT DEFINITIONS
 //
@@ -629,6 +657,15 @@ bool CAMRFileParser::CalculateDuration(bool aInitParsingEnable, uint32 countToCl
 //
 //  This function opens the AMR file, checks for AMR format type, calculates
 //  the track duration, and sets the AMR bitrate value.
+//
+//----------------------------------------------------------------------------
+// REQUIREMENTS
+//
+//----------------------------------------------------------------------------
+// REFERENCES
+//
+//------------------------------------------------------------------------------
+// CAUTION
 //
 //------------------------------------------------------------------------------
 OSCL_EXPORT_REF bool CAMRFileParser::RetrieveFileInfo(TPVAmrFileInfo& aInfo)
@@ -672,6 +709,15 @@ OSCL_EXPORT_REF bool CAMRFileParser::RetrieveFileInfo(TPVAmrFileInfo& aInfo)
 //
 //  This function takes in the 3GPP frametype and sets the AMR bitrate value
 //  depending on the AMR frametype.
+//
+//----------------------------------------------------------------------------
+// REQUIREMENTS
+//
+//----------------------------------------------------------------------------
+// REFERENCES
+//
+//------------------------------------------------------------------------------
+// CAUTION
 //
 //------------------------------------------------------------------------------
 void CAMRFileParser::SetBitRate(AMRFF_Frame_Type_3GPP aFrameType3GPP)
@@ -811,10 +857,20 @@ void CAMRFileParser::SetBitRate(AMRFF_WB_Frame_Type_3GPP aFrameType3GPP)
 //  This function sets the file pointer to the location that aStartTime would
 //  point to in the file.
 //
+//----------------------------------------------------------------------------
+// REQUIREMENTS
+//
+//----------------------------------------------------------------------------
+// REFERENCES
+//
+//------------------------------------------------------------------------------
+// CAUTION
+//
 //------------------------------------------------------------------------------
 OSCL_EXPORT_REF int32 CAMRFileParser::ResetPlayback(int32 aStartTime)
 {
     // get file size info, //iAMRFile.Size(fileSize)
+    int32 result;
     if (iAMRFileSize <= 0)
     {
         int32 frameTypeIndex;
@@ -861,11 +917,11 @@ OSCL_EXPORT_REF int32 CAMRFileParser::ResetPlayback(int32 aStartTime)
             newPosition = iRPTable[tblIdx];
         }
     }
-
-    if (newPosition >= 0 && ipBSO->reset(newPosition))
+    result = ipBSO->reset(newPosition);
+    if (newPosition >= 0 && result)
     {
         PVMF_AMRPARSER_LOGERROR((0, "AMRBitstreamObject::refill- Misc Error"));
-        return bitstreamObject::MISC_ERROR;
+        return result;
     }
     iEndOfFileReached = false;
 
@@ -895,6 +951,15 @@ OSCL_EXPORT_REF int32 CAMRFileParser::ResetPlayback(int32 aStartTime)
 //
 //  This function returns the timestamp for an actual position corresponding
 //  to the specified start time
+//
+//----------------------------------------------------------------------------
+// REQUIREMENTS
+//
+//----------------------------------------------------------------------------
+// REFERENCES
+//
+//------------------------------------------------------------------------------
+// CAUTION
 //
 //------------------------------------------------------------------------------
 OSCL_EXPORT_REF uint32 CAMRFileParser::SeekPointFromTimestamp(uint32 aStartTime)
@@ -959,6 +1024,15 @@ OSCL_EXPORT_REF uint32 CAMRFileParser::SeekPointFromTimestamp(uint32 aStartTime)
 //  This function attempts to read in the number of AMR frames specified by
 //  aNumSamples. It formats the read data to WMF bit order and stores it in
 //  the GAU structure.
+//
+//----------------------------------------------------------------------------
+// REQUIREMENTS
+//
+//----------------------------------------------------------------------------
+// REFERENCES
+//
+//------------------------------------------------------------------------------
+// CAUTION
 //
 //------------------------------------------------------------------------------
 OSCL_EXPORT_REF int32 CAMRFileParser::GetNextBundledAccessUnits(uint32 *aNumSamples, GAU *aGau)

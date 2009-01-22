@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,10 @@
 #ifndef OSCL_REGISTRY_CLIENT_IMPL_H_INCLUDED
 #define OSCL_REGISTRY_CLIENT_IMPL_H_INCLUDED
 
+#include "oscl_base.h"
 #include "osclconfig_proc.h"
+#if (OSCL_HAS_SINGLETON_SUPPORT)
+//1st choice implementation-- uses Oscl singleton
 
 #include "oscl_registry_serv_impl_global.h"
 
@@ -50,6 +53,48 @@ class OsclRegistryAccessClientImpl: public OsclRegistryServImpl
 {
 };
 
+#else //OSCL_HAS_ ...
+//3rd choice implementation -- Non-functional stubs.
+
+#include "oscl_vector.h"
+#include "oscl_string.h"
+#include "oscl_registry_types.h"
+
+class OsclRegistryClientImpl
+{
+    protected:
+
+        int32 Connect()
+        {
+            return OsclErrNotSupported;
+        }
+        void Close() {}
+
+        int32 Register(OSCL_String& , OsclComponentFactory)
+        {
+            return OsclErrNotSupported;
+        }
+        int32 UnRegister(OSCL_String&)
+        {
+            return OsclErrNotSupported;
+        }
+
+        //for access client.
+        OsclComponentFactory GetFactory(OSCL_String&)
+        {
+            return NULL;
+        }
+        void GetFactories(OSCL_String& , Oscl_Vector<OsclRegistryAccessElement, OsclMemAllocator>&) {}
+
+        friend class OsclRegistryClient;
+        friend class OsclRegistryAccessClient;
+};
+
+class OsclRegistryAccessClientImpl: public OsclRegistryClientImpl
+{
+};
+
+#endif //OSCL_HAS_ ...
 
 
 //TLS-based registry

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,11 @@
 
 //Default vector reserve size
 #define PVMF_MP3FFPARSER_NODE_PORT_VECTOR_RESERVE 10
+
+#define PVMF_MP3FPARSERNODE_LOGINFO(m)  PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iLogger,PVLOGMSG_INFO,m);
+#define PVMF_MP3FPARSERNODE_LOGERROR(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iLogger,PVLOGMSG_ERR,m);
+
+class PVMFMP3FFParserNode;
 
 /**
  * An example of a PVMF port implementation.
@@ -99,12 +104,81 @@ class PVMFMP3FFParserPort : public PvmfPortBaseImpl
                 aPtr = NULL;
         }
 
+        /* Over ride Connect() */
+        PVMFStatus Connect(PVMFPortInterface* aPort);
+
+        /* Implement pure virtuals from PvmiCapabilityAndConfig interface */
+        PVMFStatus getParametersSync(PvmiMIOSession aSession, PvmiKeyType aIdentifier,
+                                     PvmiKvp*& aParameters, int& num_parameter_elements,	PvmiCapabilityContext aContext);
+        PVMFStatus releaseParameters(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
+
+        /* Unsupported PvmiCapabilityAndConfig methods */
+        void setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters,
+                               int num_elements, PvmiKvp * & aRet_kvp)
+        {
+            OSCL_UNUSED_ARG(aSession);
+            OSCL_UNUSED_ARG(aParameters);
+            OSCL_UNUSED_ARG(aRet_kvp);
+            OSCL_UNUSED_ARG(num_elements);
+        }
+        PVMFStatus verifyParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements)
+        {
+            OSCL_UNUSED_ARG(aSession);
+            OSCL_UNUSED_ARG(aParameters);
+            OSCL_UNUSED_ARG(num_elements);
+            return PVMFErrNotSupported;
+        }
+        void setObserver(PvmiConfigAndCapabilityCmdObserver* aObserver)
+        {
+            OSCL_UNUSED_ARG(aObserver);
+        };
+        void createContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext)
+        {
+            OSCL_UNUSED_ARG(aSession);
+            OSCL_UNUSED_ARG(aContext);
+        };
+        void setContextParameters(PvmiMIOSession aSession, PvmiCapabilityContext& aContext,
+                                  PvmiKvp* aParameters, int num_parameter_elements)
+        {
+            OSCL_UNUSED_ARG(aSession);
+            OSCL_UNUSED_ARG(aContext);
+            OSCL_UNUSED_ARG(aParameters);
+            OSCL_UNUSED_ARG(num_parameter_elements);
+        };
+        void DeleteContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext)
+        {
+            OSCL_UNUSED_ARG(aSession);
+            OSCL_UNUSED_ARG(aContext);
+        };
+        PVMFCommandId setParametersAsync(PvmiMIOSession aSession, PvmiKvp* aParameters,
+                                         int num_elements, PvmiKvp*& aRet_kvp, OsclAny* context = NULL)
+        {
+            OSCL_UNUSED_ARG(aRet_kvp);
+            OSCL_UNUSED_ARG(aSession);
+            OSCL_UNUSED_ARG(aParameters);
+            OSCL_UNUSED_ARG(num_elements);
+            OSCL_UNUSED_ARG(context);
+            return -1;
+        }
+        uint32 getCapabilityMetric(PvmiMIOSession aSession)
+        {
+            OSCL_UNUSED_ARG(aSession);
+            return 0;
+        }
+
     private:
         void Construct();
+
+        bool pvmiSetPortFormatSpecificInfoSync(PvmiCapabilityAndConfig *aPort,
+                                               const char* aFormatValType);
+
+        bool pvmiGetPortFormatSpecificInfoSync(const char* aFormatValType,
+                                               PvmiKvp*& aKvp);
 
         PVLogger *iLogger;
         uint32 iNumFramesGenerated; //number of source frames generated.
 
+        PVMFMP3FFParserNode * iMP3ParserNode;
         friend class PVMFMP3FFParserNode;
 };
 

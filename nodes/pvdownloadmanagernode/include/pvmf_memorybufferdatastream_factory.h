@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,13 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
+// only include pvmf_downloadmanager_config.h if CML2 is NOT being used
+#ifndef USE_CML2_CONFIG
 #ifndef PVMF_DOWNLOADMANAGER_CONFIG_H_INCLUDED
 #include "pvmf_downloadmanager_config.h"
 #endif
+#endif
+
 #if(PVMF_DOWNLOADMANAGER_SUPPORT_PPB)
 
 #ifndef PVMF_MEMORYBUFFERDATASTREAM_FACTORY_H_INCLUDED
@@ -73,10 +77,16 @@
 
 // this is the minimum size of the sliding window
 // the file format parsers used this number to decide if a clip can be played properly in a progressive manner
-// TBD this needs to be tied to the socket memory pool size
-#define READ_BUFFER_SIZE        1680000
+// @TODO this needs to be tied to the socket memory pool size
+#define READ_BUFFER_SIZE    300000
+#define READ_BUFFER_TRIM_THRESHOLD  100 * 1024
+#if (ENABLE_LARGE_MBDS_CACHE_SIZE)
+#undef READ_BUFFER_SIZE
+#define READ_BUFFER_SIZE    1680000
 
-#define READ_BUFFER_TRIM_THRESHOLD      900 * 1024
+#undef READ_BUFFER_TRIM_THRESHOLD
+#define READ_BUFFER_TRIM_THRESHOLD 	900 * 1024
+#endif
 
 // starts trimming if the cache is grown beyond this margin
 #define READ_BUFFER_MARGIN 		4 * 1024
@@ -90,8 +100,8 @@
 #define BYTES_TO_WAIT         4 * 1024
 
 // In forward repositioning, if the data is going to come in soon,
-// which is defined as requested offset minus the download offset
-// is less than this threshold, then don't disconnect and send a new GET request.
+// which is defined as requested offset minus the download offset (aka current write pointer)
+// being less than this threshold, then don't disconnect to send a new GET request.
 #define PV_MBDS_FWD_SEEKING_NO_GET_REQUEST_THRESHOLD 64000
 
 typedef enum
@@ -510,6 +520,7 @@ class PVMFMemoryBufferWriteDataStreamImpl : public PVMIDataStreamSyncInterface
 
         OSCL_IMPORT_REF PvmiDataStreamStatus SetReadPointerPosition(PvmiDataStreamSession aSessionID, uint32 aFilePosition);
 
+
         OSCL_IMPORT_REF PvmiDataStreamStatus SetReadPointerCacheLocation(PvmiDataStreamSession aSessionID, bool aInTempCache);
 
         OSCL_IMPORT_REF void ManageCache();
@@ -519,6 +530,7 @@ class PVMFMemoryBufferWriteDataStreamImpl : public PVMIDataStreamSyncInterface
         OSCL_IMPORT_REF void UpdateReadPointersAfterMakePersistent();
 
         OSCL_IMPORT_REF bool GetPermCachePersistence(uint32& aFirstOffset, uint32& aLastOffset);
+
     public:
         bool iDownloadComplete;
 
@@ -641,6 +653,7 @@ class PVMFMemoryBufferWriteDataStreamImpl : public PVMIDataStreamSyncInterface
 class PVMFMemoryBufferDataStream
 {
     public:
+        // in case we would want to pass the constructor an existing cache
         OSCL_IMPORT_REF PVMFMemoryBufferDataStream();
 
         OSCL_IMPORT_REF ~PVMFMemoryBufferDataStream();

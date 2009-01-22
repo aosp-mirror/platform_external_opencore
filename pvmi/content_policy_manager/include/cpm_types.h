@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,8 +47,6 @@ typedef uint32 PVMFCPMContentType;
 
 /* MIME strings for CPM Content Formats */
 #define PVMF_CPM_MIME_CONTENT_FORMAT_UKNOWN "X-PV-CPM-UNKNOWN-CONTENT-TYPE"
-#define PVMF_CPM_MIME_CONTENT_FORMAT_OMA1  	"X-DRM-OMA1"
-#define PVMF_CPM_MIME_CONTENT_FORMAT_OMA2  	"X-DRM-OMA2"
 
 /* CPM Content Formats */
 #define PVMF_FIRST_CPM_CONTENT_FORMAT	2000

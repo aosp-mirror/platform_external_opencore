@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,9 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-
+#ifndef PV_OMXDEFS_H_INCLUDED
+#include "pv_omxdefs.h"
+#endif
 
 #ifndef PV_OMX_INTERFACE_PROXY_H_INCLUDED
 #include "pv_omx_interface_proxy.h"
@@ -41,8 +43,9 @@
 #include "pvlogger.h"
 #endif
 
-
 OSCL_DLL_ENTRY_POINT_DEFAULT()
+
+#if PROXY_INTERFACE
 
 //
 //CPVInterfaceProxy_OMX
@@ -50,7 +53,6 @@ OSCL_DLL_ENTRY_POINT_DEFAULT()
 
 OSCL_EXPORT_REF CPVInterfaceProxy_OMX * CPVInterfaceProxy_OMX::NewL(
     PVProxiedEngine_OMX& app
-    , OsclLockBase *lock
     , Oscl_DefAlloc *alloc
     , int32 stacksize
     , uint32 nreserve1
@@ -76,7 +78,7 @@ OSCL_EXPORT_REF CPVInterfaceProxy_OMX * CPVInterfaceProxy_OMX::NewL(
     {
         ptr = defallocL.ALLOCATE(sizeof(CPVInterfaceProxy_OMX));
     }
-    CPVInterfaceProxy_OMX *self = OSCL_PLACEMENT_NEW(ptr, CPVInterfaceProxy_OMX(app, lock, alloc, stacksize));
+    CPVInterfaceProxy_OMX *self = OSCL_PLACEMENT_NEW(ptr, CPVInterfaceProxy_OMX(app, alloc, stacksize));
     bool err;
     //Commented OSCL_TRY to remove oscl initialization dependency
     err = self->ConstructL(nreserve1, nreserve2, handlerPri, notifierPri);
@@ -88,9 +90,8 @@ OSCL_EXPORT_REF CPVInterfaceProxy_OMX * CPVInterfaceProxy_OMX::NewL(
     return self;
 }
 
-CPVInterfaceProxy_OMX::CPVInterfaceProxy_OMX(PVProxiedEngine_OMX& app, OsclLockBase *lock, Oscl_DefAlloc*alloc, int32 stacksize)
+CPVInterfaceProxy_OMX::CPVInterfaceProxy_OMX(PVProxiedEngine_OMX& app, Oscl_DefAlloc*alloc, int32 stacksize)
         : iPVApp(app)
-        , iLock(lock)
 //called under app thread context
 {
     iCommandIdCounter = 0;
@@ -103,6 +104,7 @@ CPVInterfaceProxy_OMX::CPVInterfaceProxy_OMX(PVProxiedEngine_OMX& app, OsclLockB
     iStopped = true;
     iAlloc = (alloc) ? alloc : &iDefAlloc;
     iLogger = NULL;
+    iOMXThreadCreated = false;
 }
 
 //Commented all the OsclError::Leave statements to remove oscl tls dependency
@@ -116,7 +118,8 @@ bool CPVInterfaceProxy_OMX::ConstructL(uint32 nreserve1, uint32 nreserve2, int32
             || iCounterCrit.Create() != OsclProcStatus::SUCCESS_ERROR
             || iHandlerQueueCrit.Create() != OsclProcStatus::SUCCESS_ERROR
             || iNotifierQueueCrit.Create() != OsclProcStatus::SUCCESS_ERROR
-            || iProxyListCrit.Create() != OsclProcStatus::SUCCESS_ERROR)
+            || iProxyListCrit.Create() != OsclProcStatus::SUCCESS_ERROR
+            || iThreadCreatedSem.Create() != OsclProcStatus::SUCCESS_ERROR)
     {
         return false;
     }
@@ -182,6 +185,7 @@ CPVInterfaceProxy_OMX::~CPVInterfaceProxy_OMX()
     iHandlerQueueCrit.Close();
     iNotifierQueueCrit.Close();
     iProxyListCrit.Close();
+    iThreadCreatedSem.Close();
     iInitSem.Close();
     iExitedSem.Close();
 }
@@ -202,8 +206,26 @@ OSCL_EXPORT_REF bool CPVInterfaceProxy_OMX::StartPVThread()
     err = iPVThread.Create((TOsclThreadFuncPtr)pvproxythreadmain_omx,
                            iStacksize,
                            (TOsclThreadFuncArg)this);
+
+
     if (err == OSCL_ERR_NONE)
     {
+        // the iThreadCreated semaphore blocks the app thread until the new thread initializes oscl etc.
+        // we use it before checking the flag "iOMXThreadCreated"
+        // In case of either success or error the new thread signals this semaphore
+        if (iThreadCreatedSem.Wait() != OsclProcStatus::SUCCESS_ERROR)
+        {
+            iNotifier->RemoveFromScheduler();
+            return false;
+        }
+        // check if the thread was created OK
+        if (!iOMXThreadCreated)
+        {
+            //error cleanup
+            iNotifier->RemoveFromScheduler();
+            return false;
+        }
+
         iStopped = false;
         //Wait for PV thread to initialize its scheduler.
         if (iInitSem.Wait() != OsclProcStatus::SUCCESS_ERROR)
@@ -272,7 +294,7 @@ OSCL_EXPORT_REF void CPVInterfaceProxy_OMX::DeliverNotifications(int32 aTargetCo
 {
     //make sure this isn't called under PV thread...
     if (iPVThreadContext.IsSameThreadContext())
-        OsclError::Panic("PVPROXY", EPVProxyPanicWrongThreadContext);
+        OsclError::Leave(OsclErrThreadContextIncorrect);
 
     for (int32 count = 0;count < aTargetCount;)
     {
@@ -297,7 +319,7 @@ OSCL_EXPORT_REF void CPVInterfaceProxy_OMX::DeliverNotifications(int32 aTargetCo
             else
             {	//since messages are cleaned up when interfaces
                 //get unregistered, we should not get here.
-                OsclError::Panic("PVPROXYDEBUG", 0);//debug error.
+                OSCL_ASSERT(NULL != ext);//debug error.
             }
         }
         else
@@ -550,6 +572,9 @@ void CPVInterfaceProxy_OMX::InThread()
     if (err != OsclErrNone)
         errTerm = err;
 
+    iOMXThreadCreated = true;
+    // now it's safe to signal the thread create sema
+    iThreadCreatedSem.Signal();
 
     //Start scheduler.  This call blocks until scheduler is
     //either stopped or exits due to an error.
@@ -575,12 +600,11 @@ void CPVInterfaceProxy_OMX::InThread()
     //Uninstall scheduler
     OsclScheduler::Cleanup();
     iPVScheduler = NULL;
+    iOMXThreadCreated = false;
 
     //Generate panics if any leaves happened.
-    if (errTerm != OsclErrNone)
-        OsclError::Panic("PVPROXY", EPVProxyPanicEngineLeave);
-    if (errSched != OsclErrNone)
-        OsclError::Panic("PVPROXY", EPVProxyPanicSchedulerLeave);
+    OSCL_ASSERT(errTerm == OsclErrNone);//EPVProxyPanicEngineLeave
+    OSCL_ASSERT(errSched == OsclErrNone);//EPVProxyPanicSchedulerLeave
 }
 
 ////////////////////////////////
@@ -597,9 +621,19 @@ TOsclThreadFuncRet OSCL_THREAD_DECL pvproxythreadmain_omx(TOsclThreadFuncArg *aP
     CPVInterfaceProxy_OMX *proxy = (CPVInterfaceProxy_OMX *) aPtr;
 
     //Init OSCL and create logger.
-    OsclBase::Init();
-    OsclErrorTrap::Init();
-    OsclMem::Init(proxy->iLock); // the mem lock for this thread is the same lock object as in the master thread or NULL
+    int error = OsclBase::Init();
+    if (error)
+    {
+        proxy->iThreadCreatedSem.Signal(); // signal to let the app thread run
+        return 0;
+    }
+    error = OsclErrorTrap::Init();
+    if (error)
+    {
+        proxy->iThreadCreatedSem.Signal(); // signal to let the app thread run
+        return 0;
+    }
+    OsclMem::Init();
     PVLogger::Init();
 
 #if defined( OSCL_SET_THREAD_NAME)
@@ -614,14 +648,9 @@ TOsclThreadFuncRet OSCL_THREAD_DECL pvproxythreadmain_omx(TOsclThreadFuncArg *aP
 
 
     int32 leave;
-    TPVErrorPanic panic;
-    OSCL_PANIC_TRAP(leave, panic, proxy->InThread(););
+    OSCL_TRY(leave, proxy->InThread(););
 
-    if (panic.iReason != OsclErrNone)
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, proxy->iLogger, PVLOGMSG_ERR, (0, "PVPROXY:Proxy Thread 0x%x Exit: Panic Cat '%s' Reason %d", OsclExecScheduler::GetId(), panic.iCategory.Str(), panic.iReason));
-    }
-    else if (leave != OsclErrNone)
+    if (leave != OsclErrNone)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, proxy->iLogger, PVLOGMSG_ERR, (0, "PVPROXY:Proxy Thread 0x%x Exit: Leave Reason %d", OsclExecScheduler::GetId(), leave));
     }
@@ -630,101 +659,8 @@ TOsclThreadFuncRet OSCL_THREAD_DECL pvproxythreadmain_omx(TOsclThreadFuncArg *aP
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, proxy->iLogger, PVLOGMSG_NOTICE, (0, "PVPROXY:Proxy Thread 0x%x Exit: Normal", OsclExecScheduler::GetId()));
     }
 
-#if !(OSCL_BYPASS_MEMMGT)
-    //Show mem stats
-    {
-        OsclAuditCB auditCB;
-        OsclMemInit(auditCB);
-        if (auditCB.pAudit)
-        {
-            MM_Stats_t* stats = auditCB.pAudit->MM_GetStats("");
-            if (stats)
-            {
-                //We need to re-init logger to report these, but that will create
-                //additional allocations, so save the current stats.
-                int32 peakNumAllocs = stats->peakNumAllocs;
-                int32 peakNumBytes = stats->peakNumBytes;
-                int32 numAllocFails = stats->numAllocFails;
-                int32 numAllocs = stats->numAllocs;
-                int32 numBytes = stats->numBytes;
+    proxy->iThreadCreatedSem.Signal(); // signal to let the app thread run just in case
 
-                PVLogger::Init();
-                proxy->iLogger = PVLogger::GetLoggerObject("pvproxy");
-
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, proxy->iLogger, PVLOGMSG_INFO
-                                , (0, "PVPROXY: Memory Stats:"));
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, proxy->iLogger, PVLOGMSG_INFO
-                                , (0, "PVPROXY:   peakNumAllocs %d", peakNumAllocs));
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, proxy->iLogger, PVLOGMSG_INFO
-                                , (0, "PVPROXY:   peakNumBytes %d", peakNumBytes));
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, proxy->iLogger, PVLOGMSG_INFO
-                                , (0, "PVPROXY:   numAllocFails %d", numAllocFails));
-                if (numAllocs)
-                {
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, proxy->iLogger, PVLOGMSG_ERR
-                                    , (0, "PVPROXY: ERROR: Memory Leaks! numAllocs %d, numBytes %d", numAllocs, numBytes));
-                }
-            }
-        }
-    }
-#endif
-
-
-#if !(OSCL_BYPASS_MEMMGT)
-    {
-        //Check for memory leaks before cleaning up OsclMem.
-        OsclAuditCB auditCB;
-        OsclMemInit(auditCB);
-        if (auditCB.pAudit)
-        {
-            uint32 leaks = auditCB.pAudit->MM_GetNumAllocNodes();
-            if (leaks != 0)
-            {
-                //If we found leaks we need to re-init logger so we can report them.
-                //But this will create some new allocations, so make a note of the
-                //current allocation number to weed them out of the report.
-                uint32 allocafterleaks = auditCB.pAudit->MM_GetAllocNo();
-                PVLogger::Init();
-                proxy->iLogger = PVLogger::GetLoggerObject("pvproxy");
-
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, proxy->iLogger, PVLOGMSG_ERR
-                                , (0, "PVPROXY: ERROR: %d Memory leaks detected in PV Thread!", leaks));
-
-                //Allocate space for the leak info.
-                uint32 nodes = auditCB.pAudit->MM_GetNumAllocNodes();
-                MM_AllocQueryInfo*info = auditCB.pAudit->MM_CreateAllocNodeInfo(nodes);
-                uint32 leakinfo = auditCB.pAudit->MM_GetAllocNodeInfo(info, nodes, 0);
-                if (leakinfo < nodes)
-                {
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, proxy->iLogger, PVLOGMSG_ERR
-                                    , (0, "PVPROXY: ERROR: Leak info is incomplete."));
-                }
-                //Report only the original leaks before the logger allocations.
-                for (uint32 i = 0;i < leakinfo;i++)
-                {
-                    if (info[i].allocNum < allocafterleaks)
-                    {
-                        PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, proxy->iLogger, PVLOGMSG_ERR
-                                        , (0, "PVPROXY: Leak Info:"));
-                        PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, proxy->iLogger, PVLOGMSG_ERR
-                                        , (0, "PVPROXY:   allocNum %d", info[i].allocNum));
-                        PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, proxy->iLogger, PVLOGMSG_ERR
-                                        , (0, "PVPROXY:   fileName %s", info[i].fileName));
-                        PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, proxy->iLogger, PVLOGMSG_ERR
-                                        , (0, "PVPROXY:   lineNo %d", info[i].lineNo));
-                        PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, proxy->iLogger, PVLOGMSG_ERR
-                                        , (0, "PVPROXY:   size %d", info[i].size));
-                        PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, proxy->iLogger, PVLOGMSG_ERR
-                                        , (0, "PVPROXY:   pMemBlock 0x%x", info[i].pMemBlock));
-                        PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, proxy->iLogger, PVLOGMSG_ERR
-                                        , (0, "PVPROXY:   tag %s", info[i].tag));
-                    }
-                }
-                auditCB.pAudit->MM_ReleaseAllocNodeInfo(info);
-            }
-        }
-    }
-#endif
     //Cleanup logger.
     PVLogger::Cleanup();
 
@@ -738,7 +674,7 @@ TOsclThreadFuncRet OSCL_THREAD_DECL pvproxythreadmain_omx(TOsclThreadFuncArg *aP
 
     return 0;
 }
-
+#endif // PROXY_INTERFACE
 
 
 

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,6 @@
 #include "atomutils.h"
 #include "atomdefs.h"
 
-#define BYTE_ORDER_MASK 0xFEFF
-
 CopyRightAtom::CopyRightAtom(MP4_FF_FILE *fp, uint32 size, uint32 type)
         : FullAtom(fp, size, type)
 {
@@ -36,130 +34,34 @@ CopyRightAtom::CopyRightAtom(MP4_FF_FILE *fp, uint32 size, uint32 type)
 
         count += 2;
 
-        if (count < _size)
+        if (count <= _size)
         {
-            uint32 temp = AtomUtils::peekNextNthBytes(fp, 1);
+            uint32 delta = (_size - count);
+            MP4FFParserOriginalCharEnc CharType;
 
-            uint16 byteOrderMask = (uint16)((temp >> 16) & 0xFFFF);
-
-            if (byteOrderMask == BYTE_ORDER_MASK)
+            if (delta > 0)
             {
-                if (!AtomUtils::read16(fp, byteOrderMask))
+                if (!AtomUtils::readString(fp, delta, CharType , _copyRightNotice))
                 {
+                    //error
                     _success = false;
                     _mp4ErrorCode = READ_COPYRIGHT_ATOM_FAILED;
                     return;
                 }
-                count += 2;
-
-                if (count < _size)
-                {
-                    // Check to see if the string is actually null-terminated
-                    uint32 delta = (_size - count);
-
-                    int32 filePos = AtomUtils::getCurrentFilePosition(fp);
-
-                    AtomUtils::seekFromCurrPos(fp, (delta - 2));
-
-                    uint16 strEnd = 0;
-
-                    if (!AtomUtils::read16(fp, strEnd))
-                    {
-                        _success = false;
-                        _mp4ErrorCode = READ_COPYRIGHT_ATOM_FAILED;
-                        return;
-                    }
-
-                    if (strEnd == 0)
-                    {
-                        AtomUtils::seekFromStart(fp, filePos);
-
-                        if (!AtomUtils::readNullTerminatedUnicodeString(fp, _copyRightNotice))
-                        {
-                            _success = false;
-                            _mp4ErrorCode = READ_COPYRIGHT_ATOM_FAILED;
-                            return;
-                        }
-                        {
-                            int32 newfilePos =
-                                AtomUtils::getCurrentFilePosition(fp);
-
-                            if (newfilePos != (int32)(filePos + delta))
-                            {
-                                AtomUtils::seekFromStart(fp, filePos + delta);
-                            }
-                        }
-                    }
-                    count += delta;
-                }
-                else
-                {
-                    _success = false;
-                    _mp4ErrorCode = READ_COPYRIGHT_ATOM_FAILED;
-                    return;
-                }
+                count += delta;
             }
             else
             {
-                if (count < _size)
-                {
-                    // Check to see if the string is actually null-terminated
-
-                    uint32 delta = (_size - count);
-
-                    int32 filePos = AtomUtils::getCurrentFilePosition(fp);
-
-                    AtomUtils::seekFromCurrPos(fp, (delta - 1));
-
-                    uint8 strEnd = 0;
-
-                    if (!AtomUtils::read8(fp, strEnd))
-                    {
-                        _success = false;
-                        _mp4ErrorCode = READ_COPYRIGHT_ATOM_FAILED;
-                        return;
-                    }
-
-                    if (strEnd == 0)
-                    {
-                        AtomUtils::seekFromStart(fp, filePos);
-
-                        if (!AtomUtils::readNullTerminatedString(fp, _copyRightNotice))
-                        {
-                            _success = false;
-                            _mp4ErrorCode = READ_COPYRIGHT_ATOM_FAILED;
-                            return;
-                        }
-                        {
-                            int32 newfilePos =
-                                AtomUtils::getCurrentFilePosition(fp);
-
-                            if (newfilePos != (int32)(filePos + delta))
-                            {
-                                AtomUtils::seekFromStart(fp, filePos + delta);
-                            }
-                        }
-                    }
-                    count += delta;
-                }
-                else
-                {
-                    _success = false;
-                    _mp4ErrorCode = READ_COPYRIGHT_ATOM_FAILED;
-                    return;
-                }
+                //error
+                _success = false;
+                _mp4ErrorCode = READ_COPYRIGHT_ATOM_FAILED;
+                return;
             }
 
-            while (count < _size)
+            if (count < _size)
             {
-                uint8 data;
-                if (!AtomUtils::read8(fp, data))
-                {
-                    _success = false;
-                    _mp4ErrorCode = READ_USER_DATA_ATOM_FAILED;
-                    return;
-                }
-                count++;
+                AtomUtils::seekFromCurrPos(fp, (_size - count));
+                count = _size;
             }
         }
         else if (count > _size)

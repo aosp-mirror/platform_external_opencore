@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,17 +17,14 @@
  */
 /*
 
- Pathname:  ./src/huffspec_fxp.c
+ Pathname:  huffspec_fxp.c
  Funtions:
     huffspec_fxp
-
-
-     Date: 10/25/2000
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
 
- Description:  Modified from original code
+ Description:  Modified from original shareware code
 
  Description:  Modified to pass variables by reference to eliminate use
                of global variables.
@@ -88,6 +85,7 @@
               /ropi option (Read-only position independent) for some
               compilers
 
+ Who:                                   Date: MM/DD/YYYY
  Description:
 ------------------------------------------------------------------------------
  INPUT AND OUTPUT DEFINITIONS
@@ -471,6 +469,8 @@ Int huffspec_fxp(
                 case 11:
                     pDec_huff_tab = decode_huff_cw_tab11;
                     break;
+                default:
+                    return (-1); /* error condition */
             }
 
             /* move ptr to first sfb of current section */

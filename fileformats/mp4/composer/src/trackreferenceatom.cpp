@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*********************************************************************************/
 /*
     This PVA_FF_TrackReferenceAtom Class provides a reference from the containing stream
     to another stream in the MPEG-4 presentation.
@@ -27,10 +26,6 @@
 #include "trackreferenceatom.h"
 #include "atomutils.h"
 #include "a_atomdefs.h"
-//#include "pviostream.h"
-
-//extern pvostream & operator<<(pvostream & fp, const PVA_FF_TrackReferenceTypeAtom &a);
-
 
 // Constructor
 PVA_FF_TrackReferenceAtom::PVA_FF_TrackReferenceAtom(uint32 refType)
@@ -84,4 +79,3 @@ PVA_FF_TrackReferenceAtom::recomputeSize()
         _pparent->recomputeSize();
     }
 }
-

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,8 @@
  */
 /*
 
-  Pathname: ./src/trans4m_time_2_freq_fxp.c
+  Pathname: trans4m_time_2_freq_fxp.c
   Function: trans4m_time_2_freq_fxp
-
-      Date: 5/29/2001
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
@@ -60,6 +58,7 @@
               compilers.
 
 
+ Who:                       Date:
  Description:
 
 ------------------------------------------------------------------------------

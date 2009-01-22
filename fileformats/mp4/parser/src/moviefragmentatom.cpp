@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -182,6 +182,7 @@ void MovieFragmentAtom::ParseMoofAtom(MP4_FF_FILE *fp,
                                       bool &moofParsingCompleted,
                                       uint32 &countOfTrunsParsed)
 {
+    OSCL_UNUSED_ARG(type);
     uint32 count = size;
 
     if (_success)
@@ -207,7 +208,6 @@ void MovieFragmentAtom::ParseMoofAtom(MP4_FF_FILE *fp,
                     }
                     count -= _pTrackFragmentAtom->getSize();
                     size = count;
-                    //	_ptrackFragmentArray->push_back(_pTrackFragmentAtom);
                     _pMovieFragmentCurrentOffset += _pTrackFragmentAtom->_trackFragmentEndOffset;
                 }
                 else

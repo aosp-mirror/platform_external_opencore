@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@
 class PVPlayerDataSinkFilename : public PVPlayerDataSink
 {
     public:
-        PVPlayerDataSinkFilename() : iFormatType(PVMF_FORMAT_UNKNOWN), iFilename(NULL) {};
+        PVPlayerDataSinkFilename() : iFormatType(PVMF_MIME_FORMAT_UNKNOWN), iFilename(NULL) {};
         ~PVPlayerDataSinkFilename() {};
 
         PVPDataSinkType GetDataSinkType()

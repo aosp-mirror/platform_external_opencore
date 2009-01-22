@@ -46,9 +46,9 @@
 #ifndef ANDROID_AUDIO_OUTPUT_THREADSAFE_CALLBACK_AO_H_INCLUDED
 #include "android_audio_output_threadsafe_callbacks.h"
 #endif
-
-#include "oscl_clock.h"
-
+#ifndef PVMF_MEDIA_CLOCK_H_INCLUDED
+#include "pvmf_media_clock.h"
+#endif
 #ifdef PERFORMANCE_MEASUREMENTS_ENABLED
 #ifndef _PVPROFILE_H
 #include "pvprofile.h"
@@ -58,7 +58,7 @@
 #include <media/MediaPlayerInterface.h>
 
 class PVLogger;
-class OsclClock;
+class PVMFMediaClock;
 
 using namespace android;
 
@@ -79,13 +79,14 @@ public:
 
 // Active timing support
 class AndroidAudioMIOActiveTimingSupport :
-    public PvmiClockExtensionInterface, public OsclClockStateObserver
+    public PvmiClockExtensionInterface, public PVMFMediaClockStateObserver 
 {
 public:
 
-    AndroidAudioMIOActiveTimingSupport(uint32 minCorrection=0, uint32 maxCorrection=0) :
+    AndroidAudioMIOActiveTimingSupport(int32 minCorrection=0, int32 maxCorrection=0) :
         iClock(NULL),
-        iClockState(OsclClock::STOPPED),
+        iClockNotificationsInf(NULL),
+        iClockState(PVMFMediaClock::STOPPED),
         iAudioThreadSem(0),
         iStartTime(0),
         iFrameCount(0),
@@ -99,46 +100,52 @@ public:
 
     ~AndroidAudioMIOActiveTimingSupport()
     {
-        if (iClock)
-            iClock->RemoveClockStateObserver(*this);
+        if (iClock && iClockNotificationsInf)
+        {
+            iClockNotificationsInf->RemoveClockStateObserver(*this);
+            iClock->DestroyMediaClockNotificationsInterface(iClockNotificationsInf);
+            iClockNotificationsInf = NULL;
+        }
     }
 
     //from PvmiClockExtensionInterface
-    OSCL_IMPORT_REF PVMFStatus SetClock(OsclClock *clockVal);
+    OSCL_IMPORT_REF PVMFStatus SetClock(PVMFMediaClock* clockVal);
 
-    // from OsclClockStateObserver
+    // from PVMFMediaClockStateObserver
     void ClockStateUpdated();
 
     //from PVInterface
     OSCL_IMPORT_REF void addRef() {}
     OSCL_IMPORT_REF void removeRef() {}
     OSCL_IMPORT_REF bool queryInterface(const PVUuid& uuid, PVInterface*& iface);
+    void NotificationsInterfaceDestroyed();
 
     void queryUuid(PVUuid& uuid);
 
     void ForceClockUpdate() { iUpdateClock = true; }
     void UpdateClock();
 
-    OsclClock::OsclClockState clockState() { return iClockState; }
+    PVMFMediaClock::PVMFMediaClockState clockState() { return iClockState; }
     void setThreadSemaphore(OsclSemaphore* s) { iAudioThreadSem = s; }
 
-    void setDriverLatency(uint32_t latency) { iDriverLatency = latency; }
+    void setDriverLatency(uint32 latency);
     void incFrameCount(uint32_t numFrames) { iFrameCount += numFrames; }
     void setFrameRate(float msecsPerFrame) { iMsecsPerFrame = msecsPerFrame; }
     float msecsPerFrame() { return iMsecsPerFrame; }
 
 private:
-    OsclClock* iClock;
-    OsclClock::OsclClockState iClockState;
+    PVMFMediaClock* iClock;
+    PVMFMediaClockNotificationsInterface *iClockNotificationsInf;
+    PVMFMediaClock::PVMFMediaClockState iClockState;
     OsclSemaphore* iAudioThreadSem;
 
-    uint64 iStartTime;
-    uint64 iFrameCount;
+    uint32 iStartTime;
+    uint32 iFrameCount;
     float iMsecsPerFrame;
     uint32 iDriverLatency;
     bool iUpdateClock;
-    int64 iMinCorrection;
-    int64 iMaxCorrection;
+    int32 iMinCorrection;
+    int32 iMaxCorrection;
 };
 
 // Audio MIO component
@@ -254,9 +261,7 @@ public:
 
     uint32 getCapabilityMetric (PvmiMIOSession aSession) { return 0; }
 
-    PVMFStatus verifyParametersSync (PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements) {
-        return PVMFSuccess;
-    }
+    PVMFStatus verifyParametersSync (PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
 
     // Functions specific to this MIO
     void setAudioSink(const sp<MediaPlayerInterface::AudioSink>& audioSink);
@@ -297,15 +302,15 @@ protected:
     uint32 iCommandCounter;
 
     //State
-    enum PVRefFOState
+    enum PVAudioMIOState
     {
-        STATE_IDLE
-        ,STATE_LOGGED_ON
-        ,STATE_INITIALIZED
-        ,STATE_STARTED
-        ,STATE_PAUSED
+        STATE_MIO_IDLE
+        ,STATE_MIO_LOGGED_ON
+        ,STATE_MIO_INITIALIZED
+        ,STATE_MIO_STARTED
+        ,STATE_MIO_PAUSED
     };
-    PVRefFOState iState;
+    PVAudioMIOState iState;
 
     // Control command handling.
     class CommandResponse
@@ -330,15 +335,14 @@ protected:
     int32 iAudioSamplingRate;
     bool iAudioSamplingRateValid;
 
+    bool iAudioThreadCreatedAndMIOConfigured;
+
     // For logging
     PVLogger* iLogger;
 
     // For implementing the write flow control
     bool iWriteBusy;
-    uint32 iWriteBusySeqNum;
     bool CheckWriteBusy(uint32);
-
-    uint64 iDriverLatency;
 
     bool iFlushPending;
     uint32 iDataQueued;

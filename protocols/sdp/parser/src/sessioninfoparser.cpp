@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,6 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*									    */
-/*   =====================================================================  */
-/*	File: sessionInfoParser.cpp					    */
-/*	Description:							    */
-/*									    */
-/*									    */
-/*	Rev:								    */
-/*	Created: 05/24/01						    */
-/*   =====================================================================  */
-/*									    */
-/*	Revision History:						    */
-/*									    */
-/*	Rev:								    */
-/*	Date:								    */
-/*	Description:							    */
-/*									    */
-/* //////////////////////////////////////////////////////////////////////// */
 
 #include "session_info_parser.h"
 #include "oscl_string_utils.h"
@@ -41,15 +24,7 @@
 #include "rtsp_range_utils.h"
 #include "oscl_string_containers.h"
 
-/* ========================================================================== */
-/*	Function : parsePayload(char *buff,int index,
-sessionDescription *session) */
-/*	Date     : 05/24/2001													  */
-/*	Purpose  : Parses session text and fills out the session structure		  */
-/*	In/out   :																  */
-/*	Return   :																  */
-/*	Modified :																  */
-/* ========================================================================== */
+
 SDP_ERROR_CODE parseSDPSessionInfo(const char *sdp_text, int length, SDPInfo *sdp)
 {
 
@@ -80,7 +55,6 @@ SDP_ERROR_CODE parseSDPSessionInfo(const char *sdp_text, int length, SDPInfo *sd
     StrPtrLen allowrecord("a=X-allowrecord");
     StrPtrLen random_access("a=random_access_denied");
     StrPtrLen control("a=control:");
-    StrPtrLen content_version("a=content_version:");
     StrPtrLen creation_date("a=creation_date:");
     StrPtrLen video_only_allowed_true("a=video_only_allowed:true");
     StrPtrLen video_only_allowed_false("a=video_only_allowed:false");
@@ -427,12 +401,13 @@ SDP_ERROR_CODE parseSDPSessionInfo(const char *sdp_text, int length, SDPInfo *sd
                 memFrag.ptr = (void*)sptr;
                 memFrag.len = (eptr - sptr);
                 session->setCAddressType(memFrag);
-
-
-                if (oscl_strstr(sptr, "IP6"))
-                {//TBD
+                uint32 len = OSCL_MIN((uint32)(eptr - sptr), oscl_strlen("IP6"));
+                if (oscl_strncmp(sptr, "IP6", len) == 0)
+                {
+                    //TBD
                     break;
                 }
+
 
                 // get the address
                 sptr = skip_whitespace(eptr, line_end_ptr);
@@ -1020,49 +995,6 @@ SDP_ERROR_CODE parseSDPSessionInfo(const char *sdp_text, int length, SDPInfo *sd
                     OSCL_HeapString<SDPParserAlloc> control_str(sptr, eptr - sptr);
                     session->setControlURL(control_str);
                     a_control_found = true;
-
-                }
-                else if (!oscl_strncmp(line_start_ptr, content_version.c_str(),
-                                       content_version.length()))
-                {
-
-                    sptr = skip_whitespace(line_start_ptr + content_version.length(),
-                                           line_end_ptr);
-                    if (sptr >= line_end_ptr)
-                    {
-                        return SDP_BAD_SESSION_FORMAT;
-                    }
-
-                    // skip to the first "."
-                    for (eptr = sptr; eptr < line_end_ptr && *eptr != '.'; ++eptr);
-
-                    uint32 major_version, minor_version = 0;
-                    if (PV_atoi(sptr, 'd', (eptr - sptr), major_version) == false)
-                    {
-                        return SDP_BAD_SESSION_FORMAT;
-                    }
-
-                    if (*eptr == '.')
-                    {
-
-                        sptr = skip_whitespace(eptr + 1,
-                                               line_end_ptr);
-                        eptr = skip_to_whitespace(sptr, line_end_ptr);
-                        if (eptr <= sptr)
-                        {
-                            return SDP_BAD_SESSION_FORMAT;
-                        }
-
-                        if (PV_atoi(sptr, 'd', (eptr - sptr), minor_version) == false)
-                        {
-                            return SDP_BAD_SESSION_FORMAT;
-                        }
-
-                    }
-
-                    uint16 content_version = (uint16)((major_version << 8) | minor_version);
-
-                    session->setContentVersion(content_version);
 
                 }
 

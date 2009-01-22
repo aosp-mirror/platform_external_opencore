@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -491,7 +491,7 @@ PVMFMemoryBufferReadDataStreamImpl::Read(PvmiDataStreamSession aSessionID, uint8
 
     // for debugging only
     //LOGERROR((0, "PVMFMemoryBufferReadDataStreamImpl::Read session %d offset %d size %d firstTempByteOffset %d lastTempByteOffset %d",
-    //iSessionID, iFilePtrPos, aSize * aNumElements, firstTempByteOffset, lastTempByteOffset));
+    //	iSessionID, iFilePtrPos, aSize * aNumElements, firstTempByteOffset, lastTempByteOffset));
 
     uint32 bytesRead = 0;
     uint32 firstEntry = 0;
@@ -508,7 +508,7 @@ PVMFMemoryBufferReadDataStreamImpl::Read(PvmiDataStreamSession aSessionID, uint8
             // Find out if it is on route to the cache, if so, no need to send reposition request
             // But if the cache is full, we need to send reposition request
             if ((firstByteToRead < firstTempByteOffset) || ((firstByteToRead - lastTempByteOffset) > BYTES_TO_WAIT) ||
-                    ((firstByteToRead - lastTempByteOffset) <= BYTES_TO_WAIT) && ((lastTempByteOffset - firstTempByteOffset + 1) >= READ_BUFFER_SIZE))
+                    (((firstByteToRead - lastTempByteOffset) <= BYTES_TO_WAIT) && ((lastTempByteOffset - firstTempByteOffset + 1) >= READ_BUFFER_SIZE)))
             {
                 LOGDEBUG((0, "PVMFMemoryBufferReadDataStreamImpl::Read Reposition first %d last %d session %d offset %d",
                           firstTempByteOffset, lastTempByteOffset, iSessionID, firstByteToRead));
@@ -724,10 +724,10 @@ PVMFMemoryBufferReadDataStreamImpl::Seek(PvmiDataStreamSession aSessionID, int32
                 uint32 lastTempByteOffset = 0;
                 iTempCache->GetFileOffsets(firstTempByteOffset, lastTempByteOffset);
 
-                if ((skipTo >= firstTempByteOffset)
-                        && (lastTempByteOffset + PV_MBDS_FWD_SEEKING_NO_GET_REQUEST_THRESHOLD >= skipTo))
+                if ((skipTo >= firstTempByteOffset) &&
+                        (lastTempByteOffset + PV_MBDS_FWD_SEEKING_NO_GET_REQUEST_THRESHOLD >= skipTo))
                 {
-                    // Seeking forward, check to see if the data may be coming shortly before sending request
+                    // Seeking forward,, eed to see if the data may be coming shortly before sending request
                     // If the temp cache is full, send the request right away
                     uint32 capacity = 0;
                     iWriteDataStream->QueryWriteCapacity(0, capacity);
@@ -879,24 +879,24 @@ PVMFMemoryBufferReadDataStreamImpl::MakePersistent(int32 aOffset, uint32 aSize)
 
     // MakePersistent should not be called multiple times with different offsets
     uint32 firstPersistentOffset = 0;
-    uint32 lastPersistentOffset = 0;
-    bool bMadePersistent = iWriteDataStream->GetPermCachePersistence(firstPersistentOffset, lastPersistentOffset);
+    uint32 lastPeristentOffset = 0;
+    bool bMadePersistent = iWriteDataStream->GetPermCachePersistence(firstPersistentOffset, lastPeristentOffset);
 
     if (bMadePersistent)
     {
         // has already been called, check the offset + size
         // last byte in perm cache is one byte beyond moov atom
-        if ((0 == aSize && 0 == firstPersistentOffset && 0 == lastPersistentOffset) ||
-                (aOffset == (int32)firstPersistentOffset && (aOffset + aSize) == lastPersistentOffset))
+        if ((0 == aSize && 0 == firstPersistentOffset && 0 == lastPeristentOffset) ||
+                (aOffset == (int32)firstPersistentOffset && (aOffset + aSize) == lastPeristentOffset))
         {
-            // same parameters, it is ok
+            // same paramerters, it is ok
             LOGDEBUG((0, "PVMFMemoryBufferReadDataStreamImpl::MakePersistent has already been called with same offset and size"));
             return PVDS_SUCCESS;
         }
 
         // does not support calling this function again with different parameters
         LOGERROR((0, "PVMFMemoryBufferReadDataStreamImpl::MakePersistent has already been called with first offset %d last offset %d",
-                  firstPersistentOffset, lastPersistentOffset));
+                  firstPersistentOffset, lastPeristentOffset));
         return PVDS_NOT_SUPPORTED;
     }
 
@@ -1143,13 +1143,11 @@ PVMFMemoryBufferWriteDataStreamImpl::PVMFMemoryBufferWriteDataStreamImpl(PVMFMem
     for (uint32 i = 0; i < PV_MB_MAX_NUMBER_OF_READ_CONNECTIONS; i++)
     {
         iReadNotifications[i].iReadStructValid = false;
-        iReadNotifications[i].iOutstanding = false;
 
         iReadFilePositions[i].iReadPositionStructValid = false;
     }
 
     iRepositionRequest.iOutstanding = false;
-    iRepositionRequest.iRepositionSessionID = -1;
     iWriteNotification.iOutstanding = false;
     iLogger = PVLogger::GetLoggerObject("PVMFMemoryBufferDataStream");
 
@@ -1852,21 +1850,65 @@ PVMFMemoryBufferWriteDataStreamImpl::Reposition(PvmiDataStreamSession aSessionID
             (aSessionID > (PV_MB_MAX_NUMBER_OF_READ_CONNECTIONS + PV_MB_MAX_NUMBER_OF_WRITE_CONNECTIONS)))
     {
         status = PVDS_FAILURE;
+        return status;
     }
     else if (NULL == iRequestObserver)
     {
         // Protocol engine is not listening
         status = PVDS_FAILURE;
+        return status;
     }
-    else if ((aOffset >= iFilePtrPos) &&
-             (iFilePtrPos + PV_MBDS_FWD_SEEKING_NO_GET_REQUEST_THRESHOLD > aOffset) &&
-             ((writeCap != 0) && ((aOffset - iFilePtrPos) < writeCap)) &&
-             (iAVTOffsetDelta < READ_BUFFER_SIZE))
+    else if ((aOffset >= iFilePtrPos)
+             && ((writeCap != 0) && ((writeCap + iFilePtrPos) > aOffset)))
     {
-        // data is on route
+        // data is on route. Now check whether we should send new GET and flush the old data or just wait
         LOGDEBUG((0, "PVMFMemoryBufferWriteDataStreamImpl::Reposition data is en route, GET request not sent"));
+        // Check for read position pointers in temp cache
+        bool found = false;
+        uint32 smallest = 0xFFFFFFFF;
+        {
+            uint32 firstPersistentOffset = 0;
+            uint32 lastPersistentOffset = 0;
+            iPermCache->GetPermOffsets(firstPersistentOffset, lastPersistentOffset);
+            for (int32 i = 0; i < PV_MB_MAX_NUMBER_OF_READ_CONNECTIONS; i++)
+            {
+                if ((iReadFilePositions[i].iReadPositionStructValid == true) && (iReadFilePositions[i].iInTempCache == true))
+                {
+                    if ((0 == i) && (0 == firstPersistentOffset) && (0 == lastPersistentOffset) && (0 == iReadFilePositions[i].iReadFilePtr))
+                    {
+                        // nothing made persistent, ignore session 0 ptr at offset 0
+                        continue;
+                    }
+                    found = true;
+                    //LOGE("Ln %d smalltest %d iReadFilePositions[%d].iReadFilePtr %d ", __LINE__, smallest , i, iReadFilePositions[i].iReadFilePtr );
+                    if (iReadFilePositions[i].iReadFilePtr < smallest)
+                    {
+                        smallest = iReadFilePositions[i].iReadFilePtr;
+                    }
+                }
+            }
+        }
+        //LOGE("Ln %d found %d smalltest %d iFilePtrPos %d aOffset %d", __LINE__, found, smallest , iFilePtrPos, aOffset );
+        //LOGE("Ln %d tmpCache [%d %d] iFilePtrPos %d", __LINE__, firstTempByteOffset, lastTempByteOffset , iFilePtrPos);
+        if (found)
+        {
+            if (smallest < iFilePtrPos)
+            {
+                //LOGE("Ln %d Do nothing. found %d smalltest %d", __LINE__, found, smallest );
+                return status;
+            }
+
+            if ((smallest >= iFilePtrPos) &&
+                    (iFilePtrPos + PV_MBDS_FWD_SEEKING_NO_GET_REQUEST_THRESHOLD > smallest) &&
+                    ((writeCap != 0) && ((smallest - iFilePtrPos) < writeCap)) &&
+                    (iAVTOffsetDelta < READ_BUFFER_SIZE))
+            {
+                //LOGE("Ln %d Do nothing. found %d smalltest %d", __LINE__, found, smallest );
+                return status;
+            }
+        }
     }
-    else
+
     {
         // Only support one outstanding reposition request, do not send another
         // If this is requesting the same offset as the outstanding request, return success, otherwise failure
@@ -2284,7 +2326,7 @@ PVMFMemoryBufferWriteDataStreamImpl::ManageReadCapacityNotifications()
             bool bSend = false;
             PVMFStatus status = PVMFFailure;
 
-            if ((currFilePosition - iReadNotifications[i].iFilePosition) >=
+            if ((currFilePosition - iReadNotifications[i].iFilePosition) >
                     iReadNotifications[i].iReadCapacity)
             {
                 bSend = true;
@@ -2654,7 +2696,6 @@ PVMFMemoryBufferWriteDataStreamImpl::GetPermCachePersistence(uint32& aFirstOffse
     return iMadePersistent;
 }
 
-
 //////////////////////////////////////////////////////////////////////
 // PVMFMemoryBufferDataStream
 //////////////////////////////////////////////////////////////////////
@@ -2858,7 +2899,9 @@ PVMFMemoryBufferDataStreamTempCache::RemoveFirstEntry(OsclRefCounterMemFrag*& aF
 
         found = true;
 
+#if (PVLOGGER_INST_LEVEL > PVLOGMSG_INST_LLDBG)
         uint32 offset = entry->fileOffset;
+#endif
         uint32 size = entry->fragSize;
 
         aFrag = entry->frag;
@@ -2884,8 +2927,10 @@ PVMFMemoryBufferDataStreamTempCache::RemoveFirstEntry(OsclRefCounterMemFrag*& aF
             iTotalBytes = 0;
         }
 
+#if (PVLOGGER_INST_LEVEL > PVLOGMSG_INST_LLDBG)
         LOGDEBUG((0, "PVMFMemoryBufferDataStreamTempCache::RemoveFirstEntry %x offset %d size %d first %d last %d total %d",
                   entry, offset, size, iFirstByteFileOffset, iLastByteFileOffset, iTotalBytes));
+#endif
 
     }
 
@@ -3418,8 +3463,9 @@ PVMFMemoryBufferDataStreamPermCache::RemoveFirstEntry(uint8*& aFragPtr)
         MBDSPermCacheEntry* entry = iEntries.front();
 
         found = true;
-
+#if (PVLOGGER_INST_LEVEL > PVLOGMSG_INST_LLDBG)
         uint32 offset = entry->firstFileOffset;
+#endif
         uint32 size = entry->fillSize;
 
         aFragPtr = entry->bufPtr;
@@ -3444,8 +3490,10 @@ PVMFMemoryBufferDataStreamPermCache::RemoveFirstEntry(uint8*& aFragPtr)
             iLastByteFileOffset = 0;
             iTotalBytes = 0;
         }
+#if (PVLOGGER_INST_LEVEL > PVLOGMSG_INST_LLDBG)
         LOGDEBUG((0, "PVMFMemoryBufferDataStreamTempCache::RemoveFirstEntry %x offset %d size %d first %d last %d total %d",
                   entry, offset, size, iFirstByteFileOffset, iLastByteFileOffset, iTotalBytes));
+#endif
 
     }
 

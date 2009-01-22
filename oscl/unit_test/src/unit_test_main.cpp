@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,21 @@ int main(int argc, char **argv)
     cmd_line *command_line_ptr;
     cmd_line_linux command_line;
     command_line_ptr = &command_line;
+
+    // remove leading and trailing quotation marks
+    for (int i = 0; i < argc; ++i)
+    {
+        // skip ',`," at start
+        if (argv[i][0] == '"' || argv[i][0] == '\'' || argv[i][0] == '`')
+            argv[i] += 1;
+        size_t strEnd = _strlen(argv[i]);
+        if (strEnd > 0)
+        {
+            strEnd -= 1; // last char
+            if (argv[i][strEnd] == '"' || argv[i][strEnd] == '\'' || argv[i][strEnd] == '`')
+                argv[i][strEnd] = 0;
+        }
+    }
 
 
     if (argc > 1)

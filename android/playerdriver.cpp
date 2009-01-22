@@ -47,7 +47,6 @@
 #include "oscl_mem.h"
 #include "oscl_mem_audit.h"
 #include "oscl_error.h"
-#include "oscl_error_panic.h"
 #include "oscl_utf8conv.h"
 #include "oscl_string_utils.h"
 #include "android_surface_output.h"
@@ -58,7 +57,7 @@
 #include "pvmf_source_context_data.h"
 #include "pvmf_download_data_source.h"
 #include "omx_core.h"
-#include "pv_omxmastercore.h"
+#include "pv_omxcore.h"
 
 // color converter
 #include "cczoomrotation16.h"
@@ -459,7 +458,7 @@ void PlayerDriver::handleSetup(PlayerSetup* ec)
 
 int PlayerDriver::setupHttpStreamPre()
 {
-    mDataSource->SetDataSourceFormatType(PVMF_DATA_SOURCE_HTTP_URL);
+    mDataSource->SetDataSourceFormatType((char*)PVMF_MIME_DATA_SOURCE_HTTP_URL);
     
     delete mDownloadContextData;
     mDownloadContextData = NULL;
@@ -509,10 +508,8 @@ int PlayerDriver::setupHttpStreamPost()
 
     int error = 0;
 
-    // PV will set a default user agent value. The below string will be appended to the default value.
-    // The default value [PVPLAYER_ENGINE_SDKINFO_LABEL] can be found at device/extlibs/pv/engines/player/src/pv_player_sdkinfo.h 
     iKVPSetAsync.key = _STRLIT_CHAR("x-pvmf/net/user-agent;valtype=wchar*");
-    OSCL_wHeapString<OsclMemAllocator> userAgent = _STRLIT_WCHAR("(Linux;U;Android 1.0)(AndroidMediaPlayer 1.0)");
+    OSCL_wHeapString<OsclMemAllocator> userAgent = _STRLIT_WCHAR("CORE/6.101.1.1 OpenCORE/2.0 (Linux;Android 1.0)(AndroidMediaPlayer 1.0)");
     iKVPSetAsync.value.pWChar_value=userAgent.get_str();
     iErrorKVP=NULL;
     OSCL_TRY(error, mPlayerCapConfig->setParametersSync(NULL, &iKVPSetAsync, 1, iErrorKVP));
@@ -569,11 +566,11 @@ void PlayerDriver::handleSetDataSource(PlayerSetDataSource* ec)
     wFileName.set(output, oscl_strlen(output));
     mDataSource->SetDataSourceURL(wFileName);
     if (strncmp(url, "rtsp:", strlen("rtsp:")) == 0) {
-        mDataSource->SetDataSourceFormatType(PVMF_DATA_SOURCE_RTSP_URL);
+        mDataSource->SetDataSourceFormatType((char*)PVMF_MIME_DATA_SOURCE_RTSP_URL);
     } else if (strncmp(url, "http:", strlen("http:")) == 0) {
         setupHttpStreamPre();
     } else {
-        mDataSource->SetDataSourceFormatType(PVMF_FORMAT_UNKNOWN); // Let PV figure it out
+        mDataSource->SetDataSourceFormatType((char*)PVMF_MIME_FORMAT_UNKNOWN); // Let PV figure it out
     }
 
     OSCL_TRY(error, mPlayer->AddDataSource(*mDataSource, ec));
@@ -625,9 +622,9 @@ void PlayerDriver::handleSetVideoSurface(PlayerSetVideoSurface* ec)
     mVideoSink = new PVPlayerDataSinkPVMFNode;
 
     ((PVPlayerDataSinkPVMFNode *)mVideoSink)->SetDataSinkNode(mVideoNode);
-    ((PVPlayerDataSinkPVMFNode *)mVideoSink)->SetDataSinkFormatType(PVMF_YUV420);
+    ((PVPlayerDataSinkPVMFNode *)mVideoSink)->SetDataSinkFormatType((char*)PVMF_MIME_YUV420);
 
-    OSCL_TRY(error, mPlayer->AddDataSink(*mVideoSink, ec));
+	OSCL_TRY(error, mPlayer->AddDataSink(*mVideoSink, ec));
     OSCL_FIRST_CATCH_ANY(error, commandFailed(ec));
 }
 
@@ -647,7 +644,7 @@ void PlayerDriver::handleSetAudioSink(PlayerSetAudioSink* ec)
     mAudioSink = new PVPlayerDataSinkPVMFNode;
 
     ((PVPlayerDataSinkPVMFNode *)mAudioSink)->SetDataSinkNode(mAudioNode);
-    ((PVPlayerDataSinkPVMFNode *)mAudioSink)->SetDataSinkFormatType(PVMF_PCM16);
+    ((PVPlayerDataSinkPVMFNode *)mAudioSink)->SetDataSinkFormatType((char*)PVMF_MIME_PCM16);
 
     OSCL_TRY(error, mPlayer->AddDataSink(*mAudioSink, ec));
     OSCL_FIRST_CATCH_ANY(error, commandFailed(ec));
@@ -655,7 +652,17 @@ void PlayerDriver::handleSetAudioSink(PlayerSetAudioSink* ec)
 
 void PlayerDriver::handlePrepare(PlayerPrepare* ec)
 {
-    int error = 0;
+    //Keep alive is sent during the play to prevent the firewall from closing ports while
+    //streming long clip
+    PvmiKvp iKVPSetAsync;
+    OSCL_StackString<64> iKeyStringSetAsync;
+    PvmiKvp *iErrorKVP = NULL;
+    int error=0;
+    iKeyStringSetAsync=_STRLIT_CHAR("x-pvmf/net/keep-alive-during-play;valtype=bool");
+    iKVPSetAsync.key=iKeyStringSetAsync.get_str();
+    iKVPSetAsync.value.bool_value=true;
+    iErrorKVP=NULL;
+    OSCL_TRY(error, mPlayerCapConfig->setParametersSync(NULL, &iKVPSetAsync, 1, iErrorKVP)); 
     OSCL_TRY(error, mPlayer->Prepare(ec));
     OSCL_FIRST_CATCH_ANY(error, commandFailed(ec));
 }
@@ -861,7 +868,7 @@ int PlayerDriver::playerThread()
     }
 
     LOGV("OMX_Init");
-    PV_MasterOMX_Init();
+    OMX_Init();
 
     LOGV("OsclScheduler::Init");
     OsclScheduler::Init("AndroidPVWrapper");
@@ -919,7 +926,7 @@ int PlayerDriver::playerThread()
     OsclScheduler::Cleanup();
     LOGV("OsclScheduler::Cleanup");
 
-    PV_MasterOMX_Deinit();
+    OMX_Deinit();
     UninitializeForThread();
     return 0;
 }
@@ -942,7 +949,7 @@ void PlayerDriver::handleGetDurationComplete(PlayerGetDuration* cmd)
 
     for (uint32 i = 0; i < mMetaValueList.size(); ++i) {
         // Search for the duration
-        char* substr=oscl_strstr(mMetaValueList[i].key, _STRLIT_CHAR("duration;valtype=uint32;timescale="));
+        const char* substr=oscl_strstr(mMetaValueList[i].key, _STRLIT_CHAR("duration;valtype=uint32;timescale="));
         if (substr!=NULL) {
             uint32 timescale=1000;
             if (PV_atoi((substr+34), 'd', timescale) == false) {
@@ -954,7 +961,7 @@ void PlayerDriver::handleGetDurationComplete(PlayerGetDuration* cmd)
             //set the timescale
                mcc.set_timescale(timescale);
             //set the clock to the duration as per the timescale
-               mcc.set_clock(duration,1);
+               mcc.set_clock(duration,0);
             //convert to millisec
                cmd->set(mcc.get_converted_ts(1000));
             }

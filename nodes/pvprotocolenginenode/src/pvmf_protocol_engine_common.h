@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -219,6 +219,22 @@ class ProtocolState : public HttpParsingBasicObjectObserver,
         {
             return iParser->getAuthenInfo(aRealm);
         }
+        bool isServerSupportBasicAuthentication()
+        {
+            return iParser->isServerSupportBasicAuthentication();
+        }
+        bool isServerSendAuthenticationHeader()
+        {
+            return iParser->isServerSendAuthenticationHeader();
+        }
+        void getBasicPtr(const StrPtrLen aAuthenValue, uint32 &length)
+        {
+            iParser->getBasicPtr(aAuthenValue, length);
+        }
+        void getRealmPtr(const char *&ptrRealm, uint32 &len, uint32 &length)
+        {
+            iParser->getRealmPtr(ptrRealm, len, length);
+        }
         virtual uint32 getCurrentPlaybackTime()
         {
             return 0;    // only used in fast track
@@ -325,10 +341,6 @@ class ProtocolState : public HttpParsingBasicObjectObserver,
         virtual bool setHeaderFields() = 0;
         // do final compose, fixed for all derived classes
         virtual int32 doCompose(OsclMemoryFragment &aFrag);
-        virtual uint32 getCurrentRequestLength()
-        {
-            return iComposer->getCurrentRequestLength(iURI.isUseAbsoluteURI());
-        }
         bool setExtensionFields(Oscl_Vector<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator> &aExtensionHeaderKeys,
                                 Oscl_Vector<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator> &aExtensionHeaderValues,
                                 Oscl_Vector<uint32, OsclMemAllocator> &aMaskBitForHTTPMethod,
@@ -549,6 +561,22 @@ class HttpBasedProtocol : public ProtocolStateObserver,
         {
             return iCurrState->getAuthenInfo(aRealm);
         }
+        bool isServerSupportBasicAuthentication()
+        {
+            return iParser->isServerSupportBasicAuthentication();
+        }
+        bool isServerSendAuthenticationHeader()
+        {
+            return iParser->isServerSendAuthenticationHeader();
+        }
+        void getBasicPtr(const StrPtrLen aAuthenValue, uint32 &length)
+        {
+            iParser->getBasicPtr(aAuthenValue, length);
+        }
+        void getRealmPtr(const char *&ptrRealm, uint32 &len, uint32 &length)
+        {
+            iParser->getRealmPtr(ptrRealm, len, length);
+        }
         uint32 getCurrentPlaybackTime()
         {
             return iCurrState->getCurrentPlaybackTime();    // only used in fast track
@@ -568,6 +596,11 @@ class HttpBasedProtocol : public ProtocolStateObserver,
         bool isCurrentStateOptional()
         {
             return iCurrState->isCurrentStateOptional();    // optional state can be by-passed regardless of any error happened
+        }
+
+        void resetTotalHttpStreamingSize()
+        {
+            if (iParser) iParser->resetTotalHttpStreamingSize();
         }
 
         virtual void reset()

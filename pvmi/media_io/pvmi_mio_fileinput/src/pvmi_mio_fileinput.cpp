@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,7 +76,7 @@ PvmiMIOFileInput::~PvmiMIOFileInput()
 {
     if (iMediaBufferMemPool)
     {
-        OSCL_TEMPLATED_DELETE(iMediaBufferMemPool, OsclMemPoolFixedChunkAllocator, OsclMemPoolFixedChunkAllocator);
+        OSCL_DELETE(iMediaBufferMemPool);
         iMediaBufferMemPool = NULL;
     }
 }
@@ -437,8 +437,21 @@ OSCL_EXPORT_REF void PvmiMIOFileInput::readComplete(PVMFStatus aStatus, PVMFComm
 ////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF void PvmiMIOFileInput::statusUpdate(uint32 status_flags)
 {
-    OSCL_UNUSED_ARG(status_flags);
-    OSCL_LEAVE(OsclErrNotSupported);
+    if (status_flags == PVMI_MEDIAXFER_STATUS_WRITE)
+    {
+        iMicroSecondsPerDataEvent = 0;
+        AddDataEventToQueue(iMicroSecondsPerDataEvent);
+    }
+    else
+    {
+        // Ideally this routine should update the status of media input component.
+        // It should check then for the status. If media input buffer is consumed,
+        // media input object should be resheduled.
+        // Since the Media fileinput component is designed with single buffer, two
+        // asynchronous reads are not possible. So this function will not be required
+        // and hence not been implemented.
+        OSCL_LEAVE(OsclErrNotSupported);
+    }
 }
 
 
@@ -482,20 +495,20 @@ OSCL_EXPORT_REF PVMFStatus PvmiMIOFileInput::getParametersSync(PvmiMIOSession se
             pv_mime_strcmp(identifier, OUTPUT_FORMATS_CUR_QUERY) == 0)
     {
         num_parameter_elements = 1;
-        status = AllocateKvp(parameters, OUTPUT_FORMATS_VALTYPE, num_parameter_elements);
+        status = AllocateKvp(parameters, (PvmiKeyType)OUTPUT_FORMATS_VALTYPE, num_parameter_elements);
         if (status != PVMFSuccess)
         {
             LOG_ERR((0, "PvmiMIOFileInput::GetOutputParametersSync: Error - AllocateKvp failed. status=%d", status));
         }
         else
         {
-            parameters[0].value.uint32_value = iSettings.iMediaFormat;
+            parameters[0].value.pChar_value = (char*)iSettings.iMediaFormat.getMIMEStrPtr();
         }
     }
     else if (pv_mime_strcmp(identifier, VIDEO_OUTPUT_WIDTH_CUR_QUERY) == 0)
     {
         num_parameter_elements = 1;
-        status = AllocateKvp(parameters, VIDEO_OUTPUT_WIDTH_CUR_VALUE, num_parameter_elements);
+        status = AllocateKvp(parameters, (PvmiKeyType)VIDEO_OUTPUT_WIDTH_CUR_VALUE, num_parameter_elements);
         if (status != PVMFSuccess)
         {
             LOG_ERR((0, "PvmiMIOFileInput::GetOutputParametersSync: Error - AllocateKvp failed. status=%d", status));
@@ -507,7 +520,7 @@ OSCL_EXPORT_REF PVMFStatus PvmiMIOFileInput::getParametersSync(PvmiMIOSession se
     else if (pv_mime_strcmp(identifier, VIDEO_OUTPUT_HEIGHT_CUR_QUERY) == 0)
     {
         num_parameter_elements = 1;
-        status = AllocateKvp(parameters, VIDEO_OUTPUT_HEIGHT_CUR_VALUE, num_parameter_elements);
+        status = AllocateKvp(parameters, (PvmiKeyType)VIDEO_OUTPUT_HEIGHT_CUR_VALUE, num_parameter_elements);
         if (status != PVMFSuccess)
         {
             LOG_ERR((0, "PvmiMIOFileInput::GetOutputParametersSync: Error - AllocateKvp failed. status=%d", status));
@@ -519,7 +532,7 @@ OSCL_EXPORT_REF PVMFStatus PvmiMIOFileInput::getParametersSync(PvmiMIOSession se
     else if (pv_mime_strcmp(identifier, VIDEO_OUTPUT_FRAME_RATE_CUR_QUERY) == 0)
     {
         num_parameter_elements = 1;
-        status = AllocateKvp(parameters, VIDEO_OUTPUT_FRAME_RATE_CUR_VALUE, num_parameter_elements);
+        status = AllocateKvp(parameters, (PvmiKeyType)VIDEO_OUTPUT_FRAME_RATE_CUR_VALUE, num_parameter_elements);
         if (status != PVMFSuccess)
         {
             LOG_ERR((0, "PvmiMIOFileInput::GetOutputParametersSync: Error - AllocateKvp failed. status=%d", status));
@@ -531,7 +544,7 @@ OSCL_EXPORT_REF PVMFStatus PvmiMIOFileInput::getParametersSync(PvmiMIOSession se
     else if (pv_mime_strcmp(identifier, OUTPUT_TIMESCALE_CUR_QUERY) == 0)
     {
         num_parameter_elements = 1;
-        status = AllocateKvp(parameters, OUTPUT_TIMESCALE_CUR_VALUE, num_parameter_elements);
+        status = AllocateKvp(parameters, (PvmiKeyType)OUTPUT_TIMESCALE_CUR_VALUE, num_parameter_elements);
         if (status != PVMFSuccess)
         {
             LOG_ERR((0, "PVMFVideoEncPort::GetOutputParametersSync: Error - AllocateKvp failed. status=%d", status));
@@ -539,15 +552,13 @@ OSCL_EXPORT_REF PVMFStatus PvmiMIOFileInput::getParametersSync(PvmiMIOSession se
         }
         else
         {
-            switch (GetMediaTypeIndex(iSettings.iMediaFormat))
+            if (iSettings.iMediaFormat.isAudio())
             {
-                case PVMF_UNCOMPRESSED_AUDIO_FORMAT:
-                case PVMF_COMPRESSED_AUDIO_FORMAT:
-                    parameters[0].value.uint32_value = iSettings.iSamplingFrequency;
-                    break;
-                default:
-                    parameters[0].value.uint32_value = iSettings.iTimescale;
-                    break;
+                parameters[0].value.uint32_value = iSettings.iSamplingFrequency;
+            }
+            else
+            {
+                parameters[0].value.uint32_value = iSettings.iTimescale;
             }
         }
     }
@@ -686,9 +697,9 @@ PvmiMIOFileInput::PvmiMIOFileInput(const PvmiMIOFileInputSettings& aSettings)
         iPreTS(0),
         iCount(0),
         iMediaBufferMemPool(NULL),
+        iNotificationID(0),
         iLogger(NULL),
         iState(STATE_IDLE),
-        iNotificationID(0),
         iAuthoringDuration(0),
         iStreamDuration(0)
 {
@@ -825,386 +836,378 @@ PVMFStatus PvmiMIOFileInput::DoInit()
     iInputFile.Seek(fileStart, Oscl_File::SEEKSET);
     fileSize = fileEnd - fileStart;
 
-    switch (iSettings.iMediaFormat)
+    if (iSettings.iMediaFormat == PVMF_MIME_M4V ||
+            iSettings.iMediaFormat == PVMF_MIME_H2631998 ||
+            iSettings.iMediaFormat == PVMF_MIME_H2632000)
     {
-        case PVMF_M4V:
-        case PVMF_H263:
+        int32  frameSize;
+        uint32 bytesProcessed;
+        uint8* fileData;
+        uint8* currentFrame;
+        int32 skip;
+
+        // Validate settings
+        if (iSettings.iFrameHeight <= 0 || iSettings.iFrameWidth <= 0 ||
+                iSettings.iFrameRate <= 0 || iSettings.iTimescale <= 0)
         {
-            int32  bytesProcessed, frameSize;
-            uint8* fileData;
-            uint8* currentFrame;
-            int32 skip;
-
-            // Validate settings
-            if (iSettings.iFrameHeight <= 0 || iSettings.iFrameWidth <= 0 ||
-                    iSettings.iFrameRate <= 0 || iSettings.iTimescale <= 0)
-            {
-                CloseInputFile();
-                return PVMFErrArgument;
-            }
-
-            fileData = NULL;
-            fileData = (uint8*)iAlloc.allocate(fileSize);
-            if (!fileData)
-            {
-                CloseInputFile();
-                return PVMFErrNoMemory;
-            }
-
-            // Read the whole file to data buffer then go back to front
-            iInputFile.Read((OsclAny*)fileData, sizeof(uint8), fileSize);
-            iInputFile.Seek(fileStart, Oscl_File::SEEKSET);
-
-            // Get ready to search for frame sizes
-            iFrameSizeVector.reserve(200);
-            currentFrame = fileData;
-            bytesProcessed = 0;
-
-            // Calculate time for a buffer to fill to simulate frame rate
-            iMilliSecondsPerDataEvent = (int32)(1000 / iSettings.iFrameRate);
-            iMicroSecondsPerDataEvent = iMilliSecondsPerDataEvent * 1000;
-
-            // Find size of each frame iteratively until end of file
-            iTotalNumFrames = 0;
-            if (iSettings.iMediaFormat == PVMF_M4V)
-            {
-                while (bytesProcessed < fileSize)
-                {
-                    do
-                    {
-                        skip = 1;
-                        frameSize = LocateM4VFrameHeader(currentFrame + skip, fileSize - bytesProcessed - skip);
-                        if (currentFrame[3] == 0xb3) /* GOV header */
-                        {
-                            skip += (frameSize + 1);
-                            frameSize = LocateM4VFrameHeader(currentFrame + skip, fileSize - bytesProcessed - skip);
-                        }
-                        if (frameSize == 0) skip++;
-                    }
-                    while (frameSize == 0);
-
-                    if (frameSize > 0)
-                    {
-                        frameSize += skip;
-                    }
-                    else
-                    {
-                        frameSize = fileSize - bytesProcessed;
-                    }
-
-                    if (frameSize > (int32)maxFrameSize)
-                        maxFrameSize = frameSize;
-                    iFrameSizeVector.push_back(frameSize);
-                    currentFrame += frameSize;
-                    bytesProcessed += frameSize;
-                    ++iTotalNumFrames;
-                }
-            }
-            else
-            {
-                // H263
-                while (bytesProcessed < fileSize)
-                {
-
-                    do
-                    {
-                        skip = 1;
-                        frameSize = LocateH263FrameHeader(currentFrame + skip, fileSize - bytesProcessed - skip);
-                        if (frameSize == 0) skip++;
-                    }
-                    while (frameSize == 0);
-
-                    if (frameSize > 0)
-                    {
-                        frameSize += skip;
-                    }
-                    else
-                    {
-                        frameSize = fileSize - bytesProcessed;
-                    }
-
-                    if (frameSize > (int32)maxFrameSize)
-                        maxFrameSize = frameSize;
-                    iFrameSizeVector.push_back(frameSize);
-                    currentFrame += frameSize;
-                    bytesProcessed += frameSize;
-                    ++iTotalNumFrames;
-                }
-            }
-
-            iAlloc.deallocate((OsclAny*)fileData);
-            iStreamDuration = iTotalNumFrames * (iMicroSecondsPerDataEvent / 1000); //in msec
+            CloseInputFile();
+            return PVMFErrArgument;
         }
-        break;
-        case PVMF_3GPP_TIMEDTEXT:
+
+        fileData = NULL;
+        fileData = (uint8*)iAlloc.allocate(fileSize);
+        if (!fileData)
         {
-            iTotalNumFrames = 0;
-            // Validate settings
-            if (iSettings.iFrameHeight <= 0 || iSettings.iFrameWidth <= 0 ||
-                    iSettings.iTimescale <= 0)
-            {
-                CloseInputFile();
-                return PVMFErrArgument;
-            }
-
-            if (!iFsOpened_log)
-            {
-                if (iFs_log.Connect() != 0)
-                    return PVMFFailure;
-                iFsOpened_log = true;
-            }
-
-            if (iFileOpened_log ||
-                    0 != iLogFile.Open(iSettings.iLogFileName.get_cstr(), Oscl_File::MODE_READ | Oscl_File::MODE_BINARY, iFs_log))
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
-                                (0, "PvmiMIOFileInput::DoInit: Error - iLogFile.Open for timed text file format failed"));
-                return PVMFFailure;
-            }
-
-            iFileOpened_log = true;
-
-
-            int32  bytesProcessed, frameSize, timestamp;
-            uint8* fileData;
-            uint8* currentFrame;
-
-            fileData = NULL;
-            fileData = (uint8*)iAlloc.allocate(fileSize);
-            if (!fileData)
-            {
-                CloseInputFile();
-                return PVMFErrNoMemory;
-            }
-
-            // Read the whole file to data buffer then go back to front
-            iInputFile.Read((OsclAny*)fileData, sizeof(uint8), fileSize);
-            iInputFile.Seek(fileStart, Oscl_File::SEEKSET);
-
-            // Get ready to search for frame sizes
-            iFrameSizeVector.reserve(2500);
-            currentFrame = fileData;
-            bytesProcessed = 0;
-
-
-            int32 ii = 0;
-            int32 offset = 0;
-            int32 numSamplesInTrack = 0;
-            uint32 timescale = 0;
-            uint32 bitrate = 0;
-            iLogFile.Seek(offset, Oscl_File::SEEKSET);
-            iLogFile.Read(&numSamplesInTrack, sizeof(char), 4);
-            offset = offset + 4;
-
-            //iLogFile.Seek( offset, Oscl_File::SEEKSET );  //the information
-            iLogFile.Read(&bitrate, sizeof(char), 4);		//present in the log file
-            offset = offset + 4;
-
-            //iLogFile.Seek( offset, Oscl_File::SEEKSET );
-            iLogFile.Read(&timescale, sizeof(char), 4);
-            offset = offset + 4;
-            iSettings.iTimescale = timescale;
-            uint8  isTrackDuration = false;
-            uint32 trackDuration = 0;
-            iLogFile.Read(&isTrackDuration, sizeof(char), 1);
-            if (isTrackDuration)
-            {
-                iLogFile.Read(&trackDuration, sizeof(char), 4);
-            }
-            offset = offset + 5;
-            //iLogFile.Seek( offset, Oscl_File::SEEKSET );
-            //iLogFile.Read(&maxbuffersize, sizeof(char), 4);
-            offset = offset + 4;
-            iTotalNumFrames = numSamplesInTrack;
-            while (numSamplesInTrack)
-            {
-                iLogFile.Seek(offset, Oscl_File::SEEKSET);
-                iLogFile.Read(&SampleSizeArray[ii], sizeof(char), 4);    //size of the ith frame
-
-                frameSize = SampleSizeArray[ii];
-                if ((uint32)frameSize > maxFrameSize)
-                    maxFrameSize = frameSize;
-                iFrameSizeVector.push_back(frameSize);
-                currentFrame += frameSize;
-                bytesProcessed += frameSize;
-                ii++;
-                offset = offset + 4;
-                iLogFile.Seek(offset, Oscl_File::SEEKSET);
-                iLogFile.Read(&TextTimeStampArray[ii], sizeof(char), 4);
-                timestamp = TextTimeStampArray[ii];
-                iTextTimeStampVector.push_back(timestamp);
-                offset = offset + 4;
-                numSamplesInTrack--;
-            }
-
-
-            //added for the time being, need to be re-evaluated
-            iMicroSecondsPerDataEvent = iSettings.iTimescale * 2;
-            iAlloc.deallocate((OsclAny*)fileData);
-            if (iFileOpened_log)
-            {
-                iLogFile.Close();
-                iFileOpened_log = false;
-            }
-
-            if (iFsOpened_log)
-            {
-                iFs_log.Close();
-                iFsOpened_log = false;
-            }
-
-            iStreamDuration = trackDuration / iSettings.iTimescale * 1000; //in msec
+            CloseInputFile();
+            return PVMFErrNoMemory;
         }
-        break;
-        case PVMF_YUV420:
+
+        // Read the whole file to data buffer then go back to front
+        iInputFile.Read((OsclAny*)fileData, sizeof(uint8), fileSize);
+        iInputFile.Seek(fileStart, Oscl_File::SEEKSET);
+
+        // Get ready to search for frame sizes
+        iFrameSizeVector.reserve(200);
+        currentFrame = fileData;
+        bytesProcessed = 0;
+
+        // Calculate time for a buffer to fill to simulate frame rate
+        iMilliSecondsPerDataEvent = (int32)(1000 / iSettings.iFrameRate);
+        iMicroSecondsPerDataEvent = iMilliSecondsPerDataEvent * 1000;
+
+        // Find size of each frame iteratively until end of file
+        iTotalNumFrames = 0;
+        if (iSettings.iMediaFormat == PVMF_MIME_M4V)
         {
-            // Set bytes per frame
-            maxFrameSize = (uint32)(iSettings.iFrameHeight * iSettings.iFrameWidth * 3 / 2);
-            iFrameSizeVector.push_back(maxFrameSize);
-
-            //calculate time for a buffer to fill
-            iMilliSecondsPerDataEvent = (int32)(1000 / iSettings.iFrameRate);
-            iMicroSecondsPerDataEvent = (int32)(1000000 / iSettings.iFrameRate);
-
-            uint32 numFrames = fileSize / maxFrameSize;
-            iStreamDuration = numFrames * (iMicroSecondsPerDataEvent) / 1000; //in msec
-        }
-        break;
-
-        case PVMF_RGB16:
-        {
-            // Set bytes per frame
-            maxFrameSize = (uint32)(iSettings.iFrameHeight * iSettings.iFrameWidth *  2);
-            iFrameSizeVector.push_back(maxFrameSize);
-
-            //calculate time for a buffer to fill
-            iMilliSecondsPerDataEvent = (int32)(1000 / iSettings.iFrameRate);
-            iMicroSecondsPerDataEvent = (int32)(1000000 / iSettings.iFrameRate - 1);
-
-            uint32 numFrames = fileSize / maxFrameSize;
-            iStreamDuration = numFrames * (iMicroSecondsPerDataEvent / 1000); //in msec
-        }
-        break;
-
-
-        case PVMF_PCM16:
-        {
-            // Set bytes per frame
-            maxFrameSize = AMR_FRAME_DELAY * iSettings.iSamplingFrequency / 1000 * 2 * iSettings.iNum20msFramesPerChunk;
-            iFrameSizeVector.push_back(maxFrameSize);
-
-            //calculate time for a buffer to fill
-            float chunkrate = (float)(1000 / AMR_FRAME_DELAY) / iSettings.iNum20msFramesPerChunk;
-            iMilliSecondsPerDataEvent = (uint32)(1000 / chunkrate);
-            iMicroSecondsPerDataEvent = iMilliSecondsPerDataEvent * 1000;
-            uint32 numFrames = fileSize / maxFrameSize;
-            iStreamDuration = numFrames * (iMicroSecondsPerDataEvent / 1000); //in msec
-        }
-        break;
-
-        case PVMF_AMR_IF2:
-        case PVMF_AMR_IETF:
-        {
-            int32  bytesProcessed, size, frameSize;
-            uint32 chunk;
-            uint8* fileData;
-            uint8* currentFrame;
-
-            fileData = NULL;
-            fileData = (uint8*)iAlloc.allocate(fileSize);
-            if (!fileData)
-            {
-                CloseInputFile();
-                return PVMFErrNoMemory;
-            }
-
-            // Read the whole file to data buffer then go back to front
-            iInputFile.Read((OsclAny*)fileData, sizeof(uint8), fileSize);
-            iInputFile.Seek(fileStart, Oscl_File::SEEKSET);
-
-            // Get ready to search for frame sizes
-            iFrameSizeVector.reserve(500);
-            currentFrame = fileData;
-            bytesProcessed = 0;
-
-            //skip AMR file header.
-            if (currentFrame[0] == '#')
-            {
-                iFileHeaderSize = 6;
-                currentFrame += iFileHeaderSize;
-                iInputFile.Seek(iFileHeaderSize, Oscl_File::SEEKSET);
-                bytesProcessed = 6;
-            }
-
-            // Find size of each frame iteratively until end of file
-            iTotalNumFrames = 0;
             while (bytesProcessed < fileSize)
             {
-                frameSize = 0;
-                for (chunk = 0; (chunk < iSettings.iNum20msFramesPerChunk) && (bytesProcessed < fileSize); chunk++)
+                do
                 {
-                    if (iSettings.iMediaFormat == PVMF_AMR_IF2)
-                        size = GetIF2FrameSize(currentFrame[0]);
-                    else
-                        size = GetIETFFrameSize(currentFrame[0]);
-                    frameSize += size;
-                    currentFrame += size;
-                    bytesProcessed += size;
+                    skip = 1;
+                    frameSize = LocateM4VFrameHeader(currentFrame + skip, fileSize - bytesProcessed - skip);
+                    if (currentFrame[3] == 0xb3) /* GOV header */
+                    {
+                        skip += (frameSize + 1);
+                        frameSize = LocateM4VFrameHeader(currentFrame + skip, fileSize - bytesProcessed - skip);
+                    }
+                    if (frameSize == 0) skip++;
+                }
+                while (frameSize == 0);
+
+                if (frameSize > 0)
+                {
+                    frameSize += skip;
+                }
+                else
+                {
+                    frameSize = fileSize - bytesProcessed;
                 }
 
                 if (frameSize > (int32)maxFrameSize)
                     maxFrameSize = frameSize;
                 iFrameSizeVector.push_back(frameSize);
+                currentFrame += frameSize;
+                bytesProcessed += frameSize;
                 ++iTotalNumFrames;
             }
-
-            // Calculate time for a buffer to fill to simulate frame rate
-            iMilliSecondsPerDataEvent = 20 * iSettings.iNum20msFramesPerChunk;
-            iMicroSecondsPerDataEvent = iMilliSecondsPerDataEvent * 1000;
-            iAlloc.deallocate((OsclAny*)fileData);
-            iStreamDuration = iTotalNumFrames * (iMicroSecondsPerDataEvent / 1000); //in msec
         }
-        break;
-
-        case PVMF_ADTS:
-        case PVMF_ADIF:
-        case PVMF_MPEG4_AUDIO:
-        case PVMF_MP3:
+        else
         {
-            int32  bytesProcessed, frameSize;
-
-            // Get ready to search for frame sizes
-            iFrameSizeVector.reserve(500);
-            bytesProcessed = 0;
-
-            // Find size of each frame iteratively until end of file
-            iTotalNumFrames = 0;
+            // H263
             while (bytesProcessed < fileSize)
             {
-                if ((fileSize - bytesProcessed) < 1024)
-                    frameSize = fileSize - bytesProcessed;
+
+                do
+                {
+                    skip = 1;
+                    frameSize = LocateH263FrameHeader(currentFrame + skip, fileSize - bytesProcessed - skip);
+                    if (frameSize == 0) skip++;
+                }
+                while (frameSize == 0);
+
+                if (frameSize > 0)
+                {
+                    frameSize += skip;
+                }
                 else
-                    frameSize = 1024;
-                bytesProcessed += frameSize;
+                {
+                    frameSize = fileSize - bytesProcessed;
+                }
+
+                if (frameSize > (int32)maxFrameSize)
+                    maxFrameSize = frameSize;
                 iFrameSizeVector.push_back(frameSize);
+                currentFrame += frameSize;
+                bytesProcessed += frameSize;
                 ++iTotalNumFrames;
             }
-
-            // Calculate time for a buffer to fill to simulate frame rate
-            maxFrameSize = 1024;
-            iMilliSecondsPerDataEvent = 20;
-            iMicroSecondsPerDataEvent = iMilliSecondsPerDataEvent * 1000;
-            iStreamDuration = iTotalNumFrames * (iMicroSecondsPerDataEvent / 1000); //in msec
         }
-        break;
 
-        default:
+        iAlloc.deallocate((OsclAny*)fileData);
+        iStreamDuration = iTotalNumFrames * (iMicroSecondsPerDataEvent / 1000); //in msec
+    }
+    else if (iSettings.iMediaFormat == PVMF_MIME_3GPP_TIMEDTEXT)
+    {
+        iTotalNumFrames = 0;
+        // Validate settings
+        if (iSettings.iFrameHeight <= 0 || iSettings.iFrameWidth <= 0 ||
+                iSettings.iTimescale <= 0)
+        {
             CloseInputFile();
             return PVMFErrArgument;
+        }
+
+        if (!iFsOpened_log)
+        {
+            if (iFs_log.Connect() != 0)
+                return PVMFFailure;
+            iFsOpened_log = true;
+        }
+
+        if (iFileOpened_log ||
+                0 != iLogFile.Open(iSettings.iLogFileName.get_cstr(), Oscl_File::MODE_READ | Oscl_File::MODE_BINARY, iFs_log))
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                            (0, "PvmiMIOFileInput::DoInit: Error - iLogFile.Open for timed text file format failed"));
+            return PVMFFailure;
+        }
+
+        iFileOpened_log = true;
+
+
+        int32  frameSize, timestamp;
+        uint32 bytesProcessed;
+        uint8* fileData;
+        uint8* currentFrame;
+
+        fileData = NULL;
+        fileData = (uint8*)iAlloc.allocate(fileSize);
+        if (!fileData)
+        {
+            CloseInputFile();
+            return PVMFErrNoMemory;
+        }
+
+        // Read the whole file to data buffer then go back to front
+        iInputFile.Read((OsclAny*)fileData, sizeof(uint8), fileSize);
+        iInputFile.Seek(fileStart, Oscl_File::SEEKSET);
+
+        // Get ready to search for frame sizes
+        iFrameSizeVector.reserve(2500);
+        currentFrame = fileData;
+        bytesProcessed = 0;
+
+
+        int32 ii = 0;
+        int32 offset = 0;
+        int32 numSamplesInTrack = 0;
+        uint32 timescale = 0;
+        uint32 bitrate = 0;
+        iLogFile.Seek(offset, Oscl_File::SEEKSET);
+        iLogFile.Read(&numSamplesInTrack, sizeof(char), 4);
+        offset = offset + 4;
+
+        //iLogFile.Seek( offset, Oscl_File::SEEKSET );  //the information
+        iLogFile.Read(&bitrate, sizeof(char), 4);		//present in the log file
+        offset = offset + 4;
+
+        //iLogFile.Seek( offset, Oscl_File::SEEKSET );
+        iLogFile.Read(&timescale, sizeof(char), 4);
+        offset = offset + 4;
+        iSettings.iTimescale = timescale;
+        uint8  isTrackDuration = false;
+        uint32 trackDuration = 0;
+        iLogFile.Read(&isTrackDuration, sizeof(char), 1);
+        if (isTrackDuration)
+        {
+            iLogFile.Read(&trackDuration, sizeof(char), 4);
+        }
+        offset = offset + 5;
+        //iLogFile.Seek( offset, Oscl_File::SEEKSET );
+        //iLogFile.Read(&maxbuffersize, sizeof(char), 4);
+        offset = offset + 4;
+        iTotalNumFrames = numSamplesInTrack;
+        while (numSamplesInTrack)
+        {
+            iLogFile.Seek(offset, Oscl_File::SEEKSET);
+            iLogFile.Read(&SampleSizeArray[ii], sizeof(char), 4);    //size of the ith frame
+
+            frameSize = SampleSizeArray[ii];
+            if ((uint32)frameSize > maxFrameSize)
+                maxFrameSize = frameSize;
+            iFrameSizeVector.push_back(frameSize);
+            currentFrame += frameSize;
+            bytesProcessed += frameSize;
+            ii++;
+            offset = offset + 4;
+            iLogFile.Seek(offset, Oscl_File::SEEKSET);
+            iLogFile.Read(&TextTimeStampArray[ii], sizeof(char), 4);
+            timestamp = TextTimeStampArray[ii];
+            iTextTimeStampVector.push_back(timestamp);
+            offset = offset + 4;
+            numSamplesInTrack--;
+        }
+
+
+        //added for the time being, need to be re-evaluated
+        iMicroSecondsPerDataEvent = iSettings.iTimescale * 2;
+        iAlloc.deallocate((OsclAny*)fileData);
+        if (iFileOpened_log)
+        {
+            iLogFile.Close();
+            iFileOpened_log = false;
+        }
+
+        if (iFsOpened_log)
+        {
+            iFs_log.Close();
+            iFsOpened_log = false;
+        }
+
+        iStreamDuration = trackDuration / iSettings.iTimescale * 1000; //in msec
+    }
+    else if (iSettings.iMediaFormat == PVMF_MIME_YUV420)
+    {
+        // Set bytes per frame
+        maxFrameSize = (uint32)(iSettings.iFrameHeight * iSettings.iFrameWidth * 3 / 2);
+        iFrameSizeVector.push_back(maxFrameSize);
+
+        //calculate time for a buffer to fill
+        iMilliSecondsPerDataEvent = (int32)(1000 / iSettings.iFrameRate);
+        iMicroSecondsPerDataEvent = (int32)(1000000 / iSettings.iFrameRate);
+        uint32 numFrames = fileSize / maxFrameSize;
+        iStreamDuration = numFrames * (iMicroSecondsPerDataEvent) / 1000; //in msec
+    }
+    else if (iSettings.iMediaFormat == PVMF_MIME_RGB16)
+    {
+        // Set bytes per frame
+        maxFrameSize = (uint32)(iSettings.iFrameHeight * iSettings.iFrameWidth *  2);
+        iFrameSizeVector.push_back(maxFrameSize);
+
+        //calculate time for a buffer to fill
+        iMilliSecondsPerDataEvent = (int32)(1000 / iSettings.iFrameRate);
+        iMicroSecondsPerDataEvent = (int32)(1000000 / iSettings.iFrameRate - 1);
+        uint32 numFrames = fileSize / maxFrameSize;
+        iStreamDuration = numFrames * (iMicroSecondsPerDataEvent / 1000); //in msec
+    }
+    else if (iSettings.iMediaFormat == PVMF_MIME_PCM16)
+    {
+        // Set bytes per frame
+        maxFrameSize = AMR_FRAME_DELAY * iSettings.iSamplingFrequency / 1000 * 2 * iSettings.iNum20msFramesPerChunk;
+        iFrameSizeVector.push_back(maxFrameSize);
+
+        //calculate time for a buffer to fill
+        float chunkrate = (float)(1000 / AMR_FRAME_DELAY) / iSettings.iNum20msFramesPerChunk;
+        iMilliSecondsPerDataEvent = (uint32)(1000 / chunkrate);
+        iMicroSecondsPerDataEvent = iMilliSecondsPerDataEvent * 1000;
+        uint32 numFrames = fileSize / maxFrameSize;
+        iStreamDuration = numFrames * (iMicroSecondsPerDataEvent / 1000); //in msec
+    }
+    else if (iSettings.iMediaFormat == PVMF_MIME_AMR_IF2 ||
+             iSettings.iMediaFormat == PVMF_MIME_AMR_IETF)
+    {
+        int32  size, frameSize;
+        uint32 bytesProcessed;
+        uint32 chunk;
+        uint8* fileData;
+        uint8* currentFrame;
+
+        fileData = NULL;
+        fileData = (uint8*)iAlloc.allocate(fileSize);
+        if (!fileData)
+        {
+            CloseInputFile();
+            return PVMFErrNoMemory;
+        }
+
+        // Read the whole file to data buffer then go back to front
+        iInputFile.Read((OsclAny*)fileData, sizeof(uint8), fileSize);
+        iInputFile.Seek(fileStart, Oscl_File::SEEKSET);
+
+        // Get ready to search for frame sizes
+        iFrameSizeVector.reserve(500);
+        currentFrame = fileData;
+        bytesProcessed = 0;
+
+        //skip AMR file header.
+        if (currentFrame[0] == '#')
+        {
+            iFileHeaderSize = 6;
+            currentFrame += iFileHeaderSize;
+            iInputFile.Seek(iFileHeaderSize, Oscl_File::SEEKSET);
+            bytesProcessed = 6;
+        }
+
+        // Find size of each frame iteratively until end of file
+        iTotalNumFrames = 0;
+        while (bytesProcessed < fileSize)
+        {
+            frameSize = 0;
+            for (chunk = 0; (chunk < iSettings.iNum20msFramesPerChunk) && (bytesProcessed < fileSize); chunk++)
+            {
+                if (iSettings.iMediaFormat == PVMF_MIME_AMR_IF2)
+                    size = GetIF2FrameSize(currentFrame[0]);
+                else
+                    size = GetIETFFrameSize(currentFrame[0]);
+                frameSize += size;
+                currentFrame += size;
+                bytesProcessed += size;
+            }
+
+            if (frameSize > (int32)maxFrameSize)
+                maxFrameSize = frameSize;
+            iFrameSizeVector.push_back(frameSize);
+            ++iTotalNumFrames;
+        }
+
+        // Calculate time for a buffer to fill to simulate frame rate
+        iMilliSecondsPerDataEvent = 20 * iSettings.iNum20msFramesPerChunk;
+        iMicroSecondsPerDataEvent = iMilliSecondsPerDataEvent * 1000;
+        iAlloc.deallocate((OsclAny*)fileData);
+        iStreamDuration = iTotalNumFrames * (iMicroSecondsPerDataEvent / 1000); //in msec
+    }
+    else if (iSettings.iMediaFormat == PVMF_MIME_ADTS ||
+             iSettings.iMediaFormat == PVMF_MIME_ADIF ||
+             iSettings.iMediaFormat == PVMF_MIME_MPEG4_AUDIO ||
+             iSettings.iMediaFormat == PVMF_MIME_MP3)
+    {
+        int32 frameSize;
+        uint32 bytesProcessed;
+
+        // Get ready to search for frame sizes
+        iFrameSizeVector.reserve(500);
+        bytesProcessed = 0;
+
+        // Find size of each frame iteratively until end of file
+        iTotalNumFrames = 0;
+        while (bytesProcessed < fileSize)
+        {
+            if ((fileSize - bytesProcessed) < 1024)
+                frameSize = fileSize - bytesProcessed;
+            else
+                frameSize = 1024;
+            bytesProcessed += frameSize;
+            iFrameSizeVector.push_back(frameSize);
+            ++iTotalNumFrames;
+        }
+
+        // Calculate time for a buffer to fill to simulate frame rate
+        maxFrameSize = 1024;
+        iMilliSecondsPerDataEvent = 20;
+        iMicroSecondsPerDataEvent = iMilliSecondsPerDataEvent * 1000;
+        iStreamDuration = iTotalNumFrames * (iMicroSecondsPerDataEvent / 1000); //in msec
+    }
+    else
+    {
+        CloseInputFile();
+        return PVMFErrArgument;
     }
 
-    //set default authoring duration
-    iAuthoringDuration = iStreamDuration;
+    if (!iSettings.iLoopInputFile)
+    {
+        //set default authoring duration
+        iAuthoringDuration = iStreamDuration;
+    }
 
     iDataEventCounter = 0;
     CloseInputFile();
@@ -1214,7 +1217,7 @@ PVMFStatus PvmiMIOFileInput::DoInit()
     OSCL_TRY(err,
              if (iMediaBufferMemPool)
 {
-    OSCL_TEMPLATED_DELETE(iMediaBufferMemPool, OsclMemPoolFixedChunkAllocator, OsclMemPoolFixedChunkAllocator);
+    OSCL_DELETE(iMediaBufferMemPool);
         iMediaBufferMemPool = NULL;
     }
     iMediaBufferMemPool = OSCL_NEW(OsclMemPoolFixedChunkAllocator,
@@ -1317,75 +1320,70 @@ PVMFStatus PvmiMIOFileInput::DoRead()
     uint32 writeAsyncID = 0;
 
     //Find the frame...
-    switch (iSettings.iMediaFormat)
+    if (iSettings.iMediaFormat == PVMF_MIME_M4V ||
+            iSettings.iMediaFormat == PVMF_MIME_H2631998 ||
+            iSettings.iMediaFormat == PVMF_MIME_H2632000)
     {
-        case PVMF_M4V:
-        case PVMF_H263:
-            bytesToRead = iFrameSizeVector[iDataEventCounter % iTotalNumFrames];
-            timeStamp = (int32)(iDataEventCounter * 1000 / iSettings.iFrameRate);
-            ++iDataEventCounter;
-            break;
-        case PVMF_3GPP_TIMEDTEXT:
+        bytesToRead = iFrameSizeVector[iDataEventCounter % iTotalNumFrames];
+        timeStamp = (int32)(iDataEventCounter * 1000 / iSettings.iFrameRate);
+        ++iDataEventCounter;
+    }
+    else if (iSettings.iMediaFormat == PVMF_MIME_3GPP_TIMEDTEXT)
+    {
+        bytesToRead = iFrameSizeVector[iDataEventCounter % iTotalNumFrames];
+        uint32 ts = iTextTimeStampVector[iDataEventCounter % iTotalNumFrames];
+        if ((iDataEventCounter % iTotalNumFrames) == 0)
         {
-            bytesToRead = iFrameSizeVector[iDataEventCounter % iTotalNumFrames];
-            uint32 ts = iTextTimeStampVector[iDataEventCounter % iTotalNumFrames];
-            if ((iDataEventCounter % iTotalNumFrames) == 0)
-            {
-                ++iCount;
-                iPreTS = iPreTS * iCount;
-            }
-            if (iPreTS > ts)
-            {
-                timeStamp = ts + iPreTS;
-            }
-            else
-            {
-                timeStamp = ts;
-                iPreTS = timeStamp;
-            }
-            ++iDataEventCounter;
+            ++iCount;
+            iPreTS = iPreTS * iCount;
         }
-        break;
-        case PVMF_AMR_IF2:
-        case PVMF_AMR_IETF:
-        case PVMF_ADTS:
-        case PVMF_MPEG4_AUDIO:
-        case PVMF_ADIF:
-        case PVMF_MP3:
-            bytesToRead = iFrameSizeVector[iDataEventCounter % iTotalNumFrames];
-            timeStamp = iTimeStamp;
-            iTimeStamp += iMilliSecondsPerDataEvent;
-            ++iDataEventCounter;
-            break;
-
-            //case PVMF_YUV422:
-        case PVMF_YUV420:
-        case PVMF_RGB16:
-            bytesToRead = iFrameSizeVector[0];
-            timeStamp = (int32)(iDataEventCounter * 1000 / iSettings.iFrameRate);
-            ++iDataEventCounter;
-            break;
-
-        case PVMF_PCM16:
+        if (iPreTS > ts)
         {
-            bytesToRead = iFrameSizeVector[0];
-            float chunkrate = (float)(1000 / AMR_FRAME_DELAY) / iSettings.iNum20msFramesPerChunk;
-            timeStamp = (uint32)(iDataEventCounter * 1000 / chunkrate);
-            ++iDataEventCounter;
+            timeStamp = ts + iPreTS;
         }
-        break;
-
-        default:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "PvmiMIOFileInput::HandleEventPortActivity: Error - Unsupported media format"));
-            return PVMFFailure;
+        else
+        {
+            timeStamp = ts;
+            iPreTS = timeStamp;
+        }
+        ++iDataEventCounter;
+    }
+    else if (iSettings.iMediaFormat == PVMF_MIME_AMR_IF2 ||
+             iSettings.iMediaFormat == PVMF_MIME_AMR_IETF ||
+             iSettings.iMediaFormat == PVMF_MIME_ADTS ||
+             iSettings.iMediaFormat == PVMF_MIME_MPEG4_AUDIO ||
+             iSettings.iMediaFormat == PVMF_MIME_ADIF ||
+             iSettings.iMediaFormat == PVMF_MIME_MP3)
+    {
+        bytesToRead = iFrameSizeVector[iDataEventCounter % iTotalNumFrames];
+        timeStamp = iTimeStamp;
+        iTimeStamp += iMilliSecondsPerDataEvent;
+        ++iDataEventCounter;
+    }
+    else if (iSettings.iMediaFormat == PVMF_MIME_YUV420 ||
+             iSettings.iMediaFormat == PVMF_MIME_RGB16)
+    {
+        bytesToRead = iFrameSizeVector[0];
+        timeStamp = (int32)(iDataEventCounter * 1000 / iSettings.iFrameRate);
+        ++iDataEventCounter;
+    }
+    else if (iSettings.iMediaFormat == PVMF_MIME_PCM16)
+    {
+        bytesToRead = iFrameSizeVector[0];
+        float chunkrate = (float)(1000 / AMR_FRAME_DELAY) / iSettings.iNum20msFramesPerChunk;
+        timeStamp = (uint32)(iDataEventCounter * 1000 / chunkrate);
+        ++iDataEventCounter;
+    }
+    else
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                        (0, "PvmiMIOFileInput::HandleEventPortActivity: Error - Unsupported media format"));
+        return PVMFFailure;
     }
 
     // Create new media data buffer
     int32 error = 0;
-    OSCL_TRY(error,
-             data = (uint8*)iMediaBufferMemPool->allocate(bytesToRead);
-            );
+    data = AllocateMemPool(iMediaBufferMemPool, bytesToRead, error);
 
     if (error)
     {
@@ -1400,7 +1398,7 @@ PVMFStatus PvmiMIOFileInput::DoRead()
     uint32 len = 0;
     uint32 stopTimeStamp = 0;
 
-    if (iSettings.iMediaFormat == PVMF_3GPP_TIMEDTEXT)
+    if (iSettings.iMediaFormat == PVMF_MIME_3GPP_TIMEDTEXT)
     {
         stopTimeStamp = (timeStamp / iSettings.iTimescale) * 1000; //in msec
 
@@ -1410,14 +1408,22 @@ PVMFStatus PvmiMIOFileInput::DoRead()
         stopTimeStamp = timeStamp;
     }
 
-    if (stopTimeStamp <= iAuthoringDuration)
+    if (!iSettings.iLoopInputFile)
     {
-        len = iInputFile.Read((OsclAny*)data, sizeof(uint8), bytesToRead);
+        if (stopTimeStamp <= iAuthoringDuration)
+        {
+            len = iInputFile.Read((OsclAny*)data, sizeof(uint8), bytesToRead);
+        }
+        else
+        {
+            len = 0;
+        }
     }
     else
     {
-        len = 0;
+        len = iInputFile.Read((OsclAny*)data, sizeof(uint8), bytesToRead);
     }
+
 
     if (len != bytesToRead)
     {
@@ -1450,8 +1456,7 @@ PVMFStatus PvmiMIOFileInput::DoRead()
                 bytesToRead = 0;
 
                 //send EOS information to MIO Node
-                OSCL_TRY(error, writeAsyncID = iPeer->writeAsync(PVMI_MEDIAXFER_FMT_TYPE_NOTIFICATION, PVMI_MEDIAXFER_FMT_INDEX_END_OF_STREAM,
-                                               NULL, bytesToRead, data_hdr););
+                error = WriteAsyncDataHdr(writeAsyncID, iPeer, bytesToRead, data_hdr);
 
                 if (error)
                 {
@@ -1480,7 +1485,7 @@ PVMFStatus PvmiMIOFileInput::DoRead()
 
     if (len == bytesToRead)//Data Read Successfully
     {
-        if (iSettings.iMediaFormat == PVMF_3GPP_TIMEDTEXT && !iTimed_Text_configinfo) //added for timed text support
+        if (iSettings.iMediaFormat == PVMF_MIME_3GPP_TIMEDTEXT && !iTimed_Text_configinfo) //added for timed text support
         {
             if (Get_Timed_Config_Info() != PVMFSuccess)
             {
@@ -1500,7 +1505,7 @@ PVMFStatus PvmiMIOFileInput::DoRead()
         data_hdr.stream_id = 0;
         if (!iPeer)
             return PVMFSuccess;
-        OSCL_TRY(error, writeAsyncID = iPeer->writeAsync(0, 0, data, bytesToRead, data_hdr););
+        OSCL_TRY(error, writeAsyncID = iPeer->writeAsync(PVMI_MEDIAXFER_FMT_TYPE_DATA, 0, data, bytesToRead, data_hdr););
         if (!error)
         {
             // Save the id and data pointer on iSentMediaData queue for writeComplete call
@@ -1508,6 +1513,11 @@ PVMFStatus PvmiMIOFileInput::DoRead()
             sentData.iId = writeAsyncID;
             sentData.iData = data;
             iSentMediaData.push_back(sentData);
+        }
+        else if (error == OsclErrBusy)
+        {
+            iDataEventCounter--;
+            iMediaBufferMemPool->deallocate(data);
         }
         else
         {
@@ -1716,6 +1726,7 @@ PVMFStatus PvmiMIOFileInput::AllocateKvp(PvmiKvp*& aKvp, PvmiKeyType aKey, int32
 ////////////////////////////////////////////////////////////////////////////
 PVMFStatus PvmiMIOFileInput::VerifyAndSetParameter(PvmiKvp* aKvp, bool aSetParam)
 {
+    OSCL_UNUSED_ARG(aSetParam);
     LOG_STACK_TRACE((0, "PvmiMIOFileInput::VerifyAndSetParameter: aKvp=0x%x, aSetParam=%d", aKvp, aSetParam));
 
     if (!aKvp)
@@ -1726,14 +1737,14 @@ PVMFStatus PvmiMIOFileInput::VerifyAndSetParameter(PvmiKvp* aKvp, bool aSetParam
 
     if (pv_mime_strcmp(aKvp->key, OUTPUT_FORMATS_VALTYPE) == 0)
     {
-        if (aKvp->value.uint32_value == iSettings.iMediaFormat)
+        if (iSettings.iMediaFormat == aKvp->value.pChar_value)
         {
             return PVMFSuccess;
         }
         else
         {
-            LOG_ERR((0, "PvmiMIOFileInput::VerifyAndSetParameter: Error - Unsupported format %d",
-                     aKvp->value.uint32_value));
+            LOG_ERR((0, "PvmiMIOFileInput::VerifyAndSetParameter: Error - Unsupported format %s",
+                     aKvp->value.pChar_value));
             return PVMFFailure;
         }
     }
@@ -1741,28 +1752,53 @@ PVMFStatus PvmiMIOFileInput::VerifyAndSetParameter(PvmiKvp* aKvp, bool aSetParam
     LOG_ERR((0, "PvmiMIOFileInput::VerifyAndSetParameter: Error - Unsupported parameter"));
     return PVMFFailure;
 }
-char* PvmiMIOFileInput::DecoderInfo(char* buffer, char* res)
+
+bool PvmiMIOFileInput::DecoderInfo(char* buffer, char* bufferEnd, char* res, uint32 resSize)
 {
     uint32 ji = 0;
-    oscl_memset(res, 0, sizeof(res));
-
-    while (buffer != NULL)
+    if ((NULL == buffer) || (NULL == bufferEnd) || (resSize <= 0))
     {
-        char* first = oscl_strstr(buffer, "= ");
+        return false;
+    }
+
+    oscl_memset(res, 0, resSize);
+
+    while (buffer < bufferEnd)
+    {
+        char* first = OSCL_CONST_CAST(char*, oscl_strstr(buffer, "= "));
+        if (NULL == first)
+        {
+            return false;
+        }
 
         first += 2;
-        char * temp = first;
+        char* temp = first;
         while (*first != '\n')
         {
             ji++;
             first += 1;
+
+            if ('\r' == *first)
+            {
+                break;
+            }
+
+            if (first >= bufferEnd)
+            {
+                return false;
+            }
         }
-        oscl_strncpy(res, temp, ji);
+
+        if (ji < resSize)
+        {
+            oscl_strncpy(res, temp, ji);
+        }
 
         iptextfiledata = first;
-        return(res);
-    }
-    return NULL;
+        break;
+    }   //(buffer < bufferEnd)
+
+    return true;
 }
 
 PVMFStatus PvmiMIOFileInput::Get_Timed_Config_Info()
@@ -1797,8 +1833,8 @@ PVMFStatus PvmiMIOFileInput::Get_Timed_Config_Info()
 
     fileSize = fileEnd - fileStart;
     iptextfiledata = NULL;
-    iptextfiledata = (char*)iAlloc.allocate(fileSize);
-
+    iptextfiledata = (char*)iAlloc.allocate(fileSize + 1);
+    oscl_memset(iptextfiledata, 0, fileSize + 1);
     if (!iptextfiledata)
     {
         return PVMFErrNoMemory;
@@ -1810,134 +1846,240 @@ PVMFStatus PvmiMIOFileInput::Get_Timed_Config_Info()
 
     char* buff = iptextfiledata;
     char* tempbuff = iptextfiledata;
-    char* val = (char*)OSCL_MALLOC(10 * sizeof(char));
+    uint32 valsize = 10;
+    char* val = (char*)OSCL_MALLOC(valsize * sizeof(char));
     uint32 temp = 0;
-    while (iptextfiledata != NULL)
+    while (iptextfiledata < (buff + fileSize))
     {
         PVA_FF_TextSampleDescInfo *ipDecoderinfo;
         ipDecoderinfo = OSCL_NEW(PVA_FF_TextSampleDescInfo, ());
-        oscl_memset(val, 0, sizeof(val));
+        oscl_memset(val, 0, valsize);
 
-        DecoderInfo(iptextfiledata, val);
+        if (!DecoderInfo(iptextfiledata, (buff + fileSize), val, valsize))
+        {
+            OSCL_DELETE(ipDecoderinfo);
+            break;
+        }
         PV_atoi(val, 'd', (uint32&)ipDecoderinfo->start_sample_num);
 
-        DecoderInfo(iptextfiledata, val);
+        if (!DecoderInfo(iptextfiledata, (buff + fileSize), val, valsize))
+        {
+            OSCL_DELETE(ipDecoderinfo);
+            break;
+        }
         PV_atoi(val, 'd', (uint32&)ipDecoderinfo->sdindex);
 
-        DecoderInfo(iptextfiledata, val);
+        if (!DecoderInfo(iptextfiledata, (buff + fileSize), val, valsize))
+        {
+            OSCL_DELETE(ipDecoderinfo);
+            break;
+        }
         PV_atoi(val, 'd', (uint32&)ipDecoderinfo->display_flags);
 
-        DecoderInfo(iptextfiledata, val);
+        if (!DecoderInfo(iptextfiledata, (buff + fileSize), val, valsize))
+        {
+            OSCL_DELETE(ipDecoderinfo);
+            break;
+        }
         PV_atoi(val, 'd', (uint32&)ipDecoderinfo->hJust);
 
 
         temp = 0;
-        DecoderInfo(iptextfiledata, val);
+        if (!DecoderInfo(iptextfiledata, (buff + fileSize), val, valsize))
+        {
+            OSCL_DELETE(ipDecoderinfo);
+            break;
+        }
         PV_atoi(val, 'd', (uint32&) temp);
         ipDecoderinfo->vJust = temp;
 
 
-        DecoderInfo(iptextfiledata, val);
+        if (!DecoderInfo(iptextfiledata, (buff + fileSize), val, valsize))
+        {
+            OSCL_DELETE(ipDecoderinfo);
+            break;
+        }
         temp = 0;
         PV_atoi(val, 'd', (uint32&)temp);
         ipDecoderinfo->bkRgba[0] = temp;
 
-        DecoderInfo(iptextfiledata, val);
+        if (!DecoderInfo(iptextfiledata, (buff + fileSize), val, valsize))
+        {
+            OSCL_DELETE(ipDecoderinfo);
+            break;
+        }
         temp = 0;
         PV_atoi(val, 'd', (uint32&)temp);
         ipDecoderinfo->bkRgba[1] = temp;
 
-        DecoderInfo(iptextfiledata, val);
+        if (!DecoderInfo(iptextfiledata, (buff + fileSize), val, valsize))
+        {
+            OSCL_DELETE(ipDecoderinfo);
+            break;
+        }
         temp = 0;
         PV_atoi(val, 'd', (uint32&)temp);
         ipDecoderinfo->bkRgba[2] = temp;
 
-        DecoderInfo(iptextfiledata, val);
+        if (!DecoderInfo(iptextfiledata, (buff + fileSize), val, valsize))
+        {
+            OSCL_DELETE(ipDecoderinfo);
+            break;
+        }
         temp = 0;
         PV_atoi(val, 'd', (uint32&)temp);
         ipDecoderinfo->bkRgba[3] = temp;
 
-        DecoderInfo(iptextfiledata, val);
+        if (!DecoderInfo(iptextfiledata, (buff + fileSize), val, valsize))
+        {
+            OSCL_DELETE(ipDecoderinfo);
+            break;
+        }
         temp = 0;
         PV_atoi(val, 'd', (uint32&)temp);
         ipDecoderinfo->top = temp;
 
-        DecoderInfo(iptextfiledata, val);
+        if (!DecoderInfo(iptextfiledata, (buff + fileSize), val, valsize))
+        {
+            OSCL_DELETE(ipDecoderinfo);
+            break;
+        }
         temp = 0;
         PV_atoi(val, 'd', (uint32&)temp);
         ipDecoderinfo->left = temp;
 
-        DecoderInfo(iptextfiledata, val);
+        if (!DecoderInfo(iptextfiledata, (buff + fileSize), val, valsize))
+        {
+            OSCL_DELETE(ipDecoderinfo);
+            break;
+        }
         temp = 0;
         PV_atoi(val, 'd', (uint32&)temp);
         ipDecoderinfo->bottom = temp;
 
-        DecoderInfo(iptextfiledata, val);
+        if (!DecoderInfo(iptextfiledata, (buff + fileSize), val, valsize))
+        {
+            OSCL_DELETE(ipDecoderinfo);
+            break;
+        }
         temp = 0;
         PV_atoi(val, 'd', (uint32&)temp);
         ipDecoderinfo->right = temp;
 
-        DecoderInfo(iptextfiledata, val);
+        if (!DecoderInfo(iptextfiledata, (buff + fileSize), val, valsize))
+        {
+            OSCL_DELETE(ipDecoderinfo);
+            break;
+        }
         temp = 0;
         PV_atoi(val, 'd', (uint32&)temp);
         ipDecoderinfo->startChar = temp;
 
-        DecoderInfo(iptextfiledata, val);
+        if (!DecoderInfo(iptextfiledata, (buff + fileSize), val, valsize))
+        {
+            OSCL_DELETE(ipDecoderinfo);
+            break;
+        }
         temp = 0;
         PV_atoi(val, 'd', (uint32&)temp);
         ipDecoderinfo->endChar = temp;
 
-        DecoderInfo(iptextfiledata, val);
+        if (!DecoderInfo(iptextfiledata, (buff + fileSize), val, valsize))
+        {
+            OSCL_DELETE(ipDecoderinfo);
+            break;
+        }
         temp = 0;
         PV_atoi(val, 'd', (uint32&)temp);
         ipDecoderinfo->fontID = temp;
 
-        DecoderInfo(iptextfiledata, val);
+        if (!DecoderInfo(iptextfiledata, (buff + fileSize), val, valsize))
+        {
+            OSCL_DELETE(ipDecoderinfo);
+            break;
+        }
         temp = 0;
         PV_atoi(val, 'd', (uint32&)temp);
         ipDecoderinfo->fontSizeFlags = temp;
 
-        DecoderInfo(iptextfiledata, val);
+        if (!DecoderInfo(iptextfiledata, (buff + fileSize), val, valsize))
+        {
+            OSCL_DELETE(ipDecoderinfo);
+            break;
+        }
         temp = 0;
         PV_atoi(val, 'd', (uint32&)temp);
         ipDecoderinfo->fontSize = temp;
 
-        DecoderInfo(iptextfiledata, val);
+        if (!DecoderInfo(iptextfiledata, (buff + fileSize), val, valsize))
+        {
+            OSCL_DELETE(ipDecoderinfo);
+            break;
+        }
         temp = 0;
         PV_atoi(val, 'd', (uint32&)temp);
         ipDecoderinfo->tRgba[0] = temp;
 
-        DecoderInfo(iptextfiledata, val);
+        if (!DecoderInfo(iptextfiledata, (buff + fileSize), val, valsize))
+        {
+            OSCL_DELETE(ipDecoderinfo);
+            break;
+        }
         temp = 0;
         PV_atoi(val, 'd', (uint32&)temp);
         ipDecoderinfo->tRgba[1] = temp;
 
-        DecoderInfo(iptextfiledata, val);
+        if (!DecoderInfo(iptextfiledata, (buff + fileSize), val, valsize))
+        {
+            OSCL_DELETE(ipDecoderinfo);
+            break;
+        }
         temp = 0;
         PV_atoi(val, 'd', (uint32&)temp);
         ipDecoderinfo->tRgba[2] = temp;
 
-        DecoderInfo(iptextfiledata, val);
+        if (!DecoderInfo(iptextfiledata, (buff + fileSize), val, valsize))
+        {
+            OSCL_DELETE(ipDecoderinfo);
+            break;
+        }
         temp = 0;
         PV_atoi(val, 'd', (uint32&)temp);
         ipDecoderinfo->tRgba[3] = temp;
 
-        DecoderInfo(iptextfiledata, val);
+        if (!DecoderInfo(iptextfiledata, (buff + fileSize), val, valsize))
+        {
+            OSCL_DELETE(ipDecoderinfo);
+            break;
+        }
         temp = 0;
         PV_atoi(val, 'd', (uint32&)temp);
         ipDecoderinfo->fontListSize = temp;
 
-        DecoderInfo(iptextfiledata, val);
+        if (!DecoderInfo(iptextfiledata, (buff + fileSize), val, valsize))
+        {
+            OSCL_DELETE(ipDecoderinfo);
+            break;
+        }
         temp = 0;
         PV_atoi(val, 'd', (uint32&)temp);
         ipDecoderinfo->fontListID = temp;
 
-        DecoderInfo(iptextfiledata, val);
+        if (!DecoderInfo(iptextfiledata, (buff + fileSize), val, valsize))
+        {
+            OSCL_DELETE(ipDecoderinfo);
+            break;
+        }
         temp = 0;
         PV_atoi(val, 'd', (uint32&)temp);
         ipDecoderinfo->font_id = temp;
 
-        DecoderInfo(iptextfiledata, val);
+        if (!DecoderInfo(iptextfiledata, (buff + fileSize), val, valsize))
+        {
+            OSCL_DELETE(ipDecoderinfo);
+            break;
+        }
+
         temp = 0;
         PV_atoi(val, 'd', (uint32&)temp);
         ipDecoderinfo->font_length = temp;
@@ -1945,14 +2087,22 @@ PVMFStatus PvmiMIOFileInput::Get_Timed_Config_Info()
         if (ipDecoderinfo->font_length > 0)
         {
             ipDecoderinfo->font_name = (uint8 *)(OSCL_MALLOC(ipDecoderinfo->font_length * sizeof(char) + 1));
-            DecoderInfo(iptextfiledata, val);
+            if (!DecoderInfo(iptextfiledata, (buff + fileSize), val, valsize))
+            {
+                OSCL_DELETE(ipDecoderinfo);
+                break;
+            }
             oscl_strncpy((char *)ipDecoderinfo->font_name, val, ipDecoderinfo->font_length);
         }
 
-        DecoderInfo(iptextfiledata, val);
+        if (!DecoderInfo(iptextfiledata, (buff + fileSize), val, valsize))
+        {
+            OSCL_DELETE(ipDecoderinfo);
+            break;
+        }
         PV_atoi(val, 'd', (uint32&)ipDecoderinfo->end_sample_num);
 
-        uint32 length = oscl_strlen(tempbuff) - oscl_strlen(iptextfiledata) + 1;
+        uint32 length = sizeof(ipDecoderinfo) + 2 * DEFAULT_RGB_ARRAY_SIZE + ipDecoderinfo->font_length;
 
         PvmiMediaXferHeader data_hdr;
 
@@ -1960,7 +2110,7 @@ PVMFStatus PvmiMIOFileInput::Get_Timed_Config_Info()
         //allocate KVP
         PvmiKvp* aKvp = NULL;
         PVMFStatus status = PVMFSuccess;
-        status = AllocateKvp(aKvp, TIMED_TEXT_OUTPUT_CONFIG_INFO_CUR_VALUE, 1);
+        status = AllocateKvp(aKvp, (PvmiKeyType)TIMED_TEXT_OUTPUT_CONFIG_INFO_CUR_VALUE, 1);
 
         if (status != PVMFSuccess)
         {
@@ -1968,8 +2118,6 @@ PVMFStatus PvmiMIOFileInput::Get_Timed_Config_Info()
             ipDecoderinfo = NULL;
             return 0;
         }
-
-        PvmiKvp* ret_kvp = NULL;
 
         aKvp->value.key_specific_value = ipDecoderinfo;
         aKvp->capacity = length;
@@ -1981,21 +2129,20 @@ PVMFStatus PvmiMIOFileInput::Get_Timed_Config_Info()
 
         iSentMediaData.push_back(textConfInfo);
 
+        int32 err = 0;
         //typecast to pass in writeAsync
         uint8* notifData = OSCL_STATIC_CAST(uint8*, aKvp);
-
-        iPeer->writeAsync(PVMI_MEDIAXFER_FMT_TYPE_NOTIFICATION,
-                          PVMI_MEDIAXFER_FMT_INDEX_FMT_SPECIFIC_INFO,
-                          notifData, length, data_hdr, &iNotificationID);
-
-        tempbuff = iptextfiledata; //to calculate the one decoderinfo size
-
-        int32 len = oscl_strlen(iptextfiledata);
-        if (len < MINBUFFERSIZE)
+        OSCL_TRY(err, iPeer->writeAsync(PVMI_MEDIAXFER_FMT_TYPE_NOTIFICATION,
+                                        PVMI_MEDIAXFER_FMT_INDEX_FMT_SPECIFIC_INFO,
+                                        notifData, length, data_hdr, &iNotificationID););
+        if (!err)
         {
-            break;
+            tempbuff = iptextfiledata; //to calculate the one decoderinfo size
         }
-
+        else
+        {
+            return PVMFFailure;
+        }
     }
     if (val)
     {
@@ -2022,3 +2169,17 @@ PVMFStatus PvmiMIOFileInput::Get_Timed_Config_Info()
 }
 
 
+uint8* PvmiMIOFileInput::AllocateMemPool(OsclMemPoolFixedChunkAllocator*& aMediaBufferMemPool, uint32 aDataSize, int32 &aErr)
+{
+    uint8* data = NULL;
+    OSCL_TRY(aErr, data = (uint8*)aMediaBufferMemPool->allocate(aDataSize););
+    return data;
+}
+
+int32 PvmiMIOFileInput::WriteAsyncDataHdr(uint32& aWriteAsyncID, PvmiMediaTransfer*& aPeer, uint32& aBytesToRead, PvmiMediaXferHeader& aData_hdr)
+{
+    int err = 0;
+    OSCL_TRY(err, aWriteAsyncID = aPeer->writeAsync(PVMI_MEDIAXFER_FMT_TYPE_NOTIFICATION, PVMI_MEDIAXFER_FMT_INDEX_END_OF_STREAM,
+                                  NULL, aBytesToRead, aData_hdr););
+    return err;
+}

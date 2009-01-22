@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -185,6 +185,9 @@ PV_STATUS RC_VopQPSetting(VideoEncData *video, rateControl *prc[])
     Int currLayer = video->currLayer;
     Vol *currVol = video->vol[currLayer];
     Vop *currVop = video->currVop;
+#ifdef TEST_MBBASED_QP
+    int i;
+#endif
 
     rateControl *rc = video->rc[currLayer];
     MultiPass *pMP = video->pMP[currLayer];
@@ -193,9 +196,7 @@ PV_STATUS RC_VopQPSetting(VideoEncData *video, rateControl *prc[])
 
     if (video->encParams->RC_Type == CONSTANT_Q)
     {
-
         M4VENC_MEMSET(video->QPMB, currVop->quantizer, sizeof(UChar)*currVol->nTotalMB);
-
         return PV_SUCCESS;
     }
     else
@@ -210,7 +211,16 @@ PV_STATUS RC_VopQPSetting(VideoEncData *video, rateControl *prc[])
         {
             calculateQuantizer_Multipass((void*) video);
             currVop->quantizer = video->rc[currLayer]->Qc;
+#ifdef TEST_MBBASED_QP
+            i = currVol->nTotalMB;  /* testing changing QP at MB level */
+            while (i)
+            {
+                i--;
+                video->QPMB[i] = (i & 1) ? currVop->quantizer - 1 : currVop->quantizer + 1;
+            }
+#else
             M4VENC_MEMSET(video->QPMB, currVop->quantizer, sizeof(UChar)*currVol->nTotalMB);
+#endif
         }
 
         video->header_bits = 0;

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,7 +95,7 @@ bool PVMFFileOutputInPort::queryInterface(const PVUuid& uuid, PVInterface*& ifac
 }
 
 ////////////////////////////////////////////////////////////////////////////
-PVMFStatus PVMFFileOutputInPort::SetClock(OsclClock* aClock)
+PVMFStatus PVMFFileOutputInPort::SetClock(PVMFMediaClock* aClock)
 {
     return iDataQueue.SetClock(aClock);
 }
@@ -115,23 +115,13 @@ PVMFStatus PVMFFileOutputInPort::SetMargins(int32 aEarlyMargin, int32 aLateMargi
 
 ////////////////////////////////////////////////////////////////////////////
 PVMFCommandId PVMFFileOutputInPort::SkipMediaData(PVMFSessionId aSessionId,
-        PVMFTimestamp aStartingTimestamp,
         PVMFTimestamp aResumeTimestamp,
         uint32 aStreamID,
-        bool aRenderSkippedData,
         bool aPlayBackPositionContinuous,
         OsclAny* aContext)
 {
     OSCL_UNUSED_ARG(aStreamID);
     OSCL_UNUSED_ARG(aPlayBackPositionContinuous);
-
-    // Validate the passed-in timestamps
-    if (aResumeTimestamp < aStartingTimestamp)
-    {
-        // Resume timestamp must be greater than or equal to the starting timestamp
-        OSCL_LEAVE(OsclErrArgument);
-        return 0;
-    }
 
     // To handle case where media data are in queues but
     // not processed yet
@@ -144,6 +134,7 @@ PVMFCommandId PVMFFileOutputInPort::SkipMediaData(PVMFSessionId aSessionId,
             if (iLastDataTimestamp == 0xFFFFFFFF)
             {
                 // TEMP Handle unknown timestamp
+                // Will be removed when unknown timestamp is incorporated in architecture
                 iLastDataTimestamp = 0;
             }
             else
@@ -169,6 +160,7 @@ PVMFCommandId PVMFFileOutputInPort::SkipMediaData(PVMFSessionId aSessionId,
             if (iLastDataTimestamp == 0xFFFFFFFF)
             {
                 // TEMP Handle unknown timestamp
+                // Will be removed when unknown timestamp is incorporated in architecture
                 iLastDataTimestamp = 0;
             }
             else
@@ -211,9 +203,7 @@ PVMFCommandId PVMFFileOutputInPort::SkipMediaData(PVMFSessionId aSessionId,
     switch (iDataQueue.SkipMediaData(aResumeTimestamp, true))
     {
         case PVMFPending:
-            iSkipStartTimestamp = aStartingTimestamp;
             iSkipResumeTimestamp = aResumeTimestamp;
-            iSkipRenderSkippedData = aRenderSkippedData;
             iSkipMediaDataPending = true;
             iSkipMediaDataContext = aContext;
 
@@ -243,9 +233,7 @@ void PVMFFileOutputInPort::ScheduleProcessData(PvmfSyncUtilDataQueue* aDataQueue
 ////////////////////////////////////////////////////////////////////////////
 void PVMFFileOutputInPort::SkipMediaDataComplete()
 {
-    iSkipStartTimestamp = 0;
     iSkipResumeTimestamp = 0;
-    iSkipRenderSkippedData = false;
     //Report completion to the session observer.
     PVMFCmdResp resp(iSkipMediaDataCmdId, iSkipMediaDataContext, PVMFSuccess);
     iNode->ReportCmdCompleteEvent(iSkipMediaDataSessionId, resp);
@@ -257,9 +245,7 @@ void PVMFFileOutputInPort::SkipMediaDataComplete()
 ////////////////////////////////////////////////////////////////////////////
 void PVMFFileOutputInPort::CancelSkipMediaData()
 {
-    iSkipStartTimestamp = 0;
     iSkipResumeTimestamp = 0;
-    iSkipRenderSkippedData = false;
     iDataQueue.CancelSkipMediaData();
 }
 
@@ -279,51 +265,54 @@ void PVMFFileOutputInPort::QueryInterface(const PVUuid &aUuid, OsclAny*&aPtr)
 ////////////////////////////////////////////////////////////////////////////
 bool PVMFFileOutputInPort::IsFormatSupported(PVMFFormatType aFmt)
 {
-    return ((aFmt == PVMF_AMR_IETF) ||
-            (aFmt == PVMF_AMR_IETF_COMBINED) ||
-            (aFmt == PVMF_AMR_IF2) ||
-            (aFmt == PVMF_ADTS) ||
-            (aFmt == PVMF_MPEG4_AUDIO) ||
-            (aFmt == PVMF_LATM) ||
-            (aFmt == PVMF_M4V) ||
-            (aFmt == PVMF_H263) ||
-            (aFmt == PVMF_H264_RAW) ||
-            (aFmt == PVMF_H264_MP4) ||
-            (aFmt == PVMF_H264) ||
-            (aFmt == PVMF_PCM) ||
-            (aFmt == PVMF_PCM8) ||
-            (aFmt == PVMF_PCM16) ||
-            (aFmt == PVMF_YUV420) ||
-            (aFmt == PVMF_3GPP_TIMEDTEXT));
+    if ((aFmt == PVMF_MIME_AMR_IETF) ||
+            (aFmt == PVMF_MIME_AMR) ||
+            (aFmt == PVMF_MIME_AMR_IF2) ||
+            (aFmt == PVMF_MIME_ADTS) ||
+            (aFmt == PVMF_MIME_MPEG4_AUDIO) ||
+            (aFmt == PVMF_MIME_LATM) ||
+            (aFmt == PVMF_MIME_M4V) ||
+            (aFmt == PVMF_MIME_H2631998) ||
+            (aFmt == PVMF_MIME_H2632000) ||
+            (aFmt == PVMF_MIME_H264_VIDEO_RAW) ||
+            (aFmt == PVMF_MIME_H264_VIDEO_MP4) ||
+            (aFmt == PVMF_MIME_H264_VIDEO) ||
+            (aFmt == PVMF_MIME_PCM) ||
+            (aFmt == PVMF_MIME_PCM8) ||
+            (aFmt == PVMF_MIME_PCM16) ||
+            (aFmt == PVMF_MIME_YUV420) ||
+            (aFmt == PVMF_MIME_3GPP_TIMEDTEXT))
+    {
+        return true;
+    }
+    return false;
 }
 
 ////////////////////////////////////////////////////////////////////////////
 void PVMFFileOutputInPort::FormatUpdated()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_INFO
-                    , (0, "PVMFFileOutputInPort::FormatUpdated %d", iFormat));
+                    , (0, "PVMFFileOutputInPort::FormatUpdated %s", iFormat.getMIMEStrPtr()));
     //set port name for datapath logging
-    int32 index = GetMediaTypeIndex(iFormat);
-    switch (index)
+    if (iFormat.isAudio())
     {
-        case PVMF_UNCOMPRESSED_AUDIO_FORMAT:
-        case PVMF_COMPRESSED_AUDIO_FORMAT:
-            SetName("FileOutIn(Audio)");
-            iDataQueue.SetName("FileOutIn(Audio)");
-            break;
-        case PVMF_UNCOMPRESSED_VIDEO_FORMAT:
-        case PVMF_COMPRESSED_VIDEO_FORMAT:
-            SetName("FileOutIn(Video)");
-            iDataQueue.SetName("FileOutIn(Video)");
-            break;
-        case PVMF_TEXT_FORMAT:
-            SetName("FileOutIn(Text)");
-            iDataQueue.SetName("FileOutIn(Text)");
-            break;
-        default:
-            SetName("FileOutIn");
-            iDataQueue.SetName("FileOutIn");
-            break;
+        SetName("FileOutIn(Audio)");
+        iDataQueue.SetName("FileOutIn(Audio)");
+    }
+    else if (iFormat.isVideo())
+    {
+        SetName("FileOutIn(Video)");
+        iDataQueue.SetName("FileOutIn(Video)");
+    }
+    else if (iFormat.isText())
+    {
+        SetName("FileOutIn(Text)");
+        iDataQueue.SetName("FileOutIn(Text)");
+    }
+    else
+    {
+        SetName("FileOutIn");
+        iDataQueue.SetName("FileOutIn");
     }
 }
 
@@ -353,55 +342,56 @@ OSCL_EXPORT_REF PVMFStatus PVMFFileOutputInPort::getParametersSync(PvmiMIOSessio
 
     if (pv_mime_strcmp(identifier, INPUT_FORMATS_CAP_QUERY) == 0)
     {
-        num_parameter_elements = 15;
-        status = AllocateKvp(parameters, INPUT_FORMATS_VALTYPE, num_parameter_elements);
+        num_parameter_elements = 16;
+        status = AllocateKvp(parameters, (PvmiKeyType)INPUT_FORMATS_VALTYPE, num_parameter_elements);
         if (status != PVMFSuccess)
         {
             LOG_ERR((0, "PVMFFileOutputInPort::GetOutputParametersSync: Error - AllocateKvp failed. status=%d", status));
         }
         else
         {
-            parameters[0].value.uint32_value = PVMF_AMR_IETF;
-            parameters[1].value.uint32_value = PVMF_AMR_IETF_COMBINED;
-            parameters[2].value.uint32_value = PVMF_ADTS;
-            parameters[3].value.uint32_value = PVMF_MPEG4_AUDIO;
-            parameters[4].value.uint32_value = PVMF_LATM;
-            parameters[5].value.uint32_value = PVMF_M4V;
-            parameters[6].value.uint32_value = PVMF_H263;
-            parameters[7].value.uint32_value = PVMF_PCM8;
-            parameters[8].value.uint32_value = PVMF_PCM16;
-            parameters[9].value.uint32_value = PVMF_YUV420;
-            parameters[10].value.uint32_value = PVMF_AMR_IF2;
-            parameters[11].value.uint32_value = PVMF_H264_RAW;
-            parameters[12].value.uint32_value = PVMF_H264_MP4;
-            parameters[13].value.uint32_value = PVMF_H264;
-            parameters[14].value.uint32_value = PVMF_3GPP_TIMEDTEXT;
+            parameters[0].value.pChar_value = (char*)PVMF_MIME_AMR_IETF;
+            parameters[1].value.pChar_value = (char*)PVMF_MIME_AMR;
+            parameters[2].value.pChar_value = (char*)PVMF_MIME_ADTS;
+            parameters[3].value.pChar_value = (char*)PVMF_MIME_MPEG4_AUDIO;
+            parameters[4].value.pChar_value = (char*)PVMF_MIME_LATM;
+            parameters[5].value.pChar_value = (char*)PVMF_MIME_M4V;
+            parameters[6].value.pChar_value = (char*)PVMF_MIME_H2631998;
+            parameters[7].value.pChar_value = (char*)PVMF_MIME_H2632000;
+            parameters[8].value.pChar_value = (char*)PVMF_MIME_PCM8;
+            parameters[9].value.pChar_value = (char*)PVMF_MIME_PCM16;
+            parameters[10].value.pChar_value = (char*)PVMF_MIME_YUV420;
+            parameters[11].value.pChar_value = (char*)PVMF_MIME_AMR_IF2;
+            parameters[12].value.pChar_value = (char*)PVMF_MIME_H264_VIDEO_RAW;
+            parameters[13].value.pChar_value = (char*)PVMF_MIME_H264_VIDEO_MP4;
+            parameters[14].value.pChar_value = (char*)PVMF_MIME_H264_VIDEO;
+            parameters[15].value.pChar_value = (char*)PVMF_MIME_3GPP_TIMEDTEXT;
         }
     }
     else if (pv_mime_strcmp(identifier, INPUT_FORMATS_CUR_QUERY) == 0)
     {
         num_parameter_elements = 1;
-        status = AllocateKvp(parameters, INPUT_FORMATS_VALTYPE, num_parameter_elements);
+        status = AllocateKvp(parameters, (PvmiKeyType)INPUT_FORMATS_VALTYPE, num_parameter_elements);
         if (status != PVMFSuccess)
         {
             LOG_ERR((0, "PVMFFileOutputInPort::GetOutputParametersSync: Error - AllocateKvp failed. status=%d", status));
         }
         else
         {
-            parameters[0].value.uint32_value = iFormat;
+            parameters[0].value.pChar_value = (char*)iFormat.getMIMEStrPtr();
         }
     }
     else if (pv_mime_strcmp(identifier, PVMF_FILE_OUTPUT_PORT_INPUT_FORMATS) == 0)
     {
         num_parameter_elements = 1;
-        status = AllocateKvp(parameters, PVMF_FILE_OUTPUT_PORT_INPUT_FORMATS_VALTYPE, num_parameter_elements);
+        status = AllocateKvp(parameters, (PvmiKeyType)PVMF_FILE_OUTPUT_PORT_INPUT_FORMATS_VALTYPE, num_parameter_elements);
         if (status != PVMFSuccess)
         {
             LOG_ERR((0, "PVMFFileOutputInPort::GetOutputParametersSync: Error - AllocateKvp failed. status=%d", status));
         }
         else
         {
-            parameters[0].value.int32_value = iFormat;
+            parameters[0].value.pChar_value = (char*)iFormat.getMIMEStrPtr();
         }
     }
 
@@ -519,11 +509,9 @@ PVMFFileOutputInPort::PVMFFileOutputInPort(int32 aTag
         iSkipMediaDataContext(NULL),
         iExtensionRefCount(0),
         iState(PORT_STATE_BUFFERING),
-        iFormat(PVMF_FORMAT_UNKNOWN),
+        iFormat(PVMF_MIME_FORMAT_UNKNOWN),
         iSkipAlreadyComplete(false),
-        iSkipStartTimestamp(0),
         iSkipResumeTimestamp(0),
-        iSkipRenderSkippedData(false),
         iLastDataTimestampSet(false),
         iLastDataTimestamp(0)
 {
@@ -596,8 +584,7 @@ void PVMFFileOutputInPort::Run()
                 // If skip media data is pending, complete it
                 if (iSkipMediaDataPending)
                 {
-                    if (datatailtime >= iSkipResumeTimestamp ||
-                            datatailtime >= iSkipStartTimestamp)
+                    if (datatailtime >= iSkipResumeTimestamp)
                     {
                         LOG_STACK_TRACE((0, "PVMFFileOutputInPort::Run In middle of skip so cancelling skip and sending out PVMFInfoEndOfData in response to EOS media cmd"));
                         // Cancel and complete the skip
@@ -625,8 +612,7 @@ void PVMFFileOutputInPort::Run()
                 // Check if it needs to be dropped when skipping
                 if (iSkipMediaDataPending)
                 {
-                    if (datatailtime < iSkipStartTimestamp ||
-                            (datatailtime < iSkipResumeTimestamp && iSkipRenderSkippedData == false))
+                    if (datatailtime < iSkipResumeTimestamp)
                     {
                         // Data needs to be dropped
                         return;
@@ -697,10 +683,10 @@ PVMFStatus PVMFFileOutputInPort::VerifyAndSetParameter(PvmiKvp* aKvp, bool aSetP
 
     if (pv_mime_strcmp(aKvp->key, INPUT_FORMATS_VALTYPE) == 0)
     {
-        if (IsFormatSupported(aKvp->value.uint32_value))
+        if (IsFormatSupported(aKvp->value.pChar_value))
         {
             if (aSetParam)
-                iFormat = aKvp->value.uint32_value;
+                iFormat = aKvp->value.pChar_value;
             return PVMFSuccess;
         }
         else
@@ -710,10 +696,10 @@ PVMFStatus PVMFFileOutputInPort::VerifyAndSetParameter(PvmiKvp* aKvp, bool aSetP
     }
     else if (pv_mime_strcmp(aKvp->key, PVMF_FILE_OUTPUT_PORT_INPUT_FORMATS_VALTYPE) == 0)
     {
-        if (IsFormatSupported(aKvp->value.int32_value))
+        if (IsFormatSupported(aKvp->value.pChar_value))
         {
             if (aSetParam)
-                iFormat = aKvp->value.int32_value;
+                iFormat = aKvp->value.pChar_value;
             return PVMFSuccess;
         }
         else

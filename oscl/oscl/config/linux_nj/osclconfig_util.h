@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,8 @@
 #include <sys/time.h> // timeval
 
 #define OSCL_CLOCK_HAS_DRIFT_CORRECTION 0
-
-
+#define OSCL_HAS_SYMBIAN_TIMERS 0
+#define OSCL_HAS_SYMBIAN_MATH   0
 
 #define OSCL_RAND_MAX           RAND_MAX
 

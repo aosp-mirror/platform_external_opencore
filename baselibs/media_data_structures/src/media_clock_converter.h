@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,8 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-//                                                                              //
-//  File: media_clock_converter.h                                               //
-//                                                                              //
-//////////////////////////////////////////////////////////////////////////////////
-
-/// -*- c++ -*-
-// = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-
-//               M E D I A   C L O C K   C O N V E R T E R   C L A S S
-
-// = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-
-
 #ifndef __MEDIA_CLOCK_CONVERTER_H
 #define __MEDIA_CLOCK_CONVERTER_H
-
-// - - Inclusion - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 #include "oscl_base.h"
 

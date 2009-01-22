@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,13 +27,8 @@ Permission to distribute, modify and use this file under the standard license
 terms listed above has been obtained from the copyright holder.
 ****************************************************************************************/
 /*
-------------------------------------------------------------------------------
-
-
 
  Filename: /audio/gsm_amr/c/include/mac_32.h
-
-     Date: 01/18/2002
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
@@ -47,6 +42,7 @@ terms listed above has been obtained from the copyright holder.
  Description: Inlined the functions from mac_32.cpp. A performance improvement
               change.
 
+ Who:                       Date:
  Description:
 ------------------------------------------------------------------------------
  INCLUDE DESCRIPTION

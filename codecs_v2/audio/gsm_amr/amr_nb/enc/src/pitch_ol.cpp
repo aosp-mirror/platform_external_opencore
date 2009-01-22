@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,60 +34,6 @@ terms listed above has been obtained from the copyright holder.
  Pathname: ./audio/gsm-amr/c/src/pitch_ol.c
  Funtions: Pitch_ol
            Lag_max
-
-     Date: 06/15/2000
-------------------------------------------------------------------------------
- REVISION HISTORY
-
- Description: Placed into PV template and began optimization.
-
- Description: Made changes based on review meeting.
-
- Description: Fixed bug in Pitch_ol that causes function to not be bit-exact
-          with the original version. This was done by adding an extra
-          call to mult after the first IF statement when comparing the
-          three section maximums (towards the end of the function). Fixed
-          tabs. Synced-up Lag_max_wrapper with template.
-
- Description: Synchronized file with UMTS version 3.2.0. Updated coding
-              template. Removed unnecessary include file.
-
- Description: Added code that compares max1 to THRESHOLD value prior to
-              comparison with max3.
-
- Description: Replaced basic_op.h and oper_32b.h with the header files of the
-              math functions used in this file. Fixed typecasting issue with
-              the TI C compiler.
-
- Description: Made the following changes per comments from Phase 2/3 review:
-              1. Defined one local variable per line.
-              2. Added more comments to the code.
-
- Description: Passing in pointer to overflow flag for EPOC compatibility
-
- Description:  For Lag_max() and Pitch_ol()
-              1. Eliminated unused include files.
-              2. Replaced array addressing by pointers
-              3. Eliminated math operations that unnecessary checked for
-                 saturation, in some cases this by shifting before adding and
-                 in other cases by evaluating the operands
-              4. Unrolled loops to speed up processing, use decrement loops
-              5. Eliminated if-else statements for sign extension when
-                 right-shifting
-              6. Replaced for-loop with memcpy()
-
- Description:  Replaced OSCL mem type functions and eliminated include
-               files that now are chosen by OSCL definitions
-
- Description:  Replaced "int" and/or "char" with OSCL defined types.
-
- Description: Added l_add.h in Include section.
-
- Description: Using intrinsics from fxp_arithmetic.h .
-
- Description: Replacing fxp_arithmetic.h with basic_op.h.
-
- Description:
 
 ------------------------------------------------------------------------------
  MODULE DESCRIPTION
@@ -1083,26 +1029,32 @@ Word16 Pitch_ol(       /* o   : open loop pitch lag                         */
     if (t0 == MAX_32)     /* Test for overflow */
     {
 
-        for (i = (pit_max + L_frame + 1) >> 1; i != 0; i--)
+        for (i = (pit_max + L_frame) >> 1; i != 0; i--)
         {
             *(scal_sig++) = (Word16)(((Word32) * (p_signal++) >> 3));
             *(scal_sig++) = (Word16)(((Word32) * (p_signal++) >> 3));
         }
 
-        *(scal_sig++) = (Word16)(((Word32) * (p_signal++) >> 3));
+        if ((pit_max + L_frame) & 1)
+        {
+            *(scal_sig) = (Word16)(((Word32) * (p_signal) >> 3));
+        }
 
         scal_fac = 3;
     }
     else if (t0 < (Word32)1048576L)
         /* if (t0 < 2^20) */
     {
-        for (i = (pit_max + L_frame + 1) >> 1; i != 0; i--)
+        for (i = (pit_max + L_frame) >> 1; i != 0; i--)
         {
             *(scal_sig++) = (Word16)(((Word32) * (p_signal++) << 3));
             *(scal_sig++) = (Word16)(((Word32) * (p_signal++) << 3));
         }
 
-        *(scal_sig++) = (Word16)(((Word32) * (p_signal++) << 3));
+        if ((pit_max + L_frame) & 1)
+        {
+            *(scal_sig) = (Word16)(((Word32) * (p_signal) << 3));
+        }
         scal_fac = -3;
     }
     else

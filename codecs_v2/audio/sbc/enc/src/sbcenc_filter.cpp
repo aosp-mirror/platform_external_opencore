@@ -1,18 +1,20 @@
-/***************************************************************************
- * This Software has been authored by or modified by PacketVideo Corporation.
- * Title and ownership, including all intellectual
- * property rights in and to the Software shall remain with PacketVideo
- * Corporation. The Software is protected by the patent and copyright laws of
- * the United States and by international treaty.
+/* ------------------------------------------------------------------
+ * Copyright (C) 1998-2009 PacketVideo
  *
- * No part of this software may be modified, reproduced or distributed without
- * the prior written consent of PacketVideo Corporation.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * Copyright (c) 1998, 2007, PacketVideo Corporation. All Rights Reserved.
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * Release: NJ_SRCHREL_071018
- *
- ***************************************************************************/
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied.
+ * See the License for the specific language governing permissions
+ * and limitations under the License.
+ * -------------------------------------------------------------------
+ */
 #include "oscl_types.h"
 #include "sbc.h"
 #include "sbcenc_filter.h"
@@ -29,38 +31,38 @@
  */
 
 
-static const Word32  sbc_proto_4_40[40] = 
+static const Word32  sbc_proto_4_40[40] =
 {
-	0 ,			576115 ,    1601898 ,   2935298 , 
-	4120164,	4179059 ,   2003406 ,  -3285782 , 
-	11718563, 	21945682 ,	31005088 ,  34567968 , 
-	27784982, 	6584670 ,  -30947094 , -83372136 , 
-	145592176,	209366608 , 264824096 , 302610720 ,	
-	316018688,	302610720 , 264824096 , 209366608 , 
-   -145592176, -83372136 , -30947094 ,  6584670 , 
-	27784982, 	34567968 ,  31005088 ,  21945682 , 
-   -11718563,  -3285782 ,   2003406 ,   4179059 , 
-	4120164, 	2935298 ,   1601898 ,   576115 
+    0 ,			576115 ,    1601898 ,   2935298 ,
+    4120164,	4179059 ,   2003406 ,  -3285782 ,
+    11718563, 	21945682 ,	31005088 ,  34567968 ,
+    27784982, 	6584670 ,  -30947094 , -83372136 ,
+    145592176,	209366608 , 264824096 , 302610720 ,
+    316018688,	302610720 , 264824096 , 209366608 ,
+    -145592176, -83372136 , -30947094 ,  6584670 ,
+    27784982, 	34567968 ,  31005088 ,  21945682 ,
+    -11718563,  -3285782 ,   2003406 ,   4179059 ,
+    4120164, 	2935298 ,   1601898 ,   576115
 };
 
-static const Word32 sbc_proto_8_80[80] = 
+static const Word32 sbc_proto_8_80[80] =
 {
-	0 ,			168122 ,    368569 ,    595519 ,    884677 , 
-	1223985 ,   1585274 ,   1915252 ,   2160181 ,   2258852 ,	
-	2141627 , 	1735771 ,   968681 ,   -191991 ,   -1771385 , 
-   -3755063 , 	6076836 ,   8621515 ,   11229669 ,  13687238 ,
-	15733030 , 	17077392 ,  17417002 ,  16448018 ,  13891192 , 
-	9510749 , 	3139712 ,  -5278279 ,  -15720018 , -28035266 ,
-   -41956612 , -57109432 ,  73013312 ,  89104208 ,  104770776 , 
-	119396536 , 132354304,  143091584 , 151132928 , 156111152 ,
-	157791808 , 156111152 , 151132928 , 143091584 , 132354304 , 
-	119396536 , 104770776 , 89104208 , -73013312 , -57109432 ,	
-   -41956612 , -28035266 , -15720018 , -5278279 ,   3139712 , 
-	9510749 ,   13891192 ,  16448018 ,  17417002 ,  17077392 ,
-	15733030 , 	13687238 ,  11229669 ,  8621515 ,  -6076836 , 
-   -3755063 ,  -1771385 ,  -191991 ,    968681 ,    1735771 ,	
-	2141627 ,   2258852 ,   2160181 ,   1915252 ,   1585274 , 
-	1223985 , 	884677 ,    595519 ,    368569 ,    168122
+    0 ,			168122 ,    368569 ,    595519 ,    884677 ,
+    1223985 ,   1585274 ,   1915252 ,   2160181 ,   2258852 ,
+    2141627 , 	1735771 ,   968681 ,   -191991 ,   -1771385 ,
+    -3755063 , 	6076836 ,   8621515 ,   11229669 ,  13687238 ,
+    15733030 , 	17077392 ,  17417002 ,  16448018 ,  13891192 ,
+    9510749 , 	3139712 ,  -5278279 ,  -15720018 , -28035266 ,
+    -41956612 , -57109432 ,  73013312 ,  89104208 ,  104770776 ,
+    119396536 , 132354304,  143091584 , 151132928 , 156111152 ,
+    157791808 , 156111152 , 151132928 , 143091584 , 132354304 ,
+    119396536 , 104770776 , 89104208 , -73013312 , -57109432 ,
+    -41956612 , -28035266 , -15720018 , -5278279 ,   3139712 ,
+    9510749 ,   13891192 ,  16448018 ,  17417002 ,  17077392 ,
+    15733030 , 	13687238 ,  11229669 ,  8621515 ,  -6076836 ,
+    -3755063 ,  -1771385 ,  -191991 ,    968681 ,    1735771 ,
+    2141627 ,   2258852 ,   2160181 ,   1915252 ,   1585274 ,
+    1223985 , 	884677 ,    595519 ,    368569 ,    168122
 };
 
 /*$F
@@ -81,11 +83,11 @@ static const Word32 sbc_proto_8_80[80] =
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 //Q30 format for the table
-static const Word32 M_8x16[11]=
+static const Word32 M_8x16[11] =
 {
-     759250112,  410903200,  992008064,  892783680, 
-     596539008,  209476640, 1053110144, -209476640, 
-   -1053110144, -596539008,  892783680
+    759250112,  410903200,  992008064,  892783680,
+    596539008,  209476640, 1053110144, -209476640,
+    -1053110144, -596539008,  892783680
 };
 
 /*$F
@@ -145,200 +147,200 @@ static const Word32 M_8x16[11]=
  ===============================================================================
  */
 
-void analysis_filter_4 (analysis_filter_t *filter, sbc_t *sbc)
+void analysis_filter_4(analysis_filter_t *filter, sbc_t *sbc)
 {
-    Int *ptr,*ptr1,t_var2, t_var1, arr_tmp[16], ch, blk, i, *X_ptr;
+    Int *ptr, *ptr1, t_var2, t_var1, arr_tmp[16], ch, blk, i, *X_ptr;
     Int  t_var4, tmp1, tmp2, tmp3, tmp4;
-	const Word32 *ptr2;	
-	const Word32 *ptr3;	
-	    
-	for (ch = 0; ch < sbc->channels; ch++)
-    {	
-		X_ptr = &filter->X[ch][60];
-		for(blk = 0; blk < sbc->blocks; blk++)
-		{             
-			ptr1 = X_ptr;          
-            		
-		    ptr2 = &sbc_proto_4_40[0];
-			ptr = &arr_tmp[0];
-            
+    const Word32 *ptr2;
+    const Word32 *ptr3;
+
+    for (ch = 0; ch < sbc->channels; ch++)
+    {
+        X_ptr = &filter->X[ch][60];
+        for (blk = 0; blk < sbc->blocks; blk++)
+        {
+            ptr1 = X_ptr;
+
+            ptr2 = &sbc_proto_4_40[0];
+            ptr = &arr_tmp[0];
+
             for (i = 4; i != 0; i --)
             {
                 tmp1 = ptr2[0];
-				tmp2 = ptr2[1];	
-				tmp3 = ptr1[0];
-				tmp4 = ptr1[1];
-				
-				t_var2 = FMULT(tmp1 , tmp3);
-				t_var1 = FMULT(tmp2 , tmp4);
-				
-				tmp1 = ptr2[8];
-				tmp2 = ptr2[9];
-				tmp3 = ptr1[8];
-				tmp4 = ptr1[9];
+                tmp2 = ptr2[1];
+                tmp3 = ptr1[0];
+                tmp4 = ptr1[1];
 
-				t_var2 += FMULT(tmp1 , tmp3);
+                t_var2 = FMULT(tmp1 , tmp3);
+                t_var1 = FMULT(tmp2 , tmp4);
+
+                tmp1 = ptr2[8];
+                tmp2 = ptr2[9];
+                tmp3 = ptr1[8];
+                tmp4 = ptr1[9];
+
+                t_var2 += FMULT(tmp1 , tmp3);
                 t_var1 += FMULT(tmp2 , tmp4);
-				
-				tmp1 = ptr2[16];
-				tmp2 = ptr2[17];
-				tmp3 = ptr1[16];
-				tmp4 = ptr1[17];
 
-				t_var2 += FMULT(tmp1 , tmp3);
-    			t_var1 += FMULT(tmp2 , tmp4);
-				
-				tmp1 = ptr2[24];
-				tmp2 = ptr2[25];
-				tmp3 = ptr1[24];
-				tmp4 = ptr1[25];
+                tmp1 = ptr2[16];
+                tmp2 = ptr2[17];
+                tmp3 = ptr1[16];
+                tmp4 = ptr1[17];
 
-				t_var2 += FMULT(tmp1 , tmp3);
-				t_var1 += FMULT(tmp2 , tmp4);
-				
-				tmp1 = ptr2[32];
-				tmp2 = ptr2[33];
-				tmp3 = ptr1[32];
-				tmp4 = ptr1[33];
+                t_var2 += FMULT(tmp1 , tmp3);
+                t_var1 += FMULT(tmp2 , tmp4);
 
-				t_var2 += FMULT(tmp1 , tmp3);
-				t_var1 += FMULT(tmp2 , tmp4);	
-				
-				*ptr++ = t_var2;
-				*ptr++ = t_var1;
-				
-				ptr2 +=2;
-				ptr1 +=2;				
-								
-             }
+                tmp1 = ptr2[24];
+                tmp2 = ptr2[25];
+                tmp3 = ptr1[24];
+                tmp4 = ptr1[25];
 
-			ptr -= 8;
-			ptr3 = M_8x16;
-            
+                t_var2 += FMULT(tmp1 , tmp3);
+                t_var1 += FMULT(tmp2 , tmp4);
+
+                tmp1 = ptr2[32];
+                tmp2 = ptr2[33];
+                tmp3 = ptr1[32];
+                tmp4 = ptr1[33];
+
+                t_var2 += FMULT(tmp1 , tmp3);
+                t_var1 += FMULT(tmp2 , tmp4);
+
+                *ptr++ = t_var2;
+                *ptr++ = t_var1;
+
+                ptr2 += 2;
+                ptr1 += 2;
+
+            }
+
+            ptr -= 8;
+            ptr3 = M_8x16;
+
             tmp1 = ptr[0] + ptr[4];
             tmp2 = ptr[1] + ptr[3];
             tmp3 = ptr[5] - ptr[7];
 
-            t_var4  = FMULT_1 (tmp1, *ptr3++);
+            t_var4  = FMULT_1(tmp1, *ptr3++);
             t_var2  = ptr[2] + t_var4;
             t_var4  = ptr[2] - t_var4;
 
-            tmp4     = FMULT_1 (tmp3, *ptr3  );
-            tmp1     = FMULT_1 (tmp2, *ptr3++);
-            tmp4    += FMULT_1 (tmp2, *ptr3  );
-            tmp1    -= FMULT_1 (tmp3, *ptr3  );
-            
+            tmp4     = FMULT_1(tmp3, *ptr3);
+            tmp1     = FMULT_1(tmp2, *ptr3++);
+            tmp4    += FMULT_1(tmp2, *ptr3);
+            tmp1    -= FMULT_1(tmp3, *ptr3);
+
             sbc->sb_sample[blk][ch][0]  = t_var2 + tmp4;
             sbc->sb_sample[blk][ch][3]  = t_var2 - tmp4;
             sbc->sb_sample[blk][ch][1]  = t_var4 + tmp1;
             sbc->sb_sample[blk][ch][2]  = t_var4 - tmp1;
 
-			X_ptr -= 4;			
+            X_ptr -= 4;
         }
     }
-	
-	tmp2 = 64 - (sbc->blocks << 2);
-	for (ch = 0; ch < sbc->channels; ch++) 
-	{	
-		ptr =  &filter->X[ch][tmp2];
-		ptr1 = &filter->X[ch][64];
 
-		oscl_memmove(ptr1, ptr, 36 * sizeof(Int));		
-	}	
-	
+    tmp2 = 64 - (sbc->blocks << 2);
+    for (ch = 0; ch < sbc->channels; ch++)
+    {
+        ptr =  &filter->X[ch][tmp2];
+        ptr1 = &filter->X[ch][64];
+
+        oscl_memmove(ptr1, ptr, 36 * sizeof(Int));
+    }
+
 }
 
-void analysis_filter_8 (analysis_filter_t *filter, sbc_t *sbc)
-{     
-    Int *ptr,*ptr1,t_var2, t_var1, arr_tmp[16], ch, blk, i, *X_ptr;
+void analysis_filter_8(analysis_filter_t *filter, sbc_t *sbc)
+{
+    Int *ptr, *ptr1, t_var2, t_var1, arr_tmp[16], ch, blk, i, *X_ptr;
     Int t_var3;
     Int t_var4;
     Int t_var5;
     Int t_var6;
-	Int tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8;
-	const Word32 *ptr2;	
-	const Word32 *ptr3;	
-	
-    for(ch = 0; ch < sbc->channels; ch++)
+    Int tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8;
+    const Word32 *ptr2;
+    const Word32 *ptr3;
+
+    for (ch = 0; ch < sbc->channels; ch++)
     {
         X_ptr = &filter->X[ch][120];
-		for(blk = 0; blk < sbc->blocks; blk++)
-        {         
-			ptr = X_ptr;
+        for (blk = 0; blk < sbc->blocks; blk++)
+        {
+            ptr = X_ptr;
 
-			/* Windowing by 80 coefficients */
-			ptr1=&arr_tmp[0];
-			ptr2=&sbc_proto_8_80[0];
+            /* Windowing by 80 coefficients */
+            ptr1 = &arr_tmp[0];
+            ptr2 = &sbc_proto_8_80[0];
 
-			/* Partial calculation */
-			for(i = 8; i != 0; i--)
-			{
+            /* Partial calculation */
+            for (i = 8; i != 0; i--)
+            {
 
-				tmp1 = ptr2[0];
-				tmp2 = ptr2[1];
-				tmp3 = ptr[0];
-				tmp4 = ptr[1];	
-				
-				t_var2  = FMULT(tmp1 , tmp3);
-				t_var1  = FMULT(tmp2 , tmp4);
+                tmp1 = ptr2[0];
+                tmp2 = ptr2[1];
+                tmp3 = ptr[0];
+                tmp4 = ptr[1];
 
-				tmp1 = ptr2[16];
-				tmp2 = ptr2[17];
-				tmp3 = ptr[16];
-				tmp4 = ptr[17];
+                t_var2  = FMULT(tmp1 , tmp3);
+                t_var1  = FMULT(tmp2 , tmp4);
 
-				t_var2 += FMULT (tmp1 , tmp3);
-                t_var1 += FMULT (tmp2 , tmp4);
+                tmp1 = ptr2[16];
+                tmp2 = ptr2[17];
+                tmp3 = ptr[16];
+                tmp4 = ptr[17];
 
-				tmp1 = ptr2[32];
-				tmp2 = ptr2[33];
-				tmp3 = ptr[32];
-				tmp4 = ptr[33];
+                t_var2 += FMULT(tmp1 , tmp3);
+                t_var1 += FMULT(tmp2 , tmp4);
 
-				t_var2 += FMULT (tmp1 , tmp3);
-                t_var1 += FMULT (tmp2 , tmp4);
+                tmp1 = ptr2[32];
+                tmp2 = ptr2[33];
+                tmp3 = ptr[32];
+                tmp4 = ptr[33];
 
-				tmp1 = ptr2[48];
-				tmp2 = ptr2[49];
-				tmp3 = ptr[48];
-				tmp4 = ptr[49];
+                t_var2 += FMULT(tmp1 , tmp3);
+                t_var1 += FMULT(tmp2 , tmp4);
 
-				t_var2 += FMULT (tmp1 , tmp3);
-                t_var1 += FMULT (tmp2 , tmp4);
+                tmp1 = ptr2[48];
+                tmp2 = ptr2[49];
+                tmp3 = ptr[48];
+                tmp4 = ptr[49];
 
-				tmp1 = ptr2[64];
-				tmp2 = ptr2[65];
-				tmp3 = ptr[64];
-				tmp4 = ptr[65];
+                t_var2 += FMULT(tmp1 , tmp3);
+                t_var1 += FMULT(tmp2 , tmp4);
 
-				t_var2 += FMULT (tmp1 , tmp3);
-                t_var1 += FMULT (tmp2 , tmp4);
+                tmp1 = ptr2[64];
+                tmp2 = ptr2[65];
+                tmp3 = ptr[64];
+                tmp4 = ptr[65];
 
-				ptr2 += 2;
-				ptr +=2 ;
+                t_var2 += FMULT(tmp1 , tmp3);
+                t_var1 += FMULT(tmp2 , tmp4);
 
-				*ptr1++=t_var2;
-				*ptr1++=t_var1;
-			}
-			/* Calculate 8 subband samples by Matrixing */
-			ptr=& sbc->sb_sample[blk][ch][0];
-			ptr3 = M_8x16;
-			ptr1-=16;			
-		
+                ptr2 += 2;
+                ptr += 2 ;
+
+                *ptr1++ = t_var2;
+                *ptr1++ = t_var1;
+            }
+            /* Calculate 8 subband samples by Matrixing */
+            ptr = & sbc->sb_sample[blk][ch][0];
+            ptr3 = M_8x16;
+            ptr1 -= 16;
+
             tmp1 = ptr1[ 0] + ptr1[ 8];
             tmp3 = ptr1[ 2] + ptr1[ 6];
             tmp6 = ptr1[10] - ptr1[14];
 
-            
-            t_var5  = FMULT_1( tmp1, *ptr3++);
+
+            t_var5  = FMULT_1(tmp1, *ptr3++);
             t_var2  = ptr1[4] + t_var5 ;
             t_var5  = ptr1[4] - t_var5;
             t_var3  = t_var2;
             t_var6  = t_var5;
-            tmp8    = FMULT_1( tmp6, *ptr3  );
-            tmp1    = FMULT_1( tmp3, *ptr3++);
-            tmp8   += FMULT_1( tmp3, *ptr3  );
-            tmp1   -= FMULT_1( tmp6, *ptr3++);
+            tmp8    = FMULT_1(tmp6, *ptr3);
+            tmp1    = FMULT_1(tmp3, *ptr3++);
+            tmp8   += FMULT_1(tmp3, *ptr3);
+            tmp1   -= FMULT_1(tmp6, *ptr3++);
             t_var2 += tmp8;
             t_var3 -= tmp8;
             t_var5 += tmp1;
@@ -346,53 +348,53 @@ void analysis_filter_8 (analysis_filter_t *filter, sbc_t *sbc)
 
             tmp2 = ptr1[ 1] + ptr1[ 7];
             tmp5 = ptr1[ 9] - ptr1[15];
-            
-            t_var1  = -FMULT_1( tmp2, *ptr3  );
-            t_var4  = -FMULT_1( tmp5, *ptr3++);
-            t_var1 -=  FMULT_1( tmp5, *ptr3  );
-            t_var4 +=  FMULT_1( tmp2, *ptr3++);
+
+            t_var1  = -FMULT_1(tmp2, *ptr3);
+            t_var4  = -FMULT_1(tmp5, *ptr3++);
+            t_var1 -=  FMULT_1(tmp5, *ptr3);
+            t_var4 +=  FMULT_1(tmp2, *ptr3++);
 
             tmp7 = ptr1[11] - ptr1[13];
             tmp4 = ptr1[ 3] + ptr1[ 5];
-            
-            t_var1 -=  FMULT_1( tmp7, *ptr3  );
-            t_var4 -=  FMULT_1( tmp4, *ptr3++);
-            t_var1 -=  FMULT_1( tmp4, *ptr3  );
-            t_var4 +=  FMULT_1( tmp7, *ptr3++);
-            
-            ptr[0]  = t_var2 - t_var1;			
-            ptr[7]  = t_var2 + t_var1;			                            
-            ptr[3]  = t_var3 - t_var4;			
-            ptr[4]  = t_var3 + t_var4;			                
-            
 
-            t_var1  = -FMULT_1( tmp2, *ptr3  );
-            t_var4  =  FMULT_1( tmp5, *ptr3++);
-            t_var1 -=  FMULT_1( tmp5, *ptr3  );
-            t_var4 -=  FMULT_1( tmp2, *ptr3++);
-            
-            t_var1 -=  FMULT_1( tmp7, *ptr3  );
-            t_var4 +=  FMULT_1( tmp4, *ptr3++);
-            t_var1 -=  FMULT_1( tmp4, *ptr3  );
-            t_var4 -=  FMULT_1( tmp7, *ptr3  );
-                        
-            ptr[1]  = t_var5 - t_var1;			
-            ptr[6]  = t_var5 + t_var1;			                            
-            ptr[2]  = t_var6 - t_var4;			
-            ptr[5]  = t_var6 + t_var4;		
-            
-            
-			X_ptr -= 8;
-		}
-	}
+            t_var1 -=  FMULT_1(tmp7, *ptr3);
+            t_var4 -=  FMULT_1(tmp4, *ptr3++);
+            t_var1 -=  FMULT_1(tmp4, *ptr3);
+            t_var4 +=  FMULT_1(tmp7, *ptr3++);
 
-	tmp2 = 128 - (sbc->blocks << 3);
-	for (ch = 0; ch < sbc->channels; ch++) 
-	{	
-		ptr =  &filter->X[ch][tmp2];
-		ptr1 = &filter->X[ch][128];
+            ptr[0]  = t_var2 - t_var1;
+            ptr[7]  = t_var2 + t_var1;
+            ptr[3]  = t_var3 - t_var4;
+            ptr[4]  = t_var3 + t_var4;
 
-		oscl_memmove(ptr1, ptr, 72 * sizeof(Int));		
-	}
+
+            t_var1  = -FMULT_1(tmp2, *ptr3);
+            t_var4  =  FMULT_1(tmp5, *ptr3++);
+            t_var1 -=  FMULT_1(tmp5, *ptr3);
+            t_var4 -=  FMULT_1(tmp2, *ptr3++);
+
+            t_var1 -=  FMULT_1(tmp7, *ptr3);
+            t_var4 +=  FMULT_1(tmp4, *ptr3++);
+            t_var1 -=  FMULT_1(tmp4, *ptr3);
+            t_var4 -=  FMULT_1(tmp7, *ptr3);
+
+            ptr[1]  = t_var5 - t_var1;
+            ptr[6]  = t_var5 + t_var1;
+            ptr[2]  = t_var6 - t_var4;
+            ptr[5]  = t_var6 + t_var4;
+
+
+            X_ptr -= 8;
+        }
+    }
+
+    tmp2 = 128 - (sbc->blocks << 3);
+    for (ch = 0; ch < sbc->channels; ch++)
+    {
+        ptr =  &filter->X[ch][tmp2];
+        ptr1 = &filter->X[ch][128];
+
+        oscl_memmove(ptr1, ptr, 72 * sizeof(Int));
+    }
 
 }

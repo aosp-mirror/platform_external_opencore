@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*********************************************************************************/
 /*
 	This PVA_FF_SampleEntry Class is the base class for the HinstSampleEntry,
 	PVA_FF_VisualSampleEntry, PVA_FF_AudioSampleEntry. and PVA_FF_MpegSampleEntry classes.
@@ -39,7 +38,6 @@ class PVA_FF_FileTypeAtom : public PVA_FF_Atom
         {
             if (_pCompatibleBrandVec != NULL)
             {
-                //OSCL_DELETE((_pCompatibleBrandVec));
                 PV_MP4_FF_TEMPLATED_DELETE(NULL, uint32VecType, Oscl_Vector, _pCompatibleBrandVec);
             }
         }
@@ -66,6 +64,4 @@ class PVA_FF_FileTypeAtom : public PVA_FF_Atom
         Oscl_Vector<uint32, OsclMemAllocator>* _pCompatibleBrandVec;
 };
 
-
 #endif
-

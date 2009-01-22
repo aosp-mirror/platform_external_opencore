@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
+/*********************************************************************************/
 /*  Filename: fastquant_inline.h														*/
 /*  Description: Implementation for in-line functions used in dct.cpp			*/
 /*  Modified:																	*/
@@ -25,7 +26,7 @@
 #include "mp4def.h"
 #include "oscl_base_macros.h"
 
-#if !defined(PV_ARM_GCC) && defined(__arm__) /* ARM GNU COMPILER  */
+#if !defined(PV_ARM_GCC_V5) && !defined(PV_ARM_GCC_V4) /* ARM GNU COMPILER  */
 
 __inline int32 aan_scale(int32 q_value, int32 coeff, int32 round, int32 QPdiv2)
 {
@@ -423,7 +424,7 @@ __inline int32 coeff_dequant_mpeg_intra(int32 q_value, int32 tmp)
     return q_value;
 }
 
-#elif defined(PV_ARM_GCC) && defined(__arm__) /* ARM GNU COMPILER  */
+#elif ( defined(PV_ARM_GCC_V4) || defined(PV_ARM_GCC_V5) ) /* ARM GNU COMPILER  */
 
 __inline int32 aan_scale(int32 q_value, int32 coeff,
                          int32 round, int32 QPdiv2)

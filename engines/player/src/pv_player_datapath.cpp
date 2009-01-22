@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@
 //
 PVPlayerDatapath::PVPlayerDatapath() :
         OsclTimerObject(OsclActiveObject::EPriorityNominal, "PVPlayerDatapath"),
+        iState(PVPDP_IDLE),
         iSourceNode(NULL), iSourceSessionId(0),
         iDecNode(NULL), iDecSessionId(0),
         iSinkNode(NULL), iSinkSessionId(0),
@@ -39,11 +40,10 @@ PVPlayerDatapath::PVPlayerDatapath() :
         iErrorObserver(NULL),
         iInfoObserver(NULL),
         iContext(NULL),
-        iSourceDecFormatType(PVMF_FORMAT_UNKNOWN),
-        iDecSinkFormatType(PVMF_FORMAT_UNKNOWN),
-        iSourceSinkFormatType(PVMF_FORMAT_UNKNOWN),
+        iSourceDecFormatType(PVMF_MIME_FORMAT_UNKNOWN),
+        iDecSinkFormatType(PVMF_MIME_FORMAT_UNKNOWN),
+        iSourceSinkFormatType(PVMF_MIME_FORMAT_UNKNOWN),
         iSourceTrackInfo(NULL),
-        iState(PVPDP_IDLE),
         iDatapathConfig(CONFIG_NONE),
         iErrorCondition(false),
         iErrorOccurredDuringErrorCondition(false)
@@ -302,17 +302,15 @@ void PVPlayerDatapath::Run()
             if (iDatapathConfig == CONFIG_DEC)
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerDatapath::Run() Calling Init() on dec node"));
-                leavecode = 0;
-                OSCL_TRY(leavecode, cmdid = iDecNode->Init(iDecSessionId));
-                OSCL_FIRST_CATCH_ANY(leavecode,
-                                     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::Run() Init on iDecNode did a leave"));
-                                     iState = PVPDP_ERROR; RunIfNotReady(); break);
-                if (cmdid != -1)
+                leavecode = IssueDatapathInit(iDecNode, iDecSessionId, cmdid);
+
+                if (cmdid != -1 && leavecode == 0)
                 {
                     ++iPendingCmds;
                 }
                 else
                 {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::Run() Init on iDecNode did a leave or failed"));
                     iState = PVPDP_ERROR;
                     RunIfNotReady();
                     break;
@@ -320,17 +318,15 @@ void PVPlayerDatapath::Run()
             }
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerDatapath::Run() Calling Init() on sink node"));
-            leavecode = 0;
-            OSCL_TRY(leavecode, cmdid = iSinkNode->Init(iSinkSessionId));
-            OSCL_FIRST_CATCH_ANY(leavecode,
-                                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::Run() Init on iSinkNode did a leave"));
-                                 iState = PVPDP_ERROR; RunIfNotReady(); break);
-            if (cmdid != -1)
+            leavecode = IssueDatapathInit(iSinkNode, iSinkSessionId, cmdid);
+
+            if (cmdid != -1 && leavecode == 0)
             {
                 ++iPendingCmds;
             }
             else
             {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::Run() Init on iSinkNode did a leave"));
                 iState = PVPDP_ERROR;
                 RunIfNotReady();
                 break;
@@ -345,18 +341,17 @@ void PVPlayerDatapath::Run()
             iPendingCmds = 0;
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerDatapath::Run() Calling RequestPort() on source node"));
-            leavecode = 0;
-            OSCL_TRY(leavecode, cmdid = iSourceNode->RequestPort(iSourceSessionId, iSourceTrackInfo->getPortTag(),
-                                        &(iSourceTrackInfo->getTrackMimeType()), (OsclAny*)iSourceNode));
-            OSCL_FIRST_CATCH_ANY(leavecode,
-                                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::Run() RequestPort on iSourceNode did a leave"));
-                                 iState = PVPDP_ERROR; RunIfNotReady(); break);
-            if (cmdid != -1)
+            leavecode = IssueDatapathRequestPort(iSourceNode, iSourceSessionId, iSourceTrackInfo->getPortTag(),
+                                                 &(iSourceTrackInfo->getTrackMimeType()),
+                                                 (OsclAny*)iSourceNode, cmdid);
+
+            if (cmdid != -1 && leavecode == 0)
             {
                 ++iPendingCmds;
             }
             else
             {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::Run() RequestPort on iSourceNode did a leave or failed"));
                 iState = PVPDP_ERROR;
                 RunIfNotReady();
                 break;
@@ -365,54 +360,50 @@ void PVPlayerDatapath::Run()
             if (iDatapathConfig == CONFIG_DEC)
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerDatapath::Run() Calling RequestPort() on dec node(input)"));
-                leavecode = 0;
-                OSCL_TRY(leavecode, cmdid = iDecNode->RequestPort(iDecSessionId, DEFAULT_INPUT_PORTTAG, &(iSourceTrackInfo->getTrackMimeType()),
-                                            (OsclAny*) iSourceTrackInfo));
-                OSCL_FIRST_CATCH_ANY(leavecode,
-                                     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::Run() RequestPort on iDecNode did a leave"));
-                                     iState = PVPDP_ERROR; RunIfNotReady(); break);
-                if (cmdid != -1)
+                leavecode = IssueDatapathRequestPort(iDecNode, iDecSessionId, DEFAULT_INPUT_PORTTAG,
+                                                     &(iSourceTrackInfo->getTrackMimeType()),
+                                                     (OsclAny*)iSourceTrackInfo, cmdid);
+
+                if (cmdid != -1 && leavecode == 0)
                 {
                     ++iPendingCmds;
                 }
                 else
                 {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::Run() RequestPort on iDecNode did a leave or failed"));
                     iState = PVPDP_ERROR;
                     RunIfNotReady();
                     break;
                 }
 
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerDatapath::Run() Calling RequestPort() on dec node(output)"));
-                leavecode = 0;
-                OSCL_TRY(leavecode, cmdid = iDecNode->RequestPort(iDecSessionId, DEFAULT_OUTPUT_PORTTAG, &iDecSinkFormatString,
-                                            (OsclAny*) & iDecSinkFormatString));
-                OSCL_FIRST_CATCH_ANY(leavecode,
-                                     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::Run() RequestPort on iDecNode did a leave"));
-                                     iState = PVPDP_ERROR; RunIfNotReady(); break);
-                if (cmdid != -1)
+                leavecode = IssueDatapathRequestPort(iDecNode, iDecSessionId, DEFAULT_OUTPUT_PORTTAG,
+                                                     &iDecSinkFormatString, (OsclAny*) & iDecSinkFormatString, cmdid);
+
+
+                if (cmdid != -1 && leavecode == 0)
                 {
                     ++iPendingCmds;
                 }
                 else
                 {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::Run() RequestPort on iDecNode did a leave or failed"));
                     iState = PVPDP_ERROR;
                     RunIfNotReady();
                     break;
                 }
 
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerDatapath::Run() Calling RequestPort() on sink node"));
-                leavecode = 0;
-                OSCL_TRY(leavecode, cmdid = iSinkNode->RequestPort(iSinkSessionId, DEFAULT_INPUT_PORTTAG, &iDecSinkFormatString,
-                                            (OsclAny*)iSinkNode));
-                OSCL_FIRST_CATCH_ANY(leavecode,
-                                     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::Run() RequestPort on iSinkNode did a leave"));
-                                     iState = PVPDP_ERROR; RunIfNotReady(); break);
-                if (cmdid != -1)
+                leavecode = IssueDatapathRequestPort(iSinkNode, iSinkSessionId, DEFAULT_INPUT_PORTTAG,
+                                                     &iDecSinkFormatString, (OsclAny*)iSinkNode, cmdid);
+
+                if (cmdid != -1 && leavecode == 0)
                 {
                     ++iPendingCmds;
                 }
                 else
                 {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::Run() RequestPort on iSinkNode did a leave or failed"));
                     iState = PVPDP_ERROR;
                     RunIfNotReady();
                     break;
@@ -421,18 +412,17 @@ void PVPlayerDatapath::Run()
             else
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerDatapath::Run() Calling RequestPort() on sink node"));
-                leavecode = 0;
-                OSCL_TRY(leavecode, cmdid = iSinkNode->RequestPort(iSinkSessionId, DEFAULT_INPUT_PORTTAG, &(iSourceTrackInfo->getTrackMimeType()),
-                                            (OsclAny*)iSinkNode));
-                OSCL_FIRST_CATCH_ANY(leavecode,
-                                     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::Run() RequestPort on iSinkNode did a leave"));
-                                     iState = PVPDP_ERROR; RunIfNotReady(); break);
-                if (cmdid != -1)
+                leavecode = IssueDatapathRequestPort(iSinkNode, iSinkSessionId, DEFAULT_INPUT_PORTTAG,
+                                                     &(iSourceTrackInfo->getTrackMimeType()),
+                                                     (OsclAny*)iSinkNode, cmdid);
+
+                if (cmdid != -1 && leavecode == 0)
                 {
                     ++iPendingCmds;
                 }
                 else
                 {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::Run() RequestPort on iSinkNode did a leave or failed"));
                     iState = PVPDP_ERROR;
                     RunIfNotReady();
                     break;
@@ -447,9 +437,9 @@ void PVPlayerDatapath::Run()
 
             if (iDatapathConfig == CONFIG_DEC)
             {
-                PvmiCapabilityAndConfig *portconfigif = NULL;
-
-                iSourceOutPort->QueryInterface(PVMI_CAPABILITY_AND_CONFIG_PVUUID, (OsclAny*&)portconfigif);
+                OsclAny* temp = NULL;
+                iSourceOutPort->QueryInterface(PVMI_CAPABILITY_AND_CONFIG_PVUUID, temp);
+                PvmiCapabilityAndConfig *portconfigif = OSCL_STATIC_CAST(PvmiCapabilityAndConfig*, temp);
                 if (portconfigif)
                 {
                     pvmiSetPortFormatSync(portconfigif, PORT_CONFIG_INPUT_FORMATS_VALTYPE, iSourceDecFormatType);
@@ -462,8 +452,9 @@ void PVPlayerDatapath::Run()
                     break;
                 }
 
-                portconfigif = NULL;
-                iDecInPort->QueryInterface(PVMI_CAPABILITY_AND_CONFIG_PVUUID, (OsclAny*&)portconfigif);
+                temp = NULL;
+                iDecInPort->QueryInterface(PVMI_CAPABILITY_AND_CONFIG_PVUUID, temp);
+                portconfigif = OSCL_STATIC_CAST(PvmiCapabilityAndConfig*, temp);
                 if (portconfigif)
                 {
                     pvmiSetPortFormatSync(portconfigif, PORT_CONFIG_INPUT_FORMATS_VALTYPE, iSourceDecFormatType);
@@ -484,8 +475,9 @@ void PVPlayerDatapath::Run()
                     break;
                 }
 
-                portconfigif = NULL;
-                iDecOutPort->QueryInterface(PVMI_CAPABILITY_AND_CONFIG_PVUUID, (OsclAny*&)portconfigif);
+                temp = NULL;
+                iDecOutPort->QueryInterface(PVMI_CAPABILITY_AND_CONFIG_PVUUID, temp);
+                portconfigif = OSCL_STATIC_CAST(PvmiCapabilityAndConfig*, temp);
                 if (portconfigif)
                 {
                     pvmiSetPortFormatSync(portconfigif, PORT_CONFIG_INPUT_FORMATS_VALTYPE, iDecSinkFormatType);
@@ -498,8 +490,9 @@ void PVPlayerDatapath::Run()
                     break;
                 }
 
-                portconfigif = NULL;
-                iSinkInPort->QueryInterface(PVMI_CAPABILITY_AND_CONFIG_PVUUID, (OsclAny*&)portconfigif);
+                temp = NULL;
+                iSinkInPort->QueryInterface(PVMI_CAPABILITY_AND_CONFIG_PVUUID, temp);
+                portconfigif = OSCL_STATIC_CAST(PvmiCapabilityAndConfig*, temp);
                 if (portconfigif)
                 {
                     pvmiSetPortFormatSync(portconfigif, PORT_CONFIG_INPUT_FORMATS_VALTYPE, iDecSinkFormatType);
@@ -522,9 +515,9 @@ void PVPlayerDatapath::Run()
             }
             else
             {
-                PvmiCapabilityAndConfig *portconfigif;
-
-                iSourceOutPort->QueryInterface(PVMI_CAPABILITY_AND_CONFIG_PVUUID, (OsclAny*&)portconfigif);
+                OsclAny* temp;
+                iSourceOutPort->QueryInterface(PVMI_CAPABILITY_AND_CONFIG_PVUUID, temp);
+                PvmiCapabilityAndConfig *portconfigif = OSCL_STATIC_CAST(PvmiCapabilityAndConfig*, temp);
                 if (portconfigif)
                 {
                     pvmiSetPortFormatSync(portconfigif, PORT_CONFIG_INPUT_FORMATS_VALTYPE, iSourceSinkFormatType);
@@ -537,7 +530,9 @@ void PVPlayerDatapath::Run()
                     break;
                 }
 
-                iSinkInPort->QueryInterface(PVMI_CAPABILITY_AND_CONFIG_PVUUID, (OsclAny*&)portconfigif);
+                temp = NULL;
+                iSinkInPort->QueryInterface(PVMI_CAPABILITY_AND_CONFIG_PVUUID, temp);
+                portconfigif = OSCL_STATIC_CAST(PvmiCapabilityAndConfig*, temp);
                 if (portconfigif)
                 {
                     pvmiSetPortFormatSync(portconfigif, PORT_CONFIG_INPUT_FORMATS_VALTYPE, iSourceSinkFormatType);
@@ -570,30 +565,23 @@ void PVPlayerDatapath::Run()
             iPendingCmds = 0;
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerDatapath::Run() Calling Prepare() on sink node"));
-            leavecode = 0;
-            OSCL_TRY(leavecode, cmdid = iSinkNode->Prepare(iSinkSessionId));
-            OSCL_FIRST_CATCH_ANY(leavecode,
-                                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::Run() Prepare on iSinkNode did a leave"));
-                                 iState = PVPDP_ERROR; RunIfNotReady(); break);
+            leavecode = IssueDatapathPrepare(iSinkNode, iSinkSessionId, cmdid);
 
-            if (cmdid != -1)
+            if (cmdid != -1 && leavecode == 0)
             {
                 ++iPendingCmds;
                 if (iDatapathConfig == CONFIG_DEC)
                 {
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerDatapath::Run() Calling Prepare() on dec node"));
-                    leavecode = 0;
-                    OSCL_TRY(leavecode, cmdid = iDecNode->Prepare(iDecSessionId));
-                    OSCL_FIRST_CATCH_ANY(leavecode,
-                                         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::Run() Prepare on iDecNode did a leave"));
-                                         iState = PVPDP_ERROR; RunIfNotReady(); break);
+                    leavecode = IssueDatapathPrepare(iDecNode, iDecSessionId, cmdid);
 
-                    if (cmdid != -1)
+                    if (cmdid != -1 && leavecode == 0)
                     {
                         ++iPendingCmds;
                     }
                     else
                     {
+                        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::Run() Prepare on iDecNode did a leave or failed"));
                         iState = PVPDP_ERROR;
                         RunIfNotReady();
                         break;
@@ -602,6 +590,7 @@ void PVPlayerDatapath::Run()
             }
             else
             {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::Run() Prepare on iSinkNode did a leave or failed"));
                 iState = PVPDP_ERROR;
                 RunIfNotReady();
                 break;
@@ -618,17 +607,15 @@ void PVPlayerDatapath::Run()
             iPendingCmds = 0;
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerDatapath::Run() Calling Start() on sink node"));
-            leavecode = 0;
-            OSCL_TRY(leavecode, cmdid = iSinkNode->Start(iSinkSessionId));
-            OSCL_FIRST_CATCH_ANY(leavecode,
-                                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::Run() Start on iSinkNode did a leave"));
-                                 iState = PVPDP_ERROR; RunIfNotReady(); break);
-            if (cmdid != -1)
+            leavecode = IssueDatapathStart(iSinkNode, iSinkSessionId, cmdid);
+
+            if (cmdid != -1 && leavecode == 0)
             {
                 ++iPendingCmds;
             }
             else
             {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::Run() Start on iSinkNode did a leave or failed"));
                 iState = PVPDP_ERROR;
                 RunIfNotReady();
                 break;
@@ -637,17 +624,15 @@ void PVPlayerDatapath::Run()
             if (iDatapathConfig == CONFIG_DEC)
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerDatapath::Run() Calling Start() on dec node"));
-                leavecode = 0;
-                OSCL_TRY(leavecode, cmdid = iDecNode->Start(iDecSessionId));
-                OSCL_FIRST_CATCH_ANY(leavecode,
-                                     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::Run() Start on iDecNode did a leave"));
-                                     iState = PVPDP_ERROR; RunIfNotReady(); break);
-                if (cmdid != -1)
+                leavecode = IssueDatapathStart(iDecNode, iDecSessionId, cmdid);
+
+                if (cmdid != -1 && leavecode == 0)
                 {
                     ++iPendingCmds;
                 }
                 else
                 {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::Run() Start on iDecNode did a leave or failed"));
                     iState = PVPDP_ERROR;
                     RunIfNotReady();
                     break;
@@ -667,17 +652,15 @@ void PVPlayerDatapath::Run()
             if (iSinkPaused == false)
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerDatapath::Run() Calling Pause() on sink node"));
-                leavecode = 0;
-                OSCL_TRY(leavecode, cmdid = iSinkNode->Pause(iSinkSessionId));
-                OSCL_FIRST_CATCH_ANY(leavecode,
-                                     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::Run() Pause on iSinkNode did a leave"));
-                                     iState = PVPDP_ERROR; RunIfNotReady(); break);
-                if (cmdid != -1)
+                leavecode = IssueDatapathPause(iSinkNode, iSinkSessionId, cmdid);
+
+                if (cmdid != -1 && leavecode == 0)
                 {
                     ++iPendingCmds;
                 }
                 else
                 {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::Run() Pause on iSinkNode did a leave or failed"));
                     iState = PVPDP_ERROR;
                     RunIfNotReady();
                     break;
@@ -692,17 +675,15 @@ void PVPlayerDatapath::Run()
             if (iDatapathConfig == CONFIG_DEC)
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerDatapath::Run() Calling Pause() on dec node"));
-                leavecode = 0;
-                OSCL_TRY(leavecode, cmdid = iDecNode->Pause(iDecSessionId));
-                OSCL_FIRST_CATCH_ANY(leavecode,
-                                     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::Run() Pause on iDecNode did a leave"));
-                                     iState = PVPDP_ERROR; RunIfNotReady(); break);
-                if (cmdid != -1)
+                leavecode = IssueDatapathPause(iDecNode, iDecSessionId, cmdid);
+
+                if (cmdid != -1 && leavecode == 0)
                 {
                     ++iPendingCmds;
                 }
                 else
                 {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::Run() Pause on iDecNode did a leave or failed"));
                     iState = PVPDP_ERROR;
                     RunIfNotReady();
                     break;
@@ -728,23 +709,15 @@ void PVPlayerDatapath::Run()
             iPendingCmds = 0;
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerDatapath::Run() Calling Stop() on sink node"));
-            leavecode = 0;
-            OSCL_TRY(leavecode, cmdid = iSinkNode->Stop(iSinkSessionId));
-            OSCL_FIRST_CATCH_ANY(leavecode,
-                                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::Run() Stop on iSinkNode did a leave"));
-                                 if (!iErrorCondition)
-        {
-            iState = PVPDP_ERROR;
-            RunIfNotReady();
-                break;
-            }
-                                );
+            leavecode = IssueDatapathStop(iSinkNode, iSinkSessionId, cmdid);
+
             if (cmdid != -1 && leavecode == 0)
             {
                 ++iPendingCmds;
             }
             else if (!iErrorCondition)
             {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::Run() Stop on iSinkNode did a leave or failed"));
                 iState = PVPDP_ERROR;
                 RunIfNotReady();
                 break;
@@ -757,23 +730,15 @@ void PVPlayerDatapath::Run()
             if (iDatapathConfig == CONFIG_DEC)
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerDatapath::Run() Calling Stop() on dec node"));
-                leavecode = 0;
-                OSCL_TRY(leavecode, cmdid = iDecNode->Stop(iDecSessionId));
-                OSCL_FIRST_CATCH_ANY(leavecode,
-                                     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::Run() Stop on iDecNode did a leave"));
-                                     if (!iErrorCondition)
-            {
-                iState = PVPDP_ERROR;
-                RunIfNotReady();
-                    break;
-                }
-                                    );
+                leavecode = IssueDatapathStop(iDecNode, iDecSessionId, cmdid);
+
                 if (cmdid != -1 && leavecode == 0)
                 {
                     ++iPendingCmds;
                 }
                 else if (!iErrorCondition)
                 {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::Run() Stop on iDecNode did a leave or failed"));
                     iState = PVPDP_ERROR;
                     RunIfNotReady();
                     break;
@@ -786,7 +751,7 @@ void PVPlayerDatapath::Run()
 
             if (iPendingCmds == 0 && iErrorCondition)
             {
-                iState = PVPDP_IDLE;
+                iState = PVPDP_CANCELLED;
                 if (iErrorCondition && iErrorOccurredDuringErrorCondition)
                 {
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerDatapath::Run() Report Stop() command completed with errors during error condition"));
@@ -814,23 +779,15 @@ void PVPlayerDatapath::Run()
             iPendingCmds = 0;
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerDatapath::Run() Calling ReleasePort() on sink node"));
-            leavecode = 0;
-            OSCL_TRY(leavecode, cmdid = iSinkNode->ReleasePort(iSinkSessionId, *iSinkInPort));
-            OSCL_FIRST_CATCH_ANY(leavecode,
-                                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::Run() ReleasePort on iSinkNode did a leave"));
-                                 if (!iErrorCondition)
-        {
-            iState = PVPDP_ERROR;
-            RunIfNotReady();
-                break;
-            }
-                                );
+            leavecode = IssueDatapathReleasePort(iSinkNode, iSinkSessionId, iSinkInPort, cmdid);
+
             if (cmdid != -1 && leavecode == 0)
             {
                 ++iPendingCmds;
             }
             else if (!iErrorCondition)
             {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::Run() ReleasePort on iSinkNode did a leave or failed"));
                 iState = PVPDP_ERROR;
                 RunIfNotReady();
                 break;
@@ -843,23 +800,15 @@ void PVPlayerDatapath::Run()
             if (iDatapathConfig == CONFIG_DEC)
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerDatapath::Run() Calling ReleasePort() on dec node(input)"));
-                leavecode = 0;
-                OSCL_TRY(leavecode, cmdid = iDecNode->ReleasePort(iDecSessionId, *iDecInPort));
-                OSCL_FIRST_CATCH_ANY(leavecode,
-                                     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::Run() ReleasePort on iDecNode did a leave"));
-                                     if (!iErrorCondition)
-            {
-                iState = PVPDP_ERROR;
-                RunIfNotReady();
-                    break;
-                }
-                                    );
+                leavecode = IssueDatapathReleasePort(iDecNode, iDecSessionId, iDecInPort, cmdid);
+
                 if (cmdid != -1 && leavecode == 0)
                 {
                     ++iPendingCmds;
                 }
                 else if (!iErrorCondition)
                 {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::Run() ReleasePort on iDecNode did a leave or failed"));
                     iState = PVPDP_ERROR;
                     RunIfNotReady();
                     break;
@@ -884,23 +833,15 @@ void PVPlayerDatapath::Run()
             iPendingCmds = 0;
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerDatapath::Run() Calling ReleasePort() on source node"));
-            leavecode = 0;
-            OSCL_TRY(leavecode, cmdid = iSourceNode->ReleasePort(iSourceSessionId, *iSourceOutPort));
-            OSCL_FIRST_CATCH_ANY(leavecode,
-                                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::Run() ReleasePort on iSourceNode did a leave"));
-                                 if (!iErrorCondition)
-        {
-            iState = PVPDP_ERROR;
-            RunIfNotReady();
-                break;
-            }
-                                );
+            leavecode = IssueDatapathReleasePort(iSourceNode, iSourceSessionId, iSourceOutPort, cmdid);
+
             if (cmdid != -1 && leavecode == 0)
             {
                 ++iPendingCmds;
             }
             else if (!iErrorCondition)
             {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::Run() ReleasePort on iSourceNode did a leave or failed"));
                 iState = PVPDP_ERROR;
                 RunIfNotReady();
                 break;
@@ -913,23 +854,15 @@ void PVPlayerDatapath::Run()
             if (iDatapathConfig == CONFIG_DEC)
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerDatapath::Run() Calling ReleasePort() on dec node(output)"));
-                leavecode = 0;
-                OSCL_TRY(leavecode, cmdid = iDecNode->ReleasePort(iDecSessionId, *iDecOutPort));
-                OSCL_FIRST_CATCH_ANY(leavecode,
-                                     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::Run() ReleasePort on iDecNode did a leave"));
-                                     if (!iErrorCondition)
-            {
-                iState = PVPDP_ERROR;
-                RunIfNotReady();
-                    break;
-                }
-                                    );
+                leavecode = IssueDatapathReleasePort(iDecNode, iDecSessionId, iDecOutPort, cmdid);
+
                 if (cmdid != -1 && leavecode == 0)
                 {
                     ++iPendingCmds;
                 }
                 else if (!iErrorCondition)
                 {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::Run() ReleasePort on iDecNode did a leave or failed"));
                     iState = PVPDP_ERROR;
                     RunIfNotReady();
                     break;
@@ -968,23 +901,15 @@ void PVPlayerDatapath::Run()
             iPendingCmds = 0;
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerDatapath::Run() Calling Reset() on sink node"));
-            leavecode = 0;
-            OSCL_TRY(leavecode, cmdid = iSinkNode->Reset(iSinkSessionId));
-            OSCL_FIRST_CATCH_ANY(leavecode,
-                                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::Run() Reset on iSinkNode did a leave"));
-                                 if (!iErrorCondition)
-        {
-            iState = PVPDP_ERROR;
-            RunIfNotReady();
-                break;
-            }
-                                );
+            leavecode = IssueDatapathReset(iSinkNode, iSinkSessionId, cmdid);
+
             if (cmdid != -1 && leavecode == 0)
             {
                 ++iPendingCmds;
             }
             else if (!iErrorCondition)
             {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::Run() Reset on iSinkNode did a leave or failed"));
                 iState = PVPDP_ERROR;
                 RunIfNotReady();
                 break;
@@ -997,23 +922,15 @@ void PVPlayerDatapath::Run()
             if (iDatapathConfig == CONFIG_DEC)
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerDatapath::Run() Calling Reset() on dec node"));
-                leavecode = 0;
-                OSCL_TRY(leavecode, cmdid = iDecNode->Reset(iDecSessionId));
-                OSCL_FIRST_CATCH_ANY(leavecode,
-                                     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::Run() Reset on iDecNode did a leave"));
-                                     if (!iErrorCondition)
-            {
-                iState = PVPDP_ERROR;
-                RunIfNotReady();
-                    break;
-                }
-                                    );
+                leavecode = IssueDatapathReset(iDecNode, iDecSessionId, cmdid);
+
                 if (cmdid != -1 && leavecode == 0)
                 {
                     ++iPendingCmds;
                 }
                 else if (!iErrorCondition)
                 {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::Run() Reset on iDecNode did a leave or failed"));
                     iState = PVPDP_ERROR;
                     RunIfNotReady();
                     break;
@@ -1039,22 +956,29 @@ void PVPlayerDatapath::Run()
             PVMFStatus retval;
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerDatapath::Run() Calling Disconnect() on nodes"));
-            leavecode = 0;
-            OSCL_TRY(leavecode, retval = iSourceNode->Disconnect(iSourceSessionId));
-            OSCL_FIRST_CATCH_ANY(leavecode,
-                                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::Run() Disconnect on iSourceNode did a leave")));
 
-            leavecode = 0;
-            OSCL_TRY(leavecode, retval = iSinkNode->Disconnect(iSinkSessionId));
-            OSCL_FIRST_CATCH_ANY(leavecode,
-                                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::Run() Disconnect on iSinkNode did a leave")));
+            retval = iSourceNode->Disconnect(iSourceSessionId);
+            if (retval != PVMFSuccess)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::Run() Disconnect on iSourceNode failed, asserting"));
+                OSCL_ASSERT(false);
+            }
+
+            retval = iSinkNode->Disconnect(iSinkSessionId);
+            if (retval != PVMFSuccess)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::Run() Disconnect on iSinkNode failed, asserting"));
+                OSCL_ASSERT(false);
+            }
 
             if (iDatapathConfig == CONFIG_DEC)
             {
-                leavecode = 0;
-                OSCL_TRY(leavecode, retval = iDecNode->Disconnect(iDecSessionId));
-                OSCL_FIRST_CATCH_ANY(leavecode,
-                                     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::Run() Disconnect on iDecNode did a leave")));
+                retval = iDecNode->Disconnect(iDecSessionId);
+                if (retval != PVMFSuccess)
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::Run() Disconnect on iDecNode failed, asserting"));
+                    OSCL_ASSERT(false);
+                }
             }
 
             iState = PVPDP_IDLE;
@@ -1078,30 +1002,30 @@ void PVPlayerDatapath::Run()
             OSCL_ASSERT(iSourceTrackInfo != NULL);
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerDatapath::Run() Processing PVPDP_CANCEL case for %s", iSourceTrackInfo->getTrackMimeType().get_cstr()));
 
-            iPendingCmds = 0;
-
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerDatapath::Run() Calling CancelAllCommands() on sink node"));
-            leavecode = 0;
-            OSCL_TRY(leavecode, cmdid = iSinkNode->CancelAllCommands(iSinkSessionId));
-            OSCL_FIRST_CATCH_ANY(leavecode,
-                                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::Run() CancelAllCommands on iSinkNode did a leave"));
-                                );
+            leavecode = IssueDatapathCancel(iSinkNode, iSinkSessionId, cmdid);
+
             if (cmdid != -1 && leavecode == 0)
             {
                 ++iPendingCmds;
+            }
+            else
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::Run() CancelAllCommands on iSinkNode did a leave or failed"));
             }
 
             if (iDatapathConfig == CONFIG_DEC)
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerDatapath::Run() Calling CancelAllCommands() on dec node"));
-                leavecode = 0;
-                OSCL_TRY(leavecode, cmdid = iDecNode->CancelAllCommands(iDecSessionId));
-                OSCL_FIRST_CATCH_ANY(leavecode,
-                                     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::Run() CancelAllCommands on iDecNode did a leave"));
-                                    );
+                leavecode = IssueDatapathCancel(iDecNode, iDecSessionId, cmdid);
+
                 if (cmdid != -1 && leavecode == 0)
                 {
                     ++iPendingCmds;
+                }
+                else
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::Run() CancelAllCommands on iDecNode did a leave or failed"));
                 }
             }
 
@@ -1120,7 +1044,7 @@ void PVPlayerDatapath::Run()
 
         case PVPDP_ERROR:
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::Run() Report command failed"));
-            iState = PVPDP_IDLE;
+            iState = PVPDP_CANCELLED;
             iObserver->HandlePlayerDatapathEvent(0, PVMFFailure, iContext);
             break;
 
@@ -1150,7 +1074,7 @@ void PVPlayerDatapath::NodeCommandCompleted(const PVMFCmdResp& aResponse)
             else
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::NodeCommandCompleted() Node command failed in PREPARE_INIT state"));
-                iState = PVPDP_IDLE;
+                iState = PVPDP_CANCELLED;
                 iObserver->HandlePlayerDatapathEvent(0, aResponse.GetCmdStatus(), iContext, (PVMFCmdResp*)&aResponse);
             }
             break;
@@ -1186,7 +1110,7 @@ void PVPlayerDatapath::NodeCommandCompleted(const PVMFCmdResp& aResponse)
             else
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::NodeCommandCompleted() Node command failed in PREPARE_REQPORT state"));
-                iState = PVPDP_IDLE;
+                iState = PVPDP_CANCELLED;
                 iObserver->HandlePlayerDatapathEvent(0, aResponse.GetCmdStatus(), iContext, (PVMFCmdResp*)&aResponse);
             }
             break;
@@ -1206,7 +1130,7 @@ void PVPlayerDatapath::NodeCommandCompleted(const PVMFCmdResp& aResponse)
             else
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::NodeCommandCompleted() Node command failed in PREPARE_PREPARE state"));
-                iState = PVPDP_IDLE;
+                iState = PVPDP_CANCELLED;
                 iObserver->HandlePlayerDatapathEvent(0, aResponse.GetCmdStatus(), iContext, (PVMFCmdResp*)&aResponse);
             }
             break;
@@ -1227,7 +1151,7 @@ void PVPlayerDatapath::NodeCommandCompleted(const PVMFCmdResp& aResponse)
             else
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::NodeCommandCompleted() Node command failed in START_START state"));
-                iState = PVPDP_IDLE;
+                iState = PVPDP_CANCELLED;
                 iObserver->HandlePlayerDatapathEvent(0, aResponse.GetCmdStatus(), iContext, (PVMFCmdResp*)&aResponse);
             }
             break;
@@ -1247,7 +1171,7 @@ void PVPlayerDatapath::NodeCommandCompleted(const PVMFCmdResp& aResponse)
             else
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::NodeCommandCompleted() Node command failed in PAUSE_PAUSE state"));
-                iState = PVPDP_IDLE;
+                iState = PVPDP_CANCELLED;
                 iObserver->HandlePlayerDatapathEvent(0, aResponse.GetCmdStatus(), iContext, (PVMFCmdResp*)&aResponse);
             }
             break;
@@ -1283,7 +1207,7 @@ void PVPlayerDatapath::NodeCommandCompleted(const PVMFCmdResp& aResponse)
             else
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::NodeCommandCompleted() Node command failed in STOP_STOP state"));
-                iState = PVPDP_IDLE;
+                iState = PVPDP_CANCELLED;
                 iObserver->HandlePlayerDatapathEvent(0, aResponse.GetCmdStatus(), iContext, (PVMFCmdResp*)&aResponse);
             }
             break;
@@ -1308,7 +1232,7 @@ void PVPlayerDatapath::NodeCommandCompleted(const PVMFCmdResp& aResponse)
             else
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::NodeCommandCompleted() Node command failed in RESET_RESET state"));
-                iState = PVPDP_IDLE;
+                iState = PVPDP_CANCELLED;
                 iObserver->HandlePlayerDatapathEvent(0, aResponse.GetCmdStatus(), iContext, (PVMFCmdResp*)&aResponse);
             }
             break;
@@ -1334,7 +1258,7 @@ void PVPlayerDatapath::NodeCommandCompleted(const PVMFCmdResp& aResponse)
             else
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::NodeCommandCompleted() Node command failed in TEARDOWN_RELEASEPORT1 state"));
-                iState = PVPDP_IDLE;
+                iState = PVPDP_CANCELLED;
                 iObserver->HandlePlayerDatapathEvent(0, aResponse.GetCmdStatus(), iContext, (PVMFCmdResp*)&aResponse);
             }
             break;
@@ -1371,7 +1295,7 @@ void PVPlayerDatapath::NodeCommandCompleted(const PVMFCmdResp& aResponse)
             else
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::NodeCommandCompleted() Node command failed in TEARDOWN_RELEASEPORT2 state"));
-                iState = PVPDP_IDLE;
+                iState = PVPDP_CANCELLED;
                 iObserver->HandlePlayerDatapathEvent(0, aResponse.GetCmdStatus(), iContext, (PVMFCmdResp*)&aResponse);
             }
             break;
@@ -1407,13 +1331,78 @@ void PVPlayerDatapath::HandleNodeErrorEvent(const PVMFAsyncEvent& /*aEvent*/)
     // Ignore node error events since the engine will receive it directly from the nodes
 }
 
-
-void PVPlayerDatapath::GetFormatStringFromType(PVMFFormatType &aType, OSCL_HeapString<OsclMemAllocator>& aString)
+PVMFStatus PVPlayerDatapath::IssueDatapathInit(PVMFNodeInterface* aNode, PVMFSessionId aSessionId, PVMFCommandId &aCmdId)
 {
-    GetFormatString(aType, aString);
+    PVMFStatus leavecode;
+    OSCL_TRY(leavecode, aCmdId = aNode->Init(aSessionId));
+    OSCL_FIRST_CATCH_ANY(leavecode,;);
+    return leavecode;
 }
 
+PVMFStatus PVPlayerDatapath::IssueDatapathRequestPort(PVMFNodeInterface* aNode, PVMFSessionId aSessionId,
+        int32 aPortTag, PvmfMimeString* aPortConfig,
+        OsclAny* aContext, PVMFCommandId &aCmdId)
+{
+    PVMFStatus leavecode;
+    OSCL_TRY(leavecode, aCmdId = aNode->RequestPort(aSessionId, aPortTag, aPortConfig, aContext));
+    OSCL_FIRST_CATCH_ANY(leavecode,;);
+    return leavecode;
+}
 
+PVMFStatus PVPlayerDatapath::IssueDatapathPrepare(PVMFNodeInterface* aNode, PVMFSessionId aSessionId, PVMFCommandId &aCmdId)
+{
+    PVMFStatus leavecode;
+    OSCL_TRY(leavecode, aCmdId = aNode->Prepare(aSessionId));
+    OSCL_FIRST_CATCH_ANY(leavecode,;);
+    return leavecode;
+}
 
+PVMFStatus PVPlayerDatapath::IssueDatapathStart(PVMFNodeInterface* aNode, PVMFSessionId aSessionId, PVMFCommandId &aCmdId)
+{
+    PVMFStatus leavecode;
+    OSCL_TRY(leavecode, aCmdId = aNode->Start(aSessionId));
+    OSCL_FIRST_CATCH_ANY(leavecode,;);
+    return leavecode;
+}
+
+PVMFStatus PVPlayerDatapath::IssueDatapathPause(PVMFNodeInterface* aNode, PVMFSessionId aSessionId, PVMFCommandId &aCmdId)
+{
+    PVMFStatus leavecode;
+    OSCL_TRY(leavecode, aCmdId = aNode->Pause(aSessionId));
+    OSCL_FIRST_CATCH_ANY(leavecode,;);
+    return leavecode;
+}
+
+PVMFStatus PVPlayerDatapath::IssueDatapathStop(PVMFNodeInterface* aNode, PVMFSessionId aSessionId, PVMFCommandId &aCmdId)
+{
+    PVMFStatus leavecode;
+    OSCL_TRY(leavecode, aCmdId = aNode->Stop(aSessionId));
+    OSCL_FIRST_CATCH_ANY(leavecode,;);
+    return leavecode;
+}
+
+PVMFStatus PVPlayerDatapath::IssueDatapathReleasePort(PVMFNodeInterface* aNode, PVMFSessionId aSessionId, PVMFPortInterface* aPort, PVMFCommandId &aCmdId)
+{
+    PVMFStatus leavecode;
+    OSCL_TRY(leavecode, aCmdId = aNode->ReleasePort(aSessionId, *aPort));
+    OSCL_FIRST_CATCH_ANY(leavecode,;);
+    return leavecode;
+}
+
+PVMFStatus PVPlayerDatapath::IssueDatapathReset(PVMFNodeInterface* aNode, PVMFSessionId aSessionId, PVMFCommandId &aCmdId)
+{
+    PVMFStatus leavecode;
+    OSCL_TRY(leavecode, aCmdId = aNode->Reset(aSessionId));
+    OSCL_FIRST_CATCH_ANY(leavecode,;);
+    return leavecode;
+}
+
+PVMFStatus PVPlayerDatapath::IssueDatapathCancel(PVMFNodeInterface* aNode, PVMFSessionId aSessionId, PVMFCommandId &aCmdId)
+{
+    PVMFStatus leavecode;
+    OSCL_TRY(leavecode, aCmdId = aNode->CancelAllCommands(aSessionId));
+    OSCL_FIRST_CATCH_ANY(leavecode,;);
+    return leavecode;
+}
 
 

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,65 +29,10 @@ terms listed above has been obtained from the copyright holder.
 /*
 ------------------------------------------------------------------------------
 
-
-
  Pathname: ./audio/gsm-amr/c/src/dec_amr.c
  Funtions: Decoder_amr_init
            Decoder_amr_reset
            Decoder_amr
-
-     Date: 04/11/2000
-
-------------------------------------------------------------------------------
- REVISION HISTORY
-
- Description: Updated template used to PV coding template. First attempt at
-          optimizing C code.
-
- Description: Synchronized file with UMTS version 3.2.0. Updated coding
-              template. Removed unnecessary include files.
-
- Description: Made the following changes per comments from Phase 2/3 review:
-              1. Fixed Input/Output descriptions by adding typedefs and
-                 clarifying definitions.
-              2. Used #define instead of hard-coded loop counts.
-              3. Modified FOR loops to count down.
-              4. Copied function descriptions from dec_amr.h header file.
-              5. Defined one local variable per line.
-
- Description: Copied function descriptions from header file (forgot to do it
-              prior to checking-in -- oops!).
-
- Description: Removed the function decoder_amr_exit.
- The decoder_amr related structure is no longer dynamically allocated.
-
- Also, modified function calls throughout to reflect the fact that the members
- of the structure Decoder_amrState are no longer pointers to be set via
- malloc, but full-blown structures.  (Changes of the type D_plsfState *lsfState
- to D_plsfState lsfState)
-
- Description: Fixed bug in the Decoder_amr() caused non-bit exactness. The
-              Overflow flag was inadvertently taken out of the IF statement
-              that calls agc2 and Syn_filt. It was restored to the original
-              form. Updated copyright year.
-
- Description: Adding changes for EPOC regarding pOverflow being passed in
-              rather than being a global variable.
-
- Description: Initialize overflow flag in Decoder_amr_init() and
-               Decoder_amr_reset(). Initialize pointer to overflow flag in
-               Decoder_amr().
-
- Description: Changed round function name to pv_round to avoid conflict with
-              round function in C standard library.
-
- Description:  Replaced OSCL mem type functions and eliminated include
-               files that now are chosen by OSCL definitions
-
- Description:  Replaced "int" and/or "char" with defined types.
-               Added proper casting (Word32) to some left shifting operations
-
- Description:
 
 ------------------------------------------------------------------------------
  MODULE DESCRIPTION

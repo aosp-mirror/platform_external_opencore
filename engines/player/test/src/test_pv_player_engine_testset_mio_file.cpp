@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,14 @@ PVPlayerTestMioFactory* PVPlayerTestMioFactory::Create()
 PvmiMIOControl* PVPlayerTestFileOutputMioFactory::CreateAudioOutput(OsclAny* aParam)
 {
     return new PVRefFileOutput(((OSCL_wString*)aParam)->get_cstr());
+}
+
+PvmiMIOControl* PVPlayerTestFileOutputMioFactory::CreateAudioOutput(
+    OsclAny* aParam,
+    MediaType aMediaType,
+    bool aCompressedAudio)
+{
+    return new PVRefFileOutput(((OSCL_wString*)aParam)->get_cstr(), aMediaType, aCompressedAudio);
 }
 
 PvmiMIOControl* PVPlayerTestFileOutputMioFactory::CreateAudioOutput(
@@ -59,6 +67,14 @@ PvmiMIOControl* PVPlayerTestFileOutputMioFactory::CreateVideoOutput(OsclAny* aPa
 
 PvmiMIOControl* PVPlayerTestFileOutputMioFactory::CreateVideoOutput(
     OsclAny* aParam,
+    MediaType aMediaType,
+    bool aCompressedVideo)
+{
+    return new PVRefFileOutput(((OSCL_wString*)aParam)->get_cstr(), aMediaType, aCompressedVideo);
+}
+
+PvmiMIOControl* PVPlayerTestFileOutputMioFactory::CreateVideoOutput(
+    OsclAny* aParam,
     PVRefFileOutputTestObserver* aObserver,
     bool aActiveTiming,
     uint32 aQueueLimit,
@@ -83,6 +99,11 @@ void PVPlayerTestFileOutputMioFactory::DestroyVideoOutput(PvmiMIOControl* aMio)
 PvmiMIOControl* PVPlayerTestFileOutputMioFactory::CreateTextOutput(OsclAny* aParam)
 {
     return new PVRefFileOutput(((OSCL_wString*)aParam)->get_cstr());
+}
+
+PvmiMIOControl* PVPlayerTestFileOutputMioFactory::CreateTextOutput(OsclAny* aParam, MediaType aMediaType)
+{
+    return new PVRefFileOutput(((OSCL_wString*)aParam)->get_cstr(), aMediaType);
 }
 
 void PVPlayerTestFileOutputMioFactory::DestroyTextOutput(PvmiMIOControl* aMio)

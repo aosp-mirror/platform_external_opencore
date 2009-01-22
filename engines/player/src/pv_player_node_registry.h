@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,11 +58,28 @@
 #include "pv_player_node_registry_interface.h"
 #endif
 
-#ifdef HAS_OSCL_LIB_SUPPORT
 #ifndef PVMF_RECOGNIZER_REGISTRY_H_INCLUDED
 #include "pvmf_recognizer_registry.h"
 #endif
+
+#ifndef PV_PLAYER_CONFIG_H_INCLUDED
+#include "pv_player_config.h"
 #endif
+
+#ifndef PV_LOGGER_H_INCLUDED
+#include "pvlogger.h"
+#endif
+
+#ifndef USE_CML2_CONFIG
+#ifndef PV_PLAYER_ENGINE_TUNABLES_H_INCLUDED
+#include "pv_player_engine_tunables.h"
+#endif
+#endif
+
+class OsclSharedLibrary;
+class NodeRegistryPopulatorInterface;
+class RecognizerPopulatorInterface;
+
 
 // CLASS DECLARATION
 /**
@@ -76,6 +93,9 @@ class PVPlayerNodeRegistry : public PVPlayerNodeRegistryInterface
          * Object Constructor function
          **/
         PVPlayerNodeRegistry();
+
+        void AddLoadableModules(const OSCL_String&);
+        void RemoveLoadableModules();
 
         /**
          * The QueryRegistry for PVPlayerNodeRegistry. Used mainly for Seaching of the UUID
@@ -111,7 +131,6 @@ class PVPlayerNodeRegistry : public PVPlayerNodeRegistryInterface
          **/
         virtual bool ReleaseNode(PVUuid& aUuid, PVMFNodeInterface *aNode);
 
-#ifdef HAS_OSCL_LIB_SUPPORT
         /**
          * The RegisterNode for PVPlayerNodeRegistry. Used for registering nodes through the NodeInfo object.
          *
@@ -134,32 +153,33 @@ class PVPlayerNodeRegistry : public PVPlayerNodeRegistryInterface
             OSCL_UNUSED_ARG(aNodeInfo);
             // do nothing
         };
-#else
-        /**
-         * The RegisterNode for PVPlayerNodeRegistry. Used for registering nodes through the NodeInfo object.
-         *
-         * @param aNodeInfo NodeInfo object passed to the regisry class. This contains all nodes that need to be registered.
-         *
-         **/
-        virtual void RegisterNode(const PVPlayerNodeInfo& aNodeInfo) {};
-
-        /**
-         * The PopulateRegistry for PVPlayerNodeRegistry. Populates the registry by retrieving all the information for node.
-         * @param aConfigFilePath File path for the Configuration file which stores the mapping
-         *  between OsclUuids and SharedLibrary path names
-         *
-         **/
-        virtual void PopulateRegistry(const OSCL_String& aConfigFilePath) {};
-#endif
 
         /**
          * Object destructor function
          **/
         virtual ~PVPlayerNodeRegistry();
 
+
     private:
+        /*
+        ** The node list.
+        */
         Oscl_Vector<PVPlayerNodeInfo, OsclMemAllocator> iType;
 
+        OsclAny* iStaticPopulatorContext;
+        friend class PVPlayerRegistryPopulator;
+
+        /*
+        ** Bookkeeping data for dynamically loaded nodes.
+        */
+        struct PVPlayerEngineNodeSharedLibInfo
+        {
+            OsclSharedLibrary* iLib;
+            NodeRegistryPopulatorInterface* iNodeLibIfacePtr;
+            OsclAny* iContext;
+        };
+        Oscl_Vector<struct PVPlayerEngineNodeSharedLibInfo*, OsclMemAllocator> iNodeLibInfoList;
+        PVLogger* iLogger;
 };
 
 
@@ -179,13 +199,14 @@ class PVPlayerRecognizerRegistryObserver
  **/
 class PVPlayerRecognizerRegistry : public OsclTimerObject,
             public PVMFRecognizerCommmandHandler
-#ifdef HAS_OSCL_LIB_SUPPORT
             , public PVPlayerRecognizerRegistryInterface
-#endif
 {
     public:
         PVPlayerRecognizerRegistry();
         virtual ~PVPlayerRecognizerRegistry();
+
+        void AddLoadableModules(const OSCL_String&);
+        void RemoveLoadableModules();
 
         /**
          * Determines the format type of the specified source file using the PVMF recognizer
@@ -199,6 +220,17 @@ class PVPlayerRecognizerRegistry : public OsclTimerObject,
         PVMFStatus QueryFormatType(OSCL_wString& aSourceURL, PVPlayerRecognizerRegistryObserver& aObserver, OsclAny* aContext = NULL);
 
         /**
+         * Determines the format type of the specified source file using the PVMF recognizer
+         *
+         * @param aDataStreamFactory The factory to create source data stream to determine the format
+         * @param aObserver The callback handler to call when recognize operation completes
+         * @param aContext Optional opaque data that would be returned in callback
+         *
+         * @returns Status of query
+         **/
+        PVMFStatus QueryFormatType(PVMFCPMPluginAccessInterfaceFactory* aDataStreamFactory, PVPlayerRecognizerRegistryObserver& aObserver, OsclAny* aContext = NULL);
+
+        /**
          * Cancels any pending format type query
          *
          * @param aContext Optional opaque data that would be returned in callback
@@ -206,7 +238,7 @@ class PVPlayerRecognizerRegistry : public OsclTimerObject,
          * @returns None
          **/
         void CancelQuery(OsclAny* aContext = NULL);
-#ifdef HAS_OSCL_LIB_SUPPORT
+
         /**
          * The RegisterRecognizer for PVPlayerRecognizerRegistryInterface. Used for registering file format recognizer factory plugins.
          *
@@ -238,9 +270,6 @@ class PVPlayerRecognizerRegistry : public OsclTimerObject,
                 }
             }
         }
-#endif
-
-
 
     private:
         // From OsclTimerObject
@@ -249,18 +278,72 @@ class PVPlayerRecognizerRegistry : public OsclTimerObject,
         // From PVMFRecognizerCommmandHandler
         void RecognizerCommandCompleted(const PVMFCmdResp& aResponse);
 
+        /*
+        ** The Recognizer list
+        */
         Oscl_Vector<PVMFRecognizerPluginFactory*, OsclMemAllocator> iRecognizerList;
 
         PVMFSessionId iRecSessionId;
         Oscl_Vector<PVMFRecognizerResult, OsclMemAllocator> iRecognizerResult;
         PVMFCPMPluginAccessInterfaceFactory* iFileDataStreamFactory;
+        PVMFCPMPluginAccessInterfaceFactory* iDataStreamFactory;
+
         PVMFFormatType iSourceFormatType;
         PVPlayerRecognizerRegistryObserver* iObserver;
         OsclAny* iCmdContext;
         PVMFCommandId iRecognizeCmdId;
         bool iCancelQuery;
         OsclAny* iCancelCmdContext;
+
+        OsclAny* iStaticPopulatorContext;
+        friend class PVPlayerRegistryPopulator;
+
+        /*
+        ** Bookkeeping data for dynamically loaded recognizers.
+        */
+        struct PVPlayerEngineRecognizerSharedLibInfo
+        {
+            OsclSharedLibrary* iLib;
+            RecognizerPopulatorInterface* iRecognizerLibIfacePtr;
+            OsclAny* iContext;
+        };
+        Oscl_Vector<struct PVPlayerEngineRecognizerSharedLibInfo*, OsclMemAllocator> iRecognizerLibInfoList;
+        PVLogger* iLogger;
 };
+
+/*
+** PVPlayerRegistryPopulator is used by Player engine to populate & de-populate
+** the registries.
+*/
+class PVPlayerRegistryPopulator: public NodeRegistryPopulatorInterface
+            , public RecognizerPopulatorInterface
+{
+    public:
+        /*
+        ** Populate both registries from static and loadable modules
+        */
+        static void Populate(PVPlayerNodeRegistry&, PVPlayerRecognizerRegistry&);
+
+        /*
+        ** Depopulate both registries.
+        */
+        static void Depopulate(PVPlayerNodeRegistry&, PVPlayerRecognizerRegistry&);
+
+    private:
+        /*
+        ** These routines are implemented in the project-specific player config.
+        ** They would normally populate using statically linked modules.
+        */
+
+        //from NodeRegistryPopulatorInterface
+        void RegisterAllNodes(PVPlayerNodeRegistryInterface* aRegistry, OsclAny*& aContext) ;
+        void UnregisterAllNodes(PVPlayerNodeRegistryInterface* aRegistry, OsclAny* aContext) ;
+
+        //from RecognizerPopulatorInterface
+        void RegisterAllRecognizers(PVPlayerRecognizerRegistryInterface* aRegistry, OsclAny*& aContext) ;
+        void UnregisterAllRecognizers(PVPlayerRecognizerRegistryInterface* aRegistry, OsclAny* aContext) ;
+};
+
 
 #endif // PV_PLAYER_NODE_REGISTRY_H_INCLUDED
 

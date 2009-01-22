@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,14 @@
  * -------------------------------------------------------------------
  */
 /*
-------------------------------------------------------------------------------
 
+  Pathname: pv_normalize.h
 
-
- Pathname: ./c/include/pv_normalize.h
-
-     Date: 12/10/2004
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
 
+ Who:                                       Date:
  Description:
 ------------------------------------------------------------------------------
  INCLUDE DESCRIPTION
@@ -71,8 +68,7 @@ __inline Int pv_normalize(Int32 x)
 }
 
 
-#elif defined(_ARM_GCC)
-
+#elif (defined(PV_ARM_GCC_V5)||defined(PV_ARM_GCC_V4))
 
 __inline Int pv_normalize(Int32 x)
 {

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,9 +56,6 @@
 #include "oscl_file_types.h"
 #endif
 
-#ifdef ENABLE_MEMORY_PLAYBACK
-#include <media/MediaPlayerInterface.h>
-#endif
 
 /**
  * OsclNativeFileIO defines the native file operations that must be implemented
@@ -90,7 +87,6 @@ class OsclNativeFile : public HeapBase
         int32  EndOfFile();
         int32 Size();
         int32 Close();
-        int32 SetSize(uint32 size);
 
         //query for current open mode.
         uint32 Mode()
@@ -120,6 +116,10 @@ class OsclNativeFile : public HeapBase
         ** @returns: true if async read is supported natively.
         **/
         bool HasAsyncRead();
+        /*!
+        ** Cancel any pending async read.
+        **/
+        void ReadAsyncCancel();
 
     private:
 
@@ -131,7 +131,7 @@ class OsclNativeFile : public HeapBase
 
         //native file object.
         FILE* iFile;
-#ifdef ENABLE_MEMORY_PLAYBACK
+#if ENABLE_MEMORY_PLAYBACK
         static int sigbushandlerfunc(siginfo_t *, struct mediasigbushandler *);
         // memory block
         void* membase;

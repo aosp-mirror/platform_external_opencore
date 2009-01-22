@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,6 +100,8 @@ class PVMFCmdResp : public PVMFEventBase
                 iEventExtInterface(NULL),
                 iEventData(aEventData)
         {
+            iEventDataLengthAvailable = false;
+            iEventDataLength = 0;
         }
 
         /**
@@ -115,6 +117,8 @@ class PVMFCmdResp : public PVMFEventBase
                 iEventExtInterface(aEventExtInterface),
                 iEventData(NULL)
         {
+            iEventDataLengthAvailable = false;
+            iEventDataLength = 0;
         }
 
         /**
@@ -131,6 +135,8 @@ class PVMFCmdResp : public PVMFEventBase
                 iEventExtInterface(aEventExtInterface),
                 iEventData(aEventData)
         {
+            iEventDataLengthAvailable = false;
+            iEventDataLength = 0;
         }
 
         virtual ~PVMFCmdResp() {}
@@ -179,6 +185,51 @@ class PVMFCmdResp : public PVMFEventBase
         }
 
         /**
+         * This method is going to be deprecated soon. We intend to remove
+         * the opaque event data and use PVInterface pointer if needed to
+         * retrieve more information regarding command completion.Therefore,
+         * with the removal of event data, setting length of event data wont be of any significance either.
+         *
+         * @param1 - (uint32) length of event data in bytes.
+         * @return PVMFSuccess, if length of event data can be set.
+                   PVMFFailure, if length of event data can't be set.
+         */
+        PVMFStatus SetEventDataLen(uint32 aEventDataLength)
+        {
+            PVMFStatus status = PVMFFailure;
+            if (iEventData)
+            {
+                iEventDataLengthAvailable = true;
+                iEventDataLength = aEventDataLength;
+                status = PVMFSuccess;
+            }
+            return status;
+        }
+
+        /**
+         * This method is going to be deprecated soon. We intend to remove
+         * the opaque event data and use PVInterface pointer if needed to
+         * retrieve more information regarding command completion.Therefore,
+         * with the removal of event data, length if event data wont be needed either.
+         *
+         * @param1 - bool& aEventDataLenAvailable
+         *			 false - length of event data(in bytes) is not available
+         *			 true - length of event data(in bytes) is available
+         * @param2 - uint32& aEventDataLength
+         *			 length of eventdata in bytes
+         */
+        void GetEventDataLen(bool& aEventDataLenAvailable, uint32& aEventDataLength)const
+        {
+            aEventDataLenAvailable = false;
+            aEventDataLength = 0;
+            if (iEventDataLengthAvailable)
+            {
+                aEventDataLenAvailable = true;
+                aEventDataLength = iEventDataLength;
+            }
+        }
+
+        /**
          * @return Returns the eventinfointerface
          */
         PVInterface* GetEventExtensionInterface() const
@@ -196,6 +247,8 @@ class PVMFCmdResp : public PVMFEventBase
          * soon.
          */
         OsclAny* iEventData;
+        bool iEventDataLengthAvailable;
+        uint32 iEventDataLength;
 };
 
 
@@ -225,6 +278,8 @@ class PVMFAsyncEvent : public PVMFEventBase
             {
                 iLocalBuffer[i] = 0;
             }
+            iEventDataLengthAvailable = false;
+            iEventDataLength = 0;
         }
 
         PVMFAsyncEvent(PVMFEventCategory aEventCategory,
@@ -253,6 +308,8 @@ class PVMFAsyncEvent : public PVMFEventBase
                     iLocalBuffer[i] = aLocalBuffer[i];
                 }
             }
+            iEventDataLengthAvailable = false;
+            iEventDataLength = 0;
         }
 
         PVMFAsyncEvent(PVMFEventCategory aEventCategory,
@@ -271,6 +328,8 @@ class PVMFAsyncEvent : public PVMFEventBase
             {
                 iLocalBuffer[i] = 0;
             }
+            iEventDataLengthAvailable = false;
+            iEventDataLength = 0;
         }
 
         PVMFAsyncEvent(PVMFEventCategory aEventCategory,
@@ -300,6 +359,8 @@ class PVMFAsyncEvent : public PVMFEventBase
                     iLocalBuffer[i] = aLocalBuffer[i];
                 }
             }
+            iEventDataLengthAvailable = false;
+            iEventDataLength = 0;
         }
 
         virtual ~PVMFAsyncEvent() {}
@@ -330,6 +391,51 @@ class PVMFAsyncEvent : public PVMFEventBase
         OsclAny* GetEventData() const
         {
             return iEventData;
+        }
+
+        /**
+         * This method is going to be deprecated soon. We intend to remove
+         * the opaque event data and use PVInterface pointer if needed to
+         * retrieve more information regarding command completion.Therefore,
+         * with the removal of event data, setting length of event data wont be of any significance either.
+         *
+         * @param1 - (uint32) length of event data in bytes.
+         * @return PVMFSuccess, if length of event data can be set.
+                   PVMFFailure, if length of event data can't be set.
+         */
+        PVMFStatus SetEventDataLen(uint32 aEventDataLength)
+        {
+            PVMFStatus status = PVMFFailure;
+            if (iEventData)
+            {
+                iEventDataLengthAvailable = true;
+                iEventDataLength = aEventDataLength;
+                status = PVMFSuccess;
+            }
+            return status;
+        }
+
+        /**
+         * This method is going to be deprecated soon. We intend to remove
+         * the opaque event data and use PVInterface pointer if needed to
+         * retrieve more information regarding command completion.Therefore,
+         * with the removal of event data, length if event data wont be needed either.
+         *
+         * @param1 - bool& aEventDataLenAvailable
+         *			 false - length of event data(in bytes) is not available
+         *			 true - length of event data(in bytes) is available
+         * @param2 - uint32& aEventDataLength
+         *			 length of eventdata in bytes
+         */
+        void GetEventDataLen(bool& aEventDataLenAvailable, uint32& aEventDataLength)const
+        {
+            aEventDataLenAvailable = false;
+            aEventDataLength = 0;
+            if (iEventDataLengthAvailable)
+            {
+                aEventDataLenAvailable = true;
+                aEventDataLength = iEventDataLength;
+            }
         }
 
         /**
@@ -376,6 +482,8 @@ class PVMFAsyncEvent : public PVMFEventBase
          * soon.
          */
         OsclAny* iEventData;
+        bool iEventDataLengthAvailable;
+        uint32 iEventDataLength;
 };
 
 #endif // PVMF_EVENT_HANDLING_H_INCLUDED

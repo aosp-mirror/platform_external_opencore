@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,15 +28,6 @@
     pvmp3_st_mid_side
     pvmp3_st_intensity
     pvmp3_stereo_proc
-
-     Date: 09/21/2007
-
-------------------------------------------------------------------------------
- REVISION HISTORY
-
-
- Description:
-
 
 ------------------------------------------------------------------------------
 
@@ -381,7 +372,7 @@ void pvmp3_stereo_proc(int32 xr[SUBBANDS_NUMBER*FILTERBANK_BANDS],
                             sfbNo = mp3_sfBandIndex[sfreq].s[sfbTemp+1] - mp3_sfBandIndex[sfreq].s[sfbTemp]; /* No of lines to process */
                             sfbStart = 3 * mp3_sfBandIndex[sfreq].s[sfbTemp] + j * sfbNo;
 
-                            if (scalefac->s[j][sfbTemp] != 7)         /* RF bug fix 30-09-2002  */
+                            if (scalefac->s[j][sfbTemp] != 7)
                             {
                                 pvmp3_st_intensity(xr, xl, scalefac->s[j][sfbTemp], sfbStart, sfbNo);
                             }
@@ -457,7 +448,7 @@ void pvmp3_stereo_proc(int32 xr[SUBBANDS_NUMBER*FILTERBANK_BANDS],
                             sfbNo = mp3_sfBandIndex[sfreq].s[sfbTemp+1] - mp3_sfBandIndex[sfreq].s[sfbTemp]; /* No of lines to process */
                             sfbStart = 3 * mp3_sfBandIndex[sfreq].s[sfbTemp] + j * sfbNo;
 
-                            if (scalefac->s[j][sfbTemp] != 7)  /* RF bug fix 30-09-2002 */
+                            if (scalefac->s[j][sfbTemp] != 7)
                             {
                                 pvmp3_st_intensity(xr, xl, scalefac->s[j][sfbTemp], sfbStart, sfbNo);
                             }

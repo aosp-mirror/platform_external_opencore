@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,24 +15,6 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*									    */
-/*   =====================================================================  */
-/*	File: SDPParser.cpp						    */
-/*	Description:							    */
-/*									    */
-/*									    */
-/*	Rev:								    */
-/*	Created: 05/24/01						    */
-/*   =====================================================================  */
-/*									    */
-/*	Revision History:						    */
-/*									    */
-/*	Rev:								    */
-/*	Date:								    */
-/*	Description:							    */
-/*									    */
-/* //////////////////////////////////////////////////////////////////////// */
-
 #include "sdp_parser.h"
 #include "sdp_mediaparser_registry.h"
 #include "oscl_string_utils.h"
@@ -41,7 +23,6 @@
 #include "base_media_info_parser.h"
 #include "aac_media_info_parser.h"
 #include "amr_media_info_parser.h"
-#include "evrc_media_info_parser.h"
 #include "h263_media_info_parser.h"
 #include "m4v_media_info_parser.h"
 #include "still_image_media_info_parser.h"
@@ -57,131 +38,19 @@ struct mime_payload_pair
     Oscl_Vector<int, SDPParserAlloc> payload_no;
 };
 
-
-/* ======================================================================== */
-/*	Function : SDP_Parser(table * _pSDPMediaParserRegistry,mediaInfo** mediaData,
-sessionDescription* sessionData, SDPMemory *pMemory)    */
-/*	Date     : 05/24/2001						    */
-/*	Purpose  : Constructor for the SDP_Parser class			    */
-/*	In/out   :							    */
-/*	Return   :							    */
-/*	Modified :							    */
-/* ======================================================================== */
-
-OSCL_EXPORT_REF SDP_Parser::SDP_Parser(bool sipSdp):
+OSCL_EXPORT_REF SDP_Parser::SDP_Parser(SDPMediaParserRegistry*& regTable, bool sipSdp):
         iLogger(NULL),
-        reg(NULL),
-        _pSDPMediaParserRegistry(NULL),
+        _pSDPMediaParserRegistry(regTable),
         mediaArrayIndex(0),
-        registrar_locally_allocated(false),
-        memflag(false),
-        localRegAllocation(false),
         applicationFlag(false),
-        _pAMRMediaParserFactory(NULL),
-        _pEVRCMediaParserFactory(NULL),
-        _pAACMediaParserFactory(NULL),
-        _pASFMediaParserFactory(NULL),
-        _pH263MediaParserFactory(NULL),
-        _pMPEG4MediaParserFactory(NULL),
-        _pStillImageMediaParserFactory(NULL),
-        _pH264MediaParserFactory(NULL),
-        _pPCMAMediaParserFactory(NULL),
-        _pPCMUMediaParserFactory(NULL),
-        _pRFC3640MediaParserFactory(NULL),
         isSipSdp(sipSdp)
 {
-    iLogger = PVLogger::GetLoggerObject("SDP_Parser");
-}
-
-
-OSCL_EXPORT_REF SDP_Parser::SDP_Parser(SDPMediaParserRegistry *regTable, bool sipSdp):
-        iLogger(NULL),
-        reg(NULL),
-        _pSDPMediaParserRegistry(NULL),
-        mediaArrayIndex(0),
-        registrar_locally_allocated(false),
-        memflag(false),
-        localRegAllocation(false),
-        applicationFlag(false),
-        _pAMRMediaParserFactory(NULL),
-        _pEVRCMediaParserFactory(NULL),
-        _pAACMediaParserFactory(NULL),
-        _pASFMediaParserFactory(NULL),
-        _pH263MediaParserFactory(NULL),
-        _pMPEG4MediaParserFactory(NULL),
-        _pStillImageMediaParserFactory(NULL),
-        _pH264MediaParserFactory(NULL),
-        _pPCMAMediaParserFactory(NULL),
-        _pPCMUMediaParserFactory(NULL),
-        _pRFC3640MediaParserFactory(NULL),
-
-        isSipSdp(sipSdp)
-{
-    if (regTable != NULL)
-    {
-        _pSDPMediaParserRegistry = regTable;
-    }
-    else
-    {
-        _pSDPMediaParserRegistry = NULL;
-    }
     iLogger = PVLogger::GetLoggerObject("SDP_Parser");
 }
 
 
 OSCL_EXPORT_REF SDP_Parser::~SDP_Parser()
 {
-    iLogger = NULL;
-    if (registrar_locally_allocated == true)
-    {
-        SDPMediaParserRegistry::Cleanup();
-    }
-    if (_pAMRMediaParserFactory != NULL)
-    {
-        OSCL_DELETE((_pAMRMediaParserFactory));
-    }
-    if (_pEVRCMediaParserFactory != NULL)
-    {
-        OSCL_DELETE((_pEVRCMediaParserFactory));
-    }
-    if (_pAACMediaParserFactory != NULL)
-    {
-        OSCL_DELETE((_pAACMediaParserFactory));
-    }
-    if (_pASFMediaParserFactory != NULL)
-    {
-        OSCL_DELETE((_pASFMediaParserFactory));
-    }
-    if (_pH263MediaParserFactory != NULL)
-    {
-        OSCL_DELETE((_pH263MediaParserFactory));
-    }
-    if (_pMPEG4MediaParserFactory != NULL)
-    {
-        OSCL_DELETE((_pMPEG4MediaParserFactory));
-    }
-    if (_pStillImageMediaParserFactory != NULL)
-    {
-        OSCL_DELETE((_pStillImageMediaParserFactory));
-    }
-    if (_pH264MediaParserFactory != NULL)
-    {
-        OSCL_DELETE((_pH264MediaParserFactory));
-    }
-    if (_pPCMAMediaParserFactory != NULL)
-    {
-        OSCL_DELETE((_pPCMAMediaParserFactory));
-    }
-    if (_pPCMUMediaParserFactory != NULL)
-    {
-        OSCL_DELETE((_pPCMUMediaParserFactory));
-    }
-    if (_pPCMUMediaParserFactory != NULL)
-    {
-        OSCL_DELETE((_pRFC3640MediaParserFactory));
-    }
-
-
 }
 
 bool SDP_Parser::parse_rtpmap(const char *start, const char *end, int& rtp_payload,
@@ -339,7 +208,8 @@ int SDP_Parser::validate_media_line(const char *start, const char *end, Oscl_Vec
         }
         else
         {
-            if (!oscl_strstr(start, "IMAGE"))
+            uint32 len = OSCL_MIN((uint32)(eptr - start), oscl_strlen("IMAGE"));
+            if (!oscl_strncmp(start, "IMAGE", len))
             {
                 applicationFlag = true;
             }
@@ -359,15 +229,6 @@ int SDP_Parser::validate_media_line(const char *start, const char *end, Oscl_Vec
 
 }
 
-
-/* ================================================================================= */
-/*	Function : parseSDP(char *sdpText) 											 	 */
-/*	Date     : 05/24/2001															 */
-/*	Purpose  : Parses SDP text														 */
-/*	In/out   :																		 */
-/*	Return   :																		 */
-/*	Modified :																		 */
-/* ================================================================================= */
 OSCL_EXPORT_REF
 SDP_ERROR_CODE SDP_Parser::parseSDP(const char *sdpText, int text_length, SDPInfo *sdp)
 {
@@ -809,23 +670,6 @@ SDP_ERROR_CODE SDP_Parser::parseSDP(const char *sdpText, int text_length, SDPInf
                     SDPBaseMediaInfoParser *mediaParser;
                     SDP_ERROR_CODE retval;
 
-                    if (_pSDPMediaParserRegistry == NULL)
-                    {
-                        if (allocateRegistrar() == false)
-                        {
-                            PVMF_SDP_PARSER_LOGERROR((0, "SDP_Parser::parseSDP - allocateRegistrar failed"));
-                            return SDP_FAILURE;
-                        }
-                        else
-                        {
-                            if (_pSDPMediaParserRegistry == NULL)
-                            {
-                                PVMF_SDP_PARSER_LOGERROR((0, "SDP_Parser::parseSDP - No SDP MediaParser Registry"));
-                                return SDP_FAILURE;
-                            }
-                        }
-                    }
-
                     for (uint32 kk = 0; kk < mime_payload_pair_vector.size(); kk++)
                     {
                         encoding_name = mime_payload_pair_vector[kk].mime;
@@ -854,6 +698,7 @@ SDP_ERROR_CODE SDP_Parser::parseSDP(const char *sdpText, int text_length, SDPInf
                                         OSCL_StackString<8> mime((const char*)(encoding_name.ptr), encoding_name.len);
                                         PVMF_SDP_PARSER_LOGERROR((0, "SDP_Parser::parseSDP - Parsing m= section failed, mime=%s", mime.get_cstr()));
                                         OSCL_DELETE((mediaParser));
+                                        sdp->freeLastMediaInfoObject();
                                         return retval;
                                     }
 
@@ -866,9 +711,9 @@ SDP_ERROR_CODE SDP_Parser::parseSDP(const char *sdpText, int text_length, SDPInf
                                     OSCL_StackString<8> mime((const char*)(encoding_name.ptr), encoding_name.len);
                                     PVMF_SDP_PARSER_LOGERROR((0, "SDP_Parser::parseSDP - Parsing m= section failed, mime=%s", mime.get_cstr()));
                                     OSCL_DELETE((mediaParser));
+                                    sdp->freeLastMediaInfoObject();
                                     return retval;
                                 }
-
                             }
                             sdp->IncrementAlternateMediaInfoVectorIndex();
                             OSCL_DELETE((mediaParser));
@@ -972,71 +817,6 @@ SDP_ERROR_CODE SDP_Parser::parseSDP(const char *sdpText, int text_length, SDPInf
     return SDP_SUCCESS;
 }
 
-OSCL_EXPORT_REF bool
-SDP_Parser::allocateRegistrar()
-{
-    if (_pSDPMediaParserRegistry == NULL)
-    {
-        //Please update the #define MAX_CODEC_MODE_LIST 11 in "sdp_error.h"
-        //before registerSDPParser() for any new MIME type
-        StrPtrLen aac_latm("MP4A-LATM");
-        StrPtrLen aac("AAC");
-        StrPtrLen amr("AMR");
-        StrPtrLen amrwb("AMR-WB");
-        StrPtrLen evrc("EVRC");
-        StrPtrLen h263_old("H263-1998");
-        StrPtrLen h263("H263-2000");
-        StrPtrLen m4v("MP4V-ES");
-        StrPtrLen author_m4v("PVMP4V-ES");
-        StrPtrLen still("X-MP4V-IMAGE");
-        StrPtrLen asf("ASF");
-        StrPtrLen h264("H264");
-        StrPtrLen pcma("PCMA");
-        StrPtrLen pcmu("PCMU");
-        StrPtrLen rfc3640("mpeg4-generic");
-
-        _pAMRMediaParserFactory = OSCL_NEW(SDPAMRMediaParserFactory, ());
-        _pEVRCMediaParserFactory = OSCL_NEW(SDPEVRCMediaParserFactory, ());
-        _pAACMediaParserFactory = OSCL_NEW(SDPAACMediaParserFactory, ());
-        _pASFMediaParserFactory = OSCL_NEW(SDPASFMediaParserFactory, ());
-        _pH263MediaParserFactory = OSCL_NEW(SDPH263MediaParserFactory, ());
-        _pMPEG4MediaParserFactory = OSCL_NEW(SDPMPEG4MediaParserFactory, ());
-        _pStillImageMediaParserFactory = OSCL_NEW(SDPStillImageMediaParserFactory, ());
-        _pH264MediaParserFactory = OSCL_NEW(SDPH264MediaParserFactory, ());
-        _pPCMAMediaParserFactory = OSCL_NEW(SDPPCMAMediaParserFactory, ());
-        _pPCMUMediaParserFactory = OSCL_NEW(SDPPCMUMediaParserFactory, ());
-        _pRFC3640MediaParserFactory = OSCL_NEW(SDPRFC3640MediaParserFactory, ());
-
-        SDPMediaParserRegistry::Init();
-
-        _pSDPMediaParserRegistry =
-            SDPMediaParserRegistry::GetSDPMediaParserRegistry();
-
-        _pSDPMediaParserRegistry->addMediaParserFactoryToRegistry(aac_latm, _pAACMediaParserFactory);
-        _pSDPMediaParserRegistry->addMediaParserFactoryToRegistry(aac, _pAACMediaParserFactory);
-        _pSDPMediaParserRegistry->addMediaParserFactoryToRegistry(amr, _pAMRMediaParserFactory);
-        _pSDPMediaParserRegistry->addMediaParserFactoryToRegistry(amrwb, _pAMRMediaParserFactory);
-        _pSDPMediaParserRegistry->addMediaParserFactoryToRegistry(evrc, _pEVRCMediaParserFactory);
-        _pSDPMediaParserRegistry->addMediaParserFactoryToRegistry(h263_old, _pH263MediaParserFactory);
-        _pSDPMediaParserRegistry->addMediaParserFactoryToRegistry(h263, _pH263MediaParserFactory);
-        _pSDPMediaParserRegistry->addMediaParserFactoryToRegistry(m4v, _pMPEG4MediaParserFactory);
-        _pSDPMediaParserRegistry->addMediaParserFactoryToRegistry(author_m4v, _pMPEG4MediaParserFactory);
-        _pSDPMediaParserRegistry->addMediaParserFactoryToRegistry(still, _pStillImageMediaParserFactory);
-        _pSDPMediaParserRegistry->addMediaParserFactoryToRegistry(asf, _pASFMediaParserFactory);
-        _pSDPMediaParserRegistry->addMediaParserFactoryToRegistry(h264, _pH264MediaParserFactory);
-        _pSDPMediaParserRegistry->addMediaParserFactoryToRegistry(pcma, _pPCMAMediaParserFactory);
-        _pSDPMediaParserRegistry->addMediaParserFactoryToRegistry(pcmu, _pPCMUMediaParserFactory);
-        _pSDPMediaParserRegistry->addMediaParserFactoryToRegistry(rfc3640, _pRFC3640MediaParserFactory);
-
-        registrar_locally_allocated = true;
-        return true;
-    }
-    else
-    {
-        return false;
-    }
-}
-
 OSCL_EXPORT_REF SDP_ERROR_CODE
 SDP_Parser::parseSDPDownload(const char *sdpText,
                              int length,
@@ -1084,8 +864,7 @@ SDP_Parser::parseSDPDownload(const char *sdpText,
 
         /*Get start stop times*/
         convertToMilliSec(*sdp->getSessionInfo()->getRange(), mv->duration.startTime, mv->duration.stopTime);
-        /*Get content version*/
-        sdp->getSessionInfo()->getContentVersion(mv->majorVersion, mv->minorVersion);
+
         /*Get MIMEType and other track info*/
         for (int ii = 0; ii < mv->trackCount; ii++)
         {
@@ -1128,7 +907,6 @@ SDP_Parser::parseSDPDownload(const char *sdpText,
                 }
             }
             mv->TrackArray[ii].trackID = track;
-            minfo->getContentVersion(mv->TrackArray[ii].majorVersion, mv->TrackArray[ii].minorVersion);
         }
     }
     return SDP_SUCCESS;

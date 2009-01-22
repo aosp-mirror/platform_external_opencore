@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@
 
 /*
  * Select native file access mode, for systems that have more than one type of file
- * access.
+ * access.  Values for Symbian, RFile=0, RFileBuf=1.
  */
 #define PVMI_FILEIO_NATIVE_ACCESS_MODE "fileio/native-access-mode"
 #define PVMI_FILEIO_NATIVE_ACCESS_MODE_VALUE "fileio/native-access-mode;valtype=uint32"

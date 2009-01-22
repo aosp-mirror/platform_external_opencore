@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@
 
 #include <memory.h>
 typedef size_t oscl_memsize_t;
+#define OSCL_HAS_ANSI_MEMORY_FUNCS 1
 
 
 #endif

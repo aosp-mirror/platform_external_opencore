@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,13 @@
  * -------------------------------------------------------------------
  */
 /*
-------------------------------------------------------------------------------
 
-
-
- Pathname: ./c/include/pv_div.h
-
-     Date: 02/26/2004
+ Pathname: pv_div.h
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
 
+ Who:                                       Date:
  Description:
 ------------------------------------------------------------------------------
  INCLUDE DESCRIPTION

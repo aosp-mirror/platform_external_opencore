@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,8 +51,8 @@
 #include "oscl_string_containers.h"
 #endif
 
-#ifndef OSCL_CLOCK_H_INCLUDED
-#include "oscl_clock.h"
+#ifndef PVMF_MEDIA_CLOCK_H_INCLUDED
+#include "pvmf_media_clock.h"
 #endif
 
 #ifndef OSCL_TIMER_H_INCLUDED
@@ -118,6 +118,11 @@
 #ifndef PAYLOAD_PARSER_H_INCLUDED
 #include "payload_parser.h"
 #endif
+
+#ifndef PVMF_SM_CONFIG_H_INCLUDED
+#include "pvmf_sm_config.h"
+#endif
+
 //Default vector reserve size
 #define PVMF_RTSP_ENGINE_NODE_COMMAND_VECTOR_RESERVE 10
 
@@ -209,7 +214,7 @@ class SessionInfo
         bool getStateFlag;			    //Used to ensure that the PE's main loop has been called
         bool pvServerIsSetFlag; 		    //Used to indicate if we are streaming from PVServer or not
         bool tSIDIsSetFlag;			    //Used to send session id from second SETUP request
-
+        uint32 iServerVersionNumber;    // Version number of PVSS
         int32 prerollDuration;                  //Saves the jitter buffer size
 
         int32 fwp_counter;			    //Id of the first returned firewall packet
@@ -217,7 +222,6 @@ class SessionInfo
         uint32 roundTripDelay;                   //Saves the round trip delay for a DESCRIBE request
         uint64 clientServerDelay;                //Saves the client server delay during a DESCRIBE request
 
-        bool imperialPlusServerFlag;            //Used to indicate if the server is 3.1 or not
         bool pipeLineFlag;                      //Used to indicate a pipe lined request
 
         OSCL_HeapString<PVRTSPEngineNodeAllocator>	iUserAgent;
@@ -233,15 +237,22 @@ class SessionInfo
 
         enum PVRTSPStreamingType iStreamingType;
 
+        bool									   iSessionCompleted;
+        void UpdateSessionCompletionStatus(bool aSessionCompleted)
+        {
+            iSessionCompleted = aSessionCompleted;
+        }
 
     public:
         SessionInfo():
+                iProxyPort(0),
                 bExternalSDP(false),
                 pvServerIsSetFlag(false),
+                iServerVersionNumber(0),
                 roundTripDelay(0),
-                iProxyPort(0)
+                iSessionCompleted(false)
         {
-            iUserAgent += _STRLIT_CHAR("PVCore/05.02.00.00");
+            iUserAgent += _STRLIT_CHAR("PVPlayer4.0");
             iReqPlayRange.format = RtspRangeType::INVALID_RANGE;
         };
 
@@ -261,6 +272,7 @@ typedef PVMFGenericNodeCommand<PVRTSPEngineNodeAllocator> PVRTSPEngineCommandBas
 enum TPVMFRtspNodeCommand //TPVMFGenericNodeCommand
 {
     PVMF_RTSP_NODE_ERROR_RECOVERY = PVMF_GENERIC_NODE_COMMAND_LAST + 1
+    , PVMF_RTSP_NODE_CANCELALLRESET
 };
 class PVRTSPEngineCommand: public PVRTSPEngineCommandBase
 {
@@ -363,14 +375,10 @@ class GetPostCorrelationObject
         Oscl_File iGetPostCorrelationFile;
 };
 
-#ifndef PVMF_STREAM
-#define PVMF_STREAM                       1410
-#endif
-
 class PVRTSPEngineNode
-            : public PVMFNodeInterface,
-            public OsclTimerObject, //OsclActiveObject??
-            public PVRTSPEngineNodeExtensionInterface,
+            : public PVInterface,
+            public PVMFNodeInterface,
+            public OsclTimerObject,
             public OsclSocketObserver,
             public OsclDNSObserver,
             public OsclTimerObserver,
@@ -575,6 +583,9 @@ class PVRTSPEngineNode
         OSCL_IMPORT_REF virtual PVMFStatus GetKeepAliveMethod(int32 &aTimeout, bool &aUseSetParameter, bool &aKeepAliveInPlay);
 
 
+        OSCL_IMPORT_REF virtual PVMFStatus GetRTSPTimeOut(int32 &aTimeout);
+        OSCL_IMPORT_REF virtual PVMFStatus SetRTSPTimeOut(int32 aTimeout);
+
         //************ end PVRTSPEngineNodeExtensionInterface
 
         //************ begin OsclTimerObserver
@@ -591,6 +602,16 @@ class PVRTSPEngineNode
         //************ begin OsclMemPoolFixedChunkAllocatorObserver
         void freechunkavailable(OsclAny*);
         //************ end OsclMemPoolFixedChunkAllocatorObserver
+
+        void UpdateSessionCompletionStatus(bool aSessionCompleted)
+        {
+            iSessionInfo.iSessionCompleted = aSessionCompleted;
+        }
+
+        bool IsSessionCompleted() const
+        {
+            return iSessionInfo.iSessionCompleted;
+        }
 
         typedef struct _SocketEvent
         {
@@ -634,7 +655,7 @@ class PVRTSPEngineNode
         }iState;
 
     private:
-
+        OsclSharedPtr<PVMFMediaDataImpl> AllocateMediaData(int32& errCode);
         Oscl_Vector<SocketEvent, PVRTSPEngineNodeAllocator> iSocketEventQueue;
 
         PVRTSPEngineNodeAllocator iAlloc;
@@ -642,9 +663,85 @@ class PVRTSPEngineNode
         PVMFCommandId iCurrentCmdId;
 
         OsclSocketServ	*iSockServ;
-        //OsclTCPSocket *iRTSPSocket, *iGetSocket, *iPostSocket;
-        OsclTCPSocket *iSendSocket, *iRecvSocket;
-        OsclDNS *iDNS;
+
+//note: this class is for internal use only, but must be public to avoid ADS v1.2 compile error.
+    public:
+        //To keep track of current socket op
+        class SocketState
+        {
+            public:
+                SocketState()
+                        : iPending(false)
+                        , iCanceled(false)
+                {}
+                bool iPending;
+                bool iCanceled;
+                void Reset()
+                {
+                    iPending = iCanceled = false;
+                }
+        };
+
+    private:
+
+        //Container for a TCP socket that can connect, send, & recv.
+        class SocketContainer
+        {
+            public:
+                SocketContainer(): iSocket(NULL)
+                {}
+                OsclTCPSocket* iSocket;
+                SocketState iConnectState;
+                SocketState iSendState;
+                SocketState iRecvState;
+                SocketState iShutdownState;
+                void Reset(OsclTCPSocket* aSock)
+                {
+                    iSocket = aSock;
+                    iConnectState.Reset();
+                    iSendState.Reset();
+                    iRecvState.Reset();
+                    iShutdownState.Reset();
+                }
+                bool IsBusy()
+                {
+                    return iSocket
+                           && (iConnectState.iPending
+                               || iSendState.iPending
+                               || iRecvState.iPending
+                               || iShutdownState.iPending);
+                }
+        };
+        class DnsContainer
+        {
+            public:
+                DnsContainer(): iDns(NULL)
+                {}
+                OsclDNS* iDns;
+                SocketState iState;
+                bool IsBusy()
+                {
+                    return (iDns
+                            && iState.iPending);
+                }
+        };
+        void SetSendPending(SocketContainer&);
+        void SetRecvPending(SocketContainer&);
+
+        SocketContainer iSendSocket, iRecvSocket;
+        DnsContainer iDNS;
+
+        //To keep track of socket reset sequence.
+        enum TSocketCleanupState
+        {
+            ESocketCleanup_Idle
+            , ESocketCleanup_CancelCurrentOp
+            , ESocketCleanup_WaitOnCancel
+            , ESocketCleanup_Shutdown
+            , ESocketCleanup_WaitOnShutdown
+            , ESocketCleanup_Delete
+        };
+        TSocketCleanupState iSocketCleanupState;
 
         //only for http cloaking, string to store the text to send until send completes
         OSCL_HeapString<PVRTSPEngineNodeAllocator> iRecvChannelMsg, iSendChannelMsg;
@@ -670,13 +767,15 @@ class PVRTSPEngineNode
         PVMFSharedMediaDataPtr	iEmbeddedDataPtr;
         // Reference counter for extension
         uint32 iExtensionRefCount;
+        uint32 iNumRedirectTrials;
 
         //socket server will callback even if Cancel() is called
         //most likely this is the case for OsclDNS as well
         //But this is NOT the case for OsclTimer
-        uint32	iNumOfCallback;
+        uint32	iNumHostCallback, iNumConnectCallback, iNumSendCallback, iNumRecvCallback;
         int BASE_REQUEST_ID;
-        int REQ_SEND_SOCKET_ID, REQ_RECV_SOCKET_ID;
+        static const int REQ_SEND_SOCKET_ID;
+        static const int REQ_RECV_SOCKET_ID;
         int REQ_TIMER_WATCHDOG_ID, REQ_TIMER_KEEPALIVE_ID;
         int REQ_DNS_LOOKUP_ID;
 
@@ -685,9 +784,11 @@ class PVRTSPEngineNode
 
         //these three are in milliseconds
         const int TIMEOUT_CONNECT_AND_DNS_LOOKUP, TIMEOUT_SEND, TIMEOUT_RECV;
+        const int TIMEOUT_SHUTDOWN;
 
         //these two are in seconds
-        const int TIMEOUT_WATCHDOG;
+        int TIMEOUT_WATCHDOG;
+        const int TIMEOUT_WATCHDOG_TEARDOWN;
         int TIMEOUT_KEEPALIVE;
         const int RECOMMENDED_RTP_BLOCK_SIZE;
 
@@ -749,7 +850,7 @@ class PVRTSPEngineNode
         PVMFSimpleMediaBufferCombinedAlloc *iMediaDataImplAlloc;
 
         /* Round trip delay calculation */
-        OsclTimebase_Tickcount iRoundTripClockTimeBase;
+        PVMFTimebase_Tickcount iRoundTripClockTimeBase;
 
         int32	iErrorRecoveryAttempt;
 
@@ -764,10 +865,8 @@ class PVRTSPEngineNode
         virtual void Run();
         virtual OsclLeaveCode RunError(OsclLeaveCode aError);
 
-        void deleteSocket(OsclTCPSocket *&aTcpSock);
-
-        PVMFStatus sendSocketOutgoingMsg(OsclTCPSocket &aSock, RTSPOutgoingMessage &aMsg);
-        PVMFStatus sendSocketOutgoingMsg(OsclTCPSocket &aSock, const uint8* aSendBuf, uint32 aSendLen);
+        PVMFStatus sendSocketOutgoingMsg(SocketContainer &aSock, RTSPOutgoingMessage &aMsg);
+        PVMFStatus sendSocketOutgoingMsg(SocketContainer &aSock, const uint8* aSendBuf, uint32 aSendLen);
 
         void ChangeExternalState(TPVMFNodeInterfaceState aNewState);
 
@@ -795,6 +894,7 @@ class PVRTSPEngineNode
         PVMFStatus DoErrorRecovery(PVRTSPEngineCommand &aCmd);
 
         PVMFStatus DoRequestPort(PVRTSPEngineCommand &aCmd, PVMFRTSPPort* &aPort);
+        PVMFStatus DoAddPort(int32 id, bool isMedia, int32 tag, PVMFRTSPPort* &aPort);
         PVMFStatus DoReleasePort(PVRTSPEngineCommand &aCmd);
 
         bool FlushPending();
@@ -856,10 +956,7 @@ class PVRTSPEngineNode
         //allocate aReqBufSize memory for iEmbeddedData
         bool PrepareEmbeddedDataMemory(uint32 aReqBufSize, OsclMemoryFragment &);
         bool DispatchEmbeddedData(uint32 aChannelID);
-
-
-        ///// private members added for real support (by randeep)
-
+        // private members added for real support
         bool ibIsRealRDT;
 
         // realchallenge1 string returned by OPTIONS request
@@ -882,13 +979,14 @@ class PVRTSPEngineNode
         bool ibBlockedOnFragGroups;
         //bool simpleHttpParser(const uint8 *aBuf, int32 &aLen, bool &aIsStatus200);
 
-        void resetSocket(void);
+        PVMFStatus resetSocket(bool aImmediate = false);
         void clearOutgoingMsgQueue(void);
         void partialResetSessionInfo(void);
 
         bool clearEventQueue(void);
 
         void ResetSessionInfo(void);
+        PVRTSPEngineNodeExtensionInterface* iExtensionInterface;
 };
 
 #endif //PVRTSP_CLIENT_ENGINE_NODE_H

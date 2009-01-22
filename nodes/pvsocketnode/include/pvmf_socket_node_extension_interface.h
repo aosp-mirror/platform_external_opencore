@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,21 +24,23 @@
 
 #define PVMF_SOCKET_NODE_EXTENSION_INTERFACE_UUID PVUuid(1,2,3,0xfe,0xcd,0xee,0x1f,0x00,0x11,0x22,0x33)
 
+class PVMFSocketNode;
 
 class PVMFSocketNodeExtensionInterface : public PVInterface
 {
     public:
-        OSCL_IMPORT_REF virtual void addRef() = 0;
-        OSCL_IMPORT_REF virtual void removeRef() = 0;
-        OSCL_IMPORT_REF virtual bool queryInterface(const PVUuid& uuid, PVInterface*& iface) = 0;
+        virtual ~PVMFSocketNodeExtensionInterface() {}
         OSCL_IMPORT_REF virtual PVMFStatus AllocateConsecutivePorts(PvmfMimeString* aPortConfig,
                 uint32& aLowerPortNum,
                 uint32& aHigherPortNum, uint32& aStartPortNum) = 0;
 
         OSCL_IMPORT_REF virtual PVMFStatus SetMaxTCPRecvBufferSize(uint32 aBufferSize) = 0;
         OSCL_IMPORT_REF virtual PVMFStatus GetMaxTCPRecvBufferSize(uint32& aSize) = 0;
-};
+        OSCL_IMPORT_REF virtual PVMFStatus SetMaxTCPRecvBufferCount(uint32 aCount) = 0;
+        OSCL_IMPORT_REF virtual PVMFStatus GetMaxTCPRecvBufferCount(uint32& aCount) = 0;
+        OSCL_IMPORT_REF virtual OsclMemPoolResizableAllocator* CreateSharedBuffer(const PVMFPortInterface* aPort , uint32 aBufferSize, uint32 aExpectedNumberOfBlocksPerBuffer, uint32 aResizeSize, uint32 aMaxNumResizes) = 0;
 
+};
 #endif //PVMF_SOCKET_NODE_EXTENSION_INTERFACE_H_INCLUDED
 
 

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -895,7 +895,7 @@ int32 HTTPParserBaseObject::getNextFieldKeyValuePair(HTTPMemoryFragment &aInputD
 
 // return value: 0 normal,
 //				 1 end of header,
-//				 2 ignore (for CRLF, to handle CRLF split into seperate fragments)
+//				 2 ignore (for CRLF, to handle CRLF split into separate fragments)
 //				-1 error
 int32 HTTPParserBaseObject::parseNextValueItem(HTTPMemoryFragment &aInputDataStream, char *&valueItemPtr, uint32 &valueItemLength, const bool isKeyItem)
 {

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@
 #include "oscl_error_trapcleanup.h"
 #include "oscl_error_imp.h"
 #include "oscl_heapbase.h"
+#include "pvlogger.h"
 
 //
 // OsclErrorTrap
@@ -82,7 +83,7 @@ OSCL_EXPORT_REF OsclErrorTrapImp* OsclErrorTrap::GetErrorTrapImp()
 //
 // OsclError
 //
-OSCL_EXPORT_REF void OsclError::PushL(OsclHeapBase * aPtr)
+OSCL_EXPORT_REF void OsclError::PushL(_OsclHeapBase * aPtr)
 {
     OsclErrorTrapImp *trap = OsclErrorTrapImp::GetErrorTrap();
     if (!trap)
@@ -164,13 +165,18 @@ OSCL_EXPORT_REF void OsclError::PopDealloc(int32 aCount)
 
 OSCL_EXPORT_REF void OsclError::Leave(int32 aReason)
 {
+    //log the leave
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, PVLogger::GetLoggerObject("OsclError"), PVLOGMSG_ERR
+                    , (0, "OsclError::Leave! reason %d", aReason));
+
+
     //set the global leave code if errortrap is installed.
-    //rememeber it may not be installed under symbian GUI
-    //so be tolerant.
     OsclErrorTrapImp *errortrap = OsclErrorTrapImp::GetErrorTrap();
     if (errortrap)
+    {
+        OSCL_ASSERT(!errortrap->iLeave);//to avoid infinite recursion
         errortrap->iLeave = aReason;
-
+    }
 
     //Process the cleanup stack.
     if (errortrap)
@@ -191,33 +197,7 @@ OSCL_EXPORT_REF void OsclError::LeaveIfError(int32 aReason)
         Leave(aReason);
 }
 
-/*Leave this out until logger is moved to oscl base.
-#include "pvlogger.h"
-#define LOGERROR(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iLogger,PVLOGMSG_ERR,m);
-*/
 
-OSCL_EXPORT_REF void OsclError::Panic(const char acategory[], int32 areason)
-{
-    //the application will exit.  Log to stderr because pvlogger is not
-    //available in this library.
-    fprintf(stderr, "OsclError::Panic!! Category %s reason %d\n", acategory, areason);
-
-    //set the global panic info if errortrap is installed.  remember it may
-    //not be installed under symbian GUI so be tolerant.
-    int32 error;
-    OsclErrorTrapImp *errortrap = OsclErrorTrapImp::GetErrorTrap(error);
-    if (errortrap)
-    {
-        //to avoid infinite recursion, check whether we're already
-        //doing a panic for the current trap level.
-        if (errortrap->iPanic.iReason != OsclErrNone)
-            return;
-        errortrap->iPanic.iReason = areason;
-        errortrap->iPanic.iCategory.Set(acategory);
-    }
-
-    PVError_DoPanic();
-}
 
 
 

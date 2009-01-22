@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ extern const uint32 KAudioBitrate;
 class PVAETestNodeConfig
 {
     public:
-        static bool ConfigureAudioEncoder(PVInterface* aInterface)
+        static bool ConfigureAudioEncoder(PVInterface* aInterface, uint32 aAudioBitrate = 0)
         {
             if (!aInterface)
                 return true;
@@ -57,7 +57,13 @@ class PVAETestNodeConfig
             PVAMREncExtensionInterface* config = OSCL_STATIC_CAST(PVAMREncExtensionInterface*, aInterface);
             config->SetMaxNumOutputFramesPerBuffer(KNum20msFramesPerChunk);
 
-            switch (KAudioBitrate)
+            uint32 audioBitrate = aAudioBitrate;
+
+            if (audioBitrate == 0)
+            {
+                audioBitrate = KAudioBitrate;
+            }
+            switch (audioBitrate)
             {
                 case 4750:
                     config->SetOutputBitRate(GSM_AMR_4_75);

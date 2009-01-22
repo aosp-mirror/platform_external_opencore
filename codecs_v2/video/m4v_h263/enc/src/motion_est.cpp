@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -697,7 +697,8 @@ void CalcThreshold(double pf, double exp_lamda[], Int nrmlz_th[])
 
 void	HTFMPrepareCurMB(VideoEncData *video, HTFM_Stat *htfm_stat, UChar *cur)
 {
-    ULong *htfmMB = (ULong*)(video->currYMB);
+    void* tmp = (void*)(video->currYMB);
+    ULong *htfmMB = (ULong*)tmp;
     UChar *ptr, byte;
     Int *offset;
     Int i;
@@ -761,7 +762,8 @@ void	HTFMPrepareCurMB(VideoEncData *video, HTFM_Stat *htfm_stat, UChar *cur)
 
 void	PrepareCurMB(VideoEncData *video, UChar *cur)
 {
-    ULong *currYMB = (ULong*)(video->currYMB);
+    void* tmp = (void*)(video->currYMB);
+    ULong *currYMB = (ULong*)tmp;
     Int i;
     Int width = video->currVop->width;
 

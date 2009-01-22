@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -360,5 +360,46 @@ class PVA_FF_AssetInfoLocationInfoAtom : public PVA_FF_FullAtom
 
 };
 
+class PVA_FF_AssetInfoAlbumAtom : public PVA_FF_FullAtom
+{
+    public:
+        PVA_FF_AssetInfoAlbumAtom();
+        virtual ~PVA_FF_AssetInfoAlbumAtom() {};
+        virtual bool renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp);
+
+        // Member gets
+        void setAlbumLangCode(uint16  aLangCode)
+        {
+            _langCode = aLangCode;
+        }
+        void setAlbumInfo(PVA_FF_UNICODE_HEAP_STRING aAlbumTitle)
+        {
+            _albumTitle = aAlbumTitle;
+            recomputeSize();
+        }
+        virtual	void recomputeSize();
+    private:
+        uint16 _langCode;
+        uint16  _byteOrderMask;
+        PVA_FF_UNICODE_HEAP_STRING _albumTitle;
+};
+
+class PVA_FF_AssetInfoRecordingYearAtom : public PVA_FF_FullAtom
+{
+    public:
+        PVA_FF_AssetInfoRecordingYearAtom();
+        virtual ~PVA_FF_AssetInfoRecordingYearAtom() {};
+        virtual bool renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp);
+
+        // Member gets
+        void setRecordingYear(uint16 aRecordingYear)
+        {
+            _recordingYear = aRecordingYear;
+            recomputeSize();
+        }
+        virtual	void recomputeSize();
+    private:
+        uint16 _recordingYear;
+};
 
 #endif  // ASSETINFOATOMS_H_INCLUDED

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,33 @@ AMRDecoderSpecificInfo::AMRDecoderSpecificInfo(MP4_FF_FILE *fp, bool o3GPPTrack)
 
     if (o3GPPTrack)
     {
+#if 0
+        AtomUtils::read32(fp, _VendorCode);
 
+        AtomUtils::read8(fp, _codec_version);
+
+        AtomUtils::read16(fp, _mode_set);
+
+        AtomUtils::read8(fp, _3gpp_mode_change_period);
+
+        AtomUtils::read8(fp, _frames_per_sample);
+
+        /*
+         * Currently no mode switching in 3GPP AMR Tracks is supported
+         */
+        const uint16 aModeSet[9] = {0x0001, 0x0002, 0x0004, 0x0008,
+                                    0x0010, 0x0020, 0x0040, 0x0080,
+                                    0x0100
+                                   };
+
+        for (int8 i = 0; i < 9; i++)
+        {
+            if (_mode_set == aModeSet[i])
+            {
+                _frame_type = i;
+            }
+        }
+#endif
     }
     else
     {

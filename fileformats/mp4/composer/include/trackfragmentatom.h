@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,6 +59,15 @@ class PVA_FF_TrackFragmentAtom : public PVA_FF_Atom
 
         virtual bool renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP* fp);
 
+        uint32 getSampleCount() const
+        {
+            uint32 lSampleCount = 0;
+            for (uint32 ii = 0; ii < _pTrunList->size(); ii++)
+            {
+                lSampleCount +=	((*_pTrunList)[ii])->getSampleCount();
+            }
+            return lSampleCount;
+        }
 
     private:
 

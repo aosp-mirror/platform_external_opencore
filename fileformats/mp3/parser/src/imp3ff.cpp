@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,10 +59,13 @@ static const char PVMP3METADATA_TRACKINFO_BITRATE_KEY[] = "track-info/bit-rate";
 static const char PVMP3METADATA_TRACKINFO_SAMPLERATE_KEY[] = "track-info/sample-rate";
 static const char PVMP3METADATA_TRACKINFO_AUDIO_FORMAT_KEY[] = "track-info/audio/format";
 static const char PVMP3METADATA_TRACKINFO_AUDIO_CHANNELS_KEY[] = "track-info/audio/channels";
+static const char PVMP3METADATA_TRACKINFO_AUDIO_CHANNEL_MODE_KEY[] = "track-info/audio/channel-mode";
 static const char PVMP3METADATA_BITRATE_KEY[] = "bit-rate";
 static const char PVMP3METADATA_SAMPLERATE_KEY[] = "sample-rate";
 static const char PVMP3METADATA_FORMAT_KEY[] = "format";
 static const char PVMP3METADATA_CHANNELS_KEY[] = "channels";
+static const char PVMP3METADATA_CHANNEL_MODE_KEY[] = "channel-mode";
+static const char PVMP3METADATA_RANDOM_ACCESS_DENIED_KEY[] = "random-access-denied";
 static const char PVMP3METADATA_SEMICOLON[] = ";";
 static const char PVMP3METADATA_CHARENCUTF8[] = "char-encoding=UTF8";
 static const char PVMP3METADATA_CHARENCUTF16BE[] = "char-encoding=UTF16BE";
@@ -72,7 +75,6 @@ static const char PVMP3METADATA_TIMESCALE1000[] = "timescale=1000";
 static const char PVMP3METADATA_INDEX0[] = "index=0";
 static const char PVMP3METADATA_UNKNOWN[] = "unknown";
 static const char PVMP3METADATA_COMPUTE[] = "compute=true";
-
 
 // Use default DLL entry point for Symbian
 #include "oscl_dll.h"
@@ -129,9 +131,9 @@ OSCL_EXPORT_REF IMpeg3File::IMpeg3File(OSCL_wString& filename, MP3ErrorType &bSu
         }
     }
 
-    int32 leavecode = 0;
+    int32 leavecode = OsclErrNone;
     OSCL_TRY(leavecode, pMP3Parser = OSCL_NEW(MP3Parser, (&iMP3File)););
-    if (pMP3Parser && leavecode == 0)
+    if (pMP3Parser && OsclErrNone == leavecode)
         bSuccess = MP3_SUCCESS;
     else
         bSuccess = MP3_ERROR_UNKNOWN;
@@ -139,9 +141,9 @@ OSCL_EXPORT_REF IMpeg3File::IMpeg3File(OSCL_wString& filename, MP3ErrorType &bSu
 
 OSCL_EXPORT_REF IMpeg3File::IMpeg3File(MP3ErrorType &bSuccess): pMP3Parser(NULL)
 {
-    int32 leavecode = 0;
+    int32 leavecode = OsclErrNone;
     OSCL_TRY(leavecode, pMP3Parser = OSCL_NEW(MP3Parser, ()););
-    if (pMP3Parser && leavecode == 0)
+    if (pMP3Parser && OsclErrNone == leavecode)
         bSuccess = MP3_SUCCESS;
     else
         bSuccess = MP3_ERROR_UNKNOWN;
@@ -194,49 +196,97 @@ OSCL_EXPORT_REF MP3ErrorType IMpeg3File::ParseMp3File()
         pMP3Parser->GetMetaData(id3Frames);
 
         // Populate metadata key list vector
-        int32 leavecode = 0;
+        int32 leavecode = OsclErrNone;
         for (uint32 p = 0;p < id3Frames.size();p++)
         {
             OSCL_HeapString<OsclMemAllocator> keystr((const char *)((*id3Frames[p]).key), oscl_strlen((const char *)((*id3Frames[p]).key)));
-            OSCL_TRY(leavecode, iAvailableMetadataKeys.push_back(keystr));
+            leavecode = PushKVPKey(keystr, iAvailableMetadataKeys);
+            if (OsclErrNone != leavecode)
+            {
+                return MP3_ERR_NO_MEMORY;
+            }
+
         }
 
         bool metadataDuration = true;
         if (pMP3Parser->GetDuration(metadataDuration) > 0)
         {
-            leavecode = 0;
-            OSCL_TRY(leavecode, iAvailableMetadataKeys.push_back(PVMP3METADATA_DURATION_FROM_METADATA_KEY));
+            leavecode = OsclErrNone;
+            leavecode = PushKVPKey(PVMP3METADATA_DURATION_FROM_METADATA_KEY, iAvailableMetadataKeys);
+            if (OsclErrNone != leavecode)
+            {
+                return MP3_ERR_NO_MEMORY;
+            }
         }
 
         // Following keys are available when the MP3 file has been parsed
-        if (pMP3Parser->GetDuration() >= 0)
+        leavecode = OsclErrNone;
+        leavecode = PushKVPKey(PVMP3METADATA_DURATION_KEY, iAvailableMetadataKeys);
+        if (OsclErrNone != leavecode)
         {
-            leavecode = 0;
-            OSCL_TRY(leavecode, iAvailableMetadataKeys.push_back(PVMP3METADATA_DURATION_KEY));
+            return MP3_ERR_NO_MEMORY;
         }
 
-        leavecode = 0;
-        OSCL_TRY(leavecode, iAvailableMetadataKeys.push_back(PVMP3METADATA_NUMTRACKS_KEY));
-        leavecode = 0;
-        OSCL_TRY(leavecode, iAvailableMetadataKeys.push_back(PVMP3METADATA_TRACKINFO_AUDIO_FORMAT_KEY));
+        leavecode = OsclErrNone;
+        leavecode = PushKVPKey(PVMP3METADATA_RANDOM_ACCESS_DENIED_KEY, iAvailableMetadataKeys);
+        if (OsclErrNone != leavecode)
+        {
+            return MP3_ERR_NO_MEMORY;
+        }
+
+        leavecode = OsclErrNone;
+        leavecode = PushKVPKey(PVMP3METADATA_NUMTRACKS_KEY, iAvailableMetadataKeys);
+        if (OsclErrNone != leavecode)
+        {
+            return MP3_ERR_NO_MEMORY;
+        }
+
+        leavecode = OsclErrNone;
+        leavecode = PushKVPKey(PVMP3METADATA_TRACKINFO_AUDIO_FORMAT_KEY, iAvailableMetadataKeys);
+        if (OsclErrNone != leavecode)
+        {
+            return MP3_ERR_NO_MEMORY;
+        }
 
         MP3ContentFormatType mp3info;
         if (GetConfigDetails(mp3info) == MP3_SUCCESS)
         {
             if (mp3info.Bitrate > 0)
             {
-                leavecode = 0;
-                OSCL_TRY(leavecode, iAvailableMetadataKeys.push_back(PVMP3METADATA_TRACKINFO_BITRATE_KEY));
+                leavecode = OsclErrNone;
+                leavecode = PushKVPKey(PVMP3METADATA_TRACKINFO_BITRATE_KEY, iAvailableMetadataKeys);
+                if (OsclErrNone != leavecode)
+                {
+                    return MP3_ERR_NO_MEMORY;
+                }
             }
             if (mp3info.SamplingRate > 0)
             {
-                leavecode = 0;
-                OSCL_TRY(leavecode, iAvailableMetadataKeys.push_back(PVMP3METADATA_TRACKINFO_SAMPLERATE_KEY));
+                leavecode = OsclErrNone;
+                leavecode = PushKVPKey(PVMP3METADATA_TRACKINFO_SAMPLERATE_KEY, iAvailableMetadataKeys);
+                if (OsclErrNone != leavecode)
+                {
+                    return MP3_ERR_NO_MEMORY;
+                }
             }
             if (mp3info.NumberOfChannels > 0)
             {
+                leavecode = OsclErrNone;
+                leavecode = PushKVPKey(PVMP3METADATA_TRACKINFO_AUDIO_CHANNELS_KEY, iAvailableMetadataKeys);
+                if (OsclErrNone != leavecode)
+                {
+                    return MP3_ERR_NO_MEMORY;
+                }
+            }
+            // valid channel mode is present
+            if (mp3info.ChannelMode <= MP3_CHANNEL_MODE_MONO)
+            {
                 leavecode = 0;
-                OSCL_TRY(leavecode, iAvailableMetadataKeys.push_back(PVMP3METADATA_TRACKINFO_AUDIO_CHANNELS_KEY));
+                leavecode = PushKVPKey(PVMP3METADATA_CHANNEL_MODE_KEY, iAvailableMetadataKeys);
+                if (OsclErrNone != leavecode)
+                {
+                    return MP3_ERR_NO_MEMORY;
+                }
             }
         }
     }
@@ -256,6 +306,7 @@ OSCL_EXPORT_REF MP3ErrorType IMpeg3File::GetConfigDetails(MP3ContentFormatType &
             mp3Config.SamplingRate     = mp3ConfigHdr.SamplingRate;
             mp3Config.FrameSizeUnComp  = mp3ConfigHdr.FrameSizeUnComp;
             mp3Config.FileSizeInBytes  = pMP3Parser->GetFileSize();
+            mp3Config.ChannelMode      = pMP3Parser->GetChannelMode();
             return MP3_SUCCESS;
         }
     }
@@ -327,7 +378,18 @@ OSCL_EXPORT_REF uint32 IMpeg3File::GetDuration() const
     }
 }
 
-OSCL_EXPORT_REF MP3ErrorType IMpeg3File::GetMetadataSize(int32 &aSize)
+OSCL_EXPORT_REF int32 IMpeg3File::ConvertSizeToTime(uint32 aFileSize, uint32& aNPTInMS) const
+{
+    if (pMP3Parser != NULL)
+    {
+        return pMP3Parser->ConvertSizeToTime(aFileSize, aNPTInMS);
+    }
+    else
+    {
+        return -1;
+    }
+}
+OSCL_EXPORT_REF MP3ErrorType IMpeg3File::GetMetadataSize(uint32 &aSize)
 {
     if (pMP3Parser != NULL)
     {
@@ -336,11 +398,11 @@ OSCL_EXPORT_REF MP3ErrorType IMpeg3File::GetMetadataSize(int32 &aSize)
     return MP3_ERROR_UNKNOWN;
 }
 
-OSCL_EXPORT_REF uint32 IMpeg3File::GetMinBytesRequired()
+OSCL_EXPORT_REF uint32 IMpeg3File::GetMinBytesRequired(bool aNextBytes)
 {
     if (pMP3Parser != NULL)
     {
-        return pMP3Parser->GetMinBytesRequired();
+        return pMP3Parser->GetMinBytesRequired(aNextBytes);
     }
     return 0;
 }
@@ -513,6 +575,14 @@ OSCL_EXPORT_REF uint32 IMpeg3File::GetNumMetadataValues(PVMFMetadataList& aKeyLi
                 ++numvalentries;
             }
         }
+        else if (oscl_strcmp(aKeyList[lcv].get_cstr(), PVMP3METADATA_RANDOM_ACCESS_DENIED_KEY) == 0)
+        {
+            if (pMP3Parser)
+            {
+                // Increment the counter for the number of values found so far
+                ++numvalentries;
+            }
+        }
         else if (oscl_strcmp(aKeyList[lcv].get_cstr(), PVMP3METADATA_NUMTRACKS_KEY) == 0)
         {
             // Number of tracks
@@ -562,6 +632,17 @@ OSCL_EXPORT_REF uint32 IMpeg3File::GetNumMetadataValues(PVMFMetadataList& aKeyLi
                 ++numvalentries;
             }
         }
+        else if (oscl_strcmp(aKeyList[lcv].get_cstr(), PVMP3METADATA_CHANNEL_MODE_KEY) == 0 ||
+                 oscl_strcmp(aKeyList[lcv].get_cstr(), PVMP3METADATA_TRACKINFO_AUDIO_CHANNEL_MODE_KEY) == 0)
+        {
+            // Channel mode
+            MP3ContentFormatType mp3info;
+            if (GetConfigDetails(mp3info) == MP3_SUCCESS)
+            {
+                // Increment the counter for the number of values found so far
+                ++numvalentries;
+            }
+        }
     }  // End of for loop
     return numvalentries;
 }
@@ -578,7 +659,7 @@ OSCL_EXPORT_REF PVMFStatus IMpeg3File::GetMetadataKeys(PVMFMetadataList& aKeyLis
     // Copy the requested keys
     uint32 num_entries = 0;
     int32 num_added = 0;
-    int32 leavecode = 0;
+    int32 leavecode = OsclErrNone;
     for (uint32 lcv = 0; lcv < iAvailableMetadataKeys.size(); lcv++)
     {
         if (aQueryKeyString == NULL)
@@ -588,10 +669,12 @@ OSCL_EXPORT_REF PVMFStatus IMpeg3File::GetMetadataKeys(PVMFMetadataList& aKeyLis
             if (num_entries > aStartingKeyIndex)
             {
                 // Past the starting index so copy the key
-                leavecode = 0;
-                OSCL_TRY(leavecode, aKeyList.push_back(iAvailableMetadataKeys[lcv].get_cstr()));
-                OSCL_FIRST_CATCH_ANY(leavecode,
-                                     return PVMFErrNoMemory);
+                leavecode = OsclErrNone;
+                leavecode = PushKVPKey(iAvailableMetadataKeys[lcv].get_cstr(), aKeyList);
+                if (OsclErrNone != leavecode)
+                {
+                    return PVMFErrNoMemory;
+                }
                 num_added++;
             }
         }
@@ -605,10 +688,12 @@ OSCL_EXPORT_REF PVMFStatus IMpeg3File::GetMetadataKeys(PVMFMetadataList& aKeyLis
                 if (num_entries > aStartingKeyIndex)
                 {
                     // Past the starting index so copy the key
-                    leavecode = 0;
-                    OSCL_TRY(leavecode, aKeyList.push_back(iAvailableMetadataKeys[lcv]));
-                    OSCL_FIRST_CATCH_ANY(leavecode,
-                                         return PVMFErrNoMemory);
+                    leavecode = OsclErrNone;
+                    leavecode = PushKVPKey(iAvailableMetadataKeys[lcv].get_cstr(), aKeyList);
+                    if (OsclErrNone != leavecode)
+                    {
+                        return PVMFErrNoMemory;
+                    }
                     num_added++;
                 }
             }
@@ -672,10 +757,14 @@ OSCL_EXPORT_REF PVMFStatus IMpeg3File::GetMetadataValues(PVMFMetadataList& aKeyL
 
             ++numvalentries;
 
-            int32 leavecode = 0;
-            OSCL_TRY(leavecode,
-                     KeyVal.key = OSCL_ARRAY_NEW(char, oscl_strlen(key) + 1);
-                    );
+            int32 leavecode = OsclErrNone;
+            KeyVal.key = (char*) AllocateKVPKeyArray(leavecode, PVMI_KVPVALTYPE_CHARPTR, oscl_strlen(key) + 1);
+
+            if (OsclErrNone != leavecode)
+            {
+                // allocation failed
+                return PVMFErrNoMemory;
+            }
 
             oscl_strncpy(KeyVal.key , key, oscl_strlen(key) + 1);
             KeyVal.length = len;
@@ -684,42 +773,24 @@ OSCL_EXPORT_REF PVMFStatus IMpeg3File::GetMetadataValues(PVMFMetadataList& aKeyL
             if (KeyVal.length > 0)
             {
                 PvmiKvpValueType ValueType = GetValTypeFromKeyString(key);
-
+                leavecode = OsclErrNone;
                 switch (ValueType)
                 {
 
                     case PVMI_KVPVALTYPE_WCHARPTR:
-                        leavecode = 0;
-
-                        OSCL_TRY(leavecode,
-                                 KeyVal.value.pWChar_value = OSCL_ARRAY_NEW(oscl_wchar, len + 1);
-                                );
-
+                        KeyVal.value.pWChar_value = (oscl_wchar*) AllocateKVPKeyArray(leavecode, ValueType, len);
                         oscl_strncpy(KeyVal.value.pWChar_value , (*(iFrame.back())).value.pWChar_value, len);
                         KeyVal.value.pWChar_value[len] = 0;
                         break;
-
                     case PVMI_KVPVALTYPE_CHARPTR:
-                        leavecode = 0;
-
-                        OSCL_TRY(leavecode,
-                                 KeyVal.value.pChar_value = OSCL_ARRAY_NEW(char, len + 1);
-                                );
-
+                        KeyVal.value.pChar_value = (char*) AllocateKVPKeyArray(leavecode, ValueType, len);
                         oscl_strncpy(KeyVal.value.pChar_value , (*(iFrame.back())).value.pChar_value, len);
                         KeyVal.value.pChar_value[len] = 0;
                         break;
-
                     case PVMI_KVPVALTYPE_UINT8PTR:
-                        leavecode = 0;
-
-                        OSCL_TRY(leavecode,
-                                 KeyVal.value.pUint8_value = OSCL_ARRAY_NEW(uint8, len);
-                                );
+                        KeyVal.value.pUint8_value = (uint8*) AllocateKVPKeyArray(leavecode, ValueType, len);
                         oscl_memcpy(KeyVal.value.pUint8_value, (uint8*)(*(iFrame.back())).value.pUint8_value, len);
                         break;
-
-
                     case PVMI_KVPVALTYPE_UINT32:
                         KeyVal.value.uint32_value = (*(iFrame.back())).value.uint32_value;
                         break;
@@ -729,10 +800,20 @@ OSCL_EXPORT_REF PVMFStatus IMpeg3File::GetMetadataValues(PVMFMetadataList& aKeyL
                     default:
                         break;
                 }
-                leavecode = 0;
-                OSCL_TRY(leavecode, aValueList.push_back(KeyVal));
-                OSCL_FIRST_CATCH_ANY(leavecode, ReleaseMetadataValue(KeyVal);
-                                     break;);
+
+                if (OsclErrNone != leavecode)
+                {
+                    // allocation failed
+                    return PVMFErrNoMemory;
+                }
+
+                leavecode = OsclErrNone;
+                leavecode = PushKVPValue(KeyVal, aValueList);
+                if (OsclErrNone != leavecode)
+                {
+                    // push kvp failed
+                    return PVMFErrNoMemory;
+                }
                 ++numentriesadded;
             }
             iFrame.pop_back();
@@ -742,7 +823,7 @@ OSCL_EXPORT_REF PVMFStatus IMpeg3File::GetMetadataValues(PVMFMetadataList& aKeyL
     for (lcv = 0; lcv < numKeys; lcv++)
     {
 
-        int32 leavecode = 0;
+        int32 leavecode = OsclErrNone;
         PvmiKvp KeyVal;
         KeyVal.key = NULL;
         uint32 KeyLen = 0;
@@ -772,11 +853,9 @@ OSCL_EXPORT_REF PVMFStatus IMpeg3File::GetMetadataValues(PVMFMetadataList& aKeyL
                         KeyLen += oscl_strlen(PVMP3METADATA_TIMESCALE1000) + 1; // for "timescale=1000" and NULL terminator
 
                         // Allocate memory for the string
-                        leavecode = 0;
-                        OSCL_TRY(leavecode,
-                                 KeyVal.key = OSCL_ARRAY_NEW(char, KeyLen);
-                                );
-                        if (leavecode == 0)
+                        leavecode = OsclErrNone;
+                        KeyVal.key = (char*) AllocateKVPKeyArray(leavecode, PVMI_KVPVALTYPE_CHARPTR, KeyLen);
+                        if (OsclErrNone == leavecode)
                         {
                             // Copy the key string
                             oscl_strncpy(KeyVal.key, PVMP3METADATA_DURATION_KEY, oscl_strlen(PVMP3METADATA_DURATION_KEY) + 1);
@@ -806,13 +885,10 @@ OSCL_EXPORT_REF PVMFStatus IMpeg3File::GetMetadataValues(PVMFMetadataList& aKeyL
                         KeyLen += oscl_strlen(PVMI_KVPVALTYPE_CHARPTR_STRING_CONSTCHAR) + 1; // for "char*;"
 
                         // Allocate memory for the string
-                        leavecode = 0;
-                        OSCL_TRY(leavecode,
-                                 KeyVal.key = OSCL_ARRAY_NEW(char, KeyLen);
-                                );
+                        leavecode = OsclErrNone;
+                        KeyVal.key = (char*) AllocateKVPKeyArray(leavecode, PVMI_KVPVALTYPE_CHARPTR, KeyLen);
 
-
-                        if (leavecode == 0)
+                        if (OsclErrNone == leavecode)
                         {
                             oscl_strncpy(KeyVal.key, PVMP3METADATA_DURATION_KEY, oscl_strlen(PVMP3METADATA_DURATION_KEY) + 1);
                             oscl_strncat(KeyVal.key, PVMP3METADATA_SEMICOLON, oscl_strlen(PVMP3METADATA_SEMICOLON));
@@ -830,12 +906,10 @@ OSCL_EXPORT_REF PVMFStatus IMpeg3File::GetMetadataValues(PVMFMetadataList& aKeyL
                         }
 
                         uint32 valuelen = oscl_strlen(_STRLIT_CHAR(PVMP3METADATA_UNKNOWN)) + 1; // Add value string plus one for NULL terminator
-                        leavecode = 0;
-                        OSCL_TRY(leavecode,
-                                 KeyVal.value.pChar_value = OSCL_ARRAY_NEW(char, valuelen);
-                                );
+                        leavecode = OsclErrNone;
+                        KeyVal.value.pChar_value = (char*) AllocateKVPKeyArray(leavecode, PVMI_KVPVALTYPE_CHARPTR, valuelen);
 
-                        if (leavecode == 0)
+                        if (OsclErrNone == leavecode)
                         {
                             // Copy the value
                             oscl_strncpy(KeyVal.value.pChar_value, _STRLIT_CHAR(PVMP3METADATA_UNKNOWN), valuelen);
@@ -850,6 +924,47 @@ OSCL_EXPORT_REF PVMFStatus IMpeg3File::GetMetadataValues(PVMFMetadataList& aKeyL
                             KeyVal.key = NULL;
                             break;
                         }
+                    }
+                }
+            }
+        }
+        else if (oscl_strstr(aKeyList[lcv].get_cstr(), PVMP3METADATA_RANDOM_ACCESS_DENIED_KEY))
+        {
+            // Duration
+            if (pMP3Parser)
+            {
+                // Increment the counter for the number of values found so far
+                ++numvalentries;
+
+                // Create a value entry if past the starting index
+                if (numvalentries > aStartingValueIndex)
+                {
+                    KeyLen = oscl_strlen(PVMP3METADATA_RANDOM_ACCESS_DENIED_KEY) + 1; // for "random-access-denied;"
+                    KeyLen += oscl_strlen(PVMI_KVPVALTYPE_STRING_CONSTCHAR); // for "valtype="
+                    KeyLen += oscl_strlen(PVMI_KVPVALTYPE_BOOL_STRING_CONSTCHAR) + 1; // for "bool;"
+
+                    // Allocate memory for the string
+                    leavecode = OsclErrNone;
+                    KeyVal.key = (char*) AllocateKVPKeyArray(leavecode, PVMI_KVPVALTYPE_CHARPTR, KeyLen);
+                    if (OsclErrNone == leavecode)
+                    {
+                        // Copy the key string
+                        oscl_strncpy(KeyVal.key, PVMP3METADATA_RANDOM_ACCESS_DENIED_KEY, oscl_strlen(PVMP3METADATA_RANDOM_ACCESS_DENIED_KEY) + 1);
+                        oscl_strncat(KeyVal.key, PVMP3METADATA_SEMICOLON, oscl_strlen(PVMP3METADATA_SEMICOLON));
+                        oscl_strncat(KeyVal.key, PVMI_KVPVALTYPE_STRING_CONSTCHAR, oscl_strlen(PVMI_KVPVALTYPE_STRING_CONSTCHAR));
+                        oscl_strncat(KeyVal.key, PVMI_KVPVALTYPE_BOOL_STRING_CONSTCHAR, oscl_strlen(PVMI_KVPVALTYPE_UINT32_STRING_CONSTCHAR));
+                        KeyVal.key[KeyLen-1] = NULL_TERM_CHAR;
+                        // Copy the value
+                        KeyVal.value.bool_value = pMP3Parser->GetDuration() > 0 ? false : true;
+                        // Set the length and capacity
+                        KeyVal.length = 1;
+                        KeyVal.capacity = 1;
+                    }
+                    else
+                    {
+                        // Memory allocation failed
+                        KeyVal.key = NULL;
+                        break;
                     }
                 }
             }
@@ -880,11 +995,9 @@ OSCL_EXPORT_REF PVMFStatus IMpeg3File::GetMetadataValues(PVMFMetadataList& aKeyL
                         KeyLen += oscl_strlen(PVMP3METADATA_TIMESCALE1000) + 1; // for "timescale=1000" and NULL terminator
 
                         // Allocate memory for the string
-                        leavecode = 0;
-                        OSCL_TRY(leavecode,
-                                 KeyVal.key = OSCL_ARRAY_NEW(char, KeyLen);
-                                );
-                        if (leavecode == 0)
+                        leavecode = OsclErrNone;
+                        KeyVal.key = (char*) AllocateKVPKeyArray(leavecode, PVMI_KVPVALTYPE_CHARPTR, KeyLen);
+                        if (OsclErrNone == leavecode)
                         {
                             // Copy the key string
                             oscl_strncpy(KeyVal.key, PVMP3METADATA_DURATION_FROM_METADATA_KEY, oscl_strlen(PVMP3METADATA_DURATION_KEY) + 1);
@@ -914,13 +1027,11 @@ OSCL_EXPORT_REF PVMFStatus IMpeg3File::GetMetadataValues(PVMFMetadataList& aKeyL
                         KeyLen += oscl_strlen(PVMI_KVPVALTYPE_CHARPTR_STRING_CONSTCHAR) + 1; // for "char*;"
 
                         // Allocate memory for the string
-                        leavecode = 0;
-                        OSCL_TRY(leavecode,
-                                 KeyVal.key = OSCL_ARRAY_NEW(char, KeyLen);
-                                );
+                        leavecode = OsclErrNone;
+                        KeyVal.key = (char*) AllocateKVPKeyArray(leavecode, PVMI_KVPVALTYPE_CHARPTR, KeyLen);
 
 
-                        if (leavecode == 0)
+                        if (OsclErrNone == leavecode)
                         {
                             oscl_strncpy(KeyVal.key, PVMP3METADATA_DURATION_FROM_METADATA_KEY, oscl_strlen(PVMP3METADATA_DURATION_KEY) + 1);
                             oscl_strncat(KeyVal.key, PVMP3METADATA_SEMICOLON, oscl_strlen(PVMP3METADATA_SEMICOLON));
@@ -928,7 +1039,6 @@ OSCL_EXPORT_REF PVMFStatus IMpeg3File::GetMetadataValues(PVMFMetadataList& aKeyL
                             oscl_strncat(KeyVal.key, PVMI_KVPVALTYPE_CHARPTR_STRING_CONSTCHAR, oscl_strlen(PVMI_KVPVALTYPE_CHARPTR_STRING_CONSTCHAR));
 
                             KeyVal.key[KeyLen-1] = NULL_TERM_CHAR;
-
                         }
                         else
                         {
@@ -938,12 +1048,10 @@ OSCL_EXPORT_REF PVMFStatus IMpeg3File::GetMetadataValues(PVMFMetadataList& aKeyL
                         }
 
                         uint32 valuelen = oscl_strlen(_STRLIT_CHAR(PVMP3METADATA_UNKNOWN)) + 1; // Add value string plus one for NULL terminator
-                        leavecode = 0;
-                        OSCL_TRY(leavecode,
-                                 KeyVal.value.pChar_value = OSCL_ARRAY_NEW(char, valuelen);
-                                );
+                        leavecode = OsclErrNone;
+                        KeyVal.value.pChar_value = (char*) AllocateKVPKeyArray(leavecode, PVMI_KVPVALTYPE_CHARPTR, valuelen);
 
-                        if (leavecode == 0)
+                        if (OsclErrNone == leavecode)
                         {
                             // Copy the value
                             oscl_strncpy(KeyVal.value.pChar_value, _STRLIT_CHAR(PVMP3METADATA_UNKNOWN), valuelen);
@@ -978,12 +1086,10 @@ OSCL_EXPORT_REF PVMFStatus IMpeg3File::GetMetadataValues(PVMFMetadataList& aKeyL
                     KeyLen += oscl_strlen(PVMI_KVPVALTYPE_UINT32_STRING_CONSTCHAR) + 1; // for "uint32" and NULL terminator
 
                     // Allocate memory for the string
-                    leavecode = 0;
-                    OSCL_TRY(leavecode,
-                             KeyVal.key = OSCL_ARRAY_NEW(char, KeyLen);
-                            );
+                    leavecode = OsclErrNone;
+                    KeyVal.key = (char*) AllocateKVPKeyArray(leavecode, PVMI_KVPVALTYPE_CHARPTR, KeyLen);
 
-                    if (leavecode == 0)
+                    if (OsclErrNone == leavecode)
                     {
                         // Copy the key string
                         oscl_strncpy(KeyVal.key, PVMP3METADATA_NUMTRACKS_KEY, oscl_strlen(PVMP3METADATA_NUMTRACKS_KEY) + 1);
@@ -1025,12 +1131,10 @@ OSCL_EXPORT_REF PVMFStatus IMpeg3File::GetMetadataValues(PVMFMetadataList& aKeyL
                     KeyLen += oscl_strlen(PVMI_KVPVALTYPE_UINT32_STRING_CONSTCHAR) + 1; // for "uint32" and NULL terminator
 
                     // Allocate memory for the string
-                    leavecode = 0;
-                    OSCL_TRY(leavecode,
-                             KeyVal.key = OSCL_ARRAY_NEW(char, KeyLen);
-                            );
+                    leavecode = OsclErrNone;
+                    KeyVal.key = (char*) AllocateKVPKeyArray(leavecode, PVMI_KVPVALTYPE_CHARPTR, KeyLen);
 
-                    if (leavecode == 0)
+                    if (OsclErrNone == leavecode)
                     {
                         // Copy the key string
                         oscl_strncpy(KeyVal.key, PVMP3METADATA_TRACKINFO_BITRATE_KEY, oscl_strlen(PVMP3METADATA_TRACKINFO_BITRATE_KEY) + 1);
@@ -1075,11 +1179,9 @@ OSCL_EXPORT_REF PVMFStatus IMpeg3File::GetMetadataValues(PVMFMetadataList& aKeyL
 
                     // Allocate memory for the string
                     leavecode = 0;
-                    OSCL_TRY(leavecode,
-                             KeyVal.key = OSCL_ARRAY_NEW(char, KeyLen);
-                            );
+                    KeyVal.key = (char*) AllocateKVPKeyArray(leavecode, PVMI_KVPVALTYPE_CHARPTR, KeyLen);
 
-                    if (leavecode == 0)
+                    if (OsclErrNone == leavecode)
                     {
                         // Copy the key string
                         oscl_strncpy(KeyVal.key, PVMP3METADATA_TRACKINFO_SAMPLERATE_KEY, oscl_strlen(PVMP3METADATA_TRACKINFO_SAMPLERATE_KEY) + 1);
@@ -1121,13 +1223,15 @@ OSCL_EXPORT_REF PVMFStatus IMpeg3File::GetMetadataValues(PVMFMetadataList& aKeyL
 
                 uint32 valuelen = oscl_strlen(_STRLIT_CHAR(PVMF_MIME_MP3)) + 1; // Add value string plus one for NULL terminator
                 // Allocate memory for the strings
-                leavecode = 0;
-                OSCL_TRY(leavecode,
-                         KeyVal.key = OSCL_ARRAY_NEW(char, KeyLen);
-                         KeyVal.value.pChar_value = OSCL_ARRAY_NEW(char, valuelen);
-                        );
+                int32 leavecode1 = OsclErrNone;
+                leavecode = OsclErrNone;
+                KeyVal.key = (char*) AllocateKVPKeyArray(leavecode, PVMI_KVPVALTYPE_CHARPTR, KeyLen);
+                if (OsclErrNone == leavecode)
+                {
+                    KeyVal.value.pChar_value = (char*) AllocateKVPKeyArray(leavecode1, PVMI_KVPVALTYPE_CHARPTR, valuelen);
+                }
 
-                if (leavecode == 0)
+                if (OsclErrNone == leavecode && OsclErrNone == leavecode1)
                 {
                     // Copy the key string
                     oscl_strncpy(KeyVal.key, PVMP3METADATA_TRACKINFO_AUDIO_FORMAT_KEY, oscl_strlen(PVMP3METADATA_TRACKINFO_AUDIO_FORMAT_KEY) + 1);
@@ -1179,12 +1283,10 @@ OSCL_EXPORT_REF PVMFStatus IMpeg3File::GetMetadataValues(PVMFMetadataList& aKeyL
                     KeyLen += oscl_strlen(PVMI_KVPVALTYPE_UINT32_STRING_CONSTCHAR) + 1; // for "uint32" and NULL terminator
 
                     // Allocate memory for the string
-                    leavecode = 0;
-                    OSCL_TRY(leavecode,
-                             KeyVal.key = OSCL_ARRAY_NEW(char, KeyLen);
-                            );
+                    leavecode = OsclErrNone;
+                    KeyVal.key = (char*) AllocateKVPKeyArray(leavecode, PVMI_KVPVALTYPE_CHARPTR, KeyLen);
 
-                    if (leavecode == 0)
+                    if (OsclErrNone == leavecode)
                     {
                         // Copy the key string
                         oscl_strncpy(KeyVal.key, PVMP3METADATA_TRACKINFO_AUDIO_CHANNELS_KEY, oscl_strlen(PVMP3METADATA_TRACKINFO_AUDIO_CHANNELS_KEY) + 1);
@@ -1209,15 +1311,64 @@ OSCL_EXPORT_REF PVMFStatus IMpeg3File::GetMetadataValues(PVMFMetadataList& aKeyL
                 }
             }
         }
+        else if (oscl_strcmp(aKeyList[lcv].get_cstr(), PVMP3METADATA_CHANNEL_MODE_KEY) == 0 ||
+                 oscl_strcmp(aKeyList[lcv].get_cstr(), PVMP3METADATA_TRACKINFO_AUDIO_CHANNEL_MODE_KEY) == 0)
+        {
+            // Channel mode
+            MP3ContentFormatType mp3info;
+            if (GetConfigDetails(mp3info) == MP3_SUCCESS)
+            {
+                // Increment the counter for the number of values found so far
+                ++numvalentries;
+
+                // Create a value entry if past the starting index
+                if (numvalentries > aStartingValueIndex)
+                {
+                    KeyLen = oscl_strlen(PVMP3METADATA_TRACKINFO_AUDIO_CHANNEL_MODE_KEY) + 1; // for "track-info/audio/channel-mode;"
+                    KeyLen += oscl_strlen(PVMP3METADATA_INDEX0) + 1; // for "index=0;"
+                    KeyLen += oscl_strlen(PVMI_KVPVALTYPE_STRING_CONSTCHAR); // for "valtype="
+                    KeyLen += oscl_strlen(PVMI_KVPVALTYPE_UINT32_STRING_CONSTCHAR) + 1; // for "uint32" and NULL terminator
+
+                    // Allocate memory for the string
+                    leavecode = 0;
+                    KeyVal.key = (char*) AllocateKVPKeyArray(leavecode, PVMI_KVPVALTYPE_CHARPTR, KeyLen);
+
+                    if (leavecode == 0)
+                    {
+                        // Copy the key string
+                        oscl_strncpy(KeyVal.key, PVMP3METADATA_TRACKINFO_AUDIO_CHANNEL_MODE_KEY, oscl_strlen(PVMP3METADATA_TRACKINFO_AUDIO_CHANNEL_MODE_KEY) + 1);
+                        oscl_strncat(KeyVal.key, PVMP3METADATA_SEMICOLON, oscl_strlen(PVMP3METADATA_SEMICOLON));
+                        oscl_strncat(KeyVal.key, PVMP3METADATA_INDEX0, oscl_strlen(PVMP3METADATA_INDEX0));
+                        oscl_strncat(KeyVal.key, PVMP3METADATA_SEMICOLON, oscl_strlen(PVMP3METADATA_SEMICOLON));
+                        oscl_strncat(KeyVal.key, PVMI_KVPVALTYPE_STRING_CONSTCHAR, oscl_strlen(PVMI_KVPVALTYPE_STRING_CONSTCHAR));
+                        oscl_strncat(KeyVal.key, PVMI_KVPVALTYPE_UINT32_STRING_CONSTCHAR, oscl_strlen(PVMI_KVPVALTYPE_UINT32_STRING_CONSTCHAR));
+                        KeyVal.key[KeyLen-1] = NULL_TERM_CHAR;
+                        // Copy the value
+                        KeyVal.value.uint32_value = mp3info.ChannelMode;
+                        // Set the length and capacity
+                        KeyVal.length = 1;
+                        KeyVal.capacity = 1;
+                    }
+                    else
+                    {
+                        // Memory allocation failed
+                        KeyVal.key = NULL;
+                        break;
+                    }
+                }
+            }
+        }
 
         // Add the KVP to the list if the key string was created
         if (KeyVal.key != NULL)
         {
-            leavecode = 0;
-            OSCL_TRY(leavecode, aValueList.push_back(KeyVal));
-            OSCL_FIRST_CATCH_ANY(leavecode,
-                                 ReleaseMetadataValue(KeyVal);
-                                 break;);
+            leavecode = OsclErrNone;
+            leavecode = PushKVPValue(KeyVal, aValueList);
+            if (OsclErrNone != leavecode)
+            {
+                // push kvp failed
+                return PVMFErrNoMemory;
+            }
 
             // Increment the counter for number of value entries added to the list
             ++numentriesadded;
@@ -1334,7 +1485,6 @@ OSCL_EXPORT_REF MP3ErrorType IMpeg3File::RequestReadCapacityNotification(PvmiDat
 {
     uint32 capacity = 0;
     uint32 currFilePosn = MP3Utils::getCurrentFilePosition(&iMP3File);
-    uint32 currFileSize = 0;
     if (aFileOffset > currFilePosn)
     {
         capacity = (aFileOffset - currFilePosn);
@@ -1355,3 +1505,57 @@ OSCL_EXPORT_REF MP3ErrorType IMpeg3File::ScanMP3File(uint32 aFramesToScan)
     return MP3_ERROR_UNKNOWN;
 }
 
+OsclAny* IMpeg3File::AllocateKVPKeyArray(int32& aLeaveCode, PvmiKvpValueType aValueType, int32 aNumElements)
+{
+    int32 leaveCode = OsclErrNone;
+    OsclAny* aBuffer = NULL;
+    switch (aValueType)
+    {
+        case PVMI_KVPVALTYPE_WCHARPTR:
+            OSCL_TRY(leaveCode,
+                     aBuffer = (oscl_wchar*) OSCL_ARRAY_NEW(oscl_wchar, aNumElements + 1);
+                    );
+            break;
+
+        case PVMI_KVPVALTYPE_CHARPTR:
+            OSCL_TRY(leaveCode,
+                     aBuffer = (char*) OSCL_ARRAY_NEW(char, aNumElements + 1);
+                    );
+            break;
+        case PVMI_KVPVALTYPE_UINT8PTR:
+            OSCL_TRY(leaveCode,
+                     aBuffer = (uint8*) OSCL_ARRAY_NEW(uint8, aNumElements);
+                    );
+            break;
+        default:
+            break;
+    }
+    aLeaveCode = leaveCode;
+    return aBuffer;
+}
+
+
+int32 IMpeg3File::PushKVPValue(PvmiKvp aKVP, Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList)
+{
+    int32 leavecode = OsclErrNone;
+    OSCL_TRY(leavecode, aValueList.push_back(aKVP));
+    if (OsclErrNone != leavecode)
+    {
+        ReleaseMetadataValue(aKVP);
+    }
+    return leavecode;
+}
+
+int32 IMpeg3File::PushKVPKey(const char* aString, PVMFMetadataList& aKeyList)
+{
+    int32 leavecode = OsclErrNone;
+    OSCL_TRY(leavecode, aKeyList.push_back(aString));
+    return leavecode;
+}
+
+int32 IMpeg3File::PushKVPKey(OSCL_HeapString<OsclMemAllocator>& aString, Oscl_Vector<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator>& aKeyList)
+{
+    int32 leavecode = OsclErrNone;
+    OSCL_TRY(leavecode, aKeyList.push_back(aString));
+    return leavecode;
+}

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,8 +47,8 @@
 #include "pvmf_media_data.h"
 #endif
 
-#ifndef PVMF_SIMPLE_MEDIA_BUFFER_H_INCLUDED
-#include "pvmf_simple_media_buffer.h"
+#ifndef PVMF_RESIZABLE_SIMPLE_MEDIAMSG_H_INCLUDED
+#include "pvmf_resizable_simple_mediamsg.h"
 #endif
 
 #ifndef PVMF_FFPARSERNODE_PORT_H_INCLUDED
@@ -164,7 +164,6 @@ class PVMFSubNodeContainerBaseMp3
             iType = n;
             iContainer = c;
         }
-        void Assert(bool);
 
         virtual void Cleanup() = 0;
         virtual PVMFStatus IssueCommand(int32) = 0;
@@ -236,6 +235,7 @@ class PVMFCPMContainerMp3: public PVMFSubNodeContainerBaseMp3,
         PvmiKvp iAuthorizationDataKvp;
         PVMFCPMUsageID iUsageID;
         PVMFCPMPluginLicenseInterface* iCPMLicenseInterface;
+        PVInterface* iCPMLicenseInterfacePVI;
         PVMFMetadataExtensionInterface* iCPMMetaDataExtensionInterface;
 
         PVMFStatus CreateUsageKeys();
@@ -244,45 +244,6 @@ class PVMFCPMContainerMp3: public PVMFSubNodeContainerBaseMp3,
         bool GetCPMMetaDataExtensionInterface();
 };
 
-
-// Allocator wrapper for the memory pool that saves the last block pointer allocated
-// so it can be resized later
-class TrackDataMemPoolProxyAlloc : public Oscl_DefAlloc
-{
-    public:
-        TrackDataMemPoolProxyAlloc(OsclMemPoolResizableAllocator& aMemPool)
-        {
-            iMemPoolAllocPtr = &aMemPool;
-            iLastAllocatedBlockPtr = NULL;
-        }
-
-        virtual ~TrackDataMemPoolProxyAlloc()
-        {
-        }
-
-        OsclAny* allocate(const uint32 size)
-        {
-            OSCL_ASSERT(iMemPoolAllocPtr);
-            iLastAllocatedBlockPtr = iMemPoolAllocPtr->allocate(size);
-            return iLastAllocatedBlockPtr;
-        }
-
-        void deallocate(OsclAny* p)
-        {
-            OSCL_ASSERT(iMemPoolAllocPtr);
-            iMemPoolAllocPtr->deallocate(p);
-        }
-
-        bool trim(uint32 aBytesToFree)
-        {
-            OSCL_ASSERT(iMemPoolAllocPtr);
-            OSCL_ASSERT(iLastAllocatedBlockPtr);
-            return iMemPoolAllocPtr->trim(iLastAllocatedBlockPtr, aBytesToFree);
-        }
-
-        OsclMemPoolResizableAllocator* iMemPoolAllocPtr;
-        OsclAny* iLastAllocatedBlockPtr;
-}; // end class TrackDataMemPoolProxyAlloc
 
 class PVMP3FFNodeTrackPortInfo
 {
@@ -311,12 +272,12 @@ class PVMP3FFNodeTrackPortInfo
             iPort = NULL;
             iState = TRACKSTATE_UNINITIALIZED;
             iTrackDataMemoryPool = NULL;
-            iTrackDataMemoryPoolProxy = NULL;
             iMediaDataImplAlloc = NULL;
             iMediaDataMemPool = NULL;
             timestamp_offset = 0;
             iSeqNum = 0;
             iSendBOS = false;
+            iFirstFrame = false;
         }
 
         PVMP3FFNodeTrackPortInfo(const PVMP3FFNodeTrackPortInfo& aSrc)
@@ -326,12 +287,12 @@ class PVMP3FFNodeTrackPortInfo
             iMediaData = aSrc.iMediaData;
             iState = aSrc.iState;
             iTrackDataMemoryPool = aSrc.iTrackDataMemoryPool;
-            iTrackDataMemoryPoolProxy = aSrc.iTrackDataMemoryPoolProxy;
             iMediaDataImplAlloc = aSrc.iMediaDataImplAlloc;
             iMediaDataMemPool = aSrc.iMediaDataMemPool;
             timestamp_offset = aSrc.timestamp_offset;
             iSeqNum = aSrc.iSeqNum;
             iSendBOS = aSrc.iSendBOS;
+            iFirstFrame = aSrc.iFirstFrame;
         }
 
         ~PVMP3FFNodeTrackPortInfo()
@@ -350,11 +311,8 @@ class PVMP3FFNodeTrackPortInfo
         // Output buffer memory pool
         OsclMemPoolResizableAllocator *iTrackDataMemoryPool;
 
-        // Allocator wrapper for the output buffer memory pool
-        TrackDataMemPoolProxyAlloc* iTrackDataMemoryPoolProxy;
-
         // Allocator for simple media data buffer impl
-        PVMFSimpleMediaBufferCombinedAlloc *iMediaDataImplAlloc;
+        PVMFResizableSimpleMediaMsgAlloc *iMediaDataImplAlloc;
 
         // Memory pool for simple media data
         PVMFMemPoolFixedChunkAllocator *iMediaDataMemPool;
@@ -365,12 +323,14 @@ class PVMP3FFNodeTrackPortInfo
 
         PVMFFormatType iFormatType;
         uint32 iBitrate;
-        uint32 timestamp_offset;
+        int32 timestamp_offset;
 
         // Sequence number
         uint32 iSeqNum;
         //bos flag
         bool iSendBOS;
+        // Random access point idenfier
+        bool iFirstFrame;
 };  // end class PVMP3FFNodeTrackPortInfo
 
 //Forward Declarations
@@ -448,8 +408,8 @@ class PVMFMP3FFParserNode : public OsclTimerObject,
         bool queryInterface(const PVUuid& uuid, PVInterface *& iface);
 
         PVMFStatus SetSourceInitializationData(OSCL_wString& aSourceURL, PVMFFormatType& aSourceFormat, OsclAny* aSourceData);
-        PVMFStatus SetClientPlayBackClock(OsclClock* aClientClock);
-        PVMFStatus SetEstimatedServerClock(OsclClock* aClientClock);
+        PVMFStatus SetClientPlayBackClock(PVMFMediaClock* aClientClock);
+        PVMFStatus SetEstimatedServerClock(PVMFMediaClock* aClientClock);
 
         //From PVMFTrackSelectionExtensionInterface
         PVMFStatus GetMediaPresentationInfo(PVMFMediaPresentationInfo& aInfo);
@@ -489,7 +449,7 @@ class PVMFMP3FFParserNode : public OsclTimerObject,
 
         virtual PVMFCommandId SetDataSourceRate(PVMFSessionId aSessionId,
                                                 int32 aRate,
-                                                OsclTimebase* aTimebase = NULL,
+                                                PVMFTimebase* aTimebase = NULL,
                                                 OsclAny* aContext = NULL);
 
         /* From PVMFFormatProgDownloadSupportInterface */
@@ -619,6 +579,8 @@ class PVMFMP3FFParserNode : public OsclTimerObject,
         void DataStreamCommandCompleted(const PVMFCmdResp& aResponse);
         void DataStreamInformationalEvent(const PVMFAsyncEvent& aEvent);
         void DataStreamErrorEvent(const PVMFAsyncEvent& aEvent);
+        PVMFStatus CreateMP3FileObject(MP3ErrorType &aSuccess, PVMFCPMPluginAccessInterfaceFactory*aCPM);
+        PVMFStatus PushBackCPMMetadataKeys(PVMFMetadataList *&aKeyListPtr, uint32 aLcv);
 
     protected:
         void Push(PVMFSubNodeContainerBaseMp3&, PVMFSubNodeContainerBaseMp3::CmdType);
@@ -669,12 +631,12 @@ class PVMFMP3FFParserNode : public OsclTimerObject,
 
         /* These vars are used for the prog. download to auto pause*/
         static const uint32 iTIMESTAMPDELTA;
-        OsclSharedPtr<OsclClock> iDownloadProgressClock;
+        OsclSharedPtr<PVMFMediaClock> iDownloadProgressClock;
         PVMFDownloadProgressInterface* iDownloadProgressInterface;
         bool iAutoPaused;
         bool iDownloadComplete;
         PvmiDataStreamCommandId iRequestReadCapacityNotificationID;
-        int32 iMP3MetaDataSize;
+        uint32 iMP3MetaDataSize;
 
         // Data Stream vars
         PVMIDataStreamSyncInterface* iDataStreamInterface;
@@ -699,7 +661,6 @@ class PVMFMP3FFParserNode : public OsclTimerObject,
         };
         Oscl_Vector<SubNodeCmd, OsclMemAllocator> iSubNodeCmdVec;
 
-        void Assert(bool);
         PVMFStatus DoGetLicense(PVMFMP3FFParserNodeCommand& aCmd,
                                 bool aWideCharVersion = false);
         PVMFStatus DoCancelGetLicense(PVMFMP3FFParserNodeCommand& aCmd);

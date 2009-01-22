@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,8 +43,8 @@
 #include "oscl_str_ptr_len.h"
 #endif
 
-#ifndef OSCL_CLOCK_H_INCLUDED
-#include "oscl_clock.h"
+#ifndef PVMF_MEDIA_CLOCK_H_INCLUDED
+#include "pvmf_media_clock.h"
 #endif
 
 #ifndef OSCL_TIME_H_INCLUDED
@@ -123,7 +123,9 @@ enum ProcessingStateReturnCodes
     PROCESS_TIMEOUT_SERVER_INACTIVITY		 = PROCESS_ERROR_FIRST - 15,
     PROCESS_CONTENT_LENGTH_NOT_MATCH		 = PROCESS_ERROR_FIRST - 16,
     PROCESS_CONTENT_RANGE_INFO_NOT_MATCH	 = PROCESS_ERROR_FIRST - 17,
-    PROCESS_OUTPUT_TO_OUTPUT_PORT_FAILURE	 = PROCESS_ERROR_FIRST - 18
+    PROCESS_OUTPUT_TO_OUTPUT_PORT_FAILURE	 = PROCESS_ERROR_FIRST - 18,
+    PROCESS_REACHED_MAXIMUM_SIZE_LIMITATION	 = PROCESS_ERROR_FIRST - 19
+
 };
 
 enum ProtocolType
@@ -159,6 +161,8 @@ typedef Oscl_Vector<PVMFSharedMediaMsgPtr, OsclMemAllocator> INPUT_DATA_QUEUE;
 typedef Oscl_Vector<OsclRefCounterMemFrag, OsclMemAllocator> OUTPUT_DATA_QUEUE;
 
 #define PE_isDigit(c) ((c) >= 48 && (c) <= 57)
+#define PROTOCOLENGINE_REDIRECT_STATUS_CODE_START	300
+#define PROTOCOLENGINE_REDIRECT_STATUS_CODE_END		399
 
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -270,7 +274,7 @@ class OsclRefCounterMemFragAlloc
             my_ptr += (aligned_refcnt_size + aligned_cleanup_size);
 
             // 3. create OsclMemoryFragment object after refcounter object and cleanup object
-            OsclMemoryFragment* memfrag_ptr = OSCL_PLACEMENT_NEW(my_ptr, OsclMemoryFragment());
+            OsclMemoryFragment* memfrag_ptr = OSCL_PLACEMENT_NEW(my_ptr, OsclMemoryFragment);
             memfrag_ptr->ptr = (void*)(my_ptr + aligned_class_size);
             memfrag_ptr->len = requested_size;
 
@@ -293,7 +297,7 @@ class OsclRefCounterMemFragAlloc
             my_ptr += aligned_refcnt_size;
 
             // 2. create OsclMemoryFragment object after refcounter object object
-            OsclMemoryFragment* memfrag_ptr = OSCL_PLACEMENT_NEW(my_ptr, OsclMemoryFragment());
+            OsclMemoryFragment* memfrag_ptr = OSCL_PLACEMENT_NEW(my_ptr, OsclMemoryFragment);
             memfrag_ptr->ptr = (void*)(my_ptr + aligned_class_size);
             memfrag_ptr->len = requested_size;
 
@@ -340,6 +344,7 @@ class PVProtocolEngineMSHttpStreamingParams
             iMaxASFHeaderSize = PVPROTOCOLENGINE_DEFAULT_MAXIMUM_ASF_HEADER_SIZE;
             iAccelBitrate = DEFAULT_MS_STREAMING_ACCEL_BITRATE;
             iAccelDuration = DEFAULT_MS_STREAMING_ACCEL_DURATION;
+            iMaxHttpStreamingSize = 0;
             iStreamIDList.clear();
             iStreamPlayBackModeList.clear();
             iUserAgent = OSCL_HeapString<OsclMemAllocator> (_STRLIT_CHAR("NSPlayer/10.0.0.3646"));
@@ -403,6 +408,7 @@ class PVProtocolEngineMSHttpStreamingParams
             iExtensionHeadersPurgeOnRedirect = x.iExtensionHeadersPurgeOnRedirect;
             iAccelBitrate					= x.iAccelBitrate;
             iAccelDuration					= x.iAccelDuration;
+            iMaxHttpStreamingSize           = x.iMaxHttpStreamingSize;
             return *this;
         }
 
@@ -418,6 +424,7 @@ class PVProtocolEngineMSHttpStreamingParams
         uint32 iMaxASFHeaderSize;
         uint32 iAccelBitrate;
         uint32 iAccelDuration;
+        uint32 iMaxHttpStreamingSize;
         OSCL_HeapString<OsclMemAllocator> iUserAgent;
         OSCL_HeapString<OsclMemAllocator> iUserID;
         OSCL_HeapString<OsclMemAllocator> iUserPasswd;
@@ -636,6 +643,16 @@ class HttpParsingBasicObject
             return iTotalDLHttpBodySize;
         }
         void setDownloadSize(const uint32 aInitialSize = 0);
+
+        uint32 getTotalHttpStreamingSize()
+        {
+            return iTotalHttpStreamingSize;
+        }
+        void resetTotalHttpStreamingSize()
+        {
+            iTotalHttpStreamingSize = 0;
+        }
+
         uint32 getStatusCode()
         {
             return (iParser == NULL ? 0 : iParser->getHTTPStatusCode());
@@ -651,6 +668,11 @@ class HttpParsingBasicObject
         bool getRedirectURI(OSCL_String &aRedirectUri);
         bool getContentType(OSCL_String &aContentType);
         bool getAuthenInfo(OSCL_String &aRealm);
+        bool isServerSupportBasicAuthentication();
+        bool isServerSendAuthenticationHeader();
+        void getBasicPtr(const StrPtrLen aAuthenValue, uint32 &length);
+        void getRealmPtr(const char *&ptrRealm, uint32 &len, uint32 &length);
+
         uint32 getServerVersionNumber()
         {
             return iServerVersionNumber;
@@ -721,7 +743,6 @@ class HttpParsingBasicObject
             iBWEstInfo.clear();
             iHttpHeaderParsed = false;
             iTotalDLHttpBodySize = 0;
-            isRedirectResponse = false;
             iLatestMediaDataTimestamp = 0;
         }
 
@@ -755,6 +776,7 @@ class HttpParsingBasicObject
             iDataPathLogger = PVLogger::GetLoggerObject("protocolenginenode.protocolengine");
             iDataPathErrLogger = PVLogger::GetLoggerObject("datapath.sourcenode.protocolenginenode");
             iClockLogger = PVLogger::GetLoggerObject("clock");
+            iTotalHttpStreamingSize = 0;
             reset();
         }
 
@@ -765,13 +787,13 @@ class HttpParsingBasicObject
         // EOS input can be indicated as the sign of bad request (the request just sent is bad request, especially badk URL)
         int32 validateEOSInput(int32 parsingStatus);
         // return total size of all data in entityUnit, ~0=0xffffffff means error
-        uint32 saveOutputData(RefCountHTTPEntityUnit &entityUnit, OUTPUT_DATA_QUEUE &aOutputData);
+        bool saveOutputData(RefCountHTTPEntityUnit &entityUnit, OUTPUT_DATA_QUEUE &aOutputData, uint32 &aTotalEntityDataSize);
         // return codes conversion, may send out callback for end of message or end of input cases
         int32 checkParsingDone(const int32 parsingStatus);
         // extract the server version number from server field of a HTTP response
         void extractServerVersionNum();
-        // extract realm field from WWW-Authenticate header
-        bool getRealmField(const StrPtrLen &aInputData, StrPtrLen &aOuputData);
+        // called by getNextMediaData()
+        bool isRedirectResponse();
 
         void clearInputOutput()
         {
@@ -793,7 +815,6 @@ class HttpParsingBasicObject
         uint32 iTotalDLSizeForPrevEOS; // for detecting download size change between two adjacent EOSs or start and first EOS
         uint32 iTotalDLSizeAtCurrEOS;
         uint32  iLatestMediaDataTimestamp;
-        bool isRedirectResponse;
         BandwidthEstimationInfo iBWEstInfo;
         uint32 iNumRetry;
 
@@ -801,6 +822,8 @@ class HttpParsingBasicObject
         PVLogger* iDataPathLogger;
         PVLogger* iDataPathErrLogger;
         PVLogger* iClockLogger;
+
+        uint32 iTotalHttpStreamingSize;
 };
 
 

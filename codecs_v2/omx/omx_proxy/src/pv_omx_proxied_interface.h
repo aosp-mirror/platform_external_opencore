@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,8 +29,12 @@
 #ifndef PV_INTERFACE_H_INCLUDED
 #include "pv_interface.h"
 #endif
+#ifndef PV_OMXDEFS_H_INCLUDED
+#include "pv_omxdefs.h"
+#endif
 
 #define PVUidProxiedInterface  PVUuid(0xf7076653,0x6088,0x47c6,0x88,0xc1,0xb7,0xed,0x28,0xe7,0x2b,0xeb)
+#if PROXY_INTERFACE
 
 class PVProxiedInterface_OMX;
 class PVProxiedInterfaceClient_OMX;
@@ -175,7 +179,7 @@ class PVMainProxy_OMX
         ** routine is called.
         **
         ** Calling this API under the PV thread context is an error
-        ** and will generate a panic.
+        ** and will leave.
         */
         virtual void StopPVThread() = 0;
 
@@ -189,7 +193,7 @@ class PVMainProxy_OMX
         ** been reached.  This API also returns the count of notifications
         ** still pending after the processing is complete.
         ** Any call to this API from within the PV thread context is
-        ** an error and will generate a panic.
+        ** an error and will leave.
         **
         ** @param aMaxCount: (input param) the maximum of pending
         **   notifications to process during the call.
@@ -383,7 +387,7 @@ class PVProxiedInterfaceImpl_OMX : public PVProxiedInterface_OMX
         PVMainProxy_OMX *iMainProxy;
 };
 
-
+#endif // PROXY_INTERFACE
 #endif
 
 

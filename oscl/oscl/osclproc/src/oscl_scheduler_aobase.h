@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,11 +91,12 @@ class PVActiveStats
 
         uint32 iNumRun;//how many Run calls
         uint32 iNumRunError;//how many RunError calls
+        int32 iMaxTicksInRun;//max time in any one Run call
 
-        uint32 iTotalTicksInRunL;
+        uint32 iTotalTicksInRun;
 
         bool i64Valid;//use 64-bit stats instead of 32-bit
-        int64 i64TotalTicksInRunL;//avg number of clock ticks per Run
+        int64 i64TotalTicksInRun;//avg number of clock ticks per Run
 
         //for internal computation-- percent of total time in this Run
         float iPercent;
@@ -104,6 +105,7 @@ class PVActiveStats
         uint32 iNumCancel;//how many DoCancel calls.
 
         uint32 iNumInstances;//number of scheduler instances of this AO.
+        int32 iPriority;//scheduler priority
 
         friend class PVActiveBase;
         friend class OsclExecScheduler;
@@ -159,9 +161,17 @@ class PVActiveBase
         */
 
         /*
-        ** Queue link for scheduler iActiveTimerQ or iReadyQ.
+        ** Queue link for scheduler iExecTimerQ or iReadyQ.
         */
         TReadyQueLink iPVReadyQLink;
+
+        /*
+        ** Return true if this AO is in any queue.
+        */
+        bool IsInAnyQ()
+        {
+            return(iPVReadyQLink.iIsIn != NULL);
+        }
 
         /*
         ** The executing flag is set whenever a request is active (pending
@@ -247,7 +257,7 @@ class PVActiveBase
         void RemoveFromScheduler();
         void Destroy();
         void Activate();
-        bool IsAdded()const;
+        OSCL_IMPORT_REF bool IsAdded()const;
         void Cancel();
 
         friend class OsclSchedulerCommonBase;

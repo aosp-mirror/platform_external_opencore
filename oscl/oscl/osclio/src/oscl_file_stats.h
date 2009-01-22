@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +61,6 @@ enum TOsclFileOp
     , EOsclFileOp_Size
     , EOsclFileOp_Flush
     , EOsclFileOp_EndOfFile
-    , EOsclFileOp_SetSize
     , EOsclFileOp_NativeOpen
     , EOsclFileOp_NativeClose
     , EOsclFileOp_NativeRead
@@ -71,7 +70,6 @@ enum TOsclFileOp
     , EOsclFileOp_NativeSize
     , EOsclFileOp_NativeFlush
     , EOsclFileOp_NativeEndOfFile
-    , EOsclFileOp_NativeSetSize
     , EOsclFileOp_Last
 };
 static const char* const TOsclFileOpStr[] =

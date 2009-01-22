@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
  * -------------------------------------------------------------------
  */
 #include "pvmp4ffrec_plugin.h"
-#include "impeg4file.h"
+#include "pvmp4ffrec.h"
 #include "oscl_file_io.h"
 
 
@@ -38,7 +38,7 @@ PVMFStatus PVMP4FFRecognizerPlugin::Recognize(PVMFDataStreamFactory& aSourceData
     bool ismp4file = false;
     OSCL_wHeapString<OsclMemAllocator> tmpfilename;
     int32 leavecode = 0;
-    OSCL_TRY(leavecode, ismp4file = IMpeg4File::IsMP4File(&aSourceDataStreamFactory));
+    OSCL_TRY(leavecode, ismp4file = MP4FileRecognizer::IsMP4File(&aSourceDataStreamFactory));
     OSCL_FIRST_CATCH_ANY(leavecode,
                          return PVMFErrNoMemory;
                         );

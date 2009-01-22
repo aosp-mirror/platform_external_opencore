@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,9 +40,16 @@
 #include "fullatom.h"
 #endif
 
+#ifndef OSCL_SCHEDULER_AO_H_INCLUDED
+#include "oscl_scheduler_ao.h"
+#endif
+
+#include "oscl_scheduler.h"
+
 #define PV_ERROR -1
 
-class CompositionOffsetAtom : public FullAtom
+class CompositionOffsetAtom : public FullAtom,
+            public OsclTimerObject
 {
 
     public:
@@ -65,6 +72,7 @@ class CompositionOffsetAtom : public FullAtom
         int32 getTimeOffsetForSampleNumberPeek(uint32 sampleNum);
         int32 getTimeOffsetForSampleNumber(uint32 num);
         int32 getTimeOffsetForSampleNumberGet(uint32 num);
+        void setSamplesCount(uint32 SamplesCount);
 
         int32 resetStateVariables();
         int32 resetStateVariables(uint32 sampleNum);
@@ -75,13 +83,34 @@ class CompositionOffsetAtom : public FullAtom
             return _currPeekSampleCount;
         }
 
+        //Marker Table Related Functions
+        int32 getTimeOffsetFromMT(uint32 samplenum, uint32 currEC, uint32 currSampleCount);
+        int32 createMarkerTable();
+        uint32 populateMarkerTable();
+        void deleteMarkerTable();
+
     private:
         bool ParseEntryUnit(uint32 entry_cnt);
         void CheckAndParseEntry(uint32 i);
+        // from OsclTimerObject
+        void Run();
         uint32 _entryCount;
 
         uint32 *_psampleCountVec;
         uint32 *_psampleOffsetVec;
+
+        //marker table related
+        uint32 *MT_SampleCount;
+        uint32 *MT_EntryCount;
+        uint32 _iTotalNumSamplesInTrack;
+        uint32 MT_Counter;
+        uint32 addSampleCount;
+        uint32 prevSampleCount;
+        uint32 entrycountTraversed;
+        uint32 MT_Table_Size;
+        bool iMarkerTableCreation;
+        uint32 refSample;
+        uint32 MT_j;
 
         uint32 _mediaType;
 

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,30 +27,8 @@ Permission to distribute, modify and use this file under the standard license
 terms listed above has been obtained from the copyright holder.
 ****************************************************************************************/
 /*
-------------------------------------------------------------------------------
 
-
-
- Filename: /audio/gsm_amr/c/include/mpy_32_16.h
-
-     Date: 09/08/2000
-
-------------------------------------------------------------------------------
- REVISION HISTORY
-
- Description: Updated function prototype declaration to reflect new interface.
-              A pointer to overflow flag is passed into the function. Updated
-              template.
-
- Description: Moved _cplusplus #ifdef after Include section.
-
- Description: 1. Updated the function to include ARM and Linux-ARM assembly
-                 instructions.
-              2. Added OSCL_UNUSED_ARG(pOverflow) to remove compiler warnings.
-
- Description: Fixed bug in the gcc-arm assembly.
-
- Description:
+  Filename: /audio/gsm_amr/c/include/mpy_32_16.h
 
 ------------------------------------------------------------------------------
  INCLUDE DESCRIPTION
@@ -110,7 +88,7 @@ extern "C"
     ; GLOBAL FUNCTION DEFINITIONS
     ; Function Prototype declaration
     ----------------------------------------------------------------------------*/
-#if defined(PV_ARM) /* Instructions for ARM Assembly on ADS*/
+#if defined(PV_ARM_V5) /* Instructions for ARM Assembly on ADS*/
 
     __inline Word32 Mpy_32_16(Word16 L_var1_hi,
                               Word16 L_var1_lo,
@@ -132,7 +110,7 @@ extern "C"
         return (L_sum);
     }
 
-#elif defined(PV_ARM_GCC) /* Instructions for ARM-linux cross-compiler*/
+#elif defined(PV_ARM_GCC_V5) /* Instructions for ARM-linux cross-compiler*/
 
     static inline Word32 Mpy_32_16(Word16 L_var1_hi,
                                    Word16 L_var1_lo,

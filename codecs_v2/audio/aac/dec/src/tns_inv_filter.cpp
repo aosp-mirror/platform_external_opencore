@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,7 @@
  */
 /*
 
- Pathname: ./src/tns_inv_filter.c
-
-     Date: 07/27/2001
+ Pathname: tns_inv_filter.c
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
@@ -38,6 +36,7 @@
  Description:
     Simplified MAC operations for filter by eliminating extra variables
 
+ Who:                       Date:
  Description:
 
 ------------------------------------------------------------------------------

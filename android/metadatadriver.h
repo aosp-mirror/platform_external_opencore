@@ -29,13 +29,13 @@
 #include "oscl_mem_audit.h"
 #include "oscl_error.h"
 #include "oscl_snprintf.h"
-#include "oscl_error_panic.h"
+
 #include "oscl_scheduler.h"
 #include "oscl_utf8conv.h"
 #include "oscl_scheduler_ao.h"
 #include "cczoomrotation16.h"  // for color converter
 #include "omx_core.h"
-#include "pv_omxmastercore.h"
+#include "pv_omxcore.h"
 
 #define BEST_THUMBNAIL_MODE 1
 

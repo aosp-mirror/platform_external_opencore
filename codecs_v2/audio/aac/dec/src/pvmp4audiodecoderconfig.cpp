@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +16,8 @@
  * -------------------------------------------------------------------
  */
 /*
-------------------------------------------------------------------------------
 
-
-
- Pathname: /audio/
-                aac_mpeg4/
-                    AAC_baseline/
-                        pv_aac_dec/
-                            c/
-                                src/
-                                    PVMP4AudioDecoderConfig
-
-     Date: 01/15/2002
+ Pathname: PVMP4AudioDecoderConfig
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
@@ -41,6 +30,7 @@
 
  Description: Added support for AAC+
 
+ Who:                                         Date:
  Description:
 
 ------------------------------------------------------------------------------
@@ -185,7 +175,7 @@
 ; FUNCTION CODE
 ----------------------------------------------------------------------------*/
 
-Int PVMP4AudioDecoderConfig(
+OSCL_EXPORT_REF Int PVMP4AudioDecoderConfig(
     tPVMP4AudioDecoderExternal  *pExt,
     void                        *pMem)
 {
@@ -223,9 +213,10 @@ Int PVMP4AudioDecoderConfig(
          * Buffer is not overrun, then
          * decode the AudioSpecificConfig() structure
          */
-        status =
-            get_audio_specific_config(
-                pVars);
+
+        pVars->aacConfigUtilityEnabled = false;  /* set aac dec mode */
+
+        status = get_audio_specific_config(pVars);
 
     }
 

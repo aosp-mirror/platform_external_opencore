@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,8 @@ static const char PVMI_KVPTYPE_POINTER_STRING_CONSTCHAR[] = PVMI_KVPTYPE_POINTER
 
 #define PVMI_KVPTYPE_AGGREGATE_STRING "aggregate"
 static const char PVMI_KVPTYPE_AGGREGATE_STRING_CONSTCHAR[] = PVMI_KVPTYPE_AGGREGATE_STRING;
+
+#include "oscl_string_containers.h"
 
 typedef enum
 {
@@ -308,6 +310,7 @@ class PvmfAssetInfo3GPPLocationStruct
             _latitude = 0;
             _altitude = 0;
             _langCode = 0;
+            Lang_code = NULL;
         }
         virtual ~PvmfAssetInfo3GPPLocationStruct()
         {
@@ -319,11 +322,13 @@ class PvmfAssetInfo3GPPLocationStruct
             _latitude = 0;
             _altitude = 0;
             _langCode = 0;
+            Lang_code = NULL;
         }
 
         oscl_wchar* _location_name;
         oscl_wchar* _astronomical_body;
         oscl_wchar* _additional_notes;
+        OSCL_HeapString<OsclMemAllocator> Lang_code;
         uint8	_role;
 
         uint32	_longitude;//fixed-point 16.16 number indicating the longitude in degrees.
@@ -345,10 +350,10 @@ class PvmfAssetInfo3GPPLocationStruct
 // Capability mime strings
 #define INPUT_FORMATS_CAP_QUERY ".../input_formats;attr=cap"
 #define INPUT_FORMATS_CUR_QUERY ".../input_formats;attr=cur"
-#define INPUT_FORMATS_VALTYPE ".../input_formats;valtype=uint32"
+#define INPUT_FORMATS_VALTYPE ".../input_formats;valtype=char*"
 #define OUTPUT_FORMATS_CAP_QUERY ".../output_formats;attr=cap"
 #define OUTPUT_FORMATS_CUR_QUERY ".../output_formats;attr=cur"
-#define OUTPUT_FORMATS_VALTYPE ".../output_formats;valtype=uint32"
+#define OUTPUT_FORMATS_VALTYPE ".../output_formats;valtype=char*"
 
 #define VIDEO_INPUT_WIDTH_CAP_QUERY ".../input/width;attr=cap"
 #define VIDEO_INPUT_WIDTH_CAP_RANGE ".../input/width;valtype=range_uint32"
@@ -413,6 +418,15 @@ class PvmfAssetInfo3GPPLocationStruct
 #define TIMED_TEXT_OUTPUT_CONFIG_INFO_CUR_QUERY ".../output/timedtext;attr=cur"
 #define TIMED_TEXT_OUTPUT_CONFIG_INFO_CUR_VALUE ".../output/timedtext;valtype=key_specific_value"
 
+// key for format type for any type of media
+#define PVMF_FORMAT_TYPE_VALUE_KEY "x-pvmf/media/format-type;valtype=char*"
+
+// key for audio decoder format
+#define PVMF_AUDIO_DEC_FORMAT_TYPE_VALUE_KEY "x-pvmf/audio/decoder/format-type;valtype=char*"
+
+// key for video decoder format
+#define PVMF_VIDEO_DEC_FORMAT_TYPE_VALUE_KEY "x-pvmf/video/decoder/format-type;valtype=char*"
+
 // Keys for format specific info for any type of media
 #define PVMF_FORMAT_SPECIFIC_INFO_KEY "x-pvmf/media/format_specific_info;valtype=key_specific_value"
 
@@ -430,10 +444,11 @@ class PvmfAssetInfo3GPPLocationStruct
 // Key for signalling max number of outstanding media msgs
 #define PVMF_DATAPATH_PORT_MAX_NUM_MEDIA_MSGS_KEY "x-pvmf/datapath/port/max-num-media-msgs;valtype=uint32"
 
+
 // Keys for media output components -- Audio
 //
 //audio format strings as defined in pvmf_format_type.h
-#define MOUT_AUDIO_FORMAT_KEY "x-pvmf/audio/render/media_format;valtype=uint32"
+#define MOUT_AUDIO_FORMAT_KEY "x-pvmf/audio/render/media_format;valtype=char*"
 //audio sampling rate in Hz
 #define MOUT_AUDIO_SAMPLING_RATE_KEY "x-pvmf/audio/render/sampling_rate;valtype=uint32"
 //audio number of channels (1 for mono, 2 for stereo)
@@ -445,9 +460,9 @@ class PvmfAssetInfo3GPPLocationStruct
 // Keys for media output components -- Video
 //
 //video format strings as defined in pvmf_format_type.h
-#define MOUT_VIDEO_FORMAT_KEY "x-pvmf/video/render/media_format;valtype=uint32"
+#define MOUT_VIDEO_FORMAT_KEY "x-pvmf/video/render/media_format;valtype=char*"
 // video sub-format (e.g. YUV420-planar etc.)
-#define MOUT_VIDEO_SUBFORMAT_KEY "x-pvmf/video/render/media_subformat;valtype=uint32"
+#define MOUT_VIDEO_SUBFORMAT_KEY "x-pvmf/video/render/media_subformat;valtype=char*"
 
 //video dimensions in pixels
 #define MOUT_VIDEO_WIDTH_KEY "x-pvmf/video/render/width;valtype=uint32"
@@ -459,8 +474,9 @@ class PvmfAssetInfo3GPPLocationStruct
 #define MOUT_VIDEO_OUTPUT_HEIGHT_KEY "x-pvmf/video/render/output_height;valtype=uint32"
 #define MOUT_VIDEO_DISPLAY_ROTATION_KEY "x-pvmf/video/render/display_rotation;valtype=uint32"
 #define MOUT_VIDEO_DISPLAY_BITMAP_KEY "x-pvmf/video/render/display_bitmap;valtype=uint32"
-//AVC Encoder
-#define PVMF_AVC_ENCODER_ENCODINGMODE_KEY	"x-pvmf/avc/encoder/encoding_mode;valtype=uint32"
+//video vol header info
+#define MOUT_VIDEO_VOL_HEADER_KEY "x-pvmf/video/vol_header;valtype=uint8*"
+
 
 // Keys for media output components -- Text
 //
@@ -469,6 +485,31 @@ class PvmfAssetInfo3GPPLocationStruct
 
 // Key for media output rate
 #define MOUT_MEDIAXFER_OUTPUT_RATE "x-pvmf/mediaxfer/output/rate;type=rel;valtype=int32"
+
+
+// Keys for media input components -- Audio
+//
+//audio sampling rate in Hz
+#define MIN_AUDIO_SAMPLING_RATE_KEY "x-pvmf/encoder/audio/sampling_rate;valtype=uint32"
+//audio number of channels (1 for mono, 2 for stereo)
+#define MIN_AUDIO_NUM_CHANNELS_KEY "x-pvmf/encoder/audio/channels;valtype=uint32"
+
+// Keys for media input components -- Video
+//
+// Keys for media output components -- Text
+//
+#define TEXT_INPUT_WIDTH_CUR_QUERY ".../input/width;attr=cur"
+#define TEXT_INPUT_WIDTH_CUR_VALUE ".../input/width;valtype=uint32"
+#define TEXT_INPUT_HEIGHT_CUR_QUERY ".../input/height;attr=cur"
+#define TEXT_INPUT_HEIGHT_CUR_VALUE ".../input/height;valtype=uint32"
+
+//AVC Encoder
+#define PVMF_AVC_ENCODER_ENCODINGMODE_KEY	"x-pvmf/encoder/video/encoding_mode;valtype=uint32"
+
+#define INPUT_TIMESCALE_CUR_QUERY ".../input/timescale;attr=cur"
+#define INPUT_TIMESCALE_CUR_VALUE ".../input/timescale;valtype=uint32"
+
+
 
 #endif // PVMI_KVP_H_INCLUDED
 

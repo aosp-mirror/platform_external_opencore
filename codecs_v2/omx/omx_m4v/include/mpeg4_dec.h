@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,10 +30,6 @@
 #include "mp4dec_lib.h"
 #endif
 
-#ifndef _M4VIO_H_
-#include "m4v_io.h"
-#endif
-
 class Mpeg4Decoder_OMX
 {
     public:
@@ -48,9 +44,11 @@ class Mpeg4Decoder_OMX
         OMX_BOOL Mp4DecodeVideo(OMX_U8* aOutBuffer, OMX_U32* aOutputLength,
                                 OMX_U8** aInputBuf, OMX_U32* aInBufSize,
                                 OMX_PARAM_PORTDEFINITIONTYPE* aPortParam,
-                                OMX_S32* aIsFirstBuffer, OMX_BOOL aMarkerFlag, OMX_BOOL *aResizeFlag);
+                                OMX_S32* aFrameCount, OMX_BOOL aMarkerFlag, OMX_BOOL *aResizeFlag);
 
         OMX_ERRORTYPE Mp4DecDeinit();
+
+        OMX_S32 GetVideoHeader(int32 aLayer, uint8 *aBuf, int32 aMaxSize);
 
         OMX_S32 Mpeg4InitFlag;
 
@@ -59,7 +57,8 @@ class Mpeg4Decoder_OMX
         VideoDecControls VideoCtrl;
 
         OMX_U8* pFrame0, *pFrame1;
-
+        OMX_S32 iDisplay_Width, iDisplay_Height;
+        OMX_S32 iShortVideoHeader;
 
         OMX_U8 VO_START_CODE1[4];
         OMX_U8 VOSH_START_CODE1[4];

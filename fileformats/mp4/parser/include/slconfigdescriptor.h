@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,7 @@ class SLConfigDescriptor : public BaseDescriptor
         virtual ~SLConfigDescriptor();
 
         // ALL the member gets and sets
+
         bool getUseAccessUnitStartFlag() const
         {
             return _useAccessUnitStartFlag;
@@ -177,6 +178,7 @@ class SLConfigDescriptor : public BaseDescriptor
 
         uint64 _startDecodingTimeStamp; // (_timeStampLength)
         uint64 _startCompositionTimeStamp; // (_timeStampLength)
+
 
         // Combine into a single byte when rendering to a stream
         bool _OCRStreamFlag; // (1)

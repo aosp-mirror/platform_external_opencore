@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -264,7 +264,7 @@ OSCL_EXPORT_REF int pv_mime_strcmp(const char *mimestring1, const char *mimestri
         return RETVAL_NO_MATCH;
     }
     else
-    {    // must be len2 < len1
+    {	// must be len2 < len1
         // see comments on previous case for how to check for prefix condition
         if (mimestring1[i] == MIME_SUBTYPE_DELIMITER_CHAR)
         {
@@ -272,6 +272,7 @@ OSCL_EXPORT_REF int pv_mime_strcmp(const char *mimestring1, const char *mimestri
         }
         return RETVAL_NO_MATCH;
     }
+
 }
 
 

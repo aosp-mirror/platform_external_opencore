@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,6 @@ class PVAviFileParserUtils
         read16(PVFile* aFp, uint16& aBuff, bool aBigEndian = false);
 
         static int32 GetStreamNumber(uint32 aData);
-        bool IsYUVFormat(uint32 aFcc);
 
 
 };

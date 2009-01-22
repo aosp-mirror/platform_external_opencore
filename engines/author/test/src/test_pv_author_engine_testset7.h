@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,7 +70,11 @@ class pv_mediainput_async_test_reset: public pvauthor_async_test_base
             }
 
 
-            if (PVAE_CMD_OPEN == iCurrentResetState)
+            if (PVAE_CMD_CREATE == iCurrentResetState)
+            {
+                iNextResetState = PVAE_CMD_OPEN;
+            }
+            else if (PVAE_CMD_OPEN == iCurrentResetState)
             {
                 iNextResetState = PVAE_CMD_ADD_DATA_SOURCE;
             }

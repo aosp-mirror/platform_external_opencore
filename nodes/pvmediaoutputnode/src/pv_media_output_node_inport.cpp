@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,68 +43,14 @@
 #define PVMF_MOPORT_LOGERROR(x)	PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, x);
 
 
-////////////////////////////////////////////////////////////////////////////
-PVMediaOutputNodePortTimer::PVMediaOutputNodePortTimer(PVMediaOutputNodePortTimerObserver* aObserver)
-        : OsclTimerObject(OsclActiveObject::EPriorityNominal, "PVMediaOutputNodePortTimer"),
-        iDurationInMS(0),
-        iObserver(aObserver),
-        iStarted(false)
-{
-    AddToScheduler();
-}
-
-////////////////////////////////////////////////////////////////////////////
-PVMediaOutputNodePortTimer::~PVMediaOutputNodePortTimer()
-{
-    Stop();
-}
-
-////////////////////////////////////////////////////////////////////////////
-PVMFStatus PVMediaOutputNodePortTimer::Start()
-{
-    RunIfNotReady(iDurationInMS*1000);
-    iStarted = true;
-    return PVMFSuccess;
-}
-
-////////////////////////////////////////////////////////////////////////////
-PVMFStatus PVMediaOutputNodePortTimer::setTimerDurationInMS(uint32 duration)
-{
-    iDurationInMS = duration;
-    return PVMFSuccess;
-}
-
-////////////////////////////////////////////////////////////////////////////
-PVMFStatus PVMediaOutputNodePortTimer::Stop()
-{
-    Cancel();
-    iStarted = false;
-    return PVMFSuccess;
-}
-
-////////////////////////////////////////////////////////////////////////////
-void PVMediaOutputNodePortTimer::Run()
-{
-    if (!iStarted)
-        return;
-
-    if (!iObserver)
-    {
-        return;
-    }
-
-    iObserver->PVMediaOutputNodePortTimerEvent();
-    /*
-     * Do not reschudule the AO here. Observer would reschedule this AO
-     * once it is done processing the timer event.
-     */
-}
-
 //for logging media data info
 void PVMediaOutputNodePort::LogMediaDataInfo(const char* msg, PVMFSharedMediaDataPtr mediaData)
 {
     if (!mediaData.GetRep())
+    {
+        OSCL_UNUSED_ARG(msg);
         return;
+    }
     LOGDATAPATH(
         (0, "MOUT %s %s MediaData SeqNum %d, SId %d, TS %d"
          , PortName()
@@ -120,7 +66,12 @@ void PVMediaOutputNodePort::LogMediaDataInfo(const char* msg, PVMFSharedMediaDat
 void PVMediaOutputNodePort::LogMediaDataInfo(const char* msg, PVMFSharedMediaDataPtr mediaData, int32 cmdid, int32 qdepth)
 {
     if (!mediaData.GetRep())
+    {
+        OSCL_UNUSED_ARG(msg);
+        OSCL_UNUSED_ARG(cmdid);
+        OSCL_UNUSED_ARG(qdepth);
         return;
+    }
     LOGDATAPATH(
         (0, "MOUT %s %s, Write Id %d, MediaData SeqNum %d, SId %d, TS %d, Cleanup Q-depth %d"
          , PortName()
@@ -137,6 +88,12 @@ void PVMediaOutputNodePort::LogMediaDataInfo(const char* msg, PVMFSharedMediaDat
 //for logging media xfer info
 void PVMediaOutputNodePort::LogDatapath(const char*msg)
 {
+
+    if (!iDatapathLogger)
+    {
+        OSCL_UNUSED_ARG(msg);
+        return; //unexpected call.
+    }
     LOGDATAPATH(
         (0, "MOUT %s %s"
          , PortName()
@@ -157,34 +114,41 @@ PVMediaOutputNodePort::PVMediaOutputNodePort(PVMediaOutputNode* aNode)
         , iNode(aNode)
 {
     AddToScheduler();
-
-    iWaitForConfig = true;
     isUnCompressedMIO = false;
 
     iExtensionRefCount = 0;
-    iPortFormat = PVMF_FORMAT_UNKNOWN;
+    iPortFormat = PVMF_MIME_FORMAT_UNKNOWN;
 
     iMediaTransfer = NULL;
     iMioInfoErrorCmdId = 0;
-    iMediaTypeIndex = PVMF_FORMAT_UNKNOWN;
+    iMediaType = PVMF_MEDIA_UNKNOWN;
     iWriteState = EWriteOK;
     iCleanupQueue.reserve(1);
     iWriteAsyncContext = 0;
     iWriteAsyncEOSContext = 0;
     iWriteAsyncReConfigContext = 0;
     iClock = NULL;
+    iClockNotificationsInf = NULL;
+    oClockCallBackPending = false;
+    iDelayEarlyFrameCallBkId = 0;
     iClockRate = 1;
     iEarlyMargin = 0;
     iLateMargin = 0;
-    iDelayTimer = NULL;
-    // By default we treat the MIO's to be active. For active MIO's MIO node will not
-    // wait for clock to start before it sends out the data to MIO comp. For passive MIO's
-    // oActiveMediaOutputComp and oProcessIncomingMessage will be set to false in EnableMediaSync.
-    // MIO node will wait for clock to start before sending data to passive MIO's.
-    oActiveMediaOutputComp = true;
-    oProcessIncomingMessage = true;
+    oActiveMediaOutputComp = true; // By default we treat the MIO's to be active.
+
+    // MIO node waits for MIO component configuration to complete before sending data. Once configuration is
+    // complete, MIO node waits for clock to start if mio component is passive. For active MIO's, it does not
+    // wait for clock to start before sending data. It sends data as soon as MIO component configuration is
+    // complete.
+
+    oProcessIncomingMessage = false;
+
+
+    oMIOComponentConfigured = false;
+
     iConsecutiveFramesDropped = 0;
     iLateFrameEventSent = false;
+
     iFragIndex = 0;
 
     iSkipTimestamp = 0;
@@ -194,7 +158,10 @@ PVMediaOutputNodePort::PVMediaOutputNodePort(PVMediaOutputNode* aNode)
     iFrameStepMode = false;
     iClockFrameCount = 0;
     iSyncFrameCount = 0;
-    iEOSStreamId  = 0;
+    iFramesDropped = 0;
+    iTotalFrames = 0;
+
+    iEosStreamIDVec.reserve(2);
 
     iOsclErrorTrapImp = OsclErrorTrap::GetErrorTrapImp();
     iLogger = PVLogger::GetLoggerObject("PVMediaOutputNodePort");
@@ -233,17 +200,15 @@ PVMediaOutputNodePort::~PVMediaOutputNodePort()
         OSCL_TRY(err, iMediaTransfer->cancelAllCommands(););
         ClearCleanupQueue();
     }
-    if (iDelayTimer != NULL)
-    {
-        iDelayTimer->Stop();
-        OSCL_DELETE(iDelayTimer);
-        iDelayTimer = NULL;
-    }
     if (iClock != NULL)
     {
-        iClock->RemoveClockObserver(*this);
-        iClock->RemoveClockStateObserver(*this);
-        iClock = NULL;
+        if (iClockNotificationsInf != NULL)
+        {
+            iClockNotificationsInf->RemoveClockObserver(*this);
+            iClockNotificationsInf->RemoveClockStateObserver(*this);
+            iClock->DestroyMediaClockNotificationsInterface(iClockNotificationsInf);
+            iClockNotificationsInf = NULL;
+        }
     }
 }
 
@@ -256,30 +221,7 @@ PVMFStatus PVMediaOutputNodePort::Configure(OSCL_String& fmtstr)
         // Must disconnect before changing port properties, so return error
         return PVMFFailure;
     }
-    PVMFFormatType fmt = GetFormatIndex(fmtstr.get_str());
-    //set port name for datapath logging.
-    int32 mediaindex = GetMediaTypeIndex(fmt);
-
-    if (mediaindex == PVMF_COMPRESSED_AUDIO_FORMAT ||
-            mediaindex == PVMF_UNCOMPRESSED_AUDIO_FORMAT)
-    {
-        SetName("MediaOutIn(Audio)");
-    }
-    else if (mediaindex == PVMF_COMPRESSED_VIDEO_FORMAT ||
-             mediaindex == PVMF_UNCOMPRESSED_VIDEO_FORMAT)
-    {
-        SetName("MediaOutIn(Video)");
-    }
-    else
-    {
-        SetName("MediaOutIn");
-    }
-
-    if ((mediaindex == PVMF_UNCOMPRESSED_AUDIO_FORMAT) ||
-            (mediaindex == PVMF_UNCOMPRESSED_VIDEO_FORMAT))
-    {
-        isUnCompressedMIO = true;
-    }
+    PVMFFormatType fmt = fmtstr.get_cstr();
 
     if (IsFormatSupported(fmt))
     {
@@ -291,8 +233,8 @@ PVMFStatus PVMediaOutputNodePort::Configure(OSCL_String& fmtstr)
     }
     else
     {
-        iPortFormat = PVMF_FORMAT_UNKNOWN;
-        iSinkFormat = PVMF_FORMAT_UNKNOWN;
+        iPortFormat = PVMF_MIME_FORMAT_UNKNOWN;
+        iSinkFormat = PVMF_MIME_FORMAT_UNKNOWN;
         iSinkFormatString = fmtstr;
         return PVMFFailure;
     }
@@ -323,9 +265,10 @@ OSCL_EXPORT_REF PVMFStatus PVMediaOutputNodePort::Connect(PVMFPortInterface* aPo
 
     iSkipTimestamp = 0;
 
-    PvmiCapabilityAndConfig *config;
-    aPort->QueryInterface(PVMI_CAPABILITY_AND_CONFIG_PVUUID,
-                          (OsclAny*&)config);
+    OsclAny* temp = NULL;
+    aPort->QueryInterface(PVMI_CAPABILITY_AND_CONFIG_PVUUID, temp);
+    PvmiCapabilityAndConfig *config = OSCL_STATIC_CAST(PvmiCapabilityAndConfig*, temp);
+
     if (config != NULL)
     {
         PvmiKvp* configKvp = NULL;
@@ -394,8 +337,13 @@ void PVMediaOutputNodePort::CleanupMediaTransfer()
     }
     if (iClock != NULL)
     {
-        iClock->RemoveClockObserver(*this);
-        iClock->RemoveClockStateObserver(*this);
+        if (iClockNotificationsInf != NULL)
+        {
+            iClockNotificationsInf->RemoveClockObserver(*this);
+            iClockNotificationsInf->RemoveClockStateObserver(*this);
+            iClock->DestroyMediaClockNotificationsInterface(iClockNotificationsInf);
+        }
+        iClockNotificationsInf = NULL;
         iClock = NULL;
     }
     if (iCurrentMediaMsg.GetRep() != NULL)
@@ -430,7 +378,9 @@ OSCL_EXPORT_REF PVMFStatus PVMediaOutputNodePort::PeerDisconnect()
 OSCL_EXPORT_REF PVMFStatus PVMediaOutputNodePort::ClearMsgQueues()
 {
     if (iCurrentMediaMsg.GetRep() != NULL)
+    {
         iCurrentMediaMsg.Unbind();
+    }
 
     PvmfPortBaseImpl::ClearMsgQueues();
     //cancel any pending write operations
@@ -485,20 +435,98 @@ bool PVMediaOutputNodePort::queryInterface(const PVUuid& uuid, PVInterface*& ifa
 ////////////////////////////////////////////////////////////////////////////
 void PVMediaOutputNodePort::NodeStarted()
 {
+    //it is possible that we attempted to call writeasync
+    //before media output comp start (can happen for active components)
+    //in those cases the comp can either accept or reject data
+    //if it rejected it by doing a leave, attempt to send data again
+    //now that we are done with start. Do not do the same for passive
+    //comps since this method is called during a pause-resume, and we
+    //do not want to attempt sending media data to passive comps till
+    //clock has been started
+    if ((iWriteState == EWriteWait) &&
+            (true == oActiveMediaOutputComp))
+    {
+        iWriteState = EWriteOK;
+        PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::NodeStarted - WriteAsync Enabled - Fmt=%s, iWriteState=%d",
+                                 iSinkFormatString.get_str(),
+                                 iWriteState));
+        oProcessIncomingMessage = true;
+
+        if (iCurrentMediaMsg.GetRep() != NULL)
+        {
+            //attempt to send data current media msg if any
+            SendData();
+        }
+    }
+
     RunIfNotReady();
 }
 
+// Attempt to process incoming message only after the mio component is fully configured
+// and the clock is set by the node.
+void PVMediaOutputNodePort::ProcessIncomingMessageIfPossible()
+{
+    if (oMIOComponentConfigured && iClock)
+    {
+        PVMF_MOPORT_LOGDATAPATH(
+            (0, "PVMediaOutputNodePort::ProcessIncomingMessageIfPossible: Fmt - Fmt=%s, MIOCompConfigured=%d, ActiveMIO=%d, ClockState=%d",
+             iSinkFormatString.get_str(), oMIOComponentConfigured, oActiveMediaOutputComp, iClock->GetState()));
+
+        PVMF_MOPORT_LOGDEBUG(
+            (0, "PVMediaOutputNodePort::ProcessIncomingMessageIfPossible: Fmt - Fmt=%s, MIOCompConfigured=%d, ActiveMIO=%d, ClockState=%d",
+             iSinkFormatString.get_str(), oMIOComponentConfigured, oActiveMediaOutputComp, iClock->GetState()));
+
+        if (true == oActiveMediaOutputComp)
+        {
+            oProcessIncomingMessage = true;
+        }
+        else
+        {
+            if (iClock->GetState() == PVMFMediaClock::RUNNING)
+            {
+                oProcessIncomingMessage = true;
+            }
+        }
+        RunIfNotReady();
+    }
+    else
+    {
+        PVMF_MOPORT_LOGDEBUG(
+            (0, "PVMediaOutputNodePort::ProcessIncomingMessageIfPossible: Fmt - Fmt=%s, MIOCompConfigured=%d, iClock=0x%x",
+             iSinkFormatString.get_str(), oMIOComponentConfigured, iClock));
+    }
+}
+
+void PVMediaOutputNodePort::SetMIOComponentConfigStatus(bool aStatus)
+{
+    oMIOComponentConfigured = aStatus;
+
+    ProcessIncomingMessageIfPossible();
+}
+
+
 ////////////////////////////////////////////////////////////////////////////
 //for sync control interface
-PVMFStatus PVMediaOutputNodePort::SetClock(OsclClock* aClock)
+PVMFStatus PVMediaOutputNodePort::SetClock(PVMFMediaClock* aClock)
 {
-    if (aClock == NULL)
+    if (NULL == aClock)
     {
         return PVMFErrArgument;
     }
     iClock = aClock;
-    iClock->SetClockObserver(*this);
-    iClock->SetClockStateObserver(*this);
+
+    ProcessIncomingMessageIfPossible();
+
+    iClock->ConstructMediaClockNotificationsInterface(iClockNotificationsInf, *this);
+
+    if (NULL == iClockNotificationsInf)
+    {
+        return PVMFErrNoMemory;
+    }
+
+    iClockNotificationsInf->SetClockObserver(*this);
+    iClockNotificationsInf->SetClockStateObserver(*this);
+
     return PVMFSuccess;
 }
 
@@ -507,22 +535,21 @@ void PVMediaOutputNodePort::EnableMediaSync()
     //wait on play clock
     oProcessIncomingMessage = false;
     oActiveMediaOutputComp = false;
-    if (iDelayTimer != NULL)
-    {
-        OSCL_DELETE(iDelayTimer);
-        iDelayTimer = NULL;
-    }
-    iDelayTimer = OSCL_NEW(PVMediaOutputNodePortTimer, (this));
 }
 
 ////////////////////////////////////////////////////////////////////////////
 //for sync control interface
 PVMFStatus PVMediaOutputNodePort::ChangeClockRate(int32 aRate)
 {
+    if (0 == aRate)
+    {
+        // A 0 value of clockrate is not handled
+        return PVMFFailure;
+    }
     iClockRate = aRate;
 
     PVMFStatus status;
-    status = SetMIOParameterInt32(MOUT_MEDIAXFER_OUTPUT_RATE, aRate);
+    status = SetMIOParameterInt32((char*)MOUT_MEDIAXFER_OUTPUT_RATE, aRate);
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,
                     "PVMediaOutputNodePort::ChangeClockRate rate %d",
@@ -678,13 +705,6 @@ void PVMediaOutputNodePort::writeComplete(PVMFStatus status, PVMFCommandId aCmdI
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_INFO,
                     (0, "PVMediaOutputNodePort::writeComplete status %d cmdId %d context 0x%x", status, aCmdId, aContext));
 
-    //we don't expect any error status to be returned here
-    //except possibly cancelled
-    if (status != PVMFSuccess && status != PVMFErrCancelled)
-    {
-        iNode->ReportErrorEvent(PVMFErrPortProcessing, NULL, PVMFMoutNodeErr_WriteComplete);
-    }
-
     // Check if the writeComplete is in response to EOS message
     if (&iWriteAsyncEOSContext == (uint32*)aContext)
     {
@@ -696,21 +716,40 @@ void PVMediaOutputNodePort::writeComplete(PVMFStatus status, PVMFCommandId aCmdI
         }
         else
         {
-            // Asynchronous completion
-            if (status == PVMFSuccess && iNode->IsMioRequestPending() == false)
+            // Report End of Data to the user of media output node
+            // only if the EOS media transfer completes successfully and
+            // there is no pending MIO control request
+            PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::writeComplete For EOS - Fmt=%s",
+                                     iSinkFormatString.get_str()));
+            if (iEosStreamIDVec.size() != 0)
             {
-                // Report End of Data to the user of media output node
-                // only if the EOS media transfer completes successfully and
-                // there is no pending MIO control request
-                PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::writeComplete For EOS - Fmt=%s",
-                                         iSinkFormatString.get_str()));
-                uint32 iStreamID = iEOSStreamId;
-                iNode->ReportInfoEvent(PVMFInfoEndOfData, (OsclAny*)&iStreamID);
+                //iEosStreamIDVec is used as a FIFO to store the steamids of eos sent to mio comp.
+                //streamid is pushed in at front when call writeasync(eos) to mio comp.
+                //streamid is poped out from end when mio comp. calls writecomplete(eos),
+                //we report PVMFInfoEndOfData with the poped streamid.
+                //This logic depends on Mio comp. process data(at least eos msg) in a sequencial style.
+                uint32 EosStreamID = iEosStreamIDVec.back();
+
+                // Asynchronous completion
+                if (status == PVMFSuccess)
+                {
+                    // Report EndofData to engine only if MIO comp sends success for End Of Stream.
+                    // FOr other return codes just pop out the EOS from the vector.
+                    iNode->ReportInfoEvent(PVMFInfoEndOfData, (OsclAny*)&EosStreamID);
+                }
+                else
+                {
+                    PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::writeComplete EOS media transfer completed but PVMFInfoEndOfData not sent"));
+                }
+
+                iEosStreamIDVec.pop_back();
             }
             else
             {
-                PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::writeComplete EOS media transfer completed but PVMFInfoEndOfData not sent"));
+                PVMF_MOPORT_LOGERROR((0, "PVMediaOutputNodePort::writeComplete - Invalid iEosStreamIDVec size=0"));
+                OSCL_ASSERT(false);
             }
+
         }
     }
     // Check if the writeComplete is in response to Reconfig message
@@ -729,7 +768,7 @@ void PVMediaOutputNodePort::writeComplete(PVMFStatus status, PVMFCommandId aCmdI
         }
     }
     //detect cases where the current SendData call is completing synchronously.
-    else if (iWriteState == EWriteBusy && (uint32)aContext == iWriteAsyncContext)
+    else if (iWriteState == EWriteBusy)
     {
         //synchronous completion
         iWriteState = EWriteOK;
@@ -806,23 +845,29 @@ void PVMediaOutputNodePort::statusUpdate(uint32 status_flags)
     if (status_flags & PVMI_MEDIAXFER_STATUS_WRITE)
     {
         //recover from a previous async write error.
-        if (iWriteState == EWriteWait && (iClock->GetState() != OsclClock::STOPPED))
+        if (iWriteState == EWriteWait)
         {
-            iWriteState = EWriteOK;
             PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::statusUpdate - WriteAsync Enabled - Fmt=%s, iWriteState=%d",
                                      iSinkFormatString.get_str(),
                                      iWriteState));
-            oProcessIncomingMessage = true;
-            if (iCurrentMediaMsg.GetRep() != NULL)
+            iWriteState = EWriteOK;
+
+            // Allow data to be processed if possible
+            ProcessIncomingMessageIfPossible();
+
+            if (oProcessIncomingMessage == true)
             {
-                //attempt to send data current media msg if any
-                SendData();
-            }
-            //reschedule if there is more stuff waiting and
-            //if we can process more data
-            if (IncomingMsgQueueSize() > 0)
-            {
-                RunIfNotReady();
+                if (iCurrentMediaMsg.GetRep() != NULL)
+                {
+                    //attempt to send data current media msg if any
+                    SendData();
+                }
+                //reschedule if there is more stuff waiting and
+                //if we can process more data
+                if (IncomingMsgQueueSize() > 0)
+                {
+                    RunIfNotReady();
+                }
             }
         }
     }
@@ -859,42 +904,21 @@ void PVMediaOutputNodePort::cancelAllCommands()
 bool PVMediaOutputNodePort::IsFormatSupported(PVMFFormatType aFmt)
 // for PvmiCapabilityAndConfigPortFormatImpl interface
 {
-    //Try to get supported formats from the media I/O component.
-    PvmiKvp* kvp = NULL;
-    int numParams = 0;
-    PVMFStatus status = iNode->iMIOConfig->getParametersSync(NULL, INPUT_FORMATS_CAP_QUERY, kvp, numParams, NULL);
-    if (status == PVMFSuccess)
+    //Verify if the format is supported by the media I/O component.
+    PvmiKvp kvpFormatType;
+
+    OSCL_StackString<64> iKVPFormatType = _STRLIT_CHAR(PVMF_FORMAT_TYPE_VALUE_KEY);
+
+    kvpFormatType.key = NULL;
+    kvpFormatType.key = iKVPFormatType.get_str();
+    kvpFormatType.value.pChar_value = (char*)aFmt.getMIMEStrPtr();
+
+    PVMFStatus status = iNode->iMIOConfig->verifyParametersSync(NULL, &kvpFormatType, 1);
+    if (status != PVMFSuccess)
     {
-        bool found = false;
-        for (int32 i = 0;i < numParams;i++)
-        {
-            if (aFmt == kvp[i].value.uint32_value)
-            {
-                found = true;
-                break;
-            }
-        }
-        iNode->iMIOConfig->releaseParameters(0, kvp, numParams);
-        return found;
+        return false;
     }
-    else
-    {
-        //if media I/O did not report its formats, then assume all formats
-        //are OK.  do this since some MIO may not have the query support.
-        //at least verify it's an audio or video format...
-        int32 mt = GetMediaTypeIndex(aFmt);
-        switch (mt)
-        {
-            case PVMF_COMPRESSED_AUDIO_FORMAT:
-            case PVMF_COMPRESSED_VIDEO_FORMAT:
-            case PVMF_UNCOMPRESSED_AUDIO_FORMAT:
-            case PVMF_UNCOMPRESSED_VIDEO_FORMAT:
-            case PVMF_TEXT_FORMAT:
-                return true;
-            default:
-                return false;
-        }
-    }
+    return true;
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -903,43 +927,57 @@ void PVMediaOutputNodePort::FormatUpdated()
 {
     //called when format was just set, either through capability and config,
     //for by node during port request.
-    //save the media type index.
-    iMediaTypeIndex = GetMediaTypeIndex(iSinkFormat);
-
-    switch (iMediaTypeIndex)
+    if (iSinkFormat.isAudio())
     {
-        case PVMF_COMPRESSED_AUDIO_FORMAT:
-            //pass the selected format to the MIO component.
-            //ignore any failure since not all MIO may support the feature.
-            SetMIOParameterPchar(MOUT_AUDIO_FORMAT_KEY, iSinkFormatString.get_str());
-            break;
+        //set port name for datapath logging.
+        SetName("MediaOutIn(Audio)");
 
-        case PVMF_COMPRESSED_VIDEO_FORMAT:
-            //pass the selected format to the MIO component.
-            //ignore any failure since not all MIO may support the feature.
-            SetMIOParameterPchar(MOUT_VIDEO_FORMAT_KEY, iSinkFormatString.get_str());
-            break;
+        //pass the selected format to the MIO component.
+        //ignore any failure since not all MIO may support the feature.
+        SetMIOParameterPchar((char*)MOUT_AUDIO_FORMAT_KEY, iSinkFormatString.get_str());
 
-        case PVMF_UNCOMPRESSED_AUDIO_FORMAT:
-            //pass the selected format to the MIO component.
-            //ignore any failure since not all MIO may support the feature.
-            SetMIOParameterPchar(MOUT_AUDIO_FORMAT_KEY, iSinkFormatString.get_str());
-            break;
+        //save the media type.
+        if (iSinkFormat.isCompressed())
+        {
+            iMediaType = PVMF_MEDIA_COMPRESSED_AUDIO;
+        }
+        else
+        {
+            iMediaType = PVMF_MEDIA_UNCOMPRESSED_AUDIO;
+            isUnCompressedMIO = true;
+        }
+    }
+    else if (iSinkFormat.isVideo())
+    {
+        //set port name for datapath logging.
+        SetName("MediaOutIn(Video)");
 
-        case PVMF_UNCOMPRESSED_VIDEO_FORMAT:
-            //pass the selected format to the MIO component.
-            //ignore any failure since not all MIO may support the feature.
-            SetMIOParameterPchar(MOUT_VIDEO_FORMAT_KEY, iSinkFormatString.get_str());
-            break;
+        //pass the selected format to the MIO component.
+        //ignore any failure since not all MIO may support the feature.
+        SetMIOParameterPchar((char*)MOUT_VIDEO_FORMAT_KEY, iSinkFormatString.get_str());
 
-        case PVMF_TEXT_FORMAT:
-            //pass the selected format to the MIO component.
-            //ignore any failure since not all MIO may support the feature.
-            SetMIOParameterPchar(MOUT_TEXT_FORMAT_KEY, iSinkFormatString.get_str());
-            break;
+        //save the media type.
+        if (iSinkFormat.isCompressed())
+        {
+            iMediaType = PVMF_MEDIA_COMPRESSED_VIDEO;
+        }
+        else
+        {
+            iMediaType = PVMF_MEDIA_UNCOMPRESSED_VIDEO;
+            isUnCompressedMIO = true;
+        }
+    }
+    else if (iSinkFormat.isText())
+    {
+        //set port name for datapath logging.
+        SetName("MediaOutIn");
 
-        default:
-            break;
+        //pass the selected format to the MIO component.
+        //ignore any failure since not all MIO may support the feature.
+        SetMIOParameterPchar((char*)MOUT_TEXT_FORMAT_KEY, iSinkFormatString.get_str());
+
+        //save the media type.
+        iMediaType = PVMF_MEDIA_TEXT;
     }
 }
 
@@ -947,9 +985,75 @@ void PVMediaOutputNodePort::FormatUpdated()
 void PVMediaOutputNodePort::SendData()
 //send data to the MIO componenent.
 {
+    const int32 toleranceWndForCallback = 0;
     if (iCurrentMediaMsg->getFormatID() == PVMF_MEDIA_CMD_EOS_FORMAT_ID)
     {
-        SendEndOfData();
+        if (oActiveMediaOutputComp)
+        {
+            SendEndOfData();
+        }
+        else if (iFrameStepMode == false)
+        {
+            uint32 delta = 0;
+            PVMFMediaOutputNodePortMediaTimeStatus status = CheckMediaTimeStamp(delta);
+            if (status == PVMF_MEDIAOUTPUTNODEPORT_MEDIA_ON_TIME || status == PVMF_MEDIAOUTPUTNODEPORT_MEDIA_LATE)
+            {
+                SendEndOfData();
+            }
+            else if (status == PVMF_MEDIAOUTPUTNODEPORT_MEDIA_EARLY)
+            {
+
+                OSCL_ASSERT(false == oClockCallBackPending);
+                //stop processing input, since we are not done with the current media msg
+                oProcessIncomingMessage = false;
+                oClockCallBackPending = false;
+
+                if (NULL != iClockNotificationsInf)
+                {
+                    PVMFStatus status =
+                        iClockNotificationsInf->SetCallbackDeltaTime(delta, //delta time in clock when callBack should be called
+                                toleranceWndForCallback,
+                                this, //observer object to be called on timeout
+                                false, //no threadLock
+                                NULL, //no context
+                                iDelayEarlyFrameCallBkId); //ID used to identify the timer for cancellation
+                    if (PVMFSuccess != status)
+                    {
+                        //If delta specified for the callback is too large, then callback to the Mediaclock notification interface does not succeed
+                        //Possible reasons for huge difference between the playback clock and the timestamp could be
+                        //Sample is intended to be played after a very long time from now (as indicated by the data source(streaming server/file)).
+                        //Timestamp is corrupted in the source node.
+                        PVMF_MOPORT_LOGERROR((0, "PVMediaOutputNodePort::SendData - Could not set callback notification for send data %d delta %u", status, delta));
+                        iNode->ReportErrorEvent(PVMFErrCorrupt, NULL, PVMFMoutNodeErr_Unexpected);
+                        return;
+                    }
+                    else
+                    {
+                        oClockCallBackPending = true;
+                    }
+                }
+                else
+                {
+                    PVMF_MOPORT_LOGERROR((0, "PVMediaOutputNodePort::SendData - Fmt=%s, No callback notification Intf ",
+                                          iSinkFormatString.get_str()));
+                    OSCL_ASSERT(false);
+                }
+            }
+        }
+        else if (iFrameStepMode == true)
+        {
+            PVMFMediaOutputNodePortMediaTimeStatus status = CheckMediaFrameStep();
+            if (status == PVMF_MEDIAOUTPUTNODEPORT_MEDIA_ON_TIME || status == PVMF_MEDIAOUTPUTNODEPORT_MEDIA_LATE)
+            {
+                SendEndOfData();
+            }
+            else if (status == PVMF_MEDIAOUTPUTNODEPORT_MEDIA_EARLY)
+            {
+                //stop processing input, since we are not done with the current media msg
+                oProcessIncomingMessage = false;
+                //wait on ClockCountUpdated call back from oscl clock
+            }
+        }
     }
     else if (iCurrentMediaMsg->getFormatID() == PVMF_MEDIA_CMD_RE_CONFIG_FORMAT_ID)
     {
@@ -976,16 +1080,35 @@ void PVMediaOutputNodePort::SendData()
             }
             else if (status == PVMF_MEDIAOUTPUTNODEPORT_MEDIA_EARLY)
             {
+
+                OSCL_ASSERT(false == oClockCallBackPending);
                 //stop processing input, since we are not done with the current media msg
                 oProcessIncomingMessage = false;
-                if (iDelayTimer != NULL)
+                oClockCallBackPending = false;
+
+                if (NULL != iClockNotificationsInf)
                 {
-                    iDelayTimer->setTimerDurationInMS(delta);
-                    iDelayTimer->Start();
+                    PVMFStatus status =
+                        iClockNotificationsInf->SetCallbackDeltaTime(delta, //delta time in clock when callBack should be called
+                                toleranceWndForCallback,
+                                this, //observer object to be called on timeout
+                                false, //no threadLock
+                                NULL, //no context
+                                iDelayEarlyFrameCallBkId); //ID used to identify the timer for cancellation
+                    if (PVMFSuccess != status)
+                    {
+                        PVMF_MOPORT_LOGERROR((0, "PVMediaOutputNodePort::SendData - Could not set callback notification for early frame %d delta %u", status, delta));
+                        iNode->ReportErrorEvent(PVMFErrCorrupt, NULL, PVMFMoutNodeErr_Unexpected);
+                        return;
+                    }
+                    else
+                    {
+                        oClockCallBackPending = true;
+                    }
                 }
                 else
                 {
-                    PVMF_MOPORT_LOGERROR((0, "PVMediaOutputNodePort::SendData - Fmt=%s, No Delay Timer",
+                    PVMF_MOPORT_LOGERROR((0, "PVMediaOutputNodePort::SendData - Fmt=%s, No callback notification Intf ",
                                           iSinkFormatString.get_str()));
                     OSCL_ASSERT(false);
                 }
@@ -1059,9 +1182,8 @@ void PVMediaOutputNodePort::SendMediaData()
         OsclRefCounterMemFrag frag;
         mediaData->getMediaFragment(fragindex, frag);
 
-        ++iWriteAsyncContext;
         iWriteState = EWriteBusy;
-        int32 err;
+        int32 err = OsclErrNone;
         int32 cmdId = 0;
 
         uint32 flags = PVMI_MEDIAXFER_MEDIA_DATA_FLAG_NONE;
@@ -1084,21 +1206,18 @@ void PVMediaOutputNodePort::SendMediaData()
         mediaxferhdr.stream_id = mediaData->getStreamID();
         mediaxferhdr.private_data_length = privatedatalength;
         mediaxferhdr.private_data_ptr = privatedataptr;
-        OSCL_TRY_NO_TLS(iOsclErrorTrapImp, err,
-                        cmdId = iMediaTransfer->writeAsync(PVMI_MEDIAXFER_FMT_TYPE_DATA,  /*format_type*/
-                                                           PVMI_MEDIAXFER_FMT_INDEX_DATA, /*format_index*/
-                                                           (uint8*)frag.getMemFragPtr(),
-                                                           frag.getMemFragSize(),
-                                                           mediaxferhdr,
-                                                           (OsclAny*)iWriteAsyncContext);
-                       );
+        err = WriteDataToMIO(cmdId, mediaxferhdr, frag);
 
         if (err != OsclErrNone)
         {
-            //if a leave occurs in the writeAsync call, we suspend data
-            //transfer until a statusUpdate call from the MIO component
-            //tells us to resume.
-            //this is not an error-- it's the normal flow control mechanism.
+            // A Busy or an InvalidState leave can occur in a writeAsync call. If a leave occurs in writeasync call,
+            // suspend data transfer.
+            // A Busy leave is not an error and is a normal flow control mechanism.
+            // Some MIO components can do a InvalidState leave if writeasyncs are called before calling Start on MIOs.
+            // Data transfer to MIOs will resume when
+            // 1) In case of Busy Leave: A statusUpdate call from the MIO component tells us to resume.
+            // 2) In case of InvalidState Leave: A statusUpdate call from the MIO component tells us to resume. OR
+            //                                   MIO sends the command complete for Start.
             iWriteState = EWriteWait;
 
             //stop processing input, since we are not done with the current media msg
@@ -1108,7 +1227,7 @@ void PVMediaOutputNodePort::SendMediaData()
                                      iSinkFormatString.get_str(),
                                      err));
 
-            return ;//wait on statusUpdate call from the MIO component.
+            return ;//wait on statusUpdate call or start complete from the MIO component.
         }
         else
         {
@@ -1178,7 +1297,14 @@ void PVMediaOutputNodePort::SendEndOfData()
     mediaxferhdr.duration = 0;
     mediaxferhdr.flags = PVMI_MEDIAXFER_MEDIA_DATA_FLAG_NONE;
     mediaxferhdr.stream_id = iCurrentMediaMsg->getStreamID();
-    iEOSStreamId = mediaxferhdr.stream_id;
+    uint32 EosStreamId = mediaxferhdr.stream_id;
+
+    //iEosStreamIDVec is used as a FIFO to store the steamids of eos sent to mio comp.
+    //streamid is pushed in at front when call writeasync(eos) to mio comp.
+    //streamid is poped out from end when mio comp. calls writecomplete(eos),
+    //we report PVMFInfoEndOfData with the poped streamid.
+    //This logic depends on Mio comp. process data(at least eos msg) in a sequencial style.
+    iEosStreamIDVec.push_front(EosStreamId);
     OSCL_TRY(err,
              cmdId = iMediaTransfer->writeAsync(PVMI_MEDIAXFER_FMT_TYPE_NOTIFICATION,  /*format_type*/
                                                 PVMI_MEDIAXFER_FMT_INDEX_END_OF_STREAM, /*format_index*/
@@ -1190,20 +1316,35 @@ void PVMediaOutputNodePort::SendEndOfData()
 
     if (err != OsclErrNone)
     {
-        //if a leave occurs in the writeAsync call, we suspend data
-        //transfer until a statusUpdate call from the MIO component
-        //tells us to resume.
-        //this is not an error-- it's the normal flow control mechanism.
+        // A Busy or an InvalidState leave can occur in a writeAsync call. If a leave occurs in writeasync call,
+        // suspend data transfer.
+        // A Busy leave is not an error and is a normal flow control mechanism.
+        // Some MIO components can do a InvalidState leave if writeasyncs are called before calling Start on MIOs.
+        // Data transfer to MIOs will resume when
+        // 1) In case of Busy Leave: A statusUpdate call from the MIO component tells us to resume.
+        // 2) In case of InvalidState Leave: A statusUpdate call from the MIO component tells us to resume. OR
+        //                                   MIO sends the command complete for Start.
         iWriteState = EWriteWait;
 
         //stop processing input, since we are not done with the current media msg
         oProcessIncomingMessage = false;
 
+        // StreamID popped from vector when leave occurs in the writeAsync call
+        if (iEosStreamIDVec.size() != 0)
+        {
+            iEosStreamIDVec.erase(iEosStreamIDVec.begin());
+        }
+        else
+        {
+            PVMF_MOPORT_LOGERROR((0, "PVMediaOutputNodePort::SendEndOfData - Invalid iEosStreamIDVec size=0"));
+            OSCL_ASSERT(false);
+        }
+
         PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::SendEndOfData - WriteAsyncLeave - Fmt=%s, LeaveCode=%d",
                                  iSinkFormatString.get_str(),
                                  err));
 
-        return ;//wait on statusUpdate call from the MIO component
+        return ;//wait on statusUpdate call or start complete from the MIO component.
     }
     else
     {
@@ -1231,8 +1372,22 @@ void PVMediaOutputNodePort::SendEndOfData()
                                      iCleanupQueue.size()));
 
             // Report End of Data to the user of media output node
-            uint32 iStreamID = iEOSStreamId;
-            iNode->ReportInfoEvent(PVMFInfoEndOfData, (OsclAny*)&iStreamID);
+            if (iEosStreamIDVec.size() != 0)
+            {
+                //iEosStreamIDVec is used as a FIFO to store the steamids of eos sent to mio comp.
+                //streamid is pushed in at front when call writeasync(eos) to mio comp.
+                //streamid is poped out from end when mio comp. calls writecomplete(eos),
+                //we report PVMFInfoEndOfData with the poped streamid.
+                //This logic depends on Mio comp. process data(at least eos msg) in a sequencial style.
+                uint32 EosStreamID = iEosStreamIDVec.back();
+                iNode->ReportInfoEvent(PVMFInfoEndOfData, (OsclAny*)&EosStreamID);
+                iEosStreamIDVec.pop_back();
+            }
+            else
+            {
+                PVMF_MOPORT_LOGERROR((0, "PVMediaOutputNodePort::SendEndOfData - Invalid iEosStreamIDVec size=0"));
+                OSCL_ASSERT(false);
+            }
         }
         //we are done with current media msg - either we are truly done (sync write complete) or we are
         //waiting on async write complete. there is no need to push this msg into cleanup queue since it
@@ -1323,9 +1478,11 @@ PVMediaOutputNodePort::CheckMediaTimeStamp(uint32& aDelta)
     //aTimeStamp is assumed to be in milliseconds
     if (iClock != NULL)
     {
-        uint64 clock_msec64;
-        iClock->GetCurrentTime64(clock_msec64, OSCLCLOCK_MSEC);
-        uint32 clock_msec32 = Oscl_Int64_Utils::get_uint64_lower32(clock_msec64);
+        uint32 clock_msec32;
+        bool overflowFlag = false;
+
+        iClock->GetCurrentTime32(clock_msec32, overflowFlag, PVMF_MEDIA_CLOCK_MSEC);
+
 
         uint32 clock_adjforearlymargin = clock_msec32 + iEarlyMargin;
         uint32 ts_adjforlatemargin = aTimeStamp + iLateMargin;
@@ -1381,6 +1538,7 @@ PVMediaOutputNodePort::CheckMediaTimeStamp(uint32& aDelta)
             // Say clock is 1000ms, late margin is 200ms, then any timestamp earlier than 800ms should be
             // dropped, as late. If ts is less than 800ms, then (ts + 200 - 1000) will be larger than wrap threshold
             aDelta = (clock_msec32 - aTimeStamp);
+            iFramesDropped++;
             PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::CheckMediaTimeStamp - Late - Fmt=%s, Seq=%d, Ts=%d, Clock=%d, Delta=%d",
                                      iSinkFormatString.get_str(),
                                      iCurrentMediaMsg->getSeqNum(),
@@ -1388,12 +1546,12 @@ PVMediaOutputNodePort::CheckMediaTimeStamp(uint32& aDelta)
                                      clock_msec32,
                                      aDelta));
             iConsecutiveFramesDropped++;
-            if (iMediaTypeIndex == PVMF_UNCOMPRESSED_VIDEO_FORMAT)
+            if (iMediaType == PVMF_MEDIA_UNCOMPRESSED_VIDEO)
             {
                 if ((iConsecutiveFramesDropped >= THRESHOLD_FOR_DROPPED_VIDEO_FRAMES) && (iLateFrameEventSent == false))
                 {
                     iLateFrameEventSent = true;
-                    iNode->ReportInfoEvent(PVMFInfoVideoTrackFallingBehind);
+                    iNode->ReportInfoEvent(PVMFInfoVideoTrackFallingBehind, (OsclAny*)NULL);
                 }
             }
             return PVMF_MEDIAOUTPUTNODEPORT_MEDIA_LATE;
@@ -1434,8 +1592,8 @@ PVMediaOutputNodePort::CheckMediaFrameStep()
                                      iSinkFormatString.get_str(),
                                      iCurrentMediaMsg->getSeqNum(),
                                      iCurrentMediaMsg->getTimestamp(),
-                                     Oscl_Int64_Utils::get_int64_lower32(iClockFrameCount),
-                                     Oscl_Int64_Utils::get_int64_lower32(iSyncFrameCount)));
+                                     iClockFrameCount,
+                                     iSyncFrameCount));
             iSyncFrameCount++;
             return PVMF_MEDIAOUTPUTNODEPORT_MEDIA_LATE;
         }
@@ -1447,8 +1605,8 @@ PVMediaOutputNodePort::CheckMediaFrameStep()
                                      iSinkFormatString.get_str(),
                                      iCurrentMediaMsg->getSeqNum(),
                                      iCurrentMediaMsg->getTimestamp(),
-                                     Oscl_Int64_Utils::get_int64_lower32(iClockFrameCount),
-                                     Oscl_Int64_Utils::get_int64_lower32(iSyncFrameCount)));
+                                     iClockFrameCount,
+                                     iSyncFrameCount));
             return PVMF_MEDIAOUTPUTNODEPORT_MEDIA_EARLY;
         }
         else
@@ -1457,8 +1615,8 @@ PVMediaOutputNodePort::CheckMediaFrameStep()
                                      iSinkFormatString.get_str(),
                                      iCurrentMediaMsg->getSeqNum(),
                                      iCurrentMediaMsg->getTimestamp(),
-                                     Oscl_Int64_Utils::get_int64_lower32(iClockFrameCount),
-                                     Oscl_Int64_Utils::get_int64_lower32(iSyncFrameCount)));
+                                     iClockFrameCount,
+                                     iSyncFrameCount));
             iSyncFrameCount++;
             return PVMF_MEDIAOUTPUTNODEPORT_MEDIA_ON_TIME;
         }
@@ -1489,7 +1647,7 @@ void PVMediaOutputNodePort::Run()
      * single Run call. Since we could process multiple media msgs per Run
      * we need to account for BOS and Skip as well.
      */
-    while (IncomingMsgQueueSize() > 0)
+    while ((IncomingMsgQueueSize() > 0) || (iCurrentMediaMsg.GetRep() != NULL))
     {
         bool oMsgDqd = false;
         if (iCurrentMediaMsg.GetRep() == NULL)
@@ -1500,7 +1658,7 @@ void PVMediaOutputNodePort::Run()
             {
                 PVMF_MOPORT_LOGERROR((0, "PVMediaOutputNodePort::Run: DequeueIncomingMsg Failed - Fmt=%s",
                                       iSinkFormatString.get_str()));
-                OsclError::Panic("PVMOUT", 2);
+                OSCL_ASSERT(0);
             }
             else
             {
@@ -1570,20 +1728,6 @@ void PVMediaOutputNodePort::Run()
         else
         {
             //implies that this message needs to be consumed
-            if (iSendStartOfDataEvent == true)
-            {
-                //implies that we are attempting to process the first media msg during
-                //after skip, a mediamsg whose timestamp is equal to or greater than
-                //iSkipTimestamp
-                PVMF_MOPORT_LOGREPOS((0, "PVMediaOutputNodePort::Run: PVMFInfoStartOfData - Fmt=%s",
-                                      iSinkFormatString.get_str()));
-                PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::Run: PVMFInfoStartOfData - Fmt=%s",
-                                         iSinkFormatString.get_str()));
-                uint32 iStreamID = iRecentStreamID;
-                iNode->ReportInfoEvent(PVMFInfoStartOfData, (OsclAny*)&iStreamID);
-
-                iSendStartOfDataEvent = false;
-            }
             if (oMsgDqd == true)
             {
                 //logging
@@ -1606,6 +1750,7 @@ void PVMediaOutputNodePort::Run()
                 }
                 else if (iCurrentMediaMsg->getFormatID() < PVMF_MEDIA_CMD_FORMAT_IDS_START)
                 {
+                    iTotalFrames++;
                     PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::Run - MediaMsg Recvd - Seq=%d, TS=%d, Fmt=%s, Qs=%d",
                                              iCurrentMediaMsg->getSeqNum(),
                                              iCurrentMediaMsg->getTimestamp(),
@@ -1613,7 +1758,26 @@ void PVMediaOutputNodePort::Run()
                                              IncomingMsgQueueSize()));
                 }
             }
-            if (oProcessIncomingMessage == true)
+
+            if ((iSendStartOfDataEvent == true) && oMIOComponentConfigured)
+            {
+                //implies that we are attempting to process the first media msg during
+                //after skip, a mediamsg whose timestamp is equal to or greater than
+                //iSkipTimestamp
+                PVMF_MOPORT_LOGREPOS((0, "PVMediaOutputNodePort::Run: PVMFInfoStartOfData - Fmt=%s",
+                                      iSinkFormatString.get_str()));
+                PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::Run: PVMFInfoStartOfData - Fmt=%s",
+                                         iSinkFormatString.get_str()));
+                uint32 iStreamID = iRecentStreamID;
+                iNode->ReportInfoEvent(PVMFInfoStartOfData, (OsclAny*)&iStreamID);
+                iSendStartOfDataEvent = false;
+            }
+
+            // We need to check for valid CurrentMediaMsg because it is possible that SendData has been
+            // called from ClockStateUpdated when all tracks report InfoStartofData and Engine starts the clock
+            // If dequeued data has already been sent, we cant send that data again, it will crash
+            // so just return and AO will be scheduled again for next data.
+            if ((oProcessIncomingMessage == true) && (iCurrentMediaMsg.GetRep() != NULL))
             {
                 SendData();
             }
@@ -1755,7 +1919,7 @@ void PVMediaOutputNodePort::HandlePortActivity(const PVMFPortActivity& aActivity
                     }
                     else
                     {
-                        if (iSendStartOfDataEvent == true)
+                        if ((iSendStartOfDataEvent == true) && oMIOComponentConfigured)
                         {
                             //implies that we are attempting to process the first media msg during
                             //after skip, a mediamsg whose timestamp is equal to or greater than
@@ -1766,7 +1930,6 @@ void PVMediaOutputNodePort::HandlePortActivity(const PVMFPortActivity& aActivity
                                                      iSinkFormatString.get_str()));
                             uint32 iStreamID = iRecentStreamID;
                             iNode->ReportInfoEvent(PVMFInfoStartOfData, (OsclAny*)&iStreamID);
-
                             iSendStartOfDataEvent = false;
                         }
                         if (oProcessIncomingMessage)
@@ -1775,9 +1938,9 @@ void PVMediaOutputNodePort::HandlePortActivity(const PVMFPortActivity& aActivity
                             if ((iCurrentMediaMsg.GetRep() != NULL) ||
                                     (iFragIndex != 0))
                             {
-                                PVMF_MOPORT_LOGERROR((0, "PVMediaOutputNodePort::HPA: DequeueIncomingMsg oProcessIncomingMessage Invalid - Fmt=%s",
-                                                      iSinkFormatString.get_str()));
-                                OSCL_ASSERT(false);
+                                PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::HPA: DequeueIncomingMsg ignoring msg. Still processing previous msg iCurrentMediaMsg: 0x%x  iFragIndex: %d- Fmt=%s",
+                                                         iCurrentMediaMsg.GetRep(), iFragIndex, iSinkFormatString.get_str()));
+                                return;
                             }
                             if (DequeueIncomingMsg(iCurrentMediaMsg) == PVMFSuccess)
                             {
@@ -1800,6 +1963,7 @@ void PVMediaOutputNodePort::HandlePortActivity(const PVMFPortActivity& aActivity
                                 }
                                 else if (iCurrentMediaMsg->getFormatID() < PVMF_MEDIA_CMD_FORMAT_IDS_START)
                                 {
+                                    iTotalFrames++;
                                     PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::HPA - MediaMsg Recvd - Seq=%d, TS=%d, Fmt=%s, Qs=%d",
                                                              iCurrentMediaMsg->getSeqNum(),
                                                              iCurrentMediaMsg->getTimestamp(),
@@ -1808,6 +1972,9 @@ void PVMediaOutputNodePort::HandlePortActivity(const PVMFPortActivity& aActivity
                                 }
 
                                 SendData();
+
+
+
                                 if ((oProcessIncomingMessage == true) &&
                                         (IncomingMsgQueueSize() > 0))
                                 {
@@ -1858,22 +2025,15 @@ PVMFStatus PVMediaOutputNodePort::ConfigMIO(PvmiKvp* aParameters, PvmiKvp* &aRet
     if (0 == aParameters)
     {
         PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::ConfigMIO: No format-specific info for this track."));
-        if (iWaitForConfig == true)
-        {
-            iNode->MioConfigured();
-            iWaitForConfig = false;
-        }
         return PVMFSuccess;//no format-specific info, so nothing needed.
     }
     uint8* data = (uint8*)aParameters->value.key_specific_value;
-    uint32 data_len = aParameters->capacity;
-
     PVMFStatus status;
 
     //formatted data gets sent to the MIO on first arrival
-    switch (iMediaTypeIndex)
+    switch (iMediaType)
     {
-        case PVMF_UNCOMPRESSED_AUDIO_FORMAT:
+        case PVMF_MEDIA_UNCOMPRESSED_AUDIO:
         {
             channelSampleInfo* pcm16Info = (channelSampleInfo*)data;
             PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::ConfigMIO - SamplingRate=%d, NumChannels=%d",
@@ -1882,17 +2042,17 @@ PVMFStatus PVMediaOutputNodePort::ConfigMIO(PvmiKvp* aParameters, PvmiKvp* &aRet
             //ignore any failures since not all MIO may suppport the parameters.
             //Note: send the parameters individually since some MIO may not know
             //how to process arrays.
-            status = SetMIOParameterUint32(MOUT_AUDIO_SAMPLING_RATE_KEY,
+            status = SetMIOParameterUint32((char*)MOUT_AUDIO_SAMPLING_RATE_KEY,
                                            pcm16Info->samplingRate);
             if (status == PVMFSuccess)
             {
-                SetMIOParameterUint32(MOUT_AUDIO_NUM_CHANNELS_KEY,
+                SetMIOParameterUint32((char*)MOUT_AUDIO_NUM_CHANNELS_KEY,
                                       pcm16Info->desiredChannels);
             }
         }
         break;
 
-        case PVMF_UNCOMPRESSED_VIDEO_FORMAT:
+        case PVMF_MEDIA_UNCOMPRESSED_VIDEO:
         {
             PVMFYuvFormatSpecificInfo0* yuvInfo = (PVMFYuvFormatSpecificInfo0*)data;
             PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::ConfigMIO - Width=%d, Height=%d, DispWidth=%d, DispHeight=%d",
@@ -1901,38 +2061,37 @@ PVMFStatus PVMediaOutputNodePort::ConfigMIO(PvmiKvp* aParameters, PvmiKvp* &aRet
             //ignore any failures since not all MIO may suppport the parameters.
             //Note: send the parameters individually since some MIO may not know
             //how to process arrays.
-            status = SetMIOParameterUint32(MOUT_VIDEO_WIDTH_KEY,
+            status = SetMIOParameterUint32((char*)MOUT_VIDEO_WIDTH_KEY,
                                            yuvInfo->width);
             if (status == PVMFSuccess)
             {
-                status = SetMIOParameterUint32(MOUT_VIDEO_HEIGHT_KEY,
+                status = SetMIOParameterUint32((char*)MOUT_VIDEO_HEIGHT_KEY,
                                                yuvInfo->height);
             }
             if (status == PVMFSuccess)
             {
-                status = SetMIOParameterUint32(MOUT_VIDEO_DISPLAY_WIDTH_KEY,
+                status = SetMIOParameterUint32((char*)MOUT_VIDEO_DISPLAY_WIDTH_KEY,
                                                yuvInfo->display_width);
             }
             if (status == PVMFSuccess)
             {
-                status = SetMIOParameterUint32(MOUT_VIDEO_DISPLAY_HEIGHT_KEY,
+                status = SetMIOParameterUint32((char*)MOUT_VIDEO_DISPLAY_HEIGHT_KEY,
                                                yuvInfo->display_height);
             }
             if (status == PVMFSuccess)
             {
                 // ignore status here
-                SetMIOParameterUint32(MOUT_VIDEO_SUBFORMAT_KEY,
+                SetMIOParameterFormat((char*)MOUT_VIDEO_SUBFORMAT_KEY,
                                       yuvInfo->video_format);
             }
         }
         break;
-
-        case PVMF_COMPRESSED_AUDIO_FORMAT:
-        case PVMF_COMPRESSED_VIDEO_FORMAT:
+        case PVMF_MEDIA_COMPRESSED_AUDIO:
+        case PVMF_MEDIA_COMPRESSED_VIDEO:
             //for compressed formats, the format-specific info is sent as kvp
         {
             PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::ConfigMIO Setting Codec Header - Len=%d, Fmt=%s",
-                                     data_len, iSinkFormatString.get_str()));
+                                     aParameters->capacity, iSinkFormatString.get_str()));
 
             // We will enable the following line after source node fix KVP issue
             //oscl_assert(aParameters->length == aParameters->capacity)
@@ -1956,11 +2115,11 @@ PVMFStatus PVMediaOutputNodePort::ConfigMIO(PvmiKvp* aParameters, PvmiKvp* &aRet
         }
         break;
 
-        case PVMF_TEXT_FORMAT:
+        case PVMF_MEDIA_TEXT:
             //for text formats, the format-specific info is sent as kvp
         {
             PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::ConfigMIO Setting Codec Header - Len=%d, Fmt=%s",
-                                     data_len, iSinkFormatString.get_str()));
+                                     aParameters->capacity, iSinkFormatString.get_str()));
 
             // We will enable the following line after source node fix KVP issue
             //oscl_assert(aParameters->length == aParameters->capacity)
@@ -1985,21 +2144,14 @@ PVMFStatus PVMediaOutputNodePort::ConfigMIO(PvmiKvp* aParameters, PvmiKvp* &aRet
 
         default:
             status = PVMFErrNotSupported;
-            iNode->Assert(false);
+            OSCL_ASSERT(false);
             break;
     }
     if (status != PVMFSuccess)
     {
         iNode->ReportErrorEvent(PVMFErrResource, NULL, PVMFMoutNodeErr_MediaIOSetParameterSync);
     }
-    else
-    {
-        if (iWaitForConfig == true)
-        {
-            iNode->MioConfigured();
-            iWaitForConfig = false;
-        }
-    }
+
     return status;
 }
 
@@ -2091,6 +2243,34 @@ PVMFStatus PVMediaOutputNodePort::SetMIOParameterPchar(PvmiKeyType aKey, char* a
     return PVMFSuccess;
 }
 
+////////////////////////////////////////////////////////////////////////////
+PVMFStatus PVMediaOutputNodePort::SetMIOParameterFormat(PvmiKeyType aKey, PVMFFormatType aFormatType)
+//to set parameters to the MIO component through its config interface.
+{
+    OsclMemAllocator alloc;
+    PvmiKvp kvp;
+    PvmiKvp* retKvp = NULL; // for return value
+
+    kvp.key = NULL;
+    kvp.length = oscl_strlen(aKey) + 1; // +1 for \0
+    kvp.capacity = kvp.length;
+
+    kvp.key = (PvmiKeyType)alloc.ALLOCATE(kvp.length);
+    if (!kvp.key)
+        return PVMFErrNoMemory;
+
+    oscl_strncpy(kvp.key, aKey, kvp.length);
+    kvp.value.pChar_value = (char*)aFormatType.getMIMEStrPtr();
+
+    int32 err;
+    OSCL_TRY(err, iNode->iMIOConfig->setParametersSync(iNode->iMIOSession, &kvp, 1, retKvp););
+    alloc.deallocate(kvp.key);
+
+    if (err != OsclErrNone || retKvp)
+        return PVMFFailure;
+
+    return PVMFSuccess;
+}
 
 ////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF PVMFStatus PVMediaOutputNodePort::getParametersSync(PvmiMIOSession aSession, PvmiKeyType aIdentifier,
@@ -2184,30 +2364,52 @@ bool PVMediaOutputNodePort::peekHead(PVMFSharedMediaMsgPtr& aMsgPtr,
     // to notify the media output node that configuration is complete, so that media output node can complete its pending start
     if (aMsgPtr->getFormatID() == PVMF_MEDIA_CMD_EOS_FORMAT_ID)
     {
-        if (iWaitForConfig == true)
+        if (false == oMIOComponentConfigured)
         {
-            iNode->MioConfigured();
-            iWaitForConfig = false;
+            OSCL_ASSERT(oProcessIncomingMessage != true);
+            oMIOComponentConfigured = true;
+            oProcessIncomingMessage = true;
         }
     }
     return true;
 }
 
-void PVMediaOutputNodePort::PVMediaOutputNodePortTimerEvent()
+void PVMediaOutputNodePort::ProcessCallBack(uint32 callBackID,
+        PVTimeComparisonUtils::MediaTimeStatus aTimerAccuracy,
+        uint32 aDelta,
+        const OsclAny* aContextData,
+        PVMFStatus aStatus)
 {
-    //timer expires, reset the boolean so that we can start processing more data if need be
-    oProcessIncomingMessage = true;
-    if (iCurrentMediaMsg.GetRep() != NULL)
+    OSCL_UNUSED_ARG(aTimerAccuracy);
+    OSCL_UNUSED_ARG(aDelta);
+    OSCL_UNUSED_ARG(aContextData);
+    PVMF_MOPORT_LOGDEBUG((0, "PVMediaOutputNodePort::ProcessCallBack In Callback id [%d] CallbackStatus [%d]", callBackID, aStatus));
+    if (PVMFSuccess == aStatus)
     {
-        //attempt to send data current media msg if any
-        SendData();
-    }
-    //reschedule if there is more stuff waiting and
-    //if we can process more data
-    if ((oProcessIncomingMessage == true) &&
-            (IncomingMsgQueueSize() > 0))
-    {
-        RunIfNotReady();
+        if (iDelayEarlyFrameCallBkId == callBackID)
+        {
+            oClockCallBackPending = false;
+            //timer expires, reset the boolean so that we can start processing more data if need be
+            oProcessIncomingMessage = true;
+            if (iCurrentMediaMsg.GetRep() != NULL)
+            {
+                //attempt to send data current media msg if any
+                SendData();
+            }
+            //reschedule if there is more stuff waiting and
+            //if we can process more data
+            if ((oProcessIncomingMessage == true) &&
+                    (IncomingMsgQueueSize() > 0))
+            {
+                RunIfNotReady();
+            }
+        }
+        else
+        {
+            PVMF_MOPORT_LOGERROR((0, "PVMediaOutputNodePort::ProcessCallBack- Error stray callback from iClockNotificationsInf callBackID[%d]", callBackID));
+            OSCL_ASSERT(false);
+        }
+
     }
 }
 
@@ -2223,11 +2425,13 @@ void PVMediaOutputNodePort::SetSkipTimeStamp(uint32 aSkipTS,
     iSkipTimestamp = aSkipTS;
     iRecentStreamID = aStreamID;
     iSendStartOfDataEvent = true;
-    //cancel any outstanding delay timer
-    if (iDelayTimer != NULL)
+    if (oClockCallBackPending)
     {
-        iDelayTimer->Stop();
+        iClockNotificationsInf->CancelCallback(iDelayEarlyFrameCallBkId, false);
     }
+    oClockCallBackPending = false;
+    iDelayEarlyFrameCallBkId = 0;
+
     //release the current media msg right here instead of
     //waiting on a reschedule. this is to avoid deadlocks
     //in case the upstream node is just operating with a
@@ -2294,7 +2498,7 @@ bool PVMediaOutputNodePort::DataToSkip(PVMFSharedMediaMsgPtr& aMsg)
     //assume that the stream ids are a montonically increasing
     //sequence
     uint32 delta = 0;
-    bool oOldStream = IsEarlier(aMsg->getStreamID(), iRecentStreamID, delta);
+    bool oOldStream = PVTimeComparisonUtils::IsEarlier(aMsg->getStreamID(), iRecentStreamID, delta);
     if (oOldStream && delta > 0)
     {
         //a zero delta could mean the stream ids are equal
@@ -2314,7 +2518,7 @@ bool PVMediaOutputNodePort::DataToSkip(PVMFSharedMediaMsgPtr& aMsg)
         if (iSendStartOfDataEvent == true)
         {
             delta = 0;
-            bool tsEarly = IsEarlier(aMsg->getTimestamp(), iSkipTimestamp, delta);
+            bool tsEarly = PVTimeComparisonUtils::IsEarlier(aMsg->getTimestamp(), iSkipTimestamp, delta);
             if (tsEarly && delta > 0)
             {
                 //a zero delta could mean the timestamps are equal
@@ -2352,16 +2556,13 @@ void PVMediaOutputNodePort::ClockTimebaseUpdated()
         iSyncFrameCount = 0;
         iClockFrameCount = 0;
     }
-    if (iDelayTimer != NULL)
+    if (oClockCallBackPending)
     {
-        iDelayTimer->Stop();
+        iClockNotificationsInf->CancelCallback(iDelayEarlyFrameCallBkId, false);
     }
-    oProcessIncomingMessage = true;
-    if (iCurrentMediaMsg.GetRep() != NULL)
-    {
-        //attempt to send data current media msg if any
-        SendData();
-    }
+    oClockCallBackPending = false;
+    iDelayEarlyFrameCallBkId = 0;
+
     //reschedule if there is more stuff waiting and
     //if we can process more data
     if ((oProcessIncomingMessage == true) &&
@@ -2379,6 +2580,7 @@ void PVMediaOutputNodePort::ClockCountUpdated()
         iClock->GetCountTimebase()->GetCount(iClockFrameCount);
         //wake up the AO to process data
         oProcessIncomingMessage = true;
+
         if (iCurrentMediaMsg.GetRep() != NULL)
         {
             //attempt to send data current media msg if any
@@ -2398,12 +2600,17 @@ void PVMediaOutputNodePort::ClockAdjusted()
 {
 }
 
+void PVMediaOutputNodePort::NotificationsInterfaceDestroyed()
+{
+    iClockNotificationsInf = NULL;
+}
+
 void PVMediaOutputNodePort::ClockStateUpdated()
 {
     if (iClock == NULL)
         return;
 
-    if (iClock->GetState() == OsclClock::PAUSED)
+    if (iClock->GetState() == PVMFMediaClock::PAUSED)
     {
         PVMF_MOPORT_LOGREPOS((0, "PVMediaOutputNodePort::ClockStateUpdated: Clock Paused - Fmt=%s",
                               iSinkFormatString.get_str()));
@@ -2415,28 +2622,45 @@ void PVMediaOutputNodePort::ClockStateUpdated()
         if (oActiveMediaOutputComp == false)
         {
             oProcessIncomingMessage = false;
-            if (iDelayTimer != NULL)
+            if (oClockCallBackPending)
             {
-                iDelayTimer->Stop();
+                iClockNotificationsInf->CancelCallback(iDelayEarlyFrameCallBkId, false);
             }
+            oClockCallBackPending = false;
+            iDelayEarlyFrameCallBkId = 0;
         }
     }
-    else if (iClock->GetState() == OsclClock::RUNNING)
+    else if (iClock->GetState() == PVMFMediaClock::RUNNING)
     {
         PVMF_MOPORT_LOGREPOS((0, "PVMediaOutputNodePort::ClockStateUpdated: Clock Running - Fmt=%s",
                               iSinkFormatString.get_str()));
         PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::ClockStateUpdated: Clock Running - Fmt=%s",
                                  iSinkFormatString.get_str()));
-        //start processing input msgs
-        oProcessIncomingMessage = true;
+
+        //If MIO component is configured, messages can be processed now.
+        if (oMIOComponentConfigured)
+        {
+            oProcessIncomingMessage = true;
+        }
+
+        if (oClockCallBackPending)
+        {
+            iClockNotificationsInf->CancelCallback(iDelayEarlyFrameCallBkId, false);
+        }
+        oClockCallBackPending = false;
+        iDelayEarlyFrameCallBkId = 0;
+
+
         //reset write state as well, in case mo comp is still busy
         //it will leave again, so that state will get reset
         iWriteState = EWriteOK;
+
         if (iCurrentMediaMsg.GetRep() != NULL)
         {
             //attempt to send data current media msg if any
             SendData();
         }
+
         //reschedule if there is more stuff waiting and
         //if we can process more data
         if ((oProcessIncomingMessage == true) &&
@@ -2445,7 +2669,7 @@ void PVMediaOutputNodePort::ClockStateUpdated()
             RunIfNotReady();
         }
     }
-    else if (iClock->GetState() == OsclClock::STOPPED)
+    else if (iClock->GetState() == PVMFMediaClock::STOPPED)
     {
         PVMF_MOPORT_LOGREPOS((0, "PVMediaOutputNodePort::ClockStateUpdated: Clock Stopped - Fmt=%s",
                               iSinkFormatString.get_str()));
@@ -2458,10 +2682,12 @@ void PVMediaOutputNodePort::ClockStateUpdated()
         if (oActiveMediaOutputComp == false)
         {
             oProcessIncomingMessage = false;
-            if (iDelayTimer != NULL)
+            if (oClockCallBackPending)
             {
-                iDelayTimer->Stop();
+                iClockNotificationsInf->CancelCallback(iDelayEarlyFrameCallBkId, false);
             }
+            oClockCallBackPending = false;
+            iDelayEarlyFrameCallBkId = 0;
         }
     }
     RunIfNotReady();
@@ -2490,13 +2716,15 @@ void PVMediaOutputNodePort::ClearPreviousBOSStreamIDs(uint32 aID)
     }
 }
 
-
-
-
-
-
-
-
-
-
-
+int32 PVMediaOutputNodePort::WriteDataToMIO(int32 &aCmdId, PvmiMediaXferHeader &aMediaxferhdr, OsclRefCounterMemFrag &aFrag)
+{
+    int32 leavecode = OsclErrNone;
+    OSCL_TRY_NO_TLS(iOsclErrorTrapImp, leavecode,
+                    aCmdId = iMediaTransfer->writeAsync(PVMI_MEDIAXFER_FMT_TYPE_DATA,  /*format_type*/
+                                                        PVMI_MEDIAXFER_FMT_INDEX_DATA, /*format_index*/
+                                                        (uint8*)aFrag.getMemFragPtr(),
+                                                        aFrag.getMemFragSize(),
+                                                        aMediaxferhdr,
+                                                        (OsclAny*) & iWriteAsyncContext););
+    return leavecode;
+}

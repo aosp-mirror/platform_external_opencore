@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ PVMp4FFComposerPort::PVMp4FFComposerPort(int32 aTag, PVMp4FFComposerNode* aNode,
         OsclActiveObject(aPriority, "PVMp4FFComposerPort"),
         iNode(aNode),
         iTrackId(0),
-        iFormat(PVMF_FORMAT_UNKNOWN),
+        iFormat(PVMF_MIME_FORMAT_UNKNOWN),
         iReferencePort(NULL),
         iLastTS(0),
         iEndOfDataReached(false)
@@ -139,8 +139,10 @@ OSCL_EXPORT_REF PVMFStatus PVMp4FFComposerPort::Connect(PVMFPortInterface* aPort
         return PVMFFailure;
     }
 
-    PvmiCapabilityAndConfig* config = NULL;
-    aPort->QueryInterface(PVMI_CAPABILITY_AND_CONFIG_PVUUID, (OsclAny*&)config);
+    OsclAny* temp = NULL;
+    aPort->QueryInterface(PVMI_CAPABILITY_AND_CONFIG_PVUUID, temp);
+    PvmiCapabilityAndConfig *config = OSCL_STATIC_CAST(PvmiCapabilityAndConfig*, temp);
+
     if (!config)
     {
         LOG_ERR((0, "PVMp4FFComposerPort::Connect: Error - Peer port does not support capability interface"));
@@ -204,8 +206,10 @@ OSCL_EXPORT_REF PVMFStatus PVMp4FFComposerPort::PeerConnect(PVMFPortInterface* a
 
     // When connection is initiated by peer, this port still needs to query the peer
     // for input format configuration data
-    PvmiCapabilityAndConfig* config = NULL;
-    aPort->QueryInterface(PVMI_CAPABILITY_AND_CONFIG_PVUUID, (OsclAny*&)config);
+    OsclAny* temp = NULL;
+    aPort->QueryInterface(PVMI_CAPABILITY_AND_CONFIG_PVUUID, temp);
+    PvmiCapabilityAndConfig *config = OSCL_STATIC_CAST(PvmiCapabilityAndConfig*, temp);
+
     if (!config)
     {
         LOG_ERR((0, "PVMp4FFComposerPort::PeerConnect: Error - Peer port does not support capability interface"));
@@ -255,34 +259,36 @@ OSCL_EXPORT_REF PVMFStatus PVMp4FFComposerPort::getParametersSync(PvmiMIOSession
     num_parameter_elements = 0;
     PVMFStatus status = PVMFFailure;
 
-    if (pv_mime_strcmp(identifier, INPUT_FORMATS_CAP_QUERY) == 0)
+    //identifier is a key and is assumed to be null terminated
+    if (oscl_strcmp(identifier, INPUT_FORMATS_CAP_QUERY) == 0)
     {
-        num_parameter_elements = 5;
-        status = AllocateKvp(parameters, INPUT_FORMATS_VALTYPE, num_parameter_elements);
+        num_parameter_elements = 6;
+        status = AllocateKvp(parameters, (PvmiKeyType)INPUT_FORMATS_VALTYPE, num_parameter_elements);
         if (status != PVMFSuccess)
         {
             LOG_ERR((0, "PVMp4FFComposerPort::GetOutputParametersSync: Error - AllocateKvp failed. status=%d", status));
         }
         else
         {
-            parameters[0].value.uint32_value = PVMF_AMR_IETF;
-            parameters[1].value.uint32_value = PVMF_M4V;
-            parameters[2].value.uint32_value = PVMF_H263;
-            parameters[3].value.uint32_value = PVMF_H264_MP4;
-            parameters[4].value.uint32_value = PVMF_3GPP_TIMEDTEXT;
+            parameters[0].value.pChar_value = (char*)PVMF_MIME_AMR_IETF;
+            parameters[1].value.pChar_value = (char*)PVMF_MIME_M4V;
+            parameters[2].value.pChar_value = (char*)PVMF_MIME_H2631998;
+            parameters[3].value.pChar_value = (char*)PVMF_MIME_H2632000;
+            parameters[4].value.pChar_value = (char*)PVMF_MIME_H264_VIDEO_MP4;
+            parameters[5].value.pChar_value = (char*)PVMF_MIME_3GPP_TIMEDTEXT;
         }
     }
-    else if (pv_mime_strcmp(identifier, INPUT_FORMATS_CUR_QUERY) == 0)
+    else if (oscl_strcmp(identifier, INPUT_FORMATS_CUR_QUERY) == 0)
     {
         num_parameter_elements = 1;
-        status = AllocateKvp(parameters, INPUT_FORMATS_VALTYPE, num_parameter_elements);
+        status = AllocateKvp(parameters, (PvmiKeyType)INPUT_FORMATS_VALTYPE, num_parameter_elements);
         if (status != PVMFSuccess)
         {
             LOG_ERR((0, "PVMp4FFComposerPort::GetOutputParametersSync: Error - AllocateKvp failed. status=%d", status));
         }
         else
         {
-            parameters[0].value.uint32_value = iFormat;
+            parameters[0].value.pChar_value = (char*)iFormat.getMIMEStrPtr();
         }
     }
 
@@ -340,7 +346,7 @@ OSCL_EXPORT_REF void PVMp4FFComposerPort::setParametersSync(PvmiMIOSession sessi
     OSCL_UNUSED_ARG(session);
 
     ret_kvp = NULL;
-    if (iFormat == PVMF_H264_MP4)
+    if (iFormat == PVMF_MIME_H264_VIDEO_MP4)
     {
         //this code is specific to H264 file format
         for (int32 i = 0;i < num_elements;i++)//assuming the memory is allocated for key
@@ -365,7 +371,7 @@ OSCL_EXPORT_REF void PVMp4FFComposerPort::setParametersSync(PvmiMIOSession sessi
             }
         }
     }
-    if (iFormat == PVMF_3GPP_TIMEDTEXT)
+    if (iFormat == PVMF_MIME_3GPP_TIMEDTEXT)
     {
         for (int32 i = 0;i < num_elements;i++)//assuming the memory is allocated for keys
         {
@@ -497,7 +503,19 @@ void PVMp4FFComposerPort::Run()
     if (!iEndOfDataReached && (IncomingMsgQueueSize() > 0))
     {
         //dispatch the incoming data.
+#ifdef _TEST_AE_ERROR_HANDLING
+
+        if (1 == iNode->iErrorDataPathStall)
+        {
+            status = PVMFSuccess;
+        }
+        else
+        {
+            status = iNode->ProcessIncomingMsg(this);
+        }
+#else
         status = iNode->ProcessIncomingMsg(this);
+#endif
         switch (status)
         {
             case PVMFSuccess:
@@ -577,21 +595,22 @@ PVMFStatus PVMp4FFComposerPort::VerifyAndSetParameter(PvmiKvp* aKvp, bool aSetPa
 
     if (pv_mime_strcmp(aKvp->key, INPUT_FORMATS_VALTYPE) == 0)
     {
-        switch (aKvp->value.uint32_value)
+        if (pv_mime_strcmp(aKvp->value.pChar_value, PVMF_MIME_3GPP_TIMEDTEXT) == 0 ||
+                pv_mime_strcmp(aKvp->value.pChar_value, PVMF_MIME_AMR_IETF) == 0 ||
+                pv_mime_strcmp(aKvp->value.pChar_value, PVMF_MIME_H264_VIDEO_MP4) == 0 ||
+                pv_mime_strcmp(aKvp->value.pChar_value, PVMF_MIME_M4V) == 0 ||
+                pv_mime_strcmp(aKvp->value.pChar_value, PVMF_MIME_H2631998) == 0 ||
+                pv_mime_strcmp(aKvp->value.pChar_value, PVMF_MIME_H2632000) == 0)
         {
-            case PVMF_3GPP_TIMEDTEXT:
-            case PVMF_AMR_IETF:
-            case PVMF_H264_MP4:
-            case PVMF_M4V:
-            case PVMF_H263:
-                if (aSetParam)
-                    iFormat = aKvp->value.uint32_value;
-                return PVMFSuccess;
-
-            default:
-                LOG_ERR((0, "PVMp4FFComposerPort::VerifyAndSetParameter: Error - Unsupported format %d",
-                         aKvp->value.uint32_value));
-                return PVMFFailure;
+            if (aSetParam)
+                iFormat = aKvp->value.pChar_value;
+            return PVMFSuccess;
+        }
+        else
+        {
+            LOG_ERR((0, "PVMp4FFComposerPort::VerifyAndSetParameter: Error - Unsupported format %d",
+                     aKvp->value.uint32_value));
+            return PVMFFailure;
         }
     }
 
@@ -615,7 +634,7 @@ PVMFStatus PVMp4FFComposerPort::NegotiateInputSettings(PvmiCapabilityAndConfig* 
     int32 err = 0;
 
     // Get current output formats from peer
-    PVMFStatus status = aConfig->getParametersSync(NULL, OUTPUT_FORMATS_CUR_QUERY, kvp, numParams, NULL);
+    PVMFStatus status = aConfig->getParametersSync(NULL, (PvmiKeyType)OUTPUT_FORMATS_CUR_QUERY, kvp, numParams, NULL);
     if (status != PVMFSuccess || numParams != 1)
     {
         LOG_ERR((0, "PVMp4FFComposerPort::NegotiateInputSettings: Error - config->getParametersSync(output_formats) failed"));
@@ -623,20 +642,22 @@ PVMFStatus PVMp4FFComposerPort::NegotiateInputSettings(PvmiCapabilityAndConfig* 
     }
 
     // Check if data format from peer is supported
-    switch (kvp->value.uint32_value)
+    if (pv_mime_strcmp(kvp->value.pChar_value, PVMF_MIME_3GPP_TIMEDTEXT) == 0 ||
+            pv_mime_strcmp(kvp->value.pChar_value, PVMF_MIME_AMR_IETF) == 0 ||
+            pv_mime_strcmp(kvp->value.pChar_value, PVMF_MIME_H264_VIDEO_MP4) == 0 ||
+            pv_mime_strcmp(kvp->value.pChar_value, PVMF_MIME_M4V) == 0 ||
+            pv_mime_strcmp(kvp->value.pChar_value, PVMF_MIME_H2631998) == 0 ||
+            pv_mime_strcmp(kvp->value.pChar_value, PVMF_MIME_H2632000) == 0)
     {
-        case PVMF_3GPP_TIMEDTEXT:
-        case PVMF_AMR_IETF:
-        case PVMF_H264_MP4:
-        case PVMF_M4V:
-        case PVMF_H263:
-            break;
-        default:
-            return PVMFErrNotSupported;
+        // do nothing
+    }
+    else
+    {
+        return PVMFErrNotSupported;
     }
 
     // Set format of this port, peer port and container node
-    iFormat = kvp->value.uint32_value;
+    iFormat = kvp->value.pChar_value;
     OSCL_TRY(err, aConfig->setParametersSync(NULL, kvp, 1, retKvp););
     OSCL_FIRST_CATCH_ANY(err,
                          LOG_ERR((0, "PVMp4FFComposerPort::NegotiateInputSettings: Error - aConfig->setParametersSync failed. err=%d", err));
@@ -660,25 +681,28 @@ PVMFStatus PVMp4FFComposerPort::GetInputParametersFromPeer(PvmiCapabilityAndConf
     int numParams = 0;
 
     // Get data bitrate from peer
-    PVMFStatus status = aConfig->getParametersSync(NULL, OUTPUT_BITRATE_CUR_QUERY, kvp, numParams, NULL);
+    PVMFStatus status = aConfig->getParametersSync(NULL, (PvmiKeyType)OUTPUT_BITRATE_CUR_QUERY, kvp, numParams, NULL);
     if (status != PVMFSuccess || !kvp || numParams != 1)
     {
         LOG_DEBUG((0, "PVMp4FFComposerPort::GetInputParametersFromPeer: Bitrate info not available. Use default"));
-        switch (iFormat)
+        if (iFormat == PVMF_MIME_3GPP_TIMEDTEXT)
         {
-            case PVMF_3GPP_TIMEDTEXT:
-                iFormatSpecificConfig.iBitrate = PVMF_MP4FFCN_TEXT_BITRATE;
-                break;
-            case PVMF_AMR_IETF:
-                iFormatSpecificConfig.iBitrate = PVMF_MP4FFCN_AUDIO_BITRATE;
-                break;
-            case PVMF_H264_MP4:
-            case PVMF_M4V:
-            case PVMF_H263:
-                iFormatSpecificConfig.iBitrate = PVMF_MP4FFCN_VIDEO_BITRATE;
-                break;
-            default:
-                return PVMFErrNotSupported;
+            iFormatSpecificConfig.iBitrate = PVMF_MP4FFCN_TEXT_BITRATE;
+        }
+        else if (iFormat == PVMF_MIME_AMR_IETF)
+        {
+            iFormatSpecificConfig.iBitrate = PVMF_MP4FFCN_AUDIO_BITRATE;
+        }
+        else if (iFormat == PVMF_MIME_H264_VIDEO_MP4 ||
+                 iFormat == PVMF_MIME_M4V ||
+                 iFormat == PVMF_MIME_H2631998 ||
+                 iFormat == PVMF_MIME_H2632000)
+        {
+            iFormatSpecificConfig.iBitrate = PVMF_MP4FFCN_VIDEO_BITRATE;
+        }
+        else
+        {
+            return PVMFErrNotSupported;
         }
     }
     else
@@ -690,141 +714,142 @@ PVMFStatus PVMp4FFComposerPort::GetInputParametersFromPeer(PvmiCapabilityAndConf
     numParams = 0;
 
     // Get timescale from peer
-    switch (iFormat)
+    if (iFormat == PVMF_MIME_AMR_IETF)
     {
-        case PVMF_AMR_IETF:
-            status = aConfig->getParametersSync(NULL, AUDIO_OUTPUT_SAMPLING_RATE_CUR_QUERY, kvp, numParams, NULL);
-            if (status != PVMFSuccess || !kvp || numParams != 1)
-            {
-                LOG_DEBUG((0, "PVMp4FFComposerPort::GetInputParametersFromPeer: Sampling rate info not available. Use default"));
-                iFormatSpecificConfig.iTimescale = PVMF_MP4FFCN_AUDIO_TIMESCALE;
-            }
-            else
-            {
-                iFormatSpecificConfig.iTimescale = kvp[0].value.uint32_value;
-                aConfig->releaseParameters(NULL, kvp, numParams);
-            }
-            kvp = NULL;
-            numParams = 0;
-            break;
+        status = aConfig->getParametersSync(NULL, (PvmiKeyType)AUDIO_OUTPUT_SAMPLING_RATE_CUR_QUERY, kvp, numParams, NULL);
+        if (status != PVMFSuccess || !kvp || numParams != 1)
+        {
+            LOG_DEBUG((0, "PVMp4FFComposerPort::GetInputParametersFromPeer: Sampling rate info not available. Use default"));
+            iFormatSpecificConfig.iTimescale = PVMF_MP4FFCN_AUDIO_TIMESCALE;
+        }
+        else
+        {
+            iFormatSpecificConfig.iTimescale = kvp[0].value.uint32_value;
+            aConfig->releaseParameters(NULL, kvp, numParams);
+        }
+        kvp = NULL;
+        numParams = 0;
+    }
+    else if (iFormat == PVMF_MIME_H2631998 ||
+             iFormat == PVMF_MIME_H2632000)
+    {
+        iFormatSpecificConfig.iH263Profile = PVMF_MP4FFCN_VIDEO_H263_PROFILE;
+        iFormatSpecificConfig.iH263Level = PVMF_MP4FFCN_VIDEO_H263_LEVEL;
+        // Do not break here. Continue to configure the other video parameters
+    }
+    else if (iFormat == PVMF_MIME_H264_VIDEO_MP4 ||
+             iFormat == PVMF_MIME_M4V)
+    {
+        iFormatSpecificConfig.iIFrameInterval = PVMF_MP4FFCN_VIDEO_IFRAME_INTERVAL;
+        iFormatSpecificConfig.iRateControlType = PVMP4FFCN_RATE_CONTROL_CBR;
 
-        case PVMF_H263:
-            iFormatSpecificConfig.iH263Profile = PVMF_MP4FFCN_VIDEO_H263_PROFILE;
-            iFormatSpecificConfig.iH263Level = PVMF_MP4FFCN_VIDEO_H263_LEVEL;
-            // Do not break here. Continue to configure the other video parameters
+        // Get size (in pixels) of video data from peer
+        status = aConfig->getParametersSync(NULL, (PvmiKeyType)VIDEO_OUTPUT_WIDTH_CUR_QUERY, kvp, numParams, NULL);
+        if (status != PVMFSuccess || numParams != 1)
+        {
+            LOG_DEBUG((0, "PVMp4FFComposerPort::GetInputParametersFromPeer: Frame width not available. Use default"));
+            iFormatSpecificConfig.iWidth = PVMF_MP4FFCN_VIDEO_FRAME_WIDTH;
+        }
+        else
+        {
+            iFormatSpecificConfig.iWidth = kvp[0].value.uint32_value;
+            aConfig->releaseParameters(NULL, kvp, numParams);
+        }
+        kvp = NULL;
+        numParams = 0;
 
-        case PVMF_H264_MP4:
-        case PVMF_M4V:
-            iFormatSpecificConfig.iIFrameInterval = PVMF_MP4FFCN_VIDEO_IFRAME_INTERVAL;
-            iFormatSpecificConfig.iRateControlType = PVMP4FFCN_RATE_CONTROL_CBR;
+        status = aConfig->getParametersSync(NULL, (PvmiKeyType)VIDEO_OUTPUT_HEIGHT_CUR_QUERY, kvp, numParams, NULL);
+        if (status != PVMFSuccess || numParams != 1)
+        {
+            LOG_DEBUG((0, "PVMp4FFComposerPort::GetInputParametersFromPeer: Frame height info not available. Use default"));
+            iFormatSpecificConfig.iHeight = PVMF_MP4FFCN_VIDEO_FRAME_HEIGHT;
+        }
+        else
+        {
+            iFormatSpecificConfig.iHeight = kvp[0].value.uint32_value;
+            aConfig->releaseParameters(NULL, kvp, numParams);
+        }
+        kvp = NULL;
+        numParams = 0;
 
-            // Get size (in pixels) of video data from peer
-            status = aConfig->getParametersSync(NULL, VIDEO_OUTPUT_WIDTH_CUR_QUERY, kvp, numParams, NULL);
-            if (status != PVMFSuccess || numParams != 1)
-            {
-                LOG_DEBUG((0, "PVMp4FFComposerPort::GetInputParametersFromPeer: Frame width not available. Use default"));
-                iFormatSpecificConfig.iWidth = PVMF_MP4FFCN_VIDEO_FRAME_WIDTH;
-            }
-            else
-            {
-                iFormatSpecificConfig.iWidth = kvp[0].value.uint32_value;
-                aConfig->releaseParameters(NULL, kvp, numParams);
-            }
-            kvp = NULL;
-            numParams = 0;
+        // Get video frame rate from peer
+        status = aConfig->getParametersSync(NULL, (PvmiKeyType)VIDEO_OUTPUT_FRAME_RATE_CUR_QUERY, kvp, numParams, NULL);
+        if (status != PVMFSuccess || numParams != 1)
+        {
+            LOG_DEBUG((0, "PVMp4FFComposerPort::GetInputParametersFromPeer: Frame rate not available. Use default"));
+            iFormatSpecificConfig.iFrameRate = PVMF_MP4FFCN_VIDEO_FRAME_RATE;
+        }
+        else
+        {
+            // Set input frame rate of container node
+            iFormatSpecificConfig.iFrameRate = kvp[0].value.float_value;
+            aConfig->releaseParameters(NULL, kvp, numParams);
+        }
+        kvp = NULL;
+        numParams = 0;
 
-            status = aConfig->getParametersSync(NULL, VIDEO_OUTPUT_HEIGHT_CUR_QUERY, kvp, numParams, NULL);
-            if (status != PVMFSuccess || numParams != 1)
-            {
-                LOG_DEBUG((0, "PVMp4FFComposerPort::GetInputParametersFromPeer: Frame height info not available. Use default"));
-                iFormatSpecificConfig.iHeight = PVMF_MP4FFCN_VIDEO_FRAME_HEIGHT;
-            }
-            else
-            {
-                iFormatSpecificConfig.iHeight = kvp[0].value.uint32_value;
-                aConfig->releaseParameters(NULL, kvp, numParams);
-            }
-            kvp = NULL;
-            numParams = 0;
+        status = aConfig->getParametersSync(NULL, (PvmiKeyType)OUTPUT_TIMESCALE_CUR_QUERY, kvp, numParams, NULL);
+        if (status != PVMFSuccess || !kvp || numParams != 1)
+        {
+            LOG_DEBUG((0, "PVMp4FFComposerPort::GetInputParametersFromPeer: Sampling rate info not available. Use default"));
+            iFormatSpecificConfig.iTimescale = PVMF_MP4FFCN_VIDEO_TIMESCALE;
+        }
+        else
+        {
+            iFormatSpecificConfig.iTimescale = kvp[0].value.uint32_value;
+            aConfig->releaseParameters(NULL, kvp, numParams);
+        }
+        kvp = NULL;
+        numParams = 0;
+    }
+    else if (iFormat == PVMF_MIME_3GPP_TIMEDTEXT)
+    {
+        // Get size (in pixels) of Text data from peer
+        status = aConfig->getParametersSync(NULL, (PvmiKeyType)TEXT_INPUT_WIDTH_CUR_QUERY, kvp, numParams, NULL);
+        if (status != PVMFSuccess || numParams != 1)
+        {
+            LOG_DEBUG((0, "PVMp4FFComposerPort::GetInputParametersFromPeer: Frame width not available. Use default"));
+            iFormatSpecificConfig.iWidth = PVMF_MP4FFCN_TEXT_FRAME_WIDTH;
+        }
+        else
+        {
+            iFormatSpecificConfig.iWidth = kvp[0].value.uint32_value;
+            aConfig->releaseParameters(NULL, kvp, numParams);
+        }
+        kvp = NULL;
+        numParams = 0;
 
-            // Get video frame rate from peer
-            status = aConfig->getParametersSync(NULL, VIDEO_OUTPUT_FRAME_RATE_CUR_QUERY, kvp, numParams, NULL);
-            if (status != PVMFSuccess || numParams != 1)
-            {
-                LOG_DEBUG((0, "PVMp4FFComposerPort::GetInputParametersFromPeer: Frame rate not available. Use default"));
-                iFormatSpecificConfig.iFrameRate = PVMF_MP4FFCN_VIDEO_FRAME_RATE;
-            }
-            else
-            {
-                // Set input frame rate of container node
-                iFormatSpecificConfig.iFrameRate = kvp[0].value.float_value;
-                aConfig->releaseParameters(NULL, kvp, numParams);
-            }
-            kvp = NULL;
-            numParams = 0;
+        status = aConfig->getParametersSync(NULL, (PvmiKeyType)TEXT_INPUT_HEIGHT_CUR_QUERY, kvp, numParams, NULL);
+        if (status != PVMFSuccess || numParams != 1)
+        {
+            LOG_DEBUG((0, "PVMp4FFComposerPort::GetInputParametersFromPeer: Frame height info not available. Use default"));
+            iFormatSpecificConfig.iHeight = PVMF_MP4FFCN_TEXT_FRAME_HEIGHT;
+        }
+        else
+        {
+            iFormatSpecificConfig.iHeight = kvp[0].value.uint32_value;
+            aConfig->releaseParameters(NULL, kvp, numParams);
+        }
+        kvp = NULL;
+        numParams = 0;
 
-            status = aConfig->getParametersSync(NULL, OUTPUT_TIMESCALE_CUR_QUERY, kvp, numParams, NULL);
-            if (status != PVMFSuccess || !kvp || numParams != 1)
-            {
-                LOG_DEBUG((0, "PVMp4FFComposerPort::GetInputParametersFromPeer: Sampling rate info not available. Use default"));
-                iFormatSpecificConfig.iTimescale = PVMF_MP4FFCN_VIDEO_TIMESCALE;
-            }
-            else
-            {
-                iFormatSpecificConfig.iTimescale = kvp[0].value.uint32_value;
-                aConfig->releaseParameters(NULL, kvp, numParams);
-            }
-            kvp = NULL;
-            numParams = 0;
-            break;
-        case PVMF_3GPP_TIMEDTEXT:
-            // Get size (in pixels) of Text data from peer
-            status = aConfig->getParametersSync(NULL, TEXT_OUTPUT_WIDTH_CUR_QUERY, kvp, numParams, NULL);
-            if (status != PVMFSuccess || numParams != 1)
-            {
-                LOG_DEBUG((0, "PVMp4FFComposerPort::GetInputParametersFromPeer: Frame width not available. Use default"));
-                iFormatSpecificConfig.iWidth = PVMF_MP4FFCN_TEXT_FRAME_WIDTH;
-            }
-            else
-            {
-                iFormatSpecificConfig.iWidth = kvp[0].value.uint32_value;
-                aConfig->releaseParameters(NULL, kvp, numParams);
-            }
-            kvp = NULL;
-            numParams = 0;
-
-            status = aConfig->getParametersSync(NULL, TEXT_OUTPUT_HEIGHT_CUR_QUERY, kvp, numParams, NULL);
-            if (status != PVMFSuccess || numParams != 1)
-            {
-                LOG_DEBUG((0, "PVMp4FFComposerPort::GetInputParametersFromPeer: Frame height info not available. Use default"));
-                iFormatSpecificConfig.iHeight = PVMF_MP4FFCN_TEXT_FRAME_HEIGHT;
-            }
-            else
-            {
-                iFormatSpecificConfig.iHeight = kvp[0].value.uint32_value;
-                aConfig->releaseParameters(NULL, kvp, numParams);
-            }
-            kvp = NULL;
-            numParams = 0;
-
-            status = aConfig->getParametersSync(NULL, OUTPUT_TIMESCALE_CUR_QUERY, kvp, numParams, NULL);
-            if (status != PVMFSuccess || !kvp || numParams != 1)
-            {
-                LOG_DEBUG((0, "PVMp4FFComposerPort::GetInputParametersFromPeer: Sampling rate info not available. Use default"));
-                iFormatSpecificConfig.iTimescale = PVMF_MP4FFCN_TEXT_TIMESCALE;
-            }
-            else
-            {
-                iFormatSpecificConfig.iTimescale = kvp[0].value.uint32_value;
-                aConfig->releaseParameters(NULL, kvp, numParams);
-            }
-            kvp = NULL;
-            numParams = 0;
-            break;
-
-
-        default:
-            return PVMFErrNotSupported;
+        status = aConfig->getParametersSync(NULL, (PvmiKeyType)OUTPUT_TIMESCALE_CUR_QUERY, kvp, numParams, NULL);
+        if (status != PVMFSuccess || !kvp || numParams != 1)
+        {
+            LOG_DEBUG((0, "PVMp4FFComposerPort::GetInputParametersFromPeer: Sampling rate info not available. Use default"));
+            iFormatSpecificConfig.iTimescale = PVMF_MP4FFCN_TEXT_TIMESCALE;
+        }
+        else
+        {
+            iFormatSpecificConfig.iTimescale = kvp[0].value.uint32_value;
+            aConfig->releaseParameters(NULL, kvp, numParams);
+        }
+        kvp = NULL;
+        numParams = 0;
+    }
+    else
+    {
+        return PVMFErrNotSupported;
     }
 
     return PVMFSuccess;

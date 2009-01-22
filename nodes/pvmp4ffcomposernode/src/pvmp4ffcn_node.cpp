@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,8 +39,19 @@
 #define LOG_STACK_TRACE(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, m);
 #define LOG_DEBUG(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, m);
 #define LOG_ERR(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iLogger,PVLOGMSG_ERR,m);
+#define LOGDATATRAFFIC(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iDataPathLogger,PVLOGMSG_INFO,m);
+
+#ifdef _TEST_AE_ERROR_HANDLING
+const uint32 FAIL_NODE_CMD_START = 2;
+const uint32 FAIL_NODE_CMD_STOP = 3;
+const uint32 FAIL_NODE_CMD_FLUSH = 4;
+const uint32 FAIL_NODE_CMD_PAUSE = 5;
+const uint32 FAIL_NODE_CMD_RELEASE_PORT = 7;
+#endif
 
 #define SLASH '/'
+
+#define LANG_CODE_SIZE 3
 
 // Define entry point for this DLL
 OSCL_DLL_ENTRY_POINT_DEFAULT()
@@ -82,6 +93,7 @@ PVMp4FFComposerNode::PVMp4FFComposerNode(int32 aPriority)
         , iAuthoringMode(PVMP4FF_3GPP_DOWNLOAD_MODE)
         , iPresentationTimescale(1000)
         , iMovieFragmentDuration(2000)
+        , iRecordingYear(0)
         , iClockConverter(8000)
         , iExtensionRefCount(0)
         , iRealTimeTS(false)
@@ -103,9 +115,11 @@ PVMp4FFComposerNode::PVMp4FFComposerNode(int32 aPriority)
         , iTrackId_H264(0)
         , iTrackId_Text(0)
         , iSyncSample(0)
+        , iformat_h264(PVMF_MIME_FORMAT_UNKNOWN)
+        , iformat_text(PVMF_MIME_FORMAT_UNKNOWN)
         , iNodeEndOfDataReached(false)
-        , iformat_h264(PVMF_FORMAT_UNKNOWN)
-        , iformat_text(PVMF_FORMAT_UNKNOWN)
+        , iSampleInTrack(false)
+        , iFileRendered(false)
 {
     iInterfaceState = EPVMFNodeCreated;
     iNum_PPS_Set = 0;
@@ -119,11 +133,13 @@ PVMp4FFComposerNode::PVMp4FFComposerNode(int32 aPriority)
     iNumSamplesAdded = 0;
     oDiagnosticsLogged = false;
     iDiagnosticsLogger = PVLogger::GetLoggerObject("pvauthordiagnostics.composer.mp4");
-
+    // Statistics
+    for (uint32 i = 0; i < 3; i++)
+        oscl_memset(&(iStats[i]), 0, sizeof(PVMp4FFCNStats));
 #endif
 
     iLogger = PVLogger::GetLoggerObject("PVMp4FFComposerNode");
-
+    iDataPathLogger = PVLogger::GetLoggerObject("datapath.sinknode.mp4composer");
     int32 err;
     OSCL_TRY(err,
              //Create the input command queue.  Use a reserve to avoid lots of
@@ -148,10 +164,19 @@ PVMp4FFComposerNode::PVMp4FFComposerNode(int32 aPriority)
                          OSCL_LEAVE(err);
                         );
 
-#if PROFILING_ON
-    // Statistics
-    for (uint32 i = 0; i < 3; i++)
-        oscl_memset(&(iStats[i]), 0, sizeof(PVMp4FFCNStats));
+#ifdef _TEST_AE_ERROR_HANDLING
+    iErrorHandlingAddMemFrag = false;
+    iErrorHandlingAddTrack = false;
+    iErrorCreateComposer = false;
+    iErrorRenderToFile = false;
+    iErrorAddTrack = PVMF_MIME_FORMAT_UNKNOWN;
+    iErrorNodeCmd = 0;
+    iTestFileSize = 0;
+    iTestTimeStamp = 0;
+    iErrorAddSample = 0;
+    iFileSize = 0;
+    iFileDuration = 0;
+    iErrorDataPathStall = 0;
 #endif
 }
 
@@ -167,6 +192,22 @@ PVMp4FFComposerNode::~PVMp4FFComposerNode()
     if (iMpeg4File)
     {
         PVA_FF_IMpeg4File::DestroyMP4FileObject(iMpeg4File);
+
+        if (!iFileRendered)
+        {
+            iFs.Connect();
+            iFs.Oscl_DeleteFile(iFileName.get_cstr());
+            iFs.Close();
+        }
+    }
+    for (uint32 i = 0; i < iKeyWordVector.size() ; i++)
+    {
+        if (iKeyWordVector[i] != NULL)
+        {
+            OSCL_DELETE(iKeyWordVector[i]);
+            iKeyWordVector[i] = NULL;
+        }
+
     }
 
     if (pConfig != NULL)
@@ -175,6 +216,20 @@ PVMp4FFComposerNode::~PVMp4FFComposerNode()
         iConfigSize = 0;
     }
 
+    if (iLocationInfo._location_name != NULL)
+    {
+        OSCL_FREE(iLocationInfo._location_name);
+    }
+
+    if (iLocationInfo._astronomical_body != NULL)
+    {
+        OSCL_FREE(iLocationInfo._astronomical_body);
+    }
+
+    if (iLocationInfo._additional_notes != NULL)
+    {
+        OSCL_FREE(iLocationInfo._additional_notes);
+    }
     // Cleanup allocated ports
     while (!iInPorts.empty())
     {
@@ -200,7 +255,7 @@ PVMp4FFComposerNode::~PVMp4FFComposerNode()
     Cancel();
     if (iInterfaceState != EPVMFNodeCreated)
         iInterfaceState = EPVMFNodeIdle;
-    ThreadLogoff();
+
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -228,6 +283,7 @@ OSCL_EXPORT_REF PVMFStatus PVMp4FFComposerNode::ThreadLogoff()
             if (IsAdded())
                 RemoveFromScheduler();
             iLogger = NULL;
+            iDataPathLogger = NULL;
             SetState(EPVMFNodeCreated);
             return PVMFSuccess;
 
@@ -243,11 +299,12 @@ OSCL_EXPORT_REF PVMFStatus PVMp4FFComposerNode::GetCapability(PVMFNodeCapability
     aNodeCapability.iCanSupportMultipleOutputPorts = false;
     aNodeCapability.iHasMaxNumberOfPorts = true;
     aNodeCapability.iMaxNumberOfPorts = PVMF_MP4FFCN_MAX_INPUT_PORT + PVMF_MP4FFCN_MAX_OUTPUT_PORT;
-    aNodeCapability.iInputFormatCapability.push_back(PVMF_M4V);
-    aNodeCapability.iInputFormatCapability.push_back(PVMF_H264_MP4);
-    aNodeCapability.iInputFormatCapability.push_back(PVMF_H263);
-    aNodeCapability.iInputFormatCapability.push_back(PVMF_AMR_IETF);
-    aNodeCapability.iInputFormatCapability.push_back(PVMF_3GPP_TIMEDTEXT);
+    aNodeCapability.iInputFormatCapability.push_back(PVMF_MIME_M4V);
+    aNodeCapability.iInputFormatCapability.push_back(PVMF_MIME_H264_VIDEO_MP4);
+    aNodeCapability.iInputFormatCapability.push_back(PVMF_MIME_H2631998);
+    aNodeCapability.iInputFormatCapability.push_back(PVMF_MIME_H2632000);
+    aNodeCapability.iInputFormatCapability.push_back(PVMF_MIME_AMR_IETF);
+    aNodeCapability.iInputFormatCapability.push_back(PVMF_MIME_3GPP_TIMEDTEXT);
 
     return PVMFSuccess;
 }
@@ -439,6 +496,17 @@ OSCL_EXPORT_REF bool PVMp4FFComposerNode::queryInterface(const PVUuid& uuid, PVI
 ////////////////////////////////////////////////////////////////////////////
 //            PVMp4FFCNClipConfigInterface routines
 ////////////////////////////////////////////////////////////////////////////
+OSCL_EXPORT_REF uint16 PVMp4FFComposerNode::ConvertLangCode(const OSCL_String & aLang)
+{
+    int i = 0;
+    char lang[LANG_CODE_SIZE] = {0};
+    oscl_strncpy(lang, aLang.get_cstr(), LANG_CODE_SIZE);
+
+    uint16 lang_code = ((((uint16)lang[i] - 0x60) << 10) | (((uint16)lang[i+1] - 0x60) << 5) | ((uint16)lang[i+2] - 0x60));
+
+    return lang_code;
+}
+/////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF PVMFStatus PVMp4FFComposerNode::SetOutputFileName(const OSCL_wString& aFileName)
 {
     if (iInterfaceState != EPVMFNodeIdle && iInterfaceState != EPVMFNodeInitialized)
@@ -471,7 +539,7 @@ OSCL_EXPORT_REF PVMFStatus PVMp4FFComposerNode::SetPresentationTimescale(uint32 
 }
 
 ////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFStatus PVMp4FFComposerNode::SetVersion(const OSCL_wString& aVersion, uint16 aLangCode)
+OSCL_EXPORT_REF PVMFStatus PVMp4FFComposerNode::SetVersion(const OSCL_wString& aVersion, const OSCL_String& aLangCode)
 {
     if (iInterfaceState != EPVMFNodeIdle &&
             iInterfaceState != EPVMFNodeInitialized &&
@@ -479,12 +547,12 @@ OSCL_EXPORT_REF PVMFStatus PVMp4FFComposerNode::SetVersion(const OSCL_wString& a
         return PVMFErrInvalidState;
 
     iVersion.iDataString = aVersion;
-    iVersion.iLangCode = aLangCode;
+    iVersion.iLangCode = ConvertLangCode(aLangCode);
     return PVMFSuccess;
 }
 
 ////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFStatus PVMp4FFComposerNode::SetTitle(const OSCL_wString& aTitle, uint16 aLangCode)
+OSCL_EXPORT_REF PVMFStatus PVMp4FFComposerNode::SetTitle(const OSCL_wString& aTitle, const OSCL_String& aLangCode)
 {
     if (iInterfaceState != EPVMFNodeIdle &&
             iInterfaceState != EPVMFNodeInitialized &&
@@ -492,12 +560,12 @@ OSCL_EXPORT_REF PVMFStatus PVMp4FFComposerNode::SetTitle(const OSCL_wString& aTi
         return PVMFErrInvalidState;
 
     iTitle.iDataString = aTitle;
-    iTitle.iLangCode = aLangCode;
+    iTitle.iLangCode = ConvertLangCode(aLangCode);
     return PVMFSuccess;
 }
 
 ////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFStatus PVMp4FFComposerNode::SetAuthor(const OSCL_wString& aAuthor, uint16 aLangCode)
+OSCL_EXPORT_REF PVMFStatus PVMp4FFComposerNode::SetAuthor(const OSCL_wString& aAuthor, const OSCL_String& aLangCode)
 {
     if (iInterfaceState != EPVMFNodeIdle &&
             iInterfaceState != EPVMFNodeInitialized &&
@@ -505,12 +573,12 @@ OSCL_EXPORT_REF PVMFStatus PVMp4FFComposerNode::SetAuthor(const OSCL_wString& aA
         return PVMFErrInvalidState;
 
     iAuthor.iDataString = aAuthor;
-    iAuthor.iLangCode = aLangCode;
+    iAuthor.iLangCode = ConvertLangCode(aLangCode);
     return PVMFSuccess;
 }
 
 ////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFStatus PVMp4FFComposerNode::SetCopyright(const OSCL_wString& aCopyright, uint16 aLangCode)
+OSCL_EXPORT_REF PVMFStatus PVMp4FFComposerNode::SetCopyright(const OSCL_wString& aCopyright, const OSCL_String& aLangCode)
 {
     if (iInterfaceState != EPVMFNodeIdle &&
             iInterfaceState != EPVMFNodeInitialized &&
@@ -518,12 +586,12 @@ OSCL_EXPORT_REF PVMFStatus PVMp4FFComposerNode::SetCopyright(const OSCL_wString&
         return PVMFErrInvalidState;
 
     iCopyright.iDataString = aCopyright;
-    iCopyright.iLangCode = aLangCode;
+    iCopyright.iLangCode = ConvertLangCode(aLangCode);
     return PVMFSuccess;
 }
 
 ////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFStatus PVMp4FFComposerNode::SetDescription(const OSCL_wString& aDescription, uint16 aLangCode)
+OSCL_EXPORT_REF PVMFStatus PVMp4FFComposerNode::SetDescription(const OSCL_wString& aDescription, const OSCL_String& aLangCode)
 {
     if (iInterfaceState != EPVMFNodeIdle &&
             iInterfaceState != EPVMFNodeInitialized &&
@@ -531,12 +599,12 @@ OSCL_EXPORT_REF PVMFStatus PVMp4FFComposerNode::SetDescription(const OSCL_wStrin
         return PVMFErrInvalidState;
 
     iDescription.iDataString = aDescription;
-    iDescription.iLangCode = aLangCode;
+    iDescription.iLangCode = ConvertLangCode(aLangCode);
     return PVMFSuccess;
 }
 
 ////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFStatus PVMp4FFComposerNode::SetRating(const OSCL_wString& aRating, uint16 aLangCode)
+OSCL_EXPORT_REF PVMFStatus PVMp4FFComposerNode::SetRating(const OSCL_wString& aRating, const OSCL_String& aLangCode)
 {
     if (iInterfaceState != EPVMFNodeIdle &&
             iInterfaceState != EPVMFNodeInitialized &&
@@ -544,7 +612,7 @@ OSCL_EXPORT_REF PVMFStatus PVMp4FFComposerNode::SetRating(const OSCL_wString& aR
         return PVMFErrInvalidState;
 
     iRating.iDataString = aRating;
-    iRating.iLangCode = aLangCode;
+    iRating.iLangCode = ConvertLangCode(aLangCode);
     return PVMFSuccess;
 }
 
@@ -569,6 +637,126 @@ PVMFStatus PVMp4FFComposerNode::SetRealTimeAuthoring(const bool aRealTime)
     iRealTimeTS = aRealTime;
     return PVMFSuccess;
 }
+
+////////////////////////////////////////////////////////////////////////////
+OSCL_EXPORT_REF PVMFStatus PVMp4FFComposerNode::SetAlbumInfo(const OSCL_wString& aAlbumTitle, const OSCL_String& aLangCode)
+{
+    if (iInterfaceState != EPVMFNodeIdle &&
+            iInterfaceState != EPVMFNodeInitialized &&
+            iInterfaceState != EPVMFNodePrepared)
+        return PVMFErrInvalidState;
+
+    iAlbumTitle.iDataString = aAlbumTitle;
+    iAlbumTitle.iLangCode = ConvertLangCode(aLangCode);
+    return PVMFSuccess;
+}
+
+
+////////////////////////////////////////////////////////////////////////////
+OSCL_EXPORT_REF PVMFStatus PVMp4FFComposerNode::SetRecordingYear(uint16 aRecordingYear)
+{
+    if (iInterfaceState != EPVMFNodeIdle &&
+            iInterfaceState != EPVMFNodeInitialized &&
+            iInterfaceState != EPVMFNodePrepared)
+        return PVMFErrInvalidState;
+
+    iRecordingYear = aRecordingYear;
+    return PVMFSuccess;
+}
+
+////////////////////////////////////////////////////////////////////////////
+OSCL_EXPORT_REF PVMFStatus PVMp4FFComposerNode::SetPerformer(const OSCL_wString& aPerformer, const OSCL_String& aLangCode)
+{
+    if (iInterfaceState != EPVMFNodeIdle &&
+            iInterfaceState != EPVMFNodeInitialized &&
+            iInterfaceState != EPVMFNodePrepared)
+        return PVMFErrInvalidState;
+
+    iPerformer.iDataString = aPerformer;
+    iPerformer.iLangCode = ConvertLangCode(aLangCode);
+    return PVMFSuccess;
+}
+
+////////////////////////////////////////////////////////////////////////////
+OSCL_EXPORT_REF PVMFStatus PVMp4FFComposerNode::SetGenre(const OSCL_wString& aGenre, const OSCL_String& aLangCode)
+{
+    if (iInterfaceState != EPVMFNodeIdle &&
+            iInterfaceState != EPVMFNodeInitialized &&
+            iInterfaceState != EPVMFNodePrepared)
+        return PVMFErrInvalidState;
+
+    iGenre.iDataString = aGenre;
+    iGenre.iLangCode = ConvertLangCode(aLangCode);
+    return PVMFSuccess;
+}
+////////////////////////////////////////////////////////////////////////////
+OSCL_EXPORT_REF PVMFStatus PVMp4FFComposerNode::SetClassification(const OSCL_wString& aClassificationInfo, uint32 aClassificationEntity, uint16 aClassificationTable, const OSCL_String& aLangCode)
+{
+    if (iInterfaceState != EPVMFNodeIdle &&
+            iInterfaceState != EPVMFNodeInitialized &&
+            iInterfaceState != EPVMFNodePrepared)
+        return PVMFErrInvalidState;
+
+    iClassification.iDataString = aClassificationInfo;
+    iClassification.iClassificationEntity = aClassificationEntity;
+    iClassification.iClassificationTable = aClassificationTable;
+    iClassification.iLangCode = ConvertLangCode(aLangCode);
+    return PVMFSuccess;
+}
+////////////////////////////////////////////////////////////////////////////
+OSCL_EXPORT_REF PVMFStatus PVMp4FFComposerNode::SetKeyWord(const OSCL_wString& aKeyWordInfo, const OSCL_String& aLangCode)
+{
+    if (iInterfaceState != EPVMFNodeIdle &&
+            iInterfaceState != EPVMFNodeInitialized &&
+            iInterfaceState != EPVMFNodePrepared)
+        return PVMFErrInvalidState;
+
+    PVMP4FFCN_KeyWord *KeyWord = NULL;
+
+    uint16 langCode = ConvertLangCode(aLangCode);
+    KeyWord = OSCL_NEW(PVMP4FFCN_KeyWord, (aKeyWordInfo, aKeyWordInfo.get_size(), langCode));
+
+    iKeyWordVector.push_back(KeyWord);
+
+
+    return PVMFSuccess;
+}
+
+////////////////////////////////////////////////////////////////////////////
+OSCL_EXPORT_REF PVMFStatus PVMp4FFComposerNode::SetLocationInfo(PvmfAssetInfo3GPPLocationStruct& aLocation_info)
+{
+    if (iInterfaceState != EPVMFNodeIdle &&
+            iInterfaceState != EPVMFNodeInitialized &&
+            iInterfaceState != EPVMFNodePrepared)
+        return PVMFErrInvalidState;
+
+    iLocationInfo._location_name = NULL;
+    uint32 size = oscl_strlen(aLocation_info._location_name);
+    iLocationInfo._location_name = (oscl_wchar*)oscl_malloc(sizeof(oscl_wchar) * size + 10);
+    oscl_strncpy(iLocationInfo._location_name, aLocation_info._location_name, size);
+    iLocationInfo._location_name[size+1] = 0;
+
+    iLocationInfo._astronomical_body = NULL;
+    size = oscl_strlen(aLocation_info._astronomical_body);
+    iLocationInfo._astronomical_body = (oscl_wchar*)oscl_malloc(sizeof(oscl_wchar) * size + 10);
+    oscl_strncpy(iLocationInfo._astronomical_body, aLocation_info._astronomical_body, size);
+    iLocationInfo._astronomical_body[size+1] = 0;
+
+    iLocationInfo._additional_notes = NULL;
+    size = oscl_strlen(aLocation_info._additional_notes);
+    iLocationInfo._additional_notes = (oscl_wchar*)oscl_malloc(sizeof(oscl_wchar) * size + 10);
+    oscl_strncpy(iLocationInfo._additional_notes, aLocation_info._additional_notes, size);
+    iLocationInfo._additional_notes[size+1] = 0;
+
+    iLocationInfo._role = aLocation_info._role;
+    iLocationInfo._longitude = aLocation_info._longitude;
+    iLocationInfo._latitude = aLocation_info._latitude;
+    iLocationInfo._altitude = aLocation_info._altitude;
+    iLocationInfo._langCode = ConvertLangCode(aLocation_info.Lang_code);
+
+    return PVMFSuccess;
+}
+
 
 ////////////////////////////////////////////////////////////////////////////
 //                PVMp4FFCNTrackConfigInterface routines
@@ -935,19 +1123,20 @@ void PVMp4FFComposerNode::DoRequestPort(PVMp4FFCNCmd& aCmd)
     // if format was provided in mimestring, set it now.
     if (portconfig)
     {
-        PVMFFormatType format = GetFormatIndex(portconfig->get_str());
-        switch (format)
+        PVMFFormatType format = portconfig->get_str();
+        if (format == PVMF_MIME_3GPP_TIMEDTEXT ||
+                format == PVMF_MIME_H264_VIDEO_MP4 ||
+                format == PVMF_MIME_M4V ||
+                format == PVMF_MIME_H2631998 ||
+                format == PVMF_MIME_H2632000 ||
+                format == PVMF_MIME_AMR_IETF)
         {
-            case PVMF_3GPP_TIMEDTEXT:
-            case PVMF_H264_MP4:
-            case PVMF_M4V:
-            case PVMF_H263:
-            case PVMF_AMR_IETF:
-                port->SetFormat(format);
-                break;
-            default:
-                CommandComplete(iCmdQueue, aCmd, PVMFErrNotSupported);
-                return;
+            port->SetFormat(format);
+        }
+        else
+        {
+            CommandComplete(iCmdQueue, aCmd, PVMFErrNotSupported);
+            return;
         }
     }
 
@@ -967,17 +1156,33 @@ void PVMp4FFComposerNode::DoRequestPort(PVMp4FFCNCmd& aCmd)
 void PVMp4FFComposerNode::DoReleasePort(PVMp4FFCNCmd& aCmd)
 {
     //Find the port in the port vector
-    PVMp4FFComposerPort* port;
+    PVMFPortInterface* p = NULL;
 
     for (uint32 i = 0; i < iInPorts.size(); i++)
     {
-        aCmd.Parse((PVMFPortInterface*&)port);
+        aCmd.Parse(p);
+
+        PVMp4FFComposerPort* port = (PVMp4FFComposerPort*)p;
+
         PVMp4FFComposerPort** portPtr = iInPorts.FindByValue(port);
         if (portPtr)
         {
             //delete the port.
             iInPorts.Erase(portPtr);
+
+#ifdef _TEST_AE_ERROR_HANDLING
+            if (FAIL_NODE_CMD_RELEASE_PORT == iErrorNodeCmd)
+            {
+                CommandComplete(iCmdQueue, aCmd, PVMFFailure);
+
+            }
+            else
+            {
+                CommandComplete(iCmdQueue, aCmd, PVMFSuccess);
+            }
+#else
             CommandComplete(iCmdQueue, aCmd, PVMFSuccess);
+#endif
 
         }
         else
@@ -1036,7 +1241,12 @@ void PVMp4FFComposerNode::DoStart(PVMp4FFCNCmd& aCmd)
 {
     PVMFStatus status = PVMFSuccess;
     uint32 i = 0;
-
+#ifdef _TEST_AE_ERROR_HANDLING
+    if (FAIL_NODE_CMD_START == iErrorNodeCmd)
+    {
+        iInterfaceState = EPVMFNodeError;
+    }
+#endif
     switch (iInterfaceState)
     {
         case EPVMFNodePrepared:
@@ -1065,24 +1275,26 @@ void PVMp4FFComposerNode::DoStart(PVMp4FFCNCmd& aCmd)
             iFileType = 0;
             for (i = 0; i < iInPorts.size(); i++)
             {
-                switch (iInPorts[i]->GetFormat())
+                if (iInPorts[i]->GetFormat() == PVMF_MIME_H264_VIDEO_MP4 ||
+                        iInPorts[i]->GetFormat() == PVMF_MIME_M4V ||
+                        iInPorts[i]->GetFormat() == PVMF_MIME_H2631998 ||
+                        iInPorts[i]->GetFormat() == PVMF_MIME_H2632000)
                 {
-                    case PVMF_H264_MP4:
-                    case PVMF_M4V:
-                    case PVMF_H263:
-                        iFileType |= FILE_TYPE_VIDEO;
-                        break;
-
-                    case PVMF_AMR_IETF:
-                        iFileType |= FILE_TYPE_AUDIO;
-                        break;
-                    case PVMF_3GPP_TIMEDTEXT:
-                        iFileType |= FILE_TYPE_TIMED_TEXT;
-                        break;
-                    default:
-                        PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
-                                        (0, "PVMp4FFComposerNode::DoStart: Error - Unsupported format"));
-                        return;
+                    iFileType |= FILE_TYPE_VIDEO;
+                }
+                else if (iInPorts[i]->GetFormat() == PVMF_MIME_AMR_IETF)
+                {
+                    iFileType |= FILE_TYPE_AUDIO;
+                }
+                else if (iInPorts[i]->GetFormat() == PVMF_MIME_3GPP_TIMEDTEXT)
+                {
+                    iFileType |= FILE_TYPE_TIMED_TEXT;
+                }
+                else
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
+                                    (0, "PVMp4FFComposerNode::DoStart: Error - Unsupported format"));
+                    return;
                 }
             }
 
@@ -1096,9 +1308,26 @@ void PVMp4FFComposerNode::DoStart(PVMp4FFCNCmd& aCmd)
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                             (0, "PVMp4FFComposerNode::DoStart: Calling PVA_FF_IMpeg4File::createMP4File(%d,0x%x,%d)",
                              iFileType, &iFs, iAuthoringMode));
+#ifdef _TEST_AE_ERROR_HANDLING //test case to fail mp4 file parser
+            if (iErrorCreateComposer)
+            {
+                //to fail createMP4File()
+                OSCL_wHeapString<OsclMemAllocator> ErrFileName;
+
+                iMpeg4File = PVA_FF_IMpeg4File::createMP4File(iFileType, iOutputPath, iPostfix,
+                             (void*) & iFs, iAuthoringMode, ErrFileName, iCacheSize);
+
+            }
+            else
+            {
+                iMpeg4File = PVA_FF_IMpeg4File::createMP4File(iFileType, iOutputPath, iPostfix,
+                             (void*) & iFs, iAuthoringMode, iFileName, iCacheSize);
+
+            }
+#else
             iMpeg4File = PVA_FF_IMpeg4File::createMP4File(iFileType, iOutputPath, iPostfix,
                          (void*) & iFs, iAuthoringMode, iFileName, iCacheSize);
-
+#endif
             if (!iMpeg4File)
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
@@ -1116,7 +1345,19 @@ void PVMp4FFComposerNode::DoStart(PVMp4FFCNCmd& aCmd)
             iMpeg4File->setRating(iRating.iDataString, iRating.iLangCode);
             iMpeg4File->setCreationDate(iCreationDate);
             iMpeg4File->setMovieFragmentDuration(iMovieFragmentDuration);
+            iMpeg4File->setAlbumInfo(iAlbumTitle.iDataString, iAlbumTitle.iLangCode);
+            iMpeg4File->setRecordingYear(iRecordingYear);
 
+            iMpeg4File->setPerformer(iPerformer.iDataString, iPerformer.iLangCode);
+            iMpeg4File->setGenre(iGenre.iDataString, iGenre.iLangCode);
+            iMpeg4File->setClassification(iClassification.iDataString, iClassification.iClassificationEntity, iClassification.iClassificationTable, iClassification.iLangCode);
+
+            for (i = 0; i < iKeyWordVector.size() ; i++)
+            {
+                iMpeg4File->setKeyWord(iKeyWordVector[i]->iKeyWordSize, iKeyWordVector[i]->iData_String, iKeyWordVector[i]->iLang_Code);
+            }
+
+            iMpeg4File->setLocationInfo(&iLocationInfo);
             for (i = 0; i < iInPorts.size(); i++)
             {
                 status = AddTrack(iInPorts[i]);
@@ -1178,41 +1419,55 @@ PVMFStatus PVMp4FFComposerNode::AddTrack(PVMp4FFComposerPort *aPort)
         return PVMFFailure;
     }
 
-    switch (aPort->GetFormat())
+    if (aPort->GetFormat() == PVMF_MIME_3GPP_TIMEDTEXT)
     {
-        case PVMF_3GPP_TIMEDTEXT:
-            codecType = CODEC_TYPE_TIMED_TEXT;
-            mediaType = MEDIA_TYPE_TEXT;
-            break;
-        case PVMF_H264_MP4:
-            codecType = CODEC_TYPE_AVC_VIDEO;
-            mediaType = MEDIA_TYPE_VISUAL;
-            break;
-        case PVMF_M4V:
-            codecType = CODEC_TYPE_MPEG4_VIDEO;
-            mediaType = MEDIA_TYPE_VISUAL;
-            break;
-
-        case PVMF_H263:
-            codecType = CODEC_TYPE_BASELINE_H263_VIDEO;
-            mediaType = MEDIA_TYPE_VISUAL;
-            break;
-
-        case PVMF_AMR_IETF:
-            codecType = CODEC_TYPE_AMR_AUDIO;
-            mediaType = MEDIA_TYPE_AUDIO;
-            break;
-
-        default:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
-                            (0, "PVMp4FFComposerNode::AddTrack: Error - Unsupported format"));
-            return PVMFFailure;
+        codecType = CODEC_TYPE_TIMED_TEXT;
+        mediaType = MEDIA_TYPE_TEXT;
+    }
+    else if (aPort->GetFormat() == PVMF_MIME_H264_VIDEO_MP4)
+    {
+        codecType = CODEC_TYPE_AVC_VIDEO;
+        mediaType = MEDIA_TYPE_VISUAL;
+    }
+    else if (aPort->GetFormat() == PVMF_MIME_M4V)
+    {
+        codecType = CODEC_TYPE_MPEG4_VIDEO;
+        mediaType = MEDIA_TYPE_VISUAL;
+    }
+    else if (aPort->GetFormat() == PVMF_MIME_H2631998 ||
+             aPort->GetFormat() == PVMF_MIME_H2632000)
+    {
+        codecType = CODEC_TYPE_BASELINE_H263_VIDEO;
+        mediaType = MEDIA_TYPE_VISUAL;
+    }
+    else if (aPort->GetFormat() == PVMF_MIME_AMR_IETF)
+    {
+        codecType = CODEC_TYPE_AMR_AUDIO;
+        mediaType = MEDIA_TYPE_AUDIO;
+    }
+    else
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
+                        (0, "PVMp4FFComposerNode::AddTrack: Error - Unsupported format"));
+        return PVMFFailure;
     }
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                     (0, "PVMp4FFComposerNode::AddTrack: Calling PVA_FF_IMpeg4File::addTrack(0x%x,0x%x)",
                      mediaType, codecType));
+#ifdef _TEST_AE_ERROR_HANDLING
+    if (aPort->GetFormat() == iErrorAddTrack)
+    {
+        return PVMFFailure;
+    }
+#endif
     trackId = iMpeg4File->addTrack(mediaType, codecType);
+#ifdef _TEST_AE_ERROR_HANDLING
+    if (iErrorHandlingAddTrack)
+    {
+        trackId = 0;
+    }
+#endif
     if (trackId == 0)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
@@ -1276,7 +1531,12 @@ void PVMp4FFComposerNode::DoStop(PVMp4FFCNCmd& aCmd)
         LogDiagnostics();
     }
 #endif
-
+#ifdef _TEST_AE_ERROR_HANDLING
+    if (FAIL_NODE_CMD_STOP == iErrorNodeCmd)
+    {
+        iInterfaceState = EPVMFNodeError;
+    }
+#endif
     switch (iInterfaceState)
     {
         case EPVMFNodeStarted:
@@ -1285,7 +1545,12 @@ void PVMp4FFComposerNode::DoStop(PVMp4FFCNCmd& aCmd)
             if (!iNodeEndOfDataReached)
             {
                 WriteDecoderSpecificInfo();
-                status = RenderToFile();
+                if (iSampleInTrack)
+                {
+                    status = RenderToFile();
+                }
+
+                iSampleInTrack = false;
             }
 
             iNodeEndOfDataReached = false;
@@ -1293,8 +1558,8 @@ void PVMp4FFComposerNode::DoStop(PVMp4FFCNCmd& aCmd)
             {
                 iInPorts[ii]->iEndOfDataReached = false;
             }
-
         }
+        SetState(EPVMFNodePrepared);
         break;
         case EPVMFNodePrepared:
             status = PVMFSuccess;
@@ -1315,7 +1580,7 @@ void PVMp4FFComposerNode::WriteDecoderSpecificInfo()
     iConfigSize = 0;
     int32 trackId;
 
-    if (iformat_h264 == PVMF_H264_MP4)
+    if (iformat_h264 == PVMF_MIME_H264_VIDEO_MP4)
     {
         trackId = iTrackId_H264;
 
@@ -1359,7 +1624,7 @@ void PVMp4FFComposerNode::WriteDecoderSpecificInfo()
         iMpeg4File->setDecoderSpecificInfo(pConfig, iConfigSize, trackId);
     }
 
-    if (iformat_text == PVMF_3GPP_TIMEDTEXT)
+    if (iformat_text == PVMF_MIME_3GPP_TIMEDTEXT)
     {
         for (uint32 ii = 0;ii < textdecodervector.size();ii++)
         {
@@ -1378,6 +1643,16 @@ PVMFStatus PVMp4FFComposerNode::RenderToFile()
     uint32 i;
     for (i = 0; i < iInPorts.size(); i++)
         iInPorts[i]->ClearMsgQueues();
+#ifdef _TEST_AE_ERROR_HANDLING //to fail renderToFile
+    if (iErrorRenderToFile)
+    {
+        if (iMpeg4File)
+        {
+            PVA_FF_IMpeg4File::DestroyMP4FileObject(iMpeg4File);
+            iMpeg4File = NULL;
+        }
+    }
+#endif
 
     if (!iMpeg4File || !iMpeg4File->renderToFile(iFileName))
     {
@@ -1398,6 +1673,8 @@ PVMFStatus PVMp4FFComposerNode::RenderToFile()
             oscl_memset(&(iStats[i]), 0, sizeof(PVMp4FFCNStats));
         }
 #endif
+
+        LOGDATATRAFFIC((0, "PVMp4FFComposerNode::RenderToFile() Done"));
         // Delete file format library
         if (iMpeg4File)
         {
@@ -1410,7 +1687,10 @@ PVMFStatus PVMp4FFComposerNode::RenderToFile()
         status = PVMFSuccess;
     }
 
-
+    if (PVMFSuccess == status)
+    {
+        iFileRendered = true;
+    }
     return status;
 }
 
@@ -1418,7 +1698,12 @@ PVMFStatus PVMp4FFComposerNode::RenderToFile()
 void PVMp4FFComposerNode::DoFlush(PVMp4FFCNCmd& aCmd)
 {
     LOG_STACK_TRACE((0, "PVMp4FFComposerNode::DoFlush() iInterfaceState:%d", iInterfaceState));
-
+#ifdef _TEST_AE_ERROR_HANDLING
+    if (FAIL_NODE_CMD_FLUSH == iErrorNodeCmd)
+    {
+        iInterfaceState = EPVMFNodeError;
+    }
+#endif
     switch (iInterfaceState)
     {
         case EPVMFNodeStarted:
@@ -1443,11 +1728,10 @@ void PVMp4FFComposerNode::DoFlush(PVMp4FFCNCmd& aCmd)
 
             // Move the command from the input command queue to the current command, where
             // it will remain until the flush completes.
-            OSCL_TRY(err, iCurrentCmd.StoreL(aCmd););
-            OSCL_FIRST_CATCH_ANY(err,
-                                 CommandComplete(iCmdQueue, aCmd, PVMFErrNoMemory);
-                                 return;
-                                );
+            err = StoreCurrentCommand(iCurrentCmd, aCmd, iCmdQueue);
+            if (0 != err)
+                return;
+
             iCmdQueue.Erase(&aCmd);
 
             if (!msgPending)
@@ -1458,7 +1742,7 @@ void PVMp4FFComposerNode::DoFlush(PVMp4FFCNCmd& aCmd)
             break;
 
         default:
-
+            CommandComplete(iCmdQueue, aCmd, PVMFFailure);
             break;
     }
 }
@@ -1491,7 +1775,13 @@ void PVMp4FFComposerNode::FlushComplete()
     {
         WriteDecoderSpecificInfo();
         // Finalize output file
-        status = RenderToFile();
+        if (iSampleInTrack)
+        {
+            status = RenderToFile();
+        }
+
+        iSampleInTrack = false;
+
         if (status != PVMFSuccess)
             LOG_ERR((0, "PVMp4FFComposerNode::FlushComplete: Error - RenderToFile failed"));
     }
@@ -1521,6 +1811,13 @@ void PVMp4FFComposerNode::FlushComplete()
 void PVMp4FFComposerNode::DoPause(PVMp4FFCNCmd& aCmd)
 {
     PVMFStatus status = PVMFSuccess;
+
+#ifdef _TEST_AE_ERROR_HANDLING
+    if (FAIL_NODE_CMD_PAUSE == iErrorNodeCmd)
+    {
+        iInterfaceState = EPVMFNodeError;
+    }
+#endif
     switch (iInterfaceState)
     {
         case EPVMFNodeStarted:
@@ -1549,6 +1846,12 @@ void PVMp4FFComposerNode::DoReset(PVMp4FFCNCmd& aCmd)
 
     if (IsAdded())
     {
+        if (iSampleInTrack)
+        {
+            status = RenderToFile();
+            iSampleInTrack = false;
+        }
+
         //delete all ports and notify observer.
         while (!iInPorts.empty())
             iInPorts.Erase(&iInPorts.front());
@@ -1559,7 +1862,7 @@ void PVMp4FFComposerNode::DoReset(PVMp4FFCNCmd& aCmd)
 
         //logoff & go back to Created state.
         SetState(EPVMFNodeIdle);
-        status = ThreadLogoff();
+        status = PVMFSuccess;
     }
     else
     {
@@ -1656,6 +1959,9 @@ PVMFStatus PVMp4FFComposerNode::ProcessIncomingMsg(PVMFPortInterface* aPort)
             }
             if (msg->getFormatID() == PVMF_MEDIA_CMD_EOS_FORMAT_ID)
             {
+                LOGDATATRAFFIC((0, "PVMp4FFComposerNode::ProcessIncomingMsg: EOS Recvd - TrackID=%d, StreamID=%d, TS=%d, Mime=%s",
+                                port->GetTrackId(), msg->getStreamID(), msg->getTimestamp(), port->GetMimeType().get_cstr()));
+
                 port->iEndOfDataReached = true;
                 //check if EOS has been received on all connected ports.
                 uint32 ii = 0;
@@ -1672,7 +1978,11 @@ PVMFStatus PVMp4FFComposerNode::ProcessIncomingMsg(PVMFPortInterface* aPort)
                 {
                     //Close the file since EOS is received on every connected port
                     WriteDecoderSpecificInfo();
-                    status = RenderToFile();
+                    if (iSampleInTrack)
+                    {
+                        status = RenderToFile();
+                        iSampleInTrack = false;
+                    }
 
                     //report EOS info to engine
                     ReportInfoEvent(PVMF_COMPOSER_EOS_REACHED);
@@ -1685,7 +1995,7 @@ PVMFStatus PVMp4FFComposerNode::ProcessIncomingMsg(PVMFPortInterface* aPort)
             convertToPVMFMediaData(mediaDataPtr, msg);
 
             int32 trackId = port->GetTrackId();
-            if ((mediaDataPtr->getSeqNum() == 0) && (port->GetFormat() == PVMF_M4V))
+            if ((mediaDataPtr->getSeqNum() == 0) && (port->GetFormat() == PVMF_MIME_M4V))
             {
                 // Set VOL Header
                 OsclRefCounterMemFrag volHeader;
@@ -1700,12 +2010,12 @@ PVMFStatus PVMp4FFComposerNode::ProcessIncomingMsg(PVMFPortInterface* aPort)
                 iMpeg4File->setDecoderSpecificInfo((uint8*)volHeader.getMemFragPtr(),
                                                    (int32)volHeader.getMemFragSize(), trackId);
             }
-            if ((mediaDataPtr->getSeqNum() == 0) && (port->GetFormat() == PVMF_H264_MP4))
+            if ((mediaDataPtr->getSeqNum() == 0) && (port->GetFormat() == PVMF_MIME_H264_VIDEO_MP4))
             {
                 iTrackId_H264 = port->GetTrackId();
                 iformat_h264 = port->GetFormat();
             }
-            if (port->GetFormat() == PVMF_3GPP_TIMEDTEXT)
+            if (port->GetFormat() == PVMF_MIME_3GPP_TIMEDTEXT)
             {
                 iTrackId_Text = port->GetTrackId();
                 iformat_text = port->GetFormat();
@@ -1721,7 +2031,7 @@ PVMFStatus PVMp4FFComposerNode::ProcessIncomingMsg(PVMFPortInterface* aPort)
                 int32* pVal = (int32*)textconfiginfo.getMemFragPtr();
                 iText_sdIndex = *pVal;
             }
-            if ((port->GetFormat() == PVMF_AMR_IETF) && mediaDataPtr->getErrorsFlag())
+            if ((port->GetFormat() == PVMF_MIME_AMR_IETF) && mediaDataPtr->getErrorsFlag())
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_NOTICE,
                                 (0, "PVMp4FFComposerNode::ProcessIncomingMsg: Error flag set for AMR!"));
@@ -1732,7 +2042,11 @@ PVMFStatus PVMp4FFComposerNode::ProcessIncomingMsg(PVMFPortInterface* aPort)
             OsclRefCounterMemFrag memFrag;
             uint32 numFrags = mediaDataPtr->getNumFragments();
             uint32 timestamp = mediaDataPtr->getTimestamp();
-            iSyncSample = mediaDataPtr->getMarkerInfo(); //gives the I frame info
+            iSyncSample = 0;
+            if (mediaDataPtr->getMarkerInfo()&PVMF_MEDIA_DATA_MARKER_INFO_RANDOM_ACCESS_POINT_BIT)
+            {
+                iSyncSample = 1;
+            }
 
             Oscl_Vector<OsclMemoryFragment, OsclMemAllocator> pFrame; //vector to store the nals in the particular case of AVC
             for (uint32 i = 0; (i < numFrags) && status == PVMFSuccess; i++)
@@ -1775,8 +2089,8 @@ PVMFStatus PVMp4FFComposerNode::AddMemFragToTrack(Oscl_Vector<OsclMemoryFragment
         PVMp4FFComposerPort *aPort)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "PVMp4FFComposerNode::AddMemFragToTrack: aFormat=0x%x, aTimestamp=%d, aTrackId=%d",
-                     aFormat, aTimestamp, aTrackId));
+                    (0, "PVMp4FFComposerNode::AddMemFragToTrack: aFormat=%s, aTimestamp=%d, aTrackId=%d",
+                     aFormat.getMIMEStrPtr(), aTimestamp, aTrackId));
 
     if (iRealTimeTS)
     {
@@ -1818,31 +2132,239 @@ PVMFStatus PVMp4FFComposerNode::AddMemFragToTrack(Oscl_Vector<OsclMemoryFragment
         }
     }
 
-    switch (aFormat)
+    if (aFormat == PVMF_MIME_3GPP_TIMEDTEXT ||
+            aFormat == PVMF_MIME_H264_VIDEO_MP4 ||
+            aFormat == PVMF_MIME_M4V ||
+            aFormat == PVMF_MIME_H2631998 ||
+            aFormat == PVMF_MIME_H2632000)
     {
-        case PVMF_3GPP_TIMEDTEXT:
-        case PVMF_H264_MP4:
-        case PVMF_M4V:
-        case PVMF_H263:
+        status = CheckMaxDuration(aTimestamp);
+        if (status == PVMFFailure)
         {
-            status = CheckMaxDuration(aTimestamp);
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
+                            (0, "PVMp4FFComposerNode::AddMemFragToTrack: Error - CheckMaxDuration failed"));
+            return status;
+        }
+        else if (status == PVMFSuccess)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_DEBUG,
+                            (0, "PVMp4FFComposerNode::AddMemFragToTrack: Maxmimum duration reached"));
+            return status;
+        }
+
+        for (i = 0; i < aFrame.size(); i++)
+        {
+            size = aFrame[i].len;
+            status = CheckMaxFileSize(size);
             if (status == PVMFFailure)
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
-                                (0, "PVMp4FFComposerNode::AddMemFragToTrack: Error - CheckMaxDuration failed"));
+                                (0, "PVMp4FFComposerNode::AddMemFragToTrack: Error - CheckMaxFileSize failed"));
                 return status;
             }
             else if (status == PVMFSuccess)
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_DEBUG,
-                                (0, "PVMp4FFComposerNode::AddMemFragToTrack: Maxmimum duration reached"));
+                                (0, "PVMp4FFComposerNode::AddMemFragToTrack: Maxmimum file size reached"));
                 return status;
             }
 
-            for (i = 0; i < aFrame.size(); i++)
+            //No data for some reason.
+            if (size == 0)
             {
-                size = aFrame[i].len;
-                status = CheckMaxFileSize(size);
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_NOTICE,
+                                (0, "PVMp4FFComposerNode::AddMemFragToTrack: no data in frag!"));
+                return PVMFSuccess;
+            }
+        }
+        uint8 codingType = CODING_TYPE_P;
+
+        if (iRealTimeTS)
+        {
+            if (aTimestamp <= aPort->GetLastTS())
+            {
+                aTimestamp = aPort->GetLastTS() + 1;
+            }
+
+            aPort->SetLastTS(aTimestamp);
+        }
+
+        //iSyncSample is obtained from the marker info
+        //to identify the I Frame
+        if (iSyncSample)
+        {
+            codingType = CODING_TYPE_I;
+        }
+
+        // Format: mtb (1) | layer_id (3) | coding_type (2) | ref_select_code (2)
+        // flags |= ((stream->iHintTrack.MTB & 0x01) << 7);
+        // flags |= ((stream->iHintTrack.LayerID & 0x07) << 4);
+        flags |= ((codingType & 0x03) << 2);
+        // flags |= (stream->iHintTrack.RefSelCode & 0x03);
+
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMp4FFComposerNode::AddMemFragToTrack: Calling addSampleToTrack(%d, 0x%x, %d, %d, %d)",
+                         aTrackId, data, size, aTimestamp, flags));
+
+        LOGDATATRAFFIC((0, "PVMp4FFComposerNode::AddMemFragToTrack: TrackID=%d, Size=%d, TS=%d, Flags=%d, Mime=%s",
+                        aTrackId, size, aTimestamp, flags, aPort->GetMimeType().get_cstr()));
+
+        if (aFormat == PVMF_MIME_3GPP_TIMEDTEXT)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVMp4FFComposerNode::AddMemFragToTrack: Calling addtextSampleToTrack(%d, 0x%x, %d, %d, %d)",
+                             aTrackId, data, size, aTimestamp, flags));
+            int32 index = iText_sdIndex;
+
+            if (index >= 0)
+            {
+#if PROFILING_ON
+                uint32 start = OsclTickCount::TickCount();
+#endif
+                if (!iMpeg4File->addTextSampleToTrack(aTrackId, aFrame, aTimestamp, flags, index, NULL))
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
+                                    (0, "PVMp4FFComposerNode::AddMemFragToTrack: Error - addTextSampleToTrack for Timed Text failed"));
+                    return PVMFFailure;
+                }
+                iSampleInTrack = true;
+#if PROFILING_ON
+                uint32 stop = OsclTickCount::TickCount();
+                uint32 comptime = OsclTickCount::TicksToMsec(stop - start);
+                uint32 dataSize = 0;
+                for (uint32 ii = 0; ii < aFrame.size(); ii++)
+                {
+                    dataSize += aFrame[ii].len;
+                }
+                GenerateDiagnostics(comptime, dataSize);
+#endif
+            }
+        }
+        else
+        {
+
+#if PROFILING_ON
+            uint32 start = OsclTickCount::TickCount();
+#endif
+
+#ifdef _TEST_AE_ERROR_HANDLING
+
+            if (1 == iErrorAddSample)
+            {
+                if (iTestFileSize <= iFileSize) //iTestFileSize set in sendProgressReport()
+                {
+                    if (!iMpeg4File->addSampleToTrack(aTrackId, aFrame, aTimestamp, flags))
+                    {
+                        PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
+                                        (0, "PVMp4FFComposerNode::AddMemFragToTrack: Error - addSampleToTrack failed"));
+                        return PVMFFailure;
+                    }
+                }
+            }
+            else if (2 == iErrorAddSample)
+            {
+
+                if (aTimestamp <= iFileDuration)
+                {
+                    if (!iMpeg4File->addSampleToTrack(aTrackId, aFrame, aTimestamp, flags))
+                    {
+                        PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
+                                        (0, "PVMp4FFComposerNode::AddMemFragToTrack: Error - addSampleToTrack failed"));
+                        return PVMFFailure;
+                    }
+                }
+            }
+            else
+            {
+                if (!iMpeg4File->addSampleToTrack(aTrackId, aFrame, aTimestamp, flags))
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
+                                    (0, "PVMp4FFComposerNode::AddMemFragToTrack: Error - addSampleToTrack failed"));
+                    return PVMFFailure;
+                }
+            }
+
+#else
+            if (!iMpeg4File->addSampleToTrack(aTrackId, aFrame, aTimestamp, flags))
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
+                                (0, "PVMp4FFComposerNode::AddMemFragToTrack: Error - addSampleToTrack failed"));
+                return PVMFFailure;
+            }
+#endif
+            iSampleInTrack = true;
+#ifdef _TEST_AE_ERROR_HANDLING
+            if (iErrorHandlingAddMemFrag == true)
+            {
+                return PVMFFailure; //Just to trigger error handling
+            }
+#endif
+
+#if PROFILING_ON
+            uint32 stop = OsclTickCount::TickCount();
+            uint32 comptime = OsclTickCount::TicksToMsec(stop - start);
+            uint32 dataSize = 0;
+            for (uint32 ii = 0; ii < aFrame.size(); ii++)
+            {
+                dataSize += aFrame[ii].len;
+            }
+            GenerateDiagnostics(comptime, dataSize);
+#endif
+        }
+
+
+        // Send progress report after sample is successfully added
+        SendProgressReport(aTimestamp);
+
+#if PROFILING_ON
+        ++(stats->iNumFrames);
+        stats->iDuration = aTimestamp;
+#endif
+    }
+    else if (aFormat == PVMF_MIME_AMR_IETF)
+    {
+        if (iRealTimeTS)
+        {
+            if (((int32) aTimestamp - (int32) aPort->GetLastTS()) < 20)
+            {
+                aTimestamp = aPort->GetLastTS() + 20;
+            }
+
+            aPort->SetLastTS(aTimestamp);
+        }
+
+        uint32 bytesProcessed = 0;
+        uint32 frameSize = 0;
+        Oscl_Vector<OsclMemoryFragment, OsclMemAllocator> amrfrags;
+        for (i = 0; i < aFrame.size(); i++)
+        {
+            bytesProcessed = 0;
+            size = aFrame[i].len;
+            data = OSCL_REINTERPRET_CAST(uint8*, aFrame[i].ptr);
+            // Parse audio data and add one 20ms frame to track at a time
+            while (bytesProcessed < size)
+            {
+                // Check for max duration
+                status = CheckMaxDuration(aTimestamp);
+                if (status == PVMFFailure)
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
+                                    (0, "PVMp4FFComposerNode::AddMemFragToTrack: Error - CheckMaxDuration failed"));
+                    return status;
+                }
+                else if (status == PVMFSuccess)
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_DEBUG,
+                                    (0, "PVMp4FFComposerNode::AddMemFragToTrack: Maxmimum duration reached"));
+                    return status;
+                }
+
+                // Update clock converter
+                iClockConverter.set_clock_other_timescale(aTimestamp, 1000);
+
+                // Check max file size
+                frameSize = GetIETFFrameSize(data[0]);
+                status = CheckMaxFileSize(frameSize);
                 if (status == PVMFFailure)
                 {
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
@@ -1856,243 +2378,60 @@ PVMFStatus PVMp4FFComposerNode::AddMemFragToTrack(Oscl_Vector<OsclMemoryFragment
                     return status;
                 }
 
-                //No data for some reason.
-                if (size == 0)
-                {
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_NOTICE,
-                                    (0, "PVMp4FFComposerNode::AddMemFragToTrack: no data in frag!"));
-                    return PVMFSuccess;
-                }
-            }
-            uint8 codeType = 1;
-
-            if (iRealTimeTS)
-            {
-                if (aTimestamp <= aPort->GetLastTS())
-                {
-                    aTimestamp = aPort->GetLastTS() + 1;
-                }
-
-                aPort->SetLastTS(aTimestamp);
-            }
-
-            switch (aFormat)
-            {
-                case PVMF_H264_MP4:
-                {
-                    if (iSyncSample) //iSyncSample is obtained from the marker info
-                        codeType = 0;  //to identify the I Frame in the case of AVC
-                }
-                break;
-                case PVMF_M4V:
-                    for (i = 0;i < aFrame.size();i++)
-                    {
-                        data = OSCL_REINTERPRET_CAST(uint8*, aFrame[i].ptr);
-                        if (data[4] <= 0x3F)
-                            codeType = 0; // I-frame
-                    }
-
-                    break;
-                case PVMF_H263:
-                    for (i = 0;i < aFrame.size();i++)
-                    {
-                        data = OSCL_REINTERPRET_CAST(uint8*, aFrame[i].ptr);
-                        if (!(data[4] & 0x02))
-                            codeType = 0; // I-frame
-                    }
-                    break;
-            }
-
-            // Format: mtb (1) | layer_id (3) | coding_type (2) | ref_select_code (2)
-            // flags |= ((stream->iHintTrack.MTB & 0x01) << 7);
-            // flags |= ((stream->iHintTrack.LayerID & 0x07) << 4);
-            flags |= ((codeType & 0x03) << 2);
-            // flags |= (stream->iHintTrack.RefSelCode & 0x03);
-
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                            (0, "PVMp4FFComposerNode::AddMemFragToTrack: Calling addSampleToTrack(%d, 0x%x, %d, %d, %d)",
-                             aTrackId, data, size, aTimestamp, flags));
-
-            if (aFormat == PVMF_3GPP_TIMEDTEXT)
-            {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                                (0, "PVMp4FFComposerNode::AddMemFragToTrack: Calling addtextSampleToTrack(%d, 0x%x, %d, %d, %d)",
-                                 aTrackId, data, size, aTimestamp, flags));
-                int32 index = iText_sdIndex;
+                                (0, "PVMp4FFComposerNode::AddMemFragToTrack: Calling addSampleToTrack(%d, 0x%x, %d, %d, %d)",
+                                 aTrackId, data, frameSize, iClockConverter.get_current_timestamp(), flags));
 
-                if (index >= 0)
-                {
-#if PROFILING_ON
-                    uint32 start = OsclTickCount::TickCount();
-#endif
-                    if (!iMpeg4File->addTextSampleToTrack(aTrackId, aFrame, aTimestamp, flags, index, NULL))
-                    {
-                        PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
-                                        (0, "PVMp4FFComposerNode::AddMemFragToTrack: Error - addTextSampleToTrack for Timed Text failed"));
-                        return PVMFFailure;
-                    }
-#if PROFILING_ON
-                    uint32 stop = OsclTickCount::TickCount();
-                    uint32 comptime = OsclTickCount::TicksToMsec(stop - start);
-                    uint32 dataSize = 0;
-                    for (uint32 ii = 0; ii < aFrame.size(); ii++)
-                    {
-                        dataSize += aFrame[ii].len;
-                    }
-                    GenerateDiagnostics(comptime, dataSize);
-#endif
-                }
-            }
-            else
-            {
+
+                OsclMemoryFragment amr_memfrag;
+                amr_memfrag.len = frameSize;
+                amr_memfrag.ptr = data;
+                amrfrags.push_back(amr_memfrag);
 
 #if PROFILING_ON
                 uint32 start = OsclTickCount::TickCount();
 #endif
+                uint32 amrts = iClockConverter.get_current_timestamp();
 
-                if (!iMpeg4File->addSampleToTrack(aTrackId, aFrame, aTimestamp, flags))
+                LOGDATATRAFFIC((0, "PVMp4FFComposerNode::AddMemFragToTrack: TrackID=%d, Size=%d, TS=%d, Flags=%d, Mime=%s",
+                                aTrackId, frameSize, amrts, flags, aPort->GetMimeType().get_cstr()));
+
+                if (!iMpeg4File->addSampleToTrack(aTrackId, amrfrags, amrts, flags))
                 {
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
                                     (0, "PVMp4FFComposerNode::AddMemFragToTrack: Error - addSampleToTrack failed"));
                     return PVMFFailure;
                 }
-
+                iSampleInTrack = true;
 #if PROFILING_ON
                 uint32 stop = OsclTickCount::TickCount();
                 uint32 comptime = OsclTickCount::TicksToMsec(stop - start);
                 uint32 dataSize = 0;
-                for (uint32 ii = 0; ii < aFrame.size(); ii++)
+                for (uint32 ii = 0; ii < amrfrags.size(); ii++)
                 {
-                    dataSize += aFrame[ii].len;
+                    dataSize += amrfrags[ii].len;
                 }
                 GenerateDiagnostics(comptime, dataSize);
+
 #endif
-            }
 
-
-            // Send progress report after sample is successfully added
-            SendProgressReport(aTimestamp);
+                // Send progress report after sample is successfully added
+                SendProgressReport(aTimestamp);
 
 #if PROFILING_ON
-            ++(stats->iNumFrames);
-            stats->iDuration = aTimestamp;
+                ++(stats->iNumFrames);
+                stats->iDuration = aTimestamp;
 #endif
+                data += frameSize;
+                bytesProcessed += frameSize;
+                aTimestamp += 20;
+                amrfrags.clear();
+            }
         }
-        break;
-
-        case PVMF_AMR_IETF:
+        if (iRealTimeTS)
         {
-            if (iRealTimeTS)
-            {
-                if (((int32) aTimestamp - (int32) aPort->GetLastTS()) < 20)
-                {
-                    aTimestamp = aPort->GetLastTS() + 20;
-                }
-
-                aPort->SetLastTS(aTimestamp);
-            }
-
-            uint32 bytesProcessed = 0;
-            uint32 frameSize = 0;
-            Oscl_Vector<OsclMemoryFragment, OsclMemAllocator> amrfrags;
-            for (i = 0; i < aFrame.size(); i++)
-            {
-                bytesProcessed = 0;
-                size = aFrame[i].len;
-                data = OSCL_REINTERPRET_CAST(uint8*, aFrame[i].ptr);
-                // Parse audio data and add one 20ms frame to track at a time
-                while (bytesProcessed < size)
-                {
-                    // Check for max duration
-                    status = CheckMaxDuration(aTimestamp);
-                    if (status == PVMFFailure)
-                    {
-                        PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
-                                        (0, "PVMp4FFComposerNode::AddMemFragToTrack: Error - CheckMaxDuration failed"));
-                        return status;
-                    }
-                    else if (status == PVMFSuccess)
-                    {
-                        PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_DEBUG,
-                                        (0, "PVMp4FFComposerNode::AddMemFragToTrack: Maxmimum duration reached"));
-                        return status;
-                    }
-
-                    // Update clock converter
-                    iClockConverter.set_clock_other_timescale(aTimestamp, 1000);
-
-                    // Check max file size
-                    frameSize = GetIETFFrameSize(data[0]);
-                    status = CheckMaxFileSize(frameSize);
-                    if (status == PVMFFailure)
-                    {
-                        PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
-                                        (0, "PVMp4FFComposerNode::AddMemFragToTrack: Error - CheckMaxFileSize failed"));
-                        return status;
-                    }
-                    else if (status == PVMFSuccess)
-                    {
-                        PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_DEBUG,
-                                        (0, "PVMp4FFComposerNode::AddMemFragToTrack: Maxmimum file size reached"));
-                        return status;
-                    }
-
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                                    (0, "PVMp4FFComposerNode::AddMemFragToTrack: Calling addSampleToTrack(%d, 0x%x, %d, %d, %d)",
-                                     aTrackId, data, frameSize, iClockConverter.get_current_timestamp(), flags));
-
-
-                    OsclMemoryFragment amr_memfrag;
-                    amr_memfrag.len = frameSize;
-                    amr_memfrag.ptr = data;
-                    amrfrags.push_back(amr_memfrag);
-
-#if PROFILING_ON
-                    uint32 start = OsclTickCount::TickCount();
-#endif
-
-                    if (!iMpeg4File->addSampleToTrack(aTrackId, amrfrags,
-                                                      iClockConverter.get_current_timestamp(), flags))
-                    {
-                        PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
-                                        (0, "PVMp4FFComposerNode::AddMemFragToTrack: Error - addSampleToTrack failed"));
-                        return PVMFFailure;
-                    }
-
-#if PROFILING_ON
-                    uint32 stop = OsclTickCount::TickCount();
-                    uint32 comptime = OsclTickCount::TicksToMsec(stop - start);
-                    uint32 dataSize = 0;
-                    for (uint32 ii = 0; ii < amrfrags.size(); ii++)
-                    {
-                        dataSize += amrfrags[ii].len;
-                    }
-                    GenerateDiagnostics(comptime, dataSize);
-
-#endif
-
-                    // Send progress report after sample is successfully added
-                    SendProgressReport(aTimestamp);
-
-#if PROFILING_ON
-                    ++(stats->iNumFrames);
-                    stats->iDuration = aTimestamp;
-#endif
-                    data += frameSize;
-                    bytesProcessed += frameSize;
-                    aTimestamp += 20;
-                    amrfrags.clear();
-                }
-            }
-            if (iRealTimeTS)
-            {
-                aPort->SetLastTS(aTimestamp - 20);
-            }
+            aPort->SetLastTS(aTimestamp - 20);
         }
-        break;
-
-        default:
-            break;
     }
 
     return PVMFSuccess;
@@ -2120,6 +2459,8 @@ void PVMp4FFComposerNode::GenerateDiagnostics(uint32 aTime, uint32 aSize)
     }
     iNumSamplesAdded++;
 #endif
+    OSCL_UNUSED_ARG(aTime);
+    OSCL_UNUSED_ARG(aSize);
 }
 //////////////////////////////////////////////////////////////////////////////////
 int32 PVMp4FFComposerNode::GetIETFFrameSize(uint8 aFrameType)
@@ -2177,6 +2518,9 @@ PVMFStatus PVMp4FFComposerNode::SendProgressReport(uint32 aTimestamp)
             iNextFileSizeReport = fileSize - (fileSize % iFileSizeReportFreq) + iFileSizeReportFreq;
             ReportInfoEvent(PVMF_COMPOSER_FILESIZE_PROGRESS, (OsclAny*)fileSize);
         }
+#ifdef _TEST_AE_ERROR_HANDLING
+        iTestFileSize = fileSize; //iTestTimeStamp to fail the addSampleTrack() once a particulare time duration is reached as specified in testapp.
+#endif
     }
 
     return PVMFSuccess;
@@ -2194,8 +2538,12 @@ PVMFStatus PVMp4FFComposerNode::CheckMaxFileSize(uint32 aFrameSize)
         if ((metaDataSize + mediaDataSize + aFrameSize) >= iMaxFileSize)
         {
             // Finalized output file
-            if (RenderToFile() != PVMFSuccess)
-                return PVMFFailure;
+            if (iSampleInTrack)
+            {
+                iSampleInTrack = false;
+                if (RenderToFile() != PVMFSuccess)
+                    return PVMFFailure;
+            }
 
             ReportInfoEvent(PVMF_COMPOSER_MAXFILESIZE_REACHED, NULL);
             return PVMFSuccess;
@@ -2210,13 +2558,21 @@ PVMFStatus PVMp4FFComposerNode::CheckMaxFileSize(uint32 aFrameSize)
 //////////////////////////////////////////////////////////////////////////////////
 PVMFStatus PVMp4FFComposerNode::CheckMaxDuration(uint32 aTimestamp)
 {
+    //if(!iInfoObserver)
+    //	return PVMFFailure;
+
     if (iMaxDurationEnabled)
     {
         if (aTimestamp >= iMaxTimeDuration)
         {
             // Finalize output file
-            if (RenderToFile() != PVMFSuccess)
-                return PVMFFailure;
+            if (iSampleInTrack)
+            {
+                iSampleInTrack = false;
+                if (RenderToFile() != PVMFSuccess)
+                    return PVMFFailure;
+            }
+
 
             ReportInfoEvent(PVMF_COMPOSER_MAXDURATION_REACHED, NULL);
             return PVMFSuccess;
@@ -2268,7 +2624,16 @@ void PVMp4FFComposerNode::LogDiagnostics()
 #endif
 }
 
-
+int32 PVMp4FFComposerNode::StoreCurrentCommand(PVMp4FFCNCmdQueue& aCurrentCmd, PVMp4FFCNCmd& aCmd, PVMp4FFCNCmdQueue& aCmdQueue)
+{
+    int32 err = 0;
+    OSCL_TRY(err, aCurrentCmd.StoreL(aCmd););
+    OSCL_FIRST_CATCH_ANY(err,
+                         CommandComplete(aCmdQueue, aCmd, PVMFErrNoMemory);
+                         return err;
+                        );
+    return err;
+}
 
 
 

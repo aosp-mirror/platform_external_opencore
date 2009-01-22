@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -265,6 +265,9 @@ void TrackFragmentAtom::ParseTrafAtom(MP4_FF_FILE *fp,
                                       bool &trafParsingCompleted,
                                       uint32 &countOfTrunsParsed)
 {
+    OSCL_UNUSED_ARG(type);
+    OSCL_UNUSED_ARG(movieFragmentCurrentOffset);
+    OSCL_UNUSED_ARG(moofSize);
     uint32 count = size;
     uint32 trun_start = 0;
     uint32 _movieFragmentBaseOffset = movieFragmentBaseOffset - DEFAULT_ATOM_SIZE;
@@ -570,7 +573,8 @@ TrackFragmentAtom::getNextNSamples(uint32 startSampleNum,
             return (_mp4ErrorCode);
         }
 
-        int32 tfrunoffset = Oscl_Int64_Utils::get_uint64_lower32(tfRun->getDataOffset());
+        int32 tfrunoffset = 0;
+        tfrunoffset = Oscl_Int64_Utils::get_uint64_lower32(tfRun->getDataOffset());
         int32 sampleSizeOffset = 0;
 
         uint32 sigmaSampleSize = 0, k = 0;
@@ -663,6 +667,7 @@ TrackFragmentAtom::getNextNSamples(uint32 startSampleNum,
         }
 
 
+
         Oscl_Int64_Utils::set_uint64(pgau->SampleOffset, 0, (uint32)sampleFileOffset);
 
         AtomUtils::getCurrentFileSize(_pinput, _fileSize);
@@ -713,6 +718,7 @@ TrackFragmentAtom::getNextNSamples(uint32 startSampleNum,
                 tempgauPtr->buf.fragments[k].ptr = read_fragment_ptr;
 
                 sigmaSampleSize -= tmpSize;
+
             }
 
             if (sigmaSampleSize == 0)
@@ -979,7 +985,8 @@ TrackFragmentAtom::peekNextNSamples(uint32 startSampleNum,
             return (_mp4ErrorCode);
         }
 
-        int32 tfrunoffset = Oscl_Int64_Utils::get_uint64_lower32(tfRun->getDataOffset());
+        int32 tfrunoffset = 0;
+        tfrunoffset = Oscl_Int64_Utils::get_uint64_lower32(tfRun->getDataOffset());
         int32 sampleSizeOffset = 0;
 
         uint32 sigmaSampleSize = 0, k = 0;
@@ -1079,12 +1086,12 @@ TrackFragmentAtom::peekNextNSamples(uint32 startSampleNum,
             break;
         }
 
-        if (_peekPlaybackSampleNumber == (int32)totalnumSamples)
+        if (_peekPlaybackSampleNumber == totalnumSamples)
         {
             break;
         }
 
-        if (_peekPlaybackSampleNumber > (int32)totalnumSamples)
+        if (_peekPlaybackSampleNumber > totalnumSamples)
         {
             _mp4ErrorCode = END_OF_TRACK;
             break;
@@ -1225,9 +1232,7 @@ uint32 TrackFragmentAtom::getCurrentTrafDuration()
 int32
 TrackFragmentAtom::getOffsetByTime(uint32 id, uint32 ts, int32* sampleFileOffset)
 {
-
-    PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "TrackFragmentAtom::peekNextNSamples- Track Fragment Run Input TS =%d track ID %d", ts, id));
-    int32 sampleTS = 0, sampleOffset = DEFAULT_ERROR;
+    OSCL_UNUSED_ARG(id);
     uint32 time = ts;
     uint32 prevTime = 0, prevOffset = 0;
     if (_pTrackFragmentRunAtomVec != NULL)
@@ -1251,13 +1256,11 @@ TrackFragmentAtom::getOffsetByTime(uint32 id, uint32 ts, int32* sampleFileOffset
                             if (diffwithbeforeTS > diffwithafterTS)
                             {
                                 *sampleFileOffset = (*_tfRunSampleInfo)[i]->_sample_offset;;
-                                PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "TrackFragmentAtom::peekNextNSamples- Track Fragment Run Offset Time =%d %d", sampleOffset, sampleTS));
                                 return EVERYTHING_FINE;
                             }
                             else
                             {
                                 *sampleFileOffset = prevOffset;
-                                PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "TrackFragmentAtom::peekNextNSamples- Track Fragment Run Offset Time =%d %d", sampleOffset, sampleTS));
                                 return EVERYTHING_FINE;
                             }
                         }
@@ -1279,7 +1282,7 @@ void TrackDurationContainer::updateTrackDurationForTrackId(int32 id, uint32 dura
     {
         for (uint32 i = 0; i < _pTrackdurationInfoVec->size();i++)
         {
-            if ((*_pTrackdurationInfoVec)[i]->trackId == id)
+            if ((int32)((*_pTrackdurationInfoVec)[i]->trackId) == id)
             {
                 (*_pTrackdurationInfoVec)[i]->trackDuration = duration;
             }

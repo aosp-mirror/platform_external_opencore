@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,10 @@
 #ifndef PV_OMX_INTERFACE_PROXY_HANDLER_H_INCLUDED
 #define PV_OMX_INTERFACE_PROXY_HANDLER_H_INCLUDED
 
+#ifndef PV_OMXDEFS_H_INCLUDED
+#include "pv_omxdefs.h"
+#endif
+
 #ifndef PV_OMX_INTERFACE_PROXY_H_INCLUDED
 #include "pv_omx_interface_proxy.h"
 #endif
@@ -29,6 +33,8 @@
 #endif
 
 #include "oscl_scheduler_ao.h"
+
+#if PROXY_INTERFACE
 
 class CPVInterfaceProxyHandler_OMX :
             public OsclActiveObject
@@ -48,6 +54,7 @@ class CPVInterfaceProxyHandler_OMX :
         CPVInterfaceProxy_OMX *iProxy;
 };
 
+#endif // PROXY_INTERFACE
 #endif //
 
 

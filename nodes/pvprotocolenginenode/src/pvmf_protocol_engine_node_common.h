@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,7 +96,7 @@ struct PVProtocolEngineNodeKeyStringData
 ///////////////////////////////////////////////////////
 
 //Default vector reserve size
-#define PVMF_PROTOCOLENGINE_NODE_COMMAND_VECTOR_RESERVE 10
+#define PVMF_PROTOCOLENGINE_NODE_COMMAND_VECTOR_RESERVE 16
 
 //Starting value for command IDs
 #define PVMF_PROTOCOLENGINE_NODE_COMMAND_ID_START 6000
@@ -208,14 +208,20 @@ typedef Oscl_Vector<OsclRefCounterMemFrag*, PVMFProtocolEngineNodeAllocator> PEN
 
 // two macros used in the array member and function parameter below
 #define PVHTTPDOWNLOADOUTPUT_CONTENTDATA_CHUNKSIZE 8000
-#define EVENT_HANDLER_TOTAL 9
+#define EVENT_HANDLER_TOTAL 10
 
 enum NetworkTimerType
 {
     SERVER_RESPONSE_TIMER_ID = 0,
     SERVER_INACTIVITY_TIMER_ID,
     SERVER_KEEPALIVE_TIMER_ID,
-    SERVER_RESPONSE_TIMER_ID_FOR_STOPEOS_LOGGING
+    SERVER_RESPONSE_TIMER_ID_FOR_STOPEOS_LOGGING,
+    // handle data processing in case of no data input (PE node will become idle) for download/progressive streaming,
+    // so there should be a way to activate PE node to continue data processing if needed
+    WALL_CLOCK_TIMER_ID,
+    // a timer to report buffer status periodically, say at every up to 2sec, at least buffer status has to be reported
+    // which tells our system is running
+    BUFFER_STATUS_TIMER_ID
 };
 
 enum PVHttpProtocol
@@ -252,6 +258,13 @@ class ProgressiveStreamingContainerFactory : public ProtocolContainerFactory
 #endif
 
 
+#if defined(PV_PROTOCOL_ENGINE_NODE_WMHTTPSTREAMING_ENABLED)
+class MsHttpStreamingContainerFactory : public ProtocolContainerFactory
+{
+    public:
+        ProtocolContainer* create(PVMFProtocolEngineNode *aNode = NULL);
+};
+#endif
 
 
 // Forward declarations
@@ -291,7 +304,7 @@ class ProtocolContainer
         virtual PVMFStatus doPrepare();							// used in PVMFProtocolEngineNode::doPrepare, the default implementation is for both 3gpp and fasttrack download
         virtual bool doProPrepare()
         {
-            return true;
+            return true;    // used only for fasttrack, invoke the call to generate SDP info.
         }
         virtual int32 doPreStart()
         {
@@ -301,10 +314,7 @@ class ProtocolContainer
         {
             return true;
         }
-        virtual PVMFStatus doStop()
-        {
-            return PVMFSuccess;
-        }
+        virtual PVMFStatus doStop();
         virtual bool doEOS(const bool isTrueEOS = true);
         virtual bool doInfoUpdate(const uint32 downloadStatus)
         {
@@ -326,6 +336,7 @@ class ProtocolContainer
         {
             return true;
         }
+        virtual void startDataFlowByCommand(const bool needDoSocketReconnect = true);
 
         virtual void doClear(const bool aNeedDelete = false);
         virtual void doStopClear();
@@ -364,6 +375,7 @@ class ProtocolContainer
         virtual void handleTimeout(const int32 timerID);
         virtual bool handleProtocolStateComplete(PVProtocolEngineNodeInternalEvent &aEvent, PVProtocolEngineNodeInternalEventHandler *aEventHandler);
 
+        // for fasttrack only
         virtual PVMFStatus getMediaPresentationInfo(PVMFMediaPresentationInfo& aInfo)
         {
             OSCL_UNUSED_ARG(aInfo);
@@ -382,6 +394,7 @@ class ProtocolContainer
             return false;
         }
 
+        // for ms http streaming only
         virtual void setLoggingStartInPause(const bool aLoggingStartInPause = true)
         {
             OSCL_UNUSED_ARG(aLoggingStartInPause);
@@ -445,7 +458,12 @@ class ProtocolContainer
             OSCL_UNUSED_ARG(timerID);
             return false;
         }
-
+        // called by doStop()
+        virtual void sendSocketDisconnectCmd();
+        // called by handleTimeout()
+        virtual bool ignoreThisTimeout(const int32 timerID);
+        // called by startDataFlowByCommand()
+        void rescheduleNewDataFlow();
 
     private:
         //called by createProtocolObjects()
@@ -453,8 +471,12 @@ class ProtocolContainer
         bool createEventHandlers();
 
         // called by handleTimeout()
-        bool ignoreThisTimeout(const int32 timerID);
         bool handleTimeoutErr(const int32 timerID);
+
+        // called by startDataFlowByCommand()
+        void checkEOSMsgFromInputPort();
+        // called by doClear or doCancelClear()
+        void clearInternalEventQueue();
 
     protected:
         PVMFProtocolEngineNode *iNode;
@@ -507,9 +529,10 @@ enum PVProtocolEngineNodeInternalEventType
     PVProtocolEngineNodeInternalEventType_ServerResponseError_Bypassing,
     PVProtocolEngineNodeInternalEventType_ProtocolStateError,
     PVProtocolEngineNodeInternalEventType_CheckResumeNotificationMaually,
+    PVProtocolEngineNodeInternalEventType_OutgoingMsgQueuedAndSentSuccessfully,
 
     // data flow event
-    PVProtocolEngineNodeInternalEventType_IncomingMessageReady = 8,
+    PVProtocolEngineNodeInternalEventType_IncomingMessageReady = 9,
     PVProtocolEngineNodeInternalEventType_HasExtraInputData,
     PVProtocolEngineNodeInternalEventType_OutputDataReady,
     PVProtocolEngineNodeInternalEventType_StartDataflowByCommand,
@@ -521,7 +544,7 @@ enum PVProtocolEngineNodeInternalEventType
 struct PVProtocolEngineNodeInternalEvent
 {
     PVProtocolEngineNodeInternalEventType iEventId;
-    OsclAny *iEventInfo; // any other side info except the actual data, such as error code, sequence number(http streaming)
+    OsclAny *iEventInfo; // any other side info except the actual data, such as error code, sequence number(http streaming), seek offset(fasttrack)
     OsclAny *iEventData; // actual data for the event
 
     // default constructor
@@ -625,6 +648,31 @@ struct ProtocolStateErrorInfo
     }
 };
 
+// this structure defines infomation needed for OutgoingMsgSentSuccessHandler, will be as iEventInfo
+struct OutgoingMsgSentSuccessInfo
+{
+    PVMFProtocolEnginePort *iPort;
+    PVMFSharedMediaMsgPtr iMsg;
+
+    // constructor
+    OutgoingMsgSentSuccessInfo(): iPort(NULL)
+    {
+        ;
+    }
+    OutgoingMsgSentSuccessInfo(PVMFProtocolEnginePort *aPort, PVMFSharedMediaMsgPtr &aMsg) :
+            iPort(aPort), iMsg(aMsg)
+    {
+        ;
+    }
+
+    OutgoingMsgSentSuccessInfo &operator=(const OutgoingMsgSentSuccessInfo& x)
+    {
+        iPort = x.iPort;
+        iMsg  = x.iMsg;
+        return *this;
+    }
+};
+
 // use polymophism to handle variant events
 class PVProtocolEngineNodeInternalEventHandler
 {
@@ -644,7 +692,9 @@ class PVProtocolEngineNodeInternalEventHandler
         inline bool isCurrEventMatchCurrPendingCommand(uint32 aCurrEventId);
         bool completePendingCommandWithError(PVProtocolEngineNodeInternalEvent &aEvent);
         int32 getBasePVMFErrorReturnCode(const int32 errorCode, const bool isForCommandComplete = true);
-        void handleAuthenErrResponse(int32 &aErrCode, char* &aEventData);
+        void handleErrResponse(int32 &aBaseCode, int32 &aErrCode, char* &aEventData, uint32 &aEventDataLen);
+        void handleAuthenErrResponse(int32 &aErrCode, char* &aEventData, uint32 &aEventDataLen);
+        void handleRedirectErrResponse(char* &aEventData, uint32 &aEventDataLen);
         inline bool isStopCmdPending(); // called by isBeingStopped
         inline bool isProtocolStateComplete(const int32 aStatus);
 
@@ -809,6 +859,21 @@ class CheckResumeNotificationHandler : public PVProtocolEngineNodeInternalEventH
         }
 };
 
+class OutgoingMsgSentSuccessHandler : public PVProtocolEngineNodeInternalEventHandler
+{
+    public:
+        bool handle(PVProtocolEngineNodeInternalEvent &aEvent);
+
+        // constructor
+        OutgoingMsgSentSuccessHandler(PVMFProtocolEngineNode *aNode) :
+                PVProtocolEngineNodeInternalEventHandler(aNode)
+        {
+            ;
+        }
+};
+
+
+
 
 ////////////////////////////////////////////////////////////////////////////////////
 //////	PVMFProtocolEngineNodeOutput
@@ -828,6 +893,8 @@ class PVMFProtocolEngineNodeOutputObserver
         // notify the node that the new data is already written the file and then download control and status
         // should be updated responsively
         virtual void ReadyToUpdateDownloadControl() = 0;
+        // notify the node that a media message has been queued in outgoing message queue successfully
+        virtual bool QueueOutgoingMsgSentSuccess(PVMFProtocolEnginePort *aPort, PVMFSharedMediaMsgPtr &aMsg) = 0;
 };
 
 enum NodeOutputType
@@ -851,6 +918,15 @@ class PVMFProtocolEngineNodeOutput
         virtual bool passDownNewOutputData(OUTPUT_DATA_QUEUE &aOutputQueue, OsclAny* aSideInfo = NULL);
         virtual int32 flushData(const uint32 aOutputType = NodeOutputType_InputPortForData) = 0;
         virtual int32 initialize(OsclAny* aInitInfo = NULL) = 0;
+        virtual int32 reCreateMemPool(uint32 aNumPool)
+        {
+            OSCL_UNUSED_ARG(aNumPool);
+            return PROCESS_SUCCESS;
+        }
+        virtual uint32 getNumBuffersInMediaDataPool()
+        {
+            return 0;
+        }
         bool getBuffer(PVMFSharedMediaDataPtr &aMediaData, uint32 aRequestSize = PVHTTPDOWNLOADOUTPUT_CONTENTDATA_CHUNKSIZE);
         virtual void discardData(const bool aNeedReopen = false);
         virtual bool isPortBusy();
@@ -896,9 +972,14 @@ class PVMFProtocolEngineNodeOutput
         {
             return 0;
         }
+        // in case of progressive streaming, the following two sizes mean available cache size and maximum cache size
         virtual uint32 getAvailableOutputSize()
         {
             return 0xFFFFFFFF;
+        }
+        virtual uint32 getMaxAvailableOutputSize()
+        {
+            return 0;
         }
 
         // constructor and destructor
@@ -978,7 +1059,7 @@ class DownloadControlInterface
         virtual int32 checkResumeNotification(const bool aDownloadComplete = true) = 0;
         // return true for the new download progress
         // From PVMFDownloadProgressInterface API
-        virtual void getDownloadClock(OsclSharedPtr<OsclClock> &aClock) = 0;
+        virtual void getDownloadClock(OsclSharedPtr<PVMFMediaClock> &aClock) = 0;
         // From PVMFDownloadProgressInterface API
         virtual void setClipDuration(const uint32 aClipDurationMsec) = 0;
         // for auto-resume control for resume download
@@ -1024,6 +1105,8 @@ class DownloadProgressInterface
 };
 
 
+// This class wraps up user agent setting, differentiated in progessive download, fastrack and ms http streaming.
+// Any this kind of variation should be wrapped up into an object
 class UserAgentField
 {
     public:
@@ -1080,8 +1163,16 @@ class EventReporter
             return true;
         }
 
-        // send data ready event when download control algorithm enables
+        // enable some specific events
         virtual void sendDataReadyEvent()
+        {
+            ;
+        }
+        virtual void enableBufferingCompleteEvent()
+        {
+            ;
+        }
+        virtual void sendBufferStatusEvent()
         {
             ;
         }
@@ -1098,6 +1189,8 @@ class EventReporter
         InterfacingObjectContainer *iInterfacingObjectContainer;
         PVLogger *iDataPathLogger;
 };
+
+typedef Oscl_Vector<OutgoingMsgSentSuccessInfo, PVMFProtocolEngineNodeAllocator> OutgoingMsgSentSuccessInfoVec;
 
 // This class interfaces between the node and node user, which is in fact a data holder and holds the data set by the node public APIs
 // and some output data return to node user
@@ -1171,6 +1264,12 @@ class InterfacingObjectContainer
             iStreamParams.iAccelDuration = aAccelDuration;
         }
 
+        //set max streaming size
+        void SetMaxHttpStreamingSize(uint32 aMaxHttpStreamingSize)
+        {
+            iStreamParams.iMaxHttpStreamingSize = aMaxHttpStreamingSize;
+        }
+
         // set and get number of buffers in media message allocator in http streaming
         void setMediaMsgAllocatorNumBuffers(const uint32 aNumBuffersInAllocator)
         {
@@ -1237,9 +1336,9 @@ class InterfacingObjectContainer
         {
             return iSocketReconnectCmdSent;
         }
-        void setSocketReconnectCmdSent()
+        void setSocketReconnectCmdSent(const bool aSocketReconnectCmdSent = true)
         {
-            iSocketReconnectCmdSent = true;
+            iSocketReconnectCmdSent = aSocketReconnectCmdSent;
         }
         bool ignoreCurrentInputData() const
         {
@@ -1311,6 +1410,11 @@ class InterfacingObjectContainer
             }
         }
 
+        void setNumBuffersInMediaDataPoolSMCalc(uint32 aVal);
+        uint32 getNumBuffersInMediaDataPoolSMCalc() const
+        {
+            return iNumBuffersInMediaDataPoolSMCalc;
+        }
         // iOutputPortConnected
         void setOutputPortConnect(const bool aConnected = true)
         {
@@ -1357,6 +1461,12 @@ class InterfacingObjectContainer
         {
             return &iProtocolStateCompleteInfo;
         }
+
+        OutgoingMsgSentSuccessInfoVec *getOutgoingMsgSentSuccessInfoVec()
+        {
+            return &iOutgoingMsgSentSuccessInfoVec;
+        }
+
         bool isDownloadStreamingDone()
         {
             return iProtocolStateCompleteInfo.isDownloadStreamingDone;
@@ -1370,8 +1480,22 @@ class InterfacingObjectContainer
             return iProtocolStateCompleteInfo.isEOSAchieved;
         }
 
+        void setTruncatedForLimitSize(const bool aTruncatedForLimitSize = false)
+        {
+            iTruncatedForLimitSize = aTruncatedForLimitSize;
+        }
+        bool getTruncatedForLimitSize() const
+        {
+            return iTruncatedForLimitSize;
+        }
+
         // constructor
         InterfacingObjectContainer();
+        ~InterfacingObjectContainer()
+        {
+            clear();
+            iOutgoingMsgSentSuccessInfoVec.clear();
+        }
 
         // clear
         void clear()
@@ -1383,9 +1507,10 @@ class InterfacingObjectContainer
             isCurrentInputDataUnwanted	= true; // when clear(), treat all the input data unwanted (that needs to be ignored), let command and event to enable it
             iProcessingDone				= false;
             iKeepAliveTimeout			= 0;
-            iDisableHeadRequest			= true; // changed on the request of panasonic san
+            iDisableHeadRequest			= true; // changed on the request of Japan
             iMaxASFHeaderSize			= 0;
             iCancelCmdHappened			= false;
+            iTruncatedForLimitSize		= false;
             iProtocolStateCompleteInfo.clear();
         }
 
@@ -1405,6 +1530,7 @@ class InterfacingObjectContainer
         uint32 iNumRedirectTrials;
         uint32 iCurrRedirectTrials;
 
+        uint32 iNumBuffersInMediaDataPoolSMCalc;
         // get from GetHTTPHeader()
         char iHttpHeaderBuffer[PVHTTPDOWNLOADOUTPUT_CONTENTDATA_CHUNKSIZE+1]; // to hold http header
         uint32 iHttpHeaderLength;
@@ -1442,6 +1568,12 @@ class InterfacingObjectContainer
         // work as a global variable
         EndOfDataProcessingInfo iEOPInfo;
         ProtocolStateCompleteInfo iProtocolStateCompleteInfo;
+        OutgoingMsgSentSuccessInfoVec iOutgoingMsgSentSuccessInfoVec;
+
+        // This flag mean data-size reach limitation or not
+        // true : data reached limitation
+        // false: data don't reach limitation
+        bool iTruncatedForLimitSize;
 };
 
 

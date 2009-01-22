@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,8 @@ enum TAVCEI_RETVAL
     EAVCEI_INPUT_ERROR, // error with input buffers
 
     /** GetOutput return values */
-    EAVCEI_MORE_DATA,  // there are more data to be retrieve
+    EAVCEI_MORE_DATA,  // there are more data to be retrieve (multiple fragments of a NAL)
+    EAVCEI_MORE_NAL		// there is more NAL to be retrieved
 
 } ;
 
@@ -46,7 +47,8 @@ enum TAVCEIVideoFormat
     EAVCEI_VDOFMT_RGB24,
     EAVCEI_VDOFMT_RGB12,
     EAVCEI_VDOFMT_YUV420,
-    EAVCEI_VDOFMT_UYVY
+    EAVCEI_VDOFMT_UYVY,
+    EAVCEI_VDOFMT_YUV420SEMIPLANAR
 };
 
 /** Type of contents for optimal encoding mode. */
@@ -227,6 +229,12 @@ struct TAVCEIEncodeParam
     /** Specifies the duration of the clip in millisecond, needed for VBR encode. Set to 0 if unknown.*/
     int32				iClipDuration;
 
+    /** Specify FSI Buffer input */
+    uint8*				iFSIBuff;
+
+    /** Specify FSI Buffer Length */
+    int					iFSIBuffLength;
+
 };
 
 
@@ -306,16 +314,10 @@ class PVAVCEncoderInterface
         \return  fail if there is any errors. Otherwise, the function returns success.*/
         virtual  TAVCEI_RETVAL Initialize(TAVCEIInputFormat* aVidInFormat, TAVCEIEncodeParam* aEncParam) = 0;
 
-        /** \brief Alternative initialization function to set the input video format and the
-        encoding parameters using external sequence parameter set (SPS) and picture parameter set (PPS). The
-        exact structure  of SPS and PPS must be known by the app.
-        \parm  aVidInFormat contains input related attributes.
-        \parm  aEncParam contains encoding parameters setting.
-        \parm  extSPS contains PV's SPS structure.
-        \parm  extPPS contains PV's PPS structure.
-        \return  fail if there is any errors. Otherwise, the function returns success.*/
-        virtual  TAVCEI_RETVAL Initialize(TAVCEIInputFormat *aVidInFormat, TAVCEIEncodeParam *aEncParam,
-                                          void* extSPS, void* extPPS) = 0;
+
+        /** \brief Get suggested output buffer size to be allocated such that no frames are dropped.
+        \return  Size to be allocated. 0 means the encoder is not initialized. */
+        virtual  int32 GetMaxOutputBufferSize() = 0;
 
         /** \brief This function sends in an input video data structure containing a source
         frame and the associated timestamp. It can start processing such as frame analysis, decision to
@@ -337,7 +339,7 @@ class PVAVCEncoderInterface
         /** \brief This function returns a compressed bitstream.
         \parm	aVidOut is the structure to contain the output information.
         \return	one of these, SUCCESS, MORE_DATA, NOT_READY, INPUT_ERROR, FAIL */
-        virtual  TAVCEI_RETVAL GetOutput(TAVCEIOutputData* aVidOut) = 0;
+        virtual  TAVCEI_RETVAL GetOutput(TAVCEIOutputData* aVidOut, int *aRemainingBytes) = 0;
 
         /** This function is used to flush all the unencoded frames store inside the encoder (if there exist).
         It is used for random re-positioning. Or free all the input. Note that if users want to flush output

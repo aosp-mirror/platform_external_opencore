@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*********************************************************************************/
 /*
     This PVA_FF_ESDAtom Class provides the offset between decoding
     time and composition time.
@@ -69,6 +68,10 @@ class PVA_FF_ESDAtom : public PVA_FF_FullAtom
 
         // Rendering the PVA_FF_Atom in proper format (bitlengths, etc.) to an ostream
         virtual bool renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp);
+        void writeMaxSampleSize(MP4_AUTHOR_FF_FILE_IO_WRAP *_afp)
+        {
+            _pdescriptor->writeMaxSampleSize(_afp);
+        }
 
     private:
         void init();

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,35 +29,9 @@ terms listed above has been obtained from the copyright holder.
 /*
 ------------------------------------------------------------------------------
 
-
-
  Pathname: ./audio/gsm-amr/c/src/ets_to_if2.c
  Funtions: ets_to_if2
 
-     Date: 01/23/2002
-
-------------------------------------------------------------------------------
- REVISION HISTORY
-
- Description: Added new method of formatting the frame for modes greater than
-              eight. This is to improve speed and was done per review comments.
-              bitreorder.h was changed to bitreorder_tab.h
-
- Description: Removed the #define of 244 for MAX_NUM_BITS since it was not
-              used in this function and should not have been defined in this
-              local way.
-
- Description: Added IF statement around packing of first octet for the case
-              where frame_type_3gpp >= AMR_SID.
-
- Description: Fixed bug that causes code to overwrite the memory location
-              one past the last location of the IF2 output buffer.
-
- Description:  Replaced "int" and/or "char" with OSCL defined types.
-
- Description:
-
-------------------------------------------------------------------------------
 */
 
 /*----------------------------------------------------------------------------

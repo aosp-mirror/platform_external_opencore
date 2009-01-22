@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,6 +103,7 @@ class PVMFStreamingDataSource : public PVInterface
         OSCL_wHeapString<OsclMemAllocator> iStreamStatsLoggingURL;
         //Optional logging url.
         //When present, streaming stats will be sent to this URL.
+        //Typically applies to MS HTTP Streaming sessions
 
         bool iPreviewMode;
         //Optional field to indicate if the source that is being

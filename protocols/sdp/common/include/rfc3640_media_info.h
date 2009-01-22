@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,24 +15,6 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/* //////////////////////////////////////////////////////////////////////// */
-/*																			*/
-/*	=====================================================================	*/
-/*	File: rfc3640_mediaInfo.h												*/
-/*	Description:															*/
-/*																			*/
-/*																			*/
-/*	Rev:																	*/
-/*	Created:05/17/07														*/
-/*	=====================================================================	*/
-/*																			*/
-/*	Revision History:														*/
-/*																			*/
-/*	Rev:																	*/
-/*	Date:																	*/
-/*	Description:															*/
-/*																			*/
-/* //////////////////////////////////////////////////////////////////////// */
 
 #ifndef RFC3640_MEDIAINFO_H_INCLUDED
 #define RFC3640_MEDIAINFO_H_INCLUDED

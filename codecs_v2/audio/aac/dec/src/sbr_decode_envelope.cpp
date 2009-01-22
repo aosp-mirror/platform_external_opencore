@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,14 @@
  * -------------------------------------------------------------------
  */
 /*
-------------------------------------------------------------------------------
-
-
 
  Filename: sbr_decode_envelope.c
-
-     Date: 07/17/2003
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
 
 
+ Who:                                   Date: MM/DD/YYYY
  Description:
 
 ------------------------------------------------------------------------------
@@ -146,13 +142,13 @@ void sbr_decode_envelope(SBR_FRAME_DATA * hFrameData)
     Int32 no_of_bands;
     Int32 band;
     Int32 freqRes;
-    Int32 *iEnvelope    = (Int32 *) & (hFrameData->iEnvelope_man);
-    Int32 *sfb_nrg_prev = (Int32 *) & (hFrameData->sfb_nrg_prev_man);
+    Int32 *iEnvelope    = hFrameData->iEnvelope_man;
+    Int32 *sfb_nrg_prev = hFrameData->sfb_nrg_prev_man;
 
-    Int32  offset       =   hFrameData->offset;
-    Int32 *nSfb         = (Int32 *) & (hFrameData->nSfb);
-    Int32 *domain_vec   = (Int32 *) & (hFrameData->domain_vec1);
-    Int32 *frameInfo    = (Int32 *) & (hFrameData->frameInfo);
+    Int32  offset       = hFrameData->offset;
+    Int32 *nSfb         = hFrameData->nSfb;
+    Int32 *domain_vec   = hFrameData->domain_vec1;
+    Int32 *frameInfo    = hFrameData->frameInfo;
 
 
 

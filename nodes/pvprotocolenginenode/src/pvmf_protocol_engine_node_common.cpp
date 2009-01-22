@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,9 @@
 #include "pvmf_media_msg_format_ids.h"
 #include "pv_mime_string_utils.h"
 #include "pvmi_kvp_util.h"
-#include "oscl_utf8conv.h"
 
-//#include "pvmf_protocol_engine.h"
 #include "oscl_snprintf.h"
+#include "oscl_utf8conv.h"
 
 /**
 //Macros for calling PVLogger
@@ -55,6 +54,7 @@ PVMFProtocolEngineNode::PVMFProtocolEngineNode(int32 aPriority) :
         OsclTimerObject(aPriority, "PVMFProtocolEngineNode"),
         iStatusCode(0),
         iProcessingState(ProcessingState_Idle),
+        iInterfacingObjectContainer(NULL),
         iProtocol(NULL),
         iProtocolContainer(NULL),
         iProtocolContainerFactory(NULL),
@@ -100,7 +100,7 @@ PVMFProtocolEngineNode::PVMFProtocolEngineNode(int32 aPriority) :
              iCapability.iCanSupportMultipleOutputPorts = false;
              iCapability.iHasMaxNumberOfPorts = false;
              iCapability.iMaxNumberOfPorts = 0;//no maximum
-             iCapability.iInputFormatCapability.push_back(PVMF_INET_TCP);
+             iCapability.iInputFormatCapability.push_back(PVMF_MIME_INET_TCP);
 
              // create the internal data queue
              iDataInQueue.reserve(PVPROTOCOLENGINE_RESERVED_NUMBER_OF_FRAMES);
@@ -451,7 +451,7 @@ bool PVMFProtocolEngineNode::queryInterface(const PVUuid& uuid, PVInterface*& if
     }
     else if (uuid == PVMF_TRACK_SELECTION_INTERFACE_UUID)
     {
-        if (iInterfacingObjectContainer.getDownloadFormat() != PVMF_DATA_SOURCE_PVX_FILE) return false;
+        if (!iInterfacingObjectContainer || iInterfacingObjectContainer->getDownloadFormat() != PVMF_MIME_DATA_SOURCE_PVX_FILE) return false;
         PVMFTrackSelectionExtensionInterface* myInterface = OSCL_STATIC_CAST(PVMFTrackSelectionExtensionInterface*, this);
         iface = OSCL_STATIC_CAST(PVInterface*, myInterface);
         addRef();
@@ -624,7 +624,8 @@ void PVMFProtocolEngineNode::CommandComplete(PVMFProtocolEngineNodeCmdQ& aCmdQ,
         PVMFStatus aStatus,
         OsclAny* aEventData,
         PVUuid* aEventUUID,
-        int32* aEventCode)
+        int32* aEventCode,
+        int32 aEventDataLen)
 
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFProtocolEngineNode:CommandComplete Id %d Cmd %d Status %d Context %d Data %d"
@@ -640,6 +641,11 @@ void PVMFProtocolEngineNode::CommandComplete(PVMFProtocolEngineNodeCmdQ& aCmdQ,
 
     //create response
     PVMFCmdResp resp(aCmd.iId, aCmd.iContext, aStatus, extif, aEventData);
+    if (aEventDataLen != 0)
+    {
+        resp.SetEventDataLen(aEventDataLen);
+    }
+
     PVMFSessionId session = aCmd.iSession;
 
     //Erase the command from the queue.
@@ -658,10 +664,6 @@ void PVMFProtocolEngineNode::CommandComplete(PVMFProtocolEngineNodeCmdQ& aCmdQ,
 PVMFStatus PVMFProtocolEngineNode::DoReset(PVMFProtocolEngineNodeCommand& aCmd)
 {
     LOGINFO((0, "PVMFProtocolEngineNode::DoReset()"));
-
-    //Flush the datstream
-    if (iNodeOutput)
-        iNodeOutput->flushDataStream();
 
     // Allow a reset on ANY state.
     Clear(true); // true means deleting the relevant objects
@@ -766,7 +768,7 @@ PVMFStatus PVMFProtocolEngineNode::DoRequestPort(PVMFProtocolEngineNodeCommand& 
     }
 
     //Return the port pointer to the caller.
-    CommandComplete(iInputCommands, aCmd, PVMFSuccess, (OsclAny*)port);
+    CommandComplete(iInputCommands, aCmd, PVMFSuccess, (OsclAny*)port, 0, 0, sizeof(PVMFProtocolEnginePort));
     return PVMFSuccess;
 }
 
@@ -781,8 +783,12 @@ PVMFStatus PVMFProtocolEngineNode::DoReleasePort(PVMFProtocolEngineNodeCommand& 
     PVMFStatus status = PVMFSuccess;
 
     //Find the port in the port vector
-    PVMFProtocolEnginePort* port = NULL;
-    aCmd.PVMFProtocolEngineNodeCommandBase::Parse((PVMFPortInterface*&)port);
+    PVMFPortInterface* p = NULL;
+    aCmd.PVMFProtocolEngineNodeCommandBase::Parse(p);
+
+    PVMFProtocolEnginePort* port = (PVMFProtocolEnginePort*)p;
+
+
     if (port == NULL) status = PVMFErrArgument;
 
     PVMFProtocolEnginePort** portPtr = iPortVector.FindByValue(port);
@@ -917,14 +923,14 @@ PVMFStatus PVMFProtocolEngineNode::DoStart(PVMFProtocolEngineNodeCommand& aCmd)
 {
     LOGINFO((0, "PVMFProtocolEngineNode::DoStart()"));
     LOGINFODATAPATH((0, "PVMFProtocolEngineNode::DoStart() : Start command gets called and executed, iInterfaceState=%d, currSocketConnection=%d",
-                     (int32)iInterfaceState, (uint32)iInterfacingObjectContainer.isSocketConnectionUp()));
+                     (int32)iInterfaceState, (uint32)iInterfacingObjectContainer->isSocketConnectionUp()));
 
     // check if download/streaming is done, if it is done, no need to start/resume download/streaming
     if (CheckAvailabilityOfDoStart(aCmd)) return PVMFSuccess;
 
     PVMFStatus status = PVMFSuccess;
     iProcessingState = ProcessingState_NormalDataflow;
-    iInterfacingObjectContainer.setInputDataUnwanted(false);
+    iInterfacingObjectContainer->setInputDataUnwanted(false);
     switch (iInterfaceState)
     {
         case EPVMFNodePrepared:
@@ -934,7 +940,12 @@ PVMFStatus PVMFProtocolEngineNode::DoStart(PVMFProtocolEngineNodeCommand& aCmd)
                 // do socket reconnect for init->start, prepare->start and stop->start
                 // for pause->start, no need. For seek, no start command is issued. doseek() will
                 // do socket reconnect
-                StartDataFlowByCommand(iProtocolContainer->needSocketReconnect()); // make start command (prepare->start) asynchonous
+                iProtocolContainer->startDataFlowByCommand(iProtocolContainer->needSocketReconnect()); // make start command (prepare->start) asynchonous
+
+                // Transition to BeingStarted
+                // intentionally set node state as this node internal state to ignore any left-over messages from POST port from previous stop or EOS handling
+                SetState((TPVMFNodeInterfaceState)PVMFProtocolEngineNodeState_BeingStarted);
+
                 return PVMFPending;
             }
             status = PVMFSuccess;
@@ -943,16 +954,25 @@ PVMFStatus PVMFProtocolEngineNode::DoStart(PVMFProtocolEngineNodeCommand& aCmd)
 
         case EPVMFNodePaused:
         {
-            // Transition to BeingStarted
-            // intentionally set node state as this node internal state to ignore any left-over messages from POST port because currently node is paused state.
-            // need to differentiate this case from the paused case.
-            SetState((TPVMFNodeInterfaceState)PVMFProtocolEngineNodeState_BeingStarted);
+            if (iInterfacingObjectContainer->getTruncatedForLimitSize())
+            {
+                LOGINFODATAPATH((0, "PVMFProtocolEngineNode::DoStart() : size limitation"));
+                status = PVMFSuccess;
+                break;
+            }
+            else
+            {
+                // Transition to BeingStarted
+                // intentionally set node state as this node internal state to ignore any left-over messages from POST port because currently node is paused state.
+                // need to differentiate this case from the paused case.
+                SetState((TPVMFNodeInterfaceState)PVMFProtocolEngineNodeState_BeingStarted);
 
-            iProtocol->resume();
-            StartDataFlowByCommand();
-            return PVMFPending;
+                iProtocol->resume();
+                iProtocolContainer->startDataFlowByCommand();
+                return PVMFPending;
 
-            // break;	This statement was removed to avoid compiler warning for Unreachable Code
+                // break;	This statement was removed to avoid compiler warning for Unreachable Code
+            }
         }
 
         /*
@@ -975,7 +995,7 @@ PVMFStatus PVMFProtocolEngineNode::DoStart(PVMFProtocolEngineNodeCommand& aCmd)
 bool PVMFProtocolEngineNode::CheckAvailabilityOfDoStart(PVMFProtocolEngineNodeCommand& aCmd)
 {
     // check if download/streaming is done, if it is done, no need to start/resume download/streaming
-    if (iInterfacingObjectContainer.isDownloadStreamingDone())
+    if (iInterfacingObjectContainer->isDownloadStreamingDone())
     {
         SetState(EPVMFNodeStarted);
         CommandComplete(iInputCommands, aCmd, PVMFSuccess);
@@ -991,6 +1011,13 @@ PVMFStatus PVMFProtocolEngineNode::DoPause(PVMFProtocolEngineNodeCommand& aCmd)
 {
     LOGINFO((0, "PVMFProtocolEngineNode::DoPause()"));
     LOGINFODATAPATH((0, "PVMFProtocolEngineNode::DoPause() : Pause command gets called and executed, iInterfaceState=%d", (int32)iInterfaceState));
+
+    if (iInterfacingObjectContainer->getTruncatedForLimitSize())
+    {
+        CommandComplete(iInputCommands, aCmd, PVMFSuccess);
+        LOGINFODATAPATH((0, "PVMFProtocolEngineNode::DoPause() : size limitation = PVMFSuccess"));
+        return PVMFSuccess;
+    }
 
     PVMFStatus status = PVMFSuccess;
     switch (iInterfaceState)
@@ -1024,6 +1051,12 @@ PVMFStatus PVMFProtocolEngineNode::DoPause(PVMFProtocolEngineNodeCommand& aCmd)
 */
 PVMFStatus PVMFProtocolEngineNode::DoSeek(PVMFProtocolEngineNodeCommand& aCmd)
 {
+    if (iInterfacingObjectContainer->getTruncatedForLimitSize())
+    {
+        CommandComplete(iInputCommands, aCmd, PVMFFailure);
+        LOGINFODATAPATH((0, "PVMFProtocolEngineNode::DoSeek() : size limitation = PVMFFailure"));
+        return PVMFFailure;
+    }
     return iProtocolContainer->doSeek(aCmd);
 }
 
@@ -1033,41 +1066,24 @@ PVMFStatus PVMFProtocolEngineNode::DoSeek(PVMFProtocolEngineNodeCommand& aCmd)
 */
 PVMFStatus PVMFProtocolEngineNode::DoBitsteamSwitch(PVMFProtocolEngineNodeCommand& aCmd)
 {
+    if (iInterfacingObjectContainer->getTruncatedForLimitSize())
+    {
+        CommandComplete(iInputCommands, aCmd, PVMFSuccess);
+        LOGINFODATAPATH((0, "PVMFProtocolEngineNode::DoBitsteamSwitch() : size limitation = PVMFFailure"));
+        return PVMFFailure;
+    }
     return iProtocolContainer->doBitstreamSwitch(aCmd);
 }
 
 PVMFStatus PVMFProtocolEngineNode::DoReposition(PVMFProtocolEngineNodeCommand& aCmd)
 {
+    if (iInterfacingObjectContainer->getTruncatedForLimitSize())
+    {
+        CommandComplete(iInputCommands, aCmd, PVMFFailure);
+        LOGINFODATAPATH((0, "PVMFProtocolEngineNode::DoReposition() : size limitation = PVMFFailure"));
+        return PVMFFailure;
+    }
     return iProtocolContainer->doSeek(aCmd);
-}
-
-void PVMFProtocolEngineNode::StartDataFlowByCommand(const bool needDoSocketReconnect)
-{
-    // flush out existing data at this point
-    iDataInQueue.clear();
-    iNodeOutput->discardData();
-    ClearPorts(); // clear any queued messages in ports
-
-    // cancel all the existing timers
-    iNodeTimer->clear();
-
-    // disable info update at this point, will be enabled when new response comes in
-    iProtocolContainer->enableInfoUpdate(false);
-
-    // socket reconnect
-    if (needDoSocketReconnect) iProtocolContainer->reconnectSocket();
-
-    RescheduleNewDataFlow();
-}
-
-void PVMFProtocolEngineNode::RescheduleNewDataFlow()
-{
-    PVProtocolEngineNodeInternalEvent aEvent(PVProtocolEngineNodeInternalEventType_StartDataflowByCommand);
-    iInternalEventQueue.clear();
-    iInternalEventQueue.push_back(aEvent);
-    iProcessingState = ProcessingState_NormalDataflow;
-    iInterfacingObjectContainer.setInputDataUnwanted(false);
-    RunIfNotReady();
 }
 
 /**
@@ -1154,8 +1170,8 @@ PVMFStatus PVMFProtocolEngineNode::DoFlush(PVMFProtocolEngineNodeCommand& aCmd)
 */
 bool PVMFProtocolEngineNode::FlushPending()
 {
-    return (iCurrentCommand.size() > 0
-            && iCurrentCommand.front().iCmd == PVMF_GENERIC_NODE_FLUSH);
+    return (iCurrentCommand.size() > 0 &&
+            iCurrentCommand.front().iCmd == PVMF_GENERIC_NODE_FLUSH);
 }
 
 
@@ -1183,7 +1199,7 @@ PVMFStatus PVMFProtocolEngineNode::DoCancelAllCommands(PVMFProtocolEngineNodeCom
 
     //finally, report cancel complete.
     CommandComplete(iInputCommands, aCmd, PVMFSuccess);
-    iInterfacingObjectContainer.setCancelCmdHappened();
+    if (iInterfacingObjectContainer) iInterfacingObjectContainer->setCancelCmdHappened();
     return PVMFSuccess;
 }
 
@@ -1209,7 +1225,7 @@ PVMFStatus PVMFProtocolEngineNode::DoCancelCommand(PVMFProtocolEngineNodeCommand
         //report cancel success
         CommandComplete(iInputCommands, aCmd, PVMFSuccess);
         // set cancel cmd happened flag for stop command processing
-        iInterfacingObjectContainer.setCancelCmdHappened();
+        if (iInterfacingObjectContainer) iInterfacingObjectContainer->setCancelCmdHappened();
         return PVMFSuccess;
     }
 
@@ -1224,14 +1240,14 @@ PVMFStatus PVMFProtocolEngineNode::DoCancelCommand(PVMFProtocolEngineNodeCommand
         //report cancel success
         CommandComplete(iInputCommands, aCmd, PVMFSuccess);
         // set cancel cmd happened flag for stop command processing
-        iInterfacingObjectContainer.setCancelCmdHappened();
+        if (iInterfacingObjectContainer) iInterfacingObjectContainer->setCancelCmdHappened();
         return PVMFSuccess;
     }
 
     //at this point, nothing needs to be cancelled and thus report cancel complete
     CommandComplete(iInputCommands, aCmd, PVMFSuccess);
     // set cancel cmd happened flag for stop command processing
-    iInterfacingObjectContainer.setCancelCmdHappened();
+    if (iInterfacingObjectContainer) iInterfacingObjectContainer->setCancelCmdHappened();
     return PVMFSuccess;
 }
 
@@ -1245,7 +1261,7 @@ void PVMFProtocolEngineNode::SetState(TPVMFNodeInterfaceState s)
     PVMFNodeInterface::SetState(s);
 }
 
-void PVMFProtocolEngineNode::ReportInfoEvent(PVMFEventType aEventType, OsclAny* aEventData, int32 aEventCode)
+void PVMFProtocolEngineNode::ReportInfoEvent(PVMFEventType aEventType, OsclAny* aEventData, const int32 aEventCode, OsclAny* aEventLocalBuffer, const uint32 aEventLocalBufferSize)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFProtocolEngineNode:NodeInfoEvent Type %d Data %d",
                     aEventType, aEventData));
@@ -1259,26 +1275,15 @@ void PVMFProtocolEngineNode::ReportInfoEvent(PVMFEventType aEventType, OsclAny* 
     {
         //report extended event.
         PVUuid uuid = PVMFPROTOCOLENGINENODEInfoEventTypesUUID;
-        PVMFBasicErrorInfoMessage*msg = OSCL_NEW(PVMFBasicErrorInfoMessage, (aEventCode, uuid, NULL));
-
-        uint8* eventCodeData = NULL;
-        uint32 eventCodeDataLength = 0;
-        if (aEventCode == (int32)PVMFPROTOCOLENGINENODEInfo_BufferingStatus ||
-                aEventCode == (int32)PVMFPROTOCOLENGINENODEInfo_TruncatedContentByServerDisconnect)
-        {
-            // download percentage
-            int32 data = (int32)aEventData;
-            eventCodeData = (uint8*)(&data);
-            eventCodeDataLength = sizeof(data);
-        }
+        PVMFBasicErrorInfoMessage *msg = OSCL_NEW(PVMFBasicErrorInfoMessage, (aEventCode, uuid, NULL));
 
         PVMFAsyncEvent event(PVMFInfoEvent,
                              aEventType,
                              NULL, //context
                              msg,
                              aEventData,
-                             eventCodeData,
-                             eventCodeDataLength);
+                             (uint8*)aEventLocalBuffer,
+                             aEventLocalBufferSize);
 
         //report to the session observers.
         PVMFNodeInterface::ReportInfoEvent(event);
@@ -1290,33 +1295,35 @@ void PVMFProtocolEngineNode::ReportInfoEvent(PVMFEventType aEventType, OsclAny* 
 
 void PVMFProtocolEngineNode::ReportErrorEvent(PVMFEventType aEventType,
         OsclAny* aEventData,
-        int32 aEventCode)
+        const int32 aEventCode,
+        int32 aEventDataLen)
 {
     LOGINFO((0, "PVMFProtocolEngineNode::ReportErrorEvent() Type %d Data %d"
              , aEventType, aEventData));
 
-    if (aEventCode == 0)
-    {
-        // basic error event
-        PVMFNodeInterface::ReportErrorEvent(aEventType, aEventData);
-    }
-    else
+    PVMFBasicErrorInfoMessage*msg  = NULL;
+
+    if (aEventCode != 0)
     {
         // extended error event with aEventCode
         PVUuid uuid = PVProtocolEngineNodeErrorEventTypesUUID;
-        PVMFBasicErrorInfoMessage*msg = OSCL_NEW(PVMFBasicErrorInfoMessage, (aEventCode, uuid, NULL));
-
-        PVMFAsyncEvent event(PVMFErrorEvent,
-                             aEventType,
-                             NULL, // context
-                             msg,
-                             aEventData,
-                             NULL,
-                             0);
-
-        PVMFNodeInterface::ReportErrorEvent(event);
-        if (msg) msg->removeRef();
+        msg = OSCL_NEW(PVMFBasicErrorInfoMessage, (aEventCode, uuid, NULL));
     }
+
+    PVMFAsyncEvent event(PVMFErrorEvent,
+                         aEventType,
+                         NULL, // context
+                         msg,
+                         aEventData,
+                         NULL,
+                         0);
+
+    if (aEventDataLen != 0)
+        event.SetEventDataLen(aEventDataLen);
+
+    PVMFNodeInterface::ReportErrorEvent(event);
+    if (msg) msg->removeRef();
+
 }
 
 /////////////////////////////////////////////////////
@@ -1332,7 +1339,7 @@ void PVMFProtocolEngineNode::QueuePortActivity(const PVMFPortActivity &aActivity
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
                         (0, "PVMFProtocolEngineNode::QueuePortActivity() Error - iPortActivityQueue.push_back() failed"));
-        ReportErrorEvent(PVMFErrPortProcessing, (OsclAny*)(aActivity.iPort));
+        ReportErrorEvent(PVMFErrPortProcessing, (OsclAny*)(aActivity.iPort), sizeof(PVMFProtocolEnginePort));
     }
     else
     {
@@ -1384,7 +1391,7 @@ void PVMFProtocolEngineNode::HandlePortActivity(const PVMFPortActivity &aActivit
             {
                 LOGINFODATAPATH((0, "PVMFProtocolEngineNode::HandlePortActivity: port=0x%x, type=%d(PVMF_PORT_ACTIVITY_CONNECT), PE node output port connected to downstream node port!",
                                  aActivity.iPort, aActivity.iType));
-                iInterfacingObjectContainer.setOutputPortConnect();
+                iInterfacingObjectContainer->setOutputPortConnect();
             }
 
             break;
@@ -1402,7 +1409,7 @@ void PVMFProtocolEngineNode::HandlePortActivity(const PVMFPortActivity &aActivit
             {
                 LOGINFODATAPATH((0, "PVMFProtocolEngineNode::HandlePortActivity: port=0x%x, type=%d(PVMF_PORT_ACTIVITY_DISCONNECT), PE node output port disconnected from downstream node port!",
                                  aActivity.iPort, aActivity.iType));
-                iInterfacingObjectContainer.setOutputPortConnect(false);
+                iInterfacingObjectContainer->setOutputPortConnect(false);
             }
             break;
 
@@ -1484,8 +1491,6 @@ bool PVMFProtocolEngineNode::ProcessPortActivity()
     LOGINFODATAPATH((0, "PVMFProtocolEngineNode::ProcessPortActivity() port=0x%x, type=%d, IncomingQueueSize=%d, OutgoingQueueSize=%d, iInterfaceState=%d, PAQSize=%d",
                      activity.iPort, activity.iType, activity.iPort->IncomingMsgQueueSize(), activity.iPort->OutgoingMsgQueueSize(), iInterfaceState, iPortActivityQueue.size()));
 
-    int32 err = OsclErrNone;
-
     PVMFStatus status = PVMFSuccess;
     switch (activity.iType)
     {
@@ -1493,27 +1498,14 @@ bool PVMFProtocolEngineNode::ProcessPortActivity()
             status = ProcessOutgoingMsg(activity.iPort);
             //Re-queue the port activity event as long as there's
             //more data to process and it isn't in a Busy state.
-            if (status != PVMFErrBusy
-                    && activity.iPort->OutgoingMsgQueueSize() > 0)
-            {
-                OSCL_TRY(err, iPortActivityQueue.push_back(activity););
-            }
+            QueueActivityOutgoingMessage(status, activity);
             break;
 
         case PVMF_PORT_ACTIVITY_INCOMING_MSG:
             status = ProcessIncomingMsg(activity.iPort);
             //Re-queue the port activity event as long as there's
             //more data to process and it isn't in a Busy state.
-            if (status != PVMFErrBusy
-                    && activity.iPort->IncomingMsgQueueSize() > 0)
-            {
-                //OSCL_TRY(err,iPortActivityQueue.push_back(activity););
-                // only insert outgoing queue ready event in case of no such event in the port activity queue
-                if (!SearchPortActivityInQueue(PVMF_PORT_ACTIVITY_INCOMING_MSG))
-                {
-                    OSCL_TRY(err, iPortActivityQueue.push_back(activity););
-                }
-            }
+            QueueActivityIncomingMessage(status, activity);
             break;
 
         case PVMF_PORT_ACTIVITY_OUTGOING_QUEUE_READY:
@@ -1526,21 +1518,12 @@ bool PVMFProtocolEngineNode::ProcessPortActivity()
             break;
     }
 
-    //report a failure in queueing new activity...
-    if (err != OsclErrNone)
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "PVMFProtocolEngineNode::ProcessPortActivity() Error - queue port activity failed. port=0x%x, type=%d",
-                         activity.iPort, activity.iType));
-        ReportErrorEvent(PVMFErrPortProcessing);
-    }
-
     //Report any unexpected failure in port processing...
     //(the InvalidState error happens when port input is suspended,
     //so don't report it.)
-    if (status != PVMFErrBusy
-            && status != PVMFSuccess
-            && status != PVMFErrInvalidState)
+    if (status != PVMFErrBusy &&
+            status != PVMFSuccess &&
+            status != PVMFErrInvalidState)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
                         (0, "PVMFProtocolEngineNode::ProcessPortActivity() Error - ProcessPortActivity failed. port=0x%x, type=%d",
@@ -1552,6 +1535,33 @@ bool PVMFProtocolEngineNode::ProcessPortActivity()
     return (status != PVMFErrBusy);
 }
 
+// wrap OSCL_TRY block
+void PVMFProtocolEngineNode::QueueActivityOutgoingMessage(const PVMFStatus aStatus, const PVMFPortActivity &aActivity)
+{
+    if (aStatus != PVMFErrBusy && aActivity.iPort->OutgoingMsgQueueSize() > 0)
+    {
+        int32 err;
+        OSCL_TRY(err, iPortActivityQueue.push_back(aActivity););
+        if (err) ReportErrorEvent(PVMFErrPortProcessing);
+    }
+}
+
+// wrap OSCL_TRY block
+void PVMFProtocolEngineNode::QueueActivityIncomingMessage(const PVMFStatus aStatus, const PVMFPortActivity &aActivity)
+{
+    //Re-queue the port activity event as long as there's more data to process and it isn't in a Busy state.
+    if (aStatus != PVMFErrBusy && aActivity.iPort->IncomingMsgQueueSize() > 0)
+    {
+        //OSCL_TRY(err,iPortActivityQueue.push_back(activity););
+        // only insert outgoing queue ready event in case of no such event in the port activity queue
+        if (!SearchPortActivityInQueue(PVMF_PORT_ACTIVITY_INCOMING_MSG))
+        {
+            int32 err;
+            OSCL_TRY(err, iPortActivityQueue.push_back(aActivity););
+            if (err) ReportErrorEvent(PVMFErrPortProcessing);
+        }
+    }
+}
 
 /////////////////////////////////////////////////////
 PVMFStatus PVMFProtocolEngineNode::ProcessIncomingMsg(PVMFPortInterface* aPort)
@@ -1591,7 +1601,7 @@ PVMFStatus PVMFProtocolEngineNode::ProcessIncomingMsg(PVMFPortInterface* aPort)
         bool isEOS = (msg->getFormatID() == PVMF_MEDIA_CMD_EOS_FORMAT_ID);
         if (aPort->GetPortTag() == PVMF_PROTOCOLENGINENODE_PORT_TYPE_INPUT)
         {
-            iInterfacingObjectContainer.updateSocketConnectFlags(isEOS); // will update flags
+            iInterfacingObjectContainer->updateSocketConnectFlags(isEOS); // will update flags
         }
 
         if (IgnoreCurrentInputData(aPort, isEOS, msg))
@@ -1657,7 +1667,7 @@ void PVMFProtocolEngineNode::UpdateTimersInProcessIncomingMsg(const bool aEOSMsg
 bool PVMFProtocolEngineNode::IgnoreCurrentInputData(PVMFPortInterface* aPort, const bool isEOS, PVMFSharedMediaMsgPtr &aMsg)
 {
     OSCL_UNUSED_ARG(aMsg);
-    if (iInterfacingObjectContainer.ignoreCurrentInputData())
+    if (iInterfacingObjectContainer->ignoreCurrentInputData())
     {
         if (aPort->GetPortTag() == PVMF_PROTOCOLENGINENODE_PORT_TYPE_INPUT)
         {
@@ -1683,7 +1693,7 @@ bool PVMFProtocolEngineNode::IgnoreCurrentInputData(PVMFPortInterface* aPort, co
         if (!isEOS &&
                 (iInterfaceState == EPVMFNodeStarted ||
                  iInterfaceState == (TPVMFNodeInterfaceState)PVMFProtocolEngineNodeState_BeingStarted) &&
-                !iInterfacingObjectContainer.isDownloadStreamingDone())
+                !iInterfacingObjectContainer->isDownloadStreamingDone())
         {
             return true;
         }
@@ -1694,9 +1704,9 @@ bool PVMFProtocolEngineNode::IgnoreCurrentInputData(PVMFPortInterface* aPort, co
 
 bool PVMFProtocolEngineNode::CheckEndOfProcessingInIgoreData(const bool isEOS, const bool isDataPort)
 {
-    if (!iInterfacingObjectContainer.isDownloadStreamingDone()) return false;
+    if (!iInterfacingObjectContainer->isDownloadStreamingDone()) return false;
 
-    EndOfDataProcessingInfo *aInfo = iInterfacingObjectContainer.getEOPInfo();
+    EndOfDataProcessingInfo *aInfo = iInterfacingObjectContainer->getEOPInfo();
     if (isEOS)
     {
         if (iProtocolContainer->needCheckEOSAfterDisconnectSocket())
@@ -1723,7 +1733,7 @@ bool PVMFProtocolEngineNode::CheckEndOfProcessingInIgoreData(const bool isEOS, c
         return true;
     }
 
-    // Current situation: iInterfacingObjectContainer.isDownloadStreamingDone() = true
+    // Current situation: iInterfacingObjectContainer->isDownloadStreamingDone() = true
     if (isDataPort) return true;
     return false;
 }
@@ -1734,6 +1744,7 @@ void PVMFProtocolEngineNode::LogIncomingMessage(PVMFSharedMediaMsgPtr &aMsg, boo
     {
         LOGINFODATAPATH((0, "PVMFProtocolEngineNode::LogIncomingMessage() GOT EOS! port=0x%x, iInterfaceState=%d",
                          aPort, iInterfaceState));
+        OSCL_UNUSED_ARG(aPort); // to avoid warning of unused variable, 'aPort'
     }
     else
     {
@@ -1770,8 +1781,6 @@ PVMFStatus PVMFProtocolEngineNode::ProcessOutgoingMsg(PVMFPortInterface* aPort)
     // check whether outgoing message is media command or media data
     PVMFSharedMediaMsgPtr msg;
     if (!((PVMFProtocolEnginePort*)aPort)->PeekOutgoingMsg(msg)) return PVMFFailure;
-    bool isMediaData = (msg->getFormatID() <  PVMF_MEDIA_CMD_FORMAT_IDS_START) ||
-                       (msg->getFormatID() == PVMF_MEDIA_CMD_SOCKET_CONNECT_FORMAT_ID);
 
     PVMFStatus status = aPort->Send();
     if (status == PVMFErrBusy)
@@ -1780,42 +1789,53 @@ PVMFStatus PVMFProtocolEngineNode::ProcessOutgoingMsg(PVMFPortInterface* aPort)
     }
     if (status != PVMFSuccess) return status;
 
+    return PostProcessForMsgSentSuccess(aPort, msg);
+}
+
+PVMFStatus PVMFProtocolEngineNode::PostProcessForMsgSentSuccess(PVMFPortInterface* aPort, PVMFSharedMediaMsgPtr &aMsg)
+{
+    PVMFStatus status = PVMFSuccess;
+
     // keep track the sequence no of the media msg just sent out successfully
-    iInterfacingObjectContainer.setLatestPacketNumSent(msg->getSeqNum());
-    if (msg->getFormatID() == PVMF_MEDIA_CMD_EOS_FORMAT_ID)
+    iInterfacingObjectContainer->setLatestPacketNumSent(aMsg->getSeqNum());
+
+    // set up server response timer and cancel inactivity timer
+    bool isMediaData = (aMsg->getFormatID() <  PVMF_MEDIA_CMD_FORMAT_IDS_START) ||
+                       (aMsg->getFormatID() == PVMF_MEDIA_CMD_SOCKET_CONNECT_FORMAT_ID);
+    UpdateTimersInProcessOutgoingMsg(isMediaData, aPort);
+
+    // send() success means outgoing queue should always be ready, then send out outgoing queue ready event
+    if ((PVMFProtocolEnginePort*)aPort == iPortOut) SendOutgoingQueueReadyEvent(aPort);
+
+    // handle the remaining post processing for the different media cmds.
+    if (aMsg->getFormatID() == PVMF_MEDIA_CMD_EOS_FORMAT_ID)
     {
-        LOGINFODATAPATH((0, "PVMFProtocolEngineNode::ProcessOutgoingMsg() Send() SUCCESS: EOS SENT! SEQNUM= %d, MsgID=%d, port=0x%x", msg->getSeqNum(), msg->getFormatID(), aPort));
+        LOGINFODATAPATH((0, "PVMFProtocolEngineNode::PostProcessForMsgSentSuccess() Send() SUCCESS: EOS SENT! SEQNUM= %d, MsgID=%d, port=0x%x", aMsg->getSeqNum(), aMsg->getFormatID(), aPort));
 
         // complete the pending command if there is, especially for the case of sending EOS due to error
         ProtocolStateErrorInfo aInfo(0, false);
         PVProtocolEngineNodeInternalEvent aEvent(PVProtocolEngineNodeInternalEventType_ProtocolStateError, (OsclAny*)(&aInfo));
         DispatchInternalEvent(&aEvent);
     }
-    else if (msg->getFormatID() == PVMF_MEDIA_CMD_RE_CONFIG_FORMAT_ID)
+    else if (aMsg->getFormatID() == PVMF_MEDIA_CMD_RE_CONFIG_FORMAT_ID)
     {
-        LOGINFODATAPATH((0, "PVMFProtocolEngineNode::ProcessOutgoingMsg() Send() SUCCESS: RE_CONFIG SENT! SEQNUM= %d, MsgID=%d, port=0x%x", msg->getSeqNum(), msg->getFormatID(), aPort));
+        LOGINFODATAPATH((0, "PVMFProtocolEngineNode::PostProcessForMsgSentSuccess() Send() SUCCESS: RE_CONFIG SENT! SEQNUM= %d, MsgID=%d, port=0x%x", aMsg->getSeqNum(), aMsg->getFormatID(), aPort));
 
         uint32 aFirstPacketNum = 0xFFFFFFFF;
         PVProtocolEngineNodeInternalEvent aEvent(PVProtocolEngineNodeInternalEventType_FirstPacketAvailable, (OsclAny*)aFirstPacketNum);
         DispatchInternalEvent(&aEvent);
     }
-    else if (msg->getFormatID() == PVMF_MEDIA_CMD_SOCKET_CONNECT_FORMAT_ID)
+    else if (aMsg->getFormatID() == PVMF_MEDIA_CMD_SOCKET_CONNECT_FORMAT_ID)
     {
-        LOGINFODATAPATH((0, "PVMFProtocolEngineNode::ProcessOutgoingMsg() Send() SUCCESS: SOCKET CONNECT SENT! SEQNUM= %d, MsgID=%d, port=0x%x", msg->getSeqNum(), msg->getFormatID(), aPort));
+        LOGINFODATAPATH((0, "PVMFProtocolEngineNode::PostProcessForMsgSentSuccess() Send() SUCCESS: SOCKET CONNECT SENT! SEQNUM= %d, MsgID=%d, port=0x%x", aMsg->getSeqNum(), aMsg->getFormatID(), aPort));
         bool status = iProtocolContainer->completeRepositionRequest();
-        if (status) LOGINFODATAPATH((0, "PVMFProtocolEngineNode::ProcessOutgoingMsg() Send() SOCKET CONNECT cmd SUCCESS: complete data stream reposition request"));
+        if (status) LOGINFODATAPATH((0, "PVMFProtocolEngineNode::PostProcessForMsgSentSuccess() Send() SOCKET CONNECT cmd SUCCESS: complete data stream reposition request"));
     }
     else
     {
-        LOGINFODATAPATH((0, "PVMFProtocolEngineNode::ProcessOutgoingMsg() Send() SUCCESS: SEQNUM= %d, MsgID=%d, port=0x%x", msg->getSeqNum(), msg->getFormatID(), aPort));
+        LOGINFODATAPATH((0, "PVMFProtocolEngineNode::PostProcessForMsgSentSuccess() Send() SUCCESS: SEQNUM= %d, MsgID=%d, port=0x%x", aMsg->getSeqNum(), aMsg->getFormatID(), aPort));
     }
 
-
-    // set up server response timer and cancel inactivity timer
-    UpdateTimersInProcessOutgoingMsg(isMediaData, aPort);
-
-    // send() success means outgoing queue should always be ready, then send out outgoing queue ready event
-    if ((PVMFProtocolEnginePort*)aPort == iPortOut) SendOutgoingQueueReadyEvent(aPort);
     return status;
 }
 
@@ -1829,7 +1849,7 @@ void PVMFProtocolEngineNode::UpdateTimersInProcessOutgoingMsg(const bool isMedia
         iNodeTimer->cancel(SERVER_INACTIVITY_TIMER_ID);
 
         uint32 timerID = SERVER_RESPONSE_TIMER_ID;
-        if (iInterfacingObjectContainer.isDownloadStreamingDone() && (PVMFProtocolEnginePort*)aPort == iPortInForLogging)
+        if (iInterfacingObjectContainer->isDownloadStreamingDone() && (PVMFProtocolEnginePort*)aPort == iPortInForLogging)
         {
             // logging POST for EOS and stop
             timerID = SERVER_RESPONSE_TIMER_ID_FOR_STOPEOS_LOGGING;
@@ -1878,7 +1898,8 @@ void PVMFProtocolEngineNode::ProcessOutgoingQueueReady()
     PVProtocolEngineNodeInternalEvent aEvent(PVProtocolEngineNodeInternalEventType_StartDataflowByPortOutgoingQueueReady);
     iInternalEventQueue.push_back(aEvent);
     iProcessingState = ProcessingState_NormalDataflow; // enable data flow
-    RunIfNotReady();
+    if (IsAdded())
+        RunIfNotReady();
 }
 
 /**
@@ -2033,8 +2054,8 @@ inline bool PVMFProtocolEngineNode::IsDataFlowEventAlreadyInQueue(const PVProtoc
 void PVMFProtocolEngineNode::ProtocolStateComplete(const ProtocolStateCompleteInfo &aInfo)
 {
     PVProtocolEngineNodeInternalEvent aEvent(PVProtocolEngineNodeInternalEventType_ProtocolStateComplete);
-    iInterfacingObjectContainer.setProtocolStateCompleteInfo(aInfo);
-    //aEvent.iEventInfo = (OsclAny*)iInterfacingObjectContainer.getProtocolStateCompleteInfo();
+    iInterfacingObjectContainer->setProtocolStateCompleteInfo(aInfo);
+    //aEvent.iEventInfo = (OsclAny*)iInterfacingObjectContainer->getProtocolStateCompleteInfo();
     DispatchInternalEvent(&aEvent);
 }
 
@@ -2111,10 +2132,18 @@ void PVMFProtocolEngineNode::ReadyToUpdateDownloadControl()
     iProtocolContainer->doInfoUpdate(PROCESS_SUCCESS);
 }
 
+bool PVMFProtocolEngineNode::QueueOutgoingMsgSentSuccess(PVMFProtocolEnginePort *aPort, PVMFSharedMediaMsgPtr &aMsg)
+{
+    LOGINFODATAPATH((0, "PVMFProtocolEngineNode::QueueOutgoingMsgSentSuccess() - Msg queued and sent successfully!, Port=0x%x", aPort));
+    RerunForPostProcessAfterOutgoingMsgSent(aPort, aMsg);
+    return true;
+}
+
+
 void PVMFProtocolEngineNode::TimeoutOccurred(int32 timerID, int32 timeoutInfo)
 {
     OSCL_UNUSED_ARG(timeoutInfo);
-    LOGINFODATAPATH((0, "PVMFProtocolEngineNode::TimeoutOccurred()  timerID = %d, (0-server response, 1-inactivity, 2-KeepAlive, 3-Logging response), iInterfaceState=%d",
+    LOGINFODATAPATH((0, "PVMFProtocolEngineNode::TimeoutOccurred()  timerID = %d, (0-server response, 1-inactivity, 2-KeepAlive, 3-Logging response, 4-Wall clock, 5-Buffer status timer), iInterfaceState=%d",
                      timerID, (int32)iInterfaceState));
 
     iProtocolContainer->handleTimeout(timerID);
@@ -2180,6 +2209,11 @@ ProtocolContainerFactory* PVMFProtocolEngineNode::CreateProtocolContainerFactory
 #endif
 
 
+#if defined(PV_PROTOCOL_ENGINE_NODE_WMHTTPSTREAMING_ENABLED)
+        case PVHTTPPROTOCOL_MS_HTTP_STREAMING:
+            aFactory = OSCL_NEW(MsHttpStreamingContainerFactory, ());
+            break;
+#endif
 
         default:
             break;
@@ -2199,7 +2233,15 @@ void PVMFProtocolEngineNode::ClearPorts(const bool aNeedDelete)
 
     if (aNeedDelete)
     {
-        while (!iPortVector.empty()) iPortVector.Erase(&iPortVector.front());
+        while (!iPortVector.empty())
+        {
+            PVMFProtocolEnginePort* port = iPortVector.front();
+            iPortVector.Erase(&iPortVector.front());
+
+            if (port == iPortInForData)	iPortInForData = NULL;
+            if (port == iPortInForLogging) iPortInForLogging = NULL;
+            if (port == iPortOut) iPortOut = NULL;
+        }
         // Restore original port vector reserve.
         iPortVector.Reconstruct();
     }
@@ -2227,14 +2269,8 @@ PVMFStatus PVMFProtocolEngineNode::SetSourceInitializationData(OSCL_wString& aSo
         PVMFFormatType& aSourceFormat,
         OsclAny* aSourceData)
 {
-    if ((aSourceFormat != PVMF_DATA_SOURCE_HTTP_URL) &&
-            (aSourceFormat != PVMF_DATA_SOURCE_PVX_FILE)) return PVMFErrNotSupported;
-
-    // set download format
-    iInterfacingObjectContainer.setDownloadFormat(aSourceFormat);
-
-    // set URI
-    if (!iInterfacingObjectContainer.getURIObject().setURI(aSourceURL)) return PVMFFailure;
+    if ((aSourceFormat != PVMF_MIME_DATA_SOURCE_HTTP_URL) &&
+            (aSourceFormat != PVMF_MIME_DATA_SOURCE_PVX_FILE)) return PVMFErrNotSupported;
 
     // create protocol objects
     if (!CreateProtocolObjects(GetProtocolType(aSourceFormat, aSourceData))) return PVMFErrNoMemory;
@@ -2245,13 +2281,20 @@ PVMFStatus PVMFProtocolEngineNode::SetSourceInitializationData(OSCL_wString& aSo
     // need to recreate protocol objects for progressive streaming based on source data
     if (!RecreateProtocolObjectsForProgressiveStreaming(aSourceData)) return PVMFErrNoMemory;
 
+    // set download format
+    if (iInterfacingObjectContainer) iInterfacingObjectContainer->setDownloadFormat(aSourceFormat);
+
+    // set URI
+    if (!iInterfacingObjectContainer->getURIObject().setURI(aSourceURL)) return PVMFFailure;
+
+
     // create and set iCfgFile
-    if (!iProtocolContainer->createCfgFile(iInterfacingObjectContainer.getURIObject().getURI())) return PVMFFailure;
+    if (!iProtocolContainer->createCfgFile(iInterfacingObjectContainer->getURIObject().getURI())) return PVMFFailure;
     return PVMFSuccess;
 }
 
 
-PVMFStatus PVMFProtocolEngineNode::SetClientPlayBackClock(OsclClock* aClientClock)
+PVMFStatus PVMFProtocolEngineNode::SetClientPlayBackClock(PVMFMediaClock* aClientClock)
 {
     if (iDownloadControl)
     {
@@ -2269,9 +2312,9 @@ uint32 PVMFProtocolEngineNode::GetProtocolType(PVMFFormatType& aSourceFormat, Os
     // just use sourcedata to differentiate ms http streaming and download for a short-term solution
     if (!aSourceData)
         return PVHTTPPROTOCOL_MS_HTTP_STREAMING;
-    else if (aSourceFormat == PVMF_DATA_SOURCE_PVX_FILE)
+    else if (aSourceFormat == PVMF_MIME_DATA_SOURCE_PVX_FILE)
         return PVHTTPPROTOCOL_FASTTRACK_DOWNLOAD;
-    else if (aSourceFormat == PVMF_DATA_SOURCE_HTTP_URL)
+    else if (aSourceFormat == PVMF_MIME_DATA_SOURCE_HTTP_URL)
     {
         return PVHTTPPROTOCOL_PROGRESSIVE_DOWNLOAD;
     }
@@ -2284,27 +2327,27 @@ void PVMFProtocolEngineNode::PassDatastreamFactory(PVMFDataStreamFactory& aFacto
 {
     OSCL_UNUSED_ARG(aFactoryTag);
     OSCL_UNUSED_ARG(aFactoryConfig);
-    iInterfacingObjectContainer.setDataStreamFactory(&aFactory);
+    iInterfacingObjectContainer->setDataStreamFactory(&aFactory);
 }
 
 
 // From PVMFProtocolEngineNodeExtensionInterface
 PVMFStatus PVMFProtocolEngineNode::GetHTTPHeader(uint8*& aHeader, uint32& aHeaderLen)
 {
-    iInterfacingObjectContainer.getHTTPHeader(aHeader, aHeaderLen);
+    iInterfacingObjectContainer->getHTTPHeader(aHeader, aHeaderLen);
     return PVMFSuccess;
 }
 
 bool PVMFProtocolEngineNode::GetSocketConfig(OSCL_String &aPortConfig)
 {
     if (CheckUsingProxy(aPortConfig)) return true;
-    return GetSocketConfigImp(iInterfacingObjectContainer.getURIObject(), aPortConfig);
+    return GetSocketConfigImp(iInterfacingObjectContainer->getURIObject(), aPortConfig);
 }
 
 bool PVMFProtocolEngineNode::GetSocketConfigForLogging(OSCL_String &aPortConfig)
 {
     if (CheckUsingProxy(aPortConfig)) return true;
-    return GetSocketConfigImp(iInterfacingObjectContainer.getLoggingURIObject(), aPortConfig);
+    return GetSocketConfigImp(iInterfacingObjectContainer->getLoggingURIObject(), aPortConfig);
 }
 
 bool PVMFProtocolEngineNode::GetSocketConfigImp(const INetURI &aURI, OSCL_String &aPortConfig)
@@ -2325,7 +2368,7 @@ bool PVMFProtocolEngineNode::GetSocketConfigImp(const INetURI &aURI, OSCL_String
 
 bool PVMFProtocolEngineNode::ComposeSocketConfig(OSCL_String &aServerAddr, const uint32 aPortNum, OSCL_String &aPortConfig)
 {
-    // compose port config string: "TCP/remote_address=pvs.pv.com;remote_port=554"
+    // compose port config string: "TCP/remote_address=pvserveroha.pv.com;remote_port=554"
     uint32 tempBufSize = aServerAddr.get_size() + 64;
     OsclMemAllocator alloc;
     char *buffer = (char*)alloc.allocate(tempBufSize);
@@ -2349,8 +2392,8 @@ bool PVMFProtocolEngineNode::CheckUsingProxy(OSCL_String &aPortConfig)
     uint32 aProxyPort = 0;
     OSCL_HeapString<OsclMemAllocator> aProxyName;
     if (!getProxy(aProxyName, aProxyPort)) return false;
-    iInterfacingObjectContainer.getURIObject().setUsAbsoluteURI();
-    iInterfacingObjectContainer.getLoggingURIObject().setUsAbsoluteURI();
+    iInterfacingObjectContainer->getURIObject().setUsAbsoluteURI();
+    iInterfacingObjectContainer->getLoggingURIObject().setUsAbsoluteURI();
     return ComposeSocketConfig(aProxyName, aProxyPort, aPortConfig);
 }
 
@@ -2380,7 +2423,7 @@ void PVMFProtocolEngineNode::SetHttpExtensionHeaderField(OSCL_String &aFieldKey,
 
 void PVMFProtocolEngineNode::SetLoggingURL(OSCL_wString& aSourceURL)
 {
-    iInterfacingObjectContainer.setLoggingURI(aSourceURL);
+    iInterfacingObjectContainer->setLoggingURI(aSourceURL);
 }
 
 void PVMFProtocolEngineNode::SetNetworkTimeout(const uint32 aTimeout)
@@ -2411,6 +2454,8 @@ bool PVMFProtocolEngineNode::IsWMServerVersion4()
 
 void PVMFProtocolEngineNode::setFormatDownloadSupportInterface(PVMFFormatProgDownloadSupportInterface* download_support_interface)
 {
+    LOGINFODATAPATH((0, "PVMFProtocolEngineNode::setFormatDownloadSupportInterface() IN, download_support_interface=0x%x", download_support_interface));
+
     if (iDownloadControl && iDownloadProgess)
     {
         iDownloadControl->setSupportObject((OsclAny *)download_support_interface, DownloadControlSupportObjectType_SupportInterface);
@@ -2429,21 +2474,21 @@ void PVMFProtocolEngineNode::setClipDuration(const uint32 aClipDurationMsec)
     if (iDownloadProgess) iDownloadProgess->setClipDuration(aClipDurationMsec);
 }
 
-OsclSharedPtr<OsclClock> PVMFProtocolEngineNode::getDownloadProgressClock()
+OsclSharedPtr<PVMFMediaClock> PVMFProtocolEngineNode::getDownloadProgressClock()
 {
-    OsclSharedPtr<OsclClock> clock;
+    OsclSharedPtr<PVMFMediaClock> clock;
     iDownloadControl->getDownloadClock(clock);
     return clock;
 }
 
 void PVMFProtocolEngineNode::requestResumeNotification(const uint32 currentNPTReadPosition, bool& aDownloadComplete)
 {
-    LOGINFODATAPATH((0, "PVMFProtocolEngineNode::requestResumeNotification(), currentNPTReadPosition=%d", currentNPTReadPosition));
+    LOGINFODATAPATH((0, "PVMFProtocolEngineNode::requestResumeNotification() IN, currentNPTReadPosition=%d", currentNPTReadPosition));
 
     bool needSendUnderflowEvent = false;
     iDownloadControl->requestResumeNotification(currentNPTReadPosition, aDownloadComplete, needSendUnderflowEvent);
-    LOGINFODATAPATH((0, "PVMFProtocolEngineNode::requestResumeNotification(), after iDownloadControl->requestResumeNotification(), aDownloadComplete=%d, needSendUnderflowEvent=%d",
-                     aDownloadComplete, needSendUnderflowEvent));
+    LOGINFODATAPATH((0, "PVMFProtocolEngineNode::requestResumeNotification(), after iDownloadControl->requestResumeNotification(), currentNPTReadPosition=%d, needSendUnderflowEvent=%d, aDownloadComplete=%d",
+                     currentNPTReadPosition, (uint32)needSendUnderflowEvent, (uint32)aDownloadComplete));
 
     // report underflow event for download incomplete
     // but only send it once, for multiple back to back requestResumeNotification
@@ -2451,7 +2496,7 @@ void PVMFProtocolEngineNode::requestResumeNotification(const uint32 currentNPTRe
 
     if (aDownloadComplete)  // end of processing
     {
-        EndOfDataProcessingInfo *aInfo = iInterfacingObjectContainer.getEOPInfo();
+        EndOfDataProcessingInfo *aInfo = iInterfacingObjectContainer->getEOPInfo();
         aInfo->clear();
         aInfo->iSendResumeNotification = true;
         PVProtocolEngineNodeInternalEvent aEvent(PVProtocolEngineNodeInternalEventType_EndOfProcessing, (OsclAny*)aInfo);
@@ -2468,7 +2513,10 @@ void PVMFProtocolEngineNode::cancelResumeNotification()
 {
     LOGINFODATAPATH((0, "PVMFProtocolEngineNode::cancelResumeNotification"));
 
-    iDownloadControl->cancelResumeNotification();
+    if (iDownloadControl != NULL)
+    {
+        iDownloadControl->cancelResumeNotification();
+    }
 }
 
 bool PVMFProtocolEngineNode::SendPortMediaCommand(PVMFProtocolEnginePort *aPort, PVUid32 aCmdId, const bool isForLogging)
@@ -2485,27 +2533,53 @@ bool PVMFProtocolEngineNode::SendPortMediaCommand(PVMFProtocolEnginePort *aPort,
     // Convert to media message and send it out
     PVMFSharedMediaMsgPtr mediaMsgOut;
     convertToPVMFMediaCmdMsg(mediaMsgOut, aCmdPtr);
-    if (aPort->QueueOutgoingMsg(mediaMsgOut) != PVMFSuccess) return false;
+    PVMFStatus status = aPort->QueueOutgoingMsg(mediaMsgOut);
+    if (status < PVMFSuccess) return false;
+    if (status == PVMFSuccessOutgoingMsgSent)
+    {
+        LOGINFODATAPATH((0, "PVMFProtocolEngineNode::SendPortMediaCommand() - Msg queued and sent successfully!, Port=0x%x", aPort));
+        RerunForPostProcessAfterOutgoingMsgSent(aPort, mediaMsgOut);
+    }
 
+    LogPortMediaCmdQueued(aPort, aCmdId);
+    return true;
+}
+
+void PVMFProtocolEngineNode::RerunForPostProcessAfterOutgoingMsgSent(PVMFProtocolEnginePort *aPort, PVMFSharedMediaMsgPtr &aMsg)
+{
+    // form PVProtocolEngineNodeInternalEventType_OutgoingMsgQueuedAndSentSuccessfully event
+    OutgoingMsgSentSuccessInfo aInfo(aPort, aMsg);
+    OutgoingMsgSentSuccessInfoVec *aVec = iInterfacingObjectContainer->getOutgoingMsgSentSuccessInfoVec();
+    aVec->push_back(aInfo);
+    PVProtocolEngineNodeInternalEvent aEvent(PVProtocolEngineNodeInternalEventType_OutgoingMsgQueuedAndSentSuccessfully,
+            (OsclAny*)aVec);
+    iInternalEventQueue.push_back(aEvent);
+    SetProcessingState(ProcessingState_NormalDataflow);
+    RunIfNotReady();
+}
+
+void PVMFProtocolEngineNode::LogPortMediaCmdQueued(PVMFProtocolEnginePort *aPort, PVUid32 aCmdId)
+{
     // log message
     if (aCmdId == PVMF_MEDIA_CMD_SOCKET_CONNECT_FORMAT_ID)
     {
-        LOGINFODATAPATH((0, "PVMFProtocolEngineNode::SendPortMediaCommand() - RECONNECT SENT, Port=0x%x", aPort));
+        LOGINFODATAPATH((0, "PVMFProtocolEngineNode::LogPortMediaCmdQueued() - RECONNECT SENT, Port=0x%x", aPort));
     }
     else if (aCmdId == PVMF_MEDIA_CMD_EOS_FORMAT_ID)
     {
-        LOGINFODATAPATH((0, "PVMFProtocolEngineNode::SendPortMediaCommand() - EOS SENT, Port=0x%x", aPort));
+        LOGINFODATAPATH((0, "PVMFProtocolEngineNode::LogPortMediaCmdQueued() - EOS SENT, Port=0x%x", aPort));
     }
     else if (aCmdId == PVMF_MEDIA_CMD_RE_CONFIG_FORMAT_ID)
     {
-        LOGINFODATAPATH((0, "PVMFProtocolEngineNode::SendPortMediaCommand() - RE_CONFIG SENT, Port=0x%x", aPort));
+        LOGINFODATAPATH((0, "PVMFProtocolEngineNode::LogPortMediaCmdQueued() - RE_CONFIG SENT, Port=0x%x", aPort));
     }
     else if (aCmdId == PVMF_MEDIA_CMD_SOCKET_DISCONNECT_FORMAT_ID)
     {
-        LOGINFODATAPATH((0, "PVMFProtocolEngineNode::SendPortMediaCommand() - DISCONNECT SENT, Port=0x%x", aPort));
+        LOGINFODATAPATH((0, "PVMFProtocolEngineNode::LogPortMediaCmdQueued() - DISCONNECT SENT, Port=0x%x", aPort));
     }
 
-    return true;
+    OSCL_UNUSED_ARG(aPort); // to avoid warning of unused variable 'aPort'
+
 }
 
 bool PVMFProtocolEngineNode::CheckFormatSpecificInfoForMediaCommand(PVMFSharedMediaCmdPtr &aCmdPtr, PVUid32 aCmdId, const bool isForLogging)
@@ -2515,9 +2589,9 @@ bool PVMFProtocolEngineNode::CheckFormatSpecificInfoForMediaCommand(PVMFSharedMe
     // for socket recconnect command, set port config as format specific info
     bool needAttachFormatSpecificInfo = false;
     OSCL_HeapString<OsclMemAllocator> aPortConfig;
-    if (iInterfacingObjectContainer.getCurrNumRedirectTrials() > 0 || iInterfaceState == EPVMFNodePaused)
+    if (iInterfacingObjectContainer->getCurrNumRedirectTrials() > 0 || iInterfaceState == EPVMFNodePaused)
     {
-        bool hasLoggingUrl = !iInterfacingObjectContainer.getLoggingURIObject().empty();
+        bool hasLoggingUrl = !iInterfacingObjectContainer->getLoggingURIObject().empty();
         if (isForLogging && hasLoggingUrl)
         {
             if (!GetSocketConfigForLogging(aPortConfig)) return false;
@@ -2528,9 +2602,9 @@ bool PVMFProtocolEngineNode::CheckFormatSpecificInfoForMediaCommand(PVMFSharedMe
         }
         needAttachFormatSpecificInfo = true;
     }
-    else if (iInterfacingObjectContainer.isDownloadStreamingDone())
+    else if (iInterfacingObjectContainer->isDownloadStreamingDone())
     {
-        bool hasLoggingUrl = !iInterfacingObjectContainer.getLoggingURIObject().empty();
+        bool hasLoggingUrl = !iInterfacingObjectContainer->getLoggingURIObject().empty();
         if (hasLoggingUrl)
         {
             if (!GetSocketConfigForLogging(aPortConfig)) return false;
@@ -2575,7 +2649,7 @@ ProtocolContainer::ProtocolContainer(PVMFProtocolEngineNode *aNode) :
         iNode(aNode),
         iInterfacingObjectContainer(NULL)
 {
-    if (aNode) iInterfacingObjectContainer = &aNode->iInterfacingObjectContainer;
+    if (aNode) iInterfacingObjectContainer = aNode->iInterfacingObjectContainer;
     iDataPathLogger = PVLogger::GetLoggerObject(NODEDATAPATHLOGGER_TAG);
 }
 
@@ -2583,6 +2657,7 @@ bool ProtocolContainer::isObjectsReady()
 {
     if (!iNode->iProtocol			||
             !iNode->iNodeOutput			||
+            !iInterfacingObjectContainer ||
             iInterfacingObjectContainer->getURIObject().empty() ||
             !iInterfacingObjectContainer->getDataStreamFactory() ||
             !iNode->iPortInForData) return false;
@@ -2613,8 +2688,8 @@ PVMFStatus ProtocolContainer::initImpl()
 
     // start data flow
     // if the current socket connection is down, then do socket reconnect
-    bool needSocketReconnect = !iNode->iInterfacingObjectContainer.isSocketConnectionUp();
-    iNode->StartDataFlowByCommand(needSocketReconnect);
+    bool needSocketReconnect = !iNode->iInterfacingObjectContainer->isSocketConnectionUp();
+    startDataFlowByCommand(needSocketReconnect);
 
     return PVMFPending;
 }
@@ -2634,6 +2709,79 @@ bool ProtocolContainer::initProtocol()
     return true;
 }
 
+PVMFStatus ProtocolContainer::doStop()
+{
+    // send socket disconnect command if necessary
+    sendSocketDisconnectCmd();
+
+    // disable sending logging message, but try to disconnect socket
+    // use end of processing event to streamline all end of processing cases for stop
+    EndOfDataProcessingInfo *aEOPInfo = iNode->iInterfacingObjectContainer->getEOPInfo();
+    aEOPInfo->clear();
+    aEOPInfo->iForceStop = true;
+    PVProtocolEngineNodeInternalEvent aEvent(PVProtocolEngineNodeInternalEventType_EndOfProcessing, (OsclAny*)aEOPInfo);
+    iNode->DispatchInternalEvent(&aEvent);
+
+    return PVMFSuccess;
+}
+
+void ProtocolContainer::sendSocketDisconnectCmd()
+{
+    if (iNode->SendPortMediaCommand(iNode->iPortInForData, PVMF_MEDIA_CMD_SOCKET_DISCONNECT_FORMAT_ID))
+    {
+        if (iNode->iPortInForData->Send())
+        {
+            LOGINFODATAPATH((0, "ProtocolContainer::doStop()->sendSocketDisconnectCmd(), Send() SUCCESS: MsgID=%d(SOCKET DISCONNECT)", (uint32)PVMF_MEDIA_CMD_SOCKET_DISCONNECT_FORMAT_ID));
+        }
+    }
+}
+
+void ProtocolContainer::startDataFlowByCommand(const bool needDoSocketReconnect)
+{
+    // flush out existing data at this point
+    checkEOSMsgFromInputPort();
+    iNode->iDataInQueue.clear();
+    iNode->ClearPorts(); // clear any queued messages in ports
+
+    // cancel all the existing timers
+    iNode->iNodeTimer->clear();
+
+    // disable info update at this point, will be enabled when new response comes in
+    enableInfoUpdate(false);
+
+    // socket reconnect
+    if (needDoSocketReconnect) reconnectSocket();
+
+    rescheduleNewDataFlow();
+}
+
+void ProtocolContainer::checkEOSMsgFromInputPort()
+{
+    if (iNode->iPortInForData->IncomingMsgQueueSize() == 0)  return;
+
+    // input port has media message
+    while (iNode->iPortInForData->IncomingMsgQueueSize() > 0)
+    {
+        PVMFSharedMediaMsgPtr msg;
+        PVMFStatus status = iNode->iPortInForData->DequeueIncomingMsg(msg);
+        if (status != PVMFSuccess) continue;
+        if (msg->getFormatID() == PVMF_MEDIA_CMD_EOS_FORMAT_ID)
+        {
+            iInterfacingObjectContainer->updateSocketConnectFlags(true);
+            return;
+        }
+    }
+}
+
+void ProtocolContainer::rescheduleNewDataFlow()
+{
+    PVProtocolEngineNodeInternalEvent aEvent(PVProtocolEngineNodeInternalEventType_StartDataflowByCommand);
+    iNode->iInternalEventQueue.push_back(aEvent);
+    iNode->iProcessingState = ProcessingState_NormalDataflow;
+    iNode->iInterfacingObjectContainer->setInputDataUnwanted(false);
+    iNode->RunIfNotReady();
+}
+
 void ProtocolContainer::doClear(const bool aNeedDelete)
 {
     // clear ports
@@ -2641,8 +2789,8 @@ void ProtocolContainer::doClear(const bool aNeedDelete)
 
     // Clean up the internal stuff
     iNode->iDataInQueue.clear();
-    iNode->iInternalEventQueue.clear();
-    iNode->iInterfacingObjectContainer.clear();
+    clearInternalEventQueue();
+    iNode->iInterfacingObjectContainer->clear();
     if (iNode->iNodeTimer) iNode->iNodeTimer->clear();
     //if(iNode->iDownloadControl) iNode->iDownloadControl->clear();
 }
@@ -2661,14 +2809,21 @@ void ProtocolContainer::doCancelClear()
 
     // Clean up the internal stuff
     iNode->iDataInQueue.clear();
-    iNode->iInternalEventQueue.clear();
-    //iNode->iInterfacingObjectContainer.clear();
+    clearInternalEventQueue();
+    //iNode->iInterfacingObjectContainer->clear();
     if (iNode->iNodeTimer) iNode->iNodeTimer->clear();
     if (iNode->iDownloadControl) iNode->iDownloadControl->clear();
     if (iNode->iEventReport) iNode->iEventReport->clear();
 
     // if re-do cancelled command, start from sending http request
     if (iNode->iProtocol) iNode->iProtocol->sendRequest();
+}
+
+void ProtocolContainer::clearInternalEventQueue()
+{
+    iNode->iInternalEventQueue.clear();
+    OutgoingMsgSentSuccessInfoVec *aVec = iInterfacingObjectContainer->getOutgoingMsgSentSuccessInfoVec();
+    aVec->clear();
 }
 
 bool ProtocolContainer::reconnectSocket(const bool aForceSocketReconnect)
@@ -2694,7 +2849,7 @@ bool ProtocolContainer::doEOS(const bool isTrueEOS)
     else   // EOS packet hasn't been received, so re-connect socket
     {
         bool aForceSocketReconnect = false;
-        if (!iNode->iInterfacingObjectContainer.isPrevSocketConnectionUp())
+        if (!iNode->iInterfacingObjectContainer->isPrevSocketConnectionUp())
         {
             // the situation is, previous connection is down and the current connection is down.
             // then force reconnect
@@ -2718,6 +2873,11 @@ uint32 ProtocolContainer::getBitMaskForHTTPMethod(const HttpMethod aMethod)
 
 bool ProtocolContainer::createProtocolObjects()
 {
+    // create iInterfacingObjectContainer
+    iNode->iInterfacingObjectContainer = OSCL_NEW(InterfacingObjectContainer, ());
+    if (!iNode->iInterfacingObjectContainer) return false;
+    iInterfacingObjectContainer = iNode->iInterfacingObjectContainer;
+
     // create iPortConfigFSInfoAlloc for redirect port config
     iNode->iPortConfigFSInfoAlloc = OSCL_NEW(OsclRefCounterMemFragAlloc, (&iNode->iPortConfigMemPool));
     if (!iNode->iPortConfigFSInfoAlloc) return false;
@@ -2738,6 +2898,8 @@ bool ProtocolContainer::createNetworkTimer()
     iNode->iNodeTimer->set(SERVER_RESPONSE_TIMER_ID);
     iNode->iNodeTimer->set(SERVER_INACTIVITY_TIMER_ID);
     iNode->iNodeTimer->set(SERVER_RESPONSE_TIMER_ID_FOR_STOPEOS_LOGGING);
+    iNode->iNodeTimer->set(WALL_CLOCK_TIMER_ID);
+    iNode->iNodeTimer->set(BUFFER_STATUS_TIMER_ID);
     return true;
 }
 bool ProtocolContainer::createEventHandlers()
@@ -2758,6 +2920,8 @@ bool ProtocolContainer::createEventHandlers()
     if (!iNode->iEventHandlers[6]) return false;
     iNode->iEventHandlers[7] = OSCL_NEW(CheckResumeNotificationHandler, (iNode));
     if (!iNode->iEventHandlers[7]) return false;
+    iNode->iEventHandlers[8] = OSCL_NEW(OutgoingMsgSentSuccessHandler, (iNode));
+    if (!iNode->iEventHandlers[8]) return false;
 
     iNode->iEventHandlers[EVENT_HANDLER_TOTAL-1] = OSCL_NEW(NormalDataFlowHandler, (iNode));
     if (!iNode->iEventHandlers[EVENT_HANDLER_TOTAL-1]) return false;
@@ -2766,22 +2930,24 @@ bool ProtocolContainer::createEventHandlers()
 
 void ProtocolContainer::deleteProtocolObjects()
 {
-    if (iNode->iPortConfigFSInfoAlloc)	OSCL_DELETE(iNode->iPortConfigFSInfoAlloc);
+    if (iNode->iInterfacingObjectContainer)	OSCL_DELETE(iNode->iInterfacingObjectContainer);
+    iNode->iInterfacingObjectContainer = NULL;
+    if (iNode->iPortConfigFSInfoAlloc)		OSCL_DELETE(iNode->iPortConfigFSInfoAlloc);
     iNode->iPortConfigFSInfoAlloc = NULL;
-    if (iNode->iNodeTimer)				OSCL_DELETE(iNode->iNodeTimer);
+    if (iNode->iNodeTimer)					OSCL_DELETE(iNode->iNodeTimer);
     iNode->iNodeTimer			  = NULL;
 
-    if (iNode->iProtocol)				OSCL_DELETE(iNode->iProtocol);
+    if (iNode->iProtocol)					OSCL_DELETE(iNode->iProtocol);
     iNode->iProtocol			  = NULL;
-    if (iNode->iNodeOutput)				OSCL_DELETE(iNode->iNodeOutput);
+    if (iNode->iNodeOutput)					OSCL_DELETE(iNode->iNodeOutput);
     iNode->iNodeOutput			  = NULL;
-    if (iNode->iDownloadControl)			OSCL_DELETE(iNode->iDownloadControl);
+    if (iNode->iDownloadControl)				OSCL_DELETE(iNode->iDownloadControl);
     iNode->iDownloadControl		  = NULL;
-    if (iNode->iDownloadProgess)			OSCL_DELETE(iNode->iDownloadProgess);
+    if (iNode->iDownloadProgess)				OSCL_DELETE(iNode->iDownloadProgess);
     iNode->iDownloadProgess		  = NULL;
-    if (iNode->iUserAgentField)			OSCL_DELETE(iNode->iUserAgentField);
+    if (iNode->iUserAgentField)				OSCL_DELETE(iNode->iUserAgentField);
     iNode->iUserAgentField		  = NULL;
-    if (iNode->iEventReport)				OSCL_DELETE(iNode->iEventReport);
+    if (iNode->iEventReport)					OSCL_DELETE(iNode->iEventReport);
     iNode->iEventReport			  = NULL;
 
     for (uint32 i = 0; i < EVENT_HANDLER_TOTAL; i++)
@@ -2805,8 +2971,8 @@ void ProtocolContainer::handleTimeout(const int32 timerID)
 bool ProtocolContainer::ignoreThisTimeout(const int32 timerID)
 {
     // check the end processing status: EOS recved and whole session is done
-    if (iNode->iInterfacingObjectContainer.isEOSAchieved() &&
-            iNode->iInterfacingObjectContainer.isWholeSessionDone()) return true;
+    if (iNode->iInterfacingObjectContainer->isEOSAchieved() &&
+            iNode->iInterfacingObjectContainer->isWholeSessionDone()) return true;
 
     // Next, all focus on checking server inactivity timeout
     if (timerID != (int32)SERVER_INACTIVITY_TIMER_ID) return false;
@@ -2832,7 +2998,7 @@ bool ProtocolContainer::ignoreThisTimeout(const int32 timerID)
 
 bool ProtocolContainer::handleTimeoutErr(const int32 timerID)
 {
-    if (iNode->iInterfacingObjectContainer.isDownloadStreamingDone() ||
+    if (iNode->iInterfacingObjectContainer->isDownloadStreamingDone() ||
             iNode->iInterfaceState == EPVMFNodePaused) return false;
 
     int32 timeoutErr = PVMFErrTimeout;
@@ -2847,20 +3013,21 @@ bool ProtocolContainer::handleTimeoutErr(const int32 timerID)
 
 bool ProtocolContainer::handleProtocolStateComplete(PVProtocolEngineNodeInternalEvent &aEvent, PVProtocolEngineNodeInternalEventHandler *aEventHandler)
 {
-    bool aSessionDone = iNode->iInterfacingObjectContainer.isWholeSessionDone();
-    bool aDownloadStreamingDone = iNode->iInterfacingObjectContainer.isDownloadStreamingDone();
+    bool aSessionDone = iNode->iInterfacingObjectContainer->isWholeSessionDone();
+    bool aDownloadStreamingDone = iNode->iInterfacingObjectContainer->isDownloadStreamingDone();
     OSCL_UNUSED_ARG(aDownloadStreamingDone);
-    bool aEOSArrived = iNode->iInterfacingObjectContainer.isEOSAchieved();
+    bool aEOSArrived = iNode->iInterfacingObjectContainer->isEOSAchieved();
 
-    iNode->iInterfacingObjectContainer.setInputDataUnwanted();
+    iNode->iInterfacingObjectContainer->setInputDataUnwanted();
     if (aSessionDone)
     {
         // flush all the remaining output
         iNode->iNodeOutput->flushData();
         iNode->iNodeTimer->clear();
-        if (aEOSArrived && iNode->iInterfacingObjectContainer.getOutputPortConnect())
+        if (aEOSArrived && iNode->iInterfacingObjectContainer->getOutputPortConnect())
         {
-            return iNode->iProtocolContainer->doEOS(); // true EOS
+            iNode->iProtocolContainer->doEOS(); // true EOS
+            return aEventHandler->completePendingCommand(aEvent);
         }
     }
     iNode->iProcessingState = ProcessingState_Idle;
@@ -2890,8 +3057,9 @@ bool PVProtocolEngineNodeInternalEventHandler::completePendingCommandWithError(P
             PVUuid uuid = PVProtocolEngineNodeErrorEventTypesUUID;
             int32 basePVMFErrorCode = getBasePVMFErrorReturnCode(errorCode);
             char *errEventData = NULL;
-            handleAuthenErrResponse(errorCode, errEventData);
-            iNode->CommandComplete(iNode->iCurrentCommand, iNode->iCurrentCommand.front(), basePVMFErrorCode, errEventData, &uuid, &errorCode);
+            uint32 errEventDataLen = 0;
+            handleErrResponse(basePVMFErrorCode, errorCode, errEventData, errEventDataLen);
+            iNode->CommandComplete(iNode->iCurrentCommand, iNode->iCurrentCommand.front(), basePVMFErrorCode, errEventData, &uuid, &errorCode, errEventDataLen);
             LOGINFODATAPATH((0, "PVProtocolEngineNodeInternalEventHandler::completePendingCommandWithError(), basePVMFErrorCode=%d, extensionErrorCode=%d",
                              basePVMFErrorCode, errorCode));
         }
@@ -2905,8 +3073,9 @@ bool PVProtocolEngineNodeInternalEventHandler::completePendingCommandWithError(P
         {
             int32 basePVMFErrorCode = getBasePVMFErrorReturnCode(errorCode, false); // false for error event
             char *errEventData = NULL;
-            handleAuthenErrResponse(errorCode, errEventData);
-            iNode->ReportErrorEvent(basePVMFErrorCode, errEventData, errorCode);
+            uint32 eventDataLen = 0;
+            handleErrResponse(basePVMFErrorCode, errorCode, errEventData, eventDataLen);
+            iNode->ReportErrorEvent(basePVMFErrorCode, errEventData, errorCode, eventDataLen);
             LOGINFODATAPATH((0, "PVProtocolEngineNodeInternalEventHandler::completePendingCommandWithError(), basePVMFErrorCode=%d, extensionErrorCode=%d",
                              basePVMFErrorCode, errorCode));
         }
@@ -2930,8 +3099,6 @@ int32 PVProtocolEngineNodeInternalEventHandler::getBasePVMFErrorReturnCode(const
     if (!isForCommandComplete) pvmfReturnCode = PVMFErrProcessing; // if not for command complete, should for error event
     if (iNode->iProtocolContainer->isHTTP409ForLowDiskSpace(errorCode)) pvmfReturnCode = PVMFLowDiskSpace;
 
-    LOGERRORDATAPATH((0, "PVProtocolEngineNodeInternalEventHandler::getBasePVMFErrorReturnCode(), error code %d", errorCode));
-
     switch (errorCode)
     {
         case PVProtocolEngineNodeErrorProcessingFailure_TimeoutServerNoResponce:
@@ -2941,7 +3108,19 @@ int32 PVProtocolEngineNodeInternalEventHandler::getBasePVMFErrorReturnCode(const
 
         case PVProtocolEngineNodeErrorHTTPErrorCode401:
         case PVProtocolEngineNodeErrorHTTPErrorCode407:
+        case PVProtocolEngineNodeErrorHTTPErrorCode401_InvalidRealm:
             pvmfReturnCode = PVMFErrHTTPAuthenticationRequired;
+            break;
+
+        case PVProtocolEngineNodeErrorHTTPErrorCode401_UnsupportedAuthenticationType:
+            pvmfReturnCode = PVMFErrNotSupported;
+            break;
+
+        case PVProtocolEngineNodeErrorHTTPRedirect_TrialsExceedLimit:
+            if (iNode->iInterfacingObjectContainer->getNumRedirectTrials() == 0)
+            {
+                pvmfReturnCode = PVMFErrRedirect;
+            }
             break;
         default:
             break;
@@ -2950,14 +3129,41 @@ int32 PVProtocolEngineNodeInternalEventHandler::getBasePVMFErrorReturnCode(const
     return pvmfReturnCode;
 }
 
-void PVProtocolEngineNodeInternalEventHandler::handleAuthenErrResponse(int32 &aErrCode, char* &aEventData)
+void PVProtocolEngineNodeInternalEventHandler::handleErrResponse(int32 &aBaseCode, int32 &errCode, char* &aEventData, uint32 &aEventDataLen)
+{
+    if (aBaseCode == PVMFErrRedirect)
+    {
+        handleRedirectErrResponse(aEventData, aEventDataLen);
+    }
+    else
+    {
+        handleAuthenErrResponse(errCode, aEventData, aEventDataLen);
+        aBaseCode = getBasePVMFErrorReturnCode(errCode);
+    }
+}
+
+void PVProtocolEngineNodeInternalEventHandler::handleAuthenErrResponse(int32 &aErrCode, char* &aEventData, uint32 &aEventDataLen)
 {
     aEventData = NULL;
+    aEventDataLen = 0;
     if (aErrCode == PVProtocolEngineNodeErrorHTTPErrorCode401)
     {
+        if (false == iNode->iProtocol->isServerSendAuthenticationHeader())
+        {
+            aErrCode = PVProtocolEngineNodeErrorHTTPErrorCode401_NoAuthenticationHeader;
+            return;
+        }
+
+        if (false == iNode->iProtocol->isServerSupportBasicAuthentication())
+        {
+            aErrCode = PVProtocolEngineNodeErrorHTTPErrorCode401_UnsupportedAuthenticationType;
+            return;
+        }
+
         if (iNode->iProtocol->getAuthenInfo(iAuthenInfoRealm))
         {
             aEventData = (char*)iAuthenInfoRealm.get_cstr();
+            aEventDataLen = iAuthenInfoRealm.get_size() + 1; //Incremented by one to save c string terminating char ('\0')
         }
         else
         {
@@ -2966,6 +3172,21 @@ void PVProtocolEngineNodeInternalEventHandler::handleAuthenErrResponse(int32 &aE
     }
 }
 
+void PVProtocolEngineNodeInternalEventHandler::handleRedirectErrResponse(char* &aEventData, uint32 &aEventDataLen)
+{
+    aEventData = NULL;
+    aEventDataLen = 0;
+    // set the new url into info event
+    OSCL_HeapString<OsclMemAllocator> newUrl;
+    iNode->iProtocol->getRedirectURI(newUrl);
+
+    // then set this value
+    iNode->iInterfacingObjectContainer->setURI(newUrl, true);
+    iNode->iProtocol->setURI(iNode->iInterfacingObjectContainer->getURIObject());
+
+    aEventData = (char*)iNode->iInterfacingObjectContainer->getURIObject().getURI().get_cstr();
+    aEventDataLen = iNode->iInterfacingObjectContainer->getURIObject().getURI().get_size() + 1;
+}
 
 inline bool PVProtocolEngineNodeInternalEventHandler::isCurrEventMatchCurrPendingCommand(uint32 aCurrEventId)
 {
@@ -3014,11 +3235,11 @@ bool PVProtocolEngineNodeInternalEventHandler::completePendingCommand(PVProtocol
 bool PVProtocolEngineNodeInternalEventHandler::isBeingStopped(const int32 aStatus)
 {
     // stopped, stop command is completed and node state is changed to prepared state
-    if (iNode->iInterfacingObjectContainer.isWholeSessionDone() &&
+    if (iNode->iInterfacingObjectContainer->isWholeSessionDone() &&
             iNode->iInterfaceState == EPVMFNodePrepared) return true;
 
     // being stopped, stop command is pending plus protcol state complete
-    return (iNode->iInterfacingObjectContainer.isWholeSessionDone() &&
+    return (iNode->iInterfacingObjectContainer->isWholeSessionDone() &&
             isStopCmdPending() &&
             isProtocolStateComplete(aStatus));
 }
@@ -3094,17 +3315,17 @@ int32 ProtocolStateErrorHandler::checkRedirectHandling(const int32 aErrorCode)
 {
     bool isInfoEvent = true;
     int32 errCode = parseServerResponseCode(aErrorCode, isInfoEvent);
-    uint32 numRedirectTrials = iNode->iInterfacingObjectContainer.getNumRedirectTrials();
-    uint32 numCurrRedirectTrials = iNode->iInterfacingObjectContainer.getCurrNumRedirectTrials();
+    uint32 numRedirectTrials = iNode->iInterfacingObjectContainer->getNumRedirectTrials();
+    uint32 numCurrRedirectTrials = iNode->iInterfacingObjectContainer->getCurrNumRedirectTrials();
 
     if (isInfoEvent && ++numCurrRedirectTrials <= numRedirectTrials)
     {
-        iNode->iInterfacingObjectContainer.setCurrNumRedirectTrials(numCurrRedirectTrials);
+        iNode->iInterfacingObjectContainer->setCurrNumRedirectTrials(numCurrRedirectTrials);
 
         if (handleRedirect())
         {
             // set the new url into info event
-            OSCL_HeapString<OsclMemAllocator> url(iNode->iInterfacingObjectContainer.getURIObject().getURI());
+            OSCL_HeapString<OsclMemAllocator> url(iNode->iInterfacingObjectContainer->getURIObject().getURI());
             iNode->ReportInfoEvent(PVMFInfoRemoteSourceNotification, (OsclAny*)(url.get_cstr()), errCode);
             return 0;
         }
@@ -3128,7 +3349,8 @@ int32 ProtocolStateErrorHandler::parseServerResponseCode(const int32 aErrorCode,
     isInfoEvent = true;
     int32 errCode = aErrorCode;
     // redirect code 3xx
-    if (errCode >= 300 && errCode < 400)
+    if (errCode >= (int32)PROTOCOLENGINE_REDIRECT_STATUS_CODE_START &&
+            errCode <= (int32)PROTOCOLENGINE_REDIRECT_STATUS_CODE_END)
     {
         errCode += PVMFPROTOCOLENGINENODEInfo_Redirect;
     }
@@ -3162,8 +3384,8 @@ bool ProtocolStateErrorHandler::handleRedirect()
     if (iNode->iProtocol->getRedirectURI(newUrl) && newUrl.get_size() > 0)
     {
         // then set info to protocol
-        iNode->iInterfacingObjectContainer.setURI(newUrl, true);
-        iNode->iProtocol->setURI(iNode->iInterfacingObjectContainer.getURIObject());
+        iNode->iInterfacingObjectContainer->setURI(newUrl, true);
+        iNode->iProtocol->setURI(iNode->iInterfacingObjectContainer->getURIObject());
         iNode->iProtocolContainer->reconnectSocket();
         // Activate so processing will continue
         iNode->iEventReport->startRealDataflow();
@@ -3180,21 +3402,26 @@ bool HttpHeaderAvailableHandler::handle(PVProtocolEngineNodeInternalEvent &aEven
 
     // get Http header
     OUTPUT_DATA_QUEUE aHttpHeader = *((OUTPUT_DATA_QUEUE*)aEvent.iEventData);
-    uint32 headerLength = iNode->iInterfacingObjectContainer.setHttpHeader(aHttpHeader);
+    uint32 headerLength = iNode->iInterfacingObjectContainer->setHttpHeader(aHttpHeader);
+    bool status = true;
     if (iNode->iProtocol && headerLength > 0)
     {
         uint32 length = iNode->iProtocol->getContentLength();
-        iNode->iInterfacingObjectContainer.setFileSize(length);
+        iNode->iInterfacingObjectContainer->setFileSize(length);
         iNode->iNodeOutput->setContentLength(length);
-        if (!iNode->iProtocolContainer->downloadUpdateForHttpHeaderAvailable()) return false;
+        status = iNode->iProtocolContainer->downloadUpdateForHttpHeaderAvailable();
     }
 
     // check PVMFInfoContentLength, PVMFErrContentTooLarge and PVMFInfoContentTruncated before completing the command
     iNode->iEventReport->checkContentInfoEvent(PROCESS_SUCCESS);
 
     // complete start command if it is not completed
-    if (completePendingCommand(aEvent)) iNode->iEventReport->startRealDataflow();
-    return true;
+    if (completePendingCommand(aEvent))
+    {
+        iNode->iEventReport->startRealDataflow();
+    }
+
+    return status;
 }
 
 bool FirstPacketAvailableHandler::handle(PVProtocolEngineNodeInternalEvent &aEvent)
@@ -3219,7 +3446,6 @@ bool FirstPacketAvailableHandler::handle(PVProtocolEngineNodeInternalEvent &aEve
         *aFirstSeqNumAfterSeekOrSwitch = aFirstPacketNumber;
 
         // send RE_CONFIG port command or complete seek command
-
         if (aCmd.iCmd == PVPROTOCOLENGINE_NODE_CMD_BITSTREAM_SWITCH)
         {
             // send RE_CONFIG port command
@@ -3249,9 +3475,9 @@ bool NormalDataAvailableHandler::handle(PVProtocolEngineNodeInternalEvent &aEven
 
 bool ProtocolStateCompleteHandler::handle(PVProtocolEngineNodeInternalEvent &aEvent)
 {
-    bool aSessionDone = iNode->iInterfacingObjectContainer.isWholeSessionDone();
-    bool aDownloadStreamingDone = iNode->iInterfacingObjectContainer.isDownloadStreamingDone();
-    bool aEOSArrived = iNode->iInterfacingObjectContainer.isEOSAchieved();
+    bool aSessionDone = iNode->iInterfacingObjectContainer->isWholeSessionDone();
+    bool aDownloadStreamingDone = iNode->iInterfacingObjectContainer->isDownloadStreamingDone();
+    bool aEOSArrived = iNode->iInterfacingObjectContainer->isEOSAchieved();
 
     LOGINFODATAPATH((0, "ProtocolStateCompleteHandler::handle() : iNode->iInterfaceState = %d, sessionDone=%d,DownloadStreamingDone=%d,EOSArrived=%d",
                      iNode->iInterfaceState, (uint32)aSessionDone, (uint32)aDownloadStreamingDone, (uint32)aEOSArrived));
@@ -3324,8 +3550,8 @@ bool NormalDataFlowHandler::dataFlowContinue(const int32 aStatus)
 
 inline bool NormalDataFlowHandler::isReadyGotoNextState(const int32 aStatus)
 {
-    return (aStatus == PROCESS_SUCCESS_END_OF_MESSAGE &&
-            !iNode->iInterfacingObjectContainer.isWholeSessionDone() &&
+    return (((aStatus == PROCESS_SUCCESS_END_OF_MESSAGE) || ((aStatus == PROCESS_SUCCESS_END_OF_MESSAGE_TRUNCATED))) &&
+            !iNode->iInterfacingObjectContainer->isWholeSessionDone() &&
             iNode->iInterfaceState != EPVMFNodePaused);
 }
 
@@ -3358,7 +3584,7 @@ bool NormalDataFlowHandler::flushDataPostProcessing(const int32 aStatusFlushData
 
 bool NormalDataFlowHandler::handleEOSLogging()
 {
-    if (iNode->iInterfacingObjectContainer.isDownloadStreamingDone() &&
+    if (iNode->iInterfacingObjectContainer->isDownloadStreamingDone() &&
             !iSendSocketReconnect &&
             iNode->iPortInForLogging)
     {
@@ -3373,7 +3599,7 @@ bool NormalDataFlowHandler::handleEOSLogging()
         LOGINFODATAPATH((0, "NormalDataFlowHandler::handleEOSLogging() server stop/eos logging response timer starts! timerID=3, timeoutValue=%d",
                          iNode->iNodeTimer->getTimeout(SERVER_RESPONSE_TIMER_ID_FOR_STOPEOS_LOGGING)));
     }
-    else if (!iNode->iInterfacingObjectContainer.isDownloadStreamingDone())
+    else if (!iNode->iInterfacingObjectContainer->isDownloadStreamingDone())
     {
         // reset the flag
         iSendSocketReconnect = false;
@@ -3386,7 +3612,7 @@ bool NormalDataFlowHandler::handleEOS(const int32 aStatus)
     if (aStatus != PROCESS_SUCCESS_GOT_EOS) return false;
 
     if (//(iNode->iInterfaceState==EPVMFNodeStarted || iNode->iInterfaceState==EPVMFNodePrepared || iNode->iInterfaceState==EPVMFNodeInitialized) &&
-        !iNode->iInterfacingObjectContainer.isDownloadStreamingDone())   // only issue socket reconnect during the streaming
+        !iNode->iInterfacingObjectContainer->isDownloadStreamingDone())   // only issue socket reconnect during the streaming
     {
         LOGINFODATAPATH((0, "NormalDataFlowHandler::handleEOS() : status == PROCESS_SUCCESS_GOT_EOS"));
         iNode->iProtocolContainer->doEOS(false);
@@ -3405,7 +3631,7 @@ bool NormalDataFlowHandler::handleEndOfProcessing(const int32 aStatus)
     if (!isBeingStopped(aStatus)) return false;
 
     // use end of processing event to streamline all end of processing cases for stop
-    EndOfDataProcessingInfo *aEOPInfo = iNode->iInterfacingObjectContainer.getEOPInfo();
+    EndOfDataProcessingInfo *aEOPInfo = iNode->iInterfacingObjectContainer->getEOPInfo();
     aEOPInfo->clear();
     aEOPInfo->iStreamingDone = true;
     PVProtocolEngineNodeInternalEvent aEvent(PVProtocolEngineNodeInternalEventType_EndOfProcessing, (OsclAny*)aEOPInfo);
@@ -3421,6 +3647,7 @@ bool EndOfDataProcessingHandler::handle(PVProtocolEngineNodeInternalEvent &aEven
     if (aInfo->iSendResumeNotification)
     {
         iNode->iDownloadControl->checkResumeNotification();
+        iNode->iNodeTimer->clear();
         LOGINFODATAPATH((0, "EndOfDataProcessingHandler::handle(), send resume notification to parser node, for DOWNLOAD COMPLETE"));
     }
     if (aInfo->iExtraDataComeIn)
@@ -3479,6 +3706,15 @@ bool CheckResumeNotificationHandler::handle(PVProtocolEngineNodeInternalEvent &a
     return true;
 }
 
+bool OutgoingMsgSentSuccessHandler::handle(PVProtocolEngineNodeInternalEvent &aEvent)
+{
+    OutgoingMsgSentSuccessInfoVec *aVec = (OutgoingMsgSentSuccessInfoVec*)aEvent.iEventInfo;
+    if (!aVec || aVec->empty()) return false;
+    bool retVal = (iNode->PostProcessForMsgSentSuccess(aVec->front().iPort, aVec->front().iMsg) == PVMFSuccess);
+    if (!aVec->empty()) aVec->erase(aVec->begin());
+    return retVal;
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////////
 //////	PVMFProtocolEngineNodeOutput implementation
@@ -3500,6 +3736,7 @@ PVMFProtocolEngineNodeOutput::PVMFProtocolEngineNodeOutput(PVMFProtocolEngineNod
     iLogger = PVLogger::GetLoggerObject("PVMFProtocolEngineNode");
     iDataPathLogger = PVLogger::GetLoggerObject(NODEDATAPATHLOGGER_TAG);
     iClockLogger = PVLogger::GetLoggerObject("clock");
+    iMediaDataMemPool.enablenullpointerreturn();
 }
 
 PVMFProtocolEngineNodeOutput::~PVMFProtocolEngineNodeOutput()
@@ -3534,7 +3771,7 @@ bool PVMFProtocolEngineNodeOutput::sendToPort(PVMFSharedMediaDataPtr &aMediaData
 bool PVMFProtocolEngineNodeOutput::createMediaData(PVMFSharedMediaDataPtr &aMediaData, uint32 aRequestSize)
 {
     // check if need to create memory pool
-    int32 errcode = 0;
+    int32 errcode = OsclErrNone;
     if (!iMediaDataAlloc)
     {
         errcode = createMemPool();
@@ -3544,12 +3781,22 @@ bool PVMFProtocolEngineNodeOutput::createMediaData(PVMFSharedMediaDataPtr &aMedi
     OsclSharedPtr<PVMFMediaDataImpl> mediadataImpl;
     errcode = 0;
     OSCL_TRY(errcode, mediadataImpl = iMediaDataAlloc->allocate(aRequestSize));
-    if (errcode != 0) return false;
+    if (errcode != OsclErrNone) return false;
+
 
     // Then wrap it around with PVMFMediaData
     iMediaData.Unbind();
-    OSCL_TRY(errcode, iMediaData = PVMFMediaData::createMediaData(mediadataImpl, &iMediaDataMemPool));
-    if (errcode != 0) return false;
+
+    errcode = OsclErrNoResources;
+
+    iMediaData = PVMFMediaData::createMediaData(mediadataImpl, &iMediaDataMemPool);
+
+    if (iMediaData.GetRep() != NULL)
+    {
+        errcode = OsclErrNone;
+    }
+
+    if (errcode != OsclErrNone) return false;
 
     aMediaData = iMediaData;
     return true;
@@ -3561,6 +3808,7 @@ PVMFStatus PVMFProtocolEngineNodeOutput::createMemPool()
     int32 errcode = 0;
     OSCL_TRY(errcode, iContentDataMemPool = OSCL_NEW(OsclMemPoolFixedChunkAllocator, (PVHTTPDOWNLOADOUTPUT_CONTENTDATA_POOLNUM)));
     if (errcode || iContentDataMemPool == NULL) return PVMFErrNoMemory;
+
 
     OSCL_TRY(errcode, iMediaDataAlloc = OSCL_NEW(PVMFSimpleMediaBufferCombinedAlloc, (iContentDataMemPool)));
     if (errcode || iMediaDataAlloc == NULL) return PVMFErrNoMemory;
@@ -3605,7 +3853,12 @@ bool PVMFProtocolEngineNodeOutput::sendToDestPort(PVMFSharedMediaDataPtr &aMedia
                      mediaMsgOut->getSeqNum(), dataSize, aPort));
 
     PVMFStatus status = aPort->QueueOutgoingMsg(mediaMsgOut);
-    return (status == PVMFSuccess);
+    if (status < PVMFSuccess) return false;
+    if (status == PVMFSuccessOutgoingMsgSent)
+    {
+        return iObserver->QueueOutgoingMsgSentSuccess(aPort, mediaMsgOut);
+    }
+    return true;
 }
 
 bool PVMFProtocolEngineNodeOutput::passDownNewOutputData(OUTPUT_DATA_QUEUE &aOutputQueue, OsclAny* aSideInfo)
@@ -3735,7 +3988,7 @@ bool UserAgentField::getUserAgent(OSCL_String &aUserAgent)
 EventReporter::EventReporter(PVMFProtocolEngineNode *aNode) : iNode(aNode)
 {
     clear();
-    if (aNode) iInterfacingObjectContainer = &aNode->iInterfacingObjectContainer;
+    if (aNode) iInterfacingObjectContainer = aNode->iInterfacingObjectContainer;
     iDataPathLogger = PVLogger::GetLoggerObject(NODEDATAPATHLOGGER_TAG);
 }
 
@@ -3756,16 +4009,18 @@ void EventReporter::startRealDataflow()
 
 // constructor
 InterfacingObjectContainer::InterfacingObjectContainer() :
-        iDownloadFormat(PVMF_DATA_SOURCE_HTTP_URL),
+        iDownloadFormat(PVMF_MIME_DATA_SOURCE_HTTP_URL),
         iDataStreamFactory(NULL),
         iNumBuffersInAllocator(PVHTTPSTREAMINGOUTPUT_CONTENTDATA_POOLNUM),
         iNumRedirectTrials(PVPROTOCOLENGINE_DEFAULT_NUMBER_OF_REDIRECT_TRIALS),
+        iNumBuffersInMediaDataPoolSMCalc(PVHTTPSTREAMINGOUTPUT_CONTENTDATA_POOLNUM),
         iCurrSocketConnection(true),
         iPrevSocketConnection(true),
         iLatestDataPacketNumSent(0),
         iOutputPortConnected(false)
 {
     clear();
+    iOutgoingMsgSentSuccessInfoVec.reserve(PVMF_PROTOCOLENGINE_NODE_COMMAND_VECTOR_RESERVE / 4);
 }
 
 // set and get http header
@@ -3803,6 +4058,10 @@ bool InterfacingObjectContainer::setStreamingProxy(OSCL_wString& aProxyName, con
     alloc.deallocate(buf);
     return true;
 }
+void InterfacingObjectContainer::setNumBuffersInMediaDataPoolSMCalc(uint32 aVal)
+{
+    iNumBuffersInMediaDataPoolSMCalc = aVal;
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -3838,7 +4097,7 @@ PVMFProtocolEngineNodeTimer::~PVMFProtocolEngineNodeTimer()
 {
     if (iWatchdogTimer)
     {
-        OSCL_TEMPLATED_DELETE(iWatchdogTimer, OsclTimer<PVMFProtocolEngineNodeAllocator>, OsclTimer);
+        OSCL_DELETE(iWatchdogTimer);
         iWatchdogTimer = NULL;
     }
 
@@ -3938,6 +4197,10 @@ uint32 PVMFProtocolEngineNodeTimer::getDefaultTimeout(const uint32 aTimerID)
             return DEFAULT_KEEPALIVE_TIMEOUT_IN_SEC;
         case SERVER_RESPONSE_TIMER_ID_FOR_STOPEOS_LOGGING:
             return DEFAULT_MAX_SERVER_RESPONSE_DURATION_IN_SEC_FOR_STOPEOS_LOGGING;
+        case WALL_CLOCK_TIMER_ID:
+            return DEFAULT_WALLCLOCK_TIMEOUT_IN_SEC;
+        case BUFFER_STATUS_TIMER_ID:
+            return DEFAULT_BUFFER_STATUS_CLOCK_TIMEOUT_IN_SEC;
         default:
             break;
     }

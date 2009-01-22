@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,8 +65,6 @@ uint32 num_cand = 0;
 #define FIXED_SUBMB_MODE	AVC_4x4
 /*************************************************************************/
 
-
-
 /* Initialize arrays necessary for motion search */
 AVCEnc_Status InitMotionSearchModule(AVCHandle *avcHandle)
 {
@@ -113,101 +111,61 @@ AVCEnc_Status InitMotionSearchModule(AVCHandle *avcHandle)
     encvid->hpel_cand[0] = subpel_pred + REF_CENTER;
     encvid->hpel_cand[1] = subpel_pred + V2Q_H0Q * SUBPEL_PRED_BLK_SIZE + 1 ;
     encvid->hpel_cand[2] = subpel_pred + V2Q_H2Q * SUBPEL_PRED_BLK_SIZE + 1;
-    encvid->hpel_cand[3] = subpel_pred + V0Q_H2Q * SUBPEL_PRED_BLK_SIZE + 73;
+    encvid->hpel_cand[3] = subpel_pred + V0Q_H2Q * SUBPEL_PRED_BLK_SIZE + 25;
     encvid->hpel_cand[4] = subpel_pred + V2Q_H2Q * SUBPEL_PRED_BLK_SIZE + 25;
     encvid->hpel_cand[5] = subpel_pred + V2Q_H0Q * SUBPEL_PRED_BLK_SIZE + 25;
     encvid->hpel_cand[6] = subpel_pred + V2Q_H2Q * SUBPEL_PRED_BLK_SIZE + 24;
-    encvid->hpel_cand[7] = subpel_pred + V0Q_H2Q * SUBPEL_PRED_BLK_SIZE + 72;
+    encvid->hpel_cand[7] = subpel_pred + V0Q_H2Q * SUBPEL_PRED_BLK_SIZE + 24;
     encvid->hpel_cand[8] = subpel_pred + V2Q_H2Q * SUBPEL_PRED_BLK_SIZE;
 
-    encvid->qpel_cand[0][0] = subpel_pred + V3Q_H0Q * SUBPEL_PRED_BLK_SIZE; /* 1st */
-    encvid->qpel_cand[0][1] = subpel_pred + V3Q_H1Q * SUBPEL_PRED_BLK_SIZE; /* 2nd */
-    encvid->qpel_cand[0][2] = subpel_pred + V0Q_H1Q * SUBPEL_PRED_BLK_SIZE; /* 3rd */
-    encvid->qpel_cand[0][3] = subpel_pred + V1Q_H1Q * SUBPEL_PRED_BLK_SIZE; /* 4th */
-    encvid->qpel_cand[0][4] = subpel_pred + V1Q_H0Q * SUBPEL_PRED_BLK_SIZE; /* 5th */
-    encvid->qpel_cand[0][5] = subpel_pred + V1Q_H3Q * SUBPEL_PRED_BLK_SIZE; /* 6th */
-    encvid->qpel_cand[0][6] = subpel_pred + V0Q_H3Q * SUBPEL_PRED_BLK_SIZE; /* 7th */
-    encvid->qpel_cand[0][7] = subpel_pred + V3Q_H3Q * SUBPEL_PRED_BLK_SIZE; /* 8th */
+    /* For quarter-pel interpolation around best half-pel result */
 
-    /* top */
-    encvid->qpel_cand[1][0] = subpel_pred + V1Q_H0Q * SUBPEL_PRED_BLK_SIZE; /* 5th */
-    encvid->qpel_cand[1][1] = subpel_pred + V1Q_H1Q * SUBPEL_PRED_BLK_SIZE + 1; /* 4th */
-    encvid->qpel_cand[1][2] = subpel_pred + V2Q_H1Q * SUBPEL_PRED_BLK_SIZE + 1; /* 11th */
-    encvid->qpel_cand[1][3] = subpel_pred + V3Q_H1Q * SUBPEL_PRED_BLK_SIZE + 1; /* 2nd */
-    encvid->qpel_cand[1][4] = subpel_pred + V3Q_H0Q * SUBPEL_PRED_BLK_SIZE; /* 1st */
-    encvid->qpel_cand[1][5] = subpel_pred + V3Q_H3Q * SUBPEL_PRED_BLK_SIZE; /* 8th */
-    encvid->qpel_cand[1][6] = subpel_pred + V2Q_H3Q * SUBPEL_PRED_BLK_SIZE; /* 9th */
-    encvid->qpel_cand[1][7] = subpel_pred + V1Q_H3Q * SUBPEL_PRED_BLK_SIZE; /* 6th */
+    encvid->bilin_base[0][0] = subpel_pred + V2Q_H2Q * SUBPEL_PRED_BLK_SIZE;
+    encvid->bilin_base[0][1] = subpel_pred + V2Q_H0Q * SUBPEL_PRED_BLK_SIZE + 1;
+    encvid->bilin_base[0][2] = subpel_pred + V0Q_H2Q * SUBPEL_PRED_BLK_SIZE + 24;
+    encvid->bilin_base[0][3] = subpel_pred + REF_CENTER;
 
-    /* corner */
-    encvid->qpel_cand[2][0] = subpel_pred + V1Q_H2Q * SUBPEL_PRED_BLK_SIZE + 1; /* 15th */
-    encvid->qpel_cand[2][1] = subpel_pred + V1Q_H3Q * SUBPEL_PRED_BLK_SIZE + 1; /* 6th */
-    encvid->qpel_cand[2][2] = subpel_pred + V2Q_H3Q * SUBPEL_PRED_BLK_SIZE + 1; /* 9th */
-    encvid->qpel_cand[2][3] = subpel_pred + V3Q_H3Q * SUBPEL_PRED_BLK_SIZE + 1; /* 8th */
-    encvid->qpel_cand[2][4] = subpel_pred + V3Q_H2Q * SUBPEL_PRED_BLK_SIZE + 1; /* 13th */
-    encvid->qpel_cand[2][5] = subpel_pred + V3Q_H1Q * SUBPEL_PRED_BLK_SIZE + 1; /* 2nd */
-    encvid->qpel_cand[2][6] = subpel_pred + V2Q_H1Q * SUBPEL_PRED_BLK_SIZE + 1; /* 11th */
-    encvid->qpel_cand[2][7] = subpel_pred + V1Q_H1Q * SUBPEL_PRED_BLK_SIZE + 1; /* 4th */
 
-    /* right */
-    encvid->qpel_cand[3][0] = subpel_pred + V3Q_H2Q * SUBPEL_PRED_BLK_SIZE + 1; /* 13th */
-    encvid->qpel_cand[3][1] = subpel_pred + V3Q_H3Q * SUBPEL_PRED_BLK_SIZE + 1; /* 8th */
-    encvid->qpel_cand[3][2] = subpel_pred + V0Q_H3Q * SUBPEL_PRED_BLK_SIZE + 1; /* 7th */
-    encvid->qpel_cand[3][3] = subpel_pred + V1Q_H3Q * SUBPEL_PRED_BLK_SIZE + 25; /* 6th */
-    encvid->qpel_cand[3][4] = subpel_pred + V1Q_H2Q * SUBPEL_PRED_BLK_SIZE + 25; /* 15th */
-    encvid->qpel_cand[3][5] = subpel_pred + V1Q_H1Q * SUBPEL_PRED_BLK_SIZE + 25; /* 4th */
-    encvid->qpel_cand[3][6] = subpel_pred + V0Q_H1Q * SUBPEL_PRED_BLK_SIZE + 1; /* 3rd */
-    encvid->qpel_cand[3][7] = subpel_pred + V3Q_H1Q * SUBPEL_PRED_BLK_SIZE + 1; /* 2nd */
+    encvid->bilin_base[1][0] = subpel_pred + V0Q_H2Q * SUBPEL_PRED_BLK_SIZE;
+    encvid->bilin_base[1][1] = subpel_pred + REF_CENTER - 24;
+    encvid->bilin_base[1][2] = subpel_pred + V2Q_H2Q * SUBPEL_PRED_BLK_SIZE;
+    encvid->bilin_base[1][3] = subpel_pred + V2Q_H0Q * SUBPEL_PRED_BLK_SIZE + 1;
 
-    /* corner */
-    encvid->qpel_cand[4][0] = subpel_pred + V1Q_H2Q * SUBPEL_PRED_BLK_SIZE + 25; /* 15th */
-    encvid->qpel_cand[4][1] = subpel_pred + V1Q_H3Q * SUBPEL_PRED_BLK_SIZE + 25; /* 6th */
-    encvid->qpel_cand[4][2] = subpel_pred + V2Q_H3Q * SUBPEL_PRED_BLK_SIZE + 25; /* 9th */
-    encvid->qpel_cand[4][3] = subpel_pred + V3Q_H3Q * SUBPEL_PRED_BLK_SIZE + 25; /* 8th */
-    encvid->qpel_cand[4][4] = subpel_pred + V3Q_H2Q * SUBPEL_PRED_BLK_SIZE + 25; /* 13th */
-    encvid->qpel_cand[4][5] = subpel_pred + V3Q_H1Q * SUBPEL_PRED_BLK_SIZE + 25; /* 2nd */
-    encvid->qpel_cand[4][6] = subpel_pred + V2Q_H1Q * SUBPEL_PRED_BLK_SIZE + 25; /* 11th */
-    encvid->qpel_cand[4][7] = subpel_pred + V1Q_H1Q * SUBPEL_PRED_BLK_SIZE + 25; /* 4th */
+    encvid->bilin_base[2][0] = subpel_pred + REF_CENTER - 24;
+    encvid->bilin_base[2][1] = subpel_pred + V0Q_H2Q * SUBPEL_PRED_BLK_SIZE + 1;
+    encvid->bilin_base[2][2] = subpel_pred + V2Q_H0Q * SUBPEL_PRED_BLK_SIZE + 1;
+    encvid->bilin_base[2][3] = subpel_pred + V2Q_H2Q * SUBPEL_PRED_BLK_SIZE + 1;
 
-    /* bottom */
-    encvid->qpel_cand[5][0] = subpel_pred + V1Q_H0Q * SUBPEL_PRED_BLK_SIZE + 24; /* 5th */
-    encvid->qpel_cand[5][1] = subpel_pred + V1Q_H1Q * SUBPEL_PRED_BLK_SIZE + 25; /* 4th */
-    encvid->qpel_cand[5][2] = subpel_pred + V2Q_H1Q * SUBPEL_PRED_BLK_SIZE + 25; /* 11th */
-    encvid->qpel_cand[5][3] = subpel_pred + V3Q_H1Q * SUBPEL_PRED_BLK_SIZE + 25; /* 2nd */
-    encvid->qpel_cand[5][4] = subpel_pred + V3Q_H0Q * SUBPEL_PRED_BLK_SIZE + 24; /* 1st */
-    encvid->qpel_cand[5][5] = subpel_pred + V3Q_H3Q * SUBPEL_PRED_BLK_SIZE + 24; /* 8th */
-    encvid->qpel_cand[5][6] = subpel_pred + V2Q_H3Q * SUBPEL_PRED_BLK_SIZE + 24; /* 9th */
-    encvid->qpel_cand[5][7] = subpel_pred + V1Q_H3Q * SUBPEL_PRED_BLK_SIZE + 24; /* 6th */
+    encvid->bilin_base[3][0] = subpel_pred + V2Q_H0Q * SUBPEL_PRED_BLK_SIZE + 1;
+    encvid->bilin_base[3][1] = subpel_pred + V2Q_H2Q * SUBPEL_PRED_BLK_SIZE + 1;
+    encvid->bilin_base[3][2] = subpel_pred + REF_CENTER;
+    encvid->bilin_base[3][3] = subpel_pred + V0Q_H2Q * SUBPEL_PRED_BLK_SIZE + 25;
 
-    /* corner */
-    encvid->qpel_cand[6][0] = subpel_pred + V1Q_H2Q * SUBPEL_PRED_BLK_SIZE + 24; /* 15th */
-    encvid->qpel_cand[6][1] = subpel_pred + V1Q_H3Q * SUBPEL_PRED_BLK_SIZE + 24; /* 6th */
-    encvid->qpel_cand[6][2] = subpel_pred + V2Q_H3Q * SUBPEL_PRED_BLK_SIZE + 24; /* 9th */
-    encvid->qpel_cand[6][3] = subpel_pred + V3Q_H3Q * SUBPEL_PRED_BLK_SIZE + 24; /* 8th */
-    encvid->qpel_cand[6][4] = subpel_pred + V3Q_H2Q * SUBPEL_PRED_BLK_SIZE + 24; /* 13th */
-    encvid->qpel_cand[6][5] = subpel_pred + V3Q_H1Q * SUBPEL_PRED_BLK_SIZE + 24; /* 2nd */
-    encvid->qpel_cand[6][6] = subpel_pred + V2Q_H1Q * SUBPEL_PRED_BLK_SIZE + 24; /* 11th */
-    encvid->qpel_cand[6][7] = subpel_pred + V1Q_H1Q * SUBPEL_PRED_BLK_SIZE + 24; /* 4th */
+    encvid->bilin_base[4][0] = subpel_pred + REF_CENTER;
+    encvid->bilin_base[4][1] = subpel_pred + V0Q_H2Q * SUBPEL_PRED_BLK_SIZE + 25;
+    encvid->bilin_base[4][2] = subpel_pred + V2Q_H0Q * SUBPEL_PRED_BLK_SIZE + 25;
+    encvid->bilin_base[4][3] = subpel_pred + V2Q_H2Q * SUBPEL_PRED_BLK_SIZE + 25;
 
-    /* left */
-    encvid->qpel_cand[7][0] = subpel_pred + V3Q_H2Q * SUBPEL_PRED_BLK_SIZE; /* 13th */
-    encvid->qpel_cand[7][1] = subpel_pred + V3Q_H3Q * SUBPEL_PRED_BLK_SIZE; /* 8th */
-    encvid->qpel_cand[7][2] = subpel_pred + V0Q_H3Q * SUBPEL_PRED_BLK_SIZE; /* 7th */
-    encvid->qpel_cand[7][3] = subpel_pred + V1Q_H3Q * SUBPEL_PRED_BLK_SIZE + 24; /* 6th */
-    encvid->qpel_cand[7][4] = subpel_pred + V1Q_H2Q * SUBPEL_PRED_BLK_SIZE + 24; /* 15th */
-    encvid->qpel_cand[7][5] = subpel_pred + V1Q_H1Q * SUBPEL_PRED_BLK_SIZE + 24; /* 4th */
-    encvid->qpel_cand[7][6] = subpel_pred + V0Q_H1Q * SUBPEL_PRED_BLK_SIZE; /* 3rd */
-    encvid->qpel_cand[7][7] = subpel_pred + V3Q_H1Q * SUBPEL_PRED_BLK_SIZE; /* 2nd */
+    encvid->bilin_base[5][0] = subpel_pred + V0Q_H2Q * SUBPEL_PRED_BLK_SIZE + 24;
+    encvid->bilin_base[5][1] = subpel_pred + REF_CENTER;
+    encvid->bilin_base[5][2] = subpel_pred + V2Q_H2Q * SUBPEL_PRED_BLK_SIZE + 24;
+    encvid->bilin_base[5][3] = subpel_pred + V2Q_H0Q * SUBPEL_PRED_BLK_SIZE + 25;
 
-    /* corner */
-    encvid->qpel_cand[8][0] = subpel_pred + V1Q_H2Q * SUBPEL_PRED_BLK_SIZE; /* 15th */
-    encvid->qpel_cand[8][1] = subpel_pred + V1Q_H3Q * SUBPEL_PRED_BLK_SIZE; /* 6th */
-    encvid->qpel_cand[8][2] = subpel_pred + V2Q_H3Q * SUBPEL_PRED_BLK_SIZE; /* 9th */
-    encvid->qpel_cand[8][3] = subpel_pred + V3Q_H3Q * SUBPEL_PRED_BLK_SIZE; /* 8th */
-    encvid->qpel_cand[8][4] = subpel_pred + V3Q_H2Q * SUBPEL_PRED_BLK_SIZE; /* 13th */
-    encvid->qpel_cand[8][5] = subpel_pred + V3Q_H1Q * SUBPEL_PRED_BLK_SIZE; /* 2nd */
-    encvid->qpel_cand[8][6] = subpel_pred + V2Q_H1Q * SUBPEL_PRED_BLK_SIZE; /* 11th */
-    encvid->qpel_cand[8][7] = subpel_pred + V1Q_H1Q * SUBPEL_PRED_BLK_SIZE; /* 4th */
+    encvid->bilin_base[6][0] = subpel_pred + REF_CENTER - 1;
+    encvid->bilin_base[6][1] = subpel_pred + V0Q_H2Q * SUBPEL_PRED_BLK_SIZE + 24;
+    encvid->bilin_base[6][2] = subpel_pred + V2Q_H0Q * SUBPEL_PRED_BLK_SIZE + 24;
+    encvid->bilin_base[6][3] = subpel_pred + V2Q_H2Q * SUBPEL_PRED_BLK_SIZE + 24;
+
+    encvid->bilin_base[7][0] = subpel_pred + V2Q_H0Q * SUBPEL_PRED_BLK_SIZE;
+    encvid->bilin_base[7][1] = subpel_pred + V2Q_H2Q * SUBPEL_PRED_BLK_SIZE;
+    encvid->bilin_base[7][2] = subpel_pred + REF_CENTER - 1;
+    encvid->bilin_base[7][3] = subpel_pred + V0Q_H2Q * SUBPEL_PRED_BLK_SIZE + 24;
+
+    encvid->bilin_base[8][0] = subpel_pred + REF_CENTER - 25;
+    encvid->bilin_base[8][1] = subpel_pred + V0Q_H2Q * SUBPEL_PRED_BLK_SIZE;
+    encvid->bilin_base[8][2] = subpel_pred + V2Q_H0Q * SUBPEL_PRED_BLK_SIZE;
+    encvid->bilin_base[8][3] = subpel_pred + V2Q_H2Q * SUBPEL_PRED_BLK_SIZE;
+
 
     return AVCENC_SUCCESS;
 }
@@ -224,6 +182,55 @@ void CleanMotionSearchModule(AVCHandle *avcHandle)
     }
 
     return ;
+}
+
+
+bool IntraDecisionABE(int *min_cost, uint8 *cur, int pitch, bool ave)
+{
+    int j;
+    uint8 *out;
+    int temp, SBE;
+    OsclFloat ABE;
+    bool intra = true;
+
+    SBE = 0;
+    /* top neighbor */
+    out = cur - pitch;
+    for (j = 0; j < 16; j++)
+    {
+        temp = out[j] - cur[j];
+        SBE += ((temp >= 0) ? temp : -temp);
+    }
+
+    /* left neighbor */
+    out = cur - 1;
+    out -= pitch;
+    cur -= pitch;
+    for (j = 0; j < 16; j++)
+    {
+        temp = *(out += pitch) - *(cur += pitch);
+        SBE += ((temp >= 0) ? temp : -temp);
+    }
+
+    /* compare mincost/384 and SBE/64 */
+    ABE = SBE / 32.0; //ABE = SBE/64.0; //
+    if (ABE >= *min_cost / 256.0) //if( ABE*0.8 >= min_cost/384.0) //
+    {
+        intra = false; // no possibility of intra, just use inter
+    }
+    else
+    {
+        if (ave == true)
+        {
+            *min_cost = (*min_cost + (int)(SBE * 8)) >> 1; // possibility of intra, averaging the cost
+        }
+        else
+        {
+            *min_cost = (int)(SBE * 8);
+        }
+    }
+
+    return intra;
 }
 
 /******* main function for macroblock prediction for the entire frame ***/
@@ -251,6 +258,7 @@ void AVCMotionEstimation(AVCEncObject *encvid)
     uint8 *cur, *best_cand[5];
     int totalSAD = 0;	/* average SAD for rate control */
     int type_pred;
+    int abe_cost;
 
 #ifdef HTFM
     /***** HYPOTHESIS TESTING ********/  /* 2/28/01 */
@@ -359,9 +367,7 @@ void AVCMotionEstimation(AVCEncObject *encvid)
                     AVCMBMotionSearch(encvid, cur, best_cand, i << 4, j << 4, type_pred,
                                       FS_en, &hp_guess);
 
-                    totalSAD += mot_mb_16x16->sad;
-
-                    encvid->min_cost[mbnum] = mot_mb_16x16->sad;
+                    abe_cost = encvid->min_cost[mbnum] = mot_mb_16x16->sad;
 
                     /* set mbMode and MVs */
                     currMB->mbMode = AVC_P16;
@@ -369,23 +375,44 @@ void AVCMotionEstimation(AVCEncObject *encvid)
                     mv_uint32 = ((mot_mb_16x16->y) << 16) | ((mot_mb_16x16->x) & 0xffff);
                     for (k = 0; k < 32; k += 2)
                     {
-                        *((uint32*)(&currMB->mvL0[k])) = mv_uint32;
+                        currMB->mvL0[k>>1] = mv_uint32;
                     }
 
                     /* make a decision whether it should be tested for intra or not */
+                    if (i != mbwidth - 1 && j != mbheight - 1 && i != 0 && j != 0)
                     {
-                        // NumIntraSearch++; // This will be used for scene change detection.
-                        // intraSearch[mbnum] = 1;
+                        if (false == IntraDecisionABE(&abe_cost, cur, pitch, true))
+                        {
+                            intraSearch[mbnum] = 0;
+                        }
+                        else
+                        {
+                            NumIntraSearch++;
+                            rateCtrl->MADofMB[mbnum] = abe_cost;
+                        }
                     }
+                    else // boundary MBs, always do intra search
+                    {
+                        NumIntraSearch++;
+                    }
+
+                    totalSAD += (int) rateCtrl->MADofMB[mbnum];//mot_mb_16x16->sad;
                 }
-                else 	/* INTRA update, use for prediction 3/23/01 */
+                else 	/* INTRA update, use for prediction */
                 {
                     mot_mb_16x16[0].x = mot_mb_16x16[0].y = 0;
 
                     /* reset all other MVs to zero */
                     /* mot_mb_16x8, mot_mb_8x16, mot_mb_8x8, etc. */
+                    abe_cost = encvid->min_cost[mbnum] = 0x7FFFFFFF;  /* max value for int */
 
-                    encvid->min_cost[mbnum] = 0x7FFFFFFF;  /* max value for int */
+                    if (i != mbwidth - 1 && j != mbheight - 1 && i != 0 && j != 0)
+                    {
+                        IntraDecisionABE(&abe_cost, cur, pitch, false);
+
+                        rateCtrl->MADofMB[mbnum] = abe_cost;
+                        totalSAD += abe_cost;
+                    }
 
                     NumIntraSearch++ ;
                     /* cannot do I16 prediction here because it needs full decoding. */
@@ -404,15 +431,24 @@ void AVCMotionEstimation(AVCEncObject *encvid)
         if (incr_i > 1 && numLoop) /* scene change on and first loop */
         {
             //if(NumIntraSearch > ((totalMB>>3)<<1) + (totalMB>>3)) /* 75% of 50%MBs */
-            if (NumIntraSearch*20 > (3*totalMB)) /* 15% of 50%MBs */
+            if (NumIntraSearch*99 > (48*totalMB)) /* 20% of 50%MBs */
                 /* need to do more investigation about this threshold since the NumIntraSearch
                 only show potential intra MBs, not the actual one */
             {
                 /* we can choose to just encode I_SLICE without IDR */
-                video->nal_unit_type = AVC_NALTYPE_IDR;
-                /* cannot do I16 prediction here because it needs full decoding. */
-
+                //video->nal_unit_type = AVC_NALTYPE_IDR;
+                video->nal_unit_type = AVC_NALTYPE_SLICE;
+                video->sliceHdr->slice_type = AVC_I_ALL_SLICE;
+                video->slice_type = AVC_I_SLICE;
                 oscl_memset(intraSearch, 1, sizeof(uint8)*totalMB);
+                i = totalMB;
+                while (i--)
+                {
+                    mblock[i].mb_intra = 1;
+                    encvid->min_cost[i] = 0x7FFFFFFF;  /* max value for int */
+                }
+
+                rateCtrl->totalSAD = totalSAD * 2;	/* SAD */
 
                 return ;
             }
@@ -425,7 +461,7 @@ void AVCMotionEstimation(AVCEncObject *encvid)
     rateCtrl->totalSAD = totalSAD;	/* SAD */
 
 #ifdef HTFM
-    /***** HYPOTHESIS TESTING ********/  /* 2/28/01 */
+    /***** HYPOTHESIS TESTING ********/
     if (collect)
     {
         collect = 0;
@@ -434,19 +470,6 @@ void AVCMotionEstimation(AVCEncObject *encvid)
     /*********************************/
 #endif
 
-#if 0
-    if (1) /* scene change detected, need to check the logic in the upper layer */
-    {
-        video->nal_unit_type = AVC_NALTYPE_IDR;
-        video->prevFrameNum = video->MaxFrameNum;
-        video->PrevRefFrameNum = 0;
-        video->sliceHdr->frame_num = 0;
-        video->CurrPicNum = 0;
-        InitPOC(encvid); /* redo the POC */
-        RefListInit(video);
-        return AVCENC_NEW_IDR;
-    }
-#endif
     return ;
 }
 
@@ -565,6 +588,7 @@ void AVCRasterIntraUpdate(AVCEncObject *encvid, AVCMacroblock *mblock, int total
         {
             (mblock + indx)->mb_intra = 1;
             encvid->intraSearch[indx++] = 1;
+            i++;
         }
     }
 
@@ -782,7 +806,8 @@ void	HTFMPrepareCurMB_AVC(AVCEncObject *encvid, HTFM_Stat *htfm_stat, uint8 *cur
 
 void	AVCPrepareCurMB(AVCEncObject *encvid, uint8 *cur, int pitch)
 {
-    uint32 *currYMB = (uint32*)(encvid->currYMB);
+    void* tmp = (void*)(encvid->currYMB);
+    uint32 *currYMB = (uint32*) tmp;
     int i;
 
     cur -= pitch;
@@ -909,7 +934,7 @@ AVCEnc_Status AVCMBMotionSearch(AVCEncObject *encvid, AVCMacroblock *currMB, int
 
         for (subMbPartIdx = 0; subMbPartIdx < 4; subMbPartIdx++)
         {
-            mv = &currMB->mvL0[0] + (mbPartIdx << 3) + (subMbPartIdx << 1);
+            mv = (int16*)(currMB->mvL0 + (mbPartIdx << 2) + subMbPartIdx);
 
             *mv++ = FIXED_MVX;
             *mv = FIXED_MVY;
@@ -1188,10 +1213,10 @@ void AVCMBMotionSearch(AVCEncObject *encvid, uint8 *cur, uint8 *best_cand[],
     if (rateCtrl->subPelEnable) // always enable half-pel search
     {
         /* find half-pel resolution motion vector */
-        AVCFindHalfPelMB(encvid, cur, mot16x16 + mbnum, best_cand[0], i0, j0, *hp_guess, cmvx, cmvy);
+        min_sad = AVCFindHalfPelMB(encvid, cur, mot16x16 + mbnum, best_cand[0], i0, j0, *hp_guess, cmvx, cmvy);
 
-        /** do motion comp here for now */
-        ref = currPic->Sl + i0 + j0 * lx;
+        encvid->rateCtrl->MADofMB[mbnum] = min_sad / 256.0;
+
 
         if (encvid->best_qpel_pos == -1)
         {
@@ -1199,22 +1224,26 @@ void AVCMBMotionSearch(AVCEncObject *encvid, uint8 *cur, uint8 *best_cand[],
         }
         else
         {
-            ncand = encvid->qpel_cand[encvid->best_hpel_pos][encvid->best_qpel_pos];
-        }
-
-        for (j = 0; j < 16; j++)
-        {
-            for (i = 0; i < 16; i++)
-            {
-                *ref++ = *ncand++;
-            }
-            ref += (lx - 16);
-            ncand += 8;
+            ncand = encvid->qpel_cand[encvid->best_qpel_pos];
         }
     }
+    else
+    {
+        encvid->rateCtrl->MADofMB[mbnum] = min_sad / 256.0;
+    }
 
-
-
+    /** do motion comp here for now */
+    ref = currPic->Sl + i0 + j0 * lx;
+    /* copy from the best result to current Picture */
+    for (j = 0; j < 16; j++)
+    {
+        for (i = 0; i < 16; i++)
+        {
+            *ref++ = *ncand++;
+        }
+        ref += (lx - 16);
+        ncand += 8;
+    }
 
     return ;
 }

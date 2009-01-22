@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,7 @@ Returns
 ------------------------------------------------------------------------------
 */
 
-
+#if ( !defined(PV_ARM_GCC_V5) && !defined(PV_ARM_GCC_V4) && !defined(PV_ARM_V5) && !defined(PV_ARM_V4) )
 /*----------------------------------------------------------------------------
 ; INCLUDES
 ----------------------------------------------------------------------------*/
@@ -164,4 +164,4 @@ void pvmp3_dct_9(int32 vec[])
 
 
 
-
+#endif // If not assembly

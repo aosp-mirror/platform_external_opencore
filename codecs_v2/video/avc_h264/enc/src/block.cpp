@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1110,248 +1110,6 @@ void dct_chroma(AVCEncObject *encvid, uint8 *curC, uint8 *orgC, int cr)
     return ;
 }
 
-#if 0
-void TransQuantZZ(AVCEncObject *encvid, AVCMacroblock *currMB, int slice_type,
-                  uint8 *curL, uint8 *curCb, uint8 *curCr)
-{
-    int block_y, block_x, i8x8, i, j;
-    int ncoeff, start_k = 0;
-    AVCEnc_Status status;
-    AVCCommonObj *video = encvid->common;
-    uint8 *predBlock = video->pred_block;
-    int16 *dataBlock = video->block;
-
-    int Qq, Rq, q_bits, qp_const, quant;
-    int data, lev, zero_run;
-    int k, idx, idx2;
-
-    int *level, *run;
-
-    int picPitch = video->currPic->pitch;
-
-    if (currMB->mbMode == AVC_I16)
-    {
-        start_k = 1;
-    }
-
-    Qq    = video->QPy_div_6;
-    Rq    = video->QPy_mod_6;
-    q_bits    = 15 + Qq;
-
-    if (slice_type == AVC_I_SLICE)
-    {
-        qp_const = (1 << q_bits) / 3;    // intra
-    }
-    else
-    {
-        qp_const = (1 << q_bits) / 6;    // inter
-    }
-
-    level = encvid->level[0];
-    run = encvid->run[0];
-    currMB->CBP = 0;
-
-    for (block_y = 0; block_y < 4; block_y += 2)
-    {
-        for (block_x = 0; block_x < 4; block_x += 2)
-        {
-            i8x8 = block_y + (block_x >> 1);
-
-            for (j = block_y; j < block_y + 2; j++)
-            {
-                for (i = block_x; i < block_x + 2; i++)
-                {
-                    if (currMB->mbMode == AVC_I4) /* perform prediction in the loop */
-                    {
-                        status = Intra_4x4(video, i, j, curL); /* prediction */
-                    }
-                    /* residue, transform, quant & dequant and zigzag scan */
-
-                    trans(curL, picPitch, predBlock, dataBlock);  /* residue and transform */
-
-                    zero_run = 0;
-                    ncoeff = 0;
-
-                    for (k = start_k; k < 16; k++) /* in zigzag scan order */
-                    {
-                        idx = ZZ_SCAN_BLOCK[k]; /* map back to raster scan order */
-                        data = dataBlock[idx];
-                        idx2 = ZZ_SCAN[k];
-                        quant = quant_coef[Rq][idx2];
-                        if (data > 0)
-                        {
-                            lev = data * quant + qp_const;
-                        }
-                        else
-                        {
-                            lev = -data * quant + qp_const;
-                        }
-                        lev >>= q_bits;
-                        if (lev)
-                        {	/* dequant */
-                            quant = dequant_coef[Rq][idx2];
-                            if (data > 0)
-                            {
-                                level[ncoeff] = lev;
-                                dataBlock[idx] = (lev * quant) << Qq;
-                            }
-                            else
-                            {
-                                level[ncoeff] = -lev;
-                                dataBlock[idx] = (-lev * quant) << Qq;
-                            }
-                            run[ncoeff++] = zero_run;
-                            zero_run = 0;
-                        }
-                        else
-                        {
-                            zero_run++;
-                            dataBlock[idx] = 0;
-                        }
-                    }
-
-                    if (ncoeff)
-                    {
-                        currMB->CBP |= (1 << i8x8);
-                        video->cbp4x4 |= (1 << ((j << 2) + i));
-
-                        currMB->nz_coeff[(j<<2)+i] = ncoeff;
-
-                        /* inverse transform and add prediction*/
-                        if (currMB->mbMode != AVC_I16)
-                        {
-                            itrans(dataBlock, predBlock, curL, picPitch);
-                        }
-                    }
-                    else if (currMB->mbMode != AVC_I16)
-                    {
-                        copy_block(predBlock, curL, picPitch);
-                    }
-
-                    level += 16;
-                    run += 16;
-                    dataBlock += 4;
-                    predBlock += 4;
-                    curL += 4;
-                }
-                level += 32;
-                run += 32;
-                dataBlock += 56;
-                predBlock += 56;
-                curL += ((picPitch << 2) - 8);
-            }
-            level -= 96;
-            run -= 96;
-            dataBlock -= 120;
-            predBlock -= 120;
-            curL += (8 - (picPitch << 3));
-        }
-        level += 64;
-        run += 64;
-        dataBlock += 112;
-        predBlock += 112;
-        curL += ((picPitch << 3) - 16);
-    }
-
-    /* chroma */
-    Qq    = video->QPc_div_6;
-    Rq    = video->QPc_mod_6;
-    q_bits    = 15 + Qq;
-
-    if (slice_type == AVC_I_SLICE)
-    {
-        qp_const = (1 << q_bits) / 3;    // intra
-    }
-    else
-    {
-        qp_const = (1 << q_bits) / 6;    // inter
-    }
-
-    curL = curCb;
-
-    for (block_x = 0; block_x < 4; block_x += 2) /* for iCbCr */
-    {
-        for (j = 4; j < 6; j++)  /* for each block inside Cb or Cr */
-        {
-            for (i = block_x; i < block_x + 2; i++)
-            {
-                /* transform, quant & dequant and zigzag scan */
-                /* only do zigzag for AC */
-                /* residue, transform, quant & dequant and zigzag scan */
-
-                trans(curL, picPitch, predBlock, dataBlock);  /* residue and transform */
-
-                zero_run = 0;
-                ncoeff = 0;
-
-                for (k = 1; k < 16; k++) /* in zigzag scan order */
-                {
-                    idx = ZZ_SCAN_BLOCK[k]; /* map back to raster scan order */
-                    data = dataBlock[idx];
-                    idx2 = ZZ_SCAN[k];
-                    quant = quant_coef[Rq][idx2];
-                    if (data > 0)
-                    {
-                        lev = data * quant + qp_const;
-                    }
-                    else
-                    {
-                        lev = -data * quant + qp_const;
-                    }
-                    lev >>= q_bits;
-                    if (lev)
-                    {	/* dequant */
-                        quant = dequant_coef[Rq][idx2];
-                        if (data > 0)
-                        {
-                            level[ncoeff] = lev;
-                            dataBlock[idx] = (lev * quant) << Qq;
-                        }
-                        else
-                        {
-                            level[ncoeff] = -lev;
-                            dataBlock[idx] = (-lev * quant) << Qq;
-                        }
-                        run[ncoeff++] = zero_run;
-                        zero_run = 0;
-                    }
-                    else
-                    {
-                        zero_run++;
-                        dataBlock[idx] = 0;
-                    }
-                }
-
-                if (ncoeff)
-                {
-                    currMB->CBP |= (2 << 4);
-                    video->cbp4x4 |= (1 << ((j << 2) + i));
-                }
-                /* do not do inverse transform yet, have to do DC transform first */
-
-                currMB->nz_coeff[(j<<2)+i] = ncoeff;
-                level += 16;
-                run += 16;
-                dataBlock += 4;
-                predBlock += 4;
-                curL += 4;
-            }
-            level += 32;
-            run += 32;
-            dataBlock += 56;
-            predBlock += 56;
-            curL += ((picPitch << 1) - 8);
-        }
-        level -= 96;
-        run -= 96;
-        dataBlock -= 120;
-        predBlock -= 120;
-        curL = curCr;
-    }
-
-    return ;
-}
-#endif
 
 /* only DC transform */
 int TransQuantIntra16DC(AVCEncObject *encvid)
@@ -1403,26 +1161,6 @@ int TransQuantIntra16DC(AVCEncObject *encvid)
         j--;
     }
 
-#if 0
-    zero_run = 0;
-    ncoeff = 0;
-
-    for (k = 0; k < 16; k++) /* in zigzag scan order */
-    {
-        idx = ZIGZAG2RASTERDC[k];
-        data = block[idx];
-        if (data)
-        {
-            level[ncoeff] = data;
-            run[ncoeff++] = zero_run;
-            zero_run = 0;
-        }
-        else
-        {
-            zero_run++;
-        }
-    }
-#else
     quant = quant_coef[Rq][0];
     q_bits    = 15 + Qq;
     qp_const = (1 << q_bits) / 3;    // intra
@@ -1464,7 +1202,6 @@ int TransQuantIntra16DC(AVCEncObject *encvid)
             block[idx] = 0;
         }
     }
-#endif
     return ncoeff;
 }
 
@@ -1491,26 +1228,6 @@ int TransQuantChromaDC(AVCEncObject *encvid, int16 *block, int slice_type, int c
     block[64] = r0 + r1 - r2 - r3;
     block[68] = r0 - r1 - r2 + r3;
 
-#if 0
-    zero_run = 0;
-    ncoeff = 0;
-
-    for (k = 0; k < 4; k++) /* in zigzag scan order */
-    {
-        idx = ((k >> 1) << 6) + ((k & 1) << 2);
-        data = block[idx];
-        if (data)
-        {
-            level[ncoeff] = data;
-            run[ncoeff++] = zero_run;
-            zero_run = 0;
-        }
-        else
-        {
-            zero_run++;
-        }
-    }
-#else
     Qq    = video->QPc_div_6;
     Rq    = video->QPc_mod_6;
     quant = quant_coef[Rq][0];
@@ -1561,7 +1278,6 @@ int TransQuantChromaDC(AVCEncObject *encvid, int16 *block, int slice_type, int c
             block[idx] = 0;
         }
     }
-#endif
     return ncoeff;
 }
 

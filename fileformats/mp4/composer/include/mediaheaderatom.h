@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*********************************************************************************/
 /*
     This PVA_FF_MediaHeaderAtom Class contains all the objects that declare information
     about the media data within the stream.
@@ -98,7 +97,6 @@ class PVA_FF_MediaHeaderAtom : public PVA_FF_FullAtom
         uint32 _modificationTime; // 4/8 (32/64bits) -- Will templatize later - using 32bits for now
         uint32 _timeScale; // 4 (32bits)
         uint32 _duration; // 4/8 (32/64bits) -- Will templatize later - using 32bits for now
-        //int _pad; // Need to pad a single bit = 0 when rendering
         uint16 _language; // Actually 3 5-bit objects representing the packed ISO-639-2/T language code
         // Rendered as 15 bits with the leading pad bit from above.
 

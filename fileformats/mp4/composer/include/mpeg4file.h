@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*********************************************************************************/
 /*
     The PVA_FF_Mpeg4File Class is the class that will construct and maintain all the
     mecessary data structures to be able to render a valid MP4 file to disk.
@@ -60,10 +59,12 @@ class PVA_FF_Mpeg4File : public PVA_FF_IMpeg4File, public PVA_FF_Parentable
 
         virtual ~PVA_FF_Mpeg4File();
 
+        // 03/21/01 Multiple instances support, commented out moved FROM private
         bool init(int32 mediaType,
                   void* osclFileServerSession = NULL,
                   uint32 fileAuthoringFlags = PVMP4FF_3GPP_DOWNLOAD_MODE);
 
+        // Member get methods
         PVA_FF_MovieAtom &getMutableMovieAtom()
         {
             return *_pmovieAtom;
@@ -117,14 +118,12 @@ class PVA_FF_Mpeg4File : public PVA_FF_IMpeg4File, public PVA_FF_Parentable
                                 PVA_FF_UNICODE_HEAP_STRING keyWordInfo,
                                 uint16 langCode = LANGUAGE_CODE_UNKNOWN);
 
-        virtual void setLocationInfo(PVA_FF_UNICODE_STRING_PARAM locationName,
-                                     PVA_FF_UNICODE_STRING_PARAM locationInfoAstrBody,
-                                     PVA_FF_UNICODE_STRING_PARAM locationInfoAddNotes,
-                                     uint8 locationInfoRole,
-                                     uint32 locationInfoLongitude,
-                                     uint32 locationInfoLatitude,
-                                     uint32 locationInfoAltitude,
-                                     uint16 langCode = LANGUAGE_CODE_UNKNOWN);
+        virtual void setLocationInfo(PvmfAssetInfo3GPPLocationStruct*);
+
+        virtual void setAlbumInfo(PVA_FF_UNICODE_STRING_PARAM albumInfo,
+                                  uint16 langCode = LANGUAGE_CODE_UNKNOWN);
+
+        virtual void setRecordingYear(uint16 recordingYear);
 
 
         virtual void setCreationDate(PVA_FF_UNICODE_STRING_PARAM creationDate);
@@ -143,8 +142,6 @@ class PVA_FF_Mpeg4File : public PVA_FF_IMpeg4File, public PVA_FF_Parentable
 
         // MPEG4 header retrieval methods for timed text
         virtual void setTextDecoderSpecificInfo(PVA_FF_TextSampleDescInfo *header, int32 trackID);
-        // Gets and sets for BIFS binary encoded scene
-        void setBIFSDecoderInfo(uint8 * header, int32 size);
 
         // Render to file with filename
         virtual bool renderToFile(PVA_FF_UNICODE_STRING_PARAM filename);
@@ -323,6 +320,13 @@ class PVA_FF_Mpeg4File : public PVA_FF_IMpeg4File, public PVA_FF_Parentable
         uint32 _locationInfoAltitude;
         bool         _oSetLocationInfoDone;
 
+        PVA_FF_UNICODE_HEAP_STRING _albumInfo;
+        bool         _oSetAlbumDone;
+
+        uint16	_recordingYear;
+        bool	_oSetRecordingYearDone;
+
+
         PVA_FF_UNICODE_HEAP_STRING _creationDate;
         bool         _oSetCreationDateDone;
 
@@ -333,9 +337,6 @@ class PVA_FF_Mpeg4File : public PVA_FF_IMpeg4File, public PVA_FF_Parentable
         PVA_FF_FileTypeAtom       *_pFileTypeAtom;
         PVA_FF_MovieAtom          *_pmovieAtom;
 
-        //A_FF_ZArray<PVA_FF_MediaDataAtom*> *_pmediaDataAtomVec; // PVA_FF_MediaDataAtom vector to hold media data
-        // This vector also holds the mdat atoms for the OD track
-        // as well as for the BIFS track
         Oscl_Vector<PVA_FF_MediaDataAtom*, OsclMemAllocator> *_pmediaDataAtomVec;
 
         // In movie fragment mode these parameters hold
@@ -375,14 +376,7 @@ class PVA_FF_Mpeg4File : public PVA_FF_IMpeg4File, public PVA_FF_Parentable
         // the temporary file names will be different for every instances
         PVA_FF_UNICODE_HEAP_STRING _tempFilePostfix;
 
-        PVA_FF_ObjectDescriptor *_odAudio;
-        PVA_FF_ObjectDescriptor *_odVideo;
-        PVA_FF_TrackAtom        *_ODTrack;
-
         bool             _downLoadOnly;
-
-        PVA_FF_MediaDataAtom          *_od;
-        PVA_FF_ObjectDescriptorUpdate *_odu;
 
         int32 _codecType;
 
@@ -433,6 +427,7 @@ class PVA_FF_Mpeg4File : public PVA_FF_IMpeg4File, public PVA_FF_Parentable
 
         bool        _oFirstSampleEditMode;
         uint32      iCacheSize;
+        bool		_oIsFileOpen;
 };
 
 

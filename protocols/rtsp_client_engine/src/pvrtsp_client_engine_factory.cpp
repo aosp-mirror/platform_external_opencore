@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,17 @@
  * @brief Singleton factory for PVRTSPEngineNode
  */
 
+#ifndef OSCL_BASE_H_INCLUDED
 #include "oscl_base.h"
-#include "oscl_error_codes.h"
-#include "oscl_exception.h"
+#endif
 
+#ifndef OSCL_ERROR_CODES_H_INCLUDED
+#include "oscl_error_codes.h"
+#endif
+
+#ifndef OSCL_EXCEPTION_H_INCLUDED
+#include "oscl_exception.h"
+#endif
 
 #ifndef PVRTSP_CLIENT_ENGINE_NODE_H
 #include "pvrtsp_client_engine_node.h"

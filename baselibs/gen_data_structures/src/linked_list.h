@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -127,7 +127,7 @@ template <class LLClass> LinkedList<LLClass>::~LinkedList()
     while (num_elements && head)
     {
         tmp = head->next;
-        OSCL_TEMPLATED_DELETE(head, LinkedListElement<LLClass>, LinkedListElement);
+        OSCL_DELETE(head);
         --num_elements;
         head = tmp;
     }
@@ -142,19 +142,7 @@ template <class LLClass> int LinkedList<LLClass>::check_list()
 
     for (tmp = head, ii = 0; tmp ; ++ii, tmp = tmp->next);
 
-    if (ii != num_elements)
-    {
-        /*    UNCOND_LOGMSG(ERR_ALERT, (273, "(LinkedList): The number of elements %d "
-                                  "does not match first null %d\n",
-                                  num_elements, ii));
-        */
-        // fprintf(stderr, "Link list error...\n");
-    }
-
-
     return (ii == num_elements);
-
-
 }
 
 
@@ -238,7 +226,7 @@ template <class LLClass> int LinkedList<LLClass>::remove_element(const LLClass& 
                 tail = prev;
             }
 
-            OSCL_TEMPLATED_DELETE(tmp, LinkedListElement<LLClass>, LinkedListElement);
+            OSCL_DELETE(tmp);
             --num_elements;
             break;
         }
@@ -306,7 +294,7 @@ template <class LLClass> int LinkedList<LLClass>::remove_element(const int index
         tail = prev;
     }
 
-    OSCL_TEMPLATED_DELETE(tmp, LinkedListElement<LLClass>, LinkedListElement);
+    OSCL_DELETE(tmp);
     --num_elements;
 
     return 1;

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,15 +26,15 @@
 #include "oscl_mem.h"
 #include "oscl_mem_audit.h"
 #include "oscl_error.h"
-#include "oscl_error_panic.h"
 #include "oscl_scheduler.h"
 #include "pvlogger.h"
 #include "pvlogger_file_appender.h"
+#include "pvlogger_mem_appender.h"
 #include "unit_test_args.h"
 #include "oscl_utf8conv.h"
+#include "oscl_string_utils.h"
 
 #include "omx_core.h"
-#include "pv_omxmastercore.h"
 
 #ifndef DEFAULTSOURCEFILENAME
 #error // The default source file needs to be defined in config file
@@ -45,6 +45,225 @@
 #endif
 
 FILE* file;
+
+#define MAX_LEN 100
+
+class PVLoggerConfigFile
+{
+        /*  To change the logging settings without the need to compile the test application
+        	Let us read the logging settings from the file instead of hard coding them over here
+        	The name of the config file is pvlogger.ini
+        	The format of entries in it is like
+        	First entry will decide if the file appender has to be used or error appender will be used.
+        	0 -> ErrAppender will be used
+        	1 -> File Appender will be used
+        	2 -> Mem Appender will be used
+        	Entries after this will decide the module whose logging has to be taken.For example, contents of one sample config file could be
+        	1
+        	1,PVPlayerEngine
+        	8,PVSocketNode
+        	(pls note that no space is allowed between loglevel and logger tag)
+        	This means, we intend to have logging of level 1 for the module PVPlayerEngine
+        	and of level 8 for the PVSocketNode on file.
+        */
+    public:
+
+        PVLoggerConfigFile(): iLogFileRead(false)
+        {
+            iFileServer.Connect();
+            // Full path of pvlogger.ini is: SOURCENAME_PREPEND_STRING + pvlogger.ini
+            oscl_strncpy(iLogFileName, SOURCENAME_PREPEND_STRING,
+                         oscl_strlen(SOURCENAME_PREPEND_STRING) + 1);
+            oscl_strcat(iLogFileName, "pvlogger.ini");
+            oscl_memset(ibuffer, 0, sizeof(ibuffer));
+            iAppenderType = 0;
+
+        }
+
+        ~PVLoggerConfigFile()
+        {
+            iFileServer.Close();
+        }
+
+        bool get_next_line(const char *start_ptr, const char * end_ptr,
+                           const char *& line_start,
+                           const char *& line_end)
+        {
+            // Finds the boundaries of the next non-empty line within start
+            // and end ptrs
+
+            // This initializes line_start to the first non-whitespace character
+            line_start = skip_whitespace_and_line_term(start_ptr, end_ptr);
+
+            line_end = skip_to_line_term(line_start, end_ptr);
+
+            return (line_start < end_ptr);
+
+        }
+
+
+        bool IsLoggerConfigFilePresent()
+        {
+            if (-1 != ReadAndParseLoggerConfigFile())
+                return true;
+            return false;
+        }
+
+        //Read and parse the config file
+        //retval = -1 if the config file doesnt exist
+        int8 ReadAndParseLoggerConfigFile()
+        {
+            int8 retval = 1;
+
+            if (0 != iLogFile.Open(iLogFileName, Oscl_File::MODE_READ, iFileServer))
+            {
+                retval = -1;
+            }
+            else
+            {
+                if (!iLogFileRead)
+                {
+                    int32 nCharRead = iLogFile.Read(ibuffer, 1, sizeof(ibuffer));
+                    //Parse the buffer for \n chars
+                    Oscl_Vector<char*, OsclMemAllocator> LogConfigStrings;
+
+                    const char *end_ptr = ibuffer + oscl_strlen(ibuffer) ; // Point just beyond the end
+                    const char *section_start_ptr;
+                    const char *line_start_ptr, *line_end_ptr;
+                    char* end_temp_ptr;
+                    int16 offset = 0;
+
+                    section_start_ptr = skip_whitespace_and_line_term(ibuffer, end_ptr);
+
+                    while (section_start_ptr < end_ptr)
+                    {
+                        if (!get_next_line(section_start_ptr, end_ptr,
+                                           line_start_ptr, line_end_ptr))
+                        {
+                            break;
+                        }
+
+
+                        section_start_ptr = line_end_ptr + 1;
+
+                        end_temp_ptr = (char*)line_end_ptr;
+                        *end_temp_ptr = '\0';
+
+                        LogConfigStrings.push_back((char*)line_start_ptr);
+
+                    }
+
+                    //Populate the  LoggerConfigElements vector
+                    {
+                        if (!LogConfigStrings.empty())
+                        {
+                            Oscl_Vector<char*, OsclMemAllocator>::iterator it;
+                            it = LogConfigStrings.begin();
+                            uint32 appenderType;
+                            PV_atoi(*it, 'd', oscl_strlen(*it), appenderType);
+                            iAppenderType = appenderType;
+                            if (LogConfigStrings.size() > 1)
+                            {
+                                for (it = LogConfigStrings.begin() + 1; it != LogConfigStrings.end(); it++)
+                                {
+                                    char* CommaIndex = (char*)oscl_strstr(*it, ",");
+                                    if (CommaIndex != NULL)
+                                    {
+                                        *CommaIndex = '\0';
+                                        LoggerConfigElement obj;
+                                        uint32 logLevel;
+                                        PV_atoi(*it, 'd', oscl_strlen(*it), logLevel);
+                                        obj.iLogLevel = logLevel;
+                                        obj.iLoggerString = CommaIndex + 1;
+                                        iLoggerConfigElements.push_back(obj);
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                //Add the config element for complete logging fo all the modules
+                                LoggerConfigElement obj;
+                                obj.iLoggerString = "";
+                                obj.iLogLevel = 8;
+                                iLoggerConfigElements.push_back(obj);
+                            }
+                        }
+                    }
+                    iLogFile.Close();
+                    iLogFileRead = true;
+                }
+            }
+            return retval;
+        }
+
+        void SetLoggerSettings()
+        {
+            Oscl_Vector<LoggerConfigElement, OsclMemAllocator>::iterator it;
+
+            PVLoggerAppender *appender = NULL;
+            OsclRefCounter *refCounter = NULL;
+            if (iLoggerConfigElements.empty())
+            {
+                return;
+            }
+
+            if (iAppenderType == 0)
+            {
+                appender = new StdErrAppender<TimeAndIdLayout, 1024>();
+                OsclRefCounterSA<LogAppenderDestructDealloc<StdErrAppender<TimeAndIdLayout, 1024> > > *appenderRefCounter =
+                    new OsclRefCounterSA<LogAppenderDestructDealloc<StdErrAppender<TimeAndIdLayout, 1024> > >(appender);
+                refCounter = appenderRefCounter;
+            }
+            else if (iAppenderType == 1)
+            {
+                OSCL_wHeapString<OsclMemAllocator> logfilename(OUTPUTNAME_PREPEND_WSTRING);
+                logfilename += _STRLIT_WCHAR("player.log");
+                appender = (PVLoggerAppender*)TextFileAppender<TimeAndIdLayout, 1024>::CreateAppender(logfilename.get_str());
+                OsclRefCounterSA<LogAppenderDestructDealloc<TextFileAppender<TimeAndIdLayout, 1024> > > *appenderRefCounter =
+                    new OsclRefCounterSA<LogAppenderDestructDealloc<TextFileAppender<TimeAndIdLayout, 1024> > >(appender);
+                refCounter = appenderRefCounter;
+            }
+            else
+            {
+                OSCL_wHeapString<OsclMemAllocator> logfilename(OUTPUTNAME_PREPEND_WSTRING);
+                logfilename += _STRLIT_WCHAR("player.log");
+                appender = (PVLoggerAppender*)MemAppender<TimeAndIdLayout, 1024>::CreateAppender(logfilename.get_str());
+                OsclRefCounterSA<LogAppenderDestructDealloc<MemAppender<TimeAndIdLayout, 1024> > > *appenderRefCounter =
+                    new OsclRefCounterSA<LogAppenderDestructDealloc<MemAppender<TimeAndIdLayout, 1024> > >(appender);
+                refCounter = appenderRefCounter;
+            }
+
+            OsclSharedPtr<PVLoggerAppender> appenderPtr(appender, refCounter);
+
+            for (it = iLoggerConfigElements.begin(); it != iLoggerConfigElements.end(); it++)
+            {
+                PVLogger *node = NULL;
+                node = PVLogger::GetLoggerObject(it->iLoggerString);
+                node->AddAppender(appenderPtr);
+                node->SetLogLevel(it->iLogLevel);
+            }
+        }
+
+    private:
+        class LoggerConfigElement
+        {
+            public:
+                LoggerConfigElement()
+                {
+                    iLoggerString = NULL;
+                    iLogLevel = 8;
+                }
+                char *iLoggerString;
+                int8 iLogLevel;
+        };
+        int8 iAppenderType; //Type of appender to be used for the logging 0-> Err Appender, 1-> File Appender
+        bool iLogFileRead;
+        Oscl_File iLogFile;
+        Oscl_FileServer iFileServer;
+        char iLogFileName[255];
+        char ibuffer[1024];
+        Oscl_Vector<LoggerConfigElement, OsclMemAllocator> iLoggerConfigElements;
+};
 
 
 // Pull out source file name from arguments
@@ -521,8 +740,47 @@ int local_main(FILE* filehandle, cmd_line* command_line)
     OsclBase::Init();
     OsclErrorTrap::Init();
     OsclMem::Init();
-    PV_MasterOMX_Init();
+    OMX_Init();
+
+    const int numArgs = 10; //change as per the number of args below
+    char *argv[numArgs];
+    char arr[numArgs][MAX_LEN];
+    FILE *InputFile = NULL;
+    int argc = 0;
+
     fprintf(filehandle, "Test Program for pvFrameMetadata utility class.\n");
+
+    InputFile = fopen("input.txt", "r+");
+    if (NULL != InputFile)
+    {
+        int ii = 0;
+        int len = 0;
+        fseek(InputFile , 0 , SEEK_SET);
+        while (!feof(InputFile))
+        {
+            arr[ii][0] = '\0';
+            fgets(arr[ii], 127, InputFile);
+            len = strlen(arr[ii]);
+            if (arr[ii][len-1] == '\n')
+            {
+                arr[ii][len-1] = '\0';
+            }
+            else
+            {
+                arr[ii][len-1] = '\0';
+            }
+            argv[ii] = arr[ii];
+
+            ii++;
+        }
+        fclose(InputFile);
+
+        argc = ii - 1;
+    }
+
+    int n = 0;
+
+    command_line->setup(argc - n, &argv[n]);
 
     bool oPrintDetailedMemLeakInfo = false;
     FindMemMgmtRelatedCmdLineParams(command_line, oPrintDetailedMemLeakInfo, filehandle);
@@ -530,22 +788,17 @@ int local_main(FILE* filehandle, cmd_line* command_line)
     //Run the test under a trap
     int result = 0;
     int32 err = 0;
-    TPVErrorPanic panic;
 
-    OSCL_PANIC_TRAP(err, panic, result = _local_main(filehandle, command_line););
+    OSCL_TRY(err, result = _local_main(filehandle, command_line););
 
     //Show any exception.
     if (err != 0)
     {
         fprintf(file, "Error!  Leave %d\n", err);
     }
-    if (panic.iReason != 0)
-    {
-        fprintf(file, "Error!  Panic %s %d\n", panic.iCategory.Str(), panic.iReason);
-    }
 
     //Cleanup
-
+    OMX_Deinit();
 #if !(OSCL_BYPASS_MEMMGT)
     //Check for memory leaks before cleaning up OsclMem.
     OsclAuditCB auditCB;
@@ -593,7 +846,7 @@ int local_main(FILE* filehandle, cmd_line* command_line)
         }
     }
 #endif
-    PV_MasterOMX_Deinit();
+
     OsclMem::Cleanup();
     OsclErrorTrap::Cleanup();
     OsclBase::Cleanup();
@@ -948,6 +1201,10 @@ void pvframemetadata_utility_test::test()
                 iCurrentTest = new pvframemetadata_async_test_settimeout_getframe(testparam, 2, false);
                 break;
 
+            case SetPlayerKeyTest:
+                iCurrentTest = new pvframemetadata_async_test_set_player_key(testparam);
+                break;
+
             case BeyondLastTest:
             default:
                 iCurrentTestNumber = BeyondLastTest;
@@ -995,56 +1252,11 @@ void pvframemetadata_utility_test::SetupLoggerScheduler()
 {
     // Enable the following code for logging (on Symbian, RDebug)
     PVLogger::Init();
-#if 1
-
-#if 1 // Enable this section to log to debug output
-    PVLoggerAppender *appender = new StdErrAppender<TimeAndIdLayout, 1024>();
-    OsclRefCounterSA<LogAppenderDestructDealloc<StdErrAppender<TimeAndIdLayout, 1024> > > *appenderRefCounter =
-        new OsclRefCounterSA<LogAppenderDestructDealloc<StdErrAppender<TimeAndIdLayout, 1024> > >(appender);
-#else // Enable this section to log to file
-    PVLoggerAppender *appender = (PVLoggerAppender*)TextFileAppender<TimeAndIdLayout, 1024>::CreateAppender((OSCL_TCHAR*)_STRLIT("framemetadatautil.log"));
-    OsclRefCounterSA<LogAppenderDestructDealloc<TextFileAppender<TimeAndIdLayout, 1024> > > *appenderRefCounter =
-        new OsclRefCounterSA<LogAppenderDestructDealloc<TextFileAppender<TimeAndIdLayout, 1024> > >(appender);
-#endif
-
-    OsclSharedPtr<PVLoggerAppender> appenderPtr(appender, appenderRefCounter);
-
+    PVLoggerConfigFile obj;
+    if (obj.IsLoggerConfigFilePresent())
     {
-        PVLogger *node = NULL;
-        //selective logging
-
-        /*
-        node = PVLogger::GetLoggerObject("");
-        node->AddAppender(appenderPtr);
-        node->SetLogLevel(iLogLevel);
-        */
-
-
-        node = PVLogger::GetLoggerObject("PVFrameAndMetadataUtility");
-        node->AddAppender(appenderPtr);
-        node->SetLogLevel(iLogLevel);
-
-
-        /*
-        node = PVLogger::GetLoggerObject("PVFMVideoMIO");
-        node->AddAppender(appenderPtr);
-        node->SetLogLevel(iLogLevel);
-        */
-
-        /*
-        node = PVLogger::GetLoggerObject("PVPlayerEngine");
-        node->AddAppender(appenderPtr);
-        node->SetLogLevel(iLogLevel);
-        */
-
-        /*
-        node = PVLogger::GetLoggerObject("datapath.sourcenode.mp4parsernode");
-        node->AddAppender(appenderPtr);
-        node->SetLogLevel(iLogLevel);
-        */
+        obj.SetLoggerSettings();
     }
-#endif //logging
-
     // Construct and install the active scheduler
     OsclScheduler::Init("PVFrameMetadataUtilityTestScheduler");
 }

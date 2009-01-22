@@ -79,11 +79,6 @@ typedef enum
 #define DEFAULT_FRAME_WIDTH        320
 #define DEFAULT_FRAME_HEIGHT       240
 #define DEFAULT_FRAME_RATE         20.0
-#define ANDROID_VIDEO_FORMAT       PVMF_YUV420
-
-#if ANDROID_VIDEO_FORMAT == PVMF_RGB16
-#error PV does not support RGB16
-#endif
 
 /**
  * Class containing information for a command or data event

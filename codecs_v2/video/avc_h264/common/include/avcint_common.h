@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,24 +31,6 @@ internal use only.
 #include "avcapi_common.h"
 #endif
 
-#if 0 /* no need for this, replaced by oscl_type.h*/
-/**
-This type definition can be mapped back to oscl.
-*/
-typedef unsigned char	uint8;
-typedef char			int8;
-typedef unsigned short	uint16;
-typedef short			int16;
-typedef unsigned long	uint32;
-typedef long			int32;
-typedef int	bool;
-/**
-This type is for native integer which could be either 16 or 32 bits.
-It is used to eliminate casting and only when the range of value fits 16 bits.
-@publishedAll
-*/
-typedef unsigned int	uint;
-#endif
 
 #ifndef TRUE
 #define TRUE  1
@@ -244,21 +226,6 @@ typedef enum
 } AVCResidualType;
 
 
-#if 0 /* NOT USED!!! Parameters get absorbed into AVCDecObject. */
-/**
-This structure contains NAL unit information after removal of emulation prevention code.
-@publishedAll
-*/
-typedef struct tagNALUnit
-{
-    uint		NumBytesInRBSP;
-    int		forbidden_bit;
-    int		nal_ref_idc;
-    AVCNalUnitType	nal_unit_type;
-    uint8	*rbsp_byte; /* RBSP buffer, will be assigned to bitstreamBuffer */
-} AVCNALUnit
-#endif
-
 /**
 This structure contains VUI parameters as specified in Annex E.
 Some variables may be removed from the structure if they are found to be useless to store.
@@ -269,8 +236,8 @@ typedef struct tagHRDParams
     uint  cpb_cnt_minus1;									/* ue(v), range 0..31 */
     uint  bit_rate_scale;                          /* u(4) */
     uint  cpb_size_scale;                          /* u(4) */
-    uint32  bit_rate_value [MAXIMUMVALUEOFcpb_cnt];/* ue(v), range 0..2^32-2 */
-    uint32  cpb_size_value[MAXIMUMVALUEOFcpb_cnt]; /* ue(v), range 0..2^32-2 */
+    uint32  bit_rate_value_minus1[MAXIMUMVALUEOFcpb_cnt];/* ue(v), range 0..2^32-2 */
+    uint32  cpb_size_value_minus1[MAXIMUMVALUEOFcpb_cnt]; /* ue(v), range 0..2^32-2 */
     uint  cbr_flag[MAXIMUMVALUEOFcpb_cnt];         /* u(1) */
     uint  initial_cpb_removal_delay_length_minus1;   /* u(5), default 23 */
     uint  cpb_removal_delay_length_minus1;           /* u(5), default 23 */
@@ -299,8 +266,8 @@ typedef struct tagVUIParam
     uint  transfer_characteristics;           /* u(8), Table E-4, default 2, unspecified */
     uint  matrix_coefficients;                /* u(8), Table E-5, default 2, unspecified */
     uint      chroma_location_info_present_flag;  /* u(1) */
-    uint  chroma_location_frame;                /* ue(v), Fig. E-1range 0..5, default 0 */
-    uint  chroma_location_field;                /* ue(v) */
+    uint  chroma_sample_loc_type_top_field;                /* ue(v), Fig. E-1range 0..5, default 0 */
+    uint  chroma_sample_loc_type_bottom_field;                /* ue(v) */
     uint      timing_info_present_flag;           /* u(1) */
     uint  num_units_in_tick;                    /* u(32), must be > 0 */
     uint  time_scale;                           /* u(32), must be > 0 */
@@ -606,8 +573,8 @@ typedef struct tagMacroblock
 {
     AVCIntraChromaPredMode	intra_chroma_pred_mode;  /* ue(v) */
 
-    int16 mvL0[32];  /* motion vectors */
-    int16 mvL1[32];
+    int32 mvL0[16];  /* motion vectors, 16 bit packed (x,y) per element  */
+    int32 mvL1[16];
     int16 ref_idx_L0[4];
     int16 ref_idx_L1[4];
     uint16 RefIdx[4]; /* ref index, has value of AVCPictureData->RefIdx */
@@ -886,7 +853,7 @@ const static uint8 mapLev2Idx[61] = {255, 255, 255, 255, 255, 255, 255, 255, 255
                                      13, 14, 255, 255, 255, 255, 255, 255, 255, 255
                                     };
 /* map back from index to Level IDC */
-const static uint8 mapIdx2Lev[MAX_LEVEL_IDX] = {0, 1, 2, 3, 10, 11, 12, 20, 21, 22, 30, 31, 32, 40, 41};
+const static uint8 mapIdx2Lev[MAX_LEVEL_IDX] = {10, 11, 12, 13, 20, 21, 22, 30, 31, 32, 40, 41, 42, 50, 51};
 
 /**
 from the index map to the MaxDPB value times 2 */

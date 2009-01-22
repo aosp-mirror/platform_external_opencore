@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -121,6 +121,7 @@ MovieFragmentRandomAccessAtom::~MovieFragmentRandomAccessAtom()
 
 bool MovieFragmentRandomAccessAtom::IsTFRAPresentForTrack(uint32 trackID, bool oVideoAudioTextTrack)
 {
+
     uint32 num_tfra = 0;
     if (_pTrackFragmentRandomAccessAtomVec != NULL)
     {
@@ -141,6 +142,8 @@ bool MovieFragmentRandomAccessAtom::IsTFRAPresentForTrack(uint32 trackID, bool o
                         return true;
                     }
                     else if (oVideoAudioTextTrackTfraCount == tfraAtom->_entry_count)
+#else
+                    OSCL_UNUSED_ARG(oVideoAudioTextTrack);
 #endif // DISABLE_REPOS_ON_CLIPS_HAVING_UNEQUAL_TFRA_ENTRY_COUNT
                     {
                         return true;
@@ -171,6 +174,9 @@ int32 MovieFragmentRandomAccessAtom::getSyncSampleInfoClosestToTime(uint32 track
         if (tfraAtom->getTrackID() == trackID)
         {
             uint32 entries = tfraAtom->_entry_count;
+            if (entries == 0)
+                return -1;
+
             Oscl_Vector<TFRAEntries*, OsclMemAllocator>* tfraEntries = tfraAtom->getTrackFragmentRandomAccessEntries();
             if (!tfraEntries)       // unlikely/error
                 return -1;
@@ -308,7 +314,7 @@ int32 MovieFragmentRandomAccessAtom::getTimestampForRandomAccessPoints(uint32 id
         Oscl_Vector<TFRAEntries*, OsclMemAllocator>* tfraEntries = tfraAtom->getTrackFragmentRandomAccessEntries();
         if (!tfraEntries)       // unlikely/error
             return 0;
-        int32 prevTime = 0;
+
 
         uint32 tmp = entries;
 

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -120,7 +120,6 @@ OsclAsyncFile::~OsclAsyncFile()
 
     if (iNativeFileDuplicate)
     {
-        iNativeFileDuplicate->Close();
         OSCL_DELETE(iNativeFileDuplicate);
     }
 
@@ -146,6 +145,8 @@ OsclAsyncFile::OsclAsyncFile(OsclNativeFile& aFile, int32 aCacheSize, PVLogger* 
 {
     iLogger = aLogger;
 
+    iNumOfRun = 0;
+    iNumOfRunErr = 0;
     iHasNativeAsyncRead = iNativeFile.HasAsyncRead();
 
     // Init thread state tracking variable(s)
@@ -454,6 +455,7 @@ uint32 OsclAsyncFile::doRead(uint8 *& aBuffer1, uint32 aDataSize, uint32 aNumEle
         int32 ret = iNativeFileDuplicate->Seek(aOffset, Oscl_File::SEEKSET);
         if (ret != 0)
         {
+            // This is not good
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                             (0, "OsclAsyncFile(0x%x)::doRead Seek Failed returned %d offset %d", this, ret, aOffset));
             return 0;
@@ -853,10 +855,12 @@ bool OsclAsyncFile::CanBeLinked(OsclAsyncFileBuffer* aDataBuffer)
 //The AO is invoked when the asynchronous Read request is complete.
 void OsclAsyncFile::Run()
 {
+    iNumOfRun++;
     if (iStatus != OSCL_REQUEST_ERR_NONE)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                         (0, "OsclAsyncFile(0x%x)::Run Error!!!", this));
+        iNumOfRunErr++;
         return;
     }
 
@@ -912,6 +916,25 @@ void OsclAsyncFile::Run()
 
     // Start next read
     StartNextRead(posToReadFrom);
+}
+
+void OsclAsyncFile::DoCancel()
+{
+    if (!iHasNativeAsyncRead)
+    {
+        if (iAsyncReadThreadState == EAsyncReadNotActive)
+        {
+            //in case thread exited with some request active, this will
+            //complete it
+            OsclActiveObject::DoCancel();
+        }
+        else
+        {
+            //in this case, thread is active.  since there's no way to
+            //interrupt the thread's blocking read call, just do nothing
+            //here, then scheduler will wait on request completion.
+        }
+    }
 }
 
 void OsclAsyncFile::StartNextRead(int32 aPosToReadFrom)
@@ -1008,13 +1031,15 @@ void OsclAsyncFile::StartNextRead(int32 aPosToReadFrom)
 
     if (iHasNativeAsyncRead)
     {
+        //Activate the AO that will handle read completion.
+        PendForExec();
+
         //Start the native async read operation
-        if (iNativeFile.ReadAsync(iReadPtr.Ptr(), 1, iKAsyncReadBufferSize, StatusRef()) == 0)
-        {
-            PendForExec();
-            //the AO will run when read is complete.
-        }
-        //else ignore errors.
+        int32 result = iNativeFile.ReadAsync(iReadPtr.Ptr(), 1, iKAsyncReadBufferSize, StatusRef());
+
+        //if it failed to start, then cancel the request with an error.
+        if (result != 0)
+            PendComplete(OSCL_REQUEST_ERR_GENERAL);
     }
     else
     {
@@ -1141,9 +1166,7 @@ void OsclAsyncFile::StartNonNativeAsyncRead()
     //note: we assume the read requests are nicely serialized here,
     //so there's no handling for overlapping requests.
 
-    //normally we would activate the AO after issuing the request, but
-    //in this implementation, the request may complete at any time once
-    //we signal the semaphore, so to be safe, activate the AO first.
+    //Activate the AO that will wait on read completion.
     PendForExec();
 
     //wake up the thread

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
  * -------------------------------------------------------------------
  */
 /*
- * Copyright (c) 2005 The Khronos Group Inc. 
+ * Copyright (c) 2008 The Khronos Group Inc. 
  * 
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -38,7 +38,7 @@
  *
  */
 
-/** @file OMX_Other.h - OpenMax IL version 1.1
+/** @file omx_other.h - OpenMax IL version 1.1.2
  *  The structures needed by Other components to exchange
  *  parameters and configuration data with the components.
  */
@@ -55,7 +55,7 @@ extern "C" {
  *  header to compile without errors.  The includes below are required
  *  for this header file to compile successfully 
  */
-#include <omx_types.h>
+
 #include <omx_core.h>
 
 
@@ -75,6 +75,8 @@ typedef enum OMX_OTHER_FORMATTYPE {
     OMX_OTHER_FormatVendorReserved = 1000, /**< Starting value for vendor specific 
                                                 formats */
 
+    OMX_OTHER_FormatKhronosExtensions = 0x6F000000, /**< Reserved region for introducing Khronos Standard Extensions */ 
+    OMX_OTHER_FormatVendorStartUnused = 0x7F000000, /**< Reserved region for introducing Vendor Extensions */
     OMX_OTHER_FormatMax = 0x7FFFFFFF
 } OMX_OTHER_FORMATTYPE;
 
@@ -90,6 +92,8 @@ typedef enum OMX_TIME_SEEKMODETYPE {
                                 * position over an approximation
                                 * of the requested seek position even
                                 * if it results in a slower seek. */
+    OMX_TIME_SeekModeKhronosExtensions = 0x6F000000, /**< Reserved region for introducing Khronos Standard Extensions */ 
+    OMX_TIME_SeekModeVendorStartUnused = 0x7F000000, /**< Reserved region for introducing Vendor Extensions */
     OMX_TIME_SeekModeMax = 0x7FFFFFFF
 } OMX_TIME_SEEKMODETYPE;
 
@@ -107,8 +111,8 @@ typedef struct OMX_TIME_CONFIG_SEEKMODETYPE {
  *     time
  * OMX_IndexConfigTimeCurrentMediaTime: query of the CC’s current media
  *     time
- * OMX_IndexConfigTimeAudioReferenceTime and  
- * OMX_IndexConfigTimeVideoReferenceTime: audio/video reference 
+ * OMX_IndexConfigTimeCurrentAudioReference and  
+ * OMX_IndexConfigTimeCurrentVideoReference: audio/video reference 
  *     clock sending SC its reference time
  * OMX_IndexConfigTimeClientStartTime: a Clock Component client sends 
  *     this structure to the Clock Component via a SetConfig on its 
@@ -135,6 +139,8 @@ typedef enum OMX_TIME_UPDATETYPE {
       OMX_TIME_UpdateRequestFulfillment,    /**< Update is the fulfillment of a media time request. */
       OMX_TIME_UpdateScaleChanged,	        /**< Update was generated because the scale chagned. */
       OMX_TIME_UpdateClockStateChanged,     /**< Update was generated because the clock state changed. */
+      OMX_TIME_UpdateKhronosExtensions = 0x6F000000, /**< Reserved region for introducing Khronos Standard Extensions */ 
+      OMX_TIME_UpdateVendorStartUnused = 0x7F000000, /**< Reserved region for introducing Vendor Extensions */
       OMX_TIME_UpdateMax = 0x7FFFFFFF
 } OMX_TIME_UPDATETYPE;
 
@@ -143,6 +149,8 @@ typedef enum OMX_TIME_REFCLOCKTYPE {
       OMX_TIME_RefClockNone,    /**< Use no references. */
       OMX_TIME_RefClockAudio,	/**< Use references sent through OMX_IndexConfigTimeCurrentAudioReference */
       OMX_TIME_RefClockVideo,   /**< Use references sent through OMX_IndexConfigTimeCurrentVideoReference */
+      OMX_TIME_RefClockKhronosExtensions = 0x6F000000, /**< Reserved region for introducing Khronos Standard Extensions */ 
+      OMX_TIME_RefClockVendorStartUnused = 0x7F000000, /**< Reserved region for introducing Vendor Extensions */
       OMX_TIME_RefClockMax = 0x7FFFFFFF
 } OMX_TIME_REFCLOCKTYPE;
 
@@ -153,6 +161,8 @@ typedef enum OMX_TIME_CLOCKSTATE {
                                                *   prescribed clients emit their
                                                *   start time. */
       OMX_TIME_ClockStateStopped,             /**< Clock stopped. */
+      OMX_TIME_ClockStateKhronosExtensions = 0x6F000000, /**< Reserved region for introducing Khronos Standard Extensions */ 
+      OMX_TIME_ClockStateVendorStartUnused = 0x7F000000, /**< Reserved region for introducing Vendor Extensions */
       OMX_TIME_ClockStateMax = 0x7FFFFFFF
 } OMX_TIME_CLOCKSTATE;
 
@@ -254,7 +264,7 @@ typedef struct OMX_TIME_CONFIG_SCALETYPE {
                                      * scaling the media time */
 } OMX_TIME_CONFIG_SCALETYPE;
  
-/** Bits used to identify a clock port. Used in OMX_TIME_CONFIG’s nWaitMask field */
+/** Bits used to identify a clock port. Used in OMX_TIME_CONFIG_CLOCKSTATETYPE’s nWaitMask field */
 #define OMX_CLOCKPORT0 0x00000001
 #define OMX_CLOCKPORT1 0x00000002
 #define OMX_CLOCKPORT2 0x00000004
@@ -298,7 +308,8 @@ typedef struct OMX_TIME_CONFIG_ACTIVEREFCLOCKTYPE {
     OMX_TIME_REFCLOCKTYPE eClock;   /**< Reference clock used to compute media time */                        
 } OMX_TIME_CONFIG_ACTIVEREFCLOCKTYPE;
 
-/** Descriptor for setting specifics of power type. */
+/** Descriptor for setting specifics of power type.
+ *  Note: this structure is listed for backwards compatibility. */
 typedef struct OMX_OTHER_CONFIG_POWERTYPE {
     OMX_U32 nSize;            /**< size of the structure in bytes */
     OMX_VERSIONTYPE nVersion; /**< OMX specification version information */
@@ -306,7 +317,8 @@ typedef struct OMX_OTHER_CONFIG_POWERTYPE {
 } OMX_OTHER_CONFIG_POWERTYPE;
 
 
-/** Descriptor for setting specifics of stats type. */
+/** Descriptor for setting specifics of stats type.
+ *  Note: this structure is listed for backwards compatibility. */
 typedef struct OMX_OTHER_CONFIG_STATSTYPE {
     OMX_U32 nSize;            /**< size of the structure in bytes */
     OMX_VERSIONTYPE nVersion; /**< OMX specification version information */

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,13 +27,8 @@ Permission to distribute, modify and use this file under the standard license
 terms listed above has been obtained from the copyright holder.
 ****************************************************************************************/
 /*
-------------------------------------------------------------------------------
-
-
 
  Filename: /audio/gsm_amr/c/src/mult_r.c
-
-     Date: 08/11/2000
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
@@ -50,6 +45,7 @@ terms listed above has been obtained from the copyright holder.
 			  3) Removed code that updates MOPS counter
 			  4) Updated template and reference section
 
+ Who: 						Date:
  Description:
 
 

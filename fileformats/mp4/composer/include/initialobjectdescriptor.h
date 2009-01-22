@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*********************************************************************************/
 /*
     This PVA_FF_InitialObjectDescriptor Class
 */
@@ -117,18 +116,8 @@ class PVA_FF_InitialObjectDescriptor : public PVA_FF_ObjectDescriptor
         uint8 _graphicsProfileLevelIndication; // (8)
 
         Oscl_Vector<PVA_FF_ES_ID_Inc*, OsclMemAllocator> *_pES_ID_Inc_Vec; // PVA_FF_ESDescriptor[1 to 30]
-        // The PVA_FF_ObjectDescriptor has actual ES_ID_Refs while the
-        // PVA_FF_InitialObjectDescriptor has ES_ID_Incs.
-
-        // OCIDescriptor _ODID[]; // [0 to 255]
-        // IPMPDescriptorPointer _IPMPDP[]; // [0 to 255]
-
-        // ExtensionDescriptor _ExtD[]; // [0 to 255]
-
-
 };
 
 
 
 #endif
-

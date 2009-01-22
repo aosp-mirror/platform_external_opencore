@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,42 +18,7 @@
 #ifndef __SDP_ERROR_H__
 #define __SDP_ERROR_H__
 
-/*======================================================================
-FILE:                 SDPError.h
 
-SERVICES:             SDP Composer Error Interface Class
-
-GENERAL DESCRIPTION:  Provides the local interface to the SDP composition
-					  utility.
-
-
-PUBLIC CLASSES:       None
-
-INITIALIZATION AND SEQUENCING REQUIREMENTS:
-                      None.
-
-     -------------------------------------------------------------------
-                    SDP Composer Error interface class
-     -------------------------------------------------------------------
-
-======================================================================*/
-
-
-//======================================================================
-//   INCLUDES AND VARIABLE DEFINITIONS
-//======================================================================
-
-//----------------------------------------------------------------------
-// Include Files
-//----------------------------------------------------------------------
-
-//----------------------------------------------------------------------
-// Global Constant Declarations
-//----------------------------------------------------------------------
-
-//----------------------------------------------------------------------
-// Global Type Declarations
-//----------------------------------------------------------------------
 typedef enum
 {
     SDP_SUCCESS,

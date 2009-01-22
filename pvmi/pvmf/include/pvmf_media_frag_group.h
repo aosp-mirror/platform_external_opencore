@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -449,7 +449,13 @@ OsclSharedPtr<PVMFMediaDataImpl> PVMFMediaFragGroupCombinedAlloc<Alloc>::allocat
 
     if (available_mfgs == NULL)
     {
-        OSCL_LEAVE(OSCL_BAD_ALLOC_EXCEPTION_CODE);
+        //all required memory must have been allocated in "do_allocate"
+        //which is called as part of "create". any exception in either of
+        //these methods means that the allocator could not be created, but
+        //upon successful creation if "available_mfgs" is NULL then it means
+        //we are temporarily out of memory, and there is no need to throw
+        //an exception in this case
+        return media_data;
     }
 
     MediaDataEntry* first = available_mfgs->next;

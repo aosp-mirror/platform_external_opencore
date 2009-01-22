@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -156,7 +156,7 @@ extern "C"
     Int SAD_Block_MMX(UChar *ref, UChar *blk, Int dmin, Int lx, void *extra_info);
     Int SAD_Block_SSE(UChar *ref, UChar *blk, Int dmin, Int lx, void *extra_info);
 
-#ifdef HTFM	/* KL, 3/2/1, Hypothesis Testing Fast Matching */
+#ifdef HTFM	/* Hypothesis Testing Fast Matching */
     Int SAD_MB_HP_HTFM_Collectxhyh(UChar *ref, UChar *blk, Int dmin_x, void *extra_info);
     Int SAD_MB_HP_HTFM_Collectyh(UChar *ref, UChar *blk, Int dmin_x, void *extra_info);
     Int SAD_MB_HP_HTFM_Collectxh(UChar *ref, UChar *blk, Int dmin_x, void *extra_info);
@@ -166,7 +166,7 @@ extern "C"
     Int SAD_MB_HTFM_Collect(UChar *ref, UChar *blk, Int dmin_lx, void *extra_info);
     Int SAD_MB_HTFM(UChar *ref, UChar *blk, Int dmin_lx, void *extra_info);
 #endif
-    /* KL 4/16/01 on-the-fly padding */
+    /* on-the-fly padding */
     Int SAD_Blk_PADDING(UChar *ref, UChar *cur, Int dmin, Int lx, void *extra_info);
     Int SAD_MB_PADDING(UChar *ref, UChar *cur, Int dmin, Int lx, void *extra_info);
 #ifdef HTFM
@@ -191,10 +191,10 @@ extern "C"
 
 
     /* defined in vlc_encode.c */
-    void MBVlcEncodeDataPar_I_VOP(VideoEncData *video, Int QP_prev, Int ncoefblck[], void *blkCodePtr);
-    void MBVlcEncodeDataPar_P_VOP(VideoEncData *video, Int QP_prev, Int ncoefblck[], void *blkCodePtr);
-    void MBVlcEncodeCombined_I_VOP(VideoEncData *video, Int QP_prev, Int ncoefblck[], void *blkCodePtr);
-    void MBVlcEncodeCombined_P_VOP(VideoEncData *video, Int QP_prev, Int ncoefblck[], void *blkCodePtr);
+    void MBVlcEncodeDataPar_I_VOP(VideoEncData *video, Int ncoefblck[], void *blkCodePtr);
+    void MBVlcEncodeDataPar_P_VOP(VideoEncData *video, Int ncoefblck[], void *blkCodePtr);
+    void MBVlcEncodeCombined_I_VOP(VideoEncData *video, Int ncoefblck[], void *blkCodePtr);
+    void MBVlcEncodeCombined_P_VOP(VideoEncData *video, Int ncoefblck[], void *blkCodePtr);
     void BlockCodeCoeff_ShortHeader(RunLevelBlock *RLB, BitstreamEncVideo *bs, Int j_start, Int j_stop, UChar Mode);
     void BlockCodeCoeff_RVLC(RunLevelBlock *RLB, BitstreamEncVideo *bs, Int j_start, Int j_stop, UChar Mode);
     void BlockCodeCoeff_Normal(RunLevelBlock *RLB, BitstreamEncVideo *bs, Int j_start, Int j_stop, UChar Mode);

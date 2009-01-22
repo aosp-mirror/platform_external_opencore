@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,14 +84,12 @@ void OsclSocketServRequestList::StartCancel(OsclSocketRequest *obj)
     //may need to interrupt a blocking select call
     iContainer->WakeupBlockingSelect();
 #else
-#ifdef OsclSocketSelect
     //for AO implementation, call the request processing routine
     //so that the request will get canceled.
-    bool doSelect;
-    int nfds;
-    iContainer->ProcessSocketRequests(doSelect, nfds);
+#if PV_SOCKET_SERVER_SELECT
+    iContainer->ProcessSocketRequests(iContainer->iNhandles, iContainer->iNfds);
 #else
-    OsclError::Panic("OSCLSOCK", 1);//no implementation.
+    iContainer->ProcessSocketRequests();
 #endif
 #endif
 }
@@ -133,16 +131,7 @@ void OsclSocketServRequestList::Wakeup()
     iSem.Signal();
 #else
     //wakeup the AO.
-    if (iContainer->IsAdded())
-    {
-        // To avoid waiting for the polling period to expire,
-        // cancel and activate for immediate run
-        if (iContainer->IsBusy())
-        {
-            iContainer->Cancel();
-        }
-        iContainer->RunIfNotReady();
-    }
+    iContainer->WakeupAO();
 #endif
 }
 

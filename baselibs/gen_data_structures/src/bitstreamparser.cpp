@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,15 +24,24 @@
 
 OSCL_EXPORT_REF BitStreamParser::BitStreamParser(uint8* stream, uint32 size)
 {
-    this->size = size;
-    start   = (uint8*)stream;
-    bytepos = (uint8*)start;
-    bitpos  = MOST_SIG_BIT;
+    ResetBitStreamParser(stream, size);
 }
 
+OSCL_EXPORT_REF void BitStreamParser::ResetBitStreamParser(uint8* stream, uint32 size)
+{
+    this->size = size;
+    start 	= OSCL_STATIC_CAST(uint8*, stream);
+    bytepos	= OSCL_STATIC_CAST(uint8*, start);
+    bitpos 	= MOST_SIG_BIT;
+}
 
 OSCL_EXPORT_REF uint32 BitStreamParser::ReadBits(uint8 numberOfBits)
 {
+    // Make sure bytepos won't exceed the size of the buffer while reading
+    if ((bytepos + numberOfBits) >= (start + size))
+    {
+        OSCL_LEAVE(OsclErrOverflow);
+    }
     //Initialize output to zero before shifting out bits.
     uint32 output = 0;
 
@@ -101,8 +110,11 @@ OSCL_EXPORT_REF uint8 BitStreamParser::ReadUInt8(void)
     //If bitpos is not on a byte boundary, have to use ReadBits...
     if (bitpos != MOST_SIG_BIT) return ReadBits(BITS_PER_UINT8);
 
-    //Otherwise, this is faster.
-    OSCL_ASSERT(bytepos < (start + size));
+    // Make sure the current bytepos doesn't exceed the size of the buffer
+    if (bytepos >= (start + size))
+    {
+        OSCL_LEAVE(OsclErrOverflow);
+    }
     uint8 read = *bytepos;
     bytepos++;
 
@@ -165,7 +177,10 @@ OSCL_EXPORT_REF void BitStreamParser::WriteUInt8(uint8 data)
     }
     else
     {
-        OSCL_ASSERT(bytepos < (start + size));
+        if (bytepos >= (start + size))
+        {
+            OSCL_LEAVE(OsclErrOverflow);
+        }
         *bytepos = data;
         bytepos++;
     }
@@ -194,8 +209,11 @@ OSCL_EXPORT_REF void BitStreamParser::WriteUInt32(uint32 data)
 
 OSCL_EXPORT_REF void BitStreamParser::NextBits(uint32 numberOfBits)
 {
-    //Check if we read past the end of the stream.
-    OSCL_ASSERT(bytepos < (start + size));
+    // Make sure bytepos won't exceed the size of the buffer while reading
+    if ((bytepos + numberOfBits) >= (start + size))
+    {
+        OSCL_LEAVE(OsclErrOverflow);
+    }
 
     //bitpos counts down from 7 to 0, so subtract it from 7 to get the ascending position.
     uint32 newbitpos = numberOfBits  + (MOST_SIG_BIT - bitpos);

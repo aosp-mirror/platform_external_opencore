@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,3 +56,4 @@ enum TPVMFMP3FFNodeInfo
 #define PVMF_BASEMIMETYPE "pvxxx"
 
 #endif // end PVMF_MP3FFPARSER_DEFS_H_INCLUDED
+

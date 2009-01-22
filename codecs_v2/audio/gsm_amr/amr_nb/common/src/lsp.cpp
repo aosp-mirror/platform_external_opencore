@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,14 +27,8 @@ Permission to distribute, modify and use this file under the standard license
 terms listed above has been obtained from the copyright holder.
 ****************************************************************************************/
 /*
-------------------------------------------------------------------------------
-
-
-
  Pathname: ./audio/gsm-amr/c/src/lsp.c
  Functions:
-
-     Date: 02/04/2002
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
@@ -57,6 +51,7 @@ terms listed above has been obtained from the copyright holder.
 
  Description:  Replaced "int" and/or "char" with OSCL defined types.
 
+ Who:                           Date:
  Description:
 
 ------------------------------------------------------------------------------
@@ -183,9 +178,16 @@ Word16 lsp_init(lspState **st)
     }
 
     /* Initialize quantization state */
-    Q_plsf_init(&s->qSt);
+    if (0 != Q_plsf_init(&s->qSt))
+    {
+        return -1;
+    }
 
-    lsp_reset(s);
+    if (0 != lsp_reset(s))
+    {
+        return -1;
+    }
+
     *st = s;
 
     return 0;
@@ -517,7 +519,10 @@ void lsp(lspState *st,       /* i/o : State struct                            */
 
     /* update the LSPs for the next frame */
     oscl_memcpy(st->lsp_old,   lsp_new,   M*sizeof(Word16));
-    oscl_memcpy(st->lsp_old_q, lsp_new_q, M*sizeof(Word16));
 
+    if (used_mode != MRDTX)
+    {
+        oscl_memcpy(st->lsp_old_q, lsp_new_q, M*sizeof(Word16));
+    }
 }
 

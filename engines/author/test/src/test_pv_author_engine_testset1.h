@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -166,9 +166,6 @@ class pvauthor_async_test_miscellaneous: public pvauthor_async_test_base
         bool ConfigAmrAacComposer();
         bool ConfigMp43gpComposer();
 
-        // Method to configure max filesize/duration interface
-        bool QueryComposerOutputInterface();
-        bool ConfigComposerOutput();
 
         // Methods to add media tracks
         bool AddAudioMediaTrack();
@@ -203,6 +200,8 @@ class pvauthor_async_test_miscellaneous: public pvauthor_async_test_base
         OSCL_wHeapString<OsclMemAllocator> iCopyrightString;
         OSCL_wHeapString<OsclMemAllocator> iDescriptionString;
         OSCL_wHeapString<OsclMemAllocator> iRatingString;
+        OSCL_wHeapString<OsclMemAllocator> iAlbumTitle;
+        uint16							   iRecordingYear;
 
         AVTConfig iAVTConfig;
         Oscl_Vector<PVAETestInput, OsclMemAllocator> iTestInputs;

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,59 +78,15 @@ enum PVMFMediaOutputNodePortMediaTimeStatus
 
 #define THRESHOLD_FOR_DROPPED_VIDEO_FRAMES 120
 
-/**
- * Observer class for the inactivity timer AO
- */
-class PVMediaOutputNodePortTimerObserver
-{
-    public:
-        virtual ~PVMediaOutputNodePortTimerObserver() {}
-        /**
-         * A timer event, indicating that the timer has expired.
-         */
-        virtual void PVMediaOutputNodePortTimerEvent() = 0;
-};
-
-/**
- * Timer used while pacing data for passive media output comps
- */
-class PVMediaOutputNodePortTimer : public OsclTimerObject
-{
-    public:
-        PVMediaOutputNodePortTimer(PVMediaOutputNodePortTimerObserver* aObserver);
-
-        virtual ~PVMediaOutputNodePortTimer();
-
-        /** Start Timer */
-        PVMFStatus Start();
-
-        PVMFStatus setTimerDurationInMS(uint32 duration);
-
-        /** Stop Timer events */
-        PVMFStatus Stop();
-
-        bool IsTimerStarted()
-        {
-            return iStarted;
-        }
-
-    private:
-        void Run();
-        uint32 iDurationInMS;
-        PVMediaOutputNodePortTimerObserver* iObserver;
-        bool iStarted;
-};
-
-
 class PVMediaOutputNodePort : public OsclTimerObject
             , public PvmfPortBaseImpl
             , public PvmfNodesSyncControlInterface
             , public PvmiMediaTransfer
             , public PVMFPortActivityHandler
             , public PvmiCapabilityAndConfig
-            , public PVMediaOutputNodePortTimerObserver
-            , public OsclClockObserver
-            , public OsclClockStateObserver
+            , public PVMFMediaClockObserver
+            , public PVMFMediaClockStateObserver
+            , public PVMFMediaClockNotificationsObs
 {
     public:
         PVMediaOutputNodePort(PVMediaOutputNode* aNode);
@@ -157,23 +113,19 @@ class PVMediaOutputNodePort : public OsclTimerObject
         bool queryInterface(const PVUuid& uuid, PVInterface*& iface);
 
         // Pure virtuals from PvmfNodesSyncControlInterface
-        PVMFStatus SetClock(OsclClock* aClock);
+        PVMFStatus SetClock(PVMFMediaClock* aClock);
         PVMFStatus ChangeClockRate(int32 aRate);
         PVMFStatus SetMargins(int32 aEarlyMargin, int32 aLateMargin);
         void ClockStarted();
         void ClockStopped();
         PVMFCommandId SkipMediaData(int32,
-                                    PVMFTimestamp aStartingTimestamp,
                                     PVMFTimestamp aResumeTimestamp,
                                     uint32 aStreamID,
-                                    bool aRenderSkippedData = false,
                                     bool aPlayBackPositionContinuous = false,
                                     OsclAny* aContext = NULL)
         {
-            OSCL_UNUSED_ARG(aStartingTimestamp);
             OSCL_UNUSED_ARG(aResumeTimestamp);
             OSCL_UNUSED_ARG(aStreamID);
-            OSCL_UNUSED_ARG(aRenderSkippedData);
             OSCL_UNUSED_ARG(aPlayBackPositionContinuous);
             OSCL_UNUSED_ARG(aContext);
             OSCL_LEAVE(OsclErrNotSupported);
@@ -240,31 +192,42 @@ class PVMediaOutputNodePort : public OsclTimerObject
             }
         }
 
-        //From OsclClockObserver
+        //From PVMFMediaClockObserver
         void ClockTimebaseUpdated();
         void ClockCountUpdated();
         void ClockAdjusted();
         //From OsclClockStateObserver
         void ClockStateUpdated();
+        void NotificationsInterfaceDestroyed();
 
         //To allow the node to set the port format.
         PVMFFormatType iPortFormat;
         bool IsFormatSupported(PVMFFormatType);
         void FormatUpdated();
 
-        //from PVMediaOutputNodePortTimerObserver
-        void PVMediaOutputNodePortTimerEvent();
+        //for processing the callbacks for the notifications requested to iClockNotificationsInf
+        void ProcessCallBack(uint32 callBackID, PVTimeComparisonUtils::MediaTimeStatus aTimerAccuracy, uint32 aDelta, const OsclAny* aContextData, PVMFStatus aStatus);
+
+        void ProcessIncomingMessageIfPossible();
+        // MIO node sets this status when MIO component's config is complete.
+        void SetMIOComponentConfigStatus(bool aStatus);
 
         void SetSkipTimeStamp(uint32 aSkipTS, uint32 aStreamID);
         void CancelSkip();
 
-        bool iWaitForConfig;
         bool isUnCompressedMIO;
+        uint32 iFramesDropped;
+        uint32 iTotalFrames;
 
         //BOS related
         Oscl_Vector<uint32, OsclMemAllocator> iBOSStreamIDVec;
         void ClearPreviousBOSStreamIDs(uint32 aID);
 
+        int32 WriteDataToMIO(int32 &aCmdId, PvmiMediaXferHeader &aMediaxferhdr, OsclRefCounterMemFrag &aFrag);
+        PvmiMediaTransfer* getMediaTransfer()
+        {
+            return iMediaTransfer;
+        }
     private:
         void Run();
         bool peekHead(PVMFSharedMediaMsgPtr& dataPtr, bool& bBos);
@@ -272,6 +235,7 @@ class PVMediaOutputNodePort : public OsclTimerObject
         PVMFStatus SetMIOParameterInt32(PvmiKeyType aKey, int32 aValue);
         PVMFStatus SetMIOParameterUint32(PvmiKeyType aKey, uint32 aValue);
         PVMFStatus SetMIOParameterPchar(PvmiKeyType aKey, char* aValue);
+        PVMFStatus SetMIOParameterFormat(PvmiKeyType aKey, PVMFFormatType aFormatType);
 
         // Container node
         PVMediaOutputNode* iNode;
@@ -283,7 +247,15 @@ class PVMediaOutputNodePort : public OsclTimerObject
         //data transfer related
         PvmiMediaTransfer* iMediaTransfer;
         PVMFCommandId iMioInfoErrorCmdId;
-        PvmfMediaTypeIndex iMediaTypeIndex;
+        enum PVMFMediaType
+        {
+            PVMF_MEDIA_UNKNOWN = 0,
+            PVMF_MEDIA_UNCOMPRESSED_AUDIO,
+            PVMF_MEDIA_COMPRESSED_AUDIO,
+            PVMF_MEDIA_UNCOMPRESSED_VIDEO,
+            PVMF_MEDIA_COMPRESSED_VIDEO,
+            PVMF_MEDIA_TEXT
+        } iMediaType;
         enum WriteState {EWriteBusy, EWriteWait, EWriteOK};
         WriteState iWriteState;
         //media data cleanup queue
@@ -299,13 +271,16 @@ class PVMediaOutputNodePort : public OsclTimerObject
         uint32 iWriteAsyncContext;
         uint32 iWriteAsyncEOSContext;
         uint32 iWriteAsyncReConfigContext;
-        OsclClock* iClock;
+        PVMFMediaClock* iClock;
+        PVMFMediaClockNotificationsInterface *iClockNotificationsInf;
+        bool oClockCallBackPending;
+        uint32 iDelayEarlyFrameCallBkId;
         int32 iClockRate;
         uint32 iEarlyMargin;
         uint32 iLateMargin;
-        PVMediaOutputNodePortTimer* iDelayTimer;
         bool oActiveMediaOutputComp;
         bool oProcessIncomingMessage;
+        bool oMIOComponentConfigured;
         uint32 iConsecutiveFramesDropped;
         bool iLateFrameEventSent;
         PVMFSharedMediaMsgPtr iCurrentMediaMsg;
@@ -325,15 +300,21 @@ class PVMediaOutputNodePort : public OsclTimerObject
         PVMFMediaOutputNodePortMediaTimeStatus CheckMediaTimeStamp(uint32& aDelta);
         PVMFMediaOutputNodePortMediaTimeStatus CheckMediaFrameStep();
         uint32 iRecentStreamID;
-        uint32 iEOSStreamId;
+
+        //iEosStreamIDVec is used as a FIFO to store the steamids of eos sent to mio comp.
+        //streamid is pushed in at front when call writeasync(eos) to mio comp.
+        //streamid is poped out from end when mio comp. calls writecomplete(eos),
+        //we report PVMFInfoEndOfData with the poped streamid.
+        //This logic depends on Mio comp. process data(at least eos msg) in a sequencial style.
+        Oscl_Vector<uint32, OsclMemAllocator> iEosStreamIDVec;
         uint32 iSkipTimestamp;
         bool iSendStartOfDataEvent;
         bool DataToSkip(PVMFSharedMediaMsgPtr& aMsg);
 
         //frame step related
         bool iFrameStepMode;
-        int64 iClockFrameCount;
-        int64 iSyncFrameCount;
+        int32 iClockFrameCount;
+        int32 iSyncFrameCount;
 
         //for datapath logging
         void LogMediaDataInfo(const char* msg, PVMFSharedMediaDataPtr mediaData, int32 p1, int32 p2);

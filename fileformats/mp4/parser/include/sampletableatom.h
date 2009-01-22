@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -263,15 +263,11 @@ class SampleTableAtom : public Atom
             }
         }
 
-        OSCL_wHeapString<OsclMemAllocator> getMIMEType()
+        void getMIMEType(OSCL_String& aMimeType)
         {
             if (_psampleDescriptionAtom != NULL)
             {
-                return _psampleDescriptionAtom->getMIMEType();
-            }
-            else
-            {
-                return _defaultMimeType;
+                _psampleDescriptionAtom->getMIMEType(aMimeType);
             }
         }
 
@@ -585,6 +581,7 @@ class SampleTableAtom : public Atom
         int32  _amrFrameTimeStamp;
         int32  _amrSampleSize;
 
+        uint32 SamplesCount;
         MP4_FF_FILE *_commonFilePtr;
 
         bool _oPVContentDownloadable;

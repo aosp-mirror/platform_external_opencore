@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,11 +52,14 @@ class ColorConvert32: public ColorConvertBase
 
         int32 get_frame32(uint8 **src, uint8 *dst, DisplayProperties *disp, uint8 *COFF_TBL);
         int32 cc32ZoomIn(uint8 **src, uint8 *dst, DisplayProperties *disp, uint8 *COFF_TBL);
-
+        int32 cc32Rotate(uint8 **src, uint8 *dst, DisplayProperties *disp, uint8 *COFF_TBL);
         int32(ColorConvert32::*mPtrYUV2RGB)(uint8 **src, uint8 *dst, DisplayProperties *disp, uint8 *COFF_TBL);
 };
 
 #endif // CCZOOMROTATION32_H_INCLUDED
+
+
+
 
 
 

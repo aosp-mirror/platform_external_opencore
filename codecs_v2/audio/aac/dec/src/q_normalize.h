@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,7 @@
  */
 /*
 
- Pathname: ./include/q_normalize.h
-
-     Date: 05/10/2001
+ Pathname: q_normalize.h
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
@@ -28,6 +26,7 @@
  (1) Added PV Copyright notice.
  (2) Removed embedded TABS
 
+ Who:                       Date:
  Description:
 
 ------------------------------------------------------------------------------

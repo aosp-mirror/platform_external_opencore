@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ class PvmiMIOFileInputSettings
     public:
         PvmiMIOFileInputSettings()
         {
-            iMediaFormat = PVMF_FORMAT_UNKNOWN;
+            iMediaFormat = PVMF_MIME_FORMAT_UNKNOWN;
             iLoopInputFile = true;
             iSamplingFrequency = 8000;
             iNumChannels = 1;
@@ -72,7 +72,7 @@ class PvmiMIOFileInputSettings
 
         ~PvmiMIOFileInputSettings()
         {
-            iMediaFormat = PVMF_FORMAT_UNKNOWN;
+            iMediaFormat = PVMF_MIME_FORMAT_UNKNOWN;
             iLoopInputFile = true;
             iSamplingFrequency = 8000;
             iNumChannels = 1;

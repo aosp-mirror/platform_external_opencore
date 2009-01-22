@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,14 @@
 #define OSCLCONFIG_TIME_CHECK_H_INCLUDED
 
 
+/**
+OSCL_HAS_UNIX_TIME_FUNCS macro should be set to 1 if
+the target platform supports unix time of day functions.
+Otherwise it should be set to 0.
+*/
+#ifndef OSCL_HAS_UNIX_TIME_FUNCS
+#error "ERROR: OSCL_HAS_UNIX_TIME_FUNCS has to be defined to either 1 or 0"
+#endif
 
 /**
 OsclBasicTimeStruct type should be defined to the platform-specific

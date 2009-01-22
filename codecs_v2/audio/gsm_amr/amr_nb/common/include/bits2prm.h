@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,6 +52,9 @@ terms listed above has been obtained from the copyright holder.
 #include "typedef.h"
 #include "mode.h"
 
+#ifndef OSCL_BASE_H_INCLUDED
+#include "oscl_base.h"
+#endif
 
 #ifdef __cplusplus
 extern "C"
@@ -79,7 +82,7 @@ extern "C"
     *
     **************************************************************************
     */
-    void Bits2prm(
+    OSCL_IMPORT_REF void Bits2prm(
         enum Mode mode,
         Word16 bits[],   /* input : serial bits, (244 + bfi)               */
         Word16 prm[]     /* output: analysis parameters, (57+1 parameters) */

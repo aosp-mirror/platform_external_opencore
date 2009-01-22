@@ -284,6 +284,7 @@ status_t PVMediaRecorder::stop()
 status_t PVMediaRecorder::doStop()
 {
     LOGV("doStop");
+
     if (mAuthorDriverWrapper == NULL) {
         LOGE("author driver wrapper is not initialized yet");
         return UNKNOWN_ERROR;

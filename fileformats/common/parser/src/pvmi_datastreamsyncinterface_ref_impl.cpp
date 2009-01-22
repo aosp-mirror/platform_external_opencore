@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -310,9 +310,14 @@ PVMIDataStreamSyncInterfaceRefImpl::Flush(PvmiDataStreamSession sessionID)
         LOGDEBUG((0, "PVMIDataStreamSyncInterfaceRefImpl::Flush returning %d", -1));
         return PVDS_FAILURE;
     }
-    int32 result = iFileObject->Flush();
+    int32 result;
+    result = iFileObject->Flush();
     LOGDEBUG((0, "PVMIDataStreamSyncInterfaceRefImpl::Flush returning %d", result));
-    return PVDS_SUCCESS;
+    if (result == 0) //Flush will return 0 when successful
+        return PVDS_SUCCESS;
+    else
+        return PVDS_FAILURE;
+
 }
 
 

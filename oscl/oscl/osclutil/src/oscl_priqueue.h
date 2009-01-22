@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -138,6 +138,10 @@ class OsclPriorityQueue : public OsclPriorityQueueBase
         {
             return c.front();
         };
+        const Container & vec()
+        {
+            return c;
+        }
 
         void push(const value_type& input)
         {
@@ -206,11 +210,6 @@ class OsclPriorityQueue : public OsclPriorityQueueBase
             return -1;//ok
         }
 
-        //a debug routine for direct access to the contents of the Oscl_Vector.
-        const Container & vec()
-        {
-            return c;
-        }
         friend class oscl_priqueue_test;
 
         //from Oscl_Opaque_Type_Compare

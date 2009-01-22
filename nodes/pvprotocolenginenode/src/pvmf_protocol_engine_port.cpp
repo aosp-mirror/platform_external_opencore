@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,15 +70,32 @@ PVMFProtocolEnginePort::~PVMFProtocolEnginePort()
 ////////////////////////////////////////////////////////////////////////////
 bool PVMFProtocolEnginePort::IsFormatSupported(PVMFFormatType aFmt)
 {
-    return (aFmt == PVMF_INET_TCP);
+    bool formatSupported = false;
+    if (aFmt == PVMF_MIME_INET_TCP)
+    {
+        formatSupported = true;
+    }
+    return formatSupported;
 }
 
 ////////////////////////////////////////////////////////////////////////////
 void PVMFProtocolEnginePort::FormatUpdated()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_INFO
-                    , (0, "PVMFProtocolEnginePort::FormatUpdated() %d", iFormat));
+                    , (0, "PVMFProtocolEnginePort::FormatUpdated() %s", iFormat.getMIMEStrPtr()));
 }
+
+////////////////////////////////////////////////////////////////////////////
+PVMFStatus PVMFProtocolEnginePort::QueueOutgoingMsg(PVMFSharedMediaMsgPtr aMsg)
+{
+    uint32 aOutgoingQueueSizeBefore = OutgoingMsgQueueSize();
+    PVMFStatus status = PvmfPortBaseImpl::QueueOutgoingMsg(aMsg);
+    if (status != PVMFSuccess) return status;
+    uint32 aOutgoingQueueSizeAfter = OutgoingMsgQueueSize();
+    if (aOutgoingQueueSizeBefore == aOutgoingQueueSizeAfter) return PVMFSuccessOutgoingMsgSent;
+    return PVMFSuccess;
+}
+
 
 ////////////////////////////////////////////////////////////////////////////
 bool PVMFProtocolEnginePort::PeekOutgoingMsg(PVMFSharedMediaMsgPtr& aMsg)

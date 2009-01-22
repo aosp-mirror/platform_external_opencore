@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,11 @@
 #include "pvmf_streaming_data_source.h"
 #endif
 
+#if RUN_FASTTRACK_TESTCASES
+#ifndef PVPVXPARSER_H_INCLUDED
+#include "pvpvxparser.h"
+#endif
+#endif
 
 #ifndef PVMF_DOWNLOAD_DATA_SOURCE_H_INCLUDED
 #include "pvmf_download_data_source.h"
@@ -48,17 +53,17 @@
 
 #ifndef DEFAULT_URLS_DEFINED
 #define DEFAULT_URLS_DEFINED
-#define AMR_MPEG4_RTSP_URL "rtsp://test.3gp"
-#define AMR_MPEG4_RTSP_URL_2 "rtsp://test.mp4"
-#define H263_AMR_RTSP_URL "rtsp://test.3gp"
-#define MPEG4_RTSP_URL "rtsp://test.3gp"
-#define MPEG4_SHRT_HDR_RTSP_URL "rtsp://test.3gp"
-#define AAC_RTSP_URL     "rtsp://test.3gp"
-#define MPEG4_AAC_RTSP_URL "rtsp://test.3gp"
+#define AMR_MPEG4_RTSP_URL ""
+#define AMR_MPEG4_RTSP_URL_2 ""
+#define H263_AMR_RTSP_URL ""
+#define MPEG4_RTSP_URL ""
+#define MPEG4_SHRT_HDR_RTSP_URL ""
+#define AAC_RTSP_URL     ""
+#define MPEG4_AAC_RTSP_URL ""
 #define AMR_MPEG4_SDP_FILE "pv_amr_mpeg4.sdp"
 #endif
 
-#define DEFAULT_GATEWAY "127.0.0.1"
+#define DEFAULT_GATEWAY "10.112.43.1"
 
 class PVPlayerDataSourceURL;
 class PVPlayerDataSink;
@@ -66,6 +71,8 @@ class PVPlayerDataSink;
 class PVPlayerDataSinkFilename;
 class PvmfFileOutputNodeConfigInterface;
 class PvmiCapabilityAndConfig;
+class PVMFDownloadDataSourcePVX;
+
 
 /*!
  *  A test case to count time taken in each command completion when playing an local/PDL/rtsp url
@@ -124,6 +131,7 @@ class pvplayer_async_test_genericprofiling : public pvplayer_async_test_base
                 , iPlayListURL(false)
                 , iStreamDataSource(NULL)
                 , iSourceContextData(NULL)
+                , iDownloadContextDataPVX(NULL)
         {
             iVideoSinkFormatType = aVideoSinkFormat;
             iAudioSinkFormatType = aAudioSinkFormat;
@@ -174,7 +182,6 @@ class pvplayer_async_test_genericprofiling : public pvplayer_async_test_base
         	STATE_REMOVEDATASINK_AUDIO,
         	STATE_RESET,
         	STATE_REMOVEDATASOURCE,
-        	STATE_WAIT_FOR_ERROR_HANDLING,
         	STATE_CLEANUPANDCOMPLETE
         };*/
 
@@ -254,8 +261,8 @@ class pvplayer_async_test_genericprofiling : public pvplayer_async_test_base
         bool iProtocolRollOverWithUnknownURLType;
         bool iPlayListURL;
 
-        OsclTimebase_Tickcount tb;
-        OsclClock iClock;
+        PVMFTimebase_Tickcount tb;
+        PVMFMediaClock iClock;
         //For clock usage
         uint32 iCurrenttime;
         uint32 iPrevtime;
@@ -272,8 +279,13 @@ class pvplayer_async_test_genericprofiling : public pvplayer_async_test_base
 
         //FTDL
         void CreateDownloadDataSource();
+        uint8 iPVXFileBuf[4096];
+        PVMFDownloadDataSourcePVX* iDownloadContextDataPVX;
         PVMFDownloadDataSourceHTTP* iDownloadContextDataHTTP;
         int32 iDownloadMaxfilesize;
+#if RUN_FASTTRACK_TESTCASES
+        CPVXInfo iDownloadPvxInfo;
+#endif
         OSCL_wHeapString<OsclMemAllocator> iDownloadURL;
         OSCL_wHeapString<OsclMemAllocator> iDownloadFilename;
         OSCL_HeapString<OsclMemAllocator> iDownloadProxy;
@@ -341,6 +353,7 @@ class pvplayer_async_test_genericplaypauserepositionresumetest : public pvplayer
                 , iPlayListURL(false)
                 , iStreamDataSource(NULL)
                 , iSourceContextData(NULL)
+                , iDownloadContextDataPVX(NULL)
         {
             iVideoSinkFormatType = aVideoSinkFormat;
             iAudioSinkFormatType = aAudioSinkFormat;
@@ -388,7 +401,6 @@ class pvplayer_async_test_genericplaypauserepositionresumetest : public pvplayer
         	STATE_REMOVEDATASINK_AUDIO,
         	STATE_RESET,
         	STATE_REMOVEDATASOURCE,
-        	STATE_WAIT_FOR_ERROR_HANDLING,
         	STATE_CLEANUPANDCOMPLETE
         };*/
 
@@ -480,8 +492,13 @@ class pvplayer_async_test_genericplaypauserepositionresumetest : public pvplayer
 
         //FTDL
         void CreateDownloadDataSource();
+        uint8 iPVXFileBuf[4096];
+        PVMFDownloadDataSourcePVX* iDownloadContextDataPVX;
         PVMFDownloadDataSourceHTTP* iDownloadContextDataHTTP;
         int32 iDownloadMaxfilesize;
+#if RUN_FASTTRACK_TESTCASES
+        CPVXInfo iDownloadPvxInfo;
+#endif
         OSCL_wHeapString<OsclMemAllocator> iDownloadURL;
         OSCL_wHeapString<OsclMemAllocator> iDownloadFilename;
         OSCL_HeapString<OsclMemAllocator> iDownloadProxy;
@@ -544,6 +561,7 @@ class pvplayer_async_test_genericopensetplaybackrangestartplaystoptest : public 
                 , iPlayListURL(false)
                 , iStreamDataSource(NULL)
                 , iSourceContextData(NULL)
+                , iDownloadContextDataPVX(NULL)
         {
             iVideoSinkFormatType = aVideoSinkFormat;
             iAudioSinkFormatType = aAudioSinkFormat;
@@ -591,7 +609,6 @@ class pvplayer_async_test_genericopensetplaybackrangestartplaystoptest : public 
         	STATE_REMOVEDATASINK_AUDIO,
         	STATE_RESET,
         	STATE_REMOVEDATASOURCE,
-        	STATE_WAIT_FOR_ERROR_HANDLING,
         	STATE_CLEANUPANDCOMPLETE
         };*/
 
@@ -682,8 +699,13 @@ class pvplayer_async_test_genericopensetplaybackrangestartplaystoptest : public 
 
         //FTDL
         void CreateDownloadDataSource();
+        uint8 iPVXFileBuf[4096];
+        PVMFDownloadDataSourcePVX* iDownloadContextDataPVX;
         PVMFDownloadDataSourceHTTP* iDownloadContextDataHTTP;
         int32 iDownloadMaxfilesize;
+#if RUN_FASTTRACK_TESTCASES
+        CPVXInfo iDownloadPvxInfo;
+#endif
         OSCL_wHeapString<OsclMemAllocator> iDownloadURL;
         OSCL_wHeapString<OsclMemAllocator> iDownloadFilename;
         OSCL_HeapString<OsclMemAllocator> iDownloadProxy;
@@ -747,6 +769,7 @@ class pvplayer_async_test_genericopenplayrepositiontoendtest : public pvplayer_a
                 , iPlayListURL(false)
                 , iStreamDataSource(NULL)
                 , iSourceContextData(NULL)
+                , iDownloadContextDataPVX(NULL)
         {
             iVideoSinkFormatType = aVideoSinkFormat;
             iAudioSinkFormatType = aAudioSinkFormat;
@@ -794,7 +817,6 @@ class pvplayer_async_test_genericopenplayrepositiontoendtest : public pvplayer_a
         	STATE_REMOVEDATASINK_AUDIO,
         	STATE_RESET,
         	STATE_REMOVEDATASOURCE,
-        	STATE_WAIT_FOR_ERROR_HANDLING,
         	STATE_CLEANUPANDCOMPLETE
         };*/
 
@@ -885,8 +907,13 @@ class pvplayer_async_test_genericopenplayrepositiontoendtest : public pvplayer_a
 
         //FTDL
         void CreateDownloadDataSource();
+        uint8 iPVXFileBuf[4096];
+        PVMFDownloadDataSourcePVX* iDownloadContextDataPVX;
         PVMFDownloadDataSourceHTTP* iDownloadContextDataHTTP;
         int32 iDownloadMaxfilesize;
+#if RUN_FASTTRACK_TESTCASES
+        CPVXInfo iDownloadPvxInfo;
+#endif
         OSCL_wHeapString<OsclMemAllocator> iDownloadURL;
         OSCL_wHeapString<OsclMemAllocator> iDownloadFilename;
         OSCL_HeapString<OsclMemAllocator> iDownloadProxy;
@@ -897,7 +924,8 @@ class pvplayer_async_test_genericopenplayrepositiontoendtest : public pvplayer_a
 };
 
 /*!
- *  Test cases to test Network disconnection call (right after/while processing) each state when playing an local/PDL/rtsp url
+ *  Test cases to test engine behavior when network is disconnected DURING/RIGHT AFTER various engine command's
+ *  execution when playing an PDL/streaming url
  *  - Data Source: Specified by user of test case
  *  - Data Sink(s): Video[FileOutputNode-test_player_genericnetworkdisconnect_video.dat]\n
  *                  Audio[FileOutputNode-test_player_genericnetworkdisconnect_audio.dat]
@@ -956,6 +984,7 @@ class pvplayer_async_test_genericnetworkdisconnect : public pvplayer_async_test_
                 , iPlayListURL(false)
                 , iSourceContextData(NULL)
                 , iStreamDataSource(NULL)
+                , iDownloadContextDataPVX(NULL)
         {
             iVideoSinkFormatType = aVideoSinkFormat;
             iAudioSinkFormatType = aAudioSinkFormat;
@@ -1099,8 +1128,13 @@ class pvplayer_async_test_genericnetworkdisconnect : public pvplayer_async_test_
 
         //FTDL
         void CreateDownloadDataSource();
+        uint8 iPVXFileBuf[4096];
+        PVMFDownloadDataSourcePVX* iDownloadContextDataPVX;
         PVMFDownloadDataSourceHTTP* iDownloadContextDataHTTP;
         int32 iDownloadMaxfilesize;
+#if RUN_FASTTRACK_TESTCASES
+        CPVXInfo iDownloadPvxInfo;
+#endif
         OSCL_wHeapString<OsclMemAllocator> iDownloadURL;
         OSCL_wHeapString<OsclMemAllocator> iDownloadFilename;
         OSCL_HeapString<OsclMemAllocator> iDownloadProxy;
@@ -1111,8 +1145,9 @@ class pvplayer_async_test_genericnetworkdisconnect : public pvplayer_async_test_
 };
 
 /*!
- *  Test cases to test Network disconnection then reconnection after some time,
- *  (right after/while processing) each state when playing an local/PDL/rtsp url
+ *  Test cases to test engine behavior when network is disconnected and then reconnected after
+ *  NW_RECONNECT_AFTER_DISCONNECT milli secs, DURING/RIGHT AFTER various engine command's
+ *  execution, when playing an PDL/streaming url
  *  - Data Source: Specified by user of test case
  *  - Data Sink(s): Video[FileOutputNode-test_player_genericnetworkdisconnectreconnect_video.dat]\n
  *                  Audio[FileOutputNode-test_player_genericnetworkdisconnectreconnect_audio.dat]
@@ -1171,6 +1206,7 @@ class pvplayer_async_test_genericnetworkdisconnectreconnect : public pvplayer_as
                 , iPlayListURL(false)
                 , iSourceContextData(NULL)
                 , iStreamDataSource(NULL)
+                , iDownloadContextDataPVX(NULL)
         {
             iVideoSinkFormatType = aVideoSinkFormat;
             iAudioSinkFormatType = aAudioSinkFormat;
@@ -1198,37 +1234,6 @@ class pvplayer_async_test_genericnetworkdisconnectreconnect : public pvplayer_as
         void CommandCompleted(const PVCmdResponse& aResponse);
         void HandleErrorEvent(const PVAsyncErrorEvent& aEvent);
         void HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent);
-
-        enum PVTestState
-        {
-            STATE_CREATE,
-            STATE_QUERYINTERFACE,
-            STATE_ADDDATASOURCE,
-            STATE_CONFIGPARAMS,
-            STATE_INIT,
-            STATE_GETMETADATAKEYLIST,
-            STATE_GETMETADATAVALUELIST,
-            STATE_ADDDATASINK_VIDEO,
-            STATE_ADDDATASINK_AUDIO,
-            STATE_PREPARE,
-            STATE_WAIT_FOR_DATAREADY,
-            STATE_WAIT_FOR_BUFFCOMPLETE,
-            STATE_CANCELALL,
-            STATE_WAIT_FOR_CANCELALL,
-            STATE_START,
-            STATE_SETPLAYBACKRANGE,
-            STATE_PAUSE,
-            STATE_RESUME,
-            STATE_EOSNOTREACHED,
-            STATE_STOP,
-            STATE_REMOVEDATASINK_VIDEO,
-            STATE_REMOVEDATASINK_AUDIO,
-            STATE_RESET,
-            STATE_REMOVEDATASOURCE,
-            STATE_WAIT_FOR_ERROR_HANDLING,
-            STATE_CLEANUPANDCOMPLETE,
-            STATE_RECONNECT
-        };
 
         PVTestState iState;
         PVTestState iDisconnectState;
@@ -1353,8 +1358,13 @@ class pvplayer_async_test_genericnetworkdisconnectreconnect : public pvplayer_as
 
         //FTDL
         void CreateDownloadDataSource();
+        uint8 iPVXFileBuf[4096];
+        PVMFDownloadDataSourcePVX* iDownloadContextDataPVX;
         PVMFDownloadDataSourceHTTP* iDownloadContextDataHTTP;
         int32 iDownloadMaxfilesize;
+#if RUN_FASTTRACK_TESTCASES
+        CPVXInfo iDownloadPvxInfo;
+#endif
         OSCL_wHeapString<OsclMemAllocator> iDownloadURL;
         OSCL_wHeapString<OsclMemAllocator> iDownloadFilename;
         OSCL_HeapString<OsclMemAllocator> iDownloadProxy;
@@ -1365,8 +1375,8 @@ class pvplayer_async_test_genericnetworkdisconnectreconnect : public pvplayer_as
 };
 
 /*!
- *  Test cases to test Network Disconnection during CancellAllCommands() call (right after/while processing)
- *  each state when playing an local/PDL/rtsp url
+ *  Test cases to test engine behavior when network is disconnected, followed by cancelAllCommands() immediately,
+ *  DURING/RIGHT AFTER various engine commands processing
  *  - Data Source: Specified by user of test case
  *  - Data Sink(s): Video[FileOutputNode-test_player_genericcancelall_video.dat]\n
  *                  Audio[FileOutputNode-test_player_genericcancelall_audio.dat]
@@ -1426,6 +1436,7 @@ class pvplayer_async_test_genericcancelallnetworkdisconnect : public pvplayer_as
                 , iPlayListURL(false)
                 , iSourceContextData(NULL)
                 , iStreamDataSource(NULL)
+                , iDownloadContextDataPVX(NULL)
         {
             iVideoSinkFormatType = aVideoSinkFormat;
             iAudioSinkFormatType = aAudioSinkFormat;
@@ -1440,6 +1451,7 @@ class pvplayer_async_test_genericcancelallnetworkdisconnect : public pvplayer_as
             iDownloadOnly = iDownloadThenPlay = false;
             iEndState = (PVTestState)lastState;
             iCancelAllWhileProc = aCancelAllWhileProc;
+            iNetworkIsDisabled = false;
         }
 
         ~pvplayer_async_test_genericcancelallnetworkdisconnect() {}
@@ -1455,6 +1467,7 @@ class pvplayer_async_test_genericcancelallnetworkdisconnect : public pvplayer_as
         PVTestState iState;
         PVTestState iEndState;
         bool iCancelAllWhileProc;
+        bool iNetworkIsDisabled;
 
         PVPlayerInterface* iPlayer;
         PVPlayerDataSourceURL* iDataSource;
@@ -1501,25 +1514,29 @@ class pvplayer_async_test_genericcancelallnetworkdisconnect : public pvplayer_as
             fprintf(iTestMsgOutputFile, "***Disconnecting Network...\n");
             system("ipconfig /release");
 #endif
+            iNetworkIsDisabled = true;
 
         }
 
         void enableNetwork()
         {
-            char cmd_str[48] = "/sbin/route add default gw ";
-            oscl_strcat(cmd_str, DEFAULT_GATEWAY);
+            if (iNetworkIsDisabled)
+            {
+                char cmd_str[48] = "/sbin/route add default gw ";
+                oscl_strcat(cmd_str, DEFAULT_GATEWAY);
 
 #if	PVPLAYER_TEST_LINUX_DISABLE_NETWORK
-            fprintf(iTestMsgOutputFile, "***Reconnecting Network...\n");
-            system("/sbin/ifconfig eth0 up");
-            system(cmd_str);
+                fprintf(iTestMsgOutputFile, "***Reconnecting Network...\n");
+                system("/sbin/ifconfig eth0 up");
+                system(cmd_str);
 #endif
 
 #if	PVPLAYER_TEST_WIN32_DISABLE_NETWORK
-            fprintf(iTestMsgOutputFile, "***Reconnecting Network...\n");
-            system("ipconfig /renew");
+                fprintf(iTestMsgOutputFile, "***Reconnecting Network...\n");
+                system("ipconfig /renew");
 #endif
-
+                iNetworkIsDisabled = false;
+            }
         }
 
     private:
@@ -1569,8 +1586,13 @@ class pvplayer_async_test_genericcancelallnetworkdisconnect : public pvplayer_as
 
         //FTDL
         void CreateDownloadDataSource();
+        uint8 iPVXFileBuf[4096];
+        PVMFDownloadDataSourcePVX* iDownloadContextDataPVX;
         PVMFDownloadDataSourceHTTP* iDownloadContextDataHTTP;
         int32 iDownloadMaxfilesize;
+#if RUN_FASTTRACK_TESTCASES
+        CPVXInfo iDownloadPvxInfo;
+#endif
         OSCL_wHeapString<OsclMemAllocator> iDownloadURL;
         OSCL_wHeapString<OsclMemAllocator> iDownloadFilename;
         OSCL_HeapString<OsclMemAllocator> iDownloadProxy;
@@ -1638,6 +1660,7 @@ class pvplayer_async_test_genericplaypauserepositionresumenwdisconnectcancelallt
                 , iPlayListURL(false)
                 , iStreamDataSource(NULL)
                 , iSourceContextData(NULL)
+                , iDownloadContextDataPVX(NULL)
         {
             iVideoSinkFormatType = aVideoSinkFormat;
             iAudioSinkFormatType = aAudioSinkFormat;
@@ -1687,7 +1710,6 @@ class pvplayer_async_test_genericplaypauserepositionresumenwdisconnectcancelallt
         	STATE_REMOVEDATASINK_AUDIO,
         	STATE_RESET,
         	STATE_REMOVEDATASOURCE,
-        	STATE_WAIT_FOR_ERROR_HANDLING,
         	STATE_CLEANUPANDCOMPLETE
         };*/
 
@@ -1811,8 +1833,13 @@ class pvplayer_async_test_genericplaypauserepositionresumenwdisconnectcancelallt
 
         //FTDL
         void CreateDownloadDataSource();
+        uint8 iPVXFileBuf[4096];
+        PVMFDownloadDataSourcePVX* iDownloadContextDataPVX;
         PVMFDownloadDataSourceHTTP* iDownloadContextDataHTTP;
         int32 iDownloadMaxfilesize;
+#if RUN_FASTTRACK_TESTCASES
+        CPVXInfo iDownloadPvxInfo;
+#endif
         OSCL_wHeapString<OsclMemAllocator> iDownloadURL;
         OSCL_wHeapString<OsclMemAllocator> iDownloadFilename;
         OSCL_HeapString<OsclMemAllocator> iDownloadProxy;
@@ -1867,6 +1894,7 @@ class pvplayer_async_test_genericpvmferrorcorruptrenotified : public pvplayer_as
                 , iPlayListURL(false)
                 , iStreamDataSource(NULL)
                 , iSourceContextData(NULL)
+                , iDownloadContextDataPVX(NULL)
         {
             iVideoSinkFormatType = aVideoSinkFormat;
             iAudioSinkFormatType = aAudioSinkFormat;
@@ -1911,7 +1939,6 @@ class pvplayer_async_test_genericpvmferrorcorruptrenotified : public pvplayer_as
         	STATE_REMOVEDATASINK_AUDIO,
         	STATE_RESET,
         	STATE_REMOVEDATASOURCE,
-        	STATE_WAIT_FOR_ERROR_HANDLING,
         	STATE_CLEANUPANDCOMPLETE
         };*/
 
@@ -1993,9 +2020,13 @@ class pvplayer_async_test_genericpvmferrorcorruptrenotified : public pvplayer_as
 
         //FTDL
         void CreateDownloadDataSource();
+        uint8 iPVXFileBuf[4096];
+        PVMFDownloadDataSourcePVX* iDownloadContextDataPVX;
         PVMFDownloadDataSourceHTTP* iDownloadContextDataHTTP;
         int32 iDownloadMaxfilesize;
-
+#if RUN_FASTTRACK_TESTCASES
+        CPVXInfo iDownloadPvxInfo;
+#endif
         OSCL_wHeapString<OsclMemAllocator> iDownloadURL;
         OSCL_wHeapString<OsclMemAllocator> iDownloadFilename;
         OSCL_HeapString<OsclMemAllocator> iDownloadProxy;
@@ -2052,11 +2083,11 @@ class pvplayer_async_test_genericopenplaygetmetadatatest : public pvplayer_async
                 , iSessionDuration(0)
                 , bcloaking(aCloaking)
                 , oLiveSession(false)
-                , iProtocolRollOver(false)
                 , iProtocolRollOverWithUnknownURLType(false)
                 , iPlayListURL(false)
                 , iStreamDataSource(NULL)
                 , iSourceContextData(NULL)
+                , iDownloadContextDataPVX(NULL)
         {
             iVideoSinkFormatType = aVideoSinkFormat;
             iAudioSinkFormatType = aAudioSinkFormat;
@@ -2103,7 +2134,6 @@ class pvplayer_async_test_genericopenplaygetmetadatatest : public pvplayer_async
             STATE_REMOVEDATASINK_AUDIO,
             STATE_RESET,
             STATE_REMOVEDATASOURCE,
-            STATE_WAIT_FOR_ERROR_HANDLING,
             STATE_CLEANUPANDCOMPLETE,
             STATE_GETMETADATAKEYLIST1,
             STATE_GETMETADATAVALUELIST1
@@ -2126,11 +2156,6 @@ class pvplayer_async_test_genericopenplaygetmetadatatest : public pvplayer_async
         {
             iMultiplePlay = true;
             iTargetNumPlay = aNum;
-        }
-
-        void setProtocolRollOverMode()
-        {
-            iProtocolRollOver = true;
         }
 
         void setProtocolRollOverModeWithUnknownURL()
@@ -2187,8 +2212,13 @@ class pvplayer_async_test_genericopenplaygetmetadatatest : public pvplayer_async
 
         //FTDL
         void CreateDownloadDataSource();
+        uint8 iPVXFileBuf[4096];
+        PVMFDownloadDataSourcePVX* iDownloadContextDataPVX;
         PVMFDownloadDataSourceHTTP* iDownloadContextDataHTTP;
         int32 iDownloadMaxfilesize;
+#if RUN_FASTTRACK_TESTCASES
+        CPVXInfo iDownloadPvxInfo;
+#endif
         OSCL_wHeapString<OsclMemAllocator> iDownloadURL;
         OSCL_wHeapString<OsclMemAllocator> iDownloadFilename;
         OSCL_HeapString<OsclMemAllocator> iDownloadProxy;
@@ -2243,11 +2273,11 @@ class pvplayer_async_test_genericopengetmetadatapictest : public pvplayer_async_
                 , iSessionDuration(0)
                 , bcloaking(aCloaking)
                 , oLiveSession(false)
-                , iProtocolRollOver(false)
                 , iProtocolRollOverWithUnknownURLType(false)
                 , iPlayListURL(false)
                 , iStreamDataSource(NULL)
                 , iSourceContextData(NULL)
+                , iDownloadContextDataPVX(NULL)
         {
             iVideoSinkFormatType = aVideoSinkFormat;
             iAudioSinkFormatType = aAudioSinkFormat;
@@ -2294,7 +2324,6 @@ class pvplayer_async_test_genericopengetmetadatapictest : public pvplayer_async_
             STATE_REMOVEDATASINK_AUDIO,
             STATE_RESET,
             STATE_REMOVEDATASOURCE,
-            STATE_WAIT_FOR_ERROR_HANDLING,
             STATE_CLEANUPANDCOMPLETE,
             STATE_GETMETADATAKEYLIST1,
             STATE_GETMETADATAVALUELIST1
@@ -2317,16 +2346,6 @@ class pvplayer_async_test_genericopengetmetadatapictest : public pvplayer_async_
         {
             iMultiplePlay = true;
             iTargetNumPlay = aNum;
-        }
-
-        void setProtocolRollOverMode()
-        {
-            iProtocolRollOver = true;
-        }
-
-        void setProtocolRollOverModeWithUnknownURL()
-        {
-            iProtocolRollOverWithUnknownURLType = true;
         }
 
         void setPlayListMode()
@@ -2378,8 +2397,13 @@ class pvplayer_async_test_genericopengetmetadatapictest : public pvplayer_async_
 
         //FTDL
         void CreateDownloadDataSource();
+        uint8 iPVXFileBuf[4096];
+        PVMFDownloadDataSourcePVX* iDownloadContextDataPVX;
         PVMFDownloadDataSourceHTTP* iDownloadContextDataHTTP;
         int32 iDownloadMaxfilesize;
+#if RUN_FASTTRACK_TESTCASES
+        CPVXInfo iDownloadPvxInfo;
+#endif
         OSCL_wHeapString<OsclMemAllocator> iDownloadURL;
         OSCL_wHeapString<OsclMemAllocator> iDownloadFilename;
         OSCL_HeapString<OsclMemAllocator> iDownloadProxy;

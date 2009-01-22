@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,6 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*********************************************************************************/
-/*     -------------------------------------------------------------------       */
-/*                        MPEG-4 TextSampleModifiers Class                       */
-/*     -------------------------------------------------------------------       */
-/*********************************************************************************/
-/*
-    This TextSampleModifiers Class is used for text streams.
-*/
-
 #define IMPLEMENT_TextSampleModifiers
 
 #include "textsamplemodifiers.h"
@@ -829,4 +820,6 @@ TextBoxBox* TextSampleModifiers::getTextOverideBox()
 
 }
 
+
 #endif // SUPPRESS__NOT_YET_IMPLEMENTED
+

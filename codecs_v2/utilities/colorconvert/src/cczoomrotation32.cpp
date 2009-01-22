@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,9 @@
 #include "colorconv_config.h"
 #include "cczoomrotation32.h"
 #include "osclconfig_compiler_warnings.h"
+
+
+
 
 OSCL_EXPORT_REF ColorConvertBase* ColorConvert32::NewL(void)
 {
@@ -224,6 +227,7 @@ int32 ColorConvert32::get_frame32(uint8 **src, uint8 *dst, DisplayProperties *di
     }
 }
 
+
 int32 cc32(uint8 **src, uint8 *dst, int32 *disp, uint8 *clip)
 {
     uint8		*pCb, *pCr;
@@ -358,7 +362,6 @@ int32 cc32(uint8 **src, uint8 *dst, int32 *disp, uint8 *clip)
 
     return 1;
 }
-
 
 // platform specific C function
 int32 cc32scaledown(uint8 **src, uint8 *dst, int32 *disp,
@@ -827,5 +830,4 @@ int32 cc32scaleup(uint8 **src, uint8 *dst, int *disp,
     return 0;
 #endif
 }
-
 

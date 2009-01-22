@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -259,8 +259,16 @@ void
 PVA_FF_InterLeaveBuffer::setLastChunkEndTime(uint32 time)
 {
     _lastChunkEndTime = time;
+    if (_pTimeStampVec->size() > 0)
+    {
+        _lastSampleTS  = _pTimeStampVec->back();
+    }
+    else
+    {
+        _lastSampleTS = 0;
+    }
 
-    _lastSampleTS	= _pTimeStampVec->back();
+
 }
 
 

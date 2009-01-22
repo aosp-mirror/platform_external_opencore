@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,7 @@
  */
 /*
 
- Name: PVMP4AudioDecoder_API.h
-
-     Date: 06/26/2001
+  Name: PVMP4AudioDecoder_API.h
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
@@ -37,6 +35,7 @@
  Description: add a new API to reset history buffer, the same change has been
               made on a 32-bits version(element \nd.e0352.wjin\1)
 
+ Who:                                       Date:
  Description:
 
 ------------------------------------------------------------------------------
@@ -57,7 +56,7 @@
 
   (Normally header files do not have a reference section)
 
-  ISO/EIC 14496-3:(1999) Document titled <-------- FIXME do better!
+  ISO/EIC 14496-3:(1999) Document titled
 ------------------------------------------------------------------------------
 */
 
@@ -334,24 +333,24 @@ extern "C"
     ; Function Prototype declaration
     ----------------------------------------------------------------------------*/
 
-    UInt32 PVMP4AudioDecoderGetMemRequirements(void);
+    OSCL_IMPORT_REF UInt32 PVMP4AudioDecoderGetMemRequirements(void);
 
-    Int PVMP4AudioDecoderInitLibrary(
+    OSCL_IMPORT_REF Int PVMP4AudioDecoderInitLibrary(
         tPVMP4AudioDecoderExternal  *pExt,
         void                        *pMem);
 
-    Int PVMP4AudioDecodeFrame(
+    OSCL_IMPORT_REF Int PVMP4AudioDecodeFrame(
         tPVMP4AudioDecoderExternal  *pExt,
         void                        *pMem);
 
-    Int PVMP4AudioDecoderConfig(
+    OSCL_IMPORT_REF Int PVMP4AudioDecoderConfig(
         tPVMP4AudioDecoderExternal  *pExt,
         void                        *pMem);
 
-    void PVMP4AudioDecoderResetBuffer(
+    OSCL_IMPORT_REF void PVMP4AudioDecoderResetBuffer(
         void                        *pMem);
 
-    void PVMP4AudioDecoderDisableAacPlus(
+    OSCL_IMPORT_REF void PVMP4AudioDecoderDisableAacPlus(
         tPVMP4AudioDecoderExternal  *pExt,
         void                        *pMem);
 

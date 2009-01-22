@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,6 +59,10 @@
 #include "oscl_timer.h"
 #endif
 
+#ifndef PVMF_RESIZABLE_SIMPLE_MEDIAMSG_H_INCLUDED
+#include "pvmf_resizable_simple_mediamsg.h"
+#endif
+
 #include "pvmf_mp4ffparser_node.h"
 
 #define PVMF_MP4FFPARSERNODE_LOGERROR(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iLogger,PVLOGMSG_ERR,m);
@@ -68,6 +72,7 @@
 #define PVMF_MP4FFPARSERNODE_LOGINFOLOW(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG,iLogger,PVLOGMSG_INFO,m);
 #define PVMF_MP4FFPARSERNODE_LOGINFO(m) PVMF_MP4FFPARSERNODE_LOGINFOMED(m)
 #define PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iDataPathLogger,PVLOGMSG_INFO,m);
+#define PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC_AVC(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iAVCDataPathLogger,PVLOGMSG_INFO,m);
 #define PVMF_MP4FFPARSERNODE_LOGCLOCK(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iClockLogger,PVLOGMSG_INFO,m);
 #define PVMF_MP4FFPARSERNODE_LOGBIN(iPortLogger, m) PVLOGGER_LOGBIN(PVLOGMSG_INST_LLDBG, iPortLogger, PVLOGMSG_ERR, m);
 #define PVMF_MP4FFPARSERNODE_LOGDIAGNOSTICS(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF,iDiagnosticsLogger,PVLOGMSG_INFO,m);
@@ -75,7 +80,6 @@
 * Port/Track information
 */
 class MediaClockConverter;
-class TrackDataMemPoolProxyAlloc;
 
 class VideoTrackDimensionInfo
 {
@@ -118,20 +122,21 @@ class PVMP4FFNodeTrackPortInfo : public OsclMemPoolFixedChunkAllocatorObserver,
             TRACKSTATE_ERROR,
             TRACKSTATE_DOWNLOAD_AUTOPAUSE,
             TRACKSTATE_SEND_ENDOFTRACK,
-            TRACKSTATE_TRACKMAXDATASIZE_RESIZE
+            TRACKSTATE_TRACKMAXDATASIZE_RESIZE,
+            TRACKSTATE_SKIP_CORRUPT_SAMPLE
         };
 
         PVMP4FFNodeTrackPortInfo()
         {
             iTrackId = -1;
             iPortInterface = NULL;
-            iFormatType = PVMF_FORMAT_UNKNOWN;
+            iFormatType = PVMF_MIME_FORMAT_UNKNOWN;
+            iFormatTypeInteger = 0;
             iClockConverter = NULL;
             iState = TRACKSTATE_UNINITIALIZED;
             iTrackMaxDataSize = 0;
             iTrackMaxQueueDepth = 0;
             iTrackDataMemoryPool = NULL;
-            iTrackDataMemoryPoolProxy = NULL;
             iMediaDataImplAlloc = NULL;
             iTextMediaDataImplAlloc = NULL;
             iMediaDataMemPool = NULL;
@@ -172,6 +177,7 @@ class PVMP4FFNodeTrackPortInfo : public OsclMemPoolFixedChunkAllocatorObserver,
             iPortInterface = aSrc.iPortInterface;
             iMimeType = aSrc.iMimeType;
             iFormatType = aSrc.iFormatType;
+            iFormatTypeInteger = aSrc.iFormatTypeInteger;
             iClockConverter = aSrc.iClockConverter;
             iFormatSpecificConfig = aSrc.iFormatSpecificConfig;
             iFormatSpecificConfigAndFirstSample = aSrc.iFormatSpecificConfigAndFirstSample;
@@ -180,7 +186,6 @@ class PVMP4FFNodeTrackPortInfo : public OsclMemPoolFixedChunkAllocatorObserver,
             iTrackMaxDataSize = aSrc.iTrackMaxDataSize;
             iTrackMaxQueueDepth = aSrc.iTrackMaxQueueDepth;
             iTrackDataMemoryPool = aSrc.iTrackDataMemoryPool;
-            iTrackDataMemoryPoolProxy = aSrc.iTrackDataMemoryPoolProxy;
             iMediaDataImplAlloc = aSrc.iMediaDataImplAlloc;
             iTextMediaDataImplAlloc = aSrc.iTextMediaDataImplAlloc;
             iMediaDataMemPool = aSrc.iMediaDataMemPool;
@@ -222,11 +227,6 @@ class PVMP4FFNodeTrackPortInfo : public OsclMemPoolFixedChunkAllocatorObserver,
         void freechunkavailable(OsclAny*)
         {
 
-            /*	if (iMimeType.get_size() > 0) //pvdt29435
-            	{
-            		//PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"PVMP4FFNodeTrackPortInfo::freechunkavailable() called %s",iMimeType.get_cstr()));
-            	}
-            */
             if (iState == TRACKSTATE_MEDIADATAPOOLEMPTY || iState == TRACKSTATE_MEDIADATAFRAGGROUPPOOLEMPTY)
             {
                 //PVLogger* iDataPathLogger = PVLogger::GetLoggerObject("datapath.sourcenode.mp4parsernode");
@@ -249,12 +249,6 @@ class PVMP4FFNodeTrackPortInfo : public OsclMemPoolFixedChunkAllocatorObserver,
         // calling notifyfreeblockavailable() on the mempool
         void freeblockavailable(OsclAny*)
         {
-            /*
-            if (iMimeType.get_size() > 0) //pvdt29435
-            {
-            	PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"PVMP4FFNodeTrackPortInfo::freeblockavailable() called %s",iMimeType.get_cstr()));
-            }
-            */
             // Check if track is waiting for track data to be available
             if (iState == TRACKSTATE_TRACKDATAPOOLEMPTY)
             {
@@ -281,6 +275,8 @@ class PVMP4FFNodeTrackPortInfo : public OsclMemPoolFixedChunkAllocatorObserver,
         OSCL_HeapString<OsclMemAllocator> iMimeType;
         // Format type for the port
         PVMFFormatType iFormatType;
+        // Integer Format type for the port
+        uint32 iFormatTypeInteger;
         // Converter to convert from track timescale to milliseconds
         MediaClockConverter* iClockConverter;
         // Shared memory pointer holding the decoder specific config info for this track
@@ -298,10 +294,8 @@ class PVMP4FFNodeTrackPortInfo : public OsclMemPoolFixedChunkAllocatorObserver,
         uint32 iTrackMaxQueueDepth;
         // Output buffer memory pool
         OsclMemPoolResizableAllocator *iTrackDataMemoryPool;
-        // Allocator wrapper for the output buffer memory pool
-        TrackDataMemPoolProxyAlloc* iTrackDataMemoryPoolProxy;
         // Allocator for simple media data buffer impl
-        PVMFSimpleMediaBufferCombinedAlloc *iMediaDataImplAlloc;
+        PVMFResizableSimpleMediaMsgAlloc *iMediaDataImplAlloc;
         // Allocator for text track simple media data buffer impl
         PVMFTimedTextMediaDataAlloc* iTextMediaDataImplAlloc;
         // Memory pool for simple media data

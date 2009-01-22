@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -217,7 +217,8 @@ AVCEnc_Status EncodeMB(AVCEncObject *encvid)
     /****** for intra prediction, pred is already done *******/
     /****** for I4, the recon is ready and Xfrm coefs are ready to be encoded *****/
 
-    RCCalculateMAD(encvid, currMB, orgL, orgPitch);
+    //RCCalculateMAD(encvid,currMB,orgL,orgPitch); // no need to re-calculate MAD for Intra
+    // not used since totalSAD is used instead
 
     /* compute the prediction */
     /* output is video->pred_block */
@@ -243,7 +244,7 @@ AVCEnc_Status EncodeMB(AVCEncObject *encvid)
                 currMB->nz_coeff[blkidx] = numcoeff;
                 if (numcoeff)
                 {
-                    video->cbp4x4 |= (1 << blkidx); //not needed??
+                    video->cbp4x4 |= (1 << blkidx);
                     currMB->CBP |= (1 << b8);
                 }
 
@@ -303,6 +304,8 @@ AVCEnc_Status EncodeMB(AVCEncObject *encvid)
     }
     else	/* Intra prediction */
     {
+        encvid->numIntraMB++;
+
         if (currMB->mbMode == AVC_I16) /* do prediction for the whole macroblock */
         {
             currMB->CBP = 0;
@@ -340,7 +343,7 @@ AVCEnc_Status EncodeMB(AVCEncObject *encvid)
 
                 if (!video->mbAvailA || !video->mbAvailB)
                 {
-                    if (currMB->mvL0[0] == 0 && currMB->mvL0[1] == 0) /* both mv components are zeros.*/
+                    if (currMB->mvL0[0] == 0) /* both mv components are zeros.*/
                     {
                         currMB->mbMode = AVC_SKIP;
                         video->mvd_l0[0][0][0] = 0;
@@ -349,10 +352,10 @@ AVCEnc_Status EncodeMB(AVCEncObject *encvid)
                 }
                 else
                 {
-                    if ((MB_A->ref_idx_L0[1] == 0 && MB_A->mvL0[6] == 0 &&  MB_A->mvL0[7] == 0) ||
-                            (MB_B->ref_idx_L0[2] == 0 && MB_B->mvL0[24] == 0 &&  MB_B->mvL0[25] == 0))
+                    if ((MB_A->ref_idx_L0[1] == 0 && MB_A->mvL0[3] == 0) ||
+                            (MB_B->ref_idx_L0[2] == 0 && MB_B->mvL0[12] == 0))
                     {
-                        if (currMB->mvL0[0] == 0 && currMB->mvL0[1] == 0) /* both mv components are zeros.*/
+                        if (currMB->mvL0[0] == 0) /* both mv components are zeros.*/
                         {
                             currMB->mbMode = AVC_SKIP;
                             video->mvd_l0[0][0][0] = 0;
@@ -496,17 +499,8 @@ AVCEnc_Status EncodeMB(AVCEncObject *encvid)
 
     num_bits = 32 + (encvid->bitstream->write_pos << 3) - encvid->bitstream->bit_left;
 
-    rateCtrl->numMBHeaderBits = start_text_bits - start_mb_bits;
-    rateCtrl->numMBTextureBits = num_bits - start_text_bits;
-    rateCtrl->NumberofHeaderBits += rateCtrl->numMBHeaderBits;
-    rateCtrl->NumberofTextureBits += rateCtrl->numMBTextureBits;
-    if (rateCtrl->basicUnit < (int)video->PicSizeInMbs)
-    {
-        rateCtrl->NumberofBasicUnitHeaderBits += rateCtrl->numMBHeaderBits;
-        rateCtrl->NumberofBasicUnitTextureBits += rateCtrl->numMBTextureBits;
-    }
-    rateCtrl->NumberofCodedMacroBlocks++;
-
+    RCPostMB(video, rateCtrl, start_text_bits - start_mb_bits,
+             num_bits - start_text_bits);
 
 //	num_bits -= start_mb_bits;
 //	fprintf(fdebug,"MB #%d: %d bits\n",CurrMbAddr,num_bits);

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -496,7 +496,7 @@ class HTTPParserMultipartContentObject : public HTTPParserEntityBodyObject
         bool needSkipCRLF()
         {
             // iPrevCRLF&0x3!=0x3 means iPrevCRLF hasn't got complete CRLF (i.e.both CR and LF)
-            return (iNumChunks == 0 && (iPrevCRLF&0x3 != 0x3));
+            return ((iNumChunks == 0) && ((iPrevCRLF&0x3) != 0x3));
         }
 
         int32 parseChunkHeader(HTTPParserInput &aParserInput);

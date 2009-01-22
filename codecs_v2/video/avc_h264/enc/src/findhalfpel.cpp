@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,14 @@ const static int distance_tab[9][9] =   /* [hp_guess][k] */
     {1, 0, 1, 2, 3, 2, 1, 0, 0}
 };
 
+#define CLIP_RESULT(x) 		if((uint)x > 0xFF){ \
+			     x = 0xFF & (~(x>>31));}
+
+#define CLIP_UPPER16(x)     if((uint)x >= 0x20000000){ \
+		x = 0xFF0000 & (~(x>>31));} \
+		else { \
+		x = (x>>5)&0xFF0000; \
+		}
 
 /*=====================================================================
 	Function:	AVCFindHalfPelMB
@@ -44,20 +52,20 @@ const static int distance_tab[9][9] =   /* [hp_guess][k] */
 	Purpose:	Find half pel resolution MV surrounding the full-pel MV
 =====================================================================*/
 
-void AVCFindHalfPelMB(AVCEncObject *encvid, uint8 *cur, AVCMV *mot, uint8 *ncand,
-                      int xpos, int ypos, int hp_guess, int cmvx, int cmvy)
+int AVCFindHalfPelMB(AVCEncObject *encvid, uint8 *cur, AVCMV *mot, uint8 *ncand,
+                     int xpos, int ypos, int hp_guess, int cmvx, int cmvy)
 {
     AVCPictureData *currPic = encvid->common->currPic;
     int lx = currPic->pitch;
-    int d, dmin;
+    int d, dmin, satd_min;
     uint8* cand;
     int lambda_motion = encvid->lambda_motion;
     uint8 *mvbits = encvid->mvbits;
     int mvcost;
     /* list of candidate to go through for half-pel search*/
-    uint8* subpel_pred = (uint8*) encvid->subpel_pred; // all 16 sub-pel positions
-    uint8** hpel_cand = (uint8**) encvid->hpel_cand; /* half-pel position */
-    uint8**	qpel_cand;
+    uint8 *subpel_pred = (uint8*) encvid->subpel_pred; // all 16 sub-pel positions
+    uint8 **hpel_cand = (uint8**) encvid->hpel_cand; /* half-pel position */
+
     int xh[9] = {0, 0, 2, 2, 2, 0, -2, -2, -2};
     int yh[9] = {0, -2, -2, 0, 2, 2, 2, 0, -2};
     int xq[8] = {0, 1, 1, 1, 0, -1, -1, -1};
@@ -68,7 +76,7 @@ void AVCFindHalfPelMB(AVCEncObject *encvid, uint8 *cur, AVCMV *mot, uint8 *ncand
     OSCL_UNUSED_ARG(ypos);
     OSCL_UNUSED_ARG(hp_guess);
 
-    GenerateSubPelPred(subpel_pred, ncand, lx);
+    GenerateHalfPelPred(subpel_pred, ncand, lx);
 
     cur = encvid->currYMB; // pre-load current original MB
 
@@ -77,6 +85,7 @@ void AVCFindHalfPelMB(AVCEncObject *encvid, uint8 *cur, AVCMV *mot, uint8 *ncand
     // find cost for the current full-pel position
     dmin = SATD_MB(cand, cur, 65535); // get Hadamaard transform SAD
     mvcost = MV_COST_S(lambda_motion, mot->x, mot->y, cmvx, cmvy);
+    satd_min = dmin;
     dmin += mvcost;
     hmin = 0;
 
@@ -91,6 +100,7 @@ void AVCFindHalfPelMB(AVCEncObject *encvid, uint8 *cur, AVCMV *mot, uint8 *ncand
         {
             dmin = d;
             hmin = h;
+            satd_min = d - mvcost;
         }
     }
 
@@ -100,18 +110,20 @@ void AVCFindHalfPelMB(AVCEncObject *encvid, uint8 *cur, AVCMV *mot, uint8 *ncand
     encvid->best_hpel_pos = hmin;
 
     /*** search for quarter-pel ****/
-    qpel_cand = encvid->qpel_cand[hmin];
+    GenerateQuartPelPred(encvid->bilin_base[hmin], &(encvid->qpel_cand[0][0]), hmin);
+
     encvid->best_qpel_pos = qmin = -1;
 
     for (q = 0; q < 8; q++)
     {
-        d = SATD_MB(qpel_cand[q], cur, dmin);
+        d = SATD_MB(encvid->qpel_cand[q], cur, dmin);
         mvcost = MV_COST_S(lambda_motion, mot->x + xq[q], mot->y + yq[q], cmvx, cmvy);
         d += mvcost;
         if (d < dmin)
         {
             dmin = d;
             qmin = q;
+            satd_min = d - mvcost;
         }
     }
 
@@ -123,120 +135,29 @@ void AVCFindHalfPelMB(AVCEncObject *encvid, uint8 *cur, AVCMV *mot, uint8 *ncand
         encvid->best_qpel_pos = qmin;
     }
 
-    return ;
+    return satd_min;
 }
 
-#if 0
-void FindHalfPelMB(AVCEncObject *encvid, uint8 *cur, AVCMV *mot, uint8 *ncand,
-                   int xpos, int ypos, int hp_guess, int cmvx, int cmvy)
-{
-//	hp_mem = ULong *vertArray; /* 20x17 */
-//			 ULong *horzArray; /* 20x16 */
-//			 ULong *diagArray; /* 20x17 */
-    int dmin, d;
 
-    int xh, yh;
-    int k, kmin = 0;
-    int imin, jmin, ilow, jlow;
-    int in_range[9] = {0, 1, 1, 1, 1, 1, 1, 1, 1}; /*  3/29/01 */
-    int range = encvid->rateCtrl->mvRange;
-    AVCPictureData *currPic = encvid->common->currPic;
-    int lx = currPic->pitch;
-    int width = currPic->width; /*  padding */
-    int height = currPic->height;
-    int (**SAD_MB_HalfPel)(uint8*, uint8*, int, void*) =
-        encvid->functionPointer->SAD_MB_HalfPel;
-    void *extra_info = encvid->sad_extra_info;
-
-    int next_hp_pos[9][2] = {{0, 0}, {2, 0}, {1, 1}, {0, 2}, { -1, 1}, { -2, 0}, { -1, -1}, {0, -2}, {0, -1}};
-    int next_ncand[9] = {0, 1 , lx, lx, 0, -1, -1, -lx, -lx};
-    int xhmin, yhmin;
-    int lambda_motion = encvid->lambda_motion;
-    uint8 *mvbits = encvid->mvbits;
-    int mvcost;
-
-    cur = encvid->currYMB; // pre-load current original MB
-
-    /**************** check range ***************************/
-    /*  3/29/01 */
-    imin = xpos + (mot[0].x >> 2);
-    jmin = ypos + (mot[0].y >> 2);
-    ilow = xpos - range;
-    jlow = ypos - range;
-
-    if (imin <= -15 || imin == ilow)
-        in_range[1] = in_range[7] = in_range[8] = 0;
-    else if (imin >= width - 1)
-        in_range[3] = in_range[4] = in_range[5] = 0;
-    if (jmin <= -15 || jmin == jlow)
-        in_range[1] = in_range[2] = in_range[3] = 0;
-    else if (jmin >= height - 1)
-        in_range[5] = in_range[6] = in_range[7] = 0;
-
-    xhmin = 0;
-    yhmin = 0;
-    dmin = mot->sad;
-
-    xh = 0;
-    yh = -1;
-    ncand -= lx; /* initial position */
-
-    for (k = 2; k <= 8; k += 2)
-    {
-        if (distance_tab[hp_guess][k] < HP_DISTANCE_TH)
-        {
-            if (in_range[k])
-            {
-                d = (*(SAD_MB_HalfPel[((yh&1)<<1)+(xh&1)]))(ncand, cur, (dmin << 16) | lx, extra_info);
-                mvcost = MV_COST_S(lambda_motion, mot[0].x + (xh << 1), mot[0].y + (yh << 1), cmvx, cmvy);
-                d += mvcost;
-
-                if (d < dmin)
-                {
-                    dmin = d;
-                    xhmin = xh;
-                    yhmin = yh;
-                    kmin = k;
-                }
-            }
-        }
-        xh += next_hp_pos[k][0];
-        yh += next_hp_pos[k][1];
-        ncand += next_ncand[k];
-
-        if (k == 8)
-        {
-            if (xhmin != 0 || yhmin != 0)
-            {
-                k = -1;
-                hp_guess = kmin;
-            }
-        }
-    }
-
-    mot->sad = dmin;
-    mot->x += (xhmin << 1);
-    mot->y += (yhmin << 1);
-
-    return ;
-}
-#endif
 
 /** This function generates sub-pel prediction around the full-pel candidate.
 Each sub-pel position array is 20 pixel wide (for word-alignment) and 17 pixel tall. */
 /** The sub-pel position is labeled in spiral manner from the center. */
 
-void GenerateSubPelPred(uint8* subpel_pred, uint8 *ncand, int lx)
+void GenerateHalfPelPred(uint8* subpel_pred, uint8 *ncand, int lx)
 {
     /* let's do straightforward way first */
     uint8 *ref;
-    uint8 *dst, *dst2, *dst3, *dst4, *dst5, *src;
+    uint8 *dst;
     uint8 tmp8;
     int32 tmp32;
     int16 tmp_horz[18*22], *dst_16, *src_16;
+    register int a = 0, b = 0, c = 0, d = 0, e = 0, f = 0; // temp register
+    int msk;
     int i, j;
 
     /* first copy full-pel to the first array */
+    /* to be optimized later based on byte-offset load */
     ref = ncand - 3 - lx - (lx << 1); /* move back (-3,-3) */
     dst = subpel_pred;
 
@@ -263,232 +184,442 @@ void GenerateSubPelPred(uint8* subpel_pred, uint8 *ncand, int lx)
     ref = subpel_pred + 2;
     dst_16 = tmp_horz; /* 17 x 22 */
 
-    for (j = -2; j < 0; j++)
+    for (j = 4; j > 0; j--)
     {
-        for (i = 0; i < 16; i++)
+        for (i = 16; i > 0; i -= 4)
         {
-            *dst_16++ =  ref[-2] + ref[3] - 5 * (ref[-1] + ref[2]) + 20 * (ref[0] + ref[1]);
-            ref++;
+            a = ref[-2];
+            b = ref[-1];
+            c = ref[0];
+            d = ref[1];
+            e = ref[2];
+            f = ref[3];
+            *dst_16++ = a + f - 5 * (b + e) + 20 * (c + d);
+            a = ref[4];
+            *dst_16++ = b + a - 5 * (c + f) + 20 * (d + e);
+            b = ref[5];
+            *dst_16++ = c + b - 5 * (d + a) + 20 * (e + f);
+            c = ref[6];
+            *dst_16++ = d + c - 5 * (e + b) + 20 * (f + a);
+
+            ref += 4;
         }
         /* do the 17th column here */
-        *dst_16 =  ref[-2] + ref[3] - 5 * (ref[-1] + ref[2]) + 20 * (ref[0] + ref[1]);
+        d = ref[3];
+        *dst_16 =  e + d - 5 * (f + c) + 20 * (a + b);
         dst_16 += 2; /* stride for tmp_horz is 18 */
         ref += 8;  /* stride for ref is 24 */
+        if (j == 3)  // move 18 lines down
+        {
+            dst_16 += 324;//18*18;
+            ref += 432;//18*24;
+        }
     }
 
+    ref -= 480;//20*24;
+    dst_16 -= 360;//20*18;
     dst = subpel_pred + V0Q_H2Q * SUBPEL_PRED_BLK_SIZE; /* go to the 14th array 17x18*/
 
-    for (i = 0; i < 16; i++)
+    for (j = 18; j > 0; j--)
     {
-        tmp32 =  ref[-2] + ref[3] - 5 * (ref[-1] + ref[2]) + 20 * (ref[0] + ref[1]);
-        *dst_16++ = tmp32;
-        ref++;
-        tmp32 = (tmp32 + 16) >> 5;
-        *dst++ = AVC_CLIP(tmp32);
-    }
-    /* do the 17th column here */
-    tmp32 =  ref[-2] + ref[3] - 5 * (ref[-1] + ref[2]) + 20 * (ref[0] + ref[1]);
-    *dst_16 = tmp32;
-    tmp32 = (tmp32 + 16) >> 5;
-    *dst = AVC_CLIP(tmp32);
-
-    dst += 8;  /* stride for dst is 24 */
-    dst_16 += 2; /* stride for tmp_horz is 18 */
-    ref += 8;  /* stride for ref is 24 */
-
-    dst3 = subpel_pred + V0Q_H1Q * SUBPEL_PRED_BLK_SIZE; /* 3rd array 17x16 */
-    dst4 = subpel_pred + V0Q_H3Q * SUBPEL_PRED_BLK_SIZE; /* 7th array 17x16 */
-
-    for (j = 0; j < 16; j++)
-    {
-        for (i = 0; i < 16; i++)
+        for (i = 16; i > 0; i -= 4)
         {
-            tmp32 =  ref[-2] + ref[3] - 5 * (ref[-1] + ref[2]) + 20 * (ref[0] + ref[1]);
+            a = ref[-2];
+            b = ref[-1];
+            c = ref[0];
+            d = ref[1];
+            e = ref[2];
+            f = ref[3];
+            tmp32 = a + f - 5 * (b + e) + 20 * (c + d);
             *dst_16++ = tmp32;
-            ref++;
             tmp32 = (tmp32 + 16) >> 5;
-            tmp32 = AVC_CLIP(tmp32);
+            CLIP_RESULT(tmp32)
             *dst++ = tmp32;
-            *dst3++ = (tmp32 + ref[-1] + 1) >> 1;
-            *dst4++ = (tmp32 + ref[0] + 1) >> 1;
+
+            a = ref[4];
+            tmp32 = b + a - 5 * (c + f) + 20 * (d + e);
+            *dst_16++ = tmp32;
+            tmp32 = (tmp32 + 16) >> 5;
+            CLIP_RESULT(tmp32)
+            *dst++ = tmp32;
+
+            b = ref[5];
+            tmp32 = c + b - 5 * (d + a) + 20 * (e + f);
+            *dst_16++ = tmp32;
+            tmp32 = (tmp32 + 16) >> 5;
+            CLIP_RESULT(tmp32)
+            *dst++ = tmp32;
+
+            c = ref[6];
+            tmp32 = d + c - 5 * (e + b) + 20 * (f + a);
+            *dst_16++ = tmp32;
+            tmp32 = (tmp32 + 16) >> 5;
+            CLIP_RESULT(tmp32)
+            *dst++ = tmp32;
+
+            ref += 4;
         }
         /* do the 17th column here */
-        tmp32 =  ref[-2] + ref[3] - 5 * (ref[-1] + ref[2]) + 20 * (ref[0] + ref[1]);
+        d = ref[3];
+        tmp32 =  e + d - 5 * (f + c) + 20 * (a + b);
         *dst_16 = tmp32;
         tmp32 = (tmp32 + 16) >> 5;
-        tmp32 = AVC_CLIP(tmp32);
+        CLIP_RESULT(tmp32)
         *dst = tmp32;
-        *dst3 = (tmp32 + ref[0] + 1) >> 1;
-        *dst4 = (tmp32 + ref[1] + 1) >> 1;
 
         dst += 8;  /* stride for dst is 24 */
-        dst3 += 8;
-        dst4 += 8;
         dst_16 += 2; /* stride for tmp_horz is 18 */
         ref += 8;  /* stride for ref is 24 */
     }
 
-    for (i = 0; i < 16; i++)
-    {
-        tmp32 =  ref[-2] + ref[3] - 5 * (ref[-1] + ref[2]) + 20 * (ref[0] + ref[1]);
-        *dst_16++ = tmp32;
-        ref++;
-        tmp32 = (tmp32 + 16) >> 5;
-        *dst++ = AVC_CLIP(tmp32);
-    }
-    /* do the 17th column here */
-    tmp32 =  ref[-2] + ref[3] - 5 * (ref[-1] + ref[2]) + 20 * (ref[0] + ref[1]);
-    *dst_16 = tmp32;
-    tmp32 = (tmp32 + 16) >> 5;
-    *dst = AVC_CLIP(tmp32);
 
-    dst += 8;  /* stride for dst is 24 */
-    dst_16 += 2; /* stride for tmp_horz is 18 */
-    ref += 8;  /* stride for ref is 24 */
-
-    for (j = 17; j < 19; j++)
-    {
-        for (i = 0; i < 16; i++)
-        {
-            *dst_16++ =  ref[-2] + ref[3] - 5 * (ref[-1] + ref[2]) + 20 * (ref[0] + ref[1]);
-            ref++;
-        }
-        /* do the 17th column here */
-        *dst_16 =  ref[-2] + ref[3] - 5 * (ref[-1] + ref[2]) + 20 * (ref[0] + ref[1]);
-        dst_16 += 2; /* stride for tmp_horz is 18 */
-        ref += 8;  /* stride for ref is 24 */
-    }
-
-    /* Do vertical filtering and vertical cross */
+    /* Do middle point filtering*/
     src_16 = tmp_horz; /* 17 x 22 */
-    src = subpel_pred + V0Q_H2Q * SUBPEL_PRED_BLK_SIZE; /* 14th array 17x18 */
     dst = subpel_pred + V2Q_H2Q * SUBPEL_PRED_BLK_SIZE; /* 12th array 17x17*/
-    dst3 = subpel_pred + V1Q_H2Q * SUBPEL_PRED_BLK_SIZE; /* 15th array 17x17 */
-    dst4 = subpel_pred + V3Q_H2Q * SUBPEL_PRED_BLK_SIZE; /* 13th array 17x17 */
-
     dst -= 24; // offset
-    dst3 -= 24;
-    dst4 -= 24;
     for (i = 0; i < 17; i++)
     {
-        for (j = 0; j < 17; j++)
+        for (j = 16; j > 0; j -= 4)
         {
-            tmp32 = src_16[0] + src_16[18*5] - 5 * (src_16[18] + src_16[18*4]) + 20 * (src_16[18*2] + src_16[18*3]);
+            a = *src_16;
+            b = *(src_16 += 18);
+            c = *(src_16 += 18);
+            d = *(src_16 += 18);
+            e = *(src_16 += 18);
+            f = *(src_16 += 18);
+
+            tmp32 = a + f - 5 * (b + e) + 20 * (c + d);
             tmp32 = (tmp32 + 512) >> 10;
-            tmp32 = AVC_CLIP(tmp32);
+            CLIP_RESULT(tmp32)
             *(dst += 24) = tmp32;
-            *(dst3 += 24) = (tmp32 + *src + 1) >> 1;
-            *(dst4 += 24) = (tmp32 + *(src += 24) + 1) >> 1;
-            src_16 += 18;
+
+            a = *(src_16 += 18);
+            tmp32 = b + a - 5 * (c + f) + 20 * (d + e);
+            tmp32 = (tmp32 + 512) >> 10;
+            CLIP_RESULT(tmp32)
+            *(dst += 24) = tmp32;
+
+            b = *(src_16 += 18);
+            tmp32 = c + b - 5 * (d + a) + 20 * (e + f);
+            tmp32 = (tmp32 + 512) >> 10;
+            CLIP_RESULT(tmp32)
+            *(dst += 24) = tmp32;
+
+            c = *(src_16 += 18);
+            tmp32 = d + c - 5 * (e + b) + 20 * (f + a);
+            tmp32 = (tmp32 + 512) >> 10;
+            CLIP_RESULT(tmp32)
+            *(dst += 24) = tmp32;
+
+            src_16 -= (18 << 2);
         }
-        src_16 -= ((18 * 17) - 1);
-        dst -= ((24 * 17) - 1);
-        dst3 -= ((24 * 17) - 1);
-        dst4 -= ((24 * 17) - 1);
-        src -= ((24 * 17) - 1);
+
+        d = src_16[90]; // 18*5
+        tmp32 = e + d - 5 * (f + c) + 20 * (a + b);
+        tmp32 = (tmp32 + 512) >> 10;
+        CLIP_RESULT(tmp32)
+        dst[24] = tmp32;
+
+        src_16 -= ((18 << 4) - 1);
+        dst -= ((24 << 4) - 1);
     }
 
     /* do vertical interpolation */
     ref = subpel_pred + 2;
     dst = subpel_pred + V2Q_H0Q * SUBPEL_PRED_BLK_SIZE; /* 10th array 18x17 */
     dst -= 24; // offset
-    src = subpel_pred + V2Q_H2Q * SUBPEL_PRED_BLK_SIZE; /* 12th array 17x17 */
-    src -= 24; // offset
-    dst4 = subpel_pred + V2Q_H1Q * SUBPEL_PRED_BLK_SIZE; /* 11th array 17x17 */
-    dst4 -= 24; // offset
 
-    for (j = 0; j < 17; j++)
+    for (i = 2; i > 0; i--)
     {
-        tmp32 = ref[0] + ref[24*5] - 5 * (ref[24] + ref[24*4]) + 20 * (ref[24*2] + ref[24*3]);
-        ref += 24;
-        tmp32 = (tmp32 + 16) >> 5;
-        tmp32 = AVC_CLIP(tmp32);
-        *(dst += 24) = tmp32;
-        *(dst4 += 24) = (tmp32 + *(src += 24) + 1) >> 1;
-    }
-    dst -= ((24 * 17) - 1);
-    dst4 -= ((24 * 17) - 1);
-    ref -= ((24 * 17) - 1);
-    src -= ((24 * 17) - 1); // 12th
-
-    dst2 = subpel_pred + V1Q_H0Q * SUBPEL_PRED_BLK_SIZE; /* 5th array 16x17 */
-    dst2 -= 24; //offset
-    dst3 = subpel_pred + V3Q_H0Q * SUBPEL_PRED_BLK_SIZE; /* 1st array 16x17 */
-    dst3 -= 24; //offset
-    dst5 = subpel_pred + V2Q_H3Q * SUBPEL_PRED_BLK_SIZE; /* 9th array 17x17 */
-    dst5 -= 24; //offset
-
-    for (i = 0; i < 16; i++)
-    {
-        for (j = 0; j < 17; j++)
+        for (j = 16; j > 0; j -= 4)
         {
-            tmp32 = ref[0] + ref[24*5] - 5 * (ref[24] + ref[24*4]) + 20 * (ref[24*2] + ref[24*3]);
-            ref += 24;
+            a = *ref;
+            b = *(ref += 24);
+            c = *(ref += 24);
+            d = *(ref += 24);
+            e = *(ref += 24);
+            f = *(ref += 24);
+
+            tmp32 = a + f - 5 * (b + e) + 20 * (c + d);
             tmp32 = (tmp32 + 16) >> 5;
-            tmp32 = AVC_CLIP(tmp32);
+            CLIP_RESULT(tmp32)
             *(dst += 24) = tmp32;  // 10th
-            *(dst2 += 24) = (tmp32 + ref[24] + 1) >> 1;  // 5th
-            *(dst3 += 24) = (tmp32 + ref[24*2] + 1) >> 1; // 1st
-            *(dst4 += 24) = (tmp32 + *(src += 24) + 1) >> 1; // 11th
-            *(dst5 += 24) = (tmp32 + src[-1] + 1) >> 1;  // 9th
+
+            a = *(ref += 24);
+            tmp32 = b + a - 5 * (c + f) + 20 * (d + e);
+            tmp32 = (tmp32 + 16) >> 5;
+            CLIP_RESULT(tmp32)
+            *(dst += 24) = tmp32;  // 10th
+
+            b = *(ref += 24);
+            tmp32 = c + b - 5 * (d + a) + 20 * (e + f);
+            tmp32 = (tmp32 + 16) >> 5;
+            CLIP_RESULT(tmp32)
+            *(dst += 24) = tmp32;  // 10th
+
+            c = *(ref += 24);
+            tmp32 = d + c - 5 * (e + b) + 20 * (f + a);
+            tmp32 = (tmp32 + 16) >> 5;
+            CLIP_RESULT(tmp32)
+            *(dst += 24) = tmp32;  // 10th
+
+            ref -= (24 << 2);
         }
 
-        dst -= ((24 * 17) - 1);
-        dst2 -= ((24 * 17) - 1);
-        dst3 -= ((24 * 17) - 1);
-        dst4 -= ((24 * 17) - 1);
-        dst5 -= ((24 * 17) - 1);
-        ref -= ((24 * 17) - 1);
-        src -= ((24 * 17) - 1);
-    }
-
-    src--;
-    for (j = 0; j < 17; j++)
-    {
-        tmp32 = ref[0] + ref[24*5] - 5 * (ref[24] + ref[24*4]) + 20 * (ref[24*2] + ref[24*3]);
-        ref += 24;
+        d = ref[120]; // 24*5
+        tmp32 = e + d - 5 * (f + c) + 20 * (a + b);
         tmp32 = (tmp32 + 16) >> 5;
-        tmp32 = AVC_CLIP(tmp32);
-        *(dst += 24) = tmp32;
-        *(dst5 += 24) = (tmp32 + *(src += 24) + 1) >> 1;
+        CLIP_RESULT(tmp32)
+        dst[24] = tmp32;  // 10th
+
+        dst -= ((24 << 4) - 1);
+        ref -= ((24 << 4) - 1);
     }
 
-    /* now diagonal direction */
-    ref = subpel_pred + V0Q_H2Q * SUBPEL_PRED_BLK_SIZE;  // 14th
-    src = subpel_pred + V2Q_H0Q * SUBPEL_PRED_BLK_SIZE;  // 10th
-    dst = subpel_pred + V1Q_H1Q * SUBPEL_PRED_BLK_SIZE;  // 4th
-    dst2 = subpel_pred + V1Q_H3Q * SUBPEL_PRED_BLK_SIZE; // 6th
-    dst3 = subpel_pred + V3Q_H1Q * SUBPEL_PRED_BLK_SIZE; // 2th
-    dst4 = subpel_pred + V3Q_H3Q * SUBPEL_PRED_BLK_SIZE; // 8th
-
-    for (j = 0; j < 17; j++)
+    // note that using SIMD here doesn't help much, the cycle almost stays the same
+    // one can just use the above code and change the for(i=2 to for(i=18
+    for (i = 16; i > 0; i -= 4)
     {
-        for (i = 0; i < 17; i++)
+        msk = 0;
+        for (j = 17; j > 0; j--)
         {
-            *dst3++ = (ref[24] + *src + 1) >> 1;
-            *dst2++ = (*ref + src[1] + 1) >> 1;
-            *dst4++ = (ref[24] + src[1] + 1) >> 1;
-            *dst++ = (*ref++ + *src++ + 1) >> 1;
+            a = *((uint32*)ref); /* load 4 bytes */
+            b = (a >> 8) & 0xFF00FF; /* second and fourth byte */
+            a &= 0xFF00FF;
+
+            c = *((uint32*)(ref + 120));
+            d = (c >> 8) & 0xFF00FF;
+            c &= 0xFF00FF;
+
+            a += c;
+            b += d;
+
+            e = *((uint32*)(ref + 72)); /* e, f */
+            f = (e >> 8) & 0xFF00FF;
+            e &= 0xFF00FF;
+
+            c = *((uint32*)(ref + 48));	/* c, d */
+            d = (c >> 8) & 0xFF00FF;
+            c &= 0xFF00FF;
+
+            c += e;
+            d += f;
+
+            a += 20 * c;
+            b += 20 * d;
+            a += 0x100010;
+            b += 0x100010;
+
+            e = *((uint32*)(ref += 24)); /* e, f */
+            f = (e >> 8) & 0xFF00FF;
+            e &= 0xFF00FF;
+
+            c = *((uint32*)(ref + 72)); /* c, d */
+            d = (c >> 8) & 0xFF00FF;
+            c &= 0xFF00FF;
+
+            c += e;
+            d += f;
+
+            a -= 5 * c;
+            b -= 5 * d;
+
+            c = a << 16;
+            d = b << 16;
+            CLIP_UPPER16(a)
+            CLIP_UPPER16(c)
+            CLIP_UPPER16(b)
+            CLIP_UPPER16(d)
+
+            a |= (c >> 16);
+            b |= (d >> 16);
+            //	a>>=5;
+            //	b>>=5;
+            /* clip */
+            //	msk |= b;  msk|=a;
+            //	a &= 0xFF00FF;
+            //	b &= 0xFF00FF;
+            a |= (b << 8);  /* pack it back */
+
+            *((uint16*)(dst += 24)) = a & 0xFFFF; //dst is not word-aligned.
+            *((uint16*)(dst + 2)) = a >> 16;
+
         }
-        dst += 7;
-        dst2 += 7;
-        dst3 += 7;
-        dst4 += 7;
-        ref += 7;
-        src += 7;
+        dst -= 404; // 24*17-4
+        ref -= 404;
+        /*		if(msk & 0xFF00FF00) // need clipping
+        		{
+        			VertInterpWClip(dst,ref); // re-do 4 column with clip
+        		}*/
     }
 
     return ;
 }
 
+void VertInterpWClip(uint8 *dst, uint8 *ref)
+{
+    int i, j;
+    int a, b, c, d, e, f;
+    int32 tmp32;
+
+    dst -= 4;
+    ref -= 4;
+
+    for (i = 4; i > 0; i--)
+    {
+        for (j = 16; j > 0; j -= 4)
+        {
+            a = *ref;
+            b = *(ref += 24);
+            c = *(ref += 24);
+            d = *(ref += 24);
+            e = *(ref += 24);
+            f = *(ref += 24);
+
+            tmp32 = a + f - 5 * (b + e) + 20 * (c + d);
+            tmp32 = (tmp32 + 16) >> 5;
+            CLIP_RESULT(tmp32)
+            *(dst += 24) = tmp32;  // 10th
+
+            a = *(ref += 24);
+            tmp32 = b + a - 5 * (c + f) + 20 * (d + e);
+            tmp32 = (tmp32 + 16) >> 5;
+            CLIP_RESULT(tmp32)
+            *(dst += 24) = tmp32;  // 10th
+
+            b = *(ref += 24);
+            tmp32 = c + b - 5 * (d + a) + 20 * (e + f);
+            tmp32 = (tmp32 + 16) >> 5;
+            CLIP_RESULT(tmp32)
+            *(dst += 24) = tmp32;  // 10th
+
+            c = *(ref += 24);
+            tmp32 = d + c - 5 * (e + b) + 20 * (f + a);
+            tmp32 = (tmp32 + 16) >> 5;
+            CLIP_RESULT(tmp32)
+            *(dst += 24) = tmp32;  // 10th
+
+            ref -= (24 << 2);
+        }
+
+        d = ref[120]; // 24*5
+        tmp32 = e + d - 5 * (f + c) + 20 * (a + b);
+        tmp32 = (tmp32 + 16) >> 5;
+        CLIP_RESULT(tmp32)
+        dst[24] = tmp32;  // 10th
+
+        dst -= ((24 << 4) - 1);
+        ref -= ((24 << 4) - 1);
+    }
+
+    return ;
+}
+
+
+void GenerateQuartPelPred(uint8 **bilin_base, uint8 *qpel_cand, int hpel_pos)
+{
+    // for even value of hpel_pos, start with pattern 1, otherwise, start with pattern 2
+    int i, j;
+
+    uint8 *c1 = qpel_cand;
+    uint8 *tl = bilin_base[0];
+    uint8 *tr = bilin_base[1];
+    uint8 *bl = bilin_base[2];
+    uint8 *br = bilin_base[3];
+    int a, b, c, d;
+    int offset = 1 - (384 * 7);
+
+    if (!(hpel_pos&1)) // diamond pattern
+    {
+        j = 16;
+        while (j--)
+        {
+            i = 16;
+            while (i--)
+            {
+                d = tr[24];
+                a = *tr++;
+                b = bl[1];
+                c = *br++;
+
+                *c1 = (c + a + 1) >> 1;
+                *(c1 += 384) = (b + a + 1) >> 1; /* c2 */
+                *(c1 += 384) = (b + c + 1) >> 1; /* c3 */
+                *(c1 += 384) = (b + d + 1) >> 1; /* c4 */
+
+                b = *bl++;
+
+                *(c1 += 384) = (c + d + 1) >> 1;  /* c5 */
+                *(c1 += 384) = (b + d + 1) >> 1;  /* c6 */
+                *(c1 += 384) = (b + c + 1) >> 1;  /* c7 */
+                *(c1 += 384) = (b + a + 1) >> 1;  /* c8 */
+
+                c1 += offset;
+            }
+            // advance to the next line, pitch is 24
+            tl += 8;
+            tr += 8;
+            bl += 8;
+            br += 8;
+            c1 += 8;
+        }
+    }
+    else // star pattern
+    {
+        j = 16;
+        while (j--)
+        {
+            i = 16;
+            while (i--)
+            {
+                a = *br++;
+                b = *tr++;
+                c = tl[1];
+                *c1 = (a + b + 1) >> 1;
+                b = bl[1];
+                *(c1 += 384) = (a + c + 1) >> 1; /* c2 */
+                c = tl[25];
+                *(c1 += 384) = (a + b + 1) >> 1; /* c3 */
+                b = tr[23];
+                *(c1 += 384) = (a + c + 1) >> 1; /* c4 */
+                c = tl[24];
+                *(c1 += 384) = (a + b + 1) >> 1; /* c5 */
+                b = *bl++;
+                *(c1 += 384) = (a + c + 1) >> 1; /* c6 */
+                c = *tl++;
+                *(c1 += 384) = (a + b + 1) >> 1; /* c7 */
+                *(c1 += 384) = (a + c + 1) >> 1; /* c8 */
+
+                c1 += offset;
+            }
+            // advance to the next line, pitch is 24
+            tl += 8;
+            tr += 8;
+            bl += 8;
+            br += 8;
+            c1 += 8;
+        }
+    }
+
+    return ;
+}
+
+
 /* assuming cand always has a pitch of 24 */
 int SATD_MB(uint8 *cand, uint8 *cur, int dmin)
 {
     int cost;
-    int j, k;
+
+#if 1
+
+    dmin = (dmin << 16) | 24;
+    cost = AVCSAD_Macroblock_C(cand, cur, dmin, NULL);
+
+    return cost;
+#else
     int16 res[256], *pres; // residue
     int m0, m1, m2, m3;
-
+    int j, k;
     // calculate SATD
     pres = res;
     // horizontal transform
@@ -553,6 +684,7 @@ int SATD_MB(uint8 *cand, uint8 *cur, int dmin)
     }
 
     return (cost >> 1);
+#endif
 }
 
 

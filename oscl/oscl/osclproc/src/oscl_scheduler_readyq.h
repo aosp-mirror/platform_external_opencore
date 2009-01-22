@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,54 +74,94 @@ typedef PVActiveBase* TOsclReady;
 class OsclReadyCompare
 {
     public:
-        int compare(TOsclReady& a, TOsclReady& b) const ;
+        static int compare(TOsclReady& a, TOsclReady& b) ;
+};
+class OsclTimerCompare
+{
+    public:
+        static int compare(TOsclReady& a, TOsclReady& b) ;
 };
 
-/**This is a thread-safe priority queue for holding the
+/** This is a thread-safe priority queue for holding the
     active objects that are ready to run.
+	This queue also contains the request semaphore and the
+	queue observer callback logic.
 */
 class PVLogger;
+class OsclSchedulerObserver;
 class OsclReadyQ
             : public OsclPriorityQueue<TOsclReady, OsclReadyAlloc, Oscl_Vector<TOsclReady, OsclReadyAlloc>, OsclReadyCompare>
 {
     public:
-        void Init(int, const char*);
-        void Clear();
-        void Add(TOsclReady, bool);
+        void Construct(int);
+        void ThreadLogon();
+        void ThreadLogoff();
+
         void Remove(TOsclReady);
+
+        bool IsIn(TOsclReady);
+
+        uint32 Depth()
+        {
+            return size();
+        }
+
         TOsclReady PopTop();
         TOsclReady Top();
-        void Pop(TOsclReady);
-        bool IsIn(TOsclReady);
-        bool IsInMT(TOsclReady);
-        static bool IsInAny(TOsclReady);
-        uint32 Depth();
-        void Open();
-        void Close();
-        void Lock();
-        void Unlock();
-        void Wait();
-        bool Wait(uint32);
-        void Signal(uint32 = 1);
-        void Print();
+
+        TOsclReady WaitAndPopTop();
+        TOsclReady WaitAndPopTop(uint32);
+
+        int32 PendComplete(PVActiveBase *pvbase, int32 aReason);
+        int32 WaitForRequestComplete(PVActiveBase*);
+
+        //For non-blocking scheduler observer support
+        void RegisterForCallback(OsclSchedulerObserver* aCallback, OsclAny* aCallbackContext);
+        void TimerCallback(uint32 aDelayMicrosec);
+        OsclSchedulerObserver* Callback()
+        {
+            return iCallback;
+        }
+
     private:
+        TOsclReady PopTopAfterWait();
+
         //mutex for thread protection
-        OsclMutex iCrit;
+        OsclNoYieldMutex iCrit;
 
         //this semaphore tracks the queue size.  it is used to
         //regulate the scheduling loop when running in blocking mode.
         OsclSemaphore iSem;
 
-        PVLogger* iLogger;
-        OSCL_HeapString<OsclMemAllocator> iName;
-
         //a sequence number needed to maintain FIFO sorting order in oscl pri queue.
         uint32 iSeqNumCounter;
 
+        //For non-blocking scheduler observer support
+        OsclSchedulerObserver* iCallback;
+        OsclAny* iCallbackContext;
 };
 
-/** This class defines the queue link.  Each AO contains its own
-     queue link object.
+/*
+** A non-thread-safe queue for holding pending timers.
+*/
+class OsclTimerQ
+            : public OsclPriorityQueue<TOsclReady, OsclReadyAlloc, Oscl_Vector<TOsclReady, OsclReadyAlloc>, OsclTimerCompare>
+{
+    public:
+        void Construct(int);
+        void Add(TOsclReady);
+        void Remove(TOsclReady);
+        TOsclReady PopTop();
+        TOsclReady Top();
+        void Pop(TOsclReady);
+        bool IsIn(TOsclReady);
+    private:
+        //a sequence number needed to maintain FIFO sorting order in oscl pri queue.
+        uint32 iSeqNumCounter;
+};
+
+/** This class defines the queue link, which is common to both ready Q and timer Q.
+    Each AO contains its own queue link object.
 */
 class TReadyQueLink
 {
@@ -130,19 +170,15 @@ class TReadyQueLink
         {
             iAOPriority = 0;
             iTimeToRunTicks = 0;
-            iTimerSort = false;
             iSeqNum = 0;
             iIsIn = NULL;
         }
 
         int32 iAOPriority;//scheduling priority
-        uint32 iTimeToRunTicks;//for active timers, this
-        //is the time to run in ticks.
+        uint32 iTimeToRunTicks;//for timers, this is the time to run in ticks.
         uint32 iTimeQueuedTicks;//the time when the AO was queued, in ticks.
-        bool iTimerSort;//sort by time, then priority.
         uint32 iSeqNum;//sequence number for oscl pri queue.
-        static int compare(TReadyQueLink& a, TReadyQueLink &b);//for oscl pri queue.
-        OsclReadyQ* iIsIn;//pointer to the queue we're in.
+        OsclAny* iIsIn;//pointer to the queue we're in, cast as a void*
 
 };
 

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
+/*********************************************************************************/
 /*	File: cvei.h                                                                */
 /*	Purpose:																	*/
 /*	Date:																		*/
@@ -57,7 +58,8 @@ enum TCVEI_RETVAL
 {
     ECVEI_SUCCESS,
     ECVEI_FAIL,
-    ECVEI_FLUSH
+    ECVEI_FLUSH,
+    ECVEI_MORE_OUTPUT
 } ;
 
 /** Returned events with the callback function. */
@@ -82,7 +84,8 @@ enum TPVVideoFormat
     ECVEI_RGB24,
     ECVEI_RGB12,
     ECVEI_YUV420,
-    ECVEI_UYVY
+    ECVEI_UYVY,
+    ECVEI_YUV420SEMIPLANAR
 };
 
 /** Type of contents for optimal encoding mode. */
@@ -132,7 +135,6 @@ enum TPVM4VProfileLevel
     ECVEI_CORE_SCALABLE_LEVEL3
 };
 
-
 /** This structure contains encoder settings. */
 struct TPVVideoEncodeParam
 {
@@ -169,7 +171,7 @@ struct TPVVideoEncodeParam
     the encoder will try to meet the specified frame rate regardless of the frame quality.*/
     bool				iEnableFrameQuality;
 
-    /** Specifies the maximum period in seconds between 2 INTRA frames. An INTRA mode is
+    /** Specifies the maximum number of P-frames between 2 INTRA frames. An INTRA mode is
     forced to a frame once this interval is reached. When there is only one I-frame is present
     at the beginning of the clip, iIFrameInterval should be set to -1. */
     int32				iIFrameInterval;
@@ -248,6 +250,14 @@ struct TPVVideoEncodeParam
     other settings will be checked against the range allowable by this target profile
     and level. Fail may be returned from the Initialize call. */
     TPVM4VProfileLevel	iProfileLevel;
+
+    /** Specifies FSI Buffer input */
+    uint8*				iFSIBuff;
+
+    /** Specifies FSI Buffer Length */
+    int				iFSIBuffLength;
+
+
 };
 
 
@@ -361,8 +371,10 @@ class CommonVideoEncoder : public OsclTimerObject
         The input timestamp may not correspond to the output timestamp. User can send
         an input structure in without getting any encoded data back or getting an encoded
         frame in the past. This function returns ECVEI_ERROR if there is any errors.
-        Otherwise, the function returns ECVEI_SUCCESS. */
-        virtual  TCVEI_RETVAL EncodeFrame(TPVVideoInputData  *aVidIn, TPVVideoOutputData *aVidOut
+        Otherwise, the function returns ECVEI_SUCCESS.
+        In case of Overrun Buffer usage, it is possible that return value is ECVEI_MORE_OUTPUT
+        which indicates that frame cannot fit in the current buffer*/
+        virtual  TCVEI_RETVAL EncodeFrame(TPVVideoInputData  *aVidIn, TPVVideoOutputData *aVidOut, int *aRemainingBytes
 #ifdef PVAUTHOR_PROFILING
                                           , void *aParam1 = 0
 #endif

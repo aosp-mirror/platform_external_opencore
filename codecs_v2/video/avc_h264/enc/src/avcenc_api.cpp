@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,8 +28,8 @@
 /*	Return   : AVCENC_SUCCESS if succeed, AVCENC_FAIL if fail.				*/
 /*	Modified :																*/
 /* ======================================================================== */
-AVCEnc_Status PVAVCEncGetNALType(unsigned char *bitstream, int size,
-                                 int *nal_type, int *nal_ref_idc)
+OSCL_EXPORT_REF AVCEnc_Status PVAVCEncGetNALType(unsigned char *bitstream, int size,
+        int *nal_type, int *nal_ref_idc)
 {
     int forbidden_zero_bit;
     if (size > 0)
@@ -55,8 +55,8 @@ AVCEnc_Status PVAVCEncGetNALType(unsigned char *bitstream, int size,
 /*	Return   : AVCENC_SUCCESS for success.									*/
 /*	Modified :																*/
 /* ======================================================================== */
-AVCEnc_Status PVAVCEncInitialize(AVCHandle *avcHandle, AVCEncParams *encParam,
-                                 void* extSPS, void* extPPS)
+OSCL_EXPORT_REF AVCEnc_Status PVAVCEncInitialize(AVCHandle *avcHandle, AVCEncParams *encParam,
+        void* extSPS, void* extPPS)
 {
     AVCEnc_Status status;
     AVCEncObject *encvid;
@@ -100,6 +100,7 @@ AVCEnc_Status PVAVCEncInitialize(AVCHandle *avcHandle, AVCEncParams *encParam,
     {
         return AVCENC_MEMORY_FAIL;
     }
+    encvid->bitstream->encvid = encvid; /* to point back for reallocation */
 
     /* allocate sequence parameter set structure */
     video->currSeqParams = (AVCSeqParamSet*) avcHandle->CBAVC_Malloc(userData, sizeof(AVCSeqParamSet), DEFAULT_ATTR);
@@ -153,6 +154,26 @@ AVCEnc_Status PVAVCEncInitialize(AVCHandle *avcHandle, AVCEncParams *encParam,
     if (status != AVCENC_SUCCESS)
     {
         return status;
+    }
+
+    if (encParam->use_overrun_buffer == AVC_ON)
+    {
+        /* allocate overrun buffer */
+        encvid->oBSize = encvid->rateCtrl->cpbSize;
+        if (encvid->oBSize > DEFAULT_OVERRUN_BUFFER_SIZE)
+        {
+            encvid->oBSize = DEFAULT_OVERRUN_BUFFER_SIZE;
+        }
+        encvid->overrunBuffer = (uint8*) avcHandle->CBAVC_Malloc(userData, encvid->oBSize, DEFAULT_ATTR);
+        if (encvid->overrunBuffer == NULL)
+        {
+            return AVCENC_MEMORY_FAIL;
+        }
+    }
+    else
+    {
+        encvid->oBSize = 0;
+        encvid->overrunBuffer = NULL;
     }
 
     /* allocate frame size dependent structures */
@@ -231,6 +252,30 @@ AVCEnc_Status PVAVCEncInitialize(AVCHandle *avcHandle, AVCEncParams *encParam,
 }
 
 /* ======================================================================== */
+/*	Function : PVAVCEncGetMaxOutputSize()							        */
+/*	Date     : 11/29/2008													*/
+/*	Purpose  : Return max output buffer size that apps should allocate for  */
+/*				output buffer.												*/
+/*	In/out   :																*/
+/*	Return   : AVCENC_SUCCESS for success.									*/
+/*	Modified :	 size														*/
+/* ======================================================================== */
+
+OSCL_EXPORT_REF AVCEnc_Status PVAVCEncGetMaxOutputBufferSize(AVCHandle *avcHandle, int* size)
+{
+    AVCEncObject *encvid = (AVCEncObject*)avcHandle->AVCObject;
+
+    if (encvid == NULL)
+    {
+        return AVCENC_UNINITIALIZED;
+    }
+
+    *size = encvid->rateCtrl->cpbSize;
+
+    return AVCENC_SUCCESS;
+}
+
+/* ======================================================================== */
 /*	Function : PVAVCEncSetInput()											*/
 /*	Date     : 4/18/2004													*/
 /*	Purpose  : To feed an unencoded original frame to the encoder library.	*/
@@ -238,7 +283,7 @@ AVCEnc_Status PVAVCEncInitialize(AVCHandle *avcHandle, AVCEncParams *encParam,
 /*	Return   : AVCENC_SUCCESS for success.									*/
 /*	Modified :																*/
 /* ======================================================================== */
-AVCEnc_Status PVAVCEncSetInput(AVCHandle *avcHandle, AVCFrameIO *input)
+OSCL_EXPORT_REF AVCEnc_Status PVAVCEncSetInput(AVCHandle *avcHandle, AVCFrameIO *input)
 {
     AVCEncObject *encvid = (AVCEncObject*)avcHandle->AVCObject;
     AVCCommonObj *video = encvid->common;
@@ -275,17 +320,6 @@ AVCEnc_Status PVAVCEncSetInput(AVCHandle *avcHandle, AVCFrameIO *input)
         return AVCENC_SKIPPED_PICTURE; /* not time to encode, thus skipping */
     }
 
-    if (video->nal_unit_type == AVC_NALTYPE_IDR)
-    {
-        /* no need to set sliceHdr->frame_num here, it's done in InitFrame */
-
-        /* flexible macroblock ordering */
-        /* populate video->mapUnitToSliceGroupMap and video->MbToSliceGroupMap */
-        /* It changes once per each PPS. */
-
-        FMOInit(video);
-    }
-
     /* we may not need this line */
     //nextFrmModTime = (uint32)((((frameNum+1)*1000)/rateCtrl->frame_rate) + modTimeRef); /* rec. time */
     //encvid->nextModTime = nextFrmModTime - (encvid->frameInterval>>1) - 1; /* between current and next frame */
@@ -310,8 +344,8 @@ RECALL_INITFRAME:
         else // assuming that in-band paramset keeps sending new SPS and PPS.
         {
             encvid->enc_state = AVCEnc_Encoding_SPS;
-            video->currSeqParams->seq_parameter_set_id++;
-            if (video->currSeqParams->seq_parameter_set_id > 31) // range check
+            //video->currSeqParams->seq_parameter_set_id++;
+            //if(video->currSeqParams->seq_parameter_set_id > 31) // range check
             {
                 video->currSeqParams->seq_parameter_set_id = 0;  // reset
             }
@@ -341,7 +375,7 @@ RECALL_INITFRAME:
 /*	Return   : AVCENC_SUCCESS for success.									*/
 /*	Modified :																*/
 /* ======================================================================== */
-AVCEnc_Status PVAVCEncodeNAL(AVCHandle *avcHandle, unsigned char *buffer, unsigned int *buf_nal_size, int *nal_type)
+OSCL_EXPORT_REF AVCEnc_Status PVAVCEncodeNAL(AVCHandle *avcHandle, unsigned char *buffer, unsigned int *buf_nal_size, int *nal_type)
 {
     AVCEncObject *encvid = (AVCEncObject*)avcHandle->AVCObject;
     AVCCommonObj *video = encvid->common;
@@ -359,8 +393,8 @@ AVCEnc_Status PVAVCEncodeNAL(AVCHandle *avcHandle, unsigned char *buffer, unsign
             return AVCENC_UNINITIALIZED;
         case AVCEnc_Encoding_SPS:
             /* initialized the structure */
-            buffer[0] = (1 << 5) | AVC_NALTYPE_SPS;
-            BitstreamEncInit(bitstream, buffer + 1, *buf_nal_size - 1);
+            BitstreamEncInit(bitstream, buffer, *buf_nal_size, NULL, 0);
+            BitstreamWriteBits(bitstream, 8, (1 << 5) | AVC_NALTYPE_SPS);
 
             /* encode SPS */
             status = EncodeSPS(encvid, bitstream);
@@ -377,13 +411,13 @@ AVCEnc_Status PVAVCEncodeNAL(AVCHandle *avcHandle, unsigned char *buffer, unsign
                 video->currPicParams->seq_parameter_set_id = video->currSeqParams->seq_parameter_set_id;
                 video->currPicParams->pic_parameter_set_id++;
                 *nal_type = AVC_NALTYPE_SPS;
-                *buf_nal_size = bitstream->write_pos + 1;
+                *buf_nal_size = bitstream->write_pos;
             }
             break;
         case AVCEnc_Encoding_PPS:
             /* initialized the structure */
-            buffer[0] = (1 << 5) | AVC_NALTYPE_PPS;
-            BitstreamEncInit(bitstream, buffer + 1, *buf_nal_size - 1);
+            BitstreamEncInit(bitstream, buffer, *buf_nal_size, NULL, 0);
+            BitstreamWriteBits(bitstream, 8, (1 << 5) | AVC_NALTYPE_PPS);
 
             /* encode PPS */
             status = EncodePPS(encvid, bitstream);
@@ -406,14 +440,14 @@ AVCEnc_Status PVAVCEncodeNAL(AVCHandle *avcHandle, unsigned char *buffer, unsign
                 }
 
                 *nal_type = AVC_NALTYPE_PPS;
-                *buf_nal_size = bitstream->write_pos + 1;
+                *buf_nal_size = bitstream->write_pos;
             }
             break;
 
         case AVCEnc_Encoding_Frame:
             /* initialized the structure */
-            buffer[0] = (video->nal_ref_idc << 5) | (video->nal_unit_type);
-            BitstreamEncInit(bitstream, buffer + 1, *buf_nal_size - 1);
+            BitstreamEncInit(bitstream, buffer, *buf_nal_size, encvid->overrunBuffer, encvid->oBSize);
+            BitstreamWriteBits(bitstream, 8, (video->nal_ref_idc << 5) | (video->nal_unit_type));
 
             /* Re-order the reference list according to the ref_pic_list_reordering() */
             /* We don't have to reorder the list for the encoder here. This can only be done
@@ -440,7 +474,7 @@ AVCEnc_Status PVAVCEncodeNAL(AVCHandle *avcHandle, unsigned char *buffer, unsign
             /* closing the NAL with trailing bits */
             BitstreamTrailingBits(bitstream, buf_nal_size);
 
-            *buf_nal_size = bitstream->write_pos + 1;
+            *buf_nal_size = bitstream->write_pos;
 
             encvid->rateCtrl->numFrameBits += ((*buf_nal_size) << 3);
 
@@ -451,7 +485,7 @@ AVCEnc_Status PVAVCEncodeNAL(AVCHandle *avcHandle, unsigned char *buffer, unsign
                 status = RCUpdateFrame(encvid);
                 if (status == AVCENC_SKIPPED_PICTURE) /* skip current frame */
                 {
-                    video->currFS->IsOutputted = 3; // return this buffer.
+                    DPBReleaseCurrentFrame(avcHandle, video);
                     encvid->enc_state = AVCEnc_Analyzing_Frame;
 
                     return status;
@@ -487,6 +521,30 @@ AVCEnc_Status PVAVCEncodeNAL(AVCHandle *avcHandle, unsigned char *buffer, unsign
 }
 
 /* ======================================================================== */
+/*	Function : PVAVCEncGetOverrunBuffer()									*/
+/*	Purpose  : To retrieve the overrun buffer. Check whether overrun buffer */
+/*				is used or not before returning								*/
+/*	In/out   :																*/
+/*	Return   : Pointer to the internal overrun buffer.						*/
+/*	Modified :																*/
+/* ======================================================================== */
+OSCL_EXPORT_REF uint8* PVAVCEncGetOverrunBuffer(AVCHandle* avcHandle)
+{
+    AVCEncObject *encvid = (AVCEncObject*)avcHandle->AVCObject;
+    AVCEncBitstream *bitstream = encvid->bitstream;
+
+    if (bitstream->overrunBuffer == bitstream->bitstreamBuffer) /* OB is used */
+    {
+        return encvid->overrunBuffer;
+    }
+    else
+    {
+        return NULL;
+    }
+}
+
+
+/* ======================================================================== */
 /*	Function : PVAVCEncGetRecon()											*/
 /*	Date     : 4/29/2004													*/
 /*	Purpose  : To retrieve the most recently encoded frame.					*/
@@ -499,7 +557,7 @@ AVCEnc_Status PVAVCEncodeNAL(AVCHandle *avcHandle, unsigned char *buffer, unsign
 /*	Return   : AVCENC_SUCCESS for success.									*/
 /*	Modified :																*/
 /* ======================================================================== */
-AVCEnc_Status PVAVCEncGetRecon(AVCHandle *avcHandle, AVCFrameIO *recon)
+OSCL_EXPORT_REF AVCEnc_Status PVAVCEncGetRecon(AVCHandle *avcHandle, AVCFrameIO *recon)
 {
     AVCEncObject *encvid = (AVCEncObject*)avcHandle->AVCObject;
     AVCCommonObj *video = encvid->common;
@@ -524,7 +582,7 @@ AVCEnc_Status PVAVCEncGetRecon(AVCHandle *avcHandle, AVCFrameIO *recon)
     return AVCENC_SUCCESS;
 }
 
-AVCEnc_Status PVAVCEncReleaseRecon(AVCHandle *avcHandle, AVCFrameIO *recon)
+OSCL_EXPORT_REF AVCEnc_Status PVAVCEncReleaseRecon(AVCHandle *avcHandle, AVCFrameIO *recon)
 {
     OSCL_UNUSED_ARG(avcHandle);
     OSCL_UNUSED_ARG(recon);
@@ -540,7 +598,7 @@ AVCEnc_Status PVAVCEncReleaseRecon(AVCHandle *avcHandle, AVCFrameIO *recon)
 /*	Return   : AVCENC_SUCCESS for success.									*/
 /*	Modified :																*/
 /* ======================================================================== */
-void	PVAVCCleanUpEncoder(AVCHandle *avcHandle)
+OSCL_EXPORT_REF void	PVAVCCleanUpEncoder(AVCHandle *avcHandle)
 {
     AVCEncObject *encvid = (AVCEncObject*) avcHandle->AVCObject;
     AVCCommonObj *video;
@@ -575,6 +633,11 @@ void	PVAVCCleanUpEncoder(AVCHandle *avcHandle)
         if (encvid->rateCtrl)
         {
             avcHandle->CBAVC_Free(userData, (int)encvid->rateCtrl);
+        }
+
+        if (encvid->overrunBuffer)
+        {
+            avcHandle->CBAVC_Free(userData, (int)encvid->overrunBuffer);
         }
 
         video = encvid->common;
@@ -621,11 +684,14 @@ void	PVAVCCleanUpEncoder(AVCHandle *avcHandle)
         }
 
         avcHandle->CBAVC_Free(userData, (int)encvid);
+
+        avcHandle->AVCObject = NULL;
     }
+
     return ;
 }
 
-AVCEnc_Status PVAVCEncUpdateBitRate(AVCHandle *avcHandle, uint32 bitrate)
+OSCL_EXPORT_REF AVCEnc_Status PVAVCEncUpdateBitRate(AVCHandle *avcHandle, uint32 bitrate)
 {
     OSCL_UNUSED_ARG(avcHandle);
     OSCL_UNUSED_ARG(bitrate);
@@ -633,7 +699,7 @@ AVCEnc_Status PVAVCEncUpdateBitRate(AVCHandle *avcHandle, uint32 bitrate)
     return AVCENC_FAIL;
 }
 
-AVCEnc_Status PVAVCEncUpdateFrameRate(AVCHandle *avcHandle, uint32 num, uint32 denom)
+OSCL_EXPORT_REF AVCEnc_Status PVAVCEncUpdateFrameRate(AVCHandle *avcHandle, uint32 num, uint32 denom)
 {
     OSCL_UNUSED_ARG(avcHandle);
     OSCL_UNUSED_ARG(num);
@@ -642,7 +708,7 @@ AVCEnc_Status PVAVCEncUpdateFrameRate(AVCHandle *avcHandle, uint32 num, uint32 d
     return AVCENC_FAIL;
 }
 
-AVCEnc_Status PVAVCEncUpdateIDRInterval(AVCHandle *avcHandle, int IDRInterval)
+OSCL_EXPORT_REF AVCEnc_Status PVAVCEncUpdateIDRInterval(AVCHandle *avcHandle, int IDRInterval)
 {
     OSCL_UNUSED_ARG(avcHandle);
     OSCL_UNUSED_ARG(IDRInterval);
@@ -650,14 +716,14 @@ AVCEnc_Status PVAVCEncUpdateIDRInterval(AVCHandle *avcHandle, int IDRInterval)
     return AVCENC_FAIL;
 }
 
-AVCEnc_Status PVAVCEncIDRRequest(AVCHandle *avcHandle)
+OSCL_EXPORT_REF AVCEnc_Status PVAVCEncIDRRequest(AVCHandle *avcHandle)
 {
     OSCL_UNUSED_ARG(avcHandle);
 
     return AVCENC_FAIL;
 }
 
-AVCEnc_Status PVAVCEncUpdateIMBRefresh(AVCHandle *avcHandle, int numMB)
+OSCL_EXPORT_REF AVCEnc_Status PVAVCEncUpdateIMBRefresh(AVCHandle *avcHandle, int numMB)
 {
     OSCL_UNUSED_ARG(avcHandle);
     OSCL_UNUSED_ARG(numMB);
@@ -670,12 +736,11 @@ void PVAVCEncGetFrameStats(AVCHandle *avcHandle, AVCEncFrameStats *avcStats)
     AVCEncObject *encvid = (AVCEncObject*) avcHandle->AVCObject;
     AVCRateControl *rateCtrl = encvid->rateCtrl;
 
-    avcStats->avgFrameQP = rateCtrl->PAveFrameQP;
+    avcStats->avgFrameQP = GetAvgFrameQP(rateCtrl);
     avcStats->numIntraMBs = encvid->numIntraMB;
-    avcStats->numDetected = encvid->numDetected;
-    avcStats->numFalseAlarm = encvid->numFalseAlarm;
-    avcStats->numMisDetected = encvid->numMisDetected;
 
     return ;
 }
+
+
 

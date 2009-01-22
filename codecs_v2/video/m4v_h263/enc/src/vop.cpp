@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -143,7 +143,7 @@ PV_STATUS EncodeVop_NoME(VideoEncData *video)
     else 	/* Short Video Header = 0 */
     {
 
-        if (currVol->GOVStart)
+        if (currVol->GOVStart && currVop->predictionType == I_VOP)
             status = EncodeGOVHeader(stream, time); /* Encode GOV Header */
 
         status = EncodeVOPHeader(stream, currVol, currVop);  /* Encode VOP Header */
@@ -322,7 +322,6 @@ PV_STATUS EncodeVopNotCoded(VideoEncData *video, UChar *bstream, Int *size, ULon
     status = BitstreamPutGT16Bits(stream, 32, VOP_START_CODE); /*Start Code for VOP*/
     status = BitstreamPutBits(stream, 2, P_VOP);/* VOP Coding Type*/
 
-    modTime += video->wrapModTime; /* wrapModTime is non zero after wrap-around */
     frameTick = (Int)(((double)(modTime - video->modTimeRef) * currVol->timeIncrementResolution + 500) / 1000);
     timeInc = frameTick - video->refTick[0];
     while (timeInc >= currVol->timeIncrementResolution)
@@ -498,7 +497,8 @@ PV_STATUS EncodeShortHeader(BitstreamEncVideo *stream, Vop *currVop)
 /*	Purpose  : Encode a frame of MPEG4 bitstream in Combined mode.			*/
 /*	In/out   :																*/
 /*	Return   :																*/
-/*	Modified : 04/25/2002 Add bitstream structure as input argument			*/
+/*	Modified : 04/25/2002 								*/
+/*			   Add bitstream structure as input argument					*/
 /*																			*/
 /* ======================================================================== */
 PV_STATUS EncodeVideoPacketHeader(VideoEncData *video, int MB_number,
@@ -545,7 +545,8 @@ PV_STATUS EncodeVideoPacketHeader(VideoEncData *video, int MB_number,
     if (0) /* header_extension_code = 1 */
     {
         /* NEED modulo_time_base code here ... default 0x01  belo*/
-        /*status =*/ BitstreamPut1Bits(bs, 1);
+        /*status =*/
+        BitstreamPut1Bits(bs, 1);
         /*status = */
         BitstreamPut1Bits(bs, 0);
 

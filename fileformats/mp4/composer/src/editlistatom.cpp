@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,29 +33,6 @@ PVA_FF_EditListAtom::PVA_FF_EditListAtom()
     _entryCount = 0;
 
     _size = getDefaultSize();
-
-    /* This fp ony for player
-    uint32 entry_Count;
-    int i, reserverd;
-
-    PVA_FF_AtomUtils::read32(fp, &entry_Count);
-    for ( i = 0; i<entry_Count; i++)
-    {
-    	if ( version == 1)
-    	{
-    		PVA_FF_AtomUtils::read64(fp, &_psegmentDurations);
-    		PVA_FF_AtomUtils::read64(fp, &_pmediaTimes);
-    	}else
-    	{
-    		PVA_FF_AtomUtils::read32(fp, &_psegmentDurations);
-    		PVA_FF_AtomUtils::read32(fp, &_pmediaTimes);
-    	}
-
-    	PVA_FF_AtomUtils::read16(fp, &_pmediaRates);
-    	PVA_FF_AtomUtils::read16(fp, &reserverd);
-    }
-    */
-
     PV_MP4_FF_NEW(fp->auditCB, uint32VecType, (), _psegmentDurations);
     PV_MP4_FF_NEW(fp->auditCB, int32VecType, (), _pmediaTimes);
     PV_MP4_FF_NEW(fp->auditCB, uint16VecType, (), _pmediaRates);

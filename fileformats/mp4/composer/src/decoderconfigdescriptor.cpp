@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*********************************************************************************/
 /*
     This PVA_FF_DecoderConfigDescriptor Class
 */
@@ -33,7 +32,7 @@ PVA_FF_DecoderConfigDescriptor::PVA_FF_DecoderConfigDescriptor(int32 streamType,
         : PVA_FF_BaseDescriptor(0x04)
 {
     _codecType = codecType;
-
+    iCurrFilePos = 0;
     init(streamType);
     recomputeSize();
 }
@@ -96,44 +95,6 @@ PVA_FF_DecoderConfigDescriptor::init(int32 mediaType)
             PV_MP4_FF_NEW(fp->auditCB, PVA_FF_DecoderSpecificInfoVecType, (), _pdecSpecificInfoVec);
         }
         break;
-        case MEDIA_TYPE_OBJECT_DESCRIPTOR:
-        {
-            _objectTypeIndication = 0x01; // No profile specified
-            _streamType = 0x01; // 0x01 for ObjectDescriptorStream,
-        }
-        break;
-        case MEDIA_TYPE_CLOCK_REFERENCE:
-        {
-            _objectTypeIndication = 0xFF; // No profile specified
-            _streamType = 0x02; // 0x02 for ClockReferenceStream,
-        }
-        break;
-        case MEDIA_TYPE_SCENE_DESCRIPTION:
-        {
-            _objectTypeIndication = 0x01; // No profile specified
-            _streamType = 0x03; // 0x03 for SceneDescriptionStream,
-            PV_MP4_FF_NEW(fp->auditCB, PVA_FF_DecoderSpecificInfoVecType, (), _pdecSpecificInfoVec);
-        }
-        break;
-        case MEDIA_TYPE_MPEG7:
-        {
-            _objectTypeIndication = 0xFF; // No profile specified
-            _streamType = 0x06; // 0x06 for Mpeg7Stream,
-        }
-        break;
-        case MEDIA_TYPE_IPMP:
-        {
-            _objectTypeIndication = 0xFF; // No profile specified
-            _streamType = 0x07; // 0x07 for IPMPStream,
-        }
-        break;
-        case MEDIA_TYPE_OBJECT_CONTENT_INFO:
-        {
-            _objectTypeIndication = 0xFF; // No profile specified
-            _streamType = 0x08; // 0x08 for ObjectContentInfoStream,
-        }
-        break;
-        case MEDIA_TYPE_MPEG_J:
         default:
         {
             _objectTypeIndication = 0xFF; // No profile specified
@@ -216,6 +177,7 @@ PVA_FF_DecoderConfigDescriptor::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *f
     }
     rendered += 1;
 
+    iCurrFilePos = PVA_FF_AtomUtils::getCurrentFilePosition(fp);
     if (!PVA_FF_AtomUtils::render24(fp, _bufferSizeDB))
     {
         return false;
@@ -279,3 +241,14 @@ PVA_FF_DecoderConfigDescriptor::recomputeSize()
     }
 
 }
+
+void
+PVA_FF_DecoderConfigDescriptor::writeMaxSampleSize(MP4_AUTHOR_FF_FILE_IO_WRAP *_afp)
+{
+    if (NULL != _afp->_filePtr)
+    {
+        PVA_FF_AtomUtils::seekFromStart(_afp, iCurrFilePos);
+        PVA_FF_AtomUtils::render24(_afp, _bufferSizeDB);
+    }
+}
+

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,8 @@
 #ifndef OSCL_STRING_H_INCLUDED
 #include "oscl_string.h"
 #endif
-#ifndef OSCL_CLOCK_H_INCLUDED
-#include "oscl_clock.h"
+#ifndef PVMF_MEDIA_CLOCK_H_INCLUDED
+#include "pvmf_media_clock.h"
 #endif
 #ifndef PV_UUID_H_INCLUDED
 #include "pv_uuid.h"
@@ -67,18 +67,18 @@ class PVMFDataSourceInitializationExtensionInterface : public PVInterface
         /**
          * Sets the client playback clock for the use of the data source.
          *
-         * @param aClientClock Pointer to OsclClock
+         * @param aClientClock Pointer to PVMFMediaClock
          * @return PVMFSuccess if successfully set. PVMFFailure for all other errors.
          */
-        virtual PVMFStatus SetClientPlayBackClock(OsclClock* aClientClock) = 0;
+        virtual PVMFStatus SetClientPlayBackClock(PVMFMediaClock* aClientClock) = 0;
 
         /**
          * Sets the estimated server clock for the use of the data source.
          *
-         * @param aClientClock Pointer to OsclClock
+         * @param aClientClock Pointer to PVMFMediaClock
          * @return PVMFSuccess if successfully set. PVMFFailure for all other errors.
          */
-        virtual PVMFStatus SetEstimatedServerClock(OsclClock* aClientClock) = 0;
+        virtual PVMFStatus SetEstimatedServerClock(PVMFMediaClock* aClientClock) = 0;
 
 };
 

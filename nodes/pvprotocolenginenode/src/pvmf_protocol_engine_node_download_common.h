@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ class DownloadContainer : public ProtocolContainer
         virtual void deleteProtocolObjects();
         virtual int32 doPreStart();
         virtual bool doPause();
+        virtual PVMFStatus doStop();
         virtual void doClear(const bool aNeedDelete = false);
         virtual void doCancelClear();
         virtual bool doInfoUpdate(const uint32 downloadStatus);
@@ -55,6 +56,7 @@ class DownloadContainer : public ProtocolContainer
         virtual bool downloadUpdateForHttpHeaderAvailable();
         virtual bool isStreamingPlayback();
         virtual bool handleProtocolStateComplete(PVProtocolEngineNodeInternalEvent &aEvent, PVProtocolEngineNodeInternalEventHandler *aEventHandler);
+        virtual void checkSendResumeNotification();
 
     protected:
         virtual int32 initNodeOutput();
@@ -68,11 +70,20 @@ class DownloadContainer : public ProtocolContainer
                     downloadStatus == PROCESS_SUCCESS_END_OF_MESSAGE_WITH_EXTRA_DATA ||
                     downloadStatus == PROCESS_SUCCESS_END_OF_MESSAGE_BY_SERVER_DISCONNECT);
         }
+        virtual bool ignoreThisTimeout(const int32 timerID);
+        virtual bool needToCheckResumeNotificationMaually()
+        {
+            return iNeedCheckResumeNotificationManually;
+        }
 
     private:
         //called by createProtocolObjects()
         bool createNetworkTimer();
         bool createEventHandlers();
+
+    protected:
+        bool iForceSocketReconnect;
+        bool iNeedCheckResumeNotificationManually;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -103,6 +114,7 @@ class pvHttpDownloadOutput : public PVMFProtocolEngineNodeOutput
         virtual int32 flushData(const uint32 aOutputType = NodeOutputType_InputPortForData);
         virtual void discardData(const bool aNeedReopen = false);
         uint32 getAvailableOutputSize();
+        uint32 getMaxAvailableOutputSize();
 
         // constructor and destructor
         pvHttpDownloadOutput(PVMFProtocolEngineNodeOutputObserver *aObserver = NULL);
@@ -114,7 +126,6 @@ class pvHttpDownloadOutput : public PVMFProtocolEngineNodeOutput
         uint32 writeToDataStream(OUTPUT_DATA_QUEUE &aOutputQueue);
         bool writeToDataStream(uint8 *aBuffer, uint32 aBufferLen);
         virtual int32 openDataStream(OsclAny* aInitInfo);
-        void discardDataBody(const bool aNeedReopen, const uint32 aSeekOffset = 0);
         // reset
         virtual void reset();
 
@@ -139,7 +150,7 @@ class pvDownloadControl : public DownloadControlInterface
         pvDownloadControl();
         virtual ~pvDownloadControl()
         {
-            clear();
+            clearBody();
         }
 
 
@@ -163,7 +174,7 @@ class pvDownloadControl : public DownloadControlInterface
         virtual int32 checkResumeNotification(const bool aDownloadComplete = true);
 
         // From PVMFDownloadProgressInterface API
-        virtual void getDownloadClock(OsclSharedPtr<OsclClock> &aClock)
+        virtual void getDownloadClock(OsclSharedPtr<PVMFMediaClock> &aClock)
         {
             OSCL_UNUSED_ARG(aClock);
         }
@@ -208,7 +219,6 @@ class pvDownloadControl : public DownloadControlInterface
         bool isInfoReady()
         {
             return !(iDlProgressClock.GetRep() == NULL ||
-                     iProgDownloadSI == NULL			 ||
                      iProtocol == NULL				 ||
                      iDownloadProgress == NULL		 ||
                      iNodeOutput == NULL);
@@ -285,23 +295,31 @@ class pvDownloadControl : public DownloadControlInterface
         void setFileSize(const uint32 aFileSize);
         bool getPlaybackTimeFromEngineClock(uint32 &aPlaybackTime);
 
+    private:
+        void updateFileSize();
+        void clearBody();
+
+
     protected:
         // download control
-        OsclTimebase_Tickcount iEstimatedServerClockTimeBase;
-        OsclSharedPtr<OsclClock> iDlProgressClock;
-        OsclClock* iCurrentPlaybackClock;
+        PVMFTimebase_Tickcount iEstimatedServerClockTimeBase;
+        OsclSharedPtr<PVMFMediaClock> iDlProgressClock;
+        PVMFMediaClock* iCurrentPlaybackClock;
         PVMFFormatProgDownloadSupportInterface *iProgDownloadSI;
         HttpBasedProtocol *iProtocol;
         DownloadProgressInterface *iDownloadProgress;
         PVMFProtocolEngineNodeOutput *iNodeOutput;
+        PVDlCfgFileContainer *iCfgFileContainer;
 
         bool iPlaybackUnderflow;
         bool iDownloadComplete;
         bool iRequestResumeNotification;
+        bool iFirstResumeNotificationSent;
         uint32 iCurrentNPTReadPosition;
         uint32 iClipDurationMsec;
         uint32 iPlaybackByteRate;
         uint32 iPrevDownloadSize;
+        uint32 iFileSize;
 
         bool iDlAlgoPreConditionMet;
         bool iSetFileSize;
@@ -353,7 +371,7 @@ class DownloadProgress : public DownloadProgressInterface
 
     protected:
         virtual uint32 getClipDuration();
-        virtual bool updateDownloadClock() = 0;
+        virtual bool updateDownloadClock(const bool aDownloadComplete) = 0;
         virtual bool calculateDownloadPercent(uint32 &aDownloadProgressPercent);
         virtual void reset();
 
@@ -499,8 +517,10 @@ class downloadEventReporter : public EventReporter
         bool checkContentInfoEvent(const uint32 downloadStatus);
         void clear();
 
-        // send data ready event when download control algorithm enables
+        // enable some specific events
         void sendDataReadyEvent();
+        void enableBufferingCompleteEvent();
+        void sendBufferStatusEvent();
 
     protected:
         virtual bool needToCheckContentInfoEvent()
@@ -527,6 +547,9 @@ class downloadEventReporter : public EventReporter
                     downloadStatus == PROCESS_SUCCESS_END_OF_MESSAGE_WITH_EXTRA_DATA ||
                     downloadStatus == PROCESS_SUCCESS_END_OF_MESSAGE_BY_SERVER_DISCONNECT);
         }
+        // will be overriden in case of PS
+        // called by sendBufferStatusEventBody()
+        virtual void reportBufferStatusEvent(const uint32 aDownloadPercent);
 
     protected:
         bool iSendBufferStartInfoEvent;
@@ -538,6 +561,12 @@ class downloadEventReporter : public EventReporter
         bool iSendContentTypeEvent;
         bool iSendUnexpectedDataEvent;
         bool iSendServerDisconnectEvent;
+
+    private:
+        void sendBufferStatusEventBody(const bool aForceToSend = false);
+
+    private:
+        uint32 iPrevDownloadProgress;
 };
 
 #endif

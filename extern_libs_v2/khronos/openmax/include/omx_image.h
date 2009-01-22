@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
  * -------------------------------------------------------------------
  */
 /**
- * Copyright (c) 2005 The Khronos Group Inc. 
+ * Copyright (c) 2008 The Khronos Group Inc. 
  * 
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -38,7 +38,7 @@
  */
 
 /** 
- * @file OMX_Image.h - OpenMax IL version 1.1
+ * @file omx_image.h - OpenMax IL version 1.1.2
  * The structures needed by Image components to exchange parameters and 
  * configuration data with the components.
  */
@@ -55,8 +55,7 @@ extern "C" {
  * header to compile without errors.  The includes below are required  
  * for this header file to compile successfully 
  */
-#include <omx_types.h>
-#include <omx_core.h>
+
 #include <omx_ivcommon.h>
 
 /** @defgroup imaging OpenMAX IL Imaging Domain
@@ -79,6 +78,8 @@ typedef enum OMX_IMAGE_CODINGTYPE {
     OMX_IMAGE_CodingPNG,         /**< PNG image format */
     OMX_IMAGE_CodingLZW,         /**< LZW image format */
     OMX_IMAGE_CodingBMP,         /**< Windows Bitmap format */
+    OMX_IMAGE_CodingKhronosExtensions = 0x6F000000, /**< Reserved region for introducing Khronos Standard Extensions */ 
+    OMX_IMAGE_CodingVendorStartUnused = 0x7F000000, /**< Reserved region for introducing Vendor Extensions */
     OMX_IMAGE_CodingMax = 0x7FFFFFFF
 } OMX_IMAGE_CODINGTYPE;
 
@@ -176,6 +177,8 @@ typedef enum OMX_IMAGE_FLASHCONTROLTYPE {
     OMX_IMAGE_FlashControlRedEyeReduction,
     OMX_IMAGE_FlashControlFillin,
     OMX_IMAGE_FlashControlTorch,
+    OMX_IMAGE_FlashControlKhronosExtensions = 0x6F000000, /**< Reserved region for introducing Khronos Standard Extensions */ 
+    OMX_IMAGE_FlashControlVendorStartUnused = 0x7F000000, /**< Reserved region for introducing Vendor Extensions */
     OMX_IMAGE_FlashControlMax = 0x7FFFFFFF
 } OMX_IMAGE_FLASHCONTROLTYPE;
 
@@ -205,6 +208,8 @@ typedef enum OMX_IMAGE_FOCUSCONTROLTYPE {
     OMX_IMAGE_FocusControlOff,
     OMX_IMAGE_FocusControlAuto,
     OMX_IMAGE_FocusControlAutoLock,
+    OMX_IMAGE_FocusControlKhronosExtensions = 0x6F000000, /**< Reserved region for introducing Khronos Standard Extensions */ 
+    OMX_IMAGE_FocusControlVendorStartUnused = 0x7F000000, /**< Reserved region for introducing Vendor Extensions */
     OMX_IMAGE_FocusControlMax = 0x7FFFFFFF
 } OMX_IMAGE_FOCUSCONTROLTYPE;
 
@@ -262,6 +267,8 @@ typedef enum OMX_IMAGE_QUANTIZATIONTABLETYPE {
     OMX_IMAGE_QuantizationTableChroma,
     OMX_IMAGE_QuantizationTableChromaCb,
     OMX_IMAGE_QuantizationTableChromaCr,
+    OMX_IMAGE_QuantizationTableKhronosExtensions = 0x6F000000, /**< Reserved region for introducing Khronos Standard Extensions */ 
+    OMX_IMAGE_QuantizationTableVendorStartUnused = 0x7F000000, /**< Reserved region for introducing Vendor Extensions */
     OMX_IMAGE_QuantizationTableMax = 0x7FFFFFFF
 } OMX_IMAGE_QUANTIZATIONTABLETYPE;
 
@@ -302,6 +309,8 @@ typedef enum OMX_IMAGE_HUFFMANTABLETYPE {
     OMX_IMAGE_HuffmanTableACChroma,
     OMX_IMAGE_HuffmanTableDCLuma,
     OMX_IMAGE_HuffmanTableDCChroma,
+    OMX_IMAGE_HuffmanTableKhronosExtensions = 0x6F000000, /**< Reserved region for introducing Khronos Standard Extensions */ 
+    OMX_IMAGE_HuffmanTableVendorStartUnused = 0x7F000000, /**< Reserved region for introducing Vendor Extensions */
     OMX_IMAGE_HuffmanTableMax = 0x7FFFFFFF
 } OMX_IMAGE_HUFFMANTABLETYPE;
 

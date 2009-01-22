@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@
 /*                     MPEG-4 DecoderConfigDescriptor Class                      */
 /*     -------------------------------------------------------------------       */
 /*********************************************************************************/
+
+
 
 #define IMPLEMENT_DecoderConfigDescriptor
 
@@ -62,6 +64,7 @@ DecoderConfigDescriptor::DecoderConfigDescriptor(MP4_FF_FILE *fp)
 
         uint32 base = 1 + _sizeOfSizeField;
         uint32 bytesRead = 13 + base;
+
 
         if (_success)
         {
@@ -188,5 +191,7 @@ DecoderConfigDescriptor::~DecoderConfigDescriptor()
     if (_pdecSpecificInfo != NULL)
         PV_MP4_FF_DELETE(NULL, DecoderSpecificInfo, _pdecSpecificInfo);
 }
+
+
 
 

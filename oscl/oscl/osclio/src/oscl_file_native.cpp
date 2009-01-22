@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,17 +24,12 @@
 #include "oscl_utf8conv.h"
 #include "oscl_int64_utils.h"
 
-#ifdef ENABLE_MEMORY_PLAYBACK
-#undef LOG_TAG
-#define LOG_TAG "OsclNativeFile"
-#include <utils/Log.h>
-#endif
 #include "oscl_mem.h"
 #include "oscl_file_types.h"
 #include "oscl_file_handle.h"
 
 
-#ifdef ENABLE_MEMORY_PLAYBACK
+#if ENABLE_MEMORY_PLAYBACK
 pthread_key_t osclfilenativesigbuskey;
 
 /*
@@ -72,7 +67,6 @@ static void removespecific(struct mediasigbushandler *handler)
 
     if (existinghandler == NULL || handler == NULL)
 {
-        LOGE("logic error");
         return;
     }
 
@@ -112,7 +106,6 @@ struct mediasigbushandler *OsclNativeFile::getspecificforfaultaddr(char *faultad
         }
         h = h->next;
     }
-    LOGE("couldn't find handler for address %p\n", faultaddr);
     return NULL;
 }
 #endif // ENABLE_MEMORY_PLAYBACK
@@ -123,7 +116,7 @@ OsclNativeFile::OsclNativeFile()
     iMode = 0;
 
     iFile = 0;
-#ifdef ENABLE_MEMORY_PLAYBACK
+#if ENABLE_MEMORY_PLAYBACK
     membase = NULL;
 #endif
 
@@ -163,6 +156,8 @@ int32 OsclNativeFile::Open(const oscl_wchar *filename, uint32 mode
     {
         OSCL_UNUSED_ARG(fileserv);
         OSCL_UNUSED_ARG(params);
+
+        if (*filename == '\0') return -1; // Null string not supported in fopen, error out
 
         char openmode[4];
         uint32 index = 0;
@@ -226,7 +221,7 @@ int32 OsclNativeFile::Open(const oscl_wchar *filename, uint32 mode
         {
             return -1;
         }
-#ifdef ENABLE_MEMORY_PLAYBACK
+#if ENABLE_MEMORY_PLAYBACK
         void* base;
         long long offset;
         long long len;
@@ -270,6 +265,8 @@ int32 OsclNativeFile::Open(const char *filename, uint32 mode
         OSCL_UNUSED_ARG(fileserv);
         OSCL_UNUSED_ARG(params);
 
+        if (*filename == '\0') return -1; // Null string not supported in fopen, error out
+
         char openmode[4];
         uint32 index = 0;
 
@@ -312,7 +309,7 @@ int32 OsclNativeFile::Open(const char *filename, uint32 mode
         }
 
         openmode[index++] = '\0';
-#ifdef ENABLE_MEMORY_PLAYBACK
+#if ENABLE_MEMORY_PLAYBACK
         void* base;
         long long offset;
         long long len;
@@ -375,7 +372,7 @@ int32 OsclNativeFile::Close()
             closeret = fclose(iFile);
             iFile = NULL;
         }
-#ifdef ENABLE_MEMORY_PLAYBACK
+#if ENABLE_MEMORY_PLAYBACK
         else if (membase != NULL)
         {
             membase = NULL;
@@ -392,16 +389,14 @@ int32 OsclNativeFile::Close()
     return closeret;
 }
 
-#ifdef ENABLE_MEMORY_PLAYBACK
+#if ENABLE_MEMORY_PLAYBACK
 int OsclNativeFile::sigbushandlerfunc(siginfo_t *info, struct mediasigbushandler *data)
 {
     char *faultaddr = (char*) info->si_addr;
-    LOGE("read fault at %p\n", faultaddr);
 
     struct mediasigbushandler *h = getspecificforfaultaddr(faultaddr);
     if (h == NULL)
     {
-        LOGE("No handler for fault range.");
         return -1;
     }
     else
@@ -415,7 +410,6 @@ int OsclNativeFile::sigbushandlerfunc(siginfo_t *info, struct mediasigbushandler
         void * bar = mmap(pageaddr, pagesize, PROT_READ, MAP_ANONYMOUS | MAP_PRIVATE | MAP_FIXED, -1, 0);
         if (bar == MAP_FAILED)
         {
-            LOGE("couldn't map zero page at %p: %s", pageaddr, strerror(errno));
             return -1;
         }
     }
@@ -425,7 +419,7 @@ int OsclNativeFile::sigbushandlerfunc(siginfo_t *info, struct mediasigbushandler
 
 uint32 OsclNativeFile::Read(OsclAny *buffer, uint32 size, uint32 numelements)
 {
-#ifdef ENABLE_MEMORY_PLAYBACK
+#if ENABLE_MEMORY_PLAYBACK
     if (membase)
     {
         int req = size * numelements;
@@ -438,7 +432,6 @@ uint32 OsclNativeFile::Read(OsclAny *buffer, uint32 size, uint32 numelements)
         memcpy(buffer, ((char*)membase) + memoffset + mempos, req);
         if (memcpyfailed)
         {
-            LOGE("got bus error while reading");
             return 0;
         }
         mempos += req;
@@ -466,6 +459,10 @@ int32 OsclNativeFile::ReadAsync(OsclAny*buffer, uint32 size, uint32 numelements,
     return -1;//not supported
 }
 
+void OsclNativeFile::ReadAsyncCancel()
+{
+}
+
 uint32 OsclNativeFile::GetReadAsyncNumElements()
 {
     return 0;//not supported
@@ -475,7 +472,7 @@ uint32 OsclNativeFile::GetReadAsyncNumElements()
 
 uint32 OsclNativeFile::Write(const OsclAny *buffer, uint32 size, uint32 numelements)
 {
-#ifdef ENABLE_MEMORY_PLAYBACK
+#if ENABLE_MEMORY_PLAYBACK
     if (membase)
         return 0;
 #endif
@@ -490,13 +487,16 @@ int32 OsclNativeFile::Seek(int32 offset, Oscl_File::seek_type origin)
 {
 
     {
-#ifdef ENABLE_MEMORY_PLAYBACK
+#if ENABLE_MEMORY_PLAYBACK
         if (membase)
         {
             int newpos = mempos;
-            if (origin == Oscl_File::SEEKCUR) newpos = mempos + offset;
-            else if (origin == Oscl_File::SEEKSET) newpos = offset;
-            else if (origin == Oscl_File::SEEKEND) newpos = memlen + offset;
+            if (origin == Oscl_File::SEEKCUR)
+                newpos = mempos + offset;
+            else if (origin == Oscl_File::SEEKSET)
+                newpos = offset;
+            else if (origin == Oscl_File::SEEKEND)
+                newpos = memlen + offset;
             if (newpos < 0)
                 return EINVAL;
             if (newpos > memlen) // is this valid?
@@ -509,9 +509,12 @@ int32 OsclNativeFile::Seek(int32 offset, Oscl_File::seek_type origin)
         {
             int32 seekmode = SEEK_CUR;
 
-            if	(origin == Oscl_File::SEEKCUR) seekmode = SEEK_CUR;
-            else if (origin == Oscl_File::SEEKSET) seekmode = SEEK_SET;
-            else if (origin == Oscl_File::SEEKEND) seekmode = SEEK_END;
+            if (origin == Oscl_File::SEEKCUR)
+                seekmode = SEEK_CUR;
+            else if (origin == Oscl_File::SEEKSET)
+                seekmode = SEEK_SET;
+            else if (origin == Oscl_File::SEEKEND)
+                seekmode = SEEK_END;
 
             return fseek(iFile, offset, seekmode);
         }
@@ -519,22 +522,21 @@ int32 OsclNativeFile::Seek(int32 offset, Oscl_File::seek_type origin)
     return -1;
 }
 
-int32 OsclNativeFile::SetSize(uint32 size)
-{
-    OSCL_UNUSED_ARG(size);
-    return -1;
-}
-
 
 int32 OsclNativeFile::Tell()
 {
-#ifdef ENABLE_MEMORY_PLAYBACK
+    int32 result = -1;
+#if ENABLE_MEMORY_PLAYBACK
     if (membase)
-        return mempos;
+    {
+        result = mempos;
+    }
 #endif
     if (iFile)
-        return ftell(iFile);
-    return -1;
+    {
+        result = ftell(iFile);
+    }
+    return result;
 }
 
 
@@ -542,7 +544,7 @@ int32 OsclNativeFile::Tell()
 int32 OsclNativeFile::Flush()
 {
 
-#ifdef ENABLE_MEMORY_PLAYBACK
+#if ENABLE_MEMORY_PLAYBACK
     if (membase)
         return 0;
 #endif
@@ -556,7 +558,7 @@ int32 OsclNativeFile::Flush()
 int32 OsclNativeFile::EndOfFile()
 {
 
-#ifdef ENABLE_MEMORY_PLAYBACK
+#if ENABLE_MEMORY_PLAYBACK
     if (membase)
         return mempos >= memlen;
 #endif
@@ -568,7 +570,7 @@ int32 OsclNativeFile::EndOfFile()
 
 int32 OsclNativeFile::GetError()
 {
-#ifdef ENABLE_MEMORY_PLAYBACK
+#if ENABLE_MEMORY_PLAYBACK
     if (membase)
         return 0;
 #endif

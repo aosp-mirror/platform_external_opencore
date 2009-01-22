@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,6 +84,7 @@ static const uint32 INVALID_TRACK_ID = 0;
 // *** Note that only HINT_PROTOCOL_TEMPORAL_SCALABILITY and HINT_PROTOCOL_BASE_LAYER_ONLY video protocols are supported in version 1.0 ***
 // 'pvau' - Audio encoding with simple hint track
 
+
 static const int32 OBJ_DESCR_TAG			= 0x1;
 static const int32 INITIAL_OBJ_DESCR_TAG	= 0x2;
 static const int32 ES_DESCR_TAG			= 0x3;
@@ -152,15 +153,6 @@ const uint32    MEDIA_TYPE_AUDIO = FourCharConstToUint32('s', 'o', 'u', 'n');
 const uint32    MEDIA_TYPE_VISUAL = FourCharConstToUint32('v', 'i', 'd', 'e');
 const uint32	MEDIA_TYPE_TEXT = FourCharConstToUint32('t', 'e', 'x', 't');
 
-const uint32    MEDIA_TYPE_OBJECT_DESCRIPTOR = FourCharConstToUint32('o', 'd', 's', 'm');
-const uint32    MEDIA_TYPE_CLOCK_REFERENCE = FourCharConstToUint32('c', 'r', 's', 'm');
-const uint32    MEDIA_TYPE_SCENE_DESCRIPTION = FourCharConstToUint32('s', 'd', 's', 'm');
-const uint32    MEDIA_TYPE_MPEG7 = FourCharConstToUint32('m', '7', 's', 'm');
-const uint32    MEDIA_TYPE_OBJECT_CONTENT_INFO = FourCharConstToUint32('o', 'c', 's', 'm');
-const uint32    MEDIA_TYPE_IPMP = FourCharConstToUint32('i', 'p', 's', 'm');
-const uint32    MEDIA_TYPE_MPEG_J = FourCharConstToUint32('m', 'j', 's', 'm');
-const uint32    MEDIA_TYPE_SCALABILITY = FourCharConstToUint32('p', 'v', 's', 'c');
-
 const uint32    MPEG_SAMPLE_ENTRY = FourCharConstToUint32('m', 'p', '4', 's');
 const uint32    AUDIO_SAMPLE_ENTRY = FourCharConstToUint32('m', 'p', '4', 'a');
 const uint32    VIDEO_SAMPLE_ENTRY = FourCharConstToUint32('m', 'p', '4', 'v');
@@ -196,6 +188,8 @@ const uint32    ASSET_INFO_CLSF_ATOM = FourCharConstToUint32('c', 'l', 's', 'f')
 const uint32    ASSET_INFO_KEYWORD_ATOM = FourCharConstToUint32('k', 'y', 'w', 'd');
 const uint32    ASSET_INFO_LOCINFO_ATOM = FourCharConstToUint32('l', 'o', 'c', 'i');
 const uint32	ASSET_INFO_CPRT_ATOM =  FourCharConstToUint32('c', 'p', 'r', 't');
+const uint32	ASSET_INFO_ALBUM_TITLE_ATOM =  FourCharConstToUint32('a', 'l', 'b', 'm');
+const uint32	ASSET_INFO_RECORDING_YEAR_ATOM =  FourCharConstToUint32('y', 'r', 'r', 'c');
 
 // Movie fragment atoms
 const uint32    MOVIE_EXTENDS_ATOM = FourCharConstToUint32('m', 'v', 'e', 'x');
@@ -210,10 +204,6 @@ const uint32    MOVIE_FRAGMENT_RANDOM_ACCESS_ATOM = FourCharConstToUint32('m', '
 const uint32    TRACK_FRAGMENT_RANDOM_ACCESS_ATOM = FourCharConstToUint32('t', 'f', 'r', 'a');
 const uint32    MOVIE_FRAGMENT_RANDOM_ACCESS_OFFSET_ATOM = FourCharConstToUint32('m', 'f', 'r', 'o');
 
-// Allowable values of the hint type byte
-static const int32 HINT_SAMPLE_AUDIO = 0;
-static const int32 HINT_SAMPLE_VIDEO = 1;
-static const int32 HINT_SAMPLE_STILL_IMAGE = 2;
 // MORE TBA - add specific protocols into type value
 
 #define PVMM_VERSION  0x00010000
@@ -252,7 +242,7 @@ typedef enum
 #define MPEG4_SSP_L1   0x11
 #define MPEG4_SSP_L2   0x12
 
-#define MIN_NUM_MEDIA_TRACKS 2 // BIFS + OD
+#define MIN_NUM_MEDIA_TRACKS 0
 
 #define AMR_INTERLEAVE_BUFFER_SIZE    2048
 #define AAC_INTERLEAVE_BUFFER_SIZE   12000  // Calc with 96 Kbps as max

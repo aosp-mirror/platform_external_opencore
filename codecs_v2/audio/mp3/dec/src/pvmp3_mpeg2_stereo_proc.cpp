@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -448,7 +448,7 @@ void pvmp3_mpeg2_stereo_proc(int32 xr[SUBBANDS_NUMBER*FILTERBANK_BANDS],
                         {
                             sfbNo = mp3_sfBandIndex[sfreq].s[sfb+1] - mp3_sfBandIndex[sfreq].s[sfb]; /* No of lines to process */
                             sfbStart = 3 * mp3_sfBandIndex[sfreq].s[sfb] + j * sfbNo;
-                            if ((uint32)(scalefac_R->s[j][sfb]) != scalefac_IIP_buffer[3*sfb + j])    /* RF bug fix 30-09-2002 */
+                            if ((uint32)(scalefac_R->s[j][sfb]) != scalefac_IIP_buffer[3*sfb + j])
                             {
                                 pvmp3_st_intensity_ver2(xr, xl, io, scalefac_R->s[j][sfb], sfbStart, sfbNo);
                             }
@@ -546,7 +546,7 @@ void pvmp3_mpeg2_stereo_proc(int32 xr[SUBBANDS_NUMBER*FILTERBANK_BANDS],
                         sfbNo = mp3_sfBandIndex[sfreq].s[sfb+1] - mp3_sfBandIndex[sfreq].s[sfb]; /* No of lines to process */
                         sfbStart = 3 * mp3_sfBandIndex[sfreq].s[sfb] + j * sfbNo;
 
-                        if ((uint32)(scalefac_R->s[j][sfb]) != scalefac_IIP_buffer[3*sfb + j])   /* RF bug fix 30-9-2002 */
+                        if ((uint32)(scalefac_R->s[j][sfb]) != scalefac_IIP_buffer[3*sfb + j])
                         {
                             pvmp3_st_intensity_ver2(xr, xl, io, scalefac_R->s[j][sfb], sfbStart, sfbNo);
                         }

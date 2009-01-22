@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,33 +33,6 @@ terms listed above has been obtained from the copyright holder.
 
  Pathname: ./audio/gsm-amr/c/src/d_plsf_3.c
  Functions: D_plsf_3
-
-     Date: 01/31/2002
-
-------------------------------------------------------------------------------
- REVISION HISTORY
-
- Description: Updated to accept new parameter, Flag *pOverflow.  Placed
- file in the proper PV Software template.
-
- Description:
- (1) Removed "count.h" and "basic_op.h" and replaced with individual include
-     files (add.h, sub.h, etc.)
-
- Description:
- (1) Removed optimization -- mult(i, 3, pOverflow) is NOT the same as adding
-     i to itself 3 times.  The reason is because the mult function does a
-     right shift by 15, which will obliterate smaller numbers.
-
- Description:
- (1) Logic error -- a comparison against zero should have been DOES NOT EQUAL
- zero, but instead, was translated into EQUALS ZERO.  The bug has been fixed.
-
- Description:  Replaced "int" and/or "char" with OSCL defined types.
-
- Description: Added #ifdef __cplusplus around extern'ed table.
-
- Description:
 
  ------------------------------------------------------------------------------
  INPUT AND OUTPUT DEFINITIONS

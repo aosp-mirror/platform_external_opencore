@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,6 +56,16 @@ class AudioSampleEntry : public SampleEntry
             return _timeScale;
         }
 
+        uint16 getSampleRate()
+        {
+            return _sampleRateHi;
+        }
+
+        uint16 getChannelCount()
+        {
+            return _channelCount;
+        }
+
         virtual uint32 getESID() const
         {
             if (_pes != NULL)
@@ -87,7 +97,7 @@ class AudioSampleEntry : public SampleEntry
             }
         }
 
-        virtual    uint8 getObjectTypeIndication() const
+        virtual uint8 getObjectTypeIndication() const
         {
             if (_pes != NULL)
             {
@@ -111,7 +121,7 @@ class AudioSampleEntry : public SampleEntry
             }
         }
 
-        uint32 getAverageBitrate() const
+        virtual uint32 getAverageBitrate() const
         {
             if (_pes != NULL)
             {
@@ -123,7 +133,7 @@ class AudioSampleEntry : public SampleEntry
             }
         }
 
-        uint32 getMaxBitrate() const
+        virtual uint32 getMaxBitrate() const
         {
             if (_pes != NULL)
             {
@@ -152,11 +162,13 @@ class AudioSampleEntry : public SampleEntry
     private:
         // Reserved constants
         uint32 _reserved1[2];
-        uint16 _reserved2;
-        uint16 _reserved3;
-        uint32 _reserved4;
-        uint16 _reserved5;
-        uint16 _timeScale;
+        uint16 _channelCount;
+        uint16 _sampleSize;
+        uint16 _preDefined;
+        uint16 _reserved;
+        uint16 _sampleRateLo;
+        uint16 _timeScale;      //sampleRateHi = TimeScale of track
+        uint16 _sampleRateHi;   //Either sampleRateHi or TimeScale will be read from the file
 
         ESDAtom *_pes;
 };

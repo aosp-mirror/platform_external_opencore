@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -206,7 +206,7 @@ class StringKeyValueStore
         {
             return iTotalKeyValueLength;
         }
-        // aListSize=0 means retrives whatever the library has
+        // aListSize=0 means retrieves whatever the library has
         // return the actual list size
         uint32 getCurrentKeyList(StrPtrLen *&aFieldKeyList, const uint32 aListSize = 0);
         bool getValueByKey(const StrCSumPtrLen &aKey, StrPtrLen &aValue, const uint32 index = 0);

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,16 +53,17 @@ typedef struct _PVMediaInputTestParam
     OSCL_HeapString<OsclMemAllocator> iComposerInfo;
     uint32 iLoopTime;
     bool iRealTimeAuthoring;
-
+    uint32 iVideoBitrate;
+    uint32 iAudioBitrate;
+    OsclFloat iFrameRate;
+    uint32 iSamplingRate;
 }PVMediaInputTestParam;
 
 typedef struct _PVMediaInputAuthorEngineTestParam
 {
-    int32 iLogLevel;
-    int32 iLogNode;
-    int32 iLogFile;
     int32 iFirstTest;
     int32 iLastTest;
+    bool iAsap;
     PVMediaInputTestParam iMediainputParam;
 
 }PVMediaInputAuthorEngineTestParam;
@@ -74,28 +75,19 @@ class PVMIOControlComp
         /** constructor */
         PVMIOControlComp(PVMFFormatType aType, OsclAny* aFileParser, uint32 aLoopDuration)
         {
-            switch (aType)
+            if (aType == PVMF_MIME_WAVFF)
             {
-                case PVMF_WAVFF:
-                {
-                    iPVWavFile = OSCL_STATIC_CAST(PV_Wav_Parser*, aFileParser);
-                    iPVAviFile = NULL;
-                    PVWAVFileInfo wavFileInfo;
-                    iPVWavFile->RetrieveFileInfo(wavFileInfo);
-                    iFileDuration = wavFileInfo.NumSamples / wavFileInfo.SampleRate; //in sec
-                }
-                break;
-
-                case PVMF_AVIFF:
-                {
-                    iPVAviFile = OSCL_STATIC_CAST(PVAviFile*, aFileParser);
-                    iPVWavFile = NULL;
-                    iFileDuration = iPVAviFile->GetFileDuration(); //in sec
-                }
-                break;
-
-                default :
-                    break;
+                iPVWavFile = OSCL_STATIC_CAST(PV_Wav_Parser*, aFileParser);
+                iPVAviFile = NULL;
+                PVWAVFileInfo wavFileInfo;
+                iPVWavFile->RetrieveFileInfo(wavFileInfo);
+                iFileDuration = (OsclFloat)wavFileInfo.NumSamples / wavFileInfo.SampleRate; //in sec
+            }
+            else if (aType == PVMF_MIME_AVIFF)
+            {
+                iPVAviFile = OSCL_STATIC_CAST(PVAviFile*, aFileParser);
+                iPVWavFile = NULL;
+                iFileDuration = (OsclFloat)iPVAviFile->GetFileDuration(); //in sec
             }
 
             iLogger = PVLogger::GetLoggerObject("PVMIOControlComp");
@@ -156,16 +148,13 @@ class PVMIOControlComp
          */
         bool IsTestInputTypeSupported(PVMFFormatType aType)
         {
-            switch (aType)
+            if (aType == PVMF_MIME_WAVFF ||
+                    aType == PVMF_MIME_AVIFF)
             {
-                case PVMF_WAVFF:
-                case PVMF_AVIFF:
-                {
-                    return true;
-                }
-                default:
-                    return false;
+                return true;
             }
+
+            return false;
         }
 
         /**
@@ -180,6 +169,7 @@ class PVMIOControlComp
         {
             OSCL_UNUSED_ARG(aFileName);
             int32 error = PVMFFailure;
+
             if (!IsTestInputTypeSupported(aType))
             {
                 return error;
@@ -188,13 +178,26 @@ class PVMIOControlComp
             uint32 loopCount = 0;
             if (iLoopDuration)
             {
-                loopCount = iLoopDuration / iFileDuration;
+                loopCount = iLoopDuration / (uint32)iFileDuration;
             }
-            switch (aType)
+            if (aType == PVMF_MIME_WAVFF)
             {
-                case PVMF_WAVFF:
+                PvmiMIOControl* mediaInput = PvmiMIOAviWavFileFactory::Create(loopCount, aRecMode, 0, (OsclAny*)iPVWavFile, FILE_FORMAT_WAV, error);
+                if (!mediaInput)
                 {
-                    PvmiMIOControl* mediaInput = PvmiMIOAviWavFileFactory::Create(loopCount, aRecMode, 0, (OsclAny*)iPVWavFile, FILE_FORMAT_WAV, error);
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
+                                    (0, "CreateMIOInputNode::CreateMIOInputNode: Error - PvmiMIOAviWavFileFactory::Create failed"));
+
+                    return PVMFFailure;
+                }
+
+                iMediaInput.push_back(mediaInput);
+            }
+            else if (aType == PVMF_MIME_AVIFF)
+            {
+                for (uint32 ii = 0; ii < iPVAviFile->GetNumStreams(); ii++)
+                {
+                    PvmiMIOControl* mediaInput = PvmiMIOAviWavFileFactory::Create(loopCount, aRecMode, ii, (OsclAny*)iPVAviFile, FILE_FORMAT_AVI, error);
                     if (!mediaInput)
                     {
                         PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
@@ -203,34 +206,19 @@ class PVMIOControlComp
                         return PVMFFailure;
                     }
 
-                    iMediaInput.push_back(mediaInput);
-                }
-                break;
-
-                case PVMF_AVIFF:
-                {
-                    for (uint32 ii = 0; ii < iPVAviFile->GetNumStreams(); ii++)
+                    if (error != PVMFSuccess)
                     {
-                        PvmiMIOControl* mediaInput = PvmiMIOAviWavFileFactory::Create(loopCount, aRecMode, ii, (OsclAny*)iPVAviFile, FILE_FORMAT_AVI, error);
-                        if (!mediaInput)
+                        if (mediaInput)
                         {
-                            PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
-                                            (0, "CreateMIOInputNode::CreateMIOInputNode: Error - PvmiMIOAviWavFileFactory::Create failed"));
-
-                            return PVMFFailure;
+                            PvmiMIOAviWavFileFactory::Delete(mediaInput);
                         }
 
-                        iMediaInput.push_back(mediaInput);
+                        return error;
                     }
-                }
-                break;
-                default :
-                    break;
-            }
 
-            if (error != PVMFSuccess)
-            {
-                return error;
+                    iMediaInput.push_back(mediaInput);
+
+                }
             }
 
             for (uint32 ii = 0; ii < iMediaInput.size(); ii++)
@@ -255,14 +243,22 @@ class PVMIOControlComp
         void DeleteInputNode()
         {
             uint32 ii = 0;
-            for (ii = 0; ii < iMIONode.size() ; ii++)
+            if (iMIONode.size() > 0)
             {
-                PvmfMediaInputNodeFactory::Delete(iMIONode[ii]);
+                for (ii = 0; ii < iMIONode.size() ; ii++)
+                {
+                    PvmfMediaInputNodeFactory::Delete(iMIONode[ii]);
+                }
+                iMIONode.destroy();
             }
 
-            for (ii = 0; ii < iMediaInput.size(); ii++)
+            if (iMediaInput.size() > 0)
             {
-                PvmiMIOAviWavFileFactory::Delete(iMediaInput[ii]);
+                for (ii = 0; ii < iMediaInput.size(); ii++)
+                {
+                    PvmiMIOAviWavFileFactory::Delete(iMediaInput[ii]);
+                }
+                iMediaInput.destroy();
             }
 
         }
@@ -285,12 +281,13 @@ class PVMediaInputAuthorEngineTest: public test_case,
 {
     public:
         PVMediaInputAuthorEngineTest(PVMediaInputAuthorEngineTestParam aTestParam):
+                PVLoggerSchedulerSetup(),
                 iCurrentTest(NULL),
 
-                PVLoggerSchedulerSetup(aTestParam.iLogFile, aTestParam.iLogLevel, aTestParam.iLogNode),
                 iFirstTest(aTestParam.iFirstTest),
                 iLastTest(aTestParam.iLastTest),
                 iNextTestCase(aTestParam.iFirstTest),
+                iAsap(aTestParam.iAsap),
                 iFile(aTestParam.iMediainputParam.iFile),
                 iMediaInputParam(aTestParam.iMediainputParam)
         {};
@@ -299,12 +296,15 @@ class PVMediaInputAuthorEngineTest: public test_case,
         virtual void test();
         virtual void CompleteTest(test_case& arTC);
         void RunTestCases();
+        bool	 Set_Default_Params(int32 aTestnum, PVMediaInputTestParam& aMediaInputParam);
+        void Print_TestCase_Name(int32 aTestnum);
 
     private:
         pvauthor_async_test_base* iCurrentTest;
         int32                     iFirstTest;
         int32                     iLastTest;
         int32                     iNextTestCase;
+        bool					  iAsap;
         FILE*                     iFile;
         // For test results
         int                       iTotalSuccess;

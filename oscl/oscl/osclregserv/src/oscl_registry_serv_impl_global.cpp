@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,54 +19,47 @@
 #include "oscl_registry_serv_impl_global.h"
 
 #include "osclconfig_proc.h"
+#include "oscl_base.h"
+#if (OSCL_HAS_SINGLETON_SUPPORT)
 
 //Global variable implementation.
-OsclComponentRegistry* gOsclComponentRegistry;
 
-static int calls = 0;
+#include "oscl_singleton.h"
+#include "oscl_registry_serv_impl.h"
+
+OsclComponentRegistry* OsclRegistryServImpl::GetOsclComponentRegistry()
+{
+    return (OsclComponentRegistry*)OsclSingletonRegistryEx::getInstance(OSCL_SINGLETON_ID_OSCLREGISTRY);
+}
 
 OsclRegistryServImpl::OsclRegistryServImpl()
 {
-    if (calls == 0)
-    {
-        gOsclComponentRegistry = new OsclComponentRegistry();
-    }
-
-    calls++;
-
-    iOsclComponentRegistry = gOsclComponentRegistry;
-
     iIsOpen = false;
 }
 
 OsclRegistryServImpl::~OsclRegistryServImpl()
 {
     if (iIsOpen)
-    {
         Close();
-    }
-
-    calls--;
-
-    if (calls == 0)
-    {
-        if (iOsclComponentRegistry)
-        {
-            delete iOsclComponentRegistry;
-            iOsclComponentRegistry = 0;
-            gOsclComponentRegistry = 0;
-        }
-    }
 }
 
 int32 OsclRegistryServImpl::Connect()
 {
     if (iIsOpen)
-    {
         return OsclErrInvalidState;
+    //Create the registry on the first session.
+    if (!GetOsclComponentRegistry())
+    {
+        OsclComponentRegistry* reg = NULL;
+        int32 err;
+        OSCL_TRY(err, reg = OSCL_NEW(OsclComponentRegistry, ()));
+        if (err != OsclErrNone)
+            return err;
+
+        OsclSingletonRegistryEx::registerInstance(reg, OSCL_SINGLETON_ID_OSCLREGISTRY);
     }
     iIsOpen = true;
-    iOsclComponentRegistry->OpenSession();
+    GetOsclComponentRegistry()->OpenSession();
     return OsclErrNone;
 }
 
@@ -77,15 +70,21 @@ void OsclRegistryServImpl::Close()
     {
         //unregister all comps that were registered by this session
         for (uint32 i = 0;i < iIdVec.size();i++)
-            iOsclComponentRegistry->Unregister(iIdVec[i]);
+            GetOsclComponentRegistry()->Unregister(iIdVec[i]);
         //clear our comp list.
         iIdVec.destroy();
     }
 
     if (iIsOpen)
     {
-        iOsclComponentRegistry->CloseSession();
+        GetOsclComponentRegistry()->CloseSession();
         iIsOpen = false;
+        //Delete the registry when the session count goes to zero.
+        if (GetOsclComponentRegistry()->iNumSessions == 0)
+        {
+            OSCL_DELETE(GetOsclComponentRegistry());
+            OsclSingletonRegistryEx::registerInstance(NULL, OSCL_SINGLETON_ID_OSCLREGISTRY);
+        }
     }
 }
 
@@ -100,7 +99,7 @@ int32 OsclRegistryServImpl::Register(OSCL_String& aComp, OsclComponentFactory aF
         return err;
 
     uint32 id;
-    int32 result = iOsclComponentRegistry->Register(id, aComp, aFac);
+    int32 result = GetOsclComponentRegistry()->Register(id, aComp, aFac);
 
     //save all comp IDs in our session data
     if (result == OsclErrNone)
@@ -114,7 +113,7 @@ int32 OsclRegistryServImpl::UnRegister(OSCL_String& aComp)
     if (!IsOpen())
         return OsclErrInvalidState;
 
-    return iOsclComponentRegistry->Unregister(aComp);
+    return GetOsclComponentRegistry()->Unregister(aComp);
 }
 
 OsclComponentFactory OsclRegistryServImpl::GetFactory(OSCL_String& aComp)
@@ -124,7 +123,7 @@ OsclComponentFactory OsclRegistryServImpl::GetFactory(OSCL_String& aComp)
         return NULL;
     }
 
-    return iOsclComponentRegistry->FindExact(aComp);
+    return GetOsclComponentRegistry()->FindExact(aComp);
 }
 
 void OsclRegistryServImpl::GetFactories(OSCL_String& aReg, Oscl_Vector<OsclRegistryAccessElement, OsclMemAllocator>& aVec)
@@ -132,9 +131,10 @@ void OsclRegistryServImpl::GetFactories(OSCL_String& aReg, Oscl_Vector<OsclRegis
     if (!IsOpen())
         return;
 
-    iOsclComponentRegistry->FindHierarchical(aReg, aVec);
+    GetOsclComponentRegistry()->FindHierarchical(aReg, aVec);
 }
 
+#endif //oscl config
 
 
 

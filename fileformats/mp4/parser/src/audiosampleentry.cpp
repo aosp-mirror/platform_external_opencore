@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,13 +43,16 @@ AudioSampleEntry::AudioSampleEntry(MP4_FF_FILE *fp, uint32 size, uint32 type)
         // Read reserved values
         if (!AtomUtils::read32read32(fp, _reserved1[0], _reserved1[1]))
             _success = false;
-        if (!AtomUtils::read16read16(fp, _reserved2, _reserved3))
+        if (!AtomUtils::read16read16(fp, _channelCount, _sampleSize))
             _success = false;
-        if (!AtomUtils::read32(fp, _reserved4))
+        if (!AtomUtils::read16read16(fp, _preDefined, _reserved))
             _success = false;
 
-        if (!AtomUtils::read16read16(fp, _timeScale, _reserved5))
+        if (!AtomUtils::read16read16(fp, _timeScale, _sampleRateLo)) //_timeScale and _sampleRateHi are same
             _success = false;
+
+        _sampleRateHi = _timeScale;
+
 
         if (_success)
         {

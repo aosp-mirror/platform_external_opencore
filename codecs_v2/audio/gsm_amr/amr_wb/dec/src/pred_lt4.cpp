@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -185,7 +185,7 @@ void Pred_lt4(
     }
     pt_exc -= (L_INTERPOL2 - 1);
 
-    pt_inter4_2 = (const int16 *) & inter4_2[UP_SAMP-1 - frac];
+    pt_inter4_2 = inter4_2[UP_SAMP-1 - frac];
 
     for (j = 0; j < (L_subfr >> 2); j++)
     {

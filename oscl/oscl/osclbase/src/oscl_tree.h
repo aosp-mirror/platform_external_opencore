@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -682,18 +682,26 @@ class Oscl_Rb_Tree : public Oscl_Rb_Tree_Base
         }
 
     private:
+        // this helper function performs a downcast from base_link_type& to link_type&
+        // under C99 (gcc 3.x) this breaks aliasing rules so we have to go via a void** instead
+        inline static link_type& cast_to_link_type(base_link_type &node)
+        {
+            void** ptr = (void**) & node;
+            link_type* base = (link_type*) ptr;
+            return *base;
+        }
 
         link_type& root() const
         {
-            return (link_type&)header->parent;
+            return cast_to_link_type(header->parent);
         }
         link_type& leftmost() const
         {
-            return (link_type&)header->left;
+            return cast_to_link_type(header->left);
         }
         link_type& rightmost() const
         {
-            return (link_type&)header->right;
+            return cast_to_link_type(header->right);
         }
 
         const Key& key(link_type x) const
@@ -706,15 +714,15 @@ class Oscl_Rb_Tree : public Oscl_Rb_Tree_Base
         }
         static link_type& left(link_type x)
         {
-            return (link_type&)(x->left);
+            return cast_to_link_type(x->left);
         }
         static link_type& right(link_type x)
         {
-            return (link_type&)(x->right);
+            return cast_to_link_type(x->right);
         }
         static link_type& parent(link_type x)
         {
-            return (link_type&)(x->parent);
+            return cast_to_link_type(x->parent);
         }
 
         const Key& key(base_link_type x) const
@@ -727,15 +735,15 @@ class Oscl_Rb_Tree : public Oscl_Rb_Tree_Base
         }
         static link_type& left(base_link_type x)
         {
-            return (link_type&)(x->left);
+            return cast_to_link_type(x->left);
         }
         static link_type& right(base_link_type x)
         {
-            return (link_type&)(x->right);
+            return cast_to_link_type(x->right);
         }
         static link_type& parent(base_link_type x)
         {
-            return (link_type&)(x->parent);
+            return cast_to_link_type(x->parent);
         }
 
         static link_type minimum(link_type x)
@@ -874,3 +882,4 @@ class Oscl_Rb_Tree : public Oscl_Rb_Tree_Base
 
 
 #endif
+

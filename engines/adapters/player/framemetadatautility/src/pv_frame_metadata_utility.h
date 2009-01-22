@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -429,6 +429,8 @@ class PVFrameAndMetadataUtility : public OsclTimerObject,
         PVCommandId RemoveDataSource(PVPlayerDataSource& aDataSource, const OsclAny* aContextData = NULL);
         PVMFStatus  SetMode(uint32 aMode);
 
+        void		SetThumbnailDimensions(uint32 aWidth, uint32 aHeight);
+        void		GetThumbnailDimensions(uint32 &aWidth, uint32 &aHeight);
         // From PvmiCapabilityAndConfig
         void setObserver(PvmiConfigAndCapabilityCmdObserver* aObserver);
         PVMFStatus getParametersSync(PvmiMIOSession aSession, PvmiKeyType aIdentifier, PvmiKvp*& aParameters, int& aNumParamElements, PvmiCapabilityContext aContext);
@@ -442,6 +444,8 @@ class PVFrameAndMetadataUtility : public OsclTimerObject,
         PVMFStatus verifyParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int aNumElements);
 
     private:
+        PVMFBasicErrorInfoMessage* CreateBasicErrInfoMessage(PVMFErrorInfoMessageInterface* nextmsg, PVFMErrorEventType aErrEvent = PVFMErrPlayerEngine);
+
         PVFrameAndMetadataUtility();
         void Construct(char *aOutputFormatMIMEType,
                        PVCommandStatusObserver *aCmdObserver,
@@ -530,6 +534,7 @@ class PVFrameAndMetadataUtility : public OsclTimerObject,
                                              int32& aNumAvailableValueEntries, Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList);
         PVMFStatus DoCapConfigSetParameters(PVFMUtilityCommand& aCmd, bool aSyncCmd);
         PVMFStatus DoVerifyAndSetFMUParameter(PvmiKvp& aParameter, bool aSetParam);
+        PVMFStatus DoPlayerSetParametersSync(PVCommandId aCmdId, OsclAny* aCmdContext, PvmiKvp* aParameters, int aNumElements, PvmiKvp* &aRetKVP);
         bool HasVideo();
         PVMFStatus DoGetFrame(PVFMUtilityCommand& aCmd);
         PVMFStatus DoGFPlayerStopFromPaused(PVCommandId aCmdId, OsclAny* aCmdContext);
@@ -562,6 +567,7 @@ class PVFrameAndMetadataUtility : public OsclTimerObject,
             PVFM_CMD_ADSPlayerPause,
             PVFM_CMD_PlayerGetMetadataKeys,
             PVFM_CMD_PlayerGetMetadataValues,
+            PVFM_CMD_PlayerSetParametersSync,
             PVFM_CMD_GFPlayerStopFromPaused,
             PVFM_CMD_GFPlayerPrepare,
             PVFM_CMD_GFPlayerStart,
@@ -570,7 +576,8 @@ class PVFrameAndMetadataUtility : public OsclTimerObject,
             PVFM_CMD_RDSPlayerRemoveVideoDataSink,
             PVFM_CMD_RDSPlayerRemoveAudioDataSink,
             PVFM_CMD_RDSPlayerReset,
-            PVFM_CMD_RDSPlayerRemoveDataSource
+            PVFM_CMD_RDSPlayerRemoveDataSource,
+            PVFM_CMD_PlayerQueryCapConfigInterface
         };
 
         // Player command completion handling
@@ -585,6 +592,7 @@ class PVFrameAndMetadataUtility : public OsclTimerObject,
         void HandleADSPlayerPause(PVFMUtilityContext& aUtilContext, const PVCmdResponse& aCmdResp);
         void HandlePlayerGetMetadataKeys(PVFMUtilityContext& aUtilContext, const PVCmdResponse& aCmdResp);
         void HandlePlayerGetMetadataValues(PVFMUtilityContext& aUtilContext, const PVCmdResponse& aCmdResp);
+        void HandlePlayerSetParametersSync(PVFMUtilityContext& aUtilContext, const PVCmdResponse& aCmdResp);
         void HandleGFPlayerStopFromPaused(PVFMUtilityContext& aUtilContext, const PVCmdResponse& aCmdResp);
         void HandleGFPlayerPrepare(PVFMUtilityContext& aUtilContext, const PVCmdResponse& aCmdResp);
         void HandleGFPlayerStart(PVFMUtilityContext& aUtilContext, const PVCmdResponse& aCmdResp);
@@ -601,8 +609,10 @@ class PVFrameAndMetadataUtility : public OsclTimerObject,
         // Player engine instance handle
         PVPlayerInterface* iPlayer;
 
-        // Output MIME string
-        OSCL_HeapString<OsclMemAllocator> iOutputMIMEType;
+        PvmiCapabilityAndConfig* iPlayerCapConfigIF;
+        PVInterface* iPlayerCapConfigIFPVI;
+
+        // Output Format Type
         PVMFFormatType iOutputFormatType;
 
         // User specified player data source handle
@@ -653,6 +663,9 @@ class PVFrameAndMetadataUtility : public OsclTimerObject,
         OsclTimer<OsclMemAllocator>* iTimeoutTimer;
         uint32 iErrorHandlingWaitTime;
         uint32 iFrameReadyWaitTime;
+
+        uint32 iThumbnailWidth;
+        uint32 iThumbnailHeight;
 };
 
 #endif // PV_FRAME_METADATA_UTILITY_H_INCLUDED

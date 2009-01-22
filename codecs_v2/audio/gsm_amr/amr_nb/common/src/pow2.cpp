@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,23 +28,16 @@ terms listed above has been obtained from the copyright holder.
 ****************************************************************************************/
 /*
 
-
-
-
  Filename: /audio/gsm_amr/c/src/pow2.c
-
-
-     Date: 09/28/2000
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
-
-
 
  Description: Updated template. Changed function interface to pass in a
               pointer to overflow flag into the function instead of using a
               global flag. Removed inclusion of "pow2.tab"
 
+ Who:                           Date:
  Description:
 
 ------------------------------------------------------------------------------

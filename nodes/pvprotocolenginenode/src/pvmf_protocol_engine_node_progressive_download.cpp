@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,6 +61,8 @@ ProgressiveDownloadContainer::ProgressiveDownloadContainer(PVMFProtocolEngineNod
 
 bool ProgressiveDownloadContainer::createProtocolObjects()
 {
+    if (!ProtocolContainer::createProtocolObjects()) return false;
+
     iNode->iProtocol		 = OSCL_NEW(ProgressiveDownload, ());
     iNode->iNodeOutput		 = OSCL_NEW(pvHttpDownloadOutput, (iNode));
     iNode->iDownloadControl  = OSCL_NEW(progressiveDownloadControl, ());
@@ -73,21 +75,21 @@ bool ProgressiveDownloadContainer::createProtocolObjects()
     if (!iNode->iProtocol		|| !iNode->iNodeOutput  || !iNode->iDownloadControl  ||
             !iNode->iDownloadProgess || !iNode->iEventReport || !iNode->iCfgFileContainer ||
             !iNode->iUserAgentField  || !iNode->iDownloadSource) return false;
-
-    return ProtocolContainer::createProtocolObjects();
+    return true;
 }
 
 bool ProgressiveDownloadContainer::needSocketReconnect()
 {
     // currently, only disallow socket reconnect for head request disabled during prepare->start
     if (iNode->iInterfaceState == EPVMFNodePrepared &&
-            iNode->iInterfacingObjectContainer.getHttpHeadRequestDisabled()) return false;
+            iNode->iInterfacingObjectContainer->getHttpHeadRequestDisabled() &&
+            !iForceSocketReconnect) return false;
     return true;
 }
 
 PVMFStatus ProgressiveDownloadContainer::initImpl()
 {
-    if (!iNode->iInterfacingObjectContainer.getHttpHeadRequestDisabled()) return ProtocolContainer::initImpl();
+    if (!iNode->iInterfacingObjectContainer->getHttpHeadRequestDisabled()) return ProtocolContainer::initImpl();
 
     if (!isObjectsReady())
     {
@@ -111,7 +113,7 @@ bool ProgressiveDownloadContainer::initProtocol_SetConfigInfo()
 {
     OsclSharedPtr<PVDlCfgFile> aCfgFile = iNode->iCfgFileContainer->getCfgFile();
     if (aCfgFile.GetRep() == NULL) return false;
-    aCfgFile->setHttpHeadRequestDisabled(iNode->iInterfacingObjectContainer.getHttpHeadRequestDisabled());
+    aCfgFile->setHttpHeadRequestDisabled(iNode->iInterfacingObjectContainer->getHttpHeadRequestDisabled());
     return DownloadContainer::initProtocol_SetConfigInfo();
 }
 
@@ -154,7 +156,8 @@ int32 progressiveDownloadControl::isPlaybackRateCloseToClipBitrate(const uint32 
         uint32 aInstantByterate = divisionInMilliSec(aCurrDownloadSize, aNPTInMS);			// aCurrDownloadSize*1000/aNPTInMS
         LOGINFODATAPATH((0, "progressiveDownloadControl::isPlaybackRateCloseToClipBitrate, check Instant rate=%d(currDLSize=%d, NPTTimeMs=%d), clip bitrate=%d",
                          (aInstantByterate << 3), aCurrDownloadSize, aNPTInMS, (iClipByterate << 3)));
-        if (OSCL_ABS(aInstantByterate - iClipByterate) < GET_10_PERCENT(iClipByterate) || // OSCL_ABS(aInstantByterate-iClipByterate)/iClipByterate < 1/8-1/64=0.109
+        uint32 diffByterate = (aInstantByterate >= iClipByterate ? aInstantByterate - iClipByterate : iClipByterate - aInstantByterate);
+        if (diffByterate < GET_10_PERCENT(iClipByterate) || // OSCL_ABS(aInstantByterate-iClipByterate)/iClipByterate < 1/8-1/64=0.109
                 isBufferingEnoughTime(aCurrDownloadSize, PVPROTOCOLENGINE_JITTER_BUFFER_SIZE_TIME, aNPTInMS))
         {
             if (isBufferingEnoughTime(aCurrDownloadSize, PVPROTOCOLENGINE_JITTER_BUFFER_SIZE_TIME, aNPTInMS))
@@ -196,7 +199,7 @@ bool progressiveDownloadControl::isBufferingEnoughTime(const uint32 aCurrDownloa
             uint32 aPrevNPTInMS = 0;
             if (iProgDownloadSI->convertSizeToTime(iPrevDownloadSize, aPrevNPTInMS) == 0)
             {
-                return ((aNPTInMS -aPrevNPTInMS) >= aBufferTimeLimitInSec*1000);
+                return (aNPTInMS > aPrevNPTInMS && (aNPTInMS - aPrevNPTInMS) >= aBufferTimeLimitInSec*1000);
             }
         }
     }
@@ -208,16 +211,15 @@ bool progressiveDownloadControl::checkNewDuration(const uint32 aCurrDurationMsec
     aNewDurationMsec = aCurrDurationMsec;
     if (aCurrDurationMsec > 0 && iClipByterate == 0)
     {
-        if (iProtocol->getContentLength() > 0) iClipByterate = divisionInMilliSec(iProtocol->getContentLength(), aCurrDurationMsec);
+        if (iFileSize > 0) iClipByterate = divisionInMilliSec(iFileSize, aCurrDurationMsec);
     }
 
     if (iPlaybackByteRate > 0)
     {
-        uint32 aFileSize = iProtocol->getContentLength();
         if (iPlaybackByteRate > iClipByterate)
         {
             uint32 averPlaybackRate = (iClipByterate + iPlaybackByteRate) / 2;
-            aNewDurationMsec = divisionInMilliSec(aFileSize, averPlaybackRate); // aFileSize/averPlaybackRate*1000
+            aNewDurationMsec = divisionInMilliSec(iFileSize, averPlaybackRate); // aFileSize/averPlaybackRate*1000
         }
     }
     return true;
@@ -294,7 +296,8 @@ bool progressiveDownloadControl::updateDownloadClock()
         // larger than that from output object
 
         if (iProgDownloadSI->convertSizeToTime(iNodeOutput->getCurrentOutputSize(), aDownloadNPTTime) != 0) return false;
-        iDlProgressClock->SetStartTime32(aDownloadNPTTime, OSCLCLOCK_MSEC);
+        bool bOverflowFlag = false;
+        iDlProgressClock->SetStartTime32(aDownloadNPTTime, PVMF_MEDIA_CLOCK_MSEC, bOverflowFlag);
     }
     return true;
 }
@@ -322,8 +325,9 @@ void ProgressiveDownloadProgress::setSupportObject(OsclAny *aDLSupportObject, Do
     DownloadProgress::setSupportObject(aDLSupportObject, aType);
 }
 
-bool ProgressiveDownloadProgress::updateDownloadClock()
+bool ProgressiveDownloadProgress::updateDownloadClock(const bool aDownloadComplete)
 {
+    OSCL_UNUSED_ARG(aDownloadComplete);
     if (iProtocol) iDownloadSize = iNodeOutput->getCurrentOutputSize();
     if (iDownloadSize == 0) return false;
     return checkDownloadPercentModeAndUpdateDLClock();
@@ -373,11 +377,16 @@ bool ProgressiveDownloadProgress::calculateDownloadPercentBody(uint32 &aDownload
     {
         // byte-based download percentage
         aDownloadProgressPercent = iDownloadSize;
-        if (aFileSize)
+        if (aFileSize > 0)
         {
             aDownloadProgressPercent = getDownloadBytePercent(iDownloadSize, aFileSize);
             if (aDownloadProgressPercent > 100) aDownloadProgressPercent = 100;
             if (aDownloadProgressPercent == 100) iDownloadSize = aFileSize;
+        }
+        else
+        {
+            uint32 aMaxFileSize = iCfgFileContainer->getCfgFile()->GetMaxAllowedFileSize();
+            if (aDownloadProgressPercent > aMaxFileSize) aDownloadProgressPercent = aMaxFileSize;
         }
     }
     return true;

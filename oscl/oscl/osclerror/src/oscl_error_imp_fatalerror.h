@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,25 +29,24 @@
 
 
 /** \file oscl_error_imp_fatalerror.h
-    \brief Implementation File for Leave and Panic using system fatal error.
+    \brief Implementation File for Leave using system fatal error.
 */
 
 #ifndef OSCL_ERROR_IMP_FATALERROR_H_INCLUDED
 #define OSCL_ERROR_IMP_FATALERROR_H_INCLUDED
 
-// Implementation File for Leave and Panic using system fatal error.
+// Implementation File for Leave using system fatal error.
 
 //Fatal error implementation for compilers without C++ exceptions.
-//This implementation is very limited.  Leave and Panic conditions
+//This implementation is very limited.  Leave conditions
 //just cause fatal program errors.  There is no way to catch or trap
-//any Leave or Panic.
+//any Leave.
 #ifndef OSCL_ASSERT_H_INCLUDED
 #include "oscl_assert.h"
 #endif
 
-//Leave and Panic just call a system fatal error.
+//Leave just calls a system fatal error.
 #define PVError_DoLeave() _OSCL_Abort()
-#define PVError_DoPanic() _OSCL_Abort()
 
 //_PV_TRAP
 //_r is leave code, _s is statements.
@@ -65,17 +64,6 @@
 //to compile.
 #define _PV_TRAP_NO_TLS(__tr,__r,__s) \
 	__r=OsclErrNone;\
-	{__s;}
-
-//_PV_TRAP_ALL
-//_r is leave code, _p is TPVErrorPanic,
-//_s is statements.
-//this macro isn't really functional since any
-//leave will abort the program, but it's needed
-//to compile.
-#define _PV_TRAP_ALL(__r,__p,__s) \
-	__r=OsclErrNone;\
-	__p.iReason=OsclErrNone;\
 	{__s;}
 
 

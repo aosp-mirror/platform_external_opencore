@@ -25,6 +25,9 @@
 
 #include <utils.h>
 
+#include <ui/ICamera.h>
+
+
 #include <media/mediarecorder.h>
 
 #include "oscl_scheduler.h"
@@ -41,7 +44,6 @@
 #include "oscl_mem.h"
 #include "oscl_mem_audit.h"
 #include "oscl_error.h"
-#include "oscl_error_panic.h"
 #include "oscl_utf8conv.h"
 #include "oscl_string_utils.h"
 #include "android_camera_input.h"

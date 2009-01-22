@@ -521,7 +521,7 @@ PVMFStatus AndroidCameraInput::getParametersSync(PvmiMIOSession session,
             LOGE("AllocateKvp failed for OUTPUT_FORMATS_VALTYP");
             return status;
         }
-        params[0].value.uint32_value = ANDROID_VIDEO_FORMAT;
+        params[0].value.pChar_value = (char*)PVMF_MIME_YUV420;
     } else if (!pv_mime_strcmp(identifier, VIDEO_OUTPUT_WIDTH_CUR_QUERY)) {
         num_params = 1;
         status = AllocateKvp(params, VIDEO_OUTPUT_WIDTH_CUR_VALUE, num_params);
@@ -719,7 +719,7 @@ void AndroidCameraInput::Run()
 
         uint32 writeAsyncID = 0;
         int32 error = 0;
-        OSCL_TRY(error,writeAsyncID = iPeer->writeAsync(0, 0, (uint8*)data.iFrameBuffer,
+        OSCL_TRY(error,writeAsyncID = iPeer->writeAsync(PVMI_MEDIAXFER_FMT_TYPE_DATA, 0, (uint8*)data.iFrameBuffer,
                     data.iFrameSize, data.iXferHeader););
 
         if (!error) {
@@ -991,7 +991,7 @@ PVMFStatus AndroidCameraInput::VerifyAndSetParameter(PvmiKvp* aKvp,
     }
 
     if (!pv_mime_strcmp(aKvp->key, OUTPUT_FORMATS_VALTYPE)) {
-        if (aKvp->value.uint32_value == ANDROID_VIDEO_FORMAT)  {
+		if(pv_mime_strcmp(aKvp->value.pChar_value, PVMF_MIME_YUV420) == 0) {
             return PVMFSuccess;
         } else  {
             LOGE("Unsupported format %d", aKvp->value.uint32_value);

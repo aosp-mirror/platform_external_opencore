@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@
 #include "pvmf_protocol_engine_node.h"
 #include "pvmf_protocol_engine_node_download_common.h"
 #include "pvmf_protocolengine_node_tunables.h"
+#include "pvmf_protocol_engine_command_format_ids.h"
+
 
 #include "pvlogger.h"
 /**
@@ -34,19 +36,16 @@
 #define PVMF_PROTOCOL_ENGINE_LOGBIN(iPortLogger, m) PVLOGGER_LOGBIN(PVLOGMSG_INST_LLDBG, iPortLogger, PVLOGMSG_ERR, m);
 #define	NODEDATAPATHLOGGER_TAG "datapath.sourcenode.protocolenginenode"
 
-#ifdef ANDROID
-#define LOG_NDEBUG 0
-#include <utils/Log.h>
-#undef LOG_TAG
-#define LOG_TAG "ProtocolEngine"
-#endif
 
 ////////////////////////////////////////////////////////////////////////////////////
 //////	DownloadContainer implementation
 ////////////////////////////////////////////////////////////////////////////////////
 
 // constructor
-DownloadContainer::DownloadContainer(PVMFProtocolEngineNode *aNode) : ProtocolContainer(aNode)
+DownloadContainer::DownloadContainer(PVMFProtocolEngineNode *aNode) :
+        ProtocolContainer(aNode),
+        iForceSocketReconnect(false),
+        iNeedCheckResumeNotificationManually(false)
 {
     ;
 }
@@ -74,11 +73,13 @@ int32 DownloadContainer::doPreStart()
 
     if (!aCfgFile->IsNewSession() && aCfgFile->GetCurrentFileSize() >= aCfgFile->GetOverallFileSize())
     {
-        iNode->iInterfacingObjectContainer.setFileSize(aCfgFile->GetOverallFileSize());
+        iNode->iInterfacingObjectContainer->setFileSize(aCfgFile->GetOverallFileSize());
         iNode->SetState(EPVMFNodeStarted);
+        iNode->iNodeTimer->clear();
         iNode->iEventReport->startRealDataflow();
         iNode->iEventReport->checkReportEvent(PROCESS_SUCCESS_END_OF_MESSAGE);
         iNode->iDownloadControl->checkResumeNotification();
+        iNode->iInterfacingObjectContainer->setInputDataUnwanted();
         return PROCESS_SUCCESS_END_OF_MESSAGE;
     }
     return PROCESS_SUCCESS;
@@ -88,6 +89,18 @@ bool DownloadContainer::doPause()
 {
     if (iNode->iCfgFileContainer) iNode->iCfgFileContainer->saveConfig();
     return true;
+}
+
+PVMFStatus DownloadContainer::doStop()
+{
+    ProtocolContainer::doStop();
+
+    // set resume download mode for stop and play
+    OsclSharedPtr<PVDlCfgFile> aCfgFile = iNode->iCfgFileContainer->getCfgFile();
+    aCfgFile->SetNewSession(false); // set resume download session for the next time
+
+    iForceSocketReconnect = true;
+    return PVMFSuccess;
 }
 
 void DownloadContainer::doClear(const bool aNeedDelete)
@@ -175,8 +188,8 @@ bool DownloadContainer::handleContentRangeUnmatch()
     config.isResumeDownload		= true;
     if (iNode->iNodeOutput->initialize((OsclAny*)(&config)) != PVMFSuccess) return false;
     iNode->iNodeOutput->discardData(true); // true means closing and reopening the data stream object
-    iNode->StartDataFlowByCommand();
     iNode->iEventReport->startRealDataflow();
+    startDataFlowByCommand();
     return true;
 }
 
@@ -207,7 +220,7 @@ int32 DownloadContainer::initNodeOutput()
     // pass objects to node output object
     iNode->iNodeOutput->setOutputObject((OsclAny*)iNode->iPortInForData);
     iNode->iNodeOutput->setOutputObject((OsclAny*)iInterfacingObjectContainer->getDataStreamFactory(), NodeOutputType_DataStreamFactory);
-    iNode->iInterfacingObjectContainer.setOutputPortConnect();  // for sending disconnect after download complete
+    iNode->iInterfacingObjectContainer->setOutputPortConnect();  // for sending disconnect after download complete
 
     OsclSharedPtr<PVDlCfgFile> aCfgFile = iNode->iCfgFileContainer->getCfgFile();
     DownloadOutputConfig config;
@@ -241,6 +254,7 @@ void DownloadContainer::initDownloadControl()
     iNode->iDownloadControl->setSupportObject((OsclAny*)iNode->iProtocol, DownloadControlSupportObjectType_ProtocolEngine);
     iNode->iDownloadControl->setSupportObject((OsclAny*)iNode->iDownloadProgess, DownloadControlSupportObjectType_DownloadProgress);
     iNode->iDownloadControl->setSupportObject((OsclAny*)iNode->iNodeOutput, DownloadControlSupportObjectType_OutputObject);
+    iNode->iDownloadControl->setSupportObject((OsclAny*)iNode->iCfgFileContainer, DownloadControlSupportObjectType_ConfigFileContainer);
 
     iNode->iDownloadProgess->setSupportObject((OsclAny*)iNode->iProtocol, DownloadControlSupportObjectType_ProtocolEngine);
     iNode->iDownloadProgess->setSupportObject((OsclAny*)iNode->iCfgFileContainer, DownloadControlSupportObjectType_ConfigFileContainer);
@@ -278,6 +292,42 @@ bool DownloadContainer::handleProtocolStateComplete(PVProtocolEngineNodeInternal
 {
     iNode->iNodeTimer->clear();
     return ProtocolContainer::handleProtocolStateComplete(aEvent, aEventHandler);
+}
+
+void DownloadContainer::checkSendResumeNotification()
+{
+    iNode->iNodeTimer->start(WALL_CLOCK_TIMER_ID);
+
+    if (needToCheckResumeNotificationMaually())
+    {
+        iNeedCheckResumeNotificationManually = false;
+        // form PVProtocolEngineNodeInternalEventType_CheckResumeNotificationMaually event
+        PVProtocolEngineNodeInternalEvent aEvent(PVProtocolEngineNodeInternalEventType_CheckResumeNotificationMaually);
+        iNode->iInternalEventQueue.clear();
+        iNode->iInternalEventQueue.push_back(aEvent);
+        iNode->SetProcessingState(ProcessingState_NormalDataflow);
+        iNode->RunIfNotReady();
+    }
+}
+
+bool DownloadContainer::ignoreThisTimeout(const int32 timerID)
+{
+    if (timerID != (int32)WALL_CLOCK_TIMER_ID && timerID != BUFFER_STATUS_TIMER_ID)
+    {
+        return ProtocolContainer::ignoreThisTimeout(timerID);
+    }
+
+    // in case of WALL_CLOCK_TIMER_ID
+    if (timerID == (int32)WALL_CLOCK_TIMER_ID)
+    {
+        iNeedCheckResumeNotificationManually = true;
+        checkSendResumeNotification();
+    }
+    else if (timerID == BUFFER_STATUS_TIMER_ID)
+    {
+        iNode->iEventReport->sendBufferStatusEvent();
+    }
+    return true;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -392,11 +442,6 @@ int32 pvHttpDownloadOutput::openDataStream(OsclAny* aInitInfo)
 
 void pvHttpDownloadOutput::discardData(const bool aNeedReopen)
 {
-    discardDataBody(aNeedReopen);
-}
-
-void pvHttpDownloadOutput::discardDataBody(const bool aNeedReopen, const uint32 aSeekOffset)
-{
     // discard the existing data inside the data stream object
     if (iDataStream && isOpenDataStream)
     {
@@ -404,11 +449,6 @@ void pvHttpDownloadOutput::discardDataBody(const bool aNeedReopen, const uint32 
         {
             iDataStream->CloseSession(iSessionID);
             iDataStream->OpenSession(iSessionID, PVDS_REWRITE);
-        }
-        else
-        {
-            // for progressive playback, the file offset may not be 0 after reconnect
-            iDataStream->Seek(iSessionID, aSeekOffset, PVDS_SEEK_SET);
         }
     }
     PVMFProtocolEngineNodeOutput::discardData();
@@ -424,6 +464,11 @@ uint32 pvHttpDownloadOutput::getAvailableOutputSize()
     return writeCapacity;
 }
 
+uint32 pvHttpDownloadOutput::getMaxAvailableOutputSize()
+{
+    return (iDataStream == NULL ? 0 : iDataStream->QueryBufferingCapacity());
+}
+
 ////////////////////////////////////////////////////////////////////////////////////
 //////	pvDownloadControl implementation
 ////////////////////////////////////////////////////////////////////////////////////
@@ -431,9 +476,15 @@ uint32 pvHttpDownloadOutput::getAvailableOutputSize()
 pvDownloadControl::pvDownloadControl() :
         iCurrentPlaybackClock(NULL),
         iProgDownloadSI(NULL),
-        iNodeOutput(NULL)
+        iProtocol(NULL),
+        iDownloadProgress(NULL),
+        iNodeOutput(NULL),
+        iCfgFileContainer(NULL),
+        iFirstResumeNotificationSent(false),
+        iClipDurationMsec(0),
+        iFileSize(0)
 {
-    clear();
+    clearBody();
     createDownloadClock(); // may leave
     iDataPathLogger = PVLogger::GetLoggerObject(NODEDATAPATHLOGGER_TAG);
 }
@@ -442,28 +493,32 @@ void pvDownloadControl::clear()
 {
     // check whether there is still pending resume request
     if (iProgDownloadSI) sendResumeNotification(true);
-    iProgDownloadSI = NULL;
+    clearBody();
+}
 
-    iPlaybackUnderflow			= true;
-    iDownloadComplete			= false;
-    iRequestResumeNotification	= false;
-    iCurrentNPTReadPosition		= 0;
-    iClipDurationMsec			= 0;
-    iPlaybackByteRate			= 0;
-    iClipByterate				= 0;
-    iPrevDownloadSize			= 0;
-    iDlAlgoPreConditionMet		= false;
-    iSetFileSize				= false;
+void pvDownloadControl::clearBody()
+{
+    iPlaybackUnderflow			 = true;
+    iDownloadComplete			 = false;
+    iRequestResumeNotification	 = false;
+    iCurrentNPTReadPosition		 = 0;
+    iPlaybackByteRate			 = 0;
+    iClipByterate				 = 0;
+    iPrevDownloadSize			 = 0;
+    iDlAlgoPreConditionMet		 = false;
+    iSetFileSize				 = false;
     iSendDownloadCompleteNotification = false;
 }
+
 
 // requst resume notification, implementation of PVMFDownloadProgressInterface API
 void pvDownloadControl::requestResumeNotification(const uint32 currentNPTReadPosition, bool& aDownloadComplete, bool& aNeedSendUnderflowEvent)
 {
-    LOGINFODATAPATH((0, "pvDownloadControl::requestResumeNotification(), iPlaybackUnderflow=%d, iRequestResumeNotification=%d, iDownloadComplete=%d",
-                     iPlaybackUnderflow, iRequestResumeNotification, iDownloadComplete));
+    LOGINFODATAPATH((0, "pvDownloadControl::requestResumeNotification() IN, iPlaybackUnderflow=%d, iRequestResumeNotification=%d, iDownloadComplete=%d",
+                     (uint32)iPlaybackUnderflow, (uint32)iRequestResumeNotification, (uint32)iDownloadComplete));
 
-    aNeedSendUnderflowEvent = !iRequestResumeNotification;
+    if (iFirstResumeNotificationSent) aNeedSendUnderflowEvent = !iRequestResumeNotification;
+    else aNeedSendUnderflowEvent = false;
 
     if (!(aDownloadComplete = iDownloadComplete))
     {
@@ -483,8 +538,13 @@ void pvDownloadControl::requestResumeNotification(const uint32 currentNPTReadPos
         // estimate playback rate
         iPlaybackByteRate = divisionInMilliSec(iProtocol->getDownloadSize(), currentNPTReadPosition);
 
-        LOGINFODATAPATH((0, "pvDownloadControl::requestResumeNotification(), currentNPTReadPosition=%d, playbackRate=%dbps, prevDownloadSize=%d",
-                         currentNPTReadPosition, (iPlaybackByteRate << 3), iPrevDownloadSize));
+        uint32 iPrevDownloadSizeOrig = 0;
+        iPrevDownloadSizeOrig = iPrevDownloadSize;
+        if (iClipByterate == 0 && iClipDurationMsec > 0) iClipByterate = divisionInMilliSec(iFileSize, iClipDurationMsec);
+        iPrevDownloadSize = OSCL_MAX(iPrevDownloadSize, currentNPTReadPosition / 1000 * iClipByterate);
+
+        LOGINFODATAPATH((0, "pvDownloadControl::requestResumeNotification(), currentNPTReadPosition=%d, playbackRate=%dbps, prevDownloadSize=%d, iPrevDownloadSizeOrig=%d, iClipByterate=%dbps",
+                         currentNPTReadPosition, (iPlaybackByteRate << 3), iPrevDownloadSize, iPrevDownloadSizeOrig, (iClipByterate << 3)));
     }
 }
 
@@ -494,6 +554,9 @@ void pvDownloadControl::setSupportObject(OsclAny *aDLSupportObject, DownloadCont
     {
         case DownloadControlSupportObjectType_SupportInterface:
             iProgDownloadSI = (PVMFFormatProgDownloadSupportInterface*)aDLSupportObject;
+            // in high bandwidth conditions, iProgDownloadSI gets set AFTER download is complete, then
+            // need to check resume notification again if something is pending
+            if (iDownloadComplete) checkResumeNotification(iDownloadComplete);
             break;
 
         case DownloadControlSupportObjectType_ProgressInterface:
@@ -503,7 +566,7 @@ void pvDownloadControl::setSupportObject(OsclAny *aDLSupportObject, DownloadCont
             break;
         }
         case DownloadControlSupportObjectType_EnginePlaybackClock:
-            iCurrentPlaybackClock = (OsclClock *)aDLSupportObject;
+            iCurrentPlaybackClock = (PVMFMediaClock *)aDLSupportObject;
             break;
 
         case DownloadControlSupportObjectType_ProtocolEngine:
@@ -518,6 +581,17 @@ void pvDownloadControl::setSupportObject(OsclAny *aDLSupportObject, DownloadCont
             iNodeOutput = (PVMFProtocolEngineNodeOutput *)aDLSupportObject;
             break;
 
+        case DownloadControlSupportObjectType_ConfigFileContainer:
+            iCfgFileContainer = (PVDlCfgFileContainer *)aDLSupportObject;
+            if (!iCfgFileContainer->getCfgFile()->IsNewSession())
+            {
+                if (iCfgFileContainer->getCfgFile()->HasContentLength())
+                {
+                    iFileSize = iCfgFileContainer->getCfgFile()->GetOverallFileSize();
+                }
+            }
+            break;
+
         default:
             break;
     }
@@ -529,11 +603,15 @@ void pvDownloadControl::setSupportObject(OsclAny *aDLSupportObject, DownloadCont
 //				 0 means anything else
 int32 pvDownloadControl::checkResumeNotification(const bool aDownloadComplete)
 {
-    LOGINFODATAPATH((0, "pvDownloadControl::checkResumeNotification() IN, iPlaybackUnderflow=%d, iRequestResumeNotification=%d, aDownloadComplete=%d",
-                     (uint32)iPlaybackUnderflow, (uint32)iRequestResumeNotification, (uint32)aDownloadComplete));
+    //LOGINFODATAPATH((0, "pvDownloadControl::checkResumeNotification() IN, iPlaybackUnderflow=%d, iRequestResumeNotification=%d, aDownloadComplete=%d",
+    //	(uint32)iPlaybackUnderflow, (uint32)iRequestResumeNotification, (uint32)aDownloadComplete));
 
     // short-cut: download complete
-    if (!checkDownloadCompleteForResumeNotification(aDownloadComplete)) return 0;
+    if (!checkDownloadCompleteForResumeNotification(aDownloadComplete))
+    {
+        LOGINFODATAPATH((0, "pvDownloadControl::checkResumeNotification()->checkDownloadCompleteForResumeNotification() return false, iProgDownloadSI=0x%x", iProgDownloadSI));
+        return 0;
+    }
 
     // real work that causes some PDL and PS differences
     if (!iPlaybackUnderflow && iRequestResumeNotification)
@@ -542,18 +620,15 @@ int32 pvDownloadControl::checkResumeNotification(const bool aDownloadComplete)
         return 2;
     }
 
-
     // check if need to resume playback
     if (iPlaybackUnderflow &&
             isResumePlayback(iProtocol->getDownloadRate(),
                              iNodeOutput->getCurrentOutputSize(),
-                             iProtocol->getContentLength()))
+                             iFileSize))
     {
-#ifdef ANDROID
-        LOGV("DownloadRate %d bytes per sec. Downloaded Bytes %d/%d", iProtocol->getDownloadRate(), iNodeOutput->getCurrentOutputSize(), iProtocol->getContentLength());
-#endif
         iPlaybackUnderflow = false;
         sendResumeNotification(iDownloadComplete);
+        iFirstResumeNotificationSent = true;
         return 1;
     }
 
@@ -568,10 +643,14 @@ bool pvDownloadControl::checkDownloadCompleteForResumeNotification(const bool aD
     }
 
     iDownloadComplete = aDownloadComplete;
-    if (!pvDownloadControl::isInfoReady()) return false;
+
+    // update iFileSize to minimize dependency on protocol object and improve the efficiency
+    updateFileSize();
+
+    if (!isInfoReady()) return false;
 
     // set file size to parser node
-    setFileSize(iProtocol->getContentLength());
+    setFileSize(iFileSize);
 
     // send download complete notification to parser node
     if (aDownloadComplete) sendDownloadCompleteNotification();
@@ -579,6 +658,14 @@ bool pvDownloadControl::checkDownloadCompleteForResumeNotification(const bool aD
     // update download clock
     if (!iDownloadComplete) updateDownloadClock();
     return true;
+}
+
+void pvDownloadControl::updateFileSize()
+{
+    if (iProtocol)
+    {
+        if (iProtocol->getContentLength() > 0 && iFileSize == 0) iFileSize = iProtocol->getContentLength();
+    }
 }
 
 void pvDownloadControl::setFileSize(const uint32 aFileSize)
@@ -592,10 +679,11 @@ void pvDownloadControl::setFileSize(const uint32 aFileSize)
 
 void pvDownloadControl::sendResumeNotification(bool aDownloadComplete)
 {
-    if (iRequestResumeNotification)
+    if (iRequestResumeNotification && iProgDownloadSI)
     {
         iProgDownloadSI->playResumeNotification(aDownloadComplete);
         iRequestResumeNotification = false;
+        iFirstResumeNotificationSent = true;
         if (aDownloadComplete) iPlaybackUnderflow = false;
 
         // sync up with actual download complete
@@ -616,17 +704,18 @@ void pvDownloadControl::sendDownloadCompleteNotification()
 // create iDlProgressClock, will leave when memory allocation fails
 void pvDownloadControl::createDownloadClock()
 {
-    // create shared OsclClock
-    PVDlSharedPtrAlloc<OsclClock> alloc;
-    OsclClock* myClock = alloc.allocate();
-    OsclRefCounterSA< PVDlSharedPtrAlloc<OsclClock> > *refcnt = new OsclRefCounterSA< PVDlSharedPtrAlloc<OsclClock> >(myClock);
-    OsclSharedPtr<OsclClock> myHandle(myClock, refcnt);
+    // create shared PVMFMediaClock
+    PVDlSharedPtrAlloc<PVMFMediaClock> alloc;
+    PVMFMediaClock* myClock = alloc.allocate();
+    OsclRefCounterSA< PVDlSharedPtrAlloc<PVMFMediaClock> > *refcnt = new OsclRefCounterSA< PVDlSharedPtrAlloc<PVMFMediaClock> >(myClock);
+    OsclSharedPtr<PVMFMediaClock> myHandle(myClock, refcnt);
     iDlProgressClock = myHandle;
 
     // set the clock base
     iDlProgressClock->SetClockTimebase(iEstimatedServerClockTimeBase);
     uint32 startTime = 0; // for type conversion
-    iDlProgressClock->SetStartTime32(startTime, OSCLCLOCK_SEC);
+    bool bOverflowFlag = false;
+    iDlProgressClock->SetStartTime32(startTime, PVMF_MEDIA_CLOCK_SEC, bOverflowFlag);
 }
 
 
@@ -647,6 +736,7 @@ bool pvDownloadControl::isResumePlayback(const uint32 aDownloadRate,
 
     // check playback clock, if not available, then switch to the old algorithm
     if (!iCurrentPlaybackClock) return isResumePlaybackWithOldAlg(aDownloadRate, aFileSize - aCurrDownloadSize);
+
 
     // check the pre-conditins including initial download time/size for download rate estimation purpose
     if (!isDlAlgoPreConditionMet(aDownloadRate, iClipDurationMsec, aCurrDownloadSize, aFileSize)) return false;
@@ -726,12 +816,16 @@ bool pvDownloadControl::getPlaybackTimeFromEngineClock(uint32 &aPlaybackTime)
 {
     aPlaybackTime = 0;
     bool isPbOverflow = false;
-    iCurrentPlaybackClock->GetCurrentTime32(aPlaybackTime, isPbOverflow, OSCLCLOCK_MSEC);
+    iCurrentPlaybackClock->GetCurrentTime32(aPlaybackTime, isPbOverflow, PVMF_MEDIA_CLOCK_MSEC);
     if (isPbOverflow)
     {
         LOGERRORDATAPATH((0, "pvDownloadControl::getPlaybackTimeFromEngineClock(), Playback clock overflow %d", isPbOverflow));
         return false;
     }
+
+    LOGINFODATAPATH((0, "pvDownloadControl::getPlaybackTimeFromEngineClock(), aPlaybackTime=%d, iCurrentNPTReadPosition=%d",
+                     aPlaybackTime, iCurrentNPTReadPosition));
+    aPlaybackTime = OSCL_MAX(aPlaybackTime, iCurrentNPTReadPosition);
     return true;
 }
 
@@ -740,6 +834,11 @@ bool pvDownloadControl::approveAutoResumeDecision(const uint32 aRemainingDLSize,
         const uint32 aDownloadRate,
         const uint32 aRemainingPlaybackTime)
 {
+
+#if 0
+    // the float-point calculation: aRemainingDLSize<0.0009*aDownloadRate*aRemainingPlaybackTime
+    return (aRemainingDLSize < 0.0009*aDownloadRate*aRemainingPlaybackTime);
+#else
     // fixed-point calculation
     // 0.0009 = 1/1111 ~= 1/1024 = 1/2^10 = right shift 10 bits
     // aRemainingDLSize<(aDownloadRate*aRemainingPlaybackTime>>10)
@@ -756,6 +855,7 @@ bool pvDownloadControl::approveAutoResumeDecision(const uint32 aRemainingDLSize,
         uint32 maxRightShift10 = max >> PVPROTOCOLENGINE_AUTO_RESUME_FIXED_CALCULATION_RIGHT_SHIFT; // right shift 10 bits
         return (aRemainingDLSize / maxRightShift10 < min);
     }
+#endif
 }
 
 // result = x*1000/y
@@ -763,15 +863,27 @@ uint32 pvDownloadControl::divisionInMilliSec(const uint32 x, const uint32 y)
 {
     // result = x*1000/y
     // handle overflow issue
-    uint32 result = 0;
-    if (x >> PVPROTOCOLENGINE_DOWNLOAD_DURATION_CALCULATION_LIMIT_RIGHT_SHIFT_FACTOR)
-    {
-        result = (x >> PVPROTOCOLENGINE_DOWNLOAD_DURATION_CALCULATION_RIGHTSHIFT_FACTOR) * 1000 /
-                 (y >> PVPROTOCOLENGINE_DOWNLOAD_DURATION_CALCULATION_RIGHTSHIFT_FACTOR);
-    }
+    if (x >> PVPROTOCOLENGINE_DOWNLOAD_DURATION_CALCULATION_LIMIT_RIGHT_SHIFT_FACTOR == 0) return x*1000 / y; // no overflow
+
+    // x*1000 overflows
+    uint32 result = (x >> PVPROTOCOLENGINE_DOWNLOAD_DURATION_CALCULATION_RIGHTSHIFT_FACTOR) * 1000;
+    if (result < y) result /= (y >> PVPROTOCOLENGINE_DOWNLOAD_DURATION_CALCULATION_RIGHTSHIFT_FACTOR);
     else
     {
-        result = x * 1000 / y;
+        uint32 resultTmp = result / y;
+        if (resultTmp >> PVPROTOCOLENGINE_DOWNLOAD_DURATION_CALCULATION_LIMIT_RIGHT_SHIFT_FACTOR) /* overflow */  result = 0xffffffff;
+        else
+        {
+            // check the accuracy of result/y
+            uint32 halfRightShift = PVPROTOCOLENGINE_DOWNLOAD_DURATION_CALCULATION_RIGHTSHIFT_FACTOR >> 1;
+            if (resultTmp >> halfRightShift)
+                result = resultTmp << PVPROTOCOLENGINE_DOWNLOAD_DURATION_CALCULATION_RIGHTSHIFT_FACTOR;
+            else
+            {
+                result /= (y >> halfRightShift);
+                result <<= (PVPROTOCOLENGINE_DOWNLOAD_DURATION_CALCULATION_RIGHTSHIFT_FACTOR - halfRightShift);
+            }
+        }
     }
     return result;
 }
@@ -779,8 +891,9 @@ uint32 pvDownloadControl::divisionInMilliSec(const uint32 x, const uint32 y)
 bool pvDownloadControl::isResumePlaybackWithOldAlg(const uint32 aDownloadRate, const uint32 aRemainingDownloadSize)
 {
     // get the download progress clock time
-    uint64 download_time;
-    iDlProgressClock->GetCurrentTime64(download_time, OSCLCLOCK_MSEC);
+    uint32 download_time;
+    bool overflowFlag = false;
+    iDlProgressClock->GetCurrentTime32(download_time, overflowFlag, PVMF_MEDIA_CLOCK_MSEC);
     uint32 currentNPTDownloadPosition = Oscl_Int64_Utils::get_uint64_lower32(download_time);
 
     LOGINFODATAPATH((0, "pvDownloadControl::isResumePlaybackWithOldAlg(), download_time=%dms, download_complete=%d\n", download_time, iDownloadComplete));
@@ -855,7 +968,7 @@ void DownloadProgress::setSupportObject(OsclAny *aDLSupportObject, DownloadContr
 
 bool DownloadProgress::update(const bool aDownloadComplete)
 {
-    if (!aDownloadComplete) updateDownloadClock();
+    updateDownloadClock(aDownloadComplete);
 
     // update download progress
     uint32 newProgressPercent = 0;
@@ -1142,6 +1255,7 @@ void downloadEventReporter::clear()
     iSendContentTypeEvent			= false;
     iSendUnexpectedDataEvent		= false;
     iSendServerDisconnectEvent		= false;
+    iPrevDownloadProgress = 0;
 
     EventReporter::clear();
 }
@@ -1150,7 +1264,45 @@ void downloadEventReporter::sendDataReadyEvent()
 {
     iNode->ReportInfoEvent(PVMFInfoDataReady, (OsclAny*)iNode->iProtocol->getDownloadRate());
     iSendInitialDataReadyEvent = true;
+    iNode->iNodeTimer->cancel(WALL_CLOCK_TIMER_ID);
 }
+
+void downloadEventReporter::enableBufferingCompleteEvent()
+{
+    iSendBufferCompleteInfoEvent = false;
+}
+
+void downloadEventReporter::sendBufferStatusEvent()
+{
+    sendBufferStatusEventBody(true);
+}
+
+void downloadEventReporter::sendBufferStatusEventBody(const bool aForceToSend)
+{
+    if (!iStarted || !iNode->iDownloadProgess) return;
+
+    uint32 aProgessPercent = 0;
+    bool status = iNode->iDownloadProgess->getNewProgressPercent(aProgessPercent);
+    if (!status && aForceToSend) aProgessPercent = iPrevDownloadProgress;
+
+    if ((status || aForceToSend))
+    {
+        reportBufferStatusEvent(aProgessPercent);
+        iPrevDownloadProgress = aProgessPercent;
+        if (iPrevDownloadProgress < 100) iNode->iNodeTimer->start(BUFFER_STATUS_TIMER_ID);
+    }
+}
+
+void downloadEventReporter::reportBufferStatusEvent(const uint32 aDownloadPercent)
+{
+    iNode->ReportInfoEvent(PVMFInfoBufferingStatus,
+                           NULL,
+                           PVMFPROTOCOLENGINENODEInfo_BufferingStatus,
+                           (uint8*)(&aDownloadPercent),
+                           sizeof(aDownloadPercent));
+    LOGINFODATAPATH((0, "downloadEventReporter::reportBufferStatusEvent() DOWNLOAD PERCENTAGE: %d", aDownloadPercent));
+}
+
 
 bool downloadEventReporter::checkReportEvent(const uint32 downloadStatus)
 {
@@ -1168,19 +1320,17 @@ bool downloadEventReporter::checkBufferInfoEvent(const uint32 downloadStatus)
     {
         iNode->ReportInfoEvent(PVMFInfoBufferingStart); // first coming media data triggers sending PVMFInfoBufferingStart event
         iSendBufferStartInfoEvent = true;
-        if (!isDownloadComplete(downloadStatus)) return true;
+        if (!isDownloadComplete(downloadStatus))
+        {
+            iNode->iNodeTimer->start(BUFFER_STATUS_TIMER_ID);
+            return true;
+        }
     }
 
     // PVMFInfoBufferingStatus and PVMFInfoBufferingComplete event
     if (iStarted && iNode->iDownloadProgess)
     {
-        uint32 aProgessPercent = 0;
-        if (iNode->iDownloadProgess->getNewProgressPercent(aProgessPercent))
-        {
-            iNode->ReportInfoEvent(PVMFInfoBufferingStatus, (OsclAny*)aProgessPercent,
-                                   PVMFPROTOCOLENGINENODEInfo_BufferingStatus);
-            LOGINFODATAPATH((0, "downloadEventReporter::checkBufferInfoEvent() DOWNLOAD PERCENTAGE: %d", aProgessPercent));
-        }
+        sendBufferStatusEventBody();
 
         // check and send buffer complete, data ready and unexpected data events
         checkBufferCompleteEvent(downloadStatus);
@@ -1199,8 +1349,7 @@ void downloadEventReporter::checkBufferCompleteEvent(const uint32 downloadStatus
         if (aProgessPercent < 100)
         {
             aProgessPercent = 100;
-            iNode->ReportInfoEvent(PVMFInfoBufferingStatus, (OsclAny*)aProgessPercent,
-                                   PVMFPROTOCOLENGINENODEInfo_BufferingStatus);
+            reportBufferStatusEvent(aProgessPercent);
         }
 
         // send buffer complete event
@@ -1213,6 +1362,9 @@ void downloadEventReporter::checkBufferCompleteEvent(const uint32 downloadStatus
             iNode->ReportInfoEvent(PVMFInfoDataReady);
             iSendInitialDataReadyEvent = true;
         }
+
+        // clear the timer again because of download completion
+        iNode->iNodeTimer->clear();
     }
 
     checkUnexpectedDataAndServerDisconnectEvent(downloadStatus);
@@ -1297,6 +1449,9 @@ bool downloadEventReporter::checkContentLengthOrTooLarge()
         // PVMFErrContentTooLarge
         if (fileSize > maxAllowedFileSize)
         {
+            // before error out, settle down the interaction with parser node
+            iNode->iDownloadControl->checkResumeNotification(false);
+
             ProtocolStateErrorInfo aInfo(PVMFErrContentTooLarge);
             PVProtocolEngineNodeInternalEvent aEvent(PVProtocolEngineNodeInternalEventType_ProtocolStateError, (OsclAny*)(&aInfo));
             iNode->DispatchInternalEvent(&aEvent);
@@ -1316,8 +1471,12 @@ bool downloadEventReporter::checkContentTruncated(const uint32 downloadStatus)
         if (status > 0)
         {
             if (status == 1) iNode->ReportInfoEvent(PVMFInfoContentTruncated, (OsclAny*)iNode->iProtocol->getDownloadSize());
-            if (status == 2) iNode->ReportInfoEvent(PVMFInfoContentTruncated, (OsclAny*)iNode->iProtocol->getDownloadSize(),
-                                                        PVMFPROTOCOLENGINENODEInfo_TruncatedContentByServerDisconnect);
+            if (status == 2)
+            {
+                iNode->ReportInfoEvent(PVMFInfoContentTruncated,
+                                       (OsclAny*)iNode->iProtocol->getDownloadSize(),
+                                       PVMFPROTOCOLENGINENODEInfo_TruncatedContentByServerDisconnect);
+            }
             //iNode->Clear();
             iSendContentTruncateEvent = true;
         }
@@ -1342,7 +1501,7 @@ int32 downloadEventReporter::isDownloadFileTruncated(const uint32 downloadStatus
         if (currDownloadSize < contentLength) return 2;
     }
 
-    // 2. no content length case : download size >= maximum file size (storage size)
+    // 2. no content length case : download size > maximum file size (storage size)
     if (contentLength == 0)
     {
         if (downloadStatus == PROCESS_SUCCESS_END_OF_MESSAGE_TRUNCATED) return 1;

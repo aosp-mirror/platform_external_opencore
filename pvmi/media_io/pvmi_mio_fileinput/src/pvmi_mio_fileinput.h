@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -276,7 +276,9 @@ class PvmiMIOFileInput : public OsclTimerObject,
         PVMFStatus VerifyAndSetParameter(PvmiKvp* aKvp, bool aSetParam = false);
 
 
-        char* DecoderInfo(char* buffer, char* res);
+        bool DecoderInfo(char* buffer, char* bufferEnd, char* res, uint32 resSize);
+        uint8* AllocateMemPool(OsclMemPoolFixedChunkAllocator*&, uint32, int32&);
+        int32 WriteAsyncDataHdr(uint32&, PvmiMediaTransfer*&, uint32&, PvmiMediaXferHeader&);
 
         // Command queue
         uint32 iCmdIdCounter;

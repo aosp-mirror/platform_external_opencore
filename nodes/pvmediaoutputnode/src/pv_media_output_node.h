@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,9 +94,7 @@ class PVMediaOutputNodeCmd: public PVMFGenericNodeCommand<OsclMemAllocator>
     public:
         //for SkipMediaData
         void Construct(PVMFSessionId s, int32 aCmd
-                       , PVMFTimestamp aStartingTimestamp
                        , PVMFTimestamp aResumeTimestamp
-                       , bool aRenderSkippedData
                        , uint32 aStreamID
                        , bool aPlayBackPositionContinuous
                        , const OsclAny* aContext)
@@ -104,24 +102,18 @@ class PVMediaOutputNodeCmd: public PVMFGenericNodeCommand<OsclMemAllocator>
             iSession = s;
             iCmd = aCmd;
             iContext = aContext;
-            iParam1 = (OsclAny*)aStartingTimestamp;
-            iParam2 = (OsclAny*)aResumeTimestamp;
-            iParam3 = (OsclAny*)aRenderSkippedData;
-            iParam4 = (OsclAny*)aPlayBackPositionContinuous;
-            iParam5 = (OsclAny*)aStreamID;
+            iParam1 = (OsclAny*)aResumeTimestamp;
+            iParam2 = (OsclAny*)aPlayBackPositionContinuous;
+            iParam3 = (OsclAny*)aStreamID;
             iEventCode = PVMFMoutNodeErr_First;
         }
-        void Parse(PVMFTimestamp& aStartingTimestamp
-                   , PVMFTimestamp& aResumeTimestamp
-                   , bool& aRenderSkippedData
+        void Parse(PVMFTimestamp& aResumeTimestamp
                    , bool& aPlayBackPositionContinuous
                    , uint32& aStreamID)
         {
-            aStartingTimestamp = (PVMFTimestamp)iParam1;
-            aResumeTimestamp = (PVMFTimestamp)iParam2;
-            aRenderSkippedData = (iParam3) ? true : false;
-            aPlayBackPositionContinuous = (iParam4) ? true : false;
-            aStreamID = (uint32)iParam5;
+            aResumeTimestamp = (PVMFTimestamp)iParam1;
+            aPlayBackPositionContinuous = (iParam2) ? true : false;
+            aStreamID = (uint32)iParam3;
         }
         //this holds an event code associated with the command status
         PVMFStatus iEventCode;
@@ -218,21 +210,22 @@ class PVMediaOutputNode : public OsclActiveObject,
         OSCL_IMPORT_REF bool queryInterface(const PVUuid& uuid, PVInterface*& iface);
 
         // Pure virtuals from PvmfNodesSyncControlInterface
-        OSCL_IMPORT_REF PVMFStatus SetClock(OsclClock* aClock);
+        OSCL_IMPORT_REF PVMFStatus SetClock(PVMFMediaClock* aClock);
         OSCL_IMPORT_REF PVMFStatus ChangeClockRate(int32 aRate);
         OSCL_IMPORT_REF PVMFStatus SetMargins(int32 aEarlyMargin, int32 aLateMargin);
         OSCL_IMPORT_REF void ClockStarted(void);
         OSCL_IMPORT_REF void ClockStopped(void);
         OSCL_IMPORT_REF PVMFCommandId SkipMediaData(PVMFSessionId aSession,
-                PVMFTimestamp aStartingTimestamp,
                 PVMFTimestamp aResumeTimestamp,
                 uint32 aStreamID = 0,
-                bool aRenderSkippedData = false,
                 bool aPlayBackPositionContinuous = false,
                 OsclAny* aContext = NULL);
 
         // PvmiMIOObserver implementation
         OSCL_IMPORT_REF void RequestCompleted(const PVMFCmdResp& aResponse);
+        OSCL_IMPORT_REF void ReportErrorEvent(PVMFEventType aEventType, PVInterface* aExtMsg = NULL);
+        OSCL_IMPORT_REF void ReportInfoEvent(PVMFEventType aEventType, PVInterface* aExtMsg = NULL);
+
 
         bool IsMioRequestPending()
         {
@@ -242,28 +235,14 @@ class PVMediaOutputNode : public OsclActiveObject,
         // From PvmiCapabilityAndConfig
         // Implement pure virtuals from PvmiCapabilityAndConfig interface
         OSCL_IMPORT_REF virtual PVMFStatus verifyParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int aNumElements);
+        OSCL_IMPORT_REF virtual PVMFStatus getParametersSync(PvmiMIOSession aSession, PvmiKeyType aIdentifier, PvmiKvp*& aParameters, int& aNumParamElements, PvmiCapabilityContext aContext);
+        OSCL_IMPORT_REF virtual PVMFStatus releaseParameters(PvmiMIOSession aSession, PvmiKvp* aParameters, int aNumElements);
 
         // Unsupported PvmiCapabilityAndConfig methods
         void virtual setObserver(PvmiConfigAndCapabilityCmdObserver* aObserver)
         {
             OSCL_UNUSED_ARG(aObserver);
         };
-        PVMFStatus virtual getParametersSync(PvmiMIOSession aSession, PvmiKeyType aIdentifier, PvmiKvp*& aParameters, int& aNumParamElements, PvmiCapabilityContext aContext)
-        {
-            OSCL_UNUSED_ARG(aSession);
-            OSCL_UNUSED_ARG(aIdentifier);
-            OSCL_UNUSED_ARG(aParameters);
-            OSCL_UNUSED_ARG(aNumParamElements);
-            OSCL_UNUSED_ARG(aContext);
-            return PVMFSuccess;
-        }
-        PVMFStatus virtual releaseParameters(PvmiMIOSession aSession, PvmiKvp* aParameters, int aNumElements)
-        {
-            OSCL_UNUSED_ARG(aSession);
-            OSCL_UNUSED_ARG(aParameters);
-            OSCL_UNUSED_ARG(aNumElements);
-            return PVMFSuccess;
-        }
         void virtual createContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext)
         {
             OSCL_UNUSED_ARG(aSession);
@@ -368,6 +347,7 @@ class PVMediaOutputNode : public OsclActiveObject,
         PvmiMIOControl* iMIOControl;
         PvmiMIOSession iMIOSession;
         PvmiCapabilityAndConfig* iMIOConfig;
+        PVInterface* iMIOConfigPVI;
         enum EMioRequest
         {
             ENone
@@ -378,6 +358,7 @@ class PVMediaOutputNode : public OsclActiveObject,
             , EPause
             , EStop
             , EDiscard
+            , EReset
         } ;
         EMioRequest iMediaIORequest;
         enum MioStates
@@ -394,18 +375,23 @@ class PVMediaOutputNode : public OsclActiveObject,
         bool iMediaIOCancelPending;
         PVMFStatus SendMioRequest(PVMediaOutputNodeCmd& aCmd, EMioRequest);
         PVMFStatus CancelMioRequest(PVMediaOutputNodeCmd& aCmd);
-        void MioConfigured();
 
         // Ports
         PVMFPortVector<PVMediaOutputNodePort, OsclMemAllocator> iInPortVector;
         bool PortQueuesEmpty();
 
         // Variables for media data queue and synchronization
-        OsclClock* iClock;
+        PVMFMediaClock* iClock;
         int32 iEarlyMargin;
         int32 iLateMargin;
         int32 iClockRate;
         PvmiClockExtensionInterface* iMIOClockExtension;
+        PVInterface* iMIOClockExtensionPVI;
+
+        /* Diagnostic log related */
+        PVLogger* iDiagnosticsLogger;
+        bool iDiagnosticsLogged;
+        void LogDiagnostics();
 
         // Extension reference counter
         uint32 iExtensionRefCount;
@@ -417,19 +403,12 @@ class PVMediaOutputNode : public OsclActiveObject,
         PVLogger* iLogger;
         PVLogger* iReposLogger;
 
-        void Assert(bool condition);
-
         OSCL_HeapString<OsclMemAllocator> iSinkFormatString;
 
         uint32 iRecentBOSStreamID;
         PVMFStatus CheckForBOS();
 };
 
-enum PVMoutPanic
-{
-    PVMoutPanic_OutstandingMIO_Command = 1
-    , PVMoutPanic_OutstandingMIO_WriteCommand
-};
 
 #endif // PVMI_IO_INTERFACE_NODE_H_INCLUDED
 

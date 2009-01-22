@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,9 @@
 #include "textsampledescinfo.h"
 #endif
 
-
+#ifndef PVMI_KVP_H_INCLUDED
+#include "pvmi_kvp.h"
+#endif
 
 typedef OSCL_HeapString<OsclMemAllocator> PVA_FF_UTF8_HEAP_STRING;
 typedef const OSCL_wString& PVA_FF_UNICODE_STRING_PARAM;
@@ -259,10 +261,9 @@ class PVA_FF_IMpeg4File : public PVA_FF_ISucceedFail
 
         virtual void setKeyWord(uint8 keyWordSize, PVA_FF_UNICODE_HEAP_STRING keyWordInfo, uint16 langCode = LANGUAGE_CODE_UNKNOWN) = 0;
 
-        virtual void setLocationInfo(PVA_FF_UNICODE_STRING_PARAM locationName, PVA_FF_UNICODE_STRING_PARAM locationInfoAstrBody, PVA_FF_UNICODE_STRING_PARAM locationInfoAddNotes,
-                                     uint8 locationInfoRole, uint32 locationInfoLongitude, uint32 locationInfoLatitude,
-                                     uint32 locationInfoAltitude, uint16 langCode = LANGUAGE_CODE_UNKNOWN) = 0;
-
+        virtual void setLocationInfo(PvmfAssetInfo3GPPLocationStruct*) = 0;
+        virtual void setAlbumInfo(PVA_FF_UNICODE_STRING_PARAM albumInfo, uint16 langCode = LANGUAGE_CODE_UNKNOWN) = 0;
+        virtual void setRecordingYear(uint16 recordingYear) = 0;
 
         virtual void setCreationDate(PVA_FF_UNICODE_STRING_PARAM creationDate) = 0;
 
@@ -289,7 +290,7 @@ class PVA_FF_IMpeg4File : public PVA_FF_ISucceedFail
         ///////////////////////
 
         // Method to render the MP4 file to disk
-        virtual bool renderToFile(PVA_FF_UNICODE_STRING_PARAM filename) = 0;
+        virtual bool renderToFile(PVA_FF_UNICODE_STRING_PARAM filename/*=PVA_FF_EMPTY_STRING*/) = 0;
 
         // Access function to set the postfix string for PVA_FF_MediaDataAtom objects
         virtual void SetTempFilePostFix(PVA_FF_UNICODE_STRING_PARAM postFix) = 0;

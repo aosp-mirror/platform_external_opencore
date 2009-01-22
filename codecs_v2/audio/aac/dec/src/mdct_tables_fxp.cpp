@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,8 @@
  */
 /*
 
- Pathname: ./src/mdct_tables_fxp.c
+ Pathname: mdct_tables_fxp.c
  Funtions:
-
-     Date: 2/23/2001
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
@@ -29,6 +27,7 @@
 
  Description:  Modified to include forward and inverse tables
 
+ Who:                       Date:
  Description:
 
   ------------------------------------------------------------------------------

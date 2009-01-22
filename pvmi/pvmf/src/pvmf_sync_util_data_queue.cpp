@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +50,7 @@ OSCL_EXPORT_REF PvmfSyncUtilDataQueue::PvmfSyncUtilDataQueue(PvmfSyncUtilDataQue
     iDiagnosticsLogger = PVLogger::GetLoggerObject("pvplayerdiagnostics.syncutil");
     iLateFrameDropEnable = true;
     iClock = NULL;
+    iClockNotificationsInf = NULL;
     iSyncFrameCount = iClockFrameCount = 0;
     iClockOwner = false;
     SetName(name);
@@ -76,10 +77,12 @@ OSCL_EXPORT_REF PvmfSyncUtilDataQueue::~PvmfSyncUtilDataQueue()
 {
     LogDiagnostics();
     Clear();
+
     //remove ourself as observer of clock.
-    if (iClock)
+    if (iClockNotificationsInf && iClock)
     {
-        iClock->RemoveClockObserver(*this);
+        iClockNotificationsInf->RemoveClockObserver(*this);
+        iClock->DestroyMediaClockNotificationsInterface(iClockNotificationsInf);
     }
 }
 
@@ -145,42 +148,59 @@ OSCL_EXPORT_REF void PvmfSyncUtilDataQueue::ClockCountUpdated()
     }
 }
 
+OSCL_EXPORT_REF void PvmfSyncUtilDataQueue::NotificationsInterfaceDestroyed()
+{
+    iClockNotificationsInf = NULL;
+}
+
 OSCL_EXPORT_REF void PvmfSyncUtilDataQueue::ClockAdjusted()
 {
-    uint64 clktime;
-    uint64 tbtime;
-    iClock->GetCurrentTime64(clktime, OSCLCLOCK_MSEC, tbtime);
+    uint32 clktime;
+    uint32 tbtime;
+    bool overflow;
+    iClock->GetCurrentTime32(clktime, overflow, PVMF_MEDIA_CLOCK_MSEC, tbtime);
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "PvmfSyncUtil::ClockAdjusted, new value %d", (uint32)clktime));
 }
 
-OSCL_EXPORT_REF PVMFStatus PvmfSyncUtilDataQueue::SetClock(OsclClock* aClock)
+OSCL_EXPORT_REF PVMFStatus PvmfSyncUtilDataQueue::SetClock(PVMFMediaClock* aClock)
 {
     //set clock for 'sync always' mode.
     return DoSetClock(aClock, true);
 }
 
-OSCL_EXPORT_REF PVMFStatus PvmfSyncUtilDataQueue::SetClockForFrameStep(OsclClock* aClock)
+OSCL_EXPORT_REF PVMFStatus PvmfSyncUtilDataQueue::SetClockForFrameStep(PVMFMediaClock* aClock)
 {
     //set clock for 'sync only during frame step' mode.
     return DoSetClock(aClock, false);
 }
 
-PVMFStatus PvmfSyncUtilDataQueue::DoSetClock(OsclClock* aClock, bool aSyncAlways)
+PVMFStatus PvmfSyncUtilDataQueue::DoSetClock(PVMFMediaClock* aClock, bool aSyncAlways)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "PvmfSyncUtil::DoSetClock, Clk 0x%x syncAlways %d", aClock, aSyncAlways));
 
     //remove ourself as observer of old clock, if any.
-    if (iClock)
-        iClock->RemoveClockObserver(*this);
+    if (iClockNotificationsInf && iClock)
+    {
+        iClockNotificationsInf->RemoveClockObserver(*this);
+        iClock->DestroyMediaClockNotificationsInterface(iClockNotificationsInf);
+        iClockNotificationsInf = NULL;
+    }
 
     //save new clock.
     iClock = aClock;
 
-    //set ourself as observer of new clock.
     if (iClock)
-        iClock->SetClockObserver(*this);
+    {
+        iClock->ConstructMediaClockNotificationsInterface(iClockNotificationsInf, *this);
+    }
+
+    //set ourself as observer of new clock.
+    if (iClockNotificationsInf)
+    {
+        iClockNotificationsInf->SetClockObserver(*this);
+    }
 
     //make a note of initial clock timebase
     ClockTimebaseUpdated();
@@ -201,6 +221,8 @@ PVMFStatus PvmfSyncUtilDataQueue::DoSetClock(OsclClock* aClock, bool aSyncAlways
 void PvmfSyncUtilDataQueue::LogMediaMsgInfo(PVMFSharedMediaMsgPtr aMediaMsg, const char* msg)
 //log media msg info, description, and associated q-depth.
 {
+    OSCL_UNUSED_ARG(aMediaMsg);
+    OSCL_UNUSED_ARG(msg);
     if (!iDatapathLogger)
     {
         return;//unexpected call.
@@ -222,6 +244,9 @@ void PvmfSyncUtilDataQueue::LogMediaMsgInfo(PVMFSharedMediaMsgPtr aMediaMsg, con
 void PvmfSyncUtilDataQueue::LogMediaMsgInfo(PVMFSharedMediaMsgPtr aMediaMsg, const char* msg, uint32 time)
 //log media msg info, time value, description, and associated q-depth.
 {
+    OSCL_UNUSED_ARG(aMediaMsg);
+    OSCL_UNUSED_ARG(msg);
+    OSCL_UNUSED_ARG(time);
     if (!iDatapathLogger)
     {
         return;//unexpected call.
@@ -248,7 +273,7 @@ OSCL_EXPORT_REF PVMFStatus PvmfSyncUtilDataQueue::ReserveDataQueue(uint32 aReser
         return PVMFSuccess;
     }
 
-    int32 err = 0;
+    int32 err = OsclErrNone;
     OSCL_TRY(err,
              iDataQueue.reserve(aReserveSize);
             );
@@ -273,7 +298,7 @@ OSCL_EXPORT_REF PVMFStatus PvmfSyncUtilDataQueue::QueueMediaData(PVMFSharedMedia
         *aSkipped = 0;
     }
 
-    int32 err = 0;
+    int32 err = OsclErrNone;
     if (aFront)
     {
         OSCL_TRY_NO_TLS(iOsclErrorTrapImp, err, iDataQueue.push_front(aMediaMsg););
@@ -409,16 +434,17 @@ void PvmfSyncUtilDataQueue::FrameStepClkAdjust(PVMFTimestamp aTimestamp)
 
     //if the frame timestamp is ahead of the clock, update the
     //clock to the timestamp.
-    uint64 clktime;
-    uint64 tbtime;
-    iClock->GetCurrentTime64(clktime, OSCLCLOCK_MSEC, tbtime);
+    uint32 clktime;
+    uint32 tbtime;
+    bool overflow = 0;
+    iClock->GetCurrentTime32(clktime, overflow, PVMF_MEDIA_CLOCK_MSEC, tbtime);
     if (aTimestamp > (PVMFTimestamp)clktime)
     {
-        uint64 adjtime = aTimestamp;
+        uint32 adjtime = aTimestamp;
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                         (0, "PvmfSyncUtilDataQueue::FrameStepClkAdjust: from %d to %d", (uint32)clktime, (uint32)adjtime));
-        bool ok = iClock->AdjustClockTime64(clktime, tbtime, adjtime, OSCLCLOCK_MSEC);
-        if (!ok)
+        PVMFMediaClockAdjustTimeStatus ok = iClock->AdjustClockTime32(clktime, tbtime, adjtime, PVMF_MEDIA_CLOCK_MSEC, overflow);
+        if (PVMF_MEDIA_CLOCK_ADJUST_SUCCESS != ok)
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
                             (0, "PvmfSyncUtilDataQueue::FrameStepClkAdjust: from %d to %d FAILED", (uint32)clktime, (uint32)adjtime));

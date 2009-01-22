@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,12 +43,12 @@
 class OsclNativeFile;
 
 //non-modifiable buffer pointer container
-class OsclPtrC: public OsclHeapBase
+class OsclPtrC: public HeapBase
 {
     public:
         OsclPtrC(const uint8* ptr, int32 len, int32 max): iPtr(ptr), iMaxLength(max), iLength(len)
         {}
-        OsclPtrC(const OsclPtrC& d): OsclHeapBase(d), iPtr(d.iPtr), iMaxLength(d.iMaxLength), iLength(d.iLength)
+        OsclPtrC(const OsclPtrC& d): HeapBase(d), iPtr(d.iPtr), iMaxLength(d.iMaxLength), iLength(d.iLength)
         {}
         const uint8* Ptr()
         {
@@ -100,12 +100,12 @@ class OsclPtrC: public OsclHeapBase
 };
 
 //modifiable buffer pointer container
-class OsclPtr: public OsclHeapBase
+class OsclPtr: public HeapBase
 {
     public:
         OsclPtr(uint8* ptr, int32& len, int32 max): iPtr(ptr), iMaxLength(max), iLength(len)
         {}
-        OsclPtr(const OsclPtr& d): OsclHeapBase(d), iPtr(d.iPtr), iMaxLength(d.iMaxLength), iLength(d.iLength)
+        OsclPtr(const OsclPtr& d): HeapBase(d), iPtr(d.iPtr), iMaxLength(d.iMaxLength), iLength(d.iLength)
         {}
         uint8* Ptr()
         {
@@ -149,7 +149,7 @@ class OsclPtr: public OsclHeapBase
 };
 
 //buffer container that allocates from the heap
-class OsclBuf: public OsclHeapBase
+class OsclBuf: public HeapBase
 {
     public:
         static OsclBuf* NewL(int32 size)
@@ -204,7 +204,7 @@ class OsclBuf: public OsclHeapBase
 ** consecutive areas of the file.  This allows for some seeking without requiring
 ** a full flush & refill each time.
 */
-class OsclAsyncFileBuffer: public OsclHeapBase
+class OsclAsyncFileBuffer: public HeapBase
 {
     public:
         static OsclAsyncFileBuffer* NewL(int32 aBufferSize, int32 aId);
@@ -297,6 +297,7 @@ class OsclAsyncFile : public OsclActiveObject
     private:
         //From OsclActiveObject
         void Run();
+        void DoCancel();
 
     public:
         ////////////////////////
@@ -448,6 +449,10 @@ class OsclAsyncFile : public OsclActiveObject
         // Request an async read.
         void StartNonNativeAsyncRead();
 
+    public:
+        // for test&stat
+        uint32 iNumOfRun;
+        uint32 iNumOfRunErr;
 };
 
 #endif

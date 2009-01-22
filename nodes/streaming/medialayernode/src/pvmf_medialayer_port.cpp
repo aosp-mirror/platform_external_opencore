@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -118,10 +118,9 @@ PVMFStatus PVMFMediaLayerPort::Connect(PVMFPortInterface* aPort)
 
     if (iPortType == PVMF_MEDIALAYER_PORT_TYPE_OUTPUT)
     {
-        PvmiCapabilityAndConfig *config;
-
-        aPort->QueryInterface(PVMI_CAPABILITY_AND_CONFIG_PVUUID,
-                              (OsclAny*&)config);
+        OsclAny* temp = NULL;
+        aPort->QueryInterface(PVMI_CAPABILITY_AND_CONFIG_PVUUID, temp);
+        PvmiCapabilityAndConfig *config = OSCL_STATIC_CAST(PvmiCapabilityAndConfig*, temp);
 
         if (config != NULL)
         {
@@ -160,6 +159,9 @@ PVMFStatus PVMFMediaLayerPort::getParametersSync(PvmiMIOSession aSession,
         int& num_parameter_elements,
         PvmiCapabilityContext aContext)
 {
+    OSCL_UNUSED_ARG(aSession);
+    OSCL_UNUSED_ARG(aContext);
+
     PVMF_MLNODE_LOGINFO((0, "PVMFMediaLayerPort::getParametersSync: aSession=0x%x, aIdentifier=%s, aParameters=0x%x, num_parameters_elements=%d, aContext=0x%x",
                          aSession, aIdentifier, aParameters, num_parameter_elements, aContext));
 
@@ -186,6 +188,9 @@ PVMFStatus PVMFMediaLayerPort::getParametersSync(PvmiMIOSession aSession,
 ////////////////////////////////////////////////////////////////////////////
 PVMFStatus PVMFMediaLayerPort::releaseParameters(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements)
 {
+    OSCL_UNUSED_ARG(aSession);
+    OSCL_UNUSED_ARG(num_elements);
+
     PVMF_MLNODE_LOGINFO((0, "PVMFMediaLayerPort::releaseParameters: aSession=0x%x, aParameters=0x%x, num_elements=%d",
                          aSession, aParameters, num_elements));
 
@@ -204,6 +209,12 @@ void PVMFMediaLayerPort::setParametersSync(PvmiMIOSession aSession,
         int num_elements,
         PvmiKvp * & aRet_kvp)
 {
+    OSCL_UNUSED_ARG(aSession);
+    OSCL_UNUSED_ARG(aParameters);
+    OSCL_UNUSED_ARG(num_elements);
+    OSCL_UNUSED_ARG(aRet_kvp);
+
+
     PVMF_MLNODE_LOGINFO((0, "PVMFMediaLayerPort::getParametersSync: aSession=0x%x, aParameters=0x%x, num_elements=%d, aRet_kvp=0x%x",
                          aSession, aParameters, num_elements, aRet_kvp));
 
@@ -213,6 +224,11 @@ void PVMFMediaLayerPort::setParametersSync(PvmiMIOSession aSession,
 ////////////////////////////////////////////////////////////////////////////
 PVMFStatus PVMFMediaLayerPort::verifyParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements)
 {
+    OSCL_UNUSED_ARG(aSession);
+    OSCL_UNUSED_ARG(aParameters);
+    OSCL_UNUSED_ARG(num_elements);
+
+
     PVMF_MLNODE_LOGINFO((0, "PVMFMediaLayerPort::verifyParametersSync: aSession=0x%x, aParameters=0x%x, num_elements=%d",
                          aSession, aParameters, num_elements));
 
@@ -300,9 +316,9 @@ PVMFMediaLayerPort::pvmiVerifyPortFormatSpecificInfoSync(const char* aFormatValT
      * Create PvmiKvp for capability settings
      */
     PVMFStatus status = PVMFErrNotSupported;
-    PvmiCapabilityAndConfig *capConfig;
-    iConnectedPort->QueryInterface(PVMI_CAPABILITY_AND_CONFIG_PVUUID,
-                                   (OsclAny*&)capConfig);
+    OsclAny* temp = NULL;
+    iConnectedPort->QueryInterface(PVMI_CAPABILITY_AND_CONFIG_PVUUID, temp);
+    PvmiCapabilityAndConfig *capConfig = OSCL_STATIC_CAST(PvmiCapabilityAndConfig*, temp);
 
     if (capConfig != NULL)
     {
@@ -465,6 +481,23 @@ PVMFStatus PVMFMediaLayerPort::QueueOutgoingMsg(PVMFSharedMediaMsgPtr aMsg)
         PVMF_MLNODE_LOGINFO((0, "PVMFMediaLayerPort::QueueOutgoingMsg: Connected Port Incoming queue in busy / flushing state - Attempting to Q in output port's outgoing msg q"));
         return (PvmfPortBaseImpl::QueueOutgoingMsg(aMsg));
     }
+    // In case there are data pending in iOutgoingQueue, we should try sending them first.
+    if (!iOutgoingQueue.iQ.empty())
+    {
+        PVMF_MLNODE_LOGINFO((0, "PVMFMediaLayerPort::QueueOutgoingMsg: send pending data first"));
+        PVMFStatus status = PvmfPortBaseImpl::Send();
+        if (status != PVMFSuccess)
+        {
+            PVMF_MLNODE_LOGINFO((0, "PVMFMediaLayerPort::QueueOutgoingMsg: send pending data not success status = %d:", status));
+            return status;
+        }
+        else if (cpPort->iIncomingQueue.iBusy)
+        {
+            PVMF_MLNODE_LOGINFO((0, "PVMFMediaLayerPort::QueueOutgoingMsg: Connected Port Incoming queue in busy / flushing state after sending pending data - Attempting to Q in output port's outgoing msg q"));
+            return (PvmfPortBaseImpl::QueueOutgoingMsg(aMsg));
+        }
+    }
+
 
     // Add message to outgoing queue and notify the node of the activity
     // There is no need to trap the push_back, since it cannot leave in this usage

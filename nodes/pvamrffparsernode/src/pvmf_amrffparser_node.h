@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,7 +102,7 @@
 
 #define PVMF_AMR_PARSER_NODE_TEMPLATED_DELETE(auditCB, T, Tsimple, ptr)\
 {\
-	OSCL_TEMPLATED_DELETE(ptr, T, Tsimple);\
+	OSCL_DELETE(ptr);\
 }
 
 #define PV_AMR_PARSER_NODE_ARRAY_NEW(auditCB, T, count, ptr)\
@@ -234,7 +234,7 @@ class PVMFAMRFFNodeCommand : public PVMFAMRFFNodeCommandBase
         }
 
         // Constructor and parser for SetDataSourceRate
-        void Construct(PVMFSessionId s, int32 cmd, int32 aRate, OsclTimebase* aTimebase, const OsclAny*aContext)
+        void Construct(PVMFSessionId s, int32 cmd, int32 aRate, PVMFTimebase* aTimebase, const OsclAny*aContext)
         {
             PVMFAMRFFNodeCommandBase::Construct(s, cmd, aContext);
             iParam1 = (OsclAny*)aRate;
@@ -243,10 +243,10 @@ class PVMFAMRFFNodeCommand : public PVMFAMRFFNodeCommandBase
             iParam4 = NULL;
             iParam5 = NULL;
         }
-        void Parse(int32& aRate, OsclTimebase*& aTimebase)
+        void Parse(int32& aRate, PVMFTimebase*& aTimebase)
         {
             aRate = (int32)iParam1;
-            aTimebase = (OsclTimebase*)iParam2;
+            aTimebase = (PVMFTimebase*)iParam2;
         }
 
         /* need to overlaod the base Destroy routine to cleanup metadata key. */
@@ -425,8 +425,8 @@ class PVMFAMRFFParserNode :  public OsclTimerObject
         bool queryInterface(const PVUuid& uuid, PVInterface *& iface);
         //From PVMFDataSourceInitializationExtensionInterface
         PVMFStatus SetSourceInitializationData(OSCL_wString& aSourceURL, PVMFFormatType& aSourceFormat, OsclAny* aSourceData);
-        PVMFStatus SetClientPlayBackClock(OsclClock* aClientClock);
-        PVMFStatus SetEstimatedServerClock(OsclClock* aClientClock);
+        PVMFStatus SetClientPlayBackClock(PVMFMediaClock* aClientClock);
+        PVMFStatus SetEstimatedServerClock(PVMFMediaClock* aClientClock);
 
         //From PVMFTrackSelectionExtensionInterface
         PVMFStatus GetMediaPresentationInfo(PVMFMediaPresentationInfo& aInfo);
@@ -466,7 +466,7 @@ class PVMFAMRFFParserNode :  public OsclTimerObject
 
         PVMFCommandId SetDataSourceRate(PVMFSessionId aSession
                                         , int32 aRate
-                                        , OsclTimebase* aTimebase = NULL
+                                        , PVMFTimebase* aTimebase = NULL
                                                                     , OsclAny* aContext = NULL);
 
         /* From PVMIDatastreamuserInterface */
@@ -539,7 +539,7 @@ class PVMFAMRFFParserNode :  public OsclTimerObject
 
         void MoveCmdToCurrentQueue(PVMFAMRFFNodeCommand& aCmd);
         void MoveCmdToCancelQueue(PVMFAMRFFNodeCommand& aCmd);
-        void ProcessCommand();
+        bool ProcessCommand();
         void CommandComplete(PVMFAMRFFNodeCmdQ& aCmdQueue,
                              PVMFAMRFFNodeCommand& aCmd,
                              PVMFStatus aStatus,
@@ -605,7 +605,6 @@ class PVMFAMRFFParserNode :  public OsclTimerObject
 
         bool RetrieveTrackData(PVAMRFFNodeTrackPortInfo& aTrackPortInfo);
         PVMFStatus RetrieveTrackData(PVAMRFFNodeTrackPortInfo& aTrackPortInfo, PVMFSharedMediaDataPtr& aMediaDataOut);
-        bool SendTrackData(PVAMRFFNodeTrackPortInfo& aTrackPortInfo);
         bool SendEndOfTrackCommand(PVAMRFFNodeTrackPortInfo& aTrackPortInfo);
         PVMFStatus SendBeginOfMediaStreamCommand(PVAMRFFNodeTrackPortInfo* aTrackPortInfo);
         bool CheckAvailabilityForSendingNewTrackData(PVAMRFFNodeTrackPortInfo& aTrackPortInfo);
@@ -637,6 +636,10 @@ class PVMFAMRFFParserNode :  public OsclTimerObject
         PVMFStatus GenerateAndSendEOSCommand(PVAMRFFNodeTrackPortInfo* aTrackInfoPtr);
         bool CheckForPortRescheduling();
         bool CheckForPortActivityQueues();
+        int32 PushBackKeyVal(Oscl_Vector<PvmiKvp, OsclMemAllocator>*& aValueListPtr, PvmiKvp &aKeyVal);
+        PVMFStatus PushValueToList(Oscl_Vector<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator> &aRefMetadataKeys,
+                                   PVMFMetadataList *&aKeyListPtr,
+                                   uint32 aLcv);
 
         /* Progressive download related */
         PVMFStatus CheckForAMRHeaderAvailability();
@@ -689,6 +692,7 @@ class PVMFAMRFFParserNode :  public OsclTimerObject
         PVMFCPMPluginAccessInterfaceFactory* iCPMContentAccessFactory;
         PVMFMetadataExtensionInterface* iCPMMetaDataExtensionInterface;
         PVMFCPMPluginLicenseInterface* iCPMLicenseInterface;
+        PVInterface* iCPMLicenseInterfacePVI;
         PvmiKvp iRequestedUsage;
         PvmiKvp iApprovedUsage;
         PvmiKvp iAuthorizationDataKvp;
@@ -727,7 +731,6 @@ class PVMFAMRFFParserNode :  public OsclTimerObject
                                 bool aWideCharVersion = false);
         PVMFStatus DoCancelGetLicense(PVMFAMRFFNodeCommand& aCmd);
         void CompleteGetLicense();
-        void Assert(bool);
         PVMFStatus ParseAMRFile();
         uint32 iCountToClaculateRDATimeInterval;
 };

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@
 #include "oscl_scheduler.h"
 #include "oscl_error.h"
 #include "oscl_error_imp.h"
-#include "oscl_execpanic.h"
 
 OsclExecSchedulerBase::OsclExecSchedulerBase()
 //constructor
@@ -40,8 +39,8 @@ void OsclExecSchedulerBase::Error(int32 anError) const
 //virtual method--default error handler.
 {
     OSCL_UNUSED_ARG(anError);
-    //"The default method raised E32User Cbase 47 panic
-    PV_EXECPANIC(EExecObjectLeave);
+    //"The default method raises E32User Cbase 47 panic
+    OsclError::Leave(OsclErrNoHandler);//EExecObjectLeave
 }
 
 void OsclExecSchedulerBase::OnStarting()

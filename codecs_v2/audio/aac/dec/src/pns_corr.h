@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,15 +17,14 @@
  */
 /*
 
- Pathname: ./include/pns_corr.h
-
-     Date: 07/05/2001
+ Pathname: pns_corr.h
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
 
  Description: Made changes per review comments.
 
+ Who:                       Date:
  Description:
 ------------------------------------------------------------------------------
  INCLUDE DESCRIPTION

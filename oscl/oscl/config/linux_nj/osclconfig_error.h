@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,9 +36,10 @@
 #include "osclconfig.h"
 #endif
 
-
-
-
+#define OSCL_HAS_EXCEPTIONS                     1
+#define OSCL_HAS_ERRNO_H		                1
+#define OSCL_HAS_SYMBIAN_ERRORTRAP      0
+#define OSCL_HAS_SETJMP_H 1
 
 // system header files
 #include <setjmp.h>

@@ -92,13 +92,13 @@ void AndroidAudioStream::setParametersSync(PvmiMIOSession aSession, PvmiKvp* aPa
     AndroidAudioMIO::setParametersSync(aSession, aParameters, num_elements, aRet_kvp);
 
     // initialize audio sink when we have enough information
-    if (iAudioSamplingRateValid && iAudioNumChannelsValid && iAudioFormat != PVMF_FORMAT_UNKNOWN) {
-        mAudioSink->open(iAudioSamplingRate, iAudioNumChannels, ((iAudioFormat==PVMF_PCM8)?AudioSystem::PCM_8_BIT:AudioSystem::PCM_16_BIT));
+    if (iAudioSamplingRateValid && iAudioNumChannelsValid && iAudioFormat != PVMF_MIME_FORMAT_UNKNOWN) {
+        mAudioSink->open(iAudioSamplingRate, iAudioNumChannels, ((iAudioFormat==PVMF_MIME_PCM8)?AudioSystem::PCM_8_BIT:AudioSystem::PCM_16_BIT));
 
         // reset flags for next time
         iAudioSamplingRateValid = false;
         iAudioNumChannelsValid  = false;
-        iAudioFormat = PVMF_FORMAT_UNKNOWN;
+        iAudioFormat = PVMF_MIME_FORMAT_UNKNOWN;
     }
 }
 

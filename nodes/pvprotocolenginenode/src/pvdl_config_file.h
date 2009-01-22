@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,8 +48,8 @@ class PVDlCfgFile
             LoadConfigStatus_NonCriticalError = -2 // read failure, url mismatch, headers unavailable
         };
 
-        PVDlCfgFile();
-        virtual ~PVDlCfgFile();
+        OSCL_IMPORT_REF PVDlCfgFile();
+        OSCL_IMPORT_REF virtual ~PVDlCfgFile();
 
         OSCL_IMPORT_REF void SetConfigFileName(OSCL_wString &aFileName)
         {
@@ -276,9 +276,9 @@ class PVDlCfgFile
         {
             return bIsNewSession;
         };
-        void SetNewSession()
+        void SetNewSession(const bool aNewSession = true)
         {
-            bIsNewSession = true;
+            bIsNewSession = aNewSession;
         }
 
         bool HasContentLength() const
@@ -365,6 +365,7 @@ class PVDlCfgFile
         uint32 iMaxAllowedFileSize;
         //the file size after it is completly downloaded.
         uint32	iOverallFileSize;
+        //for FastTrack, this would be the accumulated bytes downloaded
         uint32	iCurrentFileSize;
         //flag of whether to have content length for the previous download
         // boolean variable, but intentionally choose uint32 instead of bool, for consistency with other variables

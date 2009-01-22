@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,24 +16,13 @@
  * -------------------------------------------------------------------
  */
 /*
-------------------------------------------------------------------------------
 
-
-
- Pathname: /audio/
-                aac_mpeg4/
-                    AAC_baseline/
-                        pv_aac_dec/
-                            c/
-                                src/
-                                    tns_decode_coef.c
-
-     Date: 10/25/2000
+ Pathname: tns_decode_coef.c
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
 
- Description:  Modified from original code
+ Description:  Modified from original shareware code
 
  Description:  Implemented in 16-bit Fixed Point
 
@@ -72,6 +61,7 @@
 
  Description:  modified precision of coefficients
 
+ Who:                                   Date:
  Description:
 ------------------------------------------------------------------------------
  INPUT AND OUTPUT DEFINITIONS

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -195,7 +195,7 @@ void GetMotionVectorPredictor(AVCCommonObj *video, int encFlag)
     int i, j, offset_MbPart_indx, refIdxLXA, refIdxLXB, refIdxLXC = 0, curr_ref_idx;
     int pmv_A_x, pmv_B_x, pmv_C_x = 0, pmv_A_y, pmv_B_y, pmv_C_y = 0;
 
-    /* we have to take care of Intra/skip blocks somewhere, i.e. set MV to  0 and set ref to -1! MC */
+    /* we have to take care of Intra/skip blocks somewhere, i.e. set MV to  0 and set ref to -1! */
     /* we have to populate refIdx as well */
 
 
@@ -208,16 +208,16 @@ void GetMotionVectorPredictor(AVCCommonObj *video, int encFlag)
         currMB->ref_idx_L0[0] = currMB->ref_idx_L0[1] = currMB->ref_idx_L0[2] = currMB->ref_idx_L0[3] = 0;
         if (video->mbAvailA && video->mbAvailB)
         {
-            if ((MB_A->ref_idx_L0[1] == 0 && MB_A->mvL0[6] == 0 &&  MB_A->mvL0[7] == 0) ||
-                    (MB_B->ref_idx_L0[2] == 0 && MB_B->mvL0[24] == 0 &&  MB_B->mvL0[25] == 0))
+            if ((MB_A->ref_idx_L0[1] == 0 && MB_A->mvL0[3] == 0) ||
+                    (MB_B->ref_idx_L0[2] == 0 && MB_B->mvL0[12] == 0))
             {
-                oscl_memset(currMB->mvL0, 0, sizeof(int16)*32);
+                oscl_memset(currMB->mvL0, 0, sizeof(int32)*16);
                 return;
             }
         }
         else
         {
-            oscl_memset(currMB->mvL0, 0, sizeof(int16)*32);
+            oscl_memset(currMB->mvL0, 0, sizeof(int32)*16);
             return;
         }
         video->mvd_l0[0][0][0] = 0;
@@ -238,7 +238,7 @@ void GetMotionVectorPredictor(AVCCommonObj *video, int encFlag)
 
         for (subMbPartIdx = 0; subMbPartIdx < currMB->NumSubMbPart[mbPartIdx]; subMbPartIdx++)
         {
-            block_x = mbPartIdx_X + ((subMbPartIdx + offset_indx) & 1);  // check this MC
+            block_x = mbPartIdx_X + ((subMbPartIdx + offset_indx) & 1);
             block_y = mbPartIdx_Y + (((subMbPartIdx + offset_indx) >> 1) & 1);
 
             block_x_1 = block_x - 1;
@@ -250,7 +250,7 @@ void GetMotionVectorPredictor(AVCCommonObj *video, int encFlag)
             {
                 avail_a = 1;
                 refIdxLXA = currMB->ref_idx_L0[(block_y & 2) + (block_x_1 >> 1)];
-                mv = &currMB->mvL0[0] + (block_y << 3) + (block_x_1 << 1);
+                mv = (int16*)(currMB->mvL0 + (block_y << 2) + block_x_1);
                 pmv_A_x = *mv++;
                 pmv_A_y = *mv;
             }
@@ -260,7 +260,7 @@ void GetMotionVectorPredictor(AVCCommonObj *video, int encFlag)
                 if (avail_a)
                 {
                     refIdxLXA = MB_A->ref_idx_L0[(block_y & 2) + 1];
-                    mv = &MB_A->mvL0[0] + (block_y << 3) + 6;
+                    mv = (int16*)(MB_A->mvL0 + (block_y << 2) + 3);
                     pmv_A_x = *mv++;
                     pmv_A_y = *mv;
                 }
@@ -270,7 +270,7 @@ void GetMotionVectorPredictor(AVCCommonObj *video, int encFlag)
             {
                 avail_b = 1;
                 refIdxLXB = currMB->ref_idx_L0[(block_y_1 & 2) + (block_x >> 1)];
-                mv = &currMB->mvL0[0] + (block_y_1 << 3) + (block_x << 1);
+                mv = (int16*)(currMB->mvL0 + (block_y_1 << 2) + block_x);
                 pmv_B_x = *mv++;
                 pmv_B_y = *mv;
             }
@@ -281,7 +281,7 @@ void GetMotionVectorPredictor(AVCCommonObj *video, int encFlag)
                 if (avail_b)
                 {
                     refIdxLXB = MB_B->ref_idx_L0[2 + (block_x >> 1)];
-                    mv = &MB_B->mvL0[0] + 24 + (block_x << 1);
+                    mv = (int16*)(MB_B->mvL0 + 12 + block_x);
                     pmv_B_x = *mv++;
                     pmv_B_y = *mv;
                 }
@@ -292,9 +292,9 @@ void GetMotionVectorPredictor(AVCCommonObj *video, int encFlag)
 
             if (avail_c)
             {
-                /* it guaranteed that block_y > 0 && new_block_x<3 ) MC */
+                /* it guaranteed that block_y > 0 && new_block_x<3 ) */
                 refIdxLXC = currMB->ref_idx_L0[(block_y_1 & 2) + ((new_block_x+1) >> 1)];
-                mv = &currMB->mvL0[0] + (block_y_1 << 3) + ((new_block_x + 1) << 1);
+                mv = (int16*)(currMB->mvL0 + (block_y_1 << 2) + (new_block_x + 1));
                 pmv_C_x = *mv++;
                 pmv_C_y = *mv;
             }
@@ -306,7 +306,7 @@ void GetMotionVectorPredictor(AVCCommonObj *video, int encFlag)
                     if (avail_c)
                     {
                         refIdxLXC = MB_B->ref_idx_L0[2 + ((new_block_x+1)>>1)];
-                        mv = &MB_B->mvL0[0] + 24 + ((new_block_x + 1) << 1);
+                        mv = (int16*)(MB_B->mvL0 + 12 + (new_block_x + 1));
                         pmv_C_x = *mv++;
                         pmv_C_y = *mv;
                     }
@@ -317,7 +317,7 @@ void GetMotionVectorPredictor(AVCCommonObj *video, int encFlag)
                     if (avail_c)
                     {
                         refIdxLXC = MB_C->ref_idx_L0[2];
-                        mv = &MB_C->mvL0[0] + 24;
+                        mv = (int16*)(MB_C->mvL0 + 12);
                         pmv_C_x = *mv++;
                         pmv_C_y = *mv;
                     }
@@ -329,7 +329,7 @@ void GetMotionVectorPredictor(AVCCommonObj *video, int encFlag)
                     {
                         avail_c = 1;
                         refIdxLXC =  currMB->ref_idx_L0[(block_y_1 & 2) + (block_x_1 >> 1)];
-                        mv = &currMB->mvL0[0] + (block_y_1 << 3) + (block_x_1 << 1);
+                        mv = (int16*)(currMB->mvL0 + (block_y_1 << 2) + block_x_1);
                         pmv_C_x = *mv++;
                         pmv_C_y = *mv;
                     }
@@ -339,7 +339,7 @@ void GetMotionVectorPredictor(AVCCommonObj *video, int encFlag)
                         if (avail_c)
                         {
                             refIdxLXC =  MB_A->ref_idx_L0[(block_y_1 & 2) + 1];
-                            mv = &MB_A->mvL0[0] + (block_y_1 << 3) + 6;
+                            mv = (int16*)(MB_A->mvL0 + (block_y_1 << 2) + 3);
                             pmv_C_x = *mv++;
                             pmv_C_y = *mv;
                         }
@@ -350,7 +350,7 @@ void GetMotionVectorPredictor(AVCCommonObj *video, int encFlag)
                         if (avail_c)
                         {
                             refIdxLXC = MB_B->ref_idx_L0[2 + (block_x_1 >> 1)];
-                            mv = &MB_B->mvL0[0] + 24 + (block_x_1 << 1);
+                            mv = (int16*)(MB_B->mvL0 + 12 + block_x_1);
                             pmv_C_x = *mv++;
                             pmv_C_y = *mv;
                         }
@@ -361,7 +361,7 @@ void GetMotionVectorPredictor(AVCCommonObj *video, int encFlag)
                         if (avail_c)
                         {
                             refIdxLXC = MB_D->ref_idx_L0[3];
-                            mv = &MB_D->mvL0[0] + 30;
+                            mv = (int16*)(MB_D->mvL0 + 15);
                             pmv_C_x = *mv++;
                             pmv_C_y = *mv;
                         }
@@ -402,7 +402,7 @@ void GetMotionVectorPredictor(AVCCommonObj *video, int encFlag)
                 pmv_y = AVC_MEDIAN(pmv_A_y, pmv_B_y, pmv_C_y);
             }
 
-            /* overwrite if special case  MC*/
+            /* overwrite if special case */
             if (currMB->NumMbPart == 2)
             {
                 if (currMB->MbPartWidth == 16)
@@ -439,7 +439,7 @@ void GetMotionVectorPredictor(AVCCommonObj *video, int encFlag)
                 }
             }
 
-            mv = &currMB->mvL0[0] + (block_x << 1) + (block_y << 3);
+            mv = (int16*)(currMB->mvL0 + block_x + (block_y << 2));
 
             if (encFlag) /* calculate residual MV video->mvd_l0 */
             {

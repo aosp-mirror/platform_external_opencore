@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,10 +56,18 @@ class PVMFRTCPMemPool
 {
     public:
         PVMFRTCPMemPool(uint32 aNumRTCPBufs = DEFAULT_RTCP_MEM_POOL_BUFFERS)
-                : iMediaDataMemPool(aNumRTCPBufs, PVMF_MEDIA_DATA_CLASS_SIZE)
         {
+            iMediaDataMemPool = NULL;
+            iMediaDataMemPool = OSCL_NEW(OsclMemPoolFixedChunkAllocator, (aNumRTCPBufs, PVMF_MEDIA_DATA_CLASS_SIZE));
         }
 
+        ~PVMFRTCPMemPool()
+        {
+            if (iMediaDataMemPool)
+            {
+                iMediaDataMemPool->removeRef();
+            }
+        }
         OsclSharedPtr<PVMFMediaDataImpl> getMediaDataImpl(uint32 size)
         {
             return (iRTCPRRMsgBufAlloc->createSharedBuffer(size));
@@ -67,7 +75,7 @@ class PVMFRTCPMemPool
 
         OsclSharedPtr<PVMFSharedSocketDataBufferAlloc> iRTCPRRMsgBufAlloc;
         /* Memory pool for media data objects */
-        OsclMemPoolFixedChunkAllocator iMediaDataMemPool;
+        OsclMemPoolFixedChunkAllocator* iMediaDataMemPool;
 };
 
 class PVMFRTCPStats
@@ -80,7 +88,7 @@ class PVMFRTCPStats
             lastSenderReportTS = 0;
             lastSenderReportRecvTime = 0;
             packetLossUptoThisRR = 0;
-            maxSeqNumRecievedUptoThisRR = 0;
+            maxSeqNumReceivedUptoThisRR = 0;
             lastRRGenTime = 0;
             oSRRecvd = false;
             oRTCPByeRecvd = false;
@@ -93,7 +101,7 @@ class PVMFRTCPStats
             lastSenderReportTS = aSrc.lastSenderReportTS;
             lastSenderReportRecvTime = aSrc.lastSenderReportRecvTime;
             packetLossUptoThisRR = aSrc.packetLossUptoThisRR;
-            maxSeqNumRecievedUptoThisRR = aSrc.maxSeqNumRecievedUptoThisRR;
+            maxSeqNumReceivedUptoThisRR = aSrc.maxSeqNumReceivedUptoThisRR;
             lastRRGenTime = aSrc.lastRRGenTime;
             oSRRecvd = aSrc.oSRRecvd;
             oRTCPByeRecvd = aSrc.oRTCPByeRecvd;
@@ -108,7 +116,7 @@ class PVMFRTCPStats
                 lastSenderReportTS = a.lastSenderReportTS;
                 lastSenderReportRecvTime = a.lastSenderReportRecvTime;
                 packetLossUptoThisRR = a.packetLossUptoThisRR;
-                maxSeqNumRecievedUptoThisRR = a.maxSeqNumRecievedUptoThisRR;
+                maxSeqNumReceivedUptoThisRR = a.maxSeqNumReceivedUptoThisRR;
                 lastRRGenTime = a.lastRRGenTime;
                 oSRRecvd = a.oSRRecvd;
                 oRTCPByeRecvd = a.oRTCPByeRecvd;
@@ -122,7 +130,7 @@ class PVMFRTCPStats
         uint32	lastSenderReportTS;
         uint64	lastSenderReportRecvTime;
         int32	packetLossUptoThisRR;
-        int32   maxSeqNumRecievedUptoThisRR;
+        int32   maxSeqNumReceivedUptoThisRR;
         uint64	lastRRGenTime;
         bool    oSRRecvd;
         bool    oRTCPByeRecvd;

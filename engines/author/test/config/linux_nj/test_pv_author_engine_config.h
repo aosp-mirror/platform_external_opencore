@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,72 +28,81 @@
 // Set to 1 to use the scheduler native to the system instead of PV scheduler
 #define USE_NATIVE_SCHEDULER 0
 
-#define SOURCENAME_AUTHOR_PREPEND_STRING _STRLIT("")
-
 #define KLogFile _STRLIT("pvauthor.log")
+#define KPVAELoggerFile _STRLIT("pvaelogger.txt")
+
 
 // Input files
-#define KYUVTestInput               SOURCENAME_AUTHOR_PREPEND_STRING"yuvtestinput.yuv"
-#define KH263TestInput              SOURCENAME_AUTHOR_PREPEND_STRING"h263testinput.h263"
-#define KM4VTestInput               SOURCENAME_AUTHOR_PREPEND_STRING"m4vtestinput.m4v"
-#define KAMRTestInput               SOURCENAME_AUTHOR_PREPEND_STRING"amrtestinput.amr"
-#define KAACADIFTestInput           SOURCENAME_AUTHOR_PREPEND_STRING"aac_adif.aacadif"
-#define KAACADTSTestInput           SOURCENAME_AUTHOR_PREPEND_STRING"aac_adts.aacadts"
-#define KPCM16TestInput             SOURCENAME_AUTHOR_PREPEND_STRING"pcm16testinput.pcm"
-#define KH264TestInput              SOURCENAME_AUTHOR_PREPEND_STRING"h264testinput.h264"
-#define KTEXTTestInput              SOURCENAME_AUTHOR_PREPEND_STRING"MOL004.txt"
-#define KTEXTLogTestInput           SOURCENAME_AUTHOR_PREPEND_STRING"MOL004_text0.log"
-#define KTEXTTxtFileTestInput       SOURCENAME_AUTHOR_PREPEND_STRING"MOL004_sd_txt1.txt"
+#define KYUVTestInput _STRLIT("yuvtestinput.yuv")
+#define KH263TestInput _STRLIT("h263testinput.h263")
+#define KAMRTestInput _STRLIT("amrtestinput.amr")
+#define KAACADIFTestInput _STRLIT("aac_adif.aacadif")
+#define KAACADTSTestInput _STRLIT("aac_adts.aacadts")
+#define KH264TestInput _STRLIT("h264testinput.h264")
+#define KTEXTTestInput _STRLIT("MOL004.txt")
+#define KTEXTLogTestInput _STRLIT("MOL004_text0.log")
+#define KTEXTTxtFileTestInput _STRLIT("MOL004_sd_txt1.txt")
 
 // Output files
-#define KAMRInputAOnly3gpTestOutput     SOURCENAME_AUTHOR_PREPEND_STRING"amr_in_a_only_test.3gp"
-#define KAMRInputAOnlyMp4TestOutput     SOURCENAME_AUTHOR_PREPEND_STRING"amr_in_a_only_test.mp4"
-#define KYUVInputVOnly3gpTestOutput     SOURCENAME_AUTHOR_PREPEND_STRING"yuv_in_v_only_test.3gp"
-#define KH263InputVOnly3gpTestOutput    SOURCENAME_AUTHOR_PREPEND_STRING"h263_in_v_only_test.3gp"
-#define KYUVInputVOnlyMp4TestOutput     SOURCENAME_AUTHOR_PREPEND_STRING"yuv_in_v_only_test.mp4"
-#define KM4VInputVOnlyMp4TestOutput     SOURCENAME_AUTHOR_PREPEND_STRING"m4v_in_v_only_test.mp4"
-#define KAMRYUVInputAV3gpTestOutput     SOURCENAME_AUTHOR_PREPEND_STRING"amr_yuv_in_av_test.3gp"
-#define KAMRH263InputAV3gpTestOutput    SOURCENAME_AUTHOR_PREPEND_STRING"amr_h263_in_av_test.3gp"
-#define KAMRYUVInputAVMp4TestOutput     SOURCENAME_AUTHOR_PREPEND_STRING"amr_yuv_in_av_test.mp4"
-#define KAMRM4VInputAVMp4TestOutput     SOURCENAME_AUTHOR_PREPEND_STRING"amr_m4v_in_av_test.mp4"
-#define KPauseResumeTestOutput          SOURCENAME_AUTHOR_PREPEND_STRING"pause_resume_test.mp4"
-#define KFOAOnlyAMRTestOutput           SOURCENAME_AUTHOR_PREPEND_STRING"amr_testoutput.amr"
-#define KFOAOnlyAACADIFTestOutput       SOURCENAME_AUTHOR_PREPEND_STRING"aac_adif_output.aac"
-#define KFOAOnlyAACADTSTestOutput       SOURCENAME_AUTHOR_PREPEND_STRING"aac_adts_output.aac"
-#define KPCM16TestOutput                SOURCENAME_AUTHOR_PREPEND_STRING"pcm_testoutput.amr"
-#define KPCM16AOnly3gpTestOutput        SOURCENAME_AUTHOR_PREPEND_STRING"pcm_in_a_only_test.3gp"
-#define KPCM16AOnlyMp4TestOutput        SOURCENAME_AUTHOR_PREPEND_STRING"pcm_in_a_only_test.mp4"
-#define KPCM16YUVInputAV3gpTestOutput   SOURCENAME_AUTHOR_PREPEND_STRING"pcm_in_av_test.3gp"
-#define KPCM16YUVInputAVMp4TestOutput   SOURCENAME_AUTHOR_PREPEND_STRING"pcm_in_av_test.mp4"
-#define KMaxFileSizeTestOutput          SOURCENAME_AUTHOR_PREPEND_STRING"maxfilesize_test.3gp"
-#define KMaxDurationTestOutput          SOURCENAME_AUTHOR_PREPEND_STRING"maxduration_test.3gp"
-#define KFileSizeProgressTestOutput     SOURCENAME_AUTHOR_PREPEND_STRING"filesizeprogress_test.3gp"
-#define KDurationProgressTestOutput     SOURCENAME_AUTHOR_PREPEND_STRING"durationprogress_test.3gp"
-#define KIMotionAuthoringModeTestOutput SOURCENAME_AUTHOR_PREPEND_STRING"IMotionAuthoring_test.3gp"
-#define KFastTrackContentModeTestOutput SOURCENAME_AUTHOR_PREPEND_STRING"FastTrackContentAuthoring_test.3gp"
-#define K3GPPDownloadModeTestOutput     SOURCENAME_AUTHOR_PREPEND_STRING"3GPPDownloadAuthoring_test.3gp"
-#define K3GPPProgressiveDownloadModeTestOutput SOURCENAME_AUTHOR_PREPEND_STRING"3GPPProgressiveDownloadAuthoring_test.3gp"
-#define KIMotionDownloadModeTestOutput  SOURCENAME_AUTHOR_PREPEND_STRING"IMotionDownloadAuthoring_test.3gp"
-#define KH264InputVOnlyMp4TestOutput    SOURCENAME_AUTHOR_PREPEND_STRING"h264_in_v_only_test.mp4"
-#define KH264AMRInputAVMp4TestTestOutput SOURCENAME_AUTHOR_PREPEND_STRING"h264_amr_in_av_test.mp4"
-#define KMovieFragmentModeTestOutput    SOURCENAME_AUTHOR_PREPEND_STRING"movieFragmentFileTest.mp4"
-#define KYUVAMRTEXTInputAVTMp4TestOutput SOURCENAME_AUTHOR_PREPEND_STRING"yuv_amr_text_test.mp4"
-#define KYUVTEXTInputMp4TestOutput       SOURCENAME_AUTHOR_PREPEND_STRING"yuv_text_test.mp4"
-#define KAMRTEXTInputMp4TestOutput       SOURCENAME_AUTHOR_PREPEND_STRING"amr_text_test.mp4"
-#define KTEXTInputMp4TestOutput          SOURCENAME_AUTHOR_PREPEND_STRING"text_test.mp4"
+#define KAMRInputAOnly3gpTestOutput _STRLIT("amr_in_a_only_test.3gp")
+#define KAMRInputAOnlyMp4TestOutput _STRLIT("amr_in_a_only_test.3gp")
+#define KH263InputVOnly3gpTestOutput _STRLIT("h263_in_v_only_test.3gp")
+#define KAMRYUVInputAV3gpTestOutput _STRLIT("amr_yuv_in_av_test.3gp")
+#define KAMRH263InputAV3gpTestOutput _STRLIT("amr_h263_in_av_test.3gp")
+#define KAMRYUVInputAVMp4TestOutput _STRLIT("amr_yuv_in_av_test.3gp")
+#define KAMRM4VInputAVMp4TestOutput _STRLIT("amr_m4v_in_av_test.3gp")
+#define KFOAOnlyAMRTestOutput _STRLIT("amr_testoutput.amr")
+#define KFOAOnlyAACADIFTestOutput _STRLIT("aac_adif_output.aac")
+#define KFOAOnlyAACADTSTestOutput _STRLIT("aac_adts_output.aac")
+#define KH264AMRInputAVMp4TestTestOutput _STRLIT("h264_amr_in_av_test.3gp")
+#define KYUVAMRTEXTInputAVTMp4TestOutput _STRLIT("yuv_amr_text_test.3gp")
+#define KYUVTEXTInputMp4TestOutput _STRLIT("yuv_text_test.3gp")
+#define KAMRTEXTInputMp4TestOutput _STRLIT("amr_text_test.3gp")
+#define KTEXTInputMp4TestOutput _STRLIT("text_test.3gp")
 //Error Handling TestCases
-#define KYUVTestInputWrong					SOURCENAME_AUTHOR_PREPEND_STRING"yuvtestinput_wrong.yuv"
-#define KTEXTTestInputWrong					SOURCENAME_AUTHOR_PREPEND_STRING"texttestinput_wrong.txt"
-//specify wrong path
-#define KAMRYUVInputAV3gpTestOutputWrong	SOURCENAME_AUTHOR_PREPEND_STRING"../../../test_input_wrong/amr_yuv_in_av_test.3gp"
-#define KAMRTestInputWrong					SOURCENAME_AUTHOR_PREPEND_STRING"amrtestinput_wrong.amr"
+#define KTEXTTestInputWrong					_STRLIT("texttestinput_wrong.txt")
 
-#define DEFAULTSOURCEFILENAME				"testinput.avi"
-#define DEFAULTSOURCEFORMATTYPE			  	PVMF_AVIFF
-#define DEFAULTOUTPUTFILENAME				"testoutput.mp4"
+#define DEFAULTSOURCEFILENAME						"testinput.avi"
+#define DEFAULTSOURCEFORMATTYPE							PVMF_MIME_AVIFF
+#define DEFAULTOUTPUTFILENAME						"testoutput.3gp"
+#define DEFAULTOUTPUT_3GP_FILENAME						"testoutput.3gp"
 
-#define FILE_NAME_ERROR_HANDLING			"testinput_rgb16.avi"
-#define WRONGIPFILENAME_ERRORHANDLING		"/wrongdir/testinput.avi"
+//YUV test through AVI file
+#define KYUV_AVI_VIDEO_ONLY							"videoonly.avi"
+#define KPCM_AVI_AUDIO_ONLY							"audioonly.wav"
+#define KPCM_YUV_AVI_FILENAME						"testoutput_IYUV_8k_16_mono.avi"
+#define KMediaInput_Open_RealTimeCompose_Output		"mediainput_open_realtimecompose.3gp"
+//YUV & PCM test output files
+#define KYUV_VOnly_3GPP_Output						"Yuv_VideoOnly_Output.3gp"
+#define KPCM_AOnly_3GPP_Output						"Pcm_AudioOnly_Output.3gp"
+#define KPCM_YUV_AV_3GPP_Output						"Pcm_Yuv_AV_Output.3gp"
+#define KYUV_VOnly_MP4_Output						"Yuv_VideoOnly_Output.3gp"
+#define KH264_VOnly_MP4_Output						"H264_VideoOnly_Output.3gp"
+#define KPCM_AOnly_MP4_Output						"Pcm_AudioOnly_Output.3gp"
+#define KPCM_YUV_AV_MP4_Output						"Pcm_Yuv_AV_Output.3gp"
+#define KPCM16_AMR_TestOutput						"pcm_testoutput.amr"
+
+#define KMaxFileSizeTestOutput						"maxfilesize_test.3gp"
+#define KMaxFileSize_long_Output					"maxfilesize_long_output.3gp"
+
+#ifndef _IMOTION_SPECIFIC_UT_DISABLE
+#define KIMOTIONAUTHORINGMODE_OUTPUT				"IMotionAuthoring_output.3gp"
+#define KIMOTIONDOWNLOADMODE_OUTPUT					"IMotionDownloadAuthoring_output.3gp"
+#define KIMOTIONAUTHORINGMODE_Long_OUTPUT			"IMotionAuthoring_long_test.3gp"
+#define KIMOTIONDOWNLOADMODE_Long_OUTPUT				"IMotionDownloadAuthoring_long_test.3gp"
+#endif
+
+#define K3GPPDOWNLOADMODE_OUTPUT					"3GPPDownloadAuthoring_output.3gp"
+#define K3GPPPROGRESSIVEDOWNLOADMODE_OUTPUT			"3GPPProgressiveDownloadAuthoring_output.3gp"
+#define KMOVIEFRAGMENTMODE_OUTPUT					"MovieFragment_output.3gp"
+#define KCAPCONFIG_OUTPUT							"CapConfig_TestOutput.3gp"
+#define KAVI_Input_Long_OUTPUT						"Avi_Input_long_output.3gp"
+#define K3GPPDOWNLOADMODE_Long_OUTPUT				"3GPPDownloadAuthoring_long_test.3gp"
+#define K3GPPPROGRESSIVEDOWNLOADMODE_Long_OUTPUT		"3GPPProgressiveDownloadAuthoring_long_test.3gp"
+#define KMOVIEFRAGMENTMODE_Long_OUTPUT				"movieFragmentFileTestlong_.3gp"
+#define FILE_NAME_ERROR_HANDLING					"testinput_rgb16.avi"
+#define WRONGIPFILENAME_ERRORHANDLING				"wrongdir/testinput.avi"
+#define WRONGOPFILENAME_ERRORHANDLING				"pvaetest_wrong/testoutput.3gp"
 #endif // TEST_PV_AUTHOR_ENGINE_CONFIG_H_INCLUDED
 
 

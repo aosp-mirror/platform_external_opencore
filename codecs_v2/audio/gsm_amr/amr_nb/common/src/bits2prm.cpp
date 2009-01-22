@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,12 +28,7 @@ terms listed above has been obtained from the copyright holder.
 ****************************************************************************************/
 /*
 
-
-
-
  Filename: /audio/gsm_amr/c/src/bits2prm.c
-
-     Date: 02/04/2002
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
@@ -43,6 +38,7 @@ terms listed above has been obtained from the copyright holder.
 
  Description:  Replaced "int" and/or "char" with OSCL defined types.
 
+ Who:                       Date:
  Description:
 
 ------------------------------------------------------------------------------
@@ -270,7 +266,7 @@ void Bits2prm (
 /*----------------------------------------------------------------------------
 ; FUNCTION CODE
 ----------------------------------------------------------------------------*/
-void Bits2prm(
+OSCL_EXPORT_REF void Bits2prm(
     enum Mode mode,     /* i : AMR mode                                    */
     Word16 bits[],      /* i : serial bits       (size <= MAX_SERIAL_SIZE) */
     Word16 prm[]        /* o : analysis parameters  (size <= MAX_PRM_SIZE) */

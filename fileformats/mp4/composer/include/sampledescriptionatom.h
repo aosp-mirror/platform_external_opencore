@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*********************************************************************************/
 /*
     This PVA_FF_SampleDescriptionAtom Class gives detailed information about the codeing
     type used, and any initialization information needed for coding.
@@ -102,6 +101,9 @@ class PVA_FF_SampleDescriptionAtom : public PVA_FF_FullAtom
                 (*_psampleEntryVec)[i]->setESID(esid);
             }
         }
+
+        void SetMaxSampleSize(uint32);
+        void writeMaxSampleSize(MP4_AUTHOR_FF_FILE_IO_WRAP*);
 
     protected:
         virtual void recomputeSize();

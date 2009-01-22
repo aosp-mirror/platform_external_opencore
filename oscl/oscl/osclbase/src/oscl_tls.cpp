@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,9 @@
 #include "oscl_tls.h"
 #include "oscl_assert.h"
 
+//Use a magic number to help detect un-initialized TLS.
+#define OSCL_TLS_MAGIC_NUMBER 0x8765abcd
+#define OSCL_TLS_REGISTRY_VALID(reg) (reg!=0 && reg[OSCL_TLS_ID_MAGICNUM]==(OsclAny*)OSCL_TLS_MAGIC_NUMBER)
 
 OSCL_EXPORT_REF void TLSStorageOps::save_registry(TOsclTlsKey* key, OsclAny* ptr, int32 &aError)
 {
@@ -55,138 +58,9 @@ OSCL_EXPORT_REF OsclAny* TLSStorageOps::get_registry(TOsclTlsKey* key)
 
 #if (OSCL_TLS_IS_KEYED)
 
-//Global lookup table for Tls Keys.
-//There's one entry per thread.  Thread ID is used to lookup the key.
-OsclTLSRegistry::TlsKeyTable* OsclTLSRegistry::iTlsKeyTable = NULL;
+//Global var for Tls Key.
+OsclTLSRegistry::TlsKey* OsclTLSRegistry::iTlsKey = NULL;
 
-
-void OsclTLSRegistry::GetThreadId(TOsclTlsThreadId &threadId, int32 &aError)
-//Get thread ID of current thread.
-{
-    aError = 0;
-#if defined OSCL_TLS_THREAD_ID_FUNC
-
-    threadId = OSCL_TLS_THREAD_ID_FUNC();
-
-#elif defined OSCL_TLS_THREAD_ID_FUNC_EXPR
-
-    if (!OSCL_TLS_THREAD_ID_FUNC_EXPR(threadId))
-        aError = EPVErrorBaseSystemCallFailed;
-
-#else
-#error No Thread ID Function!
-#endif
-}
-
-TOsclTlsKey* OsclTLSRegistry::LookupTlsKey(int32 &aError)
-//Lookup Tls Key for current thread.
-{
-    aError = 0;
-
-    if (!iTlsKeyTable)
-    {
-        aError = EPVErrorBaseNotInstalled;//No table!
-        return NULL;
-    }
-
-    //Get the thread ID.
-    TOsclTlsThreadId threadId;
-    GetThreadId(threadId, aError);
-    if (aError)
-        return NULL;
-
-    //Search the Tls Key Table for this thread's entry.
-    iTlsKeyTable->iLock.Lock();
-    for (uint32 i = 0;i < OSCL_TLS_MAX_THREADS;i++)
-    {
-        if (OSCL_TLS_THREAD_ID_EQUAL(iTlsKeyTable->iKeys[i].iThreadId, threadId))
-        {
-            //found it!
-            iTlsKeyTable->iLock.Unlock();
-            return iTlsKeyTable->iKeys[i].iTlsKey;
-        }
-    }
-    iTlsKeyTable->iLock.Unlock();
-
-    return NULL;
-}
-
-bool OsclTLSRegistry::SaveTlsKey(TOsclTlsKey* aKey, int32 &aError)
-//Save Tls key in table.
-{
-    OSCL_ASSERT(aKey);
-
-    aError = 0;
-
-    if (!iTlsKeyTable)
-    {
-        aError = EPVErrorBaseNotInstalled;//No table!
-        return false;
-    }
-
-    bool saved = false;
-    iTlsKeyTable->iLock.Lock();
-    for (uint32 i = 0;i < OSCL_TLS_MAX_THREADS;i++)
-    {
-        if (iTlsKeyTable->iKeys[i].iTlsKey == NULL)
-        {
-            //found an empty entry.
-            iTlsKeyTable->iKeys[i].iTlsKey = aKey;
-            GetThreadId(iTlsKeyTable->iKeys[i].iThreadId, aError);
-            if (aError)
-                break;//can't get thread ID.
-            iTlsKeyTable->iNumKeys++;
-            saved = true;
-            break;
-        }
-    }
-    iTlsKeyTable->iLock.Unlock();
-    return saved;
-}
-
-bool OsclTLSRegistry::RemoveTlsKey(Oscl_DefAlloc& alloc, TOsclTlsKey * aKey, int32& aError)
-//Remove Tls key from table
-{
-    OSCL_ASSERT(aKey);
-
-    aError = 0;
-
-    bool found = false;
-
-    if (!iTlsKeyTable)
-    {
-        aError = EPVErrorBaseNotInstalled;
-        return found;
-    }
-
-    iTlsKeyTable->iLock.Lock();
-    for (uint32 i = 0;i < OSCL_TLS_MAX_THREADS;i++)
-    {
-        if (iTlsKeyTable->iKeys[i].iTlsKey == aKey)
-        {
-            //found it.
-            found = true;
-            iTlsKeyTable->iKeys[i].iTlsKey = NULL;
-            iTlsKeyTable->iNumKeys--;
-            break;
-        }
-    }
-
-    //Cleanup the table when it's empty
-    if (iTlsKeyTable->iNumKeys == 0)
-    {
-        iTlsKeyTable->iLock.Unlock();
-        iTlsKeyTable->~TlsKeyTable();
-        alloc.deallocate(iTlsKeyTable);
-        iTlsKeyTable = NULL;
-    }
-    else
-    {
-        iTlsKeyTable->iLock.Unlock();
-    }
-
-    return found;
-}
 
 #endif //OSCL_TLS_IS_KEYED
 
@@ -201,58 +75,46 @@ OSCL_EXPORT_REF void OsclTLSRegistry::initialize(Oscl_DefAlloc &alloc, int32 &aE
     //Allocate the table on the first init call.
     //Note there's some risk of thread contention here, since
     //the thread lock is not available until after this step.
-    if (!iTlsKeyTable)
+    if (!iTlsKey)
     {
-        OsclAny* table = alloc.allocate(sizeof(TlsKeyTable));
-        if (table)
-        {
-            iTlsKeyTable = new(table) TlsKeyTable();
-        }
-        else
+        OsclAny* table = alloc.allocate(sizeof(TlsKey));
+        if (!table)
         {
             aError = EPVErrorBaseOutOfMemory;
             return;
         }
+
+        //allocate space for key
+        pkey = (TOsclTlsKey*)alloc.allocate(sizeof(TOsclTlsKey));
+        if (!pkey)
+        {
+            aError = EPVErrorBaseOutOfMemory;
+            alloc.deallocate(table);
+            return;
+        }
+
+        //create key for this thread.
+        if (!OSCL_TLS_KEY_CREATE_FUNC(*pkey))
+        {
+            aError = EPVErrorBaseSystemCallFailed;
+            alloc.deallocate(pkey);
+            alloc.deallocate(table);
+            return;
+        }
+
+        iTlsKey = new(table) TlsKey();
+        iTlsKey->iLock.Lock();
+        iTlsKey->iRefCnt++;
+        iTlsKey->iOsclTlsKey = pkey;
+        iTlsKey->iLock.Unlock();
     }
-
-    //allocate a tls Key for this thread and add
-    //to table.
-
-    if (LookupTlsKey(aError) != NULL)
+    else
     {
-        aError = EPVErrorBaseAlreadyInstalled;
-        return;
+        iTlsKey->iLock.Lock();
+        iTlsKey->iRefCnt++;
+        pkey = iTlsKey->iOsclTlsKey;
+        iTlsKey->iLock.Unlock();
     }
-    if (aError)
-        return;//error in looking up TLS key.
-
-    //allocate space for key
-    pkey = (TOsclTlsKey*)alloc.allocate(sizeof(TOsclTlsKey));
-    if (!pkey)
-    {
-        aError = EPVErrorBaseOutOfMemory;
-        return;
-    }
-
-    //create key for this thread.
-    if (!OSCL_TLS_KEY_CREATE_FUNC(*pkey))
-    {
-        alloc.deallocate(pkey);
-        aError = EPVErrorBaseSystemCallFailed;
-        return;
-    }
-
-    //save in table.
-    if (!SaveTlsKey(pkey, aError))
-    {
-        //failed!
-        OSCL_TLS_KEY_DELETE_FUNC(*pkey);
-        alloc.deallocate(pkey);
-        aError = EPVErrorBaseTooManyThreads;//can't save key
-        return;
-    }
-    if (aError)
-        return;//error in SaveTlsKey
 
 #endif
 
@@ -268,6 +130,8 @@ OSCL_EXPORT_REF void OsclTLSRegistry::initialize(Oscl_DefAlloc &alloc, int32 &aE
     // initialize all TLSs to 0
     for (uint32 ii = 0; ii < OSCL_TLS_MAX_SLOTS; ii++)
         registry[ii] = 0;
+    // initialize the magic number
+    registry[OSCL_TLS_ID_MAGICNUM] = (OsclAny*)OSCL_TLS_MAGIC_NUMBER;
 
     // save it away
     TLSStorageOps::save_registry(pkey, registry, aError);
@@ -279,19 +143,17 @@ OSCL_EXPORT_REF void OsclTLSRegistry::cleanup(Oscl_DefAlloc &alloc, int32 &aErro
     aError = 0;
 
 #if (OSCL_TLS_IS_KEYED)
-    pkey = LookupTlsKey(aError);
-    if (!pkey)
+    if (!iTlsKey)
     {
         aError = EPVErrorBaseNotInstalled;//No key!
         return;
     }
-    if (aError)
-        return;//error in LookupTlsKey
+    pkey = iTlsKey->iOsclTlsKey;
 #endif
 
     //Cleanup this thread's registry
     registry_pointer_type registry = OSCL_STATIC_CAST(registry_pointer_type , TLSStorageOps::get_registry(pkey));
-    if (registry == 0)
+    if (!OSCL_TLS_REGISTRY_VALID(registry))
     {
         aError = EPVErrorBaseNotInstalled;//No registry!
         return;
@@ -304,18 +166,24 @@ OSCL_EXPORT_REF void OsclTLSRegistry::cleanup(Oscl_DefAlloc &alloc, int32 &aErro
 
 #if (OSCL_TLS_IS_KEYED)
 
-    //Remove Tls key for this thread.
-    bool ok = RemoveTlsKey(alloc, pkey, aError);
-    if (aError)
-        return;
+    //Remove Tls key
 
-    OSCL_ASSERT(ok);//key must be in table since we just looked it up
-    OSCL_UNUSED_ARG(ok);
-
-    //Deallocate key.
-    OSCL_TLS_KEY_DELETE_FUNC(*pkey);
-    alloc.deallocate(pkey);
-
+    iTlsKey->iLock.Lock();
+    iTlsKey->iRefCnt--;
+    if (iTlsKey->iRefCnt == 0)
+    {
+        //Deallocate key.
+        OSCL_TLS_KEY_DELETE_FUNC(*pkey);
+        alloc.deallocate(pkey);
+        iTlsKey->iLock.Unlock();
+        iTlsKey->~TlsKey();
+        alloc.deallocate(iTlsKey);
+        iTlsKey = NULL;
+    }
+    else
+    {
+        iTlsKey->iLock.Unlock();
+    }
 #endif
 }
 
@@ -328,18 +196,16 @@ OSCL_EXPORT_REF OsclAny* OsclTLSRegistry::getInstance(uint32 ID, int32 &aError)
     TOsclTlsKey* pkey = NULL;
 
 #if (OSCL_TLS_IS_KEYED)
-    pkey = LookupTlsKey(aError);
-    if (!pkey)
+    if (!iTlsKey)
     {
-        aError = EPVErrorBaseNotInstalled;//No key!
+        aError = EPVErrorBaseNotInstalled;//No table!
         return NULL;
     }
-    if (aError)
-        return NULL;//error in LookupTlsKey
+    pkey = iTlsKey->iOsclTlsKey;
 #endif
 
     registry_pointer_type registry = OSCL_STATIC_CAST(registry_pointer_type , TLSStorageOps::get_registry(pkey));
-    if (registry == 0)
+    if (!OSCL_TLS_REGISTRY_VALID(registry))
     {
         aError = EPVErrorBaseNotInstalled;//No registry!
         return NULL;
@@ -356,18 +222,16 @@ OSCL_EXPORT_REF void OsclTLSRegistry::registerInstance(OsclAny* ptr, uint32 ID, 
     TOsclTlsKey *pkey = NULL;
 
 #if (OSCL_TLS_IS_KEYED)
-    pkey = LookupTlsKey(aError);
-    if (!pkey)
+    if (!iTlsKey)
     {
-        aError = EPVErrorBaseNotInstalled;//No key!
-        return;
+        aError = EPVErrorBaseNotInstalled;//No table!
+        return ;
     }
-    if (aError)
-        return;//error in LookupTlsKey
+    pkey = iTlsKey->iOsclTlsKey;
 #endif
 
     registry_pointer_type registry = OSCL_STATIC_CAST(registry_pointer_type , TLSStorageOps::get_registry(pkey));
-    if (registry == 0)
+    if (!OSCL_TLS_REGISTRY_VALID(registry))
     {
         aError = EPVErrorBaseNotInstalled;//no registry!
         return;

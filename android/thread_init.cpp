@@ -22,11 +22,14 @@
 #include "android_log_appender.h"
 #include "pvlogger_time_and_id_layout.h"
 
-#include "pvlogger.h"
 #include "oscl_mem.h"
 #include "oscl_error.h"
 
 #include "omx_core.h"
+
+#if (PVLOGGER_INST_LEVEL > 0)
+#include "android_logger_config.h"
+#endif
 
 using namespace android;
 bool gotkey=false;
@@ -90,16 +93,12 @@ bool InitializeForThread()
             LOGE("pthread_setspecific error %d", error);
             return false;
         }
-
-#if 0
-    PVLoggerAppender *appender = new AndroidLogAppender<TimeAndIdLayout,1024>();
-    OsclRefCounterSA<LogAppenderDestructDealloc<AndroidLogAppender<TimeAndIdLayout,1024> > > *appenderRefCounter =
-            new OsclRefCounterSA<LogAppenderDestructDealloc<AndroidLogAppender<TimeAndIdLayout,1024> > >(appender);
-    OsclRefCounter *refCounter = appenderRefCounter;
-    OsclSharedPtr<PVLoggerAppender> appenderPtr(appender, refCounter);
-    PVLogger *rootnode = PVLogger::GetLoggerObject("");
-    rootnode->AddAppender(appenderPtr);
-    rootnode->SetLogLevel(PVLOGMSG_DEBUG);
+#if (PVLOGGER_INST_LEVEL > 0)
+        PVLoggerConfigFile obj;
+        if(obj.IsLoggerConfigFilePresent())
+        {
+            obj.SetLoggerSettings();
+        }
 #endif
     }
     return true;

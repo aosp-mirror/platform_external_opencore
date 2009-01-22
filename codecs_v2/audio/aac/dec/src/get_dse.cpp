@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,23 +16,6 @@
  * -------------------------------------------------------------------
  */
 /*
-------------------------------------------------------------------------------
-
-
- Pathname: ./src/AAC_decod/get_dse.c
- Funtions:
-    byte_align
-
-
-     Date: 11/14/2002
-
-------------------------------------------------------------------------------
- REVISION HISTORY
-
-
- Description: Added casting (Char) to avoid warnings
-
- Description:
 ------------------------------------------------------------------------------
  INPUT AND OUTPUT DEFINITIONS
 

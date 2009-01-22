@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,22 +30,24 @@ PVFMVideoMIO::PVFMVideoMIO() :
 
 void PVFMVideoMIO::InitData()
 {
-    iVideoFormatString = PVMF_MIME_FORMAT_UNKNOWN;
-    iVideoFormat = PVMF_FORMAT_UNKNOWN;
+    iVideoFormat = PVMF_MIME_FORMAT_UNKNOWN;
     iVideoHeightValid = false;
     iVideoWidthValid = false;
     iVideoDisplayHeightValid = false;
     iVideoDisplayWidthValid = false;
+    iIsMIOConfigured = false;
+    iWriteBusy = false;
     iVideoHeight = 0;
     iVideoWidth = 0;
     iVideoDisplayHeight = 0;
     iVideoDisplayWidth = 0;
 
-    iColorConverter = NULL;
-    iCCRGBFormatType = PVMF_FORMAT_UNKNOWN;
+    iThumbnailWidth = 320;
+    iThumbnailHeight = 240;
 
-    // hardware specific information
-    iVideoSubFormat = PVMF_FORMAT_UNKNOWN;
+
+    iColorConverter = NULL;
+    iCCRGBFormatType = PVMF_MIME_FORMAT_UNKNOWN;
 
     iCommandCounter = 0;
     iLogger = NULL;
@@ -72,9 +74,7 @@ void PVFMVideoMIO::ResetData()
     Cleanup();
 
     // Reset all the received media parameters.
-    iVideoFormatString = PVMF_MIME_FORMAT_UNKNOWN;
-    iVideoFormat = PVMF_FORMAT_UNKNOWN;
-    iVideoSubFormat = PVMF_FORMAT_UNKNOWN;
+    iVideoFormat = PVMF_MIME_FORMAT_UNKNOWN;
     iVideoHeightValid = false;
     iVideoWidthValid = false;
     iVideoDisplayHeightValid = false;
@@ -83,6 +83,8 @@ void PVFMVideoMIO::ResetData()
     iVideoWidth = 0;
     iVideoDisplayHeight = 0;
     iVideoDisplayWidth = 0;
+    iIsMIOConfigured = false;
+    iWriteBusy = false;
 }
 
 
@@ -118,6 +120,11 @@ PVFMVideoMIO::~PVFMVideoMIO()
     }
 }
 
+void PVFMVideoMIO::setThumbnailDimensions(uint32 aWidth, uint32 aHeight)
+{
+    iThumbnailWidth = aWidth;
+    iThumbnailHeight = aHeight;
+}
 
 PVMFStatus PVFMVideoMIO::GetFrameByFrameNumber(uint32 aFrameIndex, uint8* aFrameBuffer, uint32& aBufferSize,
         PVMFFormatType aFormatType, PVFMVideoMIOGetFrameObserver& aObserver)
@@ -371,8 +378,14 @@ PVMFCommandId PVFMVideoMIO::Init(const OsclAny* aContext)
 
 PVMFCommandId PVFMVideoMIO::Reset(const OsclAny* aContext)
 {
-    OSCL_UNUSED_ARG(aContext);
-    return 0;
+    ResetData();
+
+    PVMFCommandId cmdid = iCommandCounter++;
+    PVMFStatus status = PVMFSuccess;
+
+    CommandResponse resp(status, cmdid, aContext);
+    QueueCommandResponse(resp);
+    return cmdid;
 }
 
 PVMFCommandId PVFMVideoMIO::Start(const OsclAny* aContext)
@@ -389,6 +402,11 @@ PVMFCommandId PVFMVideoMIO::Start(const OsclAny* aContext)
         case STATE_PAUSED:
             iState = STATE_STARTED;
             status = PVMFSuccess;
+            if (iPeer && iWriteBusy)
+            {
+                iWriteBusy = false;
+                iPeer->statusUpdate(PVMI_MEDIAXFER_STATUS_WRITE);
+            }
             break;
 
         default:
@@ -567,8 +585,6 @@ void PVFMVideoMIO::ThreadLogoff()
         RemoveFromScheduler();
         iLogger = NULL;
         iState = STATE_IDLE;
-        // Reset all data from this session
-        ResetData();
     }
 }
 
@@ -600,6 +616,16 @@ PVMFCommandId PVFMVideoMIO::writeAsync(uint8 aFormatType, int32 aFormatIndex, ui
 
     PVMFStatus status = PVMFFailure;
 
+    // Do a leave if MIO is not configured except when it is an EOS
+    if (!iIsMIOConfigured &&
+            !((PVMI_MEDIAXFER_FMT_TYPE_NOTIFICATION == aFormatType) &&
+              (PVMI_MEDIAXFER_FMT_INDEX_END_OF_STREAM == aFormatIndex)))
+    {
+        iWriteBusy = true;
+        OSCL_LEAVE(OsclErrInvalidState);
+        return -1;
+    }
+
     switch (aFormatType)
     {
         case PVMI_MEDIAXFER_FMT_TYPE_COMMAND :
@@ -613,13 +639,13 @@ PVMFCommandId PVFMVideoMIO::writeAsync(uint8 aFormatType, int32 aFormatIndex, ui
             switch (aFormatIndex)
             {
                 case PVMI_MEDIAXFER_FMT_INDEX_END_OF_STREAM:
-                    // If waiting for frame then return failure
+                    // If waiting for frame then return errMaxReached
                     if (iFrameRetrievalInfo.iRetrievalRequested)
                     {
                         iFrameRetrievalInfo.iRetrievalRequested = false;
                         iFrameRetrievalInfo.iUseFrameIndex = false;
                         iFrameRetrievalInfo.iUseTimeOffset = false;
-                        iFrameRetrievalInfo.iGetFrameObserver->HandleFrameReadyEvent(PVMFFailure);
+                        iFrameRetrievalInfo.iGetFrameObserver->HandleFrameReadyEvent(PVMFErrMaxReached);
                     }
                     break;
 
@@ -640,7 +666,9 @@ PVMFCommandId PVFMVideoMIO::writeAsync(uint8 aFormatType, int32 aFormatIndex, ui
                     if (iState < STATE_INITIALIZED)
                     {
                         PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR, (0, "PVFMVideoMIO::writeAsync: Error - Invalid state"));
-                        status = PVMFErrInvalidState;
+                        iWriteBusy = true;
+                        OSCL_LEAVE(OsclErrInvalidState);
+                        return -1;
                     }
                     else
                     {
@@ -663,7 +691,9 @@ PVMFCommandId PVFMVideoMIO::writeAsync(uint8 aFormatType, int32 aFormatIndex, ui
                     if (iState != STATE_STARTED)
                     {
                         PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR, (0, "PVFMVideoMIO::writeAsync: Error - Invalid state"));
-                        status = PVMFErrInvalidState;
+                        iWriteBusy = true;
+                        OSCL_LEAVE(OsclErrInvalidState);
+                        return -1;
                     }
                     else
                     {
@@ -687,11 +717,21 @@ PVMFCommandId PVFMVideoMIO::writeAsync(uint8 aFormatType, int32 aFormatIndex, ui
                             // Check if a frame retrieval was requested
                             if (iFrameRetrievalInfo.iRetrievalRequested)
                             {
+
+                                // scale down output proportionally if smaller thumbnail requested
+                                if (iVideoDisplayWidth > iThumbnailWidth || iVideoDisplayHeight > iThumbnailHeight)
+                                {
+                                    float fScaleWidth = (float)iThumbnailWidth / iVideoDisplayWidth;
+                                    float fScaleHeight = (float)iThumbnailHeight / iVideoDisplayHeight;
+                                    float fScale = (fScaleWidth > fScaleHeight) ? fScaleHeight : fScaleWidth;
+                                    iVideoDisplayWidth = (uint32)(iVideoDisplayWidth * fScale);
+                                    iVideoDisplayHeight = (uint32)(iVideoDisplayHeight * fScale);
+                                }
+
                                 if (iFrameRetrievalInfo.iUseFrameIndex == true &&
                                         iFrameRetrievalInfo.iReceivedFrameCount > iFrameRetrievalInfo.iFrameIndex)
                                 {
                                     PVMFStatus evstatus = PVMFFailure;
-
                                     // Copy the frame data
                                     evstatus = CopyVideoFrameData(aData, aDataLen, iVideoFormat,
                                                                   iFrameRetrievalInfo.iFrameBuffer, *(iFrameRetrievalInfo.iBufferSize), iFrameRetrievalInfo.iFrameFormatType,
@@ -763,8 +803,8 @@ PVMFStatus PVFMVideoMIO::CopyVideoFrameData(uint8* aSrcBuffer, uint32 aSrcSize, 
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMVideoMIO::CopyVideoFrameData() In"));
 
-    if (aSrcBuffer == NULL || aSrcSize == 0 || aSrcFormat == PVMF_FORMAT_UNKNOWN ||
-            aDestBuffer == NULL || aDestSize == 0 || aDestFormat == PVMF_FORMAT_UNKNOWN)
+    if (aSrcBuffer == NULL || aSrcSize == 0 || aSrcFormat == PVMF_MIME_FORMAT_UNKNOWN ||
+            aDestBuffer == NULL || aDestSize == 0 || aDestFormat == PVMF_MIME_FORMAT_UNKNOWN)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFMVideoMIO::CopyVideoFrameData() Color converter instantiation did a leave"));
         return PVMFErrArgument;
@@ -778,23 +818,16 @@ PVMFStatus PVFMVideoMIO::CopyVideoFrameData(uint8* aSrcBuffer, uint32 aSrcSize, 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFMVideoMIO::CopyVideoFrameData() Color converter instantiation did a leave"));
             return PVMFErrArgument;
         }
-
-        // check for special hardware format
-        if (iVideoSubFormat == PVMF_YUV420_SEMIPLANAR_YVU) {
-            LOGV("@@@@@ Need special color conversion @@@@@");
-            convertFrame(aSrcBuffer, aDestBuffer, aSrcSize);
-        } else {
-            oscl_memcpy(aDestBuffer, aSrcBuffer, aSrcSize);
-        }
+        oscl_memcpy(aDestBuffer, aSrcBuffer, aSrcSize);
         aDestSize = aSrcSize;
     }
-    else if (aSrcFormat == PVMF_YUV420 &&
-             (aDestFormat == PVMF_RGB12 || aDestFormat == PVMF_RGB16 || aDestFormat == PVMF_RGB24))
+    else if (aSrcFormat == PVMF_MIME_YUV420 &&
+             (aDestFormat == PVMF_MIME_RGB12 || aDestFormat == PVMF_MIME_RGB16 || aDestFormat == PVMF_MIME_RGB24))
     {
         // Source is YUV 4:2:0 and dest is RGB 12, 16, or 24 bit
 
         // Validate the source and dest dimensions
-        if (aSrcWidth == 0 || aSrcHeight == 0 || aDestWidth == 0 || aDestWidth == 0)
+        if (aSrcWidth == 0 || aSrcHeight == 0 || aDestWidth == 0 || aDestHeight == 0)
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFMVideoMIO::CopyVideoFrameData() Invalid frame dimensions Src(WxH): %dx%d Dest(WxH): %dx%d",
                             aSrcWidth, aSrcHeight, aDestWidth, aDestHeight));
@@ -820,15 +853,15 @@ PVMFStatus PVFMVideoMIO::CopyVideoFrameData(uint8* aSrcBuffer, uint32 aSrcSize, 
             iCCRGBFormatType = aDestFormat;
         }
 
-        // Configure the color converter and check the required RGB buffer size
-        iColorConverter->SetMode(0);
-        if (!(iColorConverter->Init((iVideoDisplayWidth + 1)&(~1), (iVideoDisplayHeight + 1)&(~1), (iVideoWidth + 1)&(~1), aDestWidth, (aDestHeight + 1)&(~1), (aDestWidth + 1)&(~1), CCROTATE_NONE)))
+        if (!(iColorConverter->Init((aSrcWidth + 1)&(~1), (aSrcHeight + 1)&(~1), (aSrcWidth + 1)&(~1), aDestWidth, (aDestHeight + 1)&(~1), (aDestWidth + 1)&(~1), CCROTATE_NONE)))
         {
             iColorConverter = NULL;
             return PVMFFailure;
         }
 
+
         iColorConverter->SetMemHeight((iVideoHeight + 1)&(~1));
+        iColorConverter->SetMode(1); // Do scaling if needed.
 
         uint32 rgbbufsize = (uint32)(iColorConverter->GetOutputBufferSize());
         if (rgbbufsize > aDestSize)
@@ -988,7 +1021,7 @@ PVMFStatus PVFMVideoMIO::getParametersSync(PvmiMIOSession aSession, PvmiKeyType 
     {
         //query for video format string
         aParameters = (PvmiKvp*)oscl_malloc(sizeof(PvmiKvp));
-        aParameters->value.pChar_value = (char*)iVideoFormatString.get_cstr();
+        aParameters->value.pChar_value = (char*)iVideoFormat.getMIMEStrPtr();
         //don't bother to set the key string.
         return PVMFSuccess;
     }
@@ -996,19 +1029,20 @@ PVMFStatus PVFMVideoMIO::getParametersSync(PvmiMIOSession aSession, PvmiKeyType 
     else if (pv_mime_strcmp(aIdentifier, INPUT_FORMATS_CAP_QUERY) == 0)
     {
         // This is a query for the list of supported formats.
-        // This component supports any video format
+        // This component supports all uncompressed video format
         // Generate a list of all the PVMF video formats...
-        int32 count = 1 + PVMF_LAST_UNCOMPRESSED_VIDEO - PVMF_FIRST_UNCOMPRESSED_VIDEO;
+        int32 count = PVMF_SUPPORTED_UNCOMPRESSED_VIDEO_FORMATS_COUNT;
 
         aParameters = (PvmiKvp*)oscl_malloc(count * sizeof(PvmiKvp));
 
         if (aParameters)
         {
-            PVMFFormatType fmt;
-            for (fmt = PVMF_FIRST_UNCOMPRESSED_VIDEO;fmt <= PVMF_LAST_UNCOMPRESSED_VIDEO;fmt++)
-            {
-                aParameters[num_parameter_elements++].value.uint32_value = (uint32)fmt;
-            }
+            aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_YUV420;
+            aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_YUV422;
+            aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_RGB8;
+            aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_RGB12;
+            aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_RGB16;
+            aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_RGB24;
             return PVMFSuccess;
         }
         return PVMFErrNoMemory;
@@ -1088,9 +1122,8 @@ void PVFMVideoMIO::setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParamete
         //Check against known video parameter keys...
         if (pv_mime_strcmp(aParameters[i].key, MOUT_VIDEO_FORMAT_KEY) == 0)
         {
-            iVideoFormatString = aParameters[i].value.pChar_value;
-            iVideoFormat = GetFormatIndex(iVideoFormatString.get_str());
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMVideoMIO::setParametersSync() Video Format Key, Value %s", iVideoFormatString.get_str()));
+            iVideoFormat = aParameters[i].value.pChar_value;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMVideoMIO::setParametersSync() Video Format Key, Value %s", iVideoFormat.getMIMEStrPtr()));
         }
         else if (pv_mime_strcmp(aParameters[i].key, MOUT_VIDEO_WIDTH_KEY) == 0)
         {
@@ -1120,21 +1153,41 @@ void PVFMVideoMIO::setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParamete
         {
             //	iOutputFile.Write(aParameters[i].value.pChar_value, sizeof(uint8), (int32)aParameters[i].capacity);
         }
-        else if (pv_mime_strcmp(aParameters[i].key, MOUT_VIDEO_SUBFORMAT_KEY) == 0)
-        {
-            iVideoSubFormat = (PVMFFormatType) aParameters[i].value.uint32_value;
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0,"AndroidSurfaceOutput::setParametersSync() Video SubFormat Key, Value %d",iVideoSubFormat));
-LOGV("VIDEO SUBFORMAT SET TO %d\n",iVideoSubFormat);
-        }
         else
         {
+            if (iVideoWidthValid && iVideoHeightValid && iVideoDisplayHeightValid && iVideoDisplayHeightValid && !iIsMIOConfigured)
+            {
+                if (iObserver)
+                {
+                    iIsMIOConfigured = true;
+                    iObserver->ReportInfoEvent(PVMFMIOConfigurationComplete);
+                    if (iPeer && iWriteBusy)
+                    {
+                        iWriteBusy = false;
+                        iPeer->statusUpdate(PVMI_MEDIAXFER_STATUS_WRITE);
+                    }
+                }
+            }
+
             // If we get here the key is unrecognized.
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMVideoMIO::setParametersSync() Error, unrecognized key "));
 
             // Set the return value to indicate the unrecognized key and return.
             aRet_kvp = &aParameters[i];
             return;
+        }
+    }
+    if (iVideoWidthValid && iVideoHeightValid && iVideoDisplayHeightValid && iVideoDisplayHeightValid && !iIsMIOConfigured)
+    {
+        if (iObserver)
+        {
+            iIsMIOConfigured = true;
+            iObserver->ReportInfoEvent(PVMFMIOConfigurationComplete);
+            if (iPeer && iWriteBusy)
+            {
+                iWriteBusy = false;
+                iPeer->statusUpdate(PVMI_MEDIAXFER_STATUS_WRITE);
+            }
         }
     }
 }
@@ -1171,10 +1224,33 @@ PVMFStatus PVFMVideoMIO::verifyParametersSync(PvmiMIOSession aSession, PvmiKvp* 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMVideoMIO::verifyParametersSync() called"));
 
     OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aParameters);
-    OSCL_UNUSED_ARG(num_elements);
 
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO, (0, "PVFMVideoMIO::verifyParametersSync() NOT SUPPORTED"));
+    // Go through each parameter
+    for (int32 paramind = 0; paramind < num_elements; ++paramind)
+    {
+        // Retrieve the first component from the key string
+        char* compstr = NULL;
+        pv_mime_string_extract_type(0, aParameters[paramind].key, compstr);
+
+        if (pv_mime_strcmp(compstr, _STRLIT_CHAR("x-pvmf/media/format-type")) == 0)
+        {
+            //This component supports only uncompressed formats
+            if ((pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_YUV420) == 0) ||
+                    (pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_YUV422) == 0) ||
+                    (pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_RGB8) == 0) ||
+                    (pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_RGB12) == 0) ||
+                    (pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_RGB16) == 0) ||
+                    (pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_RGB24) == 0))
+            {
+                return PVMFSuccess;
+            }
+            else
+            {
+                return PVMFErrNotSupported;
+            }
+        }
+    }
+    // For all other parameters return success.
     return PVMFSuccess;
 }
 
@@ -1182,7 +1258,7 @@ PVMFStatus PVFMVideoMIO::verifyParametersSync(PvmiMIOSession aSession, PvmiKvp* 
 //
 // For active timing support
 //
-PVMFStatus PVFMVideoMIOActiveTimingSupport::SetClock(OsclClock *clockVal)
+PVMFStatus PVFMVideoMIOActiveTimingSupport::SetClock(PVMFMediaClock *clockVal)
 {
     iClock = clockVal;
     return PVMFSuccess;
@@ -1247,26 +1323,8 @@ void PVFMVideoMIO::Run()
     }
 }
 
-static inline void* byteOffset(void* p, size_t offset) { return (void*)((uint8_t*)p + offset); }
 
-// convert a frame in YUV420 semiplanar format with VU ordering to YUV420 planar format
-void PVFMVideoMIO::convertFrame(void* src, void* dst, size_t len)
-{
-    // copy the Y plane
-    size_t y_plane_size = iVideoWidth * iVideoHeight;
-    //LOGV("len=%u, y_plane_size=%u", len, y_plane_size);
-    memcpy(dst, src, y_plane_size + iVideoWidth);
 
-    // re-arrange U's and V's
-    uint32_t* p = (uint32_t*)byteOffset(src, y_plane_size);
-    uint16_t* pu = (uint16_t*)byteOffset(dst, y_plane_size);
-    uint16_t* pv = (uint16_t*)byteOffset(pu, y_plane_size / 4);
 
-    int count = y_plane_size / 8;
-    //LOGV("u = %p, v = %p, p = %p, count = %d", pu, pv, p, count);
-    do {
-        uint32_t uvuv = *p++;
-        *pu++ = (uint16_t) (((uvuv >> 8) & 0xff) | ((uvuv >> 16) & 0xff00));
-        *pv++ = (uint16_t) ((uvuv & 0xff) | ((uvuv >> 8) & 0xff00));
-    } while (--count);
-}
+
+

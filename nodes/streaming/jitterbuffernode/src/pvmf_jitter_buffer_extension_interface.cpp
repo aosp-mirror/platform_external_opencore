@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,9 +80,33 @@ void PVMFJitterBufferExtensionInterfaceImpl::getJitterBufferDurationInMilliSecon
 }
 
 OSCL_EXPORT_REF
-void PVMFJitterBufferExtensionInterfaceImpl::setClientPlayBackClock(OsclClock* clientClock)
+void PVMFJitterBufferExtensionInterfaceImpl::setEarlyDecodingTimeInMilliSeconds(uint32 duration)
+{
+    OSCL_UNUSED_ARG(duration);
+}
+
+OSCL_EXPORT_REF
+void PVMFJitterBufferExtensionInterfaceImpl::setBurstThreshold(float burstThreshold)
+{
+    OSCL_UNUSED_ARG(burstThreshold);
+}
+
+OSCL_EXPORT_REF
+void PVMFJitterBufferExtensionInterfaceImpl::setClientPlayBackClock(PVMFMediaClock* clientClock)
 {
     iContainer->setClientPlayBackClock(clientClock);
+}
+
+OSCL_EXPORT_REF
+void PVMFJitterBufferExtensionInterfaceImpl::setMaxInactivityDurationForMediaInMs(uint32 duration)
+{
+    iContainer->setMaxInactivityDurationForMediaInMs(duration);
+}
+
+OSCL_EXPORT_REF
+void PVMFJitterBufferExtensionInterfaceImpl::getMaxInactivityDurationForMediaInMs(uint32& duration)
+{
+    iContainer->getMaxInactivityDurationForMediaInMs(duration);
 }
 
 OSCL_EXPORT_REF
@@ -123,6 +147,7 @@ bool PVMFJitterBufferExtensionInterfaceImpl::setPortRTPParams(PVMFPortInterface*
         uint32 aSeqNumBase,
         bool   aRTPTimeBasePresent,
         uint32 aRTPTimeBase,
+        bool   aNPTTimeBasePresent,
         uint32 aNPTInMS,
         bool oPlayAfterASeek)
 {
@@ -131,6 +156,7 @@ bool PVMFJitterBufferExtensionInterfaceImpl::setPortRTPParams(PVMFPortInterface*
                                          aSeqNumBase,
                                          aRTPTimeBasePresent,
                                          aRTPTimeBase,
+                                         aNPTTimeBasePresent,
                                          aNPTInMS,
                                          oPlayAfterASeek));
 }
@@ -148,6 +174,12 @@ OSCL_EXPORT_REF
 PVMFTimestamp PVMFJitterBufferExtensionInterfaceImpl::getActualMediaDataTSAfterSeek()
 {
     return (iContainer->getActualMediaDataTSAfterSeek());
+}
+
+OSCL_EXPORT_REF
+PVMFTimestamp PVMFJitterBufferExtensionInterfaceImpl::getMaxMediaDataTS()
+{
+    return (iContainer->getMaxMediaDataTS());
 }
 
 OSCL_EXPORT_REF PVMFStatus
@@ -168,12 +200,6 @@ PVMFJitterBufferExtensionInterfaceImpl::SendBOSMessage(uint32 aStreamID)
     return (iContainer->SendBOSMessage(aStreamID));
 }
 
-OSCL_EXPORT_REF OsclSharedPtr<PVMFSharedSocketDataBufferAlloc>
-PVMFJitterBufferExtensionInterfaceImpl::CreateResizablePortAllocator(uint32 aSize, OSCL_String& aName)
-{
-    return (iContainer->CreateResizablePortAllocator(aSize, aName));
-}
-
 OSCL_EXPORT_REF void
 PVMFJitterBufferExtensionInterfaceImpl::SetSharedBufferResizeParams(uint32 maxNumResizes, uint32 resizeSize)
 {
@@ -185,10 +211,17 @@ PVMFJitterBufferExtensionInterfaceImpl::GetSharedBufferResizeParams(uint32& maxN
 {
     iContainer->GetSharedBufferResizeParams(maxNumResizes, resizeSize);
 }
+
 OSCL_EXPORT_REF bool
 PVMFJitterBufferExtensionInterfaceImpl::ClearJitterBuffer(PVMFPortInterface* aPort, uint32 aSeqNum)
 {
     return (iContainer->ClearJitterBuffer(aPort, aSeqNum));
+}
+
+OSCL_EXPORT_REF void
+PVMFJitterBufferExtensionInterfaceImpl::FlushJitterBuffer()
+{
+    iContainer->FlushJitterBuffer();
 }
 
 OSCL_EXPORT_REF bool
@@ -230,18 +263,43 @@ PVMFJitterBufferExtensionInterfaceImpl::DisableFireWallPackets()
 {
     iContainer->DisableFireWallPackets();
 }
+OSCL_EXPORT_REF void
+PVMFJitterBufferExtensionInterfaceImpl::StartOutputPorts()
+{
+    iContainer->StartOutputPorts();
+}
+OSCL_EXPORT_REF void
+PVMFJitterBufferExtensionInterfaceImpl::StopOutputPorts()
+{
+    iContainer->StopOutputPorts();
+}
 
+OSCL_EXPORT_REF void
+PVMFJitterBufferExtensionInterfaceImpl::UpdateJitterBufferState()
+{
+    iContainer->UpdateJitterBufferState();
+}
 
+OSCL_EXPORT_REF void
+PVMFJitterBufferExtensionInterfaceImpl::SetJitterBufferMemPoolInfo(const PvmfPortBaseImpl* aPort, uint32 aSize, uint32 aResizeSize, uint32 aMaxNumResizes, uint32 aExpectedNumberOfBlocksPerBuffer)
+{
+    iContainer->SetJitterBufferMemPoolInfo(aPort, aSize, aResizeSize, aMaxNumResizes, aExpectedNumberOfBlocksPerBuffer);
+}
 
+OSCL_EXPORT_REF void
+PVMFJitterBufferExtensionInterfaceImpl::GetJitterBufferMemPoolInfo(const PvmfPortBaseImpl* aPort, uint32& aSize, uint32& aResizeSize, uint32& aMaxNumResizes, uint32& aExpectedNumberOfBlocksPerBuffer) const
+{
+    iContainer->GetJitterBufferMemPoolInfo(aPort, aSize, aResizeSize, aMaxNumResizes, aExpectedNumberOfBlocksPerBuffer);
+}
 
+OSCL_EXPORT_REF void
+PVMFJitterBufferExtensionInterfaceImpl::SetJitterBufferChunkAllocator(OsclMemPoolResizableAllocator* aDataBufferAllocator, const PVMFPortInterface* aPort)
+{
+    iContainer->SetJitterBufferChunkAllocator(aDataBufferAllocator, aPort);
+}
 
-
-
-
-
-
-
-
-
-
-
+OSCL_EXPORT_REF bool
+PVMFJitterBufferExtensionInterfaceImpl::PrepareForPlaylistSwitch()
+{
+    return (iContainer->PrepareForPlaylistSwitch());
+}

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -160,7 +160,22 @@ const PVMFStatus PVMFLowDiskSpace = (-25);
  Error due to the requirement of user-id and password input from app for HTTP basic/digest authentication
  */
 const PVMFStatus PVMFErrHTTPAuthenticationRequired = (-26);
-
+/*
+ PVMFMediaClock specific error. Callback has become invalid due to change in direction of NPT clock.
+*/
+const PVMFStatus PVMFErrCallbackHasBecomeInvalid = (-27);
+/*
+ PVMFMediaClock specific error. Callback is called as clock has stopped.
+*/
+const PVMFStatus PVMFErrCallbackClockStopped = (-28);
+/*
+ Error due to missing call for ReleaseMatadataValue() API
+ */
+const PVMFStatus PVMFErrReleaseMetadataValueNotDone = (-29);
+/*
+ Error due to the redirect error
+*/
+const PVMFStatus PVMFErrRedirect = (-30);
 /*
  Placeholder for last event in range.
  */
@@ -314,9 +329,30 @@ const PVMFStatus PVMFInfoChangePlaybackPositionNotSupported = 42;
  */
 const PVMFStatus PVMFInfoPoorlyInterleavedContent = 43;
 /*
+ Notification for actual playback position after repositioning
+ */
+const PVMFStatus PVMFInfoActualPlaybackPosition = 44;
+/*
+ Notification that the live buffer is empty
+ */
+const PVMFStatus PVMFInfoLiveBufferEmpty = 45;
+/*
+ Notification that a server has responded with 200 OK to a Playlist play request
+ */
+const PVMFStatus PVMFInfoPlayListSwitch = 46;
+/*
+ Notification of configuration complete
+ */
+const PVMFStatus PVMFMIOConfigurationComplete = 47;
+/*
  Notification that the video track is falling behind
  */
-const PVMFStatus PVMFInfoVideoTrackFallingBehind = 44;
+const PVMFStatus PVMFInfoVideoTrackFallingBehind = 48;
+/*
+ Notification that memory is not available for new RTP packets
+ */
+const PVMFStatus PVMFInfoSourceOverflow = 49;
+
 /*
  Placeholder for end of range
  */

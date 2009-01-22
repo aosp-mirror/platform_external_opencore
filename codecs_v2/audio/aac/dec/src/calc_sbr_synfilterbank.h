@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,24 +15,6 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*
-
- Filename: calc_sbr_synfilterbank.h
- Funtions:
-    get_dse
-
-
-     Date: 07/16/2003
-
-------------------------------------------------------------------------------
- REVISION HISTORY
-
-
- Description:
-------------------------------------------------------------------------------
-
-*/
-
 /*----------------------------------------------------------------------------
 ; CONTINUE ONLY IF NOT ALREADY DEFINED
 ----------------------------------------------------------------------------*/

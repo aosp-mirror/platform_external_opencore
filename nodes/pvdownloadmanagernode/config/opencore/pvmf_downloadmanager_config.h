@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,8 +48,7 @@
 ** use for progressive playback.
 */
 #ifndef PVMF_DOWNLOADMANAGER_MIN_TCP_BUFFERS_FOR_PPB
-//#define PVMF_DOWNLOADMANAGER_MIN_TCP_BUFFERS_FOR_PPB 13
-#define PVMF_DOWNLOADMANAGER_MIN_TCP_BUFFERS_FOR_PPB 39
+#define PVMF_DOWNLOADMANAGER_MIN_TCP_BUFFERS_FOR_PPB  8
 #endif
 
 #endif // PVMF_DOWNLOADMANAGER_CONFIG_H_INCLUDED

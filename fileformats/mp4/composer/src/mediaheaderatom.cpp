@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*********************************************************************************/
 /*
     This PVA_FF_MediaHeaderAtom Class contains all the objects that declare information
     about the media data within the stream.
@@ -67,8 +66,6 @@ PVA_FF_MediaHeaderAtom::init()
 void
 PVA_FF_MediaHeaderAtom::addSample(uint32 ts)
 {
-    //uint32 d = getDuration();
-    //d+=1; // duration in terms of the media timescale just maintains a sample count
     _deltaTS = ts - _prevTS;
 
     setDuration(ts);

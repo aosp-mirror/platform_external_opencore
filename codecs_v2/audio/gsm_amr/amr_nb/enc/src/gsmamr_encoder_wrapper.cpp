@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,7 +78,7 @@ CPvGsmAmrEncoder::CPvGsmAmrEncoder()
     iSidState = NULL;
     iGsmAmrMode = (GSM_AMR_MODES)KDFLT_GAMR_MODE;
     iLastModeUsed = 0;
-    iBitStreamFormatIf2 = AMR_TX_WMF;
+    iBitStreamFormat = AMR_TX_WMF;
     iNumSamplesPerFrame = KGAMR_NUM_SAMPLES_PER_FRAME;
 }
 ///////////////////////////////////////////////////////////////////////////////
@@ -99,7 +99,7 @@ OSCL_EXPORT_REF int32 CPvGsmAmrEncoder::InitializeEncoder(int32 aMaxOutputBuffer
         dfltProps.iInClockRate = dfltProps.iInSamplingRate;
         dfltProps.iInNumChannels = KDFLT_GAMR_NUM_CHANNELS;
         iGsmAmrMode = (GSM_AMR_MODES)KDFLT_GAMR_MODE;
-        iBitStreamFormatIf2 = AMR_TX_WMF;
+        iBitStreamFormat = AMR_TX_WMF;
     }
     else
     {
@@ -114,13 +114,17 @@ OSCL_EXPORT_REF int32 CPvGsmAmrEncoder::InitializeEncoder(int32 aMaxOutputBuffer
         }
         // set AMR mode (bits per second)
         iGsmAmrMode = (GSM_AMR_MODES)aProps->iMode;
-        if (aProps->iBitStreamFormatIf2 == false)
+        if (aProps->iBitStreamFormat == AMR_TX_WMF)
         {
-            iBitStreamFormatIf2 = AMR_TX_WMF;
+            iBitStreamFormat = AMR_TX_WMF;
+        }
+        else if (aProps->iBitStreamFormat == AMR_TX_IF2)
+        {
+            iBitStreamFormat = AMR_TX_IF2;
         }
         else
         {
-            iBitStreamFormatIf2 = AMR_TX_IF2;
+            iBitStreamFormat = AMR_TX_ETS;
         }
     }
 
@@ -140,6 +144,7 @@ OSCL_EXPORT_REF int32 CPvGsmAmrEncoder::InitializeEncoder(int32 aMaxOutputBuffer
     return GSMAMR_ENC_NO_ERROR;
 }
 
+
 ////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF int32 CPvGsmAmrEncoder::Encode(TInputAudioStream& aInStream,
         TOutputAudioStream& aOutStream)
@@ -147,7 +152,6 @@ OSCL_EXPORT_REF int32 CPvGsmAmrEncoder::Encode(TInputAudioStream& aInStream,
     // check first if mode specified is invalid
     if (IsModeValid(aInStream.iMode) == false)
         return GSMAMR_ENC_INVALID_MODE;
-
 
     // set AMR mode for this set of samples
     iGsmAmrMode = (GSM_AMR_MODES)aInStream.iMode;
@@ -166,12 +170,14 @@ OSCL_EXPORT_REF int32 CPvGsmAmrEncoder::Encode(TInputAudioStream& aInStream,
         // //////////////////////////////////////////
         // encode this frame
         // //////////////////////////////////////////
+        int32 * temp = & iLastModeUsed;
         Word16 nStatus = AMREncode(iEncState, iSidState, 	// BX, Word16 instead of int32 to avoid wierd case(IF2 format): the function returns 31, but nStatus ends up with a big wierd number
                                    (Mode)iGsmAmrMode,
                                    (Word16 *)pFrameIn,
                                    (unsigned char *)pFrameOut,
-                                   (Frame_Type_3GPP*) & iLastModeUsed,
-                                   iBitStreamFormatIf2);
+                                   (Frame_Type_3GPP*) temp,
+                                   iBitStreamFormat);
+
         if (nStatus < 0)
         {
             // an error when encoding was received, so quit
@@ -201,4 +207,18 @@ OSCL_EXPORT_REF int32 CPvGsmAmrEncoder::CleanupEncoder()
 
     return GSMAMR_ENC_NO_ERROR;
 }
+
+////////////////////////////////////////////////////////////////////////////
+OSCL_EXPORT_REF int32 CPvGsmAmrEncoder::Reset()
+{
+    // reset GSM AMR encoder (state memory and SID sync function.)
+    Word16 nStatus = AMREncodeReset(&iEncState, &iSidState);
+
+    if (nStatus < 0)
+    {
+        return GSMAMR_ENC_CODEC_ENCODE_FAILURE;
+    }
+    return GSMAMR_ENC_NO_ERROR;
+}
+
 

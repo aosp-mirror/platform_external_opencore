@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -205,6 +205,10 @@ typedef UChar PIXEL;
 #define NCOEFF_Y NCOEFF_MB
 #define NCOEFF_U NCOEFF_BLOCK
 #define NCOEFF_V NCOEFF_BLOCK
+
+/* overrun buffer size  */
+#define DEFAULT_OVERRUN_BUFFER_SIZE 1000
+
 
 #if 0
 const static Int MBtype_mode[] =

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,6 @@ PVMFAMRFFParserOutPort::PVMFAMRFFParserOutPort(int32 aTag, PVMFNodeInterface* aN
 {
     iAMRParserNode = OSCL_STATIC_CAST(PVMFAMRFFParserNode*, aNode);
     Construct();
-    /*	PvmiCapabilityAndConfig::Construct(
-    		PVMF_AMRFFPARSER_PORT_OUTPUT_FORMATS,
-    		PVMF_AMRFFPARSER_PORT_OUTPUT_FORMATS_VALTYPE);
-    		*/
 }
 void PVMFAMRFFParserOutPort::Construct()
 {
@@ -48,7 +44,12 @@ PVMFAMRFFParserOutPort::~PVMFAMRFFParserOutPort()
 
 bool PVMFAMRFFParserOutPort::IsFormatSupported(PVMFFormatType aFmt)
 {
-    return (aFmt == PVMF_AMR_IETF || aFmt == PVMF_AMR_IF2 || PVMF_AMRWB_IETF == aFmt);
+    bool formatSupported = false;
+    if (aFmt == PVMF_MIME_AMR_IETF || aFmt == PVMF_MIME_AMR_IF2 || aFmt == PVMF_MIME_AMRWB_IETF)
+    {
+        formatSupported = true;
+    }
+    return formatSupported;
 }
 
 void PVMFAMRFFParserOutPort::FormatUpdated()
@@ -73,10 +74,9 @@ PVMFStatus PVMFAMRFFParserOutPort::Connect(PVMFPortInterface* aPort)
         return PVMFFailure;
     }
 
-    PvmiCapabilityAndConfig *config;
-
-    aPort->QueryInterface(PVMI_CAPABILITY_AND_CONFIG_PVUUID,
-                          (OsclAny*&)config);
+    OsclAny* temp = NULL;
+    aPort->QueryInterface(PVMI_CAPABILITY_AND_CONFIG_PVUUID, temp);
+    PvmiCapabilityAndConfig *config = OSCL_STATIC_CAST(PvmiCapabilityAndConfig*, temp);
 
     if (config != NULL)
     {

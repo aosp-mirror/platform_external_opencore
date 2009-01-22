@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -292,6 +292,7 @@ class TrackAtom : public Atom
             }
         }
 
+
         // Returns the timestamp  from the last video sample
         // This is mainly to be used when seeking in the bitstream - you request a video frame at timestamp
         // X, but the actual frame you get is Y, this method returns the timestamp for Y so you know which
@@ -417,6 +418,21 @@ class TrackAtom : public Atom
             }
         }
 
+        uint16 getLanguageCode()
+        {
+            if (_pmediaAtom != NULL)
+            {
+                return _pmediaAtom->getLanguageCode();
+            }
+            else
+            {
+                //RETURN SOME UNDEFINED VALUE
+                return (0xFFFF);
+            }
+
+        }
+
+
         // From mediaAtom -> Handler
         uint32 getTrackStreamType()
         {
@@ -443,16 +459,11 @@ class TrackAtom : public Atom
             }
         }
 
-        OSCL_wHeapString<OsclMemAllocator> getMIMEType()
+        void getMIMEType(OSCL_String& aMimeType)
         {
             if (_pmediaAtom != NULL)
             {
-                return _pmediaAtom->getMIMEType();
-            }
-            else
-            {
-                OSCL_wHeapString<OsclMemAllocator> temp(_STRLIT("UNKNOWN"));
-                return temp;
+                _pmediaAtom->getMIMEType(aMimeType);
             }
         } // Based on OTI value
 

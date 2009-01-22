@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*********************************************************************************/
 /*
     This PVA_FF_SampleDescriptionAtom Class gives detailed information about the codeing
     type used, and any initialization information needed for coding.
@@ -24,14 +23,10 @@
 
 #define IMPLEMENT_SampleDescriptionAtom
 
-//#define AMR_3GPP_CONTENT
-//#define H263_3GPP_CONTENT
-
 #include "sampledescriptionatom.h"
 
 #include "visualsampleentry.h"
 #include "audiosampleentry.h"
-#include "hintsampleentry.h"
 #include "mpegsampleentry.h"
 
 #include "objectdescriptorupdate.h"
@@ -41,7 +36,6 @@
 #include "objectdescriptor.h"
 #include "decoderspecificinfo.h"
 #include "amrdecoderspecificinfo.h"
-#include "evrcdecoderspecificinfo.h"
 #include "h263decoderspecificinfo.h"
 
 #include "amrsampleentry.h"
@@ -177,55 +171,6 @@ PVA_FF_SampleDescriptionAtom::init(int32 mediaType, uint32 protocol, uint8 profi
             }
         }
         break;
-        case MEDIA_TYPE_OBJECT_DESCRIPTOR:
-        {
-            _handlerType = MEDIA_TYPE_OBJECT_DESCRIPTOR;
-            PV_MP4_FF_NEW(fp->auditCB, PVA_FF_MpegSampleEntry, (MEDIA_TYPE_OBJECT_DESCRIPTOR), entry);
-            addSampleEntry(entry);
-        }
-        break;
-        case MEDIA_TYPE_CLOCK_REFERENCE:
-        {
-            _handlerType = MEDIA_TYPE_CLOCK_REFERENCE;
-            PV_MP4_FF_NEW(fp->auditCB, PVA_FF_MpegSampleEntry, (MEDIA_TYPE_CLOCK_REFERENCE), entry);
-            addSampleEntry(entry);
-        }
-        break;
-        case MEDIA_TYPE_SCENE_DESCRIPTION:
-        {
-            _handlerType = MEDIA_TYPE_SCENE_DESCRIPTION;
-            PV_MP4_FF_NEW(fp->auditCB, PVA_FF_MpegSampleEntry, (MEDIA_TYPE_SCENE_DESCRIPTION), entry);
-            addSampleEntry(entry);
-        }
-        break;
-        case MEDIA_TYPE_MPEG7:
-        {
-            _handlerType = MEDIA_TYPE_MPEG7;
-            PV_MP4_FF_NEW(fp->auditCB, PVA_FF_MpegSampleEntry, (MEDIA_TYPE_OBJECT_CONTENT_INFO), entry);
-            addSampleEntry(entry);
-        }
-        break;
-        case MEDIA_TYPE_OBJECT_CONTENT_INFO:
-        {
-            _handlerType = MEDIA_TYPE_OBJECT_CONTENT_INFO;
-            PV_MP4_FF_NEW(fp->auditCB, PVA_FF_MpegSampleEntry, (MEDIA_TYPE_OBJECT_CONTENT_INFO), entry);
-            addSampleEntry(entry);
-        }
-        break;
-        case MEDIA_TYPE_IPMP:
-        {
-            _handlerType = MEDIA_TYPE_IPMP;
-            PV_MP4_FF_NEW(fp->auditCB, PVA_FF_MpegSampleEntry, (MEDIA_TYPE_IPMP), entry);
-            addSampleEntry(entry);
-        }
-        break;
-        case MEDIA_TYPE_MPEG_J:
-        {
-            _handlerType = MEDIA_TYPE_MPEG_J;
-            PV_MP4_FF_NEW(fp->auditCB, PVA_FF_MpegSampleEntry, (MEDIA_TYPE_MPEG_J), entry);
-            addSampleEntry(entry);
-        }
-        break;
         case MEDIA_TYPE_UNKNOWN:
         default:
         {
@@ -235,6 +180,7 @@ PVA_FF_SampleDescriptionAtom::init(int32 mediaType, uint32 protocol, uint8 profi
         }
         break;
     }
+    OSCL_UNUSED_ARG(protocol);
 }
 
 
@@ -405,12 +351,6 @@ PVA_FF_SampleDescriptionAtom::addDecoderSpecificInfo(PVA_FF_DecoderSpecificInfo 
         }
         break;
 
-        case MEDIA_TYPE_SCENE_DESCRIPTION:
-        {
-            getMutableSampleEntryAt(0)->addDecoderSpecificInfo(pinfo);
-        }
-        break;
-
         default:
             return; // This fp actually an undefined situation
     }
@@ -484,16 +424,8 @@ PVA_FF_SampleDescriptionAtom::nextSample(uint32 size, uint8 flags)
         {
             if (_codecType == CODEC_TYPE_AVC_VIDEO)
             {
-                //	PVA_FF_AVCSampleEntry *entry = (PVA_FF_AVCSampleEntry*) getSampleEntryAt(0);
-
-                //	entry->setSample(psample,size);
-
-                //		entry->recomputeSize();
-                //		recomputeSize();
-
-
+                //nothing
             }
-
             else if (!_o3GPPCompliant)
             {
                 PVA_FF_VisualSampleEntry *entry = (PVA_FF_VisualSampleEntry*) getSampleEntryAt(0);
@@ -621,33 +553,10 @@ PVA_FF_SampleDescriptionAtom::nextSample(uint32 size, uint8 flags)
         // Check whether or not this sample meets the criteria
         // of the existing PVA_FF_SampleEntry(s) ESDAtoms.  If it does, return.
         // Otherwise, add new entry according to this sample
-        case MEDIA_TYPE_OBJECT_DESCRIPTOR:
-        {
-            // Actual sample fp an PVA_FF_ObjectDescriptorUpdate command
-            // PVA_FF_ObjectDescriptorUpdate *pupdate = (PVA_FF_ObjectDescriptorUpdate*)psample;
-            // TBA
-            // Check whether or not this sample meets the criteria
-            // of the existing PVA_FF_SampleEntry(s) ESDAtoms.  If it does, return.
-            // Otherwise, add new entry according to this sample
-            // ASSUMING ATLEAST ONE MPEG SAMPLE ENTRY WILL BE ADDED TO THE
-            // OD TRACK
-            PVA_FF_MpegSampleEntry *entry = (PVA_FF_MpegSampleEntry*) getSampleEntryAt(0);
-            entry->nextSampleSize(size);
-            nReturn = 1;
-        }
         break;
-        case MEDIA_TYPE_CLOCK_REFERENCE:
-        case MEDIA_TYPE_SCENE_DESCRIPTION:
-        case MEDIA_TYPE_MPEG7:
-        case MEDIA_TYPE_OBJECT_CONTENT_INFO:
-        case MEDIA_TYPE_IPMP:
-        case MEDIA_TYPE_MPEG_J:
         case MEDIA_TYPE_UNKNOWN:
         default:
         {
-            // ASSUMING ATLEAST ONE MPEG SAMPLE ENTRY WILL BE ADDED TO THE
-            // BIFS OR OTHER TRACKS
-
             PVA_FF_MpegSampleEntry *entry = (PVA_FF_MpegSampleEntry*) getSampleEntryAt(0);
             entry->nextSampleSize(size);
             nReturn = 1;
@@ -679,9 +588,6 @@ PVA_FF_SampleDescriptionAtom::nextTextSample(uint32 size, uint8 flags, int32 ind
         break;
         default:
         {
-            // ASSUMING ATLEAST ONE MPEG SAMPLE ENTRY WILL BE ADDED TO THE
-            // BIFS OR OTHER TRACKS
-
             PVA_FF_MpegSampleEntry *entry = (PVA_FF_MpegSampleEntry*) getSampleEntryAt(0);
             entry->nextSampleSize(size);
             nReturn = 1;
@@ -741,24 +647,6 @@ PVA_FF_SampleDescriptionAtom::addSampleEntry(PVA_FF_SampleEntry *entry)
             }
             else
             {
-//          cerr << "ERROR: Trying to add PVA_FF_SampleEntry of wrong type!" << endl;
-                return;
-            }
-            break;
-        case MEDIA_TYPE_OBJECT_DESCRIPTOR:
-        case MEDIA_TYPE_CLOCK_REFERENCE:
-        case MEDIA_TYPE_SCENE_DESCRIPTION:
-        case MEDIA_TYPE_MPEG7:
-        case MEDIA_TYPE_OBJECT_CONTENT_INFO:
-        case MEDIA_TYPE_IPMP:
-        case MEDIA_TYPE_MPEG_J:
-            if (entry->getType() == MPEG_SAMPLE_ENTRY)
-            {
-                _psampleEntryVec->push_back(entry);
-            }
-            else
-            {
-//          cerr << "ERROR: Trying to add PVA_FF_SampleEntry of wrong type!" << endl;
                 return;
             }
             break;
@@ -787,7 +675,6 @@ PVA_FF_SampleDescriptionAtom::insertSampleEntryAt(int32 index, PVA_FF_SampleEntr
                 }
                 else
                 {
-//              cerr << "ERROR: Trying to add PVA_FF_SampleEntry of wrong type!" << endl;
                     return;
                 }
                 break;
@@ -798,7 +685,6 @@ PVA_FF_SampleDescriptionAtom::insertSampleEntryAt(int32 index, PVA_FF_SampleEntr
                 }
                 else
                 {
-//              cerr << "ERROR: Trying to add PVA_FF_SampleEntry of wrong type!" << endl;
                     return;
                 }
                 break;
@@ -826,30 +712,25 @@ PVA_FF_SampleDescriptionAtom::replaceSampleEntryAt(int32 index, PVA_FF_SampleEnt
             case MEDIA_TYPE_AUDIO:
                 if (entry->getType() == AUDIO_SAMPLE_ENTRY)
                 {
-                    //_psampleEntryVec->erase(index); /SKK
                     (*_psampleEntryVec)[index] = entry;
                 }
                 else
                 {
-//              cerr << "ERROR: Trying to add PVA_FF_SampleEntry of wrong type!" << endl;
                     return;
                 }
                 break;
             case MEDIA_TYPE_VISUAL:
                 if (entry->getType() == VIDEO_SAMPLE_ENTRY)
                 {
-                    //_psampleEntryVec->erase(index); //SKK
                     (*_psampleEntryVec)[index] = entry;
                 }
                 else
                 {
-//              cerr << "ERROR: Trying to add PVA_FF_SampleEntry of wrong type!" << endl;
                     return;
                 }
                 break;
             default:
             {
-                //_psampleEntryVec->erase(index); //SKK
                 (*_psampleEntryVec)[index] = entry;
             }
             break;
@@ -901,6 +782,10 @@ PVA_FF_SampleDescriptionAtom::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
     }
     rendered += 4;
 
+    if (_psampleEntryVec->size() < getEntryCount())
+    {
+        return false;
+    }
     for (int32 i = 0; i < (int32)(getEntryCount()); i++)
     {
         if ((uint32) _mediaType == MEDIA_TYPE_AUDIO)
@@ -972,9 +857,12 @@ PVA_FF_SampleDescriptionAtom::recomputeSize()
     int32 size = getDefaultSize();
     size += 4; // For _entryCount
 
-    for (int32 i = 0; i < (int32)(getEntryCount()); i++)
+    if (_psampleEntryVec->size() >= getEntryCount())
     {
-        size += (*_psampleEntryVec)[i]->getSize();
+        for (int32 i = 0; i < (int32)(getEntryCount()); i++)
+        {
+            size += (*_psampleEntryVec)[i]->getSize();
+        }
     }
 
     _size = size;
@@ -986,3 +874,68 @@ PVA_FF_SampleDescriptionAtom::recomputeSize()
     }
 }
 
+void
+PVA_FF_SampleDescriptionAtom::SetMaxSampleSize(uint32 aSize)
+{
+    switch (_mediaType)
+    {
+        case MEDIA_TYPE_VISUAL:
+        {
+            if (!_o3GPPCompliant)
+            {
+                PVA_FF_VisualSampleEntry *entry = (PVA_FF_VisualSampleEntry*) getSampleEntryAt(0);
+                entry->nextSampleSize(aSize);
+            }
+            break;
+        }
+        case MEDIA_TYPE_AUDIO:
+        {
+            if (_codecType == CODEC_TYPE_AAC_AUDIO)
+            {
+                PVA_FF_AudioSampleEntry *entry = (PVA_FF_AudioSampleEntry*) getSampleEntryAt(0);
+                entry->nextSampleSize(aSize);
+            }
+            break;
+        }
+        case MEDIA_TYPE_UNKNOWN:
+        default:
+        {
+            PVA_FF_MpegSampleEntry *entry = (PVA_FF_MpegSampleEntry*) getSampleEntryAt(0);
+            entry->nextSampleSize(aSize);
+            break;
+        }
+    }
+}
+
+void
+PVA_FF_SampleDescriptionAtom::writeMaxSampleSize(MP4_AUTHOR_FF_FILE_IO_WRAP *_afp)
+{
+    switch (_mediaType)
+    {
+        case MEDIA_TYPE_VISUAL:
+        {
+            if (!_o3GPPCompliant)
+            {
+                PVA_FF_VisualSampleEntry *entry = (PVA_FF_VisualSampleEntry*) getSampleEntryAt(0);
+                entry->writeMaxSampleSize(_afp);
+            }
+            break;
+        }
+        case MEDIA_TYPE_AUDIO:
+        {
+            if (_codecType == CODEC_TYPE_AAC_AUDIO)
+            {
+                PVA_FF_AudioSampleEntry *entry = (PVA_FF_AudioSampleEntry*) getSampleEntryAt(0);
+                entry->writeMaxSampleSize(_afp);
+            }
+            break;
+        }
+        case MEDIA_TYPE_UNKNOWN:
+        default:
+        {
+            PVA_FF_MpegSampleEntry *entry = (PVA_FF_MpegSampleEntry*) getSampleEntryAt(0);
+            entry->writeMaxSampleSize(_afp);
+            break;
+        }
+    }
+}

@@ -1,18 +1,20 @@
-/***************************************************************************
- * This Software has been authored by or modified by PacketVideo Corporation.
- * Title and ownership, including all intellectual
- * property rights in and to the Software shall remain with PacketVideo
- * Corporation. The Software is protected by the patent and copyright laws of
- * the United States and by international treaty.
+/* ------------------------------------------------------------------
+ * Copyright (C) 1998-2009 PacketVideo
  *
- * No part of this software may be modified, reproduced or distributed without
- * the prior written consent of PacketVideo Corporation.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * Copyright (c) 1998, 2007, PacketVideo Corporation. All Rights Reserved.
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * Release: NJ_SRCHREL_071018
- *
- ***************************************************************************/
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied.
+ * See the License for the specific language governing permissions
+ * and limitations under the License.
+ * -------------------------------------------------------------------
+ */
 #include "oscl_types.h"
 #include "sbc_type_defs.h"
 #include "sbcenc_crc8.h"
@@ -24,7 +26,7 @@
 
 #if defined(USE_CRC_TABLE)
 
-static const UWord8 crctable[256] = 
+static const UWord8 crctable[256] =
 {
     0x00, 0x1D, 0x3A, 0x27, 0x74, 0x69, 0x4E, 0x53, 0xE8, 0xF5, 0xD2, 0xCF, 0x9C, 0x81, 0xA6, 0xBB,
     0xCD, 0xD0, 0xF7, 0xEA, 0xB9, 0xA4, 0x83, 0x9E, 0x25, 0x38, 0x1F, 0x02, 0x51, 0x4C, 0x6B, 0x76,
@@ -49,8 +51,8 @@ static const UWord8 crctable[256] =
  *    CRC Check:
  *    The error detection method used is "CRC-8" with generator polynomial
  *
- *           G(X) = X8 + X4 + X3 + X2 + 1 (CRC-8) 
- *           
+ *           G(X) = X8 + X4 + X3 + X2 + 1 (CRC-8)
+ *
  *           i.e. [1:0001:1101] => Polynomial is 0x1D
  *
  *    Reference: ftp://ftp.adelaide.edu.au/pub/rocksoft/crc_v3.txt
@@ -58,7 +60,7 @@ static const UWord8 crctable[256] =
  */
 UWord8 crc8(const UWord8 *data, UInt len)
 {
-    /******************************************************************************** 
+    /********************************************************************************
      * For loop need to be optimized and number of local variable should be reduced *
      ********************************************************************************/
     /*~~~~~~~~~~~~~~~~~~~~~~~~*/
@@ -70,20 +72,20 @@ UWord8 crc8(const UWord8 *data, UInt len)
     UWord8  bit;
     /*~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-    for(i = 0; i < nBytes; i++) 
+    for (i = 0; i < nBytes; i++)
     {
         CrcReg = crctable[CrcReg ^ data[i]];
     }
 
     octet = data[i];
 
-    for(i = 0; i < nBits; i++)
+    for (i = 0; i < nBits; i++)
     {
-        bit = (UWord8) (((octet ^ CrcReg) & 0x80) >> 7);
+        bit = (UWord8)(((octet ^ CrcReg) & 0x80) >> 7);
 
-        CrcReg = (UWord8) (((CrcReg & 0x7F) << 1) ^ (bit ? CRC_POLY : 0));
+        CrcReg = (UWord8)(((CrcReg & 0x7F) << 1) ^(bit ? CRC_POLY : 0));
 
-        octet = (UWord8) (octet << 1);
+        octet = (UWord8)(octet << 1);
     }
 
     return(CrcReg);

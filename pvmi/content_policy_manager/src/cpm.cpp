@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
+
 #ifndef OSCL_EXCLUSIVE_PTR_H_INCLUDED
 #include "oscl_exclusive_ptr.h"
 #endif
@@ -54,79 +55,161 @@
 #ifndef OSCL_MIME_STRING_UTILS_H
 #include "pv_mime_string_utils.h"
 #endif
-
 // Define entry point for this DLL
 OSCL_DLL_ENTRY_POINT_DEFAULT()
 
 #include "oscl_registry_access_client.h"
 
+static void _AddPluginInstance(CPMPluginRegistry* aRegistry, PVMFCPMPluginFactory* aFactory, const OSCL_String& aMimestring)
+{
+    if (aRegistry
+            && aFactory)
+    {
+        //Create an instance of the plugin.
+        PVMFCPMPluginInterface* plugin = aFactory->CreateCPMPlugin();
+        if (plugin)
+        {
+            //Package the plugin with its user authentication data.
+            CPMPluginContainer container(*plugin, NULL);
+            //Add the plugin to the registry with its mime string.
+            aRegistry->addPluginToRegistry((OSCL_String&)aMimestring, container);
+        }
+    }
+}
+
+static void _RemovePluginInstance(CPMPluginRegistry* aRegistry, PVMFCPMPluginFactory* aFactory, const OSCL_String& aMimestring)
+{
+    if (aRegistry)
+    {
+        if (aFactory)
+        {
+            CPMPluginContainer* container = aRegistry->lookupPlugin((OSCL_String&)aMimestring);
+            if (container)
+                aFactory->DestroyCPMPlugin(&container->PlugIn());
+        }
+        aRegistry->removePluginFromRegistry((OSCL_String&)aMimestring);
+    }
+}
+
+#ifdef USE_LOADABLE_MODULES
+#include "oscl_shared_library.h"
+#include "osclconfig_lib.h"
+
+static void _AddLoadablePlugins(CPMPluginRegistry* pRegistry)
+{
+    if (!pRegistry)
+        return;
+
+    //Create a list of all libs that implement CPM registry populator
+    pRegistry->AccessSharedLibraryList() = OSCL_NEW(OsclSharedLibraryList, ());
+    OSCL_HeapString<OsclMemAllocator> configPath = PV_DYNAMIC_LOADING_CONFIG_FILE_PATH;
+    pRegistry->AccessSharedLibraryList()->Populate(configPath, PVMF_CPM_PLUGIN_REGISTRY_POPULATOR_UUID);
+
+    //For each lib, add its factory to the registry.
+    for (uint32 i = 0;i < pRegistry->AccessSharedLibraryList()->Size();i++)
+    {
+        OsclAny* temp = NULL;
+        pRegistry->AccessSharedLibraryList()->QueryInterfaceAt(i, temp);
+        PVMFCPMPluginRegistryPopulator* pop = (PVMFCPMPluginRegistryPopulator*) temp;
+        if (pop)
+        {
+            OSCL_HeapString<OsclMemAllocator> mimestring;
+            PVMFCPMPluginFactory* fac = pop->GetFactoryAndMimeString(mimestring);
+            if (fac)
+                _AddPluginInstance(pRegistry, fac, mimestring);
+        }
+    }
+}
+static void _RemoveLoadablePlugins(CPMPluginRegistry* aRegistry)
+{
+    if (!aRegistry)
+        return;
+
+    if (aRegistry->AccessSharedLibraryList())
+    {
+        //Loop through loaded modules & remove plugin from list.
+        for (uint32 i = 0;i < aRegistry->AccessSharedLibraryList()->Size();i++)
+        {
+            OsclAny* temp = NULL;
+            aRegistry->AccessSharedLibraryList()->QueryInterfaceAt(i, temp);
+            PVMFCPMPluginRegistryPopulator* pop = (PVMFCPMPluginRegistryPopulator*) temp;
+            if (pop)
+            {
+                OSCL_HeapString<OsclMemAllocator> mimestring;
+                PVMFCPMPluginFactory* fac = pop->GetFactoryAndMimeString(mimestring);
+                if (fac)
+                {
+                    _RemovePluginInstance(aRegistry, fac, mimestring);
+                    pop->ReleaseFactory();
+                }
+            }
+        }
+
+        //Delete loaded module list
+        OSCL_DELETE(aRegistry->AccessSharedLibraryList());
+        aRegistry->AccessSharedLibraryList() = NULL;
+    }
+}
+#endif //USE_LOADABLE_MODULES
+
 static CPMPluginRegistry* PopulateCPMPluginRegistry()
 {
-    //Connect to global component registry.
-    OsclRegistryAccessClient cli;
-    if (cli.Connect() != OsclErrNone)
-        return NULL;
-
-    //Get all the current CPM plugin factory functions.
-    Oscl_Vector<OsclRegistryAccessElement, OsclMemAllocator> factories;
-    OSCL_HeapString<OsclMemAllocator> id("X-CPM-PLUGIN");//PVMF_MIME_CPM_PLUGIN
-    cli.GetFactories(id, factories);
-
     //Create registry
     CPMPluginRegistry* pRegistry = CPMPluginRegistryFactory::CreateCPMPluginRegistry();
     if (pRegistry)
     {
-        //Create implementations of all plugins.
-        Oscl_Vector<CPMPluginContainer, OsclMemAllocator> plugincontainers;
-        for (uint32 i = 0;i < factories.size();i++)
+        //Add plugins from global component registry.
+        OsclRegistryAccessClient cli;
+        if (cli.Connect() == OsclErrNone)
         {
-            if (factories[i].iFactory)
+            //Get all the current CPM plugin factory functions.
+            Oscl_Vector<OsclRegistryAccessElement, OsclMemAllocator> factories;
+            OSCL_HeapString<OsclMemAllocator> id("X-CPM-PLUGIN");//PVMF_MIME_CPM_PLUGIN
+            cli.GetFactories(id, factories);
+
+            //Add each plugin
+            for (uint32 i = 0;i < factories.size();i++)
             {
-                //Create an instance of the plugin.
-                PVMFCPMPluginInterface* plugin = ((PVMFCPMPluginFactory*)factories[i].iFactory)->CreateCPMPlugin();
-                if (plugin)
+                if (factories[i].iFactory)
                 {
-                    //Package the plugin with its user authentication data.
-                    CPMPluginContainer container(*plugin, NULL);
-                    //Add the plugin to the registry with its mime string.
-                    pRegistry->addPluginToRegistry(factories[i].iMimeString, container);
+                    _AddPluginInstance(pRegistry, (PVMFCPMPluginFactory*)factories[i].iFactory, factories[i].iMimeString);
                 }
             }
+            cli.Close();
         }
+#ifdef USE_LOADABLE_MODULES
+        //Add plugins from loadable modules.
+        _AddLoadablePlugins(pRegistry);
+#endif
     }
-    cli.Close();
     return pRegistry;
 }
 
 static void DePopulateCPMPluginRegistry(CPMPluginRegistry* aRegistry)
 {
-    //Connect to global component registry.
-    OsclRegistryAccessClient cli;
-    if (cli.Connect() != OsclErrNone)
-        return ;
-
     if (aRegistry)
     {
-        OSCL_HeapString<OsclMemAllocator> mimetype;
-        //Delete each plugin
-        while (aRegistry->GetNumPlugIns())
+#ifdef USE_LOADABLE_MODULES
+        //Remove dynamically loaded plugins
+        _RemoveLoadablePlugins(aRegistry);
+#endif
+        //Remove plugins created by the global component registry.
+        OsclRegistryAccessClient cli;
+        if (cli.Connect() == OsclErrNone)
         {
-            if (aRegistry->GetPluginMimeType(0, mimetype))
+            //Get all the current CPM plugin factory functions.
+            Oscl_Vector<OsclRegistryAccessElement, OsclMemAllocator> factories;
+            OSCL_HeapString<OsclMemAllocator> id("X-CPM-PLUGIN");//PVMF_MIME_CPM_PLUGIN
+            cli.GetFactories(id, factories);
+
+            for (uint32 i = 0;i < factories.size();i++)
             {
-                //lookup the instance of this plugin
-                CPMPluginContainer* container = aRegistry->lookupPlugin(mimetype);
-                if (container)
+                if (factories[i].iFactory)
                 {
-                    //lookup the factory for this plugin & delete its instance.
-                    OsclComponentFactory factory = cli.GetFactory(mimetype);
-                    if (factory)
-                    {
-                        ((PVMFCPMPluginFactory*)factory)->DestroyCPMPlugin(&container->PlugIn());
-                    }
+                    _RemovePluginInstance(aRegistry, (PVMFCPMPluginFactory*)factories[i].iFactory, factories[i].iMimeString);
                 }
-                //remove it from the registry
-                aRegistry->removePluginFromRegistry(mimetype);
             }
+            cli.Close();
         }
         //Destroy the plugin registry
         CPMPluginRegistryFactory::DestroyCPMPluginRegistry(aRegistry);
@@ -181,7 +264,7 @@ OSCL_EXPORT_REF PVMFCPMImpl::PVMFCPMImpl(PVMFCPMStatusObserver& aObserver,
     iExtensionRefCount = 0;
     iGetLicenseCmdId = 0;
 
-    int32 err;
+    int32 err = OsclErrNone;
     OSCL_TRY(err,
              /*
               * Create the input command queue.  Use a reserve to avoid lots of
@@ -253,6 +336,11 @@ OSCL_EXPORT_REF void PVMFCPMImpl::ThreadLogon()
 
 OSCL_EXPORT_REF void PVMFCPMImpl::ThreadLogoff()
 {
+    //Note: registry cleanup logically belongs under Reset command, but
+    //some nodes currently hang onto their access interfaces after
+    //CPM is reset, which means the plugins need to survive until after
+    //the access interfaces are cleaned up.
+    //@TODO this should be moved to the CompleteCPMReset routine.
     if (iPluginRegistry)
     {
         DePopulateCPMPluginRegistry(iPluginRegistry);
@@ -716,7 +804,7 @@ void PVMFCPMImpl::CommandComplete(PVMFCPMCommandCmdQ& aCmdQ,
 void
 PVMFCPMImpl::MoveCmdToCurrentQueue(PVMFCPMCommand& aCmd)
 {
-    int32 err;
+    int32 err = OsclErrNone;
     OSCL_TRY(err, iCurrentCommand.StoreL(aCmd););
     if (err != OsclErrNone)
     {
@@ -1010,10 +1098,10 @@ PVMFStatus PVMFCPMImpl::QueryForPlugInMetaDataExtensionInterface()
                 internalCmd->plugInID = it->iPlugInID;
                 OsclAny *cmdContextData =
                     OSCL_REINTERPRET_CAST(OsclAny*, internalCmd);
-
+                it->iPlugInMetaDataExtensionInterfacePVI = NULL;
                 it->iPlugInInterface->QueryInterface(it->iPlugInSessionID,
                                                      KPVMFMetadataExtensionUuid,
-                                                     OSCL_STATIC_CAST(PVInterface*&, it->iPlugInMetaDataExtensionInterface),
+                                                     it->iPlugInMetaDataExtensionInterfacePVI,
                                                      cmdContextData);
                 iNumQueryMetaDataExtensionInterfacePending++;
             }
@@ -1064,10 +1152,10 @@ PVMFStatus PVMFCPMImpl::QueryForPlugInCapConfigInterface()
                 internalCmd->plugInID = it->iPlugInID;
                 OsclAny *cmdContextData =
                     OSCL_REINTERPRET_CAST(OsclAny*, internalCmd);
-
+                it->iPlugInCapConfigExtensionInterfacePVI = NULL;
                 it->iPlugInInterface->QueryInterface(it->iPlugInSessionID,
                                                      PVMI_CAPABILITY_AND_CONFIG_PVUUID,
-                                                     OSCL_STATIC_CAST(PVInterface*&, it->iPlugInCapConfigExtensionInterface),
+                                                     it->iPlugInCapConfigExtensionInterfacePVI,
                                                      cmdContextData);
                 iNumQueryCapConfigExtensionInterfacePending++;
             }
@@ -1118,10 +1206,10 @@ PVMFStatus PVMFCPMImpl::QueryForPlugInAuthenticationInterface()
                 internalCmd->plugInID = it->iPlugInID;
                 OsclAny *cmdContextData =
                     OSCL_REINTERPRET_CAST(OsclAny*, internalCmd);
-
+                it->iPlugInAuthenticationInterfacePVI = NULL;
                 it->iPlugInInterface->QueryInterface(it->iPlugInSessionID,
                                                      PVMFCPMPluginAuthenticationInterfaceUuid,
-                                                     OSCL_STATIC_CAST(PVInterface*&, it->iPlugInAuthenticationInterface),
+                                                     it->iPlugInAuthenticationInterfacePVI,
                                                      cmdContextData);
                 iNumQueryAuthenticationInterfacePending++;
             }
@@ -1150,8 +1238,9 @@ void PVMFCPMImpl::CompleteCPMInit()
 
 void PVMFCPMImpl::DoOpenSession(PVMFCPMCommand& aCmd)
 {
-    PVMFSessionId* sessionIdPtr;
-    aCmd.Parse(OSCL_STATIC_CAST(OsclAny*&, sessionIdPtr));
+    OsclAny* temp = NULL;
+    aCmd.Parse(temp);
+    PVMFSessionId* sessionIdPtr = OSCL_STATIC_CAST(PVMFSessionId*, temp);
 
     /* Create a session info */
     CPMSessionInfo sessionInfo;
@@ -1241,15 +1330,18 @@ void PVMFCPMImpl::CompleteOpenSession(CPMSessionInfo* aSessionInfo)
 
 void PVMFCPMImpl::DoRegisterContent(PVMFCPMCommand& aCmd)
 {
-    OSCL_wString* sourceURL;
-    PVMFFormatType* sourceFormatType;
+    OsclAny* temp1 = NULL;
+    OsclAny* temp2 = NULL;
     OsclAny* aSourceData;
     OsclAny* placeHolder;
 
-    aCmd.Parse(OSCL_STATIC_CAST(OsclAny*&, sourceURL),
-               OSCL_STATIC_CAST(OsclAny*&, sourceFormatType),
+    aCmd.Parse(temp1,
+               temp2,
                aSourceData,
                placeHolder);
+
+    OSCL_wString* sourceURL = OSCL_STATIC_CAST(OSCL_wString*, temp1);
+    PVMFFormatType* sourceFormatType = OSCL_STATIC_CAST(PVMFFormatType*, temp2);
 
     CPMSessionInfo* sInfo = LookUpSessionInfo(aCmd.iSession);
 
@@ -1325,10 +1417,10 @@ PVMFStatus PVMFCPMImpl::QueryForAuthorizationInterface(CPMSessionInfo* aInfo)
                 internalCmd->sessionid = aInfo->iSessionId;
                 OsclAny *cmdContextData =
                     OSCL_REINTERPRET_CAST(OsclAny*, internalCmd);
-
+                it->iPlugInAuthorizationInterfacePVI = NULL;
                 it->iPlugInInterface->QueryInterface(it->iPlugInSessionID,
                                                      PVMFCPMPluginAuthorizationInterfaceUuid,
-                                                     OSCL_STATIC_CAST(PVInterface*&, it->iPlugInAuthorizationInterface),
+                                                     it->iPlugInAuthorizationInterfacePVI,
                                                      cmdContextData);
                 aInfo->iNumPlugInAuthorizeInterfaceQueryRequestsPending++;
             }
@@ -1361,10 +1453,10 @@ PVMFStatus PVMFCPMImpl::QueryForAccessInterfaceFactory(CPMSessionInfo* aInfo)
                 internalCmd->sessionid = aInfo->iSessionId;
                 OsclAny *cmdContextData =
                     OSCL_REINTERPRET_CAST(OsclAny*, internalCmd);
-
+                it->iPlugInAccessInterfaceFactoryPVI = NULL;
                 it->iPlugInInterface->QueryInterface(it->iPlugInSessionID,
                                                      PVMFCPMPluginAccessInterfaceFactoryUuid,
-                                                     OSCL_STATIC_CAST(PVInterface*&, it->iPlugInAccessInterfaceFactory),
+                                                     it->iPlugInAccessInterfaceFactoryPVI,
                                                      cmdContextData);
                 aInfo->iNumPlugInAccessInterfaceFactoryQueryRequestsPending++;
             }
@@ -1412,10 +1504,10 @@ PVMFStatus PVMFCPMImpl::QueryForLicenseInterface(CPMSessionInfo* aInfo)
                 internalCmd->sessionid = aInfo->iSessionId;
                 OsclAny *cmdContextData =
                     OSCL_REINTERPRET_CAST(OsclAny*, internalCmd);
-
+                it->iPlugInLicenseInterfacePVI = NULL;
                 it->iPlugInInterface->QueryInterface(it->iPlugInSessionID,
                                                      PVMFCPMPluginLicenseInterfaceUuid,
-                                                     OSCL_STATIC_CAST(PVInterface*&, it->iPlugInLicenseInterface),
+                                                     it->iPlugInLicenseInterfacePVI,
                                                      cmdContextData);
                 aInfo->iNumPlugInLicenseAcquisitionInterfaceRequestsPending++;
             }
@@ -1525,15 +1617,14 @@ void PVMFCPMImpl::CompleteRegisterContentPhase3(CPMSessionInfo* aInfo)
 
 void PVMFCPMImpl::DoApproveUsage(PVMFCPMCommand& aCmd)
 {
-    PvmiKvp* requestedUsage;
-    PvmiKvp* approvedUsage;
-    PvmiKvp* authorizationData;
-    PVMFCPMUsageID* usageID;
+    OsclAny* temp1 = NULL;
+    OsclAny* temp2 = NULL;
+    OsclAny* temp3 = NULL;
+    OsclAny* temp4 = NULL;
 
-    aCmd.Parse(OSCL_STATIC_CAST(OsclAny*&, requestedUsage),
-               OSCL_STATIC_CAST(OsclAny*&, approvedUsage),
-               OSCL_STATIC_CAST(OsclAny*&, authorizationData),
-               OSCL_STATIC_CAST(OsclAny*&, usageID));
+    aCmd.Parse(temp1, temp2, temp3, temp4);
+
+    PVMFCPMUsageID* usageID = OSCL_STATIC_CAST(PVMFCPMUsageID*, temp4);
 
     /* Create Usage context */
     *usageID = iContentUsageContextVec.size();
@@ -1557,17 +1648,27 @@ PVMFStatus PVMFCPMImpl::RequestApprovalFromActivePlugIns(PVMFCPMCommand& aCmd)
 {
     if (iActivePlugInParamsVec.size() > 0)
     {
-        PvmiKvp* requestedUsage;
-        PvmiKvp* approvedUsage;
-        PvmiKvp* authorizationData;
-        PVMFCPMUsageID* usageID;
+        OsclAny* temp1 = NULL;
+        OsclAny* temp2 = NULL;
+        OsclAny* temp3 = NULL;
+        OsclAny* temp4 = NULL;
 
-        aCmd.Parse(OSCL_STATIC_CAST(OsclAny*&, requestedUsage),
-                   OSCL_STATIC_CAST(OsclAny*&, approvedUsage),
-                   OSCL_STATIC_CAST(OsclAny*&, authorizationData),
-                   OSCL_STATIC_CAST(OsclAny*&, usageID));
+        aCmd.Parse(temp1, temp2, temp3, temp4);
 
-        CPMSessionInfo* sInfo = LookUpSessionInfo(aCmd.iSession);
+        PvmiKvp* requestedUsage = OSCL_STATIC_CAST(PvmiKvp*, temp1);
+        PvmiKvp* approvedUsage = OSCL_STATIC_CAST(PvmiKvp*, temp2);
+        PvmiKvp* authorizationData = OSCL_STATIC_CAST(PvmiKvp*, temp3);
+        PVMFCPMUsageID* usageID = OSCL_STATIC_CAST(PVMFCPMUsageID*, temp4);
+
+        CPMSessionInfo* sInfo = NULL; // initialize to ensure that if LookUpSeesionInfo() fail, sInfo will be NULL
+        sInfo = LookUpSessionInfo(aCmd.iSession);
+        OSCL_ASSERT(sInfo);
+        if (!sInfo)
+        {
+            PVMF_CPM_LOGERROR((0, "PVMFCPMImpl::RequestApprovalFromActivePlugIns - No Session Info"));
+            return PVMFFailure;
+        }
+
         CPMContentUsageContext* usageContext = LookUpContentUsageContext(*usageID);
         Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it;
         for (it = iActivePlugInParamsVec.begin(); it != iActivePlugInParamsVec.end(); it++)
@@ -1768,12 +1869,14 @@ void PVMFCPMImpl::DoUsageComplete(PVMFCPMCommand& aCmd)
     OsclAny* placeHolder1;
     OsclAny* placeHolder2;
     OsclAny* placeHolder3;
-    PVMFCPMUsageID* usageID;
+    OsclAny* temp = NULL;
 
     aCmd.Parse(OSCL_STATIC_CAST(OsclAny*&, placeHolder1),
                OSCL_STATIC_CAST(OsclAny*&, placeHolder2),
-               OSCL_STATIC_CAST(OsclAny*&, usageID),
+               temp,
                OSCL_STATIC_CAST(OsclAny*&, placeHolder3));
+
+    PVMFCPMUsageID* usageID = OSCL_STATIC_CAST(PVMFCPMUsageID*, temp);
 
     PVMFStatus status = SendUsageCompleteToRegisteredPlugIns(*usageID);
     if (status == PVMFSuccess)
@@ -1855,8 +1958,9 @@ void PVMFCPMImpl::CompleteUsageComplete(CPMContentUsageContext* aContext)
 
 void PVMFCPMImpl::DoCloseSession(PVMFCPMCommand& aCmd)
 {
-    PVMFSessionId* sessionId;
-    aCmd.Parse(OSCL_STATIC_CAST(OsclAny*&, sessionId));
+    OsclAny* temp = NULL;
+    aCmd.Parse(temp);
+    PVMFSessionId* sessionId = OSCL_STATIC_CAST(PVMFSessionId*, temp);
 
     CPMSessionInfo* sessionInfo = NULL;
 
@@ -2045,14 +2149,36 @@ void PVMFCPMImpl::CPMPluginCommandCompleted(const PVMFCmdResp& aResponse)
             break;
 
         case PVMF_CPM_INTERNAL_QUERY_METADATA_EXTENSION_INTERFACE_CMD:
+        {
+            CPMPlugInParams* plugInParams =
+                LookUpPlugInParams(cmdContextData->plugInID);
+            if (plugInParams)
+            {
+                plugInParams->iPlugInMetaDataExtensionInterface =
+                    OSCL_STATIC_CAST(PVMFMetadataExtensionInterface*,
+                                     plugInParams->iPlugInMetaDataExtensionInterfacePVI);
+                plugInParams->iPlugInMetaDataExtensionInterfacePVI = NULL;
+            }
             iNumQueryMetaDataExtensionInterfaceComplete++;
             CompleteMetaDataExtInterfaceQueryFromPlugIns();
-            break;
+        }
+        break;
 
         case PVMF_CPM_INTERNAL_QUERY_AUTHENTICATION_INTERFACE_CMD:
+        {
+            CPMPlugInParams* plugInParams =
+                LookUpPlugInParams(cmdContextData->plugInID);
+            if (plugInParams)
+            {
+                plugInParams->iPlugInAuthenticationInterface =
+                    OSCL_STATIC_CAST(PVMFCPMPluginAuthenticationInterface*,
+                                     plugInParams->iPlugInAuthenticationInterfacePVI);
+                plugInParams->iPlugInAuthenticationInterfacePVI = NULL;
+            }
             iNumQueryAuthenticationInterfaceComplete++;
             CompleteCPMInit();
-            break;
+        }
+        break;
 
         case PVMF_CPM_INTERNAL_AUTHENTICATE_CMD:
         {
@@ -2064,6 +2190,15 @@ void PVMFCPMImpl::CPMPluginCommandCompleted(const PVMFCmdResp& aResponse)
 
         case PVMF_CPM_INTERNAL_QUERY_AUTHORIZATION_INTERFACE_CMD:
         {
+            CPMPlugInParams* plugInParams =
+                LookUpPlugInParamsFromActiveList(cmdContextData->plugInID);
+            if (plugInParams)
+            {
+                plugInParams->iPlugInAuthorizationInterface =
+                    OSCL_STATIC_CAST(PVMFCPMPluginAuthorizationInterface*,
+                                     plugInParams->iPlugInAuthorizationInterfacePVI);
+                plugInParams->iPlugInAuthorizationInterfacePVI = NULL;
+            }
             CPMSessionInfo* sessionInfo =
                 LookUpSessionInfo(cmdContextData->sessionid);
             CompleteRegisterContentPhase1(sessionInfo);
@@ -2072,6 +2207,15 @@ void PVMFCPMImpl::CPMPluginCommandCompleted(const PVMFCmdResp& aResponse)
 
         case PVMF_CPM_INTERNAL_QUERY_ACCESS_INTERFACE_FACTORY_CMD:
         {
+            CPMPlugInParams* plugInParams =
+                LookUpPlugInParamsFromActiveList(cmdContextData->plugInID);
+            if (plugInParams)
+            {
+                plugInParams->iPlugInAccessInterfaceFactory =
+                    OSCL_STATIC_CAST(PVMFCPMPluginAccessInterfaceFactory*,
+                                     plugInParams->iPlugInAccessInterfaceFactoryPVI);
+                plugInParams->iPlugInAccessInterfaceFactoryPVI = NULL;
+            }
             CPMSessionInfo* sessionInfo =
                 LookUpSessionInfo(cmdContextData->sessionid);
             CompleteRegisterContentPhase2(sessionInfo);
@@ -2080,6 +2224,15 @@ void PVMFCPMImpl::CPMPluginCommandCompleted(const PVMFCmdResp& aResponse)
 
         case PVMF_CPM_INTERNAL_QUERY_LICENSE_INTERFACE_CMD:
         {
+            CPMPlugInParams* plugInParams =
+                LookUpPlugInParamsFromActiveList(cmdContextData->plugInID);
+            if (plugInParams)
+            {
+                plugInParams->iPlugInLicenseInterface =
+                    OSCL_STATIC_CAST(PVMFCPMPluginLicenseInterface*,
+                                     plugInParams->iPlugInLicenseInterfacePVI);
+                plugInParams->iPlugInLicenseInterfacePVI = NULL;
+            }
             CPMSessionInfo* sessionInfo =
                 LookUpSessionInfo(cmdContextData->sessionid);
             CompleteRegisterContentPhase3(sessionInfo);
@@ -2093,7 +2246,6 @@ void PVMFCPMImpl::CPMPluginCommandCompleted(const PVMFCmdResp& aResponse)
             CompleteApproveUsage(usageContext);
             CPMPlugInParams* plugInParams =
                 LookUpPlugInParams(cmdContextData->plugInID);
-            OSCL_ASSERT(plugInParams);
             if (plugInParams)
                 plugInParams->iAuthorized = true;
         }
@@ -2106,7 +2258,6 @@ void PVMFCPMImpl::CPMPluginCommandCompleted(const PVMFCmdResp& aResponse)
             CompleteUsageComplete(usageContext);
             CPMPlugInParams* plugInParams =
                 LookUpPlugInParams(cmdContextData->plugInID);
-            OSCL_ASSERT(plugInParams);
             if (plugInParams)
                 plugInParams->iAuthorized = false;
         }
@@ -2134,9 +2285,20 @@ void PVMFCPMImpl::CPMPluginCommandCompleted(const PVMFCmdResp& aResponse)
         break;
 
         case PVMF_CPM_INTERNAL_QUERY_CAP_CONFIG_INTERFACE_CMD:
+        {
+            CPMPlugInParams* plugInParams =
+                LookUpPlugInParams(cmdContextData->plugInID);
+            if (plugInParams)
+            {
+                plugInParams->iPlugInCapConfigExtensionInterface =
+                    OSCL_STATIC_CAST(PvmiCapabilityAndConfig*,
+                                     plugInParams->iPlugInCapConfigExtensionInterfacePVI);
+                plugInParams->iPlugInCapConfigExtensionInterfacePVI = NULL;
+            }
             iNumQueryCapConfigExtensionInterfaceComplete++;
             CompleteCapConfigExtInterfaceQueryFromPlugIns();
-            break;
+        }
+        break;
 
         default:
             break;
@@ -2273,11 +2435,11 @@ PVMFCPMImpl::CompleteDoGetMetadataKeys(PVMFCPMCommand& aCmd)
 {
     iGetMetaDataKeysInProgress = false;
 
+    int32 leavecode = OsclErrNone;
     PVMFMetadataList* keylistptr = NULL;
     int32 starting_index;
     int32 max_entries;
     char* query_key = NULL;
-
     aCmd.PVMFCPMCommand::Parse(keylistptr,
                                starting_index,
                                max_entries,
@@ -2296,12 +2458,10 @@ PVMFCPMImpl::CompleteDoGetMetadataKeys(PVMFCPMCommand& aCmd)
     /* Copy the requested keys from all active plugins */
     uint32 num_entries = 0;
     int32 num_added = 0;
-    int32 leavecode = 0;
     Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it;
     for (it = iActivePlugInParamsVec.begin(); it != iActivePlugInParamsVec.end(); it++)
     {
         it->iMetaDataKeyStartIndex = keylistptr->size();
-
         for (uint32 lcv = 0; lcv < it->iAvailableMetadataKeys.size(); lcv++)
         {
             if (query_key == NULL)
@@ -2311,11 +2471,12 @@ PVMFCPMImpl::CompleteDoGetMetadataKeys(PVMFCPMCommand& aCmd)
                 if (num_entries > (uint32)starting_index)
                 {
                     /* Past the starting index so copy the key */
-                    leavecode = 0;
-                    OSCL_TRY(leavecode, keylistptr->push_back(it->iAvailableMetadataKeys[lcv]));
-                    OSCL_FIRST_CATCH_ANY(leavecode,
-                                         PVMF_CPM_LOGERROR((0, "PVMFCPMImpl::CompleteDoGetMetadataKeys() Memory allocation failure when copying metadata key"));
-                                         return PVMFErrNoMemory);
+                    leavecode = OsclErrNone;
+                    leavecode = PushKVPKey(it->iAvailableMetadataKeys[lcv], *keylistptr);
+                    if (OsclErrNone != leavecode)
+                    {
+                        return PVMFErrNoMemory;
+                    }
                     num_added++;
                 }
             }
@@ -2329,11 +2490,12 @@ PVMFCPMImpl::CompleteDoGetMetadataKeys(PVMFCPMCommand& aCmd)
                     if (num_entries > (uint32)starting_index)
                     {
                         /* Past the starting index so copy the key */
-                        leavecode = 0;
-                        OSCL_TRY(leavecode, keylistptr->push_back(it->iAvailableMetadataKeys[lcv]));
-                        OSCL_FIRST_CATCH_ANY(leavecode,
-                                             PVMF_CPM_LOGERROR((0, "PVMFCPMImpl::CompleteDoGetMetadataKeys() Memory allocation failure when copying metadata key"));
-                                             return PVMFErrNoMemory);
+                        leavecode = OsclErrNone;
+                        leavecode = PushKVPKey(it->iAvailableMetadataKeys[lcv], *keylistptr);
+                        if (OsclErrNone != leavecode)
+                        {
+                            return PVMFErrNoMemory;
+                        }
                         num_added++;
                     }
                 }
@@ -2588,7 +2750,7 @@ void PVMFCPMImpl::setParametersSync(PvmiMIOSession aSession,
     {
         if (it->iPlugInCapConfigExtensionInterface != NULL)
         {
-            int32 err;
+            int32 err = OsclErrNone;
             OSCL_TRY(err,
                      it->iPlugInCapConfigExtensionInterface->setParametersSync(aSession,
                              aParameters,
@@ -2814,7 +2976,25 @@ void PVMFCPMImpl::DoCancelGetLicense(PVMFCPMCommand& aCmd)
             {
                 internalCmd->cmd = PVMF_CPM_INTERNAL_CANCEL_GET_LICENSE;
                 internalCmd->parentCmd = PVMF_CPM_CANCEL_GET_LICENSE;
+
+                OSCL_ASSERT(pluginParamsPtr);
+
+                if (!pluginParamsPtr)
+
+                {
+
+                    status = PVMFErrCorrupt;
+
+                    PVMF_CPM_LOGERROR((0, "PVMFCPMImpl::DoCancelGetLicense - data corrupted"));
+
+                    CommandComplete(iInputCommands, aCmd, status);
+
+                    return;
+
+                }
+
                 internalCmd->plugInID = pluginParamsPtr->iPlugInID;
+
                 OsclAny *cmdContextData =
                     OSCL_REINTERPRET_CAST(OsclAny*, internalCmd);
 
@@ -2874,6 +3054,7 @@ OSCL_EXPORT_REF CPMPluginContainer* CPMPluginRegistryImpl::lookupPlugin(OSCL_Str
     Oscl_Map<string_key_type, CPMPluginContainer*, OsclMemAllocator, string_key_compare_class>::iterator it;
     it = iCPMPluginRegistry.find(aMimeType);
 
+    /* Workaround for the ADS1.2 compiler*/
     if (!(it == iCPMPluginRegistry.end()))
     {
         return (((*it).second));
@@ -2899,7 +3080,12 @@ OSCL_EXPORT_REF bool CPMPluginRegistryImpl::GetPluginMimeType(uint32 aIndex, OSC
 OSCL_EXPORT_REF CPMPluginRegistryImpl::CPMPluginRegistryImpl()
 {
     iRefCount = 0;
+    iSharedLibList = NULL;
 }
+
+#ifdef USE_LOADABLE_MODULES
+#include "oscl_shared_library.h"
+#endif
 
 OSCL_EXPORT_REF CPMPluginRegistryImpl::~CPMPluginRegistryImpl()
 {
@@ -2910,6 +3096,10 @@ OSCL_EXPORT_REF CPMPluginRegistryImpl::~CPMPluginRegistryImpl()
         if (container)
             OSCL_DELETE(container);
     }
+#ifdef USE_LOADABLE_MODULES
+    if (iSharedLibList)
+        OSCL_DELETE(iSharedLibList);
+#endif
 }
 
 CPMPluginRegistry* CPMPluginRegistryFactory::CreateCPMPluginRegistry()
@@ -2923,3 +3113,9 @@ void CPMPluginRegistryFactory::DestroyCPMPluginRegistry(CPMPluginRegistry* aReg)
     OSCL_DELETE(impl);
 }
 
+int32 PVMFCPMImpl::PushKVPKey(OSCL_String& aString, PVMFMetadataList& aKeyList)
+{
+    int32 leavecode = OsclErrNone;
+    OSCL_TRY(leavecode, aKeyList.push_back(aString));
+    return leavecode;
+}

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -332,17 +332,6 @@ class Oscl_File : public HeapBase
          */
         OSCL_IMPORT_REF int32 Flush();
 
-        /**
-         * The File SetSize operation
-         * If the file has been opened for writing
-         * This sets the size of the file.  The file pointer position
-         * is unchanged unless the pointers position is greated than
-         * the new filesize.
-         *
-         * @return returns 0 if successful, and a non-zero value otherwise
-         */
-        OSCL_IMPORT_REF int32 SetSize(uint32 size);
-
 
         /**
          * The File EOF(end of file) operation
@@ -402,6 +391,8 @@ class Oscl_File : public HeapBase
 
     private:
         friend class OsclFileCache;
+        friend class asyncfilereadwrite_test;
+        friend class asyncfilereadcancel_test;
 
         void Construct();
         void OldCacheDefaults();
@@ -455,7 +446,6 @@ class Oscl_File : public HeapBase
         uint32 CallNativeRead(OsclAny *buffer, uint32 size, uint32 numelements);
         uint32 CallNativeWrite(const OsclAny *buffer, uint32 size, uint32 numelements);
         int32  CallNativeSeek(int32 offset, Oscl_File::seek_type origin);
-        int32  CallNativeSetSize(uint32 size);
         int32  CallNativeTell();
         int32  CallNativeFlush();
         int32  CallNativeEndOfFile();
@@ -463,6 +453,8 @@ class Oscl_File : public HeapBase
         int32 CallNativeClose();
         uint32 CallNativeMode();
         int32 CallNativeGetError();
+        OSCL_IMPORT_REF uint32 GetAsyncFileNumOfRun();
+        OSCL_IMPORT_REF uint32 GetAsyncFileNumOfRunError();
 
 };
 

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,43 +15,34 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*                                                                          */
-/*  =====================================================================   */
-/*  File: baseMediaInfoParser.cpp                                           */
-/*  Description:                                                            */
-/*                                                                          */
-/*                                                                          */
-/*  Rev:                                                                    */
-/*  Created: 05/24/01                                                       */
-/*  =====================================================================   */
-/*                                                                          */
-/*  Revision History:                                                       */
-/*                                                                          */
-/*  Rev:                                                                    */
-/*  Date:                                                                   */
-/*  Description:                                                            */
-/*                                                                          */
-/* //////////////////////////////////////////////////////////////////////// */
-
 #include "base_media_info_parser.h"
 #include "oscl_string_utils.h"
 #include "oscl_string_containers.h"
 #include "rtsp_range_utils.h"
 
 
-/* ======================================================================== */
-/*  Function : parsePayload(char *buff, mediaInfo* mediaStr,int index)      */
-/*  Date     : 05/24/2001                                                   */
-/*  Purpose  : Parses generic media text and fills out the media structure  */
-/*  In/out   :                                                              */
-/*  Return   :                                                              */
-/*  Modified :                                                              */
-/* ======================================================================== */
-SDP_ERROR_CODE
-SDPBaseMediaInfoParser::baseMediaInfoParser(const char* buff, mediaInfo* mediaStr, const int index, const int alt_id, bool alt_def_id, bool isSipSdp)
+/* Function to allocate temporary buffer, OSCL_TRY() put here to avoid     */
+/* compiler warnings                                                       */
+static void newTmpBuf(uint32 len, char** buf)
+{
+    int32 err;
+    *buf = NULL;
 
-//SDP_ERROR_CODE baseMediaInfoParser::parsePayload(const char* buff, mediaInfo*
-//                                                 mediaStr,const int index)
+    OSCL_TRY(err, *buf = OSCL_ARRAY_NEW(char, len));
+
+    if (err != OsclErrNone)
+    {
+        *buf = NULL;
+    }
+}
+
+SDP_ERROR_CODE
+SDPBaseMediaInfoParser::baseMediaInfoParser(const char* buff,
+        mediaInfo* mediaStr,
+        const int index,
+        const int alt_id,
+        bool alt_def_id,
+        bool isSipSdp)
 {
     const char *current_start = buff; //Pointer to the beginning of the media text
     const char *end = buff + index;   //Pointer to the end of the media text
@@ -258,8 +249,10 @@ SDPBaseMediaInfoParser::baseMediaInfoParser(const char* buff, mediaInfo* mediaSt
                             {
                                 if (payloadNumber == mediaStr->getPayloadSpecificInfoVector()[ii]->getPayloadNumber())
                                 {
-                                    if (payloadNumber >= FIRST_STATIC_PAYLOAD &&
-                                            payloadNumber <= LAST_STATIC_PAYLOAD)
+                                    // check if (FIRST_STATIC_PAYLOAD <= payloadNumber <= LAST_STATIC_PAYLOAD)
+                                    // since payloadNumber is unsigned and FIRST_STATIC_PAYLOAD == 0, only the upper
+                                    // boundary needs to be checked. Adding the lower boundary causes compiler warning.
+                                    if (payloadNumber <= LAST_STATIC_PAYLOAD)
                                         a_rtpmap_found = true;
                                 }
                             }
@@ -373,17 +366,18 @@ SDPBaseMediaInfoParser::baseMediaInfoParser(const char* buff, mediaInfo* mediaSt
                         //For eg. earlier we have MIME type "AMR" and according to standard it should be
                         //like "audio/AMR". so tho whole logic implements the same.
                         uint32  tempBufLen = 0;
-                        int32 err = 0;
                         char *tmpBuf = NULL;
                         const char SDP_NULL[] = "\0";
 
                         tempBufLen = oscl_strlen(mediaStr->getType()) + (tmp_end_ptr - sptr1) + 2;
 
-                        OSCL_TRY(err, tmpBuf = OSCL_ARRAY_NEW(char, tempBufLen));
-                        if ((err != OsclErrNone) || (tmpBuf == NULL))
+                        // "OSCL_TRY(err, OSCL_ARRAY_NEW(char, tempBufLen)" is in separate function to avoid warnings
+                        newTmpBuf(tempBufLen, &tmpBuf);
+                        if (NULL == tmpBuf)
                         {
                             return SDP_NO_MEMORY;
                         }
+
                         oscl_strncpy(tmpBuf, mediaStr->getType(), (oscl_strlen(mediaStr->getType()) + 1));
                         oscl_strcat(tmpBuf, SDP_FWD_SLASH);
                         oscl_strncat(tmpBuf, sptr1, (tmp_end_ptr - sptr1));
@@ -499,24 +493,6 @@ SDPBaseMediaInfoParser::baseMediaInfoParser(const char* buff, mediaInfo* mediaSt
                             return SDP_BAD_MEDIA_RANGE_FIELD;
                         }
                         parseRtspRange(sptr1, line_end_ptr - sptr1, *(mediaStr->getRtspRange()));
-                    }
-                    if (!oscl_strncmp(line_start_ptr, "a=content_version:", oscl_strlen("a=content_version:")))
-                    {
-                        sptr1 = line_start_ptr + oscl_strlen("a=content_version:");
-                        sptr1 = skip_whitespace(sptr1, line_end_ptr);
-                        if (sptr1 >= line_end_ptr)
-                        {
-                            PVMF_SDP_PARSER_LOGERROR((0, "SDPBaseMediaInfoParser::parseMediaInfo - Bad a=content_version line format"));
-                            return SDP_BAD_MEDIA_FORMAT;
-                        }
-                        double cv;
-                        if (!PV_atof(sptr1, line_end_ptr - sptr1, (OsclFloat&)cv))
-                            return SDP_BAD_MEDIA_FORMAT;
-                        uint16 major_version, minor_version;
-                        major_version = (int16)cv;
-                        minor_version = (int16)((cv - (double)major_version) * 10.0);
-                        uint16 contentVers = (uint16)((major_version << 8) | minor_version);
-                        mediaStr->setContentVersion(contentVers);
                     }
                     if (!oscl_strncmp(line_start_ptr, "a=depends_on:", oscl_strlen("a=depends_on:")))
                     {
@@ -945,7 +921,6 @@ SDPBaseMediaInfoParser::baseMediaInfoParser(const char* buff, mediaInfo* mediaSt
                     memFrag.len = (eptr - sptr);
                     mediaStr->setCNetworkType(memFrag);
 
-
                     // get the address type
                     sptr = skip_whitespace(eptr, line_end_ptr);
                     if (sptr >= line_end_ptr)
@@ -964,7 +939,6 @@ SDPBaseMediaInfoParser::baseMediaInfoParser(const char* buff, mediaInfo* mediaSt
                     memFrag.len = (eptr - sptr);
                     mediaStr->setCAddressType(memFrag);
 
-
                     // get the address
                     sptr = skip_whitespace(eptr, line_end_ptr);
                     if (sptr >= line_end_ptr)
@@ -982,8 +956,8 @@ SDPBaseMediaInfoParser::baseMediaInfoParser(const char* buff, mediaInfo* mediaSt
                     memFrag.ptr = (void*)sptr;
                     memFrag.len = (eptr - sptr);
                     mediaStr->setCAddress(memFrag);
-
-                    if (oscl_strstr(sptr, "IP4"))
+                    uint32 len = OSCL_MIN((uint32)(eptr - sptr), oscl_strlen("IP4"));
+                    if (oscl_strncmp(sptr, "IP4", len) == 0)
                     {
                         uint32 address;
                         const char *addrend = sptr;
@@ -1037,8 +1011,10 @@ SDPBaseMediaInfoParser::baseMediaInfoParser(const char* buff, mediaInfo* mediaSt
                             return SDP_BAD_SESSION_FORMAT;
                         }
                     }
-                    else if (oscl_strstr(sptr, "IP6"))
-                    {//TBD
+                    //use "len" here since "IP4" and "IP6" have same lengths
+                    else if (oscl_strncmp(sptr, "IP6", len) == 0)
+                    {
+                        //TBD
                     }
                     break;
                 }
@@ -1084,7 +1060,7 @@ SDPBaseMediaInfoParser::baseMediaInfoParser(const char* buff, mediaInfo* mediaSt
     /*
      * cannot assume that range is always going to be set at media level
      */
-    if (isSipSdp && (a_rtpmap_found) || (!alt_def_id && alt_id))
+    if ((isSipSdp && a_rtpmap_found) || (!alt_def_id && alt_id))
         return SDP_SUCCESS;
     else if ((a_rtpmap_found && a_control_found) || (!alt_def_id && alt_id) || (a_control_set))
         return SDP_SUCCESS;

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,6 +58,7 @@ OMX_BOOL OmxAacDecoder::AacDecInit(OMX_U32 aDesiredChannels)
 void OmxAacDecoder::AacDecDeinit()
 {
     oscl_free(ipMem);
+    ipMem = NULL;
 }
 
 void OmxAacDecoder::ResetDecoder()
@@ -75,12 +76,11 @@ Int OmxAacDecoder::AacDecodeFrames(OMX_S16* aOutputBuffer,
                                    OMX_U32* aInBufSize, OMX_S32* aIsFirstBuffer,
                                    OMX_AUDIO_PARAM_PCMMODETYPE* aAudioPcmParam,
                                    OMX_AUDIO_PARAM_AACPROFILETYPE* aAudioAacParam,
-                                   OMX_S32* aSamplesPerFrame,
+                                   OMX_U32* aSamplesPerFrame,
                                    OMX_BOOL* aResizeFlag)
 {
     Int   Status;
     Int32 StreamType;
-    static Int32 ConfigUpSamplingFactor;
 
 
     *aResizeFlag = OMX_FALSE;
@@ -121,10 +121,13 @@ Int OmxAacDecoder::AacDecodeFrames(OMX_S16* aOutputBuffer,
     //Decode the config buffer
     if (0 == iAacInitFlag)
     {
-        iAacInitFlag = 1;
         Status = PVMP4AudioDecoderConfig(&iExt, ipMem);
+        if (MP4AUDEC_SUCCESS == Status)
+        {
+            iAacInitFlag = 1;
+        }
 
-        ConfigUpSamplingFactor = iExt.aacPlusUpsamplingFactor;
+        iConfigUpSamplingFactor = iExt.aacPlusUpsamplingFactor;
 
         if (2 == iExt.aacPlusUpsamplingFactor)
         {
@@ -185,11 +188,12 @@ Int OmxAacDecoder::AacDecodeFrames(OMX_S16* aOutputBuffer,
         {
             StreamType = (Int32) RetrieveDecodedStreamType();
 
-            if ((0 == StreamType) && (2 == ConfigUpSamplingFactor))
+            if ((0 == StreamType) && (2 == iConfigUpSamplingFactor))
             {
                 PVMP4AudioDecoderDisableAacPlus(&iExt, &ipMem);
                 *aSamplesPerFrame = AACDEC_PCM_FRAME_SAMPLE_SIZE;
                 aAudioAacParam->eAACProfile = OMX_AUDIO_AACObjectMain;
+                aAudioAacParam->nFrameLength = AACDEC_PCM_FRAME_SAMPLE_SIZE;
             }
 
             //Output Port Parameters
@@ -221,7 +225,7 @@ Int OmxAacDecoder::AacDecodeFrames(OMX_S16* aOutputBuffer,
 }
 
 
-
+//Retrieve the Stream Type of AAC input-bitstream
 Int OmxAacDecoder::RetrieveDecodedStreamType()
 {
 
@@ -242,8 +246,10 @@ Int OmxAacDecoder::RetrieveDecodedStreamType()
     return -1;   /*  Error evaluating the stream type */
 }
 
+
+//Change the AACEnable flag, according to the AAC profile set by the client in SetParameter API
 void OmxAacDecoder::UpdateAACPlusEnabled(OMX_BOOL flag)
 {
     //Mark this flag as false if client sets any non HE AAC profile in SetParameter call
-    iExt.aacPlusEnabled = flag;
+    iExt.aacPlusEnabled = (OMX_TRUE == flag) ? true : false;
 }

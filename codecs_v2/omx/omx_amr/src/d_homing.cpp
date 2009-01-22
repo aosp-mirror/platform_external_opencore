@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@
 */
 
 #include "d_homing.h"
-const char d_homing_id[] = "@(#)$Id $" d_homing_h;
+//const char d_homing_id[] = "@(#)$Id $" d_homing_h;
 
 /*
 *****************************************************************************
@@ -53,7 +53,7 @@ const char d_homing_id[] = "@(#)$Id $" d_homing_h;
 #include "d_homing.tab"
 
 /* get rid of compiler warning "`bitno' defined but never used" */
-static void* dummy[] = {(void *) bitno, (void *) dummy };
+//static void* dummy[] = { (void *) bitno, (void *) dummy };
 
 
 /*
@@ -107,6 +107,7 @@ static Word16 dhf_test(Word16 input_frame[], enum Mode mode, Word16 nparms)
 
     return !j;
 }
+
 
 /*
 *****************************************************************************

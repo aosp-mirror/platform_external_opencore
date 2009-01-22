@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -128,11 +128,12 @@ const int32 pow_2_1_fourth[4] =
     Q30_fmt(1.41421356237310),   Q30_fmt(1.68179283050743)
 };
 
-const int32 two_cubic_roots[6] =
+const int32 two_cubic_roots[7] =
 {
     Q29_fmt(0),                  Q29_fmt(1.25992104989487),
     Q29_fmt(1.58740105196820),   Q29_fmt(2.00000000000000),
-    Q29_fmt(2.51984209978975),   Q29_fmt(3.17480210393640)
+    Q29_fmt(2.51984209978975),   Q29_fmt(3.17480210393640),
+    Q29_fmt(3.99999999999999)
 };
 
 /*----------------------------------------------------------------------------
@@ -152,28 +153,26 @@ const int32 two_cubic_roots[6] =
 
 int32 power_1_third(int32 xx)
 {
+
     if (xx <= 512)
     {
         return (power_one_third[xx] >> 1);
     }
     else
     {
-        // 'xx' is supposed to be < 8192, but in practice it can be slightly
-        // higher, depending on the encoder and the material.
-        // Use 16320 as the cutoff, because it's much higher than anything
-        // you'd see with even the most weirdly encoded material, and also
-        // is equal to 0x3fc0, which only needs 1 ARM instruction to generate.
-        if (xx > 16320)
+        if (xx >> 15)
         {
-            xx = 16320;
+            return 0x7FFFFFFF;  /* saturate any value over 32767 */
         }
+        else
+        {
+            int32 x = xx;
+            int32 m = 22 - pvmp3_normalize(xx);
 
-        int32 x = xx;
-        int32 m = 22 - pvmp3_normalize(xx);
-
-        xx >>= m;
-        xx = (power_one_third[xx]) + (((power_one_third[xx+1] - power_one_third[xx]) >> m) * (x & ((1 << m) - 1)));
-        return (fxp_mul32_Q30(xx, two_cubic_roots[m]));
+            xx >>= m;
+            xx = (power_one_third[xx]) + (((power_one_third[xx+1] - power_one_third[xx]) >> m) * (x & ((1 << m) - 1)));
+            return (fxp_mul32_Q30(xx, two_cubic_roots[m]));
+        }
 
     }
 }
@@ -294,9 +293,10 @@ void pvmp3_dequantize_sample(int32 is[SUBBANDS_NUMBER*FILTERBANK_BANDS],
 
             /* 0 < abs(is[ss]) < 8192 */
 
-
             int32 tmp = fxp_mul32_Q30((is[ss] << 16), power_1_third(pv_abs(is[ ss])));
+
             tmp = fxp_mul32_Q30(tmp, two_raise_one_fourth);
+
             if (global_gain < 0)
             {
                 int32 temp = - global_gain;

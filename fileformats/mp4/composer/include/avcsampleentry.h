@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,6 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*********************************************************************************/
-
 
 #ifndef __PVA_FF_AVCSampleEntry_H__
 #define __PVA_FF_AVCSampleEntry_H__
@@ -24,7 +22,6 @@
 #include "atom.h"
 #include "oscl_file_io.h"
 #include "avcconfigurationatom.h"
-//#include "mpeg4sampleentryextensions.h"
 #include "decoderspecificinfo.h"
 #include"sampleentry.h"
 
@@ -77,8 +74,6 @@ class PVA_FF_AVCSampleEntry : public PVA_FF_SampleEntry
         int16  _predefined4;
 
         PVA_FF_AVCConfigurationAtom          *_pAVCConfigurationAtom;
-        // MPEG4BitRateBox              *_pMPEG4BitRateBox;
-
 };
 
 

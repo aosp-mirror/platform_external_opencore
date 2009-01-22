@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,8 +65,8 @@ extern Vol					IMEM_vol[2][1];
 /*	Return   : PV_TRUE if successed, PV_FALSE if failed.					*/
 /*	Modified :																*/
 /* ======================================================================== */
-Bool PVInitVideoDecoder(VideoDecControls *decCtrl, uint8 *volbuf[],
-                        int32 *volbuf_size, int nLayers, int width, int height, MP4DecodingMode mode)
+OSCL_EXPORT_REF Bool PVInitVideoDecoder(VideoDecControls *decCtrl, uint8 *volbuf[],
+                                        int32 *volbuf_size, int nLayers, int width, int height, MP4DecodingMode mode)
 {
     VideoDecData *video = (VideoDecData *) decCtrl->videoDecoderData;
     Bool status = PV_TRUE;
@@ -563,7 +563,7 @@ Bool PVResetVideoDecoder(VideoDecControls *decCtrl)
 /*	Return   : PV_TRUE if successed, PV_FALSE if failed.					*/
 /*	Modified :																*/
 /* ======================================================================== */
-Bool PVCleanUpVideoDecoder(VideoDecControls *decCtrl)
+OSCL_EXPORT_REF Bool PVCleanUpVideoDecoder(VideoDecControls *decCtrl)
 {
     int	idx;
     VideoDecData *video = (VideoDecData *) decCtrl->videoDecoderData;
@@ -728,7 +728,7 @@ Bool PVCleanUpVideoDecoder(VideoDecControls *decCtrl)
 /*				not want to expose our internal data structure.				*/
 /*	Modified :																*/
 /* ======================================================================== */
-void PVGetVideoDimensions(VideoDecControls *decCtrl, int32 *display_width, int32 *display_height)
+OSCL_EXPORT_REF void PVGetVideoDimensions(VideoDecControls *decCtrl, int32 *display_width, int32 *display_height)
 {
     VideoDecData *video = (VideoDecData *)decCtrl->videoDecoderData;
     *display_width = video->displayWidth;
@@ -760,7 +760,7 @@ uint32 PVGetVideoTimeStamp(VideoDecControls *decCtrl)
 /*	Note     :																*/
 /*	Modified : . 08/29/2000 changes the name for consistency.				*/
 /* ======================================================================== */
-void PVSetPostProcType(VideoDecControls *decCtrl, int mode)
+OSCL_EXPORT_REF void PVSetPostProcType(VideoDecControls *decCtrl, int mode)
 {
     VideoDecData *video = (VideoDecData *)decCtrl->videoDecoderData;
     video->postFilterType = mode;
@@ -861,7 +861,7 @@ int32 PVGetDecMemoryUsage(VideoDecControls *decCtrl)
 /*	Note     :																*/
 /*	Modified :																*/
 /* ======================================================================== */
-MP4DecodingMode PVGetDecBitstreamMode(VideoDecControls *decCtrl)
+OSCL_EXPORT_REF MP4DecodingMode PVGetDecBitstreamMode(VideoDecControls *decCtrl)
 {
     VideoDecData *video = (VideoDecData *)decCtrl->videoDecoderData;
     if (video->shortVideoHeader)
@@ -1005,8 +1005,8 @@ int32 PVLocateH263FrameHeader(uint8 *ptr, int32 size)
 /*			 : 08/22/2002 break up into 2 functions PVDecodeVopHeader and */
 /*							PVDecodeVopBody									*/
 /* ======================================================================== */
-Bool PVDecodeVideoFrame(VideoDecControls *decCtrl, uint8 *buffer[],
-                        uint32 timestamp[], int32 buffer_size[], uint use_ext_timestamp[], uint8 *currYUV)
+OSCL_EXPORT_REF Bool PVDecodeVideoFrame(VideoDecControls *decCtrl, uint8 *buffer[],
+                                        uint32 timestamp[], int32 buffer_size[], uint use_ext_timestamp[], uint8 *currYUV)
 {
     PV_STATUS status = PV_FAIL;
     VopHeaderInfo header_info;
@@ -1106,7 +1106,6 @@ Bool PVDecodeVopHeader(VideoDecControls *decCtrl, uint8 *buffer[],
             else if (display_time == timestamp[idx])
             {
                 /* we have to handle either SNR or spatial scalability here. */
-                /*										 09/??/2000		 */
             }
         }
         if (target_layer < 0) return PV_FALSE;
@@ -1338,7 +1337,7 @@ Bool PVDecodeVopBody(VideoDecControls *decCtrl, int32 buffer_size[])
 #endif
         video->vop_coding_type = currVop->predictionType; /*  07/09/01 */
         /* the following is necessary to avoid displaying an notCoded I-VOP at the beginning of a session
-        		or after random positioning  07/03/02*/
+        or after random positioning  07/03/02*/
         if (currVop->predictionType == I_VOP)
         {
             video->vop_coding_type = P_VOP;
@@ -1472,7 +1471,7 @@ Bool PVDecodeVopBody(VideoDecControls *decCtrl, int32 buffer_size[])
 }
 
 #ifdef PV_MEMORY_POOL
-void PVSetReferenceYUV(VideoDecControls *decCtrl, uint8 *YUV)
+OSCL_EXPORT_REF void PVSetReferenceYUV(VideoDecControls *decCtrl, uint8 *YUV)
 {
     VideoDecData *video = (VideoDecData *)decCtrl->videoDecoderData;
     video->prevVop->yChan = (PIXEL *)YUV;

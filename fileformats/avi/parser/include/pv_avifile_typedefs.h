@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,7 +75,6 @@
 const uint32   CHUNK_SIZE				= 4;
 const uint32   RES_BYTES_SZ				= 4;
 const uint32   MAX_STRN_SZ				= 100;
-const uint32   NUM_YUV_FMT				= 32;
 const uint32   OFFSET_FROM_MOVI_LST		= 4;
 const uint32   MAX_COLOR_TABLE_SIZE		= 256;
 const uint32   BIT_COUNT1				= 1;
@@ -108,40 +107,6 @@ const uint32    DIB     MAKE_FOURCC('D', 'I', 'B', ' '); 	//Device-independent B
 const uint32	MOVI    MAKE_FOURCC('m', 'o', 'v', 'i');
 const uint32	JUNK	MAKE_FOURCC('J', 'U', 'N', 'K');
 
-const uint32    YUV_FMT[] =
-{
-    MAKE_FOURCC('A', 'Y', 'U', 'V'),
-    MAKE_FOURCC('C', 'L', 'J', 'R'),
-    MAKE_FOURCC('c', 'y', 'u', 'v'),
-    MAKE_FOURCC('G', 'R', 'E', 'Y'),
-    MAKE_FOURCC('I', 'R', 'A', 'W'),
-    MAKE_FOURCC('I', 'U', 'Y', 'V'),
-    MAKE_FOURCC('I', 'Y', '4', '1'),
-    MAKE_FOURCC('I', 'Y', 'U', '1'),
-    MAKE_FOURCC('I', 'Y', 'U', '2'),
-    MAKE_FOURCC('H', 'D', 'Y', 'C'),
-    MAKE_FOURCC('U', 'Y', 'N', 'V'),
-    MAKE_FOURCC('U', 'Y', 'V', 'P'),
-    MAKE_FOURCC('U', 'Y', 'V', 'Y'),
-    MAKE_FOURCC('V', '2', '1', '0'),
-    MAKE_FOURCC('V', '4', '2', '2'),
-    MAKE_FOURCC('V', '6', '5', '5'),
-    MAKE_FOURCC('V', 'Y', 'U', 'Y'),
-    MAKE_FOURCC('Y', '4', '2', '2'),
-    MAKE_FOURCC('Y', 'U', 'Y', '2'),
-    MAKE_FOURCC('Y', 'U', 'Y', 'V'),
-    MAKE_FOURCC('Y', 'U', 'N', 'V'),
-    MAKE_FOURCC('Y', 'V', 'Y', 'U'),
-    MAKE_FOURCC('Y', '4', '1', 'P'),
-    MAKE_FOURCC('Y', '4', '1', '1'),
-    MAKE_FOURCC('Y', '2', '1', '1'),
-    MAKE_FOURCC('Y', '4', '1', 'T'),
-    MAKE_FOURCC('Y', '4', '2', 'T'),
-    MAKE_FOURCC('Y', 'U', 'V', 'P'),
-    MAKE_FOURCC('Y', '8', '0', '0'),
-    MAKE_FOURCC('Y', '8', ' ', ' '),
-    MAKE_FOURCC('Y', '1', '6', ' '),
-};
 
 #define WAVE_FORMAT_UNKNOWN             (0x0000)
 
@@ -187,8 +152,8 @@ class   PVAviFileIdxChunk;
 
 typedef enum
 {
-    AUDIO,
-    VIDEO,
+    PV_2_AUDIO,
+    PV_2_VIDEO,
     MIDI,
     TEXT,
     UNKNOWN

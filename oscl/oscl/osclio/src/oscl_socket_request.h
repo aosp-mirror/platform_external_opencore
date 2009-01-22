@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -176,10 +176,8 @@ class ConnectParam: public SocketRequestParam
         ConnectParam(OsclNetworkAddress& anAddr)
                 : SocketRequestParam(EPVSocketConnect)
                 , iAddr(anAddr)
-                , iConnecting(false)
         {}
         OsclNetworkAddress iAddr;
-        bool iConnecting;//used in processing the request.
 } ;
 
 class AcceptParam: public SocketRequestParam

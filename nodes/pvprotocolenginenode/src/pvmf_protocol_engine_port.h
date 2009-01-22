@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,8 @@
 //Default vector reserve size
 #define PVMF_PROTOCOLENGINE_NODE_PORT_VECTOR_RESERVE 10
 
+const PVMFStatus PVMFSuccessOutgoingMsgSent = 10;
+
 
 class PVMFProtocolEnginePort : public PvmfPortBaseImpl,
             public PvmiCapabilityAndConfigPortFormatImpl
@@ -74,6 +76,9 @@ class PVMFProtocolEnginePort : public PvmfPortBaseImpl,
                 aPtr = NULL;
             }
         }
+
+        // override the base implementation
+        PVMFStatus QueueOutgoingMsg(PVMFSharedMediaMsgPtr aMsg);
 
         bool PeekOutgoingMsg(PVMFSharedMediaMsgPtr& aMsg);
 

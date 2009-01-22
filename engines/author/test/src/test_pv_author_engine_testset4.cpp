@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@
 #include "pvaetest_node_config.h"
 #endif
 
-void pvauthor_async_test_errorhandling::StartTest()
+void pvauthor_async_compressed_test_errorhandling::StartTest()
 {
     AddToScheduler();
     iState = PVAE_CMD_CREATE;
@@ -49,66 +49,53 @@ void pvauthor_async_test_errorhandling::StartTest()
 
 
 ////////////////////////////////////////////////////////////////////////////
-void pvauthor_async_test_errorhandling::HandleErrorEvent(const PVAsyncErrorEvent& aEvent)
+void pvauthor_async_compressed_test_errorhandling::HandleErrorEvent(const PVAsyncErrorEvent& aEvent)
 {
     OSCL_UNUSED_ARG(aEvent);
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR, (0, "pvauthor_async_test_errorhandling::HandleErrorEvent"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR, (0, "pvauthor_async_compressed_test_errorhandling::HandleErrorEvent"));
     iState = PVAE_CMD_RESET;
     RunIfNotReady();
 }
 
 ////////////////////////////////////////////////////////////////////////////
-void pvauthor_async_test_errorhandling::HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent)
+void pvauthor_async_compressed_test_errorhandling::HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent)
 {
     OSCL_UNUSED_ARG(aEvent);
     PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "pvauthor_async_test_errorhandling::HandleInformationalEvent"));
+                    (0, "pvauthor_async_compressed_test_errorhandling::HandleInformationalEvent"));
 
 }
 
 ////////////////////////////////////////////////////////////////////////////
-int pvauthor_async_test_errorhandling::CreateAudioInput()
+int pvauthor_async_compressed_test_errorhandling::CreateAudioInput()
 {
     int status = 0;
     PVAETestInput testInput;
 
     switch (iTestCaseNum)
     {
-        case ErrorHandling_WrongInputFormatTest:
-        case ErrorHandling_WrongVideoInputFileNameTest:
         case ErrorHandling_WrongTextInputFileNameTest:
-        case ErrorHandling_WrongOutputPathTest:
+        case ErrorHandling_MediaInputNodeStartFailed:
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_DEBUG,
-                            (0, "pvauthor_async_test_errorhandling::CreateAudioTestInput: AMR input"));
+                            (0, "pvauthor_async_compressed_test_errorhandling::CreateAudioTestInput: AMR input"));
             if (testInput.IsTestInputTypeSupported(AMR_IETF_FILE))
             {
                 iAudioInputType = AMR_IETF_FILE;
-                status = testInput.CreateInputNode(AMR_IETF_FILE, iInputFileNameAudio, iAVTConfig);
-            }
-            break;
-        case ErrorHandling_WrongAudioInputFileNameTest:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_DEBUG,
-                            (0, "pvauthor_async_test_errorhandling::CreateAudioTestInput: AMR input"));
-            if (testInput.IsTestInputTypeSupported(AMR_IETF_FILE))
-            {
-                iAudioInputType = AMR_IETF_FILE;
-                iInputFileNameAudio = KAMRTestInputWrong;
                 status = testInput.CreateInputNode(AMR_IETF_FILE, iInputFileNameAudio, iAVTConfig);
             }
             break;
 
         default:
             PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_DEBUG,
-                            (0, "pvauthor_async_test_errorhandling::CreateAudioTestInput: Audio input node not needed for this test case"));
+                            (0, "pvauthor_async_compressed_test_errorhandling::CreateAudioTestInput: Audio input node not needed for this test case"));
             return -1;
-            break;
     }
 
     if (!status)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
-                        (0, "pvauthor_async_test_errorhandling::CreateAudioTestInput: Error - Create input node failed"));
+                        (0, "pvauthor_async_compressed_test_errorhandling::CreateAudioTestInput: Error - Create input node failed"));
         return status;
     }
 
@@ -116,58 +103,35 @@ int pvauthor_async_test_errorhandling::CreateAudioInput()
 }
 
 ////////////////////////////////////////////////////////////////////////////
-int pvauthor_async_test_errorhandling::CreateVideoInput()
+int pvauthor_async_compressed_test_errorhandling::CreateVideoInput()
 {
     int status = 0;
     PVAETestInput testInput;
 
     switch (iTestCaseNum)
     {
-        case ErrorHandling_WrongAudioInputFileNameTest:
         case ErrorHandling_WrongTextInputFileNameTest:
-        case ErrorHandling_WrongOutputPathTest:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_DEBUG,
-                            (0, "pvauthor_async_test_errorhandling::CreateVideoTestInput: YUV input"));
-            if (testInput.IsTestInputTypeSupported(YUV_FILE))
-            {
-                iVideoInputType = YUV_FILE;
-                testInput = PVAETestInput();
-                status = testInput.CreateInputNode(YUV_FILE, iInputFileNameVideo, iAVTConfig);
-            }
-            break;
-        case ErrorHandling_WrongVideoInputFileNameTest:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_DEBUG,
-                            (0, "pvauthor_async_test_errorhandling::CreateVideoTestInput: YUV input"));
-            if (testInput.IsTestInputTypeSupported(YUV_FILE))
-            {
-                iVideoInputType = YUV_FILE;
-                testInput = PVAETestInput();
-                iInputFileNameVideo = KYUVTestInputWrong;
-                status = testInput.CreateInputNode(YUV_FILE, iInputFileNameVideo, iAVTConfig);
-            }
-            break;
-        case ErrorHandling_WrongInputFormatTest:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_DEBUG,
-                            (0, "pvauthor_async_test_errorhandling::CreateVideoTestInput: Incorrect input YUV input"));
-            if (testInput.IsTestInputTypeSupported(YUV_FILE))
-            {
-                iVideoInputType = YUV_WRONG_FILE;
-                testInput = PVAETestInput();
-                status = testInput.CreateInputNode(YUV_WRONG_FILE, iInputFileNameVideo, iAVTConfig);
-            }
-            break;
+        case ErrorHandling_MediaInputNodeStartFailed:
 
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_DEBUG,
+                            (0, "pvauthor_async_compressed_test_errorhandling::CreateVideoTestInput: YUV input"));
+            if (testInput.IsTestInputTypeSupported(YUV_FILE))
+            {
+                iVideoInputType = YUV_FILE;
+                testInput = PVAETestInput();
+                status = testInput.CreateInputNode(YUV_FILE, iInputFileNameVideo, iAVTConfig);
+            }
+            break;
         default:
             PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_DEBUG,
-                            (0, "pvauthor_async_test_errorhandling::CreateVideoTestInput: Video input node not needed for this test case"));
+                            (0, "pvauthor_async_compressed_test_errorhandling::CreateVideoTestInput: Video input node not needed for this test case"));
             return -1;
-            break;
     }
 
     if (!status)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
-                        (0, "pvauthor_async_test_errorhandling::CreateTestInputs: Error - CreateInputNode failed"));
+                        (0, "pvauthor_async_compressed_test_errorhandling::CreateTestInputs: Error - CreateInputNode failed"));
         return status;
     }
 
@@ -175,28 +139,16 @@ int pvauthor_async_test_errorhandling::CreateVideoInput()
 }
 
 ////////////////////////////////////////////////////////////////////////////
-int pvauthor_async_test_errorhandling::CreateTextInput()
+int pvauthor_async_compressed_test_errorhandling::CreateTextInput()
 {
     int status = 0;
     PVAETestInput testInput;
 
     switch (iTestCaseNum)
     {
-        case ErrorHandling_WrongAudioInputFileNameTest:
-        case ErrorHandling_WrongOutputPathTest:
-        case ErrorHandling_WrongVideoInputFileNameTest:
-        case ErrorHandling_WrongInputFormatTest:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_DEBUG,
-                            (0, "pvauthor_async_test_errorhandling::CreateTextTestInput: TEXT input"));
-            if (testInput.IsTestInputTypeSupported(TEXT_FILE))
-            {
-                iTextInputType = TEXT_FILE;
-                status = testInput.CreateInputNode(TEXT_FILE, iInputFileNameText, iAVTConfig);
-            }
-            break;
         case ErrorHandling_WrongTextInputFileNameTest:
             PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_DEBUG,
-                            (0, "pvauthor_async_test_errorhandling::CreateTextTestInput: TEXT input"));
+                            (0, "pvauthor_async_compressed_test_errorhandling::CreateTextTestInput: TEXT input"));
             if (testInput.IsTestInputTypeSupported(TEXT_FILE))
             {
                 iTextInputType = TEXT_FILE;
@@ -208,15 +160,14 @@ int pvauthor_async_test_errorhandling::CreateTextInput()
 
         default:
             PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_DEBUG,
-                            (0, "pvauthor_async_test_errorhandling::CreateTextTestInput:  input node not needed for this test case"));
+                            (0, "pvauthor_async_compressed_test_errorhandling::CreateTextTestInput:  input node not needed for this test case"));
             return -1;
-            break;
     }
 
     if (!status)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
-                        (0, "pvauthor_async_test_errorhandling::CreateTestInputs: Error - CreateInputNode failed"));
+                        (0, "pvauthor_async_compressed_test_errorhandling::CreateTestInputs: Error - CreateInputNode failed"));
         return status;
     }
 
@@ -224,7 +175,7 @@ int pvauthor_async_test_errorhandling::CreateTextInput()
 }
 
 ////////////////////////////////////////////////////////////////////////////
-bool pvauthor_async_test_errorhandling::AddDataSource(PVAETestInput& aInput)
+bool pvauthor_async_compressed_test_errorhandling::AddDataSource(PVAETestInput& aInput)
 {
     int32 err = 0;
 
@@ -232,7 +183,7 @@ bool pvauthor_async_test_errorhandling::AddDataSource(PVAETestInput& aInput)
     if (err != OSCL_ERR_NONE)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
-                        (0, "pvauthor_async_test_errorhandling::AddDataSource: Error - iTestInputs.push_back failed. err=0x%x", err));
+                        (0, "pvauthor_async_compressed_test_errorhandling::AddDataSource: Error - iTestInputs.push_back failed. err=0x%x", err));
         aInput.DeleteInputNode();
         return false;
     }
@@ -241,7 +192,7 @@ bool pvauthor_async_test_errorhandling::AddDataSource(PVAETestInput& aInput)
     if (err != OSCL_ERR_NONE)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
-                        (0, "pvauthor_async_test_errorhandling::AddDataSource: Error - iAuthor->AddDataSource failed. err=0x%x", err));
+                        (0, "pvauthor_async_compressed_test_errorhandling::AddDataSource: Error - iAuthor->AddDataSource failed. err=0x%x", err));
         aInput.DeleteInputNode();
         return false;
     }
@@ -249,21 +200,19 @@ bool pvauthor_async_test_errorhandling::AddDataSource(PVAETestInput& aInput)
     return true;
 }
 
-void pvauthor_async_test_errorhandling::SelectComposer()
+void pvauthor_async_compressed_test_errorhandling::SelectComposer()
 {
     switch (iTestCaseNum)
     {
-        case ErrorHandling_WrongInputFormatTest:
-        case ErrorHandling_WrongVideoInputFileNameTest:
-        case ErrorHandling_WrongAudioInputFileNameTest:
         case ErrorHandling_WrongTextInputFileNameTest:
-        case ErrorHandling_WrongOutputPathTest:
+        case ErrorHandling_MediaInputNodeStartFailed:
+
             iComposerMimeType = K3gpComposerMimeType;
             break;
 
         default:
             PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
-                            (0, "pvauthor_async_test_errorhandling::SelectComposer: Error - No composer type for test case"));
+                            (0, "pvauthor_async_compressed_test_errorhandling::SelectComposer: Error - No composer type for test case"));
             PVPATB_TEST_IS_TRUE(false);
             iObserver->CompleteTest(*iTestCase);
             return;
@@ -273,14 +222,14 @@ void pvauthor_async_test_errorhandling::SelectComposer()
 }
 
 ////////////////////////////////////////////////////////////////////////////
-bool pvauthor_async_test_errorhandling::ConfigComposer()
+bool pvauthor_async_compressed_test_errorhandling::ConfigComposer()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "pvauthor_async_test_errorhandling::ConfigComposer"));
+                    (0, "pvauthor_async_compressed_test_errorhandling::ConfigComposer"));
     if (!ConfigAmrAacComposer())
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "pvauthor_async_test_errorhandling::ConfigComposer: Error - ConfigAmrAacComposer failed"));
+                        (0, "pvauthor_async_compressed_test_errorhandling::ConfigComposer: Error - ConfigAmrAacComposer failed"));
         return false;
     }
 
@@ -289,7 +238,7 @@ bool pvauthor_async_test_errorhandling::ConfigComposer()
     if (!ConfigMp43gpComposer())
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "pvauthor_async_test_errorhandling::ConfigComposer: Error - ConfigMp43gpComposer failed"));
+                        (0, "pvauthor_async_compressed_test_errorhandling::ConfigComposer: Error - ConfigMp43gpComposer failed"));
         return false;
     }
 
@@ -297,56 +246,40 @@ bool pvauthor_async_test_errorhandling::ConfigComposer()
 }
 
 ////////////////////////////////////////////////////////////////////////////
-bool pvauthor_async_test_errorhandling::ConfigAmrAacComposer()
+bool pvauthor_async_compressed_test_errorhandling::ConfigAmrAacComposer()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "pvauthor_async_test_errorhandling::ConfigAmrAacComposer"));
+                    (0, "pvauthor_async_compressed_test_errorhandling::ConfigAmrAacComposer"));
 
-    PVMFFormatType format = PVMF_FORMAT_UNKNOWN;
 
     switch (iTestCaseNum)
     {
         case AMR_FOutput_Test:
-        case AMR_FOutput_LongetivityTest:
             if (iOutputFileName == NULL)
             {
                 iOutputFileName = KFOAOnlyAMRTestOutput;
             }
-            format = PVMF_AMR_IETF;
             break;
 
         case AACADIF_FOutput_Test:
-        case AACADIF_FOutput_LongetivityTest:
             if (iOutputFileName == NULL)
             {
                 iOutputFileName = KFOAOnlyAACADIFTestOutput;
             }
-            format = PVMF_ADIF;
             break;
 
 
         case AACADTS_FOutput_Test:
-        case AACADTS_FOutput_LongetivityTest:
             if (iOutputFileName == NULL)
             {
                 iOutputFileName = KFOAOnlyAACADTSTestOutput;
             }
-            format = PVMF_ADTS;
-            break;
-
-        case PCM16In_AMROut_Test:
-        case PCM16In_AMROut_LongetivityTest:
-            if (iOutputFileName == NULL)
-            {
-                iOutputFileName = KPCM16TestOutput;
-            }
-            format = PVMF_AMR_IETF;
             break;
 
         default:
             if (!((iComposerMimeType == KAMRNbComposerMimeType) || (iComposerMimeType == KAACADTSComposerMimeType) || (iComposerMimeType == KAACADIFComposerMimeType)))
             {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "pvauthor_async_test_errorhandling::ConfigAmrAacComposer: AMR-AAC Composer not used in this test case"));
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "pvauthor_async_compressed_test_errorhandling::ConfigAmrAacComposer: AMR-AAC Composer not used in this test case"));
                 return true;
             }
     }
@@ -355,14 +288,14 @@ bool pvauthor_async_test_errorhandling::ConfigAmrAacComposer()
     if (!clipConfig)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "pvauthor_async_test_errorhandling::ConfigAmrAacComposer: Error - Invalid iComposerConfig"));
+                        (0, "pvauthor_async_compressed_test_errorhandling::ConfigAmrAacComposer: Error - Invalid iComposerConfig"));
         return false;
     }
 
     if (clipConfig->SetOutputFileName(iOutputFileName) != PVMFSuccess)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "pvauthor_async_test_errorhandling::ConfigAmrAacComposer: Error - SetOutputFileName failed"));
+                        (0, "pvauthor_async_compressed_test_errorhandling::ConfigAmrAacComposer: Error - SetOutputFileName failed"));
         return false;
     }
 
@@ -370,26 +303,18 @@ bool pvauthor_async_test_errorhandling::ConfigAmrAacComposer()
 }
 
 ////////////////////////////////////////////////////////////////////////////
-bool pvauthor_async_test_errorhandling::ConfigMp43gpComposer()
+bool pvauthor_async_compressed_test_errorhandling::ConfigMp43gpComposer()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
-                    (0, "pvauthor_async_test_errorhandling::ConfigMp43gpComposer"));
+                    (0, "pvauthor_async_compressed_test_errorhandling::ConfigMp43gpComposer"));
 
     switch (iTestCaseNum)
     {
-        case ErrorHandling_WrongInputFormatTest:
-        case ErrorHandling_WrongVideoInputFileNameTest:
-        case ErrorHandling_WrongAudioInputFileNameTest:
         case ErrorHandling_WrongTextInputFileNameTest:
+        case ErrorHandling_MediaInputNodeStartFailed:
             if (iOutputFileName == NULL)
             {
                 iOutputFileName = KAMRYUVInputAV3gpTestOutput;
-            }
-            break;
-        case ErrorHandling_WrongOutputPathTest:
-            if (iOutputFileName == NULL)
-            {
-                iOutputFileName = KAMRYUVInputAV3gpTestOutputWrong;
             }
             break;
 
@@ -401,7 +326,7 @@ bool pvauthor_async_test_errorhandling::ConfigMp43gpComposer()
             else
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                                (0, "pvauthor_async_test_errorhandling::ConfigMp43gpComposer: Mp4-3GPP composer not used in this test case"));
+                                (0, "pvauthor_async_compressed_test_errorhandling::ConfigMp43gpComposer: Mp4-3GPP composer not used in this test case"));
                 return true;
             }
     }
@@ -411,7 +336,7 @@ bool pvauthor_async_test_errorhandling::ConfigMp43gpComposer()
     if (!clipConfig)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "pvauthor_async_test_errorhandling::ConfigMp43gpComposer: Error - iComposerConfig==NULL"));
+                        (0, "pvauthor_async_compressed_test_errorhandling::ConfigMp43gpComposer: Error - iComposerConfig==NULL"));
         return false;
     }
 
@@ -421,20 +346,23 @@ bool pvauthor_async_test_errorhandling::ConfigMp43gpComposer()
     iCopyrightString = _STRLIT("copyright");
     iDescriptionString = _STRLIT("description");
     iRatingString = _STRLIT("rating");
+    iAlbumTitle   = _STRLIT("albumtitle");
+    iRecordingYear = 2008;
+
+    OSCL_HeapString<OsclMemAllocator> lang_code = "eng";
 
     clipConfig->SetOutputFileName(iOutputFileName);
     clipConfig->SetPresentationTimescale(1000);
-    clipConfig->SetVersion(iVersionString);
-    clipConfig->SetTitle(iTitleString);
-    clipConfig->SetAuthor(iAuthorString);
-    clipConfig->SetCopyright(iCopyrightString);
-    clipConfig->SetDescription(iDescriptionString);
-    clipConfig->SetRating(iRatingString);
-    if (iTestCaseNum == KFastTrackContentModeTest)
-    {
-        clipConfig->SetAuthoringMode(PVMP4FFCN_PV_FAST_TRACK_CONTENT_MODE);
-    }
-    else if (iTestCaseNum == K3GPPDownloadModeTest)
+    clipConfig->SetVersion(iVersionString, lang_code);
+    clipConfig->SetTitle(iTitleString, lang_code);
+    clipConfig->SetAuthor(iAuthorString, lang_code);
+    clipConfig->SetCopyright(iCopyrightString, lang_code);
+    clipConfig->SetDescription(iDescriptionString, lang_code);
+    clipConfig->SetRating(iRatingString, lang_code);
+    clipConfig->SetAlbumInfo(iAlbumTitle, lang_code);
+    clipConfig->SetRecordingYear(iRecordingYear);
+
+    if (iTestCaseNum == K3GPPDownloadModeTest)
     {
         clipConfig->SetAuthoringMode(PVMP4FFCN_3GPP_DOWNLOAD_MODE);
     }
@@ -442,13 +370,23 @@ bool pvauthor_async_test_errorhandling::ConfigMp43gpComposer()
     {
         clipConfig->SetAuthoringMode(PVMP4FFCN_3GPP_PROGRESSIVE_DOWNLOAD_MODE);
     }
+#ifndef _IMOTION_SPECIFIC_UT_DISABLE
+    else if (iTestCaseNum == KIMotionAuthoringModeTest)
+    {
+        clipConfig->SetAuthoringMode(PVMP4FFCN_IMOTION_PSEUDO_STREAMING_MODE);
+    }
+    else if (iTestCaseNum == KIMotionDownloadModeTest)
+    {
+        clipConfig->SetAuthoringMode(PVMP4FFCN_IMOTION_DOWNLOAD_MODE);
+    }
+#endif
 
 
     return true;
 }
 
 ////////////////////////////////////////////////////////////////////////////
-bool pvauthor_async_test_errorhandling::ConfigComposerOutput()
+bool pvauthor_async_compressed_test_errorhandling::ConfigComposerOutput()
 {
     PvmfComposerSizeAndDurationInterface* config =
         OSCL_REINTERPRET_CAST(PvmfComposerSizeAndDurationInterface*, iOutputSizeAndDurationConfig);
@@ -456,44 +394,39 @@ bool pvauthor_async_test_errorhandling::ConfigComposerOutput()
     {
         return false;
     }
-    bool enabled = false;
-    uint32 configData = 0;
 
     return true;
 }
 
 ////////////////////////////////////////////////////////////////////////////
-bool pvauthor_async_test_errorhandling::QueryComposerOutputInterface()
+bool pvauthor_async_compressed_test_errorhandling::QueryComposerOutputInterface()
 {
     return false;
 }
 
 ////////////////////////////////////////////////////////////////////////////
-bool pvauthor_async_test_errorhandling::AddAudioMediaTrack()
+bool pvauthor_async_compressed_test_errorhandling::AddAudioMediaTrack()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "pvauthor_async_test_errorhandling::AddAudioMediaTrack"));
+                    (0, "pvauthor_async_compressed_test_errorhandling::AddAudioMediaTrack"));
 
     switch (iTestCaseNum)
     {
-        case ErrorHandling_WrongInputFormatTest:
-        case ErrorHandling_WrongVideoInputFileNameTest:
-        case ErrorHandling_WrongOutputPathTest:
         case ErrorHandling_WrongTextInputFileNameTest:
-        case ErrorHandling_WrongAudioInputFileNameTest:
+        case ErrorHandling_MediaInputNodeStartFailed:
             iAudioEncoderMimeType = KAMRNbEncMimeType;
             break;
 
         default:
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "pvauthor_async_test_errorhandling::AddAudioMediaTrackL: Error - No audio for this current test case"));
+                            (0, "pvauthor_async_compressed_test_errorhandling::AddAudioMediaTrackL: Error - No audio for this current test case"));
             return false;
     }
 
     if (iAudioInputType == INVALID_INPUT_TYPE)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "pvauthor_async_test_errorhandling::AddAudioMediaTrackL: Error - Invalid audio input type"));
+                        (0, "pvauthor_async_compressed_test_errorhandling::AddAudioMediaTrackL: Error - Invalid audio input type"));
         return false;
     }
 
@@ -512,7 +445,7 @@ bool pvauthor_async_test_errorhandling::AddAudioMediaTrack()
     if (!testInputFound)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "pvauthor_async_test_errorhandling::AddAudioMediaTrack: Error - Test input not found"));
+                        (0, "pvauthor_async_compressed_test_errorhandling::AddAudioMediaTrack: Error - Test input not found"));
         return false;
     }
 
@@ -522,33 +455,29 @@ bool pvauthor_async_test_errorhandling::AddAudioMediaTrack()
 }
 
 ////////////////////////////////////////////////////////////////////////////
-bool pvauthor_async_test_errorhandling::AddVideoMediaTrack()
+bool pvauthor_async_compressed_test_errorhandling::AddVideoMediaTrack()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "pvauthor_async_test_errorhandling::AddVideoMediaTrack"));
+                    (0, "pvauthor_async_compressed_test_errorhandling::AddVideoMediaTrack"));
 
     // Add video media track
     switch (iTestCaseNum)
     {
-        case ErrorHandling_WrongInputFormatTest:
-        case ErrorHandling_WrongVideoInputFileNameTest:
-        case ErrorHandling_WrongAudioInputFileNameTest:
         case ErrorHandling_WrongTextInputFileNameTest:
-        case ErrorHandling_WrongOutputPathTest:
+        case ErrorHandling_MediaInputNodeStartFailed:
             iVideoEncoderMimeType = KH263EncMimeType;
             break;
 
         default:
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "pvauthor_async_test_errorhandling::AddVideoMediaTrack: Video encoder not used in this test case."));
+                            (0, "pvauthor_async_compressed_test_errorhandling::AddVideoMediaTrack: Video encoder not used in this test case."));
             return false;
-            break;
     }
 
     if (iVideoInputType == INVALID_INPUT_TYPE)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "pvauthor_async_test_errorhandling::AddVideoMediaTrack: Error - Invalid input type"));
+                        (0, "pvauthor_async_compressed_test_errorhandling::AddVideoMediaTrack: Error - Invalid input type"));
         return false;
     }
 
@@ -568,7 +497,7 @@ bool pvauthor_async_test_errorhandling::AddVideoMediaTrack()
     if (!testInputFound)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "pvauthor_async_test_errorhandling::AddVideoMediaTrack: Error - Test input not found"));
+                        (0, "pvauthor_async_compressed_test_errorhandling::AddVideoMediaTrack: Error - Test input not found"));
         return false;
     }
 
@@ -578,31 +507,27 @@ bool pvauthor_async_test_errorhandling::AddVideoMediaTrack()
 }
 
 ////////////////////////////////////////////////////////////////////////////
-bool pvauthor_async_test_errorhandling::AddTextMediaTrack()
+bool pvauthor_async_compressed_test_errorhandling::AddTextMediaTrack()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "pvauthor_async_test_errorhandling::AddTextMediaTrack"));
+                    (0, "pvauthor_async_compressed_test_errorhandling::AddTextMediaTrack"));
 
     switch (iTestCaseNum)
     {
-        case ErrorHandling_WrongInputFormatTest:
-        case ErrorHandling_WrongVideoInputFileNameTest:
-        case ErrorHandling_WrongOutputPathTest:
-        case ErrorHandling_WrongAudioInputFileNameTest:
         case ErrorHandling_WrongTextInputFileNameTest:
             iTextEncoderMimeType = KTextEncMimeType;
             break;
 
         default:
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "pvauthor_async_test_errorhandling::AddTextMediaTrackL: Error - No text for this current test case"));
+                            (0, "pvauthor_async_compressed_test_errorhandling::AddTextMediaTrackL: Error - No text for this current test case"));
             return false;
     }
 
     if (iTextInputType == INVALID_INPUT_TYPE)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "pvauthor_async_test_errorhandling::AddTextMediaTrackL: Error - Invalid text input type"));
+                        (0, "pvauthor_async_compressed_test_errorhandling::AddTextMediaTrackL: Error - Invalid text input type"));
         return false;
     }
 
@@ -621,7 +546,7 @@ bool pvauthor_async_test_errorhandling::AddTextMediaTrack()
     if (!testInputFound)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "pvauthor_async_test_errorhandling::AddTextMediaTrack: Error - Test input not found"));
+                        (0, "pvauthor_async_compressed_test_errorhandling::AddTextMediaTrack: Error - Test input not found"));
         return false;
     }
 
@@ -631,17 +556,17 @@ bool pvauthor_async_test_errorhandling::AddTextMediaTrack()
 }
 
 ////////////////////////////////////////////////////////////////////////////
-bool pvauthor_async_test_errorhandling::ConfigureVideoEncoder()
+bool pvauthor_async_compressed_test_errorhandling::ConfigureVideoEncoder()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "pvauthor_async_test_errorhandling::ConfigureVideoEncoder"));
+                    (0, "pvauthor_async_compressed_test_errorhandling::ConfigureVideoEncoder"));
 
     PVMp4H263EncExtensionInterface* config;
     config = OSCL_STATIC_CAST(PVMp4H263EncExtensionInterface*, iVideoEncoderConfig);
     if (!config)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                        (0, "pvauthor_async_test_errorhandling::ConfigureVideoEncoder: No configuration needed"));
+                        (0, "pvauthor_async_compressed_test_errorhandling::ConfigureVideoEncoder: No configuration needed"));
         return true;
     }
 
@@ -649,22 +574,22 @@ bool pvauthor_async_test_errorhandling::ConfigureVideoEncoder()
     config->SetOutputBitRate(0, KVideoBitrate);
     config->SetOutputFrameSize(0, iAVTConfig.iWidth , iAVTConfig.iHeight);
     config->SetOutputFrameRate(0, iAVTConfig.iFps);
-    config->SetIFrameInterval(iAVTConfig.iFrameInterval);
-
+    config->SetIFrameInterval(KVideoIFrameInterval);
+    config->SetSceneDetection(true);
     return true;
 }
 
 ////////////////////////////////////////////////////////////////////////////
-bool pvauthor_async_test_errorhandling::ConfigureAudioEncoder()
+bool pvauthor_async_compressed_test_errorhandling::ConfigureAudioEncoder()
 {
     // Single core AMR encoder node support
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "pvauthor_async_test_errorhandling::ConfigureAudioEncoder"));
+                    (0, "pvauthor_async_compressed_test_errorhandling::ConfigureAudioEncoder"));
 
     if (!iAudioEncoderConfig)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                        (0, "pvauthor_async_test_errorhandling::ConfigureAudioEncoder: No configuration needed"));
+                        (0, "pvauthor_async_compressed_test_errorhandling::ConfigureAudioEncoder: No configuration needed"));
         return true;
     }
 
@@ -672,25 +597,25 @@ bool pvauthor_async_test_errorhandling::ConfigureAudioEncoder()
 }
 
 ////////////////////////////////////////////////////////////////////////////
-bool pvauthor_async_test_errorhandling::ConfigureTextEncoder()
+bool pvauthor_async_compressed_test_errorhandling::ConfigureTextEncoder()
 {
     // Single core AMR encoder node support
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "pvauthor_async_test_errorhandling::ConfigureTextEncoder"));
+                    (0, "pvauthor_async_compressed_test_errorhandling::ConfigureTextEncoder"));
 
     if (!iTextEncoderConfig)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                        (0, "pvauthor_async_test_errorhandling::ConfigureTextEncoder: No configuration needed"));
+                        (0, "pvauthor_async_compressed_test_errorhandling::ConfigureTextEncoder: No configuration needed"));
         return true;
     }
 
     return true;
 }
-bool pvauthor_async_test_errorhandling::DeleteTestInputs()
+bool pvauthor_async_compressed_test_errorhandling::DeleteTestInputs()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "pvauthor_async_test_errorhandling::DeleteTestInputs"));
+                    (0, "pvauthor_async_compressed_test_errorhandling::DeleteTestInputs"));
 
     for (uint32 ii = 0; ii < iTestInputs.size(); ii++)
         iTestInputs[ii].DeleteInputNode();
@@ -699,7 +624,7 @@ bool pvauthor_async_test_errorhandling::DeleteTestInputs()
     return true;
 }
 
-void pvauthor_async_test_errorhandling::ResetAuthorConfig()
+void pvauthor_async_compressed_test_errorhandling::ResetAuthorConfig()
 {
     if (iComposerConfig)
     {
@@ -723,9 +648,9 @@ void pvauthor_async_test_errorhandling::ResetAuthorConfig()
     }
 }
 
-void pvauthor_async_test_errorhandling::Cleanup()
+void pvauthor_async_compressed_test_errorhandling::Cleanup()
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "pvauthor_async_test_errorhandling::Cleanup"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "pvauthor_async_compressed_test_errorhandling::Cleanup"));
 
     iComposer = NULL;
 
@@ -743,14 +668,14 @@ void pvauthor_async_test_errorhandling::Cleanup()
 
 
 ////////////////////////////////////////////////////////////////////////////
-void pvauthor_async_test_errorhandling::Run()
+void pvauthor_async_compressed_test_errorhandling::Run()
 {
     switch (iState)
     {
         case PVAE_CMD_CREATE:
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                            (0, "******pvauthor_async_test_errorhandling::iTestCaseNum:%d******", iTestCaseNum));
+                            (0, "******pvauthor_async_compressed_test_errorhandling::iTestCaseNum:%d******", iTestCaseNum));
             iAuthor = PVAuthorEngineFactory::CreateAuthor(this, this, this);
             if (!iAuthor)
             {
@@ -779,7 +704,7 @@ void pvauthor_async_test_errorhandling::Run()
             if (aStatus == 0) //Failed while creating audio input
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
-                                (0, "pvauthor_async_test_errorhandling::CreateTestInputs: Error - CreateAudioInput() failed"));
+                                (0, "pvauthor_async_compressed_test_errorhandling::CreateTestInputs: Error - CreateAudioInput() failed"));
                 PVPATB_TEST_IS_TRUE(false);
                 iState = PVAE_CMD_CLEANUPANDCOMPLETE;
                 RunIfNotReady();
@@ -800,7 +725,7 @@ void pvauthor_async_test_errorhandling::Run()
             if (aStatus == 0)
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
-                                (0, "pvauthor_async_test_errorhandling::CreateTestInputs: Error - CreateVideoInput() failed"));
+                                (0, "pvauthor_async_compressed_test_errorhandling::CreateTestInputs: Error - CreateVideoInput() failed"));
                 Cleanup();
                 PVPATB_TEST_IS_TRUE(false);
                 iState = PVAE_CMD_CLEANUPANDCOMPLETE;
@@ -822,7 +747,7 @@ void pvauthor_async_test_errorhandling::Run()
             if (aStatus == 0)
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
-                                (0, "pvauthor_async_test_errorhandling::CreateTestInputs: Error - CreateVideoInput() failed"));
+                                (0, "pvauthor_async_compressed_test_errorhandling::CreateTestInputs: Error - CreateVideoInput() failed"));
                 Cleanup();
                 PVPATB_TEST_IS_TRUE(false);
                 iState = PVAE_CMD_CLEANUPANDCOMPLETE;
@@ -880,7 +805,7 @@ void pvauthor_async_test_errorhandling::Run()
             if (!bTextTrack && !bAudioTrack && !bVideoTrack) //No tracks have been added
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
-                                (0, "pvauthor_async_test_errorhandling::Run: Error - No track added"));
+                                (0, "pvauthor_async_compressed_test_errorhandling::Run: Error - No track added"));
                 PVPATB_TEST_IS_TRUE(false);
                 iState = PVAE_CMD_CLEANUPANDCOMPLETE;
                 RunIfNotReady();
@@ -902,13 +827,16 @@ void pvauthor_async_test_errorhandling::Run()
             break;
         case PVAE_CMD_STOP:
             PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
-                            (0, "pvauthor_async_test_errorhandling::Run: Fire Stop"));
+                            (0, "pvauthor_async_compressed_test_errorhandling::Run: Fire Stop"));
             iAuthor->Stop((OsclAny*)iAuthor);
             break;
         case PVAE_CMD_RESET:
         {
             ResetAuthorConfig();
-            iAuthor->Reset((OsclAny*)iAuthor);
+            if (iAuthor->GetPVAuthorState() != PVAE_STATE_IDLE)
+            {
+                iAuthor->Reset((OsclAny*)iAuthor);
+            }
         }
         break;
         case PVAE_CMD_REMOVE_DATA_SOURCE:
@@ -935,8 +863,6 @@ void pvauthor_async_test_errorhandling::Run()
         }
         break;
 
-        case PVAE_CMD_QUERY_INTERFACE2:
-            break;
         case PVAE_CMD_ADD_DATA_SINK:
             break;
         case PVAE_CMD_REMOVE_DATA_SINK:
@@ -967,15 +893,15 @@ void pvauthor_async_test_errorhandling::Run()
 }
 
 ////////////////////////////////////////////////////////////////////////////
-void pvauthor_async_test_errorhandling::CommandCompleted(const PVCmdResponse& aResponse)
+void pvauthor_async_compressed_test_errorhandling::CommandCompleted(const PVCmdResponse& aResponse)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "pvauthor_async_test_errorhandling::CommandCompleted iState:%d", iState));
+                    (0, "pvauthor_async_compressed_test_errorhandling::CommandCompleted iState:%d", iState));
 
     if (aResponse.GetCmdStatus() != PVMFSuccess)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "pvauthor_async_test_errorhandling::CommandCompleted iState:%d FAILED", iState));
+                        (0, "pvauthor_async_compressed_test_errorhandling::CommandCompleted iState:%d FAILED", iState));
     }
     switch (iState)
     {
@@ -1042,7 +968,7 @@ void pvauthor_async_test_errorhandling::CommandCompleted(const PVCmdResponse& aR
                 if (!ConfigComposer())
                 {
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
-                                    (0, "pvauthor_async_test_errorhandling::CommandCompleted: Error - ConfigComposer failed"));
+                                    (0, "pvauthor_async_compressed_test_errorhandling::CommandCompleted: Error - ConfigComposer failed"));
                     PVPATB_TEST_IS_TRUE(false);
                     iState = PVAE_CMD_RESET;
                     RunIfNotReady();
@@ -1083,7 +1009,7 @@ void pvauthor_async_test_errorhandling::CommandCompleted(const PVCmdResponse& aR
                 if (!ConfigureAudioEncoder())
                 {
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
-                                    (0, "pvauthor_async_test_errorhandling::CommandCompleted: Error - ConfigureAudioEncoder failed"));
+                                    (0, "pvauthor_async_compressed_test_errorhandling::CommandCompleted: Error - ConfigureAudioEncoder failed"));
                     PVPATB_TEST_IS_TRUE(false);
                     iState = PVAE_CMD_CLOSE;
                     RunIfNotReady();
@@ -1109,7 +1035,7 @@ void pvauthor_async_test_errorhandling::CommandCompleted(const PVCmdResponse& aR
                 if (!ConfigureVideoEncoder())
                 {
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
-                                    (0, "pvauthor_async_test_errorhandling::CommandCompleted: Error - ConfigureVideoEncoder failed"));
+                                    (0, "pvauthor_async_compressed_test_errorhandling::CommandCompleted: Error - ConfigureVideoEncoder failed"));
                     PVPATB_TEST_IS_TRUE(false);
                     iObserver->CompleteTest(*iTestCase);
                 }
@@ -1121,15 +1047,8 @@ void pvauthor_async_test_errorhandling::CommandCompleted(const PVCmdResponse& aR
             }
             else
             {
-                if (ErrorHandling_WrongInputFormatTest == iTestCaseNum)
-                {
-                    PVPATB_TEST_IS_TRUE(true);
-                }
-                else
-                {
-                    // AddVideoMediaTrack failed
-                    PVPATB_TEST_IS_TRUE(false);
-                }
+                // AddVideoMediaTrack failed
+                PVPATB_TEST_IS_TRUE(false);
                 iState = PVAE_CMD_RESET;
                 RunIfNotReady();
             }
@@ -1141,7 +1060,7 @@ void pvauthor_async_test_errorhandling::CommandCompleted(const PVCmdResponse& aR
                 if (!ConfigureTextEncoder())
                 {
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
-                                    (0, "pvauthor_async_test_errorhandling::CommandCompleted: Error - ConfigureTextEncoder failed"));
+                                    (0, "pvauthor_async_compressed_test_errorhandling::CommandCompleted: Error - ConfigureTextEncoder failed"));
                     PVPATB_TEST_IS_TRUE(false);
                     iObserver->CompleteTest(*iTestCase);
                 }
@@ -1171,7 +1090,7 @@ void pvauthor_async_test_errorhandling::CommandCompleted(const PVCmdResponse& aR
                 // Init failed
                 //Test does not hang, so return true
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
-                                (0, "pvauthor_async_test_errorhandling::INIT FAILED"));
+                                (0, "pvauthor_async_compressed_test_errorhandling::INIT FAILED"));
                 PVPATB_TEST_IS_TRUE(true);
                 iState = PVAE_CMD_RESET;
                 RunIfNotReady();
@@ -1197,7 +1116,7 @@ void pvauthor_async_test_errorhandling::CommandCompleted(const PVCmdResponse& aR
                 // Start failed
                 //Test does not hang, so return true
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
-                                (0, "pvauthor_async_test_errorhandling::START FAILED"));
+                                (0, "pvauthor_async_compressed_test_errorhandling::START FAILED"));
                 PVPATB_TEST_IS_TRUE(true);
                 iState = PVAE_CMD_RESET;
                 RunIfNotReady();
@@ -1272,6 +1191,7 @@ void pvauthor_async_test_errorhandling::CommandCompleted(const PVCmdResponse& aR
             {
                 // Reset failed
                 PVPATB_TEST_IS_TRUE(false);
+                OSCL_ASSERT("ERROR -- Response failure for CMD_RESET");
                 iObserver->CompleteTest(*iTestCase);
             }
             break;
@@ -1288,7 +1208,7 @@ void pvauthor_async_test_errorhandling::CommandCompleted(const PVCmdResponse& aR
                 if (!DeleteTestInputs())
                 {
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
-                                    (0, "pvauthor_async_test_errorhandling::CommandCompleted: Error - DeleteTestInputs failed"));
+                                    (0, "pvauthor_async_compressed_test_errorhandling::CommandCompleted: Error - DeleteTestInputs failed"));
                     PVPATB_TEST_IS_TRUE(false);
                     iObserver->CompleteTest(*iTestCase);
                     return;
@@ -1327,3 +1247,5 @@ void pvauthor_async_test_errorhandling::CommandCompleted(const PVCmdResponse& aR
         }
     }
 }
+
+

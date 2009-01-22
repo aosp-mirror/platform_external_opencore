@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -284,6 +284,10 @@ PVA_FF_AVCConfigurationAtom::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
         return false;
     }
     rendered += 1;
+    if (_pictureParameterSetVec->size() < _numPictureParameterSets)
+    {
+        return false;
+    }
     for (int j = 0;j < _numPictureParameterSets;j++)
     {
 
@@ -317,24 +321,28 @@ PVA_FF_AVCConfigurationAtom::recomputeSize()
 
     size += 7; // wrote six one byte data
 
-    for (int i = 0;i < _numSequenceParameterSets;i++)
+    if (_sequenceParameterSetVec->size() >= _numSequenceParameterSets)
     {
-        PVA_FF_ParameterSet *pSet = (*_sequenceParameterSetVec)[i];
+        for (int i = 0;i < _numSequenceParameterSets;i++)
+        {
+            PVA_FF_ParameterSet *pSet = (*_sequenceParameterSetVec)[i];
 
-        uint16	length = pSet->getParameterSetLength();
-        size += 2;
-        size += length;
+            uint16	length = pSet->getParameterSetLength();
+            size += 2;
+            size += length;
+        }
     }
-    for (int j = 0;j < _numPictureParameterSets;j++)
+    if (_pictureParameterSetVec->size() >= _numPictureParameterSets)
     {
-        PVA_FF_ParameterSet *pSet = (*_pictureParameterSetVec)[j];
+        for (int j = 0;j < _numPictureParameterSets;j++)
+        {
+            PVA_FF_ParameterSet *pSet = (*_pictureParameterSetVec)[j];
 
-        uint16	length = pSet->getParameterSetLength();
-        size += 2;
-        size += length;
+            uint16	length = pSet->getParameterSetLength();
+            size += 2;
+            size += length;
+        }
     }
-
-
 
     _size = size;
 

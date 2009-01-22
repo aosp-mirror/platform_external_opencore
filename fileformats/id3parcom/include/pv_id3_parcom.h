@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -304,7 +304,10 @@ class PVID3ParCom
         /** Enumerated list of ID3 Frame Types */
         typedef enum
         {
-            PV_ID3_FRAME_UNSUPPORTED = -1,
+            PV_ID3_FRAME_INVALID = -3,
+            PV_ID3_FRAME_CANDIDATE,		/**< Frame ID doesn't match with known frame IDs.
+										 The frame ID made out of the characters capital A-Z and 0-9.*/
+            PV_ID3_FRAME_UNRECOGNIZED,	/** Valid frame ID, but ID3 parcom doesn't support. */
             PV_ID3_FRAME_TITLE,         /**< Title. Supported by all ID3 versions. Maximum 30 characters for
 										 ID3v1.x. There is no maximum length limit for ID3v2.x. */
             PV_ID3_FRAME_ARTIST,        /**< Artist. Supported by all ID3 versions. Maximum 30 characters for
@@ -357,12 +360,35 @@ class PVID3ParCom
             uint8     iID3V2TagFlagsV2;
             uint32    iID3V2ExtendedHeaderSize;
             uint32    iID3V2TagSize;
-            uint8     iID3V2FrameID[5	];
+            uint8     iID3V2FrameID[5];
             uint8     iID3V2FrameFlag[2];
             bool	  iFooterPresent;
             uint8	  iID3V2LanguageID[4];
 
         };
+
+        /**
+         * @brief Checks the ID3 Tag v2.4 frame size whether it is syncsafe or not.
+         *
+         * This function validates next ID3 frame to check whether frame size is
+         * syncsafe.
+         *
+         * @returns Validated frame size
+         */
+        uint32 ValidateFrameLengthV2_4(uint32 aFrameSize);
+
+        /**
+         * @brief Checks the ID3 Tag v2.4 frame is valid or not.
+         *
+         * This function validates ID3 frame type and then, frame size and flags
+         *
+         * @params
+         * [IN] bUseSyncSafeFrameSize - validate syncsafe/non-syncsafe frame size
+         * [OUT] frameType - frame type for frame currently validated
+         *
+         * @returns validation status
+         */
+        bool ValidateFrameV2_4(PVID3FrameType& frameType, bool bUseSyncSafeFrameSize = true);
 
         /**
          * @brief Checks the file for the presence of ID3V1 Tag.
@@ -395,16 +421,15 @@ class PVID3ParCom
          * found. The data in the ID3V1 tag can only be ASCII, so the ConvertToUnicode
          * must be called for all fields read from the ID3V1 tag.
          *
-         * @param aTitleOnlyFlag Indicates whether to read title only or read
-         * other metadata information.
+         * @param None
          * @returns None
          */
-        void ReadID3V1Tag(bool aTitleOnlyFlag);
+        void ReadID3V1Tag();
 
         /**
          * @brief reads id3 V2 tag header.
          * @param aReadTags, read the id3 frames when true, else just reads the header
-         * @returns true if tags were read successfully
+         * @@returns true if tags were read successfully
          */
         bool ReadHeaderID3V2(bool aReadTags = true);
 
@@ -412,7 +437,7 @@ class PVID3ParCom
          * @brief Parses the ID3V2 tag frames from the file and populates the
          * frame vector when an ID3V2 tag is found
          * @param version ID3 V2 sub version number (v2.2, v2.3 or v2.4)
-         * @returns number of tags successfully parsed
+         * * @returns number of tags successfully parsed
          */
         int ReadTagID3V2(PVID3Version version);
 
@@ -537,7 +562,16 @@ class PVID3ParCom
          * @param None
          * @returns Value that describes the current frame of type PVID3FrameType
          */
-        PVID3FrameType FrameSupportedID3V2(PVID3Version version);
+        PVID3FrameType FrameSupportedID3V2(PVID3Version version, uint8* aframeid = NULL);
+
+        /**
+         * @brief Detects the ID3V2FrameType and fine whether it us unsupported or
+         * invalid frame type.
+         *
+         * @param None
+         * @returns Value that describes the current frame of type PVID3FrameType
+         */
+        PVID3FrameType FrameValidatedID3V2_4(uint8* aFrameID);
 
         /**
          * @brief Detects the ID3V 2.2 FrameType and returns the enum value that
@@ -662,14 +696,15 @@ class PVID3ParCom
         /**
          * @brief reads frame of type track length
          * @param aValueSize size of the frame
+         * @param aCharSet text encoding
          * @return completion status
          */
-        PVMFStatus ReadTrackLengthFrame(uint32 aValueSize);
+        PVMFStatus ReadTrackLengthFrame(uint32 aValueSize, PVID3CharacterSet aCharSet);
 
         /**
          * @brief reads ID3 frames
          * @param aFrameType frame type
-          * @param aValueSize size of the frame data
+         * @param aValueSize size of the frame data
          * @return Completion status
          */
 
@@ -821,12 +856,43 @@ class PVID3ParCom
          */
         PVMFStatus ComposeID3v2Tag(OsclRefCounterMemFrag& aTag);
 
+        /**
+         * @brief push frame to supplied frame vector
+         * @param aFrame Frame to be pushed
+         * @param aFrameVector vector in which frame is to be pushed
+         * @return Completion Status
+         */
+        PVMFStatus PushFrameToFrameVector(PvmiKvpSharedPtr& aFrame, PvmiKvpSharedPtrVector& aFrameVector);
+        /**
+         * @brief Allocate array of specified size and type of elements
+         * @param aValueType, type of array elements
+         * @param aNumElements, size of required array
+         * @return aLeaveCode, err code
+         * @return buffer, pointer to allocated buffer
+         */
+        OsclAny* AllocateValueArray(int32& aLeaveCode, PvmiKvpValueType aValueType, int32 aNumElements, OsclMemAllocator* aMemAllocator = NULL);
+
+        /**
+         * @brief Allocate kvp and handle leave
+         * @param aValueType, type of array elements
+         * @param aValueSize, value size of required kvp
+         * @return aStatus, err code
+         * @return truncate, returns false if specified memory is not allocated, else true
+         */
+        PvmiKvpSharedPtr HandleErrorForKVPAllocation(OSCL_String& aKey, PvmiKvpValueType aValueType, uint32 aValueSize, bool &truncate, PVMFStatus &aStatus);
+
     private:
 
         // Variables for parsing
         PVFile* iInputFile;
         TID3TagInfo iID3TagInfo;
         bool iTitleFoundFlag;
+        bool iArtistFoundFlag;
+        bool iAlbumFoundFlag;
+        bool iYearFoundFlag;
+        bool iCommentFoundFlag;
+        bool iTrackNumberFoundFlag;
+        bool iGenereFoundFlag;
         int32 iFileSizeInBytes;
         uint32 iByteOffsetToStartOfAudioFrames;
 

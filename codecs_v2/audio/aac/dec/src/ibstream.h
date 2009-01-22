@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,7 @@
  */
 /*
 
- Pathname: ./include/ibstream.h
-
-     Date: 02/21/2001
+ Pathname: ibstream.h
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
@@ -33,6 +31,7 @@
  Description: Change input buffer to UChar
               Add constant
 
+ Who:                                              Date:
  Description:
 
 ------------------------------------------------------------------------------

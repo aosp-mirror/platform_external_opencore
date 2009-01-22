@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ class Mp3Decoder
         Int Mp3DecodeAudio(OMX_S16* aOutBuff,
                            OMX_U32* aOutputLength, OMX_U8** aInputBuf,
                            OMX_U32* aInBufSize,
-                           OMX_S32* aIsFirstBuffer,
+                           OMX_S32* aFrameCount,
                            OMX_AUDIO_PARAM_PCMMODETYPE* aAudioPcmParam,
                            OMX_AUDIO_PARAM_MP3TYPE* aAudioMp3Param,
                            OMX_BOOL aMarkerFlag,

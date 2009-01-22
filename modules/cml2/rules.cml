@@ -1,0 +1,30 @@
+# streaming
+source "symbols.cml"
+
+derive pvrtspinterface_m_mk from rtsp_support==y                          ? "/modules/linux_rtsp/core/build/make" : ""
+derive pvrtspreginterface_m_mk from rtsp_support==y                    ? "/modules/linux_rtsp/node_registry/build/make" : ""
+derive pvasfstreaminginterface_m_mk from asf_streaming_support==y          ? "/modules/linux_asf/asf_streaming/core/build/make" : ""
+derive pvasfstreamingreginterface_m_mk from asf_streaming_support==y    ? "/modules/linux_asf/asf_streaming/node_registry/build/make" : ""
+derive pvdownloadinterface_m_mk from download_support==y                  ? "/modules/linux_download/core/build/make" : ""
+derive pvdownloadreginterface_m_mk from download_support==y            ? "/modules/linux_download/node_registry/build/make" : ""
+derive pvmp4interface_m_mk from mp4local_support==y                       ? "/modules/linux_mp4/core/build/make" : ""
+derive pvmp4reginterface_m_mk from mp4local_support==y                 ? "/modules/linux_mp4/node_registry/build/make" : ""
+derive pvasflocalpbinterface_m_mk from asflocal_support==y                ? "/modules/linux_asf/asf_localpb/core/build/make" : ""
+derive pvasflocalpbreginterface_m_mk from asflocal_support==y          ? "/modules/linux_asf/asf_localpb/node_registry/build/make" : ""
+
+derive pvrtspinterface_m_lib from rtsp_support==y                         ? "-lpvrtspinterface" : ""
+derive pvrtspreginterface_m_lib from rtsp_support==y                   ? "-lpvrtspreginterface" : ""
+derive pvasfstreaminginterface_m_lib from asf_streaming_support==y         ? "-lpvasfstreaminginterface" : ""
+derive pvasfstreamingreginterface_m_lib from asf_streaming_support==y   ? "-lpvasfstreamingreginterface" : ""
+derive pvdownloadinterface_m_lib from download_support==y                 ? "-lpvdownloadinterface" : ""
+derive pvdownloadreginterface_m_lib from download_support==y           ? "-lpvdownloadreginterface" : ""
+derive pvmp4interface_m_lib from mp4local_support==y                      ? "-lpvmp4interface" : ""
+derive pvmp4reginterface_m_lib from mp4local_support==y                ? "-lpvmp4reginterface" : ""
+derive pvasflocalpbinterface_m_lib from asflocal_support==y               ? "-lpvasflocalpbinterface" : ""
+derive pvasflocalpbreginterface_m_lib from asflocal_support==y         ? "-lpvasflocalpbreginterface" : ""
+
+
+derive LIBDIR_tools_v2_shared from pvrtspinterface_m_mk.pvrtspreginterface_m_mk.pvasfstreaminginterface_m_mk.pvasfstreamingreginterface_m_mk.pvdownloadinterface_m_mk.pvdownloadreginterface_m_mk.pvmp4interface_m_mk.pvmp4reginterface_m_mk.pvasflocalpbinterface_m_mk.pvasflocalpbreginterface_m_mk
+
+derive LIBS_tools_v2_shared from pvrtspinterface_m_lib.pvrtspreginterface_m_lib.pvasfstreaminginterface_m_lib.pvasfstreamingreginterface_m_lib.pvdownloadinterface_m_lib.pvdownloadreginterface_m_lib.pvmp4interface_m_lib.pvmp4reginterface_m_lib.pvasflocalpbinterface_m_lib.pvasflocalpbreginterface_m_lib
+

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,7 +72,7 @@ class HTTPComposer
          * Set URI. Note that composer doesn't do any memory allocation and memory copy for the input URI, and just save the pointer
          * for the URI string. So it is composer user's reponsiblity to keep URI valid during request composing.
          */
-        void setURI(const StrPtrLen aURI);
+        OSCL_IMPORT_REF void setURI(const StrPtrLen aURI);
 
         /**
          * set/remove a standard field or add a new extension field for the headers

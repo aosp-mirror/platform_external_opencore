@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,6 +78,7 @@ typedef enum
     , PVMFMoutNodeErr_MediaIOFlush
     , PVMFMoutNodeErr_MediaIODiscardData
     , PVMFMoutNodeErr_MediaIOCancelCommand
+    , PVMFMoutNodeErr_MediaIOReset
 
     //These error codes indicate errors in the data transfer to the media
     //Output componenet

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -173,37 +173,13 @@ bool PVAETestInput::CreateMIOInputNode(PVAETestInputType aType, const OSCL_wStri
     }
     switch (aType)
     {
-        case YUV_FILE:
-            if (aFileName.get_size() == 0)
-            {
-                iSettings.iFileName = KYUVTestInput;
-            }
-            iSettings.iMediaFormat = PVMF_YUV420;//PVMF_RGB16;//PVMF_YUV420;
-            iSettings.iLoopInputFile = iAVTConfig.iLoopingEnable;
-            iSettings.iTimescale = KVideoTimescale;
-            iSettings.iFrameHeight = iAVTConfig.iHeight; //KVideoFrameHeight;
-            iSettings.iFrameWidth = iAVTConfig.iWidth;//KVideoFrameWidth;
-            iSettings.iFrameRate = iAVTConfig.iFps;//KVideoFrameRate;
-            break;
-
-            /*
-            case M4V_FILE:
-            iSettings.iFileName = KM4VTestInput;
-            iSettings.iMediaFormat = PVMF_M4V;
-            iSettings.iLoopInputFile = true;
-            iSettings.iTimescale = KVideoTimescale;
-            iSettings.iFrameHeight = iAVTConfig.iHeight; //KVideoFrameHeight;
-            iSettings.iFrameWidth = iAVTConfig.iWidth;//KVideoFrameWidth;
-            iSettings.iFrameRate = iAVTConfig.iFps;//KVideoFrameRate;
-            break;
-            */
 
         case H263_FILE:
             if (aFileName.get_size() == 0)
             {
                 iSettings.iFileName = KH263TestInput;
             }
-            iSettings.iMediaFormat = PVMF_H263;
+            iSettings.iMediaFormat = PVMF_MIME_H2631998;
             iSettings.iLoopInputFile = iAVTConfig.iLoopingEnable;
             iSettings.iTimescale = KVideoTimescale;
             iSettings.iFrameHeight = iAVTConfig.iHeight; //KVideoFrameHeight;
@@ -216,7 +192,7 @@ bool PVAETestInput::CreateMIOInputNode(PVAETestInputType aType, const OSCL_wStri
             {
                 iSettings.iFileName = KH264TestInput;
             }
-            iSettings.iMediaFormat = PVMF_YUV420;
+            iSettings.iMediaFormat = PVMF_MIME_YUV420;
             iSettings.iLoopInputFile = iAVTConfig.iLoopingEnable;
             iSettings.iTimescale = KVideoTimescale;
             iSettings.iFrameHeight = iAVTConfig.iHeight; //KVideoFrameHeight;
@@ -224,12 +200,25 @@ bool PVAETestInput::CreateMIOInputNode(PVAETestInputType aType, const OSCL_wStri
             iSettings.iFrameRate = iAVTConfig.iFps;//KVideoFrameRate;
             break;
 
+        case YUV_FILE:
+            if (aFileName.get_size() == 0)
+            {
+                iSettings.iFileName = KYUVTestInput;
+            }
+            iSettings.iMediaFormat = PVMF_MIME_YUV420;
+            iSettings.iLoopInputFile = iAVTConfig.iLoopingEnable;
+            iSettings.iTimescale = KVideoTimescale;
+            iSettings.iFrameHeight = iAVTConfig.iHeight;
+            iSettings.iFrameWidth = iAVTConfig.iWidth;
+            iSettings.iFrameRate = iAVTConfig.iFps;
+            break;
+
         case AMR_IETF_FILE:
             if (aFileName.get_size() == 0)
             {
                 iSettings.iFileName = KAMRTestInput;
             }
-            iSettings.iMediaFormat = PVMF_AMR_IETF;
+            iSettings.iMediaFormat = PVMF_MIME_AMR_IETF;
             iSettings.iLoopInputFile = iAVTConfig.iLoopingEnable;
             iSettings.iSamplingFrequency = iAVTConfig.iSamplingRate; //KAudioTimescale;
             iSettings.iNumChannels = iAVTConfig.iNumChannels;// KAudioNumChannels;
@@ -241,7 +230,7 @@ bool PVAETestInput::CreateMIOInputNode(PVAETestInputType aType, const OSCL_wStri
             {
                 iSettings.iFileName = KAACADIFTestInput;
             }
-            iSettings.iMediaFormat = PVMF_ADIF;
+            iSettings.iMediaFormat = PVMF_MIME_ADIF;
             iSettings.iLoopInputFile = iAVTConfig.iLoopingEnable;
             iSettings.iSamplingFrequency = iAVTConfig.iSamplingRate; //KAudioTimescale;
             iSettings.iNumChannels = iAVTConfig.iNumChannels;// KAudioNumChannels;
@@ -252,36 +241,14 @@ bool PVAETestInput::CreateMIOInputNode(PVAETestInputType aType, const OSCL_wStri
             {
                 iSettings.iFileName = KAACADTSTestInput;
             }
-            iSettings.iMediaFormat = PVMF_ADTS;
-            iSettings.iLoopInputFile = iAVTConfig.iLoopingEnable;
-            iSettings.iSamplingFrequency = iAVTConfig.iSamplingRate; //KAudioTimescale;
-            iSettings.iNumChannels = iAVTConfig.iNumChannels;// KAudioNumChannels;
-            iSettings.iNum20msFramesPerChunk = KNum20msFramesPerChunk;
-            break;
-        case PCM16_FILE:
-            if (aFileName.get_size() == 0)
-            {
-                iSettings.iFileName = KPCM16TestInput;
-            }
-            iSettings.iMediaFormat = PVMF_PCM16;
+            iSettings.iMediaFormat = PVMF_MIME_ADTS;
             iSettings.iLoopInputFile = iAVTConfig.iLoopingEnable;
             iSettings.iSamplingFrequency = iAVTConfig.iSamplingRate; //KAudioTimescale;
             iSettings.iNumChannels = iAVTConfig.iNumChannels;// KAudioNumChannels;
             iSettings.iNum20msFramesPerChunk = KNum20msFramesPerChunk;
             break;
 
-        case YUV_WRONG_FILE:
-            if (aFileName.get_size() == 0)
-            {
-                iSettings.iFileName = KYUVTestInput;
-            }
-            iSettings.iMediaFormat = PVMF_RGB16;//PVMF_RGB16;//PVMF_YUV420;
-            iSettings.iLoopInputFile = iAVTConfig.iLoopingEnable;
-            iSettings.iTimescale = KVideoTimescale;
-            iSettings.iFrameHeight = iAVTConfig.iHeight; //KVideoFrameHeight;
-            iSettings.iFrameWidth = iAVTConfig.iWidth;//KVideoFrameWidth;
-            iSettings.iFrameRate = iAVTConfig.iFps;//KVideoFrameRate;
-            break;
+
         case TEXT_FILE:
             if (aFileName.get_size() == 0)
             {
@@ -313,7 +280,7 @@ bool PVAETestInput::CreateMIOInputNode(PVAETestInputType aType, const OSCL_wStri
                     iSettings.iTextFileName.set(output2, oscl_strlen(output2));
                 }
             }
-            iSettings.iMediaFormat = PVMF_3GPP_TIMEDTEXT;
+            iSettings.iMediaFormat = PVMF_MIME_3GPP_TIMEDTEXT;
             iSettings.iLoopInputFile = iAVTConfig.iLoopingEnable;
             iSettings.iSamplingFrequency = 0;
             iSettings.iNumChannels = 0;

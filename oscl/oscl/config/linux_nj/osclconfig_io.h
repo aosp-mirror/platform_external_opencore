@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,10 @@
 #include "osclconfig.h"
 #endif
 
+#if (OSCL_HAS_NJ_SUPPORT) && (ENABLE_MEMORY_PLAYBACK)
+#include <media/MediaPlayerInterface.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -50,21 +54,28 @@
 #include <sys/mman.h>
 #include <sys/types.h>
 #include <errno.h>
+#include <sys/vfs.h>
+#include <dirent.h>
 //#include <glob.h>
+#if (OSCL_HAS_ANSI_STDLIB_SUPPORT)
+#if (OSCL_HAS_UNIX_SUPPORT)
 #include <sys/stat.h>
+#endif
+#endif
 
 //For File I/O
-
-
-
-
+#define OSCL_HAS_GLOB 0
+#define OSCL_HAS_ANSI_FILE_IO_SUPPORT 1
+#define OSCL_HAS_SYMBIAN_COMPATIBLE_IO_FUNCTION 0
+#define OSCL_HAS_NATIVE_FILE_CACHE_ENABLE 1
 #define OSCL_FILE_BUFFER_MAX_SIZE	32768
-
+#define OSCL_HAS_PV_FILE_CACHE	0
 
 //For Sockets
-
-
-
+#define OSCL_HAS_SYMBIAN_SOCKET_SERVER 0
+#define OSCL_HAS_SYMBIAN_DNS_SERVER 0
+#define OSCL_HAS_BERKELEY_SOCKETS 1
+#define OSCL_HAS_SOCKET_SUPPORT 1
 
 //basic socket types
 typedef int TOsclSocket;
@@ -91,17 +102,31 @@ typedef socklen_t TOsclSockAddrLen;
         if (!ok)err=errno
 
 #define OsclBind(s,addr,ok,err)\
-	ok=(bind(s,(sockaddr*)&addr,sizeof(addr))!=(-1));\
+    TOsclSockAddr* tmpadr = &addr;\
+    sockaddr* sadr = OSCL_STATIC_CAST(sockaddr*, tmpadr);\
+	ok=(bind(s,sadr,sizeof(addr))!=(-1));\
 	if (!ok)err=errno
+
+#define OsclJoin(s,addr,ok,err)\
+{\
+		struct ip_mreq mreq; \
+            void* p = &addr; \
+	    ok=(bind(s,(sockaddr*)p,sizeof(addr))!=(-1));\
+        mreq.imr_multiaddr.s_addr = addr.sin_addr.s_addr ; \
+        mreq.imr_interface.s_addr = htonl(INADDR_ANY); \
+        ok=(setsockopt(s, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(struct ip_mreq))!=(-1)); \
+        if (!ok)err=errno;\
+}
+
 
 #define OsclListen(s,size,ok,err)\
 	ok=(listen(iSocket,qSize)!=(-1));\
 	if (!ok)err=errno
 
-#define OsclAccept(s,accept_s,ok,err)\
+#define OsclAccept(s,accept_s,ok,err,wouldblock)\
 	accept_s=accept(s,NULL,NULL);\
 	ok=(accept_s!=(-1));\
-	if (!ok)err=errno
+	if (!ok){err=errno;wouldblock=(err==EAGAIN||err==EWOULDBLOCK);}
 
 #define OsclSetNonBlocking(s,ok,err)\
 	ok=(fcntl(s,F_SETFL,O_NONBLOCK)!=(-1));\
@@ -117,7 +142,9 @@ typedef socklen_t TOsclSockAddrLen;
 	if (!ok)err=errno
 
 #define OsclSendTo(s,buf,len,addr,ok,err,nbytes,wouldblock)\
-	nbytes=sendto(s,(const void*)(buf),(size_t)(len),0,(const struct sockaddr*)&addr,(socklen_t)sizeof(addr));\
+    TOsclSockAddr* tmpadr = &addr;\
+    sockaddr* sadr = OSCL_STATIC_CAST(sockaddr*, tmpadr);\
+	nbytes=sendto(s,(const void*)(buf),(size_t)(len),0,sadr,(socklen_t)sizeof(addr));\
 	ok=(nbytes!=(-1));\
 	if (!ok){err=errno;wouldblock=(err==EAGAIN||err==EWOULDBLOCK);}
 
@@ -131,7 +158,9 @@ typedef socklen_t TOsclSockAddrLen;
 	if (!ok)err=errno
 
 #define OsclConnect(s,addr,ok,err,wouldblock)\
-	ok=(connect(s,(sockaddr*)&addr,sizeof(addr))!=(-1));\
+    TOsclSockAddr* tmpadr = &addr;\
+    sockaddr* sadr = OSCL_STATIC_CAST(sockaddr*, tmpadr);\
+	ok=(connect(s,sadr,sizeof(addr))!=(-1));\
 	if (!ok){err=errno;wouldblock=(err==EINPROGRESS);}
 
 #define OsclGetAsyncSockErr(s,ok,err)\
@@ -154,9 +183,13 @@ typedef socklen_t TOsclSockAddrLen;
 	if (!ok){err=errno;wouldblock=(err==EAGAIN);}
 
 #define OsclRecvFrom(s,buf,len,paddr,paddrlen,ok,err,nbytes,wouldblock)\
-	nbytes=recvfrom(s,(void*)(buf),(size_t)(len),0,(struct sockaddr*)paddr,paddrlen);\
+{\
+void* p=paddr;\
+nbytes=recvfrom(s,(void*)(buf),(size_t)(len),0,(struct sockaddr*)p,paddrlen);\
 	ok=(nbytes!=(-1));\
-	if (!ok){err=errno;wouldblock=(err==EAGAIN);}
+	if (!ok){err=errno;wouldblock=(err==EAGAIN);}\
+}
+
 
 #define OsclSocketSelect(nfds,rd,wr,ex,timeout,ok,err,nhandles)\
 	nhandles=select(nfds,&rd,&wr,&ex,&timeout);\

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,12 +26,83 @@
 #include "pv_omx_queue.h"
 #endif
 
+#ifndef OMX_Types_h
+#include "omx_types.h"
+#endif
+
+#ifndef OSCL_BASE_INCLUDED_H
+#include "oscl_base.h"
+#endif
+
+#ifndef OSCL_UUID_H_INCLUDED
+#include "oscl_uuid.h"
+#endif
+
+
 #ifndef OMX_Core_h
 #include "omx_core.h"
 #endif
 
-#ifndef PV_OMXWRAPPERBASE_H_INCLUDED
-#include "pv_omxwrapperbase.h"
+#ifndef OMX_Component_h
+#include "omx_component.h"
+#endif
+
+#if PROXY_INTERFACE
+#ifndef OMX_PROXY_INTERFACE_H_INCLUDED
+#include "omx_proxy_interface.h"
+#endif
+#endif
+
+#ifndef USE_CML2_CONFIG
+
+
+#ifdef ANDROID
+
+// NOTE: if at least one component uses dynamic loading,
+// USE_DYNAMIC_LOAD_OMX_COMPONENT needs to be 1
+#define USE_DYNAMIC_LOAD_OMX_COMPONENTS 0
+
+#define DYNAMIC_LOAD_OMX_AVC_COMPONENT 0
+#define DYNAMIC_LOAD_OMX_M4V_COMPONENT 0
+#define DYNAMIC_LOAD_OMX_H263_COMPONENT 0
+#define DYNAMIC_LOAD_OMX_WMV_COMPONENT 0
+#define DYNAMIC_LOAD_OMX_AAC_COMPONENT 0
+#define DYNAMIC_LOAD_OMX_AMR_COMPONENT 0
+#define DYNAMIC_LOAD_OMX_MP3_COMPONENT 0
+#define DYNAMIC_LOAD_OMX_WMA_COMPONENT 0
+
+#define DYNAMIC_LOAD_OMX_AMRENC_COMPONENT 0
+#define DYNAMIC_LOAD_OMX_M4VENC_COMPONENT 0
+#define DYNAMIC_LOAD_OMX_H263ENC_COMPONENT 0
+#define DYNAMIC_LOAD_OMX_AVCENC_COMPONENT 0
+#define DYNAMIC_LOAD_OMX_AACENC_COMPONENT 0
+
+#else
+
+#define USE_DYNAMIC_LOAD_OMX_COMPONENTS 0
+
+#define DYNAMIC_LOAD_OMX_AVC_COMPONENT 0
+#define DYNAMIC_LOAD_OMX_M4V_COMPONENT 0
+#define DYNAMIC_LOAD_OMX_H263_COMPONENT 0
+#define DYNAMIC_LOAD_OMX_WMV_COMPONENT 0
+#define DYNAMIC_LOAD_OMX_AAC_COMPONENT 0
+#define DYNAMIC_LOAD_OMX_AMR_COMPONENT 0
+#define DYNAMIC_LOAD_OMX_MP3_COMPONENT 0
+#define DYNAMIC_LOAD_OMX_WMA_COMPONENT 0
+
+#define DYNAMIC_LOAD_OMX_AMRENC_COMPONENT 0
+#define DYNAMIC_LOAD_OMX_M4VENC_COMPONENT 0
+#define DYNAMIC_LOAD_OMX_H263ENC_COMPONENT 0
+#define DYNAMIC_LOAD_OMX_AVCENC_COMPONENT 0
+#define DYNAMIC_LOAD_OMX_AACENC_COMPONENT 0
+
+#endif
+#endif
+
+#if USE_DYNAMIC_LOAD_OMX_COMPONENTS
+#ifndef OSCL_SHARED_LIBRARY_H_INCLUDED
+#include "oscl_shared_library.h"
+#endif
 #endif
 
 #ifdef __cplusplus
@@ -39,31 +110,73 @@ extern "C"
 {
 #endif
 
-    OMX_API OMX_ERRORTYPE PVOMX_GetComponentsOfRole(
+    OSCL_IMPORT_REF OMX_ERRORTYPE OMX_GetComponentsOfRole(
         OMX_IN		OMX_STRING role,
         OMX_INOUT	OMX_U32	*pNumComps,
         OMX_INOUT	OMX_U8	**compNames);
 
-    OMX_API OMX_ERRORTYPE OMX_APIENTRY PVOMX_ComponentNameEnum(
+    OSCL_IMPORT_REF OMX_ERRORTYPE OMX_APIENTRY OMX_ComponentNameEnum(
         OMX_OUT OMX_STRING cComponentName,
         OMX_IN  OMX_U32 nNameLength,
         OMX_IN  OMX_U32 nIndex);
 
-    OMX_API OMX_ERRORTYPE OMX_APIENTRY PVOMX_FreeHandle(OMX_IN OMX_HANDLETYPE hComponent);
+    OSCL_IMPORT_REF OMX_ERRORTYPE OMX_APIENTRY OMX_FreeHandle(OMX_IN OMX_HANDLETYPE hComponent);
 
-    OMX_API OMX_ERRORTYPE OMX_APIENTRY PVOMX_GetHandle(OMX_OUT OMX_HANDLETYPE* pHandle,
+    OSCL_IMPORT_REF OMX_ERRORTYPE OMX_APIENTRY OMX_GetHandle(OMX_OUT OMX_HANDLETYPE* pHandle,
             OMX_IN  OMX_STRING cComponentName,
             OMX_IN  OMX_PTR pAppData,
             OMX_IN  OMX_CALLBACKTYPE* pCallBacks);
 
-    OMX_API OMX_ERRORTYPE PVOMX_GetRolesOfComponent(
+    OSCL_IMPORT_REF OMX_ERRORTYPE OMX_GetRolesOfComponent(
         OMX_IN      OMX_STRING compName,
         OMX_INOUT   OMX_U32* pNumRoles,
         OMX_OUT     OMX_U8** roles);
 
+    OSCL_IMPORT_REF  OMX_ERRORTYPE OMX_SetupTunnel(
+        OMX_IN  OMX_HANDLETYPE hOutput,
+        OMX_IN  OMX_U32 nPortOutput,
+        OMX_IN  OMX_HANDLETYPE hInput,
+        OMX_IN  OMX_U32 nPortInput);
+
+    OSCL_IMPORT_REF OMX_ERRORTYPE   OMX_GetContentPipe(
+        OMX_OUT  OMX_HANDLETYPE *hPipe,
+        OMX_IN   OMX_STRING szURI);
+
+
+
 #ifdef __cplusplus
 }
 #endif
+
+
+
+#if USE_DYNAMIC_LOAD_OMX_COMPONENTS
+//Dynamic loading interface definitions
+#define PV_OMX_SHARED_INTERFACE OsclUuid(0x1d4769f0,0xca0c,0x11dc,0x95,0xff,0x08,0x00,0x20,0x0c,0x9a,0x67)
+#define PV_OMX_CREATE_INTERFACE OsclUuid(0x1d4769f0,0xca0c,0x11dc,0x95,0xff,0x08,0x00,0x20,0x0c,0x9a,0x68)
+#define PV_OMX_DESTROY_INTERFACE OsclUuid(0x1d4769f0,0xca0c,0x11dc,0x95,0xff,0x08,0x00,0x20,0x0c,0x9a,0x69)
+#define PV_OMX_AVCDEC_UUID OsclUuid(0x1d4769f0,0xca0c,0x11dc,0x95,0xff,0x08,0x00,0x20,0x0c,0x9a,0x6a)
+#define PV_OMX_M4VDEC_UUID OsclUuid(0x1d4769f0,0xca0c,0x11dc,0x95,0xff,0x08,0x00,0x20,0x0c,0x9a,0x6b)
+#define PV_OMX_H263DEC_UUID OsclUuid(0x1d4769f0,0xca0c,0x11dc,0x95,0xff,0x08,0x00,0x20,0x0c,0x9a,0x6c)
+#define PV_OMX_WMVDEC_UUID OsclUuid(0x1d4769f0,0xca0c,0x11dc,0x95,0xff,0x08,0x00,0x20,0x0c,0x9a,0x6d)
+#define PV_OMX_AACDEC_UUID OsclUuid(0x1d4769f0,0xca0c,0x11dc,0x95,0xff,0x08,0x00,0x20,0x0c,0x9a,0x6e)
+#define PV_OMX_AMRDEC_UUID OsclUuid(0x1d4769f0,0xca0c,0x11dc,0x95,0xff,0x08,0x00,0x20,0x0c,0x9a,0x6f)
+#define PV_OMX_MP3DEC_UUID OsclUuid(0x1d4769f0,0xca0c,0x11dc,0x95,0xff,0x08,0x00,0x20,0x0c,0x9a,0x70)
+#define PV_OMX_WMADEC_UUID OsclUuid(0x1d4769f0,0xca0c,0x11dc,0x95,0xff,0x08,0x00,0x20,0x0c,0x9a,0x71)
+#define PV_OMX_AVCENC_UUID OsclUuid(0x1d4769f0,0xca0c,0x11dc,0x95,0xff,0x08,0x00,0x20,0x0c,0x9a,0x72)
+#define PV_OMX_M4VENC_UUID OsclUuid(0x1d4769f0,0xca0c,0x11dc,0x95,0xff,0x08,0x00,0x20,0x0c,0x9a,0x73)
+#define PV_OMX_H263ENC_UUID OsclUuid(0x1d4769f0,0xca0c,0x11dc,0x95,0xff,0x08,0x00,0x20,0x0c,0x9a,0x74)
+#define PV_OMX_AMRENC_UUID OsclUuid(0x1d4769f0,0xca0c,0x11dc,0x95,0xff,0x08,0x00,0x20,0x0c,0x9a,0x75)
+#define PV_OMX_AACENC_UUID OsclUuid(0x1d4769f0,0xca0c,0x11dc,0x95,0xff,0x08,0x00,0x20,0x0c,0x9a,0x76)
+
+#define OMX_MAX_LIB_PATH 256
+
+class OmxSharedLibraryInterface
+{
+    public:
+        virtual OsclAny *QueryOmxComponentInterface(const OsclUuid& aOmxTypeId, const OsclUuid& aInterfaceId) = 0;
+};
+#endif // USE_DYNAMIC_LOAD_OMX_COMPONENTS
 
 class ComponentRegistrationType
 {
@@ -72,27 +185,23 @@ class ComponentRegistrationType
         OMX_STRING		ComponentName;
         OMX_STRING		RoleString;
         // pointer to factory function to be called when component needs to be instantiated
-        OMX_ERRORTYPE(*FunctionPtrCreateComponent)(OMX_OUT OMX_HANDLETYPE* pHandle, OMX_IN  OMX_PTR pAppData);
+        OMX_ERRORTYPE(*FunctionPtrCreateComponent)(OMX_OUT OMX_HANDLETYPE* pHandle, OMX_IN  OMX_PTR pAppData,
+                OMX_PTR pProxy, OMX_STRING aOmxLibName, OMX_PTR &aOmxLib, OMX_PTR aOsclUuid, OMX_U32 &aRefCount);
         // pointer to function that destroys the component and its AO
-        OMX_ERRORTYPE(*FunctionPtrDestroyComponent)(OMX_IN OMX_HANDLETYPE pHandle);
+        OMX_ERRORTYPE(*FunctionPtrDestroyComponent)(OMX_IN OMX_HANDLETYPE pHandle, OMX_PTR &aOmxLib, OMX_PTR aOsclUuid, OMX_U32 &aRefCount);
         //This function will return the role string
         void GetRolesOfComponent(OMX_STRING* aRole_string)
         {
             *aRole_string = RoleString;
         }
 
+        // for dynamic loading
+        OMX_STRING             SharedLibraryName;
+        OMX_PTR                SharedLibraryPtr;
+        OMX_PTR                SharedLibraryOsclUuid;
+        OMX_U32                SharedLibraryRefCounter;
+
 };
-
-
-OMX_API OMX_ERRORTYPE OMX_APIENTRY GlobalProxyComponentGetHandle(
-    OMX_OUT OMX_HANDLETYPE* pHandle,
-    OMX_IN  OMX_STRING cComponentName, OMX_IN  OMX_PTR pAppData,
-    OMX_IN  OMX_CALLBACKTYPE* pCallBacks);
-
-OMX_API OMX_ERRORTYPE OMX_APIENTRY GlobalProxyComponentFreeHandle(
-    OMX_IN OMX_HANDLETYPE hComponent);
-
-
 
 typedef struct CoreDescriptorType
 {
@@ -117,38 +226,59 @@ typedef struct PV_OMXComponentCapabilityFlagsType
     OMX_BOOL iOMXComponentSupportsExternalOutputBufferAlloc;
     OMX_BOOL iOMXComponentSupportsExternalInputBufferAlloc;
     OMX_BOOL iOMXComponentSupportsMovableInputBuffers;
+    OMX_BOOL iOMXComponentSupportsPartialFrames;
+    OMX_BOOL iOMXComponentNeedsNALStartCode;
+    OMX_BOOL iOMXComponentCanHandleIncompleteFrames;
 
 } PV_OMXComponentCapabilityFlagsType;
 
-
-typedef class PV_OMX_Wrapper
-            : public PV_OMX_WrapperBase
+class OMXGlobalData
 {
     public:
-        PV_OMX_Wrapper();
-        static PV_OMX_WrapperBase *New();
-        void Delete();
-        ~PV_OMX_Wrapper() {};
+        OMXGlobalData()
+                : iInstanceCount(1),
+                iOsclInit(false),
+                iNumBaseInstance(0),
+                iComponentIndex(0)
+        {
+            for (OMX_S32 ii = 0; ii < MAX_INSTANTIATED_COMPONENTS; ii++)
+            {
+                ipInstantiatedComponentReg[ii] = NULL;
+            }
+        }
 
-        tpOMX_Init GetpOMX_Init();
+        uint32 iInstanceCount;
 
-        tpOMX_Deinit GetpOMX_Deinit();
+        bool iOsclInit; //did we do OsclInit in OMX_Init?  if so we must cleanup in OMX_Deinit.
 
-        tpOMX_ComponentNameEnum GetpOMX_ComponentNameEnum();
 
-        tpOMX_GetHandle GetpOMX_GetHandle();
+        //Number of base instances
+        OMX_U32 iNumBaseInstance;
 
-        tpOMX_FreeHandle GetpOMX_FreeHandle();
+        // Array to store component handles for future recognition of components etc.
+        OMX_HANDLETYPE iComponentHandle[MAX_INSTANTIATED_COMPONENTS];
+        OMX_U32 iComponentIndex;
 
-        tpOMX_GetComponentsOfRole GetpOMX_GetComponentsOfRole();
+        // Array of supported component types (e.g. MP4, AVC, AAC, etc.)
+        // they need to be registered
+        // For each OMX Component type (e.g. Mp3, AVC, AAC) there is one entry in this table that contains info
+        // such as component type, factory, destructor functions, library name for dynamic loading etc.
+        // when the omx component is registered (at OMX_Init)
+        ComponentRegistrationType* ipRegTemplateList[MAX_SUPPORTED_COMPONENTS];
 
-        tpOMX_GetRolesOfComponent GetpOMX_GetRolesOfComponent();
 
-        tpOMX_SetupTunnel GetpOMX_SetupTunnel();
+        // Array of pointers - For each OMX component that gets instantiated - the pointer to its registry structure
+        // is saved here. This information is needed when the component is to be destroyed
 
-        tpOMX_GetContentPipe GetpOMX_GetContentPipe();
+        ComponentRegistrationType* ipInstantiatedComponentReg[MAX_INSTANTIATED_COMPONENTS];
+        // array of function pointers. For each component, a destructor function is assigned
+        //OMX_ERRORTYPE(*ComponentDestructor[MAX_INSTANTIATED_COMPONENTS])(OMX_IN OMX_HANDLETYPE pHandle, OMX_PTR &aOmxLib, OMX_PTR aOsclUuid, OMX_U32 &aRefCount);
 
-} PV_OMX_Wrapper;
+#if PROXY_INTERFACE
+        ProxyApplication_OMX* ipProxyTerm[MAX_INSTANTIATED_COMPONENTS];
+#endif
+
+};
 
 
 #endif

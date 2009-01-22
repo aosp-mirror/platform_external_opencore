@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*********************************************************************************/
 /*
     The PVA_FF_IMpeg4File Class is INTERFACE that exsposes only those necessary
     methods of the underlying PVA_FF_Mpeg4File class.
@@ -27,7 +26,6 @@
 #include "oscl_base.h"
 #include "a_impeg4file.h"
 #include "mpeg4file.h"
-//#include "pviostream.h"
 #include "atomutils.h"
 #ifndef OSCL_DLL_H_INCLUDED
 #include "oscl_dll.h"
@@ -36,7 +34,6 @@
 // Define entry point for this DLL
 OSCL_DLL_ENTRY_POINT_DEFAULT()
 
-//extern pvostream& operator<<(pvostream& os, PVA_FF_Mpeg4File &mp4);
 OSCL_EXPORT_REF
 // Static method to create the MP4 file and return the PVA_FF_IMpeg4File interface
 PVA_FF_IMpeg4File*

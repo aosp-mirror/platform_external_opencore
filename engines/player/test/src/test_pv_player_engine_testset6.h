@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,15 +41,28 @@
 #include "pvmf_source_context_data.h"
 #endif
 
+#if PVR_SUPPORT
+#ifndef PVMF_PVR_CONTROL_INTERFACE_H_INCLUDED
+#include "pvmf_pvr_control_interface.h"
+#endif
+#ifndef PVPVRFFPARSER_H_INCLUDED
+#include "pvpvrffparser.h"
+#endif
+#endif
 
-#define AMR_MPEG4_RTSP_URL "rtsp://test.3gp"
-#define AMR_MPEG4_RTSP_URL_2 "rtsp://test.mp4"
-#define H263_AMR_RTSP_URL "rtsp://test.3gp"
-#define MPEG4_RTSP_URL "rtsp://test.3gp"
-#define MPEG4_SHRT_HDR_RTSP_URL "rtsp://test.3gp"
-#define AAC_RTSP_URL     "rtsp://test.3gp"
-#define MPEG4_AAC_RTSP_URL "rtsp://test.3gp"
-#define AMR_MPEG4_SDP_FILE "test.sdp"
+
+#define AMR_MPEG4_RTSP_URL "rtsp://pvserveroha.pv.com/public/Interop/3GPP/pv2/pv-amr-475_mpeg4-20.3gp"
+#define AMR_MPEG4_RTSP_URL_2 "rtsp://pvserveroha.pv.com/public/metadata/pvmetadata.mp4"
+#define H263_AMR_RTSP_URL "rtsp://pvserveroha.pv.com/public/Interop/3GPP/pv2/pv-amr-122_h263-64.3gp"
+#define MPEG4_RTSP_URL "rtsp://pvserveroha.pv.com/public/Interop/3GPP/pv2/pv-mpeg4rdatapartr64.3gp"
+#define MPEG4_SHRT_HDR_RTSP_URL "rtsp://pvserveroha.pv.com/public/Interop/3GPP/pv2/pv-mpeg4shorthdrr64.3gp"
+#define AAC_RTSP_URL     "rtsp://pvserveroha.pv.com/public/Interop/3GPP/pv2/pv-aac64_novisual.3gp"
+#define MPEG4_AAC_RTSP_URL "rtsp://pvserveroha.pv.com/public/Interop/3GPP/pv2/pv2-aac64_mpeg4-rvlcs-64.3gp"
+#define AMR_MPEG4_SDP_FILE "pv_amr_mpeg4.sdp"
+#define WM_BSS_URL "http://pvwmsoha.pv.com:8020/WMContent/MBR/mbr_8tracks.wmv"
+#if PVR_SUPPORT
+#define DEFAULT_PV_PLAYLIST_URL "rtsp://pvserver6.pv.com:554/public/playlist/va_playlists/ply_av_01_mp4_aac.ply"
+#endif
 
 class PVPlayerDataSourceURL;
 class PVPlayerDataSink;
@@ -57,8 +70,8 @@ class PVPlayerDataSink;
 class PVPlayerDataSinkFilename;
 class PvmfFileOutputNodeConfigInterface;
 class PvmiCapabilityAndConfig;
-class PVPlayerDataSourcePacketSource;
 
+#define DEFAULT_LIVE_BUFFER_DURATION 20
 /*!
  *  A test case to test the normal engine sequence of playing an rtsp url
  *  - Data Source: RTSP URL
@@ -93,7 +106,9 @@ class pvplayer_async_test_streamingopenplaystop : public pvplayer_async_test_bas
                 bool aWaitForEOS,
                 bool aCloaking,
                 bool aCancelDuringPrepare,
-                bool aForwardEnable)
+                bool aForwardEnable,
+                bool aUseFileHandle = false,
+                bool aMultipleSeekToEndOfClipEnable = false)
                 : pvplayer_async_test_base(aTestParam)
                 , iPlayer(NULL)
                 , iDataSource(NULL)
@@ -115,14 +130,30 @@ class pvplayer_async_test_streamingopenplaystop : public pvplayer_async_test_bas
                 , iStreamDataSource(NULL)
                 , iSourceContextData(NULL)
                 , iPlayListSwitchMode(0)
+                , iErrorCodeTest(false)
+                , iErrorCode(0)
+                , iUseFileHandle(false)
+                , iPauseDenied(false)
+                , iTotalValuesRetrieved(0)
+                , iStartingIndex(0)
+                , iBlockSize(5)
+#if PVR_SUPPORT
+                , m_PVRControl(NULL)
+                , iLiveBufferDurationInSec(DEFAULT_LIVE_BUFFER_DURATION)
+                , iLiveBufferStorage(PVRConfig::EMemory)
+#endif
         {
+            iSeekAfterPause  = false;
             iVideoSinkFormatType = aVideoSinkFormat;
             iAudioSinkFormatType = aAudioSinkFormat;
             oPauseResumeEnable = aPauseResumeEnable;
             oSeekEnable = aSeekEnable;
             oWaitForEOS = aWaitForEOS;
+            iUseFileHandle = aUseFileHandle;
+            ifilehandle = NULL;
             oCancelDuringPrepare = aCancelDuringPrepare;
             oForwardEnable = aForwardEnable;
+            oMultipleSeekToEndOfClipEnable = aMultipleSeekToEndOfClipEnable;
             iTestID = aTestID;
             iNumPlay = 0;
             iTargetNumPlay = 1;
@@ -164,9 +195,9 @@ class pvplayer_async_test_streamingopenplaystop : public pvplayer_async_test_bas
             STATE_REMOVEDATASINK_AUDIO,
             STATE_RESET,
             STATE_REMOVEDATASOURCE,
-            STATE_WAIT_FOR_ERROR_HANDLING,
             STATE_CLEANUPANDCOMPLETE,
-            STATE_SETFORWARD
+            STATE_SETFORWARD,
+            STATE_SETPLAYBACKRANGE_2
         };
 
         PVTestState iState;
@@ -219,6 +250,17 @@ class pvplayer_async_test_streamingopenplaystop : public pvplayer_async_test_bas
             iPauseDurationInMS = aDuration;
         }
 
+        void setPauseSetPlayBackRangeResumeSequence()
+        {
+            iSeekAfterPause = true;
+        }
+
+        void setErrorCodeTest()
+        {
+            iErrorCodeTest = true;
+            iErrorCode = 404;
+        }
+
     private:
         void HandleSocketNodeErrors(int32 aErr);
         void HandleRTSPNodeErrors(int32 aErr);
@@ -241,6 +283,7 @@ class pvplayer_async_test_streamingopenplaystop : public pvplayer_async_test_bas
         uint32 iTestID;
         bool iSeekAfterEOSEnable;
         bool oForwardEnable;
+        bool oMultipleSeekToEndOfClipEnable;
 
         PVPMetadataList iMetadataKeyList;
         Oscl_Vector<PvmiKvp, OsclMemAllocator> iMetadataValueList;
@@ -262,18 +305,33 @@ class pvplayer_async_test_streamingopenplaystop : public pvplayer_async_test_bas
         bool iProtocolRollOver;
         bool iProtocolRollOverWithUnknownURLType;
         bool iPlayListURL;
+
+        PVMFStreamingDataSource* iStreamDataSource;
+        PVMFSourceContextData* iSourceContextData;
         int32 iPlayListSwitchMode;
+        bool iErrorCodeTest;
+        uint32 iErrorCode;
+        bool iUseFileHandle;
 
         PvmiCapabilityAndConfig* iPlayerCapConfigIF;
         PvmiKvp* iErrorKVP;
         PvmiKvp iKVPSetAsync;
         OSCL_StackString<128> iKeyStringSetAsync;
+        OSCL_StackString<128> iURLToTest404;
+        OSCL_StackString<128> iURLToTest415;
+        bool	iPauseDenied;	//governed by the pause-denied metadata
+        uint32 iTotalValuesRetrieved;
+        uint32 iStartingIndex;
+        const uint32 iBlockSize;
+        bool iSeekAfterPause;
+#if PVR_SUPPORT
+        PVMFPVRControl* m_PVRControl;
+        uint32 iLiveBufferDurationInSec;
+        PVRConfig::TLiveBufferStorage iLiveBufferStorage;
+#endif
 
-        PVMFStreamingDataSource* iStreamDataSource;
-
-        PVMFSourceContextData* iSourceContextData;
+        OsclFileHandle* ifilehandle;
 };
-
 
 /*!
  *  A test case to test the normal engine sequence of playing an rtsp url
@@ -360,7 +418,6 @@ class pvplayer_async_test_streamingJBadjust: public pvplayer_async_test_base
             STATE_REMOVEDATASINK_AUDIO,
             STATE_RESET,
             STATE_REMOVEDATASOURCE,
-            STATE_WAIT_FOR_ERROR_HANDLING,
             STATE_CLEANUPANDCOMPLETE
         };
 
@@ -489,7 +546,6 @@ class pvplayer_async_test_streaming_bitstream_switch: public pvplayer_async_test
             STATE_REMOVEDATASINK_AUDIO,
             STATE_RESET,
             STATE_REMOVEDATASOURCE,
-            STATE_WAIT_FOR_ERROR_HANDLING,
             STATE_CLEANUPANDCOMPLETE
         };
 
@@ -647,7 +703,6 @@ class pvplayer_async_test_streamingopenplaystoppreparelaystop : public pvplayer_
             STATE_REMOVEDATASINK_AUDIO,
             STATE_RESET,
             STATE_REMOVEDATASOURCE,
-            STATE_WAIT_FOR_ERROR_HANDLING,
             STATE_CLEANUPANDCOMPLETE,
             STATE_SETFORWARD,
             STATE_PREPARE1,
@@ -808,6 +863,8 @@ class pvplayer_async_test_dvbh_streamingopenplaystop : public pvplayer_async_tes
                 , iPlayListURL(false)
                 , iStreamDataSource(NULL)
                 , iSourceContextData(NULL)
+                , m_PVRControl(NULL)
+                , ps(NULL)
         {
             iVideoSinkFormatType = aVideoSinkFormat;
             iAudioSinkFormatType = aAudioSinkFormat;
@@ -853,14 +910,15 @@ class pvplayer_async_test_dvbh_streamingopenplaystop : public pvplayer_async_tes
             STATE_REMOVEDATASINK_AUDIO,
             STATE_RESET,
             STATE_REMOVEDATASOURCE,
-            STATE_WAIT_FOR_ERROR_HANDLING,
             STATE_CLEANUPANDCOMPLETE
         };
 
         PVTestState iState;
 
         PVPlayerInterface* iPlayer;
-        PVPlayerDataSourcePacketSource* iDataSource;
+        PVPlayerDataSourceURL* iDataSource;
+
+
         PVPlayerDataSink* iDataSinkVideo;
         PVPlayerDataSink* iDataSinkAudio;
         PVMFNodeInterface* iIONodeVideo;
@@ -936,9 +994,16 @@ class pvplayer_async_test_dvbh_streamingopenplaystop : public pvplayer_async_tes
         PVMFStreamingDataSource* iStreamDataSource;
 
         PVMFSourceContextData* iSourceContextData;
+        PVMFSourceContextData m_sourceContext;
+
+        PVMFPVRControl* m_PVRControl;
+
+        PVMFPacketSource* ps;
 };
 
 
 
 #endif // TEST_PV_PLAYER_ENGINE_TESTSET6_H_INCLUDED
+
+
 

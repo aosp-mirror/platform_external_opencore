@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,7 +81,7 @@ OSCL_EXPORT_REF int32 oscl_UnicodeToUTF8(const oscl_wchar *szSrc, int32 nSrcLen,
 
     if (nDestLen <= 0)
     {
-        // We cannot append terminate string for this case.
+        // We cannot append terminate 0 at this case.
         return 0; /* ERROR_INSUFFICIENT_BUFFER */
     }
 
@@ -171,6 +171,12 @@ OSCL_EXPORT_REF int32 oscl_UTF8ToUnicode(const char *szSrc, int32 nSrcLen, oscl_
     int32 i = 0;
     int32 i_cur_output = 0;
 
+    if (nDestLen <= 0)
+    {
+        // We cannot append terminate 0 at this case.
+        return 0; /* ERROR_INSUFFICIENT_BUFFER */
+    }
+
     unsigned char *pszSrc = (unsigned char *)szSrc;  /* cast to avoid signed/unsigned promomtion problems */
     while (i < nSrcLen)
     {
@@ -185,6 +191,7 @@ OSCL_EXPORT_REF int32 oscl_UTF8ToUnicode(const char *szSrc, int32 nSrcLen, oscl_
             }
             else
             {
+                strDest[i_cur_output] = 0; /* Terminate string */
                 return 0; /* ERROR_INSUFFICIENT_BUFFER */
             }
         }
@@ -198,6 +205,7 @@ OSCL_EXPORT_REF int32 oscl_UTF8ToUnicode(const char *szSrc, int32 nSrcLen, oscl_
             }
             else
             {
+                strDest[i_cur_output] = 0; /* Terminate string */
                 return 0; /* ERROR_INSUFFICIENT_BUFFER */
             }
         }
@@ -210,6 +218,7 @@ OSCL_EXPORT_REF int32 oscl_UTF8ToUnicode(const char *szSrc, int32 nSrcLen, oscl_
             }
             else
             {
+                strDest[i_cur_output] = 0; /* Terminate string */
                 return 0; /* ERROR_INSUFFICIENT_BUFFER */
             }
         }

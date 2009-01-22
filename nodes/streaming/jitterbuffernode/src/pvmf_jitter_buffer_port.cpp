@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@
 ////////////////////////////////////////////////////////////////////////////
 PVMFJitterBufferPort::PVMFJitterBufferPort(int32 aTag, PVMFNodeInterface* aNode, const char*name)
         : PvmfPortBaseImpl(aTag, aNode, name)
-        , iFormat(PVMF_FORMAT_UNKNOWN)
+        , iFormat(PVMF_MIME_FORMAT_UNKNOWN)
 {
     iJitterBufferNode = OSCL_STATIC_CAST(PVMFJitterBufferNode*, aNode);
     Construct();
@@ -68,7 +68,7 @@ PVMFJitterBufferPort::PVMFJitterBufferPort(int32 aTag, PVMFNodeInterface* aNode
         , uint32 aOutReserve
         , uint32 aOutThreshold, const char*name)
         : PvmfPortBaseImpl(aTag, aNode, aInCapacity, aInReserve, aInThreshold, aOutCapacity, aOutReserve, aOutThreshold, name)
-        , iFormat(PVMF_FORMAT_UNKNOWN)
+        , iFormat(PVMF_MIME_FORMAT_UNKNOWN)
 {
     iJitterBufferNode = OSCL_STATIC_CAST(PVMFJitterBufferNode*, aNode);
     Construct();
@@ -150,10 +150,9 @@ PVMFStatus PVMFJitterBufferPort::Connect(PVMFPortInterface* aPort)
     if ((iPortType == PVMF_JITTER_BUFFER_PORT_TYPE_INPUT) ||
             (iPortType == PVMF_JITTER_BUFFER_PORT_TYPE_FEEDBACK))
     {
-        PvmiCapabilityAndConfig *config;
-
-        aPort->QueryInterface(PVMI_CAPABILITY_AND_CONFIG_PVUUID,
-                              (OsclAny*&)config);
+        OsclAny* temp = NULL;
+        aPort->QueryInterface(PVMI_CAPABILITY_AND_CONFIG_PVUUID, temp);
+        PvmiCapabilityAndConfig *config = OSCL_STATIC_CAST(PvmiCapabilityAndConfig*, temp);
 
         if (config != NULL)
         {
@@ -161,9 +160,9 @@ PVMFStatus PVMFJitterBufferPort::Connect(PVMFPortInterface* aPort)
                                      PVMF_JITTER_BUFFER_PORT_SPECIFIC_ALLOCATOR_VALTYPE);
 
             int numKvp = 0;
-            PvmiKvp* kvpPtr;
+            PvmiKvp* kvpPtr = NULL;
             PVMFStatus status =
-                config->getParametersSync(NULL, PVMI_PORT_CONFIG_INPLACE_DATA_PROCESSING_KEY, kvpPtr, numKvp, NULL);
+                config->getParametersSync(NULL, (char*)PVMI_PORT_CONFIG_INPLACE_DATA_PROCESSING_KEY, kvpPtr, numKvp, NULL);
             if (status == PVMFSuccess)
             {
                 iInPlaceDataProcessing = kvpPtr[0].value.bool_value;
@@ -193,6 +192,10 @@ PVMFStatus PVMFJitterBufferPort::getParametersSync(PvmiMIOSession aSession,
         int& num_parameter_elements,
         PvmiCapabilityContext aContext)
 {
+    OSCL_UNUSED_ARG(aSession);
+    OSCL_UNUSED_ARG(num_parameter_elements);
+    OSCL_UNUSED_ARG(aContext);
+
     PVMF_JBNODE_LOGINFO((0, "PVMFJitterBufferPort::getParametersSync: aSession=0x%x, aIdentifier=%s, aParameters=0x%x, num_parameters_elements=%d, aContext=0x%x",
                          aSession, aIdentifier, aParameters, num_parameter_elements, aContext));
 
@@ -227,6 +230,8 @@ PVMFStatus PVMFJitterBufferPort::releaseParameters(PvmiMIOSession aSession,
         PvmiKvp* aParameters,
         int num_elements)
 {
+    OSCL_UNUSED_ARG(aSession);
+
     PVMF_JBNODE_LOGINFO((0, "PVMFJitterBufferPort::releaseParameters: aSession=0x%x, aParameters=0x%x, num_elements=%d",
                          aSession, aParameters, num_elements));
 
@@ -264,105 +269,6 @@ PVMFStatus PVMFJitterBufferPort::verifyParametersSync(PvmiMIOSession aSession, P
     OSCL_UNUSED_ARG(num_elements);
 
     return PVMFErrNotSupported;
-}
-
-void PVMFJitterBufferPort::createPortAllocators(OSCL_String& aMimeType, uint32 aSizeInBytes)
-{
-    if ((iPortType == PVMF_JITTER_BUFFER_PORT_TYPE_INPUT) ||
-            (iPortType == PVMF_JITTER_BUFFER_PORT_TYPE_FEEDBACK))
-    {
-        int32 size = (int32)aSizeInBytes;
-        createSocketDataAllocReSize(aMimeType, size);
-    }
-}
-
-void PVMFJitterBufferPort::createPortAllocators(OSCL_String& aMimeType, uint32 aSizeInBytes,
-        uint maxNumResizes, uint resizeSize)
-{
-    if ((iPortType == PVMF_JITTER_BUFFER_PORT_TYPE_INPUT) ||
-            (iPortType == PVMF_JITTER_BUFFER_PORT_TYPE_FEEDBACK))
-    {
-        int32 size = (int32)aSizeInBytes;
-        createSocketDataAllocReSize(aMimeType, size, true, maxNumResizes, resizeSize);
-    }
-}
-
-void PVMFJitterBufferPort::createSocketDataAllocReSize(OSCL_String& aMimeType,
-        int32 aSize, bool userParams,
-        uint maxNumResizes,
-        uint resizeSize)
-{
-    uint8* my_ptr;
-    OsclRefCounter* my_refcnt;
-    OsclMemAllocator my_alloc;
-    PVMFSharedSocketDataBufferAlloc *alloc_ptr = NULL;
-
-    uint aligned_socket_alloc_size =
-        oscl_mem_aligned_size(sizeof(PVMFSMSharedBufferAllocWithReSize));
-
-    uint aligned_refcnt_size =
-        oscl_mem_aligned_size(sizeof(OsclRefCounterSA<PVMFSharedSocketDataBufferAllocCleanupSA>));
-
-    my_ptr = (uint8*) my_alloc.ALLOCATE(aligned_refcnt_size +
-                                        aligned_socket_alloc_size);
-
-    my_refcnt = OSCL_PLACEMENT_NEW(my_ptr, OsclRefCounterSA<PVMFSharedSocketDataBufferAllocCleanupSA>(my_ptr));
-    my_ptr += aligned_refcnt_size;
-
-#if (PMVF_JITTER_BUFFER_NODE_USE_NO_RESIZE_ALLOC)
-    if (iPortType == PVMF_JITTER_BUFFER_PORT_TYPE_INPUT)
-    {
-        iBufferNoResizeAlloc =
-            new PVMFSocketBufferAllocator(PVMF_JB_NO_RESIZE_ALLOC_NUM_CHUNKS_RTP,
-                                          PVMF_JB_NO_RESIZE_ALLOC_CHUNK_SIZE);
-    }
-    else if (iPortType == PVMF_JITTER_BUFFER_PORT_TYPE_FEEDBACK)
-    {
-        iBufferNoResizeAlloc =
-            new PVMFSocketBufferAllocator(PVMF_JB_NO_RESIZE_ALLOC_NUM_CHUNKS_FB,
-                                          PVMF_JB_NO_RESIZE_ALLOC_CHUNK_SIZE);
-    }
-
-    Oscl_DefAlloc* alloc = OSCL_STATIC_CAST(Oscl_DefAlloc*, iBufferNoResizeAlloc);
-    alloc_ptr = OSCL_PLACEMENT_NEW(my_ptr, PVMFSharedSocketDataBufferAlloc(alloc));
-#else
-    if (iPortType == PVMF_JITTER_BUFFER_PORT_TYPE_INPUT)
-    {
-        if (aSize <= 0)
-        {
-            aSize = DEFAULT_RTP_SOCKET_MEM_POOL_SIZE_IN_BYTES;
-        }
-        if (userParams)
-        {
-            iBufferAlloc = new PVMFSMSharedBufferAllocWithReSize(aSize, aMimeType.get_cstr(),
-                    maxNumResizes, resizeSize);
-        }
-        else
-        {
-            iBufferAlloc =  new PVMFSMSharedBufferAllocWithReSize(aSize, aMimeType.get_cstr());
-        }
-    }
-    else if (iPortType == PVMF_JITTER_BUFFER_PORT_TYPE_FEEDBACK)
-    {
-        if (userParams)
-        {
-            iBufferAlloc = new PVMFSMSharedBufferAllocWithReSize(DEFAULT_RTCP_SOCKET_MEM_POOL_SIZE_IN_BYTES,
-                    "PVMFJitterBufferPortFeedBack",
-                    maxNumResizes, resizeSize);
-        }
-        else
-        {
-            iBufferAlloc = new PVMFSMSharedBufferAllocWithReSize(DEFAULT_RTCP_SOCKET_MEM_POOL_SIZE_IN_BYTES,
-                    "PVMFJitterBufferPortFeedBack");
-        }
-    }
-
-
-    alloc_ptr = OSCL_PLACEMENT_NEW(my_ptr, PVMFSharedSocketDataBufferAlloc(iBufferAlloc));
-#endif
-    OsclSharedPtr<PVMFSharedSocketDataBufferAlloc> shared_alloc(alloc_ptr, my_refcnt);
-
-    iPortDataAlloc = shared_alloc;
 }
 
 void

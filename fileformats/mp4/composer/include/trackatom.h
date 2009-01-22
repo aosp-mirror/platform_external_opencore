@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*********************************************************************************/
 /*
     This PVA_FF_TrackAtom Class is the container for a single track in the MPEG-4
     presentation.
@@ -92,7 +91,6 @@ class PVA_FF_TrackAtom : public PVA_FF_Atom, public PVA_FF_ISucceedFail
         {
             return _ptrackReference;
         }
-        //const PVA_FF_EditAtom &getEditAtom(); // No inline for optional atoms - may have null value
 
         // Add a reference to another track - return index of reference in table (1-based)
         int32 addTrackReference(uint32 ref);
@@ -245,11 +243,6 @@ class PVA_FF_TrackAtom : public PVA_FF_Atom, public PVA_FF_ISucceedFail
             _pmediaAtom->setH263ProfileLevel(profile, level);
         }
 
-        void setBIFSODSampleDuration(int32 duration)
-        {
-            _pmediaAtom->setBIFSODSampleDuration(duration);
-        }
-
         bool Is3GPPTrack()
         {
             return _o3GPPCompliant;
@@ -266,6 +259,10 @@ class PVA_FF_TrackAtom : public PVA_FF_Atom, public PVA_FF_ISucceedFail
             return _setDecoderSpecificInfoDone;
         }
 
+        uint32 getSampleCount() const
+        {
+            return _pmediaAtom->getSampleCount();
+        }
 
         bool IsFirstSample()
         {
@@ -273,6 +270,8 @@ class PVA_FF_TrackAtom : public PVA_FF_Atom, public PVA_FF_ISucceedFail
         }
         void updateLastTSEntry(uint32 ts);
         void setVideoWidthHeight(int16 width, int16 height);
+        void SetMaxSampleSize(uint32);
+        void writeMaxSampleSize(MP4_AUTHOR_FF_FILE_IO_WRAP*);
 
     private:
         virtual void recomputeSize();

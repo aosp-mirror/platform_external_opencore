@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*********************************************************************************/
 /*
     This PVA_FF_SampleTableAtom Class contains all the time and data indexing of the
     media samples in a track.
@@ -127,6 +126,8 @@ PVA_FF_SampleTableAtom::nextSample(int32 mediaType,
     {
         _psyncSampleAtom->nextSample(flags);
     }
+    OSCL_UNUSED_ARG(mediaType);
+    OSCL_UNUSED_ARG(psample);
 }
 
 void
@@ -216,6 +217,9 @@ PVA_FF_SampleTableAtom::nextSample(int32 mediaType,
     {
         _psyncSampleAtom->nextSample(flags);
     }
+
+    OSCL_UNUSED_ARG(mediaType);
+    OSCL_UNUSED_ARG(fragmentList);
 }
 
 void
@@ -364,4 +368,14 @@ PVA_FF_SampleTableAtom::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
     return true;
 }
 
+void
+PVA_FF_SampleTableAtom::SetMaxSampleSize(uint32 aSize)
+{
+    _psampleDescriptionAtom->SetMaxSampleSize(aSize);
+}
 
+void
+PVA_FF_SampleTableAtom::writeMaxSampleSize(MP4_AUTHOR_FF_FILE_IO_WRAP *_afp)
+{
+    _psampleDescriptionAtom->writeMaxSampleSize(_afp);
+}

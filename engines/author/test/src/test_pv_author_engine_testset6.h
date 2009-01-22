@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@
 class pv_mediainput_async_test_errorhandling: public pvauthor_async_test_base
 {
     public:
-        pv_mediainput_async_test_errorhandling(PVAuthorAsyncTestParam aTestParam, PVMediaInputTestParam aMediaParam, bool aPauseResumeEnable, bool aWrongFormat)
+        pv_mediainput_async_test_errorhandling(PVAuthorAsyncTestParam aTestParam, PVMediaInputTestParam aMediaParam, bool aPauseResumeEnable, uint32 aTestErrorType)
                 : pvauthor_async_test_base(aTestParam)
                 , iOutputFileName(NULL)
                 , iInputFileName(NULL)
@@ -46,7 +46,7 @@ class pv_mediainput_async_test_errorhandling: public pvauthor_async_test_base
                 , iRemoveDataSourceDone(0)
                 , iAddAudioMediaTrack(false)
                 , iAddVideoMediaTrack(false)
-                , iWrongFormat(aWrongFormat)
+                , iTestErrorType(aTestErrorType)
 
         {
             iLogger = PVLogger::GetLoggerObject("pv_mediainput_async_test_errorhandling");
@@ -82,7 +82,7 @@ class pv_mediainput_async_test_errorhandling: public pvauthor_async_test_base
         void HandleErrorEvent(const PVAsyncErrorEvent& aEvent);
         void HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent);
         void CommandCompleted(const PVCmdResponse& aResponse);
-
+        void ConfigMp4Composer();
         PVAECmdType iState;
         // Test output
         OSCL_wHeapString<OsclMemAllocator> iOutputFileName;
@@ -94,6 +94,13 @@ class pv_mediainput_async_test_errorhandling: public pvauthor_async_test_base
 
         //test input type
         PVMFFormatType  iMediaInputType;
+
+        typedef struct ts_keytype
+        {
+            uint8 mode;
+            uint32 duration;
+            uint32 track_no;
+        }key_type;
 
     private:
         // Methods to create test input nodes and add to author engine
@@ -114,6 +121,8 @@ class pv_mediainput_async_test_errorhandling: public pvauthor_async_test_base
         void ResetAuthorConfig();
 
         void Cleanup();
+        void RemoveMIOComp();
+        bool CapConfigSync1();
 
         void AddEngineCommand()
         {
@@ -158,8 +167,15 @@ class pv_mediainput_async_test_errorhandling: public pvauthor_async_test_base
         uint32                   iTestDuration;
         bool					 iAddAudioMediaTrack;
         bool					 iAddVideoMediaTrack;
-        bool					 iWrongFormat;
         Oscl_FileServer          iFileServer;
+        uint32					 iTestErrorType;
+        PvmiCapabilityAndConfig* iAuthorCapConfigIF;
+        PvmiCapabilityAndConfig* iAuthorCapConfigIF1;
+        PvmiMIOControl*			 iMediaIOControl;
+        PvmiKvp* iErrorKVP;
+        FILE*	                 iFile;
+        PVInterface*             iOutputSizeAndDurationConfig;
+        PVAECmdType				 iCheckState;
 };
 
 #endif

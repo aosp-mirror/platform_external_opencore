@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -306,6 +306,7 @@ void DeblockMb(AVCCommonObj *video, int mb_x, int mb_y, uint8 *SrcY, uint8 *SrcU
     int 	mbNum = mb_y * video->PicWidthInMbs + mb_x;
     int		*clipTable, *clipTable_c, *qp_clip_tab;
     uint8	Strength[16];
+    void*     str;
 
     MbQ = &(video->mblock[mbNum]);		// current Mb
 
@@ -320,7 +321,7 @@ void DeblockMb(AVCCommonObj *video, int mb_x, int mb_y, uint8 *SrcY, uint8 *SrcU
         filterTopMbEdgeFlag  = mb_is_available(video->mblock, video->PicSizeInMbs, mbNum - video->PicWidthInMbs, mbNum);
     }
 
-    /* NOTE: edge=0 and edge=1~3 are seperate cases because of the difference of MbP, index A and indexB calculation */
+    /* NOTE: edge=0 and edge=1~3 are separate cases because of the difference of MbP, index A and indexB calculation */
     /*       for edge = 1~3, MbP, indexA and indexB remain the same, and thus there is no need to re-calculate them for each edge */
 
     qp_clip_tab = (int *)QP_CLIP_TAB + 12;
@@ -332,7 +333,8 @@ void DeblockMb(AVCCommonObj *video, int mb_x, int mb_y, uint8 *SrcY, uint8 *SrcU
         //GetStrength(video, Strength, MbP, MbQ, 0, 0); // Strength for 4 blks in 1 stripe, 0 => vertical edge
         GetStrength_Edge0(Strength, MbP, MbQ, 0);
 
-        if (*((int*)Strength))    // only if one of the 4 Strength bytes is != 0
+        str = (void*)Strength; //de-ref type-punned pointer fix
+        if (*((uint32*)str))    // only if one of the 4 Strength bytes is != 0
         {
             QP = (MbP->QPy + MbQ->QPy + 1) >> 1; // Average QP of the two blocks;
             indexA = QP + video->FilterOffsetA;
@@ -438,7 +440,8 @@ void DeblockMb(AVCCommonObj *video, int mb_x, int mb_y, uint8 *SrcY, uint8 *SrcU
         MbP = MbQ - video->PicWidthInMbs;
         //GetStrength(video, Strength, MbP, MbQ, 1, 0); // Strength for 4 blks in 1 stripe, 0 => vertical edge
         GetStrength_Edge0(Strength, MbP, MbQ, 1);
-        if (*((int*)Strength))    // only if one of the 4 Strength bytes is != 0
+        str = (void*)Strength; //de-ref type-punned pointer fix
+        if (*((uint32*)str))    // only if one of the 4 Strength bytes is != 0
         {
             QP = (MbP->QPy + MbQ->QPy + 1) >> 1; // Average QP of the two blocks;
             indexA = QP + video->FilterOffsetA;
@@ -535,7 +538,9 @@ void GetStrength_Edge0(uint8 *Strength, AVCMacroblock* MbP, AVCMacroblock* MbQ, 
 {
     int tmp;
     int16 *ptrQ, *ptrP;
+    void* vptr;
     uint8 *pStrength;
+    void* refIdx;
 
     if (MbP->mbMode == AVC_I4 || MbP->mbMode == AVC_I16 ||
             MbQ->mbMode == AVC_I4 || MbQ->mbMode == AVC_I16)
@@ -552,8 +557,10 @@ void GetStrength_Edge0(uint8 *Strength, AVCMacroblock* MbP, AVCMacroblock* MbQ, 
         {
 
             //1. Check the ref_frame_id
-            ptrQ = (int16*)MbQ->RefIdx;
-            ptrP = (int16*)MbP->RefIdx;
+            refIdx = (void*) MbQ->RefIdx; //de-ref type-punned pointer fix
+            ptrQ = (int16*)refIdx;
+            refIdx = (void*)MbP->RefIdx; //de-ref type-punned pointer fix
+            ptrP = (int16*)refIdx;
             pStrength = Strength;
             if (ptrQ[0] != ptrP[1]) pStrength[0] = 1;
             if (ptrQ[2] != ptrP[3]) pStrength[2] = 1;
@@ -567,8 +574,9 @@ void GetStrength_Edge0(uint8 *Strength, AVCMacroblock* MbP, AVCMacroblock* MbQ, 
             if (MbQ->nz_coeff[12] != 0 || MbP->nz_coeff[15] != 0) pStrength[3] = 2;
 
             //3. Only need to check the mv difference
-            ptrQ = MbQ->mvL0;
-            ptrP = MbP->mvL0 + 6; // points to 4x4 block #3 (the 4th column)
+            vptr = (void*)MbQ->mvL0;  // for deref type-punned pointer
+            ptrQ = (int16*)vptr;
+            ptrP = (int16*)(MbP->mvL0 + 3); // points to 4x4 block #3 (the 4th column)
 
             // 1st blk
             if (*pStrength == 0)
@@ -638,8 +646,10 @@ void GetStrength_Edge0(uint8 *Strength, AVCMacroblock* MbP, AVCMacroblock* MbQ, 
         {
 
             //1. Check the ref_frame_id
-            ptrQ = (int16*)MbQ->RefIdx;
-            ptrP = (int16*)MbP->RefIdx;
+            refIdx = (void*)MbQ->RefIdx;  //de-ref type-punned pointer
+            ptrQ = (int16*)refIdx;
+            refIdx = (void*)MbP->RefIdx;  //de-ref type-punned pointer
+            ptrP = (int16*)refIdx;
             pStrength = Strength;
             if (ptrQ[0] != ptrP[2]) pStrength[0] = 1;
             if (ptrQ[1] != ptrP[3]) pStrength[2] = 1;
@@ -653,8 +663,9 @@ void GetStrength_Edge0(uint8 *Strength, AVCMacroblock* MbP, AVCMacroblock* MbQ, 
             if (MbQ->nz_coeff[3] != 0 || MbP->nz_coeff[15] != 0) pStrength[3] = 2;
 
             //3. Only need to check the mv difference
-            ptrQ = MbQ->mvL0;
-            ptrP = MbP->mvL0 + 24; // points to 4x4 block #12 (the 4th row)
+            vptr = (void*)MbQ->mvL0;
+            ptrQ = (int16*)vptr;
+            ptrP = (int16*)(MbP->mvL0 + 12); // points to 4x4 block #12 (the 4th row)
 
             // 1st blk
             if (*pStrength == 0)
@@ -732,6 +743,7 @@ void GetStrength_VerticalEdges(uint8 *Strength, AVCMacroblock* MbQ)
     int16	*ptr, *pmvx, *pmvy;
     uint8   *pnz;
     uint8	*pStrength, *pStr;
+    void* refIdx;
 
     if (MbQ->mbMode == AVC_I4 || MbQ->mbMode == AVC_I16)
     {
@@ -747,7 +759,8 @@ void GetStrength_VerticalEdges(uint8 *Strength, AVCMacroblock* MbQ)
         *((int*)(Strength + 8)) = 0;
 
         //1. Check the ref_frame_id
-        ptr = (int16*)MbQ->RefIdx;
+        refIdx = (void*)MbQ->RefIdx;  //de-ref type-punned pointer fix
+        ptr = (int16*)refIdx;
         pStrength = Strength;
         if (ptr[0] != ptr[1]) pStrength[4] = 1;
         if (ptr[2] != ptr[3]) pStrength[6] = 1;
@@ -755,8 +768,8 @@ void GetStrength_VerticalEdges(uint8 *Strength, AVCMacroblock* MbQ)
         pStrength[7] = pStrength[6];
 
         //2. Check the nz_coeff block and mv difference
-        pmvx = MbQ->mvL0 + 2; // points to 4x4 block #1,not #0
-        pmvy = MbQ->mvL0 + 3;
+        pmvx = (int16*)(MbQ->mvL0 + 1); // points to 4x4 block #1,not #0
+        pmvy = pmvx + 1;
         for (idx = 0; idx < 4; idx += 2) // unroll the loop, make 4 iterations to 2
         {
             // first/third row : 1,2,3 or 9,10,12
@@ -904,6 +917,7 @@ void GetStrength_HorizontalEdges(uint8 Strength[12], AVCMacroblock* MbQ)
     int		idx, tmp;
     int16	*ptr, *pmvx, *pmvy;
     uint8	*pStrength, *pStr;
+    void* refIdx;
 
     if (MbQ->mbMode == AVC_I4 || MbQ->mbMode == AVC_I16)
     {
@@ -920,7 +934,8 @@ void GetStrength_HorizontalEdges(uint8 Strength[12], AVCMacroblock* MbQ)
 
 
         //1. Check the ref_frame_id
-        ptr = (int16*)MbQ->RefIdx;
+        refIdx = (void*) MbQ->RefIdx; // de-ref type-punned fix
+        ptr = (int16*) refIdx;
         pStrength = Strength;
         if (ptr[0] != ptr[2]) pStrength[4] = 1;
         if (ptr[1] != ptr[3]) pStrength[6] = 1;
@@ -928,8 +943,8 @@ void GetStrength_HorizontalEdges(uint8 Strength[12], AVCMacroblock* MbQ)
         pStrength[7] = pStrength[6];
 
         //2. Check the nz_coeff block and mv difference
-        pmvx = MbQ->mvL0 + 8; // points to 4x4 block #4,not #0
-        pmvy = MbQ->mvL0 + 9;
+        pmvx = (int16*)(MbQ->mvL0 + 4); // points to 4x4 block #4,not #0
+        pmvy = pmvx + 1;
         for (idx = 0; idx < 4; idx += 2) // unroll the loop, make 4 iterations to 2
         {
             // first/third row : 1,2,3 or 9,10,12

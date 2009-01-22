@@ -67,7 +67,7 @@ AndroidAudioInput::AndroidAudioInput()
 
 
     {
-        iAudioFormat=PVMF_FORMAT_UNKNOWN;
+        iAudioFormat=PVMF_MIME_FORMAT_UNKNOWN;
         iAudioNumChannelsValid=false;
         iAudioSamplingRateValid=false;
         iExitAudioThread=false;
@@ -95,7 +95,7 @@ AndroidAudioInput::~AndroidAudioInput()
 
     if(iMediaBufferMemPool)
     {
-        OSCL_TEMPLATED_DELETE(iMediaBufferMemPool, OsclMemPoolFixedChunkAllocator, OsclMemPoolFixedChunkAllocator);
+        OSCL_DELETE(iMediaBufferMemPool);
         iMediaBufferMemPool = NULL;
     }
 
@@ -362,7 +362,7 @@ OSCL_EXPORT_REF PVMFCommandId AndroidAudioInput::CancelCommand( PVMFCommandId aC
 OSCL_EXPORT_REF void AndroidAudioInput::setPeer(PvmiMediaTransfer* aPeer)
 {
     LOGV("setPeer");
-    if(iPeer || !aPeer)
+    if(iPeer && aPeer)
     {
         OSCL_LEAVE(OsclErrGeneral);
         return;
@@ -521,7 +521,7 @@ OSCL_EXPORT_REF PVMFStatus AndroidAudioInput::getParametersSync(PvmiMIOSession s
         }
         else
         {
-            parameters[0].value.uint32_value = PVMF_PCM16;
+            parameters[0].value.pChar_value = (char*)PVMF_MIME_PCM16;
         }
     }
     else if(pv_mime_strcmp(identifier, OUTPUT_TIMESCALE_CUR_QUERY) == 0)
@@ -762,7 +762,7 @@ PVMFStatus AndroidAudioInput::DoInit()
     OSCL_TRY(err,
         if(iMediaBufferMemPool)
         {
-            OSCL_TEMPLATED_DELETE(iMediaBufferMemPool, OsclMemPoolFixedChunkAllocator, OsclMemPoolFixedChunkAllocator);
+            OSCL_DELETE(iMediaBufferMemPool);
             iMediaBufferMemPool = NULL;
         }
         iMediaBufferMemPool = OSCL_NEW(OsclMemPoolFixedChunkAllocator, (4));
@@ -1004,7 +1004,7 @@ void AndroidAudioInput::SendMicData(void)
     data_hdr.flags=0;
     data_hdr.duration = data.iDuration;
     data_hdr.stream_id=0;
-    uint32 writeAsyncID = iPeer->writeAsync(0, 0, data.iData, data.iDataLen, data_hdr);
+    uint32 writeAsyncID = iPeer->writeAsync(PVMI_MEDIAXFER_FMT_TYPE_DATA, 0, data.iData, data.iDataLen, data_hdr);
 
     // Save the id and data pointer on iSentMediaData queue for writeComplete call
     AndroidAudioInputMediaData sentData;
@@ -1062,7 +1062,7 @@ PVMFStatus AndroidAudioInput::VerifyAndSetParameter(PvmiKvp* aKvp, bool aSetPara
 
     if(pv_mime_strcmp(aKvp->key, OUTPUT_FORMATS_VALTYPE) == 0)
     {
-        if(aKvp->value.uint32_value == PVMF_PCM16)
+        if(pv_mime_strcmp(aKvp->value.pChar_value, PVMF_MIME_PCM16) == 0)
         {
             return PVMFSuccess;
         }

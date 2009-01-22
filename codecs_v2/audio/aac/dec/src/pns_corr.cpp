@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,7 @@
  */
 /*
 
- Pathname: ./src/pns_corr.c
-
-     Date: 07/06/2001
+ Pathname: pns_corr.c
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
@@ -32,6 +30,7 @@
               to Int32 before it is stored.
               *(pCoefRight++) = (Int32) tempInt2 * multiplier;
 
+ Who:                       Date:
  Description:
 ------------------------------------------------------------------------------
  INPUT AND OUTPUT DEFINITIONS

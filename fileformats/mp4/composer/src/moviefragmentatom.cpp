@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -210,7 +210,10 @@ PVA_FF_MovieFragmentAtom::recomputeSize()
     {
         for (uint32 ii = 0; ii < _pTrafList->size(); ii++)
         {
-            size += ((*_pTrafList)[ii])->getSize();
+            if (((*_pTrafList)[ii])->getSampleCount() > 0)
+            {
+                size += ((*_pTrafList)[ii])->getSize();
+            }
         }
     }
 
@@ -250,11 +253,14 @@ PVA_FF_MovieFragmentAtom::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP* fp)
     {
         for (uint32 ii = 0; ii < _pTrafList->size(); ii++)
         {
-            if (!((*_pTrafList)[ii])->renderToFileStream(fp))
+            if (((*_pTrafList)[ii])->getSampleCount() > 0)
             {
-                return false;
+                if (!((*_pTrafList)[ii])->renderToFileStream(fp))
+                {
+                    return false;
+                }
+                rendered += ((*_pTrafList)[ii])->getSize();
             }
-            rendered += ((*_pTrafList)[ii])->getSize();
         }
     }
 

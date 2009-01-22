@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,11 @@
 #include "pvmf_streaming_data_source.h"
 #endif
 
+#if RUN_FASTTRACK_TESTCASES
+#ifndef PVPVXPARSER_H_INCLUDED
+#include "pvpvxparser.h"
+#endif
+#endif
 
 #ifndef PVMF_DOWNLOAD_DATA_SOURCE_H_INCLUDED
 #include "pvmf_download_data_source.h"
@@ -57,6 +62,7 @@ class PVPlayerDataSink;
 class PVPlayerDataSinkFilename;
 class PvmfFileOutputNodeConfigInterface;
 class PvmiCapabilityAndConfig;
+class PVMFDownloadDataSourcePVX;
 
 enum OMA1_DLA_TESTMODE
 {
@@ -127,6 +133,8 @@ class pvplayer_async_test_cpmdlapassthru : public pvplayer_async_test_base
                 , iStreamDataSource(NULL)
                 , iSourceContextData(NULL)
                 , iLocalDataSource(NULL)
+                , iDownloadContextDataPVX(NULL)
+
         {
             iVideoSinkFormatType = aVideoSinkFormat;
             iAudioSinkFormatType = aAudioSinkFormat;
@@ -237,8 +245,13 @@ class pvplayer_async_test_cpmdlapassthru : public pvplayer_async_test_base
         char iClipType[100];
         //FTDL
         void CreateDownloadDataSource();
+        uint8 iPVXFileBuf[4096];
+        PVMFDownloadDataSourcePVX* iDownloadContextDataPVX;
         PVMFDownloadDataSourceHTTP* iDownloadContextDataHTTP;
         int32 iDownloadMaxfilesize;
+#if RUN_FASTTRACK_TESTCASES
+        CPVXInfo iDownloadPvxInfo;
+#endif
         OSCL_wHeapString<OsclMemAllocator> iDownloadURL;
         OSCL_wHeapString<OsclMemAllocator> iDownloadFilename;
         OSCL_HeapString<OsclMemAllocator> iDownloadProxy;

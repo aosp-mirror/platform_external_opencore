@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,13 +31,18 @@
 #include "test_pv_player_engine_testset8.h"
 #endif
 
-#if RUN_HTTPDOWNLOAD_TESTCASES
+#if (RUN_HTTPDOWNLOAD_TESTCASES || RUN_FASTTRACK_TESTCASES)
 #ifndef TEST_PV_PLAYER_ENGINE_TESTSET5_H_INCLUDED
 #include "test_pv_player_engine_testset5.h"
 #endif
 #endif
 
 #if RUN_STREAMING_TESTCASES
+#if PVR_SUPPORT
+#ifndef TEST_PV_PLAYER_ENGINE_TESTSET3_H_INCLUDED
+#include "test_pv_player_engine_testset3.h"
+#endif
+#endif
 #ifndef TEST_PV_PLAYER_ENGINE_TESTSET6_H_INCLUDED
 #include "test_pv_player_engine_testset6.h"
 #endif
@@ -99,10 +104,6 @@
 #include "oscl_error.h"
 #endif
 
-#ifndef OSCL_ERROR_PANIC_H_INCLUDED
-#include "oscl_error_panic.h"
-#endif
-
 #ifndef OSCL_SCHEDULER_H_INCLUDED
 #include "oscl_scheduler.h"
 #endif
@@ -132,7 +133,6 @@
 #endif
 
 #include "omx_core.h"
-#include "pv_omxmastercore.h"
 
 #ifndef OSCL_UTF8CONV_H
 #include "oscl_utf8conv.h"
@@ -211,7 +211,7 @@ class PVLoggerConfigFile
             {
                 if (!iLogFileRead)
                 {
-                    int32 nCharRead = iLogFile.Read(ibuffer, 1, sizeof(ibuffer));
+                    iLogFile.Read(ibuffer, 1, sizeof(ibuffer));
                     //Parse the buffer for \n chars
                     Oscl_Vector<char*, OsclMemAllocator> LogConfigStrings;
 
@@ -220,13 +220,13 @@ class PVLoggerConfigFile
                     const int8 lnFdLen = oscl_strlen(lnFd);
                     int16 offset = 0;
                     char* lastValidBffrAddr = ibuffer + oscl_strlen(ibuffer);
-                    char* lnFdIndx = oscl_strstr(ibuffer, lnFd);
+                    const char* lnFdIndx = oscl_strstr(ibuffer, lnFd);
                     while (lnFdIndx != NULL && lnFdIndx < lastValidBffrAddr)
                     {
-                        oscl_memset(lnFdIndx, '\0', lnFdLen);
+                        oscl_memset((char*)lnFdIndx, '\0', lnFdLen);
                         LogConfigStrings.push_back(ibuffer + offset);
                         offset = (lnFdIndx + lnFdLen) - ibuffer;
-                        lnFdIndx = oscl_strstr(ibuffer + offset, lnFd);
+                        lnFdIndx = OSCL_CONST_CAST(char*, oscl_strstr(ibuffer + offset, lnFd));
                     }
                     if (NULL == lnFdIndx && ((ibuffer + offset) < lastValidBffrAddr)) //If \r\n is skipped after the last logging str in ini file
                     {
@@ -247,7 +247,7 @@ class PVLoggerConfigFile
                             {
                                 for (it = LogConfigStrings.begin() + 1; it != LogConfigStrings.end(); it++)
                                 {
-                                    char* CommaIndex = oscl_strstr(*it, ",");
+                                    char* CommaIndex = OSCL_CONST_CAST(char*, oscl_strstr(*it, ","));
                                     if (CommaIndex != NULL)
                                     {
                                         *CommaIndex = '\0';
@@ -264,7 +264,7 @@ class PVLoggerConfigFile
                             {
                                 //Add the config element for complete logging fo all the modules
                                 LoggerConfigElement obj;
-                                obj.iLoggerString = "";
+                                obj.iLoggerString = NULL;
                                 obj.iLogLevel = 8;
                                 iLoggerConfigElements.push_back(obj);
                             }
@@ -394,7 +394,7 @@ void FindSourceType(cmd_line* command_line, OSCL_HeapString<OsclMemAllocator> &a
             oscl_wchar* argwstr = NULL;
             command_line->get_arg(formatSearch, argwstr); //getting the value of argument at formatSearch position
             oscl_UnicodeToUTF8(argwstr, oscl_strlen(argwstr), argstr, 128);
-            argstr[127] = NULL;
+            argstr[127] = '\0';
         }
         else
         {
@@ -406,14 +406,14 @@ void FindSourceType(cmd_line* command_line, OSCL_HeapString<OsclMemAllocator> &a
                 tmpstrlen = 128;
             }
             oscl_strncpy(argstr, tmpstr, tmpstrlen);
-            argstr[tmpstrlen-1] = NULL;
+            argstr[tmpstrlen-1] = '\0';
         }
 
         ConvertToLowerCase(argstr); //Convert the string in lower case
 
 
         // Do the string compare
-        if (oscl_strcmp(argstr, "-help") == NULL)
+        if (oscl_strcmp(argstr, "-help") == 0)
         {
             fprintf(aFile, "Format type specification option. Default is 'mp4':\n");
             fprintf(aFile, "Specify the format type name in upper case/lower case letter for test cases which\n");
@@ -421,7 +421,7 @@ void FindSourceType(cmd_line* command_line, OSCL_HeapString<OsclMemAllocator> &a
             fprintf(aFile, "e.g. for executing MP4 specific tests: test_pv_player_engine.exe MP4)\n");
             break;
         }
-        else if (oscl_strcmp(argstr, "mp3") == NULL)
+        else if (oscl_strcmp(argstr, "mp3") == 0)
         {
             aInputFileFormatType = LOCAL_TEST_FILE_MP3_FORMAT_TYPE;
             aFileNameInfo = LOCAL_TEST_FILE_MP3_CBR;
@@ -429,7 +429,7 @@ void FindSourceType(cmd_line* command_line, OSCL_HeapString<OsclMemAllocator> &a
             break;
 
         }
-        else if (oscl_strcmp(argstr, "aac") == NULL)
+        else if (oscl_strcmp(argstr, "aac") == 0)
         {
             aInputFileFormatType = LOCAL_TEST_FILE_AAC_FORMAT_TYPE;
             aFileNameInfo = LOCAL_TEST_FILE_AAC_ADTS;
@@ -437,7 +437,7 @@ void FindSourceType(cmd_line* command_line, OSCL_HeapString<OsclMemAllocator> &a
             break;
 
         }
-        else if (oscl_strcmp(argstr, "amr") == NULL)
+        else if (oscl_strcmp(argstr, "amr") == 0)
         {
             aInputFileFormatType = LOCAL_TEST_FILE_AMR_FORMAT_TYPE;
             aFileNameInfo = LOCAL_TEST_FILE_AMR_IETF;
@@ -445,7 +445,7 @@ void FindSourceType(cmd_line* command_line, OSCL_HeapString<OsclMemAllocator> &a
             break;
 
         }
-        else if (oscl_strcmp(argstr, "mp4") == NULL)
+        else if (oscl_strcmp(argstr, "mp4") == 0)
         {
             aInputFileFormatType = LOCAL_TEST_FILE_MP4_FORMAT_TYPE;
             aFileNameInfo = LOCAL_TEST_FILE_MP4_M4V_AMR;
@@ -453,7 +453,7 @@ void FindSourceType(cmd_line* command_line, OSCL_HeapString<OsclMemAllocator> &a
             break;
 
         }
-        else if (oscl_strcmp(argstr, "3gp") == NULL)
+        else if (oscl_strcmp(argstr, "3gp") == 0)
         {
             aInputFileFormatType = LOCAL_TEST_FILE_3GP_FORMAT_TYPE;
             aFileNameInfo = LOCAL_TEST_FILE_3GP;
@@ -461,7 +461,7 @@ void FindSourceType(cmd_line* command_line, OSCL_HeapString<OsclMemAllocator> &a
             break;
 
         }
-        else if (oscl_strcmp(argstr, "asf") == NULL)
+        else if (oscl_strcmp(argstr, "asf") == 0)
         {
             aInputFileFormatType = LOCAL_TEST_FILE_ASF_FORMAT_TYPE ;
             aFileNameInfo = LOCAL_TEST_FILE_ASF;
@@ -469,7 +469,7 @@ void FindSourceType(cmd_line* command_line, OSCL_HeapString<OsclMemAllocator> &a
             break;
 
         }
-        else if (oscl_strcmp(argstr, "rm") == NULL)
+        else if (oscl_strcmp(argstr, "rm") == 0)
         {
             aInputFileFormatType = LOCAL_TEST_FILE_REALAUDIO_FORMAT_TYPE;
             aFileNameInfo = LOCAL_TEST_FILE_REALAUDIO;
@@ -477,21 +477,21 @@ void FindSourceType(cmd_line* command_line, OSCL_HeapString<OsclMemAllocator> &a
             break;
 
         }
-        else if (oscl_strcmp(argstr, "wav") == NULL)
+        else if (oscl_strcmp(argstr, "wav") == 0)
         {
             aInputFileFormatType =  LOCAL_TEST_FILE_WAV_FORMAT_TYPE;
             aFileNameInfo = LOCAL_TEST_FILE_WAV;
             aTemp_Flag = WAV_ENABLED;
             break;
         }
-        else if (oscl_strcmp(argstr, "wmv") == NULL)
+        else if (oscl_strcmp(argstr, "wmv") == 0)
         {
             aInputFileFormatType =  LOCAL_TEST_FILE_WMV_FORMAT_TYPE;
             aFileNameInfo = LOCAL_TEST_FILE_WMV;
             aTemp_Flag = WMV_ENABLED;
             break;
         }
-        else if (oscl_strcmp(argstr, "wma") == NULL)
+        else if (oscl_strcmp(argstr, "wma") == 0)
         {
             aInputFileFormatType =  LOCAL_TEST_FILE_WMA_FORMAT_TYPE;
             aFileNameInfo = LOCAL_TEST_FILE_WMA;
@@ -541,7 +541,7 @@ void FindSourceFile(cmd_line* command_line, OSCL_HeapString<OsclMemAllocator> &a
         }
 
         // Do the string compare
-        if (!oscl_strcmp(argstr, "-help"))
+        if (oscl_strcmp(argstr, "-help") == 0)
         {
             fprintf(aFile, "Source specification option. Default is 'test.mp4':\n");
             fprintf(aFile, "  -source sourcename\n");
@@ -549,7 +549,7 @@ void FindSourceFile(cmd_line* command_line, OSCL_HeapString<OsclMemAllocator> &a
             fprintf(aFile, "   allow user-specified source name. The unit test determines the\n");
             fprintf(aFile, "   source format type using extension or URL header.\n\n");
         }
-        else if (!oscl_strcmp(argstr, "-source"))
+        else if (oscl_strcmp(argstr, "-source") == 0)
         {
             iFileFound = true;
             iFileArgument = ++iFileSearch;
@@ -580,7 +580,7 @@ void FindSourceFile(cmd_line* command_line, OSCL_HeapString<OsclMemAllocator> &a
         // AAC file
         if (oscl_strstr(aFileNameInfo.get_cstr(), ".aac") != NULL || oscl_strstr(aFileNameInfo.get_cstr(), ".AAC") != NULL)
         {
-            aInputFileFormatType = PVMF_AACFF;
+            aInputFileFormatType = PVMF_MIME_AACFF;
 
 
         }
@@ -588,13 +588,13 @@ void FindSourceFile(cmd_line* command_line, OSCL_HeapString<OsclMemAllocator> &a
         else  if (oscl_strstr(aFileNameInfo.get_cstr(), ".amr") != NULL || oscl_strstr(aFileNameInfo.get_cstr(), ".AMR") != NULL ||
                   oscl_strstr(aFileNameInfo.get_cstr(), ".cod") != NULL || oscl_strstr(aFileNameInfo.get_cstr(), ".COD") != NULL)
         {
-            aInputFileFormatType = PVMF_AMRFF;
+            aInputFileFormatType = PVMF_MIME_AMRFF;
         }
         // RTSP URL
         else  if ((!oscl_strncmp("rtsp", aFileNameInfo.get_cstr(), 4)) ||
                   (!oscl_strncmp("RTSP", aFileNameInfo.get_cstr(), 4)))
         {
-            aInputFileFormatType = PVMF_DATA_SOURCE_RTSP_URL;
+            aInputFileFormatType = PVMF_MIME_DATA_SOURCE_RTSP_URL;
         }
         // HTTP URL
         else  if (oscl_strstr(aFileNameInfo.get_cstr(), "http:") != NULL ||
@@ -602,61 +602,64 @@ void FindSourceFile(cmd_line* command_line, OSCL_HeapString<OsclMemAllocator> &a
                   oscl_strstr(aFileNameInfo.get_cstr(), "mms:") != NULL ||
                   oscl_strstr(aFileNameInfo.get_cstr(), "MMS:") != NULL)
         {
-            aInputFileFormatType = PVMF_DATA_SOURCE_HTTP_URL;
+            aInputFileFormatType = PVMF_MIME_DATA_SOURCE_HTTP_URL;
         }
         // MP4/3GP file
         else  if (oscl_strstr(aFileNameInfo.get_cstr(), ".mp4") != NULL || oscl_strstr(aFileNameInfo.get_cstr(), ".MP4") != NULL ||
                   oscl_strstr(aFileNameInfo.get_cstr(), ".3gp") != NULL || oscl_strstr(aFileNameInfo.get_cstr(), ".3GP") != NULL)
         {
-            aInputFileFormatType = PVMF_MPEG4FF;
+            aInputFileFormatType = PVMF_MIME_MPEG4FF;
         }
         // ASF file
         else  if (oscl_strstr(aFileNameInfo.get_cstr(), ".asf") != NULL || oscl_strstr(aFileNameInfo.get_cstr(), ".ASF") != NULL ||
                   oscl_strstr(aFileNameInfo.get_cstr(), ".wma") != NULL || oscl_strstr(aFileNameInfo.get_cstr(), ".WMA") != NULL ||
                   oscl_strstr(aFileNameInfo.get_cstr(), ".wmv") != NULL || oscl_strstr(aFileNameInfo.get_cstr(), ".WMV") != NULL)
         {
-            aInputFileFormatType = PVMF_ASFFF;
+            aInputFileFormatType = PVMF_MIME_ASFFF;
         }
         // MP3 file
         else  if (oscl_strstr(aFileNameInfo.get_cstr(), ".mp3") != NULL || oscl_strstr(aFileNameInfo.get_cstr(), ".MP3") != NULL)
         {
-            aInputFileFormatType = PVMF_MP3FF;
+            aInputFileFormatType = PVMF_MIME_MP3FF;
         }
         // RM file
         else  if (oscl_strstr(aFileNameInfo.get_cstr(), ".rm") != NULL || oscl_strstr(aFileNameInfo.get_cstr(), ".RM") != NULL)
         {
-            aInputFileFormatType = PVMF_RMFF;
+            aInputFileFormatType = PVMF_MIME_RMFF;
         }
-        // SDP file
-        else  if (oscl_strstr(aFileNameInfo.get_cstr(), ".sdp") != NULL || oscl_strstr(aFileNameInfo.get_cstr(), ".SDP") != NULL)
+        // SDP file. also includes PVR files
+        else  if (oscl_strstr(aFileNameInfo.get_cstr(), ".sdp") != NULL ||
+                  oscl_strstr(aFileNameInfo.get_cstr(), ".SDP") != NULL ||
+                  oscl_strstr(aFileNameInfo.get_cstr(), ".pvr") != NULL ||
+                  oscl_strstr(aFileNameInfo.get_cstr(), ".PVR") != NULL)
         {
-            aInputFileFormatType = PVMF_DATA_SOURCE_SDP_FILE;
+            aInputFileFormatType = PVMF_MIME_DATA_SOURCE_SDP_FILE;
         }
         // PVX file
         else  if (oscl_strstr(aFileNameInfo.get_cstr(), ".pvx") != NULL || oscl_strstr(aFileNameInfo.get_cstr(), ".PVX") != NULL)
         {
-            aInputFileFormatType = PVMF_DATA_SOURCE_PVX_FILE;
+            aInputFileFormatType = PVMF_MIME_DATA_SOURCE_PVX_FILE;
         }
         // WAV file
         else  if (oscl_strstr(aFileNameInfo.get_cstr(), ".wav") != NULL || oscl_strstr(aFileNameInfo.get_cstr(), ".WAV") != NULL)
         {
-            aInputFileFormatType = PVMF_WAVFF;
+            aInputFileFormatType = PVMF_MIME_WAVFF;
         }
         // MIDI file
         else  if (oscl_strstr(aFileNameInfo.get_cstr(), ".mid") != NULL || oscl_strstr(aFileNameInfo.get_cstr(), ".MID") != NULL)
         {
-            aInputFileFormatType = PVMF_MIDIFF;
+//            aInputFileFormatType = PVMF_MIME_MIDIFF;
         }
         // unrecognized eny (Jupiter envelope) files go to the still image node
         else  if (oscl_strstr(aFileNameInfo.get_cstr(), ".eny") != NULL || oscl_strstr(aFileNameInfo.get_cstr(), ".ENY") != NULL)
         {
-            aInputFileFormatType = PVMF_IMAGE_FORMAT;
+            aInputFileFormatType = PVMF_MIME_M4V_IMAGE;
         }
         // Unknown so set to unknown try to have the player engine recognize
         else
         {
             fprintf(file, "Source type unknown so setting to unknown and have the player engine recognize it\n");
-            aInputFileFormatType = PVMF_FORMAT_UNKNOWN;
+            aInputFileFormatType = PVMF_MIME_FORMAT_UNKNOWN;
         }
     }
 }
@@ -708,7 +711,7 @@ void FindTestRange(cmd_line *command_line,	int32 &iFirstTest, int32 &iLastTest, 
         }
 
         // Do the string compare
-        if (!oscl_strcmp(iSourceFind, "-help"))
+        if (oscl_strcmp(iSourceFind, "-help") == 0)
         {
             fprintf(aFile, "Test cases to run option. Default is ALL:\n");
             fprintf(aFile, "  -test x y\n");
@@ -721,7 +724,7 @@ void FindTestRange(cmd_line *command_line,	int32 &iFirstTest, int32 &iLastTest, 
             fprintf(aFile, "  -test S\n");
             fprintf(aFile, "   Run streaming playback test cases only.\n\n");
         }
-        else if (!oscl_strcmp(iSourceFind, "-test"))
+        else if (oscl_strcmp(iSourceFind, "-test") == 0)
         {
             iTestFound = true;
             iTestArgument = ++iTestSearch;
@@ -730,11 +733,11 @@ void FindTestRange(cmd_line *command_line,	int32 &iFirstTest, int32 &iLastTest, 
         else
         {
             ConvertToLowerCase(iSourceFind);
-            if (oscl_strcmp(iSourceFind, "aac") == NULL || oscl_strcmp(iSourceFind, "amr") == NULL || //When argument is supplied as test.exe mp3/amr,then local playback range has to be set
-                    oscl_strcmp(iSourceFind, "mp4") == NULL || oscl_strcmp(iSourceFind, "3gp") == NULL ||
-                    oscl_strcmp(iSourceFind, "mp3") == NULL || oscl_strcmp(iSourceFind, "wav") == NULL ||
-                    oscl_strcmp(iSourceFind, "wmv") == NULL || oscl_strcmp(iSourceFind, "wma") == NULL ||
-                    oscl_strcmp(iSourceFind, "asf") == NULL || oscl_strcmp(iSourceFind, "rm") == NULL)
+            if (oscl_strcmp(iSourceFind, "aac") == 0 || oscl_strcmp(iSourceFind, "amr") == 0 || //When argument is supplied as test.exe mp3/amr,then local playback range has to be set
+                    oscl_strcmp(iSourceFind, "mp4") == 0 || oscl_strcmp(iSourceFind, "3gp") == 0 ||
+                    oscl_strcmp(iSourceFind, "mp3") == 0 || oscl_strcmp(iSourceFind, "wav") == 0 ||
+                    oscl_strcmp(iSourceFind, "wmv") == 0 || oscl_strcmp(iSourceFind, "wma") == 0 ||
+                    oscl_strcmp(iSourceFind, "asf") == 0 || oscl_strcmp(iSourceFind, "rm") == 0)
             {
                 iFirstTest = FIRST_LOCAL_PLAYBACK;
                 iLastTest = LAST_LOCAL_PLAYBACK;
@@ -781,7 +784,6 @@ void FindTestRange(cmd_line *command_line,	int32 &iFirstTest, int32 &iLastTest, 
             int len = oscl_strlen(iTestArgStr1);
             switch (len)
             {
-
                 case 4:
                     iFirstTest = 0;
                     if ('0' <= iTestArgStr1[0] && iTestArgStr1[0] <= '9')
@@ -851,7 +853,6 @@ void FindTestRange(cmd_line *command_line,	int32 &iFirstTest, int32 &iLastTest, 
             len = oscl_strlen(iTestArgStr2);
             switch (len)
             {
-
                 case 4:
                     iLastTest = 0;
                     if ('0' <= iTestArgStr2[0] && iTestArgStr2[0] <= '9')
@@ -873,9 +874,7 @@ void FindTestRange(cmd_line *command_line,	int32 &iFirstTest, int32 &iLastTest, 
                     {
                         iLastTest = iLastTest + 1 * (iTestArgStr2[3] - '0');
                     }
-
                     break;
-
                 case 3:
                     iLastTest = 0;
                     if ('0' <= iTestArgStr2[0] && iTestArgStr2[0] <= '9')
@@ -999,7 +998,7 @@ void FindCompressed(cmd_line* command_line, bool& aCompV, bool& aCompA, FILE* aF
         }
 
         // Do the string compare
-        if (!oscl_strcmp(iSourceFind, "-help"))
+        if (oscl_strcmp(iSourceFind, "-help") == 0)
         {
             fprintf(aFile, "Compressed video and audio output option. Default is OFF for both:\n");
             fprintf(aFile, "  -compV AND/OR -compA\n");
@@ -1008,11 +1007,11 @@ void FindCompressed(cmd_line* command_line, bool& aCompV, bool& aCompA, FILE* aF
             fprintf(aFile, "   bitstreams. This also means the player engine would not use a decoder\n");
             fprintf(aFile, "   node to decode the bitstream from the source node.\n\n");
         }
-        else if (!oscl_strcmp(iSourceFind, "-compV"))
+        else if (oscl_strcmp(iSourceFind, "-compV") == 0)
         {
             aCompV = true;
         }
-        else if (!oscl_strcmp(iSourceFind, "-compA"))
+        else if (oscl_strcmp(iSourceFind, "-compA") == 0)
         {
             aCompA = true;
         }
@@ -1057,7 +1056,7 @@ void FindPacketSource(cmd_line* command_line, bool& aFileInput, bool& aBCS, FILE
         }
 
         // Do the string compare
-        if (!oscl_strcmp(iSourceFind, "-help"))
+        if (oscl_strcmp(iSourceFind, "-help") == 0)
         {
             fprintf(aFile, "Packet Source plug-in option. Default is OFF for both:\n");
             fprintf(aFile, "  -fi\n");
@@ -1065,11 +1064,11 @@ void FindPacketSource(cmd_line* command_line, bool& aFileInput, bool& aBCS, FILE
             fprintf(aFile, "  -bcs\n");
             fprintf(aFile, "  For broadcast socket\n\n");
         }
-        else if (!oscl_strcmp(iSourceFind, "-fi"))
+        else if (oscl_strcmp(iSourceFind, "-fi") == 0)
         {
             aFileInput = true;
         }
-        else if (!oscl_strcmp(iSourceFind, "-bcs"))
+        else if (oscl_strcmp(iSourceFind, "-bcs") == 0)
         {
             aBCS = true;
         }
@@ -1114,14 +1113,14 @@ void FindMemMgmtRelatedCmdLineParams(cmd_line* command_line, bool& aPrintDetaile
         }
 
         // Do the string compare
-        if (!oscl_strcmp(iSourceFind, "-help"))
+        if (oscl_strcmp(iSourceFind, "-help") == 0)
         {
             fprintf(aFile, "Printing leak info option. Default is OFF:\n");
             fprintf(aFile, "  -leakinfo\n");
             fprintf(aFile, "   If there is a memory leak, prints out the memory leak information\n");
             fprintf(aFile, "   after all specified test cases have finished running.\n\n");
         }
-        else if (!oscl_strcmp(iSourceFind, "-leakinfo"))
+        else if (oscl_strcmp(iSourceFind, "-leakinfo") == 0)
         {
             aPrintDetailedMemLeakInfo = true;
         }
@@ -1167,7 +1166,7 @@ void FindLoggerNode(cmd_line* command_line, int32& lognode, FILE* aFile)
         }
 
         // Do the string compare
-        if (!oscl_strcmp(iSourceFind, "-help"))
+        if (oscl_strcmp(iSourceFind, "-help") == 0)
         {
             fprintf(aFile, "Log node options. Default is player engine only:\n");
             fprintf(aFile, "  -logall\n");
@@ -1187,75 +1186,75 @@ void FindLoggerNode(cmd_line* command_line, int32& lognode, FILE* aFile)
             fprintf(aFile, "  -logdatapathdec\n");
             fprintf(aFile, "   Log decoder node datapath only\n\n");
         }
-        else if (!oscl_strcmp(iSourceFind, "-logall"))
+        else if (oscl_strcmp(iSourceFind, "-logall") == 0)
         {
             lognode = 1;		//log everything
         }
-        else if (!oscl_strcmp(iSourceFind, "-logdatapath"))
+        else if (oscl_strcmp(iSourceFind, "-logdatapath") == 0)
         {
             lognode = 2;		//datapath only
         }
-        else if (!oscl_strcmp(iSourceFind, "-logclock"))
+        else if (oscl_strcmp(iSourceFind, "-logclock") == 0)
         {
             lognode = 3;		//clock only
         }
-        else if (!oscl_strcmp(iSourceFind, "-logoscl"))
+        else if (oscl_strcmp(iSourceFind, "-logoscl") == 0)
         {
             lognode = 4;		//oscl only
         }
-        else if (!oscl_strcmp(iSourceFind, "-logperf"))
+        else if (oscl_strcmp(iSourceFind, "-logperf") == 0)
         {
             lognode = 5;		//scheduler perf logging
         }
-        else if (!oscl_strcmp(iSourceFind, "-logdatapathsrc"))
+        else if (oscl_strcmp(iSourceFind, "-logdatapathsrc") == 0)
         {
             lognode = 6;		//source node data path only
         }
-        else if (!oscl_strcmp(iSourceFind, "-logdatapathdec"))
+        else if (oscl_strcmp(iSourceFind, "-logdatapathdec") == 0)
         {
             lognode = 7;		//source node data path only
         }
-        else if (!oscl_strcmp(iSourceFind, "-logsync"))
+        else if (oscl_strcmp(iSourceFind, "-logsync") == 0)
         {
             lognode = 8;		//media output node datapath only
         }
-        else if (!oscl_strcmp(iSourceFind, "-logdiagnostics"))
+        else if (oscl_strcmp(iSourceFind, "-logdiagnostics") == 0)
         {
             lognode = 9;		//diagnostics log only
         }
-        else if (!oscl_strcmp(iSourceFind, "-logosclfileio"))
+        else if (oscl_strcmp(iSourceFind, "-logosclfileio") == 0)
         {
             lognode = 10; 	//hds access log only
         }
-        else if (!oscl_strcmp(iSourceFind, "-loghds"))
+        else if (oscl_strcmp(iSourceFind, "-loghds") == 0)
         {
             lognode = 11; 	//oscl file-io access log only
         }
-        else if (!oscl_strcmp(iSourceFind, "-loghdsandosclfileio"))
+        else if (oscl_strcmp(iSourceFind, "-loghdsandosclfileio") == 0)
         {
             lognode = 12; 	//file-io and hds access log only
         }
-        else if (!oscl_strcmp(iSourceFind, "-logjupiter"))
+        else if (oscl_strcmp(iSourceFind, "-logjupiter") == 0)
         {
             lognode = 13; 	//jupiter DRM only
         }
-        else if (!oscl_strcmp(iSourceFind, "-logjanus"))
+        else if (oscl_strcmp(iSourceFind, "-logjanus") == 0)
         {
             lognode = 14; 	//janus DRM only
         }
-        else if (oscl_strcmp(iSourceFind, "-logperfmin") == NULL)
+        else if (oscl_strcmp(iSourceFind, "-logperfmin") == 0)
         {
             lognode = 15;   //scheduler perf logging
         }
-        else if (oscl_strcmp(iSourceFind, "-logppb") == NULL)
+        else if (oscl_strcmp(iSourceFind, "-logppb") == 0)
         {
             lognode = 16;	//progressive playback log only
         }
-        else if (!oscl_strcmp(iSourceFind, "-logrepos"))
+        else if (oscl_strcmp(iSourceFind, "-logrepos") == 0)
         {
             lognode = 17; 	//repos related
         }
-        else if (oscl_strcmp(iSourceFind, "-logsnode") == NULL)
+        else if (oscl_strcmp(iSourceFind, "-logsnode") == 0)
         {
             lognode = 18; 	//socket node related
         }
@@ -1301,7 +1300,7 @@ void FindLogLevel(cmd_line* command_line, int32& loglevel, FILE* aFile)
         }
 
         // Do the string compare
-        if (!oscl_strcmp(iSourceFind, "-help"))
+        if (oscl_strcmp(iSourceFind, "-help") == 0)
         {
             fprintf(aFile, "Log level options. Default is debug level:\n");
             fprintf(aFile, "  -logerr\n");
@@ -1309,11 +1308,11 @@ void FindLogLevel(cmd_line* command_line, int32& loglevel, FILE* aFile)
             fprintf(aFile, "  -logwarn\n");
             fprintf(aFile, "   Log at warning level\n\n");
         }
-        else if (!oscl_strcmp(iSourceFind, "-logerr"))
+        else if (oscl_strcmp(iSourceFind, "-logerr") == 0)
         {
             loglevel = PVLOGMSG_ERR;
         }
-        else if (!oscl_strcmp(iSourceFind, "-logwarn"))
+        else if (oscl_strcmp(iSourceFind, "-logwarn") == 0)
         {
             loglevel = PVLOGMSG_WARNING;
         }
@@ -1328,6 +1327,7 @@ void FindLogLevel(cmd_line* command_line, int32& loglevel, FILE* aFile)
 
 void FindLogText(cmd_line* command_line, int32& logtext, FILE* aFile)
 {
+    OSCL_UNUSED_ARG(aFile);
     logtext = false;
 
     bool cmdline_iswchar = command_line->is_wchar();
@@ -1357,7 +1357,7 @@ void FindLogText(cmd_line* command_line, int32& logtext, FILE* aFile)
         }
 
         // Do the string compare
-        if (!oscl_strcmp(iSourceFind, "-logfile"))
+        if (oscl_strcmp(iSourceFind, "-logfile") == 0)
         {
             logtext = 1;
         }
@@ -1372,6 +1372,7 @@ void FindLogText(cmd_line* command_line, int32& logtext, FILE* aFile)
 
 void FindLogMem(cmd_line* command_line, int32& logmem, FILE* aFile)
 {
+    OSCL_UNUSED_ARG(aFile);
     logmem = false;
 
     bool cmdline_iswchar = command_line->is_wchar();
@@ -1401,7 +1402,7 @@ void FindLogMem(cmd_line* command_line, int32& logmem, FILE* aFile)
         }
 
         // Do the string compare
-        if (!oscl_strcmp(iSourceFind, "-logmem"))
+        if (oscl_strcmp(iSourceFind, "-logmem") == 0)
         {
             logmem = 1;
         }
@@ -1448,13 +1449,13 @@ void FindProxyEnabled(cmd_line* command_line, bool& aProxyEnabled, FILE *aFile)
         }
 
         // Do the string compare
-        if (!oscl_strcmp(iSourceFind, "-help"))
+        if (oscl_strcmp(iSourceFind, "-help") == 0)
         {
             fprintf(aFile, "   proxy enabled ON or OFF, default is OFF\n");
             fprintf(aFile, "  -proxy\n");
             fprintf(aFile, "   For test cases where proxy support is reqd\n");
         }
-        else if (!oscl_strcmp(iSourceFind, "-proxy"))
+        else if (oscl_strcmp(iSourceFind, "-proxy") == 0)
         {
             aProxyEnabled = true;
         }
@@ -1476,10 +1477,16 @@ int local_main(FILE *filehandle, cmd_line* command_line)
     OsclBase::Init();
     OsclErrorTrap::Init();
     OsclMem::Init();
-    //OMX_Init();
-    PV_MasterOMX_Init();
+    OMX_Init();
 
-    fprintf(filehandle, "Test Program for pvPlayer engine class.\n");
+
+    {
+        PVSDKInfo aSdkInfo;
+        PVPlayerInterface::GetSDKInfo(aSdkInfo);
+        fprintf(filehandle, "SDK Labeled: %s built on %x\n\n",               // display SDK info
+                aSdkInfo.iLabel.get_cstr(), aSdkInfo.iDate);
+        fprintf(filehandle, "Test Program for pvPlayer engine class.\n");
+    }
 
     bool oPrintDetailedMemLeakInfo = false;
     FindMemMgmtRelatedCmdLineParams(command_line, oPrintDetailedMemLeakInfo, filehandle);
@@ -1487,22 +1494,16 @@ int local_main(FILE *filehandle, cmd_line* command_line)
     //Run the test under a trap
     int result = 0;
     int32 err = 0;
-    TPVErrorPanic panic;
 
-    OSCL_PANIC_TRAP(err, panic, result = _local_main(filehandle, command_line););
+    OSCL_TRY(err, result = _local_main(filehandle, command_line););
 
     //Show any exception.
     if (err != 0)
     {
         fprintf(file, "Error!  Leave %d\n", err);
     }
-    if (panic.iReason != 0)
-    {
-        fprintf(file, "Error!  Panic %s %d\n", panic.iCategory.Str(), panic.iReason);
-    }
     //Cleanup
-    //OMX_Deinit();
-    PV_MasterOMX_Deinit();
+    OMX_Deinit();
 
 #if !(OSCL_BYPASS_MEMMGT)
     //Check for memory leaks before cleaning up OsclMem.
@@ -1543,7 +1544,8 @@ int local_main(FILE *filehandle, cmd_line* command_line)
                     fprintf(file, "  fileName %s\n", info[i].fileName);
                     fprintf(file, "  lineNo %d\n", info[i].lineNo);
                     fprintf(file, "  size %d\n", info[i].size);
-                    fprintf(file, "  pMemBlock 0x%x\n", info[i].pMemBlock);
+                    uint32 ptrAddr = (uint32)info[i].pMemBlock;
+                    fprintf(file, "  pMemBlock 0x%x\n", ptrAddr);
                     fprintf(file, "  tag %s\n", info[i].tag);
                 }
                 auditCB.pAudit->MM_ReleaseAllocNodeInfo(info);
@@ -1629,10 +1631,10 @@ int _local_main(FILE *filehandle, cmd_line *command_line)
 
         //Set the Initial timer
 
-        double starttick = OsclTickCount::TickCount();
+        uint32 starttick = OsclTickCount::TickCount();
         // Run the engine test
         engine_tests->run_test();
-        double endtick = OsclTickCount::TickCount();
+        uint32 endtick = OsclTickCount::TickCount();
 
         double t1 = OsclTickCount::TicksToMsec(starttick);
         double t2 = OsclTickCount::TicksToMsec(endtick);
@@ -1954,16 +1956,8 @@ void pvplayer_engine_test::test()
                 MM_Stats_t* stats = auditCB.pAudit->MM_GetStats("");
                 if (stats)
                 {
-                    uint32 alloclks = stats->numAllocs - iNumAllocs;
                     fprintf(file, "  Mem stats: TotalAllocs(%d), TotalBytes(%d),\n             AllocFailures(%d), AllocLeak(%d)\n",
                             stats->totalNumAllocs - iTotalAlloc, stats->totalNumBytes - iTotalBytes, stats->numAllocFails - iAllocFails, stats->numAllocs - iNumAllocs);
-#if 0 //debug
-                    if (alloclks != 0)
-                    {
-                        alloclks++;
-                        alloclks--;
-                    }
-#endif
                 }
                 else
                 {
@@ -2076,11 +2070,15 @@ void pvplayer_engine_test::test()
                 iCurrentTest = new pvplayer_async_test_cpmopenplaystopreset(testparam);
                 break;
 
+            case OpenPlayStopResetCPMRecognizeTest:
+                iCurrentTest = new pvplayer_async_test_cpmopenplaystopreset(testparam, true);
+                break;
+
             case CPM_DLA_OMA1PASSTRHU_OpenFailAuthPlayStopResetTest:
 #if RUN_CPMOMA1_DLAPASSTHRU_TESTCASES
                 iCurrentTest = new pvplayer_async_test_cpmdlapassthru(testparam,
-                        PVMF_YUV420,
-                        PVMF_PCM16,
+                        PVMF_MIME_YUV420,
+                        PVMF_MIME_PCM16,
                         iCurrentTestNumber,
                         false,
                         false,
@@ -2096,8 +2094,8 @@ void pvplayer_engine_test::test()
             case CPM_DLA_OMA1PASSTRHU_OpenPlayStopResetTest:
 #if RUN_CPMOMA1_DLAPASSTHRU_TESTCASES
                 iCurrentTest = new pvplayer_async_test_cpmdlapassthru(testparam,
-                        PVMF_YUV420,
-                        PVMF_PCM16,
+                        PVMF_MIME_YUV420,
+                        PVMF_MIME_PCM16,
                         iCurrentTestNumber,
                         false,
                         false,
@@ -2113,8 +2111,8 @@ void pvplayer_engine_test::test()
             case CPM_DLA_OMA1PASSTRHU_UnknownContentOpenPlayStopResetTest:
 #if RUN_CPMOMA1_DLAPASSTHRU_TESTCASES
                 iCurrentTest = new pvplayer_async_test_cpmdlapassthru(testparam,
-                        PVMF_YUV420,
-                        PVMF_PCM16,
+                        PVMF_MIME_YUV420,
+                        PVMF_MIME_PCM16,
                         iCurrentTestNumber,
                         false,
                         false,
@@ -2130,8 +2128,8 @@ void pvplayer_engine_test::test()
             case CPM_DLA_OMA1PASSTRHU_CancelAcquireLicenseTooLate_CancelFails:
 #if RUN_CPMOMA1_DLAPASSTHRU_TESTCASES
                 iCurrentTest = new pvplayer_async_test_cpmdlapassthru(testparam,
-                        PVMF_YUV420,
-                        PVMF_PCM16,
+                        PVMF_MIME_YUV420,
+                        PVMF_MIME_PCM16,
                         iCurrentTestNumber,
                         false,
                         false,
@@ -2147,8 +2145,8 @@ void pvplayer_engine_test::test()
             case CPM_DLA_OMA1PASSTRHU_CancelAcquireLicense_CancelSucceeds:
 #if RUN_CPMOMA1_DLAPASSTHRU_TESTCASES
                 iCurrentTest = new pvplayer_async_test_cpmdlapassthru(testparam,
-                        PVMF_YUV420,
-                        PVMF_PCM16,
+                        PVMF_MIME_YUV420,
+                        PVMF_MIME_PCM16,
                         iCurrentTestNumber,
                         false,
                         false,
@@ -2164,8 +2162,8 @@ void pvplayer_engine_test::test()
             case CPM_DLA_OMA1PASSTRHU_ContentNotSupported:
 #if RUN_CPMOMA1_DLAPASSTHRU_TESTCASES
                 iCurrentTest = new pvplayer_async_test_cpmdlapassthru(testparam,
-                        PVMF_YUV420,
-                        PVMF_PCM16,
+                        PVMF_MIME_YUV420,
+                        PVMF_MIME_PCM16,
                         iCurrentTestNumber,
                         false,
                         false,
@@ -2232,8 +2230,11 @@ void pvplayer_engine_test::test()
                 break;
 
             case SetStartPositionPlayStop:
+            {
                 iCurrentTest = new pvplayer_async_test_setstartpositionplaystop(testparam);
+                ((pvplayer_async_test_setstartpositionplaystop*)iCurrentTest)->setMultipleSeekMode(1);
                 break;
+            }
 
             case SetPlayRangePlay:
                 iCurrentTest = new pvplayer_async_test_setplayrangeplay(testparam);
@@ -2286,6 +2287,20 @@ void pvplayer_engine_test::test()
             case MultipleRepositionTest:
                 iCurrentTest = new pvplayer_async_test_multireposition(testparam);
                 break;
+
+            case MultiplePauseSeekResumeTest:
+            {
+                iCurrentTest = new pvplayer_async_test_multipauseseekresume(testparam);
+                ((pvplayer_async_test_multipauseseekresume*)iCurrentTest)->setMultiplePauseMode(2);
+                break;
+            }
+
+            case MultipleSetStartPositionPlayStopTest:
+            {
+                iCurrentTest = new pvplayer_async_test_setstartpositionplaystop(testparam);
+                ((pvplayer_async_test_setstartpositionplaystop*)iCurrentTest)->setMultipleSeekMode(2);
+                break;
+            }
 
             case MediaIONodeOpenPlayStopTest:
                 iCurrentTest = new pvplayer_async_test_mediaionode_openplaystop(testparam);
@@ -2399,7 +2414,7 @@ void pvplayer_engine_test::test()
 #endif
                 break;
 
-            case MediaIONodBackwardNearEOSForwardNearStartTest:
+            case MediaIONodeBackwardNearEOSForwardNearStartTest:
 #ifndef ONLY_3GPP_STREAMING_FORMAT
                 iCurrentTest = new pvplayer_async_test_mediaionode_backwardneareosforwardnearbos(testparam);
 #else
@@ -2754,7 +2769,7 @@ void pvplayer_engine_test::test()
                 break;
 
             case FTDownloadOpenPlayStopTest:
-#if RUN_HTTPDOWNLOAD_TESTCASES
+#if RUN_FASTTRACK_TESTCASES
 #ifndef ONLY_3GPP_STREAMING_FORMAT
                 iCurrentTest = new pvplayer_async_test_ftdlnormal(testparam);
 #else
@@ -2766,7 +2781,7 @@ void pvplayer_engine_test::test()
                 break;
 
             case FTDownloadPlayStopPlayTest:
-#if RUN_HTTPDOWNLOAD_TESTCASES
+#if RUN_FASTTRACK_TESTCASES
 #ifndef ONLY_3GPP_STREAMING_FORMAT
                 iCurrentTest = new pvplayer_async_test_ftdlnormal(testparam);
                 ((pvplayer_async_test_ftdlnormal*)iCurrentTest)->enablePlayStopPlay();
@@ -2781,7 +2796,7 @@ void pvplayer_engine_test::test()
 
             case ProgDownloadPlayAsapTest:
 #if RUN_HTTPDOWNLOAD_TESTCASES && RUN_MP4FILE_TESTCASES
-                testparam.iFileType = PVMF_MPEG4FF;
+                testparam.iFileType = PVMF_MIME_MPEG4FF;
                 iCurrentTest = new pvplayer_async_test_3gppdlnormal(testparam);
 #else
                 fprintf(file, "Prog download tests not enabled\n");
@@ -2790,7 +2805,7 @@ void pvplayer_engine_test::test()
 
             case ProgDownloadPlayStopPlayTest:
 #if RUN_HTTPDOWNLOAD_TESTCASES && RUN_MP4FILE_TESTCASES
-                testparam.iFileType = PVMF_MPEG4FF;
+                testparam.iFileType = PVMF_MIME_MPEG4FF;
                 iCurrentTest = new pvplayer_async_test_3gppdlnormal(testparam);
                 ((pvplayer_async_test_3gppdlnormal*)iCurrentTest)->enablePlayStopPlay();
 #else
@@ -2800,7 +2815,7 @@ void pvplayer_engine_test::test()
 
             case ProgPlaybackPlayStopPlayTest:
 #if RUN_HTTPDOWNLOAD_TESTCASES && RUN_MP4FILE_TESTCASES
-                testparam.iFileType = PVMF_MPEG4FF;
+                testparam.iFileType = PVMF_MIME_MPEG4FF;
                 iCurrentTest = new pvplayer_async_test_ppbnormal(testparam);
                 ((pvplayer_async_test_ppbnormal*)iCurrentTest)->enablePlayStopPlay();
 #else
@@ -2810,7 +2825,7 @@ void pvplayer_engine_test::test()
 
             case ProgDownloadDownloadThenPlayTest:
 #if RUN_HTTPDOWNLOAD_TESTCASES && RUN_MP4FILE_TESTCASES
-                testparam.iFileType = PVMF_MPEG4FF;
+                testparam.iFileType = PVMF_MIME_MPEG4FF;
                 iCurrentTest = new pvplayer_async_test_3gppdlnormal_dlthenplay(testparam);
 #else
                 fprintf(file, "Prog Download tests not enabled\n");
@@ -2819,7 +2834,7 @@ void pvplayer_engine_test::test()
 
             case ProgDownloadDownloadThenPlayPauseTest:
 #if RUN_HTTPDOWNLOAD_TESTCASES
-                testparam.iFileType = PVMF_MPEG4FF;
+                testparam.iFileType = PVMF_MIME_MPEG4FF;
                 iCurrentTest = new pvplayer_async_test_3gppdlnormal_dlthenplay(testparam);
                 ((pvplayer_async_test_3gppdlnormal_dlthenplay*)iCurrentTest)->enablePauseAfterDownloadComplete();
 #else
@@ -2829,7 +2844,7 @@ void pvplayer_engine_test::test()
 
             case ProgDownloadDownloadThenPlayRepositionTest:
 #if RUN_HTTPDOWNLOAD_TESTCASES
-                testparam.iFileType = PVMF_MPEG4FF;
+                testparam.iFileType = PVMF_MIME_MPEG4FF;
                 iCurrentTest = new pvplayer_async_test_3gppdlnormal_dlthenplay(testparam);
                 ((pvplayer_async_test_3gppdlnormal_dlthenplay*)iCurrentTest)->enableReposAfterDownloadComplete();
 #else
@@ -2839,7 +2854,7 @@ void pvplayer_engine_test::test()
 
             case ProgDownloadDownloadOnlyTest:
 #if RUN_HTTPDOWNLOAD_TESTCASES && RUN_MP4FILE_TESTCASES
-                testparam.iFileType = PVMF_MPEG4FF;
+                testparam.iFileType = PVMF_MIME_MPEG4FF;
                 iCurrentTest = new pvplayer_async_test_3gppdlnormal_dlonly(testparam);
 #else
                 fprintf(file, "Prog Download tests not enabled\n");
@@ -2848,7 +2863,7 @@ void pvplayer_engine_test::test()
 
             case ProgDownloadCancelDuringInitTest:
 #if RUN_HTTPDOWNLOAD_TESTCASES && RUN_MP4FILE_TESTCASES
-                testparam.iFileType = PVMF_MPEG4FF;
+                testparam.iFileType = PVMF_MIME_MPEG4FF;
                 iCurrentTest = new pvplayer_async_test_3gppdlcancelduringinit(testparam);
 #else
                 fprintf(file, "Prog Download tests not enabled\n");
@@ -2857,7 +2872,7 @@ void pvplayer_engine_test::test()
 
             case ProgDownloadCancelDuringInitDelayTest: //114
 #if RUN_HTTPDOWNLOAD_TESTCASES && RUN_MP4FILE_TESTCASES
-                testparam.iFileType = PVMF_MPEG4FF;
+                testparam.iFileType = PVMF_MIME_MPEG4FF;
                 iCurrentTest = new pvplayer_async_test_3gppdlcancelduringinitdelay(testparam);
 #else
                 fprintf(file, "Prog Download tests not enabled\n");
@@ -2865,7 +2880,7 @@ void pvplayer_engine_test::test()
                 break;
             case ProgDownloadPauseResumeAfterUnderflowTest: //115
 #if RUN_HTTPDOWNLOAD_TESTCASES && RUN_MP4FILE_TESTCASES
-                testparam.iFileType = PVMF_MPEG4FF;
+                testparam.iFileType = PVMF_MIME_MPEG4FF;
                 iCurrentTest = new pvplayer_async_test_PDLPauseResumeAfterUnderFlow(testparam);
 #else
                 fprintf(file, "Prog Download tests not enabled\n");
@@ -2874,7 +2889,7 @@ void pvplayer_engine_test::test()
 
             case ProgDownloadContentTooLarge:
 #if RUN_HTTPDOWNLOAD_TESTCASES && RUN_MP4FILE_TESTCASES
-                testparam.iFileType = PVMF_MPEG4FF;
+                testparam.iFileType = PVMF_MIME_MPEG4FF;
                 iCurrentTest = new pvplayer_async_test_3gppdlcontenttoolarge(testparam);
 #else
                 fprintf(file, "Prog Download tests not enabled\n");
@@ -2884,7 +2899,7 @@ void pvplayer_engine_test::test()
             case ProgDownloadTruncated:
 #if RUN_HTTPDOWNLOAD_TESTCASES && RUN_MP4FILE_TESTCASES
 #ifndef ONLY_3GPP_STREAMING_FORMAT
-                testparam.iFileType = PVMF_MPEG4FF;
+                testparam.iFileType = PVMF_MIME_MPEG4FF;
                 iCurrentTest = new pvplayer_async_test_3gppdlContentTruncated(testparam);
 #else
                 fprintf(file, "Prog Truncated download tests not enabled\n");
@@ -2895,8 +2910,8 @@ void pvplayer_engine_test::test()
                 break;
 
             case ProgDownloadProtocolRolloverTest:
-#if RUN_HTTPDOWNLOAD_TESTCASES && RUN_MP4FILE_TESTCASES && RUN_MS_HTTP_STREAMING_TESTCASES
-                testparam.iFileType = PVMF_MPEG4FF;
+#if RUN_HTTPDOWNLOAD_TESTCASES && RUN_MP4FILE_TESTCASES
+                testparam.iFileType = PVMF_MIME_MPEG4FF;
                 iCurrentTest = new pvplayer_async_test_3gppdlnormal(testparam);
                 ((pvplayer_async_test_3gppdlnormal*)iCurrentTest)->setProtocolRollOverMode();
 #else
@@ -2906,7 +2921,7 @@ void pvplayer_engine_test::test()
 
             case ProgDownloadSetPlayBackRangeTest:
 #if RUN_HTTPDOWNLOAD_TESTCASES && RUN_MP4FILE_TESTCASES
-                testparam.iFileType = PVMF_MPEG4FF;
+                testparam.iFileType = PVMF_MIME_MPEG4FF;
                 iCurrentTest = new pvplayer_async_test_3gppdlnormal(testparam);
                 ((pvplayer_async_test_3gppdlnormal*)iCurrentTest)->enableReposAfterDownloadComplete();
 #else
@@ -2916,7 +2931,7 @@ void pvplayer_engine_test::test()
 
             case ProgDownloadPlayUtilEOSTest:
 #if RUN_HTTPDOWNLOAD_TESTCASES && RUN_MP4FILE_TESTCASES
-                testparam.iFileType = PVMF_MPEG4FF;
+                testparam.iFileType = PVMF_MIME_MPEG4FF;
                 iCurrentTest = new pvplayer_async_test_3gppdlnormal(testparam);
                 ((pvplayer_async_test_3gppdlnormal*)iCurrentTest)->enablePlayUntilEOS();
 #else
@@ -2926,7 +2941,7 @@ void pvplayer_engine_test::test()
 
             case ProgPlaybackMP4UntilEOSTest:
 #if RUN_HTTPDOWNLOAD_TESTCASES && RUN_MP4FILE_TESTCASES
-                testparam.iFileType = PVMF_MPEG4FF;
+                testparam.iFileType = PVMF_MIME_MPEG4FF;
                 iCurrentTest = new pvplayer_async_test_ppb_normal(testparam);
                 ((pvplayer_async_test_ppb_normal*)iCurrentTest)->enablePlayUntilEOS();
                 ((pvplayer_async_test_ppb_normal*)iCurrentTest)->iTestCaseName = _STRLIT_CHAR("MP4 Progressive Playback Until EOS");
@@ -2937,7 +2952,7 @@ void pvplayer_engine_test::test()
 
             case ProgPlaybackMP4ShortTest:
 #if RUN_HTTPDOWNLOAD_TESTCASES && RUN_MP4FILE_TESTCASES
-                testparam.iFileType = PVMF_MPEG4FF;
+                testparam.iFileType = PVMF_MIME_MPEG4FF;
                 iCurrentTest = new pvplayer_async_test_ppb_normal(testparam);
 #else
                 fprintf(file, "MP4 progressive playback tests not enabled\n");
@@ -2946,7 +2961,7 @@ void pvplayer_engine_test::test()
 
             case ProgPlaybackMP4ShortPauseResumeTest:
 #if RUN_HTTPDOWNLOAD_TESTCASES && RUN_MP4FILE_TESTCASES
-                testparam.iFileType = PVMF_MPEG4FF;
+                testparam.iFileType = PVMF_MIME_MPEG4FF;
                 iCurrentTest = new pvplayer_async_test_ppb_normal(testparam);
                 ((pvplayer_async_test_ppb_normal*)iCurrentTest)->enableShortPauseResume();
                 ((pvplayer_async_test_ppb_normal*)iCurrentTest)->iTestCaseName = _STRLIT_CHAR("MP4 Progressive Playback Short Pause Resume");
@@ -2957,7 +2972,7 @@ void pvplayer_engine_test::test()
 
             case ProgPlaybackMP4LongPauseResumeTest:
 #if RUN_HTTPDOWNLOAD_TESTCASES && RUN_MP4FILE_TESTCASES
-                testparam.iFileType = PVMF_MPEG4FF;
+                testparam.iFileType = PVMF_MIME_MPEG4FF;
                 iCurrentTest = new pvplayer_async_test_ppb_normal(testparam);
                 ((pvplayer_async_test_ppb_normal*)iCurrentTest)->enableLongPauseResume();
                 ((pvplayer_async_test_ppb_normal*)iCurrentTest)->enablePlayUntilEOS();
@@ -2969,7 +2984,7 @@ void pvplayer_engine_test::test()
 
             case ProgPlaybackMP4StartPauseSeekResumeTwiceTest:
 #if RUN_HTTPDOWNLOAD_TESTCASES && RUN_MP4FILE_TESTCASES
-                testparam.iFileType = PVMF_MPEG4FF;
+                testparam.iFileType = PVMF_MIME_MPEG4FF;
                 iCurrentTest = new pvplayer_async_test_ppb_normal(testparam);
                 ((pvplayer_async_test_ppb_normal*)iCurrentTest)->enableShortPauseResume();
                 ((pvplayer_async_test_ppb_normal*)iCurrentTest)->enableSeekAfterStart();
@@ -2982,7 +2997,7 @@ void pvplayer_engine_test::test()
 
             case ProgPlaybackMP4SeekStartTest:
 #if RUN_HTTPDOWNLOAD_TESTCASES && RUN_MP4FILE_TESTCASES
-                testparam.iFileType = PVMF_MPEG4FF;
+                testparam.iFileType = PVMF_MIME_MPEG4FF;
                 iCurrentTest = new pvplayer_async_test_ppb_normal(testparam);
                 ((pvplayer_async_test_ppb_normal*)iCurrentTest)->enableSeekBeforeStart();
                 ((pvplayer_async_test_ppb_normal*)iCurrentTest)->enablePlayUntilEOS();
@@ -2994,7 +3009,7 @@ void pvplayer_engine_test::test()
 
             case ProgPlaybackMP4StartPauseSeekResumeLoopTest:
 #if RUN_HTTPDOWNLOAD_TESTCASES && RUN_MP4FILE_TESTCASES
-                testparam.iFileType = PVMF_MPEG4FF;
+                testparam.iFileType = PVMF_MIME_MPEG4FF;
                 iCurrentTest = new pvplayer_async_test_ppb_normal(testparam);
                 ((pvplayer_async_test_ppb_normal*)iCurrentTest)->enableShortPauseResume();
                 ((pvplayer_async_test_ppb_normal*)iCurrentTest)->enableSeekAfterStart();
@@ -3007,7 +3022,7 @@ void pvplayer_engine_test::test()
 
             case ProgPlaybackMP4SeekForwardStepLoopTest:
 #if RUN_HTTPDOWNLOAD_TESTCASES && RUN_MP4FILE_TESTCASES
-                testparam.iFileType = PVMF_MPEG4FF;
+                testparam.iFileType = PVMF_MIME_MPEG4FF;
                 iCurrentTest = new pvplayer_async_test_ppb_normal(testparam);
                 ((pvplayer_async_test_ppb_normal*)iCurrentTest)->enableShortPauseResume();
                 ((pvplayer_async_test_ppb_normal*)iCurrentTest)->enableSeekAfterStart();
@@ -3019,9 +3034,44 @@ void pvplayer_engine_test::test()
 #endif
                 break;
 
+            case ProgPlaybackMP4SeekToBOCAfterDownloadCompleteTest:
+#if RUN_HTTPDOWNLOAD_TESTCASES && RUN_MP4FILE_TESTCASES
+                testparam.iFileType = PVMF_MIME_MPEG4FF;
+                iCurrentTest = new pvplayer_async_test_ppb_normal(testparam);
+                ((pvplayer_async_test_ppb_normal*)iCurrentTest)->enableSeekToBOC();
+                ((pvplayer_async_test_ppb_normal*)iCurrentTest)->enableSeekAfterDownloadComplete();
+                ((pvplayer_async_test_ppb_normal*)iCurrentTest)->iTestCaseName = _STRLIT_CHAR("MP4 Progressive Playback Seek To Beginning Of Clip After Download Complete");
+#else
+                fprintf(file, "MP4 progressive playback tests not enabled\n");
+#endif
+                break;
+
+            case ProgPlaybackMP4SeekInCacheAfterDownloadCompleteTest:
+#if RUN_HTTPDOWNLOAD_TESTCASES && RUN_MP4FILE_TESTCASES
+                testparam.iFileType = PVMF_MIME_MPEG4FF;
+                iCurrentTest = new pvplayer_async_test_ppb_normal(testparam);
+                ((pvplayer_async_test_ppb_normal*)iCurrentTest)->enableSeekInCache();
+                ((pvplayer_async_test_ppb_normal*)iCurrentTest)->enableSeekAfterDownloadComplete();
+                ((pvplayer_async_test_ppb_normal*)iCurrentTest)->iTestCaseName = _STRLIT_CHAR("MP4 Progressive Playback Seek To Position In Cache After Download Complete");
+#else
+                fprintf(file, "MP4 progressive playback tests not enabled\n");
+#endif
+                break;
+
+            case ProgPlaybackMP4EOSStopPlayAgainTest:
+#if RUN_HTTPDOWNLOAD_TESTCASES && RUN_MP4FILE_TESTCASES
+                testparam.iFileType = PVMF_MIME_MPEG4FF;
+                iCurrentTest = new pvplayer_async_test_ppb_normal(testparam);
+                ((pvplayer_async_test_ppb_normal*)iCurrentTest)->enablePlayUntilEOS();
+                ((pvplayer_async_test_ppb_normal*)iCurrentTest)->enableEOSStopPlay();
+                ((pvplayer_async_test_ppb_normal*)iCurrentTest)->iTestCaseName = _STRLIT_CHAR("MP4 Progressive Playback To EOS Stop and Play Again");
+#else
+                fprintf(file, "MP4 progressive playback tests not enabled\n");
+#endif
+                break;
 
             case FTDownloadOpenPlayUntilEOSTest:
-#if RUN_HTTPDOWNLOAD_TESTCASES
+#if RUN_FASTTRACK_TESTCASES
 #ifndef ONLY_3GPP_STREAMING_FORMAT
                 iCurrentTest = new pvplayer_async_test_ftdlnormal(testparam);
                 ((pvplayer_async_test_ftdlnormal*)iCurrentTest)->enablePlayUntilEOS();
@@ -3033,14 +3083,26 @@ void pvplayer_engine_test::test()
 #endif
                 break;
 
+            case MultipleInstanceOpenPlayStopTest:
+            {
+                iCurrentTest = new pvplayer_async_test_multiple_instance(testparam);
+            }
+            break;
+
+            case MultipleThreadOpenPlayStopTest:
+            {
+                iCurrentTest = new pvplayer_async_test_multiple_thread(testparam);
+            }
+            break;
+
             case StreamingOpenPlayStopTest:
             {
 #if RUN_STREAMING_TESTCASES
                 fprintf(file, "StreamingOpenPlayStopTest");
                 iCurrentTest =
                     new pvplayer_async_test_streamingopenplaystop(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
@@ -3060,8 +3122,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "StreamingOpenPlayPausePlayStopTest");
                 iCurrentTest =
                     new pvplayer_async_test_streamingopenplaystop(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             true,
                             false,
@@ -3081,8 +3143,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "StreamingOpenPlaySeekStopTest");
                 iCurrentTest =
                     new pvplayer_async_test_streamingopenplaystop(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             true,
@@ -3102,8 +3164,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "StreamingCancelDuringPrepareTest");
                 iCurrentTest =
                     new pvplayer_async_test_streamingopenplaystop(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
@@ -3118,7 +3180,7 @@ void pvplayer_engine_test::test()
             break;
 
             case PrintMetadataTest:
-                iCurrentTest = new pvplayer_async_test_printmetadata(testparam);
+                iCurrentTest = new pvplayer_async_test_printmetadata(testparam, false);
                 break;
 
             case PrintMemStatsTest:
@@ -3127,6 +3189,10 @@ void pvplayer_engine_test::test()
 
             case PlayUntilEOSTest:
                 iCurrentTest = new pvplayer_async_test_playuntileos(testparam);
+                break;
+
+            case ReleaseMetadataTest:
+                iCurrentTest = new pvplayer_async_test_printmetadata(testparam, true);
                 break;
 
             case CleanDrmData_JanusCPMTest:
@@ -3351,50 +3417,50 @@ void pvplayer_engine_test::test()
 #endif
                 break;
 
-            case DLA_OpenPlayStop_JupiterCPMTest_v24_WMA_ringtone:
+            case DLA_OpenPlayStop_JupiterCPMTest_v4_WMA_ringtone:
 #if RUN_CPMJUPITER_TESTCASES
                 iCurrentTest = new pvplayer_async_test_jupitercpm_dla_openplaystop(testparam
-                        , EJupContentType_v24_WMA
+                        , EJupContentType_v4_WMA
                         , EJupLicenseType_DLA_With_Ringtone);
 #else
                 fprintf(file, "Jupiter CPM tests not enabled\n");
 #endif
                 break;
 
-            case DLA_OpenPlayStop_JupiterCPMTest_v24_WMA_domain:
+            case DLA_OpenPlayStop_JupiterCPMTest_v4_WMA_domain:
 #if RUN_CPMJUPITER_TESTCASES
                 iCurrentTest = new pvplayer_async_test_jupitercpm_dla_openplaystop(testparam
-                        , EJupContentType_v24_WMA
+                        , EJupContentType_v4_WMA
                         , EJupLicenseType_DLA_With_Domain);
 #else
                 fprintf(file, "Jupiter CPM tests not enabled\n");
 #endif
                 break;
 
-            case DLA_OpenPlayStop_JupiterCPMTest_v24_WMA_domain_renew:
+            case DLA_OpenPlayStop_JupiterCPMTest_v4_WMA_domain_renew:
 #if RUN_CPMJUPITER_TESTCASES
                 iCurrentTest = new pvplayer_async_test_jupitercpm_dla_openplaystop(testparam
-                        , EJupContentType_v24_WMA
+                        , EJupContentType_v4_WMA
                         , EJupLicenseType_DLA_With_DomainRenew);
 #else
                 fprintf(file, "Jupiter CPM tests not enabled\n");
 #endif
                 break;
 
-            case DLA_OpenPlayStop_JupiterCPMTest_v24_WMA_domain_offline:
+            case DLA_OpenPlayStop_JupiterCPMTest_v4_WMA_domain_offline:
 #if RUN_CPMJUPITER_TESTCASES
                 iCurrentTest = new pvplayer_async_test_jupitercpm_dla_openplaystop(testparam
-                        , EJupContentType_v24_WMA
+                        , EJupContentType_v4_WMA
                         , EJupLicenseType_DLA_With_DomainOffline);
 #else
                 fprintf(file, "Jupiter CPM tests not enabled\n");
 #endif
                 break;
 
-            case DLA_OpenPlayStop_JupiterCPMTest_v24_WMA_domain_history:
+            case DLA_OpenPlayStop_JupiterCPMTest_v4_WMA_domain_history:
 #if RUN_CPMJUPITER_TESTCASES
                 iCurrentTest = new pvplayer_async_test_jupitercpm_dla_openplaystop(testparam
-                        , EJupContentType_v24_WMA
+                        , EJupContentType_v4_WMA
                         , EJupLicenseType_DLA_With_DomainHistory);
 #else
                 fprintf(file, "Jupiter CPM tests not enabled\n");
@@ -3418,7 +3484,7 @@ void pvplayer_engine_test::test()
                 break;
 
             case DLA_MeteringByCert_JupiterCPMTest:
-#if RUN_CPMJUPITER_TESTCASES
+#if (RUN_CPMJUPITER_TESTCASES && RUN_CPMJUPITER_METERING_TESTCASES)
                 iCurrentTest = new pvplayer_async_test_jupitercpm_dla_metering_or_sync(testparam
                         , EPVMeterTestType_byCert
                         , EJupContentType_mixed
@@ -3429,7 +3495,7 @@ void pvplayer_engine_test::test()
                 break;
 
             case DLA_MeteringByMID_JupiterCPMTest:
-#if RUN_CPMJUPITER_TESTCASES
+#if (RUN_CPMJUPITER_TESTCASES && RUN_CPMJUPITER_METERING_TESTCASES)
                 iCurrentTest = new pvplayer_async_test_jupitercpm_dla_metering_or_sync(testparam
                         , EPVMeterTestType_byMID
                         , EJupContentType_mixed
@@ -3440,7 +3506,7 @@ void pvplayer_engine_test::test()
                 break;
 
             case DLA_MeteringAll_JupiterCPMTest:
-#if RUN_CPMJUPITER_TESTCASES
+#if (RUN_CPMJUPITER_TESTCASES && RUN_CPMJUPITER_METERING_TESTCASES)
                 iCurrentTest = new pvplayer_async_test_jupitercpm_dla_metering_or_sync(testparam
                         , EPVMeterTestType_All
                         , EJupContentType_mixed
@@ -3530,8 +3596,8 @@ void pvplayer_engine_test::test()
 #if RUN_STREAMING_TESTCASES
                 fprintf(file, "StreamingOpenPlayUntilEOSTest");
                 iCurrentTest = new pvplayer_async_test_streamingopenplaystop(testparam,
-                        PVMF_YUV420,
-                        PVMF_PCM16,
+                        PVMF_MIME_YUV420,
+                        PVMF_MIME_PCM16,
                         iCurrentTestNumber,
                         false,
                         false,
@@ -3548,8 +3614,8 @@ void pvplayer_engine_test::test()
 #if RUN_RTSP_CLOAKING_TESTCASES
                 fprintf(file, "StreamingCloakingOpenPlayUntilEOSTest");
                 iCurrentTest = new pvplayer_async_test_streamingopenplaystop(testparam,
-                        PVMF_YUV420,
-                        PVMF_PCM16,
+                        PVMF_MIME_YUV420,
+                        PVMF_MIME_PCM16,
                         iCurrentTestNumber,
                         false,
                         false,
@@ -3568,8 +3634,8 @@ void pvplayer_engine_test::test()
 #if RUN_STREAMING_TESTCASES
                 fprintf(file, "StreamingOpenPlayPausePlayUntilEOSTest");
                 iCurrentTest = new pvplayer_async_test_streamingopenplaystop(testparam,
-                        PVMF_YUV420,
-                        PVMF_PCM16,
+                        PVMF_MIME_YUV420,
+                        PVMF_MIME_PCM16,
                         iCurrentTestNumber,
                         true,
                         false,
@@ -3587,8 +3653,8 @@ void pvplayer_engine_test::test()
 #if RUN_STREAMING_TESTCASES
                 fprintf(file, "StreamingOpenPlayPausePlayUntilEOSTest");
                 iCurrentTest = new pvplayer_async_test_streamingopenplaystop(testparam,
-                        PVMF_YUV420,
-                        PVMF_PCM16,
+                        PVMF_MIME_YUV420,
+                        PVMF_MIME_PCM16,
                         iCurrentTestNumber,
                         true,
                         false,
@@ -3612,8 +3678,8 @@ void pvplayer_engine_test::test()
 #if RUN_STREAMING_TESTCASES
                 fprintf(file, "StreamingOpenPlaySeekPlayUntilEOSTest");
                 iCurrentTest = new pvplayer_async_test_streamingopenplaystop(testparam,
-                        PVMF_YUV420,
-                        PVMF_PCM16,
+                        PVMF_MIME_YUV420,
+                        PVMF_MIME_PCM16,
                         iCurrentTestNumber,
                         false,
                         true,
@@ -3630,8 +3696,8 @@ void pvplayer_engine_test::test()
 #if RUN_STREAMING_TESTCASES
                 fprintf(file, "StreamingOpenPlayForwardPlayUntilEOSTest");
                 iCurrentTest = new pvplayer_async_test_streamingopenplaystop(testparam,
-                        PVMF_YUV420,
-                        PVMF_PCM16,
+                        PVMF_MIME_YUV420,
+                        PVMF_MIME_PCM16,
                         iCurrentTestNumber,
                         false,
                         false,
@@ -3648,8 +3714,8 @@ void pvplayer_engine_test::test()
 #if RUN_STREAMING_TESTCASES
                 fprintf(file, "StreamingJitterBufferAdjustUntilEOSTest");
                 iCurrentTest = new pvplayer_async_test_streamingJBadjust(testparam,
-                        PVMF_YUV420,
-                        PVMF_PCM16,
+                        PVMF_MIME_YUV420,
+                        PVMF_MIME_PCM16,
                         iCurrentTestNumber,
                         false,
                         false,
@@ -3667,8 +3733,8 @@ void pvplayer_engine_test::test()
                         (NULL == (oscl_strstr(testparam.iFileName, ".sdp"))))
                 {
                     iCurrentTest = new pvplayer_async_test_streaming_bitstream_switch(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             true);
                 }
@@ -3689,8 +3755,8 @@ void pvplayer_engine_test::test()
 #if RUN_STREAMING_TESTCASES
                 fprintf(file, "StreamingMultiplePlayUntilEOSTest");
                 iCurrentTest = new pvplayer_async_test_streamingopenplaystop(testparam,
-                        PVMF_YUV420,
-                        PVMF_PCM16,
+                        PVMF_MIME_YUV420,
+                        PVMF_MIME_PCM16,
                         iCurrentTestNumber,
                         false,
                         false,
@@ -3714,8 +3780,8 @@ void pvplayer_engine_test::test()
 #if RUN_RTSP_CLOAKING_TESTCASES
                 fprintf(file, "StreamingMultipleCloakingPlayUntilEOSTest");
                 iCurrentTest = new pvplayer_async_test_streamingopenplaystop(testparam,
-                        PVMF_YUV420,
-                        PVMF_PCM16,
+                        PVMF_MIME_YUV420,
+                        PVMF_MIME_PCM16,
                         iCurrentTestNumber,
                         false,
                         false,
@@ -3741,8 +3807,8 @@ void pvplayer_engine_test::test()
 #if RUN_STREAMING_TESTCASES
                 fprintf(file, "StreamingProtocolRollOverTest");
                 iCurrentTest = new pvplayer_async_test_streamingopenplaystop(testparam,
-                        PVMF_YUV420,
-                        PVMF_PCM16,
+                        PVMF_MIME_YUV420,
+                        PVMF_MIME_PCM16,
                         iCurrentTestNumber,
                         false,
                         false,
@@ -3758,13 +3824,32 @@ void pvplayer_engine_test::test()
             }
             break;
 
+            case StreamingOpenPlayUntilEOSTestWithFileHandle:
+#if RUN_STREAMING_TESTCASES
+                fprintf(file, "StreamingOpenPlayUntilEOSTestWithFileHandle");
+                iCurrentTest = new pvplayer_async_test_streamingopenplaystop(testparam,
+                        PVMF_MIME_YUV420,
+                        PVMF_MIME_PCM16,
+                        iCurrentTestNumber,
+                        false,
+                        false,
+                        true,
+                        false,
+                        false,
+                        false,
+                        true);
+#else
+                fprintf(file, "Streaming tests not enabled\n");
+#endif
+                break;
+
             case StreamingProtocolRollOverTestWithUnknownURLType:
             {
 #if RUN_STREAMING_TESTCASES
                 fprintf(file, "StreamingProtocolRollOverTestWithUnknownURLType");
                 iCurrentTest = new pvplayer_async_test_streamingopenplaystop(testparam,
-                        PVMF_YUV420,
-                        PVMF_PCM16,
+                        PVMF_MIME_YUV420,
+                        PVMF_MIME_PCM16,
                         iCurrentTestNumber,
                         false,
                         false,
@@ -3786,8 +3871,8 @@ void pvplayer_engine_test::test()
 #ifndef ONLY_3GPP_STREAMING_FORMAT
                 fprintf(file, "StreamingPlayListSeekTest");
                 iCurrentTest = new pvplayer_async_test_streamingopenplaystop(testparam,
-                        PVMF_YUV420,
-                        PVMF_PCM16,
+                        PVMF_MIME_YUV420,
+                        PVMF_MIME_PCM16,
                         iCurrentTestNumber,
                         false,
                         true,
@@ -3811,8 +3896,8 @@ void pvplayer_engine_test::test()
 #if RUN_STREAMING_TESTCASES
                 fprintf(file, "StreamingSeekAfterEOSTest");
                 iCurrentTest = new pvplayer_async_test_streamingopenplaystop(testparam,
-                        PVMF_YUV420,
-                        PVMF_PCM16,
+                        PVMF_MIME_YUV420,
+                        PVMF_MIME_PCM16,
                         iCurrentTestNumber,
                         false,
                         false,
@@ -3830,12 +3915,62 @@ void pvplayer_engine_test::test()
             }
             break;
 
+            case StreamingPlayListErrorCodeTest:
+            {
+#if RUN_STREAMING_TESTCASES
+#ifndef ONLY_3GPP_STREAMING_FORMAT
+                fprintf(file, "StreamingPlayListErrorCodeTest");
+                iCurrentTest = new pvplayer_async_test_streamingopenplaystop(testparam,
+                        PVMF_MIME_YUV420,
+                        PVMF_MIME_PCM16,
+                        iCurrentTestNumber,
+                        false,
+                        true,
+                        true,
+                        false,
+                        false,
+                        false);
+
+                ((pvplayer_async_test_streamingopenplaystop*)iCurrentTest)->setPlayListMode();
+                ((pvplayer_async_test_streamingopenplaystop*)iCurrentTest)->setErrorCodeTest();
+#else
+                fprintf(file, "Streaming: playlist tests not enabled\n");
+#endif
+#else
+                fprintf(file, "Streaming tests not enabled\n");
+#endif
+            }
+            break;
+
+            case StreamingOpenPlayMultipleSeekToEndOfClipUntilEOSTest:
+            {
+#if RUN_STREAMING_TESTCASES
+                fprintf(file, "StreamingOpenPlayMultipleSeekToEndOfClipUntilEOSTest");
+                iCurrentTest = new pvplayer_async_test_streamingopenplaystop(testparam,
+                        PVMF_MIME_YUV420,
+                        PVMF_MIME_PCM16,
+                        iCurrentTestNumber,
+                        false,
+                        true,
+                        true,
+                        false,
+                        false,
+                        false,
+                        false,
+                        true);
+#else
+                fprintf(file, "Streaming tests not enabled\n");
+#endif
+            }
+            break;
+
+
             case StreamingLongPauseTest:
 #if RUN_STREAMING_TESTCASES
                 fprintf(file, "StreamingLongPauseTest");
                 iCurrentTest = new pvplayer_async_test_streamingopenplaystop(testparam,
-                        PVMF_YUV420,
-                        PVMF_PCM16,
+                        PVMF_MIME_YUV420,
+                        PVMF_MIME_PCM16,
                         iCurrentTestNumber,
                         true,
                         false,
@@ -3897,8 +4032,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericReset_AddDataSource");
                 iCurrentTest =
                     new pvplayer_async_test_genericreset(testparam,
-                                                         PVMF_YUV420,
-                                                         PVMF_PCM16,
+                                                         PVMF_MIME_YUV420,
+                                                         PVMF_MIME_PCM16,
                                                          iCurrentTestNumber,
                                                          true,
                                                          false,
@@ -3913,8 +4048,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericReset_Init");
                 iCurrentTest =
                     new pvplayer_async_test_genericreset(testparam,
-                                                         PVMF_YUV420,
-                                                         PVMF_PCM16,
+                                                         PVMF_MIME_YUV420,
+                                                         PVMF_MIME_PCM16,
                                                          iCurrentTestNumber,
                                                          true,
                                                          false,
@@ -3929,8 +4064,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericReset_AddDataSinkVideo");
                 iCurrentTest =
                     new pvplayer_async_test_genericreset(testparam,
-                                                         PVMF_YUV420,
-                                                         PVMF_PCM16,
+                                                         PVMF_MIME_YUV420,
+                                                         PVMF_MIME_PCM16,
                                                          iCurrentTestNumber,
                                                          true,
                                                          false,
@@ -3945,8 +4080,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericReset_AddDataSinkAudio");
                 iCurrentTest =
                     new pvplayer_async_test_genericreset(testparam,
-                                                         PVMF_YUV420,
-                                                         PVMF_PCM16,
+                                                         PVMF_MIME_YUV420,
+                                                         PVMF_MIME_PCM16,
                                                          iCurrentTestNumber,
                                                          true,
                                                          false,
@@ -3961,8 +4096,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericReset_Prepare");
                 iCurrentTest =
                     new pvplayer_async_test_genericreset(testparam,
-                                                         PVMF_YUV420,
-                                                         PVMF_PCM16,
+                                                         PVMF_MIME_YUV420,
+                                                         PVMF_MIME_PCM16,
                                                          iCurrentTestNumber,
                                                          true,
                                                          false,
@@ -3977,8 +4112,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericReset_Start");
                 iCurrentTest =
                     new pvplayer_async_test_genericreset(testparam,
-                                                         PVMF_YUV420,
-                                                         PVMF_PCM16,
+                                                         PVMF_MIME_YUV420,
+                                                         PVMF_MIME_PCM16,
                                                          iCurrentTestNumber,
                                                          true,
                                                          false,
@@ -3993,8 +4128,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericReset_Pause");
                 iCurrentTest =
                     new pvplayer_async_test_genericreset(testparam,
-                                                         PVMF_YUV420,
-                                                         PVMF_PCM16,
+                                                         PVMF_MIME_YUV420,
+                                                         PVMF_MIME_PCM16,
                                                          iCurrentTestNumber,
                                                          true,
                                                          false,
@@ -4009,8 +4144,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericReset_Resume");
                 iCurrentTest =
                     new pvplayer_async_test_genericreset(testparam,
-                                                         PVMF_YUV420,
-                                                         PVMF_PCM16,
+                                                         PVMF_MIME_YUV420,
+                                                         PVMF_MIME_PCM16,
                                                          iCurrentTestNumber,
                                                          true,
                                                          false,
@@ -4025,8 +4160,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericReset_Stop");
                 iCurrentTest =
                     new pvplayer_async_test_genericreset(testparam,
-                                                         PVMF_YUV420,
-                                                         PVMF_PCM16,
+                                                         PVMF_MIME_YUV420,
+                                                         PVMF_MIME_PCM16,
                                                          iCurrentTestNumber,
                                                          false,
                                                          false,
@@ -4042,8 +4177,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericReset_SetPlaybackRange");
                 iCurrentTest =
                     new pvplayer_async_test_genericreset(testparam,
-                                                         PVMF_YUV420,
-                                                         PVMF_PCM16,
+                                                         PVMF_MIME_YUV420,
+                                                         PVMF_MIME_PCM16,
                                                          iCurrentTestNumber,
                                                          false,
                                                          true,
@@ -4058,8 +4193,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericDelete_AddDataSource");
                 iCurrentTest =
                     new pvplayer_async_test_genericdelete(testparam,
-                                                          PVMF_YUV420,
-                                                          PVMF_PCM16,
+                                                          PVMF_MIME_YUV420,
+                                                          PVMF_MIME_PCM16,
                                                           iCurrentTestNumber,
                                                           true,
                                                           false,
@@ -4074,8 +4209,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericDelete_Init");
                 iCurrentTest =
                     new pvplayer_async_test_genericdelete(testparam,
-                                                          PVMF_YUV420,
-                                                          PVMF_PCM16,
+                                                          PVMF_MIME_YUV420,
+                                                          PVMF_MIME_PCM16,
                                                           iCurrentTestNumber,
                                                           true,
                                                           false,
@@ -4090,8 +4225,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericDelete_AddDataSinkVideo");
                 iCurrentTest =
                     new pvplayer_async_test_genericdelete(testparam,
-                                                          PVMF_YUV420,
-                                                          PVMF_PCM16,
+                                                          PVMF_MIME_YUV420,
+                                                          PVMF_MIME_PCM16,
                                                           iCurrentTestNumber,
                                                           true,
                                                           false,
@@ -4106,8 +4241,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericDelete_AddDataSinkAudio");
                 iCurrentTest =
                     new pvplayer_async_test_genericdelete(testparam,
-                                                          PVMF_YUV420,
-                                                          PVMF_PCM16,
+                                                          PVMF_MIME_YUV420,
+                                                          PVMF_MIME_PCM16,
                                                           iCurrentTestNumber,
                                                           true,
                                                           false,
@@ -4122,8 +4257,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericDelete_Prepare");
                 iCurrentTest =
                     new pvplayer_async_test_genericdelete(testparam,
-                                                          PVMF_YUV420,
-                                                          PVMF_PCM16,
+                                                          PVMF_MIME_YUV420,
+                                                          PVMF_MIME_PCM16,
                                                           iCurrentTestNumber,
                                                           true,
                                                           false,
@@ -4138,8 +4273,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericDelete_Start");
                 iCurrentTest =
                     new pvplayer_async_test_genericdelete(testparam,
-                                                          PVMF_YUV420,
-                                                          PVMF_PCM16,
+                                                          PVMF_MIME_YUV420,
+                                                          PVMF_MIME_PCM16,
                                                           iCurrentTestNumber,
                                                           true,
                                                           false,
@@ -4154,8 +4289,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericDelete_Pause");
                 iCurrentTest =
                     new pvplayer_async_test_genericdelete(testparam,
-                                                          PVMF_YUV420,
-                                                          PVMF_PCM16,
+                                                          PVMF_MIME_YUV420,
+                                                          PVMF_MIME_PCM16,
                                                           iCurrentTestNumber,
                                                           true,
                                                           false,
@@ -4170,8 +4305,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericDelete_Resume");
                 iCurrentTest =
                     new pvplayer_async_test_genericdelete(testparam,
-                                                          PVMF_YUV420,
-                                                          PVMF_PCM16,
+                                                          PVMF_MIME_YUV420,
+                                                          PVMF_MIME_PCM16,
                                                           iCurrentTestNumber,
                                                           true,
                                                           false,
@@ -4186,8 +4321,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericDelete_Stop");
                 iCurrentTest =
                     new pvplayer_async_test_genericdelete(testparam,
-                                                          PVMF_YUV420,
-                                                          PVMF_PCM16,
+                                                          PVMF_MIME_YUV420,
+                                                          PVMF_MIME_PCM16,
                                                           iCurrentTestNumber,
                                                           false,
                                                           false,
@@ -4203,8 +4338,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericDelete_SetPlaybackRange");
                 iCurrentTest =
                     new pvplayer_async_test_genericdelete(testparam,
-                                                          PVMF_YUV420,
-                                                          PVMF_PCM16,
+                                                          PVMF_MIME_YUV420,
+                                                          PVMF_MIME_PCM16,
                                                           iCurrentTestNumber,
                                                           false,
                                                           true,
@@ -4219,8 +4354,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericDeleteWhileProc_AddDataSource");
                 iCurrentTest =
                     new pvplayer_async_test_genericdelete(testparam,
-                                                          PVMF_YUV420,
-                                                          PVMF_PCM16,
+                                                          PVMF_MIME_YUV420,
+                                                          PVMF_MIME_PCM16,
                                                           iCurrentTestNumber,
                                                           true,
                                                           false,
@@ -4235,8 +4370,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericDeleteWhileProc_Init");
                 iCurrentTest =
                     new pvplayer_async_test_genericdelete(testparam,
-                                                          PVMF_YUV420,
-                                                          PVMF_PCM16,
+                                                          PVMF_MIME_YUV420,
+                                                          PVMF_MIME_PCM16,
                                                           iCurrentTestNumber,
                                                           true,
                                                           false,
@@ -4251,8 +4386,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericDeleteWhileProc_AddDataSinkVideo");
                 iCurrentTest =
                     new pvplayer_async_test_genericdelete(testparam,
-                                                          PVMF_YUV420,
-                                                          PVMF_PCM16,
+                                                          PVMF_MIME_YUV420,
+                                                          PVMF_MIME_PCM16,
                                                           iCurrentTestNumber,
                                                           true,
                                                           false,
@@ -4267,8 +4402,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericDeleteWhileProc_AddDataSinkAudio");
                 iCurrentTest =
                     new pvplayer_async_test_genericdelete(testparam,
-                                                          PVMF_YUV420,
-                                                          PVMF_PCM16,
+                                                          PVMF_MIME_YUV420,
+                                                          PVMF_MIME_PCM16,
                                                           iCurrentTestNumber,
                                                           true,
                                                           false,
@@ -4283,8 +4418,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericDeleteWhileProc_Prepare");
                 iCurrentTest =
                     new pvplayer_async_test_genericdelete(testparam,
-                                                          PVMF_YUV420,
-                                                          PVMF_PCM16,
+                                                          PVMF_MIME_YUV420,
+                                                          PVMF_MIME_PCM16,
                                                           iCurrentTestNumber,
                                                           true,
                                                           false,
@@ -4299,8 +4434,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericDeleteWhileProc_Start");
                 iCurrentTest =
                     new pvplayer_async_test_genericdelete(testparam,
-                                                          PVMF_YUV420,
-                                                          PVMF_PCM16,
+                                                          PVMF_MIME_YUV420,
+                                                          PVMF_MIME_PCM16,
                                                           iCurrentTestNumber,
                                                           true,
                                                           false,
@@ -4315,8 +4450,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericDeleteWhileProc_Pause");
                 iCurrentTest =
                     new pvplayer_async_test_genericdelete(testparam,
-                                                          PVMF_YUV420,
-                                                          PVMF_PCM16,
+                                                          PVMF_MIME_YUV420,
+                                                          PVMF_MIME_PCM16,
                                                           iCurrentTestNumber,
                                                           true,
                                                           false,
@@ -4331,8 +4466,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericDeleteWhileProc_Resume");
                 iCurrentTest =
                     new pvplayer_async_test_genericdelete(testparam,
-                                                          PVMF_YUV420,
-                                                          PVMF_PCM16,
+                                                          PVMF_MIME_YUV420,
+                                                          PVMF_MIME_PCM16,
                                                           iCurrentTestNumber,
                                                           true,
                                                           false,
@@ -4347,8 +4482,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericDeleteWhileProc_Stop");
                 iCurrentTest =
                     new pvplayer_async_test_genericdelete(testparam,
-                                                          PVMF_YUV420,
-                                                          PVMF_PCM16,
+                                                          PVMF_MIME_YUV420,
+                                                          PVMF_MIME_PCM16,
                                                           iCurrentTestNumber,
                                                           false,
                                                           false,
@@ -4363,8 +4498,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericDeleteWhileProc_SetPlaybackRange");
                 iCurrentTest =
                     new pvplayer_async_test_genericdelete(testparam,
-                                                          PVMF_YUV420,
-                                                          PVMF_PCM16,
+                                                          PVMF_MIME_YUV420,
+                                                          PVMF_MIME_PCM16,
                                                           iCurrentTestNumber,
                                                           false,
                                                           true,
@@ -4379,8 +4514,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericCancelAll_AddDataSource");
                 iCurrentTest =
                     new pvplayer_async_test_genericcancelall(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             true,
                             false,
@@ -4395,8 +4530,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericCancelAll_Init");
                 iCurrentTest =
                     new pvplayer_async_test_genericcancelall(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             true,
                             false,
@@ -4411,8 +4546,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericCancelAll_AddDataSinkVideo");
                 iCurrentTest =
                     new pvplayer_async_test_genericcancelall(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             true,
                             false,
@@ -4427,8 +4562,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericCancelAll_AddDataSinkAudio");
                 iCurrentTest =
                     new pvplayer_async_test_genericcancelall(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             true,
                             false,
@@ -4444,8 +4579,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericCancelAll_Prepare");
                 iCurrentTest =
                     new pvplayer_async_test_genericcancelall(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             true,
                             false,
@@ -4460,8 +4595,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericCancelAll_Start");
                 iCurrentTest =
                     new pvplayer_async_test_genericcancelall(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             true,
                             false,
@@ -4476,8 +4611,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericCancelAll_Pause");
                 iCurrentTest =
                     new pvplayer_async_test_genericcancelall(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             true,
                             false,
@@ -4492,8 +4627,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericCancelAll_Resume");
                 iCurrentTest =
                     new pvplayer_async_test_genericcancelall(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             true,
                             false,
@@ -4508,8 +4643,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericCancelAll_Stop");
                 iCurrentTest =
                     new pvplayer_async_test_genericcancelall(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
@@ -4524,8 +4659,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericCancelAll_SetPlaybackRange");
                 iCurrentTest =
                     new pvplayer_async_test_genericcancelall(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             true,
@@ -4540,8 +4675,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericCancelAllWhileProc_AddDataSource");
                 iCurrentTest =
                     new pvplayer_async_test_genericcancelall(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             true,
                             false,
@@ -4556,8 +4691,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericCancelAllWhileProc_Init");
                 iCurrentTest =
                     new pvplayer_async_test_genericcancelall(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             true,
                             false,
@@ -4572,8 +4707,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericCancelAllWhileProc_AddDataSinkVideo");
                 iCurrentTest =
                     new pvplayer_async_test_genericcancelall(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             true,
                             false,
@@ -4588,8 +4723,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericCancelAllWhileProc_AddDataSinkAudio");
                 iCurrentTest =
                     new pvplayer_async_test_genericcancelall(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             true,
                             false,
@@ -4604,8 +4739,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericCancelAllWhileProc_Prepare");
                 iCurrentTest =
                     new pvplayer_async_test_genericcancelall(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             true,
                             false,
@@ -4620,8 +4755,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericCancelAllWhileProc_Start");
                 iCurrentTest =
                     new pvplayer_async_test_genericcancelall(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             true,
                             false,
@@ -4636,8 +4771,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericCancelAllWhileProc_Pause");
                 iCurrentTest =
                     new pvplayer_async_test_genericcancelall(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             true,
                             false,
@@ -4652,8 +4787,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericCancelAllWhileProc_Resume");
                 iCurrentTest =
                     new pvplayer_async_test_genericcancelall(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             true,
                             false,
@@ -4668,8 +4803,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericCancelAllWhileProc_Stop");
                 iCurrentTest =
                     new pvplayer_async_test_genericcancelall(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
@@ -4684,8 +4819,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericCancelAllWhileProc_SetPlaybackRange");
                 iCurrentTest =
                     new pvplayer_async_test_genericcancelall(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             true,
@@ -4701,8 +4836,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnect_AddDataSource");
                 iCurrentTest =
                     new pvplayer_async_test_genericnetworkdisconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
@@ -4717,8 +4852,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnect_Init");
                 iCurrentTest =
                     new pvplayer_async_test_genericnetworkdisconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
@@ -4733,8 +4868,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnect_AddDataSinkVideo");
                 iCurrentTest =
                     new pvplayer_async_test_genericnetworkdisconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
@@ -4749,8 +4884,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnect_AddDataSinkAudio");
                 iCurrentTest =
                     new pvplayer_async_test_genericnetworkdisconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
@@ -4766,8 +4901,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnect_Prepare");
                 iCurrentTest =
                     new pvplayer_async_test_genericnetworkdisconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
@@ -4782,8 +4917,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnect_Start");
                 iCurrentTest =
                     new pvplayer_async_test_genericnetworkdisconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
@@ -4798,8 +4933,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnect_Pause");
                 iCurrentTest =
                     new pvplayer_async_test_genericnetworkdisconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             true,
                             false,
@@ -4814,8 +4949,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnect_Resume");
                 iCurrentTest =
                     new pvplayer_async_test_genericnetworkdisconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             true,
                             false,
@@ -4830,8 +4965,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnect_Stop");
                 iCurrentTest =
                     new pvplayer_async_test_genericnetworkdisconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
@@ -4847,8 +4982,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnect_SetPlaybackRange");
                 iCurrentTest =
                     new pvplayer_async_test_genericnetworkdisconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             true,
@@ -4863,8 +4998,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnectWhileProc_AddDataSource");
                 iCurrentTest =
                     new pvplayer_async_test_genericnetworkdisconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
@@ -4879,8 +5014,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnectWhileProc_Init");
                 iCurrentTest =
                     new pvplayer_async_test_genericnetworkdisconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
@@ -4895,8 +5030,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnectWhileProc_AddDataSinkVideo");
                 iCurrentTest =
                     new pvplayer_async_test_genericnetworkdisconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
@@ -4911,8 +5046,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnectWhileProc_AddDataSinkAudio");
                 iCurrentTest =
                     new pvplayer_async_test_genericnetworkdisconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
@@ -4927,8 +5062,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnectWhileProc_Prepare");
                 iCurrentTest =
                     new pvplayer_async_test_genericnetworkdisconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
@@ -4943,8 +5078,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnectWhileProc_Start");
                 iCurrentTest =
                     new pvplayer_async_test_genericnetworkdisconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
@@ -4959,8 +5094,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnectWhileProc_Pause");
                 iCurrentTest =
                     new pvplayer_async_test_genericnetworkdisconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             true,
                             false,
@@ -4975,8 +5110,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnectWhileProc_Resume");
                 iCurrentTest =
                     new pvplayer_async_test_genericnetworkdisconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             true,
                             false,
@@ -4991,8 +5126,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnectWhileProc_Stop");
                 iCurrentTest =
                     new pvplayer_async_test_genericnetworkdisconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
@@ -5007,8 +5142,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnectWhileProc_SetPlaybackRange");
                 iCurrentTest =
                     new pvplayer_async_test_genericnetworkdisconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             true,
@@ -5024,8 +5159,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnectReconnect_AddDataSource");
                 iCurrentTest =
                     new pvplayer_async_test_genericnetworkdisconnectreconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
@@ -5040,8 +5175,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnectReconnect_Init");
                 iCurrentTest =
                     new pvplayer_async_test_genericnetworkdisconnectreconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
@@ -5056,8 +5191,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnectReconnect_AddDataSinkVideo");
                 iCurrentTest =
                     new pvplayer_async_test_genericnetworkdisconnectreconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
@@ -5072,8 +5207,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnectReconnect_AddDataSinkAudio");
                 iCurrentTest =
                     new pvplayer_async_test_genericnetworkdisconnectreconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
@@ -5089,8 +5224,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnectReconnect_Prepare");
                 iCurrentTest =
                     new pvplayer_async_test_genericnetworkdisconnectreconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
@@ -5105,8 +5240,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnectReconnect_Start");
                 iCurrentTest =
                     new pvplayer_async_test_genericnetworkdisconnectreconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
@@ -5121,8 +5256,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnectReconnect_Pause");
                 iCurrentTest =
                     new pvplayer_async_test_genericnetworkdisconnectreconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             true,
                             false,
@@ -5137,8 +5272,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnectReconnect_Resume");
                 iCurrentTest =
                     new pvplayer_async_test_genericnetworkdisconnectreconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             true,
                             false,
@@ -5153,8 +5288,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnectReconnect_Stop");
                 iCurrentTest =
                     new pvplayer_async_test_genericnetworkdisconnectreconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
@@ -5170,8 +5305,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnectReconnect_SetPlaybackRange");
                 iCurrentTest =
                     new pvplayer_async_test_genericnetworkdisconnectreconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             true,
@@ -5186,8 +5321,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnectReconnectWhileProc_AddDataSource");
                 iCurrentTest =
                     new pvplayer_async_test_genericnetworkdisconnectreconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
@@ -5202,8 +5337,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnectReconnectWhileProc_Init");
                 iCurrentTest =
                     new pvplayer_async_test_genericnetworkdisconnectreconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
@@ -5218,8 +5353,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnectReconnectWhileProc_AddDataSinkVideo");
                 iCurrentTest =
                     new pvplayer_async_test_genericnetworkdisconnectreconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
@@ -5234,8 +5369,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnectReconnectWhileProc_AddDataSinkAudio");
                 iCurrentTest =
                     new pvplayer_async_test_genericnetworkdisconnectreconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
@@ -5250,8 +5385,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnectReconnectWhileProc_Prepare");
                 iCurrentTest =
                     new pvplayer_async_test_genericnetworkdisconnectreconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
@@ -5266,8 +5401,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnectReconnectWhileProc_Start");
                 iCurrentTest =
                     new pvplayer_async_test_genericnetworkdisconnectreconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
@@ -5282,8 +5417,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnectReconnectWhileProc_Pause");
                 iCurrentTest =
                     new pvplayer_async_test_genericnetworkdisconnectreconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             true,
                             false,
@@ -5298,8 +5433,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnectReconnectWhileProc_Resume");
                 iCurrentTest =
                     new pvplayer_async_test_genericnetworkdisconnectreconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             true,
                             false,
@@ -5314,8 +5449,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnectReconnectWhileProc_Stop");
                 iCurrentTest =
                     new pvplayer_async_test_genericnetworkdisconnectreconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
@@ -5331,8 +5466,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnectReconnectWhileProc_SetPlaybackRange");
                 iCurrentTest =
                     new pvplayer_async_test_genericnetworkdisconnectreconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             true,
@@ -5348,8 +5483,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnectCancelAll_AddDataSource");
                 iCurrentTest =
                     new pvplayer_async_test_genericcancelallnetworkdisconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
@@ -5364,8 +5499,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnectCancelAll_Init");
                 iCurrentTest =
                     new pvplayer_async_test_genericcancelallnetworkdisconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
@@ -5380,8 +5515,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnectCancelAll_AddDataSinkVideo");
                 iCurrentTest =
                     new pvplayer_async_test_genericcancelallnetworkdisconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
@@ -5396,8 +5531,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnectCancelAll_AddDataSinkAudio");
                 iCurrentTest =
                     new pvplayer_async_test_genericcancelallnetworkdisconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
@@ -5413,8 +5548,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnectCancelAll_Prepare");
                 iCurrentTest =
                     new pvplayer_async_test_genericcancelallnetworkdisconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
@@ -5429,8 +5564,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnectCancelAll_Start");
                 iCurrentTest =
                     new pvplayer_async_test_genericcancelallnetworkdisconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
@@ -5445,8 +5580,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnectCancelAll_Pause");
                 iCurrentTest =
                     new pvplayer_async_test_genericcancelallnetworkdisconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             true,
                             false,
@@ -5461,8 +5596,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnectCancelAll_Resume");
                 iCurrentTest =
                     new pvplayer_async_test_genericcancelallnetworkdisconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             true,
                             false,
@@ -5477,8 +5612,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnectCancelAll_Stop");
                 iCurrentTest =
                     new pvplayer_async_test_genericcancelallnetworkdisconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
@@ -5493,8 +5628,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnectCancelAll_SetPlaybackRange");
                 iCurrentTest =
                     new pvplayer_async_test_genericcancelallnetworkdisconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             true,
@@ -5509,8 +5644,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnectCancelAllWhileProc_AddDataSource");
                 iCurrentTest =
                     new pvplayer_async_test_genericcancelallnetworkdisconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
@@ -5525,8 +5660,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnectCancelAllWhileProc_Init");
                 iCurrentTest =
                     new pvplayer_async_test_genericcancelallnetworkdisconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
@@ -5541,8 +5676,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnectCancelAllWhileProc_AddDataSinkVideo");
                 iCurrentTest =
                     new pvplayer_async_test_genericcancelallnetworkdisconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
@@ -5557,8 +5692,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnectCancelAllWhileProc_AddDataSinkAudio");
                 iCurrentTest =
                     new pvplayer_async_test_genericcancelallnetworkdisconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
@@ -5573,8 +5708,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnectCancelAllWhileProc_Prepare");
                 iCurrentTest =
                     new pvplayer_async_test_genericcancelallnetworkdisconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
@@ -5589,8 +5724,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnectCancelAllWhileProc_Start");
                 iCurrentTest =
                     new pvplayer_async_test_genericcancelallnetworkdisconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
@@ -5605,8 +5740,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnectCancelAllWhileProc_Pause");
                 iCurrentTest =
                     new pvplayer_async_test_genericcancelallnetworkdisconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             true,
                             false,
@@ -5621,8 +5756,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnectCancelAllWhileProc_Resume");
                 iCurrentTest =
                     new pvplayer_async_test_genericcancelallnetworkdisconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             true,
                             false,
@@ -5637,8 +5772,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnectCancelAllWhileProc_Stop");
                 iCurrentTest =
                     new pvplayer_async_test_genericcancelallnetworkdisconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
@@ -5653,8 +5788,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnectCancelAllWhileProc_SetPlaybackRange");
                 iCurrentTest =
                     new pvplayer_async_test_genericcancelallnetworkdisconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             true,
@@ -5670,8 +5805,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericNetworkDisconnectCancelAllWhileProtocolRollover");
                 iCurrentTest =
                     new pvplayer_async_test_genericcancelallnetworkdisconnect(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
@@ -5687,8 +5822,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericOpenPlayMultiplePauseResumeUntilEOSTest");
                 iCurrentTest =
                     new pvplayer_async_test_genericopenplaystop(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             true,
                             false,
@@ -5707,8 +5842,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericOpenPlayMultipleSeekUntilEOSTest");
                 iCurrentTest =
                     new pvplayer_async_test_genericopenplaystop(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             true,
@@ -5727,12 +5862,12 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericOpenPlayStop_SleepAddDataSource");
                 iCurrentTest =
                     new pvplayer_async_test_genericopenplaystop(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
-                            true,
+                            false,
                             false,
                             false,
                             STATE_ADDDATASOURCE,
@@ -5748,12 +5883,12 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericOpenPlayStop_SleepInit");
                 iCurrentTest =
                     new pvplayer_async_test_genericopenplaystop(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
-                            true,
+                            false,
                             false,
                             false,
                             STATE_INIT,
@@ -5769,12 +5904,12 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericOpenPlayStop_SleepAddDataSinkVideo");
                 iCurrentTest =
                     new pvplayer_async_test_genericopenplaystop(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
-                            true,
+                            false,
                             false,
                             false,
                             STATE_ADDDATASINK_VIDEO,
@@ -5790,12 +5925,12 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericOpenPlayStop_SleepAddDataSinkAudio");
                 iCurrentTest =
                     new pvplayer_async_test_genericopenplaystop(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
-                            true,
+                            false,
                             false,
                             false,
                             STATE_ADDDATASINK_AUDIO,
@@ -5811,12 +5946,12 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericOpenPlayStop_SleepPrepare");
                 iCurrentTest =
                     new pvplayer_async_test_genericopenplaystop(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
-                            true,
+                            false,
                             false,
                             false,
                             STATE_PREPARE,
@@ -5832,99 +5967,15 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericOpenPlayStop_SleepGetMetaDataValueList");
                 iCurrentTest =
                     new pvplayer_async_test_genericopenplaystop(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
-                            true,
+                            false,
                             false,
                             false,
                             STATE_GETMETADATAVALUELIST,
-                            true);
-                pvplayer_async_test_genericopenplaystop* ptr =
-                    (pvplayer_async_test_genericopenplaystop*)iCurrentTest;
-                ptr->setProtocolRollOverMode();
-            }
-            break;
-
-            case GenericOpenPlayStop_SleepStart:
-            {
-                fprintf(file, "GenericOpenPlayStop_SleepStart");
-                iCurrentTest =
-                    new pvplayer_async_test_genericopenplaystop(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
-                            iCurrentTestNumber,
-                            false,
-                            false,
-                            true,
-                            false,
-                            false,
-                            STATE_START,
-                            true);
-                pvplayer_async_test_genericopenplaystop* ptr =
-                    (pvplayer_async_test_genericopenplaystop*)iCurrentTest;
-                ptr->setProtocolRollOverMode();
-            }
-            break;
-
-            case GenericOpenPlayStop_SleepPause:
-            {
-                fprintf(file, "GenericOpenPlayStop_SleepPause");
-                iCurrentTest =
-                    new pvplayer_async_test_genericopenplaystop(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
-                            iCurrentTestNumber,
-                            true,
-                            false,
-                            true,
-                            false,
-                            false,
-                            STATE_PAUSE,
-                            true);
-                pvplayer_async_test_genericopenplaystop* ptr =
-                    (pvplayer_async_test_genericopenplaystop*)iCurrentTest;
-                ptr->setProtocolRollOverMode();
-            }
-            break;
-
-            case GenericOpenPlayStop_SleepResume:
-            {
-                fprintf(file, "GenericOpenPlayStop_SleepResume");
-                iCurrentTest =
-                    new pvplayer_async_test_genericopenplaystop(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
-                            iCurrentTestNumber,
-                            true,
-                            false,
-                            true,
-                            false,
-                            false,
-                            STATE_RESUME,
-                            true);
-                pvplayer_async_test_genericopenplaystop* ptr =
-                    (pvplayer_async_test_genericopenplaystop*)iCurrentTest;
-                ptr->setProtocolRollOverMode();
-            }
-            break;
-
-            case GenericOpenPlayStop_SleepSetPlaybackRange:
-            {
-                fprintf(file, "GenericOpenPlayStop_SleepSetplayBackRange");
-                iCurrentTest =
-                    new pvplayer_async_test_genericopenplaystop(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
-                            iCurrentTestNumber,
-                            false,
-                            true,
-                            true,
-                            false,
-                            false,
-                            STATE_SETPLAYBACKRANGE,
                             true);
                 pvplayer_async_test_genericopenplaystop* ptr =
                     (pvplayer_async_test_genericopenplaystop*)iCurrentTest;
@@ -5937,12 +5988,12 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericOpenPlayStop_SleepStop");
                 iCurrentTest =
                     new pvplayer_async_test_genericopenplaystop(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
-                            true,
+                            false,
                             false,
                             false,
                             STATE_STOP,
@@ -5958,8 +6009,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericOpenPlayPauseResumeSeekStopProfiling");
                 iCurrentTest =
                     new pvplayer_async_test_genericprofiling(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
@@ -5975,8 +6026,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericOpenPlayPauseRepositionResumeUntilEOSTest");
                 iCurrentTest =
                     new pvplayer_async_test_genericplaypauserepositionresumetest(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             true,
                             false,
@@ -5992,8 +6043,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericOpenPlayPauseRepositionResumeNetworkDisconnectCancelAllTest");
                 iCurrentTest =
                     new pvplayer_async_test_genericplaypauserepositionresumenwdisconnectcancelalltest(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             true,
                             false,
@@ -6009,8 +6060,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericOpenSetPlaybackRangeStartPlayStopTest");
                 iCurrentTest =
                     new pvplayer_async_test_genericopensetplaybackrangestartplaystoptest(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
@@ -6026,8 +6077,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericOpenPlayRepositionToEndPlayTest");
                 iCurrentTest =
                     new pvplayer_async_test_genericopenplayrepositiontoendtest(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             true,
                             false,
@@ -6043,13 +6094,13 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericPVMFErrorCorruptReNotified");
                 iCurrentTest =
                     new pvplayer_async_test_genericpvmferrorcorruptrenotified(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false);
                 pvplayer_async_test_genericpvmferrorcorruptrenotified* ptr =
                     (pvplayer_async_test_genericpvmferrorcorruptrenotified*)iCurrentTest;
-                ptr->setProtocolRollOverMode();
+                OSCL_UNUSED_ARG(ptr);
             }
             break;
 
@@ -6058,14 +6109,15 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericOpenPlayPauseGetMetaDataUntilEOSTest");
                 iCurrentTest =
                     new pvplayer_async_test_genericopenplaygetmetadatatest(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             true,
                             false);
                 pvplayer_async_test_genericopenplaygetmetadatatest* ptr =
                     (pvplayer_async_test_genericopenplaygetmetadatatest*)iCurrentTest;
-                ptr->setProtocolRollOverMode();
+                OSCL_UNUSED_ARG(ptr);
+
             }
             break;
 
@@ -6074,14 +6126,14 @@ void pvplayer_engine_test::test()
                 fprintf(file, "GenericOpenGetMetaDataPicTest");
                 iCurrentTest =
                     new pvplayer_async_test_genericopengetmetadatapictest(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             true,
                             false);
                 pvplayer_async_test_genericopengetmetadatapictest* ptr =
                     (pvplayer_async_test_genericopengetmetadatapictest*)iCurrentTest;
-                ptr->setProtocolRollOverMode();
+                OSCL_UNUSED_ARG(ptr);
             }
             break;
 
@@ -6091,8 +6143,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "DLA_StreamingOpenPlayUntilEOST_JupiterCPMTest");
                 iCurrentTest =
                     new pvplayer_async_test_jupitercpm_DLAstreamingopenplaystop(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
@@ -6112,8 +6164,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "DLA_StreamingOpenPlayPausePlayUntilEOS_JupiterCPMTest");
                 iCurrentTest =
                     new pvplayer_async_test_jupitercpm_DLAstreamingopenplaystop(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             true,
                             false,
@@ -6132,8 +6184,8 @@ void pvplayer_engine_test::test()
 #if RUN_STREAMING_TESTCASES && RUN_CPMJUPITER_TESTCASES
                 fprintf(file, "DLA_StreamingOpenPlaySeekPlayUntilEOS_JupiterCPMTest");
                 iCurrentTest = new pvplayer_async_test_jupitercpm_DLAstreamingopenplaystop(testparam,
-                        PVMF_YUV420,
-                        PVMF_PCM16,
+                        PVMF_MIME_YUV420,
+                        PVMF_MIME_PCM16,
                         iCurrentTestNumber,
                         false,
                         true,
@@ -6153,8 +6205,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "DLA_StreamingMultiplePlayUntilEOS_JupiterCPMTest");
                 iCurrentTest =
                     new pvplayer_async_test_jupitercpm_DLAstreamingopenplaystop(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
@@ -6178,8 +6230,8 @@ void pvplayer_engine_test::test()
 #if RUN_STREAMING_TESTCASES && RUN_CPMJUPITER_TESTCASES
                 fprintf(file, "DLA_StreamingProtocolRollOverTest_JupiterCPMTest");
                 iCurrentTest = new pvplayer_async_test_jupitercpm_DLAstreamingopenplaystop(testparam,
-                        PVMF_YUV420,
-                        PVMF_PCM16,
+                        PVMF_MIME_YUV420,
+                        PVMF_MIME_PCM16,
                         iCurrentTestNumber,
                         false,
                         false,
@@ -6200,8 +6252,8 @@ void pvplayer_engine_test::test()
 #if RUN_STREAMING_TESTCASES && RUN_CPMJUPITER_TESTCASES
                 fprintf(file, "DLA_StreamingProtocolRollOverTestWithUnknownURLType_JupiterCPMTest");
                 iCurrentTest = new pvplayer_async_test_jupitercpm_DLAstreamingopenplaystop(testparam,
-                        PVMF_YUV420,
-                        PVMF_PCM16,
+                        PVMF_MIME_YUV420,
+                        PVMF_MIME_PCM16,
                         iCurrentTestNumber,
                         false,
                         false,
@@ -6773,30 +6825,6 @@ void pvplayer_engine_test::test()
             }
             break;
 
-            case DLA_StreamingOpenPlayStop_SleepStart:
-            {
-                fprintf(file, "Streaming tests not enabled\n");
-            }
-            break;
-
-            case DLA_StreamingOpenPlayStop_SleepPause:
-            {
-                fprintf(file, "Streaming tests not enabled\n");
-            }
-            break;
-
-            case DLA_StreamingOpenPlayStop_SleepResume:
-            {
-                fprintf(file, "Streaming tests not enabled\n");
-            }
-            break;
-
-            case DLA_StreamingOpenPlayStop_SleepSetPlaybackRange:
-            {
-                fprintf(file, "Streaming tests not enabled\n");
-            }
-            break;
-
             case DLA_StreamingOpenPlayStop_SleepStop:
             {
                 fprintf(file, "Streaming tests not enabled\n");
@@ -6808,8 +6836,8 @@ void pvplayer_engine_test::test()
 #if RUN_STREAMING_TESTCASES && RUN_CPMJUPITER_TESTCASES
                 fprintf(file, "DLA_StreamingCancelAcquireLicense_JupiterCPMTest");
                 iCurrentTest = new pvplayer_async_test_jupitercpm_DLAstreamingopenplaystop(testparam,
-                        PVMF_YUV420,
-                        PVMF_PCM16,
+                        PVMF_MIME_YUV420,
+                        PVMF_MIME_PCM16,
                         iCurrentTestNumber,
                         false,
                         false,
@@ -6828,8 +6856,8 @@ void pvplayer_engine_test::test()
 #if RUN_STREAMING_TESTCASES
                 fprintf(file, "DVBH_StreamingOpenPlayStopTest");
                 iCurrentTest = new pvplayer_async_test_dvbh_streamingopenplaystop(testparam,
-                        PVMF_YUV420,
-                        PVMF_PCM16,
+                        PVMF_MIME_YUV420,
+                        PVMF_MIME_PCM16,
                         iCurrentTestNumber,
                         false,
                         false,
@@ -6845,8 +6873,8 @@ void pvplayer_engine_test::test()
 #if RUN_STREAMING_TESTCASES
                 fprintf(file, "DVBH_StreamingOpenPlayUntilEOSTest");
                 iCurrentTest = new pvplayer_async_test_dvbh_streamingopenplaystop(testparam,
-                        PVMF_YUV420,
-                        PVMF_PCM16,
+                        PVMF_MIME_YUV420,
+                        PVMF_MIME_PCM16,
                         iCurrentTestNumber,
                         false,
                         false,
@@ -6858,23 +6886,594 @@ void pvplayer_engine_test::test()
 #endif
                 break;
 
-            case GenericOpenPlaySeekBeyondClipDurationTest:
+            case PVR_FILEPLAYBACK_OpenPlayUntilEOFTest:
+#if RUN_STREAMING_TESTCASES
+#if PVR_SUPPORT
+                fprintf(file, "PVR_FILEPLAYBACK_OpenPlayUntilEOFTest");
+                iCurrentTest = new pvplayer_async_test_pvr_streamingopenplaystop(testparam,
+                        PVMF_MIME_YUV420,
+                        PVMF_MIME_PCM16,
+                        iCurrentTestNumber);
+#else
+                fprintf(file, "PVR tests not enabled\n");
+#endif
+#else
+                fprintf(file, "Streaming tests not enabled\n");
+#endif
+                break;
+
+            case PVR_FILEPLAYBACK_OpenPlayRepositionPlayStopTest:
+#if RUN_STREAMING_TESTCASES
+#if PVR_SUPPORT
+                fprintf(file, "PVR_FILEPLAYBACK_OpenPlayRepositionPlayStopTes");
+                iCurrentTest = new pvplayer_async_test_pvr_streamingopenplaystop(testparam,
+                        PVMF_MIME_YUV420,
+                        PVMF_MIME_PCM16,
+                        iCurrentTestNumber);
+#else
+                fprintf(file, "PVR tests not enabled\n");
+#endif
+#else
+                fprintf(file, "Streaming tests not enabled\n");
+#endif
+                break;
+
+            case PVR_FILEPLAYBACK_OpenPlayPauseRepositionTest:
+#if RUN_STREAMING_TESTCASES
+#if PVR_SUPPORT
+                fprintf(file, "PVR_FILEPLAYBACK_OpenPlayPauseRepositionTest");
+                iCurrentTest = new pvplayer_async_test_pvr_streamingopenplaystop(testparam,
+                        PVMF_MIME_YUV420,
+                        PVMF_MIME_PCM16,
+                        iCurrentTestNumber);
+#else
+                fprintf(file, "PVR tests not enabled\n");
+#endif
+#else
+                fprintf(file, "Streaming tests not enabled\n");
+#endif
+                break;
+
+            case PVR_FILEPLAYBACK_OpenPlayVerifyDurationTest:
+#if RUN_STREAMING_TESTCASES
+#if PVR_SUPPORT
+                fprintf(file, "PVR_FILEPLAYBACK_OpenPlayVerifyDurationTest");
+                iCurrentTest = new pvplayer_async_test_pvr_streamingopenplaystop(testparam,
+                        PVMF_MIME_YUV420,
+                        PVMF_MIME_PCM16,
+                        iCurrentTestNumber);
+#else
+                fprintf(file, "PVR tests not enabled\n");
+#endif
+#else
+                fprintf(file, "Streaming tests not enabled\n");
+#endif
+                break;
+
+            case PVR_Recorder_RecordOnStartUp:
+#if RUN_STREAMING_TESTCASES
+#if PVR_SUPPORT
+                fprintf(file, "PVR_Recorder_RecordOnStartUp");
+                iCurrentTest = new pvplayer_async_test_pvr_streamingopenplaystop(testparam,
+                        PVMF_MIME_YUV420,
+                        PVMF_MIME_PCM16,
+                        iCurrentTestNumber);
+#else
+                fprintf(file, "PVR tests not enabled\n");
+#endif
+#else
+                fprintf(file, "Streaming tests not enabled\n");
+#endif
+                break;
+
+            case PVR_Recorder_RecordOnDemand:
+#if RUN_STREAMING_TESTCASES
+#if PVR_SUPPORT
+                fprintf(file, "PVR_Recorder_RecordOnDemand");
+                iCurrentTest = new pvplayer_async_test_pvr_streamingopenplaystop(testparam,
+                        PVMF_MIME_YUV420,
+                        PVMF_MIME_PCM16,
+                        iCurrentTestNumber);
+#else
+                fprintf(file, "PVR tests not enabled\n");
+#endif
+#else
+                fprintf(file, "Streaming tests not enabled\n");
+#endif
+                break;
+
+            case PVR_Recorder_MultiplePause:
+#if RUN_STREAMING_TESTCASES
+#if PVR_SUPPORT
+                fprintf(file, "PVR_Recorder_MultiplePause");
+                iCurrentTest = new pvplayer_async_test_pvr_streamingopenplaystop(testparam,
+                        PVMF_MIME_YUV420,
+                        PVMF_MIME_PCM16,
+                        iCurrentTestNumber);
+#else
+                fprintf(file, "PVR tests not enabled\n");
+#endif
+#else
+                fprintf(file, "Streaming tests not enabled\n");
+#endif
+                break;
+
+            case PVR_Recorder_MultiplePauseJTL:
+#if RUN_STREAMING_TESTCASES
+#if PVR_SUPPORT
+                fprintf(file, "PVR_Recorder_MultiplePauseJTL");
+                iCurrentTest = new pvplayer_async_test_pvr_streamingopenplaystop(testparam,
+                        PVMF_MIME_YUV420,
+                        PVMF_MIME_PCM16,
+                        iCurrentTestNumber);
+#else
+                fprintf(file, "PVR tests not enabled\n");
+#endif
+#else
+                fprintf(file, "Streaming tests not enabled\n");
+#endif
+                break;
+
+            case PVR_Recorder_MultipleRepos:
+#if RUN_STREAMING_TESTCASES
+#if PVR_SUPPORT
+                fprintf(file, "PVR_Recorder_MultipleRepos");
+                iCurrentTest = new pvplayer_async_test_pvr_streamingopenplaystop(testparam,
+                        PVMF_MIME_YUV420,
+                        PVMF_MIME_PCM16,
+                        iCurrentTestNumber);
+#else
+                fprintf(file, "PVR tests not enabled\n");
+#endif
+#else
+                fprintf(file, "Streaming tests not enabled\n");
+#endif
+                break;
+
+            case PVR_Recorder_MultipleRecord:
+#if RUN_STREAMING_TESTCASES
+#if PVR_SUPPORT
+                fprintf(file, "PVR_Recorder_MultipleRepos");
+                iCurrentTest = new pvplayer_async_test_pvr_streamingopenplaystop(testparam,
+                        PVMF_MIME_YUV420,
+                        PVMF_MIME_PCM16,
+                        iCurrentTestNumber);
+#else
+                fprintf(file, "PVR tests not enabled\n");
+#endif
+#else
+                fprintf(file, "Streaming tests not enabled\n");
+#endif
+                break;
+
+
+            case PVR_MLB_StreamingOpenPlayLivePausePlayStopTest:
+#if RUN_STREAMING_TESTCASES
+#if PVR_SUPPORT
+                fprintf(file, "PVR_MLB_StreamingOpenPlayLivePausePlayStopTest");
+                iCurrentTest = new pvplayer_async_test_pvr_streamingopenplaystop(testparam,
+                        PVMF_MIME_YUV420,
+                        PVMF_MIME_PCM16,
+                        iCurrentTestNumber);
+#else
+                fprintf(file, "PVR tests not enabled\n");
+#endif
+#else
+                fprintf(file, "Streaming tests not enabled\n");
+#endif
+                break;
+
+            case PVR_MLB_StreamingOpenPlayLivePausePlaySeekStopTest:
+#if RUN_STREAMING_TESTCASES
+#if PVR_SUPPORT
+                fprintf(file, "PVR_MLB_StreamingOpenPlayLivePausePlaySeekStopTest");
+                iCurrentTest = new pvplayer_async_test_pvr_streamingopenplaystop(testparam,
+                        PVMF_MIME_YUV420,
+                        PVMF_MIME_PCM16,
+                        iCurrentTestNumber);
+#else
+                fprintf(file, "PVR tests not enabled\n");
+#endif
+#else
+                fprintf(file, "Streaming tests not enabled\n");
+#endif
+                break;
+
+            case PVR_MLB_StreamingOpenPlayLiveBufferBoundaryCheckTest:
+#if RUN_STREAMING_TESTCASES
+#if PVR_SUPPORT
+                fprintf(file, "PVR_MLB_StreamingOpenPlayLiveBufferBoundaryCheckTest");
+                iCurrentTest = new pvplayer_async_test_pvr_streamingopenplaystop(testparam,
+                        PVMF_MIME_YUV420,
+                        PVMF_MIME_PCM16,
+                        iCurrentTestNumber);
+#else
+                fprintf(file, "PVR tests not enabled\n");
+#endif
+#else
+                fprintf(file, "Streaming tests not enabled\n");
+#endif
+                break;
+
+            case PVR_MLB_StreamingOpenPlayMultipleLivePausePlayTest:
+            case PVR_FSLB_StreamingOpenPlayMultipleLivePausePlayTest:
             {
-                fprintf(file, "GenericOpenPlaySeekBeyondClipDurationTest");
-                iCurrentTest =
-                    new pvplayer_async_test_genericopenplaystop(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
-                            iCurrentTestNumber,
-                            false,
-                            true,
-                            true,
-                            false,
-                            false);
-                pvplayer_async_test_genericopenplaystop* ptr =
-                    (pvplayer_async_test_genericopenplaystop*)iCurrentTest;
-                ptr->setProtocolRollOverMode();
-                ptr->setSeekBeyondClipDurationMode();
+#if RUN_STREAMING_TESTCASES
+#if PVR_SUPPORT
+                if (PVR_MLB_StreamingOpenPlayMultipleLivePausePlayTest == iCurrentTestNumber)
+                {
+                    fprintf(file, "PVR_MLB_StreamingOpenPlayMultipleLivePausePlayTest");
+                }
+                else
+                {
+                    fprintf(file, "PVR_FSLB_StreamingOpenPlayMultipleLivePausePlayTest");
+                }
+                iCurrentTest = new pvplayer_async_test_pvr_streamingopenplaystop(testparam,
+                        PVMF_MIME_YUV420,
+                        PVMF_MIME_PCM16,
+                        iCurrentTestNumber);
+                pvplayer_async_test_pvr_streamingopenplaystop* ptr =
+                    (pvplayer_async_test_pvr_streamingopenplaystop*)iCurrentTest;
+                ptr->setMultiplePauseMode(5);
+
+#else
+                fprintf(file, "PVR tests not enabled\n");
+#endif
+#else
+                fprintf(file, "Streaming tests not enabled\n");
+#endif
+            }
+            break;
+
+            case PVR_MLB_StreamingOpenPlayMultipleLivePauseRandomDurationPlayTest:
+            case PVR_FSLB_StreamingOpenPlayMultipleLivePauseRandomDurationPlayTest:
+            {
+#if RUN_STREAMING_TESTCASES
+#if PVR_SUPPORT
+                if (PVR_MLB_StreamingOpenPlayMultipleLivePauseRandomDurationPlayTest == iCurrentTestNumber)
+                {
+                    fprintf(file, "PVR_MLB_StreamingOpenPlayMultipleLivePauseRandomDurationPlayTest");
+                }
+                else
+                {
+                    fprintf(file, "PVR_FSLB_StreamingOpenPlayMultipleLivePauseRandomDurationPlayTest");
+                }
+                iCurrentTest = new pvplayer_async_test_pvr_streamingopenplaystop(testparam,
+                        PVMF_MIME_YUV420,
+                        PVMF_MIME_PCM16,
+                        iCurrentTestNumber);
+                pvplayer_async_test_pvr_streamingopenplaystop* ptr =
+                    (pvplayer_async_test_pvr_streamingopenplaystop*)iCurrentTest;
+                ptr->setMultiplePauseMode(5);
+                ptr->setRandomPauseDurationRange(10); // Duration range in seconds
+
+#else
+                fprintf(file, "PVR tests not enabled\n");
+#endif
+#else
+                fprintf(file, "Streaming tests not enabled\n");
+#endif
+            }
+            break;
+
+            case PVR_MLB_StreamingOpenPlayLongLivePausePlayTest:
+            case PVR_FSLB_StreamingOpenPlayLongLivePausePlayTest:
+            {
+#if RUN_STREAMING_TESTCASES
+#if PVR_SUPPORT
+                if (PVR_MLB_StreamingOpenPlayLongLivePausePlayTest == iCurrentTestNumber)
+                {
+                    fprintf(file, "PVR_MLB_StreamingOpenPlayLongLivePausePlayTest");
+                }
+                else
+                {
+                    fprintf(file, "PVR_FSLB_StreamingOpenPlayLongLivePausePlayTest");
+                }
+                iCurrentTest = new pvplayer_async_test_pvr_streamingopenplaystop(testparam,
+                        PVMF_MIME_YUV420,
+                        PVMF_MIME_PCM16,
+                        iCurrentTestNumber);
+                pvplayer_async_test_pvr_streamingopenplaystop* ptr =
+                    (pvplayer_async_test_pvr_streamingopenplaystop*)iCurrentTest;
+                ptr->setLongPauseDuration(60*1000*1000);
+
+#else
+                fprintf(file, "PVR tests not enabled\n");
+#endif
+#else
+                fprintf(file, "Streaming tests not enabled\n");
+#endif
+            }
+            break;
+
+            case PVR_MLB_StreamingOpenPlayLivePauseStopTest:
+            case PVR_FSLB_StreamingOpenPlayLivePauseStopTest:
+            {
+#if RUN_STREAMING_TESTCASES
+#if PVR_SUPPORT
+                if (PVR_MLB_StreamingOpenPlayLivePauseStopTest == iCurrentTestNumber)
+                {
+                    fprintf(file, "PVR_MLB_StreamingOpenPlayLivePauseStopTest");
+                }
+                else
+                {
+                    fprintf(file, "PVR_FSLB_StreamingOpenPlayLivePauseStopTest");
+                }
+                iCurrentTest = new pvplayer_async_test_pvr_streamingopenplaystop(testparam,
+                        PVMF_MIME_YUV420,
+                        PVMF_MIME_PCM16,
+                        iCurrentTestNumber);
+                pvplayer_async_test_pvr_streamingopenplaystop* ptr =
+                    (pvplayer_async_test_pvr_streamingopenplaystop*)iCurrentTest;
+                OSCL_UNUSED_ARG(ptr);
+#else
+                fprintf(file, "PVR tests not enabled\n");
+#endif
+#else
+                fprintf(file, "Streaming tests not enabled\n");
+#endif
+            }
+            break;
+
+            case PVR_MLB_StreamingOpenPauseJumpToLiveStopTest:
+            case PVR_FSLB_StreamingOpenPauseJumpToLiveStopTest:
+            {
+#if RUN_STREAMING_TESTCASES
+#if PVR_SUPPORT
+                if (PVR_MLB_StreamingOpenPauseJumpToLiveStopTest == iCurrentTestNumber)
+                {
+                    fprintf(file, "PVR_MLB_StreamingOpenPauseJumpToLiveStopTest");
+                }
+                else
+                {
+                    fprintf(file, "PVR_FSLB_StreamingOpenPauseJumpToLiveStopTest");
+                }
+                iCurrentTest = new pvplayer_async_test_pvr_streamingopenplaystop(testparam,
+                        PVMF_MIME_YUV420,
+                        PVMF_MIME_PCM16,
+                        iCurrentTestNumber);
+                pvplayer_async_test_pvr_streamingopenplaystop* ptr =
+                    (pvplayer_async_test_pvr_streamingopenplaystop*)iCurrentTest;
+                ptr->setMultiplePauseMode(5);
+                ptr->setRandomPauseDurationRange(10); // Duration range in seconds
+#else
+                fprintf(file, "PVR tests not enabled\n");
+#endif
+#else
+                fprintf(file, "Streaming tests not enabled\n");
+#endif
+            }
+            break;
+
+            case PVR_MLB_StreamingOpenPauseResumeJumpToLiveStopTest:
+            case PVR_FSLB_StreamingOpenPauseResumeJumpToLiveStopTest:
+            {
+#if RUN_STREAMING_TESTCASES
+#if PVR_SUPPORT
+                if (PVR_MLB_StreamingOpenPauseResumeJumpToLiveStopTest == iCurrentTestNumber)
+                {
+                    fprintf(file, "PVR_MLB_StreamingOpenPauseResumeJumpToLiveStopTest");
+                }
+                else
+                {
+                    fprintf(file, "PVR_FSLB_StreamingOpenPauseResumeJumpToLiveStopTest");
+                }
+                iCurrentTest = new pvplayer_async_test_pvr_streamingopenplaystop(testparam,
+                        PVMF_MIME_YUV420,
+                        PVMF_MIME_PCM16,
+                        iCurrentTestNumber);
+                pvplayer_async_test_pvr_streamingopenplaystop* ptr =
+                    (pvplayer_async_test_pvr_streamingopenplaystop*)iCurrentTest;
+                ptr->setMultiplePauseMode(5);
+                ptr->setRandomPauseDurationRange(10); // Duration range in seconds
+#else
+                fprintf(file, "PVR tests not enabled\n");
+#endif
+#else
+                fprintf(file, "Streaming tests not enabled\n");
+#endif
+            }
+            break;
+
+            case PVR_MLB_StreamingOpenPauseResumeStopTest:
+            case PVR_FSLB_StreamingOpenPauseResumeStopTest:
+            {
+#if RUN_STREAMING_TESTCASES
+#if PVR_SUPPORT
+                if (PVR_MLB_StreamingOpenPauseResumeStopTest == iCurrentTestNumber)
+                {
+                    fprintf(file, "PVR_MLB_StreamingOpenPauseResumeStopTest");
+                }
+                else
+                {
+                    fprintf(file, "PVR_FSLB_StreamingOpenPauseResumeStopTest");
+                }
+                iCurrentTest = new pvplayer_async_test_pvr_streamingopenplaystop(testparam,
+                        PVMF_MIME_YUV420,
+                        PVMF_MIME_PCM16,
+                        iCurrentTestNumber);
+                pvplayer_async_test_pvr_streamingopenplaystop* ptr =
+                    (pvplayer_async_test_pvr_streamingopenplaystop*)iCurrentTest;
+                OSCL_UNUSED_ARG(ptr);
+#else
+                fprintf(file, "PVR tests not enabled\n");
+#endif
+#else
+                fprintf(file, "Streaming tests not enabled\n");
+#endif
+            }
+            break;
+            case PVR_MLB_StreamingRTSPUrlPauseResumeStopTest:
+            case PVR_FSLB_StreamingRTSPUrlPauseResumeStopTest:
+            {
+#if RUN_STREAMING_TESTCASES
+#if PVR_SUPPORT
+                if (PVR_MLB_StreamingRTSPUrlPauseResumeStopTest == iCurrentTestNumber)
+                {
+                    fprintf(file, "PVR_MLB_StreamingRTSPUrlPauseResumeStopTest");
+                }
+                else
+                {
+                    fprintf(file, "PVR_FSLB_StreamingRTSPUrlPauseResumeStopTest");
+                }
+                iCurrentTest = new pvplayer_async_test_pvr_streamingopenplaystop(testparam,
+                        PVMF_MIME_YUV420,
+                        PVMF_MIME_PCM16,
+                        iCurrentTestNumber);
+                pvplayer_async_test_pvr_streamingopenplaystop* ptr =
+                    (pvplayer_async_test_pvr_streamingopenplaystop*)iCurrentTest;
+                ptr->setRtspUrlInput();
+#else
+                fprintf(file, "PVR tests not enabled\n");
+#endif
+#else
+                fprintf(file, "Streaming tests not enabled\n");
+#endif
+            }
+            break;
+
+            case PVR_MLB_StreamingPauseResumeRepositionStopTest:
+            case PVR_FSLB_StreamingPauseResumeRepositionStopTest:
+            {
+#if RUN_STREAMING_TESTCASES
+#if PVR_SUPPORT
+                if (PVR_MLB_StreamingPauseResumeRepositionStopTest == iCurrentTestNumber)
+                {
+                    fprintf(file, "PVR_MLB_StreamingPauseResumeRepositionStopTest");
+                }
+                else
+                {
+                    fprintf(file, "PVR_FSLB_StreamingPauseResumeRepositionStopTest");
+                }
+                iCurrentTest = new pvplayer_async_test_pvr_streamingopenplaystop(testparam,
+                        PVMF_MIME_YUV420,
+                        PVMF_MIME_PCM16,
+                        iCurrentTestNumber);
+                pvplayer_async_test_pvr_streamingopenplaystop* ptr =
+                    (pvplayer_async_test_pvr_streamingopenplaystop*)iCurrentTest;
+                OSCL_UNUSED_ARG(ptr);
+#else
+                fprintf(file, "PVR tests not enabled\n");
+#endif
+#else
+                fprintf(file, "Streaming tests not enabled\n");
+#endif
+            }
+            break;
+
+            case PVR_MLB_StreamingPauseRepositionResumeStopTest:
+            case PVR_FSLB_StreamingPauseRepositionResumeStopTest:
+            {
+#if RUN_STREAMING_TESTCASES
+#if PVR_SUPPORT
+                if (PVR_MLB_StreamingPauseRepositionResumeStopTest == iCurrentTestNumber)
+                {
+                    fprintf(file, "PVR_MLB_StreamingPauseRepositionResumeStopTest");
+                }
+                else
+                {
+                    fprintf(file, "PVR_FSLB_StreamingPauseRepositionResumeStopTest");
+                }
+                iCurrentTest = new pvplayer_async_test_pvr_streamingopenplaystop(testparam,
+                        PVMF_MIME_YUV420,
+                        PVMF_MIME_PCM16,
+                        iCurrentTestNumber);
+                pvplayer_async_test_pvr_streamingopenplaystop* ptr =
+                    (pvplayer_async_test_pvr_streamingopenplaystop*)iCurrentTest;
+                OSCL_UNUSED_ARG(ptr);
+#else
+                fprintf(file, "PVR tests not enabled\n");
+#endif
+#else
+                fprintf(file, "Streaming tests not enabled\n");
+#endif
+            }
+            break;
+
+
+            case PVR_MLB_StreamingOpenPauseJmpToLiveChannelSwitchTest:
+            case PVR_FSLB_StreamingOpenPauseJmpToLiveChannelSwitchTest:
+            {
+#if RUN_STREAMING_TESTCASES
+#if PVR_SUPPORT
+                if (PVR_FSLB_StreamingOpenPauseJmpToLiveChannelSwitchTest == iCurrentTestNumber)
+                {
+                    fprintf(file, "PVR_FSLB_StreamingOpenPauseJmpToLiveChannelSwitchTest");
+                }
+                else
+                {
+                    fprintf(file, "PVR_MLB_StreamingOpenPauseJmpToLiveChannelSwitchTest");
+                }
+                iCurrentTest = new pvplayer_async_test_pvr_streamingopenplaystop(testparam,
+                        PVMF_MIME_YUV420,
+                        PVMF_MIME_PCM16,
+                        iCurrentTestNumber);
+                pvplayer_async_test_pvr_streamingopenplaystop* ptr =
+                    (pvplayer_async_test_pvr_streamingopenplaystop*)iCurrentTest;
+                OSCL_UNUSED_ARG(ptr);
+#else
+                fprintf(file, "PVR tests not enabled\n");
+#endif
+#else
+                fprintf(file, "Streaming tests not enabled\n");
+#endif
+            }
+            break;
+
+            case PVR_MLB_StreamingOpenPlayLivePauseWaitForRTSPEOSResumeTest:
+            case PVR_FSLB_StreamingOpenPlayLivePauseWaitForRTSPEOSResumeTest:
+            {
+#if RUN_STREAMING_TESTCASES
+#if PVR_SUPPORT
+                if (PVR_MLB_StreamingPauseRepositionResumeStopTest == iCurrentTestNumber)
+                {
+                    fprintf(file, "PVR_MLB_StreamingOpenPlayLivePauseWaitForRTSPEOSResumeTest");
+                }
+                else
+                {
+                    fprintf(file, "PVR_FSLB_StreamingOpenPlayLivePauseWaitForRTSPEOSResumeTest");
+                }
+                iCurrentTest = new pvplayer_async_test_pvr_streamingopenplaystop(testparam,
+                        PVMF_MIME_YUV420,
+                        PVMF_MIME_PCM16,
+                        iCurrentTestNumber);
+                pvplayer_async_test_pvr_streamingopenplaystop* ptr =
+                    (pvplayer_async_test_pvr_streamingopenplaystop*)iCurrentTest;
+                OSCL_UNUSED_ARG(ptr);
+#else
+                fprintf(file, "PVR tests not enabled\n");
+#endif
+#else
+                fprintf(file, "Streaming tests not enabled\n");
+#endif
+            }
+            break;
+
+            case PVR_MLB_StreamingBitrateEstimationTest:
+            {
+#if RUN_STREAMING_TESTCASES
+#if PVR_SUPPORT
+                if (PVR_MLB_StreamingBitrateEstimationTest == iCurrentTestNumber)
+                {
+                    fprintf(file, "PVR_MLB_StreamingBitrateEstimationTest");
+                }
+                else
+                {
+                    fprintf(file, "PVR_MLB_StreamingBitrateEstimationTest");
+                }
+                iCurrentTest = new pvplayer_async_test_pvr_streamingopenplaystop(testparam,
+                        PVMF_MIME_YUV420,
+                        PVMF_MIME_PCM16,
+                        iCurrentTestNumber);
+                pvplayer_async_test_pvr_streamingopenplaystop* ptr =
+                    (pvplayer_async_test_pvr_streamingopenplaystop*)iCurrentTest;
+                OSCL_UNUSED_ARG(ptr);
+#else
+                fprintf(file, "PVR tests not enabled\n");
+#endif
+#else
+                fprintf(file, "Streaming tests not enabled\n");
+#endif
             }
             break;
 
@@ -6912,14 +7511,34 @@ void pvplayer_engine_test::test()
                 fprintf(file, "Multi CPM tests not enabled\n");
                 break;
 
+            case StreamingLongPauseSeekTest:
+#if RUN_STREAMING_TESTCASES
+                iCurrentTest = new pvplayer_async_test_streamingopenplaystop(testparam,
+                        PVMF_MIME_YUV420,
+                        PVMF_MIME_PCM16,
+                        iCurrentTestNumber,
+                        true,
+                        false,
+                        false,
+                        false,
+                        false,
+                        false,
+                        false);
+                ((pvplayer_async_test_streamingopenplaystop*)iCurrentTest)->setPauseDurationInMS(2*60*1000);
+                ((pvplayer_async_test_streamingopenplaystop*)iCurrentTest)->setPauseSetPlayBackRangeResumeSequence();
+#else
+                fprintf(file, "Streaming tests not enabled\n");
+#endif
+                break;
+
             case ApplicationInvolvedTrackSelectionTestDefault:
             {
 #if RUN_APP_TRACK_SELECTION_TESTCASES
                 fprintf(file, "ApplicationInvolvedTrackSelectionTest");
                 iCurrentTest =
                     new pvplayer_async_test_apptrackselection(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
@@ -6940,8 +7559,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "ApplicationInvolvedTrackSelectionTestPassthru");
                 iCurrentTest =
                     new pvplayer_async_test_apptrackselection(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
@@ -6962,8 +7581,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "ApplicationInvolvedTrackSelectionTestAudioOnly");
                 iCurrentTest =
                     new pvplayer_async_test_apptrackselection(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
@@ -6984,8 +7603,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "ApplicationInvolvedTrackSelectionTestVideoOnly");
                 iCurrentTest =
                     new pvplayer_async_test_apptrackselection(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
@@ -7006,8 +7625,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "ApplicationInvolvedTrackSelectionTestTextOnly");
                 iCurrentTest =
                     new pvplayer_async_test_apptrackselection(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,
@@ -7028,8 +7647,8 @@ void pvplayer_engine_test::test()
                 fprintf(file, "ApplicationInvolvedTrackSelectionTestNoTracks");
                 iCurrentTest =
                     new pvplayer_async_test_apptrackselection(testparam,
-                            PVMF_YUV420,
-                            PVMF_PCM16,
+                            PVMF_MIME_YUV420,
+                            PVMF_MIME_PCM16,
                             iCurrentTestNumber,
                             false,
                             false,

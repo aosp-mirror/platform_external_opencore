@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,10 +54,11 @@ int32 ProgressiveDownloadState_HEAD::checkParsingStatus(int32 parsingStatus)
 
 int32 ProgressiveDownloadState_HEAD::OutputDataAvailable(OUTPUT_DATA_QUEUE *aOutputQueue, const bool isHttpHeader)
 {
-    OSCL_ASSERT(isHttpHeader == true);
-    //if(iObserver) iObserver->HttpHeaderAvailable(*aOutputQueue);
-    iDataSideInfo.set(ProtocolEngineOutputDataType_HttpHeader);
-    iObserver->OutputDataAvailable(*aOutputQueue, iDataSideInfo);
+    if (isHttpHeader)
+    {
+        iDataSideInfo.set(ProtocolEngineOutputDataType_HttpHeader);
+        iObserver->OutputDataAvailable(*aOutputQueue, iDataSideInfo);
+    }
     return HttpParsingBasicObject::PARSE_SUCCESS;
 }
 

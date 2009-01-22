@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,6 +67,7 @@
 #include "oscl_mem_audit.h"
 #endif
 
+
 //
 // pvplayer_async_test_printmetadata section
 //
@@ -115,9 +116,9 @@ void pvplayer_async_test_printmetadata::Run()
              * In case of HTTP URLs always attempt rollover,
              * since we donot know if it is a download or a streaming url
              */
-            if (iFileType == PVMF_DATA_SOURCE_HTTP_URL)
+            if (iFileType == PVMF_MIME_DATA_SOURCE_HTTP_URL)
             {
-                iDataSource->SetAlternateSourceFormatType(PVMF_DATA_SOURCE_MS_HTTP_STREAMING_URL);
+                iDataSource->SetAlternateSourceFormatType(PVMF_MIME_DATA_SOURCE_MS_HTTP_STREAMING_URL);
             }
             OSCL_TRY(error, iCurrentCmdId = iPlayer->AddDataSource(*iDataSource, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
@@ -144,7 +145,15 @@ void pvplayer_async_test_printmetadata::Run()
         {
             iMetadataValueList.clear();
             iNumValues = 0;
-            OSCL_TRY(error, iCurrentCmdId = iPlayer->GetMetadataValues(iMetadataKeyList, 0, -1, iNumValues, iMetadataValueList, (OsclAny*) & iContextObject));
+            OSCL_TRY(error, iCurrentCmdId = iPlayer->GetMetadataValues(iMetadataKeyList, 0, -1, iNumValues, iMetadataValueList, (OsclAny*) & iContextObject, !iReleaseMetadataByApp));
+            OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
+        }
+        break;
+
+        case STATE_RELEASEMETADATAVALUES1:
+        {
+            PrintMetadataInfo();
+            OSCL_TRY(error, iCurrentCmdId = iPlayer->ReleaseMetadataValues(iMetadataValueList, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
         }
         break;
@@ -154,18 +163,10 @@ void pvplayer_async_test_printmetadata::Run()
             OSCL_wHeapString<OsclMemAllocator> videosinkfilename = OUTPUTNAME_PREPEND_WSTRING;
             videosinkfilename += _STRLIT_WCHAR("test_player_printmetadata_video.dat");
 
-            iMIOFileOutVideo = iMioFactory->CreateVideoOutput((OsclAny*) & videosinkfilename);
+            iMIOFileOutVideo = iMioFactory->CreateVideoOutput((OsclAny*) & videosinkfilename, MEDIATYPE_VIDEO, iCompressedVideo);
             iIONodeVideo = PVMediaOutputNodeFactory::CreateMediaOutputNode(iMIOFileOutVideo);
             iDataSinkVideo = new PVPlayerDataSinkPVMFNode;
             ((PVPlayerDataSinkPVMFNode*)iDataSinkVideo)->SetDataSinkNode(iIONodeVideo);
-            if (iCompressedVideo)
-            {
-                ((PVPlayerDataSinkPVMFNode*)iDataSinkVideo)->SetDataSinkFormatType(PVMF_M4V);
-            }
-            else
-            {
-                ((PVPlayerDataSinkPVMFNode*)iDataSinkVideo)->SetDataSinkFormatType(PVMF_YUV420);
-            }
 
             OSCL_TRY(error, iCurrentCmdId = iPlayer->AddDataSink(*iDataSinkVideo, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
@@ -177,18 +178,10 @@ void pvplayer_async_test_printmetadata::Run()
             OSCL_wHeapString<OsclMemAllocator> audiosinkfilename = OUTPUTNAME_PREPEND_WSTRING;
             audiosinkfilename += _STRLIT_WCHAR("test_player_printmetadata_audio.dat");
 
-            iMIOFileOutAudio = iMioFactory->CreateAudioOutput((OsclAny*) & audiosinkfilename);
+            iMIOFileOutAudio = iMioFactory->CreateAudioOutput((OsclAny*) & audiosinkfilename, MEDIATYPE_AUDIO, iCompressedAudio);
             iIONodeAudio = PVMediaOutputNodeFactory::CreateMediaOutputNode(iMIOFileOutAudio);
             iDataSinkAudio = new PVPlayerDataSinkPVMFNode;
             ((PVPlayerDataSinkPVMFNode*)iDataSinkAudio)->SetDataSinkNode(iIONodeAudio);
-            if (iCompressedAudio)
-            {
-                ((PVPlayerDataSinkPVMFNode*)iDataSinkAudio)->SetDataSinkFormatType(PVMF_MPEG4_AUDIO);
-            }
-            else
-            {
-                ((PVPlayerDataSinkPVMFNode*)iDataSinkAudio)->SetDataSinkFormatType(AUDIOSINK_FORMAT_TYPE);
-            }
 
             OSCL_TRY(error, iCurrentCmdId = iPlayer->AddDataSink(*iDataSinkAudio, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
@@ -200,11 +193,10 @@ void pvplayer_async_test_printmetadata::Run()
             OSCL_wHeapString<OsclMemAllocator> textsinkfilename = OUTPUTNAME_PREPEND_WSTRING;
             textsinkfilename += _STRLIT_WCHAR("test_player_printmetadata_text.dat");
 
-            iMIOFileOutText = iMioFactory->CreateTextOutput((OsclAny*) & textsinkfilename);
+            iMIOFileOutText = iMioFactory->CreateTextOutput((OsclAny*) & textsinkfilename, MEDIATYPE_TEXT);
             iIONodeText = PVMediaOutputNodeFactory::CreateMediaOutputNode(iMIOFileOutText);
             iDataSinkText = new PVPlayerDataSinkPVMFNode;
             ((PVPlayerDataSinkPVMFNode*)iDataSinkText)->SetDataSinkNode(iIONodeText);
-            ((PVPlayerDataSinkPVMFNode*)iDataSinkText)->SetDataSinkFormatType(PVMF_3GPP_TIMEDTEXT);
 
             OSCL_TRY(error, iCurrentCmdId = iPlayer->AddDataSink(*iDataSinkText, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
@@ -237,7 +229,15 @@ void pvplayer_async_test_printmetadata::Run()
         {
             iMetadataValueList.clear();
             iNumValues = 0;
-            OSCL_TRY(error, iCurrentCmdId = iPlayer->GetMetadataValues(iMetadataKeyList, 0, 50, iNumValues, iMetadataValueList, (OsclAny*) & iContextObject));
+            OSCL_TRY(error, iCurrentCmdId = iPlayer->GetMetadataValues(iMetadataKeyList, 0, 50, iNumValues, iMetadataValueList, (OsclAny*) & iContextObject, !iReleaseMetadataByApp));
+            OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
+        }
+        break;
+
+        case STATE_RELEASEMETADATAVALUES2:
+        {
+            PrintMetadataInfo();
+            OSCL_TRY(error, iCurrentCmdId = iPlayer->ReleaseMetadataValues(iMetadataValueList, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
         }
         break;
@@ -261,7 +261,15 @@ void pvplayer_async_test_printmetadata::Run()
         {
             iMetadataValueList.clear();
             iNumValues = 0;
-            OSCL_TRY(error, iCurrentCmdId = iPlayer->GetMetadataValues(iMetadataKeyList, 0, 50, iNumValues, iMetadataValueList, (OsclAny*) & iContextObject));
+            OSCL_TRY(error, iCurrentCmdId = iPlayer->GetMetadataValues(iMetadataKeyList, 0, 50, iNumValues, iMetadataValueList, (OsclAny*) & iContextObject, !iReleaseMetadataByApp));
+            OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
+        }
+        break;
+
+        case STATE_RELEASEMETADATAVALUES3:
+        {
+            PrintMetadataInfo();
+            OSCL_TRY(error, iCurrentCmdId = iPlayer->ReleaseMetadataValues(iMetadataValueList, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
         }
         break;
@@ -298,16 +306,6 @@ void pvplayer_async_test_printmetadata::Run()
         {
             OSCL_TRY(error, iCurrentCmdId = iPlayer->RemoveDataSource(*iDataSource, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
-        }
-        break;
-
-        case STATE_WAIT_FOR_ERROR_HANDLING:
-        {
-            // Timed out waiting for error handling to complete
-            PVPATB_TEST_IS_TRUE(false);
-            // Forcibly terminate the test
-            iState = STATE_CLEANUPANDCOMPLETE;
-            RunIfNotReady();
         }
         break;
 
@@ -403,8 +401,8 @@ void pvplayer_async_test_printmetadata::CommandCompleted(const PVCmdResponse& aR
             {
                 // AddDataSource failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -420,8 +418,8 @@ void pvplayer_async_test_printmetadata::CommandCompleted(const PVCmdResponse& aR
             {
                 // Init failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -435,8 +433,8 @@ void pvplayer_async_test_printmetadata::CommandCompleted(const PVCmdResponse& aR
             {
                 // GetMetadataKeys failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -444,16 +442,38 @@ void pvplayer_async_test_printmetadata::CommandCompleted(const PVCmdResponse& aR
             if (aResponse.GetCmdStatus() == PVMFSuccess || aResponse.GetCmdStatus() == PVMFErrArgument)
             {
                 fprintf(iTestMsgOutputFile, "After Init()\n");
-                PrintMetadataInfo();
-                iState = STATE_ADDDATASINK_VIDEO;
+                if (iReleaseMetadataByApp)
+                {
+                    iState = STATE_RELEASEMETADATAVALUES1;
+                }
+                else
+                {
+                    PrintMetadataInfo();
+                    iState = STATE_ADDDATASINK_VIDEO;
+                }
                 RunIfNotReady();
             }
             else
             {
                 // GetMetadataValue failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
+            }
+            break;
+
+        case STATE_RELEASEMETADATAVALUES1:
+            if (aResponse.GetCmdStatus() == PVMFSuccess)
+            {
+                iState = STATE_ADDDATASINK_VIDEO;
+                RunIfNotReady();
+            }
+            else
+            {
+                // ReleaseMetadataValues failed
+                PVPATB_TEST_IS_TRUE(false);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -467,8 +487,8 @@ void pvplayer_async_test_printmetadata::CommandCompleted(const PVCmdResponse& aR
             {
                 // AddDataSink failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -482,8 +502,8 @@ void pvplayer_async_test_printmetadata::CommandCompleted(const PVCmdResponse& aR
             {
                 // AddDataSink failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -497,8 +517,8 @@ void pvplayer_async_test_printmetadata::CommandCompleted(const PVCmdResponse& aR
             {
                 // AddDataSink failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -512,8 +532,8 @@ void pvplayer_async_test_printmetadata::CommandCompleted(const PVCmdResponse& aR
             {
                 // Prepare failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -529,8 +549,8 @@ void pvplayer_async_test_printmetadata::CommandCompleted(const PVCmdResponse& aR
             {
                 // Start failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -544,8 +564,8 @@ void pvplayer_async_test_printmetadata::CommandCompleted(const PVCmdResponse& aR
             {
                 // GetMetadataKeys failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -553,16 +573,38 @@ void pvplayer_async_test_printmetadata::CommandCompleted(const PVCmdResponse& aR
             if (aResponse.GetCmdStatus() == PVMFSuccess || aResponse.GetCmdStatus() == PVMFErrArgument)
             {
                 fprintf(iTestMsgOutputFile, "After Start()\n");
-                PrintMetadataInfo();
-                iState = STATE_STOP;
+                if (iReleaseMetadataByApp)
+                {
+                    iState = STATE_RELEASEMETADATAVALUES2;
+                }
+                else
+                {
+                    PrintMetadataInfo();
+                    iState = STATE_STOP;
+                }
                 RunIfNotReady();
             }
             else
             {
                 // GetMetadataValue failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
+            }
+            break;
+
+        case STATE_RELEASEMETADATAVALUES2:
+            if (aResponse.GetCmdStatus() == PVMFSuccess)
+            {
+                iState = STATE_STOP;
+                RunIfNotReady();
+            }
+            else
+            {
+                // ReleaseMetadataValues failed
+                PVPATB_TEST_IS_TRUE(false);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -578,8 +620,8 @@ void pvplayer_async_test_printmetadata::CommandCompleted(const PVCmdResponse& aR
             {
                 // Stop failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -593,8 +635,8 @@ void pvplayer_async_test_printmetadata::CommandCompleted(const PVCmdResponse& aR
             {
                 // GetMetadataKeys failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -602,16 +644,38 @@ void pvplayer_async_test_printmetadata::CommandCompleted(const PVCmdResponse& aR
             if (aResponse.GetCmdStatus() == PVMFSuccess || aResponse.GetCmdStatus() == PVMFErrArgument)
             {
                 fprintf(iTestMsgOutputFile, "After Stop()\n");
-                PrintMetadataInfo();
-                iState = STATE_REMOVEDATASINK_VIDEO;
+                if (iReleaseMetadataByApp)
+                {
+                    iState = STATE_RELEASEMETADATAVALUES3;
+                }
+                else
+                {
+                    PrintMetadataInfo();
+                    iState = STATE_REMOVEDATASINK_VIDEO;
+                }
                 RunIfNotReady();
             }
             else
             {
                 // GetMetadataValue failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
+            }
+            break;
+
+        case STATE_RELEASEMETADATAVALUES3:
+            if (aResponse.GetCmdStatus() == PVMFSuccess)
+            {
+                iState = STATE_REMOVEDATASINK_VIDEO;
+                RunIfNotReady();
+            }
+            else
+            {
+                // ReleaseMetadataValues failed
+                PVPATB_TEST_IS_TRUE(false);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -625,8 +689,8 @@ void pvplayer_async_test_printmetadata::CommandCompleted(const PVCmdResponse& aR
             {
                 // RemoveDataSink failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -640,8 +704,8 @@ void pvplayer_async_test_printmetadata::CommandCompleted(const PVCmdResponse& aR
             {
                 // RemoveDataSink failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -655,8 +719,8 @@ void pvplayer_async_test_printmetadata::CommandCompleted(const PVCmdResponse& aR
             {
                 // RemoveDataSink failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -670,8 +734,8 @@ void pvplayer_async_test_printmetadata::CommandCompleted(const PVCmdResponse& aR
             {
                 // Reset failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -735,48 +799,240 @@ void pvplayer_async_test_printmetadata::HandleErrorEvent(const PVAsyncErrorEvent
 
     // Wait for engine to handle the error
     Cancel();
-    iState = STATE_WAIT_FOR_ERROR_HANDLING;
-    RunIfNotReady(5000000);
 }
 
 
 void pvplayer_async_test_printmetadata::HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent)
 {
-    // Wait for error handling to complete
-    if (iState == STATE_WAIT_FOR_ERROR_HANDLING && aEvent.GetEventType() == PVMFInfoErrorHandlingComplete)
+    if (aEvent.GetEventType() == PVMFInfoErrorHandlingStart)
     {
-        PVPlayerState pstate;
-        iPlayer->GetPVPlayerStateSync(pstate);
-        switch (pstate)
-        {
-            case PVP_STATE_INITIALIZED:
-                Cancel();
-                iState = STATE_REMOVEDATASINK_VIDEO;
-                RunIfNotReady();
-                break;
-
-            case PVP_STATE_IDLE:
-                Cancel();
-                iState = STATE_REMOVEDATASOURCE;
-                RunIfNotReady();
-                break;
-
-            default:
-                // Engine should not be in any other state when
-                // error handling completes
-                PVPATB_TEST_IS_TRUE(false);
-                Cancel();
-                iState = STATE_CLEANUPANDCOMPLETE;
-                RunIfNotReady();
-                break;
-        }
+        fprintf(iTestMsgOutputFile, "PVMFInfoErrorHandlingStart...\n");
+    }
+    if (aEvent.GetEventType() == PVMFInfoErrorHandlingComplete)
+    {
+        fprintf(iTestMsgOutputFile, "PVMFInfoErrorHandlingComplete...\n");
+        iState = STATE_CLEANUPANDCOMPLETE;
+        RunIfNotReady();
     }
 }
 
+/* PrintCodecSpecificInfo() prints the codec specific information for
+   the respective AUDIO TYPE stream and VIDEO TYPE stream.
+
+   Please note that the usage of numerical constants for transversing
+   the bytes should not be treated as hard coded values usage, because
+   the starting offset of each filed in codec specific info is fixed and
+   these locations are not tunable. That is why these constants are not
+   defined under #define.
+
+*/
+void pvplayer_async_test_printmetadata::PrintCodecSpecificInfo(char* aData, uint32 aIndex)
+{
+
+    if (INDEX_CODEC_SPECIFIC_INFO_AUDIO == aIndex)
+    {
+        uint16 CodecId = ((*(aData + 0))		 & 0x000000FF)
+                         + (((*(aData + 1)) << 8)  & 0x0000FF00);
+
+        fprintf(iTestMsgOutputFile, "	CodecId:%d \n", CodecId);
+
+        uint16 NumChannels = ((*(aData + 2))		 & 0x000000FF)
+                             + (((*(aData + 3)) << 8)  & 0x0000FF00);
+
+        fprintf(iTestMsgOutputFile, "	NumChannels:%d \n", NumChannels);
+
+        uint32 SamplesPerSecond = ((*(aData + 4))		  & 0x000000FF)
+                                  + (((*(aData + 5)) << 8)  & 0x0000FF00)
+                                  + (((*(aData + 6)) << 16) & 0x00FF0000)
+                                  + (((*(aData + 7)) << 24) & 0xFF000000);
+
+        fprintf(iTestMsgOutputFile, "	SamplesPerSecond:%d \n", SamplesPerSecond);
+
+        uint32 AvgNumBytesPerSecond = ((*(aData + 8))		   & 0x000000FF)
+                                      + (((*(aData + 9)) << 8)   & 0x0000FF00)
+                                      + (((*(aData + 10)) << 16) & 0x00FF0000)
+                                      + (((*(aData + 11)) << 24) & 0xFF000000);
+
+        fprintf(iTestMsgOutputFile, "	AvgNumBytesPerSecond:%d \n", AvgNumBytesPerSecond);
+
+        uint16 BlockAlignment = ((*(aData + 12))		 & 0x000000FF)
+                                + (((*(aData + 13)) << 8)  & 0x0000FF00);
+
+        fprintf(iTestMsgOutputFile, "	BlockAlignment:%d \n", BlockAlignment);
+
+        uint16 BitsPerSample = ((*(aData + 14))		    & 0x000000FF)
+                               + (((*(aData + 15)) << 8)  & 0x0000FF00);
+
+        fprintf(iTestMsgOutputFile, "	BitsPerSample:%d \n", BitsPerSample);
+
+        uint16 CodecSpecificDataSize = ((*(aData + 16))		    & 0x000000FF)
+                                       + (((*(aData + 17)) << 8)  & 0x0000FF00);
+
+        fprintf(iTestMsgOutputFile, "	CodecSpecificDataSize:%d \n", CodecSpecificDataSize);
+
+        fprintf(iTestMsgOutputFile, "	CodecSpecifcData: \n");
+        fprintf(iTestMsgOutputFile, "\t");
+        for (uint16 ii = 0; ii < CodecSpecificDataSize; ii++)
+        {
+            fprintf(iTestMsgOutputFile, "0x%02x ", (*(aData + 18 + ii) & 0xff));
+
+        }
+        fprintf(iTestMsgOutputFile, "\n");
+
+
+    }
+    else if (INDEX_CODEC_SPECIFIC_INFO_VIDEO == aIndex)
+    {
+        uint32 ImageWidth = ((*(aData + 0))		    & 0x000000FF)
+                            + (((*(aData + 1)) << 8)  & 0x0000FF00)
+                            + (((*(aData + 2)) << 16) & 0x00FF0000)
+                            + (((*(aData + 3)) << 24) & 0xFF000000);
+        fprintf(iTestMsgOutputFile, "	ImageWidth:%d \n", ImageWidth);
+
+        uint32 Imageheight = ((*(aData + 4))		 & 0x000000FF)
+                             + (((*(aData + 5)) << 8)  & 0x0000FF00)
+                             + (((*(aData + 6)) << 16) & 0x00FF0000)
+                             + (((*(aData + 7)) << 24) & 0xFF000000);
+        fprintf(iTestMsgOutputFile, "	Imageheight:%d \n", Imageheight);
+
+        uint8 ReservedFlags = ((*(aData + 8)) & 0x000000FF);
+        fprintf(iTestMsgOutputFile, "	ReservedFlags:%d \n", ReservedFlags);
+
+        uint16 FormatDataSize = ((*(aData + 9))		     & 0x000000FF)
+                                + (((*(aData + 10)) << 8)  & 0x0000FF00);
+
+        fprintf(iTestMsgOutputFile, "	FormatDataSize:%d \n", FormatDataSize);
+
+        uint32 FormatDataFormatDataSize = ((*(aData + 11))		   & 0x000000FF)
+                                          + (((*(aData + 12)) << 8)  & 0x0000FF00)
+                                          + (((*(aData + 13)) << 16) & 0x00FF0000)
+                                          + (((*(aData + 14)) << 24) & 0xFF000000);
+        fprintf(iTestMsgOutputFile, "	FormatDataFormatDataSize:%d \n", FormatDataFormatDataSize);
+
+        uint32 FormatDataImageWidth = ((*(aData + 15))		   & 0x000000FF)
+                                      + (((*(aData + 16)) << 8)  & 0x0000FF00)
+                                      + (((*(aData + 17)) << 16) & 0x00FF0000)
+                                      + (((*(aData + 18)) << 24) & 0xFF000000);
+        fprintf(iTestMsgOutputFile, "	FormatDataImageWidth:%d \n", FormatDataImageWidth);
+
+        uint32 FormatDataImageHeight = ((*(aData + 19))			& 0x000000FF)
+                                       + (((*(aData + 20)) << 8)  & 0x0000FF00)
+                                       + (((*(aData + 21)) << 16) & 0x00FF0000)
+                                       + (((*(aData + 22)) << 24) & 0xFF000000);
+        fprintf(iTestMsgOutputFile, "	FormatDataImageHeight:%d \n", FormatDataImageHeight);
+
+        uint16 FormatDataReserved = ((*(aData + 23))		 & 0x000000FF)
+                                    + (((*(aData + 24)) << 8)  & 0x0000FF00);
+
+        fprintf(iTestMsgOutputFile, "	FormatDataReserved:%d \n", FormatDataReserved);
+
+        uint16 FormatDataBitsPerPixelCount = ((*(aData + 25))		  & 0x000000FF)
+                                             + (((*(aData + 26)) << 8)  & 0x0000FF00);
+
+        fprintf(iTestMsgOutputFile, "	FormatDataBitsPerPixelCount:%d \n", FormatDataBitsPerPixelCount);
+
+        uint32 FormatDataCompressionId = ((*(aData + 27))		  & 0x000000FF)
+                                         + (((*(aData + 28)) << 8)  & 0x0000FF00)
+                                         + (((*(aData + 29)) << 16) & 0x00FF0000)
+                                         + (((*(aData + 30)) << 24) & 0xFF000000);
+
+        fprintf(iTestMsgOutputFile, "	FormatDataCompressionId:%d \n", FormatDataCompressionId);
+
+        uint32 FormatDataImageSize = ((*(aData + 31))		  & 0x000000FF)
+                                     + (((*(aData + 32)) << 8)  & 0x0000FF00)
+                                     + (((*(aData + 33)) << 16) & 0x00FF0000)
+                                     + (((*(aData + 34)) << 24) & 0xFF000000);
+
+        fprintf(iTestMsgOutputFile, "	FormatDataImageSize:%d \n", FormatDataImageSize);
+
+        uint32 FormatDataHorizontalPixelsPerMeter = ((*(aData + 35))		 & 0x000000FF)
+                + (((*(aData + 36)) << 8)  & 0x0000FF00)
+                + (((*(aData + 37)) << 16) & 0x00FF0000)
+                + (((*(aData + 38)) << 24) & 0xFF000000);
+
+        fprintf(iTestMsgOutputFile, "	FormatDataHorizontalPixelsPerMeter:%d \n", FormatDataHorizontalPixelsPerMeter);
+
+        uint32 FormatDataVerticalPixelsPerMeter = ((*(aData + 39))		   & 0x000000FF)
+                + (((*(aData + 40)) << 8)  & 0x0000FF00)
+                + (((*(aData + 41)) << 16) & 0x00FF0000)
+                + (((*(aData + 42)) << 24) & 0xFF000000);
+
+        fprintf(iTestMsgOutputFile, "	FormatDataVerticalPixelsPerMeter:%d \n", FormatDataVerticalPixelsPerMeter);
+
+        uint32 FormatDataColorsUsedCount = ((*(aData + 43))		    & 0x000000FF)
+                                           + (((*(aData + 44)) << 8)  & 0x0000FF00)
+                                           + (((*(aData + 45)) << 16) & 0x00FF0000)
+                                           + (((*(aData + 46)) << 24) & 0xFF000000);
+
+        fprintf(iTestMsgOutputFile, "	FormatDataColorsUsedCount:%d \n", FormatDataColorsUsedCount);
+
+        uint32 FormatDataImportantColorsCount = ((*(aData + 47))		 & 0x000000FF)
+                                                + (((*(aData + 48)) << 8)  & 0x0000FF00)
+                                                + (((*(aData + 49)) << 16) & 0x00FF0000)
+                                                + (((*(aData + 50)) << 24) & 0xFF000000);
+
+        fprintf(iTestMsgOutputFile, "	FormatDataImportantColorsCount:%d \n", FormatDataImportantColorsCount);
+
+        fprintf(iTestMsgOutputFile, "	CodecSpecifcData: \n");
+        fprintf(iTestMsgOutputFile, "\t");
+        for (uint16 ii = 0; ii < (FormatDataSize - SIZE_FORMATDATA_VIDEO); ii++)
+        {
+            fprintf(iTestMsgOutputFile, "0x%02x ", (*(aData + 51 + ii) & 0xff));
+
+        }
+        fprintf(iTestMsgOutputFile, "\n");
+    }
+    else
+    {
+        fprintf(iTestMsgOutputFile, "Codec Specific Info with index %d not supported\n", aIndex);
+
+    }
+
+}
+
+PVMFStatus pvplayer_async_test_printmetadata::GetIndexParamValues(const char* aString,
+        uint32& aStartIndex,
+        uint32& aEndIndex)
+{
+    /*
+     * This parses a string of the form "index=N1...N2" and extracts the integers N1 and N2.
+     * If string is of the format "index=N1" then N2=N1
+     */
+    if (NULL == aString)
+    {
+        return PVMFErrArgument;
+    }
+
+    /* Go to end of "index=" */
+    char* pN1string = (char*)aString + 6;
+    const char ch = 'd';
+    PV_atoi(pN1string, ch, (int32)oscl_strlen(pN1string), (uint32&)aStartIndex);
+    const char* pN2string = oscl_strstr(aString, _STRLIT_CHAR("..."));
+    if (NULL == pN2string)
+    {
+        aEndIndex = aStartIndex;
+    }
+    else
+    {
+        /* Go to end of "index=N1..." */
+        pN2string += 3;
+        PV_atoi(pN2string, ch, (int32)oscl_strlen(pN2string), (uint32&)aEndIndex);
+    }
+    return PVMFSuccess;
+}
 
 void pvplayer_async_test_printmetadata::PrintMetadataInfo()
 {
-    uint32 i = 0;
+    uint32 i = 0, StartIndex = 0, EndIndex = 0, nCnt = 0, jj = 0;
+    iCodecSpecificInfoAudioIndex = INDEX_CODEC_SPECIFIC_INFO_UNDEFINED;
+    iCodecSpecificInfoVideoIndex = INDEX_CODEC_SPECIFIC_INFO_UNDEFINED;
+    CodecSpecificInfo  sCSI[MAX_CODEC_SPECIFIC_INFO_SUPPORTED];
+    for (jj = 0; jj < MAX_CODEC_SPECIFIC_INFO_SUPPORTED; jj++)
+    {
+        sCSI[jj].CodecSpecificInfoIndex		= -1;
+        sCSI[jj].MetadataKeyIndex			= -1;
+        sCSI[jj].ValueIndex					= -1;
+    }
 
     fprintf(iTestMsgOutputFile, "Metadata key list (count=%d):\n", iMetadataKeyList.size());
     for (i = 0; i < iMetadataKeyList.size(); ++i)
@@ -787,14 +1043,99 @@ void pvplayer_async_test_printmetadata::PrintMetadataInfo()
     fprintf(iTestMsgOutputFile, "\nMetadata value list (count=%d):\n", iMetadataValueList.size());
     for (i = 0; i < iMetadataValueList.size(); ++i)
     {
+
+        // Skip the logging of metadata if it is track-info/codec-specific-info, it will require track-info to be extracted first
+        // And as the track-info matches, the startindex is extracted and compared to
+        // iCodecSpecificInfoAudioIndex/ iCodecSpecificInfoVideoIndex to print the respective codec-specific-info.
+
+        if ((oscl_strncmp(iMetadataValueList[i].key, PVMF_ASF_PARSER_NODE_TRACKINFO_CODEC_DATA_KEY, oscl_strlen(PVMF_ASF_PARSER_NODE_TRACKINFO_CODEC_DATA_KEY)) == 0))
+        {
+            char *pIndexPtr = (char*)oscl_strstr(iMetadataValueList[i].key, "track-info/codec-specific-info;valtype=uint8*;");
+            if (NULL != pIndexPtr)
+            {
+                pIndexPtr = (char *)oscl_strstr(pIndexPtr, "index=");
+                GetIndexParamValues(pIndexPtr, StartIndex, EndIndex);
+                sCSI[nCnt].CodecSpecificInfoIndex = StartIndex;
+                sCSI[nCnt].MetadataKeyIndex = i;
+                sCSI[nCnt].ValueIndex = (i + 1);
+                nCnt++;
+
+                if ((int32)StartIndex == iCodecSpecificInfoAudioIndex)
+                {
+                    fprintf(iTestMsgOutputFile, "Value %d:\n", (i + 1));
+                    fprintf(iTestMsgOutputFile, "   Key string: %s\n", iMetadataValueList[sCSI[jj].MetadataKeyIndex].key);
+                    PrintCodecSpecificInfo(iMetadataValueList[i].value.pChar_value, INDEX_CODEC_SPECIFIC_INFO_AUDIO);
+                }
+                else if ((int32)StartIndex == iCodecSpecificInfoVideoIndex)
+                {
+                    fprintf(iTestMsgOutputFile, "Value %d:\n", (i + 1));
+                    fprintf(iTestMsgOutputFile, "   Key string: %s\n", iMetadataValueList[sCSI[jj].MetadataKeyIndex].key);
+                    PrintCodecSpecificInfo(iMetadataValueList[i].value.pChar_value, INDEX_CODEC_SPECIFIC_INFO_VIDEO);
+                }
+            }
+            continue;
+        }
+
+
         fprintf(iTestMsgOutputFile, "Value %d:\n", (i + 1));
         fprintf(iTestMsgOutputFile, "   Key string: %s\n", iMetadataValueList[i].key);
 
         switch (GetValTypeFromKeyString(iMetadataValueList[i].key))
         {
             case PVMI_KVPVALTYPE_CHARPTR:
+
+            {
                 fprintf(iTestMsgOutputFile, "   Value:%s\n", iMetadataValueList[i].value.pChar_value);
-                break;
+                fprintf(iTestMsgOutputFile, "   Length:%d  Capacity:%d\n", iMetadataValueList[i].length, iMetadataValueList[i].capacity);
+
+                // Checks whether the iMetadataValueList[i].key matches the track-info/type.
+                // If matches, then it checks for the index value, extracts the index and stores it in startindex.
+                // Then it verifies for WMA/WMV and accordingly prints the codec-specific-info.
+                // And if it does not match then it continues till it matches.
+
+                char *pIndexPtr = (char *)oscl_strstr(iMetadataValueList[i].key, "track-info/type;valtype=char*;");
+                if (NULL != pIndexPtr)
+                {
+                    pIndexPtr = (char *)oscl_strstr(iMetadataValueList[i].key, "index=");
+                    GetIndexParamValues(pIndexPtr, StartIndex, EndIndex);
+                    if ((oscl_strncmp(iMetadataValueList[i].value.pChar_value, "audio/x-ms-wma", oscl_strlen("audio/x-ms-wma")) == 0))
+                    {
+                        iCodecSpecificInfoAudioIndex = (int32)StartIndex;
+                        for (uint32 jj = 0; jj <= nCnt; jj++)
+                        {
+                            if ((uint32)sCSI[jj].CodecSpecificInfoIndex == StartIndex)
+                            {
+                                fprintf(iTestMsgOutputFile, "Value %d:\n", sCSI[jj].ValueIndex);
+                                fprintf(iTestMsgOutputFile, "   Key string: %s\n", iMetadataValueList[sCSI[jj].MetadataKeyIndex].key);
+                                fprintf(iTestMsgOutputFile, "   Value: UNKNOWN VALUE TYPE\n");
+                                fprintf(iTestMsgOutputFile, "   Length:%d  Capacity:%d\n", iMetadataValueList[sCSI[jj].MetadataKeyIndex].length, iMetadataValueList[sCSI[jj].MetadataKeyIndex].capacity);
+                                PrintCodecSpecificInfo(iMetadataValueList[sCSI[jj].MetadataKeyIndex].value.pChar_value, INDEX_CODEC_SPECIFIC_INFO_AUDIO);
+                                break;
+                            }
+                        }
+                    }
+
+                    else if ((oscl_strncmp(iMetadataValueList[i].value.pChar_value, "video/x-ms-wmv", oscl_strlen("video/x-ms-wmv")) == 0))
+                    {
+                        iCodecSpecificInfoVideoIndex = StartIndex;
+                        for (uint jj = 0; jj <= nCnt; jj++)
+                        {
+                            if ((uint32)sCSI[jj].CodecSpecificInfoIndex == StartIndex)
+                            {
+                                fprintf(iTestMsgOutputFile, "Value %d:\n", sCSI[jj].ValueIndex);
+                                fprintf(iTestMsgOutputFile, "   Key string: %s\n", iMetadataValueList[sCSI[jj].MetadataKeyIndex].key);
+                                fprintf(iTestMsgOutputFile, "   Value: UNKNOWN VALUE TYPE\n");
+                                fprintf(iTestMsgOutputFile, "   Length:%d  Capacity:%d\n", iMetadataValueList[sCSI[jj].MetadataKeyIndex].length, iMetadataValueList[sCSI[jj].MetadataKeyIndex].capacity);
+                                PrintCodecSpecificInfo(iMetadataValueList[sCSI[jj].MetadataKeyIndex].value.pChar_value, INDEX_CODEC_SPECIFIC_INFO_VIDEO);
+                                break;
+                            }
+                        }
+                    }
+
+                }
+
+            }
+            break;
 
             case PVMI_KVPVALTYPE_WCHARPTR:
             {
@@ -805,26 +1146,32 @@ void pvplayer_async_test_printmetadata::PrintMetadataInfo()
                 tmpstr[64] = '\0';
                 fprintf(iTestMsgOutputFile, "   Value(in UTF-8, first 64 chars):%s\n", tmpstr);
             }
+            fprintf(iTestMsgOutputFile, "   Length:%d  Capacity:%d\n", iMetadataValueList[i].length, iMetadataValueList[i].capacity);
             break;
 
             case PVMI_KVPVALTYPE_UINT32:
                 fprintf(iTestMsgOutputFile, "   Value:%d\n", iMetadataValueList[i].value.uint32_value);
+                fprintf(iTestMsgOutputFile, "   Length:%d  Capacity:%d\n", iMetadataValueList[i].length, iMetadataValueList[i].capacity);
                 break;
 
             case PVMI_KVPVALTYPE_INT32:
                 fprintf(iTestMsgOutputFile, "   Value:%d\n", iMetadataValueList[i].value.int32_value);
+                fprintf(iTestMsgOutputFile, "   Length:%d  Capacity:%d\n", iMetadataValueList[i].length, iMetadataValueList[i].capacity);
                 break;
 
             case PVMI_KVPVALTYPE_UINT8:
                 fprintf(iTestMsgOutputFile, "   Value:%d\n", iMetadataValueList[i].value.uint8_value);
+                fprintf(iTestMsgOutputFile, "   Length:%d  Capacity:%d\n", iMetadataValueList[i].length, iMetadataValueList[i].capacity);
                 break;
 
             case PVMI_KVPVALTYPE_FLOAT:
                 fprintf(iTestMsgOutputFile, "   Value:%f\n", iMetadataValueList[i].value.float_value);
+                fprintf(iTestMsgOutputFile, "   Length:%d  Capacity:%d\n", iMetadataValueList[i].length, iMetadataValueList[i].capacity);
                 break;
 
             case PVMI_KVPVALTYPE_DOUBLE:
                 fprintf(iTestMsgOutputFile, "   Value:%f\n", iMetadataValueList[i].value.double_value);
+                fprintf(iTestMsgOutputFile, "   Length:%d  Capacity:%d\n", iMetadataValueList[i].length, iMetadataValueList[i].capacity);
                 break;
 
             case PVMI_KVPVALTYPE_BOOL:
@@ -836,14 +1183,16 @@ void pvplayer_async_test_printmetadata::PrintMetadataInfo()
                 {
                     fprintf(iTestMsgOutputFile, "   Value:false(0)\n");
                 }
+                fprintf(iTestMsgOutputFile, "   Length:%d  Capacity:%d\n", iMetadataValueList[i].length, iMetadataValueList[i].capacity);
                 break;
 
             default:
                 fprintf(iTestMsgOutputFile, "   Value: UNKNOWN VALUE TYPE\n");
+                fprintf(iTestMsgOutputFile, "   Length:%d  Capacity:%d\n", iMetadataValueList[i].length, iMetadataValueList[i].capacity);
                 break;
         }
 
-        fprintf(iTestMsgOutputFile, "   Length:%d  Capacity:%d\n", iMetadataValueList[i].length, iMetadataValueList[i].capacity);
+
     }
 
     fprintf(iTestMsgOutputFile, "\n\n");
@@ -957,18 +1306,10 @@ void pvplayer_async_test_printmemstats::Run()
             OSCL_wHeapString<OsclMemAllocator> videosinkfilename = OUTPUTNAME_PREPEND_WSTRING;
             videosinkfilename += _STRLIT_WCHAR("test_player_printmemstats_video.dat");
 
-            iMIOFileOutVideo = iMioFactory->CreateVideoOutput((OsclAny*) & videosinkfilename);
+            iMIOFileOutVideo = iMioFactory->CreateVideoOutput((OsclAny*) & videosinkfilename, MEDIATYPE_VIDEO, iCompressedVideo);
             iIONodeVideo = PVMediaOutputNodeFactory::CreateMediaOutputNode(iMIOFileOutVideo);
             iDataSinkVideo = new PVPlayerDataSinkPVMFNode;
             ((PVPlayerDataSinkPVMFNode*)iDataSinkVideo)->SetDataSinkNode(iIONodeVideo);
-            if (iCompressedVideo)
-            {
-                ((PVPlayerDataSinkPVMFNode*)iDataSinkVideo)->SetDataSinkFormatType(PVMF_M4V);
-            }
-            else
-            {
-                ((PVPlayerDataSinkPVMFNode*)iDataSinkVideo)->SetDataSinkFormatType(PVMF_YUV420);
-            }
 
             OSCL_TRY(error, iCurrentCmdId = iPlayer->AddDataSink(*iDataSinkVideo, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
@@ -980,18 +1321,10 @@ void pvplayer_async_test_printmemstats::Run()
             OSCL_wHeapString<OsclMemAllocator> audiosinkfilename = OUTPUTNAME_PREPEND_WSTRING;
             audiosinkfilename += _STRLIT_WCHAR("test_player_printmemstats_audio.dat");
 
-            iMIOFileOutAudio = iMioFactory->CreateAudioOutput((OsclAny*) & audiosinkfilename);
+            iMIOFileOutAudio = iMioFactory->CreateAudioOutput((OsclAny*) & audiosinkfilename, MEDIATYPE_AUDIO, iCompressedAudio);
             iIONodeAudio = PVMediaOutputNodeFactory::CreateMediaOutputNode(iMIOFileOutAudio);
             iDataSinkAudio = new PVPlayerDataSinkPVMFNode;
             ((PVPlayerDataSinkPVMFNode*)iDataSinkAudio)->SetDataSinkNode(iIONodeAudio);
-            if (iCompressedAudio)
-            {
-                ((PVPlayerDataSinkPVMFNode*)iDataSinkAudio)->SetDataSinkFormatType(PVMF_MPEG4_AUDIO);
-            }
-            else
-            {
-                ((PVPlayerDataSinkPVMFNode*)iDataSinkAudio)->SetDataSinkFormatType(AUDIOSINK_FORMAT_TYPE);
-            }
 
             OSCL_TRY(error, iCurrentCmdId = iPlayer->AddDataSink(*iDataSinkAudio, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
@@ -1015,9 +1348,10 @@ void pvplayer_async_test_printmemstats::Run()
         case STATE_PRINTMEMSTATS:
         {
             PVPPlaybackPosition curpos;
+            curpos.iPosValue.millisec_value = 0;
             curpos.iPosUnit = PVPPBPOSUNIT_MILLISEC;
             iPlayer->GetCurrentPositionSync(curpos);
-            fprintf(iTestMsgOutputFile, "After playing %d ms: ", curpos.iPosValue);
+            fprintf(iTestMsgOutputFile, "After playing %d ms: ", curpos.iPosValue.millisec_value);
             PrintMemStats();
 
             ++iPlayTimeCtr;
@@ -1066,16 +1400,6 @@ void pvplayer_async_test_printmemstats::Run()
         {
             OSCL_TRY(error, iCurrentCmdId = iPlayer->RemoveDataSource(*iDataSource, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
-        }
-        break;
-
-        case STATE_WAIT_FOR_ERROR_HANDLING:
-        {
-            // Timed out waiting for error handling to complete
-            PVPATB_TEST_IS_TRUE(false);
-            // Forcibly terminate the test
-            iState = STATE_CLEANUPANDCOMPLETE;
-            RunIfNotReady();
         }
         break;
 
@@ -1171,8 +1495,8 @@ void pvplayer_async_test_printmemstats::CommandCompleted(const PVCmdResponse& aR
             {
                 // AddDataSource failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -1189,8 +1513,8 @@ void pvplayer_async_test_printmemstats::CommandCompleted(const PVCmdResponse& aR
             {
                 // Init failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -1207,8 +1531,8 @@ void pvplayer_async_test_printmemstats::CommandCompleted(const PVCmdResponse& aR
             {
                 // GetMetadataKeys failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -1225,8 +1549,8 @@ void pvplayer_async_test_printmemstats::CommandCompleted(const PVCmdResponse& aR
             {
                 // GetMetadataValue failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -1243,8 +1567,8 @@ void pvplayer_async_test_printmemstats::CommandCompleted(const PVCmdResponse& aR
             {
                 // AddDataSink failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -1261,8 +1585,8 @@ void pvplayer_async_test_printmemstats::CommandCompleted(const PVCmdResponse& aR
             {
                 // AddDataSink failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -1279,8 +1603,8 @@ void pvplayer_async_test_printmemstats::CommandCompleted(const PVCmdResponse& aR
             {
                 // Prepare failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -1297,8 +1621,8 @@ void pvplayer_async_test_printmemstats::CommandCompleted(const PVCmdResponse& aR
             {
                 // Start failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -1315,8 +1639,8 @@ void pvplayer_async_test_printmemstats::CommandCompleted(const PVCmdResponse& aR
             {
                 // Stop failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -1333,8 +1657,8 @@ void pvplayer_async_test_printmemstats::CommandCompleted(const PVCmdResponse& aR
             {
                 // RemoveDataSink failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -1351,8 +1675,8 @@ void pvplayer_async_test_printmemstats::CommandCompleted(const PVCmdResponse& aR
             {
                 // RemoveDataSink failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -1369,8 +1693,8 @@ void pvplayer_async_test_printmemstats::CommandCompleted(const PVCmdResponse& aR
             {
                 // Reset failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -1437,41 +1761,20 @@ void pvplayer_async_test_printmemstats::HandleErrorEvent(const PVAsyncErrorEvent
 
     // Wait for engine to handle the error
     Cancel();
-    iState = STATE_WAIT_FOR_ERROR_HANDLING;
-    RunIfNotReady(5000000);
 }
 
 
 void pvplayer_async_test_printmemstats::HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent)
 {
-    // Wait for error handling to complete
-    if (iState == STATE_WAIT_FOR_ERROR_HANDLING && aEvent.GetEventType() == PVMFInfoErrorHandlingComplete)
+    if (aEvent.GetEventType() == PVMFInfoErrorHandlingStart)
     {
-        PVPlayerState pstate;
-        iPlayer->GetPVPlayerStateSync(pstate);
-        switch (pstate)
-        {
-            case PVP_STATE_INITIALIZED:
-                Cancel();
-                iState = STATE_REMOVEDATASINK_VIDEO;
-                RunIfNotReady();
-                break;
-
-            case PVP_STATE_IDLE:
-                Cancel();
-                iState = STATE_REMOVEDATASOURCE;
-                RunIfNotReady();
-                break;
-
-            default:
-                // Engine should not be in any other state when
-                // error handling completes
-                PVPATB_TEST_IS_TRUE(false);
-                Cancel();
-                iState = STATE_CLEANUPANDCOMPLETE;
-                RunIfNotReady();
-                break;
-        }
+        fprintf(iTestMsgOutputFile, "PVMFInfoErrorHandlingStart...\n");
+    }
+    if (aEvent.GetEventType() == PVMFInfoErrorHandlingComplete)
+    {
+        fprintf(iTestMsgOutputFile, "PVMFInfoErrorHandlingComplete...\n");
+        iState = STATE_CLEANUPANDCOMPLETE;
+        RunIfNotReady();
     }
 }
 
@@ -1573,18 +1876,10 @@ void pvplayer_async_test_playuntileos::Run()
             sinkfilename += inputfilename;
             sinkfilename += _STRLIT_WCHAR("_video.dat");
 
-            iMIOFileOutVideo = iMioFactory->CreateVideoOutput((OsclAny*) & sinkfilename);
+            iMIOFileOutVideo = iMioFactory->CreateVideoOutput((OsclAny*) & sinkfilename, MEDIATYPE_VIDEO, iCompressedVideo);
             iIONodeVideo = PVMediaOutputNodeFactory::CreateMediaOutputNode(iMIOFileOutVideo);
             iDataSinkVideo = new PVPlayerDataSinkPVMFNode;
             ((PVPlayerDataSinkPVMFNode*)iDataSinkVideo)->SetDataSinkNode(iIONodeVideo);
-            if (iCompressedVideo)
-            {
-                ((PVPlayerDataSinkPVMFNode*)iDataSinkVideo)->SetDataSinkFormatType(PVMF_M4V);
-            }
-            else
-            {
-                ((PVPlayerDataSinkPVMFNode*)iDataSinkVideo)->SetDataSinkFormatType(PVMF_YUV420);
-            }
 
             OSCL_TRY(error, iCurrentCmdId = iPlayer->AddDataSink(*iDataSinkVideo, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
@@ -1605,18 +1900,10 @@ void pvplayer_async_test_playuntileos::Run()
             sinkfilename += inputfilename;
             sinkfilename += _STRLIT_WCHAR("_audio.dat");
 
-            iMIOFileOutAudio = iMioFactory->CreateAudioOutput((OsclAny*) & sinkfilename);
+            iMIOFileOutAudio = iMioFactory->CreateAudioOutput((OsclAny*) & sinkfilename, MEDIATYPE_AUDIO, iCompressedAudio);
             iIONodeAudio = PVMediaOutputNodeFactory::CreateMediaOutputNode(iMIOFileOutAudio);
             iDataSinkAudio = new PVPlayerDataSinkPVMFNode;
             ((PVPlayerDataSinkPVMFNode*)iDataSinkAudio)->SetDataSinkNode(iIONodeAudio);
-            if (iCompressedAudio)
-            {
-                ((PVPlayerDataSinkPVMFNode*)iDataSinkAudio)->SetDataSinkFormatType(PVMF_MPEG4_AUDIO);
-            }
-            else
-            {
-                ((PVPlayerDataSinkPVMFNode*)iDataSinkAudio)->SetDataSinkFormatType(AUDIOSINK_FORMAT_TYPE);
-            }
 
             OSCL_TRY(error, iCurrentCmdId = iPlayer->AddDataSink(*iDataSinkAudio, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
@@ -1633,11 +1920,10 @@ void pvplayer_async_test_playuntileos::Run()
             sinkfilename += inputfilename;
             sinkfilename += _STRLIT_WCHAR("_text.dat");
 
-            iMIOFileOutText = iMioFactory->CreateTextOutput((OsclAny*) & sinkfilename);
+            iMIOFileOutText = iMioFactory->CreateTextOutput((OsclAny*) & sinkfilename, MEDIATYPE_TEXT);
             iIONodeText = PVMediaOutputNodeFactory::CreateMediaOutputNode(iMIOFileOutText);
             iDataSinkText = new PVPlayerDataSinkPVMFNode;
             ((PVPlayerDataSinkPVMFNode*)iDataSinkText)->SetDataSinkNode(iIONodeText);
-            ((PVPlayerDataSinkPVMFNode*)iDataSinkText)->SetDataSinkFormatType(PVMF_3GPP_TIMEDTEXT);
 
             OSCL_TRY(error, iCurrentCmdId = iPlayer->AddDataSink(*iDataSinkText, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
@@ -1697,16 +1983,6 @@ void pvplayer_async_test_playuntileos::Run()
         {
             OSCL_TRY(error, iCurrentCmdId = iPlayer->RemoveDataSource(*iDataSource, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
-        }
-        break;
-
-        case STATE_WAIT_FOR_ERROR_HANDLING:
-        {
-            // Timed out waiting for error handling to complete
-            PVPATB_TEST_IS_TRUE(false);
-            // Forcibly terminate the test
-            iState = STATE_CLEANUPANDCOMPLETE;
-            RunIfNotReady();
         }
         break;
 
@@ -1802,8 +2078,8 @@ void pvplayer_async_test_playuntileos::CommandCompleted(const PVCmdResponse& aRe
             {
                 // AddDataSource failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -1817,8 +2093,8 @@ void pvplayer_async_test_playuntileos::CommandCompleted(const PVCmdResponse& aRe
             {
                 // Init failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -1832,8 +2108,8 @@ void pvplayer_async_test_playuntileos::CommandCompleted(const PVCmdResponse& aRe
             {
                 // AddDataSink failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -1847,8 +2123,8 @@ void pvplayer_async_test_playuntileos::CommandCompleted(const PVCmdResponse& aRe
             {
                 // AddDataSink failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -1862,8 +2138,8 @@ void pvplayer_async_test_playuntileos::CommandCompleted(const PVCmdResponse& aRe
             {
                 // AddDataSink failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -1871,14 +2147,16 @@ void pvplayer_async_test_playuntileos::CommandCompleted(const PVCmdResponse& aRe
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
                 iState = STATE_START;
-                RunIfNotReady();
+                // The delay is added between Prepare and Start to test that player
+                // does not start the clock and send playstatus events prior to start.
+                RunIfNotReady(PVPLAYER_ASYNC_TEST_PLAYUNTILEOS_DELAY_AFTER_PREPARE);
             }
             else
             {
                 // Prepare failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -1892,8 +2170,8 @@ void pvplayer_async_test_playuntileos::CommandCompleted(const PVCmdResponse& aRe
             {
                 // Start failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -1907,8 +2185,8 @@ void pvplayer_async_test_playuntileos::CommandCompleted(const PVCmdResponse& aRe
             {
                 // Stop failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -1922,8 +2200,8 @@ void pvplayer_async_test_playuntileos::CommandCompleted(const PVCmdResponse& aRe
             {
                 // RemoveDataSink failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -1937,8 +2215,8 @@ void pvplayer_async_test_playuntileos::CommandCompleted(const PVCmdResponse& aRe
             {
                 // RemoveDataSink failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -1952,8 +2230,8 @@ void pvplayer_async_test_playuntileos::CommandCompleted(const PVCmdResponse& aRe
             {
                 // RemoveDataSink failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -1967,8 +2245,8 @@ void pvplayer_async_test_playuntileos::CommandCompleted(const PVCmdResponse& aRe
             {
                 // Reset failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -2032,13 +2310,22 @@ void pvplayer_async_test_playuntileos::HandleErrorEvent(const PVAsyncErrorEvent&
 
     // Wait for engine to handle the error
     Cancel();
-    iState = STATE_WAIT_FOR_ERROR_HANDLING;
-    RunIfNotReady(5000000);
 }
 
 
 void pvplayer_async_test_playuntileos::HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent)
 {
+    if (aEvent.GetEventType() == PVMFInfoErrorHandlingStart)
+    {
+        fprintf(iTestMsgOutputFile, "PVMFInfoErrorHandlingStart...\n");
+    }
+    if (aEvent.GetEventType() == PVMFInfoErrorHandlingComplete)
+    {
+        fprintf(iTestMsgOutputFile, "PVMFInfoErrorHandlingComplete...\n");
+        iState = STATE_CLEANUPANDCOMPLETE;
+        RunIfNotReady();
+    }
+
     // Check for stop time reached event
     if (aEvent.GetEventType() == PVMFInfoEndOfData)
     {
@@ -2066,6 +2353,17 @@ void pvplayer_async_test_playuntileos::HandleInformationalEvent(const PVAsyncInf
     // Check and print out playback position status
     else if (aEvent.GetEventType() == PVMFInfoPositionStatus)
     {
+        PVPlayerState pstate;
+        iPlayer->GetPVPlayerStateSync(pstate);
+        if (pstate != PVP_STATE_STARTED)
+        {
+            fprintf(iTestMsgOutputFile, "Playback status recived in Wrong Engine State\n");
+            PVPATB_TEST_IS_TRUE(false);
+            iState = STATE_CLEANUPANDCOMPLETE;
+            RunIfNotReady();
+            return;
+        }
+
         PVInterface* iface = (PVInterface*)(aEvent.GetEventExtensionInterface());
         if (iface == NULL)
         {
@@ -2112,34 +2410,6 @@ void pvplayer_async_test_playuntileos::HandleInformationalEvent(const PVAsyncInf
         }
 
         fprintf(iTestMsgOutputFile, "------------------------------\n");
-    }
-    else if (iState == STATE_WAIT_FOR_ERROR_HANDLING && aEvent.GetEventType() == PVMFInfoErrorHandlingComplete)
-    {
-        PVPlayerState pstate;
-        iPlayer->GetPVPlayerStateSync(pstate);
-        switch (pstate)
-        {
-            case PVP_STATE_INITIALIZED:
-                Cancel();
-                iState = STATE_REMOVEDATASINK_VIDEO;
-                RunIfNotReady();
-                break;
-
-            case PVP_STATE_IDLE:
-                Cancel();
-                iState = STATE_REMOVEDATASOURCE;
-                RunIfNotReady();
-                break;
-
-            default:
-                // Engine should not be in any other state when
-                // error handling completes
-                PVPATB_TEST_IS_TRUE(false);
-                Cancel();
-                iState = STATE_CLEANUPANDCOMPLETE;
-                RunIfNotReady();
-                break;
-        }
     }
 }
 

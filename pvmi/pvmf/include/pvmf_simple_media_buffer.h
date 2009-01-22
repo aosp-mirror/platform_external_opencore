@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,9 +90,13 @@ class PVMFSimpleMediaBufferCombinedAlloc : public HeapBase
 {
 
     public:
-        PVMFSimpleMediaBufferCombinedAlloc(Oscl_DefAlloc* opt_gen_alloc = 0):
+        PVMFSimpleMediaBufferCombinedAlloc(Oscl_DefAlloc* opt_gen_alloc):
                 gen_alloc(opt_gen_alloc)
         {
+            if (opt_gen_alloc == NULL)
+            {
+                OSCL_ASSERT(false);
+            }
         };
         OSCL_IMPORT_REF OsclSharedPtr<PVMFMediaDataImpl> allocate(uint32 requested_buffer_capacity = 0);
 

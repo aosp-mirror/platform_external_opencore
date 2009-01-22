@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@
 ; DEFINES AND SIMPLE TYPEDEF'S
 ----------------------------------------------------------------------------*/
 
-#if defined(PV_ARM)
+#if (defined(PV_ARM_V5)||defined(PV_ARM_V4))
 
 __inline int32 pvmp3_normalize(int32 x)
 {
@@ -71,8 +71,7 @@ __inline int32 pvmp3_normalize(int32 x)
 }
 
 
-#elif defined(PV_ARM_GCC)
-
+#elif (defined(PV_ARM_GCC_V5)||defined(PV_ARM_GCC_V4))
 
 __inline int32 pvmp3_normalize(int32 x)
 {

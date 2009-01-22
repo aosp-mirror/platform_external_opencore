@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -132,7 +132,7 @@ template <class LLClass> SortedList<LLClass>::~SortedList()
     while (num_elements && head)
     {
         tmp = head->next;
-        OSCL_TEMPLATED_DELETE(head, SortedListElement<LLClass>, SortedListElement);
+        OSCL_DELETE(head);
         --num_elements;
         head = tmp;
     }
@@ -273,7 +273,7 @@ template <class LLClass> int SortedList<LLClass>::remove_element(LLClass& data_t
             }
 
 
-            OSCL_TEMPLATED_DELETE(tmp, SortedListElement<LLClass>, SortedListElement);
+            OSCL_DELETE(tmp);
             --num_elements;
             break;
         }
@@ -354,7 +354,7 @@ template <class LLClass> int SortedList<LLClass>::remove_element(const int index
     }
 
 
-    OSCL_TEMPLATED_DELETE(tmp, SortedListElement<LLClass>, SortedListElement);
+    OSCL_DELETE(tmp);
     --num_elements;
 
 

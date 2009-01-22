@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,6 +51,14 @@
 
 #ifndef PVMI_CONFIG_AND_CAPABILITY_OBSERVER_H_INCLUDED
 #include "pvmi_config_and_capability_observer.h"
+#endif
+
+#ifndef PVMF_STREAMING_DATA_SOURCE_H_INCLUDED
+#include "pvmf_streaming_data_source.h"
+#endif
+
+#ifndef PVMF_SOURCE_CONTEXT_DATA_H_INCLUDED
+#include "pvmf_source_context_data.h"
 #endif
 
 class PVPlayerDataSink;
@@ -138,7 +146,6 @@ class pvplayer_async_test_mediaionode_openplaystop : public pvplayer_async_test_
             STATE_REMOVEDATASINK_TEXT,
             STATE_RESET,
             STATE_REMOVEDATASOURCE,
-            STATE_WAIT_FOR_ERROR_HANDLING,
             STATE_CLEANUPANDCOMPLETE
         };
 
@@ -245,7 +252,6 @@ class pvplayer_async_test_mediaionode_playstopplay : public pvplayer_async_test_
             STATE_REMOVEDATASINK_TEXT,
             STATE_RESET,
             STATE_REMOVEDATASOURCE,
-            STATE_WAIT_FOR_ERROR_HANDLING,
             STATE_CLEANUPANDCOMPLETE
         };
 
@@ -346,7 +352,6 @@ class pvplayer_async_test_mediaionode_pauseresume : public pvplayer_async_test_b
             STATE_REMOVEDATASINK_TEXT,
             STATE_RESET,
             STATE_REMOVEDATASOURCE,
-            STATE_WAIT_FOR_ERROR_HANDLING,
             STATE_CLEANUPANDCOMPLETE
         };
 
@@ -444,7 +449,6 @@ class pvplayer_async_test_mediaionode_playsetplaybackrange : public pvplayer_asy
             STATE_REMOVEDATASINK_TEXT,
             STATE_RESET,
             STATE_REMOVEDATASOURCE,
-            STATE_WAIT_FOR_ERROR_HANDLING,
             STATE_CLEANUPANDCOMPLETE
         };
 
@@ -541,7 +545,6 @@ class pvplayer_async_test_mediaionode_3Xplayrate : public pvplayer_async_test_ba
             STATE_REMOVEDATASINK_TEXT,
             STATE_RESET,
             STATE_REMOVEDATASOURCE,
-            STATE_WAIT_FOR_ERROR_HANDLING,
             STATE_CLEANUPANDCOMPLETE
         };
 
@@ -638,7 +641,6 @@ class pvplayer_async_test_mediaionode_halfplayrate : public pvplayer_async_test_
             STATE_REMOVEDATASINK_TEXT,
             STATE_RESET,
             STATE_REMOVEDATASOURCE,
-            STATE_WAIT_FOR_ERROR_HANDLING,
             STATE_CLEANUPANDCOMPLETE
         };
 
@@ -742,7 +744,6 @@ class pvplayer_async_test_mediaionode_looping : public pvplayer_async_test_base
             STATE_REMOVEDATASINK_TEXT,
             STATE_RESET,
             STATE_REMOVEDATASOURCE,
-            STATE_WAIT_FOR_ERROR_HANDLING,
             STATE_CLEANUPANDCOMPLETE
         };
 
@@ -840,7 +841,6 @@ class pvplayer_async_test_mediaionode_waitforeos : public pvplayer_async_test_ba
             STATE_REMOVEDATASINK_TEXT,
             STATE_RESET,
             STATE_REMOVEDATASOURCE,
-            STATE_WAIT_FOR_ERROR_HANDLING,
             STATE_CLEANUPANDCOMPLETE
         };
 
@@ -903,6 +903,7 @@ class pvplayer_async_test_mediaionode_multipauseresume : public pvplayer_async_t
                 , iMIOFileOutAudio(NULL)
                 , iMIOFileOutText(NULL)
                 , iCurrentCmdId(0)
+                , iSourceContextData(NULL)
         {
             iTestCaseName = _STRLIT_CHAR("MIONode Multiple Pause-Resume");
         }
@@ -925,7 +926,6 @@ class pvplayer_async_test_mediaionode_multipauseresume : public pvplayer_async_t
             STATE_RESUME,
             STATE_PAUSERESUME2,
             STATE_SHUTDOWN,
-            STATE_WAIT_FOR_ERROR_HANDLING,
             STATE_CLEANUPANDCOMPLETE
         };
 
@@ -949,6 +949,7 @@ class pvplayer_async_test_mediaionode_multipauseresume : public pvplayer_async_t
     private:
         OSCL_wHeapString<OsclMemAllocator> wFileName;
         oscl_wchar output[512];
+        PVMFSourceContextData* iSourceContextData;
 };
 
 
@@ -1018,7 +1019,6 @@ class pvplayer_async_test_mediaionode_multireposition : public pvplayer_async_te
             STATE_SETPLAYBACKRANGE5,
             STATE_SETPLAYBACKRANGE6,
             STATE_SHUTDOWN,
-            STATE_WAIT_FOR_ERROR_HANDLING,
             STATE_CLEANUPANDCOMPLETE
         };
 
@@ -1146,7 +1146,6 @@ class pvplayer_async_test_mediaionode_repositionconfig : public pvplayer_async_t
             STATE_REMOVEDATASINK_TEXT,
             STATE_RESET,
             STATE_REMOVEDATASOURCE,
-            STATE_WAIT_FOR_ERROR_HANDLING,
             STATE_CLEANUPANDCOMPLETE
         };
 
@@ -1255,7 +1254,6 @@ class pvplayer_async_test_mediaionode_eoslooping : public pvplayer_async_test_ba
             STATE_REMOVEDATASINK_TEXT,
             STATE_RESET,
             STATE_REMOVEDATASOURCE,
-            STATE_WAIT_FOR_ERROR_HANDLING,
             STATE_CLEANUPANDCOMPLETE
         };
 
@@ -1352,7 +1350,6 @@ class pvplayer_async_test_mediaionode_repositionduringprepared : public pvplayer
             STATE_REMOVEDATASINK_TEXT,
             STATE_RESET,
             STATE_REMOVEDATASOURCE,
-            STATE_WAIT_FOR_ERROR_HANDLING,
             STATE_CLEANUPANDCOMPLETE
         };
 
@@ -1457,7 +1454,6 @@ class pvplayer_async_test_mediaionode_playsetplaybackrangestopplay : public pvpl
             STATE_REMOVEDATASINK_TEXT,
             STATE_RESET,
             STATE_REMOVEDATASOURCE,
-            STATE_WAIT_FOR_ERROR_HANDLING,
             STATE_CLEANUPANDCOMPLETE
         };
 
@@ -1561,7 +1557,6 @@ class pvplayer_async_test_mediaionode_playstopsetplaybackrangeplaystop : public 
             STATE_REMOVEDATASINK_TEXT,
             STATE_RESET,
             STATE_REMOVEDATASOURCE,
-            STATE_WAIT_FOR_ERROR_HANDLING,
             STATE_CLEANUPANDCOMPLETE
         };
 
@@ -1628,6 +1623,7 @@ class pvplayer_async_test_mediaionode_setplaybackrangenearendplay : public pvpla
                 , iMIOFileOutAudio(NULL)
                 , iMIOFileOutText(NULL)
                 , iCurrentCmdId(0)
+                , iSourceContextData(NULL)
         {
             iTestCaseName = _STRLIT_CHAR("MIONode SetPlaybackRange Near End-Play");
         }
@@ -1660,7 +1656,6 @@ class pvplayer_async_test_mediaionode_setplaybackrangenearendplay : public pvpla
             STATE_REMOVEDATASINK_TEXT,
             STATE_RESET,
             STATE_REMOVEDATASOURCE,
-            STATE_WAIT_FOR_ERROR_HANDLING,
             STATE_CLEANUPANDCOMPLETE
         };
 
@@ -1686,6 +1681,12 @@ class pvplayer_async_test_mediaionode_setplaybackrangenearendplay : public pvpla
         Oscl_Vector<PvmiKvp, OsclMemAllocator> iMetadataValueList;
         int32 iNumValues;
         uint32 iStartPosition;
+
+    private:
+        OSCL_wHeapString<OsclMemAllocator> wFileName;
+        oscl_wchar output[512];
+
+        PVMFSourceContextData* iSourceContextData;
 };
 
 
@@ -1734,6 +1735,7 @@ class pvplayer_async_test_mediaionode_playrepositionnearendofclip : public pvpla
                 , iMIOFileOutAudio(NULL)
                 , iMIOFileOutText(NULL)
                 , iCurrentCmdId(0)
+                , iSetPlayBackRangeIssued(false)
         {
             iTestCaseName = _STRLIT_CHAR("MIONode Play-Reposition Near End Of Clip");
         }
@@ -1765,7 +1767,6 @@ class pvplayer_async_test_mediaionode_playrepositionnearendofclip : public pvpla
             STATE_REMOVEDATASINK_TEXT,
             STATE_RESET,
             STATE_REMOVEDATASOURCE,
-            STATE_WAIT_FOR_ERROR_HANDLING,
             STATE_CLEANUPANDCOMPLETE
         };
 
@@ -1791,6 +1792,7 @@ class pvplayer_async_test_mediaionode_playrepositionnearendofclip : public pvpla
         Oscl_Vector<PvmiKvp, OsclMemAllocator> iMetadataValueList;
         int32 iNumValues;
         uint32 iClipDuration;
+        bool iSetPlayBackRangeIssued;
 };
 
 /*!
@@ -1846,6 +1848,7 @@ class pvplayer_async_test_mediaionode_forwardstep : public pvplayer_async_test_b
                 , iMIOFileOutText(NULL)
                 , iCurrentCmdId(0)
                 , iActiveAudio(aActiveAudio)
+                , iEOSReached(false)
         {
             if (iActiveAudio)
                 iTestCaseName = _STRLIT_CHAR("MIONode Forward Step Active Audio");
@@ -1886,7 +1889,6 @@ class pvplayer_async_test_mediaionode_forwardstep : public pvplayer_async_test_b
             STATE_REMOVEDATASINK_TEXT,
             STATE_RESET,
             STATE_REMOVEDATASOURCE,
-            STATE_WAIT_FOR_ERROR_HANDLING,
             STATE_CLEANUPANDCOMPLETE
         };
 
@@ -1908,9 +1910,11 @@ class pvplayer_async_test_mediaionode_forwardstep : public pvplayer_async_test_b
         OSCL_wHeapString<OsclMemAllocator> iFileNameWStr;
         oscl_wchar iTmpWCharBuffer[512];
 
-        OsclTimebase_Count iSteppingTimebase;
+        PVMFTimebase_Count iSteppingTimebase;
         bool iReposComplete;
         bool iActiveAudio;
+        int32 iCount;
+        bool iEOSReached;
 };
 
 /*!
@@ -1987,7 +1991,6 @@ class pvplayer_async_test_mediaionode_forwardsteptoeos : public pvplayer_async_t
             STATE_REMOVEDATASINK_TEXT,
             STATE_RESET,
             STATE_REMOVEDATASOURCE,
-            STATE_WAIT_FOR_ERROR_HANDLING,
             STATE_CLEANUPANDCOMPLETE
         };
 
@@ -2009,7 +2012,7 @@ class pvplayer_async_test_mediaionode_forwardsteptoeos : public pvplayer_async_t
         OSCL_wHeapString<OsclMemAllocator> iFileNameWStr;
         oscl_wchar iTmpWCharBuffer[512];
 
-        OsclTimebase_Count iSteppingTimebase;
+        PVMFTimebase_Count iSteppingTimebase;
 
 };
 
@@ -2098,7 +2101,6 @@ class pvplayer_async_test_mediaionode_backwardplayback : public pvplayer_async_t
             STATE_REMOVEDATASINK_TEXT,
             STATE_RESET,
             STATE_REMOVEDATASOURCE,
-            STATE_WAIT_FOR_ERROR_HANDLING,
             STATE_CLEANUPANDCOMPLETE
         };
 
@@ -2116,7 +2118,7 @@ class pvplayer_async_test_mediaionode_backwardplayback : public pvplayer_async_t
         PvmiMIOControl* iMIOFileOutAudio;
         PvmiMIOControl* iMIOFileOutText;
         PVCommandId iCurrentCmdId;
-        OsclTimebase_Count iSteppingTimebase;
+        PVMFTimebase_Count iSteppingTimebase;
 
         OSCL_wHeapString<OsclMemAllocator> iFileNameWStr;
         oscl_wchar iTmpWCharBuffer[512];
@@ -2204,7 +2206,6 @@ class pvplayer_async_test_mediaionode_backwardforwardplayback : public pvplayer_
             STATE_REMOVEDATASINK_TEXT,
             STATE_RESET,
             STATE_REMOVEDATASOURCE,
-            STATE_WAIT_FOR_ERROR_HANDLING,
             STATE_CLEANUPANDCOMPLETE
         };
 
@@ -2222,7 +2223,7 @@ class pvplayer_async_test_mediaionode_backwardforwardplayback : public pvplayer_
         PvmiMIOControl* iMIOFileOutAudio;
         PvmiMIOControl* iMIOFileOutText;
         PVCommandId iCurrentCmdId;
-        OsclTimebase_Count iSteppingTimebase;
+        PVMFTimebase_Count iSteppingTimebase;
 
         OSCL_wHeapString<OsclMemAllocator> iFileNameWStr;
         oscl_wchar iTmpWCharBuffer[512];
@@ -2311,7 +2312,6 @@ class pvplayer_async_test_mediaionode_pauseneareosbackwardresume : public pvplay
             STATE_REMOVEDATASINK_TEXT,
             STATE_RESET,
             STATE_REMOVEDATASOURCE,
-            STATE_WAIT_FOR_ERROR_HANDLING,
             STATE_CLEANUPANDCOMPLETE
         };
 
@@ -2421,7 +2421,6 @@ class pvplayer_async_test_mediaionode_multiplepausesetplaybackrateresume : publi
             STATE_REMOVEDATASINK_TEXT,
             STATE_RESET,
             STATE_REMOVEDATASOURCE,
-            STATE_WAIT_FOR_ERROR_HANDLING,
             STATE_CLEANUPANDCOMPLETE
         };
 
@@ -2535,7 +2534,6 @@ class pvplayer_async_test_mediaionode_backwardneareosforwardnearbos : public pvp
             STATE_REMOVEDATASINK_TEXT,
             STATE_RESET,
             STATE_REMOVEDATASOURCE,
-            STATE_WAIT_FOR_ERROR_HANDLING,
             STATE_CLEANUPANDCOMPLETE
         };
 

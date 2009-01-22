@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,8 +30,7 @@ class PVAuthorEngineTest : public test_case,
 
 {
     public:
-        PVAuthorEngineTest(FILE* aStdOut, int32 aLogFile, int32 aLogLevel, int32 aLogNode,
-                           int32 aFirstTest, int32 aLastTest, const char* aInputFileName1,
+        PVAuthorEngineTest(FILE* aStdOut, int32 aFirstTest, int32 aLastTest, const char* aInputFileName1,
                            const char* aInputFileName2, const char* aInputFileName3, const char* aOutputFileName,
                            AVTConfig iAVTConfig, PVAETestInputType aAudioInputType,
                            PVAETestInputType aVideoInputType, PVAETestInputType aTextInputType, const char* aComposerMimeType,
@@ -88,10 +87,9 @@ class PVAuthorEngineTest : public test_case,
 class PVAuthorEngineTestSuite : public test_case
 {
     public:
-        PVAuthorEngineTestSuite(FILE* aStdOut, int32 aLogFile, int32 aLogLevel, int32 aLogNode, int32 aFirstTest, int32 aLastTest, const char* iInputFileName1, const char* iInputFileName2, const char* iInputFileName3, const char* iOutputFileName, AVTConfig iAVTConfig, PVAETestInputType aAudioInputType, PVAETestInputType aVideoInputType,  PVAETestInputType aTextInputType, const char* aComposerMimeType, const char* aAudioEncoderMimeType, const char* aVideoEncoderMimeType, const char* aTextEncoderMimeType, uint aAuthoringTime) : test_case()
+        PVAuthorEngineTestSuite(FILE* aStdOut, int32 aFirstTest, int32 aLastTest, const char* iInputFileName1, const char* iInputFileName2, const char* iInputFileName3, const char* iOutputFileName, AVTConfig iAVTConfig, PVAETestInputType aAudioInputType, PVAETestInputType aVideoInputType,  PVAETestInputType aTextInputType, const char* aComposerMimeType, const char* aAudioEncoderMimeType, const char* aVideoEncoderMimeType, const char* aTextEncoderMimeType, uint aAuthoringTime) : test_case()
         {
-            adopt_test_case(new PVAuthorEngineTest(aStdOut, aLogFile, aLogLevel, aLogNode,
-                                                   aFirstTest, aLastTest, iInputFileName1, iInputFileName2, iInputFileName3, iOutputFileName,
+            adopt_test_case(new PVAuthorEngineTest(aStdOut, aFirstTest, aLastTest, iInputFileName1, iInputFileName2, iInputFileName3, iOutputFileName,
                                                    iAVTConfig, aAudioInputType, aVideoInputType, aTextInputType, aComposerMimeType, aAudioEncoderMimeType, aVideoEncoderMimeType, aTextEncoderMimeType, aAuthoringTime));
         }
         ~PVAuthorEngineTestSuite() {};

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,8 +100,6 @@ class CCRGB16toYUV420 : public ColorConvertBase
         int32 Convert(uint8 *rgb16,
                       uint8 *yuv420);
 
-
-
         /**
         	*	@brief These functions convert input YUV into corresponding RGB output.
         	*	@param yuv420 is an array of pointers to Y,U and V plane in increasing order.
@@ -109,7 +107,7 @@ class CCRGB16toYUV420 : public ColorConvertBase
         	*	@return This function return 1 if success, 0 if fail in the case of the rgbBuf
         	*	and/or yuvBuf[0] address are not word-aligned (multiple of 4).
         */
-        int32 Convert(uint8 **yuv420, uint8 *rgb16);
+        int32 Convert(uint8 *rgb16, uint8 **yuv420);
 
 
         /**
@@ -151,6 +149,8 @@ class CCRGB16toYUV420 : public ColorConvertBase
 
         /** @brief  Flag for using color key or not. **/
         bool	mUseColorKey;
+
+        bool	iBottomUp;
 
 };
 

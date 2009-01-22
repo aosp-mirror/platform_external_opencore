@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,9 +35,6 @@
 #endif
 #ifndef PVMF_MEDIALAYER_NODE_H_INCLUDED
 #include "pvmf_medialayer_node.h"
-#endif
-#ifndef PVMF_SM_CONFIG_H_INCLUDED
-#include "pvmf_sm_config.h"
 #endif
 
 /**
@@ -148,6 +145,13 @@ PVMFStreamingManagerExtensionInterfaceImpl::setPayloadParserRegistry(PayloadPars
 }
 
 OSCL_EXPORT_REF PVMFStatus
+PVMFStreamingManagerExtensionInterfaceImpl::setPacketSourceInterface(PVMFPacketSource* aPacketSource)
+{
+    iPacketSource = aPacketSource;
+    return PVMFSuccess;
+}
+
+OSCL_EXPORT_REF PVMFStatus
 PVMFStreamingManagerExtensionInterfaceImpl::setDataPortLogging(bool logEnable,
         OSCL_String* logPath)
 {
@@ -163,6 +167,11 @@ PVMFStreamingManagerExtensionInterfaceImpl::setDataPortLogging(bool logEnable,
     return (mlExtIntf->setPortDataLogging(logEnable, logPath));
 }
 
+OSCL_EXPORT_REF PVMFStatus
+PVMFStreamingManagerExtensionInterfaceImpl::switchStreams(uint32 aSrcStreamID, uint32 aDestStreamID)
+{
+    return (iContainer->switchStreams(aSrcStreamID, aDestStreamID));
+}
 
 OSCL_EXPORT_REF PVMFStatus
 PVMFStreamingManagerExtensionInterfaceImpl::SetSourceInitializationData(OSCL_wString& aSourceURL,
@@ -175,7 +184,7 @@ PVMFStreamingManagerExtensionInterfaceImpl::SetSourceInitializationData(OSCL_wSt
 }
 
 OSCL_EXPORT_REF PVMFStatus
-PVMFStreamingManagerExtensionInterfaceImpl::SetClientPlayBackClock(OsclClock* clientClock)
+PVMFStreamingManagerExtensionInterfaceImpl::SetClientPlayBackClock(PVMFMediaClock* clientClock)
 {
     PVMFSMNodeContainer* iJitterBufferNodeContainer =
         iContainer->getNodeContainer(PVMF_STREAMING_MANAGER_JITTER_BUFFER_NODE);
@@ -203,7 +212,7 @@ PVMFStreamingManagerExtensionInterfaceImpl::SetClientPlayBackClock(OsclClock* cl
 }
 
 OSCL_EXPORT_REF PVMFStatus
-PVMFStreamingManagerExtensionInterfaceImpl::SetEstimatedServerClock(OsclClock* aClientClock)
+PVMFStreamingManagerExtensionInterfaceImpl::SetEstimatedServerClock(PVMFMediaClock* aClientClock)
 {
     OSCL_UNUSED_ARG(aClientClock);
     return PVMFErrNotSupported;
@@ -252,6 +261,13 @@ PVMFStreamingManagerExtensionInterfaceImpl::queryInterface(const PVUuid& uuid, P
     {
         PVMFDataSourceInitializationExtensionInterface* interimPtr =
             OSCL_STATIC_CAST(PVMFDataSourceInitializationExtensionInterface*, this);
+        iface = OSCL_STATIC_CAST(PVInterface*, interimPtr);
+        return true;
+    }
+    else if (uuid == PVMF_DATA_SOURCE_PACKETSOURCE_INTERFACE_UUID)
+    {
+        PVMFDataSourcePacketSourceInterface* interimPtr =
+            OSCL_STATIC_CAST(PVMFDataSourcePacketSourceInterface*, this);
         iface = OSCL_STATIC_CAST(PVInterface*, interimPtr);
         return true;
     }
@@ -351,13 +367,28 @@ PVMFStreamingManagerExtensionInterfaceImpl::QueryDataSourcePosition(PVMFSessionI
 OSCL_EXPORT_REF PVMFCommandId
 PVMFStreamingManagerExtensionInterfaceImpl::SetDataSourceRate(PVMFSessionId aSessionId,
         int32 aRate,
-        OsclTimebase* aTimebase,
+        PVMFTimebase* aTimebase,
         OsclAny* aContext)
 {
+
     return (iContainer->SetDataSourceRate(aSessionId,
                                           aRate,
                                           aTimebase,
                                           aContext));
+}
+
+OSCL_EXPORT_REF PVMFStatus
+PVMFStreamingManagerExtensionInterfaceImpl::ComputeSkipTimeStamp(PVMFTimestamp aTargetNPT,
+        PVMFTimestamp aActualNPT,
+        PVMFTimestamp aActualMediaDataTS,
+        PVMFTimestamp& aSkipTimeStamp,
+        PVMFTimestamp& aStartNPT)
+{
+    return (iContainer->ComputeSkipTimeStamp(aTargetNPT,
+            aActualNPT,
+            aActualMediaDataTS,
+            aSkipTimeStamp,
+            aStartNPT));
 }
 
 OSCL_EXPORT_REF uint32

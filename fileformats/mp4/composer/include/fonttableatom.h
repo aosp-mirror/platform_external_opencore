@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,6 @@ class PVA_FF_FontTableAtom : public PVA_FF_Atom
         virtual bool renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp);
         virtual void recomputeSize();
         virtual uint32 getSize();
-        //PVA_FF_FontRecord *setFontRecord(uint16 FontListID,uint16 FontId,int8 FontLength,uint8* FontName);
         void setFontRecord(uint16 FontListID, uint16 FontId, int8 FontLength, uint8* FontName);
 
         PVA_FF_FontRecord * getFontRecordAt(uint16 index)

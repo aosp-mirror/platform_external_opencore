@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -137,7 +137,7 @@ class ProgressiveDownloadProgress : public DownloadProgress
 
     protected:
         virtual bool calculateDownloadPercent(uint32 &aDownloadProgressPercent);
-        bool updateDownloadClock();
+        bool updateDownloadClock(const bool aDownloadComplete);
         bool calculateDownloadPercentBody(uint32 &aDownloadProgressPercent, const uint32 aFileSize);
         // determine if download percent is time-based or byte-based
         bool checkDownloadPercentModeAndUpdateDLClock();

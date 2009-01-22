@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,10 @@
 
  Pathname: ./src/deinterleave.c
 
-     Date: 10/25/2000
-
 ------------------------------------------------------------------------------
  REVISION HISTORY
 
- Description:  Modified from original code
+ Description:  Modified from original shareware code
 
  Description: (1) Modified with new template, rename variables
               (2) Removed for-loop to calculate win_inc, win_inc = SN2 (128)
@@ -33,6 +31,7 @@
 
  Description: Modified per review comments
 
+ Who:                       Date:
  Description:
 
 ------------------------------------------------------------------------------

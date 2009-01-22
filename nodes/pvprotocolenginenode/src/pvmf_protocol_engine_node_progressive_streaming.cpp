@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 #include "pvmf_protocol_engine_node.h"
 #include "pvmf_protocol_engine_node_progressive_streaming.h"
 #include "pvmf_protocol_engine_progressive_download.h"
+#include "pvmf_protocolengine_node_tunables.h"
 
 #include "pvlogger.h"
 
@@ -35,6 +36,8 @@
 #define PVMF_PROTOCOL_ENGINE_LOGBIN(iPortLogger, m) PVLOGGER_LOGBIN(PVLOGMSG_INST_LLDBG, iPortLogger, PVLOGMSG_ERR, m);
 #define	NODEDATAPATHLOGGER_TAG "datapath.sourcenode.protocolenginenode"
 
+#define IS_OVERFLOW_FOR_100x(x) ( (x)>>((sizeof((x))<<2)-PVPROTOCOLENGINE_DOWNLOAD_BYTE_PERCENTAGE_DLSIZE_RIGHTSHIFT_FACTOR) ) // (x)>>(32-7)=(x)>>25
+
 ////////////////////////////////////////////////////////////////////////////////////
 //////	ProgressiveStreamingContainerFactory implementation
 ////////////////////////////////////////////////////////////////////////////////////
@@ -47,14 +50,15 @@ ProtocolContainer* ProgressiveStreamingContainerFactory::create(PVMFProtocolEngi
 //////	ProgressiveStreamingContainer implementation
 ////////////////////////////////////////////////////////////////////////////////////
 ProgressiveStreamingContainer::ProgressiveStreamingContainer(PVMFProtocolEngineNode *aNode) :
-        ProgressiveDownloadContainer(aNode),
-        iEnableInfoUpdate(true)
+        ProgressiveDownloadContainer(aNode), iEnableInfoUpdate(true)
 {
     ;
 }
 
 bool ProgressiveStreamingContainer::createProtocolObjects()
 {
+    if (!ProtocolContainer::createProtocolObjects()) return false;
+
     iNode->iProtocol		 = OSCL_NEW(ProgressiveStreaming, ());
     iNode->iNodeOutput		 = OSCL_NEW(pvProgressiveStreamingOutput, (iNode));
     iNode->iDownloadControl  = OSCL_NEW(progressiveStreamingControl, ());
@@ -72,15 +76,22 @@ bool ProgressiveStreamingContainer::createProtocolObjects()
     {
         iNode->iNodeOutput->setDataStreamSourceRequestObserver((PvmiDataStreamRequestObserver*)iNode);
     }
-
-    return ProtocolContainer::createProtocolObjects();
+    return true;
 }
 
 PVMFStatus ProgressiveStreamingContainer::doStop()
 {
+    PVMFStatus status = DownloadContainer::doStop();
+    if (status != PVMFSuccess) return status;
     // For progressive streaming, tell the data stream to flush,
     // so that the socket buffer can be returned to socket node for reset
     iNode->iNodeOutput->flushDataStream();
+
+    // set resume download mode for stop and play
+    OsclSharedPtr<PVDlCfgFile> aCfgFile = iNode->iCfgFileContainer->getCfgFile();
+    aCfgFile->SetNewSession(true); // don't set resume download session for the next time
+    if (aCfgFile->GetCurrentFileSize() >= aCfgFile->GetOverallFileSize()) aCfgFile->SetCurrentFileSize(0);
+
     return PVMFSuccess;
 }
 
@@ -107,15 +118,16 @@ PVMFStatus ProgressiveStreamingContainer::doSeekBody(uint32 aNewOffset)
 {
     // reset streaming done and session done flag to restart streaming
     ProtocolStateCompleteInfo aInfo;
-    iNode->iInterfacingObjectContainer.setProtocolStateCompleteInfo(aInfo, true);
+    iNode->iInterfacingObjectContainer->setProtocolStateCompleteInfo(aInfo, true);
 
     // HTTP GET request looks at the current file size to determine is Range header is needed
+    // TBD, there may be a better way to do this
     OsclSharedPtr<PVDlCfgFile> aCfgFile = iNode->iCfgFileContainer->getCfgFile();
     aCfgFile->SetCurrentFileSize(aNewOffset);
 
     // Reconnect and send new GET request
     iNode->iProtocol->seek(aNewOffset);
-    iNode->StartDataFlowByCommand();
+    startDataFlowByCommand();
 
     return PVMFPending;
 }
@@ -135,6 +147,7 @@ bool ProgressiveStreamingContainer::completeRepositionRequest()
     iNode->iNodeOutput->setCurrentOutputSize(newOffset);
     iNode->iDownloadControl->setPrevDownloadSize(newOffset);
 
+    // find out if download was completed for the previous GET request
     // reset initial buffering algo variables
     iNode->iDownloadControl->clearPerRequest();
 
@@ -143,6 +156,8 @@ bool ProgressiveStreamingContainer::completeRepositionRequest()
     // Make the Command Complete notification
     iNode->iNodeOutput->dataStreamCommandCompleted(resp);
     iNode->iCurrentCommand.Erase(pCmd);
+    iNode->iInterfaceState = EPVMFNodeStarted;
+    iNode->iEventReport->startRealDataflow(); // since the state gets changed to started state, enable the buffer status update
     return true;
 }
 
@@ -160,7 +175,6 @@ void ProgressiveStreamingContainer::updateDownloadControl(const bool isDownloadC
     if (iNode->iDownloadControl->checkResumeNotification(downloadComplete) == 1)
     {
         LOGINFODATAPATH((0, "ProgressiveStreamingContainer::updateDownloadControl, send data ready event to parser node, downloadComplete=false"));
-
         // report data ready event
         iNode->iEventReport->sendDataReadyEvent();
     }
@@ -169,19 +183,12 @@ void ProgressiveStreamingContainer::updateDownloadControl(const bool isDownloadC
     iNode->iDownloadProgess->update(isDownloadComplete);
 }
 
-void ProgressiveStreamingContainer::checkSendResumeNotification()
+bool ProgressiveStreamingContainer::needToCheckResumeNotificationMaually()
 {
-    // check the special case to trigger node running to send back resume notification to parser node if there is
-    if (iNode->iNodeOutput->getAvailableOutputSize() == 0 && iEnableInfoUpdate)
-    {
-        //!iNode->IsRepositioningRequestPending()) {
-        // form PVProtocolEngineNodeInternalEventType_CheckResumeNotificationMaually event
-        PVProtocolEngineNodeInternalEvent aEvent(PVProtocolEngineNodeInternalEventType_CheckResumeNotificationMaually);
-        iNode->iInternalEventQueue.clear();
-        iNode->iInternalEventQueue.push_back(aEvent);
-        iNode->SetProcessingState(ProcessingState_NormalDataflow);
-        iNode->RunIfNotReady();
-    }
+    iNode->iEventReport->enableBufferingCompleteEvent();
+
+    if (DownloadContainer::needToCheckResumeNotificationMaually()) return true;
+    return (iNode->iNodeOutput->getAvailableOutputSize() == 0 && iEnableInfoUpdate);
 }
 
 bool ProgressiveStreamingContainer::doInfoUpdate(const uint32 downloadStatus)
@@ -189,7 +196,6 @@ bool ProgressiveStreamingContainer::doInfoUpdate(const uint32 downloadStatus)
     // For pending reposition request, don't do auto-resume checking
     //if(iNode->IsRepositioningRequestPending()) return true;
     if (!iEnableInfoUpdate) return true;
-
     return DownloadContainer::doInfoUpdate(downloadStatus);
 }
 
@@ -336,9 +342,9 @@ void progressiveStreamingControl::requestResumeNotification(const uint32 current
                      (uint32)iPlaybackUnderflow, (uint32)iRequestResumeNotification, (uint32)iDownloadComplete));
 
     iDownloadComplete = aDownloadComplete = false;
+    iSendDownloadCompleteNotification = false;
     pvDownloadControl::requestResumeNotification(currentNPTReadPosition, aDownloadComplete, aNeedSendUnderflowEvent);
 }
-
 
 void progressiveStreamingControl::clearPerRequest()
 {
@@ -346,9 +352,11 @@ void progressiveStreamingControl::clearPerRequest()
     // after each repositioning (aka new GET request)
     // the following variables must be reset
     // to enable auto pause and resume to function properly
-    iDlAlgoPreConditionMet         = false;
-    iDownloadComplete              = false;
+    iDlAlgoPreConditionMet = false;
+    iDownloadComplete      = false;
+    iSendDownloadCompleteNotification = false;
 }
+
 
 ////////////////////////////////////////////////////////////////////////////////////
 //////	ProgressiveStreamingProgress implementation
@@ -365,5 +373,46 @@ bool ProgressiveStreamingProgress::calculateDownloadPercent(uint32 &aDownloadPro
     if (fileSize) iContentLength = fileSize;
 
     return ProgressiveDownloadProgress::calculateDownloadPercentBody(aDownloadProgressPercent, fileSize);
+}
+
+////////////////////////////////////////////////////////////////////////////////////
+//////	progressiveStreamingEventReporter implementation
+////////////////////////////////////////////////////////////////////////////////////
+void progressiveStreamingEventReporter::reportBufferStatusEvent(const uint32 aDownloadPercent)
+{
+    // calculate buffer fullness
+
+    uint32 aBufferFullness = getBufferFullness();
+    if (aBufferFullness == 0xffffffff) return;
+
+    iNode->ReportInfoEvent(PVMFInfoBufferingStatus,
+                           (OsclAny*)aBufferFullness,
+                           PVMFPROTOCOLENGINENODEInfo_BufferingStatus,
+                           (uint8*)(&aDownloadPercent),
+                           sizeof(aDownloadPercent));
+    LOGINFODATAPATH((0, "progressiveStreamingEventReporter::reportBufferStatusEvent() DOWNLOAD PERCENTAGE: %d", aDownloadPercent));
+}
+
+uint32 progressiveStreamingEventReporter::getBufferFullness()
+{
+
+    uint32 aCacheSize = iNode->iNodeOutput->getMaxAvailableOutputSize();
+    if (aCacheSize == 0) return 0xffffffff;
+    uint32 aCacheFilledSize = iNode->iNodeOutput->getAvailableOutputSize();
+    if (aCacheFilledSize >= aCacheSize) return 100;
+
+    // avoid fix-point multiplication overflow
+    uint32 aBufferEmptiness = 0xffffffff;
+    if (IS_OVERFLOW_FOR_100x(aCacheFilledSize) > 0)
+    {
+        aBufferEmptiness = (aCacheFilledSize >> PVPROTOCOLENGINE_DOWNLOAD_BYTE_PERCENTAGE_DLSIZE_RIGHTSHIFT_FACTOR) * 100 /
+                           (aCacheSize >> PVPROTOCOLENGINE_DOWNLOAD_BYTE_PERCENTAGE_DLSIZE_RIGHTSHIFT_FACTOR);
+    }
+    else
+    {
+        aBufferEmptiness = aCacheFilledSize * 100 / aCacheSize;
+    }
+
+    return 100 -aBufferEmptiness;
 }
 

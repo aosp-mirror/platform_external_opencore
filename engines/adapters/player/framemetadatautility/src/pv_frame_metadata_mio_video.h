@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,8 +41,12 @@
 #endif
 
 class PVLogger;
-class OsclClock;
+class PVMFMediaClock;
 class ColorConvertBase;
+
+// To maintain the count of supported uncompressed video formats.
+// Should be updated whenever new format is added
+#define PVMF_SUPPORTED_UNCOMPRESSED_VIDEO_FORMATS_COUNT 6
 
 class PVFMVideoMIOGetFrameObserver
 {
@@ -62,7 +66,7 @@ class PVFMVideoMIOActiveTimingSupport: public PvmiClockExtensionInterface
         {}
 
         // From PvmiClockExtensionInterface
-        PVMFStatus SetClock(OsclClock *aClock);
+        PVMFStatus SetClock(PVMFMediaClock *aClock);
 
         // From PVInterface
         void addRef() ;
@@ -71,7 +75,7 @@ class PVFMVideoMIOActiveTimingSupport: public PvmiClockExtensionInterface
 
         void queryUuid(PVUuid& uuid);
 
-        OsclClock* iClock;
+        PVMFMediaClock* iClock;
 };
 
 
@@ -145,6 +149,7 @@ class PVFMVideoMIO : public OsclTimerObject,
         uint32 getCapabilityMetric(PvmiMIOSession aSession);
         PVMFStatus verifyParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
 
+        void setThumbnailDimensions(uint32 aWidth, uint32 aHeight);
     private:
         void InitData();
 
@@ -162,7 +167,6 @@ class PVFMVideoMIO : public OsclTimerObject,
                                       uint32 iSrcWidth, uint32 iSrcHeight, uint32 iDestWidth, uint32 iDestHeight);
         PVMFStatus CreateYUVToRGBColorConverter(ColorConvertBase*& aCC, PVMFFormatType aRGBFormatType);
         PVMFStatus DestroyYUVToRGBColorConverter(ColorConvertBase*& aCC, PVMFFormatType aRGBFormatType);
-        void convertFrame(void* src, void* dst, size_t len);
 
         PvmiMediaTransfer* iPeer;
 
@@ -214,9 +218,7 @@ class PVFMVideoMIO : public OsclTimerObject,
         Oscl_Vector<WriteResponse, OsclMemAllocator> iWriteResponseQueue;
 
         // Video parameters
-        OSCL_HeapString<OsclMemAllocator> iVideoFormatString;
         PVMFFormatType iVideoFormat;
-        PVMFFormatType iVideoSubFormat;
         uint32 iVideoHeight;
         bool iVideoHeightValid;
         uint32 iVideoWidth;
@@ -225,6 +227,11 @@ class PVFMVideoMIO : public OsclTimerObject,
         bool iVideoDisplayHeightValid;
         uint32 iVideoDisplayWidth;
         bool iVideoDisplayWidthValid;
+        bool iIsMIOConfigured;
+        bool iWriteBusy;
+
+        uint32 iThumbnailWidth;
+        uint32 iThumbnailHeight;
 
         // Color converter if YUV to RGB is needed
         ColorConvertBase* iColorConverter;

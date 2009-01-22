@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*********************************************************************************/
 /*
     This PVA_FF_TrackAtom Class fp the container for a single track in the MPEG-4
     presentation.
@@ -83,16 +82,7 @@ PVA_FF_TrackAtom::PVA_FF_TrackAtom(int32 type,
                   profileComp, level),
                   _pmediaAtom);
 
-    if ((uint32) type == MEDIA_TYPE_OBJECT_DESCRIPTOR)  // Mandatory to have tref atom for hint tracks
-    {
-        PV_MP4_FF_NEW(fp->auditCB, PVA_FF_TrackReferenceAtom, (TREF_TYPE_OD), _ptrackReference);
-        _ptrackReference->setParent(this);
-    }
-    else
-    {
-        _ptrackReference = NULL;
-    }
-
+    _ptrackReference = NULL;
     recomputeSize();
 
     _ptrackHeader->setParent(this);
@@ -331,21 +321,6 @@ PVA_FF_TrackAtom::addTrackReference(uint32 ref)
     return 0;
 }
 
-/*
-// Get the track reference atom if it exists
-const PVA_FF_TrackReferenceAtom&
-PVA_FF_TrackAtom::getTrackReferenceAtom()
-{
-    return NULL;
-}
-
-const PVA_FF_EditAtom&
-PVA_FF_TrackAtom::getEditAtom()
-{
-    return NULL;
-}
-*/
-
 // Create methods for the optional member atoms
 void
 PVA_FF_TrackAtom::createTrackReferenceAtom()
@@ -517,4 +492,16 @@ PVA_FF_TrackAtom::updateLastTSEntry(uint32 ts)
 
     _pmediaAtom->updateLastTSEntry(ts);
 
+}
+
+void
+PVA_FF_TrackAtom::SetMaxSampleSize(uint32 aSize)
+{
+    _pmediaAtom->SetMaxSampleSize(aSize);
+}
+
+void
+PVA_FF_TrackAtom::writeMaxSampleSize(MP4_AUTHOR_FF_FILE_IO_WRAP *_afp)
+{
+    _pmediaAtom->writeMaxSampleSize(_afp);
 }

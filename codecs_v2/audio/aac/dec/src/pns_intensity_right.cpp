@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,39 +17,8 @@
  */
 /*
 
- Pathname: ./src/pns_intensity_right.c
+ Pathname: pns_intensity_right.c
 
-     Date: 07/06/2001
-
-------------------------------------------------------------------------------
- REVISION HISTORY
-
- Description: Made changes requested during review.
-
- Description: pFactorsRight and pFactorsLeft were being indexed on a
- tot_sfb basis, but in fact, these two arrays are packed when the
- windows are grouped.  This bug would appear in grouped short windows.
-
- Description: Fixed bug where pCoefRight and pCoefLeft were bumped up
- by the number of coefficients in the group.  The problem involved the
- modification of coef_per_win, which should have not been modified.  This
- bug would appear in decoding of files with grouped short windows.
-
- Description: add pFactorsRight += sfb_per_win * wins_in_group to update the
-              scalefactors pointer to next group
-
- Description: pass in hasmask parameter. update pseudo_code.
-
- Description: hasmask should also be used when intensity is called.  Both
- hasmask AND mask_enabled must be == 1 to flag a change in the phase inside
- the intensity block.
-
- Description: Updated to remove the function ms_synt, which is now called
- from within its own function, apply_ms_synt.c
-
- Description:  Changed name from right_ch_sfb_tools_ms to pns_intensity_right
-
- Description:
 ------------------------------------------------------------------------------
  INPUT AND OUTPUT DEFINITIONS
 

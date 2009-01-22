@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,7 @@
 /*
     This MP3Utils Class contains sime useful methods for operating FILE
 */
-
-
-//#define IMPLEMENT_MP3Utils
+/*********************************************************************************/
 
 #include "mp3utils.h"
 #include "oscl_base.h"
@@ -78,21 +76,20 @@ bool MP3Utils::getCurrentFileSize(PVFile *fp, uint32& aCurrentSize)
         {
             uint32 currPos = (uint32)(fp->Tell());
             aCurrentSize = currPos + aRemBytes;
-
             return true;
         }
     }
     return false;
 }
 
-MP3ErrorType MP3Utils::SeektoOffset(PVFile *fp, int32 offset)
+MP3ErrorType MP3Utils::SeektoOffset(PVFile *aFP, int32 aOffset)
 {
     uint32 currFileSize = 0;
-    if (MP3Utils::getCurrentFileSize(fp, currFileSize))
+    if (MP3Utils::getCurrentFileSize(aFP, currFileSize))
     {
-        if (currFileSize >= offset)
+        if (currFileSize >= (uint32)aOffset)
         {
-            if (fp->Seek(offset, Oscl_File::SEEKSET) != 0)
+            if (aFP->Seek(aOffset, Oscl_File::SEEKSET) != 0)
             {
                 return MP3_FILE_READ_ERR;
             }

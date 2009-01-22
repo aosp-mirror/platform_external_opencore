@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -626,7 +626,7 @@ void InterpretMBModeP(AVCMacroblock *mblock, uint mb_type)
     {
         InterpretMBModeI(mblock, mb_type - 5);
         /* set MV and Ref_Idx codes of Intra blocks in P-slices  */
-        oscl_memset(mblock->mvL0, 0, sizeof(int16)*32);
+        oscl_memset(mblock->mvL0, 0, sizeof(int32)*16);
         mblock->ref_idx_L0[0] = mblock->ref_idx_L0[1] = mblock->ref_idx_L0[2] = mblock->ref_idx_L0[3] = -1;
     }
     return ;

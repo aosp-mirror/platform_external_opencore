@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,10 @@ and necessary type defitionitions and enumerations.
 
 #ifndef _AVCDEC_API_H_
 #define _AVCDEC_API_H_
+
+#ifndef OSCL_BASE_H_INCLUDED
+#include "oscl_base.h"
+#endif
 
 #include "avcapi_common.h"
 
@@ -89,7 +93,7 @@ extern "C"
     \return	"AVCDEC_SUCCESS if success, AVCDEC_FAIL if no first start code is found, AVCDEC_NO_NEX_SC if
     		the first start code is found, but the second start code is missing (potential partial NAL)."
     */
-    AVCDec_Status PVAVCAnnexBGetNALUnit(uint8 *bitstream, uint8 **nal_unit, int *size);
+    OSCL_IMPORT_REF AVCDec_Status PVAVCAnnexBGetNALUnit(uint8 *bitstream, uint8 **nal_unit, int *size);
 
     /**
     This function sniffs the nal_unit_type such that users can call corresponding APIs.
@@ -98,7 +102,7 @@ extern "C"
     \param "nal_unit_type" "Pointer to the return value of nal unit type."
     \return	"AVCDEC_SUCCESS if success, AVCDEC_FAIL otherwise."
     */
-    AVCDec_Status PVAVCDecGetNALType(uint8 *bitstream, int size, int *nal_type, int *nal_ref_idc);
+    OSCL_IMPORT_REF AVCDec_Status PVAVCDecGetNALType(uint8 *bitstream, int size, int *nal_type, int *nal_ref_idc);
 
     /**
     This function decodes the sequence parameters set, initializes related parameters and
@@ -112,7 +116,7 @@ extern "C"
     		AVCDEC_FAIL if profile and level is not supported,
     		AVCDEC_MEMORY_FAIL if memory allocations return null."
     */
-    AVCDec_Status	PVAVCDecSeqParamSet(AVCHandle *avcHandle, uint8 *nal_unit, int nal_size);
+    OSCL_IMPORT_REF AVCDec_Status PVAVCDecSeqParamSet(AVCHandle *avcHandle, uint8 *nal_unit, int nal_size);
 
     /**
     This function returns sequence parameters such as dimension and field flag of the most recently
@@ -124,7 +128,7 @@ extern "C"
     \return "AVCDEC_SUCCESS if success and AVCDEC_FAIL if fail."
     \note "This API can be combined with PVAVCInitSequence if wanted to be consistent with m4vdec lib."
     */
-    AVCDec_Status	PVAVCDecGetSeqInfo(AVCHandle *avcHandle, AVCDecSPSInfo *seqInfo);
+    OSCL_IMPORT_REF AVCDec_Status PVAVCDecGetSeqInfo(AVCHandle *avcHandle, AVCDecSPSInfo *seqInfo);
 
     /**
     This function decodes the picture parameters set and initializes related parameters. Note thate
@@ -135,7 +139,7 @@ extern "C"
     \param "nal_size"		"size of the bitstream NumBytesInNALunit."
     \return	"AVCDEC_SUCCESS if success, AVCDEC_FAIL if profile and level is not supported."
     */
-    AVCDec_Status	PVAVCDecPicParamSet(AVCHandle *avcHandle, uint8 *nal_unit, int nal_size);
+    OSCL_IMPORT_REF AVCDec_Status PVAVCDecPicParamSet(AVCHandle *avcHandle, uint8 *nal_unit, int nal_size);
 
     /**
     This function decodes one NAL unit of bitstream. The type of nal unit is one of the
@@ -154,9 +158,9 @@ extern "C"
     		AVCDEC_REDUNDANT_PICTURE if error has been detected in the primary picture and redundant picture is available,
     		AVCDEC_CONCEALED_PICTURE if error has been detected and decoder has concealed it."
     */
-    AVCDec_Status	PVAVCDecSEI(AVCHandle *avcHandle, uint8 *nal_unit, int nal_size);
+    OSCL_IMPORT_REF AVCDec_Status PVAVCDecSEI(AVCHandle *avcHandle, uint8 *nal_unit, int nal_size);
 
-    AVCDec_Status PVAVCDecodeSlice(AVCHandle *avcHandle, uint8 *buffer, int buf_size);
+    OSCL_IMPORT_REF AVCDec_Status PVAVCDecodeSlice(AVCHandle *avcHandle, uint8 *buffer, int buf_size);
 
     /**
     Check the availability of the decoded picture in decoding order (frame_num).
@@ -169,19 +173,19 @@ extern "C"
     \return "AVCDEC_SUCCESS for success, AVCDEC_FAIL if no picture is available to be displayed,
     		AVCDEC_PICTURE_READY if there is another picture to be displayed."
     */
-    AVCDec_Status PVAVCDecGetOutput(AVCHandle *avcHandle, int *indx, int *release_flag, AVCFrameIO *output);
+    OSCL_IMPORT_REF AVCDec_Status PVAVCDecGetOutput(AVCHandle *avcHandle, int *indx, int *release_flag, AVCFrameIO *output);
 
     /**
     This function resets the decoder and expects to see the next IDR slice.
     \param "avcHandle"	"Handle to the AVC decoder library object."
     */
-    void	PVAVCDecReset(AVCHandle *avcHandle);
+    OSCL_IMPORT_REF void	PVAVCDecReset(AVCHandle *avcHandle);
 
     /**
     This function performs clean up operation including memory deallocation.
     \param "avcHandle"	"Handle to the AVC decoder library object."
     */
-    void	PVAVCCleanUpDecoder(AVCHandle *avcHandle);
+    OSCL_IMPORT_REF void	PVAVCCleanUpDecoder(AVCHandle *avcHandle);
 //AVCDec_Status EBSPtoRBSP(uint8 *nal_unit,int *size);
 
 #if 0

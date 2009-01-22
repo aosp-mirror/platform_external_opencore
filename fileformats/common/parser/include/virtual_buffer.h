@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,7 +71,10 @@ class VirtualBuffer
         // operators
         TBufferAccess& operator*();                         // indirection
         VirtualBuffer& operator=(const VirtualBuffer&);     // assignment
-        operator TBufferAccess*();                          // cast
+        operator TBufferAccess*()
+        {
+            return pCurrFragPos;
+        }; 	// cast
         VirtualBuffer& operator++();                        // prefix increment
         VirtualBuffer operator++(int);                      // postfix increment
         VirtualBuffer& operator+=(const int increment);     // addition
@@ -188,12 +191,6 @@ TBufferAccess& VirtualBuffer<TBufferAccess>::operator*()
 {
     OSCL_ASSERT(pCurrFragPos != NULL);
     return *pCurrFragPos;
-}
-
-template<class TBufferAccess>
-VirtualBuffer<TBufferAccess>::operator TBufferAccess*()
-{
-    return pCurrFragPos;
 }
 
 template<class TBufferAccess>

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -367,6 +367,7 @@ OSCL_EXPORT_REF int32 PVDlCfgFile::LoadConfig(void)
 
         //the file size after it is completly downloaded.
         iOverallFileSize = *tmpPtr++;
+        //for FastTrack, this would be the accumulated bytes downloaded
         iCurrentFileSize = *tmpPtr++;
         if (iOverallFileSize == 0 ||
                 iMaxAllowedFileSize < iOverallFileSize ||
@@ -381,6 +382,7 @@ OSCL_EXPORT_REF int32 PVDlCfgFile::LoadConfig(void)
         iSendTimeout = *tmpPtr++;
         iRecvTimeout = *tmpPtr++;
 
+        //FastTrack only
         iRangeStartTime = *tmpPtr++; //in ms
         uint32 aSelectedTrackIDsSize = *tmpPtr++;
 
@@ -574,6 +576,7 @@ void PVDlCfgFile::composeFixedHeader(uint8 *aBuf)
     *tmpPtr++ = 	iMaxAllowedFileSize;
     //the file size after it is completly downloaded.
     *tmpPtr++ = 	iOverallFileSize;
+    //for FastTrack, this would be the accumulated bytes downloaded
     *tmpPtr++ = 	iCurrentFileSize;
     // flag of whether to have content length for the previous download
     *tmpPtr++ =		iHasContentLength;
@@ -582,6 +585,7 @@ void PVDlCfgFile::composeFixedHeader(uint8 *aBuf)
     *tmpPtr++ = 	iSendTimeout;
     *tmpPtr++ = 	iRecvTimeout;
 
+    //FastTrack only
     *tmpPtr++ = 	iRangeStartTime; //in ms
     *tmpPtr++ = 	iSelectedTrackIDs.size();
 

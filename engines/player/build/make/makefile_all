@@ -32,6 +32,17 @@ include $(PV_TOP)/makefile.pv
 #XINCDIRS += -I../../../config/$(BUILD_ARCH)  -I../../../config/shared
 
 
+#ifeq ($(ARCHITECTURE),panasonic_arm)
+#XINCDIRS += -I ../../config/$(BUILD_ARCH)
+#else
+#   ifeq ($(ARCHITECTURE),panasonic_pc)
+#      XINCDIRS += -I ../../config/$(BUILD_ARCH)
+#   else
+#      XINCDIRS += -I ../../config/linux
+#   endif
+#endif
+
+
 # Use XLIBDIRS for extra library directories. These should be proceeded 
 # with "-L" just as they would be when passing to the linker. 
 # Used for building executables.

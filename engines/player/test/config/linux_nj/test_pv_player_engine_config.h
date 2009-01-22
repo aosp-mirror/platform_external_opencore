@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,86 +21,87 @@
 #ifndef PVMF_FORMAT_TYPE_H_INCLUDED
 #include "pvmf_format_type.h"
 #endif
-#define AUDIOSINK_FORMAT_TYPE PVMF_PCM16
+#define AUDIOSINK_FORMAT_TYPE PVMF_MIME_PCM16
 
 // The default test file to use
 #define DEFAULTSOURCEFILENAME "test.mp4"
-#define DEFAULTSOURCEFORMATTYPE PVMF_MPEG4FF
-
-// The string to prepend to source filenames
-#define SOURCENAME_PREPEND_STRING ""
-#define SOURCENAME_PREPEND_WSTRING _STRLIT_WCHAR("")
+#define DEFAULTSOURCEFORMATTYPE PVMF_MIME_MPEG4FF
 
 // Set to 1 to enable MP4 file test cases, 0 to disable
 #define RUN_MP4FILE_TESTCASES 1
 // MP4 files to test. Needs to be defined if RUN_MP4FILE_TESTCASES is set to 1
-#define LOCAL_TEST_FILE_MP4_FORMAT_TYPE PVMF_MPEG4FF
-#define LOCAL_TEST_FILE_MP4_M4V_AMR 		"test_m4v_amr.mp4"
-#define LOCAL_TEST_FILE_MP4_H263_AMR 		"test_h263_amr.mp4"
-#define LOCAL_TEST_FILE_MP4_AVC_AMR 		"test_avc_amr.mp4"
-#define LOCAL_TEST_FILE_MP4_AMR 		"test_amr.mp4"
-#define LOCAL_TEST_FILE_MP4_AAC 		"test_aac.mp4"
-#define LOCAL_TEST_FILE_MP4_M4V_AMR_TEXT 	"test_m4v_amr_text.mp4"
+#define LOCAL_TEST_FILE_MP4_FORMAT_TYPE PVMF_MIME_MPEG4FF
+#define LOCAL_TEST_FILE_MP4_M4V_AMR "test_m4v_amr.mp4"
+#define LOCAL_TEST_FILE_MP4_H263_AMR "test_h263_amr.mp4"
+#define LOCAL_TEST_FILE_MP4_AVC_AMR "test_avc_amr.mp4"
+#define LOCAL_TEST_FILE_MP4_AMR "test_amr.mp4"
+#define LOCAL_TEST_FILE_MP4_AAC "test_aac.mp4"
+#define LOCAL_TEST_FILE_MP4_M4V_AMR_TEXT "test_m4v_amr_text.mp4"
 
 // Set to 1 to enable AMR file test cases, 0 to disable
 #define RUN_AMRFILE_TESTCASES 1
 // AMR files to test. Needs to be defined if RUN_AMRFILE_TESTCASES is set to 1
-#define LOCAL_TEST_FILE_AMR_FORMAT_TYPE PVMF_AMRFF
-#define LOCAL_TEST_FILE_AMR_IETF 		"test_amr_ietf.amr"
-#define LOCAL_TEST_FILE_AMR_IF2 		"test_amr_if2.cod"
+#define LOCAL_TEST_FILE_AMR_FORMAT_TYPE PVMF_MIME_AMRFF
+#define LOCAL_TEST_FILE_AMR_IETF "test_amr_ietf.amr"
+#define LOCAL_TEST_FILE_AMR_IF2 "test_amr_if2.cod"
 
 // Set to 1 to enable AAC file test cases, 0 to disable
 #define RUN_AACFILE_TESTCASES 1
 // AAC files to test. Needs to be defined if RUN_AACFILE_TESTCASES is set to 1
-#define LOCAL_TEST_FILE_AAC_FORMAT_TYPE PVMF_AACFF
-#define LOCAL_TEST_FILE_AAC_ADTS 		"test_adts.aac"
-#define LOCAL_TEST_FILE_AAC_ADIF 		"test_adif.aac"
-#define LOCAL_TEST_FILE_AAC_RAW 		"test_raw.aac"
+#define LOCAL_TEST_FILE_AAC_FORMAT_TYPE PVMF_MIME_AACFF
+#define LOCAL_TEST_FILE_AAC_ADTS "test_adts.aac"
+#define LOCAL_TEST_FILE_AAC_ADIF "test_adif.aac"
+#define LOCAL_TEST_FILE_AAC_RAW "test_raw.aac"
 
 // Set to 1 to enable MP3 file test cases, 0 to disable
 #define RUN_MP3FILE_TESTCASES 1
 // MP3 files to test. Needs to be defined if RUN_MP3FILE_TESTCASES is set to 1
-#define LOCAL_TEST_FILE_MP3_FORMAT_TYPE PVMF_MP3FF
-#define LOCAL_TEST_FILE_MP3_CBR 		"test_cbr.mp3"
-#define LOCAL_TEST_FILE_MP3_VBR 		"test_vbr.mp3"
+#define LOCAL_TEST_FILE_MP3_FORMAT_TYPE PVMF_MIME_MP3FF
+#define LOCAL_TEST_FILE_MP3_CBR "test_cbr.mp3"
+#define LOCAL_TEST_FILE_MP3_VBR "test_vbr.mp3"
 
 // Set to 1 to enable 3GP file test cases, 0 to disable
 #define RUN_3GPFILE_TESTCASES 1
 // 3GP files to test. Needs to be defined if RUN_3GPFILE_TESTCASES is set to 1
-#define LOCAL_TEST_FILE_3GP_FORMAT_TYPE PVMF_MPEG4FF
-#define LOCAL_TEST_FILE_3GP 			"test.3gp"
+#define LOCAL_TEST_FILE_3GP_FORMAT_TYPE PVMF_MIME_MPEG4FF
+#define LOCAL_TEST_FILE_3GP "test.3gp"
 
 // Set to 1 to enable WMA file test cases, 0 to disable
 #define RUN_WMAFILE_TESTCASES 1
 // WMA files to test. Needs to be defined if RUN_WMAFILE_TESTCASES is set to 1
-#define LOCAL_TEST_FILE_WMA_FORMAT_TYPE PVMF_ASFFF
-#define LOCAL_TEST_FILE_WMA 			"00000035.wma"
+#define LOCAL_TEST_FILE_WMA_FORMAT_TYPE PVMF_MIME_ASFFF
+#define LOCAL_TEST_FILE_WMA "00000035.wma"
 
 // Set to 1 to enable WMV file test cases, 0 to disable
 #define RUN_WMVFILE_TESTCASES 1
 // WMV files to test. Needs to be defined if RUN_WMVFILE_TESTCASES is set to 1
-#define LOCAL_TEST_FILE_WMV_FORMAT_TYPE PVMF_ASFFF
-#define LOCAL_TEST_FILE_WMV 			"bad_video_config.wmv"
+#define LOCAL_TEST_FILE_WMV_FORMAT_TYPE PVMF_MIME_ASFFF
+#define LOCAL_TEST_FILE_WMV "bad_video_config.wmv"
 
 // Set to 1 to enable WAV file test cases, 0 to disable
 #define RUN_WAVFILE_TESTCASES 1
 // WAV files to test. Needs to be defined if RUN_WAVFILE_TESTCASES is set to 1
-#define LOCAL_TEST_FILE_WAV_FORMAT_TYPE PVMF_WAVFF
-#define LOCAL_TEST_FILE_WAV 			"test.wav"
+#define LOCAL_TEST_FILE_WAV_FORMAT_TYPE PVMF_MIME_WAVFF
+#define LOCAL_TEST_FILE_WAV "test.wav"
 
 // Set to 1 to enable ASF file test cases, 0 to disable
-#define RUN_ASFFILE_TESTCASES 1
+#define RUN_ASFFILE_TESTCASES 0
 // ASF files to test. Needs to be defined if RUN_ASFFILE_TESTCASES is set to 1
-#define LOCAL_TEST_FILE_ASF_FORMAT_TYPE PVMF_ASFFF
-#define LOCAL_TEST_FILE_ASF 			"test.asf"
+#define LOCAL_TEST_FILE_ASF_FORMAT_TYPE PVMF_MIME_ASFFF
+#define LOCAL_TEST_FILE_ASF "test.asf"
 
-// Set to 1 to enable rtps cloaking test cases, 0 to disable
+// Set to 1 to enable rtsp cloaking test cases, 0 to disable
 #define RUN_RTSP_CLOAKING_TESTCASES 0
+
 // Set to 1 to enable Real audio file test cases, 0 to disable
 #define RUN_REALAUDIO_FILE_TESTCASES 0
+
 // Real audio files to test. Needs to be defined if RUN_REALAUDIO_FILE_TESTCASES is set to 1
-#define LOCAL_TEST_FILE_REALAUDIO_FORMAT_TYPE PVMF_RMFF
-#define LOCAL_TEST_FILE_REALAUDIO 		"22sec_cook10_stereo.rm"
+#define LOCAL_TEST_FILE_REALAUDIO_FORMAT_TYPE PVMF_MIME_RMFF
+#define LOCAL_TEST_FILE_REALAUDIO "22sec_cook10_stereo.rm"
+
+// Set to 1 to enable FastTrack download test cases, 0 to disable
+#define RUN_FASTTRACK_TESTCASES 0
 
 // Set to 1 to enable HTTP download test cases, 0 to disable
 #define RUN_HTTPDOWNLOAD_TESTCASES 1
@@ -125,10 +126,18 @@
 // Set to 1 to use the scheduler native to the system instead of PV scheduler
 #define USE_NATIVE_SCHEDULER 0
 
+// The string to prepend to source filenames
+#define SOURCENAME_PREPEND_STRING ""
+#define SOURCENAME_PREPEND_WSTRING _STRLIT_WCHAR("")
 
 // The string to prepend to output filenames
+#ifdef ANDROID
+#define OUTPUTNAME_PREPEND_STRING "/sdcard/"
+#define OUTPUTNAME_PREPEND_WSTRING _STRLIT_WCHAR("/sdcard/")
+#else
 #define OUTPUTNAME_PREPEND_STRING ""
 #define OUTPUTNAME_PREPEND_WSTRING _STRLIT_WCHAR("")
+#endif
 
 //Local playback range
 #define FIRST_LOCAL_PLAYBACK 0

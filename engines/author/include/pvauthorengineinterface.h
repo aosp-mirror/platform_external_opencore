@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -169,7 +169,9 @@ class PVAuthorEngineInterface
          * Closes an authoring session.
          *
          * All resources added and allocated to the authoring session will be released.
-         * Upon completion of this command, pvAuthor Engine will be in PVAE_STATE_IDLE state.
+         *
+         * This command is valid only when pvAuthor engine is in PVAE_STATE_OPENED state and Upon
+         * completion of this command, pvAuthor Engine will be in PVAE_STATE_IDLE state.
          *
          * @param aContextData Optional opaque data to be passed back to user with the command response
          * @return Unique command ID to identify this command in command response
@@ -180,6 +182,7 @@ class PVAuthorEngineInterface
          * Adds a media source to be used as input to an authoring session.
          *
          * This command is valid only when pvAuthor Engine is in PVAE_STATE_OPENED state.
+         * This command does not change the pvAuthor Engine engine state.
          *
          * @param aDataSource Reference to the data source
          * @param aContextData Optional opaque data to be passed back to user with the command response
@@ -191,6 +194,7 @@ class PVAuthorEngineInterface
          * Unbinds a previously added data source.
          *
           * This command is valid only when pvAuthor Engine is in PVAE_STATE_OPENED state.
+         * This command does not change the pvAuthor Engine engine state.
          *
          * @param aDataSource Reference to the data source to be removed
          * @param aContextData Optional opaque data to be passed back to user with the command response
@@ -203,7 +207,7 @@ class PVAuthorEngineInterface
          *
          * pvAuthor engine will use the most suitable output composer of the specified MIME type available
          * in the authoring session. This command is valid only when pvAuthor Engine is in PVAE_STATE_OPENED
-         * state.
+         * state. This command does not change the pvAuthor Engine state.
          *
          * Upon completion of this command, opaque data to indentify the selected composer is provided in the
          * callback.  The user needs to use this opaque data to identify the composer when calling AddMediaTrack(),
@@ -227,7 +231,8 @@ class PVAuthorEngineInterface
          * Selects an output composer by specifying its Uuid.
          *
          * pvAuthor engine the composer of the specified Uuid in the authoring session.
-         * This command is valid only when pvAuthor Engine is in PVAE_STATE_OPENED state.
+         * This command is valid only when pvAuthor Engine is in PVAE_STATE_OPENED state. This command does
+         * not change the pvAuthor Engine state.
          *
          * Upon completion of this command, opaque data to indentify the selected composer is provided in the
          * callback.  The user needs to use this opaque data to identify the composer when calling AddMediaTrack(),
@@ -262,6 +267,7 @@ class PVAuthorEngineInterface
          *
          * This command is valid only when pvAuthor Engine is in PVAE_STATE_OPENED state. The referenced
          * data source and composer must be already added before this method is called.
+         * This command does not change the pvAuthor Engine engine state.
          *
          * @param aDataSource Data source node to provide input data
          * @param aEncoderType MIME type of encoder to encode the source data
@@ -292,6 +298,7 @@ class PVAuthorEngineInterface
          *
          * This command is valid only when pvAuthor Engine is in PVAE_STATE_OPENED state. The referenced
          * data source and composer must be already added before this method is called.
+         * This command does not change the pvAuthor Engine engine state.
          *
          * @param aDataSource Data source node to provide input data
          * @param aEncoderUuid Uuid of encoder to encode the source data
@@ -314,6 +321,8 @@ class PVAuthorEngineInterface
          * This command is valid only when pvAuthor Engine is in PVAE_STATE_OPENED state. The
          * referenced composer must be previously selected.
          *
+         * This command does not change the pvAuthor Engine engine state.
+         *
          * @param aDataSink Reference to the data sink to be used
          * @param aComposer Opaque data identifying the composer to which the data sink will connect to.
          * @param aContextData Optional opaque data to be passed back to user with the command response
@@ -328,6 +337,7 @@ class PVAuthorEngineInterface
          * Currently this API does not cause any action as it is not relevant.
 
          * This command is valid only when pvAuthor Engine is in PVAE_STATE_OPENED state.
+         * This command does not change the pvAuthor Engine engine state.
          *
          * @param aDataSink Reference to the data sink to be removed
          * @param aContextData Optional opaque data to be passed back to user with the command response
@@ -364,7 +374,8 @@ class PVAuthorEngineInterface
          * received from SelectComposer() or AddMediaTrack() or QueryInterface() APIs
          * before calling this method.  This method would fail otherwise.
          *
-         * Upon completion of this command, pvAuthor Engine will be in PVAE_STATE_OPENED state.
+         * This method can be called from ANY state but PVAE_STATE_IDLE. Upon completion of this command, pvAuthor
+         * Engine will be in PVAE_STATE_OPENED state.
          *
          * @param aContextData Optional opaque data to be passed back to user with the command response
          * @returns A unique command id for asynchronous completion
@@ -432,7 +443,7 @@ class PVAuthorEngineInterface
          *
          * @param aState Output parameter to hold state information
          * @param aContextData Optional opaque data to be passed back to user with the command response
-         * @returns A unique command id for asynchronous completion
+         * @returns A unique command id for synchronous completion
          */
         virtual PVAEState GetPVAuthorState() = 0;
 
@@ -473,19 +484,6 @@ class PVAuthorEngineInterface
                                            const OsclAny* aContextData = NULL) = 0;
 
         /**
-         * Returns version information about the SDK
-          * Currently this API is NOT SUPPORTED.
-        *
-         * @param aSDKInfo A reference to a PVSDKInfo structure which contains product name,
-         * supported h/w platform, supported s/w platform, version, part number, and PV UID.
-         * These fields will contain info for the currently instantiated pvAuthor engine when
-         * this function returns success.
-         * @param aContextData Optional opaque data to be passed back to user with the command response
-         * @returns A unique command id for asynchronous completion
-         */
-        virtual PVCommandId GetSDKInfo(PVSDKInfo& aSDKInfo, const OsclAny* aContextData = NULL) = 0;
-
-        /**
          * Returns information about all modules currently used by the SDK.
          * Currently this API is NOT SUPPORTED.
          *
@@ -509,6 +507,17 @@ class PVAuthorEngineInterface
          * @returns A unique command id for asynchronous completion
          */
         virtual PVCommandId CancelAllCommands(const OsclAny* aContextData = NULL) = 0;
+
+        /**
+         * Returns SDK version information about author engine.
+         *
+         * @param aSDKInfo
+         *         A reference to a PVSDKInfo structure which contains product name, supported hardware platform,
+         *         supported software platform, version, part number, and PV UUID. These fields will contain info
+         *        .for the currently instantiated pvPlayer engine when this function returns success.
+         *
+         **/
+        OSCL_IMPORT_REF static void GetSDKInfo(PVSDKInfo& aSDKInfo);
 };
 
 #endif // PVAUTHORENGINE_H_INCLUDED

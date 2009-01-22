@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
  * -------------------------------------------------------------------
  */
 /**
- * @file pvmf_jitter_buffer_port.h
- */
+* @file pvmf_jitter_buffer_port.h
+*/
 #ifndef PVMF_JITTER_BUFFER_PORT_H_INCLUDED
 #define PVMF_JITTER_BUFFER_PORT_H_INCLUDED
 
@@ -107,6 +107,7 @@ class PVMFJitterBufferPortParams
             iMediaDataAlloc = NULL;
             iMediaDataImplAlloc = NULL;
             iMediaMsgAlloc = NULL;
+            iBufferAlloc = NULL;
             oFireWallPacketRecvd = false;
             iFireWallPacketCount = 0;
             SSRC = 0;
@@ -123,6 +124,9 @@ class PVMFJitterBufferPortParams
 
             RtcpBwConfigured = false;
             eTransportType = PVMF_JITTER_BUFFER_PORT_TRANSPORT_TYPE_UNKNOWN;
+
+            iWaitForOOOPacketCallBkId = 0;
+            iWaitForOOOPacketCallBkPending = false;
         };
 
         ~PVMFJitterBufferPortParams()
@@ -140,12 +144,44 @@ class PVMFJitterBufferPortParams
             bTransportHeaderPreParsed = false;
             RtcpBwConfigured = false;
             avg_rtcp_size = 0.0;
+            iJitterBufferMemPoolInfo.Init();
         };
 
         int32                       id;
         PVMFJitterBufferNodePortTag tag;
         PVMFPortInterface* iPort;
         PVMFJitterBuffer*  iJitterBuffer;
+        class JitterBufferMemPoolInfo
+        {
+            public:
+                JitterBufferMemPoolInfo(): iSize(0), iResizeSize(0), iMaxNumResizes(0), iExpectedNumberOfBlocksPerBuffer(0) {}
+                void Init(uint32 aSize = 0, uint32 aExpectedNumberOfBlocksPerBuffer = 0, uint32 aResizeSize = 0, uint32 aMaxNumResizes = 0)
+                {
+                    iSize = aSize;
+                    iResizeSize = aResizeSize;
+                    iMaxNumResizes = aMaxNumResizes;
+                    iExpectedNumberOfBlocksPerBuffer = aExpectedNumberOfBlocksPerBuffer;
+                }
+                uint32 iSize;
+                uint32 iResizeSize;
+                uint32 iMaxNumResizes;
+                uint32 iExpectedNumberOfBlocksPerBuffer;
+        };
+        JitterBufferMemPoolInfo iJitterBufferMemPoolInfo;
+
+        void SetJitterBufferMemPoolInfo(uint32 aSize, uint32 aResizeSize, uint32 aMaxNumResizes, uint32 aExpectedNumberOfBlocksPerBuffer)
+        {
+            iJitterBufferMemPoolInfo.Init(aSize, aResizeSize, aMaxNumResizes, aExpectedNumberOfBlocksPerBuffer);
+        }
+
+        void GetJitterBufferMemPoolInfo(uint32& aSize, uint32& aResizeSize, uint32& aMaxNumResizes, uint32& aExpectedNumberOfBlocksPerBuffer) const
+        {
+            aSize = iJitterBufferMemPoolInfo.iSize;
+            aResizeSize = iJitterBufferMemPoolInfo.iResizeSize;
+            aMaxNumResizes = iJitterBufferMemPoolInfo.iMaxNumResizes;
+            aExpectedNumberOfBlocksPerBuffer = iJitterBufferMemPoolInfo.iExpectedNumberOfBlocksPerBuffer;
+        }
+
         uint32             timeScale;
         uint32             bitrate;
         MediaClockConverter mediaClockConverter;
@@ -180,6 +216,7 @@ class PVMFJitterBufferPortParams
         PVMFSimpleMediaBufferCombinedAlloc* iMediaDataImplAlloc;
         /* Memory pool for simple media data */
         OsclMemPoolFixedChunkAllocator *iMediaMsgAlloc;
+        OsclMemPoolResizableAllocator* iBufferAlloc;
         bool oFireWallPacketRecvd;
         uint32 iFireWallPacketCount;
         uint32 SSRC;
@@ -194,6 +231,10 @@ class PVMFJitterBufferPortParams
         float avg_rtcp_size;
         uint32 iRTCPIntervalInMicroSeconds;
         PvmfRtcpTimer* iRTCPTimer;
+        //There may be OOO packets in the jitter buffer associated with the port.
+        //We wait for some time for the missing packet before forwarding the available packet out of thr Jitter Buffer
+        uint32 iWaitForOOOPacketCallBkId;
+        bool   iWaitForOOOPacketCallBkPending;
 
 };
 
@@ -301,10 +342,6 @@ class PVMFJitterBufferPort : public PvmfPortBaseImpl,
             return 0;
         }
 
-        void createPortAllocators(OSCL_String& aMimeType, uint32 aSizeInBytes);
-        void createPortAllocators(OSCL_String& aMimeType, uint32 aSizeInBytes,
-                                  uint maxNumResizes, uint resizeSize);
-
         OsclSharedPtr<PVMFSharedSocketDataBufferAlloc> getPortDataAlloc()
         {
             return iPortDataAlloc;
@@ -333,7 +370,6 @@ class PVMFJitterBufferPort : public PvmfPortBaseImpl,
         // Parameters of port paired with current port (e.g. iPortCounterpart)
         PVMFJitterBufferPortParams* iCounterpartPortParams;
 
-
         //overrides from PVMFPortInterface
         PVMFStatus QueueOutgoingMsg(PVMFSharedMediaMsgPtr aMsg);
         bool IsOutgoingQueueBusy();
@@ -343,11 +379,6 @@ class PVMFJitterBufferPort : public PvmfPortBaseImpl,
 
         void pvmiSetPortAllocatorSync(PvmiCapabilityAndConfig *aPort,
                                       const char* aFormatValType);
-
-        void createSocketDataAllocReSize(OSCL_String& aMimeType, int32 size,
-                                         bool userParams = false,
-                                         uint maxNumResizes = 0,
-                                         uint resizeSize = 0);
 
         PVMFSocketBufferAllocator* iBufferNoResizeAlloc;
         PVMFSMSharedBufferAllocWithReSize* iBufferAlloc;

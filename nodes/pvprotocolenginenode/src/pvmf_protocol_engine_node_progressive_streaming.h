@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,6 @@ class ProgressiveStreamingContainer : public ProgressiveDownloadContainer
         PVMFStatus doStop();
         PVMFStatus doSeek(PVMFProtocolEngineNodeCommand& aCmd);
         bool completeRepositionRequest();
-        void checkSendResumeNotification();
         bool doInfoUpdate(const uint32 downloadStatus);
         void enableInfoUpdate(const bool aEnabled = true)
         {
@@ -49,6 +48,7 @@ class ProgressiveStreamingContainer : public ProgressiveDownloadContainer
         uint32 getSeekOffset(PVMFProtocolEngineNodeCommand& aCmd);
         PVMFStatus doSeekBody(uint32 aNewOffset);
         void updateDownloadControl(const bool isDownloadComplete = false);
+        bool needToCheckResumeNotificationMaually();
 
     private:
         bool iEnableInfoUpdate;
@@ -82,7 +82,7 @@ class pvProgressiveStreamingOutput : public pvHttpDownloadOutput
         pvProgressiveStreamingOutput(PVMFProtocolEngineNodeOutputObserver *aObserver = NULL);
         virtual ~pvProgressiveStreamingOutput()
         {
-            ;
+            flushDataStream();
         }
 
     private:
@@ -167,6 +167,10 @@ class progressiveStreamingEventReporter : public downloadEventReporter
         {
             OSCL_UNUSED_ARG(downloadStatus);
         }
+        // in case of progressive streaming, add buffer fullness information into buffer status report
+        void reportBufferStatusEvent(const uint32 aDownloadPercent);
+        // called by reportBufferStatusEvent
+        uint32 getBufferFullness();
 };
 
 

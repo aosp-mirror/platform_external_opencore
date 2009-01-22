@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ class OsclTrapStackItem
 {
     public:
         OsclTrapStackItem() {}
-        OsclTrapStackItem(OsclHeapBase *aCBase)
+        OsclTrapStackItem(_OsclHeapBase *aCBase)
         {
             iCBase = aCBase;
             iTAny = (OsclAny*)aCBase;
@@ -75,7 +75,7 @@ class OsclTrapStackItem
             iTrapOperation = aItem.iOperation;
             iNext = NULL;
         }
-        OsclHeapBase *iCBase;
+        _OsclHeapBase *iCBase;
         OsclAny *iTAny;
         OsclTrapOperation iTrapOperation;
         OsclTrapStackItem *iNext;
@@ -114,7 +114,7 @@ class OsclTrapStack
         inline bool UnTrap();
 
         //Cleanup stack APIs
-        void PushL(OsclHeapBase *aCBase);
+        void PushL(_OsclHeapBase *aCBase);
         void PushL(OsclAny *aTAny);
         void PushL(OsclTrapItem anItem);
         void Push(OsclTrapStackItem *aItem);
@@ -156,26 +156,18 @@ class OsclTrapStack
 
         void pushTrapIndex()
         {
-            if (iTrapTopIndex == (OSCL_MAX_TRAP_LEVELS - 1))
-                PV_EXECPANIC(ETrapNoFreeSlotItem);//stack is full.
-            else
-                iTrapTopIndex++;
+            OSCL_ASSERT(iTrapTopIndex < (OSCL_MAX_TRAP_LEVELS - 1));//stack overflow
+            iTrapTopIndex++;
         }
 
         void popTrapIndex()
         {
-            if (iTrapTopIndex < 0)
-                PV_EXECPANIC(ETrapPopUnderflow);
-            else
-                iTrapTopIndex--;
+            OSCL_ASSERT(iTrapTopIndex >= 0);//stack underflow
+            iTrapTopIndex--;
         }
 };
 
 
-
-#ifndef OSCL_ERROR_PANIC_H_INCLUDED
-#include "oscl_error_panic.h"
-#endif
 
 #ifndef OSCL_BASE_ALLOC_H_INCLUDED
 #include "oscl_base_alloc.h"
@@ -183,9 +175,12 @@ class OsclTrapStack
 
 //For non-symbian, the error trap stack must be in a global registry.
 //
-//use TLS registry unless it's not available, then
+//Use TLS registry unless it's not available, then
 //use singleton.
+//Note: singleton-based registry only works for single-threaded
+//scenarios because this implementation assumes a per-thread registry.
 #include "oscl_tls.h"
+#include "oscl_singleton.h"
 #define PVERRORTRAP_REGISTRY_ID OSCL_TLS_ID_PVERRORTRAP
 #define PVERRORTRAP_REGISTRY OsclTLSRegistry
 
@@ -205,8 +200,7 @@ class OsclErrorTrapImp
         OsclJump *iJumpData;
 #endif
 
-        //Global leave/panic info.
-        TPVErrorPanic iPanic;
+        //Global leave info.
         int32 iLeave;
 
     public:
@@ -232,15 +226,12 @@ class OsclErrorTrapImp
         }
         static OsclErrorTrapImp* GetErrorTrap()
         //static function to get currently installed error trap
-        //for this thread.  panics on error.
+        //for this thread.  returns NULL on error.
         {
             int32 error;
             OsclErrorTrapImp* current = GetErrorTrap(error);
             if (error)
-            {
-                OSCL_ASSERT(0);
                 return NULL;
-            }
             return current;
         }
 

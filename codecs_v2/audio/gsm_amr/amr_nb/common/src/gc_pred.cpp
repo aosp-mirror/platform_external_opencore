@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,9 +27,6 @@ Permission to distribute, modify and use this file under the standard license
 terms listed above has been obtained from the copyright holder.
 ****************************************************************************************/
 /*
-------------------------------------------------------------------------------
-
-
 
  Pathname: ./audio/gsm-amr/c/src/gc_pred.c
  Functions:
@@ -37,65 +34,6 @@ terms listed above has been obtained from the copyright holder.
             gc_pred
             gc_pred_update
             gc_pred_average_limited
-
-     Date: 04/18/2000
-
-------------------------------------------------------------------------------
- REVISION HISTORY
-
- Description: Updated template used to PV coding template. First attempt at
-          optimizing C code.
-
- Description: Updated file per comments gathered from Phase 2/3 review.
-
- Description: Added setting of Overflow flag in inlined code.
-
- Description: Fixed bug in gc_pred that causes it to not be bit-exact with
-              the original version. This was done by adding code that sign-
-              extends the means_ener value. Fixed tabs all over the code
-              and deleted all calls to test function in gc_pred.
-
- Description: Synchronized file with UMTS version 3.2.0. Updated coding
-              template. Removed unnecessary include files.
-
- Description: Replace basic_op.h and oper_32b.h with the header files of the
-              math functions used in the file. Fixed typecasting issue with
-              TI compiler.
-
- Description: Fixed more typecasting issue with TI C Compiler (per comments
-              from peer review).
-
- Description: Removed the functions gc_pred_init and gc_pred_exit.
- The gc_pred related structure is no longer dynamically allocated.
-
- Description: Adding pOverflow to the functions to remove global variables.
-              These changes are needed for the EPOC releases.
-
- Description:  For gc_pred() and gc_pred_copy()
-              1. Eliminated gc_pred_copy() (call replaced by memcpy).
-              2. Eliminated unused include files copy.h and typedef.h.
-              3. Replaced array addressing by pointers
-              4. Eliminated math operations that unnecessary checked for
-                 saturation, in some cases this by shifting before adding and
-                 in other cases by evaluating the operands
-              5. Unrolled loops to speed up processing
-
- Description:  Cleaned unused code
-
- Description:  Modified pointer update order in function gc_pred().
- 			   Previous order was accepted by Vcpp by failed when using
- 			   ARM tools. Current order is correct for all platforms
-
- Description:  Replaced OSCL mem type functions and eliminated include
-               files that now are chosen by OSCL definitions
-
- Description:  Replaced "int" and/or "char" with defined types.
-               Added proper casting (Word32) to some left shifting operations
-
- Description: Changed round function name to pv_round to avoid conflict with
-              round function in C standard library.
-
- Description:
 
 ------------------------------------------------------------------------------
  MODULE DESCRIPTION

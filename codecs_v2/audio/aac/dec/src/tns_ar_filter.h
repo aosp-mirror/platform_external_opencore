@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,7 @@
  */
 /*
 
- Pathname: ./include/tns_ar_filter.h
-
-     Date: 05/18/2001
+ Pathname: tns_ar_filter.h
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
@@ -30,6 +28,7 @@
  Description: Removed the parameter "scratch_Int32_buffer" as this space
  in memory is no longer needed by this function.
 
+ Who:                       Date:
  Description:
 ------------------------------------------------------------------------------
  INCLUDE DESCRIPTION

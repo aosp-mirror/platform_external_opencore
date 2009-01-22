@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,24 +53,22 @@ class AvcDecoder_OMX
     public:
         AvcDecoder_OMX()
         {
-            iAvcDecoderCounterInstance++;
-        };
-        ~AvcDecoder_OMX()
-        {
-            iAvcDecoderCounterInstance--;
+            CurrInputTimestamp = 0;
+            pDpbBuffer = NULL;
+            FrameSize = 0;
+            oscl_memset(DisplayTimestampArray, 0, sizeof(OMX_TICKS)*AVC_DEC_TIMESTAMP_ARRAY_SIZE);
         };
 
+        ~AvcDecoder_OMX() { };
+
         AVCCleanupObject_OMX*	pCleanObject;
-        static AVCHandle		AvcHandle;
-        static AVCDecSPSInfo	SeqInfo;
-        static uint32			FrameSize;
-        static uint8*			pDpbBuffer;
-        uint8*			pNalBufferTemp;
-        int32			NalSizeTemp;
-        OMX_BOOL		DecodeSliceFlag;
-        static OMX_TICKS		DisplayTimestampArray[AVC_DEC_TIMESTAMP_ARRAY_SIZE];
-        static OMX_TICKS		CurrInputTimestamp;
-        static OMX_U32			iAvcDecoderCounterInstance;
+        AVCHandle		AvcHandle;
+        AVCDecSPSInfo	SeqInfo;
+        uint32			FrameSize;
+        uint8*			pDpbBuffer;
+        OMX_TICKS		DisplayTimestampArray[AVC_DEC_TIMESTAMP_ARRAY_SIZE];
+        OMX_TICKS		CurrInputTimestamp;
+        OMX_U32			InputBytesConsumed;
 
 
         OMX_ERRORTYPE AvcDecInit_OMX();
@@ -93,6 +91,12 @@ class AvcDecoder_OMX
         static int32 AllocateBuffer_OMX(void* aUserData, int32 i, uint8** aYuvBuffer);
 
         static int32 ActivateSPS_OMX(void* aUserData, uint aSizeInMbs, uint aNumBuffers);
+
+        int32 NSAllocateBuffer_OMX(void* aUserData, int32 i, uint8** aYuvBuffer);
+
+        int32 NSActivateSPS_OMX(void* aUserData, uint aSizeInMbs, uint aNumBuffers);
+
+        void ResetDecoder(); // for repositioning
 };
 
 typedef class AvcDecoder_OMX AvcDecoder_OMX;

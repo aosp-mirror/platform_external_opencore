@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ struct PVAENodeContainer
     Oscl_Vector<PVMFPortInterface*, OsclMemAllocator> iOutputPorts;
     Oscl_Vector<PVInterface*, OsclMemAllocator> iExtensions;
     Oscl_Vector<PVUuid, OsclMemAllocator> iExtensionUuids;
-    PvmiCapabilityAndConfig* iNodeCapConfigIF;
+    PVInterface* iNodeCapConfigIF;
 };
 
 /** A vector of node container structures */
@@ -447,7 +447,7 @@ class PVAuthorEngineNodeUtility : public OsclTimerObject,
         PVMFStatus DoFlush(const PVAENodeUtilCmd& aCmd);
         PVMFStatus DoReset(const PVAENodeUtilCmd& aCmd);
         PVMFStatus CompleteStateTransition(const PVAENodeUtilCmd& aCmd, TPVMFNodeInterfaceState aState);
-
+        PVMFStatus ReleasePort(PVAENodeContainer*&, PVMFPortInterface*&);
         // Observer
         PVAENodeUtilObserver* iObserver;
 

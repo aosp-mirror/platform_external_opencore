@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,6 +70,10 @@
 #include "oscl_mem_inst.h"
 #endif
 
+#ifndef OSCL_HEAPBASE_H_INCLUDED
+#include "oscl_heapbase.h"
+#endif
+
 //Default for OSCL_HAS_GLOBAL_NEW_DELETE in case it is *not* defined
 //in the osclconfig_memory.h
 #ifndef OSCL_HAS_GLOBAL_NEW_DELETE
@@ -94,18 +98,19 @@ class OsclMem
         **      If no lock is provided, the memory manager will not be thread-safe.
         ** @exception: Leaves on error
         */
-        OSCL_IMPORT_REF static void Init(OsclLockBase* lock = NULL);
+        OSCL_IMPORT_REF static void Init();
 
         /** Per-thread cleanup of Oscl Memory
         ** @exception: Leaves on error;
         */
         OSCL_IMPORT_REF static void Cleanup();
 
-        /* API to obtain the Lock - needed for thread-safe operation when other threads are created */
-        OSCL_IMPORT_REF static OsclLockBase *GetLock();
-
 };
 
+/*
+** Choose whether to use per-thread or singleton registry for auditing
+*/
+#include "oscl_base.h"
 
 /*
 ** Audit control block
@@ -124,12 +129,10 @@ class OsclAuditCB
     public:
         const OsclMemStatsNode* pStatsNode;
         OsclMemAudit *pAudit;
-        OsclLockBase *pLock;
 
         OsclAuditCB() :
                 pStatsNode(NULL),
-                pAudit(NULL) ,
-                pLock(NULL)
+                pAudit(NULL)
         {}
 
         OsclAuditCB(const OsclMemStatsNode* myStatsNode,
@@ -630,16 +633,6 @@ inline void operator delete[](void *aPtr)
     if(ptr){delete(ptr);}\
 }
 
-/**
- * Oscl "delete" operator.
- *
- * @param ptr pointer to memory block previously allocated with OSCL_NEW
- *
- * @return void
- */
-#define OSCL_TEMPLATED_DELETE(ptr, T, Tsimple) {\
-    if(ptr){delete(ptr);}\
-}
 
 /** *******************************************************
  * Macros for array new/delete with memory management.
@@ -923,7 +916,7 @@ class OsclMemGlobalAuditObject
         /**
          * creates the global audit object
          */
-        static void createGlobalMemAuditObject(OsclLockBase*);
+        static void createGlobalMemAuditObject();
 
         /**
          * deletes the global audit object
@@ -938,29 +931,33 @@ class OsclMemGlobalAuditObject
 *
 * HeapBase has overloaded new and delete operators.
 *
+* Derived from _OsclHeapBase providing CBase* alike pointer and virtual destructor for cleanupstack
+* to Push and Pop for cleanup when leave occurs.
+*
 * HeapBase has a virtual destructor which calls the destructor of all the derived classes.
 */
 
-class HeapBase
+class HeapBase : public _OsclHeapBase
 {
     public:
 #if (OSCL_HAS_HEAP_BASE_SUPPORT)
 
+#if(!OSCL_BYPASS_MEMMGT)
         static void* operator new(size_t aSize, const char *aFile = NULL, const int aLine = 0)
         {
-#if(!OSCL_BYPASS_MEMMGT)
 #if(PVMEM_INST_LEVEL>0)
             //in case NULL is passed in, record this file & line #
             if (!aFile)
                 return _oscl_default_audit_new(aSize, __FILE__, __LINE__);
 #endif
             return _oscl_default_audit_new(aSize, aFile, aLine);
-#else
-            OSCL_UNUSED_ARG(aFile);
-            OSCL_UNUSED_ARG(aLine);
-            return _oscl_default_new(aSize);
-#endif
         }
+#else
+        static void* operator new(size_t aSize)
+        {
+            return _oscl_default_new(aSize);
+        }
+#endif
 
         static void* operator new[](size_t aSize)
         {

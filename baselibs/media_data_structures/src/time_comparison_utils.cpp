@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@
 #include "media_clock_converter.h"
 
 
-OSCL_EXPORT_REF bool IsEarlier(uint32 aTimeA, uint32 aTimeB, uint32& delta)
+OSCL_EXPORT_REF bool PVTimeComparisonUtils::IsEarlier(uint32 aTimeA, uint32 aTimeB, uint32& delta)
 {
     delta = aTimeB - aTimeA;
     if (delta < WRAP_THRESHOLD)
@@ -29,10 +29,17 @@ OSCL_EXPORT_REF bool IsEarlier(uint32 aTimeA, uint32 aTimeB, uint32& delta)
     return false;
 }
 
-OSCL_EXPORT_REF MediaTimeStatus CheckTimeWindow(PVMFTimestamp aTimeStamp, uint32 aClock,
+OSCL_EXPORT_REF PVTimeComparisonUtils::MediaTimeStatus PVTimeComparisonUtils::CheckTimeWindow(PVMFTimestamp aTimeStamp, uint32 aClock,
         uint32 aEarlyMargin, uint32 aLateMargin, uint32 &aDelta)
 {
-    if (IsEarlier(aClock, aTimeStamp, aDelta))
+    bool flag = IsEarlier(aClock, aTimeStamp, aDelta);
+
+    if (0 == aDelta)
+    {
+        return MEDIA_ONTIME_WITHIN_WINDOW;
+    }
+
+    if (flag)
     {
         if (aDelta < aEarlyMargin)
             return MEDIA_EARLY_WITHIN_WINDOW;

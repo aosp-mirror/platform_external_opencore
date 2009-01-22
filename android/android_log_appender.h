@@ -27,6 +27,10 @@
 #include "osclconfig_util.h"
 #endif
 
+#ifndef OSCL_MEM_H_INCLUDED
+#include "oscl_mem.h"
+#endif
+
 #include <utils/Log.h>
 #undef LOG_TAG
 #define LOG_TAG "PV"

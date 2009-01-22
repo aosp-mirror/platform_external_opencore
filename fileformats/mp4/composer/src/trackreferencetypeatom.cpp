@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*********************************************************************************/
 /*
     This PVA_FF_TrackReferenceTypeAtom Class provides a reference from the containing stream
     to another stream in the MPEG-4 presentation.
@@ -61,7 +60,6 @@ PVA_FF_TrackReferenceTypeAtom::getTrackReferenceAt(int32 index) const
     {
         return (*_trackIDs)[index];
     }
-//  cerr << "ERROR: invalid track reference index" << endl;
     return 0; // ERROR condition
 }
 

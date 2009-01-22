@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -241,7 +241,8 @@ Word16 GSMInitEncode(void **state_data,
     if (Pre_Process_init(&s->pre_state) ||
             cod_amr_init(&s->cod_amr_state, s->dtx))
     {
-        GSMEncodeFrameExit((void**)&s);
+        Speech_Encode_FrameState** temp = &s;
+        GSMEncodeFrameExit((void**)temp);
         return -1;
     }
 

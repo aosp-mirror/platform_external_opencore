@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@
 */
 class OsclSocketServI;
 
-class OsclSocketServ : public OsclHeapBase
+class OsclSocketServ : public HeapBase
 {
     public:
         /**
@@ -121,7 +121,7 @@ class OsclUDPSocketI;
 * The UDP Socket class
 */
 
-class OsclUDPSocket : public OsclHeapBase
+class OsclUDPSocket : public HeapBase
 {
     public:
         /**
@@ -179,6 +179,7 @@ class OsclUDPSocket : public OsclHeapBase
          * @param aAddress: Bind address.
          * @return Returns OsclErrNone for success, or a
          *   platform-specific error code.
+         * May throw an OsclErrNotSupported Exception
         */
         OSCL_IMPORT_REF int32 Join(OsclNetworkAddress& aAddress);
 
@@ -303,6 +304,17 @@ class OsclUDPSocket : public OsclHeapBase
         */
         OSCL_IMPORT_REF void CancelRecvFrom();
 
+        /**
+         * Set the buffer size of the socket
+         * This is a synchronous method.
+         * @param size: buffer size
+         * @return Returns OsclErrNone for success, or a
+         *   platform-specific error code.
+         * May throw an OsclErrNotSupported Exception.
+        */
+
+        OSCL_IMPORT_REF int32 SetRecvBufferSize(uint32 size);
+
     private:
         OsclUDPSocket(Oscl_DefAlloc &alloc): iUDPSocket(NULL), iAlloc(alloc) {}
         OsclUDPSocketI *iUDPSocket;
@@ -315,7 +327,7 @@ class OsclTCPSocketI;
 * The TCP Socket class
 */
 
-class OsclTCPSocket : public OsclHeapBase
+class OsclTCPSocket : public HeapBase
 {
     public:
         /**
@@ -603,4 +615,5 @@ class OsclTCPSocket : public OsclHeapBase
 };
 
 #endif
+
 

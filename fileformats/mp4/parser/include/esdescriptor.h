@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,6 +93,7 @@ class ESDescriptor : public BaseDescriptor
 
         // Retuns a UNICODE string given the null-terminated byte array
         OSCL_wString& getUrlString();
+
 
         const DecoderConfigDescriptor &getDecoderConfigDescriptor()
         {

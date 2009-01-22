@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,12 +76,23 @@ class OsclMemPoolFixedChunkAllocator : public Oscl_DefAlloc
           */
         OSCL_IMPORT_REF OsclMemPoolFixedChunkAllocator(const uint32 numchunk = 1, const uint32 chunksize = 0, Oscl_DefAlloc* gen_alloc = NULL);
 
+        /** This API will disable exceptions in case the memory pool runs out of memory
+          * Instead of doing "OSCL_LEAVE(OsclErrNoResources)" allocate API will return
+          * NULL.
+          *
+          * @return void
+          *
+          */
+        OSCL_IMPORT_REF virtual void enablenullpointerreturn();
+
         /** The destructor for the memory pool
           */
         OSCL_IMPORT_REF virtual ~OsclMemPoolFixedChunkAllocator();
 
-        /** This API throws an exception when n is greater than the fixed chunk size or there are no free chunk available in the pool.
-          * If the memory pool hasn't been created yet, the pool will be created with chunk size equal to n so n must be greater than 0. Exception will be thrown if memory allocation for the memory pool fails.
+        /** This API throws an exception when n is greater than the fixed chunk size or there are no free chunk available in the pool,
+          * if "enablenullpointerreturn" has not been called.
+          * If the memory pool hasn't been created yet, the pool will be created with chunk size equal to n so n must be greater than 0.
+          * Exception will be thrown if memory allocation for the memory pool fails.
           *
           * @return pointer to available chunk from memory pool
           *
@@ -143,6 +154,7 @@ class OsclMemPoolFixedChunkAllocator : public Oscl_DefAlloc
         OsclAny* iNextAvailableContextData;
 
         int32 iRefCount;
+        bool iEnableNullPtrReturn;
 };
 
 
@@ -162,6 +174,12 @@ class OsclMemPoolResizableAllocatorObserver
         virtual ~OsclMemPoolResizableAllocatorObserver() {}
 };
 
+class OsclMemPoolResizableAllocatorMemoryObserver
+{
+    public:
+        virtual void freememoryavailable(OsclAny* aContextData) = 0;
+        virtual ~OsclMemPoolResizableAllocatorMemoryObserver() {}
+};
 
 class OsclMemPoolResizableAllocator : public Oscl_DefAlloc
 {
@@ -180,9 +198,18 @@ class OsclMemPoolResizableAllocator : public Oscl_DefAlloc
           */
         OSCL_IMPORT_REF OsclMemPoolResizableAllocator(uint32 aMemPoolBufferSize, uint32 aMemPoolBufferNumLimit = 0, uint32 aExpectedNumBlocksPerBuffer = 0, Oscl_DefAlloc* gen_alloc = NULL);
 
+        /** This API will disable exceptions in case the memory pool runs out of memory
+          * Instead of doing "OSCL_LEAVE(OsclErrNoResources)" allocate API will return
+          * NULL.
+          *
+          * @return void
+          *
+          */
+        OSCL_IMPORT_REF virtual void enablenullpointerreturn();
+
         /** Allocates a block from the memory pool that is at least in size requested
-          * This API throws an exception if there isn't enough memory for the requested amount in the pool
-          * or if the extra pool buffer cannot be allocated.
+          * This API throws an exception if there isn't enough memory (if "enablenullpointerreturn" has not been called)
+          * for the requested amount in the pool or if the extra pool buffer cannot be allocated.
           *
           * @return Pointer to memory buffer from memory pool
           *
@@ -211,6 +238,25 @@ class OsclMemPoolResizableAllocator : public Oscl_DefAlloc
           */
         OSCL_IMPORT_REF virtual bool trim(OsclAny* aPtr, uint32 aBytesToFree);
 
+        /** Returns the size of the buffer <including the overhead bytes that may be allocated by the allocater>
+          */
+        OSCL_IMPORT_REF uint32 getBufferSize() const;
+
+        /** Returns the number of bytes allocated from the buffer<including the overhead bytes that may be
+          * allocated by the allocater to keep track of the chunks allocated>
+          */
+        OSCL_IMPORT_REF virtual uint32 getAllocatedSize() const;
+
+        /** Returns the number of bytes available with the buffer
+          */
+        OSCL_IMPORT_REF virtual uint32 getAvailableSize() const;
+
+        /** Returns the size of the largest available chunk in the memory.
+          */
+        OSCL_IMPORT_REF virtual uint32 getLargestContiguousFreeBlockSize() const;
+
+        OSCL_IMPORT_REF virtual bool setMaxSzForNewMemPoolBuffer(uint32 aMaxNewMemPoolBufferSz);
+
         /** This API will set the flag to send a callback via specified observer object when the
           * next memory block is deallocated by deallocate() call. If the optional requested size
           * parameter is set, the callback is sent when a free memory space of requested size becomes available.
@@ -230,6 +276,9 @@ class OsclMemPoolResizableAllocator : public Oscl_DefAlloc
           *
           */
         OSCL_IMPORT_REF virtual void CancelFreeChunkAvailableCallback();
+
+        OSCL_IMPORT_REF virtual void notifyfreememoryavailable(OsclMemPoolResizableAllocatorMemoryObserver& aObserver, uint32 aRequestedSize = 0, OsclAny* aContextData = NULL);
+        OSCL_IMPORT_REF void CancelFreeMemoryAvailableCallback();
 
         /** Increments the reference count for this memory pool allocator
           *
@@ -257,6 +306,7 @@ class OsclMemPoolResizableAllocator : public Oscl_DefAlloc
             uint32 iBufferSize;			// Total size of the memory pool buffer including the buffer info header
             uint32 iNumOutstanding;		// Number of outstanding blocks from this memory pool buffer
             MemPoolBlockInfo* iNextFreeBlock; // Pointer to the next free memory block
+            uint32 iAllocatedSz;		//Number of butes allocated from the mempool
             uint32 iBufferPostFence;	// Post-fence to check for memory corruption
         };
 
@@ -287,6 +337,7 @@ class OsclMemPoolResizableAllocator : public Oscl_DefAlloc
         uint32 iMemPoolBufferSize;
         uint32 iMemPoolBufferNumLimit;
         uint32 iExpectedNumBlocksPerBuffer;
+        uint32 iMaxNewMemPoolBufferSz;
         Oscl_DefAlloc* iMemPoolBufferAllocator;
         Oscl_Vector<MemPoolBufferInfo*, OsclMemAllocator> iMemPoolBufferList;
 
@@ -298,7 +349,19 @@ class OsclMemPoolResizableAllocator : public Oscl_DefAlloc
         OsclAny* iNextAvailableContextData;
         OsclMemPoolResizableAllocatorObserver* iObserver;
 
+        bool iCheckFreeMemoryAvailable;
+        uint32  iRequestedAvailableFreeMemSize;
+        OsclAny* iFreeMemContextData;
+        OsclMemPoolResizableAllocatorMemoryObserver* iFreeMemPoolObserver;
+
         int32 iRefCount;
+        bool iEnableNullPtrReturn;
+        //To compute the size of the buffer, excluding the extra memory in the buffer for its management
+        uint32 getMemPoolBufferSize(MemPoolBufferInfo* aBufferInfo) const;
+        //To compute the number of bytes allocated from the buffer
+        uint32 getMemPoolBufferAllocatedSize(MemPoolBufferInfo* aBufferInfo) const;
+        //To compute the addition bytes which were allocated while createing the memory pool for the buffer.
+        uint32 memoryPoolBufferMgmtOverhead() const;
 };
 
 #endif

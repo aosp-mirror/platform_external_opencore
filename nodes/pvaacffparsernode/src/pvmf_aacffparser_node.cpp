@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,17 +35,10 @@
 #include "oscl_int64_utils.h"
 #include "aacfileparser.h"
 #include "pvmf_source_context_data.h"
+
 #define PVAACFF_MEDIADATA_POOLNUM 8
 #define PVAACFF_MEDIADATA_CHUNKSIZE 128
 
-void PVMFAACFFParserNode::Assert(bool x)
-{
-    if (!x)
-    {
-        PVMF_AACPARSERNODE_LOGINFOLOW((0, "PVMFAACFFParserNode Assertion Failed!"));
-        OSCL_ASSERT(0);
-    }
-}
 
 PVMFAACFFParserNode::PVMFAACFFParserNode(int32 aPriority)
         : OsclTimerObject(aPriority, "PVMFAACFFParserNode")
@@ -100,7 +93,6 @@ PVMFAACFFParserNode::PVMFAACFFParserNode(int32 aPriority)
     iAutoPaused                = false;
 
     iStreamID				   = 0;
-
     int32 err;
     OSCL_TRY(err, ConstructL());
 
@@ -142,8 +134,8 @@ void PVMFAACFFParserNode::ConstructL()
     iCapability.iCanSupportMultipleOutputPorts = false;
     iCapability.iHasMaxNumberOfPorts = true;
     iCapability.iMaxNumberOfPorts = 2;//no maximum
-    iCapability.iInputFormatCapability.push_back(PVMF_AACFF);
-    iCapability.iOutputFormatCapability.push_back(PVMF_MPEG4_AUDIO);
+    iCapability.iInputFormatCapability.push_back(PVMFFormatType(PVMF_MIME_AACFF));
+    iCapability.iOutputFormatCapability.push_back(PVMFFormatType(PVMF_MIME_MPEG4_AUDIO));
 
 
 
@@ -214,6 +206,7 @@ PVMFAACFFParserNode::~PVMFAACFFParserNode()
 
     if (iDownloadProgressInterface != NULL)
     {
+        iDownloadProgressInterface->cancelResumeNotification();
         iDownloadProgressInterface->removeRef();
     }
 }
@@ -543,7 +536,7 @@ PVMFStatus PVMFAACFFParserNode::ReleaseNodeMetadataValues(Oscl_Vector<PvmiKvp, O
 {
     PVMF_AACPARSERNODE_LOGSTACKTRACE((0, "PVMFAACParserNode::ReleaseNodeMetadataValues called"));
 
-    if (start < 0 || start > end || aValueList.size() == 0)
+    if (start > end || aValueList.size() == 0)
     {
         PVMF_AACPARSERNODE_LOGERROR((0, "PVMFAACFFParserNode::ReleaseNodeMetadataValues() Invalid start/end index"));
         return PVMFErrArgument;
@@ -644,7 +637,7 @@ PVMFCommandId PVMFAACFFParserNode::QueryDataSourcePosition(PVMFSessionId aSessio
 // From PvmfDataSourcePlaybackControlInterface
 PVMFCommandId PVMFAACFFParserNode::SetDataSourceRate(PVMFSessionId aSessionId
         , int32 aRate
-        , OsclTimebase* aTimebase
+        , PVMFTimebase* aTimebase
         , OsclAny* aContext)
 {
     PVMF_AACPARSERNODE_LOGSTACKTRACE((0, "PVMFAACParserNode::SetDataSourceRate called"));
@@ -782,29 +775,46 @@ PVMFStatus PVMFAACFFParserNode::RetrieveMediaSample(PVAACFFNodeTrackPortInfo* aT
 {
 
     // Create a data buffer from pool
-    int errcode = 0;
+    int errcode = OsclErrNoResources;
     OsclSharedPtr<PVMFMediaDataImpl> mediaDataImplOut;
-    OSCL_TRY(errcode, mediaDataImplOut = aTrackInfoPtr->iResizableSimpleMediaMsgAlloc->allocate(MAXTRACKDATASIZE));
+    mediaDataImplOut = aTrackInfoPtr->iResizableSimpleMediaMsgAlloc->allocate(MAXTRACKDATASIZE);
+
+    if (mediaDataImplOut.GetRep() != NULL)
+    {
+        errcode = OsclErrNone;
+    }
 
     OsclMemPoolResizableAllocatorObserver* resizableAllocObs =
         OSCL_STATIC_CAST(OsclMemPoolResizableAllocatorObserver*, aTrackInfoPtr);
 
     // Enable flag to receive event when next deallocate() is called on pool
-    OSCL_FIRST_CATCH_ANY(errcode,
-                         aTrackInfoPtr->iTrackDataMemoryPool->notifyfreeblockavailable(*resizableAllocObs);
-                         return PVMFErrBusy;);
+    if (errcode != OsclErrNone)
+    {
+        aTrackInfoPtr->iTrackDataMemoryPool->notifyfreeblockavailable(*resizableAllocObs);
+        return PVMFErrBusy;
+    }
 
     // Now create a PVMF media data from pool
-    errcode = 0;
-    OSCL_TRY(errcode,
-             aMediaDataOut = PVMFMediaData::createMediaData(mediaDataImplOut, aTrackInfoPtr->iMediaDataMemPool));
+    errcode = OsclErrNoResources;
+    aMediaDataOut = PVMFMediaData::createMediaData(mediaDataImplOut, aTrackInfoPtr->iMediaDataMemPool);
+
+    if (aMediaDataOut.GetRep() != NULL)
+    {
+        errcode = OsclErrNone;
+    }
+
     OsclMemPoolFixedChunkAllocatorObserver* fixedChunkObs =
         OSCL_STATIC_CAST(OsclMemPoolFixedChunkAllocatorObserver*, aTrackInfoPtr);
 
     // Enable flag to receive event when next deallocate() is called on pool
-    OSCL_FIRST_CATCH_ANY(errcode,
-                         aTrackInfoPtr->iMediaDataMemPool->notifyfreechunkavailable(*fixedChunkObs);
-                         return PVMFErrBusy);
+    if (errcode != OsclErrNone)
+    {
+        aTrackInfoPtr->iMediaDataMemPool->notifyfreechunkavailable(*fixedChunkObs);
+        return PVMFErrBusy;
+    }
+
+
+
     // Retrieve memory fragment to write to
     OsclRefCounterMemFrag refCtrMemFragOut;
     OsclMemoryFragment memFragOut;
@@ -914,30 +924,6 @@ PVMFStatus PVMFAACFFParserNode::RetrieveMediaSample(PVAACFFNodeTrackPortInfo* aT
     return PVMFSuccess;
 }
 
-
-
-bool PVMFAACFFParserNode::SendTrackData(PVAACFFNodeTrackPortInfo& aTrackPortInfo)
-{
-    // Set the track specific config info
-    aTrackPortInfo.iMediaData->setFormatSpecificInfo(aTrackPortInfo.iFormatSpecificConfig);
-
-    // Send frame to downstream node via port
-    PVMFSharedMediaMsgPtr mediaMsgOut;
-    convertToPVMFMediaMsg(mediaMsgOut, aTrackPortInfo.iMediaData);
-    if (iOutPort->QueueOutgoingMsg(mediaMsgOut) != PVMFSuccess)
-    {
-        PVMF_AACPARSERNODE_LOGSTACKTRACE((0, "PVMFAACFFParserNode::SendTrackData: output queue busy!"));
-        // output queue is busy, so wait for the output queue being ready
-        aTrackPortInfo.iState = PVAACFFNodeTrackPortInfo::TRACKSTATE_DESTFULL;
-        return false;
-    }
-
-    // Don't need the ref to iMediaData so unbind it
-    aTrackPortInfo.iMediaData.Unbind();
-
-    return true;
-}
-
 void PVMFAACFFParserNode::PushToAvailableMetadataKeysList(const char* aKeystr, char* aOptionalParam)
 {
     if (aKeystr == NULL)
@@ -1028,15 +1014,22 @@ PVMFStatus PVMFAACFFParserNode::CheckForAACHeaderAvailability()
         CAACFileParser* iAACParserTemp;
         PVMF_AAC_PARSER_NODE_NEW(NULL, CAACFileParser, (), iAACParserTemp);
 
-        uint32 headerSize32 = iAACParserTemp->getAACHeaderLen(iSourceURL, false, &iFileServer , iDataStreamFactory, iFileHandle);
-
-        if (currCapacity < headerSize32)
+        uint32 headerSize32 = 0;
+        if (OK == iAACParserTemp->getAACHeaderLen(iSourceURL, false, &iFileServer ,
+                iDataStreamFactory, iFileHandle, &headerSize32))
         {
-            iRequestReadCapacityNotificationID =
-                iDataStreamInterface->RequestReadCapacityNotification(iDataStreamSessionID,
-                        *this,
-                        headerSize32);
-            return PVMFPending;
+            if (currCapacity < headerSize32)
+            {
+                iRequestReadCapacityNotificationID =
+                    iDataStreamInterface->RequestReadCapacityNotification(iDataStreamSessionID,
+                            *this,
+                            headerSize32);
+                return PVMFPending;
+            }
+        }
+        else
+        {
+            return PVMFFailure;
         }
 
         PVMF_AAC_PARSER_NODE_DELETE(NULL, CAACFileParser, iAACParserTemp);
@@ -1121,12 +1114,14 @@ PVMFStatus PVMFAACFFParserNode::ParseAACFile()
 
     if (iID3DataValid)
     {
-        for (uint s = 0; s < iID3Data.size(); s++)
-        {
-            OSCL_HeapString<OsclMemAllocator> keystr((const char *)((*iID3Data[s]).key), oscl_strlen((const char *)((*iID3Data[s]).key)));
-            leavecode = 0;
-            OSCL_TRY(leavecode, iAvailableMetadataKeys.push_back(keystr));
+        leavecode = 0;
+        OSCL_TRY(leavecode,
+                 for (uint s = 0; s < iID3Data.size(); s++)
+    {
+        OSCL_HeapString<OsclMemAllocator> keystr((const char *)((*iID3Data[s]).key), oscl_strlen((const char *)((*iID3Data[s]).key)));
+            iAvailableMetadataKeys.push_back(keystr);
         }
+                );
     }
 
     //set clip duration on download progress interface
@@ -1179,6 +1174,7 @@ void PVMFAACFFParserNode::DoStart(PVMFAACFFParserNodeCommand& aCmd)
 
 void PVMFAACFFParserNode::DoStop(PVMFAACFFParserNodeCommand& aCmd)
 {
+    iStreamID = 0;
     switch (iInterfaceState)
     {
         case EPVMFNodeStarted:
@@ -1237,6 +1233,12 @@ void PVMFAACFFParserNode::DoReset(PVMFAACFFParserNodeCommand& aCmd)
     PVMF_AACPARSERNODE_LOGSTACKTRACE((0, "PVMFAACParserNode::DoReset() Called"));
 
     MoveCmdToCurrentQueue(aCmd);
+
+    if (iDownloadProgressInterface != NULL)
+    {
+        iDownloadProgressInterface->cancelResumeNotification();
+    }
+
     if (iFileHandle != NULL)
     {
         /* Indicates that the init was successfull */
@@ -1268,10 +1270,7 @@ void PVMFAACFFParserNode::CompleteReset()
     ReleaseTrack();
     CleanupFileSource();
     SetState(EPVMFNodeIdle);
-    PVMFStatus status = ThreadLogoff();
-    CommandComplete(iCurrentCommand, iCurrentCommand.front(), status);
-
-    return;
+    CommandComplete(iCurrentCommand, iCurrentCommand.front(), PVMFSuccess);
 }
 
 void PVMFAACFFParserNode::DoRequestPort(PVMFAACFFParserNodeCommand& aCmd, PVMFPortInterface*& aPort)
@@ -1312,7 +1311,7 @@ void PVMFAACFFParserNode::DoRequestPort(PVMFAACFFParserNodeCommand& aCmd, PVMFPo
     //validate the requested format
     if (mimetype)
     {
-        PVMFFormatType fmt = GetFormatIndex(mimetype->get_str(), PVMF_COMPRESSED_AUDIO_FORMAT);
+        PVMFFormatType fmt = mimetype->get_str();
         if (!iOutPort->IsFormatSupported(fmt))
         {
             PVMF_AACPARSERNODE_LOGERROR((0, "PVMFAACFFParserNode::DoRequestPort: Error - Invalid Format!"));
@@ -1388,11 +1387,13 @@ void PVMFAACFFParserNode::DoRequestPort(PVMFAACFFParserNodeCommand& aCmd, PVMFPo
             return;
         }
 
+        trackdatamempool->enablenullpointerreturn();
+        mediadatamempool->enablenullpointerreturn();
+
         // Construct iTrack
         iTrack.iTrackId = 0;  // Only support 1 channel so far
         iTrack.iPort = iOutPort;
         iTrack.iClockConverter = clockconv;
-        iTrack.iState = PVAACFFNodeTrackPortInfo::TRACKSTATE_UNINITIALIZED;
         iTrack.iTrackDataMemoryPool = trackdatamempool;
         iTrack.iTrackDataMemoryPoolProxy = trackdatamempoolproxy;
         iTrack.iMediaDataImplAlloc = mediadataimplalloc;
@@ -1425,17 +1426,13 @@ void PVMFAACFFParserNode::DoRequestPort(PVMFAACFFParserNodeCommand& aCmd, PVMFPo
 
 void PVMFAACFFParserNode::ResetAllTracks()
 {
-    iTrack.iState = PVAACFFNodeTrackPortInfo::TRACKSTATE_UNINITIALIZED;
     iTrack.iMediaData.Unbind();
     iTrack.iSeqNum = 0;
     iFirstFrame = false;
-    //------------- CORE408/409 FIX BEGIN ------------------------
     iTrack.oEOSReached = false;
     iTrack.oEOSSent = false;
     iTrack.oProcessOutgoingMessages = true;
     iTrack.oQueueOutgoingMessages = true;
-    //------------- CORE408/409 END ------------------------
-
 }
 
 
@@ -1473,9 +1470,10 @@ bool PVMFAACFFParserNode::ReleaseTrack()
         iTrack.iMediaDataImplAlloc = NULL;
     }
 
-    if (iTrack.iMediaDataMemPool)
+    if (iTrack.iMediaDataMemPool != NULL)
     {
-        PVMF_AAC_PARSER_NODE_DELETE(NULL, PVMFMemPoolFixedChunkAllocator, iTrack.iMediaDataMemPool);
+        iTrack.iMediaDataMemPool->CancelFreeChunkAvailableCallback();
+        iTrack.iMediaDataMemPool->removeRef();
         iTrack.iMediaDataMemPool = NULL;
     }
     if (iTrack.iResizableSimpleMediaMsgAlloc)
@@ -1576,42 +1574,130 @@ void PVMFAACFFParserNode::ReportAACFFParserInfoEvent(PVMFEventType aEventType, O
 
 void PVMFAACFFParserNode::HandlePortActivity(const PVMFPortActivity &aActivity)
 {
+
+    PVMF_AACPARSERNODE_LOGSTACKTRACE((0, "PVMFAACFFParserNode::PortActivity: port=0x%x, type=%d",
+                                      aActivity.iPort, aActivity.iType));
+
+    /*
+     * A port is reporting some activity or state change.  This code
+     * figures out whether we need to queue a processing event
+     * for the AO, and/or report a node event to the observer.
+     */
     switch (aActivity.iType)
     {
-        case PVMF_PORT_ACTIVITY_OUTGOING_MSG:
-            PVMF_AACPARSERNODE_LOGSTACKTRACE((0, "PVMFAACFFParserNode::PortActivity: Outgoing Msg"));
-            //An outgoing message was queued on this port.
-            RunIfNotReady();
+        case PVMF_PORT_ACTIVITY_CREATED:
+            /*
+             * Report port created info event to the node.
+             */
+            ReportInfoEvent(PVMFInfoPortCreated, (OsclAny*)aActivity.iPort);
             break;
 
-        case PVMF_PORT_ACTIVITY_INCOMING_MSG:
-            //not used in this node.
-            break;
+        case PVMF_PORT_ACTIVITY_DELETED:
+        {
+            /*
+             * Report port deleted info event to the node.
+             */
+            ReportInfoEvent(PVMFInfoPortDeleted, (OsclAny*)aActivity.iPort);
+        }
+        break;
 
         case PVMF_PORT_ACTIVITY_CONNECT:
-            //nothing needed.
             break;
 
         case PVMF_PORT_ACTIVITY_DISCONNECT:
-            //nothing needed.
             break;
 
-        case PVMF_PORT_ACTIVITY_CONNECTED_PORT_READY:
-            //This message is send by destination port to notify that the earlier Send
-            //call that failed due to its busy status can be resumed now.
+        case PVMF_PORT_ACTIVITY_OUTGOING_MSG:
+        {
+            /*
+             * An outgoing message was queued on this port.
+             * Wakeup the node to process the same.
+             */
             RunIfNotReady();
-            break;
+        }
+        break;
+
+        case PVMF_PORT_ACTIVITY_INCOMING_MSG:
+        {
+            /*
+             * There are no input ports to this node
+             */
+            OSCL_ASSERT(false);
+        }
+        break;
+
+        case PVMF_PORT_ACTIVITY_OUTGOING_QUEUE_BUSY:
+        {
+            /*
+             * This implies that this output port cannot accept any more
+             * msgs on its outgoing queue. This implies that we should stop
+             * retrieving samples from file to queue.
+             */
+            PVAACFFNodeTrackPortInfo* trackInfoPtr = NULL;
+            if (!GetTrackInfo(aActivity.iPort, trackInfoPtr))
+            {
+                ReportErrorEvent(PVMFErrPortProcessing, (OsclAny*)(aActivity.iPort));
+                PVMF_AACPARSERNODE_LOGERROR((0, "0x%x PVMFAACFFParserNode::HandlePortActivity: Error - GetTrackInfo failed", this));
+                return;
+            }
+            trackInfoPtr->oQueueOutgoingMessages = false;
+        }
+        break;
 
         case PVMF_PORT_ACTIVITY_OUTGOING_QUEUE_READY:
-            //this message is sent by the OutgoingQueue when it recovers from
-            //the queue full status
-            if (iTrack.iState == PVAACFFNodeTrackPortInfo::TRACKSTATE_DESTFULL)
+        {
+            /*
+             * Outgoing queue was previously busy, but is now ready.
+             * We are ready to send new samples from file.
+             */
+            PVAACFFNodeTrackPortInfo* trackInfoPtr = NULL;
+            if (!GetTrackInfo(aActivity.iPort, trackInfoPtr))
             {
-                // Change track state to try sending the data again
-                iTrack.iState = PVAACFFNodeTrackPortInfo::TRACKSTATE_TRANSMITTING_SENDDATA;
+                ReportErrorEvent(PVMFErrPortProcessing, (OsclAny*)(aActivity.iPort));
+                PVMF_AACPARSERNODE_LOGERROR((0, "0x%x PVMFAACFFParserNode::HandlePortActivity: Error - GetTrackInfo failed", this));
+                return;
             }
+            trackInfoPtr->oQueueOutgoingMessages = true;
             RunIfNotReady();
-            break;
+        }
+        break;
+
+        case PVMF_PORT_ACTIVITY_CONNECTED_PORT_BUSY:
+        {
+            /*
+             * The connected port has become busy (its incoming queue is
+             * busy). There is nothing to do but to wait for connected port
+             * ready.
+             */
+            PVAACFFNodeTrackPortInfo* trackInfoPtr = NULL;
+            if (!GetTrackInfo(aActivity.iPort, trackInfoPtr))
+            {
+                ReportErrorEvent(PVMFErrPortProcessing, (OsclAny*)(aActivity.iPort));
+                PVMF_AACPARSERNODE_LOGERROR((0, "0x%x PVMFAACFFParserNode::HandlePortActivity: Error - GetTrackInfo failed", this));
+                return;
+            }
+            trackInfoPtr->oProcessOutgoingMessages = false;
+        }
+        break;
+
+        case PVMF_PORT_ACTIVITY_CONNECTED_PORT_READY:
+        {
+            /*
+             * The connected port has transitioned from Busy to Ready.
+             * It's time to start sending messages again.
+             */
+            PVAACFFNodeTrackPortInfo* trackInfoPtr = NULL;
+            if (!GetTrackInfo(aActivity.iPort, trackInfoPtr))
+            {
+                ReportErrorEvent(PVMFErrPortProcessing, (OsclAny*)(aActivity.iPort));
+                PVMF_AACPARSERNODE_LOGERROR((0, "0x%x PVMFAACFFParserNode::HandlePortActivity: Error - GetTrackInfo failed", this));
+                return;
+            }
+            trackInfoPtr->oProcessOutgoingMessages = true;
+            RunIfNotReady();
+        }
+        break;
+
 
         default:
             break;
@@ -1668,7 +1754,7 @@ void PVMFAACFFParserNode::ProcessCommand()
     }
 
     //The newest or highest pri command is in the front of the queue.
-    Assert(!iInputCommands.empty());
+    OSCL_ASSERT(!iInputCommands.empty());
     PVMFAACFFParserNodeCommand& aCmd = iInputCommands.front();
 
     PVMFStatus cmdstatus;
@@ -1956,8 +2042,10 @@ void PVMFAACFFParserNode::DoReleasePort(PVMFAACFFParserNodeCommand& aCmd)
     //This node supports release port from any state
 
     //Find the port in the port vector
-    PVMFAACFFParserOutPort* port;
-    aCmd.PVMFAACFFParserNodeCommandBase::Parse((PVMFPortInterface*&)port);
+    PVMFPortInterface* p = NULL;
+    aCmd.PVMFAACFFParserNodeCommandBase::Parse(p);
+
+    PVMFAACFFParserOutPort* port = (PVMFAACFFParserOutPort*)p;
 
     if (iOutPort == port)
     {
@@ -2098,7 +2186,7 @@ PVMFStatus PVMFAACFFParserNode::SetSourceInitializationData(OSCL_wString& aSourc
 {
     PVMF_AACPARSERNODE_LOGSTACKTRACE((0, "PVMFAACParserNode::SetSourceInitializationData called"));
 
-    if (aSourceFormat == PVMF_AACFF)
+    if (aSourceFormat == PVMF_MIME_AACFF)
     {
         /* Clean up any previous sources */
         CleanupFileSource();
@@ -2188,12 +2276,12 @@ PVMFStatus PVMFAACFFParserNode::SetSourceInitializationData(OSCL_wString& aSourc
     return PVMFFailure;
 }
 
-PVMFStatus PVMFAACFFParserNode::SetClientPlayBackClock(OsclClock* aClientClock)
+PVMFStatus PVMFAACFFParserNode::SetClientPlayBackClock(PVMFMediaClock* aClientClock)
 {
     OSCL_UNUSED_ARG(aClientClock);
     return PVMFSuccess;
 }
-PVMFStatus PVMFAACFFParserNode::SetEstimatedServerClock(OsclClock* aClientClock)
+PVMFStatus PVMFAACFFParserNode::SetEstimatedServerClock(PVMFMediaClock* aClientClock)
 {
     OSCL_UNUSED_ARG(aClientClock);
     return PVMFSuccess;
@@ -2237,6 +2325,7 @@ PVMFStatus PVMFAACFFParserNode::GetMediaPresentationInfo(PVMFMediaPresentationIn
         case EAACRaw:
             mime_type = PVMF_MIME_ADIF;
             break;
+
         case EAACADTS:
             mime_type = PVMF_MIME_MPEG4_AUDIO;
             break;
@@ -2246,6 +2335,16 @@ PVMFStatus PVMFAACFFParserNode::GetMediaPresentationInfo(PVMFMediaPresentationIn
     }
 
     tmpTrackInfo.setTrackMimeType(mime_type);
+
+    OsclRefCounterMemFrag config;
+    PVAACFFNodeTrackPortInfo trackPortInfo;
+    if (!RetrieveTrackConfigInfo(trackPortInfo))
+    {
+        return PVMFFailure;
+    }
+    config = trackPortInfo.iFormatSpecificConfig;
+
+    tmpTrackInfo.setTrackConfigInfo(config);
 
     // add the track
     aInfo.addTrackInfo(tmpTrackInfo);
@@ -2271,6 +2370,7 @@ PVMFStatus PVMFAACFFParserNode::DoGetMetadataKeys(PVMFAACFFParserNodeCommand& aC
     }
     return (CompleteGetMetadataKeys(aCmd));
 }
+
 PVMFStatus
 PVMFAACFFParserNode::CompleteGetMetadataKeys(PVMFAACFFParserNodeCommand& aCmd)
 {
@@ -2296,7 +2396,7 @@ PVMFAACFFParserNode::CompleteGetMetadataKeys(PVMFAACFFParserNodeCommand& aCmd)
         return PVMFErrArgument;
     }
 
-    if ((starting_index < 0) || (starting_index > (iAvailableMetadataKeys.size() - 1)) || max_entries == 0)
+    if ((starting_index > (iAvailableMetadataKeys.size() - 1)) || max_entries == 0)
     {
         // Invalid starting index and/or max entries
         return PVMFErrArgument;
@@ -2305,7 +2405,6 @@ PVMFAACFFParserNode::CompleteGetMetadataKeys(PVMFAACFFParserNodeCommand& aCmd)
     // Copy the requested keys
     uint32 num_entries = 0;
     int32 num_added = 0;
-    int32 leavecode = 0;
     uint32 lcv = 0;
     for (lcv = 0; lcv < iAvailableMetadataKeys.size(); lcv++)
     {
@@ -2316,11 +2415,11 @@ PVMFAACFFParserNode::CompleteGetMetadataKeys(PVMFAACFFParserNodeCommand& aCmd)
             if (num_entries > starting_index)
             {
                 // Past the starting index so copy the key
-                leavecode = 0;
-                OSCL_TRY(leavecode, keylistptr->push_back(iAvailableMetadataKeys[lcv]));
-                OSCL_FIRST_CATCH_ANY(leavecode,
-                                     PVMF_AACPARSERNODE_LOGERROR((0, "PVMFAACFFParserNode::DoGetMetadataKeys() Memory allocation failure when copying metadata key"));
-                                     return PVMFErrNoMemory);
+                PVMFStatus status = PushValueToList(iAvailableMetadataKeys, keylistptr, lcv);
+                if (PVMFErrNoMemory == status)
+                {
+                    return status;
+                }
                 num_added++;
             }
         }
@@ -2334,11 +2433,11 @@ PVMFAACFFParserNode::CompleteGetMetadataKeys(PVMFAACFFParserNodeCommand& aCmd)
                 if (num_entries > starting_index)
                 {
                     // Past the starting index so copy the key
-                    leavecode = 0;
-                    OSCL_TRY(leavecode, keylistptr->push_back(iAvailableMetadataKeys[lcv]));
-                    OSCL_FIRST_CATCH_ANY(leavecode,
-                                         PVMF_AACPARSERNODE_LOGERROR((0, "PVMFAACFFParserNode::DoGetMetadataKeys() Memory allocation failure when copying metadata key"));
-                                         return PVMFErrNoMemory);
+                    PVMFStatus status = PushValueToList(iAvailableMetadataKeys, keylistptr, lcv);
+                    if (PVMFErrNoMemory == status)
+                    {
+                        return status;
+                    }
                     num_added++;
                 }
             }
@@ -2359,11 +2458,11 @@ PVMFAACFFParserNode::CompleteGetMetadataKeys(PVMFAACFFParserNodeCommand& aCmd)
             if (num_entries > (uint32)starting_index)
             {
                 /* Past the starting index so copy the key */
-                leavecode = 0;
-                OSCL_TRY(leavecode, keylistptr->push_back(iCPMMetadataKeys[lcv]));
-                OSCL_FIRST_CATCH_ANY(leavecode,
-                                     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFAACFFParserNode::CompleteGetMetadataKeys() Memory allocation failure when copying metadata key"));
-                                     return PVMFErrNoMemory);
+                PVMFStatus status = PushValueToList(iCPMMetadataKeys, keylistptr, lcv);
+                if (PVMFErrNoMemory == status)
+                {
+                    return status;
+                }
                 num_added++;
             }
         }
@@ -2377,11 +2476,11 @@ PVMFAACFFParserNode::CompleteGetMetadataKeys(PVMFAACFFParserNodeCommand& aCmd)
                 if (num_entries > (uint32)starting_index)
                 {
                     /* Past the starting index so copy the key */
-                    leavecode = 0;
-                    OSCL_TRY(leavecode, keylistptr->push_back(iCPMMetadataKeys[lcv]));
-                    OSCL_FIRST_CATCH_ANY(leavecode,
-                                         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFAACFFParserNode::CompleteGetMetadataKeys() Memory allocation failure when copying metadata key"));
-                                         return PVMFErrNoMemory);
+                    PVMFStatus status = PushValueToList(iCPMMetadataKeys, keylistptr, lcv);
+                    if (PVMFErrNoMemory == status)
+                    {
+                        return status;
+                    }
                     num_added++;
                 }
             }
@@ -2429,6 +2528,7 @@ void PVMFAACFFParserNode::ReleaseMetadataValue(PvmiKvp& aValueKVP)
 
 PVMFStatus PVMFAACFFParserNode::DoGetMetadataValues(PVMFAACFFParserNodeCommand& aCmd)
 {
+    int32 leavecode = 0;
     PVMF_AACPARSERNODE_LOGSTACKTRACE((0, "PVMFAACParserNode::DoGetMetaDataValues Called"));
 
     // File must be parsed
@@ -2452,7 +2552,7 @@ PVMFStatus PVMFAACFFParserNode::DoGetMetadataValues(PVMFAACFFParserNodeCommand& 
 
     uint32 numkeys = keylistptr->size();
 
-    if (starting_index < 0 || starting_index > (numkeys - 1) || numkeys <= 0 || max_entries == 0)
+    if (starting_index > (numkeys - 1) || numkeys <= 0 || max_entries == 0)
     {
         // Don't do anything
         return PVMFErrArgument;
@@ -2478,11 +2578,7 @@ PVMFStatus PVMFAACFFParserNode::DoGetMetadataValues(PVMFAACFFParserNodeCommand& 
 
             ++numvalentries;
 
-            int32 leavecode = 0;
-            OSCL_TRY(leavecode,
-                     KeyVal.key = OSCL_ARRAY_NEW(char, oscl_strlen(key) + 1);
-                    );
-
+            leavecode = CreateNewArray(KeyVal.key, key);
             oscl_strncpy(KeyVal.key , key, oscl_strlen(key) + 1);
             KeyVal.length = len;
             KeyVal.capacity = (*(iFrame.back())).capacity;
@@ -2493,21 +2589,12 @@ PVMFStatus PVMFAACFFParserNode::DoGetMetadataValues(PVMFAACFFParserNodeCommand& 
             {
 
                 case PVMI_KVPVALTYPE_WCHARPTR:
-                    leavecode = 0;
-
-                    OSCL_TRY(leavecode,
-                             KeyVal.value.pWChar_value = OSCL_ARRAY_NEW(oscl_wchar, len);
-                            );
-
+                    leavecode = CreateNewArray(KeyVal.value.pWChar_value, len);
                     oscl_strncpy(KeyVal.value.pWChar_value , (*(iFrame.back())).value.pWChar_value, len);
                     break;
 
                 case PVMI_KVPVALTYPE_CHARPTR:
-                    leavecode = 0;
-
-                    OSCL_TRY(leavecode,
-                             KeyVal.value.pChar_value = OSCL_ARRAY_NEW(char, len);
-                            );
+                    leavecode = CreateNewArray(KeyVal.value.pChar_value, len);
 
                     oscl_strncpy(KeyVal.value.pChar_value , (*(iFrame.back())).value.pChar_value, len);
                     break;
@@ -2520,8 +2607,7 @@ PVMFStatus PVMFAACFFParserNode::DoGetMetadataValues(PVMFAACFFParserNodeCommand& 
                     break;
             }
 
-            leavecode = 0;
-            OSCL_TRY(leavecode, (*valuelistptr).push_back(KeyVal));
+            leavecode = PushBackKeyVal(valuelistptr, KeyVal);
             OSCL_FIRST_CATCH_ANY(leavecode, ReleaseMetadataValue(KeyVal);
                                  break;);
 
@@ -2537,7 +2623,6 @@ PVMFStatus PVMFAACFFParserNode::DoGetMetadataValues(PVMFAACFFParserNodeCommand& 
         int32 leavecode = 0;
         PvmiKvp KeyVal;
         KeyVal.key = NULL;
-        uint32 KeyLen = 0;
 
         if (!oscl_strcmp((*keylistptr)[lcv].get_cstr(), PVAACMETADATA_DURATION_KEY) &&
                 iAACFileInfo.iDuration > 0)
@@ -2549,40 +2634,20 @@ PVMFStatus PVMFAACFFParserNode::DoGetMetadataValues(PVMFAACFFParserNodeCommand& 
             // Create a value entry if past the starting index
             if (numvalentries > starting_index)
             {
-                KeyLen = oscl_strlen(PVAACMETADATA_DURATION_KEY) + 1; // for "duration;"
-                KeyLen += oscl_strlen(PVMI_KVPVALTYPE_STRING_CONSTCHAR); // for "valtype="
-                KeyLen += oscl_strlen(PVMI_KVPVALTYPE_UINT32_STRING_CONSTCHAR) + 1; // for "uint32;"
-                KeyLen += oscl_strlen(PVAACMETADATA_TIMESCALE1000) + 1; // for "timescale=1000" and NULL terminator
+                uint32 duration = (uint32)iAACFileInfo.iDuration;
+                PVMFStatus retval =
+                    PVMFCreateKVPUtils::CreateKVPForUInt32Value(KeyVal,
+                            PVAACMETADATA_DURATION_KEY,
+                            duration,
+                            (char *)PVAACMETADATA_TIMESCALE1000);
 
-                // Allocate memory for the string
-                leavecode = 0;
-                OSCL_TRY(leavecode,
-                         KeyVal.key = OSCL_ARRAY_NEW(char, KeyLen);
-                        );
-
-                if (leavecode == 0)
+                if (retval != PVMFSuccess && retval != PVMFErrArgument)
                 {
-                    // Copy the key string
-                    oscl_strncpy(KeyVal.key, PVAACMETADATA_DURATION_KEY, oscl_strlen(PVAACMETADATA_DURATION_KEY) + 1);
-                    oscl_strncat(KeyVal.key, PVAACMETADATA_SEMICOLON, oscl_strlen(PVAACMETADATA_SEMICOLON));
-                    oscl_strncat(KeyVal.key, PVMI_KVPVALTYPE_STRING_CONSTCHAR, oscl_strlen(PVMI_KVPVALTYPE_STRING_CONSTCHAR));
-                    oscl_strncat(KeyVal.key, PVMI_KVPVALTYPE_UINT32_STRING_CONSTCHAR, oscl_strlen(PVMI_KVPVALTYPE_UINT32_STRING_CONSTCHAR));
-                    oscl_strncat(KeyVal.key, PVAACMETADATA_SEMICOLON, oscl_strlen(PVAACMETADATA_SEMICOLON));
-                    oscl_strncat(KeyVal.key, PVAACMETADATA_TIMESCALE1000, oscl_strlen(PVAACMETADATA_TIMESCALE1000));
-                    KeyVal.key[KeyLen-1] = 0;
-                    // Copy the value
-                    KeyVal.value.uint32_value = iAACFileInfo.iDuration;
-                    // Set the length and capacity
-                    KeyVal.length = 1;
-                    KeyVal.capacity = 1;
-                }
-                else
-                {
-                    // Memory allocation failed
-                    KeyVal.key = NULL;
                     break;
                 }
+
             }
+
         }
         else if (!oscl_strcmp((*keylistptr)[lcv].get_cstr(),  PVAACMETADATA_RANDOM_ACCESS_DENIED_KEY))
         {
@@ -2596,8 +2661,6 @@ PVMFStatus PVMFAACFFParserNode::DoGetMetadataValues(PVMFAACFFParserNodeCommand& 
             if (numvalentries > (uint32)starting_index)
             {
                 bool random_access_denied = false;
-                //Ideally any ASF header that has broadcast flag set to true MUST also have seekable flag set to false.
-                //If either seekable flag is false or broadcast flag is true, then random access denied must be set to true.
                 if (iAACFileInfo.iFormat == EAACADIF || iAACFileInfo.iFormat == EAACRaw)
                 {
                     random_access_denied = true;
@@ -2622,34 +2685,13 @@ PVMFStatus PVMFAACFFParserNode::DoGetMetadataValues(PVMFAACFFParserNodeCommand& 
             // Create a value entry if past the starting index
             if (numvalentries > starting_index)
             {
-                KeyLen = oscl_strlen(PVAACMETADATA_NUMTRACKS_KEY) + 1; // for "num-tracks;"
-                KeyLen += oscl_strlen(PVMI_KVPVALTYPE_STRING_CONSTCHAR); // for "valtype="
-                KeyLen += oscl_strlen(PVMI_KVPVALTYPE_UINT32_STRING_CONSTCHAR) + 1; // for "uint32" and NULL terminator
-
-                // Allocate memory for the string
-                leavecode = 0;
-                OSCL_TRY(leavecode,
-                         KeyVal.key = OSCL_ARRAY_NEW(char, KeyLen);
-                        );
-
-                if (leavecode == 0)
+                uint32 numtracksuint32 = 1;
+                PVMFStatus retval = PVMFCreateKVPUtils::CreateKVPForUInt32Value(KeyVal,
+                                    PVAACMETADATA_NUMTRACKS_KEY,
+                                    numtracksuint32,
+                                    NULL);
+                if (retval != PVMFSuccess && retval != PVMFErrArgument)
                 {
-                    // Copy the key string
-                    oscl_strncpy(KeyVal.key, PVAACMETADATA_NUMTRACKS_KEY, oscl_strlen(PVAACMETADATA_NUMTRACKS_KEY) + 1);
-                    oscl_strncat(KeyVal.key, PVAACMETADATA_SEMICOLON, oscl_strlen(PVAACMETADATA_SEMICOLON));
-                    oscl_strncat(KeyVal.key, PVMI_KVPVALTYPE_STRING_CONSTCHAR, oscl_strlen(PVMI_KVPVALTYPE_STRING_CONSTCHAR));
-                    oscl_strncat(KeyVal.key, PVMI_KVPVALTYPE_UINT32_STRING_CONSTCHAR, oscl_strlen(PVMI_KVPVALTYPE_UINT32_STRING_CONSTCHAR));
-                    KeyVal.key[KeyLen-1] = 0;
-                    // Copy the value
-                    KeyVal.value.uint32_value = 1; // Number of tracks supported in PV AAC parser would always be 1
-                    // Set the length and capacity
-                    KeyVal.length = 1;
-                    KeyVal.capacity = 1;
-                }
-                else
-                {
-                    // Memory allocation failed
-                    KeyVal.key = NULL;
                     break;
                 }
             }
@@ -2664,39 +2706,16 @@ PVMFStatus PVMFAACFFParserNode::DoGetMetadataValues(PVMFAACFFParserNodeCommand& 
             // Create a value entry if past the starting index
             if (numvalentries > starting_index)
             {
-                KeyLen = oscl_strlen(PVAACMETADATA_TRACKINFO_BITRATE_KEY) + 1; // for "track-info/bitrate;"
-                KeyLen += oscl_strlen(PVAACMETADATA_INDEX0) + 1; // for "index=0;"
-                KeyLen += oscl_strlen(PVMI_KVPVALTYPE_STRING_CONSTCHAR); // for "valtype="
-                KeyLen += oscl_strlen(PVMI_KVPVALTYPE_UINT32_STRING_CONSTCHAR) + 1; // for "uint32" and NULL terminator
-
-                // Allocate memory for the string
-                leavecode = 0;
-                OSCL_TRY(leavecode,
-                         KeyVal.key = OSCL_ARRAY_NEW(char, KeyLen);
-                        );
-
-                if (leavecode == 0)
+                uint32 bitRate = (uint32)iAACFileInfo.iBitrate;
+                PVMFStatus retval = PVMFCreateKVPUtils::CreateKVPForUInt32Value(KeyVal,
+                                    PVAACMETADATA_TRACKINFO_BITRATE_KEY,
+                                    bitRate,
+                                    NULL);
+                if (retval != PVMFSuccess && retval != PVMFErrArgument)
                 {
-                    // Copy the key string
-                    oscl_strncpy(KeyVal.key, PVAACMETADATA_TRACKINFO_BITRATE_KEY, oscl_strlen(PVAACMETADATA_TRACKINFO_BITRATE_KEY) + 1);
-                    oscl_strncat(KeyVal.key, PVAACMETADATA_SEMICOLON, oscl_strlen(PVAACMETADATA_SEMICOLON));
-                    oscl_strncat(KeyVal.key, PVAACMETADATA_INDEX0, oscl_strlen(PVAACMETADATA_INDEX0));
-                    oscl_strncat(KeyVal.key, PVAACMETADATA_SEMICOLON, oscl_strlen(PVAACMETADATA_SEMICOLON));
-                    oscl_strncat(KeyVal.key, PVMI_KVPVALTYPE_STRING_CONSTCHAR, oscl_strlen(PVMI_KVPVALTYPE_STRING_CONSTCHAR));
-                    oscl_strncat(KeyVal.key, PVMI_KVPVALTYPE_UINT32_STRING_CONSTCHAR, oscl_strlen(PVMI_KVPVALTYPE_UINT32_STRING_CONSTCHAR));
-                    KeyVal.key[KeyLen-1] = 0;
-                    // Copy the value
-                    KeyVal.value.uint32_value = iAACFileInfo.iBitrate;
-                    // Set the length and capacity
-                    KeyVal.length = 1;
-                    KeyVal.capacity = 1;
-                }
-                else
-                {
-                    // Memory allocation failed
-                    KeyVal.key = NULL;
                     break;
                 }
+
             }
         }
         else if ((oscl_strcmp((*keylistptr)[lcv].get_cstr(), PVAACMETADATA_TRACKINFO_SAMPLERATE_KEY) == 0) &&
@@ -2709,37 +2728,13 @@ PVMFStatus PVMFAACFFParserNode::DoGetMetadataValues(PVMFAACFFParserNodeCommand& 
             // Create a value entry if past the starting index
             if (numvalentries > starting_index)
             {
-                KeyLen = oscl_strlen(PVAACMETADATA_TRACKINFO_SAMPLERATE_KEY) + 1; // for "track-info/samplingrate;"
-                KeyLen += oscl_strlen(PVAACMETADATA_INDEX0) + 1; // for "index=0;"
-                KeyLen += oscl_strlen(PVMI_KVPVALTYPE_STRING_CONSTCHAR); // for "valtype="
-                KeyLen += oscl_strlen(PVMI_KVPVALTYPE_UINT32_STRING_CONSTCHAR) + 1; // for "uint32" and NULL terminator
-
-                // Allocate memory for the string
-                leavecode = 0;
-                OSCL_TRY(leavecode,
-                         KeyVal.key = OSCL_ARRAY_NEW(char, KeyLen);
-                        );
-
-                if (leavecode == 0)
+                uint32 sampleFreq = (uint32)iAACFileInfo.iSampleFrequency;
+                PVMFStatus retval = PVMFCreateKVPUtils::CreateKVPForUInt32Value(KeyVal,
+                                    PVAACMETADATA_TRACKINFO_BITRATE_KEY,
+                                    sampleFreq,
+                                    NULL);
+                if (retval != PVMFSuccess && retval != PVMFErrArgument)
                 {
-                    // Copy the key string
-                    oscl_strncpy(KeyVal.key, PVAACMETADATA_TRACKINFO_SAMPLERATE_KEY, oscl_strlen(PVAACMETADATA_TRACKINFO_SAMPLERATE_KEY) + 1);
-                    oscl_strncat(KeyVal.key, PVAACMETADATA_SEMICOLON, oscl_strlen(PVAACMETADATA_SEMICOLON));
-                    oscl_strncat(KeyVal.key, PVAACMETADATA_INDEX0, oscl_strlen(PVAACMETADATA_INDEX0));
-                    oscl_strncat(KeyVal.key, PVAACMETADATA_SEMICOLON, oscl_strlen(PVAACMETADATA_SEMICOLON));
-                    oscl_strncat(KeyVal.key, PVMI_KVPVALTYPE_STRING_CONSTCHAR, oscl_strlen(PVMI_KVPVALTYPE_STRING_CONSTCHAR));
-                    oscl_strncat(KeyVal.key, PVMI_KVPVALTYPE_UINT32_STRING_CONSTCHAR, oscl_strlen(PVMI_KVPVALTYPE_UINT32_STRING_CONSTCHAR));
-                    KeyVal.key[KeyLen-1] = 0;
-                    // Copy the value
-                    KeyVal.value.uint32_value = iAACFileInfo.iSampleFrequency;
-                    // Set the length and capacity
-                    KeyVal.length = 1;
-                    KeyVal.capacity = 1;
-                }
-                else
-                {
-                    // Memory allocation failed
-                    KeyVal.key = NULL;
                     break;
                 }
             }
@@ -2754,93 +2749,53 @@ PVMFStatus PVMFAACFFParserNode::DoGetMetadataValues(PVMFAACFFParserNodeCommand& 
             // Create a value entry if past the starting index
             if (numvalentries > starting_index)
             {
-                KeyLen = oscl_strlen(PVAACMETADATA_TRACKINFO_AUDIO_FORMAT_KEY) + 1; // for "track-info/audio/format;"
-                KeyLen += oscl_strlen(PVAACMETADATA_INDEX0) + 1; // for "index=0;"
-                KeyLen += oscl_strlen(PVMI_KVPVALTYPE_STRING_CONSTCHAR); // for "valtype="
-                KeyLen += oscl_strlen(PVMI_KVPVALTYPE_CHARPTR_STRING_CONSTCHAR) + 1; // for "char*" and NULL terminator
-
-                uint32 valuelen = 1; // Init to 1 for NULL terminator
-
+                PVMFStatus retval = PVMFSuccess;
                 switch (iAACFileInfo.iFormat)
                 {
                     case EAACADTS:
-                        valuelen = oscl_strlen(_STRLIT_CHAR(PVMF_MIME_ADTS)) + 1;
+                        retval = PVMFCreateKVPUtils::CreateKVPForCharStringValue(KeyVal,
+                                 PVAACMETADATA_TRACKINFO_AUDIO_FORMAT_KEY,
+                                 _STRLIT_CHAR(PVMF_MIME_ADTS));
                         break;
 
                     case EAACADIF:
-                        valuelen = oscl_strlen(_STRLIT_CHAR(PVMF_MIME_ADIF)) + 1;
+                        retval = PVMFCreateKVPUtils::CreateKVPForCharStringValue(KeyVal,
+                                 PVAACMETADATA_TRACKINFO_AUDIO_FORMAT_KEY,
+                                 _STRLIT_CHAR(PVMF_MIME_ADIF));
+
                         break;
 
                     case EAACRaw:
-                        valuelen = oscl_strlen(_STRLIT_CHAR(PVMF_MIME_MPEG4_AUDIO)) + 1;
+                        retval = PVMFCreateKVPUtils::CreateKVPForCharStringValue(KeyVal,
+                                 PVAACMETADATA_TRACKINFO_AUDIO_FORMAT_KEY,
+                                 _STRLIT_CHAR(PVMF_MIME_MPEG4_AUDIO));
+
                         break;
 
                     default:
                         break;
                 }
-
-                // Allocate memory for the strings
-                leavecode = 0;
-                OSCL_TRY(leavecode,
-                         KeyVal.key = OSCL_ARRAY_NEW(char, KeyLen);
-                         KeyVal.value.pChar_value = OSCL_ARRAY_NEW(char, valuelen);
-                        );
-
-                if (leavecode == 0)
+            }
+            else
+            {
+                // Memory allocation failed so clean up
+                if (KeyVal.key)
                 {
-                    // Copy the key string
-                    oscl_strncpy(KeyVal.key, PVAACMETADATA_TRACKINFO_AUDIO_FORMAT_KEY, oscl_strlen(PVAACMETADATA_TRACKINFO_AUDIO_FORMAT_KEY) + 1);
-                    oscl_strncat(KeyVal.key, PVAACMETADATA_SEMICOLON, oscl_strlen(PVAACMETADATA_SEMICOLON));
-                    oscl_strncat(KeyVal.key, PVAACMETADATA_INDEX0, oscl_strlen(PVAACMETADATA_INDEX0));
-                    oscl_strncat(KeyVal.key, PVAACMETADATA_SEMICOLON, oscl_strlen(PVAACMETADATA_SEMICOLON));
-                    oscl_strncat(KeyVal.key, PVMI_KVPVALTYPE_STRING_CONSTCHAR, oscl_strlen(PVMI_KVPVALTYPE_STRING_CONSTCHAR));
-                    oscl_strncat(KeyVal.key, PVMI_KVPVALTYPE_CHARPTR_STRING_CONSTCHAR, oscl_strlen(PVMI_KVPVALTYPE_CHARPTR_STRING_CONSTCHAR));
-                    KeyVal.key[KeyLen-1] = 0;
-                    // Copy the value
-                    switch (iAACFileInfo.iFormat)
-                    {
-                        case EAACADTS:
-                            oscl_strncpy(KeyVal.value.pChar_value, _STRLIT_CHAR(PVMF_MIME_ADTS), valuelen);
-                            break;
-
-                        case EAACADIF:
-                            oscl_strncpy(KeyVal.value.pChar_value, _STRLIT_CHAR(PVMF_MIME_ADIF), valuelen);
-                            break;
-
-                        case EAACRaw:
-                            oscl_strncpy(KeyVal.value.pChar_value, _STRLIT_CHAR(PVMF_MIME_MPEG4_AUDIO), valuelen);
-                            break;
-
-                        default:
-                            break;
-                    }
-                    KeyVal.value.pChar_value[valuelen-1] = 0;
-                    // Set the length and capacity
-                    KeyVal.length = valuelen;
-                    KeyVal.capacity = valuelen;
+                    OSCL_ARRAY_DELETE(KeyVal.key);
+                    KeyVal.key = NULL;
                 }
-                else
+                if (KeyVal.value.pChar_value)
                 {
-                    // Memory allocation failed so clean up
-                    if (KeyVal.key)
-                    {
-                        OSCL_ARRAY_DELETE(KeyVal.key);
-                        KeyVal.key = NULL;
-                    }
-                    if (KeyVal.value.pChar_value)
-                    {
-                        OSCL_ARRAY_DELETE(KeyVal.value.pChar_value);
-                    }
-                    break;
+                    OSCL_ARRAY_DELETE(KeyVal.value.pChar_value);
                 }
+                break;
             }
         }
 
         // Add the KVP to the list if the key string was created
         if (KeyVal.key != NULL)
         {
-            leavecode = 0;
-            OSCL_TRY(leavecode, (*valuelistptr).push_back(KeyVal));
+            leavecode = PushBackKeyVal(valuelistptr, KeyVal);
             OSCL_FIRST_CATCH_ANY(leavecode, ReleaseMetadataValue(KeyVal);
                                  break;);
 
@@ -2872,154 +2827,6 @@ PVMFStatus PVMFAACFFParserNode::DoGetMetadataValues(PVMFAACFFParserNodeCommand& 
     return PVMFSuccess;
 }
 
-
-void PVMFAACFFParserNode::CreateKVPForCharStringValue(PvmiKvp& aKeyVal, TAudioMetaData::FormatType aFormatType, const char* aTypeString, char* aValStr, char* aMiscKeyParam)
-{
-    // Check the format type. Only char string ones supported
-    if (aFormatType != TAudioMetaData::EISO88591_CHAR && aFormatType != TAudioMetaData::EUTF8_CHAR)
-    {
-        return;
-    }
-
-    // Validate the string pointers passed in
-    if (aTypeString == NULL || aValStr == NULL)
-    {
-        return;
-    }
-
-    uint32 KeyLen = 0;
-    KeyLen = oscl_strlen(aTypeString) + 1; // for the type string and ';'
-    KeyLen += oscl_strlen(PVMI_KVPVALTYPE_STRING_CONSTCHAR); // for "valtype="
-    KeyLen += oscl_strlen(PVMI_KVPVALTYPE_CHARPTR_STRING_CONSTCHAR) + 1; // for "char*" and NULL terminator
-    if (aFormatType == TAudioMetaData::EUTF8_CHAR)
-    {
-        KeyLen += oscl_strlen(PVAACMETADATA_CHARENCUTF8) + 1; // for ";char-encoding=UTF8"
-    }
-    if (aMiscKeyParam)
-    {
-        KeyLen += oscl_strlen(aMiscKeyParam);
-    }
-
-    uint32 valuelen = oscl_strlen(aValStr) + 1; // Add value string plus one for NULL terminator
-    // Allocate memory for the strings
-    int32 leavecode = 0;
-    OSCL_TRY(leavecode,
-             aKeyVal.key = OSCL_ARRAY_NEW(char, KeyLen);
-             aKeyVal.value.pChar_value = OSCL_ARRAY_NEW(char, valuelen);
-            );
-
-    if (leavecode == 0)
-    {
-        // Copy the key string
-        oscl_strncpy(aKeyVal.key, aTypeString, oscl_strlen(aTypeString) + 1);
-        oscl_strncat(aKeyVal.key, PVAACMETADATA_SEMICOLON, oscl_strlen(PVAACMETADATA_SEMICOLON));
-        oscl_strncat(aKeyVal.key, PVMI_KVPVALTYPE_STRING_CONSTCHAR, oscl_strlen(PVMI_KVPVALTYPE_STRING_CONSTCHAR));
-        oscl_strncat(aKeyVal.key, PVMI_KVPVALTYPE_CHARPTR_STRING_CONSTCHAR, oscl_strlen(PVMI_KVPVALTYPE_CHARPTR_STRING_CONSTCHAR));
-        if (aFormatType == TAudioMetaData::EUTF8_CHAR)
-        {
-            oscl_strncat(aKeyVal.key, PVAACMETADATA_SEMICOLON, oscl_strlen(PVAACMETADATA_SEMICOLON));
-            oscl_strncat(aKeyVal.key, PVAACMETADATA_CHARENCUTF8, oscl_strlen(PVAACMETADATA_CHARENCUTF8));
-        }
-        if (aMiscKeyParam)
-        {
-            oscl_strncat(aKeyVal.key, aMiscKeyParam, oscl_strlen(aMiscKeyParam));
-        }
-        aKeyVal.key[KeyLen-1] = 0;
-        // Copy the value
-        oscl_strncpy(aKeyVal.value.pChar_value, aValStr, valuelen);
-        // Set the length and capacity
-        aKeyVal.length = valuelen;
-        aKeyVal.capacity = valuelen;
-    }
-    else
-    {
-        // Memory allocation failed so clean up
-        if (aKeyVal.key)
-        {
-            OSCL_ARRAY_DELETE(aKeyVal.key);
-            aKeyVal.key = NULL;
-        }
-        if (aKeyVal.value.pChar_value)
-        {
-            OSCL_ARRAY_DELETE(aKeyVal.value.pChar_value);
-        }
-    }
-}
-
-void PVMFAACFFParserNode::CreateKVPForWCharStringValue(PvmiKvp& aKeyVal, TAudioMetaData::FormatType aFormatType, const char* aTypeString, oscl_wchar* aValStr, char* aMiscKeyParam)
-{
-    // Check the format type. Only wide string ones supported
-    if (aFormatType != TAudioMetaData::EUTF16_WCHAR && aFormatType != TAudioMetaData::EUTF16BE_WCHAR)
-    {
-        return;
-    }
-
-    // Validate the string pointers passed in
-    if (aTypeString == NULL || aValStr == NULL)
-    {
-        return;
-    }
-
-    uint32 KeyLen = 0;
-    KeyLen = oscl_strlen(aTypeString) + 1; // for the type string and ';'
-    KeyLen += oscl_strlen(PVMI_KVPVALTYPE_STRING_CONSTCHAR); // for "valtype="
-    KeyLen += oscl_strlen(PVMI_KVPVALTYPE_WCHARPTR_STRING_CONSTCHAR) + 1; // for "wchar*" and NULL terminator
-    if (aFormatType == TAudioMetaData::EUTF16BE_WCHAR)
-    {
-        KeyLen += oscl_strlen(PVAACMETADATA_CHARENCUTF16BE) + 1; // for ";char-encoding=UTF16BE"
-    }
-    if (aMiscKeyParam)
-    {
-        KeyLen += oscl_strlen(aMiscKeyParam);
-    }
-
-    uint32 valuelen = oscl_strlen(aValStr) + 1; // Add value string plus one for NULL terminator
-    // Allocate memory for the strings
-    int32 leavecode = 0;
-    OSCL_TRY(leavecode,
-             aKeyVal.key = OSCL_ARRAY_NEW(char, KeyLen);
-             aKeyVal.value.pWChar_value = OSCL_ARRAY_NEW(oscl_wchar, valuelen);
-            );
-
-    if (leavecode == 0)
-    {
-        // Copy the key string
-        oscl_strncpy(aKeyVal.key, aTypeString, oscl_strlen(aTypeString) + 1);
-        oscl_strncat(aKeyVal.key, PVAACMETADATA_SEMICOLON, oscl_strlen(PVAACMETADATA_SEMICOLON));
-        oscl_strncat(aKeyVal.key, PVMI_KVPVALTYPE_STRING_CONSTCHAR, oscl_strlen(PVMI_KVPVALTYPE_STRING_CONSTCHAR));
-        oscl_strncat(aKeyVal.key, PVMI_KVPVALTYPE_WCHARPTR_STRING_CONSTCHAR, oscl_strlen(PVMI_KVPVALTYPE_WCHARPTR_STRING_CONSTCHAR));
-        if (aFormatType == TAudioMetaData::EUTF16BE_WCHAR)
-        {
-            oscl_strncat(aKeyVal.key, PVAACMETADATA_SEMICOLON, oscl_strlen(PVAACMETADATA_SEMICOLON));
-            oscl_strncat(aKeyVal.key, PVAACMETADATA_CHARENCUTF16BE, oscl_strlen(PVAACMETADATA_CHARENCUTF16BE));
-        }
-        if (aMiscKeyParam)
-        {
-            oscl_strncat(aKeyVal.key, aMiscKeyParam, oscl_strlen(aMiscKeyParam));
-        }
-        aKeyVal.key[KeyLen-1] = 0;
-        // Copy the value
-        oscl_strncpy(aKeyVal.value.pWChar_value, aValStr, valuelen);
-        // Set the length and capacity
-        aKeyVal.length = valuelen;
-        aKeyVal.capacity = valuelen;
-    }
-    else
-    {
-        // Memory allocation failed so clean up
-        if (aKeyVal.key)
-        {
-            OSCL_ARRAY_DELETE(aKeyVal.key);
-            aKeyVal.key = NULL;
-        }
-        if (aKeyVal.value.pWChar_value)
-        {
-            OSCL_ARRAY_DELETE(aKeyVal.value.pWChar_value);
-        }
-    }
-}
-
-
 PVMFStatus
 PVMFAACFFParserNode::DoSetDataSourcePosition(PVMFAACFFParserNodeCommand& aCmd)
 {
@@ -3044,27 +2851,16 @@ PVMFAACFFParserNode::DoSetDataSourcePosition(PVMFAACFFParserNodeCommand& aCmd)
     iFirstFrame = true;
     aCmd.PVMFAACFFParserNodeCommand::Parse(targetNPT, actualNPT, actualMediaDataTS, jumpToIFrame, streamID);
 
-    //setting up the stream id
-    bool retVal = false;
-    // duplicate bos has been received
-    // dont perform reposition at source node
-    if (iStreamID == streamID) retVal = true;
+    // validate the parameters
+    if (actualNPT == NULL || actualMediaDataTS == NULL)
+    {
+        return PVMFErrArgument;
+    }
 
     //store to send the BOS
     iTrack.iSendBOS = true;
     //save the stream id for next media segment
     iStreamID = streamID;
-
-    if (retVal)
-    {
-        RunIfNotReady();
-        return PVMFSuccess;
-    }
-
-    if (actualNPT == NULL || actualMediaDataTS == NULL)
-    {
-        return PVMFErrArgument;
-    }
 
     *actualNPT = 0;
     *actualMediaDataTS = 0;
@@ -3072,7 +2868,7 @@ PVMFAACFFParserNode::DoSetDataSourcePosition(PVMFAACFFParserNodeCommand& aCmd)
     int32 result;
 
     // check if passed targetNPT is greater than or equal to clip duration.
-    if ((targetNPT >= iAACFileInfo.iDuration) && (iAACFileInfo.iFormat != EAACRaw))
+    if ((targetNPT >= (uint32)iAACFileInfo.iDuration) && (iAACFileInfo.iFormat != EAACRaw))
     {
         if (iAACFileInfo.iFormat == EAACADIF)
         {
@@ -3090,7 +2886,7 @@ PVMFAACFFParserNode::DoSetDataSourcePosition(PVMFAACFFParserNodeCommand& aCmd)
             iTrack.iClockConverter->set_clock(0, 0);
 
             // Set the return parameters
-            *actualNPT = 0;
+            *actualNPT = iAACFileInfo.iDuration;
             *actualMediaDataTS = iTrack.iTimestampOffset;
             iTrack.oEOSReached = true;
         }
@@ -3103,9 +2899,6 @@ PVMFAACFFParserNode::DoSetDataSourcePosition(PVMFAACFFParserNodeCommand& aCmd)
             {
                 return PVMFErrResource;
             }
-
-            // Adjust the timestamp to the end of the last sample, i.e. adding the delta to next sample
-            // iTrack.iClockConverter->update_clock(timestamp);
 
             uint32 millisecTS = iTrack.iClockConverter->get_converted_ts(1000);
             *actualMediaDataTS = millisecTS;
@@ -3125,7 +2918,7 @@ PVMFAACFFParserNode::DoSetDataSourcePosition(PVMFAACFFParserNodeCommand& aCmd)
             {
                 return PVMFErrResource;
             }
-            *actualNPT = newtimestamp;
+            *actualNPT = iAACFileInfo.iDuration;
 
             //Adjust the offset to add to future timestamps.
             iTrack.iTimestampOffset += (timestamp - newtimestamp);
@@ -3206,16 +2999,69 @@ PVMFAACFFParserNode::DoSetDataSourcePosition(PVMFAACFFParserNodeCommand& aCmd)
             return PVMFErrResource;
         }
 
+        // Adjust the timestamp to the end of the last sample, i.e. adding the delta to next sample
+        //	iTrack.iClockConverter->update_clock(timestamp);
+
         uint32 millisecTS = iTrack.iClockConverter->get_converted_ts(1000);
         *actualMediaDataTS = millisecTS;
 
+        // Reset the clock to this new starting point.
+        //	iTrack.iClockConverter->set_clock(timestamp,0);
         // Reposition
         // If new position is past the end of clip, AAC FF should set the position to the last frame
         uint32 tmpuint32 = 0;
         result = iAACParser->ResetPlayback(targetNPT, tmpuint32);
         if (result != AACBitstreamObject::EVERYTHING_OK)
         {
-            return PVMFErrResource;
+            if (AACBitstreamObject::END_OF_FILE == result)
+            {
+                uint32 timestamp;
+                result = iAACParser->PeekNextTimestamp(timestamp);
+                if (result != AACBitstreamObject::EVERYTHING_OK)
+                {
+                    return PVMFErrResource;
+                }
+
+                // Adjust the timestamp to the end of the last sample, i.e. adding the delta to next sample
+                // iTrack.iClockConverter->update_clock(timestamp);
+
+                uint32 millisecTS = iTrack.iClockConverter->get_converted_ts(1000);
+                *actualMediaDataTS = millisecTS;
+
+                // Reset the track to begining of clip.
+                uint32 tmpuint32 = 0;
+                result = iAACParser->ResetPlayback(0, tmpuint32);
+                if (result != AACBitstreamObject::EVERYTHING_OK)
+                {
+                    return PVMFErrResource;
+                }
+
+                //Peek new position to get the actual new timestamp
+                uint32 newtimestamp;
+                result = iAACParser->PeekNextTimestamp(newtimestamp);
+                if (result != AACBitstreamObject::EVERYTHING_OK)
+                {
+                    return PVMFErrResource;
+                }
+                *actualNPT = newtimestamp;
+
+                //Adjust the offset to add to future timestamps.
+                iTrack.iTimestampOffset += (timestamp - newtimestamp);
+
+                MediaClockConverter mcc(1000);
+                uint32 delta = PVMF_AAC_PARSER_NODE_TS_DELTA_DURING_REPOS_IN_MS;
+                uint32 wrap_count = 0;
+                mcc.set_clock(delta, wrap_count);
+                uint32 deltaintimescale = mcc.get_converted_ts(iTrack.iClockConverter->get_timescale());
+                iTrack.iTimestampOffset += deltaintimescale;
+
+                iTrack.oEOSReached = true;
+                return PVMFSuccess;
+            }
+            else
+            {
+                return PVMFErrResource;
+            }
         }
 
         //Peek new position to get the actual new timestamp
@@ -3310,10 +3156,11 @@ void PVMFAACFFParserNode::CPMRegisterContent()
 
 void PVMFAACFFParserNode::GetCPMLicenseInterface()
 {
+    iCPMLicenseInterfacePVI = NULL;
     iCPMGetLicenseInterfaceCmdId =
         iCPM->QueryInterface(iCPMSessionID,
                              PVMFCPMPluginLicenseInterfaceUuid,
-                             OSCL_STATIC_CAST(PVInterface*&, iCPMLicenseInterface));
+                             iCPMLicenseInterfacePVI);
 }
 
 bool PVMFAACFFParserNode::GetCPMContentAccessFactory()
@@ -3329,9 +3176,11 @@ bool PVMFAACFFParserNode::GetCPMContentAccessFactory()
 
 bool PVMFAACFFParserNode::GetCPMMetaDataExtensionInterface()
 {
+    PVInterface* temp = NULL;
     bool retVal =
-        iCPM->queryInterface(KPVMFMetadataExtensionUuid,
-                             OSCL_STATIC_CAST(PVInterface*&, iCPMMetaDataExtensionInterface));
+        iCPM->queryInterface(KPVMFMetadataExtensionUuid, temp);
+    iCPMMetaDataExtensionInterface = OSCL_STATIC_CAST(PVMFMetadataExtensionInterface*, temp);
+
     return retVal;
 }
 
@@ -3590,6 +3439,8 @@ void PVMFAACFFParserNode::CPMCommandCompleted(const PVMFCmdResp& aResponse)
         }
         else if (id == iCPMGetLicenseInterfaceCmdId)
         {
+            iCPMLicenseInterface = OSCL_STATIC_CAST(PVMFCPMPluginLicenseInterface*, iCPMLicenseInterfacePVI);
+            iCPMLicenseInterfacePVI = NULL;
             GetCPMMetaDataExtensionInterface();
             iCPMContentType = iCPM->GetCPMContentType(iCPMSessionID);
             if ((iCPMContentType == PVMF_CPM_FORMAT_OMA1) ||
@@ -3968,7 +3819,8 @@ PVMFStatus PVMFAACFFParserNode::QueueMediaSample(PVAACFFNodeTrackPortInfo* aTrac
                     {
                         keyFrameBit = 1;
                     }
-                    uint32 nptTS32 = Oscl_Int64_Utils::get_uint64_lower32(aTrackInfoPtr->iPrevSampleTimeStamp);
+                    uint32 nptTS32 = 0;
+                    nptTS32 = Oscl_Int64_Utils::get_uint64_lower32(aTrackInfoPtr->iPrevSampleTimeStamp);
                     PVMF_AACPARSERNODE_LOGDATATRAFFIC((0, "PVMFAACParserNode::QueueMediaSample() TrackID=%d, SeqNum=%d, SampleLen=%d, NptTS=%d, SampleTS=%d, NR=%d, KEY=%d, MimeType=%s",
                                                        aTrackInfoPtr->iTrackId,
                                                        msgOut->getSeqNum(),
@@ -3978,6 +3830,7 @@ PVMFStatus PVMFAACFFParserNode::QueueMediaSample(PVAACFFNodeTrackPortInfo* aTrac
                                                        noRender,
                                                        keyFrameBit,
                                                        aTrackInfoPtr->iTrackMimeType.get_cstr()));
+
                     status = aTrackInfoPtr->iPort->QueueOutgoingMsg(msgOut);
                     if (status != PVMFSuccess)
                     {
@@ -4368,3 +4221,43 @@ void PVMFAACFFParserNode::DoCancelGetLicense(PVMFAACFFParserNodeCommand& aCmd)
     CommandComplete(iInputCommands, aCmd, status);
     return;
 }
+
+int32 PVMFAACFFParserNode::CreateNewArray(char*& aPtr, char *aKey)
+{
+    int32 leavecode = 0;
+    OSCL_TRY(leavecode,
+             aPtr = OSCL_ARRAY_NEW(char, oscl_strlen(aKey) + 1););
+    return leavecode;
+}
+
+int32 PVMFAACFFParserNode::CreateNewArray(char*& aPtr, int32 aLen)
+{
+    int32 leavecode = 0;
+    OSCL_TRY(leavecode,
+             aPtr = OSCL_ARRAY_NEW(char, aLen););
+    return leavecode;
+}
+
+int32 PVMFAACFFParserNode::CreateNewArray(oscl_wchar*& aPtr, int32 aLen)
+{
+    int32 leavecode = 0;
+    OSCL_TRY(leavecode,
+             aPtr = OSCL_ARRAY_NEW(oscl_wchar, aLen););
+    return leavecode;
+}
+
+int32 PVMFAACFFParserNode::PushBackKeyVal(Oscl_Vector<PvmiKvp, OsclMemAllocator>*& aValueListPtr, PvmiKvp &aKeyVal)
+{
+    int32 leavecode = 0;
+    OSCL_TRY(leavecode, (*aValueListPtr).push_back(aKeyVal));
+    return leavecode;
+}
+
+PVMFStatus PVMFAACFFParserNode::PushValueToList(Oscl_Vector<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator> &aRefMetaDataKeys, PVMFMetadataList *&aKeyListPtr, uint32 aLcv)
+{
+    int32 leavecode = 0;
+    OSCL_TRY(leavecode, aKeyListPtr->push_back(aRefMetaDataKeys[aLcv]));
+    OSCL_FIRST_CATCH_ANY(leavecode, PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFAACFFParserNode::PushValueToList() Memory allocation failure when copying metadata key"));return PVMFErrNoMemory);
+    return PVMFSuccess;
+}
+

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,6 @@ class PVA_FF_TextSampleEntry : public PVA_FF_SampleEntry
         OSCL_IMPORT_REF void setfontSize(uint8 fontsize);
         OSCL_IMPORT_REF void setTextColourRGBA(uint8* RGBA);
         OSCL_IMPORT_REF void setFontListSize(uint16 fontlistsize);
-        //OSCL_IMPORT_REF PVA_FF_FontRecord   *setFontRecord(uint16 fontlistID,uint16 fontID,int8 fontLength,uint8* fontName);
         OSCL_IMPORT_REF void   *setFontRecord(uint16 fontlistID, uint16 fontID, int8 fontLength, uint8* fontName);
 
         void setSample(void* sample, uint32 size);

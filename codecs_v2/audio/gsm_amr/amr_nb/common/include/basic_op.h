@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,8 +30,6 @@ terms listed above has been obtained from the copyright holder.
 
  Pathname: ./include/basic_op.h
 
-     Date: 08/13/2000
-
 ------------------------------------------------------------------------------
  REVISION HISTORY
 
@@ -45,6 +43,7 @@ terms listed above has been obtained from the copyright holder.
  Description: Including header files with platform specific inline assembly
               instructions.
 
+ Who:						Date:
  Description:
 
 ------------------------------------------------------------------------------
@@ -275,18 +274,21 @@ extern "C"
 
     static inline Word16 shl(Word16 var1, Word16 var2, Flag *pOverflow)
     {
-        Word16 var_out;
+        Word16 var_out = 0;
 
         OSCL_UNUSED_ARG(pOverflow);
 
         if (var2 < 0)
         {
-            var2 = (-var2) & (0xf);
-            var_out = var1 >> var2;
+            var2 = -var2;
+            if (var2 < 15)
+            {
+                var_out = var1 >> var2;
+            }
+
         }
         else
         {
-            var2 &= 0xf;
             var_out = var1 << var2;
             if (var_out >> var2 != var1)
             {
@@ -324,7 +326,7 @@ extern "C"
 
     static inline Word32 L_shl(Word32 L_var1, Word16 var2, Flag *pOverflow)
     {
-        Word32 L_var_out;
+        Word32 L_var_out = 0;
 
         OSCL_UNUSED_ARG(pOverflow);
 
@@ -338,8 +340,12 @@ extern "C"
         }
         else
         {
-            var2 = (-var2) & (0xf);
-            L_var_out = L_var1 >> var2;
+            var2 = -var2;
+            if (var2 < 31)
+            {
+                L_var_out = L_var1 >> var2;
+            }
+
         }
 
         return (L_var_out);
@@ -373,25 +379,29 @@ extern "C"
 
     static inline Word32 L_shr(Word32 L_var1, Word16 var2, Flag *pOverflow)
     {
-        Word32 L_var_out;
+        Word32 L_var_out = 0;
 
         OSCL_UNUSED_ARG(pOverflow);
 
-        if (var2 >= 0)
+        if (var2 > 0)
         {
-            L_var_out = L_var1 >> (var2 & 0x1f);
+            if (var2 < 31)
+            {
+                L_var_out = L_var1 >> var2;
+            }
         }
         else
         {
-            var2 = (Word16)(-var2);
-            var2 &= 0x1f;
-            L_var_out = L_var1 << var2;
-            if (L_var_out >> var2 != L_var1)
+            var2 = -var2;
+
+            L_var_out = L_var1 << (var2) ;
+            if ((L_var_out >> (var2)) != L_var1)
             {
                 L_var_out = (L_var1 >> 31) ^ MAX_32;
             }
 
         }
+
         return (L_var_out);
     }
 
@@ -420,18 +430,10 @@ extern "C"
     static inline Word16 abs_s(Word16 var1)
     {
 
-        if (var1 < 0)
-        {
-            if (var1 != MIN_16)
-            {
-                var1 = (Word16) - var1;
-            }
-            else
-            {
-                var1 = MAX_16;
-            }
-        }
-        return (var1);
+        Word16 y = var1 - (var1 < 0);
+        y = y ^(y >> 15);
+        return (y);
+
     }
     /*----------------------------------------------------------------------------
     ; END

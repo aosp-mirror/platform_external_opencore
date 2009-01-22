@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,6 +91,8 @@
 #ifndef PV_ID3_PARCOM_H_INCLUDED
 #include "pv_id3_parcom.h"
 #endif
+
+#define ID3V1_STR_MAX_SIZE 64
 
 class AVCSampleEntry;
 
@@ -330,6 +332,7 @@ class Mpeg4File : public IMpeg4File, public Parentable
         // From MediaHeader
         uint64 getTrackMediaDuration(uint32 id);
         uint32 getTrackMediaTimescale(uint32 id);
+        uint16 getTrackLangCode(uint32 id);
 
         // From Handler
         uint32 getTrackMediaType(uint32 id);
@@ -337,8 +340,7 @@ class Mpeg4File : public IMpeg4File, public Parentable
         // From SampleDescription
         int32 getTrackNumSampleEntries(uint32 id);
 
-        OSCL_wHeapString<OsclMemAllocator> getTrackMIMEType(uint32 id); // Based on OTI value
-        uint8  getTrackOTIType(uint32 id); // Based on OTI value
+        void getTrackMIMEType(uint32 id, OSCL_String& aMimeType); // Based on OTI value
 
         int32 getTrackMaxBufferSizeDB(uint32 id);
         int32 getTrackAverageBitrate(uint32 id);
@@ -378,6 +380,16 @@ class Mpeg4File : public IMpeg4File, public Parentable
         {
             return _pmovieAtom->getAlternateGroup(trackid);
         }
+        int32 getVideoFrameHeight(uint32 trackid)
+        {
+            return _pmovieAtom->getTrackHeight(trackid);
+        }
+
+        int32 getVideoFrameWidth(uint32 trackid)
+        {
+            return _pmovieAtom->getTrackWidth(trackid);
+        }
+
         int32 getTextTrackWidth(uint32 trackid)
         {
             return _pmovieAtom->getTextTrackWidth(trackid);
@@ -867,12 +879,37 @@ class Mpeg4File : public IMpeg4File, public Parentable
                 return temp;
         }
 
+        OSCL_wHeapString<OsclMemAllocator> getITunesAlbumArtist() const
+        {
+            OSCL_wHeapString<OsclMemAllocator> temp(_STRLIT(""));
+            if (_pmovieAtom != NULL)
+            {
+                return _pmovieAtom->getITunesAlbumArtist();
+
+            }
+            else
+                return temp;
+        }
+
         OSCL_wHeapString<OsclMemAllocator> getITunesTitle() const
         {
             OSCL_wHeapString<OsclMemAllocator> temp(_STRLIT(""));
             if (_pmovieAtom != NULL)
             {
                 return _pmovieAtom->getITunesTitle();
+
+            }
+            else
+                return temp;
+
+        }
+
+        OSCL_wHeapString<OsclMemAllocator> getITunesTrackSubTitle() const
+        {
+            OSCL_wHeapString<OsclMemAllocator> temp(_STRLIT(""));
+            if (_pmovieAtom != NULL)
+            {
+                return _pmovieAtom->getITunesTrackSubTitle();
 
             }
             else
@@ -966,6 +1003,19 @@ class Mpeg4File : public IMpeg4File, public Parentable
             {
 
                 return _pmovieAtom->getITunesTool();
+            }
+            else
+                return temp;
+        }
+
+        OSCL_wHeapString<OsclMemAllocator> getITunesEncodedBy() const
+        {
+            OSCL_wHeapString<OsclMemAllocator> temp(_STRLIT(""));
+
+            if (_pmovieAtom != NULL)
+            {
+
+                return _pmovieAtom->getITunesEncodedBy();
             }
             else
                 return temp;
@@ -1069,6 +1119,17 @@ class Mpeg4File : public IMpeg4File, public Parentable
                 return false;
         }
 
+        bool IsITunesContentRating() const
+        {
+            if (_pmovieAtom != NULL)
+            {
+
+                return _pmovieAtom->IsITunesContentRating();
+            }
+            else
+                return false;
+        }
+
         uint16 getITunesBeatsPerMinute() const
         {
             if (_pmovieAtom != NULL)
@@ -1079,6 +1140,7 @@ class Mpeg4File : public IMpeg4File, public Parentable
             else
                 return 0;
         }
+
 
         PvmfApicStruct* getITunesImageData() const
         {
@@ -1150,6 +1212,34 @@ class Mpeg4File : public IMpeg4File, public Parentable
         }
 
 
+        OSCL_wHeapString<OsclMemAllocator> getITunesCDTrackNumberData() const
+        {
+            OSCL_wHeapString<OsclMemAllocator> temp(_STRLIT(""));
+
+            if (_pmovieAtom != NULL)
+            {
+                return _pmovieAtom->getITunesCDTrackNumberData();
+
+            }
+            else
+                return temp;
+
+        }
+
+        OSCL_wHeapString<OsclMemAllocator> getITunesCDDB1Data() const
+        {
+            OSCL_wHeapString<OsclMemAllocator> temp(_STRLIT(""));
+
+            if (_pmovieAtom != NULL)
+            {
+                return _pmovieAtom->getITunesCDDB1Data();
+
+            }
+            else
+                return temp;
+
+        }
+
         OSCL_wHeapString<OsclMemAllocator> getITunesLyrics() const
         {
             OSCL_wHeapString<OsclMemAllocator> temp(_STRLIT(""));
@@ -1163,7 +1253,7 @@ class Mpeg4File : public IMpeg4File, public Parentable
                 return temp;
         }
 
-
+        // For DRM Atom.
         bool IsTFRAPresentForTrack(uint32 TrackId, bool oVideoAudioTextTrack);
 
         /*
@@ -1185,8 +1275,16 @@ class Mpeg4File : public IMpeg4File, public Parentable
         void parseID3Header(MP4_FF_FILE * aFile);
 
         uint32 getContentType();
+        bool CreateDataStreamSessionForExternalDownload(OSCL_wString& aFilename,
+                PVMFCPMPluginAccessInterfaceFactory* aCPMAccessFactory,
+                OsclFileHandle* aHandle,
+                Oscl_FileServer* aFileServSession);
+        void DestroyDataStreamForExternalDownload();
+
 
     private:
+        void ReserveMemoryForLangCodeVector(Oscl_Vector<uint16, OsclMemAllocator> &iLangCode, int32 capacity, int32 &leavecode);
+        void ReserveMemoryForValuesVector(Oscl_Vector<OSCL_wHeapString<OsclMemAllocator>, OsclMemAllocator> &iValues, int32 capacity, int32 &leavecode);
         OSCL_wHeapString<OsclMemAllocator> _emptyString;
         UserDataAtom *_puserDataAtom;
         FileTypeAtom *_pFileTypeAtom;
@@ -1237,6 +1335,7 @@ class Mpeg4File : public IMpeg4File, public Parentable
         uint32 _peekMovieFragmentSeqIdx[256];
         bool isResetPlayBackCalled;
         uint32 countOfTrunsParsed;
+
         //Master Title List
         Oscl_Vector<OSCL_wHeapString<OsclMemAllocator>, OsclMemAllocator> titleValues;
         Oscl_Vector<uint16, OsclMemAllocator> iTitleLangCode;
@@ -1285,6 +1384,12 @@ class Mpeg4File : public IMpeg4File, public Parentable
         Oscl_Vector<uint16, OsclMemAllocator> iRatingLangCode;
         Oscl_Vector<MP4FFParserOriginalCharEnc, OsclMemAllocator> iRatingCharType;
 
+        oscl_wchar _id3v1Title[ID3V1_STR_MAX_SIZE];
+        oscl_wchar _id3v1Album[ID3V1_STR_MAX_SIZE];
+        oscl_wchar _id3v1Artist[ID3V1_STR_MAX_SIZE];
+        oscl_wchar _id3v1Comment[ID3V1_STR_MAX_SIZE];
+        uint32 _id3v1Year;
+        uint32 _fileSize;
 
 };
 

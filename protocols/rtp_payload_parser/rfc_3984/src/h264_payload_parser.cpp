@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -451,12 +451,14 @@ H264PayloadParserUtility::generateMemFrag(const IPayloadParser::Payload& aIn,
 {
     // construct output memory fragment
     OsclRefCounterMemFrag memFragOut(aIn.vfragments[0]);
+    uint8* memfrag = NULL;
 
     // Get the actual memory frag pointer and length
     PayloadParserStatus ret_val =
         getMemFragPtrLen(const_cast<IPayloadParser::Payload&>(aIn).vfragments[0],
-                         nal_type, (uint8*&)memFragOut.getMemFrag().ptr,
+                         nal_type, memfrag,
                          memFragOut.getMemFrag().len, rtp_payload_ptr_offset);
+    memFragOut.getMemFrag().ptr = (OsclAny*)memfrag;
     if (ret_val != PayloadParserStatus_Success) return ret_val;
 
     // add the memory fragment into media data imp object

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ PVActiveBase::PVActiveBase(const char name[],
 PVActiveBase::~PVActiveBase()
 {
     if (iBusy)
-        PV_EXECPANIC(EExecStillReadyOnDestruct);
+        OsclError::Leave(OsclErrInvalidState);//EExecStillReadyOnDestruct
 }
 
 #if(PV_SCHED_ENABLE_AO_STATS)
@@ -62,13 +62,15 @@ PVActiveStats::PVActiveStats(OsclExecSchedulerCommonBase* aScheduler, const char
 
     iNumRun = 0;
     iNumRunError = 0;
-    iTotalTicksInRunL = 0;
+    iMaxTicksInRun = 0;
+    iTotalTicksInRun = 0;
     i64Valid = true;//make 64-bit the default.
-    i64TotalTicksInRunL = 0;
+    i64TotalTicksInRun = 0;
     iPercent = 0.0;
     iLeave = OsclErrNone;
     iNumCancel = 0;
     iNumInstances = 1;
+    iPriority = (aActiveBase) ? aActiveBase->iPVReadyQLink.iAOPriority : 0;
 }
 PVActiveStats::~PVActiveStats()
 {
@@ -82,9 +84,9 @@ void PVActiveStats::Combine(PVActiveStats& aStats)
 {
     iNumRun += aStats.iNumRun;
     iNumRunError += aStats.iNumRunError;
-    iTotalTicksInRunL += aStats.iTotalTicksInRunL;
+    iTotalTicksInRun += aStats.iTotalTicksInRun;
     OSCL_ASSERT(i64Valid == aStats.i64Valid);
-    i64TotalTicksInRunL += aStats.i64TotalTicksInRunL;
+    i64TotalTicksInRun += aStats.i64TotalTicksInRun;
     iNumCancel += aStats.iNumCancel;
     if (aStats.iLeave != OsclErrNone)
         iLeave = aStats.iLeave;
@@ -153,14 +155,14 @@ void PVActiveBase::Activate()
 //activation that is common to both timers and non-timers.
 {
 
-    //generate standard symbian panics.
+    //mimic standard symbian panics.
     if (iBusy)
-        PV_EXECPANIC(EExecAlreadyActive);
+        OsclError::Leave(OsclErrInvalidState);//EExecAlreadyActive
     if (!iThreadContext.iOpen)
-        PV_EXECPANIC(EExecNotAdded);
+        OsclError::Leave(OsclErrInvalidState);//EExecNotAdded
 
 #if PV_SCHED_ENABLE_THREAD_CONTEXT_CHECKS
-    PVThreadContext::PanicIfWrongThread(iThreadContext);
+    PVThreadContext::LeaveIfWrongThread(iThreadContext);
 #endif
 
     iBusy = true;
@@ -170,7 +172,7 @@ void PVActiveBase::Activate()
 
 }
 
-bool PVActiveBase::IsAdded() const
+OSCL_EXPORT_REF bool PVActiveBase::IsAdded() const
 {
     return iThreadContext.iOpen;
 }
@@ -183,7 +185,7 @@ void PVActiveBase::Cancel()
 #if PV_SCHED_ENABLE_THREAD_CONTEXT_CHECKS
         //require same thread context for cancel calls,
         //since we'll be calling the DoCancel routine.
-        PVThreadContext::PanicIfWrongThread(iThreadContext);
+        PVThreadContext::LeaveIfWrongThread(iThreadContext);
 #endif
 
         //call the cancel handler-- this should
@@ -207,8 +209,7 @@ void PVActiveBase::Cancel()
 /////////////////////
 
 OSCL_EXPORT_REF OsclActiveObject::OsclActiveObject(int32 aPriority, const char name[]):
-        PVActiveBase(name, aPriority),
-        OsclActiveObj()
+        PVActiveBase(name, aPriority)
 {
     iStatus = OSCL_REQUEST_ERR_NONE;
 }
@@ -321,7 +322,6 @@ OSCL_EXPORT_REF int32 OsclActiveObject::RunError(int32 aError)
 
 OSCL_EXPORT_REF OsclTimerObject::OsclTimerObject(int32 aPriority, const char name[]):
         PVActiveBase(name, aPriority)
-        , OsclTimerBase()
 {
     SetStatus(OSCL_REQUEST_ERR_NONE);
 }

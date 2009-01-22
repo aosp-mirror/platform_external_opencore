@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,7 +84,7 @@ OSCL_EXPORT_REF PVMFMediaLayerNode::PVMFMediaLayerNode(int32 aPriority)
     iReposTime = 0;
     preroll64 = 0;
     iStreamID = 0;
-
+    iExtensionInterface = NULL;
     iNumRunL = 0;
     iDiagnosticsLogged = false;
 
@@ -115,11 +115,13 @@ OSCL_EXPORT_REF PVMFMediaLayerNode::PVMFMediaLayerNode(int32 aPriority)
              iCapability.iHasMaxNumberOfPorts = false;
              iCapability.iMaxNumberOfPorts = 0; /* no maximum */
 
-             iCapability.iInputFormatCapability.push_back(PVMF_RTP);
-             iCapability.iOutputFormatCapability.push_back(PVMF_M4V);
-             iCapability.iOutputFormatCapability.push_back(PVMF_AMR_IETF);
+             iCapability.iInputFormatCapability.push_back(PVMFFormatType(PVMF_MIME_RTP));
+             iCapability.iOutputFormatCapability.push_back(PVMFFormatType(PVMF_MIME_M4V));
+             iCapability.iOutputFormatCapability.push_back(PVMFFormatType(PVMF_MIME_AMR_IETF));
 
             );
+
+
 
     if (err != OsclErrNone)
     {
@@ -140,6 +142,10 @@ OSCL_EXPORT_REF PVMFMediaLayerNode::~PVMFMediaLayerNode()
     LogSessionDiagnostics();
 
     Cancel();
+    if (iExtensionInterface)
+    {
+        iExtensionInterface->removeRef();
+    }
 
     /* delete related decryption */
     iDecryptionInterface = NULL;
@@ -150,17 +156,6 @@ OSCL_EXPORT_REF PVMFMediaLayerNode::~PVMFMediaLayerNode()
     /* thread logoff */
     if (IsAdded())
         RemoveFromScheduler();
-
-    if (iExtensionInterface)
-    {
-        /*
-         * clear the interface container
-         * the interface can't function without the node
-         */
-        iExtensionInterface->iContainer = NULL;
-        iExtensionInterface->removeRef();
-    }
-
 
     /*
      * Cleanup allocated ports
@@ -310,7 +305,7 @@ PVMFStatus PVMFMediaLayerNode::GetCapability(PVMFNodeCapability& aNodeCapability
 }
 
 /**
- * retrive a port iterator.
+ * retrieve a port iterator.
  */
 OSCL_EXPORT_REF
 PVMFPortIter* PVMFMediaLayerNode::GetPorts(const PVMFPortFilter* aFilter)
@@ -782,11 +777,8 @@ void PVMFMediaLayerNode::DoReset(PVMFMediaLayerNodeCommand& aCmd)
             /* restore original port vector reserve */
             iPortVector.Reconstruct();
 
-            /* logoff & go back to Created state */
             SetState(EPVMFNodeIdle);
-            PVMFStatus status = ThreadLogoff();
-
-            CommandComplete(iInputCommands, aCmd, status);
+            CommandComplete(iInputCommands, aCmd, PVMFSuccess);
         }
         break;
 
@@ -855,10 +847,15 @@ void PVMFMediaLayerNode::DoQueryInterface(PVMFMediaLayerNodeCommand& aCmd)
             iExtensionInterface =
                 OSCL_PLACEMENT_NEW(ptr, PVMFMediaLayerNodeExtensionInterfaceImpl(this));
         }
-        /* add a reference each time we hand out the interface pointer.*/
-        iExtensionInterface->addRef();
-        *ptr = (PVInterface*)iExtensionInterface;
-        CommandComplete(iInputCommands, aCmd, PVMFSuccess);
+
+        if (iExtensionInterface->queryInterface(*uuid, *ptr))
+        {
+            CommandComplete(iInputCommands, aCmd, PVMFSuccess);
+        }
+        else
+        {
+            CommandComplete(iInputCommands, aCmd, PVMFErrNotSupported);
+        }
     }
     else
     {
@@ -882,9 +879,11 @@ void PVMFMediaLayerNode::DoRequestPort(PVMFMediaLayerNodeCommand& aCmd)
 
     /* Allocate a new port */
     OsclAny *ptr = NULL;
-    int32 err;
-    OSCL_TRY(err, ptr = iPortVector.Allocate(););
-    if (err != OsclErrNone || !ptr)
+    bool retVal;
+
+    retVal = Allocate(ptr);
+
+    if (retVal == false || !ptr)
     {
         PVMF_MLNODE_LOGERROR((0, "PVMFMediaLayerNode::DoRequestPort: Error - iPortVector Out of memory"));
         CommandComplete(iInputCommands, aCmd, PVMFErrNoMemory);
@@ -987,8 +986,9 @@ void PVMFMediaLayerNode::DoRequestPort(PVMFMediaLayerNodeCommand& aCmd)
 
         // add the output port to the queue
         int newIndex = iPortParamsQueue.size();
-        OSCL_TRY(err, iPortParamsQueue.push_back(portParams););
-        if (err != OsclErrNone)
+
+        retVal = Push(portParams);
+        if (retVal == false)
         {
             PVMF_MLNODE_LOGERROR((0, "0x%x PVMFMediaLayerNode::DoRequestPort: Error - iPortParamsQueue.push_back() failed", this));
             CommandComplete(iInputCommands, aCmd, PVMFErrNoMemory);
@@ -1057,8 +1057,8 @@ void PVMFMediaLayerNode::DoRequestPort(PVMFMediaLayerNodeCommand& aCmd)
             portParams.iPortLogger->AddAppender(portParams.iBinAppenderPtr);
         }
 
-        OSCL_TRY(err, iPortParamsQueue.push_back(portParams););
-        if (err != OsclErrNone)
+        retVal = Push(portParams);
+        if (retVal == false)
         {
             PVMF_MLNODE_LOGERROR((0, "0x%x PVMFMediaLayerNode::DoRequestPort: Error - iPortParamsQueue.push_back() failed", this));
             CommandComplete(iInputCommands, aCmd, PVMFErrNoMemory);
@@ -1067,8 +1067,9 @@ void PVMFMediaLayerNode::DoRequestPort(PVMFMediaLayerNodeCommand& aCmd)
     }
 
     /* Add the port to the port vector. */
-    OSCL_TRY(err, iPortVector.AddL(port););
-    if (err != OsclErrNone)
+    retVal = AddPort(port);
+
+    if (retVal == false)
     {
         CommandComplete(iInputCommands, aCmd, PVMFErrNoMemory);
         portAutoPtr.release();
@@ -1081,8 +1082,38 @@ void PVMFMediaLayerNode::DoRequestPort(PVMFMediaLayerNodeCommand& aCmd)
     CommandComplete(iInputCommands, aCmd, PVMFSuccess, (OsclAny*)port);
 }
 
+bool PVMFMediaLayerNode::Allocate(OsclAny*& ptr)
+{
+    int32 err;
+    OSCL_TRY(err, ptr = iPortVector.Allocate(););
+    if (err != OsclErrNone)
+    {
+        return false;
+    }
+    return true;
+}
 
+bool PVMFMediaLayerNode::Push(PVMFMediaLayerPortContainer portParams)
+{
+    int32 err;
+    OSCL_TRY(err, iPortParamsQueue.push_back(portParams););
+    if (err != OsclErrNone)
+    {
+        return false;
+    }
+    return true;
+}
 
+bool PVMFMediaLayerNode::AddPort(PVMFMediaLayerPort* port)
+{
+    int32 err;
+    OSCL_TRY(err, iPortVector.AddL(port););
+    if (err != OsclErrNone)
+    {
+        return false;
+    }
+    return true;
+}
 /**
  * Called by the command handler AO to do the port release
  */
@@ -1091,8 +1122,10 @@ void PVMFMediaLayerNode::DoReleasePort(PVMFMediaLayerNodeCommand& aCmd)
     /* This node supports release port from any state */
 
     /* Find the port in the port vector */
-    PVMFMediaLayerPort* port;
-    aCmd.PVMFMediaLayerNodeCommandBase::Parse((PVMFPortInterface*&)port);
+    PVMFPortInterface* p = NULL;
+    aCmd.PVMFMediaLayerNodeCommandBase::Parse(p);
+
+    PVMFMediaLayerPort* port = (PVMFMediaLayerPort*)p;
 
     PVMFMediaLayerPort** portPtr = iPortVector.FindByValue(port);
     if (portPtr)
@@ -1445,8 +1478,8 @@ void PVMFMediaLayerNode::ReportErrorEvent(PVMFEventType aEventType,
         PVUuid* aEventUUID,
         int32* aEventCode)
 {
-    PVMF_MLNODE_LOGINFO((0, "PVMFMediaLayerNode:NodeErrorEvent Type %d Data %d"
-                         , aEventType, aEventData));
+    PVMF_MLNODE_LOGERROR((0, "PVMFMediaLayerNode:NodeErrorEvent Type %d Data %d"
+                          , aEventType, aEventData));
 
     if (aEventUUID && aEventCode)
     {
@@ -1779,7 +1812,10 @@ void PVMFMediaLayerNode::HandlePortActivity(const PVMFPortActivity &aActivity)
                         }
                         PVMF_MLNODE_LOGDATATRAFFIC_FLOWCTRL((0, "PVMFMediaLayerNode::HPA: Connected port busy - Stop Input - Mime=%s",
                                                              inPortContainerPtr->iMimeType.get_cstr()));
-                        inPortContainerPtr->oProcessIncomingMessages = false;
+                        if (checkOutputPortsBusy(inPortContainerPtr))
+                        {
+                            inPortContainerPtr->oProcessIncomingMessages = false;
+                        }
                     }
                     else
                     {
@@ -1951,11 +1987,9 @@ PVMFStatus PVMFMediaLayerNode::ProcessIncomingMsg(PVMFMediaLayerPortContainer* p
     if (checkOutputPortsBusy(pinputPort))
     {
         PVUuid eventuuid = PVMFMediaLayerNodeEventTypeUUID;
-        int32  infoCode = PVMFMediaLayerNodeExcercisingPortFlowControl;
+
         PVMF_MLNODE_LOGDATATRAFFIC_FLOWCTRL((0,
                                              "PVMFMediaLayerNode::ProcessIncomingMsg: Cant Send Data - Output Queue Busy"));
-        ReportInfoEvent(PVMFInfoOverflow,
-                        (OsclAny*)(&(pinputPort->iMimeType)), &eventuuid, &infoCode);
         /*
          * Processing will resume when we get outgoing queue ready notification
          * in the port activity
@@ -1989,7 +2023,7 @@ PVMFStatus PVMFMediaLayerNode::ProcessIncomingMsg(PVMFMediaLayerPortContainer* p
         {
             PVMF_MLNODE_LOGINFO((0, "PVMFMediaLayerNode::ProcessIncomingMsg() Detect EOS message"));
 
-            //EOS msg is recieved. Before sending EOS, we send left payload msgs.
+            //EOS msg is received. Before sending EOS, we send left payload msgs.
             bool IsAccessUnitsEmpty = false;
             status = checkPortCounterpartAccessUnitQueue(pinputPort, &IsAccessUnitsEmpty);
             if (status != PVMFSuccess)
@@ -2053,7 +2087,7 @@ PVMFStatus PVMFMediaLayerNode::ProcessIncomingMsg(PVMFMediaLayerPortContainer* p
             {
                 PVMFMediaLayerPortContainer* poutPort = &this->iPortParamsQueue[pinputPort->vCounterPorts[i]];
                 // set BOS Timestamp to last media ts sent on this port
-                msgIn->setTimestamp(poutPort->iPrevMsgTimeStamp);
+                msgIn->setTimestamp(poutPort->iContinuousTimeStamp);
                 status = poutPort->iPort->QueueOutgoingMsg(msgIn);
 
                 if (status != PVMFSuccess)
@@ -2066,15 +2100,17 @@ PVMFStatus PVMFMediaLayerNode::ProcessIncomingMsg(PVMFMediaLayerPortContainer* p
                 else
                 {
 #if (PVLOGGER_INST_LEVEL > PVLOGMSG_INST_LLDBG)
-                    uint64 timebase64 = 0;
-                    uint64 clientClock64 = 0;
-                    iClientPlayBackClock->GetCurrentTime64(clientClock64, OSCLCLOCK_MSEC, timebase64);
+                    uint32 timebase32 = 0;
+                    uint32 clientClock32 = 0;
+                    bool overflowFlag = false;
+                    iClientPlayBackClock->GetCurrentTime32(clientClock32, overflowFlag,
+                                                           PVMF_MEDIA_CLOCK_MSEC, timebase32);
                     PVMF_MLNODE_LOGDATATRAFFIC_OUT((0,
                                                     "PVMFMediaLayerNode::ProcessInputMsg_OneToN: Sending BOS - MimeType=%s Clock=%d",
-                                                    poutPort->iMimeType.get_cstr(), Oscl_Int64_Utils::get_uint64_lower32(clientClock64)));
+                                                    poutPort->iMimeType.get_cstr(), clientClock32));
                     PVMF_MLNODE_LOG_REPOS((0,
                                            "PVMFMediaLayerNode::ProcessInputMsg_OneToN: Sending BOS - MimeType=%s Clock=%d",
-                                           poutPort->iMimeType.get_cstr(), Oscl_Int64_Utils::get_uint64_lower32(clientClock64)));
+                                           poutPort->iMimeType.get_cstr(), clientClock32));
 #endif
                 }
             }
@@ -2111,14 +2147,16 @@ PVMFStatus PVMFMediaLayerNode::ProcessIncomingMsg(PVMFMediaLayerPortContainer* p
                     else
                     {
 #if (PVLOGGER_INST_LEVEL > PVLOGMSG_INST_LLDBG)
-                        uint64 timebase64 = 0;
-                        uint64 clientClock64 = 0;
-                        iClientPlayBackClock->GetCurrentTime64(clientClock64, OSCLCLOCK_MSEC, timebase64);
+                        uint32 timebase32 = 0;
+                        uint32 clientClock32 = 0;
+                        bool overflowFlag = false;
+                        iClientPlayBackClock->GetCurrentTime32(clientClock32, overflowFlag,
+                                                               PVMF_MEDIA_CLOCK_MSEC, timebase32);
                         PVMF_MLNODE_LOGDATATRAFFIC_OUT((0,
                                                         "PVMFMediaLayerNode::ProcessInputMsg_OneToN: Sending EOS - MimeType=%s, StreamId=%d, Clock=%d",
                                                         pinputPort->iMimeType.get_cstr(),
                                                         msgIn->getStreamID(),
-                                                        Oscl_Int64_Utils::get_uint64_lower32(clientClock64)));
+                                                        clientClock32));
 #endif
                     }
                 }
@@ -2144,12 +2182,13 @@ PVMFStatus PVMFMediaLayerNode::ProcessIncomingMsg(PVMFMediaLayerPortContainer* p
                 {
                     poutPort->iReConfig = false;
 #if (PVLOGGER_INST_LEVEL > PVLOGMSG_INST_LLDBG)
-                    uint64 timebase64 = 0;
-                    uint64 clientClock64 = 0;
-                    iClientPlayBackClock->GetCurrentTime64(clientClock64, OSCLCLOCK_MSEC, timebase64);
+                    uint32 timebase32 = 0;
+                    uint32 clientClock32 = 0;
+                    bool overflowFlag = false;
+                    iClientPlayBackClock->GetCurrentTime32(clientClock32, overflowFlag, PVMF_MEDIA_CLOCK_MSEC, timebase32);
                     PVMF_MLNODE_LOGDATATRAFFIC_OUT((0,
                                                     "PVMFMediaLayerNode::ProcessInputMsg_OneToN: Sending MediaCmd - CmdId=%d, MimeType=%s Clock=%2d",
-                                                    msgFormatID, pinputPort->iMimeType.get_cstr(), Oscl_Int64_Utils::get_uint64_lower32(clientClock64)));
+                                                    msgFormatID, pinputPort->iMimeType.get_cstr(), clientClock32));
 #endif
                 }
             }
@@ -2221,12 +2260,13 @@ PVMFStatus PVMFMediaLayerNode::ProcessIncomingMsg(PVMFMediaLayerPortContainer* p
         inputDataSize += memFrag.getMemFragSize();
     }
 
-    uint64 timebase64 = 0;
-    uint64 clientClock64 = 0;
-    iClientPlayBackClock->GetCurrentTime64(clientClock64, OSCLCLOCK_MSEC, timebase64);
+    uint32 timebase32 = 0;
+    uint32 clientClock32 = 0;
+    bool overflowFlag = false;
+    iClientPlayBackClock->GetCurrentTime32(clientClock32, overflowFlag, PVMF_MEDIA_CLOCK_MSEC, timebase32);
     PVMF_MLNODE_LOGDATATRAFFIC_IN((0,
                                    "PVMFMediaLayerNode::ProcessInputMsg_OneToN - Input: MimeType=%s, TS=%d, SEQNUM=%d, SIZE=%d, Clock=%d",
-                                   pinputPort->iMimeType.get_cstr(), msgIn->getTimestamp(), msgIn->getSeqNum(), inputDataSize, Oscl_Int64_Utils::get_uint64_lower32(clientClock64)));
+                                   pinputPort->iMimeType.get_cstr(), msgIn->getTimestamp(), msgIn->getSeqNum(), inputDataSize, clientClock32));
 #endif
 
     PVMFMediaLayerPortContainer* poutPort = NULL;
@@ -2276,7 +2316,6 @@ PVMFStatus PVMFMediaLayerNode::ProcessIncomingMsg(PVMFMediaLayerPortContainer* p
 
 PVMFStatus PVMFMediaLayerNode::sendAccessUnits(PVMFMediaLayerPortContainer* pinputPort)
 {
-    bool isOneToN = pinputPort->iIsOneToN;
 
     PVMFStatus status = PVMFSuccess;
     bool checkAccessUnitsSize = false;
@@ -2357,7 +2396,6 @@ PVMFStatus PVMFMediaLayerNode::sendAccessUnits(PVMFMediaLayerPortContainer* pinp
 PVMFStatus PVMFMediaLayerNode::dispatchAccessUnits(PVMFMediaLayerPortContainer* pinputPort,
         PVMFMediaLayerPortContainer* poutPort)
 {
-    bool isOneToN = pinputPort->iIsOneToN;
     PVMFStatus status = PVMFSuccess;
     //
     // send each access unit to its respective port
@@ -2386,10 +2424,10 @@ PVMFStatus PVMFMediaLayerNode::dispatchAccessUnits(PVMFMediaLayerPortContainer* 
 
         // retrieve a data implementation
         OsclSharedPtr<PVMFMediaDataImpl> mediaDataImplOut;
-        int32 err;
-        OSCL_TRY_NO_TLS(iOsclErrorTrapImp, err, mediaDataImplOut = poutPort->ipFragGroupAllocator->allocate());
-        OSCL_ASSERT(err == OsclErrNone); // we just checked that a message is available
-        if (err != OsclErrNone)
+        bool retVal;
+        retVal = Allocate(mediaDataImplOut, poutPort);
+
+        if (retVal == false)
         {
             status = PVMFErrNoMemory;
             break;
@@ -2419,12 +2457,13 @@ PVMFStatus PVMFMediaLayerNode::dispatchAccessUnits(PVMFMediaLayerPortContainer* 
                     poutPort->oReconfigId = 0;
                     poutPort->oMsgReconfig.Unbind();
 #if (PVLOGGER_INST_LEVEL > PVLOGMSG_INST_LLDBG)
-                    uint64 timebase64 = 0;
-                    uint64 clientClock64 = 0;
-                    iClientPlayBackClock->GetCurrentTime64(clientClock64, OSCLCLOCK_MSEC, timebase64);
+                    uint32 timebase32 = 0;
+                    uint32 clientClock32 = 0;
+                    bool overflowFlag = false;
+                    iClientPlayBackClock->GetCurrentTime32(clientClock32, overflowFlag, PVMF_MEDIA_CLOCK_MSEC, timebase32);
                     PVMF_MLNODE_LOGDATATRAFFIC_OUT((0,
                                                     "PVMFMediaLayerNode::dispatchAccessUnits: Sending ReConfig - MimeType=%s Clock=%2d",
-                                                    poutPort->iMimeType.get_cstr(), Oscl_Int64_Utils::get_uint64_lower32(clientClock64)));
+                                                    poutPort->iMimeType.get_cstr(), clientClock32));
 #endif
                 }
             }
@@ -2471,7 +2510,10 @@ PVMFStatus PVMFMediaLayerNode::dispatchAccessUnits(PVMFMediaLayerPortContainer* 
         newMsgHeader.format_id = pinputPort->iCurrFormatId;
         PVMFSharedMediaDataPtr mediaDataOut =
             PVMFMediaData::createMediaData(mediaDataImplOut, &newMsgHeader);
-
+        /*
+         * Could happen during bitstream switching,
+         * asf payload parser starts seq num for each stream from zero
+         */
         if (it->sequence < poutPort->iPrevMsgSeqNum)
         {
             poutPort->iPrevMsgSeqNum++;
@@ -2520,7 +2562,7 @@ PVMFStatus PVMFMediaLayerNode::dispatchAccessUnits(PVMFMediaLayerPortContainer* 
                 }
 
                 bool oDecryptRet =
-                    iDecryptionInterface->DecryptAccessUnit((uint8*&)(srcPtr),
+                    iDecryptionInterface->DecryptAccessUnit(srcPtr,
                                                             totalPayloadSize);
                 srcDrmPtr = srcPtr;
                 for (uint32 j = 0; j < num; j++)
@@ -2580,9 +2622,10 @@ PVMFStatus PVMFMediaLayerNode::dispatchAccessUnits(PVMFMediaLayerPortContainer* 
                 LogMediaData(mediaDataOut, pinputPort->iPort);
             }
 
-            uint64 timebase64 = 0;
-            uint64 clientClock64 = 0;
-            iClientPlayBackClock->GetCurrentTime64(clientClock64, OSCLCLOCK_MSEC, timebase64);
+            uint32 timebase32 = 0;
+            uint32 clientClock32 = 0;
+            bool overflowFlag = false;
+            iClientPlayBackClock->GetCurrentTime32(clientClock32, overflowFlag, PVMF_MEDIA_CLOCK_MSEC, timebase32);
 
             /* Get size for log purposes */
             uint32 numFrags = mediaDataOut->getNumFragments();
@@ -2600,7 +2643,7 @@ PVMFStatus PVMFMediaLayerNode::dispatchAccessUnits(PVMFMediaLayerPortContainer* 
                                             size, msgOut->getTimestamp(), msgOut->getSeqNum(),
                                             (mediaDataOut->getMarkerInfo() & PVMF_MEDIA_DATA_MARKER_INFO_M_BIT),
                                             (mediaDataOut->getMarkerInfo() & PVMF_MEDIA_DATA_MARKER_INFO_RANDOM_ACCESS_POINT_BIT),
-                                            Oscl_Int64_Utils::get_uint64_lower32(clientClock64)));
+                                            clientClock32));
 #endif
         }
     }
@@ -2611,6 +2654,19 @@ PVMFStatus PVMFMediaLayerNode::dispatchAccessUnits(PVMFMediaLayerPortContainer* 
         it = poutPort->vAccessUnits.erase(poutPort->vAccessUnits.begin(), it);
     }
     return status;
+}
+
+bool PVMFMediaLayerNode::Allocate(OsclSharedPtr<PVMFMediaDataImpl>& mediaDataImplOut, PVMFMediaLayerPortContainer* poutPort)
+{
+    int32 err;
+    OSCL_TRY_NO_TLS(iOsclErrorTrapImp, err, mediaDataImplOut = poutPort->ipFragGroupAllocator->allocate());
+    OSCL_ASSERT(err == OsclErrNone); // we just checked that a message is available
+
+    if (err != OsclErrNone)
+    {
+        return false;
+    }
+    return true;
 }
 
 bool PVMFMediaLayerNode::checkOutputPortsBusy(PVMFMediaLayerPortContainer* pinputPort)
@@ -3113,6 +3169,9 @@ PVMFMediaLayerNode::setOutPortStreamParams(PVMFPortInterface* aPort,
         uint32 aPreroll,
         bool aLiveStream)
 {
+    OSCL_UNUSED_ARG(streamid);
+    OSCL_UNUSED_ARG(aPreroll);
+    OSCL_UNUSED_ARG(aLiveStream);
     PVMFMediaLayerPortContainer* outPort = NULL;
     int id;
 
@@ -3324,13 +3383,19 @@ PVMFStatus PVMFMediaLayerNode::sendEndOfTrackCommand(PVMFMediaLayerPortContainer
 }
 
 bool PVMFMediaLayerNode::setPlayRange(int32 aStartTimeInMS,
-                                      int32 aStopTimeInMS)
+                                      int32 aStopTimeInMS,
+                                      bool oRepositioning)
 {
     iPlayStartTime = aStartTimeInMS;
     iPlayStopTime = aStopTimeInMS;
     Oscl_Vector<PVMFMediaLayerPortContainer, PVMFMediaLayerNodeAllocator>::iterator it;
     for (it = iPortParamsQueue.begin(); it != iPortParamsQueue.end(); it++)
     {
+        if (oRepositioning)
+        {
+            it->iPort->ClearMsgQueues();
+        }
+
         if (it->tag == PVMF_MEDIALAYER_PORT_TYPE_INPUT)
             it->oEOSReached = false;
     }
@@ -3438,13 +3503,14 @@ PVMFMediaLayerNodeExtensionInterfaceImpl::setPortDataLogging(bool logEnable,
 
 bool
 PVMFMediaLayerNodeExtensionInterfaceImpl::setPlayRange(int32 aStartTimeInMS,
-        int32 aStopTimeInMS)
+        int32 aStopTimeInMS,
+        bool oRepositioning)
 {
-    return (iContainer->setPlayRange(aStartTimeInMS, aStopTimeInMS));
+    return (iContainer->setPlayRange(aStartTimeInMS, aStopTimeInMS, oRepositioning));
 }
 
 bool
-PVMFMediaLayerNodeExtensionInterfaceImpl::setClientPlayBackClock(OsclClock* aClientPlayBackClock)
+PVMFMediaLayerNodeExtensionInterfaceImpl::setClientPlayBackClock(PVMFMediaClock* aClientPlayBackClock)
 {
     return (iContainer->setClientPlayBackClock(aClientPlayBackClock));
 }

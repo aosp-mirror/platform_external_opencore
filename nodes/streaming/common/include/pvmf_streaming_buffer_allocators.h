@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,6 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*
- *
- *
- *
- ***************************************************************************/
 /**
  * @file pvmf_streaming_buffer_allocators.h
  */
@@ -525,7 +520,10 @@ class PVMFSMSharedBufferAllocWithReSize : public Oscl_DefAlloc
                 {
                     OSCL_ASSERT(phead != NULL);
                     ReassemblyBlock* p = phead;
-                    phead = p->pnext;
+                    if (p)
+                    {
+                        phead = p->pnext;
+                    }
                     OSCL_DELETE(p);
                 }
 /////// START: clean the head
@@ -792,6 +790,9 @@ class PVMFSMSharedBufferAllocWithReSize : public Oscl_DefAlloc
                                   const OsclAny* aDeallocPtr,
                                   bool oEnableOutofOrderCheck = true)
         {
+            OSCL_ASSERT(aPCContainer);
+            if (!aPCContainer)
+                return PVMF_RESIZE_ALLOC_NO_MEMORY;
             uint32 seqNum = 0;
             uint32 blkSize = 0;
             uint8* p = ((uint8*)(aDeallocPtr) - PVMF_RESIZE_ALLOC_OVERHEAD);
@@ -808,10 +809,10 @@ class PVMFSMSharedBufferAllocWithReSize : public Oscl_DefAlloc
                     {//just allocated, now free, so we pretend we didn't allocate this one to increase mem efficiency
                         if (aPCContainer->iAllocationPtr != p + blkSize)
                         {
-                            PVMF_SOCKALLOC_LOGERROR((0, "SM ATTN seqNum %d blkSize %d iAlloc 0x%x p 0x%x Ln %d"
-                                                     , seqNum, blkSize, aPCContainer->iAllocationPtr, p, __LINE__));
-                            PVMF_SOCKALLOC_LOGERROR((0, "SM ATTN start 0x%x end 0x%x lastD 0x%x Ln %d"
-                                                     , aPCContainer->iParentChunkStart, aPCContainer->iParentChunkEnd, aPCContainer->iEndOfLastDeallocatedBlock, __LINE__));
+                            PVMF_SOCKALLOC_LOG_ALLOC_RESIZE_DEALLOC((0, "SM ATTN seqNum %d blkSize %d iAlloc 0x%x p 0x%x Ln %d"
+                                                                    , seqNum, blkSize, aPCContainer->iAllocationPtr, p, __LINE__));
+                            PVMF_SOCKALLOC_LOG_ALLOC_RESIZE_DEALLOC((0, "SM ATTN start 0x%x end 0x%x lastD 0x%x Ln %d"
+                                                                    , aPCContainer->iParentChunkStart, aPCContainer->iParentChunkEnd, aPCContainer->iEndOfLastDeallocatedBlock, __LINE__));
                         }
 
                         iJJDataDbgSize -= (blkSize - PVMF_RESIZE_ALLOC_OVERHEAD);
@@ -820,7 +821,6 @@ class PVMFSMSharedBufferAllocWithReSize : public Oscl_DefAlloc
 
                         iNumOutStandingBuffers--;
                         iSeqCount--;
-                        PVMF_SOCKALLOC_LOGERROR((0, "JJMEM RECY ptr 0x%x size %d new %d new2 %d Ln %d", p, blkSize, iJJDataSize, iJJDataDbgSize, __LINE__));
                         return (PVMF_RESIZE_ALLOC_SUCCESS);
                     }
 
@@ -932,6 +932,7 @@ class PVMFSMSharedBufferAllocWithReSize : public Oscl_DefAlloc
             {
                 PVMF_SOCKALLOC_LOGERROR((0, "PVMFSMSharedBufferAllocWithReSize::deallocate - INVALID PTR!!! Name=%s", iName.get_cstr()));
                 OSCL_LEAVE(OsclErrArgument);
+                return;
             }
             /* Deallocate the current ptr */
             PVMF_RESIZE_ALLOC_ERROR_CODE errCode = DeallocateFromParentChunk(parentChunkContainer, p);
@@ -960,7 +961,6 @@ class PVMFSMSharedBufferAllocWithReSize : public Oscl_DefAlloc
 
                     if (NULL != deleteList)
                     {
-                        PVMF_SOCKALLOC_LOGERROR((0, "JJMEM RECY start new %d new2 %d Ln %d", iJJDataSize, iJJDataDbgSize, __LINE__));
                         for (int32 i = (*deleteList).size() - 1; i >= 0; i--)
                         {
                             uint8* p = (uint8*)((*deleteList)[i].ptr);
@@ -970,6 +970,7 @@ class PVMFSMSharedBufferAllocWithReSize : public Oscl_DefAlloc
                             {
                                 PVMF_SOCKALLOC_LOGERROR((0, "PVMFSMSharedBufferAllocWithReSize::deallocate - INVALID PTR!!! Name=%s Ln %d", iName.get_cstr(), __LINE__));
                                 OSCL_LEAVE(OsclErrArgument);
+                                return;
                             }
                             uint32 seqNum = 0;
                             uint32 blkSize = 0;
@@ -1000,7 +1001,6 @@ class PVMFSMSharedBufferAllocWithReSize : public Oscl_DefAlloc
                         }
 
                         iOutOfOrderBlocks.PruneHead(deleteList);
-                        PVMF_SOCKALLOC_LOGERROR((0, "JJMEM RECY done new %d new2 %d Ln %d", iJJDataSize, iJJDataDbgSize, __LINE__));
                     }
                 }
             }
@@ -1031,7 +1031,7 @@ class PVMFSMSharedBufferAllocWithReSize : public Oscl_DefAlloc
             if (iSeqCount > seqNum + 1)
             {
                 //Resize can ONLY be applied to the buffer just allocated.
-                PVMF_SOCKALLOC_LOGERROR((0, "JJMEM Resize ERROR seq %d iSeqCount %d iJJDataSize %d", seqNum, iSeqCount, iJJDataSize));
+                PVMF_SOCKALLOC_LOGERROR((0, "Resize ERROR seq %d iSeqCount %d iJJDataSize %d", seqNum, iSeqCount, iJJDataSize));
                 return (PVMF_RESIZE_ALLOC_MEMORY_CORRUPT);
             }
             /* reset the block size */
@@ -1179,7 +1179,7 @@ class PVMFSMSharedBufferAllocWithReSize : public Oscl_DefAlloc
                     truespace += maxSize;
                 }
             }
-            PVMF_SOCKALLOC_LOGERROR((0, "SM alloc space new1 %d new2 %d kspace %d Ln %d", iJJDataSize, iJJDataDbgSize, truespace, __LINE__));
+            PVMF_SOCKALLOC_LOG_AVAILABILITY((0, "SM alloc space new1 %d new2 %d kspace %d Ln %d", iJJDataSize, iJJDataDbgSize, truespace, __LINE__));
             return (truespace);
         }
 

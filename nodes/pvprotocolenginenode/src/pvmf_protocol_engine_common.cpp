@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,6 @@
 #define LOGINFODATAPATH(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG,iLogger,PVLOGMSG_INFO,m);
 #define PVMF_PROTOCOL_ENGINE_LOGINFODATAPATH(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG,iDataPathLogger,PVLOGMSG_INFO,m);
 #define PVMF_PROTOCOL_ENGINE_LOGERRINFODATAPATH(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG,iDataPathErrLogger,PVLOGMSG_INFO,m);
-#define PROTOCOLENGINE_REDIRECT_STATUS_CODE_START	300
-#define PROTOCOLENGINE_REDIRECT_STATUS_CODE_END		399
 
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -113,15 +111,15 @@ bool INetURI::parseURL(OSCL_String &aUrl8, OSCL_String &aSerAdd, int32 &aSerPort
     typedef char mbchar;
     mbchar* aUrl = tmpUrl8.get_str();
 
-    mbchar *server_ip_ptr = oscl_strstr(((mbchar*)aUrl), "//");
+    mbchar *server_ip_ptr = OSCL_CONST_CAST(mbchar*, oscl_strstr(((mbchar*)aUrl), "//"));
     if (server_ip_ptr == NULL) return false;
     server_ip_ptr += 2;
 
     /* Locate the IP address. */
-    mbchar *server_port_ptr = oscl_strstr(server_ip_ptr, ":");
+    mbchar *server_port_ptr = OSCL_CONST_CAST(mbchar*, oscl_strstr(server_ip_ptr, ":"));
     mbchar *tmp_ptr = server_port_ptr;
     if (tmp_ptr == NULL) tmp_ptr = server_ip_ptr;
-    mbchar *clip_name = oscl_strstr(tmp_ptr, "/");
+    mbchar *clip_name = OSCL_CONST_CAST(mbchar*, oscl_strstr(tmp_ptr, "/"));
     if (clip_name != NULL) *clip_name++ = '\0';
 
     /* Locate the port number if provided. */
@@ -135,7 +133,7 @@ bool INetURI::parseURL(OSCL_String &aUrl8, OSCL_String &aSerAdd, int32 &aSerPort
     }
 
     /* relocate the server IP address, either stop at ':' or '/' */
-    mbchar *server_end_ptr = oscl_strstr(server_ip_ptr, "/");
+    mbchar *server_end_ptr = OSCL_CONST_CAST(mbchar*, oscl_strstr(server_ip_ptr, "/"));
     if (server_end_ptr) *server_end_ptr = '\0';
 
     OSCL_HeapString<OsclMemAllocator> tmpServerName(server_ip_ptr, oscl_strlen(server_ip_ptr));
@@ -178,8 +176,11 @@ int32 HttpParsingBasicObject::parseResponse(INPUT_DATA_QUEUE &aDataQueue)
 
             // save output data if there is
             iOutputQueue->clear();
-            uint32 size = saveOutputData(entityUnit, *iOutputQueue);
-            if (size == 0xFFFFFFFF) return PARSE_GENERAL_ERROR;
+            uint32 size = 0;
+            if (!saveOutputData(entityUnit, *iOutputQueue, size))
+            {
+                return PARSE_GENERAL_ERROR;
+            }
 
             if (parsingStatus == HTTPParser::PARSE_HEADER_AVAILABLE)
             {
@@ -237,7 +238,7 @@ int32 HttpParsingBasicObject::getNextMediaData(INPUT_DATA_QUEUE &aDataInQueue, P
     if (!iInput.getValidMediaData(aDataInQueue, aMediaData, isEOS)) return PARSE_NO_INPUT_DATA;
     if (isEOS)
     {
-        if (!isRedirectResponse)
+        if (!isRedirectResponse())
         {
             iNumEOSMessagesAfterRequest++;
             iTotalDLSizeForPrevEOS = iTotalDLSizeAtCurrEOS;
@@ -288,7 +289,6 @@ void HttpParsingBasicObject::extractServerVersionNum()
 
     // Has Sever header
     char *ptr = (char*)serverValue.c_str();
-
     for (int32 i = 0; i < serverValue.length(); i++)
     {
         if (!PE_isDigit(*ptr))
@@ -305,25 +305,24 @@ void HttpParsingBasicObject::extractServerVersionNum()
     }
 }
 
-uint32 HttpParsingBasicObject::saveOutputData(RefCountHTTPEntityUnit &entityUnit, OUTPUT_DATA_QUEUE &aOutputData)
+bool HttpParsingBasicObject::saveOutputData(RefCountHTTPEntityUnit &entityUnit, OUTPUT_DATA_QUEUE &aOutputData, uint32 &aTotalEntityDataSize)
 {
-    uint32 size = 0;
-    for (uint32 i = 0; i < entityUnit.getEntityUnit().getNumFragments();i++)
-    {
-        OsclRefCounterMemFrag memfrag;
-        entityUnit.getEntityUnit().getMemFrag(i, memfrag);
-        int32 err = 0;
-        OSCL_TRY(err, aOutputData.push_back(memfrag););
-        if (err) return 0xFFFFFFFF;
-        size += memfrag.getMemFragSize();
+    aTotalEntityDataSize = 0;
+    int32 err = 0;
+    OSCL_TRY(err,
+             for (uint32 i = 0; i < entityUnit.getEntityUnit().getNumFragments();i++)
+{
+    OsclRefCounterMemFrag memfrag;
+    entityUnit.getEntityUnit().getMemFrag(i, memfrag);
+        aOutputData.push_back(memfrag);
+        aTotalEntityDataSize += memfrag.getMemFragSize();
     }
-    return size;
+            );
+    return (err == 0);
 }
 
 int32 HttpParsingBasicObject::checkParsingDone(const int32 parsingStatus)
 {
-    isRedirectResponse = false;
-
     // check error case
     if (parsingStatus < 0)
     {
@@ -331,16 +330,6 @@ int32 HttpParsingBasicObject::checkParsingDone(const int32 parsingStatus)
         if (parsingStatus == HTTPParser::PARSE_HTTP_VERSION_NOT_SUPPORTED) return PARSE_HTTP_VERSION_NOT_SUPPORTED;
         if (parsingStatus == HTTPParser::PARSE_TRANSFER_ENCODING_NOT_SUPPORTED) return PARSE_TRANSFER_ENCODING_NOT_SUPPORTED;
         return PARSE_GENERAL_ERROR; // error happens;
-    }
-    if (parsingStatus == HTTPParser::PARSE_STATUS_LINE_SHOW_NOT_SUCCESSFUL)
-    {
-        // TBD, probably polulate the error codes
-        uint32 httpStatusCode = getStatusCode();
-        if (PROTOCOLENGINE_REDIRECT_STATUS_CODE_START <= httpStatusCode && httpStatusCode <= PROTOCOLENGINE_REDIRECT_STATUS_CODE_END)
-        {
-            isRedirectResponse = true;
-        }
-        return PARSE_STATUS_LINE_SHOW_NOT_SUCCESSFUL; // status code >= 300
     }
 
     if (parsingStatus == HTTPParser::PARSE_SUCCESS_END_OF_MESSAGE ||
@@ -358,14 +347,27 @@ int32 HttpParsingBasicObject::checkParsingDone(const int32 parsingStatus)
             if (status == PROCESS_SUCCESS_END_OF_MESSAGE_TRUNCATED) return status;
         }
     }
-    if (parsingStatus == HTTPParser::PARSE_SUCCESS_END_OF_MESSAGE)	return PARSE_SUCCESS_END_OF_MESSAGE;
-    if (parsingStatus == HTTPParser::PARSE_SUCCESS_END_OF_MESSAGE_WITH_EXTRA_DATA)	return PARSE_SUCCESS_END_OF_MESSAGE_WITH_EXTRA_DATA;
-    if (parsingStatus == HTTPParser::PARSE_NEED_MORE_DATA)			return PARSE_NEED_MORE_DATA;
-    if (parsingStatus == HTTPParser::PARSE_SUCCESS_END_OF_INPUT)		return PARSE_SUCCESS_END_OF_INPUT;
+    if (parsingStatus == HTTPParser::PARSE_STATUS_LINE_SHOW_NOT_SUCCESSFUL)		  return PARSE_STATUS_LINE_SHOW_NOT_SUCCESSFUL; // status code >= 300
+    if (parsingStatus == HTTPParser::PARSE_SUCCESS_END_OF_MESSAGE)				  return PARSE_SUCCESS_END_OF_MESSAGE;
+    if (parsingStatus == HTTPParser::PARSE_SUCCESS_END_OF_MESSAGE_WITH_EXTRA_DATA) return PARSE_SUCCESS_END_OF_MESSAGE_WITH_EXTRA_DATA;
+    if (parsingStatus == HTTPParser::PARSE_NEED_MORE_DATA)						  return PARSE_NEED_MORE_DATA;
+    if (parsingStatus == HTTPParser::PARSE_SUCCESS_END_OF_INPUT)					  return PARSE_SUCCESS_END_OF_INPUT;
 
     // HTTPParser::PARSE_SUCCESS or HTTPParser::PARSE_HEADER_AVAILABLE
     return PARSE_SUCCESS;
 }
+
+bool HttpParsingBasicObject::isRedirectResponse()
+{
+    bool aPartOfRedirectResponse = false;
+    uint32 httpStatusCode = getStatusCode();
+    if (PROTOCOLENGINE_REDIRECT_STATUS_CODE_START <= httpStatusCode && httpStatusCode <= PROTOCOLENGINE_REDIRECT_STATUS_CODE_END)
+    {
+        aPartOfRedirectResponse = true;
+    }
+    return aPartOfRedirectResponse;
+}
+
 
 // factory method
 HttpParsingBasicObject* HttpParsingBasicObject::create()
@@ -436,7 +438,86 @@ bool HttpParsingBasicObject::getContentType(OSCL_String &aContentType)
     return false;
 }
 
+bool HttpParsingBasicObject::isServerSupportBasicAuthentication()
+{
+    StrCSumPtrLen aAuthenKey = "WWW-Authenticate";
+    uint32 numFieldsByKey = iParser->getNumberOfFieldsByKey(aAuthenKey);
+    uint32 i = 0;
+    for (i = 0; i < numFieldsByKey; i++)
+    {
+        StrPtrLen aAuthenValue;
+        iParser->getField(aAuthenKey, aAuthenValue, i);
+        const char *ptrRealm = aAuthenValue.c_str();
+        uint32 len = aAuthenValue.length();
+        uint32 length = 0;
+
+        getRealmPtr(ptrRealm, len, length);
+        getBasicPtr(aAuthenValue, length);
+        if (length >= 6) return true;
+    }
+    return false;
+}
+
 bool HttpParsingBasicObject::getAuthenInfo(OSCL_String &aRealm)
+{
+    StrCSumPtrLen aAuthenKey = "WWW-Authenticate";
+    uint32 numFieldsByKey = iParser->getNumberOfFieldsByKey(aAuthenKey);
+    uint32 i = 0;
+    for (i = 0; i < numFieldsByKey; i++)
+    {
+        StrPtrLen aAuthenValue;
+        iParser->getField(aAuthenKey, aAuthenValue, i);
+        const char *ptrRealm = aAuthenValue.c_str();
+        uint32 len = aAuthenValue.length();
+        uint32 length = 0;
+
+        getRealmPtr(ptrRealm, len, length);
+        if (len < 6) continue;
+
+        getBasicPtr(aAuthenValue, length);
+        if (length < 6) continue;
+
+        ptrRealm += 6;
+        len -= 6;
+        aRealm = OSCL_HeapString<OsclMemAllocator> (ptrRealm, len);
+        return true;
+    }
+    return false;
+}
+
+void HttpParsingBasicObject::getRealmPtr(const char *&ptrRealm, uint32 &len, uint32 &length)
+{
+    while (!(((ptrRealm[0]  | OSCL_ASCII_CASE_MAGIC_BIT) == 'r') &&
+             ((ptrRealm[1]  | OSCL_ASCII_CASE_MAGIC_BIT) == 'e') &&
+             ((ptrRealm[2]  | OSCL_ASCII_CASE_MAGIC_BIT) == 'a') &&
+             ((ptrRealm[3]  | OSCL_ASCII_CASE_MAGIC_BIT) == 'l') &&
+             ((ptrRealm[4]  | OSCL_ASCII_CASE_MAGIC_BIT) == 'm') &&
+             ((ptrRealm[5]  | OSCL_ASCII_CASE_MAGIC_BIT) == '=')) &&
+            len >= 6)
+    {
+        ptrRealm++;
+        len--;
+        length++;
+    }
+}
+
+void HttpParsingBasicObject::getBasicPtr(const StrPtrLen aAuthenValue, uint32 &length)
+{
+    const char *ptrBasic = aAuthenValue.c_str();
+    while (!(((ptrBasic[0]  | OSCL_ASCII_CASE_MAGIC_BIT) == 'b') &&
+             ((ptrBasic[1]  | OSCL_ASCII_CASE_MAGIC_BIT) == 'a') &&
+             ((ptrBasic[2]  | OSCL_ASCII_CASE_MAGIC_BIT) == 's') &&
+             ((ptrBasic[3]  | OSCL_ASCII_CASE_MAGIC_BIT) == 'i') &&
+             ((ptrBasic[4]  | OSCL_ASCII_CASE_MAGIC_BIT) == 'c') &&
+             ((ptrBasic[5]  | OSCL_ASCII_CASE_MAGIC_BIT) == ' ')) &&
+            length >= 6)
+    {
+        ptrBasic++;
+        length--;
+    }
+}
+
+bool HttpParsingBasicObject::isServerSendAuthenticationHeader()
 {
     StrCSumPtrLen aAuthenKey = "WWW-Authenticate";
     StrPtrLen aAuthenValue;
@@ -444,40 +525,11 @@ bool HttpParsingBasicObject::getAuthenInfo(OSCL_String &aRealm)
     {
         if (aAuthenValue.length() > 0)
         {
-            StrPtrLen realmField;
-            if (getRealmField(aAuthenValue, realmField))
-            {
-                aRealm = OSCL_HeapString<OsclMemAllocator> (realmField.c_str(), realmField.length());
-                return true;
-            }
+            return true;
         }
     }
     return false;
 }
-
-bool HttpParsingBasicObject::getRealmField(const StrPtrLen &aInputData, StrPtrLen &aOuputData)
-{
-    // get playback time
-    char *ptr = (char *)aInputData.c_str();
-    uint32 len = aInputData.length();
-    while (!(((ptr[0]  | OSCL_ASCII_CASE_MAGIC_BIT) == 'r') &&
-             ((ptr[1]  | OSCL_ASCII_CASE_MAGIC_BIT) == 'e') &&
-             ((ptr[2]  | OSCL_ASCII_CASE_MAGIC_BIT) == 'a') &&
-             ((ptr[3]  | OSCL_ASCII_CASE_MAGIC_BIT) == 'l') &&
-             ((ptr[4]  | OSCL_ASCII_CASE_MAGIC_BIT) == 'm') &&
-             ((ptr[5]  | OSCL_ASCII_CASE_MAGIC_BIT) == '=')) &&
-            len >= 6)
-    {
-        ptr++;
-        len--;
-    }
-    if (len < 6) return false;
-    ptr += 6;
-    len -= 6;
-    aOuputData = StrPtrLen(ptr, len);
-    return true;
-}
-
 
 int32 HttpParsingBasicObject::isNewContentRangeInfoMatchingCurrentOne(const uint32 aPrevContentLength)
 {
@@ -619,7 +671,7 @@ int32 ProtocolState::processMicroStateSendRequest()
     memFrag.len = fragOut.getCapacity();
     int32 status = composeRequest(memFrag);
     if (status != PROCESS_SUCCESS) return status;
-    mediaData->setMediaFragFilledLen(0, getCurrentRequestLength()); // don't count NULL
+    mediaData->setMediaFragFilledLen(0, iComposer->getCurrentRequestLength(iURI.isUseAbsoluteURI())); // don't count NULL
 
     // send to port
     iObserver->ProtocolRequestAvailable(getProtocolRequestType());
@@ -735,10 +787,10 @@ uint32 ProtocolState::getDownloadRate()
     int32 deltaMilliSec1 = pBWEstInfo->iLatestMediaDataTimestamp - pBWEstInfo->iFirstMediaDataTsPerRequest;
     if (deltaMilliSec1 <= 0) return 0;
 
-    OsclFloat downloadRate0 = ((OsclFloat)getDownloadSize() / (OsclFloat)deltaMilliSec0) * 1000.0; // try to avoid overflow problem for 32-bit interger multiplication
-    OsclFloat downloadRate  = ((OsclFloat)getDownloadSize() / (OsclFloat)deltaMilliSec) * 1000.0; // try to avoid overflow problem for 32-bit interger multiplication
+    OsclFloat downloadRate0 = ((OsclFloat)getDownloadSize() / (OsclFloat)deltaMilliSec0) * (OsclFloat)1000.0; // try to avoid overflow problem for 32-bit interger multiplication
+    OsclFloat downloadRate  = ((OsclFloat)getDownloadSize() / (OsclFloat)deltaMilliSec) * (OsclFloat)1000.0; // try to avoid overflow problem for 32-bit interger multiplication
     OsclFloat downloadRate1 = ((OsclFloat)(pBWEstInfo->iTotalSizePerRequest) /
-                               (OsclFloat)deltaMilliSec1) * 1000.0; // try to avoid overflow problem for 32-bit interger multiplication
+                               (OsclFloat)deltaMilliSec1) * (OsclFloat)1000.0; // try to avoid overflow problem for 32-bit interger multiplication
 
     LOGINFODATAPATH((0, "ProtocolState::getDownloadRate(), deltaMilliSec0=%d, downloadSize=%d, downloadRate0=%d",
                      deltaMilliSec0, getDownloadSize(), (uint32)downloadRate0));

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,6 @@
 
  Pathname: ./src/fft_rx4_long.c
  Funtions: fft_rx4_long
-
-     Date: 9/04/2002
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
@@ -44,6 +42,7 @@
             (1) Added comment to explain max search elimination and
                 Q format during multiplications
 
+ Who:                       Date:
  Description:
 
 ------------------------------------------------------------------------------

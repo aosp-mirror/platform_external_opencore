@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,10 @@
  */
 #ifndef _MP4ENC_API_H_
 #define _MP4ENC_API_H_
+
+#ifndef OSCL_BASE_H_INCLUDED
+#include "oscl_base.h"
+#endif
 
 #ifndef _PV_TYPES_
 #define _PV_TYPES_
@@ -140,6 +144,9 @@ typedef struct tagvideoEncOptions
     /** @brief Enables reversible variable length code (RVLC) mode. Normally it is set to PV_OFF.*/
     ParamEncMode		rvlcEnable;
 
+    /** @brief Set the frequency of GOB header interval */
+    Int					gobHeaderInterval;
+
     /** @brief Sets the number of bitstream layers: 1 is base only: 2 is base + enhancement */
     Int					numLayers;
 
@@ -189,13 +196,13 @@ typedef struct tagvideoEncOptions
     *			However, users can force no frame skipping with this flag, but buffer constraint may be violated.*/
     ParamEncMode		noFrameSkipped;
 
-    /** @brief Sets the maximum time in seconds between two intra frames. Intra frames mode are periodically forced
-    *			if no I-Vop is encoded after the specified period to add error resiliency and help resynchronize in case of errors.
-    *			If scene change detection can add additional I-Vop if new scenes are detected.
+    /** @brief Sets the maximum number of P-frames between two I-frames. I-frame mode is periodically forced
+    *			if no I-frame is encoded after the specified period to add error resiliency and help resynchronize in case of errors.
+    *			If scene change detection can add additional I-frame if new scenes are detected.
     *			intraPeriod is the I frame interval in terms of second.
     *			intraPeriod =0 indicates I-frame encoding only;
-    *			intraPeriod = -1  indicates I-frame followed by all P-frames;
-    *			intraPeriod = N, indicates intra period of N seconds. The default is intraPeriod = 5.*/
+    *			intraPeriod = -1  indicates I-frame followed by all P-frames; (default)
+    *			intraPeriod = N, indicates the number of P-frames between 2 I-frames.*/
     Int					intraPeriod;
 
 
@@ -222,6 +229,13 @@ typedef struct tagvideoEncOptions
     ParamEncMode		mv8x8Enable;
 
 
+    /** @brief Set the threshold for using intra DC VLC.
+    *           Value must range from 0-7.*/
+    Int                 intraDCVlcTh;
+
+    /** @brief This flag turns on the use of AC prediction */
+    Bool                useACPred;
+
 } VideoEncOptions;
 
 #ifdef __cplusplus
@@ -240,14 +254,14 @@ extern "C"
     *			 are assigned to streaming use-case as compared to download use-case. It can be project dependent too.
     *	@return true for correct operation; false if error happens
     */
-    Bool PVGetDefaultEncOption(VideoEncOptions *encOption, Int encUseCase);
+    OSCL_IMPORT_REF Bool PVGetDefaultEncOption(VideoEncOptions *encOption, Int encUseCase);
 
     /**
     *	@brief  Verifies the consistency of encoding parameters, allocates memory needed and set necessary internal variables.
     *	@param	encCtrl is video encoder control structure that is always passed as input in all APIs
     *	@return true for correct operation; false if error happens
     */
-    Bool	PVInitVideoEncoder(VideoEncControls *encCtrl, VideoEncOptions *encOption);
+    OSCL_IMPORT_REF Bool	PVInitVideoEncoder(VideoEncControls *encCtrl, VideoEncOptions *encOption);
 
     /* acquiring encoder info APIs */
     /**
@@ -261,7 +275,7 @@ extern "C"
     *	@param	layer is the layer of the requested VOL header.
     *	@return true for correct operation; false if error happens.
     */
-    Bool	PVGetVolHeader(VideoEncControls *encCtrl, UChar *volHeader, Int *size, Int layer);
+    OSCL_IMPORT_REF Bool	PVGetVolHeader(VideoEncControls *encCtrl, UChar *volHeader, Int *size, Int layer);
 
     /**
     *	@brief  This function returns the profile and level in H.263 coding when the encoding parameters are set
@@ -270,7 +284,16 @@ extern "C"
     *	@param	levelID is the pointer of the level ID that could be 10-70.
     *	@return true for correct operation; false if error happens.
     */
-    Bool	PVGetH263ProfileLevelID(VideoEncControls *encCtrl, Int *profileID, Int *levelID);
+    OSCL_IMPORT_REF Bool	PVGetH263ProfileLevelID(VideoEncControls *encCtrl, Int *profileID, Int *levelID);
+
+    /**
+    *	@brief  This function returns the profile and level of MPEG4 when the encoding parameters are set
+    *	@param	encCtrl is video encoder control structure that is always passed as input in all APIs.
+    *	@param	profile_level is the pointer of the profile enumeration
+    *	@param	nLayer is the index of the layer of interest
+    *	@return true for correct operation; false if error happens.
+    */
+    OSCL_IMPORT_REF Bool	PVGetMPEG4ProfileLevelID(VideoEncControls *encCtrl, Int *profile_level, Int nLayer);
 
     /**
     *	@brief  This function returns maximum frame size in bytes
@@ -278,7 +301,7 @@ extern "C"
     *	@param	maxVideoFrameSize is the pointer of the maximum frame size
     *	@return true for correct operation; false if error happens
     */
-    Bool    PVGetMaxVideoFrameSize(VideoEncControls *encCtrl, Int *maxVideoFrameSize);
+    OSCL_IMPORT_REF Bool    PVGetMaxVideoFrameSize(VideoEncControls *encCtrl, Int *maxVideoFrameSize);
 
 #ifndef LIMITED_API
     /**
@@ -286,7 +309,7 @@ extern "C"
     *	@param	encCtrl is video encoder control structure that is always passed as input in all APIs
     *	@return true for correct operation; false if error happens
     */
-    Int		PVGetEncMemoryUsage(VideoEncControls *encCtrl);
+    OSCL_IMPORT_REF Int		PVGetEncMemoryUsage(VideoEncControls *encCtrl);
 
     /**
     *	@brief  This function is used by PVAuthor to get the size of the VBV buffer.
@@ -294,7 +317,7 @@ extern "C"
     *	@param	VBVSize is the pointer of The size of the VBV buffer in bytes.
     *	@return true for correct operation; false if error happens
     */
-    Bool	PVGetVBVSize(VideoEncControls *encCtrl, Int *VBVSize);
+    OSCL_IMPORT_REF Bool	PVGetVBVSize(VideoEncControls *encCtrl, Int *VBVSize);
 #endif
 
     /**
@@ -313,9 +336,21 @@ extern "C"
     *	@param	nLayer is the layer of the encoded frame either 0 for base or 1 for enhancement layer. The value -1 indicates skipped frame due to buffer overflow.
     *	@return true newfor correct operation; false if error happens
     */
-    Bool	PVEncodeVideoFrame(VideoEncControls *encCtrl, VideoEncFrameIO *vid_in, VideoEncFrameIO *vid_out,
-                            ULong *nextModTime, UChar *bstream, Int *size, Int *nLayer);
-#ifndef NO_SLICE_ENCODE
+    OSCL_IMPORT_REF Bool	PVEncodeVideoFrame(VideoEncControls *encCtrl, VideoEncFrameIO *vid_in, VideoEncFrameIO *vid_out,
+                                            ULong *nextModTime, UChar *bstream, Int *size, Int *nLayer);
+
+
+    /**
+    *	@brief	This function is used to query overrun buffer. It is used when PVEncodeVideoFrame.returns size that is
+    *			larger than the input size.
+    *	@param	encCtrl is video encoder control structure that is always passed as input in all APIs
+    *	@return Pointer to the overrun buffer. NULL if overrun buffer is not used.
+    */
+    OSCL_IMPORT_REF UChar* PVGetOverrunBuffer(VideoEncControls *encCtrl);
+
+#ifndef NO_SLICE_ENCODE   /* This set of APIs are not working. This functionality has been partially 
+    replaced by the introduction of overrun buffer. */
+
     /* slice-based coding */
     /**
     *	@brief  This function sets the input YUV frame and timestamp to be encoded by the slice-based encoding function PVEncodeSlice().
@@ -329,7 +364,7 @@ extern "C"
     *	@param	nLayer is the layer of the encoded frame either 0 for base or 1 for enhancement layer. The value -1 indicates skipped frame due to buffer overflow.
     *	@return true newfor correct operation; false if error happens
     */
-    Bool	PVEncodeFrameSet(VideoEncControls *encCtrl, VideoEncFrameIO *vid_in, ULong *nextModTime, Int *nLayer);
+    OSCL_IMPORT_REF Bool	PVEncodeFrameSet(VideoEncControls *encCtrl, VideoEncFrameIO *vid_in, ULong *nextModTime, Int *nLayer);
     /**
     *	@brief  This function encodes a GOB (short header mode) or a packet (data partitioning mode or combined mode with resync marker)
     *			and output the reconstructed frame and MPEG4 bitstream. The application is required to allocate memory for the bitstream buffer.
@@ -347,8 +382,8 @@ extern "C"
     *	@param	nextModTime is the timestamp encoder expects from the next input
     *	@return true newfor correct operation; false if error happens
     */
-    Bool	PVEncodeSlice(VideoEncControls *encCtrl, UChar *bstream, Int *size,
-                       Int *endofFrame, VideoEncFrameIO *vid_out, ULong *nextModTime);
+    OSCL_IMPORT_REF Bool	PVEncodeSlice(VideoEncControls *encCtrl, UChar *bstream, Int *size,
+                                       Int *endofFrame, VideoEncFrameIO *vid_out, ULong *nextModTime);
 #endif
 
     /**
@@ -357,7 +392,7 @@ extern "C"
     *	@param	info is the structure for MP4 hint track information
     *	@return true for correct operation; false if error happens
     */
-    Bool	PVGetHintTrack(VideoEncControls *encCtrl, MP4HintTrack *info);
+    OSCL_IMPORT_REF Bool	PVGetHintTrack(VideoEncControls *encCtrl, MP4HintTrack *info);
 
 #ifndef LIMITED_API
     /**
@@ -367,7 +402,7 @@ extern "C"
     *			frameRate[n] represents the n-th layer's target frame rate.
     *	@return true for correct operation; false if error happens
     */
-    Bool	PVUpdateEncFrameRate(VideoEncControls *encCtrl, float *frameRate); /* for 2-way */
+    OSCL_IMPORT_REF Bool	PVUpdateEncFrameRate(VideoEncControls *encCtrl, float *frameRate); /* for 2-way */
 
 
     /**
@@ -377,17 +412,17 @@ extern "C"
     *			bitRate[n] represents the n-th layer's target bit rate.
     *	@return true for correct operation; false if error happens
     */
-    Bool	PVUpdateBitRate(VideoEncControls *encCtrl, Int *bitRate);			/* for 2-way */
+    OSCL_IMPORT_REF Bool	PVUpdateBitRate(VideoEncControls *encCtrl, Int *bitRate);			/* for 2-way */
 
 
     /**
     *	@brief  updates the INTRA frame refresh interval while encoding operation is ongoing.
     *	@param	encCtrl is video encoder control structure that is always passed as input in all APIs
-    *	@param	aIFramePeriod is a new value of INTRA frame interval in the unit of second
+    *	@param	aIFramePeriod is a new value of INTRA frame interval in the unit of number of coded frames.
     *	@return true for correct operation; false if error happens
     */
 
-    Bool	PVUpdateIFrameInterval(VideoEncControls *encCtrl, Int aIFramePeriod);/* for 2-way */
+    OSCL_IMPORT_REF Bool	PVUpdateIFrameInterval(VideoEncControls *encCtrl, Int aIFramePeriod);/* for 2-way */
 
     /**
     *	@brief  specifies the number Intra MBs to be refreshed
@@ -395,14 +430,14 @@ extern "C"
     *	@param	numMB is the number of Intra MBs to be refreshed
     *	@return true for correct operation; false if error happens
     */
-    Bool	PVUpdateNumIntraMBRefresh(VideoEncControls *encCtrl, Int numMB);  /* for 2-way */
+    OSCL_IMPORT_REF Bool	PVUpdateNumIntraMBRefresh(VideoEncControls *encCtrl, Int numMB);  /* for 2-way */
 
     /**
     *	@brief  This function is called whenever users want the next base frame to be encoded as an I-Vop.
     *	@param	encCtrl is video encoder control structure that is always passed as input in all APIs
     *	@return true for correct operation; false if error happens
     */
-    Bool	PVIFrameRequest(VideoEncControls *encCtrl);							/* for 2-way */
+    OSCL_IMPORT_REF Bool	PVIFrameRequest(VideoEncControls *encCtrl);							/* for 2-way */
 
 #endif // LIMITED_API
 
@@ -412,7 +447,7 @@ extern "C"
     *	@param	encCtrl is video encoder control structure that is always passed as input in all APIs
     *	@return true for correct operation; false if error happens
     */
-    Bool	PVCleanUpVideoEncoder(VideoEncControls *encCtrl);
+    OSCL_IMPORT_REF Bool	PVCleanUpVideoEncoder(VideoEncControls *encCtrl);
 
 #ifdef __cplusplus
 }

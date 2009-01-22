@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,12 @@ class DownloadState : public ProtocolState
             return false;
         }
 
+        virtual void reset()
+        {
+            iOutputDataQueue.clear();
+            ProtocolState::reset();
+        }
+
         // constructor
         DownloadState() : iSetContentLengthFlagtoConfigFileObject(false)
         {
@@ -45,7 +51,7 @@ class DownloadState : public ProtocolState
         // virtual destructor, let internal objects destruct automatically
         virtual ~DownloadState()
         {
-            ;
+            reset();
         }
 
     protected:

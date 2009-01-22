@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*********************************************************************************/
 /*
     This PVA_FF_TimeToSampleAtom Class contains a compact version of a table that allows
     indexing from decoding to sample number.
@@ -47,8 +46,6 @@ class PVA_FF_TimeToSampleAtom : public PVA_FF_FullAtom
         void updateLastTSEntry(uint32 ts);
         // Rendering the PVA_FF_Atom in proper format (bitlengths, etc.) to an ostream
         virtual bool renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp);
-
-        void setBIFSODSampleDuration(int32 duration);
 
     private:
         void addDelta(int32 delta);

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,9 +78,6 @@
 #ifndef PVMF_META_DATA_H_INCLUDED
 #include "pvmf_meta_data_types.h"
 #endif
-#ifndef AUDIOMETADATA_H_INCLUDED
-#include "audiometadata.h"
-#endif
 #ifndef PVMI_KVP_INCLUDED
 #include "pvmi_kvp.h"
 #endif
@@ -100,7 +97,16 @@ typedef struct _MP3ContentFormatTypeTag
     uint32 FrameSize;
     uint32 FileSizeInBytes;
     uint32 FrameSizeUnComp;
+    uint32 ChannelMode;  //0: Stereo 1: Joint Ch. Stereo 2: Dual  Ch. Stereo 3: Mono
 } MP3ContentFormatType;
+
+typedef enum
+{
+    MP3_CHANNEL_MODE_STEREO = 0,
+    MP3_CHANNEL_MODE_JOINT_CHANNEL_STEREO = 1,
+    MP3_CHANNEL_MODE_DUAL_CHANNEL_STEREO = 2,
+    MP3_CHANNEL_MODE_MONO = 3
+}MP3ChannelMode;
 
 typedef enum
 {
@@ -113,6 +119,7 @@ typedef enum
     MP3_FILE_HDR_DECODE_ERR,
     MP3_FILE_XING_HDR_ERR,
     MP3_FILE_VBRI_HDR_ERR,
+    MP3_ERR_NO_MEMORY,
     MP3_NO_SYNC_FOUND,
     MP3_FILE_OPEN_ERR,
     /* PD related Error values*/
@@ -285,6 +292,14 @@ class IMpeg3File
         OSCL_IMPORT_REF uint32 GetDuration() const;
 
         /**
+        * @brief Returns the approximate duration of downloaded data.
+        *
+        * @param aFileSize, aNPTInMS
+        * @returns aNPTInMS
+        */
+        OSCL_IMPORT_REF int32 ConvertSizeToTime(uint32 aFileSize, uint32& aNPTInMS) const;
+
+        /**
         * @brief Returns the number of frames in the clip.
         *
         * @param None
@@ -385,7 +400,7 @@ class IMpeg3File
         * @param reference to metadatasize
         * @returns error type.
         */
-        OSCL_IMPORT_REF MP3ErrorType GetMetadataSize(int32& aMetaDataSize);
+        OSCL_IMPORT_REF MP3ErrorType GetMetadataSize(uint32& aMetaDataSize);
 
         /**
         * @brief Retrieves minimum bytes required for getting the config info
@@ -393,7 +408,7 @@ class IMpeg3File
         * @param
         * @returns byte size of firstframe and id3 tags.
         */
-        OSCL_IMPORT_REF uint32 GetMinBytesRequired();
+        OSCL_IMPORT_REF uint32 GetMinBytesRequired(bool aNextBytes = false);
 
         /**
         * @brief Sets the file size to the parser
@@ -417,6 +432,11 @@ class IMpeg3File
         OSCL_EXPORT_REF MP3ErrorType ScanMP3File(uint32 aFramesToScan);
 
     private:
+        OsclAny* AllocateKVPKeyArray(int32& leavecode, PvmiKvpValueType aValueType, int32 aNumElements);
+        int32 PushKVPValue(PvmiKvp aKVP, Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList);
+        int32 PushKVPKey(const char* aString, PVMFMetadataList& aKeyList);
+        int32 PushKVPKey(OSCL_HeapString<OsclMemAllocator>& aString, Oscl_Vector<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator>& aKeyList);
+
         MP3Parser* pMP3Parser;
         PVFile iMP3File;
         bool iEnableCrcCalc;

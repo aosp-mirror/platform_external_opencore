@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,25 +78,6 @@
 #define RTP_HEADER_M_BIT_OFFSET 7
 #define RTP_HEADER_PT_MASK      0x7F
 
-/* ASF HEADER CONSTANTS */
-#define ASF_DATA_PACKET_HEADER_ERROR_CORRECTION_PRESENT_MASK     0x80
-#define ASF_DATA_PACKET_HEADER_ERROR_CORRECTION_DATA_LENGTH_MASK 0x07
-#define ASF_DATA_PACKET_HEADER_SEQUENCE_LENGTH_TYPE_OFFSET       1
-#define ASF_DATA_PACKET_HEADER_SEQUENCE_LENGTH_TYPE_MASK         0x06
-#define ASF_DATA_PACKET_HEADER_PADDING_LENGTH_TYPE_OFFSET        3
-#define ASF_DATA_PACKET_HEADER_PADDING_LENGTH_TYPE_MASK          0x18
-#define ASF_DATA_PACKET_HEADER_PACKET_LENGTH_TYPE_OFFSET         5
-#define ASF_DATA_PACKET_HEADER_PACKET_LENGTH_TYPE_MASK           0x60
-/*
- * 1 - Error correction flags
- * 7 (worstcase) - Error correction data length
- * 1 - Length Type;
- * 1 - Property Flags;
- * 4 each(worst case) - PacketLength, Sequence, PaddingLength
- * 4 - Send Time
- * 2 - Duration
- */
-#define MAX_ASF_DATA_PACKET_HEADER_SIZE_IN_BYTES   28
 
 #define PVMF_JITTER_BUFFER_BUFFERING_STATUS_TIMER_ID 1
 
@@ -117,6 +98,8 @@ enum PVMFJitterBufferTransportHeaderFormat
 typedef enum
 {
     PVMF_JITTER_BUFFER_ADD_ELEM_ERROR,
+    PVMF_JITTER_BUFFER_ADD_ELEM_ERR_LATE_PACKET,
+    PVMF_JITTER_BUFFER_ADD_ELEM_PACKET_OVERWRITE,
     PVMF_JITTER_BUFFER_ADD_ELEM_SUCCESS,
     PVMF_JITTER_BUFFER_ADD_ELEM_UNEXPECTED_DATA
 } PVMFJitterBufferAddElemStatus;
@@ -150,9 +133,11 @@ typedef struct tagPVMFRTPInfoParams
         seqNum = 0;
         rtpTimeBaseSet = false;
         rtpTime = 0;
+        nptTimeBaseSet = false;
         nptTimeInMS = 0;
         rtpTimeScale = 0;
         nptTimeInRTPTimeScale = 0;
+        isPlayAfterPause = false;
     };
 
     bool   seqNumBaseSet;
@@ -160,8 +145,10 @@ typedef struct tagPVMFRTPInfoParams
     bool   rtpTimeBaseSet;
     uint32 rtpTime;
     uint32 nptTimeInMS;
+    bool   nptTimeBaseSet;
     uint32 rtpTimeScale;
     uint32 nptTimeInRTPTimeScale;
+    bool   isPlayAfterPause;
 } PVMFRTPInfoParams;
 
 class MediaCommandMsgHolder
@@ -315,6 +302,7 @@ class PVMFDynamicCircularArray
             readOffset = 0;
             firstSeqNumAdded = 0;
             sJitterBufferParams.currentOccupancy = 0;
+            sJitterBufferParams.packetSizeInBytesLeftInBuffer = 0;
         }
 
         void ResetJitterBufferStats()
@@ -401,6 +389,9 @@ class PVMFDynamicCircularArray
                     return PVMF_JITTER_BUFFER_ADD_ELEM_ERROR;
                 }
 
+                /*
+                 * During ASF streaming this will happen if there is a backwards seek.
+                 */
                 if ((iHeaderFormat == PVMF_JITTER_BUFFER_TRANSPORT_HEADER_RTP) &&
                         (iBroadCastSession == true))
                 {
@@ -428,7 +419,7 @@ class PVMFDynamicCircularArray
                         if (diff16 > PVMF_JITTER_BUFFER_ROLL_OVER_THRESHOLD_16BIT)
                         {
                             /* too late - discard the packet */
-                            oRet = PVMF_JITTER_BUFFER_ADD_ELEM_ERROR;
+                            oRet = PVMF_JITTER_BUFFER_ADD_ELEM_ERR_LATE_PACKET;
                             return (oRet);
                         }
                         else
@@ -445,7 +436,7 @@ class PVMFDynamicCircularArray
                         if ((seqNum - lastRetrievedSeqNum) > PVMF_JITTER_BUFFER_ROLL_OVER_THRESHOLD_32BIT)
                         {
                             /* too late - discard the packet */
-                            oRet = PVMF_JITTER_BUFFER_ADD_ELEM_ERROR;
+                            oRet = PVMF_JITTER_BUFFER_ADD_ELEM_ERR_LATE_PACKET;
                             return (oRet);
                         }
                         else
@@ -502,6 +493,7 @@ class PVMFDynamicCircularArray
                     sJitterBufferParams.maxTimeStampRegistered = elem->getTimestamp();
                 }
                 sJitterBufferParams.currentOccupancy = numElems;
+                oRet = PVMF_JITTER_BUFFER_ADD_ELEM_PACKET_OVERWRITE;
                 return (oRet);
             }
             /* Duplicate Packet - Ignore */
@@ -595,6 +587,13 @@ class PVMFDynamicCircularArray
             aSeqNum = dataPkt.GetRep()->getSeqNum();
             return;
         }
+        void peekMaxElementTimeStamp(PVMFTimestamp& aTS,
+                                     uint32& aSeqNum)
+        {
+            aTS = sJitterBufferParams.maxTimeStampRegistered;
+            aSeqNum = sJitterBufferParams.maxSeqNumRegistered;
+            return;
+        }
 
         bool CheckCurrentReadPosition()
         {
@@ -642,7 +641,7 @@ class PVMFDynamicCircularArray
             iMediaPtrVec[aIndex] = aMediaPtr;
         }
 
-        void PurgeElementsWithSeqNumsLessThan(uint32 aSeqNum)
+        void PurgeElementsWithSeqNumsLessThan(uint32 aSeqNum, uint32& aPrevSeqNumBaseOut)
         {
             if (!iMediaPtrVec.empty())
             {
@@ -654,11 +653,27 @@ class PVMFDynamicCircularArray
                     {
                         if (it->GetRep() != NULL)
                         {
+                            /* Get packet size */
+                            uint32 size = 0;
+                            uint32 numFragments = it->GetRep()->getNumFragments();
+                            for (uint32 i = 0; i < numFragments; i++)
+                            {
+                                OsclRefCounterMemFrag memFragIn;
+                                it->GetRep()->getMediaFragment(i, memFragIn);
+                                size += memFragIn.getMemFrag().len;
+                            }
+                            sJitterBufferParams.packetSizeInBytesLeftInBuffer -= size;
                             it->Unbind();
                         }
                     }
                     numElems = 0;
-                    //iMediaPtrVec.clear();
+                    /* If after purging all elements, we want to determine the TS of the previous element
+                     * (with DeterminePrevTimeStampPeek()), it will give as false information if the
+                     * seqnum has wrapped around. So because of that, we set aPrevSeqNumBaseOut to be smaller
+                     * than the current seqnum.
+                     */
+                    aPrevSeqNumBaseOut = aSeqNum - 1;
+
                 }
                 else if (aSeqNum > lastRetrievedSeqNum)
                 {
@@ -685,6 +700,16 @@ class PVMFDynamicCircularArray
                         {
                             if (elem->getSeqNum() < aSeqNum)
                             {
+                                /* Get packet size */
+                                uint32 size = 0;
+                                uint32 numFragments = elem->getNumFragments();
+                                for (uint32 i = 0; i < numFragments; i++)
+                                {
+                                    OsclRefCounterMemFrag memFragIn;
+                                    elem->getMediaFragment(i, memFragIn);
+                                    size += memFragIn.getMemFrag().len;
+                                }
+                                sJitterBufferParams.packetSizeInBytesLeftInBuffer -= size;
                                 elem.Unbind();
                                 iMediaPtrVec[offset] = elem;
                                 numElems--;
@@ -725,8 +750,17 @@ class PVMFDynamicCircularArray
                         if (tmpTS >= aTS)
                             break;
 
+                        /* Get packet size */
+                        uint32 size = 0;
+                        uint32 numFragments = dataPkt->getNumFragments();
+                        for (uint32 i = 0; i < numFragments; i++)
+                        {
+                            OsclRefCounterMemFrag memFragIn;
+                            dataPkt->getMediaFragment(i, memFragIn);
+                            size += memFragIn.getMemFrag().len;
+                        }
+                        sJitterBufferParams.packetSizeInBytesLeftInBuffer -= size;
                         (iMediaPtrVec[readOffset]).Unbind();
-
                         numElems--;
                     }
                     readOffset++;
@@ -806,7 +840,7 @@ class PVMFJitterBuffer
     public:
         virtual ~PVMFJitterBuffer() {}
 
-        virtual void SetEstimatedServerClock(OsclClock* aEstServClock) = 0;
+        virtual void SetEstimatedServerClock(PVMFMediaClock* aEstServClock) = 0;
         virtual bool ParsePacketHeader(PVMFSharedMediaDataPtr& inDataPacket,
                                        PVMFSharedMediaDataPtr& outDataPacket,
                                        uint32 aFragIndex = 0) = 0;
@@ -816,11 +850,12 @@ class PVMFJitterBuffer
         virtual void FlushJitterBuffer() = 0;
         virtual void ResetJitterBuffer() = 0;
         virtual void setSSRC(uint32 aSSRC) = 0;
-        virtual void setRTPInfoParams(PVMFRTPInfoParams rtpInfoParams) = 0;
+        virtual void setRTPInfoParams(PVMFRTPInfoParams rtpInfoParams, bool oPlayAfterASeek) = 0;
         virtual bool CheckSpaceAvailability() = 0;
         virtual bool CheckForMemoryAvailability() = 0;
         virtual bool CheckCurrentReadPosition() = 0;
         virtual PVMFTimestamp peekNextElementTimeStamp() = 0;
+        virtual PVMFTimestamp peekMaxElementTimeStamp() = 0;
         virtual bool IsEmpty() = 0;
         virtual void SetEOS(bool aVal) = 0;
         virtual bool GetEOS() = 0;
@@ -840,7 +875,7 @@ class PVMFJitterBuffer
         virtual bool addMediaCommand(PVMFSharedMediaMsgPtr& aMediaCmd) = 0;
         virtual bool CheckForPendingCommands(PVMFSharedMediaMsgPtr& aCmdMsg) = 0;
         virtual void SetAdjustedTSInMS(PVMFTimestamp aAdjustedTS) = 0;
-        virtual uint32 GetRTPTimeStampOffset(void) = 0;
+        virtual bool GetRTPTimeStampOffset(uint32& aTimeStampOffset) = 0;
         virtual void   SetRTPTimeStampOffset(uint32 newTSBase) = 0;
         virtual PVMFSharedMediaDataPtr& GetFirstDataPacket(void) = 0;
         virtual void AdjustRTPTimeStamp() = 0;
@@ -855,7 +890,7 @@ class PVMFJitterBufferImpl : public PVMFJitterBuffer,
                              bool aInPlaceProcessing = true);
         virtual ~PVMFJitterBufferImpl();
 
-        void SetEstimatedServerClock(OsclClock* aEstServClock)
+        void SetEstimatedServerClock(PVMFMediaClock* aEstServClock)
         {
             iEstimatedServerClock = aEstServClock;
         }
@@ -873,6 +908,8 @@ class PVMFJitterBufferImpl : public PVMFJitterBuffer,
         {
             iFirstDataPackets.clear();
             iJitterBuffer->Clear();
+            iJitterBuffer->ResetJitterBufferStats();
+            iRTPInfoParamsVec.clear();
         };
 
         void ResetJitterBuffer();
@@ -885,7 +922,7 @@ class PVMFJitterBufferImpl : public PVMFJitterBuffer,
             SSRCLock = aSSRC;
         }
 
-        void setRTPInfoParams(PVMFRTPInfoParams rtpInfo)
+        void setRTPInfoParams(PVMFRTPInfoParams rtpInfo, bool oPlayAfterASeek)
         {
             iJitterBuffer->setRTPInfoParams(rtpInfo);
             PVMFRTPInfoParams iRTPInfoParams;
@@ -899,15 +936,19 @@ class PVMFJitterBufferImpl : public PVMFJitterBuffer,
             {
                 iRTPInfoParams.rtpTime = rtpInfo.rtpTime;
             }
-            iRTPInfoParams.nptTimeInMS = rtpInfo.nptTimeInMS;
             iRTPInfoParams.rtpTimeScale = rtpInfo.rtpTimeScale;
             iRTPTimeScale = rtpInfo.rtpTimeScale;
             iEstServClockMediaClockConvertor.set_timescale(iRTPTimeScale);
             iMediaClockConvertor.set_timescale(1000);
             iMediaClockConvertor.set_clock_other_timescale(0, iRTPInfoParams.rtpTimeScale);
-            iMediaClockConvertor.update_clock(iRTPInfoParams.nptTimeInMS);
-            iRTPInfoParams.nptTimeInRTPTimeScale =
-                iMediaClockConvertor.get_converted_ts(iRTPInfoParams.rtpTimeScale);
+            iRTPInfoParams.nptTimeBaseSet = rtpInfo.nptTimeBaseSet;
+            if (iRTPInfoParams.nptTimeBaseSet == true)
+            {
+                iRTPInfoParams.nptTimeInMS = rtpInfo.nptTimeInMS;
+                iMediaClockConvertor.update_clock(iRTPInfoParams.nptTimeInMS);
+                iRTPInfoParams.nptTimeInRTPTimeScale =
+                    iMediaClockConvertor.get_converted_ts(iRTPInfoParams.rtpTimeScale);
+            }
             /* In case this is the first rtp info set TS calc variables */
             if (iRTPInfoParamsVec.size() == 0)
             {
@@ -916,6 +957,12 @@ class PVMFJitterBufferImpl : public PVMFJitterBuffer,
                     iPrevTSOut = iRTPInfoParams.rtpTime;
                     iPrevTSIn = iRTPInfoParams.rtpTime;
                     iPrevAdjustedRTPTS = iRTPInfoParams.rtpTime;
+
+                    if (iPlayListRTPTimeBaseSet == false)
+                    {
+                        iPlayListRTPTimeBaseSet = true;
+                        iPlayListRTPTimeBase = iRTPInfoParams.rtpTime;
+                    }
                 }
                 else
                 {
@@ -927,6 +974,7 @@ class PVMFJitterBufferImpl : public PVMFJitterBuffer,
                         iPrevAdjustedRTPTS = seqLockTimeStamp;
                     }
                 }
+
                 if (iRTPInfoParams.seqNumBaseSet)
                 {
                     iPrevSeqNumBaseOut = iRTPInfoParams.seqNum;
@@ -941,6 +989,21 @@ class PVMFJitterBufferImpl : public PVMFJitterBuffer,
                         iPrevSeqNumBaseIn = iFirstSeqNum;
                     }
                 }
+                /* Initialize the variables used for ts calculation between pause and resume */
+                if (iRTPInfoParams.nptTimeBaseSet)
+                {
+                    iPrevNptTimeInRTPTimeScale = iRTPInfoParams.nptTimeInRTPTimeScale;
+                    isPrevNptTimeSet = true;
+                }
+                if (iRTPInfoParams.rtpTimeBaseSet)
+                {
+                    iPrevRtpTimeBase = iRTPInfoParams.rtpTime;
+                    isPrevRtpTimeSet = true;
+                }
+            }
+            else
+            {
+                iRTPInfoParams.isPlayAfterPause = !oPlayAfterASeek;
             }
             if (iRTPInfoParams.rtpTimeBaseSet)
             {
@@ -1003,7 +1066,7 @@ class PVMFJitterBufferImpl : public PVMFJitterBuffer,
         };
 
         PVMFTimestamp peekNextElementTimeStamp();
-
+        PVMFTimestamp peekMaxElementTimeStamp();
         void SetEOS(bool aVal)
         {
             oEOS = aVal;
@@ -1027,6 +1090,10 @@ class PVMFJitterBufferImpl : public PVMFJitterBuffer,
                             PVMFSharedMediaDataPtr& dataPacket,
                             uint32 aFragIndex = 0);
 
+
+        bool Allocate(OsclSharedPtr<PVMFMediaDataImpl>& mediaDataOut);
+
+        bool CreateMediaData(PVMFSharedMediaDataPtr& dataPacket, OsclSharedPtr<PVMFMediaDataImpl>& mediaDataOut);
 
         void setPlayRange(int32 aStartTimeInMS, int32 aStopTimeInMS)
         {
@@ -1155,15 +1222,26 @@ class PVMFJitterBufferImpl : public PVMFJitterBuffer,
             PVMF_JBNODE_LOGDATATRAFFIC_OUT((0, "PVMFJitterBufferImpl::SetAdjustedTS(): adjustedTSInRTPTS=%d, iMonotonicTS=%d", adjustedTSInRTPTS, Oscl_Int64_Utils::get_uint64_lower32(iMonotonicTimeStamp)));
 
         }
-        uint32 GetRTPTimeStampOffset(void)
+        bool GetRTPTimeStampOffset(uint32& aTimeStampOffset)
         {
-            return seqLockTimeStamp;
+            if (seqNumLock)
+                aTimeStampOffset = seqLockTimeStamp;
+
+            return seqNumLock;
         }
+
         void   SetRTPTimeStampOffset(uint32 newTSBase)
         {
-            seqLockTimeStamp = newTSBase;
-            iMonotonicTimeStamp = 0;
+            // This function must be used only to offset the RTP TB
+            // for broadcast streaming.
+            // Based on that, the following is assumed:
+            // 1) seqLockTimeStamp is valid
+            // 2) newTSBase <= seqLockTimeStamp
+
+            iMonotonicTimeStamp += (seqLockTimeStamp - newTSBase);
+            iMaxAdjustedRTPTS += (seqLockTimeStamp - newTSBase);
         }
+
         PVMFSharedMediaDataPtr& GetFirstDataPacket(void)
         {
             return firstDataPacket;
@@ -1273,6 +1351,7 @@ class PVMFJitterBufferImpl : public PVMFJitterBuffer,
         PVLogger *iDataPathLoggerIn;
         PVLogger *iDataPathLoggerOut;
         PVLogger *iClockLogger;
+        PVLogger *iClockLoggerRebuff;
 
         OSCL_HeapString<PVMFJitterBufferNodeAllocator> iMimeType;
 
@@ -1281,8 +1360,8 @@ class PVMFJitterBufferImpl : public PVMFJitterBuffer,
         double iInterArrivalJitterD;
         int32  iInterArrivalJitter;
 
-        OsclClock *iPacketArrivalClock;
-        OsclTimebase_Tickcount iPacketArrivalTimeBase;
+        PVMFMediaClock *iPacketArrivalClock;
+        PVMFTimebase_Tickcount iPacketArrivalTimeBase;
 
         int32 iStartTimeInMS;
         int32 iStopTimeInMS;
@@ -1296,12 +1375,16 @@ class PVMFJitterBufferImpl : public PVMFJitterBuffer,
         PVMFTimestamp iPrevTSIn;
         uint32 iPrevSeqNumBaseIn;
 
-        OsclClock* iEstimatedServerClock;
-        OsclTimebase_Tickcount iTickCount;
+        PVMFMediaClock* iEstimatedServerClock;
+        PVMFTimebase_Tickcount iTickCount;
         uint32 iRTPTimeScale;
         MediaClockConverter iEstServClockMediaClockConvertor;
         PVMFJitterBufferObserver* iObserver;
         OsclAny* iObserverContext;
+
+        // RTP Timebase for playlists
+        uint32 iPlayListRTPTimeBase;
+        bool iPlayListRTPTimeBaseSet;
 
         bool iInPlaceProcessing;
 
@@ -1318,6 +1401,10 @@ class PVMFJitterBufferImpl : public PVMFJitterBuffer,
         OsclAny* iServerClockUpdateNotificationObserverContext;
 
         bool iBroadCastSession;
+        bool   isPrevNptTimeSet;
+        uint32 iPrevNptTimeInRTPTimeScale;
+        bool   isPrevRtpTimeSet;
+        uint32 iPrevRtpTimeBase;
 };
 
 #endif
