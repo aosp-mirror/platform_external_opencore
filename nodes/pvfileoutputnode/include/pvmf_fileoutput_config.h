@@ -70,6 +70,15 @@ class PvmfFileOutputNodeConfigInterface : public PVInterface
         virtual bool queryInterface(const PVUuid& uuid, PVInterface*& iface) = 0;
 
         /**
+         * This method sets the output file handle. This method must be called before
+         * Start() is called.
+         *
+         * @param aFileHandle Output file handle
+         * @return Completion status of this method.
+         */
+	    virtual PVMFStatus SetOutputFile(OsclFileHandle* aFileHandle) = 0;
+
+        /**
          * This method sets the output file name. This method must be called before
          * the engine / node is initialized.
          *

@@ -6128,13 +6128,25 @@ void PVMFOMXVideoDecNode::DoCancelAllCommands(PVMFOMXVideoDecNodeCommand& aCmd)
     }
 
     //next cancel all queued commands
+    // Create a temporary queue for pending commands
+    // Copy the pending commands to the new queue
+    PVMFOMXVideoDecNodeCmdQ iTempPendingCmds;
+    for(int i=0; i< iInputCommands.size(); i++)
     {
-        //start at element 1 since this cancel command is element 0.
-        while (iInputCommands.size() > 1)
-        {
-            CommandComplete(iInputCommands, iInputCommands[1], PVMFErrCancelled);
-        }
+        PVMFOMXVideoDecNodeCommand* cmd = iInputCommands.FindById(i);
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_INFO, (0, "PVMFOMXVideoDecNode::DoCancelAllCommands CancelAllCmd ID %d InputCmd ID %d", aCmd.iId , cmd->iId));
+        if ((aCmd.iId > cmd->iId) && ((aCmd.iId - cmd->iId ) < 0x80000000))
+            iTempPendingCmds.StoreL(*cmd);
     }
+    for(int i=0; i< iTempPendingCmds.size(); i++)
+    {
+        // Get the queue from the top
+        PVMFOMXVideoDecNodeCommand* cmd = iTempPendingCmds.FindById(i);
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_INFO, (0, "PVMFOMXVideoDecNode::DoCancelAllCommands Cancel Cmd ID %d", cmd->iId));
+        //cancel the queued command
+        CommandComplete(iInputCommands, *cmd, PVMFErrCancelled);
+    }
+    iTempPendingCmds.clear();
 
     if (iResetInProgress && !iResetMsgSent)
     {

@@ -56,10 +56,6 @@
 #include "oscl_file_types.h"
 #endif
 
-#ifdef ENABLE_MEMORY_PLAYBACK
-#include <media/MediaPlayerInterface.h>
-#endif
-
 /**
  * OsclNativeFileIO defines the native file operations that must be implemented
  * by every Oscl platform.
@@ -131,18 +127,13 @@ class OsclNativeFile : public HeapBase
 
         //native file object.
         FILE* iFile;
-#ifdef ENABLE_MEMORY_PLAYBACK
-        static int sigbushandlerfunc(siginfo_t *, struct mediasigbushandler *);
-        // memory block
-        void* membase;
-        long long memoffset;
-        long long memlen;
-        int mempos;
-        struct mediasigbushandler sigbushandler;
-        int memcpyfailed;
-        static struct mediasigbushandler *getspecificforfaultaddr(char *faultaddr);
-#endif
 
+#ifdef ENABLE_SHAREDFD_PLAYBACK
+        int  iSharedFd;
+        long long iSharedFileOffset;
+        long long iSharedFileSize;
+        long long iSharedFilePosition;
+#endif
 };
 
 #endif // OSCL_FILE_NATIVE_H_INCLUDED

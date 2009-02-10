@@ -149,12 +149,15 @@ public:
 
     PVMFCommandId           iId;
     PvmiMediaXferHeader     iXferHeader;
-    void*                   iFrameBuffer;
+    sp<IMemory>             iFrameBuffer;
     size_t                  iFrameSize;
 
 private:
     void Copy(const AndroidCameraInputMediaData& aData) {
-        memcpy(this, &aData, sizeof(AndroidCameraInputMediaData));
+        iId = aData.iId;
+        iXferHeader = aData.iXferHeader;
+        iFrameBuffer = aData.iFrameBuffer;  // won't mess up the reference count
+        iFrameSize = aData.iFrameSize;
     }
 };
 
@@ -288,6 +291,10 @@ public:
     bool isRecorderStarting() { return iState==STATE_STARTED?true:false; }
 
 private:
+    // release all queued recording frames that have not been
+    // given the chance to be sent out.
+    void ReleaseQueuedFrames();
+
     void Run();
     void FrameSizeChanged();
 

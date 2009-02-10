@@ -41,6 +41,9 @@
 #ifndef PV_MP4FFCOMPOSER_CONFIG_H_INCLUDED
 #include "pv_mp4ffcomposer_config.h"
 #endif
+#ifndef OSCL_FILE_HANDLE_H_INCLUDED
+#include "oscl_file_handle.h"
+#endif
 
 #define KPVMp4FFCNClipConfigUuid PVUuid(0x2e3b479f,0x2c46,0x465c,0xba,0x41,0xb8,0x91,0x11,0xa9,0xdf,0x3a)
 
@@ -144,6 +147,16 @@ class PVMp4FFCNClipConfigInterface : public PVInterface
          */
         virtual bool queryInterface(const PVUuid& uuid, PVInterface*& iface) = 0;
 
+        /**
+        * This method sets the output file handle. This method must be called before
+        * Start() is called.
+        *
+        * @param aFileHandle Output file handle
+        * @return Completion status of this method.
+        */
+        virtual PVMFStatus SetOutputFile(OsclFileHandle* aFileHandle) = 0;
+	
+	
         /**
          * This method sets the output file name. This method must be called before
          * Start() is called.

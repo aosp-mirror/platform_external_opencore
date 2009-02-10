@@ -310,7 +310,22 @@ status_t PVMediaRecorder::reset()
         LOGE("failed to construct an author command");
         return UNKNOWN_ERROR;
     }
-    return mAuthorDriverWrapper->enqueueCommand(ac, 0, 0);
+    status_t ret = mAuthorDriverWrapper->enqueueCommand(ac, 0, 0);
+    if (ret != OK) {
+        LOGE("failed to do reset(%d)", ret);
+        return UNKNOWN_ERROR;
+    }
+    ret = mAuthorDriverWrapper->enqueueCommand(new author_command(AUTHOR_REMOVE_VIDEO_SOURCE), 0, 0);
+    if (ret != OK) {
+        LOGE("failed to remove video source(%d)", ret);
+        return UNKNOWN_ERROR;
+    }
+    ret = mAuthorDriverWrapper->enqueueCommand(new author_command(AUTHOR_REMOVE_AUDIO_SOURCE), 0, 0);
+    if (ret != OK) {
+        LOGE("failed to remove audio source(%d)", ret);
+        return UNKNOWN_ERROR;
+    }
+    return ret;
 }
 
 status_t PVMediaRecorder::close()

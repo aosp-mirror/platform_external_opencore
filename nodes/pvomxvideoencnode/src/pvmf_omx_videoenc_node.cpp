@@ -2057,20 +2057,25 @@ void PVMFOMXVideoEncNode::DoStop(PVMFVideoEncNodeCommand& aCmd)
 ////////////////////////////////////////////////////////////////////////////
 void PVMFOMXVideoEncNode::DeleteVideoEncoder()
 {
-
-    if (iOMXVideoEncoder != NULL)
-    {
+    LOGV("DeleteVideoEncoder");
+    if (iOMXVideoEncoder != NULL) {
         OMX_ERRORTYPE err;
-        /* Free Component handle. */
-        err = PV_MasterOMX_FreeHandle(iOMXVideoEncoder);
-        if (err != OMX_ErrorNone)
-        {
-            //Error condition report
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "PVMFOMXVideoEncNode::DeleteVideoEncoder(): Can't free encoder's handle!"));
+        OMX_STATETYPE state;
+        err = OMX_GetState(iOMXVideoEncoder, &state);
+        if (err != OMX_ErrorNone) {
+            LOGE("Failed to get encoder state with failure code(%d)", err);
+        } else if (state != OMX_StateLoaded && state != OMX_StateInvalid) {
+            LOGE("OMX_FreeHandle is called in a state(%d) other than OMX_StateLoaded or OMX_StateInvalid.", state);
         }
-        iOMXVideoEncoder = NULL;
 
+        // No matter what, call OMX_FreeHandle anyway
+        err = PV_MasterOMX_FreeHandle(iOMXVideoEncoder);
+        if (err != OMX_ErrorNone) {
+            LOGE("Failed to free encoder handle with failure code(%d)", err);
+        } else {
+            LOGI("video encoder handle has been successfully released");
+            iOMXVideoEncoder = NULL;
+        }
     }
 }
 

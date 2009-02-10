@@ -250,6 +250,7 @@ PVMFCommandId PvmfMediaInputNodeOutPort::writeAsync(uint8 format_type, int32 for
 
                 iNode->ReportErrorEvent(PVMFErrPortProcessing);
                 OsclError::Leave(OsclErrGeneral);
+		return -1;
 
             }
 

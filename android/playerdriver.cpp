@@ -24,6 +24,7 @@
 #include <media/thread_init.h>
 #include <utils/threads.h>
 #include <utils/List.h>
+#include <cutils/properties.h>
 
 #include <media/MediaPlayerInterface.h>
 
@@ -76,7 +77,7 @@ using namespace android;
 # endif
 
 // library and function name to retrieve device-specific MIOs
-static const char* MIO_LIBRARY_NAME = "libopencorehal";
+static const char* MIO_LIBRARY_NAME = "libopencorehw.so";
 static const char* VIDEO_MIO_FACTORY_NAME = "createVideoMio";
 typedef AndroidSurfaceOutput* (*VideoMioFactory)();
 
@@ -183,6 +184,7 @@ private:
     bool                    mSeekComp;
     bool                    mSeekPending;
 
+    bool                    mEmulation;
     void*                   mLibHandle;
 };
 
@@ -196,7 +198,8 @@ PlayerDriver::PlayerDriver(PVPlayer* pvPlayer) :
     mEndOfData(false),
     mRecentSeek(0),
     mSeekComp(true),
-    mSeekPending(false)
+    mSeekPending(false),
+    mEmulation(false)
 {
     LOGV("constructor");
     mSyncSem = new OsclSemaphore();
@@ -213,8 +216,21 @@ PlayerDriver::PlayerDriver(PVPlayer* pvPlayer) :
     mPlayerCapConfig = NULL;
     mDownloadContextData = NULL;
 
-    // attempt to open device-specific library
-    mLibHandle = ::dlopen(MIO_LIBRARY_NAME, RTLD_NOW);
+    // running in emulation?
+    mLibHandle = NULL;
+    char value[PROPERTY_VALUE_MAX];
+    if (property_get("ro.kernel.qemu", value, 0)) {
+        mEmulation = true;
+        LOGV("Emulation mode - using software codecs");
+    } else {
+        // attempt to open h/w specific library
+        mLibHandle = ::dlopen(MIO_LIBRARY_NAME, RTLD_NOW);
+        if (mLibHandle != NULL) {
+            LOGV("OpenCore hardware module loaded");
+        } else {
+            LOGV("OpenCore hardware module not found");
+        }
+    }
 
     // start player thread
     LOGV("start player thread");
@@ -601,7 +617,10 @@ void PlayerDriver::handleSetVideoSurface(PlayerSetVideoSurface* ec)
     if (mLibHandle != NULL) {
         VideoMioFactory f = (VideoMioFactory) ::dlsym(mLibHandle, VIDEO_MIO_FACTORY_NAME);
         if (f != NULL) {
+            LOGV("Creating hardware specific MIO");
             mio = f();
+        } else {
+            LOGV("MIO factory function not found");
         }
     }
 
@@ -612,7 +631,7 @@ void PlayerDriver::handleSetVideoSurface(PlayerSetVideoSurface* ec)
     }
 
     // initialize the MIO parameters
-    status_t ret = mio->set(mPvPlayer, ec->surface());
+    status_t ret = mio->set(mPvPlayer, ec->surface(), mEmulation);
     if (ret != NO_ERROR) {
         LOGE("Video MIO set failed");
         commandFailed(ec);
@@ -1141,12 +1160,14 @@ void PlayerDriver::HandleInformationalEvent(const PVAsyncInformationalEvent& aEv
     }
 }
 
-extern pthread_key_t osclfilenativesigbuskey;
-
 namespace android {
 
 #undef LOG_TAG
 #define LOG_TAG "PVPlayer"
+
+#ifdef MAX_OPENCORE_INSTANCES
+/*static*/ volatile int32_t PVPlayer::sNumInstances = 0;
+#endif
 
 // ----------------------------------------------------------------------------
 // implement the Packet Video player
@@ -1155,13 +1176,23 @@ PVPlayer::PVPlayer()
 {
     LOGV("PVPlayer constructor");
     mDataSourcePath = NULL;
+    mSharedFd = -1;
+    mIsDataSourceSet = false;
+    mDuration = -1;
+    mPlayerDriver = NULL;
+
+#ifdef MAX_OPENCORE_INSTANCES
+    if (android_atomic_inc(&sNumInstances) >= MAX_OPENCORE_INSTANCES) {
+        LOGW("Exceeds maximum number of OpenCore instances");
+        mInit = -EBUSY;
+        return;
+    }
+#endif
+
     LOGV("construct PlayerDriver");
     mPlayerDriver = new PlayerDriver(this);
     LOGV("send PLAYER_SETUP");
     mInit = mPlayerDriver->enqueueCommand(new PlayerSetup(0,0));
-    mMemBase = 0;
-    mIsDataSourceSet = false;
-    mDuration = -1;
 }
 
 status_t PVPlayer::initCheck()
@@ -1172,32 +1203,31 @@ status_t PVPlayer::initCheck()
 PVPlayer::~PVPlayer()
 {
     LOGV("PVPlayer destructor");
-    PlayerQuit quit = PlayerQuit(0,0);
-    mPlayerDriver->enqueueCommand(&quit); // will wait on mSyncSem, signaled by player thread
-    free(mDataSourcePath);
-    if (mMemBase) {
-        munmap(mMemBase, mMemSize);
+    if (mPlayerDriver != NULL) {
+        PlayerQuit quit = PlayerQuit(0,0);
+        mPlayerDriver->enqueueCommand(&quit); // will wait on mSyncSem, signaled by player thread
     }
-}
-
-status_t PVPlayer::setSigBusHandlerStructTLSKey(pthread_key_t key)
-{
-    osclfilenativesigbuskey = key;
-    return OK;
+    free(mDataSourcePath);
+    if (mSharedFd >= 0) {
+        close(mSharedFd);
+    }
+#ifdef MAX_OPENCORE_INSTANCES
+    android_atomic_dec(&sNumInstances);
+#endif
 }
 
 status_t PVPlayer::setDataSource(const char *url)
 {
     LOGV("setDataSource(%s)", url);
-    if (mMemBase) {
-        munmap(mMemBase, mMemSize);
-        mMemBase = NULL;
+    if (mSharedFd >= 0) {
+        close(mSharedFd);
+        mSharedFd = -1;
     }
     free(mDataSourcePath);
     mDataSourcePath = NULL;
 
     // Don't let somebody trick us in to reading some random block of memory
-    if (strncmp("mem://", url, 6) == 0)
+    if (strncmp("sharedfd://", url, 11) == 0)
         return android::UNKNOWN_ERROR;
     mDataSourcePath = strdup(url);
     return OK;
@@ -1209,32 +1239,17 @@ status_t PVPlayer::setDataSource(int fd, int64_t offset, int64_t length) {
     // Eventually we'll fix PV to use a file descriptor directly instead
     // of using mmap().
     LOGV("setDataSource(%d, %lld, %lld)", fd, offset, length);
-    if (mMemBase) {
-        munmap(mMemBase, mMemSize);
-        mMemBase = NULL;
+    if (mSharedFd >= 0) {
+        close(mSharedFd);
+        mSharedFd = -1;
     }
     free(mDataSourcePath);
     mDataSourcePath = NULL;
 
-    // round offset down to page size
-    long pagesize = PAGESIZE;
-    long mapoffset = offset & ~(pagesize - 1);
-    long mapoffsetdelta = offset - mapoffset;
-
-    void * bar = mmap(0, length + mapoffsetdelta, PROT_READ, MAP_PRIVATE, fd, mapoffset);
-    if ((int)bar == -1) {
-            LOGV("error mapping file: %s\n", strerror(errno));
-            return android::UNKNOWN_ERROR;
-    }
-
-    mMemBase = bar;
-    mMemSize = length + mapoffsetdelta;
     char buf[80];
-    sprintf(buf, "mem://%p:%lld:%lld", mMemBase,
-                                    (int64_t) mapoffsetdelta,
-                                    (int64_t) mMemSize - mapoffsetdelta);
+    mSharedFd = dup(fd);
+    sprintf(buf, "sharedfd://%d:%lld:%lld", mSharedFd, offset, length);
     mDataSourcePath = strdup(buf);
-    madvise(mMemBase, mMemSize, MADV_RANDOM);
     return OK;
 }
 
@@ -1417,9 +1432,9 @@ status_t PVPlayer::reset()
     }
     mSurface.clear();
     LOGV("unmap file");
-    if (mMemBase) {
-        munmap(mMemBase, mMemSize);
-        mMemBase = NULL;
+    if (mSharedFd >= 0) {
+        close(mSharedFd);
+        mSharedFd = -1;
     }
     mIsDataSourceSet = false;
     return ret;

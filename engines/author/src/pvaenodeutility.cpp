@@ -281,15 +281,6 @@ void PVAuthorEngineNodeUtility::NodeCommandCompleted(const PVMFCmdResp& aRespons
     PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "PVAuthorEngineNodeUtility::NodeCommandCompleted"));
 
-    if (aResponse.GetCmdStatus() != PVMFSuccess)
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
-                        (0, "PVAuthorEngineNodeUtility::NodeCommandCompleted: Command failed - context=0x%x, status=0x%x",
-                         aResponse.GetContext(), aResponse.GetCmdStatus()));
-        CompleteUtilityCmd(iCmdQueue[0], aResponse.GetCmdStatus());
-        return;
-    }
-
     if (iCmdQueue.empty())
     {
         LOG_ERR((0, "PVAuthorEngineNodeUtility::NodeCommandCompleted: Error - Empty command queue"));
@@ -298,8 +289,17 @@ void PVAuthorEngineNodeUtility::NodeCommandCompleted(const PVMFCmdResp& aRespons
         return;
     }
 
-    PVMFStatus status = PVMFSuccess;
     PVAENodeUtilCmd cmd = iCmdQueue[0];
+    if (aResponse.GetCmdStatus() != PVMFSuccess)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
+                        (0, "PVAuthorEngineNodeUtility::NodeCommandCompleted: Command failed - context=0x%x, status=0x%x",
+                         aResponse.GetContext(), aResponse.GetCmdStatus()));
+        CompleteUtilityCmd(cmd, aResponse.GetCmdStatus());
+        return;
+    }
+
+    PVMFStatus status = PVMFSuccess;
     switch (cmd.iType)
     {
         case PVAENU_CMD_CONNECT:
@@ -339,7 +339,12 @@ void PVAuthorEngineNodeUtility::NodeCommandCompleted(const PVMFCmdResp& aRespons
     }
 
     if (status != PVMFPending)
+    {
         CompleteUtilityCmd(cmd, status);
+    }
+    else if (iCmdQueue.size() == 1) {  // kick off the execution of the command
+        RunIfNotReady();
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -440,27 +445,53 @@ void PVAuthorEngineNodeUtility::CompleteUtilityCmd(const PVAENodeUtilCmd& aCmd, 
     {
         LOG_ERR((0, "PVAuthorEngineNodeUtility::CompleteUtilityCmd: Error - Observer not set"));
         OSCL_LEAVE(OsclErrGeneral);
-        // return;	This statement was removed to avoid compiler warning for Unreachable Code
+        // return;    This statement was removed to avoid compiler warning for Unreachable Code
     }
 
-    if (iCmdQueue.empty() || aCmd.iType != iCmdQueue[0].iType)
+    // make the error logs more specific
+    bool emptyCmdQueueOrMismatchedCmd = false;
+    if (iCmdQueue.empty())
     {
-        LOG_ERR((0, "PVAuthorEngineNodeUtility::CompleteUtilityCmd: Error - Empty command queue or mismatched command"));
+        emptyCmdQueueOrMismatchedCmd = true;
+        LOG_ERR((0, "PVAuthorEngineNodeUtility::CompleteUtilityCmd: Error - Empty command queue"));
+    }
+    else if (aCmd.iType != iCmdQueue[0].iType)
+    {
+        emptyCmdQueueOrMismatchedCmd = true;
+        LOG_ERR((0, "PVAuthorEngineNodeUtility::CompleteUtilityCmd: Error - Mismatched command (%d vs %d)", aCmd.iType, iCmdQueue[0].iType));
+    }
+    if (emptyCmdQueueOrMismatchedCmd)
+    {
         PVMFAsyncEvent event(PVMFErrorEvent, PVMFFailure, NULL, NULL);
         iObserver->NodeUtilErrorEvent(event);
         return;
     }
 
-    // Remove command from queue
-    iCmdQueue.erase(iCmdQueue.begin());
-
-    // Callback to engine
-    PVMFCmdResp resp(0, aCmd.iContext, aStatus);
-    iObserver->NodeUtilCommandCompleted(resp);
+    if (aStatus == PVMFFailure)
+    {
+        // if one cmd failed, skip the remaining commands in the queue.
+        // send the same error code via callbacks to author engine
+        // to signal the (failure) completion of these commands.
+        while (!iCmdQueue.empty())
+        {
+            PVAENodeUtilCmd cmd = iCmdQueue[0];
+            iCmdQueue.erase(iCmdQueue.begin());
+            PVMFCmdResp resp(0, cmd.iContext, aStatus);
+            iObserver->NodeUtilCommandCompleted(resp);
+        }
+    }
+    else
+    {
+        iCmdQueue.erase(iCmdQueue.begin());
+        PVMFCmdResp resp(0, aCmd.iContext, aStatus);
+        iObserver->NodeUtilCommandCompleted(resp);
+    }
 
     // Run next command when needed
     if (!iCmdQueue.empty())
+    {
         RunIfNotReady();
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -909,25 +940,28 @@ PVMFStatus PVAuthorEngineNodeUtility::DoReset(const PVAENodeUtilCmd& aCmd)
 PVMFStatus PVAuthorEngineNodeUtility::CompleteStateTransition(const PVAENodeUtilCmd& aCmd,
         TPVMFNodeInterfaceState aState)
 {
-    LOG_STACK_TRACE((0, "PVAuthorEngineNodeUtility::CompleteStateTransition: aState=%d", aState));
+    LOG_STACK_TRACE((0, "PVAuthorEngineNodeUtility::CompleteStateTransition"));
 
     for (uint32 i = 0; i < aCmd.iNodes.size(); i++)
     {
         if (aCmd.iNodes[i]->iNode->GetState() != aState)
         {
+            LOG_STACK_TRACE((0, "PVAuthorEngineNodeUtility::CompleteStateTransition: node %d (%d) does not have the same state as the node util(%d)", i, aCmd.iNodes[i]->iNode->GetState(), aState));
             if ((aCmd.iType == PVAENU_CMD_RESET) && (aCmd.iNodes[i]->iNode->GetState() == EPVMFNodeIdle))
             {
+                LOG_STACK_TRACE((0, "PVAuthorEngineNodeUtility::CompleteStateTransition: RESET and EPVMFNodeIdle - do nothing"));
                 //If the command is RESET and GetState() == EPVMFNodeIdle, be tolerant
                 //do nothing;
             }
             else
             {
                 // Some nodes have not completed this command. Continue to wait
+                LOG_STACK_TRACE((0, "PVAuthorEngineNodeUtility::CompleteStateTransition: Continue to wait"));
                 return PVMFPending;
             }
         }
     }
 
+    LOG_STACK_TRACE((0, "PVAuthorEngineNodeUtility::CompleteStateTransition: return PVMFSuccess"));
     return PVMFSuccess;
 }
-

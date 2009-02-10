@@ -106,6 +106,7 @@ PVMp4FFComposerNode::PVMp4FFComposerNode(int32 aPriority)
         , iNodeEndOfDataReached(false)
         , iformat_h264(PVMF_FORMAT_UNKNOWN)
         , iformat_text(PVMF_FORMAT_UNKNOWN)
+        , iOutputFileHandle(NULL)
 {
     iInterfaceState = EPVMFNodeCreated;
     iNum_PPS_Set = 0;
@@ -167,6 +168,11 @@ PVMp4FFComposerNode::~PVMp4FFComposerNode()
     if (iMpeg4File)
     {
         PVA_FF_IMpeg4File::DestroyMP4FileObject(iMpeg4File);
+    }
+    if(iOutputFileHandle)
+    {
+        OSCL_DELETE( iOutputFileHandle );
+        iOutputFileHandle = NULL;
     }
 
     if (pConfig != NULL)
@@ -439,12 +445,48 @@ OSCL_EXPORT_REF bool PVMp4FFComposerNode::queryInterface(const PVUuid& uuid, PVI
 ////////////////////////////////////////////////////////////////////////////
 //            PVMp4FFCNClipConfigInterface routines
 ////////////////////////////////////////////////////////////////////////////
+OSCL_EXPORT_REF PVMFStatus PVMp4FFComposerNode::SetOutputFile(OsclFileHandle* aFileHandle)
+{
+    if(iInterfaceState != EPVMFNodeIdle && iInterfaceState != EPVMFNodeInitialized)
+        return PVMFFailure;
+    
+    iFileName = _STRLIT("");//wipe out file name if file handle is in use
+    
+    if(iOutputFileHandle)
+        OSCL_DELETE( iOutputFileHandle );
+    iOutputFileHandle = OSCL_NEW( Oscl_File, () );
+    if( iOutputFileHandle )
+    {
+        if(0 == iOutputFileHandle->SetFileHandle(aFileHandle) )
+        {
+            uint32 mode = Oscl_File::MODE_READWRITE | Oscl_File::MODE_BINARY;
+            if(!iOutputFileHandle->Open("", mode, iFs ))
+                return PVMFSuccess;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, 
+                            (0, "PVMp4FFComposerNode::SetOutputFile: Open() Error Ln %d", __LINE__));
+        }
+        OSCL_DELETE( iOutputFileHandle );
+        iOutputFileHandle = NULL;
+    }
+    
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, 
+                    (0, "PVMp4FFComposerNode::SetOutputFile() Error Ln %d", __LINE__));
+    return PVMFFailure;
+}
+
+
 OSCL_EXPORT_REF PVMFStatus PVMp4FFComposerNode::SetOutputFileName(const OSCL_wString& aFileName)
 {
     if (iInterfaceState != EPVMFNodeIdle && iInterfaceState != EPVMFNodeInitialized)
-        return false;
+        return PVMFFailure;
 
     iFileName = aFileName;
+	if(iOutputFileHandle)
+	{
+	    OSCL_DELETE( iOutputFileHandle );
+	    iOutputFileHandle = NULL;
+	}
+
     return PVMFSuccess;
 }
 
@@ -1096,8 +1138,21 @@ void PVMp4FFComposerNode::DoStart(PVMp4FFCNCmd& aCmd)
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                             (0, "PVMp4FFComposerNode::DoStart: Calling PVA_FF_IMpeg4File::createMP4File(%d,0x%x,%d)",
                              iFileType, &iFs, iAuthoringMode));
-            iMpeg4File = PVA_FF_IMpeg4File::createMP4File(iFileType, iOutputPath, iPostfix,
-                         (void*) & iFs, iAuthoringMode, iFileName, iCacheSize);
+			if(iOutputFileHandle)
+			{
+			    OSCL_ASSERT(NULL != iOutputFileHandle->Handle());
+
+			    iMpeg4File = PVA_FF_IMpeg4File::createMP4File(iFileType, iAuthoringMode, iOutputFileHandle, iCacheSize);
+			    if( iMpeg4File )
+			    {
+				iOutputFileHandle = NULL; //let ff take care of the file close and dealloc
+			    }
+			}
+			else
+			{
+			    iMpeg4File = PVA_FF_IMpeg4File::createMP4File(iFileType, iOutputPath, iPostfix, 
+				    (void*)&iFs, iAuthoringMode, iFileName, iCacheSize);
+			}
 
             if (!iMpeg4File)
             {

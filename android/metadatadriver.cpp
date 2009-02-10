@@ -183,7 +183,7 @@ bool MetadataDriver::containsSupportedKey(const OSCL_HeapString<OsclMemAllocator
 void MetadataDriver::trimKeys()
 {
     LOGV("trimKeys");
-    dumpkeystolog(mMetadataKeyList);
+    //dumpkeystolog(mMetadataKeyList);
     mActualMetadataKeyList.clear();
     uint32 n = mMetadataKeyList.size();
     mActualMetadataKeyList.reserve(n);
@@ -365,7 +365,7 @@ status_t MetadataDriver::setDataSource(const char* srcUrl)
 {
     LOGV("setDataSource");
     // Don't let somebody trick us in to reading some random block of memory.
-    if (strncmp("mem://", srcUrl, 6) == 0) {
+    if (strncmp("sharedfd://", srcUrl, 11) == 0) {
         LOGE("setDataSource: Invalid url (%s).", srcUrl);
         return UNKNOWN_ERROR;
     }

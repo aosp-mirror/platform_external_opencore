@@ -52,7 +52,16 @@
 #include "pvmp4h263encextension.h"
 #include "pvmp4ffcn_clipconfig.h"
 #include "pvmf_fileoutput_config.h"
+#ifndef PVMF_FILEOUTPUT_CONFIG_H_INCLUDED
+#include "pvmf_fileoutput_config.h"
+#endif
 #include "pvmfamrencnode_extension.h"
+
+// FIXME:
+// Platform-specic and temporal workaround to prevent video size
+// from being set too large
+#define ANDROID_MAX_ENCODED_FRAME_WIDTH            352
+#define ANDROID_MAX_ENCODED_FRAME_HEIGHT           288
 
 namespace android {
 
@@ -85,6 +94,8 @@ enum author_command_type {
     AUTHOR_STOP,
     AUTHOR_RESET,
     AUTHOR_CLOSE,
+    AUTHOR_REMOVE_VIDEO_SOURCE,
+    AUTHOR_REMOVE_AUDIO_SOURCE,
     AUTHOR_QUIT = 100
 };
 
@@ -210,8 +221,12 @@ private:
     // the event loop will keep running.
     void FinishNonAsyncCommand(author_command *ec);
  
-    // remove input video and/or audio source(s)
-    void removeDataSources(author_command *ac);
+    // remove references to configurations
+    void removeConfigRefs(author_command *ac);
+
+    // remove input video or audio source
+    void handleRemoveVideoSource(author_command *ac);
+    void handleRemoveAudioSource(author_command *ac);
 
     // Release resources acquired in a recording session
     // Can be called only in the IDLE state of the authoring engine
@@ -246,6 +261,7 @@ private:
     int                     mVideoFrameRate;
     //int                     mVideoBitRate;
     video_encoder           mVideoEncoder;
+    output_format           mOutputFormat; 
 
     //int                     mAudioBitRate;
     audio_encoder           mAudioEncoder;

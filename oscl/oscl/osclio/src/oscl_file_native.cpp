@@ -24,7 +24,7 @@
 #include "oscl_utf8conv.h"
 #include "oscl_int64_utils.h"
 
-#ifdef ENABLE_MEMORY_PLAYBACK
+#ifdef ENABLE_SHAREDFD_PLAYBACK
 #undef LOG_TAG
 #define LOG_TAG "OsclNativeFile"
 #include <utils/Log.h>
@@ -34,97 +34,14 @@
 #include "oscl_file_handle.h"
 
 
-#ifdef ENABLE_MEMORY_PLAYBACK
-pthread_key_t osclfilenativesigbuskey;
-
-/*
- * Add a structure describing the desired signal handling behavior
- * to the TLS. These structures form a linked list, which is needed
- * because multiple files might be opened by the same thread, in
- * which case we need to figure out which one was the one that
- * faulted.
- */
-static void addspecific(struct mediasigbushandler *newhandler)
-{
-    struct mediasigbushandler *existinghandler =
-                    (struct mediasigbushandler*) pthread_getspecific(osclfilenativesigbuskey);
-
-    if (existinghandler)
-{
-        // append the new handler
-        newhandler->next = NULL;
-        existinghandler->next = newhandler;
-    }
-    else
-    {
-        newhandler->next = NULL;
-        pthread_setspecific(osclfilenativesigbuskey, newhandler);
-    }
-}
-
-/*
- * Remove a previously added structure from the list.
- */
-static void removespecific(struct mediasigbushandler *handler)
-{
-    struct mediasigbushandler *existinghandler =
-                    (struct mediasigbushandler*) pthread_getspecific(osclfilenativesigbuskey);
-
-    if (existinghandler == NULL || handler == NULL)
-{
-        LOGE("logic error");
-        return;
-    }
-
-    // to remove the first one, just set a new TLS entry
-    if (existinghandler == handler)
-    {
-        pthread_setspecific(osclfilenativesigbuskey, handler->next);
-        return;
-    }
-
-    while (existinghandler->next)
-    {
-        if (existinghandler->next == handler)
-        {
-            existinghandler->next = existinghandler->next->next;
-            return;
-        }
-        existinghandler = existinghandler->next;
-    }
-}
-
-/*
- * Find the struct for a given fault address
- */
-struct mediasigbushandler *OsclNativeFile::getspecificforfaultaddr(char *faultaddr)
-{
-    struct mediasigbushandler *h =
-                    (struct mediasigbushandler*) pthread_getspecific(osclfilenativesigbuskey);
-
-    while (h)
-{
-        OsclNativeFile *f = (OsclNativeFile*)h->data;
-        char *base = (char*) f->membase;
-        if (base <= faultaddr && faultaddr < base + f->memlen)
-        {
-            return h;
-        }
-        h = h->next;
-    }
-    LOGE("couldn't find handler for address %p\n", faultaddr);
-    return NULL;
-}
-#endif // ENABLE_MEMORY_PLAYBACK
-
 OsclNativeFile::OsclNativeFile()
 {
     iOpenFileHandle = false;
     iMode = 0;
 
     iFile = 0;
-#ifdef ENABLE_MEMORY_PLAYBACK
-    membase = NULL;
+#ifdef ENABLE_SHAREDFD_PLAYBACK
+    iSharedFd = -1;
 #endif
 
 }
@@ -226,23 +143,19 @@ int32 OsclNativeFile::Open(const oscl_wchar *filename, uint32 mode
         {
             return -1;
         }
-#ifdef ENABLE_MEMORY_PLAYBACK
-        void* base;
+#ifdef ENABLE_SHAREDFD_PLAYBACK
+        int fd;
         long long offset;
         long long len;
-        if (sscanf(convfilename, "mem://%p:%lld:%lld", &base, &offset, &len) == 3)
+        if (sscanf(convfilename, "sharedfd://%d:%lld:%lld", &fd, &offset, &len) == 3)
         {
-            membase = base;
-            memoffset = offset;
-            memlen = len;
-            mempos = 0;
-
-            sigbushandler.handlesigbus = sigbushandlerfunc;
-            sigbushandler.sigbusvar = NULL;
-            sigbushandler.data = this;
-            addspecific(&sigbushandler);
-            sigbushandler.base = 0; // we do our own address matching
-            sigbushandler.len = 0;
+            iSharedFd = fd;
+            iSharedFilePosition = 0;
+            iSharedFileOffset = offset;
+            long long size = lseek64(iSharedFd, 0, SEEK_END);
+            lseek64(iSharedFd, 0, SEEK_SET);
+            size -= offset;
+            iSharedFileSize = size < len ? size : len;
         }
         else
 #endif
@@ -312,22 +225,19 @@ int32 OsclNativeFile::Open(const char *filename, uint32 mode
         }
 
         openmode[index++] = '\0';
-#ifdef ENABLE_MEMORY_PLAYBACK
-        void* base;
+#ifdef ENABLE_SHAREDFD_PLAYBACK
+        int fd;
         long long offset;
         long long len;
-        if (sscanf(filename, "mem://%p:%lld:%lld", &base, &offset, &len) == 3)
+        if (sscanf(filename, "sharedfd://%d:%lld:%lld", &fd, &offset, &len) == 3)
         {
-            membase = (void*)base;
-            memoffset = offset;
-            memlen = len;
-            mempos = 0;
-            sigbushandler.handlesigbus = sigbushandlerfunc;
-            sigbushandler.sigbusvar = NULL;
-            sigbushandler.data = this;
-            addspecific(&sigbushandler);
-            sigbushandler.base = 0; // we do our own address matching
-            sigbushandler.len = 0;
+            iSharedFd = fd;
+            iSharedFilePosition = 0;
+            iSharedFileOffset = offset;
+            long long size = lseek64(iSharedFd, 0, SEEK_END);
+            lseek64(iSharedFd, 0, SEEK_SET);
+            size -= offset;
+            iSharedFileSize = size < len ? size : len;
         }
         else
 #endif
@@ -375,12 +285,13 @@ int32 OsclNativeFile::Close()
             closeret = fclose(iFile);
             iFile = NULL;
         }
-#ifdef ENABLE_MEMORY_PLAYBACK
-        else if (membase != NULL)
+#ifdef ENABLE_SHAREDFD_PLAYBACK
+        else if (iSharedFd >= 0)
         {
-            membase = NULL;
-            removespecific(&sigbushandler);
-            return 0;
+            // we don't need to, and in fact MUST NOT, close mSharedFd here,
+            // since it might still be shared by another OsclFileNative, and
+            // will be closed by the playerdriver when we're done with it.
+            closeret = 0;
         }
 #endif
         else
@@ -392,59 +303,30 @@ int32 OsclNativeFile::Close()
     return closeret;
 }
 
-#ifdef ENABLE_MEMORY_PLAYBACK
-int OsclNativeFile::sigbushandlerfunc(siginfo_t *info, struct mediasigbushandler *data)
-{
-    char *faultaddr = (char*) info->si_addr;
-    LOGE("read fault at %p\n", faultaddr);
-
-    struct mediasigbushandler *h = getspecificforfaultaddr(faultaddr);
-    if (h == NULL)
-    {
-        LOGE("No handler for fault range.");
-        return -1;
-    }
-    else
-    {
-        ((OsclNativeFile*)h->data)->memcpyfailed = 1;
-        // map in a zeroed out page so the operation can succeed
-        long pagesize = sysconf(_SC_PAGE_SIZE);
-        long pagemask = ~(pagesize - 1);
-        void * pageaddr = (void*)(((long)(faultaddr)) & pagemask);
-
-        void * bar = mmap(pageaddr, pagesize, PROT_READ, MAP_ANONYMOUS | MAP_PRIVATE | MAP_FIXED, -1, 0);
-        if (bar == MAP_FAILED)
-        {
-            LOGE("couldn't map zero page at %p: %s", pageaddr, strerror(errno));
-            return -1;
-        }
-    }
-    return 0;
-}
-#endif
-
 uint32 OsclNativeFile::Read(OsclAny *buffer, uint32 size, uint32 numelements)
 {
-#ifdef ENABLE_MEMORY_PLAYBACK
-    if (membase)
-    {
-        int req = size * numelements;
-        if (mempos + req > memlen)
-        {
-            req = memlen - mempos;
+#ifdef ENABLE_SHAREDFD_PLAYBACK
+    if (iSharedFd >= 0) {
+        // restore position, no locking is needed because all access to the
+        // shared filedescriptor is done by the same thread.
+        lseek64(iSharedFd, iSharedFilePosition + iSharedFileOffset, SEEK_SET);
+        uint32 count = size * numelements;
+        if (iSharedFilePosition + count > iSharedFileSize) {
+            count = iSharedFileSize - iSharedFilePosition;
         }
-
-        memcpyfailed = 0;
-        memcpy(buffer, ((char*)membase) + memoffset + mempos, req);
-        if (memcpyfailed)
-        {
-            LOGE("got bus error while reading");
-            return 0;
+        ssize_t numread = read(iSharedFd, buffer, count);
+        // unlock
+        long long curpos = lseek64(iSharedFd, 0, SEEK_CUR);
+        if (curpos >= 0) {
+            iSharedFilePosition = curpos - iSharedFileOffset;
         }
-        mempos += req;
-        return req / size;
+        if (numread < 0) {
+            return numread;
+        }
+        return numread / size;
     }
 #endif
+
     if (iFile)
     {
         return fread(buffer, OSCL_STATIC_CAST(int32, size), OSCL_STATIC_CAST(int32, numelements), iFile);
@@ -475,8 +357,8 @@ uint32 OsclNativeFile::GetReadAsyncNumElements()
 
 uint32 OsclNativeFile::Write(const OsclAny *buffer, uint32 size, uint32 numelements)
 {
-#ifdef ENABLE_MEMORY_PLAYBACK
-    if (membase)
+#ifdef ENABLE_SHAREDFD_PLAYBACK
+    if (iSharedFd >= 0)
         return 0;
 #endif
     if (iFile)
@@ -490,18 +372,18 @@ int32 OsclNativeFile::Seek(int32 offset, Oscl_File::seek_type origin)
 {
 
     {
-#ifdef ENABLE_MEMORY_PLAYBACK
-        if (membase)
+#ifdef ENABLE_SHAREDFD_PLAYBACK
+        if (iSharedFd >= 0)
         {
-            int newpos = mempos;
-            if (origin == Oscl_File::SEEKCUR) newpos = mempos + offset;
+            int newpos = iSharedFilePosition;
+            if (origin == Oscl_File::SEEKCUR) newpos = newpos + offset;
             else if (origin == Oscl_File::SEEKSET) newpos = offset;
-            else if (origin == Oscl_File::SEEKEND) newpos = memlen + offset;
+            else if (origin == Oscl_File::SEEKEND) newpos = iSharedFileSize + offset;
             if (newpos < 0)
                 return EINVAL;
-            if (newpos > memlen) // is this valid?
-                newpos = memlen;
-            mempos = newpos;
+            if (newpos > iSharedFileSize) // is this valid?
+                newpos = iSharedFileSize;
+            iSharedFilePosition = newpos;
             return 0;
         }
 #endif
@@ -509,7 +391,7 @@ int32 OsclNativeFile::Seek(int32 offset, Oscl_File::seek_type origin)
         {
             int32 seekmode = SEEK_CUR;
 
-            if	(origin == Oscl_File::SEEKCUR) seekmode = SEEK_CUR;
+            if (origin == Oscl_File::SEEKCUR) seekmode = SEEK_CUR;
             else if (origin == Oscl_File::SEEKSET) seekmode = SEEK_SET;
             else if (origin == Oscl_File::SEEKEND) seekmode = SEEK_END;
 
@@ -528,9 +410,9 @@ int32 OsclNativeFile::SetSize(uint32 size)
 
 int32 OsclNativeFile::Tell()
 {
-#ifdef ENABLE_MEMORY_PLAYBACK
-    if (membase)
-        return mempos;
+#ifdef ENABLE_SHAREDFD_PLAYBACK
+    if (iSharedFd >= 0)
+        return iSharedFilePosition;
 #endif
     if (iFile)
         return ftell(iFile);
@@ -541,11 +423,6 @@ int32 OsclNativeFile::Tell()
 
 int32 OsclNativeFile::Flush()
 {
-
-#ifdef ENABLE_MEMORY_PLAYBACK
-    if (membase)
-        return 0;
-#endif
     if (iFile)
         return fflush(iFile);
     return EOF;
@@ -556,9 +433,9 @@ int32 OsclNativeFile::Flush()
 int32 OsclNativeFile::EndOfFile()
 {
 
-#ifdef ENABLE_MEMORY_PLAYBACK
-    if (membase)
-        return mempos >= memlen;
+#ifdef ENABLE_SHAREDFD_PLAYBACK
+    if (iSharedFd >= 0)
+        return iSharedFilePosition >= iSharedFileSize;
 #endif
     if (iFile)
         return feof(iFile);
@@ -568,10 +445,6 @@ int32 OsclNativeFile::EndOfFile()
 
 int32 OsclNativeFile::GetError()
 {
-#ifdef ENABLE_MEMORY_PLAYBACK
-    if (membase)
-        return 0;
-#endif
     if (iFile)
         return ferror(iFile);
     return 0;

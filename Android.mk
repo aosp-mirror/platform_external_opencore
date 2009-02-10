@@ -1,38 +1,15 @@
 ifneq ($(BUILD_WITHOUT_PV),true)
+
 LOCAL_PATH := $(call my-dir)
-PV_TOP := $(LOCAL_PATH)
-
 include $(CLEAR_VARS)
 
-PV_CFLAGS := -Wno-non-virtual-dtor -DENABLE_MEMORY_PLAYBACK
-include $(CLEAR_VARS)
+# Set up the PV variables.
+include $(LOCAL_PATH)/Config.mk
 
-FORMAT := nj
-
-PV_COPY_HEADERS_TO := libpv
-
-PV_INCLUDES := \
-	$(PV_TOP)/android \
-	$(PV_TOP)/extern_libs_v2/khronos/openmax/include \
-	$(PV_TOP)/engines/common/include \
-	$(PV_TOP)/engines/player/config/linux_nj \
-	$(PV_TOP)/engines/player/include \
-	$(PV_TOP)/nodes/pvmediaoutputnode/include \
-	$(PV_TOP)/nodes/pvdownloadmanagernode/config/opencore \
-	$(PV_TOP)/pvmi/pvmf/include \
-	$(PV_TOP)/fileformats/mp4/parser/config/opencore \
-	$(PV_TOP)/oscl/oscl/config/linux_nj \
-	$(PV_TOP)/oscl/oscl/config/shared \
-	$(PV_TOP)/engines/author/include \
-	$(PV_TOP)/android/drm/oma1/src \
-	$(TARGET_OUT_HEADERS)/$(PV_COPY_HEADERS_TO) 
-
-ALTERNATE_CONFIG := $(if $(wildcard vendor/pv/pvplayer.conf),true)
-ifneq ($(ALTERNATE_CONFIG), true)
+# Install the default configuration file
+# if no value-add configuration is present.
+ifneq ($(VALUE_ADD),1)
 $(call add-prebuilt-files, ETC, pvplayer.conf)
-else
-VALUE_ADD := 1
-PV_CFLAGS += -DPV_USE_VALUE_ADD=1
 endif
 
 include $(PV_TOP)/pvcommon/Android.mk

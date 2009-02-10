@@ -34,15 +34,20 @@ AuthorDriverWrapper::AuthorDriverWrapper()
 
 void AuthorDriverWrapper::resetAndClose()
 {
+    LOGV("resetAndClose");
     mAuthorDriver->enqueueCommand(new author_command(AUTHOR_RESET), NULL, NULL);
+    mAuthorDriver->enqueueCommand(new author_command(AUTHOR_REMOVE_VIDEO_SOURCE), NULL, NULL);
+    mAuthorDriver->enqueueCommand(new author_command(AUTHOR_REMOVE_AUDIO_SOURCE), NULL, NULL);
     mAuthorDriver->enqueueCommand(new author_command(AUTHOR_CLOSE), NULL, NULL);
 }
 
 AuthorDriverWrapper::~AuthorDriverWrapper()
 {
+    LOGV("Destructor");
     if (mAuthorDriver) {
         // set the authoring engine to the IDLE state.
         PVAEState state = mAuthorDriver->getAuthorEngineState();
+        LOGV("state(%d)", state);
         switch (state) {
         case PVAE_STATE_IDLE:
             break;
@@ -96,6 +101,7 @@ AuthorDriver::AuthorDriver()
                mVideoHeight(DEFAULT_FRAME_HEIGHT),
                mVideoFrameRate((int)DEFAULT_FRAME_RATE),
                mVideoEncoder(VIDEO_ENCODER_DEFAULT),
+               mOutputFormat(OUTPUT_FORMAT_DEFAULT),
                mAudioEncoder(AUDIO_ENCODER_DEFAULT)
 {
     mSyncSem = new OsclSemaphore();
@@ -240,6 +246,14 @@ void AuthorDriver::Run()
         handleSetOutputFile((set_output_file_command *)ac);
         return;
 
+    case AUTHOR_REMOVE_VIDEO_SOURCE:
+        handleRemoveVideoSource(ac);
+        return;
+
+    case AUTHOR_REMOVE_AUDIO_SOURCE:
+        handleRemoveAudioSource(ac);
+        return;
+
     case AUTHOR_PREPARE: handlePrepare(ac); break;
     case AUTHOR_START: handleStart(ac); break;
     case AUTHOR_STOP: handleStop(ac); break;
@@ -357,6 +371,8 @@ void AuthorDriver::handleSetOutputFormat(set_output_format_command *ac)
         return;
     }
 
+    mOutputFormat = ac->of;
+
     OSCL_TRY(error, mAuthor->SelectComposer(iComposerMimeType, mComposerConfig, ac));
     OSCL_FIRST_CATCH_ANY(error, commandFailed(ac));
 }
@@ -429,10 +445,22 @@ void AuthorDriver::handleSetVideoSize(set_video_size_command *ac)
     if (mVideoInputMIO == NULL)
         return;
 
-    mVideoWidth = ac->width;
-    mVideoHeight = ac->height;
+    // FIXME:
+    // Platform-specific and temporal workaround to prevent video size from being set too large
+    if (ac->width > ANDROID_MAX_ENCODED_FRAME_WIDTH) {
+        LOGW("Intended width(%d) exceeds the max allowed width(%d). Max width is used instead.", ac->width, ANDROID_MAX_ENCODED_FRAME_WIDTH);
+        mVideoWidth = ANDROID_MAX_ENCODED_FRAME_WIDTH;
+    } else {
+        mVideoWidth = ac->width;
+    }
+    if (ac->height > ANDROID_MAX_ENCODED_FRAME_HEIGHT) {
+        LOGW("Intended height(%d) exceeds the max allowed height(%d). Max height is used instead.", ac->height, ANDROID_MAX_ENCODED_FRAME_HEIGHT);
+        mVideoHeight = ANDROID_MAX_ENCODED_FRAME_HEIGHT;
+    } else {
+        mVideoHeight = ac->height;
+    }
 
-    ((AndroidCameraInput *)mVideoInputMIO)->SetFrameSize(ac->width, ac->height);
+    ((AndroidCameraInput *)mVideoInputMIO)->SetFrameSize(mVideoWidth, mVideoHeight);
     FinishNonAsyncCommand(ac);
 }
 
@@ -473,24 +501,49 @@ void AuthorDriver::handleSetOutputFile(set_output_file_command *ac)
 {
     PVMFStatus ret = PVMFFailure;
     PvmfFileOutputNodeConfigInterface *config = NULL;
-    OSCL_wHeapString<OsclMemAllocator> wFileName;
-    oscl_wchar output[512];
+    FILE *ifpOutput = NULL;
+    int handle = -1;
 
     if (!mComposerConfig) goto exit;
 
     config = OSCL_STATIC_CAST(PvmfFileOutputNodeConfigInterface*, mComposerConfig);
     if (!config) goto exit;
 
-    oscl_UTF8ToUnicode(ac->path, strlen(ac->path), output, 512);
-    wFileName.set(output, oscl_strlen(output));
-    ret = config->SetOutputFileName(wFileName);
+    handle = open(ac->path, O_RDWR | O_CREAT );
+    if(-1 == handle) {
+        LOGE("Ln %d open() error %d", __LINE__, handle);
+        goto exit;
+    }
+    
+    ifpOutput = fdopen(handle, "wb");
+    if(NULL == ifpOutput) {
+        LOGE("Ln %d fopen() error", __LINE__);
+        goto exit;
+    }
+	
+    if ( OUTPUT_FORMAT_RAW_AMR == mOutputFormat ) {
+        PvmfFileOutputNodeConfigInterface *config = OSCL_DYNAMIC_CAST(PvmfFileOutputNodeConfigInterface*, mComposerConfig);
+        if (!config) goto exit;
+        
+        ret = config->SetOutputFile(&OsclFileHandle(ifpOutput));
+    }  else if((OUTPUT_FORMAT_THREE_GPP == mOutputFormat) || (OUTPUT_FORMAT_MPEG_4 == mOutputFormat)) {
+        PVMp4FFCNClipConfigInterface *config = OSCL_DYNAMIC_CAST(PVMp4FFCNClipConfigInterface*, mComposerConfig);
+        if (!config) goto exit;
+        
+        config->SetPresentationTimescale(1000);
+        ret = config->SetOutputFile(&OsclFileHandle(ifpOutput));
+    }
+    
 
 exit:
+    free(ac->path);
+    
     if (ret == PVMFSuccess) {
         mOutputFileName = ac->path;
         FinishNonAsyncCommand(ac);
     } else {
-        free(ac->path);
+        LOGE("Ln %d SetOutputFile() error", __LINE__);
+        fclose(ifpOutput);
         commandFailed(ac);
     }
 }
@@ -511,6 +564,7 @@ void AuthorDriver::handleStart(author_command *ac)
 
 void AuthorDriver::handleStop(author_command *ac)
 {
+    LOGV("handleStop");
     int error = 0;
     OSCL_TRY(error, mAuthor->Stop(ac));
     OSCL_FIRST_CATCH_ANY(error, commandFailed(ac));
@@ -520,6 +574,7 @@ void AuthorDriver::handleStop(author_command *ac)
 
 void AuthorDriver::handleClose(author_command *ac)
 {
+    LOGV("handleClose");
     int error = 0;
     OSCL_TRY(error, mAuthor->Close(ac));
     OSCL_FIRST_CATCH_ANY(error, commandFailed(ac));
@@ -527,19 +582,45 @@ void AuthorDriver::handleClose(author_command *ac)
 
 void AuthorDriver::handleReset(author_command *ac)
 {
+    LOGV("handleReset");
     int error = 0;
     OSCL_TRY(error, mAuthor->Reset(ac));
     OSCL_FIRST_CATCH_ANY(error, commandFailed(ac));
 
-    // remove data sources
-    removeDataSources(ac);
+    // remove references to configs
+    removeConfigRefs(ac);
 }
 
-void AuthorDriver::removeDataSources(author_command *ac)
+void AuthorDriver::handleRemoveVideoSource(author_command *ac)
 {
+    LOGV("handleRemoveVideoSource");
+    if (mVideoNode) {
+        int error = 0;
+        OSCL_TRY(error, mAuthor->RemoveDataSource(*mVideoNode, ac));
+        OSCL_FIRST_CATCH_ANY(error, commandFailed(ac));
+    } else {
+       FinishNonAsyncCommand(ac); 
+    }
+}
+
+void AuthorDriver::handleRemoveAudioSource(author_command *ac)
+{
+    LOGV("handleRemoveAudioSource");
+    if (mAudioNode) {
+        int error = 0;
+        OSCL_TRY(error, mAuthor->RemoveDataSource(*mAudioNode, ac));
+        OSCL_FIRST_CATCH_ANY(error, commandFailed(ac));
+    } else {
+        FinishNonAsyncCommand(ac);
+    }
+}
+
+void AuthorDriver::removeConfigRefs(author_command *ac)
+{
+    LOGV("removeConfigRefs");
     if (mOutputFileName) {
         if (!mKeepOutputFile) {
-            LOGV("remove output filei(%s)", mOutputFileName);
+            LOGV("remove output file(%s)", mOutputFileName);
             unlink(mOutputFileName);
         }
         free(mOutputFileName);
@@ -558,19 +639,11 @@ void AuthorDriver::removeDataSources(author_command *ac)
         mAudioEncoderConfig->removeRef();
         mAudioEncoderConfig = NULL;
     }
-    int error = 0;
-    if (mAudioNode) {
-        OSCL_TRY(error, mAuthor->RemoveDataSource(*mAudioNode));
-        OSCL_FIRST_CATCH_ANY(error, commandFailed(ac));
-    }
-    if (mVideoNode) {
-        OSCL_TRY(error, mAuthor->RemoveDataSource(*mVideoNode));
-        OSCL_FIRST_CATCH_ANY(error, commandFailed(ac));
-    }
 }
 
 void AuthorDriver::handleQuit(author_command *ac)
 {
+    LOGV("handleQuit");
     OsclExecScheduler *sched = OsclExecScheduler::Current();
     sched->StopScheduler();
 }
@@ -667,18 +740,9 @@ int AuthorDriver::authorThread()
 void AuthorDriver::CommandCompleted(const PVCmdResponse& aResponse)
 {
     author_command *ac = (author_command *)aResponse.GetContext();
-    status_t s = 0;
+    status_t s = aResponse.GetCmdStatus();
+    LOGV("Command (%d) completed with status(%d)", ac->which, s);
 
-    // XXX do we want to make this illegal?  combo commands like
-    // SETUP_DEFAULT_SINKS will need some changing
-    if (ac == NULL) {
-        // NULL command may be expected from the author engine from
-        // time to time?
-        // LOGE("Unexpected NULL command");
-        return;
-    }
-
-    LOGV("Command (%d) completed with status(%d)", ac->which, aResponse.GetCmdStatus());
     if (ac->which == AUTHOR_SET_OUTPUT_FORMAT) {
         mSelectedComposer = aResponse.GetResponseData();
     }
@@ -755,7 +819,7 @@ void AuthorDriver::CommandCompleted(const PVCmdResponse& aResponse)
     }
 
     // Translate the PVMF error codes into Android ones 
-    switch(aResponse.GetCmdStatus()) {
+    switch(s) {
     case PVMFSuccess: s = android::OK; break;
     case PVMFPending: *(char *)0 = 0; break; /* XXX assert */
     default: s = android::UNKNOWN_ERROR;

@@ -209,6 +209,7 @@ class PVMFFileOutputNode :	public OsclActiveObject, public PVMFNodeInterface,
         void HandlePortActivity(const PVMFPortActivity& aActivity);
 
         // Pure virtual from PvmfFileOutputNodeConfigInterface
+        PVMFStatus SetOutputFile(OsclFileHandle* aFileHandle);
         PVMFStatus SetOutputFileName(const OSCL_wString& aFileName);
 
         // Pure virtual from PvmfComposerSizeAndDurationInterface

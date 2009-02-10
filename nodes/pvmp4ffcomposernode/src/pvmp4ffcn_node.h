@@ -152,6 +152,7 @@ class PVMp4FFComposerNode : public PVMFNodeInterface,
         OSCL_IMPORT_REF bool queryInterface(const PVUuid& uuid, PVInterface*& iface);
 
         // Pure virtual functions from PVMp4FFCNClipConfigInterface
+        OSCL_IMPORT_REF PVMFStatus SetOutputFile(OsclFileHandle* aFileHandle);
         OSCL_IMPORT_REF PVMFStatus SetOutputFileName(const OSCL_wString& aFileName);
         OSCL_IMPORT_REF PVMFStatus SetAuthoringMode(PVMp4FFCN_AuthoringMode aAuthoringMode = PVMP4FFCN_3GPP_DOWNLOAD_MODE);
         OSCL_IMPORT_REF PVMFStatus SetPresentationTimescale(uint32 aTimescale);
@@ -328,6 +329,7 @@ class PVMp4FFComposerNode : public PVMFNodeInterface,
 
         // File format
         PVA_FF_IMpeg4File* iMpeg4File;
+        Oscl_File *iOutputFileHandle;
         OSCL_wHeapString<OsclMemAllocator> iFileName;
         OSCL_wHeapString<OsclMemAllocator> iPostfix;
         OSCL_wHeapString<OsclMemAllocator> iOutputPath;

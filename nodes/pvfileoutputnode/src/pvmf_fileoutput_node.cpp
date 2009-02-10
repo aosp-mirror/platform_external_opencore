@@ -417,6 +417,34 @@ bool PVMFFileOutputNode::queryInterface(const PVUuid& uuid, PVInterface*& iface)
 }
 
 ////////////////////////////////////////////////////////////////////////////
+PVMFStatus PVMFFileOutputNode::SetOutputFile(OsclFileHandle* aFileHandle)
+{
+	if(iInterfaceState != EPVMFNodeIdle 
+          && iInterfaceState != EPVMFNodeInitialized
+          && iInterfaceState != EPVMFNodeCreated
+          && iInterfaceState != EPVMFNodePrepared)
+       return false;
+    
+	iOutputFileName = _STRLIT("");//wipe out file name if file handle is in use
+	CloseOutputFile();
+    
+	if(0 == iOutputFile.SetFileHandle(aFileHandle) )
+	{
+	    uint32 mode = Oscl_File::MODE_READWRITE | Oscl_File::MODE_BINARY;
+	    if(!iOutputFile.Open("", mode, iFs ))
+	    {
+            iFileOpened = true;
+            iFirstMediaData=true;
+            return PVMFSuccess;
+	    }
+	}
+    
+	PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, 
+                    (0, "PVMFFileOutputNode::SetOutputFile() Error Ln %d", __LINE__));
+	return PVMFFailure;
+}
+
+////////////////////////////////////////////////////////////////////////////
 PVMFStatus PVMFFileOutputNode::SetOutputFileName(const OSCL_wString& aFileName)
 {
     if (iInterfaceState != EPVMFNodeIdle
@@ -424,6 +452,9 @@ PVMFStatus PVMFFileOutputNode::SetOutputFileName(const OSCL_wString& aFileName)
             && iInterfaceState != EPVMFNodeCreated
             && iInterfaceState != EPVMFNodePrepared)
         return false;
+
+	CloseOutputFile();
+	iFirstMediaData = false;
 
     iOutputFileName = aFileName;
     return PVMFSuccess;
