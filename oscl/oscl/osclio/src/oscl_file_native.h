@@ -118,6 +118,7 @@ class OsclNativeFile : public HeapBase
         bool HasAsyncRead();
 
     private:
+        int32 OpenFileOrSharedFd(const char *filename, const char *openmode);
 
         //current open mode
         uint32 iMode;

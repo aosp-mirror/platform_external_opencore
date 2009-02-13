@@ -143,7 +143,9 @@ struct set_video_encoder_command : author_command
 struct set_output_file_command : author_command
 {
     set_output_file_command() : author_command(AUTHOR_SET_OUTPUT_FILE) {};
-    char                        *path;
+    int                         fd;
+    int64_t                     offset;
+    int64_t                     length;
 };
 
 struct set_video_size_command : author_command
@@ -252,9 +254,6 @@ private:
     PVInterface                *mComposerConfig;
     PVInterface                *mVideoEncoderConfig;
     PVInterface                *mAudioEncoderConfig;
-
-    char                    *mOutputFileName;
-    bool                    mKeepOutputFile;
 
     int                     mVideoWidth;
     int                     mVideoHeight;

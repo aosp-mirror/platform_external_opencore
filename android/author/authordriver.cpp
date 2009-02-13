@@ -95,8 +95,6 @@ AuthorDriver::AuthorDriver()
                mComposerConfig(NULL),
                mVideoEncoderConfig(NULL),
                mAudioEncoderConfig(NULL),
-               mOutputFileName(NULL),
-               mKeepOutputFile(false),
                mVideoWidth(DEFAULT_FRAME_WIDTH),
                mVideoHeight(DEFAULT_FRAME_HEIGHT),
                mVideoFrameRate((int)DEFAULT_FRAME_RATE),
@@ -502,21 +500,14 @@ void AuthorDriver::handleSetOutputFile(set_output_file_command *ac)
     PVMFStatus ret = PVMFFailure;
     PvmfFileOutputNodeConfigInterface *config = NULL;
     FILE *ifpOutput = NULL;
-    int handle = -1;
 
     if (!mComposerConfig) goto exit;
 
     config = OSCL_STATIC_CAST(PvmfFileOutputNodeConfigInterface*, mComposerConfig);
     if (!config) goto exit;
 
-    handle = open(ac->path, O_RDWR | O_CREAT );
-    if(-1 == handle) {
-        LOGE("Ln %d open() error %d", __LINE__, handle);
-        goto exit;
-    }
-    
-    ifpOutput = fdopen(handle, "wb");
-    if(NULL == ifpOutput) {
+    ifpOutput = fdopen(ac->fd, "wb");
+    if (NULL == ifpOutput) {
         LOGE("Ln %d fopen() error", __LINE__);
         goto exit;
     }
@@ -536,14 +527,12 @@ void AuthorDriver::handleSetOutputFile(set_output_file_command *ac)
     
 
 exit:
-    free(ac->path);
     
     if (ret == PVMFSuccess) {
-        mOutputFileName = ac->path;
         FinishNonAsyncCommand(ac);
     } else {
         LOGE("Ln %d SetOutputFile() error", __LINE__);
-        fclose(ifpOutput);
+        if (ifpOutput) fclose(ifpOutput);
         commandFailed(ac);
     }
 }
@@ -568,8 +557,6 @@ void AuthorDriver::handleStop(author_command *ac)
     int error = 0;
     OSCL_TRY(error, mAuthor->Stop(ac));
     OSCL_FIRST_CATCH_ANY(error, commandFailed(ac));
-
-    mKeepOutputFile = true;
 }
 
 void AuthorDriver::handleClose(author_command *ac)
@@ -618,14 +605,6 @@ void AuthorDriver::handleRemoveAudioSource(author_command *ac)
 void AuthorDriver::removeConfigRefs(author_command *ac)
 {
     LOGV("removeConfigRefs");
-    if (mOutputFileName) {
-        if (!mKeepOutputFile) {
-            LOGV("remove output file(%s)", mOutputFileName);
-            unlink(mOutputFileName);
-        }
-        free(mOutputFileName);
-        mOutputFileName = NULL;
-    }
 
     if (mComposerConfig) {
         mComposerConfig->removeRef();

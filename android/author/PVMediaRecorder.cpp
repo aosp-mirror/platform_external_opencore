@@ -108,15 +108,30 @@ status_t PVMediaRecorder::setOutputFile(const char *path)
     LOGV("setOutputFile(%s)", path);
     if (mAuthorDriverWrapper == NULL) {
         LOGE("author driver wrapper is not initialized yet");
-        return UNKNOWN_ERROR;
+        return NO_INIT;
     }
 
+    // use file descriptor interface
+    int fd = open(path, O_RDWR | O_CREAT );
+    if (-1 == fd) {
+        LOGE("Ln %d open() error %d", __LINE__, fd);
+        return -errno;
+    }
+    return setOutputFile(fd, 0, 0);
+}
+
+status_t PVMediaRecorder::setOutputFile(int fd, int64_t offset, int64_t length)
+{
+    LOGV("setOutputFile(%d, %lld, %lld)", fd, offset, length);
     set_output_file_command *ac = new set_output_file_command();
     if (ac == NULL) {
         LOGE("failed to construct an author command");
-        return UNKNOWN_ERROR;
+        return NO_MEMORY;
     }
-    ac->path = strdup(path);
+
+    ac->fd = fd;
+    ac->offset = offset;
+    ac->length = length;
     return mAuthorDriverWrapper->enqueueCommand(ac, 0, 0);
 }
 

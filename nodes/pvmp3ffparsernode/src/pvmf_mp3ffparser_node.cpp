@@ -3547,29 +3547,31 @@ PVMFStatus PVMFCPMContainerMp3::IssueCommand(int32 aCmd)
 
         case ECPMCheckUsage:
             iContainer->oWaitingOnLicense = false;
-            PVMFStatus status;
-            //Check for usage approval, and if approved, parse the file.
-            if ((iCPMContentType == PVMF_CPM_FORMAT_OMA1) ||
-                    (iCPMContentType == PVMF_CPM_FORMAT_AUTHORIZE_BEFORE_ACCESS))
             {
-                status = CheckApprovedUsage();
-                if (status != PVMFSuccess)
+                PVMFStatus status = PVMFFailure;
+                //Check for usage approval, and if approved, parse the file.
+                if ((iCPMContentType == PVMF_CPM_FORMAT_OMA1) ||
+                        (iCPMContentType == PVMF_CPM_FORMAT_AUTHORIZE_BEFORE_ACCESS))
                 {
-                    return status;
+                    status = CheckApprovedUsage();
+                    if (status != PVMFSuccess)
+                    {
+                        return status;
+                    }
+                    if (!iCPMContentAccessFactory)
+                    {
+                        return PVMFFailure;//unexpected, since ApproveUsage succeeded.
+                    }
                 }
-                if (!iCPMContentAccessFactory)
+                if (status == PVMFSuccess)
                 {
-                    return PVMFFailure;//unexpected, since ApproveUsage succeeded.
+                    if (PVMFSuccess == iContainer->CheckForMP3HeaderAvailability())
+                    {
+                        iContainer->CompleteInit(status);
+                    }
                 }
+                return status;
             }
-            if (status == PVMFSuccess)
-            {
-                if (PVMFSuccess == iContainer->CheckForMP3HeaderAvailability())
-                {
-                    iContainer->CompleteInit(status);
-                }
-            }
-            return status;
 
 
         case ECPMUsageComplete:

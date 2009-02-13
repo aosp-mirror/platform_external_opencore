@@ -76,6 +76,7 @@ MetadataDriver::MetadataDriver(uint32 mode): OsclActiveObject(OsclActiveObject::
     mContextObjectRefValue = 0x5C7A; // Some random number
     mContextObject = mContextObjectRefValue;
     mMediaAlbumArt = NULL;
+    mSharedFd = -1;
     mVideoFrame = NULL;
     for (uint32 i = 0; i < NUM_METADATA_KEYS; ++i) {
         mMetadataValues[i][0] = '\0';
@@ -114,10 +115,10 @@ int MetadataDriver::retrieverThread()
     return 0;
 }
 
-
 MetadataDriver::~MetadataDriver()
 {
     LOGV("destructor");
+
     mCmdId = 0;
     delete mVideoFrame;
     mVideoFrame = NULL;
@@ -125,6 +126,8 @@ MetadataDriver::~MetadataDriver()
     mMediaAlbumArt = NULL;
     delete mSyncSem;
     mSyncSem = NULL;
+
+    closeSharedFdIfNecessary();
 }
 
 const char* MetadataDriver::extractMetadata(int keyCode)
@@ -361,14 +364,43 @@ void MetadataDriver::clearCache()
     }
 }
 
+status_t MetadataDriver::setDataSourceFd(
+        int fd, int64_t offset, int64_t length) {
+    LOGV("setDataSourceFd");
+
+    closeSharedFdIfNecessary();
+
+    if (offset < 0 || length < 0) {
+        if (offset < 0) {
+            LOGE("negative offset (%lld)", offset);
+        }
+        if (length < 0) {
+            LOGE("negative length (%lld)", length);
+        }
+        return INVALID_OPERATION;
+    }
+
+    mSharedFd = dup(fd);
+
+    char url[80];
+    sprintf(url, "sharedfd://%d:%lld:%lld", mSharedFd, offset, length);
+
+    clearCache();
+    return doSetDataSource(url);
+}
+
 status_t MetadataDriver::setDataSource(const char* srcUrl)
 {
     LOGV("setDataSource");
+
+    closeSharedFdIfNecessary();
+
     // Don't let somebody trick us in to reading some random block of memory.
     if (strncmp("sharedfd://", srcUrl, 11) == 0) {
         LOGE("setDataSource: Invalid url (%s).", srcUrl);
         return UNKNOWN_ERROR;
     }
+
     if (oscl_strlen(srcUrl) > MAX_STRING_LENGTH) {
         LOGE("setDataSource: Data source url length (%d) is too long.", oscl_strlen(srcUrl));
         return UNKNOWN_ERROR;
@@ -687,6 +719,13 @@ void MetadataDriver::HandleInformationalEvent(const PVAsyncInformationalEvent& a
 }
 
 
+void MetadataDriver::closeSharedFdIfNecessary() {
+    if (mSharedFd >= 0) {
+        close(mSharedFd);
+        mSharedFd = -1;
+    }
+}
+
 //------------------------------------------------------------------------------
 #include <media/PVMetadataRetriever.h>
 
@@ -707,6 +746,7 @@ PVMetadataRetriever::PVMetadataRetriever()
 PVMetadataRetriever::~PVMetadataRetriever()
 {
     LOGV("destructor");
+
     Mutex::Autolock lock(mLock);
     delete mMetadataDriver;
 }
@@ -714,6 +754,7 @@ PVMetadataRetriever::~PVMetadataRetriever()
 status_t PVMetadataRetriever::setDataSource(const char *url)
 {
     LOGV("setDataSource (%s)", url);
+
     Mutex::Autolock lock(mLock);
     if (mMetadataDriver == 0) {
         LOGE("No MetadataDriver available");
@@ -729,21 +770,14 @@ status_t PVMetadataRetriever::setDataSource(const char *url)
 status_t PVMetadataRetriever::setDataSource(int fd, int64_t offset, int64_t length)
 {
     LOGV("setDataSource fd(%d), offset(%lld), length(%lld)", fd, offset, length);
+
     Mutex::Autolock lock(mLock);
     if (mMetadataDriver == 0) {
         LOGE("No MetadataDriver available");
         return INVALID_OPERATION;
     }
-    if (offset < 0 || length < 0) {
-        if (offset < 0) {
-            LOGE("negative offset (%lld)", offset);
-        }
-        if (length < 0) {
-            LOGE("negative length (%lld)", length);
-        }
-        return INVALID_OPERATION;
-    }
-    return NO_ERROR;
+
+    return mMetadataDriver->setDataSourceFd(fd, offset, length);
 }
 
 status_t PVMetadataRetriever::setMode(int mode)

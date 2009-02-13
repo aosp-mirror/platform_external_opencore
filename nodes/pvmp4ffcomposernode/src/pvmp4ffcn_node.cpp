@@ -1931,6 +1931,16 @@ PVMFStatus PVMp4FFComposerNode::AddMemFragToTrack(Oscl_Vector<OsclMemoryFragment
                 aPort->SetLastTS(aTimestamp);
             }
 
+            // FIXME:
+            //
+            // First of all, this parsing logic should not be here, since composer does not need
+            // to parse the output stream and encoder should tell composer what type of picture
+            // is coming
+            //
+            // Second, this parsing code is looking for the PTYPE or PLUSPTYPE field through
+            // all the bits in the output picture, and there is no error handling here
+            //
+            // The big assumption is that anything is not marked as I-frame, it is a P-frame.
             switch (aFormat)
             {
                 case PVMF_H264_MP4:
@@ -1940,7 +1950,7 @@ PVMFStatus PVMp4FFComposerNode::AddMemFragToTrack(Oscl_Vector<OsclMemoryFragment
                 }
                 break;
                 case PVMF_M4V:
-                    for (i = 0;i < aFrame.size();i++)
+                    for (i = 0; i < aFrame.size(); i++)
                     {
                         data = OSCL_REINTERPRET_CAST(uint8*, aFrame[i].ptr);
                         if (data[4] <= 0x3F)
@@ -1949,11 +1959,16 @@ PVMFStatus PVMp4FFComposerNode::AddMemFragToTrack(Oscl_Vector<OsclMemoryFragment
 
                     break;
                 case PVMF_H263:
-                    for (i = 0;i < aFrame.size();i++)
+                    for (i = 0; i < aFrame.size(); i++)
                     {
                         data = OSCL_REINTERPRET_CAST(uint8*, aFrame[i].ptr);
-                        if (!(data[4] & 0x02))
-                            codeType = 0; // I-frame
+                        bool isIFrameFromPTypeField = ((data[4] & 0x02) == 0x00);      // PTYPE field must contain a single 0 bit
+                        bool isExtendedPicCodingType = ((data[4] & 0x1C) == 0x1C) && ((data[5] & 0x80) == 0x80);
+                        bool isIFrameFromPlusPTypeField = ((data[7] & 0x1C) == 0x00);  // PLUSPTYPE field must contain three 0 bits
+                        if ((isExtendedPicCodingType && isIFrameFromPlusPTypeField) ||
+                            (!isExtendedPicCodingType && isIFrameFromPTypeField)) {
+                           codeType = 0;  // I-frame
+                        }
                     }
                     break;
             }
