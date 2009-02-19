@@ -71,6 +71,8 @@ AndroidAudioInput::AndroidAudioInput()
         iAudioNumChannelsValid=false;
         iAudioSamplingRateValid=false;
         iExitAudioThread=false;
+        iAudioThreadStarted=false;
+        iAudioThreadRunning=false;
 
         iCommandCounter=0;
         iCommandResponseQueue.reserve(5);
@@ -796,14 +798,18 @@ PVMFStatus AndroidAudioInput::DoStart()
     }
 
     // wait for thread to set up AudioRecord
+    LOGV("wait for thread to start");
     while (!iAudioThreadStarted)
         iAudioThreadStartCV->wait(*iAudioThreadStartLock);
 
     status_t startResult = iAudioThreadStartResult;
     iAudioThreadStartLock->unlock();
+    LOGV("thread start with result = %d", iAudioThreadStartResult);
 
-    if (startResult != NO_ERROR)
+    if (startResult != NO_ERROR) {
+        LOGE("Audio thread failed to start: %d", startResult);
         return PVMFFailure; // thread failed to set up AudioRecord
+    }
 
     iState = STATE_STARTED;
 
@@ -822,15 +828,17 @@ int AndroidAudioInput::start_audin_thread_func(TOsclThreadFuncArg arg)
 PVMFStatus AndroidAudioInput::DoPause()
 {
     LOGV("DoPause");
-    iExitAudioThread = true;
     iState = STATE_PAUSED;
+    stopAudioThread();
     return PVMFSuccess;
 }
 
 PVMFStatus AndroidAudioInput::DoReset()
 {
     LOGV("DoReset");
-    iExitAudioThread = true;
+    iDataEventCounter = 0;
+    iState = STATE_IDLE;
+    stopAudioThread();
     return PVMFSuccess;
 }
 
@@ -849,12 +857,22 @@ PVMFStatus AndroidAudioInput::DoFlush()
 PVMFStatus AndroidAudioInput::DoStop()
 {
     LOGV("DoStop");
-    iExitAudioThread = true;
     iDataEventCounter = 0;
     iState = STATE_STOPPED;
-    iAudioThreadSem->Signal();
-    iAudioThreadTermSem->Wait();
+    stopAudioThread();
     return PVMFSuccess;
+}
+
+void AndroidAudioInput::stopAudioThread()
+{
+    if (iAudioThreadRunning) {
+        LOGV("signal thread to stop");
+        iExitAudioThread = true;
+        iAudioThreadSem->Signal();
+        iAudioThreadTermSem->Wait();
+        iExitAudioThread = false;
+        LOGV("thread stopped");
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -914,18 +932,21 @@ int AndroidAudioInput::audin_thread_func() {
     iAudioThreadStartLock->lock();
 
     LOGV("create AudioRecord %p", this);
-    android::AudioRecord
-            * record = new android::AudioRecord(
+    android::AudioRecord* record = new android::AudioRecord(
                     android::AudioRecord::DEFAULT_INPUT, iAudioSamplingRate,
                     android::AudioSystem::PCM_16_BIT, iAudioNumChannels, 4*kBufferSize/iAudioNumChannels/sizeof(int16));
     LOGV("AudioRecord created %p, this %p", record, this);
 
     status_t res = record->initCheck();
-    if (res == NO_ERROR)
+    LOGV_IF(res != NO_ERROR, "initCheck() error %d", res);
+    if (res == NO_ERROR) {
         res = record->start();
-
+        LOGV_IF(res != NO_ERROR, "start() error %d", res);
+    }
+    
     iAudioThreadStartResult = res;
     iAudioThreadStarted = true;
+    iAudioThreadRunning = true;
 
     iAudioThreadStartCV->signal();
     iAudioThreadStartLock->unlock();
@@ -981,6 +1002,7 @@ int AndroidAudioInput::audin_thread_func() {
 
     LOGV("delete record %p, this %p", record, this);
     delete record;
+    iAudioThreadRunning = false;
     iAudioThreadTermSem->Signal();
     return 0;
 }

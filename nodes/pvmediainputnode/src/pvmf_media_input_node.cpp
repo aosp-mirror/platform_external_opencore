@@ -504,12 +504,10 @@ PvmfMediaInputNode::~PvmfMediaInputNode()
     while (!iCurrentCommand.empty())
     {
         CommandComplete(iCurrentCommand, iCurrentCommand.front(), PVMFFailure);
-//		iCurrentCommand.Erase(&iCurrentCommand.front());
     }
     while (!iInputCommands.empty())
     {
         CommandComplete(iInputCommands, iInputCommands.front(), PVMFFailure);
-//		iInputCommands.Erase(&iInputCommands.front());
     }
 }
 
@@ -1064,6 +1062,14 @@ void PvmfMediaInputNode::FlushComplete()
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                         (0, "PvmfMediaInputNode::FlushComplete: Port queues are not empty"));
+        return;
+    }
+
+    // When the current cmd queue is empty, simply return.
+    if (iCurrentCommand.empty())
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                        (0, "PvmfMediaInputNode::FlushComplete: Error - iCurrentCommand is empty"));
         return;
     }
 

@@ -124,6 +124,17 @@ PvmfAmrEncNode::~PvmfAmrEncNode()
     while (!iOutPort.empty())
         iOutPort.Erase(&iOutPort.front());
 
+    // Clean up command queues.
+    while (!iCmdQueue.empty())
+    {
+        CommandComplete(iCmdQueue, iCmdQueue[0], PVMFFailure);
+    }
+
+    while (!iCurrentCmd.empty())
+    {
+        CommandComplete(iCurrentCmd, iCurrentCmd[0], PVMFFailure);
+    }
+
     Cancel();
     SetState(EPVMFNodeIdle);
     ThreadLogoff();
@@ -1098,6 +1109,13 @@ void PvmfAmrEncNode::FlushComplete()
         iInPort[i]->ResumeInput();
     for (i = 0; i < iOutPort.size(); i++)
         iOutPort[i]->ResumeInput();
+
+    //  When the current cmd queue is empty, simply return.
+    if (iCurrentCmd.empty())
+    {
+        LOG_ERR((0, "PvmfAmrEncNode::FlushComplete: Error - iCurrentCmd is empty"));
+        return;
+    }
 
     CommandComplete(iCurrentCmd, iCurrentCmd.front(), status);
 

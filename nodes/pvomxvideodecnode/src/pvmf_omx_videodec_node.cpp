@@ -15,6 +15,7 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
+
 #include "pvmf_omx_videodec_node.h"
 #include "pvlogger.h"
 #include "oscl_error_codes.h"
@@ -36,6 +37,14 @@
 #include "pv_omxcore.h"
 #include "pv_omxmastercore.h"
 
+#if OMX_DEBUG_LOG
+#include <utils/Log.h>
+#undef LOG_TAG
+#define LOG_TAG "OMXD"
+#undef PVLOGGER_LOGMSG
+#define PVLOGGER_LOGMSG(IL, LOGGER, LEVEL, MESSAGE) JJLOGE MESSAGE
+#define JJLOGE(id, ...) LOGE(__VA_ARGS__)
+#endif
 
 static const OMX_U32 OMX_SPEC_VERSION = 0x00000101;
 #define CONFIG_VERSION_SIZE(param) \
@@ -6124,29 +6133,18 @@ void PVMFOMXVideoDecNode::DoCancelAllCommands(PVMFOMXVideoDecNodeCommand& aCmd)
         {
             CommandComplete(iCurrentCommand, iCurrentCommand[0], PVMFErrCancelled);
         }
-
     }
 
-    //next cancel all queued commands
-    // Create a temporary queue for pending commands
-    // Copy the pending commands to the new queue
-    PVMFOMXVideoDecNodeCmdQ iTempPendingCmds;
-    for(int i=0; i< iInputCommands.size(); i++)
+    // next cancel all queued commands before this one
+    for(int i=0; i< iInputCommands.size();)
     {
-        PVMFOMXVideoDecNodeCommand* cmd = iInputCommands.FindById(i);
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_INFO, (0, "PVMFOMXVideoDecNode::DoCancelAllCommands CancelAllCmd ID %d InputCmd ID %d", aCmd.iId , cmd->iId));
-        if ((aCmd.iId > cmd->iId) && ((aCmd.iId - cmd->iId ) < 0x80000000))
-            iTempPendingCmds.StoreL(*cmd);
+        PVMFOMXVideoDecNodeCommand* cmd = &iInputCommands[i];
+        if ((aCmd.iId <= cmd->iId) && ((cmd->iId - aCmd.iId) < 0x80000000)) {
+            ++i;
+        } else {
+            CommandComplete(iInputCommands, *cmd, PVMFErrCancelled);
+        }
     }
-    for(int i=0; i< iTempPendingCmds.size(); i++)
-    {
-        // Get the queue from the top
-        PVMFOMXVideoDecNodeCommand* cmd = iTempPendingCmds.FindById(i);
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_INFO, (0, "PVMFOMXVideoDecNode::DoCancelAllCommands Cancel Cmd ID %d", cmd->iId));
-        //cancel the queued command
-        CommandComplete(iInputCommands, *cmd, PVMFErrCancelled);
-    }
-    iTempPendingCmds.clear();
 
     if (iResetInProgress && !iResetMsgSent)
     {
@@ -8470,10 +8468,8 @@ bool PVMFOMXVideoDecNode::VerifyParametersSync(PvmiMIOSession aSession, PvmiKvp*
     return true;
 }
 
-
-
-
-
-
-
+#if OMX_DEBUG_LOG
+#undef PVLOGGER_LOGMSG
+#define PVLOGGER_LOGMSG(IL, LOGGER, LEVEL, MESSAGE) OSCL_UNUSED_ARG(LOGGER);
+#endif
 

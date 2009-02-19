@@ -48,6 +48,7 @@ public:
 
     // FIXME: see comment in AndroidAudioOutput::Stop() implementation
     virtual PVMFCommandId Stop(const OsclAny* aContext=NULL);
+    virtual PVMFCommandId Pause(const OsclAny* aContext=NULL);
     // virtual PVMFCommandId Reset(const OsclAny* aContext=NULL);
 
 private:

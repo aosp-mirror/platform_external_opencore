@@ -17,6 +17,9 @@
  */
 
 
+#define LOG_TAG "OsclErrorTrap"
+#include <utils/Log.h>
+
 #include "oscl_error.h"
 #include "oscl_assert.h"
 #include "oscl_error_trapcleanup.h"
@@ -176,6 +179,7 @@ OSCL_EXPORT_REF void OsclError::Leave(int32 aReason)
     if (errortrap)
         errortrap->iTrapStack->Leaving();
 
+    //LOGE("Leave: aReason=%d", aReason);
     PVError_DoLeave();
 }
 
@@ -200,8 +204,9 @@ OSCL_EXPORT_REF void OsclError::Panic(const char acategory[], int32 areason)
 {
     //the application will exit.  Log to stderr because pvlogger is not
     //available in this library.
-    fprintf(stderr, "OsclError::Panic!! Category %s reason %d\n", acategory, areason);
-
+    LOGE("Panic!! Category %s reason %d\n", acategory, areason);
+    *(char*) 0 = 0;
+#if 0
     //set the global panic info if errortrap is installed.  remember it may
     //not be installed under symbian GUI so be tolerant.
     int32 error;
@@ -217,6 +222,7 @@ OSCL_EXPORT_REF void OsclError::Panic(const char acategory[], int32 areason)
     }
 
     PVError_DoPanic();
+#endif
 }
 
 

@@ -163,7 +163,7 @@ PVA_FF_Mpeg4File::~PVA_FF_Mpeg4File()
     }
 
 
-    if (_oInterLeaveEnabled)
+    if (_oInterLeaveEnabled && _pInterLeaveBufferVec != NULL)
     {
         // delete all interleave buffers
         int32 size = _pInterLeaveBufferVec->size();
@@ -1429,6 +1429,11 @@ PVA_FF_Mpeg4File::setVideoParams(uint32 trackID,
     PVA_FF_TrackAtom *trackAtom;
     trackAtom = _pmovieAtom->getMediaTrack(trackID);
     trackAtom->setVideoParams(frame_width, frame_height);
+
+    // set the video width and height in "tkhd" atom
+    // we should have called "tkhdAtom->setVideoWidthHeight()"
+    // if it exists.
+    trackAtom->setVideoWidthHeight(frame_width, frame_height);
     return;
 }
 

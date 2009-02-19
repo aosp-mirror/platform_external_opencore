@@ -137,6 +137,14 @@ PVMFCommandId AndroidAudioOutput::Stop(const OsclAny* aContext)
     return AndroidAudioMIO::Stop(aContext);
 }
 
+PVMFCommandId AndroidAudioOutput::Pause(const OsclAny* aContext)
+{
+    // request output thread to exit
+    LOGV("Pause(%p)", aContext);
+    iAudioThreadSem->Signal();
+    return AndroidAudioMIO::Pause(aContext);
+}
+
 #if 0
 PVMFCommandId AndroidAudioOutput::Reset(const OsclAny* aContext)
 {

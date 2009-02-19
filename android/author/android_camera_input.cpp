@@ -1115,12 +1115,12 @@ PVMFStatus AndroidCameraInput::postWriteAsync(const sp<IMemory>& frame)
     }
 
     // if first event, set timestamp to zero
-    uint32 timeStamp = 0;
+    uint32 timeStamp;
     if (iDataEventCounter == 0) {
-        iStartTickCount = OsclTickCount::TickCount();
+        iStartTickCount = systemTime(SYSTEM_TIME_MONOTONIC) / 1000000;
+        timeStamp = 0;
     } else {
-        timeStamp = OsclTickCount::TicksToMsec(
-            OsclTickCount::TickCount()-iStartTickCount);
+        timeStamp = (systemTime(SYSTEM_TIME_MONOTONIC) / 1000000) - iStartTickCount;
     }
 
     // get memory offset for frame buffer

@@ -187,6 +187,18 @@ PVMFVideoEncNode::~PVMFVideoEncNode()
     while (!iOutPort.empty())
         iOutPort.Erase(&iOutPort.front());
 
+    // Clean up command queues
+    while (!iCmdQueue.empty())
+    {
+        CommandComplete(iCmdQueue, iCmdQueue[0], PVMFFailure);
+    }
+
+    while (!iCurrentCmd.empty())
+    {
+        CommandComplete(iCurrentCmd, iCurrentCmd[0], PVMFFailure);
+    }
+
+
     Cancel();
     SetState(EPVMFNodeIdle);
     ThreadLogoff();
@@ -1378,6 +1390,13 @@ void PVMFVideoEncNode::FlushComplete()
         iInPort[i]->ResumeInput();
     for (i = 0; i < iOutPort.size(); i++)
         iOutPort[i]->ResumeInput();
+
+    // When the current cmd queue is empty, simply return.
+    if (iCurrentCmd.empty())
+    {
+        LOG_ERR((0, "PVMp4FFComposerNode::FlushComplete: Error - iCurrentCmd is empty"));
+        return;
+    }
 
     // Flush is complete.  Go to prepared state.
     SetState(EPVMFNodePrepared);

@@ -437,6 +437,17 @@ PVMFOMXVideoEncNode::~PVMFOMXVideoEncNode()
     while (!iOutPort.empty())
         iOutPort.Erase(&iOutPort.front());
 
+    // Clean up command queues
+    while (!iCmdQueue.empty())
+    {
+        CommandComplete(iCmdQueue, iCmdQueue[0], PVMFFailure);
+    }
+
+    while (!iCurrentCmd.empty())
+    {
+        CommandComplete(iCurrentCmd, iCurrentCmd[0], PVMFFailure);
+    }
+
     Cancel();
     SetState(EPVMFNodeIdle);
     ThreadLogoff();
@@ -4306,6 +4317,9 @@ OMX_ERRORTYPE PVMFOMXVideoEncNode::FillBufferDoneProcessing(OMX_OUT OMX_HANDLETY
         // NOTE: we had to wait until now to wrap the buffer data because we only know
         //			now where the actual data is located (based on buffer offset)
         OsclSharedPtr<PVMFMediaDataImpl> MediaDataOut = WrapOutputBuffer(pBufdata, (uint32) (aBuffer->nFilledLen), pContext);
+        if (aBuffer->nFlags & OMX_BUFFERFLAG_SYNCFRAME) {
+            MediaDataOut->setMarkerInfo(PVMF_MEDIA_DATA_MARKER_INFO_RANDOM_ACCESS_POINT_BIT);
+        }
 
         // if you can't get the MediaDataOut, release the buffer back to the pool
         if (MediaDataOut.GetRep() == NULL)
@@ -5616,4 +5630,3 @@ PVMFStatus PVMFOMXVideoEncNode::SendEndOfTrackCommand()
 
     return PVMFSuccess;
 }
-

@@ -55,6 +55,7 @@
 #include "android_audio_output.h"
 #include "android_audio_stream.h"
 #include "pv_media_output_node_factory.h"
+#include "pvmf_format_type.h"  // for PVMFFormatType
 #include "pvmf_node_interface.h"
 #include "pvmf_source_context_data.h"
 #include "pvmf_download_data_source.h"
@@ -80,6 +81,69 @@ using namespace android;
 static const char* MIO_LIBRARY_NAME = "libopencorehw.so";
 static const char* VIDEO_MIO_FACTORY_NAME = "createVideoMio";
 typedef AndroidSurfaceOutput* (*VideoMioFactory)();
+
+namespace {
+
+// Checks if the buffer size is valid and adjusts it to contain only the
+// buffering percentage. The buffer's data format varies depending on the nature
+// of the connection (HTTP vs RTSP).
+//
+// For HTTP the event's buffer format is:
+//                     1                   2                   3
+//  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                        buffering percent                      |
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+//
+// For RTSP the event's buffer format is:
+//                     1                   2                   3
+//  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |0 0 0 0 0 0 0 1|0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                        buffering percent                      |
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+//
+// TODO: Fix this once PV settles on one format to report the
+// buffering progress.
+//
+// @param format Of the connection.
+// @param[inout] buffer Pointer to the start of the buffering status data. On
+//                      return points to the 1st byte of percentage value.
+// @param[inout] size Of the buffer, on exit contains the size of the buffering
+//                    percentage int.
+// @return true If the format of the connection supports buffering update
+//              events and if the buffer size is valid. false otherwise.
+bool CheckAndAdjustBufferingStatusBuf(const PVMFFormatType format,
+                                      const uint8 **buffer,
+                                      int *size)
+{
+    if (*buffer == NULL) {
+        LOGE("Invalid buffer: NULL");
+        return false;
+    }
+    if (format == PVMF_DATA_SOURCE_RTSP_URL) {
+        if (8 != *size) {
+            LOGE("Invalid rtsp buffer size %d != 8", *size);
+            return false;
+        }
+        *buffer += 4;
+        *size = 4;
+    } else if (format == PVMF_DATA_SOURCE_HTTP_URL) {
+        if (4 != *size) {
+            LOGE("Invalid http buffer size %d != 4", *size);
+            return false;
+        }
+    } else {
+        // I don't think we use PVMF_DATA_SOURCE_MS_HTTP_STREAMING_URL or
+        // PVMF_DATA_SOURCE_REAL_HTTP_CLOAKING_URL.
+        LOGE("Bad source format %d", format);
+        return false;
+    }
+    return true;
+}
+
+}  // anonymous namespace
 
 class PlayerDriver :
     public OsclActiveObject,
@@ -1087,9 +1151,18 @@ void PlayerDriver::HandleInformationalEvent(const PVAsyncInformationalEvent& aEv
 
     case PVMFInfoBufferingStatus:
         {
-            uint8 *localBuf = aEvent.GetLocalBuffer();
-            if (localBuf != NULL) {
-                uint32 bufPercent;
+            const uint8 *localBuf = aEvent.GetLocalBuffer();
+            int localBufSize = aEvent.GetLocalBufferSize();
+            // Note in PV 2.0 GetDataSourceFormatType() returns a const
+            // char* which is the MIME type.
+            PVMFFormatType source_format = mDataSource->GetDataSourceFormatType();
+                
+            if (CheckAndAdjustBufferingStatusBuf(source_format, &localBuf, &localBufSize)) {
+                uint32 bufPercent = 0;
+
+                // TODO: The PVEvent class should expose a memcopy method
+                // that does bound checking instead of having clients reaching
+                // for its internal buffer.
                 oscl_memcpy(&bufPercent, localBuf, sizeof(uint32));
                 LOGV("PVMFInfoBufferingStatus(%u)", bufPercent);
                 mPvPlayer->sendEvent(MEDIA_BUFFERING_UPDATE, bufPercent);
@@ -1447,4 +1520,3 @@ status_t PVPlayer::setLooping(int loop)
 }
 
 }; // namespace android
-

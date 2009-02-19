@@ -191,14 +191,12 @@ void AuthorDriver::FinishNonAsyncCommand(author_command *ac)
 // when a command has been enqueued for us).
 void AuthorDriver::Run()
 {
-    author_command *ac;
-
-    ac = dequeueCommand();
+    author_command* ac = dequeueCommand();
     if (ac == NULL) {
-        // assert?
+        LOGE("Unexpected NULL command");
+        OSCL_LEAVE(PVMFErrArgument);
         return;
     }
-
     switch(ac->which) {
     case AUTHOR_INIT:
         handleInit(ac);
@@ -260,7 +258,8 @@ void AuthorDriver::Run()
     case AUTHOR_QUIT: handleQuit(ac); return;
 
     default:
-        assert(0);
+        LOGE("Unknown author command: %d", ac->which);
+        OSCL_LEAVE(PVMFErrArgument);
         break;
     }
 
@@ -570,12 +569,10 @@ void AuthorDriver::handleClose(author_command *ac)
 void AuthorDriver::handleReset(author_command *ac)
 {
     LOGV("handleReset");
+    removeConfigRefs(ac);
     int error = 0;
     OSCL_TRY(error, mAuthor->Reset(ac));
     OSCL_FIRST_CATCH_ANY(error, commandFailed(ac));
-
-    // remove references to configs
-    removeConfigRefs(ac);
 }
 
 void AuthorDriver::handleRemoveVideoSource(author_command *ac)
@@ -687,7 +684,7 @@ int AuthorDriver::authorThread()
     sched->StartScheduler(mSyncSem);
     LOGV("Delete Author");
     PVAuthorEngineFactory::DeleteAuthor(mAuthor);
- 
+    mAuthor = NULL;
 
     // Let the destructor know that we're out
     mSyncStatus = OK;
@@ -812,21 +809,15 @@ void AuthorDriver::CommandCompleted(const PVCmdResponse& aResponse)
 
 void AuthorDriver::HandleErrorEvent(const PVAsyncErrorEvent& aEvent)
 {
-    printf("HandleErrorEvent\n");
+    LOGE("HandleErrorEvent(%d)", aEvent.GetEventType());
+    
+    // FIXME:
+    // Send error event to client via callback
 }
 
 void AuthorDriver::HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent)
 {
-    PVInterface* iface = (PVInterface*)(aEvent.GetEventExtensionInterface());
-
-    if (iface == NULL)
-        return;
-
-    switch(aEvent.GetEventType()) {
-    case PVMFInfoPositionStatus:
-    default:
-        break;
-    }
+    LOGV("HandleInformationalEvent(%d)", aEvent.GetEventType());
 }
 
 status_t AuthorDriver::getMaxAmplitude(int *max)

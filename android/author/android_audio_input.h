@@ -294,6 +294,7 @@ private:
     PVMFStatus DoFlush();
     PVMFStatus DoStop();
     PVMFStatus DoRead();
+    void stopAudioThread();
 
     /**
      * Allocate a specified number of key-value pairs and set the keys
@@ -421,6 +422,7 @@ private:
     Condition *iAudioThreadStartCV;
     volatile status_t iAudioThreadStartResult;
     volatile bool iAudioThreadStarted;
+    volatile bool iAudioThreadRunning;
 };
 
 }; // namespace android
