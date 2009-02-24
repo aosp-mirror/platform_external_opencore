@@ -26,8 +26,8 @@
 #include "a_atomdefs.h"
 
 // Constructor
-PVA_FF_AMRSampleEntry::PVA_FF_AMRSampleEntry()
-        : PVA_FF_SampleEntry(FourCharConstToUint32('s', 'a', 'm', 'r'))
+PVA_FF_AMRSampleEntry::PVA_FF_AMRSampleEntry(uint32 format)
+        : PVA_FF_SampleEntry(format)
 {
     init();
     recomputeSize();

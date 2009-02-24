@@ -348,63 +348,63 @@ void FindSourceFile(cmd_line* command_line,	OSCL_HeapString<OsclMemAllocator>& a
         // AAC file
         if (oscl_strstr(aFileNameInfo.get_cstr(), ".aac") != NULL || oscl_strstr(aFileNameInfo.get_cstr(), ".AAC") != NULL)
         {
-            aInputFileFormatType = PVMF_AACFF;
+            aInputFileFormatType = PVMF_MIME_AACFF;
         }
         // MP3 file
         else  if (oscl_strstr(aFileNameInfo.get_cstr(), ".mp3") != NULL || oscl_strstr(aFileNameInfo.get_cstr(), ".MP3") != NULL)
         {
-            aInputFileFormatType = PVMF_MP3FF;
+            aInputFileFormatType = PVMF_MIME_MP3FF;
         }
         // AMR file (IETF and IF2)
         else  if (oscl_strstr(aFileNameInfo.get_cstr(), ".amr") != NULL || oscl_strstr(aFileNameInfo.get_cstr(), ".AMR") != NULL ||
                   oscl_strstr(aFileNameInfo.get_cstr(), ".cod") != NULL || oscl_strstr(aFileNameInfo.get_cstr(), ".COD") != NULL)
         {
-            aInputFileFormatType = PVMF_AMRFF;
+            aInputFileFormatType = PVMF_MIME_AMRFF;
         }
         // RTSP URL
         else  if ((!oscl_strncmp("rtsp", aFileNameInfo.get_cstr(), 4)) ||
                   (!oscl_strncmp("RTSP", aFileNameInfo.get_cstr(), 4)))
         {
-            aInputFileFormatType = PVMF_DATA_SOURCE_RTSP_URL;
+            aInputFileFormatType = PVMF_MIME_DATA_SOURCE_RTSP_URL;
         }
         // HTTP URL
         else  if (oscl_strstr(aFileNameInfo.get_cstr(), "http:") != NULL || oscl_strstr(aFileNameInfo.get_cstr(), "HTTP:") != NULL)
         {
-            aInputFileFormatType = PVMF_DATA_SOURCE_HTTP_URL;
+            aInputFileFormatType = PVMF_MIME_DATA_SOURCE_HTTP_URL;
         }
         // MP4/3GP file
         else  if (oscl_strstr(aFileNameInfo.get_cstr(), ".mp4") != NULL || oscl_strstr(aFileNameInfo.get_cstr(), ".MP4") != NULL ||
                   oscl_strstr(aFileNameInfo.get_cstr(), ".3gp") != NULL || oscl_strstr(aFileNameInfo.get_cstr(), ".3GP") != NULL)
         {
-            aInputFileFormatType = PVMF_MPEG4FF;
+            aInputFileFormatType = PVMF_MIME_MPEG4FF;
         }
         // ASF file
         else  if (oscl_strstr(aFileNameInfo.get_cstr(), ".asf") != NULL || oscl_strstr(aFileNameInfo.get_cstr(), ".ASF") != NULL ||
                   oscl_strstr(aFileNameInfo.get_cstr(), ".wma") != NULL || oscl_strstr(aFileNameInfo.get_cstr(), ".WMA") != NULL ||
                   oscl_strstr(aFileNameInfo.get_cstr(), ".wmv") != NULL || oscl_strstr(aFileNameInfo.get_cstr(), ".WMV") != NULL)
         {
-            aInputFileFormatType = PVMF_ASFFF;
+            aInputFileFormatType = PVMF_MIME_ASFFF;
         }
         // SDP file
         else  if (oscl_strstr(aFileNameInfo.get_cstr(), ".sdp") != NULL || oscl_strstr(aFileNameInfo.get_cstr(), ".SDP") != NULL)
         {
-            aInputFileFormatType = PVMF_DATA_SOURCE_SDP_FILE;
+            aInputFileFormatType = PVMF_MIME_DATA_SOURCE_SDP_FILE;
         }
         // PVX file
         else  if (oscl_strstr(aFileNameInfo.get_cstr(), ".pvx") != NULL || oscl_strstr(aFileNameInfo.get_cstr(), ".PVX") != NULL)
         {
-            aInputFileFormatType = PVMF_DATA_SOURCE_PVX_FILE;
+            aInputFileFormatType = PVMF_MIME_DATA_SOURCE_PVX_FILE;
         }
         // WAV file
         else  if (oscl_strstr(aFileNameInfo.get_cstr(), ".wav") != NULL || oscl_strstr(aFileNameInfo.get_cstr(), ".WAV") != NULL)
         {
-            aInputFileFormatType = PVMF_WAVFF;
+            aInputFileFormatType = PVMF_MIME_WAVFF;
         }
         // Unknown so set to unknown and let the player engine determine the format type
         else
         {
             fprintf(file, "Source type unknown so setting to unknown and have the utility recognize it\n");
-            aInputFileFormatType = PVMF_FORMAT_UNKNOWN;
+            aInputFileFormatType = PVMF_MIME_FORMAT_UNKNOWN;
         }
     }
 }
@@ -1036,7 +1036,7 @@ void pvframemetadata_utility_test::test()
         testparam.iTestMsgOutputFile = file;
         testparam.iFileName = iFileName;
         testparam.iFileType = iFileType;
-        testparam.iOutputFrameType = PVMF_YUV420;
+        testparam.iOutputFrameType = PVMF_MIME_YUV420;
 
         switch (iCurrentTestNumber)
         {
@@ -1062,7 +1062,7 @@ void pvframemetadata_utility_test::test()
 
             case GetFirstFrameYUV420AndMetadataTest:
 #if RUN_YUV420_TESTCASES
-                testparam.iOutputFrameType = PVMF_YUV420;
+                testparam.iOutputFrameType = PVMF_MIME_YUV420;
                 iCurrentTest = new pvframemetadata_async_test_getfirstframemetadata(testparam);
                 fprintf(file, "YUV 4:2:0 ");
 #else
@@ -1072,7 +1072,7 @@ void pvframemetadata_utility_test::test()
 
             case GetFirstFrameYUV420UtilityBufferTest:
 #if RUN_YUV420_TESTCASES
-                testparam.iOutputFrameType = PVMF_YUV420;
+                testparam.iOutputFrameType = PVMF_MIME_YUV420;
                 iCurrentTest = new pvframemetadata_async_test_getfirstframeutilitybuffer(testparam);
                 fprintf(file, "YUV 4:2:0 ");
 #else
@@ -1102,7 +1102,7 @@ void pvframemetadata_utility_test::test()
 
             case GetFirstFrameRGB16AndMetadataTest:
 #if RUN_RGB16_TESTCASES
-                testparam.iOutputFrameType = PVMF_RGB16;
+                testparam.iOutputFrameType = PVMF_MIME_RGB16;
                 iCurrentTest = new pvframemetadata_async_test_getfirstframemetadata(testparam);
                 fprintf(file, "RGB 16bpp ");
 #else
@@ -1112,7 +1112,7 @@ void pvframemetadata_utility_test::test()
 
             case GetFirstFrameRGB16UtilityBufferTest:
 #if RUN_RGB16_TESTCASES
-                testparam.iOutputFrameType = PVMF_RGB16;
+                testparam.iOutputFrameType = PVMF_MIME_RGB16;
                 iCurrentTest = new pvframemetadata_async_test_getfirstframeutilitybuffer(testparam);
                 fprintf(file, "RGB 16bpp ");
 #else
@@ -1158,7 +1158,7 @@ void pvframemetadata_utility_test::test()
 
             case MultipleGetFramesYUVTest:
 #if RUN_YUV420_TESTCASES
-                testparam.iOutputFrameType = PVMF_YUV420;
+                testparam.iOutputFrameType = PVMF_MIME_YUV420;
                 iCurrentTest = new pvframemetadata_async_test_multigetframe(testparam);
                 fprintf(file, "YUV 4:2:0 ");
 #else

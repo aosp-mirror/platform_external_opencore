@@ -35,7 +35,6 @@ PVA_FF_TrackAtom::PVA_FF_TrackAtom(int32 type,
                                    uint32 id,
                                    uint32 fileAuthoringFlags,
                                    int32 codecType,
-                                   bool o3GPPCompliant,
                                    uint32 protocol,
                                    uint8 profile,
                                    uint8 profileComp,
@@ -50,8 +49,6 @@ PVA_FF_TrackAtom::PVA_FF_TrackAtom(int32 type,
     _mediaType = type;
 
     _codecType = codecType;
-
-    _o3GPPCompliant = o3GPPCompliant;
 
     _oInterLeaveMode = false;
     if (fileAuthoringFlags & PVMP4FF_SET_MEDIA_INTERLEAVE_MODE)
@@ -77,7 +74,6 @@ PVA_FF_TrackAtom::PVA_FF_TrackAtom(int32 type,
     PV_MP4_FF_NEW(fp->auditCB, PVA_FF_MediaAtom, (type,
                   codecType,
                   fileAuthoringFlags,
-                  o3GPPCompliant,
                   protocol, profile,
                   profileComp, level),
                   _pmediaAtom);
@@ -469,14 +465,6 @@ PVA_FF_TrackAtom::convertTrackDurationToMediaTimeScale(uint32 duration)
     return (mediaHeaderDuration);
 }
 
-void PVA_FF_TrackAtom::setVideoWidthHeight(int16 width, int16 height)
-{
-    if (_ptrackHeader != NULL)
-    {
-        _ptrackHeader->setVideoWidthHeight(width, height);
-    }
-}
-
 // in movie fragment mode set the actual duration of
 // last sample
 void
@@ -504,4 +492,14 @@ void
 PVA_FF_TrackAtom::writeMaxSampleSize(MP4_AUTHOR_FF_FILE_IO_WRAP *_afp)
 {
     _pmediaAtom->writeMaxSampleSize(_afp);
+}
+
+void
+PVA_FF_TrackAtom::setVideoParams(uint32 frame_width, uint32 frame_height)
+{
+    if (_ptrackHeader != NULL)
+        _ptrackHeader->setVideoWidthHeight((int16)frame_width, (int16)frame_height);
+
+    if (_pmediaAtom != NULL)
+        _pmediaAtom->setVideoParams(frame_width, frame_height);
 }

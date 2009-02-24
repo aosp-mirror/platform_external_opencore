@@ -11,7 +11,7 @@ TARGET := pvstreamingmanagernode
 
 XINCDIRS += ../../../common/include ../../../jitterbuffernode/include ../../../jitterbuffernode/include ../../../medialayernode/include ../../../../../protocols/rtp/src ../../../../common/include ../../../../../protocols/sdp/common/include ../../../../../fileformats/asf/parser/include ../../../../../fileformats/rmff_type_specific_parser/src ../../../../../protocols/rdt_parser/realchallenge/include ../../../../../pvmi/content_policy_manager/include ../../../../../pvmi/content_policy_manager/plugins/common/include ../../../../../nodes/pvrtppacketsourcenode/include ../../../../../pvmi/pvmf/include ../../../../../protocols/rtp_payload_parser/rfc_3640/include ../../../../../nodes/pvpvr/include ../../../../../nodes/pvpvr/src ../../../../../nodes/pvpvrnode/include ../../../../../nodes/pvpvrnode/src ../../../../../fileformats/pvr/composer/include
 XINCDIRS += ../../plugins/common/include
-
+XINCDIRS += -I../../../../streaming/jitterbuffernode/jitterbuffer/common/include
 
 
 

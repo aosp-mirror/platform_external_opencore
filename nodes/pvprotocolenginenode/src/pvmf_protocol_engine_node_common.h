@@ -228,6 +228,7 @@ enum PVHttpProtocol
 {
     PVHTTPPROTOCOL_PROGRESSIVE_DOWNLOAD = 0,
     PVHTTPPROTOCOL_PROGRESSIVE_STREAMING,
+    PVHTTPPROTOCOL_SHOUTCAST,
     PVHTTPPROTOCOL_FASTTRACK_DOWNLOAD,
     PVHTTPPROTOCOL_MS_HTTP_STREAMING
 };
@@ -251,6 +252,14 @@ class ProgressiveDownloadContainerFactory : public ProtocolContainerFactory
 
 #if defined(PV_PROTOCOL_ENGINE_NODE_PROGRESSIVE_STREAMING_ENABLED)
 class ProgressiveStreamingContainerFactory : public ProtocolContainerFactory
+{
+    public:
+        ProtocolContainer* create(PVMFProtocolEngineNode *aNode = NULL);
+};
+#endif
+
+#if defined(PV_PROTOCOL_ENGINE_NODE_SHOUTCAST_ENABLED)
+class ShoutcastContainerFactory : public ProtocolContainerFactory
 {
     public:
         ProtocolContainer* create(PVMFProtocolEngineNode *aNode = NULL);

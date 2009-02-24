@@ -84,6 +84,7 @@ OSCL_EXPORT_REF bool PVMFOMXDecPort::IsFormatSupported(PVMFFormatType aFmt)
         isSupported = ((aFmt == PVMF_MIME_PCM16) ||
                        (aFmt == PVMF_MIME_LATM) ||
                        (aFmt == PVMF_MIME_MPEG4_AUDIO) ||
+                       (aFmt == PVMF_MIME_3640) ||
                        (aFmt == PVMF_MIME_ADIF) ||
                        (aFmt == PVMF_MIME_ASF_MPEG4_AUDIO) ||
                        (aFmt == PVMF_MIME_AAC_SIZEHDR) ||

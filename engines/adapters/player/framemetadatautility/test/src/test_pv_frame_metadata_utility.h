@@ -123,7 +123,6 @@ class pvframemetadata_async_test_base : public OsclTimerObject,
             iFileName = aTestParam.iFileName;
             iFileType = aTestParam.iFileType;
             iOutputFrameType = aTestParam.iOutputFrameType;
-            GetFormatString(iOutputFrameType, iOutputFrameTypeString);
             oscl_UTF8ToUnicode(iOutputFrameTypeString.get_str(), iOutputFrameTypeString.get_size(), iTempWCharBuf, 512);
             iOutputFrameTypeWString.set(iTempWCharBuf, oscl_strlen(iTempWCharBuf));
 

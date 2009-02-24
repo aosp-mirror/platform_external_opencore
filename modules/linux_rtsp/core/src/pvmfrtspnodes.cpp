@@ -28,6 +28,8 @@ class StreamingNodesInterface: public OsclSharedLibraryInterface,
             public NodeSharedLibraryInterface
 {
     public:
+        StreamingNodesInterface() {};
+
         // From NodeSharedLibraryInterface
         OsclAny* QueryNodeInterface(const PVUuid& aNodeUuid, const OsclUuid& aInterfaceId)
         {
@@ -55,17 +57,6 @@ class StreamingNodesInterface: public OsclSharedLibraryInterface,
             }
             return NULL;
         };
-
-        static StreamingNodesInterface* Instance()
-        {
-            static StreamingNodesInterface nodeInterface;
-            return &nodeInterface;
-        };
-
-    private:
-
-        StreamingNodesInterface() {};
-
 };
 
 
@@ -73,11 +64,11 @@ extern "C"
 {
     OsclSharedLibraryInterface* PVGetInterface(void)
     {
-        return StreamingNodesInterface::Instance();
+        return OSCL_NEW(StreamingNodesInterface, ());
     }
-    void PVReleaseInterface(OsclSharedLibraryInterface*)
+    void PVReleaseInterface(OsclSharedLibraryInterface* aInstance)
     {
-        //nothing needed
+        OSCL_DELETE(aInstance);
     }
 }
 

@@ -56,11 +56,11 @@
 00064                     , <a class="code" href="classOscl__FileServer.html">Oscl_FileServer</a>&amp; fileserv);
 00065         uint32 <a class="code" href="classOsclNativeFile.html#a5">Read</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a> *buffer, uint32 size, uint32 numelements);
 00066         uint32 <a class="code" href="classOsclNativeFile.html#a6">Write</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a> *buffer, uint32 size, uint32 numelements);
-00067         int32  <a class="code" href="classOsclNativeFile.html#a7">Seek</a>(int32 offset, <a class="code" href="classOscl__File.html#s11">Oscl_File::seek_type</a> origin);
-00068         int32  <a class="code" href="classOsclNativeFile.html#a8">Tell</a>();
+00067         int32  <a class="code" href="classOsclNativeFile.html#a7">Seek</a>(<a class="code" href="osclconfig__io_8h.html#a48">TOsclFileOffset</a> offset, <a class="code" href="classOscl__File.html#s11">Oscl_File::seek_type</a> origin);
+00068         <a class="code" href="osclconfig__io_8h.html#a48">TOsclFileOffset</a>  <a class="code" href="classOsclNativeFile.html#a8">Tell</a>();
 00069         int32  <a class="code" href="classOsclNativeFile.html#a9">Flush</a>();
 00070         int32  <a class="code" href="classOsclNativeFile.html#a10">EndOfFile</a>();
-00071         int32 <a class="code" href="classOsclNativeFile.html#a11">Size</a>();
+00071         <a class="code" href="osclconfig__io_8h.html#a48">TOsclFileOffset</a> <a class="code" href="classOsclNativeFile.html#a11">Size</a>();
 00072         int32 <a class="code" href="classOsclNativeFile.html#a12">Close</a>();
 00073 
 00074         <span class="comment">//query for current open mode.</span>
@@ -104,7 +104,7 @@
 00131 <span class="preprocessor">#endif // OSCL_FILE_NATIVE_H_INCLUDED</span>
 00132 <span class="preprocessor"></span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: OPENCORE_20090120 </small>
+<address style="align: left;"><small>Posting Version: OPENCORE_20090223 </small>
 </small></address>
 </body>
 </html>

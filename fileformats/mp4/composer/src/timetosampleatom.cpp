@@ -26,7 +26,6 @@
 #include "timetosampleatom.h"
 #include "atomutils.h"
 #include "a_atomdefs.h"
-#include "objectdescriptorupdate.h"
 
 typedef Oscl_Vector<uint32, OsclMemAllocator> uint32VecType;
 typedef Oscl_Vector<int32, OsclMemAllocator> int32VecType;

@@ -55,7 +55,7 @@ terms listed above has been obtained from the copyright holder.
 /*----------------------------------------------------------------------------
 ; INCLUDES
 ----------------------------------------------------------------------------*/
-#include "typedef.h"
+#include "qgain475_tab.h"
 
 /*--------------------------------------------------------------------------*/
 #ifdef __cplusplus
@@ -73,7 +73,6 @@ extern "C"
     ; [Include all pre-processor statements here. Include conditional
     ; compile variables also.]
     ----------------------------------------------------------------------------*/
-#define MR475_VQ_SIZE 256
 
     /*----------------------------------------------------------------------------
     ; LOCAL FUNCTION DEFINITIONS

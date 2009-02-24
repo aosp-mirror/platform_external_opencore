@@ -23,9 +23,9 @@ LOCAL_CFLAGS := -DPV_USE_AMR_CODECS $(PV_CFLAGS)
 
 
 
-LOCAL_STATIC_LIBRARIES :=                   libunit_test 
+LOCAL_STATIC_LIBRARIES :=               libunit_test 
 
-LOCAL_SHARED_LIBRARIES := libopencore_2way                   libopencore_common
+LOCAL_SHARED_LIBRARIES := libopencore_2way               libopencore_common
 
 LOCAL_C_INCLUDES := \
 	$(PV_TOP)/engines/2way/test/src \

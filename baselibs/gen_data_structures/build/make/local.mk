@@ -17,7 +17,8 @@ SRCS := buf_frag_group.cpp \
 	pv_string_uri.cpp \
 	rtsp_range_utils.cpp \
 	base64_codec.cpp \
-	bitstreamparser.cpp
+	bitstreamparser.cpp \
+	wchar_size_utils.cpp
 
 HDRS := buf_frag_group.h \
 	hash_functions.h \
@@ -31,7 +32,8 @@ HDRS := buf_frag_group.h \
 	rtsp_time_formats.h \
 	mime_registry.h \
 	base64_codec.h \
-	bitstreamparser.h
+	bitstreamparser.h \
+	wchar_size_utils.h
 
 include $(MK)/library.mk
 

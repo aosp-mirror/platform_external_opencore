@@ -43,6 +43,7 @@ LOCAL_COPY_HEADERS := \
  	include/pvmf_source_context_data.h \
  	include/pv_player_node_registry_interface.h \
  	include/pvmf_streaming_data_source.h \
+ 	include/pvmf_audio_encnode_extension.h \
  	include/pvmfamrencnode_extension.h \
  	include/pvmp4h263encextension.h \
  	include/pvmf_format_progdownload_support_extension.h

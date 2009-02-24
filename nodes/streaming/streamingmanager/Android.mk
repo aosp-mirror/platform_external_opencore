@@ -45,9 +45,12 @@ LOCAL_C_INCLUDES := \
  	$(PV_TOP)/nodes/pvpvrnode/src \
  	$(PV_TOP)/fileformats/pvr/composer/include \
  	$(PV_TOP)/nodes/streaming/streamingmanager/plugins/common/include \
+ 	$(PV_TOP)/nodes/streaming/jitterbuffernode/jitterbuffer/common/include \
  	$(PV_TOP)/nodes/streaming/streamingmanager/config/3gpp \
+ 	$(PV_TOP)/nodes/streaming/jitterbuffernode/jitterbuffer/rtp/include \
  	$(PV_TOP)/protocols/rtsp_client_engine/src \
  	$(PV_TOP)/nodes/streaming/streamingmanager/plugins/rtspunicast/include \
+ 	$(PV_TOP)/nodes/streaming/jitterbuffernode/jitterbuffer/rtp/include \
  	$(PV_INCLUDES)
 
 LOCAL_COPY_HEADERS_TO := $(PV_COPY_HEADERS_TO)

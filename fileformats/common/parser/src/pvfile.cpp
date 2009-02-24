@@ -66,9 +66,9 @@ OSCL_EXPORT_REF int32 PVFile::Seek(int32 offset, Oscl_File::seek_type origin)
 OSCL_EXPORT_REF int32 PVFile::Tell()
 {
     if (iFile)
-        return iFile->Tell();
+        return (TOsclFileOffsetInt32)iFile->Tell();
     else if (iFilePtr)
-        return iFilePtr->Tell();
+        return (TOsclFileOffsetInt32)iFilePtr->Tell();
     else if (iDataStreamAccess)
         return (int32)(iDataStreamAccess->GetCurrentPointerPosition(iDataStreamSession));
     return (-1);//error
@@ -114,9 +114,10 @@ OSCL_EXPORT_REF int32 PVFile::Flush()
 
 OSCL_EXPORT_REF int32 PVFile::Close()
 {
+    int32 result = -1;
     if (iFilePtr)
     {
-        return -1;//Close should not be called for filePtr access.
+        result = -1;//Close should not be called for filePtr access.
     }
     else if (iDataStreamAccess)
     {
@@ -124,13 +125,12 @@ OSCL_EXPORT_REF int32 PVFile::Close()
         PVUuid uuid = PVMIDataStreamSyncInterfaceUuid;
         iCPMAccessFactory->DestroyPVMFCPMPluginAccessInterface(uuid, iDataStreamAccess);
         iDataStreamAccess = NULL;
-        return 0;
+        result = 0;
     }
     else if (iFile)
     {
         //if using a file handle, don't actually close the
         //file, just flush it.
-        int32 result;
         if (iFileHandle)
             result = iFile->Flush();
 
@@ -140,10 +140,11 @@ OSCL_EXPORT_REF int32 PVFile::Close()
         //delete the file object.
         OSCL_DELETE(iFile);
         iFile = NULL;
-        return result;
     }
-    return (-1);//not open
+    Reset(); // Reset all the internal flags
+    return result;
 }
+
 
 OSCL_EXPORT_REF int32 PVFile::Open(const oscl_wchar *filename,
                                    uint32 mode,
@@ -247,6 +248,7 @@ OSCL_EXPORT_REF int32 PVFile::Open(const oscl_wchar *filename,
 
 OSCL_EXPORT_REF bool PVFile::GetRemainingBytes(uint32& aNumBytes)
 {
+    bool result = false;
     if (iFile)
     {
         uint32 currPos = (uint32)(iFile->Tell());
@@ -261,7 +263,7 @@ OSCL_EXPORT_REF bool PVFile::GetRemainingBytes(uint32& aNumBytes)
         if (currPos <= iFileSize)
         {
             aNumBytes = (iFileSize - currPos);
-            return true;
+            result = true;
         }
     }
     else if (iFilePtr)
@@ -277,7 +279,7 @@ OSCL_EXPORT_REF bool PVFile::GetRemainingBytes(uint32& aNumBytes)
         if (currPos <= iFileSize)
         {
             aNumBytes = (iFileSize - currPos);
-            return true;
+            result = true;
         }
     }
     else if (iDataStreamAccess)
@@ -285,9 +287,11 @@ OSCL_EXPORT_REF bool PVFile::GetRemainingBytes(uint32& aNumBytes)
         PvmiDataStreamStatus status =
             iDataStreamAccess->QueryReadCapacity(iDataStreamSession, aNumBytes);
         if ((status == PVDS_SUCCESS) || (status == PVDS_END_OF_STREAM))
-            return true;
+        {
+            result = true;
+        }
     }
-    return false; //error
+    return result;
 }
 
 OSCL_EXPORT_REF bool

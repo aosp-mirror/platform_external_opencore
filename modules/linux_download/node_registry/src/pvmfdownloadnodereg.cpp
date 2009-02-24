@@ -50,32 +50,26 @@ typedef PVMFNodeInterface*(* LPFN_NODE_CREATE_FUNC)(int32);
 
 typedef bool (* LPFN_NODE_RELEASE_FUNC)(PVMFNodeInterface *);
 
-// init static variables before use
-OsclSharedLibrary* DownloadNodesCoreLibraryLoader::iOsclSharedLibrary = NULL;
-
 // Factory functions
 PVMFNodeInterface* DownloadNodesCoreLibraryLoader::CreateDownloadManagerNode(int32 aPriority)
 {
-    if (NULL == iOsclSharedLibrary)
+    OsclSharedLibrary* downloadSharedLibrary = NULL;
+    OSCL_StackString<NODE_REGISTRY_LIB_NAME_MAX_LENGTH> libname(DOWNLOAD_LIB_NAME);
+
+    // Need to load the library for the node
+    downloadSharedLibrary = OSCL_NEW(OsclSharedLibrary, (libname));
+    OsclLibStatus result = downloadSharedLibrary->LoadLib();
+    if (OsclLibSuccess != result)
     {
-        OSCL_StackString<NODE_REGISTRY_LIB_NAME_MAX_LENGTH> libname(DOWNLOAD_LIB_NAME);
-
-        // Need to load the library for the node
-        iOsclSharedLibrary = OSCL_NEW(OsclSharedLibrary, (libname));
-
-        OsclLibStatus result = iOsclSharedLibrary->LoadLib();
-        if (OsclLibSuccess != result)
-        {
-            return NULL;
-        }
+        return NULL;
     }
 
-    iOsclSharedLibrary->AddRef();
+    downloadSharedLibrary->AddRef();
 
     // Query for create function
     OsclAny* interfacePtr = NULL;
 
-    iOsclSharedLibrary->QueryInterface(PV_NODE_INTERFACE, (OsclAny*&)interfacePtr);
+    downloadSharedLibrary->QueryInterface(PV_NODE_INTERFACE, (OsclAny*&)interfacePtr);
 
     NodeSharedLibraryInterface* nodeIntPtr = OSCL_DYNAMIC_CAST(NodeSharedLibraryInterface*, interfacePtr);
 
@@ -85,8 +79,23 @@ PVMFNodeInterface* DownloadNodesCoreLibraryLoader::CreateDownloadManagerNode(int
 
     if (NULL != nodeCreateFunc)
     {
+        PVMFNodeInterface* node = NULL;
         // call the real node factory function
-        return (*(nodeCreateFunc))(aPriority);
+        node = (*(nodeCreateFunc))(aPriority);
+        if (NULL == node)
+        {
+            downloadSharedLibrary->RemoveRef();
+
+            if (OsclLibSuccess == downloadSharedLibrary->Close())
+            {
+                // Close will unload the library if refcount is 0
+                OSCL_DELETE(downloadSharedLibrary);
+            }
+
+            return NULL;
+        }
+        node->SetSharedLibraryPtr(downloadSharedLibrary);
+        return node;
     }
     return NULL;
 }
@@ -95,13 +104,22 @@ PVMFNodeInterface* DownloadNodesCoreLibraryLoader::CreateDownloadManagerNode(int
 bool DownloadNodesCoreLibraryLoader::DeleteDownloadManagerNode(PVMFNodeInterface* aNode)
 {
     bool bStatus = false;
+    OsclSharedLibrary* downloadSharedLibrary = NULL;
 
-    if (NULL != iOsclSharedLibrary)
+    if (NULL == aNode)
+    {
+        return false;
+    }
+
+    // Retrieve shared library pointer
+    downloadSharedLibrary = aNode->GetSharedLibraryPtr();
+
+    if (NULL != downloadSharedLibrary)
     {
         // Query for release function
         OsclAny* interfacePtr = NULL;
 
-        iOsclSharedLibrary->QueryInterface(PV_NODE_INTERFACE, (OsclAny*&)interfacePtr);
+        downloadSharedLibrary->QueryInterface(PV_NODE_INTERFACE, (OsclAny*&)interfacePtr);
 
         NodeSharedLibraryInterface* nodeIntPtr = OSCL_DYNAMIC_CAST(NodeSharedLibraryInterface*, interfacePtr);
 
@@ -114,13 +132,12 @@ bool DownloadNodesCoreLibraryLoader::DeleteDownloadManagerNode(PVMFNodeInterface
             bStatus = (*(nodeReleaseFunc))(aNode);
         }
 
-        iOsclSharedLibrary->RemoveRef();
+        downloadSharedLibrary->RemoveRef();
 
-        if (OsclLibSuccess == iOsclSharedLibrary->Close())
+        if (OsclLibSuccess == downloadSharedLibrary->Close())
         {
             // Close will unload the library if refcount is 0
-            OSCL_DELETE(iOsclSharedLibrary);
-            iOsclSharedLibrary = NULL;
+            OSCL_DELETE(downloadSharedLibrary);
         }
     }
 
@@ -134,6 +151,7 @@ class DownloadNodesRegistryInterface: public OsclSharedLibraryInterface,
             public RecognizerPopulatorInterface
 {
     public:
+        DownloadNodesRegistryInterface() {};
 
         // From NodeRegistryPopulatorInterface
         void RegisterAllNodes(PVPlayerNodeRegistryInterface* aRegistry, OsclAny*& aContext)
@@ -147,10 +165,11 @@ class DownloadNodesRegistryInterface: public OsclSharedLibraryInterface,
             //For PVMFDownloadManagerNode
             nodeinfo.iInputTypes.clear();
             nodeinfo.iInputTypes.push_back(PVMF_MIME_DATA_SOURCE_HTTP_URL);
+            nodeinfo.iInputTypes.push_back(PVMF_MIME_DATA_SOURCE_PVX_FILE);
+            nodeinfo.iInputTypes.push_back(PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL);
             nodeinfo.iNodeUUID = KPVMFDownloadManagerNodeUuid;
             nodeinfo.iOutputType.clear();
             nodeinfo.iOutputType.push_back(PVMF_MIME_FORMAT_UNKNOWN);
-            nodeinfo.iSharedLibrary = OSCL_NEW(OsclSharedLibrary, (libname));
             nodeinfo.iNodeCreateFunc = (DownloadNodesCoreLibraryLoader::CreateDownloadManagerNode);
             nodeinfo.iNodeReleaseFunc = (DownloadNodesCoreLibraryLoader::DeleteDownloadManagerNode);
 
@@ -171,7 +190,6 @@ class DownloadNodesRegistryInterface: public OsclSharedLibraryInterface,
                 while (!nodeList->empty())
                 {
                     PVPlayerNodeInfo tmpnode = nodeList->front();
-                    OSCL_DELETE(tmpnode.iSharedLibrary);
                     aRegistry->UnregisterNode(tmpnode);
                     nodeList->erase(nodeList->begin());
                 }
@@ -204,17 +222,6 @@ class DownloadNodesRegistryInterface: public OsclSharedLibraryInterface,
             }
             return NULL;
         };
-
-        static DownloadNodesRegistryInterface* Instance()
-        {
-            static DownloadNodesRegistryInterface nodeInterface;
-            return &nodeInterface;
-        };
-
-    private:
-
-        DownloadNodesRegistryInterface() {};
-
 };
 
 
@@ -222,11 +229,11 @@ extern "C"
 {
     OsclSharedLibraryInterface* PVGetInterface(void)
     {
-        return DownloadNodesRegistryInterface::Instance();
+        return OSCL_NEW(DownloadNodesRegistryInterface, ());
     }
-    void PVReleaseInterface(OsclSharedLibraryInterface*)
+    void PVReleaseInterface(OsclSharedLibraryInterface* aInstance)
     {
-        //nothing needed
+        OSCL_DELETE(aInstance);
     }
 }
 

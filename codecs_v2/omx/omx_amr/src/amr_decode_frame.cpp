@@ -60,6 +60,7 @@ static const OMX_S32 WBIETFFrameSize[16] =
     , 1
     , 1
     , 1
+    , 1
     , 1		// WBAMR Frame No Data
     , 1		// WBAMR Frame No Data
 };
@@ -342,7 +343,6 @@ OMX_BOOL OmxAmrDecoder::AmrDecodeFrame(OMX_S16* aOutputBuffer,
         if ((FrameLength + FrameBytesProcessed) <= (OMX_S32) *aInBufSize)
         {
             /* Set up pointer to the start of frame to be decoded */
-
             iCodecExternals->frame_type = (uint32)FrameType3gpp;
             iCodecExternals->mode = (uint32)FrameType3gpp;
             iCodecExternals->pInputBuffer = (uint8*) pSpeechBits;

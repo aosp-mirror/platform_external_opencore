@@ -77,6 +77,9 @@
 #if BUILD_RM_FF_PARSER_NODE
 #include "pvmf_rmffparser_factory.h"
 #endif
+#if BUILD_DIVX_FF_PARSER_NODE
+#include "pvmf_divxffparser_factory.h"
+#endif
 #if BUILD_STREAMING_MANAGER_NODE
 #include "pvmf_sm_node_factory.h"
 #endif
@@ -111,6 +114,9 @@
 #endif
 #if BUILD_AMR_FF_REC
 #include "pvamrffrec_factory.h"
+#endif
+#if BUILD_DIVX_FF_REC
+#include "pvdivxffrec_factory.h"
 #endif
 #ifdef USE_LOADABLE_MODULES
 #include "oscl_shared_library.h"
@@ -163,6 +169,7 @@ void PVPlayerRegistryPopulator::RegisterAllNodes(PVPlayerNodeRegistryInterface* 
     nodeinfo.iInputTypes.push_back(PVMF_MIME_AMRWB);
     nodeinfo.iInputTypes.push_back(PVMF_MIME_AMR_IF2);
     nodeinfo.iInputTypes.push_back(PVMF_MIME_MPEG4_AUDIO);
+    nodeinfo.iInputTypes.push_back(PVMF_MIME_3640);
     nodeinfo.iInputTypes.push_back(PVMF_MIME_ADIF);
     nodeinfo.iInputTypes.push_back(PVMF_MIME_ADTS);
     nodeinfo.iInputTypes.push_back(PVMF_MIME_LATM);
@@ -264,6 +271,7 @@ void PVPlayerRegistryPopulator::RegisterAllNodes(PVPlayerNodeRegistryInterface* 
     //For PVMFAACDecNode
     nodeinfo.iInputTypes.clear();
     nodeinfo.iInputTypes.push_back(PVMF_MIME_MPEG4_AUDIO);
+    nodeinfo.iInputTypes.push_back(PVMF_MIME_3640);
     nodeinfo.iInputTypes.push_back(PVMF_MIME_ADIF);
     nodeinfo.iInputTypes.push_back(PVMF_MIME_ADTS);
     nodeinfo.iInputTypes.push_back(PVMF_MIME_LATM);
@@ -381,6 +389,10 @@ void PVPlayerRegistryPopulator::RegisterAllNodes(PVPlayerNodeRegistryInterface* 
     nodeinfo.iInputTypes.push_back(PVMF_MIME_DATA_SOURCE_REAL_HTTP_CLOAKING_URL);
     nodeinfo.iInputTypes.push_back(PVMF_MIME_DATA_SOURCE_RTSP_URL);
     nodeinfo.iInputTypes.push_back(PVMF_MIME_DATA_SOURCE_SDP_FILE);
+    nodeinfo.iInputTypes.push_back(PVMF_MIME_DATA_SOURCE_SDP_PVR_FCS_FILE);
+    nodeinfo.iInputTypes.push_back(PVMF_MIME_DATA_SOURCE_RTSP_PVR_FCS_URL);
+    nodeinfo.iInputTypes.push_back(PVMF_MIME_DATA_SOURCE_SDP_BROADCAST);
+    nodeinfo.iInputTypes.push_back(PVMF_MIME_DATA_PVRFF);
     nodeinfo.iInputTypes.push_back(PVMF_MIME_DATA_SOURCE_RTP_PACKET_SOURCE);
     nodeinfo.iNodeUUID = KPVMFStreamingManagerNodeUuid;
     nodeinfo.iOutputType.clear();
@@ -404,11 +416,22 @@ void PVPlayerRegistryPopulator::RegisterAllNodes(PVPlayerNodeRegistryInterface* 
 #if BUILD_STILL_IMAGE_NODE
     //For PVMFStillImageNode
     nodeinfo.iInputTypes.clear();
-    nodeinfo.iInputTypes.push_back(PVMF_MIME_M4V_IMAGE);
+    nodeinfo.iInputTypes.push_back(PVMF_MIME_IMAGE_FORMAT);
     nodeinfo.iNodeUUID = KPVMFStillImageNodeUuid;
     nodeinfo.iOutputType.clear();
     nodeinfo.iOutputType.push_back(PVMF_MIME_FORMAT_UNKNOWN);
     nodeinfo.iNodeCreateFunc = PVMFStillImageNodeFactory::CreateStillImageNode;
+    aRegistry->RegisterNode(nodeinfo);
+#endif
+#if BUILD_DIVX_FF_PARSER_NODE
+    //For PVMFDIVXParserNode
+    nodeinfo.iInputTypes.clear();
+    nodeinfo.iInputTypes.push_back(PVMF_MIME_DIVXFF);
+    nodeinfo.iNodeUUID = KPVMFDIVXFFParserNodeUuid;
+    nodeinfo.iOutputType.clear();
+    nodeinfo.iOutputType.push_back(PVMF_MIME_FORMAT_UNKNOWN);
+    nodeinfo.iNodeCreateFunc = PVMFDIVXParserNodeFactory::CreatePVMFDIVXParserNode;
+    nodeinfo.iNodeReleaseFunc = PVMFDIVXParserNodeFactory::DeletePVMFDIVXParserNode;
     aRegistry->RegisterNode(nodeinfo);
 #endif
 }
@@ -499,6 +522,20 @@ void PVPlayerRegistryPopulator::RegisterAllRecognizers(PVPlayerRecognizerRegistr
     else
     {
         OSCL_DELETE(((PVRMFFRecognizerFactory*)tmpfac));
+        tmpfac = NULL;
+        return;
+    }
+#endif
+#if BUILD_DIVX_FF_REC
+    tmpfac = OSCL_STATIC_CAST(PVMFRecognizerPluginFactory*, OSCL_NEW(PVDIVXFFRecognizerFactory, ()));
+    if (PVMFRecognizerRegistry::RegisterPlugin(*tmpfac) == PVMFSuccess)
+    {
+        aRegistry->RegisterRecognizer(tmpfac);
+        nodeList->push_back(tmpfac);
+    }
+    else
+    {
+        OSCL_DELETE(((PVDIVXFFRecognizerFactory*)tmpfac));
         tmpfac = NULL;
         return;
     }

@@ -49,7 +49,7 @@
 #define OMX_PORT_OUTPUTPORT_INDEX OMX_DirOutput
 #define OMX_PORT_ALLPORT_INDEX -1
 
-#define OMX_PORT_NUMBER_FORMATS_SUPPORTED 3
+#define OMX_PORT_NUMBER_FORMATS_SUPPORTED 4
 
 
 /* Application's private data */
@@ -396,6 +396,7 @@ class OmxComponentBase : public OsclActiveObject
         }
 
         OMX_BOOL AssemblePartialFrames(OMX_BUFFERHEADERTYPE* aInputBuffer);
+        virtual OMX_BOOL ParseFullAVCFramesIntoNALs(OMX_BUFFERHEADERTYPE* aInputBuffer);
         OMX_ERRORTYPE MessageHandler(CoreMessage* Message);
         OMX_ERRORTYPE DoStateSet(OMX_U32);
 
@@ -498,6 +499,8 @@ class OmxComponentBase : public OsclActiveObject
         OMX_U32 iGroupID;
         //Roles of the component
         OMX_U8 iComponentRole[OMX_MAX_STRINGNAME_SIZE];
+        //Flag to indicate whether role has been set by client or not
+        OMX_BOOL iComponentRoleFlag;
         //This field holds the private data associated with a mark request, if any
         OMX_MARKTYPE* ipMark;
 

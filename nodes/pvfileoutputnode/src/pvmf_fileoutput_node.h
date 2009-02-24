@@ -82,6 +82,10 @@
 #define	AMR_HEADER		"#!AMR\n"
 #define AMR_HEADER_SIZE	6
 
+// Macros for AMR-WB header
+#define	AMRWB_HEADER		"#!AMR-WB\n"
+#define AMRWB_HEADER_SIZE	9
+
 ////////////////////////////////////////////////////////////////////////////
 class PVMFFileOutputAlloc : public Oscl_DefAlloc
 {
@@ -207,6 +211,7 @@ class PVMFFileOutputNode :	public OsclActiveObject, public PVMFNodeInterface,
 
         // Pure virtual from PvmfFileOutputNodeConfigInterface
         PVMFStatus SetOutputFileName(const OSCL_wString& aFileName);
+        PVMFStatus SetOutputFileDescriptor(const OsclFileHandle* aFileHandle);
 
         // Pure virtual from PvmfComposerSizeAndDurationInterface
         PVMFStatus SetMaxFileSize(bool aEnable, uint32 aMaxFileSizeBytes);
@@ -376,6 +381,7 @@ class PVMFFileOutputNode :	public OsclActiveObject, public PVMFNodeInterface,
 
         // Output file name
         OSCL_wHeapString<OsclMemAllocator> iOutputFileName;
+        OsclFileHandle* iFileHandle;
 
         // Allocator
         Oscl_DefAlloc* iAlloc;

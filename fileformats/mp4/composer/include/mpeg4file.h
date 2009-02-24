@@ -36,7 +36,6 @@
 #include "a_atomdefs.h"
 #include "a_isucceedfail.h"
 
-#include "objectdescriptorupdate.h"
 #include "interleavebuffer.h"
 
 // movie fragment
@@ -271,11 +270,6 @@ class PVA_FF_Mpeg4File : public PVA_FF_IMpeg4File, public PVA_FF_Parentable
 
         bool renderMoovAtom();
         bool renderMovieFragments();
-        void setVideoWidthHeight(uint32 trackID, int16 width, int16 height)
-        {
-            if (_pmovieAtom != NULL)
-                _pmovieAtom->setVideoWidthHeight(trackID, width, height);
-        }
 
     private:
 

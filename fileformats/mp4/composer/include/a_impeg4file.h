@@ -342,7 +342,6 @@ class PVA_FF_IMpeg4File : public PVA_FF_ISucceedFail
         // movie fragment duration
         virtual void setMovieFragmentDuration(uint32 duration) = 0;
         virtual uint32 getMovieFragmentDuration() = 0;
-        virtual void setVideoWidthHeight(uint32 trackID, int16 width, int16 height) = 0;
 
         OSCL_IMPORT_REF static void DestroyMP4FileObject(PVA_FF_IMpeg4File* aMP4FileObject);
 };

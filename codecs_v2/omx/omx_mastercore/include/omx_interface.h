@@ -79,6 +79,10 @@ typedef OMX_ERRORTYPE(*tpOMX_GetContentPipe)(
     OMX_OUT OMX_HANDLETYPE *hPipe,
     OMX_IN OMX_STRING szURI);
 
+typedef OMX_BOOL(*tpOMXConfigParser)(
+    OMX_PTR aInputParameters,
+    OMX_PTR aOutputParameters);
+
 
 class OMXInterface : public OsclSharedLibraryInterface
 {
@@ -94,6 +98,7 @@ class OMXInterface : public OsclSharedLibraryInterface
             pOMX_GetRolesOfComponent = NULL;
             pOMX_SetupTunnel = NULL;
             pOMX_GetContentPipe = NULL;
+            pOMXConfigParser = NULL;
         };
 
         /* return true when the core library can be safely unloaded */
@@ -145,6 +150,11 @@ class OMXInterface : public OsclSharedLibraryInterface
             return pOMX_GetContentPipe;
         };
 
+        tpOMXConfigParser GetpOMXConfigParser()
+        {
+            return pOMXConfigParser;
+        };
+
         // ptrs to all omx core methods
         // will be set in the derived classes
         OMX_ERRORTYPE OMX_APIENTRY(*pOMX_Init)(void);
@@ -189,6 +199,10 @@ class OMXInterface : public OsclSharedLibraryInterface
         OMX_ERRORTYPE(*pOMX_GetContentPipe)(
             OMX_OUT OMX_HANDLETYPE *hPipe,
             OMX_IN OMX_STRING szURI);
+
+        OMX_BOOL(*pOMXConfigParser)(
+            OMX_PTR aInputParameters,
+            OMX_PTR aOutputParameters);
 };
 #endif
 

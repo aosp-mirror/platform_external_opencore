@@ -129,6 +129,7 @@ typedef OSCL_String PvmfMimeString;
 
 // MIME strings for still image formats
 #define PVMF_MIME_M4V_IMAGE	"X-M4V-IMAGE" // PV Proprietary Still Image
+#define PVMF_MIME_IMAGE_FORMAT "image"
 
 // MIME strings for Multiplexed formats and single-media file formats.
 #define PVMF_MIME_MPEG4FF		"video/MP4"
@@ -143,19 +144,25 @@ typedef OSCL_String PvmfMimeString;
 #define PVMF_MIME_DIVXFF		"x-pvmf/mux/divx"
 #define PVMF_MIME_MIDIFF		"application/x-midi"
 #define PVMF_MIME_AVIFF			"x-pvmf/mux/avi"
+#define PVMF_MIME_DATA_PVRFF    "video/x-pvmf-pvr "
 
 // MIME strings for RAW data formats
 #define PVMF_MIME_8BIT_RAW   "X-RAW-8"
 
 // MIME strings for PVMF data source types
 #define PVMF_MIME_DATA_SOURCE_RTSP_URL  "X-PVMF-DATA-SRC-RTSP-URL"
+#define PVMF_MIME_DATA_SOURCE_RTSP_PVR_FCS_URL "X-PVMF-DATA-SRC-RTSP-PVR-FCS-URL"
 #define PVMF_MIME_DATA_SOURCE_HTTP_URL  "X-PVMF-DATA-SRC-HTTP-URL"
 #define PVMF_MIME_DATA_SOURCE_SDP_FILE  "X-PVMF-DATA-SRC-SDP-FILE"
+#define PVMF_MIME_DATA_SOURCE_SDP_PVR_FCS_FILE "X-PVMF-DATA-SRC-SDP-PVR-FCS-FILE"
+#define PVMF_MIME_DATA_SOURCE_SDP_BROADCAST "X-PVMF-DATA-SRC-SDP-BROADCAST"
 #define PVMF_MIME_DATA_SOURCE_PVX_FILE  "X-PVMF-DATA-SRC-PVX-FILE"
 #define PVMF_MIME_DATA_SOURCE_MS_HTTP_STREAMING_URL "X-PVMF-DATA-SRC-MS-HTTP-STREAMING-URL"
 #define PVMF_MIME_DATA_SOURCE_REAL_HTTP_CLOAKING_URL "X-PVMF-DATA-SRC-REAL-HTTP-CLOAKING-URL"
 #define PVMF_MIME_DATA_SOURCE_RTP_PACKET_SOURCE "X-PVMF-DATA-SRC-RTP-PACKET"
+#define PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL "X-PVMF-DATA-SRC-SHOUTCAST-URL"
 #define PVMF_MIME_DATA_SOURCE_UNKNOWN_URL "X-PVMF-DATA-SRC-UNKNOWN-URL"
+
 
 // MIME string for miscellaneous media data formats
 #define PVMF_MIME_3GPP_TIMEDTEXT		"video/3gpp-tt"

@@ -13,7 +13,7 @@
 <tr><td colspan=2><br><h2>Public Methods</h2></td></tr>
 <tr><td nowrap align=right valign=top>OSCL_IMPORT_REF&nbsp;</td><td valign=bottom><a class="el" href="classOsclThread.html#a0">OsclThread</a> ()</td></tr>
 <tr><td nowrap align=right valign=top>OSCL_IMPORT_REF&nbsp;</td><td valign=bottom><a class="el" href="classOsclThread.html#a1">~OsclThread</a> ()</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="classOsclProcStatus.html#s35">OsclProcStatus::eOsclProcError</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclThread.html#a2">Create</a> (<a class="el" href="oscl__thread_8h.html#a0">TOsclThreadFuncPtr</a> func, int32 stack_size, <a class="el" href="osclconfig__proc__unix__nj_8h.html#a7">TOsclThreadFuncArg</a> argument, <a class="el" href="oscl__thread_8h.html#a10">OsclThread_State</a> state=Start_on_creation)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="classOsclProcStatus.html#s35">OsclProcStatus::eOsclProcError</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclThread.html#a2">Create</a> (<a class="el" href="oscl__thread_8h.html#a0">TOsclThreadFuncPtr</a> func, int32 stack_size, <a class="el" href="osclconfig__proc__unix__android_8h.html#a7">TOsclThreadFuncArg</a> argument, <a class="el" href="oscl__thread_8h.html#a10">OsclThread_State</a> state=Start_on_creation)</td></tr>
 <tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="classOsclProcStatus.html#s35">OsclProcStatus::eOsclProcError</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclThread.html#a3">GetPriority</a> (<a class="el" href="oscl__thread_8h.html#a11">OsclThreadPriority</a> &amp;refThreadPriority)</td></tr>
 <tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="classOsclProcStatus.html#s35">OsclProcStatus::eOsclProcError</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclThread.html#a4">SetPriority</a> (<a class="el" href="oscl__thread_8h.html#a11">OsclThreadPriority</a> ePriority)</td></tr>
 <tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="classOsclProcStatus.html#s35">OsclProcStatus::eOsclProcError</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclThread.html#a5">Suspend</a> ()</td></tr>
@@ -22,8 +22,8 @@
 <tr><td colspan=2><br><h2>Static Public Methods</h2></td></tr>
 <tr><td nowrap align=right valign=top>OSCL_IMPORT_REF void&nbsp;</td><td valign=bottom><a class="el" href="classOsclThread.html#d0">Exit</a> (<a class="el" href="group__osclbase.html#a25">OsclAny</a> *exitcode)</td></tr>
 <tr><td nowrap align=right valign=top>OSCL_IMPORT_REF void&nbsp;</td><td valign=bottom><a class="el" href="classOsclThread.html#d1">EnableKill</a> ()</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="classOsclProcStatus.html#s35">OsclProcStatus::eOsclProcError</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclThread.html#d2">GetId</a> (<a class="el" href="osclconfig__proc__unix__nj_8h.html#a6">TOsclThreadId</a> &amp;refThreadId)</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF bool&nbsp;</td><td valign=bottom><a class="el" href="classOsclThread.html#d3">CompareId</a> (<a class="el" href="osclconfig__proc__unix__nj_8h.html#a6">TOsclThreadId</a> &amp;t1, <a class="el" href="osclconfig__proc__unix__nj_8h.html#a6">TOsclThreadId</a> &amp;t2)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="classOsclProcStatus.html#s35">OsclProcStatus::eOsclProcError</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclThread.html#d2">GetId</a> (<a class="el" href="osclconfig__proc__unix__android_8h.html#a6">TOsclThreadId</a> &amp;refThreadId)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF bool&nbsp;</td><td valign=bottom><a class="el" href="classOsclThread.html#d3">CompareId</a> (<a class="el" href="osclconfig__proc__unix__android_8h.html#a6">TOsclThreadId</a> &amp;t1, <a class="el" href="osclconfig__proc__unix__android_8h.html#a6">TOsclThreadId</a> &amp;t2)</td></tr>
 <tr><td nowrap align=right valign=top>OSCL_IMPORT_REF void&nbsp;</td><td valign=bottom><a class="el" href="classOsclThread.html#d4">SleepMillisec</a> (const int32 msec)</td></tr>
 </table>
 <hr><a name="_details"></a><h2>Detailed Description</h2>
@@ -95,13 +95,13 @@ Class destructor     </td>
         <tr>
           <td class="md" nowrap valign="top"> OSCL_IMPORT_REF bool OsclThread::CompareId </td>
           <td class="md" valign="top">(&nbsp;</td>
-          <td class="md" nowrap valign="top"><a class="el" href="osclconfig__proc__unix__nj_8h.html#a6">TOsclThreadId</a> &amp;&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="osclconfig__proc__unix__android_8h.html#a6">TOsclThreadId</a> &amp;&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>t1</em>, </td>
         </tr>
         <tr>
           <td></td>
           <td></td>
-          <td class="md" nowrap><a class="el" href="osclconfig__proc__unix__nj_8h.html#a6">TOsclThreadId</a> &amp;&nbsp;</td>
+          <td class="md" nowrap><a class="el" href="osclconfig__proc__unix__android_8h.html#a6">TOsclThreadId</a> &amp;&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>t2</em></td>
         </tr>
         <tr>
@@ -151,7 +151,7 @@ true if equal. </dl>    </td>
         <tr>
           <td></td>
           <td></td>
-          <td class="md" nowrap><a class="el" href="osclconfig__proc__unix__nj_8h.html#a7">TOsclThreadFuncArg</a>&nbsp;</td>
+          <td class="md" nowrap><a class="el" href="osclconfig__proc__unix__android_8h.html#a7">TOsclThreadFuncArg</a>&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>argument</em>, </td>
         </tr>
         <tr>
@@ -261,7 +261,7 @@ None </dl>    </td>
         <tr>
           <td class="md" nowrap valign="top"> OSCL_IMPORT_REF <a class="el" href="classOsclProcStatus.html#s35">OsclProcStatus::eOsclProcError</a> OsclThread::GetId </td>
           <td class="md" valign="top">(&nbsp;</td>
-          <td class="md" nowrap valign="top"><a class="el" href="osclconfig__proc__unix__nj_8h.html#a6">TOsclThreadId</a> &amp;&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="osclconfig__proc__unix__android_8h.html#a6">TOsclThreadId</a> &amp;&nbsp;</td>
           <td class="mdname1" valign="top" nowrap>&nbsp; <em>refThreadId</em>          </td>
           <td class="md" valign="top">)&nbsp;</td>
           <td class="md" nowrap><code> [static]</code></td>
@@ -500,7 +500,7 @@ Error code </dl>    </td>
 <hr>The documentation for this class was generated from the following file:<ul>
 <li><a class="el" href="oscl__thread_8h-source.html">oscl_thread.h</a></ul>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: OPENCORE_20090120 </small>
+<address style="align: left;"><small>Posting Version: OPENCORE_20090223 </small>
 </small></address>
 </body>
 </html>

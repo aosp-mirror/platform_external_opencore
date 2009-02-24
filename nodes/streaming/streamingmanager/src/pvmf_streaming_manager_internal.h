@@ -63,9 +63,7 @@
 #ifndef PVMF_CPMPLUGIN_LICENSE_INTERFACE_H_INCLUDED
 #include "pvmf_cpmplugin_license_interface.h"
 #endif
-#ifndef PVMF_DATA_SOURCE_PACKETSOURCE_H_INCLUDED
-#include "pvmf_data_source_packetsource.h"
-#endif
+
 /**
  * Macros for calling PVLogger
  */
@@ -370,8 +368,7 @@ class PVMFStreamingManagerExtensionInterfaceImpl :
             public PvmfDataSourcePlaybackControlInterface,
             public PVMFMetadataExtensionInterface,
             public PvmiCapabilityAndConfig,
-            public PVMFCPMPluginLicenseInterface,
-            public PVMFDataSourcePacketSourceInterface
+            public PVMFCPMPluginLicenseInterface
 {
     public:
         PVMFStreamingManagerExtensionInterfaceImpl(PVMFStreamingManagerNode*,
@@ -572,16 +569,10 @@ class PVMFStreamingManagerExtensionInterfaceImpl :
         OSCL_IMPORT_REF void removeRef();
         OSCL_IMPORT_REF bool queryInterface(const PVUuid& uuid, PVInterface*& iface);
 
-        /*
-         * From PVMFDataSourcePacketSourceInterface
-         */
-        OSCL_IMPORT_REF PVMFStatus setPacketSourceInterface(PVMFPacketSource* aPacketSource);
-
     private:
         PVMFSessionId iSessionId;
         PVMFStreamingManagerNode *iContainer;
         friend class PVMFStreamingManagerNode;
-        PVMFPacketSource *iPacketSource;
 };
 
 #endif

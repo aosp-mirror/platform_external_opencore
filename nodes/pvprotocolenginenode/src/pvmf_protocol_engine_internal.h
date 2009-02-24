@@ -15,48 +15,19 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-#ifndef PVMF_PROTOCOLENGINE_PORT_H_INCLUDED
-#include "pvmf_protocol_engine_port.h"
-#endif
-
-#ifndef PVMF_MEMPOOL_H_INCLUDED
-#include "pvmf_mempool.h"
-#endif
-
-#ifndef OSCL_MEM_MEMPOOL_H_INCLUDED
-#include "oscl_mem_mempool.h"
-#endif
+#ifndef PVMF_PROTOCOL_ENGINE_INTERNAL_H_INCLUDED
+#define PVMF_PROTOCOL_ENGINE_INTERNAL_H_INCLUDED
 
 #ifndef PVMF_MEDIA_DATA_H_INCLUDED
 #include "pvmf_media_data.h"
-#endif
-
-#ifndef PVMF_SIMPLE_MEDIA_BUFFER_H_INCLUDED
-#include "pvmf_simple_media_buffer.h"
-#endif
-
-#ifndef PVMI_DATA_STREAM_INTERFACE_H_INCLUED
-#include "pvmi_data_stream_interface.h"
 #endif
 
 #ifndef OSCL_STR_PTR_LEN_H_INCLUDED
 #include "oscl_str_ptr_len.h"
 #endif
 
-#ifndef PVMF_MEDIA_CLOCK_H_INCLUDED
-#include "pvmf_media_clock.h"
-#endif
-
 #ifndef OSCL_TIME_H_INCLUDED
 #include "oscl_time.h"
-#endif
-
-#ifndef PVMF_FORMAT_PROGDOWNLOAD_SUPPORT_EXTENSION_H_INCLUDED
-#include "pvmf_format_progdownload_support_extension.h"
-#endif
-
-#ifndef PVDL_CONFIG_FILE_H_INCLUDED
-#include "pvdl_config_file.h"
 #endif
 
 #ifndef OSCL_STRING_CONSTAINERS_H_INCLUDED
@@ -82,6 +53,26 @@
 #ifndef PVMF_PROTOCOL_ENGINE_NODE_EXTENSION_H_INCLUDED
 #include "pvmf_protocol_engine_node_extension.h" // for class PVMFProtocolEngineNodeMSHTTPStreamingParams
 #endif
+
+#ifndef PVLOGGER_H_INCLUDED
+#include "pvlogger.h"
+#endif
+
+// log macros
+#define LOGERROR(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iLogger,PVLOGMSG_ERR,m);
+#define LOGINFOHI(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG,iLogger,PVLOGMSG_INFO,m);
+#define LOGINFOMED(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG,iLogger,PVLOGMSG_INFO,m);
+#define LOGINFOLOW(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG,iLogger,PVLOGMSG_INFO,m);
+#define LOGINFO(m) LOGINFOMED(m)
+#define LOGINFODATAPATH(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG,iDataPathLogger,PVLOGMSG_INFO,m);
+#define LOGERRORDATAPATH(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iDataPathLogger,PVLOGMSG_ERR,m);
+#define LOGINFOCLOCK(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG,iClockLogger,PVLOGMSG_INFO,m);
+#define PVMF_PROTOCOL_ENGINE_LOGBIN(iPortLogger, m) PVLOGGER_LOGBIN(PVLOGMSG_INST_LLDBG, iPortLogger, PVLOGMSG_ERR, m);
+#define PVMF_PROTOCOL_ENGINE_LOGINFODATAPATH(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG,iDataPathLogger,PVLOGMSG_INFO,m);
+#define PVMF_PROTOCOL_ENGINE_LOGERRINFODATAPATH(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG,iDataPathErrLogger,PVLOGMSG_INFO,m);
+#define	NODEDATAPATHLOGGER_TAG "datapath.sourcenode.protocolenginenode"
+#define DATAPATHLOGGER_TAG "protocolenginenode.protocolengine"
+#define DATAPATHERRLOGGER_TAG "datapath.sourcenode.protocolenginenode"
 
 
 enum pvHttpProcessingMicroState
@@ -843,4 +834,6 @@ class HttpParsingBasicObjectAutoCleanup
     private:
         HttpParsingBasicObject *iParser;
 };
+
+#endif
 

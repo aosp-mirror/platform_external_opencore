@@ -478,8 +478,7 @@ int PlayerDriver::setupHttpStreamPre()
                 0xFFFFFFFF,
                 mDownloadProxy,
                 0,
-                PVMFDownloadDataSourceHTTP::ENoSaveToFile,
-                false);
+                PVMFDownloadDataSourceHTTP::ENoSaveToFile);
 
 #else
     mDownloadContextData = new PVMFSourceContextData();
@@ -492,7 +491,6 @@ int PlayerDriver::setupHttpStreamPre()
     mDownloadContextData->DownloadHTTPData()->iProxyName = _STRLIT_CHAR("");
     mDownloadContextData->DownloadHTTPData()->iProxyPort = 0;
     mDownloadContextData->DownloadHTTPData()->iPlaybackControl = PVMFSourceContextDataDownloadHTTP::EAsap;
-    mDownloadContextData->CommonData()->iUseCPMPluginRegistry = false;
 #endif
 
     mDataSource->SetDataSourceContextData(mDownloadContextData);
@@ -509,7 +507,7 @@ int PlayerDriver::setupHttpStreamPost()
     int error = 0;
 
     iKVPSetAsync.key = _STRLIT_CHAR("x-pvmf/net/user-agent;valtype=wchar*");
-    OSCL_wHeapString<OsclMemAllocator> userAgent = _STRLIT_WCHAR("CORE/6.101.1.1 OpenCORE/2.0 (Linux;Android 1.0)(AndroidMediaPlayer 1.0)");
+    OSCL_wHeapString<OsclMemAllocator> userAgent = _STRLIT_WCHAR("CORE/6.504.1.1 OpenCORE/2.1 (Linux;Android 1.0)(AndroidMediaPlayer 1.0)");
     iKVPSetAsync.value.pWChar_value=userAgent.get_str();
     iErrorKVP=NULL;
     OSCL_TRY(error, mPlayerCapConfig->setParametersSync(NULL, &iKVPSetAsync, 1, iErrorKVP));
@@ -1078,7 +1076,13 @@ void PlayerDriver::HandleInformationalEvent(const PVAsyncInformationalEvent& aEv
             uint8 *localBuf = aEvent.GetLocalBuffer();
             if (localBuf != NULL) {
                 uint32 bufPercent;
-                oscl_memcpy(&bufPercent, localBuf, sizeof(uint32));
+                // @TODO - Get rid of this later
+                if (mDataSource->GetDataSourceFormatType() == (char*)PVMF_MIME_DATA_SOURCE_HTTP_URL) {
+                    oscl_memcpy(&bufPercent, localBuf, sizeof(uint32));
+                }
+                else {//RTSP
+                    oscl_memcpy(&bufPercent, &localBuf[4], sizeof(uint32));
+                }
                 LOGV("PVMFInfoBufferingStatus(%u)", bufPercent);
                 mPvPlayer->sendEvent(MEDIA_BUFFERING_UPDATE, bufPercent);
             }

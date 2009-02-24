@@ -240,15 +240,17 @@ Word32 sqrt_l_exp(      /* o : output value,                          Q31 */
     L_x = L_shl(L_x, e, pOverflow);         /* L_x is normalized to [0.25..1) */
     *pExp = e;                              /* return 2*exponent (or Q1)      */
 
-    L_x = L_shr(L_x, 9, pOverflow);
-    i = (Word16)(L_x >> 16);               /* Extract b25-b31, 16 <= i <= 63
-                                            because of normalization          */
+    L_x >>= 10;
+    i = (Word16)(L_x >> 15) & 63;            /* Extract b25-b31, 16<= i <=63  */
+    /* because of normalization       */
 
-    L_x = L_shr(L_x, 1, pOverflow);
     a = (Word16)(L_x);                      /* Extract b10-b24 */
     a &= (Word16) 0x7fff;
 
-    i = sub(i, 16, pOverflow);              /* 0 <= i <= 47                   */
+    if (i > 15)
+    {
+        i -= 16;                              /* 0 <= i <= 47                   */
+    }
 
     L_y = L_deposit_h(sqrt_l_tbl[i]);       /* sqrt_l_tbl[i] << 16            */
 

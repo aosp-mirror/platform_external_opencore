@@ -32,7 +32,8 @@ class pv_mediainput_async_test_opencomposestop: public pvauthor_async_test_base,
             public PvmiConfigAndCapabilityCmdObserver
 {
     public:
-        pv_mediainput_async_test_opencomposestop(PVAuthorAsyncTestParam aTestParam, PVMediaInputTestParam aMediaParam, bool aPauseResumeEnable)
+        pv_mediainput_async_test_opencomposestop(PVAuthorAsyncTestParam aTestParam, PVMediaInputTestParam aMediaParam, bool aPauseResumeEnable,
+                bool aUseExtrnFileDesc = false)
                 : pvauthor_async_test_base(aTestParam)
                 , iOutputFileName(NULL)
                 , iInputFileName(NULL)
@@ -58,11 +59,13 @@ class pv_mediainput_async_test_opencomposestop: public pvauthor_async_test_base,
                 , iAudioBitrate(aMediaParam.iAudioBitrate)
                 , iFrameRate(aMediaParam.iFrameRate)
                 , iSamplingRate(aMediaParam.iSamplingRate)
+                , iUseExtrnFileDesc(aUseExtrnFileDesc)
 
         {
             OSCL_UNUSED_ARG(iAudioBitrate);
             OSCL_UNUSED_ARG(iFrameRate);
             OSCL_UNUSED_ARG(iSamplingRate);
+            iFileHandle = NULL;
 
             iLogger = PVLogger::GetLoggerObject("pv_mediainput_async_test_opencomposestop");
 
@@ -118,6 +121,7 @@ class pv_mediainput_async_test_opencomposestop: public pvauthor_async_test_base,
         // Methods to configure composers
         bool ConfigComposer();
         bool ConfigOutputFile();
+        OsclFileHandle *iFileHandle;
         bool ConfigMp43gpComposer();
 
         bool CapConfigSync();
@@ -194,6 +198,7 @@ class pv_mediainput_async_test_opencomposestop: public pvauthor_async_test_base,
         uint32					 iAudioBitrate;
         OsclFloat 				 iFrameRate;
         uint32					 iSamplingRate;
+        bool					 iUseExtrnFileDesc;
 
 };
 

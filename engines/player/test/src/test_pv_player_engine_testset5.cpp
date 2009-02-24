@@ -102,6 +102,10 @@
 #include "pvmf_socket_node_events.h"
 #endif
 
+#ifndef PVMF_METADTA_INFOMESSAGE_H
+#include "pvmf_metadata_infomessage.h"
+#endif
+
 
 
 //Default Fast-track download file
@@ -133,7 +137,9 @@
 
 #define DEFAULT_CANCEL_DURING_INIT_DELAY_TEST_URL "http://reallinux.pv.com:1415/blz4-110302-aac-h263.mp4?bitrate=1000000"
 
-#define DEFAULT_3GPP_PPB_URL "http://pvwmsoha.pv.com:7070/MediaDownloadContent/UserUploads/youtube_singer.3gp"
+#define DEFAULT_3GPP_PPB_URL "http://wms.pv.com:7070/MediaDownloadContent/UserUploads/youtube_singer.3gp"
+
+#define DEFAULT_SHOUTCAST_URL "http://scfire-dtc-aa05.stream.aol.com/stream/1018"
 
 extern FILE* file;
 
@@ -1875,7 +1881,6 @@ void pvplayer_async_test_3gppdlnormal::CreateDataSource()
     iDownloadContextData->DownloadHTTPData()->iUserID = _STRLIT_CHAR("abc");
     iDownloadContextData->DownloadHTTPData()->iUserPasswd = _STRLIT_CHAR("xyz");
     iDownloadContextData->DownloadHTTPData()->iPlaybackControl = PVMFSourceContextDataDownloadHTTP::EAsap;
-    iDownloadContextData->CommonData()->iUseCPMPluginRegistry = iUseCpmForPlayback;
 
     iDataSource->SetDataSourceContextData(iDownloadContextData);
 }
@@ -1975,7 +1980,6 @@ void pvplayer_async_test_ppbnormal::CreateDataSource()
     iDownloadContextData->DownloadHTTPData()->iUserID = _STRLIT_CHAR("abc");
     iDownloadContextData->DownloadHTTPData()->iUserPasswd = _STRLIT_CHAR("xyz");
     iDownloadContextData->DownloadHTTPData()->iPlaybackControl = PVMFSourceContextDataDownloadHTTP::ENoSaveToFile;
-    iDownloadContextData->CommonData()->iUseCPMPluginRegistry = false;
 
     iDataSource->SetDataSourceContextData(iDownloadContextData);
 }
@@ -2057,7 +2061,6 @@ void pvplayer_async_test_3gppdlnormal_dlthenplay::CreateDataSource()
     iDownloadContextData->DownloadHTTPData()->iProxyName = iDownloadProxy;
     iDownloadContextData->DownloadHTTPData()->iProxyPort = iDownloadProxyPort;
     iDownloadContextData->DownloadHTTPData()->iPlaybackControl = PVMFSourceContextDataDownloadHTTP::EAfterDownload;
-    iDownloadContextData->CommonData()->iUseCPMPluginRegistry = false;
 
     iDataSource->SetDataSourceContextData(iDownloadContextData);
 }
@@ -2140,7 +2143,6 @@ void pvplayer_async_test_3gppdlnormal_dlonly::CreateDataSource()
     iDownloadContextData->DownloadHTTPData()->iProxyName = iDownloadProxy;
     iDownloadContextData->DownloadHTTPData()->iProxyPort = iDownloadProxyPort;
     iDownloadContextData->DownloadHTTPData()->iPlaybackControl = PVMFSourceContextDataDownloadHTTP::ENoPlayback;
-    iDownloadContextData->CommonData()->iUseCPMPluginRegistry = false;
 
     iDataSource->SetDataSourceContextData(iDownloadContextData);
 }
@@ -3109,7 +3111,6 @@ void pvplayer_async_test_3gppdlcontenttoolarge::CreateDataSource()
     iDownloadContextData->DownloadHTTPData()->iProxyName = iDownloadProxy;
     iDownloadContextData->DownloadHTTPData()->iProxyPort = iDownloadProxyPort;
     iDownloadContextData->DownloadHTTPData()->iPlaybackControl = PVMFSourceContextDataDownloadHTTP::ENoPlayback;
-    iDownloadContextData->CommonData()->iUseCPMPluginRegistry = false;
 
     iDataSource->SetDataSourceContextData(iDownloadContextData);
 }
@@ -3181,7 +3182,6 @@ void pvplayer_async_test_3gppdlContentTruncated::CreateDataSource()
     iDownloadContextData->DownloadHTTPData()->iProxyName = iDownloadProxy;
     iDownloadContextData->DownloadHTTPData()->iProxyPort = iDownloadProxyPort;
     iDownloadContextData->DownloadHTTPData()->iPlaybackControl = PVMFSourceContextDataDownloadHTTP::EAsap;
-    iDownloadContextData->CommonData()->iUseCPMPluginRegistry = false;
 
     iDataSource->SetDataSourceContextData(iDownloadContextData);
 }
@@ -4064,8 +4064,17 @@ void pvplayer_async_test_ppb_base::CommandCompleted(const PVCmdResponse& aRespon
                     if (iLongPauseResume || iShortPauseResume)
                     {
                         iState = STATE_PAUSE;
-                        //just play for 20 seconds then stop
-                        RunIfNotReady(20*1000*1000);
+
+                        if (iShoutcastSession)
+                        {
+                            //just play for 1 minutes then stop
+                            RunIfNotReady(iSCListenTime);
+                        }
+                        else
+                        {
+                            //just play for 20 seconds then stop
+                            RunIfNotReady(20*1000*1000);
+                        }
                     }
                     else if (iSeekAfterDownloadComplete && 0 == iNumBufferingComplete)
                     {
@@ -4074,8 +4083,18 @@ void pvplayer_async_test_ppb_base::CommandCompleted(const PVCmdResponse& aRespon
                     else if (!iPlayUntilEOS)
                     {
                         iState = STATE_STOP;
-                        //just play for 20 seconds then stop
-                        RunIfNotReady(20*1000*1000);
+
+                        if (iShoutcastSession)
+                        {
+                            //just play for 5 minutes then stop
+                            // or 1 minute when it is play stop play
+                            RunIfNotReady(iSCListenTime);
+                        }
+                        else
+                        {
+                            //just play for 20 second then stop
+                            RunIfNotReady(20*1000*1000);
+                        }
                     }
                     else
                     {
@@ -4117,6 +4136,11 @@ void pvplayer_async_test_ppb_base::CommandCompleted(const PVCmdResponse& aRespon
                     {
                         iState = STATE_STOP_TWICE;
                         RunIfNotReady(3*1000*1000);	// Play for 3 seconds
+                    }
+                    else if (iShoutcastPlayStopPlay)
+                    {
+                        iState = STATE_STOP_TWICE;
+                        RunIfNotReady(iSCListenTime);	// Play for another minute
                     }
                 }
             }
@@ -4237,8 +4261,17 @@ void pvplayer_async_test_ppb_base::CommandCompleted(const PVCmdResponse& aRespon
                     }
                     else
                     {
-                        // play for another 20 seconds and stop
-                        RunIfNotReady(20*1000*1000);
+
+                        if (iShoutcastSession)
+                        {
+                            //just play for 1 minutes then stop
+                            RunIfNotReady(iSCListenTime);
+                        }
+                        else
+                        {
+                            // play for another 20 seconds and stop
+                            RunIfNotReady(20*1000*1000);
+                        }
                     }
                 }
             }
@@ -4340,10 +4373,14 @@ void pvplayer_async_test_ppb_base::CommandCompleted(const PVCmdResponse& aRespon
         case STATE_STOP:
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
-                if (iEOSStopPlay)
+                if (iEOSStopPlay || iShoutcastPlayStopPlay)
+                {
                     iState = STATE_PREPARE_AFTERSTOP;
+                }
                 else
+                {
                     iState = STATE_REMOVEDATASINK_VIDEO;
+                }
                 RunIfNotReady();
             }
             else
@@ -4484,6 +4521,7 @@ void pvplayer_async_test_ppb_base::HandleSocketNodeErrors(int32 aErr)
     {
         fprintf(iTestMsgOutputFile, "PVMFSocketNodeErrorSocketServerCreateError\n");
     }
+
     else if (aErr == PVMFSocketNodeErrorSocketServConnectError)
     {
         fprintf(iTestMsgOutputFile, "PVMFSocketNodeErrorSocketServConnectError\n");
@@ -4687,8 +4725,11 @@ void pvplayer_async_test_ppb_base::HandleInformationalEvent(const PVAsyncInforma
             fprintf(file, "   PVMFInfoBufferingStart\n");
             iNumBufferingStart++;
             //we should only get one of these.
-            if (iNumBufferingStart == 2 && !iEOSStopPlay)
-                PVPATB_TEST_IS_TRUE(false);
+            if (iNumBufferingStart == 2)
+            {
+                if (!iEOSStopPlay && !iShoutcastPlayStopPlay)
+                    PVPATB_TEST_IS_TRUE(false);
+            }
             break;
 
         case PVMFInfoBufferingComplete:
@@ -4863,6 +4904,50 @@ void pvplayer_async_test_ppb_base::HandleInformationalEvent(const PVAsyncInforma
             }
         }
         break;
+        case PVMFInfoMetadataAvailable:
+        {
+            PVUuid infomsguuid = PVMFMetadataInfoMessageInterfaceUUID;
+            PVMFMetadataInfoMessageInterface* eventMsg = NULL;
+            PVInterface* infoExtInterface = aEvent.GetEventExtensionInterface();
+            if (infoExtInterface &&
+                    infoExtInterface->queryInterface(infomsguuid, (PVInterface*&)eventMsg))
+            {
+                PVUuid eventuuid;
+                int32 infoCode;
+                eventMsg->GetCodeUUID(infoCode, eventuuid);
+                if (eventuuid == infomsguuid)
+                {
+                    Oscl_Vector<PvmiKvp, OsclMemAllocator> kvpVector = eventMsg->GetMetadataVector();
+                    for (uint32 i = 0;i < kvpVector.size();i++)
+                    {
+                        //arora
+                        if (oscl_strstr(kvpVector[i].key, "valtype=char*"))
+                        {
+                            fprintf(file, "\n*********************************");
+                            fprintf(file, "\nMetadata Key '%s', value '%s'\n", kvpVector[i].key, kvpVector[i].value.pChar_value);
+                            fprintf(file, "\n*********************************");
+                        }
+                        else if (oscl_strstr(kvpVector[i].key, "valtype=wchar*"))
+                        {
+                            OSCL_HeapString<OsclMemAllocator> ostr;
+                            char buf[2];
+                            buf[1] = '\0';
+                            for (uint32 j = 0;;j++)
+                            {
+                                if (kvpVector[i].value.pWChar_value[j] == '\0')
+                                    break;
+                                buf[0] = kvpVector[i].value.pWChar_value[j];
+                                ostr += buf;
+                            }
+                            fprintf(file, "\n*********************************");
+                            fprintf(file, "  Metadata Key '%s', value '%s'\n", kvpVector[i].key, ostr.get_str());
+                            fprintf(file, "\n*********************************");
+                        }
+                    }
+                }
+            }
+        }
+
         default:
             break;
     }
@@ -4882,11 +4967,26 @@ void pvplayer_async_test_ppb_normal::CreateDataSource()
     OSCL_HeapString<OsclMemAllocator> url(iFileName);
     OSCL_HeapString<OsclMemAllocator> default_source(SOURCENAME_PREPEND_STRING);
     default_source += DEFAULTSOURCEFILENAME;
+
+    if (iFileType == PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL)
+    {
+        iShoutcastSession = true;
+    }
+
     if (url == default_source)
     {
-        fprintf(file, "Setting source to %s\n", DEFAULT_3GPP_PPB_URL);
-        url = DEFAULT_3GPP_PPB_URL;
+        if (iFileType == PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL)
+        {
+            fprintf(file, "Setting source to %s\n", DEFAULT_SHOUTCAST_URL);
+            url = DEFAULT_SHOUTCAST_URL;
+        }
+        else
+        {
+            fprintf(file, "Setting source to %s\n", DEFAULT_3GPP_PPB_URL);
+            url = DEFAULT_3GPP_PPB_URL;
+        }
     }
+
     oscl_wchar wbuf[2];
     wbuf[1] = '\0';
     for (uint32 i = 0; i < url.get_size(); i++)
@@ -4896,7 +4996,15 @@ void pvplayer_async_test_ppb_normal::CreateDataSource()
     }
     iDataSource = new PVPlayerDataSourceURL;
     iDataSource->SetDataSourceURL(iDownloadURL);
-    iDataSource->SetDataSourceFormatType(PVMF_MIME_DATA_SOURCE_HTTP_URL);
+
+    if (iFileType == PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL)
+    {
+        iDataSource->SetDataSourceFormatType(PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL);
+    }
+    else
+    {
+        iDataSource->SetDataSourceFormatType(PVMF_MIME_DATA_SOURCE_HTTP_URL);
+    }
 
     iDownloadFilename = NULL;
 
@@ -4922,7 +5030,6 @@ void pvplayer_async_test_ppb_normal::CreateDataSource()
     iDownloadContextData->DownloadHTTPData()->iProxyName = iDownloadProxy;
     iDownloadContextData->DownloadHTTPData()->iProxyPort = iDownloadProxyPort;
     iDownloadContextData->DownloadHTTPData()->iPlaybackControl = PVMFSourceContextDataDownloadHTTP::ENoSaveToFile;
-    iDownloadContextData->CommonData()->iUseCPMPluginRegistry = false;
 
     iDataSource->SetDataSourceContextData(iDownloadContextData);
 }
@@ -4931,6 +5038,7 @@ void pvplayer_async_test_ppb_normal::CreateDataSinkVideo()
 {
     OSCL_wHeapString<OsclMemAllocator> sinkfile = OUTPUTNAME_PREPEND_WSTRING;
     sinkfile += _STRLIT_WCHAR("test_player_3gp_ppb_");
+
     if (iShortPauseResume)
     {
         sinkfile += _STRLIT_WCHAR("sht_ps_rsm_");
@@ -4977,7 +5085,14 @@ void pvplayer_async_test_ppb_normal::CreateDataSinkVideo()
 void pvplayer_async_test_ppb_normal::CreateDataSinkAudio()
 {
     OSCL_wHeapString<OsclMemAllocator> sinkfile = OUTPUTNAME_PREPEND_WSTRING;
-    sinkfile += _STRLIT_WCHAR("test_player_3gp_ppb_");
+    if (iShoutcastSession)
+    {
+        sinkfile += _STRLIT_WCHAR("test_player_shout_");
+    }
+    else
+    {
+        sinkfile += _STRLIT_WCHAR("test_player_3gp_ppb_");
+    }
     if (iShortPauseResume)
     {
         sinkfile += _STRLIT_WCHAR("sht_ps_rsm_");
@@ -5004,6 +5119,11 @@ void pvplayer_async_test_ppb_normal::CreateDataSinkAudio()
     if (iLoop)
     {
         sinkfile += _STRLIT_WCHAR("lp_");
+    }
+
+    if (iShoutcastPlayStopPlay)
+    {
+        sinkfile += _STRLIT_WCHAR("ply_stp_ply_");
     }
 
     if (iPlayUntilEOS)
@@ -5092,7 +5212,6 @@ void pvplayer_async_test_PDLPauseResumeAfterUnderFlow::CreateDataSource()
     iDownloadContextData->DownloadHTTPData()->iUserID = _STRLIT_CHAR("abc");
     iDownloadContextData->DownloadHTTPData()->iUserPasswd = _STRLIT_CHAR("xyz");
     iDownloadContextData->DownloadHTTPData()->iPlaybackControl = PVMFSourceContextDataDownloadHTTP::EAsap;
-    iDownloadContextData->CommonData()->iUseCPMPluginRegistry = false;
 
     iDataSource->SetDataSourceContextData(iDownloadContextData);
 }

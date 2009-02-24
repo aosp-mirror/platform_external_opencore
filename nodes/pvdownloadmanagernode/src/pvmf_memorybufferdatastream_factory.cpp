@@ -71,7 +71,7 @@ OSCL_EXPORT_REF PVInterface*
 PVMFMemoryBufferReadDataStreamFactoryImpl::CreatePVMFCPMPluginAccessInterface(PVUuid& aUuid)
 {
     // Create a new PVMFMemoryBufferReadDataStreamFactoryImpl for each request
-    // Can have up to PV_MB_MAX_NUMBER_OF_READ_CONNECTIONS connections
+    // Can have up to PV_MBDS_MAX_NUMBER_OF_READ_CONNECTIONS connections
     if (aUuid == PVMIDataStreamSyncInterfaceUuid)
     {
         PVMFMemoryBufferReadDataStreamImpl* ReadStream = NULL;
@@ -136,7 +136,7 @@ PVMFMemoryBufferReadDataStreamFactoryImpl::NotifyDownloadComplete()
 //////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF
 PVMFMemoryBufferWriteDataStreamFactoryImpl::PVMFMemoryBufferWriteDataStreamFactoryImpl(PVMFMemoryBufferDataStreamTempCache* aTempCache,
-        PVMFMemoryBufferDataStreamPermCache* aPermCache)
+        PVMFMemoryBufferDataStreamPermCache* aPermCache, MBDSStreamFormat aStreamFormat, uint32 aTempCacheCapacity)
 {
     // Init to NULL for later creation in CreatePVMFCPMPluginAccessInterface()
     iWriteDataStream = NULL;
@@ -144,6 +144,8 @@ PVMFMemoryBufferWriteDataStreamFactoryImpl::PVMFMemoryBufferWriteDataStreamFacto
     iTempCache = aTempCache;
     iPermCache = aPermCache;
     iDownloadComplete = false;
+    iStreamFormat = aStreamFormat;
+    iTempCacheCapacity = aTempCacheCapacity;
 }
 
 OSCL_EXPORT_REF
@@ -171,7 +173,7 @@ PVMFMemoryBufferWriteDataStreamFactoryImpl::CreatePVMFCPMPluginAccessInterface(P
         if (!iWriteDataStream)
         {
             // It does not exist so allocate
-            iWriteDataStream = OSCL_NEW(PVMFMemoryBufferWriteDataStreamImpl, (iTempCache, iPermCache));
+            iWriteDataStream = OSCL_NEW(PVMFMemoryBufferWriteDataStreamImpl, (iTempCache, iPermCache, iStreamFormat, iTempCacheCapacity));
             if (iWriteDataStream == NULL)
             {
                 OSCL_LEAVE(OsclErrNoMemory);
@@ -198,7 +200,6 @@ PVMFMemoryBufferWriteDataStreamFactoryImpl::NotifyDownloadComplete()
     iDownloadComplete = true;
     iWriteDataStream->NotifyDownloadComplete();
 }
-
 
 //////////////////////////////////////////////////////////////////////
 // PVMFMemoryBufferReadDataStreamImpl
@@ -507,8 +508,8 @@ PVMFMemoryBufferReadDataStreamImpl::Read(PvmiDataStreamSession aSessionID, uint8
             // First byte not in the temp cache
             // Find out if it is on route to the cache, if so, no need to send reposition request
             // But if the cache is full, we need to send reposition request
-            if ((firstByteToRead < firstTempByteOffset) || ((firstByteToRead - lastTempByteOffset) > BYTES_TO_WAIT) ||
-                    (((firstByteToRead - lastTempByteOffset) <= BYTES_TO_WAIT) && ((lastTempByteOffset - firstTempByteOffset + 1) >= READ_BUFFER_SIZE)))
+            if ((firstByteToRead < firstTempByteOffset) || ((firstByteToRead - lastTempByteOffset) > PV_MBDS_BYTES_TO_WAIT) ||
+                    (((firstByteToRead - lastTempByteOffset) <= PV_MBDS_BYTES_TO_WAIT) && ((lastTempByteOffset - firstTempByteOffset + 1) >= iWriteDataStream->GetTempCacheCapacity())))
             {
                 LOGDEBUG((0, "PVMFMemoryBufferReadDataStreamImpl::Read Reposition first %d last %d session %d offset %d",
                           firstTempByteOffset, lastTempByteOffset, iSessionID, firstByteToRead));
@@ -736,7 +737,7 @@ PVMFMemoryBufferReadDataStreamImpl::Seek(PvmiDataStreamSession aSessionID, int32
                         // Check if the data for new offset will eventually come and that there is room
                         // in the cache for it. If there is no room and no more reads are issued by the parser,
                         // no buffers will be released and there will be a deadlock
-                        if ((lastTempByteOffset + capacity) > (skipTo + BYTES_TO_WAIT))
+                        if ((lastTempByteOffset + capacity) > (skipTo + PV_MBDS_BYTES_TO_WAIT))
                         {
                             // data is coming, no need to send request
                             LOGDEBUG((0, "PVMFMemoryBufferReadDataStreamImpl::Seek/Skip data is expected shortly session %d offset %d", iSessionID, skipTo));
@@ -907,14 +908,14 @@ PVMFMemoryBufferReadDataStreamImpl::MakePersistent(int32 aOffset, uint32 aSize)
         return PVDS_SUCCESS;
     }
     // check for upper bound, if any
-    if (PERM_CACHE_SIZE != NO_LIMIT)
+    if (PV_MBDS_PERM_CACHE_SIZE != NO_LIMIT)
     {
         // find out current perm cache size
         // want to know what has been allocated, not what has been filled
         uint32 cacheSize = iPermCache->GetCacheSize();
-        if ((cacheSize + aSize) > PERM_CACHE_SIZE)
+        if ((cacheSize + aSize) > PV_MBDS_PERM_CACHE_SIZE)
         {
-            LOGERROR((0, "PVMFMemoryBufferReadDataStreamImpl::MakePersistent exceed cache size limit cacheSize %d limit %d", cacheSize, PERM_CACHE_SIZE));
+            LOGERROR((0, "PVMFMemoryBufferReadDataStreamImpl::MakePersistent exceed cache size limit cacheSize %d limit %d", cacheSize, PV_MBDS_PERM_CACHE_SIZE));
             return PVDS_FAILURE;
         }
     }
@@ -1119,7 +1120,7 @@ PVMFMemoryBufferReadDataStreamImpl::GetCurrentByteRange(uint32& aCurrentFirstByt
 //////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF
 PVMFMemoryBufferWriteDataStreamImpl::PVMFMemoryBufferWriteDataStreamImpl(PVMFMemoryBufferDataStreamTempCache* aTempCache,
-        PVMFMemoryBufferDataStreamPermCache* aPermCache)
+        PVMFMemoryBufferDataStreamPermCache* aPermCache, MBDSStreamFormat aStreamFormat, uint32 aTempCacheCapacity)
 {
     iDownloadComplete = false;
     iFileNumBytes = 0;
@@ -1139,8 +1140,10 @@ PVMFMemoryBufferWriteDataStreamImpl::PVMFMemoryBufferWriteDataStreamImpl(PVMFMem
     // save pointer to cache
     iTempCache = aTempCache;
     iPermCache = aPermCache;
+    iStreamFormat = aStreamFormat;
+    iTempCacheCapacity = aTempCacheCapacity;
 
-    for (uint32 i = 0; i < PV_MB_MAX_NUMBER_OF_READ_CONNECTIONS; i++)
+    for (uint32 i = 0; i < PV_MBDS_MAX_NUMBER_OF_READ_CONNECTIONS; i++)
     {
         iReadNotifications[i].iReadStructValid = false;
 
@@ -1151,7 +1154,20 @@ PVMFMemoryBufferWriteDataStreamImpl::PVMFMemoryBufferWriteDataStreamImpl(PVMFMem
     iWriteNotification.iOutstanding = false;
     iLogger = PVLogger::GetLoggerObject("PVMFMemoryBufferDataStream");
 
-    LOGTRACE((0, "PVMFMemoryBufferWriteDataStreamImpl::PVMFMemoryBufferWriteDataStreamImpl"));
+    // put this in the header
+    if (MBDS_STREAM_FORMAT_SHOUTCAST == iStreamFormat)
+    {
+        iTempCacheTrimThreshold = PV_MBDS_TEMP_CACHE_TRIM_THRESHOLD_SC(iTempCacheCapacity);
+        iTempCacheTrimMargin = PV_MBDS_TEMP_CACHE_TRIM_MARGIN_SC;
+    }
+    else
+    {
+        iTempCacheTrimThreshold = PV_MBDS_TEMP_CACHE_TRIM_THRESHOLD_PS(iTempCacheCapacity);
+        iTempCacheTrimMargin = PV_MBDS_TEMP_CACHE_TRIM_MARGIN_PS;
+    }
+
+    LOGTRACE((0, "PVMFMemoryBufferWriteDataStreamImpl::PVMFMemoryBufferWriteDataStreamImpl stream format %d temp cache size %d trim threshold %d trim margin %d",
+              iStreamFormat, iTempCacheCapacity, iTempCacheTrimThreshold, iTempCacheTrimMargin));
 }
 
 OSCL_EXPORT_REF
@@ -1161,7 +1177,7 @@ PVMFMemoryBufferWriteDataStreamImpl::~PVMFMemoryBufferWriteDataStreamImpl()
 
     // If there are read notifications outstanding, send them
     // If there are reposition request, signal the semaphores
-    for (uint32 i = 0; i < PV_MB_MAX_NUMBER_OF_READ_CONNECTIONS; i++)
+    for (uint32 i = 0; i < PV_MBDS_MAX_NUMBER_OF_READ_CONNECTIONS; i++)
     {
         if ((iReadNotifications[i].iReadStructValid == true) &&
                 (iReadNotifications[i].iOutstanding == true) &&
@@ -1265,18 +1281,18 @@ PVMFMemoryBufferWriteDataStreamImpl::OpenSession(PvmiDataStreamSession& aSession
     {
         case PVDS_READ_ONLY:
             // Check to see if we have free READ connections before setting one.
-            if (iNumReadSessions < PV_MB_MAX_NUMBER_OF_READ_CONNECTIONS)
+            if (iNumReadSessions < PV_MBDS_MAX_NUMBER_OF_READ_CONNECTIONS)
             {
                 // at least one of them is free
                 bool found = false;
-                for (int i = 0; i < PV_MB_MAX_NUMBER_OF_READ_CONNECTIONS; i++)
+                for (int i = 0; i < PV_MBDS_MAX_NUMBER_OF_READ_CONNECTIONS; i++)
                 {
                     if (false == iReadFilePositions[i].iReadPositionStructValid)
                     {
                         found = true;
 
                         iReadNotifications[i].iReadStructValid = true;
-                        iReadNotifications[i].iReadSessionID = i + PV_MB_MAX_NUMBER_OF_WRITE_CONNECTIONS;
+                        iReadNotifications[i].iReadSessionID = i + PV_MBDS_MAX_NUMBER_OF_WRITE_CONNECTIONS;
                         iReadNotifications[i].iReadObserver = NULL;
                         iReadNotifications[i].iFilePosition = 0;
                         iReadNotifications[i].iReadCapacity = 0;
@@ -1393,15 +1409,15 @@ PVMFMemoryBufferWriteDataStreamImpl::CloseSession(PvmiDataStreamSession aSession
     else
     {
         // Close the READ sessions
-        if ((aSessionID > (PV_MB_MAX_NUMBER_OF_READ_CONNECTIONS + PV_MB_MAX_NUMBER_OF_WRITE_CONNECTIONS)) ||
-                (iReadFilePositions[aSessionID - PV_MB_MAX_NUMBER_OF_WRITE_CONNECTIONS].iReadPositionStructValid != true))
+        if ((aSessionID > (PV_MBDS_MAX_NUMBER_OF_READ_CONNECTIONS + PV_MBDS_MAX_NUMBER_OF_WRITE_CONNECTIONS)) ||
+                (iReadFilePositions[aSessionID - PV_MBDS_MAX_NUMBER_OF_WRITE_CONNECTIONS].iReadPositionStructValid != true))
         {
             status =  PVDS_INVALID_SESSION;
         }
         else
         {
             // Have a valid READ session so close it by setting the flag to invalid
-            PvmiDataStreamSession sessionId = aSessionID - PV_MB_MAX_NUMBER_OF_WRITE_CONNECTIONS;
+            PvmiDataStreamSession sessionId = aSessionID - PV_MBDS_MAX_NUMBER_OF_WRITE_CONNECTIONS;
 
             if (sessionId == iRepositionRequest.iRepositionSessionID)
             {
@@ -1478,13 +1494,13 @@ PVMFMemoryBufferWriteDataStreamImpl::RequestReadCapacityNotification(PvmiDataStr
 
     //  Check that aSessionID is valid and is not the WRITE session
     if ((aSessionID == 0) ||
-            (aSessionID > (PV_MB_MAX_NUMBER_OF_READ_CONNECTIONS + PV_MB_MAX_NUMBER_OF_WRITE_CONNECTIONS)) ||
-            (iReadNotifications[aSessionID - PV_MB_MAX_NUMBER_OF_WRITE_CONNECTIONS].iReadStructValid != true))
+            (aSessionID > (PV_MBDS_MAX_NUMBER_OF_READ_CONNECTIONS + PV_MBDS_MAX_NUMBER_OF_WRITE_CONNECTIONS)) ||
+            (iReadNotifications[aSessionID - PV_MBDS_MAX_NUMBER_OF_WRITE_CONNECTIONS].iReadStructValid != true))
     {
         OSCL_LEAVE(OsclErrArgument);
     }
-    // Read SessionID index is PV_MB_MAX_NUMBER_OF_WRITE_CONNECTIONS less than the aSessionID passed in
-    PvmiDataStreamSession temp_session = aSessionID - PV_MB_MAX_NUMBER_OF_WRITE_CONNECTIONS;
+    // Read SessionID index is PV_MBDS_MAX_NUMBER_OF_WRITE_CONNECTIONS less than the aSessionID passed in
+    PvmiDataStreamSession temp_session = aSessionID - PV_MBDS_MAX_NUMBER_OF_WRITE_CONNECTIONS;
 
     // Save the read notification
     iReadNotifications[temp_session].iOutstanding = true;
@@ -1507,7 +1523,7 @@ PVMFMemoryBufferWriteDataStreamImpl::QueryWriteCapacity(PvmiDataStreamSession aS
     // return the number of bytes left in the sliding window that can be filled
     // only support writing to the temp cache right now
     // the perm cache is filled by copyig from the temp cache
-    aCapacity = (iTempCache->GetTotalBytes() >= READ_BUFFER_SIZE) ? 0 : READ_BUFFER_SIZE - (iTempCache->GetTotalBytes());
+    aCapacity = (iTempCache->GetTotalBytes() >= iTempCacheCapacity) ? 0 : iTempCacheCapacity - (iTempCache->GetTotalBytes());
 
     LOGTRACE((0, "PVMFMemoryBufferWriteDataStreamImpl::QueryWriteCapacity returning %d", aCapacity));
 
@@ -1589,8 +1605,8 @@ PVMFMemoryBufferWriteDataStreamImpl::CancelNotificationSync(PvmiDataStreamSessio
             iWriteNotification.iCommandID = 0;
         }
     }
-    else if ((aSessionID > (PV_MB_MAX_NUMBER_OF_READ_CONNECTIONS + PV_MB_MAX_NUMBER_OF_WRITE_CONNECTIONS)) ||
-             (iReadNotifications[aSessionID - PV_MB_MAX_NUMBER_OF_WRITE_CONNECTIONS].iReadStructValid != true))
+    else if ((aSessionID > (PV_MBDS_MAX_NUMBER_OF_READ_CONNECTIONS + PV_MBDS_MAX_NUMBER_OF_WRITE_CONNECTIONS)) ||
+             (iReadNotifications[aSessionID - PV_MBDS_MAX_NUMBER_OF_WRITE_CONNECTIONS].iReadStructValid != true))
     {
         // Cancel read notification
         // Check that aSessionID is valid
@@ -1599,7 +1615,7 @@ PVMFMemoryBufferWriteDataStreamImpl::CancelNotificationSync(PvmiDataStreamSessio
     else
     {
         // Zero out notification info
-        PvmiDataStreamSession temp_sessionID = aSessionID - PV_MB_MAX_NUMBER_OF_WRITE_CONNECTIONS;
+        PvmiDataStreamSession temp_sessionID = aSessionID - PV_MBDS_MAX_NUMBER_OF_WRITE_CONNECTIONS;
         iReadNotifications[temp_sessionID].iOutstanding = false;
         iReadNotifications[temp_sessionID].iReadObserver = NULL;
         iReadNotifications[temp_sessionID].iFilePosition = 0;
@@ -1847,7 +1863,7 @@ PVMFMemoryBufferWriteDataStreamImpl::Reposition(PvmiDataStreamSession aSessionID
 
     //  Check that aSessionID is valid and is not the WRITE session
     if ((aSessionID == 0) ||
-            (aSessionID > (PV_MB_MAX_NUMBER_OF_READ_CONNECTIONS + PV_MB_MAX_NUMBER_OF_WRITE_CONNECTIONS)))
+            (aSessionID > (PV_MBDS_MAX_NUMBER_OF_READ_CONNECTIONS + PV_MBDS_MAX_NUMBER_OF_WRITE_CONNECTIONS)))
     {
         status = PVDS_FAILURE;
         return status;
@@ -1870,7 +1886,7 @@ PVMFMemoryBufferWriteDataStreamImpl::Reposition(PvmiDataStreamSession aSessionID
             uint32 firstPersistentOffset = 0;
             uint32 lastPersistentOffset = 0;
             iPermCache->GetPermOffsets(firstPersistentOffset, lastPersistentOffset);
-            for (int32 i = 0; i < PV_MB_MAX_NUMBER_OF_READ_CONNECTIONS; i++)
+            for (int32 i = 0; i < PV_MBDS_MAX_NUMBER_OF_READ_CONNECTIONS; i++)
             {
                 if ((iReadFilePositions[i].iReadPositionStructValid == true) && (iReadFilePositions[i].iInTempCache == true))
                 {
@@ -1901,7 +1917,7 @@ PVMFMemoryBufferWriteDataStreamImpl::Reposition(PvmiDataStreamSession aSessionID
             if ((smallest >= iFilePtrPos) &&
                     (iFilePtrPos + PV_MBDS_FWD_SEEKING_NO_GET_REQUEST_THRESHOLD > smallest) &&
                     ((writeCap != 0) && ((smallest - iFilePtrPos) < writeCap)) &&
-                    (iAVTOffsetDelta < READ_BUFFER_SIZE))
+                    (iAVTOffsetDelta < iTempCacheCapacity))
             {
                 //LOGE("Ln %d Do nothing. found %d smalltest %d", __LINE__, found, smallest );
                 return status;
@@ -1958,9 +1974,9 @@ PVMFMemoryBufferWriteDataStreamImpl::Reposition(PvmiDataStreamSession aSessionID
                         iPermCache->GetFileOffsets(firstPermByteOffset, lastPermByteOffset);
 
                         // should never reposition outside of the temp cache
-                        if (aOffset >= lastPermByteOffset + 64000)
+                        if (aOffset >= lastPermByteOffset + PV_MBDS_TEMP_CACHE_TRIM_MARGIN_PS)
                         {
-                            iRepositionRequest.iNewFilePosition = aOffset - 64000;
+                            iRepositionRequest.iNewFilePosition = aOffset - PV_MBDS_TEMP_CACHE_TRIM_MARGIN_PS;
                         }
                         else
                         {
@@ -1972,9 +1988,9 @@ PVMFMemoryBufferWriteDataStreamImpl::Reposition(PvmiDataStreamSession aSessionID
                 if (!hasPerm)
                 {
                     // add the margin
-                    if (aOffset > 64000)
+                    if (aOffset > PV_MBDS_TEMP_CACHE_TRIM_MARGIN_PS)
                     {
-                        iRepositionRequest.iNewFilePosition = aOffset - 64000;
+                        iRepositionRequest.iNewFilePosition = aOffset - PV_MBDS_TEMP_CACHE_TRIM_MARGIN_PS;
                     }
                     else
                     {
@@ -2005,8 +2021,8 @@ PVMFMemoryBufferWriteDataStreamImpl::Reposition(PvmiDataStreamSession aSessionID
             iRepositionRequest.iRequestCompleted = false;
             iRepositionRequest.iSuccess = PVDS_PENDING;
 
-            // Read SessionID index is PV_MB_MAX_NUMBER_OF_WRITE_CONNECTIONS less than the aSessionID passed in
-            iRepositionRequest.iRepositionSessionID = aSessionID - PV_MB_MAX_NUMBER_OF_WRITE_CONNECTIONS;
+            // Read SessionID index is PV_MBDS_MAX_NUMBER_OF_WRITE_CONNECTIONS less than the aSessionID passed in
+            iRepositionRequest.iRepositionSessionID = aSessionID - PV_MBDS_MAX_NUMBER_OF_WRITE_CONNECTIONS;
 
             PvmiDataStreamCommandId cmdId = 0;
             int32 error = 0;
@@ -2061,7 +2077,7 @@ PVMFMemoryBufferWriteDataStreamImpl::Flush(PvmiDataStreamSession aSessionID)
         // Empty cache and return mem buffers to writer
         // It doesn't matter if there are read sessions still open
         // subsequent reads will fail
-        for (int32 i = 0; i < PV_MB_MAX_NUMBER_OF_READ_CONNECTIONS; i++)
+        for (int32 i = 0; i < PV_MBDS_MAX_NUMBER_OF_READ_CONNECTIONS; i++)
         {
             if (true == iReadFilePositions[i].iReadPositionStructValid)
             {
@@ -2161,10 +2177,10 @@ PVMFMemoryBufferWriteDataStreamImpl::SourceRequestCompleted(const PVMFCmdResp& a
 OSCL_EXPORT_REF uint32
 PVMFMemoryBufferWriteDataStreamImpl::QueryBufferingCapacity()
 {
-    LOGTRACE((0, "PVMFMemoryBufferWriteDataStreamImpl::QueryBufferingCapacity returning %d", READ_BUFFER_SIZE));
+    LOGTRACE((0, "PVMFMemoryBufferWriteDataStreamImpl::QueryBufferingCapacity returning %d", iTempCacheCapacity));
 
     // return the minimum size of the cache/sliding window
-    return READ_BUFFER_SIZE;
+    return iTempCacheCapacity;
 }
 
 OSCL_EXPORT_REF PvmiDataStreamStatus
@@ -2187,7 +2203,7 @@ PVMFMemoryBufferWriteDataStreamImpl::SetReadPointerPosition(PvmiDataStreamSessio
     {
         // go through the temp cache looking for the id's of the audio/video/text sessions
         PvmiDataStreamSession avtFirst = 0, avtSecond = 0, avtThird = 0;
-        for (int32 i = 0; i < PV_MB_MAX_NUMBER_OF_READ_CONNECTIONS; i++)
+        for (int32 i = 0; i < PV_MBDS_MAX_NUMBER_OF_READ_CONNECTIONS; i++)
         {
             if ((iReadFilePositions[i].iReadPositionStructValid == true) && (iReadFilePositions[i].iInTempCache == true))
             {
@@ -2218,15 +2234,15 @@ PVMFMemoryBufferWriteDataStreamImpl::SetReadPointerPosition(PvmiDataStreamSessio
 
     PvmiDataStreamStatus status = PVDS_SUCCESS;
     if ((aSessionID == 0) ||
-            (aSessionID > (PV_MB_MAX_NUMBER_OF_READ_CONNECTIONS + PV_MB_MAX_NUMBER_OF_WRITE_CONNECTIONS)) ||
-            (iReadFilePositions[aSessionID - PV_MB_MAX_NUMBER_OF_WRITE_CONNECTIONS].iReadPositionStructValid != true))
+            (aSessionID > (PV_MBDS_MAX_NUMBER_OF_READ_CONNECTIONS + PV_MBDS_MAX_NUMBER_OF_WRITE_CONNECTIONS)) ||
+            (iReadFilePositions[aSessionID - PV_MBDS_MAX_NUMBER_OF_WRITE_CONNECTIONS].iReadPositionStructValid != true))
     {
         LOGERROR((0, "PVMFMemoryBufferWriteDataStreamImpl::SetReadPointerPosition invalid session %d", aSessionID));
         status = PVDS_FAILURE;
     }
     else
     {
-        PvmiDataStreamSession index = aSessionID - PV_MB_MAX_NUMBER_OF_WRITE_CONNECTIONS;
+        PvmiDataStreamSession index = aSessionID - PV_MBDS_MAX_NUMBER_OF_WRITE_CONNECTIONS;
         iReadFilePositions[index].iReadFilePtr = aFilePosition;
 
         // Once MakePersistent has been called
@@ -2288,15 +2304,15 @@ PVMFMemoryBufferWriteDataStreamImpl::SetReadPointerCacheLocation(PvmiDataStreamS
 
     PvmiDataStreamStatus status = PVDS_SUCCESS;
     if ((aSessionID == 0) ||
-            (aSessionID > (PV_MB_MAX_NUMBER_OF_READ_CONNECTIONS + PV_MB_MAX_NUMBER_OF_WRITE_CONNECTIONS)) ||
-            (iReadFilePositions[aSessionID - PV_MB_MAX_NUMBER_OF_WRITE_CONNECTIONS].iReadPositionStructValid != true))
+            (aSessionID > (PV_MBDS_MAX_NUMBER_OF_READ_CONNECTIONS + PV_MBDS_MAX_NUMBER_OF_WRITE_CONNECTIONS)) ||
+            (iReadFilePositions[aSessionID - PV_MBDS_MAX_NUMBER_OF_WRITE_CONNECTIONS].iReadPositionStructValid != true))
     {
         LOGERROR((0, "PVMFMemoryBufferWriteDataStreamImpl::SetReadPointerCacheLocation invalid session %d", aSessionID));
         status = PVDS_FAILURE;
     }
     else
     {
-        PvmiDataStreamSession index = aSessionID - PV_MB_MAX_NUMBER_OF_WRITE_CONNECTIONS;
+        PvmiDataStreamSession index = aSessionID - PV_MBDS_MAX_NUMBER_OF_WRITE_CONNECTIONS;
         iReadFilePositions[index].iInTempCache = aInTempCache;
     }
     LOGTRACE((0, "PVMFMemoryBufferWriteDataStreamImpl::SetReadPointerCacheLocation returning %d", status));
@@ -2315,7 +2331,7 @@ PVMFMemoryBufferWriteDataStreamImpl::ManageReadCapacityNotifications()
     // download has completed
 
     uint32 currFilePosition = iFilePtrPos;
-    for (uint32 i = 0; i < PV_MB_MAX_NUMBER_OF_READ_CONNECTIONS; i++)
+    for (uint32 i = 0; i < PV_MBDS_MAX_NUMBER_OF_READ_CONNECTIONS; i++)
     {
         // Make sure it a valid iReadNotifications element
         //  AND the iReadObserver != NULL
@@ -2381,7 +2397,7 @@ PVMFMemoryBufferWriteDataStreamImpl::ManageCache()
     }
 
     // for debug only
-    for (int32 j = 0; j < PV_MB_MAX_NUMBER_OF_READ_CONNECTIONS; j++)
+    for (int32 j = 0; j < PV_MBDS_MAX_NUMBER_OF_READ_CONNECTIONS; j++)
     {
         LOGDEBUG((0, "PVMFMemoryBufferWriteDataStreamImpl::ManageCache session %d valid %d cache %d ptr %d",
                   j + 1, iReadFilePositions[j].iReadPositionStructValid, iReadFilePositions[j].iInTempCache, iReadFilePositions[j].iReadFilePtr));
@@ -2422,7 +2438,7 @@ PVMFMemoryBufferWriteDataStreamImpl::ManageCache()
     bool found = false;
     bool trim = false;
     uint32 smallest = 0xFFFFFFFF;
-    for (int32 i = 0; i < PV_MB_MAX_NUMBER_OF_READ_CONNECTIONS; i++)
+    for (int32 i = 0; i < PV_MBDS_MAX_NUMBER_OF_READ_CONNECTIONS; i++)
     {
         if ((iReadFilePositions[i].iReadPositionStructValid == true) && (iReadFilePositions[i].iInTempCache == true))
         {
@@ -2462,22 +2478,22 @@ PVMFMemoryBufferWriteDataStreamImpl::ManageCache()
 
     if ((0xFFFFFFFF != smallest) && !trim)
     {
-        // Put in a 64000 buffer zone at the beginning of cache
+        // Put in a buffer zone at the beginning of cache (64000 for PS and 4096 for Shoutcast)
         // If there is less than 64000 at the beginning, don't touch the cache
         // This is important in case there are other read sessions (audio, video, text) that have not yet been opened,
         // don't want to throw away any media data that may be needed later
-        if ((smallest - firstTempByteOffset) <= 64000)
+        if ((smallest - firstTempByteOffset) <= iTempCacheTrimMargin)
         {
-            LOGDEBUG((0, "PVMFMemoryBufferWriteDataStreamImpl::ManageCache leaving a 64000 zone, do nothing"));
+            LOGDEBUG((0, "PVMFMemoryBufferWriteDataStreamImpl::ManageCache leaving a %d zone, do nothing", iTempCacheTrimMargin));
             return;
         }
         else
         {
-            smallest -= 64000;
+            smallest -= iTempCacheTrimMargin;
         }
     }
 
-    while ((0 != iTempCache->GetNumEntries()) && (trim || (iTempCache->GetTotalBytes() > (READ_BUFFER_TRIM_THRESHOLD + READ_BUFFER_MARGIN))))
+    while ((0 != iTempCache->GetNumEntries()) && (trim || (iTempCache->GetTotalBytes() > (iTempCacheTrimThreshold))))
     {
         // Check if any read pointers are pointing to this frag
         uint32 size = 0;
@@ -2488,7 +2504,7 @@ PVMFMemoryBufferWriteDataStreamImpl::ManageCache()
         {
             // this entire fragment is below the zone and can be released if no read pointers are in it
             found = true;
-            for (int32 i = 0; i < PV_MB_MAX_NUMBER_OF_READ_CONNECTIONS; i++)
+            for (int32 i = 0; i < PV_MBDS_MAX_NUMBER_OF_READ_CONNECTIONS; i++)
             {
                 if ((iReadFilePositions[i].iReadPositionStructValid == true) && (iReadFilePositions[i].iInTempCache == true))
                 {
@@ -2577,7 +2593,7 @@ PVMFMemoryBufferWriteDataStreamImpl::TrimTempCache(MBDSCacheTrimMode aTrimMode)
             uint32 offset = 0;
             iTempCache->GetFirstEntryInfo(offset, size);
 
-            for (int i = 0; i < PV_MB_MAX_NUMBER_OF_READ_CONNECTIONS; i++)
+            for (int i = 0; i < PV_MBDS_MAX_NUMBER_OF_READ_CONNECTIONS; i++)
             {
                 if ((true == iReadFilePositions[i].iReadPositionStructValid) &&
                         (iReadFilePositions[i].iInTempCache == true) &&
@@ -2612,14 +2628,14 @@ PVMFMemoryBufferWriteDataStreamImpl::TrimTempCache(MBDSCacheTrimMode aTrimMode)
     {
         // Trim from the end, up to 1/2 of max cache size
         while (((MBDS_CACHE_TRIM_HEAD_AND_TAIL == aTrimMode) && (iTempCache->GetNumEntries() > 0)) ||
-                ((MBDS_CACHE_TRIM_TAIL_ONLY == aTrimMode) && (iTempCache->GetTotalBytes() > (READ_BUFFER_SIZE >> 1))))
+                ((MBDS_CACHE_TRIM_TAIL_ONLY == aTrimMode) && (iTempCache->GetTotalBytes() > (iTempCacheCapacity >> 1))))
         {
             bool releaseBuf = true;
             uint32 size = 0;
             uint32 offset = 0;
             iTempCache->GetLastEntryInfo(offset, size);
 
-            for (int i = 0; i < PV_MB_MAX_NUMBER_OF_READ_CONNECTIONS; i++)
+            for (int i = 0; i < PV_MBDS_MAX_NUMBER_OF_READ_CONNECTIONS; i++)
             {
                 if ((true == iReadFilePositions[i].iReadPositionStructValid) &&
                         (iReadFilePositions[i].iInTempCache == true) &&
@@ -2663,7 +2679,7 @@ PVMFMemoryBufferWriteDataStreamImpl::UpdateReadPointersAfterMakePersistent()
     uint32 lastOffset = 0;
     iPermCache->GetFileOffsets(firstOffset, lastOffset);
 
-    for (int32 i = 0; i < PV_MB_MAX_NUMBER_OF_READ_CONNECTIONS; i++)
+    for (int32 i = 0; i < PV_MBDS_MAX_NUMBER_OF_READ_CONNECTIONS; i++)
     {
         if ((true == iReadFilePositions[i].iReadPositionStructValid) && (true == iReadFilePositions[i].iInTempCache))
         {
@@ -2696,18 +2712,49 @@ PVMFMemoryBufferWriteDataStreamImpl::GetPermCachePersistence(uint32& aFirstOffse
     return iMadePersistent;
 }
 
+OSCL_EXPORT_REF void
+PVMFMemoryBufferWriteDataStreamImpl::SetStreamFormat(MBDSStreamFormat aStreamFormat)
+{
+    iStreamFormat = aStreamFormat;
+}
+
+OSCL_EXPORT_REF void
+PVMFMemoryBufferWriteDataStreamImpl::SetTempCacheCapacity(uint32 aCapacity)
+{
+    iTempCacheCapacity = aCapacity;
+}
+
+OSCL_EXPORT_REF MBDSStreamFormat
+PVMFMemoryBufferWriteDataStreamImpl::GetStreamFormat()
+{
+    return iStreamFormat;
+}
+
+OSCL_EXPORT_REF uint32
+PVMFMemoryBufferWriteDataStreamImpl::GetTempCacheCapacity()
+{
+    return iTempCacheCapacity;
+}
+
 //////////////////////////////////////////////////////////////////////
 // PVMFMemoryBufferDataStream
 //////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF
-PVMFMemoryBufferDataStream::PVMFMemoryBufferDataStream()
+PVMFMemoryBufferDataStream::PVMFMemoryBufferDataStream(PVMFFormatType& aStreamFormat, uint32 aTempCacheCapacity)
 {
     // Create a temporary cache and a permanent cache
     iTemporaryCache = OSCL_NEW(PVMFMemoryBufferDataStreamTempCache, ());
     iPermanentCache = OSCL_NEW(PVMFMemoryBufferDataStreamPermCache, ());
 
+    // set the stream format and the temp cache size
+    MBDSStreamFormat streamFormat = MBDS_STREAM_FORMAT_PROGRESSIVE_PLAYBACK;
+    if (aStreamFormat == PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL)
+    {
+        streamFormat = MBDS_STREAM_FORMAT_SHOUTCAST;
+    }
+
     // Create the two factories
-    iWriteDataStreamFactory = OSCL_NEW(PVMFMemoryBufferWriteDataStreamFactoryImpl, (iTemporaryCache, iPermanentCache));
+    iWriteDataStreamFactory = OSCL_NEW(PVMFMemoryBufferWriteDataStreamFactoryImpl, (iTemporaryCache, iPermanentCache, streamFormat, aTempCacheCapacity));
     iReadDataStreamFactory = OSCL_NEW(PVMFMemoryBufferReadDataStreamFactoryImpl, (iTemporaryCache, iPermanentCache));
 
     // Now create a iWriteDataStream
@@ -3115,15 +3162,6 @@ PVMFMemoryBufferDataStreamTempCache::GetNumEntries()
     LOGTRACE((0, "PVMFMemoryBufferDataStreamTempCache::GetNumEntries returning %d", iEntries.size()));
     // return number of entries in cache
     return iEntries.size();
-}
-
-
-uint32
-PVMFMemoryBufferDataStreamTempCache::GetCacheSize()
-{
-    LOGTRACE((0, "PVMFMemoryBufferDataStreamTempCache::GetCacheSize %d", READ_BUFFER_SIZE));
-    // return max cache size
-    return READ_BUFFER_SIZE;
 }
 
 

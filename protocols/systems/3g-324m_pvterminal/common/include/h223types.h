@@ -20,7 +20,6 @@
 
 #include "oscl_base.h"
 #include "oscl_mem.h"
-#include "pvt_events.h"
 #include "pvt_params.h"
 #include "h245pri.h"
 #include "h245_deleter.h"

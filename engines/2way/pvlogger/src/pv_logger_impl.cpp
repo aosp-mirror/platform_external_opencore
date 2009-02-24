@@ -186,7 +186,7 @@ uint32 PVLoggerConfigFile::SetLoggerSettings(CPV2WayInterface *aTerminal, const 
 
     for (it = iLoggerConfigElements.begin(); it != iLoggerConfigElements.end(); it++)
     {
-        char* loggerString = NULL;
+        char* loggerString = OSCL_STATIC_CAST(char*, "");
         if (0 != oscl_strncmp(it->iLoggerString, ENABLE_ALL_LOGS, oscl_strlen(ENABLE_ALL_LOGS)))
         {
             loggerString = it->iLoggerString;

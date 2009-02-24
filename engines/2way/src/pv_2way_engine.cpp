@@ -87,22 +87,25 @@
 #endif
 
 
-#ifdef PV2WAY_USE_OMX_AMR_DECODER
-#include "pvmf_omx_audiodec_factory.h"
+#ifdef PV2WAY_USE_OMX
+#include "pvmf_audio_encnode_extension.h"
 #else
+#include "pvmfamrencnode_extension.h"
 #include "pvmf_gsmamrdec_factory.h"
-#endif // PV2WAY_USE_OMX_AMR_DECODER
-
-#ifndef PV2WAY_USE_OMX_AMR_ENCODER
-#include "pvmf_amrenc_node_factory.h"
 #endif
 
-#include "pvmfamrencnode_extension.h"
+#ifdef PV2WAY_USE_OMX_AMR_ENCODER
+#else
+#include "pvmf_amrenc_node_factory.h"
+
+#endif
+
 #include "pvmf_nodes_sync_control.h"
 
 #include "pv_2way_track_info_impl.h"
 
 #include "pvmi_config_and_capability.h"
+
 
 #ifdef MEM_TRACK
 #include "oscl_mem.h"
@@ -187,6 +190,7 @@ const uint32 KNumPCMFrames  = 2; // 10
 
 
 #ifdef PV2WAY_USE_OMX_AMR_DECODER
+#include "pvmf_omx_audiodec_factory.h"
 #define CREATE_OMX_AUDIO_DEC_NODE() PVMFOMXAudioDecNodeFactory::CreatePVMFOMXAudioDecNode()
 #define DELETE_OMX_AUDIO_DEC_NODE(n) PVMFOMXAudioDecNodeFactory::DeletePVMFOMXAudioDecNode(n)
 #else
@@ -316,7 +320,11 @@ CPV324m2Way::CPV324m2Way() :
     iVideoEncPVUuid = PVMp4H263EncExtensionUUID;
     iCapConfigPVUuid = PVMI_CAPABILITY_AND_CONFIG_PVUUID;
 
+#ifdef PV2WAY_USE_OMX
+    iAudioEncPVUuid = PVAudioEncExtensionUUID;
+#else
     iAudioEncPVUuid = PVAMREncExtensionUUID;
+#endif
 
 #if defined(PV_RECORD_TO_FILE_SUPPORT)
     iFFClipConfigPVUuid = KPVMp4FFCNClipConfigUuid;
@@ -1352,6 +1360,22 @@ void CPV324m2Way::DoAddDataSink(TPV2WayNode& aNode,
                 datapathnode.iOutputPort.iPortSetType = EAppDefined;
                 datapathnode.iOutputPort.iFormatType = datapath->GetFormat();
                 datapathnode.iOutputPort.iPortTag = -cmd->iPvtCmdData;
+                datapath->AddNode(datapathnode);
+
+                //Add video parser node to datapath
+                datapathnode.iNode = iVideoParserNode;
+                datapathnode.iConfigure = NULL;
+                datapathnode.iCanNodePause = false;
+                datapathnode.iIgnoreNodeState = false;
+                datapathnode.iInputPort.iRequestPortState = EPVMFNodeInitialized;
+                datapathnode.iInputPort.iPortSetType = EConnectedPortFormat;
+                datapathnode.iInputPort.iFormatType = PVMF_MIME_FORMAT_UNKNOWN;
+                datapathnode.iInputPort.iPortTag = PV2WAY_IN_PORT;
+                datapathnode.iOutputPort.iRequestPortState = EPVMFNodeInitialized;
+                datapathnode.iOutputPort.iCanCancelPort = false;
+                datapathnode.iOutputPort.iPortSetType = EUseOtherNodePortFormat;
+                datapathnode.iOutputPort.iFormatType = PVMF_MIME_FORMAT_UNKNOWN;
+                datapathnode.iOutputPort.iPortTag = PV2WAY_OUT_PORT;
                 datapath->AddNode(datapathnode);
 
                 //Add sink node to datapath
@@ -2416,8 +2440,8 @@ void CPV324m2Way::HandleAudioEncNodeCmd(PV2WayNodeCmdType aType,
                 iAudioEncNodeInterface.iState = PV2WayNodeInterface::HasInterface;
 
 #if 0
-                PVAMREncExtensionInterface *ptr =
-                    (PVAMREncExtensionInterface *) iAudioEncNodeInterface.iInterface;
+                PVAudioEncExtensionInterface *ptr =
+                    (PVAudioEncExtensionInterface *) iAudioEncNodeInterface.iInterface;
                 ptr->SetOutputFormat(PVMF_MIME_AMR_IF2);
                 ptr->SetInputSamplingRate(KSamplingRate);
                 ptr->SetInputBitsPerSample(KBitsPerSample);
@@ -5837,8 +5861,14 @@ PVMFStatus CPV324m2Way::ConfigureNode(CPVDatapathNode *aNode)
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO,
                         (0, "CPV324m2Way::ConfigureNode configuring audio enc node\n"));
         //PVMFPortProperty prop;
-        PVAMREncExtensionInterface *ptr =
+#ifdef PV2WAY_USE_OMX
+        PVAudioEncExtensionInterface* ptr =
+            (PVAudioEncExtensionInterface *) iAudioEncNodeInterface.iInterface;
+#else
+        PVAMREncExtensionInterface* ptr;
+        ptr =
             (PVAMREncExtensionInterface *) iAudioEncNodeInterface.iInterface;
+#endif
 
         if (aNode->iOutputPort.iPortPair->iDestPort.GetStatus() != EHasPort)
         {

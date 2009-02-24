@@ -258,6 +258,24 @@ class PVPlayerInterface
         virtual PVCommandId QueryInterface(const PVUuid& aUuid, PVInterface*& aInterfacePtr, const OsclAny* aContextData = NULL) = 0;
 
         /**
+         * This API is to allow user of the SDK to cancel any specific command which is pending on pvPlayer.
+         * If the request is to cancel a command which still has to be processed pvPlayer will just remove
+         * the command from its queue of commands to be processed. If the request is to cancel a command that
+         * is ongoing then player will attempt to interrupt the ongoing command. The state of player after a cancel
+         * can vary. So the user of pvPlayerSDK must always query for state before issuing any subsequent
+         * commands.
+         * This command request is asynchronous. PVCommandStatusObserver's CommandCompleted()
+         * callback handler will be called when this command request completes.
+         *
+         * @param aCancelCmdId
+         *          Command Id to be cancelled.
+         * @param aContextData
+         *         Optional opaque data that will be passed back to the user with the command response
+         * @returns A unique command id for asynchronous completion
+         **/
+        virtual PVCommandId CancelCommand(PVCommandId aCancelCmdId, const OsclAny* aContextData = NULL) = 0;
+
+        /**
          * This API is to allow the user to cancel all pending requests in pvPlayer. The current request being
          * processed, if any, will also be aborted. The user of PV-SDK should get the state of
          * PVPlayer Engine after the command completes and before issuing any other command.

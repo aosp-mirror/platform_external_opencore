@@ -340,16 +340,16 @@ int32 OsclNativeFile::Open(const char *filename, uint32 mode
 
 }
 
-int32 OsclNativeFile::Size()
+TOsclFileOffset OsclNativeFile::Size()
 {
     //this is the default for platforms with no
     //native size query.
     //Just do seek to end, tell, then seek back.
-    int32 curPos = Tell();
+    TOsclFileOffset curPos = Tell();
     if (curPos >= 0
             && Seek(0, Oscl_File::SEEKEND) == 0)
     {
-        int32 endPos = Tell();
+        TOsclFileOffset endPos = Tell();
         if (Seek(curPos, Oscl_File::SEEKSET) == 0)
         {
             return endPos;
@@ -483,7 +483,7 @@ uint32 OsclNativeFile::Write(const OsclAny *buffer, uint32 size, uint32 numeleme
     return 0;
 }
 
-int32 OsclNativeFile::Seek(int32 offset, Oscl_File::seek_type origin)
+int32 OsclNativeFile::Seek(TOsclFileOffset offset, Oscl_File::seek_type origin)
 {
 
     {
@@ -515,17 +515,20 @@ int32 OsclNativeFile::Seek(int32 offset, Oscl_File::seek_type origin)
                 seekmode = SEEK_SET;
             else if (origin == Oscl_File::SEEKEND)
                 seekmode = SEEK_END;
-
+#if OSCL_HAS_LARGE_FILE_SUPPORT
+            return fseeko(iFile, offset, seekmode);
+#else
             return fseek(iFile, offset, seekmode);
+#endif
         }
     }
     return -1;
 }
 
 
-int32 OsclNativeFile::Tell()
+TOsclFileOffset OsclNativeFile::Tell()
 {
-    int32 result = -1;
+    TOsclFileOffset result = -1;
 #if ENABLE_MEMORY_PLAYBACK
     if (membase)
     {
@@ -534,7 +537,11 @@ int32 OsclNativeFile::Tell()
 #endif
     if (iFile)
     {
+#if OSCL_HAS_LARGE_FILE_SUPPORT
+        result = ftello(iFile);
+#else
         result = ftell(iFile);
+#endif
     }
     return result;
 }

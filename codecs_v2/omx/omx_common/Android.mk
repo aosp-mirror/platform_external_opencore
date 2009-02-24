@@ -3,6 +3,7 @@ include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := \
 	src/pv_omxcore.cpp \
+ 	src/pv_omx_config_parser.cpp \
  	src/pv_omxregistry.cpp
 
 
@@ -27,6 +28,7 @@ LOCAL_COPY_HEADERS_TO := $(PV_COPY_HEADERS_TO)
 
 LOCAL_COPY_HEADERS := \
 	include/pv_omxcore.h \
+ 	include/pv_omx_config_parser.h \
  	include/pv_omxdefs.h
 
 include $(BUILD_STATIC_LIBRARY)

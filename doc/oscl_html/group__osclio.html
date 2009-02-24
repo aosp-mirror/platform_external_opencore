@@ -71,92 +71,93 @@
 <tr><td nowrap align=right valign=top>class &nbsp;</td><td valign=bottom><a class="el" href="classOsclTCPSocket.html">OsclTCPSocket</a></td></tr>
 <tr><td nowrap align=right valign=top>class &nbsp;</td><td valign=bottom><a class="el" href="classOsclUDPSocket.html">OsclUDPSocket</a></td></tr>
 <tr><td colspan=2><br><h2>Defines</h2></td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="group__osclio.html#a18">OSCL_FILE_STATS_LOGGER_NODE</a>&nbsp;&nbsp;&nbsp;"<a class="el" href="classOsclFileStats.html">OsclFileStats</a>"</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="group__osclio.html#a19">OSCL_IO_FILENAME_MAXLEN</a>&nbsp;&nbsp;&nbsp;512</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="group__osclio.html#a20">OSCL_IO_EXTENSION_MAXLEN</a>&nbsp;&nbsp;&nbsp;512</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="group__osclio.html#a21">OSCL_FILE_WCHAR_PATH_DELIMITER</a>&nbsp;&nbsp;&nbsp;_STRLIT("/")</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="group__osclio.html#a22">OSCL_FILE_CHAR_PATH_DELIMITER</a>&nbsp;&nbsp;&nbsp;_STRLIT_CHAR("/")</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="group__osclio.html#a18">TOsclFileOffsetInt32</a>&nbsp;&nbsp;&nbsp;int32</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="group__osclio.html#a19">OSCL_FILE_STATS_LOGGER_NODE</a>&nbsp;&nbsp;&nbsp;"<a class="el" href="classOsclFileStats.html">OsclFileStats</a>"</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="group__osclio.html#a20">OSCL_IO_FILENAME_MAXLEN</a>&nbsp;&nbsp;&nbsp;512</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="group__osclio.html#a21">OSCL_IO_EXTENSION_MAXLEN</a>&nbsp;&nbsp;&nbsp;512</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="group__osclio.html#a22">OSCL_FILE_WCHAR_PATH_DELIMITER</a>&nbsp;&nbsp;&nbsp;_STRLIT("/")</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="group__osclio.html#a23">OSCL_FILE_CHAR_PATH_DELIMITER</a>&nbsp;&nbsp;&nbsp;_STRLIT_CHAR("/")</td></tr>
 <tr><td colspan=2><br><h2>Typedefs</h2></td></tr>
 <tr><td nowrap align=right valign=top>typedef <a class="el" href="structoscl__fsstat.html">oscl_fsstat</a>&nbsp;</td><td valign=bottom><a class="el" href="group__osclio.html#a0">OSCL_FSSTAT</a></td></tr>
 <tr><td nowrap align=right valign=top>typedef <a class="el" href="structoscl__stat__buf.html">oscl_stat_buf</a>&nbsp;</td><td valign=bottom><a class="el" href="group__osclio.html#a1">OSCL_STAT_BUF</a></td></tr>
 <tr><td nowrap align=right valign=top>typedef FILE *&nbsp;</td><td valign=bottom><a class="el" href="group__osclio.html#a2">TOsclFileHandle</a></td></tr>
 <tr><td colspan=2><br><h2>Enumerations</h2></td></tr>
-<tr><td nowrap align=right valign=top>enum &nbsp;</td><td valign=bottom><a class="el" href="group__osclio.html#a23">TPVDNSFxn</a> { <a class="el" href="group__osclio.html#a23a0">EPVDNSGetHostByName</a>
+<tr><td nowrap align=right valign=top>enum &nbsp;</td><td valign=bottom><a class="el" href="group__osclio.html#a24">TPVDNSFxn</a> { <a class="el" href="group__osclio.html#a24a0">EPVDNSGetHostByName</a>
  }</td></tr>
-<tr><td nowrap align=right valign=top>enum &nbsp;</td><td valign=bottom><a class="el" href="group__osclio.html#a24">TPVDNSEvent</a> { <br>
-&nbsp;&nbsp;<a class="el" href="group__osclio.html#a24a1">EPVDNSSuccess</a>, 
-<a class="el" href="group__osclio.html#a24a2">EPVDNSPending</a>, 
-<a class="el" href="group__osclio.html#a24a3">EPVDNSTimeout</a>, 
-<a class="el" href="group__osclio.html#a24a4">EPVDNSFailure</a>, 
+<tr><td nowrap align=right valign=top>enum &nbsp;</td><td valign=bottom><a class="el" href="group__osclio.html#a25">TPVDNSEvent</a> { <br>
+&nbsp;&nbsp;<a class="el" href="group__osclio.html#a25a1">EPVDNSSuccess</a>, 
+<a class="el" href="group__osclio.html#a25a2">EPVDNSPending</a>, 
+<a class="el" href="group__osclio.html#a25a3">EPVDNSTimeout</a>, 
+<a class="el" href="group__osclio.html#a25a4">EPVDNSFailure</a>, 
 <br>
-&nbsp;&nbsp;<a class="el" href="group__osclio.html#a24a5">EPVDNSCancel</a>
-<br>
- }</td></tr>
-<tr><td nowrap align=right valign=top>enum &nbsp;</td><td valign=bottom><a class="el" href="group__osclio.html#a25">OSCL_FILEMGMT_PERMS</a> { <a class="el" href="group__osclio.html#a25a2">OSCL_FILEMGMT_PERMS_READ</a> =  0x1, 
-<a class="el" href="group__osclio.html#a25a3">OSCL_FILEMGMT_PERMS_WRITE</a> =  0x2, 
-<a class="el" href="group__osclio.html#a25a4">OSCL_FILEMGMT_PERMS_EXECUTE</a> =  0x4
- }</td></tr>
-<tr><td nowrap align=right valign=top>enum &nbsp;</td><td valign=bottom><a class="el" href="group__osclio.html#a26">OSCL_FILEMGMT_MODES</a> { <a class="el" href="group__osclio.html#a26a5">OSCL_FILEMGMT_MODE_DIR</a> =  0x1
- }</td></tr>
-<tr><td nowrap align=right valign=top>enum &nbsp;</td><td valign=bottom><a class="el" href="group__osclio.html#a27">OSCL_FILEMGMT_ERR_TYPE</a> { <br>
-&nbsp;&nbsp;<a class="el" href="group__osclio.html#a27a6">OSCL_FILEMGMT_E_OK</a> =  0, 
-<a class="el" href="group__osclio.html#a27a7">OSCL_FILEMGMT_E_PATH_TOO_LONG</a>, 
-<a class="el" href="group__osclio.html#a27a8">OSCL_FILEMGMT_E_PATH_NOT_FOUND</a>, 
-<a class="el" href="group__osclio.html#a27a9">OSCL_FILEMGMT_E_ALREADY_EXISTS</a>, 
-<br>
-&nbsp;&nbsp;<a class="el" href="group__osclio.html#a27a10">OSCL_FILEMGMT_E_NOT_EMPTY</a>, 
-<a class="el" href="group__osclio.html#a27a11">OSCL_FILEMGMT_E_PERMISSION_DENIED</a>, 
-<a class="el" href="group__osclio.html#a27a12">OSCL_FILEMGMT_E_NO_MATCH</a>, 
-<a class="el" href="group__osclio.html#a27a13">OSCL_FILEMGMT_E_UNKNOWN</a>, 
-<br>
-&nbsp;&nbsp;<a class="el" href="group__osclio.html#a27a14">OSCL_FILEMGMT_E_SYS_SPECIFIC</a>, 
-<a class="el" href="group__osclio.html#a27a15">OSCL_FILEMGMT_E_NOT_IMPLEMENTED</a>
+&nbsp;&nbsp;<a class="el" href="group__osclio.html#a25a5">EPVDNSCancel</a>
 <br>
  }</td></tr>
-<tr><td nowrap align=right valign=top>enum &nbsp;</td><td valign=bottom><a class="el" href="group__osclio.html#a28">TOsclFileOp</a> { <br>
-&nbsp;&nbsp;<a class="el" href="group__osclio.html#a28a2">EOsclFileOp_Open</a>, 
-<a class="el" href="group__osclio.html#a28a3">EOsclFileOp_Close</a>, 
-<a class="el" href="group__osclio.html#a28a4">EOsclFileOp_Read</a>, 
-<a class="el" href="group__osclio.html#a28a5">EOsclFileOp_Write</a>, 
+<tr><td nowrap align=right valign=top>enum &nbsp;</td><td valign=bottom><a class="el" href="group__osclio.html#a26">OSCL_FILEMGMT_PERMS</a> { <a class="el" href="group__osclio.html#a26a2">OSCL_FILEMGMT_PERMS_READ</a> =  0x1, 
+<a class="el" href="group__osclio.html#a26a3">OSCL_FILEMGMT_PERMS_WRITE</a> =  0x2, 
+<a class="el" href="group__osclio.html#a26a4">OSCL_FILEMGMT_PERMS_EXECUTE</a> =  0x4
+ }</td></tr>
+<tr><td nowrap align=right valign=top>enum &nbsp;</td><td valign=bottom><a class="el" href="group__osclio.html#a27">OSCL_FILEMGMT_MODES</a> { <a class="el" href="group__osclio.html#a27a5">OSCL_FILEMGMT_MODE_DIR</a> =  0x1
+ }</td></tr>
+<tr><td nowrap align=right valign=top>enum &nbsp;</td><td valign=bottom><a class="el" href="group__osclio.html#a28">OSCL_FILEMGMT_ERR_TYPE</a> { <br>
+&nbsp;&nbsp;<a class="el" href="group__osclio.html#a28a6">OSCL_FILEMGMT_E_OK</a> =  0, 
+<a class="el" href="group__osclio.html#a28a7">OSCL_FILEMGMT_E_PATH_TOO_LONG</a>, 
+<a class="el" href="group__osclio.html#a28a8">OSCL_FILEMGMT_E_PATH_NOT_FOUND</a>, 
+<a class="el" href="group__osclio.html#a28a9">OSCL_FILEMGMT_E_ALREADY_EXISTS</a>, 
 <br>
-&nbsp;&nbsp;<a class="el" href="group__osclio.html#a28a6">EOsclFileOp_Seek</a>, 
-<a class="el" href="group__osclio.html#a28a7">EOsclFileOp_Tell</a>, 
-<a class="el" href="group__osclio.html#a28a8">EOsclFileOp_Size</a>, 
-<a class="el" href="group__osclio.html#a28a9">EOsclFileOp_Flush</a>, 
+&nbsp;&nbsp;<a class="el" href="group__osclio.html#a28a10">OSCL_FILEMGMT_E_NOT_EMPTY</a>, 
+<a class="el" href="group__osclio.html#a28a11">OSCL_FILEMGMT_E_PERMISSION_DENIED</a>, 
+<a class="el" href="group__osclio.html#a28a12">OSCL_FILEMGMT_E_NO_MATCH</a>, 
+<a class="el" href="group__osclio.html#a28a13">OSCL_FILEMGMT_E_UNKNOWN</a>, 
 <br>
-&nbsp;&nbsp;<a class="el" href="group__osclio.html#a28a10">EOsclFileOp_EndOfFile</a>, 
-<a class="el" href="group__osclio.html#a28a11">EOsclFileOp_NativeOpen</a>, 
-<a class="el" href="group__osclio.html#a28a12">EOsclFileOp_NativeClose</a>, 
-<a class="el" href="group__osclio.html#a28a13">EOsclFileOp_NativeRead</a>, 
+&nbsp;&nbsp;<a class="el" href="group__osclio.html#a28a14">OSCL_FILEMGMT_E_SYS_SPECIFIC</a>, 
+<a class="el" href="group__osclio.html#a28a15">OSCL_FILEMGMT_E_NOT_IMPLEMENTED</a>
 <br>
-&nbsp;&nbsp;<a class="el" href="group__osclio.html#a28a14">EOsclFileOp_NativeWrite</a>, 
-<a class="el" href="group__osclio.html#a28a15">EOsclFileOp_NativeSeek</a>, 
-<a class="el" href="group__osclio.html#a28a16">EOsclFileOp_NativeTell</a>, 
-<a class="el" href="group__osclio.html#a28a17">EOsclFileOp_NativeSize</a>, 
+ }</td></tr>
+<tr><td nowrap align=right valign=top>enum &nbsp;</td><td valign=bottom><a class="el" href="group__osclio.html#a29">TOsclFileOp</a> { <br>
+&nbsp;&nbsp;<a class="el" href="group__osclio.html#a29a2">EOsclFileOp_Open</a>, 
+<a class="el" href="group__osclio.html#a29a3">EOsclFileOp_Close</a>, 
+<a class="el" href="group__osclio.html#a29a4">EOsclFileOp_Read</a>, 
+<a class="el" href="group__osclio.html#a29a5">EOsclFileOp_Write</a>, 
 <br>
-&nbsp;&nbsp;<a class="el" href="group__osclio.html#a28a18">EOsclFileOp_NativeFlush</a>, 
-<a class="el" href="group__osclio.html#a28a19">EOsclFileOp_NativeEndOfFile</a>, 
-<a class="el" href="group__osclio.html#a28a20">EOsclFileOp_Last</a>
+&nbsp;&nbsp;<a class="el" href="group__osclio.html#a29a6">EOsclFileOp_Seek</a>, 
+<a class="el" href="group__osclio.html#a29a7">EOsclFileOp_Tell</a>, 
+<a class="el" href="group__osclio.html#a29a8">EOsclFileOp_Size</a>, 
+<a class="el" href="group__osclio.html#a29a9">EOsclFileOp_Flush</a>, 
+<br>
+&nbsp;&nbsp;<a class="el" href="group__osclio.html#a29a10">EOsclFileOp_EndOfFile</a>, 
+<a class="el" href="group__osclio.html#a29a11">EOsclFileOp_NativeOpen</a>, 
+<a class="el" href="group__osclio.html#a29a12">EOsclFileOp_NativeClose</a>, 
+<a class="el" href="group__osclio.html#a29a13">EOsclFileOp_NativeRead</a>, 
+<br>
+&nbsp;&nbsp;<a class="el" href="group__osclio.html#a29a14">EOsclFileOp_NativeWrite</a>, 
+<a class="el" href="group__osclio.html#a29a15">EOsclFileOp_NativeSeek</a>, 
+<a class="el" href="group__osclio.html#a29a16">EOsclFileOp_NativeTell</a>, 
+<a class="el" href="group__osclio.html#a29a17">EOsclFileOp_NativeSize</a>, 
+<br>
+&nbsp;&nbsp;<a class="el" href="group__osclio.html#a29a18">EOsclFileOp_NativeFlush</a>, 
+<a class="el" href="group__osclio.html#a29a19">EOsclFileOp_NativeEndOfFile</a>, 
+<a class="el" href="group__osclio.html#a29a20">EOsclFileOp_Last</a>
 <br>
  }</td></tr>
 <tr><td colspan=2><br><h2>Functions</h2></td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="group__osclio.html#a27">OSCL_FILEMGMT_ERR_TYPE</a>&nbsp;</td><td valign=bottom><a class="el" href="group__osclio.html#a4">oscl_getcwd</a> (<a class="el" href="group__osclbase.html#a32">oscl_wchar</a> *path, uint32 size)</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="group__osclio.html#a27">OSCL_FILEMGMT_ERR_TYPE</a>&nbsp;</td><td valign=bottom><a class="el" href="group__osclio.html#a5">oscl_getcwd</a> (char *path, uint32 size)</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="group__osclio.html#a27">OSCL_FILEMGMT_ERR_TYPE</a>&nbsp;</td><td valign=bottom><a class="el" href="group__osclio.html#a6">oscl_stat</a> (const <a class="el" href="group__osclbase.html#a32">oscl_wchar</a> *path, <a class="el" href="group__osclio.html#a1">OSCL_STAT_BUF</a> *statbuf)</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="group__osclio.html#a27">OSCL_FILEMGMT_ERR_TYPE</a>&nbsp;</td><td valign=bottom><a class="el" href="group__osclio.html#a7">oscl_stat</a> (const char *path, <a class="el" href="group__osclio.html#a1">OSCL_STAT_BUF</a> *statbuf)</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="group__osclio.html#a27">OSCL_FILEMGMT_ERR_TYPE</a>&nbsp;</td><td valign=bottom><a class="el" href="group__osclio.html#a8">oscl_mkdir</a> (const <a class="el" href="group__osclbase.html#a32">oscl_wchar</a> *path)</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="group__osclio.html#a27">OSCL_FILEMGMT_ERR_TYPE</a>&nbsp;</td><td valign=bottom><a class="el" href="group__osclio.html#a9">oscl_mkdir</a> (const char *path)</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="group__osclio.html#a27">OSCL_FILEMGMT_ERR_TYPE</a>&nbsp;</td><td valign=bottom><a class="el" href="group__osclio.html#a10">oscl_rmdir</a> (const <a class="el" href="group__osclbase.html#a32">oscl_wchar</a> *path)</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="group__osclio.html#a27">OSCL_FILEMGMT_ERR_TYPE</a>&nbsp;</td><td valign=bottom><a class="el" href="group__osclio.html#a11">oscl_rmdir</a> (const char *path)</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="group__osclio.html#a27">OSCL_FILEMGMT_ERR_TYPE</a>&nbsp;</td><td valign=bottom><a class="el" href="group__osclio.html#a12">oscl_chdir</a> (const <a class="el" href="group__osclbase.html#a32">oscl_wchar</a> *path)</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="group__osclio.html#a27">OSCL_FILEMGMT_ERR_TYPE</a>&nbsp;</td><td valign=bottom><a class="el" href="group__osclio.html#a13">oscl_chdir</a> (const char *path)</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="group__osclio.html#a27">OSCL_FILEMGMT_ERR_TYPE</a>&nbsp;</td><td valign=bottom><a class="el" href="group__osclio.html#a14">oscl_rename</a> (const <a class="el" href="group__osclbase.html#a32">oscl_wchar</a> *oldpath, const <a class="el" href="group__osclbase.html#a32">oscl_wchar</a> *newpath)</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="group__osclio.html#a27">OSCL_FILEMGMT_ERR_TYPE</a>&nbsp;</td><td valign=bottom><a class="el" href="group__osclio.html#a15">oscl_rename</a> (const char *oldpath, const char *newpath)</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="group__osclio.html#a27">OSCL_FILEMGMT_ERR_TYPE</a>&nbsp;</td><td valign=bottom><a class="el" href="group__osclio.html#a16">oscl_statfs</a> (<a class="el" href="group__osclio.html#a0">OSCL_FSSTAT</a> *stats, const char *path)</td></tr>
-<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="group__osclio.html#a27">OSCL_FILEMGMT_ERR_TYPE</a>&nbsp;</td><td valign=bottom><a class="el" href="group__osclio.html#a17">oscl_statfs</a> (<a class="el" href="group__osclio.html#a0">OSCL_FSSTAT</a> *stats, const <a class="el" href="group__osclbase.html#a32">oscl_wchar</a> *path)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="group__osclio.html#a28">OSCL_FILEMGMT_ERR_TYPE</a>&nbsp;</td><td valign=bottom><a class="el" href="group__osclio.html#a4">oscl_getcwd</a> (<a class="el" href="group__osclbase.html#a32">oscl_wchar</a> *path, uint32 size)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="group__osclio.html#a28">OSCL_FILEMGMT_ERR_TYPE</a>&nbsp;</td><td valign=bottom><a class="el" href="group__osclio.html#a5">oscl_getcwd</a> (char *path, uint32 size)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="group__osclio.html#a28">OSCL_FILEMGMT_ERR_TYPE</a>&nbsp;</td><td valign=bottom><a class="el" href="group__osclio.html#a6">oscl_stat</a> (const <a class="el" href="group__osclbase.html#a32">oscl_wchar</a> *path, <a class="el" href="group__osclio.html#a1">OSCL_STAT_BUF</a> *statbuf)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="group__osclio.html#a28">OSCL_FILEMGMT_ERR_TYPE</a>&nbsp;</td><td valign=bottom><a class="el" href="group__osclio.html#a7">oscl_stat</a> (const char *path, <a class="el" href="group__osclio.html#a1">OSCL_STAT_BUF</a> *statbuf)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="group__osclio.html#a28">OSCL_FILEMGMT_ERR_TYPE</a>&nbsp;</td><td valign=bottom><a class="el" href="group__osclio.html#a8">oscl_mkdir</a> (const <a class="el" href="group__osclbase.html#a32">oscl_wchar</a> *path)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="group__osclio.html#a28">OSCL_FILEMGMT_ERR_TYPE</a>&nbsp;</td><td valign=bottom><a class="el" href="group__osclio.html#a9">oscl_mkdir</a> (const char *path)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="group__osclio.html#a28">OSCL_FILEMGMT_ERR_TYPE</a>&nbsp;</td><td valign=bottom><a class="el" href="group__osclio.html#a10">oscl_rmdir</a> (const <a class="el" href="group__osclbase.html#a32">oscl_wchar</a> *path)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="group__osclio.html#a28">OSCL_FILEMGMT_ERR_TYPE</a>&nbsp;</td><td valign=bottom><a class="el" href="group__osclio.html#a11">oscl_rmdir</a> (const char *path)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="group__osclio.html#a28">OSCL_FILEMGMT_ERR_TYPE</a>&nbsp;</td><td valign=bottom><a class="el" href="group__osclio.html#a12">oscl_chdir</a> (const <a class="el" href="group__osclbase.html#a32">oscl_wchar</a> *path)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="group__osclio.html#a28">OSCL_FILEMGMT_ERR_TYPE</a>&nbsp;</td><td valign=bottom><a class="el" href="group__osclio.html#a13">oscl_chdir</a> (const char *path)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="group__osclio.html#a28">OSCL_FILEMGMT_ERR_TYPE</a>&nbsp;</td><td valign=bottom><a class="el" href="group__osclio.html#a14">oscl_rename</a> (const <a class="el" href="group__osclbase.html#a32">oscl_wchar</a> *oldpath, const <a class="el" href="group__osclbase.html#a32">oscl_wchar</a> *newpath)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="group__osclio.html#a28">OSCL_FILEMGMT_ERR_TYPE</a>&nbsp;</td><td valign=bottom><a class="el" href="group__osclio.html#a15">oscl_rename</a> (const char *oldpath, const char *newpath)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="group__osclio.html#a28">OSCL_FILEMGMT_ERR_TYPE</a>&nbsp;</td><td valign=bottom><a class="el" href="group__osclio.html#a16">oscl_statfs</a> (<a class="el" href="group__osclio.html#a0">OSCL_FSSTAT</a> *stats, const char *path)</td></tr>
+<tr><td nowrap align=right valign=top>OSCL_IMPORT_REF <a class="el" href="group__osclio.html#a28">OSCL_FILEMGMT_ERR_TYPE</a>&nbsp;</td><td valign=bottom><a class="el" href="group__osclio.html#a17">oscl_statfs</a> (<a class="el" href="group__osclio.html#a0">OSCL_FSSTAT</a> *stats, const <a class="el" href="group__osclbase.html#a32">oscl_wchar</a> *path)</td></tr>
 </table>
 <hr><h2>Define Documentation</h2>
-<a name="a22" doxytag="oscl_file_types.h::OSCL_FILE_CHAR_PATH_DELIMITER"></a><p>
+<a name="a23" doxytag="oscl_file_types.h::OSCL_FILE_CHAR_PATH_DELIMITER"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -178,7 +179,7 @@
     </td>
   </tr>
 </table>
-<a name="a18" doxytag="oscl_file_stats.h::OSCL_FILE_STATS_LOGGER_NODE"></a><p>
+<a name="a19" doxytag="oscl_file_stats.h::OSCL_FILE_STATS_LOGGER_NODE"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -200,7 +201,7 @@
     </td>
   </tr>
 </table>
-<a name="a21" doxytag="oscl_file_types.h::OSCL_FILE_WCHAR_PATH_DELIMITER"></a><p>
+<a name="a22" doxytag="oscl_file_types.h::OSCL_FILE_WCHAR_PATH_DELIMITER"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -222,7 +223,7 @@
     </td>
   </tr>
 </table>
-<a name="a20" doxytag="oscl_file_types.h::OSCL_IO_EXTENSION_MAXLEN"></a><p>
+<a name="a21" doxytag="oscl_file_types.h::OSCL_IO_EXTENSION_MAXLEN"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -244,13 +245,35 @@
     </td>
   </tr>
 </table>
-<a name="a19" doxytag="oscl_file_types.h::OSCL_IO_FILENAME_MAXLEN"></a><p>
+<a name="a20" doxytag="oscl_file_types.h::OSCL_IO_FILENAME_MAXLEN"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
           <td class="md" nowrap valign="top"> #define OSCL_IO_FILENAME_MAXLEN&nbsp;&nbsp;&nbsp;512
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+    </td>
+  </tr>
+</table>
+<a name="a18" doxytag="oscl_file_io.h::TOsclFileOffsetInt32"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define TOsclFileOffsetInt32&nbsp;&nbsp;&nbsp;int32
       </table>
     </td>
   </tr>
@@ -334,7 +357,7 @@ TOsclFileHandle is an OS-native file handle type. With a class-based file API su
   </tr>
 </table>
 <hr><h2>Enumeration Type Documentation</h2>
-<a name="a27" doxytag="oscl_file_dir_utils.h::OSCL_FILEMGMT_ERR_TYPE"></a><p>
+<a name="a28" doxytag="oscl_file_dir_utils.h::OSCL_FILEMGMT_ERR_TYPE"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -355,32 +378,32 @@ TOsclFileHandle is an OS-native file handle type. With a class-based file API su
 <p>
 <dl compact><dt><b>Enumeration values: </b></dt><dd>
 <table border=0 cellspacing=2 cellpadding=0>
-<tr><td valign=top><em><a name="a27a6" doxytag="OSCL_FILEMGMT_E_OK"></a><em>OSCL_FILEMGMT_E_OK</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a28a6" doxytag="OSCL_FILEMGMT_E_OK"></a><em>OSCL_FILEMGMT_E_OK</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a27a7" doxytag="OSCL_FILEMGMT_E_PATH_TOO_LONG"></a><em>OSCL_FILEMGMT_E_PATH_TOO_LONG</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a28a7" doxytag="OSCL_FILEMGMT_E_PATH_TOO_LONG"></a><em>OSCL_FILEMGMT_E_PATH_TOO_LONG</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a27a8" doxytag="OSCL_FILEMGMT_E_PATH_NOT_FOUND"></a><em>OSCL_FILEMGMT_E_PATH_NOT_FOUND</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a28a8" doxytag="OSCL_FILEMGMT_E_PATH_NOT_FOUND"></a><em>OSCL_FILEMGMT_E_PATH_NOT_FOUND</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a27a9" doxytag="OSCL_FILEMGMT_E_ALREADY_EXISTS"></a><em>OSCL_FILEMGMT_E_ALREADY_EXISTS</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a28a9" doxytag="OSCL_FILEMGMT_E_ALREADY_EXISTS"></a><em>OSCL_FILEMGMT_E_ALREADY_EXISTS</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a27a10" doxytag="OSCL_FILEMGMT_E_NOT_EMPTY"></a><em>OSCL_FILEMGMT_E_NOT_EMPTY</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a28a10" doxytag="OSCL_FILEMGMT_E_NOT_EMPTY"></a><em>OSCL_FILEMGMT_E_NOT_EMPTY</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a27a11" doxytag="OSCL_FILEMGMT_E_PERMISSION_DENIED"></a><em>OSCL_FILEMGMT_E_PERMISSION_DENIED</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a28a11" doxytag="OSCL_FILEMGMT_E_PERMISSION_DENIED"></a><em>OSCL_FILEMGMT_E_PERMISSION_DENIED</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a27a12" doxytag="OSCL_FILEMGMT_E_NO_MATCH"></a><em>OSCL_FILEMGMT_E_NO_MATCH</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a28a12" doxytag="OSCL_FILEMGMT_E_NO_MATCH"></a><em>OSCL_FILEMGMT_E_NO_MATCH</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a27a13" doxytag="OSCL_FILEMGMT_E_UNKNOWN"></a><em>OSCL_FILEMGMT_E_UNKNOWN</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a28a13" doxytag="OSCL_FILEMGMT_E_UNKNOWN"></a><em>OSCL_FILEMGMT_E_UNKNOWN</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a27a14" doxytag="OSCL_FILEMGMT_E_SYS_SPECIFIC"></a><em>OSCL_FILEMGMT_E_SYS_SPECIFIC</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a28a14" doxytag="OSCL_FILEMGMT_E_SYS_SPECIFIC"></a><em>OSCL_FILEMGMT_E_SYS_SPECIFIC</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a27a15" doxytag="OSCL_FILEMGMT_E_NOT_IMPLEMENTED"></a><em>OSCL_FILEMGMT_E_NOT_IMPLEMENTED</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a28a15" doxytag="OSCL_FILEMGMT_E_NOT_IMPLEMENTED"></a><em>OSCL_FILEMGMT_E_NOT_IMPLEMENTED</em></em>&nbsp;</td><td>
 </td></tr>
 </table>
 </dl>
     </td>
   </tr>
 </table>
-<a name="a26" doxytag="oscl_file_dir_utils.h::OSCL_FILEMGMT_MODES"></a><p>
+<a name="a27" doxytag="oscl_file_dir_utils.h::OSCL_FILEMGMT_MODES"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -401,14 +424,14 @@ TOsclFileHandle is an OS-native file handle type. With a class-based file API su
 <p>
 <dl compact><dt><b>Enumeration values: </b></dt><dd>
 <table border=0 cellspacing=2 cellpadding=0>
-<tr><td valign=top><em><a name="a26a5" doxytag="OSCL_FILEMGMT_MODE_DIR"></a><em>OSCL_FILEMGMT_MODE_DIR</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a27a5" doxytag="OSCL_FILEMGMT_MODE_DIR"></a><em>OSCL_FILEMGMT_MODE_DIR</em></em>&nbsp;</td><td>
 </td></tr>
 </table>
 </dl>
     </td>
   </tr>
 </table>
-<a name="a25" doxytag="oscl_file_dir_utils.h::OSCL_FILEMGMT_PERMS"></a><p>
+<a name="a26" doxytag="oscl_file_dir_utils.h::OSCL_FILEMGMT_PERMS"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -429,18 +452,18 @@ TOsclFileHandle is an OS-native file handle type. With a class-based file API su
 <p>
 <dl compact><dt><b>Enumeration values: </b></dt><dd>
 <table border=0 cellspacing=2 cellpadding=0>
-<tr><td valign=top><em><a name="a25a2" doxytag="OSCL_FILEMGMT_PERMS_READ"></a><em>OSCL_FILEMGMT_PERMS_READ</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a26a2" doxytag="OSCL_FILEMGMT_PERMS_READ"></a><em>OSCL_FILEMGMT_PERMS_READ</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a25a3" doxytag="OSCL_FILEMGMT_PERMS_WRITE"></a><em>OSCL_FILEMGMT_PERMS_WRITE</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a26a3" doxytag="OSCL_FILEMGMT_PERMS_WRITE"></a><em>OSCL_FILEMGMT_PERMS_WRITE</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a25a4" doxytag="OSCL_FILEMGMT_PERMS_EXECUTE"></a><em>OSCL_FILEMGMT_PERMS_EXECUTE</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a26a4" doxytag="OSCL_FILEMGMT_PERMS_EXECUTE"></a><em>OSCL_FILEMGMT_PERMS_EXECUTE</em></em>&nbsp;</td><td>
 </td></tr>
 </table>
 </dl>
     </td>
   </tr>
 </table>
-<a name="a28" doxytag="oscl_file_stats.h::TOsclFileOp"></a><p>
+<a name="a29" doxytag="oscl_file_stats.h::TOsclFileOp"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -461,50 +484,50 @@ TOsclFileHandle is an OS-native file handle type. With a class-based file API su
 <p>
 <dl compact><dt><b>Enumeration values: </b></dt><dd>
 <table border=0 cellspacing=2 cellpadding=0>
-<tr><td valign=top><em><a name="a28a2" doxytag="EOsclFileOp_Open"></a><em>EOsclFileOp_Open</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a29a2" doxytag="EOsclFileOp_Open"></a><em>EOsclFileOp_Open</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a28a3" doxytag="EOsclFileOp_Close"></a><em>EOsclFileOp_Close</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a29a3" doxytag="EOsclFileOp_Close"></a><em>EOsclFileOp_Close</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a28a4" doxytag="EOsclFileOp_Read"></a><em>EOsclFileOp_Read</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a29a4" doxytag="EOsclFileOp_Read"></a><em>EOsclFileOp_Read</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a28a5" doxytag="EOsclFileOp_Write"></a><em>EOsclFileOp_Write</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a29a5" doxytag="EOsclFileOp_Write"></a><em>EOsclFileOp_Write</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a28a6" doxytag="EOsclFileOp_Seek"></a><em>EOsclFileOp_Seek</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a29a6" doxytag="EOsclFileOp_Seek"></a><em>EOsclFileOp_Seek</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a28a7" doxytag="EOsclFileOp_Tell"></a><em>EOsclFileOp_Tell</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a29a7" doxytag="EOsclFileOp_Tell"></a><em>EOsclFileOp_Tell</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a28a8" doxytag="EOsclFileOp_Size"></a><em>EOsclFileOp_Size</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a29a8" doxytag="EOsclFileOp_Size"></a><em>EOsclFileOp_Size</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a28a9" doxytag="EOsclFileOp_Flush"></a><em>EOsclFileOp_Flush</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a29a9" doxytag="EOsclFileOp_Flush"></a><em>EOsclFileOp_Flush</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a28a10" doxytag="EOsclFileOp_EndOfFile"></a><em>EOsclFileOp_EndOfFile</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a29a10" doxytag="EOsclFileOp_EndOfFile"></a><em>EOsclFileOp_EndOfFile</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a28a11" doxytag="EOsclFileOp_NativeOpen"></a><em>EOsclFileOp_NativeOpen</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a29a11" doxytag="EOsclFileOp_NativeOpen"></a><em>EOsclFileOp_NativeOpen</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a28a12" doxytag="EOsclFileOp_NativeClose"></a><em>EOsclFileOp_NativeClose</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a29a12" doxytag="EOsclFileOp_NativeClose"></a><em>EOsclFileOp_NativeClose</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a28a13" doxytag="EOsclFileOp_NativeRead"></a><em>EOsclFileOp_NativeRead</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a29a13" doxytag="EOsclFileOp_NativeRead"></a><em>EOsclFileOp_NativeRead</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a28a14" doxytag="EOsclFileOp_NativeWrite"></a><em>EOsclFileOp_NativeWrite</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a29a14" doxytag="EOsclFileOp_NativeWrite"></a><em>EOsclFileOp_NativeWrite</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a28a15" doxytag="EOsclFileOp_NativeSeek"></a><em>EOsclFileOp_NativeSeek</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a29a15" doxytag="EOsclFileOp_NativeSeek"></a><em>EOsclFileOp_NativeSeek</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a28a16" doxytag="EOsclFileOp_NativeTell"></a><em>EOsclFileOp_NativeTell</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a29a16" doxytag="EOsclFileOp_NativeTell"></a><em>EOsclFileOp_NativeTell</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a28a17" doxytag="EOsclFileOp_NativeSize"></a><em>EOsclFileOp_NativeSize</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a29a17" doxytag="EOsclFileOp_NativeSize"></a><em>EOsclFileOp_NativeSize</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a28a18" doxytag="EOsclFileOp_NativeFlush"></a><em>EOsclFileOp_NativeFlush</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a29a18" doxytag="EOsclFileOp_NativeFlush"></a><em>EOsclFileOp_NativeFlush</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a28a19" doxytag="EOsclFileOp_NativeEndOfFile"></a><em>EOsclFileOp_NativeEndOfFile</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a29a19" doxytag="EOsclFileOp_NativeEndOfFile"></a><em>EOsclFileOp_NativeEndOfFile</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a28a20" doxytag="EOsclFileOp_Last"></a><em>EOsclFileOp_Last</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a29a20" doxytag="EOsclFileOp_Last"></a><em>EOsclFileOp_Last</em></em>&nbsp;</td><td>
 </td></tr>
 </table>
 </dl>
     </td>
   </tr>
 </table>
-<a name="a24" doxytag="oscl_dns.h::TPVDNSEvent"></a><p>
+<a name="a25" doxytag="oscl_dns.h::TPVDNSEvent"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -525,22 +548,22 @@ TOsclFileHandle is an OS-native file handle type. With a class-based file API su
 <p>
 <dl compact><dt><b>Enumeration values: </b></dt><dd>
 <table border=0 cellspacing=2 cellpadding=0>
-<tr><td valign=top><em><a name="a24a1" doxytag="EPVDNSSuccess"></a><em>EPVDNSSuccess</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a25a1" doxytag="EPVDNSSuccess"></a><em>EPVDNSSuccess</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a24a2" doxytag="EPVDNSPending"></a><em>EPVDNSPending</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a25a2" doxytag="EPVDNSPending"></a><em>EPVDNSPending</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a24a3" doxytag="EPVDNSTimeout"></a><em>EPVDNSTimeout</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a25a3" doxytag="EPVDNSTimeout"></a><em>EPVDNSTimeout</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a24a4" doxytag="EPVDNSFailure"></a><em>EPVDNSFailure</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a25a4" doxytag="EPVDNSFailure"></a><em>EPVDNSFailure</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a24a5" doxytag="EPVDNSCancel"></a><em>EPVDNSCancel</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a25a5" doxytag="EPVDNSCancel"></a><em>EPVDNSCancel</em></em>&nbsp;</td><td>
 </td></tr>
 </table>
 </dl>
     </td>
   </tr>
 </table>
-<a name="a23" doxytag="oscl_dns.h::TPVDNSFxn"></a><p>
+<a name="a24" doxytag="oscl_dns.h::TPVDNSFxn"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -561,7 +584,7 @@ TOsclFileHandle is an OS-native file handle type. With a class-based file API su
 <p>
 <dl compact><dt><b>Enumeration values: </b></dt><dd>
 <table border=0 cellspacing=2 cellpadding=0>
-<tr><td valign=top><em><a name="a23a0" doxytag="EPVDNSGetHostByName"></a><em>EPVDNSGetHostByName</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a24a0" doxytag="EPVDNSGetHostByName"></a><em>EPVDNSGetHostByName</em></em>&nbsp;</td><td>
 </td></tr>
 </table>
 </dl>
@@ -575,7 +598,7 @@ TOsclFileHandle is an OS-native file handle type. With a class-based file API su
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF <a class="el" href="group__osclio.html#a27">OSCL_FILEMGMT_ERR_TYPE</a> oscl_chdir </td>
+          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF <a class="el" href="group__osclio.html#a28">OSCL_FILEMGMT_ERR_TYPE</a> oscl_chdir </td>
           <td class="md" valign="top">(&nbsp;</td>
           <td class="md" nowrap valign="top">const char *&nbsp;</td>
           <td class="mdname1" valign="top" nowrap>&nbsp; <em>path</em>          </td>
@@ -610,7 +633,7 @@ OSCL_FILEMGMT_ERR_TYPE, see enumeration for this type. </dl>    </td>
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF <a class="el" href="group__osclio.html#a27">OSCL_FILEMGMT_ERR_TYPE</a> oscl_chdir </td>
+          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF <a class="el" href="group__osclio.html#a28">OSCL_FILEMGMT_ERR_TYPE</a> oscl_chdir </td>
           <td class="md" valign="top">(&nbsp;</td>
           <td class="md" nowrap valign="top">const <a class="el" href="group__osclbase.html#a32">oscl_wchar</a> *&nbsp;</td>
           <td class="mdname1" valign="top" nowrap>&nbsp; <em>path</em>          </td>
@@ -645,7 +668,7 @@ OSCL_FILEMGMT_ERR_TYPE, see enumeration for this type. </dl>    </td>
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF <a class="el" href="group__osclio.html#a27">OSCL_FILEMGMT_ERR_TYPE</a> oscl_getcwd </td>
+          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF <a class="el" href="group__osclio.html#a28">OSCL_FILEMGMT_ERR_TYPE</a> oscl_getcwd </td>
           <td class="md" valign="top">(&nbsp;</td>
           <td class="md" nowrap valign="top">char *&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>path</em>, </td>
@@ -691,7 +714,7 @@ OSCL_FILEMGMT_ERR_TYPE, see enumeration for this type. </dl>    </td>
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF <a class="el" href="group__osclio.html#a27">OSCL_FILEMGMT_ERR_TYPE</a> oscl_getcwd </td>
+          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF <a class="el" href="group__osclio.html#a28">OSCL_FILEMGMT_ERR_TYPE</a> oscl_getcwd </td>
           <td class="md" valign="top">(&nbsp;</td>
           <td class="md" nowrap valign="top"><a class="el" href="group__osclbase.html#a32">oscl_wchar</a> *&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>path</em>, </td>
@@ -737,7 +760,7 @@ OSCL_FILEMGMT_ERR_TYPE, see enumeration for this type. </dl>    </td>
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF <a class="el" href="group__osclio.html#a27">OSCL_FILEMGMT_ERR_TYPE</a> oscl_mkdir </td>
+          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF <a class="el" href="group__osclio.html#a28">OSCL_FILEMGMT_ERR_TYPE</a> oscl_mkdir </td>
           <td class="md" valign="top">(&nbsp;</td>
           <td class="md" nowrap valign="top">const char *&nbsp;</td>
           <td class="mdname1" valign="top" nowrap>&nbsp; <em>path</em>          </td>
@@ -772,7 +795,7 @@ OSCL_FILEMGMT_ERR_TYPE, see enumeration for this type. </dl>    </td>
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF <a class="el" href="group__osclio.html#a27">OSCL_FILEMGMT_ERR_TYPE</a> oscl_mkdir </td>
+          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF <a class="el" href="group__osclio.html#a28">OSCL_FILEMGMT_ERR_TYPE</a> oscl_mkdir </td>
           <td class="md" valign="top">(&nbsp;</td>
           <td class="md" nowrap valign="top">const <a class="el" href="group__osclbase.html#a32">oscl_wchar</a> *&nbsp;</td>
           <td class="mdname1" valign="top" nowrap>&nbsp; <em>path</em>          </td>
@@ -807,7 +830,7 @@ OSCL_FILEMGMT_ERR_TYPE, see enumeration for this type. </dl>    </td>
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF <a class="el" href="group__osclio.html#a27">OSCL_FILEMGMT_ERR_TYPE</a> oscl_rename </td>
+          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF <a class="el" href="group__osclio.html#a28">OSCL_FILEMGMT_ERR_TYPE</a> oscl_rename </td>
           <td class="md" valign="top">(&nbsp;</td>
           <td class="md" nowrap valign="top">const char *&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>oldpath</em>, </td>
@@ -851,7 +874,7 @@ OSCL_FILEMGMT_ERR_TYPE, see enumeration for this type. </dl>    </td>
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF <a class="el" href="group__osclio.html#a27">OSCL_FILEMGMT_ERR_TYPE</a> oscl_rename </td>
+          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF <a class="el" href="group__osclio.html#a28">OSCL_FILEMGMT_ERR_TYPE</a> oscl_rename </td>
           <td class="md" valign="top">(&nbsp;</td>
           <td class="md" nowrap valign="top">const <a class="el" href="group__osclbase.html#a32">oscl_wchar</a> *&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>oldpath</em>, </td>
@@ -897,7 +920,7 @@ OSCL_FILEMGMT_ERR_TYPE, see enumeration for this type. </dl>    </td>
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF <a class="el" href="group__osclio.html#a27">OSCL_FILEMGMT_ERR_TYPE</a> oscl_rmdir </td>
+          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF <a class="el" href="group__osclio.html#a28">OSCL_FILEMGMT_ERR_TYPE</a> oscl_rmdir </td>
           <td class="md" valign="top">(&nbsp;</td>
           <td class="md" nowrap valign="top">const char *&nbsp;</td>
           <td class="mdname1" valign="top" nowrap>&nbsp; <em>path</em>          </td>
@@ -932,7 +955,7 @@ OSCL_FILEMGMT_ERR_TYPE, see enumeration for this type. </dl>    </td>
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF <a class="el" href="group__osclio.html#a27">OSCL_FILEMGMT_ERR_TYPE</a> oscl_rmdir </td>
+          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF <a class="el" href="group__osclio.html#a28">OSCL_FILEMGMT_ERR_TYPE</a> oscl_rmdir </td>
           <td class="md" valign="top">(&nbsp;</td>
           <td class="md" nowrap valign="top">const <a class="el" href="group__osclbase.html#a32">oscl_wchar</a> *&nbsp;</td>
           <td class="mdname1" valign="top" nowrap>&nbsp; <em>path</em>          </td>
@@ -967,7 +990,7 @@ OSCL_FILEMGMT_ERR_TYPE, see enumeration for this type. </dl>    </td>
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF <a class="el" href="group__osclio.html#a27">OSCL_FILEMGMT_ERR_TYPE</a> oscl_stat </td>
+          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF <a class="el" href="group__osclio.html#a28">OSCL_FILEMGMT_ERR_TYPE</a> oscl_stat </td>
           <td class="md" valign="top">(&nbsp;</td>
           <td class="md" nowrap valign="top">const char *&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>path</em>, </td>
@@ -1011,7 +1034,7 @@ OSCL_FILEMGMT_ERR_TYPE, see enumeration for this type. </dl>    </td>
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF <a class="el" href="group__osclio.html#a27">OSCL_FILEMGMT_ERR_TYPE</a> oscl_stat </td>
+          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF <a class="el" href="group__osclio.html#a28">OSCL_FILEMGMT_ERR_TYPE</a> oscl_stat </td>
           <td class="md" valign="top">(&nbsp;</td>
           <td class="md" nowrap valign="top">const <a class="el" href="group__osclbase.html#a32">oscl_wchar</a> *&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>path</em>, </td>
@@ -1055,7 +1078,7 @@ OSCL_FILEMGMT_ERR_TYPE, see enumeration for this type. </dl>    </td>
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF <a class="el" href="group__osclio.html#a27">OSCL_FILEMGMT_ERR_TYPE</a> oscl_statfs </td>
+          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF <a class="el" href="group__osclio.html#a28">OSCL_FILEMGMT_ERR_TYPE</a> oscl_statfs </td>
           <td class="md" valign="top">(&nbsp;</td>
           <td class="md" nowrap valign="top"><a class="el" href="group__osclio.html#a0">OSCL_FSSTAT</a> *&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>stats</em>, </td>
@@ -1101,7 +1124,7 @@ OSCL_FILEMGMT_ERR_TYPE, see enumeration for this type. </dl>    </td>
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF <a class="el" href="group__osclio.html#a27">OSCL_FILEMGMT_ERR_TYPE</a> oscl_statfs </td>
+          <td class="md" nowrap valign="top"> OSCL_IMPORT_REF <a class="el" href="group__osclio.html#a28">OSCL_FILEMGMT_ERR_TYPE</a> oscl_statfs </td>
           <td class="md" valign="top">(&nbsp;</td>
           <td class="md" nowrap valign="top"><a class="el" href="group__osclio.html#a0">OSCL_FSSTAT</a> *&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>stats</em>, </td>
@@ -1142,7 +1165,7 @@ OSCL_FILEMGMT_ERR_TYPE, see enumeration for this type. </dl>    </td>
   </tr>
 </table>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: OPENCORE_20090120 </small>
+<address style="align: left;"><small>Posting Version: OPENCORE_20090223 </small>
 </small></address>
 </body>
 </html>

@@ -362,7 +362,7 @@ bool pv_mediainput_async_test_errorhandling::AddMediaTrack()
 
         }
 
-        if (!PVAETestNodeConfig::ConfigureAudioEncoder(iAudioEncoderConfig))
+        if (!PVAETestNodeConfig::ConfigureAudioEncoder(iAudioEncoderConfig, iAudioEncoderMimeType))
         {
             return false;
         }

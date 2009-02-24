@@ -59,6 +59,7 @@
 #define OSCL_HAS_NATIVE_FILE_CACHE_ENABLE 1
 #define OSCL_FILE_BUFFER_MAX_SIZE	32768
 #define OSCL_HAS_PV_FILE_CACHE	1
+#define OSCL_HAS_LARGE_FILE_SUPPORT 1
 
 //For Sockets
 #define OSCL_HAS_SYMBIAN_SOCKET_SERVER 0
@@ -227,6 +228,15 @@ typedef struct hostent TOsclHostent;
 #define OSCL_IPPROTO_UDP IPPROTO_UDP
 
 //End sockets
+
+// file IO support
+#if (OSCL_HAS_LARGE_FILE_SUPPORT)
+#define _FILE_OFFSET_BITS 64
+typedef off_t TOsclFileOffset;
+#else
+typedef int32 TOsclFileOffset;
+#endif
+
 
 #include "osclconfig_io_check.h"
 

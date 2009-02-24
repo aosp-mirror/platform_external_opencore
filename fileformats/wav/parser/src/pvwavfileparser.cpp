@@ -195,7 +195,7 @@ OSCL_EXPORT_REF PVWavParserReturnCode PV_Wav_Parser::InitWavParser(OSCL_wString&
         return PVWAVPARSER_MISC_ERROR;
     }
 
-    filesize = ipWAVFile->Tell();
+    filesize = (TOsclFileOffsetInt32)ipWAVFile->Tell();
 
     if (filesize <= 0)
     {
@@ -450,7 +450,7 @@ OSCL_EXPORT_REF PVWavParserReturnCode PV_Wav_Parser::GetPCMData(uint8* inBuff, u
     uint32 myBufSize = NumberOfSamples * BytesPerSample * NumChannels;
     if ((ipWAVFile->Tell() + myBufSize) > iEndOfDataSubChunkOffset)
     {//we don't have enough data to fulfill this request
-        int32 pos = ipWAVFile->Tell();
+        int32 pos = (TOsclFileOffsetInt32)ipWAVFile->Tell();
         if (((uint32)(BytesPerSample*NumChannels) + pos) > iEndOfDataSubChunkOffset)
         {
             return PVWAVPARSER_END_OF_FILE;

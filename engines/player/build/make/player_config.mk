@@ -4,7 +4,7 @@
 
 # Add the include path based on project to pick the right tunable and config header
 #
-ifeq ($(ARCHITECTURE),linux_nj)
+ifeq ($(ARCHITECTURE),android)
     XINCDIRS += -I ../../config/$(BUILD_ARCH)
 else
     ifeq ($(FORMAT),3gpp)
@@ -31,8 +31,8 @@ else
                                 ifeq ($(ARCHITECTURE),necel_arm)
                                     XINCDIRS += -I ../../config/$(BUILD_ARCH)
                                 else
-                                    ifeq ($(FORMAT),nj)
-                                        XINCDIRS += -I ../../config/linux_nj
+                                    ifeq ($(FORMAT),android)
+                                        XINCDIRS += -I ../../config/android
                                     else
                                         ifeq ($(ARCHITECTURE),farnsworth_arm)
                                             XINCDIRS += -I ../../config/$(BUILD_ARCH)
@@ -80,8 +80,8 @@ else
 	                        ifeq ($(ARCHITECTURE),necel_arm)
     	                        SRCS += ../config/$(BUILD_ARCH)/pv_player_node_registry_populator.cpp
         	                else
-            	                ifeq ($(FORMAT),nj)
-                	                SRCS += ../config/linux_nj/pv_player_node_registry_populator.cpp
+            	                ifeq ($(FORMAT),android)
+                	                SRCS += ../config/android/pv_player_node_registry_populator.cpp
                     	        else
                         	        ifeq ($(ARCHITECTURE),farnsworth_arm)
                             	        SRCS += ../config/$(BUILD_ARCH)/pv_player_node_registry_populator.cpp

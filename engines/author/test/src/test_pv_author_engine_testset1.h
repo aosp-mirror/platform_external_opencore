@@ -37,7 +37,8 @@ class pvauthor_async_test_miscellaneous: public pvauthor_async_test_base
                                           const char* aOutputFileName, PVAETestInputType aAudioInputType,
                                           PVAETestInputType aVideoInputType, PVAETestInputType aTextInputType,
                                           const char* aComposerMimeType, const char* aAudioEncoderMimeType, const char* aVideoEncoderMimeType,
-                                          const char* aTextEncoderMimeType, AVTConfig aAVTConfig, bool aPauseResumeEnable, uint32 aAuthoringTime)
+                                          const char* aTextEncoderMimeType, AVTConfig aAVTConfig, bool aPauseResumeEnable, uint32 aAuthoringTime,
+                                          bool aUseExtrnFileDesc = false)
 
                 : pvauthor_async_test_base(aTestParam)
 
@@ -61,9 +62,11 @@ class pvauthor_async_test_miscellaneous: public pvauthor_async_test_base
                 , iPauseResumeEnable(aPauseResumeEnable)
                 , iAuthoringTime(aAuthoringTime)
                 , iAuthoringCounter(0)
+                , iUseExtrnFileDesc(aUseExtrnFileDesc)
 
         {
             iLogger = PVLogger::GetLoggerObject("pvauthor_async_test_miscellaneous");
+            iFileHandle = NULL;
 
             if (iAuthoringTime > 0)
             {
@@ -215,6 +218,9 @@ class pvauthor_async_test_miscellaneous: public pvauthor_async_test_base
         uint32 iAuthoringTime;
         int iAuthoringCounter;
         uint32 iTestDuration;
+        bool iUseExtrnFileDesc;
+        OsclFileHandle *iFileHandle;
+        Oscl_FileServer fileserv;
 };
 
 #endif

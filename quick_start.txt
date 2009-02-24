@@ -1,164 +1,61 @@
 Q. How to build OpenCORE outside of Android?
-A. As part of the OpenCORE release, PacketVideo also provides it's internal build system 
-that can be used to build the OpenCORE outside of Android with the native linux toolchain. 
+A. As part of the OpenCORE release, PacketVideo also provides it's internal
+build system that can be used to build OpenCORE outside of Android with the
+native linux toolchain. 
 
 The following are the steps involved:
-  NOTE 1: Assume <opencore> is the folder where you have downloaded the OpenCORE codebase.
-  NOTE 2: The setup scripts are meant to be used in bash.
+  NOTE 1: Assume <opencore> is the directory where you have downloaded the
+  OpenCORE codebase
+  NOTE 2: The setup scripts are meant to be used in with the bash shell.
     cd <opencore>/build_config/opencore_dynamic
-    source setup_nr.sh <opencore>
-    make -j -f makefile_nr
+    source setup.sh <opencore>
+    make -j
 
-This will export all the required libraries to <opencore>/build_config/opencore_dynamic/build/installed_lib/linux and the executables to
-<opencore>/build_config/opencore_dynamic/build/bin/linux.
+This will build all the required libraries in
+    <opencore>/build_config/opencore_dynamic/build/installed_lib/linux
+and the executables in 
+    <opencore>/build_config/opencore_dynamic/build/bin/linux.
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Q. How to run the pvplayer engine unit tests?
-A.
-On Android emulator/device:
+A. On Android emulator/device:
     adb push <opencore>/engines/player/test/data/ /sdcard
     adb shell "cd /sdcard; pvplayer_engine_test <test_args> <source_args>"
 
 On host PC:
     cd <opencore>/build_config/opencore_dynamic
-    make -f makefile_nr run_pe_test TEST_ARGS="<test_args>"
+    make run_pe_test TEST_ARGS="<test_args>"
 
-<test_args> can be any of the following:
-Test cases to run option. Default is ALL:
-  -test x y
-   Specify a range of test cases to run. To run one test case, use the
-   same index for x and y.
-  -test L
-   Run local playback test cases only.
-  -test D
-   Run download playback test cases only.
-  -test S
-   Run streaming playback test cases only.
+To see a list of valid <test_args>:
+        make run_pe_test TEST_ARGS="-help"
 
-Compressed video and audio output option. Default is OFF for both:
-  -compV AND/OR -compA
-   For test cases and sinks that support compressed media output (media
-   I/O node test cases), the output data files would have compressed
-   bitstreams. This also means the player engine would not use a decoder
-   node to decode the bitstream from the source node.
-
-Log level options. Default is debug level:
-  -logerr
-   Log at error level
-  -logwarn
-   Log at warning level
-
-Log node options. Default is player engine only:
-  -logall
-   Log everything (log appender at root node)
-  -logoscl
-   Log OSCL only
-  -logperf
-   Log scheduler performance
-  -logperfmin
-   Log scheduler performance (minimal)
-  -logdatapathsrc
-   Log source node datapath only
-  -logdatapathdec
-   Log decoder node datapath only
-
-Proxy enabled ON or OFF, default is OFF
-  -proxy
-
-Source specification option. 
-  -source sourcename
-   Specify the source filename or URL to use for test cases which
-   allow user-specified source name. The unit test determines the
-   source format type using extension or URL header.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Q. How to run the pv2way engine unit tests?
-A.
-On Android emulator/device:
+A. On Android emulator/device:
     adb push <opencore>/extlibs/opencore/engines/2way/test/test_data/ /sdcard
     adb shell "cd /sdcard; pv2way_omx_engine_test <test_args>"
 
 On host PC:
     cd <opencore>/build_config/opencore_dynamic
-    make -f makefile_nr run_2way_test TEST_ARGS="<test_args>"
+    make run_2way_test TEST_ARGS="<test_args>"
 
-<test_args> can be any of the following:
-Test cases to run option. Default is ALL:
-  -test x y
-   Specify a range of test cases to run. To run one test case, use the
-   same index for x and y.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+To see a list of valid <test_args>:
+        make run_pe_test TEST_ARGS="-help"
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Q. How to run the pvauthor engine unit tests?
-A.
-On Android emulator/device:
+A.  On Android emulator/device:
     adb push <opencore>/engines/author/test/test_input/ /sdcard
     adb shell "cd /sdcard;test_pvauthorengine <test_args>"
 
 On host PC:
     cd <opencore>/build_config/opencore_dynamic
-    make -f makefile_nr run_ae_test TEST_ARGS="<test_args>"
+    make run_ae_test TEST_ARGS="<test_args>"
 
-<test_args> can be any of the following:
-Test cases to run option. Default is ALL:
-  -test x x
-   Specify a range of test cases to run. To run one test case, use the
-   same index for x and y.
+To see a list of valid <test_args>:
+        make run_pe_test TEST_ARGS="-help"
 
-[test range from: 1001 to: 999]
-
-CMD LINE ARGS FOR COMPRESSED TESTS [test range from: 0 to: 105]
-
-Source specification option for audio.:
-  -audio sourcename
-   Specify the source filename or URL to use for test cases which
-   allow user-specified source name. The unit test determines the
-   source format type using extension or URL header.
-
-Source specification option for video.:
-  -video sourcename
-   Specify the source filename or URL to use for test cases which
-   allow user-specified source name. The unit test determines the
-   source format type using extension or URL header.
-
-Output specification option.
-  -output outputname
-   Specify the output filename to use for test cases which
-   allow user-specified source name.
-
-Authoring Time specification option for Author.:
-  -duration time_in_seconds
-   Specify the time argument to use for test cases which
-   allow user-specified source name.
-
-CMD LINE ARGS FOR UNCOMPRESSED TESTS(with AVI/WAV inputs)[test range from 200 to 306]
-
-Source specification option.:
-  -source sourcename
-   Specify the source filename or URL to use for test cases which
-   allow user-specified source name. The unit test determines the
-   source format type using extension or URL header.
-
-Output specification option.
-  -output outputname
-   Specify the output filename to use for test cases which
-   allow user-specified source name.
-
-Video Encoder Type option. Default is M4V:
-  -encV encodertype
-  specifies the encoder to be used for authoring
-  0:M4V
-  1:H263
-  2:H264
-  e.g -encV 0
-
-Authoring Time specification option for Author.:
-  -duration time_in_seconds
-   Specify the time argument to use for test cases which
-   allow user-specified source name.
-
-NO CMD LINE ARGS ARE REQUIRED TO RUN COMPRESSED ERROR HANDLING TESTS [test range from:400 to 403]
-
-NO CMD LINE ARGS ARE REQUIRED TO RUN UNCOMPRESSED ERROR HANDLING TESTS [test range from:500 to 570]
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -255,6 +255,8 @@ TCVEI_RETVAL CPVM4VEncoder::ParseFSI(uint8* aFSIBuff, int FSILength, VideoEncOpt
     uint32 codeword;
     mp4StreamType *psBits;
     psBits = (mp4StreamType *) oscl_malloc(sizeof(mp4StreamType));
+    if (psBits == NULL)
+        return ECVEI_FAIL;
     psBits->data = aFSIBuff;
     psBits->numBytes = FSILength;
     psBits->bitBuf = 0;
@@ -306,31 +308,31 @@ TCVEI_RETVAL CPVM4VEncoder::ParseFSI(uint8* aFSIBuff, int FSILength, VideoEncOpt
             }
             default:
             {
-                return ECVEI_FAIL;
+                goto FREE_PS_BITS_AND_FAIL;
             }
         }
 
         ShowBits(psBits, 32, &codeword);
         if (codeword == USER_DATA_START_CODE)
         {
-            return ECVEI_FAIL;
+            goto FREE_PS_BITS_AND_FAIL;
         }
 
         //visual_object_start_code
         ReadBits(psBits, 32, &codeword);
-        if (codeword != VISUAL_OBJECT_START_CODE) return ECVEI_FAIL;
+        if (codeword != VISUAL_OBJECT_START_CODE) goto FREE_PS_BITS_AND_FAIL;
 
         /*  is_visual_object_identifier            */
         ReadBits(psBits, 1, &codeword);
-        if (codeword) return ECVEI_FAIL;
+        if (codeword) goto FREE_PS_BITS_AND_FAIL;
 
         /* visual_object_type                                 */
         ReadBits(psBits, 4, &codeword);
-        if (codeword != 1) return ECVEI_FAIL;
+        if (codeword != 1) goto FREE_PS_BITS_AND_FAIL;
 
         /* video_signal_type */
         ReadBits(psBits, 1, &codeword);
-        if (codeword) return ECVEI_FAIL;
+        if (codeword) goto FREE_PS_BITS_AND_FAIL;
 
         /* next_start_code() */
         ByteAlign(psBits);
@@ -338,7 +340,7 @@ TCVEI_RETVAL CPVM4VEncoder::ParseFSI(uint8* aFSIBuff, int FSILength, VideoEncOpt
         ShowBits(psBits, 32, &codeword);
         if (codeword == USER_DATA_START_CODE)
         {
-            return ECVEI_FAIL;
+            goto FREE_PS_BITS_AND_FAIL;
         }
     }
 
@@ -361,7 +363,7 @@ TCVEI_RETVAL CPVM4VEncoder::ParseFSI(uint8* aFSIBuff, int FSILength, VideoEncOpt
             }
             else
             {
-                return ECVEI_FAIL;
+                goto FREE_PS_BITS_AND_FAIL;
 
             }
         }
@@ -378,28 +380,28 @@ TCVEI_RETVAL CPVM4VEncoder::ParseFSI(uint8* aFSIBuff, int FSILength, VideoEncOpt
         ReadBits(psBits, 8, &codeword);
         if (codeword > 2)
         {
-            return ECVEI_FAIL;
+            goto FREE_PS_BITS_AND_FAIL;
         }
 
         // is_object_layer_identifier
         ReadBits(psBits, 1, &codeword);
-        if (codeword) return ECVEI_FAIL;
+        if (codeword) goto FREE_PS_BITS_AND_FAIL;
 
         // aspect ratio
         ReadBits(psBits, 4, &codeword);
-        if (codeword != 1) return ECVEI_FAIL;
+        if (codeword != 1) goto FREE_PS_BITS_AND_FAIL;
 
         //vol_control_parameters
         ReadBits(psBits, 1, &codeword);
-        if (codeword != 0) return ECVEI_FAIL;
+        if (codeword != 0) goto FREE_PS_BITS_AND_FAIL;
 
         //		video_object_layer_shape
         ReadBits(psBits, 2, &codeword);
-        if (codeword != 0) return ECVEI_FAIL;
+        if (codeword != 0) goto FREE_PS_BITS_AND_FAIL;
 
         //Marker bit
         ReadBits(psBits, 1, &codeword);
-        if (codeword != 1) return ECVEI_FAIL;
+        if (codeword != 1) goto FREE_PS_BITS_AND_FAIL;
 
         //	vop_time_increment_resolution
         ReadBits(psBits, 16, &codeword);
@@ -408,16 +410,16 @@ TCVEI_RETVAL CPVM4VEncoder::ParseFSI(uint8* aFSIBuff, int FSILength, VideoEncOpt
         //Marker bit
         ReadBits(psBits, 1, &codeword);
         if (codeword != 1)
-            return ECVEI_FAIL;
+            goto FREE_PS_BITS_AND_FAIL;
 
         //		fixed_vop_rate
         ReadBits(psBits, 1, &codeword);
-        if (codeword != 0) return ECVEI_FAIL;
+        if (codeword != 0) goto FREE_PS_BITS_AND_FAIL;
 
         /* video_object_layer_shape is RECTANGULAR */
         //Marker bit
         ReadBits(psBits, 1, &codeword);
-        if (codeword != 1) return ECVEI_FAIL;
+        if (codeword != 1) goto FREE_PS_BITS_AND_FAIL;
 
         /* this should be 176 for QCIF */
         ReadBits(psBits, 13, &codeword);
@@ -425,7 +427,7 @@ TCVEI_RETVAL CPVM4VEncoder::ParseFSI(uint8* aFSIBuff, int FSILength, VideoEncOpt
 
         //Marker bit
         ReadBits(psBits, 1, &codeword);
-        if (codeword != 1) return ECVEI_FAIL;
+        if (codeword != 1) goto FREE_PS_BITS_AND_FAIL;
 
         /* this should be 144 for QCIF */
         ReadBits(psBits, 13, &codeword);
@@ -433,23 +435,23 @@ TCVEI_RETVAL CPVM4VEncoder::ParseFSI(uint8* aFSIBuff, int FSILength, VideoEncOpt
 
         //Marker bit
         ReadBits(psBits, 1, &codeword);
-        if (codeword != 1) return ECVEI_FAIL;
+        if (codeword != 1) goto FREE_PS_BITS_AND_FAIL;
 
         //Interlaced
         ReadBits(psBits, 1, &codeword);
-        if (codeword != 0) return ECVEI_FAIL;
+        if (codeword != 0) goto FREE_PS_BITS_AND_FAIL;
 
         //obmc_disable
         ReadBits(psBits, 1, &codeword);
-        if (codeword != 1) return ECVEI_FAIL;
+        if (codeword != 1) goto FREE_PS_BITS_AND_FAIL;
 
         //sprite_enable
         ReadBits(psBits, 1, &codeword);
-        if (codeword != 0) return ECVEI_FAIL;
+        if (codeword != 0) goto FREE_PS_BITS_AND_FAIL;
 
         //not_8_bit
         ReadBits(psBits, 1, &codeword);
-        if (codeword != 0) return ECVEI_FAIL;
+        if (codeword != 0) goto FREE_PS_BITS_AND_FAIL;
 
         /* video_object_layer_shape is not GRAY_SCALE  */
         //quant_type
@@ -458,10 +460,10 @@ TCVEI_RETVAL CPVM4VEncoder::ParseFSI(uint8* aFSIBuff, int FSILength, VideoEncOpt
         if (codeword != 0) //quant_type = 1
         {
             ReadBits(psBits, 1, &codeword); //load_intra_quant_mat
-            if (codeword) return ECVEI_FAIL; // No support for user defined matrix.
+            if (codeword) goto FREE_PS_BITS_AND_FAIL; // No support for user defined matrix.
 
             ReadBits(psBits, 1, &codeword); //load_nonintra_quant_mat
-            if (codeword) return ECVEI_FAIL; // No support for user defined matrix.
+            if (codeword) goto FREE_PS_BITS_AND_FAIL; // No support for user defined matrix.
 
         }
 
@@ -469,7 +471,7 @@ TCVEI_RETVAL CPVM4VEncoder::ParseFSI(uint8* aFSIBuff, int FSILength, VideoEncOpt
         ReadBits(psBits, 1, &codeword);
         if (!codeword)
         {
-            return ECVEI_FAIL;
+            goto FREE_PS_BITS_AND_FAIL;
         }
 
         //resync_marker_disable
@@ -504,7 +506,7 @@ TCVEI_RETVAL CPVM4VEncoder::ParseFSI(uint8* aFSIBuff, int FSILength, VideoEncOpt
 
         //scalability
         ReadBits(psBits, 1, &codeword);
-        if (codeword) return ECVEI_FAIL;
+        if (codeword) goto FREE_PS_BITS_AND_FAIL;
 
     }
     else
@@ -517,11 +519,17 @@ TCVEI_RETVAL CPVM4VEncoder::ParseFSI(uint8* aFSIBuff, int FSILength, VideoEncOpt
         }
         else
         {
-            return ECVEI_FAIL;
+            goto FREE_PS_BITS_AND_FAIL;
 
         }
     }
     return ECVEI_SUCCESS;
+
+FREE_PS_BITS_AND_FAIL:
+
+    oscl_free(psBits);
+
+    return ECVEI_FAIL;
 }
 
 int16 CPVM4VEncoder::iDecodeShortHeader(mp4StreamType *psBits, VideoEncOptions *aEncOption)

@@ -75,6 +75,8 @@
 #define UNICODE_BOM_SIZE						2
 #define VERSION_SIZE							2
 
+#define UNICODE_CHAR_SIZE						2
+
 //Max length for null terminated strings in text frames
 #define ID3_MAX_STRING_FRAME_LEN				256
 

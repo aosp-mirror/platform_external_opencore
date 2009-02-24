@@ -352,14 +352,35 @@ bool pv_mediainput_async_test_opencomposestop::ConfigOutputFile()
         return false;
     }
 
-    if (clipConfig->SetOutputFileName(iOutputFileName) != PVMFSuccess)
+    if (!iUseExtrnFileDesc)
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "pv_mediainput_async_test_opencomposestop::ConfigAmrComposer: Error - SetOutputFileName failed"));
+        if (clipConfig->SetOutputFileName(iOutputFileName) != PVMFSuccess)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                            (0, "pv_mediainput_async_test_opencomposestop::ConfigAmrComposer: Error - SetOutputFileName failed"));
 
-        return false;
+            return false;
+        }
     }
+    else
+    {
+        char* fname[ARRAY_SIZE];
+        oscl_UnicodeToUTF8(iOutputFileName.get_str(), iOutputFileName.get_size(), (char*)fname, ARRAY_SIZE);
 
+        FILE *fp = fopen((char*)fname, "w+b");
+        if (fp)
+        {
+            iFileHandle = OSCL_NEW(OsclFileHandle, (fp));
+            if (clipConfig->SetOutputFileDescriptor(iFileHandle) != PVMFSuccess)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                                (0, "pv_mediainput_async_test_opencomposestop::ConfigAmrComposer: Error - SetOutputFileName failed"));
+
+                return false;
+            }
+        }
+
+    }
     return true;
 }
 
@@ -528,7 +549,7 @@ bool pv_mediainput_async_test_opencomposestop::AddMediaTrack()
 
         }
 
-        if (!PVAETestNodeConfig::ConfigureAudioEncoder(iAudioEncoderConfig, iAudioBitrate))
+        if (!PVAETestNodeConfig::ConfigureAudioEncoder(iAudioEncoderConfig, iAudioEncoderMimeType, iAudioBitrate))
         {
             return false;
         }
@@ -651,8 +672,11 @@ void pv_mediainput_async_test_opencomposestop::Cleanup()
 //	iMIOComponent.DeleteInputNode();
     iOutputFileName = NULL;
     iFileServer.Close();
-
-
+    if (iFileHandle)
+    {
+        OSCL_DELETE(iFileHandle);
+        iFileHandle = NULL;
+    }
 }
 
 
@@ -1273,6 +1297,7 @@ bool pv_mediainput_async_test_opencomposestop::ConfigComposerOutput()
         break;
 
         case PVMediaInput_Open_Compose_Stop_Test:
+        case PVMediaInput_Open_Compose_Stop_Test_UsingExternalFileHandle:
         {
             if (config->SetFileSizeProgressReport(true, KFileSizeProgressFreq) != PVMFSuccess)
             {
@@ -1308,6 +1333,7 @@ bool pv_mediainput_async_test_opencomposestop::QueryComposerOutputInterface()
     switch (iTestCaseNum)
     {
         case PVMediaInput_Open_Compose_Stop_Test:
+        case PVMediaInput_Open_Compose_Stop_Test_UsingExternalFileHandle:
         case KMaxFileSizeTest:
         {
             //iPendingCmds.push_back(PVAE_CMD_QUERY_INTERFACE);

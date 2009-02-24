@@ -41,6 +41,12 @@
 #ifndef OSCL_STRING_CONSTAINERS_H_INCLUDED
 #include "oscl_string_containers.h"
 #endif
+#ifndef PVMF_EVENT_HANDLING_H_INCLUDED
+#include "pvmf_event_handling.h"
+#endif
+#ifndef PVMF_PORT_INTERFACE_H_INCLUDED
+#include "pvmf_port_interface.h"
+#endif
 
 // default number of redirect trials
 #define PVPROTOCOLENGINE_DEFAULT_NUMBER_OF_REDIRECT_TRIALS 10

@@ -36,7 +36,7 @@ LOCAL_C_INCLUDES := \
  	$(PV_TOP)/engines/player/include \
  	$(PV_TOP)/nodes/common/include \
  	$(PV_TOP)/extern_libs_v2/khronos/openmax/include \
- 	$(PV_TOP)/engines/player/test/config/linux_nj \
+ 	$(PV_TOP)/engines/player/test/config/android \
  	$(PV_INCLUDES)
 
 LOCAL_COPY_HEADERS_TO := $(PV_COPY_HEADERS_TO)

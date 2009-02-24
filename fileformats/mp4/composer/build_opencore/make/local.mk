@@ -17,8 +17,7 @@ XCXXFLAGS += $(FLAG_COMPILE_WARNINGS_AS_ERRORS)
 SRCDIR := ../../src
 INCSRCDIR := ../../include
 
-SRCS := amrdecoderspecificinfo.cpp \
-	amrdecoderspecificinfo3gpp.cpp \
+SRCS := amrdecoderspecificinfo3gpp.cpp \
 	amrsampleentry.cpp \
     assetinfoatoms.cpp \
 	atom.cpp \
@@ -43,7 +42,6 @@ SRCS := amrdecoderspecificinfo.cpp \
 	expandablebaseclass.cpp \
 	filetypeatom.cpp \
 	fullatom.cpp \
-	h263decoderspecificinfo.cpp \
 	h263decoderspecificinfo3gpp.cpp \
 	h263sampleentry.cpp \
 	handleratom.cpp \

@@ -19,7 +19,6 @@
 #define TSC_H_INCLUDED
 
 #include "pvt_params.h"
-#include "pvt_events.h"
 
 #ifndef PVMF_NODE_INTERFACE_H_INCLUDED
 #include "pvmf_node_interface.h"

@@ -290,14 +290,6 @@ void pvplayer_async_test_cpmdlapassthru::Run()
                     iSourceContextData->EnableCommonSourceContext();
 
                     PVInterface* sourceContextStream = NULL;
-                    bool useCPM = true;
-                    PVUuid commonContextUuid(PVMF_SOURCE_CONTEXT_DATA_COMMON_UUID);
-                    if (iSourceContextData->queryInterface(commonContextUuid, sourceContextStream))
-                    {
-                        PVMFSourceContextDataCommon* commonContext =
-                            OSCL_STATIC_CAST(PVMFSourceContextDataCommon*, sourceContextStream);
-                        commonContext->iUseCPMPluginRegistry = useCPM;
-                    }
 
                     iSourceContextData->EnableStreamingSourceContext();
                     PVUuid streamingContextUuid(PVMF_SOURCE_CONTEXT_DATA_STREAMING_UUID);
@@ -326,7 +318,6 @@ void pvplayer_async_test_cpmdlapassthru::Run()
                         iDownloadFilename = OUTPUTNAME_PREPEND_WSTRING;
                         iDownloadFilename += _STRLIT_WCHAR("test_ftdownload.dl");
                         bool aIsNewSession = true;
-                        bool iUseCpmForPlayback = true;
 
                         iSourceContextData->DownloadHTTPData()->bIsNewSession = aIsNewSession;
                         iSourceContextData->DownloadHTTPData()->iConfigFileName = iDownloadConfigFilename;
@@ -335,7 +326,6 @@ void pvplayer_async_test_cpmdlapassthru::Run()
                         iSourceContextData->DownloadHTTPData()->iPlaybackControl = PVMFSourceContextDataDownloadHTTP::EAsap;
                         iSourceContextData->DownloadHTTPData()->iProxyName = iDownloadProxy;
                         iSourceContextData->DownloadHTTPData()->iProxyPort = iDownloadProxyPort;
-                        iSourceContextData->CommonData()->iUseCPMPluginRegistry = iUseCpmForPlayback;
 
                     }
                     iDataSource->SetDataSourceContextData((OsclAny*)iSourceContextData);
@@ -381,9 +371,8 @@ void pvplayer_async_test_cpmdlapassthru::Run()
             }
             else
             {
-                //Create a data source with the CPM usage flag set.
-                bool useCPM = true;
-                iLocalDataSource = new PVMFLocalDataSource(useCPM);
+                //Create a data source
+                iLocalDataSource = new PVMFLocalDataSource();
                 iDataSource->SetDataSourceContextData((OsclAny*)iLocalDataSource);
             }
 

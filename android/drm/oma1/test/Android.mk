@@ -121,7 +121,7 @@ LOCAL_C_INCLUDES := $(PV_INCLUDES) \
     $(PV_TOP)/engines/player/include \
     $(PV_TOP)/nodes/common/include \
     $(PV_TOP)/engines/player/src \
-    $(PV_TOP)/engines/player/test/config/linux_nj \
+    $(PV_TOP)/engines/player/test/config/android \
     $(PV_TOP)/android/drm/oma1/test \
     $(PV_TOP)/oscl/unit_test/src \
     libs/drm/mobile1/include

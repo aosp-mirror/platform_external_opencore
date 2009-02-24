@@ -255,9 +255,17 @@ bool pvauthor_async_compressed_test_errorhandling::ConfigAmrAacComposer()
     switch (iTestCaseNum)
     {
         case AMR_FOutput_Test:
+        case AMR_FileOutput_Test_UsingExternalFileHandle:
             if (iOutputFileName == NULL)
             {
                 iOutputFileName = KFOAOnlyAMRTestOutput;
+            }
+            break;
+
+        case AMRWB_FOutput_Test:
+            if (iOutputFileName == NULL)
+            {
+                iOutputFileName = KFOAOnlyAMRWBTestOutput;
             }
             break;
 
@@ -277,7 +285,10 @@ bool pvauthor_async_compressed_test_errorhandling::ConfigAmrAacComposer()
             break;
 
         default:
-            if (!((iComposerMimeType == KAMRNbComposerMimeType) || (iComposerMimeType == KAACADTSComposerMimeType) || (iComposerMimeType == KAACADIFComposerMimeType)))
+            if (!((iComposerMimeType == KAMRNbComposerMimeType) ||
+                    (iComposerMimeType == KAMRWBComposerMimeType) ||
+                    (iComposerMimeType == KAACADTSComposerMimeType) ||
+                    (iComposerMimeType == KAACADIFComposerMimeType)))
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "pvauthor_async_compressed_test_errorhandling::ConfigAmrAacComposer: AMR-AAC Composer not used in this test case"));
                 return true;
@@ -319,7 +330,10 @@ bool pvauthor_async_compressed_test_errorhandling::ConfigMp43gpComposer()
             break;
 
         default:
-            if (!(iComposerMimeType == KAMRNbComposerMimeType) && !(iComposerMimeType == KAACADTSComposerMimeType) && !(iComposerMimeType == KAACADIFComposerMimeType))
+            if (!(iComposerMimeType == KAMRNbComposerMimeType) &&
+                    !(iComposerMimeType == KAMRWBComposerMimeType) &&
+                    !(iComposerMimeType == KAACADTSComposerMimeType) &&
+                    !(iComposerMimeType == KAACADIFComposerMimeType))
             {
                 break;
             }
@@ -593,7 +607,7 @@ bool pvauthor_async_compressed_test_errorhandling::ConfigureAudioEncoder()
         return true;
     }
 
-    return PVAETestNodeConfig::ConfigureAudioEncoder(iAudioEncoderConfig);
+    return PVAETestNodeConfig::ConfigureAudioEncoder(iAudioEncoderConfig, iAudioEncoderMimeType);
 }
 
 ////////////////////////////////////////////////////////////////////////////

@@ -4,6 +4,7 @@ include $(CLEAR_VARS)
 LOCAL_WHOLE_STATIC_LIBRARIES := \
 	libcpm \
  	libpassthru_oma1 \
+ 	libpvpvxparser \
  	libpvid3parcom \
  	libpvamrffparsernode \
  	libpvamrffrecognizer \
@@ -34,6 +35,7 @@ LOCAL_SHARED_LIBRARIES +=   libopencore_common
 include $(BUILD_SHARED_LIBRARY)
 include   $(PV_TOP)/pvmi/content_policy_manager/Android.mk
 include   $(PV_TOP)/pvmi/content_policy_manager/plugins/oma1/passthru/Android.mk
+include   $(PV_TOP)/fileformats/pvx/parser/Android.mk
 include   $(PV_TOP)/fileformats/id3parcom/Android.mk
 include   $(PV_TOP)/nodes/pvamrffparsernode/Android.mk
 include   $(PV_TOP)/pvmi/recognizer/plugins/pvamrffrecognizer/Android.mk

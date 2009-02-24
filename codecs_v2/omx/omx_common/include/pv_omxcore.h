@@ -105,6 +105,8 @@
 #endif
 #endif
 
+#define MAX_ROLES_SUPPORTED	3
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -142,6 +144,9 @@ extern "C"
         OMX_OUT  OMX_HANDLETYPE *hPipe,
         OMX_IN   OMX_STRING szURI);
 
+    OSCL_IMPORT_REF OMX_BOOL OMXConfigParser(
+        OMX_PTR aInputParameters,
+        OMX_PTR aOutputParameters);
 
 
 #ifdef __cplusplus
@@ -178,12 +183,16 @@ class OmxSharedLibraryInterface
 };
 #endif // USE_DYNAMIC_LOAD_OMX_COMPONENTS
 
+// PV additions to OMX_EXTRADATATYPE enum
+#define OMX_ExtraDataNALSizeArray 0x7F123321 // random value above 0x7F000000 (start of the unused range for vendors)
+
 class ComponentRegistrationType
 {
     public:
         // name of the component used as identifier
         OMX_STRING		ComponentName;
-        OMX_STRING		RoleString;
+        OMX_STRING		RoleString[MAX_ROLES_SUPPORTED];
+        OMX_U32			NumberOfRolesSupported;
         // pointer to factory function to be called when component needs to be instantiated
         OMX_ERRORTYPE(*FunctionPtrCreateComponent)(OMX_OUT OMX_HANDLETYPE* pHandle, OMX_IN  OMX_PTR pAppData,
                 OMX_PTR pProxy, OMX_STRING aOmxLibName, OMX_PTR &aOmxLib, OMX_PTR aOsclUuid, OMX_U32 &aRefCount);
@@ -192,7 +201,10 @@ class ComponentRegistrationType
         //This function will return the role string
         void GetRolesOfComponent(OMX_STRING* aRole_string)
         {
-            *aRole_string = RoleString;
+            for (OMX_U32 ii = 0; ii < NumberOfRolesSupported; ii++)
+            {
+                aRole_string[ii] = RoleString[ii];
+            }
         }
 
         // for dynamic loading
@@ -227,8 +239,9 @@ typedef struct PV_OMXComponentCapabilityFlagsType
     OMX_BOOL iOMXComponentSupportsExternalInputBufferAlloc;
     OMX_BOOL iOMXComponentSupportsMovableInputBuffers;
     OMX_BOOL iOMXComponentSupportsPartialFrames;
-    OMX_BOOL iOMXComponentNeedsNALStartCode;
+    OMX_BOOL iOMXComponentUsesNALStartCodes;
     OMX_BOOL iOMXComponentCanHandleIncompleteFrames;
+    OMX_BOOL iOMXComponentUsesFullAVCFrames;
 
 } PV_OMXComponentCapabilityFlagsType;
 

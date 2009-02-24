@@ -57,6 +57,10 @@
 #include "pvmi_config_and_capability_observer.h"
 #endif
 
+#ifndef PVMF_SOURCE_CONTEXT_DATA_H_INCLUDED
+#include "pvmf_source_context_data.h"
+#endif
+
 #define INDEX_CODEC_SPECIFIC_INFO_UNDEFINED -1
 #define INDEX_CODEC_SPECIFIC_INFO_AUDIO 1
 #define INDEX_CODEC_SPECIFIC_INFO_VIDEO 2
@@ -138,6 +142,7 @@ class pvplayer_async_test_printmetadata : public pvplayer_async_test_base
                 , iMIOFileOutText(NULL)
                 , iCurrentCmdId(0)
                 , iReleaseMetadataByApp(aReleaseMetadataByApp)
+                , iSourceContextData(NULL)
         {
             if (iReleaseMetadataByApp)
             {
@@ -207,6 +212,7 @@ class pvplayer_async_test_printmetadata : public pvplayer_async_test_base
         PvmiMIOControl* iMIOFileOutText;
         PVCommandId iCurrentCmdId;
         bool iReleaseMetadataByApp;
+        PVMFSourceContextData* iSourceContextData;
 
         OSCL_wHeapString<OsclMemAllocator> iFileNameWStr;
         oscl_wchar iTmpWCharBuffer[512];
@@ -214,6 +220,12 @@ class pvplayer_async_test_printmetadata : public pvplayer_async_test_base
         PVPMetadataList iMetadataKeyList;
         Oscl_Vector<PvmiKvp, OsclMemAllocator> iMetadataValueList;
         int32 iNumValues;
+
+        int32 iDownloadMaxfilesize;
+        OSCL_wHeapString<OsclMemAllocator> iDownloadFilename;
+        OSCL_HeapString<OsclMemAllocator> iDownloadProxy;
+        OSCL_wHeapString<OsclMemAllocator> iDownloadConfigFilename;
+
 };
 
 
@@ -261,6 +273,7 @@ class pvplayer_async_test_printmemstats : public pvplayer_async_test_base
                 , iMIOFileOutAudio(NULL)
                 , iMIOFileOutText(NULL)
                 , iCurrentCmdId(0)
+                , iSourceContextData(NULL)
                 , iPlayTimeCtr(0)
                 , iInitialNumBytes(0)
                 , iInitialNumAllocs(0)
@@ -315,6 +328,7 @@ class pvplayer_async_test_printmemstats : public pvplayer_async_test_base
         PvmiMIOControl* iMIOFileOutAudio;
         PvmiMIOControl* iMIOFileOutText;
         PVCommandId iCurrentCmdId;
+        PVMFSourceContextData* iSourceContextData;
 
         OSCL_wHeapString<OsclMemAllocator> iFileNameWStr;
         oscl_wchar iTmpWCharBuffer[512];
@@ -327,6 +341,11 @@ class pvplayer_async_test_printmemstats : public pvplayer_async_test_base
 
         uint32 iInitialNumBytes;
         uint32 iInitialNumAllocs;
+
+        int32 iDownloadMaxfilesize;
+        OSCL_wHeapString<OsclMemAllocator> iDownloadFilename;
+        OSCL_HeapString<OsclMemAllocator> iDownloadProxy;
+        OSCL_wHeapString<OsclMemAllocator> iDownloadConfigFilename;
 };
 
 
@@ -373,6 +392,7 @@ class pvplayer_async_test_playuntileos : public pvplayer_async_test_base
                 , iMIOFileOutAudio(NULL)
                 , iMIOFileOutText(NULL)
                 , iCurrentCmdId(0)
+                , iSourceContextData(NULL)
         {
             iTestCaseName = _STRLIT_CHAR("Play Until EOS");
         }
@@ -420,9 +440,15 @@ class pvplayer_async_test_playuntileos : public pvplayer_async_test_base
         PvmiMIOControl* iMIOFileOutAudio;
         PvmiMIOControl* iMIOFileOutText;
         PVCommandId iCurrentCmdId;
+        PVMFSourceContextData* iSourceContextData;
 
         OSCL_wHeapString<OsclMemAllocator> iFileNameWStr;
         oscl_wchar iTmpWCharBuffer[512];
+
+        int32 iDownloadMaxfilesize;
+        OSCL_wHeapString<OsclMemAllocator> iDownloadFilename;
+        OSCL_HeapString<OsclMemAllocator> iDownloadProxy;
+        OSCL_wHeapString<OsclMemAllocator> iDownloadConfigFilename;
 };
 
 // Structure CodecSpecificInfo stores the codecSpecificInfoIndex,

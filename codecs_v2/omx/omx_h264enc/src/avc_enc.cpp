@@ -129,6 +129,11 @@ OMX_ERRORTYPE AvcEncoder_OMX::AvcEncInit(OMX_VIDEO_PORTDEFINITIONTYPE aInputPara
 
     AVCEncParams aEncOption; /* encoding options */
 
+    uint32* slice_group = NULL;
+    int32 numTotalMBs;
+    int32 Ysize16;
+    int32 total_mb;
+    int32 run_length;
 
     iSrcWidth = aInputParam.nFrameWidth;
     iSrcHeight = aInputParam.nFrameHeight;
@@ -426,8 +431,14 @@ OMX_ERRORTYPE AvcEncoder_OMX::AvcEncInit(OMX_VIDEO_PORTDEFINITIONTYPE aInputPara
     aEncOption.num_ref_frame = 1;	//We only support this value
 
     //Since FMO is disabled in our case, num of slice group is always 1
+#if (defined(TEST_FULL_AVC_FRAME_MODE) || defined(TEST_FULL_AVC_FRAME_MODE_SC))
+    aEncOption.num_slice_group = 4;
+    aEncOption.fmo_type = 6;
+    aEncOption.use_overrun_buffer = AVC_OFF; // since we are to be outputing full frame buffers
+#else
     aEncOption.num_slice_group = 1;
     aEncOption.fmo_type = 0;	//Disabled in this case
+#endif
 
     aEncOption.db_filter = AVC_ON;
 
@@ -474,7 +485,38 @@ OMX_ERRORTYPE AvcEncoder_OMX::AvcEncInit(OMX_VIDEO_PORTDEFINITIONTYPE aInputPara
     aEncOption.rdopt_mode = AVC_OFF;
     aEncOption.bidir_pred = AVC_OFF;
 
-    /***** Initlaize the encoder *****/
+    Ysize16 = (((aEncOption.width + 15) >> 4) << 4) * (((aEncOption.height + 15) >> 4) << 4);
+    numTotalMBs = Ysize16 >> 8;
+    slice_group = (uint*) oscl_malloc(sizeof(uint) * numTotalMBs);
+
+    int32 idx = 0;
+    int32 ii;
+    for (ii = 0; ii < numTotalMBs; ii++)
+    {
+        slice_group[ii] = idx++;
+        if (idx >= aEncOption.num_slice_group)
+        {
+            idx = 0;
+        }
+    }
+    aEncOption.slice_group = slice_group;
+
+    if (aEncOption.num_slice_group > 1)  /* divide slice group equally */
+    {
+        run_length = numTotalMBs / aEncOption.num_slice_group;
+        total_mb = 0;
+        for (idx = 0; idx < aEncOption.num_slice_group; idx++)
+        {
+            aEncOption.run_length_minus1[idx] = run_length - 1;
+            total_mb += run_length;
+        }
+        if (total_mb < numTotalMBs)
+        {
+            aEncOption.run_length_minus1[aEncOption.num_slice_group-1] += (numTotalMBs - total_mb);
+        }
+    }
+
+    /***** Initialize the encoder *****/
     if (AVCENC_SUCCESS != PVAVCEncInitialize(&iAvcHandle, &aEncOption, NULL, NULL))
     {
         iInitialized = OMX_FALSE;
@@ -486,12 +528,14 @@ OMX_ERRORTYPE AvcEncoder_OMX::AvcEncInit(OMX_VIDEO_PORTDEFINITIONTYPE aInputPara
     iInitialized = OMX_TRUE;
     iReadyForNextFrame = OMX_TRUE;
 
+    oscl_free(slice_group);
+
     return OMX_ErrorNone;
 
 }
 
 
-OMX_BOOL AvcEncoder_OMX::AvcEncodeSendInput(OMX_U8*    aInBuffer,
+AVCEnc_Status AvcEncoder_OMX::AvcEncodeSendInput(OMX_U8*    aInBuffer,
         OMX_U32*   aInBufSize,
         OMX_TICKS  aInTimeStamp)
 {
@@ -506,7 +550,7 @@ OMX_BOOL AvcEncoder_OMX::AvcEncodeSendInput(OMX_U8*    aInBuffer,
         {
             //Mark the inpur buffer consumed to indicate corrupt frame
             *aInBufSize = 0;
-            return OMX_FALSE;
+            return AVCENC_FAIL;
         }
 
         if (iYUVIn) /* iSrcWidth is not multiple of 4 or iSrcHeight is odd number */
@@ -526,7 +570,7 @@ OMX_BOOL AvcEncoder_OMX::AvcEncodeSendInput(OMX_U8*    aInBuffer,
         {
             //Mark the inpur buffer consumed to indicate corrupt frame
             *aInBufSize = 0;
-            return OMX_FALSE;
+            return AVCENC_FAIL;
         }
         ccRGBtoYUV->Convert((uint8*)aInBuffer, iYUVIn);
         iVideoIn = iYUVIn;
@@ -537,7 +581,7 @@ OMX_BOOL AvcEncoder_OMX::AvcEncodeSendInput(OMX_U8*    aInBuffer,
         {
             //Mark the inpur buffer consumed to indicate corrupt frame
             *aInBufSize = 0;
-            return OMX_FALSE;
+            return AVCENC_FAIL;
         }
         ccRGBtoYUV->Convert((uint8*)aInBuffer, iYUVIn);
         iVideoIn = iYUVIn;
@@ -548,7 +592,7 @@ OMX_BOOL AvcEncoder_OMX::AvcEncodeSendInput(OMX_U8*    aInBuffer,
         {
             //Mark the inpur buffer consumed to indicate corrupt frame
             *aInBufSize = 0;
-            return OMX_FALSE;
+            return AVCENC_FAIL;
         }
         ccRGBtoYUV->Convert((uint8*)aInBuffer, iYUVIn);
         iVideoIn = iYUVIn;
@@ -566,25 +610,23 @@ OMX_BOOL AvcEncoder_OMX::AvcEncodeSendInput(OMX_U8*    aInBuffer,
     iVidIn.disp_order = iDispOrd;
 
     AvcStatus = PVAVCEncSetInput(&iAvcHandle, &iVidIn);
-    //Mark the inpur buffer consumed after caling SetInput api
-    *aInBufSize = 0;
 
     if (AVCENC_SUCCESS == AvcStatus)
     {
         iDispOrd++;
         iReadyForNextFrame = OMX_FALSE;
-        return OMX_TRUE;
+        return AvcStatus;
     }
     else if (AVCENC_NEW_IDR == AvcStatus)
     {
         iDispOrd++;
         iIDR = OMX_TRUE;
         iReadyForNextFrame = OMX_FALSE;
-        return OMX_TRUE;
+        return AvcStatus;
     }
     else
     {
-        return OMX_FALSE;
+        return AvcStatus;
     }
 
 }
@@ -603,10 +645,10 @@ AVCEnc_Status AvcEncoder_OMX::AvcEncodeVideo(OMX_U8* aOutBuffer,
 {
     AVCEnc_Status AvcStatus;
     AVCEnc_Status ReturnValue;
-    OMX_BOOL	SetInputStatus = OMX_TRUE;
+    AVCEnc_Status	SetInputStatus = AVCENC_SUCCESS;
     AVCFrameIO recon;
     uint Size;
-    int  NALType;
+    int  NALType = 0;
 
     if (OMX_FALSE == iSpsPpsHeaderFlag)
     {
@@ -648,7 +690,7 @@ AVCEnc_Status AvcEncoder_OMX::AvcEncodeVideo(OMX_U8* aOutBuffer,
         SetInputStatus = AvcEncodeSendInput(aInBuffer, aInBufSize, aInTimeStamp);
     }
 
-    if (OMX_TRUE == SetInputStatus)		//success
+    if ((AVCENC_SUCCESS == SetInputStatus) || (AVCENC_NEW_IDR == SetInputStatus))		//success
     {
         Size = *aOutputLength;
 
@@ -684,7 +726,9 @@ AVCEnc_Status AvcEncoder_OMX::AvcEncodeVideo(OMX_U8* aOutBuffer,
             {
                 iIDR = OMX_FALSE;
             }
+
             ReturnValue = AVCENC_PICTURE_READY;
+
             iReadyForNextFrame = OMX_TRUE;	//ready to receive another set of input frame
 
             AvcStatus = PVAVCEncGetRecon(&iAvcHandle, &recon);
@@ -692,6 +736,12 @@ AVCEnc_Status AvcEncoder_OMX::AvcEncodeVideo(OMX_U8* aOutBuffer,
             {
                 PVAVCEncReleaseRecon(&iAvcHandle, &recon);
             }
+        }
+        else if (AVCENC_SKIPPED_PICTURE == AvcStatus)
+        {
+            *aOutputLength = 0;
+            iReadyForNextFrame = OMX_TRUE;	//ready to receive another set of input frame
+            return AVCENC_SKIPPED_PICTURE;
         }
         else
         {
@@ -705,6 +755,11 @@ AVCEnc_Status AvcEncoder_OMX::AvcEncodeVideo(OMX_U8* aOutBuffer,
 
         return ReturnValue;
 
+    }
+    else if (AVCENC_SKIPPED_PICTURE == SetInputStatus)
+    {
+        *aOutputLength = 0;
+        return AVCENC_SKIPPED_PICTURE;
     }
     else
     {
@@ -1031,4 +1086,10 @@ void AvcEncoder_OMX::CopyToYUVIn(uint8 *YUV, int width, int height, int width_16
 
     return ;
 }
+
+OMX_BOOL AvcEncoder_OMX::GetSpsPpsHeaderFlag()
+{
+    return iSpsPpsHeaderFlag;
+}
+
 

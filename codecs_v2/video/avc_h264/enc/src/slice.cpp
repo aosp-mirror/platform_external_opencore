@@ -116,7 +116,7 @@ AVCEnc_Status AVCEncodeSlice(AVCEncObject *encvid)
             {
                 /* find first_mb_num for the next slice */
                 CurrMbAddr = 0;
-                while (video->mblock[CurrMbAddr].slice_id != encvid->currSliceGroup &&
+                while (video->MbToSliceGroupMap[CurrMbAddr] != encvid->currSliceGroup &&
                         (uint)CurrMbAddr < video->PicSizeInMbs)
                 {
                     CurrMbAddr++;

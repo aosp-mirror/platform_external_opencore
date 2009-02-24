@@ -114,6 +114,7 @@ typedef enum
     , SYMBIAN_DEV_SOUND
     , YUV_WRONG_FILE //just introduced for error handling scenarios
     , TEXT_FILE
+    , AMRWB_IETF_FILE
 } PVAETestInputType;
 
 #define ARRAY_SIZE	512

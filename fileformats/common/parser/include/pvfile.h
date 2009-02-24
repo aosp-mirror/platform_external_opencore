@@ -107,14 +107,7 @@ class PVFile
         //default constructor.
         PVFile()
         {
-            iFile = NULL;
-            iFileHandle = NULL;
-            iCPMAccessFactory = NULL;
-            iFilePtr = NULL;
-            iDataStreamAccess = NULL;
-            iFileSize = 0;
-            iFileSizeAvailable = false;
-            iRequestReadCapacityNotificationID = 0;
+            Reset();
         }
 
         //API to copy all fields from another object.
@@ -140,6 +133,18 @@ class PVFile
 
         ~PVFile()
         {
+        }
+
+        void Reset()
+        {
+            iFile = NULL;
+            iFileHandle = NULL;
+            iCPMAccessFactory = NULL;
+            iFilePtr = NULL;
+            iDataStreamAccess = NULL;
+            iFileSize = 0;
+            iFileSizeAvailable = false;
+            iRequestReadCapacityNotificationID = 0;
         }
 
         //API to set the CPM access interface.

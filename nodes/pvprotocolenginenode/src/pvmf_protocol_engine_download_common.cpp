@@ -17,10 +17,6 @@
  */
 #include "pvmf_protocol_engine_download_common.h"
 
-#define LOGINFODATAPATH(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG,iLogger,PVLOGMSG_INFO,m);
-#define PVMF_PROTOCOL_ENGINE_LOGINFODATAPATH(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG,iDataPathLogger,PVLOGMSG_INFO,m);
-#define PVMF_PROTOCOL_ENGINE_LOGERRINFODATAPATH(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG,iDataPathErrLogger,PVLOGMSG_INFO,m);
-
 ////////////////////////////////////////////////////////////////////////////////////
 //////	DownloadState related implementation
 ////////////////////////////////////////////////////////////////////////////////////

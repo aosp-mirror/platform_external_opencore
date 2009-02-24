@@ -42,7 +42,6 @@
 #define PVMF_SOURCE_CONTEXT_DATA_DOWNLOAD_PVX_UUID PVUuid(0x3dbb1b51,0x49ea,0x4933,0xa6,0xec,0x26,0x97,0x43,0x12,0xb6,0xd6)
 #define PVMF_SOURCE_CONTEXT_DATA_PVR_UUID PVUuid(0x442059a2,0x76b6,0x11dc,0x83,0x14,0x08,0x00,0x20,0x0c,0x9a,0x66)
 #define PVMF_SOURCE_CONTEXT_DATA_PACKETSOURCE_UUID PVUuid(0x7f064f8c,0xa90d,0x11dc,0x83,0x14,0x08,0x00,0x20,0x0c,0x9a,0x66)
-#define PVMF_SOURCE_CONTEXT_DATA_PVRLOCALPLAYBACK_UUID PVUuid(0x3f9c615e,0x31e2,0x474c,0x9a,0xdd,0x29,0xc6,0x1d,0xd0,0x7e,0xad)
 //3f9c615e-31e2-474c-9add-29c61dd07ead
 
 class OsclFileHandle;
@@ -59,7 +58,6 @@ class PVMFSourceContextDataCommon : public PVInterface
         PVMFSourceContextDataCommon()
         {
             iRefCounter = 0;
-            iUseCPMPluginRegistry = false;
             iFileHandle = NULL;
             iPreviewMode = false;
             iIntent = BITMASK_PVMF_SOURCE_INTENT_PLAY;
@@ -106,11 +104,6 @@ class PVMFSourceContextDataCommon : public PVInterface
         }
         int32 iRefCounter;
 
-        //Optional CPM usage flag.
-        //When true, CPM will be used as needed.
-        //When false, CPM will never be used.
-        bool iUseCPMPluginRegistry;
-
         //Optional file handle.
         OsclFileHandle* iFileHandle;
 
@@ -137,7 +130,6 @@ class PVMFSourceContextDataCommon : public PVInterface
     private:
         void MyCopy(const PVMFSourceContextDataCommon& aSrc)
         {
-            iUseCPMPluginRegistry	= aSrc.iUseCPMPluginRegistry;
             iFileHandle				= aSrc.iFileHandle;
             iPreviewMode			= aSrc.iPreviewMode;
             iIntent					= aSrc.iIntent;
@@ -558,80 +550,6 @@ class PVMFSourceContextDataPacketSource : public PVInterface
         PVMFPacketSource* iPacketSourcePlugin;
 };
 
-// Source context data for local playback of pvr files.
-// This should not be the final approach for pvr local playback. Ideally, the
-// engine should be modified to associate pvr extensions with the SM
-// source node. In that way, pvr files would be treated just like any other
-// local playback format.
-class PVMFSourceContextDataPVRLocalPlay : public PVInterface
-{
-    public:
-        PVMFSourceContextDataPVRLocalPlay()
-        {
-            iRefCounter = 0;
-        }
-
-        PVMFSourceContextDataPVRLocalPlay(const PVMFSourceContextDataPVRLocalPlay& aSrc) : PVInterface(aSrc)
-        {
-            iRefCounter = 0;
-            MyCopy(aSrc);
-        };
-
-        PVMFSourceContextDataPVRLocalPlay& operator=(const PVMFSourceContextDataPVRLocalPlay& aSrc)
-        {
-            if (&aSrc != this)
-            {
-                MyCopy(aSrc);
-            }
-            return *this;
-        };
-
-        void SetFileName(OSCL_wString& aFileName)
-        {
-            iPVRFileName = aFileName;
-        }
-
-        OSCL_wString& GetFileName()
-        {
-            return iPVRFileName;
-        }
-
-        /* From PVInterface */
-        void addRef()
-        {
-            iRefCounter++;
-        }
-        void removeRef()
-        {
-            iRefCounter--;
-        }
-
-        bool queryInterface(const PVUuid& uuid, PVInterface*& iface)
-        {
-            if (uuid == PVUuid(PVMF_SOURCE_CONTEXT_DATA_PVRLOCALPLAYBACK_UUID))
-            {
-                iface = this;
-                return true;
-            }
-            else
-            {
-                iface = NULL;
-                return false;
-            }
-        }
-
-    private:
-        void MyCopy(const PVMFSourceContextDataPVRLocalPlay& aSrc)
-        {
-            iPVRFileName = aSrc.iPVRFileName;
-        };
-
-        // reference counter
-        int32 iRefCounter;
-        // Full file name
-        OSCL_wHeapString<OsclMemAllocator> iPVRFileName;
-};
-
 class PVMFSourceContextData : public PVInterface
 {
     public:
@@ -644,7 +562,6 @@ class PVMFSourceContextData : public PVInterface
             iDownloadPVXDataContextValid = false;
             iPVRDataContextValid = false;
             iPacketSourceDataContextValid = false;
-            iPVRLocalPlayDataContextValid = false;
         };
 
         PVMFSourceContextData(const PVMFSourceContextData& aSrc) : PVInterface(aSrc)
@@ -726,15 +643,6 @@ class PVMFSourceContextData : public PVInterface
                     return true;
                 }
             }
-            else if (uuid == PVUuid(PVMF_SOURCE_CONTEXT_DATA_PVRLOCALPLAYBACK_UUID))
-            {
-                if (iPVRLocalPlayDataContextValid == true)
-                {
-                    iface = &iPVMFSourceContextDataPVRLocalPlay;
-                    return true;
-                }
-            }
-
 
             iface = NULL;
             return false;
@@ -764,11 +672,6 @@ class PVMFSourceContextData : public PVInterface
         {
             iPacketSourceDataContextValid = true;
         }
-        void EnablePVRLocalPlaySourceContext()
-        {
-            iPVRLocalPlayDataContextValid = true;
-        }
-
         void DisableCommonSourceContext()
         {
             iCommonDataContextValid = false;
@@ -793,11 +696,6 @@ class PVMFSourceContextData : public PVInterface
         {
             iPacketSourceDataContextValid = false;
         }
-        void DisablePVRLocalPlaySourceContext()
-        {
-            iPVRLocalPlayDataContextValid = false;
-        }
-
         PVMFSourceContextDataCommon* CommonData()
         {
             return iCommonDataContextValid ? &iPVMFSourceContextDataCommon : NULL;
@@ -822,10 +720,6 @@ class PVMFSourceContextData : public PVInterface
         {
             return iPacketSourceDataContextValid ? &iPVMFSourceContextDataPacketSource : NULL;
         }
-        PVMFSourceContextDataPVRLocalPlay* PVRLocalPlayData()
-        {
-            return iPVRLocalPlayDataContextValid ? &iPVMFSourceContextDataPVRLocalPlay : NULL;
-        }
 
     private:
         int32 iRefCounter;
@@ -835,7 +729,6 @@ class PVMFSourceContextData : public PVInterface
         bool iDownloadPVXDataContextValid;
         bool iPVRDataContextValid;
         bool iPacketSourceDataContextValid;
-        bool iPVRLocalPlayDataContextValid;
 
         PVMFSourceContextDataCommon iPVMFSourceContextDataCommon;
         PVMFSourceContextDataStreaming iPVMFSourceContextDataStreaming;
@@ -843,7 +736,6 @@ class PVMFSourceContextData : public PVInterface
         PVMFSourceContextDataDownloadPVX iPVMFSourceContextDataDownloadPVX;
         PVMFSourceContextDataPVR iPVMFSourceContextDataPVR;
         PVMFSourceContextDataPacketSource iPVMFSourceContextDataPacketSource;
-        PVMFSourceContextDataPVRLocalPlay iPVMFSourceContextDataPVRLocalPlay;
 
         void MyCopy(const PVMFSourceContextData& aSrc)
         {
@@ -853,7 +745,6 @@ class PVMFSourceContextData : public PVInterface
             iDownloadPVXDataContextValid = aSrc.iDownloadPVXDataContextValid;
             iPVRDataContextValid = aSrc.iPVRDataContextValid;
             iPacketSourceDataContextValid = aSrc.iPacketSourceDataContextValid;
-            iPVRLocalPlayDataContextValid = aSrc.iPVRLocalPlayDataContextValid;
 
             iPVMFSourceContextDataCommon = aSrc.iPVMFSourceContextDataCommon;
             iPVMFSourceContextDataStreaming = aSrc.iPVMFSourceContextDataStreaming;
@@ -861,7 +752,6 @@ class PVMFSourceContextData : public PVInterface
             iPVMFSourceContextDataDownloadPVX = aSrc.iPVMFSourceContextDataDownloadPVX;
             iPVMFSourceContextDataPVR = aSrc.iPVMFSourceContextDataPVR;
             iPVMFSourceContextDataPacketSource = aSrc.iPVMFSourceContextDataPacketSource;
-            iPVMFSourceContextDataPVRLocalPlay = aSrc.iPVMFSourceContextDataPVRLocalPlay;
         };
 };
 

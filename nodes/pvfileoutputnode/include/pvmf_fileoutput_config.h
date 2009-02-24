@@ -77,6 +77,14 @@ class PvmfFileOutputNodeConfigInterface : public PVInterface
          * @return Completion status of this method.
          */
         virtual PVMFStatus SetOutputFileName(const OSCL_wString& aFileName) = 0;
+        /**
+         * This method sets the output file handle. This method must be called before
+         * Start() is called.
+         *
+         * @param aFileHandle Output file descriptor
+         * @return Completion status of this method.
+         */
+        virtual PVMFStatus SetOutputFileDescriptor(const OsclFileHandle* aFileHandle) = 0;
 
 };
 

@@ -26,7 +26,7 @@
 #endif
 
 PVMFJitterBufferExtensionInterfaceImpl::PVMFJitterBufferExtensionInterfaceImpl(PVMFJitterBufferNode*c)
-        : PVInterfaceImpl<PVMFJitterBufferNodeAllocator>(PVUuid(PVMF_JITTERBUFFERNODE_EXTENSIONINTERFACE_UUID))
+        : PVInterfaceImpl<OsclMemAllocator>(PVUuid(PVMF_JITTERBUFFERNODE_EXTENSIONINTERFACE_UUID))
         , iContainer(c)
 {}
 
@@ -41,7 +41,7 @@ bool PVMFJitterBufferExtensionInterfaceImpl::setPortParams(PVMFPortInterface* aP
         bool aRateAdaptation,
         uint32 aRateAdaptationFeedBackFrequency)
 {
-    return (iContainer->setPortParams(aPort,
+    return (iContainer->SetPortParams(aPort,
                                       aTimeScale,
                                       aBitRate,
                                       aConfig,
@@ -52,67 +52,67 @@ bool PVMFJitterBufferExtensionInterfaceImpl::setPortParams(PVMFPortInterface* aP
 OSCL_EXPORT_REF
 void PVMFJitterBufferExtensionInterfaceImpl::setPlayBackThresholdInMilliSeconds(uint32 threshold)
 {
-    iContainer->setPlayBackThresholdInMilliSeconds(threshold);
+    iContainer->SetPlayBackThresholdInMilliSeconds(threshold);
 }
 
 OSCL_EXPORT_REF
 void PVMFJitterBufferExtensionInterfaceImpl::setJitterBufferRebufferingThresholdInMilliSeconds(uint32 aThreshold)
 {
-    iContainer->setJitterBufferRebufferingThresholdInMilliSeconds(aThreshold);
+    iContainer->SetJitterBufferRebufferingThresholdInMilliSeconds(aThreshold);
 }
 
 OSCL_EXPORT_REF
 void PVMFJitterBufferExtensionInterfaceImpl::getJitterBufferRebufferingThresholdInMilliSeconds(uint32& aThreshold)
 {
-    iContainer->getJitterBufferRebufferingThresholdInMilliSeconds(aThreshold);
+    iContainer->GetJitterBufferRebufferingThresholdInMilliSeconds(aThreshold);
 }
 
 OSCL_EXPORT_REF
 void PVMFJitterBufferExtensionInterfaceImpl::setJitterBufferDurationInMilliSeconds(uint32 duration)
 {
-    iContainer->setJitterBufferDurationInMilliSeconds(duration);
+    iContainer->SetJitterBufferDurationInMilliSeconds(duration);
 }
 
 OSCL_EXPORT_REF
 void PVMFJitterBufferExtensionInterfaceImpl::getJitterBufferDurationInMilliSeconds(uint32& duration)
 {
-    iContainer->getJitterBufferDurationInMilliSeconds(duration);
+    iContainer->GetJitterBufferDurationInMilliSeconds(duration);
 }
 
 OSCL_EXPORT_REF
 void PVMFJitterBufferExtensionInterfaceImpl::setEarlyDecodingTimeInMilliSeconds(uint32 duration)
 {
-    OSCL_UNUSED_ARG(duration);
+    iContainer->SetEarlyDecodingTimeInMilliSeconds(duration);
 }
 
 OSCL_EXPORT_REF
 void PVMFJitterBufferExtensionInterfaceImpl::setBurstThreshold(float burstThreshold)
 {
-    OSCL_UNUSED_ARG(burstThreshold);
+    iContainer->SetBurstThreshold(burstThreshold);
 }
 
 OSCL_EXPORT_REF
 void PVMFJitterBufferExtensionInterfaceImpl::setClientPlayBackClock(PVMFMediaClock* clientClock)
 {
-    iContainer->setClientPlayBackClock(clientClock);
+    iContainer->SetClientPlayBackClock(clientClock);
 }
 
 OSCL_EXPORT_REF
 void PVMFJitterBufferExtensionInterfaceImpl::setMaxInactivityDurationForMediaInMs(uint32 duration)
 {
-    iContainer->setMaxInactivityDurationForMediaInMs(duration);
+    iContainer->SetMaxInactivityDurationForMediaInMs(duration);
 }
 
 OSCL_EXPORT_REF
 void PVMFJitterBufferExtensionInterfaceImpl::getMaxInactivityDurationForMediaInMs(uint32& duration)
 {
-    iContainer->getMaxInactivityDurationForMediaInMs(duration);
+    iContainer->GetMaxInactivityDurationForMediaInMs(duration);
 }
 
 OSCL_EXPORT_REF
 void PVMFJitterBufferExtensionInterfaceImpl::setRTCPIntervalInMicroSecs(uint32 aRTCPInterval)
 {
-    iContainer->setRTCPIntervalInMicroSecs(aRTCPInterval);
+    iContainer->SetRTCPIntervalInMicroSecs(aRTCPInterval);
 }
 
 OSCL_EXPORT_REF
@@ -121,7 +121,7 @@ bool PVMFJitterBufferExtensionInterfaceImpl::setPlayRange(int32 aStartTimeInMS,
         bool oPlayAfterASeek,
         bool aStopTimeAvailable)
 {
-    return (iContainer->setPlayRange(aStartTimeInMS,
+    return (iContainer->SetPlayRange(aStartTimeInMS,
                                      aStopTimeInMS,
                                      oPlayAfterASeek,
                                      aStopTimeAvailable));
@@ -137,7 +137,7 @@ bool PVMFJitterBufferExtensionInterfaceImpl::PrepareForRepositioning(bool oUseEx
 OSCL_EXPORT_REF
 bool PVMFJitterBufferExtensionInterfaceImpl::setPortSSRC(PVMFPortInterface* aPort, uint32 aSSRC)
 {
-    return (iContainer->setPortSSRC(aPort, aSSRC));
+    return (iContainer->SetPortSSRC(aPort, aSSRC));
 }
 
 
@@ -151,7 +151,7 @@ bool PVMFJitterBufferExtensionInterfaceImpl::setPortRTPParams(PVMFPortInterface*
         uint32 aNPTInMS,
         bool oPlayAfterASeek)
 {
-    return (iContainer->setPortRTPParams(aPort,
+    return (iContainer->SetPortRTPParams(aPort,
                                          aSeqNumBasePresent,
                                          aSeqNumBase,
                                          aRTPTimeBasePresent,
@@ -167,25 +167,25 @@ bool PVMFJitterBufferExtensionInterfaceImpl::setPortRTCPParams(PVMFPortInterface
         uint32 aRR,
         uint32 aRS)
 {
-    return iContainer->setPortRTCPParams(aPort, aNumSenders, aRR, aRS);
+    return iContainer->SetPortRTCPParams(aPort, aNumSenders, aRR, aRS);
 }
 
 OSCL_EXPORT_REF
 PVMFTimestamp PVMFJitterBufferExtensionInterfaceImpl::getActualMediaDataTSAfterSeek()
 {
-    return (iContainer->getActualMediaDataTSAfterSeek());
+    return (iContainer->GetActualMediaDataTSAfterSeek());
 }
 
 OSCL_EXPORT_REF
 PVMFTimestamp PVMFJitterBufferExtensionInterfaceImpl::getMaxMediaDataTS()
 {
-    return (iContainer->getMaxMediaDataTS());
+    return (iContainer->GetMaxMediaDataTS());
 }
 
 OSCL_EXPORT_REF PVMFStatus
 PVMFJitterBufferExtensionInterfaceImpl::setServerInfo(PVMFJitterBufferFireWallPacketInfo& aServerInfo)
 {
-    return (iContainer->setServerInfo(aServerInfo));
+    return (iContainer->SetServerInfo(aServerInfo));
 }
 
 OSCL_EXPORT_REF PVMFStatus
@@ -237,10 +237,10 @@ PVMFJitterBufferExtensionInterfaceImpl::NotifyAutoResumeComplete()
 }
 
 OSCL_EXPORT_REF PVMFStatus
-PVMFJitterBufferExtensionInterfaceImpl::SetTransportType(PVMFPortInterface* aPort,
-        OSCL_String& aTransportType)
+PVMFJitterBufferExtensionInterfaceImpl::SetInputMediaHeaderPreParsed(PVMFPortInterface* aPort,
+        bool aHeaderPreParsed)
 {
-    return (iContainer->SetTransportType(aPort, aTransportType));
+    return (iContainer->SetInputMediaHeaderPreParsed(aPort, aHeaderPreParsed));
 }
 
 OSCL_EXPORT_REF PVMFStatus

@@ -35,7 +35,7 @@
 <tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOsclSocketI.html#a16">RecvSuccess</a> (<a class="el" href="classRecvParam.html">RecvParam</a> &amp;)</td></tr>
 <tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOsclSocketI.html#a17">RecvFrom</a> (<a class="el" href="classRecvFromParam.html">RecvFromParam</a> &amp;, <a class="el" href="classOsclSocketRequestAO.html">OsclSocketRequestAO</a> &amp;)</td></tr>
 <tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOsclSocketI.html#a18">RecvFromSuccess</a> (<a class="el" href="classRecvFromParam.html">RecvFromParam</a> &amp;)</td></tr>
-<tr><td nowrap align=right valign=top><a class="el" href="osclconfig__io_8h.html#a42">TOsclSocket</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclSocketI.html#a19">Socket</a> ()</td></tr>
+<tr><td nowrap align=right valign=top><a class="el" href="osclconfig__io_8h.html#a44">TOsclSocket</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclSocketI.html#a19">Socket</a> ()</td></tr>
 <tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOsclSocketI.html#a20">ProcessConnect</a> (<a class="el" href="classOsclSocketServRequestQElem.html">OsclSocketServRequestQElem</a> *)</td></tr>
 <tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOsclSocketI.html#a21">ProcessShutdown</a> (<a class="el" href="classOsclSocketServRequestQElem.html">OsclSocketServRequestQElem</a> *)</td></tr>
 <tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOsclSocketI.html#a22">ProcessAccept</a> (<a class="el" href="classOsclSocketServRequestQElem.html">OsclSocketServRequestQElem</a> *)</td></tr>
@@ -46,8 +46,8 @@
 <tr><td nowrap align=right valign=top><a class="el" href="classPVLogger.html">PVLogger</a> *&nbsp;</td><td valign=bottom><a class="el" href="classOsclSocketI.html#a27">Logger</a> ()</td></tr>
 <tr><td colspan=2><br><h2>Static Public Methods</h2></td></tr>
 <tr><td nowrap align=right valign=top>OsclSocketI *&nbsp;</td><td valign=bottom><a class="el" href="classOsclSocketI.html#d0">NewL</a> (<a class="el" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a> &amp;a)</td></tr>
-<tr><td nowrap align=right valign=top>bool&nbsp;</td><td valign=bottom><a class="el" href="classOsclSocketI.html#d1">MakeAddr</a> (<a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a> &amp;in, <a class="el" href="osclconfig__io_8h.html#a43">TOsclSockAddr</a> &amp;addr)</td></tr>
-<tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOsclSocketI.html#d2">MakeAddr</a> (<a class="el" href="osclconfig__io_8h.html#a43">TOsclSockAddr</a> &amp;in, <a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a> &amp;addr)</td></tr>
+<tr><td nowrap align=right valign=top>bool&nbsp;</td><td valign=bottom><a class="el" href="classOsclSocketI.html#d1">MakeAddr</a> (<a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a> &amp;in, <a class="el" href="osclconfig__io_8h.html#a45">TOsclSockAddr</a> &amp;addr)</td></tr>
+<tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOsclSocketI.html#d2">MakeAddr</a> (<a class="el" href="osclconfig__io_8h.html#a45">TOsclSockAddr</a> &amp;in, <a class="el" href="classOsclNetworkAddress.html">OsclNetworkAddress</a> &amp;addr)</td></tr>
 <tr><td colspan=2><br><h2>Friends</h2></td></tr>
 <tr><td nowrap align=right valign=top>class&nbsp;</td><td valign=bottom><a class="el" href="classOsclSocketI.html#l0">OsclAcceptRequest</a></td></tr>
 <tr><td nowrap align=right valign=top>class&nbsp;</td><td valign=bottom><a class="el" href="classOsclSocketI.html#l1">OsclConnectRequest</a></td></tr>
@@ -331,7 +331,7 @@ Implements <a class="el" href="classOsclSocketIBase.html#a6">OsclSocketIBase</a>
         <tr>
           <td class="md" nowrap valign="top"> void OsclSocketI::MakeAddr </td>
           <td class="md" valign="top">(&nbsp;</td>
-          <td class="md" nowrap valign="top"><a class="el" href="osclconfig__io_8h.html#a43">TOsclSockAddr</a> &amp;&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="osclconfig__io_8h.html#a45">TOsclSockAddr</a> &amp;&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>in</em>, </td>
         </tr>
         <tr>
@@ -375,7 +375,7 @@ Implements <a class="el" href="classOsclSocketIBase.html#a6">OsclSocketIBase</a>
         <tr>
           <td></td>
           <td></td>
-          <td class="md" nowrap><a class="el" href="osclconfig__io_8h.html#a43">TOsclSockAddr</a> &amp;&nbsp;</td>
+          <td class="md" nowrap><a class="el" href="osclconfig__io_8h.html#a45">TOsclSockAddr</a> &amp;&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>addr</em></td>
         </tr>
         <tr>
@@ -1073,7 +1073,7 @@ Implements <a class="el" href="classOsclSocketIBase.html#a9">OsclSocketIBase</a>
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> <a class="el" href="osclconfig__io_8h.html#a42">TOsclSocket</a> OsclSocketI::Socket </td>
+          <td class="md" nowrap valign="top"> <a class="el" href="osclconfig__io_8h.html#a44">TOsclSocket</a> OsclSocketI::Socket </td>
           <td class="md" valign="top">(&nbsp;</td>
           <td class="mdname1" valign="top" nowrap>&nbsp;          </td>
           <td class="md" valign="top">)&nbsp;</td>
@@ -1301,7 +1301,7 @@ Reimplemented from <a class="el" href="classOsclSocketIBase.html#l3">OsclSocketI
 <hr>The documentation for this class was generated from the following file:<ul>
 <li><a class="el" href="oscl__socket__imp__pv_8h-source.html">oscl_socket_imp_pv.h</a></ul>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: OPENCORE_20090120 </small>
+<address style="align: left;"><small>Posting Version: OPENCORE_20090223 </small>
 </small></address>
 </body>
 </html>

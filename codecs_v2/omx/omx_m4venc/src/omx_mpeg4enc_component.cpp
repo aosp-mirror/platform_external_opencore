@@ -257,8 +257,9 @@ OMX_ERRORTYPE OmxComponentMpeg4EncAO::ConstructComponent(OMX_PTR pAppData, OMX_P
     iPVCapabilityFlags.iOMXComponentSupportsExternalOutputBufferAlloc = OMX_TRUE;
     iPVCapabilityFlags.iOMXComponentSupportsMovableInputBuffers = OMX_TRUE;
     iPVCapabilityFlags.iOMXComponentSupportsPartialFrames = OMX_TRUE;
-    iPVCapabilityFlags.iOMXComponentNeedsNALStartCode = OMX_FALSE;
+    iPVCapabilityFlags.iOMXComponentUsesNALStartCodes = OMX_FALSE;
     iPVCapabilityFlags.iOMXComponentCanHandleIncompleteFrames = OMX_TRUE;
+    iPVCapabilityFlags.iOMXComponentUsesFullAVCFrames = OMX_FALSE;
 
     if (ipAppPriv)
     {
@@ -281,6 +282,7 @@ OMX_ERRORTYPE OmxComponentMpeg4EncAO::ConstructComponent(OMX_PTR pAppData, OMX_P
     }
 
     /** Domain specific section for input raw port */ //OMX_PARAM_PORTDEFINITIONTYPE
+    ipPorts[OMX_PORT_INPUTPORT_INDEX]->PortParam.nPortIndex = OMX_PORT_INPUTPORT_INDEX;
     ipPorts[OMX_PORT_INPUTPORT_INDEX]->PortParam.eDomain = OMX_PortDomainVideo;
     ipPorts[OMX_PORT_INPUTPORT_INDEX]->PortParam.format.video.cMIMEType = (OMX_STRING)"raw";
     ipPorts[OMX_PORT_INPUTPORT_INDEX]->PortParam.format.video.eCompressionFormat = OMX_VIDEO_CodingUnused;
@@ -302,6 +304,7 @@ OMX_ERRORTYPE OmxComponentMpeg4EncAO::ConstructComponent(OMX_PTR pAppData, OMX_P
 
 
     /** Domain specific section for output mpeg4/h263 port */
+    ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.nPortIndex = OMX_PORT_OUTPUTPORT_INDEX;
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.eDomain = OMX_PortDomainVideo;
     if (MODE_MPEG4 == iEncMode)
     {
@@ -359,15 +362,17 @@ OMX_ERRORTYPE OmxComponentMpeg4EncAO::ConstructComponent(OMX_PTR pAppData, OMX_P
     if (MODE_MPEG4 == iEncMode)
     {
         //OMX_VIDEO_PARAM_PROFILELEVELTYPE structure
+        ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->ProfileLevel.nPortIndex = OMX_PORT_OUTPUTPORT_INDEX;
         ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->ProfileLevel.nProfileIndex = 0;
         ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->ProfileLevel.eProfile = OMX_VIDEO_MPEG4ProfileCore;
         ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->ProfileLevel.eLevel = OMX_VIDEO_MPEG4Level2;
     }
     else if (MODE_H263 == iEncMode)
     {
-        ipPorts[OMX_PORT_INPUTPORT_INDEX]->ProfileLevel.nProfileIndex = 0;
-        ipPorts[OMX_PORT_INPUTPORT_INDEX]->ProfileLevel.eProfile = OMX_VIDEO_H263ProfileBaseline;
-        ipPorts[OMX_PORT_INPUTPORT_INDEX]->ProfileLevel.eLevel = OMX_VIDEO_H263Level45;
+        ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->ProfileLevel.nPortIndex = OMX_PORT_OUTPUTPORT_INDEX;
+        ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->ProfileLevel.nProfileIndex = 0;
+        ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->ProfileLevel.eProfile = OMX_VIDEO_H263ProfileBaseline;
+        ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->ProfileLevel.eLevel = OMX_VIDEO_H263Level45;
     }
 
 
@@ -587,6 +592,7 @@ void OmxComponentMpeg4EncAO::ProcessData()
         if (OMX_TRUE == iNewOutBufRequired)
         {
             //Check whether a new output buffer is available or not
+
             if (0 == (GetQueueNumElem(pOutputQueue)))
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OmxComponentMpeg4EncAO : ProcessData OUT output buffer unavailable"));
@@ -594,6 +600,14 @@ void OmxComponentMpeg4EncAO::ProcessData()
             }
 
             ipOutputBuffer = (OMX_BUFFERHEADERTYPE*) DeQueue(pOutputQueue);
+
+            OSCL_ASSERT(NULL != ipOutputBuffer);
+            if (ipOutputBuffer == NULL)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentMpeg4EncAO : ProcessData OUT ERR output buffer cannot be dequeued"));
+                return;
+            }
+
             ipOutputBuffer->nFilledLen = 0;
             iNewOutBufRequired = OMX_FALSE;
 
@@ -628,6 +642,14 @@ void OmxComponentMpeg4EncAO::ProcessData()
                     }
 
                     ipOutputBuffer = (OMX_BUFFERHEADERTYPE*) DeQueue(pOutputQueue);
+
+                    OSCL_ASSERT(NULL != ipOutputBuffer);
+                    if (ipOutputBuffer == NULL)
+                    {
+                        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentMpeg4EncAO : ProcessData OUT ERR output buffer cannot be dequeued"));
+                        return;
+                    }
+
                     ipOutputBuffer->nFilledLen = 0;
                     iNewOutBufRequired = OMX_FALSE;
                 }
@@ -827,10 +849,19 @@ OMX_BOOL OmxComponentMpeg4EncAO::CopyDataToOutputBuffer()
             //Check whether a new output buffer is available or not
             if (0 == (GetQueueNumElem(pOutputQueue)))
             {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OmxComponentMpeg4EncAO : CopyDataToOutputBuffer OUT output buffer unavailable"));
                 return OMX_FALSE;
             }
 
             ipOutputBuffer = (OMX_BUFFERHEADERTYPE*) DeQueue(pOutputQueue);
+
+            OSCL_ASSERT(NULL != ipOutputBuffer);
+            if (ipOutputBuffer == NULL)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentMpeg4EncAO : CopyDataToOutputBuffer  OUT ERR output buffer cannot be dequeued"));
+                return OMX_FALSE;
+            }
+
             ipOutputBuffer->nFilledLen = 0;
             ipOutputBuffer->nTimeStamp = iOutputTimeStamp;
             ipOutputBuffer->nOffset = 0;

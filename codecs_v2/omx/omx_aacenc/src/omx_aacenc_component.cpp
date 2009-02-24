@@ -186,6 +186,7 @@ OMX_ERRORTYPE OmxComponentAacEncoderAO::ConstructComponent(OMX_PTR pAppData, OMX
     iPVCapabilityFlags.iOMXComponentSupportsPartialFrames = OMX_TRUE;
     iPVCapabilityFlags.iOMXComponentNeedsNALStartCode = OMX_FALSE;
     iPVCapabilityFlags.iOMXComponentCanHandleIncompleteFrames = OMX_TRUE;
+    iPVCapabilityFlags.iOMXComponentNeedsFullAVCFrames = OMX_FALSE;
 
     if (ipAppPriv)
     {
@@ -209,6 +210,7 @@ OMX_ERRORTYPE OmxComponentAacEncoderAO::ConstructComponent(OMX_PTR pAppData, OMX
 
     /** Domain specific section for the ports */
     /* Input port is raw/pcm for AAC encoder */
+    ipPorts[OMX_PORT_INPUTPORT_INDEX]->PortParam.nPortIndex = OMX_PORT_INPUTPORT_INDEX;
     ipPorts[OMX_PORT_INPUTPORT_INDEX]->PortParam.eDomain = OMX_PortDomainAudio;
     ipPorts[OMX_PORT_INPUTPORT_INDEX]->PortParam.format.audio.cMIMEType = (OMX_STRING)"raw";
     ipPorts[OMX_PORT_INPUTPORT_INDEX]->PortParam.format.audio.pNativeRender = 0;
@@ -224,6 +226,7 @@ OMX_ERRORTYPE OmxComponentAacEncoderAO::ConstructComponent(OMX_PTR pAppData, OMX
 
 
     /* Output port is aac format for AAC encoder */
+    ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.nPortIndex = OMX_PORT_OUTPUTPORT_INDEX;
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.eDomain = OMX_PortDomainAudio;
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.format.audio.cMIMEType = (OMX_STRING)"audio/mpeg";
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.format.audio.pNativeRender = 0;
@@ -238,6 +241,7 @@ OMX_ERRORTYPE OmxComponentAacEncoderAO::ConstructComponent(OMX_PTR pAppData, OMX
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.bPopulated = OMX_FALSE;
 
     //Default values for PCM input audio param port
+    ipPorts[OMX_PORT_INPUTPORT_INDEX]->AudioPcmMode.nPortIndex = OMX_PORT_INPUTPORT_INDEX;
     ipPorts[OMX_PORT_INPUTPORT_INDEX]->AudioPcmMode.nChannels = 2;
     ipPorts[OMX_PORT_INPUTPORT_INDEX]->AudioPcmMode.eNumData = OMX_NumericalDataSigned;
     ipPorts[OMX_PORT_INPUTPORT_INDEX]->AudioPcmMode.bInterleaved = OMX_TRUE;
@@ -248,6 +252,7 @@ OMX_ERRORTYPE OmxComponentAacEncoderAO::ConstructComponent(OMX_PTR pAppData, OMX
     ipPorts[OMX_PORT_INPUTPORT_INDEX]->AudioPcmMode.eChannelMapping[1] = OMX_AUDIO_ChannelRF;
 
     //Default values for AAC output audio param port
+    ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->AudioAacParam.nPortIndex = OMX_PORT_OUTPUTPORT_INDEX;
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->AudioAacParam.nChannels = 2;
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->AudioAacParam.nSampleRate = 48000;
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->AudioAacParam.nBitRate = 128000;
@@ -348,7 +353,8 @@ OMX_ERRORTYPE OmxComponentAacEncoderAO::DestroyComponent()
 /* This routine will extract the input timestamp from the input buffer */
 void OmxComponentAacEncoderAO::SyncWithInputTimestamp()
 {
-    iCurrentFrameTS.SetFromInputTimestamp(iFrameTimestamp);
+    // DV: SKIP DOING THIS FOR NOW
+    //iCurrentFrameTS.SetFromInputTimestamp(iFrameTimestamp);
 }
 
 
@@ -382,6 +388,13 @@ void OmxComponentAacEncoderAO::ProcessData()
             }
 
             ipOutputBuffer = (OMX_BUFFERHEADERTYPE*) DeQueue(pOutputQueue);
+
+            OSCL_ASSERT(NULL != ipOutputBuffer);
+            if (NULL == ipOutputBuffer)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentAacEncoderAO : ProcessData OUT ERR output buffer cannot be dequeued"));
+                return;
+            }
             ipOutputBuffer->nFilledLen = 0;
             iNewOutBufRequired = OMX_FALSE;
 
@@ -432,11 +445,12 @@ void OmxComponentAacEncoderAO::ProcessData()
             ipOutputBuffer->nFilledLen += OutputLength;
             ipOutputBuffer->nOffset = 0;
 
-            if (OutputLength > 0)
+            if ((iFrameCount > 0) && (OutputLength > 0))
             {
                 iCurrentFrameTS.UpdateTimestamp((iInputFrameLength >> 1));
             }
 
+            iFrameCount++;
 
             /* If EOS flag has come from the client & there are no more
              * input buffers to decode, send the callback to the client
@@ -471,7 +485,10 @@ void OmxComponentAacEncoderAO::ProcessData()
             {
                 if (iInputCurrLength >= iInputFrameLength)
                 {
-                    iInputCurrLength -= iInputFrameLength;
+                    // in case of "Raw" format - the first output frame contains the config data - but
+                    // actual input data has not been touched.
+                    if ((iFrameCount > 1) || (ipAacEnc->IsRawAACFormatUsed() != OMX_TRUE))
+                        iInputCurrLength -= iInputFrameLength;
                 }
                 else
                 {
@@ -492,7 +509,8 @@ void OmxComponentAacEncoderAO::ProcessData()
                 else if (iInputCurrLength >= iInputFrameLength)
                 {
                     //Do not return the input buffer in case it has more than one frame data to encode
-                    ipFrameDecodeBuffer += iInputFrameLength;
+                    if ((iFrameCount > 1) || (ipAacEnc->IsRawAACFormatUsed() != OMX_TRUE))
+                        ipFrameDecodeBuffer += iInputFrameLength;
                 }
                 else
                 {
@@ -536,8 +554,12 @@ void OmxComponentAacEncoderAO::ProcessData()
         }
         else
         {
-            oscl_memmove(ipTempInputBuffer, &ipFrameDecodeBuffer[iInputFrameLength], iInputCurrLength);
+            // if we ended up here - the data in the incoming input buffer combined with temp data still
+            // wasn't enough in quantity to send for processing - so it wasn't even processed - but we did
+            // the necessary memcopies  to save the data
+            //oscl_memmove(ipTempInputBuffer, &ipFrameDecodeBuffer[iInputFrameLength], iInputCurrLength);
             iTempInputBufferLength = iInputCurrLength;
+            ipTempInputBuffer = ipFrameDecodeBuffer;
 
             if (ipInputBuffer)
             {

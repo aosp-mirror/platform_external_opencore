@@ -96,9 +96,6 @@
 #ifndef PVMF_COMPOSER_SIZE_AND_DURATION_H_INCLUDED
 #include "pvmf_composer_size_and_duration.h"
 #endif
-#ifndef PVAETEST_NODE_CONFIG_H_INCLUDED
-#include "pvaetest_node_config.h"
-#endif
 #ifndef TEST_PV_AUTHOR_ENGINE_CONFIG_H_INCLUDED
 #include "test_pv_author_engine_config.h"
 #endif
@@ -147,11 +144,14 @@
 //composer mime type
 #define K3gpComposerMimeType "/x-pvmf/ff-mux/3gp"
 #define KAMRNbComposerMimeType		"/x-pvmf/ff-mux/amr-nb"
+#define KAMRWBComposerMimeType		"/x-pvmf/ff-mux/amr-wb"
 #define KAACADIFComposerMimeType	"/x-pvmf/ff-mux/adif"
 #define KAACADTSComposerMimeType	"/x-pvmf/ff-mux/adts"
 
 //encoder mime type
 #define KAMRNbEncMimeType "/x-pvmf/audio/encode/amr-nb"
+#define KAMRWbEncMimeType "/x-pvmf/audio/encode/amr-wb"
+#define KAACMP4EncMimeType "/x-pvmf/audio/encode/X-MPEG4-AUDIO"
 #define KH263EncMimeType "/x-pvmf/video/encode/h263"
 #define KH264EncMimeType "/x-pvmf/video/encode/h264"
 #define KMp4EncMimeType "/x-pvmf/video/encode/mp4"
@@ -174,6 +174,7 @@ extern const uint16 KVideoIFrameInterval;
 extern const uint8 KH263VideoProfile;
 extern const uint8 KH263VideoLevel;
 extern const uint32 KAudioBitrate;
+extern const uint32 KAACAudioBitrate;
 extern const uint32 KAudioTimescale;
 extern const uint32 KAudioNumChannels;
 
@@ -223,45 +224,52 @@ typedef enum
     /*********** Compressed Tests Begin****************************/
     // Tests that take compressed inputs
     //3gp output file
-    AMR_Input_AOnly_3gpTest = 0,					//.amr
-    H263_Input_VOnly_3gpTest,						//.h263
-    AMR_YUV_Input_AV_3gpTest,						//.amr+.yuv
-    AMR_H263_Input_AV_3gpTest,						//.amr+.h263
+    AMR_Input_AOnly_3gpTest  = 0,						//.amr
+    H263_Input_VOnly_3gpTest = 1,						//.h263
+    AMR_YUV_Input_AV_3gpTest = 2,						//.amr+.yuv
+    AMR_H263_Input_AV_3gpTest = 3,						//.amr+.h263
 
-    H264_AMR_Input_AV_3gpTest,						//4 //.yuv
-    AMR_YUV_Input_AV_M4V_AMR_Output_3gpTest,						//.amr+.yuv
-    TEXT_Input_TOnly_3gpTest,						//6
-    AMR_TEXT_Input_AT_3gpTest,
-    YUV_TEXT_Input_VT_3gpTest,
-    AMR_YUV_TEXT_Input_AVT_Mp4Test,
+    H264_AMR_Input_AV_3gpTest = 4,						//.yuv
+    AMR_YUV_Input_AV_M4V_AMR_Output_3gpTest = 5,			//.amr+.yuv
+    TEXT_Input_TOnly_3gpTest = 6,
+    AMR_TEXT_Input_AT_3gpTest = 7,
+    YUV_TEXT_Input_VT_3gpTest = 8,
+    AMR_YUV_TEXT_Input_AVT_Mp4Test = 9,
 
-    K3GP_OUTPUT_TestEnd,							//10 placeholder
+    K3GP_OUTPUT_TestEnd = 10,								//placeholder
 
     //amr output file
-    AMR_FOutput_Test,								//11 //.amr
+    AMR_FOutput_Test = 11,								//.amr
 
-    AMR_OUTPUT_TestEnd,								//12 // placeholder
+    AMR_OUTPUT_TestEnd = 12,								// placeholder
 
     //aac output file
-    AACADIF_FOutput_Test,							//.aacadif
-    AACADTS_FOutput_Test,							//.aacadts
+    AACADIF_FOutput_Test = 13,							//.aacadif
+    AACADTS_FOutput_Test = 14,							//.aacadts
 
-    AAC_OUTPUT_TestEnd,								//15 // placeholder
+    AAC_OUTPUT_TestEnd = 15,								// placeholder
 
-    //ErrorHandling_WrongTextInputFileNameTest,		//Incorrect name of Text input file
+    //ErrorHandling_WrongTextInputFileNameTest,			//Incorrect name of Text input file
+    //amr output file
+    AMR_FileOutput_Test_UsingExternalFileHandle = 16,		//.amr
+    //3gp output file
+    AMRWB_Input_AOnly_3gpTest = 17,
 
-    CompressedNormalTestEnd,						//placeholder
+    //amr-wb output file
+    AMRWB_FOutput_Test = 18,
+
+    CompressedNormalTestEnd = 19,							//placeholder
 
     /*********** Compressed Longetivity Tests *********************/
     // tests that takes compressed inputs and run for long duration
     // The duration is configurable through command line argument
     CompressedLongetivityTestBegin = 100,			//placeholder
     //3gp output file
-    TEXT_Input_TOnly_3gp_LongetivityTest,			//.txt
-    AMR_TEXT_Input_AT_3gp_LongetivityTest,			//.amr+.txt
-    YUV_TEXT_Input_VT_3gp_LongetivityTest,			//103 //.txt+.yuv
-    AMR_YUV_TEXT_Input_AVT_3gp_LongetivityTest,		//.txt+.yuv +.amr
-    Compressed_LongetivityTestEnd,					//105 placeholder
+    TEXT_Input_TOnly_3gp_LongetivityTest = 101,			//.txt
+    AMR_TEXT_Input_AT_3gp_LongetivityTest = 102,			//.amr+.txt
+    YUV_TEXT_Input_VT_3gp_LongetivityTest = 103,			//.txt+.yuv
+    AMR_YUV_TEXT_Input_AVT_3gp_LongetivityTest = 104,		//.txt+.yuv +.amr
+    Compressed_LongetivityTestEnd = 105,					// placeholder
 
     /*********** Compressed Tests End******************************/
 
@@ -269,70 +277,70 @@ typedef enum
     // Test case that takes Uncompressed input through AVI File begin
 
     // AVI file must have RGB24, RGB12, YUV420 planar or PCM mono 8KHz data only
-    UnCompressed_NormalTestBegin = 200,				//placeholder
-    PVMediaInput_Open_Compose_Stop_Test  ,			//Use testinput.avi
-    PVMediaInput_Open_RealTimeCompose_Stop_Test,	//Real Time authoring
+    UnCompressed_NormalTestBegin = 200,					//placeholder
+    PVMediaInput_Open_Compose_Stop_Test = 201,			//Use testinput.avi
+    PVMediaInput_Open_RealTimeCompose_Stop_Test = 202,	//Real Time authoring
+    YUV_Input_VOnly_3gpTest = 203,						//.yuv
+    PCM16_Input_AOnly_3gpTest = 204,						//.pcm
+    PCM16_YUV_Input_AV_3gpTest = 205,						//.pcm+.yuv
+    H264_Input_VOnly_3gpTest = 206,						//.yuv
+    PCM16In_AMROut_Test = 207,							//.pcm//207
 
-    YUV_Input_VOnly_3gpTest,						//.yuv
-    PCM16_Input_AOnly_3gpTest,						//204 //.pcm
-    PCM16_YUV_Input_AV_3gpTest,						//205 //.pcm+.yuv
-    H264_Input_VOnly_3gpTest,						//.yuv
-    PCM16In_AMROut_Test,							//.pcm//207
-
-    KMaxFileSizeTest,								//.amr+.yuv
-
-#ifndef _IMOTION_SPECIFIC_UT_DISABLE
-    KIMotionAuthoringModeTest,						//.amr+.yuv
-#endif
-    K3GPPDownloadModeTest,							//.amr+.yuv
-    K3GPPProgressiveDownloadModeTest,				//.amr+.yuv
+    KMaxFileSizeTest = 208,								//.amr+.yuv
 
 #ifndef _IMOTION_SPECIFIC_UT_DISABLE
-    KIMotionDownloadModeTest,						//.amr+.yuv
+    KIMotionAuthoringModeTest = 209,						//.amr+.yuv
 #endif
-    KMovieFragmentModeTest,
-    CapConfigTest,									//218
+    K3GPPDownloadModeTest = 210,							//.amr+.yuv
+    K3GPPProgressiveDownloadModeTest = 211,				//.amr+.yuv
 
-    PVMediaInput_Pause_Resume_Test,//219
+#ifndef _IMOTION_SPECIFIC_UT_DISABLE
+    KIMotionDownloadModeTest = 212,						//.amr+.yuv
+#endif
+    KMovieFragmentModeTest = 213,
+    CapConfigTest = 214,
 
-    PVMediaInput_Reset_After_Create_Test,//220
-    PVMediaInput_Reset_After_Open_Test,//221
-    PVMediaInput_Reset_After_AddDataSource_Test,//222
-    PVMediaInput_Reset_After_SelectComposer_Test,//223
-    PVMediaInput_Reset_After_AddMediaTrack_Test,//224
-    PVMediaInput_Reset_After_Init_Test,//225
-    PVMediaInput_Reset_After_Start_Test,//226
-    PVMediaInput_Reset_After_Pause_Test,//227
-    PVMediaInput_Reset_After_Recording_Test,//228
-    PVMediaInput_Reset_After_Stop_Test,//229
+    PVMediaInput_Pause_Resume_Test = 215,
 
-    PVMediaInput_Delete_After_Create_Test,//230
-    PVMediaInput_Delete_After_Open_Test,//231
-    PVMediaInput_Delete_After_AddDataSource_Test,//232
-    PVMediaInput_Delete_After_SelectComposer_Test,//233
-    PVMediaInput_Delete_After_AddMediaTrack_Test,//234
-    PVMediaInput_Delete_After_Init_Test,//235
-    PVMediaInput_Delete_After_Start_Test,//236
-    PVMediaInput_Delete_After_Pause_Test,//237
-    PVMediaInput_Delete_After_Recording_Test,//238
-    PVMediaInput_Delete_After_Stop_Test,//239
+    PVMediaInput_Reset_After_Create_Test = 216,
+    PVMediaInput_Reset_After_Open_Test = 217,
+    PVMediaInput_Reset_After_AddDataSource_Test = 218,
+    PVMediaInput_Reset_After_SelectComposer_Test = 219,
+    PVMediaInput_Reset_After_AddMediaTrack_Test = 220,
+    PVMediaInput_Reset_After_Init_Test = 221,
+    PVMediaInput_Reset_After_Start_Test = 222,
+    PVMediaInput_Reset_After_Pause_Test = 223,
+    PVMediaInput_Reset_After_Recording_Test = 224,
+    PVMediaInput_Reset_After_Stop_Test = 225,
 
-    UnCompressed_NormalTestEnd,
+    PVMediaInput_Delete_After_Create_Test = 226,
+    PVMediaInput_Delete_After_Open_Test = 227,
+    PVMediaInput_Delete_After_AddDataSource_Test = 228,
+    PVMediaInput_Delete_After_SelectComposer_Test = 229,
+    PVMediaInput_Delete_After_AddMediaTrack_Test = 230,
+    PVMediaInput_Delete_After_Init_Test = 231,
+    PVMediaInput_Delete_After_Start_Test = 232,
+    PVMediaInput_Delete_After_Pause_Test = 233,
+    PVMediaInput_Delete_After_Recording_Test = 234,
+    PVMediaInput_Delete_After_Stop_Test = 235,
+    PVMediaInput_Open_Compose_Stop_Test_UsingExternalFileHandle = 236,
+
+    UnCompressed_NormalTestEnd = 237,
 
     /********** Uncompressed Longetivity tests*********************/
-    UnCompressed_LongetivityTestBegin = 300,		//placeholder
-    AVI_Input_Longetivity_Test,						//301
-    KMaxFileSizeLongetivityTest,					//.amr+.yuv/302
+    UnCompressed_LongetivityTestBegin = 300,			//placeholder
+    AVI_Input_Longetivity_Test = 301,
+    KMaxFileSizeLongetivityTest = 302,					//.amr+.yuv/302
 #ifndef _IMOTION_SPECIFIC_UT_DISABLE
-    KIMotionAuthoringModeLongetivityTest,			//.amr+.yuv
+    KIMotionAuthoringModeLongetivityTest = 303,			//.amr+.yuv
 #endif
-    K3GPPDownloadModeLongetivityTest,				//.amr+.yuv
-    K3GPPProgressiveDownloadModeLongetivityTest,    //.amr+.yuv
+    K3GPPDownloadModeLongetivityTest = 304,				//.amr+.yuv
+    K3GPPProgressiveDownloadModeLongetivityTest = 305,  //.amr+.yuv
 #ifndef _IMOTION_SPECIFIC_UT_DISABLE
-    KIMotionDownloadModeLongetivityTest,			//307 //.amr+.yuv
+    KIMotionDownloadModeLongetivityTest = 306,			//.amr+.yuv
 #endif
-    KMovieFragmentModeLongetivityTest,				//308
-    UnCompressed_LongetivityTestEnd,
+    KMovieFragmentModeLongetivityTest = 307,
+    UnCompressed_LongetivityTestEnd = 308,
 
     /*********** UnCompressed Tests End****************************/
 
@@ -345,85 +353,85 @@ typedef enum
 
     // Error handling tests that takes compressed inputs
     KCompressed_Errorhandling_TestBegin = 400,
-    ErrorHandling_WrongTextInputFileNameTest,
-    ErrorHandling_MediaInputNodeStartFailed,
-    KCompressed_Errorhandling_TestEnd,
+    ErrorHandling_WrongTextInputFileNameTest = 401,
+    ErrorHandling_MediaInputNodeStartFailed = 402,
+    KCompressed_Errorhandling_TestEnd = 403,
 
     //Error handling tests that takes uncompressed inputs through avi files.
     KUnCompressed_Errorhandling_TestBegin = 500,
-    PVMediaInput_ErrorHandling_Test_WrongFormat,	//Use testinput_rgb16.avi
-    PVMediaInput_ErrorHandling_Test_WrongIPFileName,
-    ErrorHandling_WrongOutputPathTest,
-    ErrorHandling_VideoInitFailed,							// 504, //Video Encoder Init Failed
-    ErrorHandling_VideoEncodeFailed,						//Video Encoder Encode Failed
-    ErrorHandling_VideoEncode5FramesFailed,					//VideoEncNode Encode5Frames Failed
-    ErrorHandling_ComposerAddFragFailed,					//507, Composer AddMemFrag Failed
-    ErrorHandling_ComposerAddTrackFailed,					//Composer AddMemTrack Failed
-    ErrorHandling_AVCVideoEncodeFailed,						//AVCEncNode Encode Failed
-    ErrorHandling_AVCVideoEncode5FramesFailed,				//AVCEncNode Encode5Frames Failed
-    ErrorHandling_MediaInputNodeStopFailed,
-    ErrorHandling_AudioInitFailed,							//Audio Encoder(AMR) Init Failed
-    ErrorHandling_AudioEncodeFailed,						//513, Audio Encoder(AMR) Encode Failed
-    ErrorHandling_MediaInputNode_NoMemBuffer,				//514
-    ErrorHandling_MediaInputNode_Out_Queue_busy,			//515
-    ErrorHandling_MediaInputNode_large_time_stamp,						//516 MediaInputNode Error in time stamp for large value.
-    ErrorHandling_MediaInputNode_wrong_time_stamp_after_duration,		//517 MediaInputNode Error in time stamp for wrong value after duration of time.
-    ErrorHandling_MediaInputNode_zero_time_stamp,						//518 MediaInputNode Error in time stamp for zero value.
-    ErrorHandling_MediaInputNode_StateFailure_EPause_SendMIORequest,	//MediaInputNode Error in SendMIOioRequest().
-    ErrorHandling_MediaInputNode_StateFailure_CancelMIORequest,			//MediaInputNode Error in CancelMIORequest().
-    ErrorHandling_MediaInputNode_Corrupt_Video_InputData,				//MediaInputNode Corrupt the video input data.
-    ErrorHandling_MediaInputNode_Corrupt_Audio_InputData,				//MediaInputNode Corrupt the audio input data.
-    ErrorHandling_MediaInputNode_DataPath_Stall,						//MediaInputNode Stall the data path.
-    ErrorHandling_MP4Composer_AddTrack_PVMF_AMR_IETF,					//524 MP4ComposerNode Error in AddTrack() for PVMF_AMR_IETF.
-    ErrorHandling_MP4Composer_AddTrack_PVMF_3GPP_TIMEDTEXT,				//MP4ComposerNode Error in AddTrack() for PVMF_3GPP_TIMEDTEXT.
-    ErrorHandling_MP4Composer_AddTrack_PVMF_M4V,						//MP4ComposerNode Error in AddTrack() for PVMF_M4V.
-    ErrorHandling_MP4Composer_AddTrack_PVMF_H263,						//MP4ComposerNode Error in AddTrack() for PVMF_H263.
-    ErrorHandling_MP4Composer_AddTrack_PVMF_H264_MP4,					//MP4ComposerNode Error in AddTrack() for PVMF_H264_MP4.
-    ErrorHandling_MP4Composer_Create_FileParser,						//MP4ComposerNode Error in the creation of mp4 file parser.
-    ErrorHandling_MP4Composer_RenderToFile,								//MP4ComposerNode Error in the RenderToFile().
-    ErrorHandling_MP4Composer_FailAfter_FileSize,						//MP4ComposerNode Error after a particular file size is reached.
-    ErrorHandling_MP4Composer_FailAfter_Duration,						//MP4ComposerNode Error after a duration of some time.
-    ErrorHandling_MP4Composer_DataPathStall,							//MP4ComposerNode Stall the data path.
-    ErrorHandling_VideoEncodeNode_ConfigHeader,							//VideoEncodeNode Error in GetVolHeader().
-    ErrorHandling_VideoEncodeNode_DataPathStall_Before_ProcessingData,	//535 VideoEncodeNode Stall the data path before processing starts.
-    ErrorHandling_VideoEncodeNode_DataPathStall_After_ProcessingData,	//VideoEncodeNode Stall the data path post processing.
-    ErrorHandling_VideoEncodeNode_FailEncode_AfterDuration,				//VideoEncodeNode Error in encode after duration of time.
-    ErrorHandling_AudioEncodeNode_FailEncode_AfterDuration,				//AudioEncodeNode Error in encode operation after duration of time.
-    ErrorHandling_AudioEncodeNode_DataPathStall_Before_ProcessingData,	//AudioEncodeNode Stall data path before processing starts.
-    ErrorHandling_AudioEncodeNode_DataPathStall_After_ProcessingData,	//540 AudioEncodeNode Stall data path post processing.
-    ErrorHandling_AVCEncodeNode_ConfigHeader,							//AVCEncodeNode Error in in getting SPS & PPS Values.
-    ErrorHandling_AVCEncodeNode_DataPathStall_Before_ProcessingData,	//AVCEncodeNode Stall the data path before processing starts.
-    ErrorHandling_AVCEncodeNode_DataPathStall_After_ProcessingData,		//AVCEncodeNode Stall the data path post processing.
-    ErrorHandling_AVCEncodeNode_FailEncode_AfterDuration,				//AVCEncodeNode Error in encode after duration of time.
+    PVMediaInput_ErrorHandling_Test_WrongFormat = 501,	//Use testinput_rgb16.avi
+    PVMediaInput_ErrorHandling_Test_WrongIPFileName = 502,
+    ErrorHandling_WrongOutputPathTest = 503,
+    ErrorHandling_VideoInitFailed = 504,							//Video Encoder Init Failed
+    ErrorHandling_VideoEncodeFailed = 505,						//Video Encoder Encode Failed
+    ErrorHandling_VideoEncode5FramesFailed = 506,					//VideoEncNode Encode5Frames Failed
+    ErrorHandling_ComposerAddFragFailed = 507,					//507, Composer AddMemFrag Failed
+    ErrorHandling_ComposerAddTrackFailed = 508,					//Composer AddMemTrack Failed
+    ErrorHandling_AVCVideoEncodeFailed = 509,						//AVCEncNode Encode Failed
+    ErrorHandling_AVCVideoEncode5FramesFailed = 510,				//AVCEncNode Encode5Frames Failed
+    ErrorHandling_MediaInputNodeStopFailed = 511,
+    ErrorHandling_AudioInitFailed = 512,							//Audio Encoder(AMR) Init Failed
+    ErrorHandling_AudioEncodeFailed = 513,						//Audio Encoder(AMR) Encode Failed
+    ErrorHandling_MediaInputNode_NoMemBuffer = 514,
+    ErrorHandling_MediaInputNode_Out_Queue_busy = 515,
+    ErrorHandling_MediaInputNode_large_time_stamp = 516,						//MediaInputNode Error in time stamp for large value.
+    ErrorHandling_MediaInputNode_wrong_time_stamp_after_duration = 517,		//MediaInputNode Error in time stamp for wrong value after duration of time.
+    ErrorHandling_MediaInputNode_zero_time_stamp = 518,						//MediaInputNode Error in time stamp for zero value.
+    ErrorHandling_MediaInputNode_StateFailure_EPause_SendMIORequest = 519,	//MediaInputNode Error in SendMIOioRequest().
+    ErrorHandling_MediaInputNode_StateFailure_CancelMIORequest = 520,			//MediaInputNode Error in CancelMIORequest().
+    ErrorHandling_MediaInputNode_Corrupt_Video_InputData = 521,				//MediaInputNode Corrupt the video input data.
+    ErrorHandling_MediaInputNode_Corrupt_Audio_InputData = 522,				//MediaInputNode Corrupt the audio input data.
+    ErrorHandling_MediaInputNode_DataPath_Stall = 523,						//MediaInputNode Stall the data path.
+    ErrorHandling_MP4Composer_AddTrack_PVMF_AMR_IETF = 524,					//MP4ComposerNode Error in AddTrack() for PVMF_AMR_IETF.
+    ErrorHandling_MP4Composer_AddTrack_PVMF_3GPP_TIMEDTEXT = 525,				//MP4ComposerNode Error in AddTrack() for PVMF_3GPP_TIMEDTEXT.
+    ErrorHandling_MP4Composer_AddTrack_PVMF_M4V = 526,						//MP4ComposerNode Error in AddTrack() for PVMF_M4V.
+    ErrorHandling_MP4Composer_AddTrack_PVMF_H263 = 527,						//MP4ComposerNode Error in AddTrack() for PVMF_H263.
+    ErrorHandling_MP4Composer_AddTrack_PVMF_H264_MP4 = 528,					//MP4ComposerNode Error in AddTrack() for PVMF_H264_MP4.
+    ErrorHandling_MP4Composer_Create_FileParser = 529,						//MP4ComposerNode Error in the creation of mp4 file parser.
+    ErrorHandling_MP4Composer_RenderToFile = 530,								//MP4ComposerNode Error in the RenderToFile().
+    ErrorHandling_MP4Composer_FailAfter_FileSize = 531,						//MP4ComposerNode Error after a particular file size is reached.
+    ErrorHandling_MP4Composer_FailAfter_Duration = 532,						//MP4ComposerNode Error after a duration of some time.
+    ErrorHandling_MP4Composer_DataPathStall = 533,							//MP4ComposerNode Stall the data path.
+    ErrorHandling_VideoEncodeNode_ConfigHeader = 534,							//VideoEncodeNode Error in GetVolHeader().
+    ErrorHandling_VideoEncodeNode_DataPathStall_Before_ProcessingData = 535,	//VideoEncodeNode Stall the data path before processing starts.
+    ErrorHandling_VideoEncodeNode_DataPathStall_After_ProcessingData = 536,	//VideoEncodeNode Stall the data path post processing.
+    ErrorHandling_VideoEncodeNode_FailEncode_AfterDuration = 537,				//VideoEncodeNode Error in encode after duration of time.
+    ErrorHandling_AudioEncodeNode_FailEncode_AfterDuration = 538,				//AudioEncodeNode Error in encode operation after duration of time.
+    ErrorHandling_AudioEncodeNode_DataPathStall_Before_ProcessingData = 539,	//AudioEncodeNode Stall data path before processing starts.
+    ErrorHandling_AudioEncodeNode_DataPathStall_After_ProcessingData = 540,	//AudioEncodeNode Stall data path post processing.
+    ErrorHandling_AVCEncodeNode_ConfigHeader = 541,							//AVCEncodeNode Error in in getting SPS & PPS Values.
+    ErrorHandling_AVCEncodeNode_DataPathStall_Before_ProcessingData = 542,	//AVCEncodeNode Stall the data path before processing starts.
+    ErrorHandling_AVCEncodeNode_DataPathStall_After_ProcessingData = 543,		//AVCEncodeNode Stall the data path post processing.
+    ErrorHandling_AVCEncodeNode_FailEncode_AfterDuration = 544,				//AVCEncodeNode Error in encode after duration of time.
 
     /***** Test for Node Commands *****/
-    ErrorHandling_MediaInputNode_Node_Cmd_Start,			//545 MediaInputNode Error in node command DoStart().
-    ErrorHandling_MediaInputNode_Node_Cmd_Stop,				//MediaInputNode Error in node command DoStop().
-    ErrorHandling_MediaInputNode_Node_Cmd_Flush,			//MediaInputNode Error in node command DoFlush().
-    ErrorHandling_MediaInputNode_Node_Cmd_Pause,			//MediaInputNode Error in node command DoPause().
-    ErrorHandling_MediaInputNode_Node_Cmd_ReleasePort,		//MediaInputNode Error in node command DoReleasePort().
-    ErrorHandling_MP4Composer_Node_Cmd_Start,				//MP4ComposerNode Error in the node command DoStart().
-    ErrorHandling_MP4Composer_Node_Cmd_Stop,				//MP4ComposerNode Error in the node command DoStop().
-    ErrorHandling_MP4Composer_Node_Cmd_Flush,				//552 MP4ComposerNode Error in the node command DoFlush().
-    ErrorHandling_MP4Composer_Node_Cmd_Pause,				//MP4ComposerNode Error in the node command DoPause().
-    ErrorHandling_MP4Composer_Node_Cmd_ReleasePort,			//MP4ComposerNode Error in the node command DoReleasePort().
-    ErrorHandling_VideoEncodeNode_Node_Cmd_Start,			//VideoEncodeNode Error in node command DoStart().
-    ErrorHandling_VideoEncodeNode_Node_Cmd_Stop,			//VideoEncodeNode Error in node command DoStop().
-    ErrorHandling_VideoEncodeNode_Node_Cmd_Flush,			//VideoEncodeNode Error in node command DoFlush().
-    ErrorHandling_VideoEncodeNode_Node_Cmd_Pause,			//VideoEncodeNode Error in node command DoPause().
-    ErrorHandling_VideoEncodeNode_Node_Cmd_ReleasePort,		//VideoEncodeNode Error in node command DoReleasePort().
-    ErrorHandling_AudioEncodeNode_Node_Cmd_Start,			//560 AudioEncodeNode Error in node command DoStart().
-    ErrorHandling_AudioEncodeNode_Node_Cmd_Stop,			//AudioEncodeNode Error in node command DoStop().
-    ErrorHandling_AudioEncodeNode_Node_Cmd_Flush,			//AudioEncodeNode Error in node command DoFlush().
-    ErrorHandling_AudioEncodeNode_Node_Cmd_Pause,			//AudioEncodeNode Error in node command DoPause().
-    ErrorHandling_AudioEncodeNode_Node_Cmd_ReleasePort,		//AudioEncodeNode Error in node command DoReleasePort().
-    ErrorHandling_AVCEncodeNode_Node_Cmd_Start,				//AVCEncodeNode Error in node command DoStart().
-    ErrorHandling_AVCEncodeNode_Node_Cmd_Stop,				//AVCEncodeNode Error in node command DoStop().
-    ErrorHandling_AVCEncodeNode_Node_Cmd_Flush,				//AVCEncodeNode Error in node command DoFlush().
-    ErrorHandling_AVCEncodeNode_Node_Cmd_Pause,				//AVCEncodeNode Error in node command DoPause().
-    ErrorHandling_AVCEncodeNode_Node_Cmd_ReleasePort,		//569 AVCEncodeNode Error in node command DoReleasePort().
+    ErrorHandling_MediaInputNode_Node_Cmd_Start = 545,			//MediaInputNode Error in node command DoStart().
+    ErrorHandling_MediaInputNode_Node_Cmd_Stop = 546,				//MediaInputNode Error in node command DoStop().
+    ErrorHandling_MediaInputNode_Node_Cmd_Flush = 547,			//MediaInputNode Error in node command DoFlush().
+    ErrorHandling_MediaInputNode_Node_Cmd_Pause = 548,			//MediaInputNode Error in node command DoPause().
+    ErrorHandling_MediaInputNode_Node_Cmd_ReleasePort = 549,		//MediaInputNode Error in node command DoReleasePort().
+    ErrorHandling_MP4Composer_Node_Cmd_Start = 550,				//MP4ComposerNode Error in the node command DoStart().
+    ErrorHandling_MP4Composer_Node_Cmd_Stop = 551,				//MP4ComposerNode Error in the node command DoStop().
+    ErrorHandling_MP4Composer_Node_Cmd_Flush = 552,				//MP4ComposerNode Error in the node command DoFlush().
+    ErrorHandling_MP4Composer_Node_Cmd_Pause = 553,				//MP4ComposerNode Error in the node command DoPause().
+    ErrorHandling_MP4Composer_Node_Cmd_ReleasePort = 554,			//MP4ComposerNode Error in the node command DoReleasePort().
+    ErrorHandling_VideoEncodeNode_Node_Cmd_Start = 555,			//VideoEncodeNode Error in node command DoStart().
+    ErrorHandling_VideoEncodeNode_Node_Cmd_Stop = 556,			//VideoEncodeNode Error in node command DoStop().
+    ErrorHandling_VideoEncodeNode_Node_Cmd_Flush = 557,			//VideoEncodeNode Error in node command DoFlush().
+    ErrorHandling_VideoEncodeNode_Node_Cmd_Pause = 558,			//VideoEncodeNode Error in node command DoPause().
+    ErrorHandling_VideoEncodeNode_Node_Cmd_ReleasePort = 559,		//VideoEncodeNode Error in node command DoReleasePort().
+    ErrorHandling_AudioEncodeNode_Node_Cmd_Start = 560,			//AudioEncodeNode Error in node command DoStart().
+    ErrorHandling_AudioEncodeNode_Node_Cmd_Stop = 561,			//AudioEncodeNode Error in node command DoStop().
+    ErrorHandling_AudioEncodeNode_Node_Cmd_Flush = 562,			//AudioEncodeNode Error in node command DoFlush().
+    ErrorHandling_AudioEncodeNode_Node_Cmd_Pause = 563,			//AudioEncodeNode Error in node command DoPause().
+    ErrorHandling_AudioEncodeNode_Node_Cmd_ReleasePort = 564,		//AudioEncodeNode Error in node command DoReleasePort().
+    ErrorHandling_AVCEncodeNode_Node_Cmd_Start = 565,				//AVCEncodeNode Error in node command DoStart().
+    ErrorHandling_AVCEncodeNode_Node_Cmd_Stop = 566,				//AVCEncodeNode Error in node command DoStop().
+    ErrorHandling_AVCEncodeNode_Node_Cmd_Flush = 567,				//AVCEncodeNode Error in node command DoFlush().
+    ErrorHandling_AVCEncodeNode_Node_Cmd_Pause = 568,				//AVCEncodeNode Error in node command DoPause().
+    ErrorHandling_AVCEncodeNode_Node_Cmd_ReleasePort = 569,		//AVCEncodeNode Error in node command DoReleasePort().
 
-    KUnCompressed_Errorhandling_TestEnd,
+    KUnCompressed_Errorhandling_TestEnd = 570,
 
     /*********** Error Handling Tests End**************************/
     LastInteractiveTest = 1000,

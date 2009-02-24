@@ -22,6 +22,14 @@
 #include "omx_proxy_interface.h"
 #endif
 
+const uint8 NAL_START_CODE[4] = {0, 0, 0, 1};
+
+#define CONFIG_SIZE_AND_VERSION(param) \
+	    param.nSize=sizeof(param); \
+	    param.nVersion.s.nVersionMajor = SPECVERSIONMAJOR; \
+	    param.nVersion.s.nVersionMinor = SPECVERSIONMINOR; \
+	    param.nVersion.s.nRevision = SPECREVISION; \
+	    param.nVersion.s.nStep = SPECSTEP;
 
 // This function is called by OMX_GetHandle and it creates an instance of the avc component AO
 OMX_ERRORTYPE AvcEncOmxComponentFactory(OMX_OUT OMX_HANDLETYPE* pHandle, OMX_IN OMX_PTR pAppData, OMX_PTR pProxy, OMX_STRING aOmxLibName, OMX_PTR &aOmxLib, OMX_PTR aOsclUuid, OMX_U32 &aRefCount)
@@ -138,6 +146,10 @@ OMX_ERRORTYPE OmxComponentAvcEncAO::ConstructComponent(OMX_PTR pAppData, OMX_PTR
     ipComponentProxy = pProxy;
     iOmxComponent.pApplicationPrivate = pAppData; // init the App data
 
+    oscl_memset((void *)iNALSizeArray, 0, MAX_NAL_PER_FRAME * sizeof(int32));
+    iNALCount = 0;
+    iNALSizeSum = 0;
+    iEndOfOutputFrame = OMX_FALSE;
 
 #if PROXY_INTERFACE
     iPVCapabilityFlags.iIsOMXComponentMultiThreaded = OMX_TRUE;
@@ -179,12 +191,37 @@ OMX_ERRORTYPE OmxComponentAvcEncAO::ConstructComponent(OMX_PTR pAppData, OMX_PTR
     iOmxComponent.nVersion.s.nStep = SPECSTEP;
 
     // PV capability
+#if defined(TEST_FULL_AVC_FRAME_MODE)
+    /* output buffers based on frame boundaries instead of NAL boundaries and specify NAL boundaries through
+     * through OMX_EXTRADATA structures appended on the end of the buffer
+     */
     iPVCapabilityFlags.iOMXComponentSupportsExternalInputBufferAlloc = OMX_TRUE;
     iPVCapabilityFlags.iOMXComponentSupportsExternalOutputBufferAlloc = OMX_TRUE;
     iPVCapabilityFlags.iOMXComponentSupportsMovableInputBuffers = OMX_TRUE;
     iPVCapabilityFlags.iOMXComponentSupportsPartialFrames = OMX_TRUE;
-    iPVCapabilityFlags.iOMXComponentNeedsNALStartCode = OMX_FALSE;
+    iPVCapabilityFlags.iOMXComponentUsesNALStartCodes = OMX_FALSE;
     iPVCapabilityFlags.iOMXComponentCanHandleIncompleteFrames = OMX_TRUE;
+    iPVCapabilityFlags.iOMXComponentUsesFullAVCFrames = OMX_TRUE;
+#elif defined(TEST_FULL_AVC_FRAME_MODE_SC)
+    /* output buffers based on frame boundaries instead of NAL boundaries and specify NAL boundaries
+     * with NAL start codes
+     */
+    iPVCapabilityFlags.iOMXComponentSupportsExternalInputBufferAlloc = OMX_TRUE;
+    iPVCapabilityFlags.iOMXComponentSupportsExternalOutputBufferAlloc = OMX_TRUE;
+    iPVCapabilityFlags.iOMXComponentSupportsMovableInputBuffers = OMX_TRUE;
+    iPVCapabilityFlags.iOMXComponentSupportsPartialFrames = OMX_TRUE;
+    iPVCapabilityFlags.iOMXComponentUsesNALStartCodes = OMX_TRUE;
+    iPVCapabilityFlags.iOMXComponentCanHandleIncompleteFrames = OMX_TRUE;
+    iPVCapabilityFlags.iOMXComponentUsesFullAVCFrames = OMX_TRUE;
+#else
+    iPVCapabilityFlags.iOMXComponentSupportsExternalInputBufferAlloc = OMX_TRUE;
+    iPVCapabilityFlags.iOMXComponentSupportsExternalOutputBufferAlloc = OMX_TRUE;
+    iPVCapabilityFlags.iOMXComponentSupportsMovableInputBuffers = OMX_TRUE;
+    iPVCapabilityFlags.iOMXComponentSupportsPartialFrames = OMX_TRUE;
+    iPVCapabilityFlags.iOMXComponentUsesNALStartCodes = OMX_FALSE;
+    iPVCapabilityFlags.iOMXComponentCanHandleIncompleteFrames = OMX_TRUE;
+    iPVCapabilityFlags.iOMXComponentUsesFullAVCFrames = OMX_FALSE;
+#endif
 
     if (ipAppPriv)
     {
@@ -207,6 +244,7 @@ OMX_ERRORTYPE OmxComponentAvcEncAO::ConstructComponent(OMX_PTR pAppData, OMX_PTR
     }
 
     /** Domain specific section for input raw port */ //OMX_PARAM_PORTDEFINITIONTYPE
+    ipPorts[OMX_PORT_INPUTPORT_INDEX]->PortParam.nPortIndex = OMX_PORT_INPUTPORT_INDEX;
     ipPorts[OMX_PORT_INPUTPORT_INDEX]->PortParam.eDomain = OMX_PortDomainVideo;
     ipPorts[OMX_PORT_INPUTPORT_INDEX]->PortParam.format.video.cMIMEType = (OMX_STRING)"raw";
     ipPorts[OMX_PORT_INPUTPORT_INDEX]->PortParam.format.video.eCompressionFormat = OMX_VIDEO_CodingUnused;
@@ -228,6 +266,7 @@ OMX_ERRORTYPE OmxComponentAvcEncAO::ConstructComponent(OMX_PTR pAppData, OMX_PTR
 
 
     /** Domain specific section for output avc port */
+    ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.nPortIndex = OMX_PORT_OUTPUTPORT_INDEX;
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.eDomain = OMX_PortDomainVideo;
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.format.video.cMIMEType = (OMX_STRING)"video/avc";
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.format.video.eCompressionFormat = OMX_VIDEO_CodingAVC;
@@ -270,6 +309,7 @@ OMX_ERRORTYPE OmxComponentAvcEncAO::ConstructComponent(OMX_PTR pAppData, OMX_PTR
 
 
     //OMX_VIDEO_PARAM_PROFILELEVELTYPE structure
+    ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->ProfileLevel.nPortIndex = OMX_PORT_OUTPUTPORT_INDEX;
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->ProfileLevel.nProfileIndex = 0;
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->ProfileLevel.eProfile = OMX_VIDEO_AVCProfileBaseline;
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->ProfileLevel.eLevel = OMX_VIDEO_AVCLevel1b;
@@ -477,7 +517,6 @@ void OmxComponentAvcEncAO::ProcessData()
     QueueType* pOutputQueue = ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->pBufferQueue;
 
     ComponentPortType*	pInPort = ipPorts[OMX_PORT_INPUTPORT_INDEX];
-    ComponentPortType*	pOutPort = ipPorts[OMX_PORT_OUTPUTPORT_INDEX];
 
     OMX_U8*					pOutBuffer;
     OMX_U32					OutputLength;
@@ -490,6 +529,7 @@ void OmxComponentAvcEncAO::ProcessData()
         if (OMX_TRUE == iNewOutBufRequired)
         {
             //Check whether a new output buffer is available or not
+
             if (0 == (GetQueueNumElem(pOutputQueue)))
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OmxComponentAvcEncAO : ProcessData OUT output buffer unavailable"));
@@ -497,8 +537,26 @@ void OmxComponentAvcEncAO::ProcessData()
             }
 
             ipOutputBuffer = (OMX_BUFFERHEADERTYPE*) DeQueue(pOutputQueue);
+
+            OSCL_ASSERT(NULL != ipOutputBuffer);
+            if (ipOutputBuffer == NULL)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentAvcEncAO : ProcessData ERR OUT output buffer cannot be dequeued"));
+                return;
+            }
             ipOutputBuffer->nFilledLen = 0;
             iNewOutBufRequired = OMX_FALSE;
+
+            oscl_memset((void *)iNALSizeArray, 0, iNALCount * sizeof(int32));
+            iNALCount = 0;
+            iNALSizeSum = 0;
+
+            if (iPVCapabilityFlags.iOMXComponentUsesNALStartCodes)
+            {
+                oscl_memcpy(ipOutputBuffer->pBuffer + ipOutputBuffer->nOffset + ipOutputBuffer->nFilledLen, &NAL_START_CODE, sizeof(uint8) * 4);
+                ipOutputBuffer->nFilledLen += 4;
+                iNALSizeSum += 4;
+            }
 
 
             /* If some output data was left to be send from the last processing due to
@@ -514,14 +572,7 @@ void OmxComponentAvcEncAO::ProcessData()
                 }
                 else
                 {
-                    //Attach the end of frame flag while sending out the last piece of output buffer
-                    ipOutputBuffer->nFlags |= OMX_BUFFERFLAG_ENDOFFRAME;
-                    if (OMX_TRUE == iSyncFlag)
-                    {
-                        ipOutputBuffer->nFlags |= OMX_BUFFERFLAG_SYNCFRAME;
-                        iSyncFlag = OMX_FALSE;
-                    }
-                    ReturnOutputBuffer(ipOutputBuffer, pOutPort);
+                    ManageFrameBoundaries();
 
                     //Dequeue new output buffer to continue encoding the next frame
                     if (0 == (GetQueueNumElem(pOutputQueue)))
@@ -529,8 +580,16 @@ void OmxComponentAvcEncAO::ProcessData()
                         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OmxComponentAvcEncAO : ProcessData OUT output buffer unavailable"));
                         return;
                     }
-
                     ipOutputBuffer = (OMX_BUFFERHEADERTYPE*) DeQueue(pOutputQueue);
+
+                    OSCL_ASSERT(NULL != ipOutputBuffer);
+                    if (ipOutputBuffer == NULL)
+                    {
+                        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentAvcEncAO : ProcessData OUT ERR output buffer cannot be dequeued"));
+                        return;
+                    }
+
+
                     ipOutputBuffer->nFilledLen = 0;
                     iNewOutBufRequired = OMX_FALSE;
                 }
@@ -559,8 +618,18 @@ void OmxComponentAvcEncAO::ProcessData()
         //Call the encoder only if there is some data to encode
         if (iInputCurrLength > 0)
         {
-            pOutBuffer = ipOutputBuffer->pBuffer;
-            OutputLength = ipOutputBuffer->nAllocLen;
+            OMX_S32 filledLength = ipOutputBuffer->nOffset + ipOutputBuffer->nFilledLen;
+            pOutBuffer = ipOutputBuffer->pBuffer + (OMX_U32)filledLength;
+
+            if (iPVCapabilityFlags.iOMXComponentUsesFullAVCFrames && !iPVCapabilityFlags.iOMXComponentUsesNALStartCodes)
+            {
+                OutputLength = (OMX_U32)(((OMX_S32)ipOutputBuffer->nAllocLen - filledLength - (46 + 4 * (iNALCount + 1))) > 0) ? (ipOutputBuffer->nAllocLen - filledLength - (46 + 4 * (iNALCount + 1))) : 0;
+                // (20 + 4 * (iNALCount + 1) + 20 + 6) is size of extra data
+            }
+            else
+            {
+                OutputLength = (OMX_U32)(((OMX_S32)ipOutputBuffer->nAllocLen - filledLength) > 0) ? (ipOutputBuffer->nAllocLen - filledLength) : 0;
+            }
 
             //Output buffer is passed as a short pointer
             EncodeReturn = ipAvcEncoderObject->AvcEncodeVideo(pOutBuffer,
@@ -573,7 +642,6 @@ void OmxComponentAvcEncAO::ProcessData()
                            &iOutputTimeStamp,
                            &iSyncFlag);
 
-
             //Chk whether output data has been generated or not
             if (OutputLength > 0)
             {
@@ -584,7 +652,7 @@ void OmxComponentAvcEncAO::ProcessData()
                 if (OMX_FALSE == iBufferOverRun)
                 {
                     //No internal buffer is maintained
-                    ipOutputBuffer->nFilledLen = OutputLength;
+                    ipOutputBuffer->nFilledLen += OutputLength;
                 }
                 else
                 {
@@ -595,9 +663,9 @@ void OmxComponentAvcEncAO::ProcessData()
                 }	//else loop of if (OMX_FALSE == iMantainOutInternalBuffer)
             }	//if (OutputLength > 0)	 loop
 
-
             //If encoder returned error in case of frame skip/corrupt frame, report it to the client via a callback
-            if ((AVCENC_FAIL == EncodeReturn) && (OMX_FALSE == iEndofStream))
+            if (((AVCENC_SKIPPED_PICTURE == EncodeReturn) || (AVCENC_FAIL == EncodeReturn))
+                    && (OMX_FALSE == iEndofStream))
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OmxComponentAvcEncAO : Frame skipped, ProcessData ErrorStreamCorrupt callback send"));
 
@@ -610,9 +678,10 @@ void OmxComponentAvcEncAO::ProcessData()
                  NULL);
             }
 
-
             //Return the input buffer that has been consumed fully
-            if (0 == iInputCurrLength)
+            if ((AVCENC_PICTURE_READY == EncodeReturn) ||
+                    (AVCENC_SKIPPED_PICTURE == EncodeReturn) ||
+                    (AVCENC_FAIL == EncodeReturn))
             {
                 ipInputBuffer->nFilledLen = 0;
                 ReturnInputBuffer(ipInputBuffer, pInPort);
@@ -620,9 +689,14 @@ void OmxComponentAvcEncAO::ProcessData()
 
                 iIsInputBufferEnded = OMX_TRUE;
                 iInputCurrLength = 0;
+
+	            iFrameCount++;
             }
 
-            iFrameCount++;
+            if (AVCENC_PICTURE_READY == EncodeReturn)
+            {
+                iEndOfOutputFrame = OMX_TRUE;
+            }
         }
 
 
@@ -644,17 +718,10 @@ void OmxComponentAvcEncAO::ProcessData()
                  NULL);
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OmxComponentAvcEncAO : ProcessData EOS callback sent"));
 
+                ManageFrameBoundaries();
 
                 //Mark this flag false once the callback has been send back
                 iEndofStream = OMX_FALSE;
-
-                ipOutputBuffer->nFlags |= OMX_BUFFERFLAG_EOS;
-                if (OMX_TRUE == iSyncFlag)
-                {
-                    ipOutputBuffer->nFlags |= OMX_BUFFERFLAG_SYNCFRAME;
-                    iSyncFlag = OMX_FALSE;
-                }
-                ReturnOutputBuffer(ipOutputBuffer, pOutPort);
 
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OmxComponentAvcEncAO : ProcessData OUT"));
                 return;
@@ -662,17 +729,19 @@ void OmxComponentAvcEncAO::ProcessData()
 
         }
 
-        //Send the output buffer back after decode
-        if ((ipOutputBuffer->nFilledLen > 0) && (OMX_FALSE == iNewOutBufRequired))
+        if (!iPVCapabilityFlags.iOMXComponentUsesNALStartCodes)
         {
-            //Attach the end of frame flag while sending out the last piece of output buffer
-            ipOutputBuffer->nFlags |= OMX_BUFFERFLAG_ENDOFFRAME;
-            if (OMX_TRUE == iSyncFlag)
+            if (iEndOfOutputFrame || ((ipOutputBuffer->nFilledLen > 0) && (OMX_FALSE == iNewOutBufRequired)))
             {
-                ipOutputBuffer->nFlags |= OMX_BUFFERFLAG_SYNCFRAME;
-                iSyncFlag = OMX_FALSE;
+                ManageFrameBoundaries();
             }
-            ReturnOutputBuffer(ipOutputBuffer, pOutPort);
+        }
+        else if (ipOutputBuffer->nFilledLen > 4) // therefore only if more than just start code in buffer
+        {
+            if (iEndOfOutputFrame || (OMX_FALSE == iNewOutBufRequired))
+            {
+                ManageFrameBoundaries();
+            }
         }
 
 
@@ -728,10 +797,19 @@ OMX_BOOL OmxComponentAvcEncAO::CopyDataToOutputBuffer()
             //Check whether a new output buffer is available or not
             if (0 == (GetQueueNumElem(pOutputQueue)))
             {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OmxComponentAvcEncAO : CopyDatatoOutputBuffer OUT output buffer unavailable"));
                 return OMX_FALSE;
             }
 
             ipOutputBuffer = (OMX_BUFFERHEADERTYPE*) DeQueue(pOutputQueue);
+
+            OSCL_ASSERT(NULL != ipOutputBuffer);
+            if (ipOutputBuffer == NULL)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentAvcEncAO : CopyDatatoOutputBuffer ERR OUT output buffer cannot be dequeued"));
+                return OMX_FALSE;
+            }
+
             ipOutputBuffer->nFilledLen = 0;
             ipOutputBuffer->nTimeStamp = iOutputTimeStamp;
             ipOutputBuffer->nOffset = 0;
@@ -1000,3 +1078,180 @@ void OmxComponentAvcEncAO::ProcessInBufferFlag()
 {
     iIsInputBufferEnded = OMX_FALSE;
 }
+
+/////////////////////////////////////////////////////////////////////////////
+OMX_BOOL OmxComponentAvcEncAO::AppendExtraDataToBuffer(OMX_BUFFERHEADERTYPE* aOutputBuffer,
+        OMX_EXTRADATATYPE aType,
+        OMX_U8* aExtraData,
+        OMX_U8 aDataLength)
+
+{
+    // This function is used to append AVC NAL info to the buffer using the OMX_EXTRADATA_TYPE structure, when
+    // a component requires buffers with full AVC frames rather than just NALs
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_NOTICE,
+                    (0, "OmxComponentAvcEncAO::AppendExtraDataToBuffer() In"));
+
+
+    if ((aType != OMX_ExtraDataNone) && (aExtraData != NULL) && (aOutputBuffer->pBuffer != NULL))
+    {
+        const uint32 sizeOfExtraDataStruct = 20; // 20 is the number of bytes for the OMX_OTHER_EXTRADATATYPE structure (minus the data hint member)
+
+        OMX_OTHER_EXTRADATATYPE extra;
+        OMX_OTHER_EXTRADATATYPE terminator;
+
+        CONFIG_SIZE_AND_VERSION(extra);
+        CONFIG_SIZE_AND_VERSION(terminator);
+
+        extra.nPortIndex = OMX_PORT_OUTPUTPORT_INDEX;
+        terminator.nPortIndex = OMX_PORT_OUTPUTPORT_INDEX;
+
+        extra.eType = aType;
+        extra.nSize = (sizeOfExtraDataStruct + aDataLength + 3) & ~3; // size + padding for byte alignment
+        extra.nDataSize = aDataLength;
+
+        // fill in fields for terminator
+        terminator.eType = OMX_ExtraDataNone;
+        terminator.nDataSize = 0;
+
+        // make sure there is enough room in the buffer
+        if (aOutputBuffer->nAllocLen < (aOutputBuffer->nOffset + aOutputBuffer->nFilledLen + sizeOfExtraDataStruct + aDataLength + terminator.nSize + 6))
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "OmxComponentAvcEncAO::AppendExtraDataToBuffer()  - Error (not enough room in buffer) appending extra data to Buffer 0x%x, TS=%d", aOutputBuffer->pBuffer, iOutputTimeStamp));
+
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "OmxComponentAvcEncAO::AppendExtraDataToBuffer() Out"));
+
+            return OMX_FALSE;
+        }
+
+        // copy extra data into buffer
+        // need to align to 4 bytes
+        OMX_U8* buffer = aOutputBuffer->pBuffer + aOutputBuffer->nOffset + aOutputBuffer->nFilledLen;
+        buffer = (OMX_U8*)(((OMX_U32) buffer + 3) & ~3);
+
+        oscl_memcpy(buffer, &extra, sizeOfExtraDataStruct);
+        oscl_memcpy(buffer + sizeOfExtraDataStruct, aExtraData, aDataLength);
+        buffer += extra.nSize;
+
+        oscl_memcpy(buffer, &terminator, terminator.nSize);
+
+        // flag buffer
+        aOutputBuffer->nFlags |= OMX_BUFFERFLAG_EXTRADATA;
+
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "OmxComponentAvcEncAO::AppendExtraDataToBuffer()  - Appending extra data to Buffer 0x%x, TS=%d", aOutputBuffer->pBuffer, iOutputTimeStamp));
+
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "OmxComponentAvcEncAO::AppendExtraDataToBuffer() Out"));
+
+        return OMX_TRUE;
+    }
+    else
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "OmxComponentAvcEncAO::AppendExtraDataToBuffer() Out"));
+
+        return OMX_FALSE;
+    }
+}
+
+void OmxComponentAvcEncAO::ManageFrameBoundaries()
+{
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_NOTICE,
+                    (0, "OmxComponentAvcEncAO::ManageFrameBoundaries() In"));
+
+    ComponentPortType*	pOutPort = ipPorts[OMX_PORT_OUTPUTPORT_INDEX];
+
+    if (!iPVCapabilityFlags.iOMXComponentUsesFullAVCFrames || !ipAvcEncoderObject->GetSpsPpsHeaderFlag())
+    {
+        if (iPVCapabilityFlags.iOMXComponentUsesNALStartCodes && ipOutputBuffer->nFilledLen == 4)
+        {
+            ipOutputBuffer->nFilledLen = 0;
+        }
+
+
+        //Attach the end of frame flag while sending out the last piece of output buffer
+        if (iEndofStream)
+        {
+            ipOutputBuffer->nFlags |= OMX_BUFFERFLAG_EOS;
+        }
+        else
+        {
+            ipOutputBuffer->nFlags |= OMX_BUFFERFLAG_ENDOFFRAME;
+        }
+
+        if (OMX_TRUE == iSyncFlag)
+        {
+            ipOutputBuffer->nFlags |= OMX_BUFFERFLAG_SYNCFRAME;
+            iSyncFlag = OMX_FALSE;
+        }
+        ReturnOutputBuffer(ipOutputBuffer, pOutPort);
+    }
+    else /* append extra data structure to buffer if iOMXComponentUsesFullAVCFrames is set and the buffer does not contain SPS or PPS NALs */
+    {
+        OMX_U32 CurrNALSize = ipOutputBuffer->nFilledLen - iNALSizeSum;
+        if (CurrNALSize > 0)
+        {
+            if (iPVCapabilityFlags.iOMXComponentUsesNALStartCodes && !iEndOfOutputFrame && !iEndofStream)
+            {
+                oscl_memcpy(ipOutputBuffer->pBuffer + ipOutputBuffer->nOffset + ipOutputBuffer->nFilledLen, &NAL_START_CODE, sizeof(uint8) * 4);
+                ipOutputBuffer->nFilledLen += 4;
+                iNALSizeSum += 4;
+            }
+
+            iNALSizeArray[iNALCount] = CurrNALSize;
+            iNALSizeSum += iNALSizeArray[iNALCount];
+            iNALCount++;
+        }
+
+        if (iEndOfOutputFrame || iEndofStream)
+        {
+            if (!iPVCapabilityFlags.iOMXComponentUsesNALStartCodes)
+            {
+                if (OMX_FALSE == AppendExtraDataToBuffer(ipOutputBuffer, (OMX_EXTRADATATYPE) OMX_ExtraDataNALSizeArray, (OMX_U8*) iNALSizeArray, sizeof(uint32) * iNALCount))
+                {
+                    ipOutputBuffer->nFlags |= OMX_BUFFERFLAG_DATACORRUPT;
+
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                                    (0, "OmxComponentAvcEncAO::ManageFrameBoundaries()  - Error appending extra data to Buffer 0x%x, TS=%d, returning anyway with data corrupt flag", ipOutputBuffer->pBuffer, iOutputTimeStamp));
+                }
+            }
+            else if (0 == iNALCount)
+            {
+                iNALSizeSum = 0;
+                ipOutputBuffer->nFilledLen = 0;
+            }
+
+            //Attach the end of frame flag while sending out the last piece of output buffer
+            if (iEndOfOutputFrame)
+            {
+                ipOutputBuffer->nFlags |= OMX_BUFFERFLAG_ENDOFFRAME;
+            }
+
+            //Attach the end of stream flag
+            if (iEndofStream)
+            {
+                ipOutputBuffer->nFlags |= OMX_BUFFERFLAG_EOS;
+            }
+
+            if (OMX_TRUE == iSyncFlag)
+            {
+                ipOutputBuffer->nFlags |= OMX_BUFFERFLAG_SYNCFRAME;
+                iSyncFlag = OMX_FALSE;
+            }
+
+            ReturnOutputBuffer(ipOutputBuffer, pOutPort);
+
+            oscl_memset((void *)iNALSizeArray, 0, iNALCount * sizeof(int32));
+            iNALCount = 0;
+            iNALSizeSum = 0;
+
+            iEndOfOutputFrame = OMX_FALSE;
+        }
+    }
+
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_NOTICE,
+                    (0, "OmxComponentAvcEncAO::ManageFrameBoundaries() Out"));
+}
+

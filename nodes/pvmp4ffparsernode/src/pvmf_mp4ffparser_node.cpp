@@ -648,6 +648,7 @@ PVMFStatus PVMFMP4FFParserNode::SetSourceInitializationData(OSCL_wString& aSourc
     {
         iFilename = aSourceURL;
         iSourceFormat = inputFormatType;
+        iUseCPMPluginRegistry = true;
         if (aSourceData)
         {
             PVInterface* pvInterface =
@@ -664,7 +665,6 @@ PVMFStatus PVMFMP4FFParserNode::SetSourceInitializationData(OSCL_wString& aSourc
                 {
                     iThumbNailMode = true;
                 }
-                iUseCPMPluginRegistry = opaqueData->iUseCPMPluginRegistry;
                 iCPMSourceData.iPreviewMode = iPreviewMode;
                 iCPMSourceData.iIntent = opaqueData->iIntent;
                 if (opaqueData->iFileHandle)
@@ -713,7 +713,6 @@ PVMFStatus PVMFMP4FFParserNode::SetSourceInitializationData(OSCL_wString& aSourc
                         {
                             iThumbNailMode = true;
                         }
-                        iUseCPMPluginRegistry = cContext->iUseCPMPluginRegistry;
                         if (cContext->iFileHandle)
                         {
                             iFileHandle = OSCL_NEW(OsclFileHandle, (*(cContext->iFileHandle)));
@@ -739,12 +738,19 @@ PVMFStatus PVMFMP4FFParserNode::SetSourceInitializationData(OSCL_wString& aSourc
                 }
             }
         }
-        //If a CPM flag is provided in the source data, then
         //create a CPM object here...
         if (iUseCPMPluginRegistry)
         {
             iCPM = PVMFCPMFactory::CreateContentPolicyManager(*this);
-            iCPM->ThreadLogon();
+            //thread logon may leave if there are no plugins
+            int32 err;
+            OSCL_TRY(err, iCPM->ThreadLogon(););
+            OSCL_FIRST_CATCH_ANY(err,
+                                 iCPM->ThreadLogoff();
+                                 PVMFCPMFactory::DestroyContentPolicyManager(iCPM);
+                                 iCPM = NULL;
+                                 iUseCPMPluginRegistry = false;
+                                );
         }
         return PVMFSuccess;
     }

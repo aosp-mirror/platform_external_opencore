@@ -352,7 +352,18 @@ const PVMFStatus PVMFInfoVideoTrackFallingBehind = 48;
  Notification that memory is not available for new RTP packets
  */
 const PVMFStatus PVMFInfoSourceOverflow = 49;
-
+/*
+ Notification for Media data length in shoutcast session
+ */
+const PVMFStatus PVMFInfoShoutcastMediaDataLength = 50;
+/*
+ Notification for clip bitrate in shoutcast session
+ */
+const PVMFStatus PVMFInfoShoutcastClipBitrate = 51;
+/*
+ Notification for shoutcast session
+ */
+const PVMFStatus PVMFInfoIsShoutcastSesssion = 52;
 /*
  Placeholder for end of range
  */

@@ -41,6 +41,9 @@
 #ifndef OSCL_DLL_H_INCLUDED
 #include "oscl_dll.h"
 #endif
+#ifndef WCHAR_SIZE_UTILS_H_INCLUDED
+#include "wchar_size_utils.h"
+#endif
 
 #define LOG_STACK_TRACE(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, m);
 #define LOG_DEBUG(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, m);
@@ -3540,12 +3543,31 @@ PVMFStatus PVID3ParCom::ReadTrackLengthFrame(uint32 aValueSize, PVID3CharacterSe
         case PV_ID3_CHARSET_UTF16:
         case PV_ID3_CHARSET_UTF16BE:
         {
-            char* tmpData = NULL;
-            tmpData = (char*) AllocateValueArray(err, PVMI_KVPVALTYPE_CHARPTR, aValueSize / sizeof(oscl_wchar) + 1, &iAlloc);
+            //it uses 16-bit unicode 2.0 (ISO/IEC 10646-1:1993, UCS-2)
 
-            oscl_UnicodeToUTF8((oscl_wchar*)ptrFrameData, aValueSize / sizeof(oscl_wchar), tmpData, aValueSize);
+            char* tmpData = NULL;
+            int len = aValueSize / UNICODE_CHAR_SIZE + 1;
+            tmpData = (char*) AllocateValueArray(err, PVMI_KVPVALTYPE_CHARPTR, len, &iAlloc);
+
+            if (sizeof(oscl_wchar) == UNICODE_CHAR_SIZE)
+            {
+                oscl_UnicodeToUTF8((oscl_wchar*)ptrFrameData, aValueSize / sizeof(oscl_wchar), tmpData, len);
+            }
+            else
+            {
+                oscl_wchar* tmpData2 = NULL;
+
+                tmpData2 = (oscl_wchar*) AllocateValueArray(err, PVMI_KVPVALTYPE_WCHARPTR, len);
+                // convert 2 byte unicode data  to 4 byte wchar data
+                ExpandWChar2BytesTo4Bytes(tmpData2, (uint16*)ptrFrameData, len);
+
+                oscl_UnicodeToUTF8(tmpData2, aValueSize / UNICODE_CHAR_SIZE, tmpData, len);
+
+                OSCL_ARRAY_DELETE(tmpData2);
+            }
+
             // copy the UTF8 string back to ptrFrameData
-            oscl_strncpy((char*)ptrFrameData, tmpData, oscl_strlen((const oscl_wchar*)ptrFrameData) + 1);
+            oscl_strncpy((char*)ptrFrameData, tmpData, len);
 
             iAlloc.deallocate((OsclAny*)tmpData);
         }

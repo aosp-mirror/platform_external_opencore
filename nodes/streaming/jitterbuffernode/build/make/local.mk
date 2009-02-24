@@ -6,31 +6,22 @@ include $(MK)/clear.mk
 
 TARGET := pvjitterbuffernode
 
-
-
-
 XINCDIRS += ../../../common/include ../../../streamingmanager/plugins/mshttp/config ../../../streamingmanager/include ../../../../../protocols/rtp/src
-
-
+XINCDIRS += -I ../../../common/include
+XINCDIRS += -I ../../jitterbuffer/common/include
 
 SRCDIR := ../../src
 INCSRCDIR := ../../include
 
-SRCS := pvmf_jitter_buffer_extension_interface.cpp \
+# compose final src list for actual build
+SRCS = pvmf_jitter_buffer_extension_interface.cpp \
 	pvmf_jitter_buffer_port.cpp \
-	pvmf_jitter_buffer_impl.cpp \
-	pvmf_rtcp_timer.cpp \
-	pvmf_jitter_buffer_node.cpp \
-	pvmf_jb_inactivity_timer.cpp
+	pvmf_jitter_buffer_node.cpp 
 
-HDRS := pvmf_jitter_buffer_ext_interface.h \
+HDRS = pvmf_jitter_buffer_ext_interface.h \
 	pvmf_jitter_buffer_internal.h \
 	pvmf_jitter_buffer_port.h \
-	pvmf_jitter_buffer.h \
-	pvmf_jitter_buffer_node.h \
-	pvmf_rtcp_timer.h \
-	pvmf_jb_inactivity_timer.h
-
+	pvmf_jitter_buffer_node.h 
 
 include $(MK)/library.mk
 

@@ -435,24 +435,6 @@ PVA_FF_MovieAtom::setMaxBufferSizeDB(uint32 trackID, uint32 max)
     }
 }
 
-void PVA_FF_MovieAtom::setVideoWidthHeight(uint32 trackID, int16 width, int16 height)
-{
-    PVA_FF_TrackAtom *mediaTrack;
-    uint32 mediaType = 0;
-    mediaTrack = getMediaTrack(trackID);
-
-    if (mediaTrack != NULL)
-    {
-        mediaType  = mediaTrack->getMediaType();
-        if (mediaType == MEDIA_TYPE_VISUAL)
-        {
-            mediaTrack->setVideoWidthHeight(width, height);
-        }
-    }
-}
-
-
-
 void
 PVA_FF_MovieAtom::addSampleToTrack(uint32 trackID,
                                    uint8 *psample,

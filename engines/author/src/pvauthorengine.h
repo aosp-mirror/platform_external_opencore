@@ -54,6 +54,7 @@
 #endif
 #define K3gpComposerMimeType "/x-pvmf/ff-mux/3gp"
 #define KAmrNbEncMimeType "/x-pvmf/audio/encode/amr-nb"
+#define KAMRWbEncMimeType "/x-pvmf/audio/encode/amr-wb"
 #define KH263EncMimeType "/x-pvmf/video/encode/h263"
 #define KH264EncMimeType "/x-pvmf/video/encode/h264"
 #define KMp4EncMimeType "/x-pvmf/video/encode/mp4"
@@ -61,10 +62,12 @@
 
 //MIME strings for .amr and .aac composer
 #define KAMRNbComposerMimeType		"/x-pvmf/ff-mux/amr-nb"
+#define KAMRWbComposerMimeType		"/x-pvmf/ff-mux/amr-wb"
 #define KAACADIFComposerMimeType	"/x-pvmf/ff-mux/adif"
 #define KAACADTSComposerMimeType	"/x-pvmf/ff-mux/adts"
 #define KAACADIFEncMimeType			"/x-pvmf/audio/encode/aac/adif"
 #define KAACADTSEncMimeType			"/x-pvmf/audio/encode/aac/adts"
+#define KAACMP4EncMimeType          "/x-pvmf/audio/encode/X-MPEG4-AUDIO"
 //end of changes
 
 /**

@@ -182,20 +182,18 @@ OSCL_EXPORT_REF int32 GetActualAacConfig(uint8* aConfigHeader,
     Int            status = ERROR_BUFFER_OVERRUN;
 
 
-
     /*
      *  Allocate memory to decode one AAC frame
      */
 
+
+    iAACDecExt = new tPVMP4AudioDecoderExternal;
     if (!iAACDecExt)
     {
-        iAACDecExt = new tPVMP4AudioDecoderExternal;
-        if (!iAACDecExt)
-        {
-            return 1;
-        }
-        iAACDecExt->inputBufferCurrentLength = 0;
+        return 1;
     }
+    iAACDecExt->inputBufferCurrentLength = 0;
+
 
     iAACDecExt->pInputBuffer = aConfigHeader;
     iAACDecExt->inputBufferMaxLength = PVMP4AUDIODECODER_INBUFSIZE;

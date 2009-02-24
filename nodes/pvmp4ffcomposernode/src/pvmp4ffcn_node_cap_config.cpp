@@ -355,6 +355,10 @@ PVMFStatus PVMp4FFComposerNode::VerifyAndSetConfigParameter(PvmiKvp& aParameter,
                 {
                     iErrorAddTrack = PVMF_MIME_AMR_IETF;
                 }
+                if (pv_mime_strcmp(val_key, "PVMF_MIME_AMRWB_IETF") == 0)
+                {
+                    iErrorAddTrack = PVMF_MIME_AMRWB_IETF;
+                }
 
             }
             break;

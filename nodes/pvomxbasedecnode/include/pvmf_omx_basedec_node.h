@@ -106,6 +106,7 @@
 #endif
 #endif
 
+#define MAX_NAL_PER_FRAME 100
 
 typedef struct OutputBufCtrlStruct
 {
@@ -508,7 +509,7 @@ class PVMFOMXBaseDecNode
         }
 
         // DV:
-        virtual bool NegotiateComponentParameters() = 0;
+        virtual bool NegotiateComponentParameters(OMX_PTR aOutputParameters) = 0;
 
         bool SetDefaultCapabilityFlags();
         OSCL_IMPORT_REF bool CreateOutMemPool(uint32 num);
@@ -542,7 +543,7 @@ class PVMFOMXBaseDecNode
         bool SendBeginOfMediaStreamCommand(void);
         bool SendEndOfTrackCommand(void);
 
-
+        bool AppendExtraDataToBuffer(InputBufCtrlStruct* aInputBuffer, OMX_EXTRADATATYPE aType, uint8* aExtraData, uint8 aDataLength);
 
         virtual bool ReleaseAllPorts() = 0;
         bool DeleteOMXBaseDecoder();
@@ -634,6 +635,7 @@ class PVMFOMXBaseDecNode
         bool	iKeepDroppingMsgsUntilMarkerBit;
         bool	iFirstDataMsgAfterBOS;
         InputBufCtrlStruct *iInputBufferUnderConstruction;
+        bool	iIncompleteFrame;
 
         OSCL_IMPORT_REF void DropCurrentBufferUnderConstruction();
         OSCL_IMPORT_REF void SendIncompleteBufferUnderConstruction();
@@ -669,7 +671,8 @@ class PVMFOMXBaseDecNode
         bool iSetMarkerBitForEveryFrag; // is every fragment complete frame (e.g. AVC file playback = each fragment is a NAL)
         bool iIsOMXComponentMultiThreaded;
         bool iOMXComponentSupportsPartialFrames;
-        bool iOMXComponentNeedsNALStartCode;
+        bool iOMXComponentUsesNALStartCodes;
+        bool iOMXComponentUsesFullAVCFrames;
         bool iOMXComponentCanHandleIncompleteFrames;
 
         // State definitions for HandleProcessingState() state machine
@@ -781,6 +784,17 @@ class PVMFOMXBaseDecNode
         bool iResetInProgress;
         bool iResetMsgSent;
         bool iStopInResetMsgSent;
+
+        // AVC NAL counter and size array
+        uint32 iNALCount;
+        uint32 iNALSizeArray[MAX_NAL_PER_FRAME]; // NAL count shouldn't exceed 100
+
+        OsclAny **out_ctrl_struct_ptr ;
+        OsclAny **out_buff_hdr_ptr ;
+        OsclAny **in_ctrl_struct_ptr ;
+        OsclAny **in_buff_hdr_ptr ;
+
+
 };
 
 

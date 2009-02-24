@@ -82,23 +82,40 @@ bool MP3Utils::getCurrentFileSize(PVFile *fp, uint32& aCurrentSize)
     return false;
 }
 
-MP3ErrorType MP3Utils::SeektoOffset(PVFile *aFP, int32 aOffset)
+MP3ErrorType MP3Utils::SeektoOffset(PVFile *aFP, int32 aOffset, Oscl_File::seek_type aSeekType)
 {
     uint32 currFileSize = 0;
-    if (MP3Utils::getCurrentFileSize(aFP, currFileSize))
+    uint32 currPos = 0;
+    int32 seekOffset = 0;
+    currPos = MP3Utils::getCurrentFilePosition(aFP);
+    MP3Utils::getCurrentFileSize(aFP, currFileSize);
+
+    // translate the seek offset to seek from current position
+    switch (aSeekType)
     {
-        if (currFileSize >= (uint32)aOffset)
+        case Oscl_File::SEEKSET:
+            seekOffset = aOffset - currPos;
+            break;
+        case Oscl_File::SEEKEND:
+            seekOffset = currFileSize - currPos;
+            break;
+        case Oscl_File::SEEKCUR:
+            seekOffset = aOffset;
+        default:
+            break;
+    }
+
+    if (aOffset <= 0 || currFileSize >= (uint32) aOffset)
+    {
+        if (aFP->Seek(seekOffset, Oscl_File::SEEKCUR) != 0)
         {
-            if (aFP->Seek(aOffset, Oscl_File::SEEKSET) != 0)
-            {
-                return MP3_FILE_READ_ERR;
-            }
-            return MP3_SUCCESS;
+            return MP3_FILE_READ_ERR;
         }
-        else
-        {
-            return MP3_INSUFFICIENT_DATA;
-        }
+        return MP3_SUCCESS;
+    }
+    else
+    {
+        return MP3_INSUFFICIENT_DATA;
     }
     return MP3_ERROR_UNKNOWN;
 }

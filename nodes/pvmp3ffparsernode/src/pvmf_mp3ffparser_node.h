@@ -19,7 +19,6 @@
 #define PVMF_MP3FFPARSER_NODE_H_INCLUDED
 
 
-
 #ifndef OSCL_SCHEDULER_AO_H_INCLUDED
 #include "oscl_scheduler_ao.h"
 #endif
@@ -114,8 +113,20 @@
 #ifndef IMP3FF_H_INCLUDED
 #include "imp3ff.h"  // Includes for the core file format mp3 parser library
 #endif
-#define PVMF_MP3_PARSER_NODE_MAX_CPM_METADATA_KEYS 256
 
+#ifndef USE_CML2_CONFIG
+#ifndef PVMF_MP3FFPASER_NODE_CONFIG_H_INCLUDED
+#include "pvmf_mp3ffparser_node_config.h"
+#endif
+#endif
+
+#if PV_HAS_SHOUTCAST_SUPPORT_ENABLED // include scsp only when SHOUTCAST support is enabled
+#ifndef PVMF_SHOUTCAST_STREAM_PARSER_H_INCLUDED
+#include "pvmf_shoutcast_stream_parser.h"
+#endif
+#endif
+
+#define PVMF_MP3_PARSER_NODE_MAX_CPM_METADATA_KEYS 256
 
 /**
 * Container for the CPM object
@@ -375,6 +386,9 @@ class PVMFMP3FFParserNode : public OsclTimerObject,
             public OsclMemPoolResizableAllocatorObserver,
             public PvmfDataSourcePlaybackControlInterface,
             public PVMFCPMPluginLicenseInterface
+#if PV_HAS_SHOUTCAST_SUPPORT_ENABLED
+            , public PVMFMetadataUpdatesObserver
+#endif
 {
     public:
         PVMFMP3FFParserNode(int32 aPriority = OsclActiveObject::EPriorityNominal);
@@ -415,6 +429,10 @@ class PVMFMP3FFParserNode : public OsclTimerObject,
         PVMFStatus GetMediaPresentationInfo(PVMFMediaPresentationInfo& aInfo);
         PVMFStatus SelectTracks(PVMFMediaPresentationInfo& aInfo);
 
+#if PV_HAS_SHOUTCAST_SUPPORT_ENABLED
+        //From PVMFMetadataUpdatesObserver
+        void MetadataUpdated(uint32 aMetadataSize);
+#endif
         // From PVMFMetadataExtensionInterface
         uint32 GetNumMetadataKeys(char* aQueryKeyString = NULL);
         uint32 GetNumMetadataValues(PVMFMetadataList& aKeyList);
@@ -454,6 +472,7 @@ class PVMFMP3FFParserNode : public OsclTimerObject,
 
         /* From PVMFFormatProgDownloadSupportInterface */
         int32 convertSizeToTime(uint32 fileSize, uint32& aNPTInMS);
+        bool setProtocolInfo(Oscl_Vector<PvmiKvp*, OsclMemAllocator>& aInfoKvpVec);
         void setFileSize(const uint32 aFileSize);
         void setDownloadProgressInterface(PVMFDownloadProgressInterface* download_progress);
         void playResumeNotification(bool aDownloadComplete);
@@ -512,6 +531,8 @@ class PVMFMP3FFParserNode : public OsclTimerObject,
     private:
         PVMFStatus CheckForMP3HeaderAvailability();
         PVMFStatus GetFileOffsetForAutoResume(uint32& aOffset, PVMP3FFNodeTrackPortInfo* aTrackPortInfo);
+        PVMFStatus ParseShoutcastMetadata(char* aMetadataBuf, uint32 aMetadataSize, Oscl_Vector<PvmiKvp, OsclMemAllocator>& aKvpVector);
+
         void Construct();
 
         //from OsclActiveObject
@@ -588,6 +609,20 @@ class PVMFMP3FFParserNode : public OsclTimerObject,
 
 // private member variables
     private:
+
+#if PV_HAS_SHOUTCAST_SUPPORT_ENABLED
+        // shoutcast related
+        int32 iClipByteRate;
+        int32 iMetadataBufSize;
+        uint32 iMetadataSize;
+        int32 iMetadataInterval;
+        Oscl_Vector<PvmiKvp, OsclMemAllocator> iMetadataVector;
+
+        PVMFShoutcastStreamParserFactory* iSCSPFactory;
+        PVMFShoutcastStreamParser* iSCSP;
+        uint8 *iMetadataBuf;
+#endif
+
         // Vector of ports contained in this node
         PVMFPortVector<PVMFMP3FFParserPort, PVMFMP3FFParserNodeAllocator> iPortVector;
 
@@ -606,7 +641,6 @@ class PVMFMP3FFParserNode : public OsclTimerObject,
         OSCL_wHeapString<OsclMemAllocator> iSourceURL;
         bool iSourceURLSet;
         PVMFFormatType iSourceFormat;
-        bool iUseCPMPluginRegistry;
         PVMFSourceContextData iSourceContextData;
         bool iSourceContextDataValid;
         OsclFileHandle* iFileHandle;

@@ -19,11 +19,6 @@
 #include "pvmf_media_msg_format_ids.h" // for PVMF_MEDIA_CMD_EOS_FORMAT_ID
 #include "oscl_utf8conv.h" // for oscl_UnicodeToUTF8
 
-#define LOGINFODATAPATH(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG,iLogger,PVLOGMSG_INFO,m);
-#define PVMF_PROTOCOL_ENGINE_LOGINFODATAPATH(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG,iDataPathLogger,PVLOGMSG_INFO,m);
-#define PVMF_PROTOCOL_ENGINE_LOGERRINFODATAPATH(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG,iDataPathErrLogger,PVLOGMSG_INFO,m);
-
-
 ////////////////////////////////////////////////////////////////////////////////////
 //////	pvHttpDownloadInput implementation
 ////////////////////////////////////////////////////////////////////////////////////

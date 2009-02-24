@@ -53,6 +53,10 @@
 #include "pvmf_simple_media_buffer.h"
 #endif
 
+#ifndef PVMF_MEDIA_FRAG_GROUP_H_INCLUDED
+#include "pvmf_media_frag_group.h"
+#endif
+
 #ifndef PVMF_POOL_BUFFER_ALLOCATOR_H_INCLUDED
 #include "pvmf_pool_buffer_allocator.h"
 #endif
@@ -81,8 +85,8 @@
 #include "pvmp4h263encextension.h"
 #endif
 
-#ifndef PVMFAMRENCNODE_EXTENSION_H_INCLUDED
-#include "pvmfamrencnode_extension.h"
+#ifndef PVMF_AUDIO_ENCNODE_EXTENSION_H_INCLUDED
+#include "pvmf_audio_encnode_extension.h"
 #endif
 
 // DV: NOTE - this needs to be fixed
@@ -110,6 +114,9 @@
 #include "pvmf_omx_enc_callbacks.h"
 #endif
 
+#ifndef PV_OMXDEFS_H_INCLUDED
+#include "pv_omxdefs.h"
+#endif
 
 #ifndef OSCLCONFIG_IO_H_INCLUDED
 #include "osclconfig_io.h"
@@ -203,7 +210,8 @@ class PVOMXBufferSharedPtrWrapperCombinedCleanupDA : public OsclDestructDealloc
                 buf_alloc->deallocate(ptr_to_data_to_dealloc);
             }
 
-            // finally, free the shared ptr wrapper memory
+            // this is needed to completely free PVMFMediaDataImpl, since it allocates memory for the frag list
+            ((PVMFMediaDataImpl*)ptr)->~PVMFMediaDataImpl();
             oscl_free(ptr);
         }
 
@@ -681,7 +689,10 @@ typedef struct PV_AudioEncodeParam
     uint8 iOutputNumChannels;
 
     // DESCRIPTION: Currently, output bitrate is expressed as GSM-AMR type rate
-    PVMF_GSMAMR_Rate iOutputBitrate;
+    PVMF_GSMAMR_Rate iAMRBitrate;
+
+    // DESCRIPTION: output bitrate in bits per second for non-AMR codecs
+    uint32  iOutputBitrate;
 
     //
     uint32	iMaxNumOutputFramesPerBuffer;
@@ -867,8 +878,7 @@ class PVMFOMXEncNode
             , public PVMFMetadataExtensionInterface
             , public PvmiCapabilityAndConfig
             , public PVMp4H263EncExtensionInterface
-            , public PVAMREncExtensionInterface
-
+            , public PVAudioEncExtensionInterface
 {
     public:
         PVMFOMXEncNode(int32 aPriority);
@@ -1008,9 +1018,13 @@ class PVMFOMXEncNode
 
         OSCL_IMPORT_REF virtual bool SetFSIParam(uint8* aFSIBuff, int aFSIBuffLength);
 
-        // from AMREncExtensionInterface
+        // from AudioEncExtensionInterface
         OSCL_IMPORT_REF PVMFStatus SetOutputBitRate(PVMF_GSMAMR_Rate aBitRate);
         OSCL_IMPORT_REF PVMFStatus SetMaxNumOutputFramesPerBuffer(uint32 aNumOutputFrames);
+        OSCL_IMPORT_REF PVMFStatus SetOutputBitRate(uint32 aBitRate);
+        OSCL_IMPORT_REF PVMFStatus SetOutputNumChannel(uint32 aNumChannel);
+        OSCL_IMPORT_REF PVMFStatus SetOutputSamplingRate(uint32 aSamplingRate);
+
 
         PVMFStatus SetInputSamplingRate(uint32 aSamplingRate);
         PVMFStatus SetInputBitsPerSample(uint32 aBitsPerSample);
@@ -1030,6 +1044,8 @@ class PVMFOMXEncNode
         OsclFloat GetOutputFrameRate(uint32 aLayer);
         PVMFStatus GetOutputFrameSize(uint32 aLayer, uint32& aWidth, uint32& aHeight);
         uint32 GetIFrameInterval();
+        uint32 GetOutputSamplingRate();
+        uint32 GetOutputNumChannels();
 
     private:
         void CommandComplete(PVMFOMXEncNodeCmdQ& aCmdQ, PVMFOMXEncNodeCommand& aCmd, PVMFStatus aStatus, OsclAny* aEventData = NULL);
@@ -1067,6 +1083,7 @@ class PVMFOMXEncNode
 
         bool NegotiateAudioComponentParameters();
         bool SetAMREncoderParameters();
+        bool SetAACEncoderParameters();
 
         bool SetDefaultCapabilityFlags();
         bool CreateOutMemPool(uint32 num);
@@ -1132,6 +1149,9 @@ class PVMFOMXEncNode
         int32 CreateNewArray(char*&, int32);
         int32 MemAllocate(OsclAny*& , OsclMemPoolFixedChunkAllocator*, uint32);
 
+        bool ParseFullAVCFramesIntoNALs(OMX_BUFFERHEADERTYPE* aOutputBuffer);
+        bool AVCAnnexBGetNALUnit(uint8 *bitstream, uint8 **nal_unit, int32 *size, bool getPtrOnly);
+
         friend class PVMFOMXEncPort;
 
         // Ports pointers
@@ -1154,8 +1174,6 @@ class PVMFOMXEncNode
 
         // Memory pool for simple media data
         OsclMemPoolFixedChunkAllocator *iMediaDataMemPool;
-
-
 
         // Size of output buffer (negotiated with component)
         uint32 iOMXComponentOutputBufferSize;
@@ -1226,9 +1244,10 @@ class PVMFOMXEncNode
         bool iOMXComponentSupportsExternalOutputBufferAlloc;
         bool iOMXComponentSupportsExternalInputBufferAlloc;
         bool iOMXComponentSupportsMovableInputBuffers;
-        bool iOMXComponentNeedsNALStartCode;
+        bool iOMXComponentUsesNALStartCodes;
         bool iOMXComponentSupportsPartialFrames;
         bool iOMXComponentCanHandleIncompleteFrames;
+        bool iOMXComponentUsesFullAVCFrames;
 
         bool iSetMarkerBitForEveryFrag;
         bool iIsOMXComponentMultiThreaded;
@@ -1347,6 +1366,7 @@ class PVMFOMXEncNode
 
         PVMFOMXEncNodeAllocDestructDealloc iAlloc;
         OsclRefCounterMemFrag iVolHeader; /** Vol header */
+        OsclRefCounterMemFrag iConfigHeader;
 
         OsclRefCounterMemFrag iParamSet; /* place holder for sps,pps values */
         OsclMemoryFragment iSPSs[PVMF_AVCENC_NODE_SPS_VECTOR_RESERVE]; // just ptrs
@@ -1356,6 +1376,11 @@ class PVMFOMXEncNode
         bool iSpsPpsSequenceOver;
         OsclSharedPtr<PVMFMediaDataImpl> iPreviousMediaData;
         bool iFirstNAL;
+        uint32* iNALSizeArray;
+        uint8** iNALPtrArray;
+        uint32 iNALSizeArrayMaxElems;
+        uint32 iNumNALs;
+        uint32 iFirstNALStartCodeSize;
 
         uint32 iEndOfFrameFlagPrevious;
         uint32 iKeyFrameFlagPrevious;
@@ -1368,6 +1393,10 @@ class PVMFOMXEncNode
         uint32 iEndOfNALFlagOut;
         uint32 iTimeStampOut;
         uint32 iBufferLenOut;
+        OsclAny **out_ctrl_struct_ptr ;
+        OsclAny **out_buff_hdr_ptr ;
+        OsclAny **in_ctrl_struct_ptr ;
+        OsclAny **in_buff_hdr_ptr ;
 
 
 

@@ -25,7 +25,7 @@
 #include "pvmf_media_msg_format_ids.h"
 #include "pvmi_kvp_util.h"
 // needed for capability and config
-#include "pv_video_config_parser.h"
+#include "pv_omx_config_parser.h"
 
 
 #include "omx_core.h"
@@ -261,6 +261,39 @@ PVMFStatus PVMFOMXVideoDecNode::HandlePortReEnable()
             return PVMFErrNoMemory;
         }
 
+        if (out_ctrl_struct_ptr == NULL)
+        {
+
+            out_ctrl_struct_ptr = (OsclAny **) oscl_malloc(iNumOutputBuffers * sizeof(OsclAny *));
+
+            if (out_ctrl_struct_ptr == NULL)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                                (0, "PVMFOMXVideoDecNode::HandlePortReEnable() out_ctrl_struct_ptr == NULL"));
+
+                SetState(EPVMFNodeError);
+                ReportErrorEvent(PVMFErrNoMemory);
+                return PVMFErrNoMemory;
+            }
+        }
+
+        if (out_buff_hdr_ptr == NULL)
+        {
+
+            out_buff_hdr_ptr = (OsclAny **) oscl_malloc(iNumOutputBuffers * sizeof(OsclAny *));
+
+            if (out_buff_hdr_ptr == NULL)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                                (0, "PVMFOMXVideoDecNode::HandlePortReEnable()  out_buff_hdr_ptr == NULL"));
+
+                SetState(EPVMFNodeError);
+                ReportErrorEvent(PVMFErrNoMemory);
+                return PVMFErrNoMemory;
+            }
+        }
+
+
         if (!ProvideBuffersToComponent(iOutBufMemoryPool, // allocator
                                        iOutputAllocSize,	 // size to allocate from pool (hdr only or hdr+ buffer)
                                        iNumOutputBuffers, // number of buffers
@@ -309,6 +342,38 @@ PVMFStatus PVMFOMXVideoDecNode::HandlePortReEnable()
             return PVMFErrNoMemory;
         }
 
+        if (in_ctrl_struct_ptr == NULL)
+        {
+
+            in_ctrl_struct_ptr = (OsclAny **) oscl_malloc(iNumInputBuffers * sizeof(OsclAny *));
+
+            if (in_ctrl_struct_ptr == NULL)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                                (0, "PVMFOMXVideoDecNode::HandlePortReEnable() in_ctrl_struct_ptr == NULL"));
+
+                SetState(EPVMFNodeError);
+                ReportErrorEvent(PVMFErrNoMemory);
+                return PVMFErrNoMemory;
+            }
+        }
+
+        if (in_buff_hdr_ptr == NULL)
+        {
+
+            in_buff_hdr_ptr = (OsclAny **) oscl_malloc(iNumInputBuffers * sizeof(OsclAny *));
+
+            if (in_buff_hdr_ptr == NULL)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                                (0, "PVMFOMXVideoDecNode::HandlePortReEnable()  in_buff_hdr_ptr == NULL"));
+
+                SetState(EPVMFNodeError);
+                ReportErrorEvent(PVMFErrNoMemory);
+                return PVMFErrNoMemory;
+            }
+        }
+
         if (!ProvideBuffersToComponent(iInBufMemoryPool, // allocator
                                        iInputAllocSize,	 // size to allocate from pool (hdr only or hdr+ buffer)
                                        iNumInputBuffers, // number of buffers
@@ -343,7 +408,7 @@ PVMFStatus PVMFOMXVideoDecNode::HandlePortReEnable()
     return PVMFSuccess; // allow rescheduling of the node
 }
 ////////////////////////////////////////////////////////////////////////////////
-bool PVMFOMXVideoDecNode::NegotiateComponentParameters()
+bool PVMFOMXVideoDecNode::NegotiateComponentParameters(OMX_PTR aOutputParameters)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "PVMFOMXVideoDecNode::NegotiateComponentParameters() In"));
@@ -472,33 +537,17 @@ bool PVMFOMXVideoDecNode::NegotiateComponentParameters()
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "PVMFOMXVideoDecNode::NegotiateComponentParameters() Inport buffers %d,size %d", iNumInputBuffers, iOMXComponentInputBufferSize));
 
-    pvVideoConfigParserInputs aInputs;
-    pvVideoConfigParserOutputs aOutputs;
 
-    aInputs.inPtr = (uint8*)((PVMFOMXDecPort*)iInPort)->iTrackConfig;
-    aInputs.inBytes = (int32)((PVMFOMXDecPort*)iInPort)->iTrackConfigSize;
-    aInputs.iMimeType = ((PVMFOMXDecPort*)iInPort)->iFormat;
+    VideoOMXConfigParserOutputs *pOutputParameters;
 
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "PVMFOMXVideoDecNode::NegotiateComponentParameters() Calling video config parser - TrackConfig = %p, TrackConfigSize = %d, mimetype = %s", aInputs.inPtr, aInputs.inBytes, aInputs.iMimeType.getMIMEStrPtr()));
-
-
-    int16 status;
-    status = pv_video_config_parser(&aInputs, &aOutputs);
-    if (status != 0)
-    {
-        return false;
-    }
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "PVMFOMXVideoDecNode::NegotiateComponentParameters() pv config parser says width=%d and height=%d", aOutputs.width, aOutputs.height));
+    pOutputParameters = (VideoOMXConfigParserOutputs *)aOutputParameters;
 
 
     // set the width/height on INPUT port parameters (this may change during port reconfig)
-    if ((aOutputs.width != 0) && (aOutputs.height != 0))
+    if ((pOutputParameters->width != 0) && (pOutputParameters->height != 0))
     {
-        iParamPort.format.video.nFrameWidth = aOutputs.width;
-        iParamPort.format.video.nFrameHeight = aOutputs.height;
+        iParamPort.format.video.nFrameWidth = pOutputParameters->width;
+        iParamPort.format.video.nFrameHeight = pOutputParameters->height;
     }
 
     CONFIG_SIZE_AND_VERSION(iParamPort);
@@ -525,10 +574,10 @@ bool PVMFOMXVideoDecNode::NegotiateComponentParameters()
     // 1st frame is decoded, so read them from the output port.
     // otherwise, used Width/Height from the config parser utility
     // set the width/height based on port parameters (this may change during port reconfig)
-    if ((aOutputs.width != 0) && (aOutputs.height != 0) && iInPort && (((PVMFOMXDecPort*)iInPort)->iFormat != PVMF_MIME_H2631998 || ((PVMFOMXDecPort*)iInPort)->iFormat != PVMF_MIME_H2632000))
+    if ((pOutputParameters->width != 0) && (pOutputParameters->height != 0) && iInPort && (((PVMFOMXDecPort*)iInPort)->iFormat != PVMF_MIME_H2631998 || ((PVMFOMXDecPort*)iInPort)->iFormat != PVMF_MIME_H2632000))
     {
-        iYUVWidth  = aOutputs.width;
-        iYUVHeight = aOutputs.height;
+        iYUVWidth  = pOutputParameters->width;
+        iYUVHeight = pOutputParameters->height;
     }
     else
     {
@@ -2707,20 +2756,94 @@ PVMFStatus PVMFOMXVideoDecNode::DoCapConfigVerifyParameters(PvmiKvp* aParameters
             else
             {
                 pvVideoConfigParserInputs aInputs;
-                pvVideoConfigParserOutputs aOutputs;
+                OMXConfigParserInputs aInputParameters;
+                VideoOMXConfigParserOutputs aOutputParameters;
 
                 aInputs.inPtr = (uint8*)(aParameters->value.key_specific_value);
                 aInputs.inBytes = (int32)aParameters->capacity;
                 aInputs.iMimeType = iNodeConfig.iMimeType;
+                aInputParameters.inBytes = aInputs.inBytes;
+                aInputParameters.inPtr = aInputs.inPtr;
 
-                int16 status;
-                status = pv_video_config_parser(&aInputs, &aOutputs);
-                if (status != 0)
+                if (aInputs.iMimeType ==  PVMF_MIME_H264_VIDEO ||
+                        aInputs.iMimeType == PVMF_MIME_H264_VIDEO_MP4 ||
+                        aInputs.iMimeType == PVMF_MIME_H264_VIDEO_RAW)
+                {
+                    aInputParameters.cComponentRole = (OMX_STRING)"video_decoder.avc";
+                }
+                else if (aInputs.iMimeType ==  PVMF_MIME_M4V)
+                {
+                    aInputParameters.cComponentRole = (OMX_STRING)"video_decoder.mpeg4";
+                }
+                else if (aInputs.iMimeType ==  PVMF_MIME_H2631998 ||
+                         aInputs.iMimeType == PVMF_MIME_H2632000)
+                {
+                    aInputParameters.cComponentRole = (OMX_STRING)"video_decoder.h263";
+                }
+                else if (aInputs.iMimeType ==  PVMF_MIME_WMV)
+                {
+                    aInputParameters.cComponentRole = (OMX_STRING)"video_decoder.wmv";
+                }
+                else
+                {
+                    // Illegal codec specified.
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "%s::PVMFOMXVideoDecNode::DoCapConfigVerifyParameters() Input port format other then codec type", iName.Str()));
+
+                }
+
+
+                OMX_BOOL status = OMX_FALSE;
+                OMX_U32 num_comps = 0;
+                OMX_STRING *CompOfRole;
+                OMX_U32 ii;
+
+                // call once to find out the number of components that can fit the role
+
+                OMX_GetComponentsOfRole(aInputParameters.cComponentRole, &num_comps, NULL);
+
+                if (num_comps > 0)
+                {
+                    CompOfRole = (OMX_STRING *)oscl_malloc(num_comps * sizeof(OMX_STRING));
+                    for (ii = 0; ii < num_comps; ii++)
+                        CompOfRole[ii] = (OMX_STRING) oscl_malloc(PV_OMX_MAX_COMPONENT_NAME_LENGTH * sizeof(OMX_U8));
+
+                    // call 2nd time to get the component names
+                    OMX_GetComponentsOfRole(aInputParameters.cComponentRole, &num_comps, (OMX_U8 **)CompOfRole);
+                    for (ii = 0; ii < num_comps; ii++)
+                    {
+                        aInputParameters.cComponentName = CompOfRole[ii];
+                        status = OMXConfigParser(&aInputParameters, &aOutputParameters);
+                        if (status == OMX_TRUE)
+                        {
+                            break;
+                        }
+                        else
+                        {
+                            status = OMX_FALSE;
+                        }
+                    }
+
+                    // whether successful or not, need to free CompOfRoles
+                    for (ii = 0; ii < num_comps; ii++)
+                    {
+                        oscl_free(CompOfRole[ii]);
+                        CompOfRole[ii] = NULL;
+                    }
+                    oscl_free(CompOfRole);
+                }
+                else
+                {
+                    // if no component supports the role, nothing else to do
+                    return PVMFErrNotSupported;
+                }
+
+                if (status == OMX_FALSE)
                 {
                     return PVMFErrNotSupported;
                 }
-                iNewWidth = aOutputs.width;
-                iNewHeight = aOutputs.height;
+
+                iNewWidth = aOutputParameters.width;
+                iNewHeight = aOutputParameters.height;
 
                 return PVMFSuccess;
             }

@@ -541,7 +541,7 @@ AVCDec_Status DecodeSliceHeader(AVCDecObject *decvid, AVCCommonObj *video, AVCDe
 
     if (sliceHdr->first_mb_in_slice != 0)
     {
-        if ((int)sliceHdr->slice_type >= 5 && slice_type != (int)sliceHdr->slice_type)
+        if ((int)sliceHdr->slice_type >= 5 && slice_type != (int)sliceHdr->slice_type - 5)
         {
             return AVCDEC_FAIL; /* slice type doesn't follow the first slice in the picture */
         }

@@ -169,6 +169,7 @@ const uint32    TREF_TYPE_DEPEND = FourCharConstToUint32('d', 'p', 'n', 'd');
 
 const uint32    TEXT_SAMPLE_ENTRY = FourCharConstToUint32('t', 'x', '3', 'g');
 const uint32    AMR_SAMPLE_ENTRY = FourCharConstToUint32('s', 'a', 'm', 'r');
+const uint32    AMR_WB_SAMPLE_ENTRY = FourCharConstToUint32('s', 'a', 'w', 'b');
 const uint32    H263_SAMPLE_ENTRY = FourCharConstToUint32('s', '2', '6', '3');
 const uint32    AMR_SPECIFIC_ATOM = FourCharConstToUint32('d', 'a', 'm', 'r');
 const uint32    H263_SPECIFIC_ATOM = FourCharConstToUint32('d', '2', '6', '3');
@@ -217,20 +218,20 @@ const uint32    MOVIE_FRAGMENT_RANDOM_ACCESS_OFFSET_ATOM = FourCharConstToUint32
 typedef enum
 {
     CODEC_TYPE_AMR_AUDIO = 1,
-    CODEC_TYPE_AAC_AUDIO,
-
+    CODEC_TYPE_AAC_AUDIO = 2,
+    CODEC_TYPE_AMR_WB_AUDIO = 3
 } AUDIO_CODEC_TYPES;
 
 typedef enum
 {
-    CODEC_TYPE_MPEG4_VIDEO = 1,
-    CODEC_TYPE_BASELINE_H263_VIDEO,
-    CODEC_TYPE_AVC_VIDEO
+    CODEC_TYPE_MPEG4_VIDEO = 4,
+    CODEC_TYPE_BASELINE_H263_VIDEO = 5,
+    CODEC_TYPE_AVC_VIDEO = 6
 } VIDEO_CODEC_TYPES;
 
 typedef enum
 {
-    CODEC_TYPE_TIMED_TEXT = 1
+    CODEC_TYPE_TIMED_TEXT = 7
 
 } TEXT_CODEC_TYPES;
 
@@ -245,6 +246,7 @@ typedef enum
 #define MIN_NUM_MEDIA_TRACKS 0
 
 #define AMR_INTERLEAVE_BUFFER_SIZE    2048
+#define AMR_WB_INTERLEAVE_BUFFER_SIZE 4096
 #define AAC_INTERLEAVE_BUFFER_SIZE   12000  // Calc with 96 Kbps as max
 #define VIDEO_INTERLEAVE_BUFFER_SIZE 128000 // 2 x Bitrate @ 256 kbps
 #define TEXT_INTERLEAVE_BUFFER_SIZE  12000

@@ -266,6 +266,7 @@ void PVMFFileOutputInPort::QueryInterface(const PVUuid &aUuid, OsclAny*&aPtr)
 bool PVMFFileOutputInPort::IsFormatSupported(PVMFFormatType aFmt)
 {
     if ((aFmt == PVMF_MIME_AMR_IETF) ||
+            (aFmt == PVMF_MIME_AMRWB_IETF) ||
             (aFmt == PVMF_MIME_AMR) ||
             (aFmt == PVMF_MIME_AMR_IF2) ||
             (aFmt == PVMF_MIME_ADTS) ||
@@ -342,7 +343,7 @@ OSCL_EXPORT_REF PVMFStatus PVMFFileOutputInPort::getParametersSync(PvmiMIOSessio
 
     if (pv_mime_strcmp(identifier, INPUT_FORMATS_CAP_QUERY) == 0)
     {
-        num_parameter_elements = 16;
+        num_parameter_elements = 17;
         status = AllocateKvp(parameters, (PvmiKeyType)INPUT_FORMATS_VALTYPE, num_parameter_elements);
         if (status != PVMFSuccess)
         {
@@ -366,6 +367,7 @@ OSCL_EXPORT_REF PVMFStatus PVMFFileOutputInPort::getParametersSync(PvmiMIOSessio
             parameters[13].value.pChar_value = (char*)PVMF_MIME_H264_VIDEO_MP4;
             parameters[14].value.pChar_value = (char*)PVMF_MIME_H264_VIDEO;
             parameters[15].value.pChar_value = (char*)PVMF_MIME_3GPP_TIMEDTEXT;
+            parameters[16].value.pChar_value = (char*)PVMF_MIME_AMRWB_IETF;
         }
     }
     else if (pv_mime_strcmp(identifier, INPUT_FORMATS_CUR_QUERY) == 0)

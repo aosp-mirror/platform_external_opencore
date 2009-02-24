@@ -1,60 +1,148 @@
+function print_menu()
+{
+    echo
+    echo "Build selection menu... choose from the following:"
+    echo
+    echo "1. Build for host platform"
+    echo "2. Arm device build using OpenCORE (Android) cross-compiler"
+    echo "3. Build using default linux-arm cross-compiler"
+    echo "4. Arm device build using OpenCORE (Android) cross-compiler inside AccuRev workspace"
+    echo
+
+}
+
+function clean_env()
+{
+  echo "**********************************"
+  echo "Cleaning ARCHITECTURE ..."
+  unset ARCHITECTURE
+  echo "Cleaning ANDROID_BASE ..."
+  unset ANDROID_BASE
+  echo "Setting PATH back to the original ..."
+  export PATH=$BASE_PATH
+  echo "**********************************"
+}
+
+function menu()
+{
+    if [ "$1" ] ; then
+        CHOICE=$1
+    else
+        print_menu
+        read -p "Which selection would you like? " CHOICE
+    fi
+
+    case $CHOICE in
+    1)
+        echo "Choice is to build for the host platform."
+        clean_env
+        ;;
+    2)
+        echo "Choice is to build for target with OpenCORE (Android) cross-compiler"
+        ## clean the environment
+        clean_env
+        ## set path up for linux OpenCore build
+        android_gcc_arm_path=/opt/environments/android/toolchain-eabi-4.2.1/bin
+        export ARCHITECTURE=android
+        echo "ARCHITECTURE=$ARCHITECTURE"
+        export PATH=$android_gcc_arm_path:$BASE_PATH
+        export ANDROID_BASE=/opt/environments/android
+        echo "ANDROID_BASE=$ANDROID_BASE"
+        ;;
+    3)
+        echo "Choice is to build for target with the default linux-arm cross-compiler"
+        # clean the environment
+        clean_env
+        # set path up for linux-arm compiler
+        linux_arm_path=/opt/environments/linux_arm/data/omapts/linux/arm-tc/gcc-3.4.0-1/bin
+        export ARCHITECTURE=linux_arm
+        export PATH=$linux_arm_path:$BASE_PATH
+        ;;
+    4)  
+        echo "Choice is to build for target with workspace's OpenCORE (Android) cross-compiler"
+        ## clean the environment
+        clean_env
+        ## set path up for linux OpenCore build
+        android_gcc_arm_path=$BASE_DIR/toolchains/android/toolchain-eabi-4.2.1/bin
+        export ARCHITECTURE=android
+        echo "ARCHITECTURE=$ARCHITECTURE"
+        export PATH=$android_gcc_arm_path:$BASE_PATH
+        export ANDROID_BASE=$BASE_DIR/toolchains/android
+        echo "ANDROID_BASE=$ANDROID_BASE"
+        ;;
+    *)
+        echo "Invalid selection.  Please enter your selection again."
+        print_menu
+        return
+        ;;
+    esac
+}
+
+function mkcmdcmpl()
+{
+    printf "\nGetting make cmdline completion values...\n"
+    export PV_MAKE_COMPLETION_TARGETS=`make -j completion_targets`
+    printf "Done getting make cmdline completion values.\n\n"
+}
+
+
+
 echo Setting up build environment with default configuration ...
 
-# Setup environment for necessary for the
-# makefiles, etc.
+export PROJECT_DIR=$PWD
 
-# Set this flag for integarting CML2 config with the builds.
-# 
-export USE_CML2_CONFIG=1
-
-# How is VOB_BASE_DIR value set?
-# 1. If there is an argument to the setup script execution, use that. 
-# 2. Else, check if the value is already set and use that. 
-# 3. Throw an error.
-# @TODO : Obsolete VOB_BASE_DIR when that macro is no longer used.
+# Set CFG_DIR
+#
+export CFG_DIR=$PWD
+echo "Set CFG_DIR to $CFG_DIR ..."
 
 if [[ $# -ge 1 ]]; then
-   export VOB_BASE_DIR="$1"
-   echo "Set VOB_BASE_DIR to $VOB_BASE_DIR ..."
+  export BASE_DIR=${1%/}
+  echo "Set BASE_DIR to $BASE_DIR ..."
 else
-   if [[ -z $VOB_BASE_DIR ]]; then
-      echo "Error. !!!!!!!VOB_BASE_DIR is not set!!!!!!!"
+   if [[ -z $BASE_DIR ]]; then
+      echo "Error. !!!!!!!BASE_DIR is not set!!!!!!!"
    else   
-      echo VOB_BASE_DIR already defined as $VOB_BASE_DIR ...
+      echo BASE_DIR already defined as $BASE_DIR ...
    fi
 fi
 
-# Set the PV_TOP
-#
-export PV_TOP=$VOB_BASE_DIR/oscl
-echo Set PV_TOP to $PV_TOP ...
+export BUILD_ROOT=$PROJECT_DIR/build
+echo Set BUILD_ROOT to $BUILD_ROOT ...
 
-export PROJECT=$PV_TOP
-echo "Set PROJECT to $PROJECT ..."
+export SRC_ROOT=$BASE_DIR
+echo Set SRC_ROOT to $SRC_ROOT ...
 
-export MK="$VOB_BASE_DIR/tools_v2/build/make"
-echo "Set MK to $MK ..."
+export MK=$BASE_DIR/tools_v2/build/make
+echo Set MK to $MK ...
 
-export CCASE_MAKE_COMPAT="gnu"
-echo "Set CCASE_MAKE_COMPAT to $CCASE_MAKE_COMPAT ..."
 
-if [[ ! -f "$MK/../bin/archtype" ]];  then
-  echo "Error. Cannot find archtype script $MK/../bin/archtype."
-fi
+extern_tools_path=$BASE_DIR/extern_tools_v2/bin/linux
+export PATH=$extern_tools_path:$PATH
+export BASE_PATH=$PATH
 
-export arch_bin_path=`$MK/../bin/archtype`
-export extern_tools_path=$VOB_BASE_DIR/extern_tools_v2/bin/$arch_bin_path
-export PATH=./$arch_bin_path:$extern_tools_path:$PATH
+_pv_make_completion()
+{
+    local cur prev opts
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    opts="${PV_MAKE_COMPLETION_TARGETS}"
 
-export arch_bin_path=
-export extern_tools_path=
+    case "${prev}" in 
+      -f)
+        COMPREPLY=( $(compgen -f ${cur}) )
+        return 0
+        ;;
+    *)
+        COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+        return 0
+        ;;
+    esac
+}
 
-if [[ -f ./setup.extras.ksh ]]; then
-   echo File setup.extras.ksh found, sourcing ...
-   . ./setup.extras.ksh
-else
-   echo File setup.extras not found, skipping ...
-fi 
+complete -F _pv_make_completion make
+###
 
 echo 
 echo Environment is ready if no errors reported

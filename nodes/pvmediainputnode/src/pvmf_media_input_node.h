@@ -220,6 +220,7 @@ class PvmfMediaInputNode : public OsclActiveObject,
             , EStart
             , EPause
             , EStop
+            , EReset
         } EMioRequest;
 
         PvmfMediaInputNode();

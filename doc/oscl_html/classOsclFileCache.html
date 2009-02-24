@@ -25,10 +25,10 @@
 <tr><td nowrap align=right valign=top>int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclFileCache.html#a2">Open</a> (uint32 mode, uint32 cache_size)</td></tr>
 <tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOsclFileCache.html#a3">Close</a> ()</td></tr>
 <tr><td nowrap align=right valign=top>uint32&nbsp;</td><td valign=bottom><a class="el" href="classOsclFileCache.html#a4">Read</a> (void *outputBuffer, uint32 size, uint32 numelements)</td></tr>
-<tr><td nowrap align=right valign=top>int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclFileCache.html#a5">Write</a> (const void *inputBuffer, uint32 size, uint32 numelements)</td></tr>
-<tr><td nowrap align=right valign=top>int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclFileCache.html#a6">FileSize</a> ()</td></tr>
-<tr><td nowrap align=right valign=top>int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclFileCache.html#a7">Seek</a> (int32 offset, <a class="el" href="classOscl__File.html#s11">Oscl_File::seek_type</a> origin)</td></tr>
-<tr><td nowrap align=right valign=top>int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclFileCache.html#a8">Tell</a> ()</td></tr>
+<tr><td nowrap align=right valign=top>uint32&nbsp;</td><td valign=bottom><a class="el" href="classOsclFileCache.html#a5">Write</a> (const void *inputBuffer, uint32 size, uint32 numelements)</td></tr>
+<tr><td nowrap align=right valign=top><a class="el" href="osclconfig__io_8h.html#a48">TOsclFileOffset</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclFileCache.html#a6">FileSize</a> ()</td></tr>
+<tr><td nowrap align=right valign=top>int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclFileCache.html#a7">Seek</a> (<a class="el" href="osclconfig__io_8h.html#a48">TOsclFileOffset</a> offset, <a class="el" href="classOscl__File.html#s11">Oscl_File::seek_type</a> origin)</td></tr>
+<tr><td nowrap align=right valign=top><a class="el" href="osclconfig__io_8h.html#a48">TOsclFileOffset</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclFileCache.html#a8">Tell</a> ()</td></tr>
 <tr><td nowrap align=right valign=top>int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclFileCache.html#a9">Flush</a> ()</td></tr>
 <tr><td nowrap align=right valign=top>int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclFileCache.html#a10">EndOfFile</a> ()</td></tr>
 </table>
@@ -153,7 +153,7 @@
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> int32 OsclFileCache::FileSize </td>
+          <td class="md" nowrap valign="top"> <a class="el" href="osclconfig__io_8h.html#a48">TOsclFileOffset</a> OsclFileCache::FileSize </td>
           <td class="md" valign="top">(&nbsp;</td>
           <td class="mdname1" valign="top" nowrap>&nbsp;          </td>
           <td class="md" valign="top">)&nbsp;</td>
@@ -293,7 +293,7 @@
         <tr>
           <td class="md" nowrap valign="top"> int32 OsclFileCache::Seek </td>
           <td class="md" valign="top">(&nbsp;</td>
-          <td class="md" nowrap valign="top">int32&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="osclconfig__io_8h.html#a48">TOsclFileOffset</a>&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>offset</em>, </td>
         </tr>
         <tr>
@@ -329,7 +329,7 @@
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> int32 OsclFileCache::Tell </td>
+          <td class="md" nowrap valign="top"> <a class="el" href="osclconfig__io_8h.html#a48">TOsclFileOffset</a> OsclFileCache::Tell </td>
           <td class="md" valign="top">(&nbsp;</td>
           <td class="mdname1" valign="top" nowrap>&nbsp;          </td>
           <td class="md" valign="top">)&nbsp;</td>
@@ -357,7 +357,7 @@
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> int32 OsclFileCache::Write </td>
+          <td class="md" nowrap valign="top"> uint32 OsclFileCache::Write </td>
           <td class="md" valign="top">(&nbsp;</td>
           <td class="md" nowrap valign="top">const void *&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>inputBuffer</em>, </td>
@@ -398,7 +398,7 @@
 <hr>The documentation for this class was generated from the following file:<ul>
 <li><a class="el" href="oscl__file__cache_8h-source.html">oscl_file_cache.h</a></ul>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: OPENCORE_20090120 </small>
+<address style="align: left;"><small>Posting Version: OPENCORE_20090223 </small>
 </small></address>
 </body>
 </html>

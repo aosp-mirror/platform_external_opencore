@@ -264,13 +264,6 @@ PVMFStreamingManagerExtensionInterfaceImpl::queryInterface(const PVUuid& uuid, P
         iface = OSCL_STATIC_CAST(PVInterface*, interimPtr);
         return true;
     }
-    else if (uuid == PVMF_DATA_SOURCE_PACKETSOURCE_INTERFACE_UUID)
-    {
-        PVMFDataSourcePacketSourceInterface* interimPtr =
-            OSCL_STATIC_CAST(PVMFDataSourcePacketSourceInterface*, this);
-        iface = OSCL_STATIC_CAST(PVInterface*, interimPtr);
-        return true;
-    }
     else if (uuid == PvmfDataSourcePlaybackControlUuid)
     {
         PvmfDataSourcePlaybackControlInterface* interimPtr =

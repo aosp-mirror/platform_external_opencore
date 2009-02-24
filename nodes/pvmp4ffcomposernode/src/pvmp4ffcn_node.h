@@ -156,6 +156,7 @@ class PVMp4FFComposerNode : public PVMFNodeInterface,
 
         // Pure virtual functions from PVMp4FFCNClipConfigInterface
         OSCL_IMPORT_REF PVMFStatus SetOutputFileName(const OSCL_wString& aFileName);
+        OSCL_IMPORT_REF PVMFStatus SetOutputFileDescriptor(const OsclFileHandle* aFileHandle);
         OSCL_IMPORT_REF PVMFStatus SetAuthoringMode(PVMp4FFCN_AuthoringMode aAuthoringMode = PVMP4FFCN_3GPP_DOWNLOAD_MODE);
         OSCL_IMPORT_REF PVMFStatus SetPresentationTimescale(uint32 aTimescale);
         OSCL_IMPORT_REF PVMFStatus SetVersion(const OSCL_wString& aVersion, const OSCL_String& aLangCode);
@@ -268,7 +269,7 @@ class PVMp4FFComposerNode : public PVMFNodeInterface,
 
         PVMFStatus AddMemFragToTrack(Oscl_Vector<OsclMemoryFragment, OsclMemAllocator> aFrame, OsclRefCounterMemFrag& aMemFrag, PVMFFormatType aFormat,
                                      uint32& aTimestamp, int32 aTrackId, PVMp4FFComposerPort *aPort);
-        int32 GetIETFFrameSize(uint8 aFrameType);
+        int32 GetIETFFrameSize(uint8 aFrameType, int32 aCodecType);
 
         /////////////////////////////////////////////////////
         //    Progress and max size / duration routines
@@ -348,7 +349,7 @@ class PVMp4FFComposerNode : public PVMFNodeInterface,
         uint32 iAuthoringMode;
         uint32 iPresentationTimescale;
         uint32 iMovieFragmentDuration;
-
+        Oscl_File* iFileObject;
         // Meta data strings
         struct PVMP4FFCN_MetaDataString
         {

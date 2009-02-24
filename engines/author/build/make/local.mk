@@ -22,6 +22,8 @@ SRCS := pvaenodeutility.cpp pvauthorengine.cpp
 
 HDRS := pvauthorenginefactory.h pvauthorengineinterface.h
 
+## This file is need by PLATFORM_EXTRAS in library.mk
+sdkinfo_header_name := pv_author_sdkinfo.h
 
 include $(MK)/library.mk
 
@@ -33,9 +35,9 @@ doc_version := $(PVAUTHOR_ENGINE_VERSION)
 include $(MK)/doc.mk
 
 sdkinfo_target := $(LOCAL_SRCDIR)/pvauthorengine.cpp
-sdkinfo_header_filename := $(LOCAL_SRCDIR)/pv_author_sdkinfo.h
+sdkinfo_header_filename := $(LOCAL_SRCDIR)/$(sdkinfo_header_name)
 sdkinfo_header_macro := PV_AUTHOR_SDKINFO
 sdkinfo_label_macro := PVAUTHOR_ENGINE_SDKINFO_LABEL
 sdkinfo_date_macro := PVAUTHOR_ENGINE_SDKINFO_DATE
 
-include $(MK)/sdkinfo.mk
+include $(MK)/sdkinfo_nr.mk

@@ -1097,6 +1097,12 @@ int32 HTTPParserHeaderObject::parseFirstLine(HTTPMemoryFragment &aInputDataStrea
         return 0;
     }
 
+    // add first-line into the key-value store
+    StrPtrLen firstLine = "Response-Line";
+    addKeyValuePairToStore(firstLine.c_str(), firstLine.length(),
+                           (char *)aInputDataStream.getPtr(), aInputDataStream.getAvailableSpace(),
+                           true);
+
     return HTTPParser::PARSE_SYNTAX_ERROR; // looks like the status line has something we don't understand.
 }
 

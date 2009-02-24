@@ -232,12 +232,6 @@ OSCL_EXPORT_REF PVMFCommandId PvmiMIOFileInput::Flush(const OsclAny* aContext)
 
 OSCL_EXPORT_REF PVMFCommandId PvmiMIOFileInput::Reset(const OsclAny* aContext)
 {
-    if (iState != STATE_STARTED || iState != STATE_PAUSED)
-    {
-        OSCL_LEAVE(OsclErrInvalidState);
-        return -1;
-    }
-
     return AddCmdToQueue(CMD_RESET, aContext);
 }
 
@@ -1104,6 +1098,7 @@ PVMFStatus PvmiMIOFileInput::DoInit()
         iStreamDuration = numFrames * (iMicroSecondsPerDataEvent / 1000); //in msec
     }
     else if (iSettings.iMediaFormat == PVMF_MIME_AMR_IF2 ||
+             iSettings.iMediaFormat == PVMF_MIME_AMRWB_IETF ||
              iSettings.iMediaFormat == PVMF_MIME_AMR_IETF)
     {
         int32  size, frameSize;
@@ -1132,10 +1127,20 @@ PVMFStatus PvmiMIOFileInput::DoInit()
         //skip AMR file header.
         if (currentFrame[0] == '#')
         {
-            iFileHeaderSize = 6;
+            iFileHeaderSize = 0;
+            if (iSettings.iMediaFormat == PVMF_MIME_AMR_IETF)
+            {
+                //Skip AMR-NB magic word - "#!AMR\n" (or 0x2321414d520a in hexadecimal) (6 characters)
+                iFileHeaderSize = 6;
+            }
+            else if (iSettings.iMediaFormat == PVMF_MIME_AMRWB_IETF)
+            {
+                //Skip AMR-WB magic word - "#!AMR-WB\n" (or 0x2321414d522d57420a in hexadecimal) (9 characters)
+                iFileHeaderSize = 9;
+            }
             currentFrame += iFileHeaderSize;
             iInputFile.Seek(iFileHeaderSize, Oscl_File::SEEKSET);
-            bytesProcessed = 6;
+            bytesProcessed = iFileHeaderSize;
         }
 
         // Find size of each frame iteratively until end of file
@@ -1146,9 +1151,22 @@ PVMFStatus PvmiMIOFileInput::DoInit()
             for (chunk = 0; (chunk < iSettings.iNum20msFramesPerChunk) && (bytesProcessed < fileSize); chunk++)
             {
                 if (iSettings.iMediaFormat == PVMF_MIME_AMR_IF2)
+                {
                     size = GetIF2FrameSize(currentFrame[0]);
+                    if (size == -1)
+                    {
+                        return PVMFFailure;
+                    }
+                }
                 else
-                    size = GetIETFFrameSize(currentFrame[0]);
+                {
+                    size = GetIETFFrameSize(currentFrame[0],
+                                            iSettings.iMediaFormat);
+                    if (size == -1)
+                    {
+                        return PVMFFailure;
+                    }
+                }
                 frameSize += size;
                 currentFrame += size;
                 bytesProcessed += size;
@@ -1261,7 +1279,12 @@ PVMFStatus PvmiMIOFileInput::DoStart()
 
         iFileOpened = true;
 
+        //seek to zero
         if (iInputFile.Seek(0, Oscl_File::SEEKSET))
+            return PVMFFailure;
+
+        //skip the header if any
+        if (iInputFile.Seek(iFileHeaderSize, Oscl_File::SEEKSET))
             return PVMFFailure;
     }
 
@@ -1350,6 +1373,7 @@ PVMFStatus PvmiMIOFileInput::DoRead()
     }
     else if (iSettings.iMediaFormat == PVMF_MIME_AMR_IF2 ||
              iSettings.iMediaFormat == PVMF_MIME_AMR_IETF ||
+             iSettings.iMediaFormat == PVMF_MIME_AMRWB_IETF ||
              iSettings.iMediaFormat == PVMF_MIME_ADTS ||
              iSettings.iMediaFormat == PVMF_MIME_MPEG4_AUDIO ||
              iSettings.iMediaFormat == PVMF_MIME_ADIF ||
@@ -1568,34 +1592,82 @@ int32 PvmiMIOFileInput::GetIF2FrameSize(uint8 aFrameType)
 }
 
 //////////////////////////////////////////////////////////////////////////////////
-int32 PvmiMIOFileInput::GetIETFFrameSize(uint8 aFrameType)
+int32 PvmiMIOFileInput::GetIETFFrameSize(uint8 aFrameType,
+        PVMFFormatType aFormat)
 {
-    uint8 frameType = (uint8)(aFrameType >> 3);
-
-    // Find frame size for each frame type
-    switch (frameType)
+    uint8 frameType = (uint8)(aFrameType >> 3) & 0x0f;
+    if (aFormat == PVMF_MIME_AMR_IETF)
     {
-        case 0: // AMR 4.75 Kbps
-            return 13;
-        case 1: // AMR 5.15 Kbps
-            return 14;
-        case 2: // AMR 5.90 Kbps
-            return 16;
-        case 3: // AMR 6.70 Kbps
-            return 18;
-        case 4: // AMR 7.40 Kbps
-            return 20;
-        case 5: // AMR 7.95 Kbps
-            return 21;
-        case 6: // AMR 10.2 Kbps
-            return 27;
-        case 7: // AMR 12.2 Kbps
-            return 32;
-        case 15: // AMR Frame No Data
-            return 1;
-        default: // Error - For Future Use
-            return -1;
+        // Find frame size for each frame type
+        switch (frameType)
+        {
+            case 0: // AMR 4.75 Kbps
+                return 13;
+            case 1: // AMR 5.15 Kbps
+                return 14;
+            case 2: // AMR 5.90 Kbps
+                return 16;
+            case 3: // AMR 6.70 Kbps
+                return 18;
+            case 4: // AMR 7.40 Kbps
+                return 20;
+            case 5: // AMR 7.95 Kbps
+                return 21;
+            case 6: // AMR 10.2 Kbps
+                return 27;
+            case 7: // AMR 12.2 Kbps
+                return 32;
+            case 8: // AMR Frame SID
+                return 6;
+            case 9: // AMR Frame GSM EFR SID
+                return 7;
+            case 10:// AMR Frame TDMA EFR SID
+            case 11:// AMR Frame PDC EFR SID
+                return 6;
+            case 15: // AMR Frame No Data
+                return 1;
+            default: // Error - For Future Use
+                return -1;
+        }
     }
+    else if (aFormat == PVMF_MIME_AMRWB_IETF)
+    {
+        // Find frame size for each frame type
+        switch (frameType)
+        {
+            case 0: // AMR-WB 6.60 Kbps
+                return 18;
+            case 1: // AMR-WB 8.85 Kbps
+                return 24;
+            case 2: // AMR-WB 12.65 Kbps
+                return 33;
+            case 3: // AMR-WB 14.25 Kbps
+                return 37;
+            case 4: // AMR-WB 15.85 Kbps
+                return 41;
+            case 5: // AMR-WB 18.25 Kbps
+                return 47;
+            case 6: // AMR-WB 19.85 Kbps
+                return 51;
+            case 7: // AMR-WB 23.05 Kbps
+                return 59;
+            case 8: // AMR-WB 23.85 Kbps
+                return 61;
+            case 9: // AMR-WB SID Frame
+                return 6;
+            case 10: //Reserved
+            case 11: //Reserved
+            case 12: //Reserved
+            case 13: //Reserved
+                return -1;
+            case 14: // AMR-WB Frame Lost
+            case 15: // AMR-WB Frame No Data
+                return 1;
+            default: // Error - For Future Use
+                return -1;
+        }
+    }
+    return -1;
 }
 
 //////////////////////////////////////////////////////////////////////////////////

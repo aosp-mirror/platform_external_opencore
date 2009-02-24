@@ -19,11 +19,13 @@ INCSRCDIR := ../../include
 
 SRCS := \
     pv_omxcore.cpp \
+    pv_omx_config_parser.cpp \
     pv_omxregistry.cpp
 
 
 HDRS := \
     pv_omxcore.h \
+    pv_omx_config_parser.h \
     pv_omxdefs.h
 
 

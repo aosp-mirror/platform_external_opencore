@@ -422,8 +422,7 @@ OSCL_EXPORT_REF OMX_ERRORTYPE ProxyApplication_OMX::ProxyGetConfig(
         return OMX_ErrorInsufficientResources;
     }
 
-    GetConfigMsg* Msg = new(ptr) GetConfigMsg(hComponent, nIndex, pComponentConfigStructure);
-
+    GetConfigMsg* Msg = OSCL_PLACEMENT_NEW(ptr, GetConfigMsg(hComponent, nIndex, pComponentConfigStructure));
 
     iMemCmd++;
     iNumClientMsg++;
@@ -450,7 +449,7 @@ OSCL_EXPORT_REF OMX_ERRORTYPE ProxyApplication_OMX::ProxySetConfig(
         return OMX_ErrorInsufficientResources;
     }
 
-    SetConfigMsg* Msg = new(ptr) SetConfigMsg(hComponent, nIndex, pComponentConfigStructure);
+    SetConfigMsg* Msg = OSCL_PLACEMENT_NEW(ptr, SetConfigMsg(hComponent, nIndex, pComponentConfigStructure));
 
 
 
@@ -478,7 +477,7 @@ OSCL_EXPORT_REF OMX_ERRORTYPE ProxyApplication_OMX::ProxyGetExtensionIndex(
         return OMX_ErrorInsufficientResources;
     }
 
-    GetExtMsg* Msg = new(ptr) GetExtMsg(hComponent, cParameterName, pIndexType);
+    GetExtMsg* Msg = OSCL_PLACEMENT_NEW(ptr, GetExtMsg(hComponent, cParameterName, pIndexType));
 
     iMemCmd++;
     iNumClientMsg++;
@@ -503,7 +502,7 @@ OSCL_EXPORT_REF OMX_ERRORTYPE ProxyApplication_OMX::ProxyGetState(
         return OMX_ErrorInsufficientResources;
     }
 
-    GetStateMsg* Msg = new(ptr) GetStateMsg(hComponent, pState);
+    GetStateMsg* Msg = OSCL_PLACEMENT_NEW(ptr, GetStateMsg(hComponent, pState));
 
 
     iMemCmd++;
@@ -530,7 +529,7 @@ OSCL_EXPORT_REF OMX_ERRORTYPE ProxyApplication_OMX::ProxyGetParameter(
         return OMX_ErrorInsufficientResources;
     }
 
-    GetParameterMsg* Msg = new(ptr) GetParameterMsg(hComponent, nParamIndex, ComponentParameterStructure);
+    GetParameterMsg* Msg = OSCL_PLACEMENT_NEW(ptr, GetParameterMsg(hComponent, nParamIndex, ComponentParameterStructure));
 
 
     iMemCmd++;
@@ -558,7 +557,7 @@ OSCL_EXPORT_REF OMX_ERRORTYPE ProxyApplication_OMX::ProxySetParameter(
         return OMX_ErrorInsufficientResources;
     }
 
-    SetParameterMsg* Msg = new(ptr) SetParameterMsg(hComponent, nParamIndex, ComponentParameterStructure);
+    SetParameterMsg* Msg = OSCL_PLACEMENT_NEW(ptr, SetParameterMsg(hComponent, nParamIndex, ComponentParameterStructure));
 
 
 
@@ -590,7 +589,7 @@ OSCL_EXPORT_REF OMX_ERRORTYPE ProxyApplication_OMX::ProxyUseBuffer(
         return OMX_ErrorInsufficientResources;
     }
 
-    UseBufMsg* Msg = new(ptr) UseBufMsg(hComponent, ppBufferHdr, nPortIndex, pAppPrivate, nSizeBytes, pBuffer);
+    UseBufMsg* Msg = OSCL_PLACEMENT_NEW(ptr, UseBufMsg(hComponent, ppBufferHdr, nPortIndex, pAppPrivate, nSizeBytes, pBuffer));
 
 
     iMemCmd++;
@@ -619,7 +618,7 @@ OSCL_EXPORT_REF OMX_ERRORTYPE ProxyApplication_OMX::ProxyAllocateBuffer(
         return OMX_ErrorInsufficientResources;
     }
 
-    AllocBufMsg* Msg = new(ptr) AllocBufMsg(hComponent, pBuffer, nPortIndex, pAppPrivate, nSizeBytes);
+    AllocBufMsg* Msg = OSCL_PLACEMENT_NEW(ptr, AllocBufMsg(hComponent, pBuffer, nPortIndex, pAppPrivate, nSizeBytes));
 
 
     iMemCmd++;
@@ -645,7 +644,7 @@ OSCL_EXPORT_REF OMX_ERRORTYPE ProxyApplication_OMX::ProxyFreeBuffer(
         return OMX_ErrorInsufficientResources;
     }
 
-    FreeBufMsg* Msg = new(ptr) FreeBufMsg(hComponent, nPortIndex, pBuffer);
+    FreeBufMsg* Msg = OSCL_PLACEMENT_NEW(ptr, FreeBufMsg(hComponent, nPortIndex, pBuffer));
 
 
     iMemCmd++;
@@ -671,7 +670,7 @@ OSCL_EXPORT_REF OMX_ERRORTYPE ProxyApplication_OMX::ProxySetCallbacks(
         return OMX_ErrorInsufficientResources;
     }
 
-    SetCallMsg* Msg = new(ptr) SetCallMsg(hComponent, pCallbacks, pAppData);
+    SetCallMsg* Msg = OSCL_PLACEMENT_NEW(ptr, SetCallMsg(hComponent, pCallbacks, pAppData));
 
     iMemCmd++;
     iNumClientMsg++;
@@ -697,7 +696,7 @@ OSCL_EXPORT_REF OMX_ERRORTYPE ProxyApplication_OMX::ProxySendCommand(
         return OMX_ErrorInsufficientResources;
     }
 
-    SetCommMsg* Msg = new(ptr) SetCommMsg(hComponent, Cmd, nParam, pCmdData);
+    SetCommMsg* Msg = OSCL_PLACEMENT_NEW(ptr, SetCommMsg(hComponent, Cmd, nParam, pCmdData));
 
     iMemCmd++;
     iNumClientMsg++;
@@ -721,7 +720,7 @@ OSCL_EXPORT_REF OMX_ERRORTYPE ProxyApplication_OMX::ProxyEmptyThisBuffer(
         return OMX_ErrorInsufficientResources;
     }
 
-    EmptyBufMsg* Msg = new(ptr) EmptyBufMsg(hComponent, pBuffer);
+    EmptyBufMsg* Msg = OSCL_PLACEMENT_NEW(ptr, EmptyBufMsg(hComponent, pBuffer));
 
 
     iMemCmd++;
@@ -750,7 +749,7 @@ OSCL_EXPORT_REF OMX_ERRORTYPE ProxyApplication_OMX::ProxyFillThisBuffer(
     }
 
 
-    FillBufMsg* Msg = new(ptr) FillBufMsg(hComponent, pBuffer);
+    FillBufMsg* Msg = OSCL_PLACEMENT_NEW(ptr, FillBufMsg(hComponent, pBuffer));
 
     iMemCmd++;
     iNumClientMsg++;
@@ -780,7 +779,7 @@ OSCL_EXPORT_REF OMX_ERRORTYPE ProxyApplication_OMX::ProxyGetHandle(
         return OMX_ErrorInsufficientResources;
     }
 
-    GetHandleMsg* Msg = new(ptr) GetHandleMsg(pHandle, cComponentName, pAppData, pCallBacks);
+    GetHandleMsg* Msg = OSCL_PLACEMENT_NEW(ptr, GetHandleMsg(pHandle, cComponentName, pAppData, pCallBacks));
 
 
     iMemCmd++;
@@ -805,7 +804,7 @@ OSCL_EXPORT_REF OMX_ERRORTYPE ProxyApplication_OMX::ProxyFreeHandle(
         return OMX_ErrorInsufficientResources;
     }
 
-    FreeHandleMsg* Msg = new(ptr) FreeHandleMsg(hComponent);
+    FreeHandleMsg* Msg = OSCL_PLACEMENT_NEW(ptr, FreeHandleMsg(hComponent));
 
 
     iMemCmd++;

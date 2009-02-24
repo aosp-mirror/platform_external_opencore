@@ -125,6 +125,7 @@ PVMp4FFComposerNode::PVMp4FFComposerNode(int32 aPriority)
     iNum_PPS_Set = 0;
     iNum_SPS_Set = 0;
     iText_sdIndex = 0;
+    iFileObject = NULL;
 #if PROFILING_ON
     iMaxSampleAddTime = 0;
     iMinSampleAddTime = 0;
@@ -199,6 +200,12 @@ PVMp4FFComposerNode::~PVMp4FFComposerNode()
             iFs.Oscl_DeleteFile(iFileName.get_cstr());
             iFs.Close();
         }
+    }
+    if (iFileObject)
+    {
+        iFileObject->Close();
+        OSCL_DELETE(iFileObject);
+        iFileObject = NULL;
     }
     for (uint32 i = 0; i < iKeyWordVector.size() ; i++)
     {
@@ -304,8 +311,9 @@ OSCL_EXPORT_REF PVMFStatus PVMp4FFComposerNode::GetCapability(PVMFNodeCapability
     aNodeCapability.iInputFormatCapability.push_back(PVMF_MIME_H2631998);
     aNodeCapability.iInputFormatCapability.push_back(PVMF_MIME_H2632000);
     aNodeCapability.iInputFormatCapability.push_back(PVMF_MIME_AMR_IETF);
+    aNodeCapability.iInputFormatCapability.push_back(PVMF_MIME_AMRWB_IETF);
     aNodeCapability.iInputFormatCapability.push_back(PVMF_MIME_3GPP_TIMEDTEXT);
-
+    aNodeCapability.iInputFormatCapability.push_back(PVMF_MIME_MPEG4_AUDIO);
     return PVMFSuccess;
 }
 
@@ -515,7 +523,31 @@ OSCL_EXPORT_REF PVMFStatus PVMp4FFComposerNode::SetOutputFileName(const OSCL_wSt
     iFileName = aFileName;
     return PVMFSuccess;
 }
+//////////////////////////////////////////////////////////////////////////////
+OSCL_EXPORT_REF PVMFStatus PVMp4FFComposerNode::SetOutputFileDescriptor(const OsclFileHandle* aFileHandle)
+{
+    if (iInterfaceState != EPVMFNodeIdle && iInterfaceState != EPVMFNodeInitialized)
+        return false;
 
+    iFileObject = OSCL_NEW(Oscl_File, (0, (OsclFileHandle *)aFileHandle));
+    iFileObject->SetPVCacheSize(0);
+    iFileObject->SetAsyncReadBufferSize(0);
+    iFileObject->SetNativeBufferSize(0);
+    iFileObject->SetLoggingEnable(false);
+    iFileObject->SetSummaryStatsLoggingEnable(false);
+    iFileObject->SetFileHandle((OsclFileHandle*)aFileHandle);
+
+    //call open
+    int32 retval = iFileObject->Open(_STRLIT_CHAR("dummy"),
+                                     Oscl_File::MODE_READWRITE | Oscl_File::MODE_BINARY,
+                                     iFs);
+
+    if (retval == 0)
+    {
+        return PVMFSuccess;
+    }
+    return PVMFFailure;
+}
 ////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF PVMFStatus PVMp4FFComposerNode::SetAuthoringMode(PVMp4FFCN_AuthoringMode aAuthoringMode)
 {
@@ -1129,7 +1161,11 @@ void PVMp4FFComposerNode::DoRequestPort(PVMp4FFCNCmd& aCmd)
                 format == PVMF_MIME_M4V ||
                 format == PVMF_MIME_H2631998 ||
                 format == PVMF_MIME_H2632000 ||
-                format == PVMF_MIME_AMR_IETF)
+                format == PVMF_MIME_AMR_IETF ||
+                format == PVMF_MIME_AMRWB_IETF ||
+                format == PVMF_MIME_ADIF ||
+                format == PVMF_MIME_ADTS ||
+                format == PVMF_MIME_MPEG4_AUDIO)
         {
             port->SetFormat(format);
         }
@@ -1282,7 +1318,9 @@ void PVMp4FFComposerNode::DoStart(PVMp4FFCNCmd& aCmd)
                 {
                     iFileType |= FILE_TYPE_VIDEO;
                 }
-                else if (iInPorts[i]->GetFormat() == PVMF_MIME_AMR_IETF)
+                else if (iInPorts[i]->GetFormat() == PVMF_MIME_AMR_IETF ||
+                         iInPorts[i]->GetFormat() == PVMF_MIME_AMRWB_IETF ||
+                         iInPorts[i]->GetFormat() == PVMF_MIME_MPEG4_AUDIO)
                 {
                     iFileType |= FILE_TYPE_AUDIO;
                 }
@@ -1320,13 +1358,30 @@ void PVMp4FFComposerNode::DoStart(PVMp4FFCNCmd& aCmd)
             }
             else
             {
-                iMpeg4File = PVA_FF_IMpeg4File::createMP4File(iFileType, iOutputPath, iPostfix,
-                             (void*) & iFs, iAuthoringMode, iFileName, iCacheSize);
+                if (iFileObject != NULL)
+                {
+                    iMpeg4File = PVA_FF_IMpeg4File::createMP4File(iFileType, iAuthoringMode, iFileObject, iCacheSize);
 
+                }
+                else
+                {
+
+                    iMpeg4File = PVA_FF_IMpeg4File::createMP4File(iFileType, iOutputPath, iPostfix,
+                                 (void*) & iFs, iAuthoringMode, iFileName, iCacheSize);
+
+                }
             }
 #else
-            iMpeg4File = PVA_FF_IMpeg4File::createMP4File(iFileType, iOutputPath, iPostfix,
-                         (void*) & iFs, iAuthoringMode, iFileName, iCacheSize);
+            if (iFileObject != NULL)
+            {
+                iMpeg4File = PVA_FF_IMpeg4File::createMP4File(iFileType, iAuthoringMode, iFileObject, iCacheSize);
+
+            }
+            else
+            {
+                iMpeg4File = PVA_FF_IMpeg4File::createMP4File(iFileType, iOutputPath, iPostfix,
+                             (void*) & iFs, iAuthoringMode, iFileName, iCacheSize);
+            }
 #endif
             if (!iMpeg4File)
             {
@@ -1445,12 +1500,24 @@ PVMFStatus PVMp4FFComposerNode::AddTrack(PVMp4FFComposerPort *aPort)
         codecType = CODEC_TYPE_AMR_AUDIO;
         mediaType = MEDIA_TYPE_AUDIO;
     }
+    else if (aPort->GetFormat() == PVMF_MIME_AMRWB_IETF)
+    {
+        codecType = CODEC_TYPE_AMR_WB_AUDIO;
+        mediaType = MEDIA_TYPE_AUDIO;
+    }
+    else if (aPort->GetFormat() ==  PVMF_MIME_MPEG4_AUDIO)
+    {
+        codecType = CODEC_TYPE_AAC_AUDIO;
+        mediaType = MEDIA_TYPE_AUDIO;
+    }
     else
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
                         (0, "PVMp4FFComposerNode::AddTrack: Error - Unsupported format"));
         return PVMFFailure;
     }
+
+    aPort->SetCodecType(codecType);
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                     (0, "PVMp4FFComposerNode::AddTrack: Calling PVA_FF_IMpeg4File::addTrack(0x%x,0x%x)",
@@ -1790,13 +1857,10 @@ void PVMp4FFComposerNode::FlushComplete()
     for (i = 0; i < iInPorts.size(); i++)
         iInPorts[i]->ResumeInput();
 
-    if (iCurrentCmd.empty())
+    if (!iCurrentCmd.empty())
     {
-        LOG_ERR((0, "PVMp4FFComposerNode::FlushComplete: Error - iCurrentCmd is empty"));
-        status = PVMFFailure;
+        CommandComplete(iCurrentCmd, iCurrentCmd[0], status);
     }
-
-    CommandComplete(iCurrentCmd, iCurrentCmd[0], status);
 
     if (!iCmdQueue.empty())
     {
@@ -2031,11 +2095,28 @@ PVMFStatus PVMp4FFComposerNode::ProcessIncomingMsg(PVMFPortInterface* aPort)
                 int32* pVal = (int32*)textconfiginfo.getMemFragPtr();
                 iText_sdIndex = *pVal;
             }
-            if ((port->GetFormat() == PVMF_MIME_AMR_IETF) && mediaDataPtr->getErrorsFlag())
+            if (((port->GetFormat() == PVMF_MIME_AMR_IETF) ||
+                    (port->GetFormat() == PVMF_MIME_AMRWB_IETF)) && mediaDataPtr->getErrorsFlag())
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_NOTICE,
                                 (0, "PVMp4FFComposerNode::ProcessIncomingMsg: Error flag set for AMR!"));
                 return PVMFSuccess;
+            }
+
+            if ((mediaDataPtr->getSeqNum() == 0) && (port->GetFormat() == PVMF_MIME_MPEG4_AUDIO))
+            {
+                // Set AAC Config
+                OsclRefCounterMemFrag decSpecInfo;
+                if (mediaDataPtr->getFormatSpecificInfo(decSpecInfo) == false ||
+                        decSpecInfo.getMemFragSize() == 0)
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
+                                    (0, "PVMp4FFComposerNode::ProcessIncomingMsg: Error - Decoder Specific not available"));
+                    return PVMFFailure;
+                }
+
+                iMpeg4File->setDecoderSpecificInfo((uint8*)decSpecInfo.getMemFragPtr(),
+                                                   (int32)decSpecInfo.getMemFragSize(), trackId);
             }
 
             // Retrieve data from incoming queue
@@ -2101,6 +2182,13 @@ PVMFStatus PVMp4FFComposerNode::AddMemFragToTrack(Oscl_Vector<OsclMemoryFragment
         }
 
         aTimestamp = aTimestamp - iTSOffset;
+    }
+
+    uint32 timeScale = 0;
+    PVMP4FFCNFormatSpecificConfig* config = aPort->GetFormatSpecificConfig();
+    if (config)
+    {
+        timeScale = config->iTimescale;
     }
 
     uint32 i = 0;
@@ -2321,7 +2409,9 @@ PVMFStatus PVMp4FFComposerNode::AddMemFragToTrack(Oscl_Vector<OsclMemoryFragment
         stats->iDuration = aTimestamp;
 #endif
     }
-    else if (aFormat == PVMF_MIME_AMR_IETF)
+
+    else if ((aFormat == PVMF_MIME_AMR_IETF) ||
+             (aFormat == PVMF_MIME_AMRWB_IETF))
     {
         if (iRealTimeTS)
         {
@@ -2360,10 +2450,21 @@ PVMFStatus PVMp4FFComposerNode::AddMemFragToTrack(Oscl_Vector<OsclMemoryFragment
                 }
 
                 // Update clock converter
+                iClockConverter.set_timescale(timeScale);
                 iClockConverter.set_clock_other_timescale(aTimestamp, 1000);
 
                 // Check max file size
-                frameSize = GetIETFFrameSize(data[0]);
+                int32 frSize = GetIETFFrameSize(data[0], aPort->GetCodecType());
+                if (frSize == -1)
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
+                                    (0, "PVMp4FFComposerNode::AddMemFragToTrack: Error - Frame Type Not Supported - Skipping"));
+                    LOGDATATRAFFIC((0, "PVMp4FFComposerNode::AddMemFragToTrack - Invalid Frame: TrackID=%d, Byte=0x%x, Mime=%s",
+                                    aTrackId, data[0], aPort->GetMimeType().get_cstr()));
+                    return PVMFFailure;
+                }
+                frameSize = (uint32)frSize;
+
                 status = CheckMaxFileSize(frameSize);
                 if (status == PVMFFailure)
                 {
@@ -2434,8 +2535,81 @@ PVMFStatus PVMp4FFComposerNode::AddMemFragToTrack(Oscl_Vector<OsclMemoryFragment
         }
     }
 
+    else if (aFormat == PVMF_MIME_MPEG4_AUDIO)
+    {
+        status = CheckMaxDuration(aTimestamp);
+        if (status == PVMFFailure)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
+                            (0, "PVMp4FFComposerNode::AddMemFragToTrack: Error - CheckMaxDuration failed"));
+            return status;
+        }
+        else if (status == PVMFSuccess)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_DEBUG,
+                            (0, "PVMp4FFComposerNode::AddMemFragToTrack: Maxmimum duration reached"));
+            return status;
+        }
+
+        for (i = 0; i < aFrame.size(); i++)
+        {
+            size = aFrame[i].len;
+            status = CheckMaxFileSize(size);
+            if (status == PVMFFailure)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
+                                (0, "PVMp4FFComposerNode::AddMemFragToTrack: Error - CheckMaxFileSize failed"));
+                return status;
+            }
+            else if (status == PVMFSuccess)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_DEBUG,
+                                (0, "PVMp4FFComposerNode::AddMemFragToTrack: Maxmimum file size reached"));
+                return status;
+            }
+
+            //No data for some reason.
+            if (size == 0)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_NOTICE,
+                                (0, "PVMp4FFComposerNode::AddMemFragToTrack: no data in frag!"));
+                return PVMFSuccess;
+            }
+        }
+
+        if (iRealTimeTS)
+        {
+            if (aTimestamp <= aPort->GetLastTS())
+            {
+                aTimestamp = aPort->GetLastTS() + 1;
+            }
+
+            aPort->SetLastTS(aTimestamp);
+        }
+
+        iClockConverter.set_timescale(timeScale);
+        iClockConverter.set_clock_other_timescale(aTimestamp, 1000);
+        uint32 aacTS = iClockConverter.get_current_timestamp();
+
+        if (!iMpeg4File->addSampleToTrack(aTrackId, aFrame, aacTS, flags))
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
+                            (0, "PVMp4FFComposerNode::AddMemFragToTrack: Error - addSampleToTrack failed"));
+            return PVMFFailure;
+        }
+        iSampleInTrack = true;
+        // Send progress report after sample is successfully added
+        SendProgressReport(aTimestamp);
+
+#if PROFILING_ON
+        ++(stats->iNumFrames);
+        stats->iDuration = aTimestamp;
+#endif
+    }
+
     return PVMFSuccess;
 }
+
 
 void PVMp4FFComposerNode::GenerateDiagnostics(uint32 aTime, uint32 aSize)
 {
@@ -2463,34 +2637,82 @@ void PVMp4FFComposerNode::GenerateDiagnostics(uint32 aTime, uint32 aSize)
     OSCL_UNUSED_ARG(aSize);
 }
 //////////////////////////////////////////////////////////////////////////////////
-int32 PVMp4FFComposerNode::GetIETFFrameSize(uint8 aFrameType)
+int32 PVMp4FFComposerNode::GetIETFFrameSize(uint8 aFrameType,
+        int32 aCodecType)
 {
-    uint8 frameType = (uint8)(aFrameType >> 3);
-
-    // Find frame size for each frame type
-    switch (frameType)
+    uint8 frameType = (uint8)(aFrameType >> 3) & 0x0f;
+    if (aCodecType == CODEC_TYPE_AMR_AUDIO)
     {
-        case 0: // AMR 4.75 Kbps
-            return 13;
-        case 1: // AMR 5.15 Kbps
-            return 14;
-        case 2: // AMR 5.90 Kbps
-            return 16;
-        case 3: // AMR 6.70 Kbps
-            return 18;
-        case 4: // AMR 7.40 Kbps
-            return 20;
-        case 5: // AMR 7.95 Kbps
-            return 21;
-        case 6: // AMR 10.2 Kbps
-            return 27;
-        case 7: // AMR 12.2 Kbps
-            return 32;
-        case 15: // AMR Frame No Data
-            return 1;
-        default: // Error - For Future Use
-            return -1;
+        // Find frame size for each frame type
+        switch (frameType)
+        {
+            case 0: // AMR 4.75 Kbps
+                return 13;
+            case 1: // AMR 5.15 Kbps
+                return 14;
+            case 2: // AMR 5.90 Kbps
+                return 16;
+            case 3: // AMR 6.70 Kbps
+                return 18;
+            case 4: // AMR 7.40 Kbps
+                return 20;
+            case 5: // AMR 7.95 Kbps
+                return 21;
+            case 6: // AMR 10.2 Kbps
+                return 27;
+            case 7: // AMR 12.2 Kbps
+                return 32;
+            case 8: // AMR Frame SID
+                return 6;
+            case 9: // AMR Frame GSM EFR SID
+                return 7;
+            case 10:// AMR Frame TDMA EFR SID
+            case 11:// AMR Frame PDC EFR SID
+                return 6;
+            case 15: // AMR Frame No Data
+                return 1;
+            default: // Error - For Future Use
+                return -1;
+        }
     }
+    else if (aCodecType == CODEC_TYPE_AMR_WB_AUDIO)
+    {
+        // Find frame size for each frame type
+        switch (frameType)
+        {
+            case 0: // AMR-WB 6.60 Kbps
+                return 18;
+            case 1: // AMR-WB 8.85 Kbps
+                return 24;
+            case 2: // AMR-WB 12.65 Kbps
+                return 33;
+            case 3: // AMR-WB 14.25 Kbps
+                return 37;
+            case 4: // AMR-WB 15.85 Kbps
+                return 41;
+            case 5: // AMR-WB 18.25 Kbps
+                return 47;
+            case 6: // AMR-WB 19.85 Kbps
+                return 51;
+            case 7: // AMR-WB 23.05 Kbps
+                return 59;
+            case 8: // AMR-WB 23.85 Kbps
+                return 61;
+            case 9: // AMR-WB SID Frame
+                return 6;
+            case 10: //Reserved
+            case 11: //Reserved
+            case 12: //Reserved
+            case 13: //Reserved
+                return -1;
+            case 14: // AMR-WB Frame Lost
+            case 15: // AMR-WB Frame No Data
+                return 1;
+            default: // Error - For Future Use
+                return -1;
+        }
+    }
+    return -1;
 }
 
 //////////////////////////////////////////////////////////////////////////////////

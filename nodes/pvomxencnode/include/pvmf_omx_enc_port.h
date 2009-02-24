@@ -177,6 +177,7 @@ class PVMFOMXEncPort : public PvmfPortBaseImpl
         uint32 iNumFramesConsumed; //number of frames consumed & discarded.
         uint32 iTrackConfigSize;
         uint8* iTrackConfig;
+        uint32 iTimescale;
         friend class PVMFOMXEncNode;
         PVMFOMXEncNode* iOMXNode;
 };

@@ -216,14 +216,24 @@ class PVLoggerConfigFile
                     Oscl_Vector<char*, OsclMemAllocator> LogConfigStrings;
 
                     //Get the logger strings
-                    const char* const lnFd = "\r\n";
+                    const char* const lnFd = "\n";
                     const int8 lnFdLen = oscl_strlen(lnFd);
                     int16 offset = 0;
                     char* lastValidBffrAddr = ibuffer + oscl_strlen(ibuffer);
                     const char* lnFdIndx = oscl_strstr(ibuffer, lnFd);
                     while (lnFdIndx != NULL && lnFdIndx < lastValidBffrAddr)
                     {
-                        oscl_memset((char*)lnFdIndx, '\0', lnFdLen);
+
+                        // Remove the "\r" to avoid any windows formatting issues
+                        if (*(lnFdIndx - 1) == '\r')
+                        {
+                            oscl_memset((char*)(lnFdIndx - 1), '\0', lnFdLen);
+                        }
+                        else
+                        {
+                            oscl_memset((char*)lnFdIndx, '\0', lnFdLen);
+                        }
+
                         LogConfigStrings.push_back(ibuffer + offset);
                         offset = (lnFdIndx + lnFdLen) - ibuffer;
                         lnFdIndx = OSCL_CONST_CAST(char*, oscl_strstr(ibuffer + offset, lnFd));
@@ -653,7 +663,7 @@ void FindSourceFile(cmd_line* command_line, OSCL_HeapString<OsclMemAllocator> &a
         // unrecognized eny (Jupiter envelope) files go to the still image node
         else  if (oscl_strstr(aFileNameInfo.get_cstr(), ".eny") != NULL || oscl_strstr(aFileNameInfo.get_cstr(), ".ENY") != NULL)
         {
-            aInputFileFormatType = PVMF_MIME_M4V_IMAGE;
+            aInputFileFormatType = PVMF_MIME_IMAGE_FORMAT;
         }
         // Unknown so set to unknown try to have the player engine recognize
         else
@@ -1258,6 +1268,10 @@ void FindLoggerNode(cmd_line* command_line, int32& lognode, FILE* aFile)
         {
             lognode = 18; 	//socket node related
         }
+        else if (oscl_strcmp(iSourceFind, "-logshout") == 0)
+        {
+            lognode = 19;	//shoutcast playback log only
+        }
     }
 
     if (cmdline_iswchar)
@@ -1561,14 +1575,232 @@ int local_main(FILE *filehandle, cmd_line* command_line)
     return result;
 }
 
+template <typename T>
+class CmdLinePopulator
+{
+    public:
+        CmdLinePopulator()
+        {
+            iNumArgs = 0;
+            for (int ii = 0; ii < MAXNUMARGS; ii++)
+            {
+                iArgArr[ii] = NULL;
+            }
+        }
+        ~CmdLinePopulator()
+        {
+            for (int ii = 0; ii < MAXNUMARGS ;ii++)
+            {
+                if (iArgArr[ii] != NULL)
+                {
+                    delete iArgArr[ii];
+                    iArgArr[ii] = NULL;
+                }
+            }
+
+        }
+
+
+        bool PopulateCmdLine(Oscl_File* apFile, cmd_line* apCommandLine);
+        bool PopulateCmdLine(oscl_wchar* apFileName, cmd_line* apCommandLine);
+
+        uint32 iNumArgs;
+        enum ArgListAttributes
+        {
+            MAXNUMARGS = 15,
+            MAXARGLEN = 256
+        };
+        T* iArgArr[MAXNUMARGS];
+};
+
+template <typename T> bool CmdLinePopulator<T>::PopulateCmdLine(Oscl_File* apFile, cmd_line* apCommandLine)
+{
+
+    return false;
+}
+
+template <typename T> bool CmdLinePopulator<T>::PopulateCmdLine(oscl_wchar* apFileName, cmd_line* apCommandLine)
+{
+    int32 err = 0;
+    bool retval = false;
+    Oscl_FileServer fileServer;
+    err = fileServer.Connect();
+    if (0 == err)
+    {
+        Oscl_File* pFilePtr = new Oscl_File;
+        if (pFilePtr != NULL)
+        {
+            err = pFilePtr->Open(apFileName, Oscl_File::MODE_READ, fileServer);
+            if (0 == err)
+            {
+                if (0 == pFilePtr->Seek(0, Oscl_File::SEEKSET))
+                {
+                    //We require text in input file to be in ascii format
+                    const uint32 maxExpectedFileSz = sizeof(char) * (MAXNUMARGS + 1) * MAXARGLEN;
+                    char buffer[maxExpectedFileSz];
+                    oscl_memset(buffer, 0, sizeof(buffer));
+
+                    const uint32 elementSz = sizeof(buffer[0]);
+                    const uint32 numOfElementsToRead = sizeof(buffer) / sizeof(buffer[0]);
+                    const uint32 numOfElementsRead = pFilePtr->Read(buffer, elementSz, numOfElementsToRead);
+
+                    //we expect file size to be less than maxExpectedFileSz, therefore
+                    //numOfElementsRead should be less than numOfElementsToRead
+                    if (numOfElementsRead == numOfElementsToRead)
+                    {
+                        //print config err
+                        return false;
+                    }
+
+                    uint32 bufferIndexToParse = 0;
+                    int32 numArgPushed = 0;
+                    while (bufferIndexToParse < numOfElementsRead)
+                    {
+                        char* subBuffer = buffer + bufferIndexToParse;
+                        uint32 subBufferLen = 0;
+                        char* const terminal = oscl_strstr(subBuffer, "\"");
+                        if (terminal)
+                        {
+                            subBufferLen = terminal - subBuffer;
+                        }
+                        else
+                        {
+                            subBufferLen = buffer + numOfElementsRead - subBuffer;
+                        }
+                        bufferIndexToParse += subBufferLen;
+
+                        //preprocess the subbuffer
+                        char* ptrIter = subBuffer;
+                        const char* ptrEnd = subBuffer + subBufferLen;
+
+
+                        while (ptrIter < ptrEnd)
+                        {
+                            if (('\r' == *ptrIter) || ('\n' == *ptrIter) || (' ' == *ptrIter) || ('\t' == *ptrIter))
+                            {
+                                *ptrIter = '\0';
+                            }
+                            ++ptrIter;
+                        }
+
+                        uint32 startingSubBufferIndexToParse = 0;
+                        while (startingSubBufferIndexToParse < subBufferLen)
+                        {
+                            //eat any '\0' in the begin
+                            while (subBuffer[startingSubBufferIndexToParse] == '\0')
+                            {
+                                startingSubBufferIndexToParse++;
+
+                            }
+
+                            if (startingSubBufferIndexToParse > subBufferLen)
+                            {
+                                break;
+                            }
+
+                            const uint32 argLen = oscl_strlen(subBuffer + startingSubBufferIndexToParse);
+                            uint32 bufferLenToCopy = argLen < MAXARGLEN ? argLen : (MAXARGLEN - 1);
+                            if (bufferLenToCopy > 0 && numArgPushed < MAXNUMARGS)
+                            {
+                                T* arg = new T[bufferLenToCopy + 1];
+                                if (sizeof(T) != sizeof(char))
+                                {//unicode
+                                    oscl_UTF8ToUnicode(subBuffer + startingSubBufferIndexToParse, bufferLenToCopy, OSCL_STATIC_CAST(oscl_wchar*, arg), bufferLenToCopy + 1);
+                                }
+                                else
+                                {
+                                    oscl_strncpy(OSCL_STATIC_CAST(char*, arg), subBuffer + startingSubBufferIndexToParse, bufferLenToCopy);
+                                    arg[bufferLenToCopy] = '\0';
+                                }
+                                iArgArr[numArgPushed] = arg;
+                                numArgPushed++;
+                            }
+                            startingSubBufferIndexToParse += (argLen + 1);//1 is added for the '\0' in the end of arg in subbuffer
+                        }
+
+                        //look for the ending terminal "\""
+                        if (terminal)
+                        {
+                            //we need to look for ending terminal and accept the param within quotes as the arg
+                            char* const argEnd = oscl_strstr(terminal + 1, "\"");
+                            if (argEnd)
+                            {
+                                *terminal = *argEnd = '\0';
+                                const uint32 argLen = oscl_strlen(terminal + 1);
+                                uint32 bufferLenToCopy = argLen < MAXARGLEN ? argLen : (MAXARGLEN - 1);
+                                if (bufferLenToCopy > 0 && numArgPushed < MAXNUMARGS)
+                                {
+                                    T* arg = new T[bufferLenToCopy + 1];
+                                    if (sizeof(T) != sizeof(char))
+                                    {//unicode
+                                        oscl_UTF8ToUnicode((terminal + 1), bufferLenToCopy, OSCL_STATIC_CAST(oscl_wchar*, arg), bufferLenToCopy + 1);
+                                    }
+                                    else
+                                    {
+                                        oscl_strncpy(OSCL_STATIC_CAST(char*, arg), (terminal + 1), bufferLenToCopy);
+                                        arg[bufferLenToCopy] = '\0';
+                                    }
+                                    iArgArr[numArgPushed] = arg;
+                                    numArgPushed++;
+                                }
+                                bufferIndexToParse += (argLen + 1);
+                            }
+                            else
+                            {
+                                return false;
+                            }
+                        }
+                    }
+                    iNumArgs = numArgPushed;
+                    apCommandLine->setup(iNumArgs, iArgArr);
+                    retval = true;
+                }
+                pFilePtr->Close();
+            }
+            else
+            {
+                char filename[255] = {0};
+                oscl_UnicodeToUTF8(apFileName, oscl_strlen(apFileName), filename, 255);
+                fprintf(file, "Could not locate the file %s", filename);
+            }
+            OSCL_DELETE(pFilePtr);
+        }
+        fileServer.Close();
+    }
+    return retval;
+}
+
 int _local_main(FILE *filehandle, cmd_line *command_line)
 {
     file = filehandle;
 
+    CmdLinePopulator<char> *asciiCmdLinePopulator = NULL;
+    CmdLinePopulator<oscl_wchar> *wcharCmdLinePopulator = NULL;
     // Print out the extension for help if no argument
     if (command_line->get_count() == 0)
     {
-        fprintf(file, "  Specify '-help' first to get help information on options\n\n");
+        fprintf(file, "  No command line options available.. goin to read the cmdlineparamsconfigfile.txt(if exists) file to get input \n\n");
+        //Check if theres input file available to get the params...
+        oscl_wchar cmdLineParamsConfigFile[255] = {0};
+        oscl_strncpy(cmdLineParamsConfigFile, SOURCENAME_PREPEND_WSTRING, oscl_strlen(SOURCENAME_PREPEND_WSTRING));
+        cmdLineParamsConfigFile[oscl_strlen(SOURCENAME_PREPEND_WSTRING)] = '\0';
+        oscl_strcat(cmdLineParamsConfigFile, _STRLIT("cmdlineparamsconfigfile.txt"));
+
+        if (command_line->is_wchar())
+        {
+            wcharCmdLinePopulator = new CmdLinePopulator<oscl_wchar>();
+            wcharCmdLinePopulator->PopulateCmdLine(cmdLineParamsConfigFile, command_line);
+        }
+        else
+        {
+            asciiCmdLinePopulator = new CmdLinePopulator<char>();
+            asciiCmdLinePopulator->PopulateCmdLine(cmdLineParamsConfigFile, command_line);
+        }
+
+        if (command_line->get_count() == 0)
+        {
+            fprintf(file, "  Specify '-help' first to get help information on options\n\n");
+        }
     }
 
     OSCL_HeapString<OsclMemAllocator> filenameinfo;
@@ -1649,10 +1881,32 @@ int _local_main(FILE *filehandle, cmd_line *command_line)
         delete engine_tests;
         engine_tests = NULL;
 
+        if (asciiCmdLinePopulator)
+        {
+            OSCL_DELETE(asciiCmdLinePopulator);
+            asciiCmdLinePopulator = NULL;
+        }
+
+        if (wcharCmdLinePopulator)
+        {
+            OSCL_DELETE(wcharCmdLinePopulator);
+            wcharCmdLinePopulator = NULL;
+        }
         return (the_result.success_count() != the_result.total_test_count());
     }
     else
     {
+        if (asciiCmdLinePopulator)
+        {
+            delete asciiCmdLinePopulator;
+            asciiCmdLinePopulator = NULL;
+        }
+
+        if (wcharCmdLinePopulator)
+        {
+            delete wcharCmdLinePopulator;
+            wcharCmdLinePopulator = NULL;
+        }
         fprintf(file, "ERROR! pvplayer_engine_test_suite could not be instantiated.\n");
         return 1;
     }
@@ -3067,6 +3321,39 @@ void pvplayer_engine_test::test()
                 ((pvplayer_async_test_ppb_normal*)iCurrentTest)->iTestCaseName = _STRLIT_CHAR("MP4 Progressive Playback To EOS Stop and Play Again");
 #else
                 fprintf(file, "MP4 progressive playback tests not enabled\n");
+#endif
+                break;
+
+            case ShoutcastPlayback5MinuteTest:
+#if RUN_SHOUTCAST_TESTCASES
+                testparam.iFileType = PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL;
+                iCurrentTest = new pvplayer_async_test_ppb_normal(testparam);
+                ((pvplayer_async_test_ppb_normal*)iCurrentTest)->setShoutcastSessionDuration();
+                ((pvplayer_async_test_ppb_normal*)iCurrentTest)->iTestCaseName = _STRLIT_CHAR("Shoutcast Playback For 5 Minutes");
+#else
+                fprintf(file, "Shoutcast playback tests not enabled\n");
+#endif
+                break;
+
+            case ShoutcastPlaybackPauseResumeTest:
+#if RUN_SHOUTCAST_TESTCASES
+                testparam.iFileType = PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL;
+                iCurrentTest = new pvplayer_async_test_ppb_normal(testparam);
+                ((pvplayer_async_test_ppb_normal*)iCurrentTest)->enableShoutcastPauseResume();
+                ((pvplayer_async_test_ppb_normal*)iCurrentTest)->iTestCaseName = _STRLIT_CHAR("Shoutcast Playback Pause Resume");
+#else
+                fprintf(file, "Shoutcast playback tests not enabled\n");
+#endif
+                break;
+
+            case ShoutcastPlaybackPlayStopPlayTest:
+#if RUN_SHOUTCAST_TESTCASES
+                testparam.iFileType = PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL;
+                iCurrentTest = new pvplayer_async_test_ppb_normal(testparam);
+                ((pvplayer_async_test_ppb_normal*)iCurrentTest)->enableShoutcastPlayStopPlay();
+                ((pvplayer_async_test_ppb_normal*)iCurrentTest)->iTestCaseName = _STRLIT_CHAR("Shoutcast Playback Play Stop Play");
+#else
+                fprintf(file, "Shoutcast playback tests not enabled\n");
 #endif
                 break;
 
@@ -8020,6 +8307,18 @@ void pvplayer_engine_test::SetupLoggerScheduler()
             PVLogger *clocknode = PVLogger::GetLoggerObject("PVWmdrmHds");
             clocknode->AddAppender(appenderPtr);
             clocknode->SetLogLevel(PVLOGMSG_DEBUG + 1);
+            clocknode = PVLogger::GetLoggerObject("WmdrmStats");
+            clocknode->AddAppender(appenderPtr);
+            clocknode->SetLogLevel(PVLOGMSG_DEBUG);
+            clocknode = PVLogger::GetLoggerObject("OsclFileStats");
+            clocknode->AddAppender(appenderPtr);
+            clocknode->SetLogLevel(PVLOGMSG_DEBUG);
+            clocknode = PVLogger::GetLoggerObject("Oscl_File");
+            clocknode->AddAppender(appenderPtr);
+            clocknode->SetLogLevel(PVLOGMSG_DEBUG);
+            clocknode = PVLogger::GetLoggerObject("OsclNativeFile");
+            clocknode->AddAppender(appenderPtr);
+            clocknode->SetLogLevel(PVLOGMSG_DEBUG);
         }
         break;
         case 12://-loghdsandosclfileio
@@ -8194,6 +8493,37 @@ void pvplayer_engine_test::SetupLoggerScheduler()
             loggernode->AddAppender(appenderPtr);
             loggernode->SetLogLevel(PVLOGMSG_DEBUG);
         }
+        case 19://-logshout
+        {
+            // Log shoutcast playback node data path only.
+            PVLogger *loggernode;
+
+            loggernode = PVLogger::GetLoggerObject("PVPlayerEngine");
+            loggernode->AddAppender(appenderPtr);
+            loggernode->SetLogLevel(PVLOGMSG_DEBUG);
+
+            loggernode = PVLogger::GetLoggerObject("PVMFShoutcastStreamParser");
+            loggernode->AddAppender(appenderPtr);
+            loggernode->SetLogLevel(PVLOGMSG_STACK_TRACE);
+
+            loggernode = PVLogger::GetLoggerObject("PVMFMP3FFParserNode");
+            loggernode->AddAppender(appenderPtr);
+            loggernode->SetLogLevel(PVLOGMSG_INFO);
+            /*
+            loggernode = PVLogger::GetLoggerObject("pvdownloadmanagernode");
+            loggernode->AddAppender(appenderPtr);
+            loggernode->SetLogLevel(PVLOGMSG_DEBUG);
+
+            loggernode = PVLogger::GetLoggerObject("datapath.sourcenode.protocolenginenode");
+            loggernode->AddAppender(appenderPtr);
+            loggernode->SetLogLevel(PVLOGMSG_INFO);
+
+            loggernode = PVLogger::GetLoggerObject("PVMFMemoryBufferDataStream");
+            loggernode->AddAppender(appenderPtr);
+            loggernode->SetLogLevel(PVLOGMSG_DEBUG);
+            */
+        }
+        break;
         default:
             break;
     }

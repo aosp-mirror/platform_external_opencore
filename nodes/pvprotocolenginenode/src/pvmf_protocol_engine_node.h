@@ -365,7 +365,7 @@ class PVMFProtocolEngineNode :  public PVMFNodeInterface,
         uint32 GetProtocolType(PVMFFormatType& aSourceFormat, OsclAny* aSourceData);
         bool CreateProtocolObjects(const uint32 aProtocolType);
         void DeleteProtocolObjects();
-        bool RecreateProtocolObjectsForProgressiveStreaming(OsclAny* aSourceData);
+        bool RecreateProtocolObjectsForProgressiveStreaming(const uint32 aProtocolType, OsclAny* aSourceData);
         ProtocolContainerFactory* CreateProtocolContainerFactory(const uint32 aProtocolType);
         bool SendPortMediaCommand(PVMFProtocolEnginePort *aPort, PVUid32 aCmdId, const bool isForLogging = false);
         void RerunForPostProcessAfterOutgoingMsgSent(PVMFProtocolEnginePort *aPort, PVMFSharedMediaMsgPtr &aMsg);
@@ -387,6 +387,7 @@ class PVMFProtocolEngineNode :  public PVMFNodeInterface,
         friend class DownloadContainer;
         friend class ProgressiveDownloadContainer;
         friend class ProgressiveStreamingContainer;
+        friend class ShoutcastContainer;
         friend class FasttrackDownloadContainer;
         friend class MsHttpStreamingContainer;
         friend class EventReporter;

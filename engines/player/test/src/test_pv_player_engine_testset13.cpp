@@ -206,14 +206,11 @@ void pvplayer_async_test_genericprofiling::CreateDownloadDataSource()
     else
 #endif
     {
-        bool aUseCpmForPlayback = false;
-
         iDownloadContextDataHTTP = new PVMFDownloadDataSourceHTTP(aIsNewSession, iDownloadConfigFilename, iDownloadFilename,
                 iDownloadMaxfilesize,
                 iDownloadProxy,
                 iDownloadProxyPort,
-                PVMFDownloadDataSourceHTTP::EAsap,
-                aUseCpmForPlayback);
+                PVMFDownloadDataSourceHTTP::EAsap);
     }
 }
 
@@ -338,7 +335,6 @@ void pvplayer_async_test_genericprofiling::Run()
                         iDownloadFilename = OUTPUTNAME_PREPEND_WSTRING;
                         iDownloadFilename += _STRLIT_WCHAR("test_ftdownload.dl");
                         bool aIsNewSession = true;
-                        bool iUseCpmForPlayback = false;
 
                         iSourceContextData->DownloadHTTPData()->bIsNewSession = aIsNewSession;
                         iSourceContextData->DownloadHTTPData()->iConfigFileName = iDownloadConfigFilename;
@@ -347,7 +343,6 @@ void pvplayer_async_test_genericprofiling::Run()
                         iSourceContextData->DownloadHTTPData()->iPlaybackControl = PVMFSourceContextDataDownloadHTTP::EAsap;
                         iSourceContextData->DownloadHTTPData()->iProxyName = iDownloadProxy;
                         iSourceContextData->DownloadHTTPData()->iProxyPort = iDownloadProxyPort;
-                        iSourceContextData->CommonData()->iUseCPMPluginRegistry = iUseCpmForPlayback;
                     }
                     iDataSource->SetDataSourceContextData((OsclAny*)iSourceContextData);
 #else
@@ -2419,14 +2414,11 @@ void pvplayer_async_test_genericplaypauserepositionresumetest::CreateDownloadDat
     else
 #endif
     {
-        bool aUseCpmForPlayback = false;
-
         iDownloadContextDataHTTP = new PVMFDownloadDataSourceHTTP(aIsNewSession, iDownloadConfigFilename, iDownloadFilename,
                 iDownloadMaxfilesize,
                 iDownloadProxy,
                 iDownloadProxyPort,
-                PVMFDownloadDataSourceHTTP::EAsap,
-                aUseCpmForPlayback);
+                PVMFDownloadDataSourceHTTP::EAsap);
     }
 }
 
@@ -2550,7 +2542,6 @@ void pvplayer_async_test_genericplaypauserepositionresumetest::Run()
                         iDownloadFilename = OUTPUTNAME_PREPEND_WSTRING;
                         iDownloadFilename += _STRLIT_WCHAR("test_ftdownload.dl");
                         bool aIsNewSession = true;
-                        bool iUseCpmForPlayback = false;
 
                         iSourceContextData->DownloadHTTPData()->bIsNewSession = aIsNewSession;
                         iSourceContextData->DownloadHTTPData()->iConfigFileName = iDownloadConfigFilename;
@@ -2559,7 +2550,6 @@ void pvplayer_async_test_genericplaypauserepositionresumetest::Run()
                         iSourceContextData->DownloadHTTPData()->iPlaybackControl = PVMFSourceContextDataDownloadHTTP::EAsap;
                         iSourceContextData->DownloadHTTPData()->iProxyName = iDownloadProxy;
                         iSourceContextData->DownloadHTTPData()->iProxyPort = iDownloadProxyPort;
-                        iSourceContextData->CommonData()->iUseCPMPluginRegistry = iUseCpmForPlayback;
                     }
                     iDataSource->SetDataSourceContextData((OsclAny*)iSourceContextData);
 #else
@@ -4651,14 +4641,11 @@ void pvplayer_async_test_genericopensetplaybackrangestartplaystoptest::CreateDow
     else
 #endif
     {
-        bool aUseCpmForPlayback = false;
-
         iDownloadContextDataHTTP = new PVMFDownloadDataSourceHTTP(aIsNewSession, iDownloadConfigFilename, iDownloadFilename,
                 iDownloadMaxfilesize,
                 iDownloadProxy,
                 iDownloadProxyPort,
-                PVMFDownloadDataSourceHTTP::EAsap,
-                aUseCpmForPlayback);
+                PVMFDownloadDataSourceHTTP::EAsap);
     }
 }
 
@@ -4780,7 +4767,6 @@ void pvplayer_async_test_genericopensetplaybackrangestartplaystoptest::Run()
                         iDownloadFilename = OUTPUTNAME_PREPEND_WSTRING;
                         iDownloadFilename += _STRLIT_WCHAR("test_ftdownload.dl");
                         bool aIsNewSession = true;
-                        bool iUseCpmForPlayback = false;
 
                         iSourceContextData->DownloadHTTPData()->bIsNewSession = aIsNewSession;
                         iSourceContextData->DownloadHTTPData()->iConfigFileName = iDownloadConfigFilename;
@@ -4789,7 +4775,6 @@ void pvplayer_async_test_genericopensetplaybackrangestartplaystoptest::Run()
                         iSourceContextData->DownloadHTTPData()->iPlaybackControl = PVMFSourceContextDataDownloadHTTP::EAsap;
                         iSourceContextData->DownloadHTTPData()->iProxyName = iDownloadProxy;
                         iSourceContextData->DownloadHTTPData()->iProxyPort = iDownloadProxyPort;
-                        iSourceContextData->CommonData()->iUseCPMPluginRegistry = iUseCpmForPlayback;
                     }
                     iDataSource->SetDataSourceContextData((OsclAny*)iSourceContextData);
 #else
@@ -6806,14 +6791,11 @@ void pvplayer_async_test_genericopenplayrepositiontoendtest::CreateDownloadDataS
     else
 #endif
     {
-        bool aUseCpmForPlayback = false;
-
         iDownloadContextDataHTTP = new PVMFDownloadDataSourceHTTP(aIsNewSession, iDownloadConfigFilename, iDownloadFilename,
                 iDownloadMaxfilesize,
                 iDownloadProxy,
                 iDownloadProxyPort,
-                PVMFDownloadDataSourceHTTP::EAsap,
-                aUseCpmForPlayback);
+                PVMFDownloadDataSourceHTTP::EAsap);
     }
 }
 
@@ -6935,7 +6917,6 @@ void pvplayer_async_test_genericopenplayrepositiontoendtest::Run()
                         iDownloadFilename = OUTPUTNAME_PREPEND_WSTRING;
                         iDownloadFilename += _STRLIT_WCHAR("test_ftdownload.dl");
                         bool aIsNewSession = true;
-                        bool iUseCpmForPlayback = false;
 
                         iSourceContextData->DownloadHTTPData()->bIsNewSession = aIsNewSession;
                         iSourceContextData->DownloadHTTPData()->iConfigFileName = iDownloadConfigFilename;
@@ -6944,7 +6925,6 @@ void pvplayer_async_test_genericopenplayrepositiontoendtest::Run()
                         iSourceContextData->DownloadHTTPData()->iPlaybackControl = PVMFSourceContextDataDownloadHTTP::EAsap;
                         iSourceContextData->DownloadHTTPData()->iProxyName = iDownloadProxy;
                         iSourceContextData->DownloadHTTPData()->iProxyPort = iDownloadProxyPort;
-                        iSourceContextData->CommonData()->iUseCPMPluginRegistry = iUseCpmForPlayback;
                     }
                     iDataSource->SetDataSourceContextData((OsclAny*)iSourceContextData);
 #else
@@ -8981,14 +8961,11 @@ void pvplayer_async_test_genericnetworkdisconnect::CreateDownloadDataSource()
     else
 #endif
     {
-        bool aUseCpmForPlayback = false;
-
         iDownloadContextDataHTTP = new PVMFDownloadDataSourceHTTP(aIsNewSession, iDownloadConfigFilename, iDownloadFilename,
                 iDownloadMaxfilesize,
                 iDownloadProxy,
                 iDownloadProxyPort,
-                PVMFDownloadDataSourceHTTP::EAsap,
-                aUseCpmForPlayback);
+                PVMFDownloadDataSourceHTTP::EAsap);
     }
 }
 
@@ -9095,7 +9072,6 @@ void pvplayer_async_test_genericnetworkdisconnect::Run()
                         iDownloadFilename = OUTPUTNAME_PREPEND_WSTRING;
                         iDownloadFilename += _STRLIT_WCHAR("test_ftdownload.dl");
                         bool aIsNewSession = true;
-                        bool iUseCpmForPlayback = false;
 
                         iSourceContextData->DownloadHTTPData()->bIsNewSession = aIsNewSession;
                         iSourceContextData->DownloadHTTPData()->iConfigFileName = iDownloadConfigFilename;
@@ -9104,7 +9080,6 @@ void pvplayer_async_test_genericnetworkdisconnect::Run()
                         iSourceContextData->DownloadHTTPData()->iPlaybackControl = PVMFSourceContextDataDownloadHTTP::EAsap;
                         iSourceContextData->DownloadHTTPData()->iProxyName = iDownloadProxy;
                         iSourceContextData->DownloadHTTPData()->iProxyPort = iDownloadProxyPort;
-                        iSourceContextData->CommonData()->iUseCPMPluginRegistry = iUseCpmForPlayback;
                     }
                     iDataSource->SetDataSourceContextData((OsclAny*)iSourceContextData);
 #else
@@ -11271,14 +11246,11 @@ void pvplayer_async_test_genericnetworkdisconnectreconnect::CreateDownloadDataSo
     else
 #endif
     {
-        bool aUseCpmForPlayback = false;
-
         iDownloadContextDataHTTP = new PVMFDownloadDataSourceHTTP(aIsNewSession, iDownloadConfigFilename, iDownloadFilename,
                 iDownloadMaxfilesize,
                 iDownloadProxy,
                 iDownloadProxyPort,
-                PVMFDownloadDataSourceHTTP::EAsap,
-                aUseCpmForPlayback);
+                PVMFDownloadDataSourceHTTP::EAsap);
     }
 }
 
@@ -11385,7 +11357,6 @@ void pvplayer_async_test_genericnetworkdisconnectreconnect::Run()
                         iDownloadFilename = OUTPUTNAME_PREPEND_WSTRING;
                         iDownloadFilename += _STRLIT_WCHAR("test_ftdownload.dl");
                         bool aIsNewSession = true;
-                        bool iUseCpmForPlayback = false;
 
                         iSourceContextData->DownloadHTTPData()->bIsNewSession = aIsNewSession;
                         iSourceContextData->DownloadHTTPData()->iConfigFileName = iDownloadConfigFilename;
@@ -11394,7 +11365,6 @@ void pvplayer_async_test_genericnetworkdisconnectreconnect::Run()
                         iSourceContextData->DownloadHTTPData()->iPlaybackControl = PVMFSourceContextDataDownloadHTTP::EAsap;
                         iSourceContextData->DownloadHTTPData()->iProxyName = iDownloadProxy;
                         iSourceContextData->DownloadHTTPData()->iProxyPort = iDownloadProxyPort;
-                        iSourceContextData->CommonData()->iUseCPMPluginRegistry = iUseCpmForPlayback;
                     }
                     iDataSource->SetDataSourceContextData((OsclAny*)iSourceContextData);
 #else
@@ -13739,14 +13709,11 @@ void pvplayer_async_test_genericcancelallnetworkdisconnect::CreateDownloadDataSo
     else
 #endif
     {
-        bool aUseCpmForPlayback = false;
-
         iDownloadContextDataHTTP = new PVMFDownloadDataSourceHTTP(aIsNewSession, iDownloadConfigFilename, iDownloadFilename,
                 iDownloadMaxfilesize,
                 iDownloadProxy,
                 iDownloadProxyPort,
-                PVMFDownloadDataSourceHTTP::EAsap,
-                aUseCpmForPlayback);
+                PVMFDownloadDataSourceHTTP::EAsap);
     }
 }
 
@@ -13853,7 +13820,6 @@ void pvplayer_async_test_genericcancelallnetworkdisconnect::Run()
                         iDownloadFilename = OUTPUTNAME_PREPEND_WSTRING;
                         iDownloadFilename += _STRLIT_WCHAR("test_ftdownload.dl");
                         bool aIsNewSession = true;
-                        bool iUseCpmForPlayback = false;
 
                         iSourceContextData->DownloadHTTPData()->bIsNewSession = aIsNewSession;
                         iSourceContextData->DownloadHTTPData()->iConfigFileName = iDownloadConfigFilename;
@@ -13862,7 +13828,6 @@ void pvplayer_async_test_genericcancelallnetworkdisconnect::Run()
                         iSourceContextData->DownloadHTTPData()->iPlaybackControl = PVMFSourceContextDataDownloadHTTP::EAsap;
                         iSourceContextData->DownloadHTTPData()->iProxyName = iDownloadProxy;
                         iSourceContextData->DownloadHTTPData()->iProxyPort = iDownloadProxyPort;
-                        iSourceContextData->CommonData()->iUseCPMPluginRegistry = iUseCpmForPlayback;
                     }
                     iDataSource->SetDataSourceContextData((OsclAny*)iSourceContextData);
 #else
@@ -16006,14 +15971,11 @@ void pvplayer_async_test_genericplaypauserepositionresumenwdisconnectcancelallte
     else
 #endif
     {
-        bool aUseCpmForPlayback = false;
-
         iDownloadContextDataHTTP = new PVMFDownloadDataSourceHTTP(aIsNewSession, iDownloadConfigFilename, iDownloadFilename,
                 iDownloadMaxfilesize,
                 iDownloadProxy,
                 iDownloadProxyPort,
-                PVMFDownloadDataSourceHTTP::EAsap,
-                aUseCpmForPlayback);
+                PVMFDownloadDataSourceHTTP::EAsap);
     }
 }
 
@@ -16135,7 +16097,6 @@ void pvplayer_async_test_genericplaypauserepositionresumenwdisconnectcancelallte
                         iDownloadFilename = OUTPUTNAME_PREPEND_WSTRING;
                         iDownloadFilename += _STRLIT_WCHAR("test_ftdownload.dl");
                         bool aIsNewSession = true;
-                        bool iUseCpmForPlayback = false;
 
                         iSourceContextData->DownloadHTTPData()->bIsNewSession = aIsNewSession;
                         iSourceContextData->DownloadHTTPData()->iConfigFileName = iDownloadConfigFilename;
@@ -16144,7 +16105,6 @@ void pvplayer_async_test_genericplaypauserepositionresumenwdisconnectcancelallte
                         iSourceContextData->DownloadHTTPData()->iPlaybackControl = PVMFSourceContextDataDownloadHTTP::EAsap;
                         iSourceContextData->DownloadHTTPData()->iProxyName = iDownloadProxy;
                         iSourceContextData->DownloadHTTPData()->iProxyPort = iDownloadProxyPort;
-                        iSourceContextData->CommonData()->iUseCPMPluginRegistry = iUseCpmForPlayback;
                     }
                     iDataSource->SetDataSourceContextData((OsclAny*)iSourceContextData);
 #else
@@ -18242,14 +18202,11 @@ void pvplayer_async_test_genericpvmferrorcorruptrenotified::CreateDownloadDataSo
     else
 #endif
     {
-        bool aUseCpmForPlayback = false;
-
         iDownloadContextDataHTTP = new PVMFDownloadDataSourceHTTP(aIsNewSession, iDownloadConfigFilename, iDownloadFilename,
                 iDownloadMaxfilesize,
                 iDownloadProxy,
                 iDownloadProxyPort,
-                PVMFDownloadDataSourceHTTP::EAsap,
-                aUseCpmForPlayback);
+                PVMFDownloadDataSourceHTTP::EAsap);
     }
 }
 
@@ -18370,7 +18327,6 @@ void pvplayer_async_test_genericpvmferrorcorruptrenotified::Run()
                         iDownloadFilename = OUTPUTNAME_PREPEND_WSTRING;
                         iDownloadFilename += _STRLIT_WCHAR("test_ftdownload.dl");
                         bool aIsNewSession = true;
-                        bool iUseCpmForPlayback = false;
 
                         iSourceContextData->DownloadHTTPData()->bIsNewSession = aIsNewSession;
                         iSourceContextData->DownloadHTTPData()->iConfigFileName = iDownloadConfigFilename;
@@ -18379,7 +18335,6 @@ void pvplayer_async_test_genericpvmferrorcorruptrenotified::Run()
                         iSourceContextData->DownloadHTTPData()->iPlaybackControl = PVMFSourceContextDataDownloadHTTP::EAsap;
                         iSourceContextData->DownloadHTTPData()->iProxyName = iDownloadProxy;
                         iSourceContextData->DownloadHTTPData()->iProxyPort = iDownloadProxyPort;
-                        iSourceContextData->CommonData()->iUseCPMPluginRegistry = iUseCpmForPlayback;
                     }
                     iDataSource->SetDataSourceContextData((OsclAny*)iSourceContextData);
 #else
@@ -19771,14 +19726,11 @@ void pvplayer_async_test_genericopenplaygetmetadatatest::CreateDownloadDataSourc
     else
 #endif
     {
-        bool aUseCpmForPlayback = false;
-
         iDownloadContextDataHTTP = new PVMFDownloadDataSourceHTTP(aIsNewSession, iDownloadConfigFilename, iDownloadFilename,
                 iDownloadMaxfilesize,
                 iDownloadProxy,
                 iDownloadProxyPort,
-                PVMFDownloadDataSourceHTTP::EAsap,
-                aUseCpmForPlayback);
+                PVMFDownloadDataSourceHTTP::EAsap);
     }
 }
 
@@ -19903,7 +19855,6 @@ void pvplayer_async_test_genericopenplaygetmetadatatest::Run()
                         iDownloadFilename = OUTPUTNAME_PREPEND_WSTRING;
                         iDownloadFilename += _STRLIT_WCHAR("test_ftdownload.dl");
                         bool aIsNewSession = true;
-                        bool iUseCpmForPlayback = false;
 
                         iSourceContextData->DownloadHTTPData()->bIsNewSession = aIsNewSession;
                         iSourceContextData->DownloadHTTPData()->iConfigFileName = iDownloadConfigFilename;
@@ -19912,7 +19863,6 @@ void pvplayer_async_test_genericopenplaygetmetadatatest::Run()
                         iSourceContextData->DownloadHTTPData()->iPlaybackControl = PVMFSourceContextDataDownloadHTTP::EAsap;
                         iSourceContextData->DownloadHTTPData()->iProxyName = iDownloadProxy;
                         iSourceContextData->DownloadHTTPData()->iProxyPort = iDownloadProxyPort;
-                        iSourceContextData->CommonData()->iUseCPMPluginRegistry = iUseCpmForPlayback;
                     }
                     iDataSource->SetDataSourceContextData((OsclAny*)iSourceContextData);
 #else
@@ -21921,14 +21871,11 @@ void pvplayer_async_test_genericopengetmetadatapictest::CreateDownloadDataSource
     else
 #endif
     {
-        bool aUseCpmForPlayback = false;
-
         iDownloadContextDataHTTP = new PVMFDownloadDataSourceHTTP(aIsNewSession, iDownloadConfigFilename, iDownloadFilename,
                 iDownloadMaxfilesize,
                 iDownloadProxy,
                 iDownloadProxyPort,
-                PVMFDownloadDataSourceHTTP::EAsap,
-                aUseCpmForPlayback);
+                PVMFDownloadDataSourceHTTP::EAsap);
     }
 }
 
@@ -22053,7 +22000,6 @@ void pvplayer_async_test_genericopengetmetadatapictest::Run()
                         iDownloadFilename = OUTPUTNAME_PREPEND_WSTRING;
                         iDownloadFilename += _STRLIT_WCHAR("test_ftdownload.dl");
                         bool aIsNewSession = true;
-                        bool iUseCpmForPlayback = false;
 
                         iSourceContextData->DownloadHTTPData()->bIsNewSession = aIsNewSession;
                         iSourceContextData->DownloadHTTPData()->iConfigFileName = iDownloadConfigFilename;
@@ -22062,7 +22008,6 @@ void pvplayer_async_test_genericopengetmetadatapictest::Run()
                         iSourceContextData->DownloadHTTPData()->iPlaybackControl = PVMFSourceContextDataDownloadHTTP::EAsap;
                         iSourceContextData->DownloadHTTPData()->iProxyName = iDownloadProxy;
                         iSourceContextData->DownloadHTTPData()->iProxyPort = iDownloadProxyPort;
-                        iSourceContextData->CommonData()->iUseCPMPluginRegistry = iUseCpmForPlayback;
                     }
                     iDataSource->SetDataSourceContextData((OsclAny*)iSourceContextData);
 #else

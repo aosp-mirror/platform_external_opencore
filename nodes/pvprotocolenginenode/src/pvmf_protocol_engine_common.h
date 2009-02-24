@@ -263,6 +263,14 @@ class ProtocolState : public HttpParsingBasicObjectObserver,
         {
             ;
         }
+        virtual uint32 getMediaDataLength()
+        {
+            return 0;
+        }
+        virtual uint32 getContenBitrate()
+        {
+            return 0;
+        }
 
         // user commands
         virtual void seek(const uint32 aSeekPosition)
@@ -301,7 +309,7 @@ class ProtocolState : public HttpParsingBasicObjectObserver,
                 iObserver(NULL),
                 iNeedGetResponsePreCheck(true)
         {
-            iLogger = PVLogger::GetLoggerObject("datapath.sourcenode.protocolenginenode");
+            iDataPathLogger = PVLogger::GetLoggerObject("datapath.sourcenode.protocolenginenode");
         }
 
         virtual ~ProtocolState()
@@ -309,7 +317,7 @@ class ProtocolState : public HttpParsingBasicObjectObserver,
             iComposer = NULL;
             iParser   = NULL;
             iObserver = NULL;
-            iLogger   = NULL;
+            iDataPathLogger = NULL;
         };
 
         virtual void reset()
@@ -401,7 +409,7 @@ class ProtocolState : public HttpParsingBasicObjectObserver,
         TimeValue iStartTime;
         bool iNeedGetResponsePreCheck;
         ProtocolEngineOutputDataSideInfo iDataSideInfo;
-        PVLogger *iLogger;
+        PVLogger *iDataPathLogger;
 };
 
 // This observer class is designed to notify protocol user (specifically, node) when one protocol state is completely finished, i.e.
@@ -597,10 +605,17 @@ class HttpBasedProtocol : public ProtocolStateObserver,
         {
             return iCurrState->isCurrentStateOptional();    // optional state can be by-passed regardless of any error happened
         }
-
         void resetTotalHttpStreamingSize()
         {
             if (iParser) iParser->resetTotalHttpStreamingSize();
+        }
+        uint32 getMediaDataLength()
+        {
+            return iCurrState->getMediaDataLength();    // only used in Shoutcast streaming
+        }
+        uint32 getContenBitrate()
+        {
+            return iCurrState->getContenBitrate();    // only used in Shoutcast streaming
         }
 
         virtual void reset()

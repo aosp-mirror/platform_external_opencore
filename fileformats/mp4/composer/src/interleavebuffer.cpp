@@ -54,6 +54,13 @@ PVA_FF_InterLeaveBuffer::PVA_FF_InterLeaveBuffer(uint32 mediaType,
 
             _maxInterLeaveBufferSize = AAC_INTERLEAVE_BUFFER_SIZE;
         }
+        else if (codecType == CODEC_TYPE_AMR_WB_AUDIO)
+        {
+            _interLeaveBuffer =
+                (uint8 *)(oscl_malloc(sizeof(uint8) * AMR_WB_INTERLEAVE_BUFFER_SIZE));
+
+            _maxInterLeaveBufferSize = AMR_WB_INTERLEAVE_BUFFER_SIZE;
+        }
     }
 
     if ((uint32) mediaType == MEDIA_TYPE_VISUAL)

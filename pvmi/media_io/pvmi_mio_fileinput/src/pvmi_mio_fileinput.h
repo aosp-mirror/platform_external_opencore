@@ -250,7 +250,7 @@ class PvmiMIOFileInput : public OsclTimerObject,
         int32 LocateM4VFrameHeader(uint8* video_buffer, int32 vop_size);
         int32 LocateH263FrameHeader(uint8* video_buffer, int32 vop_size);
         int32 GetIF2FrameSize(uint8 aFrameType);
-        int32 GetIETFFrameSize(uint8 aFrameType);
+        int32 GetIETFFrameSize(uint8 aFrameType, PVMFFormatType aFormat);
 
         void CloseInputFile();
 

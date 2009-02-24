@@ -86,6 +86,7 @@ OmxComponentBase::OmxComponentBase() :
     iSendOutBufferAfterPortReconfigFlag = OMX_FALSE;
     iSizeOutBufferForPortReconfig = 0;
 
+    iComponentRoleFlag = OMX_FALSE;
 
     ipMark = NULL;
 
@@ -165,7 +166,7 @@ OMX_ERRORTYPE OmxComponentBase::ConstructBaseComponent(OMX_PTR pAppData)
     ipTempOutBufferForPortReconfig = NULL;
     iSendOutBufferAfterPortReconfigFlag = OMX_FALSE;
     iSizeOutBufferForPortReconfig = 0;
-
+    iComponentRoleFlag = OMX_FALSE;
 
 
     /* Initialize the asynchronous command Queue */
@@ -394,10 +395,22 @@ void OmxComponentBase::SetNumBufferFlush(OMX_S32 NumPorts, OMX_S32 index, OMX_S3
     }
 }
 
+
+OMX_BOOL OmxComponentBase::ParseFullAVCFramesIntoNALs(OMX_BUFFERHEADERTYPE* aInputBuffer)
+{
+    OSCL_UNUSED_ARG(aInputBuffer);
+
+    // we should never arrive here if this is not an AVC component, since iOMXComponentUsesFullAVCFrames (which is tested before calling this function)
+    // should only be set for an AVC component
+
+    OSCL_ASSERT(OMX_FALSE);
+
+    return OMX_FALSE;
+}
+
 /** This function assembles multiple input buffers into
 	* one frame with the marker flag OMX_BUFFERFLAG_ENDOFFRAME set
 	*/
-
 OMX_BOOL OmxComponentBase::AssemblePartialFrames(OMX_BUFFERHEADERTYPE* aInputBuffer)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OmxComponentBase : AssemblePartialFrames IN"));
@@ -2690,7 +2703,16 @@ void OmxComponentBase::BufferMgmtFunction()
                 //If OMX_BUFFERFLAG_ENDOFFRAME flag is marked, come here
                 else
                 {
-                    PartialFrameReturn = AssemblePartialFrames(ipInputBuffer);
+                    if (iPVCapabilityFlags.iOMXComponentUsesFullAVCFrames && (OMX_PORT_INPUTPORT_INDEX == iCompressedFormatPortNum))
+                    {
+                        // since full frames are sent, there will never be partial frame assembly,
+                        // but we do need to parse the frames into NALs to send to the decoder
+                        PartialFrameReturn = ParseFullAVCFramesIntoNALs(ipInputBuffer);
+                    }
+                    else
+                    {
+                        PartialFrameReturn = AssemblePartialFrames(ipInputBuffer);
+                    }
                     if (OMX_FALSE == PartialFrameReturn)
                     {
                         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OmxComponentBase : BufferMgmtFunction OUT"));
@@ -3574,6 +3596,7 @@ OMX_ERRORTYPE OmxComponentAudio::SetParameter(
                 break;
             }
             oscl_strncpy((OMX_STRING)iComponentRole, (OMX_STRING)pCompRole->cRole, OMX_MAX_STRINGNAME_SIZE);
+            iComponentRoleFlag = OMX_TRUE;
         }
         break;
 
@@ -4171,6 +4194,7 @@ OMX_ERRORTYPE OmxComponentVideo::SetParameter(
                 break;
             }
             oscl_strncpy((OMX_STRING)iComponentRole, (OMX_STRING)pCompRole->cRole, OMX_MAX_STRINGNAME_SIZE);
+            iComponentRoleFlag = OMX_TRUE;
         }
         break;
 

@@ -51,32 +51,26 @@ typedef PVMFNodeInterface*(* LPFN_NODE_CREATE_FUNC)(int32);
 
 typedef bool (* LPFN_NODE_RELEASE_FUNC)(PVMFNodeInterface *);
 
-// init static variables before use
-OsclSharedLibrary* StreamingNodesCoreLibraryLoader::iOsclSharedLibrary = NULL;
-
 // Factory functions
 PVMFNodeInterface* StreamingNodesCoreLibraryLoader::CreateStreamingManagerNode(int32 aPriority)
 {
-    if (NULL == iOsclSharedLibrary)
+    OsclSharedLibrary* streamingSharedLibrary = NULL;
+    OSCL_StackString<NODE_REGISTRY_LIB_NAME_MAX_LENGTH> libname(RTSP_LIB_NAME);
+
+    // Need to load the library for the node
+    streamingSharedLibrary = OSCL_NEW(OsclSharedLibrary, (libname));
+    OsclLibStatus result = streamingSharedLibrary->LoadLib();
+    if (OsclLibSuccess != result)
     {
-        OSCL_StackString<NODE_REGISTRY_LIB_NAME_MAX_LENGTH> libname(RTSP_LIB_NAME);
-
-        // Need to load the library for the node
-        iOsclSharedLibrary = OSCL_NEW(OsclSharedLibrary, (libname));
-
-        OsclLibStatus result = iOsclSharedLibrary->LoadLib();
-        if (OsclLibSuccess != result)
-        {
-            return NULL;
-        }
+        return NULL;
     }
 
-    iOsclSharedLibrary->AddRef();
+    streamingSharedLibrary->AddRef();
 
     // Query for create function
     OsclAny* interfacePtr = NULL;
 
-    iOsclSharedLibrary->QueryInterface(PV_NODE_INTERFACE, (OsclAny*&)interfacePtr);
+    streamingSharedLibrary->QueryInterface(PV_NODE_INTERFACE, (OsclAny*&)interfacePtr);
 
     NodeSharedLibraryInterface* nodeIntPtr = OSCL_DYNAMIC_CAST(NodeSharedLibraryInterface*, interfacePtr);
 
@@ -86,8 +80,23 @@ PVMFNodeInterface* StreamingNodesCoreLibraryLoader::CreateStreamingManagerNode(i
 
     if (NULL != nodeCreateFunc)
     {
+        PVMFNodeInterface* node = NULL;
         // call the real node factory function
-        return (*(nodeCreateFunc))(aPriority);
+        node = (*(nodeCreateFunc))(aPriority);
+        if (NULL == node)
+        {
+            streamingSharedLibrary->RemoveRef();
+
+            if (OsclLibSuccess == streamingSharedLibrary->Close())
+            {
+                // Close will unload the library if refcount is 0
+                OSCL_DELETE(streamingSharedLibrary);
+            }
+
+            return NULL;
+        }
+        node->SetSharedLibraryPtr(streamingSharedLibrary);
+        return node;
     }
     return NULL;
 }
@@ -95,13 +104,22 @@ PVMFNodeInterface* StreamingNodesCoreLibraryLoader::CreateStreamingManagerNode(i
 bool StreamingNodesCoreLibraryLoader::DeleteStreamingManagerNode(PVMFNodeInterface* aNode)
 {
     bool bStatus = false;
+    OsclSharedLibrary* streamingSharedLibrary = NULL;
 
-    if (NULL != iOsclSharedLibrary)
+    if (NULL == aNode)
+    {
+        return false;
+    }
+
+    // Retrieve shared library pointer
+    streamingSharedLibrary = aNode->GetSharedLibraryPtr();
+
+    if (NULL != streamingSharedLibrary)
     {
         // Query fro release function
         OsclAny* interfacePtr = NULL;
 
-        iOsclSharedLibrary->QueryInterface(PV_NODE_INTERFACE, (OsclAny*&)interfacePtr);
+        streamingSharedLibrary->QueryInterface(PV_NODE_INTERFACE, (OsclAny*&)interfacePtr);
 
         NodeSharedLibraryInterface* nodeIntPtr = OSCL_DYNAMIC_CAST(NodeSharedLibraryInterface*, interfacePtr);
 
@@ -114,13 +132,12 @@ bool StreamingNodesCoreLibraryLoader::DeleteStreamingManagerNode(PVMFNodeInterfa
             bStatus = (*(nodeReleaseFunc))(aNode);
         }
 
-        iOsclSharedLibrary->RemoveRef();
+        streamingSharedLibrary->RemoveRef();
 
-        if (OsclLibSuccess == iOsclSharedLibrary->Close())
+        if (OsclLibSuccess == streamingSharedLibrary->Close())
         {
             // Close will unload the library if refcount is 0
-            OSCL_DELETE(iOsclSharedLibrary);
-            iOsclSharedLibrary = NULL;
+            OSCL_DELETE(streamingSharedLibrary);
         }
     }
 
@@ -134,6 +151,7 @@ class StreamingNodesRegistryInterface: public OsclSharedLibraryInterface,
             public RecognizerPopulatorInterface
 {
     public:
+        StreamingNodesRegistryInterface() {};
 
         // From NodeRegistryPopulatorInterface
         void RegisterAllNodes(PVPlayerNodeRegistryInterface* aRegistry, OsclAny*& aContext)
@@ -151,7 +169,6 @@ class StreamingNodesRegistryInterface: public OsclSharedLibraryInterface,
             nodeinfo.iNodeUUID = KPVMFRTSPStreamingModuleUuid;
             nodeinfo.iOutputType.clear();
             nodeinfo.iOutputType.push_back(PVMF_MIME_FORMAT_UNKNOWN);
-            nodeinfo.iSharedLibrary = OSCL_NEW(OsclSharedLibrary, (libname));
             nodeinfo.iNodeCreateFunc = (StreamingNodesCoreLibraryLoader::CreateStreamingManagerNode);
             nodeinfo.iNodeReleaseFunc = (StreamingNodesCoreLibraryLoader::DeleteStreamingManagerNode);
 
@@ -172,7 +189,6 @@ class StreamingNodesRegistryInterface: public OsclSharedLibraryInterface,
                 while (!nodeList->empty())
                 {
                     PVPlayerNodeInfo tmpnode = nodeList->front();
-                    OSCL_DELETE(tmpnode.iSharedLibrary);
                     aRegistry->UnregisterNode(tmpnode);
                     nodeList->erase(nodeList->begin());
                 }
@@ -205,16 +221,6 @@ class StreamingNodesRegistryInterface: public OsclSharedLibraryInterface,
             }
             return NULL;
         };
-
-        static StreamingNodesRegistryInterface* Instance()
-        {
-            static StreamingNodesRegistryInterface nodeInterface;
-            return &nodeInterface;
-        };
-
-    private:
-
-        StreamingNodesRegistryInterface() {};
 };
 
 
@@ -222,11 +228,11 @@ extern "C"
 {
     OsclSharedLibraryInterface* PVGetInterface(void)
     {
-        return StreamingNodesRegistryInterface::Instance();
+        return OSCL_NEW(StreamingNodesRegistryInterface, ());
     }
-    void PVReleaseInterface(OsclSharedLibraryInterface*)
+    void PVReleaseInterface(OsclSharedLibraryInterface* aInstance)
     {
-        //nothing needed
+        OSCL_DELETE(aInstance);
     }
 }
 

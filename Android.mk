@@ -3,7 +3,7 @@ LOCAL_PATH := $(call my-dir)
 PV_TOP := $(LOCAL_PATH)
 include $(CLEAR_VARS)
 
-PV_CFLAGS := -Wno-non-virtual-dtor -DENABLE_MEMORY_PLAYBACK -DUSE_CML2_CONFIG
+PV_CFLAGS := -Wno-non-virtual-dtor -DENABLE_MEMORY_PLAYBACK -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -DUSE_CML2_CONFIG
 
 ifeq ($(ENABLE_PV_LOGGING),1)
  PV_CFLAGS += -DPVLOGGER_INST_LEVEL=5
@@ -15,7 +15,7 @@ endif
 
 include $(CLEAR_VARS)
 
-FORMAT := nj
+FORMAT := android
 
 PV_COPY_HEADERS_TO := libpv
 
@@ -23,13 +23,13 @@ PV_INCLUDES := \
 	$(PV_TOP)/android \
 	$(PV_TOP)/extern_libs_v2/khronos/openmax/include \
 	$(PV_TOP)/engines/common/include \
-	$(PV_TOP)/engines/player/config/linux_nj \
+	$(PV_TOP)/engines/player/config/android \
 	$(PV_TOP)/engines/player/include \
 	$(PV_TOP)/nodes/pvmediaoutputnode/include \
 	$(PV_TOP)/nodes/pvdownloadmanagernode/config/opencore \
 	$(PV_TOP)/pvmi/pvmf/include \
 	$(PV_TOP)/fileformats/mp4/parser/config/opencore \
-	$(PV_TOP)/oscl/oscl/config/linux_nj \
+	$(PV_TOP)/oscl/oscl/config/android \
 	$(PV_TOP)/oscl/oscl/config/shared \
 	$(PV_TOP)/engines/author/include \
 	$(PV_TOP)/android/drm/oma1/src \

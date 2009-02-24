@@ -156,7 +156,7 @@ uint32 OsclFileCache::Read(void* outputBuffer, uint32 size, uint32 numelements)
         if ((uint32)(FileSize() - Tell()) < size)
             break;
 
-        uint32 bytesInCache = (_endCachePos - _currentCachePos);
+        uint32 bytesInCache = (uint32)(_endCachePos - _currentCachePos);
 
         if (bytesInCache > 0)
         {
@@ -207,7 +207,7 @@ uint32 OsclFileCache::Read(void* outputBuffer, uint32 size, uint32 numelements)
  *
  * @return returns the number of elements written
  */
-int32 OsclFileCache::Write(const void* inputBuffer, uint32 size, uint32 numelements)
+uint32 OsclFileCache::Write(const void* inputBuffer, uint32 size, uint32 numelements)
 {
     if (inputBuffer == NULL)
     {
@@ -289,7 +289,7 @@ int32 OsclFileCache::Write(const void* inputBuffer, uint32 size, uint32 numeleme
                 _endCachePos = _currentCachePos;
 
             //extend the virtual file size if needed.
-            if (_fileSize < _cacheFilePosition + _endCachePos)
+            if (_fileSize < (TOsclFileOffset)(_cacheFilePosition + _endCachePos))
                 _fileSize = _cacheFilePosition + _endCachePos;
 
             //consistency checks.  if these asserts fire, there is
@@ -326,10 +326,10 @@ int32 OsclFileCache::Write(const void* inputBuffer, uint32 size, uint32 numeleme
  *
  * @return 0 for success.
  */
-int32 OsclFileCache::Seek(int32 offset, Oscl_File::seek_type origin)
+int32 OsclFileCache::Seek(TOsclFileOffset offset, Oscl_File::seek_type origin)
 {
     //figure out the file position we're trying to seek to
-    int32 pos;
+    TOsclFileOffset pos;
     switch (origin)
     {
         case Oscl_File::SEEKCUR:
@@ -357,9 +357,9 @@ int32 OsclFileCache::Seek(int32 offset, Oscl_File::seek_type origin)
 
     //when seek is in current cache range, just update the
     //virtual position.
-    if (_cacheFilePosition <= (uint32)pos && (uint32)pos <= (_cacheFilePosition + _endCachePos))
+    if (_cacheFilePosition <= pos && pos <= (TOsclFileOffset)(_cacheFilePosition + _endCachePos))
     {
-        _currentCachePos = pos - _cacheFilePosition;
+        _currentCachePos = (uint32)(pos - _cacheFilePosition);
         return 0;//success
     }
 
@@ -459,7 +459,7 @@ int32 OsclFileCache::Flush()
  * return 0 on success.
  *
 */
-int32 OsclFileCache::SetCachePosition(uint32 aNewPos)
+int32 OsclFileCache::SetCachePosition(TOsclFileOffset aNewPos)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                     (0, "OsclFileCache(0x%x)::SetCachePosition curpos %d newpos %d", this, _cacheFilePosition, aNewPos));
@@ -507,7 +507,7 @@ int32 OsclFileCache::FillCacheFromFile()
 
     //flush and relocate cache to current virtual
     //position if needed
-    uint32 newpos = Tell();
+    TOsclFileOffset newpos = Tell();
     if (_cacheFilePosition != newpos
             || (_cacheUpdateEnd - _cacheUpdateStart) > 0)
     {
@@ -576,7 +576,7 @@ int32 OsclFileCache::WriteCacheToFile()
 
         //Seek to the correct write location in the file if needed
 
-        uint32 pos = _cacheFilePosition + _cacheUpdateStart;
+        TOsclFileOffset pos = _cacheFilePosition + _cacheUpdateStart;
 
         if (_nativePosition != pos)
         {
@@ -621,7 +621,7 @@ int32 OsclFileCache::WriteCacheToFile()
         //and locating it as close as possible to the desired position.
         _fileSize = iContainer.CallNativeSize();
         _nativePosition = iContainer.CallNativeTell();
-        uint32 newpos = Tell();
+        TOsclFileOffset newpos = Tell();
         if (newpos > _fileSize)
             newpos = _fileSize;
         SetCachePosition(newpos);

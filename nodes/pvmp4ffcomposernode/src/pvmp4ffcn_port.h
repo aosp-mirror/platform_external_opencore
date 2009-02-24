@@ -131,6 +131,14 @@ class PVMp4FFComposerPort : public PvmfPortBaseImpl,
         {
             return iMimeType;
         }
+        void SetCodecType(int32 aCodecType)
+        {
+            iCodecType = aCodecType;
+        }
+        int32 GetCodecType()
+        {
+            return iCodecType;
+        }
         PVMP4FFCNFormatSpecificConfig* GetFormatSpecificConfig()
         {
             PvmiCapabilityAndConfig* config = NULL;
@@ -223,6 +231,7 @@ class PVMp4FFComposerPort : public PvmfPortBaseImpl,
         // Port configuration
         int32 iTrackId;
         PVMFFormatType iFormat;
+        int32 iCodecType; //integer value to avoid formatype comparisons
         PVMP4FFCNFormatSpecificConfig iFormatSpecificConfig;
         PVMp4FFComposerPort* iReferencePort;
         OsclMemoryFragment* memfrag_sps;

@@ -22,6 +22,10 @@
 #include "pvmf_protocol_engine_common.h"
 #endif
 
+#ifndef PVDL_CONFIG_FILE_H_INCLUDED
+#include "pvdl_config_file.h"
+#endif
+
 class DownloadState : public ProtocolState
 {
     public:

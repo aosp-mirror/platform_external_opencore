@@ -73,6 +73,7 @@ bool PVAETestInput::IsTestInputTypeSupported(PVAETestInputType aType)
         case PCM16_FILE:
         case YUV_WRONG_FILE:
         case TEXT_FILE:
+        case AMRWB_IETF_FILE:
             return true;
 
         case M4V_FILE:
@@ -98,6 +99,7 @@ int PVAETestInput::CreateInputNode(PVAETestInputType aType, const OSCL_wString& 
         case PCM16_FILE:
         case YUV_WRONG_FILE:
         case TEXT_FILE:
+        case AMRWB_IETF_FILE:
             status = CreateMIOInputNode(aType, aFileName, iAVTConfig);
             break;
 
@@ -128,6 +130,7 @@ bool PVAETestInput::DeleteInputNode()
         case PCM16_FILE:
         case YUV_WRONG_FILE:
         case TEXT_FILE:
+        case AMRWB_IETF_FILE:
             if (iNode)
                 PvmfMediaInputNodeFactory::Delete(iNode);
             if (iMediaInput)
@@ -225,6 +228,18 @@ bool PVAETestInput::CreateMIOInputNode(PVAETestInputType aType, const OSCL_wStri
             iSettings.iNum20msFramesPerChunk = KNum20msFramesPerChunk;
             break;
 
+        case AMRWB_IETF_FILE:
+            if (aFileName.get_size() == 0)
+            {
+                iSettings.iFileName = KAMRWBTestInput;
+            }
+            iSettings.iMediaFormat = PVMF_MIME_AMRWB_IETF;
+            iSettings.iLoopInputFile = iAVTConfig.iLoopingEnable;
+            iSettings.iSamplingFrequency = 16000; //AMR-WB is always sampled at 16KHz
+            iSettings.iNumChannels = 1; //AMR-WB is always mono
+            iSettings.iNum20msFramesPerChunk = KNum20msFramesPerChunk;
+            break;
+
         case AAC_ADIF_FILE:
             if (aFileName.get_size() == 0)
             {
@@ -247,7 +262,6 @@ bool PVAETestInput::CreateMIOInputNode(PVAETestInputType aType, const OSCL_wStri
             iSettings.iNumChannels = iAVTConfig.iNumChannels;// KAudioNumChannels;
             iSettings.iNum20msFramesPerChunk = KNum20msFramesPerChunk;
             break;
-
 
         case TEXT_FILE:
             if (aFileName.get_size() == 0)

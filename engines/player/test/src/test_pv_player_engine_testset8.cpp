@@ -67,7 +67,6 @@
 #include "oscl_mem_audit.h"
 #endif
 
-
 //
 // pvplayer_async_test_printmetadata section
 //
@@ -110,16 +109,71 @@ void pvplayer_async_test_printmetadata::Run()
             iTmpWCharBuffer[511] = '\0';
             iFileNameWStr = SOURCENAME_PREPEND_WSTRING;
             iFileNameWStr += iTmpWCharBuffer;
-            iDataSource->SetDataSourceURL(iFileNameWStr);
-            iDataSource->SetDataSourceFormatType(iFileType);
             /*
              * In case of HTTP URLs always attempt rollover,
              * since we donot know if it is a download or a streaming url
              */
             if (iFileType == PVMF_MIME_DATA_SOURCE_HTTP_URL)
             {
-                iDataSource->SetAlternateSourceFormatType(PVMF_MIME_DATA_SOURCE_MS_HTTP_STREAMING_URL);
+                iSourceContextData = new PVMFSourceContextData();
+                iSourceContextData->EnableStreamingSourceContext();
+                iSourceContextData->EnableCommonSourceContext();
+                PVInterface* sourceContextStream = NULL;
+
+                PVUuid streamingContextUuid(PVMF_SOURCE_CONTEXT_DATA_STREAMING_UUID);
+                if (iSourceContextData->queryInterface(streamingContextUuid, sourceContextStream))
+                {
+                    PVMFSourceContextDataStreaming* streamingContext =
+                        OSCL_STATIC_CAST(PVMFSourceContextDataStreaming*, sourceContextStream);
+                    streamingContext->iStreamStatsLoggingURL = iFileNameWStr;
+
+                    if (iProxyEnabled)
+                    {
+                        streamingContext->iProxyName = _STRLIT_WCHAR("");
+                        streamingContext->iProxyPort = 8080;
+                    }
+                }
+                PVInterface* sourceContextDownload = NULL;
+                iSourceContextData->EnableDownloadHTTPSourceContext();
+                PVUuid downloadContextUuid(PVMF_SOURCE_CONTEXT_DATA_DOWNLOAD_HTTP_UUID);
+                if (iSourceContextData->queryInterface(downloadContextUuid, sourceContextDownload))
+                {
+                    //create the opaque data
+                    iDownloadProxy = _STRLIT_CHAR("");
+                    int32 iDownloadProxyPort = 0;
+                    if (iProxyEnabled)
+                    {
+                        iDownloadProxy = _STRLIT_CHAR("");
+                        iDownloadProxyPort = 8080;
+                    }
+                    iDownloadConfigFilename = OUTPUTNAME_PREPEND_WSTRING;
+                    iDownloadConfigFilename += _STRLIT_WCHAR("mydlconfig");
+                    iDownloadMaxfilesize = 0x7FFFFFFF;
+                    iDownloadFilename = OUTPUTNAME_PREPEND_WSTRING;
+                    iDownloadFilename += _STRLIT_WCHAR("test_ftdownload.dl");
+                    bool aIsNewSession = true;
+
+                    iSourceContextData->DownloadHTTPData()->bIsNewSession = aIsNewSession;
+                    iSourceContextData->DownloadHTTPData()->iConfigFileName = iDownloadConfigFilename;
+                    iSourceContextData->DownloadHTTPData()->iDownloadFileName = iDownloadFilename;
+                    iSourceContextData->DownloadHTTPData()->iMaxFileSize = iDownloadMaxfilesize;
+                    iSourceContextData->DownloadHTTPData()->iPlaybackControl = PVMFSourceContextDataDownloadHTTP::EAsap;
+                    iSourceContextData->DownloadHTTPData()->iProxyName = iDownloadProxy;
+                    iSourceContextData->DownloadHTTPData()->iProxyPort = iDownloadProxyPort;
+
+                }
+                iDataSource->SetDataSourceContextData((OsclAny*)iSourceContextData);
+
+                iDataSource->SetDataSourceFormatType(PVMF_MIME_DATA_SOURCE_MS_HTTP_STREAMING_URL);
+                iDataSource->SetAlternateSourceFormatType(PVMF_MIME_DATA_SOURCE_HTTP_URL);
             }
+            else
+            {
+                iDataSource->SetDataSourceFormatType(iFileType);
+            }
+
+            iDataSource->SetDataSourceURL(iFileNameWStr);
+
             OSCL_TRY(error, iCurrentCmdId = iPlayer->AddDataSource(*iDataSource, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
         }
@@ -313,6 +367,9 @@ void pvplayer_async_test_printmetadata::Run()
         {
             PVPATB_TEST_IS_TRUE(PVPlayerFactory::DeletePlayer(iPlayer));
             iPlayer = NULL;
+
+            delete iSourceContextData;
+            iSourceContextData = NULL;
 
             delete iDataSource;
             iDataSource = NULL;
@@ -1269,8 +1326,71 @@ void pvplayer_async_test_printmemstats::Run()
             iTmpWCharBuffer[511] = '\0';
             iFileNameWStr = SOURCENAME_PREPEND_WSTRING;
             iFileNameWStr += iTmpWCharBuffer;
+            /*
+             * In case of HTTP URLs always attempt rollover,
+             * since we donot know if it is a download or a streaming url
+             */
+            if (iFileType == PVMF_MIME_DATA_SOURCE_HTTP_URL)
+            {
+                iSourceContextData = new PVMFSourceContextData();
+                iSourceContextData->EnableStreamingSourceContext();
+                iSourceContextData->EnableCommonSourceContext();
+                PVInterface* sourceContextStream = NULL;
+
+                PVUuid streamingContextUuid(PVMF_SOURCE_CONTEXT_DATA_STREAMING_UUID);
+                if (iSourceContextData->queryInterface(streamingContextUuid, sourceContextStream))
+                {
+                    PVMFSourceContextDataStreaming* streamingContext =
+                        OSCL_STATIC_CAST(PVMFSourceContextDataStreaming*, sourceContextStream);
+                    streamingContext->iStreamStatsLoggingURL = iFileNameWStr;
+
+                    if (iProxyEnabled)
+                    {
+                        streamingContext->iProxyName = _STRLIT_WCHAR("");
+                        streamingContext->iProxyPort = 8080;
+                    }
+                }
+                PVInterface* sourceContextDownload = NULL;
+                iSourceContextData->EnableDownloadHTTPSourceContext();
+                PVUuid downloadContextUuid(PVMF_SOURCE_CONTEXT_DATA_DOWNLOAD_HTTP_UUID);
+                if (iSourceContextData->queryInterface(downloadContextUuid, sourceContextDownload))
+                {
+                    //create the opaque data
+                    iDownloadProxy = _STRLIT_CHAR("");
+                    int32 iDownloadProxyPort = 0;
+                    if (iProxyEnabled)
+                    {
+                        iDownloadProxy = _STRLIT_CHAR("");
+                        iDownloadProxyPort = 8080;
+                    }
+                    iDownloadConfigFilename = OUTPUTNAME_PREPEND_WSTRING;
+                    iDownloadConfigFilename += _STRLIT_WCHAR("mydlconfig");
+                    iDownloadMaxfilesize = 0x7FFFFFFF;
+                    iDownloadFilename = OUTPUTNAME_PREPEND_WSTRING;
+                    iDownloadFilename += _STRLIT_WCHAR("test_ftdownload.dl");
+                    bool aIsNewSession = true;
+
+                    iSourceContextData->DownloadHTTPData()->bIsNewSession = aIsNewSession;
+                    iSourceContextData->DownloadHTTPData()->iConfigFileName = iDownloadConfigFilename;
+                    iSourceContextData->DownloadHTTPData()->iDownloadFileName = iDownloadFilename;
+                    iSourceContextData->DownloadHTTPData()->iMaxFileSize = iDownloadMaxfilesize;
+                    iSourceContextData->DownloadHTTPData()->iPlaybackControl = PVMFSourceContextDataDownloadHTTP::EAsap;
+                    iSourceContextData->DownloadHTTPData()->iProxyName = iDownloadProxy;
+                    iSourceContextData->DownloadHTTPData()->iProxyPort = iDownloadProxyPort;
+
+                }
+                iDataSource->SetDataSourceContextData((OsclAny*)iSourceContextData);
+
+                iDataSource->SetDataSourceFormatType(PVMF_MIME_DATA_SOURCE_MS_HTTP_STREAMING_URL);
+                iDataSource->SetAlternateSourceFormatType(PVMF_MIME_DATA_SOURCE_HTTP_URL);
+            }
+            else
+            {
+                iDataSource->SetDataSourceFormatType(iFileType);
+            }
+
             iDataSource->SetDataSourceURL(iFileNameWStr);
-            iDataSource->SetDataSourceFormatType(iFileType);
+
             OSCL_TRY(error, iCurrentCmdId = iPlayer->AddDataSource(*iDataSource, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
         }
@@ -1410,6 +1530,9 @@ void pvplayer_async_test_printmemstats::Run()
 
             fprintf(iTestMsgOutputFile, "After player destruction: ");
             PrintMemStats();
+
+            delete iSourceContextData;
+            iSourceContextData = NULL;
 
             delete iDataSource;
             iDataSource = NULL;
@@ -1847,8 +1970,71 @@ void pvplayer_async_test_playuntileos::Run()
             iDataSource = new PVPlayerDataSourceURL;
             oscl_UTF8ToUnicode(iFileName, oscl_strlen(iFileName), iTmpWCharBuffer, 512);
             iFileNameWStr.set(iTmpWCharBuffer, oscl_strlen(iTmpWCharBuffer));
+            /*
+             * In case of HTTP URLs always attempt rollover,
+             * since we donot know if it is a download or a streaming url
+             */
+            if (iFileType == PVMF_MIME_DATA_SOURCE_HTTP_URL)
+            {
+                iSourceContextData = new PVMFSourceContextData();
+                iSourceContextData->EnableStreamingSourceContext();
+                iSourceContextData->EnableCommonSourceContext();
+                PVInterface* sourceContextStream = NULL;
+
+                PVUuid streamingContextUuid(PVMF_SOURCE_CONTEXT_DATA_STREAMING_UUID);
+                if (iSourceContextData->queryInterface(streamingContextUuid, sourceContextStream))
+                {
+                    PVMFSourceContextDataStreaming* streamingContext =
+                        OSCL_STATIC_CAST(PVMFSourceContextDataStreaming*, sourceContextStream);
+                    streamingContext->iStreamStatsLoggingURL = iFileNameWStr;
+
+                    if (iProxyEnabled)
+                    {
+                        streamingContext->iProxyName = _STRLIT_WCHAR("");
+                        streamingContext->iProxyPort = 8080;
+                    }
+                }
+                PVInterface* sourceContextDownload = NULL;
+                iSourceContextData->EnableDownloadHTTPSourceContext();
+                PVUuid downloadContextUuid(PVMF_SOURCE_CONTEXT_DATA_DOWNLOAD_HTTP_UUID);
+                if (iSourceContextData->queryInterface(downloadContextUuid, sourceContextDownload))
+                {
+                    //create the opaque data
+                    iDownloadProxy = _STRLIT_CHAR("");
+                    int32 iDownloadProxyPort = 0;
+                    if (iProxyEnabled)
+                    {
+                        iDownloadProxy = _STRLIT_CHAR("");
+                        iDownloadProxyPort = 8080;
+                    }
+                    iDownloadConfigFilename = OUTPUTNAME_PREPEND_WSTRING;
+                    iDownloadConfigFilename += _STRLIT_WCHAR("mydlconfig");
+                    iDownloadMaxfilesize = 0x7FFFFFFF;
+                    iDownloadFilename = OUTPUTNAME_PREPEND_WSTRING;
+                    iDownloadFilename += _STRLIT_WCHAR("test_ftdownload.dl");
+                    bool aIsNewSession = true;
+
+                    iSourceContextData->DownloadHTTPData()->bIsNewSession = aIsNewSession;
+                    iSourceContextData->DownloadHTTPData()->iConfigFileName = iDownloadConfigFilename;
+                    iSourceContextData->DownloadHTTPData()->iDownloadFileName = iDownloadFilename;
+                    iSourceContextData->DownloadHTTPData()->iMaxFileSize = iDownloadMaxfilesize;
+                    iSourceContextData->DownloadHTTPData()->iPlaybackControl = PVMFSourceContextDataDownloadHTTP::EAsap;
+                    iSourceContextData->DownloadHTTPData()->iProxyName = iDownloadProxy;
+                    iSourceContextData->DownloadHTTPData()->iProxyPort = iDownloadProxyPort;
+
+                }
+                iDataSource->SetDataSourceContextData((OsclAny*)iSourceContextData);
+
+                iDataSource->SetDataSourceFormatType(PVMF_MIME_DATA_SOURCE_MS_HTTP_STREAMING_URL);
+                iDataSource->SetAlternateSourceFormatType(PVMF_MIME_DATA_SOURCE_HTTP_URL);
+            }
+            else
+            {
+                iDataSource->SetDataSourceFormatType(iFileType);
+            }
+
             iDataSource->SetDataSourceURL(iFileNameWStr);
-            iDataSource->SetDataSourceFormatType(iFileType);
+
             OSCL_TRY(error, iCurrentCmdId = iPlayer->AddDataSource(*iDataSource, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
         }
@@ -1990,6 +2176,9 @@ void pvplayer_async_test_playuntileos::Run()
         {
             PVPATB_TEST_IS_TRUE(PVPlayerFactory::DeletePlayer(iPlayer));
             iPlayer = NULL;
+
+            delete iSourceContextData;
+            iSourceContextData = NULL;
 
             delete iDataSource;
             iDataSource = NULL;

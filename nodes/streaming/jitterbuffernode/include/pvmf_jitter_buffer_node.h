@@ -17,7 +17,6 @@
  */
 #ifndef PVMF_JITTER_BUFFER_NODE_H_INCLUDED
 #define PVMF_JITTER_BUFFER_NODE_H_INCLUDED
-
 #ifndef OSCL_EXCLUSIVE_PTR_H_INCLUDED
 #include "oscl_exclusive_ptr.h"
 #endif
@@ -48,17 +47,16 @@
 #ifndef PVMF_JITTER_BUFFER_INTERNAL_H_INCLUDED
 #include "pvmf_jitter_buffer_internal.h"
 #endif
-#ifndef PVMF_RTCP_TIMER_H_INCLUDED
-#include "pvmf_rtcp_timer.h"
-#endif
 #ifndef PVMF_SM_NODE_EVENTS_H_INCLUDED
 #include "pvmf_sm_node_events.h"
 #endif
-#ifndef PVMF_JB_INACTIVITY_TIMER_H_INCLUDED
-#include "pvmf_jb_inactivity_timer.h"
+
+#ifndef PVMF_JB_JITTERBUFFERMISC_H_INCLUDED
+#include "pvmf_jb_jitterbuffermisc.h"
 #endif
-#ifndef PVMF_SM_CONFIG_H_INCLUDED
-#include "pvmf_sm_config.h"
+
+#ifndef PVMF_MEDIA_CMD_H_INCLUDED
+#include "pvmf_media_cmd.h"
 #endif
 
 ///////////////////////////////////////////////
@@ -94,55 +92,39 @@ enum PVMFStreamType
 };
 
 class PVLogger;
-
-class PVMFMediaClockNotificationsIntfContext
-{
-    public:
-        PVMFMediaClockNotificationsIntfContext(): iClockNotificationIntf(NULL), iContext(NULL) {}
-        void SetContext(PVMFMediaClockNotificationsInterface* aClockNotificationsInterface, OsclAny* aContext)
-        {
-            iClockNotificationIntf = aClockNotificationsInterface;
-            iContext = aContext;
-        }
-        const OsclAny* GetContextData() const
-        {
-            return iContext;
-        }
-
-        const PVMFMediaClockNotificationsInterface* GetMediaClockNotificationsInterface() const
-        {
-            return  iClockNotificationIntf;
-        }
-
-    private:
-        PVMFMediaClockNotificationsInterface* iClockNotificationIntf;
-        OsclAny* iContext;
-};
+class PVMFJitterBufferExtensionInterfaceImpl;
+class PVMFJitterBufferConstructParams;
+class JitterBufferFactory;
 
 class PVMFJitterBufferNode : public PVInterface,
             public PVMFNodeInterface,
             public OsclActiveObject,
-            public PVMFNodeErrorEventObserver,
-            public PVMFNodeInfoEventObserver,
-            public PVMFNodeCmdStatusObserver,
-            public PvmfRtcpTimerObserver,
-            public PvmfJBSessionDurationTimerObserver,
             public PVMFJitterBufferObserver,
-            public PVMFMediaClockStateObserver,
-            public OsclMemPoolResizableAllocatorMemoryObserver,
-            public PVMFMediaClockNotificationsObs
+            public PVMFJitterBufferMiscObserver,
+            public PVMFJBEventNotifierObserver,
+            public PVMFMediaClockStateObserver
 {
     public:
-        OSCL_IMPORT_REF PVMFJitterBufferNode(int32 aPriority);
+        OSCL_IMPORT_REF PVMFJitterBufferNode(int32 aPriority, JitterBufferFactory* aJBFactory);			//may be provide static func for creation and make the ctor private
         OSCL_IMPORT_REF virtual ~PVMFJitterBufferNode();
 
+        //Overrides from PVInterface
+        virtual void addRef()
+        {
+        }
+        virtual void removeRef()
+        {
+        }
+        virtual bool queryInterface(const PVUuid& uuid, PVInterface*& iface);
+
+        //Overrides from PVMFNodeInterface
         OSCL_IMPORT_REF PVMFStatus ThreadLogon();
         OSCL_IMPORT_REF PVMFStatus ThreadLogoff();
         OSCL_IMPORT_REF PVMFStatus GetCapability(PVMFNodeCapability& aNodeCapability);
         OSCL_IMPORT_REF PVMFPortIter* GetPorts(const PVMFPortFilter* aFilter = NULL);
         OSCL_IMPORT_REF PVMFCommandId QueryUUID(PVMFSessionId,
                                                 const PvmfMimeString& aMimeType,
-                                                Oscl_Vector< PVUuid, PVMFJitterBufferNodeAllocator >& aUuids,
+                                                Oscl_Vector< PVUuid, OsclMemAllocator >& aUuids,
                                                 bool aExactUuidsOnly = false,
                                                 const OsclAny* aContext = NULL);
         OSCL_IMPORT_REF PVMFCommandId QueryInterface(PVMFSessionId,
@@ -175,162 +157,149 @@ class PVMFJitterBufferNode : public PVInterface,
         OSCL_IMPORT_REF PVMFCommandId CancelCommand(PVMFSessionId,
                 PVMFCommandId aCmdId,
                 const OsclAny* aContextData = NULL);
+        void HandlePortActivity(const PVMFPortActivity& aActivity);   //from PVMFPortActivityHandler
 
-        /**
-         * Handle an error event that has been generated.
-         *
-         * @param "aEvent" "The event to be handled."
-         */
-        virtual void HandleNodeErrorEvent(const PVMFAsyncEvent& aEvent)
-        {
-            OSCL_UNUSED_ARG(aEvent);
-        }
-        /**
-         * Handle an informational event that has been generated.
-         *
-         * @param "aEvent" "The event to be handled."
-         */
-        virtual void HandleNodeInformationalEvent(const PVMFAsyncEvent& aEvent)
-        {
-            OSCL_UNUSED_ARG(aEvent);
-        }
-        /**
-         * Handle an event that has been generated.
-         *
-         * @param "aResponse"	"The response to a previously issued command."
-         */
-        virtual void NodeCommandCompleted(const PVMFCmdResp& aResponse)
-        {
-            OSCL_UNUSED_ARG(aResponse);
-        }
+        //Overrides from PVMFJitterBufferObserver
+        virtual void JitterBufferFreeSpaceAvailable(OsclAny* aContext);
+        virtual void ProcessJBInfoEvent(PVMFAsyncEvent& aEvent);
+        virtual void PacketReadyToBeRetrieved(OsclAny* aContext);
+        virtual void EndOfStreamSignalled(OsclAny* aContext);
 
-        //from PVMFPortActivityHandler
-        void HandlePortActivity(const PVMFPortActivity& aActivity);
-        //from PVMFMediaClockStateObserver
+        //PVMFJitterBufferMiscObserver
+        virtual void MessageReadyToSend(PVMFPortInterface*& aPort, PVMFSharedMediaMsgPtr& aMessage);
+        virtual void MediaReceivingChannelPrepared(bool aStatus);
+        virtual void ProcessRTCPControllerEvent(PVMFAsyncEvent& aEvent);
+        virtual void SessionSessionExpired();
+
+
+        //Overrides from PVMFJBEventNotifierObserver
+        virtual void ProcessCallback(CLOCK_NOTIFICATION_INTF_TYPE aClockNotificationInterfaceType, uint32 aCallBkId, const OsclAny* aContext, PVMFStatus aStatus);
+
+        //Override from PVMFMediaClockStateObserver
         virtual void ClockStateUpdated();
-        // Need to set jb state to ready when handing 404, 415 response
-        virtual void UpdateJitterBufferState();
-        void NotificationsInterfaceDestroyed();
-
-        virtual void addRef()
-        {
-        }
-        virtual void removeRef()
-        {
-        }
-        virtual bool queryInterface(const PVUuid& uuid, PVInterface*& iface)
-        {
-            iface = NULL;
-            if (uuid == PVUuid(PVMF_JITTERBUFFERNODE_EXTENSIONINTERFACE_UUID))
-            {
-                if (!iExtensionInterface)
-                {
-                    PVMFJitterBufferNodeAllocator alloc;
-                    int32 err;
-                    OsclAny*ptr = NULL;
-                    OSCL_TRY(err,
-                             ptr = alloc.ALLOCATE(sizeof(PVMFJitterBufferExtensionInterfaceImpl));
-                            );
-                    if (err != OsclErrNone || !ptr)
-                    {
-                        PVMF_JBNODE_LOGERROR((0, "PVMFJitterBufferNode::queryInterface: Error - Out of memory"));
-                        OSCL_LEAVE(OsclErrNoMemory);
-                    }
-                    iExtensionInterface =
-                        OSCL_PLACEMENT_NEW(ptr, PVMFJitterBufferExtensionInterfaceImpl(this));
-                }
-                return (iExtensionInterface->queryInterface(uuid, iface));
-            }
-            else
-            {
-                return false;
-            }
-        }
-        virtual bool PrepareForPlaylistSwitch();
+        virtual void NotificationsInterfaceDestroyed();
 
     private:
-        bool RTCPByeRcvd();
-        //from OsclActiveObject
+        //Overrides from OsclActiveObject
         void Run();
         void DoCancel();
 
-        /**
-         * Process a port activity. This method is called by Run to process a port activity.
-         *
-         */
+        //Extension interface functions implemented in Node
+        virtual void SetRTCPIntervalInMicroSecs(uint32 aRTCPInterval);	//Not used as of now
+        virtual bool SetPortParams(PVMFPortInterface* aPort,
+                                   uint32 aTimeScale,
+                                   uint32 aBitRate,
+                                   OsclRefCounterMemFrag& aConfig,
+                                   bool aRateAdaptation = false,
+                                   uint32 aRateAdaptationFeedBackFrequency = 0);
+        virtual bool SetPlayRange(int32 aStartTimeInMS,
+                                  int32 aStopTimeInMS,
+                                  bool oPlayAfterASeek,
+                                  bool aStopTimeAvailable = true);
+        virtual void SetPlayBackThresholdInMilliSeconds(uint32 threshold);	//Not used as of now [replace with wait for OOO timeout]
+        virtual void SetJitterBufferRebufferingThresholdInMilliSeconds(uint32 aThreshold);
+        virtual void GetJitterBufferRebufferingThresholdInMilliSeconds(uint32& aThreshold);
+        virtual void SetJitterBufferDurationInMilliSeconds(uint32 duration);
+        virtual void GetJitterBufferDurationInMilliSeconds(uint32& duration);
+        virtual void SetEarlyDecodingTimeInMilliSeconds(uint32 duration);
+        virtual void SetBurstThreshold(float burstThreshold);
+        //While in buffering/start state, Jitter Buffer node expects its upstream peer node to send media msg at its input port in duration < inactivity duration
+        virtual void SetMaxInactivityDurationForMediaInMs(uint32 duration);
+        virtual void GetMaxInactivityDurationForMediaInMs(uint32& duration);
+
+        virtual void SetClientPlayBackClock(PVMFMediaClock* clientClock);
+        virtual bool PrepareForRepositioning(bool oUseExpectedClientClockVal = false,
+                                             uint32 aExpectedClientClockVal = 0);	//called for RTSP based streaming only
+        virtual bool SetPortSSRC(PVMFPortInterface* aPort, uint32 aSSRC);
+        virtual bool SetPortRTPParams(PVMFPortInterface* aPort,
+                                      bool   aSeqNumBasePresent,
+                                      uint32 aSeqNumBase,
+                                      bool   aRTPTimeBasePresent,
+                                      uint32 aRTPTimeBase,
+                                      bool   aNPTTimeBasePresent,
+                                      uint32 aNPTInMS,
+                                      bool oPlayAfterASeek = false);
+        virtual bool SetPortRTCPParams(PVMFPortInterface* aPort,
+                                       int aNumSenders,
+                                       uint32 aRR,
+                                       uint32 aRS);
+        virtual PVMFTimestamp GetActualMediaDataTSAfterSeek();
+        virtual PVMFTimestamp GetMaxMediaDataTS();
+
+        virtual PVMFStatus SetServerInfo(PVMFJitterBufferFireWallPacketInfo& aServerInfo);
+        virtual PVMFStatus NotifyOutOfBandEOS();
+        virtual PVMFStatus SendBOSMessage(uint32 aStramID);
+
+        virtual void SetJitterBufferChunkAllocator(OsclMemPoolResizableAllocator* aDataBufferAllocator, const PVMFPortInterface* aPort);
+
+        virtual void SetJitterBufferMemPoolInfo(const PvmfPortBaseImpl* aPort, uint32 aSize, uint32 aResizeSize, uint32 aMaxNumResizes, uint32 aExpectedNumberOfBlocksPerBuffer);
+        virtual void GetJitterBufferMemPoolInfo(const PvmfPortBaseImpl* aPort, uint32& aSize, uint32& aResizeSize, uint32& aMaxNumResizes, uint32& aExpectedNumberOfBlocksPerBuffer) const ;
+
+        virtual void SetSharedBufferResizeParams(uint32 maxNumResizes, uint32 resizeSize);
+        virtual void GetSharedBufferResizeParams(uint32& maxNumResizes, uint32& resizeSize);
+
+        virtual bool ClearJitterBuffer(PVMFPortInterface* aPort,
+                                       uint32 aSeqNum);
+        virtual void FlushJitterBuffer();
+
+
+        virtual PVMFStatus SetInputMediaHeaderPreParsed(PVMFPortInterface* aPort,
+                bool aHeaderPreParsed);
+
+        virtual PVMFStatus HasSessionDurationExpired(bool& aExpired);
+        virtual bool PurgeElementsWithNPTLessThan(NptTimeFormat& aNPTTime);
+
+        virtual void SetBroadCastSession();
+        virtual void DisableFireWallPackets();
+        virtual void UpdateJitterBufferState();
+        virtual void StartOutputPorts();
+        virtual void StopOutputPorts();
+
+        bool SetPortParams(PVMFPortInterface* aPort,
+                           uint32 aTimeScale,
+                           uint32 aBitRate,
+                           OsclRefCounterMemFrag& aConfig,
+                           bool aRateAdaptation,
+                           uint32 aRateAdaptationFeedBackFrequency,
+                           uint aMaxNumBuffResizes, uint aBuffResizeSize);
+        bool SetPortParams(PVMFPortInterface* aPort,
+                           uint32 aTimeScale,
+                           uint32 aBitRate,
+                           OsclRefCounterMemFrag& aConfig,
+                           bool aRateAdaptation,
+                           uint32 aRateAdaptationFeedBackFrequency,
+                           bool aUserSpecifiedBuffParams,
+                           uint aMaxNumBuffResizes = 0, uint aBuffResizeSize = 0);
+        bool PrepareForPlaylistSwitch();
+
+        //Async command handling functions
+        void DoQueryUuid(PVMFJitterBufferNodeCommand&);
+        void DoQueryInterface(PVMFJitterBufferNodeCommand&);
+        void DoRequestPort(PVMFJitterBufferNodeCommand&);
+        void DoReleasePort(PVMFJitterBufferNodeCommand&);
+        void DoInit(PVMFJitterBufferNodeCommand&);
+        void DoPrepare(PVMFJitterBufferNodeCommand& aCmd);
+        void CompletePrepare();
+        void CancelPrepare();
+        void DoStart(PVMFJitterBufferNodeCommand&);
+        void CompleteStart();
+        void CancelStart();
+
+        //Utility functions
+        void Construct();
+        void ResetNodeParams(bool aReleaseMemory = true);
         bool ProcessPortActivity(PVMFJitterBufferPortParams*);
-
-        /**
-         * Retrieve and process an incoming message from a port.
-         */
         PVMFStatus ProcessIncomingMsg(PVMFJitterBufferPortParams*);
-        PVMFStatus ProcessIncomingMsgRTP(PVMFJitterBufferPortParams*,
-                                         PVMFSharedMediaMsgPtr&);
-
-        /**
-         * Process an outgoing message of a the specified port by sending the message to
-         * the receiving side.
-         */
         PVMFStatus ProcessOutgoingMsg(PVMFJitterBufferPortParams*);
-
         void QueuePortActivity(PVMFJitterBufferPortParams*,
                                const PVMFPortActivity&);
-
         bool CheckForPortRescheduling();
         bool CheckForPortActivityQueues();
-
-        /**
-         * Queue holding port activity. Only incoming and outgoing msg activity are
-         * put on the queue.  For each port, there should only be at most one activity
-         * of each type on the queue.
-         */
-        Oscl_Vector<PVMFPortActivity, PVMFJitterBufferNodeAllocator> iPortActivityQueue;
-
-        PVMFPortVector<PVMFJitterBufferPort, PVMFJitterBufferNodeAllocator> iPortVector;
-
-        /*
-         * Queue holding port params - one per every port
-         */
-        Oscl_Vector<PVMFJitterBufferPortParams, PVMFJitterBufferNodeAllocator> iPortParamsQueue;
 
         bool getPortContainer(PVMFPortInterface* aPort,
                               PVMFJitterBufferPortParams*& aPortParams);
 
-        PVMFJitterBufferNodeCmdQ iInputCommands;
-        PVMFJitterBufferNodeCmdQ iCurrentCommand;
-        PVMFNodeCapability iCapability;
-        PVLogger *iLogger;
-        PVLogger *iDataPathLogger;
-        PVLogger *iDataPathLoggerIn;
-        PVLogger *iDataPathLoggerOut;
-        PVLogger *iDataPathLoggerFlowCtrl;
-        PVLogger *iDataPathLoggerRTCP;
-        PVLogger *iDataPathLoggerFireWall;
-        PVLogger *iClockLogger;
-        PVLogger *iClockLoggerSessionDuration;
-        PVLogger *iClockLoggerRebuff;
-        PVLogger *iJBEventsClockLogger;
-        PVLogger *iRTCPAVSyncLogger;
-        uint32 iStreamID;
 
-        PVMFJitterBufferExtensionInterfaceImpl *iExtensionInterface;
-
-        /*
-         * Jitter buffer related params
-         */
-        PVMFMediaClock *iClientPlayBackClock;
-        PVMFMediaClock *iEstimatedServerClock;
-        PVMFTimebase_Tickcount iEstimatedServerClockTimeBase;
-
-        uint32    iJitterBufferUnderFlowThresholdInMilliSeconds;
-        uint32    iPlayBackThresholdInMilliSeconds;
-        uint32    iEstimatedServerKeepAheadInMilliSeconds;
-        bool      oDelayEstablished;
-        bool      iOverflowFlag;
-
-        PVMFJBCommandContext iInternalCmdPool[PVMF_JITTER_BUFFER_INTERNAL_CMDQ_SIZE];
-
-        /** Command processing */
         PVMFCommandId QueueCommandL(PVMFJitterBufferNodeCommand&);
         void MoveCmdToCurrentQueue(PVMFJitterBufferNodeCommand& aCmd);
         bool ProcessCommand(PVMFJitterBufferNodeCommand&);
@@ -351,24 +320,10 @@ class PVMFJitterBufferNode : public PVInterface,
                                      OsclAny* aEventData = NULL);
         PVMFJBCommandContext* RequestNewInternalCmd();
 
-        void DoQueryUuid(PVMFJitterBufferNodeCommand&);
-        void DoQueryInterface(PVMFJitterBufferNodeCommand&);
-        void DoRequestPort(PVMFJitterBufferNodeCommand&);
-        void DoReleasePort(PVMFJitterBufferNodeCommand&);
-        void DoInit(PVMFJitterBufferNodeCommand&);
-        void DoPrepare(PVMFJitterBufferNodeCommand& aCmd);
-        void CompletePrepare();
-        void CancelPrepare();
-        void DoStart(PVMFJitterBufferNodeCommand&);
-        void CompleteStart();
-        void CancelStart();
-        bool oStartPending;
-        bool iPlayingAfterSeek;
-
         void DoStop(PVMFJitterBufferNodeCommand&);
         void DoFlush(PVMFJitterBufferNodeCommand&);
         bool FlushPending();
-        uint32 iPauseTime;
+
         void DoPause(PVMFJitterBufferNodeCommand&);
         void DoReset(PVMFJitterBufferNodeCommand&);
         void DoCancelAllCommands(PVMFJitterBufferNodeCommand&);
@@ -385,210 +340,26 @@ class PVMFJitterBufferNode : public PVInterface,
         void SetState(TPVMFNodeInterfaceState);
 
         void CleanUp();
-        void setClientPlayBackClock(PVMFMediaClock* clientClock)
-        {
-            //remove ourself as observer of old clock, if any.
-            if (iClientPlayBackClockNotificationsInf && iClientPlayBackClock)
-            {
-                iClientPlayBackClockNotificationsInf->RemoveClockStateObserver(*this);
-                iClientPlayBackClock->DestroyMediaClockNotificationsInterface(iClientPlayBackClockNotificationsInf);
-                iClientPlayBackClockNotificationsInf = NULL;
-            }
 
-            iClientPlayBackClock = clientClock;
-            if (iClientPlayBackClock)
-            {
-                PVMFStatus status = iClientPlayBackClock->ConstructMediaClockNotificationsInterface(iClientPlayBackClockNotificationsInf, *this);
-                if (PVMFSuccess != status || !iClientPlayBackClockNotificationsInf)
-                {
-                    iClientPlayBackClockNotificationsInf = NULL;
-                    OSCL_ASSERT(false);
-                }
-            }
 
-            //set ourself as observer of new clock.
-            if (iClientPlayBackClockNotificationsInf)
-                iClientPlayBackClockNotificationsInf->SetClockStateObserver(*this);
-        }
-
-        void setMaxInactivityDurationForMediaInMs(uint32 duration)
-        {
-            iMaxInactivityDurationForMediaInMs = duration;
-        }
-
-        void getMaxInactivityDurationForMediaInMs(uint32& duration)
-        {
-            duration = iMaxInactivityDurationForMediaInMs;
-        }
 
         friend class PVMFJitterBufferPort;
         friend class PVMFJitterBufferExtensionInterfaceImpl;
 
-        /*
-         * Jitter buffer related methods
-         */
+
+
         bool CheckStateForRegisteringRTPPackets();
-        PVMFJitterBufferDataState iJitterBufferState;
-        void StopOutputPorts()
-        {
-            oStopOutputPorts = true;
-        }
-        void StartOutputPorts()
-        {
-            oStopOutputPorts = false;
-        }
-        bool PrepareForRepositioning(bool oUseExpectedClientClockVal = false,
-                                     uint32 aExpectedClientClockVal = 0);
-        bool ClearJitterBuffer(PVMFPortInterface* aPort, uint32 aSeqNum);
-        void FlushJitterBuffer();
-        bool pauseEstimatedServerClock()
-        {
-            if (iEstimatedServerClock)
-            {
-                PVMF_JBNODE_LOGCLOCK((0, "PVMFJitterBufferNode::pauseEstimatedServerClock"));
-                iEstimatedServerClock->Pause();
-            }
-            StopOutputPorts();
-            return true;
-        }
-        bool StartEstimatedServerClock()
-        {
-            if (iEstimatedServerClock)
-            {
-                PVMF_JBNODE_LOGCLOCK((0, "PVMFJitterBufferNode::StartEstimatedServerClock"));
-                iEstimatedServerClock->Start();
-            }
-            RequestEventCallBack(JB_BUFFERING_DURATION_COMPLETE);
-            StartOutputPorts();
-            return true;
-        }
+
         bool NotifyAutoPauseComplete()
         {
-            if (iEstimatedServerClock)
-            {
-                PVMF_JBNODE_LOGDATATRAFFIC_FLOWCTRL((0, "PVMFJitterBufferNode::NotifyAutoPauseComplete"));
-                PVMF_JBNODE_LOGCLOCK((0, "PVMFJitterBufferNode::NotifyAutoPauseComplete"));
-                iEstimatedServerClock->Pause();
-            }
+
             return true;
         }
         bool NotifyAutoResumeComplete()
         {
-            if (iEstimatedServerClock)
-            {
-                PVMF_JBNODE_LOGDATATRAFFIC_FLOWCTRL((0, "PVMFJitterBufferNode::NotifyAutoResumeComplete"));
-                PVMF_JBNODE_LOGCLOCK((0, "PVMFJitterBufferNode::NotifyAutoResumeComplete"));
-                iEstimatedServerClock->Start();
-                /* NotifyAutoResumeComplete() is only called in case of HTTP streaming,
-                   therefore EstimatedServerClock has to be paused just after it is started */
-                iEstimatedServerClock->Pause();
-            }
+
             return true;
         }
-        bool oAutoPause;
-
-        bool setPortParams(PVMFPortInterface* aPort,
-                           uint32 aTimeScale,
-                           uint32 aBitRate,
-                           OsclRefCounterMemFrag& aConfig,
-                           bool aRateAdaptation = false,
-                           uint32 aRateAdaptationFeedBackFrequency = 0);
-        bool setPortParams(PVMFPortInterface* aPort,
-                           uint32 aTimeScale,
-                           uint32 aBitRate,
-                           OsclRefCounterMemFrag& aConfig,
-                           bool aRateAdaptation,
-                           uint32 aRateAdaptationFeedBackFrequency,
-                           uint aMaxNumBuffResizes, uint aBuffResizeSize);
-        bool setPortParams(PVMFPortInterface* aPort,
-                           uint32 aTimeScale,
-                           uint32 aBitRate,
-                           OsclRefCounterMemFrag& aConfig,
-                           bool aRateAdaptation,
-                           uint32 aRateAdaptationFeedBackFrequency,
-                           bool aUserSpecifiedBuffParams,
-                           uint aMaxNumBuffResizes = 0, uint aBuffResizeSize = 0);
-        bool setPortSSRC(PVMFPortInterface* aPort, uint32 aSSRC);
-        bool setPortRTPParams(PVMFPortInterface* aPort,
-                              bool   aSeqNumBasePresent,
-                              uint32 aSeqNumBase,
-                              bool   aRTPTimeBasePresent,
-                              uint32 aRTPTimeBase,
-                              bool   aNPTTimeBasePresent,
-                              uint32 aNPTInMS,
-                              bool oPlayAfterASeek = false);
-        bool setPortRTCPParams(PVMFPortInterface* aPort,
-                               int aNumSenders,
-                               uint32 aRR,
-                               uint32 aRS);
-        void ActivateTimer(PVMFJitterBufferPortParams* pPort);
-
-        PVMFStatus setServerInfo(PVMFJitterBufferFireWallPacketInfo& aServerInfo);
-        PVMFStatus SetTransportType(PVMFPortInterface* aPort,
-                                    OSCL_String& aTransportType);
-        bool PurgeElementsWithNPTLessThan(NptTimeFormat &aNPTTime);
-
-        void setPlayBackThresholdInMilliSeconds(uint32 threshold)
-        {
-            iPlayBackThresholdInMilliSeconds = threshold;
-        }
-        void setJitterBufferRebufferingThresholdInMilliSeconds(uint32 aThreshold)
-        {
-            if (aThreshold < iJitterBufferDurationInMilliSeconds)
-            {
-                iJitterBufferUnderFlowThresholdInMilliSeconds = aThreshold;
-            }
-        }
-        void getJitterBufferRebufferingThresholdInMilliSeconds(uint32& aThreshold)
-        {
-            aThreshold = iJitterBufferUnderFlowThresholdInMilliSeconds;
-        }
-        void setJitterBufferDurationInMilliSeconds(uint32 duration)
-        {
-            iJitterBufferDurationInMilliSeconds = duration;
-        }
-        void getJitterBufferDurationInMilliSeconds(uint32& duration)
-        {
-            duration = iJitterBufferDurationInMilliSeconds;
-        }
-
-        PVMFStatus HasSessionDurationExpired(bool& aExpired)
-        {
-            aExpired = false;
-            if (oSessionDurationExpired)
-            {
-                aExpired = true;
-                return PVMFSuccess;
-            }
-
-            Oscl_Vector<PVMFJitterBufferPortParams, PVMFJitterBufferNodeAllocator>::iterator it;
-            for (it = iPortParamsQueue.begin();
-                    it != iPortParamsQueue.end();
-                    it++)
-            {
-                if (PVMF_JITTER_BUFFER_PORT_TYPE_FEEDBACK == it->tag)
-                {
-                    if (it->iRTCPStats.oRTCPByeRecvd)
-                    {
-                        aExpired = true;
-                    }
-                    else
-                    {
-                        aExpired = false;
-                        return PVMFSuccess;
-                    }
-                }
-            }
-            oSessionDurationExpired = aExpired;
-            return PVMFSuccess;
-        }
-
-
-        void SetSharedBufferResizeParams(uint32 maxNumResizes, uint32 resizeSize);
-        void GetSharedBufferResizeParams(uint32& maxNumResizes, uint32& resizeSize);
-
-        void SetJitterBufferMemPoolInfo(const PvmfPortBaseImpl* aPort, uint32 aSize, uint32 aResizeSize, uint32 aMaxNumResizes, uint32 aExpectedNumberOfBlocksPerBuffer);
-        void GetJitterBufferMemPoolInfo(const PvmfPortBaseImpl* aPort, uint32& aSize, uint32& aResizeSize, uint32& aMaxNumResizes, uint32& aExpectedNumberOfBlocksPerBuffer) const;
 
         PVMFPortInterface* getPortCounterpart(PVMFPortInterface* aPort);
         bool CheckForSpaceInJitterBuffer(PVMFPortInterface* aPort);
@@ -606,24 +377,15 @@ class PVMFJitterBufferNode : public PVInterface,
         bool IsJitterBufferReady(PVMFJitterBufferPortParams*, uint32& aClockDiff);
         PVMFStatus SendData(PVMFPortInterface*);
         PVMFStatus CheckJitterBufferEmpty(bool& oEmpty);
-        void JitterBufferFreeSpaceAvailable(OsclAny* aContext);
-        void EstimatedServerClockUpdated(OsclAny* aContext);
-        bool setPlayRange(int32 aStartTimeInMS,
-                          int32 aStopTimeInMS,
-                          bool oPlayAfterASeek,
-                          bool aStopTimeAvailable = true);
-        int32 iPlayStartTimeInMS;
-        int32 iPlayStopTimeInMS;
-        bool  iPlayStopTimeAvailable;
-        uint32 iJitterDelayPercent;
-        bool  oSessionDurationExpired;
-        bool  oStopOutputPorts;
-        PVMFTimestamp getActualMediaDataTSAfterSeek();
-        PVMFTimestamp getMaxMediaDataTS();
+
+
+        void LogSessionDiagnostics();
+        void LogPortDiagnostics();
+
         PVMFStatus CheckForEOS();
         PVMFStatus GenerateAndSendEOSCommand(PVMFPortInterface* aPort);
-        PVMFStatus NotifyOutOfBandEOS();
-        PVMFStatus SendBOSMessage(uint32 aStramID);
+
+
         bool QueueBOSCommand(PVMFPortInterface* aPort);
 
         PVMFStatus SetInPlaceProcessingMode(PVMFPortInterface* aPort,
@@ -634,20 +396,20 @@ class PVMFJitterBufferNode : public PVInterface,
             {
                 return PVMFFailure;
             }
-            portParamsPtr->oInPlaceProcessing = aInPlaceProcessing;
-            if (portParamsPtr->iJitterBuffer != NULL)
+
+            if (portParamsPtr->ipJitterBuffer != NULL)
             {
-                portParamsPtr->iJitterBuffer->SetInPlaceProcessingMode(aInPlaceProcessing);
+                portParamsPtr->ipJitterBuffer->SetInPlaceProcessingMode(aInPlaceProcessing);
             }
             return PVMFSuccess;
         }
 
-        /*
-         * RTCP timer related methods
-         */
-        uint32 iRTCPIntervalInMicroSeconds;
-        void setRTCPIntervalInMicroSecs(uint32 aRTCPInterval);
-        OsclRand iRandGen;
+
+        OsclAny* AllocatePort();
+        bool PushPortToVect(PVMFJitterBufferPort*& aPort);
+        bool PushPortParamsToQ(PVMFJitterBufferPortParams*& aPortParams);
+
+        // 	PvmfRtcpTimer* iRTCPTimer;
         void RtcpTimerEvent(PvmfRtcpTimer* pTimer);
         uint32 CalcRtcpInterval(PVMFJitterBufferPortParams* pFeedbackPort);
         PVMFStatus ProcessIncomingRTCPReport(PVMFSharedMediaMsgPtr&,
@@ -667,29 +429,15 @@ class PVMFJitterBufferNode : public PVInterface,
         PVMFStatus ComposeAndSendRateAdaptationFeedBackPacket(PVMFJitterBufferPortParams*&,
                 PVMFJitterBufferPortParams*&);
 
-        PVMFMediaClock *iRTCPClock;
-        PVMFTimebase_Tickcount iRTCPClockTimeBase;
 
-        /*
-         * Session Duration timer related
-         */
-        bool iUseSessionDurationTimerForEOS;
-        PvmfJBSessionDurationTimer* iSessionDurationTimer;
-        uint32 iSessionDurationInMS;
+
+
         void PVMFJBSessionDurationTimerEvent();
         void ComputeCurrentSessionDurationMonitoringInterval();
 
-        /* firewall packet related */
-        void DisableFireWallPackets()
-        {
-            iDisableFireWallPackets = true;
-        };
 
         PVMFStatus CreateFireWallPacketMemAllocators(PVMFJitterBufferPortParams*);
         PVMFStatus DestroyFireWallPacketMemAllocators(PVMFJitterBufferPortParams*);
-
-        PVMFJitterBufferFireWallPacketInfo iFireWallPacketInfo;
-        bool iDisableFireWallPackets;
 
         PVMFStatus SendFireWallPackets();
 
@@ -700,119 +448,90 @@ class PVMFJitterBufferNode : public PVInterface,
         void CheckForFireWallPacketAttempts(bool &aComplete);
         PVMFStatus DecodeFireWallPackets(PVMFSharedMediaDataPtr aPacket,
                                          PVMFJitterBufferPortParams* aPortParamsPtr);
+        void SetJitterBufferSize(uint32 aBufferSz);
+        void GetJitterBufferSize(uint32& aBufferSz) const;
+        void SetJitterBufferChunkAllocator(OsclMemPoolResizableAllocator* aDataBufferAllocator);
+        bool RequestEventCallBack(JB_NOTIFY_CALLBACK aEventType, uint32 aDelay = 0, OsclAny* aContext = NULL);
+        void CancelEventCallBack(JB_NOTIFY_CALLBACK aEventType, OsclAny* aContext = NULL);
+        void HandleEvent_IncomingMediaInactivityDurationExpired();
+        void HandleEvent_NotifyReportBufferingStatus();
+        void HandleEvent_JitterBufferBufferingDurationComplete();
 
         /* Bitstream thinning releated */
         void UpdateRebufferingStats(PVMFEventType aEventType);
-        uint32 iNumUnderFlow;
-        uint32 iUnderFlowStartByte;
-        uint32 iUnderFlowEndByte;
-        PVMFTimestamp iUnderFlowEndPacketTS;
-        uint32 iDataDurationAccumulatedWhileBuffering;
-        uint32 iEstimatedBitRate;
-        uint32 iStartBufferingTickCount;
-        uint32 iThinningIntervalMS;
-        uint32 iPrevBufferingStartPacketTs;
+        PVMFNodeCapability iCapability;
+        PVMFJitterBufferNodeCmdQ iInputCommands;
+        PVMFJitterBufferNodeCmdQ iCurrentCommand;
+        PVMFPortVector<PVMFJitterBufferPort, OsclMemAllocator> iPortVector;
+        Oscl_Vector<PVMFJitterBufferPortParams*, OsclMemAllocator> iPortParamsQueue;
+        Oscl_Vector<PVMFPortActivity, OsclMemAllocator> iPortActivityQueue;
 
-        /* Diagnostic log related */
-        uint32 iNumRunL;
+        bool	oStartPending;
+        bool	oStopOutputPorts;
+        uint32	iPauseTime;
 
-        PVLogger* iDiagnosticsLogger;
-        bool iDiagnosticsLogged;
-        void LogSessionDiagnostics();
-        void LogPortDiagnostics();
+        PVMFMediaClock*	ipClientPlayBackClock;
 
+        bool	iMediaReceiveingChannelPrepared;
+
+        PVMFJitterBufferMisc*	ipJitterBufferMisc;
+
+        bool iBroadCastSession;
+
+        JitterBufferFactory* ipJitterBufferFactory;
+        /////////////////////////////////////////////////////////////////////////////
+        //Following variables are shared with the jitter buffers associated with the session and are passed by refernce
+        //Node should only observe these and initialize it, and modification to these are supposed to be done by the
+        //jitter buffer only
+        bool    iDelayEstablished;
+        uint32	iJitterDelayPercent;
+        PVMFJitterBufferDataState iJitterBufferState;
+
+        /////////////////////////////////////////////////////////////////////////////
+        //Extention interface
+        PVMFJitterBufferExtensionInterfaceImpl* ipExtensionInterface;
+        //Variables to persist info passed on by the extension interface
+        uint32 iRebufferingThreshold;
+        uint32 iJitterBufferDurationInMilliSeconds;
+        uint32 iMaxInactivityDurationForMediaInMs;
+        uint32 iEstimatedServerKeepAheadInMilliSeconds;
         /* resizable reallocator configuration */
         uint32 iJitterBufferSz;
         uint iMaxNumBufferResizes;
         uint iBufferResizeSize;
+        uint32 iBufferingStatusIntervalInMs;
 
-        void SetJitterBufferSize(uint32 aBufferSz);
-        void GetJitterBufferSize(uint32& aBufferSz) const;
-        void SetJitterBufferChunkAllocator(OsclMemPoolResizableAllocator* aDataBufferAllocator, const PVMFPortInterface* aPort);
-
-        // Broadcast related
-        inline void SetBroadCastSession()
-        {
-            iBroadCastSession = true;
-        };
-
-        bool ProcessRTCPSRforAVSync();
-        bool iRTCPBcastAVSyncProcessed;
-        bool iBroadCastSession;
-
-        /*
-        "hasAudioRTCP" and "hasVideoRTCP" are fundamentally different than
-        PVMFJitterBufferPortParams::iRTCPStats.oSRRecvd because the former
-        indicates if the port exists at all, and the latter indicate if
-        sender reports were received.  This distinction is important when the
-        jitter buffer is required to wait for the first RTCP sender reports
-        before returning data.
-        */
-        bool hasAudioRTCP;
-        bool hasVideoRTCP;
-        bool gotRTCPReports;
-        uint32 prevMinPercentOccupancy;
-        uint32 consecutiveLowBufferCount;
-
-        //These arrays map a steamID (VID or AUD) to an RTCP or RTP port index.
-        uint32 RTCPPortIndex [NUM_PVMF_STREAM_TYPES];
-        uint32 InputPortIndex[NUM_PVMF_STREAM_TYPES];
-        ////////////
-        PVMFMediaClock * iNonDecreasingClock;
-        PVMFMediaClockNotificationsInterface *iNonDecreasingClockNotificationsInf;
-
-        PVMFMediaClockNotificationsInterface *iClientPlayBackClockNotificationsInf;
-        PVMFMediaClockNotificationsInterface *iEstimatedClockNotificationsInf;
-
-
-        //Request callback contexts
-        PVMFMediaClockNotificationsIntfContext	iNonDecClkNotificationsInfContext;
-        PVMFMediaClockNotificationsIntfContext	iClientPlayBkClkNotificationsInfContext;
-        PVMFMediaClockNotificationsIntfContext	iEstimatedClockNotificationsInfContext;
-
-        PVMFTimebase_Tickcount iNonDecreasingClockTimeBase;
-
-        uint32 iMaxInactivityDurationForMediaInMs;
+        PVMFJitterBufferFireWallPacketInfo iFireWallPacketInfo;
+        bool iDisableFireWallPackets;
+        bool iPlayingAfterSeek;
+        ///////////////////////////////////////////////////////////////////////
+        //EventNotification tracking vars
+        PVMFJBEventNotifier*	ipEventNotifier;
         uint32 iIncomingMediaInactivityDurationCallBkId;
         bool   iIncomingMediaInactivityDurationCallBkPending;
-
-        uint32 iBufferingStatusIntervalInMs;
         uint32 iNotifyBufferingStatusCallBkId;
         bool   iNotifyBufferingStatusCallBkPending;
-
-        uint32 iJitterBufferDurationInMilliSeconds;
         uint32 iJitterBufferDurationCallBkId;
         bool   iJitterBufferDurationCallBkPending;
 
-        uint32 iMonitorReBufferingCallBkId;
-        bool   iMonitorReBufferingCallBkPending;
+        //////////////////////// Diagnostic log related  //////////////////////
+        bool iDiagnosticsLogged;
+        uint32 iNumRunL;
+        ///////////////////////////////////////////////////////////////////////
 
-        uint32 iSendFirewallPacketCallBkId;
-        bool   iSendFirewallPacketCallBkPending;
-
-        enum JB_NOTIFY_CALLBACK
-        {
-            JB_INCOMING_MEDIA_INACTIVITY_DURATION_EXPIRED,
-            JB_NOTIFY_REPORT_BUFFERING_STATUS,
-            JB_BUFFERING_DURATION_COMPLETE,
-            JB_MONITOR_REBUFFERING,
-            JB_NOTIFY_SEND_FIREWALL_PACKET,
-            JB_NOTIFY_WAIT_FOR_OOO_PACKET_COMPLETE  //OOO->Out Of Order
-        };
-
-        bool RequestEventCallBack(JB_NOTIFY_CALLBACK aEventType, uint32 aDelay = 0, OsclAny* aContext = NULL);
-        bool RequestCallBack(PVMFMediaClockNotificationsInterface *& aEventNotificationInterface, uint32 aDelay, uint32& aCallBkId, bool& aCallBackStatusPending, OsclAny* aContext = NULL);
-        void CancelEventCallBack(JB_NOTIFY_CALLBACK aEventType, OsclAny* aContext = NULL);
-        void CancelCallBack(PVMFMediaClockNotificationsInterface *& aEventNotificationInterface, uint32& aCallBkId, bool& aCallBackStatusPending);
-        bool IsCallbackPending(JB_NOTIFY_CALLBACK aEventType, OsclAny* aContext = NULL);
-        void ProcessCallBack(uint32, PVTimeComparisonUtils::MediaTimeStatus, uint32, const OsclAny*, PVMFStatus);
-
-        void HandleEvent_IncomingMediaInactivityDurationExpired();
-        void HandleEvent_NotifyReportBufferingStatus();
-        void HandleEvent_JitterBufferBufferingDurationComplete();
-        void HandleEvent_MonitorReBuffering();
-        void HandleEvent_NotifySendFirewallPacket();
-        void HandleEvent_NotifyWaitForOOOPacketComplete(OsclAny* aContext);
+        ///////////////////////////////////////////////////////////////////////
+        //Loggers
+        PVLogger* ipLogger;
+        PVLogger* ipDataPathLogger;
+        PVLogger* ipDataPathLoggerIn;
+        PVLogger* ipDataPathLoggerOut;
+        PVLogger* ipDataPathLoggerFlowCtrl;
+        PVLogger* ipClockLogger;
+        PVLogger* ipClockLoggerSessionDuration;
+        PVLogger* ipClockLoggerRebuff;
+        PVLogger* ipDiagnosticsLogger;
+        PVLogger* ipJBEventsClockLogger;
+        ///////////////////////////////////////////////////////////////////////
 };
 #endif
 

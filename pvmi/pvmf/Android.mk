@@ -17,7 +17,8 @@ LOCAL_SRC_FILES := \
  	src/pvmi_kvp_util.cpp \
  	src/pvmf_mempool.cpp \
  	src/pvmf_media_clock.cpp \
- 	src/pvmf_duration_infomessage.cpp
+ 	src/pvmf_duration_infomessage.cpp \
+ 	src/pvmf_metadata_infomessage.cpp
 
 
 LOCAL_MODULE := libpvmf
@@ -84,6 +85,8 @@ LOCAL_COPY_HEADERS := \
  	include/pvmf_duration_infomessage.h \
  	include/pvmf_durationinfomessage_extension.h \
  	include/pvmf_counted_ptr.h \
+ 	include/pvmf_metadata_infomessage.h \
+ 	include/pvmf_metadatainfomessage_extension.h \
  	include/pvmi_fileio_kvp.h \
  	include/pvmf_timedtext.h
 

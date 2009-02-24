@@ -32,8 +32,6 @@ class StreamingNodesCoreLibraryLoader
     public:
         static PVMFNodeInterface* CreateStreamingManagerNode(int32 aPriority);
         static bool DeleteStreamingManagerNode(PVMFNodeInterface* aNode);
-    private:
-        static OsclSharedLibrary* iOsclSharedLibrary;
 };
 
 #endif // PVMFRTSPNODEREG_H_INCLUDED

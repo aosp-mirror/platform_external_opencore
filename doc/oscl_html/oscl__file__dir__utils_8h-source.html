@@ -32,17 +32,17 @@
 <a name="l00035"></a><a class="code" href="structoscl__fsstat.html#m1">00035</a>     <a class="code" href="group__osclbase.html#a31">uint64</a> <a class="code" href="structoscl__fsstat.html#m1">totalbytes</a>;
 00036 } <a class="code" href="structoscl__fsstat.html">OSCL_FSSTAT</a>;
 00037 
-<a name="l00038"></a><a class="code" href="group__osclio.html#a25">00038</a> <span class="keyword">typedef</span> <span class="keyword">enum</span>
+<a name="l00038"></a><a class="code" href="group__osclio.html#a26">00038</a> <span class="keyword">typedef</span> <span class="keyword">enum</span>
 00039 {
-00040     <a class="code" href="group__osclio.html#a25a2">OSCL_FILEMGMT_PERMS_READ</a> = 0x1,
-00041     <a class="code" href="group__osclio.html#a25a3">OSCL_FILEMGMT_PERMS_WRITE</a> = 0x2,
-00042     <a class="code" href="group__osclio.html#a25a4">OSCL_FILEMGMT_PERMS_EXECUTE</a> = 0x4,
-00043 } <a class="code" href="group__osclio.html#a25">OSCL_FILEMGMT_PERMS</a>;
+00040     <a class="code" href="group__osclio.html#a26a2">OSCL_FILEMGMT_PERMS_READ</a> = 0x1,
+00041     <a class="code" href="group__osclio.html#a26a3">OSCL_FILEMGMT_PERMS_WRITE</a> = 0x2,
+00042     <a class="code" href="group__osclio.html#a26a4">OSCL_FILEMGMT_PERMS_EXECUTE</a> = 0x4,
+00043 } <a class="code" href="group__osclio.html#a26">OSCL_FILEMGMT_PERMS</a>;
 00044 
-<a name="l00045"></a><a class="code" href="group__osclio.html#a26">00045</a> <span class="keyword">typedef</span> <span class="keyword">enum</span>
+<a name="l00045"></a><a class="code" href="group__osclio.html#a27">00045</a> <span class="keyword">typedef</span> <span class="keyword">enum</span>
 00046 {
-00047     <a class="code" href="group__osclio.html#a26a5">OSCL_FILEMGMT_MODE_DIR</a> = 0x1
-00048 } <a class="code" href="group__osclio.html#a26">OSCL_FILEMGMT_MODES</a>;
+00047     <a class="code" href="group__osclio.html#a27a5">OSCL_FILEMGMT_MODE_DIR</a> = 0x1
+00048 } <a class="code" href="group__osclio.html#a27">OSCL_FILEMGMT_MODES</a>;
 00049 
 <a name="l00050"></a><a class="code" href="structoscl__stat__buf.html">00050</a> <span class="keyword">typedef</span> <span class="keyword">struct </span><a class="code" href="structoscl__stat__buf.html">oscl_stat_buf</a>
 00051 {
@@ -50,57 +50,57 @@
 <a name="l00053"></a><a class="code" href="structoscl__stat__buf.html#m1">00053</a>     uint32 <a class="code" href="structoscl__stat__buf.html#m1">perms</a>;
 00054 } <a class="code" href="structoscl__stat__buf.html">OSCL_STAT_BUF</a>;
 00055 
-<a name="l00056"></a><a class="code" href="group__osclio.html#a27">00056</a> <span class="keyword">typedef</span> <span class="keyword">enum</span>
+<a name="l00056"></a><a class="code" href="group__osclio.html#a28">00056</a> <span class="keyword">typedef</span> <span class="keyword">enum</span>
 00057 {
-00058     <a class="code" href="group__osclio.html#a27a6">OSCL_FILEMGMT_E_OK</a> = 0,
-00059     <a class="code" href="group__osclio.html#a27a7">OSCL_FILEMGMT_E_PATH_TOO_LONG</a>,
-00060     <a class="code" href="group__osclio.html#a27a8">OSCL_FILEMGMT_E_PATH_NOT_FOUND</a>,
-00061     <a class="code" href="group__osclio.html#a27a9">OSCL_FILEMGMT_E_ALREADY_EXISTS</a>,
-00062     <a class="code" href="group__osclio.html#a27a10">OSCL_FILEMGMT_E_NOT_EMPTY</a>,
-00063     <a class="code" href="group__osclio.html#a27a11">OSCL_FILEMGMT_E_PERMISSION_DENIED</a>,
-00064     <a class="code" href="group__osclio.html#a27a12">OSCL_FILEMGMT_E_NO_MATCH</a>,
-00065     <a class="code" href="group__osclio.html#a27a13">OSCL_FILEMGMT_E_UNKNOWN</a>,
-00066     <a class="code" href="group__osclio.html#a27a14">OSCL_FILEMGMT_E_SYS_SPECIFIC</a>,
-00067     <a class="code" href="group__osclio.html#a27a15">OSCL_FILEMGMT_E_NOT_IMPLEMENTED</a>
-00068 } <a class="code" href="group__osclio.html#a27">OSCL_FILEMGMT_ERR_TYPE</a>;
+00058     <a class="code" href="group__osclio.html#a28a6">OSCL_FILEMGMT_E_OK</a> = 0,
+00059     <a class="code" href="group__osclio.html#a28a7">OSCL_FILEMGMT_E_PATH_TOO_LONG</a>,
+00060     <a class="code" href="group__osclio.html#a28a8">OSCL_FILEMGMT_E_PATH_NOT_FOUND</a>,
+00061     <a class="code" href="group__osclio.html#a28a9">OSCL_FILEMGMT_E_ALREADY_EXISTS</a>,
+00062     <a class="code" href="group__osclio.html#a28a10">OSCL_FILEMGMT_E_NOT_EMPTY</a>,
+00063     <a class="code" href="group__osclio.html#a28a11">OSCL_FILEMGMT_E_PERMISSION_DENIED</a>,
+00064     <a class="code" href="group__osclio.html#a28a12">OSCL_FILEMGMT_E_NO_MATCH</a>,
+00065     <a class="code" href="group__osclio.html#a28a13">OSCL_FILEMGMT_E_UNKNOWN</a>,
+00066     <a class="code" href="group__osclio.html#a28a14">OSCL_FILEMGMT_E_SYS_SPECIFIC</a>,
+00067     <a class="code" href="group__osclio.html#a28a15">OSCL_FILEMGMT_E_NOT_IMPLEMENTED</a>
+00068 } <a class="code" href="group__osclio.html#a28">OSCL_FILEMGMT_ERR_TYPE</a>;
 00069 
-00077 OSCL_IMPORT_REF <a class="code" href="group__osclio.html#a27">OSCL_FILEMGMT_ERR_TYPE</a> <a class="code" href="group__osclio.html#a5">oscl_getcwd</a>(<a class="code" href="group__osclbase.html#a32">oscl_wchar</a> *path, uint32 size);
+00077 OSCL_IMPORT_REF <a class="code" href="group__osclio.html#a28">OSCL_FILEMGMT_ERR_TYPE</a> <a class="code" href="group__osclio.html#a5">oscl_getcwd</a>(<a class="code" href="group__osclbase.html#a32">oscl_wchar</a> *path, uint32 size);
 00078 
 00079 
-00087 OSCL_IMPORT_REF <a class="code" href="group__osclio.html#a27">OSCL_FILEMGMT_ERR_TYPE</a> <a class="code" href="group__osclio.html#a5">oscl_getcwd</a>(<span class="keywordtype">char</span> *path, uint32 size);
+00087 OSCL_IMPORT_REF <a class="code" href="group__osclio.html#a28">OSCL_FILEMGMT_ERR_TYPE</a> <a class="code" href="group__osclio.html#a5">oscl_getcwd</a>(<span class="keywordtype">char</span> *path, uint32 size);
 00088 
 00089 
 00090 
-00097 OSCL_IMPORT_REF <a class="code" href="group__osclio.html#a27">OSCL_FILEMGMT_ERR_TYPE</a> <a class="code" href="group__osclio.html#a7">oscl_stat</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a32">oscl_wchar</a> *path, <a class="code" href="structoscl__stat__buf.html">OSCL_STAT_BUF</a> *statbuf);
+00097 OSCL_IMPORT_REF <a class="code" href="group__osclio.html#a28">OSCL_FILEMGMT_ERR_TYPE</a> <a class="code" href="group__osclio.html#a7">oscl_stat</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a32">oscl_wchar</a> *path, <a class="code" href="structoscl__stat__buf.html">OSCL_STAT_BUF</a> *statbuf);
 00098 
 00099 
-00106 OSCL_IMPORT_REF <a class="code" href="group__osclio.html#a27">OSCL_FILEMGMT_ERR_TYPE</a> <a class="code" href="group__osclio.html#a7">oscl_stat</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> *path, <a class="code" href="structoscl__stat__buf.html">OSCL_STAT_BUF</a> *statbuf);
+00106 OSCL_IMPORT_REF <a class="code" href="group__osclio.html#a28">OSCL_FILEMGMT_ERR_TYPE</a> <a class="code" href="group__osclio.html#a7">oscl_stat</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> *path, <a class="code" href="structoscl__stat__buf.html">OSCL_STAT_BUF</a> *statbuf);
 00107 
 00108 
-00115 OSCL_IMPORT_REF <a class="code" href="group__osclio.html#a27">OSCL_FILEMGMT_ERR_TYPE</a> <a class="code" href="group__osclio.html#a9">oscl_mkdir</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a32">oscl_wchar</a> *path);
+00115 OSCL_IMPORT_REF <a class="code" href="group__osclio.html#a28">OSCL_FILEMGMT_ERR_TYPE</a> <a class="code" href="group__osclio.html#a9">oscl_mkdir</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a32">oscl_wchar</a> *path);
 00116 
-00123 OSCL_IMPORT_REF <a class="code" href="group__osclio.html#a27">OSCL_FILEMGMT_ERR_TYPE</a> <a class="code" href="group__osclio.html#a9">oscl_mkdir</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> *path);
+00123 OSCL_IMPORT_REF <a class="code" href="group__osclio.html#a28">OSCL_FILEMGMT_ERR_TYPE</a> <a class="code" href="group__osclio.html#a9">oscl_mkdir</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> *path);
 00124 
-00130 OSCL_IMPORT_REF <a class="code" href="group__osclio.html#a27">OSCL_FILEMGMT_ERR_TYPE</a> <a class="code" href="group__osclio.html#a11">oscl_rmdir</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a32">oscl_wchar</a> *path);
+00130 OSCL_IMPORT_REF <a class="code" href="group__osclio.html#a28">OSCL_FILEMGMT_ERR_TYPE</a> <a class="code" href="group__osclio.html#a11">oscl_rmdir</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a32">oscl_wchar</a> *path);
 00131 
-00137 OSCL_IMPORT_REF <a class="code" href="group__osclio.html#a27">OSCL_FILEMGMT_ERR_TYPE</a> <a class="code" href="group__osclio.html#a11">oscl_rmdir</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> *path);
+00137 OSCL_IMPORT_REF <a class="code" href="group__osclio.html#a28">OSCL_FILEMGMT_ERR_TYPE</a> <a class="code" href="group__osclio.html#a11">oscl_rmdir</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> *path);
 00138 
-00144 OSCL_IMPORT_REF <a class="code" href="group__osclio.html#a27">OSCL_FILEMGMT_ERR_TYPE</a> <a class="code" href="group__osclio.html#a13">oscl_chdir</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a32">oscl_wchar</a> *path);
+00144 OSCL_IMPORT_REF <a class="code" href="group__osclio.html#a28">OSCL_FILEMGMT_ERR_TYPE</a> <a class="code" href="group__osclio.html#a13">oscl_chdir</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a32">oscl_wchar</a> *path);
 00145 
-00151 OSCL_IMPORT_REF <a class="code" href="group__osclio.html#a27">OSCL_FILEMGMT_ERR_TYPE</a> <a class="code" href="group__osclio.html#a13">oscl_chdir</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> *path);
+00151 OSCL_IMPORT_REF <a class="code" href="group__osclio.html#a28">OSCL_FILEMGMT_ERR_TYPE</a> <a class="code" href="group__osclio.html#a13">oscl_chdir</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> *path);
 00152 
-00162 OSCL_IMPORT_REF <a class="code" href="group__osclio.html#a27">OSCL_FILEMGMT_ERR_TYPE</a> <a class="code" href="group__osclio.html#a15">oscl_rename</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a32">oscl_wchar</a> *oldpath, <span class="keyword">const</span> <a class="code" href="group__osclbase.html#a32">oscl_wchar</a> *newpath);
+00162 OSCL_IMPORT_REF <a class="code" href="group__osclio.html#a28">OSCL_FILEMGMT_ERR_TYPE</a> <a class="code" href="group__osclio.html#a15">oscl_rename</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a32">oscl_wchar</a> *oldpath, <span class="keyword">const</span> <a class="code" href="group__osclbase.html#a32">oscl_wchar</a> *newpath);
 00163 
-00170 OSCL_IMPORT_REF <a class="code" href="group__osclio.html#a27">OSCL_FILEMGMT_ERR_TYPE</a> <a class="code" href="group__osclio.html#a15">oscl_rename</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> *oldpath, <span class="keyword">const</span> <span class="keywordtype">char</span> *newpath);
+00170 OSCL_IMPORT_REF <a class="code" href="group__osclio.html#a28">OSCL_FILEMGMT_ERR_TYPE</a> <a class="code" href="group__osclio.html#a15">oscl_rename</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> *oldpath, <span class="keyword">const</span> <span class="keywordtype">char</span> *newpath);
 00171 
-00179 OSCL_IMPORT_REF <a class="code" href="group__osclio.html#a27">OSCL_FILEMGMT_ERR_TYPE</a> <a class="code" href="group__osclio.html#a17">oscl_statfs</a>(<a class="code" href="structoscl__fsstat.html">OSCL_FSSTAT</a> *stats, <span class="keyword">const</span> <span class="keywordtype">char</span> *path);
-00187 OSCL_IMPORT_REF <a class="code" href="group__osclio.html#a27">OSCL_FILEMGMT_ERR_TYPE</a> <a class="code" href="group__osclio.html#a17">oscl_statfs</a>(<a class="code" href="structoscl__fsstat.html">OSCL_FSSTAT</a> *stats, <span class="keyword">const</span> <a class="code" href="group__osclbase.html#a32">oscl_wchar</a> *path);
+00179 OSCL_IMPORT_REF <a class="code" href="group__osclio.html#a28">OSCL_FILEMGMT_ERR_TYPE</a> <a class="code" href="group__osclio.html#a17">oscl_statfs</a>(<a class="code" href="structoscl__fsstat.html">OSCL_FSSTAT</a> *stats, <span class="keyword">const</span> <span class="keywordtype">char</span> *path);
+00187 OSCL_IMPORT_REF <a class="code" href="group__osclio.html#a28">OSCL_FILEMGMT_ERR_TYPE</a> <a class="code" href="group__osclio.html#a17">oscl_statfs</a>(<a class="code" href="structoscl__fsstat.html">OSCL_FSSTAT</a> *stats, <span class="keyword">const</span> <a class="code" href="group__osclbase.html#a32">oscl_wchar</a> *path);
 00188 
 00189 
 00190 <span class="preprocessor">#endif // OSCL_FILE_DIR_UTILS_H_INCLUDED</span>
 00191 <span class="preprocessor"></span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: OPENCORE_20090120 </small>
+<address style="align: left;"><small>Posting Version: OPENCORE_20090223 </small>
 </small></address>
 </body>
 </html>

@@ -71,9 +71,9 @@ class AvcEncoder_OMX
                                      OMX_TICKS* aOutTimeStamp,
                                      OMX_BOOL*  aSyncFlag);
 
-        OMX_BOOL AvcEncodeSendInput(OMX_U8*    aInBuffer,
-                                    OMX_U32*   aInBufSize,
-                                    OMX_TICKS  aInTimeStamp);
+        AVCEnc_Status AvcEncodeSendInput(OMX_U8*    aInBuffer,
+                                         OMX_U32*   aInBufSize,
+                                         OMX_TICKS  aInTimeStamp);
 
 
         OMX_ERRORTYPE AvcEncDeinit();
@@ -81,6 +81,7 @@ class AvcEncoder_OMX
         OMX_ERRORTYPE AvcRequestIFrame();
         OMX_BOOL AvcUpdateBitRate(OMX_U32 aEncodedBitRate);
         OMX_BOOL AvcUpdateFrameRate(OMX_U32 aEncodeFramerate);
+        OMX_BOOL GetSpsPpsHeaderFlag();
 
         /* for avc encoder lib callback functions */
         int		AVC_DPBAlloc(uint frame_size_in_mbs, uint num_buffers);

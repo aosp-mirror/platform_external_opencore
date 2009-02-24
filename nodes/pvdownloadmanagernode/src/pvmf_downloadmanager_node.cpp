@@ -26,6 +26,7 @@
 #include "oscl_error_codes.h"
 #include "oscl_str_ptr_len.h" // for OSCL_ASCII_CASE_MAGIC_BIT
 #include "pvmi_datastreamuser_interface.h"
+#include "pvpvxparser.h"
 #include "pv_mime_string_utils.h"
 #include "pvmi_kvp_util.h"
 #include "pvmf_source_context_data.h"
@@ -108,15 +109,17 @@ void PVMFDownloadManagerNode::ConstructL()
     iPlayBackClock = NULL;
     iClockNotificationsInf = NULL;
 
+    iNoPETrackSelect = false;
+    iMovieAtomComplete = false;
+    iParserInitAfterMovieAtom = false;
+    iParserPrepareAfterMovieAtom = false;
 
     iParserInit = false;
     iDataReady = false;
     iDownloadComplete = false;
     iRecognizerError = false;
 
-#if(PVMF_DOWNLOADMANAGER_SUPPORT_CPM_GETLICENSE)
     iInitFailedLicenseRequired = false;
-#endif
 
     iProtocolEngineNodePort = NULL;
     iSocketNodePort = NULL;
@@ -526,13 +529,11 @@ bool PVMFDownloadManagerNode::queryInterface(const PVUuid& uuid, PVInterface*& i
         PvmiCapabilityAndConfig* myInterface = OSCL_STATIC_CAST(PvmiCapabilityAndConfig*, this);
         iface = OSCL_STATIC_CAST(PVInterface*, myInterface);
     }
-#if(PVMF_DOWNLOADMANAGER_SUPPORT_CPM_GETLICENSE)
     else if (uuid == PVMFCPMPluginLicenseInterfaceUuid)
     {
         PVMFCPMPluginLicenseInterface* myInterface = OSCL_STATIC_CAST(PVMFCPMPluginLicenseInterface*, this);
         iface = OSCL_STATIC_CAST(PVInterface*, myInterface);
     }
-#endif//PVMF_DOWNLOADMANAGER_SUPPORT_CPM_GETLICENSE
     else
     {
         return false;
@@ -552,24 +553,6 @@ PVMFStatus PVMFDownloadManagerNode::SetSourceInitializationData(OSCL_wString& aS
     if (iInterfaceState != EPVMFNodeIdle && iInterfaceState != EPVMFNodeCreated)
         return PVMFErrInvalidState;
 
-    //Validate
-    if (aSourceFormat == PVMF_MIME_DATA_SOURCE_HTTP_URL)
-    {
-        if (!aSourceData)
-            return PVMFErrArgument;
-    }
-    else if (aSourceFormat == PVMF_MIME_DATA_SOURCE_PVX_FILE)
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0,
-                        "PVMFDownloadManagerNode:SetSourceInitializationData() Unsupported source format."));
-        return PVMFErrArgument; // unsupported format
-    }
-    else
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0,
-                        "PVMFDownloadManagerNode:SetSourceInitializationData() Unsupported source format."));
-        return PVMFErrArgument; // unsupported format
-    }
 
     // Pass the source info directly to the protocol engine node.
 
@@ -601,6 +584,12 @@ PVMFStatus PVMFDownloadManagerNode::SetSourceInitializationData(OSCL_wString& aS
 
     if (aSourceFormat == PVMF_MIME_DATA_SOURCE_HTTP_URL)
     {
+        if (!aSourceData)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0,
+                            "PVMFDownloadManagerNode:SetSourceInitializationData() Missing source data"));
+            return PVMFErrArgument;
+        }
         PVInterface* pvinterface = (PVInterface*)aSourceData;
         PVUuid uuid(PVMF_DOWNLOAD_DATASOURCE_HTTP_UUID);
         PVInterface* temp = NULL;
@@ -609,9 +598,6 @@ PVMFStatus PVMFDownloadManagerNode::SetSourceInitializationData(OSCL_wString& aS
             PVMFDownloadDataSourceHTTP* data = OSCL_STATIC_CAST(PVMFDownloadDataSourceHTTP*, temp);
             //extract the download file name from the opaque data.
             iDownloadFileName = data->iDownloadFileName;
-
-            //extract CPM options
-            iLocalDataSource.iUseCPMPluginRegistry = data->iUseCPMPluginRegistryForPlayback;
 
             //extract the playback mode
             switch (data->iPlaybackControl)
@@ -678,20 +664,148 @@ PVMFStatus PVMFDownloadManagerNode::SetSourceInitializationData(OSCL_wString& aS
                         iPlaybackMode = EPlayAsap;
                         break;
                 }
-
-                //extract the cpm usage flag from the common data
+            }
+            else
+            {//invalid source data
+                return PVMFErrArgument;
+            }
+        }
+    }
+    else if (aSourceFormat == PVMF_MIME_DATA_SOURCE_PVX_FILE)
+    {
+        if (!aSourceData)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0,
+                            "PVMFDownloadManagerNode:SetSourceInitializationData() Missing source data"));
+            return PVMFErrArgument;
+        }
+        PVInterface* pvinterface = (PVInterface*)aSourceData;
+        PVUuid uuid(PVMF_DOWNLOAD_DATASOURCE_PVX_UUID);
+        PVInterface* temp = NULL;
+        if (pvinterface->queryInterface(uuid, temp))
+        {
+            PVMFDownloadDataSourcePVX* data = OSCL_STATIC_CAST(PVMFDownloadDataSourcePVX*, temp);
+            iDownloadFileName = data->iDownloadFileName;
+            //get the playback mode from the PVX info
+            switch (data->iPvxInfo.iPlaybackControl)
+            {
+                case CPVXInfo::ENoPlayback:
+                    iPlaybackMode = EDownloadOnly;
+                    break;
+                case CPVXInfo::EAfterDownload:
+                    iPlaybackMode = EDownloadThenPlay;
+                    break;
+                case CPVXInfo::EAsap:
+                    iPlaybackMode = EPlayAsap;
+                    break;
+                default:
+                    iPlaybackMode = EPlayAsap;
+                    break;
+            }
+        }
+        else
+        {
+            PVUuid uuid(PVMF_SOURCE_CONTEXT_DATA_DOWNLOAD_PVX_UUID);
+            temp = NULL;
+            if (pvinterface->queryInterface(uuid, temp))
+            {
+                PVMFSourceContextDataDownloadPVX* data = OSCL_STATIC_CAST(PVMFSourceContextDataDownloadPVX*, temp);
+                iDownloadFileName = data->iDownloadFileName;
+                if (!data->iPvxInfo)
+                {//invalid source data
+                    return PVMFErrArgument;
+                }
+                //get the playback mode from the PVX info
+                switch (data->iPvxInfo->iPlaybackControl)
                 {
-                    PVUuid uuid(PVMF_SOURCE_CONTEXT_DATA_COMMON_UUID);
-                    temp = NULL;
-                    if (pvinterface->queryInterface(uuid, temp))
-                    {
-                        PVMFSourceContextDataCommon* data = OSCL_STATIC_CAST(PVMFSourceContextDataCommon*, temp);
-                        iLocalDataSource.iUseCPMPluginRegistry = data->iUseCPMPluginRegistry;
-                    }
-                    else
-                    {//invalid source data
-                        return PVMFErrArgument;
-                    }
+                    case CPVXInfo::ENoPlayback:
+                        iPlaybackMode = EDownloadOnly;
+                        break;
+                    case CPVXInfo::EAfterDownload:
+                        iPlaybackMode = EDownloadThenPlay;
+                        break;
+                    case CPVXInfo::EAsap:
+                        iPlaybackMode = EPlayAsap;
+                        break;
+                    default:
+                        iPlaybackMode = EPlayAsap;
+                        break;
+                }
+            }
+            else
+            {//invalid source data
+                return PVMFErrArgument;
+            }
+        }
+    }
+    else if (aSourceFormat == PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL)
+    {
+        if (!aSourceData)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0,
+                            "PVMFDownloadManagerNode:SetSourceInitializationData() Missing source data"));
+            return PVMFErrArgument;
+        }
+        PVInterface* pvinterface = (PVInterface*)aSourceData;
+        PVUuid uuid(PVMF_DOWNLOAD_DATASOURCE_HTTP_UUID);
+        PVInterface* temp = NULL;
+        if (pvinterface->queryInterface(uuid, temp))
+        {
+            PVMFDownloadDataSourceHTTP* data = OSCL_STATIC_CAST(PVMFDownloadDataSourceHTTP*, temp);
+
+            //extract the download file name from the opaque data.
+            iDownloadFileName = data->iDownloadFileName;
+
+            //extract the playback mode
+            switch (data->iPlaybackControl)
+            {
+                case PVMFDownloadDataSourceHTTP::ENoSaveToFile:
+
+#if(PVMF_DOWNLOADMANAGER_SUPPORT_PPB)
+                    iPlaybackMode = EPlaybackOnly;
+                    break;
+#else
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0,
+                                    "PVMFDownloadManagerNode:SetSourceInitializationData() NoSaveToFile is not supported!"));
+                    return PVMFErrArgument;//unsupported mode.
+#endif//PVMF_DOWNLOADMANAGER_SUPPORT_PPB
+
+                default:
+
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0,
+                                    "PVMFDownloadManagerNode:SetSourceInitializationData() Only NoSaveToFile mode is supported for PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL!"));
+                    return PVMFErrArgument;//unsupported mode.
+                    break;
+            }
+        }
+        else
+        {
+            PVUuid uuid(PVMF_SOURCE_CONTEXT_DATA_DOWNLOAD_HTTP_UUID);
+            if (pvinterface->queryInterface(uuid, temp))
+            {
+                PVMFSourceContextDataDownloadHTTP* data = OSCL_STATIC_CAST(PVMFSourceContextDataDownloadHTTP*, temp);
+                //extract the download file name from the opaque data.
+                iDownloadFileName = data->iDownloadFileName;
+
+                //extract the playback mode
+                switch (data->iPlaybackControl)
+                {
+                    case PVMFSourceContextDataDownloadHTTP::ENoSaveToFile:
+
+#if(PVMF_DOWNLOADMANAGER_SUPPORT_PPB)
+                        iPlaybackMode = EPlaybackOnly;
+                        break;
+#else
+                        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0,
+                                        "PVMFDownloadManagerNode:SetSourceInitializationData() NoSaveToFile is not supported!"));
+                        return PVMFErrArgument;//unsupported mode.
+#endif//PVMF_DOWNLOADMANAGER_SUPPORT_PPB
+
+                    default:
+                        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0,
+                                        "PVMFDownloadManagerNode:SetSourceInitializationData() Only NoSaveToFile mode is supported for PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL!"));
+                        return PVMFErrArgument;//unsupported mode.
+                        break;
                 }
             }
             else
@@ -702,18 +816,56 @@ PVMFStatus PVMFDownloadManagerNode::SetSourceInitializationData(OSCL_wString& aS
     }
     else
     {
-        OSCL_ASSERT(false);
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0,
+                        "PVMFDownloadManagerNode:SetSourceInitializationData() Unsupported source type"));
+        return PVMFErrArgument;
     }
 
 #if(PVMF_DOWNLOADMANAGER_SUPPORT_PPB)
+    //Configure the MBDS
     if (iPlaybackMode == EPlaybackOnly)
     {
-        //make sure we have enough TCP buffers for PPB
-        if (iSocketNode.iNode)
-            ((PVMFSocketNode*)iSocketNode.iNode)->SetMaxTCPRecvBufferCount(PVMF_DOWNLOADMANAGER_MIN_TCP_BUFFERS_FOR_PPB);
+        // make sure we have enough TCP buffers for PPB and shoutcast
+        if (aSourceFormat == PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL)
+        {
+            // calculate MBDS cache size in bytes
+            // max bitrate in bytes per second * cache size in secs
+            uint32 bitRate = PVMF_DOWNLOADMANAGER_MAX_BITRATE_FOR_SC * 1000 / 8;
+            uint32 cacheSize = bitRate * PVMF_DOWNLOADMANAGER_CACHE_SIZE_FOR_SC_IN_SECONDS;
 
-        // Use Memory Buffer Data Stream for progressive playback
-        iMemoryBufferDatastreamFactory = OSCL_NEW(PVMFMemoryBufferDataStream, ());
+            if (iSocketNode.iNode)
+            {
+                // TCP buffer size for shoutcast is 1564 (1500 data + 64 overhead)
+                // add 1 second margin
+                ((PVMFSocketNode*)iSocketNode.iNode)->SetMaxTCPRecvBufferCount((cacheSize + bitRate) / PVMF_DOWNLOADMANAGER_TCP_BUFFER_SIZE_FOR_SC);
+
+                ((PVMFSocketNode*)iSocketNode.iNode)->SetMaxTCPRecvBufferSize(PVMF_DOWNLOADMANAGER_TCP_BUFFER_SIZE_FOR_SC + PVMF_DOWNLOADMANAGER_TCP_BUFFER_OVERHEAD);
+            }
+
+            // Use Memory Buffer Data Stream for progressive playback and Shoutcast
+            iMemoryBufferDatastreamFactory = OSCL_NEW(PVMFMemoryBufferDataStream, (aSourceFormat, cacheSize));
+        }
+        else
+        {
+            uint32 bufSize = PVMF_DOWNLOADMANAGER_TCP_BUFFER_SIZE_FOR_PPB;
+            if (iSocketNode.iNode)
+            {
+                ((PVMFSocketNode*)iSocketNode.iNode)->SetMaxTCPRecvBufferCount(PVMF_DOWNLOADMANAGER_MIN_TCP_BUFFERS_FOR_PPB);
+                // get buffer size
+                ((PVMFSocketNode*)iSocketNode.iNode)->GetMaxTCPRecvBufferSize(bufSize);
+            }
+
+            // MBDS cache size calculation, see RIO-3965 for detail
+            // TCP buffer size is 64000 (the default), assume worst case that the average packet size is 250 bytes
+            // Packet overhead is 64 bytes per packet
+            // 8 buffers will yield a cache of 305500, 13 buffers will yield a cache of 560500
+            uint32 totalPoolSizeMinusTwoBuffers = (PVMF_DOWNLOADMANAGER_MIN_TCP_BUFFERS_FOR_PPB - PVMF_DOWNLOADMANAGER_TCP_BUFFER_NOT_AVAILABLE) * bufSize;
+            uint32 numPacketsToFitInPool = totalPoolSizeMinusTwoBuffers / (PVMF_DOWNLOADMANAGER_TCP_AVG_SMALL_PACKET_SIZE + PVMF_DOWNLOADMANAGER_TCP_BUFFER_OVERHEAD);
+            uint32 maxDataMinusOverheadInPool = numPacketsToFitInPool * PVMF_DOWNLOADMANAGER_TCP_AVG_SMALL_PACKET_SIZE;
+
+            // Use Memory Buffer Data Stream for progressive playback and Shoutcast
+            iMemoryBufferDatastreamFactory = OSCL_NEW(PVMFMemoryBufferDataStream, (aSourceFormat, maxDataMinusOverheadInPool));
+        }
 
         OSCL_ASSERT(iMemoryBufferDatastreamFactory != NULL);
 
@@ -731,7 +883,7 @@ PVMFStatus PVMFDownloadManagerNode::SetSourceInitializationData(OSCL_wString& aS
         iWriteFactory = iFileBufferDatastreamFactory->GetWriteDataStreamFactoryPtr();
     }
 
-    //save the source info
+//save the source info
     iSourceFormat = aSourceFormat;
     iSourceURL = aSourceURL;
     iSourceData = aSourceData;
@@ -774,13 +926,25 @@ PVMFStatus PVMFDownloadManagerNode::SetEstimatedServerClock(PVMFMediaClock*)
 PVMFDownloadManagerSubNodeContainer& PVMFDownloadManagerNode::TrackSelectNode()
 {
     //Decide which sub-node is supporting track selection.
-    if (iSourceFormat == PVMF_MIME_DATA_SOURCE_HTTP_URL)
+    if (iSourceFormat == PVMF_MIME_DATA_SOURCE_PVX_FILE)
     {
-        //for 3gpp, the parser does track selection.
-        return iFormatParserNode;
+        //for pvx file, the PE node may or may not do track selection.
+        //the final decision isn't available until PE node prepare is done
+        //and we've queried for the TS interface, at which point the
+        //iNoPETrackSelect may be set.
+        if (iNoPETrackSelect)
+            return iFormatParserNode;
+
+        //if download is already complete, such as after a stop, then
+        //the parser node will do track selection.
+        if (iDownloadComplete && iPlaybackMode != EDownloadOnly)
+            return iFormatParserNode;
+
+        return iProtocolEngineNode;
     }
     else
     {
+        //for 3gpp & shoutcast, parser does track selection.
         return iFormatParserNode;
     }
 }
@@ -1017,11 +1181,9 @@ void PVMFDownloadManagerNode::ProcessCommand()
                 cmdstatus = DoCancelCommand(aCmd);
                 break;
 
-#if(PVMF_DOWNLOADMANAGER_SUPPORT_CPM_GETLICENSE)
             case PVDLM_NODE_CMD_CANCEL_GET_LICENSE:
                 cmdstatus = DoCancelGetLicense(aCmd);
                 break;
-#endif//PVMF_DOWNLOADMANAGER_SUPPORT_CPM_GETLICENSE
 
             default:
                 cmdstatus = PVMFErrNotSupported;
@@ -1108,7 +1270,6 @@ void PVMFDownloadManagerNode::ProcessCommand()
                 cmdstatus = PVMFErrNotSupported;
                 break;
 
-#if(PVMF_DOWNLOADMANAGER_SUPPORT_CPM_GETLICENSE)
             case PVDLM_NODE_CMD_GET_LICENSE_W:
                 cmdstatus = DoGetLicense(aCmd, true);
                 break;
@@ -1116,7 +1277,6 @@ void PVMFDownloadManagerNode::ProcessCommand()
             case PVDLM_NODE_CMD_GET_LICENSE:
                 cmdstatus = DoGetLicense(aCmd);
                 break;
-#endif//PVMF_DOWNLOADMANAGER_SUPPORT_CPM_GETLICENSE
 
             default:
                 OSCL_ASSERT(false);
@@ -1155,6 +1315,26 @@ void PVMFDownloadManagerNode::CommandComplete(PVMFDownloadManagerNodeCmdQueue& a
     if (!iSubNodeCmdVec.empty())
         iSubNodeCmdVec.clear();
 
+    //We may need to wait on the movie atom before the node cmd can complete.
+    //This is a good place to catch that condition and suppress the node
+    //cmd completion.
+    if (iParserInitAfterMovieAtom
+            || iParserPrepareAfterMovieAtom)
+    {
+        if (aStatus == PVMFSuccess)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVMFDownloadManagerNode::CommandComplete() Blocking Command Completion until Movie Atom Downloaded."));
+            return;//keep waiting on movie atom complete.
+        }
+        else
+        {
+            //if command failed or was cancelled then clear any movie atom wait
+            //flags.
+            iParserInitAfterMovieAtom = false;
+            iParserPrepareAfterMovieAtom = false;
+        }
+    }
 
     //Do the post-command state changes and anything else.
     if (aStatus == PVMFSuccess)
@@ -1274,7 +1454,7 @@ bool PVMFDownloadManagerNode::FilterPlaybackEventsFromSubNodes(const PVMFAsyncEv
 
             break;
         case PVMFInfoRemoteSourceNotification:
-            //we get this event for "not pseudostreamable" for both fast-track
+            //we get this event for "not pseudostreamable" for both PVX
             //and 3gpp.  Only pass it up for 3gpp.
             if (iSourceFormat != PVMF_MIME_DATA_SOURCE_HTTP_URL)
                 return true;
@@ -1605,7 +1785,16 @@ void PVMFDownloadManagerNode::ContinueFromDownloadTrackSelectionPoint()
     if (iPlaybackMode != EDownloadOnly)
     {
         //do recognizer sequence if needed.
+        if (iSourceFormat == PVMF_MIME_DATA_SOURCE_PVX_FILE)
         {
+            //PXV is always assumed to be MP4
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,
+                            "PVMFDownloadManagerNode::ContinueFromDownloadTrackSelectionPoint Setting format to MP4"));
+            iMimeType = PVMF_MIME_MPEG4FF;
+        }
+        else
+        {
+            //for other source formats, use the recognizer to determine the format.
             Push(iRecognizerNode, PVMFDownloadManagerSubNodeContainerBase::ERecognizerStart);
             Push(iRecognizerNode, PVMFDownloadManagerSubNodeContainerBase::ERecognizerClose);
         }
@@ -1621,12 +1810,28 @@ void PVMFDownloadManagerNode::ContinueFromDownloadTrackSelectionPoint()
         Push(iFormatParserNode, PVMFDownloadManagerSubNodeContainerBase::EQueryDataSourcePlayback);
         Push(iFormatParserNode, PVMFDownloadManagerSubNodeContainerBase::EQueryFFProgDownload);
         Push(iProtocolEngineNode, PVMFDownloadManagerSubNodeContainerBase::ESetFFProgDownloadSupport);
-#if(PVMF_DOWNLOADMANAGER_SUPPORT_CPM_GETLICENSE)
         Push(iFormatParserNode, PVMFDownloadManagerSubNodeContainerBase::ECPMQueryLicenseInterface);
-#endif//PVMF_DOWNLOADMANAGER_SUPPORT_CPM_GETLICENSE
 
+        //if this is PVX, we need to wait on movie atom before we can
+        //init parser.
+        if (iSourceFormat == PVMF_MIME_DATA_SOURCE_PVX_FILE)
         {
-            //for 3gpp, go ahead and init parser.  Init will block until
+            if (iMovieAtomComplete || iDownloadComplete)
+            {
+                iParserInit = true;
+                Push(iFormatParserNode, PVMFDownloadManagerSubNodeContainerBase::EInit);
+            }
+            else
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,
+                                "PVMFDownloadManagerNode::ContinueFromDownloadTrackSelectionPoint Setting flag to Init Parser after Movie Atom Downloaded"));
+                //set this flag to trigger parser init when movie atom is done.
+                iParserInitAfterMovieAtom = true;
+            }
+        }
+        else
+        {
+            //for other formats, go ahead and init parser.  Init will block until
             //receiving movie atom.
             iParserInit = true;
             Push(iFormatParserNode, PVMFDownloadManagerSubNodeContainerBase::EInit);
@@ -1634,6 +1839,37 @@ void PVMFDownloadManagerNode::ContinueFromDownloadTrackSelectionPoint()
     }
 }
 
+//Called when movie atom is received, or when download is complete
+//but movie atom was never received.
+void PVMFDownloadManagerNode::ContinueAfterMovieAtom()
+{
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "PVMFDownloadManagerNode::ContinueAfterMovieAtom() "));
+
+    if (!iMovieAtomComplete)
+    {
+        iMovieAtomComplete = true;
+        //see whether we need to continue with parser init
+        if (iParserInitAfterMovieAtom)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVMFDownloadManagerNode::ContinueAfterMovieAtom() Continuing to Parser Init"));
+            iParserInitAfterMovieAtom = false;
+            iParserInit = true;
+            Push(iFormatParserNode, PVMFDownloadManagerSubNodeContainerBase::EInit);
+            RunIfNotReady();
+        }
+        //see whether we need to continue with parser prepare
+        if (iParserPrepareAfterMovieAtom)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVMFDownloadManagerNode::ContinueAfterMovieAtom() Continuing to Parser Prepare"));
+            iParserPrepareAfterMovieAtom = false;
+            Push(iFormatParserNode, PVMFDownloadManagerSubNodeContainerBase::EPrepare);
+            RunIfNotReady();
+        }
+    }
+}
 
 PVMFNodeInterface* PVMFDownloadManagerNode::CreateParser()
 {
@@ -1691,7 +1927,6 @@ PVMFStatus PVMFDownloadManagerNode::ScheduleSubNodeCommands(PVMFDownloadManagerN
         break;
 
         case PVMF_GENERIC_NODE_INIT:
-#if(PVMF_DOWNLOADMANAGER_SUPPORT_CPM_GETLICENSE)
             //check for second "Init" command after a license acquire.
             if (iInitFailedLicenseRequired)
             {
@@ -1700,19 +1935,21 @@ PVMFStatus PVMFDownloadManagerNode::ScheduleSubNodeCommands(PVMFDownloadManagerN
             }
             else
 
-#endif//PVMF_DOWNLOADMANAGER_SUPPORT_CPM_GETLICENSE
             {
                 //reset any prior download/playback event
                 iDownloadComplete = false;
                 iParserInit = false;
                 iDataReady = false;
+                iMovieAtomComplete = false;
+                iParserInitAfterMovieAtom = false;
+                iParserPrepareAfterMovieAtom = false;
                 iRecognizerError = false;
-#if(PVMF_DOWNLOADMANAGER_SUPPORT_CPM_GETLICENSE)
                 iInitFailedLicenseRequired = false;
-#endif//PVMF_DOWNLOADMANAGER_SUPPORT_CPM_GETLICENSE
 
                 //reset any prior track select decisions.
                 iFormatParserNode.iTrackSelection = NULL;
+                iProtocolEngineNode.iTrackSelection = NULL;
+                iNoPETrackSelect = false;
 
                 //reset any prior recognizer decisions.
                 iMimeType = PVMF_MIME_FORMAT_UNKNOWN;
@@ -1736,6 +1973,14 @@ PVMFStatus PVMFDownloadManagerNode::ScheduleSubNodeCommands(PVMFDownloadManagerN
                     //parser is doing track selection, there's no question
                     ContinueInitAfterTrackSelectDecision();
                 }
+                else
+                {
+                    //PE node may be doing track selection, but to be sure, we need
+                    //to wait until it is prepared, then request the track selection interface.
+                    iProtocolEngineNode.iTrackSelection = NULL;
+                    Push(iProtocolEngineNode, PVMFDownloadManagerSubNodeContainerBase::EQueryTrackSelection);
+                    //once this command is complete, we will call ContinueInitAfterTrackSelectDecision()
+                }
             }
             break;
 
@@ -1751,6 +1996,14 @@ PVMFStatus PVMFDownloadManagerNode::ScheduleSubNodeCommands(PVMFDownloadManagerN
             if (iParserInit)
             {
                 Push(iFormatParserNode, PVMFDownloadManagerSubNodeContainerBase::EPrepare);
+            }
+            //if we're waiting on movie atom to init parser, then set a flag so we'll
+            //also do the parser prepare when it arrives.
+            else if (iParserInitAfterMovieAtom)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,
+                                "PVMFDownloadManagerNode::ScheduleSubNodeCommands Setting flag to Prepare Parser after Movie Atom Downloaded"));
+                iParserPrepareAfterMovieAtom = true;
             }
             break;
 
@@ -1882,7 +2135,6 @@ void PVMFDownloadManagerNode::Push(PVMFDownloadManagerSubNodeContainerBase& n, P
     iSubNodeCmdVec.push_back(elem);
 }
 
-#if(PVMF_DOWNLOADMANAGER_SUPPORT_CPM_GETLICENSE)
 PVMFCommandId
 PVMFDownloadManagerNode::GetLicense(PVMFSessionId aSessionId,
                                     OSCL_wString& aContentName,
@@ -1983,7 +2235,6 @@ PVMFStatus PVMFDownloadManagerNode::DoCancelGetLicense(PVMFDownloadManagerNodeCo
     }
     return PVMFPending;
 }
-#endif//PVMF_DOWNLOADMANAGER_SUPPORT_CPM_GETLICENSE
 
 //
 // PVMFDownloadManagerSubNodeContainer Implementation.
@@ -2044,13 +2295,11 @@ void PVMFDownloadManagerSubNodeContainer::Cleanup()
         iDownloadProgress->removeRef();
         iDownloadProgress = NULL;
     }
-#if(PVMF_DOWNLOADMANAGER_SUPPORT_CPM_GETLICENSE)
     if (iLicenseInterface)
     {
         iLicenseInterface->removeRef();
         iLicenseInterface = NULL;
     }
-#endif//PVMF_DOWNLOADMANAGER_SUPPORT_CPM_GETLICENSE
     //the node instance is cleaned up elsewhere.
 }
 
@@ -2149,7 +2398,6 @@ PVMFStatus PVMFDownloadManagerSubNodeContainer::IssueCommand(int32 aCmd)
             LOGSUBCMD((0, "PVMFDownloadManagerSubNodeContainer::IssueCommand %s CmdId %d ", GETNODESTR, iCmdId));
             return PVMFPending;
 
-#if(PVMF_DOWNLOADMANAGER_SUPPORT_CPM_GETLICENSE)
         case ECPMQueryLicenseInterface:
             OSCL_ASSERT(iNode != NULL);
             LOGSUBCMD((0, "PVMFDownloadManagerSubNodeContainer::IssueCommand %s Calling QueryInterface(License)", GETNODESTR));
@@ -2157,7 +2405,6 @@ PVMFStatus PVMFDownloadManagerSubNodeContainer::IssueCommand(int32 aCmd)
             iCmdId = iNode->QueryInterface(iSessionId, PVMFCPMPluginLicenseInterfaceUuid, iLicenseInterface);
             LOGSUBCMD((0, "PVMFDownloadManagerSubNodeContainer::IssueCommand %s CmdId %d ", GETNODESTR, iCmdId));
             return PVMFPending;
-#endif//PVMF_DOWNLOADMANAGER_SUPPORT_CPM_GETLICENSE
 
         case EQueryDataSourcePlayback:
             OSCL_ASSERT(iNode != NULL);
@@ -2181,17 +2428,31 @@ PVMFStatus PVMFDownloadManagerSubNodeContainer::IssueCommand(int32 aCmd)
                     return PVMFFailure; //no datastreamuser interface?
 
                 //Pass data to the parser node.
-#if(PVMF_DOWNLOADMANAGER_SUPPORT_CPM_GETLICENSE)
                 if (iContainer->iInitFailedLicenseRequired)
                 {
                     ;//do nothing-- data was already set on the first init call.
                 }
                 else
-#endif//PVMF_DOWNLOADMANAGER_SUPPORT_CPM_GETLICENSE
                 {
                     //Pass source data
-                        //for 3gpp, pass the recognized file format to the parser node.
+                    if (iContainer->iSourceFormat == PVMF_MIME_DATA_SOURCE_PVX_FILE)
                     {
+                        // let the parser know this is PVX format.
+                        PVMFFormatType fmt = PVMF_MIME_DATA_SOURCE_PVX_FILE;
+                        (DataSourceInit())->SetSourceInitializationData(iContainer->iDownloadFileName
+                                , fmt
+                                , (OsclAny*)&iContainer->iLocalDataSource);
+                    }
+                    else if (iContainer->iSourceFormat == PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL)
+                    {
+                        // let the parser node know that it is playing from a shoutcast stream
+                        (DataSourceInit())->SetSourceInitializationData(iContainer->iDownloadFileName
+                                , iContainer->iSourceFormat
+                                , (OsclAny*)iContainer->iSourceData);
+                    }
+                    else
+                    {
+                        // pass the recognized format to the parser.
                         (DataSourceInit())->SetSourceInitializationData(iContainer->iDownloadFileName
                                 , iContainer->iFmt
                                 , (OsclAny*)iContainer->iSourceData);
@@ -2226,7 +2487,6 @@ PVMFStatus PVMFDownloadManagerSubNodeContainer::IssueCommand(int32 aCmd)
                 return PVMFPending;
             }
 
-#if(PVMF_DOWNLOADMANAGER_SUPPORT_CPM_GETLICENSE)
         case ECPMGetLicenseW:
         {
             OSCL_ASSERT(iNode != NULL);
@@ -2275,7 +2535,6 @@ PVMFStatus PVMFDownloadManagerSubNodeContainer::IssueCommand(int32 aCmd)
             LOGSUBCMD((0, "PVMFDownloadManagerSubNodeContainer::IssueCommand %s CmdId %d ", GETNODESTR, iCmdId));
             return PVMFPending;
         }
-#endif//PVMF_DOWNLOADMANAGER_SUPPORT_CPM_GETLICENSE
 
         case ERequestPort:
             OSCL_ASSERT(iNode != NULL);
@@ -2790,8 +3049,16 @@ void PVMFDownloadManagerSubNodeContainer::HandleNodeInformationalEvent(const PVM
             case PVMFInfoBufferingComplete:
                 iContainer->iDownloadComplete = true;
                 iContainer->NotifyDownloadComplete();
+                //not sure whether this is possible, but just in case download
+                //completes before movie atom notice, go ahead and do anything
+                //that was waiting on movie atom.
+                if (!iContainer->iMovieAtomComplete)
+                    iContainer->ContinueAfterMovieAtom();
                 break;
             case PVMFPROTOCOLENGINE_INFO_MovieAtomCompleted:
+                //we may be waiting on this event to continue Parser init.
+                if (!iContainer->iMovieAtomComplete)
+                    iContainer->ContinueAfterMovieAtom();
                 if (iContainer->iDebugMode)
                 {
                     iContainer->ReportInfoEvent((PVMFAsyncEvent&)aEvent);
@@ -2920,13 +3187,11 @@ void PVMFDownloadManagerSubNodeContainerBase::CommandDone(PVMFStatus aStatus, PV
 
     PVMFStatus status = aStatus;
 
-#if(PVMF_DOWNLOADMANAGER_SUPPORT_CPM_GETLICENSE)
     // Set "Init Failed License Required" flag with the results of parser Init.
     if (iType == EFormatParser && iCmd == EInit)
     {
         iContainer->iInitFailedLicenseRequired = (status == PVMFErrLicenseRequired);
     }
-#endif//PVMF_DOWNLOADMANAGER_SUPPORT_CPM_GETLICENSE
 
     // Watch for the request port command completion from the protocol node, because we need to save the port pointer
     if (iType == EProtocolEngine && iCmd == ERequestPort && status == PVMFSuccess)
@@ -2952,6 +3217,17 @@ void PVMFDownloadManagerSubNodeContainerBase::CommandDone(PVMFStatus aStatus, PV
     }
 
 
+    // Watch for the query track selection interface completion from the protocol engine node.
+    if (iType == EProtocolEngine && iCmd == EQueryTrackSelection)
+    {
+        //see whether we got the TS interface from PE node.
+        iContainer->iNoPETrackSelect = (status != PVMFSuccess || iContainer->iProtocolEngineNode.iTrackSelection == NULL);
+        //ignore cmd failure so it won't terminate the Init sequence
+        if (status != PVMFSuccess)
+            status = PVMFSuccess;
+        //Continue the Init sequence now that we have the track select decision.
+        iContainer->ContinueInitAfterTrackSelectDecision();
+    }
 
     // Watch for recognizer start failure
     if (iType == ERecognizer && iCmd == ERecognizerStart && aStatus != PVMFSuccess)
@@ -3067,14 +3343,12 @@ void PVMFDownloadManagerSubNodeContainer::NodeCommandCompleted(const PVMFCmdResp
         //Process node cancel command response
         CancelCommandDone(aResponse.GetCmdStatus(), aResponse.GetEventExtensionInterface(), aResponse.GetEventData());
     }
-#if(PVMF_DOWNLOADMANAGER_SUPPORT_CPM_GETLICENSE)
     //Process Get License cancel command response.
     else if (aResponse.GetCmdId() == iCPMCancelGetLicenseCmdId
              && iCancelCmdState == EBusy)
     {
         CancelCommandDone(aResponse.GetCmdStatus(), aResponse.GetEventExtensionInterface(), aResponse.GetEventData());
     }
-#endif//PVMF_DOWNLOADMANAGER_SUPPORT_CPM_GETLICENSE
     else
     {
         OSCL_ASSERT(false);//unexpected response.

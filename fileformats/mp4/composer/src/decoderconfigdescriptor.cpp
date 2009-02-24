@@ -61,12 +61,12 @@ PVA_FF_DecoderConfigDescriptor::init(int32 mediaType)
         {
             switch (_codecType)
             {
-                case CODEC_TYPE_AMR_AUDIO:
-                    _objectTypeIndication = 0xd0;
-                    break;
-
                 case CODEC_TYPE_AAC_AUDIO:
                     _objectTypeIndication = 0x40;
+                    break;
+
+                default:
+                    _objectTypeIndication = 0xFF;
                     break;
             }
             _streamType = 0x05; // 0x05 for AudioStream

@@ -47,6 +47,11 @@ class OmxAacEncoder
                                 OMX_U8* aInBuffer,
                                 OMX_U32 aInBufSize);
 
+        OMX_BOOL IsRawAACFormatUsed()
+        {
+            return ((TT_MP4_RAWPACKETS == iAacEncConfig.useTransmux) ? OMX_TRUE : OMX_FALSE);
+        };
+
     private:
 
         OMX_S32 AacEncConfigDefaultSettings(ENC_CONFIGURATION* pConfig);

@@ -43,6 +43,10 @@
 #include "oscl_snprintf.h"
 #endif
 
+#ifndef PVMF_JITTER_BUFFER_FACTORY_H
+#include "pvmf_jitter_buffer_factory.h"
+#endif
+
 //////////////////////////////////////////////////
 // Node Constructor & Destructor
 //////////////////////////////////////////////////
@@ -2439,6 +2443,12 @@ void PVMFSMFSPBaseNode::ResetNodeParams(bool aReleaseMem)
         it->iOutputPorts.clear();
         it->iFeedBackPorts.clear();
     }
+
+    if (aReleaseMem)
+    {
+        OSCL_DELETE(iJBFactory);
+    }
+    iJBFactory = NULL;
 }
 
 void PVMFSMFSPBaseNode::ResetCPMParams(bool aReleaseMem)
@@ -2486,7 +2496,6 @@ void PVMFSMFSPBaseNode::ResetCPMParams(bool aReleaseMem)
     iPVMFStreamingManagerNodeMetadataValueCount = 0;
 
     iCPMSourceData.iRefCounter = 0;
-    iCPMSourceData.iUseCPMPluginRegistry = false;
     iCPMSourceData.iFileHandle	= NULL;
     iCPMSourceData.iStreamStatsLoggingURL = _STRLIT("");
     iCPMSourceData.iPreviewMode = false;

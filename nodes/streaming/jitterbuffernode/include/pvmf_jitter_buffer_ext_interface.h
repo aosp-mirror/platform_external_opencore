@@ -18,85 +18,51 @@
 #ifndef PVMF_JITTER_BUFFER_EXT_INTERFACE_H_INCLUDED
 #define PVMF_JITTER_BUFFER_EXT_INTERFACE_H_INCLUDED
 
-#ifndef OSCL_REFCOUNTER_MEMFRAG_H_INCLUDED
-#include "oscl_refcounter_memfrag.h"
+#ifndef PVMF_PORT_BASE_IMPL_H_INCLUDED
+#include "pvmf_port_base_impl.h"
 #endif
-#ifndef OSCL_STRING_CONTAINERS_H_INCLUDED
-#include "oscl_string_containers.h"
-#endif
-#ifndef PVMF_MEDIA_CLOCK_H_INCLUDED
-#include "pvmf_media_clock.h"
-#endif
-#ifndef PV_UUID_H_INCLUDED
-#include "pv_uuid.h"
-#endif
-#ifndef PV_INTERFACE_H
-#include "pv_interface.h"
-#endif
-#ifndef PVMF_PORT_INTERFACE_H_INCLUDED
-#include "pvmf_port_interface.h"
-#endif
-#ifndef RTSP_TIME_FORMAT_H
-#include "rtsp_time_formats.h"
-#endif
-#ifndef PVMF_STREAMING_BUFFER_ALLOCATORS_H_INCLUDED
-#include "pvmf_streaming_buffer_allocators.h"
-#endif
+
 #ifndef PVMF_SM_TUNABLES_H_INCLUDED
 #include "pvmf_sm_tunables.h"
 #endif
-#ifndef PVMF_SM_CONFIG_H_INCLUDED
-#include "pvmf_sm_config.h"
+
+#ifndef RTSP_TIME_FORMAT_H
+#include "rtsp_time_formats.h"
 #endif
 
-class PvmfPortBaseImpl;
-//memory allocator type for this node.
-typedef OsclMemAllocator PVMFJitterBufferNodeAllocator;
+#ifndef PVMF_JITTER_BUFFER_COMMON_TYPES_H_INCLUDED
+#include "pvmf_jitter_buffer_common_types.h"
+#endif
 
-class PVMFSharedSocketDataBufferAlloc;
+class PVMFMediaClock;
+class OsclMemPoolResizableAllocator;
+///////////////////////////////////////////////////////////////////////////////
+//Common data structures for all configs
+///////////////////////////////////////////////////////////////////////////////
 
-enum PVMFJitterBufferFireWallPacketFormat
-{
-    PVMF_JB_FW_PKT_FORMAT_RTP,
-    PVMF_JB_FW_PKT_FORMAT_PV
-};
 
-class PVMFJitterBufferFireWallPacketInfo
-{
-    public:
-        PVMFJitterBufferFireWallPacketInfo()
-        {
-            iServerRoundTripDelayInMS =
-                PVMF_JITTER_BUFFER_NODE_FIREWALL_PKT_DEFAULT_SERVER_RESPONSE_TIMEOUT_IN_MS;
-            iNumAttempts =
-                PVMF_JITTER_BUFFER_NODE_DEFAULT_FIREWALL_PKT_ATTEMPTS;
-            iFormat = PVMF_JB_FW_PKT_FORMAT_RTP;
-        };
+///////////////////////////////////////////////////////////////////////////////
+//ASF based streaming specific data structures
+///////////////////////////////////////////////////////////////////////////////
 
-        virtual ~PVMFJitterBufferFireWallPacketInfo()
-        {
-        };
-
-        uint32 iServerRoundTripDelayInMS;
-        uint32 iNumAttempts;
-        PVMFJitterBufferFireWallPacketFormat iFormat;
-};
-
+///////////////////////////////////////////////////////////////////////////////
+//Class PVMFJitterBufferExtensionInterface
+///////////////////////////////////////////////////////////////////////////////
 class PVMFJitterBufferExtensionInterface : public PVInterface
 {
     public:
-        OSCL_IMPORT_REF virtual void setRTCPIntervalInMicroSecs(uint32 aRTCPInterval) = 0;
+        OSCL_IMPORT_REF virtual void setRTCPIntervalInMicroSecs(uint32 aRTCPInterval) = 0;	//Not used as of now
         OSCL_IMPORT_REF virtual bool setPortParams(PVMFPortInterface* aPort,
                 uint32 aTimeScale,
                 uint32 aBitRate,
                 OsclRefCounterMemFrag& aConfig,
                 bool aRateAdaptation = false,
                 uint32 aRateAdaptationFeedBackFrequency = 0) = 0;
-        OSCL_IMPORT_REF virtual bool setPlayRange(int32 aStartTimeInMS,
+        OSCL_IMPORT_REF virtual bool setPlayRange(int32 aStartTimeInMS,//called when the start of the session controller completes
                 int32 aStopTimeInMS,
                 bool oPlayAfterASeek,
                 bool aStopTimeAvailable = true) = 0;
-        OSCL_IMPORT_REF virtual void setPlayBackThresholdInMilliSeconds(uint32 threshold) = 0;
+        OSCL_IMPORT_REF virtual void setPlayBackThresholdInMilliSeconds(uint32 threshold) = 0;	//Not used as of now [replace with wait for OOO timeout]
         OSCL_IMPORT_REF virtual void setJitterBufferRebufferingThresholdInMilliSeconds(uint32 aThreshold) = 0;
         OSCL_IMPORT_REF virtual void getJitterBufferRebufferingThresholdInMilliSeconds(uint32& aThreshold) = 0;
         OSCL_IMPORT_REF virtual void setJitterBufferDurationInMilliSeconds(uint32 duration) = 0;
@@ -111,7 +77,7 @@ class PVMFJitterBufferExtensionInterface : public PVInterface
 
         OSCL_IMPORT_REF virtual void setClientPlayBackClock(PVMFMediaClock* clientClock) = 0;
         OSCL_IMPORT_REF virtual bool PrepareForRepositioning(bool oUseExpectedClientClockVal = false,
-                uint32 aExpectedClientClockVal = 0) = 0;
+                uint32 aExpectedClientClockVal = 0) = 0;	//called for RTSP based streaming only
         OSCL_IMPORT_REF virtual bool setPortSSRC(PVMFPortInterface* aPort, uint32 aSSRC) = 0;
         OSCL_IMPORT_REF virtual bool setPortRTPParams(PVMFPortInterface* aPort,
                 bool   aSeqNumBasePresent,
@@ -148,10 +114,10 @@ class PVMFJitterBufferExtensionInterface : public PVInterface
 
         OSCL_IMPORT_REF virtual bool NotifyAutoPauseComplete() = 0;
         OSCL_IMPORT_REF virtual bool NotifyAutoResumeComplete() = 0;
-        OSCL_IMPORT_REF virtual PVMFStatus SetTransportType(PVMFPortInterface* aPort,
-                OSCL_String& aTransportType) = 0;
+        OSCL_IMPORT_REF virtual PVMFStatus SetInputMediaHeaderPreParsed(PVMFPortInterface* aPort,
+                bool aHeaderPreParsed) = 0;
         OSCL_IMPORT_REF virtual PVMFStatus HasSessionDurationExpired(bool& aExpired) = 0;
-        OSCL_IMPORT_REF virtual bool PurgeElementsWithNPTLessThan(NptTimeFormat &aNPTTime) = 0;
+        OSCL_IMPORT_REF virtual bool PurgeElementsWithNPTLessThan(NptTimeFormat& aNPTTime) = 0;
 
         OSCL_IMPORT_REF virtual void SetBroadCastSession() = 0;
         OSCL_IMPORT_REF virtual void DisableFireWallPackets() = 0;

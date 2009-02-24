@@ -25,6 +25,8 @@ class DownloadNodesInterface: public OsclSharedLibraryInterface,
             public NodeSharedLibraryInterface
 {
     public:
+        DownloadNodesInterface() {};
+
         // From NodeSharedLibraryInterface
         OsclAny* QueryNodeInterface(const PVUuid& aNodeUuid, const OsclUuid& aInterfaceId)
         {
@@ -52,17 +54,6 @@ class DownloadNodesInterface: public OsclSharedLibraryInterface,
             }
             return NULL;
         };
-
-        static DownloadNodesInterface* Instance()
-        {
-            static DownloadNodesInterface nodeInterface;
-            return &nodeInterface;
-        };
-
-    private:
-
-        DownloadNodesInterface() {};
-
 };
 
 
@@ -70,11 +61,11 @@ extern "C"
 {
     OsclSharedLibraryInterface* PVGetInterface(void)
     {
-        return DownloadNodesInterface::Instance();
+        return OSCL_NEW(DownloadNodesInterface, ());
     }
-    void PVReleaseInterface(OsclSharedLibraryInterface*)
+    void PVReleaseInterface(OsclSharedLibraryInterface* aInstance)
     {
-        //nothing needed
+        OSCL_DELETE(aInstance);
     }
 }
 

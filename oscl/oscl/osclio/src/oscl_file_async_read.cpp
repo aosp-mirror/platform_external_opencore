@@ -81,7 +81,7 @@ OsclBuf* OsclAsyncFileBuffer::Buffer()
     return iBuffer;
 }
 
-bool OsclAsyncFileBuffer::HasThisOffset(int32 aOffset)
+bool OsclAsyncFileBuffer::HasThisOffset(TOsclFileOffset aOffset)
 {
     if (!iValid)
         return false;
@@ -413,7 +413,7 @@ uint32 OsclAsyncFile::Read(OsclAny* aBuffer, uint32 aDataSize, uint32 aNumElemen
 //If data is not available, it will do a blocking read.
 //The amount of data requested cannot exceed the internal buffer size.
 //Note this returns bytes read, not number of elements read.
-uint32 OsclAsyncFile::doRead(uint8 *& aBuffer1, uint32 aDataSize, uint32 aNumElements, int32 aOffset)
+uint32 OsclAsyncFile::doRead(uint8 *& aBuffer1, uint32 aDataSize, uint32 aNumElements, TOsclFileOffset aOffset)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                     (0, "OsclAsyncFile(0x%x)::doRead size %d numelements %d offset %d", this, aDataSize, aNumElements, aOffset));
@@ -444,9 +444,9 @@ uint32 OsclAsyncFile::doRead(uint8 *& aBuffer1, uint32 aDataSize, uint32 aNumEle
         aBuffer1 = const_cast<uint8*>(ptrRead.Ptr());
         // offset pointer to correct location
         aBuffer1 += (aOffset - dataBuffer->Offset());
-        bytesRead = dataBuffer->Length() - (aOffset - dataBuffer->Offset());
+        bytesRead = dataBuffer->Length() - (uint32)(aOffset - dataBuffer->Offset());
         // Redo queue of linked buffers
-        ReOrderBuffersQueue(aOffset, bufferFoundId);
+        ReOrderBuffersQueue(bufferFoundId);
     }
     else
     {
@@ -519,7 +519,7 @@ uint32 OsclAsyncFile::doRead(uint8 *& aBuffer1, uint32 aDataSize, uint32 aNumEle
     return bytesRead;
 }
 
-bool OsclAsyncFile::FindDataBuffer(OsclAsyncFileBuffer*& aDataBuffer, int32& aBufferId, int32 aOffset, int32 aSize)
+bool OsclAsyncFile::FindDataBuffer(OsclAsyncFileBuffer*& aDataBuffer, int32& aBufferId, TOsclFileOffset aOffset, int32 aSize)
 {
     // Look for the requested value on the queue
     OsclAsyncFileBuffer* tmpDataBuffer;
@@ -558,14 +558,14 @@ bool OsclAsyncFile::FindDataBuffer(OsclAsyncFileBuffer*& aDataBuffer, int32& aBu
     aBufferId = tmpDataBuffer->Id();
 
     // Check if we have enough data to return in a single buffer
-    int32 maxOffset = tmpDataBuffer->Offset() + tmpDataBuffer->Length();
+    TOsclFileOffset maxOffset = tmpDataBuffer->Offset() + tmpDataBuffer->Length();
 
     // the easy case
     if (aOffset + aSize <= maxOffset)
         return true;
 
     // Last option, check if we can concatenate required data from two buffers
-    int32 availableData = maxOffset - aOffset;
+    int32 availableData = (int32)(maxOffset - aOffset);
 
     // check again in the buffers for the remaining part of the data
     OsclAsyncFileBuffer* tmpDataBuffer2 = iDataBufferArray[0]; //Init pointer to clean-up compiler warning=MG
@@ -626,7 +626,7 @@ void OsclAsyncFile::UpdateReading()
     if (IsBusy())
         return;
 
-    int32 bytesReadAhead = BytesReadAhead(iFilePosition);
+    int32 bytesReadAhead = BytesReadAhead();
 
     // don't need to read more
     if (bytesReadAhead >= iKMinBytesReadAhead)
@@ -634,7 +634,7 @@ void OsclAsyncFile::UpdateReading()
         return;
     }
 
-    int32 posToReadFrom = iFilePosition + bytesReadAhead;
+    TOsclFileOffset posToReadFrom = iFilePosition + bytesReadAhead;
 
     // check for eof. We stop reading
     if (posToReadFrom == iFileSize)
@@ -647,10 +647,8 @@ void OsclAsyncFile::UpdateReading()
     StartNextRead(posToReadFrom);
 }
 
-int32 OsclAsyncFile::BytesReadAhead(int32 aOffset)
+int32 OsclAsyncFile::BytesReadAhead()
 {
-    OSCL_UNUSED_ARG(aOffset);
-
     // Get the maximum offset of the last element in the linked	buffer array
     int32 index = iLinkedDataBufferArray.size() - 1;
     if (index == -1)
@@ -659,8 +657,8 @@ int32 OsclAsyncFile::BytesReadAhead(int32 aOffset)
     }
 
     OsclAsyncFileBuffer* tmpDataBuffer = iLinkedDataBufferArray[index];
-    int32 maxOffset = tmpDataBuffer->Offset() + tmpDataBuffer->Length();
-    int32 bytesReadAhead = maxOffset - iLastUserFileRead;
+    TOsclFileOffset maxOffset = tmpDataBuffer->Offset() + tmpDataBuffer->Length();
+    int32 bytesReadAhead = (int32)(maxOffset - iLastUserFileRead);
 
     return bytesReadAhead;
 }
@@ -727,7 +725,7 @@ int32 OsclAsyncFile::SortDataBuffers()
     return 0;
 }
 
-bool OsclAsyncFile::GetNextDataBuffer(OsclAsyncFileBuffer*& aDataBuffer, int32 aFilePointerToReadFrom)
+bool OsclAsyncFile::GetNextDataBuffer(OsclAsyncFileBuffer*& aDataBuffer, TOsclFileOffset aFilePointerToReadFrom)
 {
     uint32 i;
 
@@ -746,7 +744,7 @@ bool OsclAsyncFile::GetNextDataBuffer(OsclAsyncFileBuffer*& aDataBuffer, int32 a
     }
 
     // if all buffers are valid, return the next one with oldest data
-    uint32 smallerOffset = 0;
+    TOsclFileOffset smallerOffset = 0;
     OsclAsyncFileBuffer* dataBufferToUse = NULL;
     OsclAsyncFileBuffer* lastOptionBufferToUse = NULL;
     for (i = 0; i < iDataBufferArray.size(); i++)
@@ -772,7 +770,7 @@ bool OsclAsyncFile::GetNextDataBuffer(OsclAsyncFileBuffer*& aDataBuffer, int32 a
         }
         else
         {
-            if ((uint32)(tmpDataBuffer->Offset()) < smallerOffset)
+            if (tmpDataBuffer->Offset() < smallerOffset)
             {
                 smallerOffset = tmpDataBuffer->Offset();
                 dataBufferToUse = tmpDataBuffer;
@@ -795,10 +793,8 @@ bool OsclAsyncFile::GetNextDataBuffer(OsclAsyncFileBuffer*& aDataBuffer, int32 a
     return true;
 }
 
-void OsclAsyncFile::ReOrderBuffersQueue(int32 aOffset, int32 aFirstBufferId)
+void OsclAsyncFile::ReOrderBuffersQueue(int32 aFirstBufferId)
 {
-    OSCL_UNUSED_ARG(aOffset);
-
     // reset array
     iLinkedDataBufferArray.clear();
 
@@ -812,7 +808,7 @@ void OsclAsyncFile::ReOrderBuffersQueue(int32 aOffset, int32 aFirstBufferId)
     iLinkedDataBufferArray.push_back(tmpDataBuffer);
 
     // Look for the linked elements
-    int32 offset = tmpDataBuffer->Offset() + tmpDataBuffer->Length();
+    TOsclFileOffset offset = tmpDataBuffer->Offset() + tmpDataBuffer->Length();
     for (uint32 i = 0; i < iSortedDataBufferArray.size(); i++)
     {
         tmpDataBuffer = iSortedDataBufferArray[i];
@@ -893,10 +889,10 @@ void OsclAsyncFile::Run()
 
     // check how many bytes ahead of the user file position we have
     // bool seekDone = false;
-    int32 bytesReadAhead = BytesReadAhead(iLastUserFileRead);
+    int32 bytesReadAhead = BytesReadAhead();
 
     // next position to read from
-    int32 posToReadFrom = iLastUserFileRead + bytesReadAhead;
+    TOsclFileOffset posToReadFrom = iLastUserFileRead + bytesReadAhead;
 
     // check for eof. We stop reading
     if (posToReadFrom == iFileSize)
@@ -937,7 +933,7 @@ void OsclAsyncFile::DoCancel()
     }
 }
 
-void OsclAsyncFile::StartNextRead(int32 aPosToReadFrom)
+void OsclAsyncFile::StartNextRead(TOsclFileOffset aPosToReadFrom)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                     (0, "OsclAsyncFile(0x%x)::StartNextRead pos %d ", this, aPosToReadFrom));
@@ -994,7 +990,7 @@ void OsclAsyncFile::StartNextRead(int32 aPosToReadFrom)
             }
 
             // we need to swap the file pointers
-            int32 tmpPosition = iSyncFilePosition;
+            TOsclFileOffset tmpPosition = iSyncFilePosition;
             iSyncFilePosition = iAsyncFilePosition;
             iAsyncFilePosition = tmpPosition;
 
@@ -1050,7 +1046,7 @@ void OsclAsyncFile::StartNextRead(int32 aPosToReadFrom)
     }
 }
 
-int32 OsclAsyncFile::Seek(int32 offset, Oscl_File::seek_type origin)
+int32 OsclAsyncFile::Seek(TOsclFileOffset offset, Oscl_File::seek_type origin)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                     (0, "OsclAsyncFile(0x%x)::Seek offset %d origin %d", this, offset, origin));
@@ -1085,7 +1081,7 @@ int32 OsclAsyncFile::Seek(int32 offset, Oscl_File::seek_type origin)
 }
 
 
-int32 OsclAsyncFile::Tell()
+TOsclFileOffset OsclAsyncFile::Tell()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                     (0, "OsclAsyncFile(0x%x)::Tell pos %d ", this, iFilePosition));
@@ -1109,7 +1105,7 @@ int32  OsclAsyncFile::EndOfFile()
     return result;
 }
 
-int32 OsclAsyncFile::Size()
+TOsclFileOffset OsclAsyncFile::Size()
 {
 #if(VERIFY_THIS)
     if (iNativeFileVerify->Size() != iFileSize)

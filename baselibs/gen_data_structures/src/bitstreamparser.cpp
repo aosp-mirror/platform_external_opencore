@@ -15,12 +15,28 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-
-
+#ifndef   BITSTREAMPARSER_H_INCLUDED
 #include "bitstreamparser.h"
+#endif
+#ifndef   OSCL_ASSERT_H_INCLUDED
 #include "oscl_assert.h"
+#endif
+#ifndef   OSCL_BYTE_ORDER_H_INCLUDED
 #include "oscl_byte_order.h"
+#endif
+#ifndef   OSCL_DLL_H_INCLUDED
 #include "oscl_dll.h"
+#endif
+#ifndef   OSCL_ERROR_H_INCLUDED
+#include "oscl_error.h"
+#endif
+#ifndef   OSCL_ERROR_CODES_H_INCLUDED
+#include "oscl_error_codes.h"
+#endif
+#ifndef   OSCL_EXCEPTION_H_INCLUDED
+#include "oscl_exception.h"
+#endif
+
 
 OSCL_EXPORT_REF BitStreamParser::BitStreamParser(uint8* stream, uint32 size)
 {
@@ -37,11 +53,6 @@ OSCL_EXPORT_REF void BitStreamParser::ResetBitStreamParser(uint8* stream, uint32
 
 OSCL_EXPORT_REF uint32 BitStreamParser::ReadBits(uint8 numberOfBits)
 {
-    // Make sure bytepos won't exceed the size of the buffer while reading
-    if ((bytepos + numberOfBits) >= (start + size))
-    {
-        OSCL_LEAVE(OsclErrOverflow);
-    }
     //Initialize output to zero before shifting out bits.
     uint32 output = 0;
 
@@ -53,6 +64,12 @@ OSCL_EXPORT_REF uint32 BitStreamParser::ReadBits(uint8 numberOfBits)
     //convert from big endian to host's endianness.
     while (numberOfBits)
     {
+        // Make sure bytepos won't exceed the size of the buffer while reading
+        if (bytepos >= (start + size))
+        {
+            OSCL_LEAVE(OsclErrOverflow);
+        }
+
         //Optimize reads for special cases such as byte-aligned reads and
         //processing multiple bits at a time.
         if ((numberOfBits >= BITS_PER_UINT8) && (bitpos == MOST_SIG_BIT))
@@ -209,17 +226,16 @@ OSCL_EXPORT_REF void BitStreamParser::WriteUInt32(uint32 data)
 
 OSCL_EXPORT_REF void BitStreamParser::NextBits(uint32 numberOfBits)
 {
-    // Make sure bytepos won't exceed the size of the buffer while reading
-    if ((bytepos + numberOfBits) >= (start + size))
-    {
-        OSCL_LEAVE(OsclErrOverflow);
-    }
-
     //bitpos counts down from 7 to 0, so subtract it from 7 to get the ascending position.
     uint32 newbitpos = numberOfBits  + (MOST_SIG_BIT - bitpos);
     //Convert the ascending bit position to a descending position using only the least-significant bits.
     bitpos = MOST_SIG_BIT - (newbitpos & LEAST_SIG_3_BITS_MASK);
     //Calculate the number of bytes advanced.
     bytepos += (newbitpos / BITS_PER_BYTE);
+    // Make sure bytepos won't exceed the size of the buffer while reading
+    if (bytepos >= (start + size))
+    {
+        OSCL_LEAVE(OsclErrOverflow);
+    }
 }
 

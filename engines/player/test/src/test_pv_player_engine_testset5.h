@@ -292,12 +292,6 @@ class pvplayer_async_test_3gppdlnormal : public pvplayer_async_test_downloadbase
         {
             iLogger = PVLogger::GetLoggerObject("pvplayer_async_test_3gppdlnormal");
             iTestCaseName = _STRLIT_CHAR("3GPP Download Play ASAP");
-#if !(JANUS_IS_LOADABLE_MODULE)
-            iPluginFactory = NULL;
-#endif
-            iUseCpmForPlayback = false;
-            iDrmDeviceInfoFactory = NULL;
-            iDrmSystemClockFactory = NULL;
         }
 
         ~pvplayer_async_test_3gppdlnormal();
@@ -307,16 +301,6 @@ class pvplayer_async_test_3gppdlnormal : public pvplayer_async_test_downloadbase
         void CreateDataSinkAudio();
 
         //for janus DRM
-#if !(JANUS_IS_LOADABLE_MODULE)
-        PVMFCPMPluginFactoryRegistryClient iPluginRegistryClient;
-        PVMFJanusPluginFactory* iPluginFactory;
-        OSCL_HeapString<OsclMemAllocator> iPluginMimeType;
-#endif
-        bool iUseCpmForPlayback;
-#if !(JANUS_IS_LOADABLE_MODULE)
-#endif
-        WmDrmDeviceInfoFactory* iDrmDeviceInfoFactory;
-        PVWmdrmDeviceSystemClockFactory* iDrmSystemClockFactory;
         void CleanupData();
 };
 
@@ -680,6 +664,9 @@ class pvplayer_async_test_ppb_base : public pvplayer_async_test_base
                 , iSeekToBOC(false)
                 , iSeekInCache(false)
                 , iEOSStopPlay(false)
+                , iShoutcastSession(false)
+                , iSCListenTime(0)
+                , iShoutcastPlayStopPlay(false)
                 , iSessionDuration(0)
         {
             iNumBufferingStart = iNumBufferingComplete = iNumUnderflow = iNumDataReady = iNumEOS = 0;
@@ -861,6 +848,26 @@ class pvplayer_async_test_ppb_base : public pvplayer_async_test_base
             iEOSStopPlay = true;
         }
         bool iEOSStopPlay;
+
+        void setShoutcastSessionDuration()
+        {
+            iSCListenTime = 5 * 60 * 1000 * 1000;
+        }
+        bool iShoutcastSession;
+        int32 iSCListenTime;
+        bool iShoutcastPlayStopPlay;
+
+        void enableShoutcastPauseResume()
+        {
+            iSCListenTime = 1 * 60 * 1000 * 1000;
+            enableShortPauseResume();
+        }
+
+        void enableShoutcastPlayStopPlay()
+        {
+            iSCListenTime = 30 * 1000 * 1000;
+            iShoutcastPlayStopPlay = true;
+        }
 
         //for janus drm.
         void PrintJanusError(const PVCmdResponse& aResponse);

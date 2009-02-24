@@ -500,7 +500,7 @@ void MetadataDriver::handleAddDataSource()
         if (mMode & GET_FRAME_ONLY) {
 #if BEST_THUMBNAIL_MODE
             // Set the intent to thumbnails.
-            mLocalDataSource = new PVMFLocalDataSource(false);
+            mLocalDataSource = new PVMFLocalDataSource();
             mLocalDataSource->iIntent = BITMASK_PVMF_SOURCE_INTENT_THUMBNAILS;
             mDataSource->SetDataSourceContextData((OsclAny*)mLocalDataSource);
 #endif

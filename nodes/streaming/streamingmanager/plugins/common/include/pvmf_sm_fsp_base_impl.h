@@ -70,6 +70,7 @@
 #include "pvmf_sm_fsp_base_types.h"
 #endif
 
+class JitterBufferFactory;
 
 
 #ifndef PVLOGGER_H_INCLUDED
@@ -434,6 +435,8 @@ class PVMFSMFSPBaseNode : public PVMFNodeInterface,
         PVMFStatus GetIndexParamValues(char* aString, uint32& aStartIndex, uint32& aEndIndex);
         PVMFStatus GetMaxSizeValue(char* aString, uint32& aMaxSize);
         PVMFStatus GetTruncateFlagValue(char* aString, uint32& aTruncateFlag);
+
+        JitterBufferFactory* iJBFactory;
 
         //CPM related
         bool iPreviewMode;

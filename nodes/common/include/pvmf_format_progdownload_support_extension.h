@@ -36,6 +36,9 @@
 #ifndef PV_INTERFACE_H
 #include "pv_interface.h"
 #endif
+#ifndef PVMI_KVP_H_INCLUDED
+#include "pvmi_kvp.h"
+#endif
 
 #define PVMF_FF_PROGDOWNLOAD_SUPPORT_INTERFACE_MIMETYPE "x-pvmf/pvmf/ff/progdownload-support"
 #define PVMF_FF_PROGDOWNLOAD_SUPPORT_INTERFACE_UUID PVUuid(0x00f80b00, 0x4bd4, 0x4656, 0x8e, 0x0f, 0x63, 0xe0, 0x3d, 0x7a, 0x5f, 0x39)
@@ -96,6 +99,19 @@ class PVMFFormatProgDownloadSupportInterface:  public PVInterface
          * @return - none
          */
         virtual void notifyDownloadComplete() = 0;
+
+        /**
+         * Set the protocol information that is defined as kvp
+         *
+         * @param aInfoKvpVec, a kvp vector of all protocol information
+         *
+         * @return true means success, and false means any exceptional case, such as aInfoKvpVec has nothing
+         */
+        virtual bool setProtocolInfo(Oscl_Vector<PvmiKvp*, OsclMemAllocator>& aInfoKvpVec)
+        {
+            OSCL_UNUSED_ARG(aInfoKvpVec);
+            return true;
+        }
 
 };
 

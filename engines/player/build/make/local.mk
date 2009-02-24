@@ -17,13 +17,8 @@ INCSRCDIR := ../../include
 SRCS := pv_player_datapath.cpp \
 	pv_player_engine.cpp \
 	pv_player_factory.cpp \
-        pv_player_node_registry.cpp
-
-ifeq ($(BUILD_ARCH),ms_vc2005)
-  SRCS += ../config/ms_vc2005_all/pv_player_node_registry_populator.cpp
-else
-  SRCS += ../config/core/pv_player_node_registry_populator.cpp
-endif
+        pv_player_node_registry.cpp \
+        ../config/core/pv_player_node_registry_populator.cpp
 
 HDRS := pv_player_datasinkfilename.h \
 	pv_player_datasource.h \
@@ -39,6 +34,9 @@ HDRS := pv_player_datasinkfilename.h \
 	pv_player_track_selection_interface.h \
 	pv_player_registry_interface.h
 
+## This file is need by PLATFORM_EXTRAS in library.mk
+sdkinfo_header_name := pv_player_sdkinfo.h
+
 include $(MK)/library.mk
 
 doc_target := pvplayer_engine
@@ -49,10 +47,9 @@ doc_version := $(PVPLAYER_ENGINE_VERSION)
 include $(MK)/doc.mk
 
 sdkinfo_target := $(LOCAL_SRCDIR)/pv_player_engine.cpp
-sdkinfo_header_filename := $(LOCAL_SRCDIR)/pv_player_sdkinfo.h
+sdkinfo_header_filename := $(LOCAL_SRCDIR)/$(sdkinfo_header_name)
 sdkinfo_header_macro := PV_PLAYER_SDKINFO
 sdkinfo_label_macro := PVPLAYER_ENGINE_SDKINFO_LABEL
 sdkinfo_date_macro := PVPLAYER_ENGINE_SDKINFO_DATE
 
-include $(MK)/sdkinfo.mk
-
+include $(MK)/sdkinfo_nr.mk

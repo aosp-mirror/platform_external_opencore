@@ -103,6 +103,7 @@ OSCL_EXPORT_REF PVMFStatus PvmfMediaInputNode::ThreadLogon()
         AddToScheduler();
 
     if (iMediaIOControl)
+
         iMediaIOControl->ThreadLogon();
 
     SetState(EPVMFNodeIdle);
@@ -471,7 +472,18 @@ OSCL_EXPORT_REF void PvmfMediaInputNode::RequestCompleted(const PVMFCmdResp& aRe
                     iMediaIOState = MIO_STATE_INITIALIZED;
                 }
                 break;
+            case EReset:
 
+                if (aResponse.GetCmdStatus() != PVMFSuccess)
+                {
+                    cmd.iEventCode = PvmfMediaInputNodeErr_MediaIOReset;
+                }
+                else
+                {
+                    iMediaIOState = MIO_STATE_IDLE;
+                    SetState(EPVMFNodeIdle);
+                }
+                break;
             default:
                 OSCL_ASSERT(false);
                 break;
@@ -1181,10 +1193,9 @@ PVMFStatus PvmfMediaInputNode::DoReset(PvmfMediaInputNodeCmd& aCmd)
 
         //restore original port vector reserve.
         iOutPortVector.Reconstruct();
-
-        //logoff & go back to Created state.
-        SetState(EPVMFNodeIdle);
-        return PVMFSuccess;
+        //Reset the MIO
+        PVMFStatus status = SendMioRequest(aCmd, EReset);
+        return status;
     }
     else
     {
@@ -1423,6 +1434,23 @@ PVMFStatus PvmfMediaInputNode::SendMioRequest(PvmfMediaInputNodeCmd& aCmd, EMioR
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
                                 (0, "PvmfMediaInputNode::DoInit: Error - iMediaIOControl->Stop failed"));
                 aCmd.iEventCode = PvmfMediaInputNodeErr_MediaIOStop;
+                status = PVMFFailure;
+            }
+            else
+            {
+                status = PVMFPending;
+            }
+        }
+        break;
+        case EReset:
+        {
+            int32 err ;
+            OSCL_TRY(err, iMediaIOCmdId = iMediaIOControl->Reset(););
+            if (err != OsclErrNone)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                                (0, "PVMediaInputNode::SendMioRequest: Error - iMIOControl->Reset failed"));
+                aCmd.iEventCode = PvmfMediaInputNodeErr_MediaIOReset;
                 status = PVMFFailure;
             }
             else

@@ -402,7 +402,10 @@ OSCL_EXPORT_REF PVMFCommandId PVMFStreamingManagerNode::Pause(PVMFSessionId aSes
     PVMF_SM_LOGSTACKTRACE((0, "PVMFStreamingManagerNode::Pause - In"));
 
     if (!iSMFSPlugin)
+    {
+        PVMF_SM_LOGSTACKTRACE((0, "PVMFStreamingManagerNode::Pause - FSP was not existing"));
         OSCL_LEAVE(OsclErrInvalidState);
+    }
 
     PVMFCommandId cmdId = 0;
     cmdId = iSMFSPlugin->Pause(aSessId, aContext);
@@ -488,6 +491,7 @@ PVMFStatus PVMFStreamingManagerNode::SetSourceInitializationData(OSCL_wString& a
         PVMFFormatType& aSourceFormat,
         OsclAny* aSourceData)
 {
+    PVMF_SM_LOGSTACKTRACE((0, "PVMFStreamingManagerNode::SetSourceInitializationData() In"));
     PVMFStatus status = PVMFFailure;
     //we may have the sequence like
     //Reset->queryinterface(PVMFDataSourceInitializationExtensionInterface)->PVMFDataSourceInitializationExtensionInterface::SetSourceInitializationData
@@ -502,7 +506,7 @@ PVMFStatus PVMFStreamingManagerNode::SetSourceInitializationData(OSCL_wString& a
                 iFSPDataSourceInitializationIntf->removeRef();
                 iFSPDataSourceInitializationIntf = NULL;
             }
-            OSCL_ASSERT(iSMFSPRegistry->ReleaseSMFSP(iFSPUuid, iSMFSPlugin));
+            iSMFSPRegistry->ReleaseSMFSP(iFSPUuid, iSMFSPlugin);
             iSMFSPlugin = NULL;
         }
     }
@@ -515,80 +519,6 @@ PVMFStatus PVMFStreamingManagerNode::SetSourceInitializationData(OSCL_wString& a
         if (oscl_strncmp(rtsptScheme.get_cstr(), aSourceURL.get_cstr(), 5) == 0)
         {
             fspSrcFormat = PVMF_MIME_DATA_SOURCE_RTSP_TUNNELLING;
-        }
-    }
-    if (fspSrcFormat != PVMF_MIME_DATA_SOURCE_RTSP_TUNNELLING) //Check if [RTSPUnicast and PVR]/[RTSPBroadcast and/or PVR] feature is required
-    {
-        if (aSourceData)
-        {
-            PVInterface* pvInterface = OSCL_STATIC_CAST(PVInterface*, aSourceData);
-            PVInterface* sourceDataContext = NULL;
-            PVUuid sourceContextUuid(PVMF_SOURCE_CONTEXT_DATA_UUID);
-            if (pvInterface)
-            {
-                if (pvInterface->queryInterface(sourceContextUuid, sourceDataContext))
-                {
-                    if (sourceDataContext)
-                    {
-                        PVInterface* packetSourceContextData = NULL;
-                        PVUuid packetSourceContextUuid(PVMF_SOURCE_CONTEXT_DATA_PACKETSOURCE_UUID); //Check for Broadcast Plugin
-
-                        PVInterface* pvrDataContext = NULL;
-                        PVUuid pvrContextUuid(PVMF_SOURCE_CONTEXT_DATA_PVR_UUID); //Check for RTSP Unicast + PVR plugin
-
-                        PVInterface* pvrFilePlaybackContextData = NULL;
-                        PVUuid pvrFileContextUuid(PVMF_SOURCE_CONTEXT_DATA_PVRLOCALPLAYBACK_UUID); //Check for PVR FilePlayback Plugin
-
-                        if (sourceDataContext->queryInterface(packetSourceContextUuid, packetSourceContextData))
-                        {
-                            if (packetSourceContextData)
-                            {
-                                //Broadcast is to be enabled
-                                if ((aSourceFormat == PVMF_MIME_DATA_SOURCE_RTSP_URL) || (aSourceFormat == PVMF_MIME_DATA_SOURCE_SDP_FILE))
-                                {
-                                    OSCL_ASSERT(fspSrcFormat == aSourceFormat);
-                                    fspSrcFormat = PVMF_MIME_DATA_SOURCE_RTSP_BROADCAST;
-                                }
-                                packetSourceContextData->removeRef();
-                            }
-                        }
-
-                        else if (sourceDataContext->queryInterface(pvrFileContextUuid, pvrFilePlaybackContextData))
-                        {
-                            if (pvrFilePlaybackContextData)
-                            {
-                                //PVR File Playback Pluign enable
-                                if (aSourceFormat == PVMF_MIME_DATA_SOURCE_SDP_FILE)
-                                {
-                                    OSCL_ASSERT(fspSrcFormat == aSourceFormat);
-                                    fspSrcFormat = PVMF_MIME_DATA_SOURCE_PVR_FILEPLAYBACK;
-                                }
-                                pvrFilePlaybackContextData->removeRef();
-                            }
-                        }
-
-                        else if (sourceDataContext->queryInterface(pvrContextUuid, pvrDataContext))
-                        {
-
-                            if (pvrDataContext)
-                            {
-                                //PVR is to be enabled.
-                                //set fsp src format type
-                                if ((aSourceFormat == PVMF_MIME_DATA_SOURCE_RTSP_URL) || (aSourceFormat == PVMF_MIME_DATA_SOURCE_SDP_FILE))
-                                {
-                                    OSCL_ASSERT(fspSrcFormat == aSourceFormat);
-                                    fspSrcFormat = PVMF_MIME_DATA_SOURCE_RTSP_UNICAST_PLUS_PVR;
-                                }
-                                pvrDataContext->removeRef();
-                            }
-
-                        }
-                        sourceDataContext->removeRef();
-
-                    }
-                }
-            }
-
         }
     }
 

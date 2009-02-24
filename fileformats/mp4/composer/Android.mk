@@ -2,8 +2,7 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := \
-	src/amrdecoderspecificinfo.cpp \
- 	src/amrdecoderspecificinfo3gpp.cpp \
+	src/amrdecoderspecificinfo3gpp.cpp \
  	src/amrsampleentry.cpp \
  	src/assetinfoatoms.cpp \
  	src/atom.cpp \
@@ -28,7 +27,6 @@ LOCAL_SRC_FILES := \
  	src/expandablebaseclass.cpp \
  	src/filetypeatom.cpp \
  	src/fullatom.cpp \
- 	src/h263decoderspecificinfo.cpp \
  	src/h263decoderspecificinfo3gpp.cpp \
  	src/h263sampleentry.cpp \
  	src/handleratom.cpp \

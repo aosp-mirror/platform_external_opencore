@@ -19,30 +19,31 @@
 <tr><td nowrap align=right valign=top>virtual PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#a5">GetLogLevel</a> (const char *aTag, PVLogLevelInfo &amp;aLogInfo, const OsclAny *aContextData=NULL)=0</td></tr>
 <tr><td nowrap align=right valign=top>virtual PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#a6">QueryUUID</a> (const PvmfMimeString &amp;aMimeType, Oscl_Vector&lt; PVUuid, OsclMemAllocator &gt; &amp;aUuids, bool aExactUuidsOnly=false, const OsclAny *aContextData=NULL)=0</td></tr>
 <tr><td nowrap align=right valign=top>virtual PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#a7">QueryInterface</a> (const PVUuid &amp;aUuid, PVInterface *&amp;aInterfacePtr, const OsclAny *aContextData=NULL)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#a8">CancelAllCommands</a> (const OsclAny *aContextData=NULL)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#a9">GetPVPlayerState</a> (PVPlayerState &amp;aState, const OsclAny *aContextData=NULL)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual PVMFStatus&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#a10">GetPVPlayerStateSync</a> (PVPlayerState &amp;aState)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#a11">AddDataSource</a> (PVPlayerDataSource &amp;aDataSource, const OsclAny *aContextData=NULL)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#a12">Init</a> (const OsclAny *aContextData=NULL)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#a13">GetMetadataKeys</a> (PVPMetadataList &amp;aKeyList, int32 aStartingIndex=0, int32 aMaxEntries=-1, char *aQueryKey=NULL, const OsclAny *aContextData=NULL)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#a14">GetMetadataValues</a> (PVPMetadataList &amp;aKeyList, int32 aStartingValueIndex, int32 aMaxValueEntries, int32 &amp;aNumAvailableValueEntries, Oscl_Vector&lt; PvmiKvp, OsclMemAllocator &gt; &amp;aValueList, const OsclAny *aContextData=NULL, bool aMetadataValuesCopiedInCallBack=true)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#a15">ReleaseMetadataValues</a> (Oscl_Vector&lt; PvmiKvp, OsclMemAllocator &gt; &amp;aValueList, const OsclAny *aContextData=NULL)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#a16">AddDataSink</a> (PVPlayerDataSink &amp;aDataSink, const OsclAny *aContextData=NULL)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#a17">SetPlaybackRange</a> (PVPPlaybackPosition aBeginPos, PVPPlaybackPosition aEndPos, bool aQueueRange, const OsclAny *aContextData=NULL)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#a18">GetPlaybackRange</a> (PVPPlaybackPosition &amp;aBeginPos, PVPPlaybackPosition &amp;aEndPos, bool aQueued, const OsclAny *aContextData=NULL)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#a19">GetCurrentPosition</a> (PVPPlaybackPosition &amp;aPos, const OsclAny *aContextData=NULL)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#a20">SetPlaybackRate</a> (int32 aRate, PVMFTimebase *aTimebase=NULL, const OsclAny *aContextData=NULL)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#a21">GetPlaybackRate</a> (int32 &amp;aRate, PVMFTimebase *&amp;aTimebase, const OsclAny *aContextData=NULL)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#a22">GetPlaybackMinMaxRate</a> (int32 &amp;aMinRate, int32 &amp;aMaxRate, const OsclAny *aContextData=NULL)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual PVMFStatus&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#a23">GetCurrentPositionSync</a> (PVPPlaybackPosition &amp;aPos)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#a24">Prepare</a> (const OsclAny *aContextData=NULL)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#a25">Start</a> (const OsclAny *aContextData=NULL)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#a26">Pause</a> (const OsclAny *aContextData=NULL)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#a27">Resume</a> (const OsclAny *aContextData=NULL)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#a28">Stop</a> (const OsclAny *aContextData=NULL)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#a29">RemoveDataSink</a> (PVPlayerDataSink &amp;aDataSink, const OsclAny *aContextData=NULL)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#a30">Reset</a> (const OsclAny *aContextData=NULL)=0</td></tr>
-<tr><td nowrap align=right valign=top>virtual PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#a31">RemoveDataSource</a> (PVPlayerDataSource &amp;aDataSource, const OsclAny *aContextData=NULL)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#a8">CancelCommand</a> (PVCommandId aCancelCmdId, const OsclAny *aContextData=NULL)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#a9">CancelAllCommands</a> (const OsclAny *aContextData=NULL)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#a10">GetPVPlayerState</a> (PVPlayerState &amp;aState, const OsclAny *aContextData=NULL)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual PVMFStatus&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#a11">GetPVPlayerStateSync</a> (PVPlayerState &amp;aState)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#a12">AddDataSource</a> (PVPlayerDataSource &amp;aDataSource, const OsclAny *aContextData=NULL)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#a13">Init</a> (const OsclAny *aContextData=NULL)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#a14">GetMetadataKeys</a> (PVPMetadataList &amp;aKeyList, int32 aStartingIndex=0, int32 aMaxEntries=-1, char *aQueryKey=NULL, const OsclAny *aContextData=NULL)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#a15">GetMetadataValues</a> (PVPMetadataList &amp;aKeyList, int32 aStartingValueIndex, int32 aMaxValueEntries, int32 &amp;aNumAvailableValueEntries, Oscl_Vector&lt; PvmiKvp, OsclMemAllocator &gt; &amp;aValueList, const OsclAny *aContextData=NULL, bool aMetadataValuesCopiedInCallBack=true)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#a16">ReleaseMetadataValues</a> (Oscl_Vector&lt; PvmiKvp, OsclMemAllocator &gt; &amp;aValueList, const OsclAny *aContextData=NULL)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#a17">AddDataSink</a> (PVPlayerDataSink &amp;aDataSink, const OsclAny *aContextData=NULL)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#a18">SetPlaybackRange</a> (PVPPlaybackPosition aBeginPos, PVPPlaybackPosition aEndPos, bool aQueueRange, const OsclAny *aContextData=NULL)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#a19">GetPlaybackRange</a> (PVPPlaybackPosition &amp;aBeginPos, PVPPlaybackPosition &amp;aEndPos, bool aQueued, const OsclAny *aContextData=NULL)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#a20">GetCurrentPosition</a> (PVPPlaybackPosition &amp;aPos, const OsclAny *aContextData=NULL)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#a21">SetPlaybackRate</a> (int32 aRate, PVMFTimebase *aTimebase=NULL, const OsclAny *aContextData=NULL)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#a22">GetPlaybackRate</a> (int32 &amp;aRate, PVMFTimebase *&amp;aTimebase, const OsclAny *aContextData=NULL)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#a23">GetPlaybackMinMaxRate</a> (int32 &amp;aMinRate, int32 &amp;aMaxRate, const OsclAny *aContextData=NULL)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual PVMFStatus&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#a24">GetCurrentPositionSync</a> (PVPPlaybackPosition &amp;aPos)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#a25">Prepare</a> (const OsclAny *aContextData=NULL)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#a26">Start</a> (const OsclAny *aContextData=NULL)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#a27">Pause</a> (const OsclAny *aContextData=NULL)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#a28">Resume</a> (const OsclAny *aContextData=NULL)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#a29">Stop</a> (const OsclAny *aContextData=NULL)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#a30">RemoveDataSink</a> (PVPlayerDataSink &amp;aDataSink, const OsclAny *aContextData=NULL)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#a31">Reset</a> (const OsclAny *aContextData=NULL)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual PVCommandId&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#a32">RemoveDataSource</a> (PVPlayerDataSource &amp;aDataSource, const OsclAny *aContextData=NULL)=0</td></tr>
 <tr><td colspan=2><br><h2>Static Public Methods</h2></td></tr>
 <tr><td nowrap align=right valign=top>OSCL_IMPORT_REF void&nbsp;</td><td valign=bottom><a class="el" href="classPVPlayerInterface.html#d0">GetSDKInfo</a> (PVSDKInfo &amp;aSDKInfo)</td></tr>
 </table>
@@ -79,7 +80,7 @@ Object destructor function Releases all resources prior to destruction     </td>
   </tr>
 </table>
 <hr><h2>Member Function Documentation</h2>
-<a name="a16" doxytag="PVPlayerInterface::AddDataSink"></a><p>
+<a name="a17" doxytag="PVPlayerInterface::AddDataSink"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -125,7 +126,7 @@ Optional opaque data that will be passed back to the user with the command respo
 A unique command id for asynchronous completion </dl>    </td>
   </tr>
 </table>
-<a name="a11" doxytag="PVPlayerInterface::AddDataSource"></a><p>
+<a name="a12" doxytag="PVPlayerInterface::AddDataSource"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -171,7 +172,7 @@ Optional opaque data that will be passed back to the user with the command respo
 A unique command id for asynchronous completion </dl>    </td>
   </tr>
 </table>
-<a name="a8" doxytag="PVPlayerInterface::CancelAllCommands"></a><p>
+<a name="a9" doxytag="PVPlayerInterface::CancelAllCommands"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -206,7 +207,53 @@ Optional opaque data that will be passed back to the user with the command respo
 A unique command id for asynchronous completion </dl>    </td>
   </tr>
 </table>
-<a name="a19" doxytag="PVPlayerInterface::GetCurrentPosition"></a><p>
+<a name="a8" doxytag="PVPlayerInterface::CancelCommand"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> virtual PVCommandId PVPlayerInterface::CancelCommand </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">PVCommandId&nbsp;</td>
+          <td class="mdname" nowrap>&nbsp; <em>aCancelCmdId</em>, </td>
+        </tr>
+        <tr>
+          <td></td>
+          <td></td>
+          <td class="md" nowrap>const OsclAny *&nbsp;</td>
+          <td class="mdname" nowrap>&nbsp; <em>aContextData</em> = NULL</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"><code> [pure virtual]</code></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+This API is to allow user of the SDK to cancel any specific command which is pending on pvPlayer. If the request is to cancel a command which still has to be processed pvPlayer will just remove the command from its queue of commands to be processed. If the request is to cancel a command that is ongoing then player will attempt to interrupt the ongoing command. The state of player after a cancel can vary. So the user of pvPlayerSDK must always query for state before issuing any subsequent commands. This command request is asynchronous. PVCommandStatusObserver's CommandCompleted() callback handler will be called when this command request completes.<dl compact><dt><b>Parameters: </b></dt><dd>
+<table border=0 cellspacing=2 cellpadding=0>
+<tr><td valign=top><em>aCancelCmdId</em>&nbsp;</td><td>
+Command Id to be cancelled. </td></tr>
+<tr><td valign=top><em>aContextData</em>&nbsp;</td><td>
+Optional opaque data that will be passed back to the user with the command response </td></tr>
+</table>
+</dl><dl compact><dt><b>Returns: </b></dt><dd>
+A unique command id for asynchronous completion </dl>    </td>
+  </tr>
+</table>
+<a name="a20" doxytag="PVPlayerInterface::GetCurrentPosition"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -252,7 +299,7 @@ Optional opaque data that will be passed back to the user with the command respo
 A unique command id for asynchronous completion </dl>    </td>
   </tr>
 </table>
-<a name="a23" doxytag="PVPlayerInterface::GetCurrentPositionSync"></a><p>
+<a name="a24" doxytag="PVPlayerInterface::GetCurrentPositionSync"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -346,7 +393,7 @@ Optional opaque data that will be passed back to the user with the command respo
 A unique command ID for asynchronous completion </dl>    </td>
   </tr>
 </table>
-<a name="a13" doxytag="PVPlayerInterface::GetMetadataKeys"></a><p>
+<a name="a14" doxytag="PVPlayerInterface::GetMetadataKeys"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -416,7 +463,7 @@ Optional opaque data that will be passed back to the user with the command respo
 A unique command id for asynchronous completion </dl>    </td>
   </tr>
 </table>
-<a name="a14" doxytag="PVPlayerInterface::GetMetadataValues"></a><p>
+<a name="a15" doxytag="PVPlayerInterface::GetMetadataValues"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -502,7 +549,7 @@ Boolean to let engine know if metadata values are copied by User of SDK in comma
 A unique command id for asynchronous completion </dl>    </td>
   </tr>
 </table>
-<a name="a22" doxytag="PVPlayerInterface::GetPlaybackMinMaxRate"></a><p>
+<a name="a23" doxytag="PVPlayerInterface::GetPlaybackMinMaxRate"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -556,7 +603,7 @@ Optional opaque data that will be passed back to the user with the command respo
 A unique command id for asynchronous completion </dl>    </td>
   </tr>
 </table>
-<a name="a18" doxytag="PVPlayerInterface::GetPlaybackRange"></a><p>
+<a name="a19" doxytag="PVPlayerInterface::GetPlaybackRange"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -618,7 +665,7 @@ Optional opaque data that will be passed back to the user with the command respo
 A unique command id for asynchronous completion </dl>    </td>
   </tr>
 </table>
-<a name="a21" doxytag="PVPlayerInterface::GetPlaybackRate"></a><p>
+<a name="a22" doxytag="PVPlayerInterface::GetPlaybackRate"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -672,7 +719,7 @@ Optional opaque data that will be passed back to the user with the command respo
 A unique command id for asynchronous completion </dl>    </td>
   </tr>
 </table>
-<a name="a9" doxytag="PVPlayerInterface::GetPVPlayerState"></a><p>
+<a name="a10" doxytag="PVPlayerInterface::GetPVPlayerState"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -718,7 +765,7 @@ Optional opaque data that will be passed back to the user with the command respo
 A unique command id for asynchronous completion </dl>    </td>
   </tr>
 </table>
-<a name="a10" doxytag="PVPlayerInterface::GetPVPlayerStateSync"></a><p>
+<a name="a11" doxytag="PVPlayerInterface::GetPVPlayerStateSync"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -833,7 +880,7 @@ Optional opaque data that will be passed back to the user with the command respo
 A unique command ID for asynchronous completion </dl>    </td>
   </tr>
 </table>
-<a name="a12" doxytag="PVPlayerInterface::Init"></a><p>
+<a name="a13" doxytag="PVPlayerInterface::Init"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -868,7 +915,7 @@ Optional opaque data that will be passed back to the user with the command respo
 A unique command id for asynchronous completion </dl>    </td>
   </tr>
 </table>
-<a name="a26" doxytag="PVPlayerInterface::Pause"></a><p>
+<a name="a27" doxytag="PVPlayerInterface::Pause"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -903,7 +950,7 @@ Optional opaque data that will be passed back to the user with the command respo
 A unique command id for asynchronous completion </dl>    </td>
   </tr>
 </table>
-<a name="a24" doxytag="PVPlayerInterface::Prepare"></a><p>
+<a name="a25" doxytag="PVPlayerInterface::Prepare"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -1064,7 +1111,7 @@ Optional opaque data that will be passed back to the user with the command respo
 A unique command ID for asynchronous completion </dl>    </td>
   </tr>
 </table>
-<a name="a15" doxytag="PVPlayerInterface::ReleaseMetadataValues"></a><p>
+<a name="a16" doxytag="PVPlayerInterface::ReleaseMetadataValues"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -1110,7 +1157,7 @@ Optional opaque data that will be passed back to the user with the command respo
 A unique command id for asynchronous completion </dl>    </td>
   </tr>
 </table>
-<a name="a29" doxytag="PVPlayerInterface::RemoveDataSink"></a><p>
+<a name="a30" doxytag="PVPlayerInterface::RemoveDataSink"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -1156,7 +1203,7 @@ Optional opaque data that will be passed back to the user with the command respo
 A unique command id for asynchronous completion </dl>    </td>
   </tr>
 </table>
-<a name="a31" doxytag="PVPlayerInterface::RemoveDataSource"></a><p>
+<a name="a32" doxytag="PVPlayerInterface::RemoveDataSource"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -1261,7 +1308,7 @@ Optional opaque data that will be passed back to the user with the command respo
 A unique command ID for asynchronous completion </dl>    </td>
   </tr>
 </table>
-<a name="a30" doxytag="PVPlayerInterface::Reset"></a><p>
+<a name="a31" doxytag="PVPlayerInterface::Reset"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -1296,7 +1343,7 @@ Optional opaque data that will be passed back to the user with the command respo
 A unique command id for asynchronous completion </dl>    </td>
   </tr>
 </table>
-<a name="a27" doxytag="PVPlayerInterface::Resume"></a><p>
+<a name="a28" doxytag="PVPlayerInterface::Resume"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -1457,7 +1504,7 @@ Optional opaque data that will be passed back to the user with the command respo
 A unique command ID for asynchronous completion </dl>    </td>
   </tr>
 </table>
-<a name="a17" doxytag="PVPlayerInterface::SetPlaybackRange"></a><p>
+<a name="a18" doxytag="PVPlayerInterface::SetPlaybackRange"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -1519,7 +1566,7 @@ Optional opaque data that will be passed back to the user with the command respo
 A unique command id for asynchronous completion </dl>    </td>
   </tr>
 </table>
-<a name="a20" doxytag="PVPlayerInterface::SetPlaybackRate"></a><p>
+<a name="a21" doxytag="PVPlayerInterface::SetPlaybackRate"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -1563,7 +1610,7 @@ A unique command id for asynchronous completion </dl>    </td>
 This function allows the setting of the playback rate. The playback rate can be set as millipercent of "real-time" playback rate. For example, 100000 means 1X "real-time", 400000 means 4X, 25000 means 0.25X, and -100000 means 1X backward. The playback rate can also be modified by specifying the timebase to use for the playback clock. This is accomplished by setting the aRate parameter to 0 and passing in a pointer to an PVMFTimebase. This function can be called when pvPlayer is in PVP_STATE_PREPARED, PVP_STATE_STARTED, or PVP_STATE_PAUSED state. Changing to or from an outside timebase is only allowed in PVP_STATE_PREPARED. Command if called in player state PVP_STATE_PAUSED with a direction change, will complete in one Engine AO run without actually changing the direction. The change in direction will come into affect when Resume is called on Engine by the app. If the request is not honored by the source node during Resume, engine will continue to complete Resume but will send an informational event "PVMFInfoChangePlaybackPositionNotSupported" to the app informing that the SetPlaybackRate request could not be honored. This command request is asynchronous. PVCommandStatusObserver's CommandCompleted() callback handler will be called when this command request completes.<dl compact><dt><b>Parameters: </b></dt><dd>
 <table border=0 cellspacing=2 cellpadding=0>
 <tr><td valign=top><em>aRate</em>&nbsp;</td><td>
-The playback rate specified as millipercent of "real-time". A millipercent is 1/1000 of a percent. So 2X = 200% of realtime is 200,000 millipercent. The motivation is to povide precision with an integer parameter. Negative rates specify backward playback. The valid range of absolute value of playback rates will be limited to the minimum and maximum returned by <a class="el" href="classPVPlayerInterface.html#a22">GetPlaybackMinMaxRate()</a>. </td></tr>
+The playback rate specified as millipercent of "real-time". A millipercent is 1/1000 of a percent. So 2X = 200% of realtime is 200,000 millipercent. The motivation is to povide precision with an integer parameter. Negative rates specify backward playback. The valid range of absolute value of playback rates will be limited to the minimum and maximum returned by <a class="el" href="classPVPlayerInterface.html#a23">GetPlaybackMinMaxRate()</a>. </td></tr>
 <tr><td valign=top><em>aTimebase</em>&nbsp;</td><td>
 Reference to an PVMFTimebase which will be used to drive the playback clock. aRate must be set to 0, 1X, or -1X to use the timebase. </td></tr>
 <tr><td valign=top><em>aContextData</em>&nbsp;</td><td>
@@ -1573,7 +1620,7 @@ Optional opaque data that will be passed back to the user with the command respo
 A unique command id for asynchronous completion </dl>    </td>
   </tr>
 </table>
-<a name="a25" doxytag="PVPlayerInterface::Start"></a><p>
+<a name="a26" doxytag="PVPlayerInterface::Start"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -1608,7 +1655,7 @@ Optional opaque data that will be passed back to the user with the command respo
 A unique command id for asynchronous completion </dl>    </td>
   </tr>
 </table>
-<a name="a28" doxytag="PVPlayerInterface::Stop"></a><p>
+<a name="a29" doxytag="PVPlayerInterface::Stop"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -1646,7 +1693,7 @@ A unique command id for asynchronous completion </dl>    </td>
 <hr>The documentation for this class was generated from the following file:<ul>
 <li><a class="el" href="pv__player__interface_8h-source.html">pv_player_interface.h</a></ul>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>PV Player Engine</small>
-<address style="align: left;"><small>Posting Version: OPENCORE_20090120 </small>
+<address style="align: left;"><small>Posting Version: OPENCORE_20090223 </small>
 </small></address>
 </body>
 </html>

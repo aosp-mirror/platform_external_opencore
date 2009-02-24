@@ -63,6 +63,7 @@ class PVOMXInterface : public OMXInterface
             pOMX_GetRolesOfComponent = OMX_GetRolesOfComponent;
             pOMX_SetupTunnel = OMX_SetupTunnel;
             pOMX_GetContentPipe = OMX_GetContentPipe;
+            pOMXConfigParser = OMXConfigParser;
         };
 
 };

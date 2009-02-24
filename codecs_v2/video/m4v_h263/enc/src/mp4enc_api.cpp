@@ -1396,6 +1396,8 @@ OSCL_EXPORT_REF Bool PVEncodeVideoFrame(VideoEncControls *encCtrl, VideoEncFrame
 
     encodeVop = DetermineCodingLayer(video, nLayer, modTime);
     currLayer = *nLayer;
+    if ((currLayer < 0) || (currLayer > encParams->nLayers - 1))
+        return PV_FALSE;
 
     /******************************************/
     /* If post-skipping still effective --- return */

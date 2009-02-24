@@ -33,6 +33,7 @@ HDRS :=  pvmf_common_audio_decnode.h \
 	pvmf_source_context_data.h \
 	pv_player_node_registry_interface.h \
 	pvmf_streaming_data_source.h \
+        pvmf_audio_encnode_extension.h \
 	pvmfamrencnode_extension.h \
 	pvmp4h263encextension.h \
         pvmf_format_progdownload_support_extension.h

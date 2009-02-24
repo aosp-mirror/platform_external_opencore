@@ -34,12 +34,15 @@
 
 
 #define INPUT_BUFFER_SIZE_AVCENC 38016			//(176 * 144 * 1.5) for YUV 420 format.
+
+#if (defined(TEST_FULL_AVC_FRAME_MODE) || defined(TEST_FULL_AVC_FRAME_MODE_SC))
+#define OUTPUT_BUFFER_SIZE_AVCENC 38581 // (20 + 4 * MAX_NAL_PER_FRAME + 20 + 6) is size of extra data
+#else
 #define OUTPUT_BUFFER_SIZE_AVCENC 38135
+#endif
 
 #define NUMBER_INPUT_BUFFER_AVCENC  5
 #define NUMBER_OUTPUT_BUFFER_AVCENC  2
-
-
 
 class OmxComponentAvcEncAO : public OmxComponentVideo
 {
@@ -67,6 +70,11 @@ class OmxComponentAvcEncAO : public OmxComponentVideo
     private:
 
         OMX_BOOL CopyDataToOutputBuffer();
+        OMX_BOOL AppendExtraDataToBuffer(OMX_BUFFERHEADERTYPE* aOutputBuffer,
+                                         OMX_EXTRADATATYPE aType,
+                                         OMX_U8* aExtraData,
+                                         OMX_U8 aDataLength);
+        void ManageFrameBoundaries();
 
         AvcEncoder_OMX*   ipAvcEncoderObject;
 
@@ -75,6 +83,11 @@ class OmxComponentAvcEncAO : public OmxComponentVideo
         OMX_U32			  iInternalOutBufFilledLen;
         OMX_TICKS		  iOutputTimeStamp;
         OMX_BOOL		  iSyncFlag;
+        OMX_BOOL          iEndOfOutputFrame;
+
+        OMX_U32			  iNALSizeArray[MAX_NAL_PER_FRAME];
+        OMX_U32			  iNALSizeSum;
+        OMX_U32			  iNALCount;
 };
 
 #endif // OMX_AVCENC_COMPONENT_H_INCLUDED

@@ -34,11 +34,20 @@ class PVA_FF_SampleDescriptionAtom : public PVA_FF_FullAtom
 {
 
     public:
-        PVA_FF_SampleDescriptionAtom(uint32 mediaType, int32 codecType, bool o3GPPCompliant = false, uint32 protocol = 0, uint8 profile = 1, uint8 profileComp = 0xFF, uint8 level = 0xFF); // Constructor
+        PVA_FF_SampleDescriptionAtom(uint32 mediaType,
+                                     int32 codecType,
+                                     uint32 protocol = 0,
+                                     uint8 profile = 1,
+                                     uint8 profileComp = 0xFF,
+                                     uint8 level = 0xFF); // Constructor
 
         virtual ~PVA_FF_SampleDescriptionAtom();
 
-        void init(int32 mediaType, uint32 protocol, uint8 profile, uint8 profileComp, uint8 level);
+        void init(int32 mediaType,
+                  uint32 protocol,
+                  uint8 profile,
+                  uint8 profileComp,
+                  uint8 level);
 
         int32  nextSample(uint32 size, uint8 flags);
         int32  nextTextSample(uint32 size, uint8 flags, int32 index);
@@ -121,8 +130,6 @@ class PVA_FF_SampleDescriptionAtom : public PVA_FF_FullAtom
 
         uint16 _frame_width;
         uint16 _frame_height;
-
-        bool   _o3GPPCompliant;
         uint8  _h263Profile;
         uint8  _h263Level;
 

@@ -52,46 +52,41 @@ SRCS += $(SRCS_324)
 
 
 
-
-#omx_sharedlibrary \
-#omx_amrdec_sharedlibrary\
-#omx_amrenc_sharedlibrary\
-#omx_m4vdec_sharedlibrary\
-#omx_m4venc_sharedlibrary\
-
 ifeq ($(USING_OMX),1)
+ifeq ($(pv2wayengine_lib),Y)
+FULL_LIBS =  pv2wayengine pv324m \
+pvomxvideodecnode pvomxaudiodecnode pvomxencnode pvomxbasedecnode \
+omx_common_lib omx_m4v_component_lib omx_amr_component_lib \
+omx_amrenc_component_lib omx_m4venc_component_lib \
+omx_baseclass_lib pvomx_proxy_lib omx_queue_lib \
+pvvideoparsernode \
+pvgeneraltools pvcommsionode pvmediaoutputnode pvmediainputnode \
+colorconvert pvmio_comm_loopback pvmiofileinput pvmiofileoutput\
+pvmf pvlatmpayloadparser pvgendatastruct pvmediadatastruct pvthreadmessaging \
+pv_config_parser m4v_config getactualaacconfig \
+pvmimeutils osclregcli osclregserv osclio osclproc osclutil osclmemory \
+osclerror osclbase unit_test threadsafe_callback_ao \
+
+else
 ifeq ($(pv2wayengine_lib),m)
 FULL_LIBS =  opencore_2way \
 pvomxvideodecnode pvomxaudiodecnode pvomxencnode pvomxbasedecnode \
 omx_common_lib omx_m4v_component_lib omx_amr_component_lib \
 omx_amrenc_component_lib omx_m4venc_component_lib \
 omx_baseclass_lib pvomx_proxy_lib omx_queue_lib \
-pvvideoencnode pvvideoparsernode pvmp4decoder pvm4vencoder pvencoder_gsmamr \
+pvvideoparsernode \
 unit_test opencore_common 
-
-else
-FULL_LIBS =  pv2wayengine pv324m \
-pvomxvideodecnode pvomxaudiodecnode pvomxencnode pvomxbasedecnode \
-omx_common_lib omx_m4v_component_lib omx_amr_component_lib \
-omx_amrenc_component_lib omx_m4venc_component_lib \
-omx_baseclass_lib pvomx_proxy_lib omx_queue_lib \
-pvvideoencnode pvvideoparsernode pvmp4decoder pvm4vencoder pvencoder_gsmamr \
-pvdecoder_gsmamr pv_amr_nb_common_lib pvgeneraltools pvcommsionode pvmediaoutputnode pvmediainputnode \
-colorconvert pvfileoutputnode pvmio_comm_loopback pvmiofileinput pvmiofileoutput\
-pvmf pvlatmpayloadparser pvgendatastruct pvmediadatastruct pvthreadmessaging \
-pv_config_parser m4v_config getactualaacconfig pvamrwbdecoder \
-pvmimeutils osclregcli osclregserv osclio osclproc osclutil osclmemory \
-osclerror osclbase unit_test threadsafe_callback_ao \
-
+endif
 endif
 
 else
+# NON-OMX
 FULL_LIBS =  pv2wayengine pv324m \
 pvvideodecnode pvamrencnode gsmamrdecnode \
 pvvideoencnode pvvideoparsernode pvamrwbdecoder pvmp4decoder pvm4vencoder \
 pvencoder_gsmamr pvdecoder_gsmamr pv_amr_nb_common_lib \
 pvgeneraltools pvcommsionode pvmediaoutputnode pvmediainputnode \
-pvfileoutputnode pvmio_comm_loopback pvmiofileinput pvmiofileoutput \
+pvmio_comm_loopback pvmiofileinput pvmiofileoutput \
 pvmf pvlatmpayloadparser pvgendatastruct pvmediadatastruct \
 colorconvert pvthreadmessaging pvmimeutils \
 osclio osclproc osclutil osclmemory osclerror osclbase unit_test 
@@ -106,14 +101,27 @@ endif
 include $(MK)/prog.mk
 
 
+
+TWOWAY_TARGET = ${TARGET}
+
+
+ifeq ($(HOST_ARCH),win32)
+TWOWAY_TARGET = ${TARGET}.exe
+TWOWAYFULL_TARGET = ${TWOWAY_TARGET}
+TWOWAY_TEST_DIR = build\2way_test
+RUNPREF = 
+else
 TWOWAY_TEST_DIR = ${BUILD_ROOT}/2way_test
-TWOWAY_TARGET_DIR = $(TWOWAY_TEST_DIR)/build/bin
-TWOWAY_TARGET = pv2way_omx_engine_test
+TWOWAYFULL_TARGET = ./${TWOWAY_TARGET}
+endif
+ 
 
 run_2way_test:: $(REALTARGET) default
 	$(quiet) ${RM} -r $(TWOWAY_TEST_DIR)
-	$(quiet) ${MKDIR} -p $(TWOWAY_TARGET_DIR)
-	$(quiet) $(CP) $(SRC_ROOT)/tools_v2/build/package/opencore/pvplayer.cfg $(TWOWAY_TARGET_DIR)
-	$(quiet) $(CP) ${BUILD_ROOT}/bin/${HOST_ARCH}/$(TWOWAY_TARGET) $(TWOWAY_TARGET_DIR)
-	$(quiet) $(CP) -r $(SRC_ROOT)/engines/2way/test/test_data/* $(TWOWAY_TARGET_DIR)
-	$(quiet) export LD_LIBRARY_PATH=${BUILD_ROOT}/installed_lib/${HOST_ARCH}; cd $(TWOWAY_TARGET_DIR) && $(TWOWAY_TARGET_DIR)/$(TWOWAY_TARGET) $(TEST_ARGS) $(SOURCE_ARGS)
+	$(quiet) ${MKDIR} -p $(TWOWAY_TEST_DIR)
+	$(quiet) $(CP) $(SRC_ROOT)/tools_v2/build/package/opencore/pvplayer.cfg $(TWOWAY_TEST_DIR)
+	$(quiet) $(CP) $(SRC_ROOT)/engines/2way/pvlogger/config/pvlogger.ini $(TWOWAY_TEST_DIR)
+	$(quiet) $(CP) ${BUILD_ROOT}/bin/${HOST_ARCH}/$(TWOWAY_TARGET) $(TWOWAY_TEST_DIR)
+	$(quiet) $(CP) -r $(SRC_ROOT)/engines/2way/test/test_data/* $(TWOWAY_TEST_DIR)
+	$(quiet) export LD_LIBRARY_PATH=${BUILD_ROOT}/installed_lib/${HOST_ARCH} && \
+	cd $(TWOWAY_TEST_DIR) && $(TWOWAYFULL_TARGET) $(TEST_ARGS) $(SOURCE_ARGS)

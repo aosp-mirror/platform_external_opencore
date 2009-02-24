@@ -6,13 +6,7 @@ include $(MK)/clear.mk
 
 TARGET := pvid3parcom
 
-
-
-
-
-
-
-
+XCXXFLAGS += $(FLAG_COMPILE_WARNINGS_AS_ERRORS)
 
 SRCDIR := ../../src
 INCSRCDIR := ../../include

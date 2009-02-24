@@ -32,24 +32,24 @@
 00034 <span class="preprocessor"></span><span class="preprocessor">#include "<a class="code" href="oscl__socket_8h.html">oscl_socket.h</a>"</span>
 00035 <span class="preprocessor">#endif</span>
 00036 <span class="preprocessor"></span>
-<a name="l00037"></a><a class="code" href="group__osclio.html#a23">00037</a> <span class="keyword">enum</span> <a class="code" href="group__osclio.html#a23">TPVDNSFxn</a>
+<a name="l00037"></a><a class="code" href="group__osclio.html#a24">00037</a> <span class="keyword">enum</span> <a class="code" href="group__osclio.html#a24">TPVDNSFxn</a>
 00038 {
-00039     <a class="code" href="group__osclio.html#a23a0">EPVDNSGetHostByName</a>
+00039     <a class="code" href="group__osclio.html#a24a0">EPVDNSGetHostByName</a>
 00040 } ;
 00041 
-<a name="l00042"></a><a class="code" href="group__osclio.html#a24">00042</a> <span class="keyword">enum</span> <a class="code" href="group__osclio.html#a24">TPVDNSEvent</a>
+<a name="l00042"></a><a class="code" href="group__osclio.html#a25">00042</a> <span class="keyword">enum</span> <a class="code" href="group__osclio.html#a25">TPVDNSEvent</a>
 00043 {
-00044     <a class="code" href="group__osclio.html#a24a1">EPVDNSSuccess</a>
-00045     , <a class="code" href="group__osclio.html#a24a2">EPVDNSPending</a>
-00046     , <a class="code" href="group__osclio.html#a24a3">EPVDNSTimeout</a>
-00047     , <a class="code" href="group__osclio.html#a24a4">EPVDNSFailure</a>
-00048     , <a class="code" href="group__osclio.html#a24a5">EPVDNSCancel</a>
+00044     <a class="code" href="group__osclio.html#a25a1">EPVDNSSuccess</a>
+00045     , <a class="code" href="group__osclio.html#a25a2">EPVDNSPending</a>
+00046     , <a class="code" href="group__osclio.html#a25a3">EPVDNSTimeout</a>
+00047     , <a class="code" href="group__osclio.html#a25a4">EPVDNSFailure</a>
+00048     , <a class="code" href="group__osclio.html#a25a5">EPVDNSCancel</a>
 00049 } ;
 00050 
 <a name="l00055"></a><a class="code" href="classOsclDNSObserver.html">00055</a> <span class="keyword">class </span><a class="code" href="classOsclDNSObserver.html">OsclDNSObserver</a>
 00056 {
 00057     <span class="keyword">public</span>:
-00069         OSCL_IMPORT_REF <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOsclDNSObserver.html#a0">HandleDNSEvent</a>(int32 aId, <a class="code" href="group__osclio.html#a23">TPVDNSFxn</a> aFxn, <a class="code" href="group__osclio.html#a24">TPVDNSEvent</a> aEvent, int32 aError) = 0;
+00069         OSCL_IMPORT_REF <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classOsclDNSObserver.html#a0">HandleDNSEvent</a>(int32 aId, <a class="code" href="group__osclio.html#a24">TPVDNSFxn</a> aFxn, <a class="code" href="group__osclio.html#a25">TPVDNSEvent</a> aEvent, int32 aError) = 0;
 00070 
 <a name="l00071"></a><a class="code" href="classOsclDNSObserver.html#a1">00071</a>         <span class="keyword">virtual</span> <a class="code" href="classOsclDNSObserver.html#a1">~OsclDNSObserver</a>() {}
 00072 };
@@ -68,7 +68,7 @@
 00098 
 00106         OSCL_IMPORT_REF <a class="code" href="classOsclDNS.html#a0">~OsclDNS</a>();
 00107 
-00121         OSCL_IMPORT_REF <a class="code" href="group__osclio.html#a24">TPVDNSEvent</a> <a class="code" href="classOsclDNS.html#a1">GetHostByName</a>(<span class="keywordtype">char</span> *name, <a class="code" href="classOsclNetworkAddress.html">OsclNetworkAddress</a>&amp; addr,
+00121         OSCL_IMPORT_REF <a class="code" href="group__osclio.html#a25">TPVDNSEvent</a> <a class="code" href="classOsclDNS.html#a1">GetHostByName</a>(<span class="keywordtype">char</span> *name, <a class="code" href="classOsclNetworkAddress.html">OsclNetworkAddress</a>&amp; addr,
 00122                 int32 aTimeoutMsec = -1);
 00123 
 00132         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classOsclDNS.html#a2">CancelGetHostByName</a>();
@@ -94,7 +94,7 @@
 00152 <span class="preprocessor">#endif</span>
 00153 <span class="preprocessor"></span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: OPENCORE_20090120 </small>
+<address style="align: left;"><small>Posting Version: OPENCORE_20090223 </small>
 </small></address>
 </body>
 </html>

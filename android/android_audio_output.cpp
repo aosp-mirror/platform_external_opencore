@@ -373,7 +373,7 @@ int AndroidAudioOutput::audout_thread_func()
     int outputFrameSizeInBytes = mAudioSink->frameSize();
     float msecsPerFrame = mAudioSink->msecsPerFrame();
     uint32 latency = mAudioSink->latency();
-    LOGV("driver latency(%u),bufferSizeInSamples(%d),outputFrameSizeInBytes(%d),msecsPerFrame(%f),frame count(%d)", latency,bufferSizeInSamples,outputFrameSizeInBytes,msecsPerFrame,mAudioSink->frameCount());
+    LOGV("driver latency(%u),outputFrameSizeInBytes(%d),msecsPerFrame(%f),frame count(%d)", latency,outputFrameSizeInBytes,msecsPerFrame,mAudioSink->frameCount());
 
     // initialize active timing
     iActiveTiming->setFrameRate(msecsPerFrame);

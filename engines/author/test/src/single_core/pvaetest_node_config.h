@@ -30,68 +30,79 @@
 #ifndef PVAETESTINPUT_H_INCLUDED
 #include "pvaetestinput.h"
 #endif
-#ifndef PVMFAMRENCNODE_EXTENSION_H_INCLUDED
-#include "pvmfamrencnode_extension.h"
+#ifndef PVMF_AUDIO_ENCNODE_EXTENSION_H_INCLUDED
+#include "pvmf_audio_encnode_extension.h"
 #endif
-
 #ifndef TEST_PV_AUTHOR_ENGINE_TYPEDEFS_H
 #include "test_pv_author_engine_typedefs.h"
 #endif
 
 extern const uint32 KNum20msFramesPerChunk;
 extern const uint32 KAudioBitrate;
-
+extern const uint32 KAACAudioBitrate;
 
 class PVAETestNodeConfig
 {
     public:
-        static bool ConfigureAudioEncoder(PVInterface* aInterface, uint32 aAudioBitrate = 0)
+        static bool ConfigureAudioEncoder(PVInterface* aInterface, const PvmfMimeString& aMimeType, uint32 aAudioBitrate = 0)
         {
             if (!aInterface)
                 return true;
 
             PVInterface* myInterface;
-            if (!aInterface->queryInterface(PVAMREncExtensionUUID, myInterface))
+
+            if (!aInterface->queryInterface(PVAudioEncExtensionUUID, myInterface))
                 return false;
 
-            PVAMREncExtensionInterface* config = OSCL_STATIC_CAST(PVAMREncExtensionInterface*, aInterface);
-            config->SetMaxNumOutputFramesPerBuffer(KNum20msFramesPerChunk);
+            PVAudioEncExtensionInterface* config = OSCL_STATIC_CAST(PVAudioEncExtensionInterface*, aInterface);
 
-            uint32 audioBitrate = aAudioBitrate;
+            if (aMimeType.get_cstr() == (char*)KAMRNbEncMimeType || aMimeType.get_cstr() == (char*)KAMRWbEncMimeType)
+            {
+                config->SetMaxNumOutputFramesPerBuffer(KNum20msFramesPerChunk);
+                uint32 audioBitrate = aAudioBitrate;
 
-            if (audioBitrate == 0)
-            {
-                audioBitrate = KAudioBitrate;
+                if (audioBitrate == 0)
+                {
+                    audioBitrate = KAudioBitrate;
+                }
+
+                switch (audioBitrate)
+                {
+                    case 4750:
+                        config->SetOutputBitRate(GSM_AMR_4_75);
+                        break;
+                    case 5150:
+                        config->SetOutputBitRate(GSM_AMR_5_15);
+                        break;
+                    case 5900:
+                        config->SetOutputBitRate(GSM_AMR_5_90);
+                        break;
+                    case 6700:
+                        config->SetOutputBitRate(GSM_AMR_6_70);
+                        break;
+                    case 7400:
+                        config->SetOutputBitRate(GSM_AMR_7_40);
+                        break;
+                    case 7950:
+                        config->SetOutputBitRate(GSM_AMR_7_95);
+                        break;
+                    case 10200:
+                        config->SetOutputBitRate(GSM_AMR_10_2);
+                        break;
+                    case 12200:
+                        config->SetOutputBitRate(GSM_AMR_12_2);
+                        break;
+                    default:
+                        return false;
+                }
             }
-            switch (audioBitrate)
+            else if (aMimeType == KAACADIFEncMimeType || aMimeType == KAACADTSEncMimeType)
             {
-                case 4750:
-                    config->SetOutputBitRate(GSM_AMR_4_75);
-                    break;
-                case 5150:
-                    config->SetOutputBitRate(GSM_AMR_5_15);
-                    break;
-                case 5900:
-                    config->SetOutputBitRate(GSM_AMR_5_90);
-                    break;
-                case 6700:
-                    config->SetOutputBitRate(GSM_AMR_6_70);
-                    break;
-                case 7400:
-                    config->SetOutputBitRate(GSM_AMR_7_40);
-                    break;
-                case 7950:
-                    config->SetOutputBitRate(GSM_AMR_7_95);
-                    break;
-                case 10200:
-                    config->SetOutputBitRate(GSM_AMR_10_2);
-                    break;
-                case 12200:
-                    config->SetOutputBitRate(GSM_AMR_12_2);
-                    break;
-                default:
-                    return false;
+                config->SetOutputBitRate(KAACAudioBitrate);
+                //config->SetOutputNumChannel();  do not set, use the input ones
+                //config->SetOutputSamplingRate();
             }
+
             return true;
         }
 };

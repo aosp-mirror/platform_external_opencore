@@ -296,7 +296,7 @@ OSCL_EXPORT_REF PVCommandId PVAuthorEngine::AddMediaTrack(const PVMFNodeInterfac
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "PVAuthorEngine::AddMediaTrack: &aDataSource=0x%x, aComposer=0x%x, \
-		aConfigInterface=0x%x, aContextData=0x%x",
+                     aConfigInterface=0x%x, aContextData=0x%x",
                      &aDataSource, aConfigInterface, aContextData));
 
 
@@ -475,8 +475,7 @@ void PVAuthorEngine::HandleNodeErrorEvent(const PVMFAsyncEvent& aEvent)
 
         if (cmdtype == PVAE_CMD_RESET)
         {
-            SetPVAEState(PVAE_STATE_ERROR);
-            return;
+            return; //ignore
         }
         else
         {
@@ -545,7 +544,13 @@ void PVAuthorEngine::NodeUtilCommandCompleted(const PVMFCmdResp& aResponse)
 
     if (aResponse.GetCmdStatus() != PVMFSuccess)
     {
-        SetPVAEState(PVAE_STATE_ERROR);
+        if (cmd.GetCmdType() == PVAE_CMD_RESET)
+        {
+            OSCL_ASSERT(false);//Reset can't fail.
+            return;
+        }
+        else
+            SetPVAEState(PVAE_STATE_ERROR);
     }
     //RESET needs to be handled seperately, if the EngineState is ERROR, ignore all cmds till
     //there are more pending commands, else send out commandComplete Failure
@@ -1673,6 +1678,10 @@ PVMFStatus PVAuthorEngine::GetPvmfFormatString(PvmfMimeString& aMimeType, const 
     {
         aMimeType = PVMF_MIME_AMR_IETF;
     }
+    else if (aNodeMimeType == KAMRWbEncMimeType)
+    {
+        aMimeType = PVMF_MIME_AMRWB_IETF;
+    }
     else if (aNodeMimeType == KAACADIFEncMimeType ||
              aNodeMimeType == KAACADIFComposerMimeType)
     {
@@ -1682,6 +1691,10 @@ PVMFStatus PVAuthorEngine::GetPvmfFormatString(PvmfMimeString& aMimeType, const 
              aNodeMimeType == KAACADTSComposerMimeType)
     {
         aMimeType = PVMF_MIME_ADTS;
+    }
+    else if (aNodeMimeType == KAACMP4EncMimeType)
+    {
+        aMimeType = PVMF_MIME_MPEG4_AUDIO;
     }
     else if (aNodeMimeType == KH264EncMimeType)
     {
@@ -1842,7 +1855,8 @@ PVMFStatus PVAuthorEngine::DoCapConfigSetParameters(PVEngineCommand& aCmd, bool 
                     }
                 }
                 if (anysuccess == false)
-                {   // setParametersSync was not accepted by the node(s)
+                {
+                    // setParametersSync was not accepted by the node(s)
                     *retkvp = &paramkvp[paramind];
                     return PVMFErrArgument;
                 }

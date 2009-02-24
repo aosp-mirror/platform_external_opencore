@@ -125,7 +125,7 @@ PVMIDataStreamSyncInterfaceRefImpl::OpenSession(PvmiDataStreamSession& aSessionI
         int32 res = iFileObject->Seek(0, Oscl_File::SEEKEND);
         if (res == 0)
         {
-            iFileNumBytes = iFileObject->Tell();
+            iFileNumBytes = (TOsclFileOffsetInt32)iFileObject->Tell();
             iFileObject->Seek(0, Oscl_File::SEEKSET);
         }
         aSessionID = iSessionID;
@@ -295,7 +295,7 @@ PVMIDataStreamSyncInterfaceRefImpl::GetCurrentPointerPosition(PvmiDataStreamSess
 
     if (!iFileObject)
         return 0;
-    int32 result = iFileObject->Tell();
+    int32 result = (TOsclFileOffsetInt32)iFileObject->Tell();
     LOGDEBUG((0, "PVMIDataStreamSyncInterfaceRefImpl::GetCurrentContentPosition returning %d", result));
     return (uint32)(result);
 }

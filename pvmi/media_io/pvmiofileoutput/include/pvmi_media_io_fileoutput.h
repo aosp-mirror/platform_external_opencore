@@ -155,6 +155,7 @@ class PVRefFileOutput :	public OsclTimerObject
             , public PvmiMIOControl
             , public PvmiMediaTransfer
             , public PvmiCapabilityAndConfig
+            , public PvmiClockExtensionInterface
 
 {
     public:
@@ -177,6 +178,7 @@ class PVRefFileOutput :	public OsclTimerObject
         ~PVRefFileOutput();
 
         // APIs from PvmiMIOControl
+
 
         PVMFStatus connect(PvmiMIOSession& aSession, PvmiMIOObserver* aObserver);
 
@@ -244,6 +246,8 @@ class PVRefFileOutput :	public OsclTimerObject
 
         void cancelAllCommands();
 
+        void setUserClockExtnInterface(bool aEnable);
+
         // Pure virtuals from PvmiCapabilityAndConfig
 
         void setObserver(PvmiConfigAndCapabilityCmdObserver* aObserver);
@@ -279,6 +283,15 @@ class PVRefFileOutput :	public OsclTimerObject
         void AddChunk(uint8* chunk, uint32 size, uint32 ckid);
         int32 yuv2rgb(uint8 * pBufRGBRev, uint8 * pBufYUV, int32 width, int32 height);
         void UpdateVideoChunkHeaderIdx();
+
+        //from PvmiClockExtensionInterface
+        OSCL_IMPORT_REF PVMFStatus SetClock(PVMFMediaClock *clockVal) ;
+
+        //from PVInterface
+        OSCL_IMPORT_REF void addRef() ;
+        OSCL_IMPORT_REF void removeRef() ;
+        OSCL_IMPORT_REF bool queryInterface(const PVUuid& uuid, PVInterface*& iface) ;
+        void queryUuid(PVUuid& uuid);
 
     private:
         void initData();
@@ -433,6 +446,8 @@ class PVRefFileOutput :	public OsclTimerObject
 
         MediaType	  iMediaType;
         bool		  iCompressedMedia;
+        PVMFMediaClock* iClock;
+        const bool iLogOutputToFile;
 };
 
 //An observer class for test support.

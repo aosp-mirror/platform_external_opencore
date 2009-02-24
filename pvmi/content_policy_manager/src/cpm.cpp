@@ -332,6 +332,49 @@ OSCL_EXPORT_REF void PVMFCPMImpl::ThreadLogon()
     iLogger = PVLogger::GetLoggerObject("PVMFCPMImpl");
 
     AddToScheduler();
+
+    //Create the plugin registry and leave in case there
+    // are no plugins.  This is done here in order to allow the
+    // source node to avoid going through a series of unnecessary
+    // async commands.
+
+    /*
+     * Create plugin params for all registered plugins. This container class
+     * holds all the required info about the plugin, thereby obviating the need
+     * to query the registry all the time for info
+     */
+    iNumRegisteredPlugInInitPending = 0;
+    iNumRegisteredPlugInInitComplete = 0;
+    iNumQueryMetaDataExtensionInterfacePending = 0;
+    iNumQueryMetaDataExtensionInterfaceComplete = 0;
+
+    //create the plugin registry, instantiating all the current plugins
+    //from the factory registry.
+    //first remove any old registry.
+    if (iPluginRegistry)
+    {
+        DePopulateCPMPluginRegistry(iPluginRegistry);
+        /** Cleanup all registered plugins*/
+        iPluginRegistry = NULL;
+        /* Clear all vectors */
+        iPlugInParamsVec.clear();
+        iActivePlugInParamsVec.clear();
+        iContentUsageContextVec.clear();
+        iListofActiveSessions.clear();
+        /**/
+    }
+
+    iPluginRegistry = PopulateCPMPluginRegistry();
+
+    //check for empty registry & leave.
+    if (iPluginRegistry
+            && iPluginRegistry->GetNumPlugIns() == 0)
+    {
+        CPMPluginRegistryFactory::DestroyCPMPluginRegistry(iPluginRegistry);
+        iPluginRegistry = NULL;
+        OSCL_LEAVE(OsclErrGeneral);
+    }
+
 }
 
 OSCL_EXPORT_REF void PVMFCPMImpl::ThreadLogoff()
@@ -959,39 +1002,11 @@ bool PVMFCPMImpl::ProcessCommand(PVMFCPMCommand& aCmd)
 
 void PVMFCPMImpl::DoInit(PVMFCPMCommand& aCmd)
 {
-    /*
-     * Create plugin params for all registered plugins. This container class
-     * holds all the required info about the plugin, thereby obviating the need
-     * to query the registry all the time for info
-     */
-    iNumRegisteredPlugInInitPending = 0;
-    iNumRegisteredPlugInInitComplete = 0;
-    iNumQueryMetaDataExtensionInterfacePending = 0;
-    iNumQueryMetaDataExtensionInterfaceComplete = 0;
-
-    //create the plugin registry, instantiating all the current plugins
-    //from the factory registry.
-    //first remove any old registry.
-    if (iPluginRegistry)
-    {
-        DePopulateCPMPluginRegistry(iPluginRegistry);
-        /** Cleanup all registered plugins*/
-        iPluginRegistry = NULL;
-        /* Clear all vectors */
-        iPlugInParamsVec.clear();
-        iActivePlugInParamsVec.clear();
-        iContentUsageContextVec.clear();
-        iListofActiveSessions.clear();
-        /**/
-    }
-
-    iPluginRegistry = PopulateCPMPluginRegistry();
     if (!iPluginRegistry)
     {
-        PVMF_CPM_LOGERROR((0, "PVMFCPMImpl::DoInit - PopulateCPMPluginRegistry Failed"));
+        PVMF_CPM_LOGERROR((0, "PVMFCPMImpl::DoInit - No Plugin Registry"));
         CommandComplete(iInputCommands, aCmd, PVMFFailure);
     }
-
 
     for (uint32 i = 0; i < iPluginRegistry->GetNumPlugIns(); i++)
     {

@@ -191,8 +191,9 @@ OMX_ERRORTYPE OpenmaxAmrAO::ConstructComponent(OMX_PTR pAppData, OMX_PTR pProxy)
     iPVCapabilityFlags.iOMXComponentSupportsExternalOutputBufferAlloc = OMX_TRUE;
     iPVCapabilityFlags.iOMXComponentSupportsMovableInputBuffers = OMX_TRUE;
     iPVCapabilityFlags.iOMXComponentSupportsPartialFrames = OMX_TRUE;
-    iPVCapabilityFlags.iOMXComponentNeedsNALStartCode = OMX_FALSE;
+    iPVCapabilityFlags.iOMXComponentUsesNALStartCodes = OMX_FALSE;
     iPVCapabilityFlags.iOMXComponentCanHandleIncompleteFrames = OMX_TRUE;
+    iPVCapabilityFlags.iOMXComponentUsesFullAVCFrames = OMX_FALSE;
 
     if (ipAppPriv)
     {
@@ -215,6 +216,7 @@ OMX_ERRORTYPE OpenmaxAmrAO::ConstructComponent(OMX_PTR pAppData, OMX_PTR pProxy)
     }
 
     /** Domain specific section for the ports. */
+    ipPorts[OMX_PORT_INPUTPORT_INDEX]->PortParam.nPortIndex = OMX_PORT_INPUTPORT_INDEX;
     ipPorts[OMX_PORT_INPUTPORT_INDEX]->PortParam.eDomain = OMX_PortDomainAudio;
     ipPorts[OMX_PORT_INPUTPORT_INDEX]->PortParam.format.audio.cMIMEType = (OMX_STRING)"audio/mpeg";
     ipPorts[OMX_PORT_INPUTPORT_INDEX]->PortParam.format.audio.pNativeRender = 0;
@@ -229,6 +231,7 @@ OMX_ERRORTYPE OpenmaxAmrAO::ConstructComponent(OMX_PTR pAppData, OMX_PTR pProxy)
     ipPorts[OMX_PORT_INPUTPORT_INDEX]->PortParam.bPopulated = OMX_FALSE;
 
 
+    ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.nPortIndex = OMX_PORT_OUTPUTPORT_INDEX;
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.eDomain = OMX_PortDomainAudio;
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.format.audio.cMIMEType = (OMX_STRING)"raw";
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.format.audio.pNativeRender = 0;
@@ -243,12 +246,14 @@ OMX_ERRORTYPE OpenmaxAmrAO::ConstructComponent(OMX_PTR pAppData, OMX_PTR pProxy)
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.bPopulated = OMX_FALSE;
 
     //Default values for AMR audio param port
+    ipPorts[OMX_PORT_INPUTPORT_INDEX]->AudioAmrParam.nPortIndex = OMX_PORT_INPUTPORT_INDEX;
     ipPorts[OMX_PORT_INPUTPORT_INDEX]->AudioAmrParam.nChannels = 1;
     ipPorts[OMX_PORT_INPUTPORT_INDEX]->AudioAmrParam.nBitRate = 0;
     ipPorts[OMX_PORT_INPUTPORT_INDEX]->AudioAmrParam.eAMRBandMode = OMX_AUDIO_AMRBandModeNB0;
     ipPorts[OMX_PORT_INPUTPORT_INDEX]->AudioAmrParam.eAMRDTXMode = OMX_AUDIO_AMRDTXModeOnVAD1;
     ipPorts[OMX_PORT_INPUTPORT_INDEX]->AudioAmrParam.eAMRFrameFormat = OMX_AUDIO_AMRFrameFormatConformance;
 
+    ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->AudioPcmMode.nPortIndex = OMX_PORT_OUTPUTPORT_INDEX;
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->AudioPcmMode.nChannels = 1;
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->AudioPcmMode.eNumData = OMX_NumericalDataSigned;
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->AudioPcmMode.bInterleaved = OMX_TRUE;
@@ -1045,6 +1050,27 @@ OMX_ERRORTYPE OpenmaxAmrAO::ComponentInit()
         return OMX_ErrorIncorrectStateOperation;
     }
     iIsInit = OMX_TRUE;
+
+
+    // Added an extra check based on whether client has set nb or wb as Role in
+    // SetParameter() for index OMX_IndexParamStandardComponentRole
+    OMX_AUDIO_AMRBANDMODETYPE AmrBandMode = ipPorts[OMX_PORT_INPUTPORT_INDEX]->AudioAmrParam.eAMRBandMode;
+    if ((OMX_TRUE == iComponentRoleFlag) && (0 == oscl_strcmp((OMX_STRING)iComponentRole, (OMX_STRING)"audio_decoder.amrnb")))
+    {
+        if ((AmrBandMode < OMX_AUDIO_AMRBandModeNB0) || (AmrBandMode > OMX_AUDIO_AMRBandModeNB7))
+        {
+            //Narrow band component does not support these band modes
+            return OMX_ErrorInvalidComponent;
+        }
+    }
+    else if ((OMX_TRUE == iComponentRoleFlag) && (0 == oscl_strcmp((OMX_STRING)iComponentRole, (OMX_STRING)"audio_decoder.amrwb")))
+    {
+        if ((AmrBandMode < OMX_AUDIO_AMRBandModeWB0) || (AmrBandMode > OMX_AUDIO_AMRBandModeWB8))
+        {
+            //Wide band component does not support these band modes
+            return OMX_ErrorInvalidComponent;
+        }
+    }
 
     //amr lib init
     if (!iCodecReady)

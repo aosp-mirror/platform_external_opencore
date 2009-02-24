@@ -197,19 +197,8 @@ static void decompress10(
             25,
             pOverflow);
 
-    ia =
-        (Word16)
-        L_shr(
-            tempWord32,
-            1,
-            pOverflow);
 
-    ia =
-        sub(
-            MSBs,
-            ia,
-            pOverflow);
-
+    ia = (Word16)(MSBs - (tempWord32 >> 1));
     ib =
         mult(
             ia,
@@ -222,18 +211,7 @@ static void decompress10(
             5,
             pOverflow);
 
-    ib =
-        (Word16)
-        L_shr(
-            tempWord32,
-            1,
-            pOverflow);
-
-    ib =
-        sub(
-            ia,
-            ib,
-            pOverflow);
+    ib = ia - (Word16)(tempWord32 >> 1);
 
     ib =
         shl(
@@ -241,29 +219,12 @@ static void decompress10(
             1,
             pOverflow);
 
-    ic =
-        shr(
-            LSBs,
-            2,
-            pOverflow);
-    ic =
-        shl(
-            ic,
-            2,
-            pOverflow);
 
-    ic =
-        sub(
-            LSBs,
-            ic,
-            pOverflow);
+    ic = LSBs - ((LSBs >> 2) << 2);
 
 
-    pos_indx[index1] =
-        add(
-            (Word16)ib,
-            (Word16)(ic & 0x1),
-            pOverflow);
+    pos_indx[index1] = ib + (ic & 1);
+
 
     ib =
         mult(
@@ -277,23 +238,11 @@ static void decompress10(
             1,
             pOverflow);
 
-    ic =
-        shr(
-            ic,
-            1,
-            pOverflow);
 
-    pos_indx[index2] =
-        add(
-            ib,
-            ic,
-            pOverflow);
+    pos_indx[index2] = ib + (ic >> 1);
 
-    ib =
-        shr(
-            LSBs,
-            2,
-            pOverflow);
+
+    ib = LSBs >> 2;
 
     ic =
         mult(
@@ -415,11 +364,7 @@ static void decompress_code(
       MSBs = indx[NB_TRACK]/8;
       LSBs = indx[NB_TRACK]%8;
       */
-    MSBs =
-        shr(
-            indx[NB_TRACK_MR102],
-            3,
-            pOverflow);
+    MSBs = indx[NB_TRACK_MR102] >> 3;
 
     LSBs = indx[NB_TRACK_MR102] & 0x7;
 
@@ -437,11 +382,7 @@ static void decompress_code(
       MSBs = indx[NB_TRACK+1]/8;
       LSBs = indx[NB_TRACK+1]%8;
       */
-    MSBs =
-        shr(
-            indx[NB_TRACK_MR102+1],
-            3,
-            pOverflow);
+    MSBs = indx[NB_TRACK_MR102+1] >> 3;
 
     LSBs = indx[NB_TRACK_MR102+1] & 0x7;
 
@@ -466,11 +407,7 @@ static void decompress_code(
       pos_indx[7] = (MSBs0_24/5)*2 + LSBs/2;
       */
 
-    MSBs =
-        shr(
-            indx[NB_TRACK_MR102+2],
-            2,
-            pOverflow);
+    MSBs = indx[NB_TRACK_MR102+2] >> 2;
 
     LSBs = indx[NB_TRACK_MR102+2] & 0x3;
 
@@ -487,18 +424,10 @@ static void decompress_code(
             1,
             pOverflow);
 
-    ia =
-        add(
-            ia,
-            12,
-            pOverflow);
+    ia += 12;
 
+    MSBs0_24 = ia >> 5;
 
-    MSBs0_24 =
-        shr(
-            ia,
-            5,
-            pOverflow);
 
     ia =
         mult(
@@ -521,26 +450,13 @@ static void decompress_code(
             5,
             pOverflow);
 
-    ib =
-        (Word16)
-        L_shr(
-            tempWord32,
-            1,
-            pOverflow);
 
-    ib =
-        sub(
-            MSBs0_24,
-            ib,
-            pOverflow);
+    ib = MSBs0_24 - (Word16)(tempWord32 >> 1);
 
     if (ia == 1)
     {
-        ib =
-            sub(
-                4,
-                ib,
-                pOverflow);
+        ib = 4 - ib;
+
     }
 
 
@@ -570,17 +486,8 @@ static void decompress_code(
             1,
             pOverflow);
 
-    ib =
-        shr(
-            LSBs,
-            1,
-            pOverflow);
+    pos_indx[7] = ia + (LSBs >> 1);
 
-    pos_indx[7] =
-        add(
-            ia,
-            ib,
-            pOverflow);
 }
 
 /*
@@ -659,7 +566,6 @@ void dec_8i40_31bits(
     Word16 pos1;
     Word16 pos2;
     Word16 sign;
-    Word32 tempWord32;
 
     Word16 linear_signs[NB_TRACK_MR102];
     Word16 linear_codewords[NB_PULSE];
@@ -676,30 +582,12 @@ void dec_8i40_31bits(
         pOverflow);
 
     /* decode the positions and signs of pulses and build the codeword */
-    for (j = 0; j < NB_TRACK_MR102; j++)
+    for (j = 0; j < NB_TRACK_MR102; j++)    /* NB_TRACK_MR102 = 4 */
     {
-        /* compute index i */
+        /* position of pulse "j" */
 
-        i = linear_codewords[j];
+        pos1 = (linear_codewords[j] << 2) + j;
 
-        tempWord32 =
-            L_mult(
-                i,
-                4,
-                pOverflow);
-
-        i =
-            (Word16)
-            L_shr(
-                tempWord32,
-                1,
-                pOverflow);
-
-        pos1 =
-            add(
-                i,
-                j,
-                pOverflow);   /* position of pulse "j" */
 
         if (linear_signs[j] == 0)
         {
@@ -710,47 +598,27 @@ void dec_8i40_31bits(
             sign = -NEG_CODE; /* -1.0 */
         }
 
-        cod[pos1] = sign;
+        if (pos1 < L_SUBFR)
+        {
+            cod[pos1] = sign;    /* avoid buffer overflow */
+        }
 
         /* compute index i */
+        /* position of pulse "j+4" */
 
-        i =
-            add(
-                j,
-                4,
-                pOverflow);
+        pos2 = (linear_codewords[j + 4] << 2) + j;
 
-        i = linear_codewords[i];
-
-        tempWord32 =
-            L_mult(
-                i,
-                4,
-                pOverflow);
-
-        i =
-            (Word16)
-            L_shr(
-                tempWord32,
-                1,
-                pOverflow);
-
-        pos2 =
-            add(
-                i,
-                j,
-                pOverflow);      /* position of pulse "j+4" */
 
         if (pos2 < pos1)
         {
             sign = negate(sign);
         }
 
-        cod[pos2] =
-            add(
-                cod[pos2],
-                sign,
-                pOverflow);
+        if (pos2 < L_SUBFR)
+        {
+            cod[pos2] += sign;     /* avoid buffer overflow */
+        }
+
 
     } /* for (j = 0; j < NB_TRACK_MR102; j++) */
 

@@ -37,7 +37,6 @@
 PVA_FF_MediaInformationAtom::PVA_FF_MediaInformationAtom(uint32 mediaType,
         int32 codecType,
         uint32 fileAuthoringFlags,
-        bool o3GPPCompliant,
         uint32 protocol,
         uint8 profile,
         uint8 profileComp,
@@ -49,7 +48,6 @@ PVA_FF_MediaInformationAtom::PVA_FF_MediaInformationAtom(uint32 mediaType,
     PV_MP4_FF_NEW(fp->auditCB, PVA_FF_SampleTableAtom, (mediaType,
                   codecType,
                   fileAuthoringFlags,
-                  o3GPPCompliant,
                   protocol, profile,
                   profileComp, level), _psampleTableAtom);
 

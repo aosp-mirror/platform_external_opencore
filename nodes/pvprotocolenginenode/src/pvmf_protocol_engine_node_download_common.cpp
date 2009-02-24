@@ -557,6 +557,7 @@ void pvDownloadControl::setSupportObject(OsclAny *aDLSupportObject, DownloadCont
             // in high bandwidth conditions, iProgDownloadSI gets set AFTER download is complete, then
             // need to check resume notification again if something is pending
             if (iDownloadComplete) checkResumeNotification(iDownloadComplete);
+            else checkSendingNotification();
             break;
 
         case DownloadControlSupportObjectType_ProgressInterface:
@@ -607,7 +608,8 @@ int32 pvDownloadControl::checkResumeNotification(const bool aDownloadComplete)
     //	(uint32)iPlaybackUnderflow, (uint32)iRequestResumeNotification, (uint32)aDownloadComplete));
 
     // short-cut: download complete
-    if (!checkDownloadCompleteForResumeNotification(aDownloadComplete))
+    // check sending file size, protocol info or download complete notification
+    if (!checkSendingNotification(aDownloadComplete))
     {
         LOGINFODATAPATH((0, "pvDownloadControl::checkResumeNotification()->checkDownloadCompleteForResumeNotification() return false, iProgDownloadSI=0x%x", iProgDownloadSI));
         return 0;
@@ -635,15 +637,13 @@ int32 pvDownloadControl::checkResumeNotification(const bool aDownloadComplete)
     return 0;
 }
 
-bool pvDownloadControl::checkDownloadCompleteForResumeNotification(const bool aDownloadComplete)
+bool pvDownloadControl::checkSendingNotification(const bool aDownloadComplete)
 {
     if (aDownloadComplete)
     {
         LOGINFODATAPATH((0, "pvDownloadControl::checkDownloadCompleteForResumeNotification()  Download is complete, final download rate = %dbps", (iProtocol->getDownloadRate() << 3)));
     }
-
     iDownloadComplete = aDownloadComplete;
-
     // update iFileSize to minimize dependency on protocol object and improve the efficiency
     updateFileSize();
 
@@ -651,6 +651,9 @@ bool pvDownloadControl::checkDownloadCompleteForResumeNotification(const bool aD
 
     // set file size to parser node
     setFileSize(iFileSize);
+
+    // set protocol info to parser node if needed
+    setProtocolInfo();
 
     // send download complete notification to parser node
     if (aDownloadComplete) sendDownloadCompleteNotification();

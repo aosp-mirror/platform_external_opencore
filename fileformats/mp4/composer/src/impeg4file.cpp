@@ -68,6 +68,7 @@ PVA_FF_IMpeg4File::createMP4File(int32 mediaType,
     return mp4;
 }
 
+OSCL_EXPORT_REF
 PVA_FF_IMpeg4File*
 PVA_FF_IMpeg4File::createMP4File(int32 mediaType,
                                  uint32 fileAuthoringFlags,

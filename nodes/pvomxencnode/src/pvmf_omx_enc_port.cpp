@@ -35,6 +35,7 @@ void PVMFOMXEncPort::Construct()
     iNumFramesConsumed = 0;
     iTrackConfig = NULL;
     iTrackConfigSize = 0;
+    iTimescale = 0;
 
 }
 
@@ -66,7 +67,10 @@ bool PVMFOMXEncPort::IsFormatSupported(PVMFFormatType aFmt)
             (aFmt == PVMF_MIME_H2631998) ||
             (aFmt == PVMF_MIME_H2632000) ||
             (aFmt == PVMF_MIME_AMR_IETF) ||
-            (aFmt == PVMF_MIME_AMR_IF2))
+            (aFmt == PVMF_MIME_AMR_IF2) ||
+            (aFmt == PVMF_MIME_ADTS) ||
+            (aFmt == PVMF_MIME_ADIF) ||
+            (aFmt == PVMF_MIME_MPEG4_AUDIO))
     {
         return true;
     }
@@ -372,7 +376,7 @@ PVMFStatus PVMFOMXEncPort::GetOutputParametersSync(PvmiKeyType identifier, PvmiK
 
         if (pv_mime_strcmp(param1, param2) == 0)
         {
-            num_parameter_elements = 7;
+            num_parameter_elements = 10;
             status = AllocateKvp(parameters, (OMX_STRING)OUTPUT_FORMATS_VALTYPE, num_parameter_elements);
             if (status != PVMFSuccess)
             {
@@ -387,6 +391,9 @@ PVMFStatus PVMFOMXEncPort::GetOutputParametersSync(PvmiKeyType identifier, PvmiK
                 parameters[4].value.pChar_value = (char*)PVMF_MIME_H264_VIDEO_MP4;
                 parameters[5].value.pChar_value = (char*)PVMF_MIME_AMR_IETF;
                 parameters[6].value.pChar_value = (char*)PVMF_MIME_AMR_IF2;
+                parameters[7].value.pChar_value = (char*)PVMF_MIME_ADTS;
+                parameters[8].value.pChar_value = (char*)PVMF_MIME_ADIF;
+                parameters[9].value.pChar_value = (char*)PVMF_MIME_MPEG4_AUDIO;
 
             }
         }
@@ -485,7 +492,8 @@ PVMFStatus PVMFOMXEncPort::GetOutputParametersSync(PvmiKeyType identifier, PvmiK
         {
 
             // NOTE: we assume that port format will be set before this call
-            if ((iFormat == PVMF_MIME_AMR_IETF) || (iFormat == PVMF_MIME_AMR_IF2))
+            if ((iFormat == PVMF_MIME_AMR_IETF) || (iFormat == PVMF_MIME_AMR_IF2) ||
+                    (iFormat == PVMF_MIME_ADTS) || (iFormat == PVMF_MIME_ADIF) || (iFormat == PVMF_MIME_MPEG4_AUDIO))
             {
                 parameters[0].value.uint32_value = iOMXNode->GetOutputBitRate(); // use audio version - void arg
             }
@@ -523,6 +531,54 @@ PVMFStatus PVMFOMXEncPort::GetOutputParametersSync(PvmiKeyType identifier, PvmiK
             parameters[0].value.uint32_value = iOMXNode->GetIFrameInterval();
         }
     }
+    else if (pv_mime_strcmp(identifier, AUDIO_OUTPUT_SAMPLING_RATE_CUR_QUERY) == 0)
+    {
+        num_parameter_elements = 1;
+        status = AllocateKvp(parameters, (PvmiKeyType)AUDIO_OUTPUT_SAMPLING_RATE_CUR_VALUE, num_parameter_elements);
+        if (status != PVMFSuccess)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFOMXEncPort::GetOutputParametersSync: Error - AllocateKvp failed. status=%d", status));
+            return status;
+        }
+
+        parameters[0].value.uint32_value = (uint32) iOMXNode->GetOutputSamplingRate();
+
+    }
+    else if (pv_mime_strcmp(identifier, AUDIO_OUTPUT_NUM_CHANNELS_CUR_QUERY) == 0)
+    {
+        num_parameter_elements = 1;
+        status = AllocateKvp(parameters, (PvmiKeyType)AUDIO_OUTPUT_NUM_CHANNELS_CUR_VALUE, num_parameter_elements);
+        if (status != PVMFSuccess)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFOMXEncPort::GetOutputParametersSync: Error - AllocateKvp failed. status=%d", status));
+            return status;
+        }
+
+        parameters[0].value.uint32_value = (uint32) iOMXNode->GetOutputNumChannels();
+    }
+    else if ((pv_mime_strcmp(identifier, OUTPUT_TIMESCALE_CUR_QUERY) == 0) &&
+             ((iFormat == PVMF_MIME_AMR_IETF) ||
+              (iFormat == PVMF_MIME_AMR_IF2) ||
+              (iFormat == PVMF_MIME_ADTS) ||
+              (iFormat == PVMF_MIME_ADIF) ||
+              (iFormat == PVMF_MIME_MPEG4_AUDIO)
+             ))
+    {
+        num_parameter_elements = 1;
+        status = AllocateKvp(parameters, (PvmiKeyType)OUTPUT_TIMESCALE_CUR_VALUE, num_parameter_elements);
+        if (status != PVMFSuccess)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFOMXEncPort::GetOutputParametersSync: Error - AllocateKvp failed. status=%d", status));
+            return status;
+        }
+        else
+        {
+
+            parameters[0].value.uint32_value = (uint32) iOMXNode->GetOutputSamplingRate();
+
+        }
+    }
+
 
     return status;
 }
@@ -608,7 +664,10 @@ PVMFStatus PVMFOMXEncPort::VerifyAndSetParameter(PvmiKvp* aKvp, bool aSetParam)
                 pv_mime_strcmp(aKvp->value.pChar_value, PVMF_MIME_H264_VIDEO_RAW) == 0 ||
                 pv_mime_strcmp(aKvp->value.pChar_value, PVMF_MIME_H264_VIDEO_MP4) == 0 ||
                 pv_mime_strcmp(aKvp->value.pChar_value, PVMF_MIME_AMR_IETF) == 0 ||
-                pv_mime_strcmp(aKvp->value.pChar_value, PVMF_MIME_AMR_IF2) == 0)
+                pv_mime_strcmp(aKvp->value.pChar_value, PVMF_MIME_AMR_IF2) == 0 ||
+                pv_mime_strcmp(aKvp->value.pChar_value, PVMF_MIME_ADIF) == 0 ||
+                pv_mime_strcmp(aKvp->value.pChar_value, PVMF_MIME_ADTS) == 0 ||
+                pv_mime_strcmp(aKvp->value.pChar_value, PVMF_MIME_MPEG4_AUDIO) == 0)
         {
             if (aSetParam)
             {
@@ -620,7 +679,7 @@ PVMFStatus PVMFOMXEncPort::VerifyAndSetParameter(PvmiKvp* aKvp, bool aSetParam)
         else
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFOMXEncPort::VerifyAndSetParameter: Error - Output format %d not supported",
-                            aKvp->value.uint32_value));
+                            aKvp->value.pChar_value));
             return PVMFFailure;
         }
     }
@@ -760,6 +819,24 @@ PVMFStatus PVMFOMXEncPort::NegotiateInputSettings(PvmiCapabilityAndConfig* aConf
 
         // Forward settings to encoder
         iOMXNode->SetInputNumChannels(numChannels);
+        kvp = NULL;
+        numParams = 0;
+
+        // do the "TIMESCALE" query
+        status = aConfig->getParametersSync(NULL, (PvmiKeyType)OUTPUT_TIMESCALE_CUR_QUERY, kvp, numParams, NULL);
+        iTimescale = 0;
+        if (status != PVMFSuccess || !kvp || numParams != 1)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFOMXEncPort::NegotiateInputSettings: config->getParametersSync(sampling rate) not supported. Use default."));
+            iTimescale = PVMF_AMRENC_DEFAULT_SAMPLING_RATE;
+        }
+        else
+        {
+            iTimescale = kvp[0].value.uint32_value;
+
+            aConfig->releaseParameters(NULL, kvp, numParams);
+        }
+
         kvp = NULL;
         numParams = 0;
 

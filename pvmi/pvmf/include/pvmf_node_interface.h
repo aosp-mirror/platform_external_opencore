@@ -81,6 +81,10 @@ typedef enum
     , EPVMFNodeLastState // derived nodes can add more states as needed
 } TPVMFNodeInterfaceState;
 
+/**
+Oscl shared libary class
+**/
+class OsclSharedLibrary;
 
 /**
  * PVMFNodeErrorEventObserver Class
@@ -416,15 +420,36 @@ class PVMFNodeInterface: public PVMFPortActivityHandler
          */
         virtual void HandlePortActivity(const PVMFPortActivity& aActivity) = 0;
 
+        /**
+         * Set shared library pointer
+         * @param aPtr Pointer to the shared library.
+         **/
+        virtual void SetSharedLibraryPtr(OsclSharedLibrary* aPtr)
+        {
+            iOsclSharedLibrary = aPtr;
+        }
+
+        /**
+         * Retrieves shared library pointer
+         * @returns Pointer to the shared library.
+         **/
+        virtual OsclSharedLibrary* GetSharedLibraryPtr()
+        {
+            return iOsclSharedLibrary;
+        }
+
     protected:
         PVMFNodeInterface(int32 aSessionReserve = PVMF_NODE_DEFAULT_SESSION_RESERVE) :
                 iInterfaceState(EPVMFNodeCreated)
+                , iOsclSharedLibrary(NULL)
         {
             iSessions.reserve(aSessionReserve);
         }
 
         Oscl_Vector<PVMFNodeSession, OsclMemAllocator> iSessions;
         TPVMFNodeInterfaceState iInterfaceState;
+
+        OsclSharedLibrary* iOsclSharedLibrary;
 
         /** This method can be used to update the state and
         ** notify observers of the state change event.

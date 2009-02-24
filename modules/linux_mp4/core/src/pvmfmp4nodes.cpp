@@ -25,6 +25,8 @@ class Mp4NodesInterface: public OsclSharedLibraryInterface,
             public NodeSharedLibraryInterface
 {
     public:
+        Mp4NodesInterface() {};
+
         // From NodeSharedLibraryInterface
         OsclAny* QueryNodeInterface(const PVUuid& aNodeUuid, const OsclUuid& aInterfaceId)
         {
@@ -53,17 +55,6 @@ class Mp4NodesInterface: public OsclSharedLibraryInterface,
 
             return NULL;
         };
-
-        static Mp4NodesInterface* Instance()
-        {
-            static Mp4NodesInterface nodeInterface;
-            return &nodeInterface;
-        };
-
-    private:
-
-        Mp4NodesInterface() {};
-
 };
 
 
@@ -71,11 +62,11 @@ extern "C"
 {
     OsclSharedLibraryInterface *PVGetInterface(void)
     {
-        return Mp4NodesInterface::Instance();
+        return OSCL_NEW(Mp4NodesInterface, ());
     }
-    void PVReleaseInterface(OsclSharedLibraryInterface*)
+    void PVReleaseInterface(OsclSharedLibraryInterface* aInstance)
     {
-        //nothing needed
+        OSCL_DELETE(aInstance);
     }
 }
 

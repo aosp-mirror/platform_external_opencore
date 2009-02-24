@@ -24,6 +24,9 @@
 #define MAX_INSTANTIATED_COMPONENTS 7
 
 //#define INSERT_NAL_START_CODE
+// while there is no documented number of max NALs per frame, this should be more than enough
+// this used to keep track of the NAL sizes in full-frame, multiple NAL output buffers
+#define MAX_NAL_PER_FRAME 100
 
 // maximum length of component names
 #define PV_OMX_MAX_COMPONENT_NAME_LENGTH 128

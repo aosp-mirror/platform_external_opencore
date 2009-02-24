@@ -184,14 +184,10 @@ Word32 Pow2(            /* (o)  : result       (range: 0<=val<=0x7fffffff) */
 
     L_x = L_mult(fraction, 32, pOverflow);      /* L_x = fraction<<6    */
 
-    /* Extract b10-b16 of fraction */
+    /* Extract b0-b16 of fraction */
 
-    i = (Word16)(L_x >> 16);
-    L_x >>= 1;
-
-    /* Extract b0-b9   of fraction */
-    a = (Word16)(L_x);
-    a = a & (Word16) 0x7fff;
+    i = ((Word16)(L_x >> 16)) & 31;             /* ensure index i is bounded */
+    a = (Word16)((L_x >> 1) & 0x7fff);
 
     L_x = L_deposit_h(pow2_tbl[i]);             /* pow2_tbl[i] << 16       */
 

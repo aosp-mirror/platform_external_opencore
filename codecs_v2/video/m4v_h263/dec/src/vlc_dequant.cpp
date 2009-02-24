@@ -51,6 +51,7 @@ int VlcDequantMpegIntraBlock(void *vid, int comp, int switched,
                              uint8 *bitmapcol, uint8 *bitmaprow)
 {
     VideoDecData *video = (VideoDecData*) vid;
+    Vol *currVol = video->vol[video->currLayer];
     BitstreamDecVideo *stream = video->bitstream;
     int16 *datablock = video->mblock->block[comp]; /* 10/20/2000, assume it has been reset of all-zero !!!*/
     int mbnum = video->mbnum;
@@ -384,10 +385,10 @@ int VlcDequantMpegInterBlock(void *vid, int comp,
 {
     VideoDecData *video = (VideoDecData*) vid;
     BitstreamDecVideo *stream = video->bitstream;
+    Vol *currVol = video->vol[video->currLayer];
     int16 *datablock = video->mblock->block[comp]; /* 10/20/2000, assume it has been reset of all-zero !!!*/
     int mbnum = video->mbnum;
     int QP = video->QPMB[mbnum];
-    uint8 *pbyte;
     /*** VLC *****/
     int i, k;
     Tcoef run_level;

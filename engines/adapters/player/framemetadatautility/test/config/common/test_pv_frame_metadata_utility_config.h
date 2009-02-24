@@ -24,7 +24,7 @@
 
 // The default test file to use
 #define DEFAULTSOURCEFILENAME "test.mp4"
-#define DEFAULTSOURCEFORMATTYPE PVMF_MPEG4FF
+#define DEFAULTSOURCEFORMATTYPE PVMF_MIME_MPEG4FF
 
 // Set to 1 to enable test cases that output YUV 4:2:0, 0 to disable
 #define RUN_YUV420_TESTCASES 1
@@ -44,7 +44,7 @@
 // The source test file without video track
 //#define NOVIDEOSOURCEFILENAME "test_amr.mp4"
 #define NOVIDEOSOURCEFILENAME "test_aac.mp4"
-#define NOVIDEOSOURCEFORMATTYPE PVMF_MPEG4FF
+#define NOVIDEOSOURCEFORMATTYPE PVMF_MIME_MPEG4FF
 
 // Set to 1 to use the scheduler native to the system instead of PV scheduler
 #define USE_NATIVE_SCHEDULER 0

@@ -771,7 +771,6 @@ void pvplayer_async_test_cpmopenplaystopreset::Run()
                 break;
             }
 
-            bool useCPM = true;
             if (iUsingDataStreamInput)
             {
                 //Create a data stream factory for recognizer (a)
@@ -786,15 +785,14 @@ void pvplayer_async_test_cpmopenplaystopreset::Run()
 
                 iSourceContextData = new PVMFSourceContextData();
                 iSourceContextData->EnableCommonSourceContext();
-                iSourceContextData->CommonData()->iUseCPMPluginRegistry    = useCPM;
                 iSourceContextData->CommonData()->iRecognizerDataStreamFactory = iDataStreamFactory;
 
                 iDataSource->SetDataSourceContextData((OsclAny*)iSourceContextData);
             }
             else
             {
-                //Create a data source with the CPM usage flag set.
-                iLocalDataSource = new PVMFLocalDataSource(useCPM);
+                //Create a data source
+                iLocalDataSource = new PVMFLocalDataSource();
 
                 iDataSource->SetDataSourceContextData((OsclAny*)iLocalDataSource);
             }
@@ -17620,7 +17618,7 @@ void pvplayer_async_test_multiple_instance::Run()
             iFileNameWStr.set(iTmpWCharBuffer, oscl_strlen(iTmpWCharBuffer));
             iDataSource->SetDataSourceURL(iFileNameWStr);
             iDataSource->SetDataSourceFormatType(iFileType);
-            iLocalDataSource = new PVMFLocalDataSource(false);
+            iLocalDataSource = new PVMFLocalDataSource();
             iDataSource->SetDataSourceContextData((OsclAny*)iLocalDataSource);
 
             OSCL_TRY(error, iCurrentCmdId = iPlayer->AddDataSource(*iDataSource, (OsclAny*) & iContextObject));
@@ -18358,7 +18356,7 @@ void pvplayer_async_test_multiple_thread::Run()
             iFileNameWStr.set(iTmpWCharBuffer, oscl_strlen(iTmpWCharBuffer));
             iDataSource->SetDataSourceURL(iFileNameWStr);
             iDataSource->SetDataSourceFormatType(iFileType);
-            iLocalDataSource = new PVMFLocalDataSource(false);
+            iLocalDataSource = new PVMFLocalDataSource();
             iDataSource->SetDataSourceContextData((OsclAny*)iLocalDataSource);
 
             OSCL_TRY(error, iCurrentCmdId = iPlayer->AddDataSource(*iDataSource, (OsclAny*) & iContextObject));

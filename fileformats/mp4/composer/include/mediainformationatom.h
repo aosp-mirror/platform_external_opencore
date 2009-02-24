@@ -41,7 +41,6 @@ class PVA_FF_MediaInformationAtom : public PVA_FF_Atom
         PVA_FF_MediaInformationAtom(uint32 mediaType,
                                     int32 codecType,
                                     uint32 fileAuthoringFlags,
-                                    bool o3GPPCompliant = false,
                                     uint32 protocol = 0,
                                     uint8 profile = 1,
                                     uint8 profileComp = 0xFF,

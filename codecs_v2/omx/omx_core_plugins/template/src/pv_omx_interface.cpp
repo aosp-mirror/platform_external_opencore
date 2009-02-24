@@ -93,7 +93,8 @@ class PVOMXInterface : public OMXInterface
                 pOMX_GetRolesOfComponent = NULL;
                 pOMX_SetupTunnel = NULL;
                 pOMX_GetContentPipe = NULL;
-
+                // added extra method to enable config parsing without instantiating the component
+                pOMXConfigParser = NULL;
                 // check for errors
                 const char* pErr = dlerror();
                 if (NULL == pErr)
@@ -121,6 +122,7 @@ class PVOMXInterface : public OMXInterface
                 pOMX_GetRolesOfComponent = (tpOMX_GetRolesOfComponent)dlsym(ipHandle, "OMX_GetRolesOfComponent");
                 pOMX_SetupTunnel = (tpOMX_SetupTunnel)dlsym(ipHandle, "OMX_SetupTunnel");
                 pOMX_GetContentPipe = (tpOMX_GetContentPipe)dlsym(ipHandle, "OMX_GetContentPipe");
+                pOMXConfigParser = (tpOMXConfigParser)dlsym(ipHandle, "OMXConfigParser");
             }
         };
 

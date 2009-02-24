@@ -101,6 +101,8 @@
 #include "sdp_mediaparser_registry_populator.h"
 #endif
 
+#include "pvmf_rtp_jitter_buffer_factory.h"
+
 /**
 ///////////////////////////////////////////////////////////////////////////////
 // Node Constructor & Destructor
@@ -226,7 +228,8 @@ void PVMFSMRTSPUnicastNode::CreateChildNodes()
      */
     OsclExclusivePtr<PVMFNodeInterface> jitterBufferNodeAutoPtr;
     PVMFNodeInterface* iJitterBufferNode;
-    iJitterBufferNode = OSCL_NEW(PVMFJitterBufferNode, (OsclActiveObject::EPriorityNominal));
+    iJBFactory = OSCL_NEW(RTPJitterBufferFactory, ());
+    iJitterBufferNode = OSCL_NEW(PVMFJitterBufferNode, (OsclActiveObject::EPriorityNominal, iJBFactory));
 
     jitterBufferNodeAutoPtr.set(iJitterBufferNode);
 
@@ -521,7 +524,26 @@ bool PVMFSMRTSPUnicastNode::ProcessCommand(PVMFSMFSPBaseNodeCommand& aCmd)
         case PVMF_SMFSP_NODE_PAUSE:
             if (iPauseDenied)
             {
-                CommandComplete(iInputCommands, aCmd, PVMFErrNotSupported);
+                //Check with the jitter buffer node if the session is already expired?
+                bool isSessionDurationExpired = false;
+                PVMFSMFSPChildNodeContainer* jitterBufferNodeContainer =
+                    getChildNodeContainer(PVMF_SM_FSP_JITTER_BUFFER_NODE);
+                if (jitterBufferNodeContainer)
+                {
+                    PVMFJitterBufferExtensionInterface* jbExtIntf =
+                        OSCL_STATIC_CAST(PVMFJitterBufferExtensionInterface*, jitterBufferNodeContainer->iExtensions.front());
+                    if (jbExtIntf)
+                        jbExtIntf->HasSessionDurationExpired(isSessionDurationExpired);
+                }
+
+                if (isSessionDurationExpired)
+                {
+                    DoPause(aCmd);
+                }
+                else
+                {
+                    CommandComplete(iInputCommands, aCmd, PVMFErrNotSupported);
+                }
             }
             else
             {
@@ -924,7 +946,7 @@ PVMFStatus PVMFSMRTSPUnicastNode::ProcessSDP()
 
         /* Get File Size */
         osclFile.Seek(0, Oscl_File::SEEKEND);
-        int32 fileSize = osclFile.Tell();
+        int32 fileSize = (TOsclFileOffsetInt32)osclFile.Tell();
         osclFile.Seek(0, Oscl_File::SEEKSET);
 
         if (fileSize <= 0)
@@ -3331,7 +3353,7 @@ PVMFStatus PVMFSMRTSPUnicastNode::SetSourceInitializationData(OSCL_wString& aSou
             PVMFStreamingDataSource* opaqueData =
                 OSCL_STATIC_CAST(PVMFStreamingDataSource*, streamingDataSrc);
             iPreviewMode = opaqueData->iPreviewMode;
-            iUseCPMPluginRegistry = opaqueData->iUseCPMPluginRegistry;
+            iUseCPMPluginRegistry = true;
             iCPMSourceData.iPreviewMode = iPreviewMode;
             iCPMSourceData.iIntent = opaqueData->iIntent;
         }
@@ -3348,7 +3370,7 @@ PVMFStatus PVMFSMRTSPUnicastNode::SetSourceInitializationData(OSCL_wString& aSou
                     PVMFSourceContextDataCommon* cContext =
                         OSCL_STATIC_CAST(PVMFSourceContextDataCommon*, commonDataContext);
                     iPreviewMode = cContext->iPreviewMode;
-                    iUseCPMPluginRegistry = cContext->iUseCPMPluginRegistry;
+                    iUseCPMPluginRegistry = true;
                     PVMFSourceContextData* sContext =
                         OSCL_STATIC_CAST(PVMFSourceContextData*, sourceDataContext);
                     iSourceContextData = *sContext;
@@ -3371,7 +3393,15 @@ PVMFStatus PVMFSMRTSPUnicastNode::SetSourceInitializationData(OSCL_wString& aSou
             iCPM = NULL;
         }
         iCPM = PVMFCPMFactory::CreateContentPolicyManager(*this);
-        iCPM->ThreadLogon();
+        //thread logon may leave if there are no plugins
+        int32 err;
+        OSCL_TRY(err, iCPM->ThreadLogon(););
+        OSCL_FIRST_CATCH_ANY(err,
+                             iCPM->ThreadLogoff();
+                             PVMFCPMFactory::DestroyContentPolicyManager(iCPM);
+                             iCPM = NULL;
+                             iUseCPMPluginRegistry = false;
+                            );
     }
 
     //to set the sessionsource info and configure session controller node [RTSP client], with the session type

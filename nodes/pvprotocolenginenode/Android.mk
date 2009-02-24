@@ -6,12 +6,12 @@ LOCAL_SRC_FILES := \
  	src/pvmf_protocol_engine_node_common.cpp \
  	src/pvmf_protocol_engine_factory.cpp \
  	src/pvmf_protocol_engine_port.cpp \
- 	src/pvdl_config_file.cpp \
- 	src/pvmf_protocol_engine_download_common.cpp \
- 	src/pvmf_protocol_engine_node_download_common.cpp \
  	src/pvmf_protocol_engine_node_progressive_streaming.cpp \
  	src/pvmf_protocol_engine_progressive_download.cpp \
- 	src/pvmf_protocol_engine_node_progressive_download.cpp
+ 	src/pvmf_protocol_engine_node_progressive_download.cpp \
+ 	src/pvdl_config_file.cpp \
+ 	src/pvmf_protocol_engine_download_common.cpp \
+ 	src/pvmf_protocol_engine_node_download_common.cpp
 
 
 LOCAL_MODULE := libprotocolenginenode
@@ -27,7 +27,7 @@ LOCAL_SHARED_LIBRARIES :=
 LOCAL_C_INCLUDES := \
 	$(PV_TOP)/nodes/pvprotocolenginenode/src \
  	$(PV_TOP)/nodes/pvprotocolenginenode/include \
- 	$(PV_TOP)/nodes/pvprotocolenginenode/config/linux_nj \
+ 	$(PV_TOP)/nodes/pvprotocolenginenode/config/android \
  	$(PV_TOP)/nodes/pvprotocolenginenode/config/linux \
  	$(PV_INCLUDES)
 

@@ -53,6 +53,8 @@
 
 #include "pvmf_duration_infomessage.h"
 
+#include "pvmf_metadata_infomessage.h"
+
 #include "pv_mime_string_utils.h"
 
 #include "pvmi_kvp_util.h"
@@ -286,6 +288,19 @@ PVCommandId PVPlayerEngine::QueryInterface(const PVUuid& aUuid, PVInterface*& aI
     param.pOsclAny_value = (OsclAny*) & aInterfacePtr;
     paramvec.push_back(param);
     return AddCommandToQueue(PVP_ENGINE_COMMAND_QUERY_INTERFACE, (OsclAny*)aContextData, &paramvec, &aUuid);
+}
+
+
+PVCommandId PVPlayerEngine::CancelCommand(PVCommandId aCancelCmdId, const OsclAny* aContextData)
+{
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::CancelCommand()"));
+    Oscl_Vector<PVPlayerEngineCommandParamUnion, OsclMemAllocator> paramvec;
+    paramvec.reserve(1);
+    paramvec.clear();
+    PVPlayerEngineCommandParamUnion param;
+    param.int32_value = aCancelCmdId;
+    paramvec.push_back(param);
+    return AddCommandToQueue(PVP_ENGINE_COMMAND_CANCEL_COMMAND, (OsclAny*)aContextData, &paramvec);
 }
 
 
@@ -1040,7 +1055,6 @@ PVPlayerEngine::PVPlayerEngine() :
         iSourceNodeCapConfigIF(NULL),
         iSourceNodeRegInitIF(NULL),
         iSourceNodeCPMLicenseIF(NULL),
-        iSourceNodePacketSourceIF(NULL),
         iSourceNodePVInterfaceInit(NULL),
         iSourceNodePVInterfaceTrackSel(NULL),
         iSourceNodePVInterfacePBCtrl(NULL),
@@ -1050,7 +1064,6 @@ PVPlayerEngine::PVPlayerEngine() :
         iSourceNodePVInterfaceCapConfig(NULL),
         iSourceNodePVInterfaceRegInit(NULL),
         iSourceNodePVInterfaceCPMLicense(NULL),
-        iSourceNodePVInterfacePacketSource(NULL),
         iCPMGetLicenseCmdId(0),
         iMetadataValuesCopiedInCallBack(true),
         iReleaseMetadataValuesPending(false),
@@ -1266,6 +1279,7 @@ void PVPlayerEngine::Run()
     if (!iCurrentCmd.empty())
     {
         if ((iCurrentCmd[0].GetCmdType() == PVP_ENGINE_COMMAND_RESET) ||
+                (iCurrentCmd[0].GetCmdType() == PVP_ENGINE_COMMAND_CANCEL_COMMAND) ||
                 (iCurrentCmd[0].GetCmdType() == PVP_ENGINE_COMMAND_CANCEL_ALL_COMMANDS))
         {
             if (iState != PVP_ENGINE_STATE_IDLE)
@@ -1296,10 +1310,32 @@ void PVPlayerEngine::Run()
         }
     }
 
-    /* Check if CancelAll()/CancelAcquireLicense request was made */
+    /* Check if Cancel()/CancelAll()/CancelAcquireLicense request was made */
     if (!iPendingCmds.empty())
     {
-        if (iPendingCmds.top().GetCmdType() == PVP_ENGINE_COMMAND_CANCEL_ALL_COMMANDS)
+        if (iPendingCmds.top().GetCmdType() == PVP_ENGINE_COMMAND_CANCEL_COMMAND)
+        {
+            // Process it right away
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::Run() Processing Cancel() request"));
+            PVPlayerEngineCommand cmd(iPendingCmds.top());
+            iPendingCmds.pop();
+            if ((!iCurrentCmd.empty()) && (iCurrentCmd[0].GetCmdId() == cmd.GetParam(0).int32_value))
+            {
+                // We need to cancel the ongoing command. In this case issue cancelAll
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                                (0, "PVPlayerEngine::Run: Command to Cancel is ongoing so issue CancelAll"));
+                DoCancelAllCommands(cmd);
+            }
+            else
+            {
+                // The command to be cancelled is in the pending queue
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                                (0, "PVPlayerEngine::Run: Command to Cancel is pending so just Cancel"));
+                DoCancelCommand(cmd);
+            }
+            return;
+        }
+        else if (iPendingCmds.top().GetCmdType() == PVP_ENGINE_COMMAND_CANCEL_ALL_COMMANDS)
         {
             // Process it right away
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::Run() Processing CancelAll() request"));
@@ -1568,12 +1604,20 @@ void PVPlayerEngine::Run()
                 cmdstatus = DoGetLicenseStatusSync(cmd);
                 break;
 
+            case PVP_ENGINE_COMMAND_CANCEL_COMMAND:
+                // Cancel() should not be handled here
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::Run() CancelCommand should be not handled in here. Return Failure"));
+                cmdstatus = PVMFFailure;
+                break;
+
             case PVP_ENGINE_COMMAND_CANCEL_ALL_COMMANDS:
                 // CancelAll() should not be handled here
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::Run() CancelAllCommands should be not handled in here. Return Failure"));
                 cmdstatus = PVMFFailure;
-                // Just handle as "not supported"
+                break;
+
             default:
+                // Just handle as "not supported"
                 cmdstatus = PVMFErrNotSupported;
                 break;
         }
@@ -2230,7 +2274,6 @@ void PVPlayerEngine::NodeCommandCompleted(const PVMFCmdResp& aResponse)
                         case PVP_CMD_SourceNodeQueryCapConfigIF:
                         case PVP_CMD_SourceNodeQueryCPMLicenseIF:
                         case PVP_CMD_SourceNodeQuerySrcNodeRegInitIF:
-                        case PVP_CMD_SourceNodeQueryPacketSourceIF:
                             HandleSourceNodeQueryInterfaceOptional(*nodecontext, aResponse);
                             break;
 
@@ -3572,6 +3615,82 @@ void PVPlayerEngine::SendErrorEvent(PVMFEventType aEventType, PVInterface* aExtI
 }
 
 
+void PVPlayerEngine::DoCancelCommand(PVPlayerEngineCommand& aCmd)
+{
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::DoCancelCommand() In"));
+
+    // Boolean to check if the command is cancelled or not.
+    bool commandCancelled = false;
+
+    // cmd to cancel either has been completed or is in pending queue.
+    // Create a temporary queue for pending commands and current command if any.
+    OsclPriorityQueue<PVPlayerEngineCommand, OsclMemAllocator, Oscl_Vector<PVPlayerEngineCommand, OsclMemAllocator>, PVPlayerEngineCommandCompareLess> iTempPendingCmds;
+    Oscl_Vector<PVPlayerEngineCommand, OsclMemAllocator> iTempCurrentCmd;
+    // Copy the pending commands to the new queue
+    iTempPendingCmds = iPendingCmds;
+    while (!iTempPendingCmds.empty())
+    {
+        // Get the queue from the top
+        PVPlayerEngineCommand cmd(iTempPendingCmds.top());
+        // Check if it needs to be cancelled
+        if (aCmd.GetParam(0).int32_value == cmd.GetCmdId())
+        {
+            // Found command to be cancelled in the Pending Queue, set the
+            // commandCancelled boolean to true.
+            commandCancelled = true;
+
+            // Remove it from the pending commands queue
+            iPendingCmds.remove(cmd);
+            // Save it temporary as "current command" and then cancel it. If CurrentCmd has some
+            // command, first move it to TempCurrentCmd queue.
+            if (!iCurrentCmd.empty())
+            {
+                iTempCurrentCmd.push_front(iCurrentCmd[0]);
+                iCurrentCmd.erase(iCurrentCmd.begin());
+            }
+
+            iCurrentCmd.push_front(cmd);
+            EngineCommandCompleted(cmd.GetCmdId(), cmd.GetContext(), PVMFErrCancelled);
+
+            // send command complete for CancelCommand also.
+            iCurrentCmd.push_front(aCmd);
+            EngineCommandCompleted(aCmd.GetCmdId(), aCmd.GetContext(), PVMFSuccess);
+
+            // If TempCurrentCmd queue is holding up any command, move it back to CurrentCmd queue.
+            if (!iTempCurrentCmd.empty())
+            {
+                iCurrentCmd.push_front(iTempCurrentCmd[0]);
+                iTempCurrentCmd.erase(iTempCurrentCmd.begin());
+            }
+        }
+        // Pop each cmd from the temporary queue
+        iTempPendingCmds.pop();
+    }
+
+    if (!commandCancelled)
+    {
+        // There was no command cancelled, user might have given a wrong Argument
+        // Fail the command with PVMFErrArgument
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoCancelCommand() Wrong Argument, No comand cancelled"));
+        if (!iCurrentCmd.empty())
+        {
+            PVPlayerEngineCommand currentcmd(iCurrentCmd[0]);
+            iCurrentCmd.erase(iCurrentCmd.begin());
+            iCurrentCmd.push_front(aCmd);
+            EngineCommandCompleted(aCmd.GetCmdId(), aCmd.GetContext(), PVMFErrArgument);
+            iCurrentCmd.push_front(currentcmd);
+        }
+        else
+        {
+            // Current Command is empty, just push CancelCommand and do Command Complete.
+            iCurrentCmd.push_front(aCmd);
+            EngineCommandCompleted(aCmd.GetCmdId(), aCmd.GetContext(), PVMFErrArgument);
+        }
+    }
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::DoCancelCommand() Out"));
+}
+
+
 void PVPlayerEngine::DoCancelAllCommands(PVPlayerEngineCommand& aCmd)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::DoCancelAllCommands() In"));
@@ -3730,6 +3849,7 @@ void PVPlayerEngine::DoCancelCommandBeingProcessed(void)
         case PVP_ENGINE_COMMAND_RESUME:
         case PVP_ENGINE_COMMAND_SET_PLAYBACK_RANGE:
         case PVP_ENGINE_COMMAND_SET_PLAYBACK_RATE:
+        case PVP_ENGINE_COMMAND_CANCEL_COMMAND:
         case PVP_ENGINE_COMMAND_PAUSE_DUE_TO_ENDTIME_REACHED:
         case PVP_ENGINE_COMMAND_PAUSE_DUE_TO_ENDOFCLIP:
         case PVP_ENGINE_COMMAND_PAUSE_DUE_TO_BUFFER_UNDERFLOW:
@@ -4614,6 +4734,7 @@ PVMFStatus PVPlayerEngine::DoSourceNodeQueryInterfaceOptional(PVCommandId aCmdId
     {
         ++iNumPendingNodeCmd;
     }
+
     if (iNumPendingNodeCmd > 0)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::DoSourceNodeQueryInterfaceOptional() Out"));
@@ -9157,52 +9278,75 @@ PVMFStatus PVPlayerEngine::DoSourceDataReadyAutoResume(PVPlayerEngineCommand& aC
 
     // Don't need to worry about transitional states(...ING).
     // Auto-pause/resume cmds are just regular engine cmds and won't be interrupted by normal ones
-    // First check to see if it is Underflow->Pause->Resume->DataReady usecase.
-    // In this usecase, engine starts playback clock in Resume, source nodes are sposed to pause the
-    // clock, since they are the ones in underflow. Once source nodes report dataready, engine would
-    // already be in STARTED state. So if the clock is still paused, then start it here.
-    if (iPlaybackClock.GetState() == PVMFMediaClock::PAUSED && iState == PVP_ENGINE_STATE_STARTED)
+
+    // Check if Datapaths (Sink Node) are already in Started state.
+    bool datapathSinkNodeStarted = false;
+    for (uint32 j = 0; j < iDatapathList.size(); j++)
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::DoSourceDataReadyAutoResume: Clock Start from paused state"));
-
-        StartPlaybackClock();
-
-        // Notify all sink nodes that have sync control IF that clock has started
-        for (uint32 i = 0; i < iDatapathList.size(); ++i)
+        if (iDatapathList[j].iSinkNode)
         {
-            if (iDatapathList[i].iDatapath && iDatapathList[i].iSinkNodeSyncCtrlIF)
+            if (iDatapathList[j].iSinkNode->GetState() != EPVMFNodeStarted)
             {
-                iDatapathList[i].iSinkNodeSyncCtrlIF->ClockStarted();
+                // One of the nodes is not in Started state break from the loop
+                // keeping the boolean datapathSinkNodeStaretd as false.
+                datapathSinkNodeStarted = false;
+                break;
             }
+            // this will be true only when all Sink Nodes are in started state.
+            datapathSinkNodeStarted = true;
         }
-        //instead of return PVMFSuccess because PVMFErrNotSupported will cause the DataReady event be sent to app
-        return PVMFErrNotSupported;
     }
 
-    // Next check to see if it is Underflow->Pause->DataReady->Resume usecase.
-    // Then we CANNOT start clock in here, because clock is paused by app.
-    // After Pause done, the engine is in PAUSED state. By allowing auto-resume only when
-    // auto-paused we deal with this usecase ok.
-    if (iState != PVP_ENGINE_STATE_AUTO_PAUSED)
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoSourceDataReadyAutoResume() Invalid state %d", iState));
-        //return PVMFErrNotSupported so the the DataReady can be sent, depending on iDataReadySent flag.
-        return PVMFErrNotSupported;
-    }
-
-    // Next check to see if it is:
-    // Underflow->Pause->SetPlaybackRange->Resume->DataReady or
-    // Prepare->Underflow->Start->DataReady
-    // or some other usecase, where we are still waiting on PVMFInfoStartOfData.
+    // Next check to see if it is any one of the use-cases:
+    // Prepare->Underflow->Start->DataReady or
+    // Prepare->Underflow->DataReady->Start or
+    // Underflow->Pause->Resume->DataReady or
+    // Underflow->Pause->SetPlaybackRange->Resume->DataReady
+    // These are cases where Sink Nodes are already in Started state and
+    // engine might be still waiting for PVMFInfoStartOfData.
     // Here if all PVMFInfoStartofData have not been received yet,
     // then iNumPVMFInfoStartOfDataPending would be non-zero,
-    // clock would still be in Stopped state
-    // and Engine would be in Started state.
+    // In few of these usecase, engine starts playback clock in Resume, source nodes are sposed to pause the
+    // clock, since they are the ones in underflow. Once source nodes report dataready, engine would
+    // already be in STARTED state. So if the clock is still paused, then start it here.
     // Here just send NotSupported so engine can send DataReady Event to the app.
     // and set the watchdog timer which was cancelled when underflow was recieved.
-    if (iPlaybackClock.GetState() == PVMFMediaClock::STOPPED &&
-            iState == PVP_ENGINE_STATE_STARTED)
+    if (datapathSinkNodeStarted)
     {
+        if (iState == PVP_ENGINE_STATE_PREPARED)
+        {
+            // DataReady recieved during Prepare, Engine just needs to send
+            // DataReady event.
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVPlayerEngine::DoSourceDataReadyAutoResume: DataReady rcvd, Engine in Prepared state"));
+        }
+        else if (iState == PVP_ENGINE_STATE_STARTED)
+        {
+            // Usecases for this scenario:
+            // Underflow->Pause->Resume->DataReady
+            // Underflow->Pause->SetPlaybackRange->Resume->DataReady
+            // Prepare->Underflow->Start->DataReady
+            // do nothing here
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVPlayerEngine::DoSourceDataReadyAutoResume: DataReady rcvd, Engine already in Started state"));
+        }
+        else if (iState == PVP_ENGINE_STATE_AUTO_PAUSED)
+        {
+            // Usecase for this scenario:
+            // Prepare->Underflow->DataReady->Started
+            // Change state to STARTED
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVPlayerEngine::DoSourceDataReadyAutoResume: DataReady rcvd, Prepare->Underflow->DataReady->Started, datapaths already started"));
+            SetEngineState(PVP_ENGINE_STATE_STARTED);
+        }
+        else
+        {
+            // This should never happen
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                            (0, "PVPlayerEngine::DoSourceDataReadyAutoResume() Invalid state %d, Sinks in Started state", iState));
+            OSCL_ASSERT(false);
+        }
+
         if (iNumPVMFInfoStartOfDataPending > 0)
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
@@ -9237,6 +9381,17 @@ PVMFStatus PVPlayerEngine::DoSourceDataReadyAutoResume(PVPlayerEngineCommand& aC
                 }
             }
         }
+        //return PVMFErrNotSupported so the the DataReady can be sent, depending on iDataReadySent flag.
+        return PVMFErrNotSupported;
+    }
+
+    // Next check to see if it is Underflow->Pause->DataReady->Resume usecase.
+    // Then we CANNOT start clock in here, because clock is paused by app.
+    // After Pause done, the engine is in PAUSED state. By allowing auto-resume only when
+    // auto-paused we deal with this usecase ok.
+    if (iState != PVP_ENGINE_STATE_AUTO_PAUSED)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoSourceDataReadyAutoResume() Invalid state %d", iState));
         //return PVMFErrNotSupported so the the DataReady can be sent, depending on iDataReadySent flag.
         return PVMFErrNotSupported;
     }
@@ -9568,6 +9723,7 @@ void PVPlayerEngine::DoSourceNodeCleanup(void)
             iSourceNodeCPMLicenseIF->removeRef();
             iSourceNodeCPMLicenseIF = NULL;
         }
+
         // Reset the Presentation Info list
         iSourcePresInfoList.Reset();
 
@@ -15970,6 +16126,25 @@ void PVPlayerEngine::HandleSourceNodeInfoEvent(const PVMFAsyncEvent& aEvent)
             SendInformationalEvent(event, NULL, aEvent.GetEventData(), aEvent.GetLocalBuffer(), aEvent.GetLocalBufferSize());
         }
         break;
+        case PVMFInfoMetadataAvailable:
+        {
+            PVUuid infomsguuid = PVMFMetadataInfoMessageInterfaceUUID;
+            PVMFMetadataInfoMessageInterface* eventMsg = NULL;
+            PVInterface* infoExtInterface = aEvent.GetEventExtensionInterface();
+            if (infoExtInterface &&
+                    infoExtInterface->queryInterface(infomsguuid, (PVInterface*&)eventMsg))
+            {
+                PVUuid eventuuid;
+                int32 infoCode;
+                eventMsg->GetCodeUUID(infoCode, eventuuid);
+                if (eventuuid == infomsguuid)
+                {
+                    Oscl_Vector<PvmiKvp, OsclMemAllocator> kvpVector = eventMsg->GetMetadataVector();
+                    SendInformationalEvent(aEvent.GetEventType(), infoExtInterface, aEvent.GetEventData(), aEvent.GetLocalBuffer(), aEvent.GetLocalBufferSize());
+                }
+            }
+        }
+        break;
         case PVMFInfoDurationAvailable:
         {
             PVUuid infomsguuid = PVMFDurationInfoMessageInterfaceUUID;
@@ -15994,12 +16169,6 @@ void PVPlayerEngine::HandleSourceNodeInfoEvent(const PVMFAsyncEvent& aEvent)
         }
         break;
 
-        case PVMFInfoMetadataAvailable:
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::HandleSourceNodeInfoEvent() Sending Meta data Info available %d", event));
-            SendInformationalEvent(event, NULL, aEvent.GetEventData(), aEvent.GetLocalBuffer(), aEvent.GetLocalBufferSize());
-        }
-        break;
         case PVMFInfoPoorlyInterleavedContent:
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::HandleSourceNodeInfoEvent() Sending Poorly Interleaved Content Info %d", event));

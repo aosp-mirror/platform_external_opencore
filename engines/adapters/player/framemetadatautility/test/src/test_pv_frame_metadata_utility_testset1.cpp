@@ -2050,7 +2050,7 @@ void pvframemetadata_async_test_multigetfirstframemetadata::Run()
             // Add a different data source
             OSCL_wHeapString<OsclMemAllocator> secondclip(_STRLIT_WCHAR("test.mp4"));
             iDataSource->SetDataSourceURL(secondclip);
-            iDataSource->SetDataSourceFormatType(PVMF_MPEG4FF);
+            iDataSource->SetDataSourceFormatType(PVMF_MIME_MPEG4FF);
 
             OSCL_TRY(error, iCurrentCmdId = iFrameMetadataUtil->AddDataSource(*iDataSource, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVFMUATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());

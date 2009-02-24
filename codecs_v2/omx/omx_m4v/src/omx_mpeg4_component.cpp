@@ -272,8 +272,9 @@ OMX_ERRORTYPE OpenmaxMpeg4AO::ConstructComponent(OMX_PTR pAppData, OMX_PTR pProx
     iPVCapabilityFlags.iOMXComponentSupportsExternalOutputBufferAlloc = OMX_TRUE;
     iPVCapabilityFlags.iOMXComponentSupportsMovableInputBuffers = OMX_TRUE;
     iPVCapabilityFlags.iOMXComponentSupportsPartialFrames = OMX_TRUE;
-    iPVCapabilityFlags.iOMXComponentNeedsNALStartCode = OMX_FALSE;
+    iPVCapabilityFlags.iOMXComponentUsesNALStartCodes = OMX_FALSE;
     iPVCapabilityFlags.iOMXComponentCanHandleIncompleteFrames = OMX_TRUE;
+    iPVCapabilityFlags.iOMXComponentUsesFullAVCFrames = OMX_FALSE;
 
     if (ipAppPriv)
     {
@@ -297,6 +298,7 @@ OMX_ERRORTYPE OpenmaxMpeg4AO::ConstructComponent(OMX_PTR pAppData, OMX_PTR pProx
     }
 
     /** Domain specific section for the ports. */
+    ipPorts[OMX_PORT_INPUTPORT_INDEX]->PortParam.nPortIndex = OMX_PORT_INPUTPORT_INDEX;
     ipPorts[OMX_PORT_INPUTPORT_INDEX]->PortParam.eDomain = OMX_PortDomainVideo;
     if (iDecMode == MODE_MPEG4)
     {
@@ -328,6 +330,7 @@ OMX_ERRORTYPE OpenmaxMpeg4AO::ConstructComponent(OMX_PTR pAppData, OMX_PTR pProx
     ipPorts[OMX_PORT_INPUTPORT_INDEX]->PortParam.bPopulated = OMX_FALSE;
 
 
+    ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.nPortIndex = OMX_PORT_OUTPUTPORT_INDEX;
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.eDomain = OMX_PortDomainVideo;
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.format.video.cMIMEType = (OMX_STRING)"raw";
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.format.video.pNativeRender = 0;
@@ -349,9 +352,11 @@ OMX_ERRORTYPE OpenmaxMpeg4AO::ConstructComponent(OMX_PTR pAppData, OMX_PTR pProx
     if (iDecMode == MODE_MPEG4)
     {
         //Default values for mpeg4 video param port
+        ipPorts[OMX_PORT_INPUTPORT_INDEX]->VideoMpeg4.nPortIndex = OMX_PORT_INPUTPORT_INDEX;
         ipPorts[OMX_PORT_INPUTPORT_INDEX]->VideoMpeg4.eProfile = OMX_VIDEO_MPEG4ProfileSimple;
         ipPorts[OMX_PORT_INPUTPORT_INDEX]->VideoMpeg4.eLevel = OMX_VIDEO_MPEG4Level1;
 
+        ipPorts[OMX_PORT_INPUTPORT_INDEX]->ProfileLevel.nPortIndex = OMX_PORT_INPUTPORT_INDEX;
         ipPorts[OMX_PORT_INPUTPORT_INDEX]->ProfileLevel.nProfileIndex = 0;
         ipPorts[OMX_PORT_INPUTPORT_INDEX]->ProfileLevel.eProfile = OMX_VIDEO_MPEG4ProfileSimple;
         ipPorts[OMX_PORT_INPUTPORT_INDEX]->ProfileLevel.eLevel = OMX_VIDEO_MPEG4Level1;

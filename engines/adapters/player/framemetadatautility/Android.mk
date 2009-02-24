@@ -22,7 +22,7 @@ LOCAL_SHARED_LIBRARIES :=
 LOCAL_C_INCLUDES := \
 	$(PV_TOP)/engines/adapters/player/framemetadatautility/src \
  	$(PV_TOP)/engines/adapters/player/framemetadatautility/include \
- 	$(PV_TOP)/engines/adapters/player/framemetadatautility/config/linux_nj \
+ 	$(PV_TOP)/engines/adapters/player/framemetadatautility/config/android \
  	$(PV_INCLUDES)
 
 LOCAL_COPY_HEADERS_TO := $(PV_COPY_HEADERS_TO)

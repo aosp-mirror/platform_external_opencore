@@ -1161,7 +1161,7 @@ PVMFCPMPassThruPlugInOMA1DataStreamSyncInterfaceImpl::QueryReadCapacity(PvmiData
     {
         if (!iFileObject)
             return PVDS_FAILURE;
-        int32 result = iFileObject->Size();
+        int32 result = (TOsclFileOffsetInt32)iFileObject->Size();
         PVMF_CPMPLUGIN_PASSTHRUOMA1_LOGDEBUG((0, "PVMFCPMPassThruPlugInOMA1DataStreamSyncInterfaceImpl::QueryReadCapacity returning %d", result));
         if (result < 0)
         {
@@ -1294,7 +1294,7 @@ PVMFCPMPassThruPlugInOMA1DataStreamSyncInterfaceImpl::GetCurrentPointerPosition(
     OSCL_UNUSED_ARG(sessionID);
     if (!iFileObject)
         return PVDS_FAILURE;
-    int32 result = iFileObject->Tell();
+    int32 result = (TOsclFileOffsetInt32)iFileObject->Tell();
     PVMF_CPMPLUGIN_PASSTHRUOMA1_LOGDEBUG((0, "PVMFCPMPassThruPlugInOMA1DataStreamSyncInterfaceImpl::GetCurrentContentPosition returning %d", result));
     return (uint32)(result);
 }

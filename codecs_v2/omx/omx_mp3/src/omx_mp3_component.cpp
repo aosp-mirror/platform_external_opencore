@@ -188,8 +188,9 @@ OMX_ERRORTYPE OpenmaxMp3AO::ConstructComponent(OMX_PTR pAppData, OMX_PTR pProxy)
     iPVCapabilityFlags.iOMXComponentSupportsExternalOutputBufferAlloc = OMX_TRUE;
     iPVCapabilityFlags.iOMXComponentSupportsMovableInputBuffers = OMX_TRUE;
     iPVCapabilityFlags.iOMXComponentSupportsPartialFrames = OMX_TRUE;
-    iPVCapabilityFlags.iOMXComponentNeedsNALStartCode = OMX_FALSE;
+    iPVCapabilityFlags.iOMXComponentUsesNALStartCodes = OMX_FALSE;
     iPVCapabilityFlags.iOMXComponentCanHandleIncompleteFrames = OMX_TRUE;
+    iPVCapabilityFlags.iOMXComponentUsesFullAVCFrames = OMX_FALSE;
 
     if (ipAppPriv)
     {
@@ -212,6 +213,7 @@ OMX_ERRORTYPE OpenmaxMp3AO::ConstructComponent(OMX_PTR pAppData, OMX_PTR pProxy)
     }
 
     /** Domain specific section for the ports. */
+    ipPorts[OMX_PORT_INPUTPORT_INDEX]->PortParam.nPortIndex = OMX_PORT_INPUTPORT_INDEX;
     ipPorts[OMX_PORT_INPUTPORT_INDEX]->PortParam.eDomain = OMX_PortDomainAudio;
     ipPorts[OMX_PORT_INPUTPORT_INDEX]->PortParam.format.audio.cMIMEType = (OMX_STRING)"audio/mpeg";
     ipPorts[OMX_PORT_INPUTPORT_INDEX]->PortParam.format.audio.pNativeRender = 0;
@@ -226,6 +228,7 @@ OMX_ERRORTYPE OpenmaxMp3AO::ConstructComponent(OMX_PTR pAppData, OMX_PTR pProxy)
     ipPorts[OMX_PORT_INPUTPORT_INDEX]->PortParam.bPopulated = OMX_FALSE;
 
 
+    ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.nPortIndex = OMX_PORT_OUTPUTPORT_INDEX;
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.eDomain = OMX_PortDomainAudio;
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.format.audio.cMIMEType = (OMX_STRING)"raw";
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.format.audio.pNativeRender = 0;
@@ -240,6 +243,7 @@ OMX_ERRORTYPE OpenmaxMp3AO::ConstructComponent(OMX_PTR pAppData, OMX_PTR pProxy)
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.bPopulated = OMX_FALSE;
 
     //Default values for Mp3 audio param port
+    ipPorts[OMX_PORT_INPUTPORT_INDEX]->AudioMp3Param.nPortIndex = OMX_PORT_INPUTPORT_INDEX;
     ipPorts[OMX_PORT_INPUTPORT_INDEX]->AudioMp3Param.nChannels = 2;
     ipPorts[OMX_PORT_INPUTPORT_INDEX]->AudioMp3Param.nBitRate = 0;
     ipPorts[OMX_PORT_INPUTPORT_INDEX]->AudioMp3Param.nSampleRate = 44100;
@@ -247,12 +251,14 @@ OMX_ERRORTYPE OpenmaxMp3AO::ConstructComponent(OMX_PTR pAppData, OMX_PTR pProxy)
     ipPorts[OMX_PORT_INPUTPORT_INDEX]->AudioMp3Param.eChannelMode = OMX_AUDIO_ChannelModeStereo;
     ipPorts[OMX_PORT_INPUTPORT_INDEX]->AudioMp3Param.eFormat = OMX_AUDIO_MP3StreamFormatMP1Layer3;
 
+    ipPorts[OMX_PORT_INPUTPORT_INDEX]->AudioEqualizerType.nPortIndex = OMX_PORT_INPUTPORT_INDEX;
     ipPorts[OMX_PORT_INPUTPORT_INDEX]->AudioEqualizerType.sBandIndex.nMin = 0;
     //Taken these value from from mp3 decoder component
     ipPorts[OMX_PORT_INPUTPORT_INDEX]->AudioEqualizerType.sBandIndex.nValue = (e_equalization) flat;
     ipPorts[OMX_PORT_INPUTPORT_INDEX]->AudioEqualizerType.sBandIndex.nMax = (e_equalization) flat_;
 
 
+    ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->AudioPcmMode.nPortIndex = OMX_PORT_OUTPUTPORT_INDEX;
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->AudioPcmMode.nChannels = 2;
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->AudioPcmMode.eNumData = OMX_NumericalDataSigned;
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->AudioPcmMode.bInterleaved = OMX_TRUE;
@@ -379,11 +385,10 @@ void OpenmaxMp3AO::ResetComponent()
     if (ipMp3Dec)
     {
         ipMp3Dec->ResetDecoder();
+        //Set this length to zero for flushing the current input buffer
+        ipMp3Dec->iInputUsedLength = 0;
+        //ipMp3Dec->iInitFlag = 0;
     }
-
-    //Set this length to zero for flushing the current input buffer
-    ipMp3Dec->iInputUsedLength = 0;
-    //ipMp3Dec->iInitFlag = 0;
 }
 
 

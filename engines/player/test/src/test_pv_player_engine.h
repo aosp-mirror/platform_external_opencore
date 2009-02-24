@@ -486,6 +486,12 @@ class pvplayer_engine_test : public test_case,
 
             LastProgressivePlaybackTest, //placeholder
 
+            ShoutcastPlayback5MinuteTest = 180,
+            ShoutcastPlaybackPauseResumeTest = 181,
+            ShoutcastPlaybackPlayStopPlayTest = 182,
+
+            LastShoutcastPlaybackTest, // placeholder
+
             FirstStreamingTest = 200, //placeholder
 
             StreamingOpenPlayStopTest, //201

@@ -56,6 +56,7 @@ bool PVMediaInputAuthorEngineTest::Set_Default_Params(int32 aTestnum, PVMediaInp
         break;
 
         case PVMediaInput_Open_Compose_Stop_Test:
+        case PVMediaInput_Open_Compose_Stop_Test_UsingExternalFileHandle:
         {
             if ((iFirstTest != iLastTest) || (aMediaInputParam.iIPFileInfo.get_size() == 0))
             {
@@ -560,7 +561,14 @@ void PVMediaInputAuthorEngineTest::test()
                 ++iNextTestCase;
             }
             break;
-
+            case PVMediaInput_Open_Compose_Stop_Test_UsingExternalFileHandle:
+            {
+                Print_TestCase_Name(iNextTestCase);
+                iCurrentTest = new pv_mediainput_async_test_opencomposestop(testparam, iMediaInputParam, false, true);
+                // Go to next test
+                ++iNextTestCase;
+            }
+            break;
             case PVMediaInput_Pause_Resume_Test:
             {
                 fprintf(iFile, "Pause Resume test with AVI/WAV MIO Comp:\n");

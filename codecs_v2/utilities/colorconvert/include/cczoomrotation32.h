@@ -53,6 +53,7 @@ class ColorConvert32: public ColorConvertBase
         int32 get_frame32(uint8 **src, uint8 *dst, DisplayProperties *disp, uint8 *COFF_TBL);
         int32 cc32ZoomIn(uint8 **src, uint8 *dst, DisplayProperties *disp, uint8 *COFF_TBL);
         int32 cc32Rotate(uint8 **src, uint8 *dst, DisplayProperties *disp, uint8 *COFF_TBL);
+        int32 cc32ZoomRotate(uint8 **src, uint8 *dst, DisplayProperties *disp, uint8 *COFF_TBL);
         int32(ColorConvert32::*mPtrYUV2RGB)(uint8 **src, uint8 *dst, DisplayProperties *disp, uint8 *COFF_TBL);
 };
 

@@ -32,7 +32,6 @@
 #include "pv_mp4ffcomposer_config.h"
 
 #include "movieheaderatom.h"
-#include "objectdescriptoratom.h"
 #include "trackatom.h"
 
 #include "userdataatom.h"
@@ -337,7 +336,6 @@ class PVA_FF_MovieAtom : public PVA_FF_Atom, public PVA_FF_ISucceedFail
         void	setMovieFragmentDuration();
         void	updateMovieFragmentDuration(uint32 trackID, uint32 ts);
         void	writeMovieFragmentDuration(MP4_AUTHOR_FF_FILE_IO_WRAP* fp);
-        void	setVideoWidthHeight(uint32 trackID, int16 width, int16 height);
         void    SetMaxSampleSize(uint32, uint32);
         void	writeMaxSampleSize(MP4_AUTHOR_FF_FILE_IO_WRAP*);
     private:

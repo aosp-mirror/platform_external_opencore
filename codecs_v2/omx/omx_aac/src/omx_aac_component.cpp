@@ -197,8 +197,9 @@ OMX_ERRORTYPE OpenmaxAacAO::ConstructComponent(OMX_PTR pAppData, OMX_PTR pProxy)
     iPVCapabilityFlags.iOMXComponentSupportsExternalOutputBufferAlloc = OMX_TRUE;
     iPVCapabilityFlags.iOMXComponentSupportsMovableInputBuffers = OMX_TRUE;
     iPVCapabilityFlags.iOMXComponentSupportsPartialFrames = OMX_TRUE;
-    iPVCapabilityFlags.iOMXComponentNeedsNALStartCode = OMX_FALSE;
+    iPVCapabilityFlags.iOMXComponentUsesNALStartCodes = OMX_FALSE;
     iPVCapabilityFlags.iOMXComponentCanHandleIncompleteFrames = OMX_TRUE;
+    iPVCapabilityFlags.iOMXComponentUsesFullAVCFrames = OMX_FALSE;
 
     if (ipAppPriv)
     {
@@ -221,6 +222,7 @@ OMX_ERRORTYPE OpenmaxAacAO::ConstructComponent(OMX_PTR pAppData, OMX_PTR pProxy)
     }
 
     /** Domain specific section for the ports. */
+    ipPorts[OMX_PORT_INPUTPORT_INDEX]->PortParam.nPortIndex = OMX_PORT_INPUTPORT_INDEX;
     ipPorts[OMX_PORT_INPUTPORT_INDEX]->PortParam.eDomain = OMX_PortDomainAudio;
     ipPorts[OMX_PORT_INPUTPORT_INDEX]->PortParam.format.audio.cMIMEType = (OMX_STRING)"audio/mpeg";
     ipPorts[OMX_PORT_INPUTPORT_INDEX]->PortParam.format.audio.pNativeRender = 0;
@@ -235,6 +237,7 @@ OMX_ERRORTYPE OpenmaxAacAO::ConstructComponent(OMX_PTR pAppData, OMX_PTR pProxy)
     ipPorts[OMX_PORT_INPUTPORT_INDEX]->PortParam.bPopulated = OMX_FALSE;
 
 
+    ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.nPortIndex = OMX_PORT_OUTPUTPORT_INDEX;
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.eDomain = OMX_PortDomainAudio;
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.format.audio.cMIMEType = (OMX_STRING)"raw";
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.format.audio.pNativeRender = 0;
@@ -249,6 +252,7 @@ OMX_ERRORTYPE OpenmaxAacAO::ConstructComponent(OMX_PTR pAppData, OMX_PTR pProxy)
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.bPopulated = OMX_FALSE;
 
     //Default values for AAC audio param port
+    ipPorts[OMX_PORT_INPUTPORT_INDEX]->AudioAacParam.nPortIndex = OMX_PORT_INPUTPORT_INDEX;
     ipPorts[OMX_PORT_INPUTPORT_INDEX]->AudioAacParam.nChannels = 2;
     ipPorts[OMX_PORT_INPUTPORT_INDEX]->AudioAacParam.nBitRate = 0;
     ipPorts[OMX_PORT_INPUTPORT_INDEX]->AudioAacParam.nSampleRate = 44100;
@@ -258,6 +262,7 @@ OMX_ERRORTYPE OpenmaxAacAO::ConstructComponent(OMX_PTR pAppData, OMX_PTR pProxy)
     ipPorts[OMX_PORT_INPUTPORT_INDEX]->AudioAacParam.eAACProfile = OMX_AUDIO_AACObjectHE_PS;    //OMX_AUDIO_AACObjectLC;
     ipPorts[OMX_PORT_INPUTPORT_INDEX]->AudioAacParam.eAACStreamFormat = OMX_AUDIO_AACStreamFormatMP2ADTS;
 
+    ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->AudioPcmMode.nPortIndex = OMX_PORT_OUTPUTPORT_INDEX;
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->AudioPcmMode.nChannels = 2;
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->AudioPcmMode.eNumData = OMX_NumericalDataSigned;
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->AudioPcmMode.bInterleaved = OMX_TRUE;

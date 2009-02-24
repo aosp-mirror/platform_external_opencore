@@ -29,6 +29,9 @@
 #ifndef OSCL_STRING_H_INCLUDED
 #include "oscl_string.h"
 #endif
+#ifndef OSCL_FILE_IO_H_INCLUDED
+#include "oscl_file_io.h"
+#endif
 #ifndef PVMF_RETURN_CODES_H_INCLUDED
 #include "pvmf_return_codes.h"
 #endif
@@ -131,6 +134,15 @@ class PVMp4FFCNClipConfigInterface : public PVInterface
          * @return Completion status of this method.
          */
         virtual PVMFStatus SetOutputFileName(const OSCL_wString& aFileName) = 0;
+
+        /**
+         * This method sets the output file handle. This method must be called before
+         * Start() is called.
+         *
+         * @param aFileHandle Output file descriptor
+         * @return Completion status of this method.
+         */
+        virtual PVMFStatus SetOutputFileDescriptor(const OsclFileHandle* aFileHandle) = 0;
 
         /**
          * This method sets the authoring mode. This method must be called before

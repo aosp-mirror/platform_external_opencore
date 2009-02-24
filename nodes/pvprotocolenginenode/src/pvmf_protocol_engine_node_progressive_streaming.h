@@ -19,7 +19,7 @@
 #ifndef PVMF_PROTOCOLENGINE_NODE_PROGRESSIVE_STREAMING_H_INCLUDED
 #define PVMF_PROTOCOLENGINE_NODE_PROGRESSIVE_STREAMING_H_INCLUDED
 
-#ifndef PVMF_PROTOCOLENGINE_NODE_DOWNLOAD_COMMON_H_INCLUDED
+#ifndef PVMF_PROTOCOLENGINE_NODE_PROGRESSIVE_DOWNLOAD_H_INCLUDED
 #include "pvmf_protocol_engine_node_progressive_download.h"
 #endif
 
@@ -30,7 +30,7 @@
 class ProgressiveStreamingContainer : public ProgressiveDownloadContainer
 {
     public:
-        bool createProtocolObjects();
+        virtual bool createProtocolObjects();
         PVMFStatus doStop();
         PVMFStatus doSeek(PVMFProtocolEngineNodeCommand& aCmd);
         bool completeRepositionRequest();
@@ -43,14 +43,14 @@ class ProgressiveStreamingContainer : public ProgressiveDownloadContainer
         // constructor
         ProgressiveStreamingContainer(PVMFProtocolEngineNode *aNode = NULL);
 
-    private:
+    protected:
         // called by DoSeek()
         uint32 getSeekOffset(PVMFProtocolEngineNodeCommand& aCmd);
         PVMFStatus doSeekBody(uint32 aNewOffset);
         void updateDownloadControl(const bool isDownloadComplete = false);
         bool needToCheckResumeNotificationMaually();
 
-    private:
+    protected:
         bool iEnableInfoUpdate;
 };
 

@@ -39,7 +39,7 @@
 #include "test_pv_mediainput_author_engine.h"
 #endif
 
-#ifdef USE_OMX_ENC_NODE
+#if USE_OMX_ENC_NODE
 #include "omx_core.h"
 #endif
 
@@ -59,6 +59,7 @@ const uint16 KVideoIFrameInterval = 10;
 const uint8 KH263VideoProfile = 0;
 const uint8 KH263VideoLevel = 10;
 const uint32 KAudioBitrate = 12200;
+const uint32 KAACAudioBitrate = 64000;
 const uint32 KAudioTimescale = 8000;
 const uint32 KAudioNumChannels = 1;
 const uint32 KTextTimescale = 90000;
@@ -344,6 +345,18 @@ void PVAuthorEngineTest::RunTestCases()
                     (const char*)iOutputFileName.get_cstr(), iAudioInputType, iVideoInputType, iTextInputType,
                     iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), iAVTConfig, false, KTestDuration);
             break;
+        case AMRWB_Input_AOnly_3gpTest:
+            fprintf(iStdOut, "AMR-WB to A-Only .3gp Test\n");
+            iCurrentTest = new pvauthor_async_test_miscellaneous(testparam, (const char*)iInputFileNameAudio.get_cstr(), (const char*)iInputFileNameVideo.get_cstr(), (const char*)iInputFileNameText.get_cstr(),
+                    (const char*)iOutputFileName.get_cstr(), iAudioInputType, iVideoInputType, iTextInputType,
+                    iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), iAVTConfig, false, KTestDuration);
+            break;
+        case AMRWB_FOutput_Test:
+            fprintf(iStdOut, "AMR-WB Input to .awb Test\n");
+            iCurrentTest = new pvauthor_async_test_miscellaneous(testparam, (const char*)iInputFileNameAudio.get_cstr(), (const char*)iInputFileNameVideo.get_cstr(), (const char*)iInputFileNameText.get_cstr(),
+                    (const char*)iOutputFileName.get_cstr(), iAudioInputType, iVideoInputType, iTextInputType,
+                    iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), iAVTConfig, false, KTestDuration);
+            break;
         case ErrorHandling_WrongTextInputFileNameTest:
             fprintf(iStdOut, "ErrorHandling_WrongTextInputFileNameTest Test\n");
             iCurrentTest = new pvauthor_async_compressed_test_errorhandling(testparam, (const char*)iInputFileNameAudio.get_cstr(), (const char*)iInputFileNameVideo.get_cstr(), (const char*)iInputFileNameText.get_cstr(),
@@ -424,12 +437,18 @@ void PVAuthorEngineTest::RunTestCases()
                     iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), iAVTConfig, false, iAuthoringTime);
             break;
 
+        case AMR_FileOutput_Test_UsingExternalFileHandle:
+            fprintf(iStdOut, "AMR Input to .amr using external file handle Test\n");
+            iCurrentTest = new pvauthor_async_test_miscellaneous(testparam, (const char*)iInputFileNameAudio.get_cstr(), (const char*)iInputFileNameVideo.get_cstr(), (const char*)iInputFileNameText.get_cstr(),
+                    (const char*)iOutputFileName.get_cstr(), iAudioInputType, iVideoInputType, iTextInputType,
+                    iComposerMimeType.get_cstr(), iAudioEncoderMimeType.get_cstr(), iVideoEncoderMimeType.get_cstr(),  iTextEncoderMimeType.get_cstr(), iAVTConfig, false, KTestDuration, true);
+            break;
+
         default:
             iCurrentTest = NULL;
             break;
     }
 }
-
 void PVAuthorEngineTest::CompleteTest(test_case &aTC)
 {
     // Print out the result for this test case
@@ -1482,7 +1501,7 @@ bool LoadAVIConfiguration(OSCL_HeapString<OsclMemAllocator>& aAVIConfigFileName,
 //Depending on the Test Nos, check the validity of input and output files extensions as specified in command line
 //Also set the AVTConfig param by loading the contents of audio and video config files
 //This function is used only for Test No 0 to CompressedNormalTestEnd-1
-bool CheckSourceAndOutputFiles(cmd_line* aCommandLine, int32 firsttest, int32 lasttest, OSCL_HeapString<OsclMemAllocator> &aInputAudioFileName, OSCL_HeapString<OsclMemAllocator> &aInputVideoFileName, OSCL_HeapString<OsclMemAllocator> &aInputTextFileName, OSCL_HeapString<OsclMemAllocator> &aOutputFileName, AVTConfig aAVTConfig, OSCL_HeapString<OsclMemAllocator> &audioconfigfilename, OSCL_HeapString<OsclMemAllocator> &videoconfigfilename, FILE* file)
+bool CheckSourceAndOutputFiles(cmd_line* aCommandLine, int32 firsttest, int32 lasttest, OSCL_HeapString<OsclMemAllocator> &aInputAudioFileName, OSCL_HeapString<OsclMemAllocator> &aInputVideoFileName, OSCL_HeapString<OsclMemAllocator> &aInputTextFileName, OSCL_HeapString<OsclMemAllocator> &aOutputFileName, AVTConfig &aAVTConfig, OSCL_HeapString<OsclMemAllocator> &audioconfigfilename, OSCL_HeapString<OsclMemAllocator> &videoconfigfilename, FILE* file)
 {
     bool bAudioTest = false;//To track if the test is Audio
     bool bVideoTest = false;//To track if the test is Video
@@ -1496,6 +1515,7 @@ bool CheckSourceAndOutputFiles(cmd_line* aCommandLine, int32 firsttest, int32 la
         case AMR_H263_Input_AV_3gpTest:
         case AMR_YUV_Input_AV_M4V_AMR_Output_3gpTest:
         case H264_AMR_Input_AV_3gpTest:
+        case AMR_FileOutput_Test_UsingExternalFileHandle:
             //Longetivity Tests
         case AMR_TEXT_Input_AT_3gp_LongetivityTest:
         case AMR_YUV_TEXT_Input_AVT_3gp_LongetivityTest:
@@ -1506,6 +1526,17 @@ bool CheckSourceAndOutputFiles(cmd_line* aCommandLine, int32 firsttest, int32 la
                 return false;
             }
             break;
+
+        case AMRWB_Input_AOnly_3gpTest:
+        case AMRWB_FOutput_Test:
+            bAudioTest = true;
+            if (!(oscl_strstr(aInputAudioFileName.get_cstr(), ".awb") != NULL || oscl_strstr(aInputAudioFileName.get_cstr(), ".AWB") != NULL))
+            {
+                fprintf(file, "  Input Filename incorrect!!! TestNo:%d - %d needs Input File: -audio <xxx>.awb\n\n", firsttest, lasttest);
+                return false;
+            }
+            break;
+
         case AACADIF_FOutput_Test:
             bAudioTest = true;
             if (!(oscl_strstr(aInputAudioFileName.get_cstr(), ".aacadif") != NULL || oscl_strstr(aInputAudioFileName.get_cstr(), ".AACADIF") != NULL))
@@ -1678,7 +1709,7 @@ int local_main(FILE* filehandle, cmd_line* command_line)
     OsclErrorTrap::Init();
     OsclMem::Init();
 
-#ifdef USE_OMX_ENC_NODE
+#if USE_OMX_ENC_NODE
     OMX_Init();
 #endif
 
@@ -1705,7 +1736,7 @@ int local_main(FILE* filehandle, cmd_line* command_line)
     {
         fprintf(file, "Error!  Leave %d\n", err);
     }
-#ifdef USE_OMX_ENC_NODE
+#if USE_OMX_ENC_NODE
     OMX_Deinit();
 #endif
     //Cleanup
@@ -2030,6 +2061,107 @@ void FindVideoEncoder(cmd_line* command_line, OSCL_HeapString<OsclMemAllocator>&
     }
 }
 
+//get audio encoder type from arguments
+// -encA 0: AMR-NB
+//       1: AMR-WB
+//       2: AAC-ADIF
+//       3: AAC-ADTS
+//       4: AAC-MPEG4_AUDIO
+
+void FindAudioEncoder(cmd_line* command_line, OSCL_HeapString<OsclMemAllocator>& aAudioEncoderInfo, FILE *aFile)
+{
+    aAudioEncoderInfo = SOURCENAME_PREPEND_STRING;
+    aAudioEncoderInfo += KAMRNbEncMimeType;
+
+    int cmdArgIndex = 0;
+    bool cmdline_iswchar = command_line->is_wchar();
+
+    int count = command_line->get_count();
+
+    // Search for the "-encA" argument
+    for (int ii = 0; ii < count; ii++)
+    {
+        char argstr[128];
+
+        // Convert to UTF8 if necessary
+        if (cmdline_iswchar)
+        {
+            oscl_wchar* argwstr = NULL;
+            command_line->get_arg(ii, argwstr);
+            oscl_UnicodeToUTF8(argwstr, oscl_strlen(argwstr), argstr, 128);
+            argstr[127] = '\0';
+        }
+        else
+        {
+            char* tmpargstr = NULL;
+            command_line->get_arg(ii, tmpargstr);
+            uint32 len = oscl_strlen(tmpargstr);
+            oscl_strncpy(argstr, tmpargstr, len);
+            argstr[len] = '\0';
+        }
+
+        // Do the string compare
+        if (oscl_strcmp(argstr, "-help") == 0)
+        {
+            fprintf(aFile, "Audio Encoder Type option. Default is AMRNb:\n");
+            fprintf(aFile, "  -encA encodertype\n");
+            fprintf(aFile, "  specifies the encoder to be used for authoring\n  0:AMRNb\n  1:AMRWb\n  2:AAC_ADIF\n 3:AAC_ADTS\n 4:AAC MPEG4\n");
+            fprintf(aFile, "  e.g -encA 0 \n\n");
+        }
+        else if (oscl_strcmp(argstr, "-encA") == 0)
+        {
+            cmdArgIndex = ++ii;
+            break;
+        }
+    }
+
+    if (cmdArgIndex > 0)
+    {
+        uint32 encType = 0;
+
+        // Convert to UTF8 if necessary
+        if (cmdline_iswchar)
+        {
+            oscl_wchar* cmdArg;
+            command_line->get_arg(cmdArgIndex, cmdArg);
+            char tmpstr[3];
+            oscl_UnicodeToUTF8(cmdArg, oscl_strlen(cmdArg), tmpstr, 3);
+            tmpstr[2] = '\0';
+            PV_atoi(tmpstr, 'd', 1, encType);
+        }
+        else
+        {
+            char* cmdArg = NULL;
+            command_line->get_arg(cmdArgIndex, cmdArg);
+            PV_atoi(cmdArg, 'd', 1, encType);
+
+        }
+
+        switch (encType)
+        {
+            case 0:
+                aAudioEncoderInfo = KAMRNbEncMimeType;
+                break;
+            case 1:
+                aAudioEncoderInfo = KAMRWbEncMimeType;
+                break;
+            case 2:
+                aAudioEncoderInfo = KAACADIFEncMimeType;
+                break;
+            case 3:
+                aAudioEncoderInfo = KAACADTSEncMimeType;
+                break;
+            case 4:
+                aAudioEncoderInfo = KAACMP4EncMimeType;
+                break;
+            default:
+                fprintf(aFile, "Encoder Type not supported\n Using AMR-NB encoder\n");
+                break;
+        }
+
+    }
+}
+
 bool FindAuthoringMode(cmd_line* command_line, FILE *aFile)
 {
     bool iAuthoringMode = false;
@@ -2086,6 +2218,10 @@ OSCL_HeapString<OsclMemAllocator> FindComposerType(OSCL_HeapString<OsclMemAlloca
     else if (oscl_strstr(aFileName.get_str(), ".amr"))
     {
         compType = KAMRNbComposerMimeType;
+    }
+    else if (oscl_strstr(aFileName.get_str(), ".awb"))
+    {
+        compType = KAMRWBComposerMimeType;
     }
     else
     {
@@ -2205,6 +2341,7 @@ int RunUnCompressedTest(cmd_line *aCommandLine, int32 &aFirstTest, int32 &aLastT
     OSCL_HeapString<OsclMemAllocator> filenameinfo;
     OSCL_HeapString<OsclMemAllocator> outputfilenameinfo;
     OSCL_HeapString<OsclMemAllocator> videoencoderinfo;
+    OSCL_HeapString<OsclMemAllocator> audioencoderinfo;
     OSCL_HeapString<OsclMemAllocator> configfileinfo;
     PVMFFormatType inputformattype ;
     PVMediaInputAuthorEngineTestParam testparam;
@@ -2213,6 +2350,7 @@ int RunUnCompressedTest(cmd_line *aCommandLine, int32 &aFirstTest, int32 &aLastT
     FindSourceFile(aCommandLine, filenameinfo, inputformattype, file);
     FindOutputFile(aCommandLine, outputfilenameinfo, file);
     FindVideoEncoder(aCommandLine, videoencoderinfo, file);
+    FindAudioEncoder(aCommandLine, audioencoderinfo, file);
 
     testparam.iFirstTest = aFirstTest;
     testparam.iLastTest = aLastTest;
@@ -2221,7 +2359,7 @@ int RunUnCompressedTest(cmd_line *aCommandLine, int32 &aFirstTest, int32 &aLastT
     testparam.iMediainputParam.iIPFileInfo = filenameinfo;
     testparam.iMediainputParam.iOPFileInfo = outputfilenameinfo;
     testparam.iMediainputParam.iVideoEncInfo = videoencoderinfo;
-    testparam.iMediainputParam.iAudioEncInfo = KAMRNbEncMimeType;
+    testparam.iMediainputParam.iAudioEncInfo = audioencoderinfo; //KAMRNbEncMimeType;
     testparam.iMediainputParam.iComposerInfo = FindComposerType(outputfilenameinfo, file);
 
     //setting the default configuration info
@@ -2254,8 +2392,8 @@ int RunUnCompressedTest(cmd_line *aCommandLine, int32 &aFirstTest, int32 &aLastT
             && (PVMediaInput_ErrorHandling_Test_WrongIPFileName != aFirstTest))
     {
         fprintf(file, "Begin test with the following parameters:\
-		\nInput File Name : %s\nOutput File Name: %s,\nVideo Encoder: %s,\nAudio Encoder: %s,\
-		\nComposer: %s\n", testparam.iMediainputParam.iIPFileInfo.get_cstr(), testparam.iMediainputParam.iOPFileInfo.get_cstr(),
+                \nInput File Name : %s\nOutput File Name: %s,\nVideo Encoder: %s,\nAudio Encoder: %s,\
+                \nComposer: %s\n", testparam.iMediainputParam.iIPFileInfo.get_cstr(), testparam.iMediainputParam.iOPFileInfo.get_cstr(),
                 testparam.iMediainputParam.iVideoEncInfo.get_cstr(), testparam.iMediainputParam.iAudioEncInfo.get_cstr(),
                 testparam.iMediainputParam.iComposerInfo.get_cstr());
     }
@@ -2324,6 +2462,7 @@ int _local_main(FILE *filehandle, cmd_line *command_line)
         FindSourceFile(command_line, filenameinfo, (PVMFFormatType&)formaterr, file);
         FindOutputFile(command_line, filenameinfo, file);
         FindVideoEncoder(command_line, filenameinfo, file);
+        FindAudioEncoder(command_line, filenameinfo, file);
         FindAuthoringTime(command_line, (uint32&)err, file);
 
         fprintf(file, "NO CMD LINE ARGS WERE REQUIRED TO RUN COMPRESSED ERROR HANDLING TESTS [test range from:%d to %d]\n\n", KCompressed_Errorhandling_TestBegin, KCompressed_Errorhandling_TestEnd);

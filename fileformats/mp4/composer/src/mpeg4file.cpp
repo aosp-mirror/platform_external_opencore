@@ -32,32 +32,65 @@
 #include "a_atomdefs.h"
 #include "atomutils.h"
 
-#include "objectdescriptorupdate.h"
-
 #include "pv_gau.h"
 #include "oscl_byte_order.h"
 #include "oscl_bin_stream.h"
 
 #include "pv_mp4ffcomposer_config.h"
 
-const uint8 aZeroSetMask[9] = {0xfe, 0xfe, 0xfc, 0xfc, 0xf0, 0xfe, 0xf0, 0xf0, 0xfe};
+const uint8 aAMRNBZeroSetMask[9] =
+{
+    0xfe, 0xfe, 0xfc, 0xfc,
+    0xf0, 0xfe, 0xf0, 0xf0,
+    0xfe
+};
+//IETF AMR WB Speech Frame Sizes (including zero byte padding but not including TOC)
+//FT 0 (6.6 Kbps) - 17 bytes = 136 bits
+//FT 1 (8.85 Kbps) - 23 bytes = 184 bits
+//FT 2 (12.65 Kbps) - 32 bytes = 256 bits
+//FT 3 (14.25 Kbps) - 36 bytes = 288 bits
+//FT 4 (15.85 Kbps) - 40 bytes = 320 bits
+//FT 5 (18.25 Kbps) - 46 bytes = 368 bits
+//FT 6 (19.85 Kbps) - 50 bytes = 400 bits
+//FT 7 (23.05 Kbps) - 58 bytes = 464 bits
+//FT 8 (23.85 Kbps) - 60 bytes = 480 bits
+//FT 9 (SID) - 5 bytes = 40 bits
+//FT 10-13 - Reserved
+//FT 14 (Lost frame) and FT 15 (NO DATA) - 0 bytes = 0 bits
+
+//IETF AMR WB IF1 Speech Frame Sizes (just Class A, B & C speech bits, does not include FT or any other headers)
+//FT 0 (6.6 Kbps) -  132 bits; num-bits-padded = 4
+//FT 1 (8.85 Kbps) - 177 bits; num-bits-padded = 7
+//FT 2 (12.65 Kbps) - 253 bits; num-bits-padded = 3
+//FT 3 (14.25 Kbps) - 285 bits; num-bits-padded = 3
+//FT 4 (15.85 Kbps) - 317 bits; num-bits-padded = 3
+//FT 5 (18.25 Kbps) - 365 bits; num-bits-padded = 3
+//FT 6 (19.85 Kbps) - 397 bits; num-bits-padded = 3
+//FT 7 (23.05 Kbps) - 461 bits; num-bits-padded = 3
+//FT 8 (23.85 Kbps) - 477 bits; num-bits-padded = 3
+//FT 9 (SID) - 5 bytes = 40 bits; num-bits-padded = 0
+//FT 10-13 - Reserved
+//FT 14 (Lost frame) and FT 15 (NO DATA) - 0 bytes = 0 bits; num-bits-padded = 0
+
+// Difference between IF1 bits and IETF storage bits is padded with zeros to byte align the frame
+const uint8 aAMRWBZeroSetMask[9] =
+{
+    0xf0, 0x80, 0xf8, 0xf8,
+    0xf8, 0xf8, 0xf8, 0xf8,
+    0xf8
+};
 
 typedef Oscl_Vector<PVA_FF_MediaDataAtom*, OsclMemAllocator> PVA_FF_MediaDataAtomVecType;
 typedef Oscl_Vector<PVA_FF_MovieFragmentAtom*, OsclMemAllocator> PVA_FF_MovieFragmentAtomVecType;
 typedef Oscl_Vector<PVA_FF_InterLeaveBuffer*, OsclMemAllocator> PVA_FF_InterLeaveBufferVecType;
 
+//common to both AMR and AMR-WB
 const uint32 AMRModeSetMask[16] =
 {
     0x0001, 0x0002, 0x0004, 0x0008,
     0x0010, 0x0020, 0x0040, 0x0080,
     0x0100, 0x0200, 0x0400, 0x0800,
     0x1000, 0x2000, 0x4000, 0x8000
-};
-
-const uint32 AMRBitRates[8] =
-{
-    4750, 5150, 5900, 6700,
-    7400, 7950, 10200, 12200
 };
 
 // Constructor
@@ -403,39 +436,13 @@ PVA_FF_Mpeg4File::setOutputFileHandle(MP4_AUTHOR_FF_FILE_HANDLE outputFileHandle
 }
 
 uint32
-PVA_FF_Mpeg4File::addTrack(int32 mediaType, int32 codecType, bool oDirectRender,
-                           uint8 profile, uint8 profileComp, uint8 level)
+PVA_FF_Mpeg4File::addTrack(int32 mediaType,
+                           int32 codecType,
+                           bool oDirectRender,
+                           uint8 profile,
+                           uint8 profileComp,
+                           uint8 level)
 {
-    bool o3GPPCompliant = false;
-
-    //Always 3GPP in case of AMR and H263
-    if ((uint32) mediaType == MEDIA_TYPE_AUDIO)
-    {
-        if (codecType == CODEC_TYPE_AMR_AUDIO)
-        {
-            o3GPPCompliant = true;
-        }
-    }
-    else if ((uint32) mediaType == MEDIA_TYPE_VISUAL)
-    {
-        if (codecType == CODEC_TYPE_BASELINE_H263_VIDEO)
-        {
-            o3GPPCompliant = true;
-        }
-        if (codecType == CODEC_TYPE_AVC_VIDEO)
-        {
-            o3GPPCompliant = true;
-        }
-
-    }
-    else if ((uint32) mediaType == MEDIA_TYPE_TEXT) //added for timed text track
-    {
-        if (codecType == CODEC_TYPE_TIMED_TEXT)
-        {
-            o3GPPCompliant = true;
-        }
-    }
-
     uint32 TrackID = 0;
     PVA_FF_TrackAtom *pmediatrack = NULL;
     _codecType = codecType;
@@ -499,7 +506,7 @@ PVA_FF_Mpeg4File::addTrack(int32 mediaType, int32 codecType, bool oDirectRender,
                       _pmovieAtom->getMutableMovieHeaderAtom().findNextTrackID(),
                       _fileAuthoringFlags,
                       codecType,
-                      o3GPPCompliant, 1, profile, profileComp, level),
+                      1, profile, profileComp, level),
                       pmediatrack);
 
         if (mda)
@@ -522,12 +529,10 @@ PVA_FF_Mpeg4File::addTrack(int32 mediaType, int32 codecType, bool oDirectRender,
 
         TrackID = pmediatrack->getTrackID();
 
-        if (codecType == CODEC_TYPE_AMR_AUDIO)
+        if ((codecType == CODEC_TYPE_AMR_AUDIO) ||
+                (codecType == CODEC_TYPE_AMR_WB_AUDIO))
         {
-            if (o3GPPCompliant)
-            {
-                _o3GPPTrack = true;
-            }
+            _o3GPPTrack = true;
         }
         if (codecType == CODEC_TYPE_AAC_AUDIO)
         {
@@ -538,19 +543,10 @@ PVA_FF_Mpeg4File::addTrack(int32 mediaType, int32 codecType, bool oDirectRender,
 
     if ((uint32) mediaType == MEDIA_TYPE_VISUAL)
     {
-        if (codecType == CODEC_TYPE_BASELINE_H263_VIDEO)
+        if ((codecType == CODEC_TYPE_BASELINE_H263_VIDEO) ||
+                (codecType == CODEC_TYPE_AVC_VIDEO))
         {
-            if (o3GPPCompliant)
-            {
-                _o3GPPTrack = true;
-            }
-        }
-        else if (codecType == CODEC_TYPE_AVC_VIDEO)
-        {
-            if (o3GPPCompliant)
-            {
-                _o3GPPTrack = true;
-            }
+            _o3GPPTrack = true;
         }
         else if (codecType == CODEC_TYPE_MPEG4_VIDEO)
         {
@@ -559,12 +555,11 @@ PVA_FF_Mpeg4File::addTrack(int32 mediaType, int32 codecType, bool oDirectRender,
         }
 
         // Create default video track and add it to moov atom
-
         PV_MP4_FF_NEW(fp->auditCB, PVA_FF_TrackAtom, (MEDIA_TYPE_VISUAL,
                       _pmovieAtom->getMutableMovieHeaderAtom().findNextTrackID(),
                       _fileAuthoringFlags,
                       codecType,
-                      o3GPPCompliant, 1, profile, profileComp, level),
+                      1, profile, profileComp, level),
                       pmediatrack);
 
         // add video interleave buffer for track
@@ -592,24 +587,18 @@ PVA_FF_Mpeg4File::addTrack(int32 mediaType, int32 codecType, bool oDirectRender,
     {
         if (codecType == CODEC_TYPE_TIMED_TEXT)
         {
-            if (o3GPPCompliant)
-            {
-                _o3GPPTrack = true;
-            }
+            _o3GPPTrack = true;
         }
-
         // Create default video track and add it to moov atom
-
         PV_MP4_FF_NEW(fp->auditCB, PVA_FF_TrackAtom, (MEDIA_TYPE_TEXT,
                       _pmovieAtom->getMutableMovieHeaderAtom().findNextTrackID(),
                       _fileAuthoringFlags,
                       codecType,
-                      o3GPPCompliant, 1,
+                      1,
                       profile, profileComp, level),
                       pmediatrack);
 
         // add text interleave buffer for track
-
         if (_oInterLeaveEnabled)
         {
             PV_MP4_FF_NEW(fp->auditCB, PVA_FF_InterLeaveBuffer, (MEDIA_TYPE_TEXT,
@@ -625,13 +614,9 @@ PVA_FF_Mpeg4File::addTrack(int32 mediaType, int32 codecType, bool oDirectRender,
 
         // Returns the index of the reference in the table to which this was
         // just added (with a 1-based index NOT a zero-based index)
-
         TrackID = pmediatrack->getTrackID();
-
     }
-
     recomputeSize();
-
     return (TrackID);
 }
 
@@ -801,100 +786,54 @@ PVA_FF_Mpeg4File::addSampleToTrack(uint32 trackID,
         {
             if (mediaTrack != NULL)
             {
-                if (mediaTrack->getCodecType() == CODEC_TYPE_AMR_AUDIO)
+                if ((mediaTrack->getCodecType() == CODEC_TYPE_AMR_AUDIO) ||
+                        (mediaTrack->getCodecType() == CODEC_TYPE_AMR_WB_AUDIO))
                 {
                     if (size >= 1)
                     {
                         PVA_FF_TrackAtom *track = _pmovieAtom->getMediaTrack(trackID);
-
                         if (track != NULL)
                         {
-                            if (track->Is3GPPTrack())
+                            // FT is in the first byte that comes off the encoder
+                            flags = *((uint8*)(fragmentList.front().ptr));
+                            uint32 mode_set = 0;
+                            if (flags < 16)
                             {
-                                // FT fp in the first byte that comes off the encoder
-                                flags = *((uint8*)(fragmentList.front().ptr));
-
-                                uint32 mode_set = 0;
-
-                                if (flags < 16)
+                                mode_set = AMRModeSetMask[(flags&0x0f)];
+                            }
+                            if (flags < 9)
+                            {
+                                // JUST TO ENSURE THAT THE PADDED BITS ARE ZERO
+                                fragment = fragmentList.back();
+                                if (mediaTrack->getCodecType() == CODEC_TYPE_AMR_AUDIO)
                                 {
-                                    mode_set = AMRModeSetMask[(flags&0x0f)];
+                                    ((uint8*)fragment.ptr)[ fragment.len - 1] &= aAMRNBZeroSetMask[(flags&0x0f)];
+                                }
+                                else if (mediaTrack->getCodecType() == CODEC_TYPE_AMR_WB_AUDIO)
+                                {
+                                    ((uint8*)fragment.ptr)[ fragment.len - 1] &= aAMRWBZeroSetMask[(flags&0x0f)];
                                 }
 
-                                if (flags < 9)
+                            }
+                            if (_oInterLeaveEnabled)
+                            {
+                                if (!addMediaSampleInterleave(trackID, fragmentList, size, ts, flags))
                                 {
-                                    // JUST TO ENSURE THAT THE PADDED BITS ARE ZERO
-                                    fragment = fragmentList.back();
-                                    ((uint8*)fragment.ptr)[ fragment.len - 1] &= aZeroSetMask[(flags&0x0f)];
-
-                                }
-
-                                if (_oInterLeaveEnabled)
-                                {
-                                    if (!addMediaSampleInterleave(trackID, fragmentList, size, ts, flags))
-                                    {
-                                        return false;
-                                    }
-                                }
-                                else
-                                {
-                                    // Add to mdat PVA_FF_Atom for the specified track
-                                    if (!mdatAtom->addRawSample(fragmentList, size, mediaType, codecType))
-                                    {
-                                        retVal = false;
-                                    }
-                                    // Add to moov atom (in turn adds to tracks)
-                                    _pmovieAtom->addSampleToTrack(trackID, fragmentList, size,
-                                                                  ts, flags);
+                                    return false;
                                 }
                             }
                             else
                             {
-
-                                // FT fp in the first byte that comes off the encoder
-                                flags = *((uint8*)(fragmentList.front()).ptr);
-
                                 // Add to mdat PVA_FF_Atom for the specified track
-                                uint32 mode_set = 0;
-
-                                if (flags < 16)
+                                if (!mdatAtom->addRawSample(fragmentList, size, mediaType, codecType))
                                 {
-                                    mode_set = AMRModeSetMask[(flags&0x0f)];
+                                    retVal = false;
                                 }
-
-                                if (flags < 9)
-                                {
-                                    // JUST TO ENSURE THAT THE PADDED BITS ARE ZERO
-                                    fragment = fragmentList.back();
-                                    ((uint8*)fragment.ptr)[ fragment.len - 1] &= aZeroSetMask[(flags&0x0f)];
-                                }
-
-                                if (_oInterLeaveEnabled)
-                                {
-                                    if (!addMediaSampleInterleave(trackID, fragmentList, size, ts, flags))
-                                    {
-                                        return false;
-                                    }
-                                }
-                                else
-                                {
-                                    Oscl_Vector <OsclMemoryFragment, OsclMemAllocator>& list = fragmentList;
-                                    list.front().ptr = (uint8*)(list.front().ptr) + 1;
-                                    list.front().len = list.front().len - 1;
-                                    if (!mdatAtom->addRawSample(list, size - 1, mediaType, codecType))
-                                    {
-                                        retVal = false;
-                                    }
-
-                                    // Add to moov atom (in turn adds to tracks)
-                                    list = fragmentList;
-                                    list.back().len = list.back().len - 1;
-                                    _pmovieAtom->addSampleToTrack(trackID, list, (size - 1),
-                                                                  ts, flags);
-                                }
+                                // Add to moov atom (in turn adds to tracks)
+                                _pmovieAtom->addSampleToTrack(trackID, fragmentList, size,
+                                                              ts, flags);
                             }
                         }
-
                     }
                     else
                     {
@@ -1242,7 +1181,10 @@ PVA_FF_Mpeg4File::setVideoParams(uint32 trackID,
     OSCL_UNUSED_ARG(interval);
     PVA_FF_TrackAtom *trackAtom;
     trackAtom = _pmovieAtom->getMediaTrack(trackID);
-    trackAtom->setVideoParams(frame_width, frame_height);
+
+    if (trackAtom != NULL)
+        trackAtom->setVideoParams(frame_width, frame_height);
+
     return;
 }
 
@@ -1781,93 +1723,71 @@ PVA_FF_Mpeg4File::addMultipleAccessUnitsToTrack(uint32 trackID, GAU *pgau)
     {
         if (_modifiable)
         {
-            if (mediaTrack->getCodecType() == CODEC_TYPE_AMR_AUDIO)
+            if ((mediaTrack->getCodecType() == CODEC_TYPE_AMR_AUDIO) ||
+                    (mediaTrack->getCodecType() == CODEC_TYPE_AMR_WB_AUDIO))
             {
-                if (mediaTrack->Is3GPPTrack())
+                int32 index = 0;
+
+                uint8  *frag_ptr = (uint8 *)pgau->buf.fragments[index].ptr;
+                int32 frag_len  = pgau->buf.fragments[index].len;
+
+                for (uint32 k = 0; k < pgau->numMediaSamples; k++)
                 {
-                    int32 index = 0;
+                    uint8 frame_type = (uint8)pgau->info[k].sample_info;
 
-                    uint8  *frag_ptr = (uint8 *)pgau->buf.fragments[index].ptr;
-                    int32 frag_len  = pgau->buf.fragments[index].len;
+                    frame_type = (uint8)(frame_type << 3);
+                    frame_type |= 0x04;
 
-                    for (uint32 k = 0; k < pgau->numMediaSamples; k++)
+                    // Add to mdat PVA_FF_Atom for the specified track
+                    if (!mdatAtom->addRawSample(&frame_type, 1))
                     {
-                        uint8 frame_type = (uint8)pgau->info[k].sample_info;
+                        retVal = false;
+                    }
 
-                        frame_type = (uint8)(frame_type << 3);
-                        frame_type |= 0x04;
+                    int32 frame_size = pgau->info[k].len;
 
-                        // Add to mdat PVA_FF_Atom for the specified track
-                        if (!mdatAtom->addRawSample(&frame_type, 1))
+                    while (frame_size)
+                    {
+                        if (frag_len >= frame_size)
                         {
-                            retVal = false;
-                        }
-
-                        int32 frame_size = pgau->info[k].len;
-
-                        while (frame_size)
-                        {
-                            if (frag_len >= frame_size)
+                            // Add to mdat PVA_FF_Atom for the specified track
+                            if (!mdatAtom->addRawSample(frag_ptr,
+                                                        frame_size))
                             {
-                                // Add to mdat PVA_FF_Atom for the specified track
-                                if (!mdatAtom->addRawSample(frag_ptr,
-                                                            frame_size))
-                                {
-                                    retVal = false;
-                                }
-
-                                frag_ptr += frame_size;
-                                frag_len -= frame_size;
-                                frame_size = 0;
+                                retVal = false;
                             }
-                            else
-                            {
-                                // Add to mdat PVA_FF_Atom for the specified track
-                                if (!mdatAtom->addRawSample(frag_ptr,
-                                                            frag_len))
-                                {
-                                    retVal = false;
-                                }
 
-                                frame_size -= frag_len;
-
-                                index++;
-
-                                if (index == pgau->buf.num_fragments)
-                                {
-                                    return false;
-                                }
-
-                                frag_ptr = (uint8 *)pgau->buf.fragments[index].ptr;
-                                frag_len = pgau->buf.fragments[index].len;
-                            }
+                            frag_ptr += frame_size;
+                            frag_len -= frame_size;
+                            frame_size = 0;
                         }
-                        // Add to moov atom (in turn adds to tracks)
-                        _pmovieAtom->addSampleToTrack(trackID, NULL,
-                                                      (pgau->info[k].len + 1),
-                                                      pgau->info[k].ts,
-                                                      (uint8)pgau->info[k].sample_info);
-                    }
-                }
-                else
-                {
-                    for (int32 k = 0; k < pgau->buf.num_fragments; k++)
-                    {
-                        // Add to mdat PVA_FF_Atom for the specified track
-                        if (!mdatAtom->addRawSample(pgau->buf.fragments[k].ptr,
-                                                    pgau->buf.fragments[k].len))
+                        else
                         {
-                            retVal = false;
+                            // Add to mdat PVA_FF_Atom for the specified track
+                            if (!mdatAtom->addRawSample(frag_ptr,
+                                                        frag_len))
+                            {
+                                retVal = false;
+                            }
+
+                            frame_size -= frag_len;
+
+                            index++;
+
+                            if (index == pgau->buf.num_fragments)
+                            {
+                                return false;
+                            }
+
+                            frag_ptr = (uint8 *)pgau->buf.fragments[index].ptr;
+                            frag_len = pgau->buf.fragments[index].len;
                         }
                     }
-                    for (uint32 j = 0; j < pgau->numMediaSamples; j++)
-                    {
-                        // Add to moov atom (in turn adds to tracks)
-                        _pmovieAtom->addSampleToTrack(trackID, NULL,
-                                                      pgau->info[j].len,
-                                                      pgau->info[j].ts,
-                                                      (uint8)pgau->info[j].sample_info);
-                    }
+                    // Add to moov atom (in turn adds to tracks)
+                    _pmovieAtom->addSampleToTrack(trackID, NULL,
+                                                  (pgau->info[k].len + 1),
+                                                  pgau->info[k].ts,
+                                                  (uint8)pgau->info[k].sample_info);
                 }
             }
             else

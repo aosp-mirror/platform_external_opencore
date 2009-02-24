@@ -31,8 +31,6 @@ class DownloadNodesCoreLibraryLoader
     public:
         static PVMFNodeInterface* CreateDownloadManagerNode(int32 aPriority);
         static bool DeleteDownloadManagerNode(PVMFNodeInterface* aNode);
-    private:
-        static OsclSharedLibrary* iOsclSharedLibrary;
 };
 
 #endif // PVMFDOWNLOADNODEREG_H_INCLUDED

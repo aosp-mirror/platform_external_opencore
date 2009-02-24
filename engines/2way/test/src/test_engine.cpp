@@ -530,7 +530,6 @@ void engine_test::create_sink_source()
     iAudioSourceFileSettings.iFileName = AUDIO_SOURCE_FILENAME;
     iAudioSourceFileSettings.iSamplingFrequency = 8000;
     iAudioSourceFileSettings.iNumChannels = 1;
-    //iAudioSourceFileSettings.iFrameRateSimulation = true;
     iAudioSourceIOControl = PvmiMIOFileInputFactory::Create(iAudioSourceFileSettings);
     iAudioSource = PvmfMediaInputNodeFactory::Create(iAudioSourceIOControl);
 
@@ -539,7 +538,6 @@ void engine_test::create_sink_source()
     iAudioSourceRawFileSettings.iFileName = AUDIO_SOURCE_RAW_FILENAME;
     iAudioSourceRawFileSettings.iSamplingFrequency = 8000;
     iAudioSourceRawFileSettings.iNumChannels = 1;
-    //iAudioSourceRawFileSettings.iFrameRateSimulation = true;
     iAudioSourceRawIOControl = PvmiMIOFileInputFactory::Create(iAudioSourceRawFileSettings);
     iAudioSourceRaw = PvmfMediaInputNodeFactory::Create(iAudioSourceRawIOControl);
 
@@ -548,7 +546,6 @@ void engine_test::create_sink_source()
     iAudioSource2FileSettings.iFileName = AUDIO_SOURCE_FILENAME;
     iAudioSource2FileSettings.iSamplingFrequency = 8000;
     iAudioSource2FileSettings.iNumChannels = 1;
-    //iAudioSource2FileSettings.iFrameRateSimulation = true;
     iAudioSource2IOControl = PvmiMIOFileInputFactory::Create(iAudioSource2FileSettings);
     iAudioSource2 = PvmfMediaInputNodeFactory::Create(iAudioSource2IOControl);
 
@@ -557,7 +554,6 @@ void engine_test::create_sink_source()
     iAudioSource3FileSettings.iFileName = AUDIO_SOURCE3_FILENAME;
     iAudioSource3FileSettings.iSamplingFrequency = 8000;
     iAudioSource3FileSettings.iNum20msFramesPerChunk = 1;
-    //iAudioSource3FileSettings.iFrameRateSimulation = true;
     iAudioSource3FileSettings.iNumChannels = 1;
     iAudioSource3IOControl = PvmiMIOFileInputFactory::Create(iAudioSource3FileSettings);
     iAudioSource3 = PvmfMediaInputNodeFactory::Create(iAudioSource3IOControl);
@@ -565,19 +561,16 @@ void engine_test::create_sink_source()
     // create the audio sinks
 
     iAudioSinkFileName = AUDIO_SINK_FILENAME;
-    //iAudioSinkIOControl = new PVRefFileOutput(iAudioSinkFileName, MEDIATYPE_AUDIO, true);
-    //iAudioSink = PVMediaOutputNodeFactory::CreateMediaOutputNode(iAudioSinkIOControl);
-    iAudioSink = PVFileOutputNodeFactory::CreateFileOutput(iAudioSinkFileName, PVMF_MIME_AMR_IF2);
+    iAudioSinkIOControl = new PVRefFileOutput(iAudioSinkFileName, MEDIATYPE_AUDIO, true);
+    iAudioSink = PVMediaOutputNodeFactory::CreateMediaOutputNode(iAudioSinkIOControl);
 
     iAudioSinkRawFileName = AUDIO_SINK_RAW_FILENAME;
-    //iAudioSinkRawIOControl = new PVRefFileOutput(iAudioSinkRawFileName, MEDIATYPE_AUDIO, false);
-    // iAudioSinkRaw = PVMediaOutputNodeFactory::CreateMediaOutputNode(iAudioSinkRawIOControl);
-    iAudioSinkRaw = PVFileOutputNodeFactory::CreateFileOutput(iAudioSinkRawFileName, PVMF_MIME_PCM16);
+    iAudioSinkRawIOControl = new PVRefFileOutput(iAudioSinkRawFileName, MEDIATYPE_AUDIO, false);
+    iAudioSinkRaw = PVMediaOutputNodeFactory::CreateMediaOutputNode(iAudioSinkRawIOControl);
 
     iAudioSink2FileName = AUDIO_SINK2_FILENAME;
-    // iAudioSink2IOControl = new PVRefFileOutput(iAudioSink2FileName, MEDIATYPE_AUDIO, true);
-    //iAudioSink2 = PVMediaOutputNodeFactory::CreateMediaOutputNode(iAudioSink2IOControl);
-    iAudioSink2 = PVFileOutputNodeFactory::CreateFileOutput(iAudioSink2FileName, PVMF_MIME_AMR_IF2);
+    iAudioSink2IOControl = new PVRefFileOutput(iAudioSink2FileName, MEDIATYPE_AUDIO, true);
+    iAudioSink2 = PVMediaOutputNodeFactory::CreateMediaOutputNode(iAudioSink2IOControl);
 
     // create the video sources
     iVideoSourceYUVFileSettings.iMediaFormat = PVMF_MIME_YUV420;
@@ -587,7 +580,6 @@ void engine_test::create_sink_source()
     iVideoSourceYUVFileSettings.iFrameHeight = 144;
     iVideoSourceYUVFileSettings.iFrameWidth = 176;
     iVideoSourceYUVFileSettings.iFrameRate = 5;
-    //iVideoSourceYUVFileSettings.iFrameRateSimulation = true;
     iVideoSourceYUVIOControl = PvmiMIOFileInputFactory::Create(iVideoSourceYUVFileSettings);
     iVideoSourceYUV = PvmfMediaInputNodeFactory::Create(iVideoSourceYUVIOControl);
 
@@ -599,7 +591,7 @@ void engine_test::create_sink_source()
     iVideoSourceH263FileSettings.iFrameHeight = 144;
     iVideoSourceH263FileSettings.iFrameWidth = 176;
     iVideoSourceH263FileSettings.iFrameRate = 5;
-    //iVideoSourceH263FileSettings.iFrameRateSimulation = true;
+
 
     iVideoSourceH263IOControl = PvmiMIOFileInputFactory::Create(iVideoSourceH263FileSettings);
     iVideoSourceH263 = PvmfMediaInputNodeFactory::Create(iVideoSourceH263IOControl);
@@ -612,29 +604,24 @@ void engine_test::create_sink_source()
     iVideoSourceM4VFileSettings.iFrameHeight = 144;
     iVideoSourceM4VFileSettings.iFrameWidth = 176;
     iVideoSourceM4VFileSettings.iFrameRate = 5;
-    //iVideoSourceM4VFileSettings.iFrameRateSimulation = true;
 
     iVideoSourceM4VIOControl = PvmiMIOFileInputFactory::Create(iVideoSourceM4VFileSettings);
     iVideoSourceM4V = PvmfMediaInputNodeFactory::Create(iVideoSourceM4VIOControl);
 
     // create the video sinks
     iVideoSinkYUVFileName = VIDEO_SINK_YUV_FILENAME;
-    // iVideoSinkYUVIOControl = new PVRefFileOutput(iVideoSinkYUVFileName, MEDIATYPE_VIDEO, false);
+    iVideoSinkYUVIOControl = new PVRefFileOutput(iVideoSinkYUVFileName, MEDIATYPE_VIDEO, false);
 
-    //iVideoSinkYUV = PVMediaOutputNodeFactory::CreateMediaOutputNode(iVideoSinkYUVIOControl);
-    iVideoSinkYUV = PVFileOutputNodeFactory::CreateFileOutput(iVideoSinkYUVFileName, PVMF_MIME_YUV420);
+    iVideoSinkYUV = PVMediaOutputNodeFactory::CreateMediaOutputNode(iVideoSinkYUVIOControl);
 
     iVideoSinkH263FileName = VIDEO_SINK_H263_FILENAME;
-    // iVideoSinkH263IOControl = new PVRefFileOutput(iVideoSinkH263FileName, MEDIATYPE_VIDEO, true);
+    iVideoSinkH263IOControl = new PVRefFileOutput(iVideoSinkH263FileName, MEDIATYPE_VIDEO, true);
+    iVideoSinkH263 = PVMediaOutputNodeFactory::CreateMediaOutputNode(iVideoSinkH263IOControl);
 
-    // iVideoSinkH263 = PVMediaOutputNodeFactory::CreateMediaOutputNode(iVideoSinkH263IOControl);
-    iVideoSinkH263 = PVFileOutputNodeFactory::CreateFileOutput(iVideoSinkH263FileName, PVMF_MIME_H2632000);
 
     iVideoSinkM4VFileName = VIDEO_SINK_M4V_FILENAME;
-    //iVideoSinkM4VIOControl = new PVRefFileOutput(iVideoSinkM4VFileName, MEDIATYPE_VIDEO, true);
-
-    // iVideoSinkM4V = PVMediaOutputNodeFactory::CreateMediaOutputNode(iVideoSinkM4VIOControl);
-    iVideoSinkM4V = PVFileOutputNodeFactory::CreateFileOutput(iVideoSinkM4VFileName, PVMF_MIME_M4V);
+    iVideoSinkM4VIOControl = new PVRefFileOutput(iVideoSinkM4VFileName, MEDIATYPE_VIDEO, true);
+    iVideoSinkM4V = PVMediaOutputNodeFactory::CreateMediaOutputNode(iVideoSinkM4VIOControl);
 
 }
 
@@ -739,44 +726,72 @@ void engine_test::destroy_sink_source()
 
     if (iAudioSink)
     {
-        //PVMediaOutputNodeFactory::DeleteMediaOutputNode(iAudioSink);
-        PVFileOutputNodeFactory::DeleteFileOutput(iAudioSink);
+        PVMediaOutputNodeFactory::DeleteMediaOutputNode(iAudioSink);
         iAudioSink = NULL;
     }
 
     if (iAudioSinkRaw)
     {
-        //PVMediaOutputNodeFactory::DeleteMediaOutputNode(iAudioSinkRaw);
-        PVFileOutputNodeFactory::DeleteFileOutput(iAudioSinkRaw);
+        PVMediaOutputNodeFactory::DeleteMediaOutputNode(iAudioSinkRaw);
         iAudioSinkRaw = NULL;
     }
 
     if (iAudioSink2)
     {
-        //PVMediaOutputNodeFactory::DeleteMediaOutputNode(iAudioSink2);
-        PVFileOutputNodeFactory::DeleteFileOutput(iAudioSink2);
+        PVMediaOutputNodeFactory::DeleteMediaOutputNode(iAudioSink2);
         iAudioSink2 = NULL;
     }
+    if (iAudioSinkIOControl)
+    {
+        PvmiMIOFileInputFactory::Delete(iAudioSinkIOControl);
+        iAudioSinkIOControl = NULL;
+    }
 
+    if (iAudioSinkRawIOControl)
+    {
+        PvmiMIOFileInputFactory::Delete(iAudioSinkRawIOControl);
+        iAudioSinkRawIOControl = NULL;
+    }
+
+    if (iAudioSink2IOControl)
+    {
+        PvmiMIOFileInputFactory::Delete(iAudioSinkIOControl);
+        iAudioSink2IOControl = NULL;
+    }
     if (iVideoSinkYUV)
     {
-        //PVMediaOutputNodeFactory::DeleteMediaOutputNode(iVideoSinkYUV);
-        PVFileOutputNodeFactory::DeleteFileOutput(iVideoSinkYUV);
+        PVMediaOutputNodeFactory::DeleteMediaOutputNode(iVideoSinkYUV);
         iVideoSinkYUV = NULL;
     }
 
     if (iVideoSinkH263)
     {
-        //PVMediaOutputNodeFactory::DeleteMediaOutputNode(iVideoSinkH263);
-        PVFileOutputNodeFactory::DeleteFileOutput(iVideoSinkH263);
+        PVMediaOutputNodeFactory::DeleteMediaOutputNode(iVideoSinkH263);
         iVideoSinkH263 = NULL;
     }
 
     if (iVideoSinkM4V)
     {
-        //PVMediaOutputNodeFactory::DeleteMediaOutputNode(iVideoSinkM4V);
-        PVFileOutputNodeFactory::DeleteFileOutput(iVideoSinkM4V);
+        PVMediaOutputNodeFactory::DeleteMediaOutputNode(iVideoSinkM4V);
         iVideoSinkM4V = NULL;
+    }
+
+    if (iVideoSinkYUVIOControl)
+    {
+        PvmiMIOFileInputFactory::Delete(iVideoSinkYUVIOControl);
+        iVideoSinkYUVIOControl = NULL;
+    }
+
+    if (iVideoSinkM4VIOControl)
+    {
+        PvmiMIOFileInputFactory::Delete(iVideoSinkM4VIOControl);
+        iVideoSinkM4VIOControl = NULL;
+    }
+
+    if (iVideoSinkH263IOControl)
+    {
+        PvmiMIOFileInputFactory::Delete(iVideoSinkH263IOControl);
+        iVideoSinkH263IOControl = NULL;
     }
 
 }

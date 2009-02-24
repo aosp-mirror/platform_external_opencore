@@ -69,6 +69,24 @@ Otherwise it should be set to 0.
 #endif
 
 /**
+OSCL_HAS_LARGE_FILE_SUPPORT macro should be set to 1 if
+the target platform supports more than 32bit file I/O capability.
+Otherwise it should be set to 0.
+*/
+#ifndef OSCL_HAS_LARGE_FILE_SUPPORT
+#error "ERROR: OSCL_HAS_LARGE_FILE_SUPPORT has to be defined to either 1 or 0"
+#endif
+
+/**
+type TOsclFileOffset should be defined as the type used for file size
+and offsets on the target platform.
+Example:
+typedef size_t TOsclFileOffset;
+*/
+typedef TOsclFileOffset __verify__TOsclFileOffset__defined__;
+
+
+/**
 OSCL_FILE_BUFFER_MAX_SIZE macro should be set to
 the desired size of the file I/O cache in bytes.
 Otherwise it should be set to 0.

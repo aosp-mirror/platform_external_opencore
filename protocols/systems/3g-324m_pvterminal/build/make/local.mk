@@ -82,9 +82,5 @@ HDRS := h324/tsc/include/tsc_h324m_config_interface.h \
         h245/per/include/analyzeper.h \
         h245/per/include/genericper.h 
 
-ifeq ($(USING_MONA),1)
-HDRS += h324/tsc/mona/include/mona_extension_interface.h 
-endif 
-
 include $(MK)/library.mk
 

@@ -7,7 +7,8 @@ LOCAL_SRC_FILES := \
  	src/pv_string_uri.cpp \
  	src/rtsp_range_utils.cpp \
  	src/base64_codec.cpp \
- 	src/bitstreamparser.cpp
+ 	src/bitstreamparser.cpp \
+ 	src/wchar_size_utils.cpp
 
 
 LOCAL_MODULE := libpvgendatastruct
@@ -40,6 +41,7 @@ LOCAL_COPY_HEADERS := \
  	src/rtsp_time_formats.h \
  	src/mime_registry.h \
  	src/base64_codec.h \
- 	src/bitstreamparser.h
+ 	src/bitstreamparser.h \
+ 	src/wchar_size_utils.h
 
 include $(BUILD_STATIC_LIBRARY)

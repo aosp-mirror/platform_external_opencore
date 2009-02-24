@@ -114,7 +114,6 @@
 #include "pv_player_track_selection_interface.h"
 #endif
 
-
 #ifndef PV_PLAYER_REGISTRY_INTERFACE_H_INCLUDED
 #include "pv_player_registry_interface.h"
 #endif
@@ -349,6 +348,7 @@ typedef enum
     PVP_ENGINE_COMMAND_GET_LOG_LEVEL,
     PVP_ENGINE_COMMAND_QUERY_UUID,
     PVP_ENGINE_COMMAND_QUERY_INTERFACE,
+    PVP_ENGINE_COMMAND_CANCEL_COMMAND,
     PVP_ENGINE_COMMAND_CANCEL_ALL_COMMANDS,
     PVP_ENGINE_COMMAND_GET_PVPLAYER_STATE,
     PVP_ENGINE_COMMAND_ADD_DATA_SOURCE,
@@ -461,6 +461,7 @@ class PVPlayerEngineCommandCompareLess
                     return 5;
                 case PVP_ENGINE_COMMAND_QUERY_INTERFACE:
                     return 5;
+                case PVP_ENGINE_COMMAND_CANCEL_COMMAND:
                 case PVP_ENGINE_COMMAND_CANCEL_ALL_COMMANDS:
                     return 3;
                 case PVP_ENGINE_COMMAND_GET_PVPLAYER_STATE:
@@ -696,8 +697,6 @@ class PVLogger;
 class PVMFCPMPluginLicenseInterface;
 class PVMFBasicErrorInfoMessage;
 class PVPlayerWatchdogTimer;
-class PVMFDataSourcePacketSourceInterface;
-class PVPlayerDataSourcePacketSource;
 
 typedef enum
 {
@@ -906,6 +905,7 @@ class PVPlayerEngine : public OsclTimerObject,
         PVCommandId GetLogLevel(const char* aTag, PVLogLevelInfo& aLogInfo, const OsclAny* aContextData = NULL);
         PVCommandId QueryUUID(const PvmfMimeString& aMimeType, Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids, bool aExactUuidsOnly = false, const OsclAny* aContextData = NULL);
         PVCommandId QueryInterface(const PVUuid& aUuid, PVInterface*& aInterfacePtr, const OsclAny* aContextData = NULL);
+        PVCommandId CancelCommand(PVCommandId aCancelCmdId, const OsclAny* aContextData = NULL);
         PVCommandId CancelAllCommands(const OsclAny* aContextData = NULL);
         PVCommandId GetPVPlayerState(PVPlayerState& aState, const OsclAny* aContextData = NULL);
         PVMFStatus GetPVPlayerStateSync(PVPlayerState& aState);
@@ -1077,6 +1077,7 @@ class PVPlayerEngine : public OsclTimerObject,
         PVMFBasicErrorInfoMessage* iCommandCompleteErrMsgInErrorHandling;
 
         // Command handling functions
+        void DoCancelCommand(PVPlayerEngineCommand& aCmd);
         void DoCancelAllCommands(PVPlayerEngineCommand& aCmd);
         void DoCancelCommandBeingProcessed(void);
         void DoCancelAcquireLicense(PVPlayerEngineCommand& aCmd);
@@ -1203,7 +1204,6 @@ class PVPlayerEngine : public OsclTimerObject,
         PvmiCapabilityAndConfig* iSourceNodeCapConfigIF;
         PVMFDataSourceNodeRegistryInitInterface* iSourceNodeRegInitIF;
         PVMFCPMPluginLicenseInterface* iSourceNodeCPMLicenseIF;
-        PVMFDataSourcePacketSourceInterface* iSourceNodePacketSourceIF;
         PVInterface* iSourceNodePVInterfaceInit;
         PVInterface* iSourceNodePVInterfaceTrackSel;
         PVInterface* iSourceNodePVInterfacePBCtrl;
@@ -1213,7 +1213,6 @@ class PVPlayerEngine : public OsclTimerObject,
         PVInterface* iSourceNodePVInterfaceCapConfig;
         PVInterface* iSourceNodePVInterfaceRegInit;
         PVInterface* iSourceNodePVInterfaceCPMLicense;
-        PVInterface* iSourceNodePVInterfacePacketSource;
 
         // For CPM license acquisition
         struct PVPlayerEngineCPMAcquireLicenseParam
@@ -1307,7 +1306,6 @@ class PVPlayerEngine : public OsclTimerObject,
             PVP_CMD_SourceNodeQueryCapConfigIF,
             PVP_CMD_SourceNodeQueryCPMLicenseIF,
             PVP_CMD_SourceNodeQuerySrcNodeRegInitIF,
-            PVP_CMD_SourceNodeQueryPacketSourceIF,
             PVP_CMD_SourceNodeInit,
             PVP_CMD_SourceNodeGetDurationValue,
             PVP_CMD_SourceNodeSetDataSourceRate,

@@ -151,7 +151,7 @@ AVCEnc_Status  SetEncodeParam(AVCHandle* avcHandle, AVCEncParams* encParam,
         seqParam->frame_crop_top_offset = 0;
         seqParam->vui_parameters_present_flag = FALSE; /* default */
     }
-    else // use external SPS and PPS
+    else if (extS) // use external SPS and PPS
     {
         seqParam->seq_parameter_set_id = extS->seq_parameter_set_id;
         seqParam->log2_max_frame_num_minus4 = extS->log2_max_frame_num_minus4;
@@ -223,6 +223,10 @@ AVCEnc_Status  SetEncodeParam(AVCHandle* avcHandle, AVCEncParams* encParam,
         {
             oscl_memcpy(&(seqParam->vui_parameters), &(extS->vui_parameters), sizeof(AVCVUIParams));
         }
+    }
+    else
+    {
+        return AVCENC_NOT_SUPPORTED;
     }
 
     /***************** now PPS ******************************/
@@ -330,7 +334,7 @@ AVCEnc_Status  SetEncodeParam(AVCHandle* avcHandle, AVCEncParams* encParam,
         picParam->constrained_intra_pred_flag = (encParam->constrained_intra_pred == AVC_ON) ? TRUE : FALSE;
         picParam->redundant_pic_cnt_present_flag = 0; /* default */
     }
-    else // external PPS
+    else if (extP)// external PPS
     {
         picParam->pic_parameter_set_id = extP->pic_parameter_set_id - 1; /* to be increased by one */
         picParam->seq_parameter_set_id = extP->seq_parameter_set_id;
@@ -454,6 +458,10 @@ AVCEnc_Status  SetEncodeParam(AVCHandle* avcHandle, AVCEncParams* encParam,
             return AVCENC_NOT_SUPPORTED;
         }
         picParam->redundant_pic_cnt_present_flag = extP->redundant_pic_cnt_present_flag; /* default */
+    }
+    else
+    {
+        return AVCENC_NOT_SUPPORTED;
     }
 
     /****************** now set up some SliceHeader parameters ***********/

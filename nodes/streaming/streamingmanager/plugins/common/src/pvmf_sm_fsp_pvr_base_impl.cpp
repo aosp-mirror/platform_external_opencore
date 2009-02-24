@@ -784,8 +784,10 @@ void PVMFSMFSPPVRBase::GetAcutalMediaTSAfterSeek()
         return;
     }
 
-    if ((iSessionSourceInfo->_sessionType == PVMF_MIME_DATA_SOURCE_RTSP_URL) ||
-            (iSessionSourceInfo->_sessionType == PVMF_MIME_DATA_SOURCE_SDP_FILE))
+    if ((iSessionSourceInfo->_sessionType == PVMF_MIME_DATA_SOURCE_RTSP_PVR_FCS_URL) ||
+            (iSessionSourceInfo->_sessionType == PVMF_MIME_DATA_SOURCE_SDP_PVR_FCS_FILE) ||
+            (iSessionSourceInfo->_sessionType == PVMF_MIME_DATA_SOURCE_SDP_BROADCAST)   ||
+            (iSessionSourceInfo->_sessionType == PVMF_MIME_DATA_PVRFF))
     {
 
         iActualMediaDataTS = jbExtIntf->getActualMediaDataTSAfterSeek();
@@ -1878,9 +1880,10 @@ bool PVMFSMFSPPVRBase::RequestJitterBufferPorts(int32 portType,
      */
     int32 portTagStart = portType;
 
-    if ((iSessionSourceInfo->_sessionType == PVMF_MIME_DATA_SOURCE_RTSP_URL)
-            || (iSessionSourceInfo->_sessionType == PVMF_MIME_DATA_SOURCE_SDP_FILE)
-       )
+    if ((iSessionSourceInfo->_sessionType == PVMF_MIME_DATA_SOURCE_RTSP_PVR_FCS_URL) ||
+            (iSessionSourceInfo->_sessionType == PVMF_MIME_DATA_SOURCE_SDP_PVR_FCS_FILE) ||
+            (iSessionSourceInfo->_sessionType == PVMF_MIME_DATA_SOURCE_SDP_BROADCAST) ||
+            (iSessionSourceInfo->_sessionType == PVMF_MIME_DATA_PVRFF))
     {
         for (uint32 i = 0; i < iTrackInfoVec.size(); i++)
         {
@@ -1942,9 +1945,10 @@ bool PVMFSMFSPPVRBase::RequestMediaLayerPorts(int32 portType,
      */
     int32 portTagStart = portType;
 
-    if ((iSessionSourceInfo->_sessionType == PVMF_MIME_DATA_SOURCE_RTSP_URL)
-            || (iSessionSourceInfo->_sessionType == PVMF_MIME_DATA_SOURCE_SDP_FILE)
-       )
+    if ((iSessionSourceInfo->_sessionType == PVMF_MIME_DATA_SOURCE_RTSP_PVR_FCS_URL) ||
+            (iSessionSourceInfo->_sessionType == PVMF_MIME_DATA_SOURCE_SDP_PVR_FCS_FILE) ||
+            (iSessionSourceInfo->_sessionType == PVMF_MIME_DATA_SOURCE_SDP_BROADCAST) ||
+            (iSessionSourceInfo->_sessionType == PVMF_MIME_DATA_PVRFF))
     {
         for (uint32 i = 0; i < iTrackInfoVec.size(); i++)
         {
@@ -2877,12 +2881,6 @@ void PVMFSMFSPPVRBase::DoQueryInterface(PVMFSMFSPBaseNodeCommand& aCmd)
     {
         PVMFCPMPluginLicenseInterface* interimPtr =
             OSCL_STATIC_CAST(PVMFCPMPluginLicenseInterface*, this);
-        *ptr = OSCL_STATIC_CAST(PVInterface*, interimPtr);
-    }
-    else if (*uuid == PVMF_DATA_SOURCE_PACKETSOURCE_INTERFACE_UUID)
-    {
-        PVMFDataSourcePacketSourceInterface* interimPtr =
-            OSCL_STATIC_CAST(PVMFDataSourcePacketSourceInterface*, this);
         *ptr = OSCL_STATIC_CAST(PVInterface*, interimPtr);
     }
     else

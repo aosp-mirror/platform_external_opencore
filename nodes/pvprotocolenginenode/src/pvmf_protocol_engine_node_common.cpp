@@ -2169,9 +2169,10 @@ bool PVMFProtocolEngineNode::CreateProtocolObjects(const uint32 aProtocolType)
     return true;
 }
 
-bool PVMFProtocolEngineNode::RecreateProtocolObjectsForProgressiveStreaming(OsclAny* aSourceData)
+bool PVMFProtocolEngineNode::RecreateProtocolObjectsForProgressiveStreaming(const uint32 aProtocolType, OsclAny* aSourceData)
 {
-    if (!iProtocolContainer->isStreamingPlayback()) return true;
+    if (!iProtocolContainer->isStreamingPlayback() ||
+            aProtocolType != (uint32)PVHTTPPROTOCOL_PROGRESSIVE_DOWNLOAD) return true;
 
     // in case of progressive streaming
     DeleteProtocolObjects();
@@ -2205,6 +2206,12 @@ ProtocolContainerFactory* PVMFProtocolEngineNode::CreateProtocolContainerFactory
 #if defined(PV_PROTOCOL_ENGINE_NODE_PROGRESSIVE_STREAMING_ENABLED)
         case PVHTTPPROTOCOL_PROGRESSIVE_STREAMING:
             aFactory = OSCL_NEW(ProgressiveStreamingContainerFactory, ());
+            break;
+#endif
+
+#if defined(PV_PROTOCOL_ENGINE_NODE_SHOUTCAST_ENABLED)
+        case PVHTTPPROTOCOL_SHOUTCAST:
+            aFactory = OSCL_NEW(ShoutcastContainerFactory, ());
             break;
 #endif
 
@@ -2270,26 +2277,31 @@ PVMFStatus PVMFProtocolEngineNode::SetSourceInitializationData(OSCL_wString& aSo
         OsclAny* aSourceData)
 {
     if ((aSourceFormat != PVMF_MIME_DATA_SOURCE_HTTP_URL) &&
-            (aSourceFormat != PVMF_MIME_DATA_SOURCE_PVX_FILE)) return PVMFErrNotSupported;
+            (aSourceFormat != PVMF_MIME_DATA_SOURCE_PVX_FILE) &&
+            (aSourceFormat != PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL))
+        return PVMFErrNotSupported;
 
     // create protocol objects
-    if (!CreateProtocolObjects(GetProtocolType(aSourceFormat, aSourceData))) return PVMFErrNoMemory;
+    uint32 aProtocolType = GetProtocolType(aSourceFormat, aSourceData);
+    if (!CreateProtocolObjects(aProtocolType)) return PVMFErrNoMemory;
 
     // check and add source data
     if (!iProtocolContainer->addSourceData(aSourceData)) return PVMFFailure;
 
     // need to recreate protocol objects for progressive streaming based on source data
-    if (!RecreateProtocolObjectsForProgressiveStreaming(aSourceData)) return PVMFErrNoMemory;
+    if (!RecreateProtocolObjectsForProgressiveStreaming(aProtocolType, aSourceData)) return PVMFErrNoMemory;
 
-    // set download format
-    if (iInterfacingObjectContainer) iInterfacingObjectContainer->setDownloadFormat(aSourceFormat);
+    if (iInterfacingObjectContainer)
+    {
+        // set download format
+        iInterfacingObjectContainer->setDownloadFormat(aSourceFormat);
 
-    // set URI
-    if (!iInterfacingObjectContainer->getURIObject().setURI(aSourceURL)) return PVMFFailure;
+        // set URI
+        if (!iInterfacingObjectContainer->getURIObject().setURI(aSourceURL)) return PVMFFailure;
 
-
-    // create and set iCfgFile
-    if (!iProtocolContainer->createCfgFile(iInterfacingObjectContainer->getURIObject().getURI())) return PVMFFailure;
+        // create and set iCfgFile
+        if (!iProtocolContainer->createCfgFile(iInterfacingObjectContainer->getURIObject().getURI())) return PVMFFailure;
+    }
     return PVMFSuccess;
 }
 
@@ -2317,6 +2329,10 @@ uint32 PVMFProtocolEngineNode::GetProtocolType(PVMFFormatType& aSourceFormat, Os
     else if (aSourceFormat == PVMF_MIME_DATA_SOURCE_HTTP_URL)
     {
         return PVHTTPPROTOCOL_PROGRESSIVE_DOWNLOAD;
+    }
+    else if (aSourceFormat == PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL)
+    {
+        return PVHTTPPROTOCOL_SHOUTCAST;
     }
 
     return 0;
@@ -4058,6 +4074,7 @@ bool InterfacingObjectContainer::setStreamingProxy(OSCL_wString& aProxyName, con
     alloc.deallocate(buf);
     return true;
 }
+
 void InterfacingObjectContainer::setNumBuffersInMediaDataPoolSMCalc(uint32 aVal)
 {
     iNumBuffersInMediaDataPoolSMCalc = aVal;

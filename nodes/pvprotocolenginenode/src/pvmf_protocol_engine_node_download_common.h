@@ -23,6 +23,11 @@
 #include "pvmf_protocol_engine_node_common.h"
 #endif
 
+#ifndef PVMF_FORMAT_PROGDOWNLOAD_SUPPORT_EXTENSION_H_INCLUDED
+#include "pvmf_format_progdownload_support_extension.h"
+#endif
+
+
 ////////////////////////////////////////////////////////////////////////////////////
 //////	DownloadContainer
 ////////////////////////////////////////////////////////////////////////////////////
@@ -273,7 +278,7 @@ class pvDownloadControl : public DownloadControlInterface
 
     protected:
         // called by checkResumeNotification()
-        bool checkDownloadCompleteForResumeNotification(const bool aDownloadComplete);
+        bool checkSendingNotification(const bool aDownloadComplete = false);
 
         // called by isResumePlayback()
         // with contraint: file size and clip duration are both available
@@ -294,6 +299,11 @@ class pvDownloadControl : public DownloadControlInterface
         // set file size to parser node for the new API, setFileSize()
         void setFileSize(const uint32 aFileSize);
         bool getPlaybackTimeFromEngineClock(uint32 &aPlaybackTime);
+
+        virtual void setProtocolInfo()
+        {
+            ;
+        }
 
     private:
         void updateFileSize();

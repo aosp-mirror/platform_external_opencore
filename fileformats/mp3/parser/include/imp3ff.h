@@ -111,24 +111,24 @@ typedef enum
 typedef enum
 {
     MP3_ERROR_UNKNOWN = 0,
-    MP3_SUCCESS,
-    MP3_END_OF_FILE,
-    MP3_CRC_ERR,
-    MP3_FILE_READ_ERR,
-    MP3_FILE_HDR_READ_ERR,
-    MP3_FILE_HDR_DECODE_ERR,
-    MP3_FILE_XING_HDR_ERR,
-    MP3_FILE_VBRI_HDR_ERR,
-    MP3_ERR_NO_MEMORY,
-    MP3_NO_SYNC_FOUND,
-    MP3_FILE_OPEN_ERR,
+    MP3_SUCCESS = 1,
+    MP3_END_OF_FILE = 2,
+    MP3_CRC_ERR = 3,
+    MP3_FILE_READ_ERR = 4,
+    MP3_FILE_HDR_READ_ERR = 5,
+    MP3_FILE_HDR_DECODE_ERR = 6,
+    MP3_FILE_XING_HDR_ERR = 7,
+    MP3_FILE_VBRI_HDR_ERR = 8,
+    MP3_ERR_NO_MEMORY = 9,
+    MP3_NO_SYNC_FOUND = 10,
+    MP3_FILE_OPEN_ERR = 11,
     /* PD related Error values*/
-    MP3_ERROR_UNKNOWN_OBJECT,
-    MP3_FILE_OPEN_FAILED,
-    MP3_INSUFFICIENT_DATA,
-    MP3_METADATA_NOTPARSED,
+    MP3_ERROR_UNKNOWN_OBJECT = 12,
+    MP3_FILE_OPEN_FAILED = 13,
+    MP3_INSUFFICIENT_DATA = 14,
+    MP3_METADATA_NOTPARSED = 15,
     /* Duration related Info value*/
-    MP3_DURATION_PRESENT
+    MP3_DURATION_PRESENT = 16
 }MP3ErrorType;
 
 //----------------------------------------------------------------------

@@ -568,7 +568,7 @@ OSCL_EXPORT_REF uint32 Oscl_File::Write(const OsclAny *buffer, uint32 size, uint
     return result;
 }
 
-OSCL_EXPORT_REF int32 Oscl_File::Seek(int32 offset, seek_type origin)
+OSCL_EXPORT_REF int32 Oscl_File::Seek(TOsclFileOffset offset, seek_type origin)
 {
     if (iLogger)
     {
@@ -605,7 +605,7 @@ OSCL_EXPORT_REF int32 Oscl_File::Seek(int32 offset, seek_type origin)
 }
 
 
-OSCL_EXPORT_REF int32 Oscl_File::Tell()
+OSCL_EXPORT_REF TOsclFileOffset Oscl_File::Tell()
 {
     if (iLogger)
     {
@@ -617,7 +617,7 @@ OSCL_EXPORT_REF int32 Oscl_File::Tell()
     if (iFileStats)
         iFileStats->Start(ticks);
 
-    int32 result = (-1);
+    TOsclFileOffset result = (-1);
 
     if (iIsOpen)
     {
@@ -713,7 +713,7 @@ OSCL_EXPORT_REF int32 Oscl_File::EndOfFile()
     return result;
 }
 
-OSCL_EXPORT_REF int32 Oscl_File::Size()
+OSCL_EXPORT_REF TOsclFileOffset Oscl_File::Size()
 {
     if (iLogger)
     {
@@ -725,7 +725,7 @@ OSCL_EXPORT_REF int32 Oscl_File::Size()
     if (iFileStats)
         iFileStats->Start(ticks);
 
-    int32 result = (-1);
+    TOsclFileOffset result = (-1);
 
     if (iIsOpen)
     {
@@ -929,7 +929,7 @@ uint32 Oscl_File::CallNativeWrite(const OsclAny *buffer, uint32 size, uint32 num
     return result;
 }
 
-int32  Oscl_File::CallNativeSeek(int32 offset, Oscl_File::seek_type origin)
+int32  Oscl_File::CallNativeSeek(TOsclFileOffset offset, Oscl_File::seek_type origin)
 {
     if (iNativeLogger)
     {
@@ -959,7 +959,7 @@ int32  Oscl_File::CallNativeSeek(int32 offset, Oscl_File::seek_type origin)
     return result;
 }
 
-int32  Oscl_File::CallNativeTell()
+TOsclFileOffset  Oscl_File::CallNativeTell()
 {
     if (iNativeLogger)
     {
@@ -971,7 +971,7 @@ int32  Oscl_File::CallNativeTell()
     if (iFileStats)
         iFileStats->Start(ticks);
 
-    int32 result = (-1);
+    TOsclFileOffset result = (-1);
 
     if (iNativeFile)
         result = iNativeFile->Tell();
@@ -1050,7 +1050,7 @@ int32  Oscl_File::CallNativeEndOfFile()
     return result;
 }
 
-int32 Oscl_File::CallNativeSize()
+TOsclFileOffset Oscl_File::CallNativeSize()
 {
     if (iNativeLogger)
     {
@@ -1062,7 +1062,7 @@ int32 Oscl_File::CallNativeSize()
     if (iFileStats)
         iFileStats->Start(ticks);
 
-    int32 result = (-1);
+    TOsclFileOffset result = (-1);
 
     if (iNativeFile)
         result = iNativeFile->Size();

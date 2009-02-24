@@ -23,28 +23,19 @@
 
 #define IMPLEMENT_SampleDescriptionAtom
 
+#include "atomutils.h"
+#include "a_atomdefs.h"
 #include "sampledescriptionatom.h"
-
 #include "visualsampleentry.h"
 #include "audiosampleentry.h"
 #include "mpegsampleentry.h"
-
-#include "objectdescriptorupdate.h"
-
-#include "atomutils.h"
-#include "a_atomdefs.h"
-#include "objectdescriptor.h"
 #include "decoderspecificinfo.h"
-#include "amrdecoderspecificinfo.h"
-#include "h263decoderspecificinfo.h"
-
 #include "amrsampleentry.h"
 #include "h263sampleentry.h"
-#include"avcsampleentry.h"
-
-#ifndef TEXTSAMPLEENTRY_H_INCLUDED
+#include "avcsampleentry.h"
 #include "textsampleentry.h"
-#endif
+
+//common to both AMR and AMR-WB
 const int32 AMRModeSetMask[16] =
 {
     0x0001, 0x0002, 0x0004, 0x0008,
@@ -53,27 +44,17 @@ const int32 AMRModeSetMask[16] =
     0x1000, 0x2000, 0x4000, 0x8000
 };
 
-const int32 AMRBitRates[9] =
-{
-    4750, 5150,  5900,
-    6700, 7400,  7950,
-    10200, 12200, 2400
-};
-
 typedef Oscl_Vector<PVA_FF_SampleEntry*, OsclMemAllocator> PVA_FF_SampleEntryVecType;
 typedef Oscl_Vector<uint32, OsclMemAllocator> PVA_FF_SampleEntryTypeVecType;
 
 // Constructor
 PVA_FF_SampleDescriptionAtom::PVA_FF_SampleDescriptionAtom(uint32 mediaType, int32 codecType,
-        bool o3GPPCompliant, uint32 protocol, uint8 profile,
+        uint32 protocol, uint8 profile,
         uint8 profileComp, uint8 level)
         : PVA_FF_FullAtom(SAMPLE_DESCRIPTION_ATOM, (uint8)0, (uint32)0),
         _mediaType(mediaType)
 {
     _codecType = codecType;
-
-    _o3GPPCompliant = o3GPPCompliant;
-
     init(mediaType, protocol, profile, profileComp, level);
     recomputeSize();
 }
@@ -123,17 +104,19 @@ PVA_FF_SampleDescriptionAtom::init(int32 mediaType, uint32 protocol, uint8 profi
                 PV_MP4_FF_NEW(fp->auditCB, PVA_FF_AudioSampleEntry, (_codecType), entry);
                 addSampleEntry(entry);
             }
-
-            if (_codecType == CODEC_TYPE_AMR_AUDIO)
+            else if (_codecType == CODEC_TYPE_AMR_AUDIO)
             {
-                if (_o3GPPCompliant)
-                {
-                    PV_MP4_FF_NEW(fp->auditCB, PVA_FF_AMRSampleEntry, (), entry);
-
-                    addSampleEntry(entry);
-                    entry->setParent(this);
-                    entry->recomputeSize();
-                }
+                PV_MP4_FF_NEW(fp->auditCB, PVA_FF_AMRSampleEntry, (AMR_SAMPLE_ENTRY), entry);
+                addSampleEntry(entry);
+                entry->setParent(this);
+                entry->recomputeSize();
+            }
+            else if (_codecType == CODEC_TYPE_AMR_WB_AUDIO)
+            {
+                PV_MP4_FF_NEW(fp->auditCB, PVA_FF_AMRSampleEntry, (AMR_WB_SAMPLE_ENTRY), entry);
+                addSampleEntry(entry);
+                entry->setParent(this);
+                entry->recomputeSize();
             }
         }
         break;
@@ -143,18 +126,8 @@ PVA_FF_SampleDescriptionAtom::init(int32 mediaType, uint32 protocol, uint8 profi
 
             if (_codecType == CODEC_TYPE_BASELINE_H263_VIDEO)
             {
-                if (_o3GPPCompliant)
-                {
-                    PV_MP4_FF_NEW(fp->auditCB, PVA_FF_H263SampleEntry, (), entry);
-                    addSampleEntry(entry);
-                }
-                else
-                {
-                    PV_MP4_FF_NEW(fp->auditCB, PVA_FF_VisualSampleEntry, (_codecType), entry);
-
-                    addSampleEntry(entry);
-                    addDecoderSpecificInfo(NULL);
-                }
+                PV_MP4_FF_NEW(fp->auditCB, PVA_FF_H263SampleEntry, (), entry);
+                addSampleEntry(entry);
             }
             else if (_codecType == CODEC_TYPE_AVC_VIDEO)
             {
@@ -162,7 +135,6 @@ PVA_FF_SampleDescriptionAtom::init(int32 mediaType, uint32 protocol, uint8 profi
                 addSampleEntry(entry);
                 entry->setParent(this);
                 entry->recomputeSize();
-
             }
             else
             {
@@ -203,6 +175,12 @@ PVA_FF_SampleDescriptionAtom::~PVA_FF_SampleDescriptionAtom()
                 PV_MP4_FF_DELETE(NULL, PVA_FF_AudioSampleEntry, audioentry);
             }
             else if (type == AMR_SAMPLE_ENTRY)
+            {
+                PVA_FF_AMRSampleEntry* audioentry = OSCL_STATIC_CAST(PVA_FF_AMRSampleEntry*, entry);
+                PV_MP4_FF_DELETE(NULL, PVA_FF_AMRSampleEntry, audioentry);
+
+            }
+            else if (type == AMR_WB_SAMPLE_ENTRY)
             {
                 PVA_FF_AMRSampleEntry* audioentry = OSCL_STATIC_CAST(PVA_FF_AMRSampleEntry*, entry);
                 PV_MP4_FF_DELETE(NULL, PVA_FF_AMRSampleEntry, audioentry);
@@ -309,20 +287,7 @@ PVA_FF_SampleDescriptionAtom::addDecoderSpecificInfo(PVA_FF_DecoderSpecificInfo 
     {
         case MEDIA_TYPE_VISUAL:
         {
-            // ALL PARAMETERS DEFAULTED
-            if (_codecType == CODEC_TYPE_BASELINE_H263_VIDEO)
-            {
-                PVA_FF_H263DecoderSpecificInfo *pH263info = NULL;
-                PV_MP4_FF_NEW(fp->auditCB, PVA_FF_H263DecoderSpecificInfo, (), pH263info);
-                pH263info->setVendorCode();
-                pH263info->setEncoderVersion();
-                pH263info->setCodecProfile();
-                pH263info->setCodecLevel();
-                pH263info->setMaxWidth();
-                pH263info->setMaxHeight();
-                getMutableSampleEntryAt(0)->addDecoderSpecificInfo(pH263info);
-            }
-            else if (_codecType == CODEC_TYPE_MPEG4_VIDEO)
+            if (_codecType == CODEC_TYPE_MPEG4_VIDEO)
             {
                 getMutableSampleEntryAt(0)->addDecoderSpecificInfo(pinfo);
             }
@@ -331,7 +296,6 @@ PVA_FF_SampleDescriptionAtom::addDecoderSpecificInfo(PVA_FF_DecoderSpecificInfo 
                 getMutableSampleEntryAt(0)->addDecoderSpecificInfo(pinfo);
                 getMutableSampleEntryAt(0)->recomputeSize();
                 recomputeSize();
-
             }
             else
             {
@@ -352,7 +316,7 @@ PVA_FF_SampleDescriptionAtom::addDecoderSpecificInfo(PVA_FF_DecoderSpecificInfo 
         break;
 
         default:
-            return; // This fp actually an undefined situation
+            return; // This is actually an undefined situation
     }
 }
 
@@ -422,11 +386,7 @@ PVA_FF_SampleDescriptionAtom::nextSample(uint32 size, uint8 flags)
     {
         case MEDIA_TYPE_VISUAL:
         {
-            if (_codecType == CODEC_TYPE_AVC_VIDEO)
-            {
-                //nothing
-            }
-            else if (!_o3GPPCompliant)
+            if (_codecType == CODEC_TYPE_MPEG4_VIDEO)
             {
                 PVA_FF_VisualSampleEntry *entry = (PVA_FF_VisualSampleEntry*) getSampleEntryAt(0);
                 entry->nextSampleSize(size);
@@ -446,105 +406,22 @@ PVA_FF_SampleDescriptionAtom::nextSample(uint32 size, uint8 flags)
             else
             {
                 unsigned short mode_set = 0;
-
-                if (!_o3GPPCompliant)
+                if ((_codecType == CODEC_TYPE_AMR_AUDIO) ||
+                        (_codecType == CODEC_TYPE_AMR_WB_AUDIO))
                 {
-                    bool found = false;
-                    uint32 i = 0;
-                    int32 frameType;
-
                     //CHECK FOR FRAME TYPE AND SET FLAGS ACCORDINGLY
-                    audio_frame_type = (uint8)(flags & 0x0f);
-
-                    for (i = 0; i < _psampleEntryVec->size(); i++)
+                    audio_frame_type = (flags >> 3) & 0x0F;
+                    if (getSampleEntryAt(0) != NULL)
                     {
-                        switch (_codecType)
+                        PVA_FF_AMRSampleEntry *entry = (PVA_FF_AMRSampleEntry *)(getSampleEntryAt(0));
+                        mode_set = entry->getModeSet();
+                        if (audio_frame_type < 16)
                         {
-                            case CODEC_TYPE_AMR_AUDIO:
-                            {
-                                PVA_FF_AMRDecoderSpecificInfo *pAMRInfo =
-                                    (PVA_FF_AMRDecoderSpecificInfo *)(getSampleEntryAt(i)->getDecoderSpecificInfo());
-
-                                frameType = pAMRInfo->getFrameType();
-
-                                if (frameType == audio_frame_type)
-                                {
-                                    found = true;
-                                }
-                                else
-                                {
-                                    mode_set = pAMRInfo->getModeSet();
-
-                                    mode_set |= AMRModeSetMask[(int)audio_frame_type];
-
-                                    pAMRInfo->setModeSet(mode_set);
-                                }
-                            }
-                            break;
-
-                            default:
-                                break;
-                        }
-
-                        if (found)
-                        {
-                            break;
-                        }
-                    }
-
-                    if (!found) // Add new audio sample entry
-                    {
-                        PVA_FF_AudioSampleEntry *entry = NULL;
-                        PV_MP4_FF_NEW(fp->auditCB, PVA_FF_AudioSampleEntry, (_codecType), entry);
-                        entry->nextSampleSize(size);
-
-                        if (_codecType == CODEC_TYPE_AMR_AUDIO)
-                        {
-                            PVA_FF_AMRDecoderSpecificInfo *pAMRInfo = NULL;
-                            PV_MP4_FF_NEW(fp->auditCB, PVA_FF_AMRDecoderSpecificInfo, (), pAMRInfo);
-
-                            pAMRInfo->setVendorcode(PACKETVIDEO_FOURCC);
-                            pAMRInfo->setEncoderVersion(1);
-
-                            entry->setTargetBitrate(AMRBitRates[(int)audio_frame_type]);
-
-
-                            pAMRInfo->setFrameType(audio_frame_type);
-
                             mode_set |= AMRModeSetMask[(int)audio_frame_type];
-                            pAMRInfo->setModeSet(mode_set);
-                            entry->addDecoderSpecificInfo(pAMRInfo);
                         }
-                        addSampleEntry(entry);
-
-                        nReturn = _psampleEntryVec->size();
+                        entry->setModeSet(mode_set);
                     }
-                    else
-                    {
-                        nReturn = i + 1;
-                    }
-                }
-                else
-                {
-                    if (_codecType == CODEC_TYPE_AMR_AUDIO)
-                    {
-                        //CHECK FOR FRAME TYPE AND SET FLAGS ACCORDINGLY
-                        //audio_frame_type = (uint8)(flags & 0x0f);
-
-                        audio_frame_type = flags >> 3;
-
-                        if (getSampleEntryAt(0) != NULL)
-                        {
-                            PVA_FF_AMRSampleEntry *entry = (PVA_FF_AMRSampleEntry *)(getSampleEntryAt(0));
-
-                            mode_set = entry->getModeSet();
-
-                            mode_set |= AMRModeSetMask[(int)audio_frame_type];
-
-                            entry->setModeSet(mode_set);
-                        }
-                        nReturn = 1;
-                    }
+                    nReturn = 1;
                 }
             }
             break;
@@ -624,6 +501,10 @@ PVA_FF_SampleDescriptionAtom::addSampleEntry(PVA_FF_SampleEntry *entry)
                 _psampleEntryVec->push_back(entry);
             }
             else if (entry->getType() == AMR_SAMPLE_ENTRY)
+            {
+                _psampleEntryVec->push_back(entry);
+            }
+            else if (entry->getType() == AMR_WB_SAMPLE_ENTRY)
             {
                 _psampleEntryVec->push_back(entry);
             }
@@ -801,31 +682,15 @@ PVA_FF_SampleDescriptionAtom::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
         {
             if (_codecType == CODEC_TYPE_BASELINE_H263_VIDEO)
             {
-                if (_o3GPPCompliant)
-                {
-                    PVA_FF_H263SampleEntry *entry =
-                        (PVA_FF_H263SampleEntry *)((*_psampleEntryVec)[i]);
-                    entry->setVideoParams(_frame_width, _frame_height);
+                PVA_FF_H263SampleEntry *entry =
+                    (PVA_FF_H263SampleEntry *)((*_psampleEntryVec)[i]);
+                entry->setVideoParams(_frame_width, _frame_height);
 
-                    PVA_FF_H263SpecficAtom *h263SpecificAtom =
-                        entry->get3GPPDecoderSpecificInfo();
+                PVA_FF_H263SpecficAtom *h263SpecificAtom =
+                    entry->get3GPPDecoderSpecificInfo();
 
-                    h263SpecificAtom->setCodecProfile(_h263Profile);
-                    h263SpecificAtom->setCodecLevel(_h263Level);
-                }
-                else
-                {
-                    PVA_FF_VisualSampleEntry *entry =
-                        (PVA_FF_VisualSampleEntry *)((*_psampleEntryVec)[i]);
-
-                    PVA_FF_H263DecoderSpecificInfo *pH263info =
-                        (PVA_FF_H263DecoderSpecificInfo *)(entry->getDecoderSpecificInfo());
-
-                    pH263info->setMaxWidth(_frame_width);
-                    pH263info->setMaxHeight(_frame_height);
-                    pH263info->setCodecProfile(_h263Profile);
-                    pH263info->setCodecLevel(_h263Level);
-                }
+                h263SpecificAtom->setCodecProfile(_h263Profile);
+                h263SpecificAtom->setCodecLevel(_h263Level);
             }
             else if (_codecType == CODEC_TYPE_AVC_VIDEO)
             {
@@ -881,7 +746,7 @@ PVA_FF_SampleDescriptionAtom::SetMaxSampleSize(uint32 aSize)
     {
         case MEDIA_TYPE_VISUAL:
         {
-            if (!_o3GPPCompliant)
+            if (_codecType == CODEC_TYPE_MPEG4_VIDEO)
             {
                 PVA_FF_VisualSampleEntry *entry = (PVA_FF_VisualSampleEntry*) getSampleEntryAt(0);
                 entry->nextSampleSize(aSize);
@@ -914,7 +779,7 @@ PVA_FF_SampleDescriptionAtom::writeMaxSampleSize(MP4_AUTHOR_FF_FILE_IO_WRAP *_af
     {
         case MEDIA_TYPE_VISUAL:
         {
-            if (!_o3GPPCompliant)
+            if (_codecType == CODEC_TYPE_MPEG4_VIDEO)
             {
                 PVA_FF_VisualSampleEntry *entry = (PVA_FF_VisualSampleEntry*) getSampleEntryAt(0);
                 entry->writeMaxSampleSize(_afp);

@@ -230,12 +230,6 @@ OSCL_EXPORT_REF PVMFCommandId PvmiMIOCommLoopback::Flush(const OsclAny* aContext
 
 OSCL_EXPORT_REF PVMFCommandId PvmiMIOCommLoopback::Reset(const OsclAny* aContext)
 {
-    if (iState != STATE_STARTED || iState != STATE_PAUSED)
-    {
-        OSCL_LEAVE(OsclErrInvalidState);
-        return -1;
-    }
-
     return AddCmdToQueue(CMD_RESET, aContext);
 }
 

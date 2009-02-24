@@ -22,11 +22,11 @@
 <tr><td nowrap align=right valign=top>&nbsp;</td><td valign=bottom><a class="el" href="classOsclAsyncFile.html#a0">~OsclAsyncFile</a> ()</td></tr>
 <tr><td nowrap align=right valign=top>int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclAsyncFile.html#a1">Open</a> (const <a class="el" href="group__osclbase.html#a32">oscl_wchar</a> *filename, uint32 mode, const <a class="el" href="classOsclNativeFileParams.html">OsclNativeFileParams</a> &amp;params, <a class="el" href="classOscl__FileServer.html">Oscl_FileServer</a> &amp;fileserv)</td></tr>
 <tr><td nowrap align=right valign=top>int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclAsyncFile.html#a2">Open</a> (const char *filename, uint32 mode, const <a class="el" href="classOsclNativeFileParams.html">OsclNativeFileParams</a> &amp;params, <a class="el" href="classOscl__FileServer.html">Oscl_FileServer</a> &amp;fileserv)</td></tr>
-<tr><td nowrap align=right valign=top>int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclAsyncFile.html#a3">Seek</a> (int32 offset, <a class="el" href="classOscl__File.html#s11">Oscl_File::seek_type</a> origin)</td></tr>
-<tr><td nowrap align=right valign=top>int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclAsyncFile.html#a4">Tell</a> ()</td></tr>
+<tr><td nowrap align=right valign=top>int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclAsyncFile.html#a3">Seek</a> (<a class="el" href="osclconfig__io_8h.html#a48">TOsclFileOffset</a> offset, <a class="el" href="classOscl__File.html#s11">Oscl_File::seek_type</a> origin)</td></tr>
+<tr><td nowrap align=right valign=top><a class="el" href="osclconfig__io_8h.html#a48">TOsclFileOffset</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclAsyncFile.html#a4">Tell</a> ()</td></tr>
 <tr><td nowrap align=right valign=top>uint32&nbsp;</td><td valign=bottom><a class="el" href="classOsclAsyncFile.html#a5">Read</a> (<a class="el" href="group__osclbase.html#a25">OsclAny</a> *aBuffer1, uint32 aDataSize, uint32 aNumElements)</td></tr>
 <tr><td nowrap align=right valign=top>int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclAsyncFile.html#a6">EndOfFile</a> ()</td></tr>
-<tr><td nowrap align=right valign=top>int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclAsyncFile.html#a7">Size</a> ()</td></tr>
+<tr><td nowrap align=right valign=top><a class="el" href="osclconfig__io_8h.html#a48">TOsclFileOffset</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclAsyncFile.html#a7">Size</a> ()</td></tr>
 <tr><td nowrap align=right valign=top>int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclAsyncFile.html#a8">Close</a> ()</td></tr>
 <tr><td nowrap align=right valign=top>uint32&nbsp;</td><td valign=bottom><a class="el" href="classOsclAsyncFile.html#a9">Write</a> (const <a class="el" href="group__osclbase.html#a25">OsclAny</a> *aBuffer1, uint32 aDataSize, uint32 aNumElements)</td></tr>
 <tr><td nowrap align=right valign=top>uint32&nbsp;</td><td valign=bottom><a class="el" href="classOsclAsyncFile.html#a10">Flush</a> ()</td></tr>
@@ -390,7 +390,7 @@ When true, async file read will start immediately. When false, read will not beg
         <tr>
           <td class="md" nowrap valign="top"> int32 OsclAsyncFile::Seek </td>
           <td class="md" valign="top">(&nbsp;</td>
-          <td class="md" nowrap valign="top">int32&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="osclconfig__io_8h.html#a48">TOsclFileOffset</a>&nbsp;</td>
           <td class="mdname" nowrap>&nbsp; <em>offset</em>, </td>
         </tr>
         <tr>
@@ -426,7 +426,7 @@ When true, async file read will start immediately. When false, read will not beg
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> int32 OsclAsyncFile::Size </td>
+          <td class="md" nowrap valign="top"> <a class="el" href="osclconfig__io_8h.html#a48">TOsclFileOffset</a> OsclAsyncFile::Size </td>
           <td class="md" valign="top">(&nbsp;</td>
           <td class="mdname1" valign="top" nowrap>&nbsp;          </td>
           <td class="md" valign="top">)&nbsp;</td>
@@ -454,7 +454,7 @@ When true, async file read will start immediately. When false, read will not beg
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> int32 OsclAsyncFile::Tell </td>
+          <td class="md" nowrap valign="top"> <a class="el" href="osclconfig__io_8h.html#a48">TOsclFileOffset</a> OsclAsyncFile::Tell </td>
           <td class="md" valign="top">(&nbsp;</td>
           <td class="mdname1" valign="top" nowrap>&nbsp;          </td>
           <td class="md" valign="top">)&nbsp;</td>
@@ -568,7 +568,7 @@ When true, async file read will start immediately. When false, read will not beg
 <hr>The documentation for this class was generated from the following file:<ul>
 <li><a class="el" href="oscl__file__async__read_8h-source.html">oscl_file_async_read.h</a></ul>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: OPENCORE_20090120 </small>
+<address style="align: left;"><small>Posting Version: OPENCORE_20090223 </small>
 </small></address>
 </body>
 </html>

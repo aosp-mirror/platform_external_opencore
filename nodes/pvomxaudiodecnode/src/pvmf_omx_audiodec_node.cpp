@@ -32,7 +32,7 @@
 #include "pv_omxcore.h"
 
 // needed for capability and config
-#include "pv_audio_config_parser.h"
+#include "pv_omx_config_parser.h"
 
 
 #define CONFIG_SIZE_AND_VERSION(param) \
@@ -136,6 +136,7 @@ PVMFOMXAudioDecNode::PVMFOMXAudioDecNode(int32 aPriority) :
              iCapability.iHasMaxNumberOfPorts = true;
              iCapability.iMaxNumberOfPorts = 2;
              iCapability.iInputFormatCapability.push_back(PVMF_MIME_MPEG4_AUDIO);
+             iCapability.iInputFormatCapability.push_back(PVMF_MIME_3640);
              iCapability.iInputFormatCapability.push_back(PVMF_MIME_ADIF);
              iCapability.iInputFormatCapability.push_back(PVMF_MIME_LATM);
              iCapability.iInputFormatCapability.push_back(PVMF_MIME_ASF_MPEG4_AUDIO);
@@ -516,6 +517,7 @@ PVMFStatus PVMFOMXAudioDecNode::HandlePortReEnable()
     {
         // AAC
         if (((PVMFOMXDecPort*)iInPort)->iFormat ==  PVMF_MIME_MPEG4_AUDIO ||
+                ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_3640 ||
                 ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_LATM ||
                 ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_ADIF ||
                 ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_ASF_MPEG4_AUDIO ||
@@ -553,6 +555,7 @@ PVMFStatus PVMFOMXAudioDecNode::HandlePortReEnable()
         Format = ((PVMFOMXDecPort*)iInPort)->iFormat;
     }
     if (Format ==  PVMF_MIME_MPEG4_AUDIO ||
+            Format == PVMF_MIME_3640 ||
             Format == PVMF_MIME_LATM ||
             Format == PVMF_MIME_ADIF ||
             Format == PVMF_MIME_ASF_MPEG4_AUDIO ||
@@ -676,6 +679,39 @@ PVMFStatus PVMFOMXAudioDecNode::HandlePortReEnable()
             return PVMFErrNoMemory;
         }
 
+        if (out_ctrl_struct_ptr == NULL)
+        {
+
+            out_ctrl_struct_ptr = (OsclAny **) oscl_malloc(iNumOutputBuffers * sizeof(OsclAny *));
+
+            if (out_ctrl_struct_ptr == NULL)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                                (0, "PVMFOMXAudioDecNode::HandlePortReEnable() out_ctrl_struct_ptr == NULL"));
+
+                SetState(EPVMFNodeError);
+                ReportErrorEvent(PVMFErrNoMemory);
+                return PVMFErrNoMemory;
+            }
+        }
+
+        if (out_buff_hdr_ptr == NULL)
+        {
+
+            out_buff_hdr_ptr = (OsclAny **) oscl_malloc(iNumOutputBuffers * sizeof(OsclAny *));
+
+            if (out_buff_hdr_ptr == NULL)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                                (0, "PVMFOMXAudioDecNode::HandlePortReEnable()  out_buff_hdr_ptr == NULL"));
+
+                SetState(EPVMFNodeError);
+                ReportErrorEvent(PVMFErrNoMemory);
+                return PVMFErrNoMemory;
+            }
+        }
+
+
         if (!ProvideBuffersToComponent(iOutBufMemoryPool, // allocator
                                        iOutputAllocSize,	 // size to allocate from pool (hdr only or hdr+ buffer)
                                        iNumOutputBuffers, // number of buffers
@@ -724,6 +760,39 @@ PVMFStatus PVMFOMXAudioDecNode::HandlePortReEnable()
             return PVMFErrNoMemory;
         }
 
+        if (in_ctrl_struct_ptr == NULL)
+        {
+
+            in_ctrl_struct_ptr = (OsclAny **) oscl_malloc(iNumInputBuffers * sizeof(OsclAny *));
+
+            if (in_ctrl_struct_ptr == NULL)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                                (0, "PVMFOMXAudioDecNode::HandlePortReEnable() in_ctrl_struct_ptr == NULL"));
+
+                SetState(EPVMFNodeError);
+                ReportErrorEvent(PVMFErrNoMemory);
+                return PVMFErrNoMemory;
+            }
+        }
+
+        if (in_buff_hdr_ptr == NULL)
+        {
+
+            in_buff_hdr_ptr = (OsclAny **) oscl_malloc(iNumInputBuffers * sizeof(OsclAny *));
+
+            if (in_buff_hdr_ptr == NULL)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                                (0, "PVMFOMXAudioDecNode::HandlePortReEnable()  in_buff_hdr_ptr == NULL"));
+
+                SetState(EPVMFNodeError);
+                ReportErrorEvent(PVMFErrNoMemory);
+                return PVMFErrNoMemory;
+            }
+        }
+
+
         if (!ProvideBuffersToComponent(iInBufMemoryPool, // allocator
                                        iInputAllocSize,	 // size to allocate from pool (hdr only or hdr+ buffer)
                                        iNumInputBuffers, // number of buffers
@@ -757,7 +826,7 @@ PVMFStatus PVMFOMXAudioDecNode::HandlePortReEnable()
     return PVMFSuccess; // allow rescheduling of the node
 }
 ////////////////////////////////////////////////////////////////////////////////
-bool PVMFOMXAudioDecNode::NegotiateComponentParameters()
+bool PVMFOMXAudioDecNode::NegotiateComponentParameters(OMX_PTR aOutputParameters)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "PVMFOMXAudioDecNode::NegotiateComponentParameters() In"));
@@ -770,51 +839,32 @@ bool PVMFOMXAudioDecNode::NegotiateComponentParameters()
 
 
     pvAudioConfigParserInputs aInputs;
-    pvAudioConfigParserOutputs aOutputs;
+    AudioOMXConfigParserOutputs *pOutputParameters;
 
     aInputs.inPtr = (uint8*)((PVMFOMXDecPort*)iInPort)->iTrackConfig;
     aInputs.inBytes = (int32)((PVMFOMXDecPort*)iInPort)->iTrackConfigSize;
     aInputs.iMimeType = ((PVMFOMXDecPort*)iInPort)->iFormat;
+    pOutputParameters = (AudioOMXConfigParserOutputs *)aOutputParameters;
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "PVMFOMXAudioDecNode::NegotiateComponentParameters() Calling audio config parser - TrackConfig = %p, TrackConfigSize = %d, mimetype = %s", aInputs.inPtr, aInputs.inBytes, aInputs.iMimeType.getMIMEStrPtr()));
 
 
-    if (aInputs.inBytes == 0 || aInputs.inPtr == NULL)
-    {
-        if (aInputs.iMimeType == PVMF_MIME_WMA ||
-                aInputs.iMimeType == PVMF_MIME_MPEG4_AUDIO ||
-                aInputs.iMimeType == PVMF_MIME_LATM ||
-                aInputs.iMimeType == PVMF_MIME_ADIF ||
-                aInputs.iMimeType == PVMF_MIME_ASF_MPEG4_AUDIO ||
-                aInputs.iMimeType == PVMF_MIME_AAC_SIZEHDR)
-        {
-            return false;
-        }
-    }
-
-    int16 status;
-    status = pv_audio_config_parser(&aInputs, &aOutputs);
-    if (status == 0)
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXAudioDecNode::NegotiateComponentParameters() pv_audio_config_parser()-unsupported parameters\n"));
-        return false;
-    }
 
     if (aInputs.iMimeType == PVMF_MIME_WMA)
     {
-        iNumberOfAudioChannels = aOutputs.Channels;
-        iPCMSamplingRate = aOutputs.SamplesPerSec;
+        iNumberOfAudioChannels = pOutputParameters->Channels;
+        iPCMSamplingRate = pOutputParameters->SamplesPerSec;
     }
     else if (aInputs.iMimeType == PVMF_MIME_MPEG4_AUDIO ||
+             aInputs.iMimeType == PVMF_MIME_3640 ||
              aInputs.iMimeType == PVMF_MIME_LATM ||
              aInputs.iMimeType == PVMF_MIME_ADIF ||
              aInputs.iMimeType == PVMF_MIME_ASF_MPEG4_AUDIO ||
              aInputs.iMimeType == PVMF_MIME_AAC_SIZEHDR)
 
     {
-        iNumberOfAudioChannels = aOutputs.Channels;
+        iNumberOfAudioChannels = pOutputParameters->Channels;
     }
 
     CONFIG_SIZE_AND_VERSION(AudioPortParameters);
@@ -941,13 +991,11 @@ bool PVMFOMXAudioDecNode::NegotiateComponentParameters()
                     (0, "PVMFOMXAudioDecNode::NegotiateComponentParameters() Inport buffers %d,size %d", iNumInputBuffers, iOMXComponentInputBufferSize));
 
 
-    // Codec specific info set/get: SamplingRate, formats etc.
-    if (!GetSetCodecSpecificInfo())
-        return false;
 
 
     CONFIG_SIZE_AND_VERSION(iParamPort);
-
+    iParamPort.nPortIndex = iInputPortIndex;
+    // finalize setting input port parameters
     Err = OMX_SetParameter(iOMXDecoder, OMX_IndexParamPortDefinition, &iParamPort);
     if (Err != OMX_ErrorNone)
     {
@@ -959,6 +1007,8 @@ bool PVMFOMXAudioDecNode::NegotiateComponentParameters()
 
 
     // Codec specific info set/get: SamplingRate, formats etc.
+    // NOTE: iParamPort is modified in the routine below - it is loaded from the component output port values
+    // Based on sampling rate - we also determine the desired output buffer size
     if (!GetSetCodecSpecificInfo())
         return false;
 
@@ -993,7 +1043,8 @@ bool PVMFOMXAudioDecNode::NegotiateComponentParameters()
                     (0, "PVMFOMXAudioDecNode::NegotiateComponentParameters() Outport buffers %d,size %d", iNumOutputBuffers, iOMXComponentOutputBufferSize));
 
     CONFIG_SIZE_AND_VERSION(iParamPort);
-
+    iParamPort.nPortIndex = iOutputPortIndex;
+    // finalize setting output port parameters
     Err = OMX_SetParameter(iOMXDecoder, OMX_IndexParamPortDefinition, &iParamPort);
     if (Err != OMX_ErrorNone)
     {
@@ -1012,6 +1063,7 @@ bool PVMFOMXAudioDecNode::NegotiateComponentParameters()
         Format = ((PVMFOMXDecPort*)iInPort)->iFormat;
     }
     if (Format == PVMF_MIME_MPEG4_AUDIO ||
+            Format == PVMF_MIME_3640 ||
             Format == PVMF_MIME_LATM ||
             Format == PVMF_MIME_ADIF ||
             Format == PVMF_MIME_ASF_MPEG4_AUDIO ||
@@ -1101,6 +1153,7 @@ bool PVMFOMXAudioDecNode::GetSetCodecSpecificInfo()
         Format = ((PVMFOMXDecPort*)iInPort)->iFormat;
     }
     if (Format ==  PVMF_MIME_MPEG4_AUDIO ||
+            Format == PVMF_MIME_3640 ||
             Format == PVMF_MIME_LATM ||
             Format == PVMF_MIME_ADIF ||
             Format == PVMF_MIME_ASF_MPEG4_AUDIO ||
@@ -1157,6 +1210,10 @@ bool PVMFOMXAudioDecNode::GetSetCodecSpecificInfo()
 
     // AAC FORMATS:
     if (Format ==  PVMF_MIME_MPEG4_AUDIO)
+    {
+        Audio_Aac_Param.eAACStreamFormat = OMX_AUDIO_AACStreamFormatMP4ADTS;
+    }
+    else if (Format ==  PVMF_MIME_3640)
     {
         Audio_Aac_Param.eAACStreamFormat = OMX_AUDIO_AACStreamFormatMP4ADTS;
     }
@@ -1244,6 +1301,7 @@ bool PVMFOMXAudioDecNode::GetSetCodecSpecificInfo()
     // read the output frame size
     // AAC
     if (Format ==  PVMF_MIME_MPEG4_AUDIO ||
+            Format == PVMF_MIME_3640 ||
             Format == PVMF_MIME_LATM ||
             Format == PVMF_MIME_ADIF ||
             Format == PVMF_MIME_ASF_MPEG4_AUDIO ||
@@ -1389,6 +1447,7 @@ bool PVMFOMXAudioDecNode::InitDecoder(PVMFSharedMediaDataPtr& DataIn)
         }
     }
     else if (((PVMFOMXDecPort*)iInPort)->iFormat ==  PVMF_MIME_MPEG4_AUDIO ||
+             ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_3640 ||
              ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_ADIF ||
              ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_ASF_MPEG4_AUDIO ||
              ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_AAC_SIZEHDR) // for testing
@@ -2174,6 +2233,7 @@ PVMFStatus PVMFOMXAudioDecNode::DoGetNodeMetadataValue(PVMFOMXBaseDecNodeCommand
             // Format
             if ((((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_LATM) ||
                     (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_MPEG4_AUDIO) ||
+                    (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_3640) ||
                     (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_ADIF) ||
                     (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_AAC_SIZEHDR) ||
                     (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_AMR_IF2) ||
@@ -2204,6 +2264,10 @@ PVMFStatus PVMFOMXAudioDecNode::DoGetNodeMetadataValue(PVMFOMXBaseDecNodeCommand
                     else if (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_MPEG4_AUDIO)
                     {
                         valuelen = oscl_strlen(_STRLIT_CHAR(PVMF_MIME_MPEG4_AUDIO)) + 1; // Value string plus one for NULL terminator
+                    }
+                    else if (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_3640)
+                    {
+                        valuelen = oscl_strlen(_STRLIT_CHAR(PVMF_MIME_3640)) + 1; // Value string plus one for NULL terminator
                     }
                     else if (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_ADIF)
                     {
@@ -2268,6 +2332,10 @@ PVMFStatus PVMFOMXAudioDecNode::DoGetNodeMetadataValue(PVMFOMXBaseDecNodeCommand
                         else if (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_MPEG4_AUDIO)
                         {
                             oscl_strncpy(KeyVal.value.pChar_value, _STRLIT_CHAR(PVMF_MIME_MPEG4_AUDIO), valuelen);
+                        }
+                        else if (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_3640)
+                        {
+                            oscl_strncpy(KeyVal.value.pChar_value, _STRLIT_CHAR(PVMF_MIME_3640), valuelen);
                         }
                         else if (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_ADIF)
                         {
@@ -2531,6 +2599,7 @@ uint32 PVMFOMXAudioDecNode::GetNumMetadataValues(PVMFMetadataList& aKeyList)
             // Format
             if ((((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_LATM) ||
                     (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_MPEG4_AUDIO) ||
+                    (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_3640) ||
                     (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_ADIF) ||
                     (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_AMR_IF2) ||
                     (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_AMR_IETF) ||
@@ -2574,11 +2643,15 @@ bool PVMFOMXAudioDecNode::VerifyParametersSync(PvmiMIOSession aSession, PvmiKvp*
     bool cap_exchange_status = false;
 
     pvAudioConfigParserInputs aInputs;
-    pvAudioConfigParserOutputs aOutputs;
+    OMXConfigParserInputs aInputParameters;
+    AudioOMXConfigParserOutputs aOutputParameters;
 
     aInputs.inPtr = (uint8*)(aParameters->value.key_specific_value);
     aInputs.inBytes = (int32)aParameters->capacity;
     aInputs.iMimeType = PVMF_MIME_WMA;
+    aInputParameters.cComponentRole = (OMX_STRING)"audio_decoder.wma";
+    aInputParameters.inBytes = aInputs.inBytes;
+    aInputParameters.inPtr = aInputs.inPtr;
 
 
     if (aInputs.inBytes == 0 || aInputs.inPtr == NULL)
@@ -2587,14 +2660,58 @@ bool PVMFOMXAudioDecNode::VerifyParametersSync(PvmiMIOSession aSession, PvmiKvp*
     }
 
 
-    int32 status;
-    status = pv_audio_config_parser(&aInputs, &aOutputs);
-    if (0 != status)
+    OMX_BOOL status = OMX_FALSE;
+    OMX_U32 num_comps = 0, ii;
+    OMX_STRING *CompOfRole;
+    //	uint32 ii;
+    // call once to find out the number of components that can fit the role
+    OMX_GetComponentsOfRole(aInputParameters.cComponentRole, &num_comps, NULL);
+
+    if (num_comps > 0)
+    {
+        CompOfRole = (OMX_STRING *)oscl_malloc(num_comps * sizeof(OMX_STRING));
+        for (ii = 0; ii < num_comps; ii++)
+            CompOfRole[ii] = (OMX_STRING) oscl_malloc(PV_OMX_MAX_COMPONENT_NAME_LENGTH * sizeof(OMX_U8));
+
+        // call 2nd time to get the component names
+        OMX_GetComponentsOfRole(aInputParameters.cComponentRole, &num_comps, (OMX_U8 **)CompOfRole);
+
+        for (ii = 0; ii < num_comps; ii++)
+        {
+            aInputParameters.cComponentName = CompOfRole[ii];
+            status = OMXConfigParser(&aInputParameters, &aOutputParameters);
+            if (status == OMX_TRUE)
+            {
+                break;
+            }
+            else
+            {
+                status = OMX_FALSE;
+            }
+        }
+
+        // whether successful or not, need to free CompOfRoles
+        for (ii = 0; ii < num_comps; ii++)
+        {
+            oscl_free(CompOfRole[ii]);
+            CompOfRole[ii] = NULL;
+        }
+
+        oscl_free(CompOfRole);
+
+    }
+    else
+    {
+        // if no components support the role, nothing else to do
+        return false;
+    }
+
+    if (OMX_FALSE != status)
     {
         cap_exchange_status = true;
 
-        iPCMSamplingRate = aOutputs.SamplesPerSec;
-        iNumberOfAudioChannels = aOutputs.Channels;
+        iPCMSamplingRate = aOutputParameters.SamplesPerSec;
+        iNumberOfAudioChannels = aOutputParameters.Channels;
 
         if ((iNumberOfAudioChannels != 1 && iNumberOfAudioChannels != 2) ||
                 (iPCMSamplingRate <= 0))
@@ -2616,11 +2733,14 @@ PVMFStatus PVMFOMXAudioDecNode::DoCapConfigVerifyParameters(PvmiKvp* aParameters
                     (0, "PVMFOMXAudioDecNode::DoCapConfigVerifyParameters() In\n"));
 
     pvAudioConfigParserInputs aInputs;
-    pvAudioConfigParserOutputs aOutputs;
+    OMXConfigParserInputs aInputParameters;
+    AudioOMXConfigParserOutputs aOutputParameters;
 
     aInputs.inPtr = (uint8*)(aParameters->value.key_specific_value);
     aInputs.inBytes = (int32)aParameters->capacity;
     aInputs.iMimeType = iNodeConfig.iMimeType;
+    aInputParameters.inBytes = aInputs.inBytes;
+    aInputParameters.inPtr = aInputs.inPtr;
 
     if (aInputs.inBytes == 0 || aInputs.inPtr == NULL)
     {
@@ -2628,6 +2748,7 @@ PVMFStatus PVMFOMXAudioDecNode::DoCapConfigVerifyParameters(PvmiKvp* aParameters
         // be present in the query. If not, config parser cannot be called
         if (aInputs.iMimeType == PVMF_MIME_WMA ||
                 aInputs.iMimeType == PVMF_MIME_MPEG4_AUDIO ||
+                aInputs.iMimeType == PVMF_MIME_3640 ||
                 aInputs.iMimeType == PVMF_MIME_LATM ||
                 aInputs.iMimeType == PVMF_MIME_ADIF ||
                 aInputs.iMimeType == PVMF_MIME_ASF_MPEG4_AUDIO ||
@@ -2646,27 +2767,109 @@ PVMFStatus PVMFOMXAudioDecNode::DoCapConfigVerifyParameters(PvmiKvp* aParameters
     }
 
 
-    int16 status;
-    status = pv_audio_config_parser(&aInputs, &aOutputs);
-    if (status == 0)
+    if (aInputs.iMimeType == PVMF_MIME_MPEG4_AUDIO ||
+            aInputs.iMimeType == PVMF_MIME_3640 ||
+            aInputs.iMimeType == PVMF_MIME_LATM ||
+            aInputs.iMimeType == PVMF_MIME_ADIF ||
+            aInputs.iMimeType == PVMF_MIME_ASF_MPEG4_AUDIO ||
+            aInputs.iMimeType == PVMF_MIME_AAC_SIZEHDR)
+    {
+        aInputParameters.cComponentRole = (OMX_STRING)"audio_decoder.aac";
+    }
+    // AMR
+    else if (aInputs.iMimeType == PVMF_MIME_AMR_IF2 ||
+             aInputs.iMimeType == PVMF_MIME_AMR_IETF ||
+             aInputs.iMimeType == PVMF_MIME_AMR)
+    {
+        aInputParameters.cComponentRole = (OMX_STRING)"audio_decoder.amrnb";
+    }
+    else if (aInputs.iMimeType == PVMF_MIME_AMRWB_IETF ||
+             aInputs.iMimeType == PVMF_MIME_AMRWB)
+    {
+        aInputParameters.cComponentRole = (OMX_STRING)"audio_decoder.amrwb";
+    }
+    else if (aInputs.iMimeType == PVMF_MIME_MP3)
+    {
+        aInputParameters.cComponentRole = (OMX_STRING)"audio_decoder.mp3";
+    }
+    else if (aInputs.iMimeType ==  PVMF_MIME_WMA)
+    {
+        aInputParameters.cComponentRole = (OMX_STRING)"audio_decoder.wma";
+    }
+    else
+    {
+        // Illegal codec specified.
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "%s::PVMFOMXAudioDecNode::DoCapConfigVerifyParameters() Input port format other then codec type", iName.Str()));
+    }
+
+    OMX_BOOL status = OMX_FALSE;
+    OMX_U32 num_comps = 0, ii;
+    OMX_STRING *CompOfRole;
+    //	uint32 ii;
+    // call once to find out the number of components that can fit the role
+    OMX_GetComponentsOfRole(aInputParameters.cComponentRole, &num_comps, NULL);
+
+    if (num_comps > 0)
+    {
+        CompOfRole = (OMX_STRING *)oscl_malloc(num_comps * sizeof(OMX_STRING));
+        for (ii = 0; ii < num_comps; ii++)
+            CompOfRole[ii] = (OMX_STRING) oscl_malloc(PV_OMX_MAX_COMPONENT_NAME_LENGTH * sizeof(OMX_U8));
+
+        // call 2nd time to get the component names
+        OMX_GetComponentsOfRole(aInputParameters.cComponentRole, &num_comps, (OMX_U8 **)CompOfRole);
+
+        for (ii = 0; ii < num_comps; ii++)
+        {
+            aInputParameters.cComponentName = CompOfRole[ii];
+            status = OMXConfigParser(&aInputParameters, &aOutputParameters);
+            if (status == OMX_TRUE)
+            {
+                break;
+            }
+            else
+            {
+                status = OMX_FALSE;
+            }
+        }
+
+        // whether successful or not, need to free CompOfRoles
+        for (ii = 0; ii < num_comps; ii++)
+        {
+            oscl_free(CompOfRole[ii]);
+            CompOfRole[ii] = NULL;
+        }
+
+        oscl_free(CompOfRole);
+
+    }
+    else
+    {
+        // if no component supports the role, nothing else to do
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXAudioDecNode::DoCapConfigVerifyParameters() No omx component supports this role PVMFErrNotSupported\n"));
+        return PVMFErrNotSupported;
+    }
+
+    if (status == OMX_FALSE)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXAudioDecNode::DoCapConfigVerifyParameters() ->pv_audio_config_parser() PVMFErrNotSupported\n"));
+                        (0, "PVMFOMXAudioDecNode::DoCapConfigVerifyParameters() ->OMXConfigParser() PVMFErrNotSupported\n"));
         return PVMFErrNotSupported;
     }
 
     if (aInputs.iMimeType == PVMF_MIME_WMA)
     {
-        iNumberOfAudioChannels = aOutputs.Channels;
-        iPCMSamplingRate = aOutputs.SamplesPerSec;
+        iNumberOfAudioChannels = aOutputParameters.Channels;
+        iPCMSamplingRate = aOutputParameters.SamplesPerSec;
     }
     else if (aInputs.iMimeType == PVMF_MIME_MPEG4_AUDIO ||
+             aInputs.iMimeType == PVMF_MIME_3640 ||
              aInputs.iMimeType == PVMF_MIME_LATM ||
              aInputs.iMimeType == PVMF_MIME_ADIF ||
              aInputs.iMimeType == PVMF_MIME_ASF_MPEG4_AUDIO ||
              aInputs.iMimeType == PVMF_MIME_AAC_SIZEHDR)
     {
-        iNumberOfAudioChannels = aOutputs.Channels;
+        iNumberOfAudioChannels = aOutputParameters.Channels;
     }
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,

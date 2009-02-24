@@ -25,7 +25,7 @@
 
 
 #if defined(__linux__) || defined(linux)
-#define CONFIG_FILE_PATH _STRLIT("../../../pvlogger/config/")
+#define CONFIG_FILE_PATH _STRLIT("")
 #endif
 
 #define LOG_FILE_NAME _STRLIT("pvlog.txt")

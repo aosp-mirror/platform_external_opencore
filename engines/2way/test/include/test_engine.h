@@ -355,25 +355,25 @@ class engine_test : public test_case,
         PvmiMIOControl* iVideoSourceM4VIOControl;
 
 
-        OSCL_wHeapString<OsclMemAllocator> iAudioSinkFileName;
-        OSCL_wHeapString<OsclMemAllocator> iAudioSinkRawFileName;
-        OSCL_wHeapString<OsclMemAllocator> iAudioSink2FileName;
+        const oscl_wchar* iAudioSinkFileName;
+        const oscl_wchar* iAudioSinkRawFileName;
+        const oscl_wchar* iAudioSink2FileName;
         PVMFNodeInterface* iAudioSink;
         PVMFNodeInterface* iAudioSinkRaw;
         PVMFNodeInterface* iAudioSink2;
-        /*    PVRefFileOutput* iAudioSinkIOControl;
-            PVRefFileOutput* iAudioSinkRawIOControl;
-            PVRefFileOutput* iAudioSink2IOControl;*/
+        PVRefFileOutput* iAudioSinkIOControl;
+        PVRefFileOutput* iAudioSinkRawIOControl;
+        PVRefFileOutput* iAudioSink2IOControl;
 
-        OSCL_wHeapString<OsclMemAllocator> iVideoSinkYUVFileName;
-        OSCL_wHeapString<OsclMemAllocator> iVideoSinkH263FileName;
-        OSCL_wHeapString<OsclMemAllocator> iVideoSinkM4VFileName;
+        const oscl_wchar* iVideoSinkYUVFileName;
+        const oscl_wchar* iVideoSinkH263FileName;
+        const oscl_wchar* iVideoSinkM4VFileName;
         PVMFNodeInterface* iVideoSinkYUV;
         PVMFNodeInterface* iVideoSinkH263;
         PVMFNodeInterface* iVideoSinkM4V;
-        /*   PVRefFileOutput* iVideoSinkYUVIOControl;
-           PVRefFileOutput* iVideoSinkH263IOControl;
-           PVRefFileOutput* iVideoSinkM4VIOControl;*/
+        PVRefFileOutput* iVideoSinkYUVIOControl;
+        PVRefFileOutput* iVideoSinkH263IOControl;
+        PVRefFileOutput* iVideoSinkM4VIOControl;
         bool iDuplicatesStarted;
         OSCL_wHeapString<OsclMemAllocator> iVideoPreviewFileName;
         PVMFNodeInterface* iVideoPreview;

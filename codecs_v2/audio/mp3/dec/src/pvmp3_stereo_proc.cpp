@@ -158,9 +158,10 @@ Input
  *
  */
 
-const int32  is_ratio_factor[7] = {0,
+const int32  is_ratio_factor[8] = {0,
                                    Q31_fmt(0.21132486540519),   Q31_fmt(0.36602540378444),   Q31_fmt(0.50000000000000),
-                                   Q31_fmt(0.63397459621556),   Q31_fmt(0.78867513459481),   Q31_fmt(1.00000000000000)
+                                   Q31_fmt(0.63397459621556),   Q31_fmt(0.78867513459481),   Q31_fmt(1.00000000000000),
+                                   0
                                   };
 
 /*----------------------------------------------------------------------------
@@ -221,7 +222,7 @@ void pvmp3_st_intensity(int32 xr[SUBBANDS_NUMBER*FILTERBANK_BANDS],
                         int32 Number)
 {
 
-    int32 TmpFac = is_ratio_factor[ is_pos];
+    int32 TmpFac = is_ratio_factor[ is_pos & 7];
 
     int32 *pt_xr  = &xr[Start];
     int32 *pt_xl  = &xl[Start];

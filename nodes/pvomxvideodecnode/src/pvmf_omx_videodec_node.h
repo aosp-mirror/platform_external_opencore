@@ -161,7 +161,7 @@ class PVMFOMXVideoDecNode
 
         bool InitDecoder(PVMFSharedMediaDataPtr&);
 
-        bool NegotiateComponentParameters();
+        bool NegotiateComponentParameters(OMX_PTR aOutputParameters);
         bool GetSetCodecSpecificInfo();
         bool QueueOutputBuffer(OsclSharedPtr<PVMFMediaDataImpl> &mediadataimplout, uint32 aDataLen);
 

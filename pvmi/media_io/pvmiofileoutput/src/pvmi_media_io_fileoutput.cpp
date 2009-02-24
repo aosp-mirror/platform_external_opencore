@@ -24,12 +24,16 @@
 
 #include "oscl_dll.h"
 
+#define LOG_OUTPUT_TO_FILE	1
+
 // Define entry point for this DLL
 OSCL_DLL_ENTRY_POINT_DEFAULT()
 
 //The factory functions.
 #include "pvmi_media_io_fileoutput_registry_factory.h"
 #include "oscl_mem.h"
+
+#define QUEUE_LIMIT 10
 
 OSCL_EXPORT_REF PvmiMIOControl* PVMFMediaFileOutputRegistryFactory::CreateMediaIO(OsclAny* aParam)
 {
@@ -51,6 +55,11 @@ OSCL_EXPORT_REF void PVMFMediaFileOutputRegistryFactory::ReleaseMediaIO(PvmiMIOC
 OSCL_EXPORT_REF PVRefFileOutput::PVRefFileOutput(const OSCL_wString& aFileName, bool logStrings)
         : OsclTimerObject(OsclActiveObject::EPriorityNominal, "pvreffileoutput")
         , iOutputFileName(aFileName)
+#if (LOG_OUTPUT_TO_FILE)
+        , iLogOutputToFile(true)
+#else
+        , iLogOutputToFile(false)
+#endif
 {
     initData();
     iLogStrings = logStrings;
@@ -65,6 +74,11 @@ OSCL_EXPORT_REF PVRefFileOutput::PVRefFileOutput(const OSCL_wString& aFileName
         , bool logStrings)
         : OsclTimerObject(OsclActiveObject::EPriorityNominal, "pvreffileoutput")
         , iOutputFileName(aFileName)
+#if (LOG_OUTPUT_TO_FILE)
+        , iLogOutputToFile(true)
+#else
+        , iLogOutputToFile(false)
+#endif
 {
     initData();
     //test features...
@@ -87,10 +101,15 @@ OSCL_EXPORT_REF PVRefFileOutput::PVRefFileOutput(const OSCL_wString& aFileName
     iParametersLogged = false;
 }
 
-OSCL_EXPORT_REF PVRefFileOutput::PVRefFileOutput(const oscl_wchar* aFileName,
-        bool aActiveTiming)
+OSCL_EXPORT_REF PVRefFileOutput::PVRefFileOutput(const oscl_wchar* aFileName
+        , bool aActiveTiming)
         : OsclTimerObject(OsclActiveObject::EPriorityNominal, "pvreffileoutput")
         , iOutputFileName(aFileName)
+#if (LOG_OUTPUT_TO_FILE)
+        , iLogOutputToFile(true)
+#else
+        , iLogOutputToFile(false)
+#endif
 {
     initData();
     iActiveTiming = NULL;
@@ -101,7 +120,7 @@ OSCL_EXPORT_REF PVRefFileOutput::PVRefFileOutput(const oscl_wchar* aFileName,
         OsclAny*ptr = alloc.allocate(sizeof(PVRefFileOutputActiveTimingSupport));
         if (ptr)
         {
-            iActiveTiming = OSCL_PLACEMENT_NEW(ptr, PVRefFileOutputActiveTimingSupport(10));
+            iActiveTiming = OSCL_PLACEMENT_NEW(ptr, PVRefFileOutputActiveTimingSupport(QUEUE_LIMIT));
         }
         // For active MIO assuming it to be audio MIO.
         iMediaType = MEDIATYPE_AUDIO;
@@ -115,6 +134,11 @@ OSCL_EXPORT_REF PVRefFileOutput::PVRefFileOutput(const oscl_wchar* aFileName,
         , iOutputFileName(aFileName)
         , iMediaType(aMediaType)
         , iCompressedMedia(aCompressedMedia)
+#if (LOG_OUTPUT_TO_FILE)
+        , iLogOutputToFile(true)
+#else
+        , iLogOutputToFile(false)
+#endif
 {
     initData();
 }
@@ -152,11 +176,7 @@ void PVRefFileOutput::initData()
     iParametersLogged = false;
     iFormatMask = 0;
     iTextFormat = PVMF_MIME_FORMAT_UNKNOWN;
-#if PVFILEOUTPUT_CLOCK_EXTN_SUPPORTED
-    iUseClockExtension = true;
-#else
     iUseClockExtension = false;
-#endif
     iRIFFChunk.chunkID = FOURCC_RIFF;//0x46464952;   //"RIFF" in ASCII form, big-endian form
     iRIFFChunk.chunkSize = 0;
     iRIFFChunk.format  = FOURCC_WAVE;//0x45564157;   //"WAVE" in ASCII form, big-endian form
@@ -181,6 +201,7 @@ void PVRefFileOutput::initData()
     iVideoLastTimeStamp = 0;
     iVideoCount = 0;
     iIsMIOConfigured = false;
+    iClock = NULL;
     //Connect with file server.
     if (!iFsConnected)
     {
@@ -193,6 +214,19 @@ void PVRefFileOutput::initData()
             OSCL_ASSERT(false);
         }
     }
+}
+
+void PVRefFileOutput::setUserClockExtnInterface(bool aEnable)
+{
+    if (aEnable == true)
+    {
+        iUseClockExtension = true;
+    }
+    else
+    {
+        iUseClockExtension = false;
+    }
+
 }
 
 void PVRefFileOutput::ResetData()
@@ -766,75 +800,81 @@ bool PVRefFileOutput::CheckWriteBusy(uint32 aSeqNum)
 void PVRefFileOutput::LogParameters()
 {
     iParametersLogged = true;
-    char string[128];
-    int32 len;
-    if (iVideoFormatString.get_size() > 0)
+    if (iLogOutputToFile)
     {
-        len = oscl_snprintf(string, 128, "Video Format %s ", iVideoFormatString.get_str());
-        iOutputFile.Write(string, sizeof(uint8), len) ;
-    }
-    if (iVideoHeightValid)
-    {
-        len = oscl_snprintf(string, 128, "Video Height %d ", iVideoHeight);
-        iOutputFile.Write(string, sizeof(uint8), len) ;
-    }
-    if (iVideoWidthValid)
-    {
-        len = oscl_snprintf(string, 128, "Video Width %d ", iVideoWidth);
-        iOutputFile.Write(string, sizeof(uint8), len) ;
-    }
-    if (iVideoDisplayHeightValid)
-    {
-        len = oscl_snprintf(string, 128, "Video Display Height %d ", iVideoDisplayHeight);
-        iOutputFile.Write(string, sizeof(uint8), len) ;
-    }
-    if (iVideoDisplayWidthValid)
-    {
-        len = oscl_snprintf(string, 128, "Video Display Width %d ", iVideoDisplayWidth);
-        iOutputFile.Write(string, sizeof(uint8), len) ;
-    }
-    if (iAudioFormatString.get_size() > 0)
-    {
-        len = oscl_snprintf(string, 128, "Audio Format %s ", iAudioFormatString.get_str());
-        iOutputFile.Write(string, sizeof(uint8), len) ;
-    }
-    if (iAudioNumChannelsValid)
-    {
-        len = oscl_snprintf(string, 128, "Audio Num Channels %d ", iAudioNumChannels);
-        iOutputFile.Write(string, sizeof(uint8), len) ;
-    }
-    if (iAudioSamplingRateValid)
-    {
-        len = oscl_snprintf(string, 128, "Audio Sampling Rate %d ", iAudioSamplingRate);
-        iOutputFile.Write(string, sizeof(uint8), len) ;
-    }
-    if (iTextFormatString.get_size() > 0)
-    {
-        len = oscl_snprintf(string, 128, "Text Format %s ", iTextFormatString.get_str());
-        iOutputFile.Write(string, sizeof(uint8), len) ;
+        char string[128];
+        int32 len;
+        if (iVideoFormatString.get_size() > 0)
+        {
+            len = oscl_snprintf(string, 128, "Video Format %s ", iVideoFormatString.get_str());
+            iOutputFile.Write(string, sizeof(uint8), len) ;
+        }
+        if (iVideoHeightValid)
+        {
+            len = oscl_snprintf(string, 128, "Video Height %d ", iVideoHeight);
+            iOutputFile.Write(string, sizeof(uint8), len) ;
+        }
+        if (iVideoWidthValid)
+        {
+            len = oscl_snprintf(string, 128, "Video Width %d ", iVideoWidth);
+            iOutputFile.Write(string, sizeof(uint8), len) ;
+        }
+        if (iVideoDisplayHeightValid)
+        {
+            len = oscl_snprintf(string, 128, "Video Display Height %d ", iVideoDisplayHeight);
+            iOutputFile.Write(string, sizeof(uint8), len) ;
+        }
+        if (iVideoDisplayWidthValid)
+        {
+            len = oscl_snprintf(string, 128, "Video Display Width %d ", iVideoDisplayWidth);
+            iOutputFile.Write(string, sizeof(uint8), len) ;
+        }
+        if (iAudioFormatString.get_size() > 0)
+        {
+            len = oscl_snprintf(string, 128, "Audio Format %s ", iAudioFormatString.get_str());
+            iOutputFile.Write(string, sizeof(uint8), len) ;
+        }
+        if (iAudioNumChannelsValid)
+        {
+            len = oscl_snprintf(string, 128, "Audio Num Channels %d ", iAudioNumChannels);
+            iOutputFile.Write(string, sizeof(uint8), len) ;
+        }
+        if (iAudioSamplingRateValid)
+        {
+            len = oscl_snprintf(string, 128, "Audio Sampling Rate %d ", iAudioSamplingRate);
+            iOutputFile.Write(string, sizeof(uint8), len) ;
+        }
+        if (iTextFormatString.get_size() > 0)
+        {
+            len = oscl_snprintf(string, 128, "Text Format %s ", iTextFormatString.get_str());
+            iOutputFile.Write(string, sizeof(uint8), len) ;
+        }
     }
 }
 
 void PVRefFileOutput::LogCodecHeader(uint32 aSeqNum, const PVMFTimestamp& aTimestamp, uint32 datalen)
 {
-    if (iLogStrings)
+    if (iLogOutputToFile)
     {
-        char string[128];
-        int32 len = oscl_snprintf(string, 128, "SeqNum %d Timestamp %d Len %d Codec Header", aSeqNum, aTimestamp, datalen);
-        iOutputFile.Write(string, sizeof(uint8), len) ;
-    }
-    else
-    {
-        if (iVideoFormat == PVMF_MIME_H264_VIDEO_MP4)
+        if (iLogStrings)
         {
-            iOutputFile.Write(&datalen, sizeof(uint8), sizeof(uint32));
+            char string[128];
+            int32 len = oscl_snprintf(string, 128, "SeqNum %d Timestamp %d Len %d Codec Header", aSeqNum, aTimestamp, datalen);
+            iOutputFile.Write(string, sizeof(uint8), len) ;
+        }
+        else
+        {
+            if (iVideoFormat == PVMF_MIME_H264_VIDEO_MP4)
+            {
+                iOutputFile.Write(&datalen, sizeof(uint8), sizeof(uint32));
+            }
         }
     }
 }
 
 void PVRefFileOutput::LogEndOfStream(uint32 aSeqNum, const PVMFTimestamp& aTimestamp)
 {
-    if (iLogStrings)
+    if (iLogOutputToFile && iLogStrings)
     {
         char string[128];
         int32 len = oscl_snprintf(string, 128, "SeqNum %d Timestamp %d EOS", aSeqNum, aTimestamp);
@@ -844,17 +884,20 @@ void PVRefFileOutput::LogEndOfStream(uint32 aSeqNum, const PVMFTimestamp& aTimes
 
 void PVRefFileOutput::LogFrame(uint32 aSeqNum, const PVMFTimestamp& aTimestamp, uint32 datalen)
 {
-    if (iLogStrings)
+    if (iLogOutputToFile)
     {
-        char string[128];
-        int32 len = oscl_snprintf(string, 128, "SeqNum %d Timestamp %d Len %d Frame", aSeqNum, aTimestamp, datalen);
-        iOutputFile.Write(string, sizeof(uint8), len) ;
-    }
-    else
-    {
-        if (iVideoFormat == PVMF_MIME_H264_VIDEO_MP4)
+        if (iLogStrings)
         {
-            iOutputFile.Write(&datalen, sizeof(uint8), sizeof(uint32));
+            char string[128];
+            int32 len = oscl_snprintf(string, 128, "SeqNum %d Timestamp %d Len %d Frame", aSeqNum, aTimestamp, datalen);
+            iOutputFile.Write(string, sizeof(uint8), len) ;
+        }
+        else
+        {
+            if (iVideoFormat == PVMF_MIME_H264_VIDEO_MP4)
+            {
+                iOutputFile.Write(&datalen, sizeof(uint8), sizeof(uint32));
+            }
         }
     }
 }
@@ -933,7 +976,7 @@ PVMFCommandId PVRefFileOutput::writeAsync(uint8 aFormatType, int32 aFormatIndex,
                         if (aDataLen > 0)
                         {
                             LogCodecHeader(data_header_info.seq_num, data_header_info.timestamp, aDataLen);
-                            if (iOutputFile.Write(aData, sizeof(uint8), aDataLen) != aDataLen)
+                            if (iLogOutputToFile && iOutputFile.Write(aData, sizeof(uint8), aDataLen) != aDataLen)
                             {
                                 PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
                                                 (0, "PVRefFileOutput::writeAsync: Error - File write failed"));
@@ -1012,7 +1055,7 @@ PVMFCommandId PVRefFileOutput::writeAsync(uint8 aFormatType, int32 aFormatIndex,
                                 if (textmediadata->iTextSampleEntry.GetRep() != NULL)
                                 {
                                     // @todo Write out the text sample entry in a better format
-                                    if (iOutputFile.Write((OsclAny*)(textmediadata->iTextSampleEntry.GetRep()), sizeof(PVMFTimedTextSampleEntry), 1) != 1)
+                                    if (iLogOutputToFile && iOutputFile.Write((OsclAny*)(textmediadata->iTextSampleEntry.GetRep()), sizeof(PVMFTimedTextSampleEntry), 1) != 1)
                                     {
                                         PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
                                                         (0, "PVRefFileOutput::writeAsync: Error - File write failed for text sample entry"));
@@ -1022,7 +1065,7 @@ PVMFCommandId PVRefFileOutput::writeAsync(uint8 aFormatType, int32 aFormatIndex,
                                 }
 
                                 // Write out the raw text sample
-                                if (iOutputFile.Write(textmediadata->iTextSample, sizeof(uint8), textmediadata->iTextSampleLength) != textmediadata->iTextSampleLength)
+                                if (iLogOutputToFile && iOutputFile.Write(textmediadata->iTextSample, sizeof(uint8), textmediadata->iTextSampleLength) != textmediadata->iTextSampleLength)
                                 {
                                     PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
                                                     (0, "PVRefFileOutput::writeAsync: Error - File write failed for text sample data"));
@@ -1038,7 +1081,7 @@ PVMFCommandId PVRefFileOutput::writeAsync(uint8 aFormatType, int32 aFormatIndex,
                                 //do not render this frame.
                                 char string[128];
                                 int32 len = oscl_snprintf(string, 128, "discard-- frame-step mode");
-                                if (iOutputFile.Write(string, sizeof(uint8), len) != (uint32)len)
+                                if (iLogOutputToFile && iOutputFile.Write(string, sizeof(uint8), len) != (uint32)len)
                                 {
                                     PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
                                                     (0, "PVRefFileOutput::writeAsync: Error - File write failed"));
@@ -1049,9 +1092,12 @@ PVMFCommandId PVRefFileOutput::writeAsync(uint8 aFormatType, int32 aFormatIndex,
                             {
                                 if (iHeaderWritten != true && (iAudioFormat == PVMF_MIME_PCM16 || iAudioFormat == PVMF_MIME_PCM8))
                                 {
-                                    iOutputFile.Write(&iRIFFChunk, sizeof(uint8), sizeof(RIFFChunk));
-                                    iOutputFile.Write(&iFmtSubchunk, sizeof(uint8), sizeof(fmtSubchunk));
-                                    iOutputFile.Write(&iDataSubchunk, sizeof(uint8), sizeof(dataSubchunk));
+                                    if (iLogOutputToFile)
+                                    {
+                                        iOutputFile.Write(&iRIFFChunk, sizeof(uint8), sizeof(RIFFChunk));
+                                        iOutputFile.Write(&iFmtSubchunk, sizeof(uint8), sizeof(fmtSubchunk));
+                                        iOutputFile.Write(&iDataSubchunk, sizeof(uint8), sizeof(dataSubchunk));
+                                    }
                                     iHeaderWritten = true;
                                 }
                                 if (iHeaderWritten != true && (iVideoFormat == PVMF_MIME_YUV420 || iVideoFormat == PVMF_MIME_YUV422))
@@ -1066,7 +1112,7 @@ PVMFCommandId PVRefFileOutput::writeAsync(uint8 aFormatType, int32 aFormatIndex,
                                         iVideoFormat == PVMF_MIME_H2632000 ||
                                         iVideoFormat == PVMF_MIME_M4V)
                                 {
-                                    if (iOutputFile.Write(aData, sizeof(uint8), aDataLen) != aDataLen)
+                                    if (iLogOutputToFile && iOutputFile.Write(aData, sizeof(uint8), aDataLen) != aDataLen)
                                     {
                                         PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
                                                         (0, "PVRefFileOutput::writeAsync: Error - File write failed"));
@@ -1080,7 +1126,7 @@ PVMFCommandId PVRefFileOutput::writeAsync(uint8 aFormatType, int32 aFormatIndex,
                                 //'render' this frame
                                 if (iAudioFormat == PVMF_MIME_PCM16 || iAudioFormat == PVMF_MIME_PCM8)
                                 {
-                                    if (iOutputFile.Write(aData, sizeof(uint8), aDataLen) != aDataLen)
+                                    if (iLogOutputToFile && iOutputFile.Write(aData, sizeof(uint8), aDataLen) != aDataLen)
                                     {
                                         PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
                                                         (0, "PVRefFileOutput::writeAsync: Error - File write failed"));
@@ -1123,7 +1169,7 @@ PVMFCommandId PVRefFileOutput::writeAsync(uint8 aFormatType, int32 aFormatIndex,
                                     status = PVMFSuccess;
 #else
                                     uint32 size = iVideoWidth * iVideoHeight * 3 / 2;
-                                    if (iOutputFile.Write(aData, sizeof(uint8), size) != size)
+                                    if (iLogOutputToFile && iOutputFile.Write(aData, sizeof(uint8), size) != size)
                                     {
                                         PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
                                                         (0, "PVRefFileOutput::writeAsync: Error - File write failed"));
@@ -1666,9 +1712,9 @@ void PVRefFileOutput::setParametersSync(PvmiMIOSession aSession,
                     LogCodecHeader(0, 0, (int32)aParameters[i].capacity);
                     if (aParameters[i].value.pChar_value != NULL)
                     {
-                        if (iOutputFile.Write(aParameters[i].value.pChar_value,
-                                              sizeof(uint8),
-                                              (int32)aParameters[i].capacity) != (uint32)aParameters[i].length)
+                        if (iLogOutputToFile && iOutputFile.Write(aParameters[i].value.pChar_value,
+                                sizeof(uint8),
+                                (int32)aParameters[i].capacity) != (uint32)aParameters[i].length)
                         {
                             PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
                                             (0, "PVRefFileOutput::setParametersSync: Error - File write failed"));
@@ -1910,6 +1956,30 @@ void PVRefFileOutput::setFormatMask(uint32 mask)
     iFormatMask = mask;
 }
 
+OSCL_EXPORT_REF PVMFStatus PVRefFileOutput::SetClock(PVMFMediaClock *clockVal)
+{
+    iClock = clockVal;
+    return PVMFSuccess;
+}
+
+OSCL_EXPORT_REF void PVRefFileOutput::addRef()
+{
+}
+
+OSCL_EXPORT_REF void PVRefFileOutput::removeRef()
+{
+}
+
+OSCL_EXPORT_REF bool PVRefFileOutput::queryInterface(const PVUuid& aUuid, PVInterface*& aInterface)
+{
+    OSCL_UNUSED_ARG(aInterface);
+    OSCL_UNUSED_ARG(aUuid);
+    return true;
+}
+void PVRefFileOutput::queryUuid(PVUuid& uuid)
+{
+    OSCL_UNUSED_ARG(uuid);
+}
 //
 // For active timing support
 //
@@ -2115,7 +2185,7 @@ void PVRefFileOutput::Run()
     }
 
     //Re-start the data transfer if needed.
-    if (iWriteBusy)
+    if (iWriteBusy && iPeer)
     {
         iWriteBusy = false;
         iPeer->statusUpdate(PVMI_MEDIAXFER_STATUS_WRITE);
@@ -2212,71 +2282,76 @@ void PVRefFileOutput::InitializeAVI(int width, int height)
 
 void PVRefFileOutput::WriteHeaders()
 {
-    uint32 tmp;
+    if (iLogOutputToFile)
+    {
+
+        uint32 tmp;
 
 #ifndef AVI_OUTPUT
-    return;
+        return;
 #endif
 
-    tmp = FOURCC_RIFF;
-    iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //"RIFF"
-    tmp = 38016;
-    iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //4-byte size til the end
-    tmp = formtypeAVI;
-    iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //"AVI "
-    tmp = FOURCC_LIST;
-    iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //"LIST"
-    tmp = 4 + 4 + 4 + sizeof(AVIMainHeader) + 4 + 4 + 4 + 4 + 4 + 4 + 4 + sizeof(AVIStreamHeader) + sizeof(BitMapInfoHeader);
-    iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //4-byte list chunk size (entire list including all streams)
+        tmp = FOURCC_RIFF;
+        iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //"RIFF"
+        tmp = 38016;
+        iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //4-byte size til the end
+        tmp = formtypeAVI;
+        iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //"AVI "
+        tmp = FOURCC_LIST;
+        iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //"LIST"
+        tmp = 4 + 4 + 4 + sizeof(AVIMainHeader) + 4 + 4 + 4 + 4 + 4 + 4 + 4 + sizeof(AVIStreamHeader) + sizeof(BitMapInfoHeader);
+        iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //4-byte list chunk size (entire list including all streams)
 
-    // Write AVIMainHeader
-    tmp = listtypeAVIHEADER;
-    iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //"hdrl"
-    tmp = ckidAVIMAINHDR;
-    iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //"avih"
-    tmp = sizeof(AVIMainHeader);
-    iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //4-byte AVI Header size
-    iAVIMainHeaderPosition = iOutputFile.Tell();
-    iOutputFile.Write(&iAVIMainHeader, sizeof(uint8), sizeof(AVIMainHeader));  //AVI Header Data
+        // Write AVIMainHeader
+        tmp = listtypeAVIHEADER;
+        iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //"hdrl"
+        tmp = ckidAVIMAINHDR;
+        iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //"avih"
+        tmp = sizeof(AVIMainHeader);
+        iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //4-byte AVI Header size
+        iAVIMainHeaderPosition = (TOsclFileOffsetInt32)iOutputFile.Tell();
+        iOutputFile.Write(&iAVIMainHeader, sizeof(uint8), sizeof(AVIMainHeader));  //AVI Header Data
 
-    tmp = FOURCC_LIST;
-    iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //"LIST"
-    tmp = 4 + 4 + 4 + 4 + 4 + sizeof(AVIStreamHeader) + sizeof(BitMapInfoHeader);
-    iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //4-byte size of second LIST chunk (for the first stream)
-    tmp = listtypeSTREAMHEADER;
-    iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //"strl"
-    tmp = ckidSTREAMHEADER;
-    iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //"strh"
-    tmp = sizeof(AVIStreamHeader);  //size of strh
-    iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //4-byte size of strh
+        tmp = FOURCC_LIST;
+        iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //"LIST"
+        tmp = 4 + 4 + 4 + 4 + 4 + sizeof(AVIStreamHeader) + sizeof(BitMapInfoHeader);
+        iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //4-byte size of second LIST chunk (for the first stream)
+        tmp = listtypeSTREAMHEADER;
+        iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //"strl"
+        tmp = ckidSTREAMHEADER;
+        iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //"strh"
+        tmp = sizeof(AVIStreamHeader);  //size of strh
+        iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //4-byte size of strh
 
-    iAVIStreamHeaderPosition = iOutputFile.Tell();
-    iOutputFile.Write(&iAVIStreamHeader, sizeof(uint8), sizeof(AVIStreamHeader));
+        iAVIStreamHeaderPosition = (TOsclFileOffsetInt32)iOutputFile.Tell();
+        iOutputFile.Write(&iAVIStreamHeader, sizeof(uint8), sizeof(AVIStreamHeader));
 
 
-    tmp = ckidSTREAMFORMAT;    //same format as BITMAPINFO
-    iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //"strf"
-    tmp = sizeof(BitMapInfoHeader);
-    iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //4-byte size of  strf
-    iOutputFile.Write(&bi_hdr, sizeof(uint8), sizeof(BitMapInfoHeader));  //stream format data
+        tmp = ckidSTREAMFORMAT;    //same format as BITMAPINFO
+        iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //"strf"
+        tmp = sizeof(BitMapInfoHeader);
+        iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //4-byte size of  strf
+        iOutputFile.Write(&bi_hdr, sizeof(uint8), sizeof(BitMapInfoHeader));  //stream format data
 
-    tmp = FOURCC_LIST;
-    iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //"LIST"
-    iVideoHeaderPosition = iOutputFile.Tell();
-    tmp = 0;
-    iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //4-byte size of movi chunk below
-    tmp = listtypeAVIMOVIE;
-    iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //"movi"
+        tmp = FOURCC_LIST;
+        iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //"LIST"
+        iVideoHeaderPosition = (TOsclFileOffsetInt32)iOutputFile.Tell();
+        tmp = 0;
+        iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //4-byte size of movi chunk below
+        tmp = listtypeAVIMOVIE;
+        iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //"movi"
 #if 0
-    tmp = ckidAVIPADDING;
-    iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //"movi"
-    tmp = 0x6E0;
-    iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //"movi"
-    char junk[0x6E0];
-    oscl_memset(junk, 0, 0x6E0);
-    iOutputFile.Write(junk, sizeof(uint8), 0x6E0);  //"movi"
+        tmp = ckidAVIPADDING;
+        iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //"movi"
+        tmp = 0x6E0;
+        iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //"movi"
+        char junk[0x6E0];
+        oscl_memset(junk, 0, 0x6E0);
+        iOutputFile.Write(junk, sizeof(uint8), 0x6E0);  //"movi"
 #endif
+    }
 
+    uint32 tmp;
     tmp = ckidAVINEWINDEX;
     oscl_memcpy(&iIndexBuffer.indexBuffer[0], &tmp, sizeof(uint32));
     iIndexBuffer.length = 4;
@@ -2287,9 +2362,12 @@ void PVRefFileOutput::WriteHeaders()
 
 void PVRefFileOutput::AddChunk(uint8* chunk, uint32 size, uint32 ckid)
 {
-    iOutputFile.Write(&ckid, sizeof(uint8), sizeof(uint32));
-    iOutputFile.Write(&size, sizeof(uint8), sizeof(uint32));
-    iOutputFile.Write(chunk, sizeof(uint8), size);
+    if (iLogOutputToFile)
+    {
+        iOutputFile.Write(&ckid, sizeof(uint8), sizeof(uint32));
+        iOutputFile.Write(&size, sizeof(uint8), sizeof(uint32));
+        iOutputFile.Write(chunk, sizeof(uint8), size);
+    }
 
     iAVIIndex.chunkID = videoChunkID;
     iAVIIndex.flags = 0x10;
@@ -2313,14 +2391,20 @@ void PVRefFileOutput::AddChunk(uint8* chunk, uint32 size, uint32 ckid)
 
 void PVRefFileOutput::UpdateWaveChunkSize()
 {
-    int32 ret = iOutputFile.Tell();
-    iOutputFile.Seek(4, Oscl_File::SEEKSET);
-    ret = iOutputFile.Tell();
+    if (iLogOutputToFile)
+    {
+        int32 ret = (TOsclFileOffsetInt32)iOutputFile.Tell();
+        iOutputFile.Seek(4, Oscl_File::SEEKSET);
+        ret = (TOsclFileOffsetInt32)iOutputFile.Tell();
+    }
     iRIFFChunk.chunkSize = 36 + iDataSubchunk.subchunk2Size;
-    iOutputFile.Write(&iRIFFChunk.chunkSize, sizeof(uint8), 4);
-    iOutputFile.Seek(40, Oscl_File::SEEKSET);
-    iOutputFile.Write(&iDataSubchunk.subchunk2Size, sizeof(uint8), 4);
-    iOutputFile.Flush();
+    if (iLogOutputToFile)
+    {
+        iOutputFile.Write(&iRIFFChunk.chunkSize, sizeof(uint8), 4);
+        iOutputFile.Seek(40, Oscl_File::SEEKSET);
+        iOutputFile.Write(&iDataSubchunk.subchunk2Size, sizeof(uint8), 4);
+        iOutputFile.Flush();
+    }
 }
 
 void PVRefFileOutput::UpdateVideoChunkHeaderIdx()
@@ -2331,28 +2415,42 @@ void PVRefFileOutput::UpdateVideoChunkHeaderIdx()
     iAVIMainHeader.dwMaxBytesPerSec    = (uint32)((float)(iVideoCount * 3 * iVideoHeight * iVideoWidth) / (float)iVideoLastTimeStamp * 1000);
     iAVIMainHeader.dwTotalFrames = iVideoCount;
 
-    iOutputFile.Seek(iAVIMainHeaderPosition, Oscl_File::SEEKSET);
-    iOutputFile.Write(&iAVIMainHeader, sizeof(uint8), sizeof(AVIMainHeader));
+    if (iLogOutputToFile)
+    {
+        iOutputFile.Seek(iAVIMainHeaderPosition, Oscl_File::SEEKSET);
+        iOutputFile.Write(&iAVIMainHeader, sizeof(uint8), sizeof(AVIMainHeader));
+    }
 
     iAVIStreamHeader.dwRate = (uint32)((float)(iVideoCount * 1000000) / (float)iVideoLastTimeStamp);
     iAVIStreamHeader.dwLength = iVideoCount;
 
-    iOutputFile.Seek(iAVIStreamHeaderPosition, Oscl_File::SEEKSET);
-    iOutputFile.Write(&iAVIStreamHeader, sizeof(uint8), sizeof(AVIStreamHeader));
+    if (iLogOutputToFile)
+    {
+        iOutputFile.Seek(iAVIStreamHeaderPosition, Oscl_File::SEEKSET);
+        iOutputFile.Write(&iAVIStreamHeader, sizeof(uint8), sizeof(AVIStreamHeader));
+        iOutputFile.Seek(0, Oscl_File::SEEKEND);
+    }
 
-    iOutputFile.Seek(0, Oscl_File::SEEKEND);
     uint32 tmp = iIndexBuffer.length - 8;
 
     //write the indexBuffer to the file
     oscl_memcpy(&iIndexBuffer.indexBuffer[4], &tmp, sizeof(uint32));
-    iOutputFile.Write(iIndexBuffer.indexBuffer, sizeof(uint8), iIndexBuffer.length);
-    iOutputFile.Seek(0, Oscl_File::SEEKEND);
-    uint32 iAVISize = iOutputFile.Tell() - 8;
-    iOutputFile.Seek(4, Oscl_File::SEEKSET);
-    iOutputFile.Write(&iAVISize, sizeof(uint8), 4);
-    iOutputFile.Seek(iVideoHeaderPosition, Oscl_File::SEEKSET);
+    if (iLogOutputToFile)
+    {
+        iOutputFile.Write(iIndexBuffer.indexBuffer, sizeof(uint8), iIndexBuffer.length);
+        iOutputFile.Seek(0, Oscl_File::SEEKEND);
+    }
+    uint32 iAVISize = (TOsclFileOffsetInt32)iOutputFile.Tell() - 8;
+    if (iLogOutputToFile)
+    {
+        iOutputFile.Seek(4, Oscl_File::SEEKSET);
+        iOutputFile.Write(&iAVISize, sizeof(uint8), 4);
+        iOutputFile.Seek(iVideoHeaderPosition, Oscl_File::SEEKSET);
+    }
     iAVIChunkSize += 4;
-    iOutputFile.Write(&iAVIChunkSize, sizeof(uint8), 4);
-
+    if (iLogOutputToFile)
+    {
+        iOutputFile.Write(&iAVIChunkSize, sizeof(uint8), 4);
+    }
 }
 

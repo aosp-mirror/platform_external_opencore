@@ -22,6 +22,8 @@
 #include "pvmf_protocol_engine_download_common.h"
 #endif
 
+#define DEFAULT_STATE_NUMBER_FOR_DOWNLOAD_GET_REQUEST 1 // for progressive streaming or shoutcast
+
 
 class ProgressiveDownloadState_HEAD : public DownloadState
 {
@@ -48,7 +50,7 @@ class ProgressiveDownloadState_HEAD : public DownloadState
 class ProgressiveDownloadState_GET : public DownloadState
 {
     public:
-        ProgressiveDownloadState_GET() : iSendEndOfMessageTruncate(false)
+        ProgressiveDownloadState_GET() : iSendEndOfMessageTruncate(false), iRangeHeaderSupported(true)
         {
             ;
         }
@@ -73,7 +75,8 @@ class ProgressiveDownloadState_GET : public DownloadState
 
     protected:
         int32 processMicroStateGetResponsePreCheck();
-        bool setHeaderFields();
+        virtual bool setHeaderFields();
+        bool setRangeHeaderFields();
         // From HttpParsingBasicObjectObserver
         int32 OutputDataAvailable(OUTPUT_DATA_QUEUE *aOutputQueue, const bool isHttpHeader);
         void updateOutputDataQueue(OUTPUT_DATA_QUEUE *aOutputQueue);
@@ -95,20 +98,23 @@ class ProgressiveDownloadState_GET : public DownloadState
         int32 checkContentInfoMatchingForResumeDownload();
         virtual int32 checkParsingStatus(int32 parsingStatus);
         int32 updateDownloadStatistics();
+
+    protected:
         bool iSendEndOfMessageTruncate;
+        bool iRangeHeaderSupported;
 };
 
 // Progressive Streaming is a special form of progressive download
 class ProgressiveStreamingState_GET : public ProgressiveDownloadState_GET
 {
     public:
-        void seek(const uint32 aSeekPosition)
+        virtual void seek(const uint32 aSeekPosition)
         {
             iCfgFile->SetCurrentFileSize(aSeekPosition);
             iNeedGetResponsePreCheck = true; // reset the parser
         }
 
-    private:
+    protected:
         int32 checkParsingStatus(int32 parsingStatus);
         void saveConfig()
         {
@@ -205,12 +211,12 @@ class ProgressiveStreaming : public ProgressiveDownload
         ProgressiveStreaming(): ProgressiveDownload()
         {
 
-            OSCL_DELETE(iState[1]);
-            iState[1] = OSCL_NEW(ProgressiveStreamingState_GET, ());
+            OSCL_DELETE(iState[DEFAULT_STATE_NUMBER_FOR_DOWNLOAD_GET_REQUEST]);
+            iState[DEFAULT_STATE_NUMBER_FOR_DOWNLOAD_GET_REQUEST] = OSCL_NEW(ProgressiveStreamingState_GET, ());
             if (iParser) iParser->setNumRetry(MAX_NUM_EOS_MESSAGES_FOR_SAME_REQUEST + 1); // +1 for testing purpose (i.e., insert an EOS)
         }
 
-        void seek(const uint32 aSeekPosition)
+        virtual void seek(const uint32 aSeekPosition)
         {
             HttpBasedProtocol::seek(aSeekPosition);
 

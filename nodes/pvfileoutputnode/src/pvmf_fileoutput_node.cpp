@@ -36,6 +36,7 @@ PVMFFileOutputNode::PVMFFileOutputNode(int32 aPriority)
         : OsclActiveObject(aPriority, "PVMFFileOutputNode")
         , iCmdIdCounter(0)
         , iInPort(NULL)
+        , iFileHandle(NULL)
         , iFileOpened(0)
         , iFirstMediaData(false)
         , iLogger(NULL)
@@ -220,6 +221,7 @@ PVMFStatus PVMFFileOutputNode::GetCapability(PVMFNodeCapability& aNodeCapability
     else
     {
         iCapability.iInputFormatCapability.push_back(PVMF_MIME_AMR_IETF);
+        iCapability.iInputFormatCapability.push_back(PVMF_MIME_AMRWB_IETF);
         iCapability.iInputFormatCapability.push_back(PVMF_MIME_M4V);
         iCapability.iInputFormatCapability.push_back(PVMF_MIME_PCM8);
         iCapability.iInputFormatCapability.push_back(PVMF_MIME_PCM16);
@@ -430,6 +432,35 @@ PVMFStatus PVMFFileOutputNode::SetOutputFileName(const OSCL_wString& aFileName)
     return PVMFSuccess;
 }
 
+///////////////////////////////////////////////////////////////////////////
+PVMFStatus PVMFFileOutputNode::SetOutputFileDescriptor(const OsclFileHandle* aFileHandle)
+{
+    if (iInterfaceState != EPVMFNodeIdle
+            && iInterfaceState != EPVMFNodeInitialized
+            && iInterfaceState != EPVMFNodeCreated
+            && iInterfaceState != EPVMFNodePrepared)
+        return false;
+
+    iOutputFile.SetPVCacheSize(0);
+    iOutputFile.SetAsyncReadBufferSize(0);
+    iOutputFile.SetNativeBufferSize(0);
+    iOutputFile.SetLoggingEnable(false);
+    iOutputFile.SetSummaryStatsLoggingEnable(false);
+    iOutputFile.SetFileHandle((OsclFileHandle*)aFileHandle);
+
+    //call open
+    int32 retval = iOutputFile.Open(_STRLIT_CHAR("dummy"),
+                                    Oscl_File::MODE_READWRITE | Oscl_File::MODE_BINARY,
+                                    iFs);
+
+    if (retval == 0)
+    {
+        iFileOpened = 1;
+        iFirstMediaData = true;
+        return PVMFSuccess;
+    }
+    return PVMFFailure;
+}
 ////////////////////////////////////////////////////////////////////////////
 PVMFStatus PVMFFileOutputNode::SetMaxFileSize(bool aEnable, uint32 aMaxFileSizeBytes)
 {
@@ -857,6 +888,24 @@ PVMFStatus PVMFFileOutputNode::WriteFormatSpecificInfo(OsclAny* aPtr, uint32 aSi
             {
                 // AMR header not found, add AMR header to file first
                 status = WriteData((OsclAny*)AMR_HEADER, AMR_HEADER_SIZE);
+                if (status != PVMFSuccess)
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
+                                    (0, "PVMFFileOutputNode::WriteFormatSpecificInfo: Error - WriteData failed"));
+                    return status;
+                }
+            }
+            iFirstMediaData = false;
+        }
+        // Add the amr-wb header if required
+        else if (((PVMFFileOutputInPort*)iInPort)->iFormat == PVMF_MIME_AMRWB_IETF)
+        {
+            // Check if the incoming data has "#!AMR-WB\n" string
+            if (aSize < AMRWB_HEADER_SIZE ||
+                    oscl_strncmp((const char*)aPtr, AMRWB_HEADER, AMRWB_HEADER_SIZE) != 0)
+            {
+                // AMR header not found, add AMR header to file first
+                status = WriteData((OsclAny*)AMRWB_HEADER, AMRWB_HEADER_SIZE);
                 if (status != PVMFSuccess)
                 {
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,

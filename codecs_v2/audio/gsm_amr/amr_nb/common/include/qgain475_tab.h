@@ -50,6 +50,8 @@ terms listed above has been obtained from the copyright holder.
 #ifndef QGAIN475_TAB_H
 #define QGAIN475_TAB_H
 
+#define MR475_VQ_SIZE 256
+
 /*----------------------------------------------------------------------------
 ; INCLUDES
 ----------------------------------------------------------------------------*/

@@ -213,11 +213,11 @@
 00210         {
 00211             <span class="keywordflow">return</span> iValid;
 00212         }
-<a name="l00213"></a><a class="code" href="classOsclAsyncFileBuffer.html#a5">00213</a>         int32 <a class="code" href="classOsclAsyncFileBuffer.html#a5">Offset</a>()
+<a name="l00213"></a><a class="code" href="classOsclAsyncFileBuffer.html#a5">00213</a>         <a class="code" href="osclconfig__io_8h.html#a48">TOsclFileOffset</a> <a class="code" href="classOsclAsyncFileBuffer.html#a5">Offset</a>()
 00214         {
 00215             <span class="keywordflow">return</span> iOffset;
 00216         }
-<a name="l00217"></a><a class="code" href="classOsclAsyncFileBuffer.html#a6">00217</a>         <span class="keywordtype">void</span> <a class="code" href="classOsclAsyncFileBuffer.html#a6">SetOffset</a>(int32 aOffset)
+<a name="l00217"></a><a class="code" href="classOsclAsyncFileBuffer.html#a6">00217</a>         <span class="keywordtype">void</span> <a class="code" href="classOsclAsyncFileBuffer.html#a6">SetOffset</a>(<a class="code" href="osclconfig__io_8h.html#a48">TOsclFileOffset</a> aOffset)
 00218         {
 00219             iOffset = aOffset;
 00220         }
@@ -225,7 +225,7 @@
 00222         {
 00223             <span class="keywordflow">return</span> iLength;
 00224         }
-00225         <span class="keywordtype">bool</span> <a class="code" href="classOsclAsyncFileBuffer.html#a8">HasThisOffset</a>(int32 aOffset);
+00225         <span class="keywordtype">bool</span> <a class="code" href="classOsclAsyncFileBuffer.html#a8">HasThisOffset</a>(<a class="code" href="osclconfig__io_8h.html#a48">TOsclFileOffset</a> aOffset);
 <a name="l00226"></a><a class="code" href="classOsclAsyncFileBuffer.html#a9">00226</a>         int32 <a class="code" href="classOsclAsyncFileBuffer.html#a9">Id</a>()
 00227         {
 00228             <span class="keywordflow">return</span> iId;
@@ -240,7 +240,7 @@
 00237 
 00238     <span class="keyword">private</span>:
 00239         <a class="code" href="classOsclBuf.html">OsclBuf</a>* iBuffer;
-00240         int32 iOffset;
+00240         <a class="code" href="osclconfig__io_8h.html#a48">TOsclFileOffset</a> iOffset;
 00241         <span class="keywordtype">bool</span> iInUse;
 00242         int32 iLength;
 00243         <span class="keywordtype">bool</span> iValid;
@@ -272,11 +272,11 @@
 00294                     , <span class="keyword">const</span> <a class="code" href="classOsclNativeFileParams.html">OsclNativeFileParams</a>&amp; params
 00295                     , <a class="code" href="classOscl__FileServer.html">Oscl_FileServer</a>&amp; fileserv);
 00296 
-00297         int32 <a class="code" href="classOsclAsyncFile.html#a3">Seek</a>(int32 offset, <a class="code" href="classOscl__File.html#s11">Oscl_File::seek_type</a> origin);
-00298         int32 <a class="code" href="classOsclAsyncFile.html#a4">Tell</a>();
+00297         int32 <a class="code" href="classOsclAsyncFile.html#a3">Seek</a>(<a class="code" href="osclconfig__io_8h.html#a48">TOsclFileOffset</a> offset, <a class="code" href="classOscl__File.html#s11">Oscl_File::seek_type</a> origin);
+00298         <a class="code" href="osclconfig__io_8h.html#a48">TOsclFileOffset</a> <a class="code" href="classOsclAsyncFile.html#a4">Tell</a>();
 00299         uint32 <a class="code" href="classOsclAsyncFile.html#a5">Read</a>(<a class="code" href="group__osclbase.html#a25">OsclAny</a>* aBuffer1, uint32 aDataSize, uint32 aNumElements);
 00300         int32 <a class="code" href="classOsclAsyncFile.html#a6">EndOfFile</a>();
-00301         int32 <a class="code" href="classOsclAsyncFile.html#a7">Size</a>();
+00301         <a class="code" href="osclconfig__io_8h.html#a48">TOsclFileOffset</a> <a class="code" href="classOsclAsyncFile.html#a7">Size</a>();
 00302         int32 <a class="code" href="classOsclAsyncFile.html#a8">Close</a>();
 00303 
 <a name="l00304"></a><a class="code" href="classOsclAsyncFile.html#a9">00304</a>         uint32 <a class="code" href="classOsclAsyncFile.html#a9">Write</a>(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a25">OsclAny</a>* aBuffer1, uint32 aDataSize, uint32 aNumElements)
@@ -298,25 +298,25 @@
 00323     <span class="keyword">private</span>:
 00324         <span class="comment">// private utility methods</span>
 00325         <span class="keywordtype">void</span> StartAsyncRead(<span class="keywordtype">bool</span> aStartAsyncRead);
-00326         <span class="keywordtype">bool</span> FindDataBuffer(<a class="code" href="classOsclAsyncFileBuffer.html">OsclAsyncFileBuffer</a>*&amp; aDataBuffer, int32&amp; aBufferId, int32 aOffset, int32 aSize);
+00326         <span class="keywordtype">bool</span> FindDataBuffer(<a class="code" href="classOsclAsyncFileBuffer.html">OsclAsyncFileBuffer</a>*&amp; aDataBuffer, int32&amp; aBufferId, <a class="code" href="osclconfig__io_8h.html#a48">TOsclFileOffset</a> aOffset, int32 aSize);
 00327         <span class="keywordtype">void</span> UpdateReading();
-00328         int32 BytesReadAhead(int32 aOffset);
+00328         int32 BytesReadAhead();
 00329         int32 SortDataBuffers();
-00330         <span class="keywordtype">bool</span> GetNextDataBuffer(<a class="code" href="classOsclAsyncFileBuffer.html">OsclAsyncFileBuffer</a>*&amp; aDataBuffer, int32 aFilePointerToReadFrom);
-00331         <span class="keywordtype">void</span> StartNextRead(int32 aPosToReadFrom);
-00332         <span class="keywordtype">void</span> ReOrderBuffersQueue(int32 aOffset, int32 aFirstBufferId);
+00330         <span class="keywordtype">bool</span> GetNextDataBuffer(<a class="code" href="classOsclAsyncFileBuffer.html">OsclAsyncFileBuffer</a>*&amp; aDataBuffer, <a class="code" href="osclconfig__io_8h.html#a48">TOsclFileOffset</a> aFilePointerToReadFrom);
+00331         <span class="keywordtype">void</span> StartNextRead(<a class="code" href="osclconfig__io_8h.html#a48">TOsclFileOffset</a> aPosToReadFrom);
+00332         <span class="keywordtype">void</span> ReOrderBuffersQueue(int32 aFirstBufferId);
 00333         <span class="keywordtype">bool</span> IsLinkedDataBuffer(<a class="code" href="classOsclAsyncFileBuffer.html">OsclAsyncFileBuffer</a>* aDataBuffer);
 00334         <span class="keywordtype">bool</span> CanBeLinked(<a class="code" href="classOsclAsyncFileBuffer.html">OsclAsyncFileBuffer</a>* aDataBuffer);
-00335         uint32 doRead(uint8*&amp; aBuffer1, uint32 aDataSize, uint32 aNumElements, int32 aOffset);
+00335         uint32 doRead(uint8*&amp; aBuffer1, uint32 aDataSize, uint32 aNumElements, <a class="code" href="osclconfig__io_8h.html#a48">TOsclFileOffset</a> aOffset);
 00336 
 00337     <span class="keyword">private</span>:
-00338         int32 iFileSize;
+00338         <a class="code" href="osclconfig__io_8h.html#a48">TOsclFileOffset</a> iFileSize;
 00339 
 00340         <span class="comment">// File object to do async read from</span>
 00341         <a class="code" href="classOsclNativeFile.html">OsclNativeFile</a>&amp; iNativeFile;
 00342 
 00343         <span class="comment">// File position for async reads.</span>
-00344         int32 iAsyncFilePosition;
+00344         <a class="code" href="osclconfig__io_8h.html#a48">TOsclFileOffset</a> iAsyncFilePosition;
 00345 
 00346         <span class="comment">// For verification</span>
 00347         <a class="code" href="classOsclNativeFile.html">OsclNativeFile</a>* iNativeFileVerify;
@@ -326,7 +326,7 @@
 00351         <a class="code" href="classOsclNativeFile.html">OsclNativeFile</a>* iNativeFileDuplicate;
 00352 
 00353         <span class="comment">// File position for sync reads.</span>
-00354         int32 iSyncFilePosition;
+00354         <a class="code" href="osclconfig__io_8h.html#a48">TOsclFileOffset</a> iSyncFilePosition;
 00355 
 00356         <span class="comment">// Arrays of data buffers</span>
 00357         <a class="code" href="classOscl__Vector.html">Oscl_Vector&lt;OsclAsyncFileBuffer*, OsclMemAllocator&gt;</a> iDataBufferArray;
@@ -344,10 +344,10 @@
 00369         uint32 iTotalCacheSize;
 00370 
 00371         <span class="comment">// Logical File Position (as seen by the client of this class)</span>
-00372         int32 iFilePosition;
+00372         <a class="code" href="osclconfig__io_8h.html#a48">TOsclFileOffset</a> iFilePosition;
 00373 
 00374         <span class="comment">// Last offset after a user read operation</span>
-00375         int32 iLastUserFileRead;
+00375         <a class="code" href="osclconfig__io_8h.html#a48">TOsclFileOffset</a> iLastUserFileRead;
 00376 
 00377         <span class="comment">// Start async read enable flag</span>
 00378         <span class="keywordtype">bool</span> iStartAsyncRead;
@@ -412,7 +412,7 @@
 00441 <span class="preprocessor">#endif</span>
 00442 <span class="preprocessor"></span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: OPENCORE_20090120 </small>
+<address style="align: left;"><small>Posting Version: OPENCORE_20090223 </small>
 </small></address>
 </body>
 </html>

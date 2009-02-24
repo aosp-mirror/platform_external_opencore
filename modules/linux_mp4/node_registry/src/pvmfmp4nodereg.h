@@ -31,8 +31,6 @@ class Mp4NodesCoreLibraryLoader
     public:
         static PVMFNodeInterface* CreateMp4ParserNode(int32 aPriority);
         static bool DeleteMp4ParserNode(PVMFNodeInterface* aNode);
-    private:
-        static OsclSharedLibrary* iOsclSharedLibrary;
 };
 
 #endif // PVMFMP4NODEREG_H_INCLUDED

@@ -245,12 +245,6 @@ OSCL_EXPORT_REF PVMFCommandId PvmiMIOAviWavFile::Flush(const OsclAny* aContext)
 ////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF PVMFCommandId PvmiMIOAviWavFile::Reset(const OsclAny* aContext)
 {
-    if (iState != STATE_STARTED || iState != STATE_PAUSED)
-    {
-        OSCL_LEAVE(OsclErrInvalidState);
-        return -1;
-    }
-
     return AddCmdToQueue(CMD_RESET, aContext);
 }
 
@@ -549,6 +543,30 @@ OSCL_EXPORT_REF PVMFStatus PvmiMIOAviWavFile::getParametersSync(PvmiMIOSession a
         }
 
         aParameters[0].value.float_value = iSettings.iFrameRate;
+    }
+    else if (pv_mime_strcmp(aIdentifier, AUDIO_OUTPUT_SAMPLING_RATE_CUR_QUERY) == 0)
+    {
+        aNum_parameter_elements = 1;
+        status = AllocateKvp(aParameters, (PvmiKeyType)AUDIO_OUTPUT_SAMPLING_RATE_CUR_VALUE, aNum_parameter_elements);
+        if (status != PVMFSuccess)
+        {
+            LOG_ERR((0, "PvmiMIOAviWavFile::GetOutputParametersSync: Error - AllocateKvp failed. status=%d", status));
+            return status;
+        }
+
+        aParameters[0].value.uint32_value = (uint32)iSettings.iSamplingFrequency;
+    }
+    else if (pv_mime_strcmp(aIdentifier, AUDIO_OUTPUT_NUM_CHANNELS_CUR_QUERY) == 0)
+    {
+        aNum_parameter_elements = 1;
+        status = AllocateKvp(aParameters, (PvmiKeyType)AUDIO_OUTPUT_NUM_CHANNELS_CUR_VALUE, aNum_parameter_elements);
+        if (status != PVMFSuccess)
+        {
+            LOG_ERR((0, "PvmiMIOAviWavFile::GetOutputParametersSync: Error - AllocateKvp failed. status=%d", status));
+            return status;
+        }
+
+        aParameters[0].value.uint32_value = (uint32)iSettings.iNumChannels;
     }
     else if (pv_mime_strcmp(aIdentifier, OUTPUT_TIMESCALE_CUR_QUERY) == 0)
     {
@@ -961,7 +979,12 @@ PVMFCommandId PvmiMIOAviWavFile::AddCmdToQueue(PvmiMIOAviWavFileCmdType aType,
     cmd.iData1 = aData1;
     cmd.iId = iCmdIdCounter;
     ++iCmdIdCounter;
-    iCmdQueue.push_back(cmd);
+
+    if (CMD_RESET == aType)
+        iCmdQueue.push_front(cmd);
+    else
+        iCmdQueue.push_back(cmd);
+
     RunIfNotReady();
     return cmd.iId;
 }
@@ -1047,6 +1070,9 @@ PVMFStatus PvmiMIOAviWavFile::DoPause()
 
 PVMFStatus PvmiMIOAviWavFile::DoReset()
 {
+    while (!iCmdQueue.empty())
+        iCmdQueue.erase(&iCmdQueue.front());
+
     iWriteState = EWriteOK;
 #if PROFILING_ON
     if (!oDiagnosticsLogged)

@@ -571,7 +571,7 @@ PVMFFileBufferReadDataStreamImpl::GetCurrentPointerPosition(PvmiDataStreamSessio
 
     if (!iFileObject)
         return 0;  // No iFileObject to work with, return zero
-    int32 result = iFileObject->Tell();
+    int32 result = (TOsclFileOffsetInt32)iFileObject->Tell();
     LOGDEBUG((0, "PVMFFileBufferReadDataStreamImpl::GetCurrentContentPosition returning %d", result));
     return (uint32)(result);
 }
@@ -731,7 +731,7 @@ PVMFFileBufferWriteDataStreamImpl::OpenSession(PvmiDataStreamSession& aSessionID
             aSessionID = 0;
             if (result == 0)
             {
-                const int32 filesize = iFileObject->Size();
+                const int32 filesize = (TOsclFileOffsetInt32)iFileObject->Size();
                 if (filesize >= 0)
                     this->iFileNumBytes = filesize;
             }
@@ -1091,7 +1091,7 @@ PVMFFileBufferWriteDataStreamImpl::GetCurrentPointerPosition(PvmiDataStreamSessi
 
     if (!iFileObject)
         return 0;  // No iFileObject to work with, return zero
-    int32 result = iFileObject->Tell();
+    int32 result = (TOsclFileOffsetInt32)iFileObject->Tell();
     LOGDEBUG((0, "PVMFFileBufferWriteDataStreamImpl::GetCurrentContentPosition returning %d", result));
     return (uint32)(result);
 }

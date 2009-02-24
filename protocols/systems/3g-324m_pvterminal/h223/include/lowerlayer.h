@@ -23,7 +23,6 @@
 #include "oscl_timer.h"
 #endif
 #include "pvt_params.h"
-#include "pvt_events.h"
 #include "pduparcom.h"
 #include "layer.h"
 #include "media_packet.h"

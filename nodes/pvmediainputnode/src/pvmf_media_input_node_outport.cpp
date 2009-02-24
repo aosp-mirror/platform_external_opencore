@@ -433,7 +433,7 @@ PVMFCommandId PvmfMediaInputNodeOutPort::writeAsync(uint8 format_type, int32 for
                 OsclRefCounter* my_refcnt;
                 uint aligned_refcnt_size = oscl_mem_aligned_size(sizeof(OsclRefCounterSA< OsclMemAllocDestructDealloc<uint8> >));
                 uint8* my_ptr = (uint8*) my_alloc.allocate(aligned_refcnt_size + sizeof(int32));
-                my_refcnt = new(my_ptr) OsclRefCounterSA< OsclMemAllocDestructDealloc<uint8> >(my_ptr);
+                my_refcnt = OSCL_PLACEMENT_NEW(my_ptr, OsclRefCounterSA< OsclMemAllocDestructDealloc<uint8> >(my_ptr));
                 my_ptr += aligned_refcnt_size;
 
                 OsclMemoryFragment memfrag;

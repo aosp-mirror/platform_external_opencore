@@ -308,12 +308,6 @@ PVMFStatus H223OutgoingChannel::PutData(PVMFSharedMediaMsgPtr media_msg)
         iObserver->ReceivedFormatSpecificInfo(lcn, (uint8*)iFsiFrag.getMemFragPtr(), iFsiFrag.getMemFragSize());
     }
 
-    if (iPaused)
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel::PutData Logical channel %d paused.  Dropping media data.", lcn));
-        return PVMFErrInvalidState;
-    }
-
     if (IsSegmentable() && iWaitForRandomAccessPoint)
     {
         if ((mediaData->getMarkerInfo()&PVMF_MEDIA_DATA_MARKER_INFO_RANDOM_ACCESS_POINT_BIT) == 0)
@@ -588,7 +582,12 @@ bool H223OutgoingChannel::GetNextPacket(PVMFSharedMediaDataPtr& aMediaData, PVMF
     {
         return false;
     }
+    if ((aStatus == PVMFSuccess) && iPaused)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel::GetNextPacket Logical channel %d paused.", lcn));
+        return false;
 
+    }
     if ((aStatus == PVMFSuccess) && iBufferMediaMs && iBufferMediaBytes)
     {
         /* Still buffering */
@@ -629,7 +628,7 @@ OsclAny H223OutgoingChannel::Flush()
     // clear messages in input queue
     ClearMsgQueues();
     // go through pending queue
-    while (GetNextPacket(aMediaData, PVMFFailure))
+    while (GetNextPacket(aMediaData, PVMFErrCancelled))
     {
         PV_STAT_INCR(iNumBytesFlushed, aMediaData->getFilledSize())
         OsclSharedPtr<PVMFMediaDataImpl> aMediaDataImpl;
@@ -715,6 +714,46 @@ OSCL_EXPORT_REF PVMFStatus H223OutgoingChannel::Connect(PVMFPortInterface* aPort
     PortActivity(PVMF_PORT_ACTIVITY_CONNECT);
     return PVMFSuccess;
 }
+OSCL_EXPORT_REF PVMFStatus H223OutgoingChannel::PeerConnect(PVMFPortInterface* aPort)
+{
+
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel::PeerConnect aPort=0x%x", this, aPort));
+    if (!aPort)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "0x%x H223OutgoingChannel::PeerConnect: Error - Connecting to invalid port", this));
+        return PVMFErrArgument;
+    }
+    if (iConnectedPort)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "0x%x H223OutgoingChannel::PeerConnect: Error - Already connected", this));
+        return PVMFFailure;
+    }
+
+    OsclAny* config = NULL;
+    aPort->QueryInterface(PVMI_CAPABILITY_AND_CONFIG_PVUUID, config);
+    if (!config)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "H223OutgoingChannel::PeerConnect: Error - Peer port does not support capability interface"));
+        return PVMFFailure;
+    }
+
+
+    PVMFStatus status = PVMFSuccess;
+
+    status = NegotiateInputSettings((PvmiCapabilityAndConfig*)config);
+
+    if (status != PVMFSuccess)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "H223OutgoingChannel::PeerConnect: Error - Settings negotiation failed. status=%d", status));
+        return status;
+    }
+
+
+    iConnectedPort = aPort;
+    PortActivity(PVMF_PORT_ACTIVITY_CONNECT);
+
+    return status;
+}
 
 PVMFStatus H223OutgoingChannel::NegotiateInputSettings(PvmiCapabilityAndConfig* aConfig)
 {
@@ -730,7 +769,7 @@ PVMFStatus H223OutgoingChannel::NegotiateInputSettings(PvmiCapabilityAndConfig* 
                         kvp, numParams, NULL);
     if (status != PVMFSuccess || numParams == 0)
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel::NegotiateInputSettings, Error:  getParametersSync failed.  status=%d", status));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "H223OutgoingChannel::NegotiateInputSettings, Error:  getParametersSync failed.  status=%d", status));
         return status;
     }
 
@@ -746,7 +785,7 @@ PVMFStatus H223OutgoingChannel::NegotiateInputSettings(PvmiCapabilityAndConfig* 
 
     if (!selectedKvp)
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel::NegotiateInputSettings, Error:  Input format not supported by peer"));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "H223OutgoingChannel::NegotiateInputSettings, Error:  Input format not supported by peer"));
         return PVMFFailure;
     }
     if (PVMFSuccess != setConfigParametersSync(selectedKvp, aConfig))
@@ -757,6 +796,137 @@ PVMFStatus H223OutgoingChannel::NegotiateInputSettings(PvmiCapabilityAndConfig* 
     aConfig->releaseParameters(NULL, kvp, numParams);
     kvp = NULL;
     numParams = 0;
+
+
+    if (iMediaType.isVideo())
+    {
+        // frame width negotiations
+        uint32 width = GetVideoFrameSize(iDataType, true);
+        status = aConfig->getParametersSync(NULL, (PvmiKeyType)VIDEO_OUTPUT_WIDTH_CAP_QUERY, kvp, numParams, NULL);
+        if (status != PVMFSuccess || numParams != 1)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "H223OutgoingChannel::NegotiateInputSettings: Error - config->getParametersSync(cap width) failed"));
+            // do not report error for now as enc nodes dont implemlement some parameters
+
+        }
+        else
+        {
+            if (kvp[0].value.uint32_value > width)
+            {
+                OsclMemAllocator alloc;
+                PvmiKvp kvp;
+                kvp.key = NULL;
+                kvp.length = oscl_strlen(VIDEO_OUTPUT_WIDTH_CUR_QUERY) + 1; // +1 for \0
+                kvp.key = (PvmiKeyType)alloc.ALLOCATE(kvp.length);
+                if (kvp.key == NULL)
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "H223OutgoingChannel::NegotiateInputSettings: Error - alloc failed for VIDEO_OUTPUT_WIDTH_CUR_QUERY kvp "));
+                    return PVMFErrNoMemory;
+                }
+                oscl_strncpy(kvp.key, VIDEO_OUTPUT_WIDTH_CUR_QUERY, kvp.length);
+                kvp.value.uint32_value = width;
+
+                if (PVMFSuccess != setConfigParametersSync(&kvp, aConfig))
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "H223OutgoingChannel::NegotiateInputSettings, Error:  setConfigParametersSync width failed"));
+                    //dont return PVMFFailure for now ;
+                }
+
+
+                alloc.deallocate((OsclAny*)(kvp.key));
+
+            }
+            aConfig->releaseParameters(NULL, kvp, numParams);
+        }
+
+        kvp = NULL;
+        numParams = 0;
+
+
+
+        // frame height negotiations
+        uint32 height = GetVideoFrameSize(iDataType, false);
+        status = aConfig->getParametersSync(NULL, (PvmiKeyType)VIDEO_OUTPUT_HEIGHT_CAP_QUERY, kvp, numParams, NULL);
+        if (status != PVMFSuccess || numParams != 1)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "H223OutgoingChannel::NegotiateInputSettings: Error - config->getParametersSync(cap height) failed"));
+            // do not report error for now as enc nodes dont implemlement some parameters
+
+        }
+        else
+        {
+            if (kvp[0].value.uint32_value > height)
+            {
+                OsclMemAllocator alloc;
+                PvmiKvp kvp;
+                kvp.key = NULL;
+                kvp.length = oscl_strlen(VIDEO_OUTPUT_HEIGHT_CUR_QUERY) + 1; // +1 for \0
+                kvp.key = (PvmiKeyType)alloc.ALLOCATE(kvp.length);
+                if (kvp.key == NULL)
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "H223OutgoingChannel::NegotiateInputSettings: Error - alloc failed for VIDEO_OUTPUT_HEIGHT_CUR_QUERY kvp "));
+                    return PVMFErrNoMemory;
+                }
+                oscl_strncpy(kvp.key, VIDEO_OUTPUT_HEIGHT_CUR_QUERY, kvp.length);
+                kvp.value.uint32_value = height;
+
+                if (PVMFSuccess != setConfigParametersSync(&kvp, aConfig))
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "H223OutgoingChannel::NegotiateInputSettings, Error:  setConfigParametersSync height failed"));
+                    //dont return PVMFFailure for now;
+                }
+                alloc.deallocate((OsclAny*)(kvp.key));
+
+            }
+            aConfig->releaseParameters(NULL, kvp, numParams);
+        }
+
+        kvp = NULL;
+        numParams = 0;
+
+        // frame rate negotiations
+        uint32 framerate = GetMaxFrameRate(iDataType);
+        // VIDEO_OUTPUT_FRAME_RATE_CAP_QUERY not available
+        status = aConfig->getParametersSync(NULL, (PvmiKeyType)VIDEO_OUTPUT_FRAME_RATE_CUR_QUERY, kvp, numParams, NULL);
+        if (status != PVMFSuccess || numParams != 1)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "H223OutgoingChannel::NegotiateInputSettings: Error - config->getParametersSync(cap frame rate failed"));
+            // do not report error for now as enc nodes dont implemlement some parameters
+
+        }
+        else
+        {
+            if (kvp[0].value.float_value > framerate)
+            {
+                OsclMemAllocator alloc;
+                PvmiKvp kvp;
+                kvp.key = NULL;
+                kvp.length = oscl_strlen(VIDEO_OUTPUT_FRAME_RATE_CUR_QUERY) + 1; // +1 for \0
+                kvp.key = (PvmiKeyType)alloc.ALLOCATE(kvp.length);
+                if (kvp.key == NULL)
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "H223OutgoingChannel::NegotiateInputSettings: Error - alloc failed for VIDEO_OUTPUT_FRAME_RATE_CUR_QUERY kvp "));
+                    return PVMFErrNoMemory;
+                }
+                oscl_strncpy(kvp.key, VIDEO_OUTPUT_FRAME_RATE_CUR_QUERY, kvp.length);
+                kvp.value.float_value = (float)framerate;
+
+                if (PVMFSuccess != setConfigParametersSync(&kvp, aConfig))
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "H223OutgoingChannel::NegotiateInputSettings, Error:  setConfigParametersSync frame rate failed"));
+                    //dont return PVMFFailure for now ;
+                }
+                alloc.deallocate((OsclAny*)(kvp.key));
+
+            }
+            aConfig->releaseParameters(NULL, kvp, numParams);
+        }
+
+        kvp = NULL;
+        numParams = 0;
+
+
+    }
 
     return PVMFSuccess;
 }
@@ -973,6 +1143,26 @@ void H223OutgoingChannel::HandlePortActivity(const PVMFPortActivity &aActivity)
     }
 }
 
+OSCL_EXPORT_REF PVMFStatus H223OutgoingControlChannel::PeerConnect(PVMFPortInterface* aPort)
+{
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingControlChannel::PeerConnect aPort=0x%x", this, aPort));
+    if (!aPort)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "0x%x H223OutgoingControlChannel::PeerConnect: Error - Connecting to invalid port", this));
+        return PVMFErrArgument;
+    }
+    if (iConnectedPort)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "0x%x H223OutgoingControlChannel::PeerConnect: Error - Already connected", this));
+        return PVMFFailure;
+    }
+
+    iConnectedPort = aPort;
+    PortActivity(PVMF_PORT_ACTIVITY_CONNECT);
+
+    return PVMFSuccess;
+
+}
 PVMFStatus H223OutgoingControlChannel::PutData(PVMFSharedMediaMsgPtr aMsg)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingControlChannel::PutData - iNumPendingPdus=%d,iNumMediaData=%d", iNumPendingPdus, iNumMediaData));

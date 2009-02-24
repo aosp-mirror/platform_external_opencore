@@ -53,7 +53,6 @@ class PVA_FF_TrackAtom : public PVA_FF_Atom, public PVA_FF_ISucceedFail
                          uint32 id,
                          uint32 fileAuthoringFlags,
                          int32 codecType = 0,
-                         bool o3GPPCompliant = false,
                          uint32 protocol = 0,
                          uint8 profile = 1,
                          uint8 profileComp = 0xFF,
@@ -233,21 +232,12 @@ class PVA_FF_TrackAtom : public PVA_FF_Atom, public PVA_FF_ISucceedFail
             _pmediaAtom->setMaxBufferSizeDB(max);
         }
 
-        void setVideoParams(uint32 frame_width, uint32 frame_height)
-        {
-            _pmediaAtom->setVideoParams(frame_width, frame_height);
-        }
+        void setVideoParams(uint32 frame_width, uint32 frame_height);
 
         void setH263ProfileLevel(uint8 profile, uint8 level)
         {
             _pmediaAtom->setH263ProfileLevel(profile, level);
         }
-
-        bool Is3GPPTrack()
-        {
-            return _o3GPPCompliant;
-        }
-
 
         void setESID(uint16 esid)
         {
@@ -269,7 +259,6 @@ class PVA_FF_TrackAtom : public PVA_FF_Atom, public PVA_FF_ISucceedFail
             return FIRST_SAMPLE;
         }
         void updateLastTSEntry(uint32 ts);
-        void setVideoWidthHeight(int16 width, int16 height);
         void SetMaxSampleSize(uint32);
         void writeMaxSampleSize(MP4_AUTHOR_FF_FILE_IO_WRAP*);
 
@@ -287,8 +276,6 @@ class PVA_FF_TrackAtom : public PVA_FF_Atom, public PVA_FF_ISucceedFail
 
         bool FIRST_SAMPLE;
         PVA_FF_EditAtom	*_eList;
-
-        bool _o3GPPCompliant;
 
         bool   _oInterLeaveMode;
 

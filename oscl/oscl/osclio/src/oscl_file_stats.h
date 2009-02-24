@@ -37,6 +37,7 @@
 #define OSCL_FILE_STATS_H_INCLUDED
 
 #include "oscl_base.h"
+#include "osclconfig_io.h"
 
 #define OSCL_FILE_STATS_LOGGER_NODE "OsclFileStats"
 
@@ -45,7 +46,7 @@ class OsclFileStatsItem
     public:
         uint32 iOpCount;
         uint32 iParam;
-        uint32 iParam2;
+        TOsclFileOffset iParam2;
         uint32 iStartTick;
         uint32 iTotalTicks;
 };
@@ -103,7 +104,7 @@ class OsclFileStats
     public:
         OsclFileStats(Oscl_File* c);
         void Start(uint32& aTicks);
-        void End(TOsclFileOp aOp, uint32 aStart, uint32 aParam = 0, uint32 aParam2 = 0);
+        void End(TOsclFileOp aOp, uint32 aStart, uint32 aParam = 0, TOsclFileOffset aParam2 = 0);
         void Log(TOsclFileOp, PVLogger*, uint32);
         void LogAll(PVLogger*, uint32);
 

@@ -115,9 +115,9 @@ OSCL_EXPORT_REF PVMFMediaLayerNode::PVMFMediaLayerNode(int32 aPriority)
              iCapability.iHasMaxNumberOfPorts = false;
              iCapability.iMaxNumberOfPorts = 0; /* no maximum */
 
-             iCapability.iInputFormatCapability.push_back(PVMFFormatType(PVMF_MIME_RTP));
-             iCapability.iOutputFormatCapability.push_back(PVMFFormatType(PVMF_MIME_M4V));
-             iCapability.iOutputFormatCapability.push_back(PVMFFormatType(PVMF_MIME_AMR_IETF));
+             iCapability.iInputFormatCapability.push_back(PVMF_MIME_RTP);
+             iCapability.iOutputFormatCapability.push_back(PVMF_MIME_M4V);
+             iCapability.iOutputFormatCapability.push_back(PVMF_MIME_AMR_IETF);
 
             );
 
@@ -717,7 +717,8 @@ void PVMFMediaLayerNode::DoReset(PVMFMediaLayerNodeCommand& aCmd)
                 iPortVector[i]->ClearMsgQueues();
                 PVMFMediaLayerPortContainer* portContainerPtr = NULL;
                 GetPortContainer(iPortVector[i], portContainerPtr);
-                portContainerPtr->ResetParams();
+                if (portContainerPtr)
+                    portContainerPtr->ResetParams();
             }
         }
         /* Intentional fall thru */
@@ -2638,12 +2639,12 @@ PVMFStatus PVMFMediaLayerNode::dispatchAccessUnits(PVMFMediaLayerPortContainer* 
             }
             PVMF_MLNODE_LOGDATATRAFFIC_OUT((0,
                                             "PVMFMediaLayerNode::dispatchAccessUnits: "
-                                            "SSRC=%d, MimeType=%s SIZE=%d, TS=%d, SEQNUM=%d, MBIT=%d, KEY=%d, Clock=%d",
+                                            "SSRC=%d, MimeType=%s SIZE=%d, TS=%d, SEQNUM=%d, MBIT=%d, KEY=%d, Clock=%d Delta=%d",
                                             msgOut->getStreamID(), poutPort->iMimeType.get_cstr(),
                                             size, msgOut->getTimestamp(), msgOut->getSeqNum(),
                                             (mediaDataOut->getMarkerInfo() & PVMF_MEDIA_DATA_MARKER_INFO_M_BIT),
                                             (mediaDataOut->getMarkerInfo() & PVMF_MEDIA_DATA_MARKER_INFO_RANDOM_ACCESS_POINT_BIT),
-                                            clientClock32));
+                                            clientClock32, (msgOut->getTimestamp() - clientClock32)));
 #endif
         }
     }
@@ -3394,6 +3395,7 @@ bool PVMFMediaLayerNode::setPlayRange(int32 aStartTimeInMS,
         if (oRepositioning)
         {
             it->iPort->ClearMsgQueues();
+            it->vAccessUnits.clear();
         }
 
         if (it->tag == PVMF_MEDIALAYER_PORT_TYPE_INPUT)

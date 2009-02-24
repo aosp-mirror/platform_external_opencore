@@ -30,6 +30,7 @@
 #include "oscl_string.h"
 #include "oscl_mem.h"
 #include "oscl_stdstring.h"
+#include "pv_omx_config_parser.h"
 
 #define MAX_PATHNAME_LENGTH 512
 
@@ -864,5 +865,176 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OMX_GetRolesOfComponent(
 
     return OMX_ErrorNone;
 }
+
+OMX_BOOL PV_OMXConfigParser(
+    OMX_PTR aInputParameters,
+    OMX_PTR aOutputParameters)
+
+{
+    OMXConfigParserInputs* pInputs;
+
+    pInputs = (OMXConfigParserInputs*) aInputParameters;
+
+
+    if (NULL != pInputs->cComponentRole)
+    {
+        if (0 == oscl_strncmp(pInputs->cComponentRole, (OMX_STRING)"audio_decoder", oscl_strlen("audio_decoder")))
+        {
+            OMX_S32 Status;
+            pvAudioConfigParserInputs aInputs;
+
+            aInputs.inPtr = pInputs->inPtr;
+            aInputs.inBytes = pInputs->inBytes;
+
+            if (0 == oscl_strcmp(pInputs->cComponentRole, (OMX_STRING)"audio_decoder.wma"))
+            {
+                aInputs.iMimeType = PVMF_MIME_WMA;
+
+            }
+            else if (0 == oscl_strcmp(pInputs->cComponentRole, (OMX_STRING)"audio_decoder.aac"))
+            {
+                aInputs.iMimeType = PVMF_MIME_AAC_SIZEHDR;
+
+            }
+            else if (0 == oscl_strcmp(pInputs->cComponentRole, (OMX_STRING)"audio_decoder.amr"))
+            {
+                aInputs.iMimeType = PVMF_MIME_AMR;
+
+            }
+            else if (0 == oscl_strcmp(pInputs->cComponentRole, (OMX_STRING)"audio_decoder.mp3"))
+            {
+                aInputs.iMimeType = PVMF_MIME_MP3;
+
+            }
+            else
+            {
+                return OMX_FALSE;
+            }
+
+
+            Status = pv_audio_config_parser(&aInputs, (pvAudioConfigParserOutputs *)aOutputParameters);
+            if (0 == Status)
+            {
+                return OMX_FALSE;
+            }
+        }
+        else if (0 == oscl_strncmp(pInputs->cComponentRole, (OMX_STRING)"video_decoder", oscl_strlen("video_decoder")))
+        {
+
+            OMX_S32 Status;
+            pvVideoConfigParserInputs aInputs;
+
+            aInputs.inPtr = pInputs->inPtr;
+            aInputs.inBytes = pInputs->inBytes;
+
+            if (0 == oscl_strcmp(pInputs->cComponentRole, (OMX_STRING)"video_decoder.wmv"))
+            {
+                aInputs.iMimeType = PVMF_MIME_WMV;
+
+            }
+            else if (0 == oscl_strcmp(pInputs->cComponentRole, (OMX_STRING)"video_decoder.avc"))
+            {
+                aInputs.iMimeType = PVMF_MIME_H264_VIDEO;
+
+            }
+            else if (0 == oscl_strcmp(pInputs->cComponentRole, (OMX_STRING)"video_decoder.mpeg4"))
+            {
+                aInputs.iMimeType = PVMF_MIME_M4V;
+
+            }
+            else if (0 == oscl_strcmp(pInputs->cComponentRole, (OMX_STRING)"video_decoder.h263"))
+            {
+                aInputs.iMimeType = PVMF_MIME_H2632000;
+
+            }
+            else
+            {
+                return OMX_FALSE;
+            }
+
+            Status = pv_video_config_parser(&aInputs, (pvVideoConfigParserOutputs *)aOutputParameters);
+            if (0 != Status)
+            {
+                return OMX_FALSE;
+            }
+        }
+        else
+        {
+            return OMX_FALSE;
+        }
+
+    }
+    else
+    {
+        return OMX_FALSE;
+    }
+
+    return OMX_TRUE;
+}
+
+OSCL_EXPORT_REF OMX_BOOL OMXConfigParser(
+    OMX_PTR aInputParameters,
+    OMX_PTR aOutputParameters)
+
+{
+    OMX_BOOL Status = OMX_FALSE;
+    OMX_U32 ii;
+    int32 error;
+
+    OMXMasterCoreGlobalData* data = (OMXMasterCoreGlobalData*)OsclSingletonRegistry::getInstance(OSCL_SINGLETON_ID_OMXMASTERCORE, error);
+    if (data)
+    {
+        // try to get the omxconfigparser from omx cores
+        // return the first valid one
+        OMXInterface** pInterface = (OMXInterface**)(data->iInterface);
+        PVOMXMasterRegistryStruct* pOMXMasterRegistry = (PVOMXMasterRegistryStruct*)(data->iMasterRegistry);
+
+        if (pOMXMasterRegistry == NULL)
+        {
+            return Status;
+        }
+        if (pInterface)
+        {
+            for (ii = 0; ii < (data->iTotalNumOMXComponents); ii++)
+            {
+                if (!oscl_strcmp((OMX_STRING)pOMXMasterRegistry[ii].CompRole, ((OMXConfigParserInputs*)aInputParameters)->cComponentRole))
+                {
+                    // go through the list of supported components and find the component based on its name (identifier)
+                    if (!oscl_strcmp((OMX_STRING)pOMXMasterRegistry[ii].CompName, ((OMXConfigParserInputs*)aInputParameters)->cComponentName))
+                    {
+                        // found a matching name
+                        break;
+                    }
+                }
+            }
+
+            if (ii == (data->iTotalNumOMXComponents))
+            {
+                return Status;
+            }
+
+            OMX_U32 index = pOMXMasterRegistry[ii].OMXCoreIndex;
+            if (pInterface[index]->GetpOMXConfigParser() == NULL)
+            {
+                //The OMX core does not have config parser - use PV config parser
+                Status = PV_OMXConfigParser(aInputParameters, aOutputParameters);
+            }
+            else
+            {
+                Status = (*(pInterface[index]->GetpOMXConfigParser()))(aInputParameters, aOutputParameters);
+            }
+        }
+        else
+        {
+            return Status;
+        }
+    }
+
+    return Status;
+}
+
+
+
+
 
 

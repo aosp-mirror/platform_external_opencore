@@ -29,7 +29,7 @@ LOCAL_C_INCLUDES := \
  	$(PV_TOP)/engines/author/test/src \
  	$(PV_TOP)/engines/common/include \
  	$(PV_TOP)/engines/author/test/src/single_core \
- 	$(PV_TOP)/engines/author/test/config/linux_nj \
+ 	$(PV_TOP)/engines/author/test/config/android \
  	$(PV_TOP)/pvmi/pvmf/include \
  	$(PV_TOP)/nodes/common/include \
  	$(PV_TOP)/extern_libs_v2/khronos/openmax/include \

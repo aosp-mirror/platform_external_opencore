@@ -2212,7 +2212,6 @@ PVMFStatus PVMFAMRFFParserNode::SetSourceInitializationData(OSCL_wString& aSourc
                     OSCL_STATIC_CAST(PVMFLocalDataSource*, localDataSrc);
 
                 iPreviewMode = context->iPreviewMode;
-                iUseCPMPluginRegistry = context->iUseCPMPluginRegistry;
                 if (context->iFileHandle)
                 {
 
@@ -2241,7 +2240,6 @@ PVMFStatus PVMFAMRFFParserNode::SetSourceInitializationData(OSCL_wString& aSourc
                         OSCL_STATIC_CAST(PVMFSourceContextDataCommon*, commonDataContext);
 
                     iPreviewMode = context->iPreviewMode;
-                    iUseCPMPluginRegistry = context->iUseCPMPluginRegistry;
                     if (context->iFileHandle)
                     {
 
@@ -2258,10 +2256,9 @@ PVMFStatus PVMFAMRFFParserNode::SetSourceInitializationData(OSCL_wString& aSourc
             }
         }
         /*
-         * If a CPM flag is provided in the source data, then
          * create a CPM object here...
          */
-        if (iUseCPMPluginRegistry)
+        iUseCPMPluginRegistry = true;
         {
             //cleanup any prior instance
             if (iCPM)
@@ -2271,7 +2268,15 @@ PVMFStatus PVMFAMRFFParserNode::SetSourceInitializationData(OSCL_wString& aSourc
                 iCPM = NULL;
             }
             iCPM = PVMFCPMFactory::CreateContentPolicyManager(*this);
-            iCPM->ThreadLogon();
+            //thread logon may leave if there are no plugins
+            int32 err;
+            OSCL_TRY(err, iCPM->ThreadLogon(););
+            OSCL_FIRST_CATCH_ANY(err,
+                                 iCPM->ThreadLogoff();
+                                 PVMFCPMFactory::DestroyContentPolicyManager(iCPM);
+                                 iCPM = NULL;
+                                 iUseCPMPluginRegistry = false;
+                                );
         }
         return PVMFSuccess;
     }
@@ -2306,7 +2311,7 @@ PVMFStatus PVMFAMRFFParserNode::GetMediaPresentationInfo(PVMFMediaPresentationIn
     tmpTrackInfo.setPortTag(PVMF_AMRFFPARSER_NODE_PORT_TYPE_SOURCE);
     tmpTrackInfo.setTrackID(0);
     TPVAmrFileInfo amrinfo;
-    iAMRParser->RetrieveFileInfo(amrinfo);
+    if (!iAMRParser->RetrieveFileInfo(amrinfo)) return PVMFErrNotSupported;
 
     switch (amrinfo.iAmrFormat)
     {

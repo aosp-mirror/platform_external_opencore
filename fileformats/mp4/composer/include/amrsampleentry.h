@@ -29,7 +29,7 @@
 class PVA_FF_AMRSampleEntry : public PVA_FF_SampleEntry
 {
     public:
-        PVA_FF_AMRSampleEntry(); // Constructor
+        PVA_FF_AMRSampleEntry(uint32 format); // Constructor
         virtual ~PVA_FF_AMRSampleEntry();
 
         uint16 getTimeScale()

@@ -54,32 +54,26 @@ typedef PVMFNodeInterface*(* LPFN_NODE_CREATE_FUNC)(int32);
 
 typedef bool (* LPFN_NODE_RELEASE_FUNC)(PVMFNodeInterface *);
 
-// init static variables before use
-OsclSharedLibrary* Mp4NodesCoreLibraryLoader::iOsclSharedLibrary = NULL;
-
 // Factory functions
 PVMFNodeInterface* Mp4NodesCoreLibraryLoader::CreateMp4ParserNode(int32 aPriority)
 {
-    if (NULL == iOsclSharedLibrary)
+    OsclSharedLibrary* mp4SharedLibrary = NULL;
+    OSCL_StackString<NODE_REGISTRY_LIB_NAME_MAX_LENGTH> libname(MP4_LIB_NAME);
+
+    // Need to load the library for the node
+    mp4SharedLibrary = OSCL_NEW(OsclSharedLibrary, (libname));
+    OsclLibStatus result = mp4SharedLibrary->LoadLib();
+    if (OsclLibSuccess != result)
     {
-        OSCL_StackString<NODE_REGISTRY_LIB_NAME_MAX_LENGTH> libname(MP4_LIB_NAME);
-
-        // Need to load the library for the node
-        iOsclSharedLibrary = OSCL_NEW(OsclSharedLibrary, (libname));
-
-        OsclLibStatus result = iOsclSharedLibrary->LoadLib();
-        if (OsclLibSuccess != result)
-        {
-            return NULL;
-        }
+        return NULL;
     }
 
-    iOsclSharedLibrary->AddRef();
+    mp4SharedLibrary->AddRef();
 
     // Query for create function
     OsclAny* interfacePtr = NULL;
 
-    iOsclSharedLibrary->QueryInterface(PV_NODE_INTERFACE, (OsclAny*&)interfacePtr);
+    mp4SharedLibrary->QueryInterface(PV_NODE_INTERFACE, (OsclAny*&)interfacePtr);
 
     NodeSharedLibraryInterface* nodeIntPtr = OSCL_DYNAMIC_CAST(NodeSharedLibraryInterface*, interfacePtr);
 
@@ -89,8 +83,23 @@ PVMFNodeInterface* Mp4NodesCoreLibraryLoader::CreateMp4ParserNode(int32 aPriorit
 
     if (NULL != nodeCreateFunc)
     {
+        PVMFNodeInterface* node = NULL;
         // call the real node factory function
-        return (*(nodeCreateFunc))(aPriority);
+        node = (*(nodeCreateFunc))(aPriority);
+        if (NULL == node)
+        {
+            mp4SharedLibrary->RemoveRef();
+
+            if (OsclLibSuccess == mp4SharedLibrary->Close())
+            {
+                // Close will unload the library if refcount is 0
+                OSCL_DELETE(mp4SharedLibrary);
+            }
+
+            return NULL;
+        }
+        node->SetSharedLibraryPtr(mp4SharedLibrary);
+        return node;
     }
     return NULL;
 }
@@ -99,13 +108,22 @@ PVMFNodeInterface* Mp4NodesCoreLibraryLoader::CreateMp4ParserNode(int32 aPriorit
 bool Mp4NodesCoreLibraryLoader::DeleteMp4ParserNode(PVMFNodeInterface* aNode)
 {
     bool bStatus = false;
+    OsclSharedLibrary* mp4SharedLibrary = NULL;
 
-    if (NULL != iOsclSharedLibrary)
+    if (NULL == aNode)
+    {
+        return false;
+    }
+
+    // Retrieve shared library pointer
+    mp4SharedLibrary = aNode->GetSharedLibraryPtr();
+
+    if (NULL != mp4SharedLibrary)
     {
         // Query for release function
         OsclAny* interfacePtr = NULL;
 
-        iOsclSharedLibrary->QueryInterface(PV_NODE_INTERFACE, (OsclAny*&)interfacePtr);
+        mp4SharedLibrary->QueryInterface(PV_NODE_INTERFACE, (OsclAny*&)interfacePtr);
 
         NodeSharedLibraryInterface* nodeIntPtr = OSCL_DYNAMIC_CAST(NodeSharedLibraryInterface*, interfacePtr);
 
@@ -118,13 +136,12 @@ bool Mp4NodesCoreLibraryLoader::DeleteMp4ParserNode(PVMFNodeInterface* aNode)
             bStatus = (*(nodeReleaseFunc))(aNode);
         }
 
-        iOsclSharedLibrary->RemoveRef();
+        mp4SharedLibrary->RemoveRef();
 
-        if (OsclLibSuccess == iOsclSharedLibrary->Close())
+        if (OsclLibSuccess == mp4SharedLibrary->Close())
         {
             // Close will unload the library if refcount is 0
-            OSCL_DELETE(iOsclSharedLibrary);
-            iOsclSharedLibrary = NULL;
+            OSCL_DELETE(mp4SharedLibrary);
         }
     }
 
@@ -136,6 +153,7 @@ class Mp4NodesRegistryInterface: public OsclSharedLibraryInterface,
             public RecognizerPopulatorInterface
 {
     public:
+        Mp4NodesRegistryInterface() {};
 
         // From NodeRegistryPopulatorInterface
         void RegisterAllNodes(PVPlayerNodeRegistryInterface* aRegistry, OsclAny*& aContext)
@@ -152,7 +170,6 @@ class Mp4NodesRegistryInterface: public OsclSharedLibraryInterface,
             nodeinfo.iNodeUUID = KPVMFMP4FFParserNodeUuid;
             nodeinfo.iOutputType.clear();
             nodeinfo.iOutputType.push_back(PVMF_MIME_FORMAT_UNKNOWN);
-            nodeinfo.iSharedLibrary = OSCL_NEW(OsclSharedLibrary, (libname));
             nodeinfo.iNodeCreateFunc = (Mp4NodesCoreLibraryLoader::CreateMp4ParserNode);
             nodeinfo.iNodeReleaseFunc = (Mp4NodesCoreLibraryLoader::DeleteMp4ParserNode);
 
@@ -174,7 +191,6 @@ class Mp4NodesRegistryInterface: public OsclSharedLibraryInterface,
                 while (!nodeList->empty())
                 {
                     PVPlayerNodeInfo tmpnode = nodeList->front();
-                    OSCL_DELETE(tmpnode.iSharedLibrary);
                     aRegistry->UnregisterNode(tmpnode);
                     nodeList->erase(nodeList->begin());
                 }
@@ -236,17 +252,6 @@ class Mp4NodesRegistryInterface: public OsclSharedLibraryInterface,
             }
             return NULL;
         };
-
-        static Mp4NodesRegistryInterface* Instance()
-        {
-            static Mp4NodesRegistryInterface nodeInterface;
-            return &nodeInterface;
-        };
-
-    private:
-
-        Mp4NodesRegistryInterface() {};
-
 };
 
 
@@ -254,11 +259,11 @@ extern "C"
 {
     OsclSharedLibraryInterface *PVGetInterface(void)
     {
-        return Mp4NodesRegistryInterface::Instance();
+        return OSCL_NEW(Mp4NodesRegistryInterface, ());
     }
-    void PVReleaseInterface(OsclSharedLibraryInterface*)
+    void PVReleaseInterface(OsclSharedLibraryInterface* aInstance)
     {
-        //nothing needed
+        OSCL_DELETE(aInstance);
     }
 }
 

@@ -66,7 +66,6 @@ class PVPlayerNodeInfo
         {
             iNodeCreateFunc = NULL;
             iNodeReleaseFunc = NULL;
-            iSharedLibrary = NULL;
         }
 
         /**
@@ -79,7 +78,6 @@ class PVPlayerNodeInfo
             iNodeReleaseFunc = aInfo.iNodeReleaseFunc;
             iInputTypes = aInfo.iInputTypes;
             iOutputType = aInfo.iOutputType;
-            iSharedLibrary = aInfo.iSharedLibrary;
         }
 
         /**
@@ -94,7 +92,6 @@ class PVPlayerNodeInfo
         bool (*iNodeReleaseFunc)(PVMFNodeInterface *);
         Oscl_Vector<PVMFFormatType, OsclMemAllocator> iInputTypes;
         Oscl_Vector<PVMFFormatType, OsclMemAllocator> iOutputType;
-        OsclSharedLibrary* iSharedLibrary;
 };
 
 

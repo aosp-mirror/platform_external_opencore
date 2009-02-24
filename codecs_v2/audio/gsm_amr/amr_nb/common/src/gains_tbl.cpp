@@ -93,7 +93,7 @@ extern "C"
     };
 
 
-    extern const Word16 qua_gain_code[NB_QUA_CODE*3] =
+    extern const Word16 qua_gain_code[(NB_QUA_CODE+1)*3] =
     {
         /* gain factor (g_fac) and quantized energy error (qua_ener_MR122, qua_ener)
          * are stored:
@@ -137,6 +137,7 @@ extern "C"
         12510,                 2673,           16096,
         16263,                 3060,           18429,
         21142,                 3448,           20763,
+        27485,                 3836,           23097,
         27485,                 3836,           23097
     };
 

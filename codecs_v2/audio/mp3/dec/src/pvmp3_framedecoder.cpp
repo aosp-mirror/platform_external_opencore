@@ -478,9 +478,7 @@ ERROR_CODE pvmp3_framedecoder(tPVMP3DecoderExternal *pExt,
 
             int32 ancillary_data_lenght = pVars->predicted_frame_size << 3;
 
-            pExt->totalNumberOfBitsUsed += pVars->inputStream.usedBits;
-
-            ancillary_data_lenght  -= pExt->totalNumberOfBitsUsed;
+            ancillary_data_lenght  -= pVars->inputStream.usedBits;
 
             /* skip ancillary data */
             if (ancillary_data_lenght > 0)
@@ -506,6 +504,7 @@ ERROR_CODE pvmp3_framedecoder(tPVMP3DecoderExternal *pExt,
     }
 
     pExt->inputBufferUsedLength = pVars->inputStream.usedBits >> 3;
+    pExt->totalNumberOfBitsUsed += pVars->inputStream.usedBits;
     pExt->version = info->version_x;
     pExt->samplingRate = mp3_s_freq[info->version_x][info->sampling_frequency];
     pExt->bitRate = mp3_bitrate[pExt->version][info->bitrate_index];
@@ -578,6 +577,9 @@ void fillMainDataBuf(void  *pMem, int32 temp)
             {
                 fillDataBuf(&pVars->mainDataStream, tmp1);
             }
+
+            /* adjust circular buffer counter */
+            pVars->mainDataStream.offset = module(pVars->mainDataStream.offset, BUFSIZE);
         }
     }
     else

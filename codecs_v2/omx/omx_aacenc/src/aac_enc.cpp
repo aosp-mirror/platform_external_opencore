@@ -96,23 +96,23 @@ OMX_BOOL OmxAacEncoder::AacEncInit(OMX_AUDIO_PARAM_PCMMODETYPE aPcmMode,
     iAacEncConfig.nChannelsIn = aPcmMode.nChannels;
     iAacEncConfig.nChannelsOut = aAacParam.nChannels;
 
-    iAacEncConfig.bitrate = aAacParam.nBitRate;
 
     if (0 != aAacParam.nAudioBandWidth)
     {
         iAacEncConfig.bandwidth = aAacParam.nAudioBandWidth;
     }
 
-    if (OMX_AUDIO_ChannelModeDual == aAacParam.eChannelMode)
-    {
-        iAacEncConfig.dualMono = 1;
-    }
+    /* DV: comment out for now
+        if (OMX_AUDIO_ChannelModeDual == aAacParam.eChannelMode)
+        {
+            iAacEncConfig.dualMono = 1;
+        }
 
-    if (OMX_AUDIO_ChannelModeMono == aAacParam.eChannelMode)
-    {
-        iAacEncConfig.nChannelsOut = 1;
-    }
-
+        if (OMX_AUDIO_ChannelModeMono == aAacParam.eChannelMode)
+        {
+            iAacEncConfig.nChannelsOut = 1;
+        }
+    */
 
     if (OMX_AUDIO_AACObjectMain == aAacParam.eAACProfile)
     {
@@ -155,6 +155,39 @@ OMX_BOOL OmxAacEncoder::AacEncInit(OMX_AUDIO_PARAM_PCMMODETYPE aPcmMode,
         return OMX_FALSE;
     }
 
+    iAacEncConfig.bitrate = aAacParam.nBitRate;
+    // it is possible that desired bitrate is not set by the client - if so,
+    // use a default value based on appropriate sampling rate and type of AAC profile
+    if (iAacEncConfig.bitrate == 0)
+    {
+        switch (iAacEncConfig.sampleRate)
+        {
+            case 48000:
+            case 44100:
+                iAacEncConfig.bitrate = 96000;
+                break;
+            case 32000:
+                iAacEncConfig.bitrate = 84000;
+                break;
+            case 24000:
+            case 22050:
+                iAacEncConfig.bitrate = 72000;
+                break;
+            case 16000:
+                iAacEncConfig.bitrate = 48000;
+                break;
+            case 11025:
+                iAacEncConfig.bitrate = 36000;
+                break;
+            case 8000:
+                iAacEncConfig.bitrate = 24000;
+                break;
+            default:
+                iAacEncConfig.bitrate = 24000;
+                break;
+        }
+    }
+
 
     if ((OMX_AUDIO_AACStreamFormatMP2ADTS == aAacParam.eAACStreamFormat) ||
             (OMX_AUDIO_AACStreamFormatMP4ADTS == aAacParam.eAACStreamFormat))
@@ -175,7 +208,10 @@ OMX_BOOL OmxAacEncoder::AacEncInit(OMX_AUDIO_PARAM_PCMMODETYPE aPcmMode,
     }
     else if (OMX_AUDIO_AACStreamFormatMP4FF == aAacParam.eAACStreamFormat)
     {
-        iAacEncConfig.useTransmux = TT_MP4_MP4F;
+        //iAacEncConfig.useTransmux = TT_MP4_MP4F;
+        // DV: use temporarily to bypass an error:
+        iAacEncConfig.useTransmux = TT_MP4_RAWPACKETS;
+
     }
     else if (OMX_AUDIO_AACStreamFormatRAW == aAacParam.eAACStreamFormat)
     {
@@ -247,6 +283,7 @@ void OmxAacEncoder::AacEncDeinit()
         aacEncClose(&iAacEncoder);
         iAacEncoder = NULL;
     }
+
 }
 
 
@@ -259,22 +296,27 @@ OMX_BOOL OmxAacEncoder::AacEncodeFrame(OMX_U8*    aOutputBuffer,
 
     OMX_S32 NumImputSamples = iAacEncConfig.nSamplesRead;
     OMX_S32 Status;
-    OMX_S32 OutputOffset = 0;
+    //OMX_S32 OutputOffset = 0;
 
     if (TT_MP4_RAWPACKETS == iAacEncConfig.useTransmux)
     {
         if (OMX_FALSE == iAscFlag)
         {
-            oscl_memcpy(aOutputBuffer, &iAscSize, 4);
-            oscl_memcpy((aOutputBuffer + 4), iAscBuf, iAscSize);
+            //oscl_memcpy(aOutputBuffer, &iAscSize, 4);
+            //oscl_memcpy((aOutputBuffer + 4), iAscBuf, iAscSize);
+            // copy the config data
+            oscl_memcpy(aOutputBuffer, iAscBuf, iAscSize);
             iAscFlag = OMX_TRUE;
-            OutputOffset = 4 + iAscSize;
+            //OutputOffset = 4 + iAscSize;
+            *aOutputLength = iAscSize;
+            return OMX_TRUE;
+
         }
         //Four bytes to write the size of frame after it has been encoded
-        OutputOffset += 4;
+        //OutputOffset += 4;
     }
 
-    iAacEncConfig.pOutBuffer = aOutputBuffer + OutputOffset;
+    iAacEncConfig.pOutBuffer = aOutputBuffer; // + OutputOffset;
 
     if (aInBufSize < NumImputSamples)
     {
@@ -295,10 +337,10 @@ OMX_BOOL OmxAacEncoder::AacEncodeFrame(OMX_U8*    aOutputBuffer,
         return OMX_FALSE;
     }
 
-    if (TT_MP4_RAWPACKETS == iAacEncConfig.useTransmux)
-    {
-        oscl_memcpy((aOutputBuffer + (OutputOffset - 4)), &(*aOutputLength), 4);
-    }
+    //if (TT_MP4_RAWPACKETS == iAacEncConfig.useTransmux)
+    //{
+    //    oscl_memcpy((aOutputBuffer + (OutputOffset - 4)), &(*aOutputLength), 4);
+    //}
 
     return OMX_TRUE;
 }

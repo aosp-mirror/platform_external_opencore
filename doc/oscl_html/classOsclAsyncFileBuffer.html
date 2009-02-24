@@ -22,10 +22,10 @@
 <tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOsclAsyncFileBuffer.html#a2">SetInUse</a> ()</td></tr>
 <tr><td nowrap align=right valign=top>bool&nbsp;</td><td valign=bottom><a class="el" href="classOsclAsyncFileBuffer.html#a3">IsInUse</a> ()</td></tr>
 <tr><td nowrap align=right valign=top>bool&nbsp;</td><td valign=bottom><a class="el" href="classOsclAsyncFileBuffer.html#a4">IsValid</a> ()</td></tr>
-<tr><td nowrap align=right valign=top>int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclAsyncFileBuffer.html#a5">Offset</a> ()</td></tr>
-<tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOsclAsyncFileBuffer.html#a6">SetOffset</a> (int32 aOffset)</td></tr>
+<tr><td nowrap align=right valign=top><a class="el" href="osclconfig__io_8h.html#a48">TOsclFileOffset</a>&nbsp;</td><td valign=bottom><a class="el" href="classOsclAsyncFileBuffer.html#a5">Offset</a> ()</td></tr>
+<tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOsclAsyncFileBuffer.html#a6">SetOffset</a> (<a class="el" href="osclconfig__io_8h.html#a48">TOsclFileOffset</a> aOffset)</td></tr>
 <tr><td nowrap align=right valign=top>int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclAsyncFileBuffer.html#a7">Length</a> ()</td></tr>
-<tr><td nowrap align=right valign=top>bool&nbsp;</td><td valign=bottom><a class="el" href="classOsclAsyncFileBuffer.html#a8">HasThisOffset</a> (int32 aOffset)</td></tr>
+<tr><td nowrap align=right valign=top>bool&nbsp;</td><td valign=bottom><a class="el" href="classOsclAsyncFileBuffer.html#a8">HasThisOffset</a> (<a class="el" href="osclconfig__io_8h.html#a48">TOsclFileOffset</a> aOffset)</td></tr>
 <tr><td nowrap align=right valign=top>int32&nbsp;</td><td valign=bottom><a class="el" href="classOsclAsyncFileBuffer.html#a9">Id</a> ()</td></tr>
 <tr><td nowrap align=right valign=top><a class="el" href="classOsclBuf.html">OsclBuf</a> *&nbsp;</td><td valign=bottom><a class="el" href="classOsclAsyncFileBuffer.html#a10">Buffer</a> ()</td></tr>
 <tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="classOsclAsyncFileBuffer.html#a11">UpdateData</a> ()</td></tr>
@@ -130,7 +130,7 @@ Buffer class used with async read. We keep an array of these, covering consecuti
         <tr>
           <td class="md" nowrap valign="top"> bool OsclAsyncFileBuffer::HasThisOffset </td>
           <td class="md" valign="top">(&nbsp;</td>
-          <td class="md" nowrap valign="top">int32&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="osclconfig__io_8h.html#a48">TOsclFileOffset</a>&nbsp;</td>
           <td class="mdname1" valign="top" nowrap>&nbsp; <em>aOffset</em>          </td>
           <td class="md" valign="top">)&nbsp;</td>
           <td class="md" nowrap></td>
@@ -307,7 +307,7 @@ Buffer class used with async read. We keep an array of these, covering consecuti
     <td class="md">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top"> int32 OsclAsyncFileBuffer::Offset </td>
+          <td class="md" nowrap valign="top"> <a class="el" href="osclconfig__io_8h.html#a48">TOsclFileOffset</a> OsclAsyncFileBuffer::Offset </td>
           <td class="md" valign="top">(&nbsp;</td>
           <td class="mdname1" valign="top" nowrap>&nbsp;          </td>
           <td class="md" valign="top">)&nbsp;</td>
@@ -365,7 +365,7 @@ Buffer class used with async read. We keep an array of these, covering consecuti
         <tr>
           <td class="md" nowrap valign="top"> void OsclAsyncFileBuffer::SetOffset </td>
           <td class="md" valign="top">(&nbsp;</td>
-          <td class="md" nowrap valign="top">int32&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="osclconfig__io_8h.html#a48">TOsclFileOffset</a>&nbsp;</td>
           <td class="mdname1" valign="top" nowrap>&nbsp; <em>aOffset</em>          </td>
           <td class="md" valign="top">)&nbsp;</td>
           <td class="md" nowrap><code> [inline]</code></td>
@@ -446,7 +446,7 @@ Buffer class used with async read. We keep an array of these, covering consecuti
 <hr>The documentation for this class was generated from the following file:<ul>
 <li><a class="el" href="oscl__file__async__read_8h-source.html">oscl_file_async_read.h</a></ul>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: OPENCORE_20090120 </small>
+<address style="align: left;"><small>Posting Version: OPENCORE_20090223 </small>
 </small></address>
 </body>
 </html>

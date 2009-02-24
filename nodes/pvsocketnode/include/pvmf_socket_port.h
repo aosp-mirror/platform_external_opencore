@@ -41,9 +41,6 @@
 #ifndef PVMI_CONFIG_AND_CAPABILITY_UTILS_H_INCLUDED
 #include "pvmi_config_and_capability_utils.h"
 #endif
-#ifndef PVMF_STREAMING_BUFFER_ALLOCATORS_H_INCLUDED
-#include "pvmf_streaming_buffer_allocators.h"
-#endif
 #ifndef PVMI_PORT_CONFIG_KVP_H_INCLUDED
 #include "pvmi_port_config_kvp.h"
 #endif

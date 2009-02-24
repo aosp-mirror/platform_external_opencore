@@ -303,6 +303,7 @@ class H223OutgoingChannel : public H223LogicalChannel
         void Resume();
 
         OSCL_IMPORT_REF PVMFStatus Connect(PVMFPortInterface* aPort);
+        OSCL_IMPORT_REF virtual PVMFStatus PeerConnect(PVMFPortInterface* aPort);
 
         // Implement pure virtuals from PvmiCapabilityAndConfig interface
         OSCL_IMPORT_REF void setObserver(PvmiConfigAndCapabilityCmdObserver* aObserver);
@@ -389,6 +390,8 @@ class H223OutgoingControlChannel : public H223OutgoingChannel
         }
 
         PVMFStatus PutData(PVMFSharedMediaMsgPtr aMsg);
+        OSCL_IMPORT_REF PVMFStatus PeerConnect(PVMFPortInterface* aPort);
+
 };
 
 #define NUM_INCOMING_SDU_BUFFERS 8

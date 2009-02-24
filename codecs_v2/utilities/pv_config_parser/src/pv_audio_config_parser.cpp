@@ -357,6 +357,7 @@ OSCL_EXPORT_REF int32 pv_audio_config_parser(pvAudioConfigParserInputs *aInputs,
         }
     }
     else if (aInputs->iMimeType == PVMF_MIME_MPEG4_AUDIO || // AAC
+             aInputs->iMimeType == PVMF_MIME_3640 ||
              aInputs->iMimeType == PVMF_MIME_LATM ||
              aInputs->iMimeType == PVMF_MIME_ADIF ||
              aInputs->iMimeType == PVMF_MIME_ASF_MPEG4_AUDIO ||

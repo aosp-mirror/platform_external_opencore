@@ -17,88 +17,89 @@
 00020 <span class="preprocessor"></span><span class="preprocessor">#define OSCL_FILE_STATS_H_INCLUDED</span>
 00021 <span class="preprocessor"></span>
 00022 <span class="preprocessor">#include "<a class="code" href="oscl__base_8h.html">oscl_base.h</a>"</span>
-00023 
-<a name="l00024"></a><a class="code" href="group__osclio.html#a18">00024</a> <span class="preprocessor">#define OSCL_FILE_STATS_LOGGER_NODE "OsclFileStats"</span>
-00025 <span class="preprocessor"></span>
-<a name="l00026"></a><a class="code" href="classOsclFileStatsItem.html">00026</a> <span class="keyword">class </span><a class="code" href="classOsclFileStatsItem.html">OsclFileStatsItem</a>
-00027 {
-00028     <span class="keyword">public</span>:
-<a name="l00029"></a><a class="code" href="classOsclFileStatsItem.html#m0">00029</a>         uint32 <a class="code" href="classOsclFileStatsItem.html#m0">iOpCount</a>;
-<a name="l00030"></a><a class="code" href="classOsclFileStatsItem.html#m1">00030</a>         uint32 <a class="code" href="classOsclFileStatsItem.html#m1">iParam</a>;
-<a name="l00031"></a><a class="code" href="classOsclFileStatsItem.html#m2">00031</a>         uint32 <a class="code" href="classOsclFileStatsItem.html#m2">iParam2</a>;
-<a name="l00032"></a><a class="code" href="classOsclFileStatsItem.html#m3">00032</a>         uint32 <a class="code" href="classOsclFileStatsItem.html#m3">iStartTick</a>;
-<a name="l00033"></a><a class="code" href="classOsclFileStatsItem.html#m4">00033</a>         uint32 <a class="code" href="classOsclFileStatsItem.html#m4">iTotalTicks</a>;
-00034 };
-00035 
-<a name="l00036"></a><a class="code" href="group__osclio.html#a28">00036</a> <span class="keyword">enum</span> <a class="code" href="group__osclio.html#a28">TOsclFileOp</a>
-00037 {
-00038     <a class="code" href="group__osclio.html#a28a2">EOsclFileOp_Open</a>
-00039     , <a class="code" href="group__osclio.html#a28a3">EOsclFileOp_Close</a>
-00040     , <a class="code" href="group__osclio.html#a28a4">EOsclFileOp_Read</a>
-00041     , <a class="code" href="group__osclio.html#a28a5">EOsclFileOp_Write</a>
-00042     , <a class="code" href="group__osclio.html#a28a6">EOsclFileOp_Seek</a>
-00043     , <a class="code" href="group__osclio.html#a28a7">EOsclFileOp_Tell</a>
-00044     , <a class="code" href="group__osclio.html#a28a8">EOsclFileOp_Size</a>
-00045     , <a class="code" href="group__osclio.html#a28a9">EOsclFileOp_Flush</a>
-00046     , <a class="code" href="group__osclio.html#a28a10">EOsclFileOp_EndOfFile</a>
-00047     , <a class="code" href="group__osclio.html#a28a11">EOsclFileOp_NativeOpen</a>
-00048     , <a class="code" href="group__osclio.html#a28a12">EOsclFileOp_NativeClose</a>
-00049     , <a class="code" href="group__osclio.html#a28a13">EOsclFileOp_NativeRead</a>
-00050     , <a class="code" href="group__osclio.html#a28a14">EOsclFileOp_NativeWrite</a>
-00051     , <a class="code" href="group__osclio.html#a28a15">EOsclFileOp_NativeSeek</a>
-00052     , <a class="code" href="group__osclio.html#a28a16">EOsclFileOp_NativeTell</a>
-00053     , <a class="code" href="group__osclio.html#a28a17">EOsclFileOp_NativeSize</a>
-00054     , <a class="code" href="group__osclio.html#a28a18">EOsclFileOp_NativeFlush</a>
-00055     , <a class="code" href="group__osclio.html#a28a19">EOsclFileOp_NativeEndOfFile</a>
-00056     , <a class="code" href="group__osclio.html#a28a20">EOsclFileOp_Last</a>
-00057 };
-00058 <span class="keyword">static</span> <span class="keyword">const</span> <span class="keywordtype">char</span>* <span class="keyword">const</span> TOsclFileOpStr[] =
-00059 {
-00060     <span class="stringliteral">"Open"</span>
-00061     , <span class="stringliteral">"Close"</span>
-00062     , <span class="stringliteral">"Read"</span>
-00063     , <span class="stringliteral">"Write"</span>
-00064     , <span class="stringliteral">"Seek"</span>
-00065     , <span class="stringliteral">"Tell"</span>
-00066     , <span class="stringliteral">"Size"</span>
-00067     , <span class="stringliteral">"Flush"</span>
-00068     , <span class="stringliteral">"EndOfFile"</span>
-00069     , <span class="stringliteral">"NativeOpen"</span>
-00070     , <span class="stringliteral">"NativeClose"</span>
-00071     , <span class="stringliteral">"NativeRead"</span>
-00072     , <span class="stringliteral">"NativeWrite"</span>
-00073     , <span class="stringliteral">"NativeSeek"</span>
-00074     , <span class="stringliteral">"NativeTell"</span>
-00075     , <span class="stringliteral">"NativeSize"</span>
-00076     , <span class="stringliteral">"NativeFlush"</span>
-00077     , <span class="stringliteral">"NativeEndOfFile"</span>
-00078     , <span class="stringliteral">"???"</span>
-00079 };
-00080 
-00081 <span class="keyword">class </span><a class="code" href="classPVLogger.html">PVLogger</a>;
-00082 <span class="keyword">class </span><a class="code" href="classOscl__File.html">Oscl_File</a>;
-00083 
-<a name="l00084"></a><a class="code" href="classOsclFileStats.html">00084</a> <span class="keyword">class </span><a class="code" href="classOsclFileStats.html">OsclFileStats</a>
-00085 {
-00086     <span class="keyword">public</span>:
-00087         <a class="code" href="classOsclFileStats.html#a0">OsclFileStats</a>(<a class="code" href="classOscl__File.html">Oscl_File</a>* c);
-00088         <span class="keywordtype">void</span> <a class="code" href="classOsclFileStats.html#a1">Start</a>(uint32&amp; aTicks);
-00089         <span class="keywordtype">void</span> <a class="code" href="classOsclFileStats.html#a2">End</a>(<a class="code" href="group__osclio.html#a28">TOsclFileOp</a> aOp, uint32 aStart, uint32 aParam = 0, uint32 aParam2 = 0);
-00090         <span class="keywordtype">void</span> <a class="code" href="classOsclFileStats.html#a3">Log</a>(<a class="code" href="group__osclio.html#a28">TOsclFileOp</a>, <a class="code" href="classPVLogger.html">PVLogger</a>*, uint32);
-00091         <span class="keywordtype">void</span> <a class="code" href="classOsclFileStats.html#a4">LogAll</a>(<a class="code" href="classPVLogger.html">PVLogger</a>*, uint32);
-00092 
-00093     <span class="keyword">private</span>:
-00094         <a class="code" href="classOscl__File.html">Oscl_File</a>* iContainer;
-00095         <span class="comment">//fixed array of the max time per item.</span>
-00096         <a class="code" href="classOsclFileStatsItem.html">OsclFileStatsItem</a> iStats[<a class="code" href="group__osclio.html#a28a20">EOsclFileOp_Last</a>];
-00097 };
-00098 
+00023 <span class="preprocessor">#include "<a class="code" href="osclconfig__io_8h.html">osclconfig_io.h</a>"</span>
+00024 
+<a name="l00025"></a><a class="code" href="group__osclio.html#a19">00025</a> <span class="preprocessor">#define OSCL_FILE_STATS_LOGGER_NODE "OsclFileStats"</span>
+00026 <span class="preprocessor"></span>
+<a name="l00027"></a><a class="code" href="classOsclFileStatsItem.html">00027</a> <span class="keyword">class </span><a class="code" href="classOsclFileStatsItem.html">OsclFileStatsItem</a>
+00028 {
+00029     <span class="keyword">public</span>:
+<a name="l00030"></a><a class="code" href="classOsclFileStatsItem.html#m0">00030</a>         uint32 <a class="code" href="classOsclFileStatsItem.html#m0">iOpCount</a>;
+<a name="l00031"></a><a class="code" href="classOsclFileStatsItem.html#m1">00031</a>         uint32 <a class="code" href="classOsclFileStatsItem.html#m1">iParam</a>;
+<a name="l00032"></a><a class="code" href="classOsclFileStatsItem.html#m2">00032</a>         <a class="code" href="osclconfig__io_8h.html#a48">TOsclFileOffset</a> <a class="code" href="classOsclFileStatsItem.html#m2">iParam2</a>;
+<a name="l00033"></a><a class="code" href="classOsclFileStatsItem.html#m3">00033</a>         uint32 <a class="code" href="classOsclFileStatsItem.html#m3">iStartTick</a>;
+<a name="l00034"></a><a class="code" href="classOsclFileStatsItem.html#m4">00034</a>         uint32 <a class="code" href="classOsclFileStatsItem.html#m4">iTotalTicks</a>;
+00035 };
+00036 
+<a name="l00037"></a><a class="code" href="group__osclio.html#a29">00037</a> <span class="keyword">enum</span> <a class="code" href="group__osclio.html#a29">TOsclFileOp</a>
+00038 {
+00039     <a class="code" href="group__osclio.html#a29a2">EOsclFileOp_Open</a>
+00040     , <a class="code" href="group__osclio.html#a29a3">EOsclFileOp_Close</a>
+00041     , <a class="code" href="group__osclio.html#a29a4">EOsclFileOp_Read</a>
+00042     , <a class="code" href="group__osclio.html#a29a5">EOsclFileOp_Write</a>
+00043     , <a class="code" href="group__osclio.html#a29a6">EOsclFileOp_Seek</a>
+00044     , <a class="code" href="group__osclio.html#a29a7">EOsclFileOp_Tell</a>
+00045     , <a class="code" href="group__osclio.html#a29a8">EOsclFileOp_Size</a>
+00046     , <a class="code" href="group__osclio.html#a29a9">EOsclFileOp_Flush</a>
+00047     , <a class="code" href="group__osclio.html#a29a10">EOsclFileOp_EndOfFile</a>
+00048     , <a class="code" href="group__osclio.html#a29a11">EOsclFileOp_NativeOpen</a>
+00049     , <a class="code" href="group__osclio.html#a29a12">EOsclFileOp_NativeClose</a>
+00050     , <a class="code" href="group__osclio.html#a29a13">EOsclFileOp_NativeRead</a>
+00051     , <a class="code" href="group__osclio.html#a29a14">EOsclFileOp_NativeWrite</a>
+00052     , <a class="code" href="group__osclio.html#a29a15">EOsclFileOp_NativeSeek</a>
+00053     , <a class="code" href="group__osclio.html#a29a16">EOsclFileOp_NativeTell</a>
+00054     , <a class="code" href="group__osclio.html#a29a17">EOsclFileOp_NativeSize</a>
+00055     , <a class="code" href="group__osclio.html#a29a18">EOsclFileOp_NativeFlush</a>
+00056     , <a class="code" href="group__osclio.html#a29a19">EOsclFileOp_NativeEndOfFile</a>
+00057     , <a class="code" href="group__osclio.html#a29a20">EOsclFileOp_Last</a>
+00058 };
+00059 <span class="keyword">static</span> <span class="keyword">const</span> <span class="keywordtype">char</span>* <span class="keyword">const</span> TOsclFileOpStr[] =
+00060 {
+00061     <span class="stringliteral">"Open"</span>
+00062     , <span class="stringliteral">"Close"</span>
+00063     , <span class="stringliteral">"Read"</span>
+00064     , <span class="stringliteral">"Write"</span>
+00065     , <span class="stringliteral">"Seek"</span>
+00066     , <span class="stringliteral">"Tell"</span>
+00067     , <span class="stringliteral">"Size"</span>
+00068     , <span class="stringliteral">"Flush"</span>
+00069     , <span class="stringliteral">"EndOfFile"</span>
+00070     , <span class="stringliteral">"NativeOpen"</span>
+00071     , <span class="stringliteral">"NativeClose"</span>
+00072     , <span class="stringliteral">"NativeRead"</span>
+00073     , <span class="stringliteral">"NativeWrite"</span>
+00074     , <span class="stringliteral">"NativeSeek"</span>
+00075     , <span class="stringliteral">"NativeTell"</span>
+00076     , <span class="stringliteral">"NativeSize"</span>
+00077     , <span class="stringliteral">"NativeFlush"</span>
+00078     , <span class="stringliteral">"NativeEndOfFile"</span>
+00079     , <span class="stringliteral">"???"</span>
+00080 };
+00081 
+00082 <span class="keyword">class </span><a class="code" href="classPVLogger.html">PVLogger</a>;
+00083 <span class="keyword">class </span><a class="code" href="classOscl__File.html">Oscl_File</a>;
+00084 
+<a name="l00085"></a><a class="code" href="classOsclFileStats.html">00085</a> <span class="keyword">class </span><a class="code" href="classOsclFileStats.html">OsclFileStats</a>
+00086 {
+00087     <span class="keyword">public</span>:
+00088         <a class="code" href="classOsclFileStats.html#a0">OsclFileStats</a>(<a class="code" href="classOscl__File.html">Oscl_File</a>* c);
+00089         <span class="keywordtype">void</span> <a class="code" href="classOsclFileStats.html#a1">Start</a>(uint32&amp; aTicks);
+00090         <span class="keywordtype">void</span> <a class="code" href="classOsclFileStats.html#a2">End</a>(<a class="code" href="group__osclio.html#a29">TOsclFileOp</a> aOp, uint32 aStart, uint32 aParam = 0, <a class="code" href="osclconfig__io_8h.html#a48">TOsclFileOffset</a> aParam2 = 0);
+00091         <span class="keywordtype">void</span> <a class="code" href="classOsclFileStats.html#a3">Log</a>(<a class="code" href="group__osclio.html#a29">TOsclFileOp</a>, <a class="code" href="classPVLogger.html">PVLogger</a>*, uint32);
+00092         <span class="keywordtype">void</span> <a class="code" href="classOsclFileStats.html#a4">LogAll</a>(<a class="code" href="classPVLogger.html">PVLogger</a>*, uint32);
+00093 
+00094     <span class="keyword">private</span>:
+00095         <a class="code" href="classOscl__File.html">Oscl_File</a>* iContainer;
+00096         <span class="comment">//fixed array of the max time per item.</span>
+00097         <a class="code" href="classOsclFileStatsItem.html">OsclFileStatsItem</a> iStats[<a class="code" href="group__osclio.html#a29a20">EOsclFileOp_Last</a>];
+00098 };
 00099 
 00100 
-00101 <span class="preprocessor">#endif</span>
-00102 <span class="preprocessor"></span>
+00101 
+00102 <span class="preprocessor">#endif</span>
+00103 <span class="preprocessor"></span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: OPENCORE_20090120 </small>
+<address style="align: left;"><small>Posting Version: OPENCORE_20090223 </small>
 </small></address>
 </body>
 </html>

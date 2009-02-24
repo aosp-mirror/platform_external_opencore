@@ -47,6 +47,10 @@
 #include "oscl_init.h"
 #endif
 
+#ifndef PV_OMX_CONFIG_PARSER_H
+#include "pv_omx_config_parser.h"
+#endif
+
 // pv_omxregistry.h is only needed if NOT using CML2
 #ifndef USE_CML2_CONFIG
 #include "pv_omxregistry.h"
@@ -58,6 +62,28 @@
 #ifndef OSCL_DLL_H_INCLUDED
 #include "oscl_dll.h"
 #endif
+
+#if USE_DYNAMIC_LOAD_OMX_COMPONENTS
+// until dynamic registry - register all components
+// unconditionally - may error out at load time
+
+OMX_ERRORTYPE Mpeg4Register();
+OMX_ERRORTYPE H263Register();
+OMX_ERRORTYPE AvcRegister();
+OMX_ERRORTYPE WmvRegister();
+OMX_ERRORTYPE AacRegister();
+OMX_ERRORTYPE AmrRegister();
+OMX_ERRORTYPE Mp3Register();
+OMX_ERRORTYPE WmaRegister();
+
+OMX_ERRORTYPE AmrEncRegister();
+OMX_ERRORTYPE Mpeg4EncRegister();
+OMX_ERRORTYPE H263EncRegister();
+OMX_ERRORTYPE AvcEncRegister();
+OMX_ERRORTYPE AacEncRegister();
+
+
+#else
 
 #if REGISTER_OMX_M4V_COMPONENT
 OMX_ERRORTYPE Mpeg4Register();
@@ -110,7 +136,7 @@ OMX_ERRORTYPE AvcEncRegister();
 #if REGISTER_OMX_AACENC_COMPONENT
 OMX_ERRORTYPE AacEncRegister();
 #endif
-
+#endif
 OSCL_DLL_ENTRY_POINT_DEFAULT()
 
 /* Initializes the component */
@@ -159,6 +185,76 @@ static OMX_ERRORTYPE _OMX_Init()
         return Status;
     }
 
+#if USE_DYNAMIC_LOAD_OMX_COMPONENTS
+//unconditional registration
+    // MPEG4
+    Status = Mpeg4Register();
+    if (Status != OMX_ErrorNone)
+        return Status;
+
+
+    //H263
+    Status = H263Register();
+    if (Status != OMX_ErrorNone)
+        return Status;
+
+    // AVC
+    Status = AvcRegister();
+    if (Status != OMX_ErrorNone)
+        return Status;
+
+    // WMV
+    Status = WmvRegister();
+    if (Status != OMX_ErrorNone)
+        return Status;
+
+    // AAC
+    Status = AacRegister();
+    if (Status != OMX_ErrorNone)
+        return Status;
+
+    // AMR
+    Status = AmrRegister();
+    if (Status != OMX_ErrorNone)
+        return Status;
+
+    // MP3
+    Status = Mp3Register();
+    if (Status != OMX_ErrorNone)
+        return Status;
+
+    // WMA
+    Status = WmaRegister();
+    if (Status != OMX_ErrorNone)
+        return Status;
+
+    //AMR ENCODER
+    Status = AmrEncRegister();
+    if (Status != OMX_ErrorNone)
+        return Status;
+
+    //MPEG4 Encoder
+    Status = Mpeg4EncRegister();
+    if (Status != OMX_ErrorNone)
+        return Status;
+
+    //H263 Encoder
+    Status = H263EncRegister();
+    if (Status != OMX_ErrorNone)
+        return Status;
+
+    //H264/AVC Encoder
+    Status = AvcEncRegister();
+    if (Status != OMX_ErrorNone)
+        return Status;
+
+    //AAC Encoder
+    Status = AacEncRegister();
+    if (Status != OMX_ErrorNone)
+        return Status;
+
+
+#else
     // REGISTER COMPONENT TYPES (ONE BY ONE)
 #if REGISTER_OMX_M4V_COMPONENT
     // MPEG4
@@ -249,7 +345,7 @@ static OMX_ERRORTYPE _OMX_Init()
     if (Status != OMX_ErrorNone)
         return Status;
 #endif
-
+#endif
     return OMX_ErrorNone;
 }
 
@@ -556,6 +652,8 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OMX_APIENTRY OMX_GetHandle(OMX_OUT OMX_HANDLETYPE*
     }
     pTempProxyTerm->Start();
 
+    *pHandle = NULL;
+
     ErrorType = pTempProxyTerm->ProxyGetHandle(pHandle, cComponentName, pAppData, pCallBacks);
 
     //Get registry to store values
@@ -573,35 +671,35 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OMX_APIENTRY OMX_GetHandle(OMX_OUT OMX_HANDLETYPE*
         return OMX_ErrorInvalidState;
     }
 
-    OMX_U32* componentIndex = &(data->iComponentIndex);
-    OMX_HANDLETYPE* componentHandle = data->iComponentHandle;
-
-    // First, find an empty slot in the proxy/component handle array to store the component/proxy handle
-    OMX_U32 jj;
-    for (jj = 0; jj < MAX_INSTANTIATED_COMPONENTS; jj++)
+    if ((NULL != *pHandle) && (OMX_ErrorNone == ErrorType))
     {
-        if (componentHandle[jj] == NULL)
-            break;
-    }
-    // can't find a free slot
-    if (jj == MAX_INSTANTIATED_COMPONENTS)
-    {
-        OsclSingletonRegistry::registerInstanceAndUnlock(data, OSCL_SINGLETON_ID_OMX, error);
-        _Cleanup_Component(pTempProxyTerm, *pHandle, cComponentName);
-        ErrorType = OMX_ErrorInsufficientResources;
-        return ErrorType;
-    }
-    else
-    {
-        *componentIndex = jj;
-    }
+        OMX_U32* componentIndex = &(data->iComponentIndex);
+        OMX_HANDLETYPE* componentHandle = data->iComponentHandle;
 
-    ProxyApplication_OMX** pProxyTerm = data->ipProxyTerm;
+        // First, find an empty slot in the proxy/component handle array to store the component/proxy handle
+        OMX_U32 jj;
+        for (jj = 0; jj < MAX_INSTANTIATED_COMPONENTS; jj++)
+        {
+            if (componentHandle[jj] == NULL)
+                break;
+        }
+        // can't find a free slot
+        if (jj == MAX_INSTANTIATED_COMPONENTS)
+        {
+            OsclSingletonRegistry::registerInstanceAndUnlock(data, OSCL_SINGLETON_ID_OMX, error);
+            _Cleanup_Component(pTempProxyTerm, *pHandle, cComponentName);
+            ErrorType = OMX_ErrorInsufficientResources;
+            return ErrorType;
+        }
+        else
+        {
+            *componentIndex = jj;
+        }
 
-    pProxyTerm[*componentIndex] = pTempProxyTerm;
+        ProxyApplication_OMX** pProxyTerm = data->ipProxyTerm;
 
-    if (*pHandle)
-    {
+        pProxyTerm[*componentIndex] = pTempProxyTerm;
+
         // now that we got the component handle, store the handle in the componentHandle array
         componentHandle[*componentIndex] = *pHandle;
 
@@ -949,8 +1047,8 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OMX_GetRolesOfComponent(
         return OMX_ErrorUndefined;
     }
 
-    OMX_STRING RoleString = NULL;
-    OMX_S32 ii;
+    OMX_STRING RoleString[MAX_ROLES_SUPPORTED];
+    OMX_U32 ii;
 
     // first check if there is a component with the correct name
     for (ii = 0; ii < MAX_SUPPORTED_COMPONENTS; ii ++)
@@ -959,7 +1057,7 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OMX_GetRolesOfComponent(
         {
             if (!oscl_strcmp(data->ipRegTemplateList[ii]->ComponentName, compName))
             {
-                (data->ipRegTemplateList[ii])->GetRolesOfComponent(&RoleString);
+                (data->ipRegTemplateList[ii])->GetRolesOfComponent(RoleString);
                 break;
             }
         }
@@ -973,13 +1071,14 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OMX_GetRolesOfComponent(
     }
 
 
-    // for simplicity all our components have 1 role only
-    // if a component has more than 1 role, still register it for each role separately, and use
-    //	factory/destructor separately
-    *pNumRoles = 1;
+    // Return the number of roles supported by the component.
+    *pNumRoles = (data->ipRegTemplateList[ii])->NumberOfRolesSupported;
     if (roles != NULL)
     {
-        oscl_strncpy((OMX_STRING) roles[0], (OMX_STRING)RoleString, oscl_strlen((OMX_STRING)RoleString) + 1);
+        for (ii = 0; ii < *pNumRoles; ii++)
+        {
+            oscl_strncpy((OMX_STRING) roles[ii], (OMX_STRING)RoleString[ii], oscl_strlen((OMX_STRING)RoleString[ii]) + 1);
+        }
     }
 
     return OMX_ErrorNone;
@@ -1005,8 +1104,8 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OMX_GetComponentsOfRole(
         return OMX_ErrorUndefined;
     }
 
-    OMX_U32 ii;
-    OMX_STRING RoleString;
+    OMX_U32 ii, jj;
+    OMX_STRING RoleString[MAX_ROLES_SUPPORTED];
     // initialize
     *pNumComps = 0;
 
@@ -1016,19 +1115,22 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OMX_GetComponentsOfRole(
         if (data->ipRegTemplateList[ii])
         {
             // get the component role
-            (data->ipRegTemplateList[ii])->GetRolesOfComponent(&RoleString);
+            (data->ipRegTemplateList[ii])->GetRolesOfComponent(RoleString);
 
-            // if the role matches, increment the counter and record the comp. name
-            if (!oscl_strcmp(RoleString, role))
+            for (jj = 0; jj < (data->ipRegTemplateList[ii])->NumberOfRolesSupported; jj++)
             {
-                // if a placeholder for compNames is provided, copy the component name into it
-                if (compNames != NULL)
+                // if the role matches, increment the counter and record the comp. name
+                if (!oscl_strcmp(RoleString[jj], role))
                 {
-                    oscl_strncpy((OMX_STRING) compNames[*pNumComps], (data->ipRegTemplateList[ii])->ComponentName,
-                                 oscl_strlen((data->ipRegTemplateList[ii])->ComponentName) + 1);
+                    // if a placeholder for compNames is provided, copy the component name into it
+                    if (compNames != NULL)
+                    {
+                        oscl_strncpy((OMX_STRING) compNames[*pNumComps], (data->ipRegTemplateList[ii])->ComponentName,
+                                     oscl_strlen((data->ipRegTemplateList[ii])->ComponentName) + 1);
+                    }
+                    // increment the counter
+                    *pNumComps = (*pNumComps + 1);
                 }
-                // increment the counter
-                *pNumComps = (*pNumComps + 1);
 
             }
         }
@@ -1037,3 +1139,4 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OMX_GetComponentsOfRole(
     return OMX_ErrorNone;
 
 }
+

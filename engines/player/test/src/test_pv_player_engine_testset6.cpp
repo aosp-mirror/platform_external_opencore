@@ -240,6 +240,8 @@ void pvplayer_async_test_streamingopenplaystop::Run()
                     PVMFSourceContextDataPVR* pvrData = iSourceContextData->PVRData();
                     m_PVRControl = OSCL_NEW(PVMFPVRControl, ());
                     pvrData->SetPVRControl(m_PVRControl);
+                    fileType = PVMF_MIME_DATA_SOURCE_RTSP_PVR_FCS_URL;
+                    iFileType = PVMF_MIME_DATA_SOURCE_RTSP_PVR_FCS_URL;
                 }
 #endif
                 PVInterface* sourceContext = NULL;
@@ -572,7 +574,7 @@ void pvplayer_async_test_streamingopenplaystop::Run()
         {
             fprintf(iTestMsgOutputFile, "***Adding Video Data Sink...\n");
             OSCL_wHeapString<OsclMemAllocator> videoSinkFileName = OUTPUTNAME_PREPEND_WSTRING;
-            if (iFileType == PVMF_MIME_DATA_SOURCE_RTSP_URL)
+            if (iFileType == PVMF_MIME_DATA_SOURCE_RTSP_URL || (iFileType ==  PVMF_MIME_DATA_SOURCE_RTSP_PVR_FCS_URL))
             {
                 videoSinkFileName += _STRLIT_WCHAR("test_player_rtspurl_video.dat");
             }
@@ -603,7 +605,7 @@ void pvplayer_async_test_streamingopenplaystop::Run()
         {
             fprintf(iTestMsgOutputFile, "***Adding Audio Data Sink...\n");
             OSCL_wHeapString<OsclMemAllocator> audioSinkFileName = OUTPUTNAME_PREPEND_WSTRING;
-            if (iFileType == PVMF_MIME_DATA_SOURCE_RTSP_URL)
+            if (iFileType == PVMF_MIME_DATA_SOURCE_RTSP_URL || (iFileType ==  PVMF_MIME_DATA_SOURCE_RTSP_PVR_FCS_URL))
             {
                 audioSinkFileName += _STRLIT_WCHAR("test_player_rtspurl_audio.dat");
             }
@@ -5446,7 +5448,6 @@ void pvplayer_async_test_dvbh_streamingopenplaystop::Run(void)
             m_sourceContext.DisableDownloadPVXSourceContext() ;
             m_sourceContext.DisablePVRSourceContext() ;
             m_sourceContext.DisablePacketSourceSourceContext();
-            m_sourceContext.DisablePVRLocalPlaySourceContext();
             m_sourceContext.DisableCommonSourceContext();
 
 

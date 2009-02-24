@@ -81,11 +81,11 @@ class OsclNativeFile : public HeapBase
                     , Oscl_FileServer& fileserv);
         uint32 Read(OsclAny *buffer, uint32 size, uint32 numelements);
         uint32 Write(const OsclAny *buffer, uint32 size, uint32 numelements);
-        int32  Seek(int32 offset, Oscl_File::seek_type origin);
-        int32  Tell();
+        int32  Seek(TOsclFileOffset offset, Oscl_File::seek_type origin);
+        TOsclFileOffset  Tell();
         int32  Flush();
         int32  EndOfFile();
-        int32 Size();
+        TOsclFileOffset Size();
         int32 Close();
 
         //query for current open mode.

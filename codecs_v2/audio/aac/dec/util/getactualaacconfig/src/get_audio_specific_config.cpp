@@ -344,15 +344,22 @@ Int get_audio_specific_config(tDec_Int_File   * const pVars)
     /* sampling rate index */
     pVars->prog_config.sampling_rate_idx = temp & 0xf;
 
-    if (pVars->prog_config.sampling_rate_idx == 0xf)
+    if (pVars->prog_config.sampling_rate_idx > 0xb)
     {
         /*
-         * sampling rate not listed in Table 1.6.2,
-         * this release does not support this
+         *  Only support 12 sampling frequencies from array samp_rate_info ( see sfb.cpp)
+         *  7350 Hz (index 0xc) is not supported, the other indexes are reserved or escape
          */
-        /*sampling_rate =  getbits( LEN_SAMP_RATE,
-                                  pInputStream);*/
-        getbits(LEN_SAMP_RATE, pInputStream);
+        if (pVars->prog_config.sampling_rate_idx == 0xf) /* escape sequence */
+        {
+            /*
+             * sampling rate not listed in Table 1.6.2,
+             * this release does not support this
+             */
+            /*sampling_rate =  getbits( LEN_SAMP_RATE,
+                                      pInputStream);*/
+            getbits(LEN_SAMP_RATE, pInputStream); /* future use */
+        }
 
         status = 1;
     }
@@ -421,12 +428,12 @@ Int get_audio_specific_config(tDec_Int_File   * const pVars)
         if ((pVars->mc_info.audioObjectType != MP4AUDIO_AAC_LC) &&
                 (pVars->mc_info.audioObjectType != MP4AUDIO_LTP))
         {
-            status = 1;
+            return 1;   /* status != SUCCESS invalid aot */
         }
     }
     else
     {
-        status = 1;
+        return 1;   /* status != SUCCESS invalid aot or invalid parameter */
     }
 
     /*

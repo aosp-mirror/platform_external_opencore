@@ -64,6 +64,7 @@ typedef enum
     , PvmfMediaInputNodeErr_MediaIOStart
     , PvmfMediaInputNodeErr_MediaIOPause
     , PvmfMediaInputNodeErr_MediaIOStop
+    , PvmfMediaInputNodeErr_MediaIOReset
     , PvmfMediaInputNodeErr_MediaIOFlush
     , PvmfMediaInputNodeErr_MediaIOCancelCommand
 

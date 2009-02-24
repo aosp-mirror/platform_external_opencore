@@ -32,9 +32,6 @@
 #ifndef PVMF_NODE_INTERFACE_H_INCLUDED
 #include "pvmf_node_interface.h"
 #endif
-#ifndef PVMF_STREAMING_BUFFER_ALLOCATORS_H_INCLUDED
-#include "pvmf_streaming_buffer_allocators.h"
-#endif
 #ifndef PVMF_JITTER_BUFFER_H_INCLUDED
 #include "pvmf_jitter_buffer.h"
 #endif
@@ -51,26 +48,26 @@
 #define PVMF_JB_PORT_OVERRIDE 1
 
 ////////////////////////////////////////////////////////////////////////////
-PVMFJitterBufferPort::PVMFJitterBufferPort(int32 aTag, PVMFNodeInterface* aNode, const char*name)
-        : PvmfPortBaseImpl(aTag, aNode, name)
+PVMFJitterBufferPort::PVMFJitterBufferPort(int32 aTag, PVMFJitterBufferNode& aNode, const char*name)
+        : PvmfPortBaseImpl(aTag, &aNode, name)
         , iFormat(PVMF_MIME_FORMAT_UNKNOWN)
+        , irJitterBufferNode(aNode)
 {
-    iJitterBufferNode = OSCL_STATIC_CAST(PVMFJitterBufferNode*, aNode);
     Construct();
 }
 
 ////////////////////////////////////////////////////////////////////////////
-PVMFJitterBufferPort::PVMFJitterBufferPort(int32 aTag, PVMFNodeInterface* aNode
+PVMFJitterBufferPort::PVMFJitterBufferPort(int32 aTag, PVMFJitterBufferNode& aNode
         , uint32 aInCapacity
         , uint32 aInReserve
         , uint32 aInThreshold
         , uint32 aOutCapacity
         , uint32 aOutReserve
         , uint32 aOutThreshold, const char*name)
-        : PvmfPortBaseImpl(aTag, aNode, aInCapacity, aInReserve, aInThreshold, aOutCapacity, aOutReserve, aOutThreshold, name)
+        : PvmfPortBaseImpl(aTag, &aNode, aInCapacity, aInReserve, aInThreshold, aOutCapacity, aOutReserve, aOutThreshold, name)
         , iFormat(PVMF_MIME_FORMAT_UNKNOWN)
+        , irJitterBufferNode(aNode)
 {
-    iJitterBufferNode = OSCL_STATIC_CAST(PVMFJitterBufferNode*, aNode);
     Construct();
 }
 
@@ -80,10 +77,7 @@ void PVMFJitterBufferPort::Construct()
     iPortParams = NULL;
     iCounterpartPortParams = NULL;
     iPortCounterpart = NULL;
-    iInPlaceDataProcessing = false;
-    iBufferAlloc = NULL;
-    iBufferNoResizeAlloc = NULL;
-    iLogger = PVLogger::GetLoggerObject("PVMFJitterBufferPort");
+    ipLogger = PVLogger::GetLoggerObject("PVMFJitterBufferPort");
     oscl_memset(&iStats, 0, sizeof(PvmfPortBaseImplStats));
     /*
      * Input ports have tags: 0, 3, 6, ...
@@ -112,22 +106,6 @@ PVMFJitterBufferPort::~PVMFJitterBufferPort()
 {
     Disconnect();
     ClearMsgQueues();
-    if (iBufferAlloc != NULL)
-    {
-        iBufferAlloc->DecrementKeepAliveCount();
-        if (iBufferAlloc->getNumOutStandingBuffers() == 0)
-        {
-            OSCL_DELETE((iBufferAlloc));
-        }
-    }
-    if (iBufferNoResizeAlloc != NULL)
-    {
-        iBufferNoResizeAlloc->DecrementKeepAliveCount();
-        if (iBufferNoResizeAlloc->getNumOutStandingBuffers() == 0)
-        {
-            OSCL_DELETE((iBufferNoResizeAlloc));
-        }
-    }
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -156,18 +134,15 @@ PVMFStatus PVMFJitterBufferPort::Connect(PVMFPortInterface* aPort)
 
         if (config != NULL)
         {
-            pvmiSetPortAllocatorSync(config,
-                                     PVMF_JITTER_BUFFER_PORT_SPECIFIC_ALLOCATOR_VALTYPE);
-
             int numKvp = 0;
             PvmiKvp* kvpPtr = NULL;
             PVMFStatus status =
                 config->getParametersSync(NULL, (char*)PVMI_PORT_CONFIG_INPLACE_DATA_PROCESSING_KEY, kvpPtr, numKvp, NULL);
             if (status == PVMFSuccess)
             {
-                iInPlaceDataProcessing = kvpPtr[0].value.bool_value;
-                iJitterBufferNode->SetInPlaceProcessingMode(OSCL_STATIC_CAST(PVMFPortInterface*, this),
-                        iInPlaceDataProcessing);
+                bool inPlaceDataProcessing = kvpPtr[0].value.bool_value;
+                irJitterBufferNode.SetInPlaceProcessingMode(OSCL_STATIC_CAST(PVMFPortInterface*, this),
+                        inPlaceDataProcessing);
             }
             config->releaseParameters(NULL, kvpPtr, numKvp);
         }
@@ -192,36 +167,13 @@ PVMFStatus PVMFJitterBufferPort::getParametersSync(PvmiMIOSession aSession,
         int& num_parameter_elements,
         PvmiCapabilityContext aContext)
 {
+    OSCL_UNUSED_ARG(aIdentifier);
+    OSCL_UNUSED_ARG(aParameters);
     OSCL_UNUSED_ARG(aSession);
     OSCL_UNUSED_ARG(num_parameter_elements);
     OSCL_UNUSED_ARG(aContext);
 
-    PVMF_JBNODE_LOGINFO((0, "PVMFJitterBufferPort::getParametersSync: aSession=0x%x, aIdentifier=%s, aParameters=0x%x, num_parameters_elements=%d, aContext=0x%x",
-                         aSession, aIdentifier, aParameters, num_parameter_elements, aContext));
-
-    if (pv_mime_strcmp(aIdentifier, PVMF_JITTER_BUFFER_PORT_SPECIFIC_ALLOCATOR) != 0)
-    {
-        PVMF_JBNODE_LOGERROR((0, "PVMFJitterBufferPort::getParametersSync: Error - Unsupported PvmiKeyType"));
-        return PVMFErrNotSupported;
-    }
-
-    OsclMemAllocator alloc;
-    uint32 strLen = oscl_strlen(PVMF_JITTER_BUFFER_PORT_SPECIFIC_ALLOCATOR_VALTYPE) + 1;
-    uint8* ptr = (uint8*)alloc.allocate(sizeof(PvmiKvp) + strLen);
-    if (!ptr)
-    {
-        PVMF_JBNODE_LOGERROR((0, "PVMFJitterBufferPort::getParametersSync: Error - No memory. Cannot allocate PvmiKvp"));
-        return PVMFErrNoMemory;
-    }
-
-    aParameters = new(ptr) PvmiKvp;
-    ptr += sizeof(PvmiKvp);
-    aParameters->key = (PvmiKeyType)ptr;
-    oscl_strncpy(aParameters->key, PVMF_JITTER_BUFFER_PORT_SPECIFIC_ALLOCATOR_VALTYPE, strLen);
-    aParameters->value.key_specific_value = (OsclAny*)(&iPortDataAlloc);
-    aParameters->length = aParameters->capacity = strLen;
-
-    return PVMFSuccess;
+    return PVMFErrNotSupported;
 }
 
 
@@ -270,28 +222,6 @@ PVMFStatus PVMFJitterBufferPort::verifyParametersSync(PvmiMIOSession aSession, P
 
     return PVMFErrNotSupported;
 }
-
-void
-PVMFJitterBufferPort::pvmiSetPortAllocatorSync(PvmiCapabilityAndConfig *aPort,
-        const char* aFormatValType)
-{
-    // Create PvmiKvp for capability settings
-    OsclMemAllocator alloc;
-    PvmiKvp kvp;
-    kvp.key = NULL;
-    kvp.length = oscl_strlen(aFormatValType) + 1; // +1 for \0
-    kvp.capacity = kvp.length;
-    kvp.key = (PvmiKeyType)alloc.ALLOCATE(kvp.length);
-    OsclError::LeaveIfNull(kvp.key);
-    oscl_strncpy(kvp.key, aFormatValType, kvp.length);
-    kvp.value.key_specific_value = (OsclAny*)(&iPortDataAlloc);
-    PvmiKvp* retKvp = NULL; // for return value
-    //ignore leave
-    int32 leavecode = 0;
-    OSCL_TRY(leavecode, aPort->setParametersSync(NULL, &kvp, 1, retKvp););
-    alloc.deallocate((OsclAny*)(kvp.key));
-}
-
 
 ////////////////////////////////////////////////////////////////////////////
 PVMFStatus PVMFJitterBufferPort::QueueOutgoingMsg(PVMFSharedMediaMsgPtr aMsg)

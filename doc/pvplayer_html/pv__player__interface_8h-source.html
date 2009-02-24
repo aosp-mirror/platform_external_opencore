@@ -96,66 +96,68 @@
 00220                                       <span class="keywordtype">bool</span> aExactUuidsOnly = <span class="keyword">false</span>, <span class="keyword">const</span> OsclAny* aContextData = NULL) = 0;
 00241         <span class="keyword">virtual</span> PVCommandId <a class="code" href="classPVPlayerInterface.html#a7">QueryInterface</a>(<span class="keyword">const</span> PVUuid&amp; aUuid, PVInterface*&amp; aInterfacePtr, <span class="keyword">const</span> OsclAny* aContextData = NULL) = 0;
 00242 
-00254         <span class="keyword">virtual</span> PVCommandId <a class="code" href="classPVPlayerInterface.html#a8">CancelAllCommands</a>(<span class="keyword">const</span> OsclAny* aContextData = NULL) = 0;
-00255 
-00270         <span class="keyword">virtual</span> PVCommandId <a class="code" href="classPVPlayerInterface.html#a9">GetPVPlayerState</a>(PVPlayerState&amp; aState, <span class="keyword">const</span> OsclAny* aContextData = NULL) = 0;
-00271 
-00282         <span class="keyword">virtual</span> PVMFStatus <a class="code" href="classPVPlayerInterface.html#a10">GetPVPlayerStateSync</a>(PVPlayerState&amp; aState) = 0;
-00283 
-00301         <span class="keyword">virtual</span> PVCommandId <a class="code" href="classPVPlayerInterface.html#a11">AddDataSource</a>(PVPlayerDataSource&amp; aDataSource, <span class="keyword">const</span> OsclAny* aContextData = NULL) = 0;
-00302 
-00320         <span class="keyword">virtual</span> PVCommandId <a class="code" href="classPVPlayerInterface.html#a12">Init</a>(<span class="keyword">const</span> OsclAny* aContextData = NULL) = 0;
-00321 
-00348         <span class="keyword">virtual</span> PVCommandId <a class="code" href="classPVPlayerInterface.html#a13">GetMetadataKeys</a>(PVPMetadataList&amp; aKeyList, int32 aStartingIndex = 0, int32 aMaxEntries = -1,
-00349                                             <span class="keywordtype">char</span>* aQueryKey = NULL, <span class="keyword">const</span> OsclAny* aContextData = NULL) = 0;
-00350 
-00381         <span class="keyword">virtual</span> PVCommandId <a class="code" href="classPVPlayerInterface.html#a14">GetMetadataValues</a>(PVPMetadataList&amp; aKeyList, int32 aStartingValueIndex, int32 aMaxValueEntries, int32&amp; aNumAvailableValueEntries,
-00382                                               Oscl_Vector&lt;PvmiKvp, OsclMemAllocator&gt;&amp; aValueList, <span class="keyword">const</span> OsclAny* aContextData = NULL, <span class="keywordtype">bool</span> aMetadataValuesCopiedInCallBack = <span class="keyword">true</span>) = 0;
-00383 
-00401         <span class="keyword">virtual</span> PVCommandId <a class="code" href="classPVPlayerInterface.html#a15">ReleaseMetadataValues</a>(Oscl_Vector&lt;PvmiKvp, OsclMemAllocator&gt;&amp; aValueList, <span class="keyword">const</span> OsclAny* aContextData = NULL) = 0;
-00402 
-00420         <span class="keyword">virtual</span> PVCommandId <a class="code" href="classPVPlayerInterface.html#a16">AddDataSink</a>(PVPlayerDataSink&amp; aDataSink, <span class="keyword">const</span> OsclAny* aContextData = NULL) = 0;
-00421 
-00452         <span class="keyword">virtual</span> PVCommandId <a class="code" href="classPVPlayerInterface.html#a17">SetPlaybackRange</a>(PVPPlaybackPosition aBeginPos, PVPPlaybackPosition aEndPos, <span class="keywordtype">bool</span> aQueueRange, <span class="keyword">const</span> OsclAny* aContextData = NULL) = 0;
-00453 
-00474         <span class="keyword">virtual</span> PVCommandId <a class="code" href="classPVPlayerInterface.html#a18">GetPlaybackRange</a>(PVPPlaybackPosition &amp;aBeginPos, PVPPlaybackPosition &amp;aEndPos, <span class="keywordtype">bool</span> aQueued, <span class="keyword">const</span> OsclAny* aContextData = NULL) = 0;
-00475 
-00491         <span class="keyword">virtual</span> PVCommandId <a class="code" href="classPVPlayerInterface.html#a19">GetCurrentPosition</a>(PVPPlaybackPosition &amp;aPos, <span class="keyword">const</span> OsclAny* aContextData = NULL) = 0;
-00492 
-00525         <span class="keyword">virtual</span> PVCommandId <a class="code" href="classPVPlayerInterface.html#a20">SetPlaybackRate</a>(int32 aRate, PVMFTimebase* aTimebase = NULL, <span class="keyword">const</span> OsclAny* aContextData = NULL) = 0;
-00526 
-00550         <span class="keyword">virtual</span> PVCommandId <a class="code" href="classPVPlayerInterface.html#a21">GetPlaybackRate</a>(int32&amp; aRate, PVMFTimebase*&amp; aTimebase, <span class="keyword">const</span> OsclAny* aContextData = NULL) = 0;
-00551 
-00571         <span class="keyword">virtual</span> PVCommandId <a class="code" href="classPVPlayerInterface.html#a22">GetPlaybackMinMaxRate</a>(int32&amp; aMinRate, int32&amp; aMaxRate, <span class="keyword">const</span> OsclAny* aContextData = NULL) = 0;
-00572 
-00584         <span class="keyword">virtual</span> PVMFStatus <a class="code" href="classPVPlayerInterface.html#a23">GetCurrentPositionSync</a>(PVPPlaybackPosition &amp;aPos) = 0;
-00585 
-00602         <span class="keyword">virtual</span> PVCommandId <a class="code" href="classPVPlayerInterface.html#a24">Prepare</a>(<span class="keyword">const</span> OsclAny* aContextData = NULL) = 0;
+00259         <span class="keyword">virtual</span> PVCommandId <a class="code" href="classPVPlayerInterface.html#a8">CancelCommand</a>(PVCommandId aCancelCmdId, <span class="keyword">const</span> OsclAny* aContextData = NULL) = 0;
+00260 
+00272         <span class="keyword">virtual</span> PVCommandId <a class="code" href="classPVPlayerInterface.html#a9">CancelAllCommands</a>(<span class="keyword">const</span> OsclAny* aContextData = NULL) = 0;
+00273 
+00288         <span class="keyword">virtual</span> PVCommandId <a class="code" href="classPVPlayerInterface.html#a10">GetPVPlayerState</a>(PVPlayerState&amp; aState, <span class="keyword">const</span> OsclAny* aContextData = NULL) = 0;
+00289 
+00300         <span class="keyword">virtual</span> PVMFStatus <a class="code" href="classPVPlayerInterface.html#a11">GetPVPlayerStateSync</a>(PVPlayerState&amp; aState) = 0;
+00301 
+00319         <span class="keyword">virtual</span> PVCommandId <a class="code" href="classPVPlayerInterface.html#a12">AddDataSource</a>(PVPlayerDataSource&amp; aDataSource, <span class="keyword">const</span> OsclAny* aContextData = NULL) = 0;
+00320 
+00338         <span class="keyword">virtual</span> PVCommandId <a class="code" href="classPVPlayerInterface.html#a13">Init</a>(<span class="keyword">const</span> OsclAny* aContextData = NULL) = 0;
+00339 
+00366         <span class="keyword">virtual</span> PVCommandId <a class="code" href="classPVPlayerInterface.html#a14">GetMetadataKeys</a>(PVPMetadataList&amp; aKeyList, int32 aStartingIndex = 0, int32 aMaxEntries = -1,
+00367                                             <span class="keywordtype">char</span>* aQueryKey = NULL, <span class="keyword">const</span> OsclAny* aContextData = NULL) = 0;
+00368 
+00399         <span class="keyword">virtual</span> PVCommandId <a class="code" href="classPVPlayerInterface.html#a15">GetMetadataValues</a>(PVPMetadataList&amp; aKeyList, int32 aStartingValueIndex, int32 aMaxValueEntries, int32&amp; aNumAvailableValueEntries,
+00400                                               Oscl_Vector&lt;PvmiKvp, OsclMemAllocator&gt;&amp; aValueList, <span class="keyword">const</span> OsclAny* aContextData = NULL, <span class="keywordtype">bool</span> aMetadataValuesCopiedInCallBack = <span class="keyword">true</span>) = 0;
+00401 
+00419         <span class="keyword">virtual</span> PVCommandId <a class="code" href="classPVPlayerInterface.html#a16">ReleaseMetadataValues</a>(Oscl_Vector&lt;PvmiKvp, OsclMemAllocator&gt;&amp; aValueList, <span class="keyword">const</span> OsclAny* aContextData = NULL) = 0;
+00420 
+00438         <span class="keyword">virtual</span> PVCommandId <a class="code" href="classPVPlayerInterface.html#a17">AddDataSink</a>(PVPlayerDataSink&amp; aDataSink, <span class="keyword">const</span> OsclAny* aContextData = NULL) = 0;
+00439 
+00470         <span class="keyword">virtual</span> PVCommandId <a class="code" href="classPVPlayerInterface.html#a18">SetPlaybackRange</a>(PVPPlaybackPosition aBeginPos, PVPPlaybackPosition aEndPos, <span class="keywordtype">bool</span> aQueueRange, <span class="keyword">const</span> OsclAny* aContextData = NULL) = 0;
+00471 
+00492         <span class="keyword">virtual</span> PVCommandId <a class="code" href="classPVPlayerInterface.html#a19">GetPlaybackRange</a>(PVPPlaybackPosition &amp;aBeginPos, PVPPlaybackPosition &amp;aEndPos, <span class="keywordtype">bool</span> aQueued, <span class="keyword">const</span> OsclAny* aContextData = NULL) = 0;
+00493 
+00509         <span class="keyword">virtual</span> PVCommandId <a class="code" href="classPVPlayerInterface.html#a20">GetCurrentPosition</a>(PVPPlaybackPosition &amp;aPos, <span class="keyword">const</span> OsclAny* aContextData = NULL) = 0;
+00510 
+00543         <span class="keyword">virtual</span> PVCommandId <a class="code" href="classPVPlayerInterface.html#a21">SetPlaybackRate</a>(int32 aRate, PVMFTimebase* aTimebase = NULL, <span class="keyword">const</span> OsclAny* aContextData = NULL) = 0;
+00544 
+00568         <span class="keyword">virtual</span> PVCommandId <a class="code" href="classPVPlayerInterface.html#a22">GetPlaybackRate</a>(int32&amp; aRate, PVMFTimebase*&amp; aTimebase, <span class="keyword">const</span> OsclAny* aContextData = NULL) = 0;
+00569 
+00589         <span class="keyword">virtual</span> PVCommandId <a class="code" href="classPVPlayerInterface.html#a23">GetPlaybackMinMaxRate</a>(int32&amp; aMinRate, int32&amp; aMaxRate, <span class="keyword">const</span> OsclAny* aContextData = NULL) = 0;
+00590 
+00602         <span class="keyword">virtual</span> PVMFStatus <a class="code" href="classPVPlayerInterface.html#a24">GetCurrentPositionSync</a>(PVPPlaybackPosition &amp;aPos) = 0;
 00603 
-00618         <span class="keyword">virtual</span> PVCommandId <a class="code" href="classPVPlayerInterface.html#a25">Start</a>(<span class="keyword">const</span> OsclAny* aContextData = NULL) = 0;
-00619 
-00633         <span class="keyword">virtual</span> PVCommandId <a class="code" href="classPVPlayerInterface.html#a26">Pause</a>(<span class="keyword">const</span> OsclAny* aContextData = NULL) = 0;
-00634 
-00649         <span class="keyword">virtual</span> PVCommandId <a class="code" href="classPVPlayerInterface.html#a27">Resume</a>(<span class="keyword">const</span> OsclAny* aContextData = NULL) = 0;
-00650 
-00666         <span class="keyword">virtual</span> PVCommandId <a class="code" href="classPVPlayerInterface.html#a28">Stop</a>(<span class="keyword">const</span> OsclAny* aContextData = NULL) = 0;
-00667 
-00685         <span class="keyword">virtual</span> PVCommandId <a class="code" href="classPVPlayerInterface.html#a29">RemoveDataSink</a>(PVPlayerDataSink&amp; aDataSink, <span class="keyword">const</span> OsclAny* aContextData = NULL) = 0;
-00686 
-00702         <span class="keyword">virtual</span> PVCommandId <a class="code" href="classPVPlayerInterface.html#a30">Reset</a>(<span class="keyword">const</span> OsclAny* aContextData = NULL) = 0;
-00703 
-00721         <span class="keyword">virtual</span> PVCommandId <a class="code" href="classPVPlayerInterface.html#a31">RemoveDataSource</a>(PVPlayerDataSource&amp; aDataSource, <span class="keyword">const</span> OsclAny* aContextData = NULL) = 0;
-00722 
-00732         OSCL_IMPORT_REF <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classPVPlayerInterface.html#d0">GetSDKInfo</a>(PVSDKInfo&amp; aSDKInfo);
-00733 
-00734 };
-00735 
-00736 
-00737 
-00738 
-00739 <span class="preprocessor">#endif // PV_PLAYER_INTERFACE_H_INCLUDED</span>
+00620         <span class="keyword">virtual</span> PVCommandId <a class="code" href="classPVPlayerInterface.html#a25">Prepare</a>(<span class="keyword">const</span> OsclAny* aContextData = NULL) = 0;
+00621 
+00636         <span class="keyword">virtual</span> PVCommandId <a class="code" href="classPVPlayerInterface.html#a26">Start</a>(<span class="keyword">const</span> OsclAny* aContextData = NULL) = 0;
+00637 
+00651         <span class="keyword">virtual</span> PVCommandId <a class="code" href="classPVPlayerInterface.html#a27">Pause</a>(<span class="keyword">const</span> OsclAny* aContextData = NULL) = 0;
+00652 
+00667         <span class="keyword">virtual</span> PVCommandId <a class="code" href="classPVPlayerInterface.html#a28">Resume</a>(<span class="keyword">const</span> OsclAny* aContextData = NULL) = 0;
+00668 
+00684         <span class="keyword">virtual</span> PVCommandId <a class="code" href="classPVPlayerInterface.html#a29">Stop</a>(<span class="keyword">const</span> OsclAny* aContextData = NULL) = 0;
+00685 
+00703         <span class="keyword">virtual</span> PVCommandId <a class="code" href="classPVPlayerInterface.html#a30">RemoveDataSink</a>(PVPlayerDataSink&amp; aDataSink, <span class="keyword">const</span> OsclAny* aContextData = NULL) = 0;
+00704 
+00720         <span class="keyword">virtual</span> PVCommandId <a class="code" href="classPVPlayerInterface.html#a31">Reset</a>(<span class="keyword">const</span> OsclAny* aContextData = NULL) = 0;
+00721 
+00739         <span class="keyword">virtual</span> PVCommandId <a class="code" href="classPVPlayerInterface.html#a32">RemoveDataSource</a>(PVPlayerDataSource&amp; aDataSource, <span class="keyword">const</span> OsclAny* aContextData = NULL) = 0;
+00740 
+00750         OSCL_IMPORT_REF <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classPVPlayerInterface.html#d0">GetSDKInfo</a>(PVSDKInfo&amp; aSDKInfo);
+00751 
+00752 };
+00753 
+00754 
+00755 
+00756 
+00757 <span class="preprocessor">#endif // PV_PLAYER_INTERFACE_H_INCLUDED</span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>PV Player Engine</small>
-<address style="align: left;"><small>Posting Version: OPENCORE_20090120 </small>
+<address style="align: left;"><small>Posting Version: OPENCORE_20090223 </small>
 </small></address>
 </body>
 </html>

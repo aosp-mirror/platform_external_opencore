@@ -121,6 +121,8 @@ int pvauthor_async_test_miscellaneous::CreateAudioInput()
         case AMR_YUV_TEXT_Input_AVT_3gp_LongetivityTest:
         case AMR_TEXT_Input_AT_3gpTest:
         case AMR_YUV_TEXT_Input_AVT_Mp4Test:
+        case AMR_FileOutput_Test_UsingExternalFileHandle:
+
             PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_DEBUG,
                             (0, "pvauthor_async_test_miscellaneous::CreateAudioTestInput: AMR input"));
             if (testInput.IsTestInputTypeSupported(SYMBIAN_DEV_SOUND))
@@ -132,6 +134,22 @@ int pvauthor_async_test_miscellaneous::CreateAudioInput()
             {
                 iAudioInputType = AMR_IETF_FILE;
                 status = testInput.CreateInputNode(AMR_IETF_FILE, iInputFileNameAudio, iAVTConfig);
+            }
+            break;
+
+        case AMRWB_Input_AOnly_3gpTest:
+        case AMRWB_FOutput_Test:
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_DEBUG,
+                            (0, "pvauthor_async_test_miscellaneous::CreateAudioTestInput: AMR-WB input"));
+            if (testInput.IsTestInputTypeSupported(SYMBIAN_DEV_SOUND))
+            {
+                iAudioInputType = SYMBIAN_DEV_SOUND;
+                status = testInput.CreateInputNode(SYMBIAN_DEV_SOUND, iInputFileNameAudio, iAVTConfig);
+            }
+            else if (testInput.IsTestInputTypeSupported(AMRWB_IETF_FILE))
+            {
+                iAudioInputType = AMRWB_IETF_FILE;
+                status = testInput.CreateInputNode(AMRWB_IETF_FILE, iInputFileNameAudio, iAVTConfig);
             }
             break;
 
@@ -155,6 +173,7 @@ int pvauthor_async_test_miscellaneous::CreateAudioInput()
                 status = testInput.CreateInputNode(AAC_ADTS_FILE, iInputFileNameAudio, iAVTConfig);
             }
             break;
+
         default:
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_DEBUG,
@@ -329,11 +348,18 @@ void pvauthor_async_test_miscellaneous::SelectComposer()
         case AMR_TEXT_Input_AT_3gpTest:
         case YUV_TEXT_Input_VT_3gpTest:
         case AMR_YUV_TEXT_Input_AVT_Mp4Test:
+
+        case AMRWB_Input_AOnly_3gpTest:
             iComposerMimeType = K3gpComposerMimeType;
             break;
 
         case AMR_FOutput_Test:
+        case AMR_FileOutput_Test_UsingExternalFileHandle:
             iComposerMimeType = KAMRNbComposerMimeType;
+            break;
+
+        case AMRWB_FOutput_Test:
+            iComposerMimeType = KAMRWBComposerMimeType;
             break;
 
         case AACADIF_FOutput_Test:
@@ -387,9 +413,17 @@ bool pvauthor_async_test_miscellaneous::ConfigAmrAacComposer()
     switch (iTestCaseNum)
     {
         case AMR_FOutput_Test:
+        case AMR_FileOutput_Test_UsingExternalFileHandle:
             if (iOutputFileName == NULL)
             {
                 iOutputFileName = KFOAOnlyAMRTestOutput;
+            }
+            break;
+
+        case AMRWB_FOutput_Test:
+            if (iOutputFileName == NULL)
+            {
+                iOutputFileName = KFOAOnlyAMRWBTestOutput;
             }
             break;
 
@@ -408,7 +442,10 @@ bool pvauthor_async_test_miscellaneous::ConfigAmrAacComposer()
             }
             break;
         default:
-            if (!((iComposerMimeType == KAMRNbComposerMimeType) || (iComposerMimeType == KAACADTSComposerMimeType) || (iComposerMimeType == KAACADIFComposerMimeType)))
+            if (!((iComposerMimeType == KAMRNbComposerMimeType) ||
+                    (iComposerMimeType == KAMRWBComposerMimeType) ||
+                    (iComposerMimeType == KAACADTSComposerMimeType) ||
+                    (iComposerMimeType == KAACADIFComposerMimeType)))
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "pvauthor_async_test_miscellaneous::ConfigAmrAacComposer: AMR-AAC Composer not used in this test case"));
                 return true;
@@ -423,11 +460,34 @@ bool pvauthor_async_test_miscellaneous::ConfigAmrAacComposer()
         return false;
     }
 
-    if (clipConfig->SetOutputFileName(iOutputFileName) != PVMFSuccess)
+    if (!iUseExtrnFileDesc)
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "pvauthor_async_test_miscellaneous::ConfigAmrAacComposer: Error - SetOutputFileName failed"));
-        return false;
+        if (clipConfig->SetOutputFileName(iOutputFileName) != PVMFSuccess)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                            (0, "pvauthor_async_test_miscellaneous::ConfigAmrAacComposer: Error - SetOutputFileName failed"));
+            return false;
+        }
+    }
+    else
+    {
+
+        char* fname[ARRAY_SIZE];
+        oscl_UnicodeToUTF8(iOutputFileName.get_str(), iOutputFileName.get_size(), (char*)fname, ARRAY_SIZE);
+
+        FILE *fp = fopen((char*)fname, "w+b");
+        if (fp)
+        {
+            iFileHandle = OSCL_NEW(OsclFileHandle, (fp));
+            if (clipConfig->SetOutputFileDescriptor(iFileHandle) != PVMFSuccess)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                                (0, "pv_mediainput_async_test_opencomposestop::ConfigAmrComposer: Error - SetOutputFileName failed"));
+
+                return false;
+            }
+        }
+
     }
 
     return true;
@@ -505,8 +565,17 @@ bool pvauthor_async_test_miscellaneous::ConfigMp43gpComposer()
                 iOutputFileName = KYUVAMRTEXTInputAVTMp4TestOutput;
             }
             break;
+        case AMRWB_Input_AOnly_3gpTest:
+            if (iOutputFileName == NULL)
+            {
+                iOutputFileName = KAMRWBInputAOnly3gpTestOutput;
+            }
+            break;
         default:
-            if (!(iComposerMimeType == KAMRNbComposerMimeType) && !(iComposerMimeType == KAACADTSComposerMimeType) && !(iComposerMimeType == KAACADIFComposerMimeType))
+            if (!(iComposerMimeType == KAMRNbComposerMimeType) &&
+                    !(iComposerMimeType == KAMRWBComposerMimeType) &&
+                    !(iComposerMimeType == KAACADTSComposerMimeType) &&
+                    !(iComposerMimeType == KAACADIFComposerMimeType))
             {
                 break;
             }
@@ -570,10 +639,16 @@ bool pvauthor_async_test_miscellaneous::AddAudioMediaTrack()
         case AMR_TEXT_Input_AT_3gpTest:
         case AMR_YUV_TEXT_Input_AVT_Mp4Test:
         case AMR_FOutput_Test:
+        case AMR_FileOutput_Test_UsingExternalFileHandle:
         case H264_AMR_Input_AV_3gpTest:
         case AMR_TEXT_Input_AT_3gp_LongetivityTest:
         case AMR_YUV_TEXT_Input_AVT_3gp_LongetivityTest:
             iAudioEncoderMimeType = KAMRNbEncMimeType;
+            break;
+
+        case AMRWB_Input_AOnly_3gpTest:
+        case AMRWB_FOutput_Test:
+            iAudioEncoderMimeType = KAMRWbEncMimeType;
             break;
 
         case AACADIF_FOutput_Test:
@@ -780,7 +855,7 @@ bool pvauthor_async_test_miscellaneous::ConfigureAudioEncoder()
         return true;
     }
 
-    return PVAETestNodeConfig::ConfigureAudioEncoder(iAudioEncoderConfig);
+    return PVAETestNodeConfig::ConfigureAudioEncoder(iAudioEncoderConfig, iAudioEncoderMimeType);
 }
 
 
@@ -919,7 +994,13 @@ void pvauthor_async_test_miscellaneous::Cleanup()
     }
 
     DeleteTestInputs();
+    fileserv.Close();
     iOutputFileName = NULL;
+    if (iFileHandle)
+    {
+        OSCL_DELETE(iFileHandle);
+        iFileHandle = NULL;
+    }
 }
 
 

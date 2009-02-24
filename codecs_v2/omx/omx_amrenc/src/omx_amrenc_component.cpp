@@ -183,8 +183,9 @@ OMX_ERRORTYPE OmxComponentAmrEncoderAO::ConstructComponent(OMX_PTR pAppData, OMX
     iPVCapabilityFlags.iOMXComponentSupportsExternalOutputBufferAlloc = OMX_TRUE;
     iPVCapabilityFlags.iOMXComponentSupportsMovableInputBuffers = OMX_TRUE;
     iPVCapabilityFlags.iOMXComponentSupportsPartialFrames = OMX_TRUE;
-    iPVCapabilityFlags.iOMXComponentNeedsNALStartCode = OMX_FALSE;
+    iPVCapabilityFlags.iOMXComponentUsesNALStartCodes = OMX_FALSE;
     iPVCapabilityFlags.iOMXComponentCanHandleIncompleteFrames = OMX_TRUE;
+    iPVCapabilityFlags.iOMXComponentUsesFullAVCFrames = OMX_FALSE;
 
     if (ipAppPriv)
     {
@@ -208,6 +209,7 @@ OMX_ERRORTYPE OmxComponentAmrEncoderAO::ConstructComponent(OMX_PTR pAppData, OMX
 
     /** Domain specific section for the ports */
     /* Input port is raw/pcm for AMR encoder */
+    ipPorts[OMX_PORT_INPUTPORT_INDEX]->PortParam.nPortIndex = OMX_PORT_INPUTPORT_INDEX;
     ipPorts[OMX_PORT_INPUTPORT_INDEX]->PortParam.eDomain = OMX_PortDomainAudio;
     ipPorts[OMX_PORT_INPUTPORT_INDEX]->PortParam.format.audio.cMIMEType = (OMX_STRING)"raw";
     ipPorts[OMX_PORT_INPUTPORT_INDEX]->PortParam.format.audio.pNativeRender = 0;
@@ -223,6 +225,7 @@ OMX_ERRORTYPE OmxComponentAmrEncoderAO::ConstructComponent(OMX_PTR pAppData, OMX
 
 
     /* Output port is amr format for AMR encoder */
+    ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.nPortIndex = OMX_PORT_OUTPUTPORT_INDEX;
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.eDomain = OMX_PortDomainAudio;
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.format.audio.cMIMEType = (OMX_STRING)"audio/mpeg";
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.format.audio.pNativeRender = 0;
@@ -237,6 +240,7 @@ OMX_ERRORTYPE OmxComponentAmrEncoderAO::ConstructComponent(OMX_PTR pAppData, OMX
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.bPopulated = OMX_FALSE;
 
     //Default values for PCM input audio param port
+    ipPorts[OMX_PORT_INPUTPORT_INDEX]->AudioPcmMode.nPortIndex = OMX_PORT_INPUTPORT_INDEX;
     ipPorts[OMX_PORT_INPUTPORT_INDEX]->AudioPcmMode.nChannels = 1;
     ipPorts[OMX_PORT_INPUTPORT_INDEX]->AudioPcmMode.eNumData = OMX_NumericalDataSigned;
     ipPorts[OMX_PORT_INPUTPORT_INDEX]->AudioPcmMode.bInterleaved = OMX_TRUE;
@@ -247,6 +251,7 @@ OMX_ERRORTYPE OmxComponentAmrEncoderAO::ConstructComponent(OMX_PTR pAppData, OMX
     ipPorts[OMX_PORT_INPUTPORT_INDEX]->AudioPcmMode.eChannelMapping[1] = OMX_AUDIO_ChannelRF;
 
     //Default values for AMR output audio param port
+    ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->AudioAmrParam.nPortIndex = OMX_PORT_OUTPUTPORT_INDEX;
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->AudioAmrParam.nChannels = 1;
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->AudioAmrParam.nBitRate = 0;
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->AudioAmrParam.eAMRBandMode = OMX_AUDIO_AMRBandModeNB7;	//AMRNB Mode 7 = 12200 bps
@@ -380,6 +385,15 @@ void OmxComponentAmrEncoderAO::ProcessData()
             }
 
             ipOutputBuffer = (OMX_BUFFERHEADERTYPE*) DeQueue(pOutputQueue);
+
+            OSCL_ASSERT(NULL != ipOutputBuffer);
+            if (NULL == ipOutputBuffer)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "OmxComponentAmrEncoderAO : ProcessData ERROR - OUT buffer cannot be dequeued"));
+
+                return;
+            }
+
             ipOutputBuffer->nFilledLen = 0;
             iNewOutBufRequired = OMX_FALSE;
 
