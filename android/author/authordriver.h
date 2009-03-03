@@ -218,6 +218,8 @@ public:
     status_t getMaxAmplitude(int *max);
     PVAEState getAuthorEngineState();
 
+    status_t setListener(const sp<IMediaPlayerClient>& listener);
+
 private:
     // Finish up a non-async command in such a way that
     // the event loop will keep running.
@@ -275,6 +277,7 @@ private:
     Mutex                   mQueueLock;
 
     sp<ICamera>             mCamera;
+    sp<IMediaPlayerClient>  mListener;
 };
 
 class AuthorDriverWrapper
@@ -284,6 +287,7 @@ public:
     ~AuthorDriverWrapper();
     status_t enqueueCommand(author_command *ec, media_completion_f comp, void *cookie);
     status_t getMaxAmplitude(int *max);
+    status_t setListener(const sp<IMediaPlayerClient>& listener);
 
 private:
     void resetAndClose();

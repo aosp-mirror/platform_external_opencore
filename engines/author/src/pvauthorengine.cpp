@@ -1,6 +1,5 @@
 /* ------------------------------------------------------------------
  * Copyright (C) 2008 PacketVideo
- * Copyright (C) 2008 HTC Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,7 +95,8 @@ PVAuthorEngine::PVAuthorEngine() :
         iErrorEventObserver(NULL),
         iEncodedVideoFormat(PVMF_FORMAT_UNKNOWN),
         iState(PVAE_STATE_IDLE),
-        iDoResetNodeContainers(false)
+        iDoResetNodeContainers(false),
+        iResetInProgress(false)
 {
     iLogger = PVLogger::GetLoggerObject("PVAuthorEngine");
 }
@@ -465,6 +465,15 @@ void PVAuthorEngine::HandleNodeErrorEvent(const PVMFAsyncEvent& aEvent)
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
                     (0, "PVAuthorEngine::HandleNodeErrorEvent"));
 
+    if (iResetInProgress) {
+        // Ignore errors while resetting, but notify observers just in case.
+
+        PVAsyncErrorEvent eventError(aEvent.GetEventType(), NULL);
+        iErrorEventObserver->HandleErrorEvent(eventError);
+
+        return;
+    }
+
     if ((!iPendingCmds.empty()) && (iState != PVAE_STATE_ERROR)) //if there is a pending command
     {
         SetPVAEState(PVAE_STATE_ERROR);
@@ -786,6 +795,10 @@ void PVAuthorEngine::CompleteEngineCommand(PVEngineCommand& aCmd, PVMFStatus aSt
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "PVAuthorEngine::CompleteEngineCommand: aStatus=0x%x, aResponseData=0x%x, aResponseDataSize=%d",
                      aStatus, aResponseData, aResponseDataSize));
+
+    if (aCmd.GetCmdType() == PVAE_CMD_RESET) {
+        iResetInProgress = false;
+    }
 
     // Erase command from command queue
     if (!iPendingCmds.empty())
@@ -1324,6 +1337,8 @@ PVMFStatus PVAuthorEngine::DoReset(PVEngineCommand& aCmd)
         default:
             return PVMFErrInvalidState;
     }
+
+    iResetInProgress = true;
 
     return PVMFPending;
 }

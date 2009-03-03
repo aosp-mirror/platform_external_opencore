@@ -5,14 +5,11 @@ include $(CLEAR_VARS)
 
 LOCAL_WHOLE_STATIC_LIBRARIES := \
         libpvauthorengine \
-        libpvm4vencoder \
         libpvencoder_gsmamr \
-        libpvavch264enc \
         libpvmp4ffcomposer \
         libpvamrencnode \
         libpvmp4ffcomposernode \
         libpvomxvideoencnode \
-        libpvavcencnode \
         libpvmediainputnode \
         libandroidpvauthor
 
@@ -43,9 +40,9 @@ include $(PV_TOP)//codecs_v2/video/avc_h264/enc/Android.mk
 include $(PV_TOP)//fileformats/mp4/composer/Android.mk
 include $(PV_TOP)//nodes/pvamrencnode/Android.mk
 include $(PV_TOP)//nodes/pvmp4ffcomposernode/Android.mk
-include $(PV_TOP)//nodes/pvvideoencnode/Android.mk
+#include $(PV_TOP)//nodes/pvvideoencnode/Android.mk
 include $(PV_TOP)//nodes/pvomxvideoencnode/Android.mk
-include $(PV_TOP)//nodes/pvavcencnode/Android.mk
+#include $(PV_TOP)//nodes/pvavcencnode/Android.mk
 include $(PV_TOP)//nodes/pvmediainputnode/Android.mk
 #include $(PV_TOP)//pvmi/media_io/pvmi_mio_fileinput/Android.mk
 #include $(PV_TOP)//pvmi/media_io/pvmi_mio_avi_wav_fileinput/Android.mk

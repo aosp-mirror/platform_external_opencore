@@ -1775,6 +1775,8 @@ PVA_FF_Mpeg4File::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
 bool
 PVA_FF_Mpeg4File::renderToFile(PVA_FF_UNICODE_STRING_PARAM filename)
 {
+    bool success = true;
+
     MP4_AUTHOR_FF_FILE_IO_WRAP fp;
     fp._filePtr = NULL;
     fp._osclFileServerSession = NULL;
@@ -1790,7 +1792,7 @@ PVA_FF_Mpeg4File::renderToFile(PVA_FF_UNICODE_STRING_PARAM filename)
         //or to target files
         uint32 k = 0;
 
-        for (k = 0; k < _pmediaDataAtomVec->size(); k++)
+        for (k = 0; success && k < _pmediaDataAtomVec->size(); k++)
         {
             Oscl_Vector<PVA_FF_TrackAtom*, OsclMemAllocator> *trefVec =
                 (*_pmediaDataAtomVec)[k]->getTrackReferencePtrVec();
@@ -1798,7 +1800,7 @@ PVA_FF_Mpeg4File::renderToFile(PVA_FF_UNICODE_STRING_PARAM filename)
             if (trefVec != NULL)
             {
                 for (uint32 trefVecIndex = 0;
-                        trefVecIndex < trefVec->size();
+                        success && trefVecIndex < trefVec->size();
                         trefVecIndex++)
                 {
                     PVA_FF_TrackAtom* pTrack = (*trefVec)[trefVecIndex];
@@ -1809,7 +1811,9 @@ PVA_FF_Mpeg4File::renderToFile(PVA_FF_UNICODE_STRING_PARAM filename)
                     {
                         if (!flushInterLeaveBuffer(trackID))
                         {
-                            return false;
+                            // Don't return just yet, we still want to close
+                            // the file descriptors below.
+                            success = false;
                         }
                     }
 
@@ -1840,7 +1844,9 @@ PVA_FF_Mpeg4File::renderToFile(PVA_FF_UNICODE_STRING_PARAM filename)
 
                         if (!((*_pmediaDataAtomVec)[k]->closeTargetFile()))
                         {
-                            return false;
+                            // Don't return just yet, finish closing all file
+                            // descriptors first.
+                            success = false;
                         }
 
                         fp._filePtr = ((*_pmediaDataAtomVec)[k]->getTargetFilePtr());
@@ -1925,7 +1931,7 @@ PVA_FF_Mpeg4File::renderToFile(PVA_FF_UNICODE_STRING_PARAM filename)
 
 
 
-    return true;
+    return success;
 }
 
 

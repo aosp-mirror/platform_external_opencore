@@ -594,6 +594,21 @@ status_t MediaScanner::doProcessDirectory(char *path, int pathRemaining, const c
         }
 
         int type = entry->d_type;
+        if (type == DT_UNKNOWN) {
+            // If the type is unknown, stat() the file instead.
+            // This is sometimes necessary when accessing NFS mounted filesystems, but
+            // could be needed in other cases well.
+            struct stat statbuf;
+            if (stat(path, &statbuf) == 0) {
+                if (S_ISREG(statbuf.st_mode)) {
+                    type = DT_REG;
+                } else if (S_ISDIR(statbuf.st_mode)) {
+                    type = DT_DIR;
+                }
+            } else {
+                LOGD("stat() failed for %s: %s", path, strerror(errno) );
+            }
+        }
         if (type == DT_REG || type == DT_DIR) {
             int nameLength = strlen(name);
             bool isDirectory = (type == DT_DIR);

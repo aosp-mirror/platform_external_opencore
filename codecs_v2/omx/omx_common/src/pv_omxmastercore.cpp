@@ -15,6 +15,9 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
+
+#include <utils/threads.h>
+
 #include "pv_omxdefs.h"
 #include "omx_component.h"
 #include "pv_omxcore.h"
@@ -26,7 +29,7 @@
 #include "qc_omxcore.h"
 
 //Number of base instances
-OsclMutex g_OMX_Mutex;
+android::Mutex g_OMX_Mutex;
 OMX_U32 g_NumMasterOMXInstances = 0;
 void *g_Wrapper = NULL;
 void *g_MasterRegistry = NULL;
@@ -62,7 +65,7 @@ OMX_ERRORTYPE OMX_APIENTRY  PV_MasterOMX_Init()
     OMX_U32 index;
     OMX_U32 master_index = 0;
 
-    g_OMX_Mutex.Lock();
+    android::Mutex::Autolock l(g_OMX_Mutex);
     g_NumMasterOMXInstances++;
 
     if (g_NumMasterOMXInstances == 1)
@@ -72,7 +75,6 @@ OMX_ERRORTYPE OMX_APIENTRY  PV_MasterOMX_Init()
         PV_OMX_WrapperBase **pWrapper = (PV_OMX_WrapperBase **)malloc(NUMBER_OF_OMX_CORES * sizeof(PV_OMX_WrapperBase *));
         if (pWrapper == NULL)
         {
-            g_OMX_Mutex.Unlock();
             return OMX_ErrorInsufficientResources;
         }
         // set the global ptr to this array
@@ -81,7 +83,6 @@ OMX_ERRORTYPE OMX_APIENTRY  PV_MasterOMX_Init()
         PVOMXMasterRegistryStruct *pOMXMasterRegistry = (PVOMXMasterRegistryStruct *)malloc(MAX_NUMBER_OF_OMX_COMPONENTS * sizeof(PVOMXMasterRegistryStruct));
         if (pOMXMasterRegistry == NULL)
         {
-            g_OMX_Mutex.Unlock();
             return OMX_ErrorInsufficientResources;
         }
         g_MasterRegistry = (void*)pOMXMasterRegistry;
@@ -89,7 +90,6 @@ OMX_ERRORTYPE OMX_APIENTRY  PV_MasterOMX_Init()
         PVOMXCompHandles *pOMXCompHandles = (PVOMXCompHandles *)malloc(MAX_NUMBER_OF_OMX_COMPONENTS * sizeof(PVOMXCompHandles));
         if (pOMXCompHandles == NULL)
         {
-            g_OMX_Mutex.Unlock();
             return OMX_ErrorInsufficientResources;
         }
         g_OMXCompHandles = (void*)pOMXCompHandles;
@@ -191,7 +191,6 @@ OMX_ERRORTYPE OMX_APIENTRY  PV_MasterOMX_Init()
         g_TotalNumOMXComponents = master_index;
     }
 
-    g_OMX_Mutex.Unlock();
     return OMX_ErrorNone;
 }
 
@@ -200,7 +199,7 @@ OMX_ERRORTYPE OMX_APIENTRY PV_MasterOMX_Deinit()
     OMX_U32 jj;
     OMX_ERRORTYPE Status = OMX_ErrorNone;
 
-    g_OMX_Mutex.Lock();
+    android::Mutex::Autolock l(g_OMX_Mutex);
     g_NumMasterOMXInstances--;
     if (g_NumMasterOMXInstances == 0)
     {
@@ -232,7 +231,6 @@ OMX_ERRORTYPE OMX_APIENTRY PV_MasterOMX_Deinit()
 
 
     }
-    g_OMX_Mutex.Unlock();
     return OMX_ErrorNone;
 }
 
@@ -246,11 +244,10 @@ OMX_API OMX_ERRORTYPE PV_MasterOMX_GetComponentsOfRole(
     OMX_U32 ii;
     // initialize
     *pNumComps = 0;
-    g_OMX_Mutex.Lock();
+    android::Mutex::Autolock l(g_OMX_Mutex);
     PVOMXMasterRegistryStruct *pOMXMasterRegistry = (PVOMXMasterRegistryStruct *) g_MasterRegistry;
     if (pOMXMasterRegistry == NULL)
     {
-        g_OMX_Mutex.Unlock();
         return OMX_ErrorNone;
     }
 
@@ -272,7 +269,6 @@ OMX_API OMX_ERRORTYPE PV_MasterOMX_GetComponentsOfRole(
         }
     }
 
-    g_OMX_Mutex.Unlock();
     return OMX_ErrorNone;
 
 }
@@ -287,17 +283,15 @@ OMX_API OMX_ERRORTYPE OMX_APIENTRY 	PV_MasterOMX_GetHandle(
     OMX_ERRORTYPE Status = OMX_ErrorNone;
     OMX_U32 ii, kk;
 
-    g_OMX_Mutex.Lock();
+    android::Mutex::Autolock l(g_OMX_Mutex);
     PVOMXMasterRegistryStruct *pOMXMasterRegistry = (PVOMXMasterRegistryStruct *) g_MasterRegistry;
     if (pOMXMasterRegistry == NULL)
     {
-        g_OMX_Mutex.Unlock();
         return OMX_ErrorComponentNotFound;
     }
     PVOMXCompHandles *pOMXCompHandles = (PVOMXCompHandles *)g_OMXCompHandles;
     if (pOMXCompHandles == NULL)
     {
-        g_OMX_Mutex.Unlock();
         return OMX_ErrorComponentNotFound;
     }
 
@@ -315,7 +309,6 @@ OMX_API OMX_ERRORTYPE OMX_APIENTRY 	PV_MasterOMX_GetHandle(
     if (ii == g_TotalNumOMXComponents)
     {
         // could not find a component with the given name
-        g_OMX_Mutex.Unlock();
         return OMX_ErrorComponentNotFound;
     }
 
@@ -335,7 +328,6 @@ OMX_API OMX_ERRORTYPE OMX_APIENTRY 	PV_MasterOMX_GetHandle(
         }
         if (kk == MAX_NUMBER_OF_OMX_COMPONENTS)
         {
-            g_OMX_Mutex.Unlock();
             return OMX_ErrorComponentNotFound;
         }
 
@@ -347,12 +339,10 @@ OMX_API OMX_ERRORTYPE OMX_APIENTRY 	PV_MasterOMX_GetHandle(
             pOMXCompHandles[kk].handle = *pHandle;
             pOMXCompHandles[kk].OMXCoreIndex = index;
         }
-        g_OMX_Mutex.Unlock();
         return Status;
     }
     else
     {
-        g_OMX_Mutex.Unlock();
         return OMX_ErrorInsufficientResources;
     }
 
@@ -366,11 +356,10 @@ OMX_API OMX_ERRORTYPE OMX_APIENTRY PV_MasterOMX_FreeHandle(OMX_IN OMX_HANDLETYPE
 // here, we need to first find the handle among instantiated components
 // then we retrieve the core based on component handle
 // finally, call the OMX_FreeHandle for appropriate core
-    g_OMX_Mutex.Lock();
+    android::Mutex::Autolock l(g_OMX_Mutex);
     PVOMXCompHandles *pOMXCompHandles = (PVOMXCompHandles *)g_OMXCompHandles;
     if (pOMXCompHandles == NULL)
     {
-        g_OMX_Mutex.Unlock();
         return OMX_ErrorComponentNotFound;
     }
     for (ii = 0; ii < MAX_NUMBER_OF_OMX_COMPONENTS; ii ++)
@@ -386,7 +375,6 @@ OMX_API OMX_ERRORTYPE OMX_APIENTRY PV_MasterOMX_FreeHandle(OMX_IN OMX_HANDLETYPE
     if (ii == MAX_NUMBER_OF_OMX_COMPONENTS)
     {
         // could not find a component with the given name
-        g_OMX_Mutex.Unlock();
         return OMX_ErrorComponentNotFound;
     }
 
@@ -398,12 +386,10 @@ OMX_API OMX_ERRORTYPE OMX_APIENTRY PV_MasterOMX_FreeHandle(OMX_IN OMX_HANDLETYPE
         Status = (*(pWrapper[index]->GetpOMX_FreeHandle()))(hComponent);
         //we're done with this, so get rid of the component handle
         pOMXCompHandles[ii].handle = NULL;
-        g_OMX_Mutex.Unlock();
         return Status;
     }
     else
     {
-        g_OMX_Mutex.Unlock();
         return OMX_ErrorInsufficientResources;
     }
 

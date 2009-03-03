@@ -152,7 +152,8 @@ class PvmfMediaInputNodeOutPort : public OsclTimerObject,
         {
             PORT_STATE_BUFFERING = 0,
             PORT_STATE_STARTED,
-            PORT_STATE_ENDOFTRACK
+            PORT_STATE_ENDOFTRACK,
+            PORT_STATE_STOPPED
         };
         PortState iState;
         PVMFFormatType iFormat;

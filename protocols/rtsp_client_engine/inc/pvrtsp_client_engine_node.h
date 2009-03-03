@@ -235,16 +235,7 @@ class SessionInfo
 
 
     public:
-        SessionInfo():
-                bExternalSDP(false),
-                pvServerIsSetFlag(false),
-                roundTripDelay(0),
-                iProxyPort(0)
-        {
-            iUserAgent += _STRLIT_CHAR("PVCore/05.02.00.00");
-            iReqPlayRange.format = RtspRangeType::INVALID_RANGE;
-        };
-
+       SessionInfo();
 } ;
 
 class RTSPNodeMemDestructDealloc : public OsclDestructDealloc

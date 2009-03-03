@@ -92,6 +92,7 @@ OMX_ERRORTYPE CallbackEventHandler(OMX_OUT OMX_HANDLETYPE aComponent,
                                    OMX_OUT OMX_U32 aData2,
                                    OMX_OUT OMX_PTR aEventData)
 {
+    LOGV("CallbackEventHandler");
     PVMFOMXVideoEncNode *Node = (PVMFOMXVideoEncNode *) aAppData;
 
     if ( Node->IsComponentMultiThreaded() )
@@ -1108,231 +1109,230 @@ void PVMFOMXVideoEncNode::ConstructEncoderParams()
 ////////////////////////////////////////////////////////////////////////////
 void PVMFOMXVideoEncNode::Run()
 {
-    LOG_STACK_TRACE((0, "PVMFOMXVideoEncNode::Run"));
+    LOG_STACK_TRACE((0, "PVMFOMXVideoEncNode::Run: In"));
 
-	// if reset is in progress, call DoReset again until Reset Msg is sent
-	if((iResetInProgress == true) &&
-	   (iResetMsgSent == false) &&
-	   (iCurrentCmd.size() > 0) &&
-	   (iCurrentCmd.front().iCmd == PVMF_GENERIC_NODE_RESET)
-	)
-	{
-		DoReset(iCurrentCmd.front());
-		PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0,"PVMFOMXVideoEncNode::Run() - Calling DoReset"));
-		return; // don't do anything else
-	}
-	//Check for NODE commands...
-	if (!iCmdQueue.empty())
-	{
-		if (ProcessCommand(iCmdQueue.front()))
-		{
-			if (iInterfaceState != EPVMFNodeCreated
-				&& (!iCmdQueue.empty() || (iInPort.size() > 0 && (iInPort[0]->IncomingMsgQueueSize() > 0)) ||
-				(iDataIn.GetRep()!=NULL) ))
-			{
-				PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0,"PVMFOMXVideoEncNode::Run() - rescheduling after process command"));
-				RunIfNotReady();
-			}
-			return;
-		}
+    // if reset is in progress, call DoReset again until Reset Msg is sent
+    if ((iResetInProgress == true) &&
+        (iResetMsgSent == false) &&
+        (iCurrentCmd.size() > 0) &&
+        (iCurrentCmd.front().iCmd == PVMF_GENERIC_NODE_RESET))
+    {
+        DoReset(iCurrentCmd.front());
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0,"PVMFOMXVideoEncNode::Run() - Calling DoReset"));
+        return; // don't do anything else
+    }
 
-		if (!iCmdQueue.empty())
-		{
-			PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0,"PVMFOMXVideoEncNode::Run() - rescheduling to process more commands"));
-			RunIfNotReady();
-		}
-	}
-	else
-	{
-		PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0,"PVMFOMXVideoEncNode::Run() - Input commands empty"));
-	}
+    // Check for NODE commands...
+    if (!iCmdQueue.empty())
+    {
+        if (ProcessCommand(iCmdQueue.front()))
+        {
+            if (iInterfaceState != EPVMFNodeCreated && 
+                (!iCmdQueue.empty() || (iInPort.size() > 0 && (iInPort[0]->IncomingMsgQueueSize() > 0)) || (iDataIn.GetRep()!=NULL)) ) 
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0,"PVMFOMXVideoEncNode::Run() - rescheduling after process command"));
+                RunIfNotReady();
+            }
+            return;
+        }
 
-	if ( ( (iCurrentCmd.size() == 0) && (iInterfaceState != EPVMFNodeStarted) ) ||
-	     ( (iCurrentCmd.size()>0) && (iCurrentCmd.front().iCmd == PVMF_GENERIC_NODE_START) && (iInterfaceState != EPVMFNodeStarted) ) )
-	{
-		// rescheduling because of input data will be handled in Command Processing Part
-		PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0,"PVMFOMXVideoEncNode::Run() - Node not in Started state yet"));
-		return;
-	}
+        if (!iCmdQueue.empty())
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0,"PVMFOMXVideoEncNode::Run() - rescheduling to process more commands"));
+            RunIfNotReady();
+        }
+    }
+    else
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0,"PVMFOMXVideoEncNode::Run() - Input commands empty"));
+    }
 
-	// Process port activity, push out all outgoing messages
-	if(iOutPort.size() > 0)
-	{
-		while(iOutPort[0]->OutgoingMsgQueueSize())
-		{
-			// if port is busy it is going to wakeup from port ready event
-			if(!ProcessOutgoingMsg(iOutPort[0]))
-			{
-				PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0,"PVMFOMXVideoEncNode::Run() - Outgoing Port Busy, cannot send more msgs"));
-				break;
-			}
-		}
-	}
+    if ( ( (iCurrentCmd.size() == 0) && (iInterfaceState != EPVMFNodeStarted) ) ||
+         ( (iCurrentCmd.size()>0) && (iCurrentCmd.front().iCmd == PVMF_GENERIC_NODE_START) && (iInterfaceState != EPVMFNodeStarted) ) )
+    {
+        // rescheduling because of input data will be handled in Command Processing Part
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0,"PVMFOMXVideoEncNode::Run() - Node not in Started state yet"));
+        return;
+    }
 
-	int loopCount = 0;
+    // Process port activity, push out all outgoing messages
+    if (iOutPort.size() > 0)
+    {
+        while(iOutPort[0]->OutgoingMsgQueueSize())
+        {
+            // if port is busy it is going to wakeup from port ready event
+            if (!ProcessOutgoingMsg(iOutPort[0]))
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0,"PVMFOMXVideoEncNode::Run() - Outgoing Port Busy, cannot send more msgs"));
+                break;
+            }
+        }
+    }
+
+    int loopCount = 0;
 #if (PVLOGGER_INST_LEVEL >= PVLOGMSG_INST_REL)
-	uint32 startticks = OsclTickCount::TickCount();
-	uint32 starttime = OsclTickCount::TicksToMsec(startticks);
+    uint32 startticks = OsclTickCount::TickCount();
+    uint32 starttime = OsclTickCount::TicksToMsec(startticks);
 #endif
-	do // Try to consume all the data from the Input port
-	{
-		// Process port activity if there is no input data that is being processed
-		// Do not accept any input if EOS needs to be sent out
-		if(iInPort.size() && (iInPort[0]->IncomingMsgQueueSize() > 0) && (iDataIn.GetRep() == NULL) && !iEndOfDataReached)
-		{
-			PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0,"PVMFOMXVideoEncNode::Run() - Getting more input"));
-			if (ProcessIncomingMsg(iInPort[0]) != PVMFSuccess)
-			{
-				//Re-schedule to come back.
-				RunIfNotReady();
-				return;
-			}
-		}
+    do // Try to consume all the data from the Input port
+    {
+        // Process port activity if there is no input data that is being processed
+        // Do not accept any input if EOS needs to be sent out
+        if (iInPort.size() && (iInPort[0]->IncomingMsgQueueSize() > 0) && (iDataIn.GetRep() == NULL) && !iEndOfDataReached)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0,"PVMFOMXVideoEncNode::Run() - Getting more input"));
+            if (ProcessIncomingMsg(iInPort[0]) != PVMFSuccess)
+            {
+                // Re-schedule to come back.
+                RunIfNotReady();
+                return;
+            }
+        }
 
-		// If in init or ready to decode state, process data in the input port if there is input available and input buffers are present
-		// (note: at EOS, iDataIn will not be available)
-		if( (iDataIn.GetRep() != NULL) ||
-		    	((iNumOutstandingOutputBuffers < iNumOutputBuffers) &&
-				(iProcessingState == EPVMFOMXVideoEncNodeProcessingState_ReadyToEncode) &&
-				(iResetMsgSent == false)) ||
-				( (iDynamicReconfigInProgress == true) && (iResetMsgSent==false))
-		  )
-		{
-			PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-				(0,"PVMFOMXVideoEncNode::Run() - Calling HandleProcessingState"));
+        // If in init or ready to decode state, process data in the input port if there is input available and input buffers are present
+        // (note: at EOS, iDataIn will not be available)
+        if( (iDataIn.GetRep() != NULL) ||
+            ((iNumOutstandingOutputBuffers < iNumOutputBuffers) &&
+            (iProcessingState == EPVMFOMXVideoEncNodeProcessingState_ReadyToEncode) &&
+            (iResetMsgSent == false)) ||
+            ( (iDynamicReconfigInProgress == true) && (iResetMsgSent==false)) )
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                            (0,"PVMFOMXVideoEncNode::Run() - Calling HandleProcessingState"));
 
-			// input data is available, that means there is video data to be decoded
-    		if(HandleProcessingState() != PVMFSuccess)
-			{
-				// If HandleProcessingState does not return Success, we must wait for an event
-				// no point in  rescheduling
-				PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-					(0,"PVMFOMXVideoEncNode::Run() - HandleProcessingState did not return Success"));
-				return;
-			}
-    	}
-    	loopCount++;
-	}while( iInPort.size() &&
-	        (( (iInPort[0]->IncomingMsgQueueSize() > 0) || (iDataIn.GetRep() != NULL) ) && (iNumOutstandingInputBuffers < iNumInputBuffers) )
-			&& (!iEndOfDataReached)
-			&& (iResetMsgSent == false)
-	      );
+            // input data is available, that means there is video data to be decoded
+            if (HandleProcessingState() != PVMFSuccess)
+            {
+                // If HandleProcessingState does not return Success, we must wait for an event
+                // no point in rescheduling
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                                (0,"PVMFOMXVideoEncNode::Run() - HandleProcessingState did not return Success"));
+                return;
+            }
+        }
+        loopCount++;
+        } while( iInPort.size() &&
+                 (( (iInPort[0]->IncomingMsgQueueSize() > 0) || (iDataIn.GetRep() != NULL) ) && (iNumOutstandingInputBuffers < iNumInputBuffers) ) && 
+                 (!iEndOfDataReached) &&
+                 (iResetMsgSent == false) );
 #if (PVLOGGER_INST_LEVEL >= PVLOGMSG_INST_REL)
-	uint32 endticks = OsclTickCount::TickCount();
-	uint32 endtime = OsclTickCount::TicksToMsec(endticks);
-	uint32 timeinloop = (endtime - starttime);
-	PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_INFO,
-				   (0,"PVMFOMXVideoEncNode::Run() - LoopCount = %d, Time spent in loop(in ms) = %d, iNumOutstandingInputBuffers = %d, iNumOutstandingOutputBuffers = %d ",
-				   loopCount, timeinloop, iNumOutstandingInputBuffers, iNumOutstandingOutputBuffers));
+    uint32 endticks = OsclTickCount::TickCount();
+    uint32 endtime = OsclTickCount::TicksToMsec(endticks);
+    uint32 timeinloop = (endtime - starttime);
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_INFO,
+                    (0,"PVMFOMXVideoEncNode::Run() - LoopCount = %d, Time spent in loop(in ms) = %d, iNumOutstandingInputBuffers = %d, iNumOutstandingOutputBuffers = %d ",
+                    loopCount, timeinloop, iNumOutstandingInputBuffers, iNumOutstandingOutputBuffers));
 #endif
-	// EOS processing:
-	// first send an empty buffer to OMX component and mark the EOS flag
-	// wait for the OMX component to send async event to indicate that it has reached this EOS buffer
-	// then, create and send the EOS message downstream
+    // EOS processing:
+    // first send an empty buffer to OMX component and mark the EOS flag
+    // wait for the OMX component to send async event to indicate that it has reached this EOS buffer
+    // then, create and send the EOS message downstream
 
-	if(iEndOfDataReached && !iDynamicReconfigInProgress)
-	{
+    if (iEndOfDataReached && !iDynamicReconfigInProgress)
+    {
 
-		// if EOS was not sent yet and we have an available ninput buffer, send EOS buffer to component
-		if(!iIsEOSSentToComponent && (iNumOutstandingInputBuffers < iNumInputBuffers) )
-		{
-			PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-				(0,"PVMFOMXVideoEncNode::Run() - Sending EOS marked buffer To Component "));
+        // if EOS was not sent yet and we have an available ninput buffer, send EOS buffer to component
+        if (!iIsEOSSentToComponent && (iNumOutstandingInputBuffers < iNumInputBuffers) )
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                            (0,"PVMFOMXVideoEncNode::Run() - Sending EOS marked buffer To Component "));
 
-			iIsEOSSentToComponent = true;
-
-
-			// if the component is not yet initialized or if it's in the middle of port reconfig,
-			// don't send EOS buffer to component. It does not care. Just set the flag as if we received
-			// EOS from the component to enable sending EOS downstream
-			if(iProcessingState != EPVMFOMXVideoEncNodeProcessingState_ReadyToEncode)
-			{
-				iIsEOSReceivedFromComponent = true;
-			}
-			else if( !SendEOSBufferToOMXComponent() )
-			{
-				// for some reason, Component can't receive the EOS buffer
-				// it could be that it is not initialized yet (because EOS could be the first msg). In this case,
-				// send the EOS downstream anyway
-				iIsEOSReceivedFromComponent = true;
-			}
-		}
-
-		// We must wait for event (acknowledgment from component)
-		// before sending EOS downstream. This is because OMX Component will send
-		// the EOS event only after processing remaining buffers
-
-		if(iIsEOSReceivedFromComponent)
-		{
-
-			PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-				(0,"PVMFOMXVideoEncNode::Run() - Received EOS from component, Sending EOS msg downstream "));
-
-			if((iOutPort.size() > 0) && iOutPort[0]->IsOutgoingQueueBusy())
-			{
-				// note: we already tried to empty the outgoing q. If it's still busy,
-				// it means that output port is busy. Just return and wait for the port to become free.
-				// this will wake up the node and it will send out a msg from the q etc.
-				PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-				(0,"PVMFOMXVideoEncNode::Run() - - EOS cannot be sent downstream, outgoing queue busy - wait"));
-				return;
-			}
-
-			if(SendEndOfTrackCommand()) // this will only q the EOS
-			{
-				// EOS send downstream OK, so reset the flag
-				PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-					(0,"PVMFOMXVideoEncNode::Run() - EOS was queued to be sent downstream"));
-
-				iEndOfDataReached = false; // to resume normal processing, reset the flags
-				iIsEOSSentToComponent = false;
-				iIsEOSReceivedFromComponent = false;
-
-				RunIfNotReady(); // Run again to send out the EOS msg from the outgoing q, and resume
-								 // normal processing
-				ReportInfoEvent(PVMFInfoEndOfData);
-			}
-		}
-		else
-		{
-			// keep sending output buffers, it's possible that the component needs to flush output
-			//	data at the end
-			while(iNumOutstandingOutputBuffers < iNumOutputBuffers)
-			{
-				if(!SendOutputBufferToOMXComponent())
-					break;
-			}
-		}
-
-	}
+            iIsEOSSentToComponent = true;
 
 
-	//Check for flash command complition...
-	if ((iInPort.size() > 0) && (iOutPort.size() > 0) && (iCurrentCmd.size()>0)&&
-		(iCurrentCmd.front().iCmd == PVMF_GENERIC_NODE_FLUSH)&&
-		(iInPort[0]->IncomingMsgQueueSize() == 0)&&
-		(iOutPort[0]->OutgoingMsgQueueSize() == 0)&&
-		(iDataIn.GetRep() == NULL) )
-	{
-			//flush command is complited
-			//Debug check-- all the port queues should be empty at this point.
+            // if the component is not yet initialized or if it's in the middle of port reconfig,
+            // don't send EOS buffer to component. It does not care. Just set the flag as if we received
+            // EOS from the component to enable sending EOS downstream
+            if (iProcessingState != EPVMFOMXVideoEncNodeProcessingState_ReadyToEncode)
+            {
+                iIsEOSReceivedFromComponent = true;
+            }
+            else if( !SendEOSBufferToOMXComponent() )
+            {
+                // for some reason, Component can't receive the EOS buffer
+                // it could be that it is not initialized yet (because EOS could be the first msg). In this case,
+                // send the EOS downstream anyway
+                iIsEOSReceivedFromComponent = true;
+            }
+        }
 
-			OSCL_ASSERT(iInPort[0]->IncomingMsgQueueSize() == 0 && iOutPort[0]->OutgoingMsgQueueSize() == 0);
+        // We must wait for event (acknowledgment from component)
+        // before sending EOS downstream. This is because OMX Component will send
+        // the EOS event only after processing remaining buffers
 
-			PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0,"PVMFOMXVideoEncNode::Run() - Flush pending"));
-			iEndOfDataReached=false;
-			iIsEOSSentToComponent = false;
-			iIsEOSReceivedFromComponent = false;
+        if (iIsEOSReceivedFromComponent)
+        {
+
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                            (0,"PVMFOMXVideoEncNode::Run() - Received EOS from component, Sending EOS msg downstream "));
+
+            if ((iOutPort.size() > 0) && iOutPort[0]->IsOutgoingQueueBusy())
+            {
+                // note: we already tried to empty the outgoing q. If it's still busy,
+                // it means that output port is busy. Just return and wait for the port to become free.
+                // this will wake up the node and it will send out a msg from the q etc.
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                                (0,"PVMFOMXVideoEncNode::Run() - - EOS cannot be sent downstream, outgoing queue busy - wait"));
+                return;
+            }
+
+            if (SendEndOfTrackCommand()) // this will only q the EOS
+            {
+                // EOS send downstream OK, so reset the flag
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                               (0,"PVMFOMXVideoEncNode::Run() - EOS was queued to be sent downstream"));
+
+                iEndOfDataReached = false; // to resume normal processing, reset the flags
+                iIsEOSSentToComponent = false;
+                iIsEOSReceivedFromComponent = false;
+
+                RunIfNotReady(); // Run again to send out the EOS msg from the outgoing q, and resume
+                                 // normal processing
+                ReportInfoEvent(PVMFInfoEndOfData);
+            }
+        }
+        else
+        {
+            // keep sending output buffers, it's possible that the component needs to flush output
+            // data at the end
+            while (iNumOutstandingOutputBuffers < iNumOutputBuffers)
+            {
+                if (!SendOutputBufferToOMXComponent())
+                    break;
+            }
+        }
+
+    }
 
 
-			//Flush is complete.  Go to initialized state.
-			SetState(EPVMFNodePrepared);
-			//resume port input so the ports can be re-started.
-			iInPort[0]->ResumeInput();
-			iOutPort[0]->ResumeInput();
-			CommandComplete(iCurrentCmd,iCurrentCmd.front(),PVMFSuccess);
-			RunIfNotReady();
-	}
+    // Check for flush command completion...
+    if ((iInPort.size() > 0) && (iOutPort.size() > 0) && (iCurrentCmd.size()>0) &&
+        (iCurrentCmd.front().iCmd == PVMF_GENERIC_NODE_FLUSH) &&
+        (iInPort[0]->IncomingMsgQueueSize() == 0) &&
+        (iOutPort[0]->OutgoingMsgQueueSize() == 0) &&
+        (iDataIn.GetRep() == NULL) )
+    {
+        // flush command is completed
+        // Debug check-- all the port queues should be empty at this point.
+
+        OSCL_ASSERT(iInPort[0]->IncomingMsgQueueSize() == 0 && iOutPort[0]->OutgoingMsgQueueSize() == 0);
+
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0,"PVMFOMXVideoEncNode::Run() - Flush pending"));
+
+        // clear the node input data and flags
+        iDataIn.Unbind();
+        iEndOfDataReached = false;
+        iIsEOSSentToComponent = false;
+        iIsEOSReceivedFromComponent = false;
+
+        // Flush is complete.  Go to initialized state.
+        SetState(EPVMFNodePrepared);
+        // resume port input so the ports can be re-started.
+        iInPort[0]->ResumeInput();
+        iOutPort[0]->ResumeInput();
+        CommandComplete(iCurrentCmd, iCurrentCmd.front(), PVMFSuccess);
+        RunIfNotReady();
+    }
 
     LOG_STACK_TRACE((0, "PVMFOMXVideoEncNode::Run: Out"));
 }
@@ -2093,6 +2093,9 @@ void PVMFOMXVideoEncNode::DeleteVideoEncoder()
 ////////////////////////////////////////////////////////////////////////////
 void PVMFOMXVideoEncNode::DoFlush(PVMFVideoEncNodeCommand& aCmd)
 {
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0,"PVMFOMXVideoEncNode::DoFlush(): In"));
+
     switch (iInterfaceState)
     {
         case EPVMFNodeStarted:
@@ -2102,6 +2105,7 @@ void PVMFOMXVideoEncNode::DoFlush(PVMFVideoEncNodeCommand& aCmd)
             bool msgPending;
             msgPending = false;
 
+            // FIXME: should we do this repeatedly?
             for (i = 0; i < iInPort.size(); i++)
             {
                 if (iInPort[i]->IncomingMsgQueueSize() > 0)
@@ -2128,75 +2132,94 @@ void PVMFOMXVideoEncNode::DoFlush(PVMFVideoEncNodeCommand& aCmd)
                 }
             }
 
-			OMX_ERRORTYPE omx_err;
-			OMX_STATETYPE sState;
-
-			//Get state of OpenMAX encoder
-			omx_err = OMX_GetState(iOMXVideoEncoder, &sState);
-			if (omx_err != OMX_ErrorNone)
-			{
-				//Error condition report
-				PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-					(0,"PVMFOMXVideoEncNode::DoStop(): Can't get State of encoder!"));
-
-				sState = OMX_StateInvalid;
-			}
-
-			if ((sState == OMX_StateExecuting) || (sState == OMX_StatePause))
-			{
-				/* Change state to OMX_StateIdle from OMX_StateExecuting or OMX_StatePause. */
-
-				PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-					(0,"PVMFOMXVideoEncNode::DoStop() Changing Component State Executing->Idle or Pause->Idle"));
-
-				omx_err = OMX_SendCommand(iOMXVideoEncoder, OMX_CommandStateSet, OMX_StateIdle, NULL);
-				if (omx_err != OMX_ErrorNone)
-				{
-					//Error condition report
-					PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-					 (0,"PVMFOMXVideoEncNode::DoStop(): Can't send StateSet command to encoder!"));
-
-					CommandComplete(iCmdQueue, aCmd, PVMFErrInvalidState);
-					break;
-				}
-
-				// prevent the node from sending more buffers etc.
-				// if port reconfiguration is in process, let the state remain one of the port config states
-				//	if there is a start command, we can do it seemlessly (by continuing the port reconfig)
-				if(iProcessingState == EPVMFOMXVideoEncNodeProcessingState_ReadyToEncode)
-					iProcessingState = EPVMFOMXVideoEncNodeProcessingState_Stopping;
-
-                                // HTC fix for race condition between pv omx encoder node and qualcomm encoder
-                                LOGV("==> %s: mInputBufferRefCount = %d", __FUNCTION__, mInputBufferRefCount);
-                                if (mInputBufferRefCount != 0) {
-                                    LOGV("@@@@@@@ wait for encoder @@@@@@@@");
-                                    return;
-                                }
-
-			}
-			else
-			{
-				//Error condition report
-				PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-					(0,"PVMFOMXVideoEncNode::DoStop(): Encoder is not in the Executing or Pause state!"));
-
-				CommandComplete(iCmdQueue, aCmd, PVMFErrInvalidState);
-				break;
-			}
-
-            //the flush is asynchronous.  move the command from
-            //the input command queue to the current command, where
-            //it will remain until the flush completes.
-            OSCL_TRY(err, iCurrentCmd.StoreL(aCmd););
-            OSCL_FIRST_CATCH_ANY(err,
-                                 CommandComplete(iCmdQueue, aCmd, PVMFErrNoMemory);
-                                 return;
-                                );
-            iCmdQueue.Erase(&aCmd);
-            if (!msgPending)
-            {
-                FlushComplete();
+            // Don't repeatedly poll state from encoder and don't repeatedly send the same
+            // state transition request to encoder. Only request and send command when necessary.
+            if (iProcessingState == EPVMFOMXVideoEncNodeProcessingState_Stopping && mInputBufferRefCount != 0) {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                                (0,"PVMFOMXVideoEncNode::DoFlush(): wait for buffer done for all buffers!"));
                 return;
+            } else if (iProcessingState == EPVMFOMXVideoEncNodeProcessingState_Stopping && mInputBufferRefCount == 0) {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                                (0,"PVMFOMXVideoEncNode::DoFlush(): buffer done for all buffers"));
+
+                // Flush completes only if the following conditions are all met:
+                // 1. all buffers have been released by the encoder
+                // 2. we are in the middle of doing flush
+                // 3. there are no message pending for the ports
+                // 4. the state has been transferred to OMX_StateIdle
+                if (!msgPending) {
+                     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                                     (0,"PVMFOMXVideoEncNode::DoFlush(): no message pending"));
+                    if (iCurrentEncoderState == OMX_StateIdle) {
+                        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                                        (0,"PVMFOMXVideoEncNode::DoFlush(): flush completion ready!"));
+                        // the flush is asynchronous.  move the command from
+                        // the input command queue to the current command, where
+                        // it will remain until the flush completes.
+                        OSCL_TRY(err, iCurrentCmd.StoreL(aCmd););
+                        OSCL_FIRST_CATCH_ANY(err,
+                                             CommandComplete(iCmdQueue, aCmd, PVMFErrNoMemory);
+                                             return;
+                                            );
+                        iCmdQueue.Erase(&aCmd);
+                        FlushComplete();
+                    } else {
+                        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                                        (0,"PVMFOMXVideoEncNode::DoFlush(): wait for StateExecuting->StateIdle event!"));
+                    }
+                } else {
+                     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                                     (0,"PVMFOMXVideoEncNode::DoFlush(): wait for pending messages to be completely processed!"));
+                }
+                return;
+            } else if (iProcessingState != EPVMFOMXVideoEncNodeProcessingState_Stopping) {
+                OMX_ERRORTYPE omx_err;
+                OMX_STATETYPE sState;
+
+                // Get state of OpenMAX encoder
+                omx_err = OMX_GetState(iOMXVideoEncoder, &sState);
+                if (omx_err != OMX_ErrorNone)
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                    (0,"PVMFOMXVideoEncNode::DoFlush(): can't get encoder state(%d)", omx_err));
+                    sState = OMX_StateInvalid;
+                }
+
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                                (0,"PVMFOMXVideoEncNode::DoFlush(): start handling flush when encoder is in state(%d)!", sState));
+                if ((sState == OMX_StateExecuting) || (sState == OMX_StatePause))
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                                    (0,"PVMFOMXVideoEncNode::DoFlush() Changing Component State Executing->Idle or Pause->Idle"));
+
+                    omx_err = OMX_SendCommand(iOMXVideoEncoder, OMX_CommandStateSet, OMX_StateIdle, NULL);
+                    if (omx_err != OMX_ErrorNone)
+                    {
+                        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                        (0,"PVMFOMXVideoEncNode::DoFlush(): Can't send StateSet command to encoder!"));
+
+                        CommandComplete(iCmdQueue, aCmd, PVMFErrInvalidState);
+                        break;
+                    } 
+
+                    // prevent the node from sending more buffers etc.
+                    // if port reconfiguration is in process, let the state remain one of the port config states
+                    // if there is a start command, we can do it seemlessly (by continuing the port reconfig)
+                    if (iProcessingState != EPVMFOMXVideoEncNodeProcessingState_ReadyToEncode)
+                    {
+                        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                        (0,"PVMFOMXVideoEncNode::DoFlush(): Called in an invalid processing state(%d)!", iProcessingState));
+                    }
+                    iProcessingState = EPVMFOMXVideoEncNodeProcessingState_Stopping;
+                }
+                else
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                    (0,"PVMFOMXVideoEncNode::DoFlush(): Encoder is not in the Executing or Pause state!"));
+
+                    CommandComplete(iCmdQueue, aCmd, PVMFErrInvalidState);
+                    break;
+                }
             }
             break;
 
@@ -2218,14 +2241,14 @@ void PVMFOMXVideoEncNode::FlushComplete()
 {
     LOG_STACK_TRACE((0, "PVMFOMXVideoEncNode::FlushComplete"));
     uint32 i = 0;
-
-    // Flush is complete only when all queues of all ports are clear.
-    // Other wise, just return from this method and wait for FlushComplete
+    
+    // flush completes only when all queues of all ports are clear.
+    // otherwise, just return from this method and wait for FlushComplete
     // from the remaining ports.
     for (i = 0; i < iInPort.size(); i++)
     {
         if ( iInPort[i]->IncomingMsgQueueSize() > 0 ||
-                iInPort[i]->OutgoingMsgQueueSize() > 0 )
+             iInPort[i]->OutgoingMsgQueueSize() > 0 )
         {
             return;
         }
@@ -2234,30 +2257,39 @@ void PVMFOMXVideoEncNode::FlushComplete()
     for (i = 0; i < iOutPort.size(); i++)
     {
         if ( iOutPort[i]->IncomingMsgQueueSize() > 0 ||
-                iOutPort[i]->OutgoingMsgQueueSize() > 0 )
+             iOutPort[i]->OutgoingMsgQueueSize() > 0 )
         {
             return;
         }
     }
 
-    // Video encoder is created on Start, so in parallel it's deleted when Flush is completed
-    // FIXME: Need to understand whether this code is needed
-    // DeleteVideoEncoder();
     // resume port input so the ports can be re-started.
     for (i = 0; i < iInPort.size(); i++)
         iInPort[i]->ResumeInput();
     for (i = 0; i < iOutPort.size(); i++)
         iOutPort[i]->ResumeInput();
 
-    // Flush is complete.  Go to prepared state.
-    //SetState(EPVMFNodePrepared);
-    //CommandComplete(iCurrentCmd, iCurrentCmd.front(), PVMFSuccess);
+    // clear the node input data and flags
+    iDataIn.Unbind();
+    iEndOfDataReached = false;
+    iIsEOSSentToComponent = false;
+    iIsEOSReceivedFromComponent = false;
 
-    //if (!iCmdQueue.empty())
-    //{
-    //    // If command queue is not empty, schedule to process the next command
-    //    RunIfNotReady();
-    //}
+    if (iCurrentCmd.empty())
+    {
+       LOG_ERR((0, "PVMFOMXVideoEncNode::FlushComplete: Error - iCurrentCmd is empty"));
+       return;
+    }
+
+    // flush completes, go to prepared state.
+    SetState(EPVMFNodePrepared);
+    CommandComplete(iCurrentCmd, iCurrentCmd.front(), PVMFSuccess);
+
+    if (!iCmdQueue.empty())
+    {
+        // If command queue is not empty, schedule to process the next command
+        RunIfNotReady();
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -3776,6 +3808,8 @@ bool PVMFOMXVideoEncNode::FreeBuffersFromComponent(OsclMemPoolFixedChunkAllocato
 // Callback processing in multithreaded case - dequeued event - call EventHandlerProcessing
 OsclReturnCode PVMFOMXVideoEncNode::ProcessCallbackEventHandler_MultiThreaded(OsclAny* P)
 {
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                    (0, "PVMFOMXVideoEncNode::ProcessCallbackEventHandler_MultiThreaded: In"));
     // re-cast the pointer
     EventHandlerSpecificData* ED = (EventHandlerSpecificData*) P;
 
@@ -3844,6 +3878,8 @@ OMX_ERRORTYPE PVMFOMXVideoEncNode::EventHandlerProcessing(OMX_OUT OMX_HANDLETYPE
         OMX_OUT OMX_U32 aData2,
         OMX_OUT OMX_PTR aEventData)
 {
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                    (0, "PVMFOMXVideoEncNode::EventHandlerProcessing: In"));
     OSCL_UNUSED_ARG(aComponent);
     OSCL_UNUSED_ARG(aAppData);
     OSCL_UNUSED_ARG(aEventData);
@@ -4039,7 +4075,7 @@ void PVMFOMXVideoEncNode::HandleComponentStateChange(OMX_U32 encoder_state)
                      (iCurrentCmd.front().iCmd == PVMF_GENERIC_NODE_STOP))
             {
                 // if we are stopped, we won't start until the node gets DoStart command.
-                //	in this case, we are ready to start sending buffers
+                // in this case, we are ready to start sending buffers
                 if (iProcessingState == EPVMFOMXVideoEncNodeProcessingState_Stopping)
                     iProcessingState = EPVMFOMXVideoEncNodeProcessingState_ReadyToEncode;
                 // if the processing state was not stopping, leave the state as it was (continue port reconfiguration)
@@ -4770,7 +4806,7 @@ PVMFStatus PVMFOMXVideoEncNode::HandleProcessingState()
 		{
 
 			PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-				(0,"PVMFOMXVideoEncNode::HandleProcessingState() Ready To Decode start"));
+				            (0,"PVMFOMXVideoEncNode::HandleProcessingState() Ready To Encode start"));
 			// In normal data flow and decoding state
 			// Send all available output buffers to the encoder
 
