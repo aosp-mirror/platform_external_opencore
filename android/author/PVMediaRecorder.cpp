@@ -359,13 +359,4 @@ status_t PVMediaRecorder::close()
     return mAuthorDriverWrapper->enqueueCommand(ac, 0, 0);
 }
 
-status_t PVMediaRecorder::setListener(const sp<IMediaPlayerClient>& listener) {
-    LOGV("setListener");
-    if (mAuthorDriverWrapper == NULL) {
-        LOGE("author driver wrapper is not initialized yet");
-        return UNKNOWN_ERROR;
-    }
-    return mAuthorDriverWrapper->setListener(listener);
-}
-
 }; // namespace android

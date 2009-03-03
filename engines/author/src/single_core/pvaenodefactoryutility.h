@@ -59,6 +59,9 @@
 #ifndef PVMFAMRENCNODE_EXTENSION_H_INCLUDED
 #include "pvmfamrencnode_extension.h"
 #endif
+#ifndef PVMFAVCENCNODE_FACTORY_H_INCLUDED
+#include "pvmf_avcenc_node_factory.h"
+#endif
 
 class PVAuthorEngineNodeFactoryUtility
 {
@@ -73,6 +76,10 @@ class PVAuthorEngineNodeFactoryUtility
             else if (aUuid == PvmfAmrEncNodeUuid)
             {
                 node = PvmfAmrEncNodeFactory::Create();
+            }
+            else if (aUuid == PVMFAvcEncNodeUuid)
+            {
+                node = PVMFAvcEncNodeFactory::CreateAvcEncNode();
             }
             return node;
         }
@@ -103,6 +110,10 @@ class PVAuthorEngineNodeFactoryUtility
             {
                 return PVMFOMXVideoEncNodeFactory::DeleteVideoEncNode(aNode);
             }
+            else if (aUuid == PVMFAvcEncNodeUuid)
+            {
+                return PVMFAvcEncNodeFactory::DeleteAvcEncNode(aNode);
+            }
             else if (aUuid == KPVMp4FFComposerNodeUuid)
             {
                 return PVMp4FFComposerNodeFactory::DeleteMp4FFComposer(aNode);
@@ -130,6 +141,10 @@ class PVAuthorEngineNodeFactoryUtility
                      CompareMimeTypes(aMimeType, OSCL_HeapString<OsclMemAllocator>(KH263EncMimeType)))
             {
                 aUuid = PVMFOMXVideoEncNodeUuid;
+            }
+            else if (CompareMimeTypes(aMimeType, OSCL_HeapString<OsclMemAllocator>(KH264EncMimeType)))
+            {
+                aUuid = PVMFAvcEncNodeUuid;
             }
             else if (CompareMimeTypes(aMimeType, OSCL_HeapString<OsclMemAllocator>(KAmrNbEncMimeType)))
             {
@@ -163,7 +178,7 @@ class PVAuthorEngineNodeFactoryUtility
                 aConfigUuid = PvmfFileOutputNodeConfigUuid;
                 status = true;
             }
-            else if (aNodeUuid == PVMFOMXVideoEncNodeUuid)
+            else if ((aNodeUuid == PVMFOMXVideoEncNodeUuid) || (aNodeUuid == PVMFAvcEncNodeUuid))
             {
                 aConfigUuid = PVMp4H263EncExtensionUUID;
                 status = true;

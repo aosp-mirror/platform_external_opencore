@@ -40,7 +40,7 @@ OSCL_DLL_ENTRY_POINT_DEFAULT()
 AndroidCameraInput::AndroidCameraInput()
     : OsclTimerObject(OsclActiveObject::EPriorityNominal, "AndroidCameraInput")
 {
-    LOGV("constructor(%p)", this);
+    LOGV("constructor");
     iCmdIdCounter = 0;
     iPeer = NULL;
     iThreadLoggedOn = false;
@@ -751,21 +751,18 @@ void AndroidCameraInput::Run()
     iFrameQueueMutex.Lock();
     while (!iFrameQueue.empty()) {
         AndroidCameraInputMediaData data = iFrameQueue[0];
-
-        uint32 writeAsyncID = 0;
-        int32 error = OsclErrNone;
-        OSCL_TRY(error,writeAsyncID = iPeer->writeAsync(PVMI_MEDIAXFER_FMT_TYPE_DATA, 0, (uint8*) (data.iFrameBuffer->pointer()),
-                    data.iFrameSize, data.iXferHeader););
-
-        if (OsclErrNone != error) {
-            break;
-        }
-
         iFrameQueue.erase(iFrameQueue.begin());
 
-        data.iId = writeAsyncID;
-        iSentMediaData.push_back(data);
-        ++mFrameRefCount;
+        uint32 writeAsyncID = 0;
+        int32 error = 0;
+        OSCL_TRY(error,writeAsyncID = iPeer->writeAsync(0, 0, (uint8*) (data.iFrameBuffer->pointer()),
+                    data.iFrameSize, data.iXferHeader););
+
+        if (!error) {
+            data.iId = writeAsyncID;
+            iSentMediaData.push_back(data);
+            ++mFrameRefCount;
+        }
     }
     iFrameQueueMutex.Unlock();
     PVMFStatus status = PVMFFailure;
@@ -920,30 +917,18 @@ PVMFStatus AndroidCameraInput::DoInit()
 
     LOGD("Intended mFrameWidth=%d, mFrameHeight=%d ",mFrameWidth, mFrameHeight);
     String8 s = mCamera->getParameters();
-    if (s.length() == 0) {
-        LOGE("Failed to get camera(%p) parameters", mCamera.get());
-        return PVMFFailure;
-    }
     CameraParameters p(s);
     p.setPreviewSize(mFrameWidth, mFrameHeight);
     s = p.flatten();
-    if (mCamera->setParameters(s) != NO_ERROR) {
-        LOGE("Failed to set camera(%p) parameters", mCamera.get());
-        return PVMFFailure;
-    }
+    mCamera->setParameters(s);
 
     // Since we may not honor the preview size that app has requested
     // It is a good idea to get the actual preview size and used it
     // for video recording.
     CameraParameters newCameraParam(mCamera->getParameters());
     newCameraParam.getPreviewSize(&mFrameWidth, &mFrameHeight);
-    if (mFrameWidth < 0 || mFrameHeight < 0) {
-        LOGE("Failed to get camera(%p) preview size", mCamera.get());
-        return PVMFFailure;
-    }
     LOGD("Actual mFrameWidth=%d, mFrameHeight=%d ",mFrameWidth, mFrameHeight);
     if (mCamera->startPreview() != NO_ERROR) {
-        LOGE("Failed to start camera(%p) preview", mCamera.get());
         return PVMFFailure;
     }
     return PVMFSuccess;

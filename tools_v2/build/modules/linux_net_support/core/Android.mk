@@ -13,6 +13,8 @@ LOCAL_SHARED_LIBRARIES := libopencoreplayer libopencorecommon libutils libcutils
 
 LOCAL_MODULE := libopencorenet_support
 
+LOCAL_PRELINK_MODULE := false
+
 LOCAL_C_INCLUDES := \
 	$(PV_INCLUDES)
 

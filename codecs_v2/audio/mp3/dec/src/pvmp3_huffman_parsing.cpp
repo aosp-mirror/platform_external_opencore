@@ -306,10 +306,6 @@ int32 pvmp3_huffman_parsing(int32 is[SUBBANDS_NUMBER*FILTERBANK_BANDS],
     if (pMainData->usedBits > grBits)
     {
         i -= 4;
-        if (i < 0 || i > SUBBANDS_NUMBER*FILTERBANK_BANDS - 4)
-        {
-            i = 0;
-        }
         is[i] = 0;
         is[(i+1)] = 0;
         is[(i+2)] = 0;

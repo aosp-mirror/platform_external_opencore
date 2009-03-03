@@ -1026,14 +1026,7 @@ void AndroidAudioInput::SendMicData(void)
     data_hdr.flags=0;
     data_hdr.duration = data.iDuration;
     data_hdr.stream_id=0;
-    uint32 writeAsyncID;
-    int32 error = OsclErrNone;
-    OSCL_TRY(error, writeAsyncID = iPeer->writeAsync(0, 0, data.iData, data.iDataLen, data_hdr););
-
-    if (OsclErrNone != error) {
-        iWriteResponseQueueLock.Unlock();
-        return;
-    }
+    uint32 writeAsyncID = iPeer->writeAsync(0, 0, data.iData, data.iDataLen, data_hdr);
 
     // Save the id and data pointer on iSentMediaData queue for writeComplete call
     AndroidAudioInputMediaData sentData;

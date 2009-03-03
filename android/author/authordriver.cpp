@@ -85,13 +85,6 @@ status_t AuthorDriverWrapper::enqueueCommand(author_command *ac, media_completio
     return NO_INIT;
 }
 
-status_t AuthorDriverWrapper::setListener(const sp<IMediaPlayerClient>& listener) {
-    if (mAuthorDriver) {
-        return mAuthorDriver->setListener(listener);
-    }
-    return NO_INIT;
-}
-
 AuthorDriver::AuthorDriver()
              : OsclActiveObject(OsclActiveObject::EPriorityNominal, "AuthorDriver"),
                mAuthor(NULL),
@@ -818,11 +811,8 @@ void AuthorDriver::HandleErrorEvent(const PVAsyncErrorEvent& aEvent)
 {
     LOGE("HandleErrorEvent(%d)", aEvent.GetEventType());
     
-    if (mListener != NULL) {
-        mListener->notify(
-                MEDIA_RECORDER_EVENT_ERROR, MEDIA_RECORDER_ERROR_UNKNOWN,
-                aEvent.GetEventType());
-    }
+    // FIXME:
+    // Send error event to client via callback
 }
 
 void AuthorDriver::HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent)
@@ -847,9 +837,4 @@ PVAEState AuthorDriver::getAuthorEngineState()
     return PVAE_STATE_IDLE;
 }
 
-status_t AuthorDriver::setListener(const sp<IMediaPlayerClient>& listener) {
-    mListener = listener;
-
-    return android::OK;
-}
 

@@ -102,9 +102,8 @@ TOsclTlsKey* OsclTLSRegistry::LookupTlsKey(int32 &aError)
         if (OSCL_TLS_THREAD_ID_EQUAL(iTlsKeyTable->iKeys[i].iThreadId, threadId))
         {
             //found it!
-            TOsclTlsKey* key = iTlsKeyTable->iKeys[i].iTlsKey;
             iTlsKeyTable->iLock.Unlock();
-            return key;
+            return iTlsKeyTable->iKeys[i].iTlsKey;
         }
     }
     iTlsKeyTable->iLock.Unlock();
@@ -134,11 +133,8 @@ bool OsclTLSRegistry::SaveTlsKey(TOsclTlsKey* aKey, int32 &aError)
             //found an empty entry.
             iTlsKeyTable->iKeys[i].iTlsKey = aKey;
             GetThreadId(iTlsKeyTable->iKeys[i].iThreadId, aError);
-            if (aError) {
-                // we don't want to store the key if the thread id cannot be found
-                iTlsKeyTable->iKeys[i].iTlsKey = NULL;
+            if (aError)
                 break;//can't get thread ID.
-            }
             iTlsKeyTable->iNumKeys++;
             saved = true;
             break;
@@ -176,11 +172,8 @@ bool OsclTLSRegistry::RemoveTlsKey(Oscl_DefAlloc& alloc, TOsclTlsKey * aKey, int
         }
     }
 
-    // FIXME:
-    // This is temp fix so that the iTlsKeyTable never
-    // get deallocated.
     //Cleanup the table when it's empty
-    if (0 && iTlsKeyTable->iNumKeys == 0)
+    if (iTlsKeyTable->iNumKeys == 0)
     {
         iTlsKeyTable->iLock.Unlock();
         iTlsKeyTable->~TlsKeyTable();

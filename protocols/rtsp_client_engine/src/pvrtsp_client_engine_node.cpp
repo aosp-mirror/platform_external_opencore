@@ -76,22 +76,6 @@
 #endif
 ////////////////////////////////////////////////////////////////////////////////
 
-namespace {
-const uint32 kProxyPortNotSet = 0;
-const char kProxyNameNotSet[] = "";
-}  // anonymous namespace
-
-
-SessionInfo::SessionInfo():
-        iProxyName(kProxyNameNotSet),
-        iProxyPort(kProxyPortNotSet),
-        bExternalSDP(false),
-        pvServerIsSetFlag(false),
-        roundTripDelay(0)
-{
-    iUserAgent += _STRLIT_CHAR("PVCore/05.02.00.00");
-    iReqPlayRange.format = RtspRangeType::INVALID_RANGE;
-}
 
 
 OSCL_EXPORT_REF PVRTSPEngineNode::PVRTSPEngineNode(int32 aPriority) :
@@ -539,8 +523,8 @@ OSCL_EXPORT_REF  PVMFStatus PVRTSPEngineNode::SetSessionURL(OSCL_wString& aURL)
 OSCL_EXPORT_REF PVMFStatus PVRTSPEngineNode::SetRtspProxy(OSCL_String& aRtspProxyName, uint32 aRtspProxyPort)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVRTSPEngineNode::SetRtspProxy() aRtspProxy %s %d", aRtspProxyName.get_cstr(), aRtspProxyPort));
-    iSessionInfo.iProxyName = kProxyNameNotSet;
-    iSessionInfo.iProxyPort = kProxyPortNotSet;
+    iSessionInfo.iProxyName = "";
+    iSessionInfo.iProxyPort = 0;
     if (iInterfaceState == EPVMFNodeIdle)
     {
         iSessionInfo.iProxyName = aRtspProxyName;
@@ -2257,22 +2241,21 @@ bool PVRTSPEngineNode::parseURL(const char *aUrl)
         }
     }
 
-    iSessionInfo.iServerName.set(server_ip_ptr, oscl_strlen(server_ip_ptr));
+    OSCL_HeapString<PVRTSPEngineNodeAllocator> tmpServerName(server_ip_ptr, oscl_strlen(server_ip_ptr));
+    iSessionInfo.iServerName = tmpServerName;
 
-    if (kProxyPortNotSet == iSessionInfo.iProxyPort)
+    if (iSessionInfo.iProxyName.get_size() == 0)
     {
-        // The statement below is a bit confusing but most of the code actually
-        // uses the value stored in iProxyName to establish the connection. If a
-        // proxy was not specified (proxy port == 0) we systematically set the
-        // iProxyName field to the server's address.
-        iSessionInfo.iProxyName.set(server_ip_ptr, oscl_strlen(server_ip_ptr));
+        iSessionInfo.iProxyName = tmpServerName;
     }
     else
     {
-        // Assume iProxyName has been set in SetRtspProxy. However we need to
-        // set iSrvAdd.port because it is used to established the connection.
         iSessionInfo.iSrvAdd.port = iSessionInfo.iProxyPort;
     }
+
+//iSessionInfo.iSrvAdd.port = 20080;
+//iSessionInfo.iServerName = "172.16.2.42";
+
     return true;
 }
 
@@ -5066,3 +5049,4 @@ void PVRTSPEngineNode::MoveCmdToCancelQueue(PVRTSPEngineCommand& aCmd)
     iCancelCmdQueue.StoreL(aCmd);
     iRunningCmdQueue.Erase(&aCmd);
 }
+

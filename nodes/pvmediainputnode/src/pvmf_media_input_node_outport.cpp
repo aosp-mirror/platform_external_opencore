@@ -106,7 +106,7 @@ void PvmfMediaInputNodeOutPort::Pause()
 void PvmfMediaInputNodeOutPort::Stop()
 {
     ClearMsgQueues();
-    iState = PvmfMediaInputNodeOutPort::PORT_STATE_STOPPED;
+    iState = PvmfMediaInputNodeOutPort::PORT_STATE_BUFFERING;
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -195,12 +195,6 @@ PVMFCommandId PvmfMediaInputNodeOutPort::writeAsync(uint8 format_type, int32 for
         const PvmiMediaXferHeader& data_header_info,
         OsclAny* context)
 {
-    if (iState == PvmfMediaInputNodeOutPort::PORT_STATE_STOPPED) {
-        // In stopped state we're not going to accept any buffers.
-        OsclError::Leave(OsclErrNotReady);
-        return -1;
-    }
-
     if (PVMI_MEDIAXFER_FMT_TYPE_NOTIFICATION == format_type)
     {
         switch (format_index)
