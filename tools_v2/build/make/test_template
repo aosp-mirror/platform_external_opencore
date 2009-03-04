@@ -1,0 +1,34 @@
+
+NUM_TARGETS := $(words TARGETS)
+
+ifndef ARCHITECTURE
+  ARCHITECTURE := $(shell archtype)
+endif
+
+
+.PHONY:: all
+
+default: $(word 1, $(TARGETS))
+
+all: $(TARGETS)
+
+TARGET = $@
+
+$(TARGETS):
+	@echo $(TARGET)
+	ifdef $(@)_SRCS
+	@echo $(@)_SRCS
+	else	
+  	@echo $(SRCS)
+	endif
+	@echo $(NUM_TARGETS)
+	@echo $(ARCHITECTURE)
+
+current_src = $(test_src)
+
+ifdef $(@)_SRCS
+  test_src = $(@)_SRCS
+else
+  test_src = $(SRCS)
+endif
+
