@@ -929,9 +929,9 @@ OSCL_EXPORT_REF PVMFStatus AndroidSurfaceOutput::writeFrameBuf(uint8* aData, uin
 {
     if (mSurface == 0) return PVMFFailure;
 
+    if (++mFrameBufferIndex == kBufferCount) mFrameBufferIndex = 0;
     iColorConverter->Convert(aData, static_cast<uint8*>(mFrameHeap->base()) + mFrameBuffers[mFrameBufferIndex]);
     // post to SurfaceFlinger
-    if (++mFrameBufferIndex == kBufferCount) mFrameBufferIndex = 0;
     mSurface->postBuffer(mFrameBuffers[mFrameBufferIndex]);
     return PVMFSuccess;
 }
