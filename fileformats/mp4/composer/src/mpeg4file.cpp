@@ -1613,6 +1613,7 @@ PVA_FF_Mpeg4File::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
             {
                 if (!_puserDataAtom->renderToFileStream(fp))
                 {
+                    LOGE("PVA_FF_Mpeg4File::renderToFileStream: fail to render user data atom");
                     return false;
                 }
                 metaDataSize += _puserDataAtom->getSize();
@@ -1670,6 +1671,7 @@ PVA_FF_Mpeg4File::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
         // Render the movie atom to the file stream
         if (!_pmovieAtom->renderToFileStream(fp))
         {
+            LOGE("PVA_FF_Mpeg4File::renderToFileStream: failed to render movie atom");
             return false;
         }
     }
@@ -1686,11 +1688,13 @@ PVA_FF_Mpeg4File::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
                 if (!((*_pmediaDataAtomVec)[i]->renderToFileStream(fp)))
                 {
                     _fileWriteFailed = true;
+                    LOGE("PVA_FF_Mpeg4File::renderToFileStream: failed to render media data atom vector[%d]", i);
                     return false;
                 }
                 if ((*_pmediaDataAtomVec)[i]->_targetFileWriteError == true)
                 {
                     _fileWriteFailed = true;
+                    LOGE("PVA_FF_Mpeg4File::renderToFileStream: target file write failure for media data atom vector[%d]", i);
                     return false;
                 }
 
@@ -1751,6 +1755,7 @@ PVA_FF_Mpeg4File::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
             {
                 if (!_puserDataAtom->renderToFileStream(fp))
                 {
+                    LOGE("PVA_FF_Mpeg4File::renderToFileStream: failed to render user data atom");
                     return false;
                 }
             }
@@ -1762,6 +1767,7 @@ PVA_FF_Mpeg4File::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
         // Render the movie atom to the file stream
         if (!_pmovieAtom->renderToFileStream(fp))
         {
+            LOGE("PVA_FF_Mpeg4File::renderToFileStream: failed to render movie atom");
             return false;
         }
     }
@@ -1775,6 +1781,7 @@ PVA_FF_Mpeg4File::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
 bool
 PVA_FF_Mpeg4File::renderToFile(PVA_FF_UNICODE_STRING_PARAM filename)
 {
+    LOGD("PVA_FF_Mpeg4File::renderToFile: E");
     bool success = true;
 
     MP4_AUTHOR_FF_FILE_IO_WRAP fp;
@@ -1834,8 +1841,8 @@ PVA_FF_Mpeg4File::renderToFile(PVA_FF_UNICODE_STRING_PARAM filename)
                 {
                     if (targetRender)
                     {
-                        //Only one track is allowed to be rendered directly onto the target
-                        //file
+                        // Only one track is allowed to be rendered directly onto the target file
+                        LOGE("PVA_FF_Mpeg4File::renderToFile: target render is true");
                         return false;
                     }
                     else
@@ -1866,6 +1873,7 @@ PVA_FF_Mpeg4File::renderToFile(PVA_FF_UNICODE_STRING_PARAM filename)
 
         if (fp._filePtr == NULL)
         {
+            LOGE("PVA_FF_Mpeg4File::renderToFile: NULL file pointer");
             return false;
         }
 
@@ -1878,6 +1886,7 @@ PVA_FF_Mpeg4File::renderToFile(PVA_FF_UNICODE_STRING_PARAM filename)
 
         if (_fileWriteFailed)
         {
+            LOGE("PVA_FF_Mpeg4File::renderToFile: file write failed");
             return false;
         }
     }
@@ -1903,6 +1912,7 @@ PVA_FF_Mpeg4File::renderToFile(PVA_FF_UNICODE_STRING_PARAM filename)
                         {
                             if (!flushInterLeaveBuffer(trackID))
                             {
+                                LOGE("PVA_FF_Mpeg4File::renderToFile: failed to flush interleave buffer to track(%d)", trackID); 
                                 return false;
                             }
                         }
@@ -1919,6 +1929,7 @@ PVA_FF_Mpeg4File::renderToFile(PVA_FF_UNICODE_STRING_PARAM filename)
 
         if (!renderMovieFragments())
         {
+            LOGE("PVA_FF_Mpeg4File::renderToFile: failed to render movie fragments");
             return false;
         }
 
@@ -1929,8 +1940,7 @@ PVA_FF_Mpeg4File::renderToFile(PVA_FF_UNICODE_STRING_PARAM filename)
         PVA_FF_AtomUtils::closeFile(&fp);
     }
 
-
-
+    LOGD("PVA_FF_Mpeg4File::renderToFile: X");
     return success;
 }
 

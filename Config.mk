@@ -5,6 +5,16 @@ ifndef EXTERNAL_OPENCORE_CONFIG_ONCE
   PV_TOP := $(my-dir)
   PV_CFLAGS := -Wno-non-virtual-dtor -DENABLE_SHAREDFD_PLAYBACK
   FORMAT := nj
+
+  # HAS_OSCL_LIB_SUPPORT turns on PV's OSCL dynamic loader.
+  # Set PV_OSCL_LIB to true to enable it (default in release mode).
+  # However for debugging with gdb you may want to set PV_OSCL_LIB to
+  # false to disable this custom loader.
+  PV_OSCL_LIB := true
+  ifeq ($(PV_OSCL_LIB), true)
+    PV_CFLAGS += -DHAS_OSCL_LIB_SUPPORT
+  endif
+
   PV_COPY_HEADERS_TO := libpv
 
   alternate_config := $(if $(wildcard vendor/pv/pvplayer.conf),true)
@@ -36,6 +46,7 @@ ifndef EXTERNAL_OPENCORE_CONFIG_ONCE
   OPENCORE.PV_TOP := $(PV_TOP)
   OPENCORE.PV_CFLAGS := $(PV_CFLAGS)
   OPENCORE.FORMAT := $(FORMAT)
+  OPENCORE.PV_OSCL_LIB := $(OPENCORE.PV_OSCL_LIB)
   OPENCORE.PV_COPY_HEADERS_TO := $(PV_COPY_HEADERS_TO)
   OPENCORE.VALUE_ADD := $(VALUE_ADD)
   OPENCORE.PV_INCLUDES := $(PV_INCLUDES)
@@ -45,6 +56,7 @@ else
   PV_TOP := $(OPENCORE.PV_TOP)
   PV_CFLAGS := $(OPENCORE.PV_CFLAGS)
   FORMAT := $(OPENCORE.FORMAT)
+  PV_OSCL_LIB := $(OPENCORE.PV_OSCL_LIB)
   PV_COPY_HEADERS_TO := $(OPENCORE.PV_COPY_HEADERS_TO)
   VALUE_ADD := $(OPENCORE.VALUE_ADD)
   PV_INCLUDES := $(OPENCORE.PV_INCLUDES)

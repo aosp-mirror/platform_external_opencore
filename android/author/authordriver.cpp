@@ -475,10 +475,17 @@ void AuthorDriver::handleSetVideoFrameRate(set_video_frame_rate_command *ac)
         commandFailed(ac);
         return;
     }
-
-    mVideoFrameRate = ac->rate;
-
-    ((AndroidCameraInput *)mVideoInputMIO)->SetFrameRate(ac->rate);
+    
+    // FIXME:
+    // Platform-specific and temporal workaround to accept a reasonable frame rate range
+    if (ac->rate < ANDROID_MIN_FRAME_RATE_FPS) {
+        mVideoFrameRate = ANDROID_MIN_FRAME_RATE_FPS;
+    } else if (ac->rate > ANDROID_MAX_FRAME_RATE_FPS) {
+        mVideoFrameRate = ANDROID_MAX_FRAME_RATE_FPS;
+    } else {
+        mVideoFrameRate = ac->rate;
+    }
+    ((AndroidCameraInput *)mVideoInputMIO)->SetFrameRate(mVideoFrameRate);
     FinishNonAsyncCommand(ac);
 }
 

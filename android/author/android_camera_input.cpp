@@ -936,9 +936,14 @@ PVMFStatus AndroidCameraInput::DoInit()
     // It is a good idea to get the actual preview size and used it
     // for video recording.
     CameraParameters newCameraParam(mCamera->getParameters());
-    newCameraParam.getPreviewSize(&mFrameWidth, &mFrameHeight);
-    if (mFrameWidth < 0 || mFrameHeight < 0) {
+    int32 width, height;
+    newCameraParam.getPreviewSize(&width, &height);
+    if (width < 0 || height < 0) {
         LOGE("Failed to get camera(%p) preview size", mCamera.get());
+        return PVMFFailure;
+    }
+    if (width != mFrameWidth || height != mFrameHeight) {
+        LOGE("Mismatch between the intended frame size (%dx%d) and the available frame size (%dx%d)", mFrameWidth, mFrameHeight, width, height);
         return PVMFFailure;
     }
     LOGD("Actual mFrameWidth=%d, mFrameHeight=%d ",mFrameWidth, mFrameHeight);

@@ -10,6 +10,8 @@ LOCAL_SHARED_LIBRARIES := liblog libopencorenet_support libopencoreplayer libope
 
 LOCAL_MODULE := libopencoredownload
 
+LOCAL_CFLAGS := $(PV_CFLAGS)
+
 LOCAL_C_INCLUDES := \
 	$(PV_INCLUDES)
 

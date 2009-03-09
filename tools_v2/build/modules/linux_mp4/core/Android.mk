@@ -8,7 +8,6 @@ LOCAL_WHOLE_STATIC_LIBRARIES := \
 	libomx_m4v_component_lib \
 	libpvmp4decoder \
 	libpvmp4ffparsernode \
-	
 
 LOCAL_SHARED_LIBRARIES := liblog libopencoremp4reg libopencoreplayer libopencorecommon
 
@@ -18,6 +17,8 @@ LOCAL_C_INCLUDES := \
 	$(PV_TOP)/codecs_v2/video/m4v_h263/dec/include \
 	$(PV_TOP)/codecs_v2/video/m4v_h263/dec/src \
 	$(PV_INCLUDES)
+
+LOCAL_CFLAGS := $(PV_CFLAGS)
 
 include $(BUILD_SHARED_LIBRARY)
 

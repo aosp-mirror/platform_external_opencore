@@ -20,4 +20,6 @@ LOCAL_MODULE := libopencorertsp
 LOCAL_C_INCLUDES := \
 	$(PV_INCLUDES)
 
+LOCAL_CFLAGS := $(PV_CFLAGS)
+
 include $(BUILD_SHARED_LIBRARY)

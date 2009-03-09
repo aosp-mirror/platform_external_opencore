@@ -35,9 +35,7 @@
 #include <dirent.h>
 #include <dlfcn.h>
 
-
-
-#define HAS_OSCL_LIB_SUPPORT 1
+// HAS_OSCL_LIB_SUPPORT is now defined in the build environment.
 
 // include common include for determining sizes from limits.h
 #include "osclconfig_limits_typedefs.h"

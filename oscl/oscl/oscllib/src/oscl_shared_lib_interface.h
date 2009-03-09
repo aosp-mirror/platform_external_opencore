@@ -22,10 +22,15 @@
 #include "oscl_uuid.h"
 #endif
 
+#ifndef HAS_OSCL_LIB_SUPPORT
+// A file is trying to use the OSCL dynamic loader but its support has been
+// turned off by the build environment.
+#error "OSCL shared library used but HAS_OSCL_LIB_SUPPORT is undef."
+#endif
+
 class OsclSharedLibraryInterface
 {
     public:
         virtual OsclAny* SharedLibraryLookup(const OsclUuid& aInterfaceId) = 0;
 };
 #endif // OSCL_SHARED_LIB_INTERFACE_H_INCLUDED
-

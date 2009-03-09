@@ -15,5 +15,7 @@ LOCAL_C_INCLUDES := \
 	$(PV_TOP)/nodes/pvmp4ffparsernode/include \
 	$(PV_INCLUDES)
 
+LOCAL_CFLAGS := $(PV_CFLAGS)
+
 include $(BUILD_SHARED_LIBRARY)
 

@@ -63,6 +63,9 @@
 #define ANDROID_MAX_ENCODED_FRAME_WIDTH            352
 #define ANDROID_MAX_ENCODED_FRAME_HEIGHT           288
 
+#define ANDROID_MIN_FRAME_RATE_FPS                 5
+#define ANDROID_MAX_FRAME_RATE_FPS                 20
+
 namespace android {
 
 template<class DestructClass>
