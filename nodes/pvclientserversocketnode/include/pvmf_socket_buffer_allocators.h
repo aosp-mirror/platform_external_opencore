@@ -655,21 +655,6 @@ class PVMFSMSharedBufferAllocWithReSize : public Oscl_DefAlloc
             // need to remove begin and end variables because of compiler warnings
             PVMF_SOCKALLOC_LOG_SEQNUM_ALLOC_DEALLOC((0, "PVMFSMSharedBufferAllocWithReSize::allocate - Alloc SeqNum=%d", iSeqCount));
 
-#if 0
-            availSize = FindLargestContiguousFreeBlock(aPCContainer);
-            PVMF_SOCKALLOC_LOG_ALLOC_RESIZE_DEALLOC((0, "PVMFSMSharedBufferAllocWithReSize::allocate - "
-                                                    "Name=%s, ChunkID=%d, SeqNum=%d, PtrS=0x%x, PtrE=0x%x, Begin=%d, End=%d, AllocSize=%d, iAvailableSize=%d, iNumOutStandingBuffers=%d",
-                                                    iName.get_cstr(),
-                                                    aPCContainer->id,
-                                                    iSeqCount,
-                                                    aPCContainer->iAllocationPtr,
-                                                    aPCContainer->iAllocationPtr + n,
-                                                    (aPCContainer->iAllocationPtr - aPCContainer->iParentChunkStart),
-                                                    (aPCContainer->iAllocationPtr - aPCContainer->iParentChunkStart) + n,
-                                                    n,
-                                                    availSize,
-                                                    iNumOutStandingBuffers));
-#else
             PVMF_SOCKALLOC_LOG_ALLOC_RESIZE_DEALLOC((0, "PVMFSMReSize::allocate - "
                                                     "SeqNum=%d, PtrS=0x%x, PtrE=0x%x, Begin=%d, End=%d, AllocSize=%d, LastDeallocPtr=0x%x, Avail=%d",
                                                     iSeqCount,
@@ -680,7 +665,6 @@ class PVMFSMSharedBufferAllocWithReSize : public Oscl_DefAlloc
                                                     n,
                                                     aPCContainer->iEndOfLastDeallocatedBlock,
                                                     getTotalAvailableBufferSpace()));
-#endif
             aPCContainer->iAllocationPtr += n;
 
             PVMF_SOCKALLOC_LOG_AVAILABILITY((0, "PVMFSMSBAWithReSize::allocate - Name=%s, SN=%d, Alloc=%d, Avail=%d, BufsOS=%d",
@@ -834,20 +818,6 @@ class PVMFSMSharedBufferAllocWithReSize : public Oscl_DefAlloc
 #endif
             // need to remove begin and end variables because of compiler warnings
             PVMF_SOCKALLOC_LOG_SEQNUM_ALLOC_DEALLOC((0, "PVMFSMSharedBufferAllocWithReSize::DeallocateFromParentChunk - Dealloc SeqNum=%d", iLastDeallocatedSeqNum));
-#if 0
-            PVMF_SOCKALLOC_LOG_ALLOC_RESIZE_DEALLOC((0, "PVMFSMSharedBufferAllocWithReSize::DeallocateFromParentChunk - "
-                                                    "Name=%s, ChunkID=%d, SeqNum=%d, PtrS=0x%x, PtrE=0x%x, Begin=%d, End=%d, BlockSize=%d, iAvailableSize=%d, iNumOutStandingBuffers=%d",
-                                                    iName.get_cstr(),
-                                                    aPCContainer->id,
-                                                    seqNum,
-                                                    p,
-                                                    p + blkSize + PVMF_RESIZE_ALLOC_OVERHEAD,
-                                                    ((uint8*)p - aPCContainer->iParentChunkStart),
-                                                    ((uint8*)p - aPCContainer->iParentChunkStart) + blkSize,
-                                                    blkSize,
-                                                    FindLargestContiguousFreeBlock(aPCContainer),
-                                                    iNumOutStandingBuffers));
-#else
             PVMF_SOCKALLOC_LOG_ALLOC_RESIZE_DEALLOC((0, "PVMFSMReSize::Dealloc - "
                                                     "SeqNum=%d, PtrS=0x%x, PtrE=0x%x, Begin=%d, End=%d, BlockSize=%d, LastDeallocatedPtr=0x%x, Avail=%d",
                                                     seqNum,
@@ -858,7 +828,6 @@ class PVMFSMSharedBufferAllocWithReSize : public Oscl_DefAlloc
                                                     blkSize,
                                                     aPCContainer->iEndOfLastDeallocatedBlock,
                                                     getTotalAvailableBufferSpace()));
-#endif
             PVMF_SOCKALLOC_LOG_AVAILABILITY((0, "PVMFSMSBAWithReSize::DeallocateFromParentChunk - Name=%s, SN=%d, Dealloc=%d, Avail=%d, BufsOS=%d",
                                              iName.get_cstr(), seqNum, blkSize, getTotalAvailableBufferSpace(), iNumOutStandingBuffers));
             return (PVMF_RESIZE_ALLOC_SUCCESS);
@@ -1033,21 +1002,6 @@ class PVMFSMSharedBufferAllocWithReSize : public Oscl_DefAlloc
                         &blkSize,
                         sizeof(uint32));
             // need to remove begin and end variables because of compiler warnings
-#if 0
-            PVMF_SOCKALLOC_LOG_ALLOC_RESIZE_DEALLOC((0, "PVMFSMSharedBufferAllocWithReSize::ReSizeFromParentChunk - "
-                                                    "Name=%s, ChunkID=%d, SeqNum=%d, PtrS=0x%x, PtrE=0x%x, AllocPtr=0x%x, Begin=%d, End=%d, NewSize=%d, aBytesToReclaim=%d, iAvailableSize=%d",
-                                                    iName.get_cstr(),
-                                                    aPCContainer->id,
-                                                    seqNum,
-                                                    p,
-                                                    p + blkSize + PVMF_RESIZE_ALLOC_OVERHEAD,
-                                                    aPCContainer->iAllocationPtr,
-                                                    (p - aPCContainer->iParentChunkStart),
-                                                    (p - aPCContainer->iParentChunkStart) + blkSize + PVMF_RESIZE_ALLOC_OVERHEAD,
-                                                    blkSize,
-                                                    aBytesToReclaim,
-                                                    FindLargestContiguousFreeBlock(aPCContainer)));
-#else
             PVMF_SOCKALLOC_LOG_ALLOC_RESIZE_DEALLOC((0, "PVMFSMReSize::ReSize - "
                                                     "SeqNum=%d, PtrS=0x%x, PtrE=0x%x, AllocPtr=0x%x, Begin=%d, End=%d, NewSize=%d, Avail=%d",
                                                     seqNum,
@@ -1058,7 +1012,6 @@ class PVMFSMSharedBufferAllocWithReSize : public Oscl_DefAlloc
                                                     (p - aPCContainer->iParentChunkStart) + blkSize + PVMF_RESIZE_ALLOC_OVERHEAD,
                                                     blkSize,
                                                     getTotalAvailableBufferSpace()));
-#endif
             PVMF_SOCKALLOC_LOG_AVAILABILITY((0, "PVMFSMSBAWithReSize::ReSizeFromParentChunk - Name=%s, SN=%d, Reclaim=%d, Avail=%d",
                                              iName.get_cstr(), seqNum, aBytesToReclaim, getTotalAvailableBufferSpace()));
             return (PVMF_RESIZE_ALLOC_SUCCESS);

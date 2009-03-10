@@ -34,6 +34,8 @@
 #include "pvmi_kvp_util.h"
 
 
+static const char PVWAVMETADATA_ALL_METADATA_KEY[] = "all";
+
 #define PVMF_WAV_NUM_METADATA_VALUES 7
 // Constant character strings for metadata keys
 static const char PVWAVMETADATA_DURATION_KEY[] = "duration";
@@ -1034,6 +1036,7 @@ void PVMFWAVFFParserNode::DoQueryInterface(PVMFWAVFFNodeCommand&  aCmd)
 
     if (queryInterface(*uuid, *ptr))
     {
+        (*ptr)->addRef();
         CommandComplete(iInputCommands, aCmd, PVMFSuccess);
     }
     else
@@ -1754,6 +1757,20 @@ void PVMFWAVFFParserNode::removeRef()
     --iExtensionRefCount;
 }
 
+PVMFStatus PVMFWAVFFParserNode::QueryInterfaceSync(PVMFSessionId aSession,
+        const PVUuid& aUuid,
+        PVInterface*& aInterfacePtr)
+{
+    OSCL_UNUSED_ARG(aSession);
+    aInterfacePtr = NULL;
+    if (queryInterface(aUuid, aInterfacePtr))
+    {
+        aInterfacePtr->addRef();
+        return PVMFSuccess;
+    }
+    return PVMFErrNotSupported;
+}
+
 bool PVMFWAVFFParserNode::queryInterface(const PVUuid& uuid, PVInterface*& iface)
 {
     if (PVMF_DATA_SOURCE_INIT_INTERFACE_UUID == uuid)
@@ -1780,8 +1797,6 @@ bool PVMFWAVFFParserNode::queryInterface(const PVUuid& uuid, PVInterface*& iface
     {
         return false;
     }
-
-    ++iExtensionRefCount;
     return true;
 }
 
@@ -2491,19 +2506,33 @@ PVMFStatus PVMFWAVFFParserNode::DoGetNodeMetadataValue(PVMFWAVFFNodeCommand& aCm
         return PVMFErrInvalidState;
     }
 
+    PVMFMetadataList* keylistptr_in = NULL;
     PVMFMetadataList* keylistptr = NULL;
     Oscl_Vector<PvmiKvp, OsclMemAllocator>* valuelistptr = NULL;
     uint32 starting_index;
     int32 max_entries;
 
-    aCmd.PVMFWAVFFNodeCommand::Parse(keylistptr, valuelistptr, starting_index, max_entries);
+    aCmd.PVMFWAVFFNodeCommand::Parse(keylistptr_in, valuelistptr, starting_index, max_entries);
 
     // Check the parameters
-    if (keylistptr == NULL || valuelistptr == NULL)
+    if (keylistptr_in == NULL || valuelistptr == NULL)
     {
         return PVMFErrArgument;
     }
 
+    keylistptr = keylistptr_in;
+    //If numkeys is one, just check to see if the request
+    //is for ALL metadata
+    if (keylistptr_in->size() == 1)
+    {
+        if (oscl_strncmp((*keylistptr)[0].get_cstr(),
+                         PVWAVMETADATA_ALL_METADATA_KEY,
+                         oscl_strlen(PVWAVMETADATA_ALL_METADATA_KEY)) == 0)
+        {
+            //use the complete metadata key list
+            keylistptr = &iAvailableMetadataKeys;
+        }
+    }
     uint32 numkeys = keylistptr->size();
 
     if (starting_index > (numkeys - 1) || numkeys <= 0 || max_entries == 0)

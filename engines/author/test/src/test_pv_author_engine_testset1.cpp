@@ -852,6 +852,8 @@ bool pvauthor_async_test_miscellaneous::ConfigureAudioEncoder()
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                         (0, "pvauthor_async_test_miscellaneous::ConfigureAudioEncoder: No configuration needed"));
+
+
         return true;
     }
 
@@ -864,12 +866,12 @@ bool pvauthor_async_test_miscellaneous::ConfigureTextEncoder()
 {
     //Single core AMR encoder node support
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "pvauthor_async_test_miscellaneous::ConfigureAudioEncoder"));
+                    (0, "pvauthor_async_test_miscellaneous::ConfigureTextEncoder"));
 
     if (!iTextEncoderConfig)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                        (0, "pvauthor_async_test_miscellaneous::ConfigureAudioEncoder: No configuration needed"));
+                        (0, "pvauthor_async_test_miscellaneous::ConfigureTextEncoder: No configuration needed"));
         return true;
     }
 

@@ -120,14 +120,26 @@ int32 bitstreamObject::reset(int32 filePos)
 //! read data from bitstream, this is the only function to read data from file
 int32 bitstreamObject::refill()
 {
+    PVMF_AMRPARSER_LOGDEBUG((0, "Refill In ipos=%d, iBytesRead=%d, iBytesProcessed=%d, iActualSize=%d, iFileSize=%d", iPos, iBytesRead, iBytesProcessed, iActual_size, iFileSize));
+
     if (iBytesRead > 0 && iFileSize > 0 && iBytesRead >= iFileSize)
     {
+        // if number of bytes read so far exceed the file size,
+        // then first update the file size (PDL case).
+        if (!UpdateFileSize()) return bitstreamObject::MISC_ERROR;
+
         //At this point we're within 32 bytes of the end of data.
         //Quit reading data but don't return EOF until all data is processed.
         if (iBytesProcessed < iBytesRead)
+        {
             return bitstreamObject::EVERYTHING_OK;
+        }
         else
-            return bitstreamObject::END_OF_FILE;
+        {
+            //there is no more data to read.
+            if (iBytesRead >= iFileSize || iBytesProcessed >= iFileSize)
+                return bitstreamObject::DATA_INSUFFICIENT;
+        }
     }
 
     if (!ipAMRFile)
@@ -159,24 +171,37 @@ int32 bitstreamObject::refill()
         iPos = bitstreamObject::SECOND_BUFF_SIZE;
         iBytesProcessed = 0;
     }
-
+    // we are currently positioned at the end of the data buffer.
     else if (iPos == bitstreamObject::MAIN_BUFF_SIZE + bitstreamObject::SECOND_BUFF_SIZE)
     {
-        // reset iPos and refill from the beginning of the file
+        // reset iPos and refill from the beginning of the buffer.
         iPos = bitstreamObject::SECOND_BUFF_SIZE;
     }
 
     else if (iPos >= iActual_size)
     {
+        int32 len = 0;
         // move the remaining stuff to the beginning of iBuffer
-        if (iActual_size < iMax_size)
+        if (iActual_size + bitstreamObject::SECOND_BUFF_SIZE > iPos)
         {
-            // memory content will be overlapped
-            return bitstreamObject::MISC_ERROR;
+            // we are currently positioned within SECOND_BUFF_SIZE bytes from the end of the buffer.
+            len = iActual_size + bitstreamObject::SECOND_BUFF_SIZE - iPos;
         }
-        int32 len = bitstreamObject::MAIN_BUFF_SIZE + bitstreamObject::SECOND_BUFF_SIZE - iPos;
+        else
+        {
+            // no leftover data.
+            len = 0;
+        }
+
         oscl_memcpy(&iBuffer[bitstreamObject::SECOND_BUFF_SIZE-len], &iBuffer[iPos], len);
         iPos = bitstreamObject::SECOND_BUFF_SIZE - len;
+
+        // update the file size for the PDL scenario where more data has been downloaded
+        // into the file but the file size has not been updated yet.
+        if (iBytesRead + iMax_size > iFileSize)
+        {
+            if (!UpdateFileSize()) return bitstreamObject::MISC_ERROR;
+        }
     }
 
     // read data
@@ -187,12 +212,15 @@ int32 bitstreamObject::refill()
 
     iBytesRead += iActual_size;
 
+    PVMF_AMRPARSER_LOGDEBUG((0, "Refill Out ipos=%d, iBytesRead=%d, iBytesProcessed=%d, iActualSize=%d, iFileSize=%d", iPos, iBytesRead, iBytesProcessed, iActual_size, iFileSize));
+
     return bitstreamObject::EVERYTHING_OK;
 }
 
 //! most important function to get one frame data plus frame type, used in getNextBundledAccessUnits()
 int32 bitstreamObject::getNextFrame(uint8* frameBuffer, uint8& frame_type, bool bHeaderIncluded)
 {
+    PVMF_AMRPARSER_LOGDEBUG((0, "GetNextFrame In ipos=%d, iBytesRead=%d, iBytesProcessed=%d, iActualSize=%d, iFileSize=%d", iPos, iBytesRead, iBytesProcessed, iActual_size, iFileSize));
     if (!frameBuffer)
     {
         return bitstreamObject::MISC_ERROR;
@@ -249,6 +277,8 @@ int32 bitstreamObject::getNextFrame(uint8* frameBuffer, uint8& frame_type, bool 
         return bitstreamObject::MISC_ERROR;
     }
 
+    PVMF_AMRPARSER_LOGDEBUG((0, "GetNextFrame Before Read frame ipos=%d, iBytesRead=%d, iBytesProcessed=%d, iActualSize=%d, iFileSize=%d", iPos, iBytesRead, iBytesProcessed, iActual_size, iFileSize));
+
     if (frame_size > 0)
     {
         if (bHeaderIncluded)
@@ -263,6 +293,7 @@ int32 bitstreamObject::getNextFrame(uint8* frameBuffer, uint8& frame_type, bool 
     iPos += frame_size;
     iBytesProcessed += frame_size;
 
+    PVMF_AMRPARSER_LOGDEBUG((0, "GetNextFrame Out ipos=%d, iBytesRead=%d, iBytesProcessed=%d, iActualSize=%d, iFileSize=%d", iPos, iBytesRead, iBytesProcessed, iActual_size, iFileSize));
     return ret_value;
 }
 
@@ -368,6 +399,22 @@ int32 bitstreamObject::getFileInfo(int32& fileSize, int32& format, int32& frame_
     return ret_value;
 }
 
+//! get the updated file size
+bool bitstreamObject::UpdateFileSize()
+{
+    if (ipAMRFile != NULL)
+    {
+        uint32 aRemBytes = 0;
+        if (ipAMRFile->GetRemainingBytes(aRemBytes))
+        {
+            uint32 currPos = (uint32)(ipAMRFile->Tell());
+            iFileSize = currPos + aRemBytes;
+            return true;
+        }
+    }
+    return false;
+}
+
 
 //----------------------------------------------------------------------------
 // FUNCTION NAME: CAMRFileParser::CAMRFileParser
@@ -409,7 +456,7 @@ OSCL_EXPORT_REF CAMRFileParser::CAMRFileParser(void)
     iEndOfFileReached   = false;
     iRandomAccessTimeInterval = 0;
     iCountToClaculateRDATimeInterval = 0;
-    iLogger = PVLogger::GetLoggerObject(" ");
+    iLogger = PVLogger::GetLoggerObject("pvamr_parser");
     iDiagnosticLogger = PVLogger::GetLoggerObject("playerdiagnostics.pvamr_parser");
 
     ipBSO = NULL;
@@ -499,7 +546,7 @@ OSCL_EXPORT_REF bool CAMRFileParser::InitAMRFile(OSCL_wString& aClip, bool aInit
     }
 
     // create ipBSO
-    ipBSO = OSCL_NEW(bitstreamObject, (&iAMRFile));
+    ipBSO = OSCL_NEW(bitstreamObject, (iLogger, &iAMRFile));
     if (!ipBSO)
     {
         return false;
@@ -1075,7 +1122,13 @@ OSCL_EXPORT_REF int32 CAMRFileParser::GetNextBundledAccessUnits(uint32 *aNumSamp
             break;
         }
         else if (returnValue == bitstreamObject::EVERYTHING_OK)
+
         {
+        }
+        else if (returnValue == bitstreamObject::DATA_INSUFFICIENT)
+        {
+            *aNumSamples = 0;
+            return returnValue;
         }
         else
         {   // error happens!!

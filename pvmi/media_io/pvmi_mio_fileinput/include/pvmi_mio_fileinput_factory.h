@@ -86,9 +86,9 @@ class PvmiMIOFileInputSettings
         // General settings
         PVMFFormatType iMediaFormat;
         bool iLoopInputFile;
-        OSCL_wHeapString<OsclMemAllocator> iFileName;
-        OSCL_wHeapString<OsclMemAllocator> iLogFileName;
-        OSCL_wHeapString<OsclMemAllocator> iTextFileName;
+        OSCL_wStackString<512> iFileName;
+        OSCL_wStackString<512> iLogFileName;
+        OSCL_wStackString<512> iTextFileName;
         // Settings for audio files
         uint32 iSamplingFrequency;
         uint32 iNumChannels;

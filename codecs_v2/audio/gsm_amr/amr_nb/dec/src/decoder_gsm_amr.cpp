@@ -178,7 +178,7 @@ OSCL_EXPORT_REF int32 CDecoder_AMR_NB::ExecuteL(tPVAmrDecoderExternal * pExt)
         pExt->input_format = MIME_IETF;
 
     return AMRDecode(iDecState,
-                     (enum Frame_Type_3GPP)pExt->frame_type,
+                     (enum Frame_Type_3GPP)pExt->mode,
                      (uint8*) pExt->pInputBuffer,
                      (int16*) pExt->pOutputBuffer,
                      pExt->input_format);

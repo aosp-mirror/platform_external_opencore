@@ -70,7 +70,6 @@ typedef enum
     EMuxDatapath,
     ERecDatapath,
     EPreviewDatapath,
-    EInitDatapath,
     EMaxDatapathType
 } TPV2WayDatapathType;
 
@@ -135,7 +134,7 @@ class CPVDatapathPort
 {
     public:
         CPVDatapathPort() : iPortTag(0),
-                iRequestPortState(EPVMFNodeIdle),
+                iRequestPortState(EPVMFNodeInitialized),
                 iCanCancelPort(false),
                 iPortSetType(EUserDefined),
                 iFormatType(PVMF_MIME_FORMAT_UNKNOWN),

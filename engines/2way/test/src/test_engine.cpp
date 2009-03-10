@@ -309,14 +309,13 @@ void engine_test_suite::proxy_tests(const bool aProxy)
     int32 firstTest = 0;
     int32 lastTest = MAX_324_TEST;
     FindTestRange(global_cmd_line, firstTest, lastTest, fileoutput);
-    //adopt_test_case( new av_test(aProxy,PVMF_AMR_IF2,PVMF_AMR_IF2,PVMF_YUV420,PVMF_YUV420));
 #ifndef NO_2WAY_324
     if (firstTest == 0)
         adopt_test_case(new alloc_dealloc_test(aProxy));
     if (firstTest <= 2 && lastTest >= 2)
         adopt_test_case(new init_test(aProxy, 1));
-    //if (firstTest <= 3 && lastTest >= 3 )
-    //	adopt_test_case( new init_test(aProxy, 2) );
+    if (firstTest <= 3 && lastTest >= 3)
+        adopt_test_case(new init_test(aProxy, 2));
 
     if (firstTest <= 4 && lastTest >= 4)
         adopt_test_case(new init_cancel_test(aProxy));
@@ -329,15 +328,15 @@ void engine_test_suite::proxy_tests(const bool aProxy)
 
     if (firstTest <= 7 && lastTest >= 7)
     {
-        //adopt_test_case( new audio_only_test(aProxy,PVMF_AMR_IF2,PVMF_AMR_IF2));
+        adopt_test_case(new audio_only_test(aProxy, PVMF_MIME_AMR_IF2, PVMF_MIME_AMR_IF2));
     }
     if (firstTest <= 8 && lastTest >= 8)
     {
-        //adopt_test_case( new audio_only_test(aProxy, PVMF_PCM16,PVMF_AMR_IF2) );
+        adopt_test_case(new audio_only_test(aProxy, PVMF_MIME_PCM16, PVMF_MIME_AMR_IF2));
     }
     if (firstTest <= 9 && lastTest >= 9)
     {
-        //adopt_test_case( new audio_only_test(aProxy, PVMF_AMR_IF2,PVMF_PCM16) );
+        adopt_test_case(new audio_only_test(aProxy, PVMF_MIME_AMR_IF2, PVMF_MIME_PCM16));
     }
 
     if (firstTest <= 10 && lastTest >= 10)
@@ -346,172 +345,80 @@ void engine_test_suite::proxy_tests(const bool aProxy)
     }
 
     if (firstTest <= 11 && lastTest >= 11)
+    {
         adopt_test_case(new video_only_test(PVMF_MIME_YUV420, PVMF_MIME_YUV420, aProxy));
-    /*	if (firstTest <= 12 && lastTest >= 12)
-    		//adopt_test_case( new video_only_test(aProxy,PVMF_YUV420,PVMF_H263));
-    	if (firstTest <= 13 && lastTest >= 13)
-    		//adopt_test_case( new video_only_test(aProxy,PVMF_H263,PVMF_YUV420));
-    	if (firstTest <= 14 && lastTest >= 14)
-    		//adopt_test_case( new video_only_test(aProxy,PVMF_M4V,PVMF_YUV420));
-    	if (firstTest <= 15 && lastTest >= 15)
-    		//adopt_test_case( new video_only_test(aProxy,PVMF_YUV420,PVMF_M4V));
+    }
+    if (firstTest <= 12 && lastTest >= 12)
+    {
+        adopt_test_case(new video_only_test(PVMF_MIME_YUV420, PVMF_MIME_H2632000, aProxy));
+    }
+    if (firstTest <= 13 && lastTest >= 13)
+    {
+        adopt_test_case(new video_only_test(PVMF_MIME_H2632000, PVMF_MIME_YUV420, aProxy));
+    }
+    if (firstTest <= 14 && lastTest >= 14)
+    {
+        adopt_test_case(new video_only_test(PVMF_MIME_M4V, PVMF_MIME_YUV420, aProxy));
+    }
+    if (firstTest <= 15 && lastTest >= 15)
+    {
+        adopt_test_case(new video_only_test(PVMF_MIME_YUV420, PVMF_MIME_M4V, aProxy));
+    }
 
-    	if (firstTest <= 16 && lastTest >= 16)
-    		//adopt_test_case( new av_test(aProxy,PVMF_AMR_IF2,PVMF_AMR_IF2,PVMF_YUV420,PVMF_YUV420));
+    if (firstTest <= 16 && lastTest >= 16)
+    {
+        adopt_test_case(new av_test(PVMF_MIME_AMR_IF2, PVMF_MIME_AMR_IF2, PVMF_MIME_YUV420, PVMF_MIME_YUV420, aProxy));
+    }
 
-    */
     if (firstTest <= 17 && lastTest >= 17)
+    {
         adopt_test_case(new av_test(PVMF_MIME_AMR_IF2, PVMF_MIME_PCM16, PVMF_MIME_YUV420, PVMF_MIME_YUV420, aProxy));
-    /*
-    	if (firstTest <= 18 && lastTest >= 18)
-    		//adopt_test_case( new av_test(aProxy, PVMF_PCM16,PVMF_AMR_IF2,PVMF_YUV420,PVMF_YUV420) );
-    	if (firstTest <= 19 && lastTest >= 19)
-    		adopt_test_case( new av_test(aProxy, PVMF_PCM16,PVMF_PCM16,PVMF_YUV420,PVMF_YUV420) );
-    */
-    /*	if (firstTest <= 20 && lastTest >= 20)
-    		//adopt_test_case( new av_test(aProxy, PVMF_AMR_IF2,PVMF_AMR_IF2,PVMF_YUV420,PVMF_H263) );
-    	if (firstTest <= 21 && lastTest >= 21)
-    		//adopt_test_case( new av_test(aProxy, PVMF_AMR_IF2,PVMF_AMR_IF2,PVMF_H263,PVMF_YUV420) );
-    	if (firstTest <= 22 && lastTest >= 22)
-    		//adopt_test_case( new av_test(aProxy, PVMF_AMR_IF2,PVMF_AMR_IF2,PVMF_H263,PVMF_H263) );
-    	if (firstTest <= 23 && lastTest >= 23)
-    		//adopt_test_case( new av_test(aProxy, PVMF_AMR_IF2,PVMF_AMR_IF2,PVMF_YUV420,PVMF_M4V) );
-    	if (firstTest <= 24 && lastTest >= 24)
-    		//adopt_test_case( new av_test(aProxy, PVMF_AMR_IF2,PVMF_AMR_IF2,PVMF_M4V,PVMF_YUV420) );
-    	if (firstTest <= 25 && lastTest >= 25)
-    		//adopt_test_case( new av_test(aProxy, PVMF_AMR_IF2,PVMF_AMR_IF2,PVMF_M4V,PVMF_M4V));
-
-    	if (firstTest <= 26 && lastTest >= 26)
-            adopt_test_case( new connect_test(aProxy, 1, true) );
-    */
-#if 0
-    if (firstTest <= 27 && lastTest >= 27)
-        adopt_test_case(new user_input_test(aProxy, false));
-#endif
-#endif
-
-#if 0
-    adopt_test_case(new connect_test(aProxy, 2));
-    adopt_test_case(new audio_only_pause_test(aProxy, 1));
-    adopt_test_case(new audio_only_pause_test(aProxy, 2));
-    adopt_test_case(new audio_only_pause_close_test(aProxy));
-    adopt_test_case(new audio_only_resume_close_test(aProxy));
-    adopt_test_case(new video_only_test(aProxy));
-    adopt_test_case(new video_only_pause_test(aProxy, 1));
-    adopt_test_case(new video_only_pause_test(aProxy, 2));
-    adopt_test_case(new video_only_pause_close_test(aProxy));
-    adopt_test_case(new video_only_resume_close_test(aProxy));
-    adopt_test_case(new av_test(aProxy, 2));
-    adopt_test_case(new av_pause_disconnect_test(aProxy));
-
-    //Record to file tests
-    fprintf(fileoutput, "Record to file tests.\n");
-    adopt_test_case(new init_rec_test(aProxy, 1));
-    adopt_test_case(new init_rec_test(aProxy, 2));
-    adopt_test_case(new init_rec_reset_test(aProxy));
-    adopt_test_case(new a_only_rec_test(aProxy, 1));
-    adopt_test_case(new a_only_rec_test(aProxy, 2));
-    adopt_test_case(new v_only_rec_test(aProxy, 1));
-    adopt_test_case(new v_only_rec_test(aProxy, 2));
-    adopt_test_case(new av_rec_test(aProxy));
-    adopt_test_case(new a_only_pause_rec_test(aProxy, 1));
-    adopt_test_case(new a_only_pause_rec_test(aProxy, 2));
-    adopt_test_case(new v_only_pause_rec_test(aProxy, 1));
-    adopt_test_case(new v_only_pause_rec_test(aProxy, 2));
-    adopt_test_case(new av_pause_rec_disconnect_test(aProxy));
-    adopt_test_case(new av_disconnect_reset_rec_test(aProxy));
-
-    //Preview tests
-    fprintf(fileoutput, "Preview output tests.\n");
-    adopt_test_case(new video_preview_test(aProxy, 1));
-    adopt_test_case(new video_preview_test(aProxy, 2));
-    adopt_test_case(new video_preview_disconnect_test(aProxy));
-    adopt_test_case(new video_preview_pause_test(aProxy, 1));
-    adopt_test_case(new video_preview_pause_test(aProxy, 2));
-    adopt_test_case(new av_rec_v_preview_test(aProxy));
-
-    //Play from file tests
-    fprintf(fileoutput, "Play from file tests.\n");
-    OSCL_wHeapString<OsclMemAllocator> file;
-    file = AUDIO_ONLY_PLAY_FILENAME;
-    play_from_file_tests(aProxy, file, true, false);
-    file = AUDIO_H263_PLAY_FILENAME;
-    play_from_file_tests(aProxy, file, true, true);
-    file = AUDIO_MPEG4_PLAY_FILENAME;
-    play_from_file_tests(aProxy, file, true, true);
-    file = H263_ONLY_PLAY_FILENAME;
-    play_from_file_tests(aProxy, file, false, true);
-    file = MPEG4_ONLY_PLAY_FILENAME;
-    play_from_file_tests(aProxy, file, false, true);
-    file = SQCIF_PLAY_FILENAME;
-    play_from_file_tests(aProxy, file, true, true);
-    file = QVGA_PLAY_FILENAME;
-    play_from_file_tests(aProxy, file, true, true);
-#endif
-}
-
-void engine_test_suite::play_from_file_tests(const bool aProxy,
-        const OSCL_wString& aFilename,
-        const bool aHasAudio,
-        const bool aHasVideo)
-{
-    OSCL_UNUSED_ARG(aProxy);
-    OSCL_UNUSED_ARG(aFilename);
-    OSCL_UNUSED_ARG(aHasAudio);
-    OSCL_UNUSED_ARG(aHasVideo);
-#if 0
-    adopt_test_case(new init_play_test(aProxy, aFilename, 1));
-    adopt_test_case(new init_play_test(aProxy, aFilename, 2));
-    adopt_test_case(new init_play_reset_test(aProxy, aFilename));
-    adopt_test_case(new play_from_file_test(aProxy, aFilename, 1));
-    adopt_test_case(new play_from_file_test(aProxy, aFilename, 2));
-
-    adopt_test_case(new use_play_file_test(aProxy, aFilename, false, false));
-    adopt_test_case(new use_play_file_test(aProxy, aFilename, false, true));
-    adopt_test_case(new use_play_file_test(aProxy, aFilename, true, false));
-    adopt_test_case(new use_play_file_test(aProxy, aFilename, true, true));
-
-    adopt_test_case(new play_from_file_disconnect_test(aProxy, aFilename, false));
-    adopt_test_case(new play_from_file_disconnect_test(aProxy, aFilename, true));
-
-    adopt_test_case(new play_from_file_pause_test(aProxy, aFilename, false, 1));
-    adopt_test_case(new play_from_file_pause_test(aProxy, aFilename, true, 1));
-    adopt_test_case(new play_from_file_pause_test(aProxy, aFilename, false, 2));
-    adopt_test_case(new play_from_file_pause_test(aProxy, aFilename, true, 2));
-
-    adopt_test_case(new pff_pause_disconnect_test(aProxy, aFilename, false));
-    adopt_test_case(new pff_pause_disconnect_test(aProxy, aFilename, true));
-
-    //A/V file
-    if (aHasAudio && aHasVideo)
-    {
-        //Wait for both audio and video end of stream indications
-        adopt_test_case(new pff_eos_test(aProxy, aFilename, true, true, 1));
-        adopt_test_case(new pff_eos_test(aProxy, aFilename, true, true, 2));
-        //Wait for audio end of stream indication
-        adopt_test_case(new pff_eos_test(aProxy, aFilename, true, false, 1));
-        adopt_test_case(new pff_eos_test(aProxy, aFilename, true, false, 2));
-        //Wait for video end of stream indication
-        adopt_test_case(new pff_eos_test(aProxy, aFilename, false, true, 1));
-        adopt_test_case(new pff_eos_test(aProxy, aFilename, false, true, 2));
     }
-    //Audio only file
-    else if (aHasAudio)
+    if (firstTest <= 18 && lastTest >= 18)
     {
-        //Wait for audio end of stream indication
-        adopt_test_case(new pff_eos_test(aProxy, aFilename, true, false, 1));
-        adopt_test_case(new pff_eos_test(aProxy, aFilename, true, false, 2));
+        adopt_test_case(new av_test(PVMF_MIME_PCM16, PVMF_MIME_AMR_IF2, PVMF_MIME_YUV420, PVMF_MIME_YUV420, aProxy));
+
     }
-    //Video only file
-    else if (aHasVideo)
+    if (firstTest <= 19 && lastTest >= 19)
     {
-        //Wait for video end of stream indication
-        adopt_test_case(new pff_eos_test(aProxy, aFilename, false, true, 1));
-        adopt_test_case(new pff_eos_test(aProxy, aFilename, false, true, 2));
+        adopt_test_case(new av_test(PVMF_MIME_PCM16, PVMF_MIME_PCM16, PVMF_MIME_YUV420, PVMF_MIME_YUV420, aProxy));
     }
 
-    adopt_test_case(new test_everything_test(aProxy, aFilename));
+    if (firstTest <= 20 && lastTest >= 20)
+    {
+        adopt_test_case(new av_test(PVMF_MIME_AMR_IF2, PVMF_MIME_AMR_IF2, PVMF_MIME_YUV420, PVMF_MIME_H2632000, aProxy));
+    }
+    if (firstTest <= 21 && lastTest >= 21)
+    {
+        adopt_test_case(new av_test(PVMF_MIME_AMR_IF2, PVMF_MIME_AMR_IF2, PVMF_MIME_H2632000, PVMF_MIME_YUV420, aProxy));
+    }
+    if (firstTest <= 22 && lastTest >= 22)
+    {
+        adopt_test_case(new av_test(PVMF_MIME_AMR_IF2, PVMF_MIME_AMR_IF2, PVMF_MIME_H2632000, PVMF_MIME_H2632000, aProxy));
+    }
+
+    if (firstTest <= 23 && lastTest >= 23)
+    {
+        adopt_test_case(new av_test(PVMF_MIME_AMR_IF2, PVMF_MIME_AMR_IF2, PVMF_MIME_YUV420, PVMF_MIME_M4V, aProxy));
+    }
+    if (firstTest <= 24 && lastTest >= 24)
+    {
+        adopt_test_case(new av_test(PVMF_MIME_AMR_IF2, PVMF_MIME_AMR_IF2, PVMF_MIME_M4V, PVMF_MIME_YUV420, aProxy));
+    }
+    if (firstTest <= 25 && lastTest >= 25)
+    {
+        adopt_test_case(new av_test(PVMF_MIME_AMR_IF2, PVMF_MIME_AMR_IF2, PVMF_MIME_M4V, PVMF_MIME_M4V, aProxy));
+    }
+
+    if (firstTest <= 26 && lastTest >= 26)
+    {
+        adopt_test_case(new connect_test(aProxy, 1, true));
+    }
+
+
 #endif
+
+
 }
 
 void engine_test::create_sink_source()

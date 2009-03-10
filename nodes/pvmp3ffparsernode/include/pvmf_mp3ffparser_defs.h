@@ -55,5 +55,7 @@ enum TPVMFMP3FFNodeInfo
 #define PVMF_MP3FFPARSER_NODE_MIMETYPE "pvxxx/MP3FFParserNode"
 #define PVMF_BASEMIMETYPE "pvxxx"
 
+static const char PVMF_MP3_PARSER_NODE_ALL_METADATA_KEY[] = "all";
+
 #endif // end PVMF_MP3FFPARSER_DEFS_H_INCLUDED
 

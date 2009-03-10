@@ -16,7 +16,7 @@
  * -------------------------------------------------------------------
  */
 #include "oscl_base.h"
-#include "omx_types.h"
+#include "OMX_Types.h"
 #include "pv_omxdefs.h"
 #include "omx_avc_component.h"
 

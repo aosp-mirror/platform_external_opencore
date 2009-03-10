@@ -27,7 +27,7 @@ endef
 
 #########################################################
 
-define HDRINST_TEMPLATE
+define INST_TEMPLATE
 $(3)/$(1): $(2)/$(1)
 	$(quiet) $(INSTALL) $(INSTALL_OPTS) $(2)/$(1) $(3)/$(1)
 endef

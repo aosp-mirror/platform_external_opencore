@@ -54,7 +54,7 @@
 #include "pvmp4h263encextension.h"
 #include "pvmp4ffcn_clipconfig.h"
 #include "pvmf_fileoutput_config.h"
-#include "pvmfamrencnode_extension.h"
+#include "pvmf_audio_encnode_extension.h"
 
 namespace android {
 

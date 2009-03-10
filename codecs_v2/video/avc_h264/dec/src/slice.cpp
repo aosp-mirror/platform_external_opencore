@@ -152,9 +152,6 @@ AVCDec_Status DecodeMB(AVCDecObject *decvid)
 
             currMB->mbMode = AVC_SKIP;
             currMB->MbPartWidth = currMB->MbPartHeight = 16;
-#if 0
-            currMB->MBPartPredMode[0][0] = AVC_Pred_L0;
-#endif
             currMB->NumMbPart = 1;
             currMB->NumSubMbPart[0] = currMB->NumSubMbPart[1] =
                                           currMB->NumSubMbPart[2] = currMB->NumSubMbPart[3] = 1; //
@@ -220,12 +217,6 @@ AVCDec_Status DecodeMB(AVCDecObject *decvid)
             se_v(stream, &temp);
             if (temp)
             {
-#if 0
-                if (temp < -26 || temp > 25)
-                {
-                    return AVCDEC_FAIL;
-                }
-#endif
                 temp += (video->QPy + 52);
                 currMB->QPy = video->QPy = temp - 52 * (temp * 79 >> 12);
                 if (currMB->QPy > 51 || currMB->QPy < 0)
@@ -253,16 +244,6 @@ AVCDec_Status DecodeMB(AVCDecObject *decvid)
         {
             BitstreamByteAlign(stream);
         }
-#if 0
-        while (!byte_aligned(stream))
-        {
-            BitstreamRead1Bit(stream, &zero_bit);
-            if (zero_bit)
-            {
-                return AVCDEC_FAIL; /* syntax error */
-            }
-        }
-#endif
         /* decode pcm_byte[i] */
         DecodeIntraPCM(video, stream);
 
@@ -366,24 +347,12 @@ AVCDec_Status mb_pred(AVCCommonObj *video, AVCMacroblock *currMB, AVCDecBitstrea
         {
             for (mbPartIdx = 0; mbPartIdx < currMB->NumMbPart; mbPartIdx++)
             {
-#if 0
-                if (currMB->MBPartPredMode[mbPartIdx][0] != AVC_Pred_L1)
-                {
-                    te_v(stream, (uint*)&code, max_ref_idx);
-                    currMB->ref_idx_L0[mbPartIdx] = code;
-                    if (currMB->ref_idx_L0[mbPartIdx] > max_ref_idx)
-                    {
-                        return AVCDEC_FAIL; /* out of range */
-                    }
-                }
-#else
                 te_v(stream, &code, max_ref_idx);
                 if (code > (uint)max_ref_idx)
                 {
                     return AVCDEC_FAIL;
                 }
                 currMB->ref_idx_L0[mbPartIdx] = code;
-#endif
             }
         }
 
@@ -404,49 +373,12 @@ AVCDec_Status mb_pred(AVCCommonObj *video, AVCMacroblock *currMB, AVCDecBitstrea
 
         /* see subclause 7.4.5.1 for the range of ref_idx_lX */
         max_ref_idx = sliceHdr->num_ref_idx_l1_active_minus1;
-#if 0
-        /* decode ref index for L1 */
-        if (sliceHdr->num_ref_idx_l1_active_minus1 > 0)
-        {
-            for (mbPartIdx = 0; mbPartIdx < currMB->NumMbPart; mbPartIdx++)
-            {
-                if (/*(sliceHdr->num_ref_idx_l1_active_minus1>0 || currMB->mb_field_decoding_flag) &&*/
-                    currMB->MBPartPredMode[mbPartIdx][0] != AVC_Pred_L0)
-                {
-                    te_v(stream, (uint*)&(currMB->ref_idx_L1[mbPartIdx]), max_ref_idx);
-                    if (currMB->ref_idx_L1[mbPartIdx] > max_ref_idx)
-                    {
-                        return AVCDEC_FAIL; /* out of range */
-                    }
-                }
-            }
-        }
-#endif
         /* decode mvd_l0 */
         for (mbPartIdx = 0; mbPartIdx < currMB->NumMbPart; mbPartIdx++)
         {
-#if 0
-            if (currMB->MBPartPredMode[mbPartIdx][0] != AVC_Pred_L1)
-            {
-                se_v(stream, &(video->mvd_l0[mbPartIdx][0][0]));
-                se_v(stream, &(video->mvd_l0[mbPartIdx][0][1]));
-            }
-#else
             se_v(stream, &(video->mvd_l0[mbPartIdx][0][0]));
             se_v(stream, &(video->mvd_l0[mbPartIdx][0][1]));
-#endif
         }
-#if 0
-        /* decode mvd_l1 */
-        for (mbPartIdx = 0; mbPartIdx < currMB->NumMbPart; mbPartIdx++)
-        {
-            if (currMB->MBPartPredMode[mbPartIdx][0] != AVC_Pred_L0)
-            {
-                se_v(stream, &(video->mvd_l1[mbPartIdx][0][0]));
-                se_v(stream, &(video->mvd_l1[mbPartIdx][0][1]));
-            }
-        }
-#endif
     }
 
     return AVCDEC_SUCCESS;
@@ -486,20 +418,12 @@ AVCDec_Status sub_mb_pred(AVCCommonObj *video, AVCMacroblock *currMB, AVCDecBits
     {
         for (mbPartIdx = 0; mbPartIdx < 4; mbPartIdx++)
         {
-#if 0
-            if (currMB->MBPartPredMode[mbPartIdx][0] != AVC_Pred_L1)
-            {
-                te_v(stream, (uint*)&code, max_ref_idx);
-                currMB->ref_idx_L0[mbPartIdx] = code;
-            }
-#else
             te_v(stream, (uint*)&code, max_ref_idx);
             if (code > max_ref_idx)
             {
                 return AVCDEC_FAIL;
             }
             currMB->ref_idx_L0[mbPartIdx] = code;
-#endif
         }
     }
     /* see subclause 7.4.5.1 for the range of ref_idx_lX */
@@ -507,55 +431,16 @@ AVCDec_Status sub_mb_pred(AVCCommonObj *video, AVCMacroblock *currMB, AVCDecBits
     max_ref_idx = sliceHdr->num_ref_idx_l1_active_minus1;
     /*	if(video->MbaffFrameFlag && currMB->mb_field_decoding_flag)
     		max_ref_idx = 2*sliceHdr->num_ref_idx_l1_active_minus1 + 1;*/
-#if 0
-    if (sliceHdr->num_ref_idx_l1_active_minus1 > 0)
-    {
-        for (mbPartIdx = 0; mbPartIdx < 4; mbPartIdx++)
-        {
-            if (currMB->MBPartPredMode[mbPartIdx][0] != AVC_Pred_L0)
-            {
-                te_v(stream, (uint*)&code, max_ref_idx);
-                currMB->ref_idx_L1[mbPartIdx] = code;
-            }
-        }
-    }
-#endif
     for (mbPartIdx = 0; mbPartIdx < 4; mbPartIdx++)
     {
-#if 0
-        if (/*currMB->subMbMode[mbPartIdx]!=AVC_BDirect8 &&*/
-            currMB->MBPartPredMode[mbPartIdx][0] != AVC_Pred_L1)
-        {
-            for (subMbPartIdx = 0; subMbPartIdx < currMB->NumSubMbPart[mbPartIdx]; subMbPartIdx++)
-            {
-                se_v(stream, &(video->mvd_l0[mbPartIdx][subMbPartIdx][0]));
-                se_v(stream, &(video->mvd_l0[mbPartIdx][subMbPartIdx][1]));
-            }
-        }
-#else
         for (subMbPartIdx = 0; subMbPartIdx < currMB->NumSubMbPart[mbPartIdx]; subMbPartIdx++)
         {
             se_v(stream, &(video->mvd_l0[mbPartIdx][subMbPartIdx][0]));
             se_v(stream, &(video->mvd_l0[mbPartIdx][subMbPartIdx][1]));
         }
-#endif
         /* used in deblocking */
         currMB->RefIdx[mbPartIdx] = video->RefPicList0[currMB->ref_idx_L0[mbPartIdx]]->RefIdx;
     }
-#if 0
-    for (mbPartIdx = 0; mbPartIdx < 4; mbPartIdx++)
-    {
-        if (/*currMB->subMbMode[mbPartIdx]!=AVC_BDirect8 &&*/
-            currMB->MBPartPredMode[mbPartIdx][0] != AVC_Pred_L0)
-        {
-            for (subMbPartIdx = 0; subMbPartIdx < currMB->NumSubMbPart[mbPartIdx]; subMbPartIdx++)
-            {
-                se_v(stream, &(video->mvd_l1[mbPartIdx][subMbPartIdx][0]));
-                se_v(stream, &(video->mvd_l1[mbPartIdx][subMbPartIdx][1]));
-            }
-        }
-    }
-#endif
     return AVCDEC_SUCCESS;
 }
 
@@ -573,10 +458,6 @@ void InterpretMBModeI(AVCMacroblock *mblock, uint mb_type)
     {
         mblock->mbMode = AVC_I16;
         mblock->i16Mode = (AVCIntra16x16PredMode)((mb_type - 1) & 0x3);
-#if 0
-        mblock->CBP = (((mb_type - 1) / 4) % 3) << 4;  /* chroma */
-        mblock->CBP |= ((mb_type > 12) ? 15 : 0); /* luma */
-#else
         if (mb_type > 12)
         {
             mblock->CBP = (((mb_type - 13) >> 2) << 4) + 0x0F;
@@ -585,7 +466,6 @@ void InterpretMBModeI(AVCMacroblock *mblock, uint mb_type)
         {
             mblock->CBP = ((mb_type - 1) >> 2) << 4;
         }
-#endif
     }
     else
     {
@@ -603,12 +483,6 @@ void InterpretMBModeP(AVCMacroblock *mblock, uint mb_type)
     const static AVCMBMode map2mbMode[5] = {AVC_P16, AVC_P16x8, AVC_P8x16, AVC_P8, AVC_P8ref0};
 
     mblock->mb_intra = FALSE;
-#if 0
-    for (i = 0; i < 4; i++)
-    {
-        mblock->MBPartPredMode[i][0] = AVC_Pred_L0;
-    }
-#endif
     if (mb_type < 5)
     {
         mblock->mbMode = map2mbMode[mb_type];
@@ -705,12 +579,6 @@ void InterpretSubMBModeP(AVCMacroblock *mblock, uint *sub_mb_type)
         mblock->NumSubMbPart[i] = map2numSubPart[sub_type];
         mblock->SubMbPartWidth[i] = map2subPartWidth[sub_type];
         mblock->SubMbPartHeight[i] = map2subPartHeight[sub_type];
-#if 0
-        for (j = 0; j < 4; j++)
-        {
-            mblock->MBPartPredMode[i][j] = AVC_Pred_L0;
-        }
-#endif
     }
 
     return ;
@@ -843,7 +711,6 @@ AVCDec_Status DecodeIntra4x4Mode(AVCCommonObj *video, AVCMacroblock *currMB, AVC
     }
     return AVCDEC_SUCCESS;
 }
-#if 1
 AVCDec_Status ConcealSlice(AVCDecObject *decvid, int mbnum_start, int mbnum_end)
 {
     AVCCommonObj *video = decvid->common;
@@ -901,5 +768,4 @@ AVCDec_Status ConcealSlice(AVCDecObject *decvid, int mbnum_start, int mbnum_end)
 
     return AVCDEC_SUCCESS;
 }
-#endif
 

@@ -19,34 +19,16 @@
 #include "pvlogger.h"
 
 // Add/remove header file and modify function below for different CC support
-#if 0
-#include "cczoomrotation12.h"
-#endif
 #include "cczoomrotation16.h"
-#if 0
-#include "cczoomrotation24.h"
-#endif
 
 
 PVMFStatus PVFMVideoMIO::CreateYUVToRGBColorConverter(ColorConvertBase*& aCC, PVMFFormatType aRGBFormatType)
 {
     int32 leavecode = 0;
-#if 0
-    if (aRGBFormatType == PVMF_MIME_RGB12)
-    {
-        OSCL_TRY(leavecode, aCC = ColorConvert12::NewL());
-    }
-#endif
     if (aRGBFormatType == PVMF_MIME_RGB16)
     {
         OSCL_TRY(leavecode, aCC = ColorConvert16::NewL());
     }
-#if 0
-    if (aRGBFormatType == PVMF_MIME_RGB24)
-    {
-        OSCL_TRY(leavecode, aCC = ColorConvert24::NewL());
-    }
-#endif
     else
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFMVideoMIO::CreateYUVToRGBColorConverter() Unsupported RGB mode for color converter. Asserting"));
@@ -66,25 +48,11 @@ PVMFStatus PVFMVideoMIO::DestroyYUVToRGBColorConverter(ColorConvertBase*& aCC, P
 {
     OSCL_ASSERT(aCC != NULL);
 
-#if 0
-    if (aRGBFormatType == PVMF_MIME_RGB12)
-    {
-        OSCL_DELETE(((ColorConvert12*)aCC));
-        aCC = NULL;
-    }
-#endif
     if (aRGBFormatType == PVMF_MIME_RGB16)
     {
         OSCL_DELETE(((ColorConvert16*)aCC));
         aCC = NULL;
     }
-#if 0
-    if (aRGBFormatType == PVMF_MIME_RGB24)
-    {
-        OSCL_DELETE(((ColorConvert24*)aCC));
-        aCC = NULL;
-    }
-#endif
     else
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFMVideoMIO::CreateYUVToRGBColorConverter() Unsupported RGB mode for color converter. Asserting"));

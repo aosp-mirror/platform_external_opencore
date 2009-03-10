@@ -136,9 +136,6 @@ extern "C"
     PV_STATUS BitstreamShowBits32HC(BitstreamDecVideo *stream, uint32 *code);
 
 
-#if 0
-    PV_STATUS PV_BitstreamFlushBits(BitstreamDecVideo *stream, int nbits);
-#endif
 
     PV_STATUS BitstreamCheckEndBuffer(BitstreamDecVideo *stream);
 

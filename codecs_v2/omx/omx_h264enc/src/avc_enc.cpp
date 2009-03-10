@@ -438,6 +438,7 @@ OMX_ERRORTYPE AvcEncoder_OMX::AvcEncInit(OMX_VIDEO_PORTDEFINITIONTYPE aInputPara
 #else
     aEncOption.num_slice_group = 1;
     aEncOption.fmo_type = 0;	//Disabled in this case
+    aEncOption.use_overrun_buffer = AVC_ON;
 #endif
 
     aEncOption.db_filter = AVC_ON;

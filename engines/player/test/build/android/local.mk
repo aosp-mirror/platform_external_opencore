@@ -54,6 +54,6 @@ PE_TARGET = pvplayer_engine_test
 run_pe_test:: $(REALTARGET) default
 	$(quiet) ${RM} -r ${PE_TEST_DIR}
 	$(quiet) ${MKDIR} ${PE_TEST_DIR}
-	$(quiet) $(CP) $(SRC_ROOT)/tools_v2/build/package/opencore/pvplayer.cfg $(PE_TEST_DIR)
+	$(quiet) $(CP) $(SRC_ROOT)/tools_v2/build/package/opencore/elem/default/pvplayer.cfg $(PE_TEST_DIR)
 	$(quiet) $(CP) -r $(SRC_ROOT)/engines/player/test/data/* $(PE_TEST_DIR)
 	$(quiet) export LD_LIBRARY_PATH=${BUILD_ROOT}/installed_lib/${HOST_ARCH}; cd $(PE_TEST_DIR) && ${BUILD_ROOT}/bin/${HOST_ARCH}/$(PE_TARGET) $(TEST_ARGS) $(SOURCE_ARGS)

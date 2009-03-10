@@ -171,7 +171,6 @@ void audio_only_test::TimerCallback()
 {
     int error = 1;
     timer_elapsed = true;
-#if 1
     if (iSelAudioSource != NULL)
     {
         OSCL_TRY(error, iAudioRemoveSourceId = terminal->RemoveDataSource(*iSelAudioSource));
@@ -194,9 +193,6 @@ void audio_only_test::TimerCallback()
             disconnect();
         }
     }
-#else
-    disconnect();
-#endif
 
 }
 

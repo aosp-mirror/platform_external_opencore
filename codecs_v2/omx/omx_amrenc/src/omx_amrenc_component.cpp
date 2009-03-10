@@ -529,7 +529,7 @@ void OmxComponentAmrEncoderAO::ProcessData()
                  * to be used in next decode cycle and return the existing input buffer*/
                 if (RemainderInputBytes > 0)
                 {
-                    oscl_memcpy(ipTempInputBuffer, &ipFrameDecodeBuffer[iInputCurrLength], RemainderInputBytes);
+                    oscl_memmove(ipTempInputBuffer, &ipFrameDecodeBuffer[iInputCurrLength], RemainderInputBytes);
                     iTempInputBufferLength = RemainderInputBytes;
                 }
 

@@ -77,9 +77,6 @@
 #if BUILD_RM_FF_PARSER_NODE
 #include "pvmf_rmffparser_factory.h"
 #endif
-#if BUILD_DIVX_FF_PARSER_NODE
-#include "pvmf_divxffparser_factory.h"
-#endif
 #if BUILD_STREAMING_MANAGER_NODE
 #include "pvmf_sm_node_factory.h"
 #endif
@@ -114,9 +111,6 @@
 #endif
 #if BUILD_AMR_FF_REC
 #include "pvamrffrec_factory.h"
-#endif
-#if BUILD_DIVX_FF_REC
-#include "pvdivxffrec_factory.h"
 #endif
 #ifdef USE_LOADABLE_MODULES
 #include "oscl_shared_library.h"
@@ -423,17 +417,6 @@ void PVPlayerRegistryPopulator::RegisterAllNodes(PVPlayerNodeRegistryInterface* 
     nodeinfo.iNodeCreateFunc = PVMFStillImageNodeFactory::CreateStillImageNode;
     aRegistry->RegisterNode(nodeinfo);
 #endif
-#if BUILD_DIVX_FF_PARSER_NODE
-    //For PVMFDIVXParserNode
-    nodeinfo.iInputTypes.clear();
-    nodeinfo.iInputTypes.push_back(PVMF_MIME_DIVXFF);
-    nodeinfo.iNodeUUID = KPVMFDIVXFFParserNodeUuid;
-    nodeinfo.iOutputType.clear();
-    nodeinfo.iOutputType.push_back(PVMF_MIME_FORMAT_UNKNOWN);
-    nodeinfo.iNodeCreateFunc = PVMFDIVXParserNodeFactory::CreatePVMFDIVXParserNode;
-    nodeinfo.iNodeReleaseFunc = PVMFDIVXParserNodeFactory::DeletePVMFDIVXParserNode;
-    aRegistry->RegisterNode(nodeinfo);
-#endif
 }
 
 void PVPlayerRegistryPopulator::UnregisterAllNodes(PVPlayerNodeRegistryInterface* aRegistry, OsclAny* aContext)
@@ -522,20 +505,6 @@ void PVPlayerRegistryPopulator::RegisterAllRecognizers(PVPlayerRecognizerRegistr
     else
     {
         OSCL_DELETE(((PVRMFFRecognizerFactory*)tmpfac));
-        tmpfac = NULL;
-        return;
-    }
-#endif
-#if BUILD_DIVX_FF_REC
-    tmpfac = OSCL_STATIC_CAST(PVMFRecognizerPluginFactory*, OSCL_NEW(PVDIVXFFRecognizerFactory, ()));
-    if (PVMFRecognizerRegistry::RegisterPlugin(*tmpfac) == PVMFSuccess)
-    {
-        aRegistry->RegisterRecognizer(tmpfac);
-        nodeList->push_back(tmpfac);
-    }
-    else
-    {
-        OSCL_DELETE(((PVDIVXFFRecognizerFactory*)tmpfac));
         tmpfac = NULL;
         return;
     }

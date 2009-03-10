@@ -67,6 +67,7 @@ bool PVMFOMXEncPort::IsFormatSupported(PVMFFormatType aFmt)
             (aFmt == PVMF_MIME_H2631998) ||
             (aFmt == PVMF_MIME_H2632000) ||
             (aFmt == PVMF_MIME_AMR_IETF) ||
+            (aFmt == PVMF_MIME_AMRWB_IETF) ||
             (aFmt == PVMF_MIME_AMR_IF2) ||
             (aFmt == PVMF_MIME_ADTS) ||
             (aFmt == PVMF_MIME_ADIF) ||
@@ -112,6 +113,7 @@ PVMFOMXEncPort::pvmiSetPortFormatSpecificInfoSync(OsclRefCounterMemFrag& aMemFra
 
             kvp.value.key_specific_value = (OsclAny*)(aMemFrag.getMemFragPtr());
             kvp.capacity = aMemFrag.getMemFragSize();
+            kvp.length = aMemFrag.getMemFragSize();
             PvmiKvp* retKvp = NULL; // for return value
             int32 err;
             OSCL_TRY(err, config->setParametersSync(NULL, &kvp, 1, retKvp););
@@ -254,6 +256,7 @@ PVMFStatus PVMFOMXEncPort::verifyConnectedPortParametersSync(const char* aFormat
                 oscl_strncpy(kvp.key, aFormatValType, kvp.length);
 
                 kvp.value.key_specific_value = (OsclAny*)(aFormatValue->getMemFragPtr());
+                kvp.length = aFormatValue->getMemFragSize();
                 kvp.capacity = aFormatValue->getMemFragSize();
                 int32 err;
                 OSCL_TRY(err, status = capConfig->verifyParametersSync(NULL, &kvp, 1););
@@ -376,7 +379,7 @@ PVMFStatus PVMFOMXEncPort::GetOutputParametersSync(PvmiKeyType identifier, PvmiK
 
         if (pv_mime_strcmp(param1, param2) == 0)
         {
-            num_parameter_elements = 10;
+            num_parameter_elements = 11;
             status = AllocateKvp(parameters, (OMX_STRING)OUTPUT_FORMATS_VALTYPE, num_parameter_elements);
             if (status != PVMFSuccess)
             {
@@ -390,10 +393,11 @@ PVMFStatus PVMFOMXEncPort::GetOutputParametersSync(PvmiKeyType identifier, PvmiK
                 parameters[3].value.pChar_value = (char*)PVMF_MIME_H264_VIDEO_RAW;
                 parameters[4].value.pChar_value = (char*)PVMF_MIME_H264_VIDEO_MP4;
                 parameters[5].value.pChar_value = (char*)PVMF_MIME_AMR_IETF;
-                parameters[6].value.pChar_value = (char*)PVMF_MIME_AMR_IF2;
-                parameters[7].value.pChar_value = (char*)PVMF_MIME_ADTS;
-                parameters[8].value.pChar_value = (char*)PVMF_MIME_ADIF;
-                parameters[9].value.pChar_value = (char*)PVMF_MIME_MPEG4_AUDIO;
+                parameters[6].value.pChar_value = (char*)PVMF_MIME_AMRWB_IETF;
+                parameters[7].value.pChar_value = (char*)PVMF_MIME_AMR_IF2;
+                parameters[8].value.pChar_value = (char*)PVMF_MIME_ADTS;
+                parameters[9].value.pChar_value = (char*)PVMF_MIME_ADIF;
+                parameters[10].value.pChar_value = (char*)PVMF_MIME_MPEG4_AUDIO;
 
             }
         }
@@ -492,7 +496,7 @@ PVMFStatus PVMFOMXEncPort::GetOutputParametersSync(PvmiKeyType identifier, PvmiK
         {
 
             // NOTE: we assume that port format will be set before this call
-            if ((iFormat == PVMF_MIME_AMR_IETF) || (iFormat == PVMF_MIME_AMR_IF2) ||
+            if ((iFormat == PVMF_MIME_AMR_IETF) || (iFormat == PVMF_MIME_AMRWB_IETF) || (iFormat == PVMF_MIME_AMR_IF2) ||
                     (iFormat == PVMF_MIME_ADTS) || (iFormat == PVMF_MIME_ADIF) || (iFormat == PVMF_MIME_MPEG4_AUDIO))
             {
                 parameters[0].value.uint32_value = iOMXNode->GetOutputBitRate(); // use audio version - void arg
@@ -558,6 +562,7 @@ PVMFStatus PVMFOMXEncPort::GetOutputParametersSync(PvmiKeyType identifier, PvmiK
     }
     else if ((pv_mime_strcmp(identifier, OUTPUT_TIMESCALE_CUR_QUERY) == 0) &&
              ((iFormat == PVMF_MIME_AMR_IETF) ||
+              (iFormat == PVMF_MIME_AMRWB_IETF) ||
               (iFormat == PVMF_MIME_AMR_IF2) ||
               (iFormat == PVMF_MIME_ADTS) ||
               (iFormat == PVMF_MIME_ADIF) ||
@@ -578,7 +583,30 @@ PVMFStatus PVMFOMXEncPort::GetOutputParametersSync(PvmiKeyType identifier, PvmiK
 
         }
     }
-
+    else if (pv_mime_strcmp(identifier, PVMF_FORMAT_SPECIFIC_INFO_KEY) == 0)
+    {
+        num_parameter_elements = 1;
+        status = AllocateKvp(parameters, (PvmiKeyType)PVMF_FORMAT_SPECIFIC_INFO_KEY, num_parameter_elements);
+        if (status != PVMFSuccess)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFOMXEncPort::GetOutputParametersSync: Error - AllocateKvp failed. status=%d", status));
+            return status;
+        }
+        else
+        {
+            OsclRefCounterMemFrag refMemFrag;
+            if (iOMXNode->GetVolHeader(refMemFrag))
+            {
+                parameters[0].value.key_specific_value = refMemFrag.getMemFragPtr();
+                parameters[0].capacity = refMemFrag.getMemFragSize();
+                parameters[0].length = refMemFrag.getMemFragSize();
+            }
+            else
+            {
+                return PVMFFailure;
+            }
+        }
+    }
 
     return status;
 }
@@ -644,7 +672,8 @@ PVMFStatus PVMFOMXEncPort::VerifyAndSetParameter(PvmiKvp* aKvp, bool aSetParam)
             if (aSetParam)
             {
                 iFormat = aKvp->value.pChar_value;
-                iOMXNode->SetInputFormat(iFormat);
+                if (iOMXNode->SetInputFormat(iFormat) != PVMFSuccess)
+                    return PVMFFailure;
             }
             return PVMFSuccess;
         }
@@ -664,6 +693,7 @@ PVMFStatus PVMFOMXEncPort::VerifyAndSetParameter(PvmiKvp* aKvp, bool aSetParam)
                 pv_mime_strcmp(aKvp->value.pChar_value, PVMF_MIME_H264_VIDEO_RAW) == 0 ||
                 pv_mime_strcmp(aKvp->value.pChar_value, PVMF_MIME_H264_VIDEO_MP4) == 0 ||
                 pv_mime_strcmp(aKvp->value.pChar_value, PVMF_MIME_AMR_IETF) == 0 ||
+                pv_mime_strcmp(aKvp->value.pChar_value, PVMF_MIME_AMRWB_IETF) == 0 ||
                 pv_mime_strcmp(aKvp->value.pChar_value, PVMF_MIME_AMR_IF2) == 0 ||
                 pv_mime_strcmp(aKvp->value.pChar_value, PVMF_MIME_ADIF) == 0 ||
                 pv_mime_strcmp(aKvp->value.pChar_value, PVMF_MIME_ADTS) == 0 ||
@@ -672,7 +702,8 @@ PVMFStatus PVMFOMXEncPort::VerifyAndSetParameter(PvmiKvp* aKvp, bool aSetParam)
             if (aSetParam)
             {
                 iFormat = aKvp->value.pChar_value;
-                iOMXNode->SetCodecType(iFormat);
+                if (iOMXNode->SetCodecType(iFormat) != PVMFSuccess)
+                    return PVMFFailure;
             }
             return PVMFSuccess;
         }
@@ -762,7 +793,9 @@ PVMFStatus PVMFOMXEncPort::NegotiateInputSettings(PvmiCapabilityAndConfig* aConf
 
     // Set format of this port, peer port and container node
     iFormat = selectedKvp->value.pChar_value;
-    iOMXNode->SetInputFormat(iFormat);
+    if (iOMXNode->SetInputFormat(iFormat) != PVMFSuccess)
+        return PVMFFailure;
+
     err = Config_ParametersSync(aConfig, selectedKvp, retKvp);
     OSCL_FIRST_CATCH_ANY(err,
                          PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFOMXEncPort::NegotiateInputSettings: Error - aConfig->setParametersSync failed. err=%d", err));
@@ -780,7 +813,9 @@ PVMFStatus PVMFOMXEncPort::NegotiateInputSettings(PvmiCapabilityAndConfig* aConf
         // audio i.e. AMR for now
 
         // first set bitspersample to 16
-        iOMXNode->SetInputBitsPerSample(PVMF_AMRENC_DEFAULT_BITSPERSAMPLE);
+        status = iOMXNode->SetInputBitsPerSample(PVMF_AMRENC_DEFAULT_BITSPERSAMPLE);
+        if (status != PVMFSuccess)
+            return status;
 
 
         status = aConfig->getParametersSync(NULL, (PvmiKeyType)AUDIO_OUTPUT_SAMPLING_RATE_CUR_QUERY, kvp, numParams, NULL);
@@ -799,7 +834,10 @@ PVMFStatus PVMFOMXEncPort::NegotiateInputSettings(PvmiCapabilityAndConfig* aConf
 
 
         // Forward settings to encoder
-        iOMXNode->SetInputSamplingRate(samplingRate);
+        status = iOMXNode->SetInputSamplingRate(samplingRate);
+        if (status != PVMFSuccess)
+            return status;
+
         kvp = NULL;
         numParams = 0;
 
@@ -818,7 +856,10 @@ PVMFStatus PVMFOMXEncPort::NegotiateInputSettings(PvmiCapabilityAndConfig* aConf
         }
 
         // Forward settings to encoder
-        iOMXNode->SetInputNumChannels(numChannels);
+        status = iOMXNode->SetInputNumChannels(numChannels);
+        if (status != PVMFSuccess)
+            return status;
+
         kvp = NULL;
         numParams = 0;
 
@@ -888,7 +929,10 @@ PVMFStatus PVMFOMXEncPort::NegotiateInputSettings(PvmiCapabilityAndConfig* aConf
 
         }
         // Set input frame size of container node
-        iOMXNode->SetInputFrameSize(width, height, orientation);
+        status = iOMXNode->SetInputFrameSize(width, height, orientation);
+        if (status != PVMFSuccess)
+            return status;
+
 
         // Get video frame rate from peer
         status = aConfig->getParametersSync(NULL, (OMX_STRING)VIDEO_OUTPUT_FRAME_RATE_CUR_QUERY, kvp, numParams, NULL);
@@ -899,7 +943,7 @@ PVMFStatus PVMFOMXEncPort::NegotiateInputSettings(PvmiCapabilityAndConfig* aConf
         }
 
         // Set input frame rate of container node
-        iOMXNode->SetInputFrameRate(kvp[0].value.float_value);
+        status = iOMXNode->SetInputFrameRate(kvp[0].value.float_value);
         aConfig->releaseParameters(NULL, kvp, numParams);
         kvp = NULL;
         numParams = 0;
@@ -1022,6 +1066,7 @@ void PVMFOMXEncPort::SendSPS_PPS(OsclMemoryFragment *aSPSs, int aNumSPSs, OsclMe
 
             sps->value.key_specific_value = aSPSs[ii].ptr;
             sps->capacity = aSPSs[ii].len;
+            sps->length = aSPSs[ii].len;
             config->setParametersSync(NULL, sps, 1, ret);
             if (ret)
             {
@@ -1039,6 +1084,7 @@ void PVMFOMXEncPort::SendSPS_PPS(OsclMemoryFragment *aSPSs, int aNumSPSs, OsclMe
 
             pps->value.key_specific_value = aPPSs[ii].ptr;
             pps->capacity = aPPSs[ii].len;
+            pps->length = aPPSs[ii].len;
             config->setParametersSync(NULL, pps, 1, ret);
             if (ret)
             {

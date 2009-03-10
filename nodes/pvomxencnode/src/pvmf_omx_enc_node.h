@@ -103,11 +103,11 @@
 #endif
 
 #ifndef OMX_Core_h
-#include "omx_core.h"
+#include "OMX_Core.h"
 #endif
 
 #ifndef OMX_Component_h
-#include "omx_component.h"
+#include "OMX_Component.h"
 #endif
 
 #ifndef PVMF_OMX_ENC_CALLBACKS_H_INCLUDED
@@ -195,12 +195,12 @@ OMX_ERRORTYPE CallbackFillBufferDoneEnc(OMX_OUT OMX_HANDLETYPE aComponent,
 //						2) Deallocates the pvci buffer wrapper and the rest of accompanying structures
 //					  Deallocator is created as part of the wrapper, and travels with the buffer wrapper
 
-class PVOMXBufferSharedPtrWrapperCombinedCleanupDA : public OsclDestructDealloc
+class PVOMXEncBufferSharedPtrWrapperCombinedCleanupDA : public OsclDestructDealloc
 {
     public:
-        PVOMXBufferSharedPtrWrapperCombinedCleanupDA(Oscl_DefAlloc* allocator, void *pMempoolData) :
+        PVOMXEncBufferSharedPtrWrapperCombinedCleanupDA(Oscl_DefAlloc* allocator, void *pMempoolData) :
                 buf_alloc(allocator), ptr_to_data_to_dealloc(pMempoolData) {};
-        virtual ~PVOMXBufferSharedPtrWrapperCombinedCleanupDA() {};
+        virtual ~PVOMXEncBufferSharedPtrWrapperCombinedCleanupDA() {};
 
         virtual void destruct_and_dealloc(OsclAny* ptr)
         {

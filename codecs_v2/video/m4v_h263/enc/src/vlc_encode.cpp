@@ -2001,27 +2001,6 @@ Int IntraDC_dpcm(Int val, Int lum, BitstreamEncVideo *bitstream)
 /* ======================================================================== */
 Int cal_dc_scalerENC(Int QP, Int type) ;
 
-#if 0 // optimize div by QP, doesn't work. 
-const static short scaleArrayQP[32] = {0, 16384, 8192, 5462,  /* 14 */
-                                       4096, 3277, 2731, 2341,
-                                       4096, 3641, 3277, 2979,  /* 15 */
-                                       2731, 2521, 2341, 2185,
-                                       4096, 3856, 3641, 3450,  /* 16 */
-                                       3277, 3121, 2979, 2850,
-                                       5462, 5243, 5042, 4855,  /* 17 */
-                                       4682, 4520, 4370, 4229
-                                      };
-#define PREDICT_AC  for (m = 0; m < 7; m++){ \
-						tmp = DCAC[0]*QPtmp;\
-						if(tmp<0)	tmp = (tmp-(QP/2));\
-						else		tmp = (tmp+(QP/2));\
-						tmp = tmp*scaleQP;\
-						tmp>>=shiftQP;\
-						tmp+=((UInt)tmp>>31);\
-                        pred[m] = tmp;\
-						DCAC++;\
-					}
-#else
 
 #define PREDICT_AC  for (m = 0; m < 7; m++){ \
 						tmp = DCAC[0]*QPtmp;\
@@ -2031,7 +2010,6 @@ const static short scaleArrayQP[32] = {0, 16384, 8192, 5462,  /* 14 */
 						DCAC++;\
 					}
 
-#endif
 
 Void DCACPred(VideoEncData *video, UChar Mode, Int *intraDC_decision, Int intraDCVlcQP)
 {
@@ -2048,10 +2026,6 @@ Void DCACPred(VideoEncData *video, UChar Mode, Int *intraDC_decision, Int intraD
     Int x_pos = video->outputMB->mb_x; /* 5/28/01 */
     Int y_pos = video->outputMB->mb_y;
     UChar QP = video->QPMB[mbnum];
-#if 0
-    Int	  scaleQP = scaleArrayQP[QP];
-    Int	  shiftQP = 14 + (QP >> 3);
-#endif
     UChar *QPMB = video->QPMB;
     UChar *slice_nb = video->sliceNo;
     Bool bACPredEnable = video->encParams->ACDCPrediction;

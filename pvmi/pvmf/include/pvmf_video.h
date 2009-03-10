@@ -50,6 +50,8 @@ class PVMFYuvFormatSpecificInfo0
             display_height = 0;
             width = 0;
             height = 0;
+            num_buffers = 0;
+            buffer_size = 0;
         };
 
         virtual ~PVMFYuvFormatSpecificInfo0() {};
@@ -60,6 +62,9 @@ class PVMFYuvFormatSpecificInfo0
         uint32 display_height;
         uint32 width;
         uint32 height;
+
+        uint32 num_buffers;
+        uint32 buffer_size;
 };
 
 class PVMFVideoResolution

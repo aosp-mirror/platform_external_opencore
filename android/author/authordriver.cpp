@@ -383,7 +383,7 @@ void AuthorDriver::handleSetAudioEncoder(set_audio_encoder_command *ac)
         iAudioEncoderMimeType = "/x-pvmf/audio/encode/amr-nb";
         break;
 
-    default:
+	default:
         commandFailed(ac);
         return;
     }
@@ -736,12 +736,12 @@ void AuthorDriver::CommandCompleted(const PVCmdResponse& aResponse)
     if (ac->which == AUTHOR_SET_AUDIO_ENCODER) {
         switch(mAudioEncoder) {
         case AUDIO_ENCODER_AMR_NB: {
-            PVAMREncExtensionInterface *config = OSCL_STATIC_CAST(PVAMREncExtensionInterface*,
+            PVAudioEncExtensionInterface *config = OSCL_STATIC_CAST(PVAudioEncExtensionInterface*,
                                                                   mAudioEncoderConfig);
-            if (config) {
-                config->SetMaxNumOutputFramesPerBuffer(10);
-                config->SetOutputBitRate(GSM_AMR_5_15); // 5150 bps XXX
-            }
+                if (config) {
+                    config->SetMaxNumOutputFramesPerBuffer(10);
+                    config->SetOutputBitRate(GSM_AMR_5_15); // 5150 bps XXX
+                }
             } break;
 
         default:

@@ -141,7 +141,7 @@ AVCSampleEntry::AVCSampleEntry(MP4_FF_FILE *fp, uint32 size, uint32 type)
         _predefined3 = (int16)data16;
         count -= 2;
 
-        while (count > 0)
+        while (count >= DEFAULT_ATOM_SIZE)
         {
             uint32 atomType = UNKNOWN_ATOM;
             uint32 atomSize = 0;
@@ -198,6 +198,12 @@ AVCSampleEntry::AVCSampleEntry(MP4_FF_FILE *fp, uint32 size, uint32 type)
                 AtomUtils::seekFromCurrPos(fp, atomSize);
             }
 
+        }
+        if (count > 0)
+        {
+            //skip over any left over bytes
+            AtomUtils::seekFromCurrPos(fp, count);
+            count = 0;
         }
         if (createDecoderSpecificInfo(fp))
         {

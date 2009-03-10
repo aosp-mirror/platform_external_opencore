@@ -1061,9 +1061,9 @@ void PVPlayerDatapath::NodeCommandCompleted(const PVMFCmdResp& aResponse)
     switch (iState)
     {
         case PREPARE_INIT:
+            --iPendingCmds;
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
-                --iPendingCmds;
                 if (iPendingCmds == 0)
                 {
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerDatapath::NodeCommandCompleted() All node Init() requests completed successfully"));
@@ -1080,6 +1080,7 @@ void PVPlayerDatapath::NodeCommandCompleted(const PVMFCmdResp& aResponse)
             break;
 
         case PREPARE_REQPORT:
+            --iPendingCmds;
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
                 if (aResponse.GetContext() == (OsclAny*)iSourceNode)
@@ -1098,8 +1099,6 @@ void PVPlayerDatapath::NodeCommandCompleted(const PVMFCmdResp& aResponse)
                 {
                     iDecOutPort = (PVMFPortInterface*)(aResponse.GetEventData());
                 }
-
-                --iPendingCmds;
                 if (iPendingCmds == 0)
                 {
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerDatapath::NodeCommandCompleted() All node RequestPort() requests completed successfully"));
@@ -1116,9 +1115,9 @@ void PVPlayerDatapath::NodeCommandCompleted(const PVMFCmdResp& aResponse)
             break;
 
         case PREPARE_PREPARE:
+            --iPendingCmds;
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
-                --iPendingCmds;
                 if (iPendingCmds == 0)
                 {
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerDatapath::NodeCommandCompleted() All node Prepare() requests completed successfully"));
@@ -1136,9 +1135,9 @@ void PVPlayerDatapath::NodeCommandCompleted(const PVMFCmdResp& aResponse)
             break;
 
         case START_START:
+            --iPendingCmds;
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
-                --iPendingCmds;
                 if (iPendingCmds == 0)
                 {
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerDatapath::NodeCommandCompleted() All node Start() requests completed successfully"));
@@ -1157,9 +1156,9 @@ void PVPlayerDatapath::NodeCommandCompleted(const PVMFCmdResp& aResponse)
             break;
 
         case PAUSE_PAUSE:
+            --iPendingCmds;
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
-                --iPendingCmds;
                 if (iPendingCmds == 0)
                 {
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerDatapath::NodeCommandCompleted() All node Pause() requests completed successfully"));
@@ -1177,6 +1176,7 @@ void PVPlayerDatapath::NodeCommandCompleted(const PVMFCmdResp& aResponse)
             break;
 
         case STOP_STOP:
+            --iPendingCmds;
             if (aResponse.GetCmdStatus() == PVMFSuccess || iErrorCondition)
             {
                 if (aResponse.GetCmdStatus() != PVMFSuccess && iErrorCondition)
@@ -1184,8 +1184,6 @@ void PVPlayerDatapath::NodeCommandCompleted(const PVMFCmdResp& aResponse)
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::NodeCommandCompleted() Node reported error in Stop() during error condition"));
                     iErrorOccurredDuringErrorCondition = true;
                 }
-
-                --iPendingCmds;
                 if (iPendingCmds == 0)
                 {
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerDatapath::NodeCommandCompleted() All node Stop() requests completed"));
@@ -1213,6 +1211,7 @@ void PVPlayerDatapath::NodeCommandCompleted(const PVMFCmdResp& aResponse)
             break;
 
         case RESET_RESET:
+            --iPendingCmds;
             if (aResponse.GetCmdStatus() == PVMFSuccess || iErrorCondition)
             {
                 if (aResponse.GetCmdStatus() != PVMFSuccess && iErrorCondition)
@@ -1220,8 +1219,6 @@ void PVPlayerDatapath::NodeCommandCompleted(const PVMFCmdResp& aResponse)
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::NodeCommandCompleted() Node reported error in Reset() during error condition"));
                     iErrorOccurredDuringErrorCondition = true;
                 }
-
-                --iPendingCmds;
                 if (iPendingCmds == 0)
                 {
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerDatapath::NodeCommandCompleted() All node Reset() requests completed"));
@@ -1238,6 +1235,7 @@ void PVPlayerDatapath::NodeCommandCompleted(const PVMFCmdResp& aResponse)
             break;
 
         case TEARDOWN_RELEASEPORT1:
+            --iPendingCmds;
             if (aResponse.GetCmdStatus() == PVMFSuccess || iErrorCondition)
             {
                 if (aResponse.GetCmdStatus() != PVMFSuccess && iErrorCondition)
@@ -1245,8 +1243,6 @@ void PVPlayerDatapath::NodeCommandCompleted(const PVMFCmdResp& aResponse)
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::NodeCommandCompleted() Node reported error in ReleasePort() during error condition(1st set)"));
                     iErrorOccurredDuringErrorCondition = true;
                 }
-
-                --iPendingCmds;
                 if (iPendingCmds == 0)
                 {
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerDatapath::NodeCommandCompleted() All node ReleasePort() requests completed(1st set)"));
@@ -1264,6 +1260,7 @@ void PVPlayerDatapath::NodeCommandCompleted(const PVMFCmdResp& aResponse)
             break;
 
         case TEARDOWN_RELEASEPORT2:
+            --iPendingCmds;
             if (aResponse.GetCmdStatus() == PVMFSuccess || iErrorCondition)
             {
                 if (aResponse.GetCmdStatus() != PVMFSuccess && iErrorCondition)
@@ -1271,8 +1268,6 @@ void PVPlayerDatapath::NodeCommandCompleted(const PVMFCmdResp& aResponse)
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerDatapath::NodeCommandCompleted() Node reported error in ReleasePort() during error condition(2nd set)"));
                     iErrorOccurredDuringErrorCondition = true;
                 }
-
-                --iPendingCmds;
                 if (iPendingCmds == 0)
                 {
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerDatapath::NodeCommandCompleted() All node ReleasePort() requests completed(2nd set)"));
@@ -1310,6 +1305,12 @@ void PVPlayerDatapath::NodeCommandCompleted(const PVMFCmdResp& aResponse)
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerDatapath::NodeCommandCompleted() Report Cancel() command completed successfully"));
                 iObserver->HandlePlayerDatapathEvent(0, PVMFSuccess, iContext);
             }
+            break;
+
+        case PVPDP_CANCELLED:
+        case PVPDP_IDLE:
+            --iPendingCmds;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerDatapath::NodeCommandCompleted() Report %d Pending command in NodeCommandcompleted ", iPendingCmds));
             break;
 
         default:

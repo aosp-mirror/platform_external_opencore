@@ -712,37 +712,6 @@ OsclAny TSC_324m::getModeRequestInfo(PS_ControlMsgHeader pReceiveInf,
     OSCL_UNUSED_ARG(pReceiveInf);
     OSCL_UNUSED_ARG(param2);
     OSCL_UNUSED_ARG(param1);
-#if 0
-    PS_RequestMode  pModeElementParam;
-    PS_ModeElement	pModeElement;
-    int32 i, nModeElements;
-
-    if (GetSimpleAudioType() == PV_AUD_TYPE_GSM)
-    {
-        pModeElementParam = (PS_RequestMode) pReceiveInf->pParameter;
-        nModeElements = pModeElementParam->requestedModes->size;
-        for (i = 0; i < nModeElements; i++)
-        {
-            pModeElement = (pModeElementParam->requestedModes->item + i);
-            if (pModeElement->modeType.index == 2)
-            {
-                PS_AudioMode pAudioMode = pModeElement->modeType.audioMode;
-                if (pAudioMode->index == 20)
-                {
-                    PS_GenericCapability pGenericCap = pAudioMode->genericAudioMode;
-                    if (pGenericCap->option_of_nonCollapsing)
-                    {
-                        *param1 = GSM_RATE_CHANGE;
-                        *param2 = pGenericCap->nonCollapsing->parameterValue.unsignedMin;
-                        return;
-                    }
-                }
-            }
-        }
-    }
-    *param1 = -1;
-    *param2 = 0;
-#endif
 }
 
 /*****************************************************************************/
@@ -778,13 +747,6 @@ uint32 TSC_324m::Status08Event29(PS_ControlMsgHeader  pReceiveInf)
 uint32 TSC_324m::Status08Event30(PS_ControlMsgHeader  pReceiveInf)
 {
     OSCL_UNUSED_ARG(pReceiveInf);
-#if 0
-    /*  DO NOTHING FOR NOW.  ADD BETTER HANDLING LATER. */
-
-    /* Buffer Free */
-    OSCL_DEFAULT_FREE(pReceiveInf->pParameter);
-    OSCL_DEFAULT_FREE(pReceiveInf);
-#endif
     return(PhaseE_Comm);
 }
 
@@ -837,16 +799,6 @@ uint32 TSC_324m::Status08Event31(PS_ControlMsgHeader  pReceiveInf)
 uint32 TSC_324m::Status08Event32(PS_ControlMsgHeader  pReceiveInf)
 {
     OSCL_UNUSED_ARG(pReceiveInf);
-#if 0
-    //Tsc_Analyzer( "<Comm> Round trip delay...Failed" );
-
-    /* WWUAPI: do nothing here
-    */
-
-    /* Buffer Free */
-    OSCL_DEFAULT_FREE(pReceiveInf->pParameter);
-    OSCL_DEFAULT_FREE(pReceiveInf);
-#endif
     return(PhaseE_Comm);
 }
 
@@ -874,21 +826,6 @@ uint32 TSC_324m::SendTerminalCapabilitySet(PS_ControlMsgHeader  pReceiveInf)
 uint32 TSC_324m::FlowControlCommandReceived(PS_ControlMsgHeader  pReceiveInf)
 {
     OSCL_UNUSED_ARG(pReceiveInf);
-#if 0
-    PS_FlowControlCommand p_FCC;
-
-    //Tsc_Analyzer( "<Comm> Flow Control Command(R)...Received" );
-    p_FCC = (PS_FlowControlCommand) pReceiveInf->pParameter;
-
-    /* -------------------------------------------- */
-    /* NO ACTION FOR NOW.  ADD HANDLING LATER.      */
-    /* -------------------------------------------- */
-
-    // Deep OSCL_DEFAULT_FREE the input parameter (RAN-LEAK)
-    Delete_FlowControlCommand(p_FCC);
-    OSCL_DEFAULT_FREE(pReceiveInf->pParameter);
-    OSCL_DEFAULT_FREE(pReceiveInf);
-#endif
     SendFunctionNotSupportedIndication(2, pReceiveInf->EncodedMsg,
                                        (uint16)pReceiveInf->EncodedMsgSize);//unknown function
 
@@ -979,52 +916,6 @@ uint32 TSC_324m::Status08Event55(PS_ControlMsgHeader  pReceiveInf)
     OSCL_UNUSED_ARG(pReceiveInf);
     SendFunctionNotSupportedIndication(2, pReceiveInf->EncodedMsg,
                                        (uint16)pReceiveInf->EncodedMsgSize);//unknown function
-#if 0
-    PS_H223MultiplexReconfiguration p_HMR;
-
-    //Tsc_Analyzer( "<Comm> H223MultiplexReconfiguration -- Received" );
-    p_HMR = (PS_H223MultiplexReconfiguration) pReceiveInf->pParameter;
-
-    /* -------------------------------------------- */
-    /* Act on the received HMR Command.             */
-    /*   (THIS WILL REQUIRE LINKS TO H223)          */
-    /* -------------------------------------------- */
-    if (p_HMR->index == 0)  /* h223ModeChange */
-    {
-        switch (p_HMR->h223ModeChange->index)
-        {
-            case 0:  /* toLevel0 */
-                /* INSERT ACTION HERE */
-                break;
-            case 1:  /* toLevel1 */
-                /* INSERT ACTION HERE */
-                break;
-            case 2:  /* toLevel2 */
-                /* INSERT ACTION HERE */
-                break;
-            case 3:  /* toLevel2withOptionalHeader */
-                /* INSERT ACTION HERE */
-                break;
-        }
-    }
-    else  /* h223AnnexADoubleFlag */
-    {
-        switch (p_HMR->h223AnnexADoubleFlag->index)
-        {
-            case 0:  /* start */
-                /* INSERT ACTION HERE */
-                break;
-            case 1:  /* stop */
-                /* INSERT ACTION HERE */
-                break;
-        }
-    }
-
-    // Deep OSCL_DEFAULT_FREE the input parameter (RAN-LEAK)
-    Delete_H223MultiplexReconfiguration(p_HMR);
-    OSCL_DEFAULT_FREE(pReceiveInf->pParameter);
-    OSCL_DEFAULT_FREE(pReceiveInf);
-#endif
     return(PhaseE_Comm);
 }
 

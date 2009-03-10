@@ -116,61 +116,6 @@ class RTCP_Decoder : public RTCP_Base
                                 OsclMemoryFragment& chunk_data);
 
 
-#if 0
-        // Beware: This gets reset before every request to decode an RTCP buffer
-        uint8 currNumAdditionalPackets;
-
-        CompoundRTCPInfo RTCPInfoBlock;
-
-        // Array of pointers to store additional information
-        RTCPAdditionalInfoBlock additionalInfoArray[MAX_ADDITIONAL_RTCP_PACKETS];
-
-        Error_t Decode(
-            const uint32 msg_iovlen,
-            const OsclMemoryFragment *msg_iov,
-            CompoundRTCPInfo * & compoundInfo
-        );
-
-        Error_t DecodeReportBlock(
-            OsclBinIStreamBigEndian & inStream,
-            RTCP_RR * &report
-        );
-
-        Error_t DecodeRR(
-            OsclBinIStreamBigEndian & inStream,
-            RTCP_RR * &report,
-            uint16 reportLength,
-            uint16 recordCount
-        );
-
-        Error_t DecodeSR(
-            OsclBinIStreamBigEndian & inStream,
-            RTCP_SR * &report,
-            uint16 reportLength,
-            uint16 recordCount
-        );
-
-        Error_t DecodeSDES(
-            OsclBinIStreamBigEndian & inStream,
-            RTCP_SDES * & infoSDES,
-            uint16 reportLength,
-            uint16 recordCount
-        );
-
-        Error_t DecodeBYE(
-            OsclBinIStreamBigEndian & inStream,
-            RTCP_BYE * & infoBYE,
-            uint16 reportLength,
-            uint8 recordCount
-        );
-
-        Error_t DecodeAPP(
-            OsclBinIStreamBigEndian & inStream,
-            RTCP_APP * & infoAPP,
-            uint16 reportLength,
-            uint8 subType
-        );
-#endif
 
 };
 

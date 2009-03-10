@@ -45,6 +45,7 @@ LOCAL_COPY_HEADERS := \
  	include/pvmf_event_handling.h \
  	include/pvmf_node_utils.h \
  	include/pvmi_config_and_capability_observer.h \
+ 	include/pvmf_fixedsize_buffer_alloc.h \
  	include/pvmf_format_type.h \
  	include/pvmf_pool_buffer_allocator.h \
  	include/pvmf_media_msg_format_ids.h \

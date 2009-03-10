@@ -360,10 +360,6 @@ void pvplayer_async_test_genericcancelall::Run()
                     PVMFSourceContextDataStreaming* streamingContext =
                         OSCL_STATIC_CAST(PVMFSourceContextDataStreaming*, sourceContext);
                     streamingContext->iStreamStatsLoggingURL = wFileName;
-#if 0	//RTSP_PROXY_TEST	
-                    streamingContext->iProxyName = _STRLIT_WCHAR("");
-                    streamingContext->iProxyPort = 80;
-#endif
                 }
                 iDataSource->SetDataSourceContextData((OsclAny*)iSourceContextData);
 #endif
@@ -1990,25 +1986,6 @@ void pvplayer_async_test_genericcancelall::HandleProtocolEngineNodeErrors(int32 
         fprintf(iTestMsgOutputFile, "PVProtocolEngineNodeError4xx HTTP Status Code %d\n",
                 aErr - PVProtocolEngineNodeErrorEventStart);
     }
-#if 0
-    else if ((aErr >= PVProtocolEngineNodeErrorHTTPErrorCode500) &&
-             (aErr < PVProtocolEngineNodeErrorHTTPCode5xxUnknownStart))
-    {
-        fprintf(iTestMsgOutputFile, "PVProtocolEngineNodeError5xx HTTP Status Code %d\n",
-                aErr - PVProtocolEngineNodeErrorEventStart);
-    }
-    else if ((aErr >= PVProtocolEngineNodeErrorHTTPRedirectCodeStart) &&
-             (aErr <= PVProtocolEngineNodeErrorHTTPRedirectCodeEnd))
-    {
-        fprintf(iTestMsgOutputFile, "   ERROR IN REDIRECT: PVProtocolEngineNodeError3xx HTTP Status Code %d\n",
-                aErr - PVProtocolEngineNodeErrorEventStart);
-    }
-    else if (aErr < PVProtocolEngineNodeErrorNotHTTPErrorStart || aErr > PVProtocolEngineNodeErrorNotHTTPErrorEnd)
-    {
-        fprintf(iTestMsgOutputFile, "   ERROR: PVProtocolEngineNodeError HTTP Unknown Status Code %d\n",
-                aErr - PVProtocolEngineNodeErrorEventStart);
-    }
-#endif
     else
     {
         fprintf(iTestMsgOutputFile, "PVProtocolEngineNodeError General Error %d\n", aErr);

@@ -117,19 +117,9 @@ void PVMFLoopbackIOPort::HandlePortActivity(const PVMFPortActivity &aActivity)
     switch (aActivity.iType)
     {
         case PVMF_PORT_ACTIVITY_CREATED:
-#if 0
-            //Report port created info event to the node.
-            iNode->ReportInfoEvent(PVMF_NODE_INFO_EVENT_PORT_CREATED
-                                   , (OsclAny*)aActivity.iPort);
-#endif
             break;
 
         case PVMF_PORT_ACTIVITY_DELETED:
-#if 0
-            //Report port deleted info event to the node.
-            iNode->ReportInfoEvent(PVMF_NODE_INFO_EVENT_PORT_DELETED
-                                   , (OsclAny*)aActivity.iPort);
-#endif
             break;
 
         case PVMF_PORT_ACTIVITY_CONNECT:

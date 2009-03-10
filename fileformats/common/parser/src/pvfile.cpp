@@ -230,8 +230,11 @@ OSCL_EXPORT_REF int32 PVFile::Open(const oscl_wchar *filename,
         {
             iFile->SetAsyncReadBufferSize(iOsclFileCacheParams.iAsyncReadBuffSize);
             iFile->SetLoggingEnable(iOsclFileCacheParams.iPVLoggerEnableFlag);
-            iFile->SetNativeAccessMode(iOsclFileCacheParams.iNativeAccessMode);
+
+
             iFile->SetPVCacheSize(iOsclFileCacheParams.iCacheSize);
+
+
             iFile->SetSummaryStatsLoggingEnable(iOsclFileCacheParams.iPVLoggerStateEnableFlag);
             result = iFile->Open(filename, mode, fileserv);
         }

@@ -44,6 +44,8 @@ typedef enum
 // Temporary until actual max track data size if used.
 #define MAXTRACKDATASIZE	4096
 
+static const char PVAAC_ALL_METADATA_KEY[] = "all";
+
 #define PVMF_AAC_NUM_METADATA_VALUES 14
 // Constant character strings for metadata keys
 static const char PVAACMETADATA_TITLE_KEY[] = "title";

@@ -86,10 +86,6 @@ CPVH223Multiplex::~CPVH223Multiplex()
 {
     OSCL_DELETE(iMuxTblMgr);
     iMuxTblMgr = NULL;
-#if 0
-    delete iMutex;
-    iMutex = NULL;
-#endif
 }
 
 void CPVH223Multiplex::Init()

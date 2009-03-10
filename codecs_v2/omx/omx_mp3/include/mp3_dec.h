@@ -19,7 +19,7 @@
 #define MP3_DEC_H_INCLUDED
 
 #ifndef OMX_Component_h
-#include "omx_component.h"
+#include "OMX_Component.h"
 #endif
 
 

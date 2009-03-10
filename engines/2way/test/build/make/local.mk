@@ -53,20 +53,55 @@ SRCS += $(SRCS_324)
 
 
 ifeq ($(USING_OMX),1)
-ifeq ($(pv2wayengine_lib),Y)
-FULL_LIBS =  pv2wayengine pv324m \
-pvomxvideodecnode pvomxaudiodecnode pvomxencnode pvomxbasedecnode \
-omx_common_lib omx_m4v_component_lib omx_amr_component_lib \
-omx_amrenc_component_lib omx_m4venc_component_lib \
-omx_baseclass_lib pvomx_proxy_lib omx_queue_lib \
-pvvideoparsernode \
-pvgeneraltools pvcommsionode pvmediaoutputnode pvmediainputnode \
-colorconvert pvmio_comm_loopback pvmiofileinput pvmiofileoutput\
-pvmf pvlatmpayloadparser pvgendatastruct pvmediadatastruct pvthreadmessaging \
-pv_config_parser m4v_config getactualaacconfig \
-pvmimeutils osclregcli osclregserv osclio osclproc osclutil osclmemory \
-osclerror osclbase unit_test threadsafe_callback_ao \
-
+ifeq ($(pv2wayengine_lib),y)
+FULL_LIBS =  pv2wayengine \
+	     pv324m \
+	     pvomxvideodecnode \
+	     pvomxaudiodecnode \
+	     pvomxencnode \
+	     pvomxbasedecnode \
+	     omx_common_lib \
+	     omx_m4v_component_lib \
+	     pvmp4decoder \
+	     omx_amr_component_lib \
+	     pvdecoder_gsmamr \
+             pvamrwbdecoder \
+	     omx_amrenc_component_lib \
+	     pvencoder_gsmamr \
+	     pv_amr_nb_common_lib \
+	     omx_m4venc_component_lib \
+	     pvm4vencoder \
+	     omx_baseclass_lib \
+	     pvomx_proxy_lib \
+	     omx_queue_lib \
+	     pvvideoparsernode \
+	     pvgeneraltools \
+	     pvcommsionode \
+	     pvmediaoutputnode \
+	     pvmediainputnode \
+	     colorconvert \
+	     pvmio_comm_loopback \
+	     pvmiofileinput \
+	     pvmiofileoutput\
+	     pvmf \
+	     pvlatmpayloadparser \
+	     pvgendatastruct \
+	     pvmediadatastruct \
+	     pvthreadmessaging \
+	     pv_config_parser \
+	     m4v_config \
+	     getactualaacconfig \
+	     pvmimeutils \
+	     osclregcli \
+	     osclregserv \
+             osclio \
+             osclproc \
+             osclutil \
+             osclmemory \
+	     osclerror \
+	     osclbase \
+             unit_test \
+             threadsafe_callback_ao
 else
 ifeq ($(pv2wayengine_lib),m)
 FULL_LIBS =  opencore_2way \
@@ -75,7 +110,7 @@ omx_common_lib omx_m4v_component_lib omx_amr_component_lib \
 omx_amrenc_component_lib omx_m4venc_component_lib \
 omx_baseclass_lib pvomx_proxy_lib omx_queue_lib \
 pvvideoparsernode \
-unit_test opencore_common 
+unit_test opencore_common
 endif
 endif
 
@@ -119,7 +154,7 @@ endif
 run_2way_test:: $(REALTARGET) default
 	$(quiet) ${RM} -r $(TWOWAY_TEST_DIR)
 	$(quiet) ${MKDIR} -p $(TWOWAY_TEST_DIR)
-	$(quiet) $(CP) $(SRC_ROOT)/tools_v2/build/package/opencore/pvplayer.cfg $(TWOWAY_TEST_DIR)
+	$(quiet) $(CP) $(SRC_ROOT)/tools_v2/build/package/opencore/elem/default/pvplayer.cfg $(TWOWAY_TEST_DIR)
 	$(quiet) $(CP) $(SRC_ROOT)/engines/2way/pvlogger/config/pvlogger.ini $(TWOWAY_TEST_DIR)
 	$(quiet) $(CP) ${BUILD_ROOT}/bin/${HOST_ARCH}/$(TWOWAY_TARGET) $(TWOWAY_TEST_DIR)
 	$(quiet) $(CP) -r $(SRC_ROOT)/engines/2way/test/test_data/* $(TWOWAY_TEST_DIR)

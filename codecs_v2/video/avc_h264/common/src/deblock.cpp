@@ -24,15 +24,6 @@
 // NOTE: these 3 tables are for funtion GetStrength() only
 const static int ININT_STRENGTH[4] = {0x04040404, 0x03030303, 0x03030303, 0x03030303};
 
-#if 0
-//uint8 BLK_NUM[2][4][4]  = {{{0,4,8,12},{1,5,9,13},{2,6,10,14},{3,7,11,15}},{{0,1,2,3},{4,5,6,7},{8,9,10,11},{12,13,14,15}}};
-const static int BLK_NUM[32] = { 0, 4, 8, 12,  1, 5, 9, 13,  2, 6, 10, 14,  3, 7, 11, 15,
-                                 0, 1, 2, 3,   4, 5, 6, 7,   8, 9, 10, 11,  12, 13, 14, 15
-                               };
-
-// Index = ((blkQ>>3)<<1) + ((blkQ&3)>>1)
-const static int BLK_NUM1[16] = {0, 0, 1, 1, 0, 0, 1, 1, 2, 2, 3, 3, 2, 2, 3, 3};
-#endif
 
 // NOTE: these 3 tables are for funtion EdgeLoop() only
 // NOTE: to change the tables below for instance when the QP doubling is changed from 6 to 8 values
@@ -1336,7 +1327,6 @@ void EdgeLoop_Luma_vertical(uint8* SrcPtr, uint8 *Strength, int Alpha, int Beta,
                 ap = AbsDelta & (tmp1 - Beta);
 
 
-#if 1
                 ptr = SrcPtr;
                 if (aq < 0)
                 {
@@ -1370,32 +1360,6 @@ void EdgeLoop_Luma_vertical(uint8* SrcPtr, uint8 *Strength, int Alpha, int Beta,
                 }
                 else
                     *(--ptr) = ((L1 << 1) + L0 + R1 + 2) >> 2;
-#else
-
-                ptr = SrcPtr;
-                if (aq < 0)
-                {
-                    tmp = R1 + R0 + L0;
-                    *ptr++ = (L1 + (tmp << 1) +  R2 + 4) >> 3;
-                    tmp += R2;
-                    *ptr++ = (tmp + 2) >> 2;
-                    *ptr = (((SrcPtr[3] + R2) << 1) + tmp + 4) >> 3;
-                }
-                else
-                    *ptr = ((R1 << 1) + R0 + L1 + 2) >> 2;
-
-                ptr = SrcPtr - 1;
-                if (ap < 0)
-                {
-                    tmp = L1 + R0 + L0;
-                    *ptr-- = (R1 + (tmp << 1) +  L2 + 4) >> 3;
-                    tmp += L2;
-                    *ptr-- = (tmp + 2) >> 2;
-                    *ptr = (((SrcPtr[-4] + L2) << 1) + tmp + 4) >> 3;
-                }
-                else
-                    *ptr = ((L1 << 1) + L0 + R1 + 2) >> 2;
-#endif
 
             } /* if(tmp < 0) */
 

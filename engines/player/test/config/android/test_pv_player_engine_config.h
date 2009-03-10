@@ -116,6 +116,10 @@
 // Used with #ifdef
 #define ONLY_3GPP_STREAMING_FORMAT
 
+#ifndef RUN_CPMJANUS_TESTCASES
+// Set to 1 to enable Janus CPM test cases, 0 to disable
+#define RUN_CPMJANUS_TESTCASES 0
+#endif
 
 // Set to 1 to enable OMA1 DLA Passthru CPM test cases, 0 to disable
 #define RUN_CPMOMA1_DLAPASSTHRU_TESTCASES 1

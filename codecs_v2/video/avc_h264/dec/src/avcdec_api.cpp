@@ -433,43 +433,6 @@ OSCL_EXPORT_REF AVCDec_Status	PVAVCDecSEI(AVCHandle *avcHandle, uint8 *nal_unit,
     OSCL_UNUSED_ARG(nal_unit);
     OSCL_UNUSED_ARG(nal_size);
 
-#if 0
-    AVCDec_Status status;
-    AVCDecObject *decvid = (AVCDecObject*) avcHandle->AVCObject;
-    AVCCommonObj *video;
-    AVCDecBitstream *bitstream;
-
-    DEBUG_LOG(userData, AVC_LOGTYPE_INFO, "PVAVCDecSEI", -1, -1);
-
-    return AVCDEC_SUCCESS;
-    if (decvid == NULL)
-    {
-        return AVCDEC_FAIL;
-    }
-
-    video = decvid->common;
-    bitstream = decvid->bitstream;
-    /* 1. Convert EBSP to RBSP. Create bitstream structure */
-    video->forbidden_bit = nal_unit[0] >> 7;
-    video->nal_ref_idc = (nal_unit[0] & 0x60) >> 5;
-    video->nal_unit_type = (AVCNalUnitType)(nal_unit[0] & 0x1F);
-
-    if (video->nal_unit_type != AVC_NALTYPE_SEI) /* not a SEI NAL */
-    {
-        return AVCDEC_FAIL;
-    }
-
-
-    /* 2. Initialize bitstream structure*/
-    BitstreamInit(bitstream, nal_unit + 1, nal_size - 1);
-
-    /* 2. Decode pic_parameter_set_rbsp syntax. Allocate video->picParams[i] and assign to currPicParams */
-    status = DecodeSEI(decvid, bitstream);
-    if (status != AVCDEC_SUCCESS)
-    {
-        return status;
-    }
-#endif
     return AVCDEC_SUCCESS;
 }
 /* ======================================================================== */
@@ -548,7 +511,6 @@ OSCL_EXPORT_REF AVCDec_Status PVAVCDecodeSlice(AVCHandle *avcHandle, uint8 *buff
             video->newSlice = TRUE;
             return status;
         }
-#if 1
 
         if (video->sliceHdr->frame_num != video->prevFrameNum || (video->sliceHdr->first_mb_in_slice < (uint)video->mbNum && video->currSeqParams->constrained_set1_flag == 1))
         {
@@ -605,19 +567,7 @@ OSCL_EXPORT_REF AVCDec_Status PVAVCDecodeSlice(AVCHandle *avcHandle, uint8 *buff
                 DPBInitPic(video, video->PrevRefFrameNum % video->MaxFrameNum);
                 RefListInit(video);
                 ConcealSlice(decvid, 0, video->PicSizeInMbs);  // Conceal
-#if 1
                 video->currFS->IsOutputted |= 0x02;
-#else
-                video->slice_type = AVC_I_SLICE;
-                video->CurrPicNum = video->PrevRefFrameNum;
-                DecodePOC(video);
-                /* find an empty memory from DPB and assigned to currPic */
-                DPBInitPic(video, (video->PrevRefFrameNum + 1) % video->MaxFrameNum, 0);
-
-                video->currPic->isReference = TRUE;  // FIX
-
-                RefListInit(video);
-#endif
                 //conceal frame
                 /* 3.2 Decoded frame reference marking. */
                 /* 3.3 Put the decoded picture in output buffers */
@@ -629,7 +579,6 @@ OSCL_EXPORT_REF AVCDec_Status PVAVCDecodeSlice(AVCHandle *avcHandle, uint8 *buff
                 return AVCDEC_PICTURE_OUTPUT_READY;
             }
         }
-#endif
     }
 
     if (video->newPic == TRUE)
@@ -936,12 +885,6 @@ OSCL_EXPORT_REF AVCDec_Status PVAVCDecGetOutput(AVCHandle *avcHandle, int *indx,
     *indx = index;
 
 
-#if 0
-    if (count_frame > 1)  /* more than one frame available */
-    {
-        return AVCDEC_PICTURE_READY;
-    }
-#endif
 
     return AVCDEC_SUCCESS;
 }

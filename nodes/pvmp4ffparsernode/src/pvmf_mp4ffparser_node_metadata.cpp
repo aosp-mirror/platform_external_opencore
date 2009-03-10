@@ -35,6 +35,7 @@
 #include "oscl_exclusive_ptr.h"
 
 // Constant character strings for metadata keys
+static const char PVMP4_ALL_METADATA_KEY[] = "all";
 static const char PVMP4METADATA_CLIP_TYPE_KEY[] = "clip-type";
 static const char PVMP4METADATA_ALBUM_KEY[] = "album";
 static const char PVMP4METADATA_COMMENT_KEY[] = "comment";
@@ -1787,6 +1788,7 @@ PVMFStatus PVMFMP4FFParserNode::DoGetMetadataValues(PVMFMP4FFParserNodeCommand& 
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::DoGetMetadataValues() In"));
 
+    PVMFMetadataList* keylistptr_in = NULL;
     PVMFMetadataList* keylistptr = NULL;
     OSCL_wHeapString<OsclMemAllocator> valuestring = NULL;
     Oscl_Vector<PvmiKvp, OsclMemAllocator>* valuelistptr = NULL;
@@ -1794,14 +1796,30 @@ PVMFStatus PVMFMP4FFParserNode::DoGetMetadataValues(PVMFMP4FFParserNodeCommand& 
     int32 max_entries;
     MP4FFParserOriginalCharEnc charType = ORIGINAL_CHAR_TYPE_UNKNOWN;
     uint16 iLangCode = 0;
-    aCmd.PVMFMP4FFParserNodeCommand::Parse(keylistptr, valuelistptr, starting_index, max_entries);
+    aCmd.PVMFMP4FFParserNodeCommand::Parse(keylistptr_in,
+                                           valuelistptr,
+                                           starting_index,
+                                           max_entries);
 
     // Check the parameters
-    if (keylistptr == NULL || valuelistptr == NULL)
+    if (keylistptr_in == NULL || valuelistptr == NULL)
     {
         return PVMFErrArgument;
     }
 
+    keylistptr = keylistptr_in;
+    //If numkeys is one, just check to see if the request
+    //is for ALL metadata
+    if (keylistptr_in->size() == 1)
+    {
+        if (oscl_strncmp((*keylistptr)[0].get_cstr(),
+                         PVMP4_ALL_METADATA_KEY,
+                         oscl_strlen(PVMP4_ALL_METADATA_KEY)) == 0)
+        {
+            //use the complete metadata key list
+            keylistptr = &iAvailableMetadataKeys;
+        }
+    }
     uint32 numkeys = keylistptr->size();
 
     if (starting_index > (numkeys - 1) || numkeys <= 0 || max_entries == 0)
@@ -5132,7 +5150,7 @@ PVMFStatus PVMFMP4FFParserNode::DoGetMetadataValues(PVMFMP4FFParserNodeCommand& 
     {
         iCPMGetMetaDataValuesCmdId =
             iCPMMetaDataExtensionInterface->GetNodeMetadataValues(iCPMSessionID,
-                    (*keylistptr),
+                    (*keylistptr_in),
                     (*valuelistptr),
                     0);
         return PVMFPending;

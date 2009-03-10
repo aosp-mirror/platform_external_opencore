@@ -184,20 +184,6 @@ bool CPV2WayRecDatapath::SetCmd(TPV2WayCmdInfo *aCmdInfo)
 
 void CPV2WayRecDatapath::OpenComplete()
 {
-#if 0
-    uint8 *config;
-    uint32 len;
-
-    //Get the config info
-    config = i2Way->iTscNode->GetFormatSpecificInfo(iChannelDatapath->GetTSCPort(), &len);
-
-    if (config)
-    {
-        PVMp4FFCNTrackConfigInterface *ptr;
-        ptr = (PVMp4FFCNTrackConfigInterface *) i2Way->iFFTrackConfig.iInterface;
-        ptr->SetCodecSpecificInfo(*iPortPairList.back().iDestPort.GetPort(), config, (int32) len);
-    }
-#endif
     CommandComplete(PVMFSuccess);
 }
 

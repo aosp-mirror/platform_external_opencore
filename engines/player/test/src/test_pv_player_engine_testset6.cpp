@@ -251,10 +251,6 @@ void pvplayer_async_test_streamingopenplaystop::Run()
                     PVMFSourceContextDataStreaming* streamingContext =
                         OSCL_STATIC_CAST(PVMFSourceContextDataStreaming*, sourceContext);
                     streamingContext->iStreamStatsLoggingURL = wFileName;
-#if 0	//RTSP_PROXY_TEST	
-                    streamingContext->iProxyName = _STRLIT_WCHAR("");
-                    streamingContext->iProxyPort = 80;
-#endif
                 }
                 iDataSource->SetDataSourceContextData((OsclAny*)iSourceContextData);
 #endif

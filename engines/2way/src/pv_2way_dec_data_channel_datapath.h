@@ -34,14 +34,16 @@ class CPV2WayDecDataChannelDatapath : public CPV2WayDataChannelDatapath
 
         void TSCPortClosed();
         PVMFPortInterface *GetTSCPort();
-
+        void SkipComplete(TPV2WayNode* aNode);
+        bool IsSkipComplete() const;
     private:
         CPV2WayDecDataChannelDatapath(PVLogger *aLogger,
                                       PVMFFormatType aFormat,
-                                      CPV324m2Way *a2Way) : CPV2WayDataChannelDatapath(aLogger, EDecodeDatapath, aFormat, a2Way)
+                                      CPV324m2Way *a2Way) : CPV2WayDataChannelDatapath(aLogger, EDecodeDatapath, aFormat, a2Way), iSkipComplete(false)
         {};
         TPV2WayNode* iNode;
         void OpenComplete();
+        bool iSkipComplete;
 };
 
 #endif //PV_2WAY_DEC_DATA_CHANNEL_DATAPATH_H_INCLUDED

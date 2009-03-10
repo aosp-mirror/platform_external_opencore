@@ -337,12 +337,6 @@ OSCL_EXPORT_REF int32 Oscl_File::Open(const oscl_wchar *filename, uint32 mode, O
     }
 
     int32 result = (-1);
-    // assertion on null file pointer
-    if (!filename)
-    {
-        OSCL_ASSERT(0);
-        return result;
-    }
 
     uint32 ticks = 0;
     if (iFileStats)
@@ -397,12 +391,6 @@ OSCL_EXPORT_REF int32 Oscl_File::Open(const char *filename, uint32 mode, Oscl_Fi
     }
 
     int32 result = (-1);
-    // assertion on null file pointer
-    if (!filename)
-    {
-        OSCL_ASSERT(0);
-        return result;
-    }
 
     uint32 ticks = 0;
     if (iFileStats)

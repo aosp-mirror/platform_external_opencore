@@ -278,13 +278,6 @@ OSCL_EXPORT_REF PVMFCommandId AndroidAudioInput::Flush(const OsclAny* aContext)
 OSCL_EXPORT_REF PVMFCommandId AndroidAudioInput::Reset(const OsclAny* aContext)
 {
     LOGV("Reset");
-    if(iState != STATE_STARTED || iState != STATE_PAUSED)
-    {
-        LOGV("Invalid state");
-        OSCL_LEAVE(OsclErrInvalidState);
-        return -1;
-    }
-
     return AddCmdToQueue(AI_CMD_RESET, aContext);
 }
 

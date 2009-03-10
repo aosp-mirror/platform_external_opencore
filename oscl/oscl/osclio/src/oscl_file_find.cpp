@@ -20,7 +20,6 @@
 */
 
 #include "oscl_file_find.h"
-#include "oscl_file_types.h"
 #include "oscl_utf8conv.h"
 #include "oscl_stdstring.h"
 #ifndef OSCL_STRING_CONTAINERS_H_INCLUDED
@@ -29,16 +28,10 @@
 
 OSCL_EXPORT_REF Oscl_FileFind::Oscl_FileFind()
 {
-#if   (OSCL_HAS_GLOB)
-    count = 0;
-    haveGlob = false;
     lastError = Oscl_FileFind::E_OK;
-#else
+#if   ! OSCL_HAS_GLOB
 #define OSCL_FILEFIND_NUMBER_OF_FILES_ENTRY 256
-
-    count = 0;
     int err = 0;
-    haveGlob = false;
     OSCL_TRY(err,
              iDirEntVec.reserve(OSCL_FILEFIND_NUMBER_OF_FILES_ENTRY);
             );
@@ -48,8 +41,13 @@ OSCL_EXPORT_REF Oscl_FileFind::Oscl_FileFind()
         OSCL_LEAVE(err);
         lastError = Oscl_FileFind::E_OTHER;
     }
-    lastError = Oscl_FileFind::E_OK;
 #endif
+    delimeter = OSCL_FILE_CHAR_PATH_DELIMITER;
+    nullchar = _STRLIT_CHAR("\0");
+    count = 0;
+    foundfirst = false;
+    appendPathDelimiter = false;
+    pathname = NULL;
     type = Oscl_FileFind::INVALID_TYPE;
 }
 
@@ -66,65 +64,28 @@ OSCL_EXPORT_REF const char *Oscl_FileFind::FindFirst(const char *directory, cons
     type = Oscl_FileFind::INVALID_TYPE;
     if (directory == NULL || buf == NULL || buflen <= 0)
     {
-        lastError = E_INVALID_ARG;
+        lastError = Oscl_FileFind::E_INVALID_ARG;
         return NULL;
     }
     if (pattern == NULL) pattern = def_pattern;
-
+    if (foundfirst)
+    {
+        lastError = Oscl_FileFind::E_INVALID_STATE;
+        return NULL;
+    }
 #if   (OSCL_HAS_GLOB)
+    if (!setpathanddelimiter(directory))
+        return NULL;
     int retval;
-    char path[OSCL_IO_FILENAME_MAXLEN];
-    lastError = Oscl_FileFind::E_OK;
+    OSCL_HeapString<OsclMemAllocator> path(pathname);
+    path += pattern;
 
-    if (haveGlob || !directory || !buf || buflen <= 0)
+    if ((retval = glob(path.get_cstr(), GLOB_ERR | GLOB_NOSORT , NULL, &hFind)) == 0)
     {
-        lastError = (haveGlob) ?
-                    Oscl_FileFind::E_INVALID_STATE :
-                    Oscl_FileFind::E_INVALID_ARG;
-        return NULL;
-    }
-
-    if ((oscl_strlen(directory) + oscl_strlen(pattern) + 1) > OSCL_IO_FILENAME_MAXLEN)
-    {
-        lastError = Oscl_FileFind::E_PATH_TOO_LONG;
-        return NULL;
-    }
-
-    path[0] = '\0';
-    if (oscl_strlen(directory) > 0)
-    {
-        oscl_strcat(path, directory);
-
-        // Check whether path ends with delimiter
-        int32 pathLength = oscl_strlen(path);
-        bool appendPathDelimiter = true;
-        if (pathLength >= 1)
-        {
-            if (oscl_strncmp((path + pathLength - 1/*length of path delimiter is 1*/),
-                             OSCL_FILE_CHAR_PATH_DELIMITER, 1) == 0)
-            {
-                // path ends with delimiter
-                appendPathDelimiter = false;
-            }
-        }
-
-        if (appendPathDelimiter)
-        {
-            oscl_strcat(path, OSCL_FILE_CHAR_PATH_DELIMITER);
-        }
-        oscl_strcat(path, pattern);
-    }
-    else
-    {
-        oscl_strcat(path, pattern);
-    }
-
-    if ((retval = glob(path, GLOB_ERR | GLOB_NOSORT , NULL, &hFind)) == 0)
-    {
-        haveGlob = true;
+        foundfirst = true;
         if (hFind.gl_pathc > 0)
         {
-            if (strlen(hFind.gl_pathv[count]) >= buflen)
+            if (strlen(hFind.gl_pathv[count]) > buflen)
             {
                 lastError = Oscl_FileFind::E_BUFFER_TOO_SMALL;
                 return NULL;
@@ -160,22 +121,15 @@ OSCL_EXPORT_REF const char *Oscl_FileFind::FindFirst(const char *directory, cons
         {
             lastError = Oscl_FileFind::E_OTHER;
         }
-        return NULL;
     }
-
 #else
     // support linux having no glob.h support in glob pattern matching
+    if (!setpathanddelimiter(directory))
+        return NULL;
     DIR* pDir;
     struct dirent* pEnt;
     uint32 itr = 0;
     struct stat statbuf;
-    if (haveGlob || !directory || !buf || buflen <= 0)
-    {
-        lastError = (haveGlob) ?
-                    Oscl_FileFind::E_INVALID_STATE :
-                    Oscl_FileFind::E_INVALID_ARG;
-        return NULL;
-    }
     if (oscl_strlen(directory) > 0)
     {
         pDir = opendir(directory);
@@ -190,7 +144,6 @@ OSCL_EXPORT_REF const char *Oscl_FileFind::FindFirst(const char *directory, cons
     }
     if (pDir == NULL)
     {
-
         lastError = Oscl_FileFind::E_PATH_NOT_FOUND;
         return NULL;
     }
@@ -201,17 +154,13 @@ OSCL_EXPORT_REF const char *Oscl_FileFind::FindFirst(const char *directory, cons
                 oscl_strcmp(pEnt->d_name, ".") &&
                 oscl_strcmp(pEnt->d_name, ".."))	// excluded out '.' and '..' from readdir
         {	// pattern matched
-            iDirEntVec.push_back(pEnt->d_name);
+            buf[0] = *nullchar;
+            oscl_strcat(buf, pathname);
+            oscl_strcat(buf, pEnt->d_name);
+            iDirEntVec.push_back(buf);
             // d_type is not all available on all lunix system, using stat() instead
             if (itr == 0)
-            {
-                if (strlen(pEnt->d_name) >= buflen)
-                {
-                    lastError = Oscl_FileFind::E_BUFFER_TOO_SMALL;
-                    return NULL;
-                }
-                // need to return the first found element
-                oscl_strncpy(buf, pEnt->d_name, buflen);
+            {   // first find filetype
                 if (stat(pEnt->d_name, &statbuf) == 0)
                 {
                     type = (S_ISDIR(statbuf.st_mode)) ? DIR_TYPE : FILE_TYPE;
@@ -227,9 +176,17 @@ OSCL_EXPORT_REF const char *Oscl_FileFind::FindFirst(const char *directory, cons
     closedir(pDir);
     if (iDirEntVec.size())
     {
-        haveGlob = true;
+        if (strlen(iDirEntVec[0].get_cstr()) > buflen)
+        {
+            lastError = Oscl_FileFind::E_BUFFER_TOO_SMALL;
+            return NULL;
+        }
+        // copy and return the first found element
+        buf[0] = *nullchar;
+        oscl_strcat(buf, iDirEntVec[0].get_cstr());
+        foundfirst = true;
         count = 1; // advance to next element, used for findnext()
-        return iDirEntVec[0].get_str();
+        return buf;
     }
     lastError = Oscl_FileFind::E_NO_MATCH;
 #endif
@@ -243,81 +200,53 @@ OSCL_EXPORT_REF const oscl_wchar *Oscl_FileFind::FindFirst(const oscl_wchar *dir
     type = Oscl_FileFind::INVALID_TYPE;
     if (directory == NULL || buf == NULL || buflen <= 0)
     {
-        lastError = E_INVALID_ARG;
+        lastError = Oscl_FileFind::E_INVALID_ARG;
         return NULL;
     }
-
     if (pattern == NULL) pattern = def_pattern;
-
-#if   (OSCL_HAS_GLOB)
-    char convpattern[OSCL_IO_EXTENSION_MAXLEN];
-    char convdir[OSCL_IO_FILENAME_MAXLEN];
-    char utf8buf[OSCL_IO_FILENAME_MAXLEN];
-    const char *retval;
-
-    if (haveGlob || !directory || !buf || buflen <= 0)
+    if (foundfirst)
     {
-        lastError = (haveGlob) ?
-                    Oscl_FileFind::E_INVALID_STATE :
-                    Oscl_FileFind::E_INVALID_ARG;
+        lastError = Oscl_FileFind::E_INVALID_STATE;
         return NULL;
     }
-
-    if ((0 == oscl_UnicodeToUTF8(directory, oscl_strlen(directory), convdir, OSCL_IO_FILENAME_MAXLEN)
+    // non-symbain OSs are converted to char type FindFirst()
+    char* convpattern = (char*) OSCL_MALLOC(oscl_strlen(pattern) + 1);
+    char* convdir = (char*) OSCL_MALLOC(oscl_strlen(directory) + 1);
+    char* utf8buf = (char*) OSCL_MALLOC(buflen / sizeof(chartype));
+    if (!(convpattern && convdir && utf8buf))
+    {
+        lastError = Oscl_FileFind::E_MEMORY_ERROR;
+        OSCL_FREE(convdir);
+        OSCL_FREE(convpattern);
+        OSCL_FREE(utf8buf);
+        return NULL;
+    }
+    if ((0 == oscl_UnicodeToUTF8(directory, oscl_strlen(directory), convdir, oscl_strlen(directory) + 1)
             && oscl_strlen(directory))
-            || (0 == oscl_UnicodeToUTF8(pattern, oscl_strlen(pattern), convpattern, OSCL_IO_EXTENSION_MAXLEN)
+            || (0 == oscl_UnicodeToUTF8(pattern, oscl_strlen(pattern), convpattern, oscl_strlen(pattern) + 1)
                 && oscl_strlen(pattern)))
     {
         lastError = Oscl_FileFind::E_PATH_TOO_LONG;
+        OSCL_FREE(convdir);
+        OSCL_FREE(convpattern);
+        OSCL_FREE(utf8buf);
         return NULL;
     }
-
-    retval = FindFirst(convdir, convpattern, utf8buf, OSCL_IO_FILENAME_MAXLEN);
-
+    const char* retval = FindFirst(convdir, convpattern, utf8buf, (buflen / sizeof(chartype)));
+    OSCL_FREE(convdir);
+    OSCL_FREE(convpattern);
     if (retval != NULL)
     {
-        if (0 == oscl_UTF8ToUnicode(retval, oscl_strlen(retval), buf, buflen) && oscl_strlen(retval))
+        int32 err = oscl_UTF8ToUnicode(retval, oscl_strlen(retval), buf, buflen);
+        OSCL_FREE(utf8buf);
+        if (!err && oscl_strlen(retval))
         {
             lastError = Oscl_FileFind::E_BUFFER_TOO_SMALL;
             return NULL;
         }
         return buf;
     }
-#else
-    char convpattern[OSCL_IO_EXTENSION_MAXLEN];
-    char convdir[OSCL_IO_FILENAME_MAXLEN];
-    char utf8buf[OSCL_IO_FILENAME_MAXLEN];
-    const char *retval;
-
-    if (haveGlob || !directory || !buf || buflen <= 0)
-    {
-        lastError = (haveGlob) ?
-                    Oscl_FileFind::E_INVALID_STATE :
-                    Oscl_FileFind::E_INVALID_ARG;
-        return NULL;
-    }
-    if ((0 == oscl_UnicodeToUTF8(directory, oscl_strlen(directory), convdir, OSCL_IO_FILENAME_MAXLEN) &&
-            oscl_strlen(directory) != 0) ||
-            (0 == oscl_UnicodeToUTF8(pattern, oscl_strlen(pattern), convpattern, OSCL_IO_EXTENSION_MAXLEN) &&
-             oscl_strlen(pattern) != 0))
-    {
-        lastError = Oscl_FileFind::E_PATH_TOO_LONG;
-        return NULL;
-    }
-
-    retval = FindFirst(convdir, convpattern, utf8buf, OSCL_IO_FILENAME_MAXLEN);
-
-    if (retval != NULL)
-    {
-        if (0 == oscl_UTF8ToUnicode(retval, oscl_strlen(retval), buf, buflen) && oscl_strlen(retval))
-        {
-            lastError = Oscl_FileFind::E_BUFFER_TOO_SMALL;
-            return NULL;
-        }
-        return buf;
-    }
-#endif
-
+    OSCL_FREE(utf8buf);
     return NULL;
 }
 
@@ -325,23 +254,25 @@ OSCL_EXPORT_REF char *Oscl_FileFind::FindNext(char *buf, uint32 buflen)
 {
     lastError = Oscl_FileFind::E_OK;
     type = Oscl_FileFind::INVALID_TYPE;
-#if   (OSCL_HAS_GLOB)
-    if (!haveGlob || !buf || buflen <= 0)
+    if (!buf || buflen <= 0)
     {
-        lastError = (!haveGlob) ?
-                    Oscl_FileFind::E_INVALID_STATE :
-                    Oscl_FileFind::E_INVALID_ARG;
+        lastError = Oscl_FileFind::E_INVALID_ARG;
         return NULL;
     }
+    if (!foundfirst)
+    {
+        lastError = Oscl_FileFind::E_INVALID_STATE;
+        return NULL;
+    }
+#if   (OSCL_HAS_GLOB)
     if (count >= hFind.gl_pathc)
     {
-        lastError = Oscl_FileFind::E_PATH_NOT_FOUND;
+        lastError = Oscl_FileFind::E_NO_MATCH;
         return NULL;
     }
-    if (oscl_strlen(hFind.gl_pathv[count]) >= buflen)
+    if (oscl_strlen(hFind.gl_pathv[count]) > buflen)
     {
         lastError = Oscl_FileFind::E_BUFFER_TOO_SMALL;
-        return NULL;
     }
     else
     {
@@ -358,16 +289,9 @@ OSCL_EXPORT_REF char *Oscl_FileFind::FindNext(char *buf, uint32 buflen)
         return buf;
     }
 #else
-    if (!haveGlob || !buf || buflen <= 0)
-    {
-        lastError = (!haveGlob) ?
-                    Oscl_FileFind::E_INVALID_STATE :
-                    Oscl_FileFind::E_INVALID_ARG;
-        return NULL;
-    }
     if (count >= iDirEntVec.size())
     {
-        lastError = Oscl_FileFind::E_PATH_NOT_FOUND;
+        lastError = Oscl_FileFind::E_NO_MATCH;
         return NULL;
     }
     if (oscl_strlen(iDirEntVec[count].get_cstr()) > buflen)
@@ -376,7 +300,8 @@ OSCL_EXPORT_REF char *Oscl_FileFind::FindNext(char *buf, uint32 buflen)
     }
     else
     {
-        oscl_strncpy(buf, iDirEntVec[count++].get_cstr(), buflen);
+        buf[0] = *nullchar;
+        oscl_strcat(buf, iDirEntVec[count++].get_cstr());
         struct stat statbuf;
         if (stat(buf, &statbuf) == 0)
         {
@@ -396,73 +321,56 @@ OSCL_EXPORT_REF oscl_wchar *Oscl_FileFind::FindNext(oscl_wchar *buf, uint32 bufl
 {
     lastError = Oscl_FileFind::E_OK;
     type = Oscl_FileFind::INVALID_TYPE;
-#if   (OSCL_HAS_GLOB)
-    char utf8buf[OSCL_IO_FILENAME_MAXLEN];
-    char *retval;
-
-    if (!haveGlob || !buf || buflen <= 0)
+    if (!buf || buflen <= 0)
     {
-        lastError = (!haveGlob) ?
-                    Oscl_FileFind::E_INVALID_STATE :
-                    Oscl_FileFind::E_INVALID_ARG;
+        lastError = Oscl_FileFind::E_INVALID_ARG;
         return NULL;
     }
-
-    retval = FindNext(utf8buf, OSCL_IO_FILENAME_MAXLEN);
-
+    if (!foundfirst)
+    {
+        lastError = Oscl_FileFind::E_INVALID_STATE;
+        return NULL;
+    }
+    char* utf8buf = (char*) OSCL_MALLOC(buflen * sizeof(chartype));
+    if (!utf8buf)
+    {
+        lastError = Oscl_FileFind::E_MEMORY_ERROR;
+        return NULL;
+    }
+    const char* retval = FindNext(utf8buf, buflen * sizeof(chartype));
     if (retval != NULL)
     {
-        if (0 == oscl_UTF8ToUnicode(retval, oscl_strlen(retval), buf, buflen) && oscl_strlen(retval))
+        int32 err = oscl_UTF8ToUnicode(retval, oscl_strlen(retval), buf, buflen);
+        OSCL_FREE(utf8buf);
+        if (!err && oscl_strlen(retval))
         {
             lastError = Oscl_FileFind::E_BUFFER_TOO_SMALL;
             return NULL;
         }
         return buf;
     }
-#else
-    char utf8buf[OSCL_IO_FILENAME_MAXLEN];
-    char *retval;
-    if (!haveGlob || !buf || buflen <= 0)
-    {
-        lastError = (!haveGlob) ?
-                    Oscl_FileFind::E_INVALID_STATE :
-                    Oscl_FileFind::E_INVALID_ARG;
-        return NULL;
-    }
-    if (count >= iDirEntVec.size())
-    {
-        lastError = Oscl_FileFind::E_PATH_NOT_FOUND;
-        return NULL;
-    }
-    retval = FindNext(utf8buf, OSCL_IO_FILENAME_MAXLEN);
-
-    if (retval != NULL)
-    {
-        if (0 == oscl_UTF8ToUnicode(retval, oscl_strlen(retval), buf, buflen))
-        {
-            lastError = Oscl_FileFind::E_BUFFER_TOO_SMALL;
-            return NULL;
-        }
-        return buf;
-    }
-#endif
+    lastError = Oscl_FileFind::E_NO_MATCH;
+    OSCL_FREE(utf8buf);
     return NULL;
 }
 
 OSCL_EXPORT_REF void Oscl_FileFind::Close()
 {
 #if   (OSCL_HAS_GLOB)
-    if (haveGlob)
+    if (foundfirst)
         globfree(&hFind);
-    haveGlob = false;
-    count = 0;
-    lastError = Oscl_FileFind::E_OK;
 #else
     iDirEntVec.clear();
-    count = 0;
-    haveGlob = false;
-    lastError = Oscl_FileFind::E_OK;
 #endif
+    foundfirst = false;
+    lastError = Oscl_FileFind::E_OK;
+    count = 0;
+    appendPathDelimiter = false;
+    if (pathname)
+    {
+        OSCL_FREE(pathname);
+        pathname = NULL;
+    }
 }
 
 OSCL_EXPORT_REF Oscl_FileFind::element_type Oscl_FileFind::GetElementType()
@@ -475,6 +383,30 @@ OSCL_EXPORT_REF Oscl_FileFind::error_type Oscl_FileFind::GetLastError()
     return lastError;
 }
 
+bool Oscl_FileFind::setpathanddelimiter(const chartype* directory)
+{
+    if (pathname)
+    {
+        lastError = Oscl_FileFind::E_INVALID_STATE;
+        return false;
+    }
+    if (directory[oscl_strlen(directory)-1] != *delimeter && oscl_strlen(directory))
+        appendPathDelimiter = true;
+    if (appendPathDelimiter)
+        pathname = (chartype*) OSCL_MALLOC((oscl_strlen(directory) + 2) * sizeof(chartype));
+    else
+        pathname = (chartype*) OSCL_MALLOC((oscl_strlen(directory) + 1) * sizeof(chartype));
+    if (!pathname)
+    {
+        lastError = E_MEMORY_ERROR;
+        return false;
+    }
+    pathname[0] = *nullchar;
+    oscl_strcat(pathname, directory);
+    if (appendPathDelimiter)
+        oscl_strcat(pathname, delimeter);
+    return true;
+}
 // globmatch matches pattern strings p from str, follows linux glob.c man spec.
 static bool oscl_strglob(const char *str, const char *p)
 {

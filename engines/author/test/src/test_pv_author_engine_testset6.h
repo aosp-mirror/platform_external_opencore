@@ -117,6 +117,7 @@ class pv_mediainput_async_test_errorhandling: public pvauthor_async_test_base
 
         // Methods to configure encoders
         bool ConfigureVideoEncoder();
+        bool ConfigureAudioEncoder();
 
         void ResetAuthorConfig();
 

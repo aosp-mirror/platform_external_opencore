@@ -157,7 +157,7 @@ int32 OsclNativeFile::Open(const oscl_wchar *filename, uint32 mode
         OSCL_UNUSED_ARG(fileserv);
         OSCL_UNUSED_ARG(params);
 
-        if (*filename == '\0') return -1; // Null string not supported in fopen, error out
+        if (!filename || *filename == '\0') return -1; // Null string not supported in fopen, error out
 
         char openmode[4];
         uint32 index = 0;
@@ -265,7 +265,7 @@ int32 OsclNativeFile::Open(const char *filename, uint32 mode
         OSCL_UNUSED_ARG(fileserv);
         OSCL_UNUSED_ARG(params);
 
-        if (*filename == '\0') return -1; // Null string not supported in fopen, error out
+        if (!filename || *filename == '\0') return -1; // Null string not supported in fopen, error out
 
         char openmode[4];
         uint32 index = 0;
@@ -367,7 +367,9 @@ int32 OsclNativeFile::Close()
     int32 closeret = 0;
 
     {
-        if (iFile != NULL)
+        if (iOpenFileHandle)
+            closeret = Flush();
+        else if (iFile != NULL)
         {
             closeret = fclose(iFile);
             iFile = NULL;

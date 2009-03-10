@@ -24,6 +24,9 @@
 
 #include "oscl_dll.h"
 
+#include "pvmf_video.h"
+#include "pvmf_common_audio_decnode.h"
+
 #define LOG_OUTPUT_TO_FILE	1
 
 // Define entry point for this DLL
@@ -1143,7 +1146,6 @@ PVMFCommandId PVRefFileOutput::writeAsync(uint8 aFormatType, int32 aFormatIndex,
                                 if (iVideoFormat == PVMF_MIME_YUV420 || iVideoFormat == PVMF_MIME_YUV422)
                                 {
 #ifdef AVI_OUTPUT
-#if 1
                                     unsigned char *u, *v, ch;
                                     uint32 fsize = iVideoWidth * iVideoHeight;
                                     uint32 bsize = iVideoWidth * iVideoHeight * 3 / 2;
@@ -1158,14 +1160,6 @@ PVMFCommandId PVRefFileOutput::writeAsync(uint8 aFormatType, int32 aFormatIndex,
                                     AddChunk(aData, bsize, videoChunkID);
                                     iVideoLastTimeStamp = data_header_info.timestamp;
                                     iAVIChunkSize += bsize + 4 + 4;
-#else
-                                    uint8 pBufRGBRev[80120];
-                                    yuv2rgb(pBufRGBRev, aData, iVideoWidth, iVideoHeight);
-                                    uint32 bsize = iVideoWidth * iVideoHeight * 3;
-                                    AddChunk(pBufRGBRev, bsize, videoChunkID);
-                                    iVideoLastTimeStamp = data_header_info.timestamp;
-                                    iAVIChunkSize += bsize + 4 + 4;
-#endif
                                     status = PVMFSuccess;
 #else
                                     uint32 size = iVideoWidth * iVideoHeight * 3 / 2;
@@ -1541,6 +1535,25 @@ PVMFStatus PVRefFileOutput::getParametersSync(PvmiMIOSession aSession, PvmiKeyTy
         aParameters[0].value.uint32_value = DEFAULT_NUM_DECODED_FRAMES_CAPABILITY;
         return PVMFSuccess;
     }
+#if TEST_BUFFER_ALLOCATOR
+    else if (pv_mime_strcmp(aIdentifier, PVMF_BUFFER_ALLOCATOR_KEY) == 0)
+    {
+        int32 err;
+        aParameters = (PvmiKvp*)oscl_malloc(sizeof(PvmiKvp));
+        if (!aParameters)
+        {
+            return PVMFErrNoMemory;
+        }
+
+        OSCL_TRY(err, aParameters[0].value.key_specific_value = (PVInterface *)OSCL_NEW(PVRefBufferAlloc, (iBufferSize, iNumberOfBuffers)) ;);
+        if (err || (NULL == aParameters[0].value.key_specific_value))
+        {
+            return PVMFErrNoMemory;
+
+        }
+        return PVMFSuccess;
+    }
+#endif
     //other queries are not currently supported.
 
     //unrecognized key.
@@ -1722,6 +1735,75 @@ void PVRefFileOutput::setParametersSync(PvmiMIOSession aSession,
                     }
                 }
             }
+        }
+        //All FSI for video will be set here in one go
+        else if (pv_mime_strcmp(aParameters[i].key, PVMF_FORMAT_SPECIFIC_INFO_KEY_YUV) == 0)
+        {
+            uint8* data = (uint8*)aParameters->value.key_specific_value;
+            PVMFYuvFormatSpecificInfo0* yuvInfo = (PVMFYuvFormatSpecificInfo0*)data;
+
+            iVideoWidth = (int32)yuvInfo->width;
+            iVideoWidthValid = true;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVRefFileOutput::setParametersSync() Video Width, Value %d", iVideoWidth));
+
+            iVideoHeight = (int32)yuvInfo->height;
+            iVideoHeightValid = true;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVRefFileOutput::setParametersSync() Video Height, Value %d", iVideoHeight));
+
+            iVideoDisplayHeight = (int32)yuvInfo->display_height;
+            iVideoDisplayHeightValid = true;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVRefFileOutput::setParametersSync() Video Display Height, Value %d", iVideoDisplayHeight));
+
+
+            iVideoDisplayWidth = (int32)yuvInfo->display_width;
+            iVideoDisplayWidthValid = true;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVRefFileOutput::setParametersSync() Video Display Width, Value %d", iVideoDisplayWidth));
+
+            iNumberOfBuffers = (int32)yuvInfo->num_buffers;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVRefFileOutput::setParametersSync() Number of Buffer, Value %d", iNumberOfBuffers));
+
+            iBufferSize = (int32)yuvInfo->buffer_size;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVRefFileOutput::setParametersSync() Buffer Size, Value %d", iBufferSize));
+
+        }
+        //All FSI for audio will be set here in one go
+        else if (pv_mime_strcmp(aParameters[i].key, PVMF_FORMAT_SPECIFIC_INFO_KEY_PCM) == 0)
+        {
+            uint8* data = (uint8*)aParameters->value.key_specific_value;
+            channelSampleInfo* pcm16Info = (channelSampleInfo*)data;
+
+            iAudioSamplingRate = pcm16Info->samplingRate;
+            iAudioSamplingRateValid = true;
+            iFmtSubchunk.sampleRate = iAudioSamplingRate;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVRefFileOutput::setParametersSync() Audio Sampling Rate, Value %d", iAudioSamplingRate));
+
+
+            iAudioNumChannels = pcm16Info->desiredChannels;
+            iAudioNumChannelsValid = true;
+            iFmtSubchunk.numChannels = iAudioNumChannels;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVRefFileOutput::setParametersSync() Audio Num Channels, Value %d", iAudioNumChannels));
+
+
+            iFmtSubchunk.bitsPerSample = (int32)pcm16Info->bitsPerSample;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVRefFileOutput::setParametersSync() Audio Bits Per Sample, Value %d", iFmtSubchunk.bitsPerSample));
+
+            iNumberOfBuffers = (int32)pcm16Info->num_buffers;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVRefFileOutput::setParametersSync() Number of Buffer, Value %d", iNumberOfBuffers));
+
+            iBufferSize = (int32)pcm16Info->buffer_size;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVRefFileOutput::setParametersSync() Buffer Size, Value %d", iBufferSize));
+
         }
         else
         {
@@ -2340,15 +2422,6 @@ void PVRefFileOutput::WriteHeaders()
         iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //4-byte size of movi chunk below
         tmp = listtypeAVIMOVIE;
         iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //"movi"
-#if 0
-        tmp = ckidAVIPADDING;
-        iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //"movi"
-        tmp = 0x6E0;
-        iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //"movi"
-        char junk[0x6E0];
-        oscl_memset(junk, 0, 0x6E0);
-        iOutputFile.Write(junk, sizeof(uint8), 0x6E0);  //"movi"
-#endif
     }
 
     uint32 tmp;
@@ -2453,4 +2526,80 @@ void PVRefFileOutput::UpdateVideoChunkHeaderIdx()
         iOutputFile.Write(&iAVIChunkSize, sizeof(uint8), 4);
     }
 }
+
+#if TEST_BUFFER_ALLOCATOR
+
+PVRefBufferAlloc::PVRefBufferAlloc(uint32 size, uint32 buffers): refCount(0), bufferSize(size), maxBuffers(buffers), numAllocated(0)
+{
+}
+
+PVRefBufferAlloc::~PVRefBufferAlloc()
+{
+
+}
+
+void PVRefBufferAlloc::addRef()
+{
+    ++refCount;
+}
+
+void PVRefBufferAlloc::removeRef()
+{
+    --refCount;
+    if (refCount <= 0)
+    {
+        this->~PVRefBufferAlloc();
+        OSCL_DELETE(this);
+    }
+}
+
+
+OsclAny* PVRefBufferAlloc::allocate()
+{
+    if (numAllocated < maxBuffers)
+    {
+        OsclAny* ptr = oscl_malloc(bufferSize);
+        if (ptr) ++numAllocated;
+        return ptr;
+    }
+    return NULL;
+}
+
+void PVRefBufferAlloc::deallocate(OsclAny* ptr)
+{
+    if (ptr)
+    {
+        oscl_free(ptr);
+        --numAllocated;
+    }
+}
+
+uint32 PVRefBufferAlloc::getBufferSize()
+{
+    return bufferSize;
+}
+
+uint32 PVRefBufferAlloc::getNumBuffers()
+{
+    return maxBuffers;
+}
+
+
+bool PVRefBufferAlloc::queryInterface(const PVUuid& uuid, PVInterface*& aInterface)
+{
+    aInterface = NULL; // initialize aInterface to NULL in case uuid is not supported
+
+    if (PVMFFixedSizeBufferAllocUUID == uuid)
+    {
+        // Send back ptr to the allocator interface object
+        PVMFFixedSizeBufferAlloc* myInterface	= OSCL_STATIC_CAST(PVMFFixedSizeBufferAlloc*, this);
+        refCount++; // increment interface refcount before returning ptr
+        aInterface = OSCL_STATIC_CAST(PVInterface*, myInterface);
+        return true;
+    }
+
+    return false;
+}
+
+#endif
 

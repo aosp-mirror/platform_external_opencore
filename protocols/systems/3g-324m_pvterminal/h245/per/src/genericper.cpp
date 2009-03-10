@@ -1440,22 +1440,10 @@ void PutCharString(const char *stringName,
         //   "Invoke G0 as the current character set" -- 15
         // ------------------------------------------------------------------------
     {
-#if 0
-        // Encode length of string, in octets
-        PutLengthDet(4 + (x->size), stream);  // Assumes 4-byte T.51 escape sequence
-        // Remove the '4+' if the escape sequence is removed.
-        // Note: PutLengthDet() does octet alignment for us
-        // Send T.51 escapes
-        WriteBits(8, 27, stream);  // Designate primary T.51 character set as G0; see T.51 clause 2.1.2
-        WriteBits(8, 40, stream);  //   (cont'd)
-        WriteBits(8, 66, stream);  //   (cont'd)
-        WriteBits(8, 15, stream);  // Invoke character set G0 as current charset; see T.51 clause 3.5
-#else
         // Encode length of string, in octets
         PutLengthDet((x->size), stream);  // Assumes 4-byte T.51 escape sequence
         // Remove the '4+' if the escape sequence is removed.
         // Note: PutLengthDet() does octet alignment for us
-#endif
         // Send the T.51 encoded character data
         WriteOctets(x->size, x->data, 1, stream);
     }
@@ -1905,7 +1893,8 @@ void FreeCharString(PS_int8STRING x)
 // =========================================================
 void FreeObjectID(PS_OBJECTIDENT x)
 {
-    OSCL_DEFAULT_FREE(x->data);
+    if (x->data)
+        OSCL_DEFAULT_FREE(x->data);
     OSCL_DEFAULT_FREE(x);
 }
 

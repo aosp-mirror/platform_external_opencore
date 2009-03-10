@@ -68,6 +68,7 @@
 
 #define PVMF_AMRPARSER_LOGDIAGNOSTICS(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG,iDiagnosticLogger,PVLOGMSG_INFO,m);
 #define PVMF_AMRPARSER_LOGERROR(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iLogger,PVLOGMSG_ERR,m);
+#define PVMF_AMRPARSER_LOGDEBUG(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iLogger,PVLOGMSG_DEBUG,m);
 
 #define NO_POSSIBLE_MODES 16
 
@@ -166,7 +167,8 @@ class bitstreamObject
             MISC_ERROR = -2,
             READ_ERROR = -1,
             EVERYTHING_OK = 0,
-            END_OF_FILE = 62
+            END_OF_FILE = 62,
+            DATA_INSUFFICIENT = 141
         };
 
         /**
@@ -175,9 +177,10 @@ class bitstreamObject
         * @param pFile Pointer to file pointer containing bitstream
         * @returns None
         */
-        bitstreamObject(PVFile* pFile = NULL)
+        bitstreamObject(PVLogger *aLogger, PVFile* pFile = NULL)
         {
             oscl_memset(this, 0, sizeof(bitstreamObject));
+            iLogger = aLogger;
             init(pFile);
             iBuffer = OSCL_ARRAY_NEW(uint8, bitstreamObject::MAIN_BUFF_SIZE + bitstreamObject::SECOND_BUFF_SIZE);
             if (iBuffer)
@@ -308,6 +311,15 @@ class bitstreamObject
         */
         int32 parseIETFHeader();
 
+        /**
+        * @brief Gets the updated file size
+        *
+        * @param None
+        * @returns Result of operation: true/false.
+        */
+        bool UpdateFileSize();
+
+
     private:
         int32 iPos;             // pointer for iBuffer[]
         int32 iActual_size;     // number of bytes read from a file once <= max_size
@@ -322,6 +334,7 @@ class bitstreamObject
         uint8 *iBuffer;
         PVFile* ipAMRFile; // bitstream file
         bool iStatus;
+        PVLogger *iLogger;
 };
 
 /**

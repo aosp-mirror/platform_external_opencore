@@ -507,43 +507,6 @@ class CPvtH263Capability : public CPvtVideoCapability
         PS_H263VideoCapability iH263VideoCapability;
 };
 
-#if 0
-class CPvtAvcCapability : public CPvtMediaCapability
-{
-    public:
-        CPvtAvcCapability(uint32 bitrate = 0) : CPvtMediaCapability(PVMF_AVC, bitrate), iDecoderConfig(NULL)
-        {
-            iProfile = -1;
-            iLevel = -1;
-            iCustomMaxMBPS = -1;
-            iCustomMaxFS = -1;
-            iCustomMaxDPB = -1;
-            iCustomMaxBRandCPB = -1;
-            iMaxStaticMBPS = -1;
-            iMaxRcmdNalUnitSize = 0;
-            iMaxNalUnitSize = 0;
-            iDecoderConfigLen = 0;
-        }
-        ~CPvtAvcCapability()
-        {
-            if (iDecoderConfig)
-            {
-                OSCL_DEFAULT_FREE(iDecoderConfig);
-            }
-        }
-        int32 iProfile;
-        int32 iLevel;
-        int32 iCustomMaxMBPS;
-        int32 iCustomMaxFS;
-        int32 iCustomMaxDPB;
-        int32 iCustomMaxBRandCPB;
-        int32 iMaxStaticMBPS;
-        uint32 iMaxRcmdNalUnitSize;
-        uint32 iMaxNalUnitSize;
-        uint8* iDecoderConfig;
-        uint16 iDecoderConfigLen;
-};
-#endif
 
 class CPvtTerminalCapability
 {

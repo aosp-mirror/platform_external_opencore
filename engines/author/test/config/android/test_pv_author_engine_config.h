@@ -87,12 +87,6 @@
 #define KMaxFileSizeTestOutput						"maxfilesize_test.3gp"
 #define KMaxFileSize_long_Output					"maxfilesize_long_output.3gp"
 
-#ifndef _IMOTION_SPECIFIC_UT_DISABLE
-#define KIMOTIONAUTHORINGMODE_OUTPUT				"IMotionAuthoring_output.3gp"
-#define KIMOTIONDOWNLOADMODE_OUTPUT					"IMotionDownloadAuthoring_output.3gp"
-#define KIMOTIONAUTHORINGMODE_Long_OUTPUT			"IMotionAuthoring_long_test.3gp"
-#define KIMOTIONDOWNLOADMODE_Long_OUTPUT				"IMotionDownloadAuthoring_long_test.3gp"
-#endif
 
 #define K3GPPDOWNLOADMODE_OUTPUT					"3GPPDownloadAuthoring_output.3gp"
 #define K3GPPPROGRESSIVEDOWNLOADMODE_OUTPUT			"3GPPProgressiveDownloadAuthoring_output.3gp"

@@ -855,7 +855,7 @@ PVMFStatus PVMFDownloadManagerNode::SetSourceInitializationData(OSCL_wString& aS
                 ((PVMFSocketNode*)iSocketNode.iNode)->GetMaxTCPRecvBufferSize(bufSize);
             }
 
-            // MBDS cache size calculation, see RIO-3965 for detail
+            // MBDS cache size calculation
             // TCP buffer size is 64000 (the default), assume worst case that the average packet size is 250 bytes
             // Packet overhead is 64 bytes per packet
             // 8 buffers will yield a cache of 305500, 13 buffers will yield a cache of 560500

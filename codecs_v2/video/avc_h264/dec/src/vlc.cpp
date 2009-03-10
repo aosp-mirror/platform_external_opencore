@@ -23,22 +23,7 @@
 #define PV_CLZ(A,B) __asm{CLZ (A),(B)}  \
 	A -= 16;
 #else
-#if 1
 #define PV_CLZ(A,B) while (((B) & 0x8000) == 0) {(B) <<=1; A++;}
-#else
-const static int table[64] =
-    {16, 15, 99, 0, 99, 14, 99, 99,  99, 99, 99, 99, 13, 99, 99, 99,
-     99, 99, 99, 99, 5, 99, 3, 99,   99, 12, 99, 9, 99, 99, 99, 99,
-     1, 99, 99, 99, 99, 99, 99, 99,  99, 6, 4, 99, 10, 99, 99, 2,
-     99, 99, 99, 7, 99, 11, 99, 99,   99, 8, 99, 99, 99, 99, 99, 99
-    };
-#define PV_CLZ(A,B) \
-	   B = B | (B >> 1);   \
-	   B = B | (B >> 2);   \
-	   B = B | (B >> 4);	  \
-	   B = B | (B >> 8);   \
-	   A = table[(B * 0x06EB14F9 )>> 26];
-#endif
 #endif
 
 
@@ -820,19 +805,6 @@ AVCDec_Status ce_RunBefore(AVCDecBitstream *stream, int *code, int zerosLeft)
             temp |= 1;
             indx = 0;
             PV_CLZ(indx, temp)
-#if 0
-            while ((temp&0x100) == 0)
-            {
-                temp <<= 1;
-                indx++;
-            }
-#endif
-#if 0
-            if (indx == 8)
-            {
-                return AVCDEC_FAIL;  /* error!! */
-            }
-#endif
             *code = 7 + indx;
             BitstreamFlushBits(stream, indx + 1);
         }

@@ -2133,6 +2133,19 @@ void PVMFAACFFParserNode::removeRef()
     --iExtensionRefCount;
 }
 
+PVMFStatus PVMFAACFFParserNode::QueryInterfaceSync(PVMFSessionId aSession,
+        const PVUuid& aUuid,
+        PVInterface*& aInterfacePtr)
+{
+    OSCL_UNUSED_ARG(aSession);
+    aInterfacePtr = NULL;
+    if (queryInterface(aUuid, aInterfacePtr))
+    {
+        aInterfacePtr->addRef();
+        return PVMFSuccess;
+    }
+    return PVMFErrNotSupported;
+}
 
 bool PVMFAACFFParserNode::queryInterface(const PVUuid& uuid, PVInterface*& iface)
 {
@@ -2176,10 +2189,7 @@ bool PVMFAACFFParserNode::queryInterface(const PVUuid& uuid, PVInterface*& iface
     {
         return false;
     }
-
-    ++iExtensionRefCount;
     return true;
-
 }
 
 PVMFStatus PVMFAACFFParserNode::SetSourceInitializationData(OSCL_wString& aSourceURL, PVMFFormatType& aSourceFormat, OsclAny* aSourceData)
@@ -2541,19 +2551,33 @@ PVMFStatus PVMFAACFFParserNode::DoGetMetadataValues(PVMFAACFFParserNodeCommand& 
         return PVMFErrInvalidState;
     }
 
+    PVMFMetadataList* keylistptr_in = NULL;
     PVMFMetadataList* keylistptr = NULL;
     Oscl_Vector<PvmiKvp, OsclMemAllocator>* valuelistptr = NULL;
     uint32 starting_index;
     int32 max_entries;
 
-    aCmd.PVMFAACFFParserNodeCommand::Parse(keylistptr, valuelistptr, starting_index, max_entries);
+    aCmd.PVMFAACFFParserNodeCommand::Parse(keylistptr_in, valuelistptr, starting_index, max_entries);
 
     // Check the parameters
-    if (keylistptr == NULL || valuelistptr == NULL)
+    if (keylistptr_in == NULL || valuelistptr == NULL)
     {
         return PVMFErrArgument;
     }
 
+    keylistptr = keylistptr_in;
+    //If numkeys is one, just check to see if the request
+    //is for ALL metadata
+    if (keylistptr_in->size() == 1)
+    {
+        if (oscl_strncmp((*keylistptr)[0].get_cstr(),
+                         PVAAC_ALL_METADATA_KEY,
+                         oscl_strlen(PVAAC_ALL_METADATA_KEY)) == 0)
+        {
+            //use the complete metadata key list
+            keylistptr = &iAvailableMetadataKeys;
+        }
+    }
     uint32 numkeys = keylistptr->size();
 
     if (starting_index > (numkeys - 1) || numkeys <= 0 || max_entries == 0)
@@ -2822,7 +2846,7 @@ PVMFStatus PVMFAACFFParserNode::DoGetMetadataValues(PVMFAACFFParserNodeCommand& 
     {
         iCPMGetMetaDataValuesCmdId =
             iCPMMetaDataExtensionInterface->GetNodeMetadataValues(iCPMSessionID,
-                    (*keylistptr),
+                    (*keylistptr_in),
                     (*valuelistptr),
                     0);
         return PVMFPending;

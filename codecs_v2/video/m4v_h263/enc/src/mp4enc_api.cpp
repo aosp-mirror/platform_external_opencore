@@ -1337,15 +1337,7 @@ OSCL_EXPORT_REF UChar* PVGetOverrunBuffer(VideoEncControls *encCtrl)
 }
 
 
-#if 0
-static Int PVTIMESTAMP[2] = {0, 0};
-static Int PVMS = 0;
-#endif
 
-#if 0
-static Int PVTIMESTAMP[2] = {0, 0};
-static Int PVMS = 0;
-#endif
 
 /* ======================================================================== */
 /*	Function : EncodeVideoFrame()											*/
@@ -1584,10 +1576,6 @@ OSCL_EXPORT_REF Bool PVEncodeVideoFrame(VideoEncControls *encCtrl, VideoEncFrame
     /* Determine nLayer and timeInc for next encode */
     /* 12/27/00 always go by the highest layer*/
     /************************************************/
-#if 0
-    PVTIMESTAMP[currLayer] += vol[currLayer]->prevModuloTimeBase * 1000;
-    PVMS = vol[currLayer]->timeIncrement * 1000 / vol[currLayer]->timeIncrementResolution;
-#endif
 
     /**********************************************************/
     /* Copy Reconstructed Buffer to Output Video Frame Buffer */
@@ -3252,20 +3240,6 @@ Bool SetProfile_BufferSize(VideoEncData *video, float delay, Int bInitialized)
         if (!bFound) // && start == 4)
             return PV_FALSE; /* mis-match in the profiles between base layer and enhancement layer */
 
-#if 0 /* Do not go to the higher level */
-        else if (!bFound)
-        {
-            i = j = 4; /* Choose Core (scalable) profile level 1 */
-            if (base_bitrate		> profile_level_max_bitrate[j]		||
-                    base_packet_size	> profile_level_max_packet_size[j]  ||
-                    base_MBsPerSec		> profile_level_max_mbsPerSec[j]	||
-                    base_VBV_size		> profile_level_max_VBV_size[j])
-
-            {
-                i = j = 5; /* Choose Core (scalable) profile level 2 */
-            }
-        }
-#endif
         /* j for base layer, i for enhancement layer */
         video->encParams->ProfileLevel[0] = profile_level_code[j];
         video->encParams->ProfileLevel[1] = scalable_profile_level_code[i];

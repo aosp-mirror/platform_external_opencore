@@ -103,12 +103,6 @@ void CPV2WayEncDataChannelDatapath::UseFilePlayPort(bool aUseFilePlayPort)
 
 void CPV2WayEncDataChannelDatapath::OpenComplete()
 {
-#if 0
-    if (i2Way->iUsePlayFileAsSource)
-    {
-        UseFilePlayPort(true);
-    }
-#endif
 
     CommandComplete(PVMFSuccess);
 }
@@ -116,14 +110,6 @@ void CPV2WayEncDataChannelDatapath::OpenComplete()
 bool CPV2WayEncDataChannelDatapath::CheckPathSpecificOpen()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "CPV2WayEncDataChannelDatapath::CheckPathSpecificOpen\n"));
-#if 0
-    if (iFormat == EPV2WayAudio)
-    {
-        i2Way->CheckAudioSourceMixingPort();
-        return true;
-    }
-    else
-#endif
     {
         return true;
     }

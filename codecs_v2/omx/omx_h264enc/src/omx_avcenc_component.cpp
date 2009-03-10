@@ -690,7 +690,7 @@ void OmxComponentAvcEncAO::ProcessData()
                 iIsInputBufferEnded = OMX_TRUE;
                 iInputCurrLength = 0;
 
-	            iFrameCount++;
+                iFrameCount++;
             }
 
             if (AVCENC_PICTURE_READY == EncodeReturn)

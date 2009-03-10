@@ -174,8 +174,10 @@ extern const uint16 KVideoIFrameInterval;
 extern const uint8 KH263VideoProfile;
 extern const uint8 KH263VideoLevel;
 extern const uint32 KAudioBitrate;
+extern const uint32 KAudioBitrateWB;
 extern const uint32 KAACAudioBitrate;
 extern const uint32 KAudioTimescale;
+extern const uint32 KAudioTimescaleWB;
 extern const uint32 KAudioNumChannels;
 
 extern const uint32 KMaxFileSize;
@@ -288,15 +290,9 @@ typedef enum
 
     KMaxFileSizeTest = 208,								//.amr+.yuv
 
-#ifndef _IMOTION_SPECIFIC_UT_DISABLE
-    KIMotionAuthoringModeTest = 209,						//.amr+.yuv
-#endif
     K3GPPDownloadModeTest = 210,							//.amr+.yuv
     K3GPPProgressiveDownloadModeTest = 211,				//.amr+.yuv
 
-#ifndef _IMOTION_SPECIFIC_UT_DISABLE
-    KIMotionDownloadModeTest = 212,						//.amr+.yuv
-#endif
     KMovieFragmentModeTest = 213,
     CapConfigTest = 214,
 
@@ -331,14 +327,8 @@ typedef enum
     UnCompressed_LongetivityTestBegin = 300,			//placeholder
     AVI_Input_Longetivity_Test = 301,
     KMaxFileSizeLongetivityTest = 302,					//.amr+.yuv/302
-#ifndef _IMOTION_SPECIFIC_UT_DISABLE
-    KIMotionAuthoringModeLongetivityTest = 303,			//.amr+.yuv
-#endif
     K3GPPDownloadModeLongetivityTest = 304,				//.amr+.yuv
     K3GPPProgressiveDownloadModeLongetivityTest = 305,  //.amr+.yuv
-#ifndef _IMOTION_SPECIFIC_UT_DISABLE
-    KIMotionDownloadModeLongetivityTest = 306,			//.amr+.yuv
-#endif
     KMovieFragmentModeLongetivityTest = 307,
     UnCompressed_LongetivityTestEnd = 308,
 

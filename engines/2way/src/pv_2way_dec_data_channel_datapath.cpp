@@ -53,3 +53,22 @@ void CPV2WayDecDataChannelDatapath::OpenComplete()
 {
     CommandComplete(PVMFSuccess);
 }
+
+void CPV2WayDecDataChannelDatapath::SkipComplete(TPV2WayNode* aNode)
+{
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "CPV2WayDecDataChannelDatapath::SkipComplete, Format=%s, Node=%x\n", iFormat.getMIMEStrPtr(), aNode->iNode));
+
+    if (!IsNodeInDatapath(aNode->iNode))
+        return;
+    // Check if it is the sink node.  The sink node is the last node in the vector
+    if (iNodeList[iNodeList.size()-1].iNode.iNode == aNode->iNode)
+    {
+        iSkipComplete = true;
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "CPV2WayDecDataChannelDatapath::SkipComplete, Format=%s, Node=%x\n Skip complete for datapath", iFormat.getMIMEStrPtr(), aNode->iNode));
+    }
+}
+
+bool CPV2WayDecDataChannelDatapath::IsSkipComplete() const
+{
+    return iSkipComplete;
+}

@@ -84,10 +84,6 @@ class H264PayloadParser : public IPayloadParser
          * @param accessUnit,	output media data
          * @return RTP_PAYLOAD_PARSER_RET_CODE code
          **/
-#if 0
-        RTP_PAYLOAD_PARSER_RET_CODE parseRTPPayload_PassthruMode(PVMFSharedMediaDataPtr& rtpPacket,
-                PVMFSharedMediaDataPtr& accessUnit);
-#endif
         /**
           * Parse RTP payload for non-interleaved mode(including single NAL unit mode)
           *

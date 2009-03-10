@@ -142,7 +142,7 @@ class OsclActiveObject:
         /**
          * Complete this AO's request immediately.
          * If the AO is already active, this will do nothing.
-         * Will leave if the AO is not acced to any scheduler,
+         * Will leave if the AO is not added to any scheduler,
          * or if the calling thread context does not match the
          * scheduling thread.
          */

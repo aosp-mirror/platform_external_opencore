@@ -155,6 +155,7 @@ class PvmiMIOFileInput : public OsclTimerObject,
             public PvmiMIOControl,
             public PvmiMediaTransfer,
             public PvmiCapabilityAndConfig
+
 {
     public:
         PvmiMIOFileInput(const PvmiMIOFileInputSettings& aSettings);
@@ -232,6 +233,7 @@ class PvmiMIOFileInput : public OsclTimerObject,
         OSCL_IMPORT_REF void SetAuthoringDuration(uint32);
 
         PVMFStatus Get_Timed_Config_Info();
+        PVMFStatus RetrieveFSI(uint32 fsi_size = 0);
 
     private:
         void Run();
@@ -347,6 +349,7 @@ class PvmiMIOFileInput : public OsclTimerObject,
         // Logger
         PVLogger* iLogger;
 
+
         // State machine
         enum PvmiMIOFileInputState
         {
@@ -361,6 +364,12 @@ class PvmiMIOFileInput : public OsclTimerObject,
         PvmiMIOFileInputState iState;
         uint32 iAuthoringDuration;
         uint32 iStreamDuration;  //in msec
+
+        // Format specific info
+        OsclRefCounterMemFrag iFormatSpecificInfo;
+        uint32 iFormatSpecificInfoSize;
+        bool iSetFormatSpecificInfo;
+        PvmiKvp* iFSIKvp;
 };
 
 #endif // PVMI_MIO_FILEINPUT_H_INCLUDED

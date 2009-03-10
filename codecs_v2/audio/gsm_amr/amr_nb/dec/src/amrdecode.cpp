@@ -421,7 +421,7 @@ Word16 AMRDecode(
             /* Address offset of the start of next frame */
             byte_offset = WmfDecBytesPerFrame[frame_type];
         }
-        else if (input_format == IF2)
+        else   /* else has to be input_format  IF2 */
         {
             /* Convert incoming packetized raw IF2 data to ETS format */
             if2_to_ets(frame_type, speech_bits_ptr, dec_ets_input_bfr);
@@ -459,7 +459,7 @@ Word16 AMRDecode(
                 rx_type = RX_SID_UPDATE;
             }
         }
-        else if ((frame_type > AMR_SID) && (frame_type < AMR_NO_DATA))
+        else if (frame_type < AMR_NO_DATA)
         {
             /* Invalid frame_type, return error code */
             byte_offset = -1;   /*  !!! */

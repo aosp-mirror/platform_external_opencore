@@ -127,13 +127,7 @@ void FillG723Capability(PS_G7231 g723caps);
 CodecCapabilityInfo* GetCodecCapabilityInfo(PS_G7231 capability);
 void FillAmrCapability(PS_GenericCapability amrCaps);
 CodecCapabilityInfo* GetCodecCapabilityInfoAmr(PS_GenericCapability capability);
-#if 0
-void FillH264Capability(VideoCodecCapabilityInfo& video_codec_info, PS_GenericCapability h264caps, bool includeCsi);
-#endif
 CodecCapabilityInfo* GetCodecCapabilityInfoAvc(PS_GenericCapability capability);
-#if 0
-void ParseH264Capability(PS_GenericCapability h264caps, CPvtAvcCapability& h264Capability);
-#endif
 void FillM4vCapability(VideoCodecCapabilityInfo& video_codec_info, PS_GenericCapability m4vcaps);
 CodecCapabilityInfo* GetCodecCapabilityInfoMpeg4(PS_GenericCapability capability);
 void FillUserInputCapability(CodecCapabilityInfo& codec_info, PS_UserInputCapability userinputCaps);

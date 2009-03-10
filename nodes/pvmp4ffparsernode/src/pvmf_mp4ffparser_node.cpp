@@ -560,6 +560,20 @@ void PVMFMP4FFParserNode::removeRef()
 }
 
 
+PVMFStatus PVMFMP4FFParserNode::QueryInterfaceSync(PVMFSessionId aSession,
+        const PVUuid& aUuid,
+        PVInterface*& aInterfacePtr)
+{
+    OSCL_UNUSED_ARG(aSession);
+    aInterfacePtr = NULL;
+    if (queryInterface(aUuid, aInterfacePtr))
+    {
+        aInterfacePtr->addRef();
+        return PVMFSuccess;
+    }
+    return PVMFErrNotSupported;
+}
+
 bool PVMFMP4FFParserNode::queryInterface(const PVUuid& uuid, PVInterface*& iface)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::queryInterface() In"));
@@ -618,8 +632,6 @@ bool PVMFMP4FFParserNode::queryInterface(const PVUuid& uuid, PVInterface*& iface
     {
         return false;
     }
-
-    ++iExtensionRefCount;
     return true;
 }
 
@@ -1849,6 +1861,7 @@ PVMFStatus PVMFMP4FFParserNode::DoQueryInterface(PVMFMP4FFParserNodeCommand& aCm
 
     if (queryInterface(*uuid, *ptr))
     {
+        (*ptr)->addRef();
         return PVMFSuccess;
     }
     else

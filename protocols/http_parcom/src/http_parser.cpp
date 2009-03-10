@@ -1460,7 +1460,6 @@ int32 HTTPParserMultipartContentObject::parseChunkBoundaryLine(HTTPParserInput &
         if (isFinalBoundary) return HTTPParser::PARSE_SUCCESS_END_OF_MESSAGE;
         saveEndingCRLF((char *)aInputLineData.getPtr(), (int32)aInputLineData.getAvailableSpace(), iPrevCRLF);
 
-#if 1	// try one more time
         if (!iBoudaryLineParsed)
         {
             if (aParserInput.getNextCompleteLine(aInputLineData))
@@ -1469,7 +1468,6 @@ int32 HTTPParserMultipartContentObject::parseChunkBoundaryLine(HTTPParserInput &
                 if (iContentInfo->parseBoudaryLine(aInputLineData, isFinalBoundary)) iBoudaryLineParsed = true;
             }
         }
-#endif
     }
 
     if (!iBoudaryLineParsed)

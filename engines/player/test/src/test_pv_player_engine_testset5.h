@@ -53,6 +53,9 @@ class PVMFDownloadDataSourceHTTP;
 class PVMFSourceContextData;
 class PvmiCapabilityAndConfig;
 class PVMFJanusPluginFactory;
+#if RUN_CPMJANUS_TESTCASES
+class PVMFJanusPluginConfiguration;
+#endif
 class WmDrmDeviceInfoFactory;
 class PVWmdrmDeviceSystemClockFactory;
 
@@ -292,6 +295,11 @@ class pvplayer_async_test_3gppdlnormal : public pvplayer_async_test_downloadbase
         {
             iLogger = PVLogger::GetLoggerObject("pvplayer_async_test_3gppdlnormal");
             iTestCaseName = _STRLIT_CHAR("3GPP Download Play ASAP");
+#if RUN_CPMJANUS_TESTCASES && !(JANUS_IS_LOADABLE_MODULE)
+            iPluginFactory = NULL;
+            iDrmDeviceInfoFactory = NULL;
+            iDrmSystemClockFactory = NULL;
+#endif
         }
 
         ~pvplayer_async_test_3gppdlnormal();
@@ -301,6 +309,15 @@ class pvplayer_async_test_3gppdlnormal : public pvplayer_async_test_downloadbase
         void CreateDataSinkAudio();
 
         //for janus DRM
+#if RUN_CPMJANUS_TESTCASES && !(JANUS_IS_LOADABLE_MODULE)
+        PVMFCPMPluginFactoryRegistryClient iPluginRegistryClient;
+        PVMFJanusPluginFactory* iPluginFactory;
+        OSCL_HeapString<OsclMemAllocator> iPluginMimeType;
+        bool RegisterJanusPlugin(PVMFJanusPluginConfiguration& aConfig);
+        void CleanupJanusPlugin();
+        WmDrmDeviceInfoFactory* iDrmDeviceInfoFactory;
+        PVWmdrmDeviceSystemClockFactory* iDrmSystemClockFactory;
+#endif
         void CleanupData();
 };
 

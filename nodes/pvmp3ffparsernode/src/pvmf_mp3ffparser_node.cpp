@@ -916,6 +916,7 @@ PVMFStatus PVMFMP3FFParserNode::DoQueryInterface(PVMFMP3FFParserNodeCommand& aCm
 
     if (queryInterface(*uuid, *ptr))
     {
+        (*ptr)->addRef();
         status = PVMFSuccess;
     }
     else
@@ -1543,18 +1544,41 @@ PVMFStatus PVMFMP3FFParserNode::DoGetMetadataValues(PVMFMP3FFParserNodeCommand& 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "PVMFMP3FFParserNode::DoGetMetadataValues() In"));
 
+    PVMFMetadataList* keylistptr_in = NULL;
     PVMFMetadataList* keylistptr = NULL;
+    PVMFMetadataList completeKeyList;
     Oscl_Vector<PvmiKvp, OsclMemAllocator>* valuelistptr = NULL;
     uint32 starting_index;
     int32 max_entries;
 
     // Extract parameters from command structure
-    aCmd.PVMFMP3FFParserNodeCommand::Parse(keylistptr, valuelistptr, starting_index, max_entries);
-    if (iMP3File == NULL || keylistptr == NULL || valuelistptr == NULL)
+    aCmd.PVMFMP3FFParserNodeCommand::Parse(keylistptr_in,
+                                           valuelistptr,
+                                           starting_index,
+                                           max_entries);
+
+    if (iMP3File == NULL || keylistptr_in == NULL || valuelistptr == NULL)
     {
         // The list pointer is invalid, or we cannot access the mp3 ff library.
         return PVMFFailure;
     }
+
+    keylistptr = keylistptr_in;
+    if (keylistptr_in->size() == 1)
+    {
+        if (oscl_strncmp((*keylistptr_in)[0].get_cstr(),
+                         PVMF_MP3_PARSER_NODE_ALL_METADATA_KEY,
+                         oscl_strlen(PVMF_MP3_PARSER_NODE_ALL_METADATA_KEY)) == 0)
+        {
+            //check if the user passed in "all" metadata key, in which case get the complete
+            //key list from MP3 FF lib first
+            int32 max = 0x7FFFFFFF;
+            char* query = NULL;
+            iMP3File->GetMetadataKeys(completeKeyList, 0, max, query);
+            keylistptr = &completeKeyList;
+        }
+    }
+
     // The underlying mp3 ff library will fill in the values.
     PVMFStatus status = iMP3File->GetMetadataValues(*keylistptr, *valuelistptr, starting_index, max_entries);
 
@@ -1564,7 +1588,7 @@ PVMFStatus PVMFMP3FFParserNode::DoGetMetadataValues(PVMFMP3FFParserNodeCommand& 
     {
         iCPMGetMetaDataValuesCmdId =
             (iCPMContainer.iCPMMetaDataExtensionInterface)->GetNodeMetadataValues(iCPMContainer.iSessionId,
-                    (*keylistptr),
+                    (*keylistptr_in),
                     (*valuelistptr),
                     0);
         return PVMFPending;
@@ -2653,6 +2677,20 @@ void PVMFMP3FFParserNode::removeRef()
     --iExtensionRefCount;
 }
 
+PVMFStatus PVMFMP3FFParserNode::QueryInterfaceSync(PVMFSessionId aSession,
+        const PVUuid& aUuid,
+        PVInterface*& aInterfacePtr)
+{
+    OSCL_UNUSED_ARG(aSession);
+    aInterfacePtr = NULL;
+    if (queryInterface(aUuid, aInterfacePtr))
+    {
+        aInterfacePtr->addRef();
+        return PVMFSuccess;
+    }
+    return PVMFErrNotSupported;
+}
+
 bool PVMFMP3FFParserNode::queryInterface(const PVUuid& uuid, PVInterface*& iface)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP3FFParserNode::queryInterface() In"));
@@ -2696,8 +2734,6 @@ bool PVMFMP3FFParserNode::queryInterface(const PVUuid& uuid, PVInterface*& iface
     {
         return false;
     }
-
-    ++iExtensionRefCount;
     return true;
 }
 
@@ -3858,11 +3894,7 @@ OSCL_EXPORT_REF void PVMFCPMContainerMp3::CPMCommandCompleted(const PVMFCmdResp&
             {
                 //if CPM comes back as PVMFErrNotSupported then by pass rest of the CPM
                 //sequence. Fake success here so that node doesnt treat this as an error
-                status = PVMFSuccess;
-                if (iContainer->CheckForMP3HeaderAvailability() != PVMFSuccess)
-                {
-                    return;
-                }
+                status = iContainer->CheckForMP3HeaderAvailability();
             }
             else if (status == PVMFSuccess)
             {

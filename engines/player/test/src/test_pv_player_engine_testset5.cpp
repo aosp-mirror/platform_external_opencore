@@ -106,6 +106,26 @@
 #include "pvmf_metadata_infomessage.h"
 #endif
 
+#if(RUN_CPMJANUS_TESTCASES)
+
+#ifndef PVMF_JANUS_TYPES_H_INCLUDED
+#include "pvmf_janus_types.h"
+#endif
+
+#if !(JANUS_IS_LOADABLE_MODULE)
+#ifndef PVMF_JANUS_PLUGIN_FACTORY_H_INCLUDED
+#include "pvmf_janus_plugin_factory.h"
+#endif
+#endif
+
+#ifndef PVMI_DRM_KVP_H_INCLUDED
+#include "pvmi_drm_kvp.h"
+#endif
+
+#ifndef TEST_PV_PLAYER_ENGINE_TESTSET_CPMJANUS_TYPES_H_INCLUDED
+#include "test_pv_player_engine_testset_cpmjanus_types.h"
+#endif
+#endif//RUN_CPMJANUS_TESTCASES
 
 
 //Default Fast-track download file
@@ -733,12 +753,6 @@ void pvplayer_async_test_downloadbase::CommandCompleted(const PVCmdResponse& aRe
     }
 
 //#if(RUN_CPMJANUS_TESTCASES)
-#if 0
-    if (aResponse.GetCmdStatus() != PVMFSuccess)
-    {
-        PrintJanusError(aResponse);
-    }
-#endif
 
     switch (iState)
     {
@@ -1326,7 +1340,38 @@ void pvplayer_async_test_downloadbase::HandleProtocolEngineNodeErrors(int32 aErr
 
 void pvplayer_async_test_downloadbase::PrintJanusError(const PVCmdResponse& aResp)
 {
+#if(RUN_CPMJANUS_TESTCASES)
+//#if 0
+    //Get the extended error info.
+    if (aResp.GetCmdStatus() != PVMFSuccess)
+    {
+        PVInterface* iface = (PVInterface*)(aResp.GetEventExtensionInterface());
+        if (iface)
+        {
+            PVUuid errUuid(PVMFErrorInfoMessageInterfaceUUID);
+            PVMFErrorInfoMessageInterface* errMsg = NULL;
+            if (iface->queryInterface(errUuid, (PVInterface*&)errMsg))
+            {
+                //search for a janus error in the error list.
+                PVUuid janusUuid(PVMFJanusPluginErrorMessageUuid);
+                PVMFJanusPluginErrorMessage* janusErr = NULL;
+                PVMFErrorInfoMessageInterface* nextErr = errMsg->GetNextMessage();
+                while (nextErr)
+                {
+                    if (nextErr->queryInterface(janusUuid, (PVInterface*&)janusErr))
+                    {
+                        uint32 drmErr = janusErr->DrmResult();
+                        fprintf(file, "  Janus DRM Error! 0x%x\n", drmErr);
+                        break;
+                    }
+                    nextErr = nextErr->GetNextMessage();
+                }
+            }
+        }
+    }
+#else
     OSCL_UNUSED_ARG(aResp);
+#endif
 }
 
 void pvplayer_async_test_downloadbase::HandleErrorEvent(const PVAsyncErrorEvent& aEvent)
@@ -1868,6 +1913,26 @@ void pvplayer_async_test_3gppdlnormal::CreateDataSource()
     uint32 iMaxFileSize = 0x7FFFFFFF;
     bool aIsNewSession = true;
 
+#if(RUN_CPMJANUS_TESTCASES) && !(JANUS_IS_LOADABLE_MODULE)
+    //Select the device info configuration.
+    bool ok = GetJanusFactories(iTestNumber
+                                , iDrmDeviceInfoFactory
+                                , iDrmSystemClockFactory);
+    if (!ok)
+        PVPATB_TEST_IS_TRUE(false);
+
+    //Define the janus configuration.
+    PVMFJanusPluginConfiguration config;
+    config.iDeviceInfoFactory = iDrmDeviceInfoFactory;
+    config.iSystemClockFactory = iDrmSystemClockFactory;
+    if (!RegisterJanusPlugin(config))
+    {
+        PVPATB_TEST_IS_TRUE(false);
+        iState = STATE_CLEANUPANDCOMPLETE;
+        RunIfNotReady();
+        return;
+    }
+#endif
 
     iDownloadContextData = new PVMFSourceContextData();
     iDownloadContextData->EnableCommonSourceContext();
@@ -1886,10 +1951,58 @@ void pvplayer_async_test_3gppdlnormal::CreateDataSource()
 }
 
 #if !(JANUS_IS_LOADABLE_MODULE)
+#if RUN_CPMJANUS_TESTCASES
+bool pvplayer_async_test_3gppdlnormal::RegisterJanusPlugin(PVMFJanusPluginConfiguration& aConfig)
+{
+#if(RUN_CPMJANUS_TESTCASES)
+//#if 0
+    //Connect to plugin registry
+    PVMFStatus status;
+    status = iPluginRegistryClient.Connect();
+    if (status != PVMFSuccess)
+    {
+        PVPATB_TEST_IS_TRUE(false);
+        return false;
+    }
+    //Create & the plugin factory.
+    iPluginFactory = new PVMFJanusPluginFactory(aConfig);
+    if (!iPluginFactory)
+    {
+        PVPATB_TEST_IS_TRUE(false);
+        return false;
+    }
+    //Register the plugin factory.
+    iPluginMimeType = PVMF_CPM_MIME_JANUS_PLUGIN;
+    if (iPluginRegistryClient.RegisterPlugin(iPluginMimeType, *iPluginFactory) != PVMFSuccess)
+    {
+        PVPATB_TEST_IS_TRUE(false);
+        return false;
+    }
+    return true;
+#else
+    //OSCL_UNUSED_ARG(aConfig);
+    return false;
+#endif
+}
+#endif
 #endif
 
 void pvplayer_async_test_3gppdlnormal::CleanupData()
 {
+#if(RUN_CPMJANUS_TESTCASES) && !(JANUS_IS_LOADABLE_MODULE)
+    //close the plugin registry client session.
+    iPluginRegistryClient.Close();
+
+    //delete the plugin factory.
+    if (iPluginFactory)
+    {
+        delete iPluginFactory;
+        iPluginFactory = NULL;
+    }
+    CleanupJanusFactories(iTestNumber,
+                          iDrmDeviceInfoFactory,
+                          iDrmSystemClockFactory);
+#endif
 }
 
 void pvplayer_async_test_3gppdlnormal::CreateDataSinkVideo()
@@ -3849,12 +3962,6 @@ void pvplayer_async_test_ppb_base::CommandCompleted(const PVCmdResponse& aRespon
     }
 
 //#if(RUN_CPMJANUS_TESTCASES)
-#if 0
-    if (aResponse.GetCmdStatus() != PVMFSuccess)
-    {
-        PrintJanusError(aResponse);
-    }
-#endif
 
     switch (iState)
     {
@@ -4599,7 +4706,38 @@ void pvplayer_async_test_ppb_base::HandleProtocolEngineNodeErrors(int32 aErr)
 }
 void pvplayer_async_test_ppb_base::PrintJanusError(const PVCmdResponse& aResp)
 {
+#if(RUN_CPMJANUS_TESTCASES)
+//#if 0
+    //Get the extended error info.
+    if (aResp.GetCmdStatus() != PVMFSuccess)
+    {
+        PVInterface* iface = (PVInterface*)(aResp.GetEventExtensionInterface());
+        if (iface)
+        {
+            PVUuid errUuid(PVMFErrorInfoMessageInterfaceUUID);
+            PVMFErrorInfoMessageInterface* errMsg = NULL;
+            if (iface->queryInterface(errUuid, (PVInterface*&)errMsg))
+            {
+                //search for a janus error in the error list.
+                PVUuid janusUuid(PVMFJanusPluginErrorMessageUuid);
+                PVMFJanusPluginErrorMessage* janusErr = NULL;
+                PVMFErrorInfoMessageInterface* nextErr = errMsg->GetNextMessage();
+                while (nextErr)
+                {
+                    if (nextErr->queryInterface(janusUuid, (PVInterface*&)janusErr))
+                    {
+                        uint32 drmErr = janusErr->DrmResult();
+                        fprintf(file, "  Janus DRM Error! 0x%x\n", drmErr);
+                        break;
+                    }
+                    nextErr = nextErr->GetNextMessage();
+                }
+            }
+        }
+    }
+#else
     OSCL_UNUSED_ARG(aResp);
+#endif
 }
 
 void pvplayer_async_test_ppb_base::HandleErrorEvent(const PVAsyncErrorEvent& aEvent)

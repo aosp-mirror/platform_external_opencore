@@ -20,27 +20,27 @@
 #define OMX_PROXY_INTERFACE_H_INCLUDED
 
 #ifndef OMX_Types_h
-#include "omx_types.h"
+#include "OMX_Types.h"
 #endif
 
 #ifndef OMX_Core_h
-#include "omx_core.h"
+#include "OMX_Core.h"
 #endif
 
 #ifndef OMX_Audio_h
-#include "omx_audio.h"
+#include "OMX_Audio.h"
 #endif
 
 #ifndef OMX_Video_h
-#include "omx_video.h"
+#include "OMX_Video.h"
 #endif
 
 #ifndef OMX_Image_h
-#include "omx_image.h"
+#include "OMX_Image.h"
 #endif
 
 #ifndef OMX_Other_h
-#include "omx_other.h"
+#include "OMX_Other.h"
 #endif
 
 #ifndef PV_OMXDEFS_H_INCLUDED

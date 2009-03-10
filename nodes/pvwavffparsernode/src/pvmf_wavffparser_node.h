@@ -380,6 +380,9 @@ class PVMFWAVFFParserNode : public OsclTimerObject,
         PVMFCommandId Prepare(PVMFSessionId aSession, const OsclAny* aContext = NULL);
         PVMFCommandId CancelAllCommands(PVMFSessionId, const OsclAny* aContextData = NULL);
         PVMFCommandId CancelCommand(PVMFSessionId, PVMFCommandId aCmdId, const OsclAny* aContextData = NULL);
+        PVMFStatus QueryInterfaceSync(PVMFSessionId aSession,
+                                      const PVUuid& aUuid,
+                                      PVInterface*& aInterfacePtr);
 
         //From PVMFDataSourceInitializationExtensionInterface
         void addRef();

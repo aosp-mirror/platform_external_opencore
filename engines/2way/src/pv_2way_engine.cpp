@@ -48,13 +48,17 @@
 #include "pvmf_videoparser_node.h"
 
 #ifdef PV2WAY_USE_OMX
-#include "omx_core.h"
-#endif
-
-#ifdef PV2WAY_USE_OMX_VIDEO_DECODER
+#include "OMX_Core.h"
 #include "pvmf_omx_videodec_factory.h"
+#include "pvmf_omx_enc_factory.h"
+#include "pvmf_omx_audiodec_factory.h"
+#include "pvmf_audio_encnode_extension.h"
 #else
 #include "pvmf_videodec_factory.h"
+#include "pvmf_videoenc_node_factory.h"
+#include "pvmfamrencnode_extension.h"
+#include "pvmf_gsmamrdec_factory.h"
+#include "pvmf_amrenc_node_factory.h"
 #endif
 
 #include "pvmf_video.h"
@@ -63,12 +67,6 @@
 #ifndef PV_ENGINE_OBSERVER_H_INCLUDED
 #include "pv_engine_observer.h"
 #endif
-
-#ifdef PV2WAY_USE_OMX_ENCODER
-#include "pvmf_omx_enc_factory.h"
-#else
-#include "pvmf_videoenc_node_factory.h"
-#endif //PV2WAY_USE_OMX_ENCODER
 
 #ifndef PV_DISABLE_VIDRECNODE
 #include "pvvideoencmdfnode_factory.h"
@@ -86,19 +84,6 @@
 #include "tsc_h324m_config_interface.h"
 #endif
 
-
-#ifdef PV2WAY_USE_OMX
-#include "pvmf_audio_encnode_extension.h"
-#else
-#include "pvmfamrencnode_extension.h"
-#include "pvmf_gsmamrdec_factory.h"
-#endif
-
-#ifdef PV2WAY_USE_OMX_AMR_ENCODER
-#else
-#include "pvmf_amrenc_node_factory.h"
-
-#endif
 
 #include "pvmf_nodes_sync_control.h"
 
@@ -160,43 +145,42 @@ const uint32 KNumPCMFrames  = 2; // 10
 #define CREATE_VIDEO_ENC_NODE()  PVVideoEncMDFNodeFactory::Create(this,this,this)
 #define DELETE_VIDEO_ENC_NODE(n) PVVideoEncMDFNodeFactory::Delete(n)
 #else
-#ifndef PV2WAY_USE_OMX_ENCODER // mark here
+#ifndef PV2WAY_USE_OMX
 #define	CREATE_VIDEO_ENC_NODE()  PVMFVideoEncNodeFactory::CreateVideoEncNode()
 #define DELETE_VIDEO_ENC_NODE(n) PVMFVideoEncNodeFactory::DeleteVideoEncNode(n)
-#endif
+#endif // PV2WAY_USE_OMX
 #endif
 
 #ifndef PV_DISABLE_DEVVIDEOPLAYNODE
 #define CREATE_VIDEO_DEC_NODE()  PVDevVideoPlayNode::Create()
 #define DELETE_VIDEO_DEC_NODE(n) OSCL_DELETE(n)
 #else
-#ifdef PV2WAY_USE_OMX_VIDEO_DECODER
+#ifdef PV2WAY_USE_OMX
 #define	CREATE_OMX_VIDEO_DEC_NODE()  PVMFOMXVideoDecNodeFactory::CreatePVMFOMXVideoDecNode()
 #define DELETE_OMX_VIDEO_DEC_NODE(n) PVMFOMXVideoDecNodeFactory::DeletePVMFOMXVideoDecNode(n)
-#endif // PV2WAY_USE_OMX_VIDEO_DECODER
+#endif // PV2WAY_USE_OMX
 #define	CREATE_VIDEO_DEC_NODE()  PVMFVideoDecNodeFactory::CreatePVMFVideoDecNode()
 #define DELETE_VIDEO_DEC_NODE(n) PVMFVideoDecNodeFactory::DeletePVMFVideoDecNode(n)
 #endif
 
-#ifdef PV2WAY_USE_OMX_ENCODER
+#ifdef PV2WAY_USE_OMX
 #define	CREATE_OMX_ENC_NODE()  PVMFOMXEncNodeFactory::CreatePVMFOMXEncNode()
 #define DELETE_OMX_ENC_NODE(n) PVMFOMXEncNodeFactory::DeletePVMFOMXEncNode(n);
-#endif
+#endif // PV2WAY_USE_OMX
 
-#ifndef PV2WAY_USE_OMX_AMR_ENCODER
+#ifndef PV2WAY_USE_OMX
 #define CREATE_AUDIO_ENC_NODE() PvmfAmrEncNodeFactory::Create()
 #define DELETE_AUDIO_ENC_NODE(n) PvmfAmrEncNodeFactory::Delete(n)
-#endif
+#endif // PV2WAY_USE_OMX
 
 
-#ifdef PV2WAY_USE_OMX_AMR_DECODER
-#include "pvmf_omx_audiodec_factory.h"
+#ifdef PV2WAY_USE_OMX
 #define CREATE_OMX_AUDIO_DEC_NODE() PVMFOMXAudioDecNodeFactory::CreatePVMFOMXAudioDecNode()
 #define DELETE_OMX_AUDIO_DEC_NODE(n) PVMFOMXAudioDecNodeFactory::DeletePVMFOMXAudioDecNode(n)
 #else
 #define CREATE_AUDIO_DEC_NODE() PVMFGSMAMRDecNodeFactory::CreatePVMFGSMAMRDecNode()
 #define DELETE_AUDIO_DEC_NODE(n) PVMFGSMAMRDecNodeFactory::DeletePVMFGSMAMRDecNode(n)
-#endif // PV2WAY_USE_OMX_AMR_DECODER
+#endif // PV2WAY_USE_OMX
 
 
 
@@ -311,9 +295,7 @@ CPV324m2Way::CPV324m2Way() :
         iPendingAudioEncReset(-1),
         iPendingVideoEncReset(-1),
         iAudioDatapathLatency(0),
-        iVideoDatapathLatency(0),
-        iIncomingVideoCodecType(PV_INVALID_CODEC_TYPE),
-        iOutgoingVideoCodecType(PV_INVALID_CODEC_TYPE)
+        iVideoDatapathLatency(0)
 {
     iLogger = PVLogger::GetLoggerObject("2wayEngine");
     iSyncControlPVUuid = PvmfNodesSyncControlUuid;
@@ -345,6 +327,14 @@ CPV324m2Way::~CPV324m2Way()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "CPV324m2Way::~CPV324m2Way\n"));
+
+    Oscl_Map<PVMFFormatType, CPvtMediaCapability*, OsclMemAllocator, pvmf_format_type_key_compare_class>::iterator it = iStackSupportedFormats.begin();
+    while (it != iStackSupportedFormats.end())
+    {
+        CPvtMediaCapability* media_capability = (*it++).second;
+        OSCL_DELETE(media_capability);
+    }
+    iStackSupportedFormats.clear();
 
     Cancel();
     iIncomingChannelParams.clear();
@@ -457,15 +447,13 @@ void CPV324m2Way::ClearVideoEncNode()
 #ifndef PV_DISABLE_VIDRECNODE
         PVVideoEncMDFNodeFactory::Delete(nodeIFace);
 #else
-        if (iOutgoingVideoCodecType != PV_INVALID_CODEC_TYPE)
-        {
-#if (defined(PV2WAY_USE_OMX_MPEG4_ENCODER) || defined(PV2WAY_USE_OMX_H263_ENCODER))
-            DELETE_OMX_ENC_NODE(nodeIFace);
-#else // PV2WAY_USE_OMX_ENCODER
-            DELETE_VIDEO_ENC_NODE(nodeIFace);
-#endif
-        }
-#endif
+
+#ifdef PV2WAY_USE_OMX
+        DELETE_OMX_ENC_NODE(nodeIFace);
+#else
+        DELETE_VIDEO_ENC_NODE(nodeIFace);
+#endif // PV2WAY_USE_OMX
+#endif // PV_DISABLE_VIDRECNODE
         iVideoEncNode.Clear() ;
         iVideoEncNodeInterface.Reset();
     }
@@ -1475,10 +1463,7 @@ void CPV324m2Way::DoAddDataSink(TPV2WayNode& aNode,
                     datapathnode.iInputPort.iPortSetType = EConnectedPortFormat;
                     datapathnode.iInputPort.iFormatType = PVMF_MIME_FORMAT_UNKNOWN;
                     datapathnode.iInputPort.iPortTag = PV2WAY_IN_PORT;
-                    // Changed from initialized because decoder node now tries to
-                    // immediately send data downstream during prepare, but the
-                    // downstream port isn't connected at that time.
-                    datapathnode.iOutputPort.iRequestPortState = EPVMFNodeIdle;
+                    datapathnode.iOutputPort.iRequestPortState = EPVMFNodeInitialized;
                     datapathnode.iOutputPort.iPortSetType = EUserDefined;
                     datapathnode.iOutputPort.iFormatType = PVMF_MIME_PCM16;
                     datapathnode.iOutputPort.iPortTag = PV2WAY_OUT_PORT;
@@ -1544,10 +1529,7 @@ void CPV324m2Way::DoAddDataSink(TPV2WayNode& aNode,
                 datapathnode.iInputPort.iPortSetType = EConnectedPortFormat;
                 datapathnode.iInputPort.iFormatType = PVMF_MIME_FORMAT_UNKNOWN;
                 datapathnode.iInputPort.iPortTag = PV2WAY_IN_PORT;
-                // Changed from initialized because decoder node now tries to
-                // immediately send data downstream during prepare, but the
-                // downstream port isn't connected at that time.
-                datapathnode.iOutputPort.iRequestPortState = EPVMFNodeIdle;
+                datapathnode.iOutputPort.iRequestPortState = EPVMFNodeInitialized;
                 datapathnode.iOutputPort.iPortSetType = EUserDefined;
                 datapathnode.iOutputPort.iFormatType = PVMF_MIME_PCM16;
                 datapathnode.iOutputPort.iPortTag = PV2WAY_OUT_PORT;
@@ -2234,46 +2216,6 @@ void CPV324m2Way::HandleVideoDecNodeCmd(PV2WayNodeCmdType aType,
 {
     OSCL_UNUSED_ARG(aType);
     OSCL_UNUSED_ARG(aResponse);
-#if 0
-    if (iVideoEncDatapath)
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
-                        (0, "CPV324m2Way::HandleVideoDecNodeCmd type %d, video enc path state %d\n",
-                         aType, iVideoEncDatapath->GetState()));
-    }
-    PvmiKvp kvp;
-    int32 numElems;
-    PvmiKvp *retKvp;
-    int32 error;
-
-    switch (aType)
-    {
-        case PV2WAY_NODE_CMD_QUERY_INTERFACE:
-
-            if (aResponse.GetCmdStatus() == PVMFSuccess)
-            {
-                kvp.key = "x-pvmf/video/decoder/dropframe_enable;valtype=bool";
-                kvp.capacity = oscl_strlen("x-pvmf/video/decoder/dropframe_enable;valtype=bool");
-                kvp.length = kvp.capacity;
-                kvp.value.bool_value = true;
-                numElems = 1;
-
-                OSCL_TRY(error, ptr->setParametersSync(NULL, &kvp, numElems, retKvp));
-                OSCL_FIRST_CATCH_ANY(error, SetState(EResetting));
-            }
-            else
-            {
-                iVideoDecNodeInterface.iState = PV2WayNodeInterface::NoInterface;
-                SetState(EResetting);
-            }
-
-            CheckState();
-            break;
-
-        default:
-            break;
-    }
-#endif
 }
 
 void CPV324m2Way::HandleVideoEncNodeCmd(PV2WayNodeCmdType aType,
@@ -2387,6 +2329,9 @@ void CPV324m2Way::HandleSinkNodeCmd(PV2WayNodeCmdType aType,
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
                             (0, "CPV324m2Way::HandleSinkNodeCmd type %d, SkipComplete for Node %x ",
                              aType, aNode->iNode));
+            if (iAudioDecDatapath) iAudioDecDatapath->SkipComplete(aNode);
+            if (iVideoDecDatapath) iVideoDecDatapath->SkipComplete(aNode);
+            RunIfNotReady();
             break;
         default:
             break;
@@ -2439,16 +2384,6 @@ void CPV324m2Way::HandleAudioEncNodeCmd(PV2WayNodeCmdType aType,
             {
                 iAudioEncNodeInterface.iState = PV2WayNodeInterface::HasInterface;
 
-#if 0
-                PVAudioEncExtensionInterface *ptr =
-                    (PVAudioEncExtensionInterface *) iAudioEncNodeInterface.iInterface;
-                ptr->SetOutputFormat(PVMF_MIME_AMR_IF2);
-                ptr->SetInputSamplingRate(KSamplingRate);
-                ptr->SetInputBitsPerSample(KBitsPerSample);
-                ptr->SetInputNumChannels(KNumChannels);
-                ptr->SetOutputBitRate(GSM_AMR_12_2);
-                ptr->SetMaxNumOutputFramesPerBuffer(KNumPCMFrames);
-#endif
             }
             else
             {
@@ -2536,58 +2471,6 @@ PVCommandId CPV324m2Way::SetLatencyQualityTradeoff(PVMFNodeInterface& aTrack,
     OSCL_UNUSED_ARG(aTrack);
     OSCL_UNUSED_ARG(aTradeoff);
     OSCL_UNUSED_ARG(aContextData);
-#if 0
-    TPV2WayCmdInfo *cmd;
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "CPV324m2Way::SetLatencyQualityTradeoffL\n"));
-
-#ifndef NO_2WAY_324
-    if (iTerminalType != PV_324M)
-    {
-        OSCL_LEAVE(PVMFErrNotSupported);
-    }
-
-    if (iState != EConnected)
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "CPV324m2Way::SetLatencyQualityTradeoff - invalid state(%d)", iState));
-        OSCL_LEAVE(PVMFErrInvalidState);
-    }
-
-    if (iVideoEncDatapath && iVideoEncDatapath->IsNodeInDatapath(&aTrack))
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
-                        (0, "CPV324m2Way::SetLatencyQualityTradeoff - Sending VidTempSpatTradeoff Indication for track id %d\n",
-                         iVideoEncDatapath->GetTSCPortTag()));
-        iTSC324mInterface->SendVideoTemporalSpatialTradeoffIndication(iVideoEncDatapath->GetTSCPortTag(),
-                aTradeoff);
-    }
-    else if (iVideoDecDatapath && iVideoDecDatapath->IsNodeInDatapath(&aTrack))
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
-                        (0, "CPV324m2Way::SetLatencyQualityTradeoff - Sending VidTempSpatTradeoff Command for track id %d\n",
-                         iVideoEncDatapath->GetTSCPortTag()));
-        iTSC324mInterface->SendVideoTemporalSpatialTradeoffCommand(iVideoDecDatapath->GetTSCPortTag(),
-                aTradeoff);
-    }
-    else
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "CPV324m2Way::SetLatencyQualityTradeoff - invalid state(%d)", iState));
-        OSCL_LEAVE(PVMFErrArgument);
-    }
-
-    cmd = GetCmdInfoL();
-    cmd->type = PVT_COMMAND_SET_TRADEOFF;
-    cmd->id = iCommandId;
-    cmd->contextData = aContextData;
-    cmd->status = PVMFSuccess;
-    Dispatch(cmd);
-
-#else
-    OSCL_LEAVE(PVMFErrNotSupported);
-#endif
-#endif
     return iCommandId++;
 }
 
@@ -2602,89 +2485,6 @@ PVCommandId CPV324m2Way::Pause(PV2WayDirection aDirection,
     OSCL_UNUSED_ARG(aContextData);
 
     OSCL_LEAVE(PVMFErrNotSupported);
-#if 0
-    CPV2WayDataChannelDatapath *datapath = NULL;
-    TPV2WayCmdInfo *cmd;
-
-    switch (iState)
-    {
-        case EIdle:
-        case EInitializing:
-        case EResetting:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "CPV324m2Way::Pause - invalid state(%d)", iState));
-            OSCL_LEAVE(PVMFErrInvalidState);
-            break;
-
-        default:
-            //State check okay.
-            break;
-    }
-
-    if (iVideoEncDatapath && iVideoEncDatapath->IsNodeInDatapath(&aTrack))
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
-                        (0, "CPV324m2Way::PauseL video source, state %d\n",
-                         iVideoEncDatapath->GetState()));
-        datapath = iVideoEncDatapath;
-    }
-    else if (iAudioEncDatapath && iAudioEncDatapath->IsNodeInDatapath(&aTrack))
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
-                        (0, "CPV324m2Way::PauseL audio source, state %d\n",
-                         iAudioEncDatapath->GetState()));
-        datapath = iAudioEncDatapath;
-    }
-    else if (iVideoDecDatapath && iVideoDecDatapath->IsNodeInDatapath(&aTrack))
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
-                        (0, "CPV324m2Way::PauseL video sink, state %d\n",
-                         iVideoDecDatapath->GetState()));
-        datapath = iVideoDecDatapath;
-    }
-    else if (iAudioDecDatapath && iAudioDecDatapath->IsNodeInDatapath(&aTrack))
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
-                        (0, "CPV324m2Way::PauseL audio sink, state %d\n",
-                         iAudioDecDatapath->GetState()));
-        datapath = iAudioDecDatapath;
-    }
-    else
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "CPV324m2Way::PauseL - unknown node!"));
-        OSCL_LEAVE(PVMFErrArgument);
-    }
-
-    switch (datapath->GetState())
-    {
-        case EOpened:
-            cmd = GetCmdInfoL();
-            cmd->type = PVT_COMMAND_PAUSE;
-            cmd->id = iCommandId;
-            cmd->contextData = aContextData;
-            datapath->SetCmd(cmd);
-            break;
-
-        case EPaused:
-            cmd = GetCmdInfoL();
-            cmd->type = PVT_COMMAND_PAUSE;
-            cmd->id = iCommandId;
-            cmd->contextData = aContextData;
-            cmd->status = PVMFSuccess;
-            Dispatch(cmd);
-            break;
-
-        case EPausing:
-            return datapath->GetCmdInfo()->id;
-
-        default:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "CPV324m2Way::PauseL - invalid path state\n"));
-            OSCL_LEAVE(PVMFErrInvalidState);
-            break;
-    }
-#endif
     return iCommandId++;
 }
 
@@ -2700,89 +2500,6 @@ PVCommandId CPV324m2Way::Resume(PV2WayDirection aDirection,
     OSCL_UNUSED_ARG(aContextData);
     OSCL_LEAVE(PVMFErrNotSupported);
 
-#if 0
-    CPV2WayDataChannelDatapath *datapath = NULL;
-    TPV2WayCmdInfo *cmd;
-
-    switch (iState)
-    {
-        case EIdle:
-        case EInitializing:
-        case EResetting:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "CPV324m2Way::Resume - invalid state(%d)", iState));
-            OSCL_LEAVE(PVMFErrInvalidState);
-            break;
-
-        default:
-            //State check okay.
-            break;
-    }
-
-    if (iVideoEncDatapath && iVideoEncDatapath->IsNodeInDatapath(&aTrack))
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
-                        (0, "CPV324m2Way::Resume video source, state %d\n",
-                         iVideoEncDatapath->GetState()));
-        datapath = iVideoEncDatapath;
-    }
-    else if (iAudioEncDatapath && iAudioEncDatapath->IsNodeInDatapath(&aTrack))
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
-                        (0, "CPV324m2Way::Resume audio source, state %d\n",
-                         iAudioEncDatapath->GetState()));
-        datapath = iAudioEncDatapath;
-    }
-    else if (iVideoDecDatapath && iVideoDecDatapath->IsNodeInDatapath(&aTrack))
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
-                        (0, "CPV324m2Way::Resume video sink, state %d\n",
-                         iVideoDecDatapath->GetState()));
-        datapath = iVideoDecDatapath;
-    }
-    else if (iAudioDecDatapath && iAudioDecDatapath->IsNodeInDatapath(&aTrack))
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
-                        (0, "CPV324m2Way::Resume audio sink, state %d\n",
-                         iAudioDecDatapath->GetState()));
-        datapath = iAudioDecDatapath;
-    }
-    else
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "CPV324m2Way::Resume - unknown node!"));
-        OSCL_LEAVE(PVMFErrArgument);
-    }
-
-    switch (datapath->GetState())
-    {
-        case EPaused:
-            cmd = GetCmdInfoL();
-            cmd->type = PVT_COMMAND_RESUME;
-            cmd->id = iCommandId;
-            cmd->contextData = aContextData;
-            datapath->SetCmd(cmd);
-            break;
-
-        case EOpened:
-            cmd = GetCmdInfoL();
-            cmd->type = PVT_COMMAND_RESUME;
-            cmd->id = iCommandId;
-            cmd->contextData = aContextData;
-            cmd->status = PVMFSuccess;
-            Dispatch(cmd);
-            break;
-
-        case EUnpausing:
-            return datapath->GetCmdInfo()->id;
-
-        default:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "CPV324m2Way::ResumeL - invalid path state\n"));
-            OSCL_LEAVE(PVMFErrInvalidState);
-            break;
-    }
-#endif
     return iCommandId++;
 }
 
@@ -2879,95 +2596,6 @@ PVCommandId CPV324m2Way::GetLogLevel(const char * aTag,
     return iCommandId++;
 }
 
-#if 0
-PVCommandId CPV324m2Way::SendUserInput(CPVUserInput& user_input,
-                                       OsclAny* aContextData)
-{
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "CPV324m2Way::SendUserInputL state %d, type %d\n", iState, user_input.GetType()));
-    TPV2WayCmdInfo *cmd;
-#ifndef NO_2WAY_324
-
-    if (iState != EConnected)
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "CPV324m2Way::SendUserInputL invalid state!\n"));
-        OSCL_LEAVE(PVMFErrInvalidState);
-    }
-
-    switch (user_input.GetType())
-    {
-        case EAlphanumeric:
-            CPVUserInputAlphanumeric *alpha;
-
-            alpha = (CPVUserInputAlphanumeric *) & user_input;
-
-            if ((alpha->GetInput() == NULL) || (alpha->GetLength() == 0))
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                (0, "CPV324m2Way::SendUserInputL invalid alphanumeric string, ptr %x, len %d!\n",
-                                 alpha->GetInput(), alpha->GetLength()));
-                OSCL_LEAVE(PVMFErrArgument);
-            }
-
-            cmd = GetCmdInfoL();
-
-            ((TSC_324m *) iTscNode.node)->Tsc_UII_Alphanumeric(alpha->GetInput(),
-                    alpha->GetLength());
-
-            cmd->type = PVT_COMMAND_SEND_USER_INPUT;
-            cmd->id = iCommandId;
-            cmd->contextData = aContextData;
-            cmd->status = PVMFSuccess;
-            Dispatch(cmd);
-            break;
-
-        case EDtmf:
-            CPVUserInputDtmf *dtmf;
-
-            dtmf = (CPVUserInputDtmf *) & user_input;
-
-            cmd = GetCmdInfoL();
-
-            ((TSC_324m *) iTscNode.node)->Tsc_UII_DTMF(dtmf->GetInput(),
-                    dtmf->GetDuration());
-
-            cmd->type = PVT_COMMAND_SEND_USER_INPUT;
-            cmd->id = iCommandId;
-            cmd->contextData = aContextData;
-            cmd->status = PVMFSuccess;
-            Dispatch(cmd);
-            break;
-
-        default:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "CPV324m2Way::SendUserInputL invalid user input type!\n"));
-            OSCL_LEAVE(PVMFErrArgument);
-            break;
-    }
-#else
-    cmd = GetCmdInfoL();
-    cmd->type = PVT_COMMAND_SEND_USER_INPUT;
-    cmd->id = iCommandId;
-    cmd->contextData = aContextData;
-    cmd->status = PVMFErrNotSupported;
-    Dispatch(cmd);
-#endif
-
-    return iCommandId++;
-}
-
-
-TPVCmnCommandId CPV324m2Way::GetCallStatistics(CPVCmn2WayStatistics& /*aStats*/,
-        OsclAny* /*aContextData*/)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "CPV324m2Way::GetCallStatistics\n"));
-    OSCL_LEAVE(PVMFErrNotSupported);
-    return 0;
-}
-#endif
 
 PVCommandId CPV324m2Way::QueryInterface(const PVUuid& aUuid,
                                         PVInterface*& aInterfacePtr,
@@ -3105,1502 +2733,6 @@ PVCommandId CPV324m2Way::CancelAllCommands(OsclAny* aContextData)
     return iCommandId++;
 }
 
-#if 0
-PVCommandId CPV324m2Way::InitRecordFile(const OSCL_wString& aFileName,
-                                        OsclAny* aContextData)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "CPV324m2Way::InitRecordFileL state %d, rec state %d\n",
-                     iState, iRecordFileState));
-
-    switch (iState)
-    {
-        case EIdle:
-        case EInitializing:
-        case EResetting:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "CPV324m2Way::InitRecordFileL invalid terminal state!\n"));
-            OSCL_LEAVE(PVMFErrInvalidState);
-            break;
-
-        default:
-            break;
-    }
-
-    switch (iRecordFileState)
-    {
-        case File2WayIdle:
-            iRecFilename = aFileName;
-
-            iInitRecFileInfo = GetCmdInfoL();
-
-            iInitRecFileInfo->type = PVT_COMMAND_INIT_RECORD_FILE;
-            iInitRecFileInfo->id = iCommandId;
-            iInitRecFileInfo->contextData = aContextData;
-
-            iRecordFileState = File2WayInitializing;
-            CheckRecordFileState();
-            break;
-
-        case File2WayInitializing:
-            if (iInitRecFileInfo)
-            {
-                return iInitRecFileInfo->id;
-            }
-            else
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                (0, "CPV324m2Way::InitRecordFileL no init rec info!!\n"));
-                OSCL_LEAVE(PVMFFailure);
-            }
-            break;
-
-        case File2WayInitialized:
-            iInitRecFileInfo = GetCmdInfoL();
-            iInitRecFileInfo->type = PVT_COMMAND_INIT_RECORD_FILE;
-            iInitRecFileInfo->id = iCommandId;
-            iInitRecFileInfo->contextData = aContextData;
-            iInitRecFileInfo->status = PVMFSuccess;
-            Dispatch(iInitRecFileInfo);
-            iInitRecFileInfo = NULL;
-            break;
-
-        default:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "CPV324m2Way::InitRecordFileL invalid ff composer state\n"));
-            OSCL_LEAVE(PVMFErrInvalidState);
-            break;
-    }
-
-    return iCommandId++;
-}
-
-PVCommandId CPV324m2Way::ResetRecordFile(OsclAny* aContextData)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "CPV324m2Way::ResetRecordFileL state %d, rec file state %d, audio rec %d, video rec %d\n",
-                     iState,
-                     iRecordFileState,
-                     iAudioRecDatapath->GetState(),
-                     iVideoRecDatapath->GetState()));
-
-    switch (iState)
-    {
-        case EIdle:
-        case EInitializing:
-        case EResetting:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "CPV324m2Way::ResetRecordFileL invalid terminal state!\n"));
-            OSCL_LEAVE(PVMFErrInvalidState);
-            break;
-
-        default:
-            break;
-    }
-
-    switch (iRecordFileState)
-    {
-        case File2WayIdle:
-            iResetRecFileInfo = GetCmdInfoL();
-            iResetRecFileInfo->type = PVT_COMMAND_RESET_RECORD_FILE;
-            iResetRecFileInfo->id = iCommandId;
-            iResetRecFileInfo->contextData = aContextData;
-            iResetRecFileInfo->status = PVMFSuccess;
-            Dispatch(iResetRecFileInfo);
-            iResetRecFileInfo = NULL;
-            break;
-
-        case File2WayInitialized:
-            iResetRecFileInfo = GetCmdInfoL();
-            iResetRecFileInfo->type = PVT_COMMAND_RESET_RECORD_FILE;
-            iResetRecFileInfo->id = iCommandId;
-            iResetRecFileInfo->contextData = aContextData;
-
-            InitiateResetRecordFile();
-            break;
-
-        case File2WayResetting:
-            if (iResetRecFileInfo)
-            {
-                return iResetRecFileInfo->id;
-            }
-            else
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                (0, "CPV324m2Way::ResetRecordFileL no reset rec info!!\n"));
-                OSCL_LEAVE(PVMFErrBusy);
-            }
-            break;
-
-        default:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "CPV324m2Way::ResetRecordFileL invalid ff composer state\n"));
-            OSCL_LEAVE(PVMFErrInvalidState);
-            break;
-    }
-
-    return iCommandId++;
-}
-
-PVCommandId CPV324m2Way::StartRecord(PVMFNodeInterface& aSink,
-                                     OsclAny* aContextData)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "CPV324m2Way::StartRecordL state %d, rec state %d\n", iState, iRecordFileState));
-    CPVDatapathNode node;
-#if 1
-    OSCL_LEAVE(PVMFErrNotSupported);
-#else
-    if ((iState != EConnected) ||
-            (iRecordFileState != File2WayInitialized))
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "CPV324m2Way::StartRecordL invalid state!\n"));
-        OSCL_LEAVE(PVMFErrInvalidState);
-    }
-
-    if (iAudioDecDatapath && iAudioDecDatapath->IsNodeInDatapath(&aSink))
-    {
-        if (iAudioDecDatapath->GetState() != EOpened)
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "CPV324m2Way::StartRecordL audio sink path not open %d!\n",
-                             iAudioDecDatapath->GetState()));
-            OSCL_LEAVE(PVMFErrInvalidState);
-        }
-
-        if (iAudioRecDatapath->GetState() == EClosed)
-        {
-            //Set up audio rec datapath
-
-            //Get the codec type
-            iAudioDecDatapath->GetTSCPort()->Query(node.iOutputPort.iProperty);
-
-            if (node.iOutputPort.iFormatType != PVMF_MIME_AMR_IF2)
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                (0, "CPV324m2Way::StartRecordL audio format is not AMR %d!\n",
-                                 node.iOutputPort.iFormatType));
-                OSCL_LEAVE(PVMFErrNotSupported);
-            }
-
-            cmd = GetCmdInfoL();
-
-            //Add audio sink node
-            node.iNode = iAudioSinkNode;
-            node.iConfigure = NULL;
-            node.iLoggoffOnReset = false;
-            node.iOutputPort.iCanCancelPort = false;
-            node.iOutputPort.iRequestPortState = EPVMFNodeStarted;
-            node.iOutputPort.iPortSetType = EUserDefined;
-            node.iOutputPort.iFormatType = PVMF_MIME_AMR_IF2;
-            node.iOutputPort.iPortTag = PV2WAY_OUT_PORT;
-            iAudioRecDatapath->AddNode(node);
-
-            //Add ff composer node
-            node.iNode = iFFComposerNode;
-            node.iConfigure = NULL;
-            node.iLoggoffOnReset = false;
-            node.iInputPort.iCanCancelPort = false;
-            node.iInputPort.iRequestPortState = EPVMFNodeStarted;
-            node.iInputPort.iPortSetType = EConnectedPortFormat;
-            node.iInputPort.iFormatType = PVMF_MIME_FORMAT_UNKNOWN;
-            node.iInputPort.iPortTag = PV2WAY_IN_PORT;
-            iAudioRecDatapath->AddNode(node);
-
-
-            cmd->type = PVT_COMMAND_START_RECORD;
-            cmd->id = iCommandId;
-            cmd->contextData = aContextData;
-
-            iAudioRecDatapath->SetCmd(cmd);
-        }
-        else
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "CPV324m2Way::StartRecordL, invalid record state!\n"));
-            OSCL_LEAVE(PVMFErrInvalidState);
-        }
-
-    }
-    else if (iVideoDecDatapath && iVideoDecDatapath->IsNodeInDatapath(&aSink))
-    {
-        if (iVideoDecDatapath->GetState() != EOpened)
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "CPV324m2Way::StartRecordL video sink path not open %d!\n",
-                             iVideoDecDatapath->GetState()));
-            OSCL_LEAVE(PVMFErrInvalidState);
-        }
-
-        if (iVideoRecDatapath->GetState() == EClosed)
-        {
-            cmd = GetCmdInfoL();
-
-            //Request an Iframe
-            iTscNode.node->RequestFrameUpdate(iVideoDecDatapath->GetTSCPort());
-
-            //Set up video rec datapath
-
-            //Get the codec type
-            iVideoDecDatapath->GetTSCPort()->Query(node.iOutputPort.iProperty);
-
-            //Add video splitter node
-            node.iNode = iVideoDecSplitterNode;
-            node.iConfigure = NULL;
-            node.iLoggoffOnReset = false;
-            node.iOutputPort.iCanCancelPort = false;
-            node.iOutputPort.iRequestPortState = EPVMFNodeStarted;
-            node.iOutputPort.iPortSetType = EUserDefined;
-            node.iOutputPort.iPortTag = PV2WAY_OUT_PORT;
-            iVideoRecDatapath->AddNode(node);
-
-            //Add ff composer node
-            node.iNode = iFFComposerNode;
-            node.iConfigure = NULL;
-            node.iLoggoffOnReset = false;
-            node.iInputPort.iCanCancelPort = false;
-            node.iInputPort.iRequestPortState = EPVMFNodeStarted;
-            node.iInputPort.iPortSetType = EConnectedPortFormat;
-            node.iInputPort.iFormatType = PVMF_MIME_FORMAT_UNKNOWN;
-            node.iInputPort.iPortTag = PV2WAY_IN_PORT;
-            iVideoRecDatapath->AddNode(node);
-
-            cmd->type = PVT_COMMAND_START_RECORD;
-            cmd->id = iCommandId;
-            cmd->contextData = aContextData;
-
-            iVideoRecDatapath->SetCmd(cmd);
-        }
-        else
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "CPV324m2Way::StartRecordL, invalid record state!\n"));
-            OSCL_LEAVE(PVMFErrInvalidState);
-        }
-    }
-    else
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "CPV324m2Way::StartRecordL unknown sink!\n"));
-        OSCL_LEAVE(PVMFErrArgument);
-    }
-#endif
-    return iCommandId++;
-}
-
-PVCommandId CPV324m2Way::StopRecord(PVMFNodeInterface& aSink, OsclAny* aContextData)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "CPV324m2Way::StopRecordL state %d, rec state %d\n",
-                     iState, iRecordFileState));
-    CPV2WayRecDatapath *datapath = NULL;
-    TPV2WayCmdInfo *cmd;
-
-    if ((iState != EConnected) ||
-            (iRecordFileState != File2WayInitialized))
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "CPV324m2Way::StopRecordL invalid state!\n"));
-        OSCL_LEAVE(PVMFErrInvalidState);
-    }
-
-    if (iAudioDecDatapath && iAudioDecDatapath->IsNodeInDatapath(&aSink))
-    {
-        if (iAudioDecDatapath->GetState() != EOpened)
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "CPV324m2Way::StopRecordL audio sink path not open %d!\n",
-                             iAudioDecDatapath->GetState()));
-            OSCL_LEAVE(PVMFErrInvalidState);
-        }
-
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
-                        (0, "CPV324m2Way::StopRecordL audio record, state %d\n",
-                         iAudioRecDatapath->GetState()));
-        datapath = iAudioRecDatapath;
-    }
-    else if (iVideoDecDatapath && iVideoDecDatapath->IsNodeInDatapath(&aSink))
-    {
-        if (iVideoDecDatapath->GetState() != EOpened)
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "CPV324m2Way::StopRecordL video sink path not open %d!\n",
-                             iVideoDecDatapath->GetState()));
-            OSCL_LEAVE(PVMFErrInvalidState);
-        }
-
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
-                        (0, "CPV324m2Way::StopRecordL video record, state %d\n",
-                         iVideoRecDatapath->GetState()));
-        datapath = iVideoRecDatapath;
-    }
-    else
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "CPV324m2Way::StopRecordL unknown sink\n"));
-        OSCL_LEAVE(PVMFErrArgument);
-    }
-
-
-    switch (datapath->GetState())
-    {
-        case EClosing:
-            //Close command already in progress
-            if (datapath->GetCmdInfo())
-            {
-                return datapath->GetCmdInfo()->id;
-            }
-            //Already closing because of error or remote close
-            else
-            {
-                cmd = GetCmdInfoL();
-                cmd->type = PVT_COMMAND_STOP_RECORD;
-                cmd->id = iCommandId;
-                cmd->contextData = aContextData;
-
-                datapath->SetCmd(cmd);
-            }
-            break;
-
-        case EOpened:
-        case EOpening:
-        case EPaused:
-        case EPausing:
-        case EUnpausing:
-            cmd = GetCmdInfoL();
-            cmd->type = PVT_COMMAND_STOP_RECORD;
-            cmd->id = iCommandId;
-            cmd->contextData = aContextData;
-
-            datapath->SetCmd(cmd);
-            break;
-
-        default:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "CPV324m2Way::StopRecordL - invalid rec path state\n"));
-            OSCL_LEAVE(PVMFErrInvalidState);
-            break;
-    }
-
-    return iCommandId++;
-}
-
-PVCommandId CPV324m2Way::PauseRecord(PVMFNodeInterface& aSink,
-                                     OsclAny* aContextData)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "CPV324m2Way::PauseRecordL state %d, rec state %d\n",
-                     iState, iRecordFileState));
-    CPV2WayRecDatapath *datapath = NULL;
-    TPV2WayCmdInfo *cmd;
-
-    if ((iState != EConnected) ||
-            (iRecordFileState != File2WayInitialized))
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "CPV324m2Way::PauseRecordL invalid state!\n"));
-        OSCL_LEAVE(PVMFErrInvalidState);
-    }
-
-    if (iAudioDecDatapath && iAudioDecDatapath->IsNodeInDatapath(&aSink))
-    {
-        if (iAudioDecDatapath->GetState() != EOpened)
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "CPV324m2Way::PauseRecordL audio sink path not open %d!\n",
-                             iAudioDecDatapath->GetState()));
-            OSCL_LEAVE(PVMFErrInvalidState);
-        }
-
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
-                        (0, "CPV324m2Way::PauseRecordL audio rec path, state %d\n",
-                         iAudioRecDatapath->GetState()));
-        datapath = iAudioRecDatapath;
-    }
-    else if (iVideoDecDatapath && iVideoDecDatapath->IsNodeInDatapath(&aSink))
-    {
-        if (iVideoDecDatapath->GetState() != EOpened)
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "CPV324m2Way::PauseRecordL video sink path not open %d!\n",
-                             iVideoDecDatapath->GetState()));
-            OSCL_LEAVE(PVMFErrInvalidState);
-        }
-
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
-                        (0, "CPV324m2Way::PauseRecordL video rec path, state %d\n",
-                         iVideoRecDatapath->GetState()));
-        datapath = iVideoRecDatapath;
-    }
-    else
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "CPV324m2Way::PauseRecordL unknown sink\n"));
-        OSCL_LEAVE(PVMFErrArgument);
-    }
-
-    switch (datapath->GetState())
-    {
-        case EOpened:
-            cmd = GetCmdInfoL();
-            cmd->type = PVT_COMMAND_PAUSE_RECORD;
-            cmd->id = iCommandId;
-            cmd->contextData = aContextData;
-            datapath->SetCmd(cmd);
-            break;
-
-        case EPaused:
-            cmd = GetCmdInfoL();
-            cmd->type = PVT_COMMAND_PAUSE_RECORD;
-            cmd->id = iCommandId;
-            cmd->contextData = aContextData;
-            cmd->status = PVMFSuccess;
-            Dispatch(cmd);
-            break;
-
-        case EPausing:
-            return datapath->GetCmdInfo()->id;
-
-        default:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "CPV324m2Way::PauseRecordL - invalid path state\n"));
-            OSCL_LEAVE(PVMFErrInvalidState);
-            break;
-    }
-
-    return iCommandId++;
-}
-
-PVCommandId CPV324m2Way::ResumeRecord(PVMFNodeInterface& aSink,
-                                      OsclAny* aContextData)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "CPV324m2Way::ResumeRecordL state %d, rec state %d\n",
-                     iState, iRecordFileState));
-    CPV2WayRecDatapath *datapath = NULL;
-    TPV2WayCmdInfo *cmd;
-
-    if ((iState != EConnected) ||
-            (iRecordFileState != File2WayInitialized))
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "CPV324m2Way::ResumeRecordL invalid state!\n"));
-        OSCL_LEAVE(PVMFErrInvalidState);
-    }
-
-    if (iAudioDecDatapath && iAudioDecDatapath->IsNodeInDatapath(&aSink))
-    {
-        if (iAudioDecDatapath->GetState() != EOpened)
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "CPV324m2Way::ResumeRecordL audio sink path not open %d!\n",
-                             iAudioDecDatapath->GetState()));
-            OSCL_LEAVE(PVMFErrInvalidState);
-        }
-
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
-                        (0, "CPV324m2Way::ResumeRecordL audio rec path, state %d\n",
-                         iAudioRecDatapath->GetState()));
-        datapath = iAudioRecDatapath;
-    }
-    else if (iVideoDecDatapath && iVideoDecDatapath->IsNodeInDatapath(&aSink))
-    {
-        if (iVideoDecDatapath->GetState() != EOpened)
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "CPV324m2Way::ResumeRecordL video sink path not open %d!\n",
-                             iVideoDecDatapath->GetState()));
-            OSCL_LEAVE(PVMFErrInvalidState);
-        }
-
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
-                        (0, "CPV324m2Way::ResumeRecordL video rec path, state %d\n",
-                         iVideoRecDatapath->GetState()));
-        datapath = iVideoRecDatapath;
-
-#ifndef NO_2WAY_324
-        //Request an Iframe
-        if (iTSCInterface != NULL)
-            iTSCInterface->RequestFrameUpdate(*iVideoDecDatapath->GetTSCPort());
-#endif
-    }
-    else
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "CPV324m2Way::ResumeRecordL unknown sink\n"));
-        OSCL_LEAVE(PVMFErrArgument);
-    }
-
-    switch (datapath->GetState())
-    {
-        case EPaused:
-            cmd = GetCmdInfoL();
-            cmd->type = PVT_COMMAND_RESUME_RECORD;
-            cmd->id = iCommandId;
-            cmd->contextData = aContextData;
-            datapath->SetCmd(cmd);
-            break;
-
-        case EOpened:
-            cmd = GetCmdInfoL();
-            cmd->type = PVT_COMMAND_RESUME_RECORD;
-            cmd->id = iCommandId;
-            cmd->contextData = aContextData;
-            cmd->status = PVMFSuccess;
-            Dispatch(cmd);
-            break;
-
-        case EUnpausing:
-            return datapath->GetCmdInfo()->id;
-
-        default:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "CPV324m2Way::ResumeRecordL - invalid path state\n"));
-            OSCL_LEAVE(PVMFErrInvalidState);
-            break;
-    }
-
-    return iCommandId++;
-}
-
-
-PVCommandId CPV324m2Way::AddPreviewSink(PVMFNodeInterface& aDataSource,
-                                        PVMFNodeInterface &aPreview,
-                                        OsclAny* aContextData)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "CPV324m2Way::AddPreviewSinkL state %d\n", iState));
-    PVMFNodeCapability capability, previewCap;
-//	uint32 i, j;
-//	TPV2WayCmdInfo *cmd;
-//	CPVDatapathNode node;
-//	bool previewFormatMatch = false;
-
-#if 1
-    OSCL_LEAVE(PVMFErrNotSupported);
-#else
-    if (iState != EConnected)
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "CPV324m2Way::AddPreviewSinkL invalid state!\n"));
-        OSCL_LEAVE(PVMFErrInvalidState);
-    }
-
-    if (aDataSource.GetCapability(capability) != PVMFSuccess)
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "CPV324m2Way::AddPreviewSinkL - unable to get source capability"));
-        OSCL_LEAVE(PVMFFailure);
-    }
-
-    if (aPreview.GetCapability(previewCap) != PVMFSuccess)
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "CPV324m2Way::AddPreviewSinkL - unable to get preview capability"));
-        OSCL_LEAVE(PVMFFailure);
-    }
-
-    for (i = 0; i < capability.iOutputFormatCapability.size() && !previewFormatMatch; i++)
-    {
-        for (j = 0; j < previewCap.iInputFormatCapability.size() && !previewFormatMatch; j++)
-        {
-            if (capability.iOutputFormatCapability[i] ==
-                    previewCap.iInputFormatCapability[j])
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                                (0, "CPV324m2Way::AddPreviewSinkL format match %d\n",
-                                 capability.iOutputFormatCapability[i]));
-                previewFormatMatch = true;
-            }
-        }
-    }
-
-    if (!previewFormatMatch)
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "CPV324m2Way::AddPreviewSinkL - no preview format match"));
-        OSCL_LEAVE(PVMFErrNotSupported);
-    }
-
-    if (iAudioEncDatapath && iAudioEncDatapath->IsNodeInDatapath(&aDataSource))
-    {
-        if (iAudioEncDatapath->GetState() != EOpened)
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "CPV324m2Way::AddPreviewSinkL audio source path not open %d!\n",
-                             iAudioEncDatapath->GetState()));
-            OSCL_LEAVE(PVMFErrInvalidState);
-        }
-
-        if (iAudioPreviewDatapath->GetState() == EClosed)
-        {
-            //Set up audio preview datapath
-
-            cmd = GetCmdInfoL();
-
-            //Set up video preview datapath
-            //Add preview sink to a datapath
-            aPreview.SetCmdStatusObserver(*this);
-            aPreview.SetInfoEventObserver(*this, (OsclAny*) &aPreview);
-            aPreview.SetErrorEventObserver(*this, (OsclAny*) &aPreview);
-            aPreview.ThreadLogon();
-
-            //Get the codec type
-            iAudioEncDatapath->GetSrcPort()->Query(node.iOutputPort.iProperty);
-
-            //Add audio src splitter node
-            node.iNode = iAudioSrcSplitterNode;
-            node.iConfigure = NULL;
-            node.iLoggoffOnReset = false;
-            node.iInputPort.iFormatType = PVMF_MIME_FORMAT_UNKNOWN;
-            node.iInputPort.iPortTag = PV2WAY_UNKNOWN_PORT;
-            node.iOutputPort.iRequestPortState = EPVMFNodeStarted;
-            node.iOutputPort.iPortSetType = EUserDefined;
-            node.iOutputPort.iPortTag = PV2WAY_OUT_PORT;
-            iAudioPreviewDatapath->AddNode(node);
-
-            //Add preview sink node
-            node.iNode = &aPreview;
-            node.iConfigure = NULL;
-            node.iCanNodePause = false;
-            node.iLoggoffOnReset = true;
-            node.iInputPort.iRequestPortState = EPVMFNodeInitialized;
-            node.iInputPort.iPortSetType = EConnectedPortFormat;
-            node.iInputPort.iFormatType = PVMF_MIME_FORMAT_UNKNOWN;
-            node.iInputPort.iPortTag = PV2WAY_IN_PORT;
-            iAudioPreviewDatapath->AddNode(node);
-
-            cmd->type = PVT_COMMAND_ADD_PREVIEW_SINK;
-            cmd->id = iCommandId;
-            cmd->contextData = aContextData;
-
-            iAudioPreviewDatapath->SetCmd(cmd);
-        }
-        else
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "CPV324m2Way::AddPreviewSinkL, invalid preview state %d!\n",
-                             iAudioPreviewDatapath->GetState()));
-            OSCL_LEAVE(PVMFErrInvalidState);
-        }
-    }
-    else if (iVideoEncDatapath->IsNodeInDatapath(&aDataSource))
-    {
-        if (iVideoEncDatapath->GetState() != EOpened)
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "CPV324m2Way::AddPreviewSinkL video source path not open %d!\n",
-                             iVideoEncDatapath->GetState()));
-            OSCL_LEAVE(PVMFErrInvalidState);
-        }
-
-        if (iVideoPreviewDatapath->GetState() == EClosed)
-        {
-            cmd = GetCmdInfoL();
-
-            //Set up video preview datapath
-            //Add preview sink to a datapath
-            aPreview.SetCmdStatusObserver(*this);
-            aPreview.SetInfoEventObserver(*this, (OsclAny*) &aPreview);
-            aPreview.SetErrorEventObserver(*this, (OsclAny*) &aPreview);
-            aPreview.ThreadLogon();
-
-            //Get the codec type
-            iVideoEncDatapath->GetSrcPort()->Query(node.iOutputPort.iProperty);
-
-            //Add video src splitter node
-            node.iNode = iVideoSrcSplitterNode;
-            node.iConfigure = NULL;
-            node.iLoggoffOnReset = false;
-            node.iInputPort.iFormatType = PVMF_MIME_FORMAT_UNKNOWN;
-            node.iInputPort.iPortTag = PV2WAY_UNKNOWN_PORT;
-            node.iOutputPort.iRequestPortState = EPVMFNodeStarted;
-            node.iOutputPort.iPortSetType = EUserDefined;
-            node.iOutputPort.iPortTag = PV2WAY_OUT_PORT;
-            iVideoPreviewDatapath->AddNode(node);
-
-            //Add preview sink node
-            node.iNode = &aPreview;
-            node.iConfigure = NULL;
-            node.iCanNodePause = false;
-            node.iLoggoffOnReset = true;
-            node.iInputPort.iRequestPortState = EPVMFNodeInitialized;
-            node.iInputPort.iPortSetType = EConnectedPortFormat;
-            node.iInputPort.iFormatType = PVMF_MIME_FORMAT_UNKNOWN;
-            node.iInputPort.iPortTag = PV2WAY_IN_PORT;
-            iVideoPreviewDatapath->AddNode(node);
-
-            cmd->type = PVT_COMMAND_ADD_PREVIEW_SINK;
-            cmd->id = iCommandId;
-            cmd->contextData = aContextData;
-
-            iVideoPreviewDatapath->SetCmd(cmd);
-        }
-        else
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "CPV324m2Way::AddPreviewSinkL, invalid preview state %d!\n",
-                             iVideoPreviewDatapath->GetState()));
-            OSCL_LEAVE(PVMFErrInvalidState);
-        }
-    }
-    else
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "CPV324m2Way::AddPreviewSinkL unknown source!\n"));
-        OSCL_LEAVE(PVMFErrArgument);
-    }
-#endif
-    return iCommandId++;
-}
-
-PVCommandId CPV324m2Way::RemovePreviewSink(PVMFNodeInterface &aPreview,
-        OsclAny* aContextData)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "CPV324m2Way::RemovePreviewSinkL state %d\n", iState));
-    CPV2WayPreviewDatapath *datapath = NULL;
-    TPV2WayCmdInfo *cmd;
-
-    if (iState != EConnected)
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "CPV324m2Way::RemovePreviewSinkL invalid state!\n"));
-        OSCL_LEAVE(PVMFErrInvalidState);
-    }
-
-    if (iAudioPreviewDatapath->IsNodeInDatapath(&aPreview))
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
-                        (0, "CPV324m2Way::RemovePreviewSinkL audio preview, state %d\n",
-                         iAudioPreviewDatapath->GetState()));
-        datapath = iAudioPreviewDatapath;
-    }
-    else if (iVideoPreviewDatapath->IsNodeInDatapath(&aPreview))
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
-                        (0, "CPV324m2Way::RemovePreviewSinkL video preview, state %d\n",
-                         iVideoPreviewDatapath->GetState()));
-        datapath = iVideoPreviewDatapath;
-    }
-    else
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "CPV324m2Way::RemovePreviewSinkL unknown preview sink\n"));
-        OSCL_LEAVE(PVMFErrArgument);
-    }
-
-
-    switch (datapath->GetState())
-    {
-        case EClosing:
-            //Close command already in progress
-            if (datapath->GetCmdInfo())
-            {
-                return datapath->GetCmdInfo()->id;
-            }
-            //Already closing because of error or remote close
-            else
-            {
-                cmd = GetCmdInfoL();
-                cmd->type = PVT_COMMAND_REMOVE_PREVIEW_SINK;
-                cmd->id = iCommandId;
-                cmd->contextData = aContextData;
-
-                datapath->SetCmd(cmd);
-            }
-            break;
-
-        case EOpened:
-        case EOpening:
-        case EPaused:
-        case EPausing:
-        case EUnpausing:
-            cmd = GetCmdInfoL();
-            cmd->type = PVT_COMMAND_REMOVE_PREVIEW_SINK;
-            cmd->id = iCommandId;
-            cmd->contextData = aContextData;
-
-            datapath->SetCmd(cmd);
-            break;
-
-        default:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "CPV324m2Way::RemovePreviewSinkL - invalid preview path state %d\n",
-                             datapath->GetState()));
-            OSCL_LEAVE(PVMFErrInvalidState);
-            break;
-    }
-
-    return iCommandId++;
-}
-
-PVCommandId CPV324m2Way::PausePreviewSink(PVMFNodeInterface &aPreview,
-        OsclAny* aContextData)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "CPV324m2Way::PausePreviewSinkL state %d\n", iState));
-    CPV2WayPreviewDatapath *datapath = NULL;
-    TPV2WayCmdInfo *cmd;
-
-    if (iState != EConnected)
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "CPV324m2Way::PausePreviewSinkL invalid state!\n"));
-        OSCL_LEAVE(PVMFErrInvalidState);
-    }
-
-    if (iAudioPreviewDatapath->IsNodeInDatapath(&aPreview))
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
-                        (0, "CPV324m2Way::PausePreviewSinkL audio preview path, state %d\n",
-                         iAudioPreviewDatapath->GetState()));
-        datapath = iAudioPreviewDatapath;
-    }
-    else if (iVideoPreviewDatapath->IsNodeInDatapath(&aPreview))
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
-                        (0, "CPV324m2Way::PausePreviewSinkL video preview path, state %d\n",
-                         iVideoPreviewDatapath->GetState()));
-        datapath = iVideoPreviewDatapath;
-    }
-    else
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "CPV324m2Way::PausePreviewSinkL unknown preview sink\n"));
-        OSCL_LEAVE(PVMFErrArgument);
-    }
-
-    switch (datapath->GetState())
-    {
-        case EOpened:
-            cmd = GetCmdInfoL();
-            cmd->type = PVT_COMMAND_PAUSE_PREVIEW_SINK;
-            cmd->id = iCommandId;
-            cmd->contextData = aContextData;
-            datapath->SetCmd(cmd);
-            break;
-
-        case EPaused:
-            cmd = GetCmdInfoL();
-            cmd->type = PVT_COMMAND_PAUSE_PREVIEW_SINK;
-            cmd->id = iCommandId;
-            cmd->contextData = aContextData;
-            cmd->status = PVMFSuccess;
-            Dispatch(cmd);
-            break;
-
-        case EPausing:
-            return datapath->GetCmdInfo()->id;
-
-        default:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "CPV324m2Way::PausePreviewSinkL - invalid path state\n"));
-            OSCL_LEAVE(PVMFErrInvalidState);
-            break;
-    }
-
-    return iCommandId++;
-}
-
-PVCommandId CPV324m2Way::ResumePreviewSink(PVMFNodeInterface &aPreview,
-        OsclAny* aContextData)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "CPV324m2Way::ResumePreviewSinkL state %d\n", iState));
-    CPV2WayPreviewDatapath *datapath = NULL;
-    TPV2WayCmdInfo *cmd;
-
-    if (iState != EConnected)
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "CPV324m2Way::ResumePreviewSinkL invalid state!\n"));
-        OSCL_LEAVE(PVMFErrInvalidState);
-    }
-
-    if (iAudioPreviewDatapath->IsNodeInDatapath(&aPreview))
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
-                        (0, "CPV324m2Way::ResumePreviewSinkL audio preview path, state %d\n",
-                         iAudioPreviewDatapath->GetState()));
-        datapath = iAudioPreviewDatapath;
-    }
-    else if (iVideoPreviewDatapath->IsNodeInDatapath(&aPreview))
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
-                        (0, "CPV324m2Way::ResumePreviewSinkL video preview path, state %d\n",
-                         iVideoPreviewDatapath->GetState()));
-        datapath = iVideoPreviewDatapath;
-    }
-    else
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "CPV324m2Way::ResumePreviewSinkL unknown preview sink\n"));
-        OSCL_LEAVE(PVMFErrArgument);
-    }
-
-    switch (datapath->GetState())
-    {
-        case EPaused:
-            cmd = GetCmdInfoL();
-            cmd->type = PVT_COMMAND_RESUME_PREVIEW_SINK;
-            cmd->id = iCommandId;
-            cmd->contextData = aContextData;
-            datapath->SetCmd(cmd);
-            break;
-
-        case EOpened:
-            cmd = GetCmdInfoL();
-            cmd->type = PVT_COMMAND_RESUME_PREVIEW_SINK;
-            cmd->id = iCommandId;
-            cmd->contextData = aContextData;
-            cmd->status = PVMFSuccess;
-            Dispatch(cmd);
-            break;
-
-        case EUnpausing:
-            return datapath->GetCmdInfo()->id;
-
-        default:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "CPV324m2Way::ResumePreviewSinkL - invalid path state\n"));
-            OSCL_LEAVE(PVMFErrInvalidState);
-            break;
-    }
-
-    return iCommandId++;
-}
-
-PVCommandId CPV324m2Way::InitPlayFile(const OSCL_wString& aFileName,
-                                      OsclAny* aContextData)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "CPV324m2Way::InitPlayFileL state %d, pff state %d\n",
-                     iState,
-                     iPlayFileState));
-
-#if 1
-    OSCL_LEAVE(PVMFErrNotSupported);
-#else
-    switch (iState)
-    {
-        case EIdle:
-        case EInitializing:
-        case EResetting:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "CPV324m2Way::InitPlayFileL invalid terminal state!\n"));
-            OSCL_LEAVE(PVMFErrInvalidState);
-            break;
-
-        default:
-            break;
-    }
-
-    switch (iPlayFileState)
-    {
-        case File2WayIdle:
-            iPlayFilename = aFileName;
-            iPlayFromFileNode->SetSourceFile(iPlayFilename, DEFAULT_PLAY_FROM_FILE_TYPE);
-            iPlayFromFileNode->SetAudioSinkFormat(DEFAULT_PLAY_FROM_FILE_AUDIO);
-            iPlayFromFileNode->SetVideoSinkFormat(DEFAULT_PLAY_FROM_FILE_VIDEO);
-
-            iInitPlayFileInfo = GetCmdInfoL();
-
-            iInitPlayFileInfo->type = PVT_COMMAND_INIT_PLAY_FILE;
-            iInitPlayFileInfo->id = iCommandId;
-            iInitPlayFileInfo->contextData = aContextData;
-
-            iPlayFileState = File2WayInitializing;
-            CheckPlayFileState();
-            break;
-
-        case File2WayInitializing:
-            if (iInitPlayFileInfo)
-            {
-                return iInitPlayFileInfo->id;
-            }
-            else
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                (0, "CPV324m2Way::InitPlayFileL no init play info!!\n"));
-                OSCL_LEAVE(PVMFFailure);
-            }
-            break;
-
-        case File2WayInitialized:
-            iInitPlayFileInfo = GetCmdInfoL();
-            iInitPlayFileInfo->type = PVT_COMMAND_INIT_PLAY_FILE;
-            iInitPlayFileInfo->id = iCommandId;
-            iInitPlayFileInfo->contextData = aContextData;
-            iInitPlayFileInfo->status = PVMFSuccess;
-            Dispatch(iInitPlayFileInfo);
-            iInitPlayFileInfo = NULL;
-            break;
-
-        default:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "CPV324m2Way::InitPlayFileL invalid pff state\n"));
-            OSCL_LEAVE(PVMFErrInvalidState);
-            break;
-    }
-#endif
-    return iCommandId++;
-}
-
-PVCommandId CPV324m2Way::ResetPlayFile(OsclAny* aContextData)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "CPV324m2Way::ResetPlayFileL state %d, pff state %d\n",
-                     iState,
-                     iPlayFileState));
-
-
-    switch (iState)
-    {
-        case EIdle:
-        case EInitializing:
-        case EResetting:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "CPV324m2Way::ResetPlayFileL invalid terminal state!\n"));
-            OSCL_LEAVE(PVMFErrInvalidState);
-            break;
-
-        default:
-            break;
-    }
-
-    switch (iPlayFileState)
-    {
-        case File2WayIdle:
-            iResetPlayFileInfo = GetCmdInfoL();
-            iResetPlayFileInfo->type = PVT_COMMAND_RESET_PLAY_FILE;
-            iResetPlayFileInfo->id = iCommandId;
-            iResetPlayFileInfo->contextData = aContextData;
-            iResetPlayFileInfo->status = PVMFSuccess;
-            Dispatch(iResetPlayFileInfo);
-            iResetPlayFileInfo = NULL;
-            break;
-
-        case File2WayInitialized:
-            iResetPlayFileInfo = GetCmdInfoL();
-            iResetPlayFileInfo->type = PVT_COMMAND_RESET_PLAY_FILE;
-            iResetPlayFileInfo->id = iCommandId;
-            iResetPlayFileInfo->contextData = aContextData;
-
-            InitiateResetPlayFile();
-            break;
-
-        case File2WayResetting:
-            if (iResetPlayFileInfo)
-            {
-                return iResetPlayFileInfo->id;
-            }
-            else
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                (0, "CPV324m2Way::ResetPlayFileL no reset play info!!\n"));
-                OSCL_LEAVE(PVMFErrBusy);
-            }
-            break;
-
-        default:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "CPV324m2Way::ResetPlayFileL invalid pff state\n"));
-            OSCL_LEAVE(PVMFErrInvalidState);
-            break;
-    }
-
-    return iCommandId++;
-}
-
-PVCommandId CPV324m2Way::UsePlayFileAsSource(bool aUsePlayFile,
-        OsclAny* aContextData)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "CPV324m2Way::UsePlayFileAsSourceL state %d, use play file %d\n",
-                     iState, aUsePlayFile));
-
-    TPV2WayCmdInfo *info;
-
-    if (iPlayFileState != File2WayInitialized)
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "CPV324m2Way::UsePlayFileAsSourceL invalid pff state\n"));
-        OSCL_LEAVE(PVMFErrInvalidState);
-    }
-
-    info = GetCmdInfoL();
-    info->type = PVT_COMMAND_USE_PLAY_FILE;
-    info->id = iCommandId;
-    info->contextData = aContextData;
-
-    //Value already set.
-    if (iUsePlayFileAsSource == aUsePlayFile)
-    {
-        info->status = PVMFSuccess;
-    }
-    else
-    {
-        //Use play file as data source
-        if (iAudioEncDatapath->GetState() == EOpened)
-        {
-            iAudioEncDatapath->UseFilePlayPort(aUsePlayFile);
-        }
-
-        if (iVideoEncDatapath->GetState() == EOpened)
-        {
-            iVideoEncDatapath->UseFilePlayPort(aUsePlayFile);
-        }
-
-        iUsePlayFileAsSource = aUsePlayFile;
-    }
-
-    Dispatch(info);
-    return iCommandId++;
-}
-
-PVCommandId CPV324m2Way::StartPlay(OsclAny* aContextData)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "CPV324m2Way::StartPlayL state %d, pff state %d, cmd %x\n",
-                     iState, iPlayFileState, iPlayFileCmdInfo));
-
-//	int32 error;
-//	TPV2WayCmdInfo *info;
-
-#if 1
-    OSCL_LEAVE(PVMFErrNotSupported);
-#else
-    if (iPlayFileState != File2WayInitialized)
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "CPV324m2Way::StartPlayL invalid pff state\n"));
-        OSCL_LEAVE(PVMFErrInvalidState);
-    }
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "CPV324m2Way::StartPlayL node state %d\n",
-                     iPlayFromFileNode->GetState()));
-
-    switch (iPlayFromFileNode->GetState())
-    {
-        case EPVMFNodeInitialized:
-        case EPVMFNodeStopped:
-            if (iPlayFileCmdInfo)
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                (0, "CPV324m2Way::StartPlayL node initialized, but start command issued, type %d, id %d\n", iPlayFileCmdInfo->type, iPlayFileCmdInfo->id));
-                OSCL_LEAVE(PVMFErrBusy);
-            }
-            else
-            {
-                iPlayFileCmdInfo = GetCmdInfoL();
-                iPlayFileCmdInfo->type = PVT_COMMAND_START_PLAY;
-                iPlayFileCmdInfo->id = iCommandId;
-                iPlayFileCmdInfo->contextData = aContextData;
-
-                OSCL_TRY(error, SendNodeCmdL(PV2WAY_NODE_CMD_START,
-                                             iPlayFromFileNode, this));
-                OSCL_FIRST_CATCH_ANY(error,
-                                     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                                     (0, "CPV324m2Way::StartPlayL unable to start pff node\n"));
-                                     FreeCmdInfo(iPlayFileCmdInfo);
-                                     iPlayFileCmdInfo = NULL;
-                                     OSCL_LEAVE(error));
-            }
-            break;
-
-        case EPVMFNodeStart:
-            if (iPlayFileCmdInfo)
-            {
-                if (iPlayFileCmdInfo->type == PVT_COMMAND_START_PLAY)
-                {
-                    return iPlayFileCmdInfo->id;
-                }
-                else
-                {
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                    (0, "CPV324m2Way::StartPlayL node starting, but start command not issued, type %d, id %d\n", iPlayFileCmdInfo->type, iPlayFileCmdInfo->id));
-                    OSCL_LEAVE(PVMFErrBusy);
-                }
-            }
-            else
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                (0, "CPV324m2Way::StartPlayL node starting, no start info\n"));
-                OSCL_LEAVE(PVMFErrBusy);
-            }
-
-            break;
-
-        case EPVMFNodeStarted:
-            info = GetCmdInfoL();
-            info->type = PVT_COMMAND_START_PLAY;
-            info->id = iCommandId;
-            info->contextData = aContextData;
-            info->status = PVMFSuccess;
-            Dispatch(info);
-            break;
-
-        default:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "CPV324m2Way::StartPlayL invalid node state\n"));
-            OSCL_LEAVE(PVMFErrInvalidState);
-            break;
-    }
-#endif
-    return iCommandId++;
-}
-
-PVCommandId CPV324m2Way::StopPlay(OsclAny* aContextData)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "CPV324m2Way::StopPlayL state %d, pff state %d\n",
-                     iState, iPlayFileState));
-
-//	int32 error;
-//	TPV2WayCmdInfo *info;
-#if 1
-    OSCL_LEAVE(PVMFErrNotSupported);
-#else
-    if (iPlayFileState != File2WayInitialized)
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "CPV324m2Way::StopPlayL invalid pff state\n"));
-        OSCL_LEAVE(PVMFErrInvalidState);
-    }
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "CPV324m2Way::StopPlayL node state %d\n",
-                     iPlayFromFileNode->GetState()));
-
-    switch (iPlayFromFileNode->GetState())
-    {
-        case EPVMFNodeStarted:
-        case EPVMFNodePaused:
-            if (iPlayFileCmdInfo)
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                (0, "CPV324m2Way::StopPlayL node initialized, but stop command issued, type %d, id %d\n", iPlayFileCmdInfo->type, iPlayFileCmdInfo->id));
-                OSCL_LEAVE(PVMFErrBusy);
-            }
-            else
-            {
-                iPlayFileCmdInfo = GetCmdInfoL();
-                iPlayFileCmdInfo->type = PVT_COMMAND_STOP_PLAY;
-                iPlayFileCmdInfo->id = iCommandId;
-                iPlayFileCmdInfo->contextData = aContextData;
-
-                OSCL_TRY(error, SendNodeCmdL(PV2WAY_NODE_CMD_STOP,
-                                             iPlayFromFileNode, this));
-                OSCL_FIRST_CATCH_ANY(error,
-                                     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                                     (0, "CPV324m2Way::StopPlayL unable to stop pff node\n"));
-                                     FreeCmdInfo(iPlayFileCmdInfo);
-                                     iPlayFileCmdInfo = NULL;
-                                     OSCL_LEAVE(error));
-            }
-            break;
-
-        case EPVMFNodeStop:
-            if (iPlayFileCmdInfo)
-            {
-                if (iPlayFileCmdInfo->type == PVT_COMMAND_STOP_PLAY)
-                {
-                    return iPlayFileCmdInfo->id;
-                }
-                else
-                {
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                    (0, "CPV324m2Way::StopPlayL node stopping, but stop command not issued, type %d, id %d\n", iPlayFileCmdInfo->type, iPlayFileCmdInfo->id));
-                    OSCL_LEAVE(PVMFErrBusy);
-                }
-            }
-            else
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                (0, "CPV324m2Way::StopPlayL node stopping, no stop info\n"));
-                OSCL_LEAVE(PVMFErrBusy);
-            }
-
-            break;
-
-        case EPVMFNodeInitialized:
-            info = GetCmdInfoL();
-            info->type = PVT_COMMAND_STOP_PLAY;
-            info->id = iCommandId;
-            info->contextData = aContextData;
-            info->status = PVMFSuccess;
-            Dispatch(info);
-            break;
-
-        default:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "CPV324m2Way::StopPlayL invalid node state\n"));
-            OSCL_LEAVE(PVMFErrInvalidState);
-            break;
-    }
-#endif
-    return iCommandId++;
-}
-
-PVCommandId CPV324m2Way::PausePlay(OsclAny* aContextData)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "CPV324m2Way::PausePlayL state %d, pff state %d\n", iState, iPlayFileState));
-
-//	int32 error;
-//	TPV2WayCmdInfo *info;
-#if 1
-    OSCL_LEAVE(PVMFErrNotSupported);
-#else
-    if (iPlayFileState != File2WayInitialized)
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "CPV324m2Way::PausePlayL invalid pff state\n"));
-        OSCL_LEAVE(PVMFErrInvalidState);
-    }
-
-    if (iPlayFileCmdInfo && (iPlayFileCmdInfo->type != PVT_COMMAND_PAUSE_PLAY))
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "CPV324m2Way::PausePlayL another play command in progress\n"));
-        OSCL_LEAVE(PVMFErrBusy);
-    }
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "CPV324m2Way::PausePlayL node state %d\n",
-                     iPlayFromFileNode->GetState()));
-
-    switch (iPlayFromFileNode->GetState())
-    {
-        case EPVMFNodeStarted:
-            iPlayFileCmdInfo = GetCmdInfoL();
-            iPlayFileCmdInfo->type = PVT_COMMAND_PAUSE_PLAY;
-            iPlayFileCmdInfo->id = iCommandId;
-            iPlayFileCmdInfo->contextData = aContextData;
-
-            OSCL_TRY(error, SendNodeCmdL(PV2WAY_NODE_CMD_PAUSE,
-                                         iPlayFromFileNode, this));
-            OSCL_FIRST_CATCH_ANY(error,
-                                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                                 (0, "CPV324m2Way::PausePlayL unable to pause pff node\n"));
-                                 FreeCmdInfo(iPlayFileCmdInfo);
-                                 iPlayFileCmdInfo = NULL;
-                                 OSCL_LEAVE(error));
-            break;
-
-        case EPVMFNodePause:
-            if (iPlayFileCmdInfo)
-            {
-                return iPlayFileCmdInfo->id;
-            }
-            else
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                (0, "CPV324m2Way::PausePlayL node pausing, but no command issued!\n"));
-                OSCL_LEAVE(PVMFErrBusy);
-            }
-            break;
-
-        case EPVMFNodePaused:
-            info = GetCmdInfoL();
-            info->type = PVT_COMMAND_PAUSE_PLAY;
-            info->id = iCommandId;
-            info->contextData = aContextData;
-            info->status = PVMFSuccess;
-            Dispatch(info);
-            break;
-
-        default:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "CPV324m2Way::PausePlayL invalid node state\n"));
-            OSCL_LEAVE(PVMFErrInvalidState);
-            break;
-    }
-#endif
-    return iCommandId++;
-}
-
-PVCommandId CPV324m2Way::ResumePlay(OsclAny* aContextData)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "CPV324m2Way::ResumePlayL state %d, pff state %d\n", iState, iPlayFileState));
-
-//	int32 error;
-//	TPV2WayCmdInfo *info;
-
-#if 1
-    OSCL_LEAVE(PVMFErrNotSupported);
-#else
-    if (iPlayFileState != File2WayInitialized)
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "CPV324m2Way::ResumePlayL invalid pff state\n"));
-        OSCL_LEAVE(PVMFErrInvalidState);
-    }
-
-    if (iPlayFileCmdInfo && (iPlayFileCmdInfo->type != PVT_COMMAND_RESUME_PLAY))
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "CPV324m2Way::ResumePlayL another play command in progress\n"));
-        OSCL_LEAVE(PVMFErrBusy);
-    }
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "CPV324m2Way::ResumePlayL node state %d\n",
-                     iPlayFromFileNode->GetState()));
-
-    switch (iPlayFromFileNode->GetState())
-    {
-        case EPVMFNodePaused:
-            iPlayFileCmdInfo = GetCmdInfoL();
-            iPlayFileCmdInfo->type = PVT_COMMAND_RESUME_PLAY;
-            iPlayFileCmdInfo->id = iCommandId;
-            iPlayFileCmdInfo->contextData = aContextData;
-
-            OSCL_TRY(error, SendNodeCmdL(PV2WAY_NODE_CMD_START,
-                                         iPlayFromFileNode, this));
-            OSCL_FIRST_CATCH_ANY(error,
-                                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                                 (0, "CPV324m2Way::ResumePlayL unable to resume pff node\n"));
-                                 FreeCmdInfo(iPlayFileCmdInfo);
-                                 iPlayFileCmdInfo = NULL;
-                                 OSCL_LEAVE(error));
-            break;
-
-        case EPVMFNodeStart:
-            if (iPlayFileCmdInfo)
-            {
-                return iPlayFileCmdInfo->id;
-            }
-            else
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                (0, "CPV324m2Way::ResumePlayL node resuming, but no command issued!\n"));
-                OSCL_LEAVE(PVMFErrBusy);
-            }
-            break;
-
-        case EPVMFNodeStarted:
-            info = GetCmdInfoL();
-            info->type = PVT_COMMAND_RESUME_PLAY;
-            info->id = iCommandId;
-            info->contextData = aContextData;
-            info->status = PVMFSuccess;
-            Dispatch(info);
-            break;
-
-        default:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "CPV324m2Way::ResumePlayL invalid node state\n"));
-            OSCL_LEAVE(PVMFErrInvalidState);
-            break;
-    }
-#endif
-    return iCommandId++;
-}
-#endif
 
 void CPV324m2Way::ConstructL(PVMFNodeInterface* aTsc,
                              TPVTerminalType aType,
@@ -4774,34 +2906,11 @@ void CPV324m2Way::SetDefaults()
     {
         iVideoDecNode.iNode->ThreadLogoff();
 
-        if (iIncomingVideoCodecType != PV_INVALID_CODEC_TYPE)
-        {
-
-            switch (iIncomingVideoCodecType)
-            {
-                case PV_VID_TYPE_H263:
-#ifdef PV2WAY_USE_OMX_H263_DECODER
-                    DELETE_OMX_VIDEO_DEC_NODE(iVideoDecNode.iNode);
+#ifdef PV2WAY_USE_OMX
+        DELETE_OMX_VIDEO_DEC_NODE(iVideoDecNode.iNode);
 #else
-                    DELETE_VIDEO_DEC_NODE(iVideoDecNode.iNode);
-#endif // PV2WAY_USE_OMX_H263_DECODER
-                    break;
-                case PV_VID_TYPE_MPEG4:
-#ifdef PV2WAY_USE_OMX_MPEG4_DECODER
-                    DELETE_OMX_VIDEO_DEC_NODE(iVideoDecNode.iNode);
-#else
-                    DELETE_VIDEO_DEC_NODE(iVideoDecNode.iNode);
-#endif // PV2WAY_USE_OMX_MPEG4_DECODER
-                    break;
-                default:
-                    //DELETE_VIDEO_DEC_NODE(iVideoDecNode.iNode);
-                    OSCL_ASSERT(0);
-                    break;
-            }
-
-
-            iIncomingVideoCodecType = PV_INVALID_CODEC_TYPE;
-        }
+        DELETE_VIDEO_DEC_NODE(iVideoDecNode.iNode);
+#endif // PV2WAY_USE_OMX
 
         iVideoDecNode.Clear();
     }
@@ -4809,11 +2918,11 @@ void CPV324m2Way::SetDefaults()
     if (iAudioDecNode.iNode)
     {
         iAudioDecNode.iNode->ThreadLogoff();
-#ifdef PV2WAY_USE_OMX_AMR_DECODER
+#ifdef PV2WAY_USE_OMX
         DELETE_OMX_AUDIO_DEC_NODE(iAudioDecNode.iNode);
 #else
         DELETE_AUDIO_DEC_NODE(iAudioDecNode.iNode);
-#endif // PV2WAY_USE_OMX_AMR_DECODER
+#endif // PV2WAY_USE_OMX
 
         iAudioDecNode.Clear();
     }
@@ -4828,7 +2937,7 @@ void CPV324m2Way::SetDefaults()
         iAudioEncNode.iNode->ThreadLogoff();
         if (iAudioEncNodeInterface.iInterface)
             iAudioEncNodeInterface.iInterface->removeRef();
-#ifdef PV2WAY_USE_OMX_AMR_ENCODER
+#ifdef PV2WAY_USE_OMX
         DELETE_OMX_ENC_NODE(iAudioEncNode.iNode);
 #else
         DELETE_AUDIO_ENC_NODE(iAudioEncNode.iNode);
@@ -4958,13 +3067,37 @@ void CPV324m2Way::Run()
                     break;
 
                 case PVT_COMMAND_ADD_DATA_SINK:
+                {
+                    CPV2WayDecDataChannelDatapath* datapath = NULL;
+                    if (cmd->iPvtCmdData == iAudioDecDatapath->GetChannelId())
+                    {
+                        datapath = iAudioDecDatapath;
+                    }
+                    else if (cmd->iPvtCmdData == iVideoDecDatapath->GetChannelId())
+                    {
+                        datapath = iVideoDecDatapath;
+                    }
+                    if (datapath == NULL)
+                    {
+                        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
+                                        (0, "CPV324m2Way::Run ERROR Failed to lookup dec datapath.\n"));
+                        break;
+                    }
+
                     if ((cmd->status != PVMFSuccess) &&
                             (cmd->status != PVMFErrCancelled))
                     {
-                        RemoveAudioDecPath();
-                        RemoveVideoDecPath();
+                        if (datapath == iAudioDecDatapath)
+                            RemoveAudioDecPath();
+                        else if (datapath == iVideoDecDatapath)
+                            RemoveVideoDecPath();
+                        break;
                     }
-                    break;
+
+                    if (!datapath->IsSkipComplete())
+                        return;
+                }
+                break;
 
                 case PVT_COMMAND_REMOVE_DATA_SOURCE:
                     RemoveAudioEncPath();
@@ -5862,14 +3995,12 @@ PVMFStatus CPV324m2Way::ConfigureNode(CPVDatapathNode *aNode)
                         (0, "CPV324m2Way::ConfigureNode configuring audio enc node\n"));
         //PVMFPortProperty prop;
 #ifdef PV2WAY_USE_OMX
-        PVAudioEncExtensionInterface* ptr =
+        PVAudioEncExtensionInterface *ptr =
             (PVAudioEncExtensionInterface *) iAudioEncNodeInterface.iInterface;
 #else
-        PVAMREncExtensionInterface* ptr;
-        ptr =
+        PVAMREncExtensionInterface *ptr =
             (PVAMREncExtensionInterface *) iAudioEncNodeInterface.iInterface;
-#endif
-
+#endif // PV2WAY_USE_OMX
         if (aNode->iOutputPort.iPortPair->iDestPort.GetStatus() != EHasPort)
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO,
@@ -6063,7 +4194,7 @@ PVMFStatus CPV324m2Way::EstablishChannel(TPVDirection aDir,
             }
             iVideoDecDatapath->SetFormatSpecificInfo(aFormatSpecificInfo, (uint16)aFormatSpecificInfoLen);
 
-            AddVideoDecoderNode(aCodec, aFormatSpecificInfo, aFormatSpecificInfoLen);
+            AddVideoDecoderNode(aFormatSpecificInfo, aFormatSpecificInfoLen);
             uint32 videoLatency = LookupMioLatency(PVCodecTypeToPVMFFormatType(aCodec), false);
             ((TSC_324m*)(iTscNode.iNode))->SetMioLatency((videoLatency + iVideoDatapathLatency), false);
 
@@ -6097,7 +4228,7 @@ PVMFStatus CPV324m2Way::EstablishChannel(TPVDirection aDir,
             }
             iVideoEncDatapath->SetFormatSpecificInfo(aFormatSpecificInfo, (uint16)aFormatSpecificInfoLen);
 
-            AddVideoEncoderNode(aCodec);
+            AddVideoEncoderNode();
             datapath = iVideoEncDatapath;
             codec_list = &iOutgoingVideoCodecs;
         }
@@ -6394,128 +4525,6 @@ void CPV324m2Way::RequestFrameUpdate(PVMFPortInterface* aPort)
     }
 }
 
-#if 0
-void CPV324m2Way::VideoSpatialTemporalTradeoffCommandReceived(TPVChannelId id,
-        uint8 tradeoff)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_DEBUG,
-                    (0, "CPV324m2Way::VideoSpatialTemporalTradeoffCommandReceived state %d, id %d, tradeoff %d\n", iState, id, tradeoff));
-    int32 error;
-    TPV2WayEventInfo* aEvent = NULL;
-    OSCL_TRY(error, aEvent = GetEventInfoL());
-    OSCL_FIRST_CATCH_ANY(error,
-                         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger,
-                                         PVLOGMSG_ERR, (0, "CPV324m2Way::VidSpatTempTradeoffCmd -  unable to notify app!\n"));
-                         return;);
-    aEvent->type = PVT_INDICATION_VIDEO_SPATIAL_TEMPORAL_TRADEOFF_COMMAND;
-    TPVChannelId *buf_id = (TPVChannelId *) & aEvent->localBuffer[0];
-    *buf_id = id;
-    host_to_big_endian((char *)&aEvent->localBuffer[0], 2);
-    aEvent->localBuffer[2] = tradeoff;
-    aEvent->localBufferSize = 3;
-    Dispatch(aEvent);
-
-
-}
-
-void CPV324m2Way::VideoSpatialTemporalTradeoffIndicationReceived(TPVChannelId id,
-        uint8 tradeoff)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_DEBUG,
-                    (0, "CPV324m2Way::VideoSpatialTemporalTradeoffIndicationReceived state %d, id %d, tradeoff %d\n", iState, id, tradeoff));
-    int32 error;
-    TPV2WayEventInfo* aEvent = NULL;
-    OSCL_TRY(error, aEvent = GetEventInfoL());
-    OSCL_FIRST_CATCH_ANY(error,
-                         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger,
-                                         PVLOGMSG_ERR, (0, "CPV324m2Way::VidSpatTempTradeoffInd -  unable to notify app!\n"));
-                         return;);
-    aEvent->type = PVT_INDICATION_VIDEO_SPATIAL_TEMPORAL_TRADEOFF_INDICATION;
-    TPVChannelId *buf_id = (TPVChannelId *) & aEvent->localBuffer[0];
-    *buf_id = id;
-    host_to_big_endian((char *)&aEvent->localBuffer[0], 2);
-    aEvent->localBuffer[2] = tradeoff;
-    aEvent->localBufferSize = 3;
-    Dispatch(aEvent);
-}
-
-
-void CPV324m2Way::UserInputReceived(CPVUserInput* aUI)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "CPV324m2Way::UserInputReceived state %d, type %d\n",
-                     iState, aUI->GetType()));
-
-#if 0
-    int32 error;
-    TPV2WayEventInfo* aEvent = NULL;
-    switch (aUI)
-    {
-        case EAlphanumeric:
-        case EDtmf:
-            OSCL_TRY(error, aEvent = GetEventInfoL());
-            OSCL_FIRST_CATCH_ANY(error,
-                                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                                 (0, "CPV324m2Way::UserInputReceived unable to notify app!\n"));
-                                 return EPVT_Failed);
-
-            aEvent->type = PVT_INDICATION_USER_INPUT;
-            (CPVUserInput *)&aEvent->localBuffer[0] = aUI;
-            aEvent->localBufferSize = 4;
-
-            Dispatch(aEvent);
-            break;
-
-        default:
-            break;
-    }
-#else
-    if (aUI)
-    {
-        OSCL_DELETE(aUI);
-    }
-#endif
-    return;
-}
-
-void CPV324m2Way::IncomingVendorId(TPVH245Vendor* /*vendor*/,
-                                   const uint8* /*pn*/,
-                                   uint16 /*pn_len*/,
-                                   const uint8* /*vn*/,
-                                   uint16 /*vn_len*/)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "CPV324m2Way::IncomingVendorId\n"));
-}
-
-void CPV324m2Way::UserInputCapability(int32 formats)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
-                    (0, "CPV324m2Way::UserInputCapability formats %d", formats));
-
-    if (iState == EConnecting)
-    {
-        int32 error;
-        TPV2WayEventInfo* aEvent = NULL;
-        if (!GetEventInfoL(aEvent))
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "CPV324m2Way::UserInputCapability unable to notify app!\n"));
-            return;
-        }
-        aEvent->type = PVT_INDICATION_USER_INPUT_CAPABILITY;
-        oscl_memset(aEvent->localBuffer, 0, PV_COMMON_ASYNC_EVENT_LOCAL_BUF_SIZE);
-        aEvent->localBuffer[0] = (uint8)(formats & 0xFF);
-        aEvent->localBufferSize = 1;
-        Dispatch(aEvent);
-    }
-    else
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "CPV324m2Way::UserInputCapability invalid state %d\n", iState));
-    }
-}
-#endif
 
 void  CPV324m2Way::TimeoutOccurred(int32 timerID,
                                    int32 timeoutInfo)
@@ -7126,135 +5135,7 @@ void CPV324m2Way::CheckRecordFileInit()
                      iFFComposerNode->GetState()));
 
 //	int32 error;
-#if 1
     return;
-#else
-    switch (iFFComposerNode->GetState())
-    {
-        case EPVMFNodeIdle:
-            if (iFFClipConfig.iState == PV2WayNodeInterface::NoInterface)
-            {
-                TPV2WayNodeQueryInterfaceParams queryParam;
-                queryParam.iInterfacePtr = &iFFClipConfig.iInterface;
-
-                queryParam.iUuid = (PVUuid *) & iFFClipConfigPVUuid;
-
-                OSCL_TRY(error, iFFClipConfig.iId = SendNodeCmdL(PV2WAY_NODE_CMD_QUERY_INTERFACE,
-                                                    iFFComposerNode, this, &queryParam));
-                OSCL_FIRST_CATCH_ANY(error,
-                                     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                                     (0, "CPV324m2Way::CheckRecordFileInit unable to query for ff composer clip interface!\n"));
-                                     SetState(EResetting);
-                                     CheckState();
-                                     return;);
-
-                iFFClipConfig.iState = PV2WayNodeInterface::QueryInterface;
-            }
-
-            if (iFFTrackConfig.iState == PV2WayNodeInterface::NoInterface)
-            {
-                TPV2WayNodeQueryInterfaceParams queryParam;
-                queryParam.iInterfacePtr = &iFFTrackConfig.iInterface;
-
-                queryParam.iUuid = (PVUuid *) & iFFTrackConfigPVUuid;
-
-                OSCL_TRY(error, iFFTrackConfig.iId = SendNodeCmdL(PV2WAY_NODE_CMD_QUERY_INTERFACE,
-                                                     iFFComposerNode, this, &queryParam));
-                OSCL_FIRST_CATCH_ANY(error,
-                                     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger,
-                                                     PVLOGMSG_ERR, (0, "CPV324m2Way::CheckRecordFileInit unable to query for ff composer track interface!\n"));
-                                     SetState(EResetting);
-                                     CheckState();
-                                     return;);
-
-                iFFTrackConfig.iState = PV2WayNodeInterface::QueryInterface;
-            }
-
-            OSCL_TRY(error, SendNodeCmdL(PV2WAY_NODE_CMD_INIT, iFFComposerNode, this));
-            OSCL_FIRST_CATCH_ANY(error,
-                                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger,
-                                                 PVLOGMSG_ERR, (0, "CPV324m2Way::CheckRecordFileInit unable to init ff composer node!\n"));
-                                 iRecordFileState = File2WayResetting;
-                                 CheckRecordFileState();
-                                 return;);
-            break;
-
-        case EPVMFNodeInitialized:
-            if (iFFTrackConfig.iState == PV2WayNodeInterface::HasInterface)
-            {
-                PVMp4FFCNClipConfigInterface *ptr =
-                    (PVMp4FFCNClipConfigInterface *) iFFClipConfig.iInterface;
-
-                error = ptr->SetRealTimeAuthoring(true);
-                if (error != PVMFSuccess)
-                {
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                    (0, "CPV324m2Way::CheckRecordFileInit set real time authoring failed %d\n",
-                                     error));
-                    iRecordFileState = File2WayResetting;
-                    CheckRecordFileState();
-                    return;
-                }
-
-                error = ptr->SetOutputFileName(iRecFilename);
-                if (error != PVMFSuccess)
-                {
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                    (0, "CPV324m2Way::CheckRecordFileInit set output file failed %d\n",
-                                     error));
-                    iRecordFileState = File2WayResetting;
-                    CheckRecordFileState();
-                    return;
-                }
-
-                error = ptr->SetAuthoringMode(DEFAULT_RECORDED_CALL_TYPE);
-                if (error != PVMFSuccess)
-                {
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                    (0, "CPV324m2Way::CheckRecordFileInit set authoring type %d\n",
-                                     error));
-                    iRecordFileState = File2WayResetting;
-                    CheckRecordFileState();
-                    return;
-                }
-
-                error = ptr->SetPresentationTimescale(DEFAULT_RECORDED_CALL_TIMESCALE);
-                if (error != PVMFSuccess)
-                {
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                    (0, "CPV324m2Way::CheckRecordFileInit set timescale %d\n",
-                                     error));
-                    iRecordFileState = File2WayResetting;
-                    CheckRecordFileState();
-                    return;
-                }
-
-                OSCL_TRY(error, SendNodeCmdL(PV2WAY_NODE_CMD_START, iFFComposerNode, this));
-                OSCL_FIRST_CATCH_ANY(error,
-                                     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                                     (0, "CPV324m2Way::CheckRecordFileInit unable to start ff composer node!\n"));
-                                     iRecordFileState = File2WayResetting;
-                                     CheckRecordFileState();
-                                     return;);
-            }
-            break;
-
-        case EPVMFNodeStarted:
-            if ((iFFClipConfig.iState == PV2WayNodeInterface::HasInterface) ||
-                    (iFFTrackConfig.iState == PV2WayNodeInterface::HasInterface))
-            {
-                iRecordFileState = File2WayInitialized;
-
-                iInitRecFileInfo->status = PVMFSuccess;
-                Dispatch(iInitRecFileInfo);
-                iInitRecFileInfo = NULL;
-            }
-            break;
-
-        default:
-            break;
-    }
-#endif
 }
 
 void CPV324m2Way::CheckRecordFileReset()
@@ -7264,88 +5145,7 @@ void CPV324m2Way::CheckRecordFileReset()
                      iAudioRecDatapath->GetState(), iVideoRecDatapath->GetState()));
 
 //	int32 error;
-#if 1
     return;
-#else
-    if ((iAudioRecDatapath->GetState() == EClosed) &&
-            (iVideoRecDatapath->GetState() == EClosed))
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "CPV324m2Way::CheckRecordFileReset ff composer node state %d, reset rec info %x, init rec info %x, reset info %x\n",
-                         iFFComposerNode->GetState(), iResetRecFileInfo, iInitRecFileInfo, iResetInfo));
-
-        switch (iFFComposerNode->GetState())
-        {
-            case EPVMFNodeCreated:
-
-                if (iFFClipConfig.iInterface) iFFClipConfig.iInterface->removeRef();
-                iFFClipConfig.Reset();
-
-                if (iFFTrackConfig.iInterface) iFFTrackConfig.iInterface->removeRef();
-                iFFTrackConfig.Reset();
-
-                iRecordFileState = File2WayIdle;
-
-                //If no command was issued, then dispatch an error event.
-                if ((iResetRecFileInfo == NULL) &&
-                        (iInitRecFileInfo == NULL) &&
-                        (iResetInfo == NULL))
-                {
-                    TPV2WayEventInfo* aEvent = NULL;
-                    if (!GetEventInfoL(aEvent))
-                    {
-                        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                        (0, "CPV324m2Way::CheckRecordFileReset unable to notify app!\n"));
-                        return;
-                    }
-                    aEvent->type = PVT_INDICATION_RECORDING_ERROR;
-                    Dispatch(aEvent);
-                }
-                // If reset rec in progress
-                else if (iResetRecFileInfo)
-                {
-                    iResetRecFileInfo->status = PVMFSuccess;
-                    Dispatch(iResetRecFileInfo);
-                    iResetRecFileInfo = NULL;
-                }
-                //Else if init failed
-                else if (iInitRecFileInfo)
-                {
-                    iInitRecFileInfo->status = PVMFFailure;
-                    Dispatch(iInitRecFileInfo);
-                    iInitRecFileInfo = NULL;
-                }
-
-                //Check if reset engine was in progress
-                if (iResetInfo)
-                {
-                    CheckState();
-                }
-
-                break;
-
-            case EPVMFNodeError:
-            case EPVMFNodeInitialized:
-                OSCL_TRY(error, SendNodeCmdL(PV2WAY_NODE_CMD_RESET, iFFComposerNode, this));
-                OSCL_FIRST_CATCH_ANY(error,
-                                     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                                     (0, "CPV324m2Way::CheckRecordFileReset unable to reset ff composer node!\n"));
-                                     return;);
-                break;
-
-            case EPVMFNodeStarted:
-                OSCL_TRY(error, SendNodeCmdL(PV2WAY_NODE_CMD_STOP, iFFComposerNode, this));
-                OSCL_FIRST_CATCH_ANY(error,
-                                     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                                     (0, "CPV324m2Way::CheckRecordFileReset unable to stop ff composer node!\n"));
-                                     return;);
-                break;
-
-            default:
-                break;
-        }
-    }
-#endif
 }
 
 void CPV324m2Way::InitiateResetRecordFile()
@@ -7490,179 +5290,12 @@ void CPV324m2Way::CheckPlayFileState()
 
 void CPV324m2Way::CheckPlayFileInit()
 {
-#if 1
     return;
-#else
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "CPV324m2Way::CheckPlayFileInit pff node state %d\n",
-                     iPlayFromFileNode->GetState()));
-
-    int32 error;
-    PVMFPortProperty prop;
-
-    switch (iPlayFromFileNode->GetState())
-    {
-        case EPVMFNodeIdle:
-            OSCL_TRY(error, SendNodeCmdL(PV2WAY_NODE_CMD_INIT, iPlayFromFileNode, this));
-            OSCL_FIRST_CATCH_ANY(error,
-                                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                                 (0, "CPV324m2Way::CheckPlayFileInit unable to init pff node!\n"));
-                                 iPlayFileState = File2WayResetting;
-                                 CheckPlayFileState();
-                                 return;);
-            break;
-
-        case EPVMFNodeInitialized:
-            if (iAudioPlayPort.GetStatus() == ENoPort)
-            {
-                prop.iFormatType = DEFAULT_PLAY_FROM_FILE_AUDIO;
-                prop.iPortType = PV2WAY_OUT_PORT;
-
-                OSCL_TRY(error, iAudioPlayPort.SetCmdId(SendNodeCmdL(PV2WAY_NODE_CMD_REQUESTPORT,
-                                                        iPlayFromFileNode, this, &prop)));
-                OSCL_FIRST_CATCH_ANY(error,
-                                     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                                     (0, "CPV324m2Way::CheckPlayFileInit unable to request audio port!\n"));
-                                     iPlayFileState = File2WayResetting;
-                                     CheckPlayFileState();
-                                     return;);
-
-                iAudioPlayPort.SetStatus(ERequestPort);
-            }
-            else if (iVideoPlayPort.GetStatus() == ENoPort)
-            {
-                prop.iFormatType = DEFAULT_PLAY_FROM_FILE_VIDEO;
-                prop.iPortType = PV2WAY_OUT_PORT;
-
-                OSCL_TRY(error, iVideoPlayPort.SetCmdId(SendNodeCmdL(PV2WAY_NODE_CMD_REQUESTPORT,
-                                                        iPlayFromFileNode, this, &prop)));
-                OSCL_FIRST_CATCH_ANY(error,
-                                     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                                     (0, "CPV324m2Way::CheckPlayFileInit unable to request video port!\n"));
-                                     iPlayFileState = File2WayResetting;
-                                     CheckPlayFileState();
-                                     return;);
-
-                iVideoPlayPort.SetStatus(ERequestPort);
-            }
-            break;
-
-        default:
-            break;
-    }
-
-    CheckAudioSourceMixingPort();
-
-    if ((iAudioPlayPort.GetStatus() == EHasPort) &&
-            (iVideoPlayPort.GetStatus() == EHasPort))
-    {
-        iAudioEncDatapath->SetFilePlayPort(iAudioPlayPort.GetPort());
-        iVideoEncDatapath->SetFilePlayPort(iVideoPlayPort.GetPort());
-
-        iPlayFileState = File2WayInitialized;
-
-        iInitPlayFileInfo->status = PVMFSuccess;
-        Dispatch(iInitPlayFileInfo);
-        iInitPlayFileInfo = NULL;
-    }
-#endif
 }
 
 void CPV324m2Way::CheckPlayFileReset()
 {
-#if 1
     return;
-#else
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "CPV324m2Way::CheckPlayFileReset\n"));
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "CPV324m2Way::CheckPlayFileReset pff node state %d, reset play info %x, init play info %x, reset info %x\n",
-                     iPlayFromFileNode->GetState(), iResetPlayFileInfo,
-                     iInitPlayFileInfo, iResetInfo));
-
-    int32 error;
-
-    switch (iPlayFromFileNode->GetState())
-    {
-        case EPVMFNodeCreated:
-            break;
-
-        case EPVMFNodeStarted:
-        case EPVMFNodePaused:
-            OSCL_TRY(error, SendNodeCmdL(PV2WAY_NODE_CMD_STOP,
-                                         iPlayFromFileNode, this));
-            OSCL_FIRST_CATCH_ANY(error,
-                                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger,
-                                                 PVLOGMSG_ERR, (0, "CPV324m2Way::CheckPlayFileReset unable to stop pff node %d!\n", error));
-                                 return;);
-            break;
-
-        case EPVMFNodeError:
-        case EPVMFNodeInitialized:
-        case EPVMFNodeStopped:
-            OSCL_TRY(error, SendNodeCmdL(PV2WAY_NODE_CMD_RESET, iPlayFromFileNode, this));
-            OSCL_FIRST_CATCH_ANY(error,
-                                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger,
-                                                 PVLOGMSG_ERR, (0, "CPV324m2Way::CheckPlayFileReset unable to reset pff node %d!\n", error));
-                                 return;);
-            break;
-
-        default:
-            break;
-    }
-
-    CheckAudioSourceMixingPort();
-
-    if (iPlayFromFileNode->GetState() == EPVMFNodeCreated)
-    {
-        iAudioPlayPort.SetPort(NULL);
-        iVideoPlayPort.SetPort(NULL);
-
-        iAudioEncDatapath->SetFilePlayPort(NULL);
-        iVideoEncDatapath->SetFilePlayPort(NULL);
-
-        iPlayFileState = File2WayIdle;
-
-        //If no command was issued, then dispatch an error event.
-        if ((iResetPlayFileInfo == NULL) &&
-                (iInitPlayFileInfo == NULL) &&
-                (iResetInfo == NULL))
-        {
-            TPV2WayEventInfo* aEvent = NULL;
-            if (!GetEventInfo(aEvent))
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                (0, "CPV324m2Way::CheckPlayFileReset unable to notify app!\n"));
-                return;
-            }
-            aEvent->type = PVT_INDICATION_PLAY_ERROR;
-            aEvent->localBuffer[0] = (uint8) PV_MEDIA_NONE;
-            aEvent->localBufferSize = 1;
-            Dispatch(aEvent);
-        }
-        // If reset play in progress
-        else if (iResetPlayFileInfo)
-        {
-            iResetPlayFileInfo->status = PVMFSuccess;
-            Dispatch(iResetPlayFileInfo);
-            iResetPlayFileInfo = NULL;
-        }
-        //Else if init failed
-        else if (iInitPlayFileInfo)
-        {
-            iInitPlayFileInfo->status = PVMFFailure;
-            Dispatch(iInitPlayFileInfo);
-            iInitPlayFileInfo = NULL;
-        }
-
-        //Check if reset engine was in progress
-        if (iResetInfo)
-        {
-            CheckState();
-        }
-    }
-#endif
 }
 
 void CPV324m2Way::InitiateResetPlayFile()
@@ -7691,100 +5324,7 @@ void CPV324m2Way::InitiateResetPlayFile()
 
 void CPV324m2Way::CheckAudioSourceMixingPort()
 {
-#if 1
     return;
-#else
-    PVMFPortProperty prop;
-    int32 error;
-    if (!iAudioEncDatapath)
-        return;
-    CPV2WayPort *audioPort = iAudioEncDatapath->GetSourceInputPort();
-
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "CPV324m2Way::CheckAudioSourceMixingPort audio enc state %d, mixing port state %d, play file state %d\n",
-                     iAudioEncDatapath->GetState(), audioPort->GetStatus(), iPlayFileState));
-
-    switch (iAudioEncDatapath->GetState())
-    {
-        default:
-            switch (iPlayFileState)
-            {
-                case File2WayInitializing:
-                case File2WayInitialized:
-                    if (audioPort->GetStatus() == ENoPort)
-                    {
-                        prop.iFormatType = DEFAULT_PLAY_FROM_FILE_AUDIO;
-                        prop.iPortType = PV2WAY_IN_PORT;
-
-                        OSCL_TRY(error, audioPort->SetCmdId(SendNodeCmdL(PV2WAY_NODE_CMD_REQUESTPORT,
-                                                            iAudioSrcNode, this, &prop)));
-                        OSCL_FIRST_CATCH_ANY(error,
-                                             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG,
-                                                             iLogger, PVLOGMSG_ERR,
-                                                             (0, "CPV324m2Way::CheckPlayFileInit unable to request audio port!\n"));
-                                             return;);
-
-                        audioPort->SetStatus(ERequestPort);
-                    }
-                    break;
-
-                default:
-                    break;
-            }
-            break;
-
-        case EClosing:
-        case EClosed:
-            break;
-    }
-
-    switch (iAudioEncDatapath->GetState())
-    {
-        case EClosing:
-        case EClosed:
-            if (audioPort->GetStatus() == EHasPort)
-            {
-                iAudioEncDatapath->UseFilePlayPort(false);
-
-                OSCL_TRY(error, audioPort->SetCmdId(SendNodeCmdL(PV2WAY_NODE_CMD_RELEASEPORT,
-                                                    iAudioSrcNode, this, audioPort->GetPort())));
-                OSCL_FIRST_CATCH_ANY(error,
-                                     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG,
-                                                     iLogger, PVLOGMSG_ERR,
-                                                     (0, "CPV324m2Way::CheckPlayFileReset unable to release audio port %d!\n", error));
-                                     return;);
-            }
-            break;
-
-        default:
-            break;
-    }
-
-    switch (iPlayFileState)
-    {
-        case File2WayIdle:
-        case File2WayResetting:
-            if (audioPort->GetStatus() == EHasPort)
-            {
-                iAudioEncDatapath->UseFilePlayPort(false);
-
-                OSCL_TRY(error, audioPort->SetCmdId(SendNodeCmdL(PV2WAY_NODE_CMD_RELEASEPORT,
-                                                    iAudioSrcNode, this, audioPort->GetPort())));
-                OSCL_FIRST_CATCH_ANY(error,
-                                     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG,
-                                                     iLogger, PVLOGMSG_ERR,
-                                                     (0, "CPV324m2Way::CheckPlayFileReset unable to release audio port %d!\n", error));
-                                     return;);
-
-                audioPort->SetStatus(EReleasePort);
-            }
-            break;
-
-        default:
-            break;
-    }
-#endif
 }
 
 void CPV324m2Way::HandleAudioSrcNodeCmd(PV2WayNodeCmdType aType,
@@ -7984,41 +5524,17 @@ void CPV324m2Way::ConvertMapToVector(Oscl_Map < PVMFFormatType,
 }
 
 
-void CPV324m2Way::AddVideoEncoderNode(PVCodecType_t aCodec)
+void CPV324m2Way::AddVideoEncoderNode()
 {
     int32 error;
 
     if (iVideoEncNode != NULL)
         return;
-#ifdef PV2WAY_USE_OMX_ENCODER
+#ifdef PV2WAY_USE_OMX
     iVideoEncNode = TPV2WayNode(CREATE_OMX_ENC_NODE());
-    iOutgoingVideoCodecType = aCodec;
 #else
-    OSCL_UNUSED_ARG(aCodec);
     iVideoEncNode = TPV2WayNode(CREATE_VIDEO_ENC_NODE());
-#endif // PV2WAY_USE_OMX_ENCODER
-#if 0 // mark
-    switch (aCodec)
-    {
-        case PV_VID_TYPE_H263:
-        case PV_VID_TYPE_MPEG4:
-#ifdef PV2WAY_USE_OMX_ENCODER
-            iVideoEncNode = TPV2WayNode(CREATE_OMX_ENC_NODE());
-            iOutgoingVideoCodecType = aCodec;
-#else
-            iVideoEncNode = TPV2WayNode(CREATE_VIDEO_ENC_NODE());
-#endif // PV2WAY_USE_OMX_MPEG4_ENCODER
-            break;
-        case PV_INVALID_CODEC_TYPE:
-            //Invalid codec type, do a leave with PVMFErrArgument
-            OSCL_LEAVE(PVMFErrArgument);
-            break;
-        default:
-            //Shouldn't reach this section of the code.
-            OSCL_ASSERT(0);
-            break;
-    }
-#endif // mark
+#endif // PV2WAY_USE_OMX
 
     if (iVideoEncNode.iNode == NULL)
         OSCL_LEAVE(PVMFErrNoMemory);
@@ -8052,8 +5568,7 @@ void CPV324m2Way::AddAudioEncoderNode()
     if (iAudioEncNode != NULL)
         return;
 
-
-#ifdef PV2WAY_USE_OMX_AMR_ENCODER
+#ifdef PV2WAY_USE_OMX
     OSCL_TRY(error, iAudioEncNode = TPV2WayNode(CREATE_OMX_ENC_NODE()));
 #else
     OSCL_TRY(error, iAudioEncNode =
@@ -8102,40 +5617,18 @@ void CPV324m2Way::AddAudioEncoderNode()
     }
 
 }
-void CPV324m2Way::AddVideoDecoderNode(PVCodecType_t aCodec, uint8* aFormatSpecificInfo, uint32 aFormatSpecificInfoLen)
+void CPV324m2Way::AddVideoDecoderNode(uint8* aFormatSpecificInfo, uint32 aFormatSpecificInfoLen)
 {
     int32 error = 0;
     if (iVideoDecNode != NULL)
         return;
 
-    switch (aCodec)
-    {
-        case PV_VID_TYPE_H263:
-            iIncomingVideoCodecType = aCodec;
-#ifdef PV2WAY_USE_OMX_H263_DECODER
-            OSCL_TRY(error, iVideoDecNode = TPV2WayNode(CREATE_OMX_VIDEO_DEC_NODE()););
+#ifdef PV2WAY_USE_OMX
+    OSCL_TRY(error, iVideoDecNode = TPV2WayNode(CREATE_OMX_VIDEO_DEC_NODE()););
 #else
-            OSCL_TRY(error, iVideoDecNode = TPV2WayNode(CREATE_VIDEO_DEC_NODE()););
-#endif // PV2WAY_USE_OMX_H263_DECODER
-            break;
-        case PV_VID_TYPE_MPEG4:
-            iIncomingVideoCodecType = aCodec;
-#ifdef PV2WAY_USE_OMX_MPEG4_DECODER
-            OSCL_TRY(error, iVideoDecNode = TPV2WayNode(CREATE_OMX_VIDEO_DEC_NODE()););
-#else
-            OSCL_TRY(error, iVideoDecNode = TPV2WayNode(CREATE_VIDEO_DEC_NODE()););
-#endif // PV2WAY_USE_OMX_MPEG4_DECODER
-            break;
-        case PV_INVALID_CODEC_TYPE:
-            //Invalid codec type, do a leave with PVMFErrArgument
-            OSCL_LEAVE(PVMFErrArgument);
-            break;
-        default:
-            //Shouldn't reach this section of code
-            //If it does then it's a bug
-            OSCL_ASSERT(0);
-            break;
-    }
+    OSCL_TRY(error, iVideoDecNode = TPV2WayNode(CREATE_VIDEO_DEC_NODE()););
+#endif // PV2WAY_USE_OMX
+
 
     OSCL_FIRST_CATCH_ANY(error, PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger,
                          PVLOGMSG_ERR, (0, "CPV324m2Way::InitL unable to allocate video decoder node\n")));
@@ -8155,24 +5648,19 @@ void CPV324m2Way::AddAudioDecoderNode()
     if (iAudioDecNode != NULL)
         return;
 
-
-
-#ifdef PV2WAY_USE_OMX_AMR_DECODER
+#ifdef PV2WAY_USE_OMX
     OSCL_TRY(error, iAudioDecNode =
                  TPV2WayNode(CREATE_OMX_AUDIO_DEC_NODE()););
 #else
     OSCL_TRY(error, iAudioDecNode =
                  TPV2WayNode(CREATE_AUDIO_DEC_NODE());
              /*iAudioDecNode->SetClock(&iClock);*/);
-#endif // PV2WAY_USE_OMX_AMR_DECODER
+#endif // PV2WAY_USE_OMX
 
     OSCL_FIRST_CATCH_ANY(error, PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger,
                          PVLOGMSG_ERR, (0, "CPV324m2Way::InitL unable to allocate audio decoder node\n")));
 
-
     InitiateSession(iAudioDecNode);
-
-
 }
 
 void CPV324m2Way::RegisterMioLatency(const char* aMimeStr,

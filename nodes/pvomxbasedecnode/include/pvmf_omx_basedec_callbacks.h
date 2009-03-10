@@ -27,11 +27,11 @@
 #endif
 
 #ifndef OMX_Types_h
-#include "omx_types.h"
+#include "OMX_Types.h"
 #endif
 
 #ifndef OMX_Core_h
-#include "omx_core.h"
+#include "OMX_Core.h"
 #endif
 
 #ifndef OSCL_MEM_MEMPOOL_H_INCLUDED

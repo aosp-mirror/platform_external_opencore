@@ -430,6 +430,15 @@ class PvmfAssetInfo3GPPLocationStruct
 // Keys for format specific info for any type of media
 #define PVMF_FORMAT_SPECIFIC_INFO_KEY "x-pvmf/media/format_specific_info;valtype=key_specific_value"
 
+// Keys for format specific info for video media type
+#define PVMF_FORMAT_SPECIFIC_INFO_KEY_YUV "x-pvmf/media/format_specific_info_yuv;valtype=key_specific_value"
+
+// Keys for format specific info for audio media type
+#define PVMF_FORMAT_SPECIFIC_INFO_KEY_PCM "x-pvmf/media/format_specific_info_pcm;valtype=key_specific_value"
+
+// Keys for buffer allocator
+#define PVMF_BUFFER_ALLOCATOR_KEY "x-pvmf/media/buffer_allocator;valtype=key_specific_value"
+
 // Keys for format specific info plus first media sample for any type of media
 #define PVMF_FORMAT_SPECIFIC_INFO_PLUS_FIRST_SAMPLE_KEY "x-pvmf/media/format_specific_info_plus_first_sample;valtype=uint8*"
 

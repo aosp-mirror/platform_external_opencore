@@ -120,6 +120,7 @@ $(INCDESTDIR)/ALL_HDRS_INSTALLED:
 
 $(DESTDIR)/ALL_LIBS_INSTALLED:
 	@echo Making sure all libs are installed...
+	$(call create_objdir,$(@D))
 	$(quiet) touch $@
 
 
@@ -139,6 +140,7 @@ ifneq "$(MAKECMDGOALS)" "clean"
     ifneq "$(MAKECMDGOALS)" "android_make"
       # include ALL_HDR_INSTALLED file
       include $(INCDESTDIR)/ALL_HDRS_INSTALLED
+      include $(DESTDIR)/ALL_LIBS_INSTALLED
     endif
   endif
 endif

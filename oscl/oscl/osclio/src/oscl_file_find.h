@@ -55,6 +55,11 @@
 #ifndef OSCL_STRING_CONTAINERS_H_INCLUDED
 #include "oscl_string_containers.h"
 #endif
+
+#ifndef OSCL_FILE_TYPES_H_INCLUDED
+#include "oscl_file_types.h"
+#endif
+
 /**
  * Oscl_FileFind class defines the generic way of finding filesystem elements that match a pattern  within a directory
  */
@@ -119,6 +124,7 @@ class Oscl_FileFind
             E_NO_MATCH,
             E_BUFFER_TOO_SMALL,
             E_NOT_IMPLEMENTED,
+            E_MEMORY_ERROR,
             E_OTHER
         } error_type;
 
@@ -156,18 +162,22 @@ class Oscl_FileFind
 
     private:
 
+        typedef char chartype;
+        bool setpathanddelimiter(const chartype* directory);
+
 #if   (OSCL_HAS_GLOB)
         glob_t hFind;
-        size_t count;
-        bool haveGlob;
 #else
-        size_t count;
-        bool haveGlob;
         Oscl_Vector<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator> iDirEntVec;
 #endif
+        uint32 count;
+        bool foundfirst;
         error_type lastError;
         element_type type;
-
+        bool appendPathDelimiter;
+        chartype* pathname;
+        const chartype* delimeter;
+        const chartype* nullchar;
 };
 
 

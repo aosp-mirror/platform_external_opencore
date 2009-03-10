@@ -481,6 +481,7 @@ void PVMFVideoParserNode::Run()
                         SetState(EPVMFNodeIdle);
                         status = PVMFSuccess;
                     }
+                    break;
                     default:
                         status = PVMFErrInvalidState;
                         break;

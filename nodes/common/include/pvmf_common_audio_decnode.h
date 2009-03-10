@@ -47,6 +47,9 @@ struct channelSampleInfo
 {
     uint32 desiredChannels;
     uint32 samplingRate;
+    uint32 bitsPerSample;
+    uint32 num_buffers;
+    uint32 buffer_size;
 };
 
 #endif

@@ -51,11 +51,7 @@ enum HTTPContentType
     HTTP_CONTENT_CHUNKED_TRANSFER_ENCODING	// for Transfer-Encoding : chunked
 };
 
-#if 1
 #define LOGINFO(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG,iLogger,PVLOGMSG_INFO,m);
-#else
-#define LOGINFO(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iLogger,PVLOGMSG_ERR,m);
-#endif
 
 
 

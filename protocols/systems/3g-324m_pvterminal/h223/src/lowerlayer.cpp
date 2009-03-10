@@ -343,56 +343,6 @@ void H223LowerLayer::SendStuffingMsgHeader(uint8* stuffing, uint16 stuffing_len)
     OSCL_UNUSED_ARG(stuffing);
     OSCL_UNUSED_ARG(stuffing_len);
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223LowerLayer::SendStuffingMsgHeader stuffing(%x), len(%d)\n", stuffing, stuffing_len));
-#if 0
-    if (!IsConnected())
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223LowerLayer::SendStuffingMsgHeader Error - not connected\n"));
-        return;
-    }
-
-    /* Send any format specific info if available */
-    if (stuffing_len > 0 && stuffing)
-    {
-        // Create mem frag for stuffing header
-        // Create new media data buffer for header fragment
-        OsclSharedPtr<PVMFMediaDataImpl> hdrImpl = iMediaDataAlloc.allocate(stuffing_len);
-        PVMFSharedMediaDataPtr hdrMediaData = PVMFMediaData::createMediaData(hdrImpl);
-        OsclRefCounterMemFrag stuffingFrag;
-        hdrMediaData->getMediaFragment(0, stuffingFrag);
-        oscl_memcpy(stuffingFrag.getMemFragPtr(), stuffing, stuffing_len);
-        stuffingFrag.getMemFrag().len = stuffing_len;
-
-        // Create new media data buffer for the message
-        OsclSharedPtr<PVMFMediaDataImpl> emptyImpl = iMediaDataAlloc.allocate(0);
-        PVMFSharedMediaDataPtr stuffingData = PVMFMediaData::createMediaData(emptyImpl);
-
-        // Set format specific info in media data message
-        stuffingData->setFormatSpecificInfo(stuffingFrag);
-
-        PVMFStatus status = PVMFSuccess;
-        if (iLoopbackMode == PV_LOOPBACK_MUX)
-            PacketIn(stuffingData);
-        else
-        {
-            // Send header to downstream node
-            PVMFSharedMediaMsgPtr stuffingMsg;
-            convertToPVMFMediaMsg(stuffingMsg, stuffingData);
-            status = iConnectedPort->PutData(stuffingMsg);
-        }
-
-        if (status != PVMFSuccess)
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223LowerLayer::SendStuffingMsgHeader Error - Peer node rejected stuffing msg\n"));
-            // leave
-            OSCL_LEAVE(PV2WayErrorRejected);
-        }
-    }
-    else
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "H223LowerLayer::SendStuffingMsgHeader Error - empty stuffing msg\n"));
-    }
-#endif
 }
 
 PVMFStatus H223LowerLayer::Mux()
@@ -910,10 +860,6 @@ void H223LowerLayer::HandlePortActivity(const PVMFPortActivity &aActivity)
 void H223LowerLayer::SetLoopbackMode(TPVLoopbackMode aLoopbackMode)
 {
     iLoopbackMode = aLoopbackMode;
-#if 0
-    if (iLoopbackMode != PV_LOOPBACK_NONE)
-        iLoopbackMode = PV_LOOPBACK_MUX;
-#endif
 }
 
 

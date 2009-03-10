@@ -421,6 +421,24 @@ class PVMFNodeInterface: public PVMFPortActivityHandler
         virtual void HandlePortActivity(const PVMFPortActivity& aActivity) = 0;
 
         /**
+         * This API is a synchronous version of QueryInterface.
+         * The mechanism is analogous to the COM IUnknown method.  The interfaces are identified with
+         * an interface ID that is a UUID as in DCE and a pointer to the interface object is
+         * returned if it is supported.  Otherwise the returned pointer is NULL.
+         *
+         * @param aUuid The UUID of the desired interface
+         * @param aInterfacePtr The output pointer to the desired interface
+         * @returns PVMFSuccess or PVMFErrNotSupported
+         */
+        virtual PVMFStatus QueryInterfaceSync(PVMFSessionId aSession
+                                              , const PVUuid& aUuid
+                                              , PVInterface*& aInterfacePtr)
+        {
+            return PVMFErrNotImplemented;
+        }
+
+
+        /**
          * Set shared library pointer
          * @param aPtr Pointer to the shared library.
          **/

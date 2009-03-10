@@ -47,6 +47,18 @@
 #include "avi_write.h"
 #endif
 
+#define TEST_BUFFER_ALLOCATOR 0
+
+#if TEST_BUFFER_ALLOCATOR
+#ifndef PV_INTERFACE_H
+#include "pv_interface.h"
+#endif
+
+#ifndef PVMF_FIXEDSIZE_BUFFER_ALLOC_H_INCLUDED
+#include "pvmf_fixedsize_buffer_alloc.h"
+#endif
+#endif
+
 class PVLogger;
 class PVRefFileOutputTestObserver;
 class PVMFMediaClock;
@@ -71,6 +83,9 @@ class PVRefFileOutput;
 #define PVMF_SUPPORTED_COMPRESSED_VIDEO_FORMATS_COUNT 8
 
 #define PVMF_SUPPORTED_TEXT_FORMAT_COUNT 1
+
+
+
 
 typedef struct
 {
@@ -381,6 +396,9 @@ class PVRefFileOutput :	public OsclTimerObject
         int32 iVideoDisplayWidth;
         bool iVideoDisplayWidthValid;
 
+        int32 iNumberOfBuffers;
+        int32 iBufferSize;
+
         // Text parameters
         OSCL_HeapString<OsclMemAllocator> iTextFormatString;
         PVMFFormatType iTextFormat;
@@ -459,6 +477,38 @@ class PVRefFileOutputTestObserver
         OSCL_IMPORT_REF virtual void Pos(PVMFTimestamp& aTimestamp) = 0;
 };
 
+#if TEST_BUFFER_ALLOCATOR
+
+class PVRefBufferAlloc: public PVInterface, public PVMFFixedSizeBufferAlloc
+{
+    public:
+
+        PVRefBufferAlloc(uint32 size, uint32 buffers);
+
+        virtual ~PVRefBufferAlloc();
+
+        virtual void addRef();
+
+        virtual void removeRef();
+
+        virtual bool queryInterface(const PVUuid& uuid, PVInterface*& aInterface) ;
+
+        virtual OsclAny* allocate();
+
+        virtual void deallocate(OsclAny* ptr) ;
+
+        virtual uint32 getBufferSize() ;
+
+        virtual uint32 getNumBuffers() ;
+
+    private:
+        int32 refCount;
+        int32 bufferSize;
+        int32 maxBuffers;
+        int32 numAllocated;
+};
+
+#endif
 
 #endif // PVMI_MEDIA_IO_FILEOUTPUT_H_INCLUDED
 

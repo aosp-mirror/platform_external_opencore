@@ -27,7 +27,7 @@
 #include "latmpayloadparser.h"
 
 
-#include "omx_core.h"
+#include "OMX_Core.h"
 #include "pvmf_omx_basedec_callbacks.h"     //used for thin AO in Decoder's callbacks
 #include "pv_omxcore.h"
 
@@ -667,6 +667,141 @@ PVMFStatus PVMFOMXAudioDecNode::HandlePortReEnable()
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                         (0, "PVMFOMXAudioDecNode::HandlePortReEnable() new output buffers %d, size %d", iNumOutputBuffers, iOMXComponentOutputBufferSize));
 
+        //Send the FSI information to media output node here, before setting output
+        //port parameters to the omx component
+        // Check if Fsi configuration need to be sent
+        sendFsi = true;
+        iCompactFSISettingSucceeded = false;
+
+        if (sendFsi)
+        {
+            int fsiErrorCode = 0;
+
+            OsclRefCounterMemFrag FsiMemfrag;
+
+            OSCL_TRY(fsiErrorCode, FsiMemfrag = iFsiFragmentAlloc.get(););
+
+            OSCL_FIRST_CATCH_ANY(fsiErrorCode, PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                                 (0, "PVMFOMXAudioDecNode::HandlePortReEnable() Failed to allocate memory for  FSI")));
+
+            if (fsiErrorCode == 0)
+            {
+                channelSampleInfo* pcminfo = (channelSampleInfo*) FsiMemfrag.getMemFragPtr();
+
+                if (pcminfo != NULL)
+                {
+                    OSCL_ASSERT(pcminfo != NULL);
+
+                    pcminfo->samplingRate    = iPCMSamplingRate;
+                    pcminfo->desiredChannels = iNumberOfAudioChannels;
+                    pcminfo->bitsPerSample = 16;
+                    pcminfo->num_buffers = iNumOutputBuffers;
+                    pcminfo->buffer_size = iOMXComponentOutputBufferSize;
+
+                    OsclMemAllocator alloc;
+                    int32 KeyLength = oscl_strlen(PVMF_FORMAT_SPECIFIC_INFO_KEY_PCM) + 1;
+                    PvmiKeyType KvpKey = (PvmiKeyType)alloc.ALLOCATE(KeyLength);
+
+                    if (NULL == KvpKey)
+                    {
+                        return false;
+                    }
+
+                    oscl_strncpy(KvpKey, PVMF_FORMAT_SPECIFIC_INFO_KEY_PCM, KeyLength);
+                    int32 err;
+
+                    OSCL_TRY(err, ((PVMFOMXDecPort*)iOutPort)->pvmiSetPortFormatSpecificInfoSync(FsiMemfrag, KvpKey););
+                    if (err != OsclErrNone)
+                    {
+                        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                                        (0, "PVMFOMXAudioDecNode::HandlePortReEnable - Problem to set FSI"));
+                    }
+                    else
+                    {
+                        sendFsi = false;
+                        iCompactFSISettingSucceeded = true;
+                    }
+
+
+                    alloc.deallocate((OsclAny*)(KvpKey));
+                }
+                else
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                                    (0, "PVMFOMXAudioDecNode::HandlePortReEnable - Problem allocating Output FSI"));
+                    SetState(EPVMFNodeError);
+                    ReportErrorEvent(PVMFErrNoMemory);
+                    return false; // this is going to make everything go out of scope
+                }
+            }
+            else
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                                (0, "PVMFOMXAudioDecNode::HandlePortReEnable - Problem allocating Output FSI"));
+                return false; // this is going to make everything go out of scope
+            }
+
+
+        }
+
+
+        //Buffer allocator kvp query and allocation has to be done again if we landed into handle port reconfiguration
+
+        PvmiKvp* kvp = NULL;
+        int numKvp = 0;
+        PvmiKeyType aIdentifier = (PvmiKeyType)PVMF_BUFFER_ALLOCATOR_KEY;
+        int32 err, err1;
+        ipExternalOutputBufferAllocatorInterface = NULL;
+
+        OSCL_TRY(err, ((PVMFOMXDecPort*)iOutPort)->pvmiGetBufferAllocatorSpecificInfoSync(aIdentifier, kvp, numKvp););
+
+        if ((err == OsclErrNone) && (NULL != kvp))
+        {
+            ipExternalOutputBufferAllocatorInterface = (PVInterface *)kvp->value.key_specific_value;
+
+            if (ipExternalOutputBufferAllocatorInterface)
+            {
+                PVInterface* pTempPVInterfacePtr = NULL;
+                OSCL_TRY(err, ipExternalOutputBufferAllocatorInterface->queryInterface(PVMFFixedSizeBufferAllocUUID, pTempPVInterfacePtr););
+
+                OSCL_TRY(err1, ((PVMFOMXDecPort*)iOutPort)->releaseParametersSync(kvp, numKvp););
+
+                if (err1 != OsclErrNone)
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                                    (0, "PVMFOMXAudioDecNode::HandlePortReEnable - Unable to Release Parameters"));
+                }
+
+                if ((err == OsclErrNone) && (NULL != pTempPVInterfacePtr))
+                {
+                    ipFixedSizeBufferAlloc = OSCL_STATIC_CAST(PVMFFixedSizeBufferAlloc*, pTempPVInterfacePtr);
+
+                    uint32 iNumBuffers, iBufferSize;
+
+                    iNumBuffers = ipFixedSizeBufferAlloc->getNumBuffers();
+                    iBufferSize = ipFixedSizeBufferAlloc->getBufferSize();
+
+                    if ((iNumBuffers < iParamPort.nBufferCountMin) || (iBufferSize < iOMXComponentOutputBufferSize))
+                    {
+                        ipExternalOutputBufferAllocatorInterface->removeRef();
+                        ipExternalOutputBufferAllocatorInterface = NULL;
+                    }
+                    else
+                    {
+                        iNumOutputBuffers = iNumBuffers;
+                        iOMXComponentOutputBufferSize = iBufferSize;
+                    }
+
+                }
+                else
+                {
+                    ipExternalOutputBufferAllocatorInterface->removeRef();
+                    ipExternalOutputBufferAllocatorInterface = NULL;
+                }
+            }
+        }
+
+
         /* Allocate output buffers */
         if (!CreateOutMemPool(iNumOutputBuffers))
         {
@@ -1036,6 +1171,142 @@ bool PVMFOMXAudioDecNode::NegotiateComponentParameters(OMX_PTR aOutputParameters
 
     if (iNumOutputBuffers < iParamPort.nBufferCountMin)
         iNumOutputBuffers = iParamPort.nBufferCountMin;
+
+
+    //Send the FSI information to media output node here, before setting output
+    //port parameters to the omx component
+
+    // Check if Fsi configuration need to be sent
+    sendFsi = true;
+    iCompactFSISettingSucceeded = false;
+    if (sendFsi)
+    {
+        int fsiErrorCode = 0;
+
+        OsclRefCounterMemFrag FsiMemfrag;
+
+        OSCL_TRY(fsiErrorCode, FsiMemfrag = iFsiFragmentAlloc.get(););
+
+        OSCL_FIRST_CATCH_ANY(fsiErrorCode, PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                             (0, "PVMFOMXAudioDecNode::NegotiateComponentParameters() Failed to allocate memory for  FSI")));
+
+        if (fsiErrorCode == 0)
+        {
+            channelSampleInfo* pcminfo = (channelSampleInfo*) FsiMemfrag.getMemFragPtr();
+            if (pcminfo != NULL)
+            {
+                OSCL_ASSERT(pcminfo != NULL);
+
+                pcminfo->samplingRate    = iPCMSamplingRate;
+                pcminfo->desiredChannels = iNumberOfAudioChannels;
+                pcminfo->bitsPerSample = 16;
+                pcminfo->num_buffers = iNumOutputBuffers;
+                pcminfo->buffer_size = iOMXComponentOutputBufferSize;
+
+                OsclMemAllocator alloc;
+                int32 KeyLength = oscl_strlen(PVMF_FORMAT_SPECIFIC_INFO_KEY_PCM) + 1;
+                PvmiKeyType KvpKey = (PvmiKeyType)alloc.ALLOCATE(KeyLength);
+
+                if (NULL == KvpKey)
+                {
+                    return false;
+                }
+
+                oscl_strncpy(KvpKey, PVMF_FORMAT_SPECIFIC_INFO_KEY_PCM, KeyLength);
+                int32 err;
+
+                OSCL_TRY(err, ((PVMFOMXDecPort*)iOutPort)->pvmiSetPortFormatSpecificInfoSync(FsiMemfrag, KvpKey););
+                if (err != OsclErrNone)
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                                    (0, "PVMFOMXAudioDecNode::NegotiateComponentParameters - Problem to set FSI"));
+                }
+                else
+                {
+                    sendFsi = false;
+                    iCompactFSISettingSucceeded = true;
+                }
+
+                alloc.deallocate((OsclAny*)(KvpKey));
+
+
+            }
+            else
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                                (0, "PVMFOMXAudioDecNode::NegotiateComponentParameters - Problem allocating Output FSI"));
+                SetState(EPVMFNodeError);
+                ReportErrorEvent(PVMFErrNoMemory);
+                return false; // this is going to make everything go out of scope
+            }
+        }
+        else
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                            (0, "PVMFOMXAudioDecNode::NegotiateComponentParameters - Problem allocating Output FSI"));
+            return false; // this is going to make everything go out of scope
+        }
+
+
+    }
+
+    //Try querying the buffer allocator KVP for output buffer allocation outside of the node
+    PvmiKvp* kvp = NULL;
+    int numKvp = 0;
+    PvmiKeyType aIdentifier = (PvmiKeyType)PVMF_BUFFER_ALLOCATOR_KEY;
+    int32 err, err1;
+    ipExternalOutputBufferAllocatorInterface = NULL;
+
+    OSCL_TRY(err, ((PVMFOMXDecPort*)iOutPort)->pvmiGetBufferAllocatorSpecificInfoSync(aIdentifier, kvp, numKvp););
+
+    if ((err == OsclErrNone) && (NULL != kvp))
+    {
+        ipExternalOutputBufferAllocatorInterface = (PVInterface*) kvp->value.key_specific_value;
+
+        if (ipExternalOutputBufferAllocatorInterface)
+        {
+            PVInterface* pTempPVInterfacePtr = NULL;
+
+            OSCL_TRY(err, ipExternalOutputBufferAllocatorInterface->queryInterface(PVMFFixedSizeBufferAllocUUID, pTempPVInterfacePtr););
+
+            OSCL_TRY(err1, ((PVMFOMXDecPort*)iOutPort)->releaseParametersSync(kvp, numKvp););
+            if (err1 != OsclErrNone)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                                (0, "PVMFOMXAudioDecNode::NegotiateComponentParameters - Unable to Release Parameters"));
+            }
+
+            if ((err == OsclErrNone) && (NULL != pTempPVInterfacePtr))
+            {
+                ipFixedSizeBufferAlloc = OSCL_STATIC_CAST(PVMFFixedSizeBufferAlloc*, pTempPVInterfacePtr);
+
+                uint32 iNumBuffers, iBufferSize;
+
+                iNumBuffers = ipFixedSizeBufferAlloc->getNumBuffers();
+                iBufferSize = ipFixedSizeBufferAlloc->getBufferSize();
+
+                if ((iNumBuffers < iParamPort.nBufferCountMin) || (iBufferSize < iOMXComponentOutputBufferSize))
+                {
+                    ipExternalOutputBufferAllocatorInterface->removeRef();
+                    ipExternalOutputBufferAllocatorInterface = NULL;
+                }
+                else
+                {
+                    iNumOutputBuffers = iNumBuffers;
+                    iOMXComponentOutputBufferSize = iBufferSize;
+
+                }
+
+            }
+            else
+            {
+                ipExternalOutputBufferAllocatorInterface->removeRef();
+                ipExternalOutputBufferAllocatorInterface = NULL;
+
+            }
+        }
+    }
+
 
     iParamPort.nBufferCountActual = iNumOutputBuffers;
 
@@ -1497,8 +1768,6 @@ bool PVMFOMXAudioDecNode::InitDecoder(PVMFSharedMediaDataPtr& DataIn)
     }
 
 
-    //Varibles initialization
-    sendFsi = true;
 
 
     return true;
@@ -1859,7 +2128,7 @@ bool PVMFOMXAudioDecNode::QueueOutputBuffer(OsclSharedPtr<PVMFMediaDataImpl> &me
         int fsiErrorCode = 0;
 
         // Check if Fsi configuration need to be sent
-        if (sendFsi)
+        if (sendFsi && !iCompactFSISettingSucceeded)
         {
 
             OsclRefCounterMemFrag FsiMemfrag;
@@ -1881,7 +2150,37 @@ bool PVMFOMXAudioDecNode::QueueOutputBuffer(OsclSharedPtr<PVMFMediaDataImpl> &me
                     pcminfo->desiredChannels = iNumberOfAudioChannels;
 
                     mediaDataOut->setFormatSpecificInfo(FsiMemfrag);
-                    ((PVMFOMXDecPort*)iOutPort)->pvmiSetPortFormatSpecificInfoSync(FsiMemfrag);
+
+
+                    OsclMemAllocator alloc;
+                    int32 KeyLength = oscl_strlen(PVMF_FORMAT_SPECIFIC_INFO_KEY) + 1;
+                    PvmiKeyType KvpKey = (PvmiKeyType)alloc.ALLOCATE(KeyLength);
+
+                    if (NULL == KvpKey)
+                    {
+                        SetState(EPVMFNodeError);
+                        ReportErrorEvent(PVMFErrNoMemory);
+                        return false;
+                    }
+
+                    oscl_strncpy(KvpKey, PVMF_FORMAT_SPECIFIC_INFO_KEY, KeyLength);
+                    int32 err;
+
+                    OSCL_TRY(err, ((PVMFOMXDecPort*)iOutPort)->pvmiSetPortFormatSpecificInfoSync(FsiMemfrag, KvpKey););
+                    if (err != OsclErrNone)
+                    {
+                        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                                        (0, "PVMFOMXAudioDecNode::NegotiateComponentParameters - Problem to set FSI"));
+                        SetState(EPVMFNodeError);
+                        ReportErrorEvent(PVMFErrNoMemory);
+                        return false; // this is going to make everyth go out of scope
+                    }
+
+
+                    alloc.deallocate((OsclAny*)(KvpKey));
+
+
+
                 }
                 else
                 {
@@ -1922,7 +2221,6 @@ bool PVMFOMXAudioDecNode::QueueOutputBuffer(OsclSharedPtr<PVMFMediaDataImpl> &me
                                 (0, "PVMFOMXAudioDecNode::QueueOutputFrame(): Send frame failed"));
                 return false;
             }
-
         }
 
 

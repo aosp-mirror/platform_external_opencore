@@ -484,16 +484,6 @@ bool pv_mediainput_async_test_opencomposestop::ConfigMp43gpComposer()
     {
         clipConfig->SetAuthoringMode(PVMP4FFCN_MOVIE_FRAGMENT_MODE);
     }
-#ifndef _IMOTION_SPECIFIC_UT_DISABLE
-    else if (iTestCaseNum == KIMotionAuthoringModeTest || iTestCaseNum == KIMotionAuthoringModeLongetivityTest)
-    {
-        clipConfig->SetAuthoringMode(PVMP4FFCN_IMOTION_PSEUDO_STREAMING_MODE);
-    }
-    else if (iTestCaseNum == KIMotionDownloadModeTest || iTestCaseNum == KIMotionDownloadModeLongetivityTest)
-    {
-        clipConfig->SetAuthoringMode(PVMP4FFCN_IMOTION_DOWNLOAD_MODE);
-    }
-#endif
 
 
 
@@ -549,10 +539,7 @@ bool pv_mediainput_async_test_opencomposestop::AddMediaTrack()
 
         }
 
-        if (!PVAETestNodeConfig::ConfigureAudioEncoder(iAudioEncoderConfig, iAudioEncoderMimeType, iAudioBitrate))
-        {
-            return false;
-        }
+
     }
 
     if (iAddVideoMediaTrack)
@@ -635,6 +622,25 @@ bool pv_mediainput_async_test_opencomposestop::ConfigureVideoEncoder()
     return true;
 }
 
+bool pv_mediainput_async_test_opencomposestop::ConfigureAudioEncoder()
+{
+
+    PVAudioEncExtensionInterface* config;
+    config = OSCL_STATIC_CAST(PVAudioEncExtensionInterface*, iAudioEncoderConfig);
+    if (!config)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                        (0, "pv_mediainput_async_test_opencomposestop::Encoder: No configuration needed"));
+
+        return true;
+    }
+
+    if (!PVAETestNodeConfig::ConfigureAudioEncoder(iAudioEncoderConfig, iAudioEncoderMimeType, iAudioBitrate))
+    {
+        return false;
+    }
+    return true;
+}
 ////////////////////////////////////////////////////////////////////////////
 void pv_mediainput_async_test_opencomposestop::ResetAuthorConfig()
 {
@@ -1013,6 +1019,11 @@ void pv_mediainput_async_test_opencomposestop::CommandCompleted(const PVCmdRespo
                 if (iAddVideoMediaTrack)
                 {
                     ConfigureVideoEncoder();
+                }
+
+                if (iAddAudioMediaTrack)
+                {
+                    ConfigureAudioEncoder();
                 }
 
                 iState = PVAE_CMD_QUERY_INTERFACE2;

@@ -204,14 +204,6 @@ static const VLCtable mcbpc_inter_tab[29] =
 };
 
 
-#if 0
-/* MCBPC for separate mode */
-
-static const VLCtable mcbpc_sep_tab[9] =
-{
-    {1, 1}, {1, 3}, {2, 3}, {3, 3}, {1, 4}, {1, 6}, {2, 6}, {3, 6}, {1, 9}
-};
-#endif
 
 /* CBPY. Straightforward indexing */
 

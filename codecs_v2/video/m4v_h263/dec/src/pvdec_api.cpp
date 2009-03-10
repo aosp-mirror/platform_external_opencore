@@ -202,10 +202,6 @@ OSCL_EXPORT_REF Bool PVInitVideoDecoder(VideoDecControls *decCtrl, uint8 *volbuf
                     video->vol[idx]->bitstream = stream;
                     video->vol[idx]->volID = idx;
                     video->vol[idx]->timeInc_offset = 0;  /*  11/12/01 */
-#if 0
-                    video->vlcDequantIntraBlock = &VlcDequantH263IntraBlock ;
-                    video->vlcDequantInterBlock = &VlcDequantH263InterBlock ;
-#endif
                     video->vlcDecCoeffIntra = &VlcDecTCOEFShortHeader;
                     video->vlcDecCoeffInter = &VlcDecTCOEFShortHeader;
                     if (mode == MPEG4_MODE)
@@ -270,16 +266,8 @@ OSCL_EXPORT_REF Bool PVInitVideoDecoder(VideoDecControls *decCtrl, uint8 *volbuf
         }
         if (status != PV_FALSE)
         {
-#if 0
-            if (mode == MPEG4_MODE /* || width !=0 && height !=0 */)
-            {
-                status = PVAllocVideoData(decCtrl, width, height, nLayers);
-                video->initialized = PV_TRUE;
-            }
-#else
             status = PVAllocVideoData(decCtrl, width, height, nLayers);
             video->initialized = PV_TRUE;
-#endif
         }
     }
     else
@@ -1165,18 +1153,6 @@ Bool PVDecodeVopHeader(VideoDecControls *decCtrl, uint8 *buffer[],
                     return PV_FALSE;
                 }
             }
-#if 0
-            if (video->initialized == PV_FALSE)
-            {
-                if (PVAllocVideoData(decCtrl, video->width, video->height, 1) == PV_FALSE)
-                {
-                    video->displayWidth = video->width = 0;
-                    video->displayHeight = video->height = 0;
-                    return PV_FALSE;
-                }
-                video->initialized = PV_TRUE;
-            }
-#endif
 
             if (use_ext_timestamp[0])
             {
@@ -1630,7 +1606,6 @@ Bool PVDecSetReference(VideoDecControls *decCtrl, uint8 *refYUV, uint32 timestam
 
     dstPtr = prevVop->yChan;
     orgPtr = refYUV;
-#if 1
     oscl_memcpy(dstPtr, orgPtr, size);
     dstPtr = prevVop->uChan;
     dstPtr2 = prevVop->vChan;
@@ -1638,33 +1613,6 @@ Bool PVDecSetReference(VideoDecControls *decCtrl, uint8 *refYUV, uint32 timestam
     orgPtr2 = orgPtr + (size >> 2);
     oscl_memcpy(dstPtr, orgPtr, (size >> 2));
     oscl_memcpy(dstPtr2, orgPtr2, (size >> 2));
-#else
-    for (i = 0; i < displayHeight; i++)
-    {
-        oscl_memcpy(dstPtr, orgPtr, displayWidth);
-        dstPtr += width;
-        orgPtr += displayWidth;
-    }
-
-
-    dstPtr = prevVop->uChan;
-    dstPtr2 = prevVop->vChan;
-    orgPtr = refYUV + (displayWidth * displayHeight);
-    orgPtr2 = orgPtr + ((displayWidth * displayHeight) >> 2);
-
-    displayHeight >>= 1;
-    displayWidth >>= 1;
-    width >>= 1;
-    for (i = 0; i < displayHeight; i++)
-    {
-        oscl_memcpy(dstPtr, orgPtr, displayWidth);
-        oscl_memcpy(dstPtr2, orgPtr2, displayWidth);
-        dstPtr += width;
-        dstPtr2 += width;
-        orgPtr += displayWidth;
-        orgPtr2 += displayWidth;
-    }
-#endif
 
     video->concealFrame = video->prevVop->yChan;
     video->vop_coding_type = I_VOP;
@@ -1701,7 +1649,6 @@ Bool PVDecSetEnhReference(VideoDecControls *decCtrl, uint8 *refYUV, uint32 times
 
     dstPtr = prevEnhcVop->yChan;
     orgPtr = refYUV;
-#if 1
     oscl_memcpy(dstPtr, orgPtr, size);
     dstPtr = prevEnhcVop->uChan;
     dstPtr2 = prevEnhcVop->vChan;
@@ -1709,37 +1656,6 @@ Bool PVDecSetEnhReference(VideoDecControls *decCtrl, uint8 *refYUV, uint32 times
     orgPtr2 = orgPtr + (size >> 2);
     oscl_memcpy(dstPtr, orgPtr, (size >> 2));
     oscl_memcpy(dstPtr2, orgPtr2, (size >> 2));
-#else
-    width = video->width;
-    height = video->height;
-    displayWidth = video->displayWidth;
-    displayHeight = video->displayHeight;
-
-    for (i = 0; i < displayHeight; i++)
-    {
-        oscl_memcpy(dstPtr, orgPtr, displayWidth);
-        dstPtr += width;
-        orgPtr += displayWidth;
-    }
-
-    dstPtr = prevEnhcVop->uChan;
-    dstPtr2 = prevEnhcVop->vChan;
-    orgPtr = refYUV + (displayWidth * displayHeight);
-    orgPtr2 = orgPtr + ((displayWidth * displayHeight) >> 2);
-
-    displayHeight >>= 1;
-    displayWidth >>= 1;
-    width >>= 1;
-    for (i = 0; i < displayHeight; i++)
-    {
-        oscl_memcpy(dstPtr, orgPtr, displayWidth);
-        oscl_memcpy(dstPtr2, orgPtr2, displayWidth);
-        dstPtr += width;
-        dstPtr2 += width;
-        orgPtr += displayWidth;
-        orgPtr2 += displayWidth;
-    }
-#endif
     video->concealFrame = video->prevEnhcVop->yChan;
     video->vop_coding_type = I_VOP;
     decCtrl->outputFrame = video->prevEnhcVop->yChan;

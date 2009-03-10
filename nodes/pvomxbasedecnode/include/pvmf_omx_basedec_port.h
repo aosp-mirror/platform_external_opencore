@@ -89,7 +89,10 @@ class PVMFOMXDecPort : public PvmfPortBaseImpl
                 aPtr = NULL;
         }
 
-        OSCL_IMPORT_REF bool pvmiSetPortFormatSpecificInfoSync(OsclRefCounterMemFrag& aMemFrag);
+        OSCL_IMPORT_REF bool pvmiSetPortFormatSpecificInfoSync(OsclRefCounterMemFrag& aMemFrag, PvmiKeyType KvpKey);
+
+        OSCL_IMPORT_REF bool pvmiGetBufferAllocatorSpecificInfoSync(PvmiKeyType aIdentifier, PvmiKvp*& aParameters, int& aNumParamElements);
+        OSCL_EXPORT_REF bool releaseParametersSync(PvmiKvp*& aParameters, int& aNumParamElements);
 
         OSCL_IMPORT_REF PVMFStatus Connect(PVMFPortInterface* aPort);
         OSCL_IMPORT_REF void setParametersSync(PvmiMIOSession aSession,

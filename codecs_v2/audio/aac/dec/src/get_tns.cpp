@@ -372,7 +372,6 @@ void get_tns(
 
         tns_bands = tns_max_bands_tbl_long_wndw[pMC_Info->sampling_rate_idx];
 
-#if 1
         /*
          *  Definition from 14496-3:1999 doc. Our first encoder follows this rule,
          *  later encoders don't
@@ -386,22 +385,6 @@ void get_tns(
         {
             max_order = 12;
         }
-#else
-        /*
-         *  This code was recently added to conform with the Errata on the Amd 1. 14496-3:2001
-         *  However, file created by old encoders, used the previous definition of
-         *  TNS_MAX_ORDER on the first 14496-3 doc. To be compatible with the previous
-         *  version we are going to keep the old defintions
-         */
-        if (pMC_Info->audioObjectType == MP4AUDIO_AAC_LC)
-        {
-            max_order = 12;
-        }
-        else            /* else LTP */
-        {
-            max_order = 20;
-        }
-#endif
     }
     else
     {

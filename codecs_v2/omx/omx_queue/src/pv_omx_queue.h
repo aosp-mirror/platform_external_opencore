@@ -29,11 +29,11 @@
 #endif
 
 #ifndef OMX_Types_h
-#include "omx_types.h"
+#include "OMX_Types.h"
 #endif
 
 #ifndef OMX_Core_h
-#include "omx_core.h"
+#include "OMX_Core.h"
 #endif
 
 /* Queue Depth i.e maximum number of elements */

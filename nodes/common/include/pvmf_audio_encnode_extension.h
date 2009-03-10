@@ -43,14 +43,23 @@
 
 typedef enum
 {
-    GSM_AMR_4_75 = 0,
+    GSM_AMR_4_75 = 0, // AMR NB bitrates i.e. modes start here
     GSM_AMR_5_15,
     GSM_AMR_5_90,
     GSM_AMR_6_70,
     GSM_AMR_7_40,
     GSM_AMR_7_95,
     GSM_AMR_10_2,
-    GSM_AMR_12_2,
+    GSM_AMR_12_2,  // AMR NB bitrates end
+    GSM_AMR_6_60, // AMR WB bitrates start here
+    GSM_AMR_8_85,
+    GSM_AMR_12_65,
+    GSM_AMR_14_25,
+    GSM_AMR_15_85,
+    GSM_AMR_18_25,
+    GSM_AMR_19_85,
+    GSM_AMR_23_05,
+    GSM_AMR_23_85, // AMR WB bitrates end here
     GSM_AMR_DTX,
     GSM_AMR_N_MODES      /* number of (SPC) modes */
 } PVMF_GSMAMR_Rate;

@@ -82,11 +82,11 @@
 #endif
 
 #ifndef OMX_Core_h
-#include "omx_core.h"
+#include "OMX_Core.h"
 #endif
 
 #ifndef OMX_Component_h
-#include "omx_component.h"
+#include "OMX_Component.h"
 #endif
 
 #ifndef PVMF_OMX_BASEDEC_CALLBACKS_H_INCLUDED
@@ -104,6 +104,10 @@
 #ifndef PVMF_MEDIA_CLOCK_H_INCLUDED
 #include "pvmf_media_clock.h"
 #endif
+#endif
+
+#ifndef PVMF_FIXEDSIZE_BUFFER_ALLOC_H_INCLUDED
+#include "pvmf_fixedsize_buffer_alloc.h"
 #endif
 
 #define MAX_NAL_PER_FRAME 100
@@ -163,12 +167,12 @@ const unsigned char NAL_START_CODE[4] = {0, 0, 0, 1};
 //						2) Deallocates the pvci buffer wrapper and the rest of accompanying structures
 //					  Deallocator is created as part of the wrapper, and travels with the buffer wrapper
 
-class PVOMXBufferSharedPtrWrapperCombinedCleanupDA : public OsclDestructDealloc
+class PVOMXDecBufferSharedPtrWrapperCombinedCleanupDA : public OsclDestructDealloc
 {
     public:
-        PVOMXBufferSharedPtrWrapperCombinedCleanupDA(Oscl_DefAlloc* allocator, void *pMempoolData) :
+        PVOMXDecBufferSharedPtrWrapperCombinedCleanupDA(Oscl_DefAlloc* allocator, void *pMempoolData) :
                 buf_alloc(allocator), ptr_to_data_to_dealloc(pMempoolData) {};
-        virtual ~PVOMXBufferSharedPtrWrapperCombinedCleanupDA() {};
+        virtual ~PVOMXDecBufferSharedPtrWrapperCombinedCleanupDA() {};
 
         virtual void destruct_and_dealloc(OsclAny* ptr)
         {
@@ -794,6 +798,9 @@ class PVMFOMXBaseDecNode
         OsclAny **in_ctrl_struct_ptr ;
         OsclAny **in_buff_hdr_ptr ;
 
+        PVInterface* ipExternalOutputBufferAllocatorInterface;
+        PVMFFixedSizeBufferAlloc* ipFixedSizeBufferAlloc;
+        bool iCompactFSISettingSucceeded;
 
 };
 

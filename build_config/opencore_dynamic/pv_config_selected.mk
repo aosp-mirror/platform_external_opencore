@@ -1,7 +1,8 @@
 #
 # Automatically generated, don't edit
 #
-# At: Wed, 18 Feb 2009 00:59:11 +0000
+# At: Thu, 26 Feb 2009 19:56:21 +0000
+# Linux version 2.6.22-16-generic (buildd@rothera) (gcc version 4.1.3 20070929 (prerelease) (Ubuntu 4.1.2-16ubuntu2)) #1 SMP Mon Nov 24 18:28:27 GMT 2008
 
 #
 # PV Code Base Configuration System
@@ -28,6 +29,7 @@ rtsp_support=y
 asf_streaming_support=n
 
 download_support=y
+fasttrack_download_support=n
 mp4local_support=y
 asflocal_support=n
 janus_support=n
@@ -205,14 +207,20 @@ pvavcencnode_lib=n
 #
 pvprotocolenginenode_segments_lib=m
 pvprotocolenginenode_lib=n
+pvprotocolenginenode_pdl_plugin_lib=n
+pvprotocolenginenode_ps_plugin_lib=n
+pvprotocolenginenode_ftdl_plugin_lib=n
+pvprotocolenginenode_wmhttpstreaming_plugin_lib=n
+pvprotocolenginenode_shoutcast_plugin_lib=n
 
 #
-# Menu for configuring ProtocolEngine Features
+# Menu for configuring protocol engine node plugin registry
 #
-ps_support=y
-pdl_support=y
-ftdl_support=n
-http_support=n
+BUILD_PROGRESSIVE_DOWNLOAD_PLUGIN=y
+BUILD_PROGRESSIVE_STREAMING_PLUGIN=y
+BUILD_FASTTRACK_DOWNLOAD_PLUGIN=n
+BUILD_WMHTTPSTREAMING_PLUGIN=n
+BUILD_SHOUTCAST_PLUGIN=n
 
 
 pvfileoutputnode_lib=m
@@ -429,6 +437,8 @@ pvframemetadatautility_lib=m
 # Menu for configuring Extern_libs
 #
 pvmtp_engine_lib=n
+pvmtpip_engine_lib=n
+pviptransport_lib=n
 pvsqlite_lib=n
 pvwmdrm_lib=n
 wmdrm_config=n

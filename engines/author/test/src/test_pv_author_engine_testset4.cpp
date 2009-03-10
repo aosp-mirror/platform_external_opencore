@@ -384,16 +384,6 @@ bool pvauthor_async_compressed_test_errorhandling::ConfigMp43gpComposer()
     {
         clipConfig->SetAuthoringMode(PVMP4FFCN_3GPP_PROGRESSIVE_DOWNLOAD_MODE);
     }
-#ifndef _IMOTION_SPECIFIC_UT_DISABLE
-    else if (iTestCaseNum == KIMotionAuthoringModeTest)
-    {
-        clipConfig->SetAuthoringMode(PVMP4FFCN_IMOTION_PSEUDO_STREAMING_MODE);
-    }
-    else if (iTestCaseNum == KIMotionDownloadModeTest)
-    {
-        clipConfig->SetAuthoringMode(PVMP4FFCN_IMOTION_DOWNLOAD_MODE);
-    }
-#endif
 
 
     return true;

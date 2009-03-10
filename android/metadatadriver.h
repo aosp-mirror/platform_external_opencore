@@ -34,7 +34,7 @@
 #include "oscl_utf8conv.h"
 #include "oscl_scheduler_ao.h"
 #include "cczoomrotation16.h"  // for color converter
-#include "omx_core.h"
+#include "OMX_Core.h"
 #include "pv_omxcore.h"
 
 #define BEST_THUMBNAIL_MODE 1

@@ -29,52 +29,6 @@ typedef int (*FunctionType_SPS)(void *, uint, uint);
 typedef int (*FunctionType_Malloc)(void *, int32, int);
 typedef void(*FunctionType_Free)(void *, int);
 
-#if 0
-typedef enum
-{
-    AVC_NALTYPE_SLICE = 1,	/* non-IDR non-data partition */
-    AVC_NALTYPE_DPA = 2,	/* data partition A */
-    AVC_NALTYPE_DPB = 3,	/* data partition B */
-    AVC_NALTYPE_DPC = 4,	/* data partition C */
-    AVC_NALTYPE_IDR = 5,	/* IDR NAL */
-    AVC_NALTYPE_SEI = 6,	/* supplemental enhancement info */
-    AVC_NALTYPE_SPS = 7,	/* sequence parameter set */
-    AVC_NALTYPE_PPS = 8,	/* picture parameter set */
-    AVC_NALTYPE_AUD = 9,	/* access unit delimiter */
-    AVC_NALTYPE_EOSEQ = 10,	/* end of sequence */
-    AVC_NALTYPE_EOSTREAM = 11, /* end of stream */
-    AVC_NALTYPE_FILL = 12	/* filler data */
-} AVCNalUnitType;
-
-
-typedef enum
-{
-    /**
-    The followings are fail with details. Their values are negative.
-    */
-    AVCDEC_NO_DATA = -4,
-    AVCDEC_PACKET_LOSS = -3,
-    /**
-    Fail information
-    */
-    AVCDEC_NO_BUFFER = -2, /* no output picture buffer available */
-    AVCDEC_MEMORY_FAIL = -1, /* memory allocation failed */
-    AVCDEC_FAIL = 0,
-    /**
-    Generic success value
-    */
-    AVCDEC_SUCCESS = 1,
-    AVCDEC_PICTURE_OUTPUT_READY = 2,
-    AVCDEC_PICTURE_READY = 3,
-
-    /**
-    The followings are success with warnings. Their values are positive integers.
-    */
-    AVCDEC_NO_NEXT_SC = 4,
-    AVCDEC_REDUNDANT_FRAME = 5,
-    AVCDEC_CONCEALED_FRAME = 6	/* detect and conceal the error */
-} AVCDec_Status;
-#endif
 
 // PVAVCDecoderInterface pure virtual interface class
 class PVAVCDecoderInterface

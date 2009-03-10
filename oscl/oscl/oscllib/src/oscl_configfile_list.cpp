@@ -82,25 +82,12 @@ OSCL_EXPORT_REF OsclLibStatus OsclConfigFileList::Populate(const OSCL_String& aC
 #endif
     Oscl_FileFind aCfgFind;
     OsclLibStatus status = OsclLibSuccess;
-
-    char* strbuf = (char*)_oscl_malloc(OSCL_IO_FILENAME_MAXLEN * sizeof(char));
+    char* strbuf = (char*)OSCL_MALLOC(OSCL_IO_FILENAME_MAXLEN * sizeof(char));
     if (NULL == strbuf)
-    {
         return OsclLibOutOfMemory;
-    }
-
-    bool adddelimiter = false;
-
-    if (aConfigFileDir.get_size()
-            && oscl_strncmp((aConfigFileDir.get_str() + (aConfigFileDir.get_size() - 1)/*length of path delimiter is 1*/),
-                            OSCL_FILE_CHAR_PATH_DELIMITER, 1) != 0)
-    {
-        adddelimiter = true;
-    }
-
     if (NULL == aCfgFind.FindFirst(aConfigFileDir.get_str(), CONFIG_FILE_EXTENSION, strbuf, OSCL_IO_FILENAME_MAXLEN))
     {
-        _oscl_free(strbuf);
+        OSCL_FREE(strbuf);
         strbuf = NULL;
         if (Oscl_FileFind::E_NO_MATCH == aCfgFind.GetLastError())
         {
@@ -114,38 +101,15 @@ OSCL_EXPORT_REF OsclLibStatus OsclConfigFileList::Populate(const OSCL_String& aC
     }
     else
     {
-        OSCL_HeapString<OsclMemAllocator> file(strbuf);
-        OSCL_HeapString<OsclMemAllocator> cfg;
-        //On some OS we get entire path & filename from FindFirst, on others we just get filename.
-        //Accommodate both until result is standardized.
-        bool isfullpath = (oscl_strstr(file.get_cstr(), OSCL_FILE_CHAR_PATH_DELIMITER) != NULL);
-        if (!isfullpath)
-        {
-            cfg += aConfigFileDir;
-            if (adddelimiter)
-            {
-                cfg += OSCL_FILE_CHAR_PATH_DELIMITER;
-            }
-        }
-        cfg += strbuf;
-        iCfgList.push_front(cfg.get_str());
+        //oscl_file_find return file with pathname.
+        iCfgList.push_front(strbuf);
 #if OSCL_LIBRARY_PERF_LOGGING
         iCfgFileNum++;
 #endif
         // found first config file, continue until Oscl_FileFind::E_NO_MATCH
         while (aCfgFind.FindNext(strbuf, OSCL_IO_FILENAME_MAXLEN) && Oscl_FileFind::E_NO_MATCH != aCfgFind.GetLastError())
         {
-            cfg = "";
-            if (!isfullpath)
-            {
-                cfg += aConfigFileDir;
-                if (adddelimiter)
-                {
-                    cfg += OSCL_FILE_CHAR_PATH_DELIMITER;
-                }
-            }
-            cfg += strbuf;
-            iCfgList.push_back(cfg.get_str());
+            iCfgList.push_back(strbuf);
 #if OSCL_LIBRARY_PERF_LOGGING
             iCfgFileNum++;
 #endif
@@ -161,7 +125,7 @@ OSCL_EXPORT_REF OsclLibStatus OsclConfigFileList::Populate(const OSCL_String& aC
                         (0, "                                   Number of config files found = %d", iCfgFileNum));
 #endif
     }
-    _oscl_free(strbuf);
+    OSCL_FREE(strbuf);
     // error if there's none config file found and loaded in the vector,
     if (iCfgList.size() <= 0)
     {

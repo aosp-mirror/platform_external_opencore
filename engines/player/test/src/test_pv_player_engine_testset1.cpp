@@ -9819,14 +9819,8 @@ void pvplayer_async_test_setplayrangevidframenumplay::Run()
             start.iMode = PVPPBPOS_MODE_NOW;
             start.iPosValue.samplenum_value = 100;
             end.iIndeterminate = false;
-#if 1
             end.iPosUnit = PVPPBPOSUNIT_MILLISEC;
             end.iPosValue.millisec_value = 20000;
-#else
-            // Wait until the track selection and datapath creation are moved up to AddDataSink()
-            end.iPosUnit = PVPPBPOSUNIT_SAMPLENUMBER;
-            end.iPosValue.videoframenum_value = 200;
-#endif
             OSCL_TRY(error, iCurrentCmdId = iPlayer->SetPlaybackRange(start, end, false, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
         }
@@ -16284,7 +16278,7 @@ void pvplayer_async_test_setplaybackafterprepare::Run()
             sinkfilename += inputfilename;
             sinkfilename += _STRLIT_WCHAR("_text.dat");
 
-            iMIOFileOutText = new PVRefFileOutput((oscl_wchar*) & sinkfilename, MEDIATYPE_TEXT);
+            iMIOFileOutText = iMioFactory->CreateTextOutput((OsclAny*) & sinkfilename, MEDIATYPE_TEXT);
             iIONodeText = PVMediaOutputNodeFactory::CreateMediaOutputNode(iMIOFileOutText);
             iDataSinkText = new PVPlayerDataSinkPVMFNode;
             ((PVPlayerDataSinkPVMFNode*)iDataSinkText)->SetDataSinkNode(iIONodeText);
@@ -17478,7 +17472,7 @@ void pvplayer_async_test_multipauseseekresume::HandleInformationalEvent(const PV
 //
 #include "pvmf_local_data_source.h"
 #include "oscl_scheduler.h"
-#include "omx_core.h"
+#include "OMX_Core.h"
 #include "oscl_mem_audit.h"
 
 //test observer function for the 2nd instance.
@@ -18227,7 +18221,7 @@ void pvplayer_async_test_multiple_instance::PrintMetadata()
 //
 #include "pvmf_local_data_source.h"
 #include "oscl_scheduler.h"
-#include "omx_core.h"
+#include "OMX_Core.h"
 #include "oscl_mem_audit.h"
 
 

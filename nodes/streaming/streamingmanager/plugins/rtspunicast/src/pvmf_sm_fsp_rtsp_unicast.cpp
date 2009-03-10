@@ -2281,13 +2281,6 @@ PVMFStatus PVMFSMRTSPUnicastNode::getParametersSync(PvmiMIOSession aSession, Pvm
             return PVMFErrNoMemory;
         }
 
-#if 0
-        // Return the requested info
-        oscl_free(aParameters);
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "PVMFSMRTSPUnicastNode::getParametersSync() Memory allocation for key string failed"));
-        return PVMFErrNoMemory;
-#endif
         PVMFStatus retval = GetConfigParameter(aParameters, aNumParamElements, i, reqattr);
         if (retval != PVMFSuccess)
         {
@@ -3497,7 +3490,21 @@ PVMFStatus PVMFSMRTSPUnicastNode::GetMediaPresentationInfo(PVMFMediaPresentation
     SDPInfo* sdpInfo = iSdpInfo.GetRep();
 
     /* Get SDP Session Info */
-    sessionDescription* sessionInfo = sdpInfo->getSessionInfo();
+    sessionDescription* sessionInfo  = NULL;
+    if (sdpInfo)
+    {
+        sessionInfo = sdpInfo->getSessionInfo();
+        if (!sessionInfo)
+        {
+            return PVMFFailure;
+        }
+    }
+    else
+    {
+        return PVMFFailure;
+    }
+
+
 
     RtspRangeType *sessionRange = OSCL_CONST_CAST(RtspRangeType*, (sessionInfo->getRange()));
 

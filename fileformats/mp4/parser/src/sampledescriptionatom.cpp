@@ -515,7 +515,7 @@ SampleDescriptionAtom::getDecoderSpecificInfo(uint32 index)
         }
     }
 
-    if (_o3GPPAMR)
+    if ((_o3GPPAMR) || (_o3GPPWBAMR))
     {
         if (_pAMRSampleEntryAtom != NULL)
         {

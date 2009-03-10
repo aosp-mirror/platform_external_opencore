@@ -249,13 +249,11 @@ PVMp4FFComposerNode::~PVMp4FFComposerNode()
     while (!iCmdQueue.empty())
     {
         CommandComplete(iCmdQueue, iCmdQueue[0], PVMFFailure);
-        iCmdQueue.Erase(&iCmdQueue.front());
     }
 
     while (!iCurrentCmd.empty())
     {
         CommandComplete(iCurrentCmd, iCurrentCmd[0], PVMFFailure);
-        iCmdQueue.Erase(&iCurrentCmd.front());
     }
     iNodeEndOfDataReached = false;
 

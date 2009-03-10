@@ -1581,6 +1581,15 @@ OSCL_EXPORT_REF bool CAACFileParser::InitAACFile(OSCL_wString& aClip,  bool aIni
     iAACFile.SetCPM(aCPMAccess);
     iAACFile.SetFileHandle(aHandle);
 
+    //For aac overwritte pvfile default settings in order to prevent
+    //audio artifacts when playing files from MMC
+    //use native cache (if supported by the platform) size 32KB.
+    PVFileCacheParams cacheParams;
+    cacheParams.iCacheSize = 32768; //32K
+    cacheParams.iNativeAccessMode = 1;
+
+    iAACFile.SetFileCacheParams(cacheParams);
+
     // Open the file (aClip)
     if (iAACFile.Open(aClip.get_cstr(), (Oscl_File::MODE_READ | Oscl_File::MODE_BINARY), *iFileSession) != 0)
     {

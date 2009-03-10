@@ -16,11 +16,12 @@
  * -------------------------------------------------------------------
  */
 
-Portions of the PacketVideo supplied code contain contributions which may be covered by the following copyright statements:
+Portions of the PacketVideo supplied code contain contributions which may be
+covered by the following copyright statements:
 
 
 /*     -------------------------------------------------------------------       *
- *                    MPEG-4 Simple Profile Video Decoder           *
+ *                    MPEG-4 Simple Profile Video Decoder
  *     -------------------------------------------------------------------       *
  *
  * This software module was originally developed and/or edited by
@@ -29,7 +30,7 @@ Portions of the PacketVideo supplied code contain contributions which may be cov
  *   Robert Danielsen (Telenor / ACTS-MoMuSyS)
  *   Luis Ducla-Soares (IST / ACTS-MoMuSys).
  *   Cor Quist (KPN / ACTS-MoMuSys).
- *  Minhua Zhou (HHI / ACTS-MoMuSys).
+ *   Minhua Zhou (HHI / ACTS-MoMuSys).
  *
  * in the course of development of the MPEG-4 Video (ISO/IEC 14496-2) standard.
  * This software module is an implementation of a part of one or more MPEG-4
@@ -205,11 +206,6 @@ The "Frontier Artistic License" may be found at
  http://www.spinwardstars.com/frontier/fal.html
 
 
-
-
-
-
-
 /*---------------------------------------------------------------------------*/
 
 /*
@@ -246,8 +242,7 @@ The "Frontier Artistic License" may be found at
 */ 
 
 
-
-----------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 Portions of this file are derived from the following 3GPP standard:
  
     3GPP TS 26.073
@@ -257,10 +252,10 @@ Portions of this file are derived from the following 3GPP standard:
 (C) 2004, 3GPP Organizational Partners (ARIB, ATIS, CCSA, ETSI, TTA, TTC)
 Permission to distribute, modify and use this file under the standard license
 terms listed above has been obtained from the copyright holder.
------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 
 
-----------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 Portions of this file are derived from the following 3GPP standard:
  
     3GPP TS 26.173
@@ -270,5 +265,5 @@ Portions of this file are derived from the following 3GPP standard:
 (C) 2007, 3GPP Organizational Partners (ARIB, ATIS, CCSA, ETSI, TTA, TTC)
 Permission to distribute, modify and use this file under the standard license
 terms listed above has been obtained from the copyright holder.
------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 

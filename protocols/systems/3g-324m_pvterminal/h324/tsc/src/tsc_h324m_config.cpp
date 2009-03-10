@@ -948,30 +948,6 @@ void H324MConfig::IncomingVendorId(TPVH245Vendor* vendor,
 void H324MConfig::UserInputReceived(CPVUserInput* aUI)
 {
     OSCL_UNUSED_ARG(aUI);
-#if 0
-    int error;
-    TPV2WayEventInfo* aEvent = NULL;
-    switch (aUI)
-    {
-        case EAlphanumeric:
-        case EDtmf:
-            OSCL_TRY(error, aEvent = GetEventInfoL());
-            OSCL_FIRST_CATCH_ANY(error,
-                                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                                 (0, "H324MConfig::UserInputReceived unable to notify app!\n"));
-                                 return EPVT_Failed);
-
-            aEvent->type = PVT_INDICATION_USER_INPUT;
-            (CPVUserInput *)&aEvent->localBuffer[0] = aUI;
-            aEvent->localBufferSize = 4;
-
-            Dispatch(aEvent);
-            break;
-
-        default:
-            break;
-    }
-#endif
 }
 
 void H324MConfig::UserInputCapability(int formats)
@@ -1844,6 +1820,7 @@ void H324MConfigProxied::HandleNotification(TPVProxyMsgId aId, OsclAny *aMsg)
             iPendingCmds.erase(cmdResp->GetCmdId());
             PVH324MessageUtils::DestroyMessage(cmdMsg);
         }
+        OSCL_DELETE((PVMFAsyncEvent*)event);
     }
     else if (event->IsA() == PVMFInfoEvent)
     {

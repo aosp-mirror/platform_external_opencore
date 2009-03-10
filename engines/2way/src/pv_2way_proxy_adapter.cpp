@@ -46,6 +46,10 @@ void PVCmnAsyncEventMsg::Set(const PVAsyncInformationalEvent& aEvent, PVEventTyp
     iEventType = aType;
     iEventData = aPtr;
     iEventExtInterface = aEvent.GetEventExtensionInterface();
+    if (iEventExtInterface)
+    {
+        iEventExtInterface->addRef();
+    }
     if (aBuffer)
     {
         if (aBufferSize > PV_COMMON_ASYNC_EVENT_LOCAL_BUF_SIZE)
@@ -221,68 +225,6 @@ OSCL_EXPORT_REF void CPV2WayProxyAdapter::CleanupNotification(CPVCmnInterfaceObs
 {
     OSCL_UNUSED_ARG(aLogger);
     OSCL_UNUSED_ARG(obsMsg);
-#if 0
-    if (obsMsg)
-    {
-        switch (obsMsg->GetResponseType())
-        {
-            case PVT_COMMAND_INIT:
-            case PVT_COMMAND_GET_SDK_INFO:
-            case PVT_COMMAND_GET_SDK_MODULE_INFO:
-            case PVT_COMMAND_GET_PV2WAY_STATE:
-            case PVT_COMMAND_RESET:
-            case PVT_COMMAND_PAUSE:
-            case PVT_COMMAND_RESUME:
-            case PVT_COMMAND_SET_LOG_APPENDER:
-            case PVT_COMMAND_REMOVE_LOG_APPENDER:
-            case PVT_COMMAND_SET_LOG_LEVEL:
-            case PVT_COMMAND_GET_LOG_LEVEL:
-            case PVT_COMMAND_QUERY_INTERFACE:
-            case PVT_COMMAND_CANCEL_ALL_COMMANDS:
-            case PVT_COMMAND_CONNECT:
-            case PVT_COMMAND_DISCONNECT:
-            case PVT_COMMAND_ADD_DATA_SOURCE:
-            case PVT_COMMAND_REMOVE_DATA_SOURCE:
-            case PVT_COMMAND_ADD_DATA_SINK:
-            case PVT_COMMAND_REMOVE_DATA_SINK:
-            case PVT_COMMAND_QUERY_UUID:
-            {
-                CPVCmnCmdResp *resp = (CPVCmnCmdResp*)obsMsg;
-
-                //Get the command message that prompted this
-                //response.  The pointer is in the context data.
-                CPVCmnInterfaceCmdMessage *cmd = (CPVCmnInterfaceCmdMessage*)resp->GetContext();
-
-                if (cmd)
-                {
-                    //discard command message.
-                    OSCL_DELETE(cmd);
-                }
-
-                FreeCmdMsg((CPVCmnCmdRespMsg *) obsMsg);
-            }
-            break;
-
-            case PVT_INDICATION_PAUSE_TRACK:
-            case PVT_INDICATION_RESUME_TRACK:
-            case PVT_INDICATION_USER_INPUT:
-            case PVT_INDICATION_USER_INPUT_CAPABILITY:
-            case PVT_INDICATION_INCOMING_TRACK:
-            case PVT_INDICATION_DISCONNECT:
-            case PVT_INDICATION_CLOSE_TRACK:
-            case PVT_INDICATION_INTERNAL_ERROR:
-            {
-                FreeEventMsg((CPVCmnAsyncEventMsg *) obsMsg);
-            }
-            break;
-
-            default:
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "CPV2WayProxyAdapter::CleanupNotification unknown response (%d)", obsMsg->GetResponseType()));
-                break;
-        }
-
-    }
-#endif
 }
 
 OSCL_EXPORT_REF void CPV2WayProxyAdapter::ProcessMessage(CPVCmnInterfaceCmdMessage *aMsg, PVLogger *aLogger)

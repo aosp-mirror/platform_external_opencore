@@ -336,9 +336,7 @@ typedef struct tagSeqParamSet
 //	uint vcl_hrd_parameters_present_flag;
 //	AVCHRDParams *nal_hrd_parameters;
 //	AVCHRDParams *vcl_hrd_parameters;
-#if 1 /* not supported for now */
     AVCVUIParams vui_parameters;                  /* AVCVUIParam */
-#endif
 } AVCSeqParamSet;
 
 /**

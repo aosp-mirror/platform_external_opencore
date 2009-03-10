@@ -663,87 +663,6 @@ PV_STATUS GetMBData(VideoDecData *video)
         }
 
 
-#if 0  // new optimization
-#ifdef PV_ANNEX_IJKT_SUPPORT
-        for (comp = 0; comp < 4; comp++)
-        {
-            (*DC)[comp] = mid_gray;
-            if (CBP & (1 << (5 - comp)))
-            {
-                ncoeffs[comp] = VlcDequantH263InterBlock(video, comp, mblock->bitmapcol[comp], &mblock->bitmaprow[comp]);
-                if (VLC_ERROR_DETECTED(ncoeffs[comp])) return PV_FAIL;
-
-#ifdef PV_POSTPROC_ON
-                /* for inter just test for ringing */
-                if (video->postFilterType != PV_NO_POST_PROC)
-                    *pp_mod[comp] = (uint8)((ncoeffs[comp] > 3) ? 4 : 0);
-#endif
-            }
-            else
-            {
-                /* no IDCT for all zeros blocks  03/28/2002 */
-                /*				BlockIDCT();				*/
-#ifdef PV_POSTPROC_ON
-                if (video->postFilterType != PV_NO_POST_PROC)
-                    *pp_mod[comp] = 0;
-#endif
-            }
-        }
-
-        video->QPMB[mbnum] = video->QP_CHR;		/* ANNEX_T */
-        for (comp = 4; comp < 6; comp++)
-        {
-            (*DC)[comp] = mid_gray;
-            if (CBP & (1 << (5 - comp)))
-            {
-                ncoeffs[comp] = VlcDequantH263InterBlock(video, comp, mblock->bitmapcol[comp], &mblock->bitmaprow[comp]);
-                if (VLC_ERROR_DETECTED(ncoeffs[comp])) return PV_FAIL;
-
-#ifdef PV_POSTPROC_ON
-                /* for inter just test for ringing */
-                if (video->postFilterType != PV_NO_POST_PROC)
-                    *pp_mod[comp] = (uint8)((ncoeffs[comp] > 3) ? 4 : 0);
-#endif
-            }
-            else
-            {
-                /* no IDCT for all zeros blocks  03/28/2002 */
-                /*				BlockIDCT();				*/
-#ifdef PV_POSTPROC_ON
-                if (video->postFilterType != PV_NO_POST_PROC)
-                    *pp_mod[comp] = 0;
-#endif
-            }
-        }
-        video->QPMB[mbnum] = QP;  /* restore the QP values  ANNEX_T*/
-#else
-        for (comp = 0; comp < 6; comp++)
-        {
-            (*DC)[comp] = mid_gray;
-            if (CBP & (1 << (5 - comp)))
-            {
-                ncoeffs[comp] = VlcDequantH263InterBlock(video, comp, mblock->bitmapcol[comp], &mblock->bitmaprow[comp]);
-                if (VLC_ERROR_DETECTED(ncoeffs[comp])) return PV_FAIL;
-
-
-#ifdef PV_POSTPROC_ON
-                /* for inter just test for ringing */
-                if (video->postFilterType != PV_NO_POST_PROC)
-                    *pp_mod[comp] = (uint8)((ncoeffs > 3) ? 4 : 0);
-#endif
-            }
-            else
-            {
-                /* no IDCT for all zeros blocks  03/28/2002 */
-                /*				BlockIDCT();				*/
-#ifdef PV_POSTPROC_ON
-                if (video->postFilterType != PV_NO_POST_PROC)
-                    *pp_mod[comp] = 0;
-#endif
-            }
-        }
-#endif  // PV_ANNEX_IJKT_SUPPORT
-#else   // new optimization
         MBMotionComp(video, CBP);
         c_comp  = video->currVop->yChan + offset;
 
@@ -909,14 +828,8 @@ PV_STATUS GetMBData(VideoDecData *video)
 
 
 
-#endif // new optimization
 
 
-#if 0
-        MBMotionComp(video, CBP); /*  08/04/05 */
-        /* perform IDCT for the entire macroblock, not just one block */
-        MBlockIDCTAdd(video, ncoeffs); /*  08/03/2005 */
-#endif
 
     }
 

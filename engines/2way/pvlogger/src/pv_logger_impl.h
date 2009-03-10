@@ -102,6 +102,10 @@ class PVLoggerConfigFile
         {
             iFileServer.Connect();
             iAppenderType = 0;
+            for (int i = 0; i < MAX_BUFFER_SIZE; i++)
+            {
+                ibuffer[i] = '0';
+            }
         }
 
         ~PVLoggerConfigFile();

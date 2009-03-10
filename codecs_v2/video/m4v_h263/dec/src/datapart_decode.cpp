@@ -710,30 +710,6 @@ PV_STATUS GetMBData_DataPart(VideoDecData *video)
     {
 
 
-#if 0  // new optimization
-        for (comp = 0; comp < 6; comp++)
-        {
-            (*DC)[comp] = mid_gray;
-
-            if (CBP & (1 << (5 - comp)))
-            {
-                ncoeffs[comp] = VlcDequantH263InterBlock(video, comp,
-                                mblock->bitmapcol[comp], &mblock->bitmaprow[comp]);
-                if (VLC_ERROR_DETECTED(ncoeffs[comp]))
-                    return PV_FAIL;
-            }
-            else
-            {
-                ncoeffs[comp] = 0;
-            }
-
-            /*  @todo Deblocking Semaphore for INTRA block, for inter just test for ringing  */
-#ifdef PV_POSTPROC_ON
-            if (video->postFilterType != PV_NO_POST_PROC)
-                *pp_mod[comp] = (uint8)((ncoeffs[comp] > 3) ? 4 : 0);
-#endif
-        }
-#else   // new optimization
 
 
         MBMotionComp(video, CBP);
@@ -811,15 +787,9 @@ PV_STATUS GetMBData_DataPart(VideoDecData *video)
 #endif
 
 
-#endif   // new optimization
 
 
         /* Motion compensation and put it to video->mblock->pred_block */
-#if 0
-        MBMotionComp(video, CBP);
-        /* perform IDCT for the entire macroblock, not just one block */
-//		MBlockIDCTAdd(video, ncoeffs); /*  08/03/2005 */
-#endif
     }
     return PV_SUCCESS;
 }

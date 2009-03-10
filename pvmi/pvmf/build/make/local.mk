@@ -33,6 +33,7 @@ HDRS :=  pv_interface.h \
          pvmf_event_handling.h \
          pvmf_node_utils.h \
          pvmi_config_and_capability_observer.h \
+         pvmf_fixedsize_buffer_alloc.h \
          pvmf_format_type.h \
          pvmf_pool_buffer_allocator.h \
          pvmf_media_msg_format_ids.h \

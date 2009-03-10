@@ -818,16 +818,6 @@ MM_AllocNode* MM_Audit_Imp::addAllocNode(void *pMemBlockIn, uint32 sizeIn,
         mpCurrAllocNode = mpCurrAllocNode->pNext;
     }
 
-#if 0
-    //for debug & analysis-- print all allocations as they occur...
-    fprintf(stderr, "Alloc Info:\n");
-    fprintf(stderr, "  allocNum %d\n", pAllocInfo->allocNum);
-    fprintf(stderr, "  fileName %s\n", pAllocInfo->pFileName);
-    fprintf(stderr, "  lineNo %d\n", pAllocInfo->lineNo);
-    fprintf(stderr, "  size %d\n", pAllocInfo->size);
-    fprintf(stderr, "  pMemBlock 0x%x\n", pAllocInfo->pMemBlock);
-    fprintf(stderr, "  tag %s\n", pAllocInfo->pStatsNode->tag);
-#endif
 
     /* increment the list counter */
     ++mNumAllocNodes;
@@ -1151,7 +1141,6 @@ OsclMemStatsNode* MM_Audit_Imp::createStatsNode(const char *  tagIn)
     OSCL_ASSERT((mTagTree.find(const_cast<char* const&>(tagIn)) == mTagTree.end()) ||
                 (mTagTree.find(const_cast<char* const&>(tagIn)))->value.get() == 0);
 
-#if 1
     statsNode = new OsclMemStatsNode;
     if (statsNode == NULL) return NULL;
 
@@ -1219,73 +1208,6 @@ OsclMemStatsNode* MM_Audit_Imp::createStatsNode(const char *  tagIn)
     }
 
     return statsNode;
-#else
-    OsclMemStatsNodeAutoPtr pCurrentStatsAutoPtr;
-    OsclMemStatsNode* pStatsNodePtr = NULL;
-    uint32 len = oscl_strlen(tagIn) + 1;
-
-    do
-    {
-        if ((iter = mTagTree.find(currentTag.get())) == mTagTree.end())
-        {
-            // printf("Didn't find tag %s.  Creating a new stats node\n", currentTag.get());
-            OsclMemStatsNodeAutoPtr statsNodeAutoPtr(new OsclMemStatsNode);
-            if (statsNodeAutoPtr.get() == NULL)
-            {
-                return NULL;
-            }
-
-            // statsNodeAutoPtr will now "own" the tag string. It will
-            // be responsible for freeing it.
-            statsNodeAutoPtr->tag = currentTag.release();
-
-            if ((statsNodeAutoPtr->pMMStats = new MM_Stats_t) == NULL)
-            {
-                return NULL;
-            }
-
-            if ((statsNodeAutoPtr->pMMFIParam = new MM_FailInsertParam) == NULL)
-            {
-                return NULL;
-            }
-
-            // reassign ownership of the StatsNode to the map class
-            mTagTree[statsNodeAutoPtr->tag] = statsNodeAutoPtr;
-
-            // account for the overhead memory
-            mm_audit_stats_overhead += sizeof(MM_Stats_t) +
-                                       sizeof(MM_FailInsertParam) + sizeof(OsclMemStatsNode) +
-                                       oscl_strlen(currentTag.get()) + 1;
-
-            pStatsNodePtr = statsNodeAutoPtr.get();
-
-            // update the current ptr
-            pCurrentStatsAutoPtr = statsNodeAutoPtr;
-
-            // Get the parent tag length
-            len = retrieveParentTagLength(tagIn, len - 1);
-
-            if (len > 0)
-            {
-                currentTag.allocate(len);
-                if (! currentTag.get())
-                {
-                    return NULL;
-                }
-                strncpy(currentTag.get(), tagIn, len);
-                *(currentTag.get() + (len - 1)) = '\0';
-            }
-
-        }
-        else
-        {
-            break;
-        }
-    }
-    while (len > 0);
-
-    return pStatsNodePtr;
-#endif
 }
 
 

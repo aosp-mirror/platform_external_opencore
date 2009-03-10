@@ -26,15 +26,6 @@ This file contains declarations of internal functions for AVC decoder library.
 #include "avcdec_int.h"
 
 /*----------- avcdec_api.c -------------*/
-#if 0
-/**
-This function allocates memory and keeps track of how many allocated so far.
-\param "avcHandle"	"Handle to the AVC decoder library object."
-\param "size"		"Size of memory to allocate in bytes."
-\return "Pointer to allocated space."
-*/
-uint8* avc_malloc(AVCHandle *avcHandle, uint size);
-#endif
 /**
 This function takes out the emulation prevention bytes from the input to creat RBSP.
 The result is written over the input bitstream.

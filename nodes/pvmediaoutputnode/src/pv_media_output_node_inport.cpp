@@ -2035,54 +2035,103 @@ PVMFStatus PVMediaOutputNodePort::ConfigMIO(PvmiKvp* aParameters, PvmiKvp* &aRet
     {
         case PVMF_MEDIA_UNCOMPRESSED_AUDIO:
         {
-            channelSampleInfo* pcm16Info = (channelSampleInfo*)data;
-            PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::ConfigMIO - SamplingRate=%d, NumChannels=%d",
-                                     pcm16Info->samplingRate, pcm16Info->desiredChannels));
             //Send pcm16 info.
-            //ignore any failures since not all MIO may suppport the parameters.
-            //Note: send the parameters individually since some MIO may not know
-            //how to process arrays.
-            status = SetMIOParameterUint32((char*)MOUT_AUDIO_SAMPLING_RATE_KEY,
-                                           pcm16Info->samplingRate);
-            if (status == PVMFSuccess)
+
+            if (pv_mime_strcmp(aParameters->key, PVMF_FORMAT_SPECIFIC_INFO_KEY) == 0)
             {
-                SetMIOParameterUint32((char*)MOUT_AUDIO_NUM_CHANNELS_KEY,
-                                      pcm16Info->desiredChannels);
+                //ignore any failures since not all MIO may suppport the parameters.
+                //Note: send the parameters individually since some MIO may not know
+                //how to process arrays.
+                channelSampleInfo* pcm16Info = (channelSampleInfo*)data;
+                PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::ConfigMIO - SamplingRate=%d, NumChannels=%d",
+                                         pcm16Info->samplingRate, pcm16Info->desiredChannels));
+
+                status = SetMIOParameterUint32((char*)MOUT_AUDIO_SAMPLING_RATE_KEY,
+                                               pcm16Info->samplingRate);
+                if (status == PVMFSuccess)
+                {
+                    SetMIOParameterUint32((char*)MOUT_AUDIO_NUM_CHANNELS_KEY,
+                                          pcm16Info->desiredChannels);
+                }
+            }
+            else if (pv_mime_strcmp(aParameters->key, PVMF_FORMAT_SPECIFIC_INFO_KEY_PCM) == 0)
+            {
+                // this is
+                //Do not send individual parameters to MIO component, send them all at once
+
+                int32 err;
+                OSCL_TRY(err, iNode->iMIOConfig->setParametersSync(iNode->iMIOSession, aParameters, 1, aRetParameters););
+
+                if (err != OsclErrNone || aRetParameters)
+                {
+                    PVMF_MOPORT_LOGERROR((0, "PVMediaOutputNodePort::ConfigMIO setParametersSync of PVMF_FORMAT_SPECIFIC_INFO_KEY_AUDIO failed "));
+                    PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::ConfigMIO setParametersSync of PVMF_FORMAT_SPECIFIC_INFO_KEY_AUDIO failed "));
+
+                    iNode->ReportErrorEvent(PVMFErrPortProcessing, NULL, PVMFMoutNodeErr_MediaIOSetParameterSync);
+                    return PVMFFailure;
+                }
+
+                status = PVMFSuccess;
             }
         }
         break;
 
         case PVMF_MEDIA_UNCOMPRESSED_VIDEO:
         {
-            PVMFYuvFormatSpecificInfo0* yuvInfo = (PVMFYuvFormatSpecificInfo0*)data;
-            PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::ConfigMIO - Width=%d, Height=%d, DispWidth=%d, DispHeight=%d",
-                                     yuvInfo->width, yuvInfo->height, yuvInfo->display_width, yuvInfo->display_height));
             //Send yuv info.
-            //ignore any failures since not all MIO may suppport the parameters.
-            //Note: send the parameters individually since some MIO may not know
-            //how to process arrays.
-            status = SetMIOParameterUint32((char*)MOUT_VIDEO_WIDTH_KEY,
-                                           yuvInfo->width);
-            if (status == PVMFSuccess)
+            if (pv_mime_strcmp(aParameters->key, PVMF_FORMAT_SPECIFIC_INFO_KEY) == 0)
             {
-                status = SetMIOParameterUint32((char*)MOUT_VIDEO_HEIGHT_KEY,
-                                               yuvInfo->height);
+                PVMFYuvFormatSpecificInfo0* yuvInfo = (PVMFYuvFormatSpecificInfo0*)data;
+                PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::ConfigMIO - Width=%d, Height=%d, DispWidth=%d, DispHeight=%d",
+                                         yuvInfo->width, yuvInfo->height, yuvInfo->display_width, yuvInfo->display_height));
+                //Send yuv info.
+                //ignore any failures since not all MIO may suppport the parameters.
+                //Note: send the parameters individually since some MIO may not know
+                //how to process arrays.
+                status = SetMIOParameterUint32((char*)MOUT_VIDEO_WIDTH_KEY,
+                                               yuvInfo->width);
+                if (status == PVMFSuccess)
+                {
+                    status = SetMIOParameterUint32((char*)MOUT_VIDEO_HEIGHT_KEY,
+                                                   yuvInfo->height);
+                }
+                if (status == PVMFSuccess)
+                {
+                    status = SetMIOParameterUint32((char*)MOUT_VIDEO_DISPLAY_WIDTH_KEY,
+                                                   yuvInfo->display_width);
+                }
+                if (status == PVMFSuccess)
+                {
+                    status = SetMIOParameterUint32((char*)MOUT_VIDEO_DISPLAY_HEIGHT_KEY,
+                                                   yuvInfo->display_height);
+                }
+                if (status == PVMFSuccess)
+                {
+                    // ignore status here
+                    SetMIOParameterFormat((char*)MOUT_VIDEO_SUBFORMAT_KEY,
+                                          yuvInfo->video_format);
+                }
+
+
             }
-            if (status == PVMFSuccess)
+            else if (pv_mime_strcmp(aParameters->key, PVMF_FORMAT_SPECIFIC_INFO_KEY_YUV) == 0)
             {
-                status = SetMIOParameterUint32((char*)MOUT_VIDEO_DISPLAY_WIDTH_KEY,
-                                               yuvInfo->display_width);
-            }
-            if (status == PVMFSuccess)
-            {
-                status = SetMIOParameterUint32((char*)MOUT_VIDEO_DISPLAY_HEIGHT_KEY,
-                                               yuvInfo->display_height);
-            }
-            if (status == PVMFSuccess)
-            {
-                // ignore status here
-                SetMIOParameterFormat((char*)MOUT_VIDEO_SUBFORMAT_KEY,
-                                      yuvInfo->video_format);
+
+                //Do not send individual parameters to MIO component, send them all at once
+
+                int32 err;
+                OSCL_TRY(err, iNode->iMIOConfig->setParametersSync(iNode->iMIOSession, aParameters, 1, aRetParameters););
+
+                if (err != OsclErrNone || aRetParameters)
+                {
+                    PVMF_MOPORT_LOGERROR((0, "PVMediaOutputNodePort::ConfigMIO setParametersSync of PVMF_FORMAT_SPECIFIC_INFO_KEY_VIDEO failed "));
+                    PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::ConfigMIO setParametersSync of PVMF_FORMAT_SPECIFIC_INFO_KEY_VIDEO failed "));
+
+                    iNode->ReportErrorEvent(PVMFErrPortProcessing, NULL, PVMFMoutNodeErr_MediaIOSetParameterSync);
+                    return PVMFFailure;
+                }
+
+                status = PVMFSuccess;
             }
         }
         break;
@@ -2302,6 +2351,7 @@ OSCL_EXPORT_REF void PVMediaOutputNodePort::setParametersSync(PvmiMIOSession aSe
         int num_elements,
         PvmiKvp * &aRet_kvp)
 {
+    PVMFStatus status = PVMFSuccess;
     OSCL_UNUSED_ARG(aSession);
     for (int32 i = 0; i < num_elements; i++)
     {
@@ -2310,6 +2360,22 @@ OSCL_EXPORT_REF void PVMediaOutputNodePort::setParametersSync(PvmiMIOSession aSe
             PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::setParametersSync - FSI - Fmt=%s",
                                      iSinkFormatString.get_str()));
             ConfigMIO(&aParameters[i], aRet_kvp);
+        }
+        else if (pv_mime_strcmp(aParameters[i].key, PVMF_FORMAT_SPECIFIC_INFO_KEY_YUV) == 0)
+        {
+            PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::setParametersSync - FSI - Fmt=%s",
+                                     iSinkFormatString.get_str()));
+            status = ConfigMIO(&aParameters[i], aRet_kvp);
+            if (status != PVMFSuccess)
+                OSCL_LEAVE(PVMFFailure);
+        }
+        else if (pv_mime_strcmp(aParameters[i].key, PVMF_FORMAT_SPECIFIC_INFO_KEY_PCM) == 0)
+        {
+            PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::setParametersSync - FSI - Fmt=%s",
+                                     iSinkFormatString.get_str()));
+            status = ConfigMIO(&aParameters[i], aRet_kvp);
+            if (status != PVMFSuccess)
+                OSCL_LEAVE(PVMFFailure);
         }
         else if ((pv_mime_strcmp(aParameters[i].key, MOUT_AUDIO_SAMPLING_RATE_KEY) == 0) ||
                  (pv_mime_strcmp(aParameters[i].key, MOUT_AUDIO_NUM_CHANNELS_KEY) == 0) ||

@@ -120,6 +120,10 @@ class PV2WayTrackInfoImpl : public PV2WayTrackInfoInterface
         virtual void removeRef()
         {
             --iRefCount;
+            if (iRefCount == 0)
+            {
+                OSCL_DELETE(this);
+            }
         }
 
         /*

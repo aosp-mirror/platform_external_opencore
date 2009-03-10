@@ -142,29 +142,6 @@ bool CPV2WayPreviewDatapath::SetCmd(TPV2WayCmdInfo *aCmdInfo)
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "CPV2WayPreviewDatapath::SetCmd cmd type %d\n", aCmdInfo->type));
         switch (aCmdInfo->type)
         {
-#if 0
-            case PVT_COMMAND_ADD_PREVIEW_SINK:
-                if (iState == EOpening) return false;
-                iCmdInfo = aCmdInfo;
-                Open();
-                break;
-
-            case PVT_COMMAND_REMOVE_PREVIEW_SINK:
-                if (!CloseDatapath(aCmdInfo)) return false;
-                break;
-
-            case PVT_COMMAND_PAUSE_PREVIEW_SINK:
-                if (iState == EPausing) return false;
-                iCmdInfo = aCmdInfo;
-                Pause();
-                break;
-
-            case PVT_COMMAND_RESUME_PREVIEW_SINK:
-                if (iState == EUnpausing) return false;
-                iCmdInfo = aCmdInfo;
-                Resume();
-                break;
-#endif
             default:
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "CPV2WayPreviewDatapath::SetCmd invalid command\n"));
                 break;

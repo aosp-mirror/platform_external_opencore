@@ -563,6 +563,9 @@ class PVMFMP4FFParserNode : public OsclTimerObject,
 
         PVMFCommandId CancelAllCommands(PVMFSessionId aSessionId, const OsclAny* aContextData = NULL);
         PVMFCommandId CancelCommand(PVMFSessionId aSessionId, PVMFCommandId aCmdId, const OsclAny* aContextData = NULL);
+        PVMFStatus QueryInterfaceSync(PVMFSessionId aSession,
+                                      const PVUuid& aUuid,
+                                      PVInterface*& aInterfacePtr);
 
         /* cap config interface */
         virtual void setObserver(PvmiConfigAndCapabilityCmdObserver* aObserver)

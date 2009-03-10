@@ -2259,7 +2259,6 @@ void ChromaHorizontalMC2_SIMD(uint8 *pRef, int srcPitch, int dx, int dy,
     }
     return;
 }
-#if 1
 void ChromaVerticalMC2_SIMD(uint8 *pRef, int srcPitch, int dx, int dy,
                             uint8 *pOut, int predPitch, int blkwidth, int blkheight)
 {
@@ -2284,34 +2283,6 @@ void ChromaVerticalMC2_SIMD(uint8 *pRef, int srcPitch, int dx, int dy,
     }
     return;
 }
-#else
-void ChromaVerticalMC2_SIMD(uint8 *pRef, int srcPitch, int dx, int dy,
-                            uint8 *pOut, int predPitch, int blkwidth, int blkheight)
-{
-    int32 r0, r1, result;
-    int i, temp0, temp1;
-
-    temp0 = pRef[0];
-    temp1 = pRef[1];
-    pRef += srcPitch;
-    for (i = 0; i < blkheight; i++)
-    {
-        temp2 = pRef[0];
-        temp3 = pRef[1];
-
-        result0 = ((temp0 << 3) + dy * (temp2 - temp0) + 4);
-        result0 >>= 3;
-        result1 = ((temp1 << 3) + dy * (temp3 - temp1) + 4);
-        result1 >>= 3;
-        *(int32 *)pOut = result0 | (result1 << 8);
-        temp0 = temp2;
-        temp1 = temp3;
-        pRef += srcPitch;
-        pOut += predPitch;
-    }
-    return;
-}
-#endif
 
 void ChromaFullMC_SIMD(uint8 *pRef, int srcPitch, int dx, int dy,
                        uint8 *pOut, int predPitch, int blkwidth, int blkheight)

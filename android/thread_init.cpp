@@ -25,7 +25,7 @@
 #include "oscl_mem.h"
 #include "oscl_error.h"
 
-#include "omx_core.h"
+#include "OMX_Core.h"
 
 #if (PVLOGGER_INST_LEVEL > 0)
 #include "android_logger_config.h"

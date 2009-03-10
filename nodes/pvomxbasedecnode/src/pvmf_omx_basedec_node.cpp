@@ -25,7 +25,7 @@
 #include "pvmf_media_msg_format_ids.h"
 #include "pvmi_kvp_util.h"
 
-#include "omx_core.h"
+#include "OMX_Core.h"
 #include "pvmf_omx_basedec_callbacks.h"     //used for thin AO in Decoder's callbacks
 #include "pv_omxcore.h"
 #include "pv_omx_config_parser.h"
@@ -538,7 +538,8 @@ OSCL_EXPORT_REF PVMFOMXBaseDecNode::PVMFOMXBaseDecNode(int32 aPriority, const ch
         iAvgBitrateValue(0),
         iResetInProgress(false),
         iResetMsgSent(false),
-        iStopInResetMsgSent(false)
+        iStopInResetMsgSent(false),
+        iCompactFSISettingSucceeded(false)
 {
     iThreadSafeHandlerEventHandler = NULL;
     iThreadSafeHandlerEmptyBufferDone = NULL;
@@ -1506,6 +1507,7 @@ bool PVMFOMXBaseDecNode::SendOutputBufferToOMXComponent()
 
     // try to get output buffer header
     OSCL_TRY(errcode, output_buf = (OutputBufCtrlStruct *) iOutBufMemoryPool->allocate(iOutputAllocSize));
+
     if (OsclErrNone != errcode)
     {
         if (OsclErrNoResources == errcode)
@@ -1531,6 +1533,7 @@ bool PVMFOMXBaseDecNode::SendOutputBufferToOMXComponent()
         }
 
     }
+
 
     //for every allocated buffer, make sure you notify when buffer is released. Keep track of allocated buffers
     // use mempool as context to recognize which buffer (input or output) was returned
@@ -2693,11 +2696,16 @@ OSCL_EXPORT_REF bool PVMFOMXBaseDecNode::CreateOutMemPool(uint32 num_buffers)
 
     if (iOMXComponentSupportsExternalOutputBufferAlloc)
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "%s::CreateOutMemPool() Allocating output buffers of size %d as well", iName.Str(), iOMXComponentOutputBufferSize));
+        // In case of an external output buffer allocator interface, output buffer memory will be allocated
+        // outside the node and hence iOutputAllocSize need not be incremented here
 
-        //pre-negotiated output buffer size
-        iOutputAllocSize += iOMXComponentOutputBufferSize;
+        if (NULL == ipExternalOutputBufferAllocatorInterface)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "%s::CreateOutMemPool() Allocating output buffers of size %d as well", iName.Str(), iOMXComponentOutputBufferSize));
+            //pre-negotiated output buffer size
+            iOutputAllocSize += iOMXComponentOutputBufferSize;
+        }
     }
 
     // for media data wrapper
@@ -2857,6 +2865,7 @@ OSCL_EXPORT_REF bool PVMFOMXBaseDecNode::ProvideBuffersToComponent(OsclMemPoolFi
     OMX_ERRORTYPE err = OMX_ErrorNone;
     OsclAny **ctrl_struct_ptr = NULL;	// temporary array to keep the addresses of buffer ctrl structures and buffers
 
+
     ctrl_struct_ptr = (OsclAny **) oscl_malloc(aNumBuffers * sizeof(OsclAny *));
     if (ctrl_struct_ptr == NULL)
     {
@@ -2864,6 +2873,8 @@ OSCL_EXPORT_REF bool PVMFOMXBaseDecNode::ProvideBuffersToComponent(OsclMemPoolFi
                         (0, "%s::ProvideBuffersToComponent ctrl_struct_ptr == NULL", iName.Str()));
         return false;
     }
+
+
 
     // Now, go through all buffers and tell component to
     // either use a buffer, or to allocate its own buffer
@@ -2934,25 +2945,55 @@ OSCL_EXPORT_REF bool PVMFOMXBaseDecNode::ProvideBuffersToComponent(OsclMemPoolFi
             }
             else
             {
-                OutputBufCtrlStruct *temp = (OutputBufCtrlStruct *) ctrl_struct_ptr[ii];
-                // advance buffer ptr to skip the structure
-                pB += oscl_mem_aligned_size(sizeof(OutputBufCtrlStruct));
+                if (ipExternalOutputBufferAllocatorInterface)
+                {
+                    // Actual buffer memory will be allocated outside the node from
+                    // an external output buffer allocator interface
 
+                    uint8 *pB = (uint8*) ipFixedSizeBufferAlloc->allocate();
+                    if (NULL == pB)
+                    {
+                        //  error
+                        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                        (0, "%s::ProvideBuffersToComponent ->allocate() failed due to some general error", iName.Str()));
+                        ReportErrorEvent(PVMFFailure);
+                        ChangeNodeState(EPVMFNodeError);
+                        return false;
+                    }
 
-                err = OMX_UseBuffer(iOMXDecoder,	// hComponent
-                                    &(temp->pBufHdr),		// address where ptr to buffer header will be stored
-                                    aPortIndex,				// port index (for port for which buffer is provided)
-                                    ctrl_struct_ptr[ii],	// App. private data = pointer to beginning of allocated data
-                                    //				to have a context when component returns with a callback (i.e. to know
-                                    //				what to free etc.
-                                    (OMX_U32)aActualBufferSize,		// buffer size
-                                    pB);						// buffer data ptr
+                    OutputBufCtrlStruct *temp = (OutputBufCtrlStruct *)ctrl_struct_ptr[ii];
 
-                out_ctrl_struct_ptr[ii] = ctrl_struct_ptr[ii];
-                out_buff_hdr_ptr[ii] = temp->pBufHdr;
+                    err = OMX_UseBuffer(iOMXDecoder,	// hComponent
+                                        &(temp->pBufHdr),		// address where ptr to buffer header will be stored
+                                        aPortIndex,				// port index (for port for which buffer is provided)
+                                        ctrl_struct_ptr[ii],	// App. private data = pointer to beginning of allocated data
+                                        //				to have a context when component returns with a callback (i.e. to know
+                                        //				what to free etc.
+                                        (OMX_U32)aActualBufferSize,		// buffer size
+                                        pB);						// buffer data ptr
 
+                    out_ctrl_struct_ptr[ii] = ctrl_struct_ptr[ii];
+                    out_buff_hdr_ptr[ii] = temp->pBufHdr;
 
+                }
+                else
+                {
+                    OutputBufCtrlStruct *temp = (OutputBufCtrlStruct *) ctrl_struct_ptr[ii];
+                    // advance buffer ptr to skip the structure
+                    pB += oscl_mem_aligned_size(sizeof(OutputBufCtrlStruct));
 
+                    err = OMX_UseBuffer(iOMXDecoder,	// hComponent
+                                        &(temp->pBufHdr),		// address where ptr to buffer header will be stored
+                                        aPortIndex,				// port index (for port for which buffer is provided)
+                                        ctrl_struct_ptr[ii],	// App. private data = pointer to beginning of allocated data
+                                        //				to have a context when component returns with a callback (i.e. to know
+                                        //				what to free etc.
+                                        (OMX_U32)aActualBufferSize,		// buffer size
+                                        pB);						// buffer data ptr
+
+                    out_ctrl_struct_ptr[ii] = ctrl_struct_ptr[ii];
+                    out_buff_hdr_ptr[ii] = temp->pBufHdr;
+                }
 
             }
 
@@ -3012,6 +3053,7 @@ OSCL_EXPORT_REF bool PVMFOMXBaseDecNode::ProvideBuffersToComponent(OsclMemPoolFi
     }
 
     oscl_free(ctrl_struct_ptr);
+
     // set the flags
     if (aIsThisInputBuffer)
     {
@@ -3039,6 +3081,7 @@ bool PVMFOMXBaseDecNode::FreeBuffersFromComponent(OsclMemPoolFixedChunkAllocator
     uint32 ii = 0;
     OMX_ERRORTYPE err = OMX_ErrorNone;
     OsclAny **ctrl_struct_ptr = NULL;	// temporary array to keep the addresses of buffer ctrl structures and buffers
+
 
     ctrl_struct_ptr = (OsclAny **) oscl_malloc(aNumBuffers * sizeof(OsclAny *));
     if (ctrl_struct_ptr == NULL)
@@ -3090,12 +3133,27 @@ bool PVMFOMXBaseDecNode::FreeBuffersFromComponent(OsclMemPoolFixedChunkAllocator
         }
         else
         {
-            iNumOutstandingOutputBuffers++;
-            OutputBufCtrlStruct *temp = (OutputBufCtrlStruct *) ctrl_struct_ptr[ii];
-            err = OMX_FreeBuffer(iOMXDecoder,
-                                 aPortIndex,
-                                 temp->pBufHdr);
+            if (ipExternalOutputBufferAllocatorInterface)
+            {
+                //Deallocate the output buffer memory that was allocated outside the node
+                //using an external output buffer allocator interface
 
+                iNumOutstandingOutputBuffers++;
+                OutputBufCtrlStruct *temp = (OutputBufCtrlStruct *) ctrl_struct_ptr[ii];
+                ipFixedSizeBufferAlloc->deallocate((OsclAny*) temp->pBufHdr->pBuffer);
+
+                err = OMX_FreeBuffer(iOMXDecoder,
+                                     aPortIndex,
+                                     temp->pBufHdr);
+            }
+            else
+            {
+                iNumOutstandingOutputBuffers++;
+                OutputBufCtrlStruct *temp = (OutputBufCtrlStruct *) ctrl_struct_ptr[ii];
+                err = OMX_FreeBuffer(iOMXDecoder,
+                                     aPortIndex,
+                                     temp->pBufHdr);
+            }
         }
 
         if (err != OMX_ErrorNone)
@@ -3135,6 +3193,12 @@ bool PVMFOMXBaseDecNode::FreeBuffersFromComponent(OsclMemPoolFixedChunkAllocator
         out_ctrl_struct_ptr = NULL;
         out_buff_hdr_ptr = NULL;
         iOutputBuffersFreed = true;
+
+        if (ipExternalOutputBufferAllocatorInterface)
+        {
+            ipExternalOutputBufferAllocatorInterface->removeRef();
+            ipExternalOutputBufferAllocatorInterface = NULL;
+        }
     }
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "%s::FreeBuffersFromComponent() done", iName.Str()));
     return true;
@@ -3484,7 +3548,7 @@ OsclSharedPtr<PVMFMediaDataImpl> PVMFOMXBaseDecNode::WrapOutputBuffer(uint8 *pDa
 {
     // wrap output buffer into a mediadataimpl
     uint32 aligned_class_size = oscl_mem_aligned_size(sizeof(PVMFSimpleMediaBuffer));
-    uint32 aligned_cleanup_size = oscl_mem_aligned_size(sizeof(PVOMXBufferSharedPtrWrapperCombinedCleanupDA));
+    uint32 aligned_cleanup_size = oscl_mem_aligned_size(sizeof(PVOMXDecBufferSharedPtrWrapperCombinedCleanupDA));
     uint32 aligned_refcnt_size = oscl_mem_aligned_size(sizeof(OsclRefCounterDA));
     uint8 *my_ptr = (uint8*) oscl_malloc(aligned_refcnt_size + aligned_cleanup_size + aligned_class_size);
 
@@ -3494,8 +3558,8 @@ OsclSharedPtr<PVMFMediaDataImpl> PVMFOMXBaseDecNode::WrapOutputBuffer(uint8 *pDa
         return null_buff;
     }
     // create a deallocator and pass the buffer_allocator to it as well as pointer to data that needs to be returned to the mempool
-    PVOMXBufferSharedPtrWrapperCombinedCleanupDA *cleanup_ptr =
-        OSCL_PLACEMENT_NEW(my_ptr + aligned_refcnt_size, PVOMXBufferSharedPtrWrapperCombinedCleanupDA(iOutBufMemoryPool, pContext));
+    PVOMXDecBufferSharedPtrWrapperCombinedCleanupDA *cleanup_ptr =
+        OSCL_PLACEMENT_NEW(my_ptr + aligned_refcnt_size, PVOMXDecBufferSharedPtrWrapperCombinedCleanupDA(iOutBufMemoryPool, pContext));
 
     //ModifiedPvciBufferCombinedCleanup* cleanup_ptr = OSCL_PLACEMENT_NEW(my_ptr + aligned_refcnt_size,ModifiedPvciBufferCombinedCleanup(aOutput.GetRefCounter()) );
 
@@ -4715,6 +4779,23 @@ void PVMFOMXBaseDecNode::DoReset(PVMFOMXBaseDecNodeCommand& aCmd)
 
                 if ((sState == OMX_StateExecuting) || (sState == OMX_StatePause))
                 {
+                    //this command is asynchronous.  move the command from
+                    //the input command queue to the current command, where
+                    //it will remain until it is completed.
+                    if (!iResetInProgress)
+                    {
+                        int32 err;
+                        OSCL_TRY(err, iCurrentCommand.StoreL(aCmd););
+                        if (err != OsclErrNone)
+                        {
+                            CommandComplete(iInputCommands, aCmd, PVMFErrNoMemory);
+                            return;
+                        }
+                        iInputCommands.Erase(&aCmd);
+
+                        iResetInProgress = true;
+                    }
+
                     /* Change state to OMX_StateIdle from OMX_StateExecuting or OMX_StatePause. */
 
                     if (!iStopInResetMsgSent)

@@ -166,7 +166,7 @@ int32 ColorConvert16::SetMode(int32 nMode)	//nMode : 0 Off, 1 On
         mPtrYUV2RGB	=	&ColorConvert16::get_frame16;
         _mState		=	0;
         _mDisp.src_pitch = _mSrc_pitch  ;
-        _mDisp.dst_pitch = _mSrc_width	;
+        _mDisp.dst_pitch = _mDst_pitch  ;
         _mDisp.src_width = _mSrc_width	;
         _mDisp.src_height = _mSrc_height ;
         _mDisp.dst_width = _mSrc_width	;

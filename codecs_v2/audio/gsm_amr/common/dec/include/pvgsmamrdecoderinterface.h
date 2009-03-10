@@ -153,14 +153,14 @@ typedef struct tPVAmrDecoderExternal
 
     /*
      * OUTPUT:
-     *  GSM AMR WB mode
+     *  GSM AMR NB and WB mode (i.e. bit-rate )
      */
     int16     mode;
     int16     mode_old;
 
     /*
      * OUTPUT:
-     *  GSM AMR WB frame type
+     *  GSM AMR NB and WB frame type ( speech_good, speech_bad, sid, etc.)
      */
     int16     frame_type;
 

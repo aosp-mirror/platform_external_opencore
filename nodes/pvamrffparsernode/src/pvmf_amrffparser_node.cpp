@@ -37,6 +37,7 @@
 #include "oscl_exclusive_ptr.h"
 #include "pvmf_source_context_data.h"
 
+static const char PVAMR_ALL_METADATA_KEY[] = "all";
 static const char PVAMRMETADATA_DURATION_KEY[] = "duration";
 static const char PVAMRMETADATA_NUMTRACKS_KEY[] = "num-tracks";
 static const char PVAMRMETADATA_TRACKINFO_BITRATE_KEY[] = "track-info/bit-rate";
@@ -62,6 +63,10 @@ PVMFAMRFFParserNode::PVMFAMRFFParserNode(int32 aPriority) :
     iLogger                    = NULL;
     iDataPathLogger            = NULL;
     iClockLogger               = NULL;
+    iDownloadComplete		   = false;
+
+    iFileSizeLastConvertedToTime = 0;
+    iLastNPTCalcInConvertSizeToTime = 0;
 
     iExtensionRefCount         = 0;
     iUseCPMPluginRegistry      = false;
@@ -578,16 +583,31 @@ PVMFStatus PVMFAMRFFParserNode::DoGetMetadataValues(PVMFAMRFFNodeCommand& aCmd)
         return PVMFErrInvalidState;
     }
 
+    PVMFMetadataList* keylistptr_in = NULL;
     PVMFMetadataList* keylistptr = NULL;
     Oscl_Vector<PvmiKvp, OsclMemAllocator>* valuelistptr = NULL;
     uint32 starting_index;
     int32 max_entries;
 
-    aCmd.PVMFAMRFFNodeCommand::Parse(keylistptr, valuelistptr, starting_index, max_entries);
+    aCmd.PVMFAMRFFNodeCommand::Parse(keylistptr_in, valuelistptr, starting_index, max_entries);
 
-    if (keylistptr == NULL || valuelistptr == NULL)
+    if (keylistptr_in == NULL || valuelistptr == NULL)
     {
         return PVMFErrArgument;
+    }
+
+    keylistptr = keylistptr_in;
+    //If numkeys is one, just check to see if the request
+    //is for ALL metadata
+    if (keylistptr_in->size() == 1)
+    {
+        if (oscl_strncmp((*keylistptr)[0].get_cstr(),
+                         PVAMR_ALL_METADATA_KEY,
+                         oscl_strlen(PVAMR_ALL_METADATA_KEY)) == 0)
+        {
+            //use the complete metadata key list
+            keylistptr = &iAvailableMetadataKeys;
+        }
     }
 
     uint32 numkeys = keylistptr->size();
@@ -815,7 +835,7 @@ PVMFStatus PVMFAMRFFParserNode::DoGetMetadataValues(PVMFAMRFFNodeCommand& aCmd)
     {
         iCPMGetMetaDataValuesCmdId =
             iCPMMetaDataExtensionInterface->GetNodeMetadataValues(iCPMSessionID,
-                    (*keylistptr),
+                    (*keylistptr_in),
                     (*valuelistptr),
                     0);
         return PVMFPending;
@@ -1443,12 +1463,14 @@ PVMFStatus PVMFAMRFFParserNode::ParseAMRFile()
     }
 
     PVMFDataStreamFactory* dsFactory = iCPMContentAccessFactory;
+    bool calcDuration = true;
     if ((dsFactory == NULL) && (iDataStreamFactory != NULL))
     {
         dsFactory = iDataStreamFactory;
+        calcDuration = false;
     }
 
-    if (iAMRParser->InitAMRFile(iSourceURL, true, &iFileServer, dsFactory, iFileHandle, iCountToClaculateRDATimeInterval))
+    if (iAMRParser->InitAMRFile(iSourceURL, calcDuration, &iFileServer, dsFactory, iFileHandle, iCountToClaculateRDATimeInterval))
     {
         iAvailableMetadataKeys.clear();
         if (iAMRParser->RetrieveFileInfo(iAMRFileInfo))
@@ -2140,6 +2162,20 @@ void PVMFAMRFFParserNode::addRef()
 void PVMFAMRFFParserNode::removeRef()
 {
     --iExtensionRefCount;
+}
+
+PVMFStatus PVMFAMRFFParserNode::QueryInterfaceSync(PVMFSessionId aSession,
+        const PVUuid& aUuid,
+        PVInterface*& aInterfacePtr)
+{
+    OSCL_UNUSED_ARG(aSession);
+    aInterfacePtr = NULL;
+    if (queryInterface(aUuid, aInterfacePtr))
+    {
+        aInterfacePtr->addRef();
+        return PVMFSuccess;
+    }
+    return PVMFErrNotSupported;
 }
 
 bool PVMFAMRFFParserNode::queryInterface(const PVUuid& uuid, PVInterface*& iface)
@@ -3344,8 +3380,8 @@ void PVMFAMRFFParserNode::DataStreamCommandCompleted(const PVMFCmdResp& aRespons
 
 void PVMFAMRFFParserNode::playResumeNotification(bool aDownloadComplete)
 {
-    OSCL_UNUSED_ARG(aDownloadComplete);
     iAutoPaused = false;
+    iDownloadComplete = aDownloadComplete;
     PVAMRFFNodeTrackPortInfo* trackInfoPtr = NULL;
     if (!GetTrackInfo(iOutPort, trackInfoPtr))
     {
@@ -3357,7 +3393,7 @@ void PVMFAMRFFParserNode::playResumeNotification(bool aDownloadComplete)
         trackInfoPtr->oQueueOutgoingMessages = true;
     }
 
-    PVMF_AMRPARSERNODE_LOGERROR((0, "PVMFAMRParserNode::playResumeNotification() - Auto Resume Triggered - FileSize = %d, NPT = %d", iFileSizeLastConvertedToTime, iLastNPTCalcInConvertSizeToTime));
+    PVMF_AMRPARSERNODE_LOGERROR((0, "PVMFAMRParserNode::playResumeNotification() - Auto Resume Triggered - FileSize = %d, NPT = %d isDownloadComplete [%d]", iFileSizeLastConvertedToTime, iLastNPTCalcInConvertSizeToTime, iDownloadComplete));
     PVMF_AMRPARSERNODE_LOGDATATRAFFIC((0, "PVMFAMRParserNode::playResumeNotification() - Auto Resume Triggered - FileSize = %d, NPT = %d", iFileSizeLastConvertedToTime, iLastNPTCalcInConvertSizeToTime));
     RunIfNotReady();
 }
@@ -3454,6 +3490,7 @@ PVMFStatus PVMFAMRFFParserNode::QueueMediaSample(PVAMRFFNodeTrackPortInfo* aTrac
                     }
 
                     status = aTrackInfoPtr->iPort->QueueOutgoingMsg(msgOut);
+
                     if (status != PVMFSuccess)
                     {
                         PVMF_AMRPARSERNODE_LOGERROR((0, "PVMFAMRParserNode::QueueMediaSample: Error - QueueOutgoingMsg failed"));
@@ -3590,11 +3627,16 @@ PVMFStatus PVMFAMRFFParserNode::RetrieveMediaSample(PVAMRFFNodeTrackPortInfo* aT
         }
         mediaDataImplOut->setMarkerInfo(markerInfo);
     }
-    else if (retval == bitstreamObject::READ_ERROR)
+    else if (retval == bitstreamObject::DATA_INSUFFICIENT)
     {
         payloadSizeVec.clear();
         if (iDownloadProgressInterface != NULL)
         {
+            if (iDownloadComplete)
+            {
+                aTrackInfoPtr->oEOSReached = true;
+                return PVMFSuccess;
+            }
             iDownloadProgressInterface->requestResumeNotification(aTrackInfoPtr->iContinuousTimeStamp,
                     iDownloadComplete);
             iAutoPaused = true;
@@ -3604,8 +3646,9 @@ PVMFStatus PVMFAMRFFParserNode::RetrieveMediaSample(PVAMRFFNodeTrackPortInfo* aT
         }
         else
         {
-            PVMF_AMRPARSERNODE_LOGERROR((0, "PVMFAMRParserNode::RetrieveMediaSample() - Sample Retrieval Failed - Insufficient Data In File"));
-            return PVMFFailure;
+            // if we recieve Insufficient data for local playback from parser library that means
+            // its end of track, so change track state to send end of track.
+            aTrackInfoPtr->oEOSReached = true;
         }
     }
     else if (retval == bitstreamObject::END_OF_FILE)

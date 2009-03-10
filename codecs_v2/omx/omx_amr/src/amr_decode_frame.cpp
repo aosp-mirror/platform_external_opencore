@@ -343,7 +343,6 @@ OMX_BOOL OmxAmrDecoder::AmrDecodeFrame(OMX_S16* aOutputBuffer,
         if ((FrameLength + FrameBytesProcessed) <= (OMX_S32) *aInBufSize)
         {
             /* Set up pointer to the start of frame to be decoded */
-            iCodecExternals->frame_type = (uint32)FrameType3gpp;
             iCodecExternals->mode = (uint32)FrameType3gpp;
             iCodecExternals->pInputBuffer = (uint8*) pSpeechBits;
             iCodecExternals->pOutputBuffer = (int16*) aOutputBuffer;
@@ -394,7 +393,6 @@ OMX_BOOL OmxAmrDecoder::AmrDecodeFrame(OMX_S16* aOutputBuffer,
         if ((FrameLength + FrameBytesProcessed) <= (OMX_S32) *aInBufSize)
         {
             /* Set up pointer to the start of frame to be decoded */
-            iCodecExternals->frame_type = (uint32)FrameType3gpp;
             iCodecExternals->mode = (uint32)FrameType3gpp;
             iCodecExternals->pInputBuffer = (uint8*) pSpeechBits;
             iCodecExternals->pOutputBuffer = (int16*) aOutputBuffer;
@@ -493,7 +491,6 @@ OMX_BOOL OmxAmrDecoder::AmrDecodeFrame(OMX_S16* aOutputBuffer,
         else
         {
             /* Set up pointer to the start of frame to be decoded */
-            iCodecExternals->frame_type = (uint32)FrameType3gpp;
             iCodecExternals->mode = (uint32)FrameType3gpp;
             iCodecExternals->pInputBuffer = (uint8*) pEtsSpeechBits;
             iCodecExternals->pOutputBuffer = (int16*) aOutputBuffer;
@@ -550,7 +547,6 @@ OMX_BOOL OmxAmrDecoder::AmrDecodeSilenceFrame(OMX_S16* aOutputBuffer,
     OMX_U8 FrameType = 15; // silence frame
 
     iCodecExternals->mode = (uint32) FrameType;
-    iCodecExternals->frame_type = (uint32) FrameType;
     iCodecExternals->pInputBuffer = (uint8*) & FrameType;
     iCodecExternals->pOutputBuffer = (int16*) aOutputBuffer;
 

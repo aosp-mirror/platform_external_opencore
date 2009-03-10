@@ -22,7 +22,7 @@
 
 // get definitions of omx core methods
 #ifndef OMX_Core_h
-#include "omx_core.h"
+#include "OMX_Core.h"
 #endif
 
 #ifndef OSCL_SHARED_LIB_INTERFACE_H_INCLUDED

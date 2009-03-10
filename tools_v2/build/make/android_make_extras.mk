@@ -52,7 +52,7 @@ define output_include_list
 endef
 
 define include_staticlibs_list
-  $(if $(strip $(call remove_quotes,$1)),$(PRINTF) "$(foreach elem, $(call strip_two_levels_up,$(strip $(call remove_quotes,$1))/local.mk),include $(patsubst %,%/Android.mk,$(patsubst %,\$$(PV_TOP)%,$(strip $(elem))))\n)" >> $2,)
+  $(if $(strip $(call remove_quotes,$1)),$(PRINTF) "$(foreach elem,$(strip $(call remove_quotes,$1)),include $(patsubst %,%/Android.mk,$(patsubst %,\$$(PV_TOP)%,$(call strip_two_levels_up,$(elem)/local.mk)))\n)" >> $2,)
 endef
 
 define output_assembly_srcs

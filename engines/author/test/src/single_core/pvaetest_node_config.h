@@ -36,9 +36,13 @@
 #ifndef TEST_PV_AUTHOR_ENGINE_TYPEDEFS_H
 #include "test_pv_author_engine_typedefs.h"
 #endif
+#ifndef PV_MIME_STRING_UTILS_H_INCLUDED
+#include "pv_mime_string_utils.h"
+#endif
 
 extern const uint32 KNum20msFramesPerChunk;
 extern const uint32 KAudioBitrate;
+extern const uint32 KAudioBitrateWB;
 extern const uint32 KAACAudioBitrate;
 
 class PVAETestNodeConfig
@@ -47,50 +51,100 @@ class PVAETestNodeConfig
         static bool ConfigureAudioEncoder(PVInterface* aInterface, const PvmfMimeString& aMimeType, uint32 aAudioBitrate = 0)
         {
             if (!aInterface)
-                return true;
-
-            PVInterface* myInterface;
-
-            if (!aInterface->queryInterface(PVAudioEncExtensionUUID, myInterface))
+            {
+                // if the interface is missing, this method should not be called
+                OSCL_ASSERT(aInterface != NULL);
                 return false;
+            }
+
 
             PVAudioEncExtensionInterface* config = OSCL_STATIC_CAST(PVAudioEncExtensionInterface*, aInterface);
 
-            if (aMimeType.get_cstr() == (char*)KAMRNbEncMimeType || aMimeType.get_cstr() == (char*)KAMRWbEncMimeType)
+            if ((pv_mime_strcmp(aMimeType.get_cstr(), (char*)KAMRNbEncMimeType) == 0) || (pv_mime_strcmp(aMimeType.get_cstr(), (char*)KAMRWbEncMimeType) == 0))
             {
-                config->SetMaxNumOutputFramesPerBuffer(KNum20msFramesPerChunk);
+                if (config->SetMaxNumOutputFramesPerBuffer(KNum20msFramesPerChunk) != PVMFSuccess)
+                    return false;
+
                 uint32 audioBitrate = aAudioBitrate;
 
                 if (audioBitrate == 0)
                 {
-                    audioBitrate = KAudioBitrate;
+                    if (pv_mime_strcmp(aMimeType.get_cstr(), (char*)KAMRNbEncMimeType) == 0)
+                        audioBitrate = KAudioBitrate;
+                    else if (pv_mime_strcmp(aMimeType.get_cstr(), (char*)KAMRWbEncMimeType) == 0)
+                        audioBitrate = KAudioBitrateWB;
                 }
 
                 switch (audioBitrate)
                 {
                     case 4750:
-                        config->SetOutputBitRate(GSM_AMR_4_75);
+                        if (config->SetOutputBitRate(GSM_AMR_4_75) != PVMFSuccess)
+                            return false;
                         break;
                     case 5150:
-                        config->SetOutputBitRate(GSM_AMR_5_15);
+                        if (config->SetOutputBitRate(GSM_AMR_5_15) != PVMFSuccess)
+                            return false;
                         break;
                     case 5900:
-                        config->SetOutputBitRate(GSM_AMR_5_90);
+                        if (config->SetOutputBitRate(GSM_AMR_5_90) != PVMFSuccess)
+                            return false;
                         break;
                     case 6700:
-                        config->SetOutputBitRate(GSM_AMR_6_70);
+                        if (config->SetOutputBitRate(GSM_AMR_6_70) != PVMFSuccess)
+                            return false;
                         break;
                     case 7400:
-                        config->SetOutputBitRate(GSM_AMR_7_40);
+                        if (config->SetOutputBitRate(GSM_AMR_7_40) != PVMFSuccess)
+                            return false;
                         break;
                     case 7950:
-                        config->SetOutputBitRate(GSM_AMR_7_95);
+                        if (config->SetOutputBitRate(GSM_AMR_7_95) != PVMFSuccess)
+                            return false;
                         break;
                     case 10200:
-                        config->SetOutputBitRate(GSM_AMR_10_2);
+                        if (config->SetOutputBitRate(GSM_AMR_10_2) != PVMFSuccess)
+                            return false;
                         break;
                     case 12200:
-                        config->SetOutputBitRate(GSM_AMR_12_2);
+                        if (config->SetOutputBitRate(GSM_AMR_12_2) != PVMFSuccess)
+                            return false;
+                        break;
+
+                    case 6600: // AMR WB bitrates start here
+                        if (config->SetOutputBitRate(GSM_AMR_6_60) != PVMFSuccess)
+                            return false;
+                        break;
+                    case 8850:
+                        if (config->SetOutputBitRate(GSM_AMR_8_85) != PVMFSuccess)
+                            return false;
+                        break;
+                    case 12650:
+                        if (config->SetOutputBitRate(GSM_AMR_12_65) != PVMFSuccess)
+                            return false;
+                        break;
+                    case 14250:
+                        if (config->SetOutputBitRate(GSM_AMR_14_25) != PVMFSuccess)
+                            return false;
+                        break;
+                    case 15850:
+                        if (config->SetOutputBitRate(GSM_AMR_15_85) != PVMFSuccess)
+                            return false;
+                        break;
+                    case 18250:
+                        if (config->SetOutputBitRate(GSM_AMR_18_25) != PVMFSuccess)
+                            return false;
+                        break;
+                    case 19850:
+                        if (config->SetOutputBitRate(GSM_AMR_19_85) != PVMFSuccess)
+                            return false;
+                        break;
+                    case 23050:
+                        if (config->SetOutputBitRate(GSM_AMR_23_05) != PVMFSuccess)
+                            return false;
+                        break;
+                    case 23850:
+                        if (config->SetOutputBitRate(GSM_AMR_23_85) != PVMFSuccess)
+                            return false;
                         break;
                     default:
                         return false;
@@ -98,7 +152,8 @@ class PVAETestNodeConfig
             }
             else if (aMimeType == KAACADIFEncMimeType || aMimeType == KAACADTSEncMimeType)
             {
-                config->SetOutputBitRate(KAACAudioBitrate);
+                if (config->SetOutputBitRate(KAACAudioBitrate) != PVMFSuccess)
+                    return false;
                 //config->SetOutputNumChannel();  do not set, use the input ones
                 //config->SetOutputSamplingRate();
             }

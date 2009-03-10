@@ -1516,7 +1516,6 @@ PVMFStatus PVMediaOutputNode::DoCancelCommand(PVMediaOutputNodeCmd& aCmd)
 PVMFStatus PVMediaOutputNode::DoReleasePort(PVMediaOutputNodeCmd& aCmd)
 {
     //This node supports release port from any state
-
     PVMFPortInterface* p;
     aCmd.PVMediaOutputNodeCmdBase::Parse(p);
     //search the input port vector
@@ -1662,11 +1661,9 @@ PVMFStatus PVMediaOutputNode::SendMioRequest(PVMediaOutputNodeCmd& aCmd, EMioReq
             {
                 mediaTransfer = iInPortVector[0]->getMediaTransfer();
             }
-            if (mediaTransfer != NULL)
-            {
-                OSCL_TRY(err, iMediaIOCmdId = iMIOControl->Init(););
-            }
-            if ((err != OsclErrNone) || (mediaTransfer == NULL))
+
+            OSCL_TRY(err, iMediaIOCmdId = iMIOControl->Init(););
+            if ((err != OsclErrNone))
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
                                 (0, "PVMediaOutputNode::SendMioRequest: Error - iMIOControl->Init failed"));

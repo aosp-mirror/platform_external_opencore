@@ -5409,19 +5409,10 @@ PVMFStatus PVPlayerEngine::DoSetPlaybackRange(PVPlayerEngineCommand& aCmd)
 
     if (aCmd.GetParam(2).bool_value)
     {
-#if 1
         // Queueing of playback range is not supported yet
         iQueuedRangePresent = false;
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoSetPlaybackRange() Queued playback range is not supported yet"));
         return PVMFErrNotSupported;
-#else
-        // @TODO Validation on the queued start/stop positions
-        iQueuedRangePresent = true;
-        iQueuedStartPosition = aCmd.GetParam(0).playbackpos_value;
-        iQueuedStopPosition = aCmd.GetParam(1).playbackpos_value;
-        EngineCommandCompleted(aCmd.GetCmdId(), aCmd.GetContext(), PVMFSuccess);
-        return PVMFSuccess;
-#endif
     }
 
     // Change the end position

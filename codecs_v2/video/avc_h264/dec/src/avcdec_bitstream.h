@@ -91,9 +91,6 @@ extern "C"
     			   more data. Users should call BitstreamShowBits to determine
     			   how much they want to flush."
     */
-#if 0
-    AVCDec_Status BitstreamFlushBits(AVCDecBitstream *stream, int nBits);
-#endif
 
     /**
     This function read 1 bit from the current position and advance the pointer.

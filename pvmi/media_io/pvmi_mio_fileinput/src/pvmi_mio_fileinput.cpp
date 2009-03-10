@@ -46,6 +46,7 @@ OSCL_DLL_ENTRY_POINT_DEFAULT()
 
 #define PVMIOFILEIN_MEDIADATA_POOLNUM 8
 const uint32 AMR_FRAME_DELAY = 20; // 20ms
+#define PVMIOFILEIN_MAX_FSI_SIZE 1024
 
 // Logging macros
 #define LOG_STACK_TRACE(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, m)
@@ -54,7 +55,7 @@ const uint32 AMR_FRAME_DELAY = 20; // 20ms
 
 OSCL_EXPORT_REF PvmiMIOControl* PvmiMIOFileInputFactory::Create(const PvmiMIOFileInputSettings& aSettings)
 {
-    PvmiMIOControl *mioFilein = (PvmiMIOControl*) new PvmiMIOFileInput(aSettings);
+    PvmiMIOControl* mioFilein = (PvmiMIOControl*) new PvmiMIOFileInput(aSettings);
 
     return mioFilein;
 }
@@ -541,7 +542,7 @@ OSCL_EXPORT_REF PVMFStatus PvmiMIOFileInput::getParametersSync(PvmiMIOSession se
         status = AllocateKvp(parameters, (PvmiKeyType)OUTPUT_TIMESCALE_CUR_VALUE, num_parameter_elements);
         if (status != PVMFSuccess)
         {
-            LOG_ERR((0, "PVMFVideoEncPort::GetOutputParametersSync: Error - AllocateKvp failed. status=%d", status));
+            LOG_ERR((0, "PvmiMIOFileInput::GetOutputParametersSync: Error - AllocateKvp failed. status=%d", status));
             return status;
         }
         else
@@ -555,6 +556,33 @@ OSCL_EXPORT_REF PVMFStatus PvmiMIOFileInput::getParametersSync(PvmiMIOSession se
                 parameters[0].value.uint32_value = iSettings.iTimescale;
             }
         }
+    }
+    else if (pv_mime_strcmp(identifier, PVMF_FORMAT_SPECIFIC_INFO_KEY) == 0)
+    {
+        status = PVMFSuccess;
+        if (iFSIKvp == NULL)
+        {
+            status = RetrieveFSI();
+        }
+        if (status != PVMFSuccess)
+        {
+            return status;
+        }
+
+        num_parameter_elements = 1;
+        status = AllocateKvp(parameters, (PvmiKeyType)PVMF_FORMAT_SPECIFIC_INFO_KEY, num_parameter_elements);
+        if (status != PVMFSuccess)
+        {
+            LOG_ERR((0, "PvmiMIOFileInput::GetOutputParametersSync: Error - AllocateKvp failed. status=%d", status));
+            return status;
+        }
+        else
+        {
+            parameters[0].value.key_specific_value = iFSIKvp->value.key_specific_value;
+            parameters[0].capacity = iFSIKvp->capacity;
+            parameters[0].length = iFSIKvp->length;
+        }
+
     }
 
     return status;
@@ -695,7 +723,9 @@ PvmiMIOFileInput::PvmiMIOFileInput(const PvmiMIOFileInputSettings& aSettings)
         iLogger(NULL),
         iState(STATE_IDLE),
         iAuthoringDuration(0),
-        iStreamDuration(0)
+        iStreamDuration(0),
+        iFormatSpecificInfoSize(0),
+        iFSIKvp(NULL)
 {
 
 }
@@ -804,6 +834,7 @@ PVMFStatus PvmiMIOFileInput::DoInit()
     {
         return PVMFSuccess;
     }
+
     if (!iFsOpened)
     {
         if (iFs.Connect() != 0)
@@ -1227,6 +1258,9 @@ PVMFStatus PvmiMIOFileInput::DoInit()
         iAuthoringDuration = iStreamDuration;
     }
 
+
+    RetrieveFSI(iFormatSpecificInfoSize);
+
     iDataEventCounter = 0;
     CloseInputFile();
 
@@ -1301,6 +1335,12 @@ PVMFStatus PvmiMIOFileInput::DoPause()
 
 PVMFStatus PvmiMIOFileInput::DoReset()
 {
+    if (iFSIKvp)
+    {
+        iAlloc.deallocate(iFSIKvp->value.key_specific_value);
+        iAlloc.deallocate(iFSIKvp);
+        iFSIKvp = NULL;
+    }
     return PVMFSuccess;
 }
 
@@ -1456,7 +1496,7 @@ PVMFStatus PvmiMIOFileInput::DoRead()
             // Loop or report end of data now...
             if (iSettings.iLoopInputFile)
             {
-                iInputFile.Seek(iFileHeaderSize/*iFormatSpecificInfoSize*/, Oscl_File::SEEKSET);
+                iInputFile.Seek(iFileHeaderSize + iFormatSpecificInfoSize, Oscl_File::SEEKSET);
                 len = iInputFile.Read(data, sizeof(uint8), bytesToRead);
                 if (len != bytesToRead)
                 {
@@ -1528,8 +1568,14 @@ PVMFStatus PvmiMIOFileInput::DoRead()
         data_hdr.duration = 0;
         data_hdr.stream_id = 0;
         if (!iPeer)
+        {
+            iMediaBufferMemPool->deallocate(data);
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_NOTICE,
+                            (0, "PvmiMIOFileInput::DoRead - Peer missing"));
             return PVMFSuccess;
+        }
         OSCL_TRY(error, writeAsyncID = iPeer->writeAsync(PVMI_MEDIAXFER_FMT_TYPE_DATA, 0, data, bytesToRead, data_hdr););
+
         if (!error)
         {
             // Save the id and data pointer on iSentMediaData queue for writeComplete call
@@ -2254,4 +2300,95 @@ int32 PvmiMIOFileInput::WriteAsyncDataHdr(uint32& aWriteAsyncID, PvmiMediaTransf
     OSCL_TRY(err, aWriteAsyncID = aPeer->writeAsync(PVMI_MEDIAXFER_FMT_TYPE_NOTIFICATION, PVMI_MEDIAXFER_FMT_INDEX_END_OF_STREAM,
                                   NULL, aBytesToRead, aData_hdr););
     return err;
+}
+
+PVMFStatus PvmiMIOFileInput::RetrieveFSI(uint32 fsi_size)
+{
+    if (iSettings.iMediaFormat != PVMF_MIME_M4V)
+    {
+        return PVMFFailure;
+    }
+
+    iFormatSpecificInfoSize = 0;
+    if (fsi_size == 0)
+    {
+        fsi_size = PVMIOFILEIN_MAX_FSI_SIZE;
+    }
+
+    bool close_file_on_return = (!iFsOpened || !iFileOpened);
+
+    if (!iFsOpened)
+    {
+        if (iFs.Connect() != 0)
+            return PVMFFailure;
+        iFsOpened = true;
+    }
+
+    if (!iFileOpened)
+    {
+        int32 ret = iInputFile.Open(iSettings.iFileName.get_cstr(), Oscl_File::MODE_READ | Oscl_File::MODE_BINARY, iFs);
+        if (ret != 0)
+        {
+
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                            (0, "PvmiMIOFileInput::DoInit: Error - iInputFile.Open failed, status=%d", ret));
+            return PVMFFailure;
+        }
+        iFileOpened = true;
+    }
+
+    // Allocate memory for VOL header
+    uint8* fileData = (uint8*) iAlloc.allocate(fsi_size);
+    if (!fileData)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                        (0, "PvmiMIOFileInput::RetrieveFSI: Error - Failed to allocate memory for FSI"));
+        if (close_file_on_return)
+            CloseInputFile();
+        return PVMFErrNoMemory;
+    }
+
+    // Read to data buffer
+    if (iInputFile.Read((OsclAny*)fileData, sizeof(uint8), fsi_size) != fsi_size)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                        (0, "PvmiMIOFileInput::RetrieveFSI: Error - Failed to read from file"));
+        if (close_file_on_return)
+            CloseInputFile();
+        iAlloc.deallocate(fileData);
+        return PVMFFailure;
+    }
+
+    // Anything before the first frame is assumed to be FSI
+    iFormatSpecificInfoSize = LocateM4VFrameHeader(fileData, fsi_size);
+
+    if (iFormatSpecificInfoSize == 0)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                        (0, "PvmiMIOFileInput::RetrieveFSI: Error - Failed to locate M4V Frame Header"));
+        iAlloc.deallocate(fileData);
+        if (close_file_on_return)
+            CloseInputFile();
+        return PVMFFailure;
+    }
+
+    //allocate KVP
+    PVMFStatus status = AllocateKvp(iFSIKvp, (PvmiKeyType)PVMF_FORMAT_SPECIFIC_INFO_KEY, 1);
+    if (status != PVMFSuccess)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                        (0, "PvmiMIOFileInput::RetrieveFSI: Error - Failed to allocate KVP"));
+        if (close_file_on_return)
+            CloseInputFile();
+        iAlloc.deallocate(fileData);
+        return status;
+    }
+
+    iFSIKvp->value.key_specific_value = fileData;
+    iFSIKvp->capacity = fsi_size;
+    iFSIKvp->length = iFormatSpecificInfoSize;
+
+    if (close_file_on_return)
+        CloseInputFile();
+    return PVMFSuccess;
 }

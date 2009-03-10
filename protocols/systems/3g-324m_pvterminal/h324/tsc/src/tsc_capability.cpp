@@ -214,34 +214,6 @@ void TSC_capability::ParseTcsCapabilities(S_Capability &aCapability, Oscl_Vector
             ((CPvtMpeg4Capability*)media_capability)->iGenericCapability = pVideo->genericVideoCapability;
             aMedia_capability.push_back(media_capability);
         }
-#if 0
-        else if (format_type == PVMF_MIME_AVC)
-        {
-            CPvtAvcCapability* h264_capability = (CPvtAvcCapability*)media_capability;
-            media_capability->iBitrate = pVideo->genericVideoCapability->maxBitRate;
-            ParseH264Capability(pVideo->genericVideoCapability, *h264_capability);
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                            (0, "TSC_capability::ParseTcsCapabilities H264 Capability:"));
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                            (0, "Profile=%d,Level=%d,DCI Length=%d",
-                             h264_capability->iProfile,
-                             h264_capability->iLevel,
-                             h264_capability->iDecoderConfigLen));
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                            (0, "CustomMaxMBPS=%d,CustomMaxFS=%d,CustomMaxDPB=%d",
-                             h264_capability->iCustomMaxMBPS,
-                             h264_capability->iCustomMaxFS,
-                             h264_capability->iCustomMaxDPB));
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                            (0, "CustomMaxBRandCPB=%d,MaxStaticMBPS=%d",
-                             h264_capability->iCustomMaxBRandCPB,
-                             h264_capability->iMaxStaticMBPS));
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                            (0, "max-rcmd-nal-unit-size=%d,max-nal-unit-size=%d",
-                             h264_capability->iMaxRcmdNalUnitSize,
-                             h264_capability->iMaxNalUnitSize));
-        }
-#endif
     }
     else if (pAudio)
     {
@@ -481,26 +453,6 @@ PS_DataType TSC_capability::GetOutgoingDataType(PVCodecType_t codecType,
             genericCap->option_of_transport = false;
         }
         break;
-#if 0
-        case PV_VID_TYPE_H264:
-        {
-            VideoCodecCapabilityInfo h264_info;
-            h264_info.codec = PV_VID_TYPE_H264;
-            h264_info.dir = OUTGOING;
-            h264_info.codec_specific_info_len = csi_len;
-            h264_info.codec_specific_info = (uint8*)OSCL_DEFAULT_MALLOC(h264_info.codec_specific_info_len);
-            oscl_memcpy(h264_info.codec_specific_info, csi, csi_len);
-            pDataType->index = 2;
-            pDataType->videoData = (PS_VideoCapability) OSCL_DEFAULT_MALLOC(sizeof(S_VideoCapability));
-            oscl_memset(pDataType->videoData, 0, sizeof(S_VideoCapability));
-            pDataType->videoData->index = 5;
-            pDataType->videoData->genericVideoCapability =
-                (PS_GenericCapability) OSCL_DEFAULT_MALLOC(sizeof(S_GenericCapability));
-            oscl_memset(pDataType->videoData->genericVideoCapability, 0, sizeof(S_GenericCapability));
-            FillH264Capability(h264_info, pDataType->videoData->genericVideoCapability, TRUE);
-        }
-        break;
-#endif
         default:
             /* NULL data type */
             pDataType->index = 1;
@@ -1086,29 +1038,6 @@ TSC_capability::GetDataType(PVCodecType_t codecType,
         }
         break;
 
-#if 0
-        case PV_VID_TYPE_H264:
-        {
-            VideoCodecCapabilityInfo h264_info;
-            h264_info.codec = PV_VID_TYPE_H264;
-            h264_info.dir = OUTGOING;
-            h264_info.codec_specific_info_len = dci_len;
-            if (dci_len)
-            {
-                h264_info.codec_specific_info = (uint8*)OSCL_DEFAULT_MALLOC(MAX_CONFIG_INFO_SIZE);
-                oscl_memcpy(h264_info.codec_specific_info, dci, dci_len);
-            }
-            pDataType->index = 2;
-            pDataType->videoData = (PS_VideoCapability) OSCL_DEFAULT_MALLOC(sizeof(S_VideoCapability));
-            oscl_memset(pDataType->videoData, 0, sizeof(S_VideoCapability));
-            pDataType->videoData->index = 5;
-            pDataType->videoData->genericVideoCapability =
-                (PS_GenericCapability) OSCL_DEFAULT_MALLOC(sizeof(S_GenericCapability));
-            oscl_memset(pDataType->videoData->genericVideoCapability, 0, sizeof(S_GenericCapability));
-            FillH264Capability(h264_info, pDataType->videoData->genericVideoCapability, TRUE);
-        }
-        break;
-#endif
         default:
             /* NULL data type */
             pDataType->index = 1;

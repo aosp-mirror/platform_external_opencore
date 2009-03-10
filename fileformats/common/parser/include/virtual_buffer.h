@@ -317,16 +317,16 @@ void VirtualBuffer<TBufferAccess>::advance()
     {
         // advance to the next fragment
         pCurrFrag++;
-        currIndex++;
-        setCurrPointer();
-
         if (pCurrFrag == vFragments.end())
         {
             // no fragments left
             pCurrFrag = NULL;
             pCurrFragPos = NULL;
             currIndex = 0;
+            return;
         }
+        currIndex++;
+        setCurrPointer();
     }
 }
 

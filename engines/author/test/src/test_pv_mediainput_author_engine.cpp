@@ -262,57 +262,6 @@ bool PVMediaInputAuthorEngineTest::Set_Default_Params(int32 aTestnum, PVMediaInp
         }
         break;
 
-#ifndef _IMOTION_SPECIFIC_UT_DISABLE
-        case KIMotionAuthoringModeTest:
-        {
-            aMediaInputParam.iIPFileInfo = KPCM_YUV_AVI_FILENAME;
-            aMediaInputParam.iOPFileInfo = KIMOTIONAUTHORINGMODE_OUTPUT;
-        }
-        break;
-
-        case KIMotionAuthoringModeLongetivityTest:
-        {
-            if ((iFirstTest != iLastTest) || (aMediaInputParam.iIPFileInfo.get_size() == 0))
-            {
-                aMediaInputParam.iIPFileInfo = KPCM_YUV_AVI_FILENAME;
-            }
-            if ((iFirstTest != iLastTest) || (aMediaInputParam.iOPFileInfo.get_size() == 0))
-            {
-                aMediaInputParam.iOPFileInfo = KIMOTIONAUTHORINGMODE_Long_OUTPUT;
-            }
-
-            if (0 == aMediaInputParam.iLoopTime)
-            {
-                aMediaInputParam.iLoopTime = DEFAULT_LOOPTIME;
-            }
-        }
-        break;
-
-        case KIMotionDownloadModeTest:
-        {
-            aMediaInputParam.iIPFileInfo = KPCM_YUV_AVI_FILENAME;
-            aMediaInputParam.iOPFileInfo = KIMOTIONDOWNLOADMODE_OUTPUT;
-        }
-        break;
-
-        case KIMotionDownloadModeLongetivityTest:
-        {
-            if ((iFirstTest != iLastTest) || (aMediaInputParam.iIPFileInfo.get_size() == 0))
-            {
-                aMediaInputParam.iIPFileInfo = KPCM_YUV_AVI_FILENAME;
-            }
-            if ((iFirstTest != iLastTest) || (aMediaInputParam.iOPFileInfo.get_size() == 0))
-            {
-                aMediaInputParam.iOPFileInfo = KIMOTIONDOWNLOADMODE_Long_OUTPUT;
-            }
-            if (0 == aMediaInputParam.iLoopTime)
-            {
-                aMediaInputParam.iLoopTime = DEFAULT_LOOPTIME;
-            }
-        }
-        break;
-
-#endif
 
         case K3GPPDownloadModeTest:
         {
@@ -540,12 +489,6 @@ void PVMediaInputAuthorEngineTest::test()
             case PCM16In_AMROut_Test:
             case KMaxFileSizeTest:
 
-#ifndef _IMOTION_SPECIFIC_UT_DISABLE
-            case KIMotionAuthoringModeTest:
-            case KIMotionDownloadModeTest:
-            case KIMotionAuthoringModeLongetivityTest:
-            case KIMotionDownloadModeLongetivityTest:
-#endif
             case K3GPPDownloadModeTest:
             case K3GPPProgressiveDownloadModeTest:
             case CapConfigTest:
@@ -1007,28 +950,6 @@ void PVMediaInputAuthorEngineTest::Print_TestCase_Name(int32 aTestnum)
         }
         break;
 
-#ifndef _IMOTION_SPECIFIC_UT_DISABLE
-        case KIMotionAuthoringModeTest:
-        {
-            fprintf(iFile, "IMotionAuthoringMode test \n");
-        }
-        break;
-        case KIMotionDownloadModeTest:
-        {
-            fprintf(iFile, "IMotionDownloadMode test \n");
-        }
-        break;
-        case KIMotionAuthoringModeLongetivityTest:
-        {
-            fprintf(iFile, "KIMotionAuthoringMode Longetivity Test:\n");
-        }
-        break;
-        case KIMotionDownloadModeLongetivityTest:
-        {
-            fprintf(iFile, "KIMotionDownloadMode Longetivity Test:\n");
-        }
-        break;
-#endif
         case K3GPPDownloadModeTest:
         {
             fprintf(iFile, "3GPPDownloadMode test \n");

@@ -357,10 +357,7 @@ bool pv_mediainput_async_test_delete::AddMediaTrack()
 
         }
 
-        if (!PVAETestNodeConfig::ConfigureAudioEncoder(iAudioEncoderConfig, iAudioEncoderMimeType))
-        {
-            return false;
-        }
+
     }
 
     if (iAddVideoMediaTrack)
@@ -430,6 +427,26 @@ bool pv_mediainput_async_test_delete::ConfigureVideoEncoder()
     config->SetIFrameInterval(KVideoIFrameInterval);
     config->SetSceneDetection(true);
 
+    return true;
+}
+
+bool pv_mediainput_async_test_delete::ConfigureAudioEncoder()
+{
+
+    PVAudioEncExtensionInterface* config;
+    config = OSCL_STATIC_CAST(PVAudioEncExtensionInterface*, iAudioEncoderConfig);
+    if (!config)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                        (0, "pv_mediainput_async_test_delete::Encoder: No configuration needed"));
+
+        return true;
+    }
+
+    if (!PVAETestNodeConfig::ConfigureAudioEncoder(iAudioEncoderConfig, iAudioEncoderMimeType))
+    {
+        return false;
+    }
     return true;
 }
 
@@ -794,7 +811,10 @@ void pv_mediainput_async_test_delete::CommandCompleted(const PVCmdResponse& aRes
                 {
                     ConfigureVideoEncoder();
                 }
-
+                if (iAddAudioMediaTrack)
+                {
+                    ConfigureAudioEncoder();
+                }
                 if (PVAE_CMD_ADD_MEDIA_TRACK == iCurrentResetState)
                 {
                     iNextResetState = PVAE_CMD_INIT;

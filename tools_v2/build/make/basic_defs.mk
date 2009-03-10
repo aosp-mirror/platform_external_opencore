@@ -51,7 +51,7 @@ endif
 
 # Function to remove two levels of directories
 define strip_two_levels_up
- $(foreach path,$(dir $(1)),$(patsubst %,/%,$(subst $(SPACE),/,$(call truncate,$(call truncate,$(subst /, ,$(path))))))) 
+ $(foreach path,$(1),$(patsubst %,/%,$(subst $(SPACE),/,$(call truncate,$(call truncate,$(subst /, ,$(dir $(path)))))))) 
 endef
 
 # Function to remove ../../

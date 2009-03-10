@@ -674,11 +674,6 @@ void PVMFRecognizerRegistryImpl::DoCancelCommand(PVMFRecRegImplCommand& aCmd)
         }
     }
 
-#if 0
-    // Complete the CancelCommand() request
-    iRecognizerCurrentCmd.push_front(aCmd);
-    CompleteCurrentRecRegCommand(PVMFSuccess);
-#endif
 }
 
 bool PVMFRecognizerRegistryImpl::FindCommandByID(Oscl_Vector<PVMFRecRegImplCommand, OsclMemAllocator> &aCmdQueue, const PVMFCommandId aCmdId)

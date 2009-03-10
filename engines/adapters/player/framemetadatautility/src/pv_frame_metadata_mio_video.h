@@ -167,6 +167,7 @@ class PVFMVideoMIO : public OsclTimerObject,
                                       uint32 iSrcWidth, uint32 iSrcHeight, uint32 iDestWidth, uint32 iDestHeight);
         PVMFStatus CreateYUVToRGBColorConverter(ColorConvertBase*& aCC, PVMFFormatType aRGBFormatType);
         PVMFStatus DestroyYUVToRGBColorConverter(ColorConvertBase*& aCC, PVMFFormatType aRGBFormatType);
+        void convertYUV420SPtoYUV420(void* src, void* dst, uint32 len);
 
         PvmiMediaTransfer* iPeer;
 
@@ -219,6 +220,7 @@ class PVFMVideoMIO : public OsclTimerObject,
 
         // Video parameters
         PVMFFormatType iVideoFormat;
+        PVMFFormatType iVideoSubFormat;
         uint32 iVideoHeight;
         bool iVideoHeightValid;
         uint32 iVideoWidth;

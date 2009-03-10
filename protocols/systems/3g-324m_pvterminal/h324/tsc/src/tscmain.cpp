@@ -374,6 +374,8 @@ TPVStatusCode TSC_324m::ResetTsc()
 
         if (iSrp->RequestULPort(SRP_OUTPUT_PORT_TAG))
             iSrp->RequestULPort(SRP_OUTPUT_PORT_TAG)->Disconnect();
+
+        iSrp->SrpStop();
     }
 
     if (iTscSrpBuffer)

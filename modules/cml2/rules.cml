@@ -7,6 +7,14 @@ derive pvasfstreaminginterface_m_mk from asf_streaming_support==y          ? "/m
 derive pvasfstreamingreginterface_m_mk from asf_streaming_support==y    ? "/modules/linux_asf/asf_streaming/node_registry/build/make" : ""
 derive pvdownloadinterface_m_mk from download_support==y                  ? "/modules/linux_download/core/build/make" : ""
 derive pvdownloadreginterface_m_mk from download_support==y            ? "/modules/linux_download/node_registry/build/make" : ""
+
+derive pvprotocolenginefasttrackdownloadinterface_m_mk from fasttrack_download_support==y  ? "/modules/linux_download/protocol_engine_plugins/fasttrack_download/core/build/make" : ""
+derive pvprotocolenginefasttrackdownloadpluginreginterface_m_mk from fasttrack_download_support==y  ? "/modules/linux_download/protocol_engine_plugins/fasttrack_download/registry/build/make" : ""
+
+derive pvprotocolenginewmhttpstreaminginterface_m_mk from asf_streaming_support==y  ? "/modules/linux_asf/asf_streaming/protocol_engine_plugin/core/build/make" : ""
+derive pvprotocolenginewmhttpstreamingpluginreginterface_m_mk from asf_streaming_support==y  ? "/modules/linux_asf/asf_streaming/protocol_engine_plugin/registry/build/make" : ""
+
+
 derive pvmp4interface_m_mk from mp4local_support==y                       ? "/modules/linux_mp4/core/build/make" : ""
 derive pvmp4reginterface_m_mk from mp4local_support==y                 ? "/modules/linux_mp4/node_registry/build/make" : ""
 derive pvasflocalpbinterface_m_mk from asflocal_support==y                ? "/modules/linux_asf/asf_localpb/core/build/make" : ""
@@ -22,6 +30,13 @@ derive pvasfstreaminginterface_m_lib from asf_streaming_support==y         ? "-l
 derive pvasfstreamingreginterface_m_lib from asf_streaming_support==y   ? "-lpvasfstreamingreginterface" : ""
 derive pvdownloadinterface_m_lib from download_support==y                 ? "-lpvdownloadinterface" : ""
 derive pvdownloadreginterface_m_lib from download_support==y           ? "-lpvdownloadreginterface" : ""
+
+derive pvprotocolenginefasttrackdownloadinterface_m_lib from fasttrack_download_support==y ? "-lpvprotocolenginefasttrackdownloadinterface" : ""
+derive pvprotocolenginefasttrackdownloadpluginreginterface_m_lib from fasttrack_download_support==y ? "-lpvprotocolenginefasttrackdownloadpluginreginterface" : ""
+
+derive pvprotocolenginewmhttpstreaminginterface_m_lib from asf_streaming_support==y ? "-lpvprotocolenginewmhttpstreaminginterface" : ""
+derive pvprotocolenginewmhttpstreamingpluginreginterface_m_lib from asf_streaming_support==y ? "-lpvprotocolenginewmhttpstreamingpluginreginterface" : ""
+
 derive pvmp4interface_m_lib from mp4local_support==y                      ? "-lpvmp4interface" : ""
 derive pvmp4reginterface_m_lib from mp4local_support==y                ? "-lpvmp4reginterface" : ""
 derive pvasflocalpbinterface_m_lib from asflocal_support==y               ? "-lpvasflocalpbinterface" : ""

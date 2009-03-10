@@ -16,8 +16,8 @@
  * -------------------------------------------------------------------
  */
 #include "pv_omxdefs.h"
-#include "omx_component.h"
-#include "omx_core.h"
+#include "OMX_Component.h"
+#include "OMX_Core.h"
 #include "omx_interface.h"
 
 #include "pvlogger.h"

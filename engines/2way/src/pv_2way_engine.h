@@ -58,26 +58,6 @@
 #include "pvmp4h263encextension.h"
 #endif
 
-
-#if (defined(PV2WAY_USE_OMX_H263_DECODER) || \
-     defined(PV2WAY_USE_OMX_MPEG4_DECODER) || \
-     defined(PV2WAY_USE_OMX_H263_ENCODER) || \
-     defined(PV2WAY_USE_OMX_MPEG4_ENCODER) || \
-     defined(PV2WAY_USE_OMX_AMR_DECODER))
-#define PV2WAY_USE_OMX
-#endif
-
-#if (defined(PV2WAY_USE_OMX_H263_DECODER) || \
-     defined(PV2WAY_USE_OMX_MPEG4_DECODER))
-#define PV2WAY_USE_OMX_VIDEO_DECODER
-#endif
-
-#if (defined(PV2WAY_USE_OMX_H263_ENCODER) || \
-     defined(PV2WAY_USE_OMX_MPEG4_ENCODER) || \
-     defined(PV2WAY_USE_OMX_AMR_DECODER))
-#define PV2WAY_USE_OMX_ENCODER
-#endif
-
 // COMM and Stack related
 #ifndef NO_2WAY_324
 #ifndef TSCMAIN_H_INCLUDED // Gkl
@@ -414,7 +394,7 @@ class TPV2WayCmdInfo : public TPV2WayNotificationInfo
         TPVCmnCommandStatus status;
         void* responseData;
         int32 responseDataSize;
-        int32 iPvtCmdData;
+        uint32 iPvtCmdData;
 };
 
 class TPV2WayEventInfo : public TPV2WayNotificationInfo
@@ -916,9 +896,9 @@ class CPV324m2Way : OsclActiveObject,
 
         void ConvertMapToVector(Oscl_Map<PVMFFormatType, FormatCapabilityInfo, OsclMemAllocator, pvmf_format_type_key_compare_class>& aCodecs, Oscl_Vector<FormatCapabilityInfo, OsclMemAllocator>& aFormatCapability);
 
-        void AddVideoEncoderNode(PVCodecType_t aCodec);
+        void AddVideoEncoderNode();
         void AddAudioEncoderNode();
-        void AddVideoDecoderNode(PVCodecType_t aCodec, uint8* aFormatSpecificInfo, uint32 aFormatSpecificInfoLen);
+        void AddVideoDecoderNode(uint8* aFormatSpecificInfo, uint32 aFormatSpecificInfoLen);
         void AddAudioDecoderNode();
         void RegisterMioLatency(const char* aMimeStr, bool aAudio, PVMFFormatType aFmtType);
         uint32 LookupMioLatency(PVMFFormatType aFmtType, bool aAudio);
@@ -1197,9 +1177,6 @@ class CPV324m2Way : OsclActiveObject,
         /* The AddDataSource command for video will be pending untill the extension interface for the encoder is queried and the
             encoder is configured */
         TPV2WayCmdInfo *iAddDataSourceVideoCmd;
-
-        PVCodecType_t iIncomingVideoCodecType;
-        PVCodecType_t iOutgoingVideoCodecType;
 };
 
 #endif

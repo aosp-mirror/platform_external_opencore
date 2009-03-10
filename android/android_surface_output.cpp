@@ -114,7 +114,7 @@ void AndroidSurfaceOutput::resetVideoParameterFlags()
 {
     iVideoParameterFlags = VIDEO_PARAMETERS_INVALID;
 
-    // FIXME: Hack required because subformat is not passed when
+    // TODO: Required because subformat is not passed when
     // hardware accelerator is not present.
     // emulator never uses subformat
     //if (mEmulation) iVideoParameterFlags |= VIDEO_SUBFORMAT_VALID;

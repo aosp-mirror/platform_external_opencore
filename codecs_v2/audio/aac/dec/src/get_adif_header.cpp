@@ -435,26 +435,6 @@ Int get_adif_header(
 
         } /* end for */
 
-#if 0       /*  just temporal to allow testing with old adif files with ill-headers */
-        /*
-         *  Check for supported audio object types (LC and LTP)
-         */
-
-        if ((pVars->mc_info.audioObjectType != MP4AUDIO_AAC_LC) ||
-                (pVars->mc_info.audioObjectType != MP4AUDIO_LTP))
-        {
-            status = 1;
-        }
-
-        /*
-         *  Check for supported max number of channels
-         */
-
-        if (pVars->mc_info.nch > 2)
-        {
-            status = 1;
-        }
-#endif
 
     } /* end 'else' of --> if (theIDFromFile != ADIF_ID) */
 

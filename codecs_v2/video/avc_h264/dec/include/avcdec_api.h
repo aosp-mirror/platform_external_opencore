@@ -188,14 +188,6 @@ extern "C"
     OSCL_IMPORT_REF void	PVAVCCleanUpDecoder(AVCHandle *avcHandle);
 //AVCDec_Status EBSPtoRBSP(uint8 *nal_unit,int *size);
 
-#if 0
-    /**
-    Users can query the memory usage anytime. After PVAVCCleanUpDecoder(), this API should return zero.
-    \param "avcHandle"	"Handle to the AVC decoder library object."
-    \return "Amount of memory that has been allocated by the AVC decoder library in bytes."
-    */
-    unsigned long PVAVCDecGetMemoryUsage(AVCHandle *avcHandle);
-#endif
 
 
     /** CALLBACK FUNCTION TO BE IMPLEMENTED BY APPLICATION */

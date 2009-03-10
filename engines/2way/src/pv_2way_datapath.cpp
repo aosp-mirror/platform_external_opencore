@@ -166,7 +166,7 @@ bool CPV2WayDatapath::AddNode(const CPVDatapathNode &aNode)
 
 bool CPV2WayDatapath::Open()
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "CPV2WayDatapath::Open path type %d, state %d, num nodes %d\n", iType, iState, iNodeList.size()));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "CPV2WayDatapath(%s)::Open path type %d, state %d, num nodes %d\n", iFormat.getMIMEStrPtr(), iType, iState, iNodeList.size()));
     if (SingleNodeOpen() || iNodeList.size() > 1)
     {
         switch (iState)
@@ -304,7 +304,7 @@ void CPV2WayDatapath::ConstructL()
 
 void CPV2WayDatapath::SetState(TPV2WayDatapathState aState)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "CPV2WayDatapath::SetState cur %d, new %d\n", iState, aState));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "CPV2WayDatapath(%d)::SetState cur %d, new %d\n", iType, iState, aState));
     iState = aState;
 }
 
@@ -342,7 +342,7 @@ bool CPV2WayDatapath::CheckNodePortsL(CPVDatapathNode &aNode)
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "CPV2WayDatapath::CheckNodePorts in req port state %d, port %x\n", aNode.iInputPort.iRequestPortState, inPortPair));
 
-    if (((PVMFNodeInterface *)(aNode.iNode))->GetState() == aNode.iInputPort.iRequestPortState)
+    if (((PVMFNodeInterface *)(aNode.iNode))->GetState() >= aNode.iInputPort.iRequestPortState)
     {
         if (inPortPair)
         {
@@ -364,6 +364,7 @@ bool CPV2WayDatapath::CheckNodePortsL(CPVDatapathNode &aNode)
                         if (inPortPair->iSrcPort.GetStatus() == EHasPort)
                         {
                             dataPort->iFormatType = GetPortFormatType(*inPortPair->iSrcPort.GetPort(), false, inPortPair->iDestPort.GetPort());
+                            OSCL_ASSERT(dataPort->iFormatType != PVMF_MIME_FORMAT_UNKNOWN);
                             requestPort = true;
                         }
                         break;
@@ -372,6 +373,7 @@ bool CPV2WayDatapath::CheckNodePortsL(CPVDatapathNode &aNode)
                         if (outPortPair->iSrcPort.GetStatus() == EHasPort)
                         {
                             dataPort->iFormatType = GetPortFormatType(*outPortPair->iSrcPort.GetPort(), false, outPortPair->iDestPort.GetPort());
+                            OSCL_ASSERT(dataPort->iFormatType != PVMF_MIME_FORMAT_UNKNOWN);
                             requestPort = true;
                         }
                         break;
@@ -419,7 +421,7 @@ bool CPV2WayDatapath::CheckNodePortsL(CPVDatapathNode &aNode)
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "CPV2WayDatapath::CheckNodePorts out req port state %d, port %x\n", aNode.iOutputPort.iRequestPortState, outPortPair));
 
-    if (((PVMFNodeInterface *)(aNode.iNode))->GetState() == aNode.iOutputPort.iRequestPortState)
+    if (((PVMFNodeInterface *)(aNode.iNode))->GetState() >= aNode.iOutputPort.iRequestPortState)
     {
         if (outPortPair)
         {
@@ -441,6 +443,7 @@ bool CPV2WayDatapath::CheckNodePortsL(CPVDatapathNode &aNode)
                         if (outPortPair->iDestPort.GetStatus() == EHasPort)
                         {
                             dataPort->iFormatType = GetPortFormatType(*outPortPair->iDestPort.GetPort(), true, outPortPair->iSrcPort.GetPort());
+                            OSCL_ASSERT(dataPort->iFormatType != PVMF_MIME_FORMAT_UNKNOWN);
                             requestPort = true;
                         }
                         break;
@@ -686,14 +689,8 @@ PVMFStatus CPV2WayDatapath::PortStatusChange(PVMFNodeInterface *aNode, PVMFComma
             if ((portPair->iSrcPort.GetStatus() == EHasPort) &&
                     (portPair->iDestPort.GetStatus() == EHasPort))
             {
-                // we'll want to connect these ports so that
-                // settings get negotiated, but we'll then
-                // suspend them so that data does not flow until
-                // the datpath is opened.
                 if (!portPair->Connect())
                     return PVMFFailure;
-                portPair->iSrcPort.GetPort()->SuspendInput();
-                portPair->iDestPort.GetPort()->SuspendInput();
             }
         }
 
@@ -784,45 +781,38 @@ void CPV2WayDatapath::CheckOpen()
         {
             case EPVMFNodeIdle:
                 nodesStarted = false;
-                if (!CheckNodePorts(checkPort, i))
+                switch (CheckConfig(EConfigBeforeInit, iNodeList[i]))
                 {
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "CPV2WayDatapath::CheckOpen problem checking ports\n"));
-                    DatapathError();
-                    return;
-                }
-                if (checkPort)
-                {
-                    switch (CheckConfig(EConfigBeforeInit, iNodeList[i]))
-                    {
-                        case PVMFPending:
-                            continue;
+                    case PVMFPending:
+                        continue;
 
-                        case PVMFSuccess:
-                            break;
+                    case PVMFSuccess:
+                        break;
 
-                        default:
-                            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "CPV2WayDatapath::CheckOpen node config failed\n"));
-                            DatapathError();
-                            return;
-                    }
-
-                    if (!SendNodeCmd(PV2WAY_NODE_CMD_INIT, i))
-                    {
-                        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "CPV2WayDatapath::CheckOpen unable to initialize node\n"));
+                    default:
+                        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "CPV2WayDatapath::CheckOpen node config failed\n"));
                         DatapathError();
                         return;
-                    }
+                }
+
+                if (!SendNodeCmd(PV2WAY_NODE_CMD_INIT, i))
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "CPV2WayDatapath::CheckOpen unable to initialize node\n"));
+                    DatapathError();
+                    return;
                 }
                 break;
 
             case EPVMFNodeInitialized:
                 nodesStarted = false;
+
                 if (!CheckNodePorts(checkPort, i))
                 {
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "CPV2WayDatapath::CheckOpen problem checking ports\n"));
                     DatapathError();
                     return;
                 }
+
                 if (checkPort)
                 {
                     switch (CheckConfig(EConfigBeforeStart, iNodeList[i]))
@@ -850,44 +840,35 @@ void CPV2WayDatapath::CheckOpen()
 
             case EPVMFNodePrepared:
                 nodesStarted = false;
-                if (!CheckNodePorts(checkPort, i))
+                //Make sure downstream node is started first.
+                if ((i == iNodeList.size() - 1) || (iNodeList[i+1].iNode.iNode->GetState() == EPVMFNodeStarted))
                 {
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "CPV2WayDatapath::CheckOpen problem checking ports\n"));
-                    DatapathError();
-                    return;
-                }
-                if (checkPort)
-                {
-                    //Make sure downstream node is started first.
-                    if ((i == iNodeList.size() - 1) || (iNodeList[i+1].iNode.iNode->GetState() == EPVMFNodeStarted))
+                    switch (CheckConfig(EConfigBeforeStart, iNodeList[i]))
                     {
-                        switch (CheckConfig(EConfigBeforeStart, iNodeList[i]))
-                        {
-                            case PVMFPending:
-                                continue;
-
-                            case PVMFSuccess:
-                                break;
-
-                            default:
-                                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "CPV2WayDatapath::CheckOpen node config failed\n"));
-                                DatapathError();
-                                return;
-                        }
-
-                        if (!CheckPathSpecificStart())
-                        {
+                        case PVMFPending:
                             continue;
-                        }
 
-                        if (iAllPortsConnected || SingleNodeOpen())
+                        case PVMFSuccess:
+                            break;
+
+                        default:
+                            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "CPV2WayDatapath::CheckOpen node config failed\n"));
+                            DatapathError();
+                            return;
+                    }
+
+                    if (!CheckPathSpecificStart())
+                    {
+                        continue;
+                    }
+
+                    if (iAllPortsConnected || SingleNodeOpen())
+                    {
+                        if (!SendNodeCmd(PV2WAY_NODE_CMD_START, i))
                         {
-                            if (!SendNodeCmd(PV2WAY_NODE_CMD_START, i))
-                            {
-                                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "CPV2WayDatapath::CheckOpen unable to start node\n"));
-                                DatapathError();
-                                return;
-                            }
+                            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "CPV2WayDatapath::CheckOpen unable to start node\n"));
+                            DatapathError();
+                            return;
                         }
                     }
                 }
@@ -923,11 +904,6 @@ void CPV2WayDatapath::CheckOpen()
 
 //Connect is done when both ports in a port pair are requested
 //	//If reached this point then all ports have been allocated and datapath is deemed open, connect ports and notify upper layer.
-    for (i = 0; i < iPortPairList.size(); i++)
-    {
-        iPortPairList[i].iDestPort.GetPort()->ResumeInput();
-        iPortPairList[i].iSrcPort.GetPort()->ResumeInput();
-    }
 
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "CPV2WayDatapath::CheckOpen open complete\n"));
@@ -1448,6 +1424,7 @@ PVMFFormatType CPV2WayDatapath::GetPortFormatType(PVMFPortInterface &aPort,
     OsclAny *configPtr = NULL;
     OsclAny *configOtherPtr = NULL;
     PVMFFormatType format = PVMF_MIME_FORMAT_UNKNOWN;
+    PVMFFormatType format_datapath_media_type = PVMF_MIME_FORMAT_UNKNOWN;
 
 
     //If config ptr exists, otherwise assume port has been configured.
@@ -1466,6 +1443,12 @@ PVMFFormatType CPV2WayDatapath::GetPortFormatType(PVMFPortInterface &aPort,
                     (pv_mime_strcmp(kvp[ii].key, OUTPUT_FORMATS_VALTYPE) == 0))
             {
                 format = kvp[ii].value.pChar_value;
+                if ((format.isAudio() && iFormat.isAudio()) ||
+                        (format.isVideo() && iFormat.isVideo()) ||
+                        (format.isFile() && iFormat.isFile()))
+                {
+                    format_datapath_media_type = format;
+                }
                 // loop through other port, look for a match
                 // if there is a match return it
                 for (int jj = 0; jj < numkvpOtherElements; ++jj)
@@ -1477,20 +1460,37 @@ PVMFFormatType CPV2WayDatapath::GetPortFormatType(PVMFPortInterface &aPort,
                     {
                         ((PvmiCapabilityAndConfig *)configPtr)->releaseParameters(NULL,
                                 kvp, numkvpElements);
+                        if (configOtherPtr != NULL)
+                        {
+                            ((PvmiCapabilityAndConfig *)configOtherPtr)->releaseParameters(NULL,
+                                    kvpOther, numkvpOtherElements);
+                        }
                         return format;
                     }
                 }
             }
         }
         ((PvmiCapabilityAndConfig *)configPtr)->releaseParameters(NULL, kvp, numkvpElements);
-        return format;
+        if (configOtherPtr != NULL)
+        {
+            ((PvmiCapabilityAndConfig *)configOtherPtr)->releaseParameters(NULL, kvpOther, numkvpOtherElements);
+        }
+        return format_datapath_media_type;
     }
     else
     {
+        if (configPtr != NULL)
+        {
+            ((PvmiCapabilityAndConfig *)configPtr)->releaseParameters(NULL, kvp, numkvpElements);
+        }
+        if (configOtherPtr != NULL)
+        {
+            ((PvmiCapabilityAndConfig *)configOtherPtr)->releaseParameters(NULL, kvpOther, numkvpOtherElements);
+        }
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "CPV2WayDatapath::GetPortFormatType 3rd getParametersSync failed %d, using configured format\n", status));
     }
 
-    return format;
+    return format_datapath_media_type;
 }
 
 void CPV2WayDatapath::SetFormatSpecificInfo(uint8* fsi, uint16 fsi_len)
@@ -1522,6 +1522,7 @@ PVMFFormatType CPV2WayDatapath::GetSourceSinkFormat() const
 {
     return iSourceSinkFormat;
 }
+
 
 
 

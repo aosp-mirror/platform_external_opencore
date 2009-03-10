@@ -418,6 +418,9 @@ class PVMFAMRFFParserNode :  public OsclTimerObject
         PVMFCommandId Prepare(PVMFSessionId aSession, const OsclAny* aContext = NULL);
         PVMFCommandId CancelAllCommands(PVMFSessionId, const OsclAny* aContextData = NULL);
         PVMFCommandId CancelCommand(PVMFSessionId, PVMFCommandId aCmdId, const OsclAny* aContextData = NULL);
+        PVMFStatus QueryInterfaceSync(PVMFSessionId aSession,
+                                      const PVUuid& aUuid,
+                                      PVInterface*& aInterfacePtr);
 
         /* From PVInterface */
         void addRef();
@@ -481,7 +484,10 @@ class PVMFAMRFFParserNode :  public OsclTimerObject
         void setFileSize(const uint32 aFileSize);
         void setDownloadProgressInterface(PVMFDownloadProgressInterface*);
         void playResumeNotification(bool aDownloadComplete);
-        void notifyDownloadComplete() {};
+        void notifyDownloadComplete()
+        {
+            playResumeNotification(true);
+        };
 
         /* From PvmiDataStreamObserver */
         void DataStreamCommandCompleted(const PVMFCmdResp& aResponse);

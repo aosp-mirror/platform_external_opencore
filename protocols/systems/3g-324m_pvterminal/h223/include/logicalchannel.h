@@ -251,7 +251,6 @@ class H223LogicalChannel : public PvmfPortBaseImpl,
         bool iSendFormatSpecificInfo;
         uint32 iDatapathLatency;
         PVMFFormatType iMediaType;
-        OsclRefCounterMemFrag iFsiFrag;
         bool iPaused;
         PVMFMediaClock* iClock;
         int32 iAudioLatency;
@@ -341,6 +340,8 @@ class H223OutgoingChannel : public H223LogicalChannel
         PVMFStatus VerifyAndSetParameter(PvmiKvp* aKvp, bool aSetParam);
 
         PVMFStatus NegotiateInputSettings(PvmiCapabilityAndConfig* config);
+        PVMFStatus NegotiateFSISettings(PvmiCapabilityAndConfig* config);
+        PVMFStatus ReceivedFSIFromPeer(PvmiKvp* kvp);
 
         OsclMemPoolFixedChunkAllocator* iMediaMsgMemoryPool;
         OsclMemPoolFixedChunkAllocator* iMediaDataEntryAlloc;
@@ -374,6 +375,7 @@ class H223OutgoingChannel : public H223LogicalChannel
         PVLogger* iOutgoingVideoLogger;
         bool iWaitForRandomAccessPoint;
         uint32 iBufferSizeMs;
+        OsclRefCounterMemFrag iFsiFrag;
 };
 
 class H223OutgoingControlChannel : public H223OutgoingChannel

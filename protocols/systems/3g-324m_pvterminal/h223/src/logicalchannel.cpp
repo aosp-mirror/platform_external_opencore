@@ -301,7 +301,7 @@ PVMFStatus H223OutgoingChannel::PutData(PVMFSharedMediaMsgPtr media_msg)
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel::PutData lcn=%d, size=%d, ts=%d", lcn, mediaData->getFilledSize(), mediaData->getTimestamp()));
     }
 
-    // Check for FormatSpecificInfo
+    // Check for FormatSpecificInfo.  Sending FSI with data is being obsoleted, but there is no harm in leaving this in for now.
     if (mediaData->getFormatSpecificInfo(iFsiFrag) && iFsiFrag.getMemFragPtr() && iFsiFrag.getMemFragSize())
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel::PutData Received Format Specific Info, len=%d", iFsiFrag.getMemFragSize()));
@@ -755,6 +755,91 @@ OSCL_EXPORT_REF PVMFStatus H223OutgoingChannel::PeerConnect(PVMFPortInterface* a
     return status;
 }
 
+PVMFStatus H223OutgoingChannel::NegotiateFSISettings(PvmiCapabilityAndConfig* aConfig)
+{
+    PvmiKvp* kvp = NULL;
+    int numParams = 0;
+
+    // Preconfigured FSI
+    uint8* pc_fsi = NULL;
+    unsigned pc_fsilen = ::GetFormatSpecificInfo(iDataType, pc_fsi);
+    if (pc_fsilen && pc_fsi)
+    {
+        /*
+         * Create PvmiKvp for capability settings
+         */
+        OsclMemAllocator alloc;
+        PvmiKvp kvp;
+        kvp.key = NULL;
+        kvp.length = oscl_strlen(PVMF_FORMAT_SPECIFIC_INFO_KEY) + 1; // +1 for \0
+        kvp.key = (PvmiKeyType)alloc.ALLOCATE(kvp.length);
+        if (kvp.key == NULL)
+        {
+            return PVMFFailure;
+        }
+        oscl_strncpy(kvp.key, PVMF_FORMAT_SPECIFIC_INFO_KEY, kvp.length);
+
+        kvp.value.key_specific_value = (OsclAny*)pc_fsi;
+        kvp.capacity = pc_fsilen;
+        kvp.length = pc_fsilen;
+
+        PvmiKvp* retKvp = NULL; // for return value
+        int32 err;
+        OSCL_TRY(err, aConfig->setParametersSync(NULL, &kvp, 1, retKvp););
+        alloc.deallocate((OsclAny*)(kvp.key));
+        if (err)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel::NegotiateFSISettings, Failed to set FSI on peer, err=%d", err));
+        }
+        return err;
+    }
+
+
+    // No preconfigured FSI.  In this case try to get the FSI from the peer.
+    PVMFStatus status = aConfig->getParametersSync(NULL, (PvmiKeyType)PVMF_FORMAT_SPECIFIC_INFO_KEY, kvp, numParams, NULL);
+    if (status != PVMFSuccess || numParams != 1)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "H223OutgoingChannel::NegotiateFSISettings: Failed to get FSI from peer"));
+        return PVMFSuccess;
+    }
+    else
+    {
+        ReceivedFSIFromPeer(kvp);
+        aConfig->releaseParameters(NULL, kvp, numParams);
+    }
+
+    kvp = NULL;
+    numParams = 0;
+    return PVMFSuccess;
+
+}
+
+PVMFStatus H223OutgoingChannel::ReceivedFSIFromPeer(PvmiKvp* kvp)
+{
+    // Create mem frag for VOL header
+    OsclRefCounter* my_refcnt;
+    OsclMemAllocDestructDealloc<uint8> my_alloc;
+    uint aligned_refcnt_size = oscl_mem_aligned_size(sizeof(OsclRefCounterSA< OsclMemAllocDestructDealloc<uint8> >));
+    uint8* my_ptr = (uint8*) my_alloc.allocate(aligned_refcnt_size + kvp->length);
+    my_refcnt = OSCL_PLACEMENT_NEW(my_ptr, OsclRefCounterSA< OsclMemAllocDestructDealloc<uint8> >(my_ptr));
+    my_ptr += aligned_refcnt_size;
+
+    oscl_memcpy(my_ptr, kvp->value.key_specific_value, kvp->length);
+
+    OsclMemoryFragment memfrag;
+    memfrag.len = kvp->length;
+    memfrag.ptr = my_ptr;
+
+    OsclRefCounterMemFrag configinfo(memfrag, my_refcnt, kvp->length);
+    iFsiFrag = configinfo;
+
+    SetFormatSpecificInfo((uint8*)kvp->value.key_specific_value, kvp->length);
+
+    iObserver->ReceivedFormatSpecificInfo(lcn, (uint8*)kvp->value.key_specific_value, kvp->length);
+    return PVMFSuccess;
+}
+
+
 PVMFStatus H223OutgoingChannel::NegotiateInputSettings(PvmiCapabilityAndConfig* aConfig)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223OutgoingChannel::NegotiateInputSettings, aConfig=%x", aConfig));
@@ -924,11 +1009,9 @@ PVMFStatus H223OutgoingChannel::NegotiateInputSettings(PvmiCapabilityAndConfig* 
 
         kvp = NULL;
         numParams = 0;
-
-
     }
 
-    return PVMFSuccess;
+    return NegotiateFSISettings(aConfig);
 }
 ////////////////////////////////////////////////////////////////////////////
 //                  PvmiCapabilityAndConfig
@@ -1078,6 +1161,10 @@ PVMFStatus H223OutgoingChannel::VerifyAndSetParameter(PvmiKvp* aKvp, bool aSetPa
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING, (0, "H223OutgoingChannel::VerifyAndSetParameter: Error - Input format %s not supported", aKvp->value.pChar_value));
             return PVMFErrNotSupported;
         }
+    }
+    else if (pv_mime_strcmp(aKvp->key, PVMF_FORMAT_SPECIFIC_INFO_KEY) == 0)
+    {
+        ReceivedFSIFromPeer(aKvp);
     }
 
     return PVMFSuccess;

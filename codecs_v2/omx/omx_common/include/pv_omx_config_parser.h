@@ -27,7 +27,7 @@
 #endif
 
 #ifndef OMX_Types_h
-#include "omx_types.h"
+#include "OMX_Types.h"
 #endif
 
 #ifndef OSCL_BASE_INCLUDED_H
@@ -35,7 +35,7 @@
 #endif
 
 #ifndef OMX_Core_h
-#include "omx_core.h"
+#include "OMX_Core.h"
 #endif
 
 #ifndef PV_AUDIO_CONFIG_PARSER_H

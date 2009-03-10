@@ -29,7 +29,7 @@
 #include <stdio.h>
 #endif
 
-#include "omx_core.h"
+#include "OMX_Core.h"
 #include "pvmf_omx_enc_callbacks.h"     //used for thin AO in encoder's callbacks
 #include "pv_omxcore.h"
 
@@ -84,7 +84,8 @@ static const char PVOMXENCMETADATA_CODECINFO_VIDEO_AVGBITRATE_KEY[] = "codec-inf
 
 static const char PVOMXENCMETADATA_SEMICOLON[] = ";";
 
-static const char LOG_ID_AUDIO_AMR[]  = "Audio_AMR";
+static const char LOG_ID_AUDIO_AMRNB[]  = "Audio_AMRNB";
+static const char LOG_ID_AUDIO_AMRWB[]  = "Audio_AMRWB";
 static const char LOG_ID_AUDIO_AAC[]  = "Audio_AAC";
 static const char LOG_ID_VIDEO_H263[] = "Video_H263";
 static const char LOG_ID_VIDEO_M4V[] =  "Video_M4V";
@@ -670,6 +671,7 @@ PVMFOMXEncNode::PVMFOMXEncNode(int32 aPriority) :
              //iCapability.iOutputFormatCapability.push_back(PVMF_MIME_WMV);
              // audio output
              iCapability.iOutputFormatCapability.push_back(PVMF_MIME_AMR_IETF);
+             iCapability.iOutputFormatCapability.push_back(PVMF_MIME_AMRWB_IETF);
              iCapability.iOutputFormatCapability.push_back(PVMF_MIME_AMR_IF2);
              iCapability.iOutputFormatCapability.push_back(PVMF_MIME_ADTS);
              iCapability.iOutputFormatCapability.push_back(PVMF_MIME_ADIF);
@@ -862,13 +864,11 @@ PVMFOMXEncNode::PVMFOMXEncNode(int32 aPriority) :
     sendYuvFsi = true;
 
     iNodeTypeId = LOG_ID_UNKNOWN;
-#if 1
     iLogger = PVLogger::GetLoggerObject("PVMFOMXEncNode");
     iRunlLogger = PVLogger::GetLoggerObject("Run.PVMFOMXEncNode");
     iDataPathLogger = PVLogger::GetLoggerObject("datapath");
     iClockLogger = PVLogger::GetLoggerObject("clock");
     iDiagnosticsLogger = PVLogger::GetLoggerObject("pvplayerdiagnostics.encnode.OMXEncnode");
-#endif
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -3282,14 +3282,15 @@ bool PVMFOMXEncNode::NegotiateAudioComponentParameters()
     //////////////////////// OUTPUT PORT////////////////////////////////////////////////
 
     // first of all, check if the port supports the adequate port format
-    if (iOutFormat == PVMF_MIME_AMR_IETF ||
-            iOutFormat == PVMF_MIME_AMR_IF2)
+    if ((iOutFormat == PVMF_MIME_AMR_IETF) ||
+            (iOutFormat == PVMF_MIME_AMRWB_IETF) ||
+            (iOutFormat == PVMF_MIME_AMR_IF2))
     {
         DesiredPortFormat = OMX_AUDIO_CodingAMR;
     }
-    else if (iOutFormat == PVMF_MIME_ADIF ||
-             iOutFormat == PVMF_MIME_ADTS ||
-             iOutFormat == PVMF_MIME_MPEG4_AUDIO)
+    else if ((iOutFormat == PVMF_MIME_ADIF) ||
+             (iOutFormat == PVMF_MIME_ADTS) ||
+             (iOutFormat == PVMF_MIME_MPEG4_AUDIO))
     {
         DesiredPortFormat = OMX_AUDIO_CodingAAC;
     }
@@ -3376,14 +3377,15 @@ bool PVMFOMXEncNode::NegotiateAudioComponentParameters()
 
 
 
-    if (iOutFormat == PVMF_MIME_AMR_IETF ||
-            iOutFormat == PVMF_MIME_AMR_IF2)
+    if ((iOutFormat == PVMF_MIME_AMR_IETF) ||
+            (iOutFormat == PVMF_MIME_AMRWB_IETF) ||
+            (iOutFormat == PVMF_MIME_AMR_IF2))
     {
         iParamPort.format.audio.eEncoding = OMX_AUDIO_CodingAMR;
     }
-    else if (iOutFormat == PVMF_MIME_ADTS ||
-             iOutFormat == PVMF_MIME_ADIF ||
-             iOutFormat == PVMF_MIME_MPEG4_AUDIO)
+    else if ((iOutFormat == PVMF_MIME_ADTS) ||
+             (iOutFormat == PVMF_MIME_ADIF) ||
+             (iOutFormat == PVMF_MIME_MPEG4_AUDIO))
     {
         iParamPort.format.audio.eEncoding = OMX_AUDIO_CodingAAC;
     }
@@ -3404,15 +3406,16 @@ bool PVMFOMXEncNode::NegotiateAudioComponentParameters()
 
     // now call codec specific parameter setting
     bool status = true;
-    if (iOutFormat == PVMF_MIME_AMR_IETF ||
-            iOutFormat == PVMF_MIME_AMR_IF2)
+    if ((iOutFormat == PVMF_MIME_AMR_IETF) ||
+            (iOutFormat == PVMF_MIME_AMRWB_IETF) ||
+            (iOutFormat == PVMF_MIME_AMR_IF2))
     {
 
         status = SetAMREncoderParameters();
     }
-    else if (iOutFormat == PVMF_MIME_ADTS ||
-             iOutFormat == PVMF_MIME_ADIF ||
-             iOutFormat == PVMF_MIME_MPEG4_AUDIO)
+    else if ((iOutFormat == PVMF_MIME_ADTS) ||
+             (iOutFormat == PVMF_MIME_ADIF) ||
+             (iOutFormat == PVMF_MIME_MPEG4_AUDIO))
     {
         status = SetAACEncoderParameters();
     }
@@ -3438,12 +3441,68 @@ bool PVMFOMXEncNode::SetAMREncoderParameters()
         return false;
     }
 
-    AmrType.nChannels = iAudioEncodeParam.iOutputNumChannels;
+    AmrType.nChannels = iAudioEncodeParam.iOutputNumChannels; // must be 1
 
-    AmrType.eAMRBandMode = OMX_AUDIO_AMRBandModeNB7; // use 12.2 kbps
+    switch (iAudioEncodeParam.iAMRBitrate)
+    {
+        case GSM_AMR_4_75:  // AMR NB bitrates
+            AmrType.eAMRBandMode = OMX_AUDIO_AMRBandModeNB0;
+            break;
+        case GSM_AMR_5_15:
+            AmrType.eAMRBandMode = OMX_AUDIO_AMRBandModeNB1;
+            break;
+        case GSM_AMR_5_90:
+            AmrType.eAMRBandMode = OMX_AUDIO_AMRBandModeNB2;
+            break;
+        case GSM_AMR_6_70:
+            AmrType.eAMRBandMode = OMX_AUDIO_AMRBandModeNB3;
+            break;
+        case GSM_AMR_7_40:
+            AmrType.eAMRBandMode = OMX_AUDIO_AMRBandModeNB4;
+            break;
+        case GSM_AMR_7_95:
+            AmrType.eAMRBandMode = OMX_AUDIO_AMRBandModeNB5;
+            break;
+        case GSM_AMR_10_2:
+            AmrType.eAMRBandMode = OMX_AUDIO_AMRBandModeNB6;
+            break;
+        case GSM_AMR_12_2:
+            AmrType.eAMRBandMode = OMX_AUDIO_AMRBandModeNB7;
+            break;
+        case GSM_AMR_6_60: // AMR WB bitrates start here
+            AmrType.eAMRBandMode = OMX_AUDIO_AMRBandModeWB0;
+            break;
+        case GSM_AMR_8_85:
+            AmrType.eAMRBandMode = OMX_AUDIO_AMRBandModeWB1;
+            break;
+        case GSM_AMR_12_65:
+            AmrType.eAMRBandMode = OMX_AUDIO_AMRBandModeWB2;
+            break;
+        case GSM_AMR_14_25:
+            AmrType.eAMRBandMode = OMX_AUDIO_AMRBandModeWB3;
+            break;
+        case GSM_AMR_15_85:
+            AmrType.eAMRBandMode = OMX_AUDIO_AMRBandModeWB4;
+            break;
+        case GSM_AMR_18_25:
+            AmrType.eAMRBandMode = OMX_AUDIO_AMRBandModeWB5;
+            break;
+        case GSM_AMR_19_85:
+            AmrType.eAMRBandMode = OMX_AUDIO_AMRBandModeWB6;
+            break;
+        case GSM_AMR_23_05:
+            AmrType.eAMRBandMode = OMX_AUDIO_AMRBandModeWB7;
+            break;
+        case GSM_AMR_23_85:
+            AmrType.eAMRBandMode = OMX_AUDIO_AMRBandModeWB8;
+            break;
+        default:
+            return false;
+    }
+
     AmrType.eAMRDTXMode = OMX_AUDIO_AMRDTXModeOnAuto;
 
-    if (iOutFormat == PVMF_MIME_AMR_IETF)
+    if ((iOutFormat == PVMF_MIME_AMR_IETF) || (iOutFormat == PVMF_MIME_AMRWB_IETF))
     {
         AmrType.eAMRFrameFormat = OMX_AUDIO_AMRFrameFormatFSF;
     }
@@ -3472,32 +3531,6 @@ bool PVMFOMXEncNode::SetAACEncoderParameters()
     OMX_ERRORTYPE Err = OMX_ErrorNone;
     OMX_AUDIO_PARAM_AACPROFILETYPE AacType;
 
-#if 0
-    /** AAC params */
-    typedef struct OMX_AUDIO_PARAM_AACPROFILETYPE
-    {
-        OMX_U32 nSize;                 /**< Size of this structure, in Bytes */
-        OMX_VERSIONTYPE nVersion;      /**< OMX specification version information */
-        OMX_U32 nPortIndex;            /**< Port that this structure applies to */
-        OMX_U32 nChannels;             /**< Number of channels */
-        OMX_U32 nSampleRate;           /**< Sampling rate of the source data.  Use 0 for
-                                        variable or unknown sampling rate. */
-        OMX_U32 nBitRate;              /**< Bit rate of the input data.  Use 0 for variable
-                                        rate or unknown bit rates */
-        OMX_U32 nAudioBandWidth;       /**< Audio band width (in Hz) to which an encoder should
-                                        limit the audio signal. Use 0 to let encoder decide */
-        OMX_U32 nFrameLength;          /**< Frame length (in audio samples per channel) of the codec.
-                                        Can be 1024 or 960 (AAC-LC), 2048 (HE-AAC), 480 or 512 (AAC-LD).
-                                        Use 0 to let encoder decide */
-        OMX_U32 nAACtools;             /**< AAC tool usage */
-        OMX_U32 nAACERtools;           /**< MPEG-4 AAC error resilience tool usage */
-        OMX_AUDIO_AACPROFILETYPE eAACProfile;   /**< AAC profile enumeration */
-        OMX_AUDIO_AACSTREAMFORMATTYPE eAACStreamFormat; /**< AAC stream format enumeration */
-        OMX_AUDIO_CHANNELMODETYPE eChannelMode;   /**< Channel mode enumeration */
-    } OMX_AUDIO_PARAM_AACPROFILETYPE;
-
-
-#endif
 
     CONFIG_SIZE_AND_VERSION(AacType);
     AacType.nPortIndex = iOutputPortIndex;
@@ -5273,7 +5306,7 @@ bool PVMFOMXEncNode::QueueOutputBuffer(OsclSharedPtr<PVMFMediaDataImpl> &mediada
         // Set sequence number
         mediaDataOut->setSeqNum(iSeqNum++);
 
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iDataPathLogger, PVLOGMSG_INFO, (0, ":PVMFOMXEncNode::QueueOutputFrame(): - SeqNum=%d, TS=%d", iNodeTypeId, iSeqNum, iTimeStampOut));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iDataPathLogger, PVLOGMSG_INFO, (0, ":PVMFOMXEncNode-%s::QueueOutputFrame(): - SeqNum=%d, TS=%d", iNodeTypeId, iSeqNum, iTimeStampOut));
 
 
         // Check if Fsi needs to be sent (VOL header)
@@ -5337,7 +5370,7 @@ bool PVMFOMXEncNode::QueueOutputBuffer(OsclSharedPtr<PVMFMediaDataImpl> &mediada
 OsclSharedPtr<PVMFMediaDataImpl> PVMFOMXEncNode::WrapOutputBuffer(uint8 *pData, uint32 aDataLen, OsclAny *pContext)
 {
     // wrap output buffer into a mediadataimpl
-    uint32 aligned_cleanup_size = oscl_mem_aligned_size(sizeof(PVOMXBufferSharedPtrWrapperCombinedCleanupDA));
+    uint32 aligned_cleanup_size = oscl_mem_aligned_size(sizeof(PVOMXEncBufferSharedPtrWrapperCombinedCleanupDA));
     uint32 aligned_refcnt_size = oscl_mem_aligned_size(sizeof(OsclRefCounterDA));
     uint8 *my_ptr = (uint8*) oscl_malloc(aligned_cleanup_size + aligned_refcnt_size);
 
@@ -5348,8 +5381,8 @@ OsclSharedPtr<PVMFMediaDataImpl> PVMFOMXEncNode::WrapOutputBuffer(uint8 *pData, 
     }
 
     // create a deallocator and pass the buffer_allocator to it as well as pointer to data that needs to be returned to the mempool
-    PVOMXBufferSharedPtrWrapperCombinedCleanupDA *cleanup_ptr =
-        OSCL_PLACEMENT_NEW(my_ptr + aligned_refcnt_size, PVOMXBufferSharedPtrWrapperCombinedCleanupDA(iOutBufMemoryPool, pContext));
+    PVOMXEncBufferSharedPtrWrapperCombinedCleanupDA *cleanup_ptr =
+        OSCL_PLACEMENT_NEW(my_ptr + aligned_refcnt_size, PVOMXEncBufferSharedPtrWrapperCombinedCleanupDA(iOutBufMemoryPool, pContext));
 
     // create the ref counter after the cleanup object (refcount is set to 1 at creation)
     OsclRefCounterDA *my_refcnt;
@@ -5548,11 +5581,16 @@ void PVMFOMXEncNode::DoPrepare(PVMFOMXEncNodeCommand& aCmd)
                 iFirstNAL = true; // set this flag to prevent node from queueing the first
                 // buffer
             }
-            else if (iOutFormat == PVMF_MIME_AMR_IETF ||
-                     iOutFormat == PVMF_MIME_AMR_IF2)
+            else if ((iOutFormat == PVMF_MIME_AMR_IETF) ||
+                     (iOutFormat == PVMF_MIME_AMR_IF2))
             {
-                Role = (OMX_STRING)"audio_encoder.amr";
-                iNodeTypeId = LOG_ID_AUDIO_AMR;
+                Role = (OMX_STRING)"audio_encoder.amrnb";
+                iNodeTypeId = LOG_ID_AUDIO_AMRNB;
+            }
+            else if (iOutFormat == PVMF_MIME_AMRWB_IETF)
+            {
+                Role = (OMX_STRING)"audio_encoder.amrwb";
+                iNodeTypeId = LOG_ID_AUDIO_AMRWB;
             }
             else if (iOutFormat == PVMF_MIME_ADTS ||
                      iOutFormat == PVMF_MIME_ADIF ||
@@ -5743,7 +5781,7 @@ void PVMFOMXEncNode::DoPrepare(PVMFOMXEncNodeCommand& aCmd)
 
 
             // find out about parameters
-            if ((iOutFormat == PVMF_MIME_AMR_IETF) || (iOutFormat == PVMF_MIME_AMR_IF2) ||
+            if ((iOutFormat == PVMF_MIME_AMR_IETF) || (iOutFormat == PVMF_MIME_AMRWB_IETF) || (iOutFormat == PVMF_MIME_AMR_IF2) ||
                     (iOutFormat == PVMF_MIME_ADIF) || (iOutFormat == PVMF_MIME_ADTS) || (iOutFormat == PVMF_MIME_MPEG4_AUDIO))
             {
                 if (!NegotiateAudioComponentParameters())
@@ -6534,6 +6572,23 @@ void PVMFOMXEncNode::DoReset(PVMFOMXEncNodeCommand& aCmd)
                 }
                 if ((sState == OMX_StateExecuting) || (sState == OMX_StatePause))
                 {
+                    //this command is asynchronous.  move the command from
+                    //the input command queue to the current command, where
+                    //it will remain until it is completed.
+                    if (!iResetInProgress)
+                    {
+                        int32 err;
+                        OSCL_TRY(err, iCurrentCommand.StoreL(aCmd););
+                        if (err != OsclErrNone)
+                        {
+                            CommandComplete(iInputCommands, aCmd, PVMFErrNoMemory);
+                            return;
+                        }
+                        iInputCommands.Erase(&aCmd);
+
+                        iResetInProgress = true;
+                    }
+
                     /* Change state to OMX_StateIdle from OMX_StateExecuting or OMX_StatePause. */
 
                     if (!iStopInResetMsgSent)
@@ -8438,6 +8493,9 @@ OSCL_EXPORT_REF bool PVMFOMXEncNode::SetCodec(PVMFFormatType aCodec)
 
 PVMFStatus PVMFOMXEncNode::SetCodecType(PVMFFormatType aCodec)
 {
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "PVMFOMXEncNode-%s::SetCodecType: aCodec=%s", iNodeTypeId, aCodec.getMIMEStrPtr()));
+
     switch (iInterfaceState)
     {
         case EPVMFNodeStarted:
@@ -8472,7 +8530,8 @@ PVMFStatus PVMFOMXEncNode::SetCodecType(PVMFFormatType aCodec)
         iOutFormat = aCodec;
     }
     else if (aCodec == PVMF_MIME_AMR_IETF ||
-             aCodec == PVMF_MIME_AMR_IF2)
+             aCodec == PVMF_MIME_AMR_IF2 ||
+             aCodec == PVMF_MIME_AMRWB_IETF)
     {
         iOutFormat = aCodec;
     }
@@ -8484,6 +8543,9 @@ PVMFStatus PVMFOMXEncNode::SetCodecType(PVMFFormatType aCodec)
     }
     else
     {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXEncNode-%s::SetCodecType: ERROR Unsupported format aCodec=%s", iNodeTypeId, aCodec.getMIMEStrPtr()));
+
         return PVMFErrNotSupported;
     }
 
@@ -8547,6 +8609,8 @@ PVMFStatus PVMFOMXEncNode::SetInputFormat(PVMFFormatType aFormat)
     }
     else
     {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                        (0, "PVMFOMXEncNode-%s::SetInputFormat: Error - Unsupported format", iNodeTypeId));
         return PVMFFailure;
     }
 
@@ -8683,7 +8747,98 @@ uint32 PVMFOMXEncNode::GetOutputNumChannels()
 /////////////////////////AMRENCInterfaceExtension //////////////////////////
 OSCL_EXPORT_REF PVMFStatus PVMFOMXEncNode::SetOutputBitRate(PVMF_GSMAMR_Rate aBitRate)
 {
-    iAudioEncodeParam.iAMRBitrate = aBitRate;
+    // this particular API is used only for AMR (NB or WB)
+    // do some error checking - make sure that NB (i.e. WB) bitrates correspond to NB (i.e. WB) codec
+    if ((iOutFormat == PVMF_MIME_AMR_IF2) ||
+            (iOutFormat == PVMF_MIME_AMR_IETF)
+       )
+    {
+
+        switch (aBitRate)
+        {
+            case GSM_AMR_4_75:
+            case GSM_AMR_5_15:
+            case GSM_AMR_5_90:
+            case GSM_AMR_6_70:
+            case GSM_AMR_7_40:
+            case GSM_AMR_7_95:
+            case GSM_AMR_10_2:
+            case GSM_AMR_12_2:
+
+                iAudioEncodeParam.iAMRBitrate = aBitRate;
+
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                                (0, "PVMFOMXEncNode-%s::SetOutputBitRate() OK - %d", iNodeTypeId, aBitRate));
+
+                return PVMFSuccess;
+
+            case GSM_AMR_6_60: // AMR WB bitrates start here
+            case GSM_AMR_8_85:
+            case GSM_AMR_12_65:
+            case GSM_AMR_14_25:
+            case GSM_AMR_15_85:
+            case GSM_AMR_18_25:
+            case GSM_AMR_19_85:
+            case GSM_AMR_23_05:
+            case GSM_AMR_23_85:
+
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                (0, "PVMFOMXEncNode-%s::SetOutputBitRate() failed - %d", iNodeTypeId, aBitRate));
+
+                return PVMFFailure;
+
+            default:
+
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                (0, "PVMFOMXEncNode-%s::SetOutputBitRate() failed - %d", iNodeTypeId, aBitRate));
+
+                return PVMFFailure;
+        }
+    }
+
+    if (iOutFormat == PVMF_MIME_AMRWB_IETF)
+    {
+        switch (aBitRate)
+        {
+            case GSM_AMR_4_75:
+            case GSM_AMR_5_15:
+            case GSM_AMR_5_90:
+            case GSM_AMR_6_70:
+            case GSM_AMR_7_40:
+            case GSM_AMR_7_95:
+            case GSM_AMR_10_2:
+            case GSM_AMR_12_2:
+
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                (0, "PVMFOMXEncNode-%s::SetOutputBitRate() failed - %d", iNodeTypeId, aBitRate));
+
+                return PVMFFailure;
+
+            case GSM_AMR_6_60: // AMR WB bitrates start here
+            case GSM_AMR_8_85:
+            case GSM_AMR_12_65:
+            case GSM_AMR_14_25:
+            case GSM_AMR_15_85:
+            case GSM_AMR_18_25:
+            case GSM_AMR_19_85:
+            case GSM_AMR_23_05:
+            case GSM_AMR_23_85:
+
+                iAudioEncodeParam.iAMRBitrate = aBitRate;
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                                (0, "PVMFOMXEncNode-%s::SetOutputBitRate() OK - %d", iNodeTypeId, aBitRate));
+
+                return PVMFSuccess;
+
+            default:
+
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                (0, "PVMFOMXEncNode-%s::SetOutputBitRate() failed - %d", iNodeTypeId, aBitRate));
+
+                return PVMFFailure;
+        }
+    }
+
     return PVMFSuccess;
 }
 
@@ -8697,6 +8852,7 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXEncNode::SetMaxNumOutputFramesPerBuffer(uint32
 ////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF PVMFStatus PVMFOMXEncNode::SetOutputBitRate(uint32 aBitRate)
 {
+    // this API is used for Non-AMR codecs
     iAudioEncodeParam.iOutputBitrate = aBitRate;
     return PVMFSuccess;
 }
@@ -8704,6 +8860,7 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXEncNode::SetOutputBitRate(uint32 aBitRate)
 ////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF PVMFStatus PVMFOMXEncNode::SetOutputNumChannel(uint32 aNumChannels)
 {
+
     iAudioEncodeParam.iOutputNumChannels = aNumChannels;
     return PVMFSuccess;
 }
@@ -8719,7 +8876,30 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXEncNode::SetOutputSamplingRate(uint32 aSamplin
 ////////////////////////////////////////////////////////////////////////////
 PVMFStatus PVMFOMXEncNode::SetInputSamplingRate(uint32 aSamplingRate)
 {
+    // do some error checking - make sure the input sampling rate is 8khz (i.e. 16khz) for AMRNB (i.e. WB)
+    if (((iOutFormat == PVMF_MIME_AMR_IF2) ||
+            (iOutFormat == PVMF_MIME_AMR_IETF)) &&
+            (aSamplingRate != 8000)
+       )
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                        (0, "PVMFOMXEncNode-%s::SetInputBitsSamplingRate() failed - %d", iNodeTypeId, aSamplingRate));
+
+        return PVMFFailure;
+    }
+
+    if ((iOutFormat == PVMF_MIME_AMRWB_IETF) && (aSamplingRate != 16000))
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                        (0, "PVMFOMXEncNode-%s::SetInputBitsSamplingRate() failed - %d", iNodeTypeId, aSamplingRate));
+
+        return PVMFFailure;
+    }
+
     iAudioInputFormat.iInputSamplingRate = aSamplingRate;
+
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "PVMFOMXEncNode-%s::SetInputBitsSamplingRate() OK setting OutputSamplingRate as well - %d", iNodeTypeId, aSamplingRate));
 
     // set output as well
     iAudioEncodeParam.iOutputSamplingRate = aSamplingRate;
@@ -8730,9 +8910,18 @@ PVMFStatus PVMFOMXEncNode::SetInputSamplingRate(uint32 aSamplingRate)
 PVMFStatus PVMFOMXEncNode::SetInputBitsPerSample(uint32 aBitsPerSample)
 {
     if (aBitsPerSample != 16)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                        (0, "PVMFOMXEncNode-%s::SetInputBitsPerSample() failed - %d", iNodeTypeId, aBitsPerSample));
+
         return PVMFErrNotSupported;
+    }
 
     iAudioInputFormat.iInputBitsPerSample = aBitsPerSample;
+
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "PVMFOMXEncNode-%s::SetInputBitsPerSample() OK - %d", iNodeTypeId, aBitsPerSample));
+
     return PVMFSuccess;
 }
 
@@ -8740,10 +8929,26 @@ PVMFStatus PVMFOMXEncNode::SetInputBitsPerSample(uint32 aBitsPerSample)
 ////////////////////////////////////////////////////////////////////////////
 PVMFStatus PVMFOMXEncNode::SetInputNumChannels(uint32 aNumChannels)
 {
+    // do some error checking - make sure the number of INPUT channels is 1 for AMR (NB or WB)
+
+    if (((iOutFormat == PVMF_MIME_AMR_IF2) ||
+            (iOutFormat == PVMF_MIME_AMR_IETF) ||
+            (iOutFormat == PVMF_MIME_AMRWB_IETF)) &&
+            (aNumChannels > 1)
+       )
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                        (0, "PVMFOMXEncNode-%s::SetInputNumChannels() failed - %d", iNodeTypeId, aNumChannels));
+        return PVMFFailure;
+    }
+
     iAudioInputFormat.iInputNumChannels = aNumChannels;
 
     //set output as well
     iAudioEncodeParam.iOutputNumChannels = aNumChannels;
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "PVMFOMXEncNode-%s::SetInputNumChannels() OK - %d", iNodeTypeId, aNumChannels));
+
     return PVMFSuccess;
 }
 
@@ -8751,7 +8956,8 @@ PVMFStatus PVMFOMXEncNode::SetInputNumChannels(uint32 aNumChannels)
 uint32 PVMFOMXEncNode::GetOutputBitRate()
 {
     if ((iOutFormat == PVMF_MIME_AMR_IF2) ||
-            (iOutFormat == PVMF_MIME_AMR_IETF)
+            (iOutFormat == PVMF_MIME_AMR_IETF) ||
+            (iOutFormat == PVMF_MIME_AMRWB_IETF)
        )
     {
 
@@ -8773,6 +8979,24 @@ uint32 PVMFOMXEncNode::GetOutputBitRate()
                 return 10200;
             case GSM_AMR_12_2:
                 return 12200;
+            case GSM_AMR_6_60: // AMR WB bitrates start here
+                return 6600;
+            case GSM_AMR_8_85:
+                return 8850;
+            case GSM_AMR_12_65:
+                return 12650;
+            case GSM_AMR_14_25:
+                return 14250;
+            case GSM_AMR_15_85:
+                return 15850;
+            case GSM_AMR_18_25:
+                return 18250;
+            case GSM_AMR_19_85:
+                return 19850;
+            case GSM_AMR_23_05:
+                return 23050;
+            case GSM_AMR_23_85:
+                return 23850;
             default:
                 return 0;
         }

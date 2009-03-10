@@ -34,7 +34,7 @@
 #include "oscl_utf8conv.h"
 #include "oscl_string_utils.h"
 
-#include "omx_core.h"
+#include "OMX_Core.h"
 
 #ifndef DEFAULTSOURCEFILENAME
 #error // The default source file needs to be defined in config file

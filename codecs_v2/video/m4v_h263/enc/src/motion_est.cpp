@@ -526,30 +526,6 @@ void MotionEstimation(VideoEncData *video)
     /*********************************/
 #endif
 
-#if 0
-    fstat = fopen("sad_stat.txt", "a");
-    fprintf(fstat, "frame%d = [", frame_num++);
-    mbnum = 0;
-
-    for (i = 0; i < currVol->nMBPerCol; i++)
-    {
-        for (j = 0; j < currVol->nMBPerRow; j++)
-        {
-            if (video->headerInfo.Mode[mbnum] == MODE_INTRA)
-            {
-                fprintf(fstat, "-10 ");
-            }
-            else
-            {
-                fprintf(fstat, "%d ", video->mot[mbnum][0].sad);
-            }
-            mbnum++;
-        }
-        fprintf(fstat, "\n");
-    }
-    fprintf(fstat, "];\n");
-    fclose(fstat);
-#endif
     return ;
 }
 

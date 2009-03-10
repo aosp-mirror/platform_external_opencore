@@ -24,7 +24,7 @@
 #endif
 
 #ifndef OMX_Component_h
-#include "omx_component.h"
+#include "OMX_Component.h"
 #endif
 
 #ifndef PV_OMXCORE_H_INCLUDED

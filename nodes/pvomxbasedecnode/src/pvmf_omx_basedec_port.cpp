@@ -109,7 +109,52 @@ OSCL_EXPORT_REF void PVMFOMXDecPort::FormatUpdated()
 }
 
 OSCL_EXPORT_REF bool
-PVMFOMXDecPort::pvmiSetPortFormatSpecificInfoSync(OsclRefCounterMemFrag& aMemFrag)
+PVMFOMXDecPort::releaseParametersSync(PvmiKvp*& aParameters, int& aNumParamElements)
+{
+    if ((iConnectedPort) && (iTag == PVMF_OMX_DEC_NODE_PORT_TYPE_OUTPUT))
+    {
+        OsclAny* temp = NULL;
+        iConnectedPort->QueryInterface(PVMI_CAPABILITY_AND_CONFIG_PVUUID, temp);
+
+        PvmiCapabilityAndConfig *config = (PvmiCapabilityAndConfig*)temp;
+
+        if (config != NULL)
+        {
+            config->releaseParameters(NULL, aParameters, aNumParamElements);
+
+        }
+        return true;
+    }
+    return false;
+}
+
+OSCL_EXPORT_REF bool
+PVMFOMXDecPort::pvmiGetBufferAllocatorSpecificInfoSync(PvmiKeyType aIdentifier, PvmiKvp*& aParameters, int& aNumParamElements)
+{
+    if ((iConnectedPort) && (iTag == PVMF_OMX_DEC_NODE_PORT_TYPE_OUTPUT))
+    {
+        OsclAny* temp = NULL;
+        iConnectedPort->QueryInterface(PVMI_CAPABILITY_AND_CONFIG_PVUUID, temp);
+
+        PvmiCapabilityAndConfig *config = (PvmiCapabilityAndConfig*)temp;
+
+        if (config != NULL)
+        {
+            PVMFStatus status =
+                config->getParametersSync(NULL, (PvmiKeyType)aIdentifier, aParameters, aNumParamElements, NULL);
+
+            if (PVMFSuccess == status)
+            {
+                // config->releaseParameters(NULL, aParameters, aNumParamElements);
+            }
+        }
+        return true;
+    }
+    return false;
+}
+
+OSCL_EXPORT_REF bool
+PVMFOMXDecPort::pvmiSetPortFormatSpecificInfoSync(OsclRefCounterMemFrag& aMemFrag, PvmiKeyType KvpKey)
 {
     if ((iConnectedPort) &&
             (iTag == PVMF_OMX_DEC_NODE_PORT_TYPE_OUTPUT))
@@ -124,24 +169,21 @@ PVMFOMXDecPort::pvmiSetPortFormatSpecificInfoSync(OsclRefCounterMemFrag& aMemFra
          */
         if ((config) && (aMemFrag.getMemFragSize() > 0))
         {
-            OsclMemAllocator alloc;
             PvmiKvp kvp;
-            kvp.key = NULL;
-            kvp.length = oscl_strlen(PVMF_FORMAT_SPECIFIC_INFO_KEY) + 1; // +1 for \0
-            kvp.key = (PvmiKeyType)alloc.ALLOCATE(kvp.length);
+
+            kvp.length = oscl_strlen(KvpKey) + 1; // +1 for \0
+            kvp.key = KvpKey;
             if (kvp.key == NULL)
             {
                 return false;
             }
-            oscl_strncpy(kvp.key, PVMF_FORMAT_SPECIFIC_INFO_KEY, kvp.length);
 
             kvp.value.key_specific_value = (OsclAny*)(aMemFrag.getMemFragPtr());
             kvp.capacity = aMemFrag.getMemFragSize();
             PvmiKvp* retKvp = NULL; // for return value
             int32 err;
             OSCL_TRY(err, config->setParametersSync(NULL, &kvp, 1, retKvp););
-            /* ignore the error for now */
-            alloc.deallocate((OsclAny*)(kvp.key));
+            OSCL_FIRST_CATCH_ANY(err, OSCL_LEAVE(-1));
         }
         return true;
     }

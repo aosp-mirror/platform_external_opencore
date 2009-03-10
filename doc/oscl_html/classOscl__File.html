@@ -742,7 +742,9 @@ SetFileHandle adds an open file handle to the Oscl_File object. The Oscl_File ob
 <p>
 This call is not available when the Oscl_File object is already open.
 <p>
-Note: This feature is used in Symbian with the MMF framework. The MMF framework provides an open RFile handle to access content. When using RFileBuf access mode with an RFile handle, the RFileBuf will be attached to the open RFile handle.<dl compact><dt><b>Parameters: </b></dt><dd>
+Note: This feature is used in Symbian with the MMF framework. The MMF framework provides an open RFile handle to access content. When using RFileBuf access mode with an RFile handle, the RFileBuf will be attached to the open RFile handle.
+<p>
+To use the external file handle, the caller starts with a native file handle to an open file. The caller must wrap the native file handle in an <a class="el" href="classOsclFileHandle.html">OsclFileHandle</a> object, pass the <a class="el" href="classOsclFileHandle.html">OsclFileHandle</a> pointer to SetFileHandle, call <a class="el" href="classOscl__File.html#a9">Oscl_File::Open</a>, then proceed to use the Oscl_File object, finally calling <a class="el" href="classOscl__File.html#a15">Oscl_File::Close</a>. In this usage mode, <a class="el" href="classOscl__File.html#a9">Oscl_File::Open</a> and <a class="el" href="classOscl__File.html#a15">Oscl_File::Close</a> do not actually call native file open and close. It is assumed that the caller will close the original native file handle after usage is complete.<dl compact><dt><b>Parameters: </b></dt><dd>
 <table border=0 cellspacing=2 cellpadding=0>
 <tr><td valign=top><em>aHandle:</em>&nbsp;</td><td>
 container for an open file handle. </td></tr>
@@ -1134,7 +1136,7 @@ The number of elements written </dl>    </td>
 <hr>The documentation for this class was generated from the following file:<ul>
 <li><a class="el" href="oscl__file__io_8h-source.html">oscl_file_io.h</a></ul>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: OPENCORE_20090223 </small>
+<address style="align: left;"><small>Posting Version: OPENCORE_20090310 </small>
 </small></address>
 </body>
 </html>

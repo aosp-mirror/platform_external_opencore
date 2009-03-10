@@ -358,40 +358,6 @@ bool TSC_component::CEStart()
             incoming_codecs.push_back(info);
         }
     }
-#if 0
-    for (n = 0;n < iOutgoingChannelConfig->size();n++)
-    {
-        Oscl_Vector<FormatCapabilityInfo, OsclMemAllocator>* codecs =
-            (*iOutgoingChannelConfig)[n].GetCodecs();
-        if (!codecs)
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING,
-                            (0, "TSC_component::CEStart No codecs specified for format type(%d)",
-                             (*iIncomingChannelConfig)[n].GetMediaType()));
-            continue;
-        }
-        for (unsigned m = 0;m < codecs->size();m++)
-        {
-            CodecCapabilityInfo* info = NULL;
-            PVCodecType_t codec_type = PVMFFormatTypeToPVCodecType((*codecs)[m].format);
-            TPVDirection dir = (*codecs)[m].dir;
-            if (GetMediaType(codec_type) == PV_VIDEO)
-            {
-                info = new VideoCodecCapabilityInfo;
-                ((VideoCodecCapabilityInfo*)info)->resolutions =
-                    iTSCcapability.GetResolutions(dir);
-
-            }
-            else
-            {
-                info = new CodecCapabilityInfo;
-            }
-            info->codec = codec_type;
-            info->dir = dir;
-            outgoing_codecs.push_back(info);
-        }
-    }
-#endif
     if (iLocalTcs)
     {
         Delete_TerminalCapabilitySet(iLocalTcs);

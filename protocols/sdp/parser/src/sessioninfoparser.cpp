@@ -1665,18 +1665,5 @@ SDP_ERROR_CODE parseSDPSessionInfo(const char *sdp_text, int length, SDPInfo *sd
         current_start = line_end_ptr;
     }
 
-#if 0 // disable strict checks
-    if (o_field_found &&
-            s_field_found &&
-            a_control_found &&
-            a_range_found &&
-            t_field_found)
-    {
-        return SDP_SUCCESS;
-    }
-    else
-        return SDP_BAD_SESSION_FORMAT;
-#else
     return SDP_SUCCESS;
-#endif
 }

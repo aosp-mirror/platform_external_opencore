@@ -37,7 +37,7 @@ AE_TARGET = test_pvauthorengine
 run_ae_test:: $(REALTARGET) default
 	$(quiet) ${RM} -r ${AE_TEST_DIR}
 	$(quiet) ${MKDIR} ${AE_TEST_DIR}
-	$(quiet) $(CP) $(SRC_ROOT)/tools_v2/build/package/opencore/pvplayer.cfg $(AE_TEST_DIR)
+	$(quiet) $(CP) $(SRC_ROOT)/tools_v2/build/package/opencore/elem/default/pvplayer.cfg $(AE_TEST_DIR)
 	$(quiet) $(CP) $(SRC_ROOT)/engines/author/test/test_input/* $(AE_TEST_DIR)
 	$(quiet) export LD_LIBRARY_PATH=${BUILD_ROOT}/installed_lib/${HOST_ARCH}; cd $(AE_TEST_DIR) && ${BUILD_ROOT}/bin/${HOST_ARCH}/$(AE_TARGET) $(TEST_ARGS) $(SOURCE_ARGS)
 

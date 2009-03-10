@@ -221,6 +221,12 @@ class Oscl_File : public HeapBase
          *   When using RFileBuf access mode with an RFile handle, the RFileBuf
          *   will be attached to the open RFile handle.
          *
+         *   To use the external file handle, the caller starts with a native file handle to an open file.  The caller must
+         *   wrap the native file handle in an OsclFileHandle object, pass the OsclFileHandle pointer to SetFileHandle,
+         *   call Oscl_File::Open, then proceed to use the Oscl_File object, finally calling Oscl_File::Close.
+         *   In this usage mode, Oscl_File::Open and Oscl_File::Close do not actually call native file open and close.
+         *   It is assumed that the caller will close the original native file handle after usage is complete.
+         *
          * @param aHandle: container for an open file handle.
          * @return returns 0 if successful, non-zero if error.
          *

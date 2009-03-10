@@ -553,7 +553,7 @@ class PVMFDynamicCircularArray
                     /* If after purging all elements, we want to determine the TS of the previous element
                      * (with DeterminePrevTimeStampPeek()), it will give as false information if the
                      * seqnum has wrapped around. So because of that, we set aPrevSeqNumBaseOut to be smaller
-                     * than the current seqnum (RIO-4021).
+                     * than the current seqnum.
                      */
                     aPrevSeqNumBaseOut = aSeqNum - 1;
 

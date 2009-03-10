@@ -1148,7 +1148,6 @@ static TOsclThreadFuncRet OSCL_THREAD_DECL sockthreadmain2(TOsclThreadFuncArg ar
     //create logger appenders.
     PVLoggerAppender* appender;
 
-#if 1
 //File logger
     //find an unused filename so we don't over-write any prior logs
     Oscl_FileServer fs;
@@ -1174,12 +1173,6 @@ static TOsclThreadFuncRet OSCL_THREAD_DECL sockthreadmain2(TOsclThreadFuncArg ar
     appender = TextFileAppender<TimeAndIdLayout, 1024>::CreateAppender((OSCL_TCHAR*)filename.get_cstr());
     OsclRefCounterSA<LogAppenderDestructDealloc<TextFileAppender<TimeAndIdLayout, 1024> > > *appenderRefCounter =
         new OsclRefCounterSA<LogAppenderDestructDealloc<TextFileAppender<TimeAndIdLayout, 1024> > >(appender);
-#else
-//stderr logger.
-    appender = new StdErrAppender<TimeAndIdLayout, 1024>();
-    OsclRefCounterSA<LogAppenderDestructDealloc<StdErrAppender<TimeAndIdLayout, 1024> > > *appenderRefCounter =
-        new OsclRefCounterSA<LogAppenderDestructDealloc<StdErrAppender<TimeAndIdLayout, 1024> > >(appender);
-#endif
     //Set logging options.
     OsclSharedPtr<PVLoggerAppender> appenderPtr(appender, appenderRefCounter);
     PVLogger *rootnode = PVLogger::GetLoggerObject("");

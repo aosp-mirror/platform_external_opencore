@@ -24,6 +24,8 @@
 #endif
 
 
+#include "pv_mime_string_utils.h"
+
 #if defined(__linux__) || defined(linux)
 #define CONFIG_FILE_PATH _STRLIT("")
 #endif
@@ -85,6 +87,16 @@ bool test_base::Init()
     iSdkInitInfo.iIncomingVideoFormats.push_back(iVidSinkFormatType.getMIMEStrPtr());
 
     iSdkInitInfo.iOutgoingVideoFormats.push_back(iVidSrcFormatType.getMIMEStrPtr());
+
+    if (pv_mime_strcmp(iVidSinkFormatType.getMIMEStrPtr(), PVMF_MIME_M4V) == 0)
+    {
+        iSdkInitInfo.iIncomingVideoFormats.push_back(PVMF_MIME_YUV420);
+    }
+
+    if (pv_mime_strcmp(iVidSrcFormatType.getMIMEStrPtr(), PVMF_MIME_M4V) == 0)
+    {
+        iSdkInitInfo.iOutgoingVideoFormats.push_back(PVMF_MIME_YUV420);
+    }
 
 
     OSCL_TRY(error, iInitCmdId = terminal->Init(iSdkInitInfo));

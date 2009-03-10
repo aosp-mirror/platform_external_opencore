@@ -100,6 +100,7 @@
 
 //Default Fast-track download file
 #define DEFAULT_FASTTRACK_DL_FILE "test.pvx"
+#undef USE_NEW_PVMF_COMMONSOURCE_CONTEXT_DATA
 #define USE_NEW_PVMF_COMMONSOURCE_CONTEXT_DATA 1
 #define USE_NEW_PVMF_SOURCE_CONTEXT_DATA	1
 #define DLA_TIMEOUT_MSEC (30*1000)
@@ -298,10 +299,6 @@ void pvplayer_async_test_cpmdlapassthru::Run()
                         PVMFSourceContextDataStreaming* streamingContext =
                             OSCL_STATIC_CAST(PVMFSourceContextDataStreaming*, sourceContextStream);
                         streamingContext->iStreamStatsLoggingURL = wFileName;
-#if 0
-                        streamingContext->iProxyName = _STRLIT_WCHAR("");
-                        streamingContext->iProxyPort = 8080;
-#endif
                     }
 
                     PVInterface* sourceContextDownload = NULL;
@@ -333,10 +330,6 @@ void pvplayer_async_test_cpmdlapassthru::Run()
                     //set logging url
                     iStreamDataSource = new PVMFStreamingDataSource();
                     iStreamDataSource->iStreamStatsLoggingURL = wFileName;
-#if 0
-                    iStreamDataSource->iProxyName = _STRLIT_WCHAR("");
-                    iStreamDataSource->iProxyPort = 8080;
-#endif
                     iDataSource->SetDataSourceContextData((OsclAny*)iStreamDataSource);
 #endif
                 }
@@ -361,10 +354,6 @@ void pvplayer_async_test_cpmdlapassthru::Run()
                     PVMFSourceContextDataStreaming* streamingContext =
                         OSCL_STATIC_CAST(PVMFSourceContextDataStreaming*, sourceContext);
                     streamingContext->iStreamStatsLoggingURL = wFileName;
-#if 0	//RTSP_PROXY_TEST	
-                    streamingContext->iProxyName = _STRLIT_WCHAR("");
-                    streamingContext->iProxyPort = 80;
-#endif
                 }
                 iDataSource->SetDataSourceContextData((OsclAny*)iSourceContextData);
 #endif

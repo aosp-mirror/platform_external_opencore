@@ -28,10 +28,10 @@
 #include "pv_omx_config_parser.h"
 
 
-#include "omx_core.h"
+#include "OMX_Core.h"
 #include "pvmf_omx_basedec_callbacks.h"     //used for thin AO in Decoder's callbacks
 #include "pv_omxcore.h"
-#include "omx_video.h"
+#include "OMX_Video.h"
 
 #define CONFIG_SIZE_AND_VERSION(param) \
 	    param.nSize=sizeof(param); \
@@ -191,6 +191,9 @@ PVMFOMXVideoDecNode::PVMFOMXVideoDecNode(int32 aPriority) :
     OSCL_TRY(err, iFsiFragmentAlloc.size(PVOMXVIDEODEC_MEDIADATA_POOLNUM, sizeof(PVMFYuvFormatSpecificInfo0)));
 
     OSCL_TRY(err, iPrivateDataFsiFragmentAlloc.size(PVOMXVIDEODEC_MEDIADATA_POOLNUM, sizeof(OsclAny *)));
+
+    iLastYUVWidth = 0;
+    iLastYUVHeight = 0;
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -248,6 +251,169 @@ PVMFStatus PVMFOMXVideoDecNode::HandlePortReEnable()
 
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                         (0, "PVMFOMXVideoDecNode::HandlePortReEnable() new output buffers %d, size %d", iNumOutputBuffers, iOMXComponentOutputBufferSize));
+
+
+
+        // Before allocating new set of output buffers, re-send Video FSI to
+        // media output node in case of dynamic port reconfiguration
+
+        sendFsi = true;
+        iCompactFSISettingSucceeded = false;
+
+        iLastYUVWidth = iYUVWidth ;
+        iLastYUVHeight = iYUVHeight;
+
+        // Check if Fsi configuration need to be sent
+        if (sendFsi)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                            (0, "PVMFOMXVideoDecNode::HandlePortReEnable - Re-sending YUV FSI after Dynamic port reconfiguration"));
+
+            int fsiErrorCode = 0;
+            OsclRefCounterMemFrag yuvFsiMemfrag;
+
+            OSCL_TRY(fsiErrorCode, yuvFsiMemfrag = iFsiFragmentAlloc.get(););
+
+            OSCL_FIRST_CATCH_ANY(fsiErrorCode, PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                                 (0, "PVMFOMXVideoDecNode::HandlePortReEnable() Failed to allocate memory for FSI")));
+
+            if (fsiErrorCode == 0)
+            {
+                PVMFYuvFormatSpecificInfo0* fsiInfo = OSCL_PLACEMENT_NEW(yuvFsiMemfrag.getMemFragPtr(), PVMFYuvFormatSpecificInfo0());
+                if (fsiInfo != NULL)
+                {
+                    fsiInfo->uid = PVMFYuvFormatSpecificInfo0_UID;
+                    fsiInfo->video_format = iYUVFormat;
+                    fsiInfo->display_width = iYUVWidth;
+                    fsiInfo->display_height = iYUVHeight;
+                    fsiInfo->num_buffers = iNumOutputBuffers;
+                    fsiInfo->buffer_size = iOMXComponentOutputBufferSize;
+
+                    if (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_H264_VIDEO ||
+                            ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_H264_VIDEO_MP4 ||
+                            ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_H264_VIDEO_RAW ||
+                            ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_M4V ||
+                            ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_H2631998 ||
+                            ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_H2632000)
+                    {
+                        fsiInfo->width = (iYUVWidth + 15) & (~15);
+                        fsiInfo->height = (iYUVHeight + 15) & (~15);
+                    }
+                    else if (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_WMV)
+                    {
+                        fsiInfo->width = (iYUVWidth + 3) & -4;
+                        fsiInfo->height = iYUVHeight;
+                    }
+                    else
+                    {
+                        fsiInfo->width = iYUVWidth;
+                        fsiInfo->height = iYUVHeight;
+                    }
+
+                    OsclMemAllocator alloc;
+                    int32 KeyLength = oscl_strlen(PVMF_FORMAT_SPECIFIC_INFO_KEY_YUV) + 1;
+                    PvmiKeyType KvpKey = (PvmiKeyType)alloc.ALLOCATE(KeyLength);
+
+                    if (NULL == KvpKey)
+                    {
+                        return false;
+                    }
+
+                    oscl_strncpy(KvpKey, PVMF_FORMAT_SPECIFIC_INFO_KEY_YUV, KeyLength);
+                    int32 err;
+
+                    OSCL_TRY(err, ((PVMFOMXDecPort*)iOutPort)->pvmiSetPortFormatSpecificInfoSync(yuvFsiMemfrag, KvpKey););
+                    if (err != OsclErrNone)
+                    {
+                        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                                        (0, "PVMFOMXVideoDecNode::HandlePortReEnable - Problem to set FSI"));
+
+                    }
+                    else
+                    {
+                        sendFsi = false;
+                        iCompactFSISettingSucceeded = true;
+                    }
+
+
+
+                    alloc.deallocate((OsclAny*)(KvpKey));
+                    fsiInfo->video_format.~PVMFFormatType();
+                }
+                else
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                                    (0, "PVMFOMXVideoDecNode::HandlePortReEnable - Problem allocating Output FSI"));
+                    SetState(EPVMFNodeError);
+                    ReportErrorEvent(PVMFErrNoMemory);
+                    return false; // this is going to make everything go out of scope
+                }
+            }
+            else
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                                (0, "PVMFOMXVideoDecNode::HandlePortReEnable - Problem allocating Output FSI"));
+                return false; // this is going to make everything go out of scope
+            }
+
+
+        }
+
+        //Buffer allocation has to be done again in case we landed to port reconfiguration
+        PvmiKvp* kvp = NULL;
+        int numKvp = 0;
+        PvmiKeyType aIdentifier = (PvmiKeyType)PVMF_BUFFER_ALLOCATOR_KEY;
+        int32 err, err1;
+        ipExternalOutputBufferAllocatorInterface = NULL;
+
+        OSCL_TRY(err, ((PVMFOMXDecPort*)iOutPort)->pvmiGetBufferAllocatorSpecificInfoSync(aIdentifier, kvp, numKvp););
+
+        if ((err == OsclErrNone) && (NULL != kvp))
+        {
+            ipExternalOutputBufferAllocatorInterface = (PVInterface*) kvp->value.key_specific_value;
+
+            if (ipExternalOutputBufferAllocatorInterface)
+            {
+                PVInterface* pTempPVInterfacePtr = NULL;
+
+                OSCL_TRY(err, ipExternalOutputBufferAllocatorInterface->queryInterface(PVMFFixedSizeBufferAllocUUID, pTempPVInterfacePtr););
+
+                OSCL_TRY(err1, ((PVMFOMXDecPort*)iOutPort)->releaseParametersSync(kvp, numKvp););
+
+                if (err1 != OsclErrNone)
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                                    (0, "PVMFOMXVideoDecNode::HandlePortReEnable - Unable to Release Parameters"));
+                }
+
+                if ((err == OsclErrNone) && (NULL != pTempPVInterfacePtr))
+                {
+                    ipFixedSizeBufferAlloc = OSCL_STATIC_CAST(PVMFFixedSizeBufferAlloc*, pTempPVInterfacePtr);
+
+                    uint32 iNumBuffers, iBufferSize;
+
+                    iNumBuffers = ipFixedSizeBufferAlloc->getNumBuffers();
+                    iBufferSize = ipFixedSizeBufferAlloc->getBufferSize();
+
+                    if ((iNumBuffers < iParamPort.nBufferCountMin) || (iBufferSize < iOMXComponentOutputBufferSize))
+                    {
+                        ipExternalOutputBufferAllocatorInterface->removeRef();
+                        ipExternalOutputBufferAllocatorInterface = NULL;
+                    }
+                    else
+                    {
+                        iNumOutputBuffers = iNumBuffers;
+                        iOMXComponentOutputBufferSize = iBufferSize;
+                    }
+                }
+                else
+                {
+                    ipExternalOutputBufferAllocatorInterface->removeRef();
+                    ipExternalOutputBufferAllocatorInterface = NULL;
+                }
+            }
+        }
+
 
         /* Allocate output buffers */
         if (!CreateOutMemPool(iNumOutputBuffers))
@@ -593,6 +759,175 @@ bool PVMFOMXVideoDecNode::NegotiateComponentParameters(OMX_PTR aOutputParameters
     if (iNumOutputBuffers < iParamPort.nBufferCountMin)
         iNumOutputBuffers = iParamPort.nBufferCountMin;
 
+    //Send the FSI information to media output node here, before setting output
+    //port parameters to the omx component
+
+    if (iLastYUVWidth != iYUVWidth || iYUVHeight != iLastYUVHeight)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                        (0, "PVMFOMXVideoDecNode::NegotiateComponentParameters - Sending YUV FSI"));
+
+        // set a flag to send Fsi configuration
+        sendFsi = true;
+        iCompactFSISettingSucceeded = false;
+        //store new values for reference
+        iLastYUVWidth = iYUVWidth ;
+        iLastYUVHeight = iYUVHeight;
+    }
+
+    // Check if Fsi configuration need to be sent
+    if (sendFsi)
+    {
+        int fsiErrorCode = 0;
+        OsclRefCounterMemFrag yuvFsiMemfrag;
+
+        OSCL_TRY(fsiErrorCode, yuvFsiMemfrag = iFsiFragmentAlloc.get(););
+
+        OSCL_FIRST_CATCH_ANY(fsiErrorCode, PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                             (0, "PVMFOMXVideoDecNode::NegotiateComponentParameters() Failed to allocate memory for FSI")));
+
+        if (fsiErrorCode == 0)
+        {
+            PVMFYuvFormatSpecificInfo0* fsiInfo = OSCL_PLACEMENT_NEW(yuvFsiMemfrag.getMemFragPtr(), PVMFYuvFormatSpecificInfo0());
+            if (fsiInfo != NULL)
+            {
+                fsiInfo->uid = PVMFYuvFormatSpecificInfo0_UID;
+                fsiInfo->video_format = iYUVFormat;
+                fsiInfo->display_width = iYUVWidth;
+                fsiInfo->display_height = iYUVHeight;
+                fsiInfo->num_buffers = iNumOutputBuffers;
+                fsiInfo->buffer_size = iOMXComponentOutputBufferSize;
+
+                if (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_H264_VIDEO ||
+                        ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_H264_VIDEO_MP4 ||
+                        ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_H264_VIDEO_RAW ||
+                        ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_M4V ||
+                        ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_H2631998 ||
+                        ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_H2632000)
+                {
+                    fsiInfo->width = (iYUVWidth + 15) & (~15);
+                    fsiInfo->height = (iYUVHeight + 15) & (~15);
+                }
+                else if (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_WMV)
+                {
+                    fsiInfo->width = (iYUVWidth + 3) & -4;
+                    fsiInfo->height = iYUVHeight;
+                }
+                else
+                {
+                    fsiInfo->width = iYUVWidth;
+                    fsiInfo->height = iYUVHeight;
+                }
+
+                OsclMemAllocator alloc;
+                int32 KeyLength = oscl_strlen(PVMF_FORMAT_SPECIFIC_INFO_KEY_YUV) + 1;
+                PvmiKeyType KvpKey = (PvmiKeyType)alloc.ALLOCATE(KeyLength);
+
+                if (NULL == KvpKey)
+                {
+                    return false;
+                }
+
+                oscl_strncpy(KvpKey, PVMF_FORMAT_SPECIFIC_INFO_KEY_YUV, KeyLength);
+                int32 err;
+
+                OSCL_TRY(err, ((PVMFOMXDecPort*)iOutPort)->pvmiSetPortFormatSpecificInfoSync(yuvFsiMemfrag, KvpKey););
+
+                if (err != OsclErrNone)
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                                    (0, "PVMFOMXVideoDecNode::NegotiateComponentParameters - Problem to set FSI"));
+
+
+                }
+                else
+                {
+                    iCompactFSISettingSucceeded = true;
+                    sendFsi = false;
+                }
+
+
+                alloc.deallocate((OsclAny*)(KvpKey));
+                fsiInfo->video_format.~PVMFFormatType();
+            }
+            else
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                                (0, "PVMFOMXVideoDecNode::NegotiateComponentParameters - Problem allocating Output FSI"));
+                SetState(EPVMFNodeError);
+                ReportErrorEvent(PVMFErrNoMemory);
+                return false; // this is going to make everything go out of scope
+            }
+        }
+        else
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                            (0, "PVMFOMXVideoDecNode::NegotiateComponentParameters - Problem allocating Output FSI"));
+            return false; // this is going to make everything go out of scope
+        }
+
+
+    }
+
+    //Try querying the buffer allocator KVP for output buffer allocation outside the node
+
+    PvmiKvp* kvp = NULL;
+    int numKvp = 0;
+    PvmiKeyType aIdentifier = (PvmiKeyType)PVMF_BUFFER_ALLOCATOR_KEY;
+    int32 err, err1;
+    ipExternalOutputBufferAllocatorInterface = NULL;
+
+    OSCL_TRY(err, ((PVMFOMXDecPort*)iOutPort)->pvmiGetBufferAllocatorSpecificInfoSync(aIdentifier, kvp, numKvp););
+
+    if ((err == OsclErrNone) && (NULL != kvp))
+    {
+        ipExternalOutputBufferAllocatorInterface = (PVInterface*) kvp->value.key_specific_value;
+
+        if (ipExternalOutputBufferAllocatorInterface)
+        {
+            PVInterface* pTempPVInterfacePtr = NULL;
+
+            OSCL_TRY(err, ipExternalOutputBufferAllocatorInterface->queryInterface(PVMFFixedSizeBufferAllocUUID, pTempPVInterfacePtr););
+
+            OSCL_TRY(err1, ((PVMFOMXDecPort*)iOutPort)->releaseParametersSync(kvp, numKvp););
+
+            if (err1 != OsclErrNone)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                                (0, "PVMFOMXVideoDecNode::NegotiateComponentParameters - Unable to Release Parameters"));
+            }
+
+
+            if ((err == OsclErrNone) && (NULL != pTempPVInterfacePtr))
+            {
+                ipFixedSizeBufferAlloc = OSCL_STATIC_CAST(PVMFFixedSizeBufferAlloc*, pTempPVInterfacePtr);
+
+                uint32 iNumBuffers, iBufferSize;
+
+                iNumBuffers = ipFixedSizeBufferAlloc->getNumBuffers();
+                iBufferSize = ipFixedSizeBufferAlloc->getBufferSize();
+
+                if ((iNumBuffers < iParamPort.nBufferCountMin) || (iBufferSize < iOMXComponentOutputBufferSize))
+                {
+                    ipExternalOutputBufferAllocatorInterface->removeRef();
+                    ipExternalOutputBufferAllocatorInterface = NULL;
+                }
+                else
+                {
+                    iNumOutputBuffers = iNumBuffers;
+                    iOMXComponentOutputBufferSize = iBufferSize;
+                }
+            }
+            else
+            {
+                ipExternalOutputBufferAllocatorInterface->removeRef();
+                ipExternalOutputBufferAllocatorInterface = NULL;
+
+            }
+        }
+    }
+
+
     iParamPort.nBufferCountActual = iNumOutputBuffers;
     CONFIG_SIZE_AND_VERSION(iParamPort);
 
@@ -884,12 +1219,7 @@ bool PVMFOMXVideoDecNode::InitDecoder(PVMFSharedMediaDataPtr& DataIn)
     }
 
     //Varibles initialization
-    sendFsi = true;
-
-    iLastYUVWidth = 0;
-    iLastYUVHeight = 0;
-
-
+    //sendFsi = true;
 
     return true;
 }
@@ -1159,22 +1489,12 @@ bool PVMFOMXVideoDecNode::QueueOutputBuffer(OsclSharedPtr<PVMFMediaDataImpl> &me
         mediaDataOut->setSeqNum(iSeqNum++);
 
         PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iDataPathLogger, PVLOGMSG_INFO, (0, ":PVMFOMXVideoDecNode::QueueOutputFrame(): - SeqNum=%d, TS=%d", iSeqNum, iOutTimeStamp));
-        if (iLastYUVWidth != iYUVWidth || iYUVHeight != iLastYUVHeight)
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                            (0, "PVMFOMXVideoDecNode::QueueOutputFrame - Sending YUV FSI"));
-
-            // set a flag to send Fsi configuration
-            sendFsi = true;
-            //store new values for reference
-            iLastYUVWidth = iYUVWidth ;
-            iLastYUVHeight = iYUVHeight;
-        }
 
         int fsiErrorCode = 0;
 
+
         // Check if Fsi configuration need to be sent
-        if (sendFsi)
+        if (sendFsi && !iCompactFSISettingSucceeded)
         {
             OsclRefCounterMemFrag yuvFsiMemfrag;
 
@@ -1214,9 +1534,33 @@ bool PVMFOMXVideoDecNode::QueueOutputBuffer(OsclSharedPtr<PVMFMediaDataImpl> &me
                         fsiInfo->height = iYUVHeight;
                     }
 
-                    //mediaDataOut->setFormatSpecificInfo(yuvFsiMemfrag);
-                    ((PVMFOMXDecPort*)iOutPort)->pvmiSetPortFormatSpecificInfoSync(yuvFsiMemfrag);
+                    OsclMemAllocator alloc;
+                    int32 KeyLength = oscl_strlen(PVMF_FORMAT_SPECIFIC_INFO_KEY) + 1;
+                    PvmiKeyType KvpKey = (PvmiKeyType)alloc.ALLOCATE(KeyLength);
+
+                    if (NULL == KvpKey)
+                    {
+                        SetState(EPVMFNodeError);
+                        ReportErrorEvent(PVMFErrNoMemory);
+                        return false;
+                    }
+
+                    oscl_strncpy(KvpKey, PVMF_FORMAT_SPECIFIC_INFO_KEY, KeyLength);
+                    int32 err;
+
+                    OSCL_TRY(err, ((PVMFOMXDecPort*)iOutPort)->pvmiSetPortFormatSpecificInfoSync(yuvFsiMemfrag, KvpKey););
+                    if (err != OsclErrNone)
+                    {
+                        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                                        (0, "PVMFOMXVideoDecNode::HandlePortReEnable - Problem to set FSI"));
+
+                    }
+
+
+                    alloc.deallocate((OsclAny*)(KvpKey));
                     fsiInfo->video_format.~PVMFFormatType();
+
+
                 }
                 else
                 {
@@ -1238,6 +1582,8 @@ bool PVMFOMXVideoDecNode::QueueOutputBuffer(OsclSharedPtr<PVMFMediaDataImpl> &me
             // Reset the flag
             sendFsi = false;
         }
+
+
 
         // in case of special YVU format, attach fsi to every outgoing message containing ptr to private data
         if (iYUVFormat == PVMF_MIME_YUV420_SEMIPLANAR_YVU)
@@ -1266,6 +1612,7 @@ bool PVMFOMXVideoDecNode::QueueOutputBuffer(OsclSharedPtr<PVMFMediaDataImpl> &me
                 return false; // this is going to make everything go out of scope
             }
         }
+
 
         if (fsiErrorCode == 0)
         {

@@ -610,81 +610,11 @@ int SATD_MB(uint8 *cand, uint8 *cur, int dmin)
 {
     int cost;
 
-#if 1
 
     dmin = (dmin << 16) | 24;
     cost = AVCSAD_Macroblock_C(cand, cur, dmin, NULL);
 
     return cost;
-#else
-    int16 res[256], *pres; // residue
-    int m0, m1, m2, m3;
-    int j, k;
-    // calculate SATD
-    pres = res;
-    // horizontal transform
-    for (j = 0; j < 16; j++)
-    {
-        k = 4;
-        while (k > 0)
-        {
-            m0 = cur[0] - cand[0];
-            m3 = cur[3] - cand[3];
-            m0 += m3;
-            m3 = m0 - (m3 << 1);
-            m1 = cur[1] - cand[1];
-            m2 = cur[2] - cand[2];
-            m1 += m2;
-            m2 = m1 - (m2 << 1);
-            pres[0] = m0 + m1;
-            pres[2] = m0 - m1;
-            pres[1] = m2 + m3;
-            pres[3] = m3 - m2;
-
-            cur += 4;
-            pres += 4;
-            cand += 4;
-            k--;
-        }
-        cand += 8;
-    }
-    /* vertical transform */
-    cost = 0;
-    for (j = 0; j < 4; j++)
-    {
-        pres = res + (j << 6);
-        k = 16;
-        while (k > 0)
-        {
-            m0 = pres[0];
-            m3 = pres[3<<4];
-            m0 += m3;
-            m3 = m0 - (m3 << 1);
-            m1 = pres[1<<4];
-            m2 = pres[2<<4];
-            m1 += m2;
-            m2 = m1 - (m2 << 1);
-
-            pres[0] = m0 = m0 + m1;
-            cost += ((m0 > 0) ? m0 : -m0);
-            m1 = m0 - (m1 << 1);
-            cost += ((m1 > 0) ? m1 : -m1);
-            m3 = m2 + m3;
-            cost += ((m3 > 0) ? m3 : -m3);
-            m2 = m3 - (m2 << 1);
-            cost += ((m2 > 0) ? m2 : -m2);
-
-            pres++;
-            k--;
-        }
-        if ((cost >> 1) > dmin) /* early drop out */
-        {
-            return (cost >> 1);
-        }
-    }
-
-    return (cost >> 1);
-#endif
 }
 
 

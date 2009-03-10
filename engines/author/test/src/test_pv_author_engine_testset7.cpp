@@ -357,10 +357,7 @@ bool pv_mediainput_async_test_reset::AddMediaTrack()
 
         }
 
-        if (!PVAETestNodeConfig::ConfigureAudioEncoder(iAudioEncoderConfig, iAudioEncoderMimeType))
-        {
-            return false;
-        }
+
     }
 
     if (iAddVideoMediaTrack)
@@ -433,6 +430,25 @@ bool pv_mediainput_async_test_reset::ConfigureVideoEncoder()
     return true;
 }
 
+bool pv_mediainput_async_test_reset::ConfigureAudioEncoder()
+{
+
+    PVAudioEncExtensionInterface* config;
+    config = OSCL_STATIC_CAST(PVAudioEncExtensionInterface*, iAudioEncoderConfig);
+    if (!config)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                        (0, "pv_mediainput_async_test_reset::Encoder: No configuration needed"));
+
+        return true;
+    }
+
+    if (!PVAETestNodeConfig::ConfigureAudioEncoder(iAudioEncoderConfig, iAudioEncoderMimeType))
+    {
+        return false;
+    }
+    return true;
+}
 ////////////////////////////////////////////////////////////////////////////
 void pv_mediainput_async_test_reset::ResetAuthorConfig()
 {
@@ -778,6 +794,10 @@ void pv_mediainput_async_test_reset::CommandCompleted(const PVCmdResponse& aResp
                 if (iAddVideoMediaTrack)
                 {
                     ConfigureVideoEncoder();
+                }
+                if (iAddAudioMediaTrack)
+                {
+                    ConfigureAudioEncoder();
                 }
 
                 if (PVAE_CMD_ADD_MEDIA_TRACK == iCurrentResetState)

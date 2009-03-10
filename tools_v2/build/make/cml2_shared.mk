@@ -3,7 +3,7 @@ SHARED_LIB_LOCAL_PATH := $(call get_makefile_dir)
 
 
 # create a rule to install the CML2 config header
-$(eval $(call HDRINST_TEMPLATE,pv_config.h,$(abspath $(CFG_DIR)),$(INCDESTDIR)))
+$(eval $(call INST_TEMPLATE,pv_config.h,$(abspath $(CFG_DIR)),$(INCDESTDIR)))
 
 $(INCDESTDIR)/ALL_HDRS_INSTALLED: $(INCDESTDIR)/pv_config.h
 

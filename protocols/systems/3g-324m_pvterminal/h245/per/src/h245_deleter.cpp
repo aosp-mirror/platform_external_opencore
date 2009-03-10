@@ -448,6 +448,7 @@ void Delete_NonStandardMessage(PS_NonStandardMessage x)
 /* <===============================================> */
 void Delete_NonStandardParameter(PS_NonStandardParameter x)
 {
+    if (x->data.size > 0) OSCL_DEFAULT_FREE(x->data.data);
     Delete_NonStandardIdentifier(&x->nonStandardIdentifier);
 }
 
@@ -2260,6 +2261,7 @@ void Delete_T38fax(PS_T38fax x)
 /* <================================> */
 void Delete_Nlpid(PS_Nlpid x)
 {
+    if (x->nlpidData.size > 0) OSCL_DEFAULT_FREE(x->nlpidData.data);
     Delete_DataProtocolCapability(&x->nlpidProtocol);
 }
 
@@ -2676,6 +2678,7 @@ void Delete_GenericCapability(PS_GenericCapability x)
     }
     if (x->option_of_nonCollapsingRaw)
     {
+        if (x->nonCollapsingRaw.size > 0) OSCL_DEFAULT_FREE(x->nonCollapsingRaw.data);
     }
     if (x->option_of_transport)
     {
@@ -3186,9 +3189,11 @@ void Delete_H222LogicalChannelParameters(PS_H222LogicalChannelParameters x)
     }
     if (x->option_of_programDescriptors)
     {
+        if (x->programDescriptors.size > 0) OSCL_DEFAULT_FREE(x->programDescriptors.data);
     }
     if (x->option_of_streamDescriptors)
     {
+        if (x->streamDescriptors.size > 0) OSCL_DEFAULT_FREE(x->streamDescriptors.data);
     }
     /* ------------------------------- */
     /* ---- Extension Begins Here ---- */
@@ -5659,6 +5664,7 @@ void Delete_DmT38fax(PS_DmT38fax x)
 /* <==================================> */
 void Delete_DmNlpid(PS_DmNlpid x)
 {
+    if (x->nlpidData.size > 0) OSCL_DEFAULT_FREE(x->nlpidData.data);
     Delete_DataProtocolCapability(&x->nlpidProtocol);
 }
 
@@ -7552,6 +7558,7 @@ void Delete_FunctionNotSupported(PS_FunctionNotSupported x)
     Delete_FnsCause(&x->fnsCause);
     if (x->option_of_returnedFunction)
     {
+        if (x->returnedFunction.size > 0) OSCL_DEFAULT_FREE(x->returnedFunction.data);
     }
     /* ------------------------------- */
     /* ---- Extension Begins Here ---- */

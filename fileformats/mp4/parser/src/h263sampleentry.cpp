@@ -108,7 +108,6 @@ H263SampleEntry::H263SampleEntry(MP4_FF_FILE *fp, uint32 size, uint32 type)
 
                 if (_pH263SpecificAtom->MP4Success())
                 {
-#if 1
                     PV_MP4_FF_NEW(fp->auditCB, H263DecoderSpecificInfo, (fp, true), _pH263decSpecificInfo);
 
                     _pH263decSpecificInfo->_VendorCode = _pH263SpecificAtom->getVendorCode();
@@ -117,7 +116,6 @@ H263SampleEntry::H263SampleEntry(MP4_FF_FILE *fp, uint32 size, uint32 type)
                     _pH263decSpecificInfo->_codec_profile = _pH263SpecificAtom->getCodecProfile();
                     _pH263decSpecificInfo->_max_width = _width;
                     _pH263decSpecificInfo->_max_height = _height;
-#endif
                 }
             }
         }

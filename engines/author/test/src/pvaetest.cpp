@@ -40,7 +40,7 @@
 #endif
 
 #if USE_OMX_ENC_NODE
-#include "omx_core.h"
+#include "OMX_Core.h"
 #endif
 
 FILE* file;
@@ -59,8 +59,10 @@ const uint16 KVideoIFrameInterval = 10;
 const uint8 KH263VideoProfile = 0;
 const uint8 KH263VideoLevel = 10;
 const uint32 KAudioBitrate = 12200;
+const uint32 KAudioBitrateWB = 15850;
 const uint32 KAACAudioBitrate = 64000;
 const uint32 KAudioTimescale = 8000;
+const uint32 KAudioTimescaleWB = 16000;
 const uint32 KAudioNumChannels = 1;
 const uint32 KTextTimescale = 90000;
 const uint32 KTextFrameWidth = 176;

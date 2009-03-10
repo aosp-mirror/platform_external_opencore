@@ -178,19 +178,6 @@ OSCL_EXPORT_REF void PER::Decode(uint8* pBuffer, uint32 size)
     // Save original start of pBuffer (for later freeing)
     pBufferTop = pBuffer;
 
-#if 0	// saved for testing purposes
-    Oscl_FileServer infileserv;
-    Oscl_File infile;
-    infileserv.Connect();
-    if (infile.Open("test.245", Oscl_File::MODE_READ, infileserv) == 0)
-    {
-        uint8 codeword[2000];
-        pBuffer = codeword;
-        decodeSizeLeft = infile.Read(codeword, 1, 2000);
-        infile.Close();
-    }
-    infileserv.Close();
-#endif
 
     // ----------------------------------------------------------
     // Decode messages from pBuffer.  There may be multiple msgs.

@@ -135,55 +135,6 @@ void RefListInit(AVCCommonObj *video)
 
     return ;
 }
-#if 0
-/** see subclause 8.2.4.2.5, keep alternating parity regardless of the frame_num until
-there's no more to alternate. */
-void 	GenPicListFromFrameList(AVCCommonObj *video, int IsL1, int long_term)
-{
-    AVCFrameStore **frame ;
-    AVCPictureData **pic;
-    int *num_pic;
-
-
-    int (*is_ref)(AVCPictureData *s);
-
-    if (long_term)
-        is_ref = video->is_long_ref;
-    else
-        is_ref = video->is_short_ref;
-
-    if (!long_term)
-    {
-        if (!IsL1) /* L0 */
-        {
-            frame = video->refFrameList0ShortTerm;
-            pic = video->RefPicList0;
-            num_pic = &(video->refList0Size);
-        }
-        else
-        {
-            frame = video->refFrameList1ShortTerm;
-            pic = video->RefPicList1;
-            num_pic = &(video->refList1Size);
-        }
-    }
-    else
-    {
-        frame = video->refFrameListLongTerm;
-        if (!IsL1)
-        {
-            pic = video->RefPicList0 + video->refList0Size;
-            num_pic = &(video->refList0Size);
-        }
-        else
-        {
-            pic = video->RefPicList1 + video->refList1Size;
-            num_pic = &(video->refList1Size);
-        }
-    }
-
-}
-#endif
 /* see subclause 8.2.4.3 */
 AVCStatus ReOrderList(AVCCommonObj *video)
 {
@@ -204,17 +155,6 @@ AVCStatus ReOrderList(AVCCommonObj *video)
             return AVC_FAIL;
         }
     }
-#if 0
-    if (slice_type == AVC_B_SLICE)
-    {
-        if (sliceHdr->ref_pic_list_reordering_flag_l1)
-        {
-            status = ReorderRefPicList(video, 1);
-            if (status != AVC_SUCCESS)
-                return status;
-        }
-    }
-#endif
     return status;
 }
 

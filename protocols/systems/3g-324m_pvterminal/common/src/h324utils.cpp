@@ -958,7 +958,8 @@ unsigned GetFormatSpecificInfo(PS_DataType dataType,
         }
     }
 
-    if (config != NULL)
+    bool is_filler_fsi = IsFillerFsi(config->data, config->size);
+    if (config != NULL && !is_filler_fsi)
     {		// Found valid decoderConfig
         ret = config->size;
         fsi = config->data;

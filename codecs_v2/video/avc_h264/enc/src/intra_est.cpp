@@ -174,21 +174,6 @@ void MBIntraSearch(AVCEncObject *encvid, int mbnum, uint8 *curL, int picPitch)
         encvid->min_cost[mbnum] = min_cost; /* update min_cost */
     }
 
-#if 0
-    /* then do chroma search for intra mode */
-    if (intra == true && currMB->mb_intra == 0)
-    {
-        encvid->numFalseAlarm++;
-    }
-    else if (intra == true && currMB->mb_intra)
-    {
-        encvid->numDetected++;
-    }
-    else if (intra == false && currMB->mb_intra)
-    {
-        encvid->numMisDetected++;
-    }
-#endif
 
     if (currMB->mb_intra)
     {
@@ -2067,55 +2052,6 @@ void MBIntraSearch(AVCEncObject *encvid, AVCMacroblock *currMB, int mbNum)
 
     /* currently we're doing exhaustive search. Smart search will be used later */
 
-#if 0
-    /* I4 mode */
-    block_x = block_y = 0;
-
-    sadI4 = 24 * encvid->lambda_mode;  // cost function
-
-    for (component = 0; component < 4; component++)
-    {
-        block_x = ((component & 1) << 1);
-        block_y = ((component >> 1) << 1);
-        comp = curL;
-
-        for (SubBlock_indx = 0; SubBlock_indx < 4; SubBlock_indx++)
-        {
-            sad4 = Intra4x4PredSearch(encvid, block_x, block_y, comp);
-
-            sadI4 += sad4;
-
-            temp = SubBlock_indx & 1;
-            if (temp)
-            {
-                block_y++;
-                block_x--;
-                comp += ((pitch << 2) - 4);
-            }
-            else
-            {
-                block_x++;
-                comp += 4;
-            }
-        }
-        if (component&1)
-        {
-            curL += (pitch << 3) - 8;
-        }
-        else
-        {
-            curL += 8;
-        }
-    }
-
-    /* selection between intra4, intra16 or inter mode */
-    if (sadI4 < encvid->min_cost)
-    {
-        currMB->mb_intra = TRUE;
-        currMB->mbMode = AVC_I4;
-        encvid->min_cost = sadI4;
-    }
-#endif
     /* I16 modes */
     curL = currInput->YCbCr[0] + offset;
     video->pintra_pred_top = curL - pitch;

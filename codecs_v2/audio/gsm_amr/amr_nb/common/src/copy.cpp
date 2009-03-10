@@ -82,5 +82,5 @@ void Copy(
     Word16 L            /* i : vector length     */
 )
 {
-    oscl_memcpy(y, x, L*sizeof(*x));
+    oscl_memmove(y, x, L*sizeof(*x));
 }

@@ -27,7 +27,7 @@
 #include "oscl_error.h"
 #endif
 
-#include "omx_component.h"
+#include "OMX_Component.h"
 #include "pv_omxcore.h"
 
 // pv_omxregistry.h is only needed if NOT using CML2
@@ -600,8 +600,8 @@ OMX_ERRORTYPE AmrEncRegister()
 
     if (pCRT)
     {
-        pCRT->ComponentName = (OMX_STRING)"OMX.PV.amrenc";
-        pCRT->RoleString[0] = (OMX_STRING)"audio_encoder.amr";
+        pCRT->ComponentName = (OMX_STRING)"OMX.PV.amrencnb";
+        pCRT->RoleString[0] = (OMX_STRING)"audio_encoder.amrnb";
         pCRT->NumberOfRolesSupported = 1;
         pCRT->SharedLibraryOsclUuid = NULL;
 #if USE_DYNAMIC_LOAD_OMX_COMPONENTS

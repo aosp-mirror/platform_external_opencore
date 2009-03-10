@@ -31,6 +31,7 @@ PVFMVideoMIO::PVFMVideoMIO() :
 void PVFMVideoMIO::InitData()
 {
     iVideoFormat = PVMF_MIME_FORMAT_UNKNOWN;
+	iVideoSubFormat = PVMF_MIME_FORMAT_UNKNOWN;
     iVideoHeightValid = false;
     iVideoWidthValid = false;
     iVideoDisplayHeightValid = false;
@@ -75,6 +76,7 @@ void PVFMVideoMIO::ResetData()
 
     // Reset all the received media parameters.
     iVideoFormat = PVMF_MIME_FORMAT_UNKNOWN;
+    iVideoSubFormat = PVMF_MIME_FORMAT_UNKNOWN;
     iVideoHeightValid = false;
     iVideoWidthValid = false;
     iVideoDisplayHeightValid = false;
@@ -818,7 +820,17 @@ PVMFStatus PVFMVideoMIO::CopyVideoFrameData(uint8* aSrcBuffer, uint32 aSrcSize, 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFMVideoMIO::CopyVideoFrameData() Color converter instantiation did a leave"));
             return PVMFErrArgument;
         }
-        oscl_memcpy(aDestBuffer, aSrcBuffer, aSrcSize);
+
+        if (iVideoSubFormat == PVMF_MIME_YUV420_SEMIPLANAR_YVU)
+		{
+			PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, 
+				(0, "PVFMVideoMIO::CopyVideoFrameData() SubFormat is YUV SemiPlanar, Convert to YUV planar first"));
+            convertYUV420SPtoYUV420(aSrcBuffer, aDestBuffer, aSrcSize);
+        } 
+		else 
+		{
+            oscl_memcpy(aDestBuffer, aSrcBuffer, aSrcSize);
+        }
         aDestSize = aSrcSize;
     }
     else if (aSrcFormat == PVMF_MIME_YUV420 &&
@@ -1153,6 +1165,12 @@ void PVFMVideoMIO::setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParamete
         {
             //	iOutputFile.Write(aParameters[i].value.pChar_value, sizeof(uint8), (int32)aParameters[i].capacity);
         }
+        else if (pv_mime_strcmp(aParameters[i].key, MOUT_VIDEO_SUBFORMAT_KEY) == 0)
+        {
+            iVideoSubFormat = aParameters[i].value.pChar_value;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0,"PVFMVideoMIO::setParametersSync() Video SubFormat Key, Value %s", iVideoSubFormat.getMIMEStrPtr()));
+        }
         else
         {
             if (iVideoWidthValid && iVideoHeightValid && iVideoDisplayHeightValid && iVideoDisplayHeightValid && !iIsMIOConfigured)
@@ -1323,8 +1341,27 @@ void PVFMVideoMIO::Run()
     }
 }
 
+static inline void* byteOffset(void* p, uint32 offset) { return (void*)((uint8*)p + offset); }
 
+// convert a frame in YUV420 semiplanar format with VU ordering to YUV420 planar format
+void PVFMVideoMIO::convertYUV420SPtoYUV420(void* src, void* dst, uint32 len)
+{
+    // copy the Y plane
+    uint32 y_plane_size = iVideoWidth * iVideoHeight;
+    memcpy(dst, src, y_plane_size + iVideoWidth);
 
+    // re-arrange U's and V's
+    uint32* p = (uint32*)byteOffset(src, y_plane_size);
+    uint16* pu = (uint16*)byteOffset(dst, y_plane_size);
+    uint16* pv = (uint16*)byteOffset(pu, y_plane_size / 4);
 
+    int count = y_plane_size / 8;
+    do 
+	{
+        uint32 uvuv = *p++;
+        *pu++ = (uint16) (((uvuv >> 8) & 0xff) | ((uvuv >> 16) & 0xff00));
+        *pv++ = (uint16) ((uvuv & 0xff) | ((uvuv >> 8) & 0xff00));
+    } while (--count);
+}
 
 

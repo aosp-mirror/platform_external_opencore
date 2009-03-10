@@ -177,6 +177,10 @@ const PVMFStatus PVMFErrReleaseMetadataValueNotDone = (-29);
 */
 const PVMFStatus PVMFErrRedirect = (-30);
 /*
+ Error if a given method or API is not implemented. This is NOT the same as PVMFErrNotSupported.
+*/
+const PVMFStatus PVMFErrNotImplemented = (-31);
+/*
  Placeholder for last event in range.
  */
 const PVMFStatus PVMFErrLast = (-100);

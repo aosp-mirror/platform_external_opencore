@@ -48,11 +48,7 @@ endif
 HDR_FILES := $(notdir $(HDRS))
 LOCAL_INSTALLED_HDRS := $(HDR_FILES:%=$(INCDESTDIR)/%)
 
-# $(foreach hdr, $(strip $(HDRS)), $(eval $(call HDRINST_TEMPLATE,$(notdir $(hdr)),$(patsubst %/,%,$(call abspath,$(LOCAL_INCSRCDIR)/$(dir $(hdr)))),$(INCDESTDIR))))
-
-$(foreach hdr, $(strip $(HDRS)), $(eval $(call HDRINST_TEMPLATE,$(notdir $(hdr)),$(patsubst %/,%,$(LOCAL_INCSRCDIR)/$(dir $(hdr))),$(INCDESTDIR))))
-
-# $(info LOCAL_INSTALLED_HDRS = $(LOCAL_INSTALLED_HDRS))
+$(foreach hdr, $(strip $(HDRS)), $(eval $(call INST_TEMPLATE,$(notdir $(hdr)),$(patsubst %/,%,$(LOCAL_INCSRCDIR)/$(dir $(hdr))),$(INCDESTDIR))))
 
 $(INCDESTDIR)/ALL_HDRS_INSTALLED: $(LOCAL_INSTALLED_HDRS)
 
@@ -96,12 +92,14 @@ endif
 ifeq ($($(TARGET)_libmode),debug)
   TARGET_NAME_SUFFIX:=_debug
   OBJSUBDIR:=$(OBJSUBDIR)-dbg
-  XCXXFLAGS+=$(DEBUG_CXXFLAG)
+  XCPPFLAGS+=$(DEBUG_CPPFLAGS)
+  XCXXFLAGS+=$(DEBUG_CXXFLAGS)
 else
   TARGET_NAME_SUFFIX:=
   OBJSUBDIR:=$(OBJSUBDIR)-rel
   XCXXFLAGS+=$(OPT_CXXFLAG)
-  XCPPFLAGS+=$(RELEASE_CXXFLAG)
+  XCXXFLAGS+=$(RELEASE_CXXFLAGS)
+  XCPPFLAGS+=$(RELEASE_CPPFLAGS)
 endif
 
 ifneq ($(strip $(OPTIMIZE_FOR_PERFORMANCE_OVER_SIZE)),true)

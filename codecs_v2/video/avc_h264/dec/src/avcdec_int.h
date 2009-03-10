@@ -39,19 +39,6 @@ to the buffer, the current byte position and bit position.
 */
 typedef struct tagDecBitstream
 {
-#if 0
-    uint8 *bitstreamBuffer; /* pointer to buffer memory   */
-    int nal_size;		/* size of the current NAL unit */
-    int data_end_pos;  /* bitstreamBuffer size in bytes */
-    int read_pos;		/* next position to read from bitstreamBuffer  */
-    int count_zeros;   /* count number of consecutive zero */
-    uint current_word;	/* byte-swapped (MSB left) current word read from buffer */
-    int bit_left;      /* number of bit left in current_word */
-    uint prev_word;		/* in case for old data in previous buffer hasn't been flushed. */
-    int prev_bit_left;	/* bit left in the prev_word */
-    //AVCDec_Status (*AVC_GetData)(uint8 **buffer,uint *size);	/* callback to get more data */
-    void *userData;
-#else
     uint8 *bitstreamBuffer; /* pointer to buffer memory   */
     int nal_size;		/* size of the current NAL unit */
     int data_end_pos;  /* bitstreamBuffer size in bytes */
@@ -63,7 +50,6 @@ typedef struct tagDecBitstream
     int incnt_next;
     int bitcnt;
     void *userData;
-#endif
 } AVCDecBitstream;
 
 /**

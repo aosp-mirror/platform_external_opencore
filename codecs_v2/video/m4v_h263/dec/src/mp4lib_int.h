@@ -275,12 +275,6 @@ typedef struct tagVideoDecData
 
     PV_STATUS(*vlcDecCoeffIntra)(BitstreamDecVideo *stream, Tcoef *pTcoef/*, int intra_luma*/);
     PV_STATUS(*vlcDecCoeffInter)(BitstreamDecVideo *stream, Tcoef *pTcoef);
-#if 0
-    int (*vlcDequantIntraBlock)(void *video, int comp, int switched,
-                                uint8 *bitmaprow, uint8 *bitmapcol);
-    int (*vlcDequantInterBlock)(void *video, int comp,
-                                uint8 *bitmaprow, uint8 *bitmapcol);
-#endif
     int					initialized;
 
     /* Annex IJKT */

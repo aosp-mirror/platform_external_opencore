@@ -84,7 +84,14 @@ class PVCmnAsyncEventMsg : public CPVCmnInterfaceObserverMessage,
                 , PVAsyncInformationalEvent(PVT_INDICATION_INCOMING_TRACK)
         {};
 
-        ~PVCmnAsyncEventMsg() {};
+        ~PVCmnAsyncEventMsg()
+        {
+            if (iEventExtInterface)
+            {
+                iEventExtInterface->removeRef();
+                iEventExtInterface = NULL;
+            }
+        };
 
         void Set(const PVAsyncInformationalEvent& aEvent, PVEventType aType,
                  PVExclusivePtr aPtr,

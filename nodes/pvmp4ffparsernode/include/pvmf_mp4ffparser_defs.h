@@ -39,7 +39,6 @@ typedef enum
 
 // Capability mime strings
 #define PVMF_MP4FFPARSER_PORT_INPUT_FORMATS "x-pvmf/parser/mp4ff/input_formats"
-//#define PVMF_MP4FFPARSER_PORT_INPUT_FORMATS_VALTYPE "x-pvmf/parser/mp4ff/input_formats;valtype=int32"
 #define PVMF_MP4FFPARSER_PORT_INPUT_FORMATS_VALTYPE "x-pvmf/port/formattype;valtype=char*"
 
 #define PVMF_MP4FFPARSER_NODE_PSEUDO_STREAMING_BUFFER_DURATION_IN_MS 4000
