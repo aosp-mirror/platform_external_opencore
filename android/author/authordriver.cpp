@@ -446,8 +446,11 @@ void AuthorDriver::handleSetVideoEncoder(set_video_encoder_command *ac)
 
 void AuthorDriver::handleSetVideoSize(set_video_size_command *ac)
 {
-    if (mVideoInputMIO == NULL)
+    if (mVideoInputMIO == NULL) {
+        LOGE("camera MIO is NULL");
+        commandFailed(ac);
         return;
+    }
 
     // FIXME:
     // Platform-specific and temporal workaround to prevent video size from being set too large

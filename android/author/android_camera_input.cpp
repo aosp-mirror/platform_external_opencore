@@ -1135,12 +1135,17 @@ PVMFStatus AndroidCameraInput::postWriteAsync(const sp<IMemory>& frame)
     }
 
     // if first event, set timestamp to zero
-    uint32 timeStamp;
     if (iDataEventCounter == 0) {
         iStartTickCount = systemTime(SYSTEM_TIME_MONOTONIC) / 1000000;
-        timeStamp = 0;
+        iTimeStamp = 0;
     } else {
-        timeStamp = (systemTime(SYSTEM_TIME_MONOTONIC) / 1000000) - iStartTickCount;
+        uint32 timeStamp = (systemTime(SYSTEM_TIME_MONOTONIC) / 1000000) - iStartTickCount;
+        // Make sure that no two samples have the same timestamp
+        if (iTimeStamp != timeStamp) {
+            iTimeStamp = timeStamp;
+        } else {
+            ++iTimeStamp;
+        }
     }
 
     // get memory offset for frame buffer
@@ -1161,7 +1166,7 @@ PVMFStatus AndroidCameraInput::postWriteAsync(const sp<IMemory>& frame)
     // queue data to be sent to peer
     AndroidCameraInputMediaData data;
     data.iXferHeader.seq_num = iDataEventCounter++;
-    data.iXferHeader.timestamp = timeStamp;
+    data.iXferHeader.timestamp = iTimeStamp;
     data.iXferHeader.flags = 0;
     data.iXferHeader.duration = 0;
     data.iXferHeader.stream_id = 0;

@@ -16,7 +16,8 @@ LOCAL_SRC_FILES := \
 	src/pvmf_basic_errorinfomessage.cpp \
 	src/pvmi_kvp_util.cpp \
 	src/pvmf_mempool.cpp \
-	src/pvmf_duration_infomessage.cpp
+	src/pvmf_duration_infomessage.cpp \
+	src/pvmf_return_codes.cpp
 
 
 

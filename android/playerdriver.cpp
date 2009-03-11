@@ -21,6 +21,7 @@
 
 #include <sys/prctl.h>
 #include <sys/resource.h>
+#include <media/mediaplayer.h>  // For the error codes
 #include <media/thread_init.h>
 #include <utils/threads.h>
 #include <utils/List.h>
@@ -59,6 +60,7 @@
 #include "pvmf_node_interface.h"
 #include "pvmf_source_context_data.h"
 #include "pvmf_download_data_source.h"
+#include "pvmf_return_codes.h"  // for PVMFStatus
 #include "omx_core.h"
 #include "pv_omxmastercore.h"
 
@@ -867,12 +869,12 @@ void PlayerDriver::handleGetPosition(PlayerGetPosition* command)
 
 void PlayerDriver::handleGetStatus(PlayerGetStatus* command)
 {
-    PVPlayerState stat;
-    if (mPlayer->GetPVPlayerStateSync(stat) != PVMFSuccess) {
+    PVPlayerState state;
+    if (mPlayer->GetPVPlayerStateSync(state) != PVMFSuccess) {
         command->set(0);
     } else {
-        command->set(stat);
-        LOGV("status=%d", stat);
+        command->set(state);
+        LOGV("Player state = %d", state);
     }
 }
 
@@ -907,7 +909,7 @@ void PlayerDriver::handleStop(PlayerStop* command)
     }
     else
     {
-        LOGV("handleStop - Player Status = %d - Sending Reset instead of Stop\n",state);
+        LOGV("handleStop - Player State = %d - Sending Reset instead of Stop\n", state);
         // TODO: Previously this called CancelAllCommands and RemoveDataSource
         handleReset(new PlayerReset(command->callback(), command->cookie()));
         delete command;
@@ -1083,7 +1085,7 @@ void PlayerDriver::handleGetDurationComplete(PlayerGetDuration* cmd)
 void PlayerDriver::CommandCompleted(const PVCmdResponse& aResponse)
 {
     LOGV("CommandCompleted");
-    int status = aResponse.GetCmdStatus();
+    PVMFStatus status = aResponse.GetCmdStatus();
 
     if (mDoLoop) {
         mDoLoop = false;
@@ -1092,7 +1094,8 @@ void PlayerDriver::CommandCompleted(const PVCmdResponse& aResponse)
     }
 
     PlayerCommand* command = static_cast<PlayerCommand*>(aResponse.GetContext());
-    LOGV("Completed command %s status=%d", command ? command->toString(): "<null>", status);
+    LOGV("Completed command %s status=%s", command ? command->toString(): "<null>",
+         PVMFStatusToString(status));
     if (command == NULL) return;
 
     // FIXME: Ignore non-fatal seek errors because pvPlayerEngine returns these errors and retains it's state.
@@ -1144,8 +1147,14 @@ void PlayerDriver::CommandCompleted(const PVCmdResponse& aResponse)
         command->complete(NO_ERROR, true);
     } else {  
         // error occurred
-        if (status >= 0) status = -1;
-        mPvPlayer->sendEvent(MEDIA_ERROR, status);
+        LOGE("CommandCompleted with an error or info %s", PVMFStatusToString(status));
+        if (status <= PVMFErrFirst) {
+            mPvPlayer->sendEvent(MEDIA_ERROR, ::android::MEDIA_ERROR_UNKNOWN, status);
+        } else if (status >= PVMFInfoFirst) {
+            mPvPlayer->sendEvent(MEDIA_INFO, ::android::MEDIA_INFO_UNKNOWN, status);
+        } else {
+            LOGE("Ignoring: %d", status);
+        }
         command->complete(UNKNOWN_ERROR, false);
     }
 
@@ -1154,16 +1163,32 @@ void PlayerDriver::CommandCompleted(const PVCmdResponse& aResponse)
 
 void PlayerDriver::HandleErrorEvent(const PVAsyncErrorEvent& aEvent)
 {
-    int32_t eventType = aEvent.GetEventType();
-    LOGE("HandleErrorEvent: type=%d\n", eventType);
-    mPvPlayer->sendEvent(MEDIA_ERROR, eventType);
+    PVMFStatus status = aEvent.GetEventType();  
+
+    // Errors use negative codes (see pvmi/pvmf/include/pvmf_return_codes.h)
+    if (status > PVMFErrFirst) {
+        LOGE("HandleErrorEvent called with an non-error event [%d]!!", status);
+    }
+    LOGE("HandleErrorEvent: %s", PVMFStatusToString(status));
+    // TODO: Map more of the PV error code into the Android Media Player ones.
+    mPvPlayer->sendEvent(MEDIA_ERROR, ::android::MEDIA_ERROR_UNKNOWN, status);
 }
 
 void PlayerDriver::HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent)
 {
-    switch(aEvent.GetEventType()) {
+    PVMFStatus status = aEvent.GetEventType();  
+
+    // Errors use negative codes (see pvmi/pvmf/include/pvmf_return_codes.h)
+    if (status <= PVMFErrFirst) {
+        // Errors should go to the HandleErrorEvent handler, not the
+        // informational one.
+        LOGE("HandleInformationalEvent called with an error event [%d]!!", status);
+    }
+
+    LOGV("HandleInformationalEvent: %s", PVMFStatusToString(status));
+
+    switch(status) {
     case PVMFInfoEndOfData:
-        LOGV("PVMFInfoEndOfData");
         mEndOfData = true;
         if (mIsLooping) {
             mDoLoop = true;
@@ -1180,7 +1205,6 @@ void PlayerDriver::HandleInformationalEvent(const PVAsyncInformationalEvent& aEv
         break;
 
     case PVMFInfoBufferingStart:
-        LOGV("PVMFInfoBufferingStart");
         mPvPlayer->sendEvent(MEDIA_BUFFERING_UPDATE, 0);
         break;
 
@@ -1206,7 +1230,6 @@ void PlayerDriver::HandleInformationalEvent(const PVAsyncInformationalEvent& aEv
         break;
 
     case PVMFInfoDurationAvailable:
-        LOGV("PVMFInfoDurationAvailable event ....");
         {
             PVUuid infomsguuid = PVMFDurationInfoMessageInterfaceUUID;
             PVMFDurationInfoMessageInterface* eventMsg = NULL;
@@ -1227,7 +1250,6 @@ void PlayerDriver::HandleInformationalEvent(const PVAsyncInformationalEvent& aEv
         break;
 
     case PVMFInfoDataReady:
-        LOGV("PVMFInfoDataReady");
         if (mDataReadyReceived)
             break;
         mDataReadyReceived = true;
@@ -1238,32 +1260,36 @@ void PlayerDriver::HandleInformationalEvent(const PVAsyncInformationalEvent& aEv
         break;
 
     case PVMFInfoVideoTrackFallingBehind:
+        // TODO: This event should not be passed to the user in the ERROR channel.
         LOGW("Video track fell behind");
-        mPvPlayer->sendEvent(MEDIA_ERROR, PVMFInfoVideoTrackFallingBehind);
+        mPvPlayer->sendEvent(MEDIA_INFO, ::android::MEDIA_INFO_VIDEO_TRACK_LAGGING,
+                             PVMFInfoVideoTrackFallingBehind);
         break;
 
     case PVMFInfoPoorlyInterleavedContent:
+        // TODO: This event should not be passed to the user in the ERROR channel.
         LOGW("Poorly interleaved content.");
-        mPvPlayer->sendEvent(MEDIA_ERROR, PVMFInfoPoorlyInterleavedContent);
+        mPvPlayer->sendEvent(MEDIA_INFO, ::android::MEDIA_INFO_BAD_INTERLEAVING,
+                             PVMFInfoPoorlyInterleavedContent);
         break;
 
-    case PVMFInfoContentTruncated: //LOGI("PVMFInfoContentTruncated\n"); break;
+    case PVMFInfoContentTruncated:
         LOGE("Content is truncated.");
         break;
 
     /* Certain events we don't really care about, but don't
      * want log spewage, so just no-op them here.
      */
-    case PVMFInfoPositionStatus: //LOGI("PVMFInfoPositionStatus\n"); break;
-    case PVMFInfoBufferingComplete: //LOGI("PVMFInfoBufferingComplete\n"); break;
-    case PVMFInfoContentLength: //LOGI("PVMFInfoContentLength: %d\n", (int)get_event_data(aEvent)); break;
-    case PVMFInfoContentType: //LOGI("PVMFInfoContentType: %s\n", (char *)get_event_data(aEvent)); break;
-    case PVMFInfoUnderflow: //LOGI("PVMFInfoUnderflow\n"); break;
-    case PVMFInfoDataDiscarded: //LOGI("PVMFInfoDataDiscarded\n"); break;
+    case PVMFInfoPositionStatus:
+    case PVMFInfoBufferingComplete:
+    case PVMFInfoContentLength:
+    case PVMFInfoContentType:
+    case PVMFInfoUnderflow:
+    case PVMFInfoDataDiscarded:
         break;
 
     default:
-        LOGV("HandleInformationalEvent: type=%d UNHANDLED", aEvent.GetEventType());
+        LOGV("HandleInformationalEvent: type=%d UNHANDLED", status);
         break;
     }
 }
