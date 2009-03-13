@@ -92,6 +92,7 @@ enum author_command_type {
     AUTHOR_SET_VIDEO_FRAME_RATE,
     AUTHOR_SET_PREVIEW_SURFACE,
     AUTHOR_SET_OUTPUT_FILE,
+    AUTHOR_SET_PARAMETERS,
     AUTHOR_PREPARE,
     AUTHOR_START,
     AUTHOR_STOP,
@@ -107,6 +108,8 @@ struct author_command
     author_command(author_command_type which) {
         this->which = which;
     }
+
+    virtual ~author_command() {}
 
     author_command_type which;
     media_completion_f comp;
@@ -176,6 +179,23 @@ struct set_camera_command : author_command
     sp<ICamera>                      camera;
 };
 
+struct set_parameters_command : author_command
+{
+    set_parameters_command(const String8& params)
+        : author_command(AUTHOR_SET_PARAMETERS),
+          mParams(params) {
+    }
+
+    const String8& params() const { return mParams; }
+
+private:
+    String8 mParams;
+
+    // Disallow copying and assignment.
+    set_parameters_command(const set_parameters_command&);
+    set_parameters_command& operator=(const set_parameters_command&);
+};
+
 class AuthorDriver :
 public OsclActiveObject,
 public PVCommandStatusObserver,
@@ -205,6 +225,7 @@ public:
     void handleSetVideoFrameRate(set_video_frame_rate_command *ac);
     void handleSetPreviewSurface(set_preview_surface_command *ac);
     void handleSetOutputFile(set_output_file_command *ac);
+    void handleSetParameters(set_parameters_command *ac);
     void handlePrepare(author_command *ac);
     void handleStart(author_command *ac);
     void handleStop(author_command *ac);
@@ -247,6 +268,9 @@ private:
 
     // Callback for synchronous commands.
     static void syncCompletion(status_t s, void *cookie);
+
+    PVMFStatus setMaxDuration(int64_t max_duration_ms);
+    PVMFStatus setParameter(const String8 &key, const String8 &value);
 
     PVAuthorEngineInterface    *mAuthor;
 

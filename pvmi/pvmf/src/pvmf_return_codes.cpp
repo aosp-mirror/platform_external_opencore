@@ -53,6 +53,7 @@ const char *PVMFStatusToString(const PVMFStatus status) {
         CONSIDER(PVMFErrMaxReached);
         CONSIDER(PVMFLowDiskSpace);
         CONSIDER(PVMFErrHTTPAuthenticationRequired);
+        CONSIDER(PVMFErrContentInvalidForProgressivePlayback);
         CONSIDER(PVMFInfoPortCreated);
         CONSIDER(PVMFInfoPortDeleted);
         CONSIDER(PVMFInfoPortConnected);

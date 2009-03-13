@@ -135,6 +135,19 @@ status_t PVMediaRecorder::setOutputFile(int fd, int64_t offset, int64_t length)
     return mAuthorDriverWrapper->enqueueCommand(ac, 0, 0);
 }
 
+status_t PVMediaRecorder::setParameters(const String8& params) {
+    LOGV("setParameters(%s)", params.string());
+    set_parameters_command *command = new set_parameters_command(params);
+    if (command == NULL) {
+        LOGE("failed to construct an author command");
+
+        return NO_MEMORY;
+    }
+
+    return mAuthorDriverWrapper->enqueueCommand(
+            command, NULL /* completion_func */, NULL /* completion_cookie */);
+}
+
 status_t PVMediaRecorder::setAudioEncoder(audio_encoder ae)
 {
     LOGV("setAudioEncoder(%d)", ae);
@@ -278,6 +291,7 @@ status_t PVMediaRecorder::start()
         LOGE("failed to construct an author command");
         return UNKNOWN_ERROR;
     }
+
     return mAuthorDriverWrapper->enqueueCommand(ac, 0, 0);
 }
 

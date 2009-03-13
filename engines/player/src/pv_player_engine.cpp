@@ -3897,6 +3897,7 @@ PVMFStatus PVPlayerEngine::DoSetupSourceNode(PVCommandId aCmdId, OsclAny* aCmdCo
                 return PVMFErrNotSupported;
             }
 
+
             int32 leavecode = 0;
             OSCL_TRY(leavecode, iSourceNode = iPlayerNodeRegistry.CreateNode(foundUuids[0]));
             OSCL_FIRST_CATCH_ANY(leavecode,
@@ -11970,6 +11971,8 @@ void PVPlayerEngine::HandleSourceNodeInit(PVPlayerEngineContext& aNodeContext, c
     iCommandCompleteInEngineAOPending = false;
     PVMFStatus cmdstatus;
 
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::HandleSourceNodeInit() Status= %s", PVMFStatusToString(aNodeResp.GetCmdStatus())));
+
     switch (aNodeResp.GetCmdStatus())
     {
         case PVMFSuccess:
@@ -12019,7 +12022,25 @@ void PVPlayerEngine::HandleSourceNodeInit(PVPlayerEngineContext& aNodeContext, c
 
         }
         break;
-        ;
+        case PVMFErrContentInvalidForProgressivePlayback:
+        {
+            SetEngineState(PVP_ENGINE_STATE_ERROR);
+            AddCommandToQueue(PVP_ENGINE_COMMAND_STOP_DUE_TO_ERROR, NULL, NULL, NULL, false);
+
+            cmdstatus = aNodeResp.GetCmdStatus();
+
+            PVMFErrorInfoMessageInterface* nextmsg = NULL;
+            if (aNodeResp.GetEventExtensionInterface())
+            {
+                nextmsg = GetErrorInfoMessageInterface(*(aNodeResp.GetEventExtensionInterface()));
+            }
+
+            PVUuid puuid = PVPlayerErrorInfoEventTypesUUID;
+            PVMFBasicErrorInfoMessage* errmsg = OSCL_NEW(PVMFBasicErrorInfoMessage, (PVPlayerErrSourceInit, puuid, nextmsg));
+            EngineCommandCompleted(aNodeContext.iCmdId, aNodeContext.iCmdContext, cmdstatus, OSCL_STATIC_CAST(PVInterface*, errmsg), aNodeResp.GetEventData());
+            errmsg->removeRef();
+        }
+        break;
 
         default:
         {
@@ -17013,5 +17034,3 @@ void PVPlayerEngine::DepopulateAllRegistries()
     DepopulateRecognizerRegistry();
 }
 #endif
-
-

@@ -180,6 +180,34 @@ const char *PlayerCommandCodeToString(PlayerCommand::Code code) {
 }
 #undef CONSIDER_CODE
 
+// Map a PV status code to a message type (error/info/nop)
+// @param status PacketVideo status code as defined in pvmf_return_codes.h
+// @return the corresponding android message type. MEDIA_NOP is used as a default.
+::android::media_event_type MapStatusToEventType(const PVMFStatus status) {
+    if (status <= PVMFErrFirst) {
+        return ::android::MEDIA_ERROR;
+    } else if (status >= PVMFInfoFirst) {
+        return ::android::MEDIA_INFO;
+    } else {
+        return ::android::MEDIA_NOP;
+    }
+}
+
+// Map a PV status to an error/info code.
+// @param status PacketVideo status code as defined in pvmf_return_codes.h
+// @return the corresponding android error/info code.
+int MapStatusToEventCode(const PVMFStatus status) {
+    switch (status) {
+        case PVMFErrContentInvalidForProgressivePlayback:
+            return ::android::MEDIA_ERROR_NOT_VALID_FOR_PROGRESSIVE_PLAYBACK;
+        default:
+            // Takes advantage that both error and info codes are mapped to the
+            // same value.
+            assert(::android::MEDIA_ERROR_UNKNOWN == ::android::MEDIA_INFO_UNKNOWN);
+            return ::android::MEDIA_ERROR_UNKNOWN;
+    }
+}
+
 }  // anonymous namespace
 
 class PlayerDriver :
@@ -1146,12 +1174,12 @@ void PlayerDriver::CommandCompleted(const PVCmdResponse& aResponse)
         status = PVMFSuccess;
         command->complete(NO_ERROR, true);
     } else {  
-        // error occurred
-        LOGE("CommandCompleted with an error or info %s", PVMFStatusToString(status));
-        if (status <= PVMFErrFirst) {
-            mPvPlayer->sendEvent(MEDIA_ERROR, ::android::MEDIA_ERROR_UNKNOWN, status);
-        } else if (status >= PVMFInfoFirst) {
-            mPvPlayer->sendEvent(MEDIA_INFO, ::android::MEDIA_INFO_UNKNOWN, status);
+        // Try to map the PV error code to an Android one.
+        LOGE("Command %s completed with an error or info %s", command->toString(), PVMFStatusToString(status));
+        const media_event_type event_type = MapStatusToEventType(status);
+
+        if (MEDIA_NOP != event_type) {
+            mPvPlayer->sendEvent(event_type, MapStatusToEventCode(status), status);
         } else {
             LOGE("Ignoring: %d", status);
         }
@@ -1169,6 +1197,7 @@ void PlayerDriver::HandleErrorEvent(const PVAsyncErrorEvent& aEvent)
     if (status > PVMFErrFirst) {
         LOGE("HandleErrorEvent called with an non-error event [%d]!!", status);
     }
+
     LOGE("HandleErrorEvent: %s", PVMFStatusToString(status));
     // TODO: Map more of the PV error code into the Android Media Player ones.
     mPvPlayer->sendEvent(MEDIA_ERROR, ::android::MEDIA_ERROR_UNKNOWN, status);
@@ -1289,7 +1318,7 @@ void PlayerDriver::HandleInformationalEvent(const PVAsyncInformationalEvent& aEv
         break;
 
     default:
-        LOGV("HandleInformationalEvent: type=%d UNHANDLED", status);
+        LOGE("HandleInformationalEvent: type=%d UNHANDLED", status);
         break;
     }
 }

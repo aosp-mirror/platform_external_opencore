@@ -24,6 +24,7 @@
 #include <ui/ICamera.h>
 #include "pv_omxmastercore.h"
 #include "authordriver.h"
+#include "pvmf_composer_size_and_duration.h"
 
 using namespace android;
 
@@ -247,6 +248,10 @@ void AuthorDriver::Run()
 
     case AUTHOR_SET_OUTPUT_FILE:
         handleSetOutputFile((set_output_file_command *)ac);
+        return;
+
+    case AUTHOR_SET_PARAMETERS:
+        handleSetParameters((set_parameters_command *)ac);
         return;
 
     case AUTHOR_REMOVE_VIDEO_SOURCE:
@@ -553,6 +558,149 @@ exit:
     }
 }
 
+PVMFStatus AuthorDriver::setMaxDuration(int64_t max_duration_ms) {
+    PVInterface *interface;
+    PvmfComposerSizeAndDurationInterface *durationConfig;
+
+    if (max_duration_ms > 0xffffffff) {
+        // PV API expects this to fit in a uint32.
+        return PVMFErrArgument;
+    }
+
+    if (!mComposerConfig) {
+        return PVMFFailure;
+    }
+
+    mComposerConfig->queryInterface(
+            PvmfComposerSizeAndDurationUuid, interface);
+
+    durationConfig =
+        OSCL_DYNAMIC_CAST(PvmfComposerSizeAndDurationInterface *, interface);
+
+    if (!durationConfig) {
+        return PVMFFailure;
+    }
+
+    // SetMaxDuration's first parameter is a boolean "enable", we enable
+    // enforcement of the maximum duration if it's (strictly) positive,
+    // otherwise we take it to imply disabling.
+    PVMFStatus ret = durationConfig->SetMaxDuration(
+            max_duration_ms > 0, static_cast<uint32>(max_duration_ms));
+
+    durationConfig->removeRef();
+    durationConfig = NULL;
+
+    return ret;
+}
+
+// Attempt to parse an int64 literal optionally surrounded by whitespace,
+// returns true on success, false otherwise.
+static bool safe_strtoi64(const char *s, int64 *val) {
+    char *end;
+    *val = strtoll(s, &end, 10);
+
+    if (end == s || errno == ERANGE) {
+        return false;
+    }
+
+    // Skip trailing whitespace
+    while (isspace(*end)) {
+        ++end;
+    }
+
+    // For a successful return, the string must contain nothing but a valid
+    // int64 literal optionally surrounded by whitespace.
+
+    return *end == '\0';
+}
+
+// Trim both leading and trailing whitespace from the given string.
+static void TrimString(String8 *s) {
+    size_t num_bytes = s->bytes();
+    const char *data = s->string();
+
+    size_t leading_space = 0;
+    while (leading_space < num_bytes && isspace(data[leading_space])) {
+        ++leading_space;
+    }
+
+    size_t i = num_bytes;
+    while (i > leading_space && isspace(data[i - 1])) {
+        --i;
+    }
+
+    s->setTo(String8(&data[leading_space], i - leading_space));
+}
+
+PVMFStatus AuthorDriver::setParameter(
+        const String8& key, const String8& value) {
+    if (key == "max-duration") {
+        int64_t max_duration_ms;
+        if (safe_strtoi64(value.string(), &max_duration_ms)) {
+            return setMaxDuration(max_duration_ms);
+        }
+    }
+
+    return PVMFErrArgument;
+}
+
+// Applies the requested parameters, completes either successfully or stops
+// application of parameters upon encountering the first error, finishing the
+// transaction with the failure result of that initial failure.
+void AuthorDriver::handleSetParameters(set_parameters_command *ac) {
+    PVMFStatus ret = PVMFSuccess;
+
+    const char *params = ac->params().string();
+    const char *key_start = params;
+    for (;;) {
+        const char *equal_pos = strchr(key_start, '=');
+        if (equal_pos == NULL) {
+            // This key is missing a value.
+
+            ret = PVMFErrArgument;
+            break;
+        }
+
+        String8 key(key_start, equal_pos - key_start);
+        TrimString(&key);
+
+        if (key.length() == 0) {
+            ret = PVMFErrArgument;
+            break;
+        }
+
+        const char *value_start = equal_pos + 1;
+        const char *semicolon_pos = strchr(value_start, ';');
+        String8 value;
+        if (semicolon_pos == NULL) {
+            value.setTo(value_start);
+        } else {
+            value.setTo(value_start, semicolon_pos - value_start);
+        }
+
+        ret = setParameter(key, value);
+
+        if (ret != NO_ERROR) {
+            LOGE("setParameter(%s = %s) failed with result %d",
+                 key.string(), value.string(), ret);
+            break;
+        }
+
+        if (semicolon_pos == NULL) {
+            break;
+        }
+
+        key_start = semicolon_pos + 1;
+    }
+
+    if (ret == PVMFSuccess) {
+        FinishNonAsyncCommand(ac);
+    } else {
+        LOGE("Ln %d handleSetParameters(%s) error", __LINE__, params);
+        commandFailed(ac);
+    }
+}
+
 void AuthorDriver::handlePrepare(author_command *ac)
 {
     int error = 0;
@@ -836,9 +984,31 @@ void AuthorDriver::HandleErrorEvent(const PVAsyncErrorEvent& aEvent)
     }
 }
 
+static int GetMediaRecorderInfoCode(const PVAsyncInformationalEvent& aEvent) {
+    switch (aEvent.GetEventType()) {
+        case PVMF_COMPOSER_MAXDURATION_REACHED:
+            return MEDIA_RECORDER_INFO_MAX_DURATION_REACHED;
+
+        default:
+            return MEDIA_RECORDER_INFO_UNKNOWN;
+    }
+}
+
 void AuthorDriver::HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent)
 {
-    LOGV("HandleInformationalEvent(%d)", aEvent.GetEventType());
+    const PVEventType event_type = aEvent.GetEventType();
+    assert(!IsPVMFErrCode(event_type));
+    if (IsPVMFInfoCode(event_type)) {
+        LOGV("HandleInformationalEvent(%d:%s)",
+             event_type, PVMFStatusToString(event_type));
+    } else {
+        LOGV("HandleInformationalEvent(%d)", event_type);
+    }
+
+    mListener->notify(
+            MEDIA_RECORDER_EVENT_INFO,
+            GetMediaRecorderInfoCode(aEvent),
+            aEvent.GetEventType());
 }
 
 status_t AuthorDriver::getMaxAmplitude(int *max)

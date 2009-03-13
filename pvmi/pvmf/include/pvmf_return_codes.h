@@ -161,6 +161,10 @@ const PVMFStatus PVMFLowDiskSpace = (-25);
  Error due to the requirement of user-id and password input from app for HTTP basic/digest authentication
  */
 const PVMFStatus PVMFErrHTTPAuthenticationRequired = (-26);
+/*
+ Error: the video container is not valid for progressive playback.
+ */
+const PVMFStatus PVMFErrContentInvalidForProgressivePlayback = (-27);
 
 /*
  Placeholder for last event in range.

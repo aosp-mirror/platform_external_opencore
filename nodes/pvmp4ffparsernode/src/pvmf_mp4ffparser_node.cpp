@@ -7211,6 +7211,7 @@ PVMFStatus PVMFMP4FFParserNode::CheckForMP4HeaderAvailability()
                                         isProgressiveDownloadable,
                                         iMP4HeaderSize);
 
+        PVMFStatus retcode = PVMFFailure;
         if (retCode == EVERYTHING_FINE)
         {
             if (isProgressiveDownloadable == true)
@@ -7227,11 +7228,11 @@ PVMFStatus PVMFMP4FFParserNode::CheckForMP4HeaderAvailability()
                                 *this,
                                 iMP4HeaderSize);
                     iDataStreamRequestPending = true;
-                    return PVMFPending;
+                    retcode = PVMFPending;
                 }
                 else
                 {
-                    return PVMFSuccess;
+                    retcode = PVMFSuccess;
                 }
             }
             else
@@ -7260,7 +7261,7 @@ PVMFStatus PVMFMP4FFParserNode::CheckForMP4HeaderAvailability()
                         download_progress_interface->requestResumeNotification(nptTsinMS, iDownloadComplete);
                     }
                     PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC((0, "PVMFMP4FFParserNode::CheckForMP4HeaderAvailability() - Auto Pause Triggered, TS = %d", nptTsinMS));
-                    return PVMFPending;
+                    retcode = PVMFPending;
                 }
                 else
                 {
@@ -7272,13 +7273,14 @@ PVMFStatus PVMFMP4FFParserNode::CheckForMP4HeaderAvailability()
         {
             // progressive playback and no movie atom found
             PVMF_MP4FFPARSERNODE_LOGERROR((0, "PVMFMP4FFParserNode::CheckForMP4HeaderAvailability() - Moov atom not found, needed for progressive playback"));
+            retcode =  PVMFErrContentInvalidForProgressivePlayback;
         }
         else
         {
             PVMF_MP4FFPARSERNODE_LOGERROR((0, "PVMFMP4FFParserNode::CheckForMP4HeaderAvailability() - GetMetaDataSize Failed %d", retCode));
         }
 
-        return PVMFFailure;
+        return retcode;
     }
     return PVMFSuccess;
 }
@@ -8411,37 +8413,3 @@ bool PVMFMP4FFParserNode::SendBeginOfMediaStreamCommand(PVMP4FFNodeTrackPortInfo
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::SendBeginOfMediaStreamCommand() BOS sent StreamId=%d ", iStreamID));
     return true;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
