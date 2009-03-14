@@ -1,34 +1,51 @@
 ===============================================================================
 2009-03-10  OpenCORE 2.02
 
+********
+   There is minor version number nomenclature change where the 
+   minor version is now two digits.  So the previous releases 
+   in the new nomenclature are 2.00 (2.0) and 2.01 (2.1).  The 
+   new release is 2.02, which is a minor version increment beyond
+   the previous release.
+********
+	
 New Features
-- Add AMRWB to OMX Encoder Node
-- Implement video buffer sharing from MIO and OMX decoder component
+- AMR-WB support added to the OMX encoder node so that it can utilize 
+  an OMX AMR-WB encoder component if it is part of the OMX core. 
+- Buffer allocator mechanism allowing the Media I/O components to 
+  supply buffers to the OMX decoders.  This method is especially useful
+  as an alternative way to allocate video buffers.  Details can be 
+  found in the new document "Guide to Supplying Decoder Buffers from 
+  the MIO Component" in the file mio_decoder_buffer_allocation_guide.pdf
+  in the top-level doc directory.
 
 Improvements
 - Resolution of Valgrind and static analysis warnings in player and author
-- Improvements in support for .mov files in MP4 FF Parser
-- Modify OMX encoder node to allow user to set the AMR bitrate based on
-extension interface value
-- Fix inconsistencies in OSCL find method
+- Improvements in support for .mov files in MP4 FF Parser(relaxed some checks).
+- Modified OMX encoder node to allow setting the AMR bitrate 
+  based on an extension interface value.
+- Fix inconsistencies in OSCL find method related to inclusion of the 
+  directory name with the filename.
 - Improvement in PVMFInfoErrorHandlingComplete in the player datapath
-- OMX dec node doesn't reset a flag during Reset processing
-- Refactor of the Protocol Engine node to support a plugin architecture.  This
-improves extensibility of the module for new features in the future.
+- Refactor of the Protocol Engine node to support a plugin architecture.  
+  This improves extensibility of the module for new features in the future.
 - Introduce QueryInterfaceSync in PVMFNodeInterface and "all" metadata key
 - AMR NB and WB have conflicting meaning for frame_type and mode elements
-- Change the default settings for Oscl_File when using PVFile within the
-fileformat parsers.
-- Replace test.mp4 with Interop clip
-- Update of tests for support for PDL of AMR
-- OMX Khronos header files (Omx_Core.h, Omx_Component.h) capitalization needs
-to be changed
+- Change the default settings related to caching for Oscl_File when 
+  using PVFile within the fileformat parsers.
+- Replace test.mp4 with interop clip
+- Update of tests for support for progressive download of AMR
+- OMX Khronos header files (Omx_Core.h, Omx_Component.h) capitalization 
+  changed to match that from the Khronos (previously they were all lowercase).
+- Updated MIO Developer's Guide in the top-level doc directory.
 
 Bugs Fixed
-- Memory leak when running GCF TC212
+- Memory leak when running GCF TC212 (2way-related)
 - MediaClockConverter divided by zero caused by timescale 0
-- MP4 composer node destructor memory corruption
+- MP4 composer node destructor memory corruption fixed.
 - Fix for intermittent crash in player engine TC 105
+- OMX dec node did not reset all the internal state during 
+  Reset processing.  
 
 ===============================================================================
 2009-02-26  OpenCORE 2.1 (2.01)
