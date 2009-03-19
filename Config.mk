@@ -8,23 +8,24 @@ ifndef EXTERNAL_OPENCORE_CONFIG_ONCE
 
   # HAS_OSCL_LIB_SUPPORT turns on PV's OSCL dynamic loader.
   # Set PV_OSCL_LIB to true to enable it (default in release mode).
+  # To enable the value added modules, HAS_OSCL_LIB_SUPPORT must be true.
+  #
   # However for debugging with gdb you may want to set PV_OSCL_LIB to
   # false to disable this custom loader.
   PV_OSCL_LIB := true
+  VALUE_ADD := false
   ifeq ($(PV_OSCL_LIB), true)
     PV_CFLAGS += -DHAS_OSCL_LIB_SUPPORT
-  endif
 
-  PV_COPY_HEADERS_TO := libpv
-
-  alternate_config := $(if $(wildcard vendor/pv/pvplayer.conf),true)
-  ifeq ($(alternate_config), true)
-    VALUE_ADD := 1
-    PV_CFLAGS += -DPV_USE_VALUE_ADD=1
-  else
-    VALUE_ADD :=
+    alternate_config := $(if $(wildcard vendor/pv/pvplayer.conf),true)
+    ifeq ($(alternate_config), true)
+      VALUE_ADD := true
+      PV_CFLAGS += -DPV_USE_VALUE_ADD=1
+    endif
   endif
   alternate_config :=
+
+  PV_COPY_HEADERS_TO := libpv
 
   PV_INCLUDES := \
 	$(PV_TOP)/android \

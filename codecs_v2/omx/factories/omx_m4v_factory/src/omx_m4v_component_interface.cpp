@@ -20,6 +20,7 @@
 #include "pv_omxdefs.h"
 #include "omx_mpeg4_component.h"
 
+#ifdef HAS_OSCL_LIB_SUPPORT
 #include "oscl_shared_library.h"
 
 #include "pvmf_node_shared_lib_interface.h"
@@ -34,10 +35,22 @@
 OsclSharedLibrary* OmxM4vComponentFactory::iOmxLib = NULL;
 int OmxM4vComponentFactory::iRefCount = 0;
 
+#else
+// External factory functions needed for the creation of each component. Defined
+// in codec_v2/omx/omx_m4v/src/omx_mpeg4_component.cpp.
+extern OMX_ERRORTYPE Mpeg4OmxComponentFactory(OMX_OUT OMX_HANDLETYPE* pHandle, OMX_IN  OMX_PTR pAppData);
+extern OMX_ERRORTYPE Mpeg4OmxComponentDestructor(OMX_IN OMX_HANDLETYPE pHandle);
+
+extern OMX_ERRORTYPE H263OmxComponentFactory(OMX_OUT OMX_HANDLETYPE* pHandle, OMX_IN  OMX_PTR pAppData);
+extern OMX_ERRORTYPE H263OmxComponentDestructor(OMX_IN OMX_HANDLETYPE pHandle);
+
+#endif  // HAS_OSCL_LIB_SUPPORT
+
 // This function is called by OMX_GetHandle and it creates an instance of the m4v component AO
 // by loading the library where libomx_m4v_component_lib is located
 OMX_ERRORTYPE OmxM4vComponentFactory::M4vCreate(OMX_OUT OMX_HANDLETYPE* pHandle, OMX_IN  OMX_PTR pAppData)
 {
+#ifdef HAS_OSCL_LIB_SUPPORT
     OSCL_StackString<M4V_MAX_LIB_PATH> omxLibName(OMX_M4V_LIB_NAME);
     OsclSharedLibrary* lib = NULL;
 
@@ -95,12 +108,15 @@ OMX_ERRORTYPE OmxM4vComponentFactory::M4vCreate(OMX_OUT OMX_HANDLETYPE* pHandle,
             OmxM4vComponentFactory::iOmxLib = NULL;
         }
     }
-
     return OMX_ErrorUndefined;
+#else
+    return Mpeg4OmxComponentFactory(pHandle, pAppData);
+#endif
 }
 
 OMX_ERRORTYPE OmxM4vComponentFactory::M4vDestructor(OMX_IN OMX_HANDLETYPE pHandle)
 {
+#ifdef HAS_OSCL_LIB_SUPPORT
     OsclSharedLibrary* lib = OmxM4vComponentFactory::iOmxLib;
 
     // lib must not be NULL at this point. If the omx component has been
@@ -140,12 +156,16 @@ OMX_ERRORTYPE OmxM4vComponentFactory::M4vDestructor(OMX_IN OMX_HANDLETYPE pHandl
     }
 
     return returnStatus;
+#else
+    return Mpeg4OmxComponentDestructor(pHandle);
+#endif
 }
 
-// This function is called by OMX_GetHandle and it creates an instance of the m4v component AO
+// This function is called by OMX_GetHandle and it creates an instance of the h263 component AO
 // by loading the library where libomx_m4v_component_lib is located
 OMX_ERRORTYPE OmxM4vComponentFactory::H263Create(OMX_OUT OMX_HANDLETYPE* pHandle, OMX_IN  OMX_PTR pAppData)
 {
+#ifdef HAS_OSCL_LIB_SUPPORT
     OSCL_StackString<M4V_MAX_LIB_PATH> omxLibName(OMX_M4V_LIB_NAME);
     OsclSharedLibrary* lib = NULL;
 
@@ -165,7 +185,7 @@ OMX_ERRORTYPE OmxM4vComponentFactory::H263Create(OMX_OUT OMX_HANDLETYPE* pHandle
     OmxM4vComponentFactory::iRefCount++;
 
     // Load the associated library. If successful, call the corresponding
-    // create function for OMX M4V.
+    // create function for OMX H263.
     if (OsclLibSuccess == lib->LoadLib())
     {
         OsclAny* interfacePtr = NULL;
@@ -205,10 +225,15 @@ OMX_ERRORTYPE OmxM4vComponentFactory::H263Create(OMX_OUT OMX_HANDLETYPE* pHandle
     }
 
     return OMX_ErrorUndefined;
+#else
+    return H263OmxComponentFactory(pHandle, pAppData);
+#endif
 }
 
 OMX_ERRORTYPE OmxM4vComponentFactory::H263Destructor(OMX_IN OMX_HANDLETYPE pHandle)
 {
+#ifdef HAS_OSCL_LIB_SUPPORT
+
     OsclSharedLibrary* lib = OmxM4vComponentFactory::iOmxLib;
 
     // lib must not be NULL at this point. If the omx component has been
@@ -228,7 +253,7 @@ OMX_ERRORTYPE OmxM4vComponentFactory::H263Destructor(OMX_IN OMX_HANDLETYPE pHand
         omxIntPtr->QueryOmxComponentInterface(PV_OMX_H263_TYPE, PV_OMX_DESTROY_INTERFACE);
 
     // destroyComp is the function pointer to store the function for
-    // destroying the omx m4v component.
+    // destroying the omx h263 component.
     OMX_ERRORTYPE(*destroyComp)(OMX_IN OMX_HANDLETYPE pHandle);
     destroyComp =
         OSCL_DYNAMIC_CAST(OMX_ERRORTYPE(*)(OMX_IN OMX_HANDLETYPE), destroyCompTemp);
@@ -248,5 +273,7 @@ OMX_ERRORTYPE OmxM4vComponentFactory::H263Destructor(OMX_IN OMX_HANDLETYPE pHand
     }
 
     return returnStatus;
+#else
+    return H263OmxComponentDestructor(pHandle);
+#endif
 }
-

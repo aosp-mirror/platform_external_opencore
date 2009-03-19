@@ -47,11 +47,31 @@ LOCAL_WHOLE_STATIC_LIBRARIES := \
         libandroidpv \
         libkmj_oma1
 
-LOCAL_LDLIBS := -lpthread
-
-ifeq ($(VALUE_ADD),1)
-LOCAL_WHOLE_STATIC_LIBRARIES += libomx_wmv_component_interface
+ifeq ($(PV_OSCL_LIB), true)
+  ifeq ($(VALUE_ADD), true)
+    LOCAL_WHOLE_STATIC_LIBRARIES += libomx_wmv_component_interface
+  endif
+else
+    # Since OSCL dynamic lib is disabled, we need to statically link
+    # the required libraries.
+    LOCAL_WHOLE_STATIC_LIBRARIES += \
+	libomx_m4v_component_lib \
+	libpvmp4decoder \
+        libprotocolenginenode \
+        libpv_http_parcom \
+        libpv_rtsp_parcom \
+        libpvgendatastruct \
+        libpvjitterbuffernode \
+        libpvmediaplayernode \
+        libpvrtsp_cli_eng_node_3gpp \
+        libpvsdpparser \
+        libpvsocketnode \
+        libpvstreamingmanagernode_3gpp \
+        librtppayloadparser_3gpp \
+        librtprtcp
 endif
+
+LOCAL_LDLIBS := -lpthread
 
 LOCAL_SHARED_LIBRARIES := libutils libcutils libui libhardware libandroid_runtime libdrm1 libmedia libsgl libvorbisidec libsonivox libopencorecommon libicuuc
 ifeq ($(TARGET_OS)-$(TARGET_SIMULATOR),linux-true)

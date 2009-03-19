@@ -1,3 +1,4 @@
+ifeq ($(PV_OSCL_LIB), true)
 LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
@@ -16,3 +17,4 @@ LOCAL_C_INCLUDES := \
 	$(PV_INCLUDES)
 
 include $(BUILD_SHARED_LIBRARY)
+endif  # PV_OSCL_LIB

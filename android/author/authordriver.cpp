@@ -148,14 +148,11 @@ author_command *AuthorDriver::dequeueCommand()
 
 status_t AuthorDriver::enqueueCommand(author_command *ac, media_completion_f comp, void *cookie)
 {
-    int sync_wait = 0;
-
     // If the user didn't specify a completion callback, we
     // are running in synchronous mode.
     if (comp == NULL) {
         ac->comp = AuthorDriver::syncCompletion;
         ac->cookie = this;
-        sync_wait = 1;
     } else {
         ac->comp = comp;
         ac->cookie = cookie;
@@ -558,11 +555,12 @@ exit:
     }
 }
 
-PVMFStatus AuthorDriver::setMaxDuration(int64_t max_duration_ms) {
+PVMFStatus AuthorDriver::setMaxDurationOrFileSize(
+        int64_t limit, bool limit_is_duration) {
     PVInterface *interface;
     PvmfComposerSizeAndDurationInterface *durationConfig;
 
-    if (max_duration_ms > 0xffffffff) {
+    if (limit > 0xffffffff) {
         // PV API expects this to fit in a uint32.
         return PVMFErrArgument;
     }
@@ -581,11 +579,20 @@ PVMFStatus AuthorDriver::setMaxDuration(int64_t max_duration_ms) {
         return PVMFFailure;
     }
 
-    // SetMaxDuration's first parameter is a boolean "enable", we enable
-    // enforcement of the maximum duration if it's (strictly) positive,
-    // otherwise we take it to imply disabling.
-    PVMFStatus ret = durationConfig->SetMaxDuration(
-            max_duration_ms > 0, static_cast<uint32>(max_duration_ms));
+    PVMFStatus ret;
+    if (limit_is_duration) {
+        // SetMaxDuration's first parameter is a boolean "enable", we enable
+        // enforcement of the maximum duration if it's (strictly) positive,
+        // otherwise we take it to imply disabling.
+        ret = durationConfig->SetMaxDuration(
+                limit > 0, static_cast<uint32>(limit));
+    } else {
+        // SetMaxFileSize's first parameter is a boolean "enable", we enable
+        // enforcement of the maximum filesize if it's (strictly) positive,
+        // otherwise we take it to imply disabling.
+        ret = durationConfig->SetMaxFileSize(
+                limit > 0, static_cast<uint32>(limit));
+    }
 
     durationConfig->removeRef();
     durationConfig = NULL;
@@ -637,7 +644,14 @@ PVMFStatus AuthorDriver::setParameter(
     if (key == "max-duration") {
         int64_t max_duration_ms;
         if (safe_strtoi64(value.string(), &max_duration_ms)) {
-            return setMaxDuration(max_duration_ms);
+            return setMaxDurationOrFileSize(
+                    max_duration_ms, true /* limit_is_duration */);
+        }
+    } else if (key == "max-filesize") {
+        int64_t max_filesize_bytes;
+        if (safe_strtoi64(value.string(), &max_filesize_bytes)) {
+            return setMaxDurationOrFileSize(
+                    max_filesize_bytes, false /* limit is filesize */);
         }
     }
 
@@ -680,7 +694,7 @@ void AuthorDriver::handleSetParameters(set_parameters_command *ac) {
 
         ret = setParameter(key, value);
 
-        if (ret != NO_ERROR) {
+        if (ret != PVMFSuccess) {
             LOGE("setParameter(%s = %s) failed with result %d",
                  key.string(), value.string(), ret);
             break;
@@ -988,6 +1002,9 @@ static int GetMediaRecorderInfoCode(const PVAsyncInformationalEvent& aEvent) {
     switch (aEvent.GetEventType()) {
         case PVMF_COMPOSER_MAXDURATION_REACHED:
             return MEDIA_RECORDER_INFO_MAX_DURATION_REACHED;
+
+        case PVMF_COMPOSER_MAXFILESIZE_REACHED:
+            return MEDIA_RECORDER_INFO_MAX_FILESIZE_REACHED;
 
         default:
             return MEDIA_RECORDER_INFO_UNKNOWN;

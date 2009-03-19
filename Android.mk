@@ -8,7 +8,7 @@ include $(LOCAL_PATH)/Config.mk
 
 # Install the default configuration file
 # if no value-add configuration is present.
-ifneq ($(VALUE_ADD),1)
+ifeq ($(VALUE_ADD), false)
 $(call add-prebuilt-files, ETC, pvplayer.conf)
 endif
 

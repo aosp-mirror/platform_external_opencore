@@ -4,19 +4,12 @@ include $(CLEAR_VARS)
 LOCAL_SRC_FILES := \
 	src/pv_player_datapath.cpp \
 	src/pv_player_engine.cpp \
-	src/pv_player_factory.cpp
-
-
-ifeq ($(FORMAT),nj)
-    LOCAL_SRC_FILES += src/../config/linux_nj/pv_player_node_registry.cpp
-else
-    LOCAL_SRC_FILES += src/../config/linux_nj/pv_player_node_registry.cpp
-endif
+	src/pv_player_factory.cpp \
+	config/linux_nj/pv_player_node_registry.cpp
 
 LOCAL_MODULE := libpvplayer_engine
 
 LOCAL_CFLAGS :=   $(PV_CFLAGS)
-
 
 LOCAL_C_INCLUDES := \
 	$(PV_TOP)//engines/player/include \
@@ -42,13 +35,19 @@ LOCAL_C_INCLUDES := \
 	$(PV_TOP)/pvmi/recognizer/plugins/pvmp3ffrecognizer/include \
 	$(PV_INCLUDES) 
 
+
+ifeq ($(PV_OSCL_LIB), false)
+    LOCAL_C_INCLUDES += $(PV_TOP)/nodes/streaming/streamingmanager/include
+endif
+
+
 ifeq ($(ARCHITECTURE),linux_nj)
     LOCAL_C_INCLUDES += $(PV_TOP)//engines/player/config/linux_nj
 else
 	ifeq ($(FORMAT),nj)
-    	LOCAL_C_INCLUDES += $(PV_TOP)//engines/player/config/linux_nj
+	LOCAL_C_INCLUDES += $(PV_TOP)//engines/player/config/linux_nj
 	else
-    	LOCAL_C_INCLUDES += $(PV_TOP)//engines/player/config/linux_nj
+	LOCAL_C_INCLUDES += $(PV_TOP)//engines/player/config/linux_nj
 	endif
 endif
 

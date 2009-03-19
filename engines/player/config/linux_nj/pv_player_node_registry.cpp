@@ -46,6 +46,11 @@
 #include "oscl_shared_library.h"
 
 #include "pvmf_node_shared_lib_interface.h"
+
+#else
+
+#include "pvmf_sm_node_factory.h"
+
 #endif
 
 PVPlayerNodeRegistry::PVPlayerNodeRegistry()
@@ -131,6 +136,19 @@ PVPlayerNodeRegistry::PVPlayerNodeRegistry()
     nodeinfo.iNodeCreateFunc = PVMFWAVFFParserNodeFactory::CreatePVMFWAVFFParserNode;
     nodeinfo.iNodeReleaseFunc = PVMFWAVFFParserNodeFactory::DeletePVMFWAVFFParserNode;
     iType.push_back(nodeinfo);
+
+#ifndef HAS_OSCL_LIB_SUPPORT
+    // For PVMFStreamingManagerNode
+    nodeinfo.iInputTypes.clear();
+    nodeinfo.iInputTypes.push_back(PVMF_DATA_SOURCE_RTSP_URL);
+    nodeinfo.iInputTypes.push_back(PVMF_DATA_SOURCE_SDP_FILE);
+    nodeinfo.iNodeUUID = KPVMFStreamingManagerNodeUuid;
+    nodeinfo.iOutputType.clear();
+    nodeinfo.iOutputType.push_back(PVMF_FORMAT_UNKNOWN);
+    nodeinfo.iNodeCreateFunc = PVMFStreamingManagerNodeFactory::CreateStreamingManagerNode;
+    nodeinfo.iNodeReleaseFunc = PVMFStreamingManagerNodeFactory::DeleteStreamingManagerNode;
+    iType.push_back(nodeinfo);
+#endif  // !HAS_OSCL_LIB_SUPPORT
 }
 
 
@@ -526,5 +544,3 @@ void PVPlayerRecognizerRegistry::RecognizerCommandCompleted(const PVMFCmdResp& a
 
     RunIfNotReady();
 }
-
-

@@ -269,7 +269,11 @@ private:
     // Callback for synchronous commands.
     static void syncCompletion(status_t s, void *cookie);
 
-    PVMFStatus setMaxDuration(int64_t max_duration_ms);
+    // Limit either the duration of the recording or the resulting file size
+    // If "limit_is_duration" is true, "limit" holds the maximum duration in
+    // milliseconds, otherwise "limit" holds the maximum filesize in bytes.
+    PVMFStatus setMaxDurationOrFileSize(int64_t limit, bool limit_is_duration);
+
     PVMFStatus setParameter(const String8 &key, const String8 &value);
 
     PVAuthorEngineInterface    *mAuthor;

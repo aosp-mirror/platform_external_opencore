@@ -51,6 +51,9 @@ OMX_ERRORTYPE AvcRegister(ComponentRegistrationType **);
 #endif
 
 #if REGISTER_OMX_WMV_COMPONENT
+#ifndef PV_USE_VALUE_ADD
+#error "Try to use the WMV component but PV_USE_VALUE_ADD is undef"
+#endif
 #include "omx_wmv_component_interface.h"
 OMX_ERRORTYPE WmvRegister(ComponentRegistrationType **);
 #endif
@@ -440,4 +443,3 @@ OMX_ERRORTYPE Mp3Register(ComponentRegistrationType **aTemplateList)
     return OMX_ErrorNone;
 }
 #endif
-

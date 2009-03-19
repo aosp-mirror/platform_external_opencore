@@ -13,7 +13,6 @@ LOCAL_WHOLE_STATIC_LIBRARIES := \
         libosclio \
         libosclregcli \
         libosclregserv \
-        liboscllib \
         libpvmf \
         libpvmimeutils \
         libpvfileoutputnode \
@@ -22,6 +21,10 @@ LOCAL_WHOLE_STATIC_LIBRARIES := \
         libcolorconvert \
         libpv_amr_nb_common_lib \
         libpv_avc_common_lib
+
+ifeq ($(PV_OSCL_LIB), true)
+    LOCAL_WHOLE_STATIC_LIBRARIES += liboscllib
+endif
 
 LOCAL_LDLIBS := -lpthread
 
@@ -52,7 +55,6 @@ include $(PV_TOP)//oscl/oscl/osclio/Android.mk
 include $(PV_TOP)//oscl/oscl/osclregcli/Android.mk
 include $(PV_TOP)//oscl/oscl/osclregserv/Android.mk
 include $(PV_TOP)//oscl/unit_test/Android.mk
-include $(PV_TOP)//oscl/oscl/oscllib/Android.mk
 include $(PV_TOP)//pvmi/pvmf/Android.mk
 include $(PV_TOP)//baselibs/pv_mime_utils/Android.mk
 include $(PV_TOP)//nodes/pvfileoutputnode/Android.mk
@@ -61,4 +63,9 @@ include $(PV_TOP)//baselibs/threadsafe_callback_ao/Android.mk
 include $(PV_TOP)//codecs_v2/utilities/colorconvert/Android.mk
 include $(PV_TOP)//codecs_v2/audio/gsm_amr/amr_nb/common/Android.mk
 include $(PV_TOP)//codecs_v2/video/avc_h264/common/Android.mk
+
+ifeq ($(PV_OSCL_LIB), true)
+  include $(PV_TOP)//oscl/oscl/oscllib/Android.mk
+endif
+
 endif

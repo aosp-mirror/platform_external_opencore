@@ -1,3 +1,4 @@
+ifeq ($(PV_OSCL_LIB), true)
 LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
@@ -27,4 +28,4 @@ LOCAL_COPY_HEADERS := \
 	src/oscl_library_list.h
 
 include $(BUILD_STATIC_LIBRARY)
-
+endif  # PV_OSCL_LIB
