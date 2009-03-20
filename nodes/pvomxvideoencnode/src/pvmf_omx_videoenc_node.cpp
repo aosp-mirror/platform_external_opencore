@@ -102,6 +102,7 @@ OMX_ERRORTYPE CallbackEventHandler(OMX_OUT OMX_HANDLETYPE aComponent,
                                    OMX_OUT OMX_U32 aData2,
                                    OMX_OUT OMX_PTR aEventData)
 {
+    LOGD("PVMFOMXVideoEncNode::CallbackEventHandler: event(%d), data1(%ld) and data2(%ld)", aEvent, aData1, aData2);
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, PVLogger::GetLoggerObject("PVMFOMXVideoEncNode"), PVLOGMSG_STACK_TRACE,
                     (0, "PVMFOMXVideoEncNode::CallbackEventHandler: In"));
     PVMFOMXVideoEncNode *Node = (PVMFOMXVideoEncNode *) aAppData;
@@ -258,7 +259,7 @@ PVMFOMXVideoEncNode::PVMFOMXVideoEncNode(int32 aPriority) :
     iOMXVideoEncoder = NULL;
 
     // Current State of the component
-    OMX_STATETYPE iCurrentEncoderState = OMX_StateInvalid;
+    iCurrentEncoderState = OMX_StateInvalid;
 
     // Shared pointer for Media Msg.Input buffer
     // PVMFSharedMediaDataPtr iDataIn; //Init this value ?
@@ -2083,8 +2084,12 @@ bool PVMFOMXVideoEncNode::IsFlushPending()
 void PVMFOMXVideoEncNode::FlushComplete()
 {
     LOG_STACK_TRACE((0, "PVMFOMXVideoEncNode::FlushComplete"));
+    bool flushCompleted = (mInputBufferRefCount == 0 &&
+                           iCurrentEncoderState == OMX_StateIdle &&
+                           (iCurrentCmd.size() > 0 && iCurrentCmd.front().iCmd == PVMF_GENERIC_NODE_FLUSH));
+    if (!flushCompleted) return;
+
     uint32 i = 0;
-    
     // flush completes only when all queues of all ports are clear.
     // otherwise, just return from this method and wait for FlushComplete
     // from the remaining ports.
@@ -2265,7 +2270,7 @@ void PVMFOMXVideoEncNode::DoReset(PVMFVideoEncNodeCommand& aCmd)
                         }
                         iCmdQueue.Erase(&aCmd);
                         iResetInProgress = true;
-
+                        PVMFStatus status = PVMFSuccess;
                         // free input and output buffers
                         LOG_STACK_TRACE((0,"PVMFOMXVideoEncNode::DoReset(): free output buffers"));
                         if (iOutputBuffersFreed == false)
@@ -2278,7 +2283,7 @@ void PVMFOMXVideoEncNode::DoReset(PVMFVideoEncNodeCommand& aCmd)
                                                           ))
                             {
                                 LOG_ERR((0,"PVMFOMXVideoEncNode::DoReset(): cannot free output buffers "));
-                                CommandComplete(iCurrentCmd, iCurrentCmd.front(), PVMFErrResource);
+                                status = PVMFErrResource; 
                             }
                         }
 
@@ -2293,13 +2298,18 @@ void PVMFOMXVideoEncNode::DoReset(PVMFVideoEncNodeCommand& aCmd)
                                                          ))
                             {
                                 LOG_ERR((0,"PVMFOMXVideoEncNode::DoReset(): cannot free input buffers "));
-                                CommandComplete(iCurrentCmd, iCurrentCmd.front(), PVMFErrResource);
+                                status = PVMFErrResource;
                             }
                         }
 
                         iEndOfDataReached = false;
                         iIsEOSSentToComponent = false;
                         iIsEOSReceivedFromComponent = false;
+                        if (status != PVMFSuccess)
+                        {
+                            iResetInProgress = false;
+                            CommandComplete(iCurrentCmd, iCurrentCmd.front(), status);
+                        }
                     }
                     return;
                 }
