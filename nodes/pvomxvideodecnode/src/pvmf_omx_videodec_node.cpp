@@ -740,6 +740,9 @@ bool PVMFOMXVideoDecNode::NegotiateComponentParameters(OMX_PTR aOutputParameters
     // set the width/height based on port parameters (this may change during port reconfig)
     if ((pOutputParameters->width != 0) && (pOutputParameters->height != 0) && iInPort && (((PVMFOMXDecPort*)iInPort)->iFormat != PVMF_MIME_H2631998 || ((PVMFOMXDecPort*)iInPort)->iFormat != PVMF_MIME_H2632000))
     {
+		// set width and height obtained from config parser in the output port as well
+		iParamPort.format.video.nFrameWidth = pOutputParameters->width;
+        iParamPort.format.video.nFrameHeight = pOutputParameters->height;
         iYUVWidth  = pOutputParameters->width;
         iYUVHeight = pOutputParameters->height;
     }
@@ -749,10 +752,39 @@ bool PVMFOMXVideoDecNode::NegotiateComponentParameters(OMX_PTR aOutputParameters
         iYUVHeight = iParamPort.format.video.nFrameHeight;
     }
 
+	
+	// Send the parameters right away to allow the OMX component to re-calculate the buffer size
+	// based on the new width and height that was just provided
+	CONFIG_SIZE_AND_VERSION(iParamPort);
+
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "PVMFOMXVideoDecNode::NegotiateComponentParameters() Outport buffers %d,size %d", iNumOutputBuffers, iOMXComponentOutputBufferSize));
+
+    Err = OMX_SetParameter(iOMXDecoder, OMX_IndexParamPortDefinition, &iParamPort);
+    if (Err != OMX_ErrorNone)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXVideoDecNode::NegotiateComponentParameters() Problem setting parameters in output port %d ", iOutputPortIndex));
+        return false;
+    }
+
+	// Now - read the same parameters back again with potentially new buffer sizes
+	iParamPort.nPortIndex = iOutputPortIndex;
+    CONFIG_SIZE_AND_VERSION(iParamPort);
+    Err = OMX_GetParameter(iOMXDecoder, OMX_IndexParamPortDefinition, &iParamPort);
+    if (Err != OMX_ErrorNone)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXVideoDecNode::NegotiateComponentParameters() Problem negotiating with output port %d ", iOutputPortIndex));
+        return false;
+    }
+
+
     //iNumOutputBuffers = NUMBER_OUTPUT_BUFFER;
     iNumOutputBuffers = iParamPort.nBufferCountActual;
     if (iNumOutputBuffers > NUMBER_OUTPUT_BUFFER)
         iNumOutputBuffers = NUMBER_OUTPUT_BUFFER; // make sure number of output buffers is not larger than port queue size
+
     iOMXComponentOutputBufferSize = iParamPort.nBufferSize;
     if (iNumOutputBuffers < iParamPort.nBufferCountMin)
         iNumOutputBuffers = iParamPort.nBufferCountMin;
