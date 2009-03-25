@@ -625,12 +625,7 @@ OSCL_EXPORT_REF PVMFCommandId PVMFOMXVideoEncNode::Stop(PVMFSessionId aSession, 
 {
     LOG_STACK_TRACE((0, "PVMFOMXVideoEncNode::Stop"));
     PVMFVideoEncNodeCommand cmd;
-
-    // DoFlush before DoStop
     cmd.Construct(aSession, PVMF_GENERIC_NODE_FLUSH, aContext);
-    QueueCommandL(cmd);
-
-    cmd.Construct(aSession, PVMF_GENERIC_NODE_STOP, aContext);
     return QueueCommandL(cmd);
 }
 
