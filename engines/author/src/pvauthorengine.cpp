@@ -53,6 +53,25 @@
 #define PVAE_NUM_PENDING_CMDS 10
 #define PVAE_NUM_PENDING_EVENTS 10
 
+#define TURN_ON_VERBOSE_LOGS 0
+
+#if TURN_ON_VERBOSE_LOGS
+#include <utils/Log.h>
+#undef LOG_TAG
+#define LOG_TAG "PVAE"
+#undef PVLOGGER_LOGMSG
+#define PVLOGGER_LOGMSG(IL, LOGGER, LEVEL, MESSAGE) JJLOGE MESSAGE
+#define LOG_STACK_TRACE(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, m);
+#define LOG_DEBUG(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, m);
+#define LOG_ERR(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iLogger,PVLOGMSG_ERR,m);
+#define JJLOGE(id, ...) LOGE(__VA_ARGS__)
+#else
+#define LOG_STACK_TRACE(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, m);
+#define LOG_DEBUG(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, m);
+#define LOG_ERR(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iLogger,PVLOGMSG_ERR,m);
+#endif
+
+
 // Define entry point for this DLL
 OSCL_DLL_ENTRY_POINT_DEFAULT()
 
@@ -1527,6 +1546,7 @@ PVMFStatus PVAuthorEngine::DoStopMaxSizeDuration()
             iNodeUtil.Stop(iDataSourceNodes);
             if (iEncoderNodes.size() > 0)
                 iNodeUtil.Stop(iEncoderNodes);
+            iNodeUtil.Stop(iComposerNodes);
             return PVMFPending;
 
         default:
@@ -2796,4 +2816,9 @@ PVMFStatus PVAuthorEngine::DoGetAuthorProductInfoParameter(PvmiKvp*& aParameters
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVAuthorEngine::DoGetAuthorProductInfoParameter() Out"));
     return PVMFSuccess;
 }
+
+#if TURN_ON_VERBOSE_LOGS
+#undef PVLOGGER_LOGMSG
+#define PVLOGGER_LOGMSG(IL, LOGGER, LEVEL, MESSAGE) OSCL_UNUSED_ARG(LOGGER);
+#endif
 
