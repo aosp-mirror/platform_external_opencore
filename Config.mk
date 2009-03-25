@@ -13,17 +13,16 @@ ifndef EXTERNAL_OPENCORE_CONFIG_ONCE
   # However for debugging with gdb you may want to set PV_OSCL_LIB to
   # false to disable this custom loader.
   PV_OSCL_LIB := true
-  VALUE_ADD := false
   ifeq ($(PV_OSCL_LIB), true)
     PV_CFLAGS += -DHAS_OSCL_LIB_SUPPORT
-
-    alternate_config := $(if $(wildcard vendor/pv/pvplayer.conf),true)
-    ifeq ($(alternate_config), true)
-      VALUE_ADD := true
-      PV_CFLAGS += -DPV_USE_VALUE_ADD=1
-    endif
   endif
-  alternate_config :=
+
+  # To enable the windows codecs under vendor/pv, define VALUE_ADD to true.
+  # You need HAS_OSCL_LIB_SUPPORT as well for VALUE_ADD modules.
+  VALUE_ADD := true
+  ifeq ($(VALUE_ADD), true)
+    PV_CFLAGS += -DPV_USE_VALUE_ADD=1
+  endif
 
   PV_COPY_HEADERS_TO := libpv
 
