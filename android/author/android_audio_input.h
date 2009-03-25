@@ -317,6 +317,12 @@ private:
      */
     PVMFStatus VerifyAndSetParameter(PvmiKvp* aKvp, bool aSetParam=false);
 
+    // Linearly ramp up the volume from 0 to full over a duration given
+    // in "kAutoRampDurationFrames". The time of the first audio frame
+    // passed in is "timeInFrames".
+    void RampVolume(int32 timeInFrames, int32 kAutoRampDurationFrames,
+                    void *_data, size_t numBytes) const;
+
     // Command queue
     uint32 iCmdIdCounter;
     Oscl_Vector<AndroidAudioInputCmd, OsclMemAllocator> iCmdQueue;
