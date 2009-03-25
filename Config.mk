@@ -19,8 +19,12 @@ ifndef EXTERNAL_OPENCORE_CONFIG_ONCE
 
   # To enable the windows codecs under vendor/pv, define VALUE_ADD to true.
   # You need HAS_OSCL_LIB_SUPPORT as well for VALUE_ADD modules.
-  VALUE_ADD := true
-  ifeq ($(VALUE_ADD), true)
+  # Some partners do not get vendor/pv in their distribution. If not present
+  # VALUE_ADD will be set to false.
+  ifeq ($(findstring pvplayer.conf, $(wildcard $(TOPDIR)vendor/pv/pvplayer.conf)), )
+    VALUE_ADD := false
+  else
+    VALUE_ADD := true
     PV_CFLAGS += -DPV_USE_VALUE_ADD=1
   endif
 
