@@ -402,12 +402,6 @@ void PVMFVideoEncPort::Run()
 				break;
 			}
 		}
-
-		if(iNode->IsFlushPending())
-		{
-			if(IncomingMsgQueueSize() == 0 && OutgoingMsgQueueSize() == 0)
-				iNode->FlushComplete();
-		}
 	}
 
 	//Process outgoing messages
@@ -439,21 +433,15 @@ void PVMFVideoEncPort::Run()
 					iNode->ReportErrorEvent(PVMF_OMX_VIDEOENC_NODE_ERROR_ENCODE_ERROR, (OsclAny*)this);
 					break;
 				}
-
-				if(iNode->IsFlushPending())
-				{
-					if(IncomingMsgQueueSize() == 0 && OutgoingMsgQueueSize() == 0)
-						iNode->FlushComplete();
-				}
 			}
 		}
-
-		if(iNode->IsFlushPending())
-		{
-			if(IncomingMsgQueueSize() == 0 && OutgoingMsgQueueSize() == 0)
-				iNode->FlushComplete();
-		}
 	}
+
+    if (iNode->IsFlushPending())
+    {
+        if (IncomingMsgQueueSize() == 0 && OutgoingMsgQueueSize() == 0)
+            iNode->FlushComplete();
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////
