@@ -1109,6 +1109,11 @@ void PVMFOMXVideoEncNode::Run()
 {
     LOG_STACK_TRACE((0, "PVMFOMXVideoEncNode::Run: In"));
 
+    if (iResetInProgress) {
+        LOG_STACK_TRACE((0,"PVMFOMXVideoEncNode::Run() Reset in progress"));
+        return;
+    }
+
     if (!iCmdQueue.empty())
     {
         if (ProcessCommand(iCmdQueue.front()))
@@ -3358,7 +3363,7 @@ bool PVMFOMXVideoEncNode::FreeBuffersFromComponent(OsclMemPoolFixedChunkAllocato
                                           bool	aIsThisInputBuffer      // is this input or output
                                           )
 {
-    LOG_STACK_TRACE((0,"PVMFOMXVideoEncNode::FreeBuffersToComponent(): In"));
+    LOG_STACK_TRACE((0,"PVMFOMXVideoEncNode::FreeBuffersFromComponent(): In"));
 
     OsclAny **ctrl_struct_ptr = NULL;	// temporary array to keep the addresses of buffer ctrl structures and buffers
     ctrl_struct_ptr = (OsclAny **) oscl_malloc(aNumBuffers * sizeof(OsclAny *));
