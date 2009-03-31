@@ -54,7 +54,18 @@
 #include "pvmp4h263encextension.h"
 #include "pvmp4ffcn_clipconfig.h"
 #include "pvmf_fileoutput_config.h"
+#ifndef PVMF_FILEOUTPUT_CONFIG_H_INCLUDED
+#include "pvmf_fileoutput_config.h"
+#endif
+#ifndef PVMF_AUDIO_ENCNODE_EXTENSION_H_INCLUDED
 #include "pvmf_audio_encnode_extension.h"
+#endif
+
+// FIXME:
+// Platform-specic and temporal workaround to prevent video size
+// from being set too large
+#define ANDROID_MAX_ENCODED_FRAME_WIDTH            352
+#define ANDROID_MAX_ENCODED_FRAME_HEIGHT           288
 
 namespace android {
 
@@ -82,11 +93,14 @@ enum author_command_type {
     AUTHOR_SET_VIDEO_FRAME_RATE,
     AUTHOR_SET_PREVIEW_SURFACE,
     AUTHOR_SET_OUTPUT_FILE,
+    AUTHOR_SET_PARAMETERS,
     AUTHOR_PREPARE,
     AUTHOR_START,
     AUTHOR_STOP,
     AUTHOR_RESET,
     AUTHOR_CLOSE,
+    AUTHOR_REMOVE_VIDEO_SOURCE,
+    AUTHOR_REMOVE_AUDIO_SOURCE,
     AUTHOR_QUIT = 100
 };
 
@@ -95,6 +109,8 @@ struct author_command
     author_command(author_command_type which) {
         this->which = which;
     }
+
+    virtual ~author_command() {}
 
     author_command_type which;
     media_completion_f comp;
@@ -134,9 +150,10 @@ struct set_video_encoder_command : author_command
 struct set_output_file_command : author_command
 {
     set_output_file_command() : author_command(AUTHOR_SET_OUTPUT_FILE) {};
-    char                        *path;
+    int                         fd;
+    int64_t                     offset;
+    int64_t                     length;
 };
-
 struct set_video_size_command : author_command
 {
     set_video_size_command() : author_command(AUTHOR_SET_VIDEO_SIZE) {};
@@ -160,6 +177,23 @@ struct set_camera_command : author_command
 {
     set_camera_command() : author_command(AUTHOR_SET_CAMERA) {};
     sp<ICamera>                      camera;
+};
+
+struct set_parameters_command : author_command
+{
+    set_parameters_command(const String8& params)
+        : author_command(AUTHOR_SET_PARAMETERS),
+          mParams(params) {
+    }
+
+    const String8& params() const { return mParams; }
+
+private:
+    String8 mParams;
+
+    // Disallow copying and assignment.
+    set_parameters_command(const set_parameters_command&);
+    set_parameters_command& operator=(const set_parameters_command&);
 };
 
 class AuthorDriver :
@@ -191,6 +225,7 @@ public:
     void handleSetVideoFrameRate(set_video_frame_rate_command *ac);
     void handleSetPreviewSurface(set_preview_surface_command *ac);
     void handleSetOutputFile(set_output_file_command *ac);
+    void handleSetParameters(set_parameters_command *ac);
     void handlePrepare(author_command *ac);
     void handleStart(author_command *ac);
     void handleStop(author_command *ac);
@@ -206,14 +241,19 @@ public:
 
     status_t getMaxAmplitude(int *max);
     PVAEState getAuthorEngineState();
+    status_t setListener(const sp<IMediaPlayerClient>& listener);
 
 private:
     // Finish up a non-async command in such a way that
     // the event loop will keep running.
     void FinishNonAsyncCommand(author_command *ec);
  
-    // remove input video and/or audio source(s)
-    void removeDataSources(author_command *ac);
+    // remove references to configurations
+    void removeConfigRefs(author_command *ac);
+
+    // remove input video or audio source
+    void handleRemoveVideoSource(author_command *ac);
+    void handleRemoveAudioSource(author_command *ac);
 
     // Release resources acquired in a recording session
     // Can be called only in the IDLE state of the authoring engine
@@ -228,6 +268,13 @@ private:
     // Callback for synchronous commands.
     static void syncCompletion(status_t s, void *cookie);
 
+    // Limit either the duration of the recording or the resulting file size
+    // If "limit_is_duration" is true, "limit" holds the maximum duration in
+    // milliseconds, otherwise "limit" holds the maximum filesize in bytes.
+    PVMFStatus setMaxDurationOrFileSize(int64_t limit, bool limit_is_duration);
+
+    PVMFStatus setParameter(const String8 &key, const String8 &value);
+
     PVAuthorEngineInterface    *mAuthor;
 
     PvmiMIOControl           *mVideoInputMIO;
@@ -240,14 +287,12 @@ private:
     PVInterface                *mVideoEncoderConfig;
     PVInterface                *mAudioEncoderConfig;
 
-    char                    *mOutputFileName;
-    bool                    mKeepOutputFile;
-
     int                     mVideoWidth;
     int                     mVideoHeight;
     int                     mVideoFrameRate;
     //int                     mVideoBitRate;
     video_encoder           mVideoEncoder;
+    output_format           mOutputFormat; 
 
     //int                     mAudioBitRate;
     audio_encoder           mAudioEncoder;
@@ -262,6 +307,9 @@ private:
     Mutex                   mQueueLock;
 
     sp<ICamera>             mCamera;
+    sp<IMediaPlayerClient>  mListener;
+
+    FILE* 		ifpOutput;
 };
 
 class AuthorDriverWrapper
@@ -271,6 +319,7 @@ public:
     ~AuthorDriverWrapper();
     status_t enqueueCommand(author_command *ec, media_completion_f comp, void *cookie);
     status_t getMaxAmplitude(int *max);
+    status_t setListener(const sp<IMediaPlayerClient>& listener);
 
 private:
     void resetAndClose();

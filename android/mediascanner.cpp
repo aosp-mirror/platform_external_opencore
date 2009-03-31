@@ -442,7 +442,7 @@ static PVMFStatus parseMidi(const char *filename, MediaScannerClient& client) {
         file.fd = 0;
         file.offset = 0;
         file.length = 0;
-        result = EAS_OpenFile(easData, &file, &easHandle, NULL);
+        result = EAS_OpenFile(easData, &file, &easHandle);
     }
     if (result == EAS_SUCCESS) {
         result = EAS_Prepare(easData, easHandle);
@@ -567,7 +567,7 @@ static bool fileMatchesExtension(const char* path, const char* extensions) {
 
     while (extensions[0]) {
         char* comma = strchr(extensions, ',');
-        int length = (comma ? comma - extensions : strlen(extensions));
+        size_t length = (comma ? comma - extensions : strlen(extensions));
         if (length == strlen(extension) && strncasecmp(extension, extensions, length) == 0) return true;
         extensions += length;
         if (extensions[0] == ',') ++extensions;
@@ -627,7 +627,10 @@ status_t MediaScanner::doProcessDirectory(char *path, int pathRemaining, const c
 
                 strcat(fileSpot, "/");
                 int err = doProcessDirectory(path, pathRemaining - nameLength - 1, extensions, client, exceptionCheck, exceptionEnv);
-                if (err) goto failure;
+                if (err) {
+                    LOGE("Error processing '%s' - skipping\n", path);
+                    continue;
+                }
             } else if (fileMatchesExtension(path, extensions)) {
                 struct stat statbuf;
                 stat(path, &statbuf);

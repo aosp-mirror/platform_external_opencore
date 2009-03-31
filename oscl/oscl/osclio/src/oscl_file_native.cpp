@@ -29,87 +29,6 @@
 #include "oscl_file_handle.h"
 
 
-#if ENABLE_MEMORY_PLAYBACK
-pthread_key_t osclfilenativesigbuskey;
-
-/*
- * Add a structure describing the desired signal handling behavior
- * to the TLS. These structures form a linked list, which is needed
- * because multiple files might be opened by the same thread, in
- * which case we need to figure out which one was the one that
- * faulted.
- */
-static void addspecific(struct mediasigbushandler *newhandler)
-{
-    struct mediasigbushandler *existinghandler =
-                    (struct mediasigbushandler*) pthread_getspecific(osclfilenativesigbuskey);
-
-    if (existinghandler)
-{
-        // append the new handler
-        newhandler->next = NULL;
-        existinghandler->next = newhandler;
-    }
-    else
-    {
-        newhandler->next = NULL;
-        pthread_setspecific(osclfilenativesigbuskey, newhandler);
-    }
-}
-
-/*
- * Remove a previously added structure from the list.
- */
-static void removespecific(struct mediasigbushandler *handler)
-{
-    struct mediasigbushandler *existinghandler =
-                    (struct mediasigbushandler*) pthread_getspecific(osclfilenativesigbuskey);
-
-    if (existinghandler == NULL || handler == NULL)
-{
-        return;
-    }
-
-    // to remove the first one, just set a new TLS entry
-    if (existinghandler == handler)
-    {
-        pthread_setspecific(osclfilenativesigbuskey, handler->next);
-        return;
-    }
-
-    while (existinghandler->next)
-    {
-        if (existinghandler->next == handler)
-        {
-            existinghandler->next = existinghandler->next->next;
-            return;
-        }
-        existinghandler = existinghandler->next;
-    }
-}
-
-/*
- * Find the struct for a given fault address
- */
-struct mediasigbushandler *OsclNativeFile::getspecificforfaultaddr(char *faultaddr)
-{
-    struct mediasigbushandler *h =
-                    (struct mediasigbushandler*) pthread_getspecific(osclfilenativesigbuskey);
-
-    while (h)
-{
-        OsclNativeFile *f = (OsclNativeFile*)h->data;
-        char *base = (char*) f->membase;
-        if (base <= faultaddr && faultaddr < base + f->memlen)
-        {
-            return h;
-        }
-        h = h->next;
-    }
-    return NULL;
-}
-#endif // ENABLE_MEMORY_PLAYBACK
-
 OsclNativeFile::OsclNativeFile()
 {
     iOpenFileHandle = false;
@@ -231,13 +150,6 @@ int32 OsclNativeFile::Open(const oscl_wchar *filename, uint32 mode
             memoffset = offset;
             memlen = len;
             mempos = 0;
-
-            sigbushandler.handlesigbus = sigbushandlerfunc;
-            sigbushandler.sigbusvar = NULL;
-            sigbushandler.data = this;
-            addspecific(&sigbushandler);
-            sigbushandler.base = 0; // we do our own address matching
-            sigbushandler.len = 0;
         }
         else
 #endif
@@ -319,12 +231,6 @@ int32 OsclNativeFile::Open(const char *filename, uint32 mode
             memoffset = offset;
             memlen = len;
             mempos = 0;
-            sigbushandler.handlesigbus = sigbushandlerfunc;
-            sigbushandler.sigbusvar = NULL;
-            sigbushandler.data = this;
-            addspecific(&sigbushandler);
-            sigbushandler.base = 0; // we do our own address matching
-            sigbushandler.len = 0;
         }
         else
 #endif
@@ -378,7 +284,6 @@ int32 OsclNativeFile::Close()
         else if (membase != NULL)
         {
             membase = NULL;
-            removespecific(&sigbushandler);
             return 0;
         }
 #endif
@@ -390,34 +295,6 @@ int32 OsclNativeFile::Close()
 
     return closeret;
 }
-
-#if ENABLE_MEMORY_PLAYBACK
-int OsclNativeFile::sigbushandlerfunc(siginfo_t *info, struct mediasigbushandler *data)
-{
-    char *faultaddr = (char*) info->si_addr;
-
-    struct mediasigbushandler *h = getspecificforfaultaddr(faultaddr);
-    if (h == NULL)
-    {
-        return -1;
-    }
-    else
-    {
-        ((OsclNativeFile*)h->data)->memcpyfailed = 1;
-        // map in a zeroed out page so the operation can succeed
-        long pagesize = sysconf(_SC_PAGE_SIZE);
-        long pagemask = ~(pagesize - 1);
-        void * pageaddr = (void*)(((long)(faultaddr)) & pagemask);
-
-        void * bar = mmap(pageaddr, pagesize, PROT_READ, MAP_ANONYMOUS | MAP_PRIVATE | MAP_FIXED, -1, 0);
-        if (bar == MAP_FAILED)
-        {
-            return -1;
-        }
-    }
-    return 0;
-}
-#endif
 
 uint32 OsclNativeFile::Read(OsclAny *buffer, uint32 size, uint32 numelements)
 {

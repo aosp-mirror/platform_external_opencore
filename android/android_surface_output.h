@@ -57,33 +57,6 @@
 // color converter
 #include "cczoomrotation16.h"
 
-// FIXME: Dream specific
-typedef struct PLATFORM_PRIVATE_PMEM_INFO
-{
-    /* pmem file descriptor */
-    uint32 pmem_fd;
-
-    uint32 offset;
-} PLATFORM_PRIVATE_PMEM_INFO;
-
-typedef struct PLATFORM_PRIVATE_ENTRY
-{
-    /* Entry type */
-    uint32 type;
-
-    /* Pointer to platform specific entry */
-    OsclAny* entry;
-} PLATFORM_PRIVATE_ENTRY;
-
-typedef struct PLATFORM_PRIVATE_LIST
-{
-    /* Number of entries */
-    uint32 nEntries;
-
-    /* Pointer to array of platform specific entries *
-     * Contiguous block of PLATFORM_PRIVATE_ENTRY elements */
-    PLATFORM_PRIVATE_ENTRY* entryList;
-} PLATFORM_PRIVATE_LIST;
 
 // define bits, mask and validity check for video parameters
 #define VIDEO_PARAMETERS_INVALID 0
@@ -107,37 +80,8 @@ class AndroidSurfaceOutput;
 
 using namespace android;
 
-// A test feature for simulating a component with active timing.
-class AndroidSurfaceOutput_ActiveTimingSupport:public PvmiClockExtensionInterface
-{
-public:
 
-    AndroidSurfaceOutput_ActiveTimingSupport(uint32 limit)
-        :iQueueLimit(limit)
-        ,iClock(NULL)
-    {}
-    ~AndroidSurfaceOutput_ActiveTimingSupport()
-    {}
-
-    //from PvmiClockExtensionInterface
-    OSCL_IMPORT_REF PVMFStatus SetClock(PVMFMediaClock* clockVal) ;
-
-    //from PVInterface
-    OSCL_IMPORT_REF void addRef() ;
-    OSCL_IMPORT_REF void removeRef() ;
-    OSCL_IMPORT_REF bool queryInterface(const PVUuid& uuid, PVInterface*& iface) ;
-
-    void queryUuid(PVUuid& uuid);
-
-    uint32 GetDelayMsec(PVMFTimestamp&);
-
-    uint32 iQueueLimit;
-
-    PVMFMediaClock* iClock;
-};
-
-
-typedef void (*frame_decoded_f)(void *cookie, int width, int height, int pitch, int format, uint8* data);
+//typedef void (*frame_decoded_f)(void *cookie, int width, int height, int pitch, int format, uint8* data);
 
 // This class implements the reference media IO for file output.
 // This class constitutes the Media IO component
@@ -146,17 +90,17 @@ class AndroidSurfaceOutput :    public OsclTimerObject
                         ,public PvmiMIOControl
                         ,public PvmiMediaTransfer
                         ,public PvmiCapabilityAndConfig
-
 {
 public:
     OSCL_IMPORT_REF AndroidSurfaceOutput();
 
     // parameter initialization
-    virtual status_t set(android::PVPlayer* pvPlayer, const sp<ISurface>& surface);
+    virtual status_t set(android::PVPlayer* pvPlayer, const sp<ISurface>& surface, bool emulation);
 
     // For Frame Buffer
     OSCL_IMPORT_REF bool initCheck();
     OSCL_IMPORT_REF PVMFStatus WriteFrameBuf(uint8* aData, uint32 aDataLen, const PvmiMediaXferHeader& data_header_info);
+    OSCL_IMPORT_REF void postLastFrame();
     OSCL_IMPORT_REF void CloseFrameBuf();
 
     OSCL_IMPORT_REF ~AndroidSurfaceOutput();
@@ -257,10 +201,7 @@ public:
 
     PVMFStatus verifyParametersSync (PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
 
-
-    void SetFrameDecodedCallback(frame_decoded_f f, void *cookie);
-
-private:
+protected:
     void initData();
     void resetVideoParameterFlags();
     bool checkVideoParameterFlags();
@@ -272,9 +213,6 @@ private:
 
     void Cleanup();
     void ResetData();
-
-    bool getPmemFd(OsclAny *private_data_ptr, uint32 *pmemFD);
-    bool getOffset(OsclAny *private_data_ptr, uint32 *offset);
 
     PvmiMediaTransfer* iPeer;
 
@@ -366,10 +304,6 @@ private:
     int                         mFrameBufferIndex;
     sp<MemoryHeapBase>          mFrameHeap;
     size_t                      mFrameBuffers[kBufferCount];
-
-    sp<MemoryHeapPmem>          mHeapPmem;
-    bool                        mHardwareCodec;
-    uint32                      mOffset;
 
     void convertFrame(void* src, void* dst, size_t len);
     //This bool is set true when all necassary parameters have been received.

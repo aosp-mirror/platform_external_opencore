@@ -108,16 +108,44 @@ status_t PVMediaRecorder::setOutputFile(const char *path)
     LOGV("setOutputFile(%s)", path);
     if (mAuthorDriverWrapper == NULL) {
         LOGE("author driver wrapper is not initialized yet");
-        return UNKNOWN_ERROR;
+        return NO_INIT;
     }
 
+    // use file descriptor interface
+    int fd = open(path, O_RDWR | O_CREAT );
+    if (-1 == fd) {
+        LOGE("Ln %d open() error %d", __LINE__, fd);
+        return -errno;
+    }
+    return setOutputFile(fd, 0, 0);
+}
+
+status_t PVMediaRecorder::setOutputFile(int fd, int64_t offset, int64_t length)
+{
+    LOGV("setOutputFile(%d, %lld, %lld)", fd, offset, length);
     set_output_file_command *ac = new set_output_file_command();
     if (ac == NULL) {
         LOGE("failed to construct an author command");
-        return UNKNOWN_ERROR;
+        return NO_MEMORY;
     }
-    ac->path = strdup(path);
+
+    ac->fd = fd;
+    ac->offset = offset;
+    ac->length = length;
     return mAuthorDriverWrapper->enqueueCommand(ac, 0, 0);
+}
+
+status_t PVMediaRecorder::setParameters(const String8& params) {
+    LOGV("setParameters(%s)", params.string());
+    set_parameters_command *command = new set_parameters_command(params);
+    if (command == NULL) {
+        LOGE("failed to construct an author command");
+
+        return NO_MEMORY;
+    }
+
+    return mAuthorDriverWrapper->enqueueCommand(
+            command, NULL /* completion_func */, NULL /* completion_cookie */);
 }
 
 status_t PVMediaRecorder::setAudioEncoder(audio_encoder ae)
@@ -272,19 +300,21 @@ status_t PVMediaRecorder::stop()
 {
     LOGV("stop");
     status_t ret = doStop();
-    if (OK == ret) {
-        ret = reset();
-        if (OK == ret) {
-            ret = close();
-        }
-    }
+    if (OK != ret)
+	LOGE("stop failed");
+    ret = reset();
+    if (OK != ret)
+	LOGE("reset failed");
+    ret = close();
+    if (OK != ret)
+	LOGE("close failed");
+
     return ret;
 }
 
 status_t PVMediaRecorder::doStop()
 {
     LOGV("doStop");
-
     if (mAuthorDriverWrapper == NULL) {
         LOGE("author driver wrapper is not initialized yet");
         return UNKNOWN_ERROR;
@@ -311,7 +341,22 @@ status_t PVMediaRecorder::reset()
         LOGE("failed to construct an author command");
         return UNKNOWN_ERROR;
     }
-    return mAuthorDriverWrapper->enqueueCommand(ac, 0, 0);
+    status_t ret = mAuthorDriverWrapper->enqueueCommand(ac, 0, 0);
+    if (ret != OK) {
+        LOGE("failed to do reset(%d)", ret);
+        return UNKNOWN_ERROR;
+    }
+    ret = mAuthorDriverWrapper->enqueueCommand(new author_command(AUTHOR_REMOVE_VIDEO_SOURCE), 0, 0);
+    if (ret != OK) {
+        LOGE("failed to remove video source(%d)", ret);
+        return UNKNOWN_ERROR;
+    }
+    ret = mAuthorDriverWrapper->enqueueCommand(new author_command(AUTHOR_REMOVE_AUDIO_SOURCE), 0, 0);
+    if (ret != OK) {
+        LOGE("failed to remove audio source(%d)", ret);
+        return UNKNOWN_ERROR;
+    }
+    return ret;
 }
 
 status_t PVMediaRecorder::close()
@@ -328,6 +373,15 @@ status_t PVMediaRecorder::close()
         return UNKNOWN_ERROR;
     }
     return mAuthorDriverWrapper->enqueueCommand(ac, 0, 0);
+}
+
+status_t PVMediaRecorder::setListener(const sp<IMediaPlayerClient>& listener) {
+    LOGV("setListener");
+    if (mAuthorDriverWrapper == NULL) {
+        LOGE("author driver wrapper is not initialized yet");
+        return UNKNOWN_ERROR;
+    }
+    return mAuthorDriverWrapper->setListener(listener);
 }
 
 }; // namespace android

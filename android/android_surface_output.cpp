@@ -16,9 +16,10 @@
  * -------------------------------------------------------------------
  */
 
-#define LOG_NDEBUG 0
+//#define LOG_NDEBUG 0
 #define LOG_TAG "VideoMIO"
 #include <utils/Log.h>
+#include <ui/ISurface.h>
 
 #include "android_surface_output.h"
 #include <media/PVPlayer.h>
@@ -29,27 +30,13 @@
 
 #include "oscl_dll.h"
 
-#define PLATFORM_PRIVATE_PMEM 1
-
 // Define entry point for this DLL
 OSCL_DLL_ENTRY_POINT_DEFAULT()
 
 //The factory functions.
 #include "oscl_mem.h"
 
-#include <cutils/properties.h>
-
-#if HAVE_ANDROID_OS
-#include <linux/android_pmem.h>
-#endif
-
 using namespace android;
-
-static const char* pmem_adsp = "/dev/pmem_adsp";
-static const char* pmem = "/dev/pmem";
-
-// This class implements the reference media IO for file output
-// This class constitutes the Media IO component
 
 OSCL_EXPORT_REF AndroidSurfaceOutput::AndroidSurfaceOutput() :
     OsclTimerObject(OsclActiveObject::EPriorityNominal, "androidsurfaceoutput")
@@ -59,22 +46,14 @@ OSCL_EXPORT_REF AndroidSurfaceOutput::AndroidSurfaceOutput() :
     iColorConverter = NULL;
     mInitialized = false;
     mEmulation = false;
-    mHardwareCodec = false;
     mPvPlayer = NULL;
-    mFrameBufferIndex = 0;
-
-    // running in emulation?
-    char value[PROPERTY_VALUE_MAX];
-    if (property_get("ro.kernel.qemu", value, 0)) {
-        LOGV("Emulation mode - using software codecs");
-        mEmulation = true;
-    }
 }
 
-status_t AndroidSurfaceOutput::set(PVPlayer* pvPlayer, const sp<ISurface>& surface)
+status_t AndroidSurfaceOutput::set(PVPlayer* pvPlayer, const sp<ISurface>& surface, bool emulation)
 {
     mPvPlayer = pvPlayer;
     mSurface = surface;
+    mEmulation = emulation;
     return NO_ERROR;
 }
 
@@ -83,9 +62,6 @@ void AndroidSurfaceOutput::initData()
     iVideoHeight = iVideoWidth = iVideoDisplayHeight = iVideoDisplayWidth = 0;
     iVideoFormat=PVMF_MIME_FORMAT_UNKNOWN;
     resetVideoParameterFlags();
-
-    // hardware specific information
-    iVideoSubFormat = PVMF_MIME_FORMAT_UNKNOWN;
 
     iCommandCounter=0;
     iLogger=NULL;
@@ -113,11 +89,6 @@ void AndroidSurfaceOutput::ResetData()
 void AndroidSurfaceOutput::resetVideoParameterFlags()
 {
     iVideoParameterFlags = VIDEO_PARAMETERS_INVALID;
-
-    // TODO: Required because subformat is not passed when
-    // hardware accelerator is not present.
-    // emulator never uses subformat
-    //if (mEmulation) iVideoParameterFlags |= VIDEO_SUBFORMAT_VALID;
 }
 
 bool AndroidSurfaceOutput::checkVideoParameterFlags()
@@ -317,6 +288,10 @@ PVMFCommandId AndroidSurfaceOutput::Start(const OsclAny* aContext)
     return cmdid;
 }
 
+void AndroidSurfaceOutput::postLastFrame()
+{
+    mSurface->postBuffer(mFrameBuffers[mFrameBufferIndex]);
+}
 
 PVMFCommandId AndroidSurfaceOutput::Pause(const OsclAny* aContext)
 {
@@ -336,12 +311,8 @@ PVMFCommandId AndroidSurfaceOutput::Pause(const OsclAny* aContext)
         // post last buffer to prevent stale data
         // if not configured, PVMFMIOConfigurationComplete is not sent
         // there should not be any media data.
-	if(iIsMIOConfigured) { 
-	if (mHardwareCodec) {
-		mSurface->postBuffer(mOffset);
-	} else {
-		mSurface->postBuffer(mFrameBuffers[mFrameBufferIndex]);
-	}
+	    if(iIsMIOConfigured) { 
+            postLastFrame();
         }
         break;
 
@@ -915,56 +886,6 @@ PVMFStatus AndroidSurfaceOutput::verifyParametersSync (PvmiMIOSession aSession, 
     return PVMFSuccess;
 }
 
-//
-// For active timing support
-//
-OSCL_EXPORT_REF PVMFStatus AndroidSurfaceOutput_ActiveTimingSupport::SetClock(PVMFMediaClock *clockVal)
-{
-    iClock=clockVal;
-    return PVMFSuccess;
-}
-
-OSCL_EXPORT_REF void AndroidSurfaceOutput_ActiveTimingSupport::addRef()
-{
-}
-
-OSCL_EXPORT_REF void AndroidSurfaceOutput_ActiveTimingSupport::removeRef()
-{
-}
-
-OSCL_EXPORT_REF bool AndroidSurfaceOutput_ActiveTimingSupport::queryInterface(const PVUuid& aUuid, PVInterface*& aInterface)
-{
-    aInterface=NULL;
-    PVUuid uuid;
-    queryUuid(uuid);
-    if (uuid==aUuid)
-    {
-        PvmiClockExtensionInterface* myInterface = OSCL_STATIC_CAST(PvmiClockExtensionInterface*,this);
-        aInterface = OSCL_STATIC_CAST(PVInterface*, myInterface);
-        return true;
-    }
-    return false;
-}
-
-void AndroidSurfaceOutput_ActiveTimingSupport::queryUuid(PVUuid& uuid)
-{
-    uuid=PvmiClockExtensionInterfaceUuid;
-}
-
-uint32 AndroidSurfaceOutput_ActiveTimingSupport::GetDelayMsec(PVMFTimestamp& aTs)
-{
-    if (iClock)
-    {
-        uint32 currentTime=0;
-        bool overflow=false;
-        iClock->GetCurrentTime32(currentTime, overflow, PVMF_MEDIA_CLOCK_MSEC);
-        if(aTs>currentTime)
-        {
-            return aTs-currentTime;
-        }
-    }
-    return 0;
-}
 
 //
 // Private section
@@ -1011,145 +932,55 @@ OSCL_EXPORT_REF bool AndroidSurfaceOutput::initCheck()
     int frameHeight = iVideoHeight;
     int frameSize;
 
-    // FIXME: Need to move hardware specific code to partners directory
+    // RGB-565 frames are 2 bytes/pixel
+    displayWidth = (displayWidth + 1) & -2;
+    displayHeight = (displayHeight + 1) & -2;
+    frameWidth = (frameWidth + 1) & -2;
+    frameHeight = (frameHeight + 1) & -2;
+    frameSize = frameWidth * frameHeight * 2;
 
-#if HAVE_ANDROID_OS
-    // Dream hardware codec uses semi-planar format
-    if (!mEmulation && iVideoSubFormat == PVMF_MIME_YUV420_SEMIPLANAR_YVU) {
-        LOGV("using hardware codec");
-        mHardwareCodec = true;
-    } else
-#endif
+    // create frame buffer heap and register with surfaceflinger
+    mFrameHeap = new MemoryHeapBase(frameSize * kBufferCount);
+    if (mFrameHeap->heapID() < 0) {
+	LOGE("Error creating frame buffer heap");
+	return false;
+    }
+    
+    ISurface::BufferHeap buffers(displayWidth, displayHeight,
+            frameWidth, frameHeight, PIXEL_FORMAT_RGB_565, mFrameHeap);
+    mSurface->registerBuffers(buffers);
 
-    // software codec
-    {
-        LOGV("using software codec");
-
-#if HAVE_ANDROID_OS
-        // emulation
-        if (mEmulation)
-#endif
-        {
-            // RGB-565 frames are 2 bytes/pixel
-            displayWidth = (displayWidth + 1) & -2;
-            displayHeight = (displayHeight + 1) & -2;
-            frameWidth = (frameWidth + 1) & -2;
-            frameHeight = (frameHeight + 1) & -2;
-            frameSize = frameWidth * frameHeight * 2;
-
-            // create frame buffer heap and register with surfaceflinger
-
-            mFrameHeap = new MemoryHeapBase(frameSize * kBufferCount);
-            if (mFrameHeap->heapID() < 0) {
-                LOGE("Error creating frame buffer heap");
-                return false;
-            }
-            status_t ret = mSurface->registerBuffers(displayWidth, displayHeight, frameWidth, frameHeight, PIXEL_FORMAT_RGB_565, mFrameHeap);
-
-            // create frame buffers
-            for (int i = 0; i < kBufferCount; i++) {
-                mFrameBuffers[i] = i * frameSize;
-            }
-
-            // initialize software color converter
-            iColorConverter = ColorConvert16::NewL();
-            iColorConverter->Init(displayWidth, displayHeight, frameWidth, displayWidth, displayHeight, displayWidth, CCROTATE_NONE);
-            iColorConverter->SetMemHeight(frameHeight);
-            iColorConverter->SetMode(1);
-        }
-
-#if HAVE_ANDROID_OS
-        // FIXME: hardware specific
-        else {
-            // YUV420 frames are 1.5 bytes/pixel
-            frameSize = (frameWidth * frameHeight * 3) / 2;
-
-            // create frame buffer heap
-            sp<MemoryHeapBase> master = new MemoryHeapBase(pmem_adsp, frameSize * kBufferCount);
-            if (master->heapID() < 0) {
-                LOGE("Error creating frame buffer heap");
-                return false;
-            }
-            master->setDevice(pmem);
-            mHeapPmem = new MemoryHeapPmem(master, 0);
-            mHeapPmem->slap();
-            master.clear();
-            status_t ret = mSurface->registerBuffers(displayWidth, displayHeight, frameWidth, frameHeight, PIXEL_FORMAT_YCbCr_420_SP, mHeapPmem);
-
-            // create frame buffers
-            for (int i = 0; i < kBufferCount; i++) {
-                mFrameBuffers[i] = i * frameSize;
-            }
-        }
-#endif
-
-        LOGV("video = %d x %d", displayWidth, displayHeight);
-        LOGV("frame = %d x %d", frameWidth, frameHeight);
-        LOGV("frame #bytes = %d", frameSize);
-
-        // register frame buffers with SurfaceFlinger
-        mFrameBufferIndex = 0;
-        mInitialized = true;
+    // create frame buffers
+    for (int i = 0; i < kBufferCount; i++) {
+        mFrameBuffers[i] = i * frameSize;
     }
 
-    // update app
-    mPvPlayer->sendEvent(MEDIA_SET_VIDEO_SIZE, displayWidth, displayHeight);
+    // initialize software color converter
+    iColorConverter = ColorConvert16::NewL();
+    iColorConverter->Init(displayWidth, displayHeight, frameWidth, displayWidth, displayHeight, displayWidth, CCROTATE_NONE);
+    iColorConverter->SetMemHeight(frameHeight);
+    iColorConverter->SetMode(1);
+
+    LOGV("video = %d x %d", displayWidth, displayHeight);
+    LOGV("frame = %d x %d", frameWidth, frameHeight);
+    LOGV("frame #bytes = %d", frameSize);
+
+    // register frame buffers with SurfaceFlinger
+    mFrameBufferIndex = 0;
+    mInitialized = true;
+    mPvPlayer->sendEvent(MEDIA_SET_VIDEO_SIZE, iVideoDisplayWidth, iVideoDisplayHeight);
 
     return mInitialized;
 }
 
 OSCL_EXPORT_REF PVMFStatus AndroidSurfaceOutput::WriteFrameBuf(uint8* aData, uint32 aDataLen, const PvmiMediaXferHeader& data_header_info)
 {
-    if (mSurface != 0) {
+    if (mSurface == 0) return PVMFFailure;
 
-        // initalized?
-        if (!mInitialized) {
-            LOGV("initializing for hardware");
-            // FIXME: Check for hardware codec - move to partners directory
-            if (iVideoSubFormat != PVMF_MIME_YUV420_SEMIPLANAR_YVU) return PVMFFailure;
-            LOGV("got expected format");
-            LOGV("private data pointer is 0%p\n", data_header_info.private_data_ptr);
-
-            uint32 fd;
-            if (!getPmemFd(data_header_info.private_data_ptr, &fd)) {
-                LOGE("Error getting pmem heap from private_data_ptr");
-                return PVMFFailure;
-            }
-            sp<MemoryHeapBase> master = (MemoryHeapBase *) fd;
-            master->setDevice(pmem);
-            mHeapPmem = new MemoryHeapPmem(master, 0);
-            mHeapPmem->slap();
-            master.clear();
-
-            // register frame buffers with SurfaceFlinger
-            status_t ret = mSurface->registerBuffers(iVideoDisplayWidth, iVideoDisplayHeight, iVideoWidth, iVideoHeight, PIXEL_FORMAT_YCbCr_420_SP, mHeapPmem);
-
-            mInitialized = true;
-        }
-
-        // hardware codec
-        if (mHardwareCodec) {
-            // get pmem offset
-            if (!getOffset(data_header_info.private_data_ptr, &mOffset)) {
-                LOGE("Error getting pmem offset from private_data_ptr");
-                return PVMFFailure;
-            }
-            // post to SurfaceFlinger
-            mSurface->postBuffer(mOffset);
-        }
-
-        // software codec
-        else {
-            if (mEmulation) {
-                iColorConverter->Convert(aData, static_cast<uint8*>(mFrameHeap->base()) + mFrameBuffers[mFrameBufferIndex]);
-            } else {
-                convertFrame(aData, static_cast<uint8*>(mHeapPmem->base()) + mFrameBuffers[mFrameBufferIndex], aDataLen);
-            }
-            // post to SurfaceFlinger
-            if (++mFrameBufferIndex == kBufferCount) mFrameBufferIndex = 0;
-            mSurface->postBuffer(mFrameBuffers[mFrameBufferIndex]);
-        }
-    }
+    iColorConverter->Convert(aData, static_cast<uint8*>(mFrameHeap->base()) + mFrameBuffers[mFrameBufferIndex]);
+    // post to SurfaceFlinger
+    if (++mFrameBufferIndex == kBufferCount) mFrameBufferIndex = 0;
+    mSurface->postBuffer(mFrameBuffers[mFrameBufferIndex]);
     return PVMFSuccess;
 }
 
@@ -1174,8 +1005,6 @@ OSCL_EXPORT_REF void AndroidSurfaceOutput::CloseFrameBuf()
     // free heaps
     LOGV("free mFrameHeap");
     mFrameHeap.clear();
-    LOGV("free mHeapPmem");
-    mHeapPmem.clear();
 
     // free color converter
     if (iColorConverter != 0)
@@ -1193,56 +1022,6 @@ OSCL_EXPORT_REF bool AndroidSurfaceOutput::GetVideoSize(int *w, int *h) {
     return iVideoDisplayWidth != 0 && iVideoDisplayHeight != 0;
 }
 
-bool AndroidSurfaceOutput::getPmemFd(OsclAny *private_data_ptr, uint32 *pmemFD)
-{
-    PLATFORM_PRIVATE_LIST *listPtr = NULL;
-    PLATFORM_PRIVATE_PMEM_INFO *pmemInfoPtr = NULL;
-    bool returnType = false;
-    LOGV("in getPmemfd - privatedataptr=%p\n",private_data_ptr);
-    listPtr = (PLATFORM_PRIVATE_LIST*) private_data_ptr;
-
-    for (uint32 i=0;i<listPtr->nEntries;i++)
-    {
-        if(listPtr->entryList->type == PLATFORM_PRIVATE_PMEM)
-        {
-            LOGV("in getPmemfd - entry type = %d\n",listPtr->entryList->type);
-          pmemInfoPtr = (PLATFORM_PRIVATE_PMEM_INFO*) (listPtr->entryList->entry);
-          returnType = true;
-          if(pmemInfoPtr){
-            *pmemFD = pmemInfoPtr->pmem_fd;
-            LOGV("in getPmemfd - pmemFD = %d\n",*pmemFD);
-          }
-          break;
-        }
-    }
-    return returnType;
-}
-
-bool AndroidSurfaceOutput::getOffset(OsclAny *private_data_ptr, uint32 *offset)
-{
-    PLATFORM_PRIVATE_LIST *listPtr = NULL;
-    PLATFORM_PRIVATE_PMEM_INFO *pmemInfoPtr = NULL;
-    bool returnType = false;
-
-    listPtr = (PLATFORM_PRIVATE_LIST*) private_data_ptr;
-    LOGV("in getOffset: listPtr = %p\n",listPtr);
-    for (uint32 i=0;i<listPtr->nEntries;i++)
-    {
-        if(listPtr->entryList->type == PLATFORM_PRIVATE_PMEM)
-        {
-            LOGV(" in getOffset: entrytype = %d\n",listPtr->entryList->type);
-
-          pmemInfoPtr = (PLATFORM_PRIVATE_PMEM_INFO*) (listPtr->entryList->entry);
-          returnType = true;
-          if(pmemInfoPtr){
-            *offset = pmemInfoPtr->offset;
-            LOGV("in getOffset: offset = %d\n",*offset);
-          }
-          break;
-        }
-    }
-    return returnType;
-}
 
 static inline void* byteOffset(void* p, size_t offset) { return (void*)((uint8_t*)p + offset); }
 

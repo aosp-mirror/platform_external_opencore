@@ -16,7 +16,8 @@
  */
 
 //#define LOG_NDEBUG 0
-#define LOG_TAG "AuthorDriver"
+#undef LOG_TAG
+#define LOG_TAG "AuthorDriverWrapper"
 
 #include <unistd.h>
 #include <media/thread_init.h>
@@ -25,7 +26,7 @@
 #include "authordriver.h"
 #include "pv_omxcore.h"
 #include <sys/prctl.h>
-
+#include "pvmf_composer_size_and_duration.h"
 
 using namespace android;
 
@@ -36,7 +37,10 @@ AuthorDriverWrapper::AuthorDriverWrapper()
 
 void AuthorDriverWrapper::resetAndClose()
 {
+    LOGV("resetAndClose");
     mAuthorDriver->enqueueCommand(new author_command(AUTHOR_RESET), NULL, NULL);
+    mAuthorDriver->enqueueCommand(new author_command(AUTHOR_REMOVE_VIDEO_SOURCE), NULL, NULL);
+    mAuthorDriver->enqueueCommand(new author_command(AUTHOR_REMOVE_AUDIO_SOURCE), NULL, NULL);
     mAuthorDriver->enqueueCommand(new author_command(AUTHOR_CLOSE), NULL, NULL);
 }
 
@@ -82,6 +86,15 @@ status_t AuthorDriverWrapper::enqueueCommand(author_command *ac, media_completio
     return NO_INIT;
 }
 
+status_t AuthorDriverWrapper::setListener(const sp<IMediaPlayerClient>& listener) {
+    if (mAuthorDriver) {
+	return mAuthorDriver->setListener(listener);
+    }
+    return NO_INIT;
+}
+
+#undef LOG_TAG
+#define LOG_TAG "AuthorDriver"
 AuthorDriver::AuthorDriver()
              : OsclActiveObject(OsclActiveObject::EPriorityNominal, "AuthorDriver"),
                mAuthor(NULL),
@@ -92,13 +105,13 @@ AuthorDriver::AuthorDriver()
                mComposerConfig(NULL),
                mVideoEncoderConfig(NULL),
                mAudioEncoderConfig(NULL),
-               mOutputFileName(NULL),
-               mKeepOutputFile(false),
                mVideoWidth(DEFAULT_FRAME_WIDTH),
                mVideoHeight(DEFAULT_FRAME_HEIGHT),
                mVideoFrameRate((int)DEFAULT_FRAME_RATE),
                mVideoEncoder(VIDEO_ENCODER_DEFAULT),
+               mOutputFormat(OUTPUT_FORMAT_DEFAULT),
                mAudioEncoder(AUDIO_ENCODER_DEFAULT)
+	       ,ifpOutput(NULL)
 {
     mSyncSem = new OsclSemaphore();
     mSyncSem->Create();
@@ -138,14 +151,11 @@ author_command *AuthorDriver::dequeueCommand()
 
 status_t AuthorDriver::enqueueCommand(author_command *ac, media_completion_f comp, void *cookie)
 {
-    int sync_wait = 0;
-
     // If the user didn't specify a completion callback, we
     // are running in synchronous mode.
     if (comp == NULL) {
         ac->comp = AuthorDriver::syncCompletion;
         ac->cookie = this;
-        sync_wait = 1;
     } else {
         ac->comp = comp;
         ac->cookie = cookie;
@@ -240,6 +250,18 @@ void AuthorDriver::Run()
 
     case AUTHOR_SET_OUTPUT_FILE:
         handleSetOutputFile((set_output_file_command *)ac);
+        return;
+
+    case AUTHOR_SET_PARAMETERS:
+        handleSetParameters((set_parameters_command *)ac);
+        return;
+
+    case AUTHOR_REMOVE_VIDEO_SOURCE:
+        handleRemoveVideoSource(ac);
+        return;
+
+    case AUTHOR_REMOVE_AUDIO_SOURCE:
+        handleRemoveAudioSource(ac);
         return;
 
     case AUTHOR_PREPARE: handlePrepare(ac); break;
@@ -359,6 +381,8 @@ void AuthorDriver::handleSetOutputFormat(set_output_format_command *ac)
         return;
     }
 
+    mOutputFormat = ac->of;
+
     OSCL_TRY(error, mAuthor->SelectComposer(iComposerMimeType, mComposerConfig, ac));
     OSCL_FIRST_CATCH_ANY(error, commandFailed(ac));
 }
@@ -428,13 +452,28 @@ void AuthorDriver::handleSetVideoEncoder(set_video_encoder_command *ac)
 
 void AuthorDriver::handleSetVideoSize(set_video_size_command *ac)
 {
-    if (mVideoInputMIO == NULL)
+    if (mVideoInputMIO == NULL) {
+        LOGE("camera MIO is NULL");
+        commandFailed(ac);
         return;
+    }
 
-    mVideoWidth = ac->width;
-    mVideoHeight = ac->height;
+    // FIXME:
+    // Platform-specific and temporal workaround to prevent video size from being set too large
+    if (ac->width > ANDROID_MAX_ENCODED_FRAME_WIDTH) {
+        LOGW("Intended width(%d) exceeds the max allowed width(%d). Max width is used instead.", ac->width, ANDROID_MAX_ENCODED_FRAME_WIDTH);
+        mVideoWidth = ANDROID_MAX_ENCODED_FRAME_WIDTH;
+    } else {
+        mVideoWidth = ac->width;
+    }
+    if (ac->height > ANDROID_MAX_ENCODED_FRAME_HEIGHT) {
+        LOGW("Intended height(%d) exceeds the max allowed height(%d). Max height is used instead.", ac->height, ANDROID_MAX_ENCODED_FRAME_HEIGHT);
+        mVideoHeight = ANDROID_MAX_ENCODED_FRAME_HEIGHT;
+    } else {
+        mVideoHeight = ac->height;
+    }
 
-    ((AndroidCameraInput *)mVideoInputMIO)->SetFrameSize(ac->width, ac->height);
+    ((AndroidCameraInput *)mVideoInputMIO)->SetFrameSize(mVideoWidth, mVideoHeight);
     FinishNonAsyncCommand(ac);
 }
 
@@ -475,24 +514,200 @@ void AuthorDriver::handleSetOutputFile(set_output_file_command *ac)
 {
     PVMFStatus ret = PVMFFailure;
     PvmfFileOutputNodeConfigInterface *config = NULL;
-    OSCL_wHeapString<OsclMemAllocator> wFileName;
-    oscl_wchar output[512];
 
     if (!mComposerConfig) goto exit;
 
     config = OSCL_STATIC_CAST(PvmfFileOutputNodeConfigInterface*, mComposerConfig);
     if (!config) goto exit;
 
-    oscl_UTF8ToUnicode(ac->path, strlen(ac->path), output, 512);
-    wFileName.set(output, oscl_strlen(output));
-    ret = config->SetOutputFileName(wFileName);
+    ifpOutput = fdopen(ac->fd, "wb");
+    if (NULL == ifpOutput) {
+        LOGE("Ln %d fopen() error", __LINE__);
+        goto exit;
+    }
+	
+    if ( OUTPUT_FORMAT_RAW_AMR == mOutputFormat ) {
+        PvmfFileOutputNodeConfigInterface *config = OSCL_DYNAMIC_CAST(PvmfFileOutputNodeConfigInterface*, mComposerConfig);
+        if (!config) goto exit;
+        
+        ret = config->SetOutputFileDescriptor(&OsclFileHandle(ifpOutput));
+    }  else if((OUTPUT_FORMAT_THREE_GPP == mOutputFormat) || (OUTPUT_FORMAT_MPEG_4 == mOutputFormat)) {
+        PVMp4FFCNClipConfigInterface *config = OSCL_DYNAMIC_CAST(PVMp4FFCNClipConfigInterface*, mComposerConfig);
+        if (!config) goto exit;
+        
+        config->SetPresentationTimescale(1000);
+        ret = config->SetOutputFileDescriptor(&OsclFileHandle(ifpOutput));
+    }
+    
 
 exit:
     if (ret == PVMFSuccess) {
-        mOutputFileName = ac->path;
         FinishNonAsyncCommand(ac);
     } else {
-        free(ac->path);
+        LOGE("Ln %d SetOutputFile() error", __LINE__);
+	if (ifpOutput) {
+	    fclose(ifpOutput);
+	    ifpOutput = NULL;
+	}
+        commandFailed(ac);
+    }
+}
+PVMFStatus AuthorDriver::setMaxDurationOrFileSize(
+        int64_t limit, bool limit_is_duration) {
+    PVInterface *interface;
+    PvmfComposerSizeAndDurationInterface *durationConfig;
+
+    if (limit > 0xffffffff) {
+        // PV API expects this to fit in a uint32.
+        return PVMFErrArgument;
+    }
+
+    if (!mComposerConfig) {
+        return PVMFFailure;
+    }
+
+    mComposerConfig->queryInterface(
+            PvmfComposerSizeAndDurationUuid, interface);
+
+    durationConfig =
+        OSCL_DYNAMIC_CAST(PvmfComposerSizeAndDurationInterface *, interface);
+
+    if (!durationConfig) {
+        return PVMFFailure;
+    }
+
+    PVMFStatus ret;
+    if (limit_is_duration) {
+        // SetMaxDuration's first parameter is a boolean "enable", we enable
+        // enforcement of the maximum duration if it's (strictly) positive,
+        // otherwise we take it to imply disabling.
+        ret = durationConfig->SetMaxDuration(
+                limit > 0, static_cast<uint32>(limit));
+    } else {
+        // SetMaxFileSize's first parameter is a boolean "enable", we enable
+        // enforcement of the maximum filesize if it's (strictly) positive,
+        // otherwise we take it to imply disabling.
+        ret = durationConfig->SetMaxFileSize(
+                limit > 0, static_cast<uint32>(limit));
+    }
+
+    durationConfig->removeRef();
+    durationConfig = NULL;
+
+    return ret;
+}
+
+// Attempt to parse an int64 literal optionally surrounded by whitespace,
+// returns true on success, false otherwise.
+static bool safe_strtoi64(const char *s, int64 *val) {
+    char *end;
+    *val = strtoll(s, &end, 10);
+
+    if (end == s || errno == ERANGE) {
+        return false;
+    }
+
+    // Skip trailing whitespace
+    while (isspace(*end)) {
+        ++end;
+    }
+
+    // For a successful return, the string must contain nothing but a valid
+    // int64 literal optionally surrounded by whitespace.
+
+    return *end == '\0';
+}
+
+// Trim both leading and trailing whitespace from the given string.
+static void TrimString(String8 *s) {
+    size_t num_bytes = s->bytes();
+    const char *data = s->string();
+
+    size_t leading_space = 0;
+    while (leading_space < num_bytes && isspace(data[leading_space])) {
+        ++leading_space;
+    }
+
+    size_t i = num_bytes;
+    while (i > leading_space && isspace(data[i - 1])) {
+        --i;
+    }
+
+    s->setTo(String8(&data[leading_space], i - leading_space));
+}
+
+PVMFStatus AuthorDriver::setParameter(
+        const String8& key, const String8& value) {
+    if (key == "max-duration") {
+        int64_t max_duration_ms;
+        if (safe_strtoi64(value.string(), &max_duration_ms)) {
+            return setMaxDurationOrFileSize(
+                    max_duration_ms, true /* limit_is_duration */);
+        }
+    } else if (key == "max-filesize") {
+        int64_t max_filesize_bytes;
+        if (safe_strtoi64(value.string(), &max_filesize_bytes)) {
+            return setMaxDurationOrFileSize(
+                    max_filesize_bytes, false /* limit is filesize */);
+        }
+    }
+
+    return PVMFErrArgument;
+}
+
+// Applies the requested parameters, completes either successfully or stops
+// application of parameters upon encountering the first error, finishing the
+// transaction with the failure result of that initial failure.
+void AuthorDriver::handleSetParameters(set_parameters_command *ac) {
+    PVMFStatus ret = PVMFSuccess;
+
+    const char *params = ac->params().string();
+    const char *key_start = params;
+    for (;;) {
+        const char *equal_pos = strchr(key_start, '=');
+        if (equal_pos == NULL) {
+            // This key is missing a value.
+
+            ret = PVMFErrArgument;
+            break;
+        }
+
+        String8 key(key_start, equal_pos - key_start);
+        TrimString(&key);
+
+        if (key.length() == 0) {
+            ret = PVMFErrArgument;
+            break;
+        }
+
+        const char *value_start = equal_pos + 1;
+        const char *semicolon_pos = strchr(value_start, ';');
+        String8 value;
+        if (semicolon_pos == NULL) {
+            value.setTo(value_start);
+        } else {
+            value.setTo(value_start, semicolon_pos - value_start);
+        }
+
+        ret = setParameter(key, value);
+
+        if (ret != PVMFSuccess) {
+            LOGE("setParameter(%s = %s) failed with result %d",
+                 key.string(), value.string(), ret);
+            break;
+        }
+
+        if (semicolon_pos == NULL) {
+            break;
+        }
+
+        key_start = semicolon_pos + 1;
+    }
+
+    if (ret == PVMFSuccess) {
+        FinishNonAsyncCommand(ac);
+    } else {
+        LOGE("Ln %d handleSetParameters(%s) error", __LINE__, params);
         commandFailed(ac);
     }
 }
@@ -516,8 +731,6 @@ void AuthorDriver::handleStop(author_command *ac)
     int error = 0;
     OSCL_TRY(error, mAuthor->Stop(ac));
     OSCL_FIRST_CATCH_ANY(error, commandFailed(ac));
-
-    mKeepOutputFile = true;
 }
 
 void AuthorDriver::handleClose(author_command *ac)
@@ -529,24 +742,38 @@ void AuthorDriver::handleClose(author_command *ac)
 
 void AuthorDriver::handleReset(author_command *ac)
 {
+    removeConfigRefs(ac);
     int error = 0;
     OSCL_TRY(error, mAuthor->Reset(ac));
     OSCL_FIRST_CATCH_ANY(error, commandFailed(ac));
-
-    // remove data sources
-    removeDataSources(ac);
+}
+void AuthorDriver::handleRemoveVideoSource(author_command *ac)
+{
+    LOGV("handleRemoveVideoSource");
+    if (mVideoNode) {
+        int error = 0;
+        OSCL_TRY(error, mAuthor->RemoveDataSource(*mVideoNode, ac));
+        OSCL_FIRST_CATCH_ANY(error, commandFailed(ac));
+    } else {
+       FinishNonAsyncCommand(ac); 
+    }
 }
 
-void AuthorDriver::removeDataSources(author_command *ac)
+void AuthorDriver::handleRemoveAudioSource(author_command *ac)
 {
-    if (mOutputFileName) {
-        if (!mKeepOutputFile) {
-            LOGV("remove output filei(%s)", mOutputFileName);
-            unlink(mOutputFileName);
-        }
-        free(mOutputFileName);
-        mOutputFileName = NULL;
+    LOGV("handleRemoveAudioSource");
+    if (mAudioNode) {
+        int error = 0;
+        OSCL_TRY(error, mAuthor->RemoveDataSource(*mAudioNode, ac));
+        OSCL_FIRST_CATCH_ANY(error, commandFailed(ac));
+    } else {
+        FinishNonAsyncCommand(ac);
     }
+}
+
+void AuthorDriver::removeConfigRefs(author_command *ac)
+{
+    LOGV("removeConfigRefs");
 
     if (mComposerConfig) {
         mComposerConfig->removeRef();
@@ -560,16 +787,8 @@ void AuthorDriver::removeDataSources(author_command *ac)
         mAudioEncoderConfig->removeRef();
         mAudioEncoderConfig = NULL;
     }
-    int error = 0;
-    if (mAudioNode) {
-        OSCL_TRY(error, mAuthor->RemoveDataSource(*mAudioNode));
-        OSCL_FIRST_CATCH_ANY(error, commandFailed(ac));
-    }
-    if (mVideoNode) {
-        OSCL_TRY(error, mAuthor->RemoveDataSource(*mVideoNode));
-        OSCL_FIRST_CATCH_ANY(error, commandFailed(ac));
-    }
 }
+
 
 void AuthorDriver::handleQuit(author_command *ac)
 {
@@ -586,6 +805,11 @@ void AuthorDriver::handleQuit(author_command *ac)
 
 void AuthorDriver::doCleanUp()
 {
+    if (ifpOutput) {
+	fclose(ifpOutput);
+	ifpOutput = NULL;
+    }
+
     if (mCamera != NULL) {
         mCamera.clear();
     }
@@ -637,6 +861,7 @@ int AuthorDriver::authorThread()
     sched->StartScheduler(mSyncSem);
     LOGV("Delete Author");
     PVAuthorEngineFactory::DeleteAuthor(mAuthor);
+    mAuthor = NULL;
  
 
     // Let the destructor know that we're out
@@ -771,21 +996,50 @@ void AuthorDriver::CommandCompleted(const PVCmdResponse& aResponse)
 
 void AuthorDriver::HandleErrorEvent(const PVAsyncErrorEvent& aEvent)
 {
-    printf("HandleErrorEvent\n");
+    LOGE("HandleErrorEvent(%d)", aEvent.GetEventType());
+
+    if (mListener != NULL) {
+	mListener->notify(
+		MEDIA_RECORDER_EVENT_ERROR, MEDIA_RECORDER_ERROR_UNKNOWN,
+		aEvent.GetEventType());
+    }
 }
+
+static int GetMediaRecorderInfoCode(const PVAsyncInformationalEvent& aEvent) {
+    switch (aEvent.GetEventType()) {
+        case PVMF_COMPOSER_MAXDURATION_REACHED:
+            return MEDIA_RECORDER_INFO_MAX_DURATION_REACHED;
+
+        case PVMF_COMPOSER_MAXFILESIZE_REACHED:
+            return MEDIA_RECORDER_INFO_MAX_FILESIZE_REACHED;
+
+        default:
+            return MEDIA_RECORDER_INFO_UNKNOWN;
+    }
+}
+
 
 void AuthorDriver::HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent)
 {
-    PVInterface* iface = (PVInterface*)(aEvent.GetEventExtensionInterface());
-
-    if (iface == NULL)
-        return;
-
-    switch(aEvent.GetEventType()) {
-    case PVMFInfoPositionStatus:
-    default:
-        break;
+    const PVEventType event_type = aEvent.GetEventType();
+    assert(!IsPVMFErrCode(event_type));
+    if (IsPVMFInfoCode(event_type)) {
+        LOGV("HandleInformationalEvent(%d:%s)",
+             event_type, PVMFStatusToString(event_type));
+    } else {
+        LOGV("HandleInformationalEvent(%d)", event_type);
     }
+
+    mListener->notify(
+            MEDIA_RECORDER_EVENT_INFO,
+            GetMediaRecorderInfoCode(aEvent),
+            aEvent.GetEventType());
+}
+
+status_t AuthorDriver::setListener(const sp<IMediaPlayerClient>& listener) {
+    mListener = listener;
+
+    return android::OK;
 }
 
 status_t AuthorDriver::getMaxAmplitude(int *max)

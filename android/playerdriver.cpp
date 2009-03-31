@@ -181,7 +181,7 @@ private:
     int                     mRecentSeek;
     bool                    mSeekComp;
     bool                    mSeekPending;
-
+    bool                    mEmulation;
     void*                   mLibHandle;
 };
 
@@ -195,7 +195,8 @@ PlayerDriver::PlayerDriver(PVPlayer* pvPlayer) :
         mEndOfData(false),
         mRecentSeek(0),
         mSeekComp(true),
-        mSeekPending(false)
+        mSeekPending(false),
+        mEmulation(false)
 {
     LOGV("constructor");
     mSyncSem = new OsclSemaphore();
@@ -495,7 +496,7 @@ int PlayerDriver::setupHttpStreamPost()
     int error = 0;
 
     iKVPSetAsync.key = _STRLIT_CHAR("x-pvmf/net/user-agent;valtype=wchar*");
-    OSCL_wHeapString<OsclMemAllocator> userAgent = _STRLIT_WCHAR("CORE/6.506.4.1 OpenCORE/2.02 (Linux;Android 1.0)(AndroidMediaPlayer 1.0)");
+    OSCL_wHeapString<OsclMemAllocator> userAgent = _STRLIT_WCHAR("CORE/6.506.4.1 OpenCORE/2.03 (Linux;Android 1.0)(AndroidMediaPlayer 1.0)");
     iKVPSetAsync.value.pWChar_value=userAgent.get_str();
     iErrorKVP=NULL;
     OSCL_TRY(error, mPlayerCapConfig->setParametersSync(NULL, &iKVPSetAsync, 1, iErrorKVP));
@@ -601,7 +602,7 @@ void PlayerDriver::handleSetVideoSurface(PlayerSetVideoSurface* ec)
     }
 
     // initialize the MIO parameters
-    status_t ret = mio->set(mPvPlayer, ec->surface());
+    status_t ret = mio->set(mPvPlayer, ec->surface(), mEmulation);
     if (ret != NO_ERROR) {
         LOGE("Video MIO set failed");
         commandFailed(ec);
@@ -1146,7 +1147,6 @@ void PlayerDriver::HandleInformationalEvent(const PVAsyncInformationalEvent& aEv
     }
 }
 
-extern pthread_key_t osclfilenativesigbuskey;
 
 namespace android {
 
@@ -1183,12 +1183,6 @@ PVPlayer::~PVPlayer()
     if (mMemBase) {
         munmap(mMemBase, mMemSize);
     }
-}
-
-status_t PVPlayer::setSigBusHandlerStructTLSKey(pthread_key_t key)
-{
-    osclfilenativesigbuskey = key;
-    return OK;
 }
 
 status_t PVPlayer::setDataSource(const char *url)

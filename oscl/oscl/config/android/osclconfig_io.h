@@ -38,10 +38,6 @@
 #include "osclconfig.h"
 #endif
 
-#if (OSCL_HAS_ANDROID_SUPPORT) && (ENABLE_MEMORY_PLAYBACK)
-#include <media/MediaPlayerInterface.h>
-#endif
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>

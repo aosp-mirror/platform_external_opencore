@@ -132,15 +132,12 @@ class OsclNativeFile : public HeapBase
         //native file object.
         FILE* iFile;
 #if ENABLE_MEMORY_PLAYBACK
-        static int sigbushandlerfunc(siginfo_t *, struct mediasigbushandler *);
         // memory block
         void* membase;
         long long memoffset;
         long long memlen;
         int mempos;
-        struct mediasigbushandler sigbushandler;
         int memcpyfailed;
-        static struct mediasigbushandler *getspecificforfaultaddr(char *faultaddr);
 #endif
 
 };
