@@ -48,6 +48,7 @@ OSCL_EXPORT_REF AndroidSurfaceOutput::AndroidSurfaceOutput() :
     mEmulation = false;
     mPvPlayer = NULL;
     mEmulation = false;
+    iEosReceived = false;
 }
 
 status_t AndroidSurfaceOutput::set(PVPlayer* pvPlayer, const sp<ISurface>& surface, bool emulation)
@@ -95,6 +96,28 @@ bool AndroidSurfaceOutput::checkVideoParameterFlags()
     return (iVideoParameterFlags & VIDEO_PARAMETERS_MASK) == VIDEO_PARAMETERS_VALID;
 }
 
+/*
+ * process the write response queue by sending writeComplete to the peer
+ * (nominally the decoder node). 
+ *
+ * numFramesToHold is the number of frames to be held in the MIO. During
+ * playback, we hold the last frame which is used by SurfaceFlinger
+ * to composite the final output.
+ */
+void AndroidSurfaceOutput::processWriteResponseQueue(int numFramesToHold)
+{
+    LOGV("processWriteResponseQueue: queued = %d, numFramesToHold = %d", 
+            iWriteResponseQueue.size(), numFramesToHold);
+    while (iWriteResponseQueue.size() > numFramesToHold) {
+        if (iPeer) {
+            iPeer->writeComplete(iWriteResponseQueue[0].iStatus,
+                    iWriteResponseQueue[0].iCmdId,
+                    (OsclAny*)iWriteResponseQueue[0].iContext);
+        }
+        iWriteResponseQueue.erase(&iWriteResponseQueue[0]);
+    }
+}
+
 void AndroidSurfaceOutput::Cleanup()
 //cleanup all allocated memory and release resources.
 {
@@ -104,12 +127,7 @@ void AndroidSurfaceOutput::Cleanup()
             iObserver->RequestCompleted(PVMFCmdResp(iCommandResponseQueue[0].iCmdId, iCommandResponseQueue[0].iContext, iCommandResponseQueue[0].iStatus));
         iCommandResponseQueue.erase(&iCommandResponseQueue[0]);
     }
-    while (!iWriteResponseQueue.empty())
-    {
-        if (iPeer)
-            iPeer->writeComplete(iWriteResponseQueue[0].iStatus,iWriteResponseQueue[0].iCmdId,(OsclAny*)iWriteResponseQueue[0].iContext);
-        iWriteResponseQueue.erase(&iWriteResponseQueue[0]);
-    }
+    processWriteResponseQueue(0);
 
     // We'll close frame buf and delete here for now.
     closeFrameBuf();
@@ -251,9 +269,10 @@ PVMFCommandId AndroidSurfaceOutput:: Init(const OsclAny* aContext)
     return cmdid;
 }
 
-PVMFCommandId AndroidSurfaceOutput:: Reset(const OsclAny* aContext)
+PVMFCommandId AndroidSurfaceOutput::Reset(const OsclAny* aContext)
 {
-    // Do nothing for now.
+    iEosReceived = false;
+    processWriteResponseQueue(0);
     PVMFCommandId cmdid=iCommandCounter++;
     return cmdid;
 }
@@ -261,6 +280,7 @@ PVMFCommandId AndroidSurfaceOutput:: Reset(const OsclAny* aContext)
 
 PVMFCommandId AndroidSurfaceOutput::Start(const OsclAny* aContext)
 {
+    iEosReceived = false;
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"AndroidSurfaceOutput::Start() called"));
 
     PVMFCommandId cmdid=iCommandCounter++;
@@ -333,6 +353,7 @@ PVMFCommandId AndroidSurfaceOutput::Flush(const OsclAny* aContext)
     case STATE_STARTED:
 
         iState=STATE_INITIALIZED;
+        processWriteResponseQueue(0);
         status=PVMFSuccess;
         break;
 
@@ -356,6 +377,7 @@ PVMFCommandId AndroidSurfaceOutput::DiscardData(const OsclAny* aContext)
     //needed here.
 
     PVMFStatus status=PVMFSuccess;
+    processWriteResponseQueue(0);
 
     CommandResponse resp(status,cmdid,aContext);
     QueueCommandResponse(resp);
@@ -373,6 +395,7 @@ PVMFCommandId AndroidSurfaceOutput::DiscardData(PVMFTimestamp aTimestamp, const 
     //this component doesn't buffer data, so there's nothing
     //needed here.
 
+    processWriteResponseQueue(0);
     PVMFStatus status=PVMFSuccess;
 
     CommandResponse resp(status,cmdid,aContext);
@@ -383,8 +406,6 @@ PVMFCommandId AndroidSurfaceOutput::DiscardData(PVMFTimestamp aTimestamp, const 
 PVMFCommandId AndroidSurfaceOutput::Stop(const OsclAny* aContext)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"AndroidSurfaceOutput::Stop() called"));
-
-            printf("AndroidSurfaceOutput::Stop Received %x\n", 0);
 
     PVMFCommandId cmdid=iCommandCounter++;
 
@@ -403,6 +424,7 @@ PVMFCommandId AndroidSurfaceOutput::Stop(const OsclAny* aContext)
 #endif
 
         iState=STATE_INITIALIZED;
+        processWriteResponseQueue(0);
         status=PVMFSuccess;
         break;
 
@@ -539,6 +561,7 @@ PVMFCommandId AndroidSurfaceOutput::writeAsync(uint8 aFormatType, int32 aFormatI
         switch(aFormatIndex)
         {
         case PVMI_MEDIAXFER_FMT_INDEX_END_OF_STREAM:
+            iEosReceived = true;
             break;
         default:
             break;
@@ -681,14 +704,7 @@ void AndroidSurfaceOutput::cancelAllCommands()
     //in this implementaiton, the write commands are executed immediately 
     //when received so it isn't really possible to cancel.
     //just report completion immediately.
-
-    for (uint32 i=0;i<iWriteResponseQueue.size();i++)
-    {
-        //report completion
-        if (iPeer)
-            iPeer->writeComplete(iWriteResponseQueue[i].iStatus,iWriteResponseQueue[i].iCmdId,(OsclAny*)iWriteResponseQueue[i].iContext);
-        iWriteResponseQueue.erase(&iWriteResponseQueue[i]);
-    }
+    processWriteResponseQueue(0);
 }
 
 void AndroidSurfaceOutput::setObserver (PvmiConfigAndCapabilityCmdObserver* aObserver)
@@ -855,12 +871,11 @@ void AndroidSurfaceOutput::Run()
     }
 
     //send async write completion
-    while (!iWriteResponseQueue.empty())
-    {
-        //report write complete
-        if (iPeer)
-            iPeer->writeComplete(iWriteResponseQueue[0].iStatus,iWriteResponseQueue[0].iCmdId,(OsclAny*)iWriteResponseQueue[0].iContext);
-        iWriteResponseQueue.erase(&iWriteResponseQueue[0]);
+    if (iEosReceived) {
+        LOGV("Flushing buffers after EOS");
+        processWriteResponseQueue(0);
+    } else {
+        processWriteResponseQueue(1);
     }
 }
 

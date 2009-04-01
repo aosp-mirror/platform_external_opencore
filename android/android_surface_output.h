@@ -120,6 +120,8 @@ public:
 
     void deleteMediaTransfer(PvmiMIOSession& aSession, PvmiMediaTransfer* media_transfer);
 
+    void processWriteResponseQueue(int numFramesToHold);
+
     PVMFCommandId Init(const OsclAny* aContext=NULL);
 
     PVMFCommandId Reset(const OsclAny* aContext=NULL);
@@ -269,6 +271,8 @@ protected:
     bool iFsConnected;
     Oscl_File iOutputFile;
     bool iFileOpened;
+
+    bool iEosReceived;
 
     // Video parameters
     uint32 iVideoParameterFlags;
