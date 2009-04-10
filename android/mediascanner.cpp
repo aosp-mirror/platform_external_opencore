@@ -102,7 +102,8 @@ static PVMFStatus parseMP3(const char *filename, MediaScannerClient& client)
     for (uint32 i = 0; i < num_frames;i++)
     {
         const char* key = framevector[i]->key;
-        bool validUtf8 = true;
+        bool isUtf8 = false;
+        bool isIso88591 = false;
 
         // type should follow first semicolon
         const char* type = strchr(key, ';') + 1;
@@ -114,20 +115,27 @@ static PVMFStatus parseMP3(const char *filename, MediaScannerClient& client)
         // is a substring of KVP_VALTYPE_UTF8_CHAR.
         // Similarly, KVP_VALTYPE_UTF16BE_WCHAR must be checked before KVP_VALTYPE_UTF16_WCHAR
         if (oscl_strncmp(type, KVP_VALTYPE_UTF8_CHAR, KVP_VALTYPE_UTF8_CHAR_LEN) == 0) {
-            // utf8 can be passed through directly
-            // but first validate to make sure it is legal utf8
+            isUtf8 = true;
+        } else if (oscl_strncmp(type, KVP_VALTYPE_ISO88591_CHAR, KVP_VALTYPE_ISO88591_CHAR_LEN) == 0) {
+            isIso88591 = true;
+        }
+
+        if (isUtf8) {
+            // validate to make sure it is legal utf8
             uint32 valid_chars;
-            validUtf8 = oscl_str_is_valid_utf8((const uint8 *)value, valid_chars);
-            if (validUtf8 && !client.handleStringTag(key, value)) goto failure;
+            if (oscl_str_is_valid_utf8((const uint8 *)value, valid_chars)) {
+                // utf8 can be passed through directly
+                if (!client.handleStringTag(key, value)) goto failure;
+            } else {
+                // treat as ISO-8859-1 if UTF-8 fails
+                isIso88591 = true;
+            }
         } 
 
-        // if the value is not valid utf8, then we will treat it as iso-8859-1 
-        // and our native encoding detection will try to figure out what it is
-        if (oscl_strncmp(type, KVP_VALTYPE_ISO88591_CHAR, KVP_VALTYPE_ISO88591_CHAR_LEN) == 0 
-                || !validUtf8) {
-            // iso-8859-1
-            // convert to utf8
-            // worse case is 2x inflation
+        // treat it as iso-8859-1 and our native encoding detection will try to
+        // figure out what it is
+        if (isIso88591) {
+            // convert ISO-8859-1 to utf8, worse case is 2x inflation
             const unsigned char* src = (const unsigned char *)value;
             char* temp = (char *)alloca(strlen(value) * 2 + 1);
             if (temp) {
@@ -142,8 +150,12 @@ static PVMFStatus parseMP3(const char *filename, MediaScannerClient& client)
                 *dest = 0;
                 if (!client.addStringTag(key, temp)) goto failure;           
             }
-        } else if (oscl_strncmp(type, KVP_VALTYPE_UTF16BE_WCHAR, KVP_VALTYPE_UTF16BE_WCHAR_LEN) == 0 ||
-                oscl_strncmp(type, KVP_VALTYPE_UTF16_WCHAR, KVP_VALTYPE_UTF16_WCHAR_LEN) == 0) {
+        }
+   
+        // not UTF-8 or ISO-8859-1, try wide char formats
+        if (!isUtf8 && !isIso88591 && 
+                (oscl_strncmp(type, KVP_VALTYPE_UTF16BE_WCHAR, KVP_VALTYPE_UTF16BE_WCHAR_LEN) == 0 ||
+                oscl_strncmp(type, KVP_VALTYPE_UTF16_WCHAR, KVP_VALTYPE_UTF16_WCHAR_LEN) == 0)) {
             // convert wchar to utf8
             // the id3parcom library has already taken care of byteswapping
             const oscl_wchar*  src = framevector[i]->value.pWChar_value;
