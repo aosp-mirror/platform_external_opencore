@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,34 +97,18 @@ void CBAVC_Free(void *userData, int mem)
     return ;
 }
 
-#if 0
-void AVC_DebugLog(uint32 *userData, AVCLogType type, char *string1, int val1, int val2)
-{
-    PVAVCDecoder *avcDec = (PVAVCDecoder*) userData;
-
-    avcDec->AVC_DebugLog(type, string1, val1, val2);
-    return ;
-}
-#endif
 
 /////////////////////////////////////////////////////////////////////////////
 /* Callback functions for memory allocation/free and request for more data */
 /* with C++ wrapper */
 int PVAVCDecoder::AVC_Malloc(int32 size, int attribute)
 {
-#if 0
-    PVDEBUG_LOGTYPE_PRINTF(iDebug, (PVDBL_Video, "AVC_Malloc %d bytes, %d", size, attribute));
-#else
     OSCL_UNUSED_ARG(attribute);
-#endif
     return (int)(oscl_malloc(size));
 }
 
 void PVAVCDecoder::AVC_Free(int mem)
 {
-#if 0
-    PVDEBUG_LOGTYPE_PRINTF(iDebug, (PVDBL_Video, "AVC_Free"));
-#endif
     oscl_free((uint8*)mem);
 }
 

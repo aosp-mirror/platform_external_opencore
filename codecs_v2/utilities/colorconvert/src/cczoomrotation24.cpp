@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 /** Class ColorConvert24, YUV to RGB24 bit, 8bit per component. */
 #include "cczoomrotation24.h"
+
 
 
 OSCL_EXPORT_REF ColorConvertBase* ColorConvert24::NewL(void)
@@ -154,7 +155,14 @@ int32 ColorConvert24::GetOutputBufferSize(void)
 {
     OSCL_ASSERT(_mInitialized == true);
     // for zoom, need extra line of RGB buffer for processing otherwise memory will corrupt.
-    return	_mState ? ((_mDst_height + 1)*_mDst_pitch*3) : (_mSrc_width*_mSrc_height*3);
+    if (_mIsZoom)
+    {
+        return	_mState ? ((_mDst_height + 1)*_mDst_pitch*3) : (_mSrc_width*_mSrc_height*3);
+    }
+    else
+    {
+        return	_mState ? ((_mDst_height)*_mDst_pitch*3) : (_mSrc_width*_mSrc_height*3);
+    }
 }
 
 
@@ -225,6 +233,8 @@ int32 ColorConvert24::get_frame24(uint8 **src, uint8 *dst, DisplayProperties *di
         return cc24(src, dst, disp_prop, clip);
     }
 }
+
+
 
 int32 cc24(uint8 **src, uint8 *dst, int32 *disp, uint8 *clip)
 {
@@ -492,6 +502,7 @@ int32 cc24(uint8 **src, uint8 *dst, int32 *disp, uint8 *clip)
 
     return 1;
 }
+
 
 
 

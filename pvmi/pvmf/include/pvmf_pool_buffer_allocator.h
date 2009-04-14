@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,8 +50,9 @@ typedef Oscl_TAlloc<OsclRefCounterMemFrag, OsclMemAllocator> OsclRefCounterMemFr
 class PVMFBufferPoolAllocator : public OsclDestructDealloc
 {
     public:
-        OSCL_IMPORT_REF PVMFBufferPoolAllocator();
+        OSCL_IMPORT_REF PVMFBufferPoolAllocator(bool aLeaveOnAllocFailure = true);
         OSCL_IMPORT_REF virtual ~PVMFBufferPoolAllocator();
+        OSCL_IMPORT_REF void SetLeaveOnAllocFailure(bool aLeaveOnAllocFailure);
         OSCL_IMPORT_REF virtual void size(uint16 num_frags, uint16 frag_size);
         OSCL_IMPORT_REF virtual void clear();
         OSCL_IMPORT_REF virtual OsclRefCounterMemFrag get();
@@ -60,12 +61,13 @@ class PVMFBufferPoolAllocator : public OsclDestructDealloc
         OSCL_IMPORT_REF virtual void destruct_and_dealloc(OsclAny* ptr);
         OSCL_IMPORT_REF void SetFailFrequency(uint16 aFrequency);
     protected:
-        uint16 iFragSize;
+        uint32 iFragSize;
         bool iDestroyPool;
         Oscl_Vector<OsclRefCounterMemFrag, OsclRefCounterMemFrag_Alloc> iAvailFragments;
         PVLogger *iLogger;
-        uint16 iAllocNum;
-        uint16 iFailFrequency;
+        uint32 iAllocNum;
+        uint32 iFailFrequency;
+        bool iLeaveOnAllocFailure;
 };
 
 

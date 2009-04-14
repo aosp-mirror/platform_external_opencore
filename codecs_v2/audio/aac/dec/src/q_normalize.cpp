@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,7 @@
  */
 /*
 
- Pathname: ./src/q_normalize.c
-
-     Date: 05/10/2001
+ Pathname: q_normalize.c
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
@@ -54,6 +52,7 @@
  Description: Eliminated warning: non use variable "i" and memset function
     definition
 
+ Who:                       Date:
  Description:
 ------------------------------------------------------------------------------
  INPUT AND OUTPUT DEFINITIONS

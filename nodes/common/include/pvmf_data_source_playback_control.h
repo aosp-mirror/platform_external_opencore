@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,8 +39,10 @@
 #ifndef PVMF_RETURN_CODES_H_INCLUDED
 #include "pvmf_return_codes.h"
 #endif
-#ifndef OSCL_CLOCK_H_INCLUDED
-#include "oscl_clock.h"
+
+
+#ifndef PVMF_MEDIA_CLOCK_H_INCLUDED
+#include "pvmf_media_clock.h"
 #endif
 
 #define PVMF_DATA_SOURCE_PLAYBACK_CONTROL_INTERFACE_MIMETYPE "pvxxx/pvmf/pvmfdatasourceplaybackcontrolinterface"
@@ -249,11 +251,58 @@ class PvmfDataSourcePlaybackControlInterface : public PVInterface
          **/
         virtual PVMFCommandId SetDataSourceRate(PVMFSessionId aSessionId,
                                                 int32 aRate,
-                                                OsclTimebase* aTimebase = NULL,
+                                                PVMFTimebase* aTimebase = NULL,
                                                 OsclAny* aContext = NULL) = 0;
 
-        PVMFTimestamp iDummy;
+        /**
+         * Synchronous method to compute skip timestamp based on actual and target NPT values
+         * Not all source nodes need implement this. Some source node (viz. 3GPP RTSP Streaming)
+         * are "realtime" sources and are constrained by remote server's datatransfer rate,which
+         * typically is realtime. In those cases it makes sense to start rendering from actualNPT
+         * immaterial how engine's repositioning tunables are configured.
+         *
+         * @param aTargetNPT Target normal-play-time timestamp in milliseconds of the location where the
+         *                   data source will be repositioned to, as provided in a prior SetDataSourcePosition
+         *                   call.
+         * @param aActualNPT The actual normal-play-time timestamp after repositioning as provided by the
+         *                   source node in a prior SetDataSourcePosition call.
+         * @param aActualMediaDataTS The media data timestamp corresponding to the actual NPT time. This
+         *                           will be the timestamp of the first media data after repositioning, as
+         *                           provided by the source node.
+         * @param aSkipTimeStamp Computed by source node based on aTargetNPT, aActualNPT and aActualMediaDataTS.
+         * @param aStartNPT Computed by source node based on aTargetNPT, aActualNPT and aActualMediaDataTS.
+         * @returns PVMFErrNotSupported if the source node does not care about skip timestamps, else one
+         * of PVMF return codes.
+         **/
+        virtual PVMFStatus ComputeSkipTimeStamp(PVMFTimestamp aTargetNPT,
+                                                PVMFTimestamp aActualNPT,
+                                                PVMFTimestamp aActualMediaDataTS,
+                                                PVMFTimestamp& aSkipTimeStamp,
+                                                PVMFTimestamp& aStartNPT)
+        {
+            OSCL_UNUSED_ARG(aTargetNPT);
+            OSCL_UNUSED_ARG(aActualNPT);
+            OSCL_UNUSED_ARG(aActualMediaDataTS);
+            OSCL_UNUSED_ARG(aSkipTimeStamp);
+            OSCL_UNUSED_ARG(aStartNPT);
+            return PVMFErrNotSupported;
+        }
 
+        /**
+         * Synchronous method to notify the Target NPT to the Source Node. Some source node
+         * (viz. 3GPP RTSP Streaming) will need to know the Target NPT before Prepare is
+         * called on the node to support PipeLining feature, in which the Source node
+         * will send a SETUP and PLAY request back to back to the streaming server's supporting
+         * PipeLining mode.
+         *
+         * @param aTargetNPT Target normal-play-time timestamp in milliseconds of the location where the
+         *                   data source will be repositioned to.
+         */
+        virtual PVMFStatus NotifyTargetPositionSync(PVMFTimestamp aTargetNPT)
+        {
+            OSCL_UNUSED_ARG(aTargetNPT);
+            return PVMFErrNotSupported;
+        }
 };
 
 #endif // PVMF_DATA_SOURCE_PLAYBACK_CONTROL_H_INCLUDED

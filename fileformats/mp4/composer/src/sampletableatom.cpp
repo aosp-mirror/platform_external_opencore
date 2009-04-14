@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*********************************************************************************/
 /*
     This PVA_FF_SampleTableAtom Class contains all the time and data indexing of the
     media samples in a track.
@@ -32,7 +31,6 @@
 PVA_FF_SampleTableAtom::PVA_FF_SampleTableAtom(uint32 mediaType,
         int32 codecType,
         uint32 fileAuthoringFlags,
-        bool o3GPPCompliant,
         uint32 protocol,
         uint8 profile,
         uint8 profileComp,
@@ -46,7 +44,7 @@ PVA_FF_SampleTableAtom::PVA_FF_SampleTableAtom(uint32 mediaType,
     }
 
     PV_MP4_FF_NEW(fp->auditCB, PVA_FF_TimeToSampleAtom, (mediaType), _ptimeToSampleAtom);
-    PV_MP4_FF_NEW(fp->auditCB, PVA_FF_SampleDescriptionAtom, (mediaType, codecType, o3GPPCompliant, protocol, profile, profileComp, level), _psampleDescriptionAtom);
+    PV_MP4_FF_NEW(fp->auditCB, PVA_FF_SampleDescriptionAtom, (mediaType, codecType, protocol, profile, profileComp, level), _psampleDescriptionAtom);
     PV_MP4_FF_NEW(fp->auditCB, PVA_FF_SampleSizeAtom, (mediaType), _psampleSizeAtom);
     PV_MP4_FF_NEW(fp->auditCB, PVA_FF_SampleToChunkAtom, (mediaType, fileAuthoringFlags), _psampleToChunkAtom);
     PV_MP4_FF_NEW(fp->auditCB, PVA_FF_ChunkOffsetAtom, (mediaType, fileAuthoringFlags), _pchunkOffsetAtom);
@@ -127,6 +125,8 @@ PVA_FF_SampleTableAtom::nextSample(int32 mediaType,
     {
         _psyncSampleAtom->nextSample(flags);
     }
+    OSCL_UNUSED_ARG(mediaType);
+    OSCL_UNUSED_ARG(psample);
 }
 
 void
@@ -216,6 +216,9 @@ PVA_FF_SampleTableAtom::nextSample(int32 mediaType,
     {
         _psyncSampleAtom->nextSample(flags);
     }
+
+    OSCL_UNUSED_ARG(mediaType);
+    OSCL_UNUSED_ARG(fragmentList);
 }
 
 void
@@ -364,4 +367,14 @@ PVA_FF_SampleTableAtom::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
     return true;
 }
 
+void
+PVA_FF_SampleTableAtom::SetMaxSampleSize(uint32 aSize)
+{
+    _psampleDescriptionAtom->SetMaxSampleSize(aSize);
+}
 
+void
+PVA_FF_SampleTableAtom::writeMaxSampleSize(MP4_AUTHOR_FF_FILE_IO_WRAP *_afp)
+{
+    _psampleDescriptionAtom->writeMaxSampleSize(_afp);
+}

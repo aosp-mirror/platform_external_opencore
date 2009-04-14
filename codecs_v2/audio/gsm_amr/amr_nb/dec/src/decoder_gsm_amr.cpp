@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,17 +26,12 @@ Portions of this file are derived from the following 3GPP standard:
 Permission to distribute, modify and use this file under the standard license
 terms listed above has been obtained from the copyright holder.
 ****************************************************************************************/
-//                                                                              //
-//  File: decoder_gsm_amr.cpp                                                   //
-//                                                                              //
-//////////////////////////////////////////////////////////////////////////////////
-
 #include "decoder_gsm_amr.h"
 #include "sp_dec.h"
 #include "amrdecode.h"
 #include "pvamrnbdecoder_api.h"
 
-// Use default DLL entry point for Symbian
+// Use default DLL entry point
 #include "oscl_dll.h"
 #include "oscl_error_codes.h"
 #include "oscl_exception.h"
@@ -183,7 +178,7 @@ OSCL_EXPORT_REF int32 CDecoder_AMR_NB::ExecuteL(tPVAmrDecoderExternal * pExt)
         pExt->input_format = MIME_IETF;
 
     return AMRDecode(iDecState,
-                     (enum Frame_Type_3GPP)pExt->frame_type,
+                     (enum Frame_Type_3GPP)pExt->mode,
                      (uint8*) pExt->pInputBuffer,
                      (int16*) pExt->pOutputBuffer,
                      pExt->input_format);

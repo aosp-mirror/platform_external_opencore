@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -153,7 +153,7 @@ class TEncodeProperties
         //                      d0 d1 d2 d3 d4 d5 d6 d7
         // USAGE:       The authoring application is required to fill this in.
         //              The CAEI will use the value to setup the codec library.
-        bool iBitStreamFormatIf2;
+        int32 iBitStreamFormat;
 
         // DESCRIPTION: Audio object type for the output bitstream; only applies
         //              to AAC codec
@@ -246,6 +246,12 @@ class CPvGsmAmrEncoder
         */
         OSCL_IMPORT_REF int32 CleanupEncoder();
 
+        /**
+        *  This function reset the encoder workspace.
+        */
+        OSCL_IMPORT_REF int32 Reset();
+
+
     public:
         // GSM AMR modes
         // ** values should be the same as the Mode enum specified by AMR library
@@ -296,7 +302,7 @@ class CPvGsmAmrEncoder
         int32 iMaxOutputBufferSize;
 
         // bit stream format
-        int32 iBitStreamFormatIf2;
+        int32 iBitStreamFormat;
 
 };
 

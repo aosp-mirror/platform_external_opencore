@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,15 +28,6 @@
     pvmp3_st_mid_side
     pvmp3_st_intensity
     pvmp3_stereo_proc
-
-     Date: 09/21/2007
-
-------------------------------------------------------------------------------
- REVISION HISTORY
-
-
- Description:
-
 
 ------------------------------------------------------------------------------
 
@@ -167,9 +158,10 @@ Input
  *
  */
 
-const int32  is_ratio_factor[7] = {0,
+const int32  is_ratio_factor[8] = {0,
                                    Q31_fmt(0.21132486540519),   Q31_fmt(0.36602540378444),   Q31_fmt(0.50000000000000),
-                                   Q31_fmt(0.63397459621556),   Q31_fmt(0.78867513459481),   Q31_fmt(1.00000000000000)
+                                   Q31_fmt(0.63397459621556),   Q31_fmt(0.78867513459481),   Q31_fmt(1.00000000000000),
+                                   0
                                   };
 
 /*----------------------------------------------------------------------------
@@ -230,7 +222,7 @@ void pvmp3_st_intensity(int32 xr[SUBBANDS_NUMBER*FILTERBANK_BANDS],
                         int32 Number)
 {
 
-    int32 TmpFac = is_ratio_factor[ is_pos];
+    int32 TmpFac = is_ratio_factor[ is_pos & 7];
 
     int32 *pt_xr  = &xr[Start];
     int32 *pt_xl  = &xl[Start];
@@ -381,7 +373,7 @@ void pvmp3_stereo_proc(int32 xr[SUBBANDS_NUMBER*FILTERBANK_BANDS],
                             sfbNo = mp3_sfBandIndex[sfreq].s[sfbTemp+1] - mp3_sfBandIndex[sfreq].s[sfbTemp]; /* No of lines to process */
                             sfbStart = 3 * mp3_sfBandIndex[sfreq].s[sfbTemp] + j * sfbNo;
 
-                            if (scalefac->s[j][sfbTemp] != 7)         /* RF bug fix 30-09-2002  */
+                            if (scalefac->s[j][sfbTemp] != 7)
                             {
                                 pvmp3_st_intensity(xr, xl, scalefac->s[j][sfbTemp], sfbStart, sfbNo);
                             }
@@ -457,7 +449,7 @@ void pvmp3_stereo_proc(int32 xr[SUBBANDS_NUMBER*FILTERBANK_BANDS],
                             sfbNo = mp3_sfBandIndex[sfreq].s[sfbTemp+1] - mp3_sfBandIndex[sfreq].s[sfbTemp]; /* No of lines to process */
                             sfbStart = 3 * mp3_sfBandIndex[sfreq].s[sfbTemp] + j * sfbNo;
 
-                            if (scalefac->s[j][sfbTemp] != 7)  /* RF bug fix 30-09-2002 */
+                            if (scalefac->s[j][sfbTemp] != 7)
                             {
                                 pvmp3_st_intensity(xr, xl, scalefac->s[j][sfbTemp], sfbStart, sfbNo);
                             }

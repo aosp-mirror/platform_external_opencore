@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,9 +66,6 @@
 #endif
 #ifndef PVMF_DATA_SOURCE_PLAYBACK_CONTROL_H_INCLUDED
 #include "pvmf_data_source_playback_control.h"
-#endif
-#ifndef AUDIOMETADATA_H_INCLUDED
-#include "audiometadata.h"
 #endif
 #ifndef AACFILEPARSER_H_INCLUDED
 #include "aacfileparser.h"
@@ -143,7 +140,7 @@
 
 #define PVMF_AAC_PARSER_NODE_TEMPLATED_DELETE(auditCB, T, Tsimple, ptr)\
 {\
-	OSCL_TEMPLATED_DELETE(ptr, T, Tsimple);\
+	OSCL_DELETE(ptre);\
 }
 
 #define PV_AAC_PARSER_NODE_ARRAY_NEW(auditCB, T, count, ptr)\
@@ -206,19 +203,6 @@ class PVAACFFNodeTrackPortInfo : public OsclMemPoolFixedChunkAllocatorObserver,
             public OsclMemPoolResizableAllocatorObserver
 {
     public:
-        enum TrackState
-        {
-            TRACKSTATE_UNINITIALIZED,
-            TRACKSTATE_INITIALIZED,
-            TRACKSTATE_TRANSMITTING_GETDATA,
-            TRACKSTATE_TRANSMITTING_SENDDATA,
-            TRACKSTATE_TRACKDATAPOOLEMPTY,
-            TRACKSTATE_MEDIADATAPOOLEMPTY,
-            TRACKSTATE_DESTFULL,
-            TRACKSTATE_SOURCEEMPTY,
-            TRACKSTATE_ENDOFTRACK,
-            TRACKSTATE_ERROR
-        };
 
         PVAACFFNodeTrackPortInfo()
         {
@@ -226,7 +210,6 @@ class PVAACFFNodeTrackPortInfo : public OsclMemPoolFixedChunkAllocatorObserver,
             iTrackId = -1;
             iPort = NULL;
             iClockConverter = NULL;
-            iState = TRACKSTATE_UNINITIALIZED;
             iTrackDataMemoryPool = NULL;
             iTrackDataMemoryPoolProxy = NULL;
             iMediaDataImplAlloc = NULL;
@@ -238,7 +221,7 @@ class PVAACFFNodeTrackPortInfo : public OsclMemPoolFixedChunkAllocatorObserver,
             iSendBOS = false;
 
             /////////////////////////////////////////////////////
-            iFormatType                   = PVMF_FORMAT_UNKNOWN;
+            iFormatType                   = PVMF_MIME_FORMAT_UNKNOWN;
             iSeqNum                       = 0;
             oEOSReached                   = false;
             oEOSSent                      = false;
@@ -277,7 +260,6 @@ class PVAACFFNodeTrackPortInfo : public OsclMemPoolFixedChunkAllocatorObserver,
             iClockConverter = aSrc.iClockConverter;
             iFormatSpecificConfig = aSrc.iFormatSpecificConfig;
             iMediaData = aSrc.iMediaData;
-            iState = aSrc.iState;
             iTrackDataMemoryPool = aSrc.iTrackDataMemoryPool;
             iTrackDataMemoryPoolProxy = aSrc.iTrackDataMemoryPoolProxy;
             iMediaDataImplAlloc = aSrc.iMediaDataImplAlloc;
@@ -381,8 +363,6 @@ class PVAACFFNodeTrackPortInfo : public OsclMemPoolFixedChunkAllocatorObserver,
 
         // Shared memory pointer holding the currently retrieved track data
         PVMFSharedMediaDataPtr iMediaData;
-        // Current state of this track
-        TrackState iState;
         // Output buffer memory pool
         OsclMemPoolResizableAllocator *iTrackDataMemoryPool;
         // Allocator wrapper for the output buffer memory pool
@@ -578,7 +558,7 @@ class PVMFAACFFParserNodeCommand : public PVMFAACFFParserNodeCommandBase
         }
 
         // Constructor and parser for SetDataSourceRate
-        void Construct(PVMFSessionId s, int32 cmd, int32 aRate, OsclTimebase* aTimebase, const OsclAny*aContext)
+        void Construct(PVMFSessionId s, int32 cmd, int32 aRate, PVMFTimebase* aTimebase, const OsclAny*aContext)
         {
             PVMFAACFFParserNodeCommandBase::Construct(s, cmd, aContext);
             iParam1 = (OsclAny*)aRate;
@@ -587,10 +567,10 @@ class PVMFAACFFParserNodeCommand : public PVMFAACFFParserNodeCommandBase
             iParam4 = NULL;
             iParam5 = NULL;
         }
-        void Parse(int32& aRate, OsclTimebase*& aTimebase)
+        void Parse(int32& aRate, PVMFTimebase*& aTimebase)
         {
             aRate = (int32)iParam1;
-            aTimebase = (OsclTimebase*)iParam2;
+            aTimebase = (PVMFTimebase*)iParam2;
         }
 
         /* Constructor and parser for GetLicenseW */
@@ -744,6 +724,9 @@ class PVMFAACFFParserNode :  public OsclTimerObject
         PVMFCommandId Reset(PVMFSessionId, const OsclAny* aContext = NULL);
         PVMFCommandId CancelAllCommands(PVMFSessionId, const OsclAny* aContextData = NULL);
         PVMFCommandId CancelCommand(PVMFSessionId, PVMFCommandId aCmdId, const OsclAny* aContextData = NULL);
+        PVMFStatus QueryInterfaceSync(PVMFSessionId aSession,
+                                      const PVUuid& aUuid,
+                                      PVInterface*& aInterfacePtr);
 
         //From PVMFDataSourceInitializationExtensionInterface
         void addRef();
@@ -751,8 +734,8 @@ class PVMFAACFFParserNode :  public OsclTimerObject
         bool queryInterface(const PVUuid& uuid, PVInterface *& iface);
 
         PVMFStatus SetSourceInitializationData(OSCL_wString& aSourceURL, PVMFFormatType& aSourceFormat, OsclAny* aSourceData);
-        PVMFStatus SetClientPlayBackClock(OsclClock* aClientClock);
-        PVMFStatus SetEstimatedServerClock(OsclClock* aClientClock);
+        PVMFStatus SetClientPlayBackClock(PVMFMediaClock* aClientClock);
+        PVMFStatus SetEstimatedServerClock(PVMFMediaClock* aClientClock);
 
         //From PVMFTrackSelectionExtensionInterface
         PVMFStatus GetMediaPresentationInfo(PVMFMediaPresentationInfo& aInfo);
@@ -812,7 +795,7 @@ class PVMFAACFFParserNode :  public OsclTimerObject
                                                                     , bool aSeekToSyncPoint = true);
         PVMFCommandId SetDataSourceRate(PVMFSessionId aSession
                                         , int32 aRate
-                                        , OsclTimebase* aTimebase = NULL
+                                        , PVMFTimebase* aTimebase = NULL
                                                                     , OsclAny* aContext = NULL);
 
         /* From PVMFCPMPluginLicenseInterface */
@@ -921,8 +904,6 @@ class PVMFAACFFParserNode :  public OsclTimerObject
         // For metadata extention interface
         PVMFStatus DoGetMetadataKeys(PVMFAACFFParserNodeCommand& aCmd);
         PVMFStatus DoGetMetadataValues(PVMFAACFFParserNodeCommand& aCmd);
-        void CreateKVPForCharStringValue(PvmiKvp& aKeyVal, TAudioMetaData::FormatType aFormatType, const char* aTypeString, char* aValChar, char* aMiscKeyParam = NULL);
-        void CreateKVPForWCharStringValue(PvmiKvp& aKeyVal, TAudioMetaData::FormatType aFormatType, const char* aTypeString, oscl_wchar* aValWChar, char* aMiscKeyParam = NULL);
 
         void CompleteGetMetaDataValues();
         int32 AddToValueList(Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList, PvmiKvp& aNewValue);
@@ -941,7 +922,6 @@ class PVMFAACFFParserNode :  public OsclTimerObject
         // Track data processing
         bool RetrieveTrackConfigInfo(PVAACFFNodeTrackPortInfo& aTrackPortInfo);
         bool RetrieveTrackData(PVAACFFNodeTrackPortInfo& aTrackPortInfo);
-        bool SendTrackData(PVAACFFNodeTrackPortInfo& aTrackPortInfo);
         bool SendEndOfTrackCommand(PVAACFFNodeTrackPortInfo& aTrackPortInfo);
 
         void ResetAllTracks();
@@ -983,7 +963,7 @@ class PVMFAACFFParserNode :  public OsclTimerObject
         PVAACFFNodeTrackPortInfo iTrack;
         bool iFirstFrame;
 
-        OsclClock* iClientClock;
+        PVMFMediaClock* iClientClock;
         void ResetSourceFile();
         bool oSourceIsCurrent;
 
@@ -1026,6 +1006,7 @@ class PVMFAACFFParserNode :  public OsclTimerObject
         PVMFCPMPluginAccessInterfaceFactory* iCPMContentAccessFactory;
         PVMFMetadataExtensionInterface* iCPMMetaDataExtensionInterface;
         PVMFCPMPluginLicenseInterface* iCPMLicenseInterface;
+        PVInterface* iCPMLicenseInterfacePVI;
         PvmiKvp iRequestedUsage;
         PvmiKvp iApprovedUsage;
         PvmiKvp iAuthorizationDataKvp;
@@ -1057,6 +1038,13 @@ class PVMFAACFFParserNode :  public OsclTimerObject
         void GetCPMMetaDataKeys();
         void GetCPMMetaDataValues();
         PVMFStatus CheckCPMCommandCompleteStatus(PVMFCommandId, PVMFStatus);
+        int32 CreateNewArray(char*& aPtr, char *aKey);
+        int32 CreateNewArray(char*& aPtr, int32 aLen);
+        int32 CreateNewArray(oscl_wchar*& aPtr, int32 aLen);
+        int32 PushBackKeyVal(Oscl_Vector<PvmiKvp, OsclMemAllocator>*& aValueListPtr, PvmiKvp &aKeyVal);
+        PVMFStatus PushValueToList(Oscl_Vector<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator> &aRefMetadataKeys,
+                                   PVMFMetadataList *&aKeyListPtr,
+                                   uint32 aLcv);
         PVMFStatus iCPMRequestUsageCommandStatus;
 
         PVMFStatus DoGetLicense(PVMFAACFFParserNodeCommand& aCmd,
@@ -1087,7 +1075,6 @@ class PVMFAACFFParserNode :  public OsclTimerObject
         char iLogFileIndex;
         OSCL_HeapString<PVMFAACParserNodeAllocator> portLogPath;
 
-        void Assert(bool);
         PVMFStatus ParseAACFile();
 };
 

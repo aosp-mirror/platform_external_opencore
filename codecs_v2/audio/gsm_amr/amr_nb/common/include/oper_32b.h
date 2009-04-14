@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,14 +30,13 @@ terms listed above has been obtained from the copyright holder.
 
  Pathname: ./gsm-amr/c/include/oper_32b.h
 
-     Date: 09/08/2000
-
 ------------------------------------------------------------------------------
  REVISION HISTORY
 
  Description: Deleted inclusion of files that were not part of the original
 	      oper_32b.h file.
 
+ Who:						Date:
  Description:
 
 ------------------------------------------------------------------------------

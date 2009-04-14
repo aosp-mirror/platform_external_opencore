@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ OSCL_DELETE(ptr);\
 
 #define PV_MP4_FF_TEMPLATED_DELETE(auditCB,T,Tsimple,ptr)\
 {\
-OSCL_TEMPLATED_DELETE(ptr, T, Tsimple);\
+OSCL_DELETE(ptr);\
 }
 
 

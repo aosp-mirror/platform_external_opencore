@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*********************************************************************************/
 /*
     This PVA_FF_SampleSizeAtom Class contains the sample count and a table giving the
     size of each sample.
@@ -59,18 +58,7 @@ PVA_FF_SampleSizeAtom::nextSample(uint32 size)
         case MEDIA_TYPE_TEXT://added for timed text support
         case MEDIA_TYPE_AUDIO:
         case MEDIA_TYPE_VISUAL:
-        case MEDIA_TYPE_OBJECT_DESCRIPTOR:
-        case MEDIA_TYPE_SCENE_DESCRIPTION:
-        case MEDIA_TYPE_IPMP:
             addNextSampleSize(size);
-            break;
-        case MEDIA_TYPE_CLOCK_REFERENCE:
-            break;
-        case MEDIA_TYPE_MPEG7:
-            break;
-        case MEDIA_TYPE_OBJECT_CONTENT_INFO:
-            break;
-        case MEDIA_TYPE_MPEG_J:
             break;
         case MEDIA_TYPE_UNKNOWN:
         default:
@@ -142,6 +130,10 @@ PVA_FF_SampleSizeAtom::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
 
     if (getDefaultSampleSize() == 0)
     {
+        if (_psampleSizeVec->size() < getSampleCount())
+        {
+            return false;
+        }
         for (int32 i = 0; i < (int32)(getSampleCount()); i++)
         {
             if (!PVA_FF_AtomUtils::render32(fp, (*_psampleSizeVec)[i]))
@@ -167,7 +159,6 @@ PVA_FF_SampleSizeAtom::recomputeSize()
     size += 4; // For sampleCount
     if (_sampleSize == 0)
     {
-        //size += (4*_psampleSizeVec->size()); // For all elements in vec
         size += 4 * _sampleCount; // For all elements in vec
     }
 
@@ -206,4 +197,3 @@ PVA_FF_SampleSizeAtom::reAuthorFirstSample(uint32 size)
     }
     return true;
 }
-

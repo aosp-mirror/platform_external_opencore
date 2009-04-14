@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -108,10 +108,6 @@
 //We always use fair scheduling, but for testing it can be helpful to
 //swap in the symbian native behavior.
 #define PV_SCHED_FAIR_SCHEDULING 1
-
-//Set this to 1 to enable some debugging code in the symbian coe scheduler.
-//Should be 0 in production code.
-#define PV_SCHED_DEBUG_REPLACE 0
 
 //OSCL_PERF_SUMMARY_LOGGING is a master switch to configure scheduler
 //for full performance data gathering with minimal summary logging at

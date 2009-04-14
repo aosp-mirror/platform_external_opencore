@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,22 +46,22 @@ PV_STATUS EncodeFrameCombinedMode(VideoEncData *video)
     Int	ind_x, ind_y;
     Int start_packet_header = 0;
     UChar *QPMB = video->QPMB;
-    Int QP, QP_prev;
-    Int mbnum = 0, slice_counter = 0;
+    Int QP;
+    Int mbnum = 0, slice_counter = 0, curr_slice_counter = 0;
     Int num_bits, packet_size = encParams->ResyncPacketsize;
-    Bool GOB_Header_enabled = encParams->GOB_Header_Enabled;
+    Int GOB_Header_Interval = encParams->GOB_Header_Interval;
     BitstreamEncVideo *bs1 = video->bitstream1;
     Int numHeaderBits;
     approxDCT fastDCTfunction;
     Int ncoefblck[6] = {64, 64, 64, 64, 64, 64}; /* for FastCodeMB,  5/18/2001 */
     PV_STATUS(*CodeMB)(VideoEncData *, approxDCT *, Int, Int[]);
-    void (*MBVlcEncode)(VideoEncData*, Int, Int[], void *);
+    void (*MBVlcEncode)(VideoEncData*, Int[], void *);
     void (*BlockCodeCoeff)(RunLevelBlock*, BitstreamEncVideo*, Int, Int, UChar);
 
     /* for H263 GOB changes */
 //MP4RateControlType rc_type = encParams->RC_Type;
 
-    QPMB[0] = QP_prev = QP = currVop->quantizer;
+    video->QP_prev = currVop->quantizer;
 
     numHeaderBits = BitstreamGetPos(bs1);
 
@@ -101,6 +101,9 @@ PV_STATUS EncodeFrameCombinedMode(VideoEncData *video)
     if (currVol->shortVideoHeader && currVop->gobFrameID != currVop->predictionType)
         currVop->gobFrameID = currVop->predictionType;
 
+
+    video->usePrevQP = 0;
+
     for (ind_y = 0;ind_y < currVol->nMBPerCol;ind_y++) 	/* Col MB Loop */
     {
 
@@ -109,12 +112,13 @@ PV_STATUS EncodeFrameCombinedMode(VideoEncData *video)
         if (currVol->shortVideoHeader) 	/* ShortVideoHeader Mode */
         {
 
-            if (slice_counter && GOB_Header_enabled && (ind_y % 2 == 0))  	/* Encode GOB Header */
+            if (slice_counter && GOB_Header_Interval && (ind_y % GOB_Header_Interval == 0))  	/* Encode GOB Header */
             {
                 QP = QPMB[mbnum];	 /* Get quant_scale */
                 video->header_bits -= BitstreamGetPos(currVol->stream); /* Header Bits */
                 status = EncodeGOBHeader(video, slice_counter, QP, 0);	//ind_y		/* Encode GOB Header */
                 video->header_bits += BitstreamGetPos(currVol->stream); /* Header Bits */
+                curr_slice_counter = slice_counter;
             }
         }
 
@@ -122,9 +126,10 @@ PV_STATUS EncodeFrameCombinedMode(VideoEncData *video)
         {
             video->outputMB->mb_x = ind_x; /*  5/28/01 */
             video->mbnum = mbnum;
+            QP = QPMB[mbnum];   /* always read new QP */
 
-            if (GOB_Header_enabled)
-                video->sliceNo[mbnum] = (ind_y % 2 == 0 ? slice_counter : slice_counter - 1);	/* Update MB slice number */
+            if (GOB_Header_Interval)
+                video->sliceNo[mbnum] = curr_slice_counter;	/* Update MB slice number */
             else
                 video->sliceNo[mbnum] = slice_counter;
 
@@ -138,12 +143,13 @@ PV_STATUS EncodeFrameCombinedMode(VideoEncData *video)
             {
                 slice_counter++;						/* Increment slice counter */
                 video->sliceNo[mbnum] = slice_counter;	/* Update MB slice number*/
-                QP_prev = QP = QPMB[mbnum];						/* store QP */
                 video->header_bits -= BitstreamGetPos(bs1); /* Header Bits */
-                status = EncodeVideoPacketHeader(video, mbnum, QP, 0);
+                video->QP_prev = currVop->quantizer;
+                status = EncodeVideoPacketHeader(video, mbnum, video->QP_prev, 0);
                 video->header_bits += BitstreamGetPos(bs1); /* Header Bits */
                 numHeaderBits = BitstreamGetPos(bs1);
                 start_packet_header = 0;
+                video->usePrevQP = 0;
             }
 #endif
             /***********************************************/
@@ -156,7 +162,7 @@ PV_STATUS EncodeFrameCombinedMode(VideoEncData *video)
             /* MB VLC Encode: VLC Encode MB     */
             /************************************/
 
-            (*MBVlcEncode)(video, QP_prev, ncoefblck, (void*)BlockCodeCoeff);
+            (*MBVlcEncode)(video, ncoefblck, (void*)BlockCodeCoeff);
 
             /*************************************************************/
             /* Assemble Packets:  Assemble the MB VLC codes into Packets */
@@ -205,7 +211,7 @@ PV_STATUS EncodeFrameCombinedMode(VideoEncData *video)
         if (currVol->shortVideoHeader)  /* ShortVideoHeader = 1 */
         {
 
-            if (GOB_Header_enabled)  slice_counter++;
+            if (GOB_Header_Interval)  slice_counter++;
         }
 
     } /* End of For ind_y */
@@ -267,7 +273,6 @@ PV_STATUS EncodeSliceCombinedMode(VideoEncData *video)
 //	rateControl *rc = encParams->rc[video->currLayer];
     UChar *QPMB = video->QPMB;
     Int QP;
-    Int QP_prev = 31;
     Int	ind_x = video->outputMB->mb_x, ind_y = video->outputMB->mb_y;
     Int offset = video->offset;					/* get current MB location */
     Int mbnum = video->mbnum, slice_counter = video->sliceNo[mbnum]; /* get current MB location */
@@ -285,8 +290,10 @@ PV_STATUS EncodeSliceCombinedMode(VideoEncData *video)
     Short outputMB[6][64];
     Int k;
     PV_STATUS(*CodeMB)(VideoEncData *, approxDCT *, Int, Int[]);
-    void (*MBVlcEncode)(VideoEncData*, Int, Int[], void *);
+    void (*MBVlcEncode)(VideoEncData*, Int[], void *);
     void (*BlockCodeCoeff)(RunLevelBlock*, BitstreamEncVideo*, Int, Int, UChar);
+
+    video->QP_prev = 31;
 
 #define H263_GOB_CHANGES
 
@@ -305,14 +312,15 @@ PV_STATUS EncodeSliceCombinedMode(VideoEncData *video)
 
     if (mbnum == 0) /* only do this at the start of a frame */
     {
-        QPMB[0] = QP_prev = QP = currVop->quantizer;
+        QPMB[0] = video->QP_prev = QP = currVop->quantizer;
+        video->usePrevQP = 0;
 
         numHeaderBits = BitstreamGetPos(bs1);
     }
 
     /* Re-assign fast functions on every slice, don't have to put it in the memory */
     QP = QPMB[mbnum];
-    if (mbnum > 0)	 QP_prev = QPMB[mbnum-1];
+    if (mbnum > 0)	 video->QP_prev = QPMB[mbnum-1];
 
     /* determine type of quantization	*/
 #ifndef NO_MPEG_QUANT
@@ -396,17 +404,19 @@ JUMP_IN_SH:
             getMotionCompensatedMB(video, ind_x, ind_y, offset);
 
 JUMP_IN:
+            QP = QPMB[mbnum];   /* always read new QP */
 #ifndef H263_ONLY
             if (start_packet_header)
             {
                 slice_counter++;						/* Increment slice counter */
                 video->sliceNo[mbnum] = slice_counter;	/* Update MB slice number*/
-                QP_prev = QP = QPMB[mbnum];						/* store QP */
+                video->QP_prev = currVop->quantizer;						/* store QP */
                 num_bits = BitstreamGetPos(bs1);
-                status = EncodeVideoPacketHeader(video, mbnum, QP, 1);
+                status = EncodeVideoPacketHeader(video, mbnum, video->QP_prev, 1);
                 numHeaderBits = BitstreamGetPos(bs1) - num_bits;
                 video->header_bits += numHeaderBits; /* Header Bits */
                 start_packet_header = 0;
+                video->usePrevQP = 0;
             }
             else  /* don't encode the first MB in packet again */
 #endif /* H263_ONLY */
@@ -414,7 +424,6 @@ JUMP_IN:
                 /***********************************************/
                 /* Code_MB:  DCT, Q, Q^(-1), IDCT, Motion Comp */
                 /***********************************************/
-
                 status = (*CodeMB)(video, &fastDCTfunction, (offset << 5) + QP, ncoefblck);
             }
 
@@ -437,7 +446,7 @@ JUMP_IN:
             }
             /*************************************/
 
-            (*MBVlcEncode)(video, QP_prev, ncoefblck, (void*)BlockCodeCoeff);
+            (*MBVlcEncode)(video, ncoefblck, (void*)BlockCodeCoeff);
 
             /*************************************************************/
             /* Assemble Packets:  Assemble the MB VLC codes into Packets */

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,6 +54,18 @@ PVAviFileParser::ParseFile()
 {
     iError = PV_AVI_FILE_PARSER_SUCCESS;
     ipFilePtr->Seek(0, Oscl_File::SEEKSET);
+
+    // Seek to the end to find the file size
+    uint32 filesize = 0;
+    if (ipFilePtr->Seek(0, Oscl_File::SEEKEND))
+    {
+        iError = PV_AVI_FILE_PARSER_SEEK_ERROR;
+        return iError;
+    }
+    filesize = ipFilePtr->Tell();
+
+    // Seek back to the beginning
+    ipFilePtr->Seek(0, Oscl_File::SEEKSET);
     uint32 chunkType = 0;
 
     if ((iError = PVAviFileParserUtils::ReadNextChunkType(ipFilePtr, chunkType)) != PV_AVI_FILE_PARSER_SUCCESS)
@@ -76,7 +88,7 @@ PVAviFileParser::ParseFile()
         return iError;
     }
 
-    if (iFileSize <= 0)
+    if ((iFileSize <= 0) || (iFileSize > filesize))
     {
         iError = PV_AVI_FILE_PARSER_WRONG_SIZE;
         return iError;
@@ -375,9 +387,14 @@ PVAviFileParser::GetNextMediaSample(uint32& arStreamNo, uint8* aBuffer,
         uint32 sampleSize = GetBitsPerSample(arStreamNo);
         sampleSize = sampleSize / BIT_COUNT8; //in bytes
         OsclFloat  samplingRate = GetFrameRate(arStreamNo);
-        OsclFloat  sampleCount = arSize / sampleSize;
-        iTimeStampAudio += (uint32)((sampleCount * 1000) / samplingRate);
-
+        if (sampleSize > 0)
+        {
+            OsclFloat  sampleCount = (OsclFloat)arSize / sampleSize;
+            if (samplingRate > 0)
+            {
+                iTimeStampAudio += (uint32)((sampleCount * 1000) / samplingRate);
+            }
+        }
     }
     else
     {
@@ -465,9 +482,14 @@ PVAviFileParser::GetNextStreamMediaSample(uint32 aStreamNo, uint8* aBuffer,
         uint32 sampleSize = GetBitsPerSample(aStreamNo);
         sampleSize = sampleSize / BIT_COUNT8; //in bytes
         OsclFloat samplingRate = GetFrameRate(aStreamNo);
-        OsclFloat sampleCount = arSize / sampleSize;
-        iTimeStampAudio += (uint32)((sampleCount * 1000) / samplingRate);
-
+        if (sampleSize > 0)
+        {
+            OsclFloat sampleCount = (OsclFloat)arSize / sampleSize;
+            if (samplingRate > 0)
+            {
+                iTimeStampAudio += (uint32)((sampleCount * 1000) / samplingRate);
+            }
+        }
     }
     else
     {

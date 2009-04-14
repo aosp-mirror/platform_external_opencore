@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,8 +36,8 @@ class PVMFNodeInterface;
  * PVMFOMXAudioDecNodeFactory Class
  *
  * a singleton class which instantiates and provides
- * access to OMX video decoder node. It returns a PVMFNodeInterface
- * reference, the interface class of the PVMFVideoDecNode.
+ * access to OMX audio decoder node. It returns a PVMFNodeInterface
+ * reference, the interface class of the PVMFAudioDecNode.
  *
  * The client is expected to contain and maintain a pointer to the instance created
  * while the node is active.
@@ -48,7 +48,7 @@ class PVMFOMXAudioDecNodeFactory
         /**
          * Creates an instance of a PVMFOMXAudioDecNode. If the creation fails, this function will leave.
          *
-         * @param aPriority The active object priority for the node. Default is nominal priority if not specified
+         * @param aPriority The active object priority for the node. Default is standard priority if not specified
          * @returns A pointer to an instance of PVMFOMXAudioDecNode as PVMFNodeInterface reference or leaves if instantiation fails
          **/
         OSCL_IMPORT_REF static PVMFNodeInterface* CreatePVMFOMXAudioDecNode(int32 aPriority = OsclActiveObject::EPriorityNominal);

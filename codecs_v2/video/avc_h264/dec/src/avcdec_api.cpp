@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,8 +97,8 @@ AVCDec_Status EBSPtoRBSP(uint8 *nal_unit, int *size)
 	}
    }"
 */
-AVCDec_Status PVAVCAnnexBGetNALUnit(uint8 *bitstream, uint8 **nal_unit,
-                                    int *size)
+OSCL_EXPORT_REF AVCDec_Status PVAVCAnnexBGetNALUnit(uint8 *bitstream, uint8 **nal_unit,
+        int *size)
 {
     int i, j, FoundStartCode = 0;
     int end;
@@ -162,8 +162,8 @@ AVCDec_Status PVAVCAnnexBGetNALUnit(uint8 *bitstream, uint8 **nal_unit,
 /*	Return   : AVCDEC_SUCCESS if succeed, AVC_FAIL if fail.					*/
 /*	Modified :																*/
 /* ======================================================================== */
-AVCDec_Status PVAVCDecGetNALType(uint8 *bitstream, int size,
-                                 int *nal_type, int *nal_ref_idc)
+OSCL_EXPORT_REF AVCDec_Status PVAVCDecGetNALType(uint8 *bitstream, int size,
+        int *nal_type, int *nal_ref_idc)
 {
     int forbidden_zero_bit;
     if (size > 0)
@@ -188,8 +188,8 @@ AVCDec_Status PVAVCDecGetNALType(uint8 *bitstream, int size,
 /*	Modified :																*/
 /* ======================================================================== */
 
-AVCDec_Status	PVAVCDecSeqParamSet(AVCHandle *avcHandle, uint8 *nal_unit,
-                                  int nal_size)
+OSCL_EXPORT_REF AVCDec_Status	PVAVCDecSeqParamSet(AVCHandle *avcHandle, uint8 *nal_unit,
+        int nal_size)
 {
     AVCDec_Status status;
     AVCDecObject *decvid;
@@ -321,44 +321,44 @@ AVCDec_Status	PVAVCDecSeqParamSet(AVCHandle *avcHandle, uint8 *nal_unit,
 /*	12/20/03:  change input argument, use structure instead.				*/
 /* ======================================================================== */
 
-AVCDec_Status PVAVCDecGetSeqInfo(AVCHandle *avcHandle, AVCDecSPSInfo *seqInfo)
+OSCL_EXPORT_REF AVCDec_Status PVAVCDecGetSeqInfo(AVCHandle *avcHandle, AVCDecSPSInfo *seqInfo)
 {
     AVCDecObject *decvid = (AVCDecObject*) avcHandle->AVCObject;
     AVCCommonObj *video;
     int PicWidthInMbs, PicHeightInMapUnits, FrameHeightInMbs;
 
-    if (decvid == NULL)
+    if (decvid == NULL || decvid->seqParams[0] == NULL)
     {
         return AVCDEC_FAIL;
     }
 
     video = decvid->common;
 
-    PicWidthInMbs = video->currSeqParams->pic_width_in_mbs_minus1 + 1;
-    PicHeightInMapUnits = video->currSeqParams->pic_height_in_map_units_minus1 + 1 ;
-    FrameHeightInMbs = (2 - video->currSeqParams->frame_mbs_only_flag) * PicHeightInMapUnits ;
+    PicWidthInMbs = decvid->seqParams[0]->pic_width_in_mbs_minus1 + 1;
+    PicHeightInMapUnits = decvid->seqParams[0]->pic_height_in_map_units_minus1 + 1 ;
+    FrameHeightInMbs = (2 - decvid->seqParams[0]->frame_mbs_only_flag) * PicHeightInMapUnits ;
 
     seqInfo->FrameWidth = PicWidthInMbs << 4;
     seqInfo->FrameHeight = FrameHeightInMbs << 4;
 
-    seqInfo->frame_only_flag = video->currSeqParams->frame_mbs_only_flag;
+    seqInfo->frame_only_flag = decvid->seqParams[0]->frame_mbs_only_flag;
 
-    if (video->currSeqParams->frame_cropping_flag)
+    if (decvid->seqParams[0]->frame_cropping_flag)
     {
-        seqInfo->frame_crop_left = 2 * video->currSeqParams->frame_crop_left_offset;
-        seqInfo->frame_crop_right = seqInfo->FrameWidth - (2 * video->currSeqParams->frame_crop_right_offset + 1);
+        seqInfo->frame_crop_left = 2 * decvid->seqParams[0]->frame_crop_left_offset;
+        seqInfo->frame_crop_right = seqInfo->FrameWidth - (2 * decvid->seqParams[0]->frame_crop_right_offset + 1);
 
         if (seqInfo->frame_only_flag)
         {
-            seqInfo->frame_crop_top = 2 * video->currSeqParams->frame_crop_top_offset;
-            seqInfo->frame_crop_bottom = seqInfo->FrameHeight - (2 * video->currSeqParams->frame_crop_bottom_offset + 1);
+            seqInfo->frame_crop_top = 2 * decvid->seqParams[0]->frame_crop_top_offset;
+            seqInfo->frame_crop_bottom = seqInfo->FrameHeight - (2 * decvid->seqParams[0]->frame_crop_bottom_offset + 1);
             /* Note in 7.4.2.1, there is a contraint on the value of frame_crop_left and frame_crop_top
             such that they have to be less than or equal to frame_crop_right/2 and frame_crop_bottom/2, respectively. */
         }
         else
         {
-            seqInfo->frame_crop_top = 4 * video->currSeqParams->frame_crop_top_offset;
-            seqInfo->frame_crop_bottom = seqInfo->FrameHeight - (4 * video->currSeqParams->frame_crop_bottom_offset + 1);
+            seqInfo->frame_crop_top = 4 * decvid->seqParams[0]->frame_crop_top_offset;
+            seqInfo->frame_crop_bottom = seqInfo->FrameHeight - (4 * decvid->seqParams[0]->frame_crop_bottom_offset + 1);
             /* Note in 7.4.2.1, there is a contraint on the value of frame_crop_left and frame_crop_top
             such that they have to be less than or equal to frame_crop_right/2 and frame_crop_bottom/4, respectively. */
         }
@@ -385,8 +385,8 @@ AVCDec_Status PVAVCDecGetSeqInfo(AVCHandle *avcHandle, AVCDecSPSInfo *seqInfo)
 /**
 Since PPS doesn't contain much data, most of the picture initialization will
 be done after decoding the slice header in PVAVCDecodeSlice. */
-AVCDec_Status	PVAVCDecPicParamSet(AVCHandle *avcHandle, uint8 *nal_unit,
-                                  int nal_size)
+OSCL_EXPORT_REF AVCDec_Status	PVAVCDecPicParamSet(AVCHandle *avcHandle, uint8 *nal_unit,
+        int nal_size)
 {
     AVCDec_Status status;
     AVCDecObject *decvid = (AVCDecObject*) avcHandle->AVCObject;
@@ -426,50 +426,13 @@ AVCDec_Status	PVAVCDecPicParamSet(AVCHandle *avcHandle, uint8 *nal_unit,
     return AVCDEC_SUCCESS;
 }
 
-AVCDec_Status	PVAVCDecSEI(AVCHandle *avcHandle, uint8 *nal_unit,
-                          int nal_size)
+OSCL_EXPORT_REF AVCDec_Status	PVAVCDecSEI(AVCHandle *avcHandle, uint8 *nal_unit,
+        int nal_size)
 {
     OSCL_UNUSED_ARG(avcHandle);
     OSCL_UNUSED_ARG(nal_unit);
     OSCL_UNUSED_ARG(nal_size);
 
-#if 0
-    AVCDec_Status status;
-    AVCDecObject *decvid = (AVCDecObject*) avcHandle->AVCObject;
-    AVCCommonObj *video;
-    AVCDecBitstream *bitstream;
-
-    DEBUG_LOG(userData, AVC_LOGTYPE_INFO, "PVAVCDecSEI", -1, -1);
-
-    return AVCDEC_SUCCESS;
-    if (decvid == NULL)
-    {
-        return AVCDEC_FAIL;
-    }
-
-    video = decvid->common;
-    bitstream = decvid->bitstream;
-    /* 1. Convert EBSP to RBSP. Create bitstream structure */
-    video->forbidden_bit = nal_unit[0] >> 7;
-    video->nal_ref_idc = (nal_unit[0] & 0x60) >> 5;
-    video->nal_unit_type = (AVCNalUnitType)(nal_unit[0] & 0x1F);
-
-    if (video->nal_unit_type != AVC_NALTYPE_SEI) /* not a SEI NAL */
-    {
-        return AVCDEC_FAIL;
-    }
-
-
-    /* 2. Initialize bitstream structure*/
-    BitstreamInit(bitstream, nal_unit + 1, nal_size - 1);
-
-    /* 2. Decode pic_parameter_set_rbsp syntax. Allocate video->picParams[i] and assign to currPicParams */
-    status = DecodeSEI(decvid, bitstream);
-    if (status != AVCDEC_SUCCESS)
-    {
-        return status;
-    }
-#endif
     return AVCDEC_SUCCESS;
 }
 /* ======================================================================== */
@@ -480,8 +443,8 @@ AVCDec_Status	PVAVCDecSEI(AVCHandle *avcHandle, uint8 *nal_unit,
 /*	Return   : See enum AVCDec_Status for return values.					*/
 /*	Modified :																*/
 /* ======================================================================== */
-AVCDec_Status PVAVCDecodeSlice(AVCHandle *avcHandle, uint8 *buffer,
-                               int buf_size)
+OSCL_EXPORT_REF AVCDec_Status PVAVCDecodeSlice(AVCHandle *avcHandle, uint8 *buffer,
+        int buf_size)
 {
     AVCDecObject *decvid = (AVCDecObject*) avcHandle->AVCObject;
     AVCCommonObj *video;
@@ -541,14 +504,13 @@ AVCDec_Status PVAVCDecodeSlice(AVCHandle *avcHandle, uint8 *buffer,
         BitstreamInit(bitstream, buffer + 1, buf_size - 1);
 
 
-        /* 2.1 Decode Slice Header (seperate function)*/
+        /* 2.1 Decode Slice Header (separate function)*/
         status = DecodeSliceHeader(decvid, video, bitstream);
         if (status != AVCDEC_SUCCESS)
         {
             video->newSlice = TRUE;
             return status;
         }
-#if 1
 
         if (video->sliceHdr->frame_num != video->prevFrameNum || (video->sliceHdr->first_mb_in_slice < (uint)video->mbNum && video->currSeqParams->constrained_set1_flag == 1))
         {
@@ -559,7 +521,7 @@ AVCDec_Status PVAVCDecodeSlice(AVCHandle *avcHandle, uint8 *buffer,
                 ConcealSlice(decvid, video->PicSizeInMbs - video->numMBs, video->PicSizeInMbs);  // Conceal
                 video->numMBs = 0;
 
-//				DeblockPicture(video);   // No need to deblock
+                //				DeblockPicture(video);   // No need to deblock
 
                 /* 3.2 Decoded frame reference marking. */
                 /* 3.3 Put the decoded picture in output buffers */
@@ -605,19 +567,7 @@ AVCDec_Status PVAVCDecodeSlice(AVCHandle *avcHandle, uint8 *buffer,
                 DPBInitPic(video, video->PrevRefFrameNum % video->MaxFrameNum);
                 RefListInit(video);
                 ConcealSlice(decvid, 0, video->PicSizeInMbs);  // Conceal
-#if 1
                 video->currFS->IsOutputted |= 0x02;
-#else
-                video->slice_type = AVC_I_SLICE;
-                video->CurrPicNum = video->PrevRefFrameNum;
-                DecodePOC(video);
-                /* find an empty memory from DPB and assigned to currPic */
-                DPBInitPic(video, (video->PrevRefFrameNum + 1) % video->MaxFrameNum, 0);
-
-                video->currPic->isReference = TRUE;  // FIX
-
-                RefListInit(video);
-#endif
                 //conceal frame
                 /* 3.2 Decoded frame reference marking. */
                 /* 3.3 Put the decoded picture in output buffers */
@@ -629,7 +579,6 @@ AVCDec_Status PVAVCDecodeSlice(AVCHandle *avcHandle, uint8 *buffer,
                 return AVCDEC_PICTURE_OUTPUT_READY;
             }
         }
-#endif
     }
 
     if (video->newPic == TRUE)
@@ -687,7 +636,7 @@ AVCDec_Status PVAVCDecodeSlice(AVCHandle *avcHandle, uint8 *buffer,
         if (video->nal_ref_idc == 0)
         {
             video->currPic->isReference = FALSE;
-            video->currFS->IsOutputted |= 0x02;		/* The MASK 0x02 means not needed for reference, or returned MC */
+            video->currFS->IsOutputted |= 0x02;		/* The MASK 0x02 means not needed for reference, or returned */
             /* node need to check for freeing of this buffer */
         }
 
@@ -770,7 +719,7 @@ AVCDec_Status PVAVCDecodeSlice(AVCHandle *avcHandle, uint8 *buffer,
 /*	Modified :																*/
 /* ======================================================================== */
 
-AVCDec_Status PVAVCDecGetOutput(AVCHandle *avcHandle, int *indx, int *release, AVCFrameIO *output)
+OSCL_EXPORT_REF AVCDec_Status PVAVCDecGetOutput(AVCHandle *avcHandle, int *indx, int *release, AVCFrameIO *output)
 {
     AVCDecObject *decvid = (AVCDecObject*) avcHandle->AVCObject;
     AVCCommonObj *video;
@@ -936,12 +885,6 @@ AVCDec_Status PVAVCDecGetOutput(AVCHandle *avcHandle, int *indx, int *release, A
     *indx = index;
 
 
-#if 0
-    if (count_frame > 1)  /* more than one frame available */
-    {
-        return AVCDEC_PICTURE_READY;
-    }
-#endif
 
     return AVCDEC_SUCCESS;
 }
@@ -955,7 +898,7 @@ AVCDec_Status PVAVCDecGetOutput(AVCHandle *avcHandle, int *indx, int *release, A
 /*	Return   :	void														*/
 /*	Modified :																*/
 /* ======================================================================== */
-void	PVAVCDecReset(AVCHandle *avcHandle)
+OSCL_EXPORT_REF void	PVAVCDecReset(AVCHandle *avcHandle)
 {
     AVCDecObject *decvid = (AVCDecObject*) avcHandle->AVCObject;
     AVCCommonObj *video;
@@ -993,6 +936,7 @@ void	PVAVCDecReset(AVCHandle *avcHandle)
     video->prevFrameNumOffset = 0;
     video->FrameNumOffset = 0;
     video->mbNum = 0;
+    video->numMBs = 0;
 
     return ;
 }
@@ -1007,7 +951,7 @@ void	PVAVCDecReset(AVCHandle *avcHandle)
 /*	Modified :																*/
 /* ======================================================================== */
 
-void PVAVCCleanUpDecoder(AVCHandle *avcHandle)
+OSCL_EXPORT_REF void PVAVCCleanUpDecoder(AVCHandle *avcHandle)
 {
     AVCDecObject *decvid = (AVCDecObject*) avcHandle->AVCObject;
     AVCCommonObj *video;

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*********************************************************************************/
 /*
     The PVA_FF_Mpeg4File Class fp the class that will construct and maintain all the
     mecessary data structures to be able to render a valid MP4 file to disk.
@@ -32,9 +31,6 @@
 #include "mpeg4file.h"
 #include "a_atomdefs.h"
 #include "atomutils.h"
-#include "bifs.h"
-
-#include "objectdescriptorupdate.h"
 
 #include "pv_gau.h"
 #include "oscl_byte_order.h"
@@ -42,24 +38,59 @@
 
 #include "pv_mp4ffcomposer_config.h"
 
-const uint8 aZeroSetMask[9] = {0xfe, 0xfe, 0xfc, 0xfc, 0xf0, 0xfe, 0xf0, 0xf0, 0xfe};
+const uint8 aAMRNBZeroSetMask[9] =
+{
+    0xfe, 0xfe, 0xfc, 0xfc,
+    0xf0, 0xfe, 0xf0, 0xf0,
+    0xfe
+};
+//IETF AMR WB Speech Frame Sizes (including zero byte padding but not including TOC)
+//FT 0 (6.6 Kbps) - 17 bytes = 136 bits
+//FT 1 (8.85 Kbps) - 23 bytes = 184 bits
+//FT 2 (12.65 Kbps) - 32 bytes = 256 bits
+//FT 3 (14.25 Kbps) - 36 bytes = 288 bits
+//FT 4 (15.85 Kbps) - 40 bytes = 320 bits
+//FT 5 (18.25 Kbps) - 46 bytes = 368 bits
+//FT 6 (19.85 Kbps) - 50 bytes = 400 bits
+//FT 7 (23.05 Kbps) - 58 bytes = 464 bits
+//FT 8 (23.85 Kbps) - 60 bytes = 480 bits
+//FT 9 (SID) - 5 bytes = 40 bits
+//FT 10-13 - Reserved
+//FT 14 (Lost frame) and FT 15 (NO DATA) - 0 bytes = 0 bits
+
+//IETF AMR WB IF1 Speech Frame Sizes (just Class A, B & C speech bits, does not include FT or any other headers)
+//FT 0 (6.6 Kbps) -  132 bits; num-bits-padded = 4
+//FT 1 (8.85 Kbps) - 177 bits; num-bits-padded = 7
+//FT 2 (12.65 Kbps) - 253 bits; num-bits-padded = 3
+//FT 3 (14.25 Kbps) - 285 bits; num-bits-padded = 3
+//FT 4 (15.85 Kbps) - 317 bits; num-bits-padded = 3
+//FT 5 (18.25 Kbps) - 365 bits; num-bits-padded = 3
+//FT 6 (19.85 Kbps) - 397 bits; num-bits-padded = 3
+//FT 7 (23.05 Kbps) - 461 bits; num-bits-padded = 3
+//FT 8 (23.85 Kbps) - 477 bits; num-bits-padded = 3
+//FT 9 (SID) - 5 bytes = 40 bits; num-bits-padded = 0
+//FT 10-13 - Reserved
+//FT 14 (Lost frame) and FT 15 (NO DATA) - 0 bytes = 0 bits; num-bits-padded = 0
+
+// Difference between IF1 bits and IETF storage bits is padded with zeros to byte align the frame
+const uint8 aAMRWBZeroSetMask[9] =
+{
+    0xf0, 0x80, 0xf8, 0xf8,
+    0xf8, 0xf8, 0xf8, 0xf8,
+    0xf8
+};
 
 typedef Oscl_Vector<PVA_FF_MediaDataAtom*, OsclMemAllocator> PVA_FF_MediaDataAtomVecType;
 typedef Oscl_Vector<PVA_FF_MovieFragmentAtom*, OsclMemAllocator> PVA_FF_MovieFragmentAtomVecType;
 typedef Oscl_Vector<PVA_FF_InterLeaveBuffer*, OsclMemAllocator> PVA_FF_InterLeaveBufferVecType;
 
+//common to both AMR and AMR-WB
 const uint32 AMRModeSetMask[16] =
 {
     0x0001, 0x0002, 0x0004, 0x0008,
     0x0010, 0x0020, 0x0040, 0x0080,
     0x0100, 0x0200, 0x0400, 0x0800,
     0x1000, 0x2000, 0x4000, 0x8000
-};
-
-const uint32 AMRBitRates[8] =
-{
-    4750, 5150, 5900, 6700,
-    7400, 7950, 10200, 12200
 };
 
 // Constructor
@@ -72,10 +103,6 @@ PVA_FF_Mpeg4File::PVA_FF_Mpeg4File(int32 mediaType)
 
     _tempOutputPath = _STRLIT("");
 
-    _odAudio = NULL;
-    _odVideo = NULL;
-    _od = NULL;
-    _ODTrack = NULL;
     _oUserDataPopulated = true;
     _pmovieAtom = NULL;
     _pmediaDataAtomVec = NULL;
@@ -84,55 +111,15 @@ PVA_FF_Mpeg4File::PVA_FF_Mpeg4File(int32 mediaType)
     _pCurrentMoofAtom = NULL;
     _pCurrentMediaDataAtom = NULL;
     iCacheSize = 0;
+    _oIsFileOpen = false;
+    _pInterLeaveBufferVec = NULL;
+    _oInterLeaveEnabled = false;
+    _aFs = NULL;
 }
 
 // Destructor
 PVA_FF_Mpeg4File::~PVA_FF_Mpeg4File()
 {
-    if (_oFileRenderCalled == false)
-    {
-        // Render to file was not called, hence
-        // these atoms would not be deleted, so
-        // add them to corresponding parents, so
-        // that they get deleted
-
-        if (_odAudio != NULL)
-        {
-            if (_odu != NULL)
-            {
-                _odu->addObjectDescriptor(_odAudio);
-            }
-            else
-            {
-                PV_MP4_FF_DELETE(NULL, PVA_FF_ObjectDescriptor, _odAudio);
-            }
-        }
-
-        if (_odVideo != NULL)
-        {
-            if (_odu != NULL)
-            {
-                _odu->addObjectDescriptor(_odVideo);
-            }
-            else
-            {
-                PV_MP4_FF_DELETE(NULL, PVA_FF_ObjectDescriptor, _odVideo);
-            }
-        }
-
-        // Add the PVA_FF_ObjectDescriptorUpdate to the media data atom
-        if (_od != NULL)
-        {
-            _od->addRenderableSample(_odu);
-        }
-        if (_ODTrack != NULL)
-        {
-            // Add the ODCommand "PVA_FF_ObjectDescriptorUpdate" to the OD track
-            _ODTrack->nextSample(MEDIA_TYPE_OBJECT_DESCRIPTOR,
-                                 (void*)_odu,
-                                 _odu->getSizeOfDescriptorObject());
-        }
-    }
 
     {
         if (_oUserDataPopulated == false)
@@ -163,7 +150,7 @@ PVA_FF_Mpeg4File::~PVA_FF_Mpeg4File()
     }
 
 
-    if (_oInterLeaveEnabled && _pInterLeaveBufferVec != NULL)
+    if ((_oInterLeaveEnabled) && (NULL != _pInterLeaveBufferVec))
     {
         // delete all interleave buffers
         int32 size = _pInterLeaveBufferVec->size();
@@ -195,8 +182,10 @@ PVA_FF_Mpeg4File::~PVA_FF_Mpeg4File()
     {
         PV_MP4_FF_DELETE(NULL, PVA_FF_FileTypeAtom, _pFileTypeAtom);
     }
-
-    PVA_FF_AtomUtils::closeFileSession(OSCL_STATIC_CAST(Oscl_FileServer*, _aFs));
+    if (_aFs)
+    {
+        PVA_FF_AtomUtils::closeFileSession(OSCL_STATIC_CAST(Oscl_FileServer*, _aFs));
+    }
 }
 
 void PVA_FF_Mpeg4File::SetCacheSize(uint32 aCacheSize)
@@ -208,6 +197,7 @@ PVA_FF_Mpeg4File::init(int32 mediaType,
                        void *osclFileServerSession,
                        uint32 fileAuthoringFlags)
 {
+    OSCL_UNUSED_ARG(mediaType);
     _modifiable = true; // Allow addition of media samples
     _firstFrameInLayer0 = true;
     _firstFrameInLayer1 = true;
@@ -245,11 +235,6 @@ PVA_FF_Mpeg4File::init(int32 mediaType,
     _tempFileIndex = 'a';
 
     _pmediaDataAtomVec  = NULL;
-    _odAudio            = NULL;
-    _odVideo            = NULL;
-    _ODTrack            = NULL;
-    _od                 = NULL;
-    _odu                = NULL;
     _pmovieAtom         = NULL;
 
     _puserDataAtom      = NULL;
@@ -257,7 +242,6 @@ PVA_FF_Mpeg4File::init(int32 mediaType,
 
     _initialUserDataSize     = 0;
     _oDirectRenderEnabled    = false;
-
 
     _oSetTitleDone			= false;
     _oSetAuthorDone			= false;
@@ -270,11 +254,13 @@ PVA_FF_Mpeg4File::init(int32 mediaType,
     _oSetGenreDone			= false;
     _oSetClassificationDone	= false;
     _oSetLocationInfoDone	= false;
+    _oSetAlbumDone			= false;
+    _oSetRecordingYearDone	= false;
 
 
     _totalTempFileRemoval = false;
     _oUserDataUpFront     = true;
-
+    _oIsFileOpen		  = false;
     _oFirstSampleEditMode = false;
 
     _fileAuthoringFlags = fileAuthoringFlags;
@@ -346,63 +332,6 @@ PVA_FF_Mpeg4File::init(int32 mediaType,
 
     _pparent = NULL;
 
-    // BIFS Track
-    PVA_FF_TrackAtom *BIFSTrack = NULL;
-    PV_MP4_FF_NEW(fp->auditCB, PVA_FF_TrackAtom, (MEDIA_TYPE_SCENE_DESCRIPTION,
-                  _pmovieAtom->getMutableMovieHeaderAtom().findNextTrackID(),
-                  _fileAuthoringFlags), BIFSTrack);
-    // Object Descriptor Track
-    PV_MP4_FF_NEW(fp->auditCB, PVA_FF_TrackAtom, (MEDIA_TYPE_OBJECT_DESCRIPTOR,
-                  _pmovieAtom->getMutableMovieHeaderAtom().findNextTrackID(),
-                  _fileAuthoringFlags), _ODTrack);
-
-    // Add the BIFS and OD tracks to the movie atom
-    _pmovieAtom->addTrackAtom(BIFSTrack);
-    _pmovieAtom->addTrackAtom(_ODTrack);
-
-    //CURRENTLY DEFAULTED TO 1000 - MAY NEED TO CHANGE LATER ON WHEN IPMP SUPPORT
-    BIFSTrack->setMediaTimeScale(DEFAULT_PRESENTATION_TIMESCALE);
-    _ODTrack->setMediaTimeScale(DEFAULT_PRESENTATION_TIMESCALE);
-
-    // Still need to add the componnets to the MEDIA_DATA_ATOM atom
-
-    // MODIFIED to fit new PVA_FF_ES_ID_Inc classes
-    // Add BIFS and OD track ESDescriptors to the ODAtom (i.e. the InitialObectDescriptor)
-    // Create new PVA_FF_ES_ID_Inc for the Bifs track and add it to the IOD
-    PVA_FF_ES_ID_Inc* inc = NULL;
-    PV_MP4_FF_NEW(fp->auditCB, PVA_FF_ES_ID_Inc, (BIFSTrack->getTrackID()), inc);
-
-    _pmovieAtom->getMutableObjectDescriptorAtom().getMutableInitialObjectDescriptor().addESIDInclude(inc);
-    // Create new PVA_FF_ES_ID_Inc for the OD track and add it to the IOD
-    PV_MP4_FF_NEW(fp->auditCB, PVA_FF_ES_ID_Inc, (_ODTrack->getTrackID()), inc);
-
-    _pmovieAtom->getMutableObjectDescriptorAtom().getMutableInitialObjectDescriptor().addESIDInclude(inc);
-
-    // Create the ODCommand "PVA_FF_ObjectDescriptorUpdate" and add the ODs with refs to the media and hint tracks
-    _odu = OSCL_NEW(PVA_FF_ObjectDescriptorUpdate, ());
-
-    // Create MEDIA_DATA_ATOM atoms to comtain the BIFS and OD stream data
-    PVA_FF_MediaDataAtom *bif = NULL;
-    PV_MP4_FF_NEW(fp->auditCB, PVA_FF_MediaDataAtom, (_tempOutputPath,
-                  _tempFilePostfix,
-                  _tempFileIndex,
-                  MEDIA_DATA_IN_MEMORY,
-                  _aFs,
-                  iCacheSize), bif);
-    _tempFileIndex++;
-    bif->setTrackReferencePtr(BIFSTrack);
-    addMediaDataAtom(bif);
-
-    PV_MP4_FF_NEW(fp->auditCB, PVA_FF_MediaDataAtom, (_tempOutputPath,
-                  _tempFilePostfix,
-                  _tempFileIndex,
-                  MEDIA_DATA_IN_MEMORY,
-                  _aFs,
-                  iCacheSize), _od);
-    _tempFileIndex++;
-    _od->setTrackReferencePtr(_ODTrack);
-    addMediaDataAtom(_od);
-
     /*
      * In interleave mode, create only ONE media atom, to store
      * all the media samples.
@@ -448,94 +377,6 @@ PVA_FF_Mpeg4File::init(int32 mediaType,
     {
         _pmovieAtom->createAssetInfoAtoms();
     }
-    // Pointer to the bifs data
-    uint8 * pbifs = NULL;
-    int32 bifsSize = 0;
-
-    // Check the media type(s) of the desired mpeg4 file and create
-    // the appropriate MediaDataAtoms (MEDIA_DATA_ATOM) to store the media content
-    switch (mediaType)
-    {
-        case FILE_TYPE_AUDIO_TEXT:
-        case FILE_TYPE_AUDIO:
-        {
-            // Create the OD for the audio stream
-            PV_MP4_FF_NEW(fp->auditCB, PVA_FF_ObjectDescriptor, (_nextAvailableODID), _odAudio);
-
-            _nextAvailableODID++;
-
-            bifsSize = AUDIO_BIFS_SCENE_SIZE;
-            pbifs = (uint8 *)oscl_malloc(AUDIO_BIFS_SCENE_SIZE);
-            oscl_memcpy(pbifs, AUDIO_BIFS_SCENE, AUDIO_BIFS_SCENE_SIZE);
-        }
-        break;
-        case FILE_TYPE_TIMED_TEXT:
-        case FILE_TYPE_VIDEO_TEXT:
-        case FILE_TYPE_VIDEO:
-        case FILE_TYPE_STILL_IMAGE:
-        {
-            // Create the OD for the base-layer video stream
-            PV_MP4_FF_NEW(fp->auditCB, PVA_FF_ObjectDescriptor, (_nextAvailableODID), _odVideo);
-
-            _nextAvailableODID++;
-
-            bifsSize = VIDEO_BIFS_SCENE_SIZE;
-            pbifs = (uint8 *)oscl_malloc(VIDEO_BIFS_SCENE_SIZE);
-            oscl_memcpy(pbifs, VIDEO_BIFS_SCENE, VIDEO_BIFS_SCENE_SIZE);
-        }
-        break;
-
-        case FILE_TYPE_AUDIO_VIDEO_TEXT:
-        case FILE_TYPE_AUDIO_VIDEO:
-        case FILE_TYPE_STILL_IMAGE_AUDIO:
-        {
-            // Create the OD for the audio stream
-            PV_MP4_FF_NEW(fp->auditCB, PVA_FF_ObjectDescriptor, (_nextAvailableODID), _odAudio);
-
-            _nextAvailableODID++;
-
-            // Create the OD for the base-layer video stream
-            PV_MP4_FF_NEW(fp->auditCB, PVA_FF_ObjectDescriptor, (_nextAvailableODID), _odVideo);
-
-            _nextAvailableODID++;
-
-            bifsSize = AUDIO_VIDEO_BIFS_SCENE_SIZE;
-            pbifs = (uint8 *)oscl_malloc(AUDIO_VIDEO_BIFS_SCENE_SIZE);
-            oscl_memcpy(pbifs, AUDIO_VIDEO_BIFS_SCENE, AUDIO_VIDEO_BIFS_SCENE_SIZE);
-        }
-        break;
-
-        default:
-            pbifs = NULL;
-            break;
-    }
-    if (bif != NULL)
-    {
-        // Add the BIFS binary encoded scene to the media data atom
-        PVA_FF_BufferHolder *bufHolder = NULL;
-
-        //PV_MP4_FF_NEW(fp->auditCB, PVA_FF_BufferHolder, (pbifs, bifsSize),bufHolder);
-        bufHolder = OSCL_NEW(PVA_FF_BufferHolder, (pbifs, bifsSize));
-
-        bif->addRenderableSample(bufHolder);
-
-        // Add the BIFS Command "ReplaceScene" to the BIFS track
-        BIFSTrack->nextSample(MEDIA_TYPE_SCENE_DESCRIPTION, (void*)pbifs, bifsSize);
-
-        if (pbifs)
-        {
-            oscl_free(pbifs);
-        }
-
-        //Add the decoder-specific info for the BIFS track
-        int32 bifsDecoderSize = BIFS_DECODER_INFO_SIZE;
-        uint8 * pbifsDecoder = (uint8 *)oscl_malloc(BIFS_DECODER_INFO_SIZE);
-        oscl_memcpy(pbifsDecoder, BIFS_DECODER_INFO, bifsDecoderSize);
-        setBIFSDecoderInfo(pbifsDecoder, bifsDecoderSize);
-        oscl_free(pbifsDecoder);
-    }
-
-
     recomputeSize();
 
     return true;
@@ -595,39 +436,13 @@ PVA_FF_Mpeg4File::setOutputFileHandle(MP4_AUTHOR_FF_FILE_HANDLE outputFileHandle
 }
 
 uint32
-PVA_FF_Mpeg4File::addTrack(int32 mediaType, int32 codecType, bool oDirectRender,
-                           uint8 profile, uint8 profileComp, uint8 level)
+PVA_FF_Mpeg4File::addTrack(int32 mediaType,
+                           int32 codecType,
+                           bool oDirectRender,
+                           uint8 profile,
+                           uint8 profileComp,
+                           uint8 level)
 {
-    bool o3GPPCompliant = false;
-
-    //Always 3GPP in case of AMR and H263
-    if ((uint32) mediaType == MEDIA_TYPE_AUDIO)
-    {
-        if (codecType == CODEC_TYPE_AMR_AUDIO)
-        {
-            o3GPPCompliant = true;
-        }
-    }
-    else if ((uint32) mediaType == MEDIA_TYPE_VISUAL)
-    {
-        if (codecType == CODEC_TYPE_BASELINE_H263_VIDEO)
-        {
-            o3GPPCompliant = true;
-        }
-        if (codecType == CODEC_TYPE_AVC_VIDEO)
-        {
-            o3GPPCompliant = true;
-        }
-
-    }
-    else if ((uint32) mediaType == MEDIA_TYPE_TEXT) //added for timed text track
-    {
-        if (codecType == CODEC_TYPE_TIMED_TEXT)
-        {
-            o3GPPCompliant = true;
-        }
-    }
-
     uint32 TrackID = 0;
     PVA_FF_TrackAtom *pmediatrack = NULL;
     _codecType = codecType;
@@ -677,7 +492,6 @@ PVA_FF_Mpeg4File::addTrack(int32 mediaType, int32 codecType, bool oDirectRender,
 
             _tempFileIndex++;
         }
-
         addMediaDataAtom(mda);
     }
     else
@@ -692,10 +506,11 @@ PVA_FF_Mpeg4File::addTrack(int32 mediaType, int32 codecType, bool oDirectRender,
                       _pmovieAtom->getMutableMovieHeaderAtom().findNextTrackID(),
                       _fileAuthoringFlags,
                       codecType,
-                      o3GPPCompliant, 1, profile, profileComp, level),
+                      1, profile, profileComp, level),
                       pmediatrack);
 
-        mda->setTrackReferencePtr(pmediatrack);
+        if (mda)
+            mda->setTrackReferencePtr(pmediatrack);
         _pmovieAtom->addTrackAtom(pmediatrack);
 
         // add audio interleave buffer for track
@@ -711,22 +526,13 @@ PVA_FF_Mpeg4File::addTrack(int32 mediaType, int32 codecType, bool oDirectRender,
 
         // Returns the index of the reference in the table to which this was
         // just added (with a 1-based index NOT a zero-based index)
-        int32 index = _ODTrack->addTrackReference(pmediatrack->getTrackID());
-
-        // Create the PVA_FF_ES_ID_Ref to add to the OD
-        PVA_FF_ES_ID_Ref *ref = NULL;
-        PV_MP4_FF_NEW(fp->auditCB, PVA_FF_ES_ID_Ref, (index), ref);
-
-        _odAudio->addESIDReference(ref);
 
         TrackID = pmediatrack->getTrackID();
 
-        if (codecType == CODEC_TYPE_AMR_AUDIO)
+        if ((codecType == CODEC_TYPE_AMR_AUDIO) ||
+                (codecType == CODEC_TYPE_AMR_WB_AUDIO))
         {
-            if (o3GPPCompliant)
-            {
-                _o3GPPTrack = true;
-            }
+            _o3GPPTrack = true;
         }
         if (codecType == CODEC_TYPE_AAC_AUDIO)
         {
@@ -737,19 +543,10 @@ PVA_FF_Mpeg4File::addTrack(int32 mediaType, int32 codecType, bool oDirectRender,
 
     if ((uint32) mediaType == MEDIA_TYPE_VISUAL)
     {
-        if (codecType == CODEC_TYPE_BASELINE_H263_VIDEO)
+        if ((codecType == CODEC_TYPE_BASELINE_H263_VIDEO) ||
+                (codecType == CODEC_TYPE_AVC_VIDEO))
         {
-            if (o3GPPCompliant)
-            {
-                _o3GPPTrack = true;
-            }
-        }
-        else if (codecType == CODEC_TYPE_AVC_VIDEO)
-        {
-            if (o3GPPCompliant)
-            {
-                _o3GPPTrack = true;
-            }
+            _o3GPPTrack = true;
         }
         else if (codecType == CODEC_TYPE_MPEG4_VIDEO)
         {
@@ -758,12 +555,11 @@ PVA_FF_Mpeg4File::addTrack(int32 mediaType, int32 codecType, bool oDirectRender,
         }
 
         // Create default video track and add it to moov atom
-
         PV_MP4_FF_NEW(fp->auditCB, PVA_FF_TrackAtom, (MEDIA_TYPE_VISUAL,
                       _pmovieAtom->getMutableMovieHeaderAtom().findNextTrackID(),
                       _fileAuthoringFlags,
                       codecType,
-                      o3GPPCompliant, 1, profile, profileComp, level),
+                      1, profile, profileComp, level),
                       pmediatrack);
 
         // add video interleave buffer for track
@@ -778,19 +574,12 @@ PVA_FF_Mpeg4File::addTrack(int32 mediaType, int32 codecType, bool oDirectRender,
             addInterLeaveBuffer(pInterLeaveBuffer);
         }
 
-        mda->setTrackReferencePtr(pmediatrack);
+        if (mda)
+            mda->setTrackReferencePtr(pmediatrack);
         _pmovieAtom->addTrackAtom(pmediatrack);
 
         // Returns the index of the reference in the table to which this was
         // just added (with a 1-based index NOT a zero-based index)
-        int32 index = _ODTrack->addTrackReference(pmediatrack->getTrackID());
-
-        // Create the PVA_FF_ES_ID_Ref to add to the OD
-        PVA_FF_ES_ID_Ref *ref = NULL;
-        PV_MP4_FF_NEW(fp->auditCB, PVA_FF_ES_ID_Ref, (index), ref);
-
-        _odVideo->addESIDReference(ref);
-
         TrackID = pmediatrack->getTrackID();
     }
 
@@ -798,24 +587,18 @@ PVA_FF_Mpeg4File::addTrack(int32 mediaType, int32 codecType, bool oDirectRender,
     {
         if (codecType == CODEC_TYPE_TIMED_TEXT)
         {
-            if (o3GPPCompliant)
-            {
-                _o3GPPTrack = true;
-            }
+            _o3GPPTrack = true;
         }
-
         // Create default video track and add it to moov atom
-
         PV_MP4_FF_NEW(fp->auditCB, PVA_FF_TrackAtom, (MEDIA_TYPE_TEXT,
                       _pmovieAtom->getMutableMovieHeaderAtom().findNextTrackID(),
                       _fileAuthoringFlags,
                       codecType,
-                      o3GPPCompliant, 1,
+                      1,
                       profile, profileComp, level),
                       pmediatrack);
 
         // add text interleave buffer for track
-
         if (_oInterLeaveEnabled)
         {
             PV_MP4_FF_NEW(fp->auditCB, PVA_FF_InterLeaveBuffer, (MEDIA_TYPE_TEXT,
@@ -831,14 +614,9 @@ PVA_FF_Mpeg4File::addTrack(int32 mediaType, int32 codecType, bool oDirectRender,
 
         // Returns the index of the reference in the table to which this was
         // just added (with a 1-based index NOT a zero-based index)
-        _ODTrack->addTrackReference(pmediatrack->getTrackID());
-
         TrackID = pmediatrack->getTrackID();
-
     }
-
     recomputeSize();
-
     return (TrackID);
 }
 
@@ -880,8 +658,6 @@ bool PVA_FF_Mpeg4File::addTextSampleToTrack(uint32 trackID,
     mediaTrack = _pmovieAtom->getMediaTrack(trackID);
     mediaType  = mediaTrack->getMediaType();
     codecType = _pmovieAtom->getCodecType(trackID);
-
-    uint32 timescale = mediaTrack->getMediaTimeScale();
 
     // Create media sample buffer and size field
     uint32 size = 0;
@@ -976,8 +752,6 @@ PVA_FF_Mpeg4File::addSampleToTrack(uint32 trackID,
     mediaType  = mediaTrack->getMediaType();
     codecType = _pmovieAtom->getCodecType(trackID);
 
-    uint32 timescale = mediaTrack->getMediaTimeScale();
-
     // Create media sample buffer and size field
     uint32 size = 0;
     // temporary variables
@@ -1012,100 +786,54 @@ PVA_FF_Mpeg4File::addSampleToTrack(uint32 trackID,
         {
             if (mediaTrack != NULL)
             {
-                if (mediaTrack->getCodecType() == CODEC_TYPE_AMR_AUDIO)
+                if ((mediaTrack->getCodecType() == CODEC_TYPE_AMR_AUDIO) ||
+                        (mediaTrack->getCodecType() == CODEC_TYPE_AMR_WB_AUDIO))
                 {
                     if (size >= 1)
                     {
                         PVA_FF_TrackAtom *track = _pmovieAtom->getMediaTrack(trackID);
-
                         if (track != NULL)
                         {
-                            if (track->Is3GPPTrack())
+                            // FT is in the first byte that comes off the encoder
+                            flags = *((uint8*)(fragmentList.front().ptr));
+                            uint32 mode_set = 0;
+                            if (flags < 16)
                             {
-                                // FT fp in the first byte that comes off the encoder
-                                flags = *((uint8*)(fragmentList.front().ptr));
-
-                                uint32 mode_set = 0;
-
-                                if (flags < 16)
+                                mode_set = AMRModeSetMask[(flags&0x0f)];
+                            }
+                            if (flags < 9)
+                            {
+                                // JUST TO ENSURE THAT THE PADDED BITS ARE ZERO
+                                fragment = fragmentList.back();
+                                if (mediaTrack->getCodecType() == CODEC_TYPE_AMR_AUDIO)
                                 {
-                                    mode_set = AMRModeSetMask[(flags&0x0f)];
+                                    ((uint8*)fragment.ptr)[ fragment.len - 1] &= aAMRNBZeroSetMask[(flags&0x0f)];
+                                }
+                                else if (mediaTrack->getCodecType() == CODEC_TYPE_AMR_WB_AUDIO)
+                                {
+                                    ((uint8*)fragment.ptr)[ fragment.len - 1] &= aAMRWBZeroSetMask[(flags&0x0f)];
                                 }
 
-                                if (flags < 9)
+                            }
+                            if (_oInterLeaveEnabled)
+                            {
+                                if (!addMediaSampleInterleave(trackID, fragmentList, size, ts, flags))
                                 {
-                                    // JUST TO ENSURE THAT THE PADDED BITS ARE ZERO
-                                    fragment = fragmentList.back();
-                                    ((uint8*)fragment.ptr)[ fragment.len - 1] &= aZeroSetMask[(flags&0x0f)];
-
-                                }
-
-                                if (_oInterLeaveEnabled)
-                                {
-                                    if (!addMediaSampleInterleave(trackID, fragmentList, size, ts, flags))
-                                    {
-                                        return false;
-                                    }
-                                }
-                                else
-                                {
-                                    // Add to mdat PVA_FF_Atom for the specified track
-                                    if (!mdatAtom->addRawSample(fragmentList, size, mediaType, codecType))
-                                    {
-                                        retVal = false;
-                                    }
-                                    // Add to moov atom (in turn adds to tracks)
-                                    _pmovieAtom->addSampleToTrack(trackID, fragmentList, size,
-                                                                  ts, flags);
+                                    return false;
                                 }
                             }
                             else
                             {
-
-                                // FT fp in the first byte that comes off the encoder
-                                flags = *((uint8*)(fragmentList.front()).ptr);
-
                                 // Add to mdat PVA_FF_Atom for the specified track
-                                uint32 mode_set = 0;
-
-                                if (flags < 16)
+                                if (!mdatAtom->addRawSample(fragmentList, size, mediaType, codecType))
                                 {
-                                    mode_set = AMRModeSetMask[(flags&0x0f)];
+                                    retVal = false;
                                 }
-
-                                if (flags < 9)
-                                {
-                                    // JUST TO ENSURE THAT THE PADDED BITS ARE ZERO
-                                    fragment = fragmentList.back();
-                                    ((uint8*)fragment.ptr)[ fragment.len - 1] &= aZeroSetMask[(flags&0x0f)];
-                                }
-
-                                if (_oInterLeaveEnabled)
-                                {
-                                    if (!addMediaSampleInterleave(trackID, fragmentList, size, ts, flags))
-                                    {
-                                        return false;
-                                    }
-                                }
-                                else
-                                {
-                                    Oscl_Vector <OsclMemoryFragment, OsclMemAllocator>& list = fragmentList;
-                                    list.front().ptr = (uint8*)(list.front().ptr) + 1;
-                                    list.front().len = list.front().len - 1;
-                                    if (!mdatAtom->addRawSample(list, size - 1, mediaType, codecType))
-                                    {
-                                        retVal = false;
-                                    }
-
-                                    // Add to moov atom (in turn adds to tracks)
-                                    list = fragmentList;
-                                    list.back().len = list.back().len - 1;
-                                    _pmovieAtom->addSampleToTrack(trackID, list, (size - 1),
-                                                                  ts, flags);
-                                }
+                                // Add to moov atom (in turn adds to tracks)
+                                _pmovieAtom->addSampleToTrack(trackID, fragmentList, size,
+                                                              ts, flags);
                             }
                         }
-
                     }
                     else
                     {
@@ -1380,30 +1108,55 @@ PVA_FF_Mpeg4File::setKeyWord(uint8 keyWordSize, PVA_FF_UNICODE_HEAP_STRING keyWo
 }
 
 void
-PVA_FF_Mpeg4File::setLocationInfo(PVA_FF_UNICODE_STRING_PARAM locationName, PVA_FF_UNICODE_STRING_PARAM locationInfoAstrBody, PVA_FF_UNICODE_STRING_PARAM locationInfoAddNotes,
-                                  uint8 locationInfoRole, uint32 locationInfoLongitude, uint32 locationInfoLatitude,
-                                  uint32 locationInfoAltitude, uint16 langCode)
+PVA_FF_Mpeg4File::setLocationInfo(PvmfAssetInfo3GPPLocationStruct *ptr_loc_struct)
 {
-    OSCL_UNUSED_ARG(langCode);
-
     if (!_oSetLocationInfoDone)
     {
         _oSetLocationInfoDone		= true;
-        _locationName			= locationName;
-        _locationInfoAstrBody	= locationInfoAstrBody;
-        _locationInfoAddNotes	= locationInfoAddNotes;
-        _locationInfoRole		= locationInfoRole;
-        _locationInfoLongitude	= locationInfoLongitude;
-        _locationInfoAltitude	= locationInfoAltitude;
-        _locationInfoLatitude	= locationInfoLatitude;
+        _locationName			= ptr_loc_struct->_location_name;
+        _locationInfoAstrBody	= ptr_loc_struct->_astronomical_body;
+        _locationInfoAddNotes	= ptr_loc_struct->_additional_notes;
+        _locationInfoRole		= ptr_loc_struct->_role;
+        _locationInfoLongitude	= ptr_loc_struct->_longitude;
+        _locationInfoAltitude	= ptr_loc_struct->_altitude;
+        _locationInfoLatitude	= ptr_loc_struct->_latitude;
 
         if (_pmovieAtom != NULL)
         {
-            _pmovieAtom->setLocationInfo(locationName, locationInfoAstrBody,
-                                         locationInfoAddNotes, locationInfoRole,
-                                         locationInfoLongitude, locationInfoLatitude,
-                                         locationInfoAltitude, langCode);
+            _pmovieAtom->setLocationInfo(ptr_loc_struct);
         }
+    }
+}
+
+void
+PVA_FF_Mpeg4File::setAlbumInfo(PVA_FF_UNICODE_STRING_PARAM albumInfo, uint16 langCode)
+{
+    if (!_oSetAlbumDone)
+    {
+        _oSetAlbumDone = true;
+        _albumInfo = albumInfo;
+
+        if (_pmovieAtom != NULL)
+        {
+            _pmovieAtom->setAlbumInfo(albumInfo, langCode);
+        }
+
+    }
+}
+
+void
+PVA_FF_Mpeg4File::setRecordingYear(uint16 recordingYear)
+{
+    if (!_oSetRecordingYearDone)
+    {
+        _oSetRecordingYearDone = true;
+        _recordingYear = recordingYear;
+
+        if (_pmovieAtom != NULL)
+        {
+            _pmovieAtom->setRecordingYearInfo(recordingYear);
+        }
+
     }
 }
 
@@ -1428,12 +1181,10 @@ PVA_FF_Mpeg4File::setVideoParams(uint32 trackID,
     OSCL_UNUSED_ARG(interval);
     PVA_FF_TrackAtom *trackAtom;
     trackAtom = _pmovieAtom->getMediaTrack(trackID);
-    trackAtom->setVideoParams(frame_width, frame_height);
 
-    // set the video width and height in "tkhd" atom
-    // we should have called "tkhdAtom->setVideoWidthHeight()"
-    // if it exists.
-    trackAtom->setVideoWidthHeight(frame_width, frame_height);
+    if (trackAtom != NULL)
+        trackAtom->setVideoParams(frame_width, frame_height);
+
     return;
 }
 
@@ -1463,10 +1214,6 @@ PVA_FF_Mpeg4File::addMediaDataAtom(PVA_FF_MediaDataAtom* atom)
     {
         _pmediaDataAtomVec->push_back(atom);
     }
-    else
-    {
-        //cerr << "ERROR: Not allowed to modify file" << endl;
-    }
 }
 
 //for timed text only
@@ -1489,28 +1236,12 @@ PVA_FF_Mpeg4File::setDecoderSpecificInfo(uint8 * header, int32 size, int32 track
     PVA_FF_TrackAtom *track = _pmovieAtom->getMediaTrack(trackID);
     if (track->getMediaType() == MEDIA_TYPE_VISUAL)
     {
-        if (track->getCodecType() == CODEC_TYPE_MPEG4_VIDEO)
-        {
-            // The fifth byte in the VOL header fp the profile level value
-            uint8 profileLevelValue = *(header + 4);
-            _pmovieAtom->getMutableObjectDescriptorAtom().
-            getMutableInitialObjectDescriptor().setVisualProfileLevelIndication(profileLevelValue);
-        }
         if (track->getCodecType() == CODEC_TYPE_AVC_VIDEO)
         {
             PV_MP4_FF_DELETE(NULL, PVA_FF_DecoderSpecificInfo, pinfo);
         }
     }
 }
-
-void
-PVA_FF_Mpeg4File::setBIFSDecoderInfo(uint8 * header, int32 size)
-{
-    PVA_FF_DecoderSpecificInfo *pinfo = NULL;
-    PV_MP4_FF_NEW(fp->auditCB, PVA_FF_DecoderSpecificInfo, (header, (uint32)size), pinfo);
-    _pmovieAtom->setBIFSDecoderInfo(pinfo);
-}
-
 
 void
 PVA_FF_Mpeg4File::recomputeSize()
@@ -1530,26 +1261,6 @@ bool
 PVA_FF_Mpeg4File::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
 {
     uint32 metaDataSize = 0;
-
-    if (_odAudio != NULL)
-    {
-        _odu->addObjectDescriptor(_odAudio);
-    }
-
-    if (_odVideo != NULL)
-    {
-        _odu->addObjectDescriptor(_odVideo);
-    }
-
-    // Add the PVA_FF_ObjectDescriptorUpdate to the media data atom
-    _od->addRenderableSample(_odu);
-
-    // Add the ODCommand "PVA_FF_ObjectDescriptorUpdate" to the OD track
-    _ODTrack->nextSample(MEDIA_TYPE_OBJECT_DESCRIPTOR,
-                         (void*)_odu,
-                         _odu->getSizeOfDescriptorObject());
-
-
     /*
      * Setting the major brand in ftyp atom
      */
@@ -1613,7 +1324,6 @@ PVA_FF_Mpeg4File::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
             {
                 if (!_puserDataAtom->renderToFileStream(fp))
                 {
-                    LOGE("PVA_FF_Mpeg4File::renderToFileStream: fail to render user data atom");
                     return false;
                 }
                 metaDataSize += _puserDataAtom->getSize();
@@ -1671,7 +1381,6 @@ PVA_FF_Mpeg4File::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
         // Render the movie atom to the file stream
         if (!_pmovieAtom->renderToFileStream(fp))
         {
-            LOGE("PVA_FF_Mpeg4File::renderToFileStream: failed to render movie atom");
             return false;
         }
     }
@@ -1688,13 +1397,11 @@ PVA_FF_Mpeg4File::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
                 if (!((*_pmediaDataAtomVec)[i]->renderToFileStream(fp)))
                 {
                     _fileWriteFailed = true;
-                    LOGE("PVA_FF_Mpeg4File::renderToFileStream: failed to render media data atom vector[%d]", i);
                     return false;
                 }
                 if ((*_pmediaDataAtomVec)[i]->_targetFileWriteError == true)
                 {
                     _fileWriteFailed = true;
-                    LOGE("PVA_FF_Mpeg4File::renderToFileStream: target file write failure for media data atom vector[%d]", i);
                     return false;
                 }
 
@@ -1755,7 +1462,6 @@ PVA_FF_Mpeg4File::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
             {
                 if (!_puserDataAtom->renderToFileStream(fp))
                 {
-                    LOGE("PVA_FF_Mpeg4File::renderToFileStream: failed to render user data atom");
                     return false;
                 }
             }
@@ -1767,7 +1473,6 @@ PVA_FF_Mpeg4File::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
         // Render the movie atom to the file stream
         if (!_pmovieAtom->renderToFileStream(fp))
         {
-            LOGE("PVA_FF_Mpeg4File::renderToFileStream: failed to render movie atom");
             return false;
         }
     }
@@ -1781,12 +1486,10 @@ PVA_FF_Mpeg4File::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
 bool
 PVA_FF_Mpeg4File::renderToFile(PVA_FF_UNICODE_STRING_PARAM filename)
 {
-    LOGD("PVA_FF_Mpeg4File::renderToFile: E");
-    bool success = true;
-
     MP4_AUTHOR_FF_FILE_IO_WRAP fp;
     fp._filePtr = NULL;
     fp._osclFileServerSession = NULL;
+    bool status = true;
 
     if (!(_oMovieFragmentEnabled && _oComposeMoofAtom))
     {
@@ -1799,7 +1502,7 @@ PVA_FF_Mpeg4File::renderToFile(PVA_FF_UNICODE_STRING_PARAM filename)
         //or to target files
         uint32 k = 0;
 
-        for (k = 0; success && k < _pmediaDataAtomVec->size(); k++)
+        for (k = 0; status && k < _pmediaDataAtomVec->size(); k++)
         {
             Oscl_Vector<PVA_FF_TrackAtom*, OsclMemAllocator> *trefVec =
                 (*_pmediaDataAtomVec)[k]->getTrackReferencePtrVec();
@@ -1807,20 +1510,17 @@ PVA_FF_Mpeg4File::renderToFile(PVA_FF_UNICODE_STRING_PARAM filename)
             if (trefVec != NULL)
             {
                 for (uint32 trefVecIndex = 0;
-                        success && trefVecIndex < trefVec->size();
+                        status && trefVecIndex < trefVec->size();
                         trefVecIndex++)
                 {
                     PVA_FF_TrackAtom* pTrack = (*trefVec)[trefVecIndex];
-                    uint32 mediaType  = pTrack->getMediaType();
                     uint32 trackID = pTrack->getTrackID();
 
                     if (_oInterLeaveEnabled)
                     {
                         if (!flushInterLeaveBuffer(trackID))
                         {
-                            // Don't return just yet, we still want to close
-                            // the file descriptors below.
-                            success = false;
+                            status = false;
                         }
                     }
 
@@ -1841,9 +1541,9 @@ PVA_FF_Mpeg4File::renderToFile(PVA_FF_UNICODE_STRING_PARAM filename)
                 {
                     if (targetRender)
                     {
-                        // Only one track is allowed to be rendered directly onto the target file
-                        LOGE("PVA_FF_Mpeg4File::renderToFile: target render is true");
-                        return false;
+                        //Only one track is allowed to be rendered directly onto the target
+                        //file
+                        status = false;
                     }
                     else
                     {
@@ -1851,14 +1551,11 @@ PVA_FF_Mpeg4File::renderToFile(PVA_FF_UNICODE_STRING_PARAM filename)
 
                         if (!((*_pmediaDataAtomVec)[k]->closeTargetFile()))
                         {
-                            // Don't return just yet, finish closing all file
-                            // descriptors first.
-                            success = false;
+                            status = false;
                         }
 
                         fp._filePtr = ((*_pmediaDataAtomVec)[k]->getTargetFilePtr());
                         fp._osclFileServerSession = OSCL_STATIC_CAST(Oscl_FileServer*, _aFs);
-
                         _directRenderFileOffset =
                             ((*_pmediaDataAtomVec)[k]->getTotalDataRenderedToTargetFileInDirectRenderMode());
                     }
@@ -1869,25 +1566,28 @@ PVA_FF_Mpeg4File::renderToFile(PVA_FF_UNICODE_STRING_PARAM filename)
         {
             fp._osclFileServerSession = OSCL_STATIC_CAST(Oscl_FileServer*, _aFs);
             PVA_FF_AtomUtils::openFile(&fp, filename, Oscl_File::MODE_READWRITE | Oscl_File::MODE_BINARY);
+            _oIsFileOpen = true;
         }
 
         if (fp._filePtr == NULL)
         {
-            LOGE("PVA_FF_Mpeg4File::renderToFile: NULL file pointer");
-            return false;
+            status = false;
         }
 
         if (!renderToFileStream(&fp))
         {
-            return false;
+            status = false;
         }
 
-        PVA_FF_AtomUtils::closeFile(&fp);
+        if (_oIsFileOpen)
+        {
+            PVA_FF_AtomUtils::closeFile(&fp);
+            _oIsFileOpen = false;
+        }
 
         if (_fileWriteFailed)
         {
-            LOGE("PVA_FF_Mpeg4File::renderToFile: file write failed");
-            return false;
+            status = false;
         }
     }
     else
@@ -1897,13 +1597,12 @@ PVA_FF_Mpeg4File::renderToFile(PVA_FF_UNICODE_STRING_PARAM filename)
         {
             if ((*_pmediaDataAtomVec)[k]->IsTargetRender())
             {
-
                 Oscl_Vector<PVA_FF_TrackAtom*, OsclMemAllocator> *trefVec =
                     (*_pmediaDataAtomVec)[k]->getTrackReferencePtrVec();
 
                 if (trefVec != NULL)
                 {
-                    for (uint32 trefVecIndex = 0; trefVecIndex < trefVec->size(); trefVecIndex++)
+                    for (uint32 trefVecIndex = 0; status && trefVecIndex < trefVec->size(); trefVecIndex++)
                     {
                         PVA_FF_TrackAtom* pTrack = (*trefVec)[trefVecIndex];
                         uint32 trackID = pTrack->getTrackID();
@@ -1912,8 +1611,7 @@ PVA_FF_Mpeg4File::renderToFile(PVA_FF_UNICODE_STRING_PARAM filename)
                         {
                             if (!flushInterLeaveBuffer(trackID))
                             {
-                                LOGE("PVA_FF_Mpeg4File::renderToFile: failed to flush interleave buffer to track(%d)", trackID); 
-                                return false;
+                                status = false;
                             }
                         }
                     }
@@ -1929,22 +1627,27 @@ PVA_FF_Mpeg4File::renderToFile(PVA_FF_UNICODE_STRING_PARAM filename)
 
         if (!renderMovieFragments())
         {
-            LOGE("PVA_FF_Mpeg4File::renderToFile: failed to render movie fragments");
-            return false;
+            status = false;
         }
 
         fp._filePtr = _targetFileHandle;
         fp._osclFileServerSession = OSCL_STATIC_CAST(Oscl_FileServer*, _aFs);
         _pMfraAtom->renderToFileStream(&fp);
-
-        PVA_FF_AtomUtils::closeFile(&fp);
+        _pmovieAtom->writeMaxSampleSize(&fp);
+        if (_oIsFileOpen)
+        {
+            PVA_FF_AtomUtils::closeFile(&fp);
+            _oIsFileOpen = false;
+        }
     }
 
-    LOGD("PVA_FF_Mpeg4File::renderToFile: X");
-    return success;
+    return status;
 }
 
 
+// Access function to set the postfix string for PVA_FF_MediaDataAtom objects
+// Set the post fix string for the temporary file in order to support multiple instances,
+// the goal fp to create temporary files with different names
 void
 PVA_FF_Mpeg4File::SetTempFilePostFix(PVA_FF_UNICODE_STRING_PARAM postFix)
 {
@@ -1952,6 +1655,9 @@ PVA_FF_Mpeg4File::SetTempFilePostFix(PVA_FF_UNICODE_STRING_PARAM postFix)
     _tempFilePostfix += postFix;
 }
 
+// Access function to set the output path string for PVA_FF_MediaDataAtom objects
+// Set the output path string for the temporary files in order to generate them at the same location
+// as the final mp4 file.
 void
 PVA_FF_Mpeg4File::SetTempOutputPath(PVA_FF_UNICODE_STRING_PARAM outputPath)
 {
@@ -1964,8 +1670,6 @@ PVA_FF_Mpeg4File::getMediaDataAtomForTrack(uint32 trackID)
 {
     if (_oInterLeaveEnabled)
     {
-        // If interleave is enabled, them there is only media track
-        // for all, except BIFS and OD of course
         if (_pmediaDataAtomVec != NULL)
         {
             if (_pmediaDataAtomVec->size() > MIN_NUM_MEDIA_TRACKS)
@@ -2014,98 +1718,75 @@ PVA_FF_Mpeg4File::addMultipleAccessUnitsToTrack(uint32 trackID, GAU *pgau)
         return false;
     }
 
-    uint32 timescale = mediaTrack->getMediaTimeScale();
     if (mediaType == MEDIA_TYPE_AUDIO)
     {
         if (_modifiable)
         {
-            if (mediaTrack->getCodecType() == CODEC_TYPE_AMR_AUDIO)
+            if ((mediaTrack->getCodecType() == CODEC_TYPE_AMR_AUDIO) ||
+                    (mediaTrack->getCodecType() == CODEC_TYPE_AMR_WB_AUDIO))
             {
-                if (mediaTrack->Is3GPPTrack())
+                int32 index = 0;
+
+                uint8  *frag_ptr = (uint8 *)pgau->buf.fragments[index].ptr;
+                int32 frag_len  = pgau->buf.fragments[index].len;
+
+                for (uint32 k = 0; k < pgau->numMediaSamples; k++)
                 {
-                    int32 index = 0;
+                    uint8 frame_type = (uint8)pgau->info[k].sample_info;
 
-                    uint8  *frag_ptr = (uint8 *)pgau->buf.fragments[index].ptr;
-                    int32 frag_len  = pgau->buf.fragments[index].len;
+                    frame_type = (uint8)(frame_type << 3);
+                    frame_type |= 0x04;
 
-                    for (uint32 k = 0; k < pgau->numMediaSamples; k++)
+                    // Add to mdat PVA_FF_Atom for the specified track
+                    if (!mdatAtom->addRawSample(&frame_type, 1))
                     {
-                        uint8 frame_type = (uint8)pgau->info[k].sample_info;
+                        retVal = false;
+                    }
 
-                        frame_type = (uint8)(frame_type << 3);
-                        frame_type |= 0x04;
+                    int32 frame_size = pgau->info[k].len;
 
-                        // Add to mdat PVA_FF_Atom for the specified track
-                        if (!mdatAtom->addRawSample(&frame_type, 1))
+                    while (frame_size)
+                    {
+                        if (frag_len >= frame_size)
                         {
-                            retVal = false;
-                        }
-
-                        int32 frame_size = pgau->info[k].len;
-
-                        while (frame_size)
-                        {
-                            if (frag_len >= frame_size)
+                            // Add to mdat PVA_FF_Atom for the specified track
+                            if (!mdatAtom->addRawSample(frag_ptr,
+                                                        frame_size))
                             {
-                                // Add to mdat PVA_FF_Atom for the specified track
-                                if (!mdatAtom->addRawSample(frag_ptr,
-                                                            frame_size))
-                                {
-                                    retVal = false;
-                                }
-
-                                frag_ptr += frame_size;
-                                frag_len -= frame_size;
-                                frame_size = 0;
+                                retVal = false;
                             }
-                            else
-                            {
-                                // Add to mdat PVA_FF_Atom for the specified track
-                                if (!mdatAtom->addRawSample(frag_ptr,
-                                                            frag_len))
-                                {
-                                    retVal = false;
-                                }
 
-                                frame_size -= frag_len;
-
-                                index++;
-
-                                if (index == pgau->buf.num_fragments)
-                                {
-                                    return false;
-                                }
-
-                                frag_ptr = (uint8 *)pgau->buf.fragments[index].ptr;
-                                frag_len = pgau->buf.fragments[index].len;
-                            }
+                            frag_ptr += frame_size;
+                            frag_len -= frame_size;
+                            frame_size = 0;
                         }
-                        // Add to moov atom (in turn adds to tracks)
-                        _pmovieAtom->addSampleToTrack(trackID, NULL,
-                                                      (pgau->info[k].len + 1),
-                                                      pgau->info[k].ts,
-                                                      (uint8)pgau->info[k].sample_info);
-                    }
-                }
-                else
-                {
-                    for (int32 k = 0; k < pgau->buf.num_fragments; k++)
-                    {
-                        // Add to mdat PVA_FF_Atom for the specified track
-                        if (!mdatAtom->addRawSample(pgau->buf.fragments[k].ptr,
-                                                    pgau->buf.fragments[k].len))
+                        else
                         {
-                            retVal = false;
+                            // Add to mdat PVA_FF_Atom for the specified track
+                            if (!mdatAtom->addRawSample(frag_ptr,
+                                                        frag_len))
+                            {
+                                retVal = false;
+                            }
+
+                            frame_size -= frag_len;
+
+                            index++;
+
+                            if (index == pgau->buf.num_fragments)
+                            {
+                                return false;
+                            }
+
+                            frag_ptr = (uint8 *)pgau->buf.fragments[index].ptr;
+                            frag_len = pgau->buf.fragments[index].len;
                         }
                     }
-                    for (uint32 j = 0; j < pgau->numMediaSamples; j++)
-                    {
-                        // Add to moov atom (in turn adds to tracks)
-                        _pmovieAtom->addSampleToTrack(trackID, NULL,
-                                                      pgau->info[j].len,
-                                                      pgau->info[j].ts,
-                                                      (uint8)pgau->info[j].sample_info);
-                    }
+                    // Add to moov atom (in turn adds to tracks)
+                    _pmovieAtom->addSampleToTrack(trackID, NULL,
+                                                  (pgau->info[k].len + 1),
+                                                  pgau->info[k].ts,
+                                                  (uint8)pgau->info[k].sample_info);
                 }
             }
             else
@@ -2176,22 +1857,6 @@ PVA_FF_Mpeg4File::renderTruncatedFile(PVA_FF_UNICODE_STRING_PARAM filename)
     {
         return false;
     }
-
-    if (_odAudio != NULL)
-    {
-        _odu->addObjectDescriptor(_odAudio);
-    }
-
-    if (_odVideo != NULL)
-    {
-        _odu->addObjectDescriptor(_odVideo);
-    }
-
-    // Add the PVA_FF_ObjectDescriptorUpdate to the media data atom
-    _od->addRenderableSample(_odu);
-    // Add the ODCommand "PVA_FF_ObjectDescriptorUpdate" to the OD track
-    _ODTrack->nextSample(MEDIA_TYPE_OBJECT_DESCRIPTOR, (void*)_odu, _odu->getSizeOfDescriptorObject());
-
     /*
      * Setting the major brand in ftyp atom
      */
@@ -2657,10 +2322,13 @@ PVA_FF_Mpeg4File::flushInterLeaveBuffer(uint32 trackID)
         // make entry for last sample same as duration of second to last sample
         else
         {
-            uint32 delta = (*tsVec)[ii -1] - (*tsVec)[ii -2];
-            uint32 ts = (*tsVec)[ii -1];
-            pCurrentTrackFragment->updateLastTSEntry(ts + delta);
-            _pmovieAtom->updateMovieFragmentDuration(trackID, ts + delta);
+            if (tsVec->size() > 1)
+            {
+                uint32 delta = (*tsVec)[ii -1] - (*tsVec)[ii -2];
+                uint32 ts = (*tsVec)[ii -1];
+                pCurrentTrackFragment->updateLastTSEntry(ts + delta);
+                _pmovieAtom->updateMovieFragmentDuration(trackID, ts + delta);
+            }
         }
 
 
@@ -2891,6 +2559,8 @@ PVA_FF_Mpeg4File::addMediaSampleInterleave(uint32 trackID,
     int32 codecType = _pmovieAtom->getCodecType(trackID);
     uint32 mediaType = mediaTrack->getMediaType();
     int32 index = 0;
+    if (true == _oComposeMoofAtom)
+        _pmovieAtom->SetMaxSampleSize(trackID, size);
     if (_oFirstSampleEditMode)
     {
         _oChunkStart = true;
@@ -3610,7 +3280,8 @@ PVA_FF_Mpeg4File::renderMoovAtom()
     fp._filePtr = NULL;
     fp._osclFileServerSession = NULL;
 
-    //make sure to flush the interleave buffers, be it to temp files or to target files
+    //make sure to flush the interleave buffers, be it to temp files
+    //or to target files
     uint32 kk = 0;
 
     for (kk = 0; kk < _pmediaDataAtomVec->size(); kk++)
@@ -3647,7 +3318,8 @@ PVA_FF_Mpeg4File::renderMoovAtom()
             {
                 if (targetRender)
                 {
-                    //Only one track is allowed to be rendered directly onto the target file
+                    //Only one track is allowed to be rendered directly onto the target
+                    //file
                     return false;
                 }
                 else

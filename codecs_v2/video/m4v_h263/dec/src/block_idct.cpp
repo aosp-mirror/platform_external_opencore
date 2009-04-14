@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -344,74 +344,6 @@ void Copy_Blk_to_Vop(uint8 *dst, uint8 *pred, int width)
 
     return ;
 }
-#if 0
-/*  08/04/05, main function for IDCT+MC */
-void MBlockIDCTAdd(
-    VideoDecData *video,
-    int nz_coefs[]
-)
-{
-    /*----------------------------------------------------------------------------
-    ; Define all local variables
-    ----------------------------------------------------------------------------*/
-    Vop *currVop = video->currVop;
-    MacroBlock *mblock = video->mblock;
-    PIXEL *c_comp;
-    PIXEL *cu_comp;
-    PIXEL *cv_comp;
-    uint8 *pred_block;
-    int x_pos = video->mbnum_col;
-    int y_pos = video->mbnum_row;
-    int width;
-    int32 offset;
-    width = video->width;
-    offset = (int32)(y_pos << 4) * width + (x_pos << 4);
-
-    c_comp  = currVop->yChan + offset;
-    cu_comp = currVop->uChan + (offset >> 2) + (x_pos << 2);
-    cv_comp = currVop->vChan + (offset >> 2) + (x_pos << 2);
-
-    pred_block = mblock->pred_block;
-
-    if (nz_coefs[0])
-    {
-        BlockIDCT(c_comp, pred_block, mblock->block[0], width, nz_coefs[0],
-                  mblock->bitmapcol[0], mblock->bitmaprow[0]);
-    }
-
-    if (nz_coefs[1])
-    {
-        BlockIDCT(c_comp + 8, pred_block + 8, mblock->block[1], width, nz_coefs[1],
-                  mblock->bitmapcol[1], mblock->bitmaprow[1]);
-    }
-
-    if (nz_coefs[2])
-    {
-        BlockIDCT(c_comp + (width << 3), pred_block + 128, mblock->block[2], width, nz_coefs[2],
-                  mblock->bitmapcol[2], mblock->bitmaprow[2]);
-    }
-
-    if (nz_coefs[3])
-    {
-        BlockIDCT(c_comp + (width << 3) + 8, pred_block + 136, mblock->block[3], width, nz_coefs[3],
-                  mblock->bitmapcol[3], mblock->bitmaprow[3]);
-    }
-
-    if (nz_coefs[4])
-    {
-        BlockIDCT(cu_comp, pred_block + 256, mblock->block[4], width >> 1, nz_coefs[4],
-                  mblock->bitmapcol[4], mblock->bitmaprow[4]);
-    }
-
-    if (nz_coefs[5])
-    {
-        BlockIDCT(cv_comp, pred_block + 264, mblock->block[5], width >> 1, nz_coefs[5],
-                  mblock->bitmapcol[5], mblock->bitmaprow[5]);
-    }
-
-    return ;
-}
-#endif
 
 /*  08/04/05 compute IDCT and add prediction at the end  */
 void BlockIDCT(
@@ -575,7 +507,6 @@ void BlockIDCT(
 /*----------------------------------------------------------------------------
 ; Function Code FOR idctrow
 ----------------------------------------------------------------------------*/
-#if 1
 void idctrow(
     int16 *blk, uint8 *pred, uint8 *dst, int width
 )
@@ -686,7 +617,6 @@ void idctrow(
     ----------------------------------------------------------------------------*/
     return;
 }
-#endif
 
 void idctrow_intra(
     int16 *blk, PIXEL *comp, int width
@@ -805,196 +735,6 @@ void idctrow_intra(
     return;
 }
 
-#if 0
-void idctrow(
-    int16 *blk, uint8 *pred, uint8 *dst, int width
-)
-{
-    /*----------------------------------------------------------------------------
-    ; Define all local variables
-    ----------------------------------------------------------------------------*/
-    int32 x0, x1, x2, x3, x4, x5, x6, x7, x8, x9;
-    int i = 8;
-
-    /*----------------------------------------------------------------------------
-    ; Function body here
-    ----------------------------------------------------------------------------*/
-    /* row (horizontal) IDCT
-    *
-    * 7                       pi         1 dst[k] = sum c[l] * src[l] * cos( -- *
-    * ( k + - ) * l ) l=0                      8          2
-    *
-    * where: c[0]    = 128 c[1..7] = 128*sqrt(2) */
-
-    /* preset the offset, such that we can take advantage pre-offset addressing mode   */
-    width -= 4;
-    dst -= width;
-    pred -= 12;
-    blk -= 8;
-
-    while (i--)
-    {
-        x2 = *((uint32*)(blk + 14)); /* load blk[6]=x2, blk[7]=x5 to [x5|x2] */
-        x1 = *((uint32*)(blk + 12)); /* load blk[4]=x1, blk[5]=x6 to [x6|x1] */
-        x3 = *((uint32*)(blk + 10)); /* load blk[2]=x3, blk[3]=x7 to [x7|x3] */
-        x0 = *((uint32*)(blk += 8)); /* load blk[0]=x0, blk[1]=x4 to [x4|x0] */
-
-        x5 = x2 >> 16;
-        x6 = x1 >> 16;
-        x7 = x3 >> 16;
-        x4 = x0 >> 16;
-
-        x8 = W7 * (x4 + x5) + 4;
-        x9 = W3 * (x6 + x7) + 4;
-        x4 = (x8 + W1mW7 * x4); /* to be >> 3 */
-        x5 = (x8 - W1pW7 * x5); /* to be >> 3 */
-        x6 = (x9 + W5mW3 * x6); /* to be >> 3 */
-        x7 = (x9 + mW3mW5 * x7); /* to be >> 3 */
-
-        x4 >>= 3;
-        x5 >>= 3;
-        x6 = x4 + (x6 >> 3); /* x1 = x4 + x6 */
-        x7 = x5 + (x7 >> 3); /* x6 = x5 + x7 */
-        x4 = (x4 << 1) - x6; /* x4-=x6 */
-        x5 = (x5 << 1) - x7; /* x5-=x7 */
-
-        /*** x2 = (181 * (x4 + x5) + 128) >> 8;***/
-        /*** x4 = (181 * (x4 - x5) + 128) >> 8;***/
-        x5 += x4;
-        x4 = (x4 << 1) - x5;
-        x5 = 181 * x5 + 128; /* to be >> 8 */
-        x4 = 181 * x4 + 128; /* to be >> 8 */
-
-        /*** lower 4 ****/
-        x0 += 32;
-        /* may not needed if we use in-line SMULxy */
-        x1 <<= 16; /* to be >> 8 */
-        x2 <<= 16;
-        x3 <<= 16;
-        x0 <<= 16; /* to be >> 8 */
-        x2 >>= 16;
-        x3 >>= 16;
-
-        x8 = x3 + x2;
-        x8 = W6 * x8 + 4; /* x8 = W6 * (x3 + x2) + 4; */
-        x1 >>= 8;
-        x1 += (x0 >> 8);	 /* x8 = x1+x0*/
-        x0 = (x0 >> 7) - x1; /* x0-=x1 */
-        x2 = (x8 + mW2mW6 * x2); /* to be >> 3; */
-        x3 = (x8 + W2mW6 * x3); /* to be >> 3; */
-
-        x3 = x1 + (x3 >> 3); /* x7 = x8 + x3 */
-        x1 = (x1 << 1) - x3; /* x8-=x3 */
-        x2 = x0 + (x2 >> 3); /* x3 = x0 + x2 */
-        x0 = (x0 << 1) - x2; /* x0-=x2 */
-
-        /** final stage **/
-        x6 = x3 + x6; 		/* (x7+x1)>>14 */
-        x5 = x2 + (x5 >> 8);/* (x3+x2)>>14 */
-        x4 = x0 + (x4 >> 8);/* (x0+x4)>>14 */
-        x7 = x1 + x7;		/* (x8+x6)>>14 */
-        x1 = (x1 << 1) - x7;/* (x8-x6)>>14 */
-        x0 = (x0 << 1) - x4;/* (x0-x4)>>14 */
-        x2 = (x2 << 1) - x5;/* (x3-x2)>>14 */
-        x3 = (x3 << 1) - x6;/* (x7-x1)>>14 */
-
-        x8 = *((uint32*)(pred += 12)); /* read 4 bytes from pred */
-
-
-        x9 = x8 & 0xFF;
-        x6 = x9 + (x6 >> 14); /* compensate first byte */
-        x9 = (x8 >> 8) & 0xFF;
-        x5 = x9 + (x5 >> 14); /* compensate second byte */
-        x9 = (x8 >> 16) & 0xFF;
-        x4 = x9 + (x4 >> 14); /* compensate third byte */
-        x9 = (x8 >> 24) & 0xFF;
-        x7 = x9 + (x7 >> 14); /* compensate fourth byte */
-
-        if ((x7 >> 8)) x7 = ~(x7 >> 31); /* x7 is clipped to 0 or FFFFFFFF */
-        x8 = ~(x4 >> 8); /* check range of x4 */
-        if (x8 != -1)
-        {
-            x8 = ((uint32)x8) >> 24; /* 255 or 0 */
-            x4 = x8 | (x7 << 8);
-        }
-        else
-        {
-            x4 = x4 | (x7 << 8);  /* x7 x4 */
-        }
-
-        x8 = ~(x5 >> 8); /* check range of x5 */
-        if (x8 != -1)
-        {
-            x8 = ((uint32)x8) >> 24; /* 255 or 0 */
-            x5 = x8 | (x4 << 8);
-        }
-        else
-        {
-            x5 = x5 | (x4 << 8); /* x7 x4 x5 */
-        }
-
-        x8 = ~(x6 >> 8); /* check range of x6 */
-        if (x8 != -1)
-        {
-            x8 = ((uint32)x8) >> 24; /* 255 or 0 */
-            x6 = x8 | (x5 << 8);
-        }
-        else
-        {
-            x6 = x6 | (x5 << 8); /* x7 x4 x5 x6 */
-        }
-        *((uint32*)(dst += width)) = x6; /* save 4 bytes to dst */
-
-
-        x8 = *((uint32*)(pred += 4)); /* read 4 bytes from pred */
-        x9 = x8 & 0xFF;
-        x1 = x9 + (x1 >> 14); /* compensate first byte */
-        x9 = (x8 >> 8) & 0xFF;
-        x0 = x9 + (x0 >> 14); /* compensate second byte */
-        x9 = (x8 >> 16) & 0xFF;
-        x2 = x9 + (x2 >> 14); /* compensate third byte */
-        x9 = (x8 >> 24) & 0xFF;
-        x3 = x9 + (x3 >> 14); /* compensate fourth byte */
-
-        if ((x3 >> 8)) x3 = ~(x3 >> 31); /* x3 is clipped to 0 or FFFFFFFF */
-        x8 = ~(x2 >> 8); /* check range of x4 */
-        if (x8 != -1)
-        {
-            x8 = ((uint32)x8) >> 24; /* 255 or 0 */
-            x2 = x8 | (x3 << 8);
-        }
-        else
-        {
-            x2 = x2 | (x3 << 8);  /* x3 x2 */
-        }
-
-        x8 = ~(x0 >> 8); /* check range of x5 */
-        if (x8 != -1)
-        {
-            x8 = ((uint32)x8) >> 24; /* 255 or 0 */
-            x0 = x8 | (x2 << 8);
-        }
-        else
-        {
-            x0 = x0 | (x2 << 8); /* x3 x2 x0 */
-        }
-
-        x8 = ~(x1 >> 8); /* check range of x6 */
-        if (x8 != -1)
-        {
-            x8 = ((uint32)x8) >> 24; /* 255 or 0 */
-            x1 = x8 | (x0 << 8);
-        }
-        else
-        {
-            x1 = x1 | (x0 << 8); /* x3 x2 x0 x1 */
-        }
-        *((uint32*)(dst += 4)) = x1; /* save 4 bytes to dst */
-    }
-
-    return ;
-}
-#endif
 /*----------------------------------------------------------------------------
 ; End Function: idctrow
 ----------------------------------------------------------------------------*/

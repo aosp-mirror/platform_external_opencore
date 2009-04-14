@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,17 +17,16 @@
  */
 /*
 
- Pathname: ./src/AAC_decod/get_dse.h
+ Pathname: get_dse.h
  Funtions:
     get_dse
 
-
-     Date: 11/14/2002
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
 
 
+ Who:                                   Date: MM/DD/YYYY
  Description:
 ------------------------------------------------------------------------------
 

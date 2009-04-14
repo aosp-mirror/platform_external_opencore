@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,8 +80,11 @@
 #include "pvmi_config_and_capability.h"
 #endif
 
+// only include pvmf_downloadmanager_config.h if CML2 is NOT being used
+#ifndef USE_CML2_CONFIG
 #ifndef PVMF_DOWNLOADMANAGER_CONFIG_H_INCLUDED
 #include "pvmf_downloadmanager_config.h"
+#endif
 #endif
 
 #if(PVMF_DOWNLOADMANAGER_SUPPORT_PPB)
@@ -90,11 +93,9 @@
 #endif
 #endif //PVMF_DOWNLOADMANAGER_SUPPORT_PPB
 
-#if(PVMF_DOWNLOADMANAGER_SUPPORT_CPM_GETLICENSE)
 #ifndef PVMF_CPMPLUGIN_LICENSE_INTERFACE_H_INCLUDED
 #include "pvmf_cpmplugin_license_interface.h"
 #endif
-#endif//PVMF_DOWNLOADMANAGER_SUPPORT_CPM_GETLICENSE
 
 /**
 * Node command handling
@@ -109,17 +110,14 @@ enum PVMFDownloadManagerNodeCommandType
     , PVDLM_NODE_CMD_SETDATASOURCERATE
     , PVDLM_NODE_CMD_GETNODEMETADATAKEY
     , PVDLM_NODE_CMD_GETNODEMETADATAVALUE
-#if(PVMF_DOWNLOADMANAGER_SUPPORT_CPM_GETLICENSE)
     , PVDLM_NODE_CMD_GET_LICENSE
     , PVDLM_NODE_CMD_GET_LICENSE_W
     , PVDLM_NODE_CMD_CANCEL_GET_LICENSE
-#endif//PVMF_DOWNLOADMANAGER_SUPPORT_CPM_GETLICENSE
 };
 
 class PVMFDownloadManagerNodeCommand : public PVMFDownloadManagerNodeCommandBase
 {
     public:
-#if(PVMF_DOWNLOADMANAGER_SUPPORT_CPM_GETLICENSE)
         //override the default implementation of "hipri" and add the "cancel get license"
         //command to the list of hi-priority commands.
         bool hipri()
@@ -127,7 +125,6 @@ class PVMFDownloadManagerNodeCommand : public PVMFDownloadManagerNodeCommandBase
             return PVMFDownloadManagerNodeCommandBase::hipri()
                    || iCmd == PVDLM_NODE_CMD_CANCEL_GET_LICENSE;
         }
-#endif//PVMF_DOWNLOADMANAGER_SUPPORT_CPM_GETLICENSE
 
         // Constructor and parser for GetNodeMetadataKey
         void Construct(PVMFSessionId s, int32 cmd
@@ -218,7 +215,7 @@ class PVMFDownloadManagerNodeCommand : public PVMFDownloadManagerNodeCommandBase
         }
 
         // Constructor and parser for SetDataSourceRate
-        void Construct(PVMFSessionId s, int32 cmd, int32 aRate, OsclTimebase* aTimebase, const OsclAny*aContext)
+        void Construct(PVMFSessionId s, int32 cmd, int32 aRate, PVMFTimebase* aTimebase, const OsclAny*aContext)
         {
             PVMFDownloadManagerNodeCommandBase::Construct(s, cmd, aContext);
             iParam1 = (OsclAny*)aRate;
@@ -227,10 +224,10 @@ class PVMFDownloadManagerNodeCommand : public PVMFDownloadManagerNodeCommandBase
             iParam4 = NULL;
             iParam5 = NULL;
         }
-        void Parse(int32& aRate, OsclTimebase*& aTimebase)
+        void Parse(int32& aRate, PVMFTimebase*& aTimebase)
         {
             aRate = (int32)iParam1;
-            aTimebase = (OsclTimebase*)iParam2;
+            aTimebase = (PVMFTimebase*)iParam2;
         }
 
         //need to overload the base Destroy routine to cleanup metadata key.
@@ -271,7 +268,6 @@ class PVMFDownloadManagerNodeCommand : public PVMFDownloadManagerNodeCommandBase
                     break;
             }
         }
-#if(PVMF_DOWNLOADMANAGER_SUPPORT_CPM_GETLICENSE)
         /* Constructor and parser for GetLicenseW */
         void Construct(PVMFSessionId s,
                        int32 cmd,
@@ -325,7 +321,6 @@ class PVMFDownloadManagerNodeCommand : public PVMFDownloadManagerNodeCommandBase
             aDataSize = (uint32)iParam3;
             aTimeoutMsec = (int32)iParam4;
         }
-#endif//PVMF_DOWNLOADMANAGER_SUPPORT_CPM_GETLICENSE
 
 };
 
@@ -363,11 +358,9 @@ class PVMFDownloadManagerSubNodeContainerBase
         //Node Command processing
         PVMFCommandId iCmdId;
 
-#if(PVMF_DOWNLOADMANAGER_SUPPORT_CPM_GETLICENSE)
         //License Command Processing
         PVMFCommandId iCPMGetLicenseCmdId;
         PVMFCommandId iCPMCancelGetLicenseCmdId;
-#endif //PVMF_DOWNLOADMANAGER_SUPPORT_CPM_GETLICENSE
 
         enum CmdState
         {
@@ -408,13 +401,11 @@ class PVMFDownloadManagerSubNodeContainerBase
             //Recognizer module commands
             , ERecognizerStart = 24
             , ERecognizerClose = 25
-#if(PVMF_DOWNLOADMANAGER_SUPPORT_CPM_GETLICENSE)
             //License commands.
             , ECPMQueryLicenseInterface = 26
             , ECPMGetLicense = 27
             , ECPMGetLicenseW = 28
             , ECPMCancelGetLicense = 29
-#endif//PVMF_DOWNLOADMANAGER_SUPPORT_CPM_GETLICENSE
         };
 
         int32 iCmd;
@@ -435,7 +426,6 @@ class PVMFDownloadManagerSubNodeContainerBase
         CmdState iCancelCmdState;
         void CancelCommandDone(PVMFStatus, PVInterface*, OsclAny*);
 
-        void Assert(bool);
         bool CmdPending()
         {
             return iCmdState != EIdle || iCancelCmdState != EIdle;
@@ -463,9 +453,7 @@ class PVMFDownloadManagerSubNodeContainer
             iFormatProgDownloadSupport = NULL;
             iDownloadProgress = NULL;
             iNode = NULL;
-#if(PVMF_DOWNLOADMANAGER_SUPPORT_CPM_GETLICENSE)
             iLicenseInterface = NULL;
-#endif//PVMF_DOWNLOADMANAGER_SUPPORT_CPM_GETLICENSE
         }
 
         ~PVMFDownloadManagerSubNodeContainer()
@@ -492,9 +480,7 @@ class PVMFDownloadManagerSubNodeContainer
         PVInterface* iDownloadProgress;
         PVInterface* iDataSourcePlayback;
         PVInterface* iDatastreamUser;
-#if(PVMF_DOWNLOADMANAGER_SUPPORT_CPM_GETLICENSE)
         PVInterface* iLicenseInterface;
-#endif//PVMF_DOWNLOADMANAGER_SUPPORT_CPM_GETLICENSE
 
         PVMFDataSourceInitializationExtensionInterface *DataSourceInit()
         {
@@ -528,12 +514,10 @@ class PVMFDownloadManagerSubNodeContainer
         {
             return (PvmfDataSourcePlaybackControlInterface*)iDataSourcePlayback;
         }
-#if(PVMF_DOWNLOADMANAGER_SUPPORT_CPM_GETLICENSE)
         PVMFCPMPluginLicenseInterface* LicenseInterface()
         {
             return (PVMFCPMPluginLicenseInterface*)iLicenseInterface;
         }
-#endif //PVMF_DOWNLOADMANAGER_SUPPORT_CPM_GETLICENSE
 
         //Node event observers
         void HandleNodeErrorEvent(const PVMFAsyncEvent& aEvent);
@@ -624,11 +608,9 @@ class PVMFDownloadManagerNode
             , public PvmfDataSourcePlaybackControlInterface
             , public PVMFMetadataExtensionInterface
             , public PVMFDataSourceNodeRegistryInitInterface
-#if(PVMF_DOWNLOADMANAGER_SUPPORT_CPM_GETLICENSE)
             , public PVMFCPMPluginLicenseInterface
-#endif//PVMF_DOWNLOADMANAGER_SUPPORT_CPM_GETLICENSE
             // For observing the playback clock states
-            , public OsclClockStateObserver
+            , public PVMFMediaClockStateObserver
 {
     public:
         PVMFDownloadManagerNode(int32 aPriority = OsclActiveObject::EPriorityNominal);
@@ -674,8 +656,8 @@ class PVMFDownloadManagerNode
 
         //From PVMFDataSourceInitializationExtensionInterface
         PVMFStatus SetSourceInitializationData(OSCL_wString& aSourceURL, PVMFFormatType& aSourceFormat, OsclAny* aSourceData);
-        PVMFStatus SetClientPlayBackClock(OsclClock* aClientClock);
-        PVMFStatus SetEstimatedServerClock(OsclClock* aClientClock);
+        PVMFStatus SetClientPlayBackClock(PVMFMediaClock* aClientClock);
+        PVMFStatus SetEstimatedServerClock(PVMFMediaClock* aClientClock);
 
         //From PVMFTrackSelectionExtensionInterface
         PVMFStatus GetMediaPresentationInfo(PVMFMediaPresentationInfo& aInfo);
@@ -701,7 +683,7 @@ class PVMFDownloadManagerNode
                                               PVMFTimestamp& aSeekPointBeforeTargetNPT, PVMFTimestamp& aSeekPointAfterTargetNPT,
                                               OsclAny* aContext = NULL, bool aSeekToSyncPoint = true);
 
-        PVMFCommandId SetDataSourceRate(PVMFSessionId aSessionId, int32 aRate, OsclTimebase* aTimebase = NULL, OsclAny* aContext = NULL);
+        PVMFCommandId SetDataSourceRate(PVMFSessionId aSessionId, int32 aRate, PVMFTimebase* aTimebase = NULL, OsclAny* aContext = NULL);
 
         // From PVMFPortActivityHandler
         void HandlePortActivity(const PVMFPortActivity& aActivity)
@@ -748,10 +730,10 @@ class PVMFDownloadManagerNode
                                                 PvmiKvp* aParameters,
                                                 int num_elements);
 
-        //from OsclClockStateObserver
+        //from PVMFMediaClockStateObserver
         void ClockStateUpdated();
+        void NotificationsInterfaceDestroyed();
 
-#if(PVMF_DOWNLOADMANAGER_SUPPORT_CPM_GETLICENSE)
         /* From PVMFCPMPluginLicenseInterface */
         PVMFStatus GetLicenseURL(PVMFSessionId aSessionId,
                                  OSCL_wString& aContentName,
@@ -791,7 +773,6 @@ class PVMFDownloadManagerNode
         PVMFCommandId CancelGetLicense(PVMFSessionId aSessionId
                                        , PVMFCommandId aCmdId
                                        , OsclAny* aContextData);
-#endif //PVMF_DOWNLOADMANAGER_SUPPORT_CPM_GETLICENSE
 
     private:
         bool iDebugMode;
@@ -882,7 +863,6 @@ class PVMFDownloadManagerNode
 
         PVMFNodeCapability iCapability;
         PVLogger* iLogger;
-        void Assert(bool);
         friend class PVMFDownloadManagerSubNodeContainerBase;
         friend class PVMFDownloadManagerSubNodeContainer;
         friend class PVMFDownloadManagerRecognizerContainer;
@@ -933,17 +913,19 @@ class PVMFDownloadManagerNode
         bool iParserInit;//set when file parse sequence is initiated.
         bool iDataReady;//set when initial data ready is received or generated.
         bool iDownloadComplete;//set when DL is complete.
-
+        bool iMovieAtomComplete;//set when movie atom DL complete for fast-track.
+        bool iNoPETrackSelect;//set after deciding that PE cannot to track selection.
+        bool iParserInitAfterMovieAtom;
+        bool iParserPrepareAfterMovieAtom;
 
         bool iRecognizerError;//set when recognizer fails.
         PVMFStatus iRecognizerStartStatus;
 
-#if(PVMF_DOWNLOADMANAGER_SUPPORT_CPM_GETLICENSE)
         bool iInitFailedLicenseRequired; //set when PVMFErrLicenseRequired failed
-#endif//PVMF_DOWNLOADMANAGER_SUPPORT_CPM_GETLICENSE
 
         void ContinueInitAfterTrackSelectDecision();
         void ContinueFromDownloadTrackSelectionPoint();
+        void ContinueAfterMovieAtom();
 
         PVMFNodeInterface* CreateParser();
 
@@ -978,15 +960,17 @@ class PVMFDownloadManagerNode
         //Count for Uuids
         uint32 iDNodeUuidCount;
         // playback clock which will be received form the engine.
-        OsclClock *iPlayBackClock;
+        PVMFMediaClock *iPlayBackClock;
+        PVMFMediaClockNotificationsInterface *iClockNotificationsInf;
 
-#if(PVMF_DOWNLOADMANAGER_SUPPORT_CPM_GETLICENSE)
+        // HTTP Content-Type header MIME string hint from the server
+        OSCL_HeapString<OsclMemAllocator> iContentTypeMIMEString;
+
         PVMFStatus DoGetLicense(PVMFDownloadManagerNodeCommand& aCmd,
                                 bool aWideCharVersion = false);
         void CompleteGetLicense();
 
         PVMFStatus DoCancelGetLicense(PVMFDownloadManagerNodeCommand& aCmd);
-#endif//PVMF_DOWNLOADMANAGER_SUPPORT_CPM_GETLICENSE
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1004,6 +988,21 @@ struct DownloadManagerKeyStringData
 
 // The number of characters to allocate for the key string
 #define DLMCONFIG_KEYSTRING_SIZE 128
+
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// Constants for setting up socket mem pool for progressive playback and shoutcast
+// These constants are not tunables.
+//
+///////////////////////////////////////////////////////////////////////////////
+#define PVMF_DOWNLOADMANAGER_TCP_BUFFER_SIZE_FOR_SC		1500
+#define PVMF_DOWNLOADMANAGER_TCP_BUFFER_SIZE_FOR_PPB	64000
+#define PVMF_DOWNLOADMANAGER_TCP_BUFFER_NOT_AVAILABLE	2
+#define PVMF_DOWNLOADMANAGER_TCP_BUFFER_OVERHEAD		64
+#define PVMF_DOWNLOADMANAGER_TCP_AVG_SMALL_PACKET_SIZE	250
+
+
 
 #endif // PVMF_DOWNLOADMANAGER_NODE_H_INCLUDED
 

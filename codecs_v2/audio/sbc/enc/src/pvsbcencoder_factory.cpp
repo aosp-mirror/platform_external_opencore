@@ -1,18 +1,20 @@
-/***************************************************************************
- * This Software has been authored by or modified by PacketVideo Corporation.
- * Title and ownership, including all intellectual
- * property rights in and to the Software shall remain with PacketVideo
- * Corporation. The Software is protected by the patent and copyright laws of
- * the United States and by international treaty.
+/* ------------------------------------------------------------------
+ * Copyright (C) 1998-2009 PacketVideo
  *
- * No part of this software may be modified, reproduced or distributed without
- * the prior written consent of PacketVideo Corporation.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * Copyright (c) 1998, 2007, PacketVideo Corporation. All Rights Reserved.
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * Release: NJ_SRCHREL_071018
- *
- ***************************************************************************/
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied.
+ * See the License for the specific language governing permissions
+ * and limitations under the License.
+ * -------------------------------------------------------------------
+ */
 /**
  * @file pvsbcencoder_factory.cpp
  * @brief Singleton factory for CPVSbcEncoder
@@ -26,7 +28,7 @@
 #include "oscl_error_codes.h"
 #include "oscl_exception.h"
 
-// Use default DLL entry point for Symbian
+// Use default DLL entry point
 #include "oscl_dll.h"
 
 OSCL_DLL_ENTRY_POINT_DEFAULT()
@@ -35,24 +37,24 @@ OSCL_DLL_ENTRY_POINT_DEFAULT()
 ////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF PVSbcEncoderInterface* PVSbcEncoderFactory::CreatePVSbcEncoder()
 {
-	PVSbcEncoderInterface* sbcenc = NULL;
-	sbcenc = CPVSbcEncoder::New();
-	if (sbcenc==NULL)
-	{
-		OSCL_LEAVE(OsclErrNoMemory);
-	}
-	return sbcenc;
+    PVSbcEncoderInterface* sbcenc = NULL;
+    sbcenc = CPVSbcEncoder::New();
+    if (sbcenc == NULL)
+    {
+        OSCL_LEAVE(OsclErrNoMemory);
+    }
+    return sbcenc;
 }
 
 ////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF bool PVSbcEncoderFactory::DeletePVSbcEncoder(PVSbcEncoderInterface* aSbcEnc)
 {
-	if(aSbcEnc)
-	{
-		OSCL_DELETE(aSbcEnc);
-		return true;
-	}
+    if (aSbcEnc)
+    {
+        OSCL_DELETE(aSbcEnc);
+        return true;
+    }
 
-	return false;
+    return false;
 }
 

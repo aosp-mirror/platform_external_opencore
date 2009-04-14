@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -113,39 +113,16 @@ int pvauthor_async_test_miscellaneous::CreateAudioInput()
     {
         case AMR_FOutput_Test:
         case AMR_Input_AOnly_3gpTest:
-        case AMR_Input_AOnly_Mp4Test:
         case AMR_YUV_Input_AV_3gpTest:
         case AMR_H263_Input_AV_3gpTest:
-        case AMR_YUV_Input_AV_Mp4Test:
-        case Pause_Resume_Test:
-        case KMaxFileSizeTest:
-        case KMaxDurationTest:
-        case KFileSizeProgressTest:
-        case KDurationProgressTest:
-        case KFastTrackContentModeTest:
-        case K3GPPDownloadModeTest:
-        case K3GPPProgressiveDownloadModeTest:
-        case KMovieFragmentModeTest:
-        case H264_AMR_Input_AV_Mp4Test:
-        case H264_AMR_Input_AV_Mp4_LongetivityTest:
-        case AMR_FOutput_LongetivityTest:
-        case AMR_Input_AOnly_3gp_LongetivityTest:
-        case AMR_Input_AOnly_Mp4_LongetivityTest:
-        case AMR_YUV_Input_AV_3gp_LongetivityTest:
-        case AMR_H263_Input_AV_3gp_LongetivityTest:
-        case AMR_YUV_Input_AV_Mp4_LongetivityTest:
+        case AMR_YUV_Input_AV_M4V_AMR_Output_3gpTest:
+        case H264_AMR_Input_AV_3gpTest:
         case AMR_TEXT_Input_AT_3gp_LongetivityTest:
         case AMR_YUV_TEXT_Input_AVT_3gp_LongetivityTest:
-
-        case KMaxFileSizeLongetivityTest:
-        case KMaxDurationLongetivityTest:
-        case KFileSizeProgressLongetivityTest:
-        case KDurationProgressLongetivityTest:
-        case KFastTrackContentModeLongetivityTest:
-        case K3GPPDownloadModeLongetivityTest:
-        case K3GPPProgressiveDownloadModeLongetivityTest:
-        case AMR_TEXT_Input_AT_Mp4Test:
+        case AMR_TEXT_Input_AT_3gpTest:
         case AMR_YUV_TEXT_Input_AVT_Mp4Test:
+        case AMR_FileOutput_Test_UsingExternalFileHandle:
+
             PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_DEBUG,
                             (0, "pvauthor_async_test_miscellaneous::CreateAudioTestInput: AMR input"));
             if (testInput.IsTestInputTypeSupported(SYMBIAN_DEV_SOUND))
@@ -160,8 +137,23 @@ int pvauthor_async_test_miscellaneous::CreateAudioInput()
             }
             break;
 
+        case AMRWB_Input_AOnly_3gpTest:
+        case AMRWB_FOutput_Test:
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_DEBUG,
+                            (0, "pvauthor_async_test_miscellaneous::CreateAudioTestInput: AMR-WB input"));
+            if (testInput.IsTestInputTypeSupported(SYMBIAN_DEV_SOUND))
+            {
+                iAudioInputType = SYMBIAN_DEV_SOUND;
+                status = testInput.CreateInputNode(SYMBIAN_DEV_SOUND, iInputFileNameAudio, iAVTConfig);
+            }
+            else if (testInput.IsTestInputTypeSupported(AMRWB_IETF_FILE))
+            {
+                iAudioInputType = AMRWB_IETF_FILE;
+                status = testInput.CreateInputNode(AMRWB_IETF_FILE, iInputFileNameAudio, iAVTConfig);
+            }
+            break;
+
         case AACADIF_FOutput_Test:
-        case AACADIF_FOutput_LongetivityTest:
             PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_DEBUG,
                             (0, "pvauthor_async_test_miscellaneous::CreateAudioTestInput: AAC-ADIF input"));
             if (testInput.IsTestInputTypeSupported(AAC_ADIF_FILE))
@@ -173,7 +165,6 @@ int pvauthor_async_test_miscellaneous::CreateAudioInput()
 
 
         case AACADTS_FOutput_Test:
-        case AACADTS_FOutput_LongetivityTest:
             PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_DEBUG,
                             (0, "pvauthor_async_test_miscellaneous::CreateAudioTestInput: AAC-ADTS input"));
             if (testInput.IsTestInputTypeSupported(AAC_ADTS_FILE))
@@ -183,30 +174,12 @@ int pvauthor_async_test_miscellaneous::CreateAudioInput()
             }
             break;
 
-        case PCM16In_AMROut_Test:
-        case PCM16_Input_AOnly_3gpTest:
-        case PCM16_Input_AOnly_Mp4Test:
-        case PCM16_YUV_Input_AV_3gpTest:
-        case PCM16_YUV_Input_AV_Mp4Test:
-        case PCM16In_AMROut_LongetivityTest:
-        case PCM16_Input_AOnly_3gp_LongetivityTest:
-        case PCM16_Input_AOnly_Mp4_LongetivityTest:
-        case PCM16_YUV_Input_AV_3gp_LongetivityTest:
-        case PCM16_YUV_Input_AV_Mp4_LongetivityTest:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_DEBUG,
-                            (0, "pvauthor_async_test_miscellaneous::CreateAudioTestInput: PCM16 input"));
-            if (testInput.IsTestInputTypeSupported(PCM16_FILE))
-            {
-                iAudioInputType = PCM16_FILE;
-                status = testInput.CreateInputNode(PCM16_FILE, iInputFileNameAudio, iAVTConfig);
-            }
-            break;
-
         default:
+        {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_DEBUG,
                             (0, "pvauthor_async_test_miscellaneous::CreateAudioTestInput: Audio input node not needed for this test case"));
             return -1;
-            break;
+        }
     }
 
     if (!status)
@@ -227,38 +200,12 @@ int pvauthor_async_test_miscellaneous::CreateVideoInput()
 
     switch (iTestCaseNum)
     {
-        case YUV_Input_VOnly_3gpTest:
-        case YUV_Input_VOnly_Mp4Test:
         case AMR_YUV_Input_AV_3gpTest:
-        case AMR_YUV_Input_AV_Mp4Test:
-        case PCM16_YUV_Input_AV_3gpTest:
-        case PCM16_YUV_Input_AV_Mp4Test:
-        case Pause_Resume_Test:
-        case KMaxFileSizeTest:
-        case KMaxDurationTest:
-        case KFileSizeProgressTest:
-        case KDurationProgressTest:
-        case KFastTrackContentModeTest:
-        case K3GPPDownloadModeTest:
-        case K3GPPProgressiveDownloadModeTest:
-        case KMovieFragmentModeTest:
-        case YUV_Input_VOnly_3gp_LongetivityTest:
-        case YUV_Input_VOnly_Mp4_LongetivityTest:
-        case AMR_YUV_Input_AV_3gp_LongetivityTest:
-        case AMR_YUV_Input_AV_Mp4_LongetivityTest:
-        case PCM16_YUV_Input_AV_3gp_LongetivityTest:
-        case PCM16_YUV_Input_AV_Mp4_LongetivityTest:
+        case AMR_YUV_Input_AV_M4V_AMR_Output_3gpTest:
         case YUV_TEXT_Input_VT_3gp_LongetivityTest:
         case AMR_YUV_TEXT_Input_AVT_3gp_LongetivityTest:
 
-        case KMaxFileSizeLongetivityTest:
-        case KMaxDurationLongetivityTest:
-        case KFileSizeProgressLongetivityTest:
-        case KDurationProgressLongetivityTest:
-        case KFastTrackContentModeLongetivityTest:
-        case K3GPPDownloadModeLongetivityTest:
-        case K3GPPProgressiveDownloadModeLongetivityTest:
-        case YUV_TEXT_Input_VT_Mp4Test:
+        case YUV_TEXT_Input_VT_3gpTest:
         case AMR_YUV_TEXT_Input_AVT_Mp4Test:
             PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_DEBUG,
                             (0, "pvauthor_async_test_miscellaneous::CreateVideoTestInput: YUV input"));
@@ -272,8 +219,6 @@ int pvauthor_async_test_miscellaneous::CreateVideoInput()
 
         case H263_Input_VOnly_3gpTest:
         case AMR_H263_Input_AV_3gpTest:
-        case H263_Input_VOnly_3gp_LongetivityTest:
-        case AMR_H263_Input_AV_3gp_LongetivityTest:
             PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_DEBUG,
                             (0, "pvauthor_async_test_miscellaneous::CreateVideoTestInput: H263 input"));
             if (testInput.IsTestInputTypeSupported(H263_FILE))
@@ -283,10 +228,7 @@ int pvauthor_async_test_miscellaneous::CreateVideoInput()
                 status = testInput.CreateInputNode(H263_FILE, iInputFileNameVideo, iAVTConfig);
             }
             break;
-        case H264_Input_VOnly_Mp4Test:
-        case H264_AMR_Input_AV_Mp4Test:
-        case H264_Input_VOnly_Mp4_LongetivityTest:
-        case H264_AMR_Input_AV_Mp4_LongetivityTest:
+        case H264_AMR_Input_AV_3gpTest:
             PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_DEBUG,
                             (0, "pvauthor_async_test_miscellaneous::CreateVideoTestInput: YUV input"));
             if (testInput.IsTestInputTypeSupported(H264_FILE))
@@ -298,10 +240,11 @@ int pvauthor_async_test_miscellaneous::CreateVideoInput()
             break;
 
         default:
+        {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_DEBUG,
                             (0, "pvauthor_async_test_miscellaneous::CreateVideoTestInput: Video input node not needed for this test case"));
             return -1;
-            break;
+        }
     }
 
     if (!status)
@@ -322,9 +265,9 @@ int pvauthor_async_test_miscellaneous::CreateTextInput()
 
     switch (iTestCaseNum)
     {
-        case TEXT_Input_TOnly_Mp4Test:
-        case AMR_TEXT_Input_AT_Mp4Test:
-        case YUV_TEXT_Input_VT_Mp4Test:
+        case TEXT_Input_TOnly_3gpTest:
+        case AMR_TEXT_Input_AT_3gpTest:
+        case YUV_TEXT_Input_VT_3gpTest:
         case AMR_YUV_TEXT_Input_AVT_Mp4Test:
         case TEXT_Input_TOnly_3gp_LongetivityTest:
         case AMR_TEXT_Input_AT_3gp_LongetivityTest:
@@ -341,10 +284,11 @@ int pvauthor_async_test_miscellaneous::CreateTextInput()
             break;
 
         default:
+        {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_DEBUG,
                             (0, "pvauthor_async_test_miscellaneous::CreateTextTestInput: Text input node not needed for this test case"));
             return -1;
-            break;
+        }
     }
 
     if (!status)
@@ -388,78 +332,41 @@ void pvauthor_async_test_miscellaneous::SelectComposer()
     switch (iTestCaseNum)
     {
         case AMR_Input_AOnly_3gpTest:
-        case PCM16_Input_AOnly_3gpTest:
-        case PCM16_YUV_Input_AV_3gpTest:
-        case YUV_Input_VOnly_3gpTest:
         case H263_Input_VOnly_3gpTest:
         case AMR_YUV_Input_AV_3gpTest:
         case AMR_H263_Input_AV_3gpTest:
-        case Pause_Resume_Test:
-        case KMaxFileSizeTest:
-        case KMaxDurationTest:
-        case KFileSizeProgressTest:
-        case KDurationProgressTest:
-        case KFastTrackContentModeTest:
-        case K3GPPDownloadModeTest:
-        case K3GPPProgressiveDownloadModeTest:
-        case KMovieFragmentModeTest:
-        case AMR_Input_AOnly_3gp_LongetivityTest:
-        case PCM16_Input_AOnly_3gp_LongetivityTest:
-        case PCM16_YUV_Input_AV_3gp_LongetivityTest:
-        case YUV_Input_VOnly_3gp_LongetivityTest:
-        case H263_Input_VOnly_3gp_LongetivityTest:
-        case AMR_YUV_Input_AV_3gp_LongetivityTest:
-        case AMR_H263_Input_AV_3gp_LongetivityTest:
         case TEXT_Input_TOnly_3gp_LongetivityTest:
         case AMR_TEXT_Input_AT_3gp_LongetivityTest:
         case YUV_TEXT_Input_VT_3gp_LongetivityTest:
         case AMR_YUV_TEXT_Input_AVT_3gp_LongetivityTest:
 
-        case KMaxFileSizeLongetivityTest:
-        case KMaxDurationLongetivityTest:
-        case KFileSizeProgressLongetivityTest:
-        case KDurationProgressLongetivityTest:
-        case KFastTrackContentModeLongetivityTest:
-        case K3GPPDownloadModeLongetivityTest:
-        case K3GPPProgressiveDownloadModeLongetivityTest:
+
+        case AMR_YUV_Input_AV_M4V_AMR_Output_3gpTest:
+        case H264_Input_VOnly_3gpTest:
+        case H264_AMR_Input_AV_3gpTest:
+        case TEXT_Input_TOnly_3gpTest:
+        case AMR_TEXT_Input_AT_3gpTest:
+        case YUV_TEXT_Input_VT_3gpTest:
+        case AMR_YUV_TEXT_Input_AVT_Mp4Test:
+
+        case AMRWB_Input_AOnly_3gpTest:
             iComposerMimeType = K3gpComposerMimeType;
             break;
 
-        case AMR_Input_AOnly_Mp4Test:
-        case PCM16_Input_AOnly_Mp4Test:
-        case PCM16_YUV_Input_AV_Mp4Test:
-        case YUV_Input_VOnly_Mp4Test:
-        case AMR_YUV_Input_AV_Mp4Test:
-        case AMR_Input_AOnly_Mp4_LongetivityTest:
-        case PCM16_Input_AOnly_Mp4_LongetivityTest:
-        case PCM16_YUV_Input_AV_Mp4_LongetivityTest:
-        case YUV_Input_VOnly_Mp4_LongetivityTest:
-        case AMR_YUV_Input_AV_Mp4_LongetivityTest:
-        case H264_Input_VOnly_Mp4Test:
-        case H264_AMR_Input_AV_Mp4Test:
-        case H264_Input_VOnly_Mp4_LongetivityTest:
-        case H264_AMR_Input_AV_Mp4_LongetivityTest:
-        case TEXT_Input_TOnly_Mp4Test:
-        case AMR_TEXT_Input_AT_Mp4Test:
-        case YUV_TEXT_Input_VT_Mp4Test:
-        case AMR_YUV_TEXT_Input_AVT_Mp4Test:
-            iComposerMimeType = KMp4ComposerMimeType;
-            break;
-
         case AMR_FOutput_Test:
-        case PCM16In_AMROut_Test:
-        case AMR_FOutput_LongetivityTest:
-        case PCM16In_AMROut_LongetivityTest:
+        case AMR_FileOutput_Test_UsingExternalFileHandle:
             iComposerMimeType = KAMRNbComposerMimeType;
             break;
 
+        case AMRWB_FOutput_Test:
+            iComposerMimeType = KAMRWBComposerMimeType;
+            break;
+
         case AACADIF_FOutput_Test:
-        case AACADIF_FOutput_LongetivityTest:
             iComposerMimeType = KAACADIFComposerMimeType;
             break;
 
         case AACADTS_FOutput_Test:
-        case AACADTS_FOutput_LongetivityTest:
             iComposerMimeType = KAACADTSComposerMimeType;
             break;
 
@@ -502,49 +409,43 @@ bool pvauthor_async_test_miscellaneous::ConfigAmrAacComposer()
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "pvauthor_async_test_miscellaneous::ConfigAmrAacComposer"));
 
-    PVMFFormatType format = PVMF_FORMAT_UNKNOWN;
 
     switch (iTestCaseNum)
     {
         case AMR_FOutput_Test:
-        case AMR_FOutput_LongetivityTest:
+        case AMR_FileOutput_Test_UsingExternalFileHandle:
             if (iOutputFileName == NULL)
             {
                 iOutputFileName = KFOAOnlyAMRTestOutput;
             }
-            format = PVMF_AMR_IETF;
+            break;
+
+        case AMRWB_FOutput_Test:
+            if (iOutputFileName == NULL)
+            {
+                iOutputFileName = KFOAOnlyAMRWBTestOutput;
+            }
             break;
 
         case AACADIF_FOutput_Test:
-        case AACADIF_FOutput_LongetivityTest:
             if (iOutputFileName == NULL)
             {
                 iOutputFileName = KFOAOnlyAACADIFTestOutput;
             }
-            format = PVMF_ADIF;
             break;
 
 
         case AACADTS_FOutput_Test:
-        case AACADTS_FOutput_LongetivityTest:
             if (iOutputFileName == NULL)
             {
                 iOutputFileName = KFOAOnlyAACADTSTestOutput;
             }
-            format = PVMF_ADTS;
             break;
-
-        case PCM16In_AMROut_Test:
-        case PCM16In_AMROut_LongetivityTest:
-            if (iOutputFileName == NULL)
-            {
-                iOutputFileName = KPCM16TestOutput;
-            }
-            format = PVMF_AMR_IETF;
-            break;
-
         default:
-            if (!((iComposerMimeType == KAMRNbComposerMimeType) || (iComposerMimeType == KAACADTSComposerMimeType) || (iComposerMimeType == KAACADIFComposerMimeType)))
+            if (!((iComposerMimeType == KAMRNbComposerMimeType) ||
+                    (iComposerMimeType == KAMRWBComposerMimeType) ||
+                    (iComposerMimeType == KAACADTSComposerMimeType) ||
+                    (iComposerMimeType == KAACADIFComposerMimeType)))
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "pvauthor_async_test_miscellaneous::ConfigAmrAacComposer: AMR-AAC Composer not used in this test case"));
                 return true;
@@ -559,11 +460,34 @@ bool pvauthor_async_test_miscellaneous::ConfigAmrAacComposer()
         return false;
     }
 
-    if (clipConfig->SetOutputFileName(iOutputFileName) != PVMFSuccess)
+    if (!iUseExtrnFileDesc)
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "pvauthor_async_test_miscellaneous::ConfigAmrAacComposer: Error - SetOutputFileName failed"));
-        return false;
+        if (clipConfig->SetOutputFileName(iOutputFileName) != PVMFSuccess)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                            (0, "pvauthor_async_test_miscellaneous::ConfigAmrAacComposer: Error - SetOutputFileName failed"));
+            return false;
+        }
+    }
+    else
+    {
+
+        char* fname[ARRAY_SIZE];
+        oscl_UnicodeToUTF8(iOutputFileName.get_str(), iOutputFileName.get_size(), (char*)fname, ARRAY_SIZE);
+
+        FILE *fp = fopen((char*)fname, "w+b");
+        if (fp)
+        {
+            iFileHandle = OSCL_NEW(OsclFileHandle, (fp));
+            if (clipConfig->SetOutputFileDescriptor(iFileHandle) != PVMFSuccess)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                                (0, "pv_mediainput_async_test_opencomposestop::ConfigAmrComposer: Error - SetOutputFileName failed"));
+
+                return false;
+            }
+        }
+
     }
 
     return true;
@@ -578,183 +502,56 @@ bool pvauthor_async_test_miscellaneous::ConfigMp43gpComposer()
     switch (iTestCaseNum)
     {
         case AMR_Input_AOnly_3gpTest:
-        case AMR_Input_AOnly_3gp_LongetivityTest:
             if (iOutputFileName == NULL)
             {
                 iOutputFileName = KAMRInputAOnly3gpTestOutput;
             }
             break;
-        case AMR_Input_AOnly_Mp4Test:
-        case AMR_Input_AOnly_Mp4_LongetivityTest:
-            if (iOutputFileName == NULL)
-            {
-                iOutputFileName = KAMRInputAOnlyMp4TestOutput;
-            }
-            break;
-        case YUV_Input_VOnly_3gpTest:
-        case YUV_Input_VOnly_3gp_LongetivityTest:
-            if (iOutputFileName == NULL)
-            {
-                iOutputFileName = KYUVInputVOnly3gpTestOutput;
-            }
-            break;
         case H263_Input_VOnly_3gpTest:
-        case H263_Input_VOnly_3gp_LongetivityTest:
             if (iOutputFileName == NULL)
             {
                 iOutputFileName = KH263InputVOnly3gpTestOutput;
             }
             break;
-        case YUV_Input_VOnly_Mp4Test:
-        case YUV_Input_VOnly_Mp4_LongetivityTest:
-            if (iOutputFileName == NULL)
-            {
-                iOutputFileName = KYUVInputVOnlyMp4TestOutput;
-            }
-            break;
         case AMR_YUV_Input_AV_3gpTest:
-        case AMR_YUV_Input_AV_3gp_LongetivityTest:
             if (iOutputFileName == NULL)
             {
                 iOutputFileName = KAMRYUVInputAV3gpTestOutput;
             }
             break;
         case AMR_H263_Input_AV_3gpTest:
-        case AMR_H263_Input_AV_3gp_LongetivityTest:
             if (iOutputFileName == NULL)
             {
                 iOutputFileName = KAMRH263InputAV3gpTestOutput;
             }
             break;
-        case AMR_YUV_Input_AV_Mp4Test:
-        case AMR_YUV_Input_AV_Mp4_LongetivityTest:
+        case AMR_YUV_Input_AV_M4V_AMR_Output_3gpTest:
             if (iOutputFileName == NULL)
             {
                 iOutputFileName = KAMRYUVInputAVMp4TestOutput;
             }
             break;
-        case KMaxFileSizeTest:
-        case KMaxFileSizeLongetivityTest:
-            if (iOutputFileName == NULL)
-            {
-                iOutputFileName = KMaxFileSizeTestOutput;
-            }
-            break;
-        case KMaxDurationTest:
-        case KMaxDurationLongetivityTest:
-            if (iOutputFileName == NULL)
-            {
-                iOutputFileName = KMaxDurationTestOutput;
-            }
-            break;
-        case KFileSizeProgressTest:
-        case KFileSizeProgressLongetivityTest:
-            if (iOutputFileName == NULL)
-            {
-                iOutputFileName = KFileSizeProgressTestOutput;
-            }
-            break;
-        case KDurationProgressTest:
-        case KDurationProgressLongetivityTest:
-            if (iOutputFileName == NULL)
-            {
-                iOutputFileName = KDurationProgressTestOutput;
-            }
-            break;
-        case PCM16_Input_AOnly_3gpTest:
-        case PCM16_Input_AOnly_3gp_LongetivityTest:
-            if (iOutputFileName == NULL)
-            {
-                iOutputFileName = KPCM16AOnly3gpTestOutput;
-            }
-            break;
-        case PCM16_Input_AOnly_Mp4Test:
-        case PCM16_Input_AOnly_Mp4_LongetivityTest:
-            if (iOutputFileName == NULL)
-            {
-                iOutputFileName = KPCM16AOnlyMp4TestOutput;
-            }
-            break;
-        case PCM16_YUV_Input_AV_3gpTest:
-        case PCM16_YUV_Input_AV_3gp_LongetivityTest:
-            if (iOutputFileName == NULL)
-            {
-                iOutputFileName = KPCM16YUVInputAV3gpTestOutput;
-            }
-            break;
-        case PCM16_YUV_Input_AV_Mp4Test:
-        case PCM16_YUV_Input_AV_Mp4_LongetivityTest:
-            if (iOutputFileName == NULL)
-            {
-                iOutputFileName = KPCM16YUVInputAVMp4TestOutput;
-            }
-            break;
-        case Pause_Resume_Test:
-
-            if (iOutputFileName == NULL)
-            {
-                iOutputFileName = KPauseResumeTestOutput;
-            }
-            break;
-
-        case KFastTrackContentModeTest:
-        case KFastTrackContentModeLongetivityTest:
-            if (iOutputFileName == NULL)
-            {
-                iOutputFileName = KFastTrackContentModeTestOutput;
-            }
-            break;
-        case K3GPPDownloadModeTest:
-        case K3GPPDownloadModeLongetivityTest:
-            if (iOutputFileName == NULL)
-            {
-                iOutputFileName = K3GPPDownloadModeTestOutput;
-            }
-            break;
-        case K3GPPProgressiveDownloadModeTest:
-        case K3GPPProgressiveDownloadModeLongetivityTest:
-            if (iOutputFileName == NULL)
-            {
-                iOutputFileName = K3GPPProgressiveDownloadModeTestOutput;
-            }
-            break;
-
-        case KMovieFragmentModeTest:
-            if (iOutputFileName == NULL)
-            {
-                iOutputFileName = KMovieFragmentModeTestOutput;
-            }
-            break;
-
-        case H264_Input_VOnly_Mp4Test:
-        case H264_Input_VOnly_Mp4_LongetivityTest:
-            if (iOutputFileName == NULL)
-            {
-                iOutputFileName = KH264InputVOnlyMp4TestOutput;
-            }
-            break;
-        case H264_AMR_Input_AV_Mp4Test:
-        case H264_AMR_Input_AV_Mp4_LongetivityTest:
+        case H264_AMR_Input_AV_3gpTest:
             if (iOutputFileName == NULL)
             {
                 iOutputFileName = KH264AMRInputAVMp4TestTestOutput;
             }
             break;
-        case TEXT_Input_TOnly_Mp4Test:
+        case TEXT_Input_TOnly_3gpTest:
         case TEXT_Input_TOnly_3gp_LongetivityTest:
             if (iOutputFileName == NULL)
             {
                 iOutputFileName = KTEXTInputMp4TestOutput;
             }
             break;
-        case AMR_TEXT_Input_AT_Mp4Test:
+        case AMR_TEXT_Input_AT_3gpTest:
         case AMR_TEXT_Input_AT_3gp_LongetivityTest:
             if (iOutputFileName == NULL)
             {
                 iOutputFileName = KAMRTEXTInputMp4TestOutput;
             }
             break;
-        case YUV_TEXT_Input_VT_Mp4Test:
+        case YUV_TEXT_Input_VT_3gpTest:
         case YUV_TEXT_Input_VT_3gp_LongetivityTest:
             if (iOutputFileName == NULL)
             {
@@ -768,8 +565,17 @@ bool pvauthor_async_test_miscellaneous::ConfigMp43gpComposer()
                 iOutputFileName = KYUVAMRTEXTInputAVTMp4TestOutput;
             }
             break;
+        case AMRWB_Input_AOnly_3gpTest:
+            if (iOutputFileName == NULL)
+            {
+                iOutputFileName = KAMRWBInputAOnly3gpTestOutput;
+            }
+            break;
         default:
-            if (!(iComposerMimeType == KAMRNbComposerMimeType) && !(iComposerMimeType == KAACADTSComposerMimeType) && !(iComposerMimeType == KAACADIFComposerMimeType))
+            if (!(iComposerMimeType == KAMRNbComposerMimeType) &&
+                    !(iComposerMimeType == KAMRWBComposerMimeType) &&
+                    !(iComposerMimeType == KAACADTSComposerMimeType) &&
+                    !(iComposerMimeType == KAACADIFComposerMimeType))
             {
                 break;
             }
@@ -796,130 +602,27 @@ bool pvauthor_async_test_miscellaneous::ConfigMp43gpComposer()
     iCopyrightString = _STRLIT("copyright");
     iDescriptionString = _STRLIT("description");
     iRatingString = _STRLIT("rating");
+    iAlbumTitle   = _STRLIT("albumtitle");
+    iRecordingYear = 2008;
+
+    OSCL_HeapString<OsclMemAllocator> lang_code = "eng";
 
     clipConfig->SetOutputFileName(iOutputFileName);
     clipConfig->SetPresentationTimescale(1000);
-    clipConfig->SetVersion(iVersionString);
-    clipConfig->SetTitle(iTitleString);
-    clipConfig->SetAuthor(iAuthorString);
-    clipConfig->SetCopyright(iCopyrightString);
-    clipConfig->SetDescription(iDescriptionString);
-    clipConfig->SetRating(iRatingString);
-    if (iTestCaseNum == KFastTrackContentModeTest)
-    {
-        clipConfig->SetAuthoringMode(PVMP4FFCN_PV_FAST_TRACK_CONTENT_MODE);
-    }
-    else if (iTestCaseNum == K3GPPDownloadModeTest)
-    {
-        clipConfig->SetAuthoringMode(PVMP4FFCN_3GPP_DOWNLOAD_MODE);
-    }
-    else if (iTestCaseNum == K3GPPProgressiveDownloadModeTest)
-    {
-        clipConfig->SetAuthoringMode(PVMP4FFCN_3GPP_PROGRESSIVE_DOWNLOAD_MODE);
-    }
-    else if (iTestCaseNum == KMovieFragmentModeTest)
-    {
-        clipConfig->SetAuthoringMode(PVMP4FFCN_MOVIE_FRAGMENT_MODE);
-    }
+    clipConfig->SetVersion(iVersionString, lang_code);
+    clipConfig->SetTitle(iTitleString, lang_code);
+    clipConfig->SetAuthor(iAuthorString, lang_code);
+    clipConfig->SetCopyright(iCopyrightString, lang_code);
+    clipConfig->SetDescription(iDescriptionString, lang_code);
+    clipConfig->SetRating(iRatingString, lang_code);
+    clipConfig->SetAlbumInfo(iAlbumTitle, lang_code);
+    clipConfig->SetRecordingYear(iRecordingYear);
 
 
     return true;
 }
 
 ////////////////////////////////////////////////////////////////////////////
-bool pvauthor_async_test_miscellaneous::ConfigComposerOutput()
-{
-    PvmfComposerSizeAndDurationInterface* config =
-        OSCL_REINTERPRET_CAST(PvmfComposerSizeAndDurationInterface*, iOutputSizeAndDurationConfig);
-    if (!config)
-    {
-        return false;
-    }
-    bool enabled = false;
-    uint32 configData = 0;
-    switch (iTestCaseNum)
-    {
-        case KMaxFileSizeTest:
-        case KMaxFileSizeLongetivityTest:
-            if (config->SetMaxFileSize(true, KMaxFileSize) != PVMFSuccess)
-            {
-                return false;
-            }
-            config->GetMaxFileSizeConfig(enabled, configData);
-            if (!enabled || configData != KMaxFileSize)
-            {
-                return false;
-            }
-            break;
-
-        case KMaxDurationLongetivityTest:
-        case KMaxDurationTest:
-            if (config->SetMaxDuration(true, KMaxDuration) != PVMFSuccess)
-            {
-                return false;
-            }
-            config->GetMaxDurationConfig(enabled, configData);
-            if (!enabled || configData != KMaxDuration)
-            {
-                return false;
-            }
-            break;
-
-        case KFileSizeProgressLongetivityTest:
-        case KFileSizeProgressTest:
-            if (config->SetFileSizeProgressReport(true, KFileSizeProgressFreq) != PVMFSuccess)
-            {
-                return false;
-            }
-            config->GetFileSizeProgressReportConfig(enabled, configData);
-            if (!enabled || configData != KFileSizeProgressFreq)
-            {
-                return false;
-            }
-            break;
-
-        case KDurationProgressTest:
-        case KDurationProgressLongetivityTest:
-            if (config->SetDurationProgressReport(true, KDurationProgressFreq) != PVMFSuccess)
-            {
-                return false;
-            }
-            config->GetDurationProgressReportConfig(enabled, configData);
-            if (!enabled || configData != KDurationProgressFreq)
-            {
-                return false;
-            }
-            break;
-
-        default:
-            break;
-    }
-
-    return true;
-}
-
-////////////////////////////////////////////////////////////////////////////
-bool pvauthor_async_test_miscellaneous::QueryComposerOutputInterface()
-{
-    switch (iTestCaseNum)
-    {
-        case KMaxFileSizeTest:
-        case KMaxDurationTest:
-        case KFileSizeProgressTest:
-        case KDurationProgressTest:
-        case KMaxFileSizeLongetivityTest:
-        case KMaxDurationLongetivityTest:
-        case KFileSizeProgressLongetivityTest:
-        case KDurationProgressLongetivityTest:
-        case Generic_QueryInterface_Reset_Test:
-            iAuthor->QueryInterface(PvmfComposerSizeAndDurationUuid,
-                                    iOutputSizeAndDurationConfig, (OsclAny*)iAuthor);
-            return true;
-
-        default:
-            return false;
-    }
-}
 
 ////////////////////////////////////////////////////////////////////////////
 bool pvauthor_async_test_miscellaneous::AddAudioMediaTrack()
@@ -930,60 +633,28 @@ bool pvauthor_async_test_miscellaneous::AddAudioMediaTrack()
     switch (iTestCaseNum)
     {
         case AMR_Input_AOnly_3gpTest:
-        case AMR_Input_AOnly_Mp4Test:
         case AMR_YUV_Input_AV_3gpTest:
         case AMR_H263_Input_AV_3gpTest:
-        case AMR_YUV_Input_AV_Mp4Test:
-        case PCM16In_AMROut_Test:
-        case PCM16_Input_AOnly_3gpTest:
-        case PCM16_Input_AOnly_Mp4Test:
-        case PCM16_YUV_Input_AV_3gpTest:
-        case PCM16_YUV_Input_AV_Mp4Test:
-        case Pause_Resume_Test:
-        case AMR_TEXT_Input_AT_Mp4Test:
+        case AMR_YUV_Input_AV_M4V_AMR_Output_3gpTest:
+        case AMR_TEXT_Input_AT_3gpTest:
         case AMR_YUV_TEXT_Input_AVT_Mp4Test:
         case AMR_FOutput_Test:
-        case KMaxFileSizeTest:
-        case KMaxDurationTest:
-        case KFileSizeProgressTest:
-        case KDurationProgressTest:
-        case KFastTrackContentModeTest:
-        case K3GPPDownloadModeTest:
-        case K3GPPProgressiveDownloadModeTest:
-        case KMovieFragmentModeTest:
-        case H264_AMR_Input_AV_Mp4Test:
-        case H264_AMR_Input_AV_Mp4_LongetivityTest:
-        case AMR_Input_AOnly_3gp_LongetivityTest:
-        case AMR_Input_AOnly_Mp4_LongetivityTest:
-        case AMR_YUV_Input_AV_3gp_LongetivityTest:
-        case AMR_H263_Input_AV_3gp_LongetivityTest:
-        case AMR_YUV_Input_AV_Mp4_LongetivityTest:
+        case AMR_FileOutput_Test_UsingExternalFileHandle:
+        case H264_AMR_Input_AV_3gpTest:
         case AMR_TEXT_Input_AT_3gp_LongetivityTest:
         case AMR_YUV_TEXT_Input_AVT_3gp_LongetivityTest:
-        case PCM16In_AMROut_LongetivityTest:
-        case PCM16_Input_AOnly_3gp_LongetivityTest:
-        case PCM16_Input_AOnly_Mp4_LongetivityTest:
-        case PCM16_YUV_Input_AV_3gp_LongetivityTest:
-        case PCM16_YUV_Input_AV_Mp4_LongetivityTest:
-
-        case AMR_FOutput_LongetivityTest:
-        case KMaxFileSizeLongetivityTest:
-        case KMaxDurationLongetivityTest:
-        case KFileSizeProgressLongetivityTest:
-        case KDurationProgressLongetivityTest:
-        case KFastTrackContentModeLongetivityTest:
-        case K3GPPDownloadModeLongetivityTest:
-        case K3GPPProgressiveDownloadModeLongetivityTest:
             iAudioEncoderMimeType = KAMRNbEncMimeType;
             break;
 
+        case AMRWB_Input_AOnly_3gpTest:
+        case AMRWB_FOutput_Test:
+            iAudioEncoderMimeType = KAMRWbEncMimeType;
+            break;
 
         case AACADIF_FOutput_Test:
-        case AACADIF_FOutput_LongetivityTest:
             iAudioEncoderMimeType = KAACADIFEncMimeType;
             break;
         case AACADTS_FOutput_Test:
-        case AACADTS_FOutput_LongetivityTest:
             iAudioEncoderMimeType = KAACADTSEncMimeType;
             break;
 
@@ -1038,56 +709,25 @@ bool pvauthor_async_test_miscellaneous::AddVideoMediaTrack()
         case H263_Input_VOnly_3gpTest:
         case AMR_H263_Input_AV_3gpTest:
         case PCM16_YUV_Input_AV_3gpTest:
-        case KMaxFileSizeTest:
-        case KMaxDurationTest:
-        case KFileSizeProgressTest:
-        case KDurationProgressTest:
-        case KFastTrackContentModeTest:
-        case K3GPPDownloadModeTest:
-        case K3GPPProgressiveDownloadModeTest:
-        case KMovieFragmentModeTest:
             iVideoEncoderMimeType = KH263EncMimeType;
             break;
-        case YUV_Input_VOnly_3gp_LongetivityTest:
-        case AMR_YUV_Input_AV_3gp_LongetivityTest:
-        case H263_Input_VOnly_3gp_LongetivityTest:
-        case AMR_H263_Input_AV_3gp_LongetivityTest:
-        case PCM16_YUV_Input_AV_3gp_LongetivityTest:
         case YUV_TEXT_Input_VT_3gp_LongetivityTest:
         case AMR_YUV_TEXT_Input_AVT_3gp_LongetivityTest:
-        case KMaxFileSizeLongetivityTest:
-        case KMaxDurationLongetivityTest:
-        case KFileSizeProgressLongetivityTest:
-        case KDurationProgressLongetivityTest:
-        case KFastTrackContentModeLongetivityTest:
-        case K3GPPDownloadModeLongetivityTest:
-        case K3GPPProgressiveDownloadModeLongetivityTest:
             iVideoEncoderMimeType = KH263EncMimeType;
             break;
 
-
-        case YUV_Input_VOnly_Mp4Test:
-        case AMR_YUV_Input_AV_Mp4Test:
-        case PCM16_YUV_Input_AV_Mp4Test:
-        case Pause_Resume_Test:
-        case YUV_TEXT_Input_VT_Mp4Test:
+        case AMR_YUV_Input_AV_M4V_AMR_Output_3gpTest:
+        case YUV_TEXT_Input_VT_3gpTest:
         case AMR_YUV_TEXT_Input_AVT_Mp4Test:
-        case YUV_Input_VOnly_Mp4_LongetivityTest:
-        case AMR_YUV_Input_AV_Mp4_LongetivityTest:
-        case PCM16_YUV_Input_AV_Mp4_LongetivityTest:
             iVideoEncoderMimeType = KMp4EncMimeType;
             break;
-        case H264_Input_VOnly_Mp4Test:
-        case H264_AMR_Input_AV_Mp4Test:
-        case H264_Input_VOnly_Mp4_LongetivityTest:
-        case H264_AMR_Input_AV_Mp4_LongetivityTest:
+        case H264_AMR_Input_AV_3gpTest:
             iVideoEncoderMimeType = KH264EncMimeType;
             break;
         default:
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
                             (0, "pvauthor_async_test_miscellaneous::AddVideoMediaTrack: Video encoder not used in this test case."));
             return false;
-            break;
     }
 
     if (iVideoInputType == INVALID_INPUT_TYPE)
@@ -1130,9 +770,9 @@ bool pvauthor_async_test_miscellaneous::AddTextMediaTrack()
 
     switch (iTestCaseNum)
     {
-        case TEXT_Input_TOnly_Mp4Test:
-        case AMR_TEXT_Input_AT_Mp4Test:
-        case YUV_TEXT_Input_VT_Mp4Test:
+        case TEXT_Input_TOnly_3gpTest:
+        case AMR_TEXT_Input_AT_3gpTest:
+        case YUV_TEXT_Input_VT_3gpTest:
         case AMR_YUV_TEXT_Input_AVT_Mp4Test:
         case TEXT_Input_TOnly_3gp_LongetivityTest:
         case AMR_TEXT_Input_AT_3gp_LongetivityTest:
@@ -1195,7 +835,8 @@ bool pvauthor_async_test_miscellaneous::ConfigureVideoEncoder()
     config->SetOutputBitRate(0, KVideoBitrate);
     config->SetOutputFrameSize(0, iAVTConfig.iWidth , iAVTConfig.iHeight);
     config->SetOutputFrameRate(0, iAVTConfig.iFps);
-    config->SetIFrameInterval(iAVTConfig.iFrameInterval);
+    config->SetIFrameInterval(KVideoIFrameInterval);
+    config->SetSceneDetection(true);
 
     return true;
 }
@@ -1211,10 +852,12 @@ bool pvauthor_async_test_miscellaneous::ConfigureAudioEncoder()
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                         (0, "pvauthor_async_test_miscellaneous::ConfigureAudioEncoder: No configuration needed"));
+
+
         return true;
     }
 
-    return PVAETestNodeConfig::ConfigureAudioEncoder(iAudioEncoderConfig);
+    return PVAETestNodeConfig::ConfigureAudioEncoder(iAudioEncoderConfig, iAudioEncoderMimeType);
 }
 
 
@@ -1223,12 +866,12 @@ bool pvauthor_async_test_miscellaneous::ConfigureTextEncoder()
 {
     //Single core AMR encoder node support
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "pvauthor_async_test_miscellaneous::ConfigureAudioEncoder"));
+                    (0, "pvauthor_async_test_miscellaneous::ConfigureTextEncoder"));
 
     if (!iTextEncoderConfig)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                        (0, "pvauthor_async_test_miscellaneous::ConfigureAudioEncoder: No configuration needed"));
+                        (0, "pvauthor_async_test_miscellaneous::ConfigureTextEncoder: No configuration needed"));
         return true;
     }
 
@@ -1259,11 +902,7 @@ void pvauthor_async_test_miscellaneous::SetAuthoringDuration()
     uint32 minDuration = 0;
     uint32 ii = 0;
 
-    if (iTestCaseNum >= LongetivityTestBegin && iTestCaseNum <= AAC_OUTPUT_LongetivityTestEnd)
-    {
-        minDuration = iTestDuration / 1000; //in msec
-    }
-    else if (iTestCaseNum == Input_Stream_Looping_Test)
+    if (iTestCaseNum >= CompressedLongetivityTestBegin && iTestCaseNum <= Compressed_LongetivityTestEnd)
     {
         minDuration = iTestDuration / 1000; //in msec
     }
@@ -1357,7 +996,13 @@ void pvauthor_async_test_miscellaneous::Cleanup()
     }
 
     DeleteTestInputs();
+    fileserv.Close();
     iOutputFileName = NULL;
+    if (iFileHandle)
+    {
+        OSCL_DELETE(iFileHandle);
+        iFileHandle = NULL;
+    }
 }
 
 
@@ -1459,14 +1104,6 @@ void pvauthor_async_test_miscellaneous::Run()
             SelectComposer();
             break;
 
-        case PVAE_CMD_QUERY_INTERFACE:
-            if (!QueryComposerOutputInterface())
-            {
-                iState = PVAE_CMD_ADD_AUDIO_MEDIA_TRACK;
-                RunIfNotReady();
-            }
-            break;
-
         case PVAE_CMD_ADD_AUDIO_MEDIA_TRACK:
             if (!AddAudioMediaTrack())
             {
@@ -1530,7 +1167,10 @@ void pvauthor_async_test_miscellaneous::Run()
         case PVAE_CMD_RESET:
         {
             ResetAuthorConfig();
-            iAuthor->Reset((OsclAny*)iAuthor);
+            if (iAuthor->GetPVAuthorState() != PVAE_STATE_IDLE)
+            {
+                iAuthor->Reset((OsclAny*)iAuthor);
+            }
         }
         break;
         case PVAE_CMD_REMOVE_DATA_SOURCE:
@@ -1597,7 +1237,7 @@ void pvauthor_async_test_miscellaneous::CommandCompleted(const PVCmdResponse& aR
     if (aResponse.GetCmdStatus() != PVMFSuccess)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "pvauthor_async_test_generic_reset::CommandCompleted iState:%d FAILED", iState));
+                        (0, "pvauthor_async_test_miscellaneous::CommandCompleted iState:%d FAILED", iState));
     }
     switch (iState)
     {
@@ -1672,28 +1312,13 @@ void pvauthor_async_test_miscellaneous::CommandCompleted(const PVCmdResponse& aR
                 }
                 else
                 {
-                    iState = PVAE_CMD_QUERY_INTERFACE;
+                    iState = PVAE_CMD_ADD_AUDIO_MEDIA_TRACK;
                     RunIfNotReady();
                 }
             }
             else
             {
                 // SelectComposer failed
-                PVPATB_TEST_IS_TRUE(false);
-                iState = PVAE_CMD_RESET;
-                RunIfNotReady();
-            }
-            break;
-        case PVAE_CMD_QUERY_INTERFACE:
-            if (aResponse.GetCmdStatus() == PVMFSuccess)
-            {
-                ConfigComposerOutput();
-                iState = PVAE_CMD_ADD_AUDIO_MEDIA_TRACK;
-                RunIfNotReady();
-            }
-            else
-            {
-                // QueryInterface failed
                 PVPATB_TEST_IS_TRUE(false);
                 iState = PVAE_CMD_RESET;
                 RunIfNotReady();
@@ -1881,6 +1506,7 @@ void pvauthor_async_test_miscellaneous::CommandCompleted(const PVCmdResponse& aR
             {
                 // Reset failed
                 PVPATB_TEST_IS_TRUE(false);
+                OSCL_ASSERT("ERROR -- Response failure for CMD_RESET");
                 iObserver->CompleteTest(*iTestCase);
             }
             break;

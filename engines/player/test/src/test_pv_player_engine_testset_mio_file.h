@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,12 +32,15 @@ class PVPlayerTestFileOutputMioFactory : public PVPlayerTestMioFactory
         ~PVPlayerTestFileOutputMioFactory() {}
 
         PvmiMIOControl* CreateAudioOutput(OsclAny* aParam);
+        PvmiMIOControl* CreateAudioOutput(OsclAny* aParam, MediaType aMediaType, bool aCompressedAudio = false);
         PvmiMIOControl* CreateAudioOutput(OsclAny* aParam, PVRefFileOutputTestObserver* aObserver, bool aActiveTiming, uint32 aQueueLimit, bool aSimFlowControl, bool logStrings = true);
         void DestroyAudioOutput(PvmiMIOControl* aMio);
         PvmiMIOControl* CreateVideoOutput(OsclAny* aParam);
+        PvmiMIOControl* CreateVideoOutput(OsclAny* aParam, MediaType aMediaType, bool aCompressedVideo = false);
         PvmiMIOControl* CreateVideoOutput(OsclAny* aParam, PVRefFileOutputTestObserver* aObserver, bool aActiveTiming, uint32 aQueueLimit, bool aSimFlowControl, bool logStrings = true);
         void DestroyVideoOutput(PvmiMIOControl* aMio);
         PvmiMIOControl* CreateTextOutput(OsclAny* aParam);
+        PvmiMIOControl* CreateTextOutput(OsclAny* aParam, MediaType aMediaType);
         void DestroyTextOutput(PvmiMIOControl* aMio);
 };
 

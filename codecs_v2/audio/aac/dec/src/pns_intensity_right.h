@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,7 @@
  */
 /*
 
- Pathname: ./include/pns_intensity_right.h
-
-     Date: 07/05/2001
+ Pathname: pns_intensity_right.h
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
@@ -29,6 +27,7 @@
  Description: Changed name to from right_ch_sfb_tools_ms to intensity_right
  to more correct reflect the purpose of the function.
 
+ Who:                                  Date:
  Description:
 
 ------------------------------------------------------------------------------

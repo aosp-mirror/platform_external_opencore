@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,8 +36,6 @@ bool composeURL(const char *baseURL, const char *relativeURL, char *completeURL,
         {
             int len = oscl_strlen(baseURL);
             oscl_strncpy(copyOfBaseURL, baseURL, (len + 1));
-            //JJ 12/04/06
-            //dropTextAfterLastSlash(copyOfBaseURL);
             if ((copyOfBaseURL[len-1] != '/') && (len > 0))
             {
                 copyOfBaseURL[len] = '/';
@@ -57,8 +55,6 @@ bool composeURL(const char *baseURL, const char *relativeURL, char *completeURL,
         case REPLACE_PATH:
         {
             oscl_strncpy(copyOfBaseURL, baseURL, (oscl_strlen(baseURL) + 1));
-            //JJ 12/04/06
-            //dropTextAfterFirstSlash(copyOfBaseURL);
             if (completeURLLen <= (oscl_strlen(copyOfBaseURL) + oscl_strlen(relativeURL)))
             {
                 OSCL_ARRAY_DELETE(copyOfBaseURL);
@@ -195,9 +191,7 @@ void dropTextAfterFirstSlash(char *copyOfBaseURL)
 #ifndef OSCL_TIME_H_INCLUDED
 #include "oscl_time.h"
 #endif
-#if (!defined(MD5_H) && defined(SDK_HAS_REAL_HTTP_CLOAKING_SUPPORT))
-#include "md5.h"
-#endif
+
 #ifndef OSCL_SNPRINTF_H_INCLUDED
 #include "oscl_snprintf.h"
 #endif
@@ -207,43 +201,7 @@ void dropTextAfterFirstSlash(char *copyOfBaseURL)
 
 bool generatePseudoUUID(OSCL_String& aUUID)
 {
-#ifdef SDK_HAS_REAL_HTTP_CLOAKING_SUPPORT
-    //6e31c837-b458-4c27-b290-73805cb08da1
-    TimeValue current_time;
-    current_time.set_to_current_time();
-
-    uint32 seed_1 = current_time.get_sec();
-    uint32 seed_2 = current_time.get_usec();
-
-    MD5 myMD5;
-    myMD5.add((const  uint8 *)(&seed_1), sizeof(seed_1));
-    myMD5.add((const  uint8 *)(&seed_2), sizeof(seed_2));
-
-    MD5OctetHashValue md5output;
-    myMD5.compute_hash(md5output);
-
-    const int MAX_UUID_BUFSIZE = 64;
-    char buffer[MAX_UUID_BUFSIZE+1];
-
-    {
-        const char hex[] = "0123456789abcdef";
-        char *ptr = buffer;
-
-        for (uint32 i = 0, j = 0; i < 16; i++)
-        {
-            ptr[j++] = hex[md5output.hash_array[i] >> 4];
-            ptr[j++] = hex[md5output.hash_array[i] & 0x0f];
-
-            if ((j == 8) || (j == 13) || (j == 18) || (j == 23))
-                ptr[j++] = '-';
-
-            ptr[j] = '\0';
-        }
-    }
-    aUUID = buffer;
-#else
     aUUID = NULL;
-#endif
     return true;
 }
 

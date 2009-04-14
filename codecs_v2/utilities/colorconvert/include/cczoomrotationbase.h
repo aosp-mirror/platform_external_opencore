@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@
 #define CCROTATE_180			 2
 #define CCROTATE_CLKWISE         3
 #define	CCFLIP					 4
+#define CCBOTTOM_UP				 8
 
 /**
 *	Description - This is the base class of color converter classes.
@@ -124,17 +125,6 @@ class ColorConvertBase
         */
 
         virtual	int32 Convert(uint8 *srcBuf, uint8 *destBuf) = 0;
-
-        /**
-        *	@brief These functions convert the input buffer data into the output format
-        *   and write the converted data to the output buffer.
-        *	@param srcBuf is an array of pointers to Y,U and V plane in increasing order.
-        *	@param destBuf is a pointer to an output buffer.
-        *	@return This function return 1 if success, 0 if fail in the case of the destBuf
-        *	and/or srcBuf address are not word-aligned (multiple of 4).
-        */
-
-        virtual int32 Convert(uint8 **srcBuf, uint8 *destBuf) = 0;
 
         /**
         *	@brief This function returns the size of output buffer that users need

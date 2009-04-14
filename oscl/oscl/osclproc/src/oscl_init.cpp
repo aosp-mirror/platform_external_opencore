@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@
 #include "oscl_mem.h"
 #include "oscl_scheduler.h"
 #include "oscl_error.h"
-#include "oscl_error_panic.h"
 #include "pvlogger.h"
 
 static void _OsclInit2(const OsclSelect &aSelect)
@@ -29,7 +28,7 @@ static void _OsclInit2(const OsclSelect &aSelect)
 {
     if (aSelect.iOsclMemory)
     {
-        OsclMem::Init(aSelect.iMemLock);
+        OsclMem::Init();
     }
     if (aSelect.iOsclLogger)
     {
@@ -45,19 +44,17 @@ static void _OsclInit2(const OsclSelect &aSelect)
 }
 
 //need this routine to avoid a longjmp clobber warning.
-static void _OsclInit2(int32 &aErr, TPVErrorPanic &aPanic, const OsclSelect &aSelect)
+static void _OsclInit2(int32 &aErr, const OsclSelect &aSelect)
 {
-    OSCL_PANIC_TRAP(aErr, aPanic, _OsclInit2(aSelect););
+    OSCL_TRY(aErr, _OsclInit2(aSelect););
 }
 
 OSCL_EXPORT_REF void OsclInit::Init(
     int32 &err
-    , TPVErrorPanic &panic
     , const OsclSelect *p
 )
 {
     err = OsclErrNone;
-    panic.iReason = OsclErrNone;
 
     //Use default parameters if none were input.
     OsclSelect defaultselect;
@@ -92,7 +89,7 @@ OSCL_EXPORT_REF void OsclInit::Init(
     //Do remaining init under a trap, if available.
     if (trapit)
     {
-        _OsclInit2(err, panic, *select);
+        _OsclInit2(err, *select);
     }
     else
     {
@@ -102,14 +99,14 @@ OSCL_EXPORT_REF void OsclInit::Init(
 
 
 //Note: need these routines to avoid longjmp clobber warnings from some compilers.
-static void _OsclSchedulerCleanup(int32 &aErr, TPVErrorPanic& aPanic)
+static void _OsclSchedulerCleanup(int32 &aErr)
 {
-    OSCL_PANIC_TRAP(aErr, aPanic, OsclScheduler::Cleanup(););
+    OSCL_TRY(aErr, OsclScheduler::Cleanup(););
 }
 
-static void _OsclLoggerCleanup(int32 &aErr, TPVErrorPanic& aPanic)
+static void _OsclLoggerCleanup(int32 &aErr)
 {
-    OSCL_PANIC_TRAP(aErr, aPanic, PVLogger::Cleanup(););
+    OSCL_TRY(aErr, PVLogger::Cleanup(););
 }
 
 #include "oscl_mem_audit.h"
@@ -124,7 +121,8 @@ static void _OsclMemCleanup(FILE* aFile)
         //Check for memory leaks before cleaning up OsclMem.
         OsclAuditCB auditCB;
         OsclMemInit(auditCB);
-        if (auditCB.pAudit)
+        if (auditCB.pAudit
+                && auditCB.pAudit->MM_GetRefCount() == 1)
         {
             MM_Stats_t* stats = auditCB.pAudit->MM_GetStats("");
             if (stats)
@@ -155,7 +153,7 @@ static void _OsclMemCleanup(FILE* aFile)
                     fprintf(aFile, "  fileName %s\n", info[i].fileName);
                     fprintf(aFile, "  lineNo %d\n", info[i].lineNo);
                     fprintf(aFile, "  size %d\n", info[i].size);
-                    fprintf(aFile, "  pMemBlock 0x%x\n", info[i].pMemBlock);
+                    fprintf(aFile, "  pMemBlock 0x%x\n", (uint32)info[i].pMemBlock);
                     fprintf(aFile, "  tag %s\n", info[i].tag);
                 }
                 auditCB.pAudit->MM_ReleaseAllocNodeInfo(info);
@@ -166,46 +164,42 @@ static void _OsclMemCleanup(FILE* aFile)
     OsclMem::Cleanup();
 }
 
-static void _OsclMemCleanup(int32 &aErr, TPVErrorPanic& aPanic, FILE* aFile)
+static void _OsclMemCleanup(int32 &aErr, FILE* aFile)
 {
-    OSCL_PANIC_TRAP(aErr, aPanic, _OsclMemCleanup(aFile););
+    OSCL_TRY(aErr, _OsclMemCleanup(aFile););
 }
 
-OSCL_EXPORT_REF void OsclInit::Cleanup(int32 &aErr, TPVErrorPanic& aPanic, const OsclSelect *p)
+OSCL_EXPORT_REF void OsclInit::Cleanup(int32 &aErr, const OsclSelect *p)
 {
-    int32 err = OsclErrNone;
-    TPVErrorPanic panic;
+    aErr = OsclErrNone;
+
     //Use default parameters if none were input.
     OsclSelect defaultselect;
     const OsclSelect* select = (p) ? p : &defaultselect;
 
     //Note: we continue cleanup despite errors and return the last error encoutered.
 
+    int32 err;
+
     if (select->iOsclScheduler)
     {
-        _OsclSchedulerCleanup(err, panic);
+        _OsclSchedulerCleanup(err);
         if (err)
             aErr = err;
-        if (panic.iReason)
-            aPanic = panic;
     }
 
     if (select->iOsclLogger)
     {
-        _OsclLoggerCleanup(err, panic);
+        _OsclLoggerCleanup(err);
         if (err)
             aErr = err;
-        if (panic.iReason)
-            aPanic = panic;
     }
 
     if (select->iOsclMemory)
     {
-        _OsclMemCleanup(err, panic, select->iOutputFile);
+        _OsclMemCleanup(err, select->iOutputFile);
         if (err)
             aErr = err;
-        if (panic.iReason)
-            aPanic = panic;
     }
 
     if (select->iOsclErrorTrap)

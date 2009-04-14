@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,14 +27,8 @@ Permission to distribute, modify and use this file under the standard license
 terms listed above has been obtained from the copyright holder.
 ****************************************************************************************/
 /*
-------------------------------------------------------------------------------
-
-
-
  Pathname: ./audio/gsm-amr/c/src/q_plsf_5.c
  Funtions:
-
-     Date: 02/05/2002
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
@@ -75,6 +69,7 @@ terms listed above has been obtained from the copyright holder.
 
  Description: Added #ifdef __cplusplus around extern'ed table.
 
+ Who:                           Date:
  Description:
 
 ------------------------------------------------------------------------------
@@ -295,7 +290,7 @@ static Word16 Vq_subvec( /* o : quantization index,            Q0  */
     lsf_r1[0] = *p_dico++;
     lsf_r1[1] = *p_dico++;
     lsf_r2[0] = *p_dico++;
-    lsf_r2[1] = *p_dico++;
+    lsf_r2[1] = *p_dico;
 
     return index;
 
@@ -486,7 +481,7 @@ static Word16 Vq_subvec_s(  /* o : quantization index            Q0  */
         lsf_r1[0] = - (*p_dico++);
         lsf_r1[1] = - (*p_dico++);
         lsf_r2[0] = - (*p_dico++);
-        lsf_r2[1] = - (*p_dico++);
+        lsf_r2[1] = - (*p_dico);
         index +=  1;
     }
     else
@@ -494,7 +489,7 @@ static Word16 Vq_subvec_s(  /* o : quantization index            Q0  */
         lsf_r1[0] = *p_dico++;
         lsf_r1[1] = *p_dico++;
         lsf_r2[0] = *p_dico++;
-        lsf_r2[1] = *p_dico++;
+        lsf_r2[1] = *p_dico;
     }
 
     return index;

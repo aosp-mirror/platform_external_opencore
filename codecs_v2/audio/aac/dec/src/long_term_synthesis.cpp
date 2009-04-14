@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,9 @@
  * -------------------------------------------------------------------
  */
 /*
-------------------------------------------------------------------------------
 
+ Pathname: long_term_synthesis.c
 
- Pathname: ./AAC_baseline/pv_aac_dec/c/src/long_term_synthesis.c
-
-     Date: 07/12/2001
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
@@ -43,6 +40,7 @@
 
  Description: Changed index "wnd" in previous line 584 with "wnd_offset"
               and made other correspondent changes to the code.
+
 
  Description: Based on Ken's suggestion, modified the function with the
               passing-in Q format as scalefactor band basis in order to
@@ -75,6 +73,7 @@
     pointer and a post-increment pointer in the same line. This may not
     work with all compilers.
 
+ Who:                                   Date:
  Description:
 
 ------------------------------------------------------------------------------

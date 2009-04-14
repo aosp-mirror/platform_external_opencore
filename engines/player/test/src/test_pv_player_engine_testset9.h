@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,11 @@
 #include "pvmf_streaming_data_source.h"
 #endif
 
+#if RUN_FASTTRACK_TESTCASES
+#ifndef PVPVXPARSER_H_INCLUDED
+#include "pvpvxparser.h"
+#endif
+#endif
 
 #ifndef PVMF_DOWNLOAD_DATA_SOURCE_H_INCLUDED
 #include "pvmf_download_data_source.h"
@@ -46,14 +51,14 @@
 #include "pvmf_source_context_data.h"
 #endif
 
-#define AMR_MPEG4_RTSP_URL "rtsp://test.3gp"
-#define AMR_MPEG4_RTSP_URL_2 "rtsp://test.mp4"
-#define H263_AMR_RTSP_URL "rtsp://test.3gp"
-#define MPEG4_RTSP_URL "rtsp://test.3gp"
-#define MPEG4_SHRT_HDR_RTSP_URL "rtsp://test.3gp"
-#define AAC_RTSP_URL     "rtsp://test.3gp"
-#define MPEG4_AAC_RTSP_URL "rtsp://test.3gp"
-#define AMR_MPEG4_SDP_FILE "test.sdp"
+#define AMR_MPEG4_RTSP_URL "rtsp://pvserveroha.pv.com/public/Interop/3GPP/pv2/pv-amr-475_mpeg4-20.3gp"
+#define AMR_MPEG4_RTSP_URL_2 "rtsp://pvserveroha.pv.com/public/metadata/pvmetadata.mp4"
+#define H263_AMR_RTSP_URL "rtsp://pvserveroha.pv.com/public/Interop/3GPP/pv2/pv-amr-122_h263-64.3gp"
+#define MPEG4_RTSP_URL "rtsp://pvserveroha.pv.com/public/Interop/3GPP/pv2/pv-mpeg4rdatapartr64.3gp"
+#define MPEG4_SHRT_HDR_RTSP_URL "rtsp://pvserveroha.pv.com/public/Interop/3GPP/pv2/pv-mpeg4shorthdrr64.3gp"
+#define AAC_RTSP_URL     "rtsp://pvserveroha.pv.com/public/Interop/3GPP/pv2/pv-aac64_novisual.3gp"
+#define MPEG4_AAC_RTSP_URL "rtsp://pvserveroha.pv.com/public/Interop/3GPP/pv2/pv2-aac64_mpeg4-rvlcs-64.3gp"
+#define AMR_MPEG4_SDP_FILE "pv_amr_mpeg4.sdp"
 
 class PVPlayerDataSourceURL;
 class PVPlayerDataSink;
@@ -61,6 +66,8 @@ class PVPlayerDataSink;
 class PVPlayerDataSinkFilename;
 class PvmfFileOutputNodeConfigInterface;
 class PvmiCapabilityAndConfig;
+class PVMFDownloadDataSourcePVX;
+
 
 /*!
  *  Test cases to test Reset() call (right after/while processing) each state while playing an local/PDL/rtsp url
@@ -122,6 +129,7 @@ class pvplayer_async_test_genericreset : public pvplayer_async_test_base
                 , iPlayListURL(false)
                 , iStreamDataSource(NULL)
                 , iSourceContextData(NULL)
+                , iDownloadContextDataPVX(NULL)
                 , iPlayStarted(false)
                 , iSeekDone(false)
         {
@@ -231,8 +239,13 @@ class pvplayer_async_test_genericreset : public pvplayer_async_test_base
         char iClipType[100];
         //FTDL
         void CreateDownloadDataSource();
+        uint8 iPVXFileBuf[4096];
+        PVMFDownloadDataSourcePVX* iDownloadContextDataPVX;
         PVMFDownloadDataSourceHTTP* iDownloadContextDataHTTP;
         int32 iDownloadMaxfilesize;
+#if RUN_FASTTRACK_TESTCASES
+        CPVXInfo iDownloadPvxInfo;
+#endif
         OSCL_wHeapString<OsclMemAllocator> iDownloadURL;
         OSCL_wHeapString<OsclMemAllocator> iDownloadFilename;
         OSCL_HeapString<OsclMemAllocator> iDownloadProxy;

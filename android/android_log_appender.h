@@ -27,6 +27,10 @@
 #include "osclconfig_util.h"
 #endif
 
+#ifndef OSCL_MEM_H_INCLUDED
+#include "oscl_mem.h"
+#endif
+
 #include <utils/Log.h>
 #undef LOG_TAG
 #define LOG_TAG "PV"
@@ -38,43 +42,43 @@
 template<class Layout, int32 LayoutBufferSize, class Lock = OsclNullLock>
 class AndroidLogAppender : public PVLoggerAppender {
 public:
-	typedef PVLoggerAppender::message_id_type message_id_type;
+    typedef PVLoggerAppender::message_id_type message_id_type;
 
-	AndroidLogAppender() 
-	{
-		stringbuf=NULL;
-		wstringbuf=NULL;
-	}
+    AndroidLogAppender() 
+    {
+        stringbuf=NULL;
+        wstringbuf=NULL;
+    }
     virtual ~AndroidLogAppender() 
-	{
-		if(stringbuf)
-			OSCL_DEFAULT_FREE(stringbuf);
-		if(wstringbuf)
-			OSCL_DEFAULT_FREE((OsclAny*)wstringbuf);
-	}
+    {
+        if(stringbuf)
+            OSCL_DEFAULT_FREE(stringbuf);
+        if(wstringbuf)
+            OSCL_DEFAULT_FREE((OsclAny*)wstringbuf);
+    }
     
     void AppendString(message_id_type msgID, const char *fmt, va_list va)
     {
         _lock.Lock();
-		
+        
         int32 size;
 
-		if(!stringbuf)
-		{
-			stringbuf=(char*)OSCL_DEFAULT_MALLOC(LayoutBufferSize);
-			if(!stringbuf)
-				return;//allocation failed-- just exit gracefully.
-		}
+        if(!stringbuf)
+        {
+            stringbuf=(char*)OSCL_DEFAULT_MALLOC(LayoutBufferSize);
+            if(!stringbuf)
+                return;//allocation failed-- just exit gracefully.
+        }
 
         size = _layout.FormatString(stringbuf, LayoutBufferSize, msgID, fmt, va );
-		
+        
         LOGE(stringbuf);
 
         _lock.Unlock();
     }
     void AppendBuffers(message_id_type msgID, int32 numPairs, va_list va)
     {
-		OSCL_UNUSED_ARG(msgID);
+        OSCL_UNUSED_ARG(msgID);
         
         for (int32 i = 0; i < numPairs; i++)
         {
@@ -97,7 +101,7 @@ public:
             }
         }
         va_end(va);
-	}
+    }
 
 private:
     void AppendStringA(message_id_type msgID, const char *fmt, ...) {
@@ -109,8 +113,8 @@ private:
 
     Layout _layout;
     Lock _lock;
-	char* stringbuf;
-	oscl_wchar* wstringbuf;
+    char* stringbuf;
+    oscl_wchar* wstringbuf;
 
 };
 

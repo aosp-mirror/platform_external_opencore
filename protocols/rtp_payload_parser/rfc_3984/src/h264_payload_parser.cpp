@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -180,43 +180,6 @@ OSCL_EXPORT_REF uint32 H264PayloadParser::GetMinCurrTimestamp()
 /***************************************************************************************
 *******************************	PRIVATE SECTION ****************************************
 ****************************************************************************************/
-#if 0
-PayloadParserStatus
-H264PayloadParser::parseRTPPayload_PassthruMode(PVMFSharedMediaDataPtr& rtpPacket,
-        PVMFSharedMediaDataPtr& accessUnit)
-{
-    OsclSharedPtr<PVMFMediaDataImpl> mediaDataIn;
-    if (rtpPacket->getMediaDataImpl(mediaDataIn) == false)
-    {
-        return RTP_PAYLOAD_PARSER_MEMORY_ALLOC_FAILURE;
-    }
-
-    // Create output media data impl object
-    OsclSharedPtr<PVMFMediaDataImpl> mediaDataOut;
-    int32 err;
-    OSCL_TRY(err, mediaDataOut = iMediaDataGroupAlloc->allocate());
-    if (err != OsclErrNone) return RTP_PAYLOAD_PARSER_MEMORY_ALLOC_FAILURE;
-
-    // Get the input memory fragment
-    OsclRefCounterMemFrag memFragIn;
-    mediaDataIn->getMediaFragment(0, memFragIn);
-
-    OsclRefCounterMemFrag memFragOut(memFragIn);
-    memFragOut.getMemFrag().ptr = memFragIn.getMemFragPtr();
-    memFragOut.getMemFrag().len = memFragIn.getMemFragSize();
-    mediaDataOut->appendMediaFragment(memFragOut);
-
-    // create output media data object
-    OSCL_TRY(err, accessUnit = PVMFMediaData::createMediaData(mediaDataOut, rtpPacket->getMessageHeader()));
-    if (err != OsclErrNone) return RTP_PAYLOAD_PARSER_MEMORY_ALLOC_FAILURE;
-
-    // set sequence number and timestamp
-    accessUnit->setSeqNum(rtpPacket->getSeqNum() + 1);
-    accessUnit->setTimestamp(rtpPacket->getTimestamp());
-
-    return RTP_PAYLOAD_PARSER_SUCCESS;
-}
-#endif
 
 PayloadParserStatus
 H264PayloadParser::parseRTPPayload_For_Non_InterleavedMode(const Payload& inputPacket,
@@ -451,12 +414,14 @@ H264PayloadParserUtility::generateMemFrag(const IPayloadParser::Payload& aIn,
 {
     // construct output memory fragment
     OsclRefCounterMemFrag memFragOut(aIn.vfragments[0]);
+    uint8* memfrag = NULL;
 
     // Get the actual memory frag pointer and length
     PayloadParserStatus ret_val =
         getMemFragPtrLen(const_cast<IPayloadParser::Payload&>(aIn).vfragments[0],
-                         nal_type, (uint8*&)memFragOut.getMemFrag().ptr,
+                         nal_type, memfrag,
                          memFragOut.getMemFrag().len, rtp_payload_ptr_offset);
+    memFragOut.getMemFrag().ptr = (OsclAny*)memfrag;
     if (ret_val != PayloadParserStatus_Success) return ret_val;
 
     // add the memory fragment into media data imp object

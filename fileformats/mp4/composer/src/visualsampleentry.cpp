@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*********************************************************************************/
 /*
     This PVA_FF_VisualSampleEntry Class fp used for visual streams.
 */
@@ -26,8 +25,6 @@
 #include "visualsampleentry.h"
 #include "atomutils.h"
 #include "a_atomdefs.h"
-
-//extern pvostream& operator<<(pvostream& fp, const PVA_FF_ESDAtom &a);
 
 
 // Constructor
@@ -189,4 +186,3 @@ PVA_FF_VisualSampleEntry::recomputeSize()
         _pparent->recomputeSize();
     }
 }
-

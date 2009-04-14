@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -135,55 +135,6 @@ void RefListInit(AVCCommonObj *video)
 
     return ;
 }
-#if 0
-/** see subclause 8.2.4.2.5, keep alternating parity regardless of the frame_num until
-there's no more to alternate. */
-void 	GenPicListFromFrameList(AVCCommonObj *video, int IsL1, int long_term)
-{
-    AVCFrameStore **frame ;
-    AVCPictureData **pic;
-    int *num_pic;
-
-
-    int (*is_ref)(AVCPictureData *s);
-
-    if (long_term)
-        is_ref = video->is_long_ref;
-    else
-        is_ref = video->is_short_ref;
-
-    if (!long_term)
-    {
-        if (!IsL1) /* L0 */
-        {
-            frame = video->refFrameList0ShortTerm;
-            pic = video->RefPicList0;
-            num_pic = &(video->refList0Size);
-        }
-        else
-        {
-            frame = video->refFrameList1ShortTerm;
-            pic = video->RefPicList1;
-            num_pic = &(video->refList1Size);
-        }
-    }
-    else
-    {
-        frame = video->refFrameListLongTerm;
-        if (!IsL1)
-        {
-            pic = video->RefPicList0 + video->refList0Size;
-            num_pic = &(video->refList0Size);
-        }
-        else
-        {
-            pic = video->RefPicList1 + video->refList1Size;
-            num_pic = &(video->refList1Size);
-        }
-    }
-
-}
-#endif
 /* see subclause 8.2.4.3 */
 AVCStatus ReOrderList(AVCCommonObj *video)
 {
@@ -204,17 +155,6 @@ AVCStatus ReOrderList(AVCCommonObj *video)
             return AVC_FAIL;
         }
     }
-#if 0
-    if (slice_type == AVC_B_SLICE)
-    {
-        if (sliceHdr->ref_pic_list_reordering_flag_l1)
-        {
-            status = ReorderRefPicList(video, 1);
-            if (status != AVC_SUCCESS)
-                return status;
-        }
-    }
-#endif
     return status;
 }
 
@@ -231,22 +171,27 @@ AVCStatus ReorderRefPicList(AVCCommonObj *video, int isL1)
     int i;
     int maxPicNum, currPicNum, picNumLXNoWrap, picNumLXPred, picNumLX;
     int refIdxLX = 0;
+    void* tmp;
 
     if (!isL1) /* list 0 */
     {
         list_size = &(video->refList0Size);
         num_ref_idx_lX_active_minus1 = sliceHdr->num_ref_idx_l0_active_minus1;
         remapping_of_pic_nums_idc = sliceHdr->reordering_of_pic_nums_idc_l0;
-        abs_diff_pic_num_minus1 = (int*)sliceHdr->abs_diff_pic_num_minus1_l0;
-        long_term_pic_idx = (int*)sliceHdr->long_term_pic_num_l0;
+        tmp = (void*)sliceHdr->abs_diff_pic_num_minus1_l0;
+        abs_diff_pic_num_minus1 = (int*) tmp;
+        tmp = (void*)sliceHdr->long_term_pic_num_l0;
+        long_term_pic_idx = (int*) tmp;
     }
     else
     {
         list_size = &(video->refList1Size);
         num_ref_idx_lX_active_minus1 = sliceHdr->num_ref_idx_l1_active_minus1;
         remapping_of_pic_nums_idc = sliceHdr->reordering_of_pic_nums_idc_l1;
-        abs_diff_pic_num_minus1 = (int*)sliceHdr->abs_diff_pic_num_minus1_l1;
-        long_term_pic_idx = (int*)sliceHdr->long_term_pic_num_l1;
+        tmp = (void*) sliceHdr->abs_diff_pic_num_minus1_l1;
+        abs_diff_pic_num_minus1 = (int*) tmp;
+        tmp = (void*) sliceHdr->long_term_pic_num_l1;
+        long_term_pic_idx = (int*)tmp;
     }
 
     maxPicNum = video->MaxPicNum;

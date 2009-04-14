@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 /* ---------------------------------------------------------------- */
 /*	Create AVI file from a YUV or RGB output of MPEG4 decoder.		*/
 /* //////////////////////////////////////////////////////////////// */
+
 #ifndef AVI_WRITE_H_INCLUDED
 #define AVI_WRITE_H_INCLUDED
 
@@ -61,12 +62,9 @@
 #define videoChunkID        mmioFOURCC('0', '0', 'd', 'b')
 #define ckidAVINEWINDEX		mmioFOURCC('i', 'd', 'x', '1')
 
-#define AVIF_HASINDEX		0x00000010	// Index at end of file?
-#define AVIF_MUSTUSEINDEX	0x00000020
-#define AVIF_ISINTERLEAVED	0x00000100
-#define AVIF_TRUSTCKTYPE	0x00000800	// Use CKType to find key frames?
-#define AVIF_WASCAPTUREFILE	0x00010000
-#define AVIF_COPYRIGHTED	0x00020000
+#define AVIF_HASINDEX_FILE_OUT		0x00000010	// Index at end of file?
+#define AVIF_TRUSTCKTYPE_FILE_OUT	0x00000800	// Use CKType to find key frames?
+
 
 #define DEFAULT_COUNT 20000 /* default number of frames */
 
@@ -104,8 +102,8 @@ typedef struct
  * Stream header
  */
 
-#define AVISF_DISABLED			0x00000001
-#define AVISF_VIDEO_PALCHANGES		0x00010000
+//#define AVISF_DISABLED			0x00000001
+//#define AVISF_VIDEO_PALCHANGES		0x00010000
 
 typedef struct
 {

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -192,8 +192,9 @@ typedef enum {  READ_FAILED	= -1,
                 LAST_SAMPLE_IN_MOOV = 148,
                 READ_UDTA_LOC_FAILED = 149,
                 NOT_PROGRESSIVE_STREAMABLE = 150,
-                READ_PIXELASPECTRATIO_BOX_FAILED = 151
+                READ_PIXELASPECTRATIO_BOX_FAILED = 151,
 
+                EXCEED_MAX_LIMIT_SUPPORTED_FOR_TOTAL_TRACKS
 
              } MP4_ERROR_CODE;
 

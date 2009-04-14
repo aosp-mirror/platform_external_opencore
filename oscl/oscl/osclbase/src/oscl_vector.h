@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -137,11 +137,18 @@ class Oscl_Vector_Base
         OSCL_IMPORT_REF void push_front(const OsclAny* x) ;
 
         /**
-         * Erases the element pointed to by iterator pos.
-         * Erasing an element invalidates all iterators pointing to elements
-         * following the deletion point.
-         * @param pos iterator at erase position
+         * Inserts a new element at a specific position.
+         * @param pos iterator at insert position.
+         * @param x pointer to new element
          */
+        OSCL_IMPORT_REF OsclAny* insert(OsclAny* pos, const OsclAny* x);
+
+        /**
+          * Erases the element pointed to by iterator pos.
+          * Erasing an element invalidates all iterators pointing to elements
+          * following the deletion point.
+          * @param pos iterator at erase position
+          */
         OSCL_IMPORT_REF OsclAny* erase(OsclAny* pos) ;
 
         /**
@@ -299,6 +306,16 @@ class Oscl_Vector
         }
 
         /**
+         * Inserts a new element before the one at pos.
+         * @param pos position at which to insert the new element.
+         * @param x new element
+         */
+        iterator insert(iterator pos, const T& x)
+        {
+            return (iterator)Oscl_Vector_Base::insert(pos, &x);
+        }
+
+        /**
          * Returns the n'th element.
          * @param n element position to return
          */
@@ -353,6 +370,7 @@ class Oscl_Vector
          */
         void pop_back()
         {
+            OSCL_ASSERT(numelems);
             numelems--;
             destroy(end());
         }
@@ -419,7 +437,8 @@ class Oscl_Vector
         //from Oscl_Opaque_Type_Alloc
         OsclAny* allocate(const uint32 size)
         {
-            return defAlloc.ALLOCATE(size);
+            //prevent zero-size allocations since some allocators don't handle this
+            return (size) ? defAlloc.ALLOCATE(size) : NULL;
         }
 
         //from Oscl_Opaque_Type_Alloc

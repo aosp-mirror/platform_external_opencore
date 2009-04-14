@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,6 @@
 */
 
 /*!
-** Support PVX download
-*/
-
-/*!
 ** Support progressive playback.
 */
 #ifndef PVMF_DOWNLOADMANAGER_SUPPORT_PPB
@@ -36,21 +32,30 @@
 #endif
 
 /*!
-** Support License Acquire interface.  This allows acquiring a license
-** during playback of protected content.
-*/
-#ifndef PVMF_DOWNLOADMANAGER_SUPPORT_CPM_GETLICENSE
-#define PVMF_DOWNLOADMANAGER_SUPPORT_CPM_GETLICENSE   1
-#endif
-
-/*!
 ** A tunable parameter setting the number of TCP buffers to
 ** use for progressive playback.
 */
 #ifndef PVMF_DOWNLOADMANAGER_MIN_TCP_BUFFERS_FOR_PPB
-//#define PVMF_DOWNLOADMANAGER_MIN_TCP_BUFFERS_FOR_PPB 13
-#define PVMF_DOWNLOADMANAGER_MIN_TCP_BUFFERS_FOR_PPB 39
+#define PVMF_DOWNLOADMANAGER_MIN_TCP_BUFFERS_FOR_PPB  8
 #endif
+
+/*!
+** A tunable parameter setting the MBDS cache size to
+** use for shoutcast in seconds.
+** PE node required jitter buffer size is 4 seconds.
+*/
+#ifndef PVMF_DOWNLOADMANAGER_CACHE_SIZE_FOR_SC_IN_SECONDS
+#define PVMF_DOWNLOADMANAGER_CACHE_SIZE_FOR_SC_IN_SECONDS  6
+#endif
+
+/*!
+** A tunable parameter setting the maximum clip bitrate supported
+** by shoutcast in kbps
+*/
+#ifndef PVMF_DOWNLOADMANAGER_MAX_BITRATE_FOR_SC
+#define PVMF_DOWNLOADMANAGER_MAX_BITRATE_FOR_SC  128
+#endif
+
 
 #endif // PVMF_DOWNLOADMANAGER_CONFIG_H_INCLUDED
 

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,8 @@ to three OS LINUX, SYMBIAN, WIN32
 
 // Implementation file for OSCL Semaphores
 #include "oscl_semaphore.h"
+#include "oscl_assert.h"
+
 
 
 // Class contructor
@@ -40,6 +42,8 @@ OSCL_EXPORT_REF OsclSemaphore::OsclSemaphore()
 
 OSCL_EXPORT_REF OsclSemaphore::~OsclSemaphore()
 {
+    //make sure it was closed
+    OSCL_ASSERT(!bCreated);
 }
 
 
@@ -107,17 +111,17 @@ OSCL_EXPORT_REF OsclProcStatus::eOsclProcError OsclSemaphore::Wait()
     if (res != 0)
         return OsclProcStatus::OTHER_ERROR;
     while (iCount == 0 && res == 0)
-    {	// wait till the semaphore is signaled
+    {   // wait till the semaphore is signaled
         // or an error has occurred
         res = pthread_cond_wait(&ObjCondition, &ObjMutex);
     }
     if (res == 0)
-    {	// signaled
+    {   // signaled
         iCount--;
     }
     pthread_mutex_unlock(&ObjMutex);
     if (res != 0)
-    {	// error occurred
+    {   // error occurred
         // invalid condition or mutex
         return OsclProcStatus::OTHER_ERROR;
     }
@@ -179,21 +183,21 @@ OSCL_EXPORT_REF OsclProcStatus::eOsclProcError OsclSemaphore::Wait(uint32 timeou
     getAbsTime(abs, timeout_msec);
 
     while ((iCount == 0) && (res == 0))
-    {	// wait till semaphore is signaled
+    {   // wait till semaphore is signaled
         // or time runs out
         res = pthread_cond_timedwait(&ObjCondition, &ObjMutex, &abs);
     }
     if (res == 0)
-    {	// signalied
+    {   // signalied
         iCount--;
     }
     pthread_mutex_unlock(&ObjMutex);
     if (res == ETIMEDOUT)
-    {	// timeour occurred
+    {   // timeour occurred
         return OsclProcStatus::WAIT_TIMEOUT_ERROR;
     }
     else if (res != 0)
-    {	// error occurred
+    {   // error occurred
         return OsclProcStatus::OTHER_ERROR;
     }
     return OsclProcStatus::SUCCESS_ERROR;

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,8 @@
  * -------------------------------------------------------------------
  */
 /*
-------------------------------------------------------------------------------
 
-
- Pathname: ./AAC_baseline/pv_aac_dec/c/include/getfill.h
-
-     Date: 07/05/2001
+ Pathname: getfill.h
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
@@ -29,6 +25,7 @@
  Description: Changed "definition" to "declaration" on line 28 per
               review comments.
 
+ Who:                           Date:
  Description:
 
 ------------------------------------------------------------------------------

@@ -74,7 +74,7 @@ namespace android {
 }
 
 class PVLogger;
-class OsclClock;
+class PVMFMediaClock;
 class AndroidSurfaceOutput;
 
 using namespace android;
@@ -85,8 +85,10 @@ using namespace android;
 // This class implements the reference media IO for file output.
 // This class constitutes the Media IO component
 
-class AndroidSurfaceOutput : public OsclTimerObject, public PvmiMIOControl,
-    public PvmiMediaTransfer, public PvmiCapabilityAndConfig
+class AndroidSurfaceOutput :    public OsclTimerObject
+                        ,public PvmiMIOControl
+                        ,public PvmiMediaTransfer
+                        ,public PvmiCapabilityAndConfig
 {
 public:
     AndroidSurfaceOutput();
@@ -119,6 +121,8 @@ public:
                                             PvmiKvp* write_formats=NULL, int32 write_flags=0);
 
     void deleteMediaTransfer(PvmiMIOSession& aSession, PvmiMediaTransfer* media_transfer);
+
+    void processWriteResponseQueue(int numFramesToHold);
 
     PVMFCommandId Init(const OsclAny* aContext=NULL);
 
@@ -198,8 +202,6 @@ public:
 
     PVMFStatus verifyParametersSync (PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
 
-    // FIXME: Not used?
-    // void SetFrameDecodedCallback(frame_decoded_f f, void *cookie);
 
 protected:
     void initData();
@@ -270,6 +272,8 @@ protected:
     Oscl_File iOutputFile;
     bool iFileOpened;
 
+    bool iEosReceived;
+
     // Video parameters
     uint32 iVideoParameterFlags;
     OSCL_HeapString<OsclMemAllocator> iVideoFormatString;
@@ -306,6 +310,8 @@ protected:
     size_t                      mFrameBuffers[kBufferCount];
 
     void convertFrame(void* src, void* dst, size_t len);
+    //This bool is set true when all necassary parameters have been received.
+    bool iIsMIOConfigured;
 
 #ifdef PERFORMANCE_MEASUREMENTS_ENABLED
         PVProfile PVOmapVideoProfile;

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,15 +112,18 @@ OSCL_EXPORT_REF int OsclPriorityQueueBase::remove(const OsclAny* input)
     OsclAny* pos = find_heap(input, pVec->begin(), pVec->end());
     if (pos)
     {
-        // Move the element of interest to end of tree and remove
-        pop_heap(pos, pVec->end());
-        pVec->pop_back();
-        // Re-sort all elements beyond the removed element.
-        OsclAny* endpos = pVec->increment_T(pos, 1);
-        while (endpos <= pVec->end())
+        if (pVec->increment_T(pos, 1) == pVec->end())
         {
-            push_heap(pVec->begin(), endpos);
-            endpos = pVec->increment_T(endpos, 1);
+            // It's the last element-- just remove it without any re-ordering.
+            pVec->pop_back();
+        }
+        else
+        {
+            // Move the element to the end & remove.
+            pop_heap(pos, pVec->end());
+            pVec->pop_back();
+            // Re-order the front part of the queue.
+            push_heap(pVec->begin(), pVec->increment_T(pos, 1));
         }
         return 1;
     }

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,6 +81,10 @@ typedef enum
     , EPVMFNodeLastState // derived nodes can add more states as needed
 } TPVMFNodeInterfaceState;
 
+/**
+Oscl shared libary class
+**/
+class OsclSharedLibrary;
 
 /**
  * PVMFNodeErrorEventObserver Class
@@ -416,15 +420,54 @@ class PVMFNodeInterface: public PVMFPortActivityHandler
          */
         virtual void HandlePortActivity(const PVMFPortActivity& aActivity) = 0;
 
+        /**
+         * This API is a synchronous version of QueryInterface.
+         * The mechanism is analogous to the COM IUnknown method.  The interfaces are identified with
+         * an interface ID that is a UUID as in DCE and a pointer to the interface object is
+         * returned if it is supported.  Otherwise the returned pointer is NULL.
+         *
+         * @param aUuid The UUID of the desired interface
+         * @param aInterfacePtr The output pointer to the desired interface
+         * @returns PVMFSuccess or PVMFErrNotSupported
+         */
+        virtual PVMFStatus QueryInterfaceSync(PVMFSessionId aSession
+                                              , const PVUuid& aUuid
+                                              , PVInterface*& aInterfacePtr)
+        {
+            return PVMFErrNotImplemented;
+        }
+
+
+        /**
+         * Set shared library pointer
+         * @param aPtr Pointer to the shared library.
+         **/
+        virtual void SetSharedLibraryPtr(OsclSharedLibrary* aPtr)
+        {
+            iOsclSharedLibrary = aPtr;
+        }
+
+        /**
+         * Retrieves shared library pointer
+         * @returns Pointer to the shared library.
+         **/
+        virtual OsclSharedLibrary* GetSharedLibraryPtr()
+        {
+            return iOsclSharedLibrary;
+        }
+
     protected:
         PVMFNodeInterface(int32 aSessionReserve = PVMF_NODE_DEFAULT_SESSION_RESERVE) :
                 iInterfaceState(EPVMFNodeCreated)
+                , iOsclSharedLibrary(NULL)
         {
             iSessions.reserve(aSessionReserve);
         }
 
         Oscl_Vector<PVMFNodeSession, OsclMemAllocator> iSessions;
         TPVMFNodeInterfaceState iInterfaceState;
+
+        OsclSharedLibrary* iOsclSharedLibrary;
 
         /** This method can be used to update the state and
         ** notify observers of the state change event.

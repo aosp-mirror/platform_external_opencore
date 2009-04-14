@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,6 +54,7 @@ class CPMPluginContainer
  * CPMPluginRegistry is an abstract interface class
  * defining the plugin registry.
  */
+class OsclSharedLibraryList;
 class CPMPluginRegistry
 {
     public:
@@ -90,6 +91,8 @@ class CPMPluginRegistry
          */
         virtual bool GetPluginMimeType(uint32 aIndex, OSCL_String& aMimeType) = 0;
         virtual ~CPMPluginRegistry() {}
+
+        virtual OsclSharedLibraryList*& AccessSharedLibraryList() = 0;
 };
 
 /**

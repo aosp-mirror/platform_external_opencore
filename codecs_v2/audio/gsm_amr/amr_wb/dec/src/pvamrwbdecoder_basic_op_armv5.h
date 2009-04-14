@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ extern "C"
 
 
 
-#if defined(_ARM_V5)
+#if defined(PV_ARM_V5)
 
     __inline int16 add_int16(int16 var1, int16 var2)
     {
@@ -179,6 +179,20 @@ extern "C"
         return L_var_out;
     }
 
+
+
+    __inline int16 amr_wb_shl1_round(int32 L_var1)
+    {
+        int32 L_var_out;
+
+        __asm
+        {
+            qadd L_var_out, L_var1, L_var1
+            qadd L_var_out, L_var_out, (int32) 0x00008000L
+            mov L_var_out, L_var_out, asr #16
+        }
+        return L_var_out;
+    }
 
     __inline int32 mul_32by16(int16 hi, int16 lo, int16 n)
     {

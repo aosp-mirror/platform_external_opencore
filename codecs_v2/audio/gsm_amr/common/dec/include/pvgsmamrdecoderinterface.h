@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -153,14 +153,14 @@ typedef struct tPVAmrDecoderExternal
 
     /*
      * OUTPUT:
-     *  GSM AMR WB mode
+     *  GSM AMR NB and WB mode (i.e. bit-rate )
      */
     int16     mode;
     int16     mode_old;
 
     /*
      * OUTPUT:
-     *  GSM AMR WB frame type
+     *  GSM AMR NB and WB frame type ( speech_good, speech_bad, sid, etc.)
      */
     int16     frame_type;
 

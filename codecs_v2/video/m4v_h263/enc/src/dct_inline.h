@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@
 #ifndef _DCT_INLINE_H_
 #define _DCT_INLINE_H_
 
-#if !defined(PV_ARM_GCC)&& defined(__arm__)
+#if !defined(PV_ARM_GCC_V5) && !defined(PV_ARM_GCC_V4)
 
 #include "oscl_base_macros.h"
 
@@ -266,7 +266,7 @@ __inline int32 sum_abs(int32 k0, int32 k1, int32 k2, int32 k3,
     return abs_sum;
 }
 
-#elif defined(PV_ARM_GCC) && defined(__arm__) /* ARM GNU COMPILER  */
+#elif ( defined(PV_ARM_GCC_V5) || defined(PV_ARM_GCC_V4) )  /* ARM GNU COMPILER  */
 
 __inline int32 mla724(int32 op1, int32 op2, int32 op3)
 {

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,13 +28,12 @@ terms listed above has been obtained from the copyright holder.
 ****************************************************************************************/
 /*
 
- Pathname: ./include/basic_op_arm_gcc_v5.h
-
-     Date: 01/30/2007
+  Pathname: ./include/basic_op_arm_gcc_v5.h
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
 
+ Who:						Date:
  Description:
 
 ------------------------------------------------------------------------------
@@ -480,26 +479,21 @@ extern "C"
         register Word32 ra = var1;
         register Word32 rb = var2;
         Word32 product;
-        Word32 temp = 0x7FFF;
+        Word32 temp;
 
         OSCL_UNUSED_ARG(pOverflow);
 
-        asm volatile("smulbb %0, %1, %2"
-             : "=r"(product)
-                             : "r"(ra), "r"(rb)
-                            );
-        asm volatile("mov %0, %1, ASR #15"
-             : "=r"(product)
-                             : "r"(product)
-                            );
-        asm volatile("cmp %0, %1"
-             : "=r"(product)
-                             : "r"(temp)
-                            );
-        asm volatile("movge %0, %1"
-             : "=r"(product)
-                             : "r"(temp)
-                            );
+        asm volatile(
+            "smulbb %0, %1, %2"
+    : "=r"(temp)
+                    : "r"(ra), "r"(rb)
+                );
+        asm volatile(
+            "qadd %0, %1, %2\n\t"
+            "mov %0, %0, asr #16"
+    : "=&r*i"(product)
+                    : "r"(temp), "r"(temp)
+                );
 
         return ((Word16) product);
     }

@@ -29,13 +29,13 @@
 #include "oscl_mem_audit.h"
 #include "oscl_error.h"
 #include "oscl_snprintf.h"
-#include "oscl_error_panic.h"
+
 #include "oscl_scheduler.h"
 #include "oscl_utf8conv.h"
 #include "oscl_scheduler_ao.h"
 #include "cczoomrotation16.h"  // for color converter
-#include "omx_core.h"
-#include "pv_omxmastercore.h"
+#include "OMX_Core.h"
+#include "pv_omxcore.h"
 
 #define BEST_THUMBNAIL_MODE 1
 
@@ -81,10 +81,10 @@ public:
     // Returns OK if no operation failed; otherwise, it returns UNKNOWN_ERROR.
     status_t setDataSource(const char* srcUrl);
 
-    // This call may be time consuming.
-    // Returns OK if no operation failed; otherwise, it returns UNKNOWN_ERROR.
-    // The caller _retains_ ownership of "fd".
-    status_t setDataSourceFd(int fd, int64_t offset, int64_t length);
+    // This call may be time consuming.          
+    // Returns OK if no operation failed; otherwise, it returns UNKNOWN_ERROR.       
+    // The caller _retains_ ownership of "fd".       
+    status_t setDataSourceFd(int fd, int64_t offset, int64_t length);        
 
     // Captures a representative frame. Returns NULL if failure.
     VideoFrame *captureFrame();
@@ -150,7 +150,7 @@ private:
     status_t extractMetadata(const char* key, char* value, uint32 valueLength);
     static int startDriverThread(void *cookie);
     int retrieverThread();
-    void closeSharedFdIfNecessary();
+    void closeSharedFdIfNecessary(); 
 
     OsclSemaphore* mSyncSem;
 
@@ -186,10 +186,10 @@ private:
     // get these out of mMetadataValueList
     char mMetadataValues[NUM_METADATA_KEYS][MAX_METADATA_STRING_LENGTH];
     MediaAlbumArt *mMediaAlbumArt;
-
-    // If sourcing from a file descriptor, this holds a dup of it to prevent
-    // it from going away while we pass around the sharedfd: URI.
-    int                 mSharedFd;
+         
+    // If sourcing from a file descriptor, this holds a dup of it to prevent         
+    // it from going away while we pass around the sharedfd: URI.        
+    int mSharedFd; 
 };
 
 }; // namespace android

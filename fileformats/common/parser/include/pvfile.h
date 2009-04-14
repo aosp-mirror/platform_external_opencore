@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,9 +48,58 @@
 */
 
 class PVMFCPMPluginAccessInterfaceFactory;
-class PVMFCPMPluginLocalSyncAccessInterface;
 class PVMIDataStreamSyncInterface;
 class PvmiDataStreamObserver;
+
+#define PVFILE_DEFAULT_CACHE_SIZE 4*1024
+#define PVFILE_DEFAULT_ASYNC_READ_BUFFER_SIZE 0
+#define PVFILE_DEFAULT_NATIVE_ACCESS_MODE 0
+
+class PVFileCacheParams
+{
+    public:
+        PVFileCacheParams()
+        {
+            iCacheSize = PVFILE_DEFAULT_CACHE_SIZE;
+            iAsyncReadBuffSize = PVFILE_DEFAULT_ASYNC_READ_BUFFER_SIZE;
+            iNativeAccessMode = PVFILE_DEFAULT_NATIVE_ACCESS_MODE;
+            iPVLoggerEnableFlag = false;
+            iPVLoggerStateEnableFlag = false;
+        }
+
+        PVFileCacheParams(const PVFileCacheParams& a)
+        {
+            MyCopy(a);
+        }
+
+        /**
+         * The assignment operator
+         */
+        PVFileCacheParams& operator=(const PVFileCacheParams& a)
+        {
+            if (&a != this)
+            {
+                MyCopy(a);
+            }
+            return *this;
+        }
+
+        uint32 iCacheSize;
+        uint32 iAsyncReadBuffSize;
+        bool iPVLoggerEnableFlag;
+        bool iPVLoggerStateEnableFlag;
+        uint32 iNativeAccessMode;
+
+    private:
+        void MyCopy(const PVFileCacheParams& a)
+        {
+            iCacheSize = a.iCacheSize;
+            iAsyncReadBuffSize = a.iAsyncReadBuffSize;
+            iPVLoggerEnableFlag = a.iPVLoggerEnableFlag;
+            iPVLoggerStateEnableFlag = a.iPVLoggerStateEnableFlag;
+            iNativeAccessMode = a.iNativeAccessMode;
+        }
+};
 
 class PVFile
 {
@@ -58,15 +107,7 @@ class PVFile
         //default constructor.
         PVFile()
         {
-            iFile = NULL;
-            iFileHandle = NULL;
-            iCPMAccessFactory = NULL;
-            iCPMAccess = NULL;
-            iFilePtr = NULL;
-            iDataStreamAccess = NULL;
-            iFileSize = 0;
-            iFileSizeAvailable = false;
-            iRequestReadCapacityNotificationID = 0;
+            Reset();
         }
 
         //API to copy all fields from another object.
@@ -76,12 +117,12 @@ class PVFile
             iFilePtr = a.iFilePtr;
             iFileHandle = a.iFileHandle;
             iCPMAccessFactory = a.iCPMAccessFactory;
-            iCPMAccess = a.iCPMAccess;
             iDataStreamAccess = a.iDataStreamAccess;
             iFileSize = a.iFileSize;
             iFileSizeAvailable = a.iFileSizeAvailable;
             iDataStreamSession = a.iDataStreamSession;
             iRequestReadCapacityNotificationID = a.iRequestReadCapacityNotificationID;
+            iOsclFileCacheParams = a.iOsclFileCacheParams;
         }
 
         //copy constructor.
@@ -92,6 +133,18 @@ class PVFile
 
         ~PVFile()
         {
+        }
+
+        void Reset()
+        {
+            iFile = NULL;
+            iFileHandle = NULL;
+            iCPMAccessFactory = NULL;
+            iFilePtr = NULL;
+            iDataStreamAccess = NULL;
+            iFileSize = 0;
+            iFileSizeAvailable = false;
+            iRequestReadCapacityNotificationID = 0;
         }
 
         //API to set the CPM access interface.
@@ -138,12 +191,21 @@ class PVFile
         {
             if ((iFilePtr != NULL) ||
                     (iFile != NULL) ||
-                    (iCPMAccess != NULL) ||
                     (iDataStreamAccess != NULL))
             {
                 return true;
             }
             return false;
+        }
+
+        //Only valid in case Oscl_File class is being used
+        //internally for file access. In case of datastream
+        //access or in case of Oscl_File ptr provided for outside
+        //via SetFilePtr API, it is assumed that implementor of datastream
+        //has picked appropriate caching mechanism.
+        void SetFileCacheParams(PVFileCacheParams aParams)
+        {
+            iOsclFileCacheParams = aParams;
         }
 
         //Access APIs, same functionality as Oscl File I/O.
@@ -190,7 +252,6 @@ class PVFile
 
         //Internal implementation.
         Oscl_File* iFile;
-        PVMFCPMPluginLocalSyncAccessInterface *iCPMAccess;
         PVMIDataStreamSyncInterface* iDataStreamAccess;
         int32 iDataStreamSession;
 
@@ -199,6 +260,7 @@ class PVFile
         uint32 iFileSize;
         bool iFileSizeAvailable;
         uint32 iRequestReadCapacityNotificationID;
+        PVFileCacheParams iOsclFileCacheParams;
 };
 
 

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,10 @@
  */
 #ifndef OSCL_SHARED_LIBRARY_H_INCLUDED
 #define OSCL_SHARED_LIBRARY_H_INCLUDED
+
+#ifndef OSCL_BASE_H_INCLUDED
+#include "oscl_base.h"
+#endif
 
 #ifndef OSCL_STRING_CONTAINERS_H_INCLUDED
 #include "oscl_string_containers.h"
@@ -113,10 +117,63 @@ class OsclSharedLibrary
         OSCL_IMPORT_REF void RemoveRef();
 
     private:
+        OsclLibStatus loadlibrary(const OSCL_String& alib);
+
         PVLogger* ipLogger;
         int32 iRefCount;
+        OsclSharedLibraryInterface *pSharedLibInterface;
+#if OSCL_LIBRARY_PERF_LOGGING
+        PVLogger* iDiagnosticsLogger;
+        uint32 iLibCount;
+        uint32 iLibLoadTime;
+        uint32 delta;
+#endif
         void* ipHandle;
         OSCL_HeapString<OsclMemAllocator> iLibPath;
+        bool iLoaded;
+};
+
+#include "oscl_vector.h"
+
+/*
+** OsclSharedLibraryList is a handy class for locating and using libraries that support
+** a given interface.
+*/
+class OsclSharedLibraryList
+{
+    public:
+        OSCL_IMPORT_REF OsclSharedLibraryList();
+        OSCL_IMPORT_REF ~OsclSharedLibraryList();
+
+        /*
+        ** Give a config file directory, locate all the libraries that support the given
+        ** interface ID.  For each library, create a shared library object for it and add
+        ** it to the list.
+        */
+        OSCL_IMPORT_REF void Populate(const OSCL_String& aPath, const OsclUuid& aInterfaceId);
+
+        /*
+        ** Return the size of the list
+        */
+        uint32 Size()
+        {
+            return iList.size();
+        }
+
+        /*
+        ** Query interface for the given library.  This will load the library if needed.
+        */
+        OSCL_IMPORT_REF OsclLibStatus QueryInterfaceAt(uint32 aIndex, OsclAny*& aInterfacePtr);
+
+        /*
+        ** Close all open libraries and clear the list.
+        */
+        OSCL_IMPORT_REF void CloseAll();
+
+    private:
+        Oscl_Vector<OsclSharedLibrary*, OsclMemAllocator> iList;
+        OsclUuid iInterfaceId;
+        PVLogger* iLogger;
 };
 
 #endif //OSCL_SHARED_LIBRARY_H_INCLUDED

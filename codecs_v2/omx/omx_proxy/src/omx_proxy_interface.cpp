@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,9 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
+#ifndef OSCLCONFIG_H_INCLUDED
+#include "osclconfig.h"
+#endif
 
 #ifndef PV_OMXDEFS_H_INCLUDED
 #include "pv_omxdefs.h"
@@ -28,15 +31,15 @@
 #include "pv_omxcore.h"
 #endif
 
-#ifndef THREADSAFE_MEMPOOL_H_INCLUDED
+#ifndef PV_THREADSAFE_MEMPOOL_H_INCLUDED
 #include "threadsafe_mempool.h"
 #endif
 
+#ifndef OSCL_ERROR_H_INCLUDED
+#include "oscl_error.h"
+#endif
+
 #if PROXY_INTERFACE
-
-extern ProxyApplication_OMX*	pProxyTerm[];
-extern OMX_HANDLETYPE		ComponentHandle[];
-
 
 // the messages include input and output buffer circulation and cmd msgs into omx
 // MAX_NUMBER_OF_OMX_PROXY_MSGS must be larger than the sum of:
@@ -54,7 +57,7 @@ PROXY APP CLASS FUNCTIONS
 
 
 //Constructor function for class ProxyApplication
-ProxyApplication_OMX::ProxyApplication_OMX()
+OSCL_EXPORT_REF ProxyApplication_OMX::ProxyApplication_OMX()
 {
     iNumMessage = iNumNotice = 0;
     iMemCmd = 0;
@@ -79,7 +82,7 @@ ProxyApplication_OMX::ProxyApplication_OMX()
 }
 
 //Destructor function for class ProxyApplication
-ProxyApplication_OMX::~ProxyApplication_OMX()
+OSCL_EXPORT_REF ProxyApplication_OMX::~ProxyApplication_OMX()
 {
     iInitSemOmx.Close();
     if (iMemoryPool)
@@ -91,26 +94,26 @@ ProxyApplication_OMX::~ProxyApplication_OMX()
 }
 
 /* Initialize the proxy objects & create a new thread */
-void ProxyApplication_OMX::Start()
+OSCL_EXPORT_REF bool ProxyApplication_OMX::Start()
 {
-    // obtain the global memory lock (if one exists, it will be non-null)
-
-    OsclLockBase *thread_mem_lock = OsclMem::GetLock();
-
-    // if this lock exists, i.e. if this (master) thread already did  OsclMem::Init(lock)
-    //	we'll use the same lock in the new thread to do OsclMem::Init(lock). This will provide
-    // mem lock
-
     // if the global lock is NULL, there will be no mem lock control
-    ipProxy = CPVInterfaceProxy_OMX::NewL(*this, thread_mem_lock);
+    ipProxy = CPVInterfaceProxy_OMX::NewL(*this);
 
+    if (!ipProxy)
+    {
+        return false;
+    }
 
-    ipProxy->StartPVThread();
+    return ipProxy->StartPVThread();
 }
 
 /* De-Initialize the proxy object & destroy the new thread */
-void ProxyApplication_OMX::Exit()
+OSCL_EXPORT_REF void ProxyApplication_OMX::Exit()
 {
+    if (NULL == ipProxy)
+    {
+        return;
+    }
     //this will stop proxy scheduler and thread.
     ipProxy->Delete();
     ipProxy = NULL;
@@ -275,11 +278,12 @@ void ProxyApplication_OMX::ProcessMessage(TPVCommandId cmdid, OsclAny* cmd)
             EmptyBufMsg* Command = (EmptyBufMsg*) cmd;
             // Do not use wait/signal semaphore for queuing input/output buffers
             // allow the client thread to keep going without having to check the status (assume its OK)
-            ComponentEmptyThisBuffer(Command->hComponent, Command->pBuffer);
+            ReturnValueOmxApi = ComponentEmptyThisBuffer(Command->hComponent, Command->pBuffer);
             //delete Command;
             iMemoryPool->deallocate((OsclAny*)Command);
 
             iMemCmd--;
+
 
         }
         break;
@@ -289,11 +293,12 @@ void ProxyApplication_OMX::ProcessMessage(TPVCommandId cmdid, OsclAny* cmd)
             FillBufMsg* Command = (FillBufMsg*) cmd;
             // Do not use wait/signal semaphore for queuing input/output buffers
             // allow the client thread to keep going without having to check the status (assume its OK)
-            ComponentFillThisBuffer(Command->hComponent, Command->pBuffer);
+            ReturnValueOmxApi = ComponentFillThisBuffer(Command->hComponent, Command->pBuffer);
             //delete Command;
             iMemoryPool->deallocate((OsclAny*)Command);
 
             iMemCmd--;
+
         }
         break;
 
@@ -302,7 +307,7 @@ void ProxyApplication_OMX::ProcessMessage(TPVCommandId cmdid, OsclAny* cmd)
             GetHandleMsg* Command = (GetHandleMsg*) cmd;
 
             ReturnValueOmxApi = GlobalProxyComponentGetHandle(Command->pHandle, Command->cComponentName,
-                                Command->pAppData, Command->pCallBacks);
+                                Command->pAppData, Command->pCallBacks, (OMX_PTR)this);
             //delete Command;
             iMemoryPool->deallocate((OsclAny*)Command);
 
@@ -405,7 +410,7 @@ PROXY API'S OF CLASS PROXYAPPLICATION START FROM HERE
 THESE API'S ARE BEING CALLED FROM THE WRAPPER FUNCTIONS
 ****************************/
 
-OMX_ERRORTYPE ProxyApplication_OMX::ProxyGetConfig(
+OSCL_EXPORT_REF OMX_ERRORTYPE ProxyApplication_OMX::ProxyGetConfig(
     OMX_IN  OMX_HANDLETYPE hComponent,
     OMX_IN  OMX_INDEXTYPE nIndex,
     OMX_INOUT OMX_PTR pComponentConfigStructure)
@@ -417,8 +422,7 @@ OMX_ERRORTYPE ProxyApplication_OMX::ProxyGetConfig(
         return OMX_ErrorInsufficientResources;
     }
 
-    GetConfigMsg* Msg = new(ptr) GetConfigMsg(hComponent, nIndex, pComponentConfigStructure);
-
+    GetConfigMsg* Msg = OSCL_PLACEMENT_NEW(ptr, GetConfigMsg(hComponent, nIndex, pComponentConfigStructure));
 
     iMemCmd++;
     iNumClientMsg++;
@@ -434,7 +438,7 @@ OMX_ERRORTYPE ProxyApplication_OMX::ProxyGetConfig(
 
 }
 
-OMX_ERRORTYPE ProxyApplication_OMX::ProxySetConfig(
+OSCL_EXPORT_REF OMX_ERRORTYPE ProxyApplication_OMX::ProxySetConfig(
     OMX_IN  OMX_HANDLETYPE hComponent,
     OMX_IN  OMX_INDEXTYPE nIndex,
     OMX_IN  OMX_PTR pComponentConfigStructure)
@@ -445,7 +449,7 @@ OMX_ERRORTYPE ProxyApplication_OMX::ProxySetConfig(
         return OMX_ErrorInsufficientResources;
     }
 
-    SetConfigMsg* Msg = new(ptr) SetConfigMsg(hComponent, nIndex, pComponentConfigStructure);
+    SetConfigMsg* Msg = OSCL_PLACEMENT_NEW(ptr, SetConfigMsg(hComponent, nIndex, pComponentConfigStructure));
 
 
 
@@ -461,7 +465,7 @@ OMX_ERRORTYPE ProxyApplication_OMX::ProxySetConfig(
     return ReturnValueOmxApi;
 }
 
-OMX_ERRORTYPE ProxyApplication_OMX::ProxyGetExtensionIndex(
+OSCL_EXPORT_REF OMX_ERRORTYPE ProxyApplication_OMX::ProxyGetExtensionIndex(
     OMX_IN  OMX_HANDLETYPE hComponent,
     OMX_IN  OMX_STRING cParameterName,
     OMX_OUT OMX_INDEXTYPE* pIndexType)
@@ -473,7 +477,7 @@ OMX_ERRORTYPE ProxyApplication_OMX::ProxyGetExtensionIndex(
         return OMX_ErrorInsufficientResources;
     }
 
-    GetExtMsg* Msg = new(ptr) GetExtMsg(hComponent, cParameterName, pIndexType);
+    GetExtMsg* Msg = OSCL_PLACEMENT_NEW(ptr, GetExtMsg(hComponent, cParameterName, pIndexType));
 
     iMemCmd++;
     iNumClientMsg++;
@@ -487,7 +491,7 @@ OMX_ERRORTYPE ProxyApplication_OMX::ProxyGetExtensionIndex(
     return ReturnValueOmxApi;
 }
 
-OMX_ERRORTYPE ProxyApplication_OMX::ProxyGetState(
+OSCL_EXPORT_REF OMX_ERRORTYPE ProxyApplication_OMX::ProxyGetState(
     OMX_IN  OMX_HANDLETYPE hComponent,
     OMX_OUT OMX_STATETYPE* pState)
 {
@@ -498,7 +502,7 @@ OMX_ERRORTYPE ProxyApplication_OMX::ProxyGetState(
         return OMX_ErrorInsufficientResources;
     }
 
-    GetStateMsg* Msg = new(ptr) GetStateMsg(hComponent, pState);
+    GetStateMsg* Msg = OSCL_PLACEMENT_NEW(ptr, GetStateMsg(hComponent, pState));
 
 
     iMemCmd++;
@@ -514,7 +518,7 @@ OMX_ERRORTYPE ProxyApplication_OMX::ProxyGetState(
 }
 
 
-OMX_ERRORTYPE ProxyApplication_OMX::ProxyGetParameter(
+OSCL_EXPORT_REF OMX_ERRORTYPE ProxyApplication_OMX::ProxyGetParameter(
     OMX_IN  OMX_HANDLETYPE hComponent,
     OMX_IN  OMX_INDEXTYPE nParamIndex,
     OMX_INOUT OMX_PTR ComponentParameterStructure)
@@ -525,7 +529,7 @@ OMX_ERRORTYPE ProxyApplication_OMX::ProxyGetParameter(
         return OMX_ErrorInsufficientResources;
     }
 
-    GetParameterMsg* Msg = new(ptr) GetParameterMsg(hComponent, nParamIndex, ComponentParameterStructure);
+    GetParameterMsg* Msg = OSCL_PLACEMENT_NEW(ptr, GetParameterMsg(hComponent, nParamIndex, ComponentParameterStructure));
 
 
     iMemCmd++;
@@ -542,7 +546,7 @@ OMX_ERRORTYPE ProxyApplication_OMX::ProxyGetParameter(
 }
 
 
-OMX_ERRORTYPE ProxyApplication_OMX::ProxySetParameter(
+OSCL_EXPORT_REF OMX_ERRORTYPE ProxyApplication_OMX::ProxySetParameter(
     OMX_IN  OMX_HANDLETYPE hComponent,
     OMX_IN  OMX_INDEXTYPE nParamIndex,
     OMX_IN  OMX_PTR ComponentParameterStructure)
@@ -553,7 +557,7 @@ OMX_ERRORTYPE ProxyApplication_OMX::ProxySetParameter(
         return OMX_ErrorInsufficientResources;
     }
 
-    SetParameterMsg* Msg = new(ptr) SetParameterMsg(hComponent, nParamIndex, ComponentParameterStructure);
+    SetParameterMsg* Msg = OSCL_PLACEMENT_NEW(ptr, SetParameterMsg(hComponent, nParamIndex, ComponentParameterStructure));
 
 
 
@@ -571,7 +575,7 @@ OMX_ERRORTYPE ProxyApplication_OMX::ProxySetParameter(
 }
 
 
-OMX_ERRORTYPE ProxyApplication_OMX::ProxyUseBuffer(
+OSCL_EXPORT_REF OMX_ERRORTYPE ProxyApplication_OMX::ProxyUseBuffer(
     OMX_IN OMX_HANDLETYPE hComponent,
     OMX_INOUT OMX_BUFFERHEADERTYPE** ppBufferHdr,
     OMX_IN OMX_U32 nPortIndex,
@@ -585,7 +589,7 @@ OMX_ERRORTYPE ProxyApplication_OMX::ProxyUseBuffer(
         return OMX_ErrorInsufficientResources;
     }
 
-    UseBufMsg* Msg = new(ptr) UseBufMsg(hComponent, ppBufferHdr, nPortIndex, pAppPrivate, nSizeBytes, pBuffer);
+    UseBufMsg* Msg = OSCL_PLACEMENT_NEW(ptr, UseBufMsg(hComponent, ppBufferHdr, nPortIndex, pAppPrivate, nSizeBytes, pBuffer));
 
 
     iMemCmd++;
@@ -601,7 +605,7 @@ OMX_ERRORTYPE ProxyApplication_OMX::ProxyUseBuffer(
     return ReturnValueOmxApi;
 }
 
-OMX_ERRORTYPE ProxyApplication_OMX::ProxyAllocateBuffer(
+OSCL_EXPORT_REF OMX_ERRORTYPE ProxyApplication_OMX::ProxyAllocateBuffer(
     OMX_IN OMX_HANDLETYPE hComponent,
     OMX_INOUT OMX_BUFFERHEADERTYPE** pBuffer,
     OMX_IN OMX_U32 nPortIndex,
@@ -614,7 +618,7 @@ OMX_ERRORTYPE ProxyApplication_OMX::ProxyAllocateBuffer(
         return OMX_ErrorInsufficientResources;
     }
 
-    AllocBufMsg* Msg = new(ptr) AllocBufMsg(hComponent, pBuffer, nPortIndex, pAppPrivate, nSizeBytes);
+    AllocBufMsg* Msg = OSCL_PLACEMENT_NEW(ptr, AllocBufMsg(hComponent, pBuffer, nPortIndex, pAppPrivate, nSizeBytes));
 
 
     iMemCmd++;
@@ -629,7 +633,7 @@ OMX_ERRORTYPE ProxyApplication_OMX::ProxyAllocateBuffer(
     return ReturnValueOmxApi;
 }
 
-OMX_ERRORTYPE ProxyApplication_OMX::ProxyFreeBuffer(
+OSCL_EXPORT_REF OMX_ERRORTYPE ProxyApplication_OMX::ProxyFreeBuffer(
     OMX_IN  OMX_HANDLETYPE hComponent,
     OMX_IN  OMX_U32 nPortIndex,
     OMX_IN  OMX_BUFFERHEADERTYPE* pBuffer)
@@ -640,7 +644,7 @@ OMX_ERRORTYPE ProxyApplication_OMX::ProxyFreeBuffer(
         return OMX_ErrorInsufficientResources;
     }
 
-    FreeBufMsg* Msg = new(ptr) FreeBufMsg(hComponent, nPortIndex, pBuffer);
+    FreeBufMsg* Msg = OSCL_PLACEMENT_NEW(ptr, FreeBufMsg(hComponent, nPortIndex, pBuffer));
 
 
     iMemCmd++;
@@ -655,7 +659,7 @@ OMX_ERRORTYPE ProxyApplication_OMX::ProxyFreeBuffer(
     return ReturnValueOmxApi;
 }
 
-OMX_ERRORTYPE ProxyApplication_OMX::ProxySetCallbacks(
+OSCL_EXPORT_REF OMX_ERRORTYPE ProxyApplication_OMX::ProxySetCallbacks(
     OMX_IN  OMX_HANDLETYPE hComponent,
     OMX_IN  OMX_CALLBACKTYPE* pCallbacks,
     OMX_IN  OMX_PTR pAppData)
@@ -666,7 +670,7 @@ OMX_ERRORTYPE ProxyApplication_OMX::ProxySetCallbacks(
         return OMX_ErrorInsufficientResources;
     }
 
-    SetCallMsg* Msg = new(ptr) SetCallMsg(hComponent, pCallbacks, pAppData);
+    SetCallMsg* Msg = OSCL_PLACEMENT_NEW(ptr, SetCallMsg(hComponent, pCallbacks, pAppData));
 
     iMemCmd++;
     iNumClientMsg++;
@@ -680,7 +684,7 @@ OMX_ERRORTYPE ProxyApplication_OMX::ProxySetCallbacks(
     return ReturnValueOmxApi;
 }
 
-OMX_ERRORTYPE ProxyApplication_OMX::ProxySendCommand(
+OSCL_EXPORT_REF OMX_ERRORTYPE ProxyApplication_OMX::ProxySendCommand(
     OMX_IN  OMX_HANDLETYPE hComponent,
     OMX_IN  OMX_COMMANDTYPE Cmd,
     OMX_IN  OMX_U32 nParam,
@@ -692,7 +696,7 @@ OMX_ERRORTYPE ProxyApplication_OMX::ProxySendCommand(
         return OMX_ErrorInsufficientResources;
     }
 
-    SetCommMsg* Msg = new(ptr) SetCommMsg(hComponent, Cmd, nParam, pCmdData);
+    SetCommMsg* Msg = OSCL_PLACEMENT_NEW(ptr, SetCommMsg(hComponent, Cmd, nParam, pCmdData));
 
     iMemCmd++;
     iNumClientMsg++;
@@ -706,7 +710,7 @@ OMX_ERRORTYPE ProxyApplication_OMX::ProxySendCommand(
     return ReturnValueOmxApi;
 }
 
-OMX_ERRORTYPE ProxyApplication_OMX::ProxyEmptyThisBuffer(
+OSCL_EXPORT_REF OMX_ERRORTYPE ProxyApplication_OMX::ProxyEmptyThisBuffer(
     OMX_IN  OMX_HANDLETYPE hComponent,
     OMX_IN  OMX_BUFFERHEADERTYPE* pBuffer)
 {
@@ -716,7 +720,7 @@ OMX_ERRORTYPE ProxyApplication_OMX::ProxyEmptyThisBuffer(
         return OMX_ErrorInsufficientResources;
     }
 
-    EmptyBufMsg* Msg = new(ptr) EmptyBufMsg(hComponent, pBuffer);
+    EmptyBufMsg* Msg = OSCL_PLACEMENT_NEW(ptr, EmptyBufMsg(hComponent, pBuffer));
 
 
     iMemCmd++;
@@ -730,11 +734,11 @@ OMX_ERRORTYPE ProxyApplication_OMX::ProxyEmptyThisBuffer(
     // Do not use wait/signal semaphore for queuing input/output buffers
     // allow the client thread to keep going without having to wait for the status (assume its OK)
 
-    return OMX_ErrorNone;
+    return ReturnValueOmxApi;
 }
 
 
-OMX_ERRORTYPE ProxyApplication_OMX::ProxyFillThisBuffer(
+OSCL_EXPORT_REF OMX_ERRORTYPE ProxyApplication_OMX::ProxyFillThisBuffer(
     OMX_IN  OMX_HANDLETYPE hComponent,
     OMX_IN  OMX_BUFFERHEADERTYPE* pBuffer)
 {
@@ -745,7 +749,7 @@ OMX_ERRORTYPE ProxyApplication_OMX::ProxyFillThisBuffer(
     }
 
 
-    FillBufMsg* Msg = new(ptr) FillBufMsg(hComponent, pBuffer);
+    FillBufMsg* Msg = OSCL_PLACEMENT_NEW(ptr, FillBufMsg(hComponent, pBuffer));
 
     iMemCmd++;
     iNumClientMsg++;
@@ -758,11 +762,13 @@ OMX_ERRORTYPE ProxyApplication_OMX::ProxyFillThisBuffer(
     // Do not use wait/signal semaphore for queuing input/output buffers
     // allow the client thread to keep going without having to wait for the status (assume its OK)
 
-    return OMX_ErrorNone;
+
+
+    return ReturnValueOmxApi;
 }
 
 
-OMX_API OMX_ERRORTYPE OMX_APIENTRY ProxyApplication_OMX::ProxyGetHandle(
+OSCL_EXPORT_REF OMX_ERRORTYPE ProxyApplication_OMX::ProxyGetHandle(
     OMX_OUT OMX_HANDLETYPE* pHandle,
     OMX_IN  OMX_STRING cComponentName, OMX_IN  OMX_PTR pAppData,
     OMX_IN  OMX_CALLBACKTYPE* pCallBacks)
@@ -773,7 +779,7 @@ OMX_API OMX_ERRORTYPE OMX_APIENTRY ProxyApplication_OMX::ProxyGetHandle(
         return OMX_ErrorInsufficientResources;
     }
 
-    GetHandleMsg* Msg = new(ptr) GetHandleMsg(pHandle, cComponentName, pAppData, pCallBacks);
+    GetHandleMsg* Msg = OSCL_PLACEMENT_NEW(ptr, GetHandleMsg(pHandle, cComponentName, pAppData, pCallBacks));
 
 
     iMemCmd++;
@@ -785,12 +791,11 @@ OMX_API OMX_ERRORTYPE OMX_APIENTRY ProxyApplication_OMX::ProxyGetHandle(
     }
 
     iInitSemOmx.Wait();
-
     return ReturnValueOmxApi;
 }
 
 
-OMX_API OMX_ERRORTYPE OMX_APIENTRY ProxyApplication_OMX::ProxyFreeHandle(
+OSCL_EXPORT_REF OMX_ERRORTYPE ProxyApplication_OMX::ProxyFreeHandle(
     OMX_IN OMX_HANDLETYPE hComponent)
 {
     OsclAny *ptr = iMemoryPool->allocate(MAX_SIZE_OF_OMX_PROXY_MSG * sizeof(uint8));
@@ -799,7 +804,7 @@ OMX_API OMX_ERRORTYPE OMX_APIENTRY ProxyApplication_OMX::ProxyFreeHandle(
         return OMX_ErrorInsufficientResources;
     }
 
-    FreeHandleMsg* Msg = new(ptr) FreeHandleMsg(hComponent);
+    FreeHandleMsg* Msg = OSCL_PLACEMENT_NEW(ptr, FreeHandleMsg(hComponent));
 
 
     iMemCmd++;
@@ -815,291 +820,124 @@ OMX_API OMX_ERRORTYPE OMX_APIENTRY ProxyApplication_OMX::ProxyFreeHandle(
     return ReturnValueOmxApi;
 }
 
-
 /**********************************
-WRAPPER FUNCTIONS START FROM HERE
-THESE FUNCTIONS ARE MAPPED TO THE OPENMAX MACROS AND METHODS
+COMPONENT HANDLE FUNCTIONS
 ***********************************/
 
-OMX_ERRORTYPE WrapperGetConfig(
-    OMX_IN  OMX_HANDLETYPE hComponent,
-    OMX_IN  OMX_INDEXTYPE nIndex,
-    OMX_INOUT OMX_PTR pComponentConfigStructure)
+OSCL_EXPORT_REF OMX_ERRORTYPE OMX_APIENTRY GlobalProxyComponentGetHandle(
+    OMX_OUT OMX_HANDLETYPE* pHandle,
+    OMX_IN  OMX_STRING cComponentName,
+    OMX_IN  OMX_PTR pAppData,
+    OMX_IN  OMX_CALLBACKTYPE* pCallBacks,
+    OMX_IN	OMX_PTR	pProxy)
 {
-    OMX_ERRORTYPE ReturnValue;
-    OMX_S32 ii, ComponentNumber = 0;
-
-    for (ii = 0; ii < MAX_INSTANTIATED_COMPONENTS; ii++)
+    OMX_ERRORTYPE ErrorType = OMX_ErrorNone;
+    int32 error;
+    OMXGlobalData* data = (OMXGlobalData*)OsclSingletonRegistry::lockAndGetInstance(OSCL_SINGLETON_ID_OMX, error);
+    if (!data)
     {
-        if (hComponent == ComponentHandle[ii])
-        {
-            ComponentNumber = ii;
-            break;
-        }
+        OsclSingletonRegistry::registerInstanceAndUnlock(data, OSCL_SINGLETON_ID_OMX, error);
+        ErrorType = OMX_ErrorInvalidState;
+        return ErrorType;
     }
 
-    ReturnValue = pProxyTerm[ComponentNumber]->ProxyGetConfig(hComponent, nIndex, pComponentConfigStructure);
-    return ReturnValue;
-}
-
-OMX_ERRORTYPE WrapperSetConfig(
-    OMX_IN  OMX_HANDLETYPE hComponent,
-    OMX_IN  OMX_INDEXTYPE nIndex,
-    OMX_IN  OMX_PTR pComponentConfigStructure)
-{
-    OMX_ERRORTYPE ReturnValue;
-    OMX_S32 ii, ComponentNumber = 0;
-
-    for (ii = 0; ii < MAX_INSTANTIATED_COMPONENTS; ii++)
-    {
-        if (hComponent == ComponentHandle[ii])
-        {
-            ComponentNumber = ii;
-            break;
-        }
-    }
-
-    ReturnValue = pProxyTerm[ComponentNumber]->ProxySetConfig(hComponent, nIndex, pComponentConfigStructure);
-    return ReturnValue;
-}
-
-OMX_ERRORTYPE WrapperGetExtensionIndex(
-    OMX_IN  OMX_HANDLETYPE hComponent,
-    OMX_IN  OMX_STRING cParameterName,
-    OMX_OUT OMX_INDEXTYPE* pIndexType)
-{
-    OMX_ERRORTYPE ReturnValue;
-    OMX_S32 ii, ComponentNumber = 0;
-
-    for (ii = 0; ii < MAX_INSTANTIATED_COMPONENTS; ii++)
-    {
-        if (hComponent == ComponentHandle[ii])
-        {
-            ComponentNumber = ii;
-            break;
-        }
-    }
-
-    ReturnValue = pProxyTerm[ComponentNumber]->ProxyGetExtensionIndex(hComponent, cParameterName, pIndexType);
-    return ReturnValue;
-}
-
-OMX_ERRORTYPE WrapperGetState(
-    OMX_IN  OMX_HANDLETYPE hComponent,
-    OMX_OUT OMX_STATETYPE* pState)
-{
-    OMX_ERRORTYPE ReturnValue;
-    OMX_S32 ii, ComponentNumber = 0;
-
-    for (ii = 0; ii < MAX_INSTANTIATED_COMPONENTS; ii++)
-    {
-        if (hComponent == ComponentHandle[ii])
-        {
-            ComponentNumber = ii;
-            break;
-        }
-    }
-
-    ReturnValue = pProxyTerm[ComponentNumber]->ProxyGetState(hComponent, pState);
-    return ReturnValue;
-}
-
-
-OMX_ERRORTYPE WrapperGetParameter(
-    OMX_IN  OMX_HANDLETYPE hComponent,
-    OMX_IN  OMX_INDEXTYPE nParamIndex,
-    OMX_INOUT OMX_PTR ComponentParameterStructure)
-{
-    OMX_ERRORTYPE ReturnValue = OMX_ErrorNone;
-    OMX_S32 ii, ComponentNumber = 0;
-
-    for (ii = 0; ii < MAX_INSTANTIATED_COMPONENTS; ii++)
-    {
-        if (hComponent == ComponentHandle[ii])
-        {
-            ComponentNumber = ii;
-            break;
-        }
-    }
-
-    ReturnValue = pProxyTerm[ComponentNumber]->ProxyGetParameter(hComponent, nParamIndex, ComponentParameterStructure);
-    return ReturnValue;
-}
-
-
-OMX_ERRORTYPE WrapperSetParameter(
-    OMX_IN  OMX_HANDLETYPE hComponent,
-    OMX_IN  OMX_INDEXTYPE nParamIndex,
-    OMX_IN  OMX_PTR ComponentParameterStructure)
-{
-    OMX_ERRORTYPE ReturnValue;
-    OMX_S32 ii, ComponentNumber = 0;
-
-    for (ii = 0; ii < MAX_INSTANTIATED_COMPONENTS; ii++)
-    {
-        if (hComponent == ComponentHandle[ii])
-        {
-            ComponentNumber = ii;
-            break;
-        }
-    }
-
-    ReturnValue = pProxyTerm[ComponentNumber]->ProxySetParameter(hComponent, nParamIndex, ComponentParameterStructure);
-    return ReturnValue;
-}
-
-
-OMX_ERRORTYPE WrapperUseBuffer(
-    OMX_IN OMX_HANDLETYPE hComponent,
-    OMX_INOUT OMX_BUFFERHEADERTYPE** ppBufferHdr,
-    OMX_IN OMX_U32 nPortIndex,
-    OMX_IN OMX_PTR pAppPrivate,
-    OMX_IN OMX_U32 nSizeBytes,
-    OMX_IN OMX_U8* pBuffer)
-{
-    OMX_ERRORTYPE ReturnValue;
-    OMX_S32 ii, ComponentNumber = 0;
-
-    for (ii = 0; ii < MAX_INSTANTIATED_COMPONENTS; ii++)
-    {
-        if (hComponent == ComponentHandle[ii])
-        {
-            ComponentNumber = ii;
-            break;
-        }
-    }
-
-    ReturnValue = pProxyTerm[ComponentNumber]->ProxyUseBuffer(hComponent, ppBufferHdr, nPortIndex, pAppPrivate, nSizeBytes, pBuffer);
-    return ReturnValue;
-}
-
-OMX_ERRORTYPE WrapperAllocateBuffer(
-    OMX_IN OMX_HANDLETYPE hComponent,
-    OMX_INOUT OMX_BUFFERHEADERTYPE** pBuffer,
-    OMX_IN OMX_U32 nPortIndex,
-    OMX_IN OMX_PTR pAppPrivate,
-    OMX_IN OMX_U32 nSizeBytes)
-{
-    OMX_ERRORTYPE ReturnValue;
-    OMX_S32 ii, ComponentNumber = 0;
-
-    for (ii = 0; ii < MAX_INSTANTIATED_COMPONENTS; ii++)
-    {
-        if (hComponent == ComponentHandle[ii])
-        {
-            ComponentNumber = ii;
-            break;
-        }
-    }
-
-    ReturnValue = pProxyTerm[ComponentNumber]->ProxyAllocateBuffer(hComponent, pBuffer, nPortIndex, pAppPrivate, nSizeBytes);
-    return ReturnValue;
-}
-
-OMX_ERRORTYPE WrapperFreeBuffer(
-    OMX_IN  OMX_HANDLETYPE hComponent,
-    OMX_IN  OMX_U32 nPortIndex,
-    OMX_IN  OMX_BUFFERHEADERTYPE* pBuffer)
-{
-    OMX_ERRORTYPE ReturnValue;
-    OMX_S32 ii, ComponentNumber = 0;
-
-    for (ii = 0; ii < MAX_INSTANTIATED_COMPONENTS; ii++)
-    {
-        if (hComponent == ComponentHandle[ii])
-        {
-            ComponentNumber = ii;
-            break;
-        }
-    }
-
-    ReturnValue = pProxyTerm[ComponentNumber]->ProxyFreeBuffer(hComponent, nPortIndex, pBuffer);
-    return ReturnValue;
-}
-
-OMX_ERRORTYPE WrapperSetCallbacks(
-    OMX_IN  OMX_HANDLETYPE hComponent,
-    OMX_IN  OMX_CALLBACKTYPE* pCallbacks,
-    OMX_IN  OMX_PTR pAppData)
-{
-    OMX_ERRORTYPE ReturnValue;
-    OMX_S32 ii, ComponentNumber = 0;
-
-    for (ii = 0; ii < MAX_INSTANTIATED_COMPONENTS; ii++)
-    {
-        if (hComponent == ComponentHandle[ii])
-        {
-            ComponentNumber = ii;
-            break;
-        }
-    }
-
-    ReturnValue = pProxyTerm[ComponentNumber]->ProxySetCallbacks(hComponent, pCallbacks, pAppData);
-    return ReturnValue;
-}
-
-OMX_ERRORTYPE WrapperSendCommand(
-    OMX_IN  OMX_HANDLETYPE hComponent,
-    OMX_IN  OMX_COMMANDTYPE Cmd,
-    OMX_IN  OMX_U32 nParam,
-    OMX_IN  OMX_PTR pCmdData)
-{
-    OMX_ERRORTYPE ReturnValue;
-    OMX_S32 ii, ComponentNumber = 0;
-
-    for (ii = 0; ii < MAX_INSTANTIATED_COMPONENTS; ii++)
-    {
-        if (hComponent == ComponentHandle[ii])
-        {
-            ComponentNumber = ii;
-            break;
-        }
-    }
-
-    ReturnValue = pProxyTerm[ComponentNumber]->ProxySendCommand(hComponent, Cmd, nParam, pCmdData);
-    return ReturnValue;
-}
-
-OMX_ERRORTYPE WrapperEmptyThisBuffer(
-    OMX_IN  OMX_HANDLETYPE hComponent,
-    OMX_IN  OMX_BUFFERHEADERTYPE* pBuffer)
-{
-    OMX_ERRORTYPE ReturnValue;
     OMX_S32 ii;
-    OMX_S32 ComponentNumber = 0;
+    OMX_U8 componentFoundflag = false;
 
-    for (ii = 0; ii < MAX_INSTANTIATED_COMPONENTS; ii++)
+    for (ii = 0; ii < MAX_SUPPORTED_COMPONENTS; ii ++)
     {
-        if (hComponent == ComponentHandle[ii])
+        if (data->ipRegTemplateList[ii] != NULL)
         {
-            ComponentNumber = ii;
+            if (!oscl_strcmp(data->ipRegTemplateList[ii]->ComponentName, cComponentName))
+            {
+                // found a matching name
+                // call the factory for the component
+                OMX_STRING aOmxLibName = data->ipRegTemplateList[ii]->SharedLibraryName;
+                OMX_PTR &aOmxLib = data->ipRegTemplateList[ii]->SharedLibraryPtr;
+                OMX_PTR aOsclUuid = data->ipRegTemplateList[ii]->SharedLibraryOsclUuid;
+                OMX_U32 &aRefCount = data->ipRegTemplateList[ii]->SharedLibraryRefCounter;
+                if ((data->ipRegTemplateList[ii]->FunctionPtrCreateComponent)(pHandle, pAppData, pProxy, aOmxLibName, aOmxLib, aOsclUuid, aRefCount) == OMX_ErrorNone)
+                {
+                    componentFoundflag = true;
+                    ((OMX_COMPONENTTYPE*)*pHandle)->SetCallbacks(*pHandle, pCallBacks, pAppData);
+                }
+                else
+                {
+                    OsclSingletonRegistry::registerInstanceAndUnlock(data, OSCL_SINGLETON_ID_OMX, error);
+                    ErrorType = OMX_ErrorInsufficientResources;
+                    return ErrorType;
+                }
+            }
+        }
+        else
+        {
             break;
         }
     }
 
-    ReturnValue = pProxyTerm[ComponentNumber]->ProxyEmptyThisBuffer(hComponent, pBuffer);
-    return ReturnValue;
+    // can't find the component after going through all of them
+    if (!componentFoundflag)
+    {
+        ErrorType = OMX_ErrorComponentNotFound;
+    }
+
+    //Release the singleton.
+    OsclSingletonRegistry::registerInstanceAndUnlock(data, OSCL_SINGLETON_ID_OMX, error);
+    return ErrorType;
 }
 
-
-OMX_ERRORTYPE WrapperFillThisBuffer(
-    OMX_IN  OMX_HANDLETYPE hComponent,
-    OMX_IN  OMX_BUFFERHEADERTYPE* pBuffer)
+OSCL_EXPORT_REF OMX_ERRORTYPE OMX_APIENTRY GlobalProxyComponentFreeHandle(OMX_IN OMX_HANDLETYPE hComponent)
 {
-    OMX_ERRORTYPE ReturnValue;
-    OMX_S32 ii, ComponentNumber = 0;
-
-    for (ii = 0; ii < MAX_INSTANTIATED_COMPONENTS; ii++)
+    //ThreadLock.Lock();
+    OMX_ERRORTYPE ErrorType = OMX_ErrorNone;
+    int32 error;
+    OMXGlobalData* data = (OMXGlobalData*)OsclSingletonRegistry::lockAndGetInstance(OSCL_SINGLETON_ID_OMX, error);
+    if (!data)
     {
-        if (hComponent == ComponentHandle[ii])
-        {
-            ComponentNumber = ii;
-            break;
-        }
+        OsclSingletonRegistry::registerInstanceAndUnlock(data, OSCL_SINGLETON_ID_OMX, error);
+        ErrorType = OMX_ErrorInvalidState;
+        return ErrorType;
     }
 
-    ReturnValue = pProxyTerm[ComponentNumber]->ProxyFillThisBuffer(hComponent, pBuffer);
-    return ReturnValue;
+    OMX_HANDLETYPE* componentHandle = data->iComponentHandle;
+    OMX_COMPONENTTYPE *pHandle = (OMX_COMPONENTTYPE *)hComponent;
+    OMX_U32 ii;
+
+    // find the component index based on handle
+    for (ii = 0; ii < MAX_INSTANTIATED_COMPONENTS; ii++)
+    {
+        if (pHandle == componentHandle[ii])
+            break;
+    }
+    // cannot find the component handle
+    if (ii == MAX_INSTANTIATED_COMPONENTS)
+    {
+        OsclSingletonRegistry::registerInstanceAndUnlock(data, OSCL_SINGLETON_ID_OMX, error);
+        ErrorType = OMX_ErrorInvalidComponent;
+        return ErrorType;
+    }
+
+    // call the component destructor through the function pointer recorder earlier
+    // using hComponent as argument
+
+    OMX_ERRORTYPE(*destroyComp)(OMX_IN OMX_HANDLETYPE pHandle, OMX_PTR &aOmxLib, OMX_PTR aOsclUuid, OMX_U32 &aRefCount);
+    // First, obtain the destructor function
+    destroyComp = data->ipInstantiatedComponentReg[ii]->FunctionPtrDestroyComponent;
+
+    OMX_PTR &aOmxLib = data->ipInstantiatedComponentReg[ii]->SharedLibraryPtr;
+    OMX_PTR aOsclUuid = data->ipInstantiatedComponentReg[ii]->SharedLibraryOsclUuid;
+    OMX_U32 &aRefCount = data->ipInstantiatedComponentReg[ii]->SharedLibraryRefCounter;
+
+    (*destroyComp)(pHandle, aOmxLib, aOsclUuid, aRefCount);
+
+    data->iNumBaseInstance--;
+    //ThreadLock.Unlock();
+
+    ErrorType = OMX_ErrorNone;
+
+    //Release the singleton.
+    OsclSingletonRegistry::registerInstanceAndUnlock(data, OSCL_SINGLETON_ID_OMX, error);
+    return ErrorType;
 }
 
 #endif // PROXY_INTERFACE

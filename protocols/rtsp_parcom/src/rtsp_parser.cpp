@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -206,7 +206,6 @@ RTSPParser::continueProcessing()
             break;
 
         case IS_WAITING_FOR_EMBEDDED_DATA_MEMORY:
-            // nothing to do
             break;
 
         case IS_SKIPPING_OVER_EMBEDDED_DATA:
@@ -218,7 +217,6 @@ RTSPParser::continueProcessing()
             break;
 
         case IS_CONTINUING_TO_FILL_OUT_EMBEDDED_DATA:
-            // nothing to do
             break;
 
 
@@ -260,7 +258,7 @@ RTSPParser::getDataBufferSpec()
     else if (internalState == IS_CONTINUING_TO_FILL_OUT_ENTITY_BODY
              ||	internalState == IS_CONTINUING_TO_FILL_OUT_EMBEDDED_DATA
             )
-    { // now things get interesting
+    {
 
         // the whole entity body arithmetic is done here, not in
         // registerDataWritten(), so here it comes
@@ -314,16 +312,16 @@ RTSPParser::lookForEndOfRequest()
 
     bool  shouldMoveOverToBeginning = false;
 
-    // now, it's either a binary data thing, or a regular message thing
+    // now, it's either a binary data thing, or a regular message
     if (CHAR_DOLLAR == *mainBufferEntry)
-    { // interesting, could be it
+    {
 
         if (mainBufferSpace - mainBufferEntry < 4)
         { // not a complete message
             shouldMoveOverToBeginning = true;
         }
         else
-        { // it is a complete thing!
+        { // it is a complete thing
             requestStruct->msgType = RTSPRequestMsg;
             requestStruct->method = METHOD_BINARY_DATA;
 
@@ -414,7 +412,6 @@ RTSPParser::lookForEndOfRequest()
                 uint32 atoi_tmp;
                 PV_atoi(cl, 'd', atoi_tmp);
                 ebFullSizeExpected = atoi_tmp;
-//        fflush(stdout);
             }
 
             // now, on with the moving around ...
@@ -439,7 +436,7 @@ RTSPParser::lookForEndOfRequest()
             }
             else
             {
-                // everything is peachy
+                // everything is ok
 
                 oscl_memcpy(requestStruct->secondaryBuffer, mainBufferEntry,
                             newMessageSize);
@@ -474,7 +471,7 @@ RTSPParser::lookForEndOfRequest()
         if (RTSP_PARSER_BUFFER_SIZE == sizeUsedSoFar)
         {	// we hit the parser's buffer size
             internalState = IS_START_LOOKING_FOR_RESYNC;
-            continueProcessing();   // xxx
+            continueProcessing();
 
             return;
         }

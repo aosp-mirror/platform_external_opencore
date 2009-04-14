@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,7 @@
 /*
     This MP3Utils Class contains sime useful methods for operating FILE
 */
-
-
-//#define IMPLEMENT_MP3Utils
+/*********************************************************************************/
 
 #include "mp3utils.h"
 #include "oscl_base.h"
@@ -78,30 +76,46 @@ bool MP3Utils::getCurrentFileSize(PVFile *fp, uint32& aCurrentSize)
         {
             uint32 currPos = (uint32)(fp->Tell());
             aCurrentSize = currPos + aRemBytes;
-
             return true;
         }
     }
     return false;
 }
 
-MP3ErrorType MP3Utils::SeektoOffset(PVFile *fp, int32 offset)
+MP3ErrorType MP3Utils::SeektoOffset(PVFile *aFP, int32 aOffset, Oscl_File::seek_type aSeekType)
 {
     uint32 currFileSize = 0;
-    if (MP3Utils::getCurrentFileSize(fp, currFileSize))
+    uint32 currPos = 0;
+    int32 seekOffset = 0;
+    currPos = MP3Utils::getCurrentFilePosition(aFP);
+    MP3Utils::getCurrentFileSize(aFP, currFileSize);
+
+    // translate the seek offset to seek from current position
+    switch (aSeekType)
     {
-        if (currFileSize >= offset)
+        case Oscl_File::SEEKSET:
+            seekOffset = aOffset - currPos;
+            break;
+        case Oscl_File::SEEKEND:
+            seekOffset = currFileSize - currPos;
+            break;
+        case Oscl_File::SEEKCUR:
+            seekOffset = aOffset;
+        default:
+            break;
+    }
+
+    if (aOffset <= 0 || currFileSize >= (uint32) aOffset)
+    {
+        if (aFP->Seek(seekOffset, Oscl_File::SEEKCUR) != 0)
         {
-            if (fp->Seek(offset, Oscl_File::SEEKSET) != 0)
-            {
-                return MP3_FILE_READ_ERR;
-            }
-            return MP3_SUCCESS;
+            return MP3_FILE_READ_ERR;
         }
-        else
-        {
-            return MP3_INSUFFICIENT_DATA;
-        }
+        return MP3_SUCCESS;
+    }
+    else
+    {
+        return MP3_INSUFFICIENT_DATA;
     }
     return MP3_ERROR_UNKNOWN;
 }

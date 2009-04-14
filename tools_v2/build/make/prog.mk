@@ -1,106 +1,114 @@
+# -*- makefile -*-
 #
-# This makefile is included by language- or compiler-specific makefiles.
-# The makefiles including those may define LIBS to a list
-# of libraries that this program needs to link with.  This LIBS should
-# have syntax suitable for being included on the link commandline.
-# See also the rules.mk file for descriptions of meanings of
-# other variables.
+# This makefile template should be included by makefiles in
+# program directories.
 #
 
-# if DBG_SUFFIX not set then set to _debug
-ifeq ($(strip $(DBG_SUFFIX)),)
-  DBG_SUFFIX = _debug
+# Set the directory for the local sources
+LOCAL_SRCDIR :=  $(abspath $(LOCAL_PATH)/$(SRCDIR))
+LOCAL_INCSRCDIR :=  $(abspath $(LOCAL_PATH)/$(INCSRCDIR))
+
+OBJDIR := $(patsubst $(SRC_ROOT)/%,$(BUILD_ROOT)/%,$(abspath $(LOCAL_PATH)/$(OUTPUT_DIR_COMPONENT)))
+
+$(eval $(call set-src-and-obj-names,$(SRCS),$(LOCAL_SRCDIR)))
+
+ifneq ($(strip $(FORCED_OBJS)),)
+ # The point of this dependency is to force object rebuilds when the 
+ # corresponding dependency files are missing (even if the object file exists).
+ $(FORCED_OBJS): FORCE
 endif
 
 
-TARGETS_TO_INSTALL+=default
-
-ifneq ($(strip $(RSRCS)),)
-  ifneq ($(strip $(RSRCDESTDIR)),)
-    TARGETS_TO_INSTALL+=resources
+ifneq "$(MAKECMDGOALS)" "clean"
+  ifneq ($(strip $(FOUND_DEPS)),)
+# $(warning Including $(FOUND_DEPS))
+  -include $(FOUND_DEPS)
   endif
 endif
 
-resources_srcdir=.
-resources_destdir=$(RSRCDESTDIR)
-resources_files=$(RSRCS)
-resources_ifunction=_resource_install_
-
-define _resource_install_
-	$(INSTALL) -c -m 444 WHAT_TO_INSTALL $(resources_destdir)
-endef
-
-OBJDIRS = $(BUILD_ARCH)
-
-OBJS = $(COMPILED_OBJS:%.$(STAT_OBJS_EXT)=$(OBJDIRS)/%.$(STAT_OBJS_EXT))
-
-DEPS = $(OBJS:%.$(STAT_OBJS_EXT)=%.d)
-
-CLEAN += $(DEPS)
-
-include $(MK)/rules.mk
-
-# Note that clearmake does not appear to handle vpath correctly
-# If a system file only has a shared version then it complains that
-# it can't find the dependency (if the library is listed in the 
-# dependency list).  The work-around for now is to include the 
-# library in the XLDFLAGS.  One example is libpthread on the Suns.
-
-ifeq ($(HOST_ARCH), win32)
-  vpath %.so $(LIB_DIRS:$(LIBCOMPFLAG)%=%)
-  vpath %.$(STAT_LIB_EXT) $(LIB_DIRS:$(LIBCOMPFLAG)%=%)
+ifeq ($(strip $(DEFAULT_LIBMODE)),release)
+  XCXXFLAGS+=$(OPT_CXXFLAG)
+  XCXXFLAGS+=$(RELEASE_CXXFLAGS)
+  XCPPFLAGS+=$(RELEASE_CPPFLAGS)
 else
-  vpath lib%.so $(LIB_DIRS:$(LIBCOMPFLAG)%=%)
-  vpath lib%.$(STAT_LIB_EXT) $(LIB_DIRS:$(LIBCOMPFLAG)%=%)
+  XCPPFLAGS+=$(DEBUG_CPPFLAGS)
+  XCXXFLAGS+=$(DEBUG_CXXFLAGS)
 endif
 
-ifneq ($(HOST_ARCH), win32)
-define group_writable_target
-	chmod g+w $(REALTARGET)
-endef
-endif
+LOCAL_XINCDIRS := $(abspath $(patsubst ../%,$(LOCAL_PATH)/../%,$(patsubst -I%,%,$(XINCDIRS))))
 
+LOCAL_TOTAL_INCDIRS := $(LOCAL_SRCDIR) $(LOCAL_INCSRCDIR) $(LOCAL_XINCDIRS)
 
-ifeq ($(TOOLSET), cl)
-define build_target
-	-$(RM) $(REALTARGET)
-		_LINK_ $(BINDING) /out:$(REALTARGET) $(patsubst -L%,/libpath:%,$(filter-out -l%,$(LDFLAGS))) \
-			$(OBJS)	$(XOBJECTS) $(patsubst -l%,%.$(STAT_LIB_EXT),$(filter -l%,$(LDFLAGS))) \
-			$(POST_LDFLAGS)
-		$(rm_vc60)
-	$(group_writable_target)
-endef
+$(COMPILED_OBJS): XFLAGS := $(XCPPFLAGS) $(patsubst %,-I%,$(LOCAL_TOTAL_INCDIRS)) $(XCXXFLAGS)
 
-else
-define build_target
-	-$(RM) $(REALTARGET)
-		_LINK_ $(BINDING) -o $(REALTARGET)  $(filter-out -l%,$(LDFLAGS)) \
-			$(PRE_LDFLAGS) $(OBJS) $(XOBJECTS) $(filter -l%,$(LDFLAGS)) $(POST_LDFLAGS)
-	$(group_writable_target)
-endef
+# remove any leading / trailing whitespace
+TARGET := $(strip $(TARGET))
+
+# save compiled objects in a macro
+$(TARGET)_compiled_objs := $(COMPILED_OBJS)
+
+ifneq ($(strip $(REMOTE_DIRS)),)
+# $(info remote dirs = $(REMOTE_DIRS))
+$(foreach srcdir, $(strip $(REMOTE_DIRS)), $(eval $(call OBJ_TEMPLATE,$(srcdir),$(OBJDIR))))
 endif
 
 
-static::
-	-$(RM) $(REALTARGET)
-	$(MAKE) $(MFLAGS) $(REALTARGET) BINDING=$(STATIC_BINDING)
+$(OBJDIR)/%.$(OBJ_EXT): $(LOCAL_SRCDIR)/%.cpp 
+	$(call make-cpp-obj-and-depend,$<,$@,$(subst .$(OBJ_EXT),.d,$@),$(XFLAGS))
 
-link::
-	-$(RM) $(REALTARGET)
-	$(MAKE) $(MFLAGS) $(REALTARGET)
+$(OBJDIR)/%.$(OBJ_EXT): $(LOCAL_SRCDIR)/%.c
+	$(call make-c-obj-and-depend,$<,$@,$(subst .$(OBJ_EXT),.d,$@),$(XFLAGS))
 
-ifeq ($(strip $(TEST_PROG)),)
-  ifneq ($(HOST_ARCH), win32)
-    TEST_PROG = $(REALTARGET)
-  else
-    # Use DOS path delimeter to run executable
-    TEST_PROG = $(subst /,\,$(REALTARGET))
-  endif
-endif
 
-ifneq ($(strip $(TEST_PROG)),NOTEST)
-run_test::	$(REALTARGET)
-	$(TEST_PROG) $(TEST_ARGS) $(SOURCE_ARGS)
-endif
+#ifeq ($(HOST_ARCH), win32)
+#  vpath %.so $(LIB_DIRS:$(LIBCOMPFLAG)%=%)
+#  vpath %.$(STAT_LIB_EXT) $(LIB_DIRS:$(LIBCOMPFLAG)%=%)
+#else
+#  vpath lib%.so $(LIB_DIRS:$(LIBCOMPFLAG)%=%)
+#  vpath lib%.$(STAT_LIB_EXT) $(LIB_DIRS:$(LIBCOMPFLAG)%=%)
+#endif
 
-.PRECIOUS:: $(OBJS)
+LOCAL_LIBDIRS := $(abspath $(patsubst ../%,$(LOCAL_PATH)/../%,$(patsubst $(LIBCOMPFLAG)%,%,$(XLIBDIRS))))
+
+LOCAL_LIBDIRS := $(patsubst %,$(LIBCOMPFLAG)%,$(LOCAL_LIBDIRS)) $(LIB_DIRS)
+
+
+REALTARGET := $(TARGET:%=$(BUILD_ROOT)/bin/$(OUTPUT_DIR_COMPONENT)/%$(TARGET_EXT))
+
+TMPDEPS := $(patsubst %,$$(%_fullname),$(LIBS))
+
+$(eval $(TARGET)_LIBDEPS := $(TMPDEPS))
+
+$(TARGET)_LDFLAGS := $(LOCAL_LIBDIRS) $($(TARGET)_LIBDEPS) $(LDFLAGS) $(XLDFLAGS)
+
+$(REALTARGET): $(COMPILED_OBJS) $($(TARGET)_LIBDEPS)
+	@echo Building $@
+	$(call create_objdir,$(@D))
+	$(call generate_prog,$@,$(notdir $@))
+	@echo DONE building $@.
+
+ALL_BIN_INSTALLED: $(REALTARGET)
+
+# Pseudo-targets for executables. With this, we can use "make $(TARGET)" instead of "make $(BUILD_ROOT)/bin/$(OUTPUT_DIR_COMPONENT)/%$(TARGET_EXT)"
+# # E.g., make pvplayer_engine_test
+$(TARGET): $(REALTARGET)
+
+.PRECIOUS:: $(DEPS) $(COMPILED_OBJS)
+
+TARGET_TYPE := prog
+
+-include $(PLATFORM_EXTRAS)
+
+TARGET_LIST := $(TARGET_LIST) $(TARGET)
+
+run_$(TARGET)_TEST_ARGS := $(TEST_ARGS)
+run_$(TARGET)_SOURCE_ARGS := $(SOURCE_ARGS)
+run_$(TARGET)_SOURCE_DIR := $(LOCAL_PATH)
+
+###incluede targest for test apps###########
+run_$(TARGET): $(REALTARGET)
+		$(call cd_and_run_test,$($@_SOURCE_DIR),$<,$($@_TEST_ARGS),$($@_SOURCE_ARGS))
+	
+run_test: run_$(TARGET)
+build_$(TARGET): $(REALTARGET)
+build_test: build_$(TARGET)

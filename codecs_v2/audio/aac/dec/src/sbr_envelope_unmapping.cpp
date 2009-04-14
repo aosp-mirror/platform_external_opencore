@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,14 @@
  * -------------------------------------------------------------------
  */
 /*
-------------------------------------------------------------------------------
-
-
 
  Filename: sbr_envelope_unmapping.c
-
-     Date: 07/21/2003
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
 
 
+ Who:                                   Date: MM/DD/YYYY
  Description:
 
 ------------------------------------------------------------------------------
@@ -160,25 +156,19 @@ void sbr_envelope_unmapping(SBR_FRAME_DATA * hFrameData1,
 
 {
     Int32 i;
-
-
-
     Int32 tempLeft;
     Int32 tempRight;
 
-
     Int32 tmp;
-    Int32 *iEnvelopeLeft_man  = (Int32 *) & (hFrameData1->iEnvelope_man);
-    Int32 *iEnvelopeLeft_exp  = (Int32 *) & (hFrameData1->iEnvelope_exp);
+    Int32 *iEnvelopeLeft_man    = hFrameData1->iEnvelope_man;
+    Int32 *iEnvelopeLeft_exp    = hFrameData1->iEnvelope_exp;
+    Int32 *noiseFloorLeft_man   = hFrameData1->sbrNoiseFloorLevel_man;
+    Int32 *noiseFloorLeft_exp   = hFrameData1->sbrNoiseFloorLevel_exp;
 
-    Int32 *iEnvelopeRight_man = (Int32 *) & (hFrameData2->iEnvelope_man);
-    Int32 *iEnvelopeRight_exp = (Int32 *) & (hFrameData2->iEnvelope_exp);
-
-
-    Int32 *noiseFloorLeft_man   = (Int32 *) & (hFrameData1->sbrNoiseFloorLevel_man);
-    Int32 *noiseFloorLeft_exp   = (Int32 *) & (hFrameData1->sbrNoiseFloorLevel_exp);
-    Int32 *noiseFloorRight_man  = (Int32 *) & (hFrameData2->sbrNoiseFloorLevel_man);
-    Int32 *noiseFloorRight_exp  = (Int32 *) & (hFrameData2->sbrNoiseFloorLevel_exp);
+    Int32 *iEnvelopeRight_man   = hFrameData2->iEnvelope_man;
+    Int32 *iEnvelopeRight_exp   = hFrameData2->iEnvelope_exp;
+    Int32 *noiseFloorRight_man  = hFrameData2->sbrNoiseFloorLevel_man;
+    Int32 *noiseFloorRight_exp  = hFrameData2->sbrNoiseFloorLevel_exp;
 
 
     if (hFrameData2->ampRes)
@@ -193,7 +183,6 @@ void sbr_envelope_unmapping(SBR_FRAME_DATA * hFrameData1,
 
             iEnvelopeRight_exp[i] = tempRight - 12;
             iEnvelopeRight_man[i] = Qfmt(1.000F);
-
 
             /*
              *  iEnvelopeRight[i] = tempLeft / (1 + tempRight);
@@ -214,7 +203,6 @@ void sbr_envelope_unmapping(SBR_FRAME_DATA * hFrameData1,
                     iEnvelopeRight_man[i] -= (Qfmt(1.000F) >> iEnvelopeRight_exp[i]);
                 }
                 iEnvelopeRight_exp[i] = iEnvelopeLeft_exp[i] - iEnvelopeRight_exp[i];
-
             }
             else
             {

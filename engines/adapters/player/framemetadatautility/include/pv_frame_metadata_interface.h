@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -480,6 +480,19 @@ class PVFrameAndMetadataInterface
          * (PVMFSuccess, PVMFFailure, PVMFErrNotSupported, PVMFErrInvalidState, PVMFErrArgument)
          **/
         virtual PVMFStatus SetMode(uint32 aMode) = 0;
+
+        /**
+         * This method allows setting the maximum thumbnail size to be retrieved.
+         * Any video streams with larger dimensions will be scaled down proportionally.
+         * aWidth * aHeight * bpc should not exceed the size of the provided buffer.
+         * @param aWidth
+         * @param aHeight
+         *
+         * @returns A status code on whether the intent was accepted or not
+         * (PVMFSuccess, PVMFFailure, PVMFErrNotSupported, PVMFErrInvalidState, PVMFErrArgument)
+         **/
+        virtual void SetThumbnailDimensions(uint32 aWidth, uint32 aHeight) = 0;
+        virtual void GetThumbnailDimensions(uint32 &aWidth, uint32 &aHeight) = 0;
 };
 
 #endif // PV_FRAME_METADATA_INTERFACE_H_INCLUDED

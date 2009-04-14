@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,10 +84,6 @@ class H264PayloadParser : public IPayloadParser
          * @param accessUnit,	output media data
          * @return RTP_PAYLOAD_PARSER_RET_CODE code
          **/
-#if 0
-        RTP_PAYLOAD_PARSER_RET_CODE parseRTPPayload_PassthruMode(PVMFSharedMediaDataPtr& rtpPacket,
-                PVMFSharedMediaDataPtr& accessUnit);
-#endif
         /**
           * Parse RTP payload for non-interleaved mode(including single NAL unit mode)
           *

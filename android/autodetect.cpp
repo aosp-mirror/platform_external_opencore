@@ -16,7 +16,7 @@
 
 #include "autodetect.h"
 
-struct CharRange {
+typedef struct CharRange {
     uint16_t first;
     uint16_t last;
 };

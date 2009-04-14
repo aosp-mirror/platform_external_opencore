@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,79 +53,6 @@ OSCL_DLL_ENTRY_POINT_DEFAULT()
 
 
 /* ======================================================================== */
-// Static method to read in an MP4 file from disk and return the IMpeg4File interface
-OSCL_EXPORT_REF IMpeg4File* IMpeg4File::readMP4File(OSCL_wString& filename,
-        uint32 parsingMode,
-        Oscl_FileServer* fileServSession)
-{
-    //optimized mode is not supported if multiple file ptrs are not allowed
-    if (parsingMode == 1)
-    {
-#ifndef OPEN_FILE_ONCE_PER_TRACK
-        parsingMode = 0;
-#endif
-    }
-
-    MP4_FF_FILE fileStruct;
-    MP4_FF_FILE *fp = &fileStruct;
-    fp->_fileServSession = fileServSession;
-    if (AtomUtils::OpenMP4File(filename,
-                               Oscl_File::MODE_READ | Oscl_File::MODE_BINARY,
-                               fp) != 0)
-    {
-        return NULL;
-    }
-
-    int32 fileSize = 0;
-    int32 filePointer = 0;
-    filePointer = AtomUtils::getCurrentFilePosition(fp);
-    AtomUtils::seekToEnd(fp);
-    fileSize = AtomUtils::getCurrentFilePosition(fp);
-    AtomUtils::seekFromStart(fp, filePointer);
-
-    fp->_fileSize = fileSize;
-
-    Mpeg4File *mp4 = NULL;
-    PV_MP4_FF_NEW(fp->auditCB, Mpeg4File, (fp, filename, parsingMode), mp4);
-
-    return mp4;
-}
-
-OSCL_EXPORT_REF IMpeg4File* IMpeg4File::readMP4File(MP4_FF_FILE_REFERENCE fileRef,
-        uint32 parsingMode)
-{
-    //optimized mode is not supported if multiple file ptrs are not allowed
-    if (parsingMode == 1)
-    {
-#ifndef OPEN_FILE_ONCE_PER_TRACK
-        parsingMode = 0;
-#endif
-    }
-
-    //Create a dummy string to hold the file name
-    OSCL_wHeapString<OsclMemAllocator> filename(_STRLIT(""));
-
-    MP4_FF_FILE fileStruct;
-    MP4_FF_FILE *fp = &fileStruct;
-
-    fp->_pvfile.SetFilePtr(fileRef);
-
-    int32 fileSize;
-    int32 filePointer;
-    AtomUtils::seekFromStart(fp, 0);
-    filePointer = AtomUtils::getCurrentFilePosition(fp);
-    AtomUtils::seekToEnd(fp);
-    fileSize = AtomUtils::getCurrentFilePosition(fp);
-    AtomUtils::seekFromStart(fp, filePointer);
-
-    fp->_fileSize = fileSize;
-
-    Mpeg4File *mp4 = NULL;
-
-    PV_MP4_FF_NEW(fp->auditCB, Mpeg4File, (fp, filename, parsingMode), mp4);
-
-    return mp4;
-}
 OSCL_EXPORT_REF  IMpeg4File *IMpeg4File::readMP4File(OSCL_wString& aFilename,
         PVMFCPMPluginAccessInterfaceFactory* aCPMAccessFactory,
         OsclFileHandle* aHandle,
@@ -161,10 +88,20 @@ OSCL_EXPORT_REF  IMpeg4File *IMpeg4File::readMP4File(OSCL_wString& aFilename,
     Mpeg4File *mp4 = NULL;
     PV_MP4_FF_NEW(fp->auditCB, Mpeg4File, (fp, aFilename, aParsingMode), mp4);
 
+#ifdef OPEN_FILE_ONCE_PER_TRACK
+    if (mp4 != NULL)
+    {
+        if (!mp4->IsMovieFragmentsPresent())
+        {
+            if (fp->IsOpen())
+                AtomUtils::CloseMP4File(fp);
+        }
+    }
+#endif
+
     return mp4;
 }
 
-// IMOTION_PSEUDO_STREAMING start
 //IsXXXable	*******************************************
 /*
 oMoovBeforeMdat: as input,
@@ -536,176 +473,7 @@ IMpeg4File::IsXXXable(MP4_FF_FILE_REFERENCE fileRef,
     AtomUtils::CloseMP4File(fp);
     return (mp4ErrorCode);
 }
-// IMOTION_PSEUDO_STREAMING end
 
-
-OSCL_EXPORT_REF bool IMpeg4File::IsMP4File(OSCL_wString& filename,
-        Oscl_FileServer* fileServSession)
-{
-    bool oReturn = false;
-    MP4_FF_FILE fileStruct;
-    MP4_FF_FILE *fp = &fileStruct;
-
-    fp->_fileServSession = fileServSession;
-
-    if (AtomUtils::OpenMP4File(filename,
-                               Oscl_File::MODE_READ | Oscl_File::MODE_BINARY,
-                               fp) != 0)
-    {
-        return (oReturn);
-    }
-
-    int32 fileSize;
-    int32 filePointer;
-    filePointer = AtomUtils::getCurrentFilePosition(fp);
-    AtomUtils::seekToEnd(fp);
-    fileSize = AtomUtils::getCurrentFilePosition(fp);
-    AtomUtils::seekFromStart(fp, filePointer);
-    fp->_fileSize = fileSize;
-
-    int32 fpos = filePointer;
-
-    while (fpos < fileSize)
-    {
-        uint32 atomType = UNKNOWN_ATOM;
-        uint32 atomSize = 0;
-
-        AtomUtils::getNextAtomType(fp, atomSize, atomType);
-
-        if (atomType != UNKNOWN_ATOM)
-        {
-            oReturn = true;
-            break;
-        }
-        else
-        {
-            if (atomSize < DEFAULT_ATOM_SIZE)
-            {
-                break;
-            }
-            if (fileSize < (int32)atomSize)
-            {
-                break;
-            }
-            atomSize -= DEFAULT_ATOM_SIZE;
-            AtomUtils::seekFromCurrPos(fp, atomSize);
-            fpos = AtomUtils::getCurrentFilePosition(fp);
-        }
-    }
-
-    AtomUtils::CloseMP4File(fp);
-    return (oReturn);
-}
-
-
-OSCL_EXPORT_REF bool IMpeg4File::IsMP4File(MP4_FF_FILE_REFERENCE filePtr)
-{
-    bool oReturn = false;
-    MP4_FF_FILE fileStruct;
-    MP4_FF_FILE *fp = &fileStruct;
-
-    fp->_pvfile.SetFilePtr(filePtr);
-
-    int32 fileSize;
-    int32 filePointer;
-    AtomUtils::seekFromStart(fp, 0);
-    filePointer = AtomUtils::getCurrentFilePosition(fp);
-    AtomUtils::seekToEnd(fp);
-    fileSize = AtomUtils::getCurrentFilePosition(fp);
-    AtomUtils::seekFromStart(fp, filePointer);
-    fp->_fileSize = fileSize;
-
-    int32 fpos = filePointer;
-
-    while (fpos < fileSize)
-    {
-        uint32 atomType = UNKNOWN_ATOM;
-        uint32 atomSize = 0;
-
-        AtomUtils::getNextAtomType(fp, atomSize, atomType);
-
-        if (atomType != UNKNOWN_ATOM)
-        {
-            oReturn = true;
-            break;
-        }
-        else
-        {
-            if (atomSize < DEFAULT_ATOM_SIZE)
-            {
-                break;
-            }
-            if (fileSize < (int32)atomSize)
-            {
-                break;
-            }
-            atomSize -= DEFAULT_ATOM_SIZE;
-            AtomUtils::seekFromCurrPos(fp, atomSize);
-            fpos = AtomUtils::getCurrentFilePosition(fp);
-        }
-    }
-
-    return (oReturn);
-}
-
-OSCL_EXPORT_REF bool IMpeg4File::IsMP4File(PVMFCPMPluginAccessInterfaceFactory* aCPMAccessFactory,
-        Oscl_FileServer* aFileServSession,
-        OsclFileHandle* aHandle)
-{
-    bool oReturn = false;
-
-    /* use a dummy string for file name */
-    OSCL_wHeapString<OsclMemAllocator> filename;
-
-    MP4_FF_FILE fileStruct;
-    MP4_FF_FILE *fp = &fileStruct;
-    fp->_fileServSession = aFileServSession;
-    fp->_pvfile.SetCPM(aCPMAccessFactory);
-    fp->_pvfile.SetFileHandle(aHandle);
-
-    if (AtomUtils::OpenMP4File(filename,
-                               Oscl_File::MODE_READ | Oscl_File::MODE_BINARY,
-                               fp) != 0)
-    {
-        return oReturn;
-    }
-
-    uint32 fileSize;
-    AtomUtils::getCurrentFileSize(fp, fileSize);
-    fp->_fileSize = (int32)fileSize;
-    int32 fpos = AtomUtils::getCurrentFilePosition(fp);
-
-    while (fpos < (int32)fileSize)
-    {
-        uint32 atomType = UNKNOWN_ATOM;
-        uint32 atomSize = 0;
-
-        AtomUtils::getNextAtomType(fp, atomSize, atomType);
-
-        if (atomType != UNKNOWN_ATOM)
-        {
-            oReturn = true;
-            break;
-        }
-        else
-        {
-            if (atomSize < DEFAULT_ATOM_SIZE)
-            {
-                break;
-            }
-            if (fileSize < atomSize)
-            {
-                break;
-            }
-            atomSize -= DEFAULT_ATOM_SIZE;
-            AtomUtils::seekFromCurrPos(fp, atomSize);
-            fpos = AtomUtils::getCurrentFilePosition(fp);
-        }
-    }
-
-    AtomUtils::CloseMP4File(fp);
-    return (oReturn);
-}
 
 OSCL_EXPORT_REF MP4_ERROR_CODE
 IMpeg4File::IsProgressiveDownloadable(MP4_FF_FILE_REFERENCE filePtr,
@@ -854,6 +622,7 @@ IMpeg4File::GetMetaDataSize(PVMFCPMPluginAccessInterfaceFactory* aCPMAccessFacto
                 (atomType == UNKNOWN_ATOM))
         {
             fpos += atomSize;
+            metaDataSize = fpos;
             if ((uint32)fpos > fileSize)
             {
                 break;
@@ -871,6 +640,7 @@ IMpeg4File::GetMetaDataSize(PVMFCPMPluginAccessInterfaceFactory* aCPMAccessFacto
         {
             fpos += atomSize;
             oMediaDataAtomFound  = true;
+            metaDataSize = fpos;
         }
         else
         {

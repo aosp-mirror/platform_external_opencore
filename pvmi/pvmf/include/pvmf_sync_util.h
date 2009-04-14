@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,9 +26,15 @@
 #ifndef OSCL_BASE_H_INCLUDED
 #include "oscl_base.h"
 #endif
-#ifndef OSCL_CLOCK_H_INCLUDED
-#include "oscl_clock.h"
+
+#ifndef PVMF_MEDIA_CLOCK_H_INCLUDED
+#include "pvmf_media_clock.h"
 #endif
+
+
+
+
+
 #ifndef PVLOGGER_H_INCLUDED
 #include "pvlogger.h"
 #endif
@@ -139,14 +145,14 @@ class PvmfSyncUtil
          * @param aClock Clock object to which media data is synchronized.
          * @return Completion status.
          */
-        OSCL_IMPORT_REF PVMFStatus SetClock(OsclClock* aClock);
-        OSCL_IMPORT_REF PVMFStatus SetFrameStepClock(OsclClock* aClock);
+        OSCL_IMPORT_REF PVMFStatus SetClock(PVMFMediaClock* aClock);
+        OSCL_IMPORT_REF PVMFStatus SetFrameStepClock(PVMFMediaClock* aClock);
 
 
     private:
 
-        OsclClock* iClock;
-        OsclClock* iFrameStepClock;
+        PVMFMediaClock* iClock;
+        PVMFMediaClock* iFrameStepClock;
         int32 iEarlyMargin;
         int32 iLateMargin;
 

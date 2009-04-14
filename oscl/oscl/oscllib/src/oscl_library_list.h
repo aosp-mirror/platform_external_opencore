@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,11 +57,11 @@ class OsclLibraryList
          * Populate the list for the given interface ID.
          *
          * @param aInterfaceId ID to find the list of libraries for.
-         * @param aConfigFilePath - Location of the DLL Config file
+         * @param aConfigFile - DLL Config file
          *
          * @returns OsclLibStatus about whether the librarylist vector got populated or not
          **/
-        OSCL_IMPORT_REF OsclLibStatus Populate(const OsclUuid& aInterfaceId, const OSCL_String& aConfigFilePath);
+        OSCL_IMPORT_REF OsclLibStatus Populate(const OsclUuid& aInterfaceId, const OSCL_String& aConfigFile);
 
         /**
         * Get the number of libraries in the list.
@@ -80,6 +80,11 @@ class OsclLibraryList
     private:
         Oscl_Vector<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator> iLibList;
         PVLogger* ipLogger;
+#if OSCL_LIBRARY_PERF_LOGGING
+        PVLogger* iDiagnosticsLogger;
+        uint32 iLibHit;
+        uint32 iLinesRead;
+#endif
 };
 
 #endif //OSCL_LIBRARY_LIST_H_INCLUDED

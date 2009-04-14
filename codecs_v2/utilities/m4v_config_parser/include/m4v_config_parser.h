@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@
 
 #include "oscl_base.h"
 #include "oscl_types.h"
+
+#define USE_LATER 0  // for some code that will be needed in the future
 
 #define MP4_INVALID_VOL_PARAM -1
 #define SHORT_HEADER_MODE -4
@@ -80,16 +82,23 @@ int16 ByteAlign(
 );
 
 
-
-int16 iDecodeVOLHeader(mp4StreamType *psBits, int *width, int *height, int *, int *);
-OSCL_IMPORT_REF int16 iGetM4VConfigInfo(uint8 *buffer, int length, int *width, int *height, int *, int *);
+OSCL_IMPORT_REF int16 iDecodeVOLHeader(mp4StreamType *psBits, int32 *width, int32 *height, int32 *, int32 *, int32 *profilelevel);
+OSCL_IMPORT_REF int16 iGetM4VConfigInfo(uint8 *buffer, int32 length, int32 *width, int32 *height, int32 *, int32 *);
 int16 DecodeUserData(mp4StreamType *pStream);
-OSCL_IMPORT_REF int16 iDecodeShortHeader(mp4StreamType *psBits, int *width, int *height, int *, int *);
-OSCL_IMPORT_REF int16 iGetAVCConfigInfo(uint8 *buffer, int length, int *width, int *height, int *, int *);
-int16 DecodeSPS(mp4StreamType *psBits, int *width, int *height, int *display_width, int *display_height);
+OSCL_IMPORT_REF int16 iDecodeShortHeader(mp4StreamType *psBits, int32 *width, int32 *height, int32 *, int32 *);
+OSCL_IMPORT_REF int16 iGetAVCConfigInfo(uint8 *buffer, int32 length, int32 *width, int32 *height, int32 *, int32 *, int32 *profile, int32 *level);
+
+int32 FindNAL(uint8** nal_pnt, uint8* buffer, int32 length);
+int16 DecodeSPS(mp4StreamType *psBits, int32 *width, int32 *height, int32 *display_width, int32 *display_height, int32 *profile_idc, int32 *level_idc);
+#if USE_LATER
+int32 DecodeHRD(mp4StreamType *psBits);
+int32 DecodeVUI(mp4StreamType *psBits);
+#endif
+int32 DecodePPS(mp4StreamType *psBits);
+
 void ue_v(mp4StreamType *psBits, uint32 *codeNum);
 void se_v(mp4StreamType *psBits, int32 *value);
-void Parser_EBSPtoRBSP(uint8 *nal_unit, int *size);
+void Parser_EBSPtoRBSP(uint8 *nal_unit, int32 *size);
 
 #endif //PV_M4V_CONFIG_PARSER_H_INCLUDED
 

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,7 +110,10 @@ void AccessUnitImplementation::GetMediaFragment(uint32 index, BufferFragment& fr
 
 
 // bit_pattern_masks assume MSB first
-const uint8 bit_pattern_masks[7] = { 0xfe, 0xfc, 0xf8, 0xf0, 0xE0, 0xC0, 0x80 };
+const uint8 bit_pattern_masks[7] =
+{
+    0xfe, 0xfc, 0xf8, 0xf0, 0xE0, 0xC0, 0x80
+};
 
 //
 // the follow routine seeks forward or backward, depending on delta_in_bytes

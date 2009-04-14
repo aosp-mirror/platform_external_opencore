@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,8 @@ OSCL_EXPORT_REF OsclMemPoolFixedChunkAllocator::OsclMemPoolFixedChunkAllocator(c
         iMemPoolAllocator(gen_alloc), iMemPool(NULL),
         iCheckNextAvailableFreeChunk(false), iObserver(NULL),
         iNextAvailableContextData(NULL),
-        iRefCount(1)
+        iRefCount(1),
+        iEnableNullPtrReturn(false)
 {
     iNumChunk = numchunk;
     iChunkSize = chunksize;
@@ -41,6 +42,11 @@ OSCL_EXPORT_REF OsclMemPoolFixedChunkAllocator::OsclMemPoolFixedChunkAllocator(c
     {
         createmempool();
     }
+}
+
+OSCL_EXPORT_REF void OsclMemPoolFixedChunkAllocator::enablenullpointerreturn()
+{
+    iEnableNullPtrReturn = true;
 }
 
 OSCL_EXPORT_REF void OsclMemPoolFixedChunkAllocator::addRef()
@@ -94,8 +100,14 @@ OSCL_EXPORT_REF OsclAny* OsclMemPoolFixedChunkAllocator::allocate(const uint32 n
     if (iFreeMemChunkList.empty())
     {
         // No free chunk is available
-        OSCL_LEAVE(OsclErrNoResources);
-        // OSCL_UNUSED_RETURN(NULL);	This statement was removed to avoid compiler warning for Unreachable Code
+        if (iEnableNullPtrReturn)
+        {
+            return NULL;
+        }
+        else
+        {
+            OSCL_LEAVE(OsclErrNoResources);
+        }
     }
 
     // Return the next available chunk from the pool
@@ -178,7 +190,7 @@ OSCL_EXPORT_REF void OsclMemPoolFixedChunkAllocator::createmempool()
     }
     else
     {
-        OSCL_TRY(leavecode, iMemPool = OSCL_MALLOC(iNumChunk * iChunkSizeMemAligned));
+        iMemPool = OSCL_MALLOC(iNumChunk * iChunkSizeMemAligned);
     }
 
     if (leavecode || iMemPool == NULL)
@@ -250,10 +262,16 @@ OSCL_EXPORT_REF OsclMemPoolResizableAllocator::OsclMemPoolResizableAllocator(uin
         iRequestedNextAvailableSize(0),
         iNextAvailableContextData(NULL),
         iObserver(NULL),
-        iRefCount(1)
+        iCheckFreeMemoryAvailable(false),
+        iRequestedAvailableFreeMemSize(0),
+        iFreeMemContextData(NULL),
+        iFreeMemPoolObserver(NULL),
+        iRefCount(1),
+        iEnableNullPtrReturn(false)
 {
     OSCL_ASSERT(aMemPoolBufferSize > OSCLMEMPOOLRESIZABLEALLOCATOR_MIN_BUFFERSIZE);
 
+    iMaxNewMemPoolBufferSz = 0;
     // Calculate and save the mem aligned size of buffer and block info header structures
     iBufferInfoAlignedSize = oscl_mem_aligned_size(sizeof(MemPoolBufferInfo));
     iBlockInfoAlignedSize = oscl_mem_aligned_size(sizeof(MemPoolBlockInfo));
@@ -282,6 +300,10 @@ OSCL_EXPORT_REF OsclMemPoolResizableAllocator::OsclMemPoolResizableAllocator(uin
     addnewmempoolbuffer(buffersize);
 }
 
+OSCL_EXPORT_REF void OsclMemPoolResizableAllocator::enablenullpointerreturn()
+{
+    iEnableNullPtrReturn = true;
+}
 
 OSCL_EXPORT_REF OsclAny* OsclMemPoolResizableAllocator::allocate(const uint32 aNumBytes)
 {
@@ -298,6 +320,22 @@ OSCL_EXPORT_REF OsclAny* OsclMemPoolResizableAllocator::allocate(const uint32 aN
     freeblock = findfreeblock(alignednumbytes + iBlockInfoAlignedSize);
     if (freeblock == NULL)
     {
+        //We could not find the new buffer, the only way we can allocate the chunk is by allocating newmempool buffer
+        //Validate is size is less than the regrow size.
+        if (iMemPoolBufferNumLimit > 0 && iMaxNewMemPoolBufferSz > 0 && iMaxNewMemPoolBufferSz < alignednumbytes)
+        {
+            //cannot create the new buffer
+            if (iEnableNullPtrReturn)
+            {
+                return NULL;
+            }
+            else
+            {
+                // Leave with resource limitation
+                OSCL_LEAVE(OsclErrNoResources);
+            }
+
+        }
         // Check if the requested size is bigger than the specified buffer size
         if (alignednumbytes > iMemPoolBufferSize)
         {
@@ -333,9 +371,15 @@ OSCL_EXPORT_REF OsclAny* OsclMemPoolResizableAllocator::allocate(const uint32 aN
                 // Need to leave and return if empty buffer not found
                 if (!emptybufferfound)
                 {
-                    // Leave with resource limitation
-                    OSCL_LEAVE(OsclErrNoResources);
-                    // OSCL_UNUSED_RETURN(NULL);	This statement was removed to avoid compiler warning for Unreachable Code
+                    if (iEnableNullPtrReturn)
+                    {
+                        return NULL;
+                    }
+                    else
+                    {
+                        // Leave with resource limitation
+                        OSCL_LEAVE(OsclErrNoResources);
+                    }
                 }
 
                 // Continue on to create a new buffer
@@ -365,9 +409,15 @@ OSCL_EXPORT_REF OsclAny* OsclMemPoolResizableAllocator::allocate(const uint32 aN
             // Check if another buffer can be created
             if (iMemPoolBufferNumLimit > 0 && iMemPoolBufferList.size() >= iMemPoolBufferNumLimit)
             {
-                // Cannot so leave with resource limitation
-                OSCL_LEAVE(OsclErrNoResources);
-                // OSCL_UNUSED_RETURN(NULL);	This statement was removed to avoid compiler warning for Unreachable Code
+                if (iEnableNullPtrReturn)
+                {
+                    return NULL;
+                }
+                else
+                {
+                    // Leave with resource limitation
+                    OSCL_LEAVE(OsclErrNoResources);
+                }
             }
 
             // Determine the size of memory pool buffer and create one
@@ -486,6 +536,30 @@ OSCL_EXPORT_REF void OsclMemPoolResizableAllocator::deallocate(OsclAny* aPtr)
             }
         }
     }
+    if (iCheckFreeMemoryAvailable)
+    {
+        if (iRequestedAvailableFreeMemSize == 0)
+        {
+            // No so just make the callback
+            iCheckFreeMemoryAvailable = false;
+            if (iFreeMemPoolObserver)
+            {
+                iFreeMemPoolObserver->freememoryavailable(iFreeMemContextData);
+            }
+        }
+        else
+        {
+            // Check if the requested size is available now
+            if (getAvailableSize() >= iRequestedAvailableFreeMemSize)
+            {
+                iCheckFreeMemoryAvailable = false;
+                if (iFreeMemPoolObserver)
+                {
+                    iFreeMemPoolObserver->freememoryavailable(iFreeMemContextData);
+                }
+            }
+        }
+    }
 
     // Decrement the refcount since deallocating succeeded
     removeRef();
@@ -568,6 +642,23 @@ OSCL_EXPORT_REF void OsclMemPoolResizableAllocator::CancelFreeChunkAvailableCall
     iNextAvailableContextData = NULL;
 }
 
+OSCL_EXPORT_REF void OsclMemPoolResizableAllocator::notifyfreememoryavailable(OsclMemPoolResizableAllocatorMemoryObserver& aObserver, uint32 aRequestedSize, OsclAny* aContextData)
+{
+    // Save the parameters for the next deallocate() call
+    iCheckFreeMemoryAvailable = true;
+    iFreeMemPoolObserver = &aObserver;
+    iRequestedAvailableFreeMemSize = oscl_mem_aligned_size(aRequestedSize);
+    iFreeMemContextData = aContextData;
+}
+
+OSCL_EXPORT_REF void OsclMemPoolResizableAllocator::CancelFreeMemoryAvailableCallback()
+{
+    iCheckFreeMemoryAvailable = false;
+    iFreeMemPoolObserver = NULL;
+    iRequestedAvailableFreeMemSize = 0;
+    iFreeMemContextData = NULL;
+}
+
 OSCL_EXPORT_REF void OsclMemPoolResizableAllocator::addRef()
 {
     // Just increment the ref count
@@ -630,6 +721,7 @@ OsclMemPoolResizableAllocator::MemPoolBufferInfo* OsclMemPoolResizableAllocator:
     newbufferinfo->iBufferSize = aBufferAlignedSize;
     newbufferinfo->iNumOutstanding = 0;
     newbufferinfo->iNextFreeBlock = (MemPoolBlockInfo*)(newbufferinfo->iStartAddr);
+    newbufferinfo->iAllocatedSz = 0;
     newbufferinfo->iBufferPostFence = OSCLMEMPOOLRESIZABLEALLOCATOR_POSTFENCE_PATTERN;
 
     // Put in one free block in the new buffer
@@ -749,6 +841,8 @@ OsclAny* OsclMemPoolResizableAllocator::allocateblock(MemPoolBlockInfo& aBlockPt
     aBlockPtr.iNextFreeBlock = NULL;
     aBlockPtr.iPrevFreeBlock = NULL;
 
+    aBlockPtr.iParentBuffer->iAllocatedSz += aBlockPtr.iBlockSize;
+
     // Resize the block if too large
     uint32 extraspace = aBlockPtr.iBlockSize - iBlockInfoAlignedSize - aNumAlignedBytes;
     if (extraspace > (iBlockInfoAlignedSize + OSCLMEMPOOLRESIZABLEALLOCATOR_MIN_BUFFERSIZE))
@@ -759,7 +853,6 @@ OsclAny* OsclMemPoolResizableAllocator::allocateblock(MemPoolBlockInfo& aBlockPt
 #if OSCL_MEM_FILL_WITH_PATTERN
     oscl_memset(aBlockPtr.iBlockBuffer, 0x55, (aBlockPtr.iBlockSize - iBlockInfoAlignedSize));
 #endif
-
     return aBlockPtr.iBlockBuffer;
 }
 
@@ -792,6 +885,7 @@ void OsclMemPoolResizableAllocator::deallocateblock(MemPoolBlockInfo& aBlockPtr)
         bufferinfo->iNextFreeBlock = &aBlockPtr;
         aBlockPtr.iNextFreeBlock = NULL;
         aBlockPtr.iPrevFreeBlock = NULL;
+        aBlockPtr.iParentBuffer->iAllocatedSz -= aBlockPtr.iBlockSize;
         return;
     }
     else if (leftblockinfo != NULL && rightblockinfo == NULL)
@@ -843,9 +937,7 @@ void OsclMemPoolResizableAllocator::deallocateblock(MemPoolBlockInfo& aBlockPtr)
         aBlockPtr.iPrevFreeBlock = leftblockinfo;
         aBlockPtr.iNextFreeBlock = rightblockinfo;
     }
-
-
-
+    aBlockPtr.iParentBuffer->iAllocatedSz -= aBlockPtr.iBlockSize;
 
     // Merge the newly freed block with neighbors if contiguous
     // Check which neighbors are contiguous in memory space
@@ -986,4 +1078,134 @@ bool OsclMemPoolResizableAllocator::validateblock(OsclAny* aBlockBufPtr)
     }
 
     return true;
+}
+
+
+OSCL_EXPORT_REF uint32 OsclMemPoolResizableAllocator::getBufferSize() const
+{
+    if (iMemPoolBufferNumLimit == 0)
+        OSCL_LEAVE(OsclErrNotSupported);
+
+    uint32 bufferSize = 0;
+    for (uint32 i = 0; i < iMemPoolBufferList.size(); ++i)
+    {
+        MemPoolBufferInfo* bufferinfo = iMemPoolBufferList[i];
+        bufferSize += getMemPoolBufferSize(bufferinfo);
+    }
+
+    return bufferSize;
+}
+
+OSCL_EXPORT_REF uint32 OsclMemPoolResizableAllocator::getAllocatedSize() const
+{
+    //const uint32 expectedNumBlocksPerBuffer = iExpectedNumBlocksPerBuffer > 0 ? iExpectedNumBlocksPerBuffer : OSCLMEMPOOLRESIZABLEALLOCATOR_DEFAULT_NUMBLOCKPERBUFFER;
+    uint32 allocatedSz = 0;
+    for (uint32 i = 0; i < iMemPoolBufferList.size(); ++i)
+    {
+        MemPoolBufferInfo* bufferinfo = iMemPoolBufferList[i];
+        allocatedSz += getMemPoolBufferAllocatedSize(bufferinfo);
+    }
+    return allocatedSz;
+}
+
+OSCL_EXPORT_REF uint32 OsclMemPoolResizableAllocator::getAvailableSize() const
+{
+    if (iMemPoolBufferNumLimit == 0)
+        OSCL_LEAVE(OsclErrNotSupported);
+
+    uint32 availableSize = 0;
+    for (uint32 i = 0; i < iMemPoolBufferList.size(); ++i)
+    {
+        MemPoolBufferInfo* bufferinfo = iMemPoolBufferList[i];
+        uint32 memPoolBufferAvailableSz = 0;
+        memPoolBufferAvailableSz = (getMemPoolBufferSize(bufferinfo) - getMemPoolBufferAllocatedSize(bufferinfo));
+        availableSize += memPoolBufferAvailableSz;
+    }
+
+    return availableSize;
+}
+
+OSCL_EXPORT_REF uint32 OsclMemPoolResizableAllocator::getLargestContiguousFreeBlockSize() const
+{
+    uint32 blockSz = 0;
+
+    if (iMemPoolBufferNumLimit > 0)
+    {
+        for (uint32 i = 0; i < iMemPoolBufferList.size(); ++i)
+        {
+            MemPoolBufferInfo* bufferinfo = iMemPoolBufferList[i];
+            if (bufferinfo)
+            {
+                MemPoolBlockInfo* blockinfo = bufferinfo->iNextFreeBlock;
+                while (blockinfo != NULL)
+                {
+                    if (blockinfo->iBlockSize > blockSz) blockSz = blockinfo->iBlockSize;
+                    blockinfo = blockinfo->iNextFreeBlock;
+                }
+            }
+        }
+    }
+    else
+        OSCL_LEAVE(OsclErrNotSupported);
+
+    if (blockSz > iBlockInfoAlignedSize) blockSz -= iBlockInfoAlignedSize;
+    else blockSz = 0;
+
+    return blockSz;
+}
+
+OSCL_EXPORT_REF bool OsclMemPoolResizableAllocator::setMaxSzForNewMemPoolBuffer(uint32 aMaxNewMemPoolBufferSz)
+{
+    bool retval = true;
+    if (iMemPoolBufferNumLimit > 0)
+        iMaxNewMemPoolBufferSz = aMaxNewMemPoolBufferSz;
+    else
+        retval = false;
+    return retval;
+}
+
+uint32 OsclMemPoolResizableAllocator::getMemPoolBufferSize(MemPoolBufferInfo* aBufferInfo) const
+{
+    uint32 memPoolBufferSz = 0;
+
+    if (aBufferInfo)
+        memPoolBufferSz = aBufferInfo->iBufferSize;
+
+    return memPoolBufferSz;
+}
+
+uint32 OsclMemPoolResizableAllocator::getMemPoolBufferAllocatedSize(MemPoolBufferInfo* aBufferInfo) const
+{
+    return aBufferInfo->iAllocatedSz;
+    /*
+    uint32 allocatedSz = 0;
+    const uint32 expectedNumBlocksPerBuffer = iExpectedNumBlocksPerBuffer > 0 ? iExpectedNumBlocksPerBuffer : OSCLMEMPOOLRESIZABLEALLOCATOR_DEFAULT_NUMBLOCKPERBUFFER;
+
+    if (aBufferInfo)
+    {
+        if (aBufferInfo->iNumOutstanding > expectedNumBlocksPerBuffer)
+        {
+            allocatedSz = (aBufferInfo->iAllocatedSz - (expectedNumBlocksPerBuffer * iBlockInfoAlignedSize));
+        }
+        else
+        {
+            allocatedSz = (aBufferInfo->iAllocatedSz - (aBufferInfo->iNumOutstanding * iBlockInfoAlignedSize));
+        }
+    }
+    return allocatedSz;
+    */
+}
+
+uint32 OsclMemPoolResizableAllocator::memoryPoolBufferMgmtOverhead() const
+{
+    uint32 overheadBytes = iBufferInfoAlignedSize;
+    if (iExpectedNumBlocksPerBuffer > 0)
+    {
+        overheadBytes += (iExpectedNumBlocksPerBuffer * iBlockInfoAlignedSize);
+    }
+    else
+    {
+        overheadBytes += (OSCLMEMPOOLRESIZABLEALLOCATOR_DEFAULT_NUMBLOCKPERBUFFER * iBlockInfoAlignedSize);
+    }
+    return overheadBytes;
 }

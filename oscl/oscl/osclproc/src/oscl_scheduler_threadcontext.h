@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,6 +59,7 @@ enum TPVThreadContext
 */
 class OsclExecSchedulerCommonBase;
 class PVActiveBase;
+class OsclBrewThreadYield;
 class PVThreadContext
 {
     public:
@@ -92,10 +93,10 @@ class PVThreadContext
     private:
 
         /**
-        //panic if caller's thread doesn't match
+        //leave if caller's thread doesn't match
         //given thread.
         */
-        static void PanicIfWrongThread(PVThreadContext &a);
+        static void LeaveIfWrongThread(PVThreadContext &a);
 
 
         bool iOpen;

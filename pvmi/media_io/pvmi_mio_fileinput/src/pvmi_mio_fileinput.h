@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -155,6 +155,7 @@ class PvmiMIOFileInput : public OsclTimerObject,
             public PvmiMIOControl,
             public PvmiMediaTransfer,
             public PvmiCapabilityAndConfig
+
 {
     public:
         PvmiMIOFileInput(const PvmiMIOFileInputSettings& aSettings);
@@ -232,6 +233,7 @@ class PvmiMIOFileInput : public OsclTimerObject,
         OSCL_IMPORT_REF void SetAuthoringDuration(uint32);
 
         PVMFStatus Get_Timed_Config_Info();
+        PVMFStatus RetrieveFSI(uint32 fsi_size = 0);
 
     private:
         void Run();
@@ -250,7 +252,7 @@ class PvmiMIOFileInput : public OsclTimerObject,
         int32 LocateM4VFrameHeader(uint8* video_buffer, int32 vop_size);
         int32 LocateH263FrameHeader(uint8* video_buffer, int32 vop_size);
         int32 GetIF2FrameSize(uint8 aFrameType);
-        int32 GetIETFFrameSize(uint8 aFrameType);
+        int32 GetIETFFrameSize(uint8 aFrameType, PVMFFormatType aFormat);
 
         void CloseInputFile();
 
@@ -276,7 +278,9 @@ class PvmiMIOFileInput : public OsclTimerObject,
         PVMFStatus VerifyAndSetParameter(PvmiKvp* aKvp, bool aSetParam = false);
 
 
-        char* DecoderInfo(char* buffer, char* res);
+        bool DecoderInfo(char* buffer, char* bufferEnd, char* res, uint32 resSize);
+        uint8* AllocateMemPool(OsclMemPoolFixedChunkAllocator*&, uint32, int32&);
+        int32 WriteAsyncDataHdr(uint32&, PvmiMediaTransfer*&, uint32&, PvmiMediaXferHeader&);
 
         // Command queue
         uint32 iCmdIdCounter;
@@ -345,6 +349,7 @@ class PvmiMIOFileInput : public OsclTimerObject,
         // Logger
         PVLogger* iLogger;
 
+
         // State machine
         enum PvmiMIOFileInputState
         {
@@ -359,6 +364,12 @@ class PvmiMIOFileInput : public OsclTimerObject,
         PvmiMIOFileInputState iState;
         uint32 iAuthoringDuration;
         uint32 iStreamDuration;  //in msec
+
+        // Format specific info
+        OsclRefCounterMemFrag iFormatSpecificInfo;
+        uint32 iFormatSpecificInfoSize;
+        bool iSetFormatSpecificInfo;
+        PvmiKvp* iFSIKvp;
 };
 
 #endif // PVMI_MIO_FILEINPUT_H_INCLUDED

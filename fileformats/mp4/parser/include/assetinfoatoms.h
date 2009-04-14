@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,17 +37,14 @@
 #include "atomdefs.h"
 #endif
 
-
-#define BYTE_ORDER_MASK 0xFEFF
-
-class AssetInfoBaseParser
+class AssestInfoBaseParser
 {
     public:
-        AssetInfoBaseParser(MP4_FF_FILE *fp,
-                            uint32 size,
-                            uint32 sizeofDataFieldBeforeString = 2);
+        AssestInfoBaseParser(MP4_FF_FILE *fp,
+                             uint32 size,
+                             uint32 sizeofDataFieldBeforeString = 2);
 
-        virtual ~AssetInfoBaseParser() {};
+        virtual ~AssestInfoBaseParser() {};
 
         uint16 getLangCode() const
         {
@@ -101,10 +98,10 @@ class AssetInfoTitleAtom : public FullAtom
 
     private:
         OSCL_wHeapString<OsclMemAllocator> _defaultTitle;
-        AssetInfoBaseParser* _pAssetInfoBaseParser;
+        AssestInfoBaseParser* _pAssetInfoBaseParser;
 };
 
-typedef Oscl_Vector<AssetInfoBaseParser*, OsclMemAllocator> assetInfoBaseParserVecType;
+typedef Oscl_Vector<AssestInfoBaseParser*, OsclMemAllocator> assestInfoBaseParserVecType;
 
 class AssetInfoDescAtom : public FullAtom
 {
@@ -133,7 +130,7 @@ class AssetInfoDescAtom : public FullAtom
 
     private:
         OSCL_wHeapString<OsclMemAllocator> _defaultDesc;
-        AssetInfoBaseParser* _pAssetInfoBaseParser;
+        AssestInfoBaseParser* _pAssetInfoBaseParser;
 };
 
 class AssetInfoPerformerAtom : public FullAtom
@@ -162,7 +159,7 @@ class AssetInfoPerformerAtom : public FullAtom
 
     private:
         OSCL_wHeapString<OsclMemAllocator> _defaultPerf;
-        AssetInfoBaseParser* _pAssetInfoBaseParser;
+        AssestInfoBaseParser* _pAssetInfoBaseParser;
 };
 
 class AssetInfoAuthorAtom : public FullAtom
@@ -191,7 +188,7 @@ class AssetInfoAuthorAtom : public FullAtom
 
     private:
         OSCL_wHeapString<OsclMemAllocator> _defaultAuthor;
-        AssetInfoBaseParser* _pAssetInfoBaseParser;
+        AssestInfoBaseParser* _pAssetInfoBaseParser;
 };
 
 class AssetInfoGenreAtom : public FullAtom
@@ -220,7 +217,7 @@ class AssetInfoGenreAtom : public FullAtom
 
     private:
         OSCL_wHeapString<OsclMemAllocator> _defaultGenre;
-        AssetInfoBaseParser* _pAssetInfoBaseParser;
+        AssestInfoBaseParser* _pAssetInfoBaseParser;
 };
 
 class AssetInfoRatingAtom : public FullAtom
@@ -261,7 +258,7 @@ class AssetInfoRatingAtom : public FullAtom
         OSCL_wHeapString<OsclMemAllocator> _defaultRating;
         uint32				  _ratingEntity;
         uint32				  _ratingCriteria;
-        AssetInfoBaseParser* _pAssetInfoBaseParser;
+        AssestInfoBaseParser* _pAssetInfoBaseParser;
 };
 
 class AssetInfoClassificationAtom : public FullAtom
@@ -300,13 +297,13 @@ class AssetInfoClassificationAtom : public FullAtom
         OSCL_wHeapString<OsclMemAllocator> _defaultClassification;
         uint32				  _classificationEntity;
         uint16				  _classificationTable;
-        AssetInfoBaseParser* _pAssetInfoBaseParser;
+        AssestInfoBaseParser* _pAssetInfoBaseParser;
 };
 
-class AssetInfoKeyWord
+class AssestInfoKeyWord
 {
     public:
-        AssetInfoKeyWord(MP4_FF_FILE *fp);
+        AssestInfoKeyWord(MP4_FF_FILE *fp);
         OSCL_wHeapString<OsclMemAllocator> _defaultKeyWord;
         MP4FFParserOriginalCharEnc _charType;
         uint32 count;
@@ -342,7 +339,7 @@ class AssetInfoKeyWordAtom : public FullAtom
     private:
         uint16				          _langCode;
         uint8						  _keyWordCount;
-        Oscl_Vector<AssetInfoKeyWord *, OsclMemAllocator> *_pAssetInfoKeyWordVec;
+        Oscl_Vector<AssestInfoKeyWord *, OsclMemAllocator> *_pAssetInfoKeyWordVec;
         OSCL_wHeapString<OsclMemAllocator> _defaultKeyWord;
 };
 

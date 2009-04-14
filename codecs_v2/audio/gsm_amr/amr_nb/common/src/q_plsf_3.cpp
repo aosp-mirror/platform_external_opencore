@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,9 +27,6 @@ Permission to distribute, modify and use this file under the standard license
 terms listed above has been obtained from the copyright holder.
 ****************************************************************************************/
 /*
-------------------------------------------------------------------------------
-
-
 
  Pathname: ./audio/gsm-amr/c/src/q_plsf_3.c
  Funtions: Vq_subvec4
@@ -37,8 +34,6 @@ terms listed above has been obtained from the copyright holder.
            Vq_subvec3
            Test_Vq_subvec3
            Q_plsf_3
-
-     Date: 05/18/00
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
@@ -84,6 +79,7 @@ terms listed above has been obtained from the copyright holder.
 
  Description: Added #ifdef __cplusplus around extern'ed table.
 
+ Who:                           Date:
  Description:
 
 ------------------------------------------------------------------------------
@@ -246,7 +242,7 @@ Vq_subvec4(             // o: quantization index,            Q0
     lsf_r1[0] = *p_dico++;
     lsf_r1[1] = *p_dico++;
     lsf_r1[2] = *p_dico++;
-    lsf_r1[3] = *p_dico++;
+    lsf_r1[3] = *p_dico;
 
     return index;
 
@@ -346,7 +342,7 @@ static Word16 Vq_subvec4( /* o: quantization index,            Q0  */
     *lsf_r1++ = *p_dico++;
     *lsf_r1++ = *p_dico++;
     *lsf_r1++ = *p_dico++;
-    *lsf_r1 = *p_dico++;
+    *lsf_r1 = *p_dico;
 
     return(index);
 
@@ -679,7 +675,7 @@ static Word16 Vq_subvec3( /* o: quantization index,            Q0  */
     /* Reading the selected vector */
     *lsf_r1++ = *p_dico++;
     *lsf_r1++ = *p_dico++;
-    *lsf_r1 = *p_dico++;
+    *lsf_r1 = *p_dico;
 
     return(index);
 }

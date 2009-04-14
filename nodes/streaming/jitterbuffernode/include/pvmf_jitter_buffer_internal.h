@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,23 +34,26 @@
 /**
  * Macros for calling PVLogger
  */
-#define PVMF_JBNODE_LOGERROR(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iLogger,PVLOGMSG_ERR,m);
-#define PVMF_JBNODE_LOGWARNING(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iLogger,PVLOGMSG_WARNING,m);
-#define PVMF_JBNODE_LOGINFOHI(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG,iLogger,PVLOGMSG_INFO,m);
-#define PVMF_JBNODE_LOGINFOMED(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG,iLogger,PVLOGMSG_INFO,m);
-#define PVMF_JBNODE_LOGINFOLOW(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG,iLogger,PVLOGMSG_INFO,m);
+#define PVMF_JBNODE_LOGERROR(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,ipLogger,PVLOGMSG_ERR,m);
+#define PVMF_JBNODE_LOGWARNING(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,ipLogger,PVLOGMSG_WARNING,m);
+#define PVMF_JBNODE_LOGINFOHI(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG,ipLogger,PVLOGMSG_INFO,m);
+#define PVMF_JBNODE_LOGINFOMED(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG,ipLogger,PVLOGMSG_INFO,m);
+#define PVMF_JBNODE_LOGINFOLOW(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG,ipLogger,PVLOGMSG_INFO,m);
 #define PVMF_JBNODE_LOGINFO(m) PVMF_JBNODE_LOGINFOMED(m)
-#define PVMF_JBNODE_LOGDATATRAFFIC(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iDataPathLogger,PVLOGMSG_INFO,m);
-#define PVMF_JBNODE_LOGDATATRAFFIC_IN(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iDataPathLoggerIn,PVLOGMSG_INFO,m);
-#define PVMF_JBNODE_LOGDATATRAFFIC_OUT(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iDataPathLoggerOut,PVLOGMSG_INFO,m);
-#define PVMF_JBNODE_LOGCLOCK(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iClockLogger,PVLOGMSG_INFO,m);
-#define PVMF_JBNODE_LOGCLOCK_SESSION_DURATION(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iClockLoggerSessionDuration,PVLOGMSG_INFO,m);
-#define PVMF_JBNODE_LOGCLOCK_REBUFF(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iClockLoggerRebuff,PVLOGMSG_INFO,m);
-#define PVMF_JBNODE_LOGDIAGNOSTICS(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF,iDiagnosticsLogger,PVLOGMSG_INFO,m);
-#define PVMF_JBNODE_LOGDATATRAFFIC_FLOWCTRL(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iDataPathLoggerFlowCtrl,PVLOGMSG_INFO,m);
-#define PVMF_JBNODE_LOGDATATRAFFIC_FLOWCTRL_E(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iDataPathLoggerFlowCtrl,PVLOGMSG_ERR,m);
-#define PVMF_JBNODE_LOG_RTCP(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iDataPathLoggerRTCP,PVLOGMSG_INFO,m);
-#define PVMF_JBNODE_LOG_FW(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iDataPathLoggerFireWall,PVLOGMSG_INFO,m);
+#define PVMF_JBNODE_LOGDATATRAFFIC(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,ipDataPathLogger,PVLOGMSG_INFO,m);
+#define PVMF_JBNODE_LOGDATATRAFFIC_IN(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,ipDataPathLoggerIn,PVLOGMSG_INFO,m);
+#define PVMF_JBNODE_LOGDATATRAFFIC_IN_E(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,ipDataPathLoggerIn,PVLOGMSG_ERR,m);
+#define PVMF_JBNODE_LOGDATATRAFFIC_OUT(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,ipDataPathLoggerOut,PVLOGMSG_INFO,m);
+#define PVMF_JBNODE_LOGDATATRAFFIC_OUT_E(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,ipDataPathLoggerOut,PVLOGMSG_ERR,m);
+#define PVMF_JBNODE_LOGCLOCK(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,ipClockLogger,PVLOGMSG_INFO,m);
+#define PVMF_JBNODE_LOGCLOCK_SESSION_DURATION(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,ipClockLoggerSessionDuration,PVLOGMSG_INFO,m);
+#define PVMF_JBNODE_LOGCLOCK_REBUFF(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,ipClockLoggerRebuff,PVLOGMSG_INFO,m);
+#define PVMF_JBNODE_LOGDIAGNOSTICS(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF,ipDiagnosticsLogger,PVLOGMSG_INFO,m);
+#define PVMF_JBNODE_LOGDATATRAFFIC_FLOWCTRL(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,ipDataPathLoggerFlowCtrl,PVLOGMSG_INFO,m);
+#define PVMF_JBNODE_LOGDATATRAFFIC_FLOWCTRL_E(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,ipDataPathLoggerFlowCtrl,PVLOGMSG_ERR,m);
+#define PVMF_JBNODE_LOG_RTCP_DATAPATH(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,ipDataPathLoggerRTCP,PVLOGMSG_ERR,m);
+#define PVMF_JBNODE_LOG_EVENTS_CLOCK(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG,ipJBEventsClockLogger ,PVLOGMSG_INFO,m);
+#define PVMF_JBNODE_LOG_RTCP_AVSYNC(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,ipRTCPAVSyncLogger,PVLOGMSG_INFO,m);
 
 #define PVMF_JITTER_BUFFER_NEW(auditCB,T,params,ptr)\
 {\
@@ -64,7 +67,7 @@ OSCL_DELETE(ptr);\
 
 #define PVMF_JITTER_BUFFER_TEMPLATED_DELETE(auditCB, T, Tsimple, ptr)\
 {\
-OSCL_TEMPLATED_DELETE(ptr, T, Tsimple);\
+OSCL_DELETE(ptr);\
 }
 
 //Default vector reserve size
@@ -76,7 +79,7 @@ OSCL_TEMPLATED_DELETE(ptr, T, Tsimple);\
 #define PVMF_JITTER_BUFFER_INTERNAL_CMDQ_SIZE 20
 
 //Node command type.
-typedef PVMFGenericNodeCommand<PVMFJitterBufferNodeAllocator> PVMFJitterBufferNodeCommandBase;
+typedef PVMFGenericNodeCommand<OsclMemAllocator> PVMFJitterBufferNodeCommandBase;
 
 class PVMFJitterBufferNodeCommand : public PVMFJitterBufferNodeCommandBase
 {
@@ -103,7 +106,7 @@ class PVMFJitterBufferNodeCommand : public PVMFJitterBufferNodeCommandBase
 };
 
 //Command queue type
-typedef PVMFNodeCommandQueue<PVMFJitterBufferNodeCommand, PVMFJitterBufferNodeAllocator> PVMFJitterBufferNodeCmdQ;
+typedef PVMFNodeCommandQueue<PVMFJitterBufferNodeCommand, OsclMemAllocator> PVMFJitterBufferNodeCmdQ;
 
 typedef struct tagPVMFJBCommandContext
 {
@@ -119,7 +122,7 @@ typedef struct tagPVMFJBCommandContext
 class PVMFJitterBufferNode;
 
 class PVMFJitterBufferExtensionInterfaceImpl :
-            public PVInterfaceImpl<PVMFJitterBufferNodeAllocator>,
+            public PVInterfaceImpl<OsclMemAllocator>,
             public PVMFJitterBufferExtensionInterface
 {
     public:
@@ -146,7 +149,13 @@ class PVMFJitterBufferExtensionInterfaceImpl :
         OSCL_IMPORT_REF void getJitterBufferRebufferingThresholdInMilliSeconds(uint32& aThreshold);
         OSCL_IMPORT_REF void setJitterBufferDurationInMilliSeconds(uint32 duration);
         OSCL_IMPORT_REF void getJitterBufferDurationInMilliSeconds(uint32& duration);
-        OSCL_IMPORT_REF void setClientPlayBackClock(OsclClock* clientClock);
+
+        OSCL_IMPORT_REF void setEarlyDecodingTimeInMilliSeconds(uint32 duration);
+        OSCL_IMPORT_REF void setBurstThreshold(float burstThreshold);
+
+        OSCL_IMPORT_REF void setClientPlayBackClock(PVMFMediaClock* clientClock);
+        OSCL_IMPORT_REF void setMaxInactivityDurationForMediaInMs(uint32 duration);
+        OSCL_IMPORT_REF void getMaxInactivityDurationForMediaInMs(uint32& duration);
 
         OSCL_IMPORT_REF bool PrepareForRepositioning(bool oUseExpectedClientClockVal = false,
                 uint32 aExpectedClientClockVal = 0);
@@ -158,6 +167,7 @@ class PVMFJitterBufferExtensionInterfaceImpl :
                                               uint32 aSeqNumBase,
                                               bool   aRTPTimeBasePresent,
                                               uint32 aRTPTimeBase,
+                                              bool   aNPTTimeBasePresent,
                                               uint32 aNPTInMS,
                                               bool oPlayAfterASeek = false);
 
@@ -167,19 +177,21 @@ class PVMFJitterBufferExtensionInterfaceImpl :
                                                uint32 aRS);
 
         OSCL_IMPORT_REF PVMFTimestamp getActualMediaDataTSAfterSeek();
+        OSCL_IMPORT_REF PVMFTimestamp getMaxMediaDataTS();
 
         void addRef()
         {
-            PVInterfaceImpl<PVMFJitterBufferNodeAllocator>::addRef();
+            PVInterfaceImpl<OsclMemAllocator>::addRef();
         }
         void removeRef()
         {
-            PVInterfaceImpl<PVMFJitterBufferNodeAllocator>::removeRef();
+            PVInterfaceImpl<OsclMemAllocator>::removeRef();
         }
         bool queryInterface(const PVUuid& uuid, PVInterface*& iface)
         {
             if (uuid == Uuid())
             {
+                addRef();
                 iface = this;
                 return true;
             }
@@ -195,25 +207,33 @@ class PVMFJitterBufferExtensionInterfaceImpl :
         OSCL_IMPORT_REF PVMFStatus NotifyOutOfBandEOS();
         OSCL_IMPORT_REF PVMFStatus SendBOSMessage(uint32 aStramID);
 
-        OSCL_IMPORT_REF OsclSharedPtr<PVMFSharedSocketDataBufferAlloc> CreateResizablePortAllocator(uint32 aSize, OSCL_String& aName);
-
         OSCL_IMPORT_REF void SetSharedBufferResizeParams(uint32 maxNumResizes, uint32 resizeSize);
         OSCL_IMPORT_REF void GetSharedBufferResizeParams(uint32& maxNumResizes, uint32& resizeSize);
 
         OSCL_IMPORT_REF bool ClearJitterBuffer(PVMFPortInterface* aPort, uint32 aSeqNum);
+        OSCL_IMPORT_REF void FlushJitterBuffer();
 
         OSCL_IMPORT_REF bool NotifyAutoPauseComplete();
 
         OSCL_IMPORT_REF bool NotifyAutoResumeComplete();
 
-        OSCL_IMPORT_REF PVMFStatus SetTransportType(PVMFPortInterface* aPort,
-                OSCL_String& aTransportType);
+        OSCL_IMPORT_REF PVMFStatus SetInputMediaHeaderPreParsed(PVMFPortInterface* aPort,
+                bool aHeaderPreParsed);
 
         OSCL_IMPORT_REF PVMFStatus HasSessionDurationExpired(bool& aExpired);
         OSCL_IMPORT_REF bool PurgeElementsWithNPTLessThan(NptTimeFormat &aNPTTime);
 
         OSCL_IMPORT_REF void SetBroadCastSession();
         OSCL_IMPORT_REF void DisableFireWallPackets();
+
+
+        OSCL_IMPORT_REF void StartOutputPorts();
+        OSCL_IMPORT_REF void StopOutputPorts();
+        OSCL_IMPORT_REF void UpdateJitterBufferState();
+        OSCL_IMPORT_REF virtual void SetJitterBufferMemPoolInfo(const PvmfPortBaseImpl* aPort, uint32 aSize, uint32 aResizeSize, uint32 aMaxNumResizes, uint32 aExpectedNumberOfBlocksPerBuffer);
+        OSCL_IMPORT_REF virtual void GetJitterBufferMemPoolInfo(const PvmfPortBaseImpl* aPort, uint32& aSize, uint32& aResizeSize, uint32& aMaxNumResizes, uint32& aExpectedNumberOfBlocksPerBuffer) const;
+        OSCL_IMPORT_REF void SetJitterBufferChunkAllocator(OsclMemPoolResizableAllocator* aDataBufferAllocator, const PVMFPortInterface* aPort);
+        OSCL_IMPORT_REF virtual bool PrepareForPlaylistSwitch();
 
     private:
         PVMFJitterBufferNode *iContainer;

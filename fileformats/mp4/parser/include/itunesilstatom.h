@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,22 +15,58 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*********************************************************************************/
-/*
-	This ITunesILSTAtom Class is used for Parsing, and Storing the tags from Meta data
-	of ITune M4A file.
-*/
-
 #ifndef ITUNESILSTATOM_H_INCLUDED
 #define ITUNESILSTATOM_H_INCLUDED
 
 #include "atom.h"
+#include "fullatom.h"
 #include "pvmi_kvp.h"
 #include "atomdefs.h"
 
 #define MAX_CD_IDENTIFIER_FREE_DATA_ATOM 16
 #define ITUNES_MAX_COVER_IMAGE_SIZE (1024*1024) //1 meg
+#define PREFIX_SIZE 16
 
+//************************************MeaningAtom Class Starts  **********************************
+class ItunesMeaningAtom : public FullAtom
+{
+    public:
+        ItunesMeaningAtom(MP4_FF_FILE *fp, uint32 size, uint32 type);
+        virtual ~ItunesMeaningAtom();
+        //API to retrieve the Meaning String
+        OSCL_wHeapString<OsclMemAllocator> getMeaningString() const
+        {
+            return _meaningString;
+        }
+
+    private:
+
+        OSCL_wHeapString<OsclMemAllocator> _meaningString;
+
+
+};
+
+//************************************NameAtom Class Starts  **********************************
+
+class ItunesNameAtom : public FullAtom
+{
+    public:
+        ItunesNameAtom(MP4_FF_FILE *fp, uint32 size, uint32 type);
+        virtual ~ItunesNameAtom();
+        //API to retrieve the Name String
+        OSCL_wHeapString<OsclMemAllocator> getNameString() const
+        {
+            return _nameString;
+        }
+
+    private:
+
+        OSCL_wHeapString<OsclMemAllocator> _nameString;
+
+
+};
+
+//************************************BaseTypes for the MetaData **********************************
 class ITunesMetaDataAtom: public Atom
 {
     public:
@@ -48,8 +84,7 @@ class ITunesMetaDataAtom: public Atom
 };
 
 
-
-// Title / Name
+//************************************Title(Name) Class Starts  **********************************
 class ITunesTitleAtom: public ITunesMetaDataAtom
 {
     public:
@@ -64,6 +99,24 @@ class ITunesTitleAtom: public ITunesMetaDataAtom
     private:
 // Title of Song
         OSCL_wHeapString<OsclMemAllocator> _name;
+};
+
+//************************************ Track's Subtitle Class Starts  **********************************
+
+class ITunesTrackSubTitleAtom: public ITunesMetaDataAtom
+{
+    public:
+        ITunesTrackSubTitleAtom(MP4_FF_FILE *fp, uint32 size, uint32 type);
+        ~ITunesTrackSubTitleAtom();
+
+        OSCL_wHeapString<OsclMemAllocator> getTrackSubTitle() const
+        {
+            return _trackTitle;
+        }
+
+    private:
+//SubTitle of the track
+        OSCL_wHeapString<OsclMemAllocator> _trackTitle;
 };
 
 
@@ -82,6 +135,23 @@ class ITunesArtistAtom: public ITunesMetaDataAtom
     private:
 // Artist / Performer of Song
         OSCL_wHeapString<OsclMemAllocator> _artist;
+};
+
+//************************************AlbumArtist Class Starts  **********************************
+class ITunesAlbumArtistAtom: public ITunesMetaDataAtom
+{
+    public:
+        ITunesAlbumArtistAtom(MP4_FF_FILE *fp, uint32 size, uint32 type);
+        ~ITunesAlbumArtistAtom();
+
+        OSCL_wHeapString<OsclMemAllocator> getAlbumArtist() const
+        {
+            return _albumArtist;
+        }
+
+    private:
+// AlbumArtist
+        OSCL_wHeapString<OsclMemAllocator> _albumArtist;
 };
 
 //************************************ Album Class Starts  **********************************
@@ -108,12 +178,6 @@ class ITunesGenreAtom: public ITunesMetaDataAtom
         ITunesGenreAtom(MP4_FF_FILE *fp, uint32 size, uint32 type);
         ~ITunesGenreAtom();
 
-        /*	typedef enum
-        	{
-        		STRING_GENRE = 0,
-        		INTEGER_GENRE
-        	}GnreVersion;
-        */
         uint16 getGnreID() const
         {
             return _gnreID;
@@ -171,6 +235,24 @@ class ITunesToolAtom: public ITunesMetaDataAtom
         // Tool/Encoder of Song
         OSCL_wHeapString<OsclMemAllocator> _tool;
 };
+
+//************************************EncodedBy(Company/Person) Class Starts  **********************************
+class ITunesEncodedByAtom: public ITunesMetaDataAtom
+{
+    public:
+        ITunesEncodedByAtom(MP4_FF_FILE *fp, uint32 size, uint32 type);
+        ~ITunesEncodedByAtom();
+
+        OSCL_wHeapString<OsclMemAllocator> getEncodedBy() const
+        {
+            return _encodedBy;
+        }
+
+    private:
+        // Person or company that encoded the recording
+        OSCL_wHeapString<OsclMemAllocator> _encodedBy;
+};
+
 
 //************************************ Writer Class Starts  **********************************
 class ITunesWriterAtom: public ITunesMetaDataAtom
@@ -263,6 +345,23 @@ class ITunesCompileAtom: public ITunesMetaDataAtom
         bool _compilationPart;
 };
 
+//********************************* Content Rating Class Starts  ********************************
+class ITunesContentRatingAtom: public ITunesMetaDataAtom
+{
+    public:
+        ITunesContentRatingAtom(MP4_FF_FILE *fp, uint32 size, uint32 type);
+        ~ITunesContentRatingAtom();
+
+        bool IsContentRating() const
+        {
+            return _contentRating;
+        }
+
+    private:
+        // Does song have explicit content?
+        bool _contentRating;
+};
+
 //************************************ Tempo Class Starts  **********************************
 class ITunesTempoAtom: public ITunesMetaDataAtom
 {
@@ -312,6 +411,7 @@ class ITunesDescriptionAtom: public ITunesMetaDataAtom
 
         OSCL_wHeapString<OsclMemAllocator> _desc;
 };
+
 
 //************************************ Disk Data Class Starts  **********************************
 class ITunesDiskDatatAtom: public ITunesMetaDataAtom
@@ -404,11 +504,29 @@ class ITunesILSTAtom : public Atom
                 return temp;
         }
 
+        OSCL_wHeapString<OsclMemAllocator> getTrackSubTitle() const
+        {
+            OSCL_wHeapString<OsclMemAllocator> temp;
+            if (_pITunesTrackSubTitleAtom)
+                return _pITunesTrackSubTitleAtom->getTrackSubTitle();
+            else
+                return temp;
+        }
+
         OSCL_wHeapString<OsclMemAllocator> getArtist() const
         {
             OSCL_wHeapString<OsclMemAllocator> temp;
             if (_pITunesArtistAtom)
                 return _pITunesArtistAtom->getArtist();
+            else
+                return temp;
+        }
+
+        OSCL_wHeapString<OsclMemAllocator> getAlbumArtist() const
+        {
+            OSCL_wHeapString<OsclMemAllocator> temp;
+            if (_pITunesAlbumArtistAtom)
+                return _pITunesAlbumArtistAtom->getAlbumArtist();
             else
                 return temp;
         }
@@ -491,6 +609,17 @@ class ITunesILSTAtom : public Atom
                 return temp;
         }
 
+        OSCL_wHeapString<OsclMemAllocator> getEncodedBy() const
+        {
+            OSCL_wHeapString<OsclMemAllocator> temp;
+            if (_pITunesEncodedByAtom)
+            {
+                return _pITunesEncodedByAtom->getEncodedBy();
+            }
+            else
+                return temp;
+        }
+
         OSCL_wHeapString<OsclMemAllocator> getWriter() const
         {
             OSCL_wHeapString<OsclMemAllocator> temp;
@@ -542,6 +671,14 @@ class ITunesILSTAtom : public Atom
                 return false;
         }
 
+        bool IsContentRating() const
+        {
+            if (_pITunesContentRatingAtom)
+                return _pITunesContentRatingAtom->IsContentRating();
+            else
+                return false;
+        }
+
         uint16 getBeatsPerMinute() const
         {
             if (_pITunesTempoAtom)
@@ -568,11 +705,6 @@ class ITunesILSTAtom : public Atom
                 return temp;
         }
 
-
-        /*	PvmfApicStruct getPNGImageData() const
-        	{
-        		return _PNGimageData;
-        	}*/
 
         PvmfApicStruct* getImageData() const
         {
@@ -629,6 +761,24 @@ class ITunesILSTAtom : public Atom
 
         }
 
+        OSCL_wHeapString<OsclMemAllocator> getCDTrackNumberData() const
+        {
+            OSCL_wHeapString<OsclMemAllocator> temp;
+            if (_pITunesCDTrackNumberFreeFormDataAtom)
+                return _pITunesCDTrackNumberFreeFormDataAtom->getString();
+            else
+                return temp;
+        }
+
+        OSCL_wHeapString<OsclMemAllocator> getCDDB1Data() const
+        {
+            OSCL_wHeapString<OsclMemAllocator> temp;
+            if (_pITunesCDDB1FreeFormDataAtom)
+                return _pITunesCDDB1FreeFormDataAtom->getString();
+            else
+                return temp;
+        }
+
         OSCL_wHeapString<OsclMemAllocator> getLyrics() const
         {
             OSCL_wHeapString<OsclMemAllocator> temp;
@@ -638,14 +788,25 @@ class ITunesILSTAtom : public Atom
                 return temp;
         }
 
-
     private:
 
+        //Meaning String
+        ItunesMeaningAtom  *_pITunesMeaningAtom;
+        Oscl_Vector<ItunesMeaningAtom*, OsclMemAllocator> *_pMeaningAtomVec;
+        //Name String
+        ItunesNameAtom     *_pITunesNameAtom;
+        Oscl_Vector<ItunesNameAtom*, OsclMemAllocator> *_pNameAtomVec;
         // Title/Name Atom
         ITunesTitleAtom		*_pITunesTitleAtom;
 
+        //Track's subtitle
+        ITunesTrackSubTitleAtom *_pITunesTrackSubTitleAtom;
+
         // Artist/Performer of the Song
         ITunesArtistAtom		*_pITunesArtistAtom;
+
+        //Artist for the whole album (if different than the individual tracks)
+        ITunesAlbumArtistAtom		*_pITunesAlbumArtistAtom;
 
         // Album of Song
         ITunesAlbumAtom			*_pITunesAlbumAtom;
@@ -658,6 +819,9 @@ class ITunesILSTAtom : public Atom
 
         // Tool/Encoder used for creation of this file.
         ITunesToolAtom			*_pITunesToolAtom;
+
+        //Person or company that encoded the recording
+        ITunesEncodedByAtom     *_pITunesEncodedByAtom;
 
         // Writer of the Song
         ITunesWriterAtom		*_pITunesWriterAtom;
@@ -674,12 +838,16 @@ class ITunesILSTAtom : public Atom
         // Whether this file is the Part of Compilation or not.
         ITunesCompileAtom		*_pITunesCompileAtom;
 
+        // Does song have explicit content?
+        ITunesContentRatingAtom *_pITunesContentRatingAtom;
+
         // Number of Beats per Minute
         ITunesTempoAtom			*_pITunesTempoAtom;
 
         ITunesCopyrightAtom		*_pITunesCopyrightAtom;
 
         ITunesDescriptionAtom	*_pITunesDescriptionAtom;
+
 
         // Album Art Data- PNG Image data
         //PvmfApicStruct _PNGimageData;
@@ -698,8 +866,15 @@ class ITunesILSTAtom : public Atom
         uint8 _iITunesCDIdentifierFreeFormDataAtomNum;
         ITunesFreeFormDataAtom	*_pITunesCDIdentifierFreeFormDataAtom[MAX_CD_IDENTIFIER_FREE_DATA_ATOM];
 
+        //CD Track Number Free Form Data
+        ITunesFreeFormDataAtom *_pITunesCDTrackNumberFreeFormDataAtom;
+
+        // CD Identifier Free Form Data
+        ITunesFreeFormDataAtom *_pITunesCDDB1FreeFormDataAtom;
+
         // Lyrics of the Song
         ITunesLyricsAtom		*_pITunesLyricsAtom;
+
         PVLogger *iLogger;
 };
 

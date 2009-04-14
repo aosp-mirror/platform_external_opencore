@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,17 +36,27 @@ numbers such.
 #include "compositionoffsetatom.h"
 #include "atomutils.h"
 
+#define CTTS_MIN_SAMPLE_TABLE_SIZE 4096
+#define MT_SAMPLECOUNT_INCREMENT 100 //this has to be atleast 3
+#define NUMBER_OF_SAMPLE_POPULATES_PER_RUNL 50
+#define ENABLE_MT_LOGIC_ON_CTTS_ENTRY_COUNT_VALUE 512
+
 // Stream-in ctor
 CompositionOffsetAtom::CompositionOffsetAtom(MP4_FF_FILE *fp,
         uint32 mediaType,
         uint32 size,
         uint32 type,
         OSCL_wString& filename,
-        uint32 parsingMode)
-        : FullAtom(fp, size, type)
+        uint32 parsingMode):
+        FullAtom(fp, size, type),
+        OsclTimerObject(OsclActiveObject::EPriorityNominal, "CompositionOffsetAtom")
 {
     _psampleCountVec = NULL;
     _psampleOffsetVec = NULL;
+    MT_SampleCount  = NULL;
+    MT_EntryCount  = NULL;
+    iMarkerTableCreation = false;
+    MT_Table_Size = 0;
 
     _currGetSampleCount = 0;
     _currGetIndex = -1;
@@ -55,14 +65,21 @@ CompositionOffsetAtom::CompositionOffsetAtom(MP4_FF_FILE *fp,
     _currPeekIndex = -1;
     _currPeekTimeOffset = 0;
 
+    MT_Counter = 1;
+    addSampleCount = 0;
+    prevSampleCount = 0;
+    entrycountTraversed = 0;
+    refSample = MT_SAMPLECOUNT_INCREMENT;
+    MT_j = 1;
+
     _mediaType = mediaType;
-    //_head_offset = 0;
     _parsed_entry_cnt = 0;
     _fileptr = NULL;
     _parsing_mode = 0;
     _parsing_mode = parsingMode;
 
-    _stbl_buff_size = 4096;
+
+    _stbl_buff_size = CTTS_MIN_SAMPLE_TABLE_SIZE;
     _next_buff_number = 0;
     _curr_buff_number = 0;
     _curr_entry_point = 0;
@@ -72,6 +89,16 @@ CompositionOffsetAtom::CompositionOffsetAtom(MP4_FF_FILE *fp,
     iStateVarLogger = PVLogger::GetLoggerObject("mp4ffparser_mediasamplestats");
     iParsedDataLogger = PVLogger::GetLoggerObject("mp4ffparser_parseddata");
 
+    iMarkerTableCreation = false;
+
+    /* Add this AO to the scheduler */
+    if (OsclExecScheduler::Current() != NULL)
+    {
+        if (!IsAdded())
+        {
+            AddToScheduler();
+        }
+    }
 
     if (_success)
     {
@@ -96,9 +123,11 @@ CompositionOffsetAtom::CompositionOffsetAtom(MP4_FF_FILE *fp,
             {
                 if (parsingMode == 1)
                 {
-                    if ((_entryCount > 4096)) // cahce size is 4K so that optimization
-                        // should work if entry_count is greater than 4K
+                    // cache size is 4K so that optimization
+                    // should work if entry_count is greater than 4K
+                    if (_entryCount > _stbl_buff_size)
                     {
+
                         uint32 fptrBuffSize = (_entryCount / _stbl_buff_size) + 1;
 
                         PV_MP4_FF_ARRAY_NEW(NULL, uint32, (fptrBuffSize), _stbl_fptr_vec);
@@ -109,6 +138,7 @@ CompositionOffsetAtom::CompositionOffsetAtom(MP4_FF_FILE *fp,
                             return;
                         }
 
+
                         PV_MP4_FF_ARRAY_NEW(NULL, uint32, (_stbl_buff_size), _psampleCountVec);
                         if (_psampleCountVec == NULL)
                         {
@@ -116,6 +146,7 @@ CompositionOffsetAtom::CompositionOffsetAtom(MP4_FF_FILE *fp,
                             _mp4ErrorCode = MEMORY_ALLOCATION_FAILED;
                             return;
                         }
+
 
                         PV_MP4_FF_ARRAY_NEW(NULL, uint32, (_stbl_buff_size), _psampleOffsetVec);
                         if (_psampleOffsetVec == NULL)
@@ -158,6 +189,7 @@ CompositionOffsetAtom::CompositionOffsetAtom(MP4_FF_FILE *fp,
                         int32 _head_offset = AtomUtils::getCurrentFilePosition(fp);
                         AtomUtils::seekFromCurrPos(fp, dataSize);
                         AtomUtils::seekFromStart(_fileptr, _head_offset);
+
                         return;
                     }
                     else
@@ -227,15 +259,32 @@ CompositionOffsetAtom::CompositionOffsetAtom(MP4_FF_FILE *fp,
     }
 }
 
+void CompositionOffsetAtom::setSamplesCount(uint32 SamplesCount)
+{
+    _iTotalNumSamplesInTrack = SamplesCount;
+
+    if (_entryCount > ENABLE_MT_LOGIC_ON_CTTS_ENTRY_COUNT_VALUE)
+    {
+        //Make this AO active so Run() will be called when scheduler is started
+        if (OsclExecScheduler::Current() != NULL)
+        {
+            RunIfNotReady();
+        }
+    }
+}
+
 bool CompositionOffsetAtom::ParseEntryUnit(uint32 entry_cnt)
 {
     const uint32 threshold = 1024;
     entry_cnt += threshold;
 
     if (entry_cnt > _entryCount)
+    {
         entry_cnt = _entryCount;
+    }
 
-    uint32 number, offset;
+    uint32 number = 0;
+    uint32 offset = 0;
     while (_parsed_entry_cnt < entry_cnt)
     {
         _curr_entry_point = _parsed_entry_cnt % _stbl_buff_size;
@@ -282,6 +331,8 @@ CompositionOffsetAtom::~CompositionOffsetAtom()
     if (_stbl_fptr_vec != NULL)
         PV_MP4_ARRAY_DELETE(NULL, _stbl_fptr_vec);
 
+    deleteMarkerTable();
+
     if (_fileptr != NULL)
     {
         if (_fileptr->IsOpen())
@@ -290,6 +341,12 @@ CompositionOffsetAtom::~CompositionOffsetAtom()
         }
         oscl_free(_fileptr);
     }
+
+    if (IsAdded())
+    {
+        RemoveFromScheduler();
+    }
+
 }
 
 // Return the number of samples  at index
@@ -382,6 +439,7 @@ CompositionOffsetAtom::getTimeOffsetForSampleNumberPeek(uint32 sampleNum)
             return (PV_ERROR);
         }
     }
+
 }
 
 // This is the most widely used API
@@ -428,12 +486,14 @@ int32 CompositionOffsetAtom::getTimeOffsetForSampleNumberGet(uint32 sampleNum)
             return (PV_ERROR);
         }
     }
+
 }
 
-// Returns the offset (ms) for the  sample given by num.  This is used when
-// randomly accessing a frame and the timestamp has not been accumulated.
 
-int32 CompositionOffsetAtom::getTimeOffsetForSampleNumber(uint32 num)
+
+
+
+int32 CompositionOffsetAtom::getTimeOffsetFromMT(uint32 samplenum, uint32 currEC, uint32 currSampleCount)
 {
     if ((_psampleOffsetVec == NULL) ||
             (_psampleCountVec == NULL) ||
@@ -442,28 +502,104 @@ int32 CompositionOffsetAtom::getTimeOffsetForSampleNumber(uint32 num)
         return PV_ERROR;
     }
 
-    uint32 sampleCount = 0;
-    int32 offset = 0; // Offset value to return
-
-    for (uint32 i = 0; i < _entryCount; i++)
-    {
+    if (samplenum < currSampleCount)
+    { // Sample num within current entry
         if (_parsing_mode == 1)
-            CheckAndParseEntry(i);
+            CheckAndParseEntry(currEC);
 
-        if (num < (sampleCount + _psampleCountVec[i%_stbl_buff_size]))
-        { // Sample num within current entry
-            int32 count = num - sampleCount;
-            PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "CompositionOffsetAtom::getTimestampForSampleNumber- Time StampOffset = %d", _psampleOffsetVec[i%_stbl_buff_size]));
-            return _psampleOffsetVec[i%_stbl_buff_size];
-        }
-        else
+        PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "CompositionOffsetAtom::getTimestampForSampleNumber- Time StampOffset = %d", _psampleOffsetVec[currEC%_stbl_buff_size]));
+        return _psampleOffsetVec[currEC%_stbl_buff_size];
+    }
+    else
+    {
+
+        for (uint32 i = currEC + 1; i < _entryCount; i++)
         {
-            sampleCount += _psampleCountVec[i%_stbl_buff_size];
+            if (_parsing_mode == 1)
+                CheckAndParseEntry(i);
+
+
+            if (samplenum < (currSampleCount + _psampleCountVec[i%_stbl_buff_size]))
+            {
+                PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "CompositionOffsetAtom::getTimestampForSampleNumber- Time StampOffset = %d", _psampleOffsetVec[i%_stbl_buff_size]));
+                return _psampleOffsetVec[i%_stbl_buff_size];
+            }
+            else
+            {
+                currSampleCount += _psampleCountVec[i%_stbl_buff_size];
+            }
         }
     }
 
     // Went past end of list - not a valid sample number
     return PV_ERROR;
+}
+
+int32 CompositionOffsetAtom::getTimeOffsetForSampleNumber(uint32 num)
+{
+    uint32 currSample = 0;
+    uint32 currEC = 0;
+
+    if (iMarkerTableCreation == true)
+    {
+        uint32 MT_EC = num / (MT_SAMPLECOUNT_INCREMENT - 1); //where MT_SAMPLECOUNT_INCREMENT is the granuality of sample separation in Marker Table
+
+        if (MT_EC > ((_iTotalNumSamplesInTrack / MT_SAMPLECOUNT_INCREMENT) - 1))
+        {
+            //boundary check, MT_EC valid value will always be between 0 to (_samples_count/MT_SAMPLECOUNT_INCREMENT)-1
+            MT_EC = (_iTotalNumSamplesInTrack / MT_SAMPLECOUNT_INCREMENT) - 1;
+        }
+        //assign the last marker entry count created till now to look for sample from this location onwards instead of from start
+        if (MT_EC > MT_Counter)
+            MT_EC = MT_Counter;
+
+        while ((num < MT_SampleCount[MT_EC]) && (MT_EC > 0))
+        {
+            //This check was put keeping in mind that it may happen (due to rounding off error),
+            //that we choose a MT_EC greater than desired. So to avoid such a scenario.
+            MT_EC = MT_EC - 1;
+            currSample = MT_SampleCount[MT_EC];
+            currEC = MT_EntryCount[MT_EC];
+        }
+
+        currSample = MT_SampleCount[MT_EC];
+        currEC = MT_EntryCount[MT_EC];
+
+
+
+        return getTimeOffsetFromMT(num, currEC, currSample);
+    }
+    else
+    {
+        if ((_psampleOffsetVec == NULL) ||
+                (_psampleCountVec == NULL) ||
+                (_entryCount == 0))
+        {
+            return PV_ERROR;
+        }
+
+        uint32 sampleCount = 0;
+
+        for (uint32 i = 0; i < _entryCount; i++)
+        {
+            if (_parsing_mode == 1)
+                CheckAndParseEntry(i);
+
+            if (num < (sampleCount + _psampleCountVec[i%_stbl_buff_size]))
+            { // Sample num within current entry
+
+                PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "CompositionOffsetAtom::getTimestampForSampleNumber- Time StampOffset = %d", _psampleOffsetVec[i%_stbl_buff_size]));
+                return _psampleOffsetVec[i%_stbl_buff_size];
+            }
+            else
+            {
+                sampleCount += _psampleCountVec[i%_stbl_buff_size];
+            }
+        }
+
+        // Went past end of list - not a valid sample number
+        return PV_ERROR;
+    }
 }
 
 int32
@@ -514,6 +650,7 @@ CompositionOffsetAtom::resetStateVariables(uint32 sampleNum)
         {
             return (EVERYTHING_FINE);
         }
+
     }
 
     // Went past end of list - not a valid sample number
@@ -545,4 +682,146 @@ void CompositionOffsetAtom::CheckAndParseEntry(uint32 i)
         }
     }
 }
+
+void CompositionOffsetAtom::Run()
+{
+    // Create it for the first time
+    if ((MT_SampleCount == NULL) && (MT_EntryCount == NULL))
+    {
+        int32 status = createMarkerTable();
+        if (status == PVMFFailure)
+        {
+            OSCL_LEAVE(OsclErrNoMemory);
+        }
+        iMarkerTableCreation = true;
+    }
+
+    populateMarkerTable();
+
+    // check for entry count being exhausted.. table iterated completely
+    if ((entrycountTraversed < _entryCount) && (refSample < _iTotalNumSamplesInTrack)
+            && (MT_Counter < _iTotalNumSamplesInTrack / MT_SAMPLECOUNT_INCREMENT))
+    {
+        RunIfNotReady();
+    }
+
+    return;
+
+}
+//Populate the Marker Table with SampleCount and EntryCount values
+//for every nth sample starting from n-1, where n=MT_SAMPLECOUNT_INCREMENT.
+
+uint32 CompositionOffsetAtom::populateMarkerTable()
+{
+    uint32 increment = MT_SAMPLECOUNT_INCREMENT;
+    uint32 numPopulated = 0;
+
+
+
+    for (uint32 i = entrycountTraversed; i < _entryCount; i++)
+    {
+
+        if (refSample < _iTotalNumSamplesInTrack)
+        {
+
+            if (i == 0)
+            {
+                if (_parsing_mode == 1)
+                    CheckAndParseEntry(i);
+
+                MT_SampleCount[0] = _psampleCountVec[i%_stbl_buff_size];
+                prevSampleCount = MT_SampleCount[0];
+                addSampleCount = MT_SampleCount[0];
+            }
+            else if (addSampleCount < refSample)
+            {
+                if (_parsing_mode == 1)
+                    CheckAndParseEntry(MT_j);
+
+                prevSampleCount = addSampleCount;
+                addSampleCount += _psampleCountVec[MT_j%_stbl_buff_size];
+                MT_j++;
+            }
+            else
+            {
+                entrycountTraversed = i - 1;
+                i = i - 1;
+                refSample += increment;
+                MT_SampleCount[MT_Counter] = prevSampleCount;
+                //Incase SampleCounts have same value for consecutive MT entries,
+                //even the same EntryCount should be mentioned in the Marker Table.
+                if (MT_SampleCount[MT_Counter] == MT_SampleCount[MT_Counter-1])
+                {
+                    MT_EntryCount[MT_Counter] = MT_EntryCount[MT_Counter-1];
+                }
+                else
+                {
+                    MT_EntryCount[MT_Counter] = MT_j - 2;
+                }
+
+
+                MT_Counter++;
+                numPopulated++;
+                if ((numPopulated == NUMBER_OF_SAMPLE_POPULATES_PER_RUNL) ||
+                        (MT_Counter >= _iTotalNumSamplesInTrack / MT_SAMPLECOUNT_INCREMENT))
+                    break;
+            }
+        }
+        else
+        {
+            break;
+        }
+
+    }
+
+    return numPopulated;
+
+}
+void CompositionOffsetAtom::deleteMarkerTable()
+{
+    if (MT_SampleCount != NULL)
+        PV_MP4_ARRAY_DELETE(NULL, MT_SampleCount);
+
+    if (MT_EntryCount != NULL)
+        PV_MP4_ARRAY_DELETE(NULL, MT_EntryCount);
+}
+// responsible for creation of data sturcture inside the table.
+PVMFStatus CompositionOffsetAtom::createMarkerTable()
+{
+
+    MT_Table_Size = (_iTotalNumSamplesInTrack / MT_SAMPLECOUNT_INCREMENT);
+    PV_MP4_FF_ARRAY_NEW(NULL, uint32, (MT_Table_Size), MT_SampleCount);
+
+    if (MT_SampleCount == NULL)
+    {
+        PV_MP4_ARRAY_DELETE(NULL, MT_SampleCount);
+        MT_SampleCount = NULL;
+        _success = false;
+        _mp4ErrorCode = MEMORY_ALLOCATION_FAILED;
+        return PVMFFailure;
+    }
+
+    PV_MP4_FF_ARRAY_NEW(NULL, uint32, (MT_Table_Size), MT_EntryCount);
+
+    if (MT_EntryCount == NULL)
+    {
+        PV_MP4_ARRAY_DELETE(NULL, MT_EntryCount);
+        MT_EntryCount = NULL;
+        PV_MP4_ARRAY_DELETE(NULL, MT_SampleCount);
+        MT_SampleCount = NULL;
+        _success = false;
+        _mp4ErrorCode = MEMORY_ALLOCATION_FAILED;
+        return PVMFFailure;
+    }
+
+    for (uint32 idx = 0; idx < MT_Table_Size; idx++)  //initialization
+    {
+
+        MT_EntryCount[idx] = 0;
+        MT_SampleCount[idx] = 0;
+    }
+
+    return PVMFSuccess;
+}
+
 

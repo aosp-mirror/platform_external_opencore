@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,18 +25,22 @@
 #ifndef TEST_PV_AUTHOR_ENGINE_TYPEDEFS_H
 #include "test_pv_author_engine_typedefs.h"
 #endif
+#ifndef PVMI_CONFIG_AND_CAPABILITY_H_INCLUDED
+#include "pvmi_config_and_capability.h"
+#endif
 #define PVPATB_TEST_IS_TRUE( condition ) (iTestCase->test_is_true_stub( (condition), (#condition), __FILE__, __LINE__ ))
 
 
-class pvauthor_async_test_errorhandling: public pvauthor_async_test_base
+class pvauthor_async_compressed_test_errorhandling: public pvauthor_async_test_base
 {
     public:
-        pvauthor_async_test_errorhandling(PVAuthorAsyncTestParam aTestParam, const char* aInputFileNameAudio,
-                                          const char* aInputFileNameVideo, const char* aInputFileNameText, const char* aOutputFileName,
-                                          PVAETestInputType aAudioInputType, PVAETestInputType aVideoInputType,
-                                          PVAETestInputType aTextInputType, const char* aComposerMimeType,
-                                          const char* aAudioEncoderMimeType, const char* aVideoEncoderMimeType,
-                                          const char* aTextEncoderMimeType, AVTConfig aAVTConfig, bool aPauseResumeEnable, uint32 aAuthoringTime)
+        pvauthor_async_compressed_test_errorhandling(PVAuthorAsyncTestParam aTestParam, const char* aInputFileNameAudio,
+                const char* aInputFileNameVideo, const char* aInputFileNameText, const char* aOutputFileName,
+                PVAETestInputType aAudioInputType, PVAETestInputType aVideoInputType,
+                PVAETestInputType aTextInputType, const char* aComposerMimeType,
+                const char* aAudioEncoderMimeType, const char* aVideoEncoderMimeType,
+                const char* aTextEncoderMimeType, AVTConfig aAVTConfig, bool aPauseResumeEnable, uint32 aAuthoringTime,
+                FAIL_STATE aFailState)
 
                 : pvauthor_async_test_base(aTestParam)
 
@@ -60,9 +64,10 @@ class pvauthor_async_test_errorhandling: public pvauthor_async_test_base
                 , iPauseResumeEnable(aPauseResumeEnable)
                 , iAuthoringTime(aAuthoringTime)
                 , iAuthoringCounter(0)
+                , iFailureState(aFailState)
 
         {
-            iLogger = PVLogger::GetLoggerObject("pvauthor_async_test_errorhandling");
+            iLogger = PVLogger::GetLoggerObject("pvauthor_async_compressed_test_errorhandling");
 
             if (iAuthoringTime > 0)
             {
@@ -121,7 +126,7 @@ class pvauthor_async_test_errorhandling: public pvauthor_async_test_base
             iRemoveDataSourceDone = 0;
         }
 
-        ~pvauthor_async_test_errorhandling()
+        ~pvauthor_async_compressed_test_errorhandling()
         {
             Cleanup();
         }
@@ -199,6 +204,8 @@ class pvauthor_async_test_errorhandling: public pvauthor_async_test_base
         OSCL_wHeapString<OsclMemAllocator> iCopyrightString;
         OSCL_wHeapString<OsclMemAllocator> iDescriptionString;
         OSCL_wHeapString<OsclMemAllocator> iRatingString;
+        OSCL_wHeapString<OsclMemAllocator> iAlbumTitle;
+        uint16							   iRecordingYear;
 
         AVTConfig iAVTConfig;
         Oscl_Vector<PVAETestInput, OsclMemAllocator> iTestInputs;
@@ -211,6 +218,10 @@ class pvauthor_async_test_errorhandling: public pvauthor_async_test_base
         uint32 iAuthoringTime;
         int iAuthoringCounter;
         uint32 iTestDuration;
+        FAIL_STATE	iFailureState;
+        //For CapConfig
+        PvmiCapabilityAndConfig* iAuthorCapConfigIF;
+        PvmiKvp* iErrorKVP;
 };
 
 #endif

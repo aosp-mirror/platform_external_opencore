@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,8 @@
  */
 /*
 
- Pathname: ./include/lt_decode.h
+ Pathname: lt_decode.h
 
-     Date: 06/12/2001
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
@@ -28,6 +27,7 @@
 
  Description: Replaced "e_WINDOW_TYPE.h" with "e_WINDOW_SEQUENCE.h"
 
+ Who:						Date:
  Description:
 ------------------------------------------------------------------------------
  INCLUDE DESCRIPTION

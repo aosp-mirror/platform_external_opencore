@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
  */
 #include "avcenc_lib.h"
 #include "avcenc_api.h"
+#include "oscl_string.h"
 
 #define LOG2_MAX_FRAME_NUM_MINUS4	12   /* 12 default */
 #define SLICE_GROUP_CHANGE_CYCLE	1    /* default */
@@ -40,6 +41,7 @@ AVCEnc_Status  SetEncodeParam(AVCHandle* avcHandle, AVCEncParams* encParam,
 
     if (extSPS) extS = (AVCSeqParamSet*) extSPS;
     if (extPPS) extP = (AVCPicParamSet*) extPPS;
+
     /* This part sets the default values of the encoding options this
     library supports in seqParam, picParam and sliceHdr structures and
     also copy the values from the encParam into the above 3 structures.
@@ -87,7 +89,7 @@ AVCEnc_Status  SetEncodeParam(AVCHandle* avcHandle, AVCEncParams* encParam,
 
     if (!extS && !extP)
     {
-        maxFrameNum = (encParam->idr_period == 0) ? (1 << 16) : encParam->idr_period;
+        maxFrameNum = (encParam->idr_period == -1) ? (1 << 16) : encParam->idr_period;
         ii = 0;
         while (maxFrameNum > 0)
         {
@@ -149,13 +151,13 @@ AVCEnc_Status  SetEncodeParam(AVCHandle* avcHandle, AVCEncParams* encParam,
         seqParam->frame_crop_top_offset = 0;
         seqParam->vui_parameters_present_flag = FALSE; /* default */
     }
-    else // use external SPS and PPS
+    else if (extS) // use external SPS and PPS
     {
         seqParam->seq_parameter_set_id = extS->seq_parameter_set_id;
         seqParam->log2_max_frame_num_minus4 = extS->log2_max_frame_num_minus4;
         video->MaxFrameNum = 1 << (extS->log2_max_frame_num_minus4 + 4);
         video->MaxPicNum = video->MaxFrameNum;
-        if (encParam->idr_period > (int)(video->MaxFrameNum))
+        if (encParam->idr_period > (int)(video->MaxFrameNum) || (encParam->idr_period == -1))
         {
             encParam->idr_period = (int)video->MaxFrameNum;
         }
@@ -206,11 +208,6 @@ AVCEnc_Status  SetEncodeParam(AVCHandle* avcHandle, AVCEncParams* encParam,
         }
 
         seqParam->direct_8x8_inference_flag = extS->direct_8x8_inference_flag;
-        if (extS->direct_8x8_inference_flag != FALSE)
-        {
-            return AVCENC_NOT_SUPPORTED;
-        }
-
         seqParam->frame_cropping_flag = extS->frame_cropping_flag ;
         if (extS->frame_cropping_flag != FALSE)
         {
@@ -221,7 +218,15 @@ AVCEnc_Status  SetEncodeParam(AVCHandle* avcHandle, AVCEncParams* encParam,
         seqParam->frame_crop_left_offset = 0;
         seqParam->frame_crop_right_offset = 0;
         seqParam->frame_crop_top_offset = 0;
-        seqParam->vui_parameters_present_flag = FALSE; /* default */
+        seqParam->vui_parameters_present_flag = extS->vui_parameters_present_flag;
+        if (extS->vui_parameters_present_flag)
+        {
+            oscl_memcpy(&(seqParam->vui_parameters), &(extS->vui_parameters), sizeof(AVCVUIParams));
+        }
+    }
+    else
+    {
+        return AVCENC_NOT_SUPPORTED;
     }
 
     /***************** now PPS ******************************/
@@ -329,7 +334,7 @@ AVCEnc_Status  SetEncodeParam(AVCHandle* avcHandle, AVCEncParams* encParam,
         picParam->constrained_intra_pred_flag = (encParam->constrained_intra_pred == AVC_ON) ? TRUE : FALSE;
         picParam->redundant_pic_cnt_present_flag = 0; /* default */
     }
-    else // external PPS
+    else if (extP)// external PPS
     {
         picParam->pic_parameter_set_id = extP->pic_parameter_set_id - 1; /* to be increased by one */
         picParam->seq_parameter_set_id = extP->seq_parameter_set_id;
@@ -422,7 +427,7 @@ AVCEnc_Status  SetEncodeParam(AVCHandle* avcHandle, AVCEncParams* encParam,
         }
 
         picParam->weighted_pred_flag = 0; /* no weighted prediction supported */
-        picParam->weighted_bipred_idc = 0; /* range 0,1,2 */
+        picParam->weighted_bipred_idc = extP->weighted_bipred_idc; /* range 0,1,2 */
         if (/*picParam->weighted_bipred_idc < 0 || (no need, it's unsigned) */
             picParam->weighted_bipred_idc > 2)
         {
@@ -452,7 +457,11 @@ AVCEnc_Status  SetEncodeParam(AVCHandle* avcHandle, AVCEncParams* encParam,
         {
             return AVCENC_NOT_SUPPORTED;
         }
-        picParam->redundant_pic_cnt_present_flag = 0; /* default */
+        picParam->redundant_pic_cnt_present_flag = extP->redundant_pic_cnt_present_flag; /* default */
+    }
+    else
+    {
+        return AVCENC_NOT_SUPPORTED;
     }
 
     /****************** now set up some SliceHeader parameters ***********/
@@ -493,12 +502,13 @@ AVCEnc_Status  SetEncodeParam(AVCHandle* avcHandle, AVCEncParams* encParam,
 
     /* now the rate control and performance related parameters */
     rateCtrl->scdEnable = (encParam->auto_scd == AVC_ON) ? TRUE : FALSE;
-    rateCtrl->idrPeriod = encParam->idr_period;
+    rateCtrl->idrPeriod = encParam->idr_period + 1;
     rateCtrl->intraMBRate = encParam->intramb_refresh;
     rateCtrl->dpEnable = (encParam->data_par == AVC_ON) ? TRUE : FALSE;
 
     rateCtrl->subPelEnable = (encParam->sub_pel == AVC_ON) ? TRUE : FALSE;
     rateCtrl->mvRange = encParam->search_range;
+
     rateCtrl->subMBEnable = (encParam->submb_pred == AVC_ON) ? TRUE : FALSE;
     rateCtrl->rdOptEnable = (encParam->rdopt_mode == AVC_ON) ? TRUE : FALSE;
     rateCtrl->bidirPred = (encParam->bidir_pred == AVC_ON) ? TRUE : FALSE;
@@ -646,10 +656,10 @@ AVCEnc_Status VerifyLevel(AVCEncObject *encvid, AVCSeqParamSet *seqParam, AVCPic
         {
             if (mb_per_sec <= MaxMBPS[ii] &&
                     video->PicSizeInMbs <= (uint)MaxFS[ii] &&
-                    rateCtrl->bitRate <= (int32)MaxBR[ii] &&
-                    rateCtrl->cpbSize <= (int32)MaxCPB[ii] &&
+                    rateCtrl->bitRate <= (int32)MaxBR[ii]*1000 &&
+                    rateCtrl->cpbSize <= (int32)MaxCPB[ii]*1000 &&
                     rateCtrl->mvRange <= MaxVmvR[ii] &&
-                    dpb_size <= MaxDPBX2[ii])
+                    dpb_size <= MaxDPBX2[ii]*512)
             {
                 seqParam->level_idc = mapIdx2Lev[ii];
                 break;
@@ -711,6 +721,11 @@ AVCEnc_Status InitFrame(AVCEncObject *encvid)
         }
     }
 
+    /* flexible macroblock ordering (every frame)*/
+    /* populate video->mapUnitToSliceGroupMap and video->MbToSliceGroupMap */
+    /* It changes once per each PPS. */
+    FMOInit(video);
+
     ret = DPBInitBuffer(encvid->avcHandle, video); // get new buffer
 
     if (ret != AVC_SUCCESS)
@@ -767,9 +782,6 @@ AVCEnc_Status InitFrame(AVCEncObject *encvid)
     video->mbNum = 0; /* start from zero MB */
     encvid->currSliceGroup = 0; /* start from slice group #0 */
     encvid->numIntraMB = 0; /* reset this counter */
-    encvid->numDetected = 0;
-    encvid->numFalseAlarm = 0;
-    encvid->numMisDetected = 0;
 
     if (video->nal_unit_type == AVC_NALTYPE_IDR)
     {

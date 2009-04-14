@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ extern "C"
 #include "pvmp3_audio_type_defs.h"
 
 
-#if defined(PV_ARM_GCC)
+#if (defined(PV_ARM_GCC_V5)||defined(PV_ARM_GCC_V4))
 
 #define Qfmt_31(a)   (int32)(a*0x7FFFFFFF + (a>=0?0.5F:-0.5F))
 

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,9 +48,9 @@ OSCL_EXPORT_REF void OsclSingletonRegistry::initialize(Oscl_DefAlloc &alloc, int
     }
 
     //increment the ref count on each init.
-    iSingletonTable->iLock.Lock();
+    iSingletonTable->iTableLock.Lock();
     iSingletonTable->iRefCount++;
-    iSingletonTable->iLock.Unlock();
+    iSingletonTable->iTableLock.Unlock();
 }
 
 OSCL_EXPORT_REF void OsclSingletonRegistry::cleanup(Oscl_DefAlloc &alloc, int32 &aError)
@@ -63,19 +63,19 @@ OSCL_EXPORT_REF void OsclSingletonRegistry::cleanup(Oscl_DefAlloc &alloc, int32 
     }
 
     //decrement the ref count and cleanup when it reaches zero.
-    iSingletonTable->iLock.Lock();
+    iSingletonTable->iTableLock.Lock();
     iSingletonTable->iRefCount--;
     if (iSingletonTable->iRefCount == 0)
     {
         //cleanup
-        iSingletonTable->iLock.Unlock();
+        iSingletonTable->iTableLock.Unlock();
         iSingletonTable->~SingletonTable();
         alloc.deallocate(iSingletonTable);
         iSingletonTable = NULL;
     }
     else
     {
-        iSingletonTable->iLock.Unlock();
+        iSingletonTable->iTableLock.Unlock();
     }
 }
 
@@ -90,9 +90,9 @@ OSCL_EXPORT_REF OsclAny* OsclSingletonRegistry::getInstance(uint32 ID, int32 &aE
         return NULL;
     }
 
-    iSingletonTable->iLock.Lock();
+    iSingletonTable->iSingletonLocks[ID].Lock();
     OsclAny* value = iSingletonTable->iSingletons[ID];
-    iSingletonTable->iLock.Unlock();
+    iSingletonTable->iSingletonLocks[ID].Unlock();
 
     return value;
 }
@@ -108,9 +108,46 @@ OSCL_EXPORT_REF void OsclSingletonRegistry::registerInstance(OsclAny* ptr, uint3
         return;
     }
 
-    iSingletonTable->iLock.Lock();
+    iSingletonTable->iSingletonLocks[ID].Lock();
     iSingletonTable->iSingletons[ID] = ptr;
-    iSingletonTable->iLock.Unlock();
+    iSingletonTable->iSingletonLocks[ID].Unlock();
+}
+
+OSCL_EXPORT_REF OsclAny* OsclSingletonRegistry::lockAndGetInstance(uint32 ID, int32 &aError)
+{
+    OSCL_ASSERT(ID < OSCL_SINGLETON_ID_LAST);
+
+    aError = 0;
+
+    if (!iSingletonTable)
+    {
+        aError = EPVErrorBaseNotInstalled;//no table!
+        return NULL;
+    }
+
+    iSingletonTable->iSingletonLocks[ID].Lock();
+    OsclAny* value = iSingletonTable->iSingletons[ID];
+    //leave it locked.
+
+    return value;
+}
+
+OSCL_EXPORT_REF void OsclSingletonRegistry::registerInstanceAndUnlock(OsclAny* ptr, uint32 ID, int32 &aError)
+{
+    OSCL_ASSERT(ID < OSCL_SINGLETON_ID_LAST);
+
+    aError = 0;
+
+    if (!iSingletonTable)
+    {
+        aError = EPVErrorBaseNotInstalled;//no table!
+        return;
+    }
+
+    //assume it's already locked.
+
+    iSingletonTable->iSingletons[ID] = ptr;
+    iSingletonTable->iSingletonLocks[ID].Unlock();
 }
 
 #endif //OSCL_HAS_SINGLETON_SUPPORT

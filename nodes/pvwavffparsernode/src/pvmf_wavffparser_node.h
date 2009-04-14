@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -119,7 +119,8 @@ class PVWAVFFNodeTrackPortInfo : public OsclMemPoolFixedChunkAllocatorObserver
             iSendBOS = false;
         }
 
-        PVWAVFFNodeTrackPortInfo(const PVWAVFFNodeTrackPortInfo& aSrc)
+        PVWAVFFNodeTrackPortInfo(const PVWAVFFNodeTrackPortInfo& aSrc):
+                OsclMemPoolFixedChunkAllocatorObserver()
         {
             iTrackId = aSrc.iTrackId;
             iPort = aSrc.iPort;
@@ -279,7 +280,7 @@ class PVMFWAVFFNodeCommand: public PVMFWAVFFNodeCommandBase
         }
 
         // Constructor and parser for SetDataSourceRate
-        void Construct(PVMFSessionId s, int32 cmd, int32 aRate, OsclTimebase* aTimebase, const OsclAny* aContext)
+        void Construct(PVMFSessionId s, int32 cmd, int32 aRate, PVMFTimebase* aTimebase, const OsclAny* aContext)
         {
             PVMFWAVFFNodeCommandBase::Construct(s, cmd, aContext);
             iParam1 = (OsclAny*)aRate;
@@ -288,10 +289,10 @@ class PVMFWAVFFNodeCommand: public PVMFWAVFFNodeCommandBase
             iParam4 = NULL;
             iParam5 = NULL;
         }
-        void Parse(int32& aRate, OsclTimebase*& aTimebase)
+        void Parse(int32& aRate, PVMFTimebase*& aTimebase)
         {
             aRate = (int32)iParam1;
-            aTimebase = (OsclTimebase*)iParam2;
+            aTimebase = (PVMFTimebase*)iParam2;
         }
 
         //need to overlaod the base Destroy routine to cleanup metadata key.
@@ -379,14 +380,17 @@ class PVMFWAVFFParserNode : public OsclTimerObject,
         PVMFCommandId Prepare(PVMFSessionId aSession, const OsclAny* aContext = NULL);
         PVMFCommandId CancelAllCommands(PVMFSessionId, const OsclAny* aContextData = NULL);
         PVMFCommandId CancelCommand(PVMFSessionId, PVMFCommandId aCmdId, const OsclAny* aContextData = NULL);
+        PVMFStatus QueryInterfaceSync(PVMFSessionId aSession,
+                                      const PVUuid& aUuid,
+                                      PVInterface*& aInterfacePtr);
 
         //From PVMFDataSourceInitializationExtensionInterface
         void addRef();
         void removeRef();
         bool queryInterface(const PVUuid& uuid, PVInterface *& iface);
         PVMFStatus SetSourceInitializationData(OSCL_wString& aSourceURL, PVMFFormatType& aSourceFormat, OsclAny* aSourceData);
-        PVMFStatus SetClientPlayBackClock(OsclClock* aClientClock);
-        PVMFStatus SetEstimatedServerClock(OsclClock* aClientClock);
+        PVMFStatus SetClientPlayBackClock(PVMFMediaClock* aClientClock);
+        PVMFStatus SetEstimatedServerClock(PVMFMediaClock* aClientClock);
 
         //From PVMFTrackSelectionExtensionInterface
         PVMFStatus GetMediaPresentationInfo(PVMFMediaPresentationInfo& aInfo);
@@ -422,7 +426,7 @@ class PVMFWAVFFParserNode : public OsclTimerObject,
                                               PVMFTimestamp& aSeekPointBeforeTargetNPT, PVMFTimestamp& aSeekPointAfterTargetNPT,
                                               OsclAny* aContext = NULL, bool aSeekToSyncPoint = true);
 
-        PVMFCommandId SetDataSourceRate(PVMFSessionId aSession, int32 aRate, OsclTimebase* aTimebase = NULL, OsclAny* aContext = NULL);
+        PVMFCommandId SetDataSourceRate(PVMFSessionId aSession, int32 aRate, PVMFTimebase* aTimebase = NULL, OsclAny* aContext = NULL);
 
 
     private:
@@ -495,6 +499,10 @@ class PVMFWAVFFParserNode : public OsclTimerObject,
         void ResetAllTracks();
         bool ReleaseAllPorts();
         void CleanupFileSource();
+        int32 PushBackPortActivity(PVMFPortActivity &aActivity);
+        int32 CreateNewArray(char*& aPtr, int32 aLen);
+        int32 PushBackKeyVal(Oscl_Vector<PvmiKvp, OsclMemAllocator>*& aValueListPtr, PvmiKvp &aKeyVal);
+        PVMFStatus PushBackMetadataKeys(PVMFMetadataList *&aKeyListPtr, uint32 aLcv);
 
     private: // private member variables
 

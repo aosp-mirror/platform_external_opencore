@@ -100,7 +100,7 @@ int MetadataDriver::retrieverThread()
         return -1;
     }
 
-    PV_MasterOMX_Init();
+    OMX_Init();
     OsclScheduler::Init("PVAuthorEngineWrapper");
     mState = STATE_CREATE;
     AddToScheduler();
@@ -110,7 +110,7 @@ int MetadataDriver::retrieverThread()
 
     mSyncSem->Signal();  // Signal that doSetDataSource() is done.
     OsclScheduler::Cleanup();
-    PV_MasterOMX_Deinit();
+    OMX_Deinit();
     UninitializeForThread();
     return 0;
 }
@@ -466,9 +466,16 @@ void MetadataDriver::doColorConversion()
         delete bitmap;
         return;
     }
+
+    // When passing parameters in Init call of ColorConverter library
+    // we need to take care of passing even width and height to the CC.
+    // If Width is odd then making it even as below
+    // will reduce the pitch by 1. This may result in a tilted image for
+    // clips with odd width.
     ColorConvertBase* colorConverter = ColorConvert16::NewL();
     if (!colorConverter ||
-        !colorConverter->Init(width, height, width, displayWidth, displayHeight, displayWidth, CCROTATE_NONE) ||
+       !colorConverter->Init(((width)&(~1)), ((height)&(~1)), ((width)&(~1)), displayWidth, ((displayHeight)&(~1)), ((displayWidth)&(~1)), CCROTATE_NONE) ||
+        //!colorConverter->Init(width, height, width, displayWidth, displayHeight, displayWidth, CCROTATE_NONE) ||
         !colorConverter->SetMode(1) ||
         !colorConverter->Convert(mFrameBuffer, (uint8*)bitmap->getPixels())) {
         LOGE("failed to do color conversion");
@@ -511,9 +518,7 @@ void MetadataDriver::handleCreate()
 {
     LOGV("handleCreate");
     int error = 0;
-    OSCL_HeapString<OsclMemAllocator> outputFrameTypeString;
-    GetFormatString(PVMF_YUV420, outputFrameTypeString);
-    OSCL_TRY(error, mUtil = PVFrameAndMetadataFactory::CreateFrameAndMetadataUtility(outputFrameTypeString.get_str(), this, this, this));
+    OSCL_TRY(error, mUtil = PVFrameAndMetadataFactory::CreateFrameAndMetadataUtility((char*)PVMF_MIME_YUV420, this, this, this));
     if (error || mUtil->SetMode(PV_FRAME_METADATA_INTERFACE_MODE_SOURCE_METADATA_AND_THUMBNAIL) != PVMFSuccess) {
         handleCommandFailure();
     } else {
@@ -530,11 +535,11 @@ void MetadataDriver::handleAddDataSource()
     mDataSource = new PVPlayerDataSourceURL;
     if (mDataSource) {
         mDataSource->SetDataSourceURL(mDataSourceUrl);
-        mDataSource->SetDataSourceFormatType(PVMF_FORMAT_UNKNOWN);
+        mDataSource->SetDataSourceFormatType((char*)PVMF_MIME_FORMAT_UNKNOWN);
         if (mMode & GET_FRAME_ONLY) {
 #if BEST_THUMBNAIL_MODE
             // Set the intent to thumbnails.
-            mLocalDataSource = new PVMFLocalDataSource(false);
+            mLocalDataSource = new PVMFLocalDataSource();
             mLocalDataSource->iIntent = BITMASK_PVMF_SOURCE_INTENT_THUMBNAILS;
             mDataSource->SetDataSourceContextData((OsclAny*)mLocalDataSource);
 #endif

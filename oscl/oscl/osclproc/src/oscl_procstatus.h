@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -107,6 +107,7 @@ class OsclProcStatus
             WAIT_ABANDONED_ERROR,//thread terminated while waiting
             WAIT_TIMEOUT_ERROR, //timed wait expired without acquiring
             SEM_NOT_SIGNALED_ERROR, //trywait returned without acquiring
+            PSHARED_ATTRIBUTE_SETTING_ERROR,   // Error at setting pthread attributes
             NOT_IMPLEMENTED //function not implemented on this platform.
         } ;
 

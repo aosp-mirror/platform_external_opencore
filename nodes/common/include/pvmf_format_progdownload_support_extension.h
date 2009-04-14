@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,14 +27,17 @@
 #ifndef OSCL_SHARED_PTR_H_INCLUDED
 #include "oscl_shared_ptr.h"
 #endif
-#ifndef OSCL_CLOCK_H_INCLUDED
-#include "oscl_clock.h"
+#ifndef PVMF_MEDIA_CLOCK_H_INCLUDED
+#include "pvmf_media_clock.h"
 #endif
 #ifndef PV_UUID_H_INCLUDED
 #include "pv_uuid.h"
 #endif
 #ifndef PV_INTERFACE_H
 #include "pv_interface.h"
+#endif
+#ifndef PVMI_KVP_H_INCLUDED
+#include "pvmi_kvp.h"
 #endif
 
 #define PVMF_FF_PROGDOWNLOAD_SUPPORT_INTERFACE_MIMETYPE "x-pvmf/pvmf/ff/progdownload-support"
@@ -96,6 +99,19 @@ class PVMFFormatProgDownloadSupportInterface:  public PVInterface
          * @return - none
          */
         virtual void notifyDownloadComplete() = 0;
+
+        /**
+         * Set the protocol information that is defined as kvp
+         *
+         * @param aInfoKvpVec, a kvp vector of all protocol information
+         *
+         * @return true means success, and false means any exceptional case, such as aInfoKvpVec has nothing
+         */
+        virtual bool setProtocolInfo(Oscl_Vector<PvmiKvp*, OsclMemAllocator>& aInfoKvpVec)
+        {
+            OSCL_UNUSED_ARG(aInfoKvpVec);
+            return true;
+        }
 
 };
 

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,26 +29,9 @@ terms listed above has been obtained from the copyright holder.
 /*
 ------------------------------------------------------------------------------
 
-
-
  Pathname: ./audio/gsm-amr/c/src/if2_to_ets.c
  Funtions: if2_to_ets
 
-     Date: 01/21/2002
-
-------------------------------------------------------------------------------
- REVISION HISTORY
-
- Description: Changed mode into frame_type_3gpp. Modified the function to save
-              memory and improve speed. bitreorder.h was changed to
-              bitreorder_tab.h.
-
- Description: Fixed a bug in the code where the third FOR loop executes more
-              than it should.
-
- Description:
-
-------------------------------------------------------------------------------
 */
 
 /*----------------------------------------------------------------------------

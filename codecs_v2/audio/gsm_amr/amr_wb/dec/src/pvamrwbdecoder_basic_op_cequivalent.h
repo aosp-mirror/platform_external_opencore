@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -454,21 +454,56 @@ extern "C"
         return ((int16)(L_var1 >> 16));
     }
 
+
     /*----------------------------------------------------------------------------
-         Function Name : mul_32by16
 
-         Multiply a 16 bit integer by a 32 bit (DPF). The result is divided
-         by 2^15
+         Function Name : amr_wb_shl1_round
 
-                L_32 = (hi1*lo2)<<1 + ((lo1*lo2)>>15)<<1
+         Shift the 32 bit input number to the left by 1, round up the result and
+    	 shift down by 16
+                     amr_wb_shl1_round(L_var1) = round(L_shl(L_var1,1))
 
          Inputs :
+          L_var1
+                   32 bit long signed integer (int32 ) whose value falls in the
+                   range : 0x8000 0000 <= L_var1 <= 0x7fff ffff.
 
-         hi          hi part of 32 bit number.
-         lo          lo part of 32 bit number.
-         n           16 bit number.
+         Return Value :
+                   16 bit short signed integer (int16) whose value falls in the
+                   range : 0xffff 8000 <= var_out <= 0x0000 7fff.
 
      ----------------------------------------------------------------------------*/
+    __inline int16 amr_wb_shl1_round(int32 L_var1)
+    {
+        int16 var_out;
+
+        if ((L_var1 << 1) >> 1 == L_var1)
+        {
+            var_out = (int16)((L_var1 + 0x00004000) >> 15);
+        }
+        else
+        {
+            var_out = (int16)(((L_var1 >> 31) ^ MAX_32) >> 16);
+        }
+
+        return (var_out);
+    }
+
+    /*----------------------------------------------------------------------------
+             Function Name : mul_32by16
+
+             Multiply a 16 bit integer by a 32 bit (DPF). The result is divided
+             by 2^15
+
+                    L_32 = (hi1*lo2)<<1 + ((lo1*lo2)>>15)<<1
+
+             Inputs :
+
+             hi          hi part of 32 bit number.
+             lo          lo part of 32 bit number.
+             n           16 bit number.
+
+         ----------------------------------------------------------------------------*/
 
 
     __inline int32 mul_32by16(int16 hi, int16 lo, int16 n)

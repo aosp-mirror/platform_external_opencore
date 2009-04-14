@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ static const uint32 mask[33] =
 
 int32 LocateFrameHeader(uint8 *ptr, int32 size)
 {
-    int count = 0;
+    int32 count = 0;
     int32 i = size;
 
     if (size < 1)
@@ -99,7 +99,7 @@ int16 SearchNextM4VFrame(mp4StreamType *psBits)
     return status;
 }
 
-OSCL_EXPORT_REF int16 iGetM4VConfigInfo(uint8 *buffer, int length, int *width, int *height, int *display_width, int *display_height)
+OSCL_EXPORT_REF int16 iGetM4VConfigInfo(uint8 *buffer, int32 length, int32 *width, int32 *height, int32 *display_width, int32 *display_height)
 {
     int16 status;
     mp4StreamType psBits;
@@ -110,28 +110,39 @@ OSCL_EXPORT_REF int16 iGetM4VConfigInfo(uint8 *buffer, int length, int *width, i
     psBits.bytePos = 0;
     psBits.dataBitPos = 0;
     *width = *height = *display_height = *display_width = 0;
-    status = iDecodeVOLHeader(&psBits, width, height, display_width, display_height);
+
+    if (length == 0)
+    {
+        return MP4_INVALID_VOL_PARAM;
+    }
+    int32 profilelevel = 0; // dummy value discarded here
+    status = iDecodeVOLHeader(&psBits, width, height, display_width, display_height, &profilelevel);
     return status;
 }
 
 // name: iDecodeVOLHeader
 // Purpose: decode VOL header
 // return:  error code
-int16 iDecodeVOLHeader(mp4StreamType *psBits, int *width, int *height, int *display_width, int *display_height)
+OSCL_EXPORT_REF int16 iDecodeVOLHeader(mp4StreamType *psBits, int32 *width, int32 *height, int32 *display_width, int32 *display_height, int32 *profilelevel)
 {
-
     int16 iErrorStat;
     uint32 codeword;
-    int time_increment_resolution, nbits_time_increment;
-    int i, j;
+    int32 time_increment_resolution, nbits_time_increment;
+    int32 i, j;
+
+    *profilelevel = 0x0000FFFF; // init to some invalid value. When this value is returned, then no profilelevel info is available
 
     ShowBits(psBits, 32, &codeword);
 
     if (codeword == VISUAL_OBJECT_SEQUENCE_START_CODE)
     {
-        psBits->dataBitPos += 32;
+        //DV: this is the wrong way to skip bits, use FLush or Read psBits->dataBitPos += 32;
+        ReadBits(psBits, 32, &codeword); // skip 32 bits of the Start code
 
         ReadBits(psBits, 8, &codeword);
+
+        // record profile and level
+        *profilelevel = (int) codeword;
 
         ShowBits(psBits, 32, &codeword);
         if (codeword == USER_DATA_START_CODE)
@@ -240,17 +251,18 @@ int16 iDecodeVOLHeader(mp4StreamType *psBits, int *width, int *height, int *disp
             }
         }
 decode_vol:
-        /* vol_id (4 bits) */
-        ReadBits(psBits, 4, & codeword);
 
+        uint32 vol_id;
+
+        /* vol_id (4 bits) */
+        ReadBits(psBits, 4, & vol_id);
 
         // RandomAccessibleVOLFlag
         ReadBits(psBits, 1, &codeword);
 
-
         //Video Object Type Indication
         ReadBits(psBits, 8, &codeword);
-        if (codeword > 2)
+        if (codeword != 1)
         {
             return MP4_INVALID_VOL_PARAM;
         }
@@ -366,14 +378,14 @@ decode_vol:
 
         /* this should be 176 for QCIF */
         ReadBits(psBits, 13, &codeword);
-        *display_width = (int)codeword;
+        *display_width = (int32)codeword;
         ReadBits(psBits, 1, &codeword);
         if (codeword != 1)
             return MP4_INVALID_VOL_PARAM;
 
         /* this should be 144 for QCIF */
         ReadBits(psBits, 13, &codeword);
-        *display_height = (int)codeword;
+        *display_height = (int32)codeword;
 
         *width = (*display_width + 15) & -16;
         *height = (*display_height + 15) & -16;
@@ -409,15 +421,15 @@ decode_vol:
 
 OSCL_EXPORT_REF
 int16 iDecodeShortHeader(mp4StreamType *psBits,
-                         int *width,
-                         int *height,
-                         int *display_width,
-                         int *display_height)
+                         int32 *width,
+                         int32 *height,
+                         int32 *display_width,
+                         int32 *display_height)
 {
     uint32 codeword;
-    int	extended_PTYPE = 0;
-    int UFEP = 0;
-    int custom_PFMT = 0;
+    int32	extended_PTYPE = 0;
+    int32 UFEP = 0;
+    int32 custom_PFMT = 0;
 
     ShowBits(psBits, 22, &codeword);
 
@@ -752,7 +764,7 @@ int16 DecodeUserData(mp4StreamType *pStream)
 
     while (codeword != 1)
     {
-        /* Discard user data for now.  CJ 04/05/2000 */
+        /* Discard user data for now. */
         iErrorStat = ReadBits(pStream, 8, &codeword);
         if (iErrorStat) return iErrorStat;
         iErrorStat = ShowBits(pStream, 24, &codeword);
@@ -762,22 +774,23 @@ int16 DecodeUserData(mp4StreamType *pStream)
 }
 
 
-OSCL_EXPORT_REF int16 iGetAVCConfigInfo(uint8 *buffer, int length, int *width, int *height, int *display_width, int *display_height)
+OSCL_EXPORT_REF int16 iGetAVCConfigInfo(uint8 *buffer, int32 length, int32 *width, int32 *height, int32 *display_width, int32 *display_height, int32 *profile_idc, int32 *level_idc)
 {
     int16 status;
     mp4StreamType psBits;
-    uint16 sps_length;
-    int size;
-    int i = 0;
-    uint8* nal_unit = buffer;
-    uint8* temp_ptr = NULL;
+    uint16 sps_length, pps_length;
+    int32 size;
+    int32 i = 0;
+    uint8* sps = NULL;
     uint8* temp = (uint8 *)OSCL_MALLOC(sizeof(uint8) * length);
+    uint8* pps = NULL;
+
 
     if (temp)
     {
-        temp_ptr = temp; // Make a copy of the original pointer to be freed later
+        sps = temp; // Make a copy of the original pointer to be freed later
         // Successfull allocation... copy input buffer
-        oscl_memcpy(temp, buffer, length);
+        oscl_memcpy(sps, buffer, length);
     }
     else
     {
@@ -785,96 +798,100 @@ OSCL_EXPORT_REF int16 iGetAVCConfigInfo(uint8 *buffer, int length, int *width, i
         return MP4_INVALID_VOL_PARAM;
     }
 
+    if (length < 3)
+    {
+        OSCL_FREE(temp);
+        return MP4_INVALID_VOL_PARAM;
+    }
+
     *width = *height = *display_height = *display_width = 0;
 
-    if (temp[0] == 0 && temp[1] == 0)
+    if (sps[0] == 0 && sps[1] == 0)
     {
         /* find SC at the beginning of the NAL */
-        while (nal_unit[i++] == 0 && i < length)
+        while (sps[i++] == 0 && i < length)
         {
         }
 
-        if (nal_unit[i-1] == 1)
+        if (sps[i-1] == 1)
         {
-            temp = nal_unit + i;
+            sps += i;
+
+            sps_length = 0;
+            // search for the next start code
+            while (!(sps[sps_length] == 0 && sps[sps_length+1] == 0 && sps[sps_length+2] == 1) &&
+                    sps_length < length - i - 2)
+            {
+                sps_length++;
+            }
+
+            if (sps_length >= length - i - 2)
+            {
+                OSCL_FREE(temp);
+                return MP4_INVALID_VOL_PARAM;
+            }
+
+            pps_length = length - i - sps_length - 3;
+            pps = sps + sps_length + 3;
         }
         else
         {
-            if (temp_ptr)
-            {
-                OSCL_FREE(temp_ptr);
-            }
+            OSCL_FREE(temp);
             return MP4_INVALID_VOL_PARAM;
         }
-
-        sps_length = length - i;
     }
     else
     {
-        sps_length = (uint16)(temp[1] << 8) | temp[0];
-        temp += 2;
+        sps_length = (uint16)(sps[1] << 8) | sps[0];
+        sps += 2;
+        pps = sps + sps_length;
+        pps_length = (uint16)(pps[1] << 8) | pps[0];
+        pps += 2;
     }
 
-    if (sps_length > length)
+    if (sps_length + pps_length > length)
     {
-        if (temp_ptr)
-        {
-            OSCL_FREE(temp_ptr);
-        }
+        OSCL_FREE(temp);
         return MP4_INVALID_VOL_PARAM;
     }
 
     size = sps_length;
 
-#if 0
-// FLAGG
-    uint32 ii = 0;
-    uint32 count = size;
-    printf("iGetAVCConfigInfo() before size %d\n", size);
-    for (ii = 0; ii < count; ii++)
-    {
-        printf("%02x ", temp[ii]);
-        if ((ii + 1) % 16 == 0)
-        {
-            printf("\n");
-        }
-    }
-    printf("\n");
-#endif
+    Parser_EBSPtoRBSP(sps, &size);
 
-    Parser_EBSPtoRBSP(temp, &size);
-
-#if 0
-    ii = 0;
-    count = size;
-    printf("iGetAVCConfigInfo() after size %d\n", size);
-    for (ii = 0; ii < count; ii++)
-    {
-        printf("%02x ", temp[ii]);
-        if ((ii + 1) % 16 == 0)
-        {
-            printf("\n");
-        }
-    }
-    printf("\n");
-#endif
-
-    psBits.data = temp;
+    psBits.data = sps;
     psBits.numBytes = size;
     psBits.bitBuf = 0;
     psBits.bitPos = 32;
     psBits.bytePos = 0;
     psBits.dataBitPos = 0;
 
-    status = DecodeSPS(&psBits, width, height, display_width, display_height);
-    if (temp_ptr)
+    if (DecodeSPS(&psBits, width, height, display_width, display_height, profile_idc, level_idc))
     {
-        OSCL_FREE(temp_ptr);
+        OSCL_FREE(temp);
+        return MP4_INVALID_VOL_PARAM;
     }
+
+    // now do PPS
+    size = pps_length;
+
+    Parser_EBSPtoRBSP(pps, &size);
+    psBits.data = pps;
+    psBits.numBytes = size;
+    psBits.bitBuf = 0;
+    psBits.bitPos = 32;
+    psBits.bytePos = 0;
+    psBits.dataBitPos = 0;
+
+    status = DecodePPS(&psBits);
+
+    OSCL_FREE(temp);
+
     return status;
 }
 
-int16 DecodeSPS(mp4StreamType *psBits, int *width, int *height, int *display_width, int *display_height)
+
+int16 DecodeSPS(mp4StreamType *psBits, int32 *width, int32 *height, int32 *display_width, int32 *display_height, int32 *profile_idc, int32 *level_idc)
 {
     uint32 temp;
     int32 temp0;
@@ -883,17 +900,24 @@ int16 DecodeSPS(mp4StreamType *psBits, int *width, int *height, int *display_wid
 
     ReadBits(psBits, 8, &temp);
 
+
+
     if ((temp & 0x1F) != 7) return MP4_INVALID_VOL_PARAM;
 
     ReadBits(psBits, 8, &temp);
+
+    *profile_idc = temp;
+
     ReadBits(psBits, 1, &temp);
     ReadBits(psBits, 1, &temp);
     ReadBits(psBits, 1, &temp);
     ReadBits(psBits, 5, &temp);
     ReadBits(psBits, 8, &temp);
+
+    *level_idc = temp;
+
     if (temp > 51)
         return MP4_INVALID_VOL_PARAM;
-
 
     ue_v(psBits, &temp);
     ue_v(psBits, &temp);
@@ -925,14 +949,13 @@ int16 DecodeSPS(mp4StreamType *psBits, int *width, int *height, int *display_wid
     *display_height = *height = (temp + 1) << 4;
 
 
-
     ReadBits(psBits, 1, &temp);
-
     if (!temp)
     {
-        ReadBits(psBits, 1, &temp);
+        // we do not support if frame_mb_only_flag is off
+        return MP4_INVALID_VOL_PARAM;
+        //ReadBits(psBits,1, &temp);
     }
-
 
     ReadBits(psBits, 1, &temp);
 
@@ -948,6 +971,163 @@ int16 DecodeSPS(mp4StreamType *psBits, int *width, int *height, int *display_wid
         *display_width = *width - 2 * (right_offset + left_offset);
         *display_height = *height - 2 * (top_offset + bottom_offset);
     }
+
+    /*	no need to check further */
+#if USE_LATER
+    ReadBits(psBits, 1, &temp);
+    if (temp)
+    {
+        if (!DecodeVUI(psBits))
+        {
+            return MP4_INVALID_VOL_PARAM;
+        }
+    }
+#endif
+    return 0; // return 0 for success
+}
+
+#if USE_LATER
+/* unused for now */
+int32 DecodeVUI(mp4StreamType *psBits)
+{
+    uint temp;
+    uint32 temp32;
+    uint aspect_ratio_idc, overscan_appopriate_flag, video_format, video_full_range_flag;
+    int32 status;
+
+    ReadBits(psBits, 1, &temp); /* aspect_ratio_info_present_flag */
+    if (temp)
+    {
+        ReadBits(psBits, 8, &aspect_ratio_idc);
+        if (aspect_ratio_idc == 255)
+        {
+            ReadBits(psBits, 16, &temp); /* sar_width */
+            ReadBits(psBits, 16, &temp); /* sar_height */
+        }
+    }
+    ReadBits(psBits, 1, &temp); /* overscan_info_present */
+    if (temp)
+    {
+        ReadBits(psBits, 1, &overscan_appopriate_flag);
+    }
+    ReadBits(psBits, 1, &temp); /* video_signal_type_present_flag */
+    if (temp)
+    {
+        ReadBits(psBits, 3, &video_format);
+        ReadBits(psBits, 1, &video_full_range_flag);
+        ReadBits(psBits, 1, &temp); /* colour_description_present_flag */
+        if (temp)
+        {
+            ReadBits(psBits, 8, &temp); /* colour_primaries */
+            ReadBits(psBits, 8, &temp); /* transfer_characteristics */
+            ReadBits(psBits, 8, &temp); /* matrix coefficients */
+        }
+    }
+    ReadBits(psBits, 1, &temp);/*	chroma_loc_info_present_flag */
+    if (temp)
+    {
+        ue_v(psBits, &temp); /*  chroma_sample_loc_type_top_field */
+        ue_v(psBits, &temp); /*  chroma_sample_loc_type_bottom_field */
+    }
+
+    ReadBits(psBits, 1, &temp); /*	timing_info_present_flag*/
+    if (temp)
+    {
+        ReadBits(psBits, 32, &temp32); /*  num_unit_in_tick*/
+        ReadBits(psBits, 32, &temp32); /*	time_scale */
+        ReadBits(psBits, 1, &temp); /*	fixed_frame_rate_flag */
+    }
+
+    ReadBits(psBits, 1, &temp); /*	nal_hrd_parameters_present_flag */
+    if (temp)
+    {
+        if (!DecodeHRD(psBits))
+        {
+            return 1;
+        }
+    }
+    ReadBits(psBits, 1, &temp32); /*	vcl_hrd_parameters_present_flag*/
+    if (temp32)
+    {
+        if (!DecodeHRD(psBits))
+        {
+            return 1;
+        }
+    }
+    if (temp || temp32)
+    {
+        ReadBits(psBits, 1, &temp);		/*	low_delay_hrd_flag */
+    }
+    ReadBits(psBits, 1, &temp); /*	pic_struct_present_flag */
+    status = ReadBits(psBits, 1, &temp); /*	_restriction_flag */
+    if (status != 0) // buffer overrun
+    {
+        return 1;
+    }
+
+    if (temp)
+    {
+        ReadBits(psBits, 1, &temp); /*	motion_vectors_over_pic_boundaries_flag */
+        ue_v(psBits, &temp); /*	max_bytes_per_pic_denom */
+        ue_v(psBits, &temp); /*	max_bits_per_mb_denom */
+        ue_v(psBits, &temp); /*	log2_max_mv_length_horizontal */
+        ue_v(psBits, &temp); /*	log2_max_mv_length_vertical */
+        ue_v(psBits, &temp); /*	num_reorder_frames */
+        ue_v(psBits, &temp); /*	max_dec_frame_buffering */
+    }
+
+    return 0; // 0 for success
+}
+
+/* unused for now */
+int32 DecodeHRD(mp4StreamType *psBits)
+{
+    uint temp;
+    uint cpb_cnt_minus1;
+    uint i;
+    int32 status;
+
+    ue_v(psBits, &cpb_cnt_minus1);
+    ReadBits(psBits, 4, &temp); /*	bit_rate_scale */
+    ReadBits(psBits, 4, &temp); /*	cpb_size_scale */
+    for (i = 0; i <= cpb_cnt_minus1; i++)
+    {
+        ue_v(psBits, &temp); /*	bit_rate_value_minus1[i] */
+        ue_v(psBits, &temp); /*	cpb_size_value_minus1[i] */
+        ue_v(psBits, &temp); /*	cbr_flag[i] */
+    }
+    ReadBits(psBits, 5, &temp); /*	initial_cpb_removal_delay_length_minus1 */
+    ReadBits(psBits, 5, &temp); /*	cpb_removal_delay_length_minus1 */
+    ReadBits(psBits, 5, &temp); /*	dpb_output_delay_length_minus1 */
+    status = ReadBits(psBits, 5, &temp); /*	time_offset_length	*/
+
+    if (status != 0) // buffer overrun
+    {
+        return 1;
+    }
+
+    return 0; // 0 for success
+}
+#endif
+
+// only check for entropy coding mode
+int32 DecodePPS(mp4StreamType *psBits)
+{
+    uint32 temp, pic_parameter_set_id, seq_parameter_set_id, entropy_coding_mode_flag;
+
+    ReadBits(psBits, 8, &temp);
+
+    if ((temp & 0x1F) != 8) return MP4_INVALID_VOL_PARAM;
+
+    ue_v(psBits, &pic_parameter_set_id);
+    ue_v(psBits, &seq_parameter_set_id);
+
+    ReadBits(psBits, 1, &entropy_coding_mode_flag);
+    if (entropy_coding_mode_flag)
+    {
+        return 1;
+    }
+
     return 0;
 }
 
@@ -955,7 +1135,7 @@ void ue_v(mp4StreamType *psBits, uint32 *codeNum)
 {
     uint32 temp;
     uint tmp_cnt;
-    int leading_zeros = 0;
+    int32 leading_zeros = 0;
     ShowBits(psBits, 16, &temp);
     tmp_cnt = temp  | 0x1;
 
@@ -977,7 +1157,7 @@ void ue_v(mp4StreamType *psBits, uint32 *codeNum)
 
 void se_v(mp4StreamType *psBits, int32 *value)
 {
-    int leadingZeros = 0;
+    int32 leadingZeros = 0;
     uint32 temp;
 
     OSCL_UNUSED_ARG(value);
@@ -994,10 +1174,10 @@ void se_v(mp4StreamType *psBits, int32 *value)
     ReadBits(psBits, leadingZeros, &temp);
 }
 
-void Parser_EBSPtoRBSP(uint8 *nal_unit, int *size)
+void Parser_EBSPtoRBSP(uint8 *nal_unit, int32 *size)
 {
-    int i, j;
-    int count = 0;
+    int32 i, j;
+    int32 count = 0;
 
 
     for (i = 0; i < *size; i++)

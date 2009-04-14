@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*********************************************************************************/
 /*
     This PVA_FF_TrackHeaderAtom Class specifies the characteristics of a single MPEG-4
     track.
@@ -34,6 +33,7 @@
 PVA_FF_TrackHeaderAtom::PVA_FF_TrackHeaderAtom(int32 type, uint32 trackID, uint8 version, uint32 flags, uint32 fileAuthoringFlags)
         : PVA_FF_FullAtom(TRACK_HEADER_ATOM, version, flags)
 {
+    OSCL_UNUSED_ARG(fileAuthoringFlags);
 
     _trackID = trackID;
     _mediaType = type;
@@ -203,7 +203,7 @@ PVA_FF_TrackHeaderAtom::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
      * To ensure that the total track duration includes the duration of the
      * last sample as well, which in our case is same as the last but one.
      */
-    //uint32 totalDuration = getDuration() + _deltaTS;
+
     uint32 totalDuration = getDuration();
     if (!PVA_FF_AtomUtils::render32(fp, totalDuration))
     {

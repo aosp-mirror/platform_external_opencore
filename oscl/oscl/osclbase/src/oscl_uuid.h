@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,18 +28,14 @@
 #include "oscl_base.h"
 #endif
 
-#ifdef __cplusplus
-#ifndef OSCL_MEM_H_INCLUDED
-#include "oscl_mem.h"
-#endif
-#else
 #ifndef OSCL_MEM_BASIC_FUNCTIONS_H
 #include "oscl_mem_basic_functions.h"
 #endif
-#endif
+
 #ifndef OSCL_STRING_UTILS_H
 #include "oscl_string_utils.h"
 #endif
+
 #ifndef OSCL_STDSTRING_H_INCLUDED
 #include "oscl_stdstring.h"
 #endif

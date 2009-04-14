@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,9 @@ typedef struct tagBitstream
     Int byteCount;	/*how many bytes already encoded*/
     UInt word;		/*hold one word temporarily */
     Int bitLeft;	/*number of bits left in "word" */
+    UChar* overrunBuffer;  /* pointer to overrun buffer */
+    Int oBSize;		/* length of overrun buffer */
+    struct tagVideoEncData *video;
 } BitstreamEncVideo;
 
 typedef struct tagVOP
@@ -76,7 +79,7 @@ typedef struct tagVol
     Int     shortVideoHeader;   /* shortVideoHeader mode */
     Int		GOVStart;			/* Insert GOV Header */
     Int		timeIncrementResolution;	/* VOL time increment */
-    Int		nbitsTimeIncRes;	/* number of bits for time increment (CJ) */
+    Int		nbitsTimeIncRes;	/* number of bits for time increment */
     Int		timeIncrement;		/* time increment */
     Int		moduloTimeBase;		/* internal decoder clock */
     Int		prevModuloTimeBase;	/* in case of pre-frameskip */
@@ -116,7 +119,7 @@ typedef struct tagVol
     Int		verSamp_m;			/* sampfac = ver_samp_n/ver_samp_m      */
     Int		enhancementType;	/* VOL type of enhancement layer */
 
-    /* I added these variables since they are used a lot.  CJ 04/13/2000 */
+    /* These variables were added since they are used a lot. */
     Int		nMBPerRow, nMBPerCol;	/* number of MBs in each row & column    */
     Int		nTotalMB;
     Int		nBitsForMBID;			/* how many bits required for MB number? */
@@ -217,7 +220,7 @@ typedef struct tagVideoEncParams
     Bool	HalfPel_Enabled;		/* Turn Halfpel ME on or off */
     Bool	MV8x8_Enabled;			/* Enable 8x8 motion vectors */
     Bool	RD_opt_Enabled;			/* Enable operational R-D optimization */
-    Bool	GOB_Header_Enabled;		/* Enable encoding GOB header in H263_WITH_ERR_RES and SHORT_HERDER_WITH_ERR_RES */
+    Int 	GOB_Header_Interval;		/* Enable encoding GOB header in H263_WITH_ERR_RES and SHORT_HERDER_WITH_ERR_RES */
     Int		SearchRange;			/* Search range for 16x16 motion vector */
     Int		MemoryUsage;			/* Amount of memory allocated */
     Int		GetVolHeader[2];		/* Flag to check if Vol Header has been retrieved */
@@ -335,6 +338,9 @@ typedef struct tagVideoEncData
     BitstreamEncVideo  *bitstream2;	/* and combined modes as	  */
     BitstreamEncVideo  *bitstream3;	/* intermediate storages	  */
 
+    UChar   *overrunBuffer;  /* extra output buffer to prevent current skip due to output buffer overrun*/
+    Int		oBSize;		/* size of allocated overrun buffer */
+
     Int dc_scalar_1;			/*dc scalar for Y block */
     Int dc_scalar_2;			/*dc scalar for U, V block*/
 
@@ -371,6 +377,8 @@ typedef struct tagVideoEncData
     UInt	bitmapzz[6][2];	/* for zigzag bitmap */
     Int		zeroMV;			/* flag for zero MV */
 
+    Int     usePrevQP;      /* flag for intraDCVlcThreshold switch decision */
+    Int		QP_prev;			/* use for DQUANT calculation */
     Int		*acPredFlag;		/* */
     typeDCStore		*predDC;		/* The DC coeffs for each MB */
     typeDCACStore   *predDCAC_row;
@@ -388,7 +396,6 @@ typedef struct tagVideoEncData
     float	FrameRate;			/* Src frame Rate */
 
     ULong	nextModTime;		/* expected next frame time */
-    ULong	wrapModTime;		/* residue of wrapping */
     UInt	prevFrameNum[4];	/* previous frame number starting from modTimeRef */
     UInt	modTimeRef;		/* Reference modTime update every I-Vop*/
     UInt	refTick[4];			/* second aligned referenc tick */

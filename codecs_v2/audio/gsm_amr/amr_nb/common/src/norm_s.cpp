@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,8 +30,6 @@ terms listed above has been obtained from the copyright holder.
 
  Pathname: ./gsm-amr/c/src/norm_s.c
 
-     Date: 08/13/2000
-
 ------------------------------------------------------------------------------
  REVISION HISTORY
 
@@ -46,6 +44,7 @@ terms listed above has been obtained from the copyright holder.
 
  Description: Removed conditional code that updates WMOPS counter
 
+ Who:                       Date:
  Description:
 
 ------------------------------------------------------------------------------
@@ -193,42 +192,51 @@ Word16 norm_s (Word16 var1)
 /*----------------------------------------------------------------------------
 ; FUNCTION CODE
 ----------------------------------------------------------------------------*/
+#if !( defined(PV_ARM_V5) || defined(PV_ARM_GCC_V5) )
+
 Word16 norm_s(register Word16 var1)
 {
     /*----------------------------------------------------------------------------
     ; Define all local variables
     ----------------------------------------------------------------------------*/
-    register Word16 var_out;
+
+    register Word16 var_out = 0;
 
     /*----------------------------------------------------------------------------
     ; Function body here
     ----------------------------------------------------------------------------*/
-    if (var1 == 0)
-    {
-        var_out = 0;
-    }
-    else
-    {
-        if (var1 == (Word16) 0xffff)
-        {
-            var_out = 15;
-        }
-        else
-        {
-            if (var1 < 0)
-            {
-                var1 = ~var1;
-            }
-            for (var_out = 0; var1 < 0x4000; var_out++)
-            {
-                var1 <<= 1;
-            }
-        }
-    }
 
+    if (var1)
+    {
+        Word16 y = var1 - (var1 < 0);
+        var1 = y ^(y >> 15);
+
+        while (!(0x4000 & var1))
+        {
+            var_out++;
+            if ((0x2000 & var1))
+            {
+                break;
+            }
+            var_out++;
+            if ((0x1000 & var1))
+            {
+                break;
+            }
+            var_out++;
+            if ((0x0800 & var1))
+            {
+                break;
+            }
+            var_out++;
+            var1 <<= 4;
+        }
+    }
 
     /*----------------------------------------------------------------------------
     ; Return nothing or data or data pointer
     ----------------------------------------------------------------------------*/
     return (var_out);
 }
+
+#endif

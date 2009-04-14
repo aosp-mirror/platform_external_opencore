@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,9 @@
  * -------------------------------------------------------------------
  */
 /*
+------------------------------------------------------------------------------
+
+
 
  Pathname: codecs/audio/aac/c/src/getactualAacConfig
 
@@ -179,20 +182,18 @@ OSCL_EXPORT_REF int32 GetActualAacConfig(uint8* aConfigHeader,
     Int            status = ERROR_BUFFER_OVERRUN;
 
 
-
     /*
      *  Allocate memory to decode one AAC frame
      */
 
+
+    iAACDecExt = new tPVMP4AudioDecoderExternal;
     if (!iAACDecExt)
     {
-        iAACDecExt = new tPVMP4AudioDecoderExternal;
-        if (!iAACDecExt)
-        {
-            return 1;
-        }
-        iAACDecExt->inputBufferCurrentLength = 0;
+        return 1;
     }
+    iAACDecExt->inputBufferCurrentLength = 0;
+
 
     iAACDecExt->pInputBuffer = aConfigHeader;
     iAACDecExt->inputBufferMaxLength = PVMP4AUDIODECODER_INBUFSIZE;
@@ -255,6 +256,8 @@ OSCL_EXPORT_REF int32 GetActualAacConfig(uint8* aConfigHeader,
          * Buffer is not overrun, then
          * decode the AudioSpecificConfig() structure
          */
+        pVars->aacConfigUtilityEnabled = true;  /* set aac utility mode */
+
         status = get_audio_specific_config(pVars);
 
     }
@@ -269,7 +272,18 @@ OSCL_EXPORT_REF int32 GetActualAacConfig(uint8* aConfigHeader,
 
     *NumChannels = pVars->mc_info.nch;
 
-    *aAudioObjectType = pVars->mc_info.audioObjectType;
+    /*
+     *  Set the audio object type to the extended type, only if this is different
+     *  from the baseline object type (this only applies to explicit signaling)
+     */
+    if (pVars->mc_info.audioObjectType != pVars->mc_info.ExtendedAudioObjectType)
+    {
+        *aAudioObjectType = pVars->mc_info.ExtendedAudioObjectType;
+    }
+    else
+    {
+        *aAudioObjectType = pVars->mc_info.audioObjectType;
+    }
 
     /*
      *  Set parameters  based on the explicit information from the
@@ -284,7 +298,6 @@ OSCL_EXPORT_REF int32 GetActualAacConfig(uint8* aConfigHeader,
         }
     }
 
-
     pVars->status = status;
 
     /*
@@ -296,11 +309,9 @@ OSCL_EXPORT_REF int32 GetActualAacConfig(uint8* aConfigHeader,
         pMem = NULL;
     }
 
-    if (iAACDecExt)
-    {
-        OSCL_DELETE(iAACDecExt);
-        iAACDecExt = NULL;
-    }
+
+    OSCL_DELETE(iAACDecExt);
+    iAACDecExt = NULL;
 
     return status;
 }

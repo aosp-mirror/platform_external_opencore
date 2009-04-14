@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,6 +73,9 @@
 
 // Number of samples to be retrieved for Best Thumbnail Mode
 #define NUMSAMPLES_BEST_THUMBNAIL_MODE 10
+
+//flag, enable(1) or disable(0) functionality to break up aac frames into multiple media messages
+#define PVMFMP4FF_BREAKUP_AAC_FRAMES_INTO_MULTIPLE_MEDIA_FRAGS 1
 
 #endif // PVMF_MP4FFPARSER_NODE_TUNEABLES_H_INCLUDED
 

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@
 //----------------------------------------------------------------------------
 #include "amrfileparser.h"
 
+// Use default DLL entry point for Symbian
 #include "oscl_dll.h"
 OSCL_DLL_ENTRY_POINT_DEFAULT()
 
@@ -119,14 +120,26 @@ int32 bitstreamObject::reset(int32 filePos)
 //! read data from bitstream, this is the only function to read data from file
 int32 bitstreamObject::refill()
 {
+    PVMF_AMRPARSER_LOGDEBUG((0, "Refill In ipos=%d, iBytesRead=%d, iBytesProcessed=%d, iActualSize=%d, iFileSize=%d", iPos, iBytesRead, iBytesProcessed, iActual_size, iFileSize));
+
     if (iBytesRead > 0 && iFileSize > 0 && iBytesRead >= iFileSize)
     {
+        // if number of bytes read so far exceed the file size,
+        // then first update the file size (PDL case).
+        if (!UpdateFileSize()) return bitstreamObject::MISC_ERROR;
+
         //At this point we're within 32 bytes of the end of data.
         //Quit reading data but don't return EOF until all data is processed.
         if (iBytesProcessed < iBytesRead)
+        {
             return bitstreamObject::EVERYTHING_OK;
+        }
         else
-            return bitstreamObject::END_OF_FILE;
+        {
+            //there is no more data to read.
+            if (iBytesRead >= iFileSize || iBytesProcessed >= iFileSize)
+                return bitstreamObject::DATA_INSUFFICIENT;
+        }
     }
 
     if (!ipAMRFile)
@@ -158,24 +171,37 @@ int32 bitstreamObject::refill()
         iPos = bitstreamObject::SECOND_BUFF_SIZE;
         iBytesProcessed = 0;
     }
-
+    // we are currently positioned at the end of the data buffer.
     else if (iPos == bitstreamObject::MAIN_BUFF_SIZE + bitstreamObject::SECOND_BUFF_SIZE)
     {
-        // reset iPos and refill from the beginning of the file
+        // reset iPos and refill from the beginning of the buffer.
         iPos = bitstreamObject::SECOND_BUFF_SIZE;
     }
 
     else if (iPos >= iActual_size)
     {
+        int32 len = 0;
         // move the remaining stuff to the beginning of iBuffer
-        if (iActual_size < iMax_size)
+        if (iActual_size + bitstreamObject::SECOND_BUFF_SIZE > iPos)
         {
-            // memory content will be overlapped
-            return bitstreamObject::MISC_ERROR;
+            // we are currently positioned within SECOND_BUFF_SIZE bytes from the end of the buffer.
+            len = iActual_size + bitstreamObject::SECOND_BUFF_SIZE - iPos;
         }
-        int32 len = bitstreamObject::MAIN_BUFF_SIZE + bitstreamObject::SECOND_BUFF_SIZE - iPos;
+        else
+        {
+            // no leftover data.
+            len = 0;
+        }
+
         oscl_memcpy(&iBuffer[bitstreamObject::SECOND_BUFF_SIZE-len], &iBuffer[iPos], len);
         iPos = bitstreamObject::SECOND_BUFF_SIZE - len;
+
+        // update the file size for the PDL scenario where more data has been downloaded
+        // into the file but the file size has not been updated yet.
+        if (iBytesRead + iMax_size > iFileSize)
+        {
+            if (!UpdateFileSize()) return bitstreamObject::MISC_ERROR;
+        }
     }
 
     // read data
@@ -186,12 +212,15 @@ int32 bitstreamObject::refill()
 
     iBytesRead += iActual_size;
 
+    PVMF_AMRPARSER_LOGDEBUG((0, "Refill Out ipos=%d, iBytesRead=%d, iBytesProcessed=%d, iActualSize=%d, iFileSize=%d", iPos, iBytesRead, iBytesProcessed, iActual_size, iFileSize));
+
     return bitstreamObject::EVERYTHING_OK;
 }
 
 //! most important function to get one frame data plus frame type, used in getNextBundledAccessUnits()
 int32 bitstreamObject::getNextFrame(uint8* frameBuffer, uint8& frame_type, bool bHeaderIncluded)
 {
+    PVMF_AMRPARSER_LOGDEBUG((0, "GetNextFrame In ipos=%d, iBytesRead=%d, iBytesProcessed=%d, iActualSize=%d, iFileSize=%d", iPos, iBytesRead, iBytesProcessed, iActual_size, iFileSize));
     if (!frameBuffer)
     {
         return bitstreamObject::MISC_ERROR;
@@ -248,6 +277,8 @@ int32 bitstreamObject::getNextFrame(uint8* frameBuffer, uint8& frame_type, bool 
         return bitstreamObject::MISC_ERROR;
     }
 
+    PVMF_AMRPARSER_LOGDEBUG((0, "GetNextFrame Before Read frame ipos=%d, iBytesRead=%d, iBytesProcessed=%d, iActualSize=%d, iFileSize=%d", iPos, iBytesRead, iBytesProcessed, iActual_size, iFileSize));
+
     if (frame_size > 0)
     {
         if (bHeaderIncluded)
@@ -262,6 +293,7 @@ int32 bitstreamObject::getNextFrame(uint8* frameBuffer, uint8& frame_type, bool 
     iPos += frame_size;
     iBytesProcessed += frame_size;
 
+    PVMF_AMRPARSER_LOGDEBUG((0, "GetNextFrame Out ipos=%d, iBytesRead=%d, iBytesProcessed=%d, iActualSize=%d, iFileSize=%d", iPos, iBytesRead, iBytesProcessed, iActual_size, iFileSize));
     return ret_value;
 }
 
@@ -367,6 +399,22 @@ int32 bitstreamObject::getFileInfo(int32& fileSize, int32& format, int32& frame_
     return ret_value;
 }
 
+//! get the updated file size
+bool bitstreamObject::UpdateFileSize()
+{
+    if (ipAMRFile != NULL)
+    {
+        uint32 aRemBytes = 0;
+        if (ipAMRFile->GetRemainingBytes(aRemBytes))
+        {
+            uint32 currPos = (uint32)(ipAMRFile->Tell());
+            iFileSize = currPos + aRemBytes;
+            return true;
+        }
+    }
+    return false;
+}
+
 
 //----------------------------------------------------------------------------
 // FUNCTION NAME: CAMRFileParser::CAMRFileParser
@@ -389,6 +437,15 @@ int32 bitstreamObject::getFileInfo(int32& fileSize, int32& format, int32& frame_
 // FUNCTION DESCRIPTION
 //
 //  Constructor for CAMRFileParser class
+//----------------------------------------------------------------------------
+// REQUIREMENTS
+//
+//----------------------------------------------------------------------------
+// REFERENCES
+//
+//------------------------------------------------------------------------------
+// CAUTION
+//
 //------------------------------------------------------------------------------
 OSCL_EXPORT_REF CAMRFileParser::CAMRFileParser(void)
 {
@@ -399,7 +456,7 @@ OSCL_EXPORT_REF CAMRFileParser::CAMRFileParser(void)
     iEndOfFileReached   = false;
     iRandomAccessTimeInterval = 0;
     iCountToClaculateRDATimeInterval = 0;
-    iLogger = PVLogger::GetLoggerObject(" ");
+    iLogger = PVLogger::GetLoggerObject("pvamr_parser");
     iDiagnosticLogger = PVLogger::GetLoggerObject("playerdiagnostics.pvamr_parser");
 
     ipBSO = NULL;
@@ -426,6 +483,15 @@ OSCL_EXPORT_REF CAMRFileParser::CAMRFileParser(void)
 // FUNCTION DESCRIPTION
 //
 //  Destructor for CAMRFileParser class
+//----------------------------------------------------------------------------
+// REQUIREMENTS
+//
+//----------------------------------------------------------------------------
+// REFERENCES
+//
+//------------------------------------------------------------------------------
+// CAUTION
+//
 //------------------------------------------------------------------------------
 OSCL_EXPORT_REF CAMRFileParser::~CAMRFileParser(void)
 {
@@ -457,6 +523,15 @@ OSCL_EXPORT_REF CAMRFileParser::~CAMRFileParser(void)
 //  This function opens the AMR file, checks for AMR format type, calculates
 //  the track duration, and sets the AMR bitrate value.
 //
+//----------------------------------------------------------------------------
+// REQUIREMENTS
+//
+//----------------------------------------------------------------------------
+// REFERENCES
+//
+//------------------------------------------------------------------------------
+// CAUTION
+//
 //------------------------------------------------------------------------------
 OSCL_EXPORT_REF bool CAMRFileParser::InitAMRFile(OSCL_wString& aClip, bool aInitParsingEnable, Oscl_FileServer* aFileSession, PVMFCPMPluginAccessInterfaceFactory*aCPM, OsclFileHandle*aHandle, uint32 countToClaculateRDATimeInterval)
 {
@@ -471,7 +546,7 @@ OSCL_EXPORT_REF bool CAMRFileParser::InitAMRFile(OSCL_wString& aClip, bool aInit
     }
 
     // create ipBSO
-    ipBSO = OSCL_NEW(bitstreamObject, (&iAMRFile));
+    ipBSO = OSCL_NEW(bitstreamObject, (iLogger, &iAMRFile));
     if (!ipBSO)
     {
         return false;
@@ -606,7 +681,7 @@ bool CAMRFileParser::CalculateDuration(bool aInitParsingEnable, uint32 countToCl
 }
 
 //----------------------------------------------------------------------------
-// FUNCTION NAME: CAMRFileParser::RetreiveAMRFileInfo
+// FUNCTION NAME: CAMRFileParser::RetrieveAMRFileInfo
 //----------------------------------------------------------------------------
 // INPUT AND OUTPUT DEFINITIONS
 //
@@ -629,6 +704,15 @@ bool CAMRFileParser::CalculateDuration(bool aInitParsingEnable, uint32 countToCl
 //
 //  This function opens the AMR file, checks for AMR format type, calculates
 //  the track duration, and sets the AMR bitrate value.
+//
+//----------------------------------------------------------------------------
+// REQUIREMENTS
+//
+//----------------------------------------------------------------------------
+// REFERENCES
+//
+//------------------------------------------------------------------------------
+// CAUTION
 //
 //------------------------------------------------------------------------------
 OSCL_EXPORT_REF bool CAMRFileParser::RetrieveFileInfo(TPVAmrFileInfo& aInfo)
@@ -672,6 +756,15 @@ OSCL_EXPORT_REF bool CAMRFileParser::RetrieveFileInfo(TPVAmrFileInfo& aInfo)
 //
 //  This function takes in the 3GPP frametype and sets the AMR bitrate value
 //  depending on the AMR frametype.
+//
+//----------------------------------------------------------------------------
+// REQUIREMENTS
+//
+//----------------------------------------------------------------------------
+// REFERENCES
+//
+//------------------------------------------------------------------------------
+// CAUTION
 //
 //------------------------------------------------------------------------------
 void CAMRFileParser::SetBitRate(AMRFF_Frame_Type_3GPP aFrameType3GPP)
@@ -811,10 +904,20 @@ void CAMRFileParser::SetBitRate(AMRFF_WB_Frame_Type_3GPP aFrameType3GPP)
 //  This function sets the file pointer to the location that aStartTime would
 //  point to in the file.
 //
+//----------------------------------------------------------------------------
+// REQUIREMENTS
+//
+//----------------------------------------------------------------------------
+// REFERENCES
+//
+//------------------------------------------------------------------------------
+// CAUTION
+//
 //------------------------------------------------------------------------------
 OSCL_EXPORT_REF int32 CAMRFileParser::ResetPlayback(int32 aStartTime)
 {
     // get file size info, //iAMRFile.Size(fileSize)
+    int32 result;
     if (iAMRFileSize <= 0)
     {
         int32 frameTypeIndex;
@@ -861,11 +964,11 @@ OSCL_EXPORT_REF int32 CAMRFileParser::ResetPlayback(int32 aStartTime)
             newPosition = iRPTable[tblIdx];
         }
     }
-
-    if (newPosition >= 0 && ipBSO->reset(newPosition))
+    result = ipBSO->reset(newPosition);
+    if (newPosition >= 0 && result)
     {
         PVMF_AMRPARSER_LOGERROR((0, "AMRBitstreamObject::refill- Misc Error"));
-        return bitstreamObject::MISC_ERROR;
+        return result;
     }
     iEndOfFileReached = false;
 
@@ -895,6 +998,15 @@ OSCL_EXPORT_REF int32 CAMRFileParser::ResetPlayback(int32 aStartTime)
 //
 //  This function returns the timestamp for an actual position corresponding
 //  to the specified start time
+//
+//----------------------------------------------------------------------------
+// REQUIREMENTS
+//
+//----------------------------------------------------------------------------
+// REFERENCES
+//
+//------------------------------------------------------------------------------
+// CAUTION
 //
 //------------------------------------------------------------------------------
 OSCL_EXPORT_REF uint32 CAMRFileParser::SeekPointFromTimestamp(uint32 aStartTime)
@@ -960,6 +1072,15 @@ OSCL_EXPORT_REF uint32 CAMRFileParser::SeekPointFromTimestamp(uint32 aStartTime)
 //  aNumSamples. It formats the read data to WMF bit order and stores it in
 //  the GAU structure.
 //
+//----------------------------------------------------------------------------
+// REQUIREMENTS
+//
+//----------------------------------------------------------------------------
+// REFERENCES
+//
+//------------------------------------------------------------------------------
+// CAUTION
+//
 //------------------------------------------------------------------------------
 OSCL_EXPORT_REF int32 CAMRFileParser::GetNextBundledAccessUnits(uint32 *aNumSamples, GAU *aGau)
 {
@@ -1001,7 +1122,13 @@ OSCL_EXPORT_REF int32 CAMRFileParser::GetNextBundledAccessUnits(uint32 *aNumSamp
             break;
         }
         else if (returnValue == bitstreamObject::EVERYTHING_OK)
+
         {
+        }
+        else if (returnValue == bitstreamObject::DATA_INSUFFICIENT)
+        {
+            *aNumSamples = 0;
+            return returnValue;
         }
         else
         {   // error happens!!

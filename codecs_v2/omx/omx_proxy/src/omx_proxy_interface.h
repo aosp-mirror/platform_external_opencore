@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,27 +20,27 @@
 #define OMX_PROXY_INTERFACE_H_INCLUDED
 
 #ifndef OMX_Types_h
-#include "omx_types.h"
+#include "OMX_Types.h"
 #endif
 
 #ifndef OMX_Core_h
-#include "omx_core.h"
+#include "OMX_Core.h"
 #endif
 
 #ifndef OMX_Audio_h
-#include "omx_audio.h"
+#include "OMX_Audio.h"
 #endif
 
 #ifndef OMX_Video_h
-#include "omx_video.h"
+#include "OMX_Video.h"
 #endif
 
 #ifndef OMX_Image_h
-#include "omx_image.h"
+#include "OMX_Image.h"
 #endif
 
 #ifndef OMX_Other_h
-#include "omx_other.h"
+#include "OMX_Other.h"
 #endif
 
 #ifndef PV_OMXDEFS_H_INCLUDED
@@ -99,10 +99,10 @@ class ProxyApplication_OMX
             , public PVProxiedInterfaceClient_OMX
 {
     public:
-        ProxyApplication_OMX();
-        virtual ~ProxyApplication_OMX();
-        void Start();
-        void Exit();
+        OSCL_IMPORT_REF ProxyApplication_OMX();
+        OSCL_IMPORT_REF virtual ~ProxyApplication_OMX();
+        OSCL_IMPORT_REF bool Start();
+        OSCL_IMPORT_REF void Exit();
         void TermCmd();
 
         void CreateLoggerAppenders()
@@ -122,36 +122,36 @@ class ProxyApplication_OMX
         void HandleNotification(TPVProxyMsgId , OsclAny* aData);
         void CleanupCommand(TPVProxyMsgId , OsclAny* aData);
 
-        OMX_ERRORTYPE ProxyGetConfig(
+        OSCL_IMPORT_REF OMX_ERRORTYPE ProxyGetConfig(
             OMX_IN  OMX_HANDLETYPE hComponent,
             OMX_IN  OMX_INDEXTYPE nIndex,
             OMX_INOUT OMX_PTR pComponentConfigStructure);
 
-        OMX_ERRORTYPE ProxySetConfig(
+        OSCL_IMPORT_REF OMX_ERRORTYPE ProxySetConfig(
             OMX_IN  OMX_HANDLETYPE hComponent,
             OMX_IN  OMX_INDEXTYPE nIndex,
             OMX_IN  OMX_PTR pComponentConfigStructure);
 
-        OMX_ERRORTYPE ProxyGetExtensionIndex(
+        OSCL_IMPORT_REF OMX_ERRORTYPE ProxyGetExtensionIndex(
             OMX_IN  OMX_HANDLETYPE hComponent,
             OMX_IN  OMX_STRING cParameterName,
             OMX_OUT OMX_INDEXTYPE* pIndexType) ;
 
-        OMX_ERRORTYPE ProxyGetState(
+        OSCL_IMPORT_REF OMX_ERRORTYPE ProxyGetState(
             OMX_IN  OMX_HANDLETYPE hComponent,
             OMX_OUT OMX_STATETYPE* pState);
 
-        OMX_ERRORTYPE ProxyGetParameter(
+        OSCL_IMPORT_REF OMX_ERRORTYPE ProxyGetParameter(
             OMX_IN  OMX_HANDLETYPE hComponent,
             OMX_IN  OMX_INDEXTYPE nParamIndex,
             OMX_INOUT OMX_PTR ComponentParameterStructure);
 
-        OMX_ERRORTYPE ProxySetParameter(
+        OSCL_IMPORT_REF OMX_ERRORTYPE ProxySetParameter(
             OMX_IN  OMX_HANDLETYPE hComponent,
             OMX_IN  OMX_INDEXTYPE nParamIndex,
             OMX_IN  OMX_PTR ComponentParameterStructure);
 
-        OMX_ERRORTYPE ProxyUseBuffer(
+        OSCL_IMPORT_REF OMX_ERRORTYPE ProxyUseBuffer(
             OMX_IN OMX_HANDLETYPE hComponent,
             OMX_INOUT OMX_BUFFERHEADERTYPE** ppBufferHdr,
             OMX_IN OMX_U32 nPortIndex,
@@ -159,44 +159,44 @@ class ProxyApplication_OMX
             OMX_IN OMX_U32 nSizeBytes,
             OMX_IN OMX_U8* pBuffer);
 
-        OMX_ERRORTYPE ProxyAllocateBuffer(
+        OSCL_IMPORT_REF OMX_ERRORTYPE ProxyAllocateBuffer(
             OMX_IN OMX_HANDLETYPE hComponent,
             OMX_INOUT OMX_BUFFERHEADERTYPE** pBuffer,
             OMX_IN OMX_U32 nPortIndex,
             OMX_IN OMX_PTR pAppPrivate,
             OMX_IN OMX_U32 nSizeBytes);
 
-        OMX_ERRORTYPE ProxyFreeBuffer(
+        OSCL_IMPORT_REF OMX_ERRORTYPE ProxyFreeBuffer(
             OMX_IN  OMX_HANDLETYPE hComponent,
             OMX_IN  OMX_U32 nPortIndex,
             OMX_IN  OMX_BUFFERHEADERTYPE* pBuffer);
 
-        OMX_ERRORTYPE ProxySetCallbacks(
+        OSCL_IMPORT_REF OMX_ERRORTYPE ProxySetCallbacks(
             OMX_IN  OMX_HANDLETYPE hComponent,
             OMX_IN  OMX_CALLBACKTYPE* pCallbacks,
             OMX_IN  OMX_PTR pAppData);
 
-        OMX_ERRORTYPE ProxySendCommand(
+        OSCL_IMPORT_REF OMX_ERRORTYPE ProxySendCommand(
             OMX_IN  OMX_HANDLETYPE hComponent,
             OMX_IN  OMX_COMMANDTYPE Cmd,
             OMX_IN  OMX_U32 nParam,
             OMX_IN  OMX_PTR pCmdData);
 
-        OMX_ERRORTYPE ProxyEmptyThisBuffer(
+        OSCL_IMPORT_REF OMX_ERRORTYPE ProxyEmptyThisBuffer(
             OMX_IN  OMX_HANDLETYPE hComponent,
             OMX_IN  OMX_BUFFERHEADERTYPE* pBuffer);
 
-        OMX_ERRORTYPE ProxyFillThisBuffer(
+        OSCL_IMPORT_REF OMX_ERRORTYPE ProxyFillThisBuffer(
             OMX_IN  OMX_HANDLETYPE hComponent,
             OMX_IN  OMX_BUFFERHEADERTYPE* pBuffer);
 
-        OMX_API OMX_ERRORTYPE OMX_APIENTRY ProxyGetHandle(
+        OSCL_IMPORT_REF OMX_ERRORTYPE ProxyGetHandle(
             OMX_OUT OMX_HANDLETYPE* pHandle,
             OMX_IN  OMX_STRING cComponentName,
             OMX_IN  OMX_PTR pAppData,
             OMX_IN  OMX_CALLBACKTYPE* pCallBacks);
 
-        OMX_API OMX_ERRORTYPE OMX_APIENTRY ProxyFreeHandle(
+        OSCL_IMPORT_REF OMX_ERRORTYPE ProxyFreeHandle(
             OMX_IN OMX_HANDLETYPE hComponent);
 
         /************************
@@ -562,74 +562,17 @@ class BasicDestructDealloc : public OsclDestructDealloc
         }
 };
 
-//Wrapper functions above Proxy layer
-OMX_ERRORTYPE WrapperGetConfig(
-    OMX_IN  OMX_HANDLETYPE hComponent,
-    OMX_IN  OMX_INDEXTYPE nIndex,
-    OMX_INOUT OMX_PTR pComponentConfigStructure);
 
-OMX_ERRORTYPE WrapperSetConfig(
-    OMX_IN  OMX_HANDLETYPE hComponent,
-    OMX_IN  OMX_INDEXTYPE nIndex,
-    OMX_IN  OMX_PTR pComponentConfigStructure);
+/*Component Handle Functions*/
+OMX_API OMX_ERRORTYPE OMX_APIENTRY GlobalProxyComponentGetHandle(
+    OMX_OUT OMX_HANDLETYPE* pHandle,
+    OMX_IN  OMX_STRING cComponentName, OMX_IN  OMX_PTR pAppData,
+    OMX_IN  OMX_CALLBACKTYPE* pCallBacks,
+    OMX_IN	OMX_PTR pProxy);
 
-OMX_ERRORTYPE WrapperGetExtensionIndex(
-    OMX_IN  OMX_HANDLETYPE hComponent,
-    OMX_IN  OMX_STRING cParameterName,
-    OMX_OUT OMX_INDEXTYPE* pIndexType) ;
+OMX_API OMX_ERRORTYPE OMX_APIENTRY GlobalProxyComponentFreeHandle(
+    OMX_IN OMX_HANDLETYPE hComponent);
 
-OMX_ERRORTYPE WrapperGetState(
-    OMX_IN  OMX_HANDLETYPE hComponent,
-    OMX_OUT OMX_STATETYPE* pState);
-
-OMX_ERRORTYPE WrapperGetParameter(
-    OMX_IN  OMX_HANDLETYPE hComponent,
-    OMX_IN  OMX_INDEXTYPE nParamIndex,
-    OMX_INOUT OMX_PTR ComponentParameterStructure);
-
-OMX_ERRORTYPE WrapperSetParameter(
-    OMX_IN  OMX_HANDLETYPE hComponent,
-    OMX_IN  OMX_INDEXTYPE nParamIndex,
-    OMX_IN  OMX_PTR ComponentParameterStructure);
-
-OMX_ERRORTYPE WrapperUseBuffer(
-    OMX_IN OMX_HANDLETYPE hComponent,
-    OMX_INOUT OMX_BUFFERHEADERTYPE** ppBufferHdr,
-    OMX_IN OMX_U32 nPortIndex,
-    OMX_IN OMX_PTR pAppPrivate,
-    OMX_IN OMX_U32 nSizeBytes,
-    OMX_IN OMX_U8* pBuffer);
-
-OMX_ERRORTYPE WrapperAllocateBuffer(
-    OMX_IN OMX_HANDLETYPE hComponent,
-    OMX_INOUT OMX_BUFFERHEADERTYPE** pBuffer,
-    OMX_IN OMX_U32 nPortIndex,
-    OMX_IN OMX_PTR pAppPrivate,
-    OMX_IN OMX_U32 nSizeBytes);
-
-OMX_ERRORTYPE WrapperFreeBuffer(
-    OMX_IN  OMX_HANDLETYPE hComponent,
-    OMX_IN  OMX_U32 nPortIndex,
-    OMX_IN  OMX_BUFFERHEADERTYPE* pBuffer);
-
-OMX_ERRORTYPE WrapperSetCallbacks(
-    OMX_IN  OMX_HANDLETYPE hComponent,
-    OMX_IN  OMX_CALLBACKTYPE* pCallbacks,
-    OMX_IN  OMX_PTR pAppData);
-
-OMX_ERRORTYPE WrapperSendCommand(
-    OMX_IN  OMX_HANDLETYPE hComponent,
-    OMX_IN  OMX_COMMANDTYPE Cmd,
-    OMX_IN  OMX_U32 nParam,
-    OMX_IN  OMX_PTR pCmdData);
-
-OMX_ERRORTYPE WrapperEmptyThisBuffer(
-    OMX_IN  OMX_HANDLETYPE hComponent,
-    OMX_IN  OMX_BUFFERHEADERTYPE* pBuffer);
-
-OMX_ERRORTYPE WrapperFillThisBuffer(
-    OMX_IN  OMX_HANDLETYPE hComponent,
-    OMX_IN  OMX_BUFFERHEADERTYPE* pBuffer);
 #endif // PROXY_INTERFACE
 
 #endif //OMX_PROXY_INTERFACE_H_INCLUDED

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,6 @@
  Pathname: ./src/esc_iquant_scaling.c
  Funtions:  esc_iquant_scaling
 
-     Date: 9/16/2002
-
 ------------------------------------------------------------------------------
  REVISION HISTORY
 
@@ -29,6 +27,7 @@
 
  Description:  Eliminated unused variables to avoid warnings, changed header
 
+ Who:                                   Date:
  Description:
 
 ------------------------------------------------------------------------------
@@ -400,8 +399,7 @@ __inline Int32 abs2(Int32 x)
 #define pv_abs(x)	abs2(x)
 
 
-#elif defined(_ARM_GCC)
-
+#elif (defined(PV_ARM_GCC_V5)||defined(PV_ARM_GCC_V4))
 
 /*
  *  Absolute value for 16 bit-numbers

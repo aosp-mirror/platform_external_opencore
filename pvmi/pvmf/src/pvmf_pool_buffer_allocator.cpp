@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,10 @@
 #include "oscl_mem.h"
 #include "oscl_time.h"
 
-OSCL_EXPORT_REF PVMFBufferPoolAllocator::PVMFBufferPoolAllocator() : iFragSize(0), iDestroyPool(false)
+OSCL_EXPORT_REF PVMFBufferPoolAllocator::PVMFBufferPoolAllocator(bool aLeaveOnAllocFailure) :
+        iFragSize(0),
+        iDestroyPool(false),
+        iLeaveOnAllocFailure(aLeaveOnAllocFailure)
 {
     iLogger = PVLogger::GetLoggerObject("pvmf.bufferpoolallocator");
     iAllocNum = 0;
@@ -38,6 +41,11 @@ OSCL_EXPORT_REF PVMFBufferPoolAllocator::~PVMFBufferPoolAllocator()
 {
     iDestroyPool = true;
     iAvailFragments.clear();
+}
+
+OSCL_EXPORT_REF void PVMFBufferPoolAllocator::SetLeaveOnAllocFailure(bool aLeaveOnAllocFailure)
+{
+    iLeaveOnAllocFailure = aLeaveOnAllocFailure;
 }
 
 OSCL_EXPORT_REF void PVMFBufferPoolAllocator::size(uint16 num_frags, uint16 frag_size)
@@ -52,7 +60,11 @@ OSCL_EXPORT_REF void PVMFBufferPoolAllocator::size(uint16 num_frags, uint16 frag
         uint8* buf = (uint8*)OSCL_MALLOC(aligned_refcnt_size + frag_size);
 
         // check for out-of-memory
-        if (!buf) break;
+        if (!buf)
+        {
+            iAvailFragments.clear();
+            OSCL_LEAVE(OSCL_BAD_ALLOC_EXCEPTION_CODE);
+        }
 
         // ref counter will delete itself when refcount goes to 0
         OsclRefCounterDA* ref_counter = OSCL_PLACEMENT_NEW(buf, OsclRefCounterDA(buf, this));
@@ -91,6 +103,7 @@ OSCL_EXPORT_REF void PVMFBufferPoolAllocator::destruct_and_dealloc(OsclAny* ptr)
 
 OSCL_EXPORT_REF OsclRefCounterMemFrag PVMFBufferPoolAllocator::get()
 {
+    OsclRefCounterMemFrag ret;
 #if _DEBUG
     ++iAllocNum;
     if (iFailFrequency)
@@ -101,12 +114,15 @@ OSCL_EXPORT_REF OsclRefCounterMemFrag PVMFBufferPoolAllocator::get()
         {
             // throw exception
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_NONFATAL_ERROR, (0, "PVMFBufferPoolAllocator::get - Simulating out of fragment exception !! \n"));
-            OSCL_LEAVE(OSCL_BAD_ALLOC_EXCEPTION_CODE);
+            if (iLeaveOnAllocFailure)
+            {
+                OSCL_LEAVE(OSCL_BAD_ALLOC_EXCEPTION_CODE);
+            }
+            return ret;
         }
     }
 #endif
 
-    OsclRefCounterMemFrag ret;
     if (!iAvailFragments.empty())
     {
         ret = iAvailFragments.back();
@@ -116,7 +132,10 @@ OSCL_EXPORT_REF OsclRefCounterMemFrag PVMFBufferPoolAllocator::get()
     }
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_NONFATAL_ERROR, (0, "PVMFBufferPoolAllocator::get - Out of fragments !! \n"));
 
-    OSCL_LEAVE(OSCL_BAD_ALLOC_EXCEPTION_CODE);
+    if (iLeaveOnAllocFailure)
+    {
+        OSCL_LEAVE(OSCL_BAD_ALLOC_EXCEPTION_CODE);
+    }
     return ret;
 }
 

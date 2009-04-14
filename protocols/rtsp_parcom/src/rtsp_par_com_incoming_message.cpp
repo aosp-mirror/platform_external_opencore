@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,7 +59,7 @@ RTSPIncomingMessage::parseFirstFields()
 
     char * endOfString;
 
-    // All righty, the first thing to do is to parse the status line;
+    // The first thing to do is to parse the status line;
     // the rest of the parsing (regular fields) can be parsed out by
     // parseNextPortion() method, since it has to know how to do that anyway.
     // We also have to find out if Content-length is there, etc.
@@ -142,7 +142,7 @@ RTSPIncomingMessage::parseFirstFields()
                     wordCountTrigger = true;
                 }
                 else
-                { // nah, still a word
+                { // still a word
                 }
                 break;
             }
@@ -178,8 +178,6 @@ RTSPIncomingMessage::parseFirstFields()
         // ran to the end of input, didn't find a single newline....
         // most probably the message was too big to handle, but parser still
         // created a message hoping that at least something can be found...
-        //
-        // anyway, we don't deal with incomplete status lines
         //
 
         amMalformed = RTSPErrorSyntax;
@@ -217,7 +215,7 @@ RTSPIncomingMessage::parseFirstFields()
             &&	('/' == *(wordPtr[0] + 4))
        )
     {
-        // it's got to be a response
+        // it has to be a response
         //
         msgType = RTSPResponseMsg;
         rtspVersionString = firstWordPLSS;
@@ -441,7 +439,7 @@ RTSPIncomingMessage::parseFirstFields()
         // extra URI validation
         {
             if (1 == originalURI.length())
-            { // it better be a star
+            { // Is it a star
                 if (CHAR_STAR != originalURI.c_str()[0])
                 {
                     amMalformed = RTSPErrorSyntax;
@@ -905,7 +903,7 @@ RTSPIncomingMessage::parseTransport(uint16 fieldIdx)
 void
 RTSPIncomingMessage::parseOneTransportEntry(char*& trans, char *final_end)
 {
-    char *startPtr, *endPtr, *nxtPtr;
+    const char *startPtr, *endPtr, *nxtPtr;
     char *transSepPtr;
 
 
@@ -946,19 +944,19 @@ RTSPIncomingMessage::parseOneTransportEntry(char*& trans, char *final_end)
 
 
     // see if there is a tranport list separator
-    transSepPtr = oscl_strstr(startPtr, ",");
+    transSepPtr = OSCL_CONST_CAST(char*, oscl_strstr(startPtr, ","));
     if (transSepPtr)
     {
 
-        char *quotePtr = oscl_strstr(startPtr, "\"");
+        const char *quotePtr = oscl_strstr(startPtr, "\"");
         if (quotePtr && quotePtr < transSepPtr)
         {
             // this may be a comma in the mode list -- so find the end of the mode list
-            char *quote_end = oscl_strstr(quotePtr + 1, "\"");
+            const char *quote_end = oscl_strstr(quotePtr + 1, "\"");
             if (quote_end)
             {
                 // look for another comma
-                if (NULL != (transSepPtr = oscl_strstr(quote_end, ",")))
+                if (NULL != (transSepPtr = OSCL_CONST_CAST(char*, oscl_strstr(quote_end, ","))))
                 {
                     // temporarily write a terminator to separate the transport specs.
                     *transSepPtr = '\0';
@@ -1008,7 +1006,7 @@ RTSPIncomingMessage::parseOneTransportEntry(char*& trans, char *final_end)
 
         // look for either the '/' or ';' separators
         endPtr = oscl_strstr(startPtr, "/");
-        char *endPtr2 = oscl_strstr(startPtr, ";");
+        const char *endPtr2 = oscl_strstr(startPtr, ";");
 
         if (!endPtr)
         {
@@ -1078,7 +1076,7 @@ RTSPIncomingMessage::parseOneTransportEntry(char*& trans, char *final_end)
 
         char *sepPtr;
         // find the next separator
-        if (NULL == (endPtr = sepPtr = oscl_strstr(startPtr, ";")))
+        if (NULL == (sepPtr = (char*)(endPtr = oscl_strstr(startPtr, ";"))))
         {
             endPtr = final_end;
         }
@@ -1107,7 +1105,7 @@ RTSPIncomingMessage::parseOneTransportEntry(char*& trans, char *final_end)
                                destination_str_len))
         {
             nxtPtr = startPtr + destination_str_len;
-            char *curEndPtr = oscl_strstr(nxtPtr, "=");
+            char *curEndPtr = OSCL_CONST_CAST(char*, oscl_strstr(nxtPtr, "="));
             if (curEndPtr)
             {
                 nxtPtr = curEndPtr + 1;
@@ -1116,7 +1114,7 @@ RTSPIncomingMessage::parseOneTransportEntry(char*& trans, char *final_end)
                 for (; nxtPtr < endPtr && ((*nxtPtr >= 0x09 && *nxtPtr <= 0x0D) || *nxtPtr == 0x20); ++nxtPtr);
 
                 // now find the end
-                for (curEndPtr = nxtPtr; curEndPtr < endPtr && !((*curEndPtr >= 0x09 && *curEndPtr <= 0x0D) || *curEndPtr == 0x20);
+                for (curEndPtr = (char*)nxtPtr; curEndPtr < endPtr && !((*curEndPtr >= 0x09 && *curEndPtr <= 0x0D) || *curEndPtr == 0x20);
                         ++curEndPtr);
 
                 if (curEndPtr - nxtPtr > 0)
@@ -1142,7 +1140,7 @@ RTSPIncomingMessage::parseOneTransportEntry(char*& trans, char *final_end)
         {
             int tmp;
             nxtPtr = startPtr + interleaved_str_len;
-            char *curEndPtr = oscl_strstr(nxtPtr, "-");
+            char *curEndPtr = OSCL_CONST_CAST(char*, oscl_strstr(nxtPtr, "-"));
             if (curEndPtr) *curEndPtr = '\0';
             uint32 atoi_tmp;
             PV_atoi(nxtPtr, 'd', atoi_tmp);
@@ -1196,7 +1194,7 @@ RTSPIncomingMessage::parseOneTransportEntry(char*& trans, char *final_end)
             int tmp;
             uint32 atoi_tmp;
             nxtPtr = startPtr + client_port_str_len;
-            char *curEndPtr = oscl_strstr(nxtPtr, "-");
+            char *curEndPtr = OSCL_CONST_CAST(char*, oscl_strstr(nxtPtr, "-"));
             if (curEndPtr) *curEndPtr = '\0';
             PV_atoi(nxtPtr, 'd', atoi_tmp);
             tmp = atoi_tmp;
@@ -1249,7 +1247,7 @@ RTSPIncomingMessage::parseOneTransportEntry(char*& trans, char *final_end)
             int tmp;
             uint32 atoi_tmp;
             nxtPtr = startPtr + server_port_str_len;
-            char *curEndPtr = oscl_strstr(nxtPtr, "-");
+            char *curEndPtr = OSCL_CONST_CAST(char*, oscl_strstr(nxtPtr, "-"));
             if (curEndPtr) *curEndPtr = '\0';
             PV_atoi(nxtPtr, 'd', atoi_tmp);
             tmp = atoi_tmp;
@@ -1322,11 +1320,11 @@ RTSPIncomingMessage::parseOneTransportEntry(char*& trans, char *final_end)
             nxtPtr = startPtr + mode_str_len;
             rtspTrans->modeIsSet = true;
             char *quotePtr = NULL;
-            char *wordEndPtr;
+            const char *wordEndPtr;
             if (*nxtPtr == '\"')
             {
                 ++nxtPtr;
-                if (NULL != (quotePtr = oscl_strstr(nxtPtr, "\"")))
+                if (NULL != (quotePtr = OSCL_CONST_CAST(char*, oscl_strstr(nxtPtr, "\""))))
                 {
                     *quotePtr = '\0';
                 }
@@ -1360,7 +1358,7 @@ RTSPIncomingMessage::parseOneTransportEntry(char*& trans, char *final_end)
             int tmp;
             uint32 atoi_tmp;
             nxtPtr = startPtr + port_str_len;
-            char *curEndPtr = oscl_strstr(nxtPtr, "-");
+            char *curEndPtr = OSCL_CONST_CAST(char*, oscl_strstr(nxtPtr, "-"));
             if (curEndPtr) *curEndPtr = '\0';
             PV_atoi(nxtPtr, 'd', atoi_tmp);
             tmp = atoi_tmp;
@@ -1614,13 +1612,8 @@ RTSPIncomingMessage::parseOneRTPInfoEntry(char * & cPtr, char * finishPtr)
                     && ('e' == (subFieldName[6] | OSCL_ASCII_CASE_MAGIC_BIT))
                )
             {
-                /*
-                 *Change from using atoi to PV_atoi. This is needed to
-                 *handle really large rtptimes from the server.
-                 */
                 uint32 rtptime = 0;
                 PV_atoi((separator + 1), 'd', rtptime);
-//          rtpInfo[ numOfRtpInfoEntries-1 ].rtptime = atoi( separator+1 );
                 rtpInfo[ numOfRtpInfoEntries-1 ].rtptime = rtptime;
                 rtpInfo[ numOfRtpInfoEntries-1 ].rtptimeIsSet = true;
             }

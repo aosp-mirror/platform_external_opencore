@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -197,8 +197,16 @@ int32 ColorConvert12::GetOutputBufferSize(void)
 {
     OSCL_ASSERT(_mInitialized == true);
 
-    // for zoom, need extra line of RGB buffer for processing otherwise memory will corrupt.
-    return	_mState ? ((_mDst_height + 1)*_mDst_pitch*2) : (_mSrc_width*_mSrc_height*2);
+    if (_mIsZoom)
+    {
+        // for zoom, need extra line of RGB buffer for processing otherwise memory will corrupt.
+        return	_mState ? ((_mDst_height + 1)*_mDst_pitch*2) : (_mSrc_width*_mSrc_height*2);
+    }
+    else
+    {
+        return	_mState ? ((_mDst_height)*_mDst_pitch*2) : (_mSrc_width*_mSrc_height*2);
+    }
+
 }
 
 

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,10 +43,6 @@
 #include "oscl_defalloc.h"
 #endif
 
-#ifndef OSCL_EXECPANIC_H_INCLUDED
-#include "oscl_execpanic.h"
-#endif
-
 #ifndef OSCL_ERROR_CODES_H_INCLUDED
 #include "oscl_error_codes.h"
 #endif
@@ -74,7 +70,7 @@ class OsclErrorTrap
         OSCL_IMPORT_REF static int32 Cleanup();
         /**
          * Get the ErrorTrapImp for the current thread.
-         * Panics on error.
+         * Leaves on error.
          */
         OSCL_IMPORT_REF static OsclErrorTrapImp* GetErrorTrapImp();
 };
@@ -90,9 +86,9 @@ class OsclError
         //Cleanup stack operations.
         */
 
-        /** Push an OsclHeapBase item onto the cleanup stack.
+        /** Push an _OsclHeapBase item onto the cleanup stack.
         */
-        OSCL_IMPORT_REF static void PushL(OsclHeapBase * aPtr);
+        OSCL_IMPORT_REF static void PushL(_OsclHeapBase * aPtr);
 
         /** Push an OsclAny item onto the cleanup stack.
         */
@@ -137,16 +133,6 @@ class OsclError
         */
         OSCL_IMPORT_REF static void LeaveIfError(int32 aReason);
 
-        /** Generate a panic, using the given category and reason.
-        ** A panic is a fatal error, and differs from a leave in
-        ** that there is no cleanup stack processing, and the panic
-        ** can only be caught at the application level.  On Symbian,
-        ** the panic will be caught by the UI framework.  On non-Symbian,
-        ** the application can use the OSCL_PANIC_TRAP macro to catch the
-        ** panic.
-        */
-        OSCL_IMPORT_REF static void Panic(const char aCategory[], int32 aReason);
-
 };
 
 /** Cleanup Stack user macros
@@ -170,6 +156,8 @@ static const int32 _OsclBaseToErrorMap[] =
     ,/*EPVErrorBaseOutOfMemory=3*/OsclErrNoMemory
     ,/*EPVErrorBaseSystemCallFailed=4*/OsclErrSystemCallFailed
     ,/*EPVErrorBaseTooManyThreads=5*/0
+    ,/*EPVErrorBaseNotSupported=6*/OsclErrNotSupported
+    ,/*EPVErrorBaseNotReady=7*/OsclErrNotReady
 };
 
 #include "oscl_singleton.h"
@@ -182,7 +170,7 @@ class OsclSingletonRegistryEx
         ** Get an entry
         ** @param ID: identifier
         ** @returns: the entry value
-        ** @exception: panics on error.
+        ** @exception: leaves on error.
         */
         static OsclAny* getInstance(uint32 ID)
         {
@@ -200,7 +188,7 @@ class OsclSingletonRegistryEx
         ** Set an entry
         ** @param ID: identifier
         ** @returns: the entry value
-        ** @exception: panics on error.
+        ** @exception: leaves on error.
         */
         static void registerInstance(OsclAny* ptr, uint32 ID)
         {
@@ -223,7 +211,7 @@ class OsclSingletonRegistryEx
         * on return.
         * @param ID the singleton ID
         * @returns the singleton value.
-        ** @exception: panics on error.
+        ** @exception: leaves on error.
         */
         static OsclAny* lockAndGetInstance(uint32 ID)
         {
@@ -241,7 +229,7 @@ class OsclSingletonRegistryEx
         * Set the value of the singleton.  Assume the singleton table is locked on entry.
         * @param ptr the singleton value
         * @param ID the singleton ID
-        ** @exception: panics on error.
+        ** @exception: leaves on error.
         */
         static void registerInstanceAndUnlock(OsclAny* ptr, uint32 ID)
         {
@@ -321,7 +309,7 @@ class OsclTLSRegistryEx
         ** Get an entry
         ** @param ID: identifier
         ** @returns: the entry value
-        ** @exception: panics on error.
+        ** @exception: leaves on error.
         */
         static OsclAny* getInstance(uint32 ID)
         {
@@ -338,7 +326,7 @@ class OsclTLSRegistryEx
         ** Set an entry
         ** @param ID: identifier
         ** @returns: the entry value
-        ** @exception: panics on error.
+        ** @exception: leaves on error.
         */
         static void registerInstance(OsclAny* ptr, uint32 ID)
         {

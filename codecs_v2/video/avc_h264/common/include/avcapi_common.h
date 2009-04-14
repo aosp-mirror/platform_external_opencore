@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
  * -------------------------------------------------------------------
  */
 /**
-This file contains common type defitionitions and enumerations used by AVC encoder
+This file contains common type definitions and enumerations used by AVC encoder
 and decoder libraries which are exposed to the users.
 @publishedAll
 */
@@ -61,6 +61,7 @@ parameter set rbsp. See Annex A.
 */
 typedef enum
 {
+    AVC_LEVEL_AUTO = 0,
     AVC_LEVEL1_B = 9,
     AVC_LEVEL1 = 10,
     AVC_LEVEL1_1 = 11,

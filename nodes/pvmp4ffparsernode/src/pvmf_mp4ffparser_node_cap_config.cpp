@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -203,12 +203,12 @@ PVMFStatus PVMFMP4FFParserNode::getParametersSync(
             oscl_strset(memblock, 0, MP4ParserNodeConfig_Num_Net_Keys*MP4CONFIG_KEYSTRING_SIZE*sizeof(char));
             // Assign the key string buffer to each KVP
             int32 j;
-            for (j = 0; j < MP4ParserNodeConfig_Num_Net_Keys; ++j)
+            for (j = 0; j < (int32)MP4ParserNodeConfig_Num_Net_Keys; ++j)
             {
                 aParameters[j].key = memblock + (j * MP4CONFIG_KEYSTRING_SIZE);
             }
             // Copy the requested info
-            for (j = 0; j < MP4ParserNodeConfig_Num_Net_Keys; ++j)
+            for (j = 0; j < (int32)MP4ParserNodeConfig_Num_Net_Keys; ++j)
             {
                 oscl_strncat(aParameters[j].key, _STRLIT_CHAR("x-pvmf/net/"), 11);
                 oscl_strncat(aParameters[j].key, MP4ParserNodeConfig_Net_Keys[j].iString, oscl_strlen(MP4ParserNodeConfig_Net_Keys[j].iString));
@@ -267,8 +267,8 @@ PVMFStatus PVMFMP4FFParserNode::getParametersSync(
             {
                 reqattr = PVMI_KVPATTR_CUR;
             }
-            int i;
-            for (i = 0; i < MP4ParserNodeConfig_Num_Net_Keys; i++)
+            int32 i;
+            for (i = 0; i < (int32)MP4ParserNodeConfig_Num_Net_Keys; i++)
             {
                 if (pv_mime_strcmp(compstr, (char*)(MP4ParserNodeConfig_Net_Keys[i].iString)) >= 0)
                 {
@@ -276,7 +276,7 @@ PVMFStatus PVMFMP4FFParserNode::getParametersSync(
                 }
             }
 
-            if (i == MP4ParserNodeConfig_Num_Net_Keys)
+            if (i == (int32)MP4ParserNodeConfig_Num_Net_Keys)
             {
                 // no match found
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
@@ -465,7 +465,7 @@ void PVMFMP4FFParserNode::setParametersSync(PvmiMIOSession aSession, PvmiKvp* aP
 
 
     // Go through each parameter
-    for (int paramind = 0; paramind < num_elements; ++paramind)
+    for (int32 paramind = 0; paramind < num_elements; ++paramind)
     {
         // Count the number of components and parameters in the key
         int compcount = pv_mime_string_compcnt(aParameters[paramind].key);
@@ -484,7 +484,6 @@ void PVMFMP4FFParserNode::setParametersSync(PvmiMIOSession aSession, PvmiKvp* aP
                 uint i;
                 for (i = 0; i < MP4ParserNodeConfig_Num_FileIO_Keys; i++)
                 {
-                    char *x = (char*)MP4ParserNodeConfig_FileIO_Keys[i].iString;
                     if (pv_mime_strcmp(compstr, (char*)(MP4ParserNodeConfig_FileIO_Keys[i].iString)) >= 0)
                     {
                         break;
@@ -527,19 +526,18 @@ void PVMFMP4FFParserNode::setParametersSync(PvmiMIOSession aSession, PvmiKvp* aP
                 if (pv_mime_strcmp(compstr, _STRLIT_CHAR("net")) >= 0)
                 {
                     iBaseKey = NET;
-                    int i;
+                    int32 i;
                     //Extract the third component from the key string
                     pv_mime_string_extract_type(2, aParameters[paramind].key, compstr);
-                    for (i = 0; i < MP4ParserNodeConfig_Num_Net_Keys; i++)
+                    for (i = 0; i < (int32)MP4ParserNodeConfig_Num_Net_Keys; i++)
                     {
-                        char *x = (char*)MP4ParserNodeConfig_Net_Keys[i].iString;
                         if (pv_mime_strcmp(compstr, (char*)(MP4ParserNodeConfig_Net_Keys[i].iString)) >= 0)
                         {
                             break;
                         }
                     }
 
-                    if (MP4ParserNodeConfig_Num_Net_Keys == i)
+                    if ((int32)MP4ParserNodeConfig_Num_Net_Keys == i)
                     {
                         // invalid third component
                         aRet_kvp = &aParameters[paramind];
@@ -556,6 +554,32 @@ void PVMFMP4FFParserNode::setParametersSync(PvmiMIOSession aSession, PvmiKvp* aP
                                                       "parameter %d failed", paramind));
                         return;
                     }
+                }
+                else if (pv_mime_strcmp(compstr, _STRLIT_CHAR("parser/ff_noaudio")) >= 0)
+                {
+                    // Make sure its a bool value
+                    PvmiKvpValueType keyvaltype = GetValTypeFromKeyString(aParameters[paramind].key);
+                    if (PVMI_KVPVALTYPE_BOOL != keyvaltype)
+                    {
+                        aRet_kvp = &aParameters[paramind];
+                        PVMF_MP4FFPARSERNODE_LOGINFO((0, "PVMFMP4FFParserNode::setParametersSync Setting "
+                                                      "ff_noaudio valtype error"));
+                        return;
+                    }
+                    iParseAudioDuringFF = aParameters[paramind].value.bool_value;
+                }
+                else if (pv_mime_strcmp(compstr, _STRLIT_CHAR("parser/rew_noaudio")) >= 0)
+                {
+                    // Make sure its a bool value
+                    PvmiKvpValueType keyvaltype = GetValTypeFromKeyString(aParameters[paramind].key);
+                    if (PVMI_KVPVALTYPE_BOOL != keyvaltype)
+                    {
+                        aRet_kvp = &aParameters[paramind];
+                        PVMF_MP4FFPARSERNODE_LOGINFO((0, "PVMFMP4FFParserNode::setParametersSync Setting "
+                                                      "ff_noaudio valtype error"));
+                        return;
+                    }
+                    iParseAudioDuringREW = aParameters[paramind].value.bool_value;
                 }
                 else
                 {
@@ -634,8 +658,8 @@ PVMFStatus PVMFMP4FFParserNode::verifyParametersSync(PvmiMIOSession aSession,
         {
             iBaseKey = FILE_IO;
             pv_mime_string_extract_type(1, aParameters[paramind].key, compstr);
-            int i;
-            for (i = 0; i < MP4ParserNodeConfig_Num_FileIO_Keys; i++)
+            int32 i;
+            for (i = 0; i < (int32)MP4ParserNodeConfig_Num_FileIO_Keys; i++)
             {
                 if (pv_mime_strcmp(compstr, (char*)(MP4ParserNodeConfig_FileIO_Keys[i].iString)) >= 0)
                 {
@@ -643,7 +667,7 @@ PVMFStatus PVMFMP4FFParserNode::verifyParametersSync(PvmiMIOSession aSession,
                 }
             }
 
-            if (MP4ParserNodeConfig_Num_FileIO_Keys == i)
+            if ((int32)MP4ParserNodeConfig_Num_FileIO_Keys == i)
             {
                 return PVMFErrArgument;
             }
@@ -663,9 +687,9 @@ PVMFStatus PVMFMP4FFParserNode::verifyParametersSync(PvmiMIOSession aSession,
             if (pv_mime_strcmp(compstr, _STRLIT_CHAR("net")) >= 0)
             {
                 iBaseKey = NET;
-                int i;
+                int32 i;
                 pv_mime_string_extract_type(2, aParameters[paramind].key, compstr);
-                for (i = 0; i < MP4ParserNodeConfig_Num_Net_Keys; i++)
+                for (i = 0; i < (int32)MP4ParserNodeConfig_Num_Net_Keys; i++)
                 {
                     if (pv_mime_strcmp(compstr, (char*)(MP4ParserNodeConfig_Net_Keys[i].iString)) >= 0)
                     {
@@ -673,7 +697,7 @@ PVMFStatus PVMFMP4FFParserNode::verifyParametersSync(PvmiMIOSession aSession,
                     }
                 }
 
-                if (MP4ParserNodeConfig_Num_Net_Keys == i)
+                if ((int32)MP4ParserNodeConfig_Num_Net_Keys == i)
                 {
                     return PVMFErrArgument;
                 }
@@ -1118,7 +1142,7 @@ PVMFStatus PVMFMP4FFParserNode::VerifyAndSetConfigParameter(int index, PvmiKvp& 
             break;
 
             default:
-                OSCL_ASSERT(0);
+                return PVMFErrNotSupported;
         }
     }
 

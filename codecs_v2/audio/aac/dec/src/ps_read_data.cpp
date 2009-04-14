@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,15 @@
  * -------------------------------------------------------------------
  */
 /*
-------------------------------------------------------------------------------
-
-
 
  Filename: ps_read_data.c
 
-     Date: 01/10/2005
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
 
 
+ Who:                                   Date: MM/DD/YYYY
  Description:
 
 ------------------------------------------------------------------------------
@@ -314,22 +311,22 @@ Int32 ps_read_data(STRUCT_PS_DEC *ps_dec,
             {
                 if (ps_dec->bFineIidQ)
                 {
-                    CurrentTable = (SbrHuffman) & aBookPsIidFineFreqDecode;
+                    CurrentTable = aBookPsIidFineFreqDecode;
                 }
                 else
                 {
-                    CurrentTable = (SbrHuffman) & aBookPsIidFreqDecode;
+                    CurrentTable = aBookPsIidFreqDecode;
                 }
             }
             else
             {
                 if (ps_dec->bFineIidQ)
                 {
-                    CurrentTable = (SbrHuffman) & aBookPsIidFineTimeDecode;
+                    CurrentTable = aBookPsIidFineTimeDecode;
                 }
                 else
                 {
-                    CurrentTable = (SbrHuffman) & aBookPsIidTimeDecode;
+                    CurrentTable = aBookPsIidTimeDecode;
                 }
             }
 
@@ -349,11 +346,11 @@ Int32 ps_read_data(STRUCT_PS_DEC *ps_dec,
             dtFlag = buf_get_1bit(hBitBuf);
             if (!dtFlag)
             {
-                CurrentTable = (SbrHuffman) & aBookPsIccFreqDecode;
+                CurrentTable = aBookPsIccFreqDecode;
             }
             else
             {
-                CurrentTable = (SbrHuffman) & aBookPsIccTimeDecode;
+                CurrentTable = aBookPsIccTimeDecode;
             }
             for (gr = 0; gr < aNoIccBins[ps_dec->freqResIcc]; gr++)
             {

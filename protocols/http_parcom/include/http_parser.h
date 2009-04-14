@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -104,7 +104,7 @@ class HTTPParser
         OSCL_IMPORT_REF uint32 getTotalFieldsInHeader();
         // get a list of all field keys inside the header
         OSCL_IMPORT_REF uint32 getFieldKeyListInHeader(StrPtrLen *&aFieldKeyList);
-        // get the field value with the given field key, which can be retrived from getFieldKeyListInHeader()
+        // get the field value with the given field key, which can be retrieved from getFieldKeyListInHeader()
         // There could be a case where one field key correponds to multiple field values, so input argument "index" is for
         // getting which value for the given field key
         OSCL_IMPORT_REF bool getField(const StrCSumPtrLen &aNewFieldName, StrPtrLen &aNewFieldValue, const uint32 index = 0);

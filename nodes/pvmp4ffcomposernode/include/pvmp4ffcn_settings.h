@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ class PVMp4FFComposerNodeSettings
     public:
         PVMp4FFComposerNodeSettings()
         {
-            iMediaFormat = PVMF_FORMAT_UNKNOWN;
+            iMediaFormat = PVMF_MIME_FORMAT_UNKNOWN;
             iLoopInputFile = true;
             iSamplingFrequency = 8000;
             iNumChannels = 1;
@@ -49,6 +49,7 @@ class PVMp4FFComposerNodeSettings
             iFrameRate = 15;
             iFirstFrameTimestamp = 0;
             iBitrate = 0;
+            iFrameInterval = 0;
         }
 
         // General settings
@@ -70,6 +71,7 @@ class PVMp4FFComposerNodeSettings
         OsclFloat iFrameRate;
         uint32 iFirstFrameTimestamp;
         uint32 iBitrate;
+        uint32 iFrameInterval;
 };
 
 #endif

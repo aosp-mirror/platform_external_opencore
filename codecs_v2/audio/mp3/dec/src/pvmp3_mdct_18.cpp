@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ Returns
 ------------------------------------------------------------------------------
 */
 
-
+#if ( !defined(PV_ARM_GCC_V5) && !defined(PV_ARM_GCC_V4) && !defined(PV_ARM_V5) && !defined(PV_ARM_V4) )
 /*----------------------------------------------------------------------------
 ; INCLUDES
 ----------------------------------------------------------------------------*/
@@ -286,4 +286,4 @@ void pvmp3_mdct_18(int32 vec[], int32 *history, const int32 *window)
     history[11] = fxp_mul32_Q32(tmp,  window[29]);
 }
 
-
+#endif // If not assembly

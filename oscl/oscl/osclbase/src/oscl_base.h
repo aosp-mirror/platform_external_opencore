@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,16 @@
 #include "oscl_types.h"
 #include "osclconfig_check.h"
 
+#ifdef USE_CML2_CONFIG
+#include "pv_config.h"
+#endif
+
+//singleton support derives from global var support.
+#define OSCL_HAS_SINGLETON_SUPPORT 1
+
 #ifdef __cplusplus
+
+class OsclLockBase;
 
 class OsclBase
 {
@@ -49,6 +58,13 @@ class OsclBase
          * Initializes OsclBase functionality.
          * OsclBase must be initialized before any OsclBase
          * functionality can be used.
+         *
+         * Note: The first call to OsclBase::Init will initialize
+         *  the thread lock that is used to avoid thread contention
+         *  for process scope singleton access.  The last call to
+         *  OsclBase::Cleanup will cleanup the thread lock.
+         *  Case should be taken to avoid possible thread contention
+         *  on the first Init and the last Cleanup call.
          *
          * @return 0 on success
          */
@@ -84,6 +100,7 @@ enum TPVBaseErrorEnum
  * OsclTLSRegistry and OsclSingleton.
  * Higher-level code should use OsclMutex instead.
  */
+#if (OSCL_HAS_BASIC_LOCK)
 class _OsclBasicLock : public OsclLockBase
 {
     public:
@@ -120,6 +137,9 @@ class _OsclBasicLock : public OsclLockBase
         TOsclBasicLockObject    ObjLock;
 
 };
+#else
+typedef OsclNullLock _OsclBasicLock;
+#endif
 
 #else
 

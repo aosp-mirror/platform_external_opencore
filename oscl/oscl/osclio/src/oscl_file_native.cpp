@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -148,33 +148,78 @@ int32 OsclNativeFile::Open(const oscl_wchar *filename, uint32 mode
     iMode = mode;
     iOpenFileHandle = false;
 
-    OSCL_UNUSED_ARG(fileserv);
-    OSCL_UNUSED_ARG(params);
+    {
+        OSCL_UNUSED_ARG(fileserv);
+        OSCL_UNUSED_ARG(params);
 
-    char openmode[4];
-    OpenModeToString(mode, openmode);
+        if (!filename || *filename == '\0') return -1; // Null string not supported in fopen, error out
+
+        char openmode[4];
+        uint32 index = 0;
+
+        if (mode & Oscl_File::MODE_READWRITE)
+        {
+            if (mode & Oscl_File::MODE_APPEND)
+            {
+                openmode[index++] = 'a';
+                openmode[index++] = '+';
+            }
+            else
+            {
+                openmode[index++] = 'w';
+                openmode[index++] = '+';
+            }
+        }
+        else if (mode & Oscl_File::MODE_APPEND)
+        {
+            openmode[index++] = 'a';
+            openmode[index++] = '+';
+        }
+        else if (mode & Oscl_File::MODE_READ)
+        {
+            openmode[index++] = 'r';
+        }
+        else if (mode & Oscl_File::MODE_READ_PLUS)
+        {
+            openmode[index++] = 'r';
+            openmode[index++] = '+';
+        }
+
+
+
+        if (mode & Oscl_File::MODE_TEXT)
+        {
+            openmode[index++] = 't';
+        }
+        else
+        {
+            openmode[index++] = 'b';
+        }
+
+        openmode[index++] = '\0';
 
 #ifdef _UNICODE
-    oscl_wchar convopenmode[4];
-    if (0 == oscl_UTF8ToUnicode(openmode, oscl_strlen(openmode), convopenmode, 4))
-    {
-        return -1;
-    }
+        oscl_wchar convopenmode[4];
+        if (0 == oscl_UTF8ToUnicode(openmode, oscl_strlen(openmode), convopenmode, 4))
+        {
+            return -1;
+        }
 
-    if ((iFile = _wfopen(filename, convopenmode)) == NULL)
-    {
-        return -1;
-    }
+        if ((iFile = _wfopen(filename, convopenmode)) == NULL)
+        {
+            return -1;
+        }
 #else
-    //Convert to UTF8
-    char convfilename[OSCL_IO_FILENAME_MAXLEN];
-    if (0 == oscl_UnicodeToUTF8(filename, oscl_strlen(filename), convfilename, OSCL_IO_FILENAME_MAXLEN))
-    {
-        return -1;
+        //Convert to UTF8
+        char convfilename[OSCL_IO_FILENAME_MAXLEN];
+        if (0 == oscl_UnicodeToUTF8(filename, oscl_strlen(filename), convfilename, OSCL_IO_FILENAME_MAXLEN))
+        {
+            return -1;
+        }
+	return OpenFileOrSharedFd(convfilename, openmode);
+#endif
     }
 
-    return OpenFileOrSharedFd(convfilename, openmode);
-#endif
 }
 
 int32 OsclNativeFile::Open(const char *filename, uint32 mode
@@ -187,22 +232,65 @@ int32 OsclNativeFile::Open(const char *filename, uint32 mode
     OSCL_UNUSED_ARG(fileserv);
     OSCL_UNUSED_ARG(params);
 
+    if (!filename || *filename == '\0') return -1; // Null string not supported in fopen, error out
+
     char openmode[4];
-    OpenModeToString(mode, openmode);
+    uint32 index = 0;
+
+    if (mode & Oscl_File::MODE_READWRITE)
+    {
+	if (mode & Oscl_File::MODE_APPEND)
+	{
+	    openmode[index++] = 'a';
+	    openmode[index++] = '+';
+	}
+	else
+	{
+	    openmode[index++] = 'w';
+	    openmode[index++] = '+';
+
+	}
+    }
+    else if (mode & Oscl_File::MODE_APPEND)
+    {
+	openmode[index++] = 'a';
+	openmode[index++] = '+';
+    }
+    else if (mode & Oscl_File::MODE_READ)
+    {
+	openmode[index++] = 'r';
+    }
+    else if (mode & Oscl_File::MODE_READ_PLUS)
+    {
+	openmode[index++] = 'r';
+	openmode[index++] = '+';
+    }
+
+    if (mode & Oscl_File::MODE_TEXT)
+    {
+	openmode[index++] = 't';
+    }
+    else
+    {
+	openmode[index++] = 'b';
+    }
+
+    openmode[index++] = '\0';
 
     return OpenFileOrSharedFd(filename, openmode);
+
 }
 
-int32 OsclNativeFile::Size()
+TOsclFileOffset OsclNativeFile::Size()
 {
     //this is the default for platforms with no
     //native size query.
     //Just do seek to end, tell, then seek back.
-    int32 curPos = Tell();
+    TOsclFileOffset curPos = Tell();
     if (curPos >= 0
             && Seek(0, Oscl_File::SEEKEND) == 0)
     {
-        int32 endPos = Tell();
+        TOsclFileOffset endPos = Tell();
         if (Seek(curPos, Oscl_File::SEEKSET) == 0)
         {
             return endPos;
@@ -220,7 +308,9 @@ int32 OsclNativeFile::Close()
     int32 closeret = 0;
 
     {
-        if (iFile != NULL)
+        if (iOpenFileHandle)
+            closeret = Flush();
+        else if (iFile != NULL)
         {
             closeret = fclose(iFile);
             iFile = NULL;
@@ -242,6 +332,7 @@ int32 OsclNativeFile::Close()
 
     return closeret;
 }
+
 
 uint32 OsclNativeFile::Read(OsclAny *buffer, uint32 size, uint32 numelements)
 {
@@ -288,6 +379,10 @@ int32 OsclNativeFile::ReadAsync(OsclAny*buffer, uint32 size, uint32 numelements,
     return -1;//not supported
 }
 
+void OsclNativeFile::ReadAsyncCancel()
+{
+}
+
 uint32 OsclNativeFile::GetReadAsyncNumElements()
 {
     return 0;//not supported
@@ -308,7 +403,7 @@ uint32 OsclNativeFile::Write(const OsclAny *buffer, uint32 size, uint32 numeleme
     return 0;
 }
 
-int32 OsclNativeFile::Seek(int32 offset, Oscl_File::seek_type origin)
+int32 OsclNativeFile::Seek(TOsclFileOffset offset, Oscl_File::seek_type origin)
 {
 
     {
@@ -331,38 +426,49 @@ int32 OsclNativeFile::Seek(int32 offset, Oscl_File::seek_type origin)
         {
             int32 seekmode = SEEK_CUR;
 
-            if (origin == Oscl_File::SEEKCUR) seekmode = SEEK_CUR;
-            else if (origin == Oscl_File::SEEKSET) seekmode = SEEK_SET;
-            else if (origin == Oscl_File::SEEKEND) seekmode = SEEK_END;
-
+            if (origin == Oscl_File::SEEKCUR)
+                seekmode = SEEK_CUR;
+            else if (origin == Oscl_File::SEEKSET)
+                seekmode = SEEK_SET;
+            else if (origin == Oscl_File::SEEKEND)
+                seekmode = SEEK_END;
+#if OSCL_HAS_LARGE_FILE_SUPPORT
+            return fseeko(iFile, offset, seekmode);
+#else
             return fseek(iFile, offset, seekmode);
+#endif
         }
     }
     return -1;
 }
 
-int32 OsclNativeFile::SetSize(uint32 size)
-{
-    OSCL_UNUSED_ARG(size);
-    return -1;
-}
 
-
-int32 OsclNativeFile::Tell()
+TOsclFileOffset OsclNativeFile::Tell()
 {
+    TOsclFileOffset result = -1;
 #ifdef ENABLE_SHAREDFD_PLAYBACK
     if (iSharedFd >= 0)
         return iSharedFilePosition;
 #endif
     if (iFile)
-        return ftell(iFile);
-    return -1;
+    {
+#if OSCL_HAS_LARGE_FILE_SUPPORT
+        result = ftello(iFile);
+#else
+        result = ftell(iFile);
+#endif
+    }
+    return result;
 }
 
 
 
 int32 OsclNativeFile::Flush()
 {
+#ifdef ENABLE_SHAREDFD_PLAYBACK
+    if (iSharedFd >= 0)
+        return iSharedFilePosition >= iSharedFileSize;
+#endif
     if (iFile)
         return fflush(iFile);
     return EOF;
@@ -372,7 +478,6 @@ int32 OsclNativeFile::Flush()
 
 int32 OsclNativeFile::EndOfFile()
 {
-
 #ifdef ENABLE_SHAREDFD_PLAYBACK
     if (iSharedFd >= 0)
         return iSharedFilePosition >= iSharedFileSize;
@@ -385,6 +490,7 @@ int32 OsclNativeFile::EndOfFile()
 
 int32 OsclNativeFile::GetError()
 {
+//FIXME ENABLE_SHAREDFD_PLAYBACK 
     if (iFile)
         return ferror(iFile);
     return 0;

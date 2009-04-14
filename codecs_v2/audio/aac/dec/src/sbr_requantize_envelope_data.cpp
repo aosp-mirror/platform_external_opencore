@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,14 @@
  * -------------------------------------------------------------------
  */
 /*
-------------------------------------------------------------------------------
-
-
 
  Filename: sbr_requantize_envelope_data.c
-
-     Date: 07/21/2003
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
 
 
+ Who:                                   Date: MM/DD/YYYY
  Description:
 
 ------------------------------------------------------------------------------
@@ -138,10 +134,10 @@ void sbr_requantize_envelope_data(SBR_FRAME_DATA * hFrameData)
     Int32  nScaleFactors      =  hFrameData->nScaleFactors;
     Int32  nNoiseFactors      =  hFrameData->nNoiseFactors;
     Int32  ampRes             =  hFrameData->ampRes;
-    Int32 *iEnvelope_man      = (Int32 *) & (hFrameData->iEnvelope_man);
-    Int32 *iEnvelope_exp      = (Int32 *) & (hFrameData->iEnvelope_exp);
-    Int32 *sbrNoiseFloorLevel_man = (Int32 *) & (hFrameData->sbrNoiseFloorLevel_man);
-    Int32 *sbrNoiseFloorLevel_exp = (Int32 *) & (hFrameData->sbrNoiseFloorLevel_exp);
+    Int32 *iEnvelope_man      =  hFrameData->iEnvelope_man;
+    Int32 *iEnvelope_exp      =  hFrameData->iEnvelope_exp;
+    Int32 *sbrNoiseFloorLevel_man = hFrameData->sbrNoiseFloorLevel_man;
+    Int32 *sbrNoiseFloorLevel_exp = hFrameData->sbrNoiseFloorLevel_exp;
 
     /*
      *  ampRes could be 0 (resolution step = 1.5 dB) or

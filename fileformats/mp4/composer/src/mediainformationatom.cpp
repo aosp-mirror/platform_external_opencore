@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*********************************************************************************/
 /*
     This PVA_FF_MediaInformationHeaderAtom Class fp the base class of the other
     MediaInformationHeaderAtoms, PVA_FF_VideoMediaHeaderAtom VIDEO_MEDIA_HEADER_ATOM, PVA_FF_SoundMediaHeaderAtom
@@ -38,7 +37,6 @@
 PVA_FF_MediaInformationAtom::PVA_FF_MediaInformationAtom(uint32 mediaType,
         int32 codecType,
         uint32 fileAuthoringFlags,
-        bool o3GPPCompliant,
         uint32 protocol,
         uint8 profile,
         uint8 profileComp,
@@ -50,7 +48,6 @@ PVA_FF_MediaInformationAtom::PVA_FF_MediaInformationAtom(uint32 mediaType,
     PV_MP4_FF_NEW(fp->auditCB, PVA_FF_SampleTableAtom, (mediaType,
                   codecType,
                   fileAuthoringFlags,
-                  o3GPPCompliant,
                   protocol, profile,
                   profileComp, level), _psampleTableAtom);
 
@@ -246,6 +243,16 @@ PVA_FF_MediaInformationAtom::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
 
     return true;
 }
+void
+PVA_FF_MediaInformationAtom::SetMaxSampleSize(uint32 aSize)
+{
+    _psampleTableAtom->SetMaxSampleSize(aSize);
+}
 
+void
+PVA_FF_MediaInformationAtom::writeMaxSampleSize(MP4_AUTHOR_FF_FILE_IO_WRAP *_afp)
+{
+    _psampleTableAtom->writeMaxSampleSize(_afp);
+}
 
 

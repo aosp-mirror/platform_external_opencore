@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -191,6 +191,7 @@ ChunkOffsetAtom::~ChunkOffsetAtom()
 
 bool ChunkOffsetAtom::ParseEntryUnit(uint32 sample_cnt)
 {
+
     if (_parsingMode)
     {
         const uint32 threshold = 512;

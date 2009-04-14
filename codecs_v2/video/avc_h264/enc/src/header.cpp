@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ AVCEnc_Status EncodeSPS(AVCEncObject *encvid, AVCEncBitstream *stream)
 {
     AVCCommonObj *video = encvid->common;
     AVCSeqParamSet *seqParam = video->currSeqParams;
+    AVCVUIParams *vui = &(seqParam->vui_parameters);
     int i;
     AVCEnc_Status status = AVCENC_SUCCESS;
 
@@ -101,11 +102,123 @@ AVCEnc_Status EncodeSPS(AVCEncObject *encvid, AVCEncBitstream *stream)
     if (seqParam->vui_parameters_present_flag)
     {
         /* not supported */
-        return AVCENC_SPS_FAIL;
+        //return AVCENC_SPS_FAIL;
+        EncodeVUI(stream, vui);
     }
 
     return status;
 }
+
+
+void EncodeVUI(AVCEncBitstream* stream, AVCVUIParams* vui)
+{
+    int temp;
+
+    temp = vui->aspect_ratio_info_present_flag;
+    BitstreamWrite1Bit(stream, temp);
+    if (temp)
+    {
+        BitstreamWriteBits(stream, 8, vui->aspect_ratio_idc);
+        if (vui->aspect_ratio_idc == 255)
+        {
+            BitstreamWriteBits(stream, 16, vui->sar_width);
+            BitstreamWriteBits(stream, 16, vui->sar_height);
+        }
+    }
+    temp = vui->overscan_info_present_flag;
+    BitstreamWrite1Bit(stream, temp);
+    if (temp)
+    {
+        BitstreamWrite1Bit(stream, vui->overscan_appropriate_flag);
+    }
+    temp = vui->video_signal_type_present_flag;
+    BitstreamWrite1Bit(stream, temp);
+    if (temp)
+    {
+        BitstreamWriteBits(stream, 3, vui->video_format);
+        BitstreamWrite1Bit(stream, vui->video_full_range_flag);
+        temp = vui->colour_description_present_flag;
+        BitstreamWrite1Bit(stream, temp);
+        if (temp)
+        {
+            BitstreamWriteBits(stream, 8, vui->colour_primaries);
+            BitstreamWriteBits(stream, 8, vui->transfer_characteristics);
+            BitstreamWriteBits(stream, 8, vui->matrix_coefficients);
+        }
+    }
+    temp = vui->chroma_location_info_present_flag;
+    BitstreamWrite1Bit(stream, temp);
+    if (temp)
+    {
+        ue_v(stream, vui->chroma_sample_loc_type_top_field);
+        ue_v(stream, vui->chroma_sample_loc_type_bottom_field);
+    }
+
+    temp = vui->timing_info_present_flag;
+    BitstreamWrite1Bit(stream, temp);
+    if (temp)
+    {
+        BitstreamWriteBits(stream, 32, vui->num_units_in_tick);
+        BitstreamWriteBits(stream, 32, vui->time_scale);
+        BitstreamWrite1Bit(stream, vui->fixed_frame_rate_flag);
+    }
+
+    temp = vui->nal_hrd_parameters_present_flag;
+    BitstreamWrite1Bit(stream, temp);
+    if (temp)
+    {
+        EncodeHRD(stream, &(vui->nal_hrd_parameters));
+    }
+    temp = vui->vcl_hrd_parameters_present_flag;
+    BitstreamWrite1Bit(stream, temp);
+    if (temp)
+    {
+        EncodeHRD(stream, &(vui->vcl_hrd_parameters));
+    }
+    if (vui->nal_hrd_parameters_present_flag || vui->vcl_hrd_parameters_present_flag)
+    {
+        BitstreamWrite1Bit(stream, vui->low_delay_hrd_flag);
+    }
+    BitstreamWrite1Bit(stream, vui->pic_struct_present_flag);
+    temp = vui->bitstream_restriction_flag;
+    BitstreamWrite1Bit(stream, temp);
+    if (temp)
+    {
+        BitstreamWrite1Bit(stream, vui->motion_vectors_over_pic_boundaries_flag);
+        ue_v(stream, vui->max_bytes_per_pic_denom);
+        ue_v(stream, vui->max_bits_per_mb_denom);
+        ue_v(stream, vui->log2_max_mv_length_horizontal);
+        ue_v(stream, vui->log2_max_mv_length_vertical);
+        ue_v(stream, vui->max_dec_frame_reordering);
+        ue_v(stream, vui->max_dec_frame_buffering);
+    }
+
+    return ;
+}
+
+
+void EncodeHRD(AVCEncBitstream* stream, AVCHRDParams* hrd)
+{
+    int i;
+
+    ue_v(stream, hrd->cpb_cnt_minus1);
+    BitstreamWriteBits(stream, 4, hrd->bit_rate_scale);
+    BitstreamWriteBits(stream, 4, hrd->cpb_size_scale);
+    for (i = 0; i <= (int)hrd->cpb_cnt_minus1; i++)
+    {
+        ue_v(stream, hrd->bit_rate_value_minus1[i]);
+        ue_v(stream, hrd->cpb_size_value_minus1[i]);
+        ue_v(stream, hrd->cbr_flag[i]);
+    }
+    BitstreamWriteBits(stream, 5, hrd->initial_cpb_removal_delay_length_minus1);
+    BitstreamWriteBits(stream, 5, hrd->cpb_removal_delay_length_minus1);
+    BitstreamWriteBits(stream, 5, hrd->dpb_output_delay_length_minus1);
+    BitstreamWriteBits(stream, 5, hrd->time_offset_length);
+
+    return ;
+}
+
+
 
 /** see subclause 7.4.2.2 */
 /* no need for checking the valid range , already done in SetEncodeParam().

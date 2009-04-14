@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,15 +17,14 @@
  */
 /*
 
- Pathname: ./include/get_pulse_data.h
-
-     Date: 05/21/2001
+ Pathname: get_pulse_data.h
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
 
  Description: Change structure name.
 
+ Who:                                      Date:
  Description:
 
 ------------------------------------------------------------------------------

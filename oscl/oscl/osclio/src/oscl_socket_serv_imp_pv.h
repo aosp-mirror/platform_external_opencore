@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,11 +34,12 @@
 #include "oscl_scheduler_ao.h"
 #endif
 
+class PVServiStats;
 
 /** PV socket server implementation
 */
 #if (PV_SOCKET_SERVER_IS_THREAD)
-class OsclSocketServI: public OsclHeapBase, public OsclSocketServIBase
+class OsclSocketServI: public HeapBase, public OsclSocketServIBase
 #else
 class OsclSocketServI: public OsclTimerObject, public OsclSocketServIBase
 #endif
@@ -60,6 +61,7 @@ class OsclSocketServI: public OsclTimerObject, public OsclSocketServIBase
         //socket request list.
         OsclSocketServRequestList iSockServRequestList;
 
+#if PV_SOCKET_SERVER_SELECT_LOOPBACK_SOCKET
         //blocking select wakeup feature
         class LoopbackSocket
         {
@@ -71,7 +73,7 @@ class OsclSocketServI: public OsclTimerObject, public OsclSocketServIBase
                 }
                 bool iEnable;
                 void Read();
-                void ProcessSelect(bool, TOsclSocket&);
+                void ProcessSelect(TOsclSocket&);
                 void Init(OsclSocketServI* aContainer);
                 void Cleanup();
                 void Write();
@@ -84,12 +86,15 @@ class OsclSocketServI: public OsclTimerObject, public OsclSocketServIBase
                 OsclSocketServI* iContainer;
         };
         LoopbackSocket iLoopbackSocket;
+#endif
         uint32 iSelectPollIntervalMsec;
 
         void WakeupBlockingSelect()
         {
+#if PV_SOCKET_SERVER_SELECT_LOOPBACK_SOCKET
             if (iLoopbackSocket.iEnable)
                 iLoopbackSocket.Write();
+#endif
         }
 
         int32 StartServImp();
@@ -112,18 +117,23 @@ class OsclSocketServI: public OsclTimerObject, public OsclSocketServIBase
 #else
         //for AO implemenation.
         void Run();
+        void WakeupAO();
+#if PV_SOCKET_SERVER_SELECT
+        int iNhandles;
+        int iNfds;
+#endif
 #endif
 
-
-#ifdef OsclSocketSelect
+#if PV_SOCKET_SERVER_SELECT
         //select flags.
         fd_set iReadset, iWriteset, iExceptset;
-
-        void ProcessSocketRequests(bool &select, int &n);
+        void ProcessSocketRequests(int &, int &n);
+#else
+        void ProcessSocketRequests();
+#endif
 
         friend class OsclSocketServRequestList;
         friend class LoopbackSocket;
-#endif
 
         friend class OsclTCPSocketI;
         friend class OsclUDPSocketI;
@@ -131,6 +141,8 @@ class OsclSocketServI: public OsclTimerObject, public OsclSocketServIBase
         friend class OsclDNSI;
         friend class OsclSocketRequest;
         friend class OsclSocketServ;
+
+        PVServiStats* iServiStats;
 
 };
 

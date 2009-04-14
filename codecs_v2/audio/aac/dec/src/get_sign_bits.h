@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,7 @@
  */
 /*
 
- Pathname: ./include/get_sign_bits.h
-
-     Date: 02/09/2001
+ Pathname: get_sign_bits.h
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
@@ -31,6 +29,7 @@
 
  Description: Fix pathname above
 
+ Who:                                               Date: MM/DD/YYYY
  Description:
 
 ------------------------------------------------------------------------------

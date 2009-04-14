@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,18 +43,16 @@ class PVMFLocalDataSource : public PVInterface
 {
     public:
         //default constructor
-        PVMFLocalDataSource(bool aUseCPMPluginRegistry = false
-                            , OsclFileHandle*aFileHandle = NULL)
-                : iUseCPMPluginRegistry(aUseCPMPluginRegistry)
-                , iFileHandle(aFileHandle)
+        PVMFLocalDataSource(OsclFileHandle*aFileHandle = NULL)
+                : iFileHandle(aFileHandle)
                 , iPreviewMode(false)
                 , iIntent(BITMASK_PVMF_SOURCE_INTENT_PLAY)
                 , iContentAccessFactory(NULL)
-        {}
+        {
+        }
 
         //copy constructor
         PVMFLocalDataSource(const PVMFLocalDataSource& source) : PVInterface(source)
-                , iUseCPMPluginRegistry(source.iUseCPMPluginRegistry)
                 , iFileHandle(source.iFileHandle)
                 , iPreviewMode(source.iPreviewMode)
                 , iIntent(source.iIntent)
@@ -84,11 +82,6 @@ class PVMFLocalDataSource : public PVInterface
             }
         }
         int32 iRefCounter;
-
-        bool iUseCPMPluginRegistry;
-        //Optional CPM usage flag.
-        //When true, CPM will be used as needed.
-        //When false, CPM will never be used.
 
         OsclFileHandle* iFileHandle;
         //Optional file handle.

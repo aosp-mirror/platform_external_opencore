@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ class PVMFFileOutputNode;
 
 // Capability mime strings
 #define PVMF_FILE_OUTPUT_PORT_INPUT_FORMATS "x-pvmf/file/encode/input_formats"
-#define PVMF_FILE_OUTPUT_PORT_INPUT_FORMATS_VALTYPE "x-pvmf/port/formattype;valtype=int32"
+#define PVMF_FILE_OUTPUT_PORT_INPUT_FORMATS_VALTYPE "x-pvmf/port/formattype;valtype=char*"
 
 class PVMFFileOutputInPort : public PvmfPortBaseImpl
             , public PvmiCapabilityAndConfig
@@ -79,16 +79,14 @@ class PVMFFileOutputInPort : public PvmfPortBaseImpl
         bool queryInterface(const PVUuid& uuid, PVInterface*& iface);
 
         // Pure virtuals from PvmfNodesSyncControlInterface
-        PVMFStatus SetClock(OsclClock* aClock);
+        PVMFStatus SetClock(PVMFMediaClock* aClock);
         PVMFStatus ChangeClockRate(int32 aRate);
         PVMFStatus SetMargins(int32 aEarlyMargin, int32 aLateMargin);
         void ClockStarted(void) {} // Not needed
         void ClockStopped(void) {} // Not needed
         PVMFCommandId SkipMediaData(PVMFSessionId aSessionId,
-                                    PVMFTimestamp aStartingTimestamp,
                                     PVMFTimestamp aResumeTimestamp,
                                     uint32 aStreamID,
-                                    bool aRenderSkippedData = false,
                                     bool aPlayBackPositionContinuous = false,
                                     OsclAny* aContext = NULL);
 
@@ -176,9 +174,7 @@ class PVMFFileOutputInPort : public PvmfPortBaseImpl
         OsclMemAllocator iAlloc;
 
         bool iSkipAlreadyComplete;
-        PVMFTimestamp iSkipStartTimestamp;
         PVMFTimestamp iSkipResumeTimestamp;
-        bool iSkipRenderSkippedData;
         bool iLastDataTimestampSet;
         PVMFTimestamp iLastDataTimestamp;
 

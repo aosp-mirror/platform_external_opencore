@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,15 @@
  * -------------------------------------------------------------------
  */
 /*
-------------------------------------------------------------------------------
 
+  Filename: calc_sbr_synfilterbank.c
 
-
- Filename: calc_sbr_synfilterbank.c
-
-     Date: 07/16/2003
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
 
 
+ Who:                                   Date: MM/DD/YYYY
  Description:
 
 ------------------------------------------------------------------------------
@@ -105,7 +102,7 @@ Copyright (c) ISO/IEC 2002.
 ----------------------------------------------------------------------------*/
 
 
-#if defined (_ARM)
+#if defined (PV_ARM_V5)
 
 
 __inline Int16 sat(Int32 y)
@@ -126,7 +123,7 @@ __inline Int16 sat(Int32 y)
                                     d -= 2;
 
 
-#elif defined (_ARM_V4)
+#elif defined (PV_ARM_V4)
 
 
 __inline Int16 sat(Int32 y)
@@ -150,7 +147,7 @@ __inline Int16 sat(Int32 y)
                                     c += 2;         \
                                     d -= 2;
 
-#elif defined(_ARM_GCC)
+#elif defined(PV_ARM_GCC_V5)
 
 __inline Int16 sat(Int32 y)
 {
@@ -173,6 +170,15 @@ __inline Int16 sat(Int32 y)
                                     c += 2;         \
                                     d -= 2;
 
+
+#elif defined(PV_ARM_MSC_EVC_V5)
+
+#include "armintr.h"
+
+#define saturate2( a, b, c, d)      *c = _DAddSatInt( a, a)>>16;   \
+                                    *d = _DAddSatInt( b, b)>>16;   \
+                                    c += 2;         \
+                                    d -= 2;
 
 #else
 

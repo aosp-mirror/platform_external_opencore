@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -101,6 +101,7 @@ class TimeToSampleAtom : public FullAtom
         uint32 _next_buff_number;
 
         uint32	_parsed_entry_cnt;
+
         uint32 _currGetSampleCount;
         int32 _currGetIndex;
         int32 _currGetTimeDelta;

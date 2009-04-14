@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,8 +46,8 @@
 #include "oscl_vector.h"
 #endif
 
-#ifndef OSCL_CLOCK_H_INCLUDED
-#include "oscl_clock.h"
+#ifndef PVMF_MEDIA_CLOCK_H_INCLUDED
+#include "pvmf_media_clock.h"
 #endif
 
 #ifndef PVLOGGER_H_INCLUDED
@@ -83,6 +83,7 @@
 #endif
 
 
+#define MAKE_FOURCC(a , b, c, d)		((uint32(a) << 24) | (uint32(b) << 16) | (uint32(c) << 8) | uint32(d))
 
 // Forward declaration
 class PvmiMIOAviWavFileSettings;
@@ -106,7 +107,63 @@ typedef enum
     INVALID_CMD
 } PvmiMIOAviWavFileCmdType;
 
-
+const uint32   YUV_FMT[] =
+{
+    MAKE_FOURCC('A', 'Y', 'U', 'V'),
+    MAKE_FOURCC('a', 'y', 'u', 'v'),
+    MAKE_FOURCC('C', 'L', 'J', 'R'),
+    MAKE_FOURCC('c', 'l', 'j', 'r'),
+    MAKE_FOURCC('I', 'Y', 'U', 'V'),
+    MAKE_FOURCC('i', 'y', 'u', 'v'),
+    MAKE_FOURCC('G', 'R', 'E', 'Y'),
+    MAKE_FOURCC('g', 'r', 'e', 'y'),
+    MAKE_FOURCC('I', 'Y', '4', '1'),
+    MAKE_FOURCC('i', 'y', '4', '1'),
+    MAKE_FOURCC('I', 'Y', 'U', '1'),
+    MAKE_FOURCC('i', 'y', 'u', '1'),
+    MAKE_FOURCC('Y', '4', '1', 'P'),
+    MAKE_FOURCC('y', '4', '1', 'p'),
+    MAKE_FOURCC('Y', '4', '1', '1'),
+    MAKE_FOURCC('y', '4', '1', '1'),
+    MAKE_FOURCC('Y', '4', '1', 'T'),
+    MAKE_FOURCC('y', '4', '1', 't'),
+    MAKE_FOURCC('Y', '4', '2', 'T'),
+    MAKE_FOURCC('y', '4', '2', 't'),
+    MAKE_FOURCC('Y', '8', '0', '0'),
+    MAKE_FOURCC('y', '8', '0', '0'),
+    MAKE_FOURCC('Y', '8', ' ', ' '),
+    MAKE_FOURCC('y', '8', ' ', ' '),
+    MAKE_FOURCC('Y', '2', '1', '1'),
+    MAKE_FOURCC('y', '2', '1', '1'),
+    MAKE_FOURCC('I', '4', '2', '0'),
+    MAKE_FOURCC('i', '4', '2', '0'),
+    MAKE_FOURCC('I', 'Y', 'U', '1'),
+    MAKE_FOURCC('i', 'y', 'u', '1'),
+    MAKE_FOURCC('Y', 'V', '1', '6'),
+    MAKE_FOURCC('y', 'v', '1', '6'),
+    MAKE_FOURCC('Y', 'V', '1', '2'),
+    MAKE_FOURCC('y', 'v', '1', '2'),
+    MAKE_FOURCC('C', 'L', 'P', 'L'),
+    MAKE_FOURCC('c', 'l', 'p', 'l'),
+    MAKE_FOURCC('N', 'V', '1', '2'),
+    MAKE_FOURCC('n', 'v', '1', '2'),
+    MAKE_FOURCC('N', 'V', '2', '1'),
+    MAKE_FOURCC('n', 'v', '2', '1'),
+    MAKE_FOURCC('I', 'M', 'C', '1'),
+    MAKE_FOURCC('i', 'm', 'c', '1'),
+    MAKE_FOURCC('I', 'M', 'C', '2'),
+    MAKE_FOURCC('i', 'm', 'c', '2'),
+    MAKE_FOURCC('I', 'M', 'C', '3'),
+    MAKE_FOURCC('i', 'm', 'c', '3'),
+    MAKE_FOURCC('I', 'M', 'C', '4'),
+    MAKE_FOURCC('i', 'm', 'c', '4'),
+    MAKE_FOURCC('C', 'X', 'Y', '1'),
+    MAKE_FOURCC('c', 'x', 'y', '1'),
+    MAKE_FOURCC('Y', 'V', 'Y', '2'),
+    MAKE_FOURCC('y', 'v', 'y', '2'),
+    MAKE_FOURCC('U', 'Y', 'V', 'Y'),
+    MAKE_FOURCC('u', 'y', 'v', 'y'),
+};
 const uint32 BITS_PER_SAMPLE8		= 8;
 const uint32 BITS_PER_SAMPLE12		= 12;
 const uint32 BITS_PER_SAMPLE16		= 16;
@@ -114,6 +171,7 @@ const uint32 BITS_PER_SAMPLE24		= 24;
 const uint32 PVWAV_MSEC_PER_BUFFER	= 100;
 const uint32 BYTE_COUNT				= 8;
 const uint32 DATA_BUFF_THRESHOLD	= 1;
+const uint32   NUM_YUV_FMT				= 54;
 
 #define PROFILING_ON (PVLOGGER_INST_LEVEL >= PVLOGMSG_INST_PROF)
 
@@ -303,8 +361,11 @@ class PvmiMIOAviWavFile : public OsclTimerObject,
          * @return PVMFSuccess if parameter is supported, else PVMFFailure
          */
         PVMFStatus VerifyAndSetParameter(PvmiKvp* aKvp, bool aSetParam = false);
-        void GetNextTimeStamp(uint32 aDataSize);
+        void UpdateCurrentTimeStamp(uint32 aDataSize);
         void LogDiagnostics();
+        bool IsYUVFormat_Supported(uint32 aFcc);
+        uint8* AllocateMemPool(OsclMemPoolFixedChunkAllocator*&, uint32, int32&);
+        int32 WriteAsyncDataHdr(uint32&, PvmiMediaTransfer*&, uint32&, PvmiMediaXferHeader&, uint8*, uint32, uint32);
 
         // Command queue
         uint32 iCmdIdCounter;
@@ -345,6 +406,8 @@ class PvmiMIOAviWavFile : public OsclTimerObject,
         // Logger
         PVLogger* iLogger;
         PVLogger* iDiagnosticsLogger;
+        PVLogger* iDiagnosticsLoggerAVIFF;
+        PVLogger* iDataPathLogger;
 
         // State machine
         enum PvmiMIOAviWavFileState
@@ -358,16 +421,16 @@ class PvmiMIOAviWavFile : public OsclTimerObject,
         };
 
         PvmiMIOAviWavFileState iState;
-        OsclClock* iMioClock;
-        OsclTimebase_Tickcount iClockTimeBase;
+        PVMFMediaClock* iMioClock;
+        PVMFTimebase_Tickcount iClockTimeBase;
         bool iWaitingOnClock;
-        uint8* iData;
         uint32 iDataSize;
         uint32 iTimeStamp;
         uint32 iStreamDuration ;  // in microsec
-        uint32 iBaseTimeStamp;
         uint32 iCurrentTimeStamp;
-        uint32 iNextTimeStamp;
+        enum WriteState {EWriteBusy, EWriteOK};
+        WriteState iWriteState;
+        uint8* iData;
 
 #if PROFILING_ON
         //for diagnostics purpose
@@ -382,6 +445,7 @@ class PvmiMIOAviWavFile : public OsclTimerObject,
         bool   oDiagnosticsLogged;
 #endif
 
+        bool iNoMemBufferData;
 };
 
 #endif // PVMI_MIO_AVIFILE_H_INCLUDED

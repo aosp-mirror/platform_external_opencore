@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,19 +44,23 @@ PVMFWAVFFParserOutPort::~PVMFWAVFFParserOutPort()
 
 bool PVMFWAVFFParserOutPort::IsFormatSupported(PVMFFormatType aFmt)
 {
-    return ((aFmt == PVMF_PCM ||
-             aFmt == PVMF_PCM8 ||
-             aFmt == PVMF_PCM16 ||
-             aFmt == PVMF_PCM16_BE ||
-             aFmt == PVMF_PCM_ULAW ||
-             aFmt == PVMF_PCM_ALAW));
+    if ((aFmt == PVMF_MIME_PCM ||
+            aFmt == PVMF_MIME_PCM8 ||
+            aFmt == PVMF_MIME_PCM16 ||
+            aFmt == PVMF_MIME_PCM16_BE ||
+            aFmt == PVMF_MIME_ULAW ||
+            aFmt == PVMF_MIME_ALAW))
+    {
+        return true;
+    }
+    return false;
 }
 
 ////////////////////////////////////////////////////////////////////////////
 void PVMFWAVFFParserOutPort::FormatUpdated()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_INFO
-                    , (0, "PVMFWAVFFParserOutPort::FormatUpdated %d", iFormat));
+                    , (0, "PVMFWAVFFParserOutPort::FormatUpdated %s", iFormat.getMIMEStrPtr()));
 }
 
 
@@ -68,7 +72,7 @@ PVMFStatus PVMFWAVFFParserOutPort::Connect(PVMFPortInterface* aPort)
 {
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_STACK_TRACE
-                    , (0, "PVMFWAVFFParserOutPort::FormatUpdated %d", iFormat));
+                    , (0, "PVMFWAVFFParserOutPort::FormatUpdated %s", iFormat.getMIMEStrPtr()));
 
     if (!aPort)
     {
@@ -82,8 +86,10 @@ PVMFStatus PVMFWAVFFParserOutPort::Connect(PVMFPortInterface* aPort)
         return PVMFFailure;
     }
 
-    PvmiCapabilityAndConfig* config = NULL;
-    aPort->QueryInterface(PVMI_CAPABILITY_AND_CONFIG_PVUUID, (OsclAny*&)config);
+    OsclAny* temp = NULL;
+    aPort->QueryInterface(PVMI_CAPABILITY_AND_CONFIG_PVUUID, temp);
+    PvmiCapabilityAndConfig *config = OSCL_STATIC_CAST(PvmiCapabilityAndConfig*, temp);
+
     if (!config)
     {
         LOG_ERR((0, "PVMFWAVFFParserOutPort::Connect: Error - Peer port does not support capability interface"));

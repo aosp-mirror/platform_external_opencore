@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,8 +51,13 @@ PVMFAACFFParserOutPort::~PVMFAACFFParserOutPort()
 
 bool PVMFAACFFParserOutPort::IsFormatSupported(PVMFFormatType aFmt)
 {
-    return (aFmt == PVMF_MPEG4_AUDIO ||
-            aFmt == PVMF_ADIF);
+    bool formatSupported = false;
+    if (aFmt == PVMF_MIME_MPEG4_AUDIO ||
+            aFmt == PVMF_MIME_ADIF)
+    {
+        formatSupported = true;
+    }
+    return formatSupported;
 }
 
 void PVMFAACFFParserOutPort::FormatUpdated()
@@ -78,10 +83,9 @@ PVMFStatus PVMFAACFFParserOutPort::Connect(PVMFPortInterface* aPort)
         return PVMFFailure;
     }
 
-    PvmiCapabilityAndConfig *config;
-
-    aPort->QueryInterface(PVMI_CAPABILITY_AND_CONFIG_PVUUID,
-                          (OsclAny*&)config);
+    OsclAny* temp = NULL;
+    aPort->QueryInterface(PVMI_CAPABILITY_AND_CONFIG_PVUUID, temp);
+    PvmiCapabilityAndConfig *config = OSCL_STATIC_CAST(PvmiCapabilityAndConfig*, temp);
 
     if (config != NULL)
     {

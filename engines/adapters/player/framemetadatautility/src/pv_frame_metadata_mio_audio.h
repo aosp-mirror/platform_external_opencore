@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,8 +40,12 @@
 #include "pvmi_media_io_clock_extension.h"
 #endif
 
+// To maintain the count of supported uncompressed audio formats.
+// Should be updated whenever new format is added
+#define PVMF_SUPPORTED_UNCOMPRESSED_AUDIO_FORMATS_COUNT 6
+
 class PVLogger;
-class OsclClock;
+class PVMFMediaClock;
 class ColorConvertBase;
 
 class PVFMAudioMIOGetFrameObserver
@@ -62,7 +66,7 @@ class PVFMAudioMIOActiveTimingSupport: public PvmiClockExtensionInterface
         {}
 
         // From PvmiClockExtensionInterface
-        PVMFStatus SetClock(OsclClock *aClock);
+        PVMFStatus SetClock(PVMFMediaClock *aClock);
 
         // From PVInterface
         void addRef() ;
@@ -71,7 +75,7 @@ class PVFMAudioMIOActiveTimingSupport: public PvmiClockExtensionInterface
 
         void queryUuid(PVUuid& uuid);
 
-        OsclClock* iClock;
+        PVMFMediaClock* iClock;
 };
 
 
@@ -213,12 +217,13 @@ class PVFMAudioMIO : public OsclTimerObject,
         Oscl_Vector<WriteResponse, OsclMemAllocator> iWriteResponseQueue;
 
         // Audio parameters
-        OSCL_HeapString<OsclMemAllocator> iAudioFormatString;
         PVMFFormatType iAudioFormat;
         uint32 iAudioNumChannels;
         bool iAudioNumChannelsValid;
         uint32 iAudioSamplingRate;
         bool iAudioSamplingRateValid;
+        bool iIsMIOConfigured;
+        bool iWriteBusy;
 
         // For logging
         PVLogger* iLogger;

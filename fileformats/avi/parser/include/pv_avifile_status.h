@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,10 +27,10 @@
 
 typedef enum
 {
-    PV_AVI_FILE_PARSER_ERROR_UNKNOWN		     = -1,
-    PV_AVI_FILE_PARSER_SUCCESS			         = 0,
+    PV_AVI_FILE_PARSER_ERROR_UNKNOWN             = -1,
+    PV_AVI_FILE_PARSER_SUCCESS                   = 0,
     PV_AVI_FILE_PARSER_FILE_OPEN_ERROR           = 1,
-    PV_AVI_FILE_PARSER_INSUFFICIENT_MEMORY	     = 2,
+    PV_AVI_FILE_PARSER_INSUFFICIENT_MEMORY       = 2,
     PV_AVI_FILE_PARSER_WRONG_CHUNK               = 3,
     PV_AVI_FILE_PARSER_WRONG_CHUNK_SIZE          = 4,
     PV_AVI_FILE_PARSER_WRONG_FILE                = 5,
@@ -38,16 +38,17 @@ typedef enum
     PV_AVI_FILE_PARSER_READ_ERROR                = 7,
     PV_AVI_FILE_PARSER_ERROR_NUM_STREAM          = 8,
     PV_AVI_FILE_PARSER_ERROR_STREAM_TYPE_UNKNOWN = 9,
-    PV_AVI_FILE_PARSER_NO_INDEX_CHUNK		     = 10,
-    PV_AVI_FILE_PARSER_EOF_REACHED			     = 11,  //End of file
-    PV_AVI_FILE_PARSER_EOS_REACHED			     = 12,  //End of stream
+    PV_AVI_FILE_PARSER_NO_INDEX_CHUNK            = 10,
+    PV_AVI_FILE_PARSER_EOF_REACHED               = 11,  //End of file
+    PV_AVI_FILE_PARSER_EOS_REACHED               = 12,  //End of stream
     PV_AVI_FILE_PARSER_USE_INDX_TBL              = 13,
     PV_AVI_FILE_PARSER_BYTE_COUNT_ERROR          = 14,
     PV_AVI_FILE_PARSER_UNSUPPORTED_CHUNK         = 15,
     PV_AVI_FILE_PARSER_ERROR_WRONG_STREAM_NUM    = 16,
     PV_AVI_FILE_PARSER_WRONG_OFFSET              = 17,
-    PV_AVI_FILE_PARSER_NO_OFFSET_FOUND			 = 18,
-    PV_AVI_FILE_PARSER_WRONG_BIT_COUNT			 = 19
+    PV_AVI_FILE_PARSER_NO_OFFSET_FOUND           = 18,
+    PV_AVI_FILE_PARSER_WRONG_BIT_COUNT           = 19,
+    PV_AVI_FILE_PARSER_SEEK_ERROR                = 20
 
 }PV_AVI_FILE_PARSER_ERROR_TYPE;
 

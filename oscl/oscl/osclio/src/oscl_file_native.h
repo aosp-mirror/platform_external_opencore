@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,6 +56,7 @@
 #include "oscl_file_types.h"
 #endif
 
+
 /**
  * OsclNativeFileIO defines the native file operations that must be implemented
  * by every Oscl platform.
@@ -80,13 +81,12 @@ class OsclNativeFile : public HeapBase
                     , Oscl_FileServer& fileserv);
         uint32 Read(OsclAny *buffer, uint32 size, uint32 numelements);
         uint32 Write(const OsclAny *buffer, uint32 size, uint32 numelements);
-        int32  Seek(int32 offset, Oscl_File::seek_type origin);
-        int32  Tell();
+        int32  Seek(TOsclFileOffset offset, Oscl_File::seek_type origin);
+        TOsclFileOffset  Tell();
         int32  Flush();
         int32  EndOfFile();
-        int32 Size();
+        TOsclFileOffset Size();
         int32 Close();
-        int32 SetSize(uint32 size);
 
         //query for current open mode.
         uint32 Mode()
@@ -116,6 +116,10 @@ class OsclNativeFile : public HeapBase
         ** @returns: true if async read is supported natively.
         **/
         bool HasAsyncRead();
+        /*!
+        ** Cancel any pending async read.
+        **/
+        void ReadAsyncCancel();
 
     private:
         int32 OpenFileOrSharedFd(const char *filename, const char *openmode);

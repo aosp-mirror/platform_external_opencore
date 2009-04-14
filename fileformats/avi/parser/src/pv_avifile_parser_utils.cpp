@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -151,17 +151,4 @@ int32 PVAviFileParserUtils::GetStreamNumber(uint32 aData)
     }
 }
 
-bool PVAviFileParserUtils::IsYUVFormat(uint32 aFcc)
-{
-    uint32  ii;
-    bool pattern_found = false;
-    for (ii = 0 ; ii < NUM_YUV_FMT; ii++)
-    {
-        if (YUV_FMT[ii] == aFcc)
-        {
-            pattern_found = true;
-        }
-    }
-    return pattern_found;
-}
 

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,12 @@ bool parseAssetInfo(const char *sptr, const char *line_end_ptr,
 
 bool sdp_decodebase64(uint8* aInBuf, uint32 aInBufLen,
                       uint8* aOutBuf, uint32& aOutBufLen, uint32 aMaxOutBufLen);
+
+void pvSDPParserGetAssetInfoLanguageCode(uint16 langcode, char* LangCode);
+
+bool pvSDPParserParse3GPPAssetInfoLocation(AssetInfoType& aInfo,
+        uint8* aBuf,
+        uint32 aBufSize);
 
 #endif
 

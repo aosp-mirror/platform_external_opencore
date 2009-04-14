@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,9 +52,10 @@
 #ifndef PVMI_CONFIG_AND_CAPABILITY_H_INCLUDED
 #include "pvmi_config_and_capability.h"
 #endif
-#define KMp4ComposerMimeType "/x-pvmf/ff-mux/mp4"
 #define K3gpComposerMimeType "/x-pvmf/ff-mux/3gp"
+#define KMP4ComposerMimeType "/x-pvmf/ff-mux/mp4"
 #define KAmrNbEncMimeType "/x-pvmf/audio/encode/amr-nb"
+#define KAMRWbEncMimeType "/x-pvmf/audio/encode/amr-wb"
 #define KH263EncMimeType "/x-pvmf/video/encode/h263"
 #define KH264EncMimeType "/x-pvmf/video/encode/h264"
 #define KMp4EncMimeType "/x-pvmf/video/encode/mp4"
@@ -62,10 +63,12 @@
 
 //MIME strings for .amr and .aac composer
 #define KAMRNbComposerMimeType		"/x-pvmf/ff-mux/amr-nb"
+#define KAMRWbComposerMimeType		"/x-pvmf/ff-mux/amr-wb"
 #define KAACADIFComposerMimeType	"/x-pvmf/ff-mux/adif"
 #define KAACADTSComposerMimeType	"/x-pvmf/ff-mux/adts"
 #define KAACADIFEncMimeType			"/x-pvmf/audio/encode/aac/adif"
 #define KAACADTSEncMimeType			"/x-pvmf/audio/encode/aac/adts"
+#define KAACMP4EncMimeType          "/x-pvmf/audio/encode/X-MPEG4-AUDIO"
 //end of changes
 
 /**
@@ -220,7 +223,7 @@ class PVAuthorEngine : public PVAuthorEngineInterface,
         PVMFStatus verifyParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int aNumElements);
         // functions used by cap-config class virtual functions
         bool queryInterface(const PVUuid& uuid, PVInterface*& iface);
-        PVMFStatus DoQueryNodeCapConfig(char* aKeySubString, Oscl_Vector<PvmiCapabilityAndConfig*, OsclMemAllocator>& aNodeCapConfigIF);
+        PVMFStatus DoQueryNodeCapConfig(char* aKeySubString, Oscl_Vector<PVInterface*, OsclMemAllocator>& aNodeCapConfigIF);
         void addRef();
         void removeRef();
     private:
@@ -234,6 +237,7 @@ class PVAuthorEngine : public PVAuthorEngineInterface,
         // Command handling functions
         void Dispatch(PVEngineCommand& aCmd);
         void Dispatch(PVEngineAsyncEvent& aEvent);
+        void PushCmdInFront(PVEngineCommand& aCmd);
         void CompleteEngineCommand(PVEngineCommand& aCmd, PVMFStatus aStatus,
                                    OsclAny* aResponseData = NULL, int32 aResponseDataSize = 0);
         PVMFStatus DoOpen(PVEngineCommand& aCmd);
@@ -366,6 +370,7 @@ class PVAuthorEngine : public PVAuthorEngineInterface,
         PVAENodeContainerVector iDataSourceNodes;
         PVAENodeContainerVector iEncoderNodes;
         PVAENodeContainerVector iComposerNodes;
+        PVAENodeContainerVector iAllNodes;
 
         PVMFFormatType iEncodedVideoFormat;
         PVAEState iState;
@@ -374,7 +379,6 @@ class PVAuthorEngine : public PVAuthorEngineInterface,
         PvmiConfigAndCapabilityCmdObserver *iCfgCapCmdObserver;
         int iAsyncNumElements;
         bool iDoResetNodeContainers;
-        bool iResetInProgress;
 };
 
 

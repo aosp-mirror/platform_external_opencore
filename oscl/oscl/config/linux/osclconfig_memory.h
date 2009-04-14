@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,6 +80,9 @@
 
 //OSCL_HAS_HEAP_BASE_SUPPORT - Enables or disables overloaded memory operators in HeapBase class
 #define OSCL_HAS_HEAP_BASE_SUPPORT 1
+
+
+#define OSCL_HAS_SYMBIAN_MEMORY_FUNCS 0
 
 
 #include "osclconfig_memory_check.h"

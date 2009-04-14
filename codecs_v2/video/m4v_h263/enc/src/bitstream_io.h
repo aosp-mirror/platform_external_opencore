@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,10 @@ extern "C"
     PV_STATUS BitstreamRepos(BitstreamEncVideo *bitstream, Int byteCount, Int bitCount);
     PV_STATUS BitstreamFlushBits(BitstreamEncVideo *bitstream1, Int num_bit_left);
     PV_STATUS BitstreamPrependPacket(BitstreamEncVideo *bitstream1, BitstreamEncVideo *bitstream2);
+
+
+    Void  BitstreamSetOverrunBuffer(BitstreamEncVideo *stream, UChar *overrunBuffer, Int oBSize, VideoEncData *video);
+    PV_STATUS BitstreamUseOverrunBuffer(BitstreamEncVideo* stream, Int numExtraBytes);
 
 
 #ifdef __cplusplus

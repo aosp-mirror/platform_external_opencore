@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,14 @@
  * -------------------------------------------------------------------
  */
 /*
-------------------------------------------------------------------------------
 
+ Pathname: fxp_mul32_c_equivalent.h
 
-
- Pathname: ./c/include/fxp_mul32_c_equivalent.h
-
-     Date: 12/06/2005
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
 
+ Who:                                       Date:
  Description:
 ------------------------------------------------------------------------------
  INCLUDE DESCRIPTION
@@ -47,7 +44,7 @@ extern "C"
 #include "pv_audio_type_defs.h"
 
 
-#if defined(_ARM_V4)
+#if defined(PV_ARM_V4)
 
 #define preload_cache( a)
 

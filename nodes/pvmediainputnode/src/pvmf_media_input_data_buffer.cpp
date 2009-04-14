@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@
 #include "pvmf_simple_media_buffer.h"
 #endif
 
-PvmfMediaInputDataBufferCleanup::PvmfMediaInputDataBufferCleanup(Oscl_DefAlloc* in_gen_alloc,
+PvmfMediaInputDataBufferCleanup::PvmfMediaInputDataBufferCleanup(OsclMemPoolFixedChunkAllocator* in_gen_alloc,
         PvmiMediaTransfer* aMediaInput,
         PVMFCommandId aCmdId,
         OsclAny* aContext)
@@ -64,10 +64,11 @@ void PvmfMediaInputDataBufferCleanup::destruct_and_dealloc(OsclAny* ptr)
     else
     {
         gen_alloc->deallocate(ptr);
+
     }
 }
 
-PvmfMediaInputDataBufferAlloc::PvmfMediaInputDataBufferAlloc(Oscl_DefAlloc* opt_gen_alloc)
+PvmfMediaInputDataBufferAlloc::PvmfMediaInputDataBufferAlloc(OsclMemPoolFixedChunkAllocator* opt_gen_alloc)
         : gen_alloc(opt_gen_alloc)
 {
     iLogger = PVLogger::GetLoggerObject("PvmfMediaInputDataBufferAlloc");

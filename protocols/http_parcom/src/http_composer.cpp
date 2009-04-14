@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,10 +81,10 @@ OSCL_EXPORT_REF void HTTPComposer::setURI(const StrPtrLen aURI)
     iURI = aURI;
 
     // get relative URI
-    char *aServerAddPtr = oscl_strstr(((char*)aURI.c_str()), "//");
+    const char *aServerAddPtr = oscl_strstr(((char*)aURI.c_str()), "//");
     if (!aServerAddPtr) return;
     aServerAddPtr += 2;
-    char *aRelativeUriPtr = oscl_strstr(aServerAddPtr, "/");
+    const char *aRelativeUriPtr = oscl_strstr(aServerAddPtr, "/");
     if (!aRelativeUriPtr) return;
     iRelativeURI = StrPtrLen(aRelativeUriPtr);
 }

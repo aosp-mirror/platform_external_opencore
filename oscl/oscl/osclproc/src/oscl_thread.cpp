@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,9 +92,19 @@ OSCL_EXPORT_REF OsclProcStatus::eOsclProcError OsclThread::Create(TOsclThreadFun
     }
     pthread_attr_t attr;
     pthread_attr_init(&attr);
-    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
     if (stack_size != 0)
         pthread_attr_setstacksize(&attr, stack_size);
+
+    // Default detachstate attribute to PTHREAD_CREATE_DETACHED state
+    int detach_ret = pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+    switch (detach_ret)
+    {
+        case 0:	// successful, continue thread creation
+            break;
+        case EINVAL:
+        default:
+            return OsclProcStatus::PSHARED_ATTRIBUTE_SETTING_ERROR;
+    }
 
     int result = pthread_create(
                      (pthread_t*) & ObjThread,

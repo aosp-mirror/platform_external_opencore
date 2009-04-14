@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,14 @@
  * -------------------------------------------------------------------
  */
 /*
-------------------------------------------------------------------------------
-
-
 
  Filename: sbr_dec.c
-
-     Date: 07/17/2003
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
 
 
+ Who:                                   Date: MM/DD/YYYY
  Description:
 
 ------------------------------------------------------------------------------
@@ -408,8 +404,14 @@ void sbr_dec(Int16 *inPcmData,
 #ifdef PARAMETRICSTEREO
 
 
-    if (pVars->mc_info.psPresentFlag)
+    /*
+     * psPresentFlag set implies hParametricStereoDec !=NULL, second condition is
+     * is just here to prevent CodeSonar warnings.
+     */
+    if ((pVars->mc_info.psPresentFlag) && (applyProcessing) &&
+            (hParametricStereoDec != NULL))
     {
+
         /*
          *  qmfBufferReal uses the rigth aac channel ( perChan[1] is not used)
          *  followed by the buffer fxpCoef[2][2048]  which makes a total of
@@ -419,33 +421,33 @@ void sbr_dec(Int16 *inPcmData,
          */
 
 
-        hParametricStereoDec->qmfBufferReal = (Int32(*)[64]) & pVars->perChan[1];
-        hParametricStereoDec->qmfBufferImag = (Int32(*)[64]) & hParametricStereoDec->qmfBufferReal[38][0];
+        tDec_Int_Chan *tmpx = &pVars->perChan[1];
+        /*
+         *  dereferencing type-punned pointer avoid
+         *  breaking strict-aliasing rules
+         */
+        Int32 *tmp = (Int32 *)tmpx;
+        hParametricStereoDec->qmfBufferReal = (Int32(*)[64]) tmp;
 
+        tmp = (Int32 *) & hParametricStereoDec->qmfBufferReal[38][0];
+        hParametricStereoDec->qmfBufferImag = (Int32(*)[64]) tmp;
 
         for (i = 0; i < 32; i++)
         {
             Int   xoverBand;
 
-            if (applyProcessing)
+            if (i < ((hFrameData->frameInfo[1]) << 1))
             {
-                if (i < ((hFrameData->frameInfo[1]) << 1))
-                {
-                    xoverBand = sbrDec->prevLowSubband;
-                }
-                else
-                {
-                    xoverBand = sbrDec->lowSubband;
-                }
-
-                if (xoverBand > sbrDec->highSubband)
-                {
-                    xoverBand = 32; /* error condition, default to upsampling mode */
-                }
+                xoverBand = sbrDec->prevLowSubband;
             }
             else
             {
-                xoverBand = 32;
+                xoverBand = sbrDec->lowSubband;
+            }
+
+            if (xoverBand > sbrDec->highSubband)
+            {
+                xoverBand = 32; /* error condition, default to upsampling mode */
             }
 
             m = sbrDec->bufReadOffs + i;    /*  2 + i */
@@ -776,7 +778,7 @@ void sbr_dec(Int16 *inPcmData,
                 ptr_tmp1 = &hFrameData->sbrQmfBufferReal[i*SBR_NUM_BANDS];
 
 
-                for (k = (sbrDec->highSubband - xoverBand); k > 0; k--)
+                for (k = xoverBand; k < sbrDec->highSubband; k++)
                 {
                     *(ptr_tmp2++) = (*(ptr_tmp1++)) << 1;
                 }
@@ -814,12 +816,10 @@ void sbr_dec(Int16 *inPcmData,
                 ptr_tmp2 = &Sr[xoverBand];
 
 
-
-                for (k = (sbrDec->highSubband - xoverBand); k != 0; k--)
+                for (k = xoverBand; k < sbrDec->highSubband; k++)
                 {
                     *(ptr_tmp2++) = (*(ptr_tmp1++));
                 }
-
 
                 pv_memset((void *)ptr_tmp2,
                           0,
@@ -842,7 +842,7 @@ void sbr_dec(Int16 *inPcmData,
                 ptr_tmp1 = &hFrameData->sbrQmfBufferImag[i*SBR_NUM_BANDS];
                 ptr_tmp2 = &Si[xoverBand];
 
-                for (k = (sbrDec->highSubband - xoverBand); k > 0; k--)
+                for (k = xoverBand; k < sbrDec->highSubband; k++)
                 {
                     *(ptr_tmp2++) = (*(ptr_tmp1++));
                 }

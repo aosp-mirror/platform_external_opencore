@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,13 @@
  * -------------------------------------------------------------------
  */
 /*
-------------------------------------------------------------------------------
 
-
-
- Pathname: ./c/include/fxp_mul32_msc_evc.h
-
-     Date: 07/09/2006
+ Pathname: fxp_mul32_msc_evc.h
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
 
+ Who:                                       Date:
  Description:
 ------------------------------------------------------------------------------
  INCLUDE DESCRIPTION
@@ -47,7 +43,7 @@ extern "C"
 
 #include "pv_audio_type_defs.h"
 
-#if defined(_MSC_EVC)
+#if defined(PV_ARM_MSC_EVC_V4)
 
 #include "cmnintrin.h"
 

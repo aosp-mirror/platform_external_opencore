@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,7 @@
  */
 /*
 
- Pathname: ./include/ms_synt.h
-
-     Date: 06/18/2001
+ Pathname: ms_synt.h
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
@@ -27,6 +25,7 @@
  Description:  Updated to reflect new functionality of ms_synt() routine.
  (ms_synt now only decodes one grouped scalefactor band at a time.)
 
+ Who:                       Date:
  Description:
 ------------------------------------------------------------------------------
  INCLUDE DESCRIPTION

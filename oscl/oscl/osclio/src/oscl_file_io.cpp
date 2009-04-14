@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,13 +75,13 @@ void Oscl_File::OldCacheDefaults()
 
     SetNativeAccessMode(ESymbianAccessMode_RfileBuf);
 
-#if defined(OSCL_FILE_BUFFER_MAX_SIZE)
+#if defined(OSCL_FILE_BUFFER_MAX_SIZE) 
     //native buffer size defaults to max buffer size
 
     SetNativeBufferSize(OSCL_FILE_BUFFER_MAX_SIZE);
 #endif
 
-#if defined(OSCL_ASYNC_READ_BUFFER_SIZE)
+#if defined(OSCL_ASYNC_READ_BUFFER_SIZE) 
     // enable async file read operation
 
     SetAsyncReadBufferSize(OSCL_ASYNC_READ_BUFFER_SIZE);
@@ -164,6 +164,7 @@ OSCL_EXPORT_REF void Oscl_File::SetAsyncReadBufferSize(uint32 aSize)
 {
     //just save the value now-- it will take effect on the next open.
     iAsyncReadBufferSize = aSize;
+
 }
 
 OSCL_EXPORT_REF void Oscl_File::SetLoggingEnable(bool aEnable)
@@ -335,11 +336,11 @@ OSCL_EXPORT_REF int32 Oscl_File::Open(const oscl_wchar *filename, uint32 mode, O
                         (0, "Oscl_File(0x%x)::Open IN name '%s' mode %d serv 0x%x", this, str.get_cstr(), mode, &fileserv));
     }
 
+    int32 result = (-1);
+
     uint32 ticks = 0;
     if (iFileStats)
         iFileStats->Start(ticks);
-
-    int32 result = (-1);
 
     //protect against duplicate open calls
     if (iIsOpen)
@@ -389,11 +390,11 @@ OSCL_EXPORT_REF int32 Oscl_File::Open(const char *filename, uint32 mode, Oscl_Fi
                         (0, "Oscl_File(0x%x)::Open IN name '%s' mode %d serv 0x%x", this, filename, mode, &fileserv));
     }
 
+    int32 result = (-1);
+
     uint32 ticks = 0;
     if (iFileStats)
         iFileStats->Start(ticks);
-
-    int32 result = (-1);
 
     //protect against duplicate open calls
     if (iIsOpen)
@@ -555,7 +556,7 @@ OSCL_EXPORT_REF uint32 Oscl_File::Write(const OsclAny *buffer, uint32 size, uint
     return result;
 }
 
-OSCL_EXPORT_REF int32 Oscl_File::Seek(int32 offset, seek_type origin)
+OSCL_EXPORT_REF int32 Oscl_File::Seek(TOsclFileOffset offset, seek_type origin)
 {
     if (iLogger)
     {
@@ -592,7 +593,7 @@ OSCL_EXPORT_REF int32 Oscl_File::Seek(int32 offset, seek_type origin)
 }
 
 
-OSCL_EXPORT_REF int32 Oscl_File::Tell()
+OSCL_EXPORT_REF TOsclFileOffset Oscl_File::Tell()
 {
     if (iLogger)
     {
@@ -604,7 +605,7 @@ OSCL_EXPORT_REF int32 Oscl_File::Tell()
     if (iFileStats)
         iFileStats->Start(ticks);
 
-    int32 result = (-1);
+    TOsclFileOffset result = (-1);
 
     if (iIsOpen)
     {
@@ -627,38 +628,6 @@ OSCL_EXPORT_REF int32 Oscl_File::Tell()
     }
     return result;
 }
-
-OSCL_EXPORT_REF int32 Oscl_File::SetSize(uint32 size)
-{
-    if (iLogger)
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                        (0, "Oscl_File(0x%x)::SetSize IN", this));
-    }
-
-    uint32 ticks = 0;
-    if (iFileStats)
-        iFileStats->Start(ticks);
-
-    int32 result = (-1);
-
-    if (iIsOpen)
-    {
-        result = CallNativeSetSize(size);
-    }
-
-    if (iFileStats
-            && result == 0)
-        iFileStats->End(EOsclFileOp_SetSize, ticks);
-
-    if (iLogger)
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                        (0, "Oscl_File(0x%x)::SetSize OUT result %d", this, result));
-    }
-    return result;
-}
-
 
 OSCL_EXPORT_REF int32 Oscl_File::Flush()
 {
@@ -732,7 +701,7 @@ OSCL_EXPORT_REF int32 Oscl_File::EndOfFile()
     return result;
 }
 
-OSCL_EXPORT_REF int32 Oscl_File::Size()
+OSCL_EXPORT_REF TOsclFileOffset Oscl_File::Size()
 {
     if (iLogger)
     {
@@ -744,7 +713,7 @@ OSCL_EXPORT_REF int32 Oscl_File::Size()
     if (iFileStats)
         iFileStats->Start(ticks);
 
-    int32 result = (-1);
+    TOsclFileOffset result = (-1);
 
     if (iIsOpen)
     {
@@ -948,7 +917,7 @@ uint32 Oscl_File::CallNativeWrite(const OsclAny *buffer, uint32 size, uint32 num
     return result;
 }
 
-int32  Oscl_File::CallNativeSeek(int32 offset, Oscl_File::seek_type origin)
+int32  Oscl_File::CallNativeSeek(TOsclFileOffset offset, Oscl_File::seek_type origin)
 {
     if (iNativeLogger)
     {
@@ -978,7 +947,7 @@ int32  Oscl_File::CallNativeSeek(int32 offset, Oscl_File::seek_type origin)
     return result;
 }
 
-int32  Oscl_File::CallNativeTell()
+TOsclFileOffset  Oscl_File::CallNativeTell()
 {
     if (iNativeLogger)
     {
@@ -990,7 +959,7 @@ int32  Oscl_File::CallNativeTell()
     if (iFileStats)
         iFileStats->Start(ticks);
 
-    int32 result = (-1);
+    TOsclFileOffset result = (-1);
 
     if (iNativeFile)
         result = iNativeFile->Tell();
@@ -1003,36 +972,6 @@ int32  Oscl_File::CallNativeTell()
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iNativeLogger, PVLOGMSG_DEBUG,
                         (0, "OsclNativeFile(0x%x)::Tell OUT result %d", this, result));
-    }
-
-    return result;
-}
-
-int32  Oscl_File::CallNativeSetSize(uint32 size)
-{
-    if (iNativeLogger)
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iNativeLogger, PVLOGMSG_DEBUG,
-                        (0, "OsclNativeFile(0x%x)::SetSize IN", this));
-    }
-
-    uint32 ticks = 0;
-    if (iFileStats)
-        iFileStats->Start(ticks);
-
-    int32 result = (-1);
-
-    if (iNativeFile)
-        result = iNativeFile->SetSize(size);
-
-    if (iFileStats
-            && result == 0)
-        iFileStats->End(EOsclFileOp_NativeSetSize, ticks);
-
-    if (iNativeLogger)
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iNativeLogger, PVLOGMSG_DEBUG,
-                        (0, "OsclNativeFile(0x%x)::SetSize OUT result %d", this, result));
     }
 
     return result;
@@ -1099,7 +1038,7 @@ int32  Oscl_File::CallNativeEndOfFile()
     return result;
 }
 
-int32 Oscl_File::CallNativeSize()
+TOsclFileOffset Oscl_File::CallNativeSize()
 {
     if (iNativeLogger)
     {
@@ -1111,7 +1050,7 @@ int32 Oscl_File::CallNativeSize()
     if (iFileStats)
         iFileStats->Start(ticks);
 
-    int32 result = (-1);
+    TOsclFileOffset result = (-1);
 
     if (iNativeFile)
         result = iNativeFile->Size();
@@ -1178,3 +1117,20 @@ int32 Oscl_File::CallNativeGetError()
 
     return result;
 }
+
+OSCL_EXPORT_REF uint32 Oscl_File::GetAsyncFileNumOfRun()
+{
+    if (iAsyncFile)
+        return iAsyncFile->iNumOfRun;
+    else
+        return 0;
+}
+
+OSCL_EXPORT_REF uint32 Oscl_File::GetAsyncFileNumOfRunError()
+{
+    if (iAsyncFile)
+        return iAsyncFile->iNumOfRunErr;
+    else
+        return 0;
+}
+

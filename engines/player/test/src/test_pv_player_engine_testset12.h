@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,11 @@
 #include "pvmf_streaming_data_source.h"
 #endif
 
+#if RUN_FASTTRACK_TESTCASES
+#ifndef PVPVXPARSER_H_INCLUDED
+#include "pvpvxparser.h"
+#endif
+#endif
 
 #ifndef PVMF_DOWNLOAD_DATA_SOURCE_H_INCLUDED
 #include "pvmf_download_data_source.h"
@@ -49,14 +54,14 @@
 #ifndef DEFAULT_URLS_DEFINED
 #define DEFAULT_URLS_DEFINED
 
-#define AMR_MPEG4_RTSP_URL "rtsp://test.3gp"
-#define AMR_MPEG4_RTSP_URL_2 "rtsp://test.mp4"
-#define H263_AMR_RTSP_URL "rtsp://test.3gp"
-#define MPEG4_RTSP_URL "rtsp://test.3gp"
-#define MPEG4_SHRT_HDR_RTSP_URL "rtsp://test.3gp"
-#define AAC_RTSP_URL     "rtsp://test.3gp"
-#define MPEG4_AAC_RTSP_URL "rtsp://test.3gp"
-#define AMR_MPEG4_SDP_FILE "test.sdp"
+#define AMR_MPEG4_RTSP_URL ""
+#define AMR_MPEG4_RTSP_URL_2 ""
+#define H263_AMR_RTSP_URL ""
+#define MPEG4_RTSP_URL ""
+#define MPEG4_SHRT_HDR_RTSP_URL ""
+#define AAC_RTSP_URL     ""
+#define MPEG4_AAC_RTSP_URL ""
+#define AMR_MPEG4_SDP_FILE "pv_amr_mpeg4.sdp"
 #endif
 
 #define NUM_PAUSE -1 // No of times 'PAUSE' infinite in case of Multiple Pause
@@ -75,6 +80,8 @@ class PVPlayerDataSink;
 class PVPlayerDataSinkFilename;
 class PvmfFileOutputNodeConfigInterface;
 class PvmiCapabilityAndConfig;
+class PVMFDownloadDataSourcePVX;
+
 
 /*!
  *  Test cases to test Multiple pause resume, multiple seek during playback
@@ -142,6 +149,7 @@ class pvplayer_async_test_genericopenplaystop : public pvplayer_async_test_base
                 , iPlayListURL(false)
                 , iStreamDataSource(NULL)
                 , iSourceContextData(NULL)
+                , iDownloadContextDataPVX(NULL)
         {
             iVideoSinkFormatType = aVideoSinkFormat;
             iAudioSinkFormatType = aAudioSinkFormat;
@@ -200,7 +208,6 @@ class pvplayer_async_test_genericopenplaystop : public pvplayer_async_test_base
         	STATE_REMOVEDATASINK_AUDIO,
         	STATE_RESET,
         	STATE_REMOVEDATASOURCE,
-        	STATE_WAIT_FOR_ERROR_HANDLING,
         	STATE_CLEANUPANDCOMPLETE
         };*/
 
@@ -327,8 +334,13 @@ class pvplayer_async_test_genericopenplaystop : public pvplayer_async_test_base
 
         //FTDL
         void CreateDownloadDataSource();
+        uint8 iPVXFileBuf[4096];
+        PVMFDownloadDataSourcePVX* iDownloadContextDataPVX;
         PVMFDownloadDataSourceHTTP* iDownloadContextDataHTTP;
         int32 iDownloadMaxfilesize;
+#if RUN_FASTTRACK_TESTCASES
+        CPVXInfo iDownloadPvxInfo;
+#endif
         OSCL_wHeapString<OsclMemAllocator> iDownloadURL;
         OSCL_wHeapString<OsclMemAllocator> iDownloadFilename;
         OSCL_HeapString<OsclMemAllocator> iDownloadProxy;

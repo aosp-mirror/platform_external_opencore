@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,55 +17,8 @@
  */
 /*
 
- Pathname: ./src/mdct_fxp.c
+ Pathname: mdct_fxp.c
  Funtions: fft_rx2
-
-     Date: 2/23/2001
-
-------------------------------------------------------------------------------
- REVISION HISTORY
-
- Description:  Unscambled arrays are now of type const, stored in twiddle.h
-
- Description:  Convertion to fixed point
-
- Description:  Modified according to code review comments
-
- Description:  Changed definitions from Int to Int32 for Data[]
-
- Description:  Modified pointer updating schemes to avoid setting the pointers
- outside the allowable range of memory, and then rewinding them back inside
- the allowable range.  No bug existed - this just seems to be a "safer"
- method, at no penalty.
-
- Description:  Modified interface so a vector with extended precision is
-               returned, this is a 32 bit vector whose MSB 16 bits will be
-               extracted later. This avoid a constant shift down. Also, the
-               number of stack variables has been reduced and casting has been
-               added to support more platforms. Added copyright notice.
-
- Description:   Eliminate constant down shifting before call to FFT. Highest
-                precision is kept now by adaptive shifting in buffer_adaptation().
-
- Description:   per review comments, added comments to explain new operations.
-
- Description:   Replaced radix 2 FFT with a mix-radix FFT. Also transfer complex
-                post-rotation functionality to functions fwd_long_complex_rot()
-                and fwd_short_complex_rot(). This saves unnecessary double access
-                to memory. Also added max calculation in complex the pre-rotation
-                to eliminate the use of buffer_adaptation().
-
- Description:
-            (1) Updated interfaces to functions fwd_short_complex_rot() and
-                fwd_long_complex_rot() so no max is returned.
-            (2) Eliminated shifting after post complex rotation
-            (3) Updated normalization calculation and shift constants
-
- Date: 10/28/2002
- Description:
-            (1) Added check for max1 == 0
-
- Description:
 
 ------------------------------------------------------------------------------
  INPUT AND OUTPUT DEFINITIONS

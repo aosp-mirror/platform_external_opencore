@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,6 +82,9 @@
 #include "pvmf_media_msg_format_ids.h"
 #endif
 
+#ifndef PVMI_KVP_H_INCLUDED
+#include "pvmi_kvp.h"
+#endif
 // Forward declaration
 class PVMp4FFComposerPort;
 
@@ -101,8 +104,8 @@ typedef PVMFPortVector<PVMp4FFComposerPort, PVMp4FFCNAlloc> PVMp4FFCNPortVector;
 #define PROFILING_ON (PVLOGGER_INST_LEVEL >= PVLOGMSG_INST_PROF)
 
 #if PROFILING_ON
-#ifndef OSCL_CLOCK_H_INCLUDED
-#include "oscl_clock.h"
+#ifndef PVMF_MEDIA_CLOCK_H_INCLUDED
+#include "pvmf_media_clock.h"
 #endif
 #endif
 
@@ -152,18 +155,26 @@ class PVMp4FFComposerNode : public PVMFNodeInterface,
         OSCL_IMPORT_REF bool queryInterface(const PVUuid& uuid, PVInterface*& iface);
 
         // Pure virtual functions from PVMp4FFCNClipConfigInterface
-        OSCL_IMPORT_REF PVMFStatus SetOutputFile(OsclFileHandle* aFileHandle);
         OSCL_IMPORT_REF PVMFStatus SetOutputFileName(const OSCL_wString& aFileName);
+        OSCL_IMPORT_REF PVMFStatus SetOutputFileDescriptor(const OsclFileHandle* aFileHandle);
         OSCL_IMPORT_REF PVMFStatus SetAuthoringMode(PVMp4FFCN_AuthoringMode aAuthoringMode = PVMP4FFCN_3GPP_DOWNLOAD_MODE);
         OSCL_IMPORT_REF PVMFStatus SetPresentationTimescale(uint32 aTimescale);
-        OSCL_IMPORT_REF PVMFStatus SetVersion(const OSCL_wString& aVersion, uint16 aLangCode = 0);
-        OSCL_IMPORT_REF PVMFStatus SetTitle(const OSCL_wString& aTitle, uint16 aLangCode = 0);
-        OSCL_IMPORT_REF PVMFStatus SetAuthor(const OSCL_wString& aAuthor, uint16 aLangCode = 0);
-        OSCL_IMPORT_REF PVMFStatus SetCopyright(const OSCL_wString& aCopyright, uint16 aLangCode = 0);
-        OSCL_IMPORT_REF PVMFStatus SetDescription(const OSCL_wString& aDescription, uint16 aLangCode = 0);
-        OSCL_IMPORT_REF PVMFStatus SetRating(const OSCL_wString& aRating, uint16 aLangCode = 0);
+        OSCL_IMPORT_REF PVMFStatus SetVersion(const OSCL_wString& aVersion, const OSCL_String& aLangCode);
+        OSCL_IMPORT_REF PVMFStatus SetTitle(const OSCL_wString& aTitle, const OSCL_String& aLangCode);
+        OSCL_IMPORT_REF PVMFStatus SetAuthor(const OSCL_wString& aAuthor, const OSCL_String& aLangCode);
+        OSCL_IMPORT_REF PVMFStatus SetCopyright(const OSCL_wString& aCopyright, const OSCL_String& aLangCode);
+        OSCL_IMPORT_REF PVMFStatus SetDescription(const OSCL_wString& aDescription, const OSCL_String& aLangCode);
+        OSCL_IMPORT_REF PVMFStatus SetRating(const OSCL_wString& aRating, const OSCL_String& aLangCode);
         OSCL_IMPORT_REF PVMFStatus SetCreationDate(const OSCL_wString& aCreationDate);
         OSCL_IMPORT_REF PVMFStatus SetRealTimeAuthoring(const bool aRealTime);
+        OSCL_IMPORT_REF PVMFStatus SetAlbumInfo(const OSCL_wString& aAlbum_Title, const OSCL_String& aLangCode);
+        OSCL_IMPORT_REF PVMFStatus SetRecordingYear(uint16 aRecordingYear);
+        OSCL_IMPORT_REF PVMFStatus SetPerformer(const OSCL_wString& aPerformer, const OSCL_String& aLangCode);
+        OSCL_EXPORT_REF PVMFStatus SetGenre(const OSCL_wString& aGenre, const OSCL_String& aLangCode);
+        OSCL_EXPORT_REF PVMFStatus SetClassification(const OSCL_wString& aClassificationInfo, uint32 aClassificationEntity, uint16 aClassificationTable, const OSCL_String& aLangCode);
+        OSCL_EXPORT_REF PVMFStatus SetKeyWord(const OSCL_wString& aKeyWordInfo, const OSCL_String& aLangCode);
+        OSCL_EXPORT_REF PVMFStatus SetLocationInfo(PvmfAssetInfo3GPPLocationStruct& aLocation_info);
+        OSCL_IMPORT_REF uint16 ConvertLangCode(const OSCL_String& aLang);
 
         // Pure virtual functions from PVMp4FFCNTrackConfigInterface
         OSCL_IMPORT_REF PVMFStatus SetTrackReference(const PVMFPortInterface& aPort,
@@ -258,7 +269,7 @@ class PVMp4FFComposerNode : public PVMFNodeInterface,
 
         PVMFStatus AddMemFragToTrack(Oscl_Vector<OsclMemoryFragment, OsclMemAllocator> aFrame, OsclRefCounterMemFrag& aMemFrag, PVMFFormatType aFormat,
                                      uint32& aTimestamp, int32 aTrackId, PVMp4FFComposerPort *aPort);
-        int32 GetIETFFrameSize(uint8 aFrameType);
+        int32 GetIETFFrameSize(uint8 aFrameType, int32 aCodecType);
 
         /////////////////////////////////////////////////////
         //    Progress and max size / duration routines
@@ -319,6 +330,7 @@ class PVMp4FFComposerNode : public PVMFNodeInterface,
     private:
         void GenerateDiagnostics(uint32 aTime, uint32 aSize);
         void LogDiagnostics();
+        int32 StoreCurrentCommand(PVMp4FFCNCmdQueue&, PVMp4FFCNCmd&, PVMp4FFCNCmdQueue&);
 
         // Node command queue
         PVMp4FFCNCmdQueue iCmdQueue;
@@ -329,7 +341,6 @@ class PVMp4FFComposerNode : public PVMFNodeInterface,
 
         // File format
         PVA_FF_IMpeg4File* iMpeg4File;
-        Oscl_File *iOutputFileHandle;
         OSCL_wHeapString<OsclMemAllocator> iFileName;
         OSCL_wHeapString<OsclMemAllocator> iPostfix;
         OSCL_wHeapString<OsclMemAllocator> iOutputPath;
@@ -338,14 +349,33 @@ class PVMp4FFComposerNode : public PVMFNodeInterface,
         uint32 iAuthoringMode;
         uint32 iPresentationTimescale;
         uint32 iMovieFragmentDuration;
-
+        Oscl_File* iFileObject;
         // Meta data strings
         struct PVMP4FFCN_MetaDataString
         {
 public:
-            PVMP4FFCN_MetaDataString(): iLangCode(0) {};
+            PVMP4FFCN_MetaDataString(): iClassificationEntity(0), iClassificationTable(0), iLangCode(0) {};
             OSCL_wHeapString<OsclMemAllocator> iDataString;
+            uint32 iClassificationEntity;
+            uint16 iClassificationTable;
             uint16 iLangCode;
+        };
+        class PVMP4FFCN_KeyWord
+        {
+            public:
+                PVMP4FFCN_KeyWord(): iKeyWordSize(0), iLang_Code(0) {};
+                ~PVMP4FFCN_KeyWord() {};
+                uint32 iKeyWordSize;
+                uint16 iLang_Code;
+                OSCL_wHeapString<OsclMemAllocator> iData_String;
+
+                PVMP4FFCN_KeyWord(const OSCL_wString& aData_String, uint32 aKeyWordSize, uint16 aLang_Code)
+                {
+                    iData_String = aData_String;
+                    iKeyWordSize = aKeyWordSize;
+                    iLang_Code = aLang_Code;
+                }
+
         };
         PVMP4FFCN_MetaDataString iVersion;
         PVMP4FFCN_MetaDataString iTitle;
@@ -353,6 +383,14 @@ public:
         PVMP4FFCN_MetaDataString iCopyright;
         PVMP4FFCN_MetaDataString iDescription;
         PVMP4FFCN_MetaDataString iRating;
+        PVMP4FFCN_MetaDataString iAlbumTitle;
+        uint16 iRecordingYear;
+        PVMP4FFCN_MetaDataString iPerformer;
+        PVMP4FFCN_MetaDataString iGenre;
+        PVMP4FFCN_MetaDataString iClassification;
+        Oscl_Vector<PVMP4FFCN_KeyWord* , OsclMemAllocator> iKeyWordVector;
+
+        PvmfAssetInfo3GPPLocationStruct iLocationInfo;
         OSCL_wHeapString<OsclMemAllocator> iCreationDate;
 
         // Convert from timescale
@@ -360,6 +398,7 @@ public:
 
         // Debug logging
         PVLogger* iLogger;
+        PVLogger* iDataPathLogger;
 
         uint32 iExtensionRefCount;
 
@@ -389,6 +428,8 @@ public:
         PVMFFormatType iformat_h264;
         PVMFFormatType iformat_text;
         bool iNodeEndOfDataReached;
+        bool iSampleInTrack;
+        bool iFileRendered;
 
 #if PROFILING_ON
         uint32 iMaxSampleAddTime;
@@ -408,6 +449,20 @@ public:
         };
 
         PVMp4FFCNStats iStats[3];
+#endif
+#ifdef _TEST_AE_ERROR_HANDLING
+        bool iErrorHandlingAddMemFrag;
+        bool iErrorHandlingAddTrack;
+        bool iErrorCreateComposer;
+        bool iErrorRenderToFile;
+        PVMFFormatType iErrorAddTrack;
+        uint32 iErrorNodeCmd;
+        uint32 iTestFileSize;
+        uint32 iTestTimeStamp;
+        uint32 iErrorAddSample;
+        uint32 iFileSize;
+        uint32 iFileDuration;
+        uint32 iErrorDataPathStall;
 #endif
 };
 

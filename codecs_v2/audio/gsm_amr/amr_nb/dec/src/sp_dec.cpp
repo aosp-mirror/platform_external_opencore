@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ terms listed above has been obtained from the copyright holder.
 
  Description: Add PV coding template. Filled out template sections and
               reformatted code to follow C coding standard. Removed code that
-              was put in to handle SID in GSMFrameDecode.
+              handles SID in GSMFrameDecode.
 
  Description: Made the following changes per comments from Phase 2/3 review:
               1. Updated to more recent PV C coding template.
@@ -267,7 +267,12 @@ Word16 GSMInitDecode(void **state_data,
     if (Decoder_amr_init(&s->decoder_amrState)
             || Post_Process_reset(&s->postHP_state))
     {
-        void** tempVoid = (void**) & s;
+        Speech_Decode_FrameState *tmp = s;
+        /*
+         *  dereferencing type-punned pointer avoid
+         *  breaking strict-aliasing rules
+         */
+        void** tempVoid = (void**) tmp;
         GSMDecodeFrameExit(tempVoid);
         return (-1);
     }

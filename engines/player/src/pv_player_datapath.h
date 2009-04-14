@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,30 @@ class PVPlayerDatapathObserver
     public:
         virtual void HandlePlayerDatapathEvent(int32 aDatapathEvent, PVMFStatus aEventStatus, OsclAny* aContext = NULL, PVMFCmdResp* aCmdResp = NULL) = 0;
         virtual ~PVPlayerDatapathObserver() {}
+};
+
+enum PVPDPState
+{
+    PVPDP_IDLE,
+    PVPDP_ERROR,
+    PREPARE_INIT,
+    PREPARE_REQPORT,
+    PREPARE_PREPARE,
+    PREPARE_CONNECT,
+    PREPARED,
+    START_START,
+    STARTED,
+    PAUSE_PAUSE,
+    PAUSED,
+    STOP_STOP,
+    STOPPED,
+    TEARDOWN_RELEASEPORT1,
+    TEARDOWN_RELEASEPORT2,
+    TEARDOWNED,
+    RESET_RESET,
+    RESETTED,
+    PVPDP_CANCEL,
+    PVPDP_CANCELLED
 };
 
 class PVLogger;
@@ -103,19 +127,19 @@ class PVPlayerDatapath : public OsclTimerObject,
         void SetSourceDecTrackInfo(PVMFTrackInfo& aTrackInfo)
         {
             iSourceTrackInfo = &aTrackInfo;
-            iSourceDecFormatType = GetFormatIndex(aTrackInfo.getTrackMimeType().get_str());
+            iSourceDecFormatType = aTrackInfo.getTrackMimeType().get_str();
         }
 
         void SetDecSinkFormatType(PVMFFormatType& aFormatType)
         {
             iDecSinkFormatType = aFormatType;
-            GetFormatStringFromType(aFormatType, iDecSinkFormatString);
+            iDecSinkFormatString = aFormatType.getMIMEStrPtr();
         }
 
         void SetSourceSinkTrackInfo(PVMFTrackInfo& aTrackInfo)
         {
             iSourceTrackInfo = &aTrackInfo;
-            iSourceSinkFormatType = GetFormatIndex(aTrackInfo.getTrackMimeType().get_str());
+            iSourceSinkFormatType = aTrackInfo.getTrackMimeType().get_str();
         }
 
         PVMFStatus Prepare(OsclAny* aContext);
@@ -134,6 +158,8 @@ class PVPlayerDatapath : public OsclTimerObject,
 
         void DisconnectNodeSession(void);
 
+        PVPDPState iState;
+
     private:
         // From OsclTimerObject
         void Run();
@@ -147,7 +173,16 @@ class PVPlayerDatapath : public OsclTimerObject,
         // From PVMFNodeErrorEventObserver
         void HandleNodeErrorEvent(const PVMFAsyncEvent& aEvent);
 
-        void GetFormatStringFromType(PVMFFormatType &aType, OSCL_HeapString<OsclMemAllocator>& aString);
+        PVMFStatus IssueDatapathInit(PVMFNodeInterface* aNode, PVMFSessionId aSessionId, PVMFCommandId& aCmdId);
+        PVMFStatus IssueDatapathRequestPort(PVMFNodeInterface* aNode, PVMFSessionId aSessionId, int32 aPortTag,
+                                            PvmfMimeString* aPortConfig, OsclAny* aContext, PVMFCommandId &aCmdId);
+        PVMFStatus IssueDatapathPrepare(PVMFNodeInterface* aNode, PVMFSessionId aSessionId, PVMFCommandId& aCmdId);
+        PVMFStatus IssueDatapathStart(PVMFNodeInterface* aNode, PVMFSessionId aSessionId, PVMFCommandId& aCmdId);
+        PVMFStatus IssueDatapathPause(PVMFNodeInterface* aNode, PVMFSessionId aSessionId, PVMFCommandId& aCmdId);
+        PVMFStatus IssueDatapathStop(PVMFNodeInterface* aNode, PVMFSessionId aSessionId, PVMFCommandId& aCmdId);
+        PVMFStatus IssueDatapathReleasePort(PVMFNodeInterface* aNode, PVMFSessionId aSessionId, PVMFPortInterface* aPort, PVMFCommandId& aCmdId);
+        PVMFStatus IssueDatapathReset(PVMFNodeInterface* aNode, PVMFSessionId aSessionId, PVMFCommandId& aCmdId);
+        PVMFStatus IssueDatapathCancel(PVMFNodeInterface* aNode, PVMFSessionId aSessionId, PVMFCommandId& aCmdId);
 
         PVMFNodeInterface* iSourceNode;
         PVMFSessionId iSourceSessionId;
@@ -171,32 +206,6 @@ class PVPlayerDatapath : public OsclTimerObject,
         OSCL_HeapString<OsclMemAllocator> iDecSinkFormatString;
         PVMFFormatType iSourceSinkFormatType;
         PVMFTrackInfo* iSourceTrackInfo;
-
-        enum PVPDPState
-        {
-            PVPDP_IDLE,
-            PVPDP_ERROR,
-            PREPARE_INIT,
-            PREPARE_REQPORT,
-            PREPARE_PREPARE,
-            PREPARE_CONNECT,
-            PREPARED,
-            START_START,
-            STARTED,
-            PAUSE_PAUSE,
-            PAUSED,
-            STOP_STOP,
-            STOPPED,
-            TEARDOWN_RELEASEPORT1,
-            TEARDOWN_RELEASEPORT2,
-            TEARDOWNED,
-            RESET_RESET,
-            RESETTED,
-            PVPDP_CANCEL,
-            PVPDP_CANCELLED
-        };
-
-        PVPDPState iState;
 
         // Enum for the datapath configuration
         enum PVPDPConfig

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*********************************************************************************/
 /*
     This PVA_FF_ESDescriptor Class contains information on the Elementary Stream
 */
@@ -31,7 +30,6 @@ class PVA_FF_ES_ID_Inc : public PVA_FF_BaseDescriptor
 
     public:
         PVA_FF_ES_ID_Inc(uint32 trackid); // Alternate constructor
-
         virtual ~PVA_FF_ES_ID_Inc(); // Destructor
 
         // Member gets and sets

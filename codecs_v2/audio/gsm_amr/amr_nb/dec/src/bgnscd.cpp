@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,50 +29,10 @@ terms listed above has been obtained from the copyright holder.
 /*
 ------------------------------------------------------------------------------
 
-
-
  Pathname: ./audio/gsm-amr/c/src/bgnscd.c
  Functions:
            Bgn_scd_reset
            Bgn_scd
-
-     Date: 03/28/2000
-
-------------------------------------------------------------------------------
- REVISION HISTORY
-
- Description: Made prereview changes so the structure of the module conforms
-    with the others. Added checks for overflow on the shift functions.
-
- Description: Made changes based on comments from the review meeting.
-
- Description: Fixed a bug found during unit testing.
-
- Description: Synchronized code with UMTS version 3.2.0. Updated coding
-              template.
-
- Description: Made the following changes per comments from Phase 2/3 review:
-              1. Used TRUE/FALSE #defines instead of hard-coded 1/0 in
-                 Bgn_scd code.
-              2. Fixed typecasting issue with TI compiler.
-              3. Modified FOR loop to count down.
-
- Description: Modified FOR loop on line 740 to count up.
-
- Description: Removed the functions bgn_scd_init and bgn_scd_exit.
- The bgn_scd related structure is no longer dynamically allocated.
-
- Description: Making changes for EPOC. Passing in pOverflow instead of having
-              it act as a global variable. Updated include files and added
-              more description about pOverflow.
-
- Description:  Replaced OSCL mem type functions and eliminated include
-               files that now are chosen by OSCL definitions
-
- Description:  Replaced "int" and/or "char" with defined types.
-               Added proper casting (Word32) to some left shifting operations
-
- Description:
 
 ------------------------------------------------------------------------------
  MODULE DESCRIPTION

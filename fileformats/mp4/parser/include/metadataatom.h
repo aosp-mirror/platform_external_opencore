@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,6 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*********************************************************************************/
-/*
-	This MetaDataAtom Class is used for Parsing, and Storing the tags from Meta data
-	of ITune M4A file.
-*/
-
 #ifndef METADATAATOM_H_INCLUDED
 #define METADATAATOM_H_INCLUDED
 
@@ -50,11 +44,30 @@ class MetaDataAtom: public Atom
                 return temp;
         }
 
+        OSCL_wHeapString<OsclMemAllocator> getITunesTrackSubTitle() const
+        {
+            OSCL_wHeapString<OsclMemAllocator> temp;
+            if (_pITunesILSTAtom)
+                return _pITunesILSTAtom->getTrackSubTitle();
+            else
+                return temp;
+        }
+
+
         OSCL_wHeapString<OsclMemAllocator> getITunesArtist() const
         {
             OSCL_wHeapString<OsclMemAllocator> temp;
             if (_pITunesILSTAtom)
                 return _pITunesILSTAtom->getArtist();
+            else
+                return temp;
+        }
+
+        OSCL_wHeapString<OsclMemAllocator> getITunesAlbumArtist() const
+        {
+            OSCL_wHeapString<OsclMemAllocator> temp;
+            if (_pITunesILSTAtom)
+                return _pITunesILSTAtom->getAlbumArtist();
             else
                 return temp;
         }
@@ -137,6 +150,17 @@ class MetaDataAtom: public Atom
                 return temp;
         }
 
+        OSCL_wHeapString<OsclMemAllocator> getITunesEncodedBy() const
+        {
+            OSCL_wHeapString<OsclMemAllocator> temp;
+            if (_pITunesILSTAtom)
+            {
+                return _pITunesILSTAtom->getEncodedBy();
+            }
+            else
+                return temp;
+        }
+
         OSCL_wHeapString<OsclMemAllocator> getITunesWriter() const
         {
             OSCL_wHeapString<OsclMemAllocator> temp;
@@ -182,6 +206,7 @@ class MetaDataAtom: public Atom
                 return temp;
         }
 
+
         uint16 getITunesThisTrackNo() const
         {
             if (_pITunesILSTAtom)
@@ -206,6 +231,14 @@ class MetaDataAtom: public Atom
                 return false;
         }
 
+        bool IsITunesContentRating() const
+        {
+            if (_pITunesILSTAtom)
+                return _pITunesILSTAtom->IsContentRating();
+            else
+                return false;
+        }
+
         uint16 getITunesBeatsPerMinute() const
         {
             if (_pITunesILSTAtom)
@@ -213,6 +246,7 @@ class MetaDataAtom: public Atom
             else
                 return 0;
         }
+
 
         PvmfApicStruct* getITunesImageData() const
         {
@@ -266,6 +300,25 @@ class MetaDataAtom: public Atom
                 return 0;
         }
 
+
+        OSCL_wHeapString<OsclMemAllocator> getITunesCDTrackNumberData() const
+        {
+            OSCL_wHeapString<OsclMemAllocator> temp;
+            if (_pITunesILSTAtom)
+                return _pITunesILSTAtom->getCDTrackNumberData();
+            else
+                return temp;
+        }
+
+        OSCL_wHeapString<OsclMemAllocator> getITunesCDDB1Data() const
+        {
+            OSCL_wHeapString<OsclMemAllocator> temp;
+            if (_pITunesILSTAtom)
+                return _pITunesILSTAtom->getCDDB1Data();
+            else
+                return temp;
+        }
+
         OSCL_wHeapString<OsclMemAllocator> getITunesLyrics() const
         {
             OSCL_wHeapString<OsclMemAllocator> temp;
@@ -278,10 +331,7 @@ class MetaDataAtom: public Atom
 
     private:
 
-
-
         HandlerAtom	*_pHdlrAtom;
-
         // User ilst Data
         ITunesILSTAtom* _pITunesILSTAtom;
         PVLogger *iLogger;

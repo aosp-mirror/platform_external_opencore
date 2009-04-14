@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,14 +27,8 @@ Permission to distribute, modify and use this file under the standard license
 terms listed above has been obtained from the copyright holder.
 ****************************************************************************************/
 /*
-------------------------------------------------------------------------------
-
-
-
  Pathname: ./audio/gsm-amr/c/src/vad1.c
  Functions:
-
-     Date: 02/04/2002
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
@@ -55,6 +49,7 @@ terms listed above has been obtained from the copyright holder.
  Description: Changed round function name to pv_round to avoid conflict with
               round function in C standard library.
 
+ Who:                           Date:
  Description:
 
 ------------------------------------------------------------------------------

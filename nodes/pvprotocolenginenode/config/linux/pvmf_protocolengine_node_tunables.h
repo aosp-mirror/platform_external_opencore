@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,7 @@
 #ifndef PVMF_PROTOCOL_ENGINE_NODE_TUNABLES_H_INCLUDED
 #define PVMF_PROTOCOL_ENGINE_NODE_TUNABLES_H_INCLUDED
 
-#ifndef PV_PLAYER_SDKINFO_H_INCLUDED
-#include "../../../engines/player/src/pv_player_sdkinfo.h"
-#endif
-
-#define PDL_HTTP_USER_AGENT			_STRLIT_CHAR(PVPLAYER_ENGINE_SDKINFO_LABEL)
+#define PDL_HTTP_USER_AGENT			_STRLIT_CHAR("PVPLAYER 04.07.00.01")
 #define PDL_HTTP_VERSION_NUMBER		0 // 0 => Http Version1.0 ; 1 => Http Version1.1
 
 // macros for memory pool
@@ -38,6 +34,8 @@
 #define DEFAULT_MAX_SERVER_RESPONSE_DURATION_IN_SEC 60
 #define DEFAULT_KEEPALIVE_TIMEOUT_IN_SEC 60
 #define DEFAULT_MAX_SERVER_RESPONSE_DURATION_IN_SEC_FOR_STOPEOS_LOGGING 4
+#define DEFAULT_WALLCLOCK_TIMEOUT_IN_SEC 2
+#define DEFAULT_BUFFER_STATUS_CLOCK_TIMEOUT_IN_SEC 2
 #define DEFAULT_TIMER_VECTOR_RESERVE_NUMBER 8
 #define PVPROTOCOLENGINENODE_TIMER_FREQUENCY 1 // 1 means 1 sec, 1000 means 1msec
 
@@ -47,7 +45,7 @@
 #define BITMASK_HTTPHEAD 4
 
 // macros for user-agent
-#define DEFAULT_DL_USER_AGNET			_STRLIT_CHAR(PVPLAYER_ENGINE_SDKINFO_LABEL)
+#define DEFAULT_DL_USER_AGNET			_STRLIT_CHAR("PVPlayer/4.0 (Beta release)")
 #define DEFAULT_MS_STREAMING_USER_AGENT _STRLIT_CHAR("NSPlayer/10.0.0.3646")
 
 // marcos for download algorithm pre-condition checks
@@ -80,7 +78,7 @@
 #define PROTOCOLENGINENODE_SPACE_ASCIICODE 0x20
 #define BUFFER_SIZE_FOR_ZERO_OUT_DATA_STREAM_OBJECT 10240
 #ifndef EVENT_HANDLER_TOTAL
-#define EVENT_HANDLER_TOTAL 8
+#define EVENT_HANDLER_TOTAL 9
 #endif
 
 #endif // PVMF_PROTOCOL_ENGINE_NODE_TUNABLES_H_INCLUDED

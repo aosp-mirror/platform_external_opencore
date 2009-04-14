@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -318,6 +318,11 @@ OSCL_EXPORT_REF PVMFStatus PvmfPortBaseImpl::Disconnect()
         return PVMFFailure;
     }
 
+    //reset busy flags - this would prevent any queue / port ready
+    //events from being generated as we clear the message queues
+    iIncomingQueue.iBusy = false;
+    iOutgoingQueue.iBusy = false;
+
     //Automatically disconnect the peer.
     iConnectedPort->PeerDisconnect();
 
@@ -351,6 +356,11 @@ OSCL_EXPORT_REF PVMFStatus PvmfPortBaseImpl::PeerDisconnect()
                         (0, "0x%x PvmfPortBaseImpl::PeerDisconnect: Error - Port not connected", this));
         return PVMFFailure;
     }
+
+    //reset busy flags - this would prevent any queue / port ready
+    //events from being generated as we clear the message queues
+    iIncomingQueue.iBusy = false;
+    iOutgoingQueue.iBusy = false;
 
     ClearMsgQueues();
 
@@ -404,23 +414,49 @@ OSCL_EXPORT_REF PVMFStatus PvmfPortBaseImpl::QueueOutgoingMsg(PVMFSharedMediaMsg
 #if PVMF_PORT_BASE_IMPL_STATS
     ++iStats.iOutgoingMsgQueued;
 #endif
-    PortActivity(PVMF_PORT_ACTIVITY_OUTGOING_MSG);
 
-    // Outgoing queue size is at capacity and goes into busy state. The owner node is
-    // notified of this transition into busy state.
-    if (isOutgoingFull())
-//	if(iOutgoingQueue.iThreshold!=0 &&
-//		iOutgoingQueue.iQ.size() >= iOutgoingQueue.iCapacity) //(mg) this causes ASF streaming to fail
+    //Attempt to queue the message directly in connected port's incoming msg queue
+    //first. If we cannot queue then we leave the msg in iOutgoingQueue
+    //Doing the push in iOutgoingQueue first followed by Receive ensure that msgs
+    //flow in FIFO order. If we did a Receive first then we would need
+    PVMFStatus status = iConnectedPort->Receive(iOutgoingQueue.iQ.front());
+    if (status == PVMFSuccess)
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_DEBUG,
-                        (0, "0x%x PvmfPortBaseImpl::QueueOutgoingMsg: Outgoing queue is full. Goes into busy state.", this));
-        iOutgoingQueue.iBusy = true;
-        PortActivity(PVMF_PORT_ACTIVITY_OUTGOING_QUEUE_BUSY);
-#if PVMF_PORT_BASE_IMPL_STATS
-        ++iStats.iOutgoingQueueBusy;
+        // Dequeue the message
+        PVMFSharedMediaMsgPtr msg = iOutgoingQueue.iQ.front();
+        iOutgoingQueue.iQ.pop();
+#if (PVLOGGER_INST_LEVEL > PVLOGMSG_INST_LLDBG)
+        //log to datapath
+        if (iDatapathLogger)
+        {
+            LogMediaMsgInfo(msg, "Msg Sent Directly", iOutgoingQueue);
+        }
 #endif
+#if PVMF_PORT_BASE_IMPL_STATS
+        // Count this message as either sent successfully,
+        ++iStats.iOutgoingMsgSent;
+#endif
+        return status;
+        //there is no need to queue port activity PVMF_PORT_ACTIVITY_OUTGOING_MSG
+        //here since we have successfully q'd the msg on connected port's incoming
+        //msg queue
     }
-
+    else
+    {
+        PortActivity(PVMF_PORT_ACTIVITY_OUTGOING_MSG);
+        // Outgoing queue size is at capacity and goes into busy state. The owner node is
+        // notified of this transition into busy state.
+        if (isOutgoingFull())
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_DEBUG,
+                            (0, "0x%x PvmfPortBaseImpl::QueueOutgoingMsg: Outgoing queue is full. Goes into busy state.", this));
+            iOutgoingQueue.iBusy = true;
+            PortActivity(PVMF_PORT_ACTIVITY_OUTGOING_QUEUE_BUSY);
+#if PVMF_PORT_BASE_IMPL_STATS
+            ++iStats.iOutgoingQueueBusy;
+#endif
+        }
+    }
     return PVMFSuccess;
 }
 
@@ -556,6 +592,10 @@ OSCL_EXPORT_REF bool PvmfPortBaseImpl::isOutgoingFull()
 void PvmfPortBaseImpl::LogMediaMsgInfo(PVMFSharedMediaMsgPtr aMediaMsg, const char* msg, PvmfPortBaseImplQueue&q)
 //log media msg info, description, and associated q-depth.
 {
+    // to avoid compiler warnings when logger is not available
+    OSCL_UNUSED_ARG(msg);
+    OSCL_UNUSED_ARG(q);
+
     switch (aMediaMsg->getFormatID())
     {
         case PVMF_MEDIA_CMD_BOS_FORMAT_ID:
@@ -621,6 +661,9 @@ void PvmfPortBaseImpl::LogMediaMsgInfo(PVMFSharedMediaMsgPtr aMediaMsg, const ch
 OSCL_EXPORT_REF void PvmfPortBaseImpl::LogMediaMsgInfo(PVMFSharedMediaMsgPtr aMediaMsg, const char* msg, int32 qsize)
 //log media msg info, description, and associated q-depth.
 {
+    OSCL_UNUSED_ARG(msg);
+    OSCL_UNUSED_ARG(qsize);
+
     if (!iDatapathLogger)
         return;
 
@@ -672,6 +715,10 @@ OSCL_EXPORT_REF void PvmfPortBaseImpl::LogMediaMsgInfo(PVMFSharedMediaMsgPtr aMe
 OSCL_EXPORT_REF void PvmfPortBaseImpl::LogMediaDataInfo(PVMFSharedMediaDataPtr aMediaData, const char* msg, int32 qsize)
 //log media data info, description, and associated q-depth.
 {
+    OSCL_UNUSED_ARG(aMediaData);
+    OSCL_UNUSED_ARG(msg);
+    OSCL_UNUSED_ARG(qsize);
+
     if (!iDatapathLogger)
         return;
 

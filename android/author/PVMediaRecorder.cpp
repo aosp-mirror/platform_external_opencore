@@ -291,7 +291,6 @@ status_t PVMediaRecorder::start()
         LOGE("failed to construct an author command");
         return UNKNOWN_ERROR;
     }
-
     return mAuthorDriverWrapper->enqueueCommand(ac, 0, 0);
 }
 
@@ -301,12 +300,15 @@ status_t PVMediaRecorder::stop()
 {
     LOGV("stop");
     status_t ret = doStop();
-    if (OK == ret) {
-        ret = reset();
-        if (OK == ret) {
-            ret = close();
-        }
-    }
+    if (OK != ret)
+    LOGE("stop failed");
+    ret = reset();
+    if (OK != ret)
+    LOGE("reset failed");
+    ret = close();
+    if (OK != ret)
+    LOGE("close failed");
+
     return ret;
 }
 

@@ -1,6 +1,19 @@
-/* mediascanner.cpp
+/*
+ * Copyright (C) 2008, Google Inc.
  *
- * Android wrapper for media scanner
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied.
+ * See the License for the specific language governing permissions
+ * and limitations under the License.
+ * -------------------------------------------------------------------
  */
 
 #include <media/mediascanner.h>
@@ -108,6 +121,7 @@ static PVMFStatus parseMP3(const char *filename, MediaScannerClient& client)
         // type should follow first semicolon
         const char* type = strchr(key, ';') + 1;
         if (type == 0) continue;
+
         
         const char* value = framevector[i]->value.pChar_value;
 
@@ -326,7 +340,7 @@ static PVMFStatus parseMP4(const char *filename, MediaScannerClient& client)
     oscl_UTF8ToUnicode((const char *)filename, oscl_strlen((const char *)filename), (oscl_wchar *)output, MAX_BUFF_SIZE);
     OSCL_wHeapString<OsclMemAllocator> mpegfilename(output);
 
-    IMpeg4File *mp4Input = IMpeg4File::readMP4File(mpegfilename, 1 /* parsing_mode */, &iFs);
+    IMpeg4File *mp4Input = IMpeg4File::readMP4File(mpegfilename, NULL, NULL, 1 /* parsing_mode */, &iFs);
     if (mp4Input)
     {
         // check to see if the file contains video
@@ -338,16 +352,18 @@ static PVMFStatus parseMP4(const char *filename, MediaScannerClient& client)
             mp4Input->getTrackIDList(tracks, count);
             for (int i = 0; i < count; ++i) {
                 uint32 trackType = mp4Input->getTrackMediaType(tracks[i]);
-                OSCL_wHeapString<OsclMemAllocator> streamtype = mp4Input->getTrackMIMEType(tracks[i]);
+                OSCL_HeapString<OsclMemAllocator> streamtype;
+                mp4Input->getTrackMIMEType(tracks[i], streamtype);
                 char streamtypeutf8[128];
-                if (oscl_UnicodeToUTF8(streamtype.get_cstr(),streamtype.get_size(), streamtypeutf8,
-                                                                            sizeof(streamtypeutf8)) > 0) {
-                    if (strcmp(streamtypeutf8,"UNKNOWN") != 0) {
-                        if (trackType ==  MEDIA_TYPE_AUDIO) {
-                            hasAudio = true;
-                        } else if (trackType ==  MEDIA_TYPE_VISUAL) {
-                            hasVideo = true;
-                        }
+        strncpy (streamtypeutf8, streamtype.get_str(), streamtype.get_size());
+                if (streamtypeutf8[0])
+        {                                                                           
+                    if (strcmp(streamtypeutf8,"FORMATUNKNOWN") != 0) {
+                            if (trackType ==  MEDIA_TYPE_AUDIO) {
+                                hasAudio = true;
+                            } else if (trackType ==  MEDIA_TYPE_VISUAL) {
+                                hasVideo = true;
+                            }
                     } else {
                         //LOGI("@@@@@@@@ %100s: %s\n", filename, streamtypeutf8);
                     }
@@ -606,21 +622,6 @@ status_t MediaScanner::doProcessDirectory(char *path, int pathRemaining, const c
         }
 
         int type = entry->d_type;
-        if (type == DT_UNKNOWN) {
-            // If the type is unknown, stat() the file instead.
-            // This is sometimes necessary when accessing NFS mounted filesystems, but
-            // could be needed in other cases well.
-            struct stat statbuf;
-            if (stat(path, &statbuf) == 0) {
-                if (S_ISREG(statbuf.st_mode)) {
-                    type = DT_REG;
-                } else if (S_ISDIR(statbuf.st_mode)) {
-                    type = DT_DIR;
-                }
-            } else {
-                LOGD("stat() failed for %s: %s", path, strerror(errno) );
-            }
-        }
         if (type == DT_REG || type == DT_DIR) {
             int nameLength = strlen(name);
             bool isDirectory = (type == DT_DIR);

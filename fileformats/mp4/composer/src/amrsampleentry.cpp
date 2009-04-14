@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*********************************************************************************/
 /*
     This PVA_FF_AudioSampleEntry Class is used for visual streams.
 */
@@ -27,8 +26,8 @@
 #include "a_atomdefs.h"
 
 // Constructor
-PVA_FF_AMRSampleEntry::PVA_FF_AMRSampleEntry()
-        : PVA_FF_SampleEntry(FourCharConstToUint32('s', 'a', 'm', 'r'))
+PVA_FF_AMRSampleEntry::PVA_FF_AMRSampleEntry(uint32 format)
+        : PVA_FF_SampleEntry(format)
 {
     init();
     recomputeSize();
@@ -47,13 +46,13 @@ PVA_FF_AMRSampleEntry::init()
     _reserved1[0] = 0;
     _reserved1[1] = 0;
 
-    _reserved2 = 2; // = 2;
-    _reserved3 = 16; // = 16;
-    _reserved4 = 0; // = 0;
+    _reserved2 = 2;
+    _reserved3 = 16;
+    _reserved4 = 0;
 
-    _timeScale = 0; // Get it from the track
+    _timeScale = 0;
 
-    _reserved5 = 0; // = 0;
+    _reserved5 = 0;
 
     PV_MP4_FF_NEW(fp->auditCB, PVA_FF_AMRSpecificAtom, (), pAMRSpecificAtom);
 
@@ -152,7 +151,4 @@ PVA_FF_AMRSampleEntry::recomputeSize()
         _pparent->recomputeSize();
     }
 }
-
-
-
 

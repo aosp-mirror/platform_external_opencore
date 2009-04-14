@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,8 +39,9 @@
 #ifndef PVMF_RETURN_CODES_H_INCLUDED
 #include "pvmf_return_codes.h"
 #endif
-#ifndef OSCL_CLOCK_H_INCLUDED
-#include "oscl_clock.h"
+
+#ifndef PVMF_MEDIA_CLOCK_H_INCLUDED
+#include "pvmf_media_clock.h"
 #endif
 
 #define PVMF_DATA_SOURCE_DIRECTION_CONTROL_INTERFACE_MIMETYPE "pvxxx/pvmf/pvmfdatasourcedirectioncontrolinterface"
@@ -80,7 +81,7 @@ class PvmfDataSourceDirectionControlInterface : public PVInterface
                 int32 aDirection,
                 PVMFTimestamp& aActualNPT,
                 PVMFTimestamp& aActualMediaDataTS,
-                OsclTimebase* aTimebase = NULL,
+                PVMFTimebase* aTimebase = NULL,
                 OsclAny* aContext = NULL) = 0;
 
 };

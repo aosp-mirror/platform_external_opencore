@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,6 +66,22 @@
 #endif
 
 /*!
+** PV_SOCKET_SERVER_SELECT chooses whether to use "select" call or not.
+** In threaded mode, select call is required and is forced to "1".
+** In AO mode, "select" call is an option that defaults to "0".
+** Avoiding any "select" call was found to greatly reduce CPU usage
+** on WinMobile devices.
+*/
+#if PV_SOCKET_SERVER_IS_THREAD
+#undef PV_SOCKET_SERVER_SELECT
+#define PV_SOCKET_SERVER_SELECT 1
+#else
+#ifndef PV_SOCKET_SERVER_SELECT
+#define PV_SOCKET_SERVER_SELECT 0
+#endif
+#endif
+
+/*!
 ** PV_SOCKET_SERVER_THREAD_PRIORITY sets the priority of the PV socket
 ** server thread.
 */
@@ -78,7 +94,7 @@
 ** in the PV socket server thread for the polling select loop implementation.
 ** When the timeout is -1, the select call will block forever waiting on a new request
 ** and will use a loopback socket to signal a new request.
-** Note: if infinite wait is selected, but loopback socket cannot be created at runtime,
+** Note: if infinite wait is selected, but loopback socket is not available,
 ** the implementation will poll at 10 msec intervals.
 */
 #ifndef PV_SOCKET_SERVER_SELECT_TIMEOUT_MSEC
@@ -88,12 +104,16 @@
 /*!
 ** PV_SOCKET_SERVER_SELECT_LOOPBACK_SOCKET enables the feature to wakeup the select
 ** call by writing to a loopback socket each time a new request comes in.
-** This option only applies when using the polling select loop implementation.
-** When using the blocking select loop, loopback socket will always be used and
-** this setting will be ignored.
+** This option is required to support the blocking select loop option of threaded
+** server mode.  This option is forced to "0" in AO mode.
 */
+#if PV_SOCKET_SERVER_IS_THREAD
 #ifndef PV_SOCKET_SERVER_SELECT_LOOPBACK_SOCKET
 #define PV_SOCKET_SERVER_SELECT_LOOPBACK_SOCKET 1
+#endif
+#else
+#undef PV_SOCKET_SERVER_SELECT_LOOPBACK_SOCKET
+#define PV_SOCKET_SERVER_SELECT_LOOPBACK_SOCKET 0
 #endif
 
 /*!
@@ -101,7 +121,7 @@
 ** AO for non-threaded implementations.
 */
 #ifndef PV_SOCKET_SERVER_AO_PRIORITY
-#define PV_SOCKET_SERVER_AO_PRIORITY OsclActiveObject::EPriorityNominal
+#define PV_SOCKET_SERVER_AO_PRIORITY (OsclActiveObject::EPriorityNominal)
 #endif
 
 /*!
@@ -109,7 +129,7 @@
 ** of the PV socket server AO for non-threaded implementations.
 */
 #ifndef PV_SOCKET_SERVER_AO_INTERVAL_MSEC
-#define PV_SOCKET_SERVER_AO_INTERVAL_MSEC 10
+#define PV_SOCKET_SERVER_AO_INTERVAL_MSEC 5
 #endif
 
 /*!
@@ -139,6 +159,19 @@
 #define PV_OSCL_SOCKET_1MB_RECV_BUF 0
 #endif
 
+/*!
+** For detailed performance breakdown of time spend in OsclSocketServI AO.
+** Output is logged under "OsclSchedulerPerfStats" node.  Should be off in
+** production code.  This option is forced to "0" in threaded mode.
+*/
+#if PV_SOCKET_SERVER_IS_THREAD
+#undef PV_SOCKET_SERVI_STATS
+#define PV_SOCKET_SERVI_STATS 0
+#else
+#ifndef PV_SOCKET_SERVI_STATS
+#define PV_SOCKET_SERVI_STATS 0
+#endif
+#endif
 
 #endif//PV_SOCKET_SERVER
 

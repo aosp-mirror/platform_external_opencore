@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,14 @@
  * -------------------------------------------------------------------
  */
 /*
-------------------------------------------------------------------------------
-
-
 
  Filename: sbr_get_envelope.c
-
-     Date: 07/17/2003
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
 
 
+ Who:                                   Date: MM/DD/YYYY
  Description:
 
 ------------------------------------------------------------------------------
@@ -203,13 +199,13 @@ void sbr_get_envelope(SBR_FRAME_DATA * h_frame_data,
         envDataTableCompFactor = 1;
         if (ampRes == SBR_AMP_RES_1_5)
         {
-            hcb_t = (SbrHuffman) & bookSbrEnvBalance10T;
-            hcb_f = (SbrHuffman) & bookSbrEnvBalance10F;
+            hcb_t = bookSbrEnvBalance10T;
+            hcb_f = bookSbrEnvBalance10F;
         }
         else
         {
-            hcb_t = (SbrHuffman) & bookSbrEnvBalance11T;
-            hcb_f = (SbrHuffman) & bookSbrEnvBalance11F;
+            hcb_t = bookSbrEnvBalance11T;
+            hcb_f = bookSbrEnvBalance11F;
         }
     }
     else
@@ -217,13 +213,13 @@ void sbr_get_envelope(SBR_FRAME_DATA * h_frame_data,
         envDataTableCompFactor = 0;
         if (ampRes == SBR_AMP_RES_1_5)
         {
-            hcb_t = (SbrHuffman) & bookSbrEnvLevel10T;
-            hcb_f = (SbrHuffman) & bookSbrEnvLevel10F;
+            hcb_t = bookSbrEnvLevel10T;
+            hcb_f = bookSbrEnvLevel10F;
         }
         else
         {
-            hcb_t = (SbrHuffman) & bookSbrEnvLevel11T;
-            hcb_f = (SbrHuffman) & bookSbrEnvLevel11F;
+            hcb_t = bookSbrEnvLevel11T;
+            hcb_f = bookSbrEnvLevel11F;
         }
     }
 

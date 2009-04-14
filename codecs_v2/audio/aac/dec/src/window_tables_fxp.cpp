@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,8 @@
  */
 /*
 
- Pathname: ./src/window_tables_fxp.c
+ Pathname: window_tables_fxp.c
  Funtions:
-
-     Date: 4/02/2001
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
@@ -43,6 +41,7 @@
               - Eliminated Long_Window_fxp and Short_Window_fxp as global
                 contants vectors
 
+ Who:                       Date:
  Description:
 
   ------------------------------------------------------------------------------

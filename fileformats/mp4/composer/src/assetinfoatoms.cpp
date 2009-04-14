@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,6 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-//#define __IMPLEMENT_AssetInfoAtoms__
-
-
 #include "a_atomdefs.h"
 #include "assetinfoatoms.h"
 
@@ -111,6 +108,22 @@ PVA_FF_AssetInfoKeyWordsAtom::PVA_FF_AssetInfoKeyWordsAtom()
 
 }
 
+PVA_FF_AssetInfoAlbumAtom::PVA_FF_AssetInfoAlbumAtom()
+        : PVA_FF_FullAtom(ASSET_INFO_ALBUM_TITLE_ATOM, 0, 0)
+{
+    _albumTitle = (_STRLIT(""));
+    _langCode = LANGUAGE_CODE_UNKNOWN;
+    _byteOrderMask = BYTE_ORDER_MASK;
+    recomputeSize();
+}
+
+PVA_FF_AssetInfoRecordingYearAtom::PVA_FF_AssetInfoRecordingYearAtom()
+        : PVA_FF_FullAtom(ASSET_INFO_RECORDING_YEAR_ATOM, 0, 0)
+{
+    _recordingYear = 0;
+    recomputeSize();
+}
+
 PVA_FF_AssetInfoKeyWordsAtom::~PVA_FF_AssetInfoKeyWordsAtom()
 {
     if (_pKeyWordVect != NULL)
@@ -133,9 +146,10 @@ PVA_FF_AssetInfoKeyWordStruct::PVA_FF_AssetInfoKeyWordStruct(
     PVA_FF_UNICODE_HEAP_STRING aKeyWordInfo)
 
 {
+    OSCL_UNUSED_ARG(aKeyWordBinarySize);
     _byteOrderMask = BYTE_ORDER_MASK;
-    _keyWordSize	= aKeyWordBinarySize;
     _keyWordInfo	= aKeyWordInfo;
+    _keyWordSize = ((_keyWordInfo.get_size() + 1) * 2) + sizeof(_byteOrderMask);;// 1 for the NULL entry
 
 }
 
@@ -170,7 +184,6 @@ void PVA_FF_AssetInfoTitleAtom::recomputeSize()
 bool
 PVA_FF_AssetInfoTitleAtom::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
 {
-    //recomputeSize();
     int32 rendered = 0; // Keep track of number of bytes rendered
 
     // Render PVA_FF_Atom type and size
@@ -197,7 +210,6 @@ PVA_FF_AssetInfoTitleAtom::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
         return false;
     }
     rendered += _title.get_size() + 1; // 1 for the NULL entry
-    //recomputeSize();
     return true;
 
 }
@@ -246,7 +258,6 @@ bool PVA_FF_AssetInfoDescAtom::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp
         return false;
     }
     rendered += _description.get_size() + 1; // 1 for the NULL entry
-    //recomputeSize();
     return true;
 }
 
@@ -293,7 +304,6 @@ bool PVA_FF_AssetInfoCopyRightAtom::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRA
         return false;
     }
     rendered += _cprt.get_size() + 1; // 1 for the NULL entry
-    //recomputeSize();
     return true;
 }
 
@@ -340,7 +350,6 @@ bool PVA_FF_AssetInfoPerformerAtom::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRA
         return false;
     }
     rendered += _performer.get_size() + 1; // 1 for the NULL entry
-    //recomputeSize();
     return true;
 }
 
@@ -387,7 +396,6 @@ bool PVA_FF_AssetInfoAuthorAtom::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *
         return false;
     }
     rendered += _author.get_size() + 1; // 1 for the NULL entry
-    //recomputeSize();
     return true;
 }
 
@@ -434,7 +442,6 @@ bool PVA_FF_AssetInfoGenreAtom::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *f
         return false;
     }
     rendered += _genre.get_size() + 1; // 1 for the NULL entry
-    //recomputeSize();
     return true;
 }
 
@@ -497,7 +504,6 @@ bool PVA_FF_AssetInfoRatingAtom::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *
         return false;
     }
     rendered += _ratingInfo.get_size() + 1; // 1 for the NULL entry
-    //recomputeSize();
     return true;
 }
 
@@ -559,7 +565,6 @@ bool PVA_FF_AssetInfoClassificationAtom::renderToFileStream(MP4_AUTHOR_FF_FILE_I
         return false;
     }
     rendered += _classificationInfo.get_size() + 1; // 1 for the NULL entry
-    //recomputeSize();
     return true;
 }
 
@@ -657,6 +662,10 @@ bool PVA_FF_AssetInfoKeyWordsAtom::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP
         return false;
     }
     rendered += 1;
+    if (_pKeyWordVect->size() < _keyWordCnt)
+    {
+        return false;
+    }
 
     // calculate size of each object in the structure
     for (int i = 0; i < _keyWordCnt; i++)
@@ -773,3 +782,85 @@ bool PVA_FF_AssetInfoLocationInfoAtom::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_
     rendered += _locationInfoAddNotes.get_size() + 1; // 1 for the NULL entry
     return true;
 }
+
+
+void PVA_FF_AssetInfoAlbumAtom::recomputeSize()
+{
+    _size = getDefaultSize();
+    _size += sizeof(_langCode);
+    _size += sizeof(_byteOrderMask);
+    _size += 2 * (_albumTitle.get_size() + 1);
+    // Update the size of the parent atom since this child atom may have changed
+    if (_pparent != NULL)
+    {
+        _pparent->recomputeSize();
+    }
+}
+
+bool
+PVA_FF_AssetInfoAlbumAtom::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
+{
+    //recomputeSize();
+    int32 rendered = 0; // Keep track of number of bytes rendered
+
+    // Render PVA_FF_Atom type and size
+    if (!renderAtomBaseMembers(fp))
+    {
+        return false;
+    }
+    rendered += getDefaultSize();
+
+    if (!PVA_FF_AtomUtils::render16(fp, _langCode))
+    {
+        return false;
+    }
+    rendered += 2;
+
+    if (!PVA_FF_AtomUtils::render16(fp, _byteOrderMask))
+    {
+        return false;
+    }
+    rendered += 2;
+
+    if (!PVA_FF_AtomUtils::renderNullTerminatedUnicodeString(fp, _albumTitle))
+    {
+        return false;
+    }
+    rendered += _albumTitle.get_size() + 1; // 1 for the NULL entry
+    //recomputeSize();
+    return true;
+
+}
+
+void PVA_FF_AssetInfoRecordingYearAtom::recomputeSize()
+{
+    _size = getDefaultSize();
+    _size += sizeof(_recordingYear);
+    if (_pparent != NULL)
+    {
+        _pparent->recomputeSize();
+    }
+}
+
+bool
+PVA_FF_AssetInfoRecordingYearAtom::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
+{
+    //recomputeSize();
+    int32 rendered = 0; // Keep track of number of bytes rendered
+
+    // Render PVA_FF_Atom type and size
+    if (!renderAtomBaseMembers(fp))
+    {
+        return false;
+    }
+    rendered += getDefaultSize();
+
+    if (!PVA_FF_AtomUtils::render16(fp, _recordingYear))
+    {
+        return false;
+    }
+    rendered += 2;
+    return true;
+
+}
+

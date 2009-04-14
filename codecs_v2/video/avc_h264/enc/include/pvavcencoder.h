@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,32 +26,35 @@
 #include "avcenc_api.h"
 #endif
 
+#include "ccrgb24toyuv420.h"
+#include "ccrgb12toyuv420.h"
+#include "ccyuv420semitoyuv420.h"
+
 /** AVC encoder class interface. See PVAVCEncoderInterface APIs for
 virtual functions definitions. */
 class PVAVCEncoder : public PVAVCEncoderInterface
 {
 
     public:
-        static PVAVCEncoder* New(void);
-        virtual ~PVAVCEncoder();
+        OSCL_IMPORT_REF static PVAVCEncoder* New(void);
+        OSCL_IMPORT_REF virtual ~PVAVCEncoder();
 
-        virtual TAVCEI_RETVAL Initialize(TAVCEIInputFormat* aVidInFormat, TAVCEIEncodeParam* aEncParam);
-        virtual TAVCEI_RETVAL Initialize(TAVCEIInputFormat *aVidInFormat, TAVCEIEncodeParam *aEncParam,
-                                         void* extSPS, void* extPPS);
-        virtual TAVCEI_RETVAL Encode(TAVCEIInputData* aVidIn);
-        virtual TAVCEI_RETVAL GetParameterSet(uint8* paramSet, int32* size, int* nalType);
-        virtual TAVCEI_RETVAL GetOutput(TAVCEIOutputData* aVidOut);
-        virtual TAVCEI_RETVAL FlushInput();
+        OSCL_IMPORT_REF virtual TAVCEI_RETVAL Initialize(TAVCEIInputFormat* aVidInFormat, TAVCEIEncodeParam* aEncParam);
+        OSCL_IMPORT_REF virtual int32 GetMaxOutputBufferSize();
+        OSCL_IMPORT_REF virtual TAVCEI_RETVAL Encode(TAVCEIInputData* aVidIn);
+        OSCL_IMPORT_REF virtual TAVCEI_RETVAL GetParameterSet(uint8* paramSet, int32* size, int* nalType);
+        OSCL_IMPORT_REF virtual TAVCEI_RETVAL GetOutput(TAVCEIOutputData* aVidOut, int *aRemainingBytes);
+        OSCL_IMPORT_REF virtual TAVCEI_RETVAL FlushInput();
         virtual TAVCEI_RETVAL CleanupEncoder();
 
-        virtual TAVCEI_RETVAL UpdateBitRate(int32* aBitRate);
-        virtual TAVCEI_RETVAL UpdateFrameRate(OsclFloat* aFrameRate);
-        virtual TAVCEI_RETVAL UpdateIDRFrameInterval(int32 aIFrameInterval);
-        virtual TAVCEI_RETVAL IDRRequest();
+        OSCL_IMPORT_REF virtual TAVCEI_RETVAL UpdateBitRate(int32* aBitRate);
+        OSCL_IMPORT_REF virtual TAVCEI_RETVAL UpdateFrameRate(OsclFloat* aFrameRate);
+        OSCL_IMPORT_REF virtual TAVCEI_RETVAL UpdateIDRFrameInterval(int32 aIFrameInterval);
+        OSCL_IMPORT_REF virtual TAVCEI_RETVAL IDRRequest();
 
-        virtual int32 GetEncodeWidth(int32 aLayer);
-        virtual int32 GetEncodeHeight(int32 aLayer);
-        virtual OsclFloat GetEncodeFrameRate(int32 aLayer);
+        OSCL_IMPORT_REF virtual int32 GetEncodeWidth(int32 aLayer);
+        OSCL_IMPORT_REF virtual int32 GetEncodeHeight(int32 aLayer);
+        OSCL_IMPORT_REF virtual OsclFloat GetEncodeFrameRate(int32 aLayer);
 
         /* for avc encoder lib callback functions */
         int		AVC_DPBAlloc(uint frame_size_in_mbs, uint num_buffers);
@@ -67,17 +70,10 @@ class PVAVCEncoder : public PVAVCEncoderInterface
 #ifdef	YUV_INPUT
         void CopyToYUVIn(uint8* YUV, int width, int height, int width_16, int height_16);
 #endif
-        /* RGB->YUV conversion */
-#if defined(RGB12_INPUT)||defined(RGB24_INPUT)
-        bool initRGB2YUVTables();
-        void freeRGB2YUVTables();
-#endif
-        //void RGB2YUV420_12bit(uint16 *inputRGB, int width, int height,int width_16,int height_16);
-#ifdef RGB12_INPUT
-        void RGB2YUV420_12bit(uint32* inputRGB, int width, int height, int width_16, int height_16);
-#endif
-#ifdef RGB24_INPUT
-        void RGB2YUV420_24bit(uint8* inputRGB, int width, int height, int width_16, int height_16);
+
+        /** Color conversion instance RGB24/RGB12/YUV420SEMI to YUV 420 */
+#if defined(RGB24_INPUT) || defined (RGB12_INPUT) || defined(YUV420SEMIPLANAR_INPUT)
+        ColorConvertBase *ccRGBtoYUV;
 #endif
 
 #ifdef FOR_3GPP_COMPLIANCE
@@ -116,6 +112,9 @@ class PVAVCEncoder : public PVAVCEncoderInterface
         uint8*	iVideoOut;
         uint32	iTimeStamp;
         uint32  iPacketSize;
+        uint8*	iOverrunBuffer;
+        int		iOBSize;
+        AVCEnc_Status iEncStatus;
         bool	iIDR;
         int		iDispOrd;
 

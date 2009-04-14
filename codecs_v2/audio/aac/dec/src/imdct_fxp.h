@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,7 @@
  */
 /*
 
- Pathname: ./include/imdct_fxp.h
-
-     Date: 02/25/2001
+ Pathname: imdct_fxp.h
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
@@ -34,6 +32,7 @@
  Description:   Modified function interface to accomodate the normalization
                 that now is done in this function.
 
+ Who:						Date:
  Description:
 
 ------------------------------------------------------------------------------

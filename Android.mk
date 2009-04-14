@@ -1,6 +1,6 @@
 ifneq ($(BUILD_WITHOUT_PV),true)
-
 LOCAL_PATH := $(call my-dir)
+#PV_TOP := $(LOCAL_PATH)
 include $(CLEAR_VARS)
 
 # Set up the PV variables.
@@ -8,33 +8,34 @@ include $(LOCAL_PATH)/Config.mk
 
 # Install the default configuration file
 # if no value-add configuration is present.
-ifeq ($(VALUE_ADD), false)
-$(call add-prebuilt-files, ETC, pvplayer.conf)
+ifneq ($(VALUE_ADD),1)
+#$(call add-prebuilt-files, ETC, pvplayer.conf)
+$(call add-prebuilt-files, ETC, pvplayer.cfg)
 endif
 
-include $(PV_TOP)/pvcommon/Android.mk
-include $(PV_TOP)/pvplayer/Android.mk
-include $(PV_TOP)/pvauthor/Android.mk
-include $(PV_TOP)//baselibs/gen_data_structures/Android.mk
-include $(PV_TOP)//protocols/rtp/Android.mk
-include $(PV_TOP)//protocols/sdp/parser/Android.mk
-include $(PV_TOP)//protocols/rtp_payload_parser/Android.mk
-include $(PV_TOP)//protocols/rtsp_parcom/Android.mk
-include $(PV_TOP)//protocols/rtsp_client_engine/Android.mk
-include $(PV_TOP)//protocols/http_parcom/Android.mk
-include $(PV_TOP)//nodes/pvsocketnode/Android.mk
-include $(PV_TOP)//nodes/pvdownloadmanagernode/Android.mk
-include $(PV_TOP)//nodes/pvprotocolenginenode/Android.mk
-include $(PV_TOP)//nodes/streaming/jitterbuffernode/Android.mk
-include $(PV_TOP)//nodes/streaming/medialayernode/Android.mk
-include $(PV_TOP)//nodes/streaming/streamingmanager/Android.mk
-include $(PV_TOP)//pvmi/recognizer/plugins/pvmp4ffrecognizer/Android.mk
-include $(PV_TOP)//codecs_v2/video/m4v_h263/dec/Android.mk
-include $(PV_TOP)//nodes/pvmp4ffparsernode/Android.mk
-include $(PV_TOP)//codecs_v2/omx/omx_m4v/Android.mk
-include $(PV_TOP)//codecs_v2/audio/sbc/enc/Android.mk
-#include $(PV_TOP)//engines/player/sample_app/Android.mk
-#include $(PV_TOP)//engines/player/test/Android.mk
-#include $(PV_TOP)//engines/adapters/player/framemetadatautility/test/Android.mk
-#include $(PV_TOP)//engines/author/test/Android.mk
+
+include $(PV_TOP)/build_config/opencore_dynamic/Android_opencore_common.mk
+include $(PV_TOP)/build_config/opencore_dynamic/Android_opencore_author.mk
+include $(PV_TOP)/build_config/opencore_dynamic/Android_opencore_player.mk
+include $(PV_TOP)/build_config/opencore_dynamic/Android_opencore_2way.mk
+include $(PV_TOP)/build_config/opencore_dynamic/Android_omx_sharedlibrary.mk
+include $(PV_TOP)/build_config/opencore_dynamic/Android_omx_avcdec_sharedlibrary.mk
+include $(PV_TOP)/build_config/opencore_dynamic/Android_omx_m4vdec_sharedlibrary.mk
+include $(PV_TOP)/build_config/opencore_dynamic/Android_omx_aacdec_sharedlibrary.mk
+include $(PV_TOP)/build_config/opencore_dynamic/Android_omx_amrdec_sharedlibrary.mk
+include $(PV_TOP)/build_config/opencore_dynamic/Android_omx_mp3dec_sharedlibrary.mk
+include $(PV_TOP)/build_config/opencore_dynamic/Android_omx_avcenc_sharedlibrary.mk
+include $(PV_TOP)/build_config/opencore_dynamic/Android_omx_m4venc_sharedlibrary.mk
+include $(PV_TOP)/build_config/opencore_dynamic/Android_omx_amrenc_sharedlibrary.mk
+include $(PV_TOP)/build_config/opencore_dynamic/Android_opencore_net_support.mk
+include $(PV_TOP)/build_config/opencore_dynamic/Android_opencore_downloadreg.mk
+include $(PV_TOP)/build_config/opencore_dynamic/Android_opencore_download.mk
+include $(PV_TOP)/build_config/opencore_dynamic/Android_opencore_rtspreg.mk
+include $(PV_TOP)/build_config/opencore_dynamic/Android_opencore_rtsp.mk
+include $(PV_TOP)/build_config/opencore_dynamic/Android_opencore_mp4localreg.mk
+include $(PV_TOP)/build_config/opencore_dynamic/Android_opencore_mp4local.mk
+include $(PV_TOP)/oscl/unit_test/Android.mk
+include $(PV_TOP)/engines/player/test/Android.mk
+include $(PV_TOP)/engines/author/test/Android.mk
+include $(PV_TOP)/engines/2way/test/Android.mk
 endif

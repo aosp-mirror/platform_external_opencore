@@ -41,15 +41,13 @@ public:
     virtual void setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters,
             int num_elements, PvmiKvp * & aRet_kvp);
 
-    virtual PVMFCommandId Start(const OsclAny* aContext);
     virtual PVMFCommandId DiscardData(PVMFTimestamp aTimestamp=0, const OsclAny* aContext=NULL);
 
     virtual void cancelCommand(PVMFCommandId aCmdId);
 
-    // FIXME: see comment in AndroidAudioOutput::Stop() implementation
     virtual PVMFCommandId Stop(const OsclAny* aContext=NULL);
-    virtual PVMFCommandId Pause(const OsclAny* aContext=NULL);
-    // virtual PVMFCommandId Reset(const OsclAny* aContext=NULL);
+    virtual PVMFCommandId Reset(const OsclAny* aContext=NULL);
+    
 
 private:
 
@@ -83,9 +81,11 @@ private:
     // semaphores used to communicate with the audio output thread
     OsclSemaphore* iAudioThreadSem;
     OsclSemaphore* iAudioThreadTermSem;
+    OsclSemaphore* iAudioThreadReturnSem;
+    OsclSemaphore* iAudioThreadCreatedSem;
 
-    bool iAudioThreadCreated;
     volatile bool iExitAudioThread;
+    volatile bool iReturnBuffers;
 
     // active timing
     AndroidAudioMIOActiveTimingSupport* iActiveTiming;

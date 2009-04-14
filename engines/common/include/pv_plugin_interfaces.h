@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -169,13 +169,8 @@ class MPVPluginBase
 
 #if defined USE_MMF_DATA_PATH
 
-#if 0 /* Causes a compiler warning when deriving from this class */
-typedef MDataSource MPVDataSourceBase;
-typedef MDataSink MPVDataSinkBase;
-#else
 #define MPVDataSourceBase MDataSource
 #define MPVDataSinkBase MDataSink
-#endif
 
 #else /* USE_MMF_DATA_PATH */
 

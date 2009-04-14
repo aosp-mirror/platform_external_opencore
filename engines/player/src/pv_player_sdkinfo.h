@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,10 @@
 #ifndef PV_PLAYER_SDKINFO_H_INCLUDED
 #define PV_PLAYER_SDKINFO_H_INCLUDED
 
-// This header file provides defines for PLAYER's SDK info's release label and release date
+// This header file is automatically generated at build-time
+// *** OFFICIAL RELEASE INFO -- Will not auto update
 
-#define PVPLAYER_ENGINE_SDKINFO_LABEL "PVCore/05.02.00.00 PVPlayer/6.18 (Linux; Android; NJ)"
-#define PVPLAYER_ENGINE_SDKINFO_DATE 0x20080729
+#define PVPLAYER_ENGINE_SDKINFO_LABEL "PVDEV_CORE_RELEASE_6.506.4.1"
+#define PVPLAYER_ENGINE_SDKINFO_DATE 0x20090312
 
-#endif //PV_PLAYER_SDKINFO_H_INCLUDED 
+#endif //PV_PLAYER_SDKINFO_H_INCLUDED

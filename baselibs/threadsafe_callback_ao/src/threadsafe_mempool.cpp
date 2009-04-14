@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -149,6 +149,7 @@ OSCL_EXPORT_REF OsclAny* ThreadSafeMemPoolFixedChunkAllocator::allocate(const ui
     else if (n > iChunkSize)
     {
         OSCL_LEAVE(OsclErrArgument);
+
     }
 
 
@@ -158,7 +159,6 @@ OSCL_EXPORT_REF OsclAny* ThreadSafeMemPoolFixedChunkAllocator::allocate(const ui
 
         iMemPoolMutex.Unlock();
         return NULL;
-        // OSCL_LEAVE(OsclErrNoResources);
     }
 
     // Return the next available chunk from the pool

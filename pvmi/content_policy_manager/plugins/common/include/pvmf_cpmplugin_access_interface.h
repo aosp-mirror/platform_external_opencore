@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,106 +51,6 @@ class PVMFCPMPluginAccessInterface : public PVInterface
     public:
         virtual void Init(void) = 0;
         virtual void Reset(void) = 0;
-};
-
-
-#define PVMF_CPMPLUGIN_LOCAL_SYNC_ACCESS_INTERFACE_MIMETYPE "pvxxx/pvmf/cpm/plugin/local_sync_access_interface"
-#define PVMFCPMPluginLocalSyncAccessInterfaceUuid PVUuid(0xa3aa0c20,0xab74,0x4b52,0xaa,0xae,0x76,0x05,0xe8,0x31,0x3c,0x11)
-
-/**
- * Local Synchronous Content Access Interface for Content Policy Manager Plugins
- */
-class PVMFCPMPluginLocalSyncAccessInterface : public PVMFCPMPluginAccessInterface
-{
-    public:
-        /**
-         * Opens the registered content.
-         *
-         *
-         * @return returns 0 if successful and a non-zero value otherwise
-         */
-        virtual int32 OpenContent() = 0;
-
-        /**
-         * The File Read & Decrypt operation
-         * Reads from the file into the buffer a maximum of 'numelements'
-         * of size 'size'.
-         *
-         * @param buffer pointer to buffer of type void
-         * @param size   element size in bytes
-         * @param numelements
-         *               max number of elements to read
-         *
-         * @return returns the number of full elements actually read, which
-         *         may be less than count if an error occurs or if the end
-         *         of the file is encountered before reaching count. Use the
-         *         CheckEndOfFile or GetError function to distinguish a read
-         *         error from an end-of-file condition.
-         */
-        virtual uint32 ReadAndUnlockContent(OsclAny *buffer,
-                                            uint32 size,
-                                            uint32 numelements) = 0;
-
-        /**
-         * The File Seek operation
-         * Sets the position for file pointer
-         *
-         * @param offset offset from the specified origin.
-         * @param origin starting point
-         *
-         * @return returns 0 on success, and a non-zero value otherwise
-         */
-        virtual int32 SeekContent(int32 offset,
-                                  Oscl_File::seek_type origin) = 0;
-
-        /**
-         * The File Tell operation
-         * Returns the current file position for file specified by fp
-         */
-        virtual int32 GetCurrentContentPosition() = 0;
-
-        /**
-         * The File Size operation
-         * Returns the file size
-         */
-        virtual int32 GetContentSize() = 0;
-
-        /**
-         * The File Close operation
-         * Closes the file after flushing any remaining data in the
-         * buffers.
-         *
-         * @return returns 0 if successful, and a non-zero value otherwise
-         */
-        virtual int32 CloseContent() = 0;
-
-        /**
-         * The File Flush operation
-         * On an output stream OSCL_FileFlush causes any buffered
-         * but unwritten data to be written to the file.
-         *
-         * @return returns 0 if successful, and a non-zero value otherwise
-         */
-        virtual int32 Flush() = 0;
-
-        /**
-         * The File Error operation
-         * If no error has occurred on stream, returns 0. Otherwise,
-         * it returns a nonzero value
-         *
-         * @return
-         */
-        virtual int32 GetContentAccessError() = 0;
-        /**
-         * Determines if the content is drm protected or not.
-         *
-         * @param aProtected set to true if protected, false otherwise.
-         * Value undefined in case of error
-         *
-         * @return returns PVMFSuccess if successful and an appropriate errcode
-         * otherwise
-         */
-        virtual PVMFStatus IsContentProtected(bool& aProtected) = 0;
 };
 
 #define PVMF_CPMPLUGIN_DECRYPTION_INTERFACE_MIMETYPE "pvxxx/pvmf/cpm/plugin/remote_sync_access_interface"

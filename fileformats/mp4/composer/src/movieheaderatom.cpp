@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*********************************************************************************/
 /*
     This PVA_FF_MovieHeaderAtom Class defines the overall media-independent information
     relevant to the MPEG-4 presentation as a whole.
@@ -33,6 +32,8 @@
 PVA_FF_MovieHeaderAtom::PVA_FF_MovieHeaderAtom(uint8 version, uint32 flags, uint32 fileAuthoringFlags)
         : PVA_FF_FullAtom(MOVIE_HEADER_ATOM, version, flags)
 {
+    OSCL_UNUSED_ARG(fileAuthoringFlags);
+
     PVA_FF_AtomUtils::setTime(_creationTime); // Setting creating time (since 1/1/1904)
     PVA_FF_AtomUtils::setTime(_modificationTime); // Setting modification time
     _timeScale = DEFAULT_PRESENTATION_TIMESCALE;

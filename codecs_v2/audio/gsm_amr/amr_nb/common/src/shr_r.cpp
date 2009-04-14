@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,8 +30,6 @@ terms listed above has been obtained from the copyright holder.
 
  Pathname: ./gsm-amr/c/src/shr_r.c
 
-     Date: 08/11/2000
-
 ------------------------------------------------------------------------------
  REVISION HISTORY
 
@@ -40,6 +38,7 @@ terms listed above has been obtained from the copyright holder.
 
  Description: Passing around pOverflow as per EPOC changes.
 
+ Who:                           Date:
  Description:
 
 ------------------------------------------------------------------------------

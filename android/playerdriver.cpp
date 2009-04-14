@@ -21,7 +21,7 @@
 
 #include <sys/prctl.h>
 #include <sys/resource.h>
-#include <media/mediaplayer.h>  // For the error codes
+#include <media/mediaplayer.h>
 #include <media/thread_init.h>
 #include <utils/threads.h>
 #include <utils/List.h>
@@ -49,7 +49,6 @@
 #include "oscl_mem.h"
 #include "oscl_mem_audit.h"
 #include "oscl_error.h"
-#include "oscl_error_panic.h"
 #include "oscl_utf8conv.h"
 #include "oscl_string_utils.h"
 #include "android_surface_output.h"
@@ -60,9 +59,8 @@
 #include "pvmf_node_interface.h"
 #include "pvmf_source_context_data.h"
 #include "pvmf_download_data_source.h"
-#include "pvmf_return_codes.h"  // for PVMFStatus
-#include "omx_core.h"
-#include "pv_omxmastercore.h"
+#include "OMX_Core.h"
+#include "pv_omxcore.h"
 
 // color converter
 #include "cczoomrotation16.h"
@@ -72,6 +70,7 @@
 #include "pvmf_recognizer_registry.h"
 #include "pvoma1_kmj_recognizer.h"
 #include "pvmf_cpmplugin_kmj_oma1.h"
+
 
 using namespace android;
 
@@ -116,7 +115,7 @@ namespace {
 //                    percentage int.
 // @return true If the format of the connection supports buffering update
 //              events and if the buffer size is valid. false otherwise.
-bool CheckAndAdjustBufferingStatusBuf(const PVMFFormatType format,
+bool CheckAndAdjustBufferingStatusBuf(const PVMFFormatType& format,
                                       const uint8 **buffer,
                                       int *size)
 {
@@ -124,22 +123,22 @@ bool CheckAndAdjustBufferingStatusBuf(const PVMFFormatType format,
         LOGE("Invalid buffer: NULL");
         return false;
     }
-    if (format == PVMF_DATA_SOURCE_RTSP_URL) {
+    if (format == PVMF_MIME_DATA_SOURCE_RTSP_URL) {
         if (8 != *size) {
             LOGE("Invalid rtsp buffer size %d != 8", *size);
             return false;
         }
         *buffer += 4;
         *size = 4;
-    } else if (format == PVMF_DATA_SOURCE_HTTP_URL) {
+    } else if (format == PVMF_MIME_DATA_SOURCE_HTTP_URL) {
         if (4 != *size) {
             LOGE("Invalid http buffer size %d != 4", *size);
             return false;
         }
     } else {
-        // I don't think we use PVMF_DATA_SOURCE_MS_HTTP_STREAMING_URL or
-        // PVMF_DATA_SOURCE_REAL_HTTP_CLOAKING_URL.
-        LOGE("Bad source format %d", format);
+        // I don't think we use PVMF_MIME_DATA_SOURCE_MS_HTTP_STREAMING_URL or
+        // PVMF_MIME_DATA_SOURCE_REAL_HTTP_CLOAKING_URL.
+        LOGE("Bad source format %s", format.getMIMEStrPtr() );
         return false;
     }
     return true;
@@ -200,6 +199,7 @@ int MapStatusToEventCode(const PVMFStatus status) {
     switch (status) {
         case PVMFErrContentInvalidForProgressivePlayback:
             return ::android::MEDIA_ERROR_NOT_VALID_FOR_PROGRESSIVE_PLAYBACK;
+
         default:
             // Takes advantage that both error and info codes are mapped to the
             // same value.
@@ -221,30 +221,30 @@ public:
     ~PlayerDriver();
 
     PlayerCommand* dequeueCommand();
-    status_t enqueueCommand(PlayerCommand* command);
+    status_t enqueueCommand(PlayerCommand* code);
 
-    // Dequeues a command from MediaPlayer and gives it to PVPlayer.
+    // Dequeues a code from MediaPlayer and gives it to PVPlayer.
     void Run();
 
     // Handlers for the various commands we can accept.
-    void commandFailed(PlayerCommand* ec);
-    void handleSetup(PlayerSetup* ec);
-    void handleSetDataSource(PlayerSetDataSource* ec);
-    void handleSetVideoSurface(PlayerSetVideoSurface* ec);
-    void handleSetAudioSink(PlayerSetAudioSink* ec);
-    void handleInit(PlayerInit* ec);
-    void handlePrepare(PlayerPrepare* ec);
-    void handleStart(PlayerStart* ec);
-    void handleStop(PlayerStop* ec);
-    void handlePause(PlayerPause* ec);
-    void handleSeek(PlayerSeek* ec);
-    void handleCancelAllCommands(PlayerCancelAllCommands* ec);
-    void handleRemoveDataSource(PlayerRemoveDataSource* ec);
-    void handleReset(PlayerReset* ec);
-    void handleQuit(PlayerQuit* ec);
-    void handleGetPosition(PlayerGetPosition* ec);
-    void handleGetDuration(PlayerGetDuration* ec);
-    void handleGetStatus(PlayerGetStatus* ec);
+    void commandFailed(PlayerCommand* command);
+    void handleSetup(PlayerSetup* command);
+    void handleSetDataSource(PlayerSetDataSource* command);
+    void handleSetVideoSurface(PlayerSetVideoSurface* command);
+    void handleSetAudioSink(PlayerSetAudioSink* command);
+    void handleInit(PlayerInit* command);
+    void handlePrepare(PlayerPrepare* command);
+    void handleStart(PlayerStart* command);
+    void handleStop(PlayerStop* command);
+    void handlePause(PlayerPause* command);
+    void handleSeek(PlayerSeek* command);
+    void handleCancelAllCommands(PlayerCancelAllCommands* command);
+    void handleRemoveDataSource(PlayerRemoveDataSource* command);
+    void handleReset(PlayerReset* command);
+    void handleQuit(PlayerQuit* command);
+    void handleGetPosition(PlayerGetPosition* command);
+    void handleGetDuration(PlayerGetDuration* command);
+    void handleGetStatus(PlayerGetStatus* command);
 
     void endOfData();
 
@@ -253,9 +253,9 @@ public:
     void HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent);
 
 private:
-    // Finish up a non-async command in such a way that
+    // Finish up a non-async code in such a way that
     // the event loop will keep running.
-    void FinishSyncCommand(PlayerCommand* ec);
+    void FinishSyncCommand(PlayerCommand* command);
 
     void handleGetDurationComplete(PlayerGetDuration* cmd);
 
@@ -282,14 +282,11 @@ private:
     PvmiMIOControl          *mVideoOutputMIO;
 
     PvmiCapabilityAndConfig *mPlayerCapConfig;
-#if 1 //PS
-    PVMFDownloadDataSourceHTTP   *mDownloadContextData;
+
     OSCL_wHeapString<OsclMemAllocator> mDownloadFilename;
     OSCL_HeapString<OsclMemAllocator> mDownloadProxy;
     OSCL_wHeapString<OsclMemAllocator> mDownloadConfigFilename;
-#else
     PVMFSourceContextData   *mDownloadContextData;
-#endif
 
     PVPMetadataList mMetaKeyList;
     Oscl_Vector<PvmiKvp,OsclMemAllocator> mMetaValueList;
@@ -379,7 +376,7 @@ PlayerDriver::~PlayerDriver()
 
 PlayerCommand* PlayerDriver::dequeueCommand()
 {
-    PlayerCommand* ec;
+    PlayerCommand* command;
 
     mQueueLock.lock();
 
@@ -390,9 +387,9 @@ PlayerCommand* PlayerDriver::dequeueCommand()
         return NULL;
     }
 
-    ec = *(--mCommandQueue.end());
+    command = *(--mCommandQueue.end());
     mCommandQueue.erase(--mCommandQueue.end());
-    if(mCommandQueue.size() > 0 )
+    if (mCommandQueue.size() > 0 )
     {
         RunIfNotReady();
     }
@@ -402,7 +399,7 @@ PlayerCommand* PlayerDriver::dequeueCommand()
     }
     mQueueLock.unlock();
 
-    return ec;
+    return command;
 }
 
 status_t PlayerDriver::enqueueCommand(PlayerCommand* command)
@@ -418,16 +415,16 @@ status_t PlayerDriver::enqueueCommand(PlayerCommand* command)
     // are running in synchronous mode.
     if (command->hasCompletionHook()) {
         command->set(PlayerDriver::syncCompletion, this);
-        // make a copy of this semaphore for special handling of the PLAYER_QUIT command
+        // make a copy of this semaphore for special handling of the PLAYER_QUIT code
         syncsemcopy = mSyncSem;
     }
 
-    // Add the command to the queue.
+    // Add the code to the queue.
     mQueueLock.lock();
     mCommandQueue.push_front(command);
 
-    // save command code, since command will be deleted by the standard completion function
-    PlayerCommand::Code code = command->code();
+    // save code, since command will be deleted by the standard completion function
+    int code = command->code();
 
     // AO needs to be scheduled only if this is the first cmd after queue was empty
     if (mCommandQueue.size() == 1)
@@ -457,7 +454,7 @@ void PlayerDriver::FinishSyncCommand(PlayerCommand* command)
 }
 
 // The OSCL scheduler calls this when we get to run (this should happen only
-// when a command has been enqueued for us).
+// when a code has been enqueued for us).
 void PlayerDriver::Run()
 {
     if (mDoLoop) {
@@ -476,7 +473,7 @@ void PlayerDriver::Run()
     PVPlayerState state = PVP_STATE_ERROR;
     if ((mPlayer->GetPVPlayerStateSync(state) == PVMFSuccess))
     {
-        if(state == PVP_STATE_ERROR)
+        if (state == PVP_STATE_ERROR)
         {
             return;
         }
@@ -487,9 +484,9 @@ void PlayerDriver::Run()
 
     command = dequeueCommand();
     if (command) {
-        LOGV("Send player command: %s", command->toString());
+        LOGV("Send player code: %d", command->code());
 
-        switch(command->code()) {
+        switch (command->code()) {
         case PlayerCommand::PLAYER_SETUP:
             handleSetup(static_cast<PlayerSetup*>(command));
             break;
@@ -566,7 +563,7 @@ void PlayerDriver::Run()
             return;
 
         default:
-            LOGE("Unexpected command %d", command->code());
+            LOGE("Unexpected code %d", command->code());
             break;
         }
     }
@@ -576,11 +573,11 @@ void PlayerDriver::Run()
 void PlayerDriver::commandFailed(PlayerCommand* command)
 {
     if (command == NULL) {
-        LOGV("async command failed");
+        LOGV("async code failed");
         return;
     }
 
-    LOGV("Command failed: %s", command->toString());
+    LOGV("Command failed: %d", command->code());
     // FIXME: Ignore seek failure because it might not work when streaming
     if (mSeekPending) {
         LOGV("Ignoring failed seek");
@@ -598,49 +595,35 @@ void PlayerDriver::handleSetup(PlayerSetup* command)
 
     // Make sure we have the capabilities and config interface first.
     OSCL_TRY(error, mPlayer->QueryInterface(PVMI_CAPABILITY_AND_CONFIG_PVUUID,
-                                    (PVInterface *&)mPlayerCapConfig, command));
+                                            (PVInterface *&)mPlayerCapConfig, command));
     OSCL_FIRST_CATCH_ANY(error, commandFailed(command));
 }
 
 int PlayerDriver::setupHttpStreamPre()
 {
-    mDataSource->SetDataSourceFormatType(PVMF_DATA_SOURCE_HTTP_URL);
-    
+    mDataSource->SetDataSourceFormatType((char*)PVMF_MIME_DATA_SOURCE_HTTP_URL);
+
     delete mDownloadContextData;
     mDownloadContextData = NULL;
 
-#if 1 //PS
-    mDownloadFilename = NULL;
-    
+    mDownloadContextData = new PVMFSourceContextData();
+    mDownloadContextData->EnableCommonSourceContext();
+    mDownloadContextData->EnableDownloadHTTPSourceContext();
+
     // FIXME:
     // This mDownloadConfigFilename at /tmp/http-stream-cfg
     // should not exist. We need to clean it up later.
     mDownloadConfigFilename = _STRLIT_WCHAR("/tmp/http-stream-cfg");
+    mDownloadFilename = NULL;
     mDownloadProxy = _STRLIT_CHAR("");
 
-    mDownloadContextData = new PVMFDownloadDataSourceHTTP(true,
-                mDownloadConfigFilename,
-                mDownloadFilename,
-                0xFFFFFFFF,
-                mDownloadProxy,
-                0,
-                PVMFDownloadDataSourceHTTP::ENoSaveToFile,
-                false);
-
-#else
-    mDownloadContextData = new PVMFSourceContextData();
-    mDownloadContextData->EnableCommonSourceContext();
-    mDownloadContextData->EnableDownloadHTTPSourceContext();
-    mDownloadContextData->DownloadHTTPData()->bIsNewSession = true;
-    mDownloadContextData->DownloadHTTPData()->iConfigFileName = _STRLIT_WCHAR("/tmp/http-stream-cfg");
-    mDownloadContextData->DownloadHTTPData()->iDownloadFileName = _STRLIT_WCHAR("/tmp/http-stream");
-    mDownloadContextData->DownloadHTTPData()->iMaxFileSize = 5*1024*1024; // XXX
-    mDownloadContextData->DownloadHTTPData()->iProxyName = _STRLIT_CHAR("");
+    mDownloadContextData->DownloadHTTPData()->iMaxFileSize = 0xFFFFFFFF;
+    mDownloadContextData->DownloadHTTPData()->iPlaybackControl = PVMFSourceContextDataDownloadHTTP::ENoSaveToFile;
+    mDownloadContextData->DownloadHTTPData()->iConfigFileName = mDownloadConfigFilename;
+    mDownloadContextData->DownloadHTTPData()->iDownloadFileName = mDownloadFilename;
+    mDownloadContextData->DownloadHTTPData()->iProxyName = mDownloadProxy;
     mDownloadContextData->DownloadHTTPData()->iProxyPort = 0;
-    mDownloadContextData->DownloadHTTPData()->iPlaybackControl = PVMFSourceContextDataDownloadHTTP::EAsap;
-    mDownloadContextData->CommonData()->iUseCPMPluginRegistry = false;
-#endif
-
+    mDownloadContextData->DownloadHTTPData()->bIsNewSession = true;
     mDataSource->SetDataSourceContextData(mDownloadContextData);
 
     return 0;
@@ -654,10 +637,8 @@ int PlayerDriver::setupHttpStreamPost()
 
     int error = 0;
 
-    // PV will set a default user agent value. The below string will be appended to the default value.
-    // The default value [PVPLAYER_ENGINE_SDKINFO_LABEL] can be found at device/extlibs/pv/engines/player/src/pv_player_sdkinfo.h 
     iKVPSetAsync.key = _STRLIT_CHAR("x-pvmf/net/user-agent;valtype=wchar*");
-    OSCL_wHeapString<OsclMemAllocator> userAgent = _STRLIT_WCHAR("(Linux;U;Android 1.0)(AndroidMediaPlayer 1.0)");
+    OSCL_wHeapString<OsclMemAllocator> userAgent = _STRLIT_WCHAR("CORE/6.506.4.1 OpenCORE/2.02 (Linux;Android 1.0)(AndroidMediaPlayer 1.0)");
     iKVPSetAsync.value.pWChar_value=userAgent.get_str();
     iErrorKVP=NULL;
     OSCL_TRY(error, mPlayerCapConfig->setParametersSync(NULL, &iKVPSetAsync, 1, iErrorKVP));
@@ -697,6 +678,7 @@ int PlayerDriver::setupHttpStreamPost()
 
 void PlayerDriver::handleSetDataSource(PlayerSetDataSource* command)
 {
+    LOGV("handleSetDataSource");
     int error = 0;
     const char* url = command->url();
     int lengthofurl = strlen(url);
@@ -713,12 +695,17 @@ void PlayerDriver::handleSetDataSource(PlayerSetDataSource* command)
     oscl_UTF8ToUnicode(url, strlen(url), output, lengthofurl+1);
     wFileName.set(output, oscl_strlen(output));
     mDataSource->SetDataSourceURL(wFileName);
+    LOGV("handleSetDataSource- scanning for extension");
     if (strncmp(url, "rtsp:", strlen("rtsp:")) == 0) {
-        mDataSource->SetDataSourceFormatType(PVMF_DATA_SOURCE_RTSP_URL);
+        mDataSource->SetDataSourceFormatType((const char*)PVMF_MIME_DATA_SOURCE_RTSP_URL);
     } else if (strncmp(url, "http:", strlen("http:")) == 0) {
-        setupHttpStreamPre();
+        if (0!=setupHttpStreamPre())
+        {
+            commandFailed(command);
+            return;
+        }
     } else {
-        mDataSource->SetDataSourceFormatType(PVMF_FORMAT_UNKNOWN); // Let PV figure it out
+        mDataSource->SetDataSourceFormatType((const char*)PVMF_MIME_FORMAT_UNKNOWN); // Let PV figure it out
     }
 
     OSCL_TRY(error, mPlayer->AddDataSource(*mDataSource, command));
@@ -746,10 +733,7 @@ void PlayerDriver::handleSetVideoSurface(PlayerSetVideoSurface* command)
     if (mLibHandle != NULL) {
         VideoMioFactory f = (VideoMioFactory) ::dlsym(mLibHandle, VIDEO_MIO_FACTORY_NAME);
         if (f != NULL) {
-            LOGV("Creating hardware specific MIO");
             mio = f();
-        } else {
-            LOGV("MIO factory function not found");
         }
     }
 
@@ -773,7 +757,7 @@ void PlayerDriver::handleSetVideoSurface(PlayerSetVideoSurface* command)
     mVideoSink = new PVPlayerDataSinkPVMFNode;
 
     ((PVPlayerDataSinkPVMFNode *)mVideoSink)->SetDataSinkNode(mVideoNode);
-    ((PVPlayerDataSinkPVMFNode *)mVideoSink)->SetDataSinkFormatType(PVMF_YUV420);
+    ((PVPlayerDataSinkPVMFNode *)mVideoSink)->SetDataSinkFormatType((char*)PVMF_MIME_YUV420);
 
     OSCL_TRY(error, mPlayer->AddDataSink(*mVideoSink, command));
     OSCL_FIRST_CATCH_ANY(error, commandFailed(command));
@@ -795,7 +779,7 @@ void PlayerDriver::handleSetAudioSink(PlayerSetAudioSink* command)
     mAudioSink = new PVPlayerDataSinkPVMFNode;
 
     ((PVPlayerDataSinkPVMFNode *)mAudioSink)->SetDataSinkNode(mAudioNode);
-    ((PVPlayerDataSinkPVMFNode *)mAudioSink)->SetDataSinkFormatType(PVMF_PCM16);
+    ((PVPlayerDataSinkPVMFNode *)mAudioSink)->SetDataSinkFormatType((char*)PVMF_MIME_PCM16);
 
     OSCL_TRY(error, mPlayer->AddDataSink(*mAudioSink, command));
     OSCL_FIRST_CATCH_ANY(error, commandFailed(command));
@@ -803,7 +787,17 @@ void PlayerDriver::handleSetAudioSink(PlayerSetAudioSink* command)
 
 void PlayerDriver::handlePrepare(PlayerPrepare* command)
 {
-    int error = 0;
+    //Keep alive is sent during the play to prevent the firewall from closing ports while
+    //streaming long clip
+    PvmiKvp iKVPSetAsync;
+    OSCL_StackString<64> iKeyStringSetAsync;
+    PvmiKvp *iErrorKVP = NULL;
+    int error=0;
+    iKeyStringSetAsync=_STRLIT_CHAR("x-pvmf/net/keep-alive-during-play;valtype=bool");
+    iKVPSetAsync.key=iKeyStringSetAsync.get_str();
+    iKVPSetAsync.value.bool_value=true;
+    iErrorKVP=NULL;
+    OSCL_TRY(error, mPlayerCapConfig->setParametersSync(NULL, &iKVPSetAsync, 1, iErrorKVP));
     OSCL_TRY(error, mPlayer->Prepare(command));
     OSCL_FIRST_CATCH_ANY(error, commandFailed(command));
 }
@@ -827,7 +821,7 @@ void PlayerDriver::handleStart(PlayerStart* command)
     // if we are paused, just resume
     PVPlayerState state;
     if (mPlayer->GetPVPlayerStateSync(state) == PVMFSuccess
-        && (state == PVP_STATE_PAUSED)) {
+            && (state == PVP_STATE_PAUSED)) {
         if (mEndOfData) {
             // if we are at the end, seek to the beginning first
             mEndOfData = false;
@@ -857,7 +851,7 @@ void PlayerDriver::handleSeek(PlayerSeek* command)
     // Seeking in the pause state
     PVPlayerState state;
     if (mPlayer->GetPVPlayerStateSync(state) == PVMFSuccess
-        && (state == PVP_STATE_PAUSED)){
+            && (state == PVP_STATE_PAUSED)) {
         mSeekComp = false;
     }
     PVPPlaybackPosition begin, end;
@@ -881,8 +875,8 @@ void PlayerDriver::handleGetPosition(PlayerGetPosition* command)
     //  In the pause state, get the progress bar position from the recent seek value
     // instead of GetCurrentPosition() from PVPlayer Engine.
     if (mPlayer->GetPVPlayerStateSync(state) == PVMFSuccess
-        && (state == PVP_STATE_PAUSED)
-        && (mSeekComp == false)) {
+            && (state == PVP_STATE_PAUSED)
+            && (mSeekComp == false)) {
         command->set(mRecentSeek);
     }
     else {
@@ -902,7 +896,7 @@ void PlayerDriver::handleGetStatus(PlayerGetStatus* command)
         command->set(0);
     } else {
         command->set(state);
-        LOGV("Player state = %d", state);
+        LOGV("status=%d", state);
     }
 }
 
@@ -926,10 +920,10 @@ void PlayerDriver::handleStop(PlayerStop* command)
     mDoLoop = false;
     PVPlayerState state;
     if ((mPlayer->GetPVPlayerStateSync(state) == PVMFSuccess)
-        && ( (state == PVP_STATE_PAUSED) ||
-             (state == PVP_STATE_PREPARED) ||
-             (state == PVP_STATE_STARTED)
-           )
+            && ( (state == PVP_STATE_PAUSED) ||
+                (state == PVP_STATE_PREPARED) ||
+                (state == PVP_STATE_STARTED)
+               )
        )
     {
         OSCL_TRY(error, mPlayer->Stop(command));
@@ -937,7 +931,7 @@ void PlayerDriver::handleStop(PlayerStop* command)
     }
     else
     {
-        LOGV("handleStop - Player State = %d - Sending Reset instead of Stop\n", state);
+        LOGV("handleStop - Player State = %d - Sending Reset instead of Stop\n",state);
         // TODO: Previously this called CancelAllCommands and RemoveDataSource
         handleReset(new PlayerReset(command->callback(), command->cookie()));
         delete command;
@@ -1000,7 +994,7 @@ int PlayerDriver::playerThread()
     int error;
 
     LOGV("InitializeForThread");
-    if(!InitializeForThread())
+    if (!InitializeForThread())
     {
         LOGV("InitializeForThread fail");
         mPlayer = NULL;
@@ -1009,7 +1003,7 @@ int PlayerDriver::playerThread()
     }
 
     LOGV("OMX_Init");
-    PV_MasterOMX_Init();
+    OMX_Init();
 
     LOGV("OsclScheduler::Init");
     OsclScheduler::Init("AndroidPVWrapper");
@@ -1067,7 +1061,7 @@ int PlayerDriver::playerThread()
     OsclScheduler::Cleanup();
     LOGV("OsclScheduler::Cleanup");
 
-    PV_MasterOMX_Deinit();
+    OMX_Deinit();
     UninitializeForThread();
     return 0;
 }
@@ -1090,7 +1084,7 @@ void PlayerDriver::handleGetDurationComplete(PlayerGetDuration* cmd)
 
     for (uint32 i = 0; i < mMetaValueList.size(); ++i) {
         // Search for the duration
-        char* substr=oscl_strstr(mMetaValueList[i].key, _STRLIT_CHAR("duration;valtype=uint32;timescale="));
+        const char* substr=oscl_strstr(mMetaValueList[i].key, _STRLIT_CHAR("duration;valtype=uint32;timescale="));
         if (substr!=NULL) {
             uint32 timescale=1000;
             if (PV_atoi((substr+34), 'd', timescale) == false) {
@@ -1099,12 +1093,12 @@ void PlayerDriver::handleGetDurationComplete(PlayerGetDuration* cmd)
             }
             uint32 duration = mMetaValueList[i].value.uint32_value;
             if (duration > 0 && timescale > 0) {
-            //set the timescale
-               mcc.set_timescale(timescale);
-            //set the clock to the duration as per the timescale
-               mcc.set_clock(duration,1);
-            //convert to millisec
-               cmd->set(mcc.get_converted_ts(1000));
+                //set the timescale
+                mcc.set_timescale(timescale);
+                //set the clock to the duration as per the timescale
+                mcc.set_clock(duration,0);
+                //convert to millisec
+                cmd->set(mcc.get_converted_ts(1000));
             }
         }
     }
@@ -1122,8 +1116,7 @@ void PlayerDriver::CommandCompleted(const PVCmdResponse& aResponse)
     }
 
     PlayerCommand* command = static_cast<PlayerCommand*>(aResponse.GetContext());
-    LOGV("Completed command %s status=%s", command ? command->toString(): "<null>",
-         PVMFStatusToString(status));
+    LOGV("Completed command %s status=%s", command ? command->toString(): "<null>", PVMFStatusToString(status));
     if (command == NULL) return;
 
     // FIXME: Ignore non-fatal seek errors because pvPlayerEngine returns these errors and retains it's state.
@@ -1136,7 +1129,7 @@ void PlayerDriver::CommandCompleted(const PVCmdResponse& aResponse)
     }
 
     if (status == PVMFSuccess) {
-        switch(command->code()) {
+        switch (command->code()) {
         case PlayerCommand::PLAYER_PREPARE:
             LOGV("PLAYER_PREPARE complete mDownloadContextData=%p, mDataReadyReceived=%d", mDownloadContextData, mDataReadyReceived);
             mPrepareDone = true;
@@ -1145,7 +1138,7 @@ void PlayerDriver::CommandCompleted(const PVCmdResponse& aResponse)
             // is sent to notify the user that it is okay to
             // begin playback.  If it is a local file, just
             // send it now at the completion of Prepare().
-            if ((mDownloadContextData == NULL) || mDataReadyReceived){
+            if ((mDownloadContextData == NULL) || mDataReadyReceived) {
                 mPvPlayer->sendEvent(MEDIA_PREPARED);
             }
             break;
@@ -1169,8 +1162,8 @@ void PlayerDriver::CommandCompleted(const PVCmdResponse& aResponse)
         // Call the user's requested completion function
         command->complete(NO_ERROR, false);
     } else if (status == PVMFErrCancelled) {
-        // Ignore cancelled command return status (PVMFErrCancelled), since it is not an error.
-        LOGE("Command (%s) was cancelled", command->toString());
+        // Ignore cancelled code return status (PVMFErrCancelled), since it is not an error.
+        LOGE("Command (%d) was cancelled", command->code());
         status = PVMFSuccess;
         command->complete(NO_ERROR, true);
     } else {  
@@ -1191,13 +1184,12 @@ void PlayerDriver::CommandCompleted(const PVCmdResponse& aResponse)
 
 void PlayerDriver::HandleErrorEvent(const PVAsyncErrorEvent& aEvent)
 {
-    PVMFStatus status = aEvent.GetEventType();  
+    PVMFStatus status = aEvent.GetEventType();
 
     // Errors use negative codes (see pvmi/pvmf/include/pvmf_return_codes.h)
     if (status > PVMFErrFirst) {
         LOGE("HandleErrorEvent called with an non-error event [%d]!!", status);
     }
-
     LOGE("HandleErrorEvent: %s", PVMFStatusToString(status));
     // TODO: Map more of the PV error code into the Android Media Player ones.
     mPvPlayer->sendEvent(MEDIA_ERROR, ::android::MEDIA_ERROR_UNKNOWN, status);
@@ -1205,7 +1197,7 @@ void PlayerDriver::HandleErrorEvent(const PVAsyncErrorEvent& aEvent)
 
 void PlayerDriver::HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent)
 {
-    PVMFStatus status = aEvent.GetEventType();  
+    PVMFStatus status = aEvent.GetEventType();
 
     // Errors use negative codes (see pvmi/pvmf/include/pvmf_return_codes.h)
     if (status <= PVMFErrFirst) {
@@ -1216,7 +1208,7 @@ void PlayerDriver::HandleInformationalEvent(const PVAsyncInformationalEvent& aEv
 
     LOGV("HandleInformationalEvent: %s", PVMFStatusToString(status));
 
-    switch(status) {
+    switch (status) {
     case PVMFInfoEndOfData:
         mEndOfData = true;
         if (mIsLooping) {
@@ -1252,11 +1244,11 @@ void PlayerDriver::HandleInformationalEvent(const PVAsyncInformationalEvent& aEv
                 // that does bound checking instead of having clients reaching
                 // for its internal buffer.
                 oscl_memcpy(&bufPercent, localBuf, sizeof(uint32));
-                LOGV("PVMFInfoBufferingStatus(%u)", bufPercent);
+                LOGE("PVMFInfoBufferingStatus(%u)", bufPercent);
                 mPvPlayer->sendEvent(MEDIA_BUFFERING_UPDATE, bufPercent);
             }
         }
-        break;
+    break;
 
     case PVMFInfoDurationAvailable:
         {
@@ -1306,9 +1298,9 @@ void PlayerDriver::HandleInformationalEvent(const PVAsyncInformationalEvent& aEv
         LOGE("Content is truncated.");
         break;
 
-    /* Certain events we don't really care about, but don't
-     * want log spewage, so just no-op them here.
-     */
+        /* Certain events we don't really care about, but don't
+         * want log spewage, so just no-op them here.
+         */
     case PVMFInfoPositionStatus:
     case PVMFInfoBufferingComplete:
     case PVMFInfoContentLength:
@@ -1318,7 +1310,7 @@ void PlayerDriver::HandleInformationalEvent(const PVAsyncInformationalEvent& aEv
         break;
 
     default:
-        LOGE("HandleInformationalEvent: type=%d UNHANDLED", status);
+        LOGV("HandleInformationalEvent: type=%d UNHANDLED", status);
         break;
     }
 }
@@ -1439,7 +1431,7 @@ status_t PVPlayer::prepare()
     // 2. new PVPlayer/reset()->setDataSource()->prepare()/prepareAsync()
     //    ->start()->...->stop()->prepare()
     // If data source has already been set previously, no need to run
-    // a sequence of commands and only the PLAYER_PREPARE command needs
+    // a sequence of commands and only the PLAYER_PREPARE code needs
     // to be run.
     if (!mIsDataSourceSet) {
         // set data source
@@ -1533,7 +1525,7 @@ status_t PVPlayer::prepareAsync()
         mIsDataSourceSet = true;
     } else {  // If data source has been already set.
         // No need to run a sequence of commands.
-        // The only command needed to run is PLAYER_PREPARE.
+        // The only code needed to run is PLAYER_PREPARE.
         ret = mPlayerDriver->enqueueCommand(new PlayerPrepare(do_nothing, NULL));
     }
 
@@ -1617,3 +1609,7 @@ status_t PVPlayer::setLooping(int loop)
 }
 
 }; // namespace android
+
+
+
+

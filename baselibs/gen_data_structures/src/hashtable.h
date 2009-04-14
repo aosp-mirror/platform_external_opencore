@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -500,7 +500,7 @@ template <class keyclass, class hashclass> MTHashTable<keyclass, hashclass>::MTH
 
 template <class keyclass, class hashclass> MTHashTable<keyclass, hashclass>::~MTHashTable()
 {
-    OSCL_TEMPLATED_DELETE(the_hash, HashTable<keyclass, hashclass>, HashTable);
+    OSCL_DELETE(the_hash);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

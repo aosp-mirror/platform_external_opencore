@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,10 @@
 #include "pv_uuid.h"
 #endif
 
+#ifndef PVMF_FORMAT_TYPE_H_INCLUDED
+#include "pvmf_format_type.h"
+#endif
+
 #define PVMF_VIDEO_INPUT_WIDTH 176
 #define PVMF_VIDEO_INPUT_HEIGHT 144
 #define PVMF_VIDEO_INPUT_FRAME_RATE 15
@@ -35,14 +39,32 @@
 
 const PVUid32 PVMFYuvFormatSpecificInfo0_UID = 0x1;
 const PVUid32 PVMFEOSFormatSpecificInfo_UID = 0x2;
-struct PVMFYuvFormatSpecificInfo0
+class PVMFYuvFormatSpecificInfo0
 {
-    PVUid32 uid;
-    uint32 video_format;
-    uint32 display_width;
-    uint32 display_height;
-    uint32 width;
-    uint32 height;
+    public:
+        PVMFYuvFormatSpecificInfo0()
+        {
+            uid = PVMFYuvFormatSpecificInfo0_UID;
+            video_format = PVMF_MIME_FORMAT_UNKNOWN;
+            display_width = 0;
+            display_height = 0;
+            width = 0;
+            height = 0;
+            num_buffers = 0;
+            buffer_size = 0;
+        };
+
+        virtual ~PVMFYuvFormatSpecificInfo0() {};
+
+        PVUid32 uid;
+        PVMFFormatType video_format;
+        uint32 display_width;
+        uint32 display_height;
+        uint32 width;
+        uint32 height;
+
+        uint32 num_buffers;
+        uint32 buffer_size;
 };
 
 class PVMFVideoResolution

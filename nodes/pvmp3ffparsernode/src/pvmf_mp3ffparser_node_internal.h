@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,8 +34,8 @@
 #ifndef PVMF_META_DATA_EXTENSION_H_INCLUDED
 #include "pvmf_meta_data_extension.h"
 #endif
-#ifndef OSCL_CLOCK_H_INCLUDED
-#include "oscl_clock.h"
+#ifndef PVMF_MEDIA_CLOCK_H_INCLUDED
+#include "pvmf_media_clock.h"
 #endif
 
 
@@ -107,7 +107,7 @@ class PVMFMP3FFParserNodeCommand : public PVMFMP3FFParserNodeCommandBase
         }
 
         // Constructor and parser for SetDataSourceRate
-        void Construct(PVMFSessionId aSessionId, int32 cmd, int32 aRate, OsclTimebase* aTimebase, const OsclAny* aContext)
+        void Construct(PVMFSessionId aSessionId, int32 cmd, int32 aRate, PVMFTimebase* aTimebase, const OsclAny* aContext)
         {
             PVMFMP3FFParserNodeCommandBase::Construct(aSessionId, cmd, aContext);
             iParam1 = (OsclAny*)aRate;
@@ -116,10 +116,10 @@ class PVMFMP3FFParserNodeCommand : public PVMFMP3FFParserNodeCommandBase
             iParam4 = NULL;
             iParam5 = NULL;
         }
-        void Parse(int32& aRate, OsclTimebase*& aTimebase)
+        void Parse(int32& aRate, PVMFTimebase*& aTimebase)
         {
             aRate = (int32)iParam1;
-            aTimebase = (OsclTimebase*)iParam2;
+            aTimebase = (PVMFTimebase*)iParam2;
         }
 
         // Constructor and parser for GetNodeMetadataKeys

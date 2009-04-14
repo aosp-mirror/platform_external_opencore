@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,7 +92,7 @@
  *   OSCL_ASSERT and thus unreferenced in release mode
  * OSCL_UNUSED_RETURN(val) provides a "return" of a value, in places
  *   which will not actually be executed, such as after an
- *   OSCL_LEAVE or Thread::exit or PANIC.  The value needs to
+ *   OSCL_LEAVE or Thread::exit or abort.  The value needs to
  *   be of an appropriate type for the current function, though
  *   zero will usually suffice.  Note that OSCL_UNUSED_RETURN
  *   will not be necessary for 'void' functions, as there is no

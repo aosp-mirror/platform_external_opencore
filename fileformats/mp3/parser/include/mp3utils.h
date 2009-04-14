@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -116,7 +116,7 @@ class MP3Utils
         static int32  CloseFile(PVFile *fp);
         static int32  Flush(PVFile *fp);
         static bool   getCurrentFileSize(PVFile *fp, uint32& aCurrentSize);
-        static MP3ErrorType SeektoOffset(PVFile *fp, int32 offset);
+        static MP3ErrorType SeektoOffset(PVFile *fp, int32 offset, Oscl_File::seek_type aSeekType);
 };
 
 #endif // MP3_UTILS_H_INCLUDED

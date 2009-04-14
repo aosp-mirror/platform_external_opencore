@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,9 @@
 #ifndef OSCL_DLL_H_INCLUDED
 #include "oscl_dll.h"
 #endif
+#ifndef WCHAR_SIZE_UTILS_H_INCLUDED
+#include "wchar_size_utils.h"
+#endif
 
 #define LOG_STACK_TRACE(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, m);
 #define LOG_DEBUG(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, m);
@@ -49,6 +52,7 @@
 #ifndef NULL_TERM_CHAR
 #define NULL_TERM_CHAR '\0'
 #endif
+
 // DLL entry point
 OSCL_DLL_ENTRY_POINT_DEFAULT()
 
@@ -74,11 +78,17 @@ class PVID3ParComKvpCleanupDA : public OsclDestructDealloc
 OSCL_EXPORT_REF PVID3ParCom::PVID3ParCom()
         : iInputFile(NULL),
         iTitleFoundFlag(false),
+        iArtistFoundFlag(false),
+        iAlbumFoundFlag(false),
+        iYearFoundFlag(false),
+        iCommentFoundFlag(false),
+        iTrackNumberFoundFlag(false),
+        iGenereFoundFlag(false),
         iFileSizeInBytes(0),
         iByteOffsetToStartOfAudioFrames(0),
-        iVersion(PV_ID3_INVALID_VERSION),
         iID3V1Present(false),
         iID3V2Present(false),
+        iVersion(PV_ID3_INVALID_VERSION),
         iUseMaxTagSize(false),
         iMaxTagSize(0),
         iUsePadding(false),
@@ -91,6 +101,9 @@ OSCL_EXPORT_REF PVID3ParCom::PVID3ParCom()
     iID3TagInfo.iID3V2TagFlagsV2 = 0;
     iID3TagInfo.iID3V2TagSize = 0 ;
     iID3TagInfo.iFooterPresent = false;
+
+    oscl_memset(&iID3TagInfo.iID3V2FrameFlag, 0, sizeof(iID3TagInfo.iID3V2FrameFlag));
+
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -285,11 +298,8 @@ OSCL_EXPORT_REF PVMFStatus PVID3ParCom::ParseID3Tag(PVFile* aFile, uint32 buffsi
         //check for ID3 Version 1
         if (CheckForTagID3V1())
         {
-            if (!iTitleFoundFlag)
-            {
-                //Read the header
-                ReadID3V1Tag(true);
-            }
+            iVersion = PV_ID3_V1;
+            ReadID3V1Tag();
         }
         if (iInputFile->Seek(currentFilePosn, Oscl_File::SEEKSET) == -1)
         {
@@ -297,12 +307,12 @@ OSCL_EXPORT_REF PVMFStatus PVID3ParCom::ParseID3Tag(PVFile* aFile, uint32 buffsi
             return PVMFFailure;
         }
     }
-    if (!readTags && CheckForTagID3V1())
+    else if (!readTags && CheckForTagID3V1())
     {
         //check for ID3 Version 1
         iVersion = PV_ID3_V1;
         //Read the header
-        ReadID3V1Tag(false);
+        ReadID3V1Tag();
 
         iByteOffsetToStartOfAudioFrames = 0;
         if (iInputFile->Seek(currentFilePosn, Oscl_File::SEEKSET) == -1)
@@ -311,9 +321,8 @@ OSCL_EXPORT_REF PVMFStatus PVID3ParCom::ParseID3Tag(PVFile* aFile, uint32 buffsi
             return PVMFFailure;
         }
     }
-    else if (!readTags)
+    else
     {
-        //Neither ID3V1 nor ID3V2 are present
         return PVMFFailure;
     }
 
@@ -347,19 +356,14 @@ OSCL_EXPORT_REF PVMFStatus PVID3ParCom::GetID3Frames(PvmiKvpSharedPtrVector& aFr
 }
 
 ////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFStatus PVID3ParCom::GetID3Frame(const OSCL_String& aFrameType, PvmiKvpSharedPtrVector& aFrame)
+OSCL_EXPORT_REF PVMFStatus PVID3ParCom::GetID3Frame(const OSCL_String& aFrameType, PvmiKvpSharedPtrVector& aFrameVector)
 {
     uint32 i;
-    int32 err = 0;
     for (i = 0; i < iFrames.size(); i++)
     {
         if (pv_mime_strcmp(iFrames[i]->key, aFrameType.get_str()) == 0)
         {
-            OSCL_TRY(err, aFrame.push_back(iFrames[i]););
-            OSCL_FIRST_CATCH_ANY(err,
-                                 LOG_ERR((0, "PVID3ParCom::GetID3Frame: Error - aFrame.push_back failed"));
-                                 return PVMFErrNoMemory;
-                                );
+            return PushFrameToFrameVector(iFrames[i], aFrameVector);
         }
     }
 
@@ -444,16 +448,15 @@ OSCL_EXPORT_REF PVMFStatus PVID3ParCom::SetID3Frame(const PvmiKvp& aFrame)
             return PVMFErrNotSupported;
     }
 
-    int32 err = 0;
+    status = PVMFSuccess;
     PvmiKvpSharedPtr kvp;
     bool truncate = false;
-    OSCL_TRY(err, kvp = AllocateKvp(key, kvpValueType, valueSize, truncate););
-    OSCL_FIRST_CATCH_ANY(err,
-                         LOG_ERR((0, "PVID3ParCom::SetID3Frame: Error - AllocateKvp failed"));
-                         return PVMFErrNoMemory;
-                        );
-    if (truncate)
+    kvp = HandleErrorForKVPAllocation(key, kvpValueType, valueSize, truncate, status);
+
+    if (truncate || (PVMFSuccess != status) || !kvp)
+    {
         return PVMFErrNoMemory;
+    }
 
     switch (kvpValueType)
     {
@@ -465,22 +468,20 @@ OSCL_EXPORT_REF PVMFStatus PVID3ParCom::SetID3Frame(const PvmiKvp& aFrame)
             oscl_strncpy(kvp->value.pWChar_value, aFrame.value.pWChar_value, valueStrLen);
             kvp->value.pWChar_value[valueStrLen] = NULL_TERM_CHAR;
             break;
-        case PVMI_KVPVALTYPE_KSV:
-            // Comment field
-            break;
         case PVMI_KVPVALTYPE_UINT32:
             kvp->value.uint32_value = aFrame.value.uint32_value;
             break;
+        case PVMI_KVPVALTYPE_KSV:
+            // comment field
         default:
             return PVMFErrNotSupported;
     }
 
-    OSCL_TRY(err, iFrames.push_back(kvp););
-    OSCL_FIRST_CATCH_ANY(err,
-                         LOG_ERR((0, "PVID3ParCom::SetID3Frame: Error - iFrames.push_back() failed"));
-                         return PVMFErrNoMemory;
-                        );
 
+    if (PVMFSuccess != PushFrameToFrameVector(kvp, iFrames))
+    {
+        return PVMFErrNoMemory;
+    }
     return PVMFSuccess;
 }
 
@@ -578,7 +579,6 @@ bool PVID3ParCom::CheckForTagID3V2()
 OSCL_EXPORT_REF bool PVID3ParCom::IsID3V2Present(PVFile* aFile, uint32& aTagSize)
 {
     iInputFile = aFile;
-
     if (iID3V2Present)
     {
         // if id3 tag has already been discovered, just return the tag size
@@ -622,7 +622,7 @@ OSCL_EXPORT_REF PVMFStatus PVID3ParCom::LookForV2_4Footer(uint32 aBuffSz, uint32
 
     tag_size = SafeSynchIntToInt32(size);
 
-    if (iInputFile->Seek(-(int32)(tag_size + 1 + ID3V2_TAG_NUM_BYTES_HEADER + (ID3V2_TAG_NUM_BYTES_HEADER - ID3V2_TAG_NUM_BYTES_ID)),
+    if (iInputFile->Seek(-(int32)(tag_size + ID3V2_TAG_NUM_BYTES_HEADER + (ID3V2_TAG_NUM_BYTES_HEADER - ID3V2_TAG_NUM_BYTES_ID)),
                          Oscl_File::SEEKCUR) == -1)
     {
         return PVMFFailure;
@@ -714,165 +714,261 @@ uint32 PVID3ParCom::SearchTagV2_4(uint32 aBuffSz, uint32 aFileOffset)
 }
 
 ////////////////////////////////////////////////////////////////////////////
-void PVID3ParCom::ReadID3V1Tag(bool aTitleOnlyFlag)
+void PVID3ParCom::ReadID3V1Tag(void)
 {
+
     PVMFStatus status = PVMFSuccess;
     bool truncate = false;
-    status = ReadStringValueFrame(PV_ID3_FRAME_TITLE, PV_ID3_CHARSET_ISO88591, ID3V1_MAX_NUM_BYTES_TITLE);
-    if (status != PVMFSuccess)
+
+    if (!iTitleFoundFlag)
     {
-        LOG_ERR((0, "PVID3ParCom::ReadID3V1Tag: Error = ReadStringValueFrame failed for title"));
-        OSCL_LEAVE(OsclErrGeneral);
+        //Title
+        status = ReadStringValueFrame(PV_ID3_FRAME_TITLE, PV_ID3_CHARSET_ISO88591, ID3V1_MAX_NUM_BYTES_TITLE);
+        if (status != PVMFSuccess)
+        {
+            LOG_ERR((0, "PVID3ParCom::ReadID3V1Tag: Error = ReadStringValueFrame failed for title"));
+            OSCL_LEAVE(OsclErrGeneral);
+        }
+        iTitleFoundFlag = true;
+    }
+    else
+    {
+
+        if (iInputFile->Seek(ID3V1_MAX_NUM_BYTES_TITLE, Oscl_File::SEEKCUR) == -1)
+        {
+            return;
+        }
+
+    }
+    if (!iArtistFoundFlag)
+    {
+        //Artist
+        status = ReadStringValueFrame(PV_ID3_FRAME_ARTIST, PV_ID3_CHARSET_ISO88591, ID3V1_MAX_NUM_BYTES_ARTIST);
+        if (status != PVMFSuccess)
+        {
+            LOG_ERR((0, "PVID3ParCom::ReadID3V1Tag: Error = ReadStringValueFrame failed for artist"));
+            OSCL_LEAVE(OsclErrGeneral);
+        }
+        iArtistFoundFlag = true;
+    }
+    else
+    {
+        if (iInputFile->Seek(ID3V1_MAX_NUM_BYTES_ARTIST, Oscl_File::SEEKCUR) == -1)
+        {
+            return;
+        }
     }
 
-    iTitleFoundFlag = true;
-    if (aTitleOnlyFlag)
+    if (!iAlbumFoundFlag)
     {
-        return;
+        // Album
+        status = ReadStringValueFrame(PV_ID3_FRAME_ALBUM, PV_ID3_CHARSET_ISO88591, ID3V1_MAX_NUM_BYTES_ALBUM);
+        if (status != PVMFSuccess)
+        {
+            LOG_ERR((0, "PVID3ParCom::ReadID3V1Tag: Error = ReadStringValueFrame failed for album"));
+            OSCL_LEAVE(OsclErrGeneral);
+        }
+        iAlbumFoundFlag = true;
+    }
+    else
+    {
+        if (iInputFile->Seek(ID3V1_MAX_NUM_BYTES_ALBUM, Oscl_File::SEEKCUR) == -1)
+        {
+            return;
+        }
     }
 
-    status = ReadStringValueFrame(PV_ID3_FRAME_ARTIST, PV_ID3_CHARSET_ISO88591, ID3V1_MAX_NUM_BYTES_ARTIST);
-    if (status != PVMFSuccess)
+    if (!iYearFoundFlag)
     {
-        LOG_ERR((0, "PVID3ParCom::ReadID3V1Tag: Error = ReadStringValueFrame failed for artist"));
-        OSCL_LEAVE(OsclErrGeneral);
+        //Year
+        status = ReadStringValueFrame(PV_ID3_FRAME_YEAR, PV_ID3_CHARSET_ISO88591, ID3V1_MAX_NUM_BYTES_YEAR);
+        if (status != PVMFSuccess)
+        {
+            LOG_ERR((0, "PVID3ParCom::ReadID3V1Tag: Error = ReadStringValueFrame failed for year"));
+            OSCL_LEAVE(OsclErrGeneral);
+        }
+        iYearFoundFlag = true;
     }
-
-    status = ReadStringValueFrame(PV_ID3_FRAME_ALBUM, PV_ID3_CHARSET_ISO88591, ID3V1_MAX_NUM_BYTES_ALBUM);
-    if (status != PVMFSuccess)
+    else
     {
-        LOG_ERR((0, "PVID3ParCom::ReadID3V1Tag: Error = ReadStringValueFrame failed for album"));
-        OSCL_LEAVE(OsclErrGeneral);
+        if (iInputFile->Seek(ID3V1_MAX_NUM_BYTES_YEAR, Oscl_File::SEEKCUR) == -1)
+        {
+            return;
+        }
     }
-
-    status = ReadStringValueFrame(PV_ID3_FRAME_YEAR, PV_ID3_CHARSET_ISO88591, ID3V1_MAX_NUM_BYTES_YEAR);
-    if (status != PVMFSuccess)
-    {
-        LOG_ERR((0, "PVID3ParCom::ReadID3V1Tag: Error = ReadStringValueFrame failed for year"));
-        OSCL_LEAVE(OsclErrGeneral);
-    }
-
-    // Read and convert comment & track number
-    uint8* frameData = NULL;
-    uint32 frameDataSize = ID3V1_MAX_NUM_BYTES_FIELD_SIZE + 1;
-    int32 err = 0;
-    OSCL_TRY(err, frameData = (uint8*)iAlloc.ALLOCATE(frameDataSize););
-    if (err != OsclErrNone || !frameData)
-    {
-        LOG_ERR((0, "PVID3ParCom::ReadID3V1Tag: Error - Out of memory"));
-        OSCL_LEAVE(OsclErrNoMemory);
-    }
-    oscl_memset(frameData, 0, frameDataSize);
-
-    if (readByteData(iInputFile, ID3V1_MAX_NUM_BYTES_COMMENT, frameData) == false)
-    {
-        iAlloc.deallocate(frameData);
-        LOG_ERR((0, "PVID3ParCom::ReadID3V1Tag: Error - readByteData failed"));
-        OSCL_LEAVE(OsclErrGeneral);
-    }
-
     OSCL_StackString<128> keyStr;
     PvmiKvpSharedPtr kvpPtr;
-    if (frameData[ID3V1_MAX_NUM_BYTES_COMMENT-2] == 0 &&
-            frameData[ID3V1_MAX_NUM_BYTES_COMMENT-1] != 0)
-    {
-        // This would mean its an ID3v1.1 tag and hence has the
-        // the track number also, so extract it
-        iVersion = PV_ID3_V1_1;
+    uint8* frameData = NULL;
 
-        if (ConstructKvpKey(keyStr, PV_ID3_FRAME_TRACK_NUMBER, PV_ID3_CHARSET_INVALID) != PVMFSuccess)
+    if (!iCommentFoundFlag   || !iTrackNumberFoundFlag)
+    {
+        frameData = NULL;
+        //Comment or Track Number
+        // Read and convert comment & track number
+        uint32 frameDataSize = ID3V1_MAX_NUM_BYTES_FIELD_SIZE + 1;
+        int32 err = OsclErrNone;
+        frameData = (uint8*) AllocateValueArray(err, PVMI_KVPVALTYPE_UINT8PTR, frameDataSize, &iAlloc);
+        if (OsclErrNone != err || !frameData)
+        {
+            LOG_ERR((0, "PVID3ParCom::ReadID3V1Tag: Error - Out of memory"));
+            OSCL_LEAVE(OsclErrNoMemory);
+        }
+        oscl_memset(frameData, 0, frameDataSize);
+
+        if (readByteData(iInputFile, ID3V1_MAX_NUM_BYTES_COMMENT, frameData) == false)
         {
             iAlloc.deallocate(frameData);
-            LOG_ERR((0, "PVID3ParCom::ReadID3V1Tag: Error - ConstructKvpKey failed for tracknumber"));
+            LOG_ERR((0, "PVID3ParCom::ReadID3V1Tag: Error - readByteData failed"));
+            OSCL_LEAVE(OsclErrGeneral);
+        }
+
+
+        if (frameData[ID3V1_MAX_NUM_BYTES_COMMENT-2] == 0 &&
+                frameData[ID3V1_MAX_NUM_BYTES_COMMENT-1] != 0)
+        {
+            if (!iTrackNumberFoundFlag)
+            {
+                // This would mean its an ID3v1.1 tag and hence has the
+                // the track number also, so extract it
+                iVersion = PV_ID3_V1_1;
+
+                if (ConstructKvpKey(keyStr, PV_ID3_FRAME_TRACK_NUMBER, PV_ID3_CHARSET_INVALID) != PVMFSuccess)
+                {
+                    iAlloc.deallocate(frameData);
+                    LOG_ERR((0, "PVID3ParCom::ReadID3V1Tag: Error - ConstructKvpKey failed for tracknumber"));
+                    OSCL_LEAVE(OsclErrNotSupported);
+                }
+
+                // Allocate key-value pair
+                OSCL_TRY(err, kvpPtr = AllocateKvp(keyStr, PVMI_KVPVALTYPE_UINT32, 1, truncate););
+                if (OsclErrNone != err || !kvpPtr)
+                {
+                    LOG_ERR((0, "PVID3ParCom::ReadID3V1Tag: Error - AllocateKvp failed. err=%d", err));
+                    iAlloc.deallocate(frameData);
+                    OSCL_LEAVE(OsclErrNoMemory);
+                    return;
+                }
+
+                if (!truncate)
+                {
+                    kvpPtr->value.uint32_value = (uint32)frameData[ID3V1_MAX_NUM_BYTES_COMMENT - 1];
+                }
+                OSCL_TRY(err, iFrames.push_back(kvpPtr););
+                OSCL_FIRST_CATCH_ANY(err,
+                                     LOG_ERR((0, "PVID3ParCom::ReadTrackLengthFrame: Error - iFrame.push_back failed"));
+                                     iAlloc.deallocate(frameData);
+                                     OSCL_LEAVE(OsclErrNoMemory);
+                                     return;
+                                    );
+                iTrackNumberFoundFlag = true;
+            }
+        }
+        if (!iCommentFoundFlag)
+        {
+
+            // Comment frame
+            frameData[ID3V1_MAX_NUM_BYTES_COMMENT] = 0;
+            if (ConstructKvpKey(keyStr, PV_ID3_FRAME_COMMENT, PV_ID3_CHARSET_ISO88591) != PVMFSuccess)
+            {
+                LOG_ERR((0, "PVID3ParCom::ReadID3V1Tag: Error - ConstructKvpKey failed for tracknumber"));
+                iAlloc.deallocate(frameData);
+                OSCL_LEAVE(OsclErrNotSupported);
+            }
+
+            uint32 dataSize = ID3V1_MAX_NUM_BYTES_COMMENT + 1;
+            // Allocate key-value pair
+            OSCL_TRY(err, kvpPtr = AllocateKvp(keyStr, PVMI_KVPVALTYPE_CHARPTR, dataSize, truncate););
+            if (OsclErrNone != err || !kvpPtr)
+            {
+                LOG_ERR((0, "PVID3ParCom::ReadID3V1Tag: Error - AllocateKvp failed. err=%d", err));
+                iAlloc.deallocate(frameData);
+                OSCL_LEAVE(OsclErrNoMemory);
+                return;
+            }
+
+            if (!truncate)
+            {
+                uint32 comment_size = oscl_strlen((char*) frameData);
+                oscl_strncpy(kvpPtr->value.pChar_value, (char *)frameData, dataSize);
+                kvpPtr->value.pChar_value[comment_size] = 0;
+                kvpPtr->length = comment_size + 1;
+            }
+
+            if (PVMFSuccess != PushFrameToFrameVector(kvpPtr, iFrames))
+            {
+                LOG_ERR((0, "PVID3ParCom::ReadID3V1Tag: Error - iFrame.push_back failed"));
+                iAlloc.deallocate(frameData);
+                return ;
+            }
+            iCommentFoundFlag = true;
+
+        }
+        iAlloc.deallocate(frameData);
+    }
+    else
+    {
+        if (iInputFile->Seek(ID3V1_MAX_NUM_BYTES_FIELD_SIZE, Oscl_File::SEEKCUR) == -1)
+        {
+            return;
+        }
+    }
+    if (!iGenereFoundFlag)
+    {
+        // Genre frame
+        uint32 frameDataSize = ID3V1_MAX_NUM_BYTES_GENRE + 1;
+        int32 err = 0;
+        frameData = (uint8*) AllocateValueArray(err, PVMI_KVPVALTYPE_UINT8PTR, frameDataSize, &iAlloc);
+        if (OsclErrNone != err || !frameData)
+        {
+            LOG_ERR((0, "PVID3ParCom::ReadID3V1Tag: Error - Out of memory"));
+            OSCL_LEAVE(OsclErrNoMemory);
+        }
+        oscl_memset(frameData, 0, frameDataSize);
+
+        if (readByteData(iInputFile, ID3V1_MAX_NUM_BYTES_GENRE, frameData) == false)
+        {
+            iAlloc.deallocate(frameData);
+            LOG_ERR((0, "PVID3ParCom::ReadID3V1Tag: Error - readByteData failed"));
+            OSCL_LEAVE(OsclErrGeneral);
+        }
+
+        if (ConstructKvpKey(keyStr, PV_ID3_FRAME_GENRE, PV_ID3_CHARSET_INVALID) != PVMFSuccess)
+        {
+            iAlloc.deallocate(frameData);
+            LOG_ERR((0, "PVID3ParCom::ReadID3V1Tag: Error - ConstructKvpKey failed for genre"));
             OSCL_LEAVE(OsclErrNotSupported);
         }
 
-        // Allocate key-value pair
-        OSCL_TRY(err, kvpPtr = AllocateKvp(keyStr, PVMI_KVPVALTYPE_UINT32, 0, truncate););
-
-        OSCL_FIRST_CATCH_ANY(err,
-                             LOG_ERR((0, "PVID3ParCom::ReadID3V1Tag: Error - AllocateKvp failed. err=%d", err));
-                             iAlloc.deallocate(frameData);
-                             OSCL_LEAVE(OsclErrNoMemory);
-                             return;
-                            );
+        OSCL_TRY(err, kvpPtr = AllocateKvp(keyStr, PVMI_KVPVALTYPE_UINT32, 1, truncate););
+        if (OsclErrNone != err || !kvpPtr)
+        {
+            iAlloc.deallocate(frameData);
+            LOG_ERR((0, "PVID3ParCom::ReadID3V1Tag: Error - AllocateKvp failed. err=%d", err));
+            OSCL_LEAVE(OsclErrNoMemory);
+            return;
+        }
 
         if (!truncate)
-            kvpPtr->value.uint32_value = (uint32)frameData[ID3V1_MAX_NUM_BYTES_COMMENT - 1];
-
+        {
+            kvpPtr->value.uint32_value = (uint32)(frameData[ID3V1_MAX_NUM_BYTES_GENRE - 1]);
+        }
         OSCL_TRY(err, iFrames.push_back(kvpPtr););
         OSCL_FIRST_CATCH_ANY(err,
-                             LOG_ERR((0, "PVID3ParCom::ReadTrackLengthFrame: Error - iFrame.push_back failed"));
                              iAlloc.deallocate(frameData);
+                             LOG_ERR((0, "PVID3ParCom::ReadTrackLengthFrame: Error - iFrame.push_back failed"));
                              OSCL_LEAVE(OsclErrNoMemory);
                              return;
                             );
-    }
-
-    // Comment frame
-    frameData[ID3V1_MAX_NUM_BYTES_COMMENT] = 0;
-    if (ConstructKvpKey(keyStr, PV_ID3_FRAME_COMMENT, PV_ID3_CHARSET_ISO88591) != PVMFSuccess)
-    {
-        LOG_ERR((0, "PVID3ParCom::ReadID3V1Tag: Error - ConstructKvpKey failed for tracknumber"));
         iAlloc.deallocate(frameData);
-        OSCL_LEAVE(OsclErrNotSupported);
+        iGenereFoundFlag = true;
     }
-
-    uint32 dataSize = ID3V1_MAX_NUM_BYTES_COMMENT + 1;
-    // Allocate key-value pair
-    OSCL_TRY(err, kvpPtr = AllocateKvp(keyStr, PVMI_KVPVALTYPE_CHARPTR, dataSize, truncate););
-    OSCL_FIRST_CATCH_ANY(err,
-                         LOG_ERR((0, "PVID3ParCom::ReadID3V1Tag: Error - AllocateKvp failed. err=%d", err));
-                         iAlloc.deallocate(frameData);
-                         OSCL_LEAVE(OsclErrNoMemory);
-                         return;
-                        );
-
-    if (!truncate)
-        oscl_strncpy(kvpPtr->value.pChar_value, (char *)frameData, dataSize) ;
-
-    OSCL_TRY(err, iFrames.push_back(kvpPtr););
-    OSCL_FIRST_CATCH_ANY(err,
-                         LOG_ERR((0, "PVID3ParCom::ReadID3V1Tag: Error - iFrame.push_back failed"));
-                         iAlloc.deallocate(frameData);
-                         return ;
-                        );
-
-    // Genre frame
-    oscl_memset(frameData, 0, frameDataSize);
-    if (readByteData(iInputFile, ID3V1_MAX_NUM_BYTES_GENRE, frameData) == false)
+    else
     {
-        LOG_ERR((0, "PVID3ParCom::ReadID3V1Tag: Error - readByteData failed"));
-        iAlloc.deallocate(frameData);
-        OSCL_LEAVE(OsclErrGeneral);
+        if (iInputFile->Seek(ID3V1_MAX_NUM_BYTES_GENRE, Oscl_File::SEEKCUR) == -1)
+        {
+            return;
+        }
     }
-
-    if (ConstructKvpKey(keyStr, PV_ID3_FRAME_GENRE, PV_ID3_CHARSET_INVALID) != PVMFSuccess)
-    {
-        LOG_ERR((0, "PVID3ParCom::ReadID3V1Tag: Error - ConstructKvpKey failed for genre"));
-        iAlloc.deallocate(frameData);
-        OSCL_LEAVE(OsclErrNotSupported);
-    }
-
-    OSCL_TRY(err, kvpPtr = AllocateKvp(keyStr, PVMI_KVPVALTYPE_UINT32, 0, truncate););
-    OSCL_FIRST_CATCH_ANY(err,
-                         LOG_ERR((0, "PVID3ParCom::ReadID3V1Tag: Error - AllocateKvp failed. err=%d", err));
-                         iAlloc.deallocate(frameData);
-                         OSCL_LEAVE(OsclErrNoMemory);
-                         return;
-                        );
-
-    if (!truncate)
-        kvpPtr->value.uint32_value = (uint32)(frameData[ID3V1_MAX_NUM_BYTES_GENRE - 1]);
-
-    OSCL_TRY(err, iFrames.push_back(kvpPtr););
-    OSCL_FIRST_CATCH_ANY(err,
-                         LOG_ERR((0, "PVID3ParCom::ReadTrackLengthFrame: Error - iFrame.push_back failed"));
-                         iAlloc.deallocate(frameData);
-                         OSCL_LEAVE(OsclErrNoMemory);
-                         return;
-                        );
-    iAlloc.deallocate(frameData);
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -1069,10 +1165,11 @@ bool PVID3ParCom::ReadExtendedHeader()
 /////////////////////////////////////////////////////////////////////////////////
 int PVID3ParCom::ReadTagID3V2(PVID3Version aVersion)
 {
-    PVID3FrameType frameType;
+    PVID3FrameType frameType = PV_ID3_FRAME_EEND;
     uint32 i = 0;
-    uint32 currFrameLength;
+    uint32 currFrameLength = 0;
     uint32 current_file_pos = iInputFile->Tell();
+    uint32 data_len_indicator_size = 0;
     uint32 count = 0;
 
     if (iID3TagInfo.iID3V2ExtendedHeaderSize > 0)
@@ -1088,7 +1185,6 @@ int PVID3ParCom::ReadTagID3V2(PVID3Version aVersion)
 
         ReadFrameHeaderID3V2(aVersion);
 
-        currFrameLength = 0;
         currFrameLength = iID3TagInfo.iID3V2FrameSize;
         frameType = FrameSupportedID3V2(aVersion);
 
@@ -1113,14 +1209,12 @@ int PVID3ParCom::ReadTagID3V2(PVID3Version aVersion)
         if (aVersion == PV_ID3_V2_3)
         {
             if (iID3TagInfo.iID3V2FrameFlag[1] & ENCR_COMP_3_FLAGMASK)
-                frameType = PV_ID3_FRAME_UNSUPPORTED;
-
-
+                frameType = PV_ID3_FRAME_UNRECOGNIZED;
         }
         else if (aVersion == PV_ID3_V2_4)
         {
             if (iID3TagInfo.iID3V2FrameFlag[1] & ENCR_COMP_4_FLAGMASK)
-                frameType = PV_ID3_FRAME_UNSUPPORTED;
+                frameType = PV_ID3_FRAME_UNRECOGNIZED;
         }
 
         if (frameType == PV_ID3_FRAME_SEEK)
@@ -1130,7 +1224,25 @@ int PVID3ParCom::ReadTagID3V2(PVID3Version aVersion)
             return count;
         }
 
-        if (((currFrameLength > 1) && (frameType != PV_ID3_FRAME_UNSUPPORTED)))
+        // Check if data length indicator is present
+        if (aVersion == PV_ID3_V2_4 && (iID3TagInfo.iID3V2FrameFlag[1] & FRAME_LENGTH_INDICATOR_FLAGMASK))
+        {
+            uint32 temp = 0;
+            // Read data length indicator
+            if (read32(iInputFile, temp) == false)
+            {
+                return count;
+            }
+            // stored as syncsafe integer
+            currFrameLength = SafeSynchIntToInt32(temp);
+
+            data_len_indicator_size = ID3V2_4_DATA_LENGTH_INDICATOR_SIZE;
+        }
+
+        if (((currFrameLength > 1) && (frameType != PV_ID3_FRAME_UNRECOGNIZED
+                                       && frameType != PV_ID3_FRAME_INVALID
+                                       && frameType != PV_ID3_FRAME_EEND
+                                       && frameType != PV_ID3_FRAME_CANDIDATE)))
         {
             uint8 unicodeCheck;
 
@@ -1152,13 +1264,12 @@ int PVID3ParCom::ReadTagID3V2(PVID3Version aVersion)
 
                     return count;
                 }
-
             }
             else if (unicodeCheck < PV_ID3_CHARSET_END)
             {
 
                 if (!ReadFrameData(unicodeCheck, frameType,
-                                   current_file_pos + i + frame_header_size + 1 ,
+                                   current_file_pos + i + frame_header_size + data_len_indicator_size + 1,
                                    currFrameLength))
                 {
                     return count;
@@ -1167,42 +1278,193 @@ int PVID3ParCom::ReadTagID3V2(PVID3Version aVersion)
             else
             {
                 // This case is when no text type is defined in the frame.
-                HandleID3V2FrameDataASCII(frameType, i + frame_header_size,
-                                          currFrameLength);
-
+                HandleID3V2FrameDataASCII(frameType, i + frame_header_size + data_len_indicator_size, currFrameLength);
             }
             count++;
         }
         else
         {
-            if (frameType == PV_ID3_FRAME_EEND)
+            if (frameType == PV_ID3_FRAME_EEND ||
+                    frameType == PV_ID3_FRAME_INVALID)
             {
                 i = iID3TagInfo.iID3V2TagSize + 1;
             }
-            else if (frameType == PV_ID3_FRAME_UNSUPPORTED)
+            else if (frameType == PV_ID3_FRAME_UNRECOGNIZED ||
+                     frameType == PV_ID3_FRAME_CANDIDATE) // handle candidate frames as we do unsupported
             {
                 if (i < iID3TagInfo.iID3V2TagSize)
                 {
                     HandleID3V2FrameUnsupported(frameType,
                                                 current_file_pos + i,
-                                                currFrameLength + frame_header_size);
+                                                currFrameLength + frame_header_size + data_len_indicator_size);
                 }
-
-
-
             }
         }
 
-        i += currFrameLength + frame_header_size;
+        i += iID3TagInfo.iID3V2FrameSize + frame_header_size;
+    }
+    return count;
+}
+
+bool PVID3ParCom::ValidateFrameV2_4(PVID3FrameType& frameType, bool bUseSyncSafeFrameSize)
+{
+    // Initialize OUT param
+    frameType = PV_ID3_FRAME_INVALID;
+
+    uint8 frameid[ID3V2_FRAME_NUM_BYTES_ID + 1] = {0};
+    // read frame id for next frame
+    if (readByteData(iInputFile, ID3V2_FRAME_NUM_BYTES_ID, frameid) == false)
+    {
+        return false;
+    }
+    frameid[ID3V2_FRAME_NUM_BYTES_ID] = 0;
+
+    // Get frame type from frame ID
+    frameType = FrameSupportedID3V2(PV_ID3_V2_4, frameid);
+    if (PV_ID3_FRAME_INVALID == frameType ||
+            PV_ID3_FRAME_EEND == frameType)
+    {
+        return false;
+    }
+    else
+    {
+        uint32 frameSize = 0;
+        uint8 frameflags[ID3V2_FRAME_NUM_BYTES_FLAG] = {0};
+
+        // Validate frame size and flags
+
+        if (read32(iInputFile, frameSize) == false)
+        {
+            return false;
+        }
+        if (bUseSyncSafeFrameSize)
+        {
+            frameSize = SafeSynchIntToInt32(frameSize);
+        }
+
+        if (readByteData(iInputFile, ID3V2_FRAME_NUM_BYTES_FLAG, frameflags) == false)
+        {
+            return false;
+        }
+
+        if ((0 == frameSize ||
+                (frameSize + ID3V2_FRAME_NUM_BYTES_HEADER) > iID3TagInfo.iID3V2TagSize) ||
+                ((frameflags[0] & ID3V2_4_MASK_FRAME_FLAG_VERIFICATION) ||
+                 (frameflags[1] & ID3V2_4_MASK_FRAME_FLAG_VERIFICATION)))
+        {
+            // validation for frame size or flags failed
+            return false;
+        }
+        else
+        {
+            return true;
+        }
+    }
+}
+
+uint32 PVID3ParCom::ValidateFrameLengthV2_4(uint32 aFrameSize)
+{
+    int32 currFilePos = iInputFile->Tell();
+    int32 errCode = -1;
+    int32 actualFrameLen = 0;
+
+    // we have already read the complete current frame header
+
+    do
+    {
+        // Assuming syncsafe frame size
+        actualFrameLen = SafeSynchIntToInt32(aFrameSize);
+
+        //
+        /* validate frame using syncsafe size */
+        //
+
+        // Seek to next frame boundary with syncsafe size
+        errCode = iInputFile->Seek(actualFrameLen, Oscl_File::SEEKCUR);
+        if (-1 == errCode)
+        {
+            // proceed with default syncsafe handling
+            break;
+        }
+
+        bool bIsSyncSafeFrameValid = false;
+        PVID3FrameType frameTypeUsingSyncSafeSize = PV_ID3_FRAME_INVALID;
+        // Get the validation status and frame type
+        bIsSyncSafeFrameValid = ValidateFrameV2_4(frameTypeUsingSyncSafeSize);
+
+        //
+        /* validate frame using non-syncsafe size */
+        //
+
+        // FrameSize is not even stored as non-syncsafe
+        if ((aFrameSize + ID3V2_FRAME_NUM_BYTES_HEADER) > iID3TagInfo.iID3V2TagSize)
+        {
+            // proceed with syncsafe, as non-syncsafe length not valid
+            break;
+        }
+
+        // Seek back
+        errCode = iInputFile->Seek(currFilePos, Oscl_File::SEEKSET);
+        if (-1 == errCode)
+        {
+            LOG_ERR((0, "PVID3ParCom::ValidateFrameLengthV2_4: Error - iInputFile->Seek failed"));
+            OSCL_LEAVE(OsclErrGeneral);
+        }
+        // Seek to next frame boundary with non-syncsafe size
+        errCode = iInputFile->Seek(aFrameSize, Oscl_File::SEEKCUR);
+        if (-1 == errCode)
+        {
+            // proceed with default syncsafe handling
+            break;
+        }
+
+        bool bIsNonSyncSafeFrameValid = false;
+        PVID3FrameType frameTypeUsingNonSyncSafeSize = PV_ID3_FRAME_INVALID;
+        // Get the validation status and frame type
+        bIsNonSyncSafeFrameValid = ValidateFrameV2_4(frameTypeUsingNonSyncSafeSize, false);
+
+        // - Give more priority to non-syncsafe VALID frame ID,
+        //		than syncsafe candidate frame ID (frame validation is true for both)
+        // - In case, we have frame validation true for both syncsafe and non-syncsafe size,
+        //		we will use default syncsafe representation
+        // - In case, we have frame validation false for both syncsafe and non-syncsafe size,
+        //		we will use default syncsafe representation
+        if (bIsSyncSafeFrameValid && frameTypeUsingSyncSafeSize != PV_ID3_FRAME_CANDIDATE)
+        {
+            // syncsafe representation
+        }
+        else if (bIsNonSyncSafeFrameValid && frameTypeUsingNonSyncSafeSize != PV_ID3_FRAME_CANDIDATE)
+        {
+            // non-syncsafe representation
+            actualFrameLen = aFrameSize;
+        }
+        else if (!bIsSyncSafeFrameValid && bIsNonSyncSafeFrameValid)
+        {
+            // non-syncsafe representation
+            actualFrameLen = aFrameSize;
+        }
+        else
+        {
+            // consider rest all syncsafe representation
+        }
+
+    }
+    while (false);
+
+    // Seek back
+    errCode = iInputFile->Seek(currFilePos, Oscl_File::SEEKSET);
+    if (-1 == errCode)
+    {
+        LOG_ERR((0, "PVID3ParCom::ValidateFrameLengthV2_4: Error - iInputFile->Seek failed"));
+        OSCL_LEAVE(OsclErrGeneral);
     }
 
-    return count;
+    return actualFrameLen;
 }
 
 //////////////////////////////////////////////////////////////////////////
 bool  PVID3ParCom::ReadFrameData(uint8 unicodeCheck, PVID3FrameType frameType, uint32 pos, uint32 currFrameLength)
 {
-
     if (unicodeCheck == PV_ID3_CHARSET_ISO88591)
     {
         // This frame contains normal ASCII text strings. (ISO-8859-1)
@@ -1254,8 +1516,6 @@ bool  PVID3ParCom::ReadFrameData(uint8 unicodeCheck, PVID3FrameType frameType, u
         iID3TagInfo.iTextType = PV_ID3_CHARSET_UTF8;
         HandleID3V2FrameDataUTF8(frameType,	pos, currFrameLength - 1);
     }
-
-
     return true;
 }
 
@@ -1268,22 +1528,30 @@ void PVID3ParCom::ReadFrameHeaderID3V2(PVID3Version aVersion)
     }
     else
     {
+        // Read frame ID
         if (readByteData(iInputFile, ID3V2_FRAME_NUM_BYTES_ID, iID3TagInfo.iID3V2FrameID) == false)
         {
             return;
         }
         iID3TagInfo.iID3V2FrameID[ID3V2_FRAME_NUM_BYTES_ID] = 0;
+        // Read frame size
         if (read32(iInputFile, iID3TagInfo.iID3V2FrameSize) == false)
         {
             return;
         }
-        if (aVersion == PV_ID3_V2_4)
-        {
-            iID3TagInfo.iID3V2FrameSize = SafeSynchIntToInt32(iID3TagInfo.iID3V2FrameSize);
-        }
+        // Read frame flag
         if (readByteData(iInputFile, ID3V2_FRAME_NUM_BYTES_FLAG, iID3TagInfo.iID3V2FrameFlag) == false)
         {
             return;
+        }
+
+        if (PV_ID3_V2_4 == aVersion)
+        {
+            if (iID3TagInfo.iID3V2FrameSize > MAX_SYNCSAFE_LEN)
+            {
+                // Verify whether frame length is SyncSafe or Non-SyncSafe
+                iID3TagInfo.iID3V2FrameSize = ValidateFrameLengthV2_4(iID3TagInfo.iID3V2FrameSize);
+            }
         }
     }
     return;
@@ -1322,7 +1590,7 @@ void PVID3ParCom::HandleID3V2FrameDataASCII(PVID3FrameType aFrameType,
     switch (aFrameType)
     {
         case PV_ID3_FRAME_TRACK_LENGTH:
-            status = ReadTrackLengthFrame(aSize);
+            status = ReadTrackLengthFrame(aSize, PV_ID3_CHARSET_ISO88591);
             if (status != PVMFSuccess)
             {
                 LOG_ERR((0, "PVID3ParCom::HandleID3V2FrameDataASCII: Error - ReadTrackLengthFrame failed. status=%d", status));
@@ -1353,6 +1621,17 @@ void PVID3ParCom::HandleID3V2FrameDataASCII(PVID3FrameType aFrameType,
             }
             if (aFrameType == PV_ID3_FRAME_TITLE)
                 iTitleFoundFlag = true;
+            if (aFrameType == PV_ID3_FRAME_ARTIST)
+                iArtistFoundFlag = true;
+            if (aFrameType == PV_ID3_FRAME_ALBUM)
+                iAlbumFoundFlag = true;
+            if (aFrameType == PV_ID3_FRAME_YEAR)
+                iYearFoundFlag = true;
+            if (aFrameType == PV_ID3_FRAME_TRACK_NUMBER)
+                iTrackNumberFoundFlag = true;
+            if (aFrameType == PV_ID3_FRAME_GENRE)
+                iGenereFoundFlag = true;
+
             break;
 
         default:
@@ -1408,7 +1687,7 @@ void PVID3ParCom::HandleID3V2FrameDataUnicode16(PVID3FrameType aFrameType,
 
         case PV_ID3_FRAME_TRACK_LENGTH:
             //is a numeric string and does not depend on text encoding.
-            status = ReadTrackLengthFrame(aSize);
+            status = ReadTrackLengthFrame(aSize, charSet);
             if (status != PVMFSuccess)
             {
                 LOG_ERR((0, "PVID3ParCom::HandleID3V2FrameDataUnicode16: Error - ReadTrackLengthFrame failed. status=%d", status));
@@ -1441,6 +1720,17 @@ void PVID3ParCom::HandleID3V2FrameDataUnicode16(PVID3FrameType aFrameType,
             }
             if (aFrameType == PV_ID3_FRAME_TITLE)
                 iTitleFoundFlag = true;
+            if (aFrameType == PV_ID3_FRAME_ARTIST)
+                iArtistFoundFlag = true;
+            if (aFrameType == PV_ID3_FRAME_ALBUM)
+                iAlbumFoundFlag = true;
+            if (aFrameType == PV_ID3_FRAME_YEAR)
+                iYearFoundFlag = true;
+            if (aFrameType == PV_ID3_FRAME_TRACK_NUMBER)
+                iTrackNumberFoundFlag = true;
+            if (aFrameType == PV_ID3_FRAME_GENRE)
+                iGenereFoundFlag = true;
+
             break;
 
         default:
@@ -1464,7 +1754,7 @@ void PVID3ParCom::HandleID3V2FrameDataUTF8(PVID3FrameType aFrameType,
     {
 
         case PV_ID3_FRAME_TRACK_LENGTH:
-            status = ReadTrackLengthFrame(aSize);
+            status = ReadTrackLengthFrame(aSize, PV_ID3_CHARSET_UTF8);
             if (status != PVMFSuccess)
             {
                 LOG_ERR((0, "PVID3ParCom::HandleID3V2FrameDataUTF8: Error - ReadTrackLengthFrame failed. status=%d", status));
@@ -1496,6 +1786,17 @@ void PVID3ParCom::HandleID3V2FrameDataUTF8(PVID3FrameType aFrameType,
             }
             if (aFrameType == PV_ID3_FRAME_TITLE)
                 iTitleFoundFlag = true;
+            if (aFrameType == PV_ID3_FRAME_ARTIST)
+                iArtistFoundFlag = true;
+            if (aFrameType == PV_ID3_FRAME_ALBUM)
+                iAlbumFoundFlag = true;
+            if (aFrameType == PV_ID3_FRAME_YEAR)
+                iYearFoundFlag = true;
+            if (aFrameType == PV_ID3_FRAME_TRACK_NUMBER)
+                iTrackNumberFoundFlag = true;
+            if (aFrameType == PV_ID3_FRAME_GENRE)
+                iGenereFoundFlag = true;
+
             break;
 
         default:
@@ -1527,11 +1828,12 @@ void PVID3ParCom::HandleID3V2FrameDataUTF8(PVID3FrameType aFrameType,
 //
 //------------------------------------------------------------------------------
 
-PVID3ParCom::PVID3FrameType PVID3ParCom::FrameSupportedID3V2(PVID3Version aVersion)
+PVID3ParCom::PVID3FrameType PVID3ParCom::FrameSupportedID3V2(PVID3Version aVersion, uint8* aframeid)
 {
     PVID3FrameType ID3V2FrameTypeReturnValue;
+    uint8* pFrameID = (aframeid) ? aframeid : iID3TagInfo.iID3V2FrameID;
 
-    if ((iID3TagInfo.iID3V2FrameID[0] == 0xff))
+    if (0xff == pFrameID[0])
     {
         //possibly start of mp3 frame. Stop further parsing.
         return PV_ID3_FRAME_EEND;
@@ -1543,101 +1845,108 @@ PVID3ParCom::PVID3FrameType PVID3ParCom::FrameSupportedID3V2(PVID3Version aVersi
     }
     else	//for v2.3 & v2.4
     {
-
         uint8 endTestBuf[ID3V2_FRAME_NUM_BYTES_ID] = {0};
 
-        if (oscl_memcmp(iID3TagInfo.iID3V2FrameID, ID3_FRAME_ID_TITLE, ID3V2_FRAME_NUM_BYTES_ID) == 0)
+        if (oscl_memcmp(pFrameID, ID3_FRAME_ID_TITLE, ID3V2_FRAME_NUM_BYTES_ID) == 0)
         {
             ID3V2FrameTypeReturnValue = PV_ID3_FRAME_TITLE;
             iTitleFoundFlag = true;
         }
-        else if (oscl_memcmp(iID3TagInfo.iID3V2FrameID, ID3_FRAME_ID_ARTIST, ID3V2_FRAME_NUM_BYTES_ID) == 0)
+        else if (oscl_memcmp(pFrameID, ID3_FRAME_ID_ARTIST, ID3V2_FRAME_NUM_BYTES_ID) == 0)
         {
             ID3V2FrameTypeReturnValue = PV_ID3_FRAME_ARTIST;
+            iArtistFoundFlag = true;
         }
-        else if (oscl_memcmp(iID3TagInfo.iID3V2FrameID, ID3_FRAME_ID_PART_OF_SET, ID3V2_FRAME_NUM_BYTES_ID) == 0)
+        else if (oscl_memcmp(pFrameID, ID3_FRAME_ID_PART_OF_SET, ID3V2_FRAME_NUM_BYTES_ID) == 0)
         {
             ID3V2FrameTypeReturnValue = PV_ID3_FRAME_PART_OF_SET;
         }
-        else if (oscl_memcmp(iID3TagInfo.iID3V2FrameID, ID3_FRAME_ID_ALBUM, ID3V2_FRAME_NUM_BYTES_ID) == 0)
+        else if (oscl_memcmp(pFrameID, ID3_FRAME_ID_ALBUM, ID3V2_FRAME_NUM_BYTES_ID) == 0)
         {
             ID3V2FrameTypeReturnValue = PV_ID3_FRAME_ALBUM;
+            iAlbumFoundFlag = true;
         }
-        else if (oscl_memcmp(iID3TagInfo.iID3V2FrameID, ID3_FRAME_ID_COPYRIGHT, ID3V2_FRAME_NUM_BYTES_ID) == 0)
+        else if (oscl_memcmp(pFrameID, ID3_FRAME_ID_COPYRIGHT, ID3V2_FRAME_NUM_BYTES_ID) == 0)
         {
             ID3V2FrameTypeReturnValue = PV_ID3_FRAME_COPYRIGHT;
         }
-        else if (oscl_memcmp(iID3TagInfo.iID3V2FrameID, ID3_FRAME_ID_GENRE, ID3V2_FRAME_NUM_BYTES_ID) == 0)
+        else if (oscl_memcmp(pFrameID, ID3_FRAME_ID_GENRE, ID3V2_FRAME_NUM_BYTES_ID) == 0)
         {
             ID3V2FrameTypeReturnValue = PV_ID3_FRAME_GENRE;
+            iGenereFoundFlag = true;
         }
-        else if (oscl_memcmp(iID3TagInfo.iID3V2FrameID, ID3_FRAME_ID_TRACK_NUMBER, ID3V2_FRAME_NUM_BYTES_ID) == 0)
+        else if (oscl_memcmp(pFrameID, ID3_FRAME_ID_TRACK_NUMBER, ID3V2_FRAME_NUM_BYTES_ID) == 0)
         {
             ID3V2FrameTypeReturnValue = PV_ID3_FRAME_TRACK_NUMBER;
+            iTrackNumberFoundFlag = true;
         }
-        else if (oscl_memcmp(iID3TagInfo.iID3V2FrameID, ID3_FRAME_ID_TRACK_LENGTH, ID3V2_FRAME_NUM_BYTES_ID) == 0)
+        else if (oscl_memcmp(pFrameID, ID3_FRAME_ID_TRACK_LENGTH, ID3V2_FRAME_NUM_BYTES_ID) == 0)
         {
             ID3V2FrameTypeReturnValue = PV_ID3_FRAME_TRACK_LENGTH;
         }
-        else if (oscl_memcmp(iID3TagInfo.iID3V2FrameID, ID3_FRAME_ID_COMMENT, ID3V2_FRAME_NUM_BYTES_ID) == 0)
+        else if (oscl_memcmp(pFrameID, ID3_FRAME_ID_COMMENT, ID3V2_FRAME_NUM_BYTES_ID) == 0)
         {
             ID3V2FrameTypeReturnValue = PV_ID3_FRAME_COMMENT;
+            iCommentFoundFlag = true;
         }
-        else if (oscl_memcmp(iID3TagInfo.iID3V2FrameID, ID3_FRAME_ID_YEAR, ID3V2_FRAME_NUM_BYTES_ID) == 0)
+        else if (oscl_memcmp(pFrameID, ID3_FRAME_ID_YEAR, ID3V2_FRAME_NUM_BYTES_ID) == 0)
         {
             ID3V2FrameTypeReturnValue = PV_ID3_FRAME_YEAR;
+            iYearFoundFlag = true;
         }
-        else if (oscl_memcmp(iID3TagInfo.iID3V2FrameID, ID3_FRAME_ID_DATE, ID3V2_FRAME_NUM_BYTES_ID) == 0)
+        else if (oscl_memcmp(pFrameID, ID3_FRAME_ID_RECORDING_TIME, ID3V2_FRAME_NUM_BYTES_ID) == 0)
+        {
+            ID3V2FrameTypeReturnValue = PV_ID3_FRAME_RECORDING_TIME;
+            iYearFoundFlag = true;
+        }
+        else if (oscl_memcmp(pFrameID, ID3_FRAME_ID_DATE, ID3V2_FRAME_NUM_BYTES_ID) == 0)
         {
             ID3V2FrameTypeReturnValue = PV_ID3_FRAME_DATE;
         }
 
-        else if (oscl_memcmp(iID3TagInfo.iID3V2FrameID, ID3_FRAME_ID_ALBUMART, ID3V2_FRAME_NUM_BYTES_ID) == 0)
+        else if (oscl_memcmp(pFrameID, ID3_FRAME_ID_ALBUMART, ID3V2_FRAME_NUM_BYTES_ID) == 0)
         {
             ID3V2FrameTypeReturnValue = PV_ID3_FRAME_APIC;
         }
-        else if (oscl_memcmp(iID3TagInfo.iID3V2FrameID, ID3_FRAME_ID_LYRICIST, ID3V2_FRAME_NUM_BYTES_ID) == 0)
+        else if (oscl_memcmp(pFrameID, ID3_FRAME_ID_LYRICIST, ID3V2_FRAME_NUM_BYTES_ID) == 0)
         {
             ID3V2FrameTypeReturnValue = PV_ID3_FRAME_LYRICS;
         }
 
         // For the seek frame.
-        else if (oscl_memcmp(iID3TagInfo.iID3V2FrameID, ID3_FRAME_ID_SEEK, ID3V2_FRAME_NUM_BYTES_ID) == 0)
+        else if (oscl_memcmp(pFrameID, ID3_FRAME_ID_SEEK, ID3V2_FRAME_NUM_BYTES_ID) == 0)
         {
             ID3V2FrameTypeReturnValue = PV_ID3_FRAME_SEEK;
         }
-        else if (oscl_memcmp(iID3TagInfo.iID3V2FrameID, ID3_FRAME_ID_RECORDING_TIME, ID3V2_FRAME_NUM_BYTES_ID) == 0)
-        {
-            ID3V2FrameTypeReturnValue = PV_ID3_FRAME_RECORDING_TIME;
-        }
-//new frames support
-        else if (oscl_memcmp(iID3TagInfo.iID3V2FrameID, ID3_FRAME_ID_AUTHOR, ID3V2_FRAME_NUM_BYTES_ID) == 0)
+        //new frames support
+        else if (oscl_memcmp(pFrameID, ID3_FRAME_ID_AUTHOR, ID3V2_FRAME_NUM_BYTES_ID) == 0)
         {
             ID3V2FrameTypeReturnValue = PV_ID3_FRAME_AUTHOR;
         }
-        else if (oscl_memcmp(iID3TagInfo.iID3V2FrameID, ID3_FRAME_ID_COMPOSER, ID3V2_FRAME_NUM_BYTES_ID) == 0)
+        else if (oscl_memcmp(pFrameID, ID3_FRAME_ID_COMPOSER, ID3V2_FRAME_NUM_BYTES_ID) == 0)
         {
             ID3V2FrameTypeReturnValue = PV_ID3_FRAME_COMPOSER;
         }
-        else if (oscl_memcmp(iID3TagInfo.iID3V2FrameID, ID3_FRAME_ID_DESCRIPTION, ID3V2_FRAME_NUM_BYTES_ID) == 0)
+        else if (oscl_memcmp(pFrameID, ID3_FRAME_ID_DESCRIPTION, ID3V2_FRAME_NUM_BYTES_ID) == 0)
         {
             ID3V2FrameTypeReturnValue = PV_ID3_FRAME_DESCRIPTION;
         }
-        else if (oscl_memcmp(iID3TagInfo.iID3V2FrameID, ID3_FRAME_ID_VERSION, ID3V2_FRAME_NUM_BYTES_ID) == 0)
+        else if (oscl_memcmp(pFrameID, ID3_FRAME_ID_VERSION, ID3V2_FRAME_NUM_BYTES_ID) == 0)
         {
             ID3V2FrameTypeReturnValue = PV_ID3_FRAME_VERSION;
         }
-        else if (oscl_memcmp(iID3TagInfo.iID3V2FrameID, endTestBuf, ID3V2_FRAME_NUM_BYTES_ID) == 0)
+        else if (oscl_memcmp(pFrameID, endTestBuf, ID3V2_FRAME_NUM_BYTES_ID) == 0)
         {
             ID3V2FrameTypeReturnValue = PV_ID3_FRAME_EEND;
         }
-        else if (oscl_memcmp(iID3TagInfo.iID3V2FrameID, endTestBuf, ID3V2_FRAME_NUM_BYTES_ID) == 0)
+        else if (oscl_memcmp(pFrameID, endTestBuf, ID3V2_FRAME_NUM_BYTES_ID) == 0)
         {
             ID3V2FrameTypeReturnValue = PV_ID3_FRAME_EEND;
         }
         else
         {
-            ID3V2FrameTypeReturnValue = PV_ID3_FRAME_UNSUPPORTED;
+            // Find whether frame is invalid or unsupported
+            ID3V2FrameTypeReturnValue = FrameValidatedID3V2_4(pFrameID);
         }
     }
     return ID3V2FrameTypeReturnValue;
@@ -1680,6 +1989,7 @@ PVID3ParCom::PVID3FrameType PVID3ParCom::FrameSupportedID3V2_2(void)
     else if (oscl_memcmp(iID3TagInfo.iID3V2FrameID, ID3V2_2_FRAME_ID_ARTIST, ID3V2_2_FRAME_NUM_BYTES_ID) == 0)
     {
         ID3V2_2FrameTypeReturnValue = PV_ID3_FRAME_ARTIST;
+        iArtistFoundFlag = true;
     }
     else if (oscl_memcmp(iID3TagInfo.iID3V2FrameID, ID3V2_2_FRAME_ID_PART_OF_SET, ID3V2_2_FRAME_NUM_BYTES_ID) == 0)
     {
@@ -1688,6 +1998,7 @@ PVID3ParCom::PVID3FrameType PVID3ParCom::FrameSupportedID3V2_2(void)
     else if (oscl_memcmp(iID3TagInfo.iID3V2FrameID, ID3V2_2_FRAME_ID_ALBUM, ID3V2_2_FRAME_NUM_BYTES_ID) == 0)
     {
         ID3V2_2FrameTypeReturnValue = PV_ID3_FRAME_ALBUM;
+        iAlbumFoundFlag = true;
     }
     else if (oscl_memcmp(iID3TagInfo.iID3V2FrameID, ID3V2_2_FRAME_ID_COPYRIGHT, ID3V2_2_FRAME_NUM_BYTES_ID) == 0)
     {
@@ -1696,10 +2007,12 @@ PVID3ParCom::PVID3FrameType PVID3ParCom::FrameSupportedID3V2_2(void)
     else if (oscl_memcmp(iID3TagInfo.iID3V2FrameID, ID3V2_2_FRAME_ID_GENRE, ID3V2_2_FRAME_NUM_BYTES_ID) == 0)
     {
         ID3V2_2FrameTypeReturnValue = PV_ID3_FRAME_GENRE;
+        iGenereFoundFlag = true;
     }
     else if (oscl_memcmp(iID3TagInfo.iID3V2FrameID, ID3V2_2_FRAME_ID_TRACK_NUMBER, ID3V2_2_FRAME_NUM_BYTES_ID) == 0)
     {
         ID3V2_2FrameTypeReturnValue = PV_ID3_FRAME_TRACK_NUMBER;
+        iTrackNumberFoundFlag = true;
     }
     else if (oscl_memcmp(iID3TagInfo.iID3V2FrameID, ID3V2_2_FRAME_ID_TRACK_LENGTH, ID3V2_2_FRAME_NUM_BYTES_ID) == 0)
     {
@@ -1708,10 +2021,12 @@ PVID3ParCom::PVID3FrameType PVID3ParCom::FrameSupportedID3V2_2(void)
     else if (oscl_memcmp(iID3TagInfo.iID3V2FrameID, ID3V2_2_FRAME_ID_COMMENT, ID3V2_2_FRAME_NUM_BYTES_ID) == 0)
     {
         ID3V2_2FrameTypeReturnValue = PV_ID3_FRAME_COMMENT;
+        iCommentFoundFlag = true;
     }
     else if (oscl_memcmp(iID3TagInfo.iID3V2FrameID, ID3V2_2_FRAME_ID_YEAR, ID3V2_2_FRAME_NUM_BYTES_ID) == 0)
     {
         ID3V2_2FrameTypeReturnValue = PV_ID3_FRAME_YEAR;
+        iYearFoundFlag = true;
     }
     else if (oscl_memcmp(iID3TagInfo.iID3V2FrameID, ID3V2_2_FRAME_ID_DATE, ID3V2_2_FRAME_NUM_BYTES_ID) == 0)
     {
@@ -1750,7 +2065,7 @@ PVID3ParCom::PVID3FrameType PVID3ParCom::FrameSupportedID3V2_2(void)
 
     else
     {
-        ID3V2_2FrameTypeReturnValue = PV_ID3_FRAME_UNSUPPORTED;
+        ID3V2_2FrameTypeReturnValue = PV_ID3_FRAME_UNRECOGNIZED;
     }
 
     return ID3V2_2FrameTypeReturnValue;
@@ -1991,13 +2306,14 @@ PvmiKvpSharedPtr PVID3ParCom::AllocateKvp(OSCL_String& aKey, PvmiKvpValueType aV
                         aligned_kvp_size + key_size + aValueSize;
 
     int32 error = 0;
-    OSCL_TRY(error, myPtr = (uint8*)iAlloc.ALLOCATE(total_size););
+    myPtr = (uint8*) AllocateValueArray(error, PVMI_KVPVALTYPE_UINT8PTR, total_size, &iAlloc);
     if ((error != OsclErrNone) || (!myPtr) || (total_size < aValueSize))
     {
         if (myPtr)
         {
             iAlloc.deallocate(myPtr);
         }
+
         char str_data_len[MAX_RANGE_INT_SIZE + 1] = {0};
         oscl_snprintf(str_data_len, MAX_RANGE_INT_SIZE + 1, "%d", aValueSize);
         aKey += SEMI_COLON;
@@ -2006,8 +2322,12 @@ PvmiKvpSharedPtr PVID3ParCom::AllocateKvp(OSCL_String& aKey, PvmiKvpValueType aV
         uint32 new_key_size = oscl_mem_aligned_size(aKey.get_size() + 1);
         error = OsclErrNone;
         total_size = aligned_refcnt_size + aligned_cleanup_size + aligned_kvp_size + new_key_size;
-        myPtr = (uint8*)iAlloc.ALLOCATE(total_size);
+        myPtr = (uint8*) AllocateValueArray(error, PVMI_KVPVALTYPE_UINT8PTR, total_size, &iAlloc);
         truncate = true;
+        if (OsclErrNone != error)
+        {
+            OSCL_LEAVE(OsclErrNoMemory);
+        }
     }
     oscl_memset(myPtr, 0, total_size);
 
@@ -2018,11 +2338,11 @@ PvmiKvpSharedPtr PVID3ParCom::AllocateKvp(OSCL_String& aKey, PvmiKvpValueType aV
     PvmiKvp* kvp = OSCL_STATIC_CAST(PvmiKvp *, myPtr) ;
     myPtr += aligned_kvp_size;
 
+    kvp->key = OSCL_STATIC_CAST(char* , myPtr);
+    myPtr += key_size;
+    oscl_strncpy(kvp->key, aKey.get_cstr(), key_size);
     if (!truncate)
     {
-        kvp->key = OSCL_STATIC_CAST(char* , myPtr);
-        myPtr += key_size;
-        oscl_strncpy(kvp->key, aKey.get_cstr(), key_size);
         switch (aValueType)
         {
             case PVMI_KVPVALTYPE_WCHARPTR:
@@ -2161,7 +2481,8 @@ PVMFStatus PVID3ParCom::ConstructKvpKey(OSCL_String& aKey, PVID3FrameType aType,
             aKey += SEMI_COLON;
             aKey += KVP_VALTYPE_LYRICS;
             break;
-        case PV_ID3_FRAME_UNSUPPORTED:
+        case PV_ID3_FRAME_UNRECOGNIZED:
+        case PV_ID3_FRAME_CANDIDATE:
             aKey += _STRLIT_CHAR(KVP_ID3V2_VALUE);
             aKey += FORWARD_SLASH;
             aKey += _STRLIT_CHAR((char *)iID3TagInfo.iID3V2FrameID);
@@ -2222,7 +2543,7 @@ PVMFStatus PVID3ParCom::ReadStringValueFrame(PVID3FrameType aFrameType, PVID3Cha
     }
 
     // Allocate key-value pair
-    int32 err = 0;
+    int32 err = OsclErrNone;
     PvmiKvpSharedPtr kvpPtr;
     bool truncate = false;
     switch (aCharSet)
@@ -2230,10 +2551,11 @@ PVMFStatus PVID3ParCom::ReadStringValueFrame(PVID3FrameType aFrameType, PVID3Cha
         case PV_ID3_CHARSET_ISO88591:
         case PV_ID3_CHARSET_UTF8:
             OSCL_TRY(err, kvpPtr = AllocateKvp(keyStr, PVMI_KVPVALTYPE_CHARPTR, aValueSize + 1, truncate););
-            OSCL_FIRST_CATCH_ANY(err,
-                                 LOG_ERR((0, "PVID3ParCom::ReadStringValueFrame: Error - AllocateKvp failed. err=%d", err));
-                                 return PVMFErrNoMemory;
-                                );
+            if (OsclErrNone != err || !kvpPtr)
+            {
+                LOG_ERR((0, "PVID3ParCom::ReadStringValueFrame: Error - AllocateKvp failed. err=%d", err));
+                return PVMFErrNoMemory;
+            }
 
             if (truncate)
             {
@@ -2247,8 +2569,12 @@ PVMFStatus PVID3ParCom::ReadStringValueFrame(PVID3FrameType aFrameType, PVID3Cha
                     LOG_ERR((0, "PVID3ParCom::ReadStringValueFrame: Error - readByteData failed"));
                     return PVMFFailure;
                 }
-                kvpPtr->value.pChar_value[aValueSize] = NULL_TERM_CHAR;
-                kvpPtr->length = aValueSize;
+
+                int32 valueLen = aValueSize;
+                valueLen = oscl_strlen((char*)kvpPtr->value.pChar_value);
+
+                kvpPtr->value.pChar_value[valueLen] = NULL_TERM_CHAR;
+                kvpPtr->length = valueLen + 1;
             }
             // Add to frame vector
             OSCL_TRY(err, iFrames.push_back(kvpPtr););
@@ -2263,8 +2589,8 @@ PVMFStatus PVID3ParCom::ReadStringValueFrame(PVID3FrameType aFrameType, PVID3Cha
         {
             // create buffers to store frame data
             uint8* ptrFrameData = NULL;
-            OSCL_TRY(err, ptrFrameData = (uint8*)iAlloc.allocate(aValueSize + 2););
-            if (err != OsclErrNone || !ptrFrameData)
+            ptrFrameData = (uint8*) AllocateValueArray(err, PVMI_KVPVALTYPE_UINT8PTR, aValueSize + 2, &iAlloc);
+            if (OsclErrNone != err || !ptrFrameData)
             {
                 LOG_ERR((0, "PVID3ParCom::ReadStringValueFrame: Error - frameData allocation failed"));
                 return PVMFErrNoMemory;
@@ -2273,10 +2599,11 @@ PVMFStatus PVID3ParCom::ReadStringValueFrame(PVID3FrameType aFrameType, PVID3Cha
             uint32 wchar_size = sizeof(oscl_wchar);	//for platforms where wchar is 4 bytes.
             // Allocate key-value pair
             OSCL_TRY(err, kvpPtr = AllocateKvp(keyStr, PVMI_KVPVALTYPE_WCHARPTR, (wchar_size / 2) * (aValueSize + 2), truncate););
-            OSCL_FIRST_CATCH_ANY(err,
-                                 LOG_ERR((0, "PVID3ParCom::ReadStringValueFrame: Error - AllocateKvp failed. err=%d", err));
-                                 return PVMFErrNoMemory;
-                                );
+            if (OsclErrNone != err || !kvpPtr)
+            {
+                LOG_ERR((0, "PVID3ParCom::ReadStringValueFrame: Error - AllocateKvp failed. err=%d", err));
+                return PVMFErrNoMemory;
+            }
 
             if (truncate)
             {
@@ -2297,17 +2624,19 @@ PVMFStatus PVID3ParCom::ReadStringValueFrame(PVID3FrameType aFrameType, PVID3Cha
 
                 uint32 endianType = UNICODE_LITTLE_ENDIAN;
                 if (aCharSet == PV_ID3_CHARSET_UTF16BE)
+                {
                     endianType = UNICODE_BIG_ENDIAN;
+                }
 
                 uint32 wcSize = EightBitToWideCharBufferTransfer(ptrFrameData, aValueSize, endianType, kvpPtr->value.pWChar_value);
-
                 kvpPtr->value.pWChar_value[wcSize] = NULL_TERM_CHAR;
                 iAlloc.deallocate(ptrFrameData);
-                kvpPtr->length = aValueSize;
+                kvpPtr->length = wcSize;
             }
             OSCL_TRY(err, iFrames.push_back(kvpPtr););
             OSCL_FIRST_CATCH_ANY(err,
                                  LOG_ERR((0, "PVID3ParCom::ReadStringValueFrame: Error - iFrame.push_back failed"));
+                                 iAlloc.deallocate((OsclAny*)ptrFrameData);
                                  return PVMFErrNoMemory;
                                 );
         }
@@ -2333,14 +2662,16 @@ PVMFStatus PVID3ParCom::ReadFrame(PVID3FrameType aFrameType, uint32 aValueSize)
     }
 
     // Allocate key-value pair
-    int32 err = 0;
+    int32 err = OsclErrNone;
     PvmiKvpSharedPtr kvpPtr;
     bool truncate = false;
     OSCL_TRY(err, kvpPtr = AllocateKvp(keyStr, PVMI_KVPVALTYPE_CHARPTR, aValueSize + 1 + VERSION_SIZE, truncate););
-    OSCL_FIRST_CATCH_ANY(err,
-                         LOG_ERR((0, "PVID3ParCom::ReadFrame: Error - AllocateKvp failed. err=%d", err));
-                         return PVMFErrNoMemory;
-                        );
+    if (OsclErrNone != err || !kvpPtr)
+    {
+        LOG_ERR((0, "PVID3ParCom::ReadFrame: Error - AllocateKvp failed. err=%d", err));
+        return PVMFErrNoMemory;
+    }
+
     if (truncate)
     {
         iInputFile->Seek(aValueSize, Oscl_File::SEEKCUR);
@@ -2348,7 +2679,6 @@ PVMFStatus PVID3ParCom::ReadFrame(PVID3FrameType aFrameType, uint32 aValueSize)
     }
     else
     {
-
         kvpPtr->value.pUint8_value[0] = (uint8)iVersion;
         kvpPtr->value.pUint8_value[1] = 0;
 
@@ -2359,7 +2689,6 @@ PVMFStatus PVID3ParCom::ReadFrame(PVID3FrameType aFrameType, uint32 aValueSize)
         }
         kvpPtr->value.pUint8_value[aValueSize+VERSION_SIZE] = 0;
         kvpPtr->length = aValueSize + VERSION_SIZE;
-
     }
     // Add to frame vector
     OSCL_TRY(err, iFrames.push_back(kvpPtr););
@@ -2382,10 +2711,8 @@ PVID3ParCom::readNullTerminatedUnicodeString(PVFile* aInputFile, OSCL_wHeapStrin
     uint8 buff[ID3_MAX_STRING_FRAME_LEN];
     uint32 index = 0;
     uint16 endianCheck;
-
     if (read16(aInputFile, endianCheck) == false)
     {
-
         return PVMFFailure;
     }
 
@@ -2395,7 +2722,6 @@ PVID3ParCom::readNullTerminatedUnicodeString(PVFile* aInputFile, OSCL_wHeapStrin
     //some id3 tools does not add BOM with null strings.
     if (endianCheck != 0)
     {
-
         bomSz = UNICODE_BOM_SIZE;
         // This frame's text strings are Unicode and the frame
         // does include a BOM value. (UTF-16)
@@ -2407,10 +2733,9 @@ PVID3ParCom::readNullTerminatedUnicodeString(PVFile* aInputFile, OSCL_wHeapStrin
         {
             endianType = UNICODE_BIG_ENDIAN;
         }
-
         //read frame data from file
         bool more = true;
-        while (more && index < ID3_MAX_STRING_FRAME_LEN)
+        while (more && (index < ID3_MAX_STRING_FRAME_LEN))
         {
             if (read8(iInputFile, buff[index]) == false)
                 return PVMFFailure;
@@ -2438,10 +2763,10 @@ PVID3ParCom::readNullTerminatedUnicodeString(PVFile* aInputFile, OSCL_wHeapStrin
         index = 2;
     }
 
-    int32 err = 0;
-    oscl_wchar *tmpData = 0;
-    OSCL_TRY(err, tmpData = OSCL_ARRAY_NEW(oscl_wchar, index););
-    if (err != OsclErrNone || !tmpData)
+    int32 err = OsclErrNone;
+    oscl_wchar *tmpData = NULL;
+    tmpData = (oscl_wchar*) AllocateValueArray(err, PVMI_KVPVALTYPE_WCHARPTR, index);
+    if (OsclErrNone != err || !tmpData)
     {
         LOG_ERR((0, "PVID3ParCom::readNullTerminatedUnicodeString: Error - allocation failed"));
         return PVMFErrNoMemory;
@@ -2451,7 +2776,6 @@ PVID3ParCom::readNullTerminatedUnicodeString(PVFile* aInputFile, OSCL_wHeapStrin
     tmpData[wcSize] = 0;
     aData = tmpData;
     OSCL_ARRAY_DELETE(tmpData);
-
     return PVMFSuccess;
 }
 
@@ -2489,7 +2813,7 @@ PVMFStatus PVID3ParCom::ReadAlbumArtFrame(PVID3FrameType aFrameType, uint8 unico
     OSCL_HeapString<OsclMemAllocator> ImageFormat;
     bool pic_as_url = false;
     bool truncate = false;
-    int32 err = 0;
+    int32 err = OsclErrNone;
     PvmiKvpSharedPtr kvpPtr;
     OSCL_StackString<128> keyStr;
 
@@ -2498,7 +2822,6 @@ PVMFStatus PVID3ParCom::ReadAlbumArtFrame(PVID3FrameType aFrameType, uint8 unico
         LOG_ERR((0, "PVID3ParCom::ReadAlbumArtFrame: Error - ConstructKvpKey failed"));
         return PVMFErrNotSupported;
     }
-
 
     switch (unicode)
     {
@@ -2527,16 +2850,18 @@ PVMFStatus PVID3ParCom::ReadAlbumArtFrame(PVID3FrameType aFrameType, uint8 unico
 
             // Allocate key-value pair
             OSCL_TRY(err, kvpPtr = AllocateKvp(keyStr, PVMI_KVPVALTYPE_KSV, total_size, truncate););
-            OSCL_FIRST_CATCH_ANY(err,
-                                 LOG_ERR((0, "PVID3ParCom::ReadAlbumArtFrame: Error - AllocateKvp failed. err=%d", err));
-                                 return PVMFFailure;
-                                );
+            if (OsclErrNone != err || !kvpPtr)
+            {
+                LOG_ERR((0, "PVID3ParCom::ReadAlbumArtFrame: Error - AllocateKvp failed. err=%d", err));
+                return PVMFFailure;
+            }
 
             if (truncate)
             {
                 iInputFile->Seek(dataLen, Oscl_File::SEEKCUR);
                 kvpPtr->capacity = 0;
                 kvpPtr->length = 0;
+
                 OSCL_TRY(err, iFrames.push_back(kvpPtr););
                 OSCL_FIRST_CATCH_ANY(err,
                                      LOG_ERR((0, "PVID3ParCom::ReadLyricsCommFrame: Error - iFrame.push_back failed"));
@@ -2575,22 +2900,24 @@ PVMFStatus PVID3ParCom::ReadAlbumArtFrame(PVID3FrameType aFrameType, uint8 unico
             keyStr += KVP_VALTYPE_ALBUMART;
 
             //image format is stored as wchar.
-            uint32 rfs = aFrameSize - (ImageFormat.get_size() - (2 * oscl_strlen(description.get_str())));
+            uint32 rfs = aFrameSize - (ImageFormat.get_size() + (2 * oscl_strlen(description.get_str())));
             uint32 wchar_size = sizeof(oscl_wchar); //for platforms that store wchar as 4 bytes.
             uint32 total_size = sizeof(PvmfApicStruct) + rfs + (wchar_size * (ImageFormat.get_size() + description.get_size())) + (2 * wchar_size);
 
             // Allocate key-value pair
             OSCL_TRY(err, kvpPtr = AllocateKvp(keyStr, PVMI_KVPVALTYPE_KSV, total_size, truncate););
-            OSCL_FIRST_CATCH_ANY(err,
-                                 LOG_ERR((0, "PVID3ParCom::ReadAlbumArtFrame: Error - AllocateKvp failed. err=%d", err));
-                                 return PVMFFailure;
-                                );
+            if (OsclErrNone != err || !kvpPtr)
+            {
+                LOG_ERR((0, "PVID3ParCom::ReadAlbumArtFrame: Error - AllocateKvp failed. err=%d", err));
+                return PVMFFailure;
+            }
 
             if (truncate)
             {
                 iInputFile->Seek(dataLen, Oscl_File::SEEKCUR);
                 kvpPtr->capacity = 0;
                 kvpPtr->length = 0;
+
                 OSCL_TRY(err, iFrames.push_back(kvpPtr););
                 OSCL_FIRST_CATCH_ANY(err,
                                      LOG_ERR((0, "PVID3ParCom::ReadLyricsCommFrame: Error - iFrame.push_back failed"));
@@ -2606,8 +2933,7 @@ PVMFStatus PVID3ParCom::ReadAlbumArtFrame(PVID3FrameType aFrameType, uint8 unico
             //convert raw data to struct
             PVMFStatus status;
             status = ConvertUnicodeDataToApic(ImageFormat.get_str(), description.get_str(), picType,
-                                              dataLen , kvpPtr->value.key_specific_value, total_size) ;
-
+                                              dataLen , kvpPtr->value.key_specific_value, total_size);
         }
         break;
         default:
@@ -2622,15 +2948,17 @@ PVMFStatus PVID3ParCom::ReadAlbumArtFrame(PVID3FrameType aFrameType, uint8 unico
         bool truncate = false;
         // Allocate key-value pair
         OSCL_TRY(err, kvpPtr = AllocateKvp(keyStr, PVMI_KVPVALTYPE_CHARPTR, dataLen, truncate););
-        OSCL_FIRST_CATCH_ANY(err,
-                             LOG_ERR((0, "PVID3ParCom::ReadAlbumArtFrame: Error - AllocateKvp failed. err=%d", err));
-                             return PVMFFailure;
-                            );
+        if (OsclErrNone != err || !kvpPtr)
+        {
+            LOG_ERR((0, "PVID3ParCom::ReadAlbumArtFrame: Error - AllocateKvp failed. err=%d", err));
+            return PVMFFailure;
+        }
 
         if (truncate)
         {
             iInputFile->Seek(dataLen, Oscl_File::SEEKCUR);
             kvpPtr->length = 0;
+
             OSCL_TRY(err, iFrames.push_back(kvpPtr););
             OSCL_FIRST_CATCH_ANY(err,
                                  LOG_ERR((0, "PVID3ParCom::ReadLyricsCommFrame: Error - iFrame.push_back failed"));
@@ -2643,8 +2971,8 @@ PVMFStatus PVID3ParCom::ReadAlbumArtFrame(PVID3FrameType aFrameType, uint8 unico
         {
             if (readByteData(iInputFile, dataLen, (uint8 *)kvpPtr->value.pChar_value) == false)
                 return PVMFFailure;
-            kvpPtr->length = dataLen;
             kvpPtr->value.pChar_value[dataLen] = NULL_TERM_CHAR;
+            kvpPtr->length = dataLen;
         }
     }
     else
@@ -2652,7 +2980,6 @@ PVMFStatus PVID3ParCom::ReadAlbumArtFrame(PVID3FrameType aFrameType, uint8 unico
         aApicStruct = OSCL_STATIC_CAST(PvmfApicStruct *, kvpPtr->value.key_specific_value);
         if (readByteData(iInputFile, dataLen, aApicStruct->iGraphicData) == false)
             return PVMFFailure;
-        aApicStruct->iGraphicData[dataLen] = NULL_TERM_CHAR;
     }
 
 
@@ -2675,7 +3002,7 @@ PVMFStatus PVID3ParCom::ReadLyricsCommFrame(uint8 unicodeCheck, uint32 aFramesiz
         return PVMFFailure;
     }
 
-    iID3TagInfo.iID3V2LanguageID[3] = 0;
+    iID3TagInfo.iID3V2LanguageID[ID3V2_LANGUAGE_SIZE] = 0;
 
     //subtract 3 bytes of language from the frame size.
     framesize = aFramesize - ID3V2_LANGUAGE_SIZE ;
@@ -2691,25 +3018,26 @@ PVMFStatus PVID3ParCom::ReadLyricsCommFrame(uint8 unicodeCheck, uint32 aFramesiz
         return PVMFErrNotSupported;
     }
 
-    int32 err = 0;
+    int32 err = OsclErrNone;
     PvmiKvpSharedPtr kvpPtr;
     uint32 wchar_size = sizeof(oscl_wchar); //for platforms where wchar is 4 bytes.
     uint32 total_size = (wchar_size * framesize) + sizeof(PvmfLyricsCommStruct) + (2 * wchar_size) ;
     uint32 used_size = 0;
     // Allocate key-value pair
     OSCL_TRY(err, kvpPtr = AllocateKvp(keyStr, PVMI_KVPVALTYPE_KSV, total_size , truncate););
-    OSCL_FIRST_CATCH_ANY(err,
-                         LOG_ERR((0, "PVID3ParCom::ReadLyricsCommFrame: Error - AllocateKvp failed. err=%d", err));
-                         return PVMFFailure;
-                        );
+    if (OsclErrNone != err || !kvpPtr)
+    {
+        LOG_ERR((0, "PVID3ParCom::ReadLyricsCommFrame: Error - AllocateKvp failed. err=%d", err));
+        return PVMFFailure;
+    }
 
     if (truncate)
     {
         iInputFile->Seek(framesize, Oscl_File::SEEKCUR);
         kvpPtr->capacity = 0;
         kvpPtr->length = 0;
-        OSCL_TRY(err, iFrames.push_back(kvpPtr););
 
+        OSCL_TRY(err, iFrames.push_back(kvpPtr););
         OSCL_FIRST_CATCH_ANY(err,
                              LOG_ERR((0, "PVID3ParCom::ReadLyricsCommFrame: Error - iFrame.push_back failed"));
                              return PVMFErrNoMemory;);
@@ -2718,8 +3046,15 @@ PVMFStatus PVID3ParCom::ReadLyricsCommFrame(uint8 unicodeCheck, uint32 aFramesiz
 
     }
 
-    PvmfLyricsCommStruct *lcStruct = OSCL_STATIC_CAST(PvmfLyricsCommStruct *, kvpPtr->value.key_specific_value);
-    uint8 *ptr = (uint8 *)kvpPtr->value.key_specific_value;
+    PvmfLyricsCommStruct *lcStruct = NULL;
+    uint8 *ptr = NULL;
+    lcStruct = OSCL_STATIC_CAST(PvmfLyricsCommStruct *, kvpPtr->value.key_specific_value);
+    ptr = (uint8 *)kvpPtr->value.key_specific_value;
+    if (!ptr)
+    {
+        return PVMFFailure;
+    }
+
     ptr += sizeof(PvmfLyricsCommStruct);
     used_size += sizeof(PvmfLyricsCommStruct);
 
@@ -2767,7 +3102,7 @@ PVMFStatus PVID3ParCom::ReadLyricsCommFrame(uint8 unicodeCheck, uint32 aFramesiz
             uint32 datasz = framesize + 1;
             OSCL_TRY(err, data = (uint8*)iAlloc.allocate(datasz););
 
-            if (err != OsclErrNone || !(data))
+            if (OsclErrNone != err || !(data))
             {
                 LOG_ERR((0, "PVID3ParCom::ReadLyricsCommFrame: Error - allocation failed"));
                 iInputFile->Seek(framesize, Oscl_File::SEEKCUR);
@@ -2785,6 +3120,7 @@ PVMFStatus PVID3ParCom::ReadLyricsCommFrame(uint8 unicodeCheck, uint32 aFramesiz
 
                 lcStruct->iData = OSCL_STATIC_CAST(oscl_wchar *, ptr);
                 used_size += datasz;
+
                 if (used_size > total_size)
                     return PVMFErrOverflow;
                 oscl_UTF8ToUnicode((const char *)data, framesize, lcStruct->iData,  datasz);
@@ -2819,6 +3155,7 @@ PVMFStatus PVID3ParCom::ReadLyricsCommFrame(uint8 unicodeCheck, uint32 aFramesiz
 
             lcStruct->iDescription = OSCL_STATIC_CAST(oscl_wchar *, ptr);
             ptr += wchar_size * (desc_len + 1); //1 for null char
+
             used_size += wchar_size * (desc_len + 1);
             if (used_size > total_size)
                 return PVMFErrOverflow;
@@ -2866,9 +3203,9 @@ PVMFStatus PVID3ParCom::ReadLyricsCommFrame(uint8 unicodeCheck, uint32 aFramesiz
 
             uint8 *data = NULL;
             uint32 datasz = framesize + 2;
-            int32 err = 0;
+            int32 err = OsclErrNone;
             OSCL_TRY(err, data = (uint8*)iAlloc.allocate(datasz););
-            if (err != OsclErrNone || !(data))
+            if (OsclErrNone != err || !(data))
             {
                 LOG_ERR((0, "PVID3ParCom::ReadLyricsCommFrame: Error - allocation failed"));
                 truncate = true;
@@ -2877,17 +3214,17 @@ PVMFStatus PVID3ParCom::ReadLyricsCommFrame(uint8 unicodeCheck, uint32 aFramesiz
             {
 
                 oscl_memset(data, 0, datasz);
-
                 if ((readByteData(iInputFile, framesize, data) == false))
                 {
                     iAlloc.deallocate(data);
                     return PVMFFailure;
                 }
-
                 lcStruct->iData = OSCL_STATIC_CAST(oscl_wchar *, ptr);
+
                 used_size += wchar_size * (framesize / 2);  //UCS-2 unicode
                 if (used_size > total_size)
                     return PVMFErrOverflow;
+
                 uint32 sz = EightBitToWideCharBufferTransfer(data, framesize, endianType , lcStruct->iData);
                 lcStruct->iData[sz] = 0;
 
@@ -3174,7 +3511,7 @@ PVMFStatus PVID3ParCom::GetAlbumArtInfo(PVID3FrameType aFrameType, uint32 aFrame
 
 
 ////////////////////////////////////////////////////////////////////////////
-PVMFStatus PVID3ParCom::ReadTrackLengthFrame(uint32 aValueSize)
+PVMFStatus PVID3ParCom::ReadTrackLengthFrame(uint32 aValueSize, PVID3CharacterSet aCharSet)
 {
     OSCL_StackString<128> keyStr;
     if (ConstructKvpKey(keyStr, PV_ID3_FRAME_TRACK_LENGTH, PV_ID3_CHARSET_INVALID) != PVMFSuccess)
@@ -3183,10 +3520,10 @@ PVMFStatus PVID3ParCom::ReadTrackLengthFrame(uint32 aValueSize)
         return PVMFErrNotSupported;
     }
 
-    int32 err = 0;
+    int32 err = OsclErrNone;
     uint8* ptrFrameData = NULL;
-    OSCL_TRY(err, ptrFrameData = (uint8*)iAlloc.ALLOCATE(aValueSize + 1););
-    if (err != OsclErrNone || !ptrFrameData)
+    ptrFrameData = (uint8*) AllocateValueArray(err, PVMI_KVPVALTYPE_UINT8PTR, aValueSize + 2, &iAlloc);
+    if (OsclErrNone != err || !ptrFrameData)
     {
         LOG_ERR((0, "PVID3ParCom::ReadTrackLengthFrame: Error - ptrFrameData allocation failed"));
         return PVMFErrNoMemory;
@@ -3199,12 +3536,53 @@ PVMFStatus PVID3ParCom::ReadTrackLengthFrame(uint32 aValueSize)
         return PVMFFailure;
     }
     ptrFrameData[aValueSize] = 0;
+    ptrFrameData[aValueSize+1] = 0;
+
+    switch (aCharSet)
+    {
+        case PV_ID3_CHARSET_UTF16:
+        case PV_ID3_CHARSET_UTF16BE:
+        {
+            //it uses 16-bit unicode 2.0 (ISO/IEC 10646-1:1993, UCS-2)
+
+            char* tmpData = NULL;
+            int len = aValueSize / UNICODE_CHAR_SIZE + 1;
+            tmpData = (char*) AllocateValueArray(err, PVMI_KVPVALTYPE_CHARPTR, len, &iAlloc);
+
+            if (sizeof(oscl_wchar) == UNICODE_CHAR_SIZE)
+            {
+                oscl_UnicodeToUTF8((oscl_wchar*)ptrFrameData, aValueSize / sizeof(oscl_wchar), tmpData, len);
+            }
+            else
+            {
+                oscl_wchar* tmpData2 = NULL;
+
+                tmpData2 = (oscl_wchar*) AllocateValueArray(err, PVMI_KVPVALTYPE_WCHARPTR, len);
+                // convert 2 byte unicode data  to 4 byte wchar data
+                ExpandWChar2BytesTo4Bytes(tmpData2, (uint16*)ptrFrameData, len);
+
+                oscl_UnicodeToUTF8(tmpData2, aValueSize / UNICODE_CHAR_SIZE, tmpData, len);
+
+                OSCL_ARRAY_DELETE(tmpData2);
+            }
+
+            // copy the UTF8 string back to ptrFrameData
+            oscl_strncpy((char*)ptrFrameData, tmpData, len);
+
+            iAlloc.deallocate((OsclAny*)tmpData);
+        }
+        break;
+        case PV_ID3_CHARSET_ISO88591:
+        case PV_ID3_CHARSET_UTF8:
+            break;
+        default:
+            return PVMFFailure;
+    }
 
     // The ID3 Track Length is a numeric string in milliseconds.
     uint32 duration = 0;
     int32 numericStringLen = oscl_strlen((const char*)ptrFrameData);
 
-    uint8* ptr = ptrFrameData;
     if (!PV_atoi((const char *)ptrFrameData, 'd', numericStringLen, duration))
     {
         uint8* ptr = ptrFrameData;
@@ -3213,10 +3591,10 @@ PVMFStatus PVID3ParCom::ReadTrackLengthFrame(uint32 aValueSize)
         {
             // if the charater read is a digit or decimal point
             // then truncate it to integer value
-            if (!((*ptr >= ZERO_CHARACTER_ASCII_VALUE) &&
+            if (!(((*ptr >= ZERO_CHARACTER_ASCII_VALUE) &&
                     (*ptr <= NINE_CHARACTER_ASCII_VALUE)) ||
                     (*ptr == PERIOD_CHARACTER_ASCII_VALUE) ||
-                    (*ptr == COMMA_CHARACTER_ASCII_VALUE))
+                    (*ptr == COMMA_CHARACTER_ASCII_VALUE)))
             {
                 invalid_frame = true;
                 break;
@@ -3241,19 +3619,17 @@ PVMFStatus PVID3ParCom::ReadTrackLengthFrame(uint32 aValueSize)
             return PVMFSuccess;
         }
     }
-    else
-    {
-        numericStringLen = aValueSize;
-    }
 
     // Allocate key-value pair
     bool truncate = false;
     PvmiKvpSharedPtr kvpPtr;
-    OSCL_TRY(err, kvpPtr = AllocateKvp(keyStr, PVMI_KVPVALTYPE_UINT32, 0, truncate););
-    OSCL_FIRST_CATCH_ANY(err,
-                         LOG_ERR((0, "PVID3ParCom::ReadTrackLengthFrame: Error - AllocateKvp failed. err=%d", err));
-                         return PVMFFailure;
-                        );
+    PVMFStatus status = PVMFSuccess;
+    kvpPtr = HandleErrorForKVPAllocation(keyStr, PVMI_KVPVALTYPE_UINT32, 1, truncate, status);
+    if (PVMFSuccess != status || !kvpPtr)
+    {
+        iAlloc.deallocate((OsclAny*)ptrFrameData);
+        return PVMFErrNoMemory;
+    }
 
     kvpPtr->value.uint32_value = duration; // Track length in milliseconds
     kvpPtr->length = numericStringLen;
@@ -3282,12 +3658,12 @@ PVMFStatus PVID3ParCom::GetKvpValueType(PvmiKvpSharedPtr aKvp,
     {
         case PVMI_KVPVALTYPE_CHARPTR:
             aCharSet = PV_ID3_CHARSET_ISO88591;
-            if (pv_mime_string_parse_param(aKvp->key, KVP_PARAM_CHAR_ENCODING_UTF8, param) > 0)
+            if (pv_mime_string_parse_param(aKvp->key, (char*) KVP_PARAM_CHAR_ENCODING_UTF8, param) > 0)
                 aCharSet = PV_ID3_CHARSET_UTF8;
             break;
         case PVMI_KVPVALTYPE_WCHARPTR:
             aCharSet = PV_ID3_CHARSET_UTF16;
-            if (pv_mime_string_parse_param(aKvp->key, KVP_PARAM_CHAR_ENCODING_UTF16BE, param) > 0)
+            if (pv_mime_string_parse_param(aKvp->key, (char*) KVP_PARAM_CHAR_ENCODING_UTF16BE, param) > 0)
                 aCharSet = PV_ID3_CHARSET_UTF16BE;
             break;
         case PVMI_KVPVALTYPE_KSV:
@@ -3791,3 +4167,165 @@ PVMFStatus PVID3ParCom::ComposeID3v2Tag(OsclRefCounterMemFrag& aTag)
     return PVMFSuccess;
 }
 
+////////////////////////////////////////////////////////////////////////////
+PVID3ParCom::PVID3FrameType PVID3ParCom::FrameValidatedID3V2_4(uint8* aFrameID)
+{
+    PVID3FrameType ID3V2FrameTypeReturnValue;
+
+    if ((oscl_memcmp(aFrameID, ID3_FRAME_ID_ENCRYPTION, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_AUDIO_SEEK_POINT_INDEX, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_COMMERCIAL_FRAME, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_ENCRYPTION_REGISTRATION, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_EQUALIZATION2, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_EVENT_TIMING_CODES, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_GENERAL_ENCAPSULATED_OBJECT, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_GROUP_IDENTITY_REGISTRATION, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_LINKED_INFORMATION, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_MUSIC_CD_IDENTIFIER, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_MPEG_LOCATION_LOOKUP_TABLE, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_OWNERSHIP_FRAME, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_PRIVATE_FRAME, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_PLAY_COUNTER, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_POPULARIMETER, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_POSITION_SYNCH_FRAME, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_RECOMMENDED_BUFFER_SIZE, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_RELATIVE_VOLUME_ADJUSTMENT2, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_REVERB, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_SYNCHRONIZED_LYRICS_TEXT, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_SYNCHRONIZED_TEMPO_CODES, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_BPM, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_PLAYLIST_DELAY, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_FILE_TYPE, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_CONTENT_GROUP_DESC, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_INITIAL_KEY, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_LANGUAGE, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_MEDIA_TYPE, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_ORIGINAL_ALBUM, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_ORIGINAL_FILENAME, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_ORIGINAL_LYRICIST, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_ORIGINAL_ARTIST, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_FILE_LICENSEE, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_BAND, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_CONDUCTOR, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_MODIFIER, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_PART_OF_SET, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_PUBLISHER, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_INTERNET_RADIO_STATION_NAME, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_INTERNET_RADIO_STATION_OWNER, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_RECORDING_CODE, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_SOFTWARE_SETTING_ENCODE, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_UNIQUE_FILE_IDENTIFIER, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_TERMS_OF_USE, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_COMMERCIAL_INFO, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_LEGAL_INFO, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_OFFICIAL_AUDIO_FILE_WEBPAGE, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_OFFICIAL_ARTIST_WEBPAGE, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_OFFICIAL_AUDIO__SOURCE_WEBPAGE, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_OFFICIAL_RADIO_STATION_WEBPAGE, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_PAYMENT, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_PUBLISHER_OFFICIAL_WEBPAGE, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_USER_DEFINED_URL_LINK_FRAME, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_SIGNATURE_FRAME, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_ENCODING_TIME, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_ORIGINAL_RELEASE_TIME, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_RELEASE_TIME, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_TAGGING_TIME, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_INVOLVED_PEOPLE_LIST, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_MUSICIAN_CREDITS_LIST, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_MOOD, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_PRODUCED_NOTICE, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_ALBUM_SORT_ORDER, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_PERFORMER_SORT_ORDER, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_TITLE_SORT_ORDER, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_SET_SUBTITLE, ID3V2_FRAME_NUM_BYTES_ID) == 0) ||
+            (oscl_memcmp(aFrameID, ID3_FRAME_ID_USER_DEFINED_TEXT_INFO, ID3V2_FRAME_NUM_BYTES_ID) == 0)
+       )
+    {
+        ID3V2FrameTypeReturnValue = PV_ID3_FRAME_UNRECOGNIZED;
+    }
+    // The frame ID made out of the characters capital A-Z and 0-9.
+    else if (IS_POTENTIAL_FRAME_ID(aFrameID))
+    {
+        ID3V2FrameTypeReturnValue = PV_ID3_FRAME_CANDIDATE;
+    }
+    else
+    {
+        // Frame ID doesn't match with defined/possible frame Ids
+        ID3V2FrameTypeReturnValue = PV_ID3_FRAME_INVALID;
+    }
+    return ID3V2FrameTypeReturnValue;
+}
+
+PVMFStatus PVID3ParCom::PushFrameToFrameVector(PvmiKvpSharedPtr& aFrame, PvmiKvpSharedPtrVector& aFrameVector)
+{
+    int32 err = OsclErrNone;
+    OSCL_TRY(err, aFrameVector.push_back(aFrame););
+    OSCL_FIRST_CATCH_ANY(err,
+                         LOG_ERR((0, "PVID3ParCom::GetID3Frame: Error - aFrame.push_back failed"));
+                         return PVMFErrNoMemory;);
+    return PVMFSuccess;
+}
+
+OsclAny* PVID3ParCom::AllocateValueArray(int32& aLeaveCode, PvmiKvpValueType aValueType, int32 aNumElements, OsclMemAllocator* aMemAllocator)
+{
+    int32 leaveCode = OsclErrNone;
+    OsclAny* buffer = NULL;
+    switch (aValueType)
+    {
+        case PVMI_KVPVALTYPE_WCHARPTR:
+            if (aMemAllocator)
+            {
+                OSCL_TRY(leaveCode,
+                         buffer = (oscl_wchar*) aMemAllocator->ALLOCATE(aNumElements););
+            }
+            else
+            {
+                OSCL_TRY(leaveCode,
+                         buffer = (oscl_wchar*) OSCL_ARRAY_NEW(oscl_wchar, aNumElements););
+            }
+            break;
+
+        case PVMI_KVPVALTYPE_CHARPTR:
+            if (aMemAllocator)
+            {
+                OSCL_TRY(leaveCode,
+                         buffer = (char*) aMemAllocator->ALLOCATE(aNumElements););
+            }
+            else
+            {
+                OSCL_TRY(leaveCode,
+                         buffer = (char*) OSCL_ARRAY_NEW(char, aNumElements););
+            }
+            break;
+        case PVMI_KVPVALTYPE_UINT8PTR:
+            if (aMemAllocator)
+            {
+                OSCL_TRY(leaveCode,
+                         buffer = (uint8*) aMemAllocator->ALLOCATE(aNumElements););
+            }
+            else
+            {
+                OSCL_TRY(leaveCode,
+                         buffer = (uint8*) OSCL_ARRAY_NEW(char, aNumElements););
+            }
+            break;
+        default:
+            break;
+    }
+    aLeaveCode = leaveCode;
+    return buffer;
+}
+
+PvmiKvpSharedPtr PVID3ParCom::HandleErrorForKVPAllocation(OSCL_String& aKey, PvmiKvpValueType aValueType, uint32 aValueSize, bool &truncate, PVMFStatus &aStatus)
+{
+    PvmiKvpSharedPtr kvp;
+    int32 err = OsclErrNone;
+    aStatus = PVMFSuccess;
+    OSCL_TRY(err, kvp = AllocateKvp(aKey, aValueType, aValueSize, truncate););
+    if (OsclErrNone != err)
+    {
+        LOG_ERR((0, "PVID3ParCom::SetID3Frame: Error - AllocateKvp failed"));
+        aStatus = PVMFErrNoMemory;
+    }
+    return kvp;
+}

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,9 +40,9 @@
 	characters[0] = (num & 0xFF000000)>>24; \
 }
 
-typedef Oscl_Vector<AssetInfoKeyWord*, OsclMemAllocator> assetInfoKeyWordVecType;
+typedef Oscl_Vector<AssestInfoKeyWord*, OsclMemAllocator> assestInfoKeyWordVecType;
 
-AssetInfoBaseParser::AssetInfoBaseParser(MP4_FF_FILE *fp,
+AssestInfoBaseParser::AssestInfoBaseParser(MP4_FF_FILE *fp,
         uint32 size,
         uint32 sizeofDataFieldBeforeString)
 {
@@ -80,156 +80,22 @@ AssetInfoBaseParser::AssetInfoBaseParser(MP4_FF_FILE *fp,
             return;
         }
 
-        uint32 temp = AtomUtils::peekNextNthBytes(fp, 1);
+        uint32 delta = (size - _count);
 
-        uint16 byteOrderMask = (uint16)((temp >> 16) & 0xFFFF);
-
-        if (byteOrderMask == BYTE_ORDER_MASK)
+        if (delta > 0)
         {
-            _charType = ORIGINAL_CHAR_TYPE_UTF16;
-            if (!AtomUtils::read16(fp, byteOrderMask))
+            if (!AtomUtils::readString(fp, delta, _charType , _infoNotice))
             {
+                //error
                 _success = false;
                 return;
             }
-
-            _count += 2;
-
-            // Check to see if the string is actually null-terminated
-            uint32 delta = (size - _count);
-
-            int32 filePos = AtomUtils::getCurrentFilePosition(fp);
-
-            AtomUtils::seekFromCurrPos(fp, (delta - 2));
-
-            uint16 strEnd = 0;
-
-            if (!AtomUtils::read16(fp, strEnd))
-            {
-                _success = false;
-                return;
-            }
-
-            if (strEnd == 0)
-            {
-                AtomUtils::seekFromStart(fp, filePos);
-
-                if (!AtomUtils::readNullTerminatedUnicodeString(fp, _infoNotice))
-                {
-                    _success = false;
-                    return;
-                }
-                {
-                    int32 newfilePos = AtomUtils::getCurrentFilePosition(fp);
-                    if (newfilePos != (int32)(filePos + delta))
-                    {
-                        AtomUtils::seekFromStart(fp, filePos + delta);
-                    }
-                }
-            }
-            else
-            {
-                uint32 dataLengthInBytes = delta * 2;
-                uint8* str = (uint8 *)oscl_malloc(dataLengthInBytes);
-                if (!str)
-                {
-                    _success = false;
-                    return;
-                }
-                AtomUtils::seekFromStart(fp, filePos);
-                if (!AtomUtils::readByteData(fp, dataLengthInBytes, (uint8 *)str))
-                {
-                    _success = false;
-                    oscl_free(str);
-                    return;
-                }
-                oscl_wchar *temp = (oscl_wchar *)oscl_malloc(dataLengthInBytes + 2);;
-                if (!temp)
-                {
-                    _success = false;
-                    oscl_free(str);
-                    return;
-                }
-
-                oscl_memcpy(temp, str, dataLengthInBytes);
-
-                OSCL_wHeapString<OsclMemAllocator> NoticeStr(temp);
-                _infoNotice = NoticeStr;
-                oscl_free(str);
-                oscl_free(temp);
-            }
-
             _count += delta;
         }
         else
         {
-            _charType = ORIGINAL_CHAR_TYPE_UTF8;
-            // Check to see if the string is actually null-terminated
-            uint32 delta = (size - _count);
-
-            int32 filePos = AtomUtils::getCurrentFilePosition(fp);
-
-            AtomUtils::seekFromCurrPos(fp, (delta - 1));
-
-            uint8 strEnd = 0;
-
-            if (!AtomUtils::read8(fp, strEnd))
-            {
-                _success = false;
-                return;
-            }
-
-            if (strEnd == 0)
-            {
-                AtomUtils::seekFromStart(fp, filePos);
-
-                if (!AtomUtils::readNullTerminatedString(fp, _infoNotice))
-                {
-                    _success = false;
-                    return;
-                }
-                {
-                    int32 newfilePos = AtomUtils::getCurrentFilePosition(fp);
-                    if (newfilePos != (int32)(filePos + delta))
-                    {
-                        AtomUtils::seekFromStart(fp, filePos + delta);
-                    }
-                }
-            }
-            else
-            {
-                uint32 dataLengthInBytes = delta;
-                uint8* str = (uint8 *)oscl_malloc(dataLengthInBytes);
-                if (!str)
-                {
-                    _success = false;
-                    return;
-                }
-
-                AtomUtils::seekFromStart(fp, filePos);
-                if (!AtomUtils::readByteData(fp, dataLengthInBytes, (uint8 *)str))
-                {
-                    _success = false;
-                    oscl_free(str);
-                    return;
-                }
-                oscl_wchar *temp = (oscl_wchar *)oscl_malloc(2 * (dataLengthInBytes + 1));;
-                if (!temp)
-                {
-                    _success = false;
-                    oscl_free(str);
-                    return;
-                }
-                oscl_UTF8ToUnicode((const char*)str, dataLengthInBytes, temp, 2*dataLengthInBytes);
-
-                OSCL_wHeapString<OsclMemAllocator> NoticeStr(temp);
-                _infoNotice = NoticeStr;
-
-                oscl_free(str);
-                oscl_free(temp);
-            }
-
-            _count += delta;
+            _charType = ORIGINAL_CHAR_TYPE_UNKNOWN;
+            _infoNotice = NULL;
         }
 
         if (_count < size)
@@ -245,7 +111,7 @@ AssetInfoTitleAtom::AssetInfoTitleAtom(MP4_FF_FILE *fp, uint32 size, uint32 type
     {
         uint32 count = getDefaultSize();
 
-        PV_MP4_FF_NEW(fp->auditCB, AssetInfoBaseParser, (fp, (_size - count)), _pAssetInfoBaseParser);
+        PV_MP4_FF_NEW(fp->auditCB, AssestInfoBaseParser, (fp, (_size - count)), _pAssetInfoBaseParser);
 
         if (!(_pAssetInfoBaseParser->GetMP4Success()))
         {
@@ -267,7 +133,8 @@ AssetInfoTitleAtom::~AssetInfoTitleAtom()
 {
     if (_pAssetInfoBaseParser != NULL)
     {
-        PV_MP4_FF_DELETE(NULL, AssetInfoBaseParser, _pAssetInfoBaseParser);
+        PV_MP4_FF_DELETE(NULL, AssestInfoBaseParser, _pAssetInfoBaseParser);
+
     }
 }
 
@@ -279,7 +146,7 @@ AssetInfoDescAtom::AssetInfoDescAtom(MP4_FF_FILE *fp, uint32 size, uint32 type)
     {
         uint32 count = getDefaultSize();
 
-        PV_MP4_FF_NEW(fp->auditCB, AssetInfoBaseParser, (fp, (_size - count)), _pAssetInfoBaseParser);
+        PV_MP4_FF_NEW(fp->auditCB, AssestInfoBaseParser, (fp, (_size - count)), _pAssetInfoBaseParser);
 
         if (!(_pAssetInfoBaseParser->GetMP4Success()))
         {
@@ -301,7 +168,7 @@ AssetInfoDescAtom::~AssetInfoDescAtom()
 {
     if (_pAssetInfoBaseParser != NULL)
     {
-        PV_MP4_FF_DELETE(NULL, AssetInfoBaseParser, _pAssetInfoBaseParser);
+        PV_MP4_FF_DELETE(NULL, AssestInfoBaseParser, _pAssetInfoBaseParser);
     }
 }
 
@@ -314,7 +181,7 @@ AssetInfoPerformerAtom::AssetInfoPerformerAtom(MP4_FF_FILE *fp, uint32 size, uin
     {
         uint32 count = getDefaultSize();
 
-        PV_MP4_FF_NEW(fp->auditCB, AssetInfoBaseParser, (fp, (_size - count)), _pAssetInfoBaseParser);
+        PV_MP4_FF_NEW(fp->auditCB, AssestInfoBaseParser, (fp, (_size - count)), _pAssetInfoBaseParser);
 
         if (!(_pAssetInfoBaseParser->GetMP4Success()))
         {
@@ -336,7 +203,7 @@ AssetInfoPerformerAtom::~AssetInfoPerformerAtom()
 {
     if (_pAssetInfoBaseParser != NULL)
     {
-        PV_MP4_FF_DELETE(NULL, AssetInfoBaseParser, _pAssetInfoBaseParser);
+        PV_MP4_FF_DELETE(NULL, AssestInfoBaseParser, _pAssetInfoBaseParser);
     }
 }
 
@@ -349,7 +216,7 @@ AssetInfoAuthorAtom::AssetInfoAuthorAtom(MP4_FF_FILE *fp, uint32 size, uint32 ty
     {
         uint32 count = getDefaultSize();
 
-        PV_MP4_FF_NEW(fp->auditCB, AssetInfoBaseParser, (fp, (_size - count)), _pAssetInfoBaseParser);
+        PV_MP4_FF_NEW(fp->auditCB, AssestInfoBaseParser, (fp, (_size - count)), _pAssetInfoBaseParser);
 
         if (!(_pAssetInfoBaseParser->GetMP4Success()))
         {
@@ -371,7 +238,7 @@ AssetInfoAuthorAtom::~AssetInfoAuthorAtom()
 {
     if (_pAssetInfoBaseParser != NULL)
     {
-        PV_MP4_FF_DELETE(NULL, AssetInfoBaseParser, _pAssetInfoBaseParser);
+        PV_MP4_FF_DELETE(NULL, AssestInfoBaseParser, _pAssetInfoBaseParser);
     }
 }
 
@@ -384,7 +251,7 @@ AssetInfoGenreAtom::AssetInfoGenreAtom(MP4_FF_FILE *fp, uint32 size, uint32 type
     {
         uint32 count = getDefaultSize();
 
-        PV_MP4_FF_NEW(fp->auditCB, AssetInfoBaseParser, (fp, (_size - count)), _pAssetInfoBaseParser);
+        PV_MP4_FF_NEW(fp->auditCB, AssestInfoBaseParser, (fp, (_size - count)), _pAssetInfoBaseParser);
 
         if (!(_pAssetInfoBaseParser->GetMP4Success()))
         {
@@ -406,7 +273,7 @@ AssetInfoGenreAtom::~AssetInfoGenreAtom()
 {
     if (_pAssetInfoBaseParser != NULL)
     {
-        PV_MP4_FF_DELETE(NULL, AssetInfoBaseParser, _pAssetInfoBaseParser);
+        PV_MP4_FF_DELETE(NULL, AssestInfoBaseParser, _pAssetInfoBaseParser);
     }
 }
 
@@ -435,7 +302,7 @@ AssetInfoRatingAtom::AssetInfoRatingAtom(MP4_FF_FILE *fp, uint32 size, uint32 ty
         }
         count += 4;
 
-        PV_MP4_FF_NEW(fp->auditCB, AssetInfoBaseParser, (fp, (_size - count)), _pAssetInfoBaseParser);
+        PV_MP4_FF_NEW(fp->auditCB, AssestInfoBaseParser, (fp, (_size - count)), _pAssetInfoBaseParser);
         if (!(_pAssetInfoBaseParser->GetMP4Success()))
         {
             _success = false;
@@ -446,6 +313,7 @@ AssetInfoRatingAtom::AssetInfoRatingAtom(MP4_FF_FILE *fp, uint32 size, uint32 ty
 
         addnlratingInfo += _STRLIT_WCHAR(";rating-criteria=");
         char Criteria[4];
+        oscl_memset(Criteria, 0, 4*sizeof(char));
         UInt32ToFourChar(_ratingCriteria, Criteria);
         oscl_wchar wCriteria[5];
         oscl_UTF8ToUnicode(Criteria, 4, wCriteria, 5);
@@ -453,6 +321,7 @@ AssetInfoRatingAtom::AssetInfoRatingAtom(MP4_FF_FILE *fp, uint32 size, uint32 ty
 
         addnlratingInfo += _STRLIT_WCHAR(";rating-entity=");
         char Entity[4];
+        oscl_memset(Entity, 0, 4);
         UInt32ToFourChar(_ratingEntity, Entity);
         oscl_wchar wEntity[5];
         oscl_UTF8ToUnicode(Entity, 4, wEntity, 5);
@@ -473,7 +342,7 @@ AssetInfoRatingAtom::~AssetInfoRatingAtom()
 {
     if (_pAssetInfoBaseParser != NULL)
     {
-        PV_MP4_FF_DELETE(NULL, AssetInfoBaseParser, _pAssetInfoBaseParser);
+        PV_MP4_FF_DELETE(NULL, AssestInfoBaseParser, _pAssetInfoBaseParser);
     }
 }
 
@@ -502,7 +371,7 @@ AssetInfoClassificationAtom::AssetInfoClassificationAtom(MP4_FF_FILE *fp, uint32
         }
         count += 2;
 
-        PV_MP4_FF_NEW(fp->auditCB, AssetInfoBaseParser, (fp, (_size - count)), _pAssetInfoBaseParser);
+        PV_MP4_FF_NEW(fp->auditCB, AssestInfoBaseParser, (fp, (_size - count)), _pAssetInfoBaseParser);
 
         if (!(_pAssetInfoBaseParser->GetMP4Success()))
         {
@@ -514,6 +383,7 @@ AssetInfoClassificationAtom::AssetInfoClassificationAtom(MP4_FF_FILE *fp, uint32
 
         addnlclassificationInfo += _STRLIT_WCHAR(";classification-table=");
         char Table[4];
+        oscl_memset(Table, 0, 4);
         oscl_snprintf(Table, 4, _STRLIT_CHAR("%d"), _classificationTable);
         oscl_wchar wTable[5];
         oscl_UTF8ToUnicode(Table, 4, wTable, 5);
@@ -521,6 +391,7 @@ AssetInfoClassificationAtom::AssetInfoClassificationAtom(MP4_FF_FILE *fp, uint32
 
         addnlclassificationInfo += _STRLIT_WCHAR(";classification-entity=");
         char Entity[4];
+        oscl_memset(Entity, 0, 4);
         UInt32ToFourChar(_classificationEntity, Entity);
         oscl_wchar wEntity[5];
         oscl_UTF8ToUnicode(Entity, 4, wEntity, 5);
@@ -541,12 +412,12 @@ AssetInfoClassificationAtom::~AssetInfoClassificationAtom()
 {
     if (_pAssetInfoBaseParser != NULL)
     {
-        PV_MP4_FF_DELETE(NULL, AssetInfoBaseParser, _pAssetInfoBaseParser);
+        PV_MP4_FF_DELETE(NULL, AssestInfoBaseParser, _pAssetInfoBaseParser);
     }
 };
 
 
-AssetInfoKeyWord::AssetInfoKeyWord(MP4_FF_FILE *fp)
+AssestInfoKeyWord::AssestInfoKeyWord(MP4_FF_FILE *fp)
 {
     int32 currfilePos = AtomUtils::getCurrentFilePosition(fp);
 
@@ -595,7 +466,7 @@ AssetInfoKeyWordAtom::AssetInfoKeyWordAtom(MP4_FF_FILE *fp, uint32 size, uint32 
 {
     _pAssetInfoKeyWordVec = NULL;
 
-    PV_MP4_FF_NEW(fp->auditCB, assetInfoKeyWordVecType, (), _pAssetInfoKeyWordVec);
+    PV_MP4_FF_NEW(fp->auditCB, assestInfoKeyWordVecType, (), _pAssetInfoKeyWordVec);
 
     if (_success)
     {
@@ -619,9 +490,9 @@ AssetInfoKeyWordAtom::AssetInfoKeyWordAtom(MP4_FF_FILE *fp, uint32 size, uint32 
 
         for (uint8 i = 0; i < _keyWordCount; i++)
         {
-            AssetInfoKeyWord * pAssetInfoKeyWord = NULL;
+            AssestInfoKeyWord * pAssetInfoKeyWord = NULL;
 
-            PV_MP4_FF_NEW(fp->auditCB, AssetInfoKeyWord, (fp), pAssetInfoKeyWord);
+            PV_MP4_FF_NEW(fp->auditCB, AssestInfoKeyWord, (fp), pAssetInfoKeyWord);
 
             if (pAssetInfoKeyWord == NULL)
             {
@@ -651,10 +522,10 @@ AssetInfoKeyWordAtom::~AssetInfoKeyWordAtom()
 {
     for (uint32 i = 0; i < _pAssetInfoKeyWordVec->size(); i++)
     {
-        PV_MP4_FF_DELETE(NULL, AssetInfoKeyWord, (*_pAssetInfoKeyWordVec)[i]);
+        PV_MP4_FF_DELETE(NULL, AssestInfoKeyWord, (*_pAssetInfoKeyWordVec)[i]);
         (*_pAssetInfoKeyWordVec)[i] = NULL;
     }
-    PV_MP4_FF_TEMPLATED_DELETE(NULL, assetInfoKeyWordVecType, Oscl_Vector, _pAssetInfoKeyWordVec);
+    PV_MP4_FF_TEMPLATED_DELETE(NULL, assestInfoKeyWordVecType, Oscl_Vector, _pAssetInfoKeyWordVec);
 };
 
 OSCL_wString& AssetInfoKeyWordAtom::getKeyWordAt(int32 index)
@@ -728,7 +599,7 @@ AssetInfoLocationAtom::AssetInfoLocationAtom(MP4_FF_FILE *fp, uint32 size, uint3
 
         PV_MP4_FF_ARRAY_NEW(NULL, oscl_wchar, _defaultNotice.get_size() + 1, _pLocationStruct->_location_name);
         oscl_strncpy(_pLocationStruct->_location_name, _defaultNotice.get_str(), _defaultNotice.get_size());
-        _pLocationStruct->_location_name[_defaultNotice.get_size()] = NULL;
+        _pLocationStruct->_location_name[_defaultNotice.get_size()] = 0;
 
         if (_defaultNotice.get_size() > size)
         {
@@ -814,7 +685,7 @@ AssetInfoLocationAtom::AssetInfoLocationAtom(MP4_FF_FILE *fp, uint32 size, uint3
         }
         PV_MP4_FF_ARRAY_NEW(NULL, oscl_wchar, _astronomical_body.get_size() + 1, _pLocationStruct->_astronomical_body);
         oscl_strncpy(_pLocationStruct->_astronomical_body, _astronomical_body.get_str(), _astronomical_body.get_size());
-        _pLocationStruct->_astronomical_body[_astronomical_body.get_size()] = NULL;
+        _pLocationStruct->_astronomical_body[_astronomical_body.get_size()] = 0;
 
         if (_astronomical_body.get_size() > size)
         {
@@ -860,7 +731,7 @@ AssetInfoLocationAtom::AssetInfoLocationAtom(MP4_FF_FILE *fp, uint32 size, uint3
         }
         PV_MP4_FF_ARRAY_NEW(NULL, oscl_wchar, _additional_notes.get_size() + 1, _pLocationStruct->_additional_notes);
         oscl_strncpy(_pLocationStruct->_additional_notes, _additional_notes.get_str(), _additional_notes.get_size());
-        _pLocationStruct->_additional_notes[_additional_notes.get_size()] = NULL;
+        _pLocationStruct->_additional_notes[_additional_notes.get_size()] = 0;
 
         if (_additional_notes.get_size() > size)
         {
@@ -932,7 +803,7 @@ AssetInfoAlbumAtom::AssetInfoAlbumAtom(MP4_FF_FILE *fp, uint32 size, uint32 type
                 _success = false;
                 return;
             }
-            count -= _defaultNotice.get_size() + 2;
+            count -= (_defaultNotice.get_size() + 1) * 2;
         }
         else
         {
@@ -955,14 +826,16 @@ AssetInfoAlbumAtom::AssetInfoAlbumAtom(MP4_FF_FILE *fp, uint32 size, uint32 type
 
             return;
         }
-
-        if (!AtomUtils::read8(fp, _trackNumber))
+        if (count > 0)
         {
-            _success = false;
-            _mp4ErrorCode = READ_UDTA_LOC_FAILED;
-            return;
+            if (!AtomUtils::read8(fp, _trackNumber))
+            {
+                _success = false;
+                _mp4ErrorCode = READ_UDTA_LOC_FAILED;
+                return;
+            }
+            count -= 1;
         }
-        count -= 1;
     }
     if (count > 0)
         AtomUtils::seekFromCurrPos(fp, count);
@@ -982,3 +855,4 @@ AssetInfoRecordingYearAtom::AssetInfoRecordingYearAtom(MP4_FF_FILE *fp, uint32 s
         }
     }
 }
+

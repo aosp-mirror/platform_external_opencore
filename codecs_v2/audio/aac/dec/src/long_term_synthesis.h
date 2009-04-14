@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,8 @@
  * -------------------------------------------------------------------
  */
 /*
-------------------------------------------------------------------------------
 
-
- Pathname: ./AAC_baseline/pv_aac_dec/c/include/long_term_synthesis.h
-
-     Date: 07/12/2001
+ Pathname: long_term_synthesis.h
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
@@ -33,6 +29,7 @@
  Description: Modified prototype based on review comments for new version
 	      long_term_synthesis.c.
 
+ Who:                                   Date:
  Description:
 
 ------------------------------------------------------------------------------

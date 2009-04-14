@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,40 +19,20 @@
 #include "pvlogger.h"
 
 // Add/remove header file and modify function below for different CC support
-#if 0
-#include "cczoomrotation12.h"
-#endif
 #include "cczoomrotation16.h"
-#if 0
-#include "cczoomrotation24.h"
-#endif
 
 
 PVMFStatus PVFMVideoMIO::CreateYUVToRGBColorConverter(ColorConvertBase*& aCC, PVMFFormatType aRGBFormatType)
 {
     int32 leavecode = 0;
-    switch (aRGBFormatType)
+    if (aRGBFormatType == PVMF_MIME_RGB16)
     {
-#if 0
-        case PVMF_RGB12:
-            OSCL_TRY(leavecode, aCC = ColorConvert12::NewL());
-            break;
-#endif
-
-        case PVMF_RGB16:
-            OSCL_TRY(leavecode, aCC = ColorConvert16::NewL());
-            break;
-
-#if 0
-        case PVMF_RGB24:
-            OSCL_TRY(leavecode, aCC = ColorConvert24::NewL());
-            break;
-#endif
-
-        default:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFMVideoMIO::CreateYUVToRGBColorConverter() Unsupported RGB mode for color converter. Asserting"));
-            OSCL_ASSERT(false);
-            return PVMFErrNotSupported;
+        OSCL_TRY(leavecode, aCC = ColorConvert16::NewL());
+    }
+    else
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFMVideoMIO::CreateYUVToRGBColorConverter() Unsupported RGB mode for color converter. Asserting"));
+        return PVMFErrNotSupported;
     }
 
     OSCL_FIRST_CATCH_ANY(leavecode,
@@ -68,31 +48,15 @@ PVMFStatus PVFMVideoMIO::DestroyYUVToRGBColorConverter(ColorConvertBase*& aCC, P
 {
     OSCL_ASSERT(aCC != NULL);
 
-    switch (aRGBFormatType)
+    if (aRGBFormatType == PVMF_MIME_RGB16)
     {
-#if 0
-        case PVMF_RGB12:
-            OSCL_DELETE(((ColorConvert12*)aCC));
-            aCC = NULL;
-            break;
-#endif
-
-        case PVMF_RGB16:
-            OSCL_DELETE(((ColorConvert16*)aCC));
-            aCC = NULL;
-            break;
-
-#if 0
-        case PVMF_RGB24:
-            OSCL_DELETE(((ColorConvert24*)aCC));
-            aCC = NULL;
-            break;
-#endif
-
-        default:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFMVideoMIO::CreateYUVToRGBColorConverter() Unsupported RGB mode for color converter. Asserting"));
-            OSCL_ASSERT(false);
-            return PVMFErrNotSupported;
+        OSCL_DELETE(((ColorConvert16*)aCC));
+        aCC = NULL;
+    }
+    else
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFMVideoMIO::CreateYUVToRGBColorConverter() Unsupported RGB mode for color converter. Asserting"));
+        return PVMFErrNotSupported;
     }
 
     return PVMFSuccess;

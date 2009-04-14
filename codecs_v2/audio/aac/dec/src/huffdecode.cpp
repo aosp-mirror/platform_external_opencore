@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,24 +16,13 @@
  * -------------------------------------------------------------------
  */
 /*
-------------------------------------------------------------------------------
 
-
-
- Pathname: /audio/
-                aac_mpeg4/
-                    AAC_baseline/
-                        pv_aac_dec/
-                            c/
-                                src/
-                                    huffdecode.c
-
-     Date: 10/25/2000
+ Pathname: huffdecode.c
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
 
- Description:  Modified from original code
+ Description:  Modified from original shareware code
 
  Description:  Modified to pass variables by reference to eliminate use
                of global variables.
@@ -420,21 +409,27 @@ Int huffdecode(
 
     pMcInfo = &pVars->mc_info;
 
+    /*
+     *  check if provided info (num of channels) on audio config,
+     *  matches read bitstream data, if not, allow update only once.
+     *  In almost all cases it should match.
+     */
     if ((pMcInfo->ch_info[0].cpe != id_syn_ele))
     {
-        if (pVars->mc_info.implicit_channeling)
+        if (pVars->mc_info.implicit_channeling)     /* check done only once */
         {
-            pMcInfo->ch_info[0].cpe = 1;  /* stream is really stereo */
-            pVars->mc_info.implicit_channeling = 0; /* disable flag, as this is allowed
-                                                     * only the first time
+            pMcInfo->ch_info[0].cpe = id_syn_ele & 1; /*  collect info from bitstream
+                                                     *  implicit_channeling flag is locked
+                                                     *  after 1st frame, to avoid toggling
+                                                     *  parameter in the middle of the clip
                                                      */
+            pMcInfo->nch = (id_syn_ele & 1) + 1;     /* update number of channels */
         }
         else
         {
-            status = 1; /* ERROR Code */
+            status = 1; /* ERROR break if syntax error persist  */
         }
     }
-
 
     if (status == SUCCESS)
     {

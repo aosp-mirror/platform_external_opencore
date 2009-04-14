@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,6 +60,16 @@ int32 OsclIPSocketI::Join(OsclNetworkAddress &aAddress)
         return OsclErrGeneral;
     }
 }
+
+int32 OsclIPSocketI::SetRecvBufferSize(uint32 size)
+{
+    if (iSocket)
+    {
+        return iSocket->SetRecvBufferSize(size);
+    }
+    return OsclErrGeneral;
+}
+
 
 
 

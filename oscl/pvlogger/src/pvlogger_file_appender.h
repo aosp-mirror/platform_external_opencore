@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ class TextFileAppender : public PVLoggerAppender
     public:
         typedef PVLoggerAppender::message_id_type message_id_type;
 
-        static TextFileAppender<Layout, LayoutBufferSize, Lock>* CreateAppender(OSCL_TCHAR * filename, uint32 cacheSize = 0)
+        static TextFileAppender<Layout, LayoutBufferSize, Lock>* CreateAppender(const OSCL_TCHAR * filename, uint32 cacheSize = 0)
         {
 
             TextFileAppender<Layout, LayoutBufferSize, Lock> * appender = new TextFileAppender<Layout, LayoutBufferSize, Lock>();

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,7 @@
  */
 /*
 
- Pathname: ./include/tns_inv_filter.h
-
-     Date: 07/20/2001
+ Pathname: tns_inv_filter.h
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
@@ -30,6 +28,7 @@
  Description: The scratch memory was mistakenly declared here as type "Int32"
  It should have been "Int"
 
+ Who:                       Date:
  Description:
 
 ------------------------------------------------------------------------------

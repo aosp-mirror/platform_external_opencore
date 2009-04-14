@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,8 +31,8 @@
 #include "oscl_thread.h"
 #endif
 
-#ifndef OSCL_CLOCK_H_INCLUDED
-#include "oscl_clock.h"
+#ifndef OSCL_TICKCOUNT_H_INCLUDED
+#include "oscl_tickcount.h"
 #endif
 
 #define OSCLCLOCKUNIT_SEC = 2
@@ -48,8 +48,11 @@
 class TimeAndIdLayout : public PVLoggerLayout
 {
     public:
-        TimeAndIdLayout() {};
-        virtual ~TimeAndIdLayout() {};
+        TimeAndIdLayout()
+        {
+            iTickBase = OsclTickCount::TickCount();
+        }
+        virtual ~TimeAndIdLayout() {}
 
         typedef PVLoggerLayout::message_id_type message_id_type;
 
@@ -58,17 +61,14 @@ class TimeAndIdLayout : public PVLoggerLayout
         {
             int32 msgLen = 0;
             int32 remBufSpace = formatBufSize;
-            uint64 aTime = 0;
-            OsclClock_TimeUnits aUnits = OSCLCLOCK_MSEC;
-            uint64 aTimebaseTime = 0;
-            iCurrentClockTime.GetCurrentTime64(aTime, aUnits, aTimebaseTime);
+            uint32 msec = OsclTickCount::TicksToMsec(OsclTickCount::TickCount() - iTickBase);
 
             OSCL_UNUSED_ARG(msgID);
 
             TOsclThreadId threadId;
             OsclThread::GetId(threadId);
 
-            msgLen += oscl_snprintf(formatBuf, remBufSpace, "PVLOG:TID(0x%x):Time=%d:", (uint32)threadId, Oscl_Int64_Utils::get_uint64_lower32(aTime));
+            msgLen += oscl_snprintf(formatBuf, remBufSpace, "PVLOG:TID(0x%x):Time=%d:", (uint32)threadId, msec);
 
             if (msgLen > formatBufSize) return (formatBufSize);
 
@@ -93,7 +93,7 @@ class TimeAndIdLayout : public PVLoggerLayout
             return 0;
         }
     private:
-        OsclTimebase_Tickcount iCurrentClockTime;
+        uint32 iTickBase;
 
 };
 

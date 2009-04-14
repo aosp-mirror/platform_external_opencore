@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ typedef enum
 
     /**
     	pvPlayer enters this state when it encounters an error. This is a transitional state and after pvPlayer performs
-    	error recovery, it should end up in PVP_STATE_INITIALIZED or PVP_STATE_IDLE state.
+    	error recovery, it will end up in PVP_STATE_IDLE state.
     **/
     PVP_STATE_ERROR			= 6
 } PVPlayerState;

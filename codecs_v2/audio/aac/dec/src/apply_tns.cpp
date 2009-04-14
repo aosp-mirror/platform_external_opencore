@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,79 +16,9 @@
  * -------------------------------------------------------------------
  */
 /*
-------------------------------------------------------------------------------
 
+ Pathname: apply_tns.c
 
-
- Pathname: /audio/
-                aac_mpeg4/
-                    AAC_baseline/
-                        pv_aac_dec/
-                            c/
-                                src/
-                                    apply_tns.c
-
-     Date: 07/26/2001
-
-------------------------------------------------------------------------------
- REVISION HISTORY
-
- Description: Modified per review comments.
-
- Description: Updated to interface properly with new versionn
- of tns_ar_filter.c, which had an overflow problem.
-
- Description: Updated comment for coef to change to "array of
- input coefficients."
-
- Description: Updated per review comments.
-
- Description: Pass in the q-format of the LPC coefficients
- to tns_ar_filter.c and tns_inv_filter.c.  For now,
- this q-format is hard-coded to 11.  Eventually, it will be a passed-in
- parameter.
-
- Description: Fixed two problems uncovered from unit testing.
- (1) pCoef and pTNSinfo were not being incremented correctly at the end of the
-     1st for loop.
-
- (2) pWinSfbTop was being set incorrectly.
-
- (3) Initialization of shift_amt was moved outside the check on
-     inverse_flag.  Would cause incorrect execution for tns_inv_filter.
-
- Description: Updated to accept a one q-Format per scalefactor band strategy.
- This greatly simplifies the code.
-
- Description: Modified per the requests from review.
-
- Description: It was found, during system level testing, that pCoef
- was not being initialized properly.
-
- Description: Bug found during unit testing.  pQformat array was not being
- indexed correctly by the number of scalefactor bands per window.
-
- Description: Removed #include for aac_memfuncs.h
- Also, updated comments to reflect new variable, pStartQformat.
-
- Description:
- (1) Since tns_ar_filter was modified to no longer need scratch memory,
- tns_inv_filter is the only user of scratch memory at present time.  This
- allowed me to remove the typecast to (Int *) and change the interface.
-
- (2) Updated calls to tns_ar_filter and tns_inv_filter to reflect the fact
- that the q-format for the LPC coefficients will now be passed
- via pFilt->q_lpc.
-
- Description: Updated to reflect more efficient usage of memory by the TNS
- filters.
-
- Description: Updated the SW template to include the full pathname to the
- source file and a slightly modified copyright header.
-
- Description: Modified definition of SHRT_MAX by INT16_MAX
-
- Description:
 ------------------------------------------------------------------------------
  INPUT AND OUTPUT DEFINITIONS
 

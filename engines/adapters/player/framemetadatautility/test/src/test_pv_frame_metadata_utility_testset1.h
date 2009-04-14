@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -157,6 +157,10 @@ class pvframemetadata_async_test_getmetadata : public pvframemetadata_async_test
 
         uint32 iMode;
         bool iBestThumbNailMode;
+
+        // Handle to the logger node
+        PVLogger* iLogger;
+        PVLogger* iPerfLogger;
 };
 
 
@@ -938,6 +942,66 @@ class pvframemetadata_async_test_settimeout_getframe : public pvframemetadata_as
 
         uint32 iMode;
         bool iBestThumbNailMode;
+};
+
+
+/*!
+ *  A test case to test the usage of setting a key that will be passed to the player engine
+ *  - Data Source: Passed in parameter
+ *  - Sequence:
+ *             -# CreateFrameAndMetadataUtility()
+ *             -# AddDataSource()
+ *             -# QueryInterface()
+ *             -# SetParametersSync()
+  *             -# RemoveDataSource()
+ *             -# DeleteFrameAndMetadataUtility()
+ *
+ */
+class pvframemetadata_async_test_set_player_key : public pvframemetadata_async_test_base
+{
+    public:
+        pvframemetadata_async_test_set_player_key(PVFrameMetadataAsyncTestParam aTestParam):
+                pvframemetadata_async_test_base(aTestParam)
+                , iFrameMetadataUtil(NULL)
+                , iDataSource(NULL)
+                , iCurrentCmdId(0)
+        {
+            iTestCaseName = _STRLIT_CHAR("Set Player Engine Key");
+        }
+
+        ~pvframemetadata_async_test_set_player_key() {}
+
+        void StartTest();
+        void Run();
+
+        void CommandCompleted(const PVCmdResponse& aResponse);
+        void HandleErrorEvent(const PVAsyncErrorEvent& aEvent);
+        void HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent);
+
+        enum PVTestState
+        {
+            STATE_CREATE,
+            STATE_ADDDATASOURCE,
+            STATE_QUERYINTERFACE,
+            STATE_SETPLAYERKEY,
+            STATE_REMOVEDATASOURCE,
+            STATE_CLEANUPANDCOMPLETE
+        };
+
+        PVTestState iState;
+
+        PVFrameAndMetadataInterface* iFrameMetadataUtil;
+
+        PvmiCapabilityAndConfig* iFMUCapConfigIF;
+        PvmiKvp* iErrorKVP;
+        PvmiKvp iKVPSetAsync;
+        OSCL_StackString<128> iKeyStringSetAsync;
+
+        PVPlayerDataSourceURL* iDataSource;
+        PVCommandId iCurrentCmdId;
+
+    private:
+        OSCL_wHeapString<OsclMemAllocator> wFileName;
 };
 
 #endif // TEST_PV_FRAME_METADATA_UTILITY_TESTSET1_H_INCLUDED

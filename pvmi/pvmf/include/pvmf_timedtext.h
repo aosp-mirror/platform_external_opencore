@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,10 @@
 
 #ifndef OSCL_SHARED_PTR_H_INCLUDED
 #include "oscl_shared_ptr.h"
+#endif
+
+#ifndef OSCL_MEM_MEMPOOL_H_INCLUDED
+#include "oscl_mem_mempool.h"
 #endif
 
 #ifndef PVMF_MEDIA_DATA_IMPL_H_INCLUDED
@@ -245,17 +249,58 @@ class PVMFTimedTextMediaDataCleanup :  public OsclDestructDealloc
 class PVMFTimedTextMediaDataAlloc
 {
     public:
-        PVMFTimedTextMediaDataAlloc(Oscl_DefAlloc* opt_gen_alloc = 0):
-                gen_alloc(opt_gen_alloc) {};
+        PVMFTimedTextMediaDataAlloc(OsclMemPoolResizableAllocator* in_gen_alloc)
+        {
+            if (in_gen_alloc)
+            {
+                gen_alloc = in_gen_alloc;
+                iBufferOverhead = 0;
+                uint32 aligned_refcnt_size =
+                    oscl_mem_aligned_size(sizeof(OsclRefCounterDA));
+                uint32 aligned_cleanup_size =
+                    oscl_mem_aligned_size(sizeof(PVMFTimedTextMediaDataCleanup));
+                uint32 aligned_simplemb_size =
+                    oscl_mem_aligned_size(sizeof(PVMFSimpleMediaBuffer));
+                uint32 aligned_textmediadata_size =
+                    oscl_mem_aligned_size(sizeof(PVMFTimedTextMediaData));
+                iBufferOverhead = aligned_refcnt_size +
+                                  aligned_cleanup_size +
+                                  aligned_simplemb_size +
+                                  aligned_textmediadata_size;
+
+            }
+            else
+            {
+                OSCL_LEAVE(OsclErrArgument);
+            }
+        };
+
+        virtual ~PVMFTimedTextMediaDataAlloc()
+        {
+        };
 
         OsclSharedPtr<PVMFMediaDataImpl> allocate(uint32 requested_size)
         {
-            uint32 aligned_refcnt_size = oscl_mem_aligned_size(sizeof(OsclRefCounterDA));
-            uint32 aligned_cleanup_size = oscl_mem_aligned_size(sizeof(PVMFTimedTextMediaDataCleanup));
-            uint32 aligned_simplemb_size = oscl_mem_aligned_size(sizeof(PVMFSimpleMediaBuffer));
-            uint32 aligned_textmediadata_size = oscl_mem_aligned_size(sizeof(PVMFTimedTextMediaData));
-            uint32 aligned_requested_size = oscl_mem_aligned_size(requested_size);
-            uint32 totalmem_size = aligned_refcnt_size + aligned_cleanup_size + aligned_simplemb_size + aligned_textmediadata_size + aligned_requested_size;
+            uint32 aligned_refcnt_size =
+                oscl_mem_aligned_size(sizeof(OsclRefCounterDA));
+
+            uint32 aligned_cleanup_size =
+                oscl_mem_aligned_size(sizeof(PVMFTimedTextMediaDataCleanup));
+
+            uint32 aligned_simplemb_size =
+                oscl_mem_aligned_size(sizeof(PVMFSimpleMediaBuffer));
+
+            uint32 aligned_textmediadata_size =
+                oscl_mem_aligned_size(sizeof(PVMFTimedTextMediaData));
+
+            uint32 aligned_requested_size =
+                oscl_mem_aligned_size(requested_size);
+
+            uint32 totalmem_size = aligned_refcnt_size +
+                                   aligned_cleanup_size +
+                                   aligned_simplemb_size +
+                                   aligned_textmediadata_size +
+                                   aligned_requested_size;
 
             // Allocate the memory
             uint8* mem_ptr = NULL;
@@ -293,8 +338,32 @@ class PVMFTimedTextMediaDataAlloc
             return shared_media_data;
         }
 
+        void ResizeMemoryFragment(OsclSharedPtr<PVMFMediaDataImpl>& aSharedBuffer)
+        {
+            OsclRefCounterMemFrag memFrag;
+            aSharedBuffer->getMediaFragment(0, memFrag);
+            uint32 currCapacity = memFrag.getCapacity();
+            uint32 bytesUsed = memFrag.getMemFragSize();
+
+            //uint32 alignedBytesUsed = bytesUsed;
+            uint32 alignedBytesUsed = oscl_mem_aligned_size(bytesUsed);
+
+            if (alignedBytesUsed < currCapacity)
+            {
+                uint32 bytesToReclaim = (currCapacity - alignedBytesUsed);
+                OsclMemPoolResizableAllocator* dataAllocator =
+                    reinterpret_cast<OsclMemPoolResizableAllocator*>(gen_alloc);
+                /* Account for the overhead */
+                uint8* memFragPtr = (uint8*)(memFrag.getMemFragPtr());
+                uint8* ptr = (memFragPtr - iBufferOverhead);
+                dataAllocator->trim((OsclAny*)ptr, bytesToReclaim);
+                aSharedBuffer->setCapacity(alignedBytesUsed);
+            }
+        }
+
     private:
-        Oscl_DefAlloc* gen_alloc;
+        uint32 iBufferOverhead;
+        OsclMemPoolResizableAllocator* gen_alloc;
 };
 
 

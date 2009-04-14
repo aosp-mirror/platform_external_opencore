@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,11 +34,11 @@ OSCL_EXPORT_REF PVThreadContext::~PVThreadContext()
 {
 }
 
-void PVThreadContext::PanicIfWrongThread(PVThreadContext &a)
+void PVThreadContext::LeaveIfWrongThread(PVThreadContext &a)
 //static routine to verify thread context.
 {
     if (!a.IsSameThreadContext())
-        PV_SCHEDULERPANIC(EPVPanicThreadContextIncorrect);
+        OsclError::Leave(OsclErrThreadContextIncorrect);
 }
 
 OSCL_EXPORT_REF bool PVThreadContext::IsSameThreadContext()
@@ -51,7 +51,7 @@ OSCL_EXPORT_REF bool PVThreadContext::IsSameThreadContext()
     TOsclThreadId id;
     int32 result = OsclThread::GetId(id);
     if (result != OsclProcStatus::SUCCESS_ERROR)
-        PV_SCHEDULERPANIC(EPVPanicThreadContextError);
+        OsclError::Leave(OsclErrSystemCallFailed);
 
     return OsclThread::CompareId(id, iThreadId);
 }
@@ -61,7 +61,7 @@ OSCL_EXPORT_REF void PVThreadContext::EnterThreadContext()
     //Save thread ID.
     int32 result = OsclThread::GetId(iThreadId);
     if (result != OsclProcStatus::SUCCESS_ERROR)
-        PV_SCHEDULERPANIC(EPVPanicThreadContextError);
+        OsclError::Leave(OsclErrSystemCallFailed);
 
 
     //Set current thread scheduler.
@@ -70,7 +70,7 @@ OSCL_EXPORT_REF void PVThreadContext::EnterThreadContext()
     if (!iScheduler)
     {
         //There must be a pv scheduler.
-        PV_SCHEDULERPANIC(EPVPanicSchedulerNotInstalled);
+        OsclError::Leave(OsclErrNotInstalled);
     }
 
     iOpen = true;
@@ -82,15 +82,14 @@ OSCL_EXPORT_REF void PVThreadContext::ExitThreadContext()
     iOpen = false;
 }
 
-
 void PVThreadContext::PendComplete(PVActiveBase *pvbase, int32 aReason, TPVThreadContext aCallingContext)
 {
     //request can be completed from any thread.
     if (!iOpen)
-        PV_SCHEDULERPANIC(EPVPanicThreadContextUnknown);
+        OsclError::Leave(OsclErrInvalidState);//thread context unknown
     //status can be anything but 'pending'
     if (aReason == OSCL_REQUEST_PENDING)
-        PV_SCHEDULERPANIC(EPVPanicBadRequestStatus);
+        OsclError::Leave(OsclErrInvalidState);//bad request status
 
 
     //use PV scheduler mechanism to complete requests.
@@ -109,7 +108,7 @@ OSCL_EXPORT_REF uint32 PVThreadContext::Id()
     TOsclThreadId id;
     int32 result = OsclThread::GetId(id);
     if (result != OsclProcStatus::SUCCESS_ERROR)
-        PV_SCHEDULERPANIC(EPVPanicThreadContextError);
+        OsclError::Leave(OsclErrSystemCallFailed);
     return (uint32)id;
 }
 

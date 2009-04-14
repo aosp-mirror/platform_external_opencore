@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -377,6 +377,20 @@ class MediaAtom : public Atom
             }
         }
 
+        uint16 getLanguageCode()
+        {
+            if (_pmediaHeader != NULL)
+            {
+                return _pmediaHeader->getLanguage();
+            }
+            else
+            {
+                return (0xFFFF);
+            }
+
+        }
+
+
         // From Handler
         uint32 getTrackStreamType()
         {
@@ -429,16 +443,11 @@ class MediaAtom : public Atom
             }
         }
 
-        OSCL_wHeapString<OsclMemAllocator> getMIMEType()
+        void getMIMEType(OSCL_String& aMimeType)
         {
             if (_pmediaInformation != NULL)
             {
-                return _pmediaInformation->getMIMEType();
-            }
-            else
-            {
-                OSCL_wHeapString<OsclMemAllocator> temp(_STRLIT("UNKNOWN"));
-                return temp;
+                _pmediaInformation->getMIMEType(aMimeType);
             }
         }
 

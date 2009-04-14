@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,6 @@ void PVA_FF_FontTableAtom::setFontListSize(uint16 FontListSize)
 
 }
 
-//PVA_FF_FontRecord* PVA_FF_FontTableAtom::setFontRecord(uint16 FontListID,uint16 FontId,int8 FontLength,uint8* FontName)
 void PVA_FF_FontTableAtom::setFontRecord(uint16 FontListID, uint16 FontId, int8 FontLength, uint8* FontName)
 {
 

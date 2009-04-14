@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*********************************************************************************/
 /*
     This PVA_FF_AudioSampleEntry Class is used for visual streams.
 */
@@ -30,7 +29,7 @@
 class PVA_FF_AMRSampleEntry : public PVA_FF_SampleEntry
 {
     public:
-        PVA_FF_AMRSampleEntry(); // Constructor
+        PVA_FF_AMRSampleEntry(uint32 format); // Constructor
         virtual ~PVA_FF_AMRSampleEntry();
 
         uint16 getTimeScale()

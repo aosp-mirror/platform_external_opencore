@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,6 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*																			*/
-/*	=====================================================================	*/
-/*	File: sessionInfo.h														*/
-/*	Description:															*/
-/*																			*/
-/*																			*/
-/*	Rev:																	*/
-/*	Created: 05/24/01														*/
-/*	=====================================================================	*/
-/*																			*/
-/*	Revision History:														*/
-/*																			*/
-/*	Rev:																	*/
-/*	Date:																	*/
-/*	Description:															*/
-/*																			*/
-/* //////////////////////////////////////////////////////////////////////// */
 
 #ifndef SESSION_INFO_H
 #define SESSION_INFO_H
@@ -124,8 +107,6 @@ class sessionDescription
         VideoOnlyStatus videoOnlyAllowed;
         OSCL_HeapString<SDPParserAlloc> controlURL;
 
-        uint16 contentVersion;
-
         OSCL_HeapString<SDPParserAlloc> creationDate;
 
         OSCL_HeapString<SDPParserAlloc> eTag;
@@ -192,6 +173,7 @@ class sessionDescription
         {
             OSCL_DELETE(asfHeaderPtr);
             asfHeaderPtr = NULL;
+            assetInfo.CleanUp();
         };
 
         // added for RM
@@ -513,10 +495,6 @@ class sessionDescription
         {
             connectInfo.connectionAddress.set((const char*)(memFrag.ptr), memFrag.len);
         };
-        inline void setContentVersion(uint16 cVersion)
-        {
-            contentVersion = cVersion;
-        };
 
         inline void setCreationDate(char *cDate)
         {
@@ -746,39 +724,7 @@ class sessionDescription
 
         inline void setAssetInfo(const AssetInfoType &ainfo)
         {
-            if (ainfo.URL == NULL) {}
-            else
-                assetInfo.URL = ainfo.URL;
-
-            for (int ii = 0;ii < ASSET_NAME_SIZE; ii++)
-            {
-                if (ainfo.Box[ii] == NULL) {}
-                else
-                    assetInfo.Box[ii] = ainfo.Box[ii];
-            }
-
-            if (ainfo.oTitlePresent)
-                assetInfo.oTitlePresent = ainfo.oTitlePresent;
-            if (ainfo.oDescriptionPresent)
-                assetInfo.oDescriptionPresent = ainfo.oDescriptionPresent;
-            if (ainfo.oCopyRightPresent)
-                assetInfo.oCopyRightPresent = ainfo.oCopyRightPresent;
-            if (ainfo.oPerformerPresent)
-                assetInfo.oPerformerPresent = ainfo.oPerformerPresent;
-            if (ainfo.oAuthorPresent)
-                assetInfo.oAuthorPresent = ainfo.oAuthorPresent;
-            if (ainfo.oGenrePresent)
-                assetInfo.oGenrePresent  = ainfo.oGenrePresent;
-            if (ainfo.oRatingPresent)
-                assetInfo.oRatingPresent  = ainfo.oRatingPresent;
-            if (ainfo.oClassificationPresent)
-                assetInfo.oClassificationPresent = ainfo.oClassificationPresent;
-            if (ainfo.oKeyWordsPresent)
-                assetInfo.oKeyWordsPresent = ainfo.oKeyWordsPresent;
-            if (ainfo.oLocationPresent)
-                assetInfo.oLocationPresent = ainfo.oLocationPresent;
-            if (ainfo.oAssetExtensionPresent)
-                assetInfo.oAssetExtensionPresent = ainfo.oAssetExtensionPresent;
+            assetInfo = ainfo;
         };
 
         inline SDPAltGroupType getSDPAltGroupType()
@@ -1035,11 +981,7 @@ class sessionDescription
         {
             return creationDate.get_cstr();
         }
-        inline void getContentVersion(uint8 & major_version, uint8 & minor_version)
-        {
-            major_version = (uint8)((contentVersion & 0xff00) >> 8);
-            minor_version = (uint8)(contentVersion & 0x00ff);
-        }
+
 
 
         inline const char *getETag()
@@ -1176,7 +1118,7 @@ class sessionDescription
         }
         //End additions
 
-        //Additions for asf streaming, 12/27/02
+        //Additions for asf streaming
         inline void setAsfHeader(unsigned char* ASCPtr, int ASCLen)
         {
             asfHeaderPtr = ASCPtr;
@@ -1247,9 +1189,6 @@ class sessionDescription
             connectInfo.connectionNetworkType = "IP";
             connectInfo.connectionAddress = "0.0.0.0";
             connectInfo.connectionAddressType = "IP4";
-            contentVersion = 0;
-            //Commenting out the default value for the creation date.
-            //creationDate = "20000101T000000.000Z";
 
             //    securityFlag = 0;
             pauseDenied = false;
@@ -1257,7 +1196,6 @@ class sessionDescription
             randomFiller = NULL;
             digitalSignature = NULL;
             launchURL = NULL;
-            //Commenting out default value for endOfClip field.
             //Added new enum state.
             endOfClip = DO_NOTHING;
             appSpecificString = NULL;
@@ -1283,23 +1221,7 @@ class sessionDescription
             intKeyRightIssuerURI = NULL;
             sdpAuthTag = NULL;
 
-            assetInfo.URL = NULL;
-            int ii;
-            for (ii = 0;ii < ASSET_NAME_SIZE;ii++)
-            {
-                assetInfo.Box[ii] = NULL;
-            }
-            assetInfo.oTitlePresent = false;
-            assetInfo.oDescriptionPresent = false;
-            assetInfo.oCopyRightPresent = false;
-            assetInfo.oPerformerPresent = false;
-            assetInfo.oAuthorPresent = false;
-            assetInfo.oGenrePresent  = false;
-            assetInfo.oRatingPresent  = false;
-            assetInfo.oClassificationPresent = false;
-            assetInfo.oKeyWordsPresent = false;
-            assetInfo.oLocationPresent = false;
-            assetInfo.oAssetExtensionPresent = false;
+            assetInfo.ResetAssetInfoType();
 
             iSDPAltGroupType = SDP_ALT_GROUP_NONE;
             altGroupBW = NULL;
@@ -1353,12 +1275,6 @@ class sessionDescription
             setCAddressType(connection.connectionAddressType);
             setCAddress(connection.connectionAddress);
 
-            uint8 majorVersion, minorVersion;
-            ((sessionDescription)sourceSessionDescription).getContentVersion(majorVersion, minorVersion);
-            uint16 cVersion = (uint16) majorVersion;
-            cVersion <<= 8;
-            cVersion |= (uint16) minorVersion;
-            setContentVersion(cVersion);
             setCreationDate(((sessionDescription)sourceSessionDescription).getCreationDate());
             setRandomAccessDenied(((sessionDescription)sourceSessionDescription).getRandomAccessDenied());
             setETag(((sessionDescription)sourceSessionDescription).getETag());
@@ -1377,7 +1293,7 @@ class sessionDescription
             setRTCPSenderBitRate(((sessionDescription)sourceSessionDescription).getRTCPBWSender());
             setRTCPReceiverBitRate(((sessionDescription)sourceSessionDescription).getRTCPBWReceiver());
             setBWtias(((sessionDescription)sourceSessionDescription).getBWtias());
-            //Additions for asf streaming, 12/27/02
+            //Additions for asf streaming
             setAsfHeader(((sessionDescription)sourceSessionDescription).getAsfHeader(), ((sessionDescription)sourceSessionDescription).getAsfHeaderSize()) ;
             setAsfTrue(((sessionDescription)sourceSessionDescription).getAsfTrue());
 
@@ -1405,92 +1321,67 @@ class sessionDescription
 
         const sessionDescription &operator=(const sessionDescription & sourceSessionDescription)
         {
-            setProtocolVersion(((sessionDescription)sourceSessionDescription).getProtocolVersion());
-            setSessionName(((sessionDescription)sourceSessionDescription).getSessionName());
-            setSessionInformation(((sessionDescription)sourceSessionDescription).getSessionInformation());
-            setVersion(((sessionDescription)sourceSessionDescription).getVersion());
-            setAuthor(((sessionDescription)sourceSessionDescription).getAuthor());
-            setCopyright(((sessionDescription)sourceSessionDescription).getCopyright());
-            setRating(((sessionDescription)sourceSessionDescription).getRating());
-            uint64 start, stop;
-            ((sessionDescription)sourceSessionDescription).getStartStopTimes(&start, &stop);
-            setSessionStartTime(start);
-            setSessionStopTime(stop);
+            protocolVersion = sourceSessionDescription.protocolVersion;
+            sessionName = sourceSessionDescription.sessionName;
+            sessionInformation = sourceSessionDescription.sessionInformation;
+            version = sourceSessionDescription.version;
+            author = sourceSessionDescription.author;
+            copyright = sourceSessionDescription.copyright;
+            rating = sourceSessionDescription.rating;
+            sessionStartTime = sourceSessionDescription.sessionStartTime.get_value();
+            sessionStopTime = sourceSessionDescription.sessionStopTime.get_value();
 
-            setRepeatInterval(((sessionDescription)sourceSessionDescription).getSessionRepeatInterval());
-            setActiveDuration(((sessionDescription)sourceSessionDescription).getSessionActiveDuration());
-            setOffsetVector(((sessionDescription)sourceSessionDescription).getRepeatTimeOffsetVectors());
+            repeatInterval = sourceSessionDescription.repeatInterval;
+            activeDuration = sourceSessionDescription.activeDuration;
+            listOfOffsetsFromStartTime = sourceSessionDescription.listOfOffsetsFromStartTime;
 
-            setRange(*((sessionDescription)sourceSessionDescription).getRange());
-            setWmfVersion(((sessionDescription)sourceSessionDescription).getWmfVersion());
-            setAllowRecord(((sessionDescription)sourceSessionDescription).getAllowRecord());
-            setVideoOnlyAllowed(((sessionDescription)sourceSessionDescription).getVideoOnlyAllowed());
-            setControlURL(((sessionDescription)sourceSessionDescription).getControlURL());
-
-            originatorInfo originator;
-            ((sessionDescription)sourceSessionDescription).getOriginator(&originator);
-            setOUsername(originator.originatorUsername);
-            //Check the following 2 fields for validity
-            setOSessionID(originator.originatorSessionID);
-            setOVersion(originator.originatorVersion);
-            setONetworkType(originator.originatorNetworkType);
-            setOAddressType(originator.originatorAddressType);
-            setOAddress(originator.originatorAddress);
-
-            connectionInfo connection;
-            ((sessionDescription)sourceSessionDescription).getConnectionInformation(&connection);
-            setCNetworkType(connection.connectionNetworkType);
-            setCAddressType(connection.connectionAddressType);
-            setCAddress(connection.connectionAddress);
-
-            uint8 majorVersion, minorVersion;
-            ((sessionDescription)sourceSessionDescription).getContentVersion(majorVersion, minorVersion);
-            uint16 cVersion = (uint16) majorVersion;
-            cVersion <<= 8;
-            cVersion |= (uint16) minorVersion;
-            setContentVersion(cVersion);
-            setCreationDate(((sessionDescription)sourceSessionDescription).getCreationDate());
-            setRandomAccessDenied(((sessionDescription)sourceSessionDescription).getRandomAccessDenied());
-            setETag(((sessionDescription)sourceSessionDescription).getETag());
-            setRandomFiller(((sessionDescription)sourceSessionDescription).getRandomFiller());
-            setDigitalSignature(((sessionDescription)sourceSessionDescription).getDigitalSignature());
-            setLaunchURL(((sessionDescription)sourceSessionDescription).getLaunchURL());
-            setEndOfClipAction(((sessionDescription)sourceSessionDescription).getEndOfClipAction());
-            setAppSpecificString(((sessionDescription)sourceSessionDescription).getAppSpecificString());
-            setExpiryDate(((sessionDescription)sourceSessionDescription).getExpiryDate());
-            setPauseDenied(((sessionDescription)sourceSessionDescription).getPauseDenied());
-            setEmail(((sessionDescription)sourceSessionDescription).getEmail());
-            setPhoneNumber(((sessionDescription)sourceSessionDescription).getPhoneNumber());
-            setEncryptionKey(((sessionDescription)sourceSessionDescription).getEncryptionKey());
-
-            setBitrate(((sessionDescription)sourceSessionDescription).getBitRate());
-            setRTCPSenderBitRate(((sessionDescription)sourceSessionDescription).getRTCPBWSender());
-            setRTCPReceiverBitRate(((sessionDescription)sourceSessionDescription).getRTCPBWReceiver());
-            setBWtias(((sessionDescription)sourceSessionDescription).getBWtias());
-            //Additions for asf streaming, 12/27/02
-            setAsfHeader(((sessionDescription)sourceSessionDescription).getAsfHeader(), ((sessionDescription)sourceSessionDescription).getAsfHeaderSize()) ;
-            setAsfTrue(((sessionDescription)sourceSessionDescription).getAsfTrue());
-
-            setQoEMetrics(sourceSessionDescription.qoeMetrics);
-
-            setKeyMethod(sourceSessionDescription.intKeyMethod);
-
-            setKeyData(sourceSessionDescription.intKeyData);
-
-            setKeyContentIdURI(sourceSessionDescription.intKeyContentIdURI);
-
-            setKeyRightIssuerURI(sourceSessionDescription.intKeyRightIssuerURI);
-
-            setAssetInfo(((sessionDescription)sourceSessionDescription).getAssetInfo());
-
-            setSdpAuthTag(((sessionDescription)sourceSessionDescription).getSdpAuthTag());
-
-            setSDPAltGroupType(((sessionDescription)sourceSessionDescription).getSDPAltGroupType());
-            setAltGroupBW(((sessionDescription)sourceSessionDescription).getAltGroupBW());
-            setAltGroupLANG(((sessionDescription)sourceSessionDescription).getAltGroupLANG());
-
-            setCFieldStatus(((sessionDescription)sourceSessionDescription).getCFieldStatus());
-            setMaxprate(((sessionDescription)sourceSessionDescription).getMaxprate());
+            session_range = sourceSessionDescription.session_range;
+            wmfVersion = sourceSessionDescription.wmfVersion;
+            allowRecord = sourceSessionDescription.allowRecord;
+            videoOnlyAllowed = sourceSessionDescription.videoOnlyAllowed;
+            controlURL = sourceSessionDescription.controlURL;
+            origInfo.originatorUsername = sourceSessionDescription.origInfo.originatorUsername;
+            origInfo.originatorSessionID = sourceSessionDescription.origInfo.originatorSessionID;
+            origInfo.originatorVersion = sourceSessionDescription.origInfo.originatorVersion;
+            origInfo.originatorNetworkType = sourceSessionDescription.origInfo.originatorNetworkType;
+            origInfo.originatorAddressType = sourceSessionDescription.origInfo.originatorAddressType;
+            origInfo.originatorAddress = sourceSessionDescription.origInfo.originatorAddress;
+            connectInfo.connectionNetworkType = sourceSessionDescription.connectInfo.connectionNetworkType;
+            connectInfo.connectionAddressType = sourceSessionDescription.connectInfo.connectionAddressType;
+            connectInfo.connectionAddress = sourceSessionDescription.connectInfo.connectionAddress;
+            creationDate = sourceSessionDescription.creationDate;
+            randomAccessDenied = sourceSessionDescription.randomAccessDenied;
+            eTag = 	sourceSessionDescription.eTag;
+            randomFiller = sourceSessionDescription.randomFiller;
+            digitalSignature = sourceSessionDescription.digitalSignature;
+            launchURL = sourceSessionDescription.launchURL;
+            endOfClip = sourceSessionDescription.endOfClip;
+            appSpecificString = sourceSessionDescription.appSpecificString;
+            expiryDate = sourceSessionDescription.expiryDate;
+            pauseDenied = sourceSessionDescription.pauseDenied;
+            email = sourceSessionDescription.email;
+            phoneNumber = sourceSessionDescription.phoneNumber;
+            encryptionKey = sourceSessionDescription.encryptionKey;
+            bitrate = sourceSessionDescription.bitrate;
+            rtcpBWSender = 	sourceSessionDescription.rtcpBWSender;
+            rtcpBWReceiver = sourceSessionDescription.rtcpBWReceiver;
+            BWtias = sourceSessionDescription.BWtias;
+            asfHeaderPtr = sourceSessionDescription.asfHeaderPtr;
+            asfHeaderSize = sourceSessionDescription.asfHeaderSize;
+            asfTrue = sourceSessionDescription.asfTrue;
+            qoeMetrics = sourceSessionDescription.qoeMetrics;
+            Keywords = 	sourceSessionDescription.Keywords;
+            intKeyData = sourceSessionDescription.intKeyData;
+            intKeyContentIdURI = sourceSessionDescription.intKeyContentIdURI;
+            intKeyRightIssuerURI = sourceSessionDescription.intKeyRightIssuerURI;
+            assetInfo = sourceSessionDescription.assetInfo;
+            sdpAuthTag = sourceSessionDescription.sdpAuthTag;
+            iSDPAltGroupType = sourceSessionDescription.iSDPAltGroupType;
+            c_field_found = sourceSessionDescription.c_field_found;
+            maxprate = sourceSessionDescription.maxprate;
+            altGroupBW = sourceSessionDescription.altGroupBW;
+            altGroupLANG = sourceSessionDescription.altGroupLANG;
+            iSDPAltGroupType = sourceSessionDescription.iSDPAltGroupType;
             return *this;
         }
 

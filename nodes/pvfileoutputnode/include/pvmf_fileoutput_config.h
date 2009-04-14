@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,15 +70,6 @@ class PvmfFileOutputNodeConfigInterface : public PVInterface
         virtual bool queryInterface(const PVUuid& uuid, PVInterface*& iface) = 0;
 
         /**
-         * This method sets the output file handle. This method must be called before
-         * Start() is called.
-         *
-         * @param aFileHandle Output file handle
-         * @return Completion status of this method.
-         */
-	    virtual PVMFStatus SetOutputFile(OsclFileHandle* aFileHandle) = 0;
-
-        /**
          * This method sets the output file name. This method must be called before
          * the engine / node is initialized.
          *
@@ -86,6 +77,14 @@ class PvmfFileOutputNodeConfigInterface : public PVInterface
          * @return Completion status of this method.
          */
         virtual PVMFStatus SetOutputFileName(const OSCL_wString& aFileName) = 0;
+        /**
+         * This method sets the output file handle. This method must be called before
+         * Start() is called.
+         *
+         * @param aFileHandle Output file descriptor
+         * @return Completion status of this method.
+         */
+        virtual PVMFStatus SetOutputFileDescriptor(const OsclFileHandle* aFileHandle) = 0;
 
 };
 

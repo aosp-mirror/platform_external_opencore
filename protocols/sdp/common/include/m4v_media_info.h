@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,6 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*																			*/
-/*	=====================================================================	*/
-/*	File: m4v_mediaInfo.h													*/
-/*	Description:															*/
-/*																			*/
-/*																			*/
-/*	Rev:																	*/
-/*	Created: 05/24/01														*/
-/*	=====================================================================	*/
-/*																			*/
-/*	Revision History:														*/
-/*																			*/
-/*	Rev:																	*/
-/*	Date:																	*/
-/*	Description:															*/
-/*																			*/
-/* //////////////////////////////////////////////////////////////////////// */
 
 #ifndef M4V_MEDIAINFO_H
 #define M4V_MEDIAINFO_H

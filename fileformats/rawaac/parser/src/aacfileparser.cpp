@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@
 #include "pv_audio_type_defs.h"
 #include "getactualaacconfig.h"
 #include "media_clock_converter.h"
-
+#include "pvmp4audiodecoder_api.h"
 
 // Use default DLL entry point for Symbian
 #include "oscl_dll.h"
@@ -257,6 +257,118 @@ void AACBitstreamObject::parseID3Header(PVFile& aFile)
     aFile.Seek(curpos, Oscl_File::SEEKSET);
 }
 
+int32 AACBitstreamObject::isAACFile()
+{
+    if (!ipAACFile || !ipAACFile->IsOpen())
+    {
+        return AACBitstreamObject::READ_ERROR;
+    }
+
+    int32 retVal = AACBitstreamObject::EVERYTHING_OK;
+
+    // save current file pointer location
+    int32 curPos = ipAACFile->Tell();
+    ipAACFile->Seek(0, Oscl_File::SEEKSET);
+
+    // check for ID3v2 tag at the beginning of file
+    uint32 tagSize = 0;
+    if (true == id3Parser->IsID3V2Present(ipAACFile, tagSize))
+    {
+        // skip over ID3v2 tag
+        // move the file read pointer to beginning of audio data
+        // but first make sure the data is there
+        uint32 aCurrentSize = 0;
+        uint32 aRemBytes = 0;
+        if (ipAACFile->GetRemainingBytes(aRemBytes))
+        {
+            uint32 currPos_2 = (uint32)(ipAACFile->Tell());
+            aCurrentSize = currPos_2 + aRemBytes;
+
+            if (aCurrentSize >= tagSize)
+            {
+                if (ipAACFile->Seek(tagSize, Oscl_File::SEEKSET) != 0)
+                {
+                    retVal = AACBitstreamObject::READ_ERROR;
+                }
+            }
+            else
+            {
+                // data has not arrived yet
+                retVal = AACBitstreamObject::INSUFFICIENT_DATA;
+            }
+        }
+        else
+        {
+            retVal = AACBitstreamObject::READ_ERROR;
+        }
+    }
+
+    // file pointer should be at the audio data
+    // can be ADTS, ADIF or raw AAC
+    // - it takes 8192 bytes (max AAC frame size) to determine that is is ADTS
+    // - it takes 4 bytes to determine that it is ADIF
+    // - it takes 1536 bytes to determine that it is raw AAC
+
+    // make sure there are at least 8192 bytes left in the file
+    if (AACBitstreamObject::EVERYTHING_OK == retVal)
+    {
+        uint32 aRemBytes = 0;
+        if (ipAACFile->GetRemainingBytes(aRemBytes))
+        {
+            int32 currPos_2 = ipAACFile->Tell();
+            retVal = reset(currPos_2);
+
+            if (AACBitstreamObject::EVERYTHING_OK == retVal)
+            {
+                uint8 *pBuffer = &iBuffer[iPos];
+
+                // default to not enough data
+                retVal = AACBitstreamObject::INSUFFICIENT_DATA;
+                if (aRemBytes >= MAX_ADTS_PACKET_LENGTH)
+                {
+                    // check for possible ADTS sync word
+                    int32 index = find_adts_syncword(pBuffer);
+                    if (index != -1)
+                    {
+                        // definitely ADTS
+                        retVal = AACBitstreamObject::EVERYTHING_OK;
+                    }
+                }
+
+                if (AACBitstreamObject::INSUFFICIENT_DATA == retVal)
+                {
+                    // not enough data to determine if it is ADTS
+                    // see if it is ADIF
+                    if (aRemBytes >= 4)
+                    {
+                        // check for ADIF header
+                        if (pBuffer[0] == 0x41 &&  // 'A'
+                                pBuffer[1] == 0x44 &&  // 'D'
+                                pBuffer[2] == 0x49 &&  // 'I'
+                                pBuffer[3] == 0x46)    // 'F'
+                        {
+                            // definitely ADIF
+                            retVal = AACBitstreamObject::EVERYTHING_OK;
+                        }
+                        else
+                        {
+                            // non-recognized format,
+                            retVal = AACBitstreamObject::MISC_ERROR;
+                        }
+                    }
+                }
+            }
+        }
+        else
+        {
+            retVal = AACBitstreamObject::READ_ERROR;
+        }
+    }
+
+    // retore file pointer
+    ipAACFile->Seek(curPos, Oscl_File::SEEKSET);
+    return retVal;
+}
 
 
 //! Search for adts synchronization word
@@ -1357,6 +1469,15 @@ class AutoPtrArrayContainer
 //
 //  Constructor for CAACFileParser class
 //
+//----------------------------------------------------------------------------
+// REQUIREMENTS
+//
+//----------------------------------------------------------------------------
+// REFERENCES
+//
+//------------------------------------------------------------------------------
+// CAUTION
+//
 //------------------------------------------------------------------------------
 OSCL_EXPORT_REF CAACFileParser::CAACFileParser(void)
 {
@@ -1392,6 +1513,15 @@ OSCL_EXPORT_REF CAACFileParser::CAACFileParser(void)
 // FUNCTION DESCRIPTION
 //
 //  Destructor for CAACFileParser class
+//
+//----------------------------------------------------------------------------
+// REQUIREMENTS
+//
+//----------------------------------------------------------------------------
+// REFERENCES
+//
+//------------------------------------------------------------------------------
+// CAUTION
 //
 //------------------------------------------------------------------------------
 OSCL_EXPORT_REF CAACFileParser::~CAACFileParser(void)
@@ -1433,6 +1563,15 @@ OSCL_EXPORT_REF CAACFileParser::~CAACFileParser(void)
 //  This function opens the AAC file, checks for AAC format type, calculates
 //  the track duration, and sets the AAC bitrate value.
 //
+//----------------------------------------------------------------------------
+// REQUIREMENTS
+//
+//----------------------------------------------------------------------------
+// REFERENCES
+//
+//------------------------------------------------------------------------------
+// CAUTION
+//
 //------------------------------------------------------------------------------
 OSCL_EXPORT_REF bool CAACFileParser::InitAACFile(OSCL_wString& aClip,  bool aInitParsingEnable, Oscl_FileServer* iFileSession, PVMFCPMPluginAccessInterfaceFactory* aCPMAccess, OsclFileHandle*aHandle)
 {
@@ -1441,6 +1580,15 @@ OSCL_EXPORT_REF bool CAACFileParser::InitAACFile(OSCL_wString& aClip,  bool aIni
 
     iAACFile.SetCPM(aCPMAccess);
     iAACFile.SetFileHandle(aHandle);
+
+    //For aac overwritte pvfile default settings in order to prevent
+    //audio artifacts when playing files from MMC
+    //use native cache (if supported by the platform) size 32KB.
+    PVFileCacheParams cacheParams;
+    cacheParams.iCacheSize = 32768; //32K
+    cacheParams.iNativeAccessMode = 1;
+
+    iAACFile.SetFileCacheParams(cacheParams);
 
     // Open the file (aClip)
     if (iAACFile.Open(aClip.get_cstr(), (Oscl_File::MODE_READ | Oscl_File::MODE_BINARY), *iFileSession) != 0)
@@ -1581,7 +1729,7 @@ OSCL_EXPORT_REF bool CAACFileParser::InitAACFile(OSCL_wString& aClip,  bool aIni
             // get the duration in millisec
             MediaClockConverter mcc;
             mcc.set_timescale(iAACSampleFrequency);
-            mcc.set_clock(iAACDuration*1024, 1);
+            mcc.set_clock(iAACDuration*1024, 0);
             iAACDuration = mcc.get_converted_ts(1000);
 
             if (ipBSO->reset(0))
@@ -1599,7 +1747,7 @@ OSCL_EXPORT_REF bool CAACFileParser::InitAACFile(OSCL_wString& aClip,  bool aIni
             // rough duration calculation based on max bitrate for variable rate bitstream
             MediaClockConverter mcc;
             mcc.set_timescale(iAACBitRate);
-            mcc.set_clock(raw_data_bits, 1);
+            mcc.set_clock(raw_data_bits, 0);
             iAACDuration = mcc.get_converted_ts(1000);
 
             if (ipBSO->reset(ipBSO->GetByteOffsetToStartOfAudioFrames() + (iAACHeaderLen >> 3)))
@@ -1651,6 +1799,15 @@ OSCL_EXPORT_REF bool CAACFileParser::InitAACFile(OSCL_wString& aClip,  bool aIni
 //  This function opens the AAC file, checks for AAC format type, calculates
 //  the track duration, and sets the AAC bitrate value.
 //
+//----------------------------------------------------------------------------
+// REQUIREMENTS
+//
+//----------------------------------------------------------------------------
+// REFERENCES
+//
+//------------------------------------------------------------------------------
+// CAUTION
+//
 //------------------------------------------------------------------------------
 OSCL_EXPORT_REF bool CAACFileParser::RetrieveFileInfo(TPVAacFileInfo& aInfo)
 {
@@ -1692,6 +1849,15 @@ OSCL_EXPORT_REF bool CAACFileParser::RetrieveFileInfo(TPVAacFileInfo& aInfo)
 // FUNCTION DESCRIPTION
 //
 //  This function retrieves the ID3 data if any was found in the file.
+//
+//----------------------------------------------------------------------------
+// REQUIREMENTS
+//
+//----------------------------------------------------------------------------
+// REFERENCES
+//
+//------------------------------------------------------------------------------
+// CAUTION
 //
 //------------------------------------------------------------------------------
 OSCL_EXPORT_REF bool CAACFileParser::RetrieveID3Info(PvmiKvpSharedPtrVector& aID3MetaData)
@@ -1743,11 +1909,21 @@ OSCL_EXPORT_REF void CAACFileParser::GetID3Frame(const OSCL_String& aFrameType, 
 //  This function sets the file pointer to the location that aStartTime would
 //  point to in the file.
 //
+//----------------------------------------------------------------------------
+// REQUIREMENTS
+//
+//----------------------------------------------------------------------------
+// REFERENCES
+//
+//------------------------------------------------------------------------------
+// CAUTION
+//
 //------------------------------------------------------------------------------
 
 OSCL_EXPORT_REF int32 CAACFileParser::ResetPlayback(uint32 aStartTime, uint32& aActualStartTime)
 {
     // Check if the file is opened
+    int32 result;
     if (!iAACFile.IsOpen())
     {
         PVMF_AACPARSER_LOGERROR((0, "CAACFileParser::ResetPlayback- Misc error-"));
@@ -1782,11 +1958,11 @@ OSCL_EXPORT_REF int32 CAACFileParser::ResetPlayback(uint32 aStartTime, uint32& a
             }
             newPosition = iRPTable[iTotalNumFramesRead];
         }
-
-        if (newPosition >= 0 && ipBSO->reset(ipBSO->GetByteOffsetToStartOfAudioFrames() + newPosition))
+        result = ipBSO->reset(ipBSO->GetByteOffsetToStartOfAudioFrames() + newPosition);
+        if (newPosition >= 0 && result)
         {
             PVMF_AACPARSER_LOGERROR((0, "CAACFileParser::ResetPlayback- Misc error-"));
-            return AACBitstreamObject::MISC_ERROR;
+            return result;
         }
         iEndOfFileReached = false;
     }
@@ -1823,7 +1999,7 @@ OSCL_EXPORT_REF int32 CAACFileParser::ResetPlayback(uint32 aStartTime, uint32& a
 
     MediaClockConverter mcc;
     mcc.set_timescale(iAACSampleFrequency);
-    mcc.set_clock(iTotalNumFramesRead*1024, 1);
+    mcc.set_clock(iTotalNumFramesRead*1024, 0);
     aActualStartTime = mcc.get_converted_ts(1000);
 
     PVMF_AACPARSER_LOGDIAGNOSTICS((0, "CAACFileParser::resetplayback - aActualStartTime=%d", aActualStartTime));
@@ -1852,6 +2028,15 @@ OSCL_EXPORT_REF int32 CAACFileParser::ResetPlayback(uint32 aStartTime, uint32& a
 //
 //  This function returns the timestamp for an actual position corresponding
 //  to the specified start time
+//
+//----------------------------------------------------------------------------
+// REQUIREMENTS
+//
+//----------------------------------------------------------------------------
+// REFERENCES
+//
+//------------------------------------------------------------------------------
+// CAUTION
 //
 //------------------------------------------------------------------------------
 OSCL_EXPORT_REF uint32 CAACFileParser::SeekPointFromTimestamp(uint32 aStartTime)
@@ -1917,6 +2102,15 @@ OSCL_EXPORT_REF uint32 CAACFileParser::SeekPointFromTimestamp(uint32 aStartTime)
 //  This function attempts to read in the number of AAC frames specified by
 //  aNumSamples. It formats the read data to WMF bit order and stores it in
 //  the GAU structure.
+//
+//----------------------------------------------------------------------------
+// REQUIREMENTS
+//
+//----------------------------------------------------------------------------
+// REFERENCES
+//
+//------------------------------------------------------------------------------
+// CAUTION
 //
 //------------------------------------------------------------------------------
 OSCL_EXPORT_REF int32
@@ -2123,12 +2317,21 @@ CAACFileParser::GetNextBundledAccessUnits(uint32 *aNumSamples,
 //
 //  This function returns the next timestamp without processing any data.
 //
+//----------------------------------------------------------------------------
+// REQUIREMENTS
+//
+//----------------------------------------------------------------------------
+// REFERENCES
+//
+//------------------------------------------------------------------------------
+// CAUTION
+//
 //------------------------------------------------------------------------------
 OSCL_EXPORT_REF int32 CAACFileParser::PeekNextTimestamp(uint32& ts)
 {
     MediaClockConverter mcc;
     mcc.set_timescale(iAACSampleFrequency);
-    mcc.set_clock((iTotalNumFramesRead + 1)*1024, 1);
+    mcc.set_clock((iTotalNumFramesRead + 1)*1024, 0);
     ts = mcc.get_converted_ts(1000);
 
     return AACBitstreamObject::EVERYTHING_OK;
@@ -2155,6 +2358,15 @@ OSCL_EXPORT_REF int32 CAACFileParser::PeekNextTimestamp(uint32& ts)
 // FUNCTION DESCRIPTION
 //
 //  This function returns the value defined by AAC_DECODER_SPECIFIC_INFO_SIZE.
+//
+//----------------------------------------------------------------------------
+// REQUIREMENTS
+//
+//----------------------------------------------------------------------------
+// REFERENCES
+//
+//------------------------------------------------------------------------------
+// CAUTION
 //
 //------------------------------------------------------------------------------
 OSCL_EXPORT_REF int32 CAACFileParser::GetTrackDecoderSpecificInfoSize(void)
@@ -2197,6 +2409,15 @@ OSCL_EXPORT_REF int32 CAACFileParser::GetTrackDecoderSpecificInfoSize(void)
 //  This function populates iAACFrameBuffer with the two byte of decoder
 //  specific info and returns the address to the values.
 //
+//----------------------------------------------------------------------------
+// REQUIREMENTS
+//
+//----------------------------------------------------------------------------
+// REFERENCES
+//
+//------------------------------------------------------------------------------
+// CAUTION
+//
 //------------------------------------------------------------------------------
 OSCL_EXPORT_REF uint8* CAACFileParser::GetTrackDecoderSpecificInfoContent(void)
 {
@@ -2229,6 +2450,15 @@ OSCL_EXPORT_REF uint8* CAACFileParser::GetTrackDecoderSpecificInfoContent(void)
 //
 //  This function returns iAACFormat value.
 //
+//----------------------------------------------------------------------------
+// REQUIREMENTS
+//
+//----------------------------------------------------------------------------
+// REFERENCES
+//
+//------------------------------------------------------------------------------
+// CAUTION
+//
 //------------------------------------------------------------------------------
 OSCL_EXPORT_REF TAACFormat CAACFileParser::GetAACFormat(void)
 {
@@ -2240,11 +2470,12 @@ OSCL_EXPORT_REF  PVID3Version CAACFileParser::GetID3Version() const
     return ipBSO->GetID3Version();
 }
 
-OSCL_EXPORT_REF uint32 CAACFileParser::getAACHeaderLen(OSCL_wString& aClip,
+OSCL_EXPORT_REF ParserErrorCode CAACFileParser::getAACHeaderLen(OSCL_wString& aClip,
         bool aInitParsingEnable,
         Oscl_FileServer* iFileSession,
         PVMFCPMPluginAccessInterfaceFactory* aCPMAccess,
-        OsclFileHandle* aHandle)
+        OsclFileHandle* aHandle,
+        uint32* HeaderLenValue)
 {
     PVFile iAACFileTemp;
     OSCL_UNUSED_ARG(aInitParsingEnable);
@@ -2268,27 +2499,70 @@ OSCL_EXPORT_REF uint32 CAACFileParser::getAACHeaderLen(OSCL_wString& aClip,
         // release temp storage, file control block..
         iAACFileTemp.Close();
         PV_AAC_FF_DELETE(NULL, AACBitstreamObject, ipBSOTemp);
-        return MEMEORY_ERROR;
+        return MEMORY_ERROR;
     }
 
     uint32 bitRateValueTemp;
-    uint32 HeaderLenValueTemp;
+    uint32 tempHeaderLenValue = 0;
 
     int32 iAACFileSizeTemp;
     uint8 sampleFreqTableValueTemp;
     TAACFormat formatTemp;
-    if (ipBSOTemp->getFileInfo(iAACFileSizeTemp, formatTemp, sampleFreqTableValueTemp, bitRateValueTemp, HeaderLenValueTemp, aClip))
+    if (ipBSOTemp->getFileInfo(iAACFileSizeTemp, formatTemp, sampleFreqTableValueTemp, bitRateValueTemp, tempHeaderLenValue, aClip))
     {
         return FILE_OPEN_ERROR;
     }
     if (formatTemp == EAACADTS)
     {
-        HeaderLenValueTemp = ADTS_HEADER_LENGTH;
+        tempHeaderLenValue = ADTS_HEADER_LENGTH;
     }
     iAACFileTemp.Close();
     PV_AAC_FF_DELETE(NULL, AACBitstreamObject, ipBSOTemp);
     ipBSOTemp = NULL;
-
-    return HeaderLenValueTemp;
-
+    *HeaderLenValue = tempHeaderLenValue;
+    return OK;
 }
+
+OSCL_EXPORT_REF ParserErrorCode CAACFileParser::IsAACFile(OSCL_wString& aClip, Oscl_FileServer* aFileSession, PVMFCPMPluginAccessInterfaceFactory* aCPMAccess, OsclFileHandle* aHandle)
+{
+    PVFile iAACFileTemp;
+    iAACFileTemp.SetCPM(aCPMAccess);
+    iAACFileTemp.SetFileHandle(aHandle);
+
+    // Open the file (aClip)
+    if (iAACFileTemp.Open(aClip.get_cstr(), (Oscl_File::MODE_READ | Oscl_File::MODE_BINARY), *aFileSession) != 0)
+    {
+        PVMF_AACPARSER_LOGERROR((0, "CAACFileParser::IsAACFile- File open error-"));
+        return FILE_OPEN_ERROR;
+    }
+
+    AACBitstreamObject *ipBSOTemp;
+    PV_AAC_FF_NEW(NULL, AACBitstreamObject, (&iAACFileTemp), ipBSOTemp);
+
+    if (!ipBSOTemp || ipBSOTemp->get())
+    {
+        PVMF_AACPARSER_LOGERROR((0, "CAACFileParser::IsAACFile- Memory allocation failed-"));
+        // release temp storage, file control block..
+        iAACFileTemp.Close();
+        PV_AAC_FF_DELETE(NULL, AACBitstreamObject, ipBSOTemp);
+        return MEMORY_ERROR;
+    }
+
+    int32 result = ipBSOTemp->isAACFile();
+
+    // release temp storage, file control block and the file
+    iAACFileTemp.Close();
+    PV_AAC_FF_DELETE(NULL, AACBitstreamObject, ipBSOTemp);
+    ipBSOTemp = NULL;
+
+    if (AACBitstreamObject::EVERYTHING_OK == result)
+    {
+        return OK;
+    }
+    else if (AACBitstreamObject::INSUFFICIENT_DATA == result)
+    {
+        return INSUFFICIENT_DATA;
+    }
+    return GENERIC_ERROR;
+}
+

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 
 #include "oscl_error_trapcleanup.h"
 #include "oscl_assert.h"
+#include "oscl_error_codes.h"
 
 
 OsclErrorTrapImp::OsclErrorTrapImp(Oscl_DefAlloc *alloc, int32 &aError)
@@ -49,8 +50,6 @@ OsclErrorTrapImp::OsclErrorTrapImp(Oscl_DefAlloc *alloc, int32 &aError)
         iTrapStack = new(ptr) OsclTrapStack(iAlloc);
     }
     iLeave = OsclErrNone;
-    iPanic.iReason = OsclErrNone;
-    iPanic.iCategory.Set("");
 }
 
 
@@ -71,8 +70,6 @@ OsclErrorTrapImp::~OsclErrorTrapImp()
 }
 
 
-#include "oscl_execpanic.h"
-
 OSCL_EXPORT_REF OsclErrorTrapImp * OsclErrorTrapImp::Trap()
 //static function to enter a trap level.
 {
@@ -81,7 +78,6 @@ OSCL_EXPORT_REF OsclErrorTrapImp * OsclErrorTrapImp::Trap()
     if (!trap)
         return NULL;//trap is non-functional.
     trap->iLeave = OsclErrNone;
-    trap->iPanic.iReason = OsclErrNone;
     trap->iTrapStack->Trap();
 #if defined(PVERROR_IMP_JUMPS)
     trap->iJumpData->PushMark();
@@ -101,7 +97,6 @@ OSCL_EXPORT_REF OsclErrorTrapImp* OsclErrorTrapImp::TrapNoTls(OsclErrorTrapImp* 
     if (!trap)
         return NULL;//trap is non-functional.
     trap->iLeave = OsclErrNone;
-    trap->iPanic.iReason = OsclErrNone;
     trap->iTrapStack->Trap();
 #if defined(PVERROR_IMP_JUMPS)
     trap->iJumpData->PushMark();
@@ -111,15 +106,17 @@ OSCL_EXPORT_REF OsclErrorTrapImp* OsclErrorTrapImp::TrapNoTls(OsclErrorTrapImp* 
 
 OSCL_EXPORT_REF void OsclErrorTrapImp::UnTrap()
 {
+    //clear the global leave code
+    iLeave = 0;
+
     bool notempty = iTrapStack->UnTrap();
+    OSCL_UNUSED_ARG(notempty);
 
 #if defined(PVERROR_IMP_JUMPS)
     iJumpData->PopMark();
 #endif
 
-    if (notempty)
-        PV_EXECPANIC(ETrapLevelNotEmpty);
-
+    OSCL_ASSERT(!notempty);//ETrapLevelNotEmpty
 }
 
 ///////////////
@@ -139,8 +136,7 @@ inline bool OsclTrapStack::UnTrap()
 //leave the current trap by popping the trap stack.
 {
     //check for untrap without corresponding trap.
-    if (!TrapTop())
-        PV_EXECPANIC(ETrapLevelUnderflow);
+    OSCL_ASSERT(TrapTop());//ETrapLevelUnderflow
 
     //make sure all cleanup items in this level have
     //been popped.
@@ -173,9 +169,14 @@ OsclTrapStack::~OsclTrapStack()
         PopTrap();
 }
 
-void OsclTrapStack::PushL(OsclHeapBase *aCBase)
+void OsclTrapStack::PushL(_OsclHeapBase *aCBase)
 //Push a CBase item onto the cleanup stack
 {
+    //Note: on Symbian you get a panic for doing
+    //a push outside any TRAP statement, so generate an
+    //error here also.
+    OSCL_ASSERT(TrapTop());//ETrapPushAtLevelZero
+
     OsclAny* ptr = iAlloc->ALLOCATE(sizeof(OsclTrapStackItem));
     OsclError::LeaveIfNull(ptr);
     OsclTrapStackItem * item = new(ptr) OsclTrapStackItem(aCBase);
@@ -185,6 +186,11 @@ void OsclTrapStack::PushL(OsclHeapBase *aCBase)
 void OsclTrapStack::PushL(OsclAny *aTAny)
 //Push a nonOsclTrapStackCBase item onto the cleanup stack
 {
+    //Note: on Symbian you get a panic for doing
+    //a push outside any TRAP statement, so generate an
+    //error here also.
+    OSCL_ASSERT(TrapTop());//ETrapPushAtLevelZero
+
     OsclAny* ptr = iAlloc->ALLOCATE(sizeof(OsclTrapStackItem));
     OsclError::LeaveIfNull(ptr);
     OsclTrapStackItem *item = new(ptr) OsclTrapStackItem(aTAny);
@@ -201,6 +207,11 @@ inline void OsclTrapStack::PushTrapL(OsclAny *aTAny)
 
 void OsclTrapStack::PushL(OsclTrapItem anItem)
 {
+    //Note: on Symbian you get a panic for doing
+    //a push outside any TRAP statement, so generate an
+    //error here also.
+    OSCL_ASSERT(TrapTop());//ETrapPushAtLevelZero
+
     OsclAny* ptr = iAlloc->ALLOCATE(sizeof(OsclTrapStackItem));
     OsclError::LeaveIfNull(ptr);
     OsclTrapStackItem *item = new(ptr) OsclTrapStackItem(anItem);
@@ -210,14 +221,6 @@ void OsclTrapStack::PushL(OsclTrapItem anItem)
 void OsclTrapStack::Push(OsclTrapStackItem *aItem)
 //push the given item onto the stack.
 {
-#ifdef PVERROR_TRAP_LEVEL_CHECKS
-    //Note: on Symbian you get this panic for doing
-    //a push outside any TRAP statement.  The panic
-    //is optional on non-Symbian.
-    if (!iTrapTop)
-        PV_EXECPANIC(ETrapPushAtLevelZero);
-#endif
-
     if (aItem)
     {
         aItem->iNext = iTop;
@@ -229,12 +232,11 @@ void OsclTrapStack::Pop()
 //pop the stack.
 {
     if (!iTop)
-        PV_EXECPANIC(ETrapPopUnderflow);
+        OsclError::Leave(OsclErrUnderflow);//ETrapPopUnderflow
 
     //check for a pop beyond the current trap level
-    if (TrapTop()
-            && iTop->iTAny == TrapTop()->iTAny)
-        PV_EXECPANIC(ETrapPopAcrossLevels);
+    if (TrapTop() && iTop->iTAny == TrapTop()->iTAny)
+        OsclError::Leave(OsclErrUnderflow);//ETrapPopAcrossLevels
 
     OsclTrapStackItem *next = iTop->iNext;
     iTop->~OsclTrapStackItem();
@@ -245,8 +247,7 @@ void OsclTrapStack::Pop()
 inline void OsclTrapStack::PopTrap()
 //pop the trap mark stack.
 {
-    if (!TrapTop())
-        PV_EXECPANIC(ETrapPopUnderflow);
+    OSCL_ASSERT(TrapTop());//ETrapPopUnderflow
 
     //call destructor on the item in-place
     TrapTop()->~OsclTrapStackItem();
@@ -256,8 +257,7 @@ inline void OsclTrapStack::PopTrap()
 
 void OsclTrapStack::Pop(int32 aCount)
 {
-    if (aCount < 0)
-        PV_EXECPANIC(ETrapPopCountNegative);
+    OSCL_ASSERT(aCount >= 0);//ETrapPopCountNegative
     for (int i = 0;i < aCount;i++)
         Pop();
 }
@@ -265,13 +265,10 @@ void OsclTrapStack::Pop(int32 aCount)
 void OsclTrapStack::PopDealloc()
 {
     if (!iTop)
-        PV_EXECPANIC(ETrapPopUnderflow);
+        OsclError::Leave(OsclErrUnderflow);//ETrapPopUnderflow;
 
-    //do this check before the destroy, to avoid
-    //corrupting the stack when the panic happens.
-    if (TrapTop()
-            && iTop->iTAny == TrapTop()->iTAny)
-        PV_EXECPANIC(ETrapPopAcrossLevels);
+    if (TrapTop() && iTop->iTAny == TrapTop()->iTAny)
+        OsclError::Leave(OsclErrUnderflow);//ETrapPopAcrossLevels;
 
     if (iTop->iCBase)
     {
@@ -305,11 +302,7 @@ void OsclTrapStack::Leaving()
 //for the current trap level.
 {
     //check for a leave outside any trap.
-    if (!TrapTop())
-    {
-        PV_EXECPANIC(ETrapLevelUnderflow);
-        return;
-    }
+    OSCL_ASSERT(TrapTop());//ETrapLevelUnderflow
 
     while (iTop && iTop->iTAny != TrapTop()->iTAny)
         PopDealloc();

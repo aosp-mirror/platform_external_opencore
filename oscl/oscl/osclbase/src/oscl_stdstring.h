@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -195,6 +195,18 @@ OSCL_IMPORT_REF char* oscl_strncat(char* dest, const char* src, uint32 count);
  */
 OSCL_IMPORT_REF oscl_wchar* oscl_strncat(oscl_wchar* dest, const oscl_wchar* src, uint32 count);
 
+/**
+ * Finds the first occurrence of c in string, or it
+ * returns NULL if c is not found. The null-terminating
+ * character is included in the search.
+ *
+ * @param str    null terminated source string
+ * @param c      character to search for
+ *
+ * @return
+ */
+OSCL_IMPORT_REF const char* oscl_strchr(const char *str, int32 c);
+OSCL_IMPORT_REF char* oscl_strchr(char *str, int32 c);
 
 /**
  * Finds the first occurrence of c in string, or it
@@ -206,10 +218,11 @@ OSCL_IMPORT_REF oscl_wchar* oscl_strncat(oscl_wchar* dest, const oscl_wchar* src
  *
  * @return
  */
-OSCL_IMPORT_REF char* oscl_strchr(const char *str, int32 c);
+OSCL_IMPORT_REF const oscl_wchar* oscl_strchr(const oscl_wchar *str, int32 c);
+OSCL_IMPORT_REF oscl_wchar* oscl_strchr(oscl_wchar *str, int32 c);
 
 /**
- * Finds the first occurrence of c in string, or it
+ * Finds the last occurrence of c in string, or it
  * returns NULL if c is not found. The null-terminating
  * character is included in the search.
  *
@@ -218,7 +231,10 @@ OSCL_IMPORT_REF char* oscl_strchr(const char *str, int32 c);
  *
  * @return
  */
-OSCL_IMPORT_REF oscl_wchar* oscl_strchr(const oscl_wchar *str, int32 c);
+OSCL_IMPORT_REF const char* oscl_strrchr(const char *str, int32 c);
+OSCL_IMPORT_REF char* oscl_strrchr(char *str, int32 c);
+OSCL_IMPORT_REF const oscl_wchar* oscl_strrchr(const oscl_wchar *str, int32 c);
+OSCL_IMPORT_REF oscl_wchar* oscl_strrchr(oscl_wchar *str, int32 c);
 
 /**
  * Sets the characters of a string to a specified character
@@ -342,7 +358,8 @@ OSCL_IMPORT_REF bool oscl_isLetter(const char car);
  *
  * @return    pointer to the begining of sub-string.
  */
-OSCL_IMPORT_REF char* oscl_strstr(const char* str1, const char* str2);
+OSCL_IMPORT_REF const char* oscl_strstr(const char* str1, const char* str2);
+OSCL_IMPORT_REF char* oscl_strstr(char* str1, const char* str2);
 
 
 /**
@@ -353,7 +370,8 @@ OSCL_IMPORT_REF char* oscl_strstr(const char* str1, const char* str2);
  *
  * @return    pointer to the begining of sub-string.
  */
-OSCL_IMPORT_REF oscl_wchar* oscl_strstr(const oscl_wchar* str1, const oscl_wchar* str2);
+OSCL_IMPORT_REF const oscl_wchar* oscl_strstr(const oscl_wchar* str1, const oscl_wchar* str2);
+OSCL_IMPORT_REF oscl_wchar* oscl_strstr(oscl_wchar* str1, const oscl_wchar* str2);
 
 
 /**

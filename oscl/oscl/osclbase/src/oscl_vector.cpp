@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -114,6 +114,30 @@ OSCL_EXPORT_REF void Oscl_Vector_Base::push_front(const OsclAny* x)
     }
     numelems++;
     pOpaqueType->construct(begin(), x);
+}
+
+OSCL_EXPORT_REF OsclAny* Oscl_Vector_Base::insert(OsclAny* pos, const OsclAny* x)
+{
+    OSCL_ASSERT(x);
+    if (numelems == bufsize)
+    {
+        uint32 new_bufsize = (bufsize) ? 2 * bufsize : 2;
+        OsclAny* oldPtr = elems;
+        reserve(new_bufsize);
+        int32 diff = ((char*)elems) - ((char*)oldPtr);
+        pos = (OsclAny*)(((char*)pos) + diff);
+    }
+    OsclAny* ptr = increment_T(elems, numelems);
+    while (ptr > pos)
+    {
+        OsclAny* previous = increment_T(ptr, -1);
+        pOpaqueType->construct(ptr, previous);
+        pOpaqueType->destroy(previous);
+        ptr = previous;
+    }
+    numelems++;
+    pOpaqueType->construct(pos, x);
+    return pos;
 }
 
 OSCL_EXPORT_REF OsclAny* Oscl_Vector_Base::erase(OsclAny* pos)

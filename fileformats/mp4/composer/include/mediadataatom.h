@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*********************************************************************************/
 /*
     This PVA_FF_MediaDataAtom Class contains the media data.
 */
@@ -37,6 +36,10 @@ class PVA_FF_MediaDataAtom : public PVA_FF_Atom, public PVA_FF_ISucceedFail
 {
 
     public:
+        // 03/21/01 Pass the postfixed string to the obejct
+        // PVA_FF_MediaDataAtom(int32 type = MEDIA_DATA_IN_MEMORY); // Constructor
+        // 03/21/01 Generate the temporary files into the output path
+        // PVA_FF_MediaDataAtom(OSCL_wString postfixString, int32 type = MEDIA_DATA_IN_MEMORY); // Constructor
         PVA_FF_MediaDataAtom(PVA_FF_UNICODE_STRING_PARAM outputPathString,
                              PVA_FF_UNICODE_STRING_PARAM postfixString,
                              int32 tempFileIndex,
@@ -122,7 +125,6 @@ class PVA_FF_MediaDataAtom : public PVA_FF_Atom, public PVA_FF_ISucceedFail
         {
             return _type;
         }
-
     private:
         virtual void recomputeSize();
         void prepareTempFile(uint32 aCache = 0);
@@ -140,6 +142,8 @@ class PVA_FF_MediaDataAtom : public PVA_FF_Atom, public PVA_FF_ISucceedFail
 
         int32 _tempFileIndex;
 
+        // 03/21/01 Add postfix string to handle multiple instances of the output filter,
+        // the temporary file names will be different for every instances
         PVA_FF_UNICODE_HEAP_STRING _tempFilePostfix;
 
         Oscl_Vector<PVA_FF_Renderable*, OsclMemAllocator> *_prenderables;
@@ -150,6 +154,7 @@ class PVA_FF_MediaDataAtom : public PVA_FF_Atom, public PVA_FF_ISucceedFail
         void*  _osclFileServerSession;
         uint32 _targetFileMediaStartOffset;
         uint32  _totalDataRenderedToTargetFile;
+        bool _oIsFileOpen;
 };
 
 

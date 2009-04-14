@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*********************************************************************************/
 /*
     This PVA_FF_SyncSampleAtom Class provides a compact marking of the random access
     points within the stream.
@@ -99,6 +98,10 @@ PVA_FF_SyncSampleAtom::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
     int32 ARRAY_OFFSET_1_BASE = 1;
     if (_psampleNumbers != NULL)
     {
+        if (_psampleNumbers->size() < _entryCount)
+        {
+            return false;
+        }
         for (uint32 i = 0; i < _entryCount; i++)
         {
             if (!PVA_FF_AtomUtils::render32(fp, (*_psampleNumbers)[i] + ARRAY_OFFSET_1_BASE))

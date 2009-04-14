@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,6 +48,9 @@ DataEntryUrlAtom::DataEntryUrlAtom(MP4_FF_FILE *fp)
                 _success = false;
                 _mp4ErrorCode = READ_DATA_ENTRY_URL_ATOM_FAILED;
             }
+
+            //We DO NOT SUPPORT NON-SELF CONTAINED files.
+            //So flag ERROR, and return
 
             _success = false;
             _mp4ErrorCode = MEDIA_DATA_NOT_SELF_CONTAINED;

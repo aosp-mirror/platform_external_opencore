@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,12 +27,7 @@ Permission to distribute, modify and use this file under the standard license
 terms listed above has been obtained from the copyright holder.
 ****************************************************************************************/
 /*
-------------------------------------------------------------------------------
-
-
  Pathname: ./gsm-amr/c/src/norm_l.c
-
-     Date: 08/13/2000
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
@@ -53,6 +48,7 @@ terms listed above has been obtained from the copyright holder.
 
  Description: 1. Support for ARM and Linux-ARM assembly instructions.
 
+ Who:                       Date:
  Description:
 
 ------------------------------------------------------------------------------
@@ -200,7 +196,7 @@ Word16 norm_l (Word32 L_var1)
 /*----------------------------------------------------------------------------
 ; FUNCTION CODE
 ----------------------------------------------------------------------------*/
-#if ( !defined(PV_ARM) && !defined(PV_ARM_GCC) )
+#if !( defined(PV_ARM_V5) || defined(PV_ARM_GCC_V5) )
 Word16 norm_l(register Word32 L_var1)
 {
     /*----------------------------------------------------------------------------
@@ -212,8 +208,13 @@ Word16 norm_l(register Word32 L_var1)
     ; Function body here
     ----------------------------------------------------------------------------*/
 
-    if (L_var1 > 0)
+    if (L_var1)
     {
+
+        Word32 y = L_var1 - (L_var1 < 0);
+        L_var1 = y ^(y >> 31);
+
+
         while (!(0x40000000L & L_var1))
         {
             var_out++;
@@ -234,36 +235,7 @@ Word16 norm_l(register Word32 L_var1)
             var_out++;
             L_var1 <<= 4;
         }
-
     }
-    else
-    {
-        if (L_var1 < 0)
-        {
-            L_var1 = -L_var1;
-            while (!(0x40000000L & L_var1))
-            {
-                var_out++;
-                if ((0x20000000L & L_var1))
-                {
-                    break;
-                }
-                var_out++;
-                if ((0x10000000L & L_var1))
-                {
-                    break;
-                }
-                var_out++;
-                if ((0x08000000L & L_var1))
-                {
-                    break;
-                }
-                var_out++;
-                L_var1 <<= 4;
-            }
-        }
-    }
-
 
     /*----------------------------------------------------------------------------
     ; Return nothing or data or data pointer

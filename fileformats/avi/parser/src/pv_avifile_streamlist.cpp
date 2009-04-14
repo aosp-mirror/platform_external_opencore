@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -168,7 +168,14 @@ PVAviFileStreamlist::PVAviFileStreamlist(PVFile *aFp, uint32 aStrListSz)
                 break;
             }
 
+            ipCodecSpecificHdrData = NULL;
             ipCodecSpecificHdrData = (uint8*)oscl_malloc(iCodecSpecificHdrDataSize);
+            if (!ipCodecSpecificHdrData)
+            {
+                PVAVIFILE_LOGERROR((0, "PVAviFileStreamlist::PVAviFileStreamlist: Unable to allocate memory."));
+                iError = PV_AVI_FILE_PARSER_INSUFFICIENT_MEMORY;
+                break;
+            }
             if (0 == PVAviFileParserUtils::read8(aFp, ipCodecSpecificHdrData, iCodecSpecificHdrDataSize))
             {
                 PVAVIFILE_LOGERROR((0, "PVAviFileStreamlist::PVAviFileStreamlist: File Read Error"));
@@ -199,6 +206,12 @@ PVAviFileStreamlist::PVAviFileStreamlist(PVFile *aFp, uint32 aStrListSz)
             if (strnSz >= MAX_STRN_SZ)
             {
                 uint8* strn = (uint8*)oscl_malloc(strnSz);
+                if (!strn)
+                {
+                    PVAVIFILE_LOGERROR((0, "PVAviFileStreamlist::PVAviFileStreamlist: Unable to allocate memory."));
+                    iError = PV_AVI_FILE_PARSER_INSUFFICIENT_MEMORY;
+                    break;
+                }
                 if (PVAviFileParserUtils::read8(aFp, strn, strnSz) == 0)
                 {
                     PVAVIFILE_LOGERROR((0, "PVAviFileStreamlist::PVAviFileStreamlist: File Read Error"));
@@ -206,7 +219,8 @@ PVAviFileStreamlist::PVAviFileStreamlist(PVFile *aFp, uint32 aStrListSz)
                     break;
                 }
 
-                oscl_strncpy(iStreamName, (char*)strn, MAX_STRN_SZ);
+                oscl_strncpy(iStreamName, (char*)strn, (MAX_STRN_SZ - 1));
+                iStreamName[MAX_STRN_SZ - 1] = '\0';
                 oscl_free(strn);
             }
             else
@@ -437,7 +451,7 @@ PVAviFileStreamlist::ParseStreamHeader(PVFile *aFp, uint32 aHdrSize)
         return PV_AVI_FILE_PARSER_BYTE_COUNT_ERROR;
     }
 
-    iStreamHdr.iSamplingRate = iStreamHdr.iRate / iStreamHdr.iScale;
+    iStreamHdr.iSamplingRate = (OsclFloat)iStreamHdr.iRate / iStreamHdr.iScale;
 
     return  PV_AVI_FILE_PARSER_SUCCESS;
 }
@@ -451,12 +465,12 @@ PVAviFileStreamlist::ParseStreamFormat(PVFile *aFp, uint32 aHdrSize)
     {
         case AUDS:
         {
-            iStreamFmt.iType = AUDIO;
+            iStreamFmt.iType = PV_2_AUDIO;
         }
         break;
         case VIDS:
         {
-            iStreamFmt.iType = VIDEO;
+            iStreamFmt.iType = PV_2_VIDEO;
         }
         break;
         case MIDI:
@@ -477,8 +491,14 @@ PVAviFileStreamlist::ParseStreamFormat(PVFile *aFp, uint32 aHdrSize)
     }
     ; //end switch
 
-    if (iStreamFmt.iType == AUDIO)
+    if (iStreamFmt.iType == PV_2_AUDIO)
     {
+        iStreamFmt.iAudWaveFormatEx.FormatTag = 0;
+        iStreamFmt.iAudWaveFormatEx.Channels = 0;
+        iStreamFmt.iAudWaveFormatEx.SamplesPerSec = 0;
+        iStreamFmt.iAudWaveFormatEx.AvgBytesPerSec = 0;
+        iStreamFmt.iAudWaveFormatEx.BlockAlign = 0;
+        iStreamFmt.iAudWaveFormatEx.BitsPerSample = 0;
         if (PV_AVI_FILE_PARSER_SUCCESS != (PVAviFileParserUtils::read16(aFp, iStreamFmt.iAudWaveFormatEx.FormatTag, true)))
         {
             return PV_AVI_FILE_PARSER_READ_ERROR;
@@ -529,8 +549,19 @@ PVAviFileStreamlist::ParseStreamFormat(PVFile *aFp, uint32 aHdrSize)
         }
 
     }
-    else if (iStreamFmt.iType == VIDEO)
+    else if (iStreamFmt.iType == PV_2_VIDEO)
     {
+        iStreamFmt.iVidBitMapInfo.BmiHeader.BiSize = 0;
+        iStreamFmt.iVidBitMapInfo.BmiHeader.BiHeight = 0;
+        iStreamFmt.iVidBitMapInfo.BmiHeader.BiPlanes = 0;
+        iStreamFmt.iVidBitMapInfo.BmiHeader.BiBitCount = 0;
+        iStreamFmt.iVidBitMapInfo.BmiHeader.BiCompression = 0;
+        iStreamFmt.iVidBitMapInfo.BmiHeader.BiSizeImage = 0;
+        iStreamFmt.iVidBitMapInfo.BmiHeader.BiXPelsPerMeter = 0;
+        iStreamFmt.iVidBitMapInfo.BmiHeader.BiYPelsPerMeter = 0;
+        iStreamFmt.iVidBitMapInfo.BmiHeader.BiClrUsed = 0;
+        iStreamFmt.iVidBitMapInfo.BmiHeader.BiClrImportant = 0;
+        iStreamFmt.iVidBitMapInfo.BmiColorsCount = 0;
         if (PV_AVI_FILE_PARSER_SUCCESS != (PVAviFileParserUtils::read32(aFp, iStreamFmt.iVidBitMapInfo.BmiHeader.BiSize, true)))
         {
             return PV_AVI_FILE_PARSER_READ_ERROR;
@@ -599,84 +630,95 @@ PVAviFileStreamlist::ParseStreamFormat(PVFile *aFp, uint32 aHdrSize)
 
         //get the color table size
         uint32 colorTblSize = iStreamFmt.iVidBitMapInfo.BmiHeader.BiClrUsed;
-
-        if (colorTblSize == 0)
+        if (colorTblSize > MAX_COLOR_TABLE_SIZE)
         {
-            switch (iStreamFmt.iVidBitMapInfo.BmiHeader.BiBitCount)
+            return PV_AVI_FILE_PARSER_WRONG_SIZE;
+        }
+        if (bytesRead == aHdrSize)
+        {
+            return PV_AVI_FILE_PARSER_SUCCESS;
+        }
+        else
+        {
+            if (colorTblSize == 0)
             {
-                case BIT_COUNT1:
+                switch (iStreamFmt.iVidBitMapInfo.BmiHeader.BiBitCount)
                 {
-                    colorTblSize = 2;
-                }
-                break;
-                case BIT_COUNT2:
-                {
-                    colorTblSize = 4;
-                }
-                break;
-                case BIT_COUNT4:
-                {
-                    colorTblSize = 16;
-                }
-                break;
-                case BIT_COUNT8:
-                {
-                    colorTblSize = 256;
-                }
-                break;
-                case BIT_COUNT16:
-                case BIT_COUNT32:
-                {
-                    if (BI_BITFIELDS == iStreamFmt.iVidBitMapInfo.BmiHeader.BiCompression)
+                    case BIT_COUNT1:
                     {
-                        colorTblSize = 3;
+                        colorTblSize = 2;
                     }
-                    else if (BI_ALPHABITFIELDS == iStreamFmt.iVidBitMapInfo.BmiHeader.BiCompression)
+                    break;
+                    case BIT_COUNT2:
                     {
                         colorTblSize = 4;
                     }
-                    else if (BI_RGB == iStreamFmt.iVidBitMapInfo.BmiHeader.BiCompression)
+                    break;
+                    case BIT_COUNT4:
+                    {
+                        colorTblSize = 16;
+                    }
+                    break;
+                    case BIT_COUNT8:
+                    {
+                        colorTblSize = 256;
+                    }
+                    break;
+                    case BIT_COUNT16:
+                    case BIT_COUNT32:
+                    {
+                        if (BI_BITFIELDS == iStreamFmt.iVidBitMapInfo.BmiHeader.BiCompression)
+                        {
+                            colorTblSize = 3;
+                        }
+                        else if (BI_ALPHABITFIELDS == iStreamFmt.iVidBitMapInfo.BmiHeader.BiCompression)
+                        {
+                            colorTblSize = 4;
+                        }
+                        else if (BI_RGB == iStreamFmt.iVidBitMapInfo.BmiHeader.BiCompression)
+                        {
+                            colorTblSize = 0;
+                        }
+
+                    }
+                    break;
+                    case BIT_COUNT24:
                     {
                         colorTblSize = 0;
                     }
+                    break;
+                    default:
+                        return PV_AVI_FILE_PARSER_WRONG_BIT_COUNT;
+                        break;
 
-                }
-                break;
-                case BIT_COUNT24:
+                } //switch
+            }
+
+            iStreamFmt.iVidBitMapInfo.BmiColorsCount = colorTblSize;
+
+            uint32 length = 1;
+            //get color table entries
+            for (uint32 ii = 0; ii < colorTblSize; ii++)
+            {
+                if (length != PVAviFileParserUtils::read8(aFp, &(iStreamFmt.iVidBitMapInfo.BmiColors[ii].Blue), length))
                 {
-                    colorTblSize = 0;
+                    return PV_AVI_FILE_PARSER_READ_ERROR;
                 }
-                break;
-                default:
-                    return PV_AVI_FILE_PARSER_WRONG_BIT_COUNT;
+                if (length != PVAviFileParserUtils::read8(aFp, &(iStreamFmt.iVidBitMapInfo.BmiColors[ii].Green), length))
+                {
+                    return PV_AVI_FILE_PARSER_READ_ERROR;
+                }
+                if (length != PVAviFileParserUtils::read8(aFp, &(iStreamFmt.iVidBitMapInfo.BmiColors[ii].Red), length))
+                {
+                    return PV_AVI_FILE_PARSER_READ_ERROR;
+                }
+                if (length != PVAviFileParserUtils::read8(aFp, &(iStreamFmt.iVidBitMapInfo.BmiColors[ii].Reserved), length))
+                {
+                    return PV_AVI_FILE_PARSER_READ_ERROR;
+                }
 
-            } //switch
-        }
-
-        iStreamFmt.iVidBitMapInfo.BmiColorsCount = colorTblSize;
-
-        uint32 length = 1;
-        //get color table entries
-        for (uint32 ii = 0; ii < colorTblSize; ii++)
-        {
-            if (length != PVAviFileParserUtils::read8(aFp, &(iStreamFmt.iVidBitMapInfo.BmiColors[ii].Blue), length))
-            {
-                return PV_AVI_FILE_PARSER_READ_ERROR;
             }
-            if (length != PVAviFileParserUtils::read8(aFp, &(iStreamFmt.iVidBitMapInfo.BmiColors[ii].Green), length))
-            {
-                return PV_AVI_FILE_PARSER_READ_ERROR;
-            }
-            if (length != PVAviFileParserUtils::read8(aFp, &(iStreamFmt.iVidBitMapInfo.BmiColors[ii].Red), length))
-            {
-                return PV_AVI_FILE_PARSER_READ_ERROR;
-            }
-            if (length != PVAviFileParserUtils::read8(aFp, &(iStreamFmt.iVidBitMapInfo.BmiColors[ii].Reserved), length))
-            {
-                return PV_AVI_FILE_PARSER_READ_ERROR;
-            }
-
-        }
+        } //else
         bytesRead += colorTblSize * sizeof(RGBQuad);
 
 
@@ -712,7 +754,7 @@ OSCL_HeapString<OsclMemAllocator> PVAviFileStreamlist::GetStreamMimeType()
     }
     else
     {
-        return 0;
+        mime_str = "unknown";
     }
 
     return mime_str;
@@ -732,11 +774,11 @@ bool PVAviFileStreamlist::GetHandlerType(uint8* aHdlr, uint32& aSize)
 
 uint32 PVAviFileStreamlist::GetBitsPerSample()
 {
-    if (AUDIO == iStreamFmt.iType)
+    if (PV_2_AUDIO == iStreamFmt.iType)
     {
         return (iStreamFmt.iAudWaveFormatEx).BitsPerSample;
     }
-    else if (VIDEO == iStreamFmt.iType)
+    else if (PV_2_VIDEO == iStreamFmt.iType)
 
     {
         return (iStreamFmt.iVidBitMapInfo).BmiHeader.BiBitCount;
@@ -749,7 +791,7 @@ uint32 PVAviFileStreamlist::GetBitsPerSample()
 
 uint32 PVAviFileStreamlist::GetAudioFormat()
 {
-    if (AUDIO == iStreamFmt.iType)
+    if (PV_2_AUDIO == iStreamFmt.iType)
     {
         return (iStreamFmt.iAudWaveFormatEx).FormatTag;
     }
@@ -761,7 +803,7 @@ uint32 PVAviFileStreamlist::GetAudioFormat()
 
 uint32 PVAviFileStreamlist::GetNumAudioChannels()
 {
-    if (AUDIO == iStreamFmt.iType)
+    if (PV_2_AUDIO == iStreamFmt.iType)
     {
         return (iStreamFmt.iAudWaveFormatEx).Channels;
     }
@@ -774,7 +816,7 @@ uint32 PVAviFileStreamlist::GetNumAudioChannels()
 
 uint32 PVAviFileStreamlist::GetVideoWidth()
 {
-    if (VIDEO == iStreamFmt.iType)
+    if (PV_2_VIDEO == iStreamFmt.iType)
     {
         return (iStreamFmt.iVidBitMapInfo).BmiHeader.BiWidth;
     }
@@ -786,7 +828,7 @@ uint32 PVAviFileStreamlist::GetVideoWidth()
 
 uint32 PVAviFileStreamlist::GetVideoHeight(bool& rBottomUp)
 {
-    if (VIDEO == iStreamFmt.iType)
+    if (PV_2_VIDEO == iStreamFmt.iType)
     {
         int32 height = (iStreamFmt.iVidBitMapInfo).BmiHeader.BiHeight;
         if (height < 0) //negative height
@@ -809,12 +851,12 @@ uint32 PVAviFileStreamlist::GetVideoHeight(bool& rBottomUp)
 
 bool PVAviFileStreamlist::GetFormatSpecificInfo(uint8*& aBuff, uint32& aSize)
 {
-    if (AUDIO == iStreamFmt.iType)
+    if (PV_2_AUDIO == iStreamFmt.iType)
     {
         aSize = sizeof(WaveFormatExStruct);
         aBuff = OSCL_STATIC_CAST(uint8*, &(iStreamFmt.iAudWaveFormatEx));
     }
-    else if (VIDEO == iStreamFmt.iType)
+    else if (PV_2_VIDEO == iStreamFmt.iType)
     {
         aSize = sizeof(BitmapInfoHhr) + (sizeof(RGBQuad) * iStreamFmt.iVidBitMapInfo.BmiColorsCount);
         aBuff = OSCL_STATIC_CAST(uint8*, &(iStreamFmt.iVidBitMapInfo));

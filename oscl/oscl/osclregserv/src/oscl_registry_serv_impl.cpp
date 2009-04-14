@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ OsclComponentRegistryElement::~OsclComponentRegistryElement()
     if (iId)
     {
         OSCL_HeapString<OsclMemAllocator>* id = (OSCL_HeapString<OsclMemAllocator>*)iId;
-        OSCL_TEMPLATED_DELETE(id, OSCL_HeapString<OsclMemAllocator>, OSCL_HeapString);
+        OSCL_DELETE(id);
     }
 }
 
@@ -55,7 +55,7 @@ OsclComponentRegistryElement& OsclComponentRegistryElement::operator=(const Oscl
     if (iId)
     {
         OSCL_HeapString<OsclMemAllocator>* id = (OSCL_HeapString<OsclMemAllocator>*)iId;
-        OSCL_TEMPLATED_DELETE(id, OSCL_HeapString<OsclMemAllocator>, OSCL_HeapString);
+        OSCL_DELETE(id);
         iId = NULL;
     }
     iId = OSCL_NEW(OSCL_HeapString<OsclMemAllocator>, (*src.iId));

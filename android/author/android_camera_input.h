@@ -76,14 +76,18 @@ typedef enum
     INVALID_CMD
 } AndroidCameraInputCmdType;
 
-#define DEFAULT_FRAME_WIDTH        320
-#define DEFAULT_FRAME_HEIGHT       240
-#define DEFAULT_FRAME_RATE         20.0
-#define ANDROID_VIDEO_FORMAT       PVMF_YUV420
+#define ANDROID_DEFAULT_FRAME_WIDTH        320
+#define ANDROID_DEFAULT_FRAME_HEIGHT       240
+#define ANDROID_DEFAULT_FRAME_RATE         20.0
+#define ANDROID_DEFAULT_I_FRAME_INTERVAL 1  // encode one I frame every 1 second.
+#define ANDROID_VIDEO_FORMAT       PVMF_MIME_YUV420
 
-#if ANDROID_VIDEO_FORMAT == PVMF_RGB16
+//FIXME mime string now
+/*
+#if ANDROID_VIDEO_FORMAT == PVMF_MIME_YUV420
 #error PV does not support RGB16
 #endif
+*/
 
 /**
  * Class containing information for a command or data event

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*********************************************************************************/
 /*
     This PVA_FF_MediaDataAtom Class contains the media data.  This class can operate in
     either one of two ways - 1. it can store all it's data in memory (such as
@@ -61,6 +60,7 @@ PVA_FF_MediaDataAtom::PVA_FF_MediaDataAtom(PVA_FF_UNICODE_STRING_PARAM outputPat
     _fileWriteError = false;
     _targetFileWriteError = false;
     _directRender = false;
+    _oIsFileOpen = false;
 
     _fileSize = 0;
     _fileOffsetForChunkStart = 0;
@@ -98,9 +98,6 @@ PVA_FF_MediaDataAtom::PVA_FF_MediaDataAtom(PVA_FF_UNICODE_STRING_PARAM targetFil
     _totalDataRenderedToTargetFile = 0;
     _prenderables = NULL;
     _success = true;
-    //_ptrackReferencePtrVec = new Oscl_Vector<PVA_FF_TrackAtom*,OsclMemAllocator>();
-    //_prenderables = new Oscl_Vector<PVA_FF_Renderable*,OsclMemAllocator>();
-
     PV_MP4_FF_NEW(fp->auditCB, PVA_FF_RenderableVecType, (), _prenderables);
     PV_MP4_FF_NEW(fp->auditCB, PVA_FF_TrackAtomVecType, (), _ptrackReferencePtrVec);
 
@@ -108,7 +105,6 @@ PVA_FF_MediaDataAtom::PVA_FF_MediaDataAtom(PVA_FF_UNICODE_STRING_PARAM targetFil
     // ADDED TO CHECK FOR ANY FILE WRITE FAILURES
     _fileWriteError = false;
     _targetFileWriteError = false;
-
     _fileSize = 0;
     _fileOffsetForChunkStart = 0;
     _fileOffsetForAtomStart = 0;
@@ -124,6 +120,7 @@ PVA_FF_MediaDataAtom::PVA_FF_MediaDataAtom(PVA_FF_UNICODE_STRING_PARAM targetFil
 
 
     int retVal = PVA_FF_AtomUtils::openFile(&_pofstream, targetFileName, Oscl_File::MODE_READWRITE | Oscl_File::MODE_BINARY, aCacheSize);
+    _oIsFileOpen = true;
 
     if (_pofstream._filePtr == NULL)
     {
@@ -168,7 +165,7 @@ PVA_FF_MediaDataAtom::PVA_FF_MediaDataAtom(MP4_AUTHOR_FF_FILE_HANDLE targetFileH
     _fileSize = 0;
     _fileOffsetForChunkStart = 0;
     _fileOffsetForAtomStart = 0;
-
+    _oIsFileOpen = false;
     _directRender = true;
 
     _ptrackReferencePtr = NULL;
@@ -186,13 +183,10 @@ PVA_FF_MediaDataAtom::PVA_FF_MediaDataAtom(MP4_AUTHOR_FF_FILE_HANDLE targetFileH
 // Destructor
 PVA_FF_MediaDataAtom::~PVA_FF_MediaDataAtom()
 {
-    if (!_directRender)
+    if (_pofstream._filePtr != NULL && true == _oIsFileOpen)
     {
-        if (_pofstream._filePtr != NULL)
-        {
-            PVA_FF_AtomUtils::closeFile(&_pofstream);
-            _pofstream._filePtr = NULL;
-        }
+        PVA_FF_AtomUtils::closeFile(&_pofstream);
+        _pofstream._filePtr = NULL;
     }
 
     // PVA_FF_TrackAtom *_ptrackReferencePtr - is taken care of by the movie atom
@@ -229,10 +223,17 @@ PVA_FF_MediaDataAtom::prepareTempFile(uint32 aCacheSize)
 {
     if (_pofstream._filePtr == NULL && !_fileWriteError)
     {
+        // 05/31/01 Generate temporary files into output path (the actual mp4 location)
+        // _tempFilename already contains the output path ("drive:\\...\\...\\")
+        //
         _tempFilename += _STRLIT("temp");
+        // Assign the rest of the temp filename - index plus suffix
         _tempFilename += (uint16)(_tempFileIndex++);
+
+        // 03/21/01 Multiple instances support
         _tempFilename += _STRLIT("_");
         _tempFilename += _tempFilePostfix;
+        //
 
         _tempFilename += _STRLIT(".mdat");
 
@@ -243,6 +244,10 @@ PVA_FF_MediaDataAtom::prepareTempFile(uint32 aCacheSize)
         if (_pofstream._filePtr == NULL)
         {
             _fileWriteError = true;
+        }
+        else
+        {
+            _oIsFileOpen = true;
         }
 
         // Render the atoms base members to the media data atom file
@@ -514,7 +519,6 @@ void
 PVA_FF_MediaDataAtom::reserveBuffer(int32 size)
 {
     OSCL_UNUSED_ARG(size);
-    //_data = malloc // Reserve space for
 }
 
 void
@@ -588,7 +592,6 @@ PVA_FF_MediaDataAtom::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
         // and NOT just offsets from the first chunk (i.e. zero) and we don't really
         // know this offset until now.
         PVA_FF_MediaDataAtom *This = const_cast<PVA_FF_MediaDataAtom*>(this);
-        //This->setFileOffsetForChunkStart(fp.tellp());
         This->setFileOffsetForChunkStart(PVA_FF_AtomUtils::getCurrentFilePosition(fp));
 
         for (uint32 i = 0; i < _prenderables->size(); i++)
@@ -602,6 +605,9 @@ PVA_FF_MediaDataAtom::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
     }
     else
     {
+        // MEDIA_DATA_ON_DISK
+        // 05/30/01 CPU problem when the file fp big.
+        // We update the size at the end not for every sample.
         // Need to update the atoms size field on disk
         int32 currentPos = PVA_FF_AtomUtils::getCurrentFilePosition(&_pofstream);    // Get current position of put pointer
         PVA_FF_AtomUtils::seekFromStart(&_pofstream, 0);          // Go to the beginning of the file
@@ -646,7 +652,6 @@ PVA_FF_MediaDataAtom::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
 
         // Read in atom from separate file and copy byte-by-byte to new ofstream
         // (including the mediaDataAtom header - 4 byte size ad 4 byte type)
-        // uint32 count = 0;
 
         uint32 readBlockSize = 0;
         uint32 tempFileSize  = getSize();
@@ -690,6 +695,4 @@ PVA_FF_MediaDataAtom::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
 
     return true;
 }
-
-
 

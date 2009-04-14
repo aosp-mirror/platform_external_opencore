@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,8 +65,8 @@ extern Vol					IMEM_vol[2][1];
 /*	Return   : PV_TRUE if successed, PV_FALSE if failed.					*/
 /*	Modified :																*/
 /* ======================================================================== */
-Bool PVInitVideoDecoder(VideoDecControls *decCtrl, uint8 *volbuf[],
-                        int32 *volbuf_size, int nLayers, int width, int height, MP4DecodingMode mode)
+OSCL_EXPORT_REF Bool PVInitVideoDecoder(VideoDecControls *decCtrl, uint8 *volbuf[],
+                                        int32 *volbuf_size, int nLayers, int width, int height, MP4DecodingMode mode)
 {
     VideoDecData *video = (VideoDecData *) decCtrl->videoDecoderData;
     Bool status = PV_TRUE;
@@ -202,10 +202,6 @@ Bool PVInitVideoDecoder(VideoDecControls *decCtrl, uint8 *volbuf[],
                     video->vol[idx]->bitstream = stream;
                     video->vol[idx]->volID = idx;
                     video->vol[idx]->timeInc_offset = 0;  /*  11/12/01 */
-#if 0
-                    video->vlcDequantIntraBlock = &VlcDequantH263IntraBlock ;
-                    video->vlcDequantInterBlock = &VlcDequantH263InterBlock ;
-#endif
                     video->vlcDecCoeffIntra = &VlcDecTCOEFShortHeader;
                     video->vlcDecCoeffInter = &VlcDecTCOEFShortHeader;
                     if (mode == MPEG4_MODE)
@@ -270,16 +266,8 @@ Bool PVInitVideoDecoder(VideoDecControls *decCtrl, uint8 *volbuf[],
         }
         if (status != PV_FALSE)
         {
-#if 0
-            if (mode == MPEG4_MODE /* || width !=0 && height !=0 */)
-            {
-                status = PVAllocVideoData(decCtrl, width, height, nLayers);
-                video->initialized = PV_TRUE;
-            }
-#else
             status = PVAllocVideoData(decCtrl, width, height, nLayers);
             video->initialized = PV_TRUE;
-#endif
         }
     }
     else
@@ -563,7 +551,7 @@ Bool PVResetVideoDecoder(VideoDecControls *decCtrl)
 /*	Return   : PV_TRUE if successed, PV_FALSE if failed.					*/
 /*	Modified :																*/
 /* ======================================================================== */
-Bool PVCleanUpVideoDecoder(VideoDecControls *decCtrl)
+OSCL_EXPORT_REF Bool PVCleanUpVideoDecoder(VideoDecControls *decCtrl)
 {
     int	idx;
     VideoDecData *video = (VideoDecData *) decCtrl->videoDecoderData;
@@ -728,7 +716,7 @@ Bool PVCleanUpVideoDecoder(VideoDecControls *decCtrl)
 /*				not want to expose our internal data structure.				*/
 /*	Modified :																*/
 /* ======================================================================== */
-void PVGetVideoDimensions(VideoDecControls *decCtrl, int32 *display_width, int32 *display_height)
+OSCL_EXPORT_REF void PVGetVideoDimensions(VideoDecControls *decCtrl, int32 *display_width, int32 *display_height)
 {
     VideoDecData *video = (VideoDecData *)decCtrl->videoDecoderData;
     *display_width = video->displayWidth;
@@ -760,7 +748,7 @@ uint32 PVGetVideoTimeStamp(VideoDecControls *decCtrl)
 /*	Note     :																*/
 /*	Modified : . 08/29/2000 changes the name for consistency.				*/
 /* ======================================================================== */
-void PVSetPostProcType(VideoDecControls *decCtrl, int mode)
+OSCL_EXPORT_REF void PVSetPostProcType(VideoDecControls *decCtrl, int mode)
 {
     VideoDecData *video = (VideoDecData *)decCtrl->videoDecoderData;
     video->postFilterType = mode;
@@ -861,7 +849,7 @@ int32 PVGetDecMemoryUsage(VideoDecControls *decCtrl)
 /*	Note     :																*/
 /*	Modified :																*/
 /* ======================================================================== */
-MP4DecodingMode PVGetDecBitstreamMode(VideoDecControls *decCtrl)
+OSCL_EXPORT_REF MP4DecodingMode PVGetDecBitstreamMode(VideoDecControls *decCtrl)
 {
     VideoDecData *video = (VideoDecData *)decCtrl->videoDecoderData;
     if (video->shortVideoHeader)
@@ -1005,8 +993,8 @@ int32 PVLocateH263FrameHeader(uint8 *ptr, int32 size)
 /*			 : 08/22/2002 break up into 2 functions PVDecodeVopHeader and */
 /*							PVDecodeVopBody									*/
 /* ======================================================================== */
-Bool PVDecodeVideoFrame(VideoDecControls *decCtrl, uint8 *buffer[],
-                        uint32 timestamp[], int32 buffer_size[], uint use_ext_timestamp[], uint8 *currYUV)
+OSCL_EXPORT_REF Bool PVDecodeVideoFrame(VideoDecControls *decCtrl, uint8 *buffer[],
+                                        uint32 timestamp[], int32 buffer_size[], uint use_ext_timestamp[], uint8 *currYUV)
 {
     PV_STATUS status = PV_FAIL;
     VopHeaderInfo header_info;
@@ -1106,7 +1094,6 @@ Bool PVDecodeVopHeader(VideoDecControls *decCtrl, uint8 *buffer[],
             else if (display_time == timestamp[idx])
             {
                 /* we have to handle either SNR or spatial scalability here. */
-                /*										 09/??/2000		 */
             }
         }
         if (target_layer < 0) return PV_FALSE;
@@ -1166,18 +1153,6 @@ Bool PVDecodeVopHeader(VideoDecControls *decCtrl, uint8 *buffer[],
                     return PV_FALSE;
                 }
             }
-#if 0
-            if (video->initialized == PV_FALSE)
-            {
-                if (PVAllocVideoData(decCtrl, video->width, video->height, 1) == PV_FALSE)
-                {
-                    video->displayWidth = video->width = 0;
-                    video->displayHeight = video->height = 0;
-                    return PV_FALSE;
-                }
-                video->initialized = PV_TRUE;
-            }
-#endif
 
             if (use_ext_timestamp[0])
             {
@@ -1338,7 +1313,7 @@ Bool PVDecodeVopBody(VideoDecControls *decCtrl, int32 buffer_size[])
 #endif
         video->vop_coding_type = currVop->predictionType; /*  07/09/01 */
         /* the following is necessary to avoid displaying an notCoded I-VOP at the beginning of a session
-        		or after random positioning  07/03/02*/
+        or after random positioning  07/03/02*/
         if (currVop->predictionType == I_VOP)
         {
             video->vop_coding_type = P_VOP;
@@ -1472,7 +1447,7 @@ Bool PVDecodeVopBody(VideoDecControls *decCtrl, int32 buffer_size[])
 }
 
 #ifdef PV_MEMORY_POOL
-void PVSetReferenceYUV(VideoDecControls *decCtrl, uint8 *YUV)
+OSCL_EXPORT_REF void PVSetReferenceYUV(VideoDecControls *decCtrl, uint8 *YUV)
 {
     VideoDecData *video = (VideoDecData *)decCtrl->videoDecoderData;
     video->prevVop->yChan = (PIXEL *)YUV;
@@ -1631,7 +1606,6 @@ Bool PVDecSetReference(VideoDecControls *decCtrl, uint8 *refYUV, uint32 timestam
 
     dstPtr = prevVop->yChan;
     orgPtr = refYUV;
-#if 1
     oscl_memcpy(dstPtr, orgPtr, size);
     dstPtr = prevVop->uChan;
     dstPtr2 = prevVop->vChan;
@@ -1639,33 +1613,6 @@ Bool PVDecSetReference(VideoDecControls *decCtrl, uint8 *refYUV, uint32 timestam
     orgPtr2 = orgPtr + (size >> 2);
     oscl_memcpy(dstPtr, orgPtr, (size >> 2));
     oscl_memcpy(dstPtr2, orgPtr2, (size >> 2));
-#else
-    for (i = 0; i < displayHeight; i++)
-    {
-        oscl_memcpy(dstPtr, orgPtr, displayWidth);
-        dstPtr += width;
-        orgPtr += displayWidth;
-    }
-
-
-    dstPtr = prevVop->uChan;
-    dstPtr2 = prevVop->vChan;
-    orgPtr = refYUV + (displayWidth * displayHeight);
-    orgPtr2 = orgPtr + ((displayWidth * displayHeight) >> 2);
-
-    displayHeight >>= 1;
-    displayWidth >>= 1;
-    width >>= 1;
-    for (i = 0; i < displayHeight; i++)
-    {
-        oscl_memcpy(dstPtr, orgPtr, displayWidth);
-        oscl_memcpy(dstPtr2, orgPtr2, displayWidth);
-        dstPtr += width;
-        dstPtr2 += width;
-        orgPtr += displayWidth;
-        orgPtr2 += displayWidth;
-    }
-#endif
 
     video->concealFrame = video->prevVop->yChan;
     video->vop_coding_type = I_VOP;
@@ -1702,7 +1649,6 @@ Bool PVDecSetEnhReference(VideoDecControls *decCtrl, uint8 *refYUV, uint32 times
 
     dstPtr = prevEnhcVop->yChan;
     orgPtr = refYUV;
-#if 1
     oscl_memcpy(dstPtr, orgPtr, size);
     dstPtr = prevEnhcVop->uChan;
     dstPtr2 = prevEnhcVop->vChan;
@@ -1710,37 +1656,6 @@ Bool PVDecSetEnhReference(VideoDecControls *decCtrl, uint8 *refYUV, uint32 times
     orgPtr2 = orgPtr + (size >> 2);
     oscl_memcpy(dstPtr, orgPtr, (size >> 2));
     oscl_memcpy(dstPtr2, orgPtr2, (size >> 2));
-#else
-    width = video->width;
-    height = video->height;
-    displayWidth = video->displayWidth;
-    displayHeight = video->displayHeight;
-
-    for (i = 0; i < displayHeight; i++)
-    {
-        oscl_memcpy(dstPtr, orgPtr, displayWidth);
-        dstPtr += width;
-        orgPtr += displayWidth;
-    }
-
-    dstPtr = prevEnhcVop->uChan;
-    dstPtr2 = prevEnhcVop->vChan;
-    orgPtr = refYUV + (displayWidth * displayHeight);
-    orgPtr2 = orgPtr + ((displayWidth * displayHeight) >> 2);
-
-    displayHeight >>= 1;
-    displayWidth >>= 1;
-    width >>= 1;
-    for (i = 0; i < displayHeight; i++)
-    {
-        oscl_memcpy(dstPtr, orgPtr, displayWidth);
-        oscl_memcpy(dstPtr2, orgPtr2, displayWidth);
-        dstPtr += width;
-        dstPtr2 += width;
-        orgPtr += displayWidth;
-        orgPtr2 += displayWidth;
-    }
-#endif
     video->concealFrame = video->prevEnhcVop->yChan;
     video->vop_coding_type = I_VOP;
     decCtrl->outputFrame = video->prevEnhcVop->yChan;

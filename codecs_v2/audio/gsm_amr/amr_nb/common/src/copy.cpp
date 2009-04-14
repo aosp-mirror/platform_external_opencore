@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,6 +53,7 @@ terms listed above has been obtained from the copyright holder.
 */
 #include "typedef.h"
 #include "basic_op.h"
+#include "oscl_mem.h"
 
 /*
 ********************************************************************************
@@ -81,12 +82,5 @@ void Copy(
     Word16 L            /* i : vector length     */
 )
 {
-    Word16 i;
-
-    for (i = 0; i < L; i++)
-    {
-        y[i] = x[i];
-    }
-
-    return;
+    oscl_memmove(y, x, L*sizeof(*x));
 }

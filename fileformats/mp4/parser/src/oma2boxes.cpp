@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -767,6 +767,7 @@ EcnvBox::createAVCDecoderSpecificInfo(MP4_FF_FILE *fp)
 
     if ((int32)len > 0)
     {
+
         PV_MP4_FF_NEW(fp->auditCB, DecoderSpecificInfo, (fp, true), _decoderSpecificInfo);
 
         uint8* info = (uint8*)(oscl_malloc(sizeof(uint8) * len));
@@ -948,6 +949,7 @@ uint16 EcnvBox::getWidth() const
     uint32 width = _reserved2 & 0xFFFF0000;
     uint32 ret = width >> 16;
     return (uint16)ret;
+
 }
 
 uint16 EcnvBox::getHeight() const

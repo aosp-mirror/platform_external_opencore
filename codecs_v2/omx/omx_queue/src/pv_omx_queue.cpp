@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,56 +18,136 @@
 
 #include "pv_omx_queue.h"
 
-// Use default DLL entry point for Symbian
+// Use default DLL entry point
 #ifndef OSCL_DLL_H_INCLUDED
 #include "oscl_dll.h"
 #endif
 
 OSCL_DLL_ENTRY_POINT_DEFAULT()
 
-OSCL_EXPORT_REF void QueueInit(QueueType* aQueue)
+OSCL_EXPORT_REF OMX_ERRORTYPE QueueInit(QueueType* aQueue)
 {
-    aQueue->inptr = 0;
-    aQueue->outptr = 0;
+    OMX_S32 ii;
+    QueueElement* pTempQElement = NULL;
+    aQueue->pFirst = NULL;
+
+    aQueue->pFirst = (QueueElement*) oscl_malloc(sizeof(QueueElement));
+    if (NULL == aQueue->pFirst)
+    {
+        return OMX_ErrorInsufficientResources;
+    }
+    oscl_memset(aQueue->pFirst, 0, sizeof(QueueElement));
+
+    aQueue->pLast = aQueue->pFirst;
+    aQueue->NumElem = 0;
+    aQueue->NumElemAdded = 0;
+
+    for (ii = 0; ii < MAX_QUEUE_ELEMENTS - 1; ii++)
+    {
+        pTempQElement = (QueueElement*) oscl_malloc(sizeof(QueueElement));
+        if (NULL == pTempQElement)
+        {
+            return OMX_ErrorInsufficientResources;
+        }
+
+        oscl_memset(pTempQElement, 0, sizeof(QueueElement));
+
+        aQueue->pLast->pQueueNext = pTempQElement;
+        aQueue->pLast = pTempQElement;
+        pTempQElement = NULL;
+    }
+
+    aQueue->pLast->pQueueNext = aQueue->pFirst;
+    aQueue->pLast = aQueue->pFirst;
+
+    return OMX_ErrorNone;
+
+}
+
+OSCL_EXPORT_REF OMX_BOOL AddQueueElem(QueueType* aQueue)
+{
+    QueueElement* pTempQElement = NULL;
+
+    pTempQElement = (QueueElement*) oscl_malloc(sizeof(QueueElement));
+    if (NULL == pTempQElement)
+    {
+        return OMX_FALSE;
+    }
+
+    oscl_memset(pTempQElement, 0, sizeof(QueueElement));
+    aQueue->pLast->pQueueNext = pTempQElement;
+    pTempQElement->pQueueNext = aQueue->pFirst;
+
+    aQueue->NumElemAdded++;
+
+    return OMX_TRUE;
+
 }
 
 OSCL_EXPORT_REF void QueueDeinit(QueueType* aQueue)
 {
-    aQueue->inptr = 0;
-    aQueue->outptr = 0;
+    OMX_S32 ii;
+    QueueElement* pTempQElement;
+
+    OMX_S32 QueueElemCount = aQueue->NumElemAdded + MAX_QUEUE_ELEMENTS;
+
+    pTempQElement = aQueue->pFirst;
+
+    for (ii = 0; ii < QueueElemCount	; ii++)
+    {
+        if (pTempQElement != NULL)
+        {
+            pTempQElement = pTempQElement->pQueueNext;
+            oscl_free(aQueue->pFirst);
+            aQueue->pFirst = pTempQElement;
+        }
+    }
 }
 
-OSCL_EXPORT_REF void Queue(QueueType* aQueue, void* aData)
+OSCL_EXPORT_REF OMX_ERRORTYPE Queue(QueueType* aQueue, void* aData)
 {
-    aQueue->queue[aQueue->inptr++] = aData;
-    if (aQueue->inptr >= MAX_QUEUE_ELEMENTS)
+    if (aQueue->NumElem == (MAX_QUEUE_ELEMENTS + aQueue->NumElemAdded))
     {
-        aQueue->inptr = 0;
+        if (OMX_FALSE == AddQueueElem(aQueue))
+        {
+            return OMX_ErrorInsufficientResources;
+        }
     }
+
+    if (aQueue->NumElem != 0)
+    {
+        aQueue->pLast = aQueue->pLast->pQueueNext;
+    }
+
+    aQueue->pLast->pData = aData;
+    aQueue->NumElem++;
+
+    return OMX_ErrorNone;
 }
 
 OSCL_EXPORT_REF void* DeQueue(QueueType* aQueue)
 {
-    if (aQueue->inptr == aQueue->outptr)
+    void* pData;
+    if (NULL == aQueue->pFirst->pData)
     {
         return NULL;
     }
 
-    void *ret =  aQueue->queue[aQueue->outptr++];
-    if (aQueue->outptr >= MAX_QUEUE_ELEMENTS)
+    pData = aQueue->pFirst->pData;
+    aQueue->pFirst->pData = NULL;
+    aQueue->pFirst = aQueue->pFirst->pQueueNext;
+    aQueue->NumElem--;
+
+    if (0 == aQueue->NumElem)
     {
-        aQueue->outptr = 0;
+        aQueue->pLast = aQueue->pFirst;
     }
-    return ret;
+
+    return pData;
 }
 
 OSCL_EXPORT_REF OMX_S32 GetQueueNumElem(QueueType* aQueue)
 {
-    int num = aQueue->inptr - aQueue->outptr;
-    if (num < 0)
-    {
-        num += MAX_QUEUE_ELEMENTS;
-    }
-    return num;
+    return aQueue->NumElem;
 }
 

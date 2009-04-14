@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,25 +15,41 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-//                                                                              //
-//  File: media_clock_converter.cpp                                             //
-//                                                                              //
-//////////////////////////////////////////////////////////////////////////////////
-
 #include "media_clock_converter.h"
 
 // Use default DLL entry point for Symbian
 #include "oscl_dll.h"
 OSCL_DLL_ENTRY_POINT_DEFAULT()
 
+// All the rounding in this utility is using method rounding up
+// For example, normal calculation
+//   A / B
+// is replaced as
+//   (A + (B - 1))/ B
+// In an average roudning up is same as rounding down, but it resolve some issue
+
 //////////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF void MediaClockConverter::set_value(const MediaClockConverter& src)
 {
+    // Timescale value cannot be zero
+    OSCL_ASSERT(src.get_timescale() != 0);
+    if (src.get_timescale() == 0)
+    {
+        OSCL_LEAVE(OsclErrCorrupt);
+    }
+
+    OSCL_ASSERT(timescale != 0);
+    if (0 == timescale)
+    {
+        OSCL_LEAVE(OsclErrCorrupt);
+    }
+
     uint64 value = (uint64(src.get_wrap_count())) << 32;
 
     value += src.get_current_timestamp();
 
-    value = (uint64(value) * timescale) / src.get_timescale();
+    // rounding up
+    value = (uint64(value) * timescale + uint64(src.get_timescale() - 1)) / src.get_timescale();
 
     wrap_count = ((uint32)(value >> 32)) % timescale;
 
@@ -43,10 +59,24 @@ OSCL_EXPORT_REF void MediaClockConverter::set_value(const MediaClockConverter& s
 //////////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF void MediaClockConverter::set_timescale(uint32 new_timescale)
 {
+    // Timescale value cannot be zero
+    OSCL_ASSERT(new_timescale != 0);
+    if (0 == new_timescale)
+    {
+        OSCL_LEAVE(OsclErrArgument);
+    }
+
+    OSCL_ASSERT(timescale != 0);
+    if (0 == timescale)
+    {
+        OSCL_LEAVE(OsclErrCorrupt);
+    }
+
     uint64 value = ((uint64)wrap_count) << 32;
     value += current_ts;
 
-    value = (value * new_timescale) / timescale;
+    // rounding up
+    value = (value * new_timescale + uint64(timescale - 1)) / timescale;
 
     timescale = new_timescale;
 
@@ -59,8 +89,23 @@ OSCL_EXPORT_REF void MediaClockConverter::set_timescale(uint32 new_timescale)
 OSCL_EXPORT_REF void MediaClockConverter::set_clock_other_timescale(uint32 value,
         uint32 in_timescale)
 {
+    // Timescale value cannot be zero
+    OSCL_ASSERT(in_timescale != 0);
+    if (0 == in_timescale)
+    {
+        OSCL_LEAVE(OsclErrArgument);
+    }
+
+    OSCL_ASSERT(timescale != 0);
+    if (0 == timescale)
+    {
+        OSCL_LEAVE(OsclErrCorrupt);
+    }
+
     uint64 new_value = (uint64)value * timescale;
     uint64 in_timescale64Comp = (uint64)(in_timescale - 1);
+
+    // rounding up
     new_value = new_value + in_timescale64Comp ;
     new_value /= in_timescale;
 
@@ -74,8 +119,16 @@ OSCL_EXPORT_REF uint32 MediaClockConverter::get_timediff_and_update_clock(uint32
         uint32 in_timescale,
         uint32 output_timescale)
 {
+    // Timescale value cannot be zero
+    OSCL_ASSERT(in_timescale != 0);
+    if (0 == in_timescale)
+    {
+        OSCL_LEAVE(OsclErrArgument);
+    }
+
     // convert to native timescale
-    uint64 new_value = (uint64)value * timescale;
+    // rounding up
+    uint64 new_value = (uint64)value * timescale + uint64(in_timescale - 1);
     new_value /= in_timescale;
 
     uint32 new_timevalue = ((uint32)(new_value & 0xFFFFFFFF));
@@ -88,10 +141,18 @@ OSCL_EXPORT_REF uint32 MediaClockConverter::get_timediff_and_update_clock(uint32
 OSCL_EXPORT_REF uint32 MediaClockConverter::get_timediff_and_update_clock(uint32 value,
         uint32 output_timescale)
 {
+    // Timescale value cannot be zero
+    OSCL_ASSERT(timescale != 0);
+    if (0 == timescale)
+    {
+        OSCL_LEAVE(OsclErrCorrupt);
+    }
+
     uint32 diff = value - current_ts;
 
     // convert to output timescale
-    uint64 new_value = (uint64)diff * output_timescale;
+    // rounding up
+    uint64 new_value = (uint64)diff * output_timescale + uint64(timescale - 1);
     new_value /= timescale;
 
     diff = ((uint32)(new_value & 0xFFFFFFFF));
@@ -137,10 +198,16 @@ OSCL_EXPORT_REF bool MediaClockConverter::update_clock(uint32 new_ts)
 //////////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF uint32 MediaClockConverter::get_converted_ts(uint32 new_timescale) const
 {
+    // Timescale value cannot be zero
+    OSCL_ASSERT(timescale != 0);
+    if (0 == timescale)
+    {
+        OSCL_LEAVE(OsclErrCorrupt);
+    }
 
     uint64 value = ((uint64)wrap_count) << 32;
-    //Accounting for a roundingoff error
-    value += (uint64(current_ts) * uint64(new_timescale) + uint64(timescale - 1)) / uint64(timescale);
+    // rounding up
+    value = ((value + uint64(current_ts)) * uint64(new_timescale) + uint64(timescale - 1)) / uint64(timescale);
 
     return ((uint32) value);
 

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,9 +29,12 @@
 #ifndef OSCL_STRING_H_INCLUDED
 #include "oscl_string.h"
 #endif
-#ifndef OSCL_CLOCK_H_INCLUDED
-#include "oscl_clock.h"
+
+#ifndef PVMF_MEDIA_CLOCK_H_INCLUDED
+#include "pvmf_media_clock.h"
 #endif
+
+
 #ifndef PV_UUID_H_INCLUDED
 #include "pv_uuid.h"
 #endif
@@ -75,7 +78,7 @@ class PvmiClockExtensionInterface  : public PVInterface
          * @param clockVal the Instance of OSCL Clock
          * @return Completion status of this method.
          */
-        virtual PVMFStatus SetClock(OsclClock *clockVal) = 0;
+        virtual PVMFStatus SetClock(PVMFMediaClock *clockVal) = 0;
 };
 
 #endif // PVMI_MEDIA_IO_CLOCK_EXTENSION_H_INCLUDED

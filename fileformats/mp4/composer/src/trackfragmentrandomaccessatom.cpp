@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,14 +78,16 @@ PVA_FF_TfraAtom::getTrackId()
 void
 PVA_FF_TfraAtom::updateMoofOffset(uint32 offset)
 {
-    if (_moofUpdateSample <= _entryCount)
+    if (_pSampleEntries->size() >= _entryCount)
     {
-        for (uint32 ii = _moofUpdateSample; ii <= _entryCount; ii++)
+        if (_moofUpdateSample <= _entryCount)
         {
-            ((*_pSampleEntries)[ii-1].moofOffset) += offset;
+            for (uint32 ii = _moofUpdateSample; ii <= _entryCount; ii++)
+            {
+                ((*_pSampleEntries)[ii-1].moofOffset) += offset;
+            }
+            _moofUpdateSample = _entryCount + 1;
         }
-        _moofUpdateSample = _entryCount + 1;
-
     }
 }
 

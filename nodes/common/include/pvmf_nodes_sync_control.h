@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@
 #define PvmfNodesSyncControlUuid PVUuid(0xd4d82607,0xbca5,0x43e3,0x88,0x30,0xa3,0x1b,0x36,0x0a,0xb5,0xf2)
 
 // Forward declarations
-class OsclClock;
+class PVMFMediaClock;
 
 /**
  * Configuration interface used by data sink nodes to synchronize rendering of media data
@@ -58,7 +58,7 @@ class PvmfNodesSyncControlInterface : public PVInterface
          * @param aClock Clock object to which media data is synchronized.
          * @return Completion status.
          */
-        virtual PVMFStatus SetClock(OsclClock* aClock) = 0;
+        virtual PVMFStatus SetClock(PVMFMediaClock* aClock) = 0;
 
         /**
          * Notifies the data sink node that clock rate is changing. Also allows
@@ -117,12 +117,8 @@ class PvmfNodesSyncControlInterface : public PVInterface
          * PVMFNodeCmdStatusObserver of the node implementing this interface.
          *
          * @param aSessionId Session ID returned when creating a session with the node
-         * @param aStartingTimestamp Timestamp at which the new media data will start. Media data with timestamps before the starting time
-         *                           is considered to be old data and will be flushed out.
          * @param aResumeTimestamp Timestamp at which normal evaluation of timestamp against the clock will resume. This timestamp
          *                         must be greater than or equal to aStartingTimestamp
-         * @param aRenderSkippedData When set to true, SyncMediaData API will return 0 for all timestamps after the starting time but
-         *        before the resume time.
          * @param aPlayBackPositionContinuous When set to true, this is meant to notify the data sink that
          *        this skip media data call does not relate to a change in source position. Or in
          *        other words source is continuous. Example: Smart Forward Repositioning (SFR). In this case the source node
@@ -131,10 +127,8 @@ class PvmfNodesSyncControlInterface : public PVInterface
          * @returns A unique command id for asynchronous completion.
          */
         virtual PVMFCommandId SkipMediaData(PVMFSessionId aSessionId,
-                                            PVMFTimestamp aStartingTimestamp,
                                             PVMFTimestamp aResumeTimestamp,
                                             uint32 aStreamID = 0,
-                                            bool aRenderSkippedData = false,
                                             bool aPlayBackPositionContinuous = false,
                                             OsclAny* aContext = NULL) = 0;
 };

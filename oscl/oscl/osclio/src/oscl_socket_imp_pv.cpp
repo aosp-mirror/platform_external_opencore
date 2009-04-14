@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -122,7 +122,8 @@ int32 OsclSocketI::Join(OsclNetworkAddress& anAddr)
     return OsclErrNone;
 #else
     OSCL_UNUSED_ARG(anAddr);
-    return PVSOCK_ERR_NOT_IMPLEMENTED;
+    OSCL_LEAVE(OsclErrNotSupported);
+    return 0;
 #endif
 }
 
@@ -144,6 +145,22 @@ int32 OsclSocketI::Listen(uint32 qSize)
 #else
     OSCL_UNUSED_ARG(qSize);
     return PVSOCK_ERR_NOT_IMPLEMENTED;
+#endif
+}
+
+int32 OsclSocketI::SetRecvBufferSize(uint32 size)
+{
+#ifdef OsclSetRecvBufferSize
+    int err;
+    int ok;
+    OsclSetRecvBufferSize(iSocket, size, ok, err);
+    if (!ok)
+        return err;
+    return OsclErrNone;
+#else
+    OSCL_UNUSED_ARG(size);
+    OSCL_LEAVE(OsclErrNotSupported);
+    return 0;
 #endif
 }
 
@@ -404,6 +421,7 @@ void OsclSocketI::InitSocket(bool valid)
 }
 
 #endif //pv socket server
+
 
 
 

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,8 +72,8 @@ extern "C"
     	To do:		Uniform subsampling will be inserted later!
     				Hypothesis Testing Fast Matching to be used later!
     	Changes:
-    	11/7/00:	 implemented MMX
-    	1/24/01:	 implemented SSE
+    11/7/00:	 implemented MMX
+    1/24/01:	 implemented SSE
     ==================================================================*/
     /********** C ************/
     Int SAD_Macroblock_C(UChar *ref, UChar *blk, Int dmin_lx, void *extra_info)
@@ -308,8 +308,8 @@ extern "C"
     	To do:		Uniform subsampling will be inserted later!
     				Hypothesis Testing Fast Matching to be used later!
     	Changes:
-    	11/7/00:	 implemented MMX
-    	1/24/01:	 implemented SSE
+    11/7/00:	 implemented MMX
+    1/24/01:	 implemented SSE
       ==================================================================*/
     /********** C ************/
     Int SAD_Block_C(UChar *ref, UChar *blk, Int dmin, Int lx, void *)

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,12 +28,7 @@ terms listed above has been obtained from the copyright holder.
 ****************************************************************************************/
 /*
 
-
-
-
  Filename: /audio/gsm_amr/c/src/sqrt_l_tbl.c
-
-     Date: 01/24/2002
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
@@ -45,6 +40,7 @@ terms listed above has been obtained from the copyright holder.
 
  Description: Put "extern" back.
 
+ Who:                           Date:
  Description:
 
 ------------------------------------------------------------------------------
@@ -89,13 +85,13 @@ extern "C"
     ; LOCAL VARIABLE DEFINITIONS
     ; [Variable declaration - defined here and used outside this module]
     ----------------------------------------------------------------------------*/
-    extern const Word16 sqrt_l_tbl[49] =
+    extern const Word16 sqrt_l_tbl[50] =
     {
         16384, 16888, 17378, 17854, 18318, 18770, 19212, 19644, 20066, 20480,
         20886, 21283, 21674, 22058, 22435, 22806, 23170, 23530, 23884, 24232,
         24576, 24915, 25249, 25580, 25905, 26227, 26545, 26859, 27170, 27477,
         27780, 28081, 28378, 28672, 28963, 29251, 29537, 29819, 30099, 30377,
-        30652, 30924, 31194, 31462, 31727, 31991, 32252, 32511, 32767
+        30652, 30924, 31194, 31462, 31727, 31991, 32252, 32511, 32767, 32767
     };
 
 

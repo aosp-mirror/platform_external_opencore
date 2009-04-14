@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -250,8 +250,9 @@ SampleToChunkAtom::SampleToChunkAtom(MP4_FF_FILE *fp, uint32 size, uint32 type, 
 }
 bool SampleToChunkAtom::ParseEntryUnit(uint32 sample_cnt)
 {
+
     uint32 prevFirstChunk = 0;
-    uint32 j = 0;
+
 
     const uint32 threshold = 512;
     sample_cnt += threshold;
@@ -824,6 +825,7 @@ SampleToChunkAtom::getSamplesPerChunkCorrespondingToSample(uint32 sampleNum)
     }
     return 0; // Should never get here
 }
+
 
 // Returns the chunk number for the given sample number
 uint32

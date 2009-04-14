@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,15 +17,14 @@
  */
 /*
 
- Pathname: ./include/gen_rand_vector.h
-
-     Date: 03/20/2001
+ Pathname: gen_rand_vector.h
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
 
  Description: Added include of pv_audio_type_defs.h
 
+ Who:						Date:
  Description:
 ------------------------------------------------------------------------------
  INCLUDE DESCRIPTION
