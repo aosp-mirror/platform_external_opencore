@@ -7,8 +7,6 @@ LOCAL_WHOLE_STATIC_LIBRARIES := \
 
 LOCAL_MODULE := libomx_mp3dec_sharedlibrary
 
-LOCAL_PRELINK_MODULE := true
-
 -include $(PV_TOP)/Android_platform_extras.mk
 
 -include $(PV_TOP)/Android_system_extras.mk
