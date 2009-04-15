@@ -34,8 +34,8 @@ include $(PV_TOP)/build_config/opencore_dynamic/Android_opencore_rtspreg.mk
 include $(PV_TOP)/build_config/opencore_dynamic/Android_opencore_rtsp.mk
 include $(PV_TOP)/build_config/opencore_dynamic/Android_opencore_mp4localreg.mk
 include $(PV_TOP)/build_config/opencore_dynamic/Android_opencore_mp4local.mk
-include $(PV_TOP)/oscl/unit_test/Android.mk
-include $(PV_TOP)/engines/player/test/Android.mk
-include $(PV_TOP)/engines/author/test/Android.mk
-include $(PV_TOP)/engines/2way/test/Android.mk
+#include $(PV_TOP)/oscl/unit_test/Android.mk
+#include $(PV_TOP)/engines/player/test/Android.mk
+#include $(PV_TOP)/engines/author/test/Android.mk
+#include $(PV_TOP)/engines/2way/test/Android.mk
 endif
