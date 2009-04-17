@@ -1612,6 +1612,19 @@ OMX_ERRORTYPE OmxComponentBase::SendCommand(
             Message->MessageParam2 = nParam;
             Message->pCmdData = pCmdData;
 
+            if ((nParam != -1) && ((OMX_U32) nParam >= iNumPorts))
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OmxComponentBase : SendCommand error bad port index"));
+                return OMX_ErrorBadPortIndex;
+            }
+
+            //If component is in Idle state, just queue the command and don't do anything else
+            if (iState == OMX_StateIdle)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OmxComponentBase : SendCommand Flush command in Idle state"));
+                break;
+            }
+
             if ((iState != OMX_StateExecuting) && (iState != OMX_StatePause))
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OmxComponentBase : SendCommand error incorrect state"));
@@ -1619,11 +1632,7 @@ OMX_ERRORTYPE OmxComponentBase::SendCommand(
                 break;
 
             }
-            if ((nParam != -1) && ((OMX_U32) nParam >= iNumPorts))
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OmxComponentBase : SendCommand error bad port index"));
-                return OMX_ErrorBadPortIndex;
-            }
+
             SetPortFlushFlag(iNumPorts, nParam, OMX_TRUE);
             SetNumBufferFlush(iNumPorts, -1, 0);
         }
@@ -1905,6 +1914,42 @@ OMX_ERRORTYPE OmxComponentBase::MessageHandler(CoreMessage* Message)
 
             case OMX_CommandFlush:
             {
+                //If the component is in Idle state, send the command complete callback
+                //without any processing as the ports are empty of buffers anyway
+                if (OMX_StateIdle == iState)
+                {
+                    if (-1 == Message->MessageParam2)
+                    {
+                        /*Flush all port*/
+                        for (ii = 0; ii < iNumPorts; ii++)
+                        {
+                            (*(ipCallbacks->EventHandler))
+                            (pHandle,
+                             iCallbackData,
+                             OMX_EventCmdComplete, /* The command was completed */
+                             OMX_CommandFlush, /* The commands was a OMX_CommandStateSet */
+                             ii, /* The iState has been changed in Message->MessageParam2 */
+                             NULL);
+                        }
+                    }
+                    else
+                    {
+                        /*Flush input/output port*/
+                        (*(ipCallbacks->EventHandler))
+                        (pHandle,
+                         iCallbackData,
+                         OMX_EventCmdComplete, /* The command was completed */
+                         OMX_CommandFlush, /* The commands was a OMX_CommandStateSet */
+                         Message->MessageParam2, /* The iState has been changed in Message->MessageParam2 */
+                         NULL);
+                    }
+
+                    // Break from here as we don't want to do any further processing
+                    // for this command
+                    break;
+                }
+
+
                 /*Flush ports*/
                 ErrorType = FlushPort(Message->MessageParam2);
 
