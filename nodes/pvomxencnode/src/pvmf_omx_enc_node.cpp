@@ -2264,7 +2264,6 @@ bool PVMFOMXEncNode::NegotiateVideoComponentParameters()
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                         (0, "PVMFOMXEncNode-%s::NegotiateVideoComponentParameters() Problem getting OMX_IndexConfigCommonRotate param ", iNodeTypeId));
-        return false;
     }
 
     //Set the OMX_CONFIG_ROTATIONTYPE parameters
@@ -2274,7 +2273,6 @@ bool PVMFOMXEncNode::NegotiateVideoComponentParameters()
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                         (0, "PVMFOMXEncNode-%s::NegotiateVideoComponentParameters() Problem setting OMX_IndexConfigCommonRotate param ", iNodeTypeId));
-        return false;
     }
 
 
@@ -2609,8 +2607,8 @@ bool PVMFOMXEncNode::SetH263EncoderParameters()
     if (OMX_ErrorNone != Err)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXEncNode-%s::SetH263EncoderParameters Parameter Invalid", iNodeTypeId));
-    }
+                        (0, "PVMFOMXEncNode-%s::SetH263EncoderParameters OMX_GetParameter() failed for index(0x%x)", iNodeTypeId, OMX_IndexParamVideoH263));
+    } 
 
 
     //Set the OMX_VIDEO_PARAM_H263TYPE parameters
@@ -2637,7 +2635,12 @@ bool PVMFOMXEncNode::SetH263EncoderParameters()
     // extra parameters - hardcoded
     H263Type.nBFrames = 0;
     H263Type.eProfile = OMX_VIDEO_H263ProfileBaseline;
-    H263Type.eLevel = OMX_VIDEO_H263Level45;
+
+    // the supported level is up to OMX_VIDEO_H263Level45
+    if (H263Type.eLevel > OMX_VIDEO_H263Level45)
+    {
+        H263Type.eLevel = OMX_VIDEO_H263Level45;
+    }
     H263Type.bPLUSPTYPEAllowed = OMX_FALSE;
     H263Type.bForceRoundingTypeToZero = OMX_FALSE;
     H263Type.nPictureHeaderRepetition = 0;
@@ -2647,7 +2650,7 @@ bool PVMFOMXEncNode::SetH263EncoderParameters()
     if (OMX_ErrorNone != Err)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXEncNode-%s::SetH263EncoderParameters Parameter Invalid", iNodeTypeId));
+                        (0, "PVMFOMXEncNode-%s::SetH263EncoderParameters OMX_SetParameter() failed for index(0x%x)", iNodeTypeId, OMX_IndexParamVideoH263));
     }
 
     //OMX_VIDEO_PARAM_BITRATETYPE Settings
@@ -2658,7 +2661,7 @@ bool PVMFOMXEncNode::SetH263EncoderParameters()
     if (OMX_ErrorNone != Err)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXEncNode-%s::SetH263EncoderParameters Parameter Invalid", iNodeTypeId));
+                        (0, "PVMFOMXEncNode-%s::SetH263EncoderParameters OMX_GetParameter() failed for index(0x%x)", iNodeTypeId, OMX_IndexParamVideoBitrate));
     }
 
     //Set the parameters now
@@ -2684,7 +2687,7 @@ bool PVMFOMXEncNode::SetH263EncoderParameters()
     if (OMX_ErrorNone != Err)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXEncNode-%s::SetH263EncoderParameters Parameter Invalid", iNodeTypeId));
+                        (0, "PVMFOMXEncNode-%s::SetH263EncoderParameters OMX_SetParameter() failed for index(0x%x)", iNodeTypeId, OMX_IndexParamVideoBitrate));
     }
 
 
@@ -2698,7 +2701,7 @@ bool PVMFOMXEncNode::SetH263EncoderParameters()
         if (OMX_ErrorNone != Err)
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                            (0, "PVMFOMXEncNode-%s::SetH263EncoderParameters Parameter Invalid", iNodeTypeId));
+                            (0, "PVMFOMXEncNode-%s::SetH263EncoderParameters OMX_GetParameter() failed for index(0x%x", iNodeTypeId, OMX_IndexParamVideoQuantization));
         }
 
         //Set the parameters now
@@ -2710,7 +2713,7 @@ bool PVMFOMXEncNode::SetH263EncoderParameters()
         if (OMX_ErrorNone != Err)
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                            (0, "PVMFOMXEncNode-%s::SetH263EncoderParameters Parameter Invalid", iNodeTypeId));
+                            (0, "PVMFOMXEncNode-%s::SetH263EncoderParameters OMX_SetParameter() failed for index(0x%x)", iNodeTypeId, OMX_IndexParamVideoQuantization));
         }
     }
 
@@ -2723,7 +2726,7 @@ bool PVMFOMXEncNode::SetH263EncoderParameters()
     if (OMX_ErrorNone != Err)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXEncNode-%s::SetH263EncoderParameters Parameter Invalid", iNodeTypeId));
+                        (0, "PVMFOMXEncNode-%s::SetH263EncoderParameters OMX_GetParameter() faile for index(0x%x)", iNodeTypeId, OMX_IndexParamVideoErrorCorrection));
     }
 
     //Set the parameters now
@@ -2744,7 +2747,7 @@ bool PVMFOMXEncNode::SetH263EncoderParameters()
     if (OMX_ErrorNone != Err)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXEncNode-%s::SetH263EncoderParameters Parameter Invalid", iNodeTypeId));
+                        (0, "PVMFOMXEncNode-%s::SetH263EncoderParameters OMX_SetParameter() failed for index(0x%x)", iNodeTypeId, OMX_IndexParamVideoErrorCorrection));
     }
 
 
@@ -2757,7 +2760,7 @@ bool PVMFOMXEncNode::SetH263EncoderParameters()
     if (OMX_ErrorNone != Err)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXEncNode-%s::SetH263EncoderParameters Parameter Invalid", iNodeTypeId));
+                        (0, "PVMFOMXEncNode-%s::SetH263EncoderParameters OMX_GetParameter() failed for index(0x%x)", iNodeTypeId, OMX_IndexParamVideoMotionVector));
     }
 
     // extra parameters - hardcoded
@@ -2772,7 +2775,7 @@ bool PVMFOMXEncNode::SetH263EncoderParameters()
     if (OMX_ErrorNone != Err)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXEncNode-%s::SetH263EncoderParameters Parameter Invalid", iNodeTypeId));
+                        (0, "PVMFOMXEncNode-%s::SetH263EncoderParameters OMX_SetParameter() failed for index(0x%x", iNodeTypeId, OMX_IndexParamVideoMotionVector));
     }
 
 
@@ -2785,7 +2788,7 @@ bool PVMFOMXEncNode::SetH263EncoderParameters()
     if (OMX_ErrorNone != Err)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXEncNode-%s::SetH263EncoderParameters Parameter Invalid", iNodeTypeId));
+                        (0, "PVMFOMXEncNode-%s::SetH263EncoderParameters OMX_GetParameter() failed for index(0x%x)", iNodeTypeId, OMX_IndexParamVideoIntraRefresh));
     }
 
     // extra parameters - hardcoded based on PV defaults
@@ -2798,7 +2801,7 @@ bool PVMFOMXEncNode::SetH263EncoderParameters()
     if (OMX_ErrorNone != Err)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXEncNode-%s::SetH263EncoderParameters Parameter Invalid", iNodeTypeId));
+                        (0, "PVMFOMXEncNode-%s::SetH263EncoderParameters OMX_SetParameter() failed for index(0x%x)", iNodeTypeId, OMX_IndexParamVideoIntraRefresh));
     }
 
     return true;
