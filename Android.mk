@@ -9,7 +9,6 @@ include $(LOCAL_PATH)/Config.mk
 # Install the default configuration file
 # if no value-add configuration is present.
 ifneq ($(VALUE_ADD),1)
-#$(call add-prebuilt-files, ETC, pvplayer.conf)
 $(call add-prebuilt-files, ETC, pvplayer.cfg)
 endif
 
@@ -34,8 +33,11 @@ include $(PV_TOP)/build_config/opencore_dynamic/Android_opencore_rtspreg.mk
 include $(PV_TOP)/build_config/opencore_dynamic/Android_opencore_rtsp.mk
 include $(PV_TOP)/build_config/opencore_dynamic/Android_opencore_mp4localreg.mk
 include $(PV_TOP)/build_config/opencore_dynamic/Android_opencore_mp4local.mk
-#include $(PV_TOP)/oscl/unit_test/Android.mk
-#include $(PV_TOP)/engines/player/test/Android.mk
-#include $(PV_TOP)/engines/author/test/Android.mk
-#include $(PV_TOP)/engines/2way/test/Android.mk
+ifeq ($(BUILD_PV_TEST_APPS),1)
+include $(PV_TOP)/oscl/unit_test/Android.mk
+include $(PV_TOP)/engines/player/test/Android.mk
+include $(PV_TOP)/engines/author/test/Android.mk
+include $(PV_TOP)/engines/2way/test/Android.mk
+endif
+
 endif
