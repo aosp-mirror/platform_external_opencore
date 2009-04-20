@@ -413,7 +413,7 @@ status_t PlayerDriver::enqueueCommand(PlayerCommand* command)
 
     // If the user didn't specify a completion callback, we
     // are running in synchronous mode.
-    if (command->hasCompletionHook()) {
+    if (!command->hasCallback()) {
         command->set(PlayerDriver::syncCompletion, this);
         // make a copy of this semaphore for special handling of the PLAYER_QUIT code
         syncsemcopy = mSyncSem;
@@ -1609,7 +1609,3 @@ status_t PVPlayer::setLooping(int loop)
 }
 
 }; // namespace android
-
-
-
-
