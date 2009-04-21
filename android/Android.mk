@@ -36,6 +36,8 @@ LOCAL_C_INCLUDES := $(PV_INCLUDES) \
 LOCAL_MODULE := libandroidpv
 
 LOCAL_SHARED_LIBRARIES := libui libutils
+LOCAL_STATIC_LIBRARIES := libosclbase libosclerror libosclmemory libosclutil
+
 LOCAL_LDLIBS += 
 
 include $(BUILD_STATIC_LIBRARY)
