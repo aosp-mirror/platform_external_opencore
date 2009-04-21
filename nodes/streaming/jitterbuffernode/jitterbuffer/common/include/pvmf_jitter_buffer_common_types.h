@@ -18,17 +18,9 @@
 #ifndef PVMF_JITTER_BUFFER_COMMON_TYPES_H_INCLUDED
 #define PVMF_JITTER_BUFFER_COMMON_TYPES_H_INCLUDED
 
-#ifndef OSCL_BASE_H_INCLUDED
 #include "oscl_base.h"
-#endif
-
-#ifndef OSCL_STRING_CONTAINERS_H_INCLUDED
 #include "oscl_string_containers.h"
-#endif
-
-#ifndef PVMF_SM_TUNABLES_H_INCLUDED
 #include "pvmf_sm_tunables.h"
-#endif
 
 //Jitter buffer node specific leave codes
 #define JBPacketRegistrationConfigurationCorrupted	1000
@@ -140,7 +132,7 @@ class PVMFJitterBufferConstructParams
                                         , OSCL_HeapString<OsclMemAllocator>& aMimeType
                                         , PVMFJBEventNotifier& aJBEventNotifier
                                         , bool& aDelayEstablished
-                                        , uint32& aJitterDelayPercent
+                                        , int& aJitterDelayPercent
                                         , PVMFJitterBufferDataState& aJitterBufferDataState
                                         , PVMFJitterBufferObserver* const aObserver
                                         , OsclAny* const aContext)
@@ -175,7 +167,7 @@ class PVMFJitterBufferConstructParams
             return irDelayEstablished;
         }
 
-        uint32& GetJBDelayPercent() const
+        int& GetJBDelayPercent() const
         {
             return irJitterDelayPercent;
         }
@@ -206,7 +198,7 @@ class PVMFJitterBufferConstructParams
         OSCL_HeapString<OsclMemAllocator>& irMimeType;
         PVMFJBEventNotifier&	irJBEventNotifier;
         bool& irDelayEstablished;
-        uint32& irJitterDelayPercent;
+        int& irJitterDelayPercent;
         PVMFJitterBufferDataState&	irJitterBufferState;
         PVMFJitterBufferObserver *const	ipObserver;
         OsclAny* const	ipContextData;

@@ -364,7 +364,7 @@ OSCL_EXPORT_REF bool ProgressiveStreamingProgress::calculateDownloadPercent(uint
 ////////////////////////////////////////////////////////////////////////////////////
 //////	progressiveStreamingEventReporter implementation
 ////////////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF void progressiveStreamingEventReporter::reportBufferStatusEvent(const uint32 aDownloadPercent)
+OSCL_EXPORT_REF void progressiveStreamingEventReporter::reportBufferStatusEvent(int aDownloadPercent)
 {
     // calculate buffer fullness
 
@@ -372,9 +372,12 @@ OSCL_EXPORT_REF void progressiveStreamingEventReporter::reportBufferStatusEvent(
     if (aBufferFullness == 0xffffffff) return;
 
     iObserver->ReportEvent(PVMFInfoBufferingStatus,
-                           (OsclAny*)aBufferFullness,
+                           // TODO: Why is that not part of the buffer we
+                           // send? Which part uses that? It does not seem to
+                           // reach the player driver.
+                           (OsclAny*)aBufferFullness,  // ugly uses a pointer to carry a value.
                            PVMFPROTOCOLENGINENODEInfo_BufferingStatus,
-                           (uint8*)(&aDownloadPercent),
+                           &aDownloadPercent,
                            sizeof(aDownloadPercent));
     LOGINFODATAPATH((0, "progressiveStreamingEventReporter::reportBufferStatusEvent() DOWNLOAD PERCENTAGE: %d", aDownloadPercent));
 }
@@ -401,4 +404,3 @@ uint32 progressiveStreamingEventReporter::getBufferFullness()
 
     return 100 -aBufferEmptiness;
 }
-
