@@ -98,7 +98,7 @@ class OsclThread
          *    platform-specific default stack size will be used.
          * argument = Argument to be passed to thread function
          * state = Enumeration which specifies the state of the thread on creation
-         * 		  with values Running and Suspend.  Note: the Suspend option
+         *        with values Running and Suspend.  Note: the Suspend option
          *        may not be available on all platforms.  If it is not supported,
          *        the Create call will return INVALID_PARAM_ERROR.
          * @return eOsclProcError
@@ -106,14 +106,15 @@ class OsclThread
         OSCL_IMPORT_REF OsclProcStatus::eOsclProcError Create(TOsclThreadFuncPtr func,
                 int32 stack_size,
                 TOsclThreadFuncArg argument,
-                OsclThread_State state = Start_on_creation);
+                OsclThread_State state = Start_on_creation,
+                bool isJoinable = false);
 
         /**
          * Exit is a static function which is used to end the current thread. When called it
          * just ends the execution of the current thread.
          * @param
          * exitcode  =  Exitcode of the thread. This can be used by other threads to know the
-         *				exit status of this thread.
+         *              exit status of this thread.
          * @return None
          */
         OSCL_IMPORT_REF static void Exit(OsclAny* exitcode);
@@ -225,7 +226,7 @@ class OsclThread
 
         TOsclThreadObject ObjThread;
         bool bCreated;
-
+        bool iJoined;
 };
 
 #endif

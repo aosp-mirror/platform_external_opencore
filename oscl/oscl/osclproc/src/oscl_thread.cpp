@@ -39,7 +39,7 @@ to three OS LINUX, SYMBIAN, WIN32
 OSCL_EXPORT_REF OsclThread::OsclThread()
 {
     bCreated = false;
-
+    iJoined = false;
 }
 
 
@@ -62,13 +62,14 @@ OSCL_EXPORT_REF OsclThread::~OsclThread()
  * stack_size  =  Size of the thread stack
  * argument = Argument to be passed to thread function
  * Thread_State = Enumeration which specifies the state of the thread on creation
- * 		  with values Running and Suspend
+ *        with values Running and Suspend
  * Return value : eOsclProcError
  */
 OSCL_EXPORT_REF OsclProcStatus::eOsclProcError OsclThread::Create(TOsclThreadFuncPtr function_name,
         int32 stack_size,
         TOsclThreadFuncArg argument,
-        OsclThread_State state)
+        OsclThread_State state,
+        bool oIsJoinable)
 {
     if (stack_size < 0)
         return OsclProcStatus::INVALID_PARAM_ERROR;
@@ -96,10 +97,19 @@ OSCL_EXPORT_REF OsclProcStatus::eOsclProcError OsclThread::Create(TOsclThreadFun
         pthread_attr_setstacksize(&attr, stack_size);
 
     // Default detachstate attribute to PTHREAD_CREATE_DETACHED state
-    int detach_ret = pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+    int detach_ret;
+    if (oIsJoinable)
+    {
+        detach_ret = pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+        iJoined = true;
+    }
+    else
+    {
+        detach_ret = pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+    }
     switch (detach_ret)
     {
-        case 0:	// successful, continue thread creation
+        case 0: // successful, continue thread creation
             break;
         case EINVAL:
         default:
@@ -132,7 +142,7 @@ OSCL_EXPORT_REF OsclProcStatus::eOsclProcError OsclThread::Create(TOsclThreadFun
  * just ends the execution of the current thread.
  * Input Argument:
  * exitcode  =  Exitcode of the thread. This can be used by other threads to know the
- *				exit status of this thread.
+ *              exit status of this thread.
  * Return value : None
 */
 OSCL_EXPORT_REF void OsclThread::Exit(OsclAny* exitcode)
@@ -173,7 +183,7 @@ OSCL_EXPORT_REF void OsclThread::SleepMillisec(const int32 msec)
 
  * exitcode  =  Exitcode of the thread. This can be used by other threads to know the
 
- * 				exit status of this thread.
+ *              exit status of this thread.
 
  * Return value : Error code
 
@@ -187,12 +197,20 @@ OSCL_EXPORT_REF OsclProcStatus::eOsclProcError OsclThread::Terminate(OsclAny* os
         return OsclProcStatus::INVALID_OPERATION_ERROR;
 
     {
-        //intentionally not implemented.
-
         OSCL_UNUSED_ARG(oscl_ExitCode);
 
         bCreated = false;
-
+        if (iJoined)
+        {
+            if (pthread_join(ObjThread, NULL) == 0)
+            {
+                return OsclProcStatus::SUCCESS_ERROR;
+            }
+            else
+            {
+                return OsclProcStatus::OTHER_ERROR;
+            }
+        }
         return OsclProcStatus::NOT_IMPLEMENTED;
     }
 }

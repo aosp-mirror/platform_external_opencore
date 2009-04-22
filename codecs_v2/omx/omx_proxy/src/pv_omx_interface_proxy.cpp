@@ -129,7 +129,7 @@ bool CPVInterfaceProxy_OMX::ConstructL(uint32 nreserve1, uint32 nreserve2, int32
     if (nreserve2 > 0)
     {
         iCommandQueue.reserve(nreserve2);
-//		iNotificationQueue.reserve(nreserve2);
+//      iNotificationQueue.reserve(nreserve2);
     }
 
     //create handler
@@ -181,7 +181,6 @@ CPVInterfaceProxy_OMX::~CPVInterfaceProxy_OMX()
     }
     iNotifier = NULL;
 
-    usleep(200000);
     iCounterCrit.Close();
     iHandlerQueueCrit.Close();
     iNotifierQueueCrit.Close();
@@ -206,7 +205,9 @@ OSCL_EXPORT_REF bool CPVInterfaceProxy_OMX::StartPVThread()
     OsclProcStatus::eOsclProcError err;
     err = iPVThread.Create((TOsclThreadFuncPtr)pvproxythreadmain_omx,
                            iStacksize,
-                           (TOsclThreadFuncArg)this);
+                           (TOsclThreadFuncArg)this,
+                           Start_on_creation,
+                           true);
 
 
     if (err == OSCL_ERR_NONE)
@@ -250,7 +251,7 @@ OSCL_EXPORT_REF void CPVInterfaceProxy_OMX::StopPVThread()
     //if called under the PV thread, we'll get deadlock..
     //so don't allow it.
     if (iPVThreadContext.IsSameThreadContext())
-    {	//Commented to remove oscl tls dependency (OsclError::Panic)
+    {   //Commented to remove oscl tls dependency (OsclError::Panic)
         return;
     }
 
@@ -277,7 +278,7 @@ OSCL_EXPORT_REF void CPVInterfaceProxy_OMX::StopPVThread()
     //Wait for PV thread to finish up, then it's safe
     //to delete the remaining stuff.
     if (iExitedSem.Wait() != OsclProcStatus::SUCCESS_ERROR)
-    {	//Commented to remove oscl tls dependency (OsclError::Panic)
+    {   //Commented to remove oscl tls dependency (OsclError::Panic)
         return;
     }
 
@@ -318,7 +319,7 @@ OSCL_EXPORT_REF void CPVInterfaceProxy_OMX::DeliverNotifications(int32 aTargetCo
             if (ext)
                 ext->iClient->HandleNotification(notice.iMsgId, notice.iMsg);
             else
-            {	//since messages are cleaned up when interfaces
+            {   //since messages are cleaned up when interfaces
                 //get unregistered, we should not get here.
                 OSCL_ASSERT(NULL != ext);//debug error.
             }
