@@ -9326,8 +9326,7 @@ PVMFStatus PVPlayerEngine::DoSourceDataReadyAutoResume(PVPlayerEngineCommand& aC
             // Change state back to PREPARED, since Underflow and Dataready cancel each other out.
             // Wait for Start command from App to Start the clock and change state to STARTED.
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "PVPlayerEngine::DoSourceDataReadyAutoResume: DataReady rcvd in 
-                     PVP_ENGINE_STATE_AUTO_PAUSED state. Set state back to PREPARED."));
+                    (0, "PVPlayerEngine::DoSourceDataReadyAutoResume: DataReady rcvd in PVP_ENGINE_STATE_AUTO_PAUSED state. Set state back to PREPARED."));
             SetEngineState(PVP_ENGINE_STATE_PREPARED);
         }
         else
