@@ -1188,7 +1188,10 @@ PVMFStatus PvmfMediaInputNode::DoReset(PvmfMediaInputNodeCmd& aCmd)
     if (IsAdded())
     {
         for (uint32 i = 0;i< iOutPortVector.size();i++)
+        {
             iOutPortVector[i]->Stop();
+            iOutPortVector[i]->Disconnect();
+        }
 
         //delete all ports and notify observer.
         while (!iOutPortVector.empty())
