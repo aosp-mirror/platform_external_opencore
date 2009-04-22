@@ -9323,12 +9323,12 @@ PVMFStatus PVPlayerEngine::DoSourceDataReadyAutoResume(PVPlayerEngineCommand& aC
         }
         else if (iState == PVP_ENGINE_STATE_AUTO_PAUSED)
         {
-            // Usecase for this scenario:
-            // Prepare->Underflow->DataReady->Started
-            // Change state to STARTED
+            // Change state back to PREPARED, since Underflow and Dataready cancel each other out.
+            // Wait for Start command from App to Start the clock and change state to STARTED.
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                            (0, "PVPlayerEngine::DoSourceDataReadyAutoResume: DataReady rcvd, Prepare->Underflow->DataReady->Started, datapaths already started"));
-            SetEngineState(PVP_ENGINE_STATE_STARTED);
+                    (0, "PVPlayerEngine::DoSourceDataReadyAutoResume: DataReady rcvd in 
+                     PVP_ENGINE_STATE_AUTO_PAUSED state. Set state back to PREPARED."));
+            SetEngineState(PVP_ENGINE_STATE_PREPARED);
         }
         else
         {
@@ -9359,7 +9359,7 @@ PVMFStatus PVPlayerEngine::DoSourceDataReadyAutoResume(PVPlayerEngineCommand& aC
                 iWatchDogTimer->Start();
             }
         }
-        else if (iNumPVMFInfoStartOfDataPending == 0)
+        else if ((iNumPVMFInfoStartOfDataPending == 0) && (iState == PVP_ENGINE_STATE_STARTED))
         {
             StartPlaybackClock();
 
@@ -14109,7 +14109,7 @@ void PVPlayerEngine::HandleSourceNodeSetDataSourcePositionDuringPlayback(PVPlaye
             {
                 // Can't adjust the skip time back so use the returned values to skip to
                 iSkipMediaDataTS = iActualMediaDataTS;
-                iActualNPT = iTargetNPT;
+                iTargetNPT = iActualNPT;
                 iWatchDogTimerInterval = 0;
             }
             else
