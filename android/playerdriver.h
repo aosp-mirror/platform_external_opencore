@@ -82,7 +82,7 @@ class PlayerCommand
     bool                hasCallback() const { return NULL != mCallback; }
     void                complete(android::status_t status, bool cancelled) { mCallback(status, mCookie, cancelled); }
     void                set(media_completion_f cbf, void* cookie) { mCallback = cbf; mCookie = cookie; }
-    
+
     // @return the command code as a string.
     const char*         toString() const;
   protected:
@@ -172,7 +172,7 @@ class PlayerSetDataSource : public PlayerCommand
   public:
     PlayerSetDataSource(const char* url, media_completion_f cbf, void* cookie) :
             PlayerCommand(PLAYER_SET_DATA_SOURCE, cbf, cookie), mUrl(0) {
-        if (url) mUrl = std::strdup(url); }
+        if (url) mUrl = strdup(url); }
     ~PlayerSetDataSource() { if (mUrl) free(mUrl); }
     const char*         url() const { return mUrl; }
   private:
