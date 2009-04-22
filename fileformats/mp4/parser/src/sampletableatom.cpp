@@ -3095,6 +3095,10 @@ int32 SampleTableAtom::getOffsetByTime(uint32 ts, int32* sampleFileOffset)
 
     int32 sampleNum = _ptimeToSampleAtom->getSampleNumberFromTimestamp(ts, true);
 
+    if (sampleNum == PV_ERROR)
+    {
+        return DEFAULT_ERROR;
+    }
     // Go for composition offset adjustment.
     sampleNum =
         getSampleNumberAdjustedWithCTTS(ts, sampleNum);
