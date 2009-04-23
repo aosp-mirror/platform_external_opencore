@@ -740,61 +740,41 @@ void AndroidCameraInput::Run()
     LOGV("Run");
 
     // dequeue frame buffers and write to peer
-    iFrameQueueMutex.Lock();
-    while (!iFrameQueue.empty()) {
-        AndroidCameraInputMediaData data = iFrameQueue[0];
+    if (NULL != iPeer) {
+        iFrameQueueMutex.Lock();
+        while (!iFrameQueue.empty()) {
+            AndroidCameraInputMediaData data = iFrameQueue[0];
 
-        uint32 writeAsyncID = 0;
-        OsclLeaveCode error = OsclErrNone;
-        if (NULL == iPeer)
-            break;
-        OSCL_TRY(error,writeAsyncID = iPeer->writeAsync(PVMI_MEDIAXFER_FMT_TYPE_DATA, 0, (uint8*) (data.iFrameBuffer->pointer()),
-                    data.iFrameSize, data.iXferHeader););
+            uint32 writeAsyncID = 0;
+            OsclLeaveCode error = OsclErrNone;
+            uint8 *ptr = (uint8*) (data.iFrameBuffer->pointer());
+            if (ptr) {
+                OSCL_TRY(error,writeAsyncID = iPeer->writeAsync(PVMI_MEDIAXFER_FMT_TYPE_DATA, 0, ptr,
+                            data.iFrameSize, data.iXferHeader););
+            } else {
+                //FIXME Check why camera sends NULL frames
+                LOGE("Ln %d ERROR null pointer");
+                error = OsclErrBadHandle;
+            }
 
-        if (OsclErrNone == error) {
-        iFrameQueue.erase(iFrameQueue.begin());
-            data.iId = writeAsyncID;
-            iSentMediaData.push_back(data);
-            ++mFrameRefCount;
-        LOGV("Ln %d Run writeAsync mFrameRefCount %d writeAsyncID %d", __LINE__, mFrameRefCount, writeAsyncID);
+            if (OsclErrNone == error) {
+                iFrameQueue.erase(iFrameQueue.begin());
+                data.iId = writeAsyncID;
+                iSentMediaData.push_back(data);
+                ++mFrameRefCount;
+                LOGV("Ln %d Run writeAsync mFrameRefCount %d writeAsyncID %d", __LINE__, mFrameRefCount, writeAsyncID);
+            } else {
+                //FIXME resend the frame later if ( OsclErrBusy == error)
+                LOGE("Ln %d Run writeAsync error %d mFrameRefCount %d", __LINE__, error, mFrameRefCount);
+                //release buffer immediately if write fails
+                mCamera->releaseRecordingFrame(data.iFrameBuffer);
+                iFrameQueue.erase(iFrameQueue.begin());
+                break;
+            }
         }
-    else if ( OsclErrBusy == error) {
-        LOGE("Ln %d Run writeAsync BUSY mFrameRefCount %d", __LINE__, mFrameRefCount);
-        {//release buffer immediately if write fails
-        mCamera->releaseRecordingFrame(data.iFrameBuffer);
-        if (mFrameRefCount) {
-            --mFrameRefCount;
-        }
-        //LOGV("@@@@@@@@@@@@@ decrementing frame reference count: %d @@@@@@@@@@@@", mFrameRefCount);
-        if (mFrameRefCount <= 0) {
-            //LOGV("decrement the reference count for mHeap");
-            mFrameRefCount = 0;
-            mHeap.clear();
-        }
-        iFrameQueue.erase(iFrameQueue.begin());
-        }
-        break;
+        iFrameQueueMutex.Unlock();
     }
-    else
-    {
-        LOGE("Ln %d Run writeAsync error %d mFrameRefCount %d", __LINE__, error, mFrameRefCount);
-        {//release buffer immediately if write fails
-        mCamera->releaseRecordingFrame(data.iFrameBuffer);
-        if (mFrameRefCount) {
-            --mFrameRefCount;
-        }
-        //LOGV("@@@@@@@@@@@@@ decrementing frame reference count: %d @@@@@@@@@@@@", mFrameRefCount);
-        if (mFrameRefCount <= 0) {
-            //LOGV("decrement the reference count for mHeap");
-            mFrameRefCount = 0;
-            mHeap.clear();
-        }
-        iFrameQueue.erase(iFrameQueue.begin());
-        }
-        break;
-    }
-    }
-    iFrameQueueMutex.Unlock();
+
     PVMFStatus status = PVMFFailure;
 
     if (!iCmdQueue.empty()) {
