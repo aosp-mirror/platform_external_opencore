@@ -1225,7 +1225,7 @@ class PVMFJitterBufferImpl : public PVMFJitterBuffer
         PVMFJBEventNotifier& irJBEventNotifier;
         OSCL_HeapString<OsclMemAllocator> irMimeType;
         bool&	irDelayEstablished;
-        uint32&	irJitterDelayPercent;
+        int&	irJitterDelayPercent;
         PVMFJitterBufferDataState&	irDataState;
         bool iInProcessingMode;
         bool iHeaderPreParsed;

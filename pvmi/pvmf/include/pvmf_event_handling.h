@@ -18,21 +18,13 @@
 #ifndef PVMF_EVENT_HANDLING_H_INCLUDED
 #define PVMF_EVENT_HANDLING_H_INCLUDED
 
-#ifndef OSCL_BASE_H_INCLUDED
+
 #include "oscl_base.h"
-#endif
-
-#ifndef OSCL_MEM_AUTO_PTR_H
 #include "oscl_mem_auto_ptr.h"
-#endif
-
-#ifndef PVMF_RETURN_CODES_H_INCLUDED
+#include "oscl_mem_basic_functions.h"
 #include "pvmf_return_codes.h"
-#endif
-
-#ifndef PV_INTERFACE_H
 #include "pv_interface.h"
-#endif
+
 
 /**
 Identifies the specific observer session
@@ -274,10 +266,7 @@ class PVMFAsyncEvent : public PVMFEventBase
                 , iContext(aContext)
                 , iEventData(aEventData)
         {
-            for (uint32 i = 0;i < PVMF_ASYNC_EVENT_LOCAL_BUF_SIZE;i++)
-            {
-                iLocalBuffer[i] = 0;
-            }
+            oscl_memset(iLocalBuffer, 0, PVMF_ASYNC_EVENT_LOCAL_BUF_SIZE);
             iEventDataLengthAvailable = false;
             iEventDataLength = 0;
         }
@@ -286,8 +275,8 @@ class PVMFAsyncEvent : public PVMFEventBase
                        PVMFEventType aEventType,
                        OsclAny* aContext,
                        OsclAny* aEventData,
-                       uint8* aLocalBuffer,
-                       uint32 aLocalBufferSize) :
+                       const void* aLocalBuffer,
+                       const size_t aLocalBufferSize) :
                 iEventCategory(aEventCategory)
                 , iEventType(aEventType)
                 , iEventExtInterface(NULL)
@@ -295,18 +284,15 @@ class PVMFAsyncEvent : public PVMFEventBase
                 , iContext(aContext)
                 , iEventData(aEventData)
         {
-            OSCL_ASSERT(aLocalBufferSize <= PVMF_ASYNC_EVENT_LOCAL_BUF_SIZE);
-            if (iLocalBufferSize > PVMF_ASYNC_EVENT_LOCAL_BUF_SIZE)
-            {
-                iLocalBufferSize = PVMF_ASYNC_EVENT_LOCAL_BUF_SIZE;
-            }
-
             if (aLocalBuffer)
             {
-                for (uint32 i = 0;i < iLocalBufferSize;i++)
+                OSCL_ASSERT(iLocalBufferSize <= PVMF_ASYNC_EVENT_LOCAL_BUF_SIZE);
+                if (iLocalBufferSize > PVMF_ASYNC_EVENT_LOCAL_BUF_SIZE)
                 {
-                    iLocalBuffer[i] = aLocalBuffer[i];
+                    iLocalBufferSize = PVMF_ASYNC_EVENT_LOCAL_BUF_SIZE;
                 }
+
+                oscl_memcpy(iLocalBuffer, aLocalBuffer, iLocalBufferSize);
             }
             iEventDataLengthAvailable = false;
             iEventDataLength = 0;
@@ -324,10 +310,7 @@ class PVMFAsyncEvent : public PVMFEventBase
                 , iContext(aContext)
                 , iEventData(aEventData)
         {
-            for (uint32 i = 0;i < PVMF_ASYNC_EVENT_LOCAL_BUF_SIZE;i++)
-            {
-                iLocalBuffer[i] = 0;
-            }
+            oscl_memset(iLocalBuffer, 0, PVMF_ASYNC_EVENT_LOCAL_BUF_SIZE);
             iEventDataLengthAvailable = false;
             iEventDataLength = 0;
         }
@@ -337,8 +320,8 @@ class PVMFAsyncEvent : public PVMFEventBase
                        OsclAny* aContext,
                        PVInterface* aEventExtInterface,
                        OsclAny* aEventData,
-                       uint8* aLocalBuffer,
-                       uint32 aLocalBufferSize) :
+                       const void* aLocalBuffer,
+                       const size_t aLocalBufferSize) :
                 iEventCategory(aEventCategory)
                 , iEventType(aEventType)
                 , iEventExtInterface(aEventExtInterface)
@@ -346,18 +329,15 @@ class PVMFAsyncEvent : public PVMFEventBase
                 , iContext(aContext)
                 , iEventData(aEventData)
         {
-            OSCL_ASSERT(aLocalBufferSize <= PVMF_ASYNC_EVENT_LOCAL_BUF_SIZE);
-            if (iLocalBufferSize > PVMF_ASYNC_EVENT_LOCAL_BUF_SIZE)
-            {
-                iLocalBufferSize = PVMF_ASYNC_EVENT_LOCAL_BUF_SIZE;
-            }
-
             if (aLocalBuffer)
             {
-                for (uint32 i = 0;i < iLocalBufferSize;i++)
+                OSCL_ASSERT(iLocalBufferSize <= PVMF_ASYNC_EVENT_LOCAL_BUF_SIZE);
+                if (iLocalBufferSize > PVMF_ASYNC_EVENT_LOCAL_BUF_SIZE)
                 {
-                    iLocalBuffer[i] = aLocalBuffer[i];
+                    iLocalBufferSize = PVMF_ASYNC_EVENT_LOCAL_BUF_SIZE;
                 }
+
+                oscl_memcpy(iLocalBuffer, aLocalBuffer, iLocalBufferSize);
             }
             iEventDataLengthAvailable = false;
             iEventDataLength = 0;
@@ -441,7 +421,7 @@ class PVMFAsyncEvent : public PVMFEventBase
         /**
          * @return Returns the size of the local data asociated with the event.
          */
-        int32 GetLocalBufferSize() const
+        size_t GetLocalBufferSize() const
         {
             return iLocalBufferSize;
         }
@@ -449,6 +429,8 @@ class PVMFAsyncEvent : public PVMFEventBase
         /**
          * @return Returns the local data asociated with the event.
          */
+        // TODO: This is a const method returning a non const ref to some
+        // internal array.
         uint8* GetLocalBuffer() const
         {
             return (uint8*)iLocalBuffer;
@@ -475,7 +457,7 @@ class PVMFAsyncEvent : public PVMFEventBase
         PVMFEventType iEventType;
         PVInterface*  iEventExtInterface;
         uint8 iLocalBuffer[PVMF_ASYNC_EVENT_LOCAL_BUF_SIZE];
-        uint32 iLocalBufferSize;
+        size_t iLocalBufferSize;
         OsclAny* iContext;
         /**
          * We STRONGLY DISCOURAGE use of this. This field will be deprecated
@@ -487,5 +469,3 @@ class PVMFAsyncEvent : public PVMFEventBase
 };
 
 #endif // PVMF_EVENT_HANDLING_H_INCLUDED
-
-
