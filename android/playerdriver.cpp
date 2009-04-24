@@ -196,12 +196,12 @@ int MapStatusToEventCode(const PVMFStatus status) {
 }  // anonymous namespace
 
 class PlayerDriver :
-    public OsclActiveObject,
-    public PVCommandStatusObserver,
-    public PVInformationalEventObserver,
-    public PVErrorEventObserver
+        public OsclActiveObject,
+        public PVCommandStatusObserver,
+        public PVInformationalEventObserver,
+        public PVErrorEventObserver
 {
-public:
+  public:
     PlayerDriver(PVPlayer* pvPlayer);
     ~PlayerDriver();
 
@@ -237,7 +237,7 @@ public:
     void HandleErrorEvent(const PVAsyncErrorEvent& aEvent);
     void HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent);
 
-private:
+  private:
     // Finish up a non-async code in such a way that
     // the event loop will keep running.
     void FinishSyncCommand(PlayerCommand* command);
@@ -300,17 +300,17 @@ private:
 };
 
 PlayerDriver::PlayerDriver(PVPlayer* pvPlayer) :
-    OsclActiveObject(OsclActiveObject::EPriorityNominal, "PVPlayerPlayer"),
-    mPvPlayer(pvPlayer),
-    mIsLooping(false),
-    mDoLoop(false),
-    mDataReadyReceived(false),
-    mPrepareDone(false),
-    mEndOfData(false),
-    mRecentSeek(0),
-    mSeekComp(true),
-    mSeekPending(false),
-    mEmulation(false)
+        OsclActiveObject(OsclActiveObject::EPriorityNominal, "PVPlayerPlayer"),
+        mPvPlayer(pvPlayer),
+        mIsLooping(false),
+        mDoLoop(false),
+        mDataReadyReceived(false),
+        mPrepareDone(false),
+        mEndOfData(false),
+        mRecentSeek(0),
+        mSeekComp(true),
+        mSeekPending(false),
+        mEmulation(false)
 {
     LOGV("constructor");
     mSyncSem = new OsclSemaphore();
@@ -472,84 +472,84 @@ void PlayerDriver::Run()
         LOGV("Send player code: %d", command->code());
 
         switch (command->code()) {
-        case PlayerCommand::PLAYER_SETUP:
-            handleSetup(static_cast<PlayerSetup*>(command));
-            break;
+            case PlayerCommand::PLAYER_SETUP:
+                handleSetup(static_cast<PlayerSetup*>(command));
+                break;
 
-        case PlayerCommand::PLAYER_SET_DATA_SOURCE:
-            handleSetDataSource(static_cast<PlayerSetDataSource*>(command));
-            break;
+            case PlayerCommand::PLAYER_SET_DATA_SOURCE:
+                handleSetDataSource(static_cast<PlayerSetDataSource*>(command));
+                break;
 
-        case PlayerCommand::PLAYER_SET_VIDEO_SURFACE:
-            handleSetVideoSurface(static_cast<PlayerSetVideoSurface*>(command));
-            break;
+            case PlayerCommand::PLAYER_SET_VIDEO_SURFACE:
+                handleSetVideoSurface(static_cast<PlayerSetVideoSurface*>(command));
+                break;
 
-        case PlayerCommand::PLAYER_SET_AUDIO_SINK:
-            handleSetAudioSink(static_cast<PlayerSetAudioSink*>(command));
-            break;
+            case PlayerCommand::PLAYER_SET_AUDIO_SINK:
+                handleSetAudioSink(static_cast<PlayerSetAudioSink*>(command));
+                break;
 
-        case PlayerCommand::PLAYER_INIT:
-            handleInit(static_cast<PlayerInit*>(command));
-            break;
+            case PlayerCommand::PLAYER_INIT:
+                handleInit(static_cast<PlayerInit*>(command));
+                break;
 
-        case PlayerCommand::PLAYER_PREPARE:
-            handlePrepare(static_cast<PlayerPrepare*>(command));
-            break;
+            case PlayerCommand::PLAYER_PREPARE:
+                handlePrepare(static_cast<PlayerPrepare*>(command));
+                break;
 
-        case PlayerCommand::PLAYER_START:
-            handleStart(static_cast<PlayerStart*>(command));
-            break;
+            case PlayerCommand::PLAYER_START:
+                handleStart(static_cast<PlayerStart*>(command));
+                break;
 
-        case PlayerCommand::PLAYER_STOP:
-            handleStop(static_cast<PlayerStop*>(command));
-            break;
+            case PlayerCommand::PLAYER_STOP:
+                handleStop(static_cast<PlayerStop*>(command));
+                break;
 
-        case PlayerCommand::PLAYER_PAUSE:
-            handlePause(static_cast<PlayerPause*>(command));
-            break;
+            case PlayerCommand::PLAYER_PAUSE:
+                handlePause(static_cast<PlayerPause*>(command));
+                break;
 
-        case PlayerCommand::PLAYER_SEEK:
-            handleSeek(static_cast<PlayerSeek*>(command));
-            break;
+            case PlayerCommand::PLAYER_SEEK:
+                handleSeek(static_cast<PlayerSeek*>(command));
+                break;
 
-        case PlayerCommand::PLAYER_GET_POSITION:
-            handleGetPosition(static_cast<PlayerGetPosition*>(command));
-            FinishSyncCommand(command);
-            return;
+            case PlayerCommand::PLAYER_GET_POSITION:
+                handleGetPosition(static_cast<PlayerGetPosition*>(command));
+                FinishSyncCommand(command);
+                return;
 
-        case PlayerCommand::PLAYER_GET_STATUS:
-            handleGetStatus(static_cast<PlayerGetStatus*>(command));
-            FinishSyncCommand(command);
-            return;
+            case PlayerCommand::PLAYER_GET_STATUS:
+                handleGetStatus(static_cast<PlayerGetStatus*>(command));
+                FinishSyncCommand(command);
+                return;
 
-        case PlayerCommand::PLAYER_GET_DURATION:
-            handleGetDuration(static_cast<PlayerGetDuration*>(command));
-            break;
+            case PlayerCommand::PLAYER_GET_DURATION:
+                handleGetDuration(static_cast<PlayerGetDuration*>(command));
+                break;
 
-        case PlayerCommand::PLAYER_REMOVE_DATA_SOURCE:
-            handleRemoveDataSource(static_cast<PlayerRemoveDataSource*>(command));
-            break;
+            case PlayerCommand::PLAYER_REMOVE_DATA_SOURCE:
+                handleRemoveDataSource(static_cast<PlayerRemoveDataSource*>(command));
+                break;
 
-        case PlayerCommand::PLAYER_CANCEL_ALL_COMMANDS:
-            handleCancelAllCommands(static_cast<PlayerCancelAllCommands*>(command));
-            break;
+            case PlayerCommand::PLAYER_CANCEL_ALL_COMMANDS:
+                handleCancelAllCommands(static_cast<PlayerCancelAllCommands*>(command));
+                break;
 
-        case PlayerCommand::PLAYER_RESET:
-            handleReset(static_cast<PlayerReset*>(command));
-            break;
+            case PlayerCommand::PLAYER_RESET:
+                handleReset(static_cast<PlayerReset*>(command));
+                break;
 
-        case PlayerCommand::PLAYER_QUIT:
-            handleQuit(static_cast<PlayerQuit*>(command));
-            return;
+            case PlayerCommand::PLAYER_QUIT:
+                handleQuit(static_cast<PlayerQuit*>(command));
+                return;
 
-        case PlayerCommand::PLAYER_SET_LOOP:
-            mIsLooping = static_cast<PlayerSetLoop*>(command)->loop();
-            FinishSyncCommand(command);
-            return;
+            case PlayerCommand::PLAYER_SET_LOOP:
+                mIsLooping = static_cast<PlayerSetLoop*>(command)->loop();
+                FinishSyncCommand(command);
+                return;
 
-        default:
-            LOGE("Unexpected code %d", command->code());
-            break;
+            default:
+                LOGE("Unexpected code %d", command->code());
+                break;
         }
     }
 
@@ -806,7 +806,7 @@ void PlayerDriver::handleStart(PlayerStart* command)
     // if we are paused, just resume
     PVPlayerState state;
     if (mPlayer->GetPVPlayerStateSync(state) == PVMFSuccess
-            && (state == PVP_STATE_PAUSED)) {
+        && (state == PVP_STATE_PAUSED)) {
         if (mEndOfData) {
             // if we are at the end, seek to the beginning first
             mEndOfData = false;
@@ -836,7 +836,7 @@ void PlayerDriver::handleSeek(PlayerSeek* command)
     // Seeking in the pause state
     PVPlayerState state;
     if (mPlayer->GetPVPlayerStateSync(state) == PVMFSuccess
-            && (state == PVP_STATE_PAUSED)) {
+        && (state == PVP_STATE_PAUSED)) {
         mSeekComp = false;
     }
     PVPPlaybackPosition begin, end;
@@ -860,8 +860,8 @@ void PlayerDriver::handleGetPosition(PlayerGetPosition* command)
     //  In the pause state, get the progress bar position from the recent seek value
     // instead of GetCurrentPosition() from PVPlayer Engine.
     if (mPlayer->GetPVPlayerStateSync(state) == PVMFSuccess
-            && (state == PVP_STATE_PAUSED)
-            && (mSeekComp == false)) {
+        && (state == PVP_STATE_PAUSED)
+        && (mSeekComp == false)) {
         command->set(mRecentSeek);
     }
     else {
@@ -905,11 +905,9 @@ void PlayerDriver::handleStop(PlayerStop* command)
     mDoLoop = false;
     PVPlayerState state;
     if ((mPlayer->GetPVPlayerStateSync(state) == PVMFSuccess)
-            && ( (state == PVP_STATE_PAUSED) ||
-                (state == PVP_STATE_PREPARED) ||
-                (state == PVP_STATE_STARTED)
-               )
-       )
+        && ( (state == PVP_STATE_PAUSED) ||
+             (state == PVP_STATE_PREPARED) ||
+             (state == PVP_STATE_STARTED) ))
     {
         OSCL_TRY(error, mPlayer->Stop(command));
         OSCL_FIRST_CATCH_ANY(error, commandFailed(command));
@@ -1115,33 +1113,33 @@ void PlayerDriver::CommandCompleted(const PVCmdResponse& aResponse)
 
     if (status == PVMFSuccess) {
         switch (command->code()) {
-        case PlayerCommand::PLAYER_PREPARE:
-            LOGV("PLAYER_PREPARE complete mDownloadContextData=%p, mDataReadyReceived=%d", mDownloadContextData, mDataReadyReceived);
-            mPrepareDone = true;
-            // If we are streaming from the network, we
-            // have to wait until the first PVMFInfoDataReady
-            // is sent to notify the user that it is okay to
-            // begin playback.  If it is a local file, just
-            // send it now at the completion of Prepare().
-            if ((mDownloadContextData == NULL) || mDataReadyReceived) {
-                mPvPlayer->sendEvent(MEDIA_PREPARED);
-            }
-            break;
+            case PlayerCommand::PLAYER_PREPARE:
+                LOGV("PLAYER_PREPARE complete mDownloadContextData=%p, mDataReadyReceived=%d", mDownloadContextData, mDataReadyReceived);
+                mPrepareDone = true;
+                // If we are streaming from the network, we
+                // have to wait until the first PVMFInfoDataReady
+                // is sent to notify the user that it is okay to
+                // begin playback.  If it is a local file, just
+                // send it now at the completion of Prepare().
+                if ((mDownloadContextData == NULL) || mDataReadyReceived) {
+                    mPvPlayer->sendEvent(MEDIA_PREPARED);
+                }
+                break;
 
-        case PlayerCommand::PLAYER_GET_DURATION:
-            handleGetDurationComplete(static_cast<PlayerGetDuration*>(command));
-            break;
+            case PlayerCommand::PLAYER_GET_DURATION:
+                handleGetDurationComplete(static_cast<PlayerGetDuration*>(command));
+                break;
 
-        case PlayerCommand::PLAYER_PAUSE:
-            LOGV("pause complete");
-            break;
+            case PlayerCommand::PLAYER_PAUSE:
+                LOGV("pause complete");
+                break;
 
-        case PlayerCommand::PLAYER_SEEK:
-            mPvPlayer->sendEvent(MEDIA_SEEK_COMPLETE);
-            break;
+            case PlayerCommand::PLAYER_SEEK:
+                mPvPlayer->sendEvent(MEDIA_SEEK_COMPLETE);
+                break;
 
-        default: /* shut up gcc */
-            break;
+            default: /* shut up gcc */
+                break;
         }
 
         // Call the user's requested completion function
@@ -1151,7 +1149,7 @@ void PlayerDriver::CommandCompleted(const PVCmdResponse& aResponse)
         LOGE("Command (%d) was cancelled", command->code());
         status = PVMFSuccess;
         command->complete(NO_ERROR, true);
-    } else {  
+    } else {
         // Try to map the PV error code to an Android one.
         LOGE("Command %s completed with an error or info %s", command->toString(), PVMFStatusToString(status));
         const media_event_type event_type = MapStatusToEventType(status);
@@ -1194,102 +1192,102 @@ void PlayerDriver::HandleInformationalEvent(const PVAsyncInformationalEvent& aEv
     LOGV("HandleInformationalEvent: %s", PVMFStatusToString(status));
 
     switch (status) {
-    case PVMFInfoEndOfData:
-        mEndOfData = true;
-        if (mIsLooping) {
-            mDoLoop = true;
-            Cancel();
-            RunIfNotReady();
-        } else {
-            mPvPlayer->sendEvent(MEDIA_PLAYBACK_COMPLETE);
-        }
-        break;
-
-    case PVMFInfoErrorHandlingComplete:
-        LOGW("PVMFInfoErrorHandlingComplete");
-        RunIfNotReady();
-        break;
-
-    case PVMFInfoBufferingStart:
-        mPvPlayer->sendEvent(MEDIA_BUFFERING_UPDATE, 0);
-        break;
-
-    case PVMFInfoBufferingStatus:
-        {
-            const void *buffer = aEvent.GetLocalBuffer();
-            const size_t size = aEvent.GetLocalBufferSize();
-            int percentage;
-
-            if (GetBufferingPercentage(buffer, size, &percentage))
-            {
-                LOGD("buffering (%d)", percentage);
-                mPvPlayer->sendEvent(MEDIA_BUFFERING_UPDATE, percentage);
+        case PVMFInfoEndOfData:
+            mEndOfData = true;
+            if (mIsLooping) {
+                mDoLoop = true;
+                Cancel();
+                RunIfNotReady();
+            } else {
+                mPvPlayer->sendEvent(MEDIA_PLAYBACK_COMPLETE);
             }
-        }
-    break;
+            break;
 
-    case PVMFInfoDurationAvailable:
-        {
-            PVUuid infomsguuid = PVMFDurationInfoMessageInterfaceUUID;
-            PVMFDurationInfoMessageInterface* eventMsg = NULL;
-            PVInterface* infoExtInterface = aEvent.GetEventExtensionInterface();
-            if (infoExtInterface &&
-                    infoExtInterface->queryInterface(infomsguuid, (PVInterface*&)eventMsg))
+        case PVMFInfoErrorHandlingComplete:
+            LOGW("PVMFInfoErrorHandlingComplete");
+            RunIfNotReady();
+            break;
+
+        case PVMFInfoBufferingStart:
+            mPvPlayer->sendEvent(MEDIA_BUFFERING_UPDATE, 0);
+            break;
+
+        case PVMFInfoBufferingStatus:
             {
-                PVUuid eventuuid;
-                int32 infoCode;
-                eventMsg->GetCodeUUID(infoCode, eventuuid);
-                if (eventuuid == infomsguuid)
+                const void *buffer = aEvent.GetLocalBuffer();
+                const size_t size = aEvent.GetLocalBufferSize();
+                int percentage;
+
+                if (GetBufferingPercentage(buffer, size, &percentage))
                 {
-                    uint32 SourceDurationInMS = eventMsg->GetDuration();
-                    LOGV(".... with duration = %u ms",SourceDurationInMS);
+                    LOGD("buffering (%d)", percentage);
+                    mPvPlayer->sendEvent(MEDIA_BUFFERING_UPDATE, percentage);
                 }
             }
-        }
-        break;
-
-    case PVMFInfoDataReady:
-        if (mDataReadyReceived)
             break;
-        mDataReadyReceived = true;
-        // If this is a network stream, we are now ready to play.
-        if (mDownloadContextData && mPrepareDone) {
-            mPvPlayer->sendEvent(MEDIA_PREPARED);
-        }
-        break;
 
-    case PVMFInfoVideoTrackFallingBehind:
-        // TODO: This event should not be passed to the user in the ERROR channel.
-        LOGW("Video track fell behind");
-        mPvPlayer->sendEvent(MEDIA_INFO, ::android::MEDIA_INFO_VIDEO_TRACK_LAGGING,
-                             PVMFInfoVideoTrackFallingBehind);
-        break;
+        case PVMFInfoDurationAvailable:
+            {
+                PVUuid infomsguuid = PVMFDurationInfoMessageInterfaceUUID;
+                PVMFDurationInfoMessageInterface* eventMsg = NULL;
+                PVInterface* infoExtInterface = aEvent.GetEventExtensionInterface();
+                if (infoExtInterface &&
+                    infoExtInterface->queryInterface(infomsguuid, (PVInterface*&)eventMsg))
+                {
+                    PVUuid eventuuid;
+                    int32 infoCode;
+                    eventMsg->GetCodeUUID(infoCode, eventuuid);
+                    if (eventuuid == infomsguuid)
+                    {
+                        uint32 SourceDurationInMS = eventMsg->GetDuration();
+                        LOGV(".... with duration = %u ms",SourceDurationInMS);
+                    }
+                }
+            }
+            break;
 
-    case PVMFInfoPoorlyInterleavedContent:
-        // TODO: This event should not be passed to the user in the ERROR channel.
-        LOGW("Poorly interleaved content.");
-        mPvPlayer->sendEvent(MEDIA_INFO, ::android::MEDIA_INFO_BAD_INTERLEAVING,
-                             PVMFInfoPoorlyInterleavedContent);
-        break;
+        case PVMFInfoDataReady:
+            if (mDataReadyReceived)
+                break;
+            mDataReadyReceived = true;
+            // If this is a network stream, we are now ready to play.
+            if (mDownloadContextData && mPrepareDone) {
+                mPvPlayer->sendEvent(MEDIA_PREPARED);
+            }
+            break;
 
-    case PVMFInfoContentTruncated:
-        LOGE("Content is truncated.");
-        break;
+        case PVMFInfoVideoTrackFallingBehind:
+            // TODO: This event should not be passed to the user in the ERROR channel.
+            LOGW("Video track fell behind");
+            mPvPlayer->sendEvent(MEDIA_INFO, ::android::MEDIA_INFO_VIDEO_TRACK_LAGGING,
+                                 PVMFInfoVideoTrackFallingBehind);
+            break;
+
+        case PVMFInfoPoorlyInterleavedContent:
+            // TODO: This event should not be passed to the user in the ERROR channel.
+            LOGW("Poorly interleaved content.");
+            mPvPlayer->sendEvent(MEDIA_INFO, ::android::MEDIA_INFO_BAD_INTERLEAVING,
+                                 PVMFInfoPoorlyInterleavedContent);
+            break;
+
+        case PVMFInfoContentTruncated:
+            LOGE("Content is truncated.");
+            break;
 
         /* Certain events we don't really care about, but don't
          * want log spewage, so just no-op them here.
          */
-    case PVMFInfoPositionStatus:
-    case PVMFInfoBufferingComplete:
-    case PVMFInfoContentLength:
-    case PVMFInfoContentType:
-    case PVMFInfoUnderflow:
-    case PVMFInfoDataDiscarded:
-        break;
+        case PVMFInfoPositionStatus:
+        case PVMFInfoBufferingComplete:
+        case PVMFInfoContentLength:
+        case PVMFInfoContentType:
+        case PVMFInfoUnderflow:
+        case PVMFInfoDataDiscarded:
+            break;
 
-    default:
-        LOGV("HandleInformationalEvent: type=%d UNHANDLED", status);
-        break;
+        default:
+            LOGV("HandleInformationalEvent: type=%d UNHANDLED", status);
+            break;
     }
 }
 

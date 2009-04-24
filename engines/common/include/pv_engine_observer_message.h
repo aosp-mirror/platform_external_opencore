@@ -44,84 +44,85 @@
  **/
 class PVCmdResponse : public PVMFCmdResp
 {
-    public:
-        /**
-         * Constructor for PVCmdResponse
-         */
-        PVCmdResponse(PVCommandId aId,
-                      OsclAny* aContext,
-                      PVMFStatus aStatus,
-                      // Event data will be deprecated
-                      OsclAny* aEventData = NULL, int32 aEventDataSize = 0):
-                PVMFCmdResp(aId, aContext, aStatus, NULL, aEventData),
-                iEventDataSize(aEventDataSize)
-        {
-        }
+  public:
+    /**
+     * Constructor for PVCmdResponse
+     */
+    PVCmdResponse(PVCommandId aId,
+                  OsclAny* aContext,
+                  PVMFStatus aStatus,
+                  // Event data will be deprecated
+                  OsclAny* aEventData = NULL, int32 aEventDataSize = 0):
+        PVMFCmdResp(aId, aContext, aStatus, NULL, aEventData),
+        iEventDataSize(aEventDataSize)
+    {
+    }
 
-        /**
-         * Constructor with event extension interface
-         */
-        PVCmdResponse(PVCommandId aId,
-                      OsclAny* aContext,
-                      PVMFStatus aStatus,
-                      PVInterface* aEventExtInterface = NULL,
-                      // Event data will be deprecated
-                      OsclAny* aEventData = NULL, int32 aEventDataSize = 0):
-                PVMFCmdResp(aId, aContext, aStatus, aEventExtInterface, aEventData),
-                iEventDataSize(aEventDataSize)
-        {
-        }
+    /**
+     * Constructor with event extension interface
+     */
+    PVCmdResponse(PVCommandId aId,
+                  OsclAny* aContext,
+                  PVMFStatus aStatus,
+                  PVInterface* aEventExtInterface = NULL,
+                  // Event data will be deprecated
+                  OsclAny* aEventData = NULL, int32 aEventDataSize = 0):
+        PVMFCmdResp(aId, aContext, aStatus, aEventExtInterface, aEventData),
+        iEventDataSize(aEventDataSize)
+    {
+    }
 
-        /**
-        * WILL BE DEPRECATED SINCE IT IS NOT BEING USED. CURRENTLY RETURNS 0
-        * @return Returns the type of Response we get
-        */
-        PVResponseType GetResponseType()const
-        {
-            return 0;
-        }
+    /**
+     * WILL BE DEPRECATED SINCE IT IS NOT BEING USED. CURRENTLY RETURNS 0
+     * @return Returns the type of Response we get
+     */
+    PVResponseType GetResponseType()const
+    {
+        return 0;
+    }
 
-        /**
-         * @return Returns the unique ID associated with a command of this type.
-         */
-        PVCommandId GetCmdId()const
-        {
-            return (PVCommandId)(PVMFCmdResp::GetCmdId());
-        }
+    /**
+     * @return Returns the unique ID associated with a command of this type.
+     */
+    PVCommandId GetCmdId()const
+    {
+        return (PVCommandId)(PVMFCmdResp::GetCmdId());
+    }
 
-        /**
-         * @return Returns the opaque data that was passed in with the command.
-         */
-        OsclAny* GetContext()const
-        {
-            return (OsclAny*)(PVMFCmdResp::GetContext());
-        }
+    /**
+     * @return Returns the opaque data that was passed in with the command.
+     */
+    OsclAny* GetContext()const
+    {
+        return (OsclAny*)(PVMFCmdResp::GetContext());
+    }
 
-        /**
-         * @return Returns the completion status of the command
-         */
-        PVMFStatus GetCmdStatus()const
-        {
-            return PVMFCmdResp::GetCmdStatus();
-        }
+    /**
+     * @return Returns the completion status of the command
+     */
+    PVMFStatus GetCmdStatus()const
+    {
+        return PVMFCmdResp::GetCmdStatus();
+    }
 
-        /**
-         * WILL BE DEPRECATED WHEN PVMFCmdResp REMOVES EVENT DATA
-         * @return Returns additional data asociated with the command.  This is to be interpreted
-                   based on the command issued and the return status
-         */
-        OsclAny* GetResponseData()const
-        {
-            return PVMFCmdResp::GetEventData();
-        }
+    /**
+     * WILL BE DEPRECATED WHEN PVMFCmdResp REMOVES EVENT DATA
+     * @return Returns additional data asociated with the command.
+     *         This is to be interpreted based on the command issued
+     *         and the return status
+     */
+    OsclAny* GetResponseData()const
+    {
+        return PVMFCmdResp::GetEventData();
+    }
 
-        int32 GetResponseDataSize()const
-        {
-            return iEventDataSize;
-        }
+    int32 GetResponseDataSize()const
+    {
+        return iEventDataSize;
+    }
 
-    private:
-        int32 iEventDataSize;
+  private:
+    int32 iEventDataSize;
 };
 
 
@@ -133,60 +134,60 @@ class PVCmdResponse : public PVMFCmdResp
  **/
 class PVAsyncInformationalEvent : public PVMFAsyncEvent
 {
-    public:
-        /**
-         * Constructor for PVAsyncInformationalEvent
-         */
-        PVAsyncInformationalEvent(PVEventType aEventType,
-                                  PVExclusivePtr aEventData = NULL,
-                                  uint8* aLocalBuffer = NULL,
-                                  int32 aLocalBufferSize = 0):
-                PVMFAsyncEvent(PVMFInfoEvent, aEventType, NULL, NULL, aEventData, aLocalBuffer, aLocalBufferSize)
-        {
-        }
+  public:
+    /**
+     * Constructor for PVAsyncInformationalEvent
+     */
+    PVAsyncInformationalEvent(PVEventType aEventType,
+                              PVExclusivePtr aEventData = NULL,
+                              uint8* aLocalBuffer = NULL,
+                              int32 aLocalBufferSize = 0):
+        PVMFAsyncEvent(PVMFInfoEvent, aEventType, NULL, NULL, aEventData, aLocalBuffer, aLocalBufferSize)
+    {
+    }
 
-        /**
-         * Constructor with context and event extension interface
-         */
-        PVAsyncInformationalEvent(PVEventType aEventType,
-                                  OsclAny* aContext,
-                                  PVInterface* aEventExtInterface,
-                                  PVExclusivePtr aEventData = NULL,
-                                  uint8* aLocalBuffer = NULL,
-                                  int32 aLocalBufferSize = 0):
-                PVMFAsyncEvent(PVMFInfoEvent, aEventType, aContext, aEventExtInterface, aEventData, aLocalBuffer, aLocalBufferSize)
-        {
-        }
+    /**
+     * Constructor with context and event extension interface
+     */
+    PVAsyncInformationalEvent(PVEventType aEventType,
+                              OsclAny* aContext,
+                              PVInterface* aEventExtInterface,
+                              PVExclusivePtr aEventData = NULL,
+                              uint8* aLocalBuffer = NULL,
+                              int32 aLocalBufferSize = 0):
+        PVMFAsyncEvent(PVMFInfoEvent, aEventType, aContext, aEventExtInterface, aEventData, aLocalBuffer, aLocalBufferSize)
+    {
+    }
 
-        /**
-         * Destructor
-         */
-        ~PVAsyncInformationalEvent() {}
+    /**
+     * Destructor
+     */
+    ~PVAsyncInformationalEvent() {}
 
-        /**
-         * WILL BE DEPRECATED SINCE IT IS NOT BEING USED. CURRENTLY RETURNING 0.
-         * @return Returns the type of Response we get
-         */
-        PVResponseType GetResponseType()const
-        {
-            return 0;
-        }
+    /**
+     * WILL BE DEPRECATED SINCE IT IS NOT BEING USED. CURRENTLY RETURNING 0.
+     * @return Returns the type of Response we get
+     */
+    PVResponseType GetResponseType()const
+    {
+        return 0;
+    }
 
-        /**
-         * @return Returns the Event type that has been received
-         */
-        PVEventType GetEventType()const
-        {
-            return PVMFAsyncEvent::GetEventType();
-        }
+    /**
+     * @return Returns the Event type that has been received
+     */
+    PVEventType GetEventType()const
+    {
+        return PVMFAsyncEvent::GetEventType();
+    }
 
-        /**
-        * @return Returns the opaque data asociated with the event.
-        */
-        void GetEventData(PVExclusivePtr& aPtr)const
-        {
-            aPtr = PVMFAsyncEvent::GetEventData();
-        }
+    /**
+     * @return Returns the opaque data asociated with the event.
+     */
+    void GetEventData(PVExclusivePtr& aPtr)const
+    {
+        aPtr = PVMFAsyncEvent::GetEventData();
+    }
 };
 
 /**
@@ -197,60 +198,60 @@ class PVAsyncInformationalEvent : public PVMFAsyncEvent
  **/
 class PVAsyncErrorEvent : public PVMFAsyncEvent
 {
-    public:
-        /**
-         * Constructor for PVAsyncErrorEvent
-         */
-        PVAsyncErrorEvent(PVEventType aEventType,
-                          PVExclusivePtr aEventData = NULL,
-                          uint8* aLocalBuffer = NULL,
-                          int32 aLocalBufferSize = 0):
-                PVMFAsyncEvent(PVMFErrorEvent, aEventType, NULL, NULL, aEventData, aLocalBuffer, aLocalBufferSize)
-        {
-        }
+  public:
+    /**
+     * Constructor for PVAsyncErrorEvent
+     */
+    PVAsyncErrorEvent(PVEventType aEventType,
+                      PVExclusivePtr aEventData = NULL,
+                      uint8* aLocalBuffer = NULL,
+                      int32 aLocalBufferSize = 0) :
+        PVMFAsyncEvent(PVMFErrorEvent, aEventType, NULL, NULL, aEventData, aLocalBuffer, aLocalBufferSize)
+    {
+    }
 
-        /**
-         * Constructor with context and event extension interface
-         */
-        PVAsyncErrorEvent(PVEventType aEventType,
-                          OsclAny* aContext,
-                          PVInterface* aEventExtInterface,
-                          PVExclusivePtr aEventData = NULL,
-                          uint8* aLocalBuffer = NULL,
-                          int32 aLocalBufferSize = 0):
-                PVMFAsyncEvent(PVMFErrorEvent, aEventType, aContext, aEventExtInterface, aEventData, aLocalBuffer, aLocalBufferSize)
-        {
-        }
+    /**
+     * Constructor with context and event extension interface
+     */
+    PVAsyncErrorEvent(PVEventType aEventType,
+                      OsclAny* aContext,
+                      PVInterface* aEventExtInterface,
+                      PVExclusivePtr aEventData = NULL,
+                      uint8* aLocalBuffer = NULL,
+                      int32 aLocalBufferSize = 0) :
+        PVMFAsyncEvent(PVMFErrorEvent, aEventType, aContext, aEventExtInterface, aEventData, aLocalBuffer, aLocalBufferSize)
+    {
+    }
 
-        /**
-         * Destructor
-         */
-        ~PVAsyncErrorEvent() {}
+    /**
+     * Destructor
+     */
+    ~PVAsyncErrorEvent() {}
 
-        /**
-         * WILL BE DEPRECATED SINCE IT IS NOT BEING USED. CURRENTLY RETURNING 0.
-         * @return Returns the type of Response we get
-         */
-        PVResponseType GetResponseType()const
-        {
-            return 0;
-        }
+    /**
+     * WILL BE DEPRECATED SINCE IT IS NOT BEING USED. CURRENTLY RETURNING 0.
+     * @return Returns the type of Response we get
+     */
+    PVResponseType GetResponseType()const
+    {
+        return 0;
+    }
 
-        /**
-         * @return Returns the Event type that has been received
-         */
-        PVEventType GetEventType()const
-        {
-            return PVMFAsyncEvent::GetEventType();
-        }
+    /**
+     * @return Returns the Event type that has been received
+     */
+    PVEventType GetEventType()const
+    {
+        return PVMFAsyncEvent::GetEventType();
+    }
 
-        /**
-        * @return Returns the opaque data asociated with the event.
-        */
-        void GetEventData(PVExclusivePtr& aPtr)const
-        {
-            aPtr = PVMFAsyncEvent::GetEventData();
-        }
+    /**
+     * @return Returns the opaque data asociated with the event.
+     */
+    void GetEventData(PVExclusivePtr& aPtr)const
+    {
+        aPtr = PVMFAsyncEvent::GetEventData();
+    }
 };
 
 
