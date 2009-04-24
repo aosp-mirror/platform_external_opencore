@@ -64,10 +64,11 @@ class PVMFEventBase
     PVMFEventBase() {}
 
     virtual ~PVMFEventBase() {};
+
     /**
-       What type of event is this ?
-    **/
-    virtual PVMFEventCategory IsA() = 0;
+     * @return the event's category.
+     */
+    virtual PVMFEventCategory IsA() const = 0;
 };
 
 /**
@@ -133,10 +134,7 @@ class PVMFCmdResp : public PVMFEventBase
 
     virtual ~PVMFCmdResp() {}
 
-    PVMFEventCategory IsA()
-    {
-        return PVMFCmdRespEvent;
-    }
+    virtual PVMFEventCategory IsA() const;
 
     /**
      * @return Returns the unique ID associated with a command of this type.
@@ -345,10 +343,7 @@ class PVMFAsyncEvent : public PVMFEventBase
 
     virtual ~PVMFAsyncEvent() {}
 
-    PVMFEventCategory IsA()
-    {
-        return iEventCategory;
-    }
+    virtual PVMFEventCategory IsA() const;
 
     /**
      * @return Returns the unique type identifier of the event.
@@ -428,9 +423,9 @@ class PVMFAsyncEvent : public PVMFEventBase
 
     /**
      * @return Returns the local data asociated with the event.
+     * TODO: This is a const method returning a non const ref to some
+     * internal array.
      */
-    // TODO: This is a const method returning a non const ref to some
-    // internal array.
     uint8* GetLocalBuffer() const
     {
         return (uint8*)iLocalBuffer;

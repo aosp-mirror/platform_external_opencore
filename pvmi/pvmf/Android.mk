@@ -2,24 +2,25 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := \
+        src/pvmf_basic_errorinfomessage.cpp \
+        src/pvmf_duration_infomessage.cpp \
+        src/pvmf_event_handling.cpp \
         src/pvmf_format_type.cpp \
-        src/pvmf_pool_buffer_allocator.cpp \
-        src/pvmf_sync_util_data_queue.cpp \
+        src/pvmf_media_clock.cpp \
         src/pvmf_media_cmd.cpp \
         src/pvmf_media_data.cpp \
-        src/pvmf_port_base_impl.cpp \
-        src/pvmf_timestamp.cpp \
-        src/pvmf_simple_media_buffer.cpp \
-        src/pvmi_config_and_capability_utils.cpp \
-        src/pvmf_node_interface.cpp \
-        src/pvmf_sync_util.cpp \
-        src/pvmf_basic_errorinfomessage.cpp \
-        src/pvmi_kvp_util.cpp \
         src/pvmf_mempool.cpp \
-        src/pvmf_media_clock.cpp \
-        src/pvmf_duration_infomessage.cpp \
         src/pvmf_metadata_infomessage.cpp \
-        src/pvmf_return_codes.cpp
+        src/pvmf_node_interface.cpp \
+        src/pvmf_pool_buffer_allocator.cpp \
+        src/pvmf_port_base_impl.cpp \
+        src/pvmf_return_codes.cpp \
+        src/pvmf_simple_media_buffer.cpp \
+        src/pvmf_sync_util.cpp \
+        src/pvmf_sync_util_data_queue.cpp \
+        src/pvmf_timestamp.cpp \
+        src/pvmi_config_and_capability_utils.cpp \
+        src/pvmi_kvp_util.cpp \
 
 
 LOCAL_MODULE := libpvmf
@@ -30,7 +31,7 @@ LOCAL_CFLAGS :=  $(PV_CFLAGS)
 
 LOCAL_STATIC_LIBRARIES := libosclbase
 
-LOCAL_SHARED_LIBRARIES := 
+LOCAL_SHARED_LIBRARIES :=
 
 LOCAL_C_INCLUDES := \
         $(PV_TOP)/pvmi/pvmf/src \

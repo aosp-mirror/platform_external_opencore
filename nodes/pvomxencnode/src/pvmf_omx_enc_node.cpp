@@ -610,6 +610,8 @@ PVMFOMXEncNode::PVMFOMXEncNode(int32 aPriority) :
     iMediaDataMemPool(NULL),
     iOMXComponentOutputBufferSize(0),
     iOutputAllocSize(0),
+    iNumOutstandingOutputBuffers(0),
+    iNumOutstandingInputBuffers(0),
     iProcessingState(EPVMFOMXEncNodeProcessingState_Idle),
     iOMXEncoder(NULL),
     iSendBOS(false),
@@ -630,9 +632,7 @@ PVMFOMXEncNode::PVMFOMXEncNode(int32 aPriority) :
     iResetInProgress(false),
     iResetMsgSent(false),
     iStopInResetMsgSent(false),
-    iNumOutstandingOutputBuffers(0),
-    iNumOutstandingInputBuffers(0)
-    ,bIsQCOMOmxComp(false)
+    bIsQCOMOmxComp(false)
 {
     iInterfaceState = EPVMFNodeCreated;
 

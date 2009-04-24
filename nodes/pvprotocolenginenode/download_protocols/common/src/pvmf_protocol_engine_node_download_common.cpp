@@ -1236,8 +1236,8 @@ OSCL_EXPORT_REF downloadEventReporter::downloadEventReporter(EventReporterObserv
         iProtocol(NULL),
         iCfgFileContainer(NULL),
         iNodeTimer(NULL),
-        iNodeOutput(NULL),
-        iInterfacingObjectContainer(NULL)
+        iInterfacingObjectContainer(NULL),
+        iNodeOutput(NULL)
 {
     clear();
 }
@@ -1537,5 +1537,3 @@ OSCL_EXPORT_REF int32 downloadEventReporter::isDownloadFileTruncated(const uint3
     }
     return 0;
 }
-
-
