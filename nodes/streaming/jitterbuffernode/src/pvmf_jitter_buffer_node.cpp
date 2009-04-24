@@ -85,7 +85,7 @@ OSCL_DLL_ENTRY_POINT_DEFAULT()
 
 //Construction and Destruction
 OSCL_EXPORT_REF PVMFJitterBufferNode::PVMFJitterBufferNode(int32 aPriority,
-        JitterBufferFactory* aJBFactory): OsclActiveObject(aPriority, "JitterBufferNode")
+                                                           JitterBufferFactory* aJBFactory): OsclActiveObject(aPriority, "JitterBufferNode")
 {
     //Initialize capability
     iCapability.iCanSupportMultipleInputPorts = true;
@@ -98,7 +98,7 @@ OSCL_EXPORT_REF PVMFJitterBufferNode::PVMFJitterBufferNode(int32 aPriority,
     iCapability.iOutputFormatCapability.push_back(PVMF_MIME_RTP);
     iCapability.iOutputFormatCapability.push_back(PVMF_MIME_ASFFF);
     //Jitter buffer factory
-    ipJitterBufferFactory	=	aJBFactory;
+    ipJitterBufferFactory   =   aJBFactory;
 
     //Initialize loggers
     ipLogger = NULL;
@@ -164,7 +164,7 @@ void PVMFJitterBufferNode::ResetNodeParams(bool aReleaseMemory)
     iMaxNumBufferResizes = DEFAULT_MAX_NUM_SOCKETMEMPOOL_RESIZES;
     iBufferResizeSize = DEFAULT_MAX_SOCKETMEMPOOL_RESIZELEN_INPUT_PORT;
     iBufferingStatusIntervalInMs =
-        (PVMF_JITTER_BUFFER_BUFFERING_STATUS_EVENT_CYCLES * 1000) / PVMF_JITTER_BUFFER_BUFFERING_STATUS_EVENT_FREQUENCY;
+            (PVMF_JITTER_BUFFER_BUFFERING_STATUS_EVENT_CYCLES * 1000) / PVMF_JITTER_BUFFER_BUFFERING_STATUS_EVENT_FREQUENCY;
 
     iDisableFireWallPackets = false;
     //iPlayingAfterSeek = false;
@@ -212,8 +212,8 @@ void PVMFJitterBufferNode::ResetNodeParams(bool aReleaseMemory)
         //port vect and port params Q
         Oscl_Vector<PVMFJitterBufferPortParams*, OsclMemAllocator>::iterator it;
         for (it = iPortParamsQueue.begin();
-                it != iPortParamsQueue.end();
-                it++)
+             it != iPortParamsQueue.end();
+             it++)
         {
             PVMFJitterBufferPortParams* pPortParams = *it;
 
@@ -263,7 +263,7 @@ PVMFJitterBufferNode::~PVMFJitterBufferNode()
     PVMF_JBNODE_LOGINFO((0, "PVMFJitterBufferNode::~PVMFJitterBufferNode Out"));
 }
 
-void PVMFJitterBufferNode::CleanUp()	//Reverse of Construct
+void PVMFJitterBufferNode::CleanUp()    //Reverse of Construct
 {
     //noop
 }
@@ -295,14 +295,14 @@ bool PVMFJitterBufferNode::queryInterface(const PVUuid& uuid, PVInterface*& ifac
             OsclAny*ptr = NULL;
             OSCL_TRY(err,
                      ptr = alloc.ALLOCATE(sizeof(PVMFJitterBufferExtensionInterfaceImpl));
-                    );
+                     );
             if (err != OsclErrNone || !ptr)
             {
                 PVMF_JBNODE_LOGERROR((0, "PVMFJitterBufferNode::queryInterface: Error - Out of memory"));
                 OSCL_LEAVE(OsclErrNoMemory);
             }
             ipExtensionInterface =
-                OSCL_PLACEMENT_NEW(ptr, PVMFJitterBufferExtensionInterfaceImpl(this));
+                    OSCL_PLACEMENT_NEW(ptr, PVMFJitterBufferExtensionInterfaceImpl(this));
         }
         return (ipExtensionInterface->queryInterface(uuid, iface));
     }
@@ -333,28 +333,28 @@ OSCL_EXPORT_REF PVMFStatus PVMFJitterBufferNode::ThreadLogon()
     switch (iInterfaceState)
     {
         case EPVMFNodeCreated:
-        {
-            if (!IsAdded())
-                AddToScheduler();
+            {
+                if (!IsAdded())
+                    AddToScheduler();
 
-            ipLogger = PVLogger::GetLoggerObject("jitterbuffernode");
-            ipDataPathLogger = PVLogger::GetLoggerObject("datapath.sourcenode.jitterbuffernode");
-            ipDataPathLoggerIn = PVLogger::GetLoggerObject("datapath.sourcenode.jitterbuffernode.in");
-            ipDataPathLoggerOut = PVLogger::GetLoggerObject("datapath.sourcenode.jitterbuffernode.out");
-            ipDataPathLoggerFlowCtrl = PVLogger::GetLoggerObject("datapath.sourcenode.jitterbuffernode.flowctrl");
+                ipLogger = PVLogger::GetLoggerObject("jitterbuffernode");
+                ipDataPathLogger = PVLogger::GetLoggerObject("datapath.sourcenode.jitterbuffernode");
+                ipDataPathLoggerIn = PVLogger::GetLoggerObject("datapath.sourcenode.jitterbuffernode.in");
+                ipDataPathLoggerOut = PVLogger::GetLoggerObject("datapath.sourcenode.jitterbuffernode.out");
+                ipDataPathLoggerFlowCtrl = PVLogger::GetLoggerObject("datapath.sourcenode.jitterbuffernode.flowctrl");
 
-            ipClockLogger = PVLogger::GetLoggerObject("clock.jitterbuffernode");
-            ipClockLoggerSessionDuration = PVLogger::GetLoggerObject("clock.streaming_manager.sessionduration");
-            ipClockLoggerRebuff = PVLogger::GetLoggerObject("clock.jitterbuffernode.rebuffer");
+                ipClockLogger = PVLogger::GetLoggerObject("clock.jitterbuffernode");
+                ipClockLoggerSessionDuration = PVLogger::GetLoggerObject("clock.streaming_manager.sessionduration");
+                ipClockLoggerRebuff = PVLogger::GetLoggerObject("clock.jitterbuffernode.rebuffer");
 
-            ipDiagnosticsLogger = PVLogger::GetLoggerObject("pvplayerdiagnostics.streamingmanager");
-            ipJBEventsClockLogger = PVLogger::GetLoggerObject("jitterbuffernode.eventsclock");
+                ipDiagnosticsLogger = PVLogger::GetLoggerObject("pvplayerdiagnostics.streamingmanager");
+                ipJBEventsClockLogger = PVLogger::GetLoggerObject("jitterbuffernode.eventsclock");
 
-            iDiagnosticsLogged = false;
-            SetState(EPVMFNodeIdle);
-            status = PVMFSuccess;
-        }
-        break;
+                iDiagnosticsLogged = false;
+                SetState(EPVMFNodeIdle);
+                status = PVMFSuccess;
+            }
+            break;
         default:
             status = PVMFErrInvalidState;
             break;
@@ -381,24 +381,24 @@ OSCL_EXPORT_REF PVMFStatus PVMFJitterBufferNode::ThreadLogoff()
     switch (iInterfaceState)
     {
         case EPVMFNodeIdle:
-        {
-            ResetNodeParams();
-            ipLogger = NULL;
-            ipDataPathLogger = NULL;
-            ipDataPathLoggerIn = NULL;
-            ipDataPathLoggerOut = NULL;
-            ipClockLogger = NULL;
-            ipClockLoggerSessionDuration = NULL;
-            ipDiagnosticsLogger = NULL;
-            ipDataPathLoggerFlowCtrl = NULL;
-            if (IsAdded())
             {
-                RemoveFromScheduler();
+                ResetNodeParams();
+                ipLogger = NULL;
+                ipDataPathLogger = NULL;
+                ipDataPathLoggerIn = NULL;
+                ipDataPathLoggerOut = NULL;
+                ipClockLogger = NULL;
+                ipClockLoggerSessionDuration = NULL;
+                ipDiagnosticsLogger = NULL;
+                ipDataPathLoggerFlowCtrl = NULL;
+                if (IsAdded())
+                {
+                    RemoveFromScheduler();
+                }
+                SetState(EPVMFNodeCreated);
+                status = PVMFSuccess;
             }
-            SetState(EPVMFNodeCreated);
-            status = PVMFSuccess;
-        }
-        break;
+            break;
 
         default:
             status = PVMFErrInvalidState;
@@ -444,163 +444,163 @@ OSCL_EXPORT_REF PVMFPortIter* PVMFJitterBufferNode::GetPorts(const PVMFPortFilte
 //PVMFErrInvalidState - If API is called in the invalid state
 ////////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF PVMFCommandId PVMFJitterBufferNode::QueryUUID(PVMFSessionId s,
-        const PvmfMimeString& aMimeType,
-        Oscl_Vector< PVUuid, OsclMemAllocator >& aUuids,
-        bool aExactUuidsOnly ,
-        const OsclAny* aContext)
+                                                              const PvmfMimeString& aMimeType,
+                                                              Oscl_Vector< PVUuid, OsclMemAllocator >& aUuids,
+                                                              bool aExactUuidsOnly ,
+                                                              const OsclAny* aContext)
 {
     PVMF_JBNODE_LOGINFO((0, "PVMFJitterBufferNode::QueryUUID"));
     PVMFJitterBufferNodeCommand cmd;
     cmd.PVMFJitterBufferNodeCommandBase::Construct(s,
-            PVMF_JITTER_BUFFER_NODE_QUERYUUID,
-            aMimeType,
-            aUuids,
-            aExactUuidsOnly,
-            aContext);
+                                                   PVMF_JITTER_BUFFER_NODE_QUERYUUID,
+                                                   aMimeType,
+                                                   aUuids,
+                                                   aExactUuidsOnly,
+                                                   aContext);
     return QueueCommandL(cmd);
 }
 
 OSCL_EXPORT_REF PVMFCommandId PVMFJitterBufferNode::QueryInterface(PVMFSessionId s,
-        const PVUuid& aUuid,
-        PVInterface*& aInterfacePtr,
-        const OsclAny* aContext)
+                                                                   const PVUuid& aUuid,
+                                                                   PVInterface*& aInterfacePtr,
+                                                                   const OsclAny* aContext)
 {
     PVMF_JBNODE_LOGINFO((0, "JitterBufferNode:QueryInterface"));
     PVMFJitterBufferNodeCommand cmd;
     cmd.PVMFJitterBufferNodeCommandBase::Construct(s,
-            PVMF_JITTER_BUFFER_NODE_QUERYINTERFACE,
-            aUuid,
-            aInterfacePtr,
-            aContext);
+                                                   PVMF_JITTER_BUFFER_NODE_QUERYINTERFACE,
+                                                   aUuid,
+                                                   aInterfacePtr,
+                                                   aContext);
     return QueueCommandL(cmd);
 }
 
 OSCL_EXPORT_REF PVMFCommandId PVMFJitterBufferNode::RequestPort(PVMFSessionId s,
-        int32 aPortTag,
-        const PvmfMimeString* aPortConfig,
-        const OsclAny* aContext)
+                                                                int32 aPortTag,
+                                                                const PvmfMimeString* aPortConfig,
+                                                                const OsclAny* aContext)
 {
     PVMF_JBNODE_LOGINFO((0, "JitterBufferNode:RequestPort"));
     PVMFJitterBufferNodeCommand cmd;
     cmd.PVMFJitterBufferNodeCommandBase::Construct(s,
-            PVMF_JITTER_BUFFER_NODE_REQUESTPORT,
-            aPortTag,
-            aPortConfig,
-            aContext);
+                                                   PVMF_JITTER_BUFFER_NODE_REQUESTPORT,
+                                                   aPortTag,
+                                                   aPortConfig,
+                                                   aContext);
     return QueueCommandL(cmd);
 }
 
 OSCL_EXPORT_REF PVMFCommandId PVMFJitterBufferNode::ReleasePort(PVMFSessionId s,
-        PVMFPortInterface& aPort,
-        const OsclAny* aContext)
+                                                                PVMFPortInterface& aPort,
+                                                                const OsclAny* aContext)
 {
     PVMF_JBNODE_LOGINFO((0, "JitterBufferNode:ReleasePort"));
     PVMFJitterBufferNodeCommand cmd;
     cmd.PVMFJitterBufferNodeCommandBase::Construct(s,
-            PVMF_JITTER_BUFFER_NODE_RELEASEPORT,
-            aPort,
-            aContext);
+                                                   PVMF_JITTER_BUFFER_NODE_RELEASEPORT,
+                                                   aPort,
+                                                   aContext);
     return QueueCommandL(cmd);
 }
 
 OSCL_EXPORT_REF PVMFCommandId PVMFJitterBufferNode::Init(PVMFSessionId s,
-        const OsclAny* aContext)
+                                                         const OsclAny* aContext)
 {
     PVMF_JBNODE_LOGINFO((0, "JitterBufferNode:Init"));
     PVMFJitterBufferNodeCommand cmd;
     cmd.PVMFJitterBufferNodeCommandBase::Construct(s,
-            PVMF_JITTER_BUFFER_NODE_INIT,
-            aContext);
+                                                   PVMF_JITTER_BUFFER_NODE_INIT,
+                                                   aContext);
     return QueueCommandL(cmd);
 }
 
 OSCL_EXPORT_REF PVMFCommandId PVMFJitterBufferNode::Prepare(PVMFSessionId s,
-        const OsclAny* aContext)
+                                                            const OsclAny* aContext)
 {
     PVMF_JBNODE_LOGINFO((0, "JitterBufferNode:Prepare"));
     PVMFJitterBufferNodeCommand cmd;
     cmd.PVMFJitterBufferNodeCommandBase::Construct(s,
-            PVMF_JITTER_BUFFER_NODE_PREPARE,
-            aContext);
+                                                   PVMF_JITTER_BUFFER_NODE_PREPARE,
+                                                   aContext);
     return QueueCommandL(cmd);
 }
 
 OSCL_EXPORT_REF PVMFCommandId PVMFJitterBufferNode::Start(PVMFSessionId s,
-        const OsclAny* aContext)
+                                                          const OsclAny* aContext)
 {
     PVMF_JBNODE_LOGINFO((0, "JitterBufferNode:Start"));
     PVMFJitterBufferNodeCommand cmd;
     cmd.PVMFJitterBufferNodeCommandBase::Construct(s,
-            PVMF_JITTER_BUFFER_NODE_START,
-            aContext);
+                                                   PVMF_JITTER_BUFFER_NODE_START,
+                                                   aContext);
     return QueueCommandL(cmd);
 }
 
 OSCL_EXPORT_REF PVMFCommandId PVMFJitterBufferNode::Stop(PVMFSessionId s,
-        const OsclAny* aContext)
+                                                         const OsclAny* aContext)
 {
     PVMF_JBNODE_LOGINFO((0, "JitterBufferNode:Stop"));
     PVMFJitterBufferNodeCommand cmd;
     cmd.PVMFJitterBufferNodeCommandBase::Construct(s,
-            PVMF_JITTER_BUFFER_NODE_STOP,
-            aContext);
+                                                   PVMF_JITTER_BUFFER_NODE_STOP,
+                                                   aContext);
     return QueueCommandL(cmd);
 }
 
 OSCL_EXPORT_REF PVMFCommandId PVMFJitterBufferNode::Flush(PVMFSessionId s,
-        const OsclAny* aContext)
+                                                          const OsclAny* aContext)
 {
     PVMF_JBNODE_LOGINFO((0, "JitterBufferNode:Flush"));
     PVMFJitterBufferNodeCommand cmd;
     cmd.PVMFJitterBufferNodeCommandBase::Construct(s,
-            PVMF_JITTER_BUFFER_NODE_FLUSH,
-            aContext);
+                                                   PVMF_JITTER_BUFFER_NODE_FLUSH,
+                                                   aContext);
     return QueueCommandL(cmd);
 }
 
 OSCL_EXPORT_REF PVMFCommandId PVMFJitterBufferNode::Pause(PVMFSessionId s,
-        const OsclAny* aContext)
+                                                          const OsclAny* aContext)
 {
     PVMF_JBNODE_LOGINFO((0, "JitterBufferNode:Pause"));
     PVMFJitterBufferNodeCommand cmd;
     cmd.PVMFJitterBufferNodeCommandBase::Construct(s,
-            PVMF_JITTER_BUFFER_NODE_PAUSE,
-            aContext);
+                                                   PVMF_JITTER_BUFFER_NODE_PAUSE,
+                                                   aContext);
     return QueueCommandL(cmd);
 }
 
 OSCL_EXPORT_REF PVMFCommandId PVMFJitterBufferNode::Reset(PVMFSessionId s,
-        const OsclAny* aContext)
+                                                          const OsclAny* aContext)
 {
     PVMF_JBNODE_LOGINFO((0, "JitterBufferNode:Reset"));
     PVMFJitterBufferNodeCommand cmd;
     cmd.PVMFJitterBufferNodeCommandBase::Construct(s,
-            PVMF_JITTER_BUFFER_NODE_RESET,
-            aContext);
+                                                   PVMF_JITTER_BUFFER_NODE_RESET,
+                                                   aContext);
     return QueueCommandL(cmd);
 }
 
 OSCL_EXPORT_REF PVMFCommandId PVMFJitterBufferNode::CancelAllCommands(PVMFSessionId s,
-        const OsclAny* aContextData)
+                                                                      const OsclAny* aContextData)
 {
     PVMF_JBNODE_LOGINFO((0, "JitterBufferNode:CancelAllCommands"));
     PVMFJitterBufferNodeCommand cmd;
     cmd.PVMFJitterBufferNodeCommandBase::Construct(s,
-            PVMF_JITTER_BUFFER_NODE_CANCELALLCOMMANDS,
-            aContextData);
+                                                   PVMF_JITTER_BUFFER_NODE_CANCELALLCOMMANDS,
+                                                   aContextData);
     return QueueCommandL(cmd);
 }
 
 OSCL_EXPORT_REF PVMFCommandId PVMFJitterBufferNode::CancelCommand(PVMFSessionId s,
-        PVMFCommandId aCmdId,
-        const OsclAny* aContextData)
+                                                                  PVMFCommandId aCmdId,
+                                                                  const OsclAny* aContextData)
 {
     PVMF_JBNODE_LOGINFO((0, "JitterBufferNode:CancelCommand"));
     PVMFJitterBufferNodeCommand cmd;
     cmd.PVMFJitterBufferNodeCommandBase::Construct(s,
-            PVMF_JITTER_BUFFER_NODE_CANCELCOMMAND,
-            aCmdId,
-            aContextData);
+                                                   PVMF_JITTER_BUFFER_NODE_CANCELCOMMAND,
+                                                   aCmdId,
+                                                   aContextData);
     return QueueCommandL(cmd);
 }
 
@@ -650,214 +650,214 @@ void PVMFJitterBufferNode::HandlePortActivity(const PVMFPortActivity& aActivity)
             break;
 
         case PVMF_PORT_ACTIVITY_DISCONNECT:
-        {
-            if (ipJitterBufferMisc)
             {
-                LogSessionDiagnostics();
-                ipJitterBufferMisc->StreamingSessionStopped();
+                if (ipJitterBufferMisc)
+                {
+                    LogSessionDiagnostics();
+                    ipJitterBufferMisc->StreamingSessionStopped();
+                }
             }
-        }
-        break;
+            break;
 
         case PVMF_PORT_ACTIVITY_OUTGOING_MSG:
-        {
-            if (portParamsPtr->iProcessOutgoingMessages)
+            {
+                if (portParamsPtr->iProcessOutgoingMessages)
+                {
+                    /*
+                     * An outgoing message was queued on this port.
+                     * All ports have outgoing messages
+                     * in this node
+                     */
+                    QueuePortActivity(portParamsPtr, aActivity);
+                }
+            }
+            break;
+
+        case PVMF_PORT_ACTIVITY_INCOMING_MSG:
             {
                 /*
                  * An outgoing message was queued on this port.
-                 * All ports have outgoing messages
+                 * Only input and feedback ports have incoming messages
                  * in this node
                  */
-                QueuePortActivity(portParamsPtr, aActivity);
-            }
-        }
-        break;
+                int32 portTag = portParamsPtr->iTag;
+                switch (portTag)
+                {
+                    case PVMF_JITTER_BUFFER_PORT_TYPE_INPUT:
+                    case PVMF_JITTER_BUFFER_PORT_TYPE_FEEDBACK:
+                        if (portParamsPtr->iProcessIncomingMessages)
+                        {
+                            QueuePortActivity(portParamsPtr, aActivity);
+                        }
+                        break;
 
-        case PVMF_PORT_ACTIVITY_INCOMING_MSG:
-        {
-            /*
-             * An outgoing message was queued on this port.
-             * Only input and feedback ports have incoming messages
-             * in this node
-             */
-            int32 portTag = portParamsPtr->iTag;
-            switch (portTag)
-            {
-                case PVMF_JITTER_BUFFER_PORT_TYPE_INPUT:
-                case PVMF_JITTER_BUFFER_PORT_TYPE_FEEDBACK:
-                    if (portParamsPtr->iProcessIncomingMessages)
-                    {
-                        QueuePortActivity(portParamsPtr, aActivity);
-                    }
-                    break;
-
-                default:
-                    OSCL_ASSERT(false);
-                    break;
+                    default:
+                        OSCL_ASSERT(false);
+                        break;
+                }
             }
-        }
-        break;
+            break;
 
         case PVMF_PORT_ACTIVITY_OUTGOING_QUEUE_BUSY:
-        {
-            int32 portTag = portParamsPtr->iTag;
-            switch (portTag)
             {
-                case PVMF_JITTER_BUFFER_PORT_TYPE_INPUT:
-                    /*
-                     * We typically use incoming port's outgoing q
-                     * only in case of 3GPP streaming, wherein we
-                     * send firewall packets. If it is busy, it does
-                     * not stop us from registering incoming data pkts.
-                     * so do nothing.
-                     */
-                    break;
-
-                case PVMF_JITTER_BUFFER_PORT_TYPE_OUTPUT:
+                int32 portTag = portParamsPtr->iTag;
+                switch (portTag)
                 {
-                    /*
-                     * This implies that this output port cannot accept any more
-                     * msgs on its outgoing queue. This would usually imply that
-                     * the corresponding input port must stop processing messages,
-                     * however in case of jitter buffer the input and output ports
-                     * are separated by a huge jitter buffer. Therefore continue
-                     * to process the input.
-                     */
+                    case PVMF_JITTER_BUFFER_PORT_TYPE_INPUT:
+                        /*
+                         * We typically use incoming port's outgoing q
+                         * only in case of 3GPP streaming, wherein we
+                         * send firewall packets. If it is busy, it does
+                         * not stop us from registering incoming data pkts.
+                         * so do nothing.
+                         */
+                        break;
+
+                    case PVMF_JITTER_BUFFER_PORT_TYPE_OUTPUT:
+                        {
+                            /*
+                             * This implies that this output port cannot accept any more
+                             * msgs on its outgoing queue. This would usually imply that
+                             * the corresponding input port must stop processing messages,
+                             * however in case of jitter buffer the input and output ports
+                             * are separated by a huge jitter buffer. Therefore continue
+                             * to process the input.
+                             */
+                        }
+                        break;
+
+                    case PVMF_JITTER_BUFFER_PORT_TYPE_FEEDBACK:
+                        portParamsPtr->iProcessIncomingMessages = false;
+                        break;
+
+                    default:
+                        OSCL_ASSERT(false);
+                        break;
                 }
-                break;
-
-                case PVMF_JITTER_BUFFER_PORT_TYPE_FEEDBACK:
-                    portParamsPtr->iProcessIncomingMessages = false;
-                    break;
-
-                default:
-                    OSCL_ASSERT(false);
-                    break;
             }
-        }
-        break;
+            break;
 
         case PVMF_PORT_ACTIVITY_OUTGOING_QUEUE_READY:
-        {
-            int32 portTag = portParamsPtr->iTag;
-            /*
-             * Outgoing queue was previously busy, but is now ready.
-             * We may need to schedule new processing events depending
-             * on the port type.
-             */
-            switch (portTag)
             {
-                case PVMF_JITTER_BUFFER_PORT_TYPE_INPUT:
-                    /*
-                     * We never did anything in PVMF_PORT_ACTIVITY_OUTGOING_QUEUE_BUSY
-                     * so do nothing
-                     */
-                    break;
-
-                case PVMF_JITTER_BUFFER_PORT_TYPE_OUTPUT:
+                int32 portTag = portParamsPtr->iTag;
+                /*
+                 * Outgoing queue was previously busy, but is now ready.
+                 * We may need to schedule new processing events depending
+                 * on the port type.
+                 */
+                switch (portTag)
                 {
-                    /*
-                     * This implies that this output port can accept more
-                     * msgs on its outgoing queue. This implies that the corresponding
-                     * input port can start processing messages again.
-                     */
-                    PVMFJitterBufferPort* jbPort = OSCL_STATIC_CAST(PVMFJitterBufferPort*, aActivity.iPort);
-                    PVMFJitterBufferPortParams* inPortParams = jbPort->iCounterpartPortParams;
-                    if (inPortParams != NULL)
-                    {
-                        inPortParams->iProcessIncomingMessages = true;
-                    }
-                    else
-                    {
+                    case PVMF_JITTER_BUFFER_PORT_TYPE_INPUT:
+                        /*
+                         * We never did anything in PVMF_PORT_ACTIVITY_OUTGOING_QUEUE_BUSY
+                         * so do nothing
+                         */
+                        break;
+
+                    case PVMF_JITTER_BUFFER_PORT_TYPE_OUTPUT:
+                        {
+                            /*
+                             * This implies that this output port can accept more
+                             * msgs on its outgoing queue. This implies that the corresponding
+                             * input port can start processing messages again.
+                             */
+                            PVMFJitterBufferPort* jbPort = OSCL_STATIC_CAST(PVMFJitterBufferPort*, aActivity.iPort);
+                            PVMFJitterBufferPortParams* inPortParams = jbPort->iCounterpartPortParams;
+                            if (inPortParams != NULL)
+                            {
+                                inPortParams->iProcessIncomingMessages = true;
+                            }
+                            else
+                            {
+                                OSCL_ASSERT(false);
+                            }
+                        }
+                        break;
+
+                    case PVMF_JITTER_BUFFER_PORT_TYPE_FEEDBACK:
+                        portParamsPtr->iProcessIncomingMessages = true;
+                        break;
+
+                    default:
                         OSCL_ASSERT(false);
-                    }
+                        break;
                 }
-                break;
-
-                case PVMF_JITTER_BUFFER_PORT_TYPE_FEEDBACK:
-                    portParamsPtr->iProcessIncomingMessages = true;
-                    break;
-
-                default:
-                    OSCL_ASSERT(false);
-                    break;
+                if (IsAdded())
+                {
+                    RunIfNotReady();
+                }
             }
-            if (IsAdded())
-            {
-                RunIfNotReady();
-            }
-        }
-        break;
+            break;
 
         case PVMF_PORT_ACTIVITY_CONNECTED_PORT_BUSY:
-        {
-            /*
-             * The connected port has become busy (its incoming queue is
-             * busy).
-             */
-            int32 portTag = portParamsPtr->iTag;
-            switch (portTag)
             {
-                case PVMF_JITTER_BUFFER_PORT_TYPE_INPUT:
-                    break;
-
-                case PVMF_JITTER_BUFFER_PORT_TYPE_OUTPUT:
+                /*
+                 * The connected port has become busy (its incoming queue is
+                 * busy).
+                 */
+                int32 portTag = portParamsPtr->iTag;
+                switch (portTag)
                 {
-                    /*
-                     * This implies that this output port cannot send any more
-                     * msgs from its outgoing queue. It should stop processing
-                     * messages till the connect port is ready.
-                     */
-                    portParamsPtr->iProcessOutgoingMessages = false;
+                    case PVMF_JITTER_BUFFER_PORT_TYPE_INPUT:
+                        break;
+
+                    case PVMF_JITTER_BUFFER_PORT_TYPE_OUTPUT:
+                        {
+                            /*
+                             * This implies that this output port cannot send any more
+                             * msgs from its outgoing queue. It should stop processing
+                             * messages till the connect port is ready.
+                             */
+                            portParamsPtr->iProcessOutgoingMessages = false;
+                        }
+                        break;
+
+                    case PVMF_JITTER_BUFFER_PORT_TYPE_FEEDBACK:
+                        portParamsPtr->iProcessOutgoingMessages = false;
+                        break;
+
+                    default:
+                        OSCL_ASSERT(false);
+                        break;
                 }
-                break;
-
-                case PVMF_JITTER_BUFFER_PORT_TYPE_FEEDBACK:
-                    portParamsPtr->iProcessOutgoingMessages = false;
-                    break;
-
-                default:
-                    OSCL_ASSERT(false);
-                    break;
             }
-        }
-        break;
+            break;
 
         case PVMF_PORT_ACTIVITY_CONNECTED_PORT_READY:
-        {
-            /*
-             * The connected port has transitioned from Busy to Ready.
-             * It's time to start processing messages outgoing again.
-             */
-            int32 portTag = portParamsPtr->iTag;
-            switch (portTag)
             {
-                case PVMF_JITTER_BUFFER_PORT_TYPE_INPUT:
-                    break;
+                /*
+                 * The connected port has transitioned from Busy to Ready.
+                 * It's time to start processing messages outgoing again.
+                 */
+                int32 portTag = portParamsPtr->iTag;
+                switch (portTag)
+                {
+                    case PVMF_JITTER_BUFFER_PORT_TYPE_INPUT:
+                        break;
 
-                case PVMF_JITTER_BUFFER_PORT_TYPE_OUTPUT:
-                    /*
-                     * This implies that this output port can now send
-                     * msgs from its outgoing queue. It can start processing
-                     * messages now.
-                     */
-                    portParamsPtr->iProcessOutgoingMessages = true;
-                    break;
+                    case PVMF_JITTER_BUFFER_PORT_TYPE_OUTPUT:
+                        /*
+                         * This implies that this output port can now send
+                         * msgs from its outgoing queue. It can start processing
+                         * messages now.
+                         */
+                        portParamsPtr->iProcessOutgoingMessages = true;
+                        break;
 
-                case PVMF_JITTER_BUFFER_PORT_TYPE_FEEDBACK:
-                    portParamsPtr->iProcessOutgoingMessages = true;
-                    break;
+                    case PVMF_JITTER_BUFFER_PORT_TYPE_FEEDBACK:
+                        portParamsPtr->iProcessOutgoingMessages = true;
+                        break;
 
-                default:
-                    OSCL_ASSERT(false);
-                    break;
+                    default:
+                        OSCL_ASSERT(false);
+                        break;
+                }
+                if (IsAdded())
+                {
+                    RunIfNotReady();
+                }
             }
-            if (IsAdded())
-            {
-                RunIfNotReady();
-            }
-        }
-        break;
+            break;
 
         default:
             break;
@@ -868,7 +868,7 @@ void PVMFJitterBufferNode::HandlePortActivity(const PVMFPortActivity& aActivity)
 // Port Processing routines
 /////////////////////////////////////////////////////
 void PVMFJitterBufferNode::QueuePortActivity(PVMFJitterBufferPortParams* aPortParams,
-        const PVMFPortActivity &aActivity)
+                                             const PVMFPortActivity &aActivity)
 {
     OSCL_UNUSED_ARG(aPortParams);
     OSCL_UNUSED_ARG(aActivity);
@@ -891,11 +891,11 @@ void PVMFJitterBufferNode::SetRTCPIntervalInMicroSecs(uint32 aRTCPInterval)
 }
 
 bool PVMFJitterBufferNode::SetPortParams(PVMFPortInterface* aPort,
-        uint32 aTimeScale,
-        uint32 aBitRate,
-        OsclRefCounterMemFrag& aConfig,
-        bool aRateAdaptation,
-        uint32 aRateAdaptationFeedBackFrequency)
+                                         uint32 aTimeScale,
+                                         uint32 aBitRate,
+                                         OsclRefCounterMemFrag& aConfig,
+                                         bool aRateAdaptation,
+                                         uint32 aRateAdaptationFeedBackFrequency)
 {
     return SetPortParams(aPort, aTimeScale, aBitRate, aConfig, aRateAdaptation,
                          aRateAdaptationFeedBackFrequency, false);
@@ -1020,7 +1020,7 @@ void PVMFJitterBufferNode::SetClientPlayBackClock(PVMFMediaClock* aClientClock)
 }
 
 bool PVMFJitterBufferNode::PrepareForRepositioning(bool oUseExpectedClientClockVal ,
-        uint32 aExpectedClientClockVal)
+                                                   uint32 aExpectedClientClockVal)
 {
     PVMF_JBNODE_LOGINFO((0, "PVMFJitterBufferNode::PrepareForRepositioning oUseExpectedClientClockVal[%d], aExpectedClientClockVal[%d]", oUseExpectedClientClockVal, aExpectedClientClockVal));
     iJitterBufferState = PVMF_JITTER_BUFFER_IN_TRANSITION;
@@ -1035,13 +1035,13 @@ bool PVMFJitterBufferNode::SetPortSSRC(PVMFPortInterface* aPort, uint32 aSSRC)
 }
 
 bool PVMFJitterBufferNode::SetPortRTPParams(PVMFPortInterface* aPort,
-        bool   aSeqNumBasePresent,
-        uint32 aSeqNumBase,
-        bool   aRTPTimeBasePresent,
-        uint32 aRTPTimeBase,
-        bool   aNPTTimeBasePresent,
-        uint32 aNPTInMS,
-        bool oPlayAfterASeek)
+                                            bool   aSeqNumBasePresent,
+                                            uint32 aSeqNumBase,
+                                            bool   aRTPTimeBasePresent,
+                                            uint32 aRTPTimeBase,
+                                            bool   aNPTTimeBasePresent,
+                                            uint32 aNPTInMS,
+                                            bool oPlayAfterASeek)
 {
     PVMF_JBNODE_LOGINFO((0, "PVMFJitterBufferNode::SetPortRTPParams In Port - 0x%x", aPort));
     uint32 i;
@@ -1092,7 +1092,7 @@ bool PVMFJitterBufferNode::SetPortRTPParams(PVMFPortInterface* aPort,
                                                      clientClock32));
 #endif
                         pPortParams->ipJitterBuffer->PurgeElementsWithSeqNumsLessThan(aSeqNumBase,
-                                clientClock32);
+                                                                                      clientClock32);
 #if (PVLOGGER_INST_LEVEL > PVLOGMSG_INST_LLDBG)
                         PVMF_JBNODE_LOGCLOCK_REBUFF((0, "PVMFJitterBufferNode::setPortRTPParams - After Purge - ClientClock=%d",
                                                      clientClock32));
@@ -1114,9 +1114,9 @@ bool PVMFJitterBufferNode::SetPortRTPParams(PVMFPortInterface* aPort,
 }
 
 bool PVMFJitterBufferNode::SetPortRTCPParams(PVMFPortInterface* aPort,
-        int aNumSenders,
-        uint32 aRR,
-        uint32 aRS)
+                                             int aNumSenders,
+                                             uint32 aRR,
+                                             uint32 aRS)
 {
     PVMF_JBNODE_LOGINFO((0, "PVMFJitterBufferNode::SetPortRTCPParams aPort - [0x%x]", aPort));
     return ipJitterBufferMisc->SetPortRTCPParams(aPort, aNumSenders, aRR, aRS);
@@ -1186,8 +1186,8 @@ PVMFStatus PVMFJitterBufferNode::SendBOSMessage(uint32 aStreamID)
     PVMF_JBNODE_LOGINFO((0, "PVMFJitterBufferNode::SendBOSMessage In"));
     Oscl_Vector<PVMFJitterBufferPortParams*, OsclMemAllocator>::iterator it;
     for (it = iPortParamsQueue.begin();
-            it != iPortParamsQueue.end();
-            it++)
+         it != iPortParamsQueue.end();
+         it++)
     {
         PVMFJitterBufferPortParams* pPortParams = *it;
         if (pPortParams->iTag == PVMF_JITTER_BUFFER_PORT_TYPE_INPUT)
@@ -1203,7 +1203,7 @@ PVMFStatus PVMFJitterBufferNode::SendBOSMessage(uint32 aStreamID)
 }
 
 void PVMFJitterBufferNode::SetJitterBufferChunkAllocator(OsclMemPoolResizableAllocator*
-        aDataBufferAllocator, const PVMFPortInterface* aPort)
+                                                         aDataBufferAllocator, const PVMFPortInterface* aPort)
 {
     PVMF_JBNODE_LOGINFO((0, "PVMFJitterBufferNode::SetJitterBufferChunkAllocator -aPort 0x%x", aPort));
     PVMFJitterBufferPort* port = OSCL_STATIC_CAST(PVMFJitterBufferPort*, aPort);
@@ -1214,10 +1214,10 @@ void PVMFJitterBufferNode::SetJitterBufferChunkAllocator(OsclMemPoolResizableAll
 }
 
 void PVMFJitterBufferNode::SetJitterBufferMemPoolInfo(const PvmfPortBaseImpl* aPort,
-        uint32 aSize,
-        uint32 aResizeSize,
-        uint32 aMaxNumResizes,
-        uint32 aExpectedNumberOfBlocksPerBuffer)
+                                                      uint32 aSize,
+                                                      uint32 aResizeSize,
+                                                      uint32 aMaxNumResizes,
+                                                      uint32 aExpectedNumberOfBlocksPerBuffer)
 {
     PVMF_JBNODE_LOGINFO((0, "PVMFJitterBufferNode::SetJitterBufferMemPoolInfo Port 0x%x", aPort));
     PVMFJitterBufferPort* port = OSCL_STATIC_CAST(PVMFJitterBufferPort*, aPort);
@@ -1228,10 +1228,10 @@ void PVMFJitterBufferNode::SetJitterBufferMemPoolInfo(const PvmfPortBaseImpl* aP
 }
 
 void PVMFJitterBufferNode::GetJitterBufferMemPoolInfo(const PvmfPortBaseImpl* aPort,
-        uint32& aSize,
-        uint32& aResizeSize,
-        uint32& aMaxNumResizes,
-        uint32& aExpectedNumberOfBlocksPerBuffer) const
+                                                      uint32& aSize,
+                                                      uint32& aResizeSize,
+                                                      uint32& aMaxNumResizes,
+                                                      uint32& aExpectedNumberOfBlocksPerBuffer) const
 {
     PVMFJitterBufferPort* port = OSCL_STATIC_CAST(PVMFJitterBufferPort*, aPort);
     if (port->iPortParams->ipJitterBuffer)
@@ -1241,7 +1241,7 @@ void PVMFJitterBufferNode::GetJitterBufferMemPoolInfo(const PvmfPortBaseImpl* aP
 }
 
 void PVMFJitterBufferNode::SetSharedBufferResizeParams(uint32 maxNumResizes,
-        uint32 resizeSize)
+                                                       uint32 resizeSize)
 {
     // make sure we're in a state that makes sense
     OSCL_ASSERT((iInterfaceState == EPVMFNodeCreated) ||
@@ -1253,14 +1253,14 @@ void PVMFJitterBufferNode::SetSharedBufferResizeParams(uint32 maxNumResizes,
 }
 
 void PVMFJitterBufferNode::GetSharedBufferResizeParams(uint32& maxNumResizes,
-        uint32& resizeSize)
+                                                       uint32& resizeSize)
 {
     maxNumResizes = iMaxNumBufferResizes;
     resizeSize = iBufferResizeSize;
 }
 
 bool PVMFJitterBufferNode::ClearJitterBuffer(PVMFPortInterface* aPort,
-        uint32 aSeqNum)
+                                             uint32 aSeqNum)
 {
     PVMF_JBNODE_LOGINFO((0, "PVMFJitterBufferNode::ClearJitterBuffer Port 0x%x aSeqNum[%d]", aPort, aSeqNum));
     /* Typically called only for HTTP streaming sessions */
@@ -1282,7 +1282,7 @@ bool PVMFJitterBufferNode::ClearJitterBuffer(PVMFPortInterface* aPort,
             if (ipClientPlayBackClock != NULL)
                 ipClientPlayBackClock->GetCurrentTime32(clientClock32, overflowFlag, PVMF_MEDIA_CLOCK_MSEC, timebase32);
             pPortParams->ipJitterBuffer->PurgeElementsWithSeqNumsLessThan(aSeqNum,
-                    clientClock32);
+                                                                          clientClock32);
             ipJitterBufferMisc->ResetSession();
             iJitterBufferState = PVMF_JITTER_BUFFER_READY;
             return true;
@@ -1308,7 +1308,7 @@ void PVMFJitterBufferNode::FlushJitterBuffer()
 }
 
 PVMFStatus PVMFJitterBufferNode::SetInputMediaHeaderPreParsed(PVMFPortInterface* aPort,
-        bool aHeaderPreParsed)
+                                                              bool aHeaderPreParsed)
 {
     PVMFStatus status = PVMFFailure;
     PVMFJitterBufferPort *port = OSCL_STATIC_CAST(PVMFJitterBufferPort*, aPort);
@@ -1436,7 +1436,7 @@ PVMFJitterBufferNode::SetPortParams(PVMFPortInterface* aPort,
             /* Compute buffer size based on bitrate and jitter duration*/
             uint32 sizeInBytes = 0;
             if (((int32)iJitterBufferDurationInMilliSeconds > 0) &&
-                    ((int32)aBitRate > 0))
+                ((int32)aBitRate > 0))
             {
                 uint32 byteRate = aBitRate / 8;
                 uint32 overhead = (byteRate * PVMF_JITTER_BUFFER_NODE_MEM_POOL_OVERHEAD) / 100;
@@ -1492,11 +1492,11 @@ PVMFCommandId PVMFJitterBufferNode::QueueCommandL(PVMFJitterBufferNodeCommand& a
 //OsclActiveObject Implementation
 ///////////////////////////////////////////////////////////////////////////////
 /**
-  * This AO handles both API commands and port activity.
-  * The AO will either process one command or service one connected
-  * port per call.  It will re-schedule itself and run continuously
-  * until it runs out of things to do.
-  */
+ * This AO handles both API commands and port activity.
+ * The AO will either process one command or service one connected
+ * port per call.  It will re-schedule itself and run continuously
+ * until it runs out of things to do.
+ */
 void PVMFJitterBufferNode::Run()
 {
     iNumRunL++;
@@ -1527,16 +1527,16 @@ void PVMFJitterBufferNode::Run()
      * Process port activity
      */
     if (((iInterfaceState == EPVMFNodeInitialized) ||
-            (iInterfaceState == EPVMFNodePrepared) ||
-            (iInterfaceState == EPVMFNodeStarted)  ||
-            (iInterfaceState == EPVMFNodePaused)) ||
-            FlushPending())
+         (iInterfaceState == EPVMFNodePrepared) ||
+         (iInterfaceState == EPVMFNodeStarted)  ||
+         (iInterfaceState == EPVMFNodePaused)) ||
+        FlushPending())
     {
         uint32 i;
         for (i = 0; i < iPortVector.size(); i++)
         {
             PVMFJitterBufferPortParams* portContainerPtr =
-                iPortVector[i]->iPortParams;
+                    iPortVector[i]->iPortParams;
 
             if (portContainerPtr == NULL)
             {
@@ -1578,7 +1578,7 @@ void PVMFJitterBufferNode::Run()
         for (i = 0;i < iPortVector.size();i++)
         {
             if (iPortVector[i]->IncomingMsgQueueSize() > 0 ||
-                    iPortVector[i]->OutgoingMsgQueueSize() > 0)
+                iPortVector[i]->OutgoingMsgQueueSize() > 0)
             {
                 OSCL_ASSERT(false);
             }
@@ -1622,64 +1622,64 @@ bool PVMFJitterBufferNode::ProcessPortActivity(PVMFJitterBufferPortParams* aPort
     switch (aPortParams->iTag)
     {
         case PVMF_JITTER_BUFFER_PORT_TYPE_OUTPUT:
-        {
-            if ((aPortParams->iProcessOutgoingMessages) &&
+            {
+                if ((aPortParams->iProcessOutgoingMessages) &&
                     (aPortParams->irPort.OutgoingMsgQueueSize() > 0))
-            {
-                status = ProcessOutgoingMsg(aPortParams);
-            }
-            /*
-             * Send data out of jitter buffer as long as there's:
-             *  - more data to send
-             *  - outgoing queue isn't in a Busy state.
-             *  - ports are not paused
-             */
-            PVMFJitterBufferPort* outPort = OSCL_STATIC_CAST(PVMFJitterBufferPort*, &aPortParams->irPort);
-            PVMFJitterBufferPortParams* inPortParamsPtr = outPort->iCounterpartPortParams;
-            if (aPortParams->iProcessOutgoingMessages)
-            {
-                if ((oStopOutputPorts == false) && (inPortParamsPtr->iCanReceivePktFromJB))
                 {
-                    SendData(OSCL_STATIC_CAST(PVMFPortInterface*, &inPortParamsPtr->irPort));
+                    status = ProcessOutgoingMsg(aPortParams);
+                }
+                /*
+                 * Send data out of jitter buffer as long as there's:
+                 *  - more data to send
+                 *  - outgoing queue isn't in a Busy state.
+                 *  - ports are not paused
+                 */
+                PVMFJitterBufferPort* outPort = OSCL_STATIC_CAST(PVMFJitterBufferPort*, &aPortParams->irPort);
+                PVMFJitterBufferPortParams* inPortParamsPtr = outPort->iCounterpartPortParams;
+                if (aPortParams->iProcessOutgoingMessages)
+                {
+                    if ((oStopOutputPorts == false) && (inPortParamsPtr->iCanReceivePktFromJB))
+                    {
+                        SendData(OSCL_STATIC_CAST(PVMFPortInterface*, &inPortParamsPtr->irPort));
+                    }
                 }
             }
-        }
-        break;
+            break;
 
         case PVMF_JITTER_BUFFER_PORT_TYPE_INPUT:
-        {
-            PVMF_JBNODE_LOGINFO((0, "PVMFJitterBufferNode::ProcessPortActivity: input port- aPortParams->iProcessIncomingMessages %d aPortParams->iPort->IncomingMsgQueueSize()  %d" ,
-                                 aPortParams->iProcessIncomingMessages, aPortParams->irPort.IncomingMsgQueueSize()));
-            if ((aPortParams->iProcessIncomingMessages) &&
+            {
+                PVMF_JBNODE_LOGINFO((0, "PVMFJitterBufferNode::ProcessPortActivity: input port- aPortParams->iProcessIncomingMessages %d aPortParams->iPort->IncomingMsgQueueSize()  %d" ,
+                                     aPortParams->iProcessIncomingMessages, aPortParams->irPort.IncomingMsgQueueSize()));
+                if ((aPortParams->iProcessIncomingMessages) &&
                     (aPortParams->irPort.IncomingMsgQueueSize() > 0))
-            {
-                status = ProcessIncomingMsg(aPortParams);
-            }
-            if ((aPortParams->iProcessOutgoingMessages) &&
+                {
+                    status = ProcessIncomingMsg(aPortParams);
+                }
+                if ((aPortParams->iProcessOutgoingMessages) &&
                     (aPortParams->irPort.OutgoingMsgQueueSize() > 0))
-            {
-                status = ProcessOutgoingMsg(aPortParams);
+                {
+                    status = ProcessOutgoingMsg(aPortParams);
+                }
             }
-        }
-        break;
+            break;
 
         case PVMF_JITTER_BUFFER_PORT_TYPE_FEEDBACK:
-        {
-            PVMF_JBNODE_LOGINFO((0, "PVMFJitterBufferNode::ProcessPortActivity: - aPortParams->iProcessIncomingMessages %d aPortParams->iPort->IncomingMsgQueueSize()  %d" ,
-                                 aPortParams->iProcessIncomingMessages, aPortParams->irPort.IncomingMsgQueueSize()));
+            {
+                PVMF_JBNODE_LOGINFO((0, "PVMFJitterBufferNode::ProcessPortActivity: - aPortParams->iProcessIncomingMessages %d aPortParams->iPort->IncomingMsgQueueSize()  %d" ,
+                                     aPortParams->iProcessIncomingMessages, aPortParams->irPort.IncomingMsgQueueSize()));
 
-            if ((aPortParams->iProcessIncomingMessages) &&
+                if ((aPortParams->iProcessIncomingMessages) &&
                     (aPortParams->irPort.IncomingMsgQueueSize() > 0))
-            {
-                status = ProcessIncomingMsg(aPortParams);
-            }
-            if ((aPortParams->iProcessOutgoingMessages) &&
+                {
+                    status = ProcessIncomingMsg(aPortParams);
+                }
+                if ((aPortParams->iProcessOutgoingMessages) &&
                     (aPortParams->irPort.OutgoingMsgQueueSize() > 0))
-            {
-                status = ProcessOutgoingMsg(aPortParams);
+                {
+                    status = ProcessOutgoingMsg(aPortParams);
+                }
             }
-        }
-        break;
+            break;
 
         default:
             break;
@@ -1691,8 +1691,8 @@ bool PVMFJitterBufferNode::ProcessPortActivity(PVMFJitterBufferPortParams* aPort
      * so don't report it.)
      */
     if (status != PVMFErrBusy
-            && status != PVMFSuccess
-            && status != PVMFErrInvalidState)
+        && status != PVMFSuccess
+        && status != PVMFErrInvalidState)
     {
         PVMF_JBNODE_LOGERROR((0, "PVMFJitterBufferNode::ProcessPortActivity: Error - ProcessPortActivity failed. port=0x%x",
                               &aPortParams->irPort));
@@ -1726,105 +1726,105 @@ PVMFStatus PVMFJitterBufferNode::ProcessIncomingMsg(PVMFJitterBufferPortParams* 
     switch (aPortParams->iTag)
     {
         case PVMF_JITTER_BUFFER_PORT_TYPE_INPUT:
-        {
-            /* Parse packet header - mainly to retrieve time stamp */
-            PVMFJitterBuffer* jitterBuffer = aPortParams->ipJitterBuffer;
-            if (jitterBuffer == NULL)
             {
-                PVMF_JBNODE_LOGERROR((0, "PVMFJitterBufferNode::ProcessIncomingMsg: findJitterBuffer failed"));
-                int32 errcode = PVMFJitterBufferNodeUnableToRegisterIncomingPacket;
-                ReportErrorEvent(PVMFErrArgument, (OsclAny*)(aPort), &eventuuid, &errcode);
-                return PVMFErrArgument;
-            }
-
-            /*
-             * Incoming message recvd on the input port.
-             * Dequeue the message
-             */
-            PVMFSharedMediaMsgPtr msg;
-            PVMFStatus status = aPort->DequeueIncomingMsg(msg);
-            if (status != PVMFSuccess)
-            {
-                ReportErrorEvent(PVMFErrPortProcessing, (OsclAny*)(aPort));
-                PVMF_JBNODE_LOGERROR((0, "PVMFJitterBufferNode::ProcessIncomingMsg: Error - INPUT PORT - DequeueIncomingMsg failed"));
-                return status;
-            }
-
-            PVMFJitterBufferRegisterMediaMsgStatus regStatus = jitterBuffer->RegisterMediaMsg(msg);
-            switch (regStatus)
-            {
-
-                case PVMF_JB_REGISTER_MEDIA_MSG_SUCCESS:
+                /* Parse packet header - mainly to retrieve time stamp */
+                PVMFJitterBuffer* jitterBuffer = aPortParams->ipJitterBuffer;
+                if (jitterBuffer == NULL)
                 {
-                    PVMF_JBNODE_LOGDATATRAFFIC_IN((0, "PVMFJitterBufferNode::ProcessIncomingMsg: Packet registered successfully Mime %s", aPortParams->iMimeType.get_cstr()));
-                }
-                break;
-                case PVMF_JB_REGISTER_MEDIA_MSG_FAILURE_JB_FULL:
-                {
-                    aPortParams->iProcessIncomingMessages = false;
-                    jitterBuffer->NotifyFreeSpaceAvailable();
-                    int32 infocode = PVMFJitterBufferNodeJitterBufferFull;
-                    ReportInfoEvent(PVMFInfoOverflow, (OsclAny*)(aPort), &eventuuid, &infocode);
-                    PVMF_JBNODE_LOGDATATRAFFIC_IN((0, "PVMFJitterBufferNode::ProcessIncomingMsg: Jitter Buffer full"));
-                    PVMF_JBNODE_LOGDATATRAFFIC_FLOWCTRL_E((0, "PVMFJitterBufferNode::ProcessIncomingMsg: Jitter Buffer full"));
-                    return PVMFErrBusy;
-                }
-                break;
-                case PVMF_JB_REGISTER_MEDIA_MSG_FAILURE_INSUFFICIENT_MEMORY_FOR_PACKETIZATION:
-                {
-                    aPortParams->iProcessIncomingMessages = false;
-                    jitterBuffer->NotifyFreeSpaceAvailable();
-                    return PVMFErrBusy;
-                }
-                break;
-                case PVMF_JB_REGISTER_MEDIA_MSG_ERR_CORRUPT_PACKET:
-                {
-                    PVMF_JBNODE_LOGERROR((0, "PVMFJitterBufferNode::ProcessIncomingMsg: unable to register packet"));
+                    PVMF_JBNODE_LOGERROR((0, "PVMFJitterBufferNode::ProcessIncomingMsg: findJitterBuffer failed"));
                     int32 errcode = PVMFJitterBufferNodeUnableToRegisterIncomingPacket;
                     ReportErrorEvent(PVMFErrArgument, (OsclAny*)(aPort), &eventuuid, &errcode);
                     return PVMFErrArgument;
                 }
-                case PVMF_JB_REGISTER_MEDIA_MSG_ERR_EOS_SIGNALLED:
+
+                /*
+                 * Incoming message recvd on the input port.
+                 * Dequeue the message
+                 */
+                PVMFSharedMediaMsgPtr msg;
+                PVMFStatus status = aPort->DequeueIncomingMsg(msg);
+                if (status != PVMFSuccess)
                 {
-                    PVMF_JBNODE_LOGERROR((0, "PVMFJitterBufferNode::ProcessIncomingMsg: data received after signalling EOS"));
+                    ReportErrorEvent(PVMFErrPortProcessing, (OsclAny*)(aPort));
+                    PVMF_JBNODE_LOGERROR((0, "PVMFJitterBufferNode::ProcessIncomingMsg: Error - INPUT PORT - DequeueIncomingMsg failed"));
+                    return status;
                 }
-                break;
-                default:
+
+                PVMFJitterBufferRegisterMediaMsgStatus regStatus = jitterBuffer->RegisterMediaMsg(msg);
+                switch (regStatus)
                 {
-                    PVMF_JBNODE_LOGDATATRAFFIC_IN((0, "PVMFJitterBufferNode::ProcessIncomingMsg: Packet could not be registered Register packet returned status %d", regStatus));
-                    PVMF_JBNODE_LOGERROR((0, "PVMFJitterBufferNode::ProcessIncomingMsg: Packet could not be registered Register packet returned status %d", regStatus));
+
+                    case PVMF_JB_REGISTER_MEDIA_MSG_SUCCESS:
+                        {
+                            PVMF_JBNODE_LOGDATATRAFFIC_IN((0, "PVMFJitterBufferNode::ProcessIncomingMsg: Packet registered successfully Mime %s", aPortParams->iMimeType.get_cstr()));
+                        }
+                        break;
+                    case PVMF_JB_REGISTER_MEDIA_MSG_FAILURE_JB_FULL:
+                        {
+                            aPortParams->iProcessIncomingMessages = false;
+                            jitterBuffer->NotifyFreeSpaceAvailable();
+                            int32 infocode = PVMFJitterBufferNodeJitterBufferFull;
+                            ReportInfoEvent(PVMFInfoOverflow, (OsclAny*)(aPort), &eventuuid, &infocode);
+                            PVMF_JBNODE_LOGDATATRAFFIC_IN((0, "PVMFJitterBufferNode::ProcessIncomingMsg: Jitter Buffer full"));
+                            PVMF_JBNODE_LOGDATATRAFFIC_FLOWCTRL_E((0, "PVMFJitterBufferNode::ProcessIncomingMsg: Jitter Buffer full"));
+                            return PVMFErrBusy;
+                        }
+                        break;
+                    case PVMF_JB_REGISTER_MEDIA_MSG_FAILURE_INSUFFICIENT_MEMORY_FOR_PACKETIZATION:
+                        {
+                            aPortParams->iProcessIncomingMessages = false;
+                            jitterBuffer->NotifyFreeSpaceAvailable();
+                            return PVMFErrBusy;
+                        }
+                        break;
+                    case PVMF_JB_REGISTER_MEDIA_MSG_ERR_CORRUPT_PACKET:
+                        {
+                            PVMF_JBNODE_LOGERROR((0, "PVMFJitterBufferNode::ProcessIncomingMsg: unable to register packet"));
+                            int32 errcode = PVMFJitterBufferNodeUnableToRegisterIncomingPacket;
+                            ReportErrorEvent(PVMFErrArgument, (OsclAny*)(aPort), &eventuuid, &errcode);
+                            return PVMFErrArgument;
+                        }
+                    case PVMF_JB_REGISTER_MEDIA_MSG_ERR_EOS_SIGNALLED:
+                        {
+                            PVMF_JBNODE_LOGERROR((0, "PVMFJitterBufferNode::ProcessIncomingMsg: data received after signalling EOS"));
+                        }
+                        break;
+                    default:
+                        {
+                            PVMF_JBNODE_LOGDATATRAFFIC_IN((0, "PVMFJitterBufferNode::ProcessIncomingMsg: Packet could not be registered Register packet returned status %d", regStatus));
+                            PVMF_JBNODE_LOGERROR((0, "PVMFJitterBufferNode::ProcessIncomingMsg: Packet could not be registered Register packet returned status %d", regStatus));
+                        }
                 }
+                SendData(aPort);
             }
-            SendData(aPort);
-        }
-        break;
+            break;
 
         case PVMF_JITTER_BUFFER_PORT_TYPE_FEEDBACK:
-        {
-            /*
-            * Incoming RTCP reports - recvd on the input port.
-            * Dequeue the message - Need to fully implement
-            * RTCP
-            */
-            PVMFSharedMediaMsgPtr msg;
-            PVMFStatus status = aPort->DequeueIncomingMsg(msg);
-            if (status != PVMFSuccess)
             {
-                ReportErrorEvent(PVMFErrPortProcessing, (OsclAny*)(aPort));
-                PVMF_JBNODE_LOGERROR((0, "0x%x PVMFJitterBufferNode::ProcessIncomingMsg: Error - FB PORT - DequeueIncomingMsg failed", this));
-                return status;
+                /*
+                 * Incoming RTCP reports - recvd on the input port.
+                 * Dequeue the message - Need to fully implement
+                 * RTCP
+                 */
+                PVMFSharedMediaMsgPtr msg;
+                PVMFStatus status = aPort->DequeueIncomingMsg(msg);
+                if (status != PVMFSuccess)
+                {
+                    ReportErrorEvent(PVMFErrPortProcessing, (OsclAny*)(aPort));
+                    PVMF_JBNODE_LOGERROR((0, "0x%x PVMFJitterBufferNode::ProcessIncomingMsg: Error - FB PORT - DequeueIncomingMsg failed", this));
+                    return status;
+                }
+                status = ipJitterBufferMisc->ProcessFeedbackMessage(*aPortParams, msg);
+                PVMF_JBNODE_LOGDATATRAFFIC_IN((0, "PVMFJitterBufferNode::ProcessIncomingMsg: Feedback Packet registered with status code status %d", status));
             }
-            status = ipJitterBufferMisc->ProcessFeedbackMessage(*aPortParams, msg);
-            PVMF_JBNODE_LOGDATATRAFFIC_IN((0, "PVMFJitterBufferNode::ProcessIncomingMsg: Feedback Packet registered with status code status %d", status));
-        }
-        break;
+            break;
 
         default:
-        {
-            ReportErrorEvent(PVMFErrPortProcessing, (OsclAny*)(aPort));
-            PVMF_JBNODE_LOGERROR((0, "PVMFJitterBufferNode::ProcessIncomingMsg - Invalid Port Tag"));
-            return PVMFFailure;
-        }
+            {
+                ReportErrorEvent(PVMFErrPortProcessing, (OsclAny*)(aPort));
+                PVMF_JBNODE_LOGERROR((0, "PVMFJitterBufferNode::ProcessIncomingMsg - Invalid Port Tag"));
+                return PVMFFailure;
+            }
     }
     return (PVMFSuccess);
 }
@@ -1873,7 +1873,7 @@ PVMFStatus
 PVMFJitterBufferNode::SendData(PVMFPortInterface* aPort)
 {
     PVMFJitterBufferPort* jbPort =
-        OSCL_STATIC_CAST(PVMFJitterBufferPort*, aPort);
+            OSCL_STATIC_CAST(PVMFJitterBufferPort*, aPort);
 
     PVMFPortInterface* outputPort = jbPort->iPortCounterpart;
     PVMFJitterBufferPortParams* portParamsPtr = jbPort->iPortParams;
@@ -1935,9 +1935,9 @@ PVMFJitterBufferNode::SendData(PVMFPortInterface* aPort)
         uint32 currentTimeBase32 = 0;
         bool overflowFlag = false;
         ipJitterBufferMisc->GetEstimatedServerClock().GetCurrentTime32(currentTime32,
-                overflowFlag,
-                PVMF_MEDIA_CLOCK_MSEC,
-                currentTimeBase32);
+                                                                       overflowFlag,
+                                                                       PVMF_MEDIA_CLOCK_MSEC,
+                                                                       currentTimeBase32);
 
 
         PVMF_JBNODE_LOGDATATRAFFIC_OUT((0, "PVMFJitterBufferNode::SendData - Estimated serv clock %d", currentTime32));
@@ -1976,13 +1976,13 @@ bool PVMFJitterBufferNode::CheckForPortRescheduling()
     //RTSP streaming to do firewall packet exchange. So if there are outgoing
     //msgs and oProcessOutgoingMessages is true then node needs scheduling.
     //b) PVMF_JITTER_BUFFER_PORT_TYPE_OUTPUT - As long as:
-    //	- there are msgs in outgoing queue
-    //	- oProcessOutgoingMessages is true
-    //	- and as long as there is data in JB and we are not in buffering
+    //  - there are msgs in outgoing queue
+    //  - oProcessOutgoingMessages is true
+    //  - and as long as there is data in JB and we are not in buffering
     //then node needs scheduling.
     //c) PVMF_JITTER_BUFFER_PORT_TYPE_FEEDBACK - As long as:
-    //	- there are msgs in incoming queue and oProcessIncomingMessages is true
-    //	- there are msgs in outgoing queue and oProcessOutgoingMessages is true
+    //  - there are msgs in incoming queue and oProcessIncomingMessages is true
+    //  - there are msgs in outgoing queue and oProcessOutgoingMessages is true
     uint32 i;
     for (i = 0; i < iPortVector.size(); i++)
     {
@@ -2020,10 +2020,10 @@ bool PVMFJitterBufferNode::CheckForPortRescheduling()
         else if (portContainerPtr->iTag == PVMF_JITTER_BUFFER_PORT_TYPE_OUTPUT)
         {
             PVMFJitterBufferPort* jbPort =
-                OSCL_STATIC_CAST(PVMFJitterBufferPort*, &portContainerPtr->irPort);
+                    OSCL_STATIC_CAST(PVMFJitterBufferPort*, &portContainerPtr->irPort);
             PVMFJitterBufferPortParams* inPortParamsPtr = jbPort->iCounterpartPortParams;
             if ((portContainerPtr->irPort.OutgoingMsgQueueSize() > 0) ||
-                    (inPortParamsPtr->iCanReceivePktFromJB))
+                (inPortParamsPtr->iCanReceivePktFromJB))
             {
                 if ((portContainerPtr->iProcessOutgoingMessages) && (oStopOutputPorts == false))
                 {
@@ -2082,7 +2082,7 @@ bool PVMFJitterBufferNode::CheckForPortActivityQueues()
         }
 
         if ((portContainerPtr->irPort.IncomingMsgQueueSize() > 0) ||
-                (portContainerPtr->irPort.OutgoingMsgQueueSize() > 0))
+            (portContainerPtr->irPort.OutgoingMsgQueueSize() > 0))
         {
             /*
              * Found a port that still has an outstanding activity.
@@ -2174,11 +2174,11 @@ bool PVMFJitterBufferNode::ProcessCommand(PVMFJitterBufferNodeCommand& aCmd)
             break;
 
         default:
-        {
-            /* unknown command type */
-            CommandComplete(iInputCommands, aCmd, PVMFErrNotSupported);
-        }
-        break;
+            {
+                /* unknown command type */
+                CommandComplete(iInputCommands, aCmd, PVMFErrNotSupported);
+            }
+            break;
     }
 
     return true;
@@ -2199,11 +2199,11 @@ PVMFJitterBufferNode::MoveCmdToCurrentQueue(PVMFJitterBufferNodeCommand& aCmd)
 }
 
 void PVMFJitterBufferNode::CommandComplete(PVMFJitterBufferNodeCmdQ& aCmdQ,
-        PVMFJitterBufferNodeCommand& aCmd,
-        PVMFStatus aStatus,
-        OsclAny* aEventData,
-        PVUuid* aEventUUID,
-        int32* aEventCode)
+                                           PVMFJitterBufferNodeCommand& aCmd,
+                                           PVMFStatus aStatus,
+                                           OsclAny* aEventData,
+                                           PVUuid* aEventUUID,
+                                           int32* aEventCode)
 {
     PVMF_JBNODE_LOGINFO((0, "JitterBufferNode:CommandComplete Id %d Cmd %d Status %d Context %d Data %d"
                          , aCmd.iId, aCmd.iCmd, aStatus, aCmd.iContext, aEventData));
@@ -2238,18 +2238,18 @@ void PVMFJitterBufferNode::CommandComplete(PVMFJitterBufferNodeCmdQ& aCmdQ,
      * state
      */
     if ((aStatus == PVMFFailure) ||
-            (aStatus == PVMFErrNoMemory) ||
-            (aStatus == PVMFErrNoResources))
+        (aStatus == PVMFErrNoMemory) ||
+        (aStatus == PVMFErrNoResources))
     {
         SetState(EPVMFNodeError);
     }
 }
 
 void PVMFJitterBufferNode::CommandComplete(PVMFJitterBufferNodeCommand& aCmd,
-        PVMFStatus aStatus,
-        OsclAny* aEventData,
-        PVUuid* aEventUUID,
-        int32* aEventCode)
+                                           PVMFStatus aStatus,
+                                           OsclAny* aEventData,
+                                           PVUuid* aEventUUID,
+                                           int32* aEventCode)
 {
     PVMF_JBNODE_LOGINFO((0, "JitterBufferNode:CommandComplete Id %d Cmd %d Status %d Context %d Data %d"
                          , aCmd.iId, aCmd.iCmd, aStatus, aCmd.iContext, aEventData));
@@ -2280,8 +2280,8 @@ void PVMFJitterBufferNode::CommandComplete(PVMFJitterBufferNodeCommand& aCmd,
      * state
      */
     if ((aStatus == PVMFFailure) ||
-            (aStatus == PVMFErrNoMemory) ||
-            (aStatus == PVMFErrNoResources))
+        (aStatus == PVMFErrNoMemory) ||
+        (aStatus == PVMFErrNoResources))
     {
         SetState(EPVMFNodeError);
     }
@@ -2292,9 +2292,9 @@ void PVMFJitterBufferNode::CommandComplete(PVMFJitterBufferNodeCommand& aCmd,
  * Does not report completion as it is an internal command
  */
 void PVMFJitterBufferNode::InternalCommandComplete(PVMFJitterBufferNodeCmdQ& aCmdQ,
-        PVMFJitterBufferNodeCommand& aCmd,
-        PVMFStatus aStatus,
-        OsclAny* aEventData)
+                                                   PVMFJitterBufferNodeCommand& aCmd,
+                                                   PVMFStatus aStatus,
+                                                   OsclAny* aEventData)
 {
     OSCL_UNUSED_ARG(aEventData);
 
@@ -2311,8 +2311,8 @@ void PVMFJitterBufferNode::InternalCommandComplete(PVMFJitterBufferNodeCmdQ& aCm
      * state
      */
     if ((aStatus == PVMFFailure) ||
-            (aStatus == PVMFErrNoMemory) ||
-            (aStatus == PVMFErrNoResources))
+        (aStatus == PVMFErrNoMemory) ||
+        (aStatus == PVMFErrNoResources))
     {
         SetState(EPVMFNodeError);
     }
@@ -2337,8 +2337,8 @@ void PVMFJitterBufferNode::DoQueryUuid(PVMFJitterBufferNodeCommand& aCmd)
     // unless exactmatch is set.
 
     if (*mimetype == PVMF_JITTERBUFFER_CUSTOMINTERFACE_MIMETYPE
-            || (!exactmatch && *mimetype == PVMF_JITTERBUFFER_MIMETYPE)
-            || (!exactmatch && *mimetype == PVMF_JITTERBUFFER_BASEMIMETYPE))
+        || (!exactmatch && *mimetype == PVMF_JITTERBUFFER_MIMETYPE)
+        || (!exactmatch && *mimetype == PVMF_JITTERBUFFER_BASEMIMETYPE))
     {
         PVUuid uuid(PVMF_JITTERBUFFERNODE_EXTENSIONINTERFACE_UUID);
         uuidvec->push_back(uuid);
@@ -2365,7 +2365,7 @@ void PVMFJitterBufferNode::DoQueryInterface(PVMFJitterBufferNodeCommand& aCmd)
             OsclAny*ptr = NULL;
             OSCL_TRY(err,
                      ptr = alloc.ALLOCATE(sizeof(PVMFJitterBufferExtensionInterfaceImpl));
-                    );
+                     );
             if (err != OsclErrNone || !ptr)
             {
                 PVMF_JBNODE_LOGERROR((0, "PVMFJitterBufferNode::DoQueryInterface: Error - Out of memory"));
@@ -2373,7 +2373,7 @@ void PVMFJitterBufferNode::DoQueryInterface(PVMFJitterBufferNodeCommand& aCmd)
                 return;
             }
             ipExtensionInterface =
-                OSCL_PLACEMENT_NEW(ptr, PVMFJitterBufferExtensionInterfaceImpl(this));
+                    OSCL_PLACEMENT_NEW(ptr, PVMFJitterBufferExtensionInterfaceImpl(this));
         }
         if (ipExtensionInterface->queryInterface(*uuid, *ptr))
         {
@@ -2514,8 +2514,8 @@ void PVMFJitterBufferNode::DoRequestPort(PVMFJitterBufferNodeCommand& aCmd)
     // have caused reallocation of the vector elements.
     Oscl_Vector<PVMFJitterBufferPortParams*, OsclMemAllocator>::iterator it;
     for (it = iPortParamsQueue.begin();
-            it != iPortParamsQueue.end();
-            it++)
+         it != iPortParamsQueue.end();
+         it++)
     {
         PVMFJitterBufferPortParams* portParametersPtr = *it;
         PVMFJitterBufferPort* portPtr = OSCL_REINTERPRET_CAST(PVMFJitterBufferPort*, &portParametersPtr->irPort);
@@ -2605,8 +2605,8 @@ void PVMFJitterBufferNode::DoReleasePort(PVMFJitterBufferNodeCommand& aCmd)
         Oscl_Vector<PVMFJitterBufferPortParams*, OsclMemAllocator>::iterator it;
 
         for (it = iPortParamsQueue.begin();
-                it != iPortParamsQueue.end();
-                it++)
+             it != iPortParamsQueue.end();
+             it++)
         {
             PVMFJitterBufferPortParams* pPortParams = *it;
             if (&pPortParams->irPort == iPortVector.front())
@@ -2678,61 +2678,61 @@ void PVMFJitterBufferNode::DoPrepare(PVMFJitterBufferNodeCommand& aCmd)
     switch (iInterfaceState)
     {
         case EPVMFNodeInitialized:
-        {
-            uint32 i;
-            for (i = 0; i < iPortVector.size(); i++)
             {
-                PVMFJitterBufferPortParams* portContainerPtr1 = NULL;
-                if (getPortContainer(iPortVector[i], portContainerPtr1))
+                uint32 i;
+                for (i = 0; i < iPortVector.size(); i++)
                 {
-                    iPortVector[i]->iPortParams = portContainerPtr1;
-                }
-                else
-                {
-                    PVMF_JBNODE_LOGERROR((0, "PVMFJitterBufferNode::DoPrepare: getPortContainer - Self"));
-                    CommandComplete(iInputCommands, aCmd, PVMFFailure);
-                    break;
-                }
-                PVMFPortInterface* cpPort = getPortCounterpart(iPortVector[i]);
-                if (cpPort != NULL)
-                {
-                    iPortVector[i]->iPortCounterpart = (PVMFJitterBufferPort*)cpPort;
-                    PVMFJitterBufferPortParams* portContainerPtr2 = NULL;
-                    if (getPortContainer(iPortVector[i]->iPortCounterpart, portContainerPtr2))
+                    PVMFJitterBufferPortParams* portContainerPtr1 = NULL;
+                    if (getPortContainer(iPortVector[i], portContainerPtr1))
                     {
-                        iPortVector[i]->iCounterpartPortParams = portContainerPtr2;
+                        iPortVector[i]->iPortParams = portContainerPtr1;
                     }
                     else
                     {
-                        PVMF_JBNODE_LOGERROR((0, "PVMFJitterBufferNode::DoPrepare: getPortContainer - Counterpart"));
+                        PVMF_JBNODE_LOGERROR((0, "PVMFJitterBufferNode::DoPrepare: getPortContainer - Self"));
                         CommandComplete(iInputCommands, aCmd, PVMFFailure);
                         break;
                     }
+                    PVMFPortInterface* cpPort = getPortCounterpart(iPortVector[i]);
+                    if (cpPort != NULL)
+                    {
+                        iPortVector[i]->iPortCounterpart = (PVMFJitterBufferPort*)cpPort;
+                        PVMFJitterBufferPortParams* portContainerPtr2 = NULL;
+                        if (getPortContainer(iPortVector[i]->iPortCounterpart, portContainerPtr2))
+                        {
+                            iPortVector[i]->iCounterpartPortParams = portContainerPtr2;
+                        }
+                        else
+                        {
+                            PVMF_JBNODE_LOGERROR((0, "PVMFJitterBufferNode::DoPrepare: getPortContainer - Counterpart"));
+                            CommandComplete(iInputCommands, aCmd, PVMFFailure);
+                            break;
+                        }
+                    }
                 }
-            }
 
-            ipJitterBufferMisc->Prepare();
-            PVMFStatus status = ipJitterBufferMisc->PrepareMediaReceivingChannel();
-            if (PVMFPending == status)
-            {
-                MoveCmdToCurrentQueue(aCmd);
-            }
-            else
-            {
-                if (PVMFSuccess == status)
+                ipJitterBufferMisc->Prepare();
+                PVMFStatus status = ipJitterBufferMisc->PrepareMediaReceivingChannel();
+                if (PVMFPending == status)
                 {
-                    PVMF_JBNODE_LOGINFO((0, "PVMFJitterBufferNode::DoPrepare: FW Pkts Disabled"));
-                    /* Complete prepare */
-                    SetState(EPVMFNodePrepared);
-                    CommandComplete(iInputCommands, aCmd, PVMFSuccess);
+                    MoveCmdToCurrentQueue(aCmd);
                 }
                 else
                 {
-                    CommandComplete(iInputCommands, aCmd, status);
+                    if (PVMFSuccess == status)
+                    {
+                        PVMF_JBNODE_LOGINFO((0, "PVMFJitterBufferNode::DoPrepare: FW Pkts Disabled"));
+                        /* Complete prepare */
+                        SetState(EPVMFNodePrepared);
+                        CommandComplete(iInputCommands, aCmd, PVMFSuccess);
+                    }
+                    else
+                    {
+                        CommandComplete(iInputCommands, aCmd, status);
+                    }
                 }
             }
-        }
-        break;
+            break;
 
         default:
             CommandComplete(iInputCommands, aCmd, PVMFErrInvalidState);
@@ -2770,71 +2770,71 @@ void PVMFJitterBufferNode::DoStart(PVMFJitterBufferNodeCommand& aCmd)
     {
         case EPVMFNodePrepared:
         case EPVMFNodePaused:
-        {
-            ipJitterBufferMisc->StreamingSessionStarted();
-            /* Diagnostic logging */
-            iDiagnosticsLogged = false;
-            iMediaReceiveingChannelPrepared = true;
-
-            if (iInterfaceState == EPVMFNodePaused)
             {
-                uint32 currticks = OsclTickCount::TickCount();
-                uint32 startTime = OsclTickCount::TicksToMsec(currticks);
-                uint32 diff = (startTime - iPauseTime);
-                if (diff > PVMF_JITTER_BUFFER_NODE_FIREWALL_PKT_DEFAULT_PAUSE_DURATION_IN_MS)
+                ipJitterBufferMisc->StreamingSessionStarted();
+                /* Diagnostic logging */
+                iDiagnosticsLogged = false;
+                iMediaReceiveingChannelPrepared = true;
+
+                if (iInterfaceState == EPVMFNodePaused)
                 {
-                    if (PVMFPending == ipJitterBufferMisc->PrepareMediaReceivingChannel())
+                    uint32 currticks = OsclTickCount::TickCount();
+                    uint32 startTime = OsclTickCount::TicksToMsec(currticks);
+                    uint32 diff = (startTime - iPauseTime);
+                    if (diff > PVMF_JITTER_BUFFER_NODE_FIREWALL_PKT_DEFAULT_PAUSE_DURATION_IN_MS)
                     {
-                        iMediaReceiveingChannelPrepared = false;
+                        if (PVMFPending == ipJitterBufferMisc->PrepareMediaReceivingChannel())
+                        {
+                            iMediaReceiveingChannelPrepared = false;
+                        }
                     }
                 }
-            }
 
-            if (!ipJitterBufferMisc->IsSessionExpired())
-                RequestEventCallBack(JB_INCOMING_MEDIA_INACTIVITY_DURATION_EXPIRED);
+                if (!ipJitterBufferMisc->IsSessionExpired())
+                    RequestEventCallBack(JB_INCOMING_MEDIA_INACTIVITY_DURATION_EXPIRED);
 
-            /* If auto paused, implies jitter buffer is not empty */
-            if ((iDelayEstablished == false) ||
+                /* If auto paused, implies jitter buffer is not empty */
+                if ((iDelayEstablished == false) ||
                     (iJitterBufferState == PVMF_JITTER_BUFFER_IN_TRANSITION))
-            {
+                {
 
-                Oscl_Vector<PVMFJitterBufferPortParams*, OsclMemAllocator>::iterator iter;
-                for (iter = iPortParamsQueue.begin(); iter != iPortParamsQueue.end(); iter++)
-                {
-                    PVMFJitterBufferPortParams* pPortParams = *iter;
-                    if (pPortParams->iTag == PVMF_JITTER_BUFFER_PORT_TYPE_INPUT)
+                    Oscl_Vector<PVMFJitterBufferPortParams*, OsclMemAllocator>::iterator iter;
+                    for (iter = iPortParamsQueue.begin(); iter != iPortParamsQueue.end(); iter++)
                     {
-                        pPortParams->ipJitterBuffer->NotifyCanRetrievePacket();
+                        PVMFJitterBufferPortParams* pPortParams = *iter;
+                        if (pPortParams->iTag == PVMF_JITTER_BUFFER_PORT_TYPE_INPUT)
+                        {
+                            pPortParams->ipJitterBuffer->NotifyCanRetrievePacket();
+                        }
                     }
-                }
-                /*
-                 * Move start to current msg queue where it would stay
-                 * jitter buffer is full.
-                 */
-                oStartPending = true;
-                MoveCmdToCurrentQueue(aCmd);
-                ReportInfoEvent(PVMFInfoBufferingStart);
-                RequestEventCallBack(JB_NOTIFY_REPORT_BUFFERING_STATUS);
-            }
-            else
-            {
-                if (false == iMediaReceiveingChannelPrepared)
-                {
+                    /*
+                     * Move start to current msg queue where it would stay
+                     * jitter buffer is full.
+                     */
                     oStartPending = true;
                     MoveCmdToCurrentQueue(aCmd);
+                    ReportInfoEvent(PVMFInfoBufferingStart);
+                    RequestEventCallBack(JB_NOTIFY_REPORT_BUFFERING_STATUS);
                 }
                 else
                 {
-                    /* Just resuming from a paused state with enough data in jitter buffer */
-                    oStartPending = false;
-                    SetState(EPVMFNodeStarted);
-                    /* Enable Output Ports */
-                    StartOutputPorts();
-                    CommandComplete(iInputCommands, aCmd, PVMFSuccess);
+                    if (false == iMediaReceiveingChannelPrepared)
+                    {
+                        oStartPending = true;
+                        MoveCmdToCurrentQueue(aCmd);
+                    }
+                    else
+                    {
+                        /* Just resuming from a paused state with enough data in jitter buffer */
+                        oStartPending = false;
+                        SetState(EPVMFNodeStarted);
+                        /* Enable Output Ports */
+                        StartOutputPorts();
+                        CommandComplete(iInputCommands, aCmd, PVMFSuccess);
+                    }
                 }
             }
-        }
-        break;
+            break;
 
         default:
             status = PVMFErrInvalidState;
@@ -2860,36 +2860,36 @@ void PVMFJitterBufferNode::CompleteStart()
             case EPVMFNodePrepared:
             case EPVMFNodePaused:
             case EPVMFNodeStarted:
-            {
-                /* transition to Started */
-                oStartPending = false;
-                SetState(EPVMFNodeStarted);
-                /* Enable Output Ports */
-                StartOutputPorts();
-                /* Enable remote activity monitoring */
-                Oscl_Vector<PVMFJitterBufferPortParams*, OsclMemAllocator>::iterator it;
-                for (it = iPortParamsQueue.begin(); it != iPortParamsQueue.end(); it++)
                 {
-                    PVMFJitterBufferPortParams* pPortParams = *it;
-                    if (pPortParams->iTag == PVMF_JITTER_BUFFER_PORT_TYPE_INPUT)
+                    /* transition to Started */
+                    oStartPending = false;
+                    SetState(EPVMFNodeStarted);
+                    /* Enable Output Ports */
+                    StartOutputPorts();
+                    /* Enable remote activity monitoring */
+                    Oscl_Vector<PVMFJitterBufferPortParams*, OsclMemAllocator>::iterator it;
+                    for (it = iPortParamsQueue.begin(); it != iPortParamsQueue.end(); it++)
                     {
-                        pPortParams->iMonitorForRemoteActivity = true;
+                        PVMFJitterBufferPortParams* pPortParams = *it;
+                        if (pPortParams->iTag == PVMF_JITTER_BUFFER_PORT_TYPE_INPUT)
+                        {
+                            pPortParams->iMonitorForRemoteActivity = true;
+                        }
                     }
+                    CommandComplete(aCmd, PVMFSuccess);
+                    /* Erase the command from the current queue */
+                    iCurrentCommand.Erase(&iCurrentCommand.front());
                 }
-                CommandComplete(aCmd, PVMFSuccess);
-                /* Erase the command from the current queue */
-                iCurrentCommand.Erase(&iCurrentCommand.front());
-            }
-            break;
+                break;
 
             default:
-            {
-                SetState(EPVMFNodeError);
-                CommandComplete(aCmd, PVMFErrInvalidState);
-                /* Erase the command from the current queue */
-                iCurrentCommand.Erase(&iCurrentCommand.front());
-            }
-            break;
+                {
+                    SetState(EPVMFNodeError);
+                    CommandComplete(aCmd, PVMFErrInvalidState);
+                    /* Erase the command from the current queue */
+                    iCurrentCommand.Erase(&iCurrentCommand.front());
+                }
+                break;
         }
     }
     else
@@ -2924,44 +2924,44 @@ void PVMFJitterBufferNode::DoStop(PVMFJitterBufferNodeCommand& aCmd)
     {
         case EPVMFNodeStarted:
         case EPVMFNodePaused:
-        {
-            if (ipJitterBufferMisc)
-                ipJitterBufferMisc->StreamingSessionStopped();
-
-            /* Clear queued messages in ports */
-            for (uint32 i = 0; i < iPortVector.size(); i++)
             {
-                PVMFJitterBufferPortParams* pPortParams = NULL;
-                bool bRet = getPortContainer(iPortVector[i], pPortParams);
-                if (bRet)
-                {
-                    if (pPortParams->iTag == PVMF_JITTER_BUFFER_PORT_TYPE_INPUT)
-                    {
-                        pPortParams->ipJitterBuffer->ResetJitterBuffer();
-                    }
-                    pPortParams->ResetParams();
-                }
-                iPortVector[i]->ClearMsgQueues();
-            }
-
-            if (aStatus == PVMFSuccess)
-            {
-                /* Reset State Variables */
-                iDelayEstablished = false;
                 if (ipJitterBufferMisc)
-                    ipJitterBufferMisc->SetSessionDurationExpired();
-                oStopOutputPorts = true;
-                oStartPending = false;
-                iJitterBufferState = PVMF_JITTER_BUFFER_READY;
-                iJitterDelayPercent = 0;
+                    ipJitterBufferMisc->StreamingSessionStopped();
 
-                /* transition to Prepared state */
-                SetState(EPVMFNodePrepared);
+                /* Clear queued messages in ports */
+                for (uint32 i = 0; i < iPortVector.size(); i++)
+                {
+                    PVMFJitterBufferPortParams* pPortParams = NULL;
+                    bool bRet = getPortContainer(iPortVector[i], pPortParams);
+                    if (bRet)
+                    {
+                        if (pPortParams->iTag == PVMF_JITTER_BUFFER_PORT_TYPE_INPUT)
+                        {
+                            pPortParams->ipJitterBuffer->ResetJitterBuffer();
+                        }
+                        pPortParams->ResetParams();
+                    }
+                    iPortVector[i]->ClearMsgQueues();
+                }
+
+                if (aStatus == PVMFSuccess)
+                {
+                    /* Reset State Variables */
+                    iDelayEstablished = false;
+                    if (ipJitterBufferMisc)
+                        ipJitterBufferMisc->SetSessionDurationExpired();
+                    oStopOutputPorts = true;
+                    oStartPending = false;
+                    iJitterBufferState = PVMF_JITTER_BUFFER_READY;
+                    iJitterDelayPercent = 0;
+
+                    /* transition to Prepared state */
+                    SetState(EPVMFNodePrepared);
+                }
+                CommandComplete(iInputCommands, aCmd, aStatus);
             }
-            CommandComplete(iInputCommands, aCmd, aStatus);
-        }
 
-        break;
+            break;
 
         default:
             CommandComplete(iInputCommands, aCmd, PVMFErrInvalidState);
@@ -2987,18 +2987,18 @@ void PVMFJitterBufferNode::DoPause(PVMFJitterBufferNodeCommand& aCmd)
     {
         case EPVMFNodeStarted:
         case EPVMFNodePaused:
-        {
-            uint32 currticks = OsclTickCount::TickCount();
-            iPauseTime = OsclTickCount::TicksToMsec(currticks);
-            ipJitterBufferMisc->StreamingSessionPaused();
-            SetState(EPVMFNodePaused);
-            StopOutputPorts();
-            CancelEventCallBack(JB_INCOMING_MEDIA_INACTIVITY_DURATION_EXPIRED);
-            CancelEventCallBack(JB_NOTIFY_REPORT_BUFFERING_STATUS);
-            PVMF_JBNODE_LOGERROR((0, "PVMFJitterBufferNode::DoPause Success"));
-            CommandComplete(iInputCommands, aCmd, PVMFSuccess);
-        }
-        break;
+            {
+                uint32 currticks = OsclTickCount::TickCount();
+                iPauseTime = OsclTickCount::TicksToMsec(currticks);
+                ipJitterBufferMisc->StreamingSessionPaused();
+                SetState(EPVMFNodePaused);
+                StopOutputPorts();
+                CancelEventCallBack(JB_INCOMING_MEDIA_INACTIVITY_DURATION_EXPIRED);
+                CancelEventCallBack(JB_NOTIFY_REPORT_BUFFERING_STATUS);
+                PVMF_JBNODE_LOGERROR((0, "PVMFJitterBufferNode::DoPause Success"));
+                CommandComplete(iInputCommands, aCmd, PVMFSuccess);
+            }
+            break;
 
         default:
             PVMF_JBNODE_LOGERROR((0, "PVMFJitterBufferNode::DoPause PVMFErrInvalidState iInterfaceState %d", iInterfaceState));
@@ -3193,95 +3193,95 @@ void PVMFJitterBufferNode::ProcessJBInfoEvent(PVMFAsyncEvent& aEvent)
     switch (aEvent.GetEventType())
     {
         case PVMFInfoUnderflow:
-        {
-            RequestEventCallBack(JB_NOTIFY_REPORT_BUFFERING_STATUS);
-            if (oStartPending == false)
             {
-                UpdateRebufferingStats(PVMFInfoUnderflow);
-                ipJitterBufferMisc->StreamingSessionBufferingStart();
-                ReportInfoEvent(PVMFInfoUnderflow);
-                ReportInfoEvent(PVMFInfoBufferingStart);
-                ReportInfoEvent(PVMFInfoBufferingStatus);
+                RequestEventCallBack(JB_NOTIFY_REPORT_BUFFERING_STATUS);
+                if (oStartPending == false)
+                {
+                    UpdateRebufferingStats(PVMFInfoUnderflow);
+                    ipJitterBufferMisc->StreamingSessionBufferingStart();
+                    ReportInfoEvent(PVMFInfoUnderflow);
+                    ReportInfoEvent(PVMFInfoBufferingStart);
+                    ReportInfoEvent(PVMFInfoBufferingStatus);
+                }
             }
-        }
-        break;
+            break;
         case PVMFInfoDataReady:
-        {
-            UpdateRebufferingStats(PVMFInfoDataReady);
-            ReportInfoEvent(PVMFInfoBufferingStatus);
-            ReportInfoEvent(PVMFInfoDataReady);
-            ReportInfoEvent(PVMFInfoBufferingComplete);
-            CancelEventCallBack(JB_NOTIFY_REPORT_BUFFERING_STATUS);
-
-            Oscl_Vector<PVMFJitterBufferPortParams*, OsclMemAllocator>::iterator it;
-            for (it = iPortParamsQueue.begin(); it != iPortParamsQueue.end(); it++)
             {
-                PVMFJitterBufferPortParams* pPortParams = *it;
-                if (pPortParams->iTag == PVMF_JITTER_BUFFER_PORT_TYPE_INPUT)
+                UpdateRebufferingStats(PVMFInfoDataReady);
+                ReportInfoEvent(PVMFInfoBufferingStatus);
+                ReportInfoEvent(PVMFInfoDataReady);
+                ReportInfoEvent(PVMFInfoBufferingComplete);
+                CancelEventCallBack(JB_NOTIFY_REPORT_BUFFERING_STATUS);
+
+                Oscl_Vector<PVMFJitterBufferPortParams*, OsclMemAllocator>::iterator it;
+                for (it = iPortParamsQueue.begin(); it != iPortParamsQueue.end(); it++)
                 {
-                    pPortParams->iCanReceivePktFromJB = true;
-                    pPortParams->ipJitterBuffer->CancelNotifyCanRetrievePacket();
-                    PVMFJitterBufferStats stats = pPortParams->ipJitterBuffer->getJitterBufferStats();
-                    PVMF_JBNODE_LOGDATATRAFFIC((0, "Mime %s stats.currentOccupancy[%d], stats.maxSeqNumRegistered[%d], stats.lastRetrievedSeqNum[%d] stats.maxTimeStampRetrievedWithoutRTPOffset[%d]", pPortParams->iMimeType.get_cstr(), stats.currentOccupancy, stats.maxSeqNumRegistered, stats.lastRetrievedSeqNum, stats.maxTimeStampRetrievedWithoutRTPOffset));
+                    PVMFJitterBufferPortParams* pPortParams = *it;
+                    if (pPortParams->iTag == PVMF_JITTER_BUFFER_PORT_TYPE_INPUT)
+                    {
+                        pPortParams->iCanReceivePktFromJB = true;
+                        pPortParams->ipJitterBuffer->CancelNotifyCanRetrievePacket();
+                        PVMFJitterBufferStats stats = pPortParams->ipJitterBuffer->getJitterBufferStats();
+                        PVMF_JBNODE_LOGDATATRAFFIC((0, "Mime %s stats.currentOccupancy[%d], stats.maxSeqNumRegistered[%d], stats.lastRetrievedSeqNum[%d] stats.maxTimeStampRetrievedWithoutRTPOffset[%d]", pPortParams->iMimeType.get_cstr(), stats.currentOccupancy, stats.maxSeqNumRegistered, stats.lastRetrievedSeqNum, stats.maxTimeStampRetrievedWithoutRTPOffset));
+                    }
+                }
+
+                if (oStartPending)
+                {
+                    CompleteStart();
+                }
+                else
+                {
+                    ipJitterBufferMisc->StreamingSessionBufferingEnd();
+
                 }
             }
-
-            if (oStartPending)
-            {
-                CompleteStart();
-            }
-            else
-            {
-                ipJitterBufferMisc->StreamingSessionBufferingEnd();
-
-            }
-        }
-        break;
+            break;
         case PVMFInfoOverflow:
-        {
-            ReportInfoEvent(PVMFInfoOverflow);
-        }
-        break;
+            {
+                ReportInfoEvent(PVMFInfoOverflow);
+            }
+            break;
         case PVMFJitterBufferNodeJitterBufferLowWaterMarkReached:
-        {
-            Oscl_Vector<PVMFJitterBufferPortParams*, OsclMemAllocator>::iterator iter;
-            for (iter = iPortParamsQueue.begin(); iter != iPortParamsQueue.end(); iter++)
             {
-                PVMFJitterBufferPortParams* pPortParams = *iter;
-                if (pPortParams->iMonitorForRemoteActivity == false)
+                Oscl_Vector<PVMFJitterBufferPortParams*, OsclMemAllocator>::iterator iter;
+                for (iter = iPortParamsQueue.begin(); iter != iPortParamsQueue.end(); iter++)
                 {
-                    pPortParams->iMonitorForRemoteActivity = true;
-                    RequestEventCallBack(JB_INCOMING_MEDIA_INACTIVITY_DURATION_EXPIRED);
-                }
+                    PVMFJitterBufferPortParams* pPortParams = *iter;
+                    if (pPortParams->iMonitorForRemoteActivity == false)
+                    {
+                        pPortParams->iMonitorForRemoteActivity = true;
+                        RequestEventCallBack(JB_INCOMING_MEDIA_INACTIVITY_DURATION_EXPIRED);
+                    }
 
-            }
-            ReportInfoEvent(PVMFJitterBufferNodeJitterBufferLowWaterMarkReached);
-        }
-        break;
-        case PVMFJitterBufferNodeJitterBufferHighWaterMarkReached:
-        {
-            Oscl_Vector<PVMFJitterBufferPortParams*, OsclMemAllocator>::iterator iter;
-            for (iter = iPortParamsQueue.begin(); iter != iPortParamsQueue.end(); iter++)
-            {
-                PVMFJitterBufferPortParams* pPortParams = *iter;
-                if (pPortParams->iMonitorForRemoteActivity == true)
-                {
-                    pPortParams->iMonitorForRemoteActivity = false;
-                    CancelEventCallBack(JB_INCOMING_MEDIA_INACTIVITY_DURATION_EXPIRED);
                 }
+                ReportInfoEvent(PVMFJitterBufferNodeJitterBufferLowWaterMarkReached);
             }
-            ReportInfoEvent(PVMFJitterBufferNodeJitterBufferHighWaterMarkReached);
-        }
-        break;
+            break;
+        case PVMFJitterBufferNodeJitterBufferHighWaterMarkReached:
+            {
+                Oscl_Vector<PVMFJitterBufferPortParams*, OsclMemAllocator>::iterator iter;
+                for (iter = iPortParamsQueue.begin(); iter != iPortParamsQueue.end(); iter++)
+                {
+                    PVMFJitterBufferPortParams* pPortParams = *iter;
+                    if (pPortParams->iMonitorForRemoteActivity == true)
+                    {
+                        pPortParams->iMonitorForRemoteActivity = false;
+                        CancelEventCallBack(JB_INCOMING_MEDIA_INACTIVITY_DURATION_EXPIRED);
+                    }
+                }
+                ReportInfoEvent(PVMFJitterBufferNodeJitterBufferHighWaterMarkReached);
+            }
+            break;
         case PVMFJitterBufferNodeStreamThinningRecommended:
-        {
-            PVMFNodeInterface::ReportInfoEvent(aEvent);
-        }
-        break;
+            {
+                PVMFNodeInterface::ReportInfoEvent(aEvent);
+            }
+            break;
         default:
-        {
-            //noop
-        }
+            {
+                //noop
+            }
     }
 
 }
@@ -3321,8 +3321,8 @@ void PVMFJitterBufferNode::UpdateRebufferingStats(PVMFEventType aEventType)
     {
         Oscl_Vector<PVMFJitterBufferPortParams*, OsclMemAllocator>::iterator it;
         for (it = iPortParamsQueue.begin();
-                it != iPortParamsQueue.end();
-                it++)
+             it != iPortParamsQueue.end();
+             it++)
         {
             PVMFJitterBufferPortParams* pJitterBufferPortParams = *it;
             if (pJitterBufferPortParams->iMonitorForRemoteActivity == false)
@@ -3463,8 +3463,8 @@ void PVMFJitterBufferNode::HandleEvent_NotifyReportBufferingStatus()
             /* Force out of rebuffering */
             Oscl_Vector<PVMFJitterBufferPortParams*, OsclMemAllocator>::iterator it;
             for (it = iPortParamsQueue.begin();
-                    it != iPortParamsQueue.end();
-                    it++)
+                 it != iPortParamsQueue.end();
+                 it++)
             {
                 PVMFJitterBufferPortParams* pPortParams = *it;
                 if (pPortParams->iTag == PVMF_JITTER_BUFFER_PORT_TYPE_INPUT)
@@ -3497,8 +3497,8 @@ PVMFJitterBufferNode::getPortContainer(PVMFPortInterface* aPort,
     Oscl_Vector<PVMFJitterBufferPortParams*, OsclMemAllocator>::iterator it;
 
     for (it = iPortParamsQueue.begin();
-            it != iPortParamsQueue.end();
-            it++)
+         it != iPortParamsQueue.end();
+         it++)
     {
         PVMFJitterBufferPortParams* pPortParams = *it;
         if (&pPortParams->irPort == aPort)
@@ -3518,34 +3518,34 @@ bool PVMFJitterBufferNode::RequestEventCallBack(JB_NOTIFY_CALLBACK aEventType, u
     switch (aEventType)
     {
         case JB_INCOMING_MEDIA_INACTIVITY_DURATION_EXPIRED:
-        {
-            PVMFJBEventNotificationRequestInfo eventRequestInfo(CLOCK_NOTIFICATION_INTF_TYPE_NONDECREASING, this, NULL);
-            retval = ipEventNotifier->RequestCallBack(eventRequestInfo, iMaxInactivityDurationForMediaInMs, iIncomingMediaInactivityDurationCallBkId);
-            if (retval)
             {
-                iIncomingMediaInactivityDurationCallBkPending = true;
+                PVMFJBEventNotificationRequestInfo eventRequestInfo(CLOCK_NOTIFICATION_INTF_TYPE_NONDECREASING, this, NULL);
+                retval = ipEventNotifier->RequestCallBack(eventRequestInfo, iMaxInactivityDurationForMediaInMs, iIncomingMediaInactivityDurationCallBkId);
+                if (retval)
+                {
+                    iIncomingMediaInactivityDurationCallBkPending = true;
+                }
             }
-        }
-        break;
+            break;
         case JB_NOTIFY_REPORT_BUFFERING_STATUS:
-        {
-            if (iNotifyBufferingStatusCallBkPending)
             {
-                CancelEventCallBack(JB_NOTIFY_REPORT_BUFFERING_STATUS);
+                if (iNotifyBufferingStatusCallBkPending)
+                {
+                    CancelEventCallBack(JB_NOTIFY_REPORT_BUFFERING_STATUS);
+                }
+                PVMFJBEventNotificationRequestInfo eventRequestInfo(CLOCK_NOTIFICATION_INTF_TYPE_NONDECREASING, this, NULL);
+                retval = ipEventNotifier->RequestCallBack(eventRequestInfo, iBufferingStatusIntervalInMs, iNotifyBufferingStatusCallBkId);
+                if (retval)
+                {
+                    iNotifyBufferingStatusCallBkPending = true;
+                }
             }
-            PVMFJBEventNotificationRequestInfo eventRequestInfo(CLOCK_NOTIFICATION_INTF_TYPE_NONDECREASING, this, NULL);
-            retval = ipEventNotifier->RequestCallBack(eventRequestInfo, iBufferingStatusIntervalInMs, iNotifyBufferingStatusCallBkId);
-            if (retval)
-            {
-                iNotifyBufferingStatusCallBkPending = true;
-            }
-        }
-        break;
+            break;
 
         default:
-        {
-            //Log it
-        }
+            {
+                //Log it
+            }
     }
     return retval;
 }
@@ -3556,30 +3556,30 @@ void PVMFJitterBufferNode::CancelEventCallBack(JB_NOTIFY_CALLBACK aEventType, Os
     switch (aEventType)
     {
         case JB_INCOMING_MEDIA_INACTIVITY_DURATION_EXPIRED:
-        {
-            if (iIncomingMediaInactivityDurationCallBkPending)
             {
-                PVMFJBEventNotificationRequestInfo eventRequestInfo(CLOCK_NOTIFICATION_INTF_TYPE_NONDECREASING, this, NULL);
-                ipEventNotifier->CancelCallBack(eventRequestInfo, iIncomingMediaInactivityDurationCallBkId);
-                iIncomingMediaInactivityDurationCallBkPending = false;
+                if (iIncomingMediaInactivityDurationCallBkPending)
+                {
+                    PVMFJBEventNotificationRequestInfo eventRequestInfo(CLOCK_NOTIFICATION_INTF_TYPE_NONDECREASING, this, NULL);
+                    ipEventNotifier->CancelCallBack(eventRequestInfo, iIncomingMediaInactivityDurationCallBkId);
+                    iIncomingMediaInactivityDurationCallBkPending = false;
+                }
             }
-        }
-        break;
+            break;
         case JB_NOTIFY_REPORT_BUFFERING_STATUS:
-        {
-            if (iNotifyBufferingStatusCallBkPending)
             {
-                PVMFJBEventNotificationRequestInfo eventRequestInfo(CLOCK_NOTIFICATION_INTF_TYPE_NONDECREASING, this, NULL);
-                ipEventNotifier->CancelCallBack(eventRequestInfo, iNotifyBufferingStatusCallBkId);
-                iNotifyBufferingStatusCallBkPending = false;
+                if (iNotifyBufferingStatusCallBkPending)
+                {
+                    PVMFJBEventNotificationRequestInfo eventRequestInfo(CLOCK_NOTIFICATION_INTF_TYPE_NONDECREASING, this, NULL);
+                    ipEventNotifier->CancelCallBack(eventRequestInfo, iNotifyBufferingStatusCallBkId);
+                    iNotifyBufferingStatusCallBkPending = false;
+                }
             }
-        }
-        break;
+            break;
 
         default:
-        {
-            //Log it
-        }
+            {
+                //Log it
+            }
     }
     return;
 }
@@ -3591,9 +3591,9 @@ void PVMFJitterBufferNode::SetState(TPVMFNodeInterfaceState s)
 }
 
 void PVMFJitterBufferNode::ReportErrorEvent(PVMFEventType aEventType,
-        OsclAny* aEventData,
-        PVUuid* aEventUUID,
-        int32* aEventCode)
+                                            OsclAny* aEventData,
+                                            PVUuid* aEventUUID,
+                                            int32* aEventCode)
 {
     PVMF_JBNODE_LOGERROR((0, "PVMFJitterBufferNode:NodeErrorEvent Type %d Data %d"
                           , aEventType, aEventData));
@@ -3619,9 +3619,9 @@ void PVMFJitterBufferNode::ReportErrorEvent(PVMFEventType aEventType,
 }
 
 void PVMFJitterBufferNode::ReportInfoEvent(PVMFEventType aEventType,
-        OsclAny* aEventData,
-        PVUuid* aEventUUID,
-        int32* aEventCode)
+                                           OsclAny* aEventData,
+                                           PVUuid* aEventUUID,
+                                           int32* aEventCode)
 {
     PVMF_JBNODE_LOGINFO((0, "PVMFJitterBufferNode:NodeInfoEvent Type %d Data %d"
                          , aEventType, aEventData));
@@ -3642,7 +3642,7 @@ void PVMFJitterBufferNode::ReportInfoEvent(PVMFEventType aEventType,
         PVMFBasicErrorInfoMessage* eventmsg;
         PVMF_JITTER_BUFFER_NEW(NULL, PVMFBasicErrorInfoMessage, (*aEventCode, *aEventUUID, NULL), eventmsg);
         PVMFErrorInfoMessageInterface* interimPtr =
-            OSCL_STATIC_CAST(PVMFErrorInfoMessageInterface*, eventmsg);
+                OSCL_STATIC_CAST(PVMFErrorInfoMessageInterface*, eventmsg);
         PVMFAsyncEvent asyncevent(PVMFInfoEvent,
                                   aEventType,
                                   NULL,
@@ -3706,9 +3706,9 @@ void PVMFJitterBufferNode::LogSessionDiagnostics()
                     uint32 currentTimeBase32 = 0;
                     bool overflowFlag = false;
                     ipJitterBufferMisc->GetEstimatedServerClock().GetCurrentTime32(currentTime32,
-                            overflowFlag,
-                            PVMF_MEDIA_CLOCK_MSEC,
-                            currentTimeBase32);
+                                                                                   overflowFlag,
+                                                                                   PVMF_MEDIA_CLOCK_MSEC,
+                                                                                   currentTimeBase32);
                     uint32 bitrate32 = 0;
                     uint32 totalNumBytesRecvd = jbStats.totalNumBytesRecvd;
                     if (currentTime32 != 0)
@@ -3749,7 +3749,7 @@ void PVMFJitterBufferNode::LogPortDiagnostics()
     {
         PVMFJitterBufferPortParams* pPortParams = *it;
         PvmfPortBaseImpl* ptr =
-            OSCL_STATIC_CAST(PvmfPortBaseImpl*, &pPortParams->irPort);
+                OSCL_STATIC_CAST(PvmfPortBaseImpl*, &pPortParams->irPort);
         PvmfPortBaseImplStats stats;
         ptr->GetStats(stats);
 
