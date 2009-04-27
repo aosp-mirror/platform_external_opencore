@@ -377,19 +377,6 @@ enum EncContentType
     EI_H264
 };
 
-/** Rate control type. */
-enum EncRateControlType
-{
-    /** Constant quality, variable bit rate, fixed quantization level. */
-    ECONSTANT_Q,
-
-    /** Short-term constant bit rate control. */
-    ECBR_1,
-
-    /** Long-term constant bit rate control. */
-    EVBR_1
-};
-
 /** Targeted profile and level to encode. */
 enum EncM4VProfileLevel
 {
@@ -514,7 +501,7 @@ typedef struct PV_VideoEncodeParam
 
     /** Specifies the rate control algorithm among one of the following constant Q,
     CBR and VBR.  The structure EncRateControlType is defined above.*/
-    EncRateControlType iRateControlType;
+    PVMFVENRateControlType iRateControlType;
 
     /** Specifies the initial quantization parameter for the first I-frame. If constant Q
     rate control is used, this QP will be used for all the I-frames. This number must be

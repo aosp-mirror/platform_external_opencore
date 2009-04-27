@@ -820,7 +820,10 @@ PVMFOMXEncNode::PVMFOMXEncNode(int32 aPriority) :
     iVideoEncodeParam.iIFrameInterval = DEFAULT_I_FRAME_INTERVAL;
     iVideoEncodeParam.iBufferDelay = (float)0.2;
     iVideoEncodeParam.iContentType = EI_H263;
-    iVideoEncodeParam.iRateControlType = ECBR_1;
+
+    // set the default rate control type to variable bit rate control
+    // since it has better performance
+    iVideoEncodeParam.iRateControlType = PVMFVEN_RATE_CONTROL_VBR;
     iVideoEncodeParam.iIquant[0] = 15;
     iVideoEncodeParam.iPquant[0] = 12;
     iVideoEncodeParam.iBquant[0] = 12;
@@ -2441,22 +2444,7 @@ bool PVMFOMXEncNode::SetMP4EncoderParameters()
 
     //Set the parameters now
     BitRateType.nPortIndex = iOutputPortIndex;
-    switch (iVideoEncodeParam.iRateControlType)
-    {
-        case ECONSTANT_Q:
-            BitRateType.eControlRate = OMX_Video_ControlRateDisable;
-            break;
-        case ECBR_1:
-            BitRateType.eControlRate = OMX_Video_ControlRateConstant;
-            break;
-        case EVBR_1:
-            BitRateType.eControlRate = OMX_Video_ControlRateVariable;
-            break;
-        default:
-            BitRateType.eControlRate = OMX_Video_ControlRateDisable;
-            break;
-    }
-
+    BitRateType.eControlRate = static_cast<OMX_VIDEO_CONTROLRATETYPE>(iVideoEncodeParam.iRateControlType);
     BitRateType.nTargetBitrate = iVideoEncodeParam.iBitRate[0];
     Err = OMX_SetParameter(iOMXEncoder, OMX_IndexParamVideoBitrate, &BitRateType);
 
@@ -2666,22 +2654,7 @@ bool PVMFOMXEncNode::SetH263EncoderParameters()
 
     //Set the parameters now
     BitRateType.nPortIndex = iOutputPortIndex;
-    switch (iVideoEncodeParam.iRateControlType)
-    {
-        case ECONSTANT_Q:
-            BitRateType.eControlRate = OMX_Video_ControlRateDisable;
-            break;
-        case ECBR_1:
-            BitRateType.eControlRate = OMX_Video_ControlRateConstant;
-            break;
-        case EVBR_1:
-            BitRateType.eControlRate = OMX_Video_ControlRateVariable;
-            break;
-        default:
-            BitRateType.eControlRate = OMX_Video_ControlRateDisable;
-            break;
-    }
-
+    BitRateType.eControlRate = static_cast<OMX_VIDEO_CONTROLRATETYPE>(iVideoEncodeParam.iRateControlType);
     BitRateType.nTargetBitrate = iVideoEncodeParam.iBitRate[0];
     Err = OMX_SetParameter(iOMXEncoder, OMX_IndexParamVideoBitrate, &BitRateType);
     if (OMX_ErrorNone != Err)
@@ -2894,22 +2867,7 @@ bool PVMFOMXEncNode::SetH264EncoderParameters()
 
     //Set the parameters now
     BitRateType.nPortIndex = iOutputPortIndex;
-    switch (iVideoEncodeParam.iRateControlType)
-    {
-        case ECONSTANT_Q:
-            BitRateType.eControlRate = OMX_Video_ControlRateDisable;
-            break;
-        case ECBR_1:
-            BitRateType.eControlRate = OMX_Video_ControlRateConstant;
-            break;
-        case EVBR_1:
-            BitRateType.eControlRate = OMX_Video_ControlRateVariable;
-            break;
-        default:
-            BitRateType.eControlRate = OMX_Video_ControlRateDisable;
-            break;
-    }
-
+    BitRateType.eControlRate = static_cast<OMX_VIDEO_CONTROLRATETYPE>(iVideoEncodeParam.iRateControlType);
     BitRateType.nTargetBitrate = iVideoEncodeParam.iBitRate[0];
     Err = OMX_SetParameter(iOMXEncoder, OMX_IndexParamVideoBitrate, &BitRateType);
     if (OMX_ErrorNone != Err)
@@ -8326,21 +8284,7 @@ OSCL_EXPORT_REF bool PVMFOMXEncNode::SetRateControlType(uint32 aLayer, PVMFVENRa
             break;
     }
 
-    switch (aRateControl)
-    {
-        case PVMFVEN_RATE_CONTROL_CONSTANT_Q:
-            iVideoEncodeParam.iRateControlType = ECONSTANT_Q;
-            break;
-        case PVMFVEN_RATE_CONTROL_CBR:
-            iVideoEncodeParam.iRateControlType = ECBR_1;
-            break;
-        case PVMFVEN_RATE_CONTROL_VBR:
-            iVideoEncodeParam.iRateControlType = EVBR_1;
-            break;
-        default:
-            return false;
-    }
-
+    iVideoEncodeParam.iRateControlType = aRateControl;
     return true;
 }
 
