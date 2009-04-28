@@ -96,4 +96,7 @@
 // check all osclconfig required macros are defined
 #include "osclconfig_check.h"
 
+#include <sys/prctl.h>
+#define OSCL_SET_THREAD_NAME(name) prctl(PR_SET_NAME,(unsigned long)name,0,0,0)
+
 #endif
