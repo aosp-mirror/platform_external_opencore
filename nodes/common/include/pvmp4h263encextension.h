@@ -44,13 +44,21 @@ template <class T> class OsclSharedPtr;
 #define PVMp4H263EncExtensionUUID PVUuid(0xc4737ade,0xa002,0x4632,0x95,0x1a,0x9c,0xa7,0xd6,0x3a,0xcd,0x2b)
 
 /**
+ * TODO:
+ * Move the enum to another header file that may be
+ * shared by all the video codecs.
+ *
  * Enumerated list of supported rate control types
+ * The types assume the same value as those defined
+ * in OpenMAX standard.
  */
 typedef enum
 {
     PVMFVEN_RATE_CONTROL_CONSTANT_Q,
+    PVMFVEN_RATE_CONTROL_VBR,
     PVMFVEN_RATE_CONTROL_CBR,
-    PVMFVEN_RATE_CONTROL_VBR
+    PVMFVEN_RATE_CONTROL_VBR_FRAME_SKIPPING,
+    PVMFVEN_RATE_CONTROL_CBR_FRAME_SKIPPING
 } PVMFVENRateControlType;
 
 ////////////////////////////////////////////////////////////////////////////
