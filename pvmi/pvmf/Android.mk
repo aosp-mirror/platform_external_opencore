@@ -71,7 +71,6 @@ LOCAL_COPY_HEADERS := \
         include/pvmf_meta_data_types.h \
         include/pvmf_timestamp.h \
         include/pv_uuid.h \
-        include/pvmf_node_cmd_msg.h \
         include/pvmf_video.h \
         include/pvmf_basic_errorinfomessage.h \
         include/pvmf_errorinfomessage_extension.h \
@@ -87,7 +86,6 @@ LOCAL_COPY_HEADERS := \
         include/pvmf_media_clock.h \
         include/pvmf_duration_infomessage.h \
         include/pvmf_durationinfomessage_extension.h \
-        include/pvmf_counted_ptr.h \
         include/pvmf_metadata_infomessage.h \
         include/pvmf_metadatainfomessage_extension.h \
         include/pvmi_fileio_kvp.h \
