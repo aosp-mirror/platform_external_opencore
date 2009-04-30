@@ -287,7 +287,7 @@ public:
     void SetPreviewSurface(const sp<android::ISurface>& surface);
     void SetFrameSize(int w, int h);
     void SetFrameRate(int frames_per_second);
-    void SetCamera(const sp<android::ICamera>& camera);
+    PVMFStatus SetCamera(const sp<android::ICamera>& camera);
 
     // add for Camcorder
     PVMFStatus              postWriteAsync(const sp<IMemory>& frame);

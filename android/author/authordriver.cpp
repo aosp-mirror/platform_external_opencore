@@ -336,9 +336,11 @@ void AuthorDriver::handleSetVideoSource(set_video_source_command *ac)
             mVideoNode = PvmfMediaInputNodeFactory::Create(cameraInput);
             if (mVideoNode) {
                 // pass in the application supplied camera object
-                if (mCamera != 0) cameraInput->SetCamera(mCamera);
-                mVideoInputMIO = cameraInput;
-                break;
+                if (mCamera == 0 || 
+                    (mCamera != 0 && cameraInput->SetCamera(mCamera) == PVMFSuccess)) {
+                    mVideoInputMIO = cameraInput;
+                    break;
+                }
             }
             delete cameraInput;
         }

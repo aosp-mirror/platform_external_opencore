@@ -76,7 +76,7 @@ void AndroidCameraInput::ReleaseQueuedFrames()
         ssize_t offset = 0;
         size_t size = 0;
         sp<IMemoryHeap> heap = data.iFrameBuffer->getMemory(&offset, &size);
-        LOGD("writeComplete: ID = %d, base = %p, offset = %p, size = %d ReleaseQueuedFrames", heap->getHeapID(), heap->base(), offset, size);
+        LOGD("writeComplete: ID = %d, base = %p, offset = %ld, size = %d ReleaseQueuedFrames", heap->getHeapID(), heap->base(), offset, size);
 #endif
         mCamera->releaseRecordingFrame(data.iFrameBuffer);
     }
@@ -426,7 +426,7 @@ void AndroidCameraInput::writeComplete(PVMFStatus aStatus,
     ssize_t offset = 0;
     size_t size = 0;
     sp<IMemoryHeap> heap = data.iFrameBuffer->getMemory(&offset, &size);
-    LOGD("writeComplete: ID = %d, base = %p, offset = %p, size = %d", heap->getHeapID(), heap->base(), offset, size);
+    LOGD("writeComplete: ID = %d, base = %p, offset = %ld, size = %d", heap->getHeapID(), heap->base(), offset, size);
 #endif
     mCamera->releaseRecordingFrame(data.iFrameBuffer);
 
@@ -1109,20 +1109,20 @@ void AndroidCameraInput::SetPreviewSurface(const sp<android::ISurface>& surface)
     }
 }
 
-void AndroidCameraInput::SetCamera(const sp<android::ICamera>& camera)
+PVMFStatus AndroidCameraInput::SetCamera(const sp<android::ICamera>& camera)
 {
     LOGV("SetCamera");
     mFlags &= ~ FLAGS_SET_CAMERA | FLAGS_HOT_CAMERA;
     if (camera == NULL) {
         LOGV("camera is NULL");
-        return;
+        return PVMFErrArgument;
     }
 
     // Connect our client to the camera remote
-    mCamera = new Camera(camera);
+    mCamera = Camera::create(camera);
     if (mCamera == NULL) {
         LOGE("Unable to connect to camera");
-        return;
+        return PVMFErrNoResources;
     }
 
     LOGV("Connected to camera");
@@ -1131,6 +1131,7 @@ void AndroidCameraInput::SetCamera(const sp<android::ICamera>& camera)
         mFlags |= FLAGS_HOT_CAMERA;
         LOGV("camera is hot");
     }
+    return PVMFSuccess;
 }
 
 PVMFStatus AndroidCameraInput::postWriteAsync(const sp<IMemory>& frame)
