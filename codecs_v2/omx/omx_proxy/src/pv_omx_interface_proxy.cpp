@@ -642,6 +642,7 @@ TOsclThreadFuncRet OSCL_THREAD_DECL pvproxythreadmain_omx(TOsclThreadFuncArg *aP
     OSCL_SET_THREAD_NAME("OMX proxy");
 #endif
 
+    setpriority(PRIO_PROCESS, 0, ANDROID_PRIORITY_AUDIO);
     //Call the proxied app routine to create its logger appenders.
     //proxy->iPVApp.CreateLoggerAppenders();
     //proxy->iLogger=PVLogger::GetLoggerObject("");
