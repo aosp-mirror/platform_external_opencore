@@ -39,5 +39,10 @@
 
 #include "osclconfig_proc_check.h"
 
+#include <sys/prctl.h>
+#include <utils/threads.h>
+#include <sys/time.h>
+#include <sys/resource.h>
+#define OSCL_SET_THREAD_NAME(name) prctl(PR_SET_NAME,(unsigned long)name,0,0,0)
 
 #endif
