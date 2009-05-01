@@ -1,6 +1,19 @@
-/* mediascanner.cpp
+/*
+ * Copyright (C) 2008, Google Inc.
  *
- * Android wrapper for media scanner
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied.
+ * See the License for the specific language governing permissions
+ * and limitations under the License.
+ * -------------------------------------------------------------------
  */
 
 #include <media/mediascanner.h>
@@ -102,11 +115,13 @@ static PVMFStatus parseMP3(const char *filename, MediaScannerClient& client)
     for (uint32 i = 0; i < num_frames;i++)
     {
         const char* key = framevector[i]->key;
-        bool validUtf8 = true;
+        bool isUtf8 = false;
+        bool isIso88591 = false;
 
         // type should follow first semicolon
         const char* type = strchr(key, ';') + 1;
         if (type == 0) continue;
+
         
         const char* value = framevector[i]->value.pChar_value;
 
@@ -114,20 +129,27 @@ static PVMFStatus parseMP3(const char *filename, MediaScannerClient& client)
         // is a substring of KVP_VALTYPE_UTF8_CHAR.
         // Similarly, KVP_VALTYPE_UTF16BE_WCHAR must be checked before KVP_VALTYPE_UTF16_WCHAR
         if (oscl_strncmp(type, KVP_VALTYPE_UTF8_CHAR, KVP_VALTYPE_UTF8_CHAR_LEN) == 0) {
-            // utf8 can be passed through directly
-            // but first validate to make sure it is legal utf8
+            isUtf8 = true;
+        } else if (oscl_strncmp(type, KVP_VALTYPE_ISO88591_CHAR, KVP_VALTYPE_ISO88591_CHAR_LEN) == 0) {
+            isIso88591 = true;
+        }
+
+        if (isUtf8) {
+            // validate to make sure it is legal utf8
             uint32 valid_chars;
-            validUtf8 = oscl_str_is_valid_utf8((const uint8 *)value, valid_chars);
-            if (validUtf8 && !client.handleStringTag(key, value)) goto failure;
+            if (oscl_str_is_valid_utf8((const uint8 *)value, valid_chars)) {
+                // utf8 can be passed through directly
+                if (!client.handleStringTag(key, value)) goto failure;
+            } else {
+                // treat as ISO-8859-1 if UTF-8 fails
+                isIso88591 = true;
+            }
         } 
 
-        // if the value is not valid utf8, then we will treat it as iso-8859-1 
-        // and our native encoding detection will try to figure out what it is
-        if (oscl_strncmp(type, KVP_VALTYPE_ISO88591_CHAR, KVP_VALTYPE_ISO88591_CHAR_LEN) == 0 
-                || !validUtf8) {
-            // iso-8859-1
-            // convert to utf8
-            // worse case is 2x inflation
+        // treat it as iso-8859-1 and our native encoding detection will try to
+        // figure out what it is
+        if (isIso88591) {
+            // convert ISO-8859-1 to utf8, worse case is 2x inflation
             const unsigned char* src = (const unsigned char *)value;
             char* temp = (char *)alloca(strlen(value) * 2 + 1);
             if (temp) {
@@ -142,8 +164,12 @@ static PVMFStatus parseMP3(const char *filename, MediaScannerClient& client)
                 *dest = 0;
                 if (!client.addStringTag(key, temp)) goto failure;           
             }
-        } else if (oscl_strncmp(type, KVP_VALTYPE_UTF16BE_WCHAR, KVP_VALTYPE_UTF16BE_WCHAR_LEN) == 0 ||
-                oscl_strncmp(type, KVP_VALTYPE_UTF16_WCHAR, KVP_VALTYPE_UTF16_WCHAR_LEN) == 0) {
+        }
+   
+        // not UTF-8 or ISO-8859-1, try wide char formats
+        if (!isUtf8 && !isIso88591 && 
+                (oscl_strncmp(type, KVP_VALTYPE_UTF16BE_WCHAR, KVP_VALTYPE_UTF16BE_WCHAR_LEN) == 0 ||
+                oscl_strncmp(type, KVP_VALTYPE_UTF16_WCHAR, KVP_VALTYPE_UTF16_WCHAR_LEN) == 0)) {
             // convert wchar to utf8
             // the id3parcom library has already taken care of byteswapping
             const oscl_wchar*  src = framevector[i]->value.pWChar_value;
@@ -314,7 +340,7 @@ static PVMFStatus parseMP4(const char *filename, MediaScannerClient& client)
     oscl_UTF8ToUnicode((const char *)filename, oscl_strlen((const char *)filename), (oscl_wchar *)output, MAX_BUFF_SIZE);
     OSCL_wHeapString<OsclMemAllocator> mpegfilename(output);
 
-    IMpeg4File *mp4Input = IMpeg4File::readMP4File(mpegfilename, 1 /* parsing_mode */, &iFs);
+    IMpeg4File *mp4Input = IMpeg4File::readMP4File(mpegfilename, NULL, NULL, 1 /* parsing_mode */, &iFs);
     if (mp4Input)
     {
         // check to see if the file contains video
@@ -326,16 +352,18 @@ static PVMFStatus parseMP4(const char *filename, MediaScannerClient& client)
             mp4Input->getTrackIDList(tracks, count);
             for (int i = 0; i < count; ++i) {
                 uint32 trackType = mp4Input->getTrackMediaType(tracks[i]);
-                OSCL_wHeapString<OsclMemAllocator> streamtype = mp4Input->getTrackMIMEType(tracks[i]);
+                OSCL_HeapString<OsclMemAllocator> streamtype;
+                mp4Input->getTrackMIMEType(tracks[i], streamtype);
                 char streamtypeutf8[128];
-                if (oscl_UnicodeToUTF8(streamtype.get_cstr(),streamtype.get_size(), streamtypeutf8,
-                                                                            sizeof(streamtypeutf8)) > 0) {
-                    if (strcmp(streamtypeutf8,"UNKNOWN") != 0) {
-                        if (trackType ==  MEDIA_TYPE_AUDIO) {
-                            hasAudio = true;
-                        } else if (trackType ==  MEDIA_TYPE_VISUAL) {
-                            hasVideo = true;
-                        }
+        strncpy (streamtypeutf8, streamtype.get_str(), streamtype.get_size());
+                if (streamtypeutf8[0])
+        {                                                                           
+                    if (strcmp(streamtypeutf8,"FORMATUNKNOWN") != 0) {
+                            if (trackType ==  MEDIA_TYPE_AUDIO) {
+                                hasAudio = true;
+                            } else if (trackType ==  MEDIA_TYPE_VISUAL) {
+                                hasVideo = true;
+                            }
                     } else {
                         //LOGI("@@@@@@@@ %100s: %s\n", filename, streamtypeutf8);
                     }
@@ -594,21 +622,6 @@ status_t MediaScanner::doProcessDirectory(char *path, int pathRemaining, const c
         }
 
         int type = entry->d_type;
-        if (type == DT_UNKNOWN) {
-            // If the type is unknown, stat() the file instead.
-            // This is sometimes necessary when accessing NFS mounted filesystems, but
-            // could be needed in other cases well.
-            struct stat statbuf;
-            if (stat(path, &statbuf) == 0) {
-                if (S_ISREG(statbuf.st_mode)) {
-                    type = DT_REG;
-                } else if (S_ISDIR(statbuf.st_mode)) {
-                    type = DT_DIR;
-                }
-            } else {
-                LOGD("stat() failed for %s: %s", path, strerror(errno) );
-            }
-        }
         if (type == DT_REG || type == DT_DIR) {
             int nameLength = strlen(name);
             bool isDirectory = (type == DT_DIR);

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,9 @@
 #ifndef OSCL_STRING_H_INCLUDED
 #include "oscl_string.h"
 #endif
+#ifndef OSCL_FILE_IO_H_INCLUDED
+#include "oscl_file_io.h"
+#endif
 #ifndef PVMF_RETURN_CODES_H_INCLUDED
 #include "pvmf_return_codes.h"
 #endif
@@ -41,23 +44,15 @@
 #ifndef PV_MP4FFCOMPOSER_CONFIG_H_INCLUDED
 #include "pv_mp4ffcomposer_config.h"
 #endif
-#ifndef OSCL_FILE_HANDLE_H_INCLUDED
-#include "oscl_file_handle.h"
-#endif
 
+
+#ifndef PVMI_KVP_H_INCLUDED
+#include "pvmi_kvp.h"
+#endif
 #define KPVMp4FFCNClipConfigUuid PVUuid(0x2e3b479f,0x2c46,0x465c,0xba,0x41,0xb8,0x91,0x11,0xa9,0xdf,0x3a)
 
 typedef enum
 {
-    /**
-     * This mode authors non Progressive Downloadable output files using temp files
-     * during authoring:
-     * Meta data towards the end of the clip
-     * Media data is not interleaved. Temp files are used.
-     * Media data is authored in separate media atoms for each track
-     * Temporary files are written to the same directory as the output file.
-     */
-    PVMP4FFCN_PV_FAST_TRACK_CONTENT_MODE = 0x00000000,
 
     /**
      * This mode authors 3GPP Progressive Downloadable output files:
@@ -76,6 +71,23 @@ typedef enum
     PVMP4FFCN_3GPP_DOWNLOAD_MODE = 0x00000009,
 
 
+    /**
+     * This mode authors I-Motion compliant output files:
+     * Meta Data is upfront.
+     * Media Data is interleaved. Temp files are used.
+     * Imotion DRM and Udta atoms are authored
+     * Temporary files are written to the same directory as the output file.
+     */
+    PVMP4FFCN_IMOTION_PSEUDO_STREAMING_MODE = 0x00000007,
+
+    /**
+     * This mode authors I-Motion compliant output files:
+     * Meta Data is towards the end of the file.
+     * Media Data is interleaved.
+     * Imotion DRM and Udta atoms are authored
+     * NoTemp files are used.
+     */
+    PVMP4FFCN_IMOTION_DOWNLOAD_MODE = 0x0000000D,
 
     /**
      * This mode authors movie fragment files:
@@ -88,39 +100,6 @@ typedef enum
 
 } PVMp4FFCN_AuthoringMode;
 
-#ifdef XXXX
-
-
-typedef enum
-{
-    /**
-     * This mode authors non Progressive Downloadable output files using temp files
-     * during authoring:
-     * Meta data towards the end of the clip
-     * Media data is not interleaved. Temp files are used.
-     * Media data is authored in separate media atoms for each track
-     * Temporary files are written to the same directory as the output file.
-     */
-    PVMP4FFCN_NON_3GPP_PROGRESSIVE_DOWNLOADABLE_WITH_TEMP_FILES = 0x00000000,
-
-    /**
-     * This mode authors 3GPP Progressive Downloadable output files:
-     * Meta Data is upfront.
-     * Media Data is interleaved. Temp files are used.
-     * Temporary files are written to the same directory as the output file.
-     */
-    PVMF4FFCN_3GPP_PROGRESSIVE_DOWNLOADABLE = 0x00000003,
-
-
-    /**
-     * This mode authors non Progressive Downloadable output files without using
-     * temp files during authoring:
-     * Meta data towards the end of the clip
-     * Media data is interleaved. No temp files are used.
-     */
-    PVMP4FFCN_NON_3GPP_PROGRESSIVE_DOWNLOADABLE_NO_TEMP_FILES = 0x00000009
-} PVMp4FFCN_AuthoringMode;
-#endif
 /**
  * PVMp4FFCNClipConfigInterface allows a client to control properties of PVMp4FFComposerNode
  */
@@ -148,16 +127,6 @@ class PVMp4FFCNClipConfigInterface : public PVInterface
         virtual bool queryInterface(const PVUuid& uuid, PVInterface*& iface) = 0;
 
         /**
-        * This method sets the output file handle. This method must be called before
-        * Start() is called.
-        *
-        * @param aFileHandle Output file handle
-        * @return Completion status of this method.
-        */
-        virtual PVMFStatus SetOutputFile(OsclFileHandle* aFileHandle) = 0;
-	
-	
-        /**
          * This method sets the output file name. This method must be called before
          * Start() is called.
          *
@@ -165,6 +134,15 @@ class PVMp4FFCNClipConfigInterface : public PVInterface
          * @return Completion status of this method.
          */
         virtual PVMFStatus SetOutputFileName(const OSCL_wString& aFileName) = 0;
+
+        /**
+         * This method sets the output file handle. This method must be called before
+         * Start() is called.
+         *
+         * @param aFileHandle Output file descriptor
+         * @return Completion status of this method.
+         */
+        virtual PVMFStatus SetOutputFileDescriptor(const OsclFileHandle* aFileHandle) = 0;
 
         /**
          * This method sets the authoring mode. This method must be called before
@@ -193,10 +171,10 @@ class PVMp4FFCNClipConfigInterface : public PVInterface
         /* This is an optional configuration API that should be called before Start() is called.
          *
          * @param aVersion   version string.
-         * @param aLangCode  16 bit ISO-639-2/T Language code
+         * @param aLangCode  OSCL_HeapString ISO-639-2/T Language code
          * @return Completion status of this method.
          */
-        virtual PVMFStatus SetVersion(const OSCL_wString& aVersion, uint16 aLangCode = 0) = 0;
+        virtual PVMFStatus SetVersion(const OSCL_wString& aVersion, const OSCL_String& aLangCode) = 0;
 
         /**
          * This method populates the title string. Title string contains
@@ -207,10 +185,10 @@ class PVMp4FFCNClipConfigInterface : public PVInterface
         /* This is an optional configuration API that should be called before Start() is called.
          *
          * @param aTitle   title string.
-         * @param aLangCode  16 bit ISO-639-2/T Language code
+         * @param aLangCode OSCL_HeapString ISO-639-2/T Language code
          * @return Completion status of this method.
          */
-        virtual PVMFStatus SetTitle(const OSCL_wString& aTitle, uint16 aLangCode = 0) = 0;
+        virtual PVMFStatus SetTitle(const OSCL_wString& aTitle, const OSCL_String& aLangCode) = 0;
 
         /**
          * This method populates the author string. Title string information about
@@ -220,10 +198,10 @@ class PVMp4FFCNClipConfigInterface : public PVInterface
         /* This is an optional configuration API that should be called before Start() is called.
          *
          * @param aAuthor   author string.
-         * @param aLangCode  16 bit ISO-639-2/T Language code
+         * @param aLangCode  OSCL_HeapString ISO-639-2/T Language code
          * @return Completion status of this method.
          */
-        virtual PVMFStatus SetAuthor(const OSCL_wString& aAuthor, uint16 aLangCode = 0) = 0;
+        virtual PVMFStatus SetAuthor(const OSCL_wString& aAuthor, const OSCL_String& aLangCode) = 0;
 
 
         /**
@@ -235,10 +213,10 @@ class PVMp4FFCNClipConfigInterface : public PVInterface
         /* This is an optional configuration API that should be called before Start() is called.
          *
          * @param aCopyright   Copyright string.
-         * @param aLangCode  16 bit ISO-639-2/T Language code
+         * @param aLangCode  OSCL_HeapString ISO-639-2/T Language code
          * @return Completion status of this method.
          */
-        virtual PVMFStatus SetCopyright(const OSCL_wString& aCopyright, uint16 aLangCode = 0) = 0;
+        virtual PVMFStatus SetCopyright(const OSCL_wString& aCopyright, const OSCL_String& aLangCode) = 0;
 
         /**
          * This method populates the description string. Description string contains
@@ -249,10 +227,10 @@ class PVMp4FFCNClipConfigInterface : public PVInterface
         /* This is an optional configuration API that should be called before Start() is called.
          *
          * @param aDescription   Description string.
-         * @param aLangCode  16 bit ISO-639-2/T Language code
+         * @param aLangCode  OSCL_HeapString ISO-639-2/T Language code
          * @return Completion status of this method.
          */
-        virtual PVMFStatus SetDescription(const OSCL_wString& aDescription, uint16 aLangCode = 0) = 0;
+        virtual PVMFStatus SetDescription(const OSCL_wString& aDescription, const OSCL_String& aLangCode) = 0;
 
         /**
          * This method populates the rating string. Rating string contains
@@ -262,10 +240,10 @@ class PVMp4FFCNClipConfigInterface : public PVInterface
         /* This is an optional configuration API that should be called before Start() is called.
          *
          * @param aRating   Rating string.
-         * @param aLangCode  16 bit ISO-639-2/T Language code
+         * @param aLangCode  OSCL_HeapString ISO-639-2/T Language code
          * @return Completion status of this method.
          */
-        virtual PVMFStatus SetRating(const OSCL_wString& aRating, uint16 aLangCode = 0) = 0;
+        virtual PVMFStatus SetRating(const OSCL_wString& aRating, const OSCL_String& aLangCode) = 0;
 
         /**
          * This method ests the creation date in ISO 8601 format
@@ -289,6 +267,97 @@ class PVMp4FFCNClipConfigInterface : public PVInterface
          * @return Completion status of this method.
          */
         virtual PVMFStatus SetRealTimeAuthoring(const bool aRealTime) = 0;
+        /* This is an optional configuration API that should be called before Start() is called.
+         *
+         * @param aAlbum_Title   Album string.
+         * @param aLangCode  OSCL_HeapString ISO-639-2/T Language code
+         * @return Completion status of this method.
+         */
+        virtual PVMFStatus SetAlbumInfo(const OSCL_wString& aAlbum_Title, const OSCL_String& aLangCode) = 0;
+        /* This is an optional configuration API that should be called before Start() is called.
+         *
+         * @param aRecordingYear   Recoding year.
+         * @return Completion status of this method.
+         */
+        virtual PVMFStatus SetRecordingYear(uint16 aRecordingYear) = 0;
+        /**
+         * This method populates the performer string. Performer string contains information about
+         * the the performer of the clip.
+         * Currently only wide char strings are supported.
+         * Language code is currently used only in case of IMOTION authoring mode,
+         * to populate the IMOTION author info atom.
+         *
+         * This is an optional configuration API that should be called before Start() is called.
+         *
+         * @param aPerformer  performer string.
+         * @param aLangCode  OSCL_HeapString ISO-639-2/T Language code
+         * @return Completion status of this method.
+         */
+        virtual PVMFStatus SetPerformer(const OSCL_wString& aPerformer, const OSCL_String& aLangCode) = 0;
+
+        /**
+         * This method populates the genre string. Genre string contains information about
+         * the the genre of the clip.
+         * Currently only wide char strings are supported.
+         * Language code is currently used only in case of IMOTION authoring mode,
+         * to populate the IMOTION author info atom.
+         *
+         * This is an optional configuration API that should be called before Start() is called.
+         *
+         * @param aGenre  genre string.
+         * @param aLangCode  OSCL_HeapString ISO-639-2/T Language code
+         * @return Completion status of this method.
+         */
+        virtual PVMFStatus SetGenre(const OSCL_wString& aGenre, const OSCL_String& aLangCode) = 0;
+
+        /**
+         * This method populates the Classification string. classification string contains information about
+         * the the classification of the clip .
+         * Currently only wide char strings are supported.
+         * Language code is currently used only in case of IMOTION authoring mode,
+         * to populate the IMOTION author info atom.
+         *
+         * This is an optional configuration API that should be called before Start() is called.
+         *
+         * @param aClassificationInfo   classification information string.
+         * @param aClassificationEntity classification Entity string.
+         * @param aClassificationTable  classification Table string.
+         * @param aLangCode  OSCL_HeapString ISO-639-2/T Language code
+         * @return Completion status of this method.
+         */
+        virtual PVMFStatus SetClassification(const OSCL_wString& aClassificationInfo, uint32 aClassificationEntity, uint16 aClassificationTable, const OSCL_String& aLangCode) = 0;
+        /**
+         * This method populates the keyword string. keyword string contains information about
+         * the the keyword of the clip.
+         * Currently only wide char strings are supported.
+         * Language code is currently used only in case of IMOTION authoring mode,
+         * to populate the IMOTION author info atom.
+         *
+         * This is an optional configuration API that should be called before Start() is called.
+         *
+         * @param aKeyWordInfo  Keyword information string.
+         * @param aLangCode  OSCL_HeapString ISO-639-2/T Language code
+         * @return Completion status of this method.
+         */
+        virtual PVMFStatus SetKeyWord(const OSCL_wString& aKeyWordInfo, const OSCL_String& aLangCode) = 0;
+        /**
+         * This method populates the LocationInfo string. LocationInfo string contains information about
+         * the the Location of the clip.
+         *
+         * This is an optional configuration API that should be called before Start() is called.
+         *
+         * @param aLocation_info  Instance of class PvmfAssetInfo3GPPLocationStruct
+         * @return Completion status of this method.
+         */
+        virtual PVMFStatus SetLocationInfo(PvmfAssetInfo3GPPLocationStruct& aLocation_info) = 0;
+        /**
+        * This method pouplates the aLang string. aLang contains the language code as a heap string and
+        * this function is used to convert the lang code into uint16 format and stores the lang code into
+        * the authored media file.
+        * @param aLang Language code in Heap String format,
+        * @return lang_code in a uint16 format.
+        */
+        virtual uint16 ConvertLangCode(const OSCL_String& aLang) = 0;
 };
 
 #endif // PVMP4FFCN_CLIPCONFIG_H_INCLUDED

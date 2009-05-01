@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,10 +27,7 @@ Permission to distribute, modify and use this file under the standard license
 terms listed above has been obtained from the copyright holder.
 ****************************************************************************************/
 /*
-
  Pathname: ./gsm-amr/c/src/l_abs.c
-
-     Date: 08/13/2000
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
@@ -40,6 +37,7 @@ terms listed above has been obtained from the copyright holder.
 
  Description: Removed conditional code that updates WMOPS counter
 
+ Who: 						Date:
  Description:
 
 ------------------------------------------------------------------------------
@@ -188,21 +186,8 @@ Word32 L_abs(register Word32 L_var1)
     ; Function body here
     ----------------------------------------------------------------------------*/
 
-    if (L_var1 < 0)
-    {
-        if (L_var1 == MIN_32)
-        {
-            L_var1 = MAX_32;
-        }
-        else
-        {
-            L_var1 = -L_var1;
-        }
-    }
-    /* else L_var1 = L_var1;*/
+    Word32 y = L_var1 - (L_var1 < 0);
+    y = y ^(y >> 31);
+    return (y);
 
-    /*----------------------------------------------------------------------------
-    ; Return nothing or data or data pointer
-    ----------------------------------------------------------------------------*/
-    return (L_var1);
 }

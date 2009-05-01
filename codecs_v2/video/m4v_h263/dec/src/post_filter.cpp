@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -227,26 +227,6 @@ void H263_Deblock(uint8 *rec,
                         B = *(rec_y - width);
                         d = (((C - B) << 2) + A_D);
 
-#if 0
-                        abs_d = ((d >> 31) ^ d) >> 3;
-
-                        if (abs_d > strength)
-                        {
-                            if (abs_d > ((abs_d - strength) << 1))
-                            {
-                                d1 = abs_d - ((abs_d - strength) << 1);
-                            }
-                            else
-                            {
-                                d1 = 0;
-                            }
-                        }
-                        else
-                        {
-                            d1 = abs_d;
-                        }
-
-#endif
                         if (d < 0)
                         {
                             d1 = -(-d >> 3);

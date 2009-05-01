@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,13 +27,8 @@ Permission to distribute, modify and use this file under the standard license
 terms listed above has been obtained from the copyright holder.
 ****************************************************************************************/
 /*
-------------------------------------------------------------------------------
-
-
 
  Filename: /audio/gsm_amr/c/include/l_add.h
-
-     Date: 08/11/2000
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
@@ -51,6 +46,7 @@ terms listed above has been obtained from the copyright holder.
 
  Description: Providing support for ARM and Linux-ARM assembly instructions.
 
+ Who:                       Date:
  Description:
 
 ------------------------------------------------------------------------------
@@ -110,7 +106,7 @@ extern "C"
     ; GLOBAL FUNCTION DEFINITIONS
     ; Function Prototype declaration
     ----------------------------------------------------------------------------*/
-#if defined(PV_ARM) /* Instructions for ARM Assembly on ADS*/
+#if defined(PV_ARM_V5) /* Instructions for ARM Assembly on ADS*/
 
     __inline Word32 L_add(register Word32 L_var1, register Word32 L_var2, Flag *pOverflow)
     {
@@ -124,7 +120,7 @@ extern "C"
         return(result);
     }
 
-#elif defined(PV_ARM_GCC) /* Instructions for ARM-linux cross-compiler*/
+#elif defined(PV_ARM_GCC_V5) /* Instructions for ARM-linux cross-compiler*/
 
     __inline Word32 L_add(register Word32 L_var1, register Word32 L_var2, Flag *pOverflow)
     {

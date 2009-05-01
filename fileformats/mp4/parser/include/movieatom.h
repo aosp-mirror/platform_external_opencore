@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,6 +76,7 @@
 #ifndef MOVIEEXTENDSATOM_HINCLUDED
 #include "movieextendsatom.h"
 #endif
+
 
 class AVCSampleEntry;
 /*
@@ -231,7 +232,7 @@ class MovieAtom : public Atom
 
         DecoderSpecificInfo *getTrackDecoderSpecificInfoAtSDI(uint32 trackID, uint32 index);
 
-        OSCL_wHeapString<OsclMemAllocator> getTrackMIMEType(uint32 id);
+        void getTrackMIMEType(uint32 id, OSCL_String& aMimeType);
 
         int32 getTrackMaxBufferSizeDB(uint32 id);
 
@@ -299,6 +300,16 @@ class MovieAtom : public Atom
                 return 0;
             }
         }
+
+        OSCL_wHeapString<OsclMemAllocator> getITunesDescription() const
+        {
+            OSCL_wHeapString<OsclMemAllocator> temp;
+            if (_pUserDataAtom)
+                return _pUserDataAtom->getITunesDescription();
+            else
+                return temp;
+        }
+
         int32 getNumAssetInfoPerformerAtoms()
         {
             if (_pUserDataAtom != NULL)
@@ -489,11 +500,29 @@ class MovieAtom : public Atom
                 return temp;
         }
 
+        OSCL_wHeapString<OsclMemAllocator> getITunesTrackSubTitle() const
+        {
+            OSCL_wHeapString<OsclMemAllocator> temp;
+            if (_pUserDataAtom)
+                return _pUserDataAtom->getITunesTrackSubTitle();
+            else
+                return temp;
+        }
+
         OSCL_wHeapString<OsclMemAllocator> getITunesArtist() const
         {
             OSCL_wHeapString<OsclMemAllocator> temp;
             if (_pUserDataAtom)
                 return _pUserDataAtom->getITunesArtist();
+            else
+                return temp;
+        }
+
+        OSCL_wHeapString<OsclMemAllocator> getITunesAlbumArtist() const
+        {
+            OSCL_wHeapString<OsclMemAllocator> temp;
+            if (_pUserDataAtom)
+                return _pUserDataAtom->getITunesAlbumArtist();
             else
                 return temp;
         }
@@ -577,6 +606,17 @@ class MovieAtom : public Atom
                 return temp;
         }
 
+        OSCL_wHeapString<OsclMemAllocator> getITunesEncodedBy() const
+        {
+            OSCL_wHeapString<OsclMemAllocator> temp;
+            if (_pUserDataAtom)
+            {
+                return _pUserDataAtom->getITunesEncodedBy();
+            }
+            else
+                return temp;
+        }
+
         OSCL_wHeapString<OsclMemAllocator> getITunesWriter() const
         {
             OSCL_wHeapString<OsclMemAllocator> temp;
@@ -613,14 +653,6 @@ class MovieAtom : public Atom
                 return temp;
         }
 
-        OSCL_wHeapString<OsclMemAllocator> getITunesDescription() const
-        {
-            OSCL_wHeapString<OsclMemAllocator> temp;
-            if (_pUserDataAtom)
-                return _pUserDataAtom->getITunesDescription();
-            else
-                return temp;
-        }
 
         uint16 getITunesThisTrackNo() const
         {
@@ -646,6 +678,14 @@ class MovieAtom : public Atom
                 return false;
         }
 
+        bool IsITunesContentRating() const
+        {
+            if (_pUserDataAtom)
+                return _pUserDataAtom->IsITunesContentRating();
+            else
+                return false;
+        }
+
         uint16 getITunesBeatsPerMinute() const
         {
             if (_pUserDataAtom)
@@ -653,6 +693,7 @@ class MovieAtom : public Atom
             else
                 return 0;
         }
+
 
         PvmfApicStruct* getITunesImageData() const
         {
@@ -708,6 +749,25 @@ class MovieAtom : public Atom
                 return 0;
         }
 
+
+        OSCL_wHeapString<OsclMemAllocator> getITunesCDTrackNumberData() const
+        {
+            OSCL_wHeapString<OsclMemAllocator> temp;
+            if (_pUserDataAtom)
+                return _pUserDataAtom->getITunesCDTrackNumberData();
+            else
+                return temp;
+        }
+
+        OSCL_wHeapString<OsclMemAllocator> getITunesCDDB1Data() const
+        {
+            OSCL_wHeapString<OsclMemAllocator> temp;
+            if (_pUserDataAtom)
+                return _pUserDataAtom->getITunesCDDB1Data();
+            else
+                return temp;
+        }
+
         OSCL_wHeapString<OsclMemAllocator> getITunesLyrics() const
         {
             OSCL_wHeapString<OsclMemAllocator> temp;
@@ -716,8 +776,6 @@ class MovieAtom : public Atom
             else
                 return temp;
         }
-
-
 
     private:
         void addTrackAtom(TrackAtom *a);
@@ -738,6 +796,8 @@ class MovieAtom : public Atom
         bool _oVideoTrackPresent;
 
         OSCL_wHeapString<OsclMemAllocator> _emptyString;
+
+
 };
 
 #endif // MOVIEATOM_H_INCLUDED

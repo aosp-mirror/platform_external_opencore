@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,12 +40,14 @@ SLConfigDescriptor::SLConfigDescriptor(MP4_FF_FILE *fp)
         if (!AtomUtils::read8(fp, _predefined))
             _success = false;
 
+
         // Need to add in abilty to handle case where (_predefined == 0).
         // In this situation, there are many other members that need to be rendered
 
 
         if (getSizeOfSizeField() + 2 != getSize())
         {
+
             if (_success && _OCRStreamFlag)
             {
                 if (!AtomUtils::read16(fp, _OCRESID))

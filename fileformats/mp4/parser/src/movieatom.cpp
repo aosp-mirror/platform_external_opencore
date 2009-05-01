@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,6 +59,7 @@ OSCL_EXPORT_REF MovieAtom::MovieAtom(MP4_FF_FILE *fp,
     _oVideoTrackPresent = false;
 
 
+
     if (_success)
     {
         _scalability = -1;
@@ -111,7 +112,6 @@ OSCL_EXPORT_REF MovieAtom::MovieAtom(MP4_FF_FILE *fp,
                 else
                 {
                     //at most one udat atom allowed
-                    //Skip mulitple Imotion UDATs
                     if (atomSize < DEFAULT_ATOM_SIZE)
                     {
                         _success = false;
@@ -222,12 +222,11 @@ OSCL_EXPORT_REF MovieAtom::MovieAtom(MP4_FF_FILE *fp,
             }
             else if (atomType == TRACK_ATOM)
             {
+                TrackAtom *track = NULL;
                 // trak
                 if (oPVContent)
                 {
                     // Read in and add all the track atoms
-                    TrackAtom *track = NULL;
-
                     PV_MP4_FF_NEW(fp->auditCB,
                                   TrackAtom,
                                   (fp, filename, atomSize,
@@ -257,8 +256,6 @@ OSCL_EXPORT_REF MovieAtom::MovieAtom(MP4_FF_FILE *fp,
                 else
                 {
                     // Read in and add all the track atoms
-                    TrackAtom *track = NULL;
-
                     uint32 currPos = AtomUtils::getCurrentFilePosition(fp);
                     PV_MP4_FF_NEW(fp->auditCB,
                                   TrackAtom,
@@ -286,6 +283,14 @@ OSCL_EXPORT_REF MovieAtom::MovieAtom(MP4_FF_FILE *fp,
                             track = NULL;
                         }
                     }
+                }
+
+                /* max limit- 1024 tracks*/
+                if ((_ptrackArray->size()) > MAX_LIMIT_FOR_NUMBER_OF_TRACKS)
+                {
+                    _success = false;
+                    _mp4ErrorCode = EXCEED_MAX_LIMIT_SUPPORTED_FOR_TOTAL_TRACKS;
+                    return ;
                 }
             }
         }
@@ -617,18 +622,13 @@ MovieAtom::getTrackDecoderSpecificInfoAtSDI(uint32 trackID, uint32 index)
     }
 }
 
-OSCL_wHeapString<OsclMemAllocator> MovieAtom::getTrackMIMEType(uint32 id)
+void MovieAtom::getTrackMIMEType(uint32 id, OSCL_String& aMimeType)
 {
     TrackAtom *trackAtom = getTrackforID(id);
 
     if (trackAtom != NULL)
     {
-        return trackAtom->getMIMEType();
-    }
-    else
-    {
-        OSCL_wHeapString<OsclMemAllocator> temp(_STRLIT("UNKNOWN"));
-        return temp;
+        trackAtom->getMIMEType(aMimeType);
     }
 }
 
@@ -914,6 +914,7 @@ uint32 MovieAtom::resetPlayback(uint32 time, uint16 numTracks, uint32 *trackList
                         {
                             modifiedTimeStamp = timestamp;
                         }
+
                     }
 
                     bool oDependsOn = true;
@@ -941,6 +942,7 @@ uint32 MovieAtom::resetPlayback(uint32 time, uint16 numTracks, uint32 *trackList
                     {
                         modifiedTimeStamp = timestamp;
                     }
+
                 }
             }
         }
@@ -993,6 +995,7 @@ uint32 MovieAtom::resetPlayback(uint32 time, uint16 numTracks, uint32 *trackList
         }
     }
 
+
     return modifiedTimeStamp;
 
 }
@@ -1044,6 +1047,7 @@ int32 MovieAtom::queryRepositionTime(uint32 time,
             }
         }
         return minTS;
+
     }
     for (i = 0; i < numTracks; i++)
     {
@@ -2197,3 +2201,4 @@ int32 MovieAtom::getTimestampForRandomAccessPointsBeforeAfter(uint32 id, uint32 
     }
 
 }
+

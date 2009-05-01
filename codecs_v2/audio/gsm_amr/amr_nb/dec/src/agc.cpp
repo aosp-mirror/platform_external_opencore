@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,70 +39,6 @@ terms listed above has been obtained from the copyright holder.
            agc_exit
            agc
            agc2
-
-     Date: 03/28/2000
-
-------------------------------------------------------------------------------
- REVISION HISTORY
-
- Description: Fixed some problems with overflow and negative saturation.
-
- Description: Made changes based on comments from the review meeting. Removed
-    more calls to L_shl in agc and agc2.
-
- Description: Synchronized code with the UMTS version 3.2.0. Updated Pseudo-
-              code section on all functions to show the latest version of
-              code that was optimized. Removed hard tabs. Updated to most
-              current PV coding template.
-
- Description: Removed basic_op.h and replaced it with the header files of
-              the math functions used by the file. Removed unnecessary
-              include files.
-
- Description: Made the following changes per comments from Phase 2/3 review:
-              1. Changed FOR loops to count down.
-              2. Reordered IF statement to take advantage of branch prediction.
-              3. Declared one local variable per line.
-              4. Copied detailed function description of agc() from the
-                 header file.
-              5. Made minor cosmetic changes.
-              6. Fixed typecasting issue using a TI C compiler.
-
- Description: Made the following changes to make the library EPOC compatible.
-             1. energy_old(): Passed in pointer to overflow flag. Changed
-              call to L_add() to include overflow flag.
-              2. energy_new(): Passed in pointer to overflow flag. Changed
-              function calls to L_add() and energy_old() to include overflow
-              flag.
-              3. agc(): Passed in pointer to overflow flag. Changed function
-              calls to energy_new(), L_shl(), round(), L_shr(), Inv_sqrt(),
-              mult(), add() and L_mult() to include overflow flag.
-              3. agc2(): Passed in pointer to overflow flag. Changed function
-              calls to energy_new(), L_shl(), round(), L_shr(), Inv_sqrt(),
-              mult(), add() and L_mult() to include overflow flag.
-
- Description: Added wrapper functions for energy_old() and energy_new() for
-             access by unit tests.
- Description: Corrected return type for energy_old() and energy_new() wrapper
-              functions. Removed unneeded header files. Cleaned up code.
-
- Description: Fixed bug found in the FOR loop calculation of gain[n] in agc().
-              Updated copyright year.
-
- Description: Removed the functions agc_init() and agc_exit().  The agc
- related structure is no longer dynamically allocated.
-
- Description: Updated Ouputs section for all functions.
-
- Description: Optimized agc() to reduce clock cycle usage. Updated
-              copyright year and removed unused files in Include section.
-
- Description: Changed function name to pv_round to avoid conflict with
-              round function in C standard library.
-
- Description: Removed the usage of l_deposit_l().
-
- Description:
 
 ------------------------------------------------------------------------------
  MODULE DESCRIPTION
@@ -237,23 +173,13 @@ static Word32 energy_old(       /* o : return energy of signal      */
 
 {
     Word32  s = 0;
-    Word32  L_temp;
     Word16  i;
     Word16  temp;
 
-    for (i = l_trm - 1; i >= 0; i--)
+    for (i = 0; i < l_trm; i++)
     {
-        temp = in[i];
-        if (temp < 0)
-        {
-            temp = ~(~temp >> 2);
-        }
-        else
-        {
-            temp = temp >> 2;
-        }
-        L_temp = (((Word32) temp) * temp) << 1;
-        s = L_add(s, L_temp, pOverflow);
+        temp = in[i] >> 2;
+        s = L_mac(s, temp, temp, pOverflow);
     }
 
     return(s);
@@ -449,25 +375,16 @@ static Word32 energy_new(       /* o : return energy of signal      */
 
 {
     Word32  s = 0;
-    Word32  L_temp;
     Word16  i;
     Flag    ov_save;
 
     ov_save = *(pOverflow);  /* save overflow flag in case energy_old */
     /* must be called                        */
 
-    for (i = l_trm - 1; i >= 0; i--)
+
+    for (i = 0; i < l_trm; i++)
     {
-        L_temp = ((Word32) in[i]) * in[i];
-        if (L_temp != (Word32) 0x40000000L)
-        {
-            L_temp = L_temp << 1;
-        }
-        else
-        {
-            L_temp = MAX_32;
-        }
-        s = L_add(s, L_temp, pOverflow);
+        s = L_mac(s, in[i], in[i], pOverflow);
     }
 
     /* check for overflow */

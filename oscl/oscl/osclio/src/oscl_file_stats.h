@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@
 #define OSCL_FILE_STATS_H_INCLUDED
 
 #include "oscl_base.h"
+#include "osclconfig_io.h"
 
 #define OSCL_FILE_STATS_LOGGER_NODE "OsclFileStats"
 
@@ -45,7 +46,7 @@ class OsclFileStatsItem
     public:
         uint32 iOpCount;
         uint32 iParam;
-        uint32 iParam2;
+        TOsclFileOffset iParam2;
         uint32 iStartTick;
         uint32 iTotalTicks;
 };
@@ -61,7 +62,6 @@ enum TOsclFileOp
     , EOsclFileOp_Size
     , EOsclFileOp_Flush
     , EOsclFileOp_EndOfFile
-    , EOsclFileOp_SetSize
     , EOsclFileOp_NativeOpen
     , EOsclFileOp_NativeClose
     , EOsclFileOp_NativeRead
@@ -71,7 +71,6 @@ enum TOsclFileOp
     , EOsclFileOp_NativeSize
     , EOsclFileOp_NativeFlush
     , EOsclFileOp_NativeEndOfFile
-    , EOsclFileOp_NativeSetSize
     , EOsclFileOp_Last
 };
 static const char* const TOsclFileOpStr[] =
@@ -105,7 +104,7 @@ class OsclFileStats
     public:
         OsclFileStats(Oscl_File* c);
         void Start(uint32& aTicks);
-        void End(TOsclFileOp aOp, uint32 aStart, uint32 aParam = 0, uint32 aParam2 = 0);
+        void End(TOsclFileOp aOp, uint32 aStart, uint32 aParam = 0, TOsclFileOffset aParam2 = 0);
         void Log(TOsclFileOp, PVLogger*, uint32);
         void LogAll(PVLogger*, uint32);
 

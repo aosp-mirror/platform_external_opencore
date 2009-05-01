@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,7 +88,7 @@ class PvmfSyncUtilDataQueueObserver
  * too late, or schedule the data to be processed at a later time that is synchronized to the
  * specified clock.
  */
-class PvmfSyncUtilDataQueue: public OsclClockObserver
+class PvmfSyncUtilDataQueue: public PVMFMediaClockObserver
 {
     public:
         /**
@@ -202,13 +202,14 @@ class PvmfSyncUtilDataQueue: public OsclClockObserver
          */
         OSCL_IMPORT_REF void SetName(const char*);
 
-        OSCL_IMPORT_REF PVMFStatus SetClock(OsclClock*);
-        OSCL_IMPORT_REF PVMFStatus SetClockForFrameStep(OsclClock*);
+        OSCL_IMPORT_REF PVMFStatus SetClock(PVMFMediaClock*);
+        OSCL_IMPORT_REF PVMFStatus SetClockForFrameStep(PVMFMediaClock*);
 
-        //From OsclClockObserver
+        //From PVMFMediaClockObserver
         OSCL_IMPORT_REF void ClockTimebaseUpdated();
         OSCL_IMPORT_REF void ClockCountUpdated();
         OSCL_IMPORT_REF void ClockAdjusted();
+        OSCL_IMPORT_REF void NotificationsInterfaceDestroyed();
 
     private:
 
@@ -222,14 +223,15 @@ class PvmfSyncUtilDataQueue: public OsclClockObserver
         PVLogger* iDatapathLogger;
         void LogMediaMsgInfo(PVMFSharedMediaMsgPtr aMediaMsg, const char* msg);
         void LogMediaMsgInfo(PVMFSharedMediaMsgPtr aMediaMsg, const char* msg, uint32);
-        OsclClock* iClock;
+        PVMFMediaClock* iClock;
+        PVMFMediaClockNotificationsInterface* iClockNotificationsInf;
         bool iClockOwner;
-        PVMFStatus DoSetClock(OsclClock*, bool);
+        PVMFStatus DoSetClock(PVMFMediaClock*, bool);
         void PassClockToSyncUtil();
 
         //for frame-stepping.
-        int64 iClockFrameCount;
-        int64 iSyncFrameCount;
+        int32 iClockFrameCount;
+        int32 iSyncFrameCount;
         PVMFStatus FrameStep();
         bool FrameStepMode();
         bool FrameSyncMode();

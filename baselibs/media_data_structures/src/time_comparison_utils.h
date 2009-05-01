@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,70 +32,76 @@
 #include "pvmf_timestamp.h"
 #endif
 
-typedef enum
+
+class PVTimeComparisonUtils
 {
-    MEDIA_EARLY_OUTSIDE_WINDOW,
-    MEDIA_EARLY_WITHIN_WINDOW,
-    MEDIA_LATE_WITHIN_WINDOW,
-    MEDIA_LATE_OUTSIDE_WINDOW
-} MediaTimeStatus;
+    public:
+        typedef enum
+        {
+            MEDIA_EARLY_OUTSIDE_WINDOW,
+            MEDIA_EARLY_WITHIN_WINDOW,
+            MEDIA_ONTIME_WITHIN_WINDOW,
+            MEDIA_LATE_WITHIN_WINDOW,
+            MEDIA_LATE_OUTSIDE_WINDOW
+        } MediaTimeStatus;
 
 
-/*!*********************************************************************
-**
-** Function:    IsEarlier
-**
-** Synopsis: This function returns true if TimeA is considered EARLIER than TimeB.
-**
-** Arguments :
-** @param  [aTimeA] -- Time stamp to be compared.
-** @param  [aTimeB] -- Time stamp to be compared.
-** @param  [delta]  -- delta is an output parameter and is always
-**                     a small positive value representing TimeB-TimeA if TimeA is earlier
-**                     than TimeB or TimeA-TimeB if TimeB is earlier than TimeA.
+        /*!*********************************************************************
+        **
+        ** Function:    IsEarlier
+        **
+        ** Synopsis: This function returns true if TimeA is considered EARLIER than TimeB.
+        **
+        ** Arguments :
+        ** @param  [aTimeA] -- Time stamp to be compared.
+        ** @param  [aTimeB] -- Time stamp to be compared.
+        ** @param  [delta]  -- delta is an output parameter and is always
+        **                     a small positive value representing TimeB-TimeA if TimeA is earlier
+        **                     than TimeB or TimeA-TimeB if TimeB is earlier than TimeA.
 
-** Returns:
-** @return  bool  -- returns true if TimeA is considered EARLIER than TimeB.
-**
-**
-** Notes:
-**
-**********************************************************************/
+        ** Returns:
+        ** @return  bool  -- returns true if TimeA is considered EARLIER than TimeB.
+        **
+        **
+        ** Notes:
+        **
+        **********************************************************************/
 
-OSCL_IMPORT_REF bool IsEarlier(
-    /*IN*/ uint32 aTimeA,
-    /*IN*/ uint32 aTimeB,
-    /*OUT*/ uint32& delta);
+        OSCL_IMPORT_REF static bool IsEarlier(
+            /*IN*/ uint32 aTimeA,
+            /*IN*/ uint32 aTimeB,
+            /*OUT*/ uint32& delta);
 
-/*!*********************************************************************
-**
-** Function:    CheckTimeWindow
-**
-** Synopsis: This function would return one of MEDIA_EARLY_OUTSIDE_WINDOW, MEDIA_EARLY_WITHIN_WINDOW,
-**           MEDIA_LATE_WITHIN_WINDOW or MEDIA_LATE_OUTSIDE_WINDOW depending on where the TimeStamp
-**           is within the window specified by (Clock-LateMargin) to (Clock+EarlyMargin).
-**
-** Arguments :
-** @param  [aTimeStamp]    -- Time stamp to be checked.
-** @param  [aClock]        -- present clock value.
-** @param  [aEarlyMargin]  -- early margin of the window
-** @param  [aLateMargin]   -- late margin of the window
-** @param  [aDelta]        -- aDelta is an output parameter and would contain the difference
-**                            in timestamp and clock in positive form.
+        /*!*********************************************************************
+        **
+        ** Function:    CheckTimeWindow
+        **
+        ** Synopsis: This function would return one of MEDIA_EARLY_OUTSIDE_WINDOW, MEDIA_EARLY_WITHIN_WINDOW,
+        **           MEDIA_LATE_WITHIN_WINDOW or MEDIA_LATE_OUTSIDE_WINDOW depending on where the TimeStamp
+        **           is within the window specified by (Clock-LateMargin) to (Clock+EarlyMargin).
+        **
+        ** Arguments :
+        ** @param  [aTimeStamp]    -- Time stamp to be checked.
+        ** @param  [aClock]        -- present clock value.
+        ** @param  [aEarlyMargin]  -- early margin of the window
+        ** @param  [aLateMargin]   -- late margin of the window
+        ** @param  [aDelta]        -- aDelta is an output parameter and would contain the difference
+        **                            in timestamp and clock in positive form.
 
-** Returns:
-** @return  MediaTimeStatus  -- returns one of the values from MediaTimeStatus enum.
-**
-**
-** Notes:
-**
-**********************************************************************/
+        ** Returns:
+        ** @return  MediaTimeStatus  -- returns one of the values from MediaTimeStatus enum.
+        **
+        **
+        ** Notes:
+        **
+        **********************************************************************/
 
-OSCL_IMPORT_REF MediaTimeStatus CheckTimeWindow(
-    /*IN*/ PVMFTimestamp aTimeStamp,
-    /*IN*/ uint32 aClock,
-    /*IN*/ uint32 aEarlyMargin,
-    /*IN*/ uint32 aLateMargin,
-    /*OUT*/ uint32 &aDelta);
+        OSCL_IMPORT_REF static MediaTimeStatus CheckTimeWindow(
+            /*IN*/ PVMFTimestamp aTimeStamp,
+            /*IN*/ uint32 aClock,
+            /*IN*/ uint32 aEarlyMargin,
+            /*IN*/ uint32 aLateMargin,
+            /*OUT*/ uint32 &aDelta);
 
+};
 #endif

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,9 +91,6 @@ extern "C"
     			   more data. Users should call BitstreamShowBits to determine
     			   how much they want to flush."
     */
-#if 0
-    AVCDec_Status BitstreamFlushBits(AVCDecBitstream *stream, int nBits);
-#endif
 
     /**
     This function read 1 bit from the current position and advance the pointer.

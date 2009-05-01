@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,17 +32,11 @@
 #ifndef PVAUTHORENGINE_H_INCLUDED
 #include "pvauthorengine.h"
 #endif
-#ifndef PVMF_OMX_VIDEOENC_NODE_FACTORY_H_INCLUDED
-#include "pvmf_omx_videoenc_node_factory.h"
-#endif
 #ifndef PVMP4FFCN_FACTORY_H_INCLUDED
 #include "pvmp4ffcn_factory.h"
 #endif
 #ifndef PVMF_FILEOUTPUT_FACTORY_H_INCLUDED
 #include "pvmf_fileoutput_factory.h"
-#endif
-#ifndef PVMF_AMRENC_NODE_FACTORY_H_INCLUDED
-#include "pvmf_amrenc_node_factory.h"
 #endif
 #ifndef PVMP4FFCN_CLIPCONFIG_H_INCLUDED
 #include "pvmp4ffcn_clipconfig.h"
@@ -56,8 +50,27 @@
 #ifndef PV_MP4_H263_ENC_EXTENSION_H_INCLUDED
 #include "pvmp4h263encextension.h"
 #endif
-#ifndef PVMFAMRENCNODE_EXTENSION_H_INCLUDED
-#include "pvmfamrencnode_extension.h"
+#ifndef PVMF_AUDIO_ENCNODE_EXTENSION_H_INCLUDED
+#include "pvmf_audio_encnode_extension.h"
+#endif
+
+#if USE_OMX_ENC_NODE
+
+#ifndef PVMF_OMX_ENC_FACTORY_H_INCLUDED
+#include "pvmf_omx_enc_factory.h"
+#endif
+
+#else
+
+#ifndef PVMFAVCENCNODE_FACTORY_H_INCLUDED
+#include "pvmf_avcenc_node_factory.h"
+#endif
+#ifndef PVMF_VIDEOENC_NODE_FACTORY_H_INCLUDED
+#include "pvmf_videoenc_node_factory.h"
+#endif
+#ifndef PVMF_AMRENC_NODE_FACTORY_H_INCLUDED
+#include "pvmf_amrenc_node_factory.h"
+#endif
 #endif
 
 class PVAuthorEngineNodeFactoryUtility
@@ -66,14 +79,30 @@ class PVAuthorEngineNodeFactoryUtility
         static PVMFNodeInterface* CreateEncoder(const PVUuid& aUuid)
         {
             PVMFNodeInterface* node = NULL;
-            if (aUuid == PVMFOMXVideoEncNodeUuid)
+#if USE_OMX_ENC_NODE
+            if (aUuid == KPVMFOMXVideoEncNodeUuid)
             {
-                node = PVMFOMXVideoEncNodeFactory::CreateVideoEncNode();
+                node = PVMFOMXEncNodeFactory::CreatePVMFOMXEncNode();
+            }
+            else if (aUuid == KPVMFOMXAudioEncNodeUuid)
+            {
+                node = PVMFOMXEncNodeFactory::CreatePVMFOMXEncNode();
+            }
+#else
+
+            if (aUuid == PVMFVideoEncNodeUuid)
+            {
+                node = PVMFVideoEncNodeFactory::CreateVideoEncNode();
             }
             else if (aUuid == PvmfAmrEncNodeUuid)
             {
                 node = PvmfAmrEncNodeFactory::Create();
             }
+            else if (aUuid == PVMFAvcEncNodeUuid)
+            {
+                node = PVMFAvcEncNodeFactory::CreateAvcEncNode();
+            }
+#endif
             return node;
         }
 
@@ -94,15 +123,32 @@ class PVAuthorEngineNodeFactoryUtility
 
         static bool Delete(const PVUuid& aUuid, PVMFNodeInterface* aNode)
         {
-            if(!aNode)
-            {
+            if (!aNode)
                 return false;
-            }
 
-            if (aUuid == PVMFOMXVideoEncNodeUuid)
+#if USE_OMX_ENC_NODE
+            else if (aUuid == KPVMFOMXVideoEncNodeUuid)
             {
-                return PVMFOMXVideoEncNodeFactory::DeleteVideoEncNode(aNode);
+                return PVMFOMXEncNodeFactory::DeletePVMFOMXEncNode(aNode);
             }
+            else if (aUuid == KPVMFOMXAudioEncNodeUuid)
+            {
+                return PVMFOMXEncNodeFactory::DeletePVMFOMXEncNode(aNode);
+            }
+#else
+            if (aUuid == PVMFVideoEncNodeUuid)
+            {
+                return PVMFVideoEncNodeFactory::DeleteVideoEncNode(aNode);
+            }
+            else if (aUuid == PVMFAvcEncNodeUuid)
+            {
+                return PVMFAvcEncNodeFactory::DeleteAvcEncNode(aNode);
+            }
+            else if (aUuid == PvmfAmrEncNodeUuid)
+            {
+                return PvmfAmrEncNodeFactory::Delete(aNode);
+            }
+#endif
             else if (aUuid == KPVMp4FFComposerNodeUuid)
             {
                 return PVMp4FFComposerNodeFactory::DeleteMp4FFComposer(aNode);
@@ -111,31 +157,57 @@ class PVAuthorEngineNodeFactoryUtility
             {
                 return PVFileOutputNodeFactory::DeleteFileOutput(aNode);
             }
-            else if (aUuid == PvmfAmrEncNodeUuid)
-            {
-                return PvmfAmrEncNodeFactory::Delete(aNode);
-            }
-
             return false;
         }
 
         static bool QueryRegistry(const PvmfMimeString& aMimeType, PVUuid& aUuid)
         {
-            if (CompareMimeTypes(aMimeType, OSCL_HeapString<OsclMemAllocator>(KMp4ComposerMimeType)) ||
-                CompareMimeTypes(aMimeType, OSCL_HeapString<OsclMemAllocator>(K3gpComposerMimeType)))
+            if (CompareMimeTypes(aMimeType, OSCL_HeapString<OsclMemAllocator>(K3gpComposerMimeType)) ||
+                    CompareMimeTypes(aMimeType, OSCL_HeapString<OsclMemAllocator>(KMP4ComposerMimeType)))
             {
                 aUuid = KPVMp4FFComposerNodeUuid;
             }
             else if (CompareMimeTypes(aMimeType, OSCL_HeapString<OsclMemAllocator>(KMp4EncMimeType)) ||
                      CompareMimeTypes(aMimeType, OSCL_HeapString<OsclMemAllocator>(KH263EncMimeType)))
             {
-                aUuid = PVMFOMXVideoEncNodeUuid;
+#if USE_OMX_ENC_NODE
+                // replace mp4/h263 encoder node with omx encoder node
+                aUuid = KPVMFOMXVideoEncNodeUuid;
+#else
+                aUuid = PVMFVideoEncNodeUuid;
+#endif
+            }
+            else if (CompareMimeTypes(aMimeType, OSCL_HeapString<OsclMemAllocator>(KH264EncMimeType)))
+            {
+#if USE_OMX_ENC_NODE
+                // replace avc encoder node with omx encoder node
+                aUuid = KPVMFOMXVideoEncNodeUuid;
+#else
+                aUuid = PVMFAvcEncNodeUuid;
+#endif
+
             }
             else if (CompareMimeTypes(aMimeType, OSCL_HeapString<OsclMemAllocator>(KAmrNbEncMimeType)))
             {
+#if USE_OMX_ENC_NODE
+                // replace amr encoder node with omx encoder node
+                aUuid = KPVMFOMXAudioEncNodeUuid;
+#else
                 aUuid = PvmfAmrEncNodeUuid;
+#endif
             }
+#if USE_OMX_ENC_NODE
+            // aac encoding is supported only under OMX node
+            else if (CompareMimeTypes(aMimeType, OSCL_HeapString<OsclMemAllocator>(KAACADIFEncMimeType)) ||
+                     CompareMimeTypes(aMimeType, OSCL_HeapString<OsclMemAllocator>(KAACADTSEncMimeType)) ||
+                     CompareMimeTypes(aMimeType, OSCL_HeapString<OsclMemAllocator>(KAACMP4EncMimeType))  ||
+                     CompareMimeTypes(aMimeType, OSCL_HeapString<OsclMemAllocator>(KAMRWbEncMimeType)))
+            {
+                aUuid = KPVMFOMXAudioEncNodeUuid;
+            }
+#endif
             else if (CompareMimeTypes(aMimeType, OSCL_HeapString<OsclMemAllocator>(KAMRNbComposerMimeType)) ||
+                     CompareMimeTypes(aMimeType, OSCL_HeapString<OsclMemAllocator>(KAMRWbComposerMimeType)) ||
                      CompareMimeTypes(aMimeType, OSCL_HeapString<OsclMemAllocator>(KAACADIFComposerMimeType)) ||
                      CompareMimeTypes(aMimeType, OSCL_HeapString<OsclMemAllocator>(KAACADTSComposerMimeType)))
             {
@@ -163,16 +235,30 @@ class PVAuthorEngineNodeFactoryUtility
                 aConfigUuid = PvmfFileOutputNodeConfigUuid;
                 status = true;
             }
-            else if (aNodeUuid == PVMFOMXVideoEncNodeUuid)
+#if USE_OMX_ENC_NODE
+            else if (aNodeUuid == KPVMFOMXVideoEncNodeUuid)
+            {
+                aConfigUuid = PVMp4H263EncExtensionUUID;
+                status = true;
+            }
+            else if (aNodeUuid == KPVMFOMXAudioEncNodeUuid)
+            {
+                aConfigUuid = PVAudioEncExtensionUUID;
+                status = true;
+            }
+#else
+            else if ((aNodeUuid == PVMFVideoEncNodeUuid) ||
+                     (aNodeUuid == PVMFAvcEncNodeUuid))
             {
                 aConfigUuid = PVMp4H263EncExtensionUUID;
                 status = true;
             }
             else if (aNodeUuid == PvmfAmrEncNodeUuid)
             {
-                aConfigUuid = PVAMREncExtensionUUID;
+                aConfigUuid = PVAudioEncExtensionUUID;
                 status = true;
             }
+#endif
             ////////////////////////////////////////////////////////////////////////////
             // When implementing support for a new file format composer or encoder node,
             // add code to return config uuid of the new node here if necessary

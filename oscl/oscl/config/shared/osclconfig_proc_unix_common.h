@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,15 +31,18 @@
 #ifndef OSCLCONFIG_PROC_UNIX_COMMON_H_INCLUDED
 #define OSCLCONFIG_PROC_UNIX_COMMON_H_INCLUDED
 
+#define OSCL_HAS_SYMBIAN_SCHEDULER 0
 
+#define OSCL_HAS_THREAD_SUPPORT 1
+#define OSCL_HAS_NON_PREEMPTIVE_THREAD_SUPPORT 0
 
 //semaphore with advanced realtime features incl. timed wait.
-
+#define OSCL_HAS_SEM_TIMEDWAIT_SUPPORT 1
 #include <time.h>
 #include <semaphore.h>
 
 //pthreads
-
+#define OSCL_HAS_PTHREAD_SUPPORT 1
 #include <pthread.h>
 #include <errno.h>
 

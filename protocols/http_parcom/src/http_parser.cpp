@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -895,7 +895,7 @@ int32 HTTPParserBaseObject::getNextFieldKeyValuePair(HTTPMemoryFragment &aInputD
 
 // return value: 0 normal,
 //				 1 end of header,
-//				 2 ignore (for CRLF, to handle CRLF split into seperate fragments)
+//				 2 ignore (for CRLF, to handle CRLF split into separate fragments)
 //				-1 error
 int32 HTTPParserBaseObject::parseNextValueItem(HTTPMemoryFragment &aInputDataStream, char *&valueItemPtr, uint32 &valueItemLength, const bool isKeyItem)
 {
@@ -1096,6 +1096,12 @@ int32 HTTPParserHeaderObject::parseFirstLine(HTTPMemoryFragment &aInputDataStrea
         saveEndingCRLF(ptr, len, iPrevCRLF);
         return 0;
     }
+
+    // add first-line into the key-value store
+    StrPtrLen firstLine = "Response-Line";
+    addKeyValuePairToStore(firstLine.c_str(), firstLine.length(),
+                           (char *)aInputDataStream.getPtr(), aInputDataStream.getAvailableSpace(),
+                           true);
 
     return HTTPParser::PARSE_SYNTAX_ERROR; // looks like the status line has something we don't understand.
 }
@@ -1454,7 +1460,6 @@ int32 HTTPParserMultipartContentObject::parseChunkBoundaryLine(HTTPParserInput &
         if (isFinalBoundary) return HTTPParser::PARSE_SUCCESS_END_OF_MESSAGE;
         saveEndingCRLF((char *)aInputLineData.getPtr(), (int32)aInputLineData.getAvailableSpace(), iPrevCRLF);
 
-#if 1	// try one more time
         if (!iBoudaryLineParsed)
         {
             if (aParserInput.getNextCompleteLine(aInputLineData))
@@ -1463,7 +1468,6 @@ int32 HTTPParserMultipartContentObject::parseChunkBoundaryLine(HTTPParserInput &
                 if (iContentInfo->parseBoudaryLine(aInputLineData, isFinalBoundary)) iBoudaryLineParsed = true;
             }
         }
-#endif
     }
 
     if (!iBoudaryLineParsed)

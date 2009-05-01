@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*********************************************************************************/
 /*
     This PVA_FF_UserDataAtom Class fp a container atom for informative user-data.
 */
@@ -94,6 +93,16 @@ PVA_FF_UserDataAtom::~PVA_FF_UserDataAtom()
             PVA_FF_AssetInfoCopyRightAtom * ptr = (PVA_FF_AssetInfoCopyRightAtom*)(*_pUserDataAtomVec)[i];
             PV_MP4_FF_DELETE(NULL, PVA_FF_AssetInfoCopyRightAtom , ptr);
         }
+        else if (atomPtr->getType() == ASSET_INFO_ALBUM_TITLE_ATOM)
+        {
+            PVA_FF_AssetInfoAlbumAtom * ptr = (PVA_FF_AssetInfoAlbumAtom*)(*_pUserDataAtomVec)[i];
+            PV_MP4_FF_DELETE(NULL, PVA_FF_AssetInfoAlbumAtom , ptr);
+        }
+        else if (atomPtr->getType() == ASSET_INFO_RECORDING_YEAR_ATOM)
+        {
+            PVA_FF_AssetInfoRecordingYearAtom * ptr = (PVA_FF_AssetInfoRecordingYearAtom*)(*_pUserDataAtomVec)[i];
+            PV_MP4_FF_DELETE(NULL, PVA_FF_AssetInfoRecordingYearAtom , ptr);
+        }
 
     }
 
@@ -104,7 +113,6 @@ PVA_FF_UserDataAtom::~PVA_FF_UserDataAtom()
 void PVA_FF_UserDataAtom::addAtom(PVA_FF_Atom* atom)
 {
     // Adds a new vector to the array of user data atom pointers
-    //_pUserDataAtomVec->push_back(atom);
     _pUserDataAtomVec->push_back(atom);
     atom->setParent(this);
     recomputeSize();

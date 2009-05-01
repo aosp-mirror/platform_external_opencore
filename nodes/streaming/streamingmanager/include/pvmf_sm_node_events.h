@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ typedef enum
 typedef enum
 {
     PVMFStreamingManagerNodeInfoEventStart = 8192,
+    PVMFStreamingManagerNodeInfoLaunchURL,
     PVMFStreamingManagerNodeInfoEventEnd
 } PVMFStreamingManagerNodeInfoEventType;
 
@@ -60,22 +61,6 @@ typedef enum
     PVMFJitterBufferNodeFirewallPacketExchangeFailed,
     PVMFJitterBufferNodeErrorEventEnd
 } PVMFJitterBufferNodeErrorEventType;
-
-/**
- * An enumeration of info codes from PVMFJitterBufferNode
- **/
-typedef enum
-{
-    PVMFJitterBufferNodeInfoEventStart = 8192,
-    PVMFJitterBufferNodeJitterBufferFull,
-    PVMFJitterBufferNodeTrackEOSReached,
-    PVMFJitterBufferNodeExcercisingPortFlowControl,
-    PVMFJitterBufferNodeRTCPBYERecvd,
-    PVMFJitterBufferNodeJitterBufferLowWaterMarkReached,
-    PVMFJitterBufferNodeJitterBufferHighWaterMarkReached,
-    PVMFJitterBufferNodeStreamThinningRecommended,
-    PVMFJitterBufferNodeInfoEventEnd
-} PVMFJitterBufferNodeInfoEventType;
 
 #define PVMFMediaLayerNodeEventTypeUUID PVUuid(0xaf589e87,0xa76b,0x406d,0xac,0xf7,0x9d,0x79,0xda,0x4e,0x78,0xde)
 /**

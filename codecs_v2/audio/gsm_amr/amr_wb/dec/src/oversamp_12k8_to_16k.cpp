@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -252,7 +252,7 @@ void AmrWbUp_samp(
         if (frac)
         {
             *(pt_sig_u++) = AmrWbInterpol(&sig_d[i],
-                                          (const int16 *) & fir_up[(FAC5-1) - frac],
+                                          fir_up[(FAC5-1) - frac],
                                           N_LOOP_COEF_UP);
         }
         else

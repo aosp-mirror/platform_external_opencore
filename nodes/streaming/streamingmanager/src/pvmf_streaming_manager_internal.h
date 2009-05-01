@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,9 +54,6 @@
 #ifndef SDP_INFO_H_INCLUDED
 #include "sdp_info.h"
 #endif
-#ifndef PVMF_SM_CONFIG_H_INCLUDED
-#include "pvmf_sm_config.h"
-#endif
 #ifndef PVMF_SM_TUNABLES_H_INCLUDED
 #include "pvmf_sm_tunables.h"
 #endif
@@ -66,6 +63,7 @@
 #ifndef PVMF_CPMPLUGIN_LICENSE_INTERFACE_H_INCLUDED
 #include "pvmf_cpmplugin_license_interface.h"
 #endif
+
 /**
  * Macros for calling PVLogger
  */
@@ -90,7 +88,7 @@
 
 #define PVMF_STREAMING_MANAGER_TEMPLATED_DELETE(auditCB, T, Tsimple, ptr)\
 {\
-	OSCL_TEMPLATED_DELETE(ptr, T, Tsimple);\
+	OSCL_DELETE(ptr);\
 }
 
 #define PV_STREAMING_MANAGER_ARRAY_NEW(auditCB, T, count, ptr)\
@@ -172,6 +170,7 @@ enum TPVMFStreamingManagerChildNodeTag
     PVMF_STREAMING_MANAGER_MEDIA_LAYER_NODE = 4,
     PVMF_STREAMING_MANAGER_HTTP_SESSION_CONTROLLER_NODE = 5,
     PVMF_STREAMING_MANAGER_RTPPACKETSOURCE_NODE = 6,
+    PVMF_STREAMING_MANAGER_PVR_NODE = 7,
     PVMF_STREAMING_MANAGER_LAST_CHILD_NODE
 };
 
@@ -182,6 +181,7 @@ enum TPVMFStreamingManagerChildNodeTag
 #define PVMF_STREAMING_MANAGER_MEDIA_LAYER_COMMAND_START              4000
 #define PVMF_STREAMING_MANAGER_HTTP_SESSION_CONTROLLER_COMMAND_START  5000
 #define PVMF_STREAMING_MANAGER_RTPPACKETSOURCE_NODE_COMMAND_START     6000
+#define PVMF_STREAMING_MANAGER_PVR_NODE_COMMAND_START     7000
 
 #define PVMF_STREAMING_MANAGER_NODE_INTERNAL_QUERY_UUID_CMD_OFFSET       0
 #define PVMF_STREAMING_MANAGER_NODE_INTERNAL_QUERY_INTERFACE_CMD_OFFSET  1
@@ -284,11 +284,60 @@ enum TPVMFStreamingManagerInternalCommands
     PVMF_STREAMING_MANAGER_RTP_PACKET_SOURCE_NODE_RELEASE_PORT = 6010,
     PVMF_STREAMING_MANAGER_RTP_PACKET_SOURCE_NODE_CANCEL_ALL_COMMANDS = 6011,
 
-    PVMF_STREAMING_MANAGER_INTERNAL_COMMAND_LAST = 6999
+    PVMF_STREAMING_MANAGER_PVR_NODE_QUERY_UUID = 7000,
+    PVMF_STREAMING_MANAGER_PVR_NODE_QUERY_INTERFACE = 7001,
+    PVMF_STREAMING_MANAGER_PVR_NODE_INIT = 7002,
+    PVMF_STREAMING_MANAGER_PVR_NODE_PREPARE = 7003,
+    PVMF_STREAMING_MANAGER_PVR_NODE_START = 7004,
+    PVMF_STREAMING_MANAGER_PVR_NODE_STOP = 7005,
+    PVMF_STREAMING_MANAGER_PVR_NODE_FLUSH = 7006,
+    PVMF_STREAMING_MANAGER_PVR_NODE_PAUSE = 7007,
+    PVMF_STREAMING_MANAGER_PVR_NODE_RESET = 7008,
+    PVMF_STREAMING_MANAGER_PVR_NODE_REQUEST_PORT = 7009,
+    PVMF_STREAMING_MANAGER_PVR_NODE_RELEASE_PORT = 7010,
+    PVMF_STREAMING_MANAGER_PVR_NODE_CANCEL_ALL_COMMANDS = 7011,
+
+    PVMF_STREAMING_MANAGER_INTERNAL_COMMAND_LAST = 7999
+
 };
 
+static const char PVMFSTREAMINGMGRNODE_JANUS_AUTH_DATA_V2_HEADER[] = "V2 ASF header";
+static const char PVMFSTREAMINGMGRNODE_JANUS_AUTH_DATA_V1_HEADER[] = "V1 ASF header";
 #define PVMF_STREAMING_MANAGER_NODE_MAX_CPM_METADATA_KEYS 256
 
+class PVMFSMASFHeaderInfo
+{
+    public:
+        PVMFSMASFHeaderInfo()
+        {
+            iASFHeaderObject    = NULL;
+            iASFFileSize        = 0;
+            iASFFileDuration    = 0;
+            iASFPreRollDuration = 0;
+            iASFBroadCastFlag   = 0;
+            iASFStreamRate      = PVMF_STREAMING_MAANGER_NODE_DEFAULT_STREAM_SPEED;
+            iASFDRMProtected	= false;
+        };
+
+        virtual ~PVMFSMASFHeaderInfo()
+        {
+            if (iASFHeaderObject != NULL)
+            {
+                PVMF_STREAMING_MANAGER_DELETE(NULL,
+                                              StreamAsfHeader,
+                                              iASFHeaderObject);
+                iASFHeaderObject = NULL;
+            }
+        };
+
+        StreamAsfHeader*      iASFHeaderObject;
+        uint64        iASFFileSize;
+        uint64        iASFFileDuration;
+        uint64        iASFPreRollDuration;
+        uint8         iASFBroadCastFlag;
+        uint32        iASFStreamRate;
+        bool		  iASFDRMProtected;
+};
 
 class PVMFSMSessionSourceInfo
 {
@@ -305,6 +354,7 @@ class PVMFSMSessionSourceInfo
         OsclSharedPtr<SDPInfo> _sdpInfo;
         OsclAny*    _sourceData;
         bool iRTSPTunnelling;
+        PVMFSMASFHeaderInfo iASFHeaderInfo;
 };
 
 //implementation class for extension interface
@@ -331,8 +381,8 @@ class PVMFStreamingManagerExtensionInterfaceImpl :
         OSCL_IMPORT_REF PVMFStatus SetSourceInitializationData(OSCL_wString& aSourceURL,
                 PVMFFormatType& aSourceFormat,
                 OsclAny* aSourceData);
-        OSCL_IMPORT_REF PVMFStatus SetClientPlayBackClock(OsclClock* aClientClock);
-        OSCL_IMPORT_REF PVMFStatus SetEstimatedServerClock(OsclClock* aClientClock);
+        OSCL_IMPORT_REF PVMFStatus SetClientPlayBackClock(PVMFMediaClock* aClientClock);
+        OSCL_IMPORT_REF PVMFStatus SetEstimatedServerClock(PVMFMediaClock* aClientClock);
 
         /*
          * From PVMFTrackSelectionExtensionInterface
@@ -349,8 +399,9 @@ class PVMFStreamingManagerExtensionInterfaceImpl :
         OSCL_IMPORT_REF PVMFStatus setJitterBufferParams(PVMFSMJitterBufferParmas* jitterBufferParams);
         OSCL_IMPORT_REF PVMFStatus resetJitterBuffer();
         OSCL_IMPORT_REF PVMFStatus setPayloadParserRegistry(PayloadParserRegistry*);
-        OSCL_IMPORT_REF PVMFStatus setDataPortLogging(bool logEnable,
-                OSCL_String* logPath = NULL);
+        OSCL_IMPORT_REF PVMFStatus setDataPortLogging(bool logEnable, OSCL_String* logPath = NULL);
+        OSCL_IMPORT_REF PVMFStatus switchStreams(uint32 aSrcStreamID, uint32 aDestStreamID);
+
         /*
          * From PvmfDataSourcePlaybackControlInterface
          */
@@ -377,8 +428,13 @@ class PVMFStreamingManagerExtensionInterfaceImpl :
                 bool aSeekToSyncPoint = true);
         OSCL_IMPORT_REF PVMFCommandId SetDataSourceRate(PVMFSessionId aSessionId,
                 int32 aRate,
-                OsclTimebase* aTimebase = NULL,
+                PVMFTimebase* aTimebase = NULL,
                 OsclAny* aContext = NULL);
+        OSCL_IMPORT_REF PVMFStatus ComputeSkipTimeStamp(PVMFTimestamp aTargetNPT,
+                PVMFTimestamp aActualNPT,
+                PVMFTimestamp aActualMediaDataTS,
+                PVMFTimestamp& aSkipTimeStamp,
+                PVMFTimestamp& aStartNPT);
 
         /*
          * From PVMFMetadataExtensionInterface
@@ -512,7 +568,6 @@ class PVMFStreamingManagerExtensionInterfaceImpl :
         OSCL_IMPORT_REF void addRef();
         OSCL_IMPORT_REF void removeRef();
         OSCL_IMPORT_REF bool queryInterface(const PVUuid& uuid, PVInterface*& iface);
-
 
     private:
         PVMFSessionId iSessionId;

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,23 +53,7 @@
 #define PVAE_NUM_PENDING_CMDS 10
 #define PVAE_NUM_PENDING_EVENTS 10
 
-#define TURN_ON_VERBOSE_LOGS 0
-
-#if TURN_ON_VERBOSE_LOGS
-#include <utils/Log.h>
-#undef LOG_TAG
-#define LOG_TAG "PVAE"
-#undef PVLOGGER_LOGMSG
-#define PVLOGGER_LOGMSG(IL, LOGGER, LEVEL, MESSAGE) JJLOGE MESSAGE
-#define LOG_STACK_TRACE(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, m);
-#define LOG_DEBUG(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, m);
-#define LOG_ERR(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iLogger,PVLOGMSG_ERR,m);
-#define JJLOGE(id, ...) LOGE(__VA_ARGS__)
-#else
-#define LOG_STACK_TRACE(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, m);
-#define LOG_DEBUG(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, m);
-#define LOG_ERR(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iLogger,PVLOGMSG_ERR,m);
-#endif
+#include "pv_author_sdkinfo.h"
 
 
 // Define entry point for this DLL
@@ -112,12 +96,13 @@ PVAuthorEngine::PVAuthorEngine() :
         iCmdStatusObserver(NULL),
         iInfoEventObserver(NULL),
         iErrorEventObserver(NULL),
-        iEncodedVideoFormat(PVMF_FORMAT_UNKNOWN),
+        iEncodedVideoFormat(PVMF_MIME_FORMAT_UNKNOWN),
         iState(PVAE_STATE_IDLE),
-        iDoResetNodeContainers(false),
-        iResetInProgress(false)
+        iCfgCapCmdObserver(NULL),
+        iAsyncNumElements(0)
 {
     iLogger = PVLogger::GetLoggerObject("PVAuthorEngine");
+    iDoResetNodeContainers = false;
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -144,8 +129,6 @@ PVAuthorEngine::~PVAuthorEngine()
     Cancel();
     iPendingCmds.clear();
     iPendingEvents.clear();
-
-    ResetGraph();
     ResetNodeContainers();
     while (!iDataSourcePool.empty())
     {
@@ -313,7 +296,7 @@ OSCL_EXPORT_REF PVCommandId PVAuthorEngine::AddMediaTrack(const PVMFNodeInterfac
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "PVAuthorEngine::AddMediaTrack: &aDataSource=0x%x, aComposer=0x%x, \
-		aConfigInterface=0x%x, aContextData=0x%x",
+                     aConfigInterface=0x%x, aContextData=0x%x",
                      &aDataSource, aConfigInterface, aContextData));
 
 
@@ -481,28 +464,29 @@ OSCL_EXPORT_REF PVCommandId PVAuthorEngine::CancelAllCommands(const OsclAny* aCo
 ////////////////////////////////////////////////////////////////////////////
 void PVAuthorEngine::HandleNodeErrorEvent(const PVMFAsyncEvent& aEvent)
 {
+    OSCL_UNUSED_ARG(aEvent);
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
                     (0, "PVAuthorEngine::HandleNodeErrorEvent"));
 
-    if (iResetInProgress) {
-        // Ignore errors while resetting, but notify observers just in case.
-
-        PVAsyncErrorEvent eventError(aEvent.GetEventType(), NULL);
-        iErrorEventObserver->HandleErrorEvent(eventError);
-
-        return;
-    }
-
     if ((!iPendingCmds.empty()) && (iState != PVAE_STATE_ERROR)) //if there is a pending command
     {
-        SetPVAEState(PVAE_STATE_ERROR);
-        CompleteEngineCommand(iPendingCmds[0], PVMFFailure);
+        PVEngineCommand cmd = iPendingCmds.front();
+        int cmdtype = cmd.GetCmdType();
+
+        if (cmdtype == PVAE_CMD_RESET)
+        {
+            return; //ignore
+        }
+        else
+        {
+            SetPVAEState(PVAE_STATE_ERROR);
+        }
     }
-    else if (iState != PVAE_STATE_ERROR) //no pending command
+    else if (iState != PVAE_STATE_ERROR) //no pending command*
     {
         SetPVAEState(PVAE_STATE_ERROR);
-        PVAsyncErrorEvent eventError(aEvent.GetEventType(), NULL);
-        iErrorEventObserver->HandleErrorEvent(eventError);
+	PVAsyncErrorEvent event(aEvent.GetEventType(), aEvent.GetEventData());
+	iErrorEventObserver->HandleErrorEvent(event);
     }
 }
 
@@ -517,20 +501,20 @@ void PVAuthorEngine::HandleNodeInformationalEvent(const PVMFAsyncEvent& aEvent)
         case PVMF_COMPOSER_MAXFILESIZE_REACHED:
         {
             PVEngineCommand cmd(PVAE_CMD_STOP_MAX_SIZE, 0, NULL, NULL);
-            Dispatch(cmd);
+            PushCmdInFront(cmd);
         }
         break;
         case PVMF_COMPOSER_MAXDURATION_REACHED:
         {
             PVEngineCommand cmd(PVAE_CMD_STOP_MAX_DURATION, 0, NULL, NULL);
-            Dispatch(cmd);
+            PushCmdInFront(cmd);
         }
         break;
         case PVMF_COMPOSER_EOS_REACHED:
         case PVMFInfoEndOfData:
         {
             PVEngineCommand cmd(PVAE_CMD_STOP_EOS_REACHED, 0, NULL, NULL);
-            Dispatch(cmd);
+            PushCmdInFront(cmd);
         }
         break;
         case PVMF_COMPOSER_FILESIZE_PROGRESS:
@@ -561,7 +545,13 @@ void PVAuthorEngine::NodeUtilCommandCompleted(const PVMFCmdResp& aResponse)
 
     if (aResponse.GetCmdStatus() != PVMFSuccess)
     {
-        SetPVAEState(PVAE_STATE_ERROR);
+        if (cmd.GetCmdType() == PVAE_CMD_RESET)
+        {
+            OSCL_ASSERT(false);//Reset can't fail.
+            return;
+        }
+        else
+            SetPVAEState(PVAE_STATE_ERROR);
     }
     //RESET needs to be handled seperately, if the EngineState is ERROR, ignore all cmds till
     //there are more pending commands, else send out commandComplete Failure
@@ -586,6 +576,8 @@ void PVAuthorEngine::NodeUtilCommandCompleted(const PVMFCmdResp& aResponse)
     {
         case PVAE_CMD_ADD_DATA_SOURCE:
             status = PVMFSuccess;
+            break;
+        case PVAE_CMD_REMOVE_DATA_SOURCE:
             break;
         case PVAE_CMD_SELECT_COMPOSER:
             if (iNodeUtil.GetCommandQueueSize() > 0)
@@ -807,6 +799,28 @@ void PVAuthorEngine::Dispatch(PVEngineAsyncEvent& aEvent)
         RunIfNotReady();
 }
 
+void PVAuthorEngine::PushCmdInFront(PVEngineCommand& aCmd)
+{
+    uint32 idx = 0;
+    while (idx < iPendingCmds.size())
+    {
+        PVEngineCommand cmdPenCmd(iPendingCmds[idx++]);
+        if (cmdPenCmd.GetCmdType() == PVAE_CMD_RESET) //dont erase RESET
+        {
+            return;
+        }
+    }
+    //Author engine processes commands in the order recvd.This is true for API commands, since author does
+    //not support cancelall yet.when composer node eventually reports any informational event like PVMF_COMPOSER_MAXFILESIZE_REACHED,
+    //author engine should queue this cmd into iPendingCmds using "push_front"
+    iPendingCmds.push_front(aCmd);
+    // Call RunIfNotReady only if the newly added command is the only one
+    // in the queue.  Otherwise, it will be processed after the current
+    // command is complete
+    if (iPendingCmds.size() == 1)
+        RunIfNotReady();
+}
+
 ////////////////////////////////////////////////////////////////////////////
 void PVAuthorEngine::CompleteEngineCommand(PVEngineCommand& aCmd, PVMFStatus aStatus,
         OsclAny* aResponseData, int32 aResponseDataSize)
@@ -815,17 +829,13 @@ void PVAuthorEngine::CompleteEngineCommand(PVEngineCommand& aCmd, PVMFStatus aSt
                     (0, "PVAuthorEngine::CompleteEngineCommand: aStatus=0x%x, aResponseData=0x%x, aResponseDataSize=%d",
                      aStatus, aResponseData, aResponseDataSize));
 
-    if (aCmd.GetCmdType() == PVAE_CMD_RESET) {
-        iResetInProgress = false;
-    }
-
     // Erase command from command queue
     if (!iPendingCmds.empty())
     {
         iPendingCmds.erase(iPendingCmds.begin());
     }
 
-    if (aStatus == PVMFFailure)
+    if (IsPVMFErrCode(aStatus))
     {
         PVCmdResponse response(aCmd.GetCmdId(), aCmd.GetContext(), aStatus, aResponseData, aResponseDataSize);
         iCmdStatusObserver->CommandCompleted(response);
@@ -835,7 +845,7 @@ void PVAuthorEngine::CompleteEngineCommand(PVEngineCommand& aCmd, PVMFStatus aSt
             PVEngineCommand cmdPenCmd(iPendingCmds[0]);
             if (cmdPenCmd.GetCmdType() != PVAE_CMD_RESET) //dont erase RESET
             {
-                PVCmdResponse response(cmdPenCmd.GetCmdId(), cmdPenCmd.GetContext(), aStatus, NULL, NULL);
+                PVCmdResponse response(cmdPenCmd.GetCmdId(), cmdPenCmd.GetContext(), aStatus, NULL, 0);
                 iCmdStatusObserver->CommandCompleted(response);
                 iPendingCmds.erase(iPendingCmds.begin());
             }
@@ -1285,7 +1295,10 @@ PVMFStatus PVAuthorEngine::DoInit(PVEngineCommand& aCmd)
         // call queryInterface of amr/video encoder node
         // retrieve capability class pointer in iEncoderNode
         // capability class pointer fetched from amr/video encoder node in iEncoderNode
-        iEncoderNodes[ii]->iNode->QueryInterface(iEncoderNodes[ii]->iSessionId, iUuid1, (PVInterface*&)iEncoderNodes[ii]->iNodeCapConfigIF, NULL);
+        iEncoderNodes[ii]->iNode->QueryInterface(iEncoderNodes[ii]->iSessionId,
+                iUuid1,
+                iEncoderNodes[ii]->iNodeCapConfigIF,
+                NULL);
     }
 
     for (uint jj = 0; jj < iComposerNodes.size(); jj++)
@@ -1293,7 +1306,10 @@ PVMFStatus PVAuthorEngine::DoInit(PVEngineCommand& aCmd)
         // call queryInterface of file-ouput/mp4-composer node
         // retrieve capability class pointer in iComposerNode
         // capability class pointer fetched from file-ouput/mp4-composer node in iComposerNode
-        iComposerNodes[jj]->iNode->QueryInterface(iComposerNodes[jj]->iSessionId, iUuid1, (PVInterface*&)iComposerNodes[jj]->iNodeCapConfigIF, NULL);
+        iComposerNodes[jj]->iNode->QueryInterface(iComposerNodes[jj]->iSessionId,
+                iUuid1,
+                iComposerNodes[jj]->iNodeCapConfigIF,
+                NULL);
     }
 
     for (uint kk = 0; kk < iDataSourceNodes.size(); kk++)
@@ -1301,7 +1317,10 @@ PVMFStatus PVAuthorEngine::DoInit(PVEngineCommand& aCmd)
         // call queryInterface of media io node
         // retrieve capability class pointer in iDataSourceNodes
         // capability class pointer fetched from media io node in iDataSourceNodes
-        iDataSourceNodes[kk]->iNode->QueryInterface(iDataSourceNodes[kk]->iSessionId, iUuid1, (PVInterface*&)iDataSourceNodes[kk]->iNodeCapConfigIF, NULL);
+        iDataSourceNodes[kk]->iNode->QueryInterface(iDataSourceNodes[kk]->iSessionId,
+                iUuid1,
+                iDataSourceNodes[kk]->iNodeCapConfigIF,
+                NULL);
     }
     return PVMFPending;
 }
@@ -1313,52 +1332,39 @@ PVMFStatus PVAuthorEngine::DoReset(PVEngineCommand& aCmd)
 
     OSCL_UNUSED_ARG(aCmd);
 
-    switch (GetPVAEState())
+    if (GetPVAEState() == PVAE_STATE_IDLE)
     {
-        case PVAE_STATE_ERROR:
-        case PVAE_STATE_RECORDING:
-        case PVAE_STATE_PAUSED:
-            iNodeUtil.Stop(iDataSourceNodes);
-            if (iEncoderNodes.size() > 0)
-                iNodeUtil.Stop(iEncoderNodes);
-            iNodeUtil.Stop(iComposerNodes);
-            // Don't break here. Continue to disconnect and reset the nodes
-
-        case PVAE_STATE_INITIALIZED:
-            ResetGraph();
-            iNodeUtil.Reset(iDataSourceNodes);
-            if (iEncoderNodes.size() > 0)
-                iNodeUtil.Reset(iEncoderNodes);
-            iNodeUtil.Reset(iComposerNodes);
-            break;
-
-        case PVAE_STATE_OPENED:
-            if (iDoResetNodeContainers)
-            {
-                iDoResetNodeContainers = false;
-                // While RESET-ing, the Composer and Encoder nodes are to be
-                // deleted as there no user API to do deallocations for the
-                // allocations done in the api's DoSelectComposer() and AddMediaTrack()
-                ResetNodeContainers();
-                return PVMFSuccess;
-            }
-            ResetGraph();
-            if ((iDataSourceNodes.size() == 0)
-                    && (iEncoderNodes.size() == 0)
-                    && (iComposerNodes.size() == 0))
-            {
-                // If there is no source/encoder/composer node present
-                // there is nothing to reset, return success rightaway.
-                return PVMFSuccess;
-            }
-            break;
-
-        default:
-            return PVMFErrInvalidState;
+        return PVMFErrInvalidState;
     }
 
-    iResetInProgress = true;
-
+    else
+    {
+        if ((iDataSourceNodes.size() == 0)
+                && (iEncoderNodes.size() == 0)
+                && (iComposerNodes.size() == 0))
+        {
+            // If there is no source/encoder/composer node present
+            // there is nothing to reset, return success rightaway.
+            return PVMFSuccess;
+        }
+        //First call reset on all child nodes, source nodes, encoder nodes, composer nodes
+        //Pls note that since reset on child nodes can be called from any state, and since
+        //node reset needs to clean up everything, there is no need to thru an asynchronous
+        //release port sequence
+        //Once all these resets complete delete them all. We use the boolean iDoResetNodeContainers
+        //to get back in the context of author engine AO to delete stuff. We cannot delete stuff in
+        //NodeUtilCommandCompleted
+        if (iDoResetNodeContainers)
+        {
+            iDoResetNodeContainers = false;
+            // While RESET-ing, the Composer and Encoder nodes are to be
+            // deleted as there no user API to do deallocations for the
+            // allocations done in the api's DoSelectComposer() and AddMediaTrack()
+            ResetNodeContainers();
+            return PVMFSuccess;
+        }
+        ResetGraph();
+    }
     return PVMFPending;
 }
 
@@ -1446,6 +1452,10 @@ void PVAuthorEngine::ResetNodeContainers()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "PVAuthorEngine::ResetNodeContainers"));
+
+    if (iAllNodes.size() > 0)
+        iAllNodes.clear();
+
     uint32 i, j;
     for (i = 0; i < iDataSourceNodes.size(); i++)
     {
@@ -1587,19 +1597,14 @@ PVMFStatus PVAuthorEngine::IsCompressedFormatDataSource(PVAENodeContainer* aData
         LOG_ERR((0, "PVAuthorEngine::IsCompressedFormatDataSource: Error - GetCapability failed"));
         return PVMFFailure;
     }
-
     aIsCompressedFormat = false;
     for (uint32 i = 0; i < capability.iOutputFormatCapability.size(); i++)
     {
-        switch (GetMediaTypeIndex(capability.iOutputFormatCapability[i]))
+        PVMFFormatType format = (capability.iOutputFormatCapability[i]);
+        if (format.isCompressed() || format.isText())
         {
-            case PVMF_COMPRESSED_VIDEO_FORMAT:
-            case PVMF_COMPRESSED_AUDIO_FORMAT:
-            case PVMF_TEXT_FORMAT:
-                aIsCompressedFormat = true;
-                return PVMFSuccess;
-            default:
-                break;
+            aIsCompressedFormat = true;
+            return PVMFSuccess;
         }
     }
 
@@ -1609,13 +1614,30 @@ PVMFStatus PVAuthorEngine::IsCompressedFormatDataSource(PVAENodeContainer* aData
 ////////////////////////////////////////////////////////////////////////////
 void PVAuthorEngine::ResetGraph()
 {
-    uint32 i = 0;
-    for (i = 0; i < iDataSourceNodes.size(); i++)
-        iNodeUtil.Disconnect(iDataSourceNodes[i]);
-    for (i = 0; i < iEncoderNodes.size(); i++)
-        iNodeUtil.Disconnect(iEncoderNodes[i]);
-    for (i = 0; i < iComposerNodes.size(); i++)
-        iNodeUtil.Disconnect(iComposerNodes[i]);
+
+    if (iAllNodes.size() != (iEncoderNodes.size() + iDataSourceNodes.size() + iComposerNodes.size()))
+    {
+
+        for (uint ii = 0; ii < iEncoderNodes.size(); ii++)
+        {
+            iAllNodes.push_back(iEncoderNodes[ii]);
+        }
+        for (uint jj = 0; jj < iDataSourceNodes.size(); jj++)
+        {
+            iAllNodes.push_back(iDataSourceNodes[jj]);
+        }
+        for (uint kk = 0; kk < iComposerNodes.size(); kk++)
+        {
+            iAllNodes.push_back(iComposerNodes[kk]);
+        }
+    }
+
+
+    if (iAllNodes.size() > 0)
+    {
+        iNodeUtil.Reset(iAllNodes);
+    }
+
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -1658,6 +1680,10 @@ PVMFStatus PVAuthorEngine::GetPvmfFormatString(PvmfMimeString& aMimeType, const 
     {
         aMimeType = PVMF_MIME_AMR_IETF;
     }
+    else if (aNodeMimeType == KAMRWbEncMimeType)
+    {
+        aMimeType = PVMF_MIME_AMRWB_IETF;
+    }
     else if (aNodeMimeType == KAACADIFEncMimeType ||
              aNodeMimeType == KAACADIFComposerMimeType)
     {
@@ -1667,6 +1693,10 @@ PVMFStatus PVAuthorEngine::GetPvmfFormatString(PvmfMimeString& aMimeType, const 
              aNodeMimeType == KAACADTSComposerMimeType)
     {
         aMimeType = PVMF_MIME_ADTS;
+    }
+    else if (aNodeMimeType == KAACMP4EncMimeType)
+    {
+        aMimeType = PVMF_MIME_MPEG4_AUDIO;
     }
     else if (aNodeMimeType == KH264EncMimeType)
     {
@@ -1703,8 +1733,10 @@ PVAENodeContainer* PVAuthorEngine::AllocateNodeContainer(PVMFNodeInterface* aNod
              // Do thread logon and create a session to the node
              PVMFNodeSessionInfo session((PVMFNodeCmdStatusObserver*)&iNodeUtil, this, nodeContainer,
                                          this, nodeContainer);
+
              aNode->ThreadLogon();
              nodeContainer->iSessionId = aNode->Connect(session);
+
              nodeContainer->iNode = aNode;
             );
 
@@ -1806,19 +1838,18 @@ PVMFStatus PVAuthorEngine::DoCapConfigSetParameters(PVEngineCommand& aCmd, bool 
         else
         {
             // Determine which node's cap-config IF needs to be used
-            Oscl_Vector<PvmiCapabilityAndConfig*, OsclMemAllocator> nodecapconfigif;
+            Oscl_Vector<PVInterface*, OsclMemAllocator> nodecapconfigif;
             PVMFStatus retval = DoQueryNodeCapConfig(paramkvp[paramind].key, nodecapconfigif);
             *retkvp = &paramkvp[paramind];
             if (retval == PVMFSuccess && !(nodecapconfigif.empty()))
             {
                 uint32 nodeind = 0;
                 bool anysuccess = false;
-
                 // Go through each returned node's cap-config until successful
                 while (nodeind < nodecapconfigif.size())
                 {
                     *retkvp = NULL;
-                    nodecapconfigif[nodeind]->setParametersSync(NULL, &paramkvp[paramind], 1, *retkvp);
+                    ((PvmiCapabilityAndConfig*)nodecapconfigif[nodeind])->setParametersSync(NULL, &paramkvp[paramind], 1, *retkvp);
                     ++nodeind;
                     if (*retkvp == NULL && anysuccess == false)
                     {
@@ -1826,7 +1857,8 @@ PVMFStatus PVAuthorEngine::DoCapConfigSetParameters(PVEngineCommand& aCmd, bool 
                     }
                 }
                 if (anysuccess == false)
-                {   // setParametersSync was not accepted by the node(s)
+                {
+                    // setParametersSync was not accepted by the node(s)
                     *retkvp = &paramkvp[paramind];
                     return PVMFErrArgument;
                 }
@@ -1850,7 +1882,7 @@ PVMFStatus PVAuthorEngine::DoCapConfigSetParameters(PVEngineCommand& aCmd, bool 
 }
 
 
-PVMFStatus PVAuthorEngine::DoQueryNodeCapConfig(char* aKeySubString, Oscl_Vector<PvmiCapabilityAndConfig*, OsclMemAllocator>& aNodeCapConfigIF)
+PVMFStatus PVAuthorEngine::DoQueryNodeCapConfig(char* aKeySubString, Oscl_Vector<PVInterface*, OsclMemAllocator>& aNodeCapConfigIF)
 {
     int32 leavecode = 0;
 
@@ -1861,51 +1893,59 @@ PVMFStatus PVAuthorEngine::DoQueryNodeCapConfig(char* aKeySubString, Oscl_Vector
         return PVMFErrArgument;
     }
 
-    // check for "video/render" or "audio/render" keyword in MIME string
-    if ((pv_mime_strcmp(aKeySubString, _STRLIT_CHAR("x-pvmf/video/render")) >= 0)
-            || (pv_mime_strcmp(aKeySubString, _STRLIT_CHAR("x-pvmf/audio/render")) >= 0)
-            || (pv_mime_strcmp(aKeySubString, _STRLIT_CHAR("x-pvmf/avc/encoder")) >= 0))
+    // check for "encoder/video" or "encoder/audio" keyword in MIME string
+    if ((pv_mime_strcmp(aKeySubString, _STRLIT_CHAR("x-pvmf/encoder/video")) >= 0) ||
+            (pv_mime_strcmp(aKeySubString, _STRLIT_CHAR("x-pvmf/encoder/audio")) >= 0))
     {
-        for (uint ii = 0; ii < iEncoderNodes.size(); ii++)
-        {
-            if (iEncoderNodes[ii]->iNodeCapConfigIF)
+        leavecode = 0;
+        // insert capability class pointer of amr/video encoder/avc encoder node in aNodeCapConfigIF
+        OSCL_TRY(leavecode,
+                 for (uint ii = 0; ii < iEncoderNodes.size(); ii++)
+    {
+        if (iEncoderNodes[ii]->iNodeCapConfigIF)
             {
-                leavecode = 0;
-                // insert capability class pointer of amr/video encoder/avc encoder node in aNodeCapConfigIF
-                OSCL_TRY(leavecode, aNodeCapConfigIF.push_back(iEncoderNodes[ii]->iNodeCapConfigIF));
-                OSCL_FIRST_CATCH_ANY(leavecode, return PVMFErrNoMemory);
+                aNodeCapConfigIF.push_back(iEncoderNodes[ii]->iNodeCapConfigIF);
             }
         }
-    }
+                );
+        OSCL_FIRST_CATCH_ANY(leavecode, return PVMFErrNoMemory);
 
-    // check for "fileio" or "file/output" keyword in MIME string
-    else if ((pv_mime_strcmp(aKeySubString, _STRLIT_CHAR("fileio")) >= 0) || (pv_mime_strcmp(aKeySubString, _STRLIT_CHAR("x-pvmf/file/output")) >= 0))
-    {
-        for (uint jj = 0; jj < iComposerNodes.size(); jj++)
-        {
-            if (iComposerNodes[jj]->iNodeCapConfigIF)
-            {
-                leavecode = 0;
-                // insert capability class pointer of mp4-composer/file-output node in aNodeCapConfigIF
-                OSCL_TRY(leavecode, aNodeCapConfigIF.push_back(iComposerNodes[jj]->iNodeCapConfigIF));
-                OSCL_FIRST_CATCH_ANY(leavecode, return PVMFErrNoMemory);
-            }
-        }
     }
-
-    // check for "x-pvmf/media-io" keyword in MIME string
-    else if (pv_mime_strcmp(aKeySubString, _STRLIT_CHAR("x-pvmf/media-io")) >= 0)
+    // check for "fileio" or "file/output" or "x-pvmf/composer" keyword in MIME string
+    else if ((pv_mime_strcmp(aKeySubString, _STRLIT_CHAR("x-pvmf/composer")) >= 0) ||
+             (pv_mime_strcmp(aKeySubString, _STRLIT_CHAR("fileio")) >= 0) ||
+             (pv_mime_strcmp(aKeySubString, _STRLIT_CHAR("x-pvmf/file/output")) >= 0))
     {
-        for (uint k = 0; k < iDataSourceNodes.size(); k++)
-        {
-            if (iDataSourceNodes[k]->iNodeCapConfigIF)
+        leavecode = 0;
+        // insert capability class pointer of mp4-composer/file-output node in aNodeCapConfigIF
+        OSCL_TRY(leavecode,
+                 for (uint jj = 0; jj < iComposerNodes.size(); jj++)
+    {
+        if (iComposerNodes[jj]->iNodeCapConfigIF)
             {
-                leavecode = 0;
-                // insert capability class pointer of media io node in aNodeCapConfigIF
-                OSCL_TRY(leavecode, aNodeCapConfigIF.push_back(iDataSourceNodes[k]->iNodeCapConfigIF));
-                OSCL_FIRST_CATCH_ANY(leavecode, return PVMFErrNoMemory);
+                aNodeCapConfigIF.push_back(iComposerNodes[jj]->iNodeCapConfigIF);
             }
         }
+                );
+        OSCL_FIRST_CATCH_ANY(leavecode, return PVMFErrNoMemory);
+
+    }
+    // check for "x-pvmf/media-io" or "x-pvmf/datasource" keyword in MIME string
+    else if ((pv_mime_strcmp(aKeySubString, _STRLIT_CHAR("x-pvmf/datasource")) >= 0) ||
+             (pv_mime_strcmp(aKeySubString, _STRLIT_CHAR("x-pvmf/media-io")) >= 0))
+    {
+        leavecode = 0;
+        // insert capability class pointer of media io node in aNodeCapConfigIF
+        OSCL_TRY(leavecode,
+                 for (uint k = 0; k < iDataSourceNodes.size(); k++)
+    {
+        if (iDataSourceNodes[k]->iNodeCapConfigIF)
+            {
+                aNodeCapConfigIF.push_back(iDataSourceNodes[k]->iNodeCapConfigIF);
+            }
+        }
+                );
+        OSCL_FIRST_CATCH_ANY(leavecode, return PVMFErrNoMemory);
     }
 
     return PVMFSuccess;
@@ -1927,7 +1967,6 @@ PVMFCommandId PVAuthorEngine::setParametersAsync(PvmiMIOSession aSession, PvmiKv
     OSCL_UNUSED_ARG(aSession);
     OSCL_UNUSED_ARG(aContext);
     iAsyncNumElements = aNumElements;
-
     PVEngineCommand cmd(PVAE_CMD_CAPCONFIG_SET_PARAMETERS, 0, NULL, aParameters, (OsclAny*)&iAsyncNumElements, (OsclAny*)&aRetKVP);
     Dispatch(cmd);
     return iCommandId++;
@@ -2039,7 +2078,7 @@ PVMFStatus PVAuthorEngine::DoCapConfigVerifyParameters(PvmiKvp* aParameters, int
         else
         {
             // Determine which node's cap-config IF needs to be used
-            Oscl_Vector<PvmiCapabilityAndConfig*, OsclMemAllocator> nodecapconfigif;
+            Oscl_Vector<PVInterface*, OsclMemAllocator> nodecapconfigif;
             PVMFStatus retval = DoQueryNodeCapConfig(compstr, nodecapconfigif);
             if (retval == PVMFSuccess && !(nodecapconfigif.empty()))
             {
@@ -2048,7 +2087,8 @@ PVMFStatus PVAuthorEngine::DoCapConfigVerifyParameters(PvmiKvp* aParameters, int
                 // Go through each returned node's cap-config until successful
                 while (nodeind < nodecapconfigif.size() && retval != PVMFSuccess)
                 {
-                    retval = nodecapconfigif[nodeind]->verifyParametersSync(NULL, &aParameters[paramind], 1);
+                    retval =
+                        ((PvmiCapabilityAndConfig*)nodecapconfigif[nodeind])->verifyParametersSync(NULL, &aParameters[paramind], 1);
                     ++nodeind;
                 }
 
@@ -2358,7 +2398,7 @@ PVMFStatus PVAuthorEngine::DoCapConfigGetParametersSync(PvmiKeyType aIdentifier,
     else
     {
         // Determine which node's cap-config IF needs to be used
-        Oscl_Vector<PvmiCapabilityAndConfig*, OsclMemAllocator> nodecapconfigif;
+        Oscl_Vector<PVInterface*, OsclMemAllocator> nodecapconfigif;
         PVMFStatus retval = DoQueryNodeCapConfig(compstr, nodecapconfigif);
         if (PVMFSuccess == retval && !(nodecapconfigif.empty()))
         {
@@ -2366,7 +2406,8 @@ PVMFStatus PVAuthorEngine::DoCapConfigGetParametersSync(PvmiKeyType aIdentifier,
             // Go through each returned node's cap-config until successful
             while (nodeind < nodecapconfigif.size() && 0 == aNumParamElements)
             {
-                retval = nodecapconfigif[nodeind]->getParametersSync(NULL, aIdentifier, aParameters, aNumParamElements, aContext);
+                retval =
+                    ((PvmiCapabilityAndConfig*)nodecapconfigif[nodeind])->getParametersSync(NULL, aIdentifier, aParameters, aNumParamElements, aContext);
                 ++nodeind;
             }
         }
@@ -2449,6 +2490,7 @@ PVMFStatus PVAuthorEngine::DoCapConfigReleaseParameters(PvmiKvp* aParameters, in
                     aParameters[ii].value.key_specific_value = NULL;
                     oscl_free(rui32);
                 }
+                // @TODO Add more types if engine starts returning more types
             }
         }
 
@@ -2462,7 +2504,7 @@ PVMFStatus PVAuthorEngine::DoCapConfigReleaseParameters(PvmiKvp* aParameters, in
     else
     {
         // Determine which node's cap-config IF needs to be used
-        Oscl_Vector<PvmiCapabilityAndConfig*, OsclMemAllocator> nodecapconfigif;
+        Oscl_Vector<PVInterface*, OsclMemAllocator> nodecapconfigif;
         PVMFStatus retval = DoQueryNodeCapConfig(compstr, nodecapconfigif);
         if (PVMFSuccess == retval && !(nodecapconfigif.empty()))
         {
@@ -2471,7 +2513,8 @@ PVMFStatus PVAuthorEngine::DoCapConfigReleaseParameters(PvmiKvp* aParameters, in
             // Go through each returned node's cap-config until successful
             while (nodeind < nodecapconfigif.size() && PVMFSuccess != retval)
             {
-                retval = nodecapconfigif[nodeind]->releaseParameters(NULL, aParameters, aNumElements);
+                retval =
+                    ((PvmiCapabilityAndConfig*)nodecapconfigif[nodeind])->releaseParameters(NULL, aParameters, aNumElements);
                 ++nodeind;
             }
 
@@ -2817,8 +2860,15 @@ PVMFStatus PVAuthorEngine::DoGetAuthorProductInfoParameter(PvmiKvp*& aParameters
     return PVMFSuccess;
 }
 
-#if TURN_ON_VERBOSE_LOGS
-#undef PVLOGGER_LOGMSG
-#define PVLOGGER_LOGMSG(IL, LOGGER, LEVEL, MESSAGE) OSCL_UNUSED_ARG(LOGGER);
-#endif
+
+OSCL_EXPORT_REF
+void
+PVAuthorEngineInterface::GetSDKInfo
+(
+    PVSDKInfo& aSdkInfo
+)
+{
+    aSdkInfo.iLabel = PVAUTHOR_ENGINE_SDKINFO_LABEL;
+    aSdkInfo.iDate  = PVAUTHOR_ENGINE_SDKINFO_DATE;
+}
 

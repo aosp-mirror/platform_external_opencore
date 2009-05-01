@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,6 +53,13 @@ PVA_FF_InterLeaveBuffer::PVA_FF_InterLeaveBuffer(uint32 mediaType,
                 (uint8 *)(oscl_malloc(sizeof(uint8) * AAC_INTERLEAVE_BUFFER_SIZE));
 
             _maxInterLeaveBufferSize = AAC_INTERLEAVE_BUFFER_SIZE;
+        }
+        else if (codecType == CODEC_TYPE_AMR_WB_AUDIO)
+        {
+            _interLeaveBuffer =
+                (uint8 *)(oscl_malloc(sizeof(uint8) * AMR_WB_INTERLEAVE_BUFFER_SIZE));
+
+            _maxInterLeaveBufferSize = AMR_WB_INTERLEAVE_BUFFER_SIZE;
         }
     }
 
@@ -259,8 +266,16 @@ void
 PVA_FF_InterLeaveBuffer::setLastChunkEndTime(uint32 time)
 {
     _lastChunkEndTime = time;
+    if (_pTimeStampVec->size() > 0)
+    {
+        _lastSampleTS  = _pTimeStampVec->back();
+    }
+    else
+    {
+        _lastSampleTS = 0;
+    }
 
-    _lastSampleTS	= _pTimeStampVec->back();
+
 }
 
 

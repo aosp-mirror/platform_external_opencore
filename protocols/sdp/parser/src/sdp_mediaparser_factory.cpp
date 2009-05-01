@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@
 #include "sdp_mediaparser_factory.h"
 #include "aac_media_info_parser.h"
 #include "amr_media_info_parser.h"
-#include "evrc_media_info_parser.h"
 #include "h263_media_info_parser.h"
 #include "h264_media_info_parser.h"
 #include "m4v_media_info_parser.h"
@@ -41,19 +40,6 @@ SDPAMRMediaParserFactory::destruct_and_dealloc(OsclAny* ptr)
 }
 
 SDPBaseMediaInfoParser*
-SDPEVRCMediaParserFactory::createSDPMediaParserInstance()
-{
-    SDPEVRCMediaInfoParser* parser = OSCL_NEW(SDPEVRCMediaInfoParser, ());
-    return (parser);
-}
-
-void
-SDPEVRCMediaParserFactory::destruct_and_dealloc(OsclAny* ptr)
-{
-    OSCL_UNUSED_ARG(ptr); // line added to remove warning "unreferenced formal parameter"
-}
-
-SDPBaseMediaInfoParser*
 SDPAACMediaParserFactory::createSDPMediaParserInstance()
 {
     SDPAACMediaInfoParser* parser = OSCL_NEW(SDPAACMediaInfoParser, ());
@@ -62,18 +48,6 @@ SDPAACMediaParserFactory::createSDPMediaParserInstance()
 
 void
 SDPAACMediaParserFactory::destruct_and_dealloc(OsclAny* ptr)
-{
-    OSCL_UNUSED_ARG(ptr); // line added to remove warning "unreferenced formal parameter"
-}
-
-SDPBaseMediaInfoParser*
-SDPASFMediaParserFactory::createSDPMediaParserInstance()
-{
-    return NULL;
-}
-
-void
-SDPASFMediaParserFactory::destruct_and_dealloc(OsclAny* ptr)
 {
     OSCL_UNUSED_ARG(ptr); // line added to remove warning "unreferenced formal parameter"
 }
@@ -142,7 +116,6 @@ SDPStillImageMediaParserFactory::destruct_and_dealloc(OsclAny* ptr)
 {
     OSCL_UNUSED_ARG(ptr); // line added to remove warning "unreferenced formal parameter"
 }
-
 
 SDPBaseMediaInfoParser*
 SDPPCMAMediaParserFactory::createSDPMediaParserInstance()

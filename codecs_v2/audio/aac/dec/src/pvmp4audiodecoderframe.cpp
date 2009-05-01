@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +16,13 @@
  * -------------------------------------------------------------------
  */
 /*
-------------------------------------------------------------------------------
 
-
-
- Pathname: /codecs/audio/aac/c/src/pvmp4audiodecodeframe
-
-
-     Date: 10/25/2000
+ Pathname: pvmp4audiodecodeframe
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
 
- Description:  Modified from original code
+ Description:  Modified from original shareware code
 
  Description:  Pulled in loop structure from console.c, so that this function
                now decodes all frames in the file.
@@ -143,6 +137,7 @@
 
  Description: Added comments explaining how the ltp_buffer_state
  variable is updated.
+
 
  Description: Modified code to take advantage of new trans4m_freq_2_time_fxp,
  which writes the output directly into a 16-bit output buffer.  This
@@ -507,7 +502,7 @@ void InitSbrSynFilterbank(bool bDownSampleSBR);
 ----------------------------------------------------------------------------*/
 
 
-Int PVMP4AudioDecodeFrame(
+OSCL_EXPORT_REF Int PVMP4AudioDecodeFrame(
     tPVMP4AudioDecoderExternal  *pExt,
     void                        *pMem)
 {
@@ -1248,24 +1243,39 @@ Int PVMP4AudioDecodeFrame(
                 }
 
             }
+
+#if defined(AAC_PLUS)
 #if defined(PARAMETRICSTEREO)&&defined(HQ_SBR)
-            else if ((pExt->aacPlusEnabled == false) && (pMC_Info->psPresentFlag == 1))
+
+            else if (pMC_Info->psPresentFlag == 1)
             {
-                /*
-                 *  Decoding eaac+ when only aac is enabled, copy L into R
-                 */
+                Int32 frameSize = 0;
+                if (pExt->aacPlusEnabled == false)
+                {
+                    /*
+                     *  Decoding eaac+ when only aac is enabled, copy L into R
+                     */
+                    frameSize = 1024;
+                }
+                else if (sbrDecoderData->SbrChannel[0].syncState != SBR_ACTIVE)
+                {
+                    /*
+                     *  Decoding eaac+ when no PS data was found, copy upsampled L into R
+                     */
+                    frameSize = 2048;
+                }
 
                 Int16 * pt  = &pExt->pOutputBuffer[0];
                 Int16 * pt2 = &pExt->pOutputBuffer[1];
                 Int i;
-                for (i = 0; i < 1024; i++)
+                for (i = 0; i < frameSize; i++)
                 {
                     *pt2 = *pt;
                     pt += 2;
                     pt2 += 2;
                 }
-
             }
+#endif
 #endif
 
         }
@@ -1351,6 +1361,11 @@ Int PVMP4AudioDecodeFrame(
              */
             pExt->samplingRate =
                 samp_rate_info[pVars->mc_info.sampling_rate_idx].samp_rate;
+
+            pVars->mc_info.implicit_channeling = 0; /* disable flag, as this is allowed
+                                                      * only the first time
+                                                      */
+
 
 #ifdef AAC_PLUS
 

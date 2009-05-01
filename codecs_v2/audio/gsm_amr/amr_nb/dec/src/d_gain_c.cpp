@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -217,7 +217,8 @@ void d_gain_code(
     gc_pred(pred_state, mode, code, &exp, &frac,
             &exp_inn_en, &frac_inn_en, pOverflow);
 
-    tbl_tmp = add(add(index, index, pOverflow), index, pOverflow);
+    index &= 31;                    /* index < 32, to avoid buffer overflow */
+    tbl_tmp = index + (index << 1);
 
     p = &qua_gain_code[tbl_tmp];
 

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,14 +70,18 @@ PVMFRTSPPort::~PVMFRTSPPort()
 bool PVMFRTSPPort::IsFormatSupported(PVMFFormatType aFmt)
 {
 //	return (aFmt==PVMF_INET_UDP)||(aFmt==PVMF_INET_TCP);
-    return (aFmt == PVMF_INET_TCP);
+    if (aFmt == PVMF_MIME_INET_TCP)
+    {
+        return true;
+    }
+    return false;
 }
 
 ////////////////////////////////////////////////////////////////////////////
 void PVMFRTSPPort::FormatUpdated()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_INFO
-                    , (0, "PVMFRTSPPort::FormatUpdated %d", iFormat));
+                    , (0, "PVMFRTSPPort::FormatUpdated %s", iFormat.getMIMEStrPtr()));
 }
 
 void PVMFRTSPPort::setParametersSync(PvmiMIOSession aSession,
@@ -85,6 +89,7 @@ void PVMFRTSPPort::setParametersSync(PvmiMIOSession aSession,
                                      int num_elements,
                                      PvmiKvp * & aRet_kvp)
 {
+    OSCL_UNUSED_ARG(aSession);
     PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_INFO, (0, "PVMFRTSPPort::getParametersSync: aSession=0x%x, aParameters=0x%x, num_elements=%d, aRet_kvp=0x%x",
                     aSession, aParameters, num_elements, aRet_kvp));
 
@@ -131,6 +136,7 @@ PVMFStatus PVMFRTSPPort::releaseParameters(PvmiMIOSession aSession,
         PvmiKvp* aParameters,
         int num_elements)
 {
+    OSCL_UNUSED_ARG(aSession);
     PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_INFO, (0, "PVMFRTSPPort::releaseParameters: aSession=0x%x, aParameters=0x%x, num_elements=%d",
                     aSession, aParameters, num_elements));
 

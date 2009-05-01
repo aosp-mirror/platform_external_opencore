@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,8 +42,8 @@ OSCL_EXPORT_REF PVMFStatus PvmiCapabilityAndConfigPortFormatImpl::getParametersS
             char *param;
             if (pv_mime_string_extract_param(0, aIdentifier, param))
             {
-                if (oscl_strcmp(param, "attr=cap") &&
-                        oscl_strcmp(param, "attr=cur"))
+                if (oscl_strncmp(param, "attr=cap", oscl_strlen("attr=cap")) &&
+                        oscl_strncmp(param, "attr=cur", oscl_strlen("attr=cur")))
                     return PVMFErrNotSupported;
             }
         }
@@ -63,7 +63,7 @@ OSCL_EXPORT_REF PVMFStatus PvmiCapabilityAndConfigPortFormatImpl::getParametersS
     ptr += sizeof(PvmiKvp);
     aParameters->key = (PvmiKeyType)ptr;
     oscl_strncpy(aParameters->key, iFormatValTypeString.get_cstr(), strLen);
-    aParameters->value.int32_value = iFormat;
+    aParameters->value.pChar_value = (char*)iFormat.getMIMEStrPtr();
     aParameters->length = aParameters->capacity = strLen;
 
     return PVMFSuccess;
@@ -95,10 +95,10 @@ OSCL_EXPORT_REF void PvmiCapabilityAndConfigPortFormatImpl::setParametersSync(Pv
         aRet_kvp = aParameters;
         OSCL_LEAVE(OsclErrArgument);
     }
-    else if (IsFormatSupported(aParameters->value.int32_value))
+    else if (IsFormatSupported(aParameters->value.pChar_value))
     {
         aRet_kvp = NULL;
-        iFormat = (PVMFFormatType)aParameters->value.int32_value;
+        iFormat = (PVMFFormatType)aParameters->value.pChar_value;
         //notify derived class of format update.
         //This function may leave.
         FormatUpdated();
@@ -121,7 +121,7 @@ OSCL_EXPORT_REF PVMFStatus PvmiCapabilityAndConfigPortFormatImpl::verifyParamete
         return PVMFErrNotSupported;
     }
 
-    if (IsFormatSupported(aParameters->value.int32_value))
+    if (IsFormatSupported(aParameters->value.pChar_value))
     {
         return PVMFSuccess;
     }
@@ -140,7 +140,7 @@ OSCL_EXPORT_REF void pvmiSetPortFormatSync(PvmiCapabilityAndConfig *aPort, const
     kvp.key = (PvmiKeyType)alloc.ALLOCATE(kvp.length);
     OsclError::LeaveIfNull(kvp.key);
     oscl_strncpy(kvp.key, aFormatValType, kvp.length);
-    kvp.value.int32_value = (int32)aFormat;
+    kvp.value.pChar_value = (char*)aFormat.getMIMEStrPtr();
 
     PvmiKvp* retKvp = NULL; // for return value
     aPort->setParametersSync(NULL, &kvp, 1, retKvp);

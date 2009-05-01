@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,6 +61,7 @@ class PVH264PayLoadOutputMediaData
         //would be needed if code called "remove".
         bool operator==(const PVH264PayLoadOutputMediaData& x)const
         {
+            OSCL_UNUSED_ARG(&x);
             OSCL_ASSERT(0);
             return false;
         }

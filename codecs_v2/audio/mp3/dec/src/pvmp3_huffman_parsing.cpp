@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -306,10 +306,13 @@ int32 pvmp3_huffman_parsing(int32 is[SUBBANDS_NUMBER*FILTERBANK_BANDS],
     if (pMainData->usedBits > grBits)
     {
         i -= 4;
-        if (i < 0 || i > SUBBANDS_NUMBER*FILTERBANK_BANDS - 4)
+
+        if (i < 0 || i > FILTERBANK_BANDS*SUBBANDS_NUMBER - 4)
         {
+            /* illegal parameters may cause invalid access, set i to 0 */
             i = 0;
         }
+
         is[i] = 0;
         is[(i+1)] = 0;
         is[(i+2)] = 0;

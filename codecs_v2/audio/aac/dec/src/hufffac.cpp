@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,13 +21,10 @@
  Funtions:
     hufffac
 
-
-     Date: 10/25/2000
-
 ------------------------------------------------------------------------------
  REVISION HISTORY
 
- Description:  Modified from original code
+ Description:  Modified from original shareware code
 
  Description:  Modified to pass variables by reference to eliminate use
                of global variables.
@@ -50,6 +47,7 @@
 
  Description: Use decode_huff_scl function.
 
+ Who:                                   Date: MM/DD/YYYY
  Description:
 
 ------------------------------------------------------------------------------

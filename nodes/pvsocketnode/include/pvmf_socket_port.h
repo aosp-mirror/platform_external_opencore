@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,9 +40,6 @@
 
 #ifndef PVMI_CONFIG_AND_CAPABILITY_UTILS_H_INCLUDED
 #include "pvmi_config_and_capability_utils.h"
-#endif
-#ifndef PVMF_STREAMING_BUFFER_ALLOCATORS_H_INCLUDED
-#include "pvmf_streaming_buffer_allocators.h"
 #endif
 #ifndef PVMI_PORT_CONFIG_KVP_H_INCLUDED
 #include "pvmi_port_config_kvp.h"
@@ -127,8 +124,6 @@ class PVMFSocketPort : public PvmfPortBaseImpl,
         PVMFStatus releaseParameters(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
 
         PVMFStatus PeekIncomingMsg(PVMFSharedMediaMsgPtr& aMsg);
-
-        OsclSharedPtr<PVMFSharedSocketDataBufferAlloc> iAllocSharedPtr;
 
         SocketPortConfig* iConfig;
         PVMFSocketNodePortTag iPortTag;

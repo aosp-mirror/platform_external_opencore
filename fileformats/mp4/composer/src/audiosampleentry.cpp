@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*********************************************************************************/
 /*
     This PVA_FF_AudioSampleEntry Class is used for visual streams.
 */
@@ -26,7 +25,6 @@
 #include "atomutils.h"
 #include "a_atomdefs.h"
 
-//extern pvostream& operator<<(pvostream& fp, const PVA_FF_ESDAtom &a);
 
 // Constructor
 PVA_FF_AudioSampleEntry::PVA_FF_AudioSampleEntry(int32 codecType)
@@ -53,15 +51,13 @@ PVA_FF_AudioSampleEntry::init()
     _reserved1[0] = 0;
     _reserved1[1] = 0;
 
-    _reserved2 = 2; // = 2;
-    _reserved3 = 16; // = 16;
-    _reserved4 = 0; // = 0;
+    _reserved2 = 2;
+    _reserved3 = 16;
+    _reserved4 = 0;
 
-    _timeScale = 0; // Get it from the track
+    _timeScale = 0;
 
-    _reserved5 = 0; // = 0;
-
-
+    _reserved5 = 0;
 }
 
 // Rendering the PVA_FF_Atom in proper format (bitlengths, etc.) to an ostream
@@ -155,7 +151,3 @@ PVA_FF_AudioSampleEntry::recomputeSize()
         _pparent->recomputeSize();
     }
 }
-
-
-
-

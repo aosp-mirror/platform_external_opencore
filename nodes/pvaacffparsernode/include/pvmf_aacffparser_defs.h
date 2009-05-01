@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,8 @@ typedef enum
 // Temporary until actual max track data size if used.
 #define MAXTRACKDATASIZE	4096
 
+static const char PVAAC_ALL_METADATA_KEY[] = "all";
+
 #define PVMF_AAC_NUM_METADATA_VALUES 14
 // Constant character strings for metadata keys
 static const char PVAACMETADATA_TITLE_KEY[] = "title";
@@ -64,7 +66,7 @@ static const char PVAACMETADATA_CHARENCUTF8[] = "char-encoding=UTF8";
 static const char PVAACMETADATA_CHARENCUTF16BE[] = "char-encoding=UTF16BE";
 static const char PVAACMETADATA_FORMATID3V1[] = "format=id3v1";
 static const char PVAACMETADATA_FORMATID3V11[] = "format=id3v1.1";
-static const char PVAACMETADATA_TIMESCALE1000[] = "timescale=1000";
+static const char PVAACMETADATA_TIMESCALE1000[] = ";timescale=1000";
 static const char PVAACMETADATA_INDEX0[] = "index=0";
 static const char PVAACMETADATA_RANDOM_ACCESS_DENIED_KEY[] = "random-access-denied";
 

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@
 #ifndef OSCL_REGISTRY_SERV_IMPL_H_INCLUDED
 #define OSCL_REGISTRY_SERV_IMPL_H_INCLUDED
 
+#include "oscl_base.h"
 #include "osclconfig_proc.h"
 
 #include "oscl_registry_types.h"

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,7 +68,6 @@
 #ifndef CPM_H_INCLUDED
 #include "cpm.h"
 #endif
-
 #include "pv_id3_parcom_types.h"
 
 class OsclFileHandle;
@@ -138,6 +137,7 @@ class IMpeg4File : public ISucceedFail
         virtual uint64 getMovieDuration() const = 0;
         virtual uint32 getMovieTimescale() const = 0;
 
+
         // From TrackHeader
         virtual uint64 getTrackDuration(uint32 id) = 0; // in movie timescale
 
@@ -148,6 +148,7 @@ class IMpeg4File : public ISucceedFail
         // From MediaHeader
         virtual uint64 getTrackMediaDuration(uint32 id) = 0;
         virtual uint32 getTrackMediaTimescale(uint32 id) = 0;
+        virtual uint16 getTrackLangCode(uint32 id) = 0;
 
         // From Handler
         // Returns the 4CC of the track media type (i.e. 'vide' for video)
@@ -158,8 +159,7 @@ class IMpeg4File : public ISucceedFail
         virtual int32 getTrackNumSampleEntries(uint32 id) = 0;
 
         // From DecoderConfigDescriptor
-        virtual OSCL_wHeapString<OsclMemAllocator>  getTrackMIMEType(uint32 id) = 0; // Based on OTI and string tables
-        virtual uint8  getTrackOTIType(uint32 id) = 0;// Based on OTI value
+        virtual void getTrackMIMEType(uint32 id, OSCL_String& aMimeType) = 0; // Based on OTI and string tables
 
         virtual int32  getTrackMaxBufferSizeDB(uint32 id) = 0;
         virtual int32  getTrackAverageBitrate(uint32 id) = 0;
@@ -187,12 +187,6 @@ class IMpeg4File : public ISucceedFail
                 uint32 howManyKeySamples = 1) = 0;
 
         // Static method to read in an MP4 file from disk and return the IMpeg4File interface
-        OSCL_IMPORT_REF static IMpeg4File *readMP4File(OSCL_wString& filename,
-                uint32 parsingMode = 0,
-                Oscl_FileServer* fileServSession = NULL);
-
-        OSCL_IMPORT_REF static IMpeg4File *readMP4File(Oscl_File* fileRef, uint32 parsingMode = 0);
-
         OSCL_IMPORT_REF static IMpeg4File *readMP4File(OSCL_wString& aFilename,
                 PVMFCPMPluginAccessInterfaceFactory* aCPMAccessFactory,
                 OsclFileHandle* aHandle = NULL,
@@ -200,6 +194,14 @@ class IMpeg4File : public ISucceedFail
                 Oscl_FileServer* aFileServSession = NULL);
 
         OSCL_IMPORT_REF static void DestroyMP4FileObject(IMpeg4File* aMP4FileObject);
+
+        virtual bool CreateDataStreamSessionForExternalDownload(OSCL_wString& aFilename,
+                PVMFCPMPluginAccessInterfaceFactory* aCPMAccessFactory,
+                OsclFileHandle* aHandle = NULL,
+                Oscl_FileServer* aFileServSession = NULL) = 0;
+
+        virtual void DestroyDataStreamForExternalDownload() = 0;
+
         virtual void resetPlayback() = 0;
         virtual uint32 resetPlayback(uint32 time, uint16 numTracks, uint32 *trackList, bool bResetToIFrame = true) = 0;
         virtual int32 queryRepositionTime(uint32 time,
@@ -243,6 +245,10 @@ class IMpeg4File : public ISucceedFail
 
         virtual int16 getLayer(uint32 trackid) = 0;
         virtual uint16 getAlternateGroup(uint32 trackid) = 0;
+
+        virtual int32 getVideoFrameHeight(uint32 trackid) = 0;
+        virtual int32 getVideoFrameWidth(uint32 trackid) = 0;
+
         virtual int32 getTextTrackWidth(uint32 trackid) = 0;
         virtual int32 getTextTrackHeight(uint32 trackid) = 0;
         virtual int32 getTextTrackXOffset(uint32 trackid) = 0;
@@ -276,14 +282,6 @@ class IMpeg4File : public ISucceedFail
 
         virtual	uint32 getAVCNALLengthSize(uint32 trackID, uint32 index = 0) = 0;
 
-        OSCL_IMPORT_REF static bool IsMP4File(OSCL_wString& filename,
-                                              Oscl_FileServer* fileServSession = NULL);
-
-        OSCL_IMPORT_REF static bool IsMP4File(Oscl_File* filePtr);
-
-        OSCL_IMPORT_REF static bool IsMP4File(PVMFCPMPluginAccessInterfaceFactory* aCPMAccessFactory,
-                                              Oscl_FileServer* aFileServSession = NULL,
-                                              OsclFileHandle* aHandle = NULL);
         /*
          * @param Oscl_File* filePtr - File pointer to the MP4/3GP
          * file. Please note that the file open and close are handled by the
@@ -424,23 +422,30 @@ class IMpeg4File : public ISucceedFail
         // ITunes Specific functions
 
         virtual OSCL_wHeapString<OsclMemAllocator> getITunesTool() const = 0;
+        virtual OSCL_wHeapString<OsclMemAllocator> getITunesEncodedBy() const = 0;
         virtual OSCL_wHeapString<OsclMemAllocator> getITunesWriter() const = 0;
         virtual OSCL_wHeapString<OsclMemAllocator> getITunesGroupData() const = 0;
         virtual uint16 getITunesThisTrackNo() const = 0;
         virtual PvmfApicStruct* getITunesImageData() const = 0;
         virtual uint16 getITunesTotalTracks() const = 0;
         virtual bool IsITunesCompilationPart() const = 0;
+        virtual bool IsITunesContentRating() const = 0;
         virtual uint16 getITunesBeatsPerMinute() const = 0;
         virtual uint16 getITunesThisDiskNo() const = 0;
         virtual uint16 getITunesTotalDisks() const = 0;
         virtual OSCL_wHeapString<OsclMemAllocator> getITunesNormalizationData() const = 0;
         virtual OSCL_wHeapString<OsclMemAllocator> getITunesCDIdentifierData(uint8 aCDdatanumIndex) = 0;
+        virtual OSCL_wHeapString<OsclMemAllocator> getITunesCDTrackNumberData() const = 0;
+        virtual OSCL_wHeapString<OsclMemAllocator> getITunesCDDB1Data() const = 0;
         virtual OSCL_wHeapString<OsclMemAllocator> getITunesLyrics() const = 0;
         virtual	uint8 getITunesTotalCDIdentifierData() const = 0;
         virtual bool IsMovieFragmentsPresent() const = 0;
+        //Returns the Subtitle of individual track
+        virtual OSCL_wHeapString<OsclMemAllocator> getITunesTrackSubTitle() const = 0;
 
         // Reposition Related Video Track present API
         virtual void ResetVideoTrackPresentFlag() = 0;
+
         //APIs to return the no. of titles and their metadata values respectively.
         virtual uint32 getNumTitle() = 0;
         virtual PVMFStatus getTitle(uint32 index, OSCL_wString& aVal, uint16& aLangCode, MP4FFParserOriginalCharEnc& aCharEncType) = 0;

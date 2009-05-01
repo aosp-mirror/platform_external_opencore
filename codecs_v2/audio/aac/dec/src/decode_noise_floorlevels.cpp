@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,14 @@
  * -------------------------------------------------------------------
  */
 /*
-------------------------------------------------------------------------------
-
-
 
  Filename: decode_noise_floorlevels.c
-
-     Date: 07/21/2003
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
 
 
+ Who:                                   Date: MM/DD/YYYY
  Description:
 
 ------------------------------------------------------------------------------
@@ -131,12 +127,12 @@ void decode_noise_floorlevels(SBR_FRAME_DATA * hFrameData)
     Int32 env;
     Int32 i;
 
-    Int32 * frameInfo           = (Int32 *) & (hFrameData->frameInfo);
-    Int32   nNfb                =   hFrameData->nNfb;
-    Int32 * domain_vec          = (Int32 *) & (hFrameData->domain_vec2);
+    Int32 * frameInfo           = hFrameData->frameInfo;
+    Int32   nNfb                = hFrameData->nNfb;
+    Int32 * domain_vec          = hFrameData->domain_vec2;
 
-    Int32 * sbrNoiseFloorLevel_man = (Int32 *) & (hFrameData->sbrNoiseFloorLevel_man);
-    Int32 * prevNoiseLevel_man     = (Int32 *) & (hFrameData->prevNoiseLevel_man);
+    Int32 * sbrNoiseFloorLevel_man = hFrameData->sbrNoiseFloorLevel_man;
+    Int32 * prevNoiseLevel_man     = hFrameData->prevNoiseLevel_man;
 
     Int32 nEnv = frameInfo[(frameInfo[0] << 1) + 3];
 

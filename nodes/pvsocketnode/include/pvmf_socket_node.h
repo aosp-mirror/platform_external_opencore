@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,7 +72,9 @@
 #ifndef PVMF_SM_TUNABLES_H_INCLUDED
 #include "pvmf_sm_tunables.h"
 #endif
-
+#ifndef PVMF_RESIZABLE_SIMPLE_MEDIAMSG_H_INCLUDED
+#include "pvmf_resizable_simple_mediamsg.h"
+#endif
 #include "pvmf_socket_node_events.h"
 #include "pvmf_media_frag_group.h"
 
@@ -91,6 +93,8 @@
 #define PVMF_SOCKETNODE_LOGWARNING(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iLogger,PVLOGMSG_WARNING,m);
 #define PVMF_SOCKETNODE_LOGDATATRAFFIC_I(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iDataPathLogger,PVLOGMSG_INFO,m);
 #define PVMF_SOCKETNODE_LOGDATATRAFFIC_E(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iDataPathLogger,PVLOGMSG_ERR,m);
+#define PVMF_SOCKETNODE_LOGDATATRAFFIC_RTP(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iDataPathLoggerRTP,PVLOGMSG_INFO,m);
+#define PVMF_SOCKETNODE_LOGDATATRAFFIC_RTCP(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iDataPathLoggerRTCP,PVLOGMSG_INFO,m);
 
 //memory allocator type for this node.
 typedef OsclMemAllocator PVMFSocketNodeAllocator;
@@ -131,50 +135,61 @@ class PVMFSocketNodeMemPool
 
         OsclSharedPtr<PVMFMediaDataImpl> getMediaDataImpl(uint32 size)
         {
-            return (iSocketAllocSharedPtr->createSharedBuffer(size));
+            OsclSharedPtr<PVMFMediaDataImpl> mediaImpl = iMediaMsgAllocator->allocate(size);
+            return mediaImpl;
         }
 
         void resizeSocketDataBuffer(OsclSharedPtr<PVMFMediaDataImpl>& aSharedBuffer)
         {
-            if (iSocketAllocSharedPtr.GetRep() != NULL)
+            if (iMediaMsgAllocator != NULL)
             {
-                iSocketAllocSharedPtr->ResizeMemoryFragment(aSharedBuffer);
+                iMediaMsgAllocator->ResizeMemoryFragment(aSharedBuffer);
             }
         }
 
-        void notifyfreechunkavailable(OsclMemPoolFixedChunkAllocatorObserver& aObserver,
-                                      uint32 aSize,
-                                      OsclAny* aContextData = NULL)
+        void CreateAllocators(const OSCL_HeapString<OsclMemAllocator>& iMime, uint32 aSize, uint32 aExpectedNumberOfBlocksPerBuffer, uint32 aResizeSize, uint32 aMaxNumResizes);
+        OsclMemPoolResizableAllocator* CreateResizableDataBufferAllocator(const char* allocatorName);
+        void CreateDefaultDataBufferAllocator(const char* allocatorName);
+        void CreateUDPMultipleRecvAllocator();
+
+        uint32 GetMaxSizeMediaMsgLen();
+
+        void DestroyAllocators();
+        void DestroyUDPMultipleRecvAllocator();
+
+        class SharedDataBufferInfo
         {
-            if (iSocketAllocSharedPtr.GetRep() != NULL)
-            {
-                iSocketAllocSharedPtr->notifyfreechunkavailable(aObserver, aSize, aContextData);
-            }
-        }
-
-        void CancelFreeChunkAvailableCallback()
-        {
-            if (iSocketAllocSharedPtr.GetRep() != NULL)
-            {
-                iSocketAllocSharedPtr->CancelFreeChunkAvailableCallback();
-            }
-        }
-
-        OsclSharedPtr<PVMFSharedSocketDataBufferAlloc> iSocketAllocSharedPtr;
-
+            public:
+                SharedDataBufferInfo(): iSize(0), iResizeSize(0), iMaxNumResizes(0), iExpectedNumberOfBlocksPerBuffer(0) {}
+                void Init(uint32 aSize, uint32 aExpectedNumberOfBlocksPerBuffer, uint32 aResizeSize, uint32 aMaxNumResizes)
+                {
+                    iSize = aSize;
+                    iResizeSize = aResizeSize;
+                    iMaxNumResizes = aMaxNumResizes;
+                    iExpectedNumberOfBlocksPerBuffer = aExpectedNumberOfBlocksPerBuffer;
+                }
+                uint32 iSize;
+                uint32 iResizeSize;
+                uint32 iMaxNumResizes;
+                uint32 iExpectedNumberOfBlocksPerBuffer;
+        };
+        SharedDataBufferInfo iSharedDataBufferInfo;
         // Memory pool for media data objects
         OsclMemPoolFixedChunkAllocator* iMediaDataMemPool;
 
-        int32 iPortTag;
+        // Allocators for persisting the data received from the server (on all the ports) are created in respective SocketConfig.
+        //For UDP [RTSP Based Streaming], allocators will be created before connection of port to its peer completes.
+        //For TCP [MSHTTP Streaming], size of the memory pool for Data is determined only after receiving ASF header from the streaming server
+        //therefore, to persist the response of the Server before completion of receiving the ASF header, an internal shared buffer allocator is created.
+        PVMFResizableSimpleMediaMsgAlloc* iMediaMsgAllocator;
+        OsclMemPoolResizableAllocator*	iSharedBufferAlloc;
+        OsclMemPoolResizableAllocator*	iInternalAlloc;//[MSHTTP Streaming Specific specific]
 
-        // Allocator created in this node, for TCP only.
-        // (For UDP, the JB node owns the allocator and passes
-        // it in during the call to setSocketPortMemAllocator)
-        PVMFSMSharedBufferAllocWithReSize* iInternalAlloc;
-
-        // Allocator for multiple receives, for UDP only.
+        // Allocator for multiple receives[ for UDP only, will be created and used only when SNODE_ENABLE_UDP_MULTI_PACKET is defined].
         PVMFMediaFragGroupCombinedAlloc<PVMFSocketNodeAllocator>* iMediaFragGroupAlloc;
         OsclMemPoolFixedChunkAllocator* iMediaFragGroupAllocMempool;
+
+        int32 iPortTag;
 };
 
 /*
@@ -552,7 +567,7 @@ class SocketNodeStats
 ** SocketPortConfig contains all the information associated with a port including
 ** the Oscl socket, memory pool, and status.
 */
-class SocketPortConfig : public OsclMemPoolFixedChunkAllocatorObserver
+class SocketPortConfig : public OsclMemPoolFixedChunkAllocatorObserver, public OsclMemPoolResizableAllocatorObserver
 {
     public:
         SocketPortConfig()
@@ -566,12 +581,13 @@ class SocketPortConfig : public OsclMemPoolFixedChunkAllocatorObserver
             iContainer = NULL;
             iTag = PVMF_SOCKET_NODE_PORT_TYPE_UNKNOWN;
             iRTP = false;
+            iRTCP = false;
         };
-
-        void DoSetSocketPortMemAllocator(PVLogger*, OsclSharedPtr<PVMFSharedSocketDataBufferAlloc> aAlloc);
-        void CleanupMemPools();
+        void CleanupMemPools(Oscl_DefAlloc& aAlloc);
+        void CreateAllocators(uint32 aSize, uint32 aExpectedNumberOfBlocksPerBuffer, uint32 aResizeSize, uint32 aMaxNumResizes);
 
         void freechunkavailable(OsclAny* aContextData);
+        void freeblockavailable(OsclAny* aContextData);
 
         SocketPortState iState;
 
@@ -597,6 +613,7 @@ class SocketPortConfig : public OsclMemPoolFixedChunkAllocatorObserver
 
         OSCL_HeapString<OsclMemAllocator> iMime;
         bool iRTP;
+        bool iRTCP;
 
 #if(ENABLE_SOCKET_NODE_STATS)
         SocketNodePortStats iPortStats;
@@ -712,31 +729,15 @@ class PVMFDnsCache
 ** The Socket Node
 */
 class PVMFSocketNode
-            : public PVMFNodeInterface
+            : public PVInterface
+            , public PVMFNodeInterface
             , public OsclActiveObject
             , public OsclSocketObserver
             , public OsclDNSObserver
-            , public PVMFSocketNodeExtensionInterface
 {
     public:
-
         OSCL_IMPORT_REF PVMFSocketNode(int32 aPriority);
         OSCL_IMPORT_REF ~PVMFSocketNode();
-
-
-        //**********begin PVMFSocketNodeExtensionInterface
-        OSCL_IMPORT_REF void addRef();
-        OSCL_IMPORT_REF void removeRef();
-        OSCL_IMPORT_REF bool queryInterface(const PVUuid& uuid, PVInterface*& iface);
-        OSCL_IMPORT_REF PVMFStatus AllocateConsecutivePorts(PvmfMimeString* aPortConfig,
-                uint32& aLowerPortNum,
-                uint32& aHigherPortNum, uint32& aStartPortNum);
-        OSCL_IMPORT_REF PVMFStatus SetMaxTCPRecvBufferSize(uint32 aBufferSize);
-        OSCL_IMPORT_REF PVMFStatus GetMaxTCPRecvBufferSize(uint32& aSize);
-        OSCL_IMPORT_REF PVMFStatus SetMaxTCPRecvBufferCount(uint32 aBufferSize);
-        OSCL_IMPORT_REF PVMFStatus GetMaxTCPRecvBufferCount(uint32& aSize);
-
-        //**********end PVMFSocketNodeExtensionInterface
 
         //************ begin OsclSocketObserver
         OSCL_IMPORT_REF void HandleSocketEvent(int32 aId, TPVSocketFxn aFxn, TPVSocketEvent aEvent, int32 aError);
@@ -782,9 +783,26 @@ class PVMFSocketNode
         OSCL_IMPORT_REF bool GetPortConfig(PVMFPortInterface &aPort, OsclNetworkAddress &aLocalAdd, OsclNetworkAddress &aRemoteAdd);
         OSCL_IMPORT_REF bool SetPortConfig(PVMFPortInterface &aPort, OsclNetworkAddress aLocalAdd, OsclNetworkAddress aRemoteAdd);
 
-        OSCL_IMPORT_REF bool setSocketPortMemAllocator(PVMFPortInterface* aPort,
-                OsclSharedPtr<PVMFSharedSocketDataBufferAlloc> aAlloc);
+        virtual void addRef()
+        {
+        }
 
+        virtual void removeRef()
+        {
+        }
+
+        virtual bool queryInterface(const PVUuid& uuid, PVInterface*& iface);
+
+        //**********begin PVMFSocketNodeExtensionInterface
+        PVMFStatus AllocateConsecutivePorts(PvmfMimeString* aPortConfig,
+                                            uint32& aLowerPortNum,
+                                            uint32& aHigherPortNum, uint32& aStartPortNum);
+        OSCL_IMPORT_REF PVMFStatus SetMaxTCPRecvBufferSize(uint32 aBufferSize);
+        OSCL_IMPORT_REF PVMFStatus GetMaxTCPRecvBufferSize(uint32& aSize);
+        OSCL_IMPORT_REF PVMFStatus SetMaxTCPRecvBufferCount(uint32 aBufferSize);
+        OSCL_IMPORT_REF PVMFStatus GetMaxTCPRecvBufferCount(uint32& aSize);
+        OsclMemPoolResizableAllocator* CreateSharedBuffer(const PVMFPortInterface* aPort , uint32 aBufferSize, uint32 aExpectedNumberOfBlocksPerBuffer, uint32 aResizeSize, uint32 aMaxNumResizes);
+        //**********end PVMFSocketNodeExtensionInterface
 
     private:
         friend class SocketPortConfig;
@@ -793,16 +811,8 @@ class PVMFSocketNode
         void Run();
 
         /*********************************************
-        * Socket extension interface
-        **********************************************/
-
-        // Reference counter for extension
-        uint32 iExtensionRefCount;
-
-        /*********************************************
         * Command Processing and Event Notification
         **********************************************/
-
         //Command queue type
         typedef PVMFNodeCommandQueue<PVMFSocketNodeCommand, PVMFSocketNodeAllocator> PVMFSocketNodeCmdQ;
 
@@ -851,6 +861,11 @@ class PVMFSocketNode
 
         PVMFStatus DoCancelCurrentCommand(PVMFSocketNodeCmdQ& aCmdQ, PVMFSocketNodeCommand& aCmd);
         PVMFStatus DoStopNodeActivity();
+        int32 SocketPlacementNew(PVMFSocketNodeMemPool*&, OsclAny*, int32);
+        int32 CreateMediaData(SocketPortConfig&, OsclSharedPtr<PVMFMediaDataImpl>&);
+        int32 Allocate(SocketPortConfig&, OsclSharedPtr<PVMFMediaDataImpl>&);
+        int32 GetMediaDataImpl(SocketPortConfig&, OsclSharedPtr<PVMFMediaDataImpl>&, int32);
+
         PVMFSocketPort* iRequestedPort;
 
         //node state
@@ -880,8 +895,8 @@ class PVMFSocketNode
         * Oscl Socket Handling
         **********************************************/
 
-        void HandleRecvComplete(SocketPortConfig& tmpSockConfig, PVMFStatus, PVMFSocketActivity*);
-        void HandleRecvFromComplete(SocketPortConfig& tmpSockConfig, PVMFStatus, PVMFSocketActivity*);
+        void HandleRecvComplete(SocketPortConfig& tmpSockConfig, PVMFStatus, PVMFSocketActivity*, bool);
+        void HandleRecvFromComplete(SocketPortConfig& tmpSockConfig, PVMFStatus, PVMFSocketActivity*, bool);
 
         OsclSocketServ	*iSockServ;
 
@@ -893,6 +908,7 @@ class PVMFSocketNode
         const int TIMEOUT_SHUTDOWN;
         const int UDP_PORT_RANGE;
         const int MAX_UDP_PACKET_SIZE;
+        const int MIN_UDP_PACKET_SIZE;
 
         int32 iMaxTcpRecvBufferSize;
         int32 iMaxTcpRecvBufferCount;
@@ -982,17 +998,43 @@ class PVMFSocketNode
 
         PVLogger *iLogger;
         PVLogger *iDataPathLogger;
+        PVLogger *iDataPathLoggerRTP;
+        PVLogger *iDataPathLoggerRTCP;
 
         void LogRTPHeaderFields(SocketPortConfig& aSockConfig,
                                 OsclRefCounterMemFrag& memFragIn);
 
+        void LogRTCPHeaderFields(SocketPortConfig& aSockConfig,
+                                 OsclRefCounterMemFrag& memFragIn);
+
         OsclErrorTrapImp* iOsclErrorTrapImp;
 
         PVMFSocketNodeAllocator iAlloc;
-
+        PVMFSocketNodeExtensionInterface* iExtensionInterface;
 #if(ENABLE_SOCKET_NODE_STATS)
         SocketNodeStats iSocketNodeStats;
 #endif
+};
+
+class PVMFSocketNodeExtensionInterfaceImpl: public PVInterfaceImpl<PVMFSocketNodeAllocator>, public  PVMFSocketNodeExtensionInterface
+{
+    public:
+        PVMFSocketNodeExtensionInterfaceImpl(PVMFSocketNode* iContainer);
+        ~PVMFSocketNodeExtensionInterfaceImpl();
+        virtual void addRef();
+        virtual void removeRef();
+        virtual bool queryInterface(const PVUuid& uuid, PVInterface*& iface); //From PVInterface
+        OSCL_IMPORT_REF virtual PVMFStatus AllocateConsecutivePorts(PvmfMimeString* aPortConfig,
+                uint32& aLowerPortNum,
+                uint32& aHigherPortNum, uint32& aStartPortNum);
+
+        OSCL_IMPORT_REF virtual PVMFStatus SetMaxTCPRecvBufferSize(uint32 aBufferSize);
+        OSCL_IMPORT_REF virtual PVMFStatus GetMaxTCPRecvBufferSize(uint32& aSize);
+        OSCL_IMPORT_REF virtual PVMFStatus SetMaxTCPRecvBufferCount(uint32 aCount);
+        OSCL_IMPORT_REF virtual PVMFStatus GetMaxTCPRecvBufferCount(uint32& aCount);
+        OSCL_IMPORT_REF virtual OsclMemPoolResizableAllocator* CreateSharedBuffer(const PVMFPortInterface* aPort , uint32 aBufferSize, uint32 aExpectedNumberOfBlocksPerBuffer, uint32 aResizeSize, uint32 aMaxNumResizes);
+    private:
+        PVMFSocketNode *iContainer;
 };
 
 #endif //PVMF_SOCKET_NODE_H_INCLUDED

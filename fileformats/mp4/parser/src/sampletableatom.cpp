@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,6 +67,8 @@ SampleTableAtom::SampleTableAtom(MP4_FF_FILE *fp,
 
     _SDIndex = 0;
 
+    SamplesCount = 0;
+
     _oMultipleSampleDescription = false;
     _numAMRFramesPerSample = 0;
     _pAMRTempBuffer = NULL;
@@ -102,7 +104,6 @@ SampleTableAtom::SampleTableAtom(MP4_FF_FILE *fp,
             return;
         }
         _pinput = OSCL_PLACEMENT_NEW(ptr, MP4_FF_FILE());
-
         _pinput->_fileServSession = fp->_fileServSession;
         _pinput->_pvfile.SetCPM(fp->_pvfile.GetCPM());
 
@@ -115,6 +116,7 @@ SampleTableAtom::SampleTableAtom(MP4_FF_FILE *fp,
             return;
         }
         _commonFilePtr = OSCL_PLACEMENT_NEW(ptr, MP4_FF_FILE(*fp));
+
 #endif
 
         _currentPlaybackSampleNumber = 0; // Initializing playback start point
@@ -261,6 +263,7 @@ SampleTableAtom::SampleTableAtom(MP4_FF_FILE *fp,
                                filename, parsingMode),
                               _psampleSizeAtom);
 
+                SamplesCount = _psampleSizeAtom->getSampleCount();
                 // Check for success
                 if (!_psampleSizeAtom->MP4Success())
                 {
@@ -378,9 +381,18 @@ SampleTableAtom::SampleTableAtom(MP4_FF_FILE *fp,
                 count -= atomSize;
                 atomSize -= DEFAULT_ATOM_SIZE;
                 AtomUtils::seekFromCurrPos(fp, atomSize);
+
             }
+
         }
 
+        if (_pcompositionOffsetAtom != NULL)
+        {
+            if (SamplesCount != 0)
+            {
+                _pcompositionOffsetAtom->setSamplesCount(SamplesCount);
+            }
+        }
         /*
          * These 5 atoms are mandatory. In case any of it is absent
          * return ERROR!!!
@@ -1305,6 +1317,7 @@ SampleTableAtom::getNextSample(uint8 *buf, int32 &size, uint32 &index, uint32 &S
             {
                 // Reset Time Stamp
                 _currentPlaybackSampleTimestamp -= (tsDelta + getCttsOffsetForSampleNumber(_currentPlaybackSampleNumber));
+
                 return retval;
             }
             _currentPlaybackSampleNumber++;
@@ -1566,9 +1579,9 @@ int32 SampleTableAtom::resetPlayBackbyTime(int32 time, bool oDependsOn)
 
         if (_currentPlaybackSampleNumber > _tempSampleNumber)
         {
-            // In case of Backward Repos,the flag _firstSampleOnBkwdRepos in samplesizeatom.cpp is set to true to prevent
+            // In case of Backward Repos,the flag _SkipOldEntry in samplesizeatom.cpp is set to true to prevent
             // old entries from getting used.
-            getSampleSizeAtom()._firstSampleOnBkwdRepos = true;
+            getSampleSizeAtom()._SkipOldEntry = true;
         }
         _currentPlaybackSampleNumber =
             getTimeToSampleAtom().getSampleNumberFromTimestamp(time - _trackStartTSOffset);
@@ -1599,7 +1612,7 @@ int32 SampleTableAtom::resetPlayBackbyTime(int32 time, bool oDependsOn)
         if (getSampleSizeAtom().getSampleCount() > 0)
         {
             _currentPlaybackSampleNumber =
-                (getSampleSizeAtom().getSampleCount() - 1);
+                (getSampleSizeAtom().getSampleCount());
 
             retValA = _ptimeToSampleAtom->resetStateVariables(_currentPlaybackSampleNumber);
             if (retValA == PV_ERROR)
@@ -1788,9 +1801,6 @@ int32 SampleTableAtom::resetPlayBackbyTime(int32 time, bool oDependsOn)
     PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "SampleTableAtom::resetPlayBackbyTime- _currentPlaybackSampleNumber =%d", _currentPlaybackSampleNumber));
     PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "SampleTableAtom::resetPlayBackbyTime- trueTS =%d", trueTS));
 
-    //this is no longer needed since _currentPlaybackSampleTimestamp is updated
-    // with duration of a sample, after each read
-
     retValA = _ptimeToSampleAtom->resetStateVariables(_currentPlaybackSampleNumber);
     if (retValA == PV_ERROR)
     {
@@ -1976,6 +1986,10 @@ int32 SampleTableAtom::getTimestampForRandomAccessPoints(uint32 *num, uint32 *ts
 {
     if (_psyncSampleAtom == NULL)
     {
+		if (_psampleSizeAtom != NULL)
+        {
+            *num =_psampleSizeAtom->getSampleCount();
+        }
         return 2;	//success : every sample is a random access point
     }
 
@@ -2012,6 +2026,7 @@ int32 SampleTableAtom::getTimestampForRandomAccessPoints(uint32 *num, uint32 *ts
     }
     return	1;	//success
 }
+
 
 int32 SampleTableAtom::getTimestampForRandomAccessPointsBeforeAfter(uint32 ts, uint32 *tsBuf, uint32* numBuf, uint32& numsamplestoget, uint32 howManyKeySamples)
 {
@@ -2448,8 +2463,10 @@ SampleTableAtom::getNextNSamples(uint32 startSampleNum,
             SDIndex -= 1;
         }
 
+
         // Find chunk offset to file
         int32 offset = _pchunkOffsetAtom->getChunkOffsetAt(chunk);
+
 
         if (offset == PV_ERROR)
         {
@@ -2465,6 +2482,7 @@ SampleTableAtom::getNextNSamples(uint32 startSampleNum,
         int32 tempSize = 0;
 
         uint32 sigmaSampleSize = 0;
+
         for (j = sampleNum;
                 j < (sampleNum + numSamples);
                 j++)
@@ -2566,9 +2584,11 @@ SampleTableAtom::getNextNSamples(uint32 startSampleNum,
 
             currTSBase += tsDelta;
 
+
             PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "SampleTableAtom::getNextNSamples- pgau->info[%d].sample_info =%d", s, pgau->info[s].sample_info));
             PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "SampleTableAtom::getNextNSamples- pgau->info[%d].ts_delta =%d", s, pgau->info[s].ts_delta));
             PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "SampleTableAtom::getNextNSamples- pgau->info[%d].ts =%d", s, pgau->info[s].ts));
+
 
             s++;
         }
@@ -2623,9 +2643,9 @@ SampleTableAtom::getNextNSamples(uint32 startSampleNum,
             bufEnd++;
         }
 
-        if ((sampleFileOffset < bufStart) || ((sigmaSampleSize + sampleFileOffset) > bufEnd))
+        if (((uint32)sampleFileOffset < bufStart) || ((sigmaSampleSize + sampleFileOffset) > bufEnd))
         {
-            if (_currentPlaybackSampleNumber != startSampleNum)
+            if ((uint32)_currentPlaybackSampleNumber != startSampleNum)
             {
                 _currentPlaybackSampleNumber = startSampleNum;
                 _currentPlaybackSampleTimestamp = startSampleNumTSBase;
@@ -2922,6 +2942,7 @@ SampleTableAtom::peekNextNSamples(uint32 startSampleNum,
                                   MediaMetaInfo    *mInfo)
 {//this API is only called in peekNextBundledAccessUnits(), which already check _psampleSizeAtom is NULL
 
+
     int32 currTSBase = _currentPlaybackSampleTimestamp;
     int32 i = 0;
     uint32 sampleNum = startSampleNum;
@@ -3067,6 +3088,7 @@ SampleTableAtom::peekNextNSamples(uint32 startSampleNum,
 
 int32 SampleTableAtom::getOffsetByTime(uint32 ts, int32* sampleFileOffset)
 {
+
     if ((_psampleSizeAtom    == NULL) ||
             (_psampleToChunkAtom == NULL) ||
             (_ptimeToSampleAtom == NULL) ||
@@ -3077,6 +3099,10 @@ int32 SampleTableAtom::getOffsetByTime(uint32 ts, int32* sampleFileOffset)
 
     int32 sampleNum = _ptimeToSampleAtom->getSampleNumberFromTimestamp(ts, true);
 
+    if (sampleNum == PV_ERROR)
+    {
+        return DEFAULT_ERROR;
+    }
     // Go for composition offset adjustment.
     sampleNum =
         getSampleNumberAdjustedWithCTTS(ts, sampleNum);
@@ -3130,8 +3156,8 @@ int32 SampleTableAtom::getOffsetByTime(uint32 ts, int32* sampleFileOffset)
 
     // Find actual file offset to sample
     *sampleFileOffset = offset + sampleSizeOffset;
-
-    if (sampleNum == (numSamples - 1))
+    getSampleSizeAtom()._SkipOldEntry = true;
+    if (sampleNum == (int32)(numSamples - 1))
     {
         return LAST_SAMPLE_IN_MOOV;
     }
@@ -3355,16 +3381,6 @@ getSampleNumberAdjustedWithCTTS(uint32 aTs, int32 aSampleNumber)
 int32 SampleTableAtom::
 getTimestampForCurrentSample()
 {
-    if (_psampleDescriptionAtom->Is3GPPAMR())
-    {
-        int32 ts = _amrFrameTimeStamp;
-
-        _amrFrameTimeStamp += _amrFrameDelta;
-
-        return ts;
-    }
-    else
-    {
-        return _currentPlaybackSampleTimestamp;
-    }
+    return _currentPlaybackSampleTimestamp;
 }
+

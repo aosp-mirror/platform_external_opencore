@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ OSCL_EXPORT_REF PvmfSyncUtil::PvmfSyncUtil() :
     iLogger = PVLogger::GetLoggerObject("PvmfSyncUtil");
 }
 
-OSCL_EXPORT_REF PVMFStatus PvmfSyncUtil::SetClock(OsclClock* aClock)
+OSCL_EXPORT_REF PVMFStatus PvmfSyncUtil::SetClock(PVMFMediaClock* aClock)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "PvmfSyncUtil::SetClockAndTimebase: aClock=0x%x", aClock));
@@ -50,7 +50,7 @@ OSCL_EXPORT_REF PVMFStatus PvmfSyncUtil::SetClock(OsclClock* aClock)
     return PVMFSuccess;
 }
 
-OSCL_EXPORT_REF PVMFStatus PvmfSyncUtil::SetFrameStepClock(OsclClock* aClock)
+OSCL_EXPORT_REF PVMFStatus PvmfSyncUtil::SetFrameStepClock(PVMFMediaClock* aClock)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "PvmfSyncUtil::SetClockAndTimebase: SetFrameStepClock=0x%x", aClock));
@@ -127,7 +127,7 @@ OSCL_EXPORT_REF PvmfSyncStatus PvmfSyncUtil::SyncMediaData(PVMFTimestamp aDataTi
     // Get current playback clock time
     uint32 currentTime = 0;
     bool overflow = false;
-    iClock->GetCurrentTime32(currentTime, overflow, OSCLCLOCK_MSEC);
+    iClock->GetCurrentTime32(currentTime, overflow, PVMF_MEDIA_CLOCK_MSEC);
 
     // Check if in sync
     if (currentTime > (uint32)iLateMargin)

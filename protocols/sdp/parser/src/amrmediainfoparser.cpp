@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,38 +15,18 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*																			                                    */
-/*	=====================================================================	  */
-/*	File: amrMediaInfoParser.cpp											                      */
-/*	Description:															                              */
-/*																			                                    */
-/*																			                                    */
-/*	Rev:																	                                  */
-/*	Created: 05/24/01														                            */
-/*	=====================================================================	  */
-/*																			                                    */
-/*	Revision History:														                            */
-/*																			                                    */
-/*	Rev:																	                                  */
-/*	Date:																	                                  */
-/*	Description:															                              */
-/*																			                                    */
-/* //////////////////////////////////////////////////////////////////////// */
-
 #include "amr_media_info_parser.h"
 #include "oscl_string_utils.h"
 #include "oscl_string_containers.h"
 
-/* ======================================================================== */
-/*	Function : parsePayload(char *buff, mediaInfo* amrA,int index)			    */
-/*	Date     : 05/24/2001													                          */
-/*	Purpose  : Parses AMR text and fills out the amr media structure		    */
-/*	In/out   :																                              */
-/*	Return   :																                              */
-/*	Modified :																                              */
-/* ======================================================================== */
 SDP_ERROR_CODE
-SDPAMRMediaInfoParser::parseMediaInfo(const char *buff, const int index, SDPInfo *sdp, payloadVector payload_vec, bool isSipSdp, int alt_id, bool alt_def_id)
+SDPAMRMediaInfoParser::parseMediaInfo(const char *buff,
+                                      const int index,
+                                      SDPInfo *sdp,
+                                      payloadVector payload_vec,
+                                      bool isSipSdp,
+                                      int alt_id,
+                                      bool alt_def_id)
 {
 
     const char *current_start = buff; //Pointer to the beginning of the media text
@@ -236,6 +216,7 @@ SDPAMRMediaInfoParser::parseMediaInfo(const char *buff, const int index, SDPInfo
                                 }
                                 if (!oscl_strncmp(temp, "robust-sorting", oscl_strlen("robust-sorting")))
                                 {
+
 
                                     //We need to make sure that we do not read beyond valid memory
                                     if ((line_end_ptr - temp) >= (int)oscl_strlen("robust-sorting=0"))

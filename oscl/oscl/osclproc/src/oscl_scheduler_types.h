@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,10 +41,6 @@
 #include "osclconfig_proc.h"
 #endif
 
-#ifndef OSCL_EXECPANIC_H_INCLUDED
-#include "oscl_execpanic.h"
-#endif
-
 
 //Non-Symbian
 
@@ -56,26 +52,12 @@
 #include "oscl_heapbase.h"
 #endif
 
-/*
-** OsclExecBase is the base class for OsclActiveObject.
-** On non-symbian, PVActiveBase implements the AO, so
-** nothing is really needed here.
-*/
-typedef OsclHeapBase OsclActiveObj;
-
-/*
-** OsclTimerBase is the base class for OsclTimerObject.
-** On non-symbian, PVActiveBase implements the AO, so
-** nothing is really needed here.
-*/
-typedef OsclHeapBase OsclTimerBase;
-
 
 /** OsclActiveSchedulerBase is the base for OsclExecScheduler.
   The non-Symbian OsclActiveSchedulerBase class is functionally similar to
   a subset of Symbian CActiveScheduler class.
 */
-class OsclExecSchedulerBase : public OsclHeapBase
+class OsclExecSchedulerBase : public _OsclHeapBase
 {
     private:
         virtual void Error(int32 anError) const;

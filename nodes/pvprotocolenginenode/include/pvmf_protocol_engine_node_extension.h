@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,12 @@
 #endif
 #ifndef OSCL_STRING_CONSTAINERS_H_INCLUDED
 #include "oscl_string_containers.h"
+#endif
+#ifndef PVMF_EVENT_HANDLING_H_INCLUDED
+#include "pvmf_event_handling.h"
+#endif
+#ifndef PVMF_PORT_INTERFACE_H_INCLUDED
+#include "pvmf_port_interface.h"
 #endif
 
 // default number of redirect trials
@@ -89,7 +95,7 @@ class PVMFProtocolEngineNodeExtensionInterface : public PVInterface
         virtual PVMFStatus GetHTTPHeader(uint8*& aHeader, uint32& aHeaderLen) = 0;
 
         /**
-         * Retrieves the file size. The file size is retrived from http header
+         * Retrieves the file size. The file size is retrieved from http header
          * But server might not announce the file size info. In this case, file size
          * is not available, and set to zero.
          * @param aFileSize returned download file size.
@@ -100,7 +106,7 @@ class PVMFProtocolEngineNodeExtensionInterface : public PVInterface
          * Retrieves the host name and port number for socket node port request
          * set up by download manager node
          *
-         * @param aPortConfig string of IP/DNS address + port number, like "TCP/remote_address=pvs.pv.com;remote_port=554"
+         * @param aPortConfig string of IP/DNS address + port number, like "TCP/remote_address=pvserveroha.pv.com;remote_port=554"
          * @return true if config info is provided, else false.
          * Note that this extension interface must be called AFTER data source
          * initialization interface (url is provided) gets called, otherwise it would fail
@@ -248,7 +254,7 @@ class PVMFProtocolEngineNodeMSHTTPStreamingExtensionInterface : public PVInterfa
     public:
 
         /**
-         * Retrieves the ASF header. The ASF header can be retrived in fragments
+         * Retrieves the ASF header. The ASF header can be retrieved in fragments
          *
          * @param aHeader a vector of fragments
          * @param aHeaderLen length of header data.
@@ -269,7 +275,7 @@ class PVMFProtocolEngineNodeMSHTTPStreamingExtensionInterface : public PVInterfa
          * Retrieves the host name and port number for socket node port request
          * set up by streaming manager node
          *
-         * @param aPortConfig string of IP/DNS address + port number, like "TCP/remote_address=pvs.pv.com;remote_port=554"
+         * @param aPortConfig string of IP/DNS address + port number, like "TCP/remote_address=pvserveroha.pv.com;remote_port=554"
          * @return true if config info is provided, else false.
          * Note that this extension interface must be called AFTER data source
          * initialization interface (url is provided) gets called, otherwise it would fail
@@ -280,7 +286,7 @@ class PVMFProtocolEngineNodeMSHTTPStreamingExtensionInterface : public PVInterfa
          * Retrieves the host name and port number for socket node port request, based on logging URL
          * set up by streaming manager node
          *
-         * @param aPortConfig string of IP/DNS address + port number, like "TCP/remote_address=pvs.pv.com;remote_port=554"
+         * @param aPortConfig string of IP/DNS address + port number, like "TCP/remote_address=pvserveroha.pv.com;remote_port=554"
          * @return true if config info is provided, else false.
          * Note that this extension interface must be called AFTER data source
          * initialization interface (url is provided) gets called, otherwise it would fail
@@ -422,6 +428,19 @@ class PVMFProtocolEngineNodeMSHTTPStreamingExtensionInterface : public PVInterfa
          * @param aAccelDuration, specified accel duration
          */
         virtual void SetAccelDuration(const uint32 aAccelDuration) = 0;
+
+        /**
+         * Set number of buffers to be allocated for media data pool
+         * @param aVal, the number calculated by SM node
+         * @return void
+         */
+        virtual void SetNumBuffersInMediaDataPoolSMCalc(uint32 aVal) = 0;
+
+        /**
+         * Set the max http stremaing size.
+         * @param aMaxHttpStreamingSize
+         */
+        virtual void SetMaxHttpStreamingSize(const uint32 aMaxHttpStreamingSize) = 0;
 
 };
 

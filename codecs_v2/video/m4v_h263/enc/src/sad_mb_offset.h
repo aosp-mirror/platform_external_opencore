@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,13 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
+/*********************************************************************************/
 /*  Filename: sad_mb_offset.h														*/
 /*  Description: Implementation for in-line functions used in dct.cpp			*/
 /*  Modified:																	*/
 /*********************************************************************************/
 
-#if !defined(PV_ARM_GCC) && defined(__arm__) /* ARM GNU COMPILER  */
+#if !defined(PV_ARM_GCC_V4) && !defined(PV_ARM_GCC_V5) /* ARM GNU COMPILER  */
 
 #if (NUMBER==3)
 __inline int32 sad_mb_offset3(UChar *ref, UChar *blk, Int lx, Int dmin)
@@ -216,7 +217,7 @@ LOOP_SAD1:
     return ((uint32)x10 >> 16);
 }
 
-#elif defined(PV_ARM_GCC) && defined(__arm__) /* ARM GNU COMPILER  */
+#elif ( defined(PV_ARM_GCC_V5) || defined(PV_ARM_GCC_V4) ) /* ARM GNU COMPILER  */
 
 #if (NUMBER==3)
 __inline int32 sad_mb_offset3(UChar *ref, UChar *blk, Int lx, Int dmin)

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,14 @@
 #define PV_OMXDEFS_H_INCLUDED
 
 /** Maximum number of base_component component instances */
-#define MAX_SUPPORTED_COMPONENTS 10 		// e.g. 10 = PV -MP4, PV-H263, PV-AVC, PV-WMV, PV-AAC, PV-AMR, PV-MP3, ...
-#define MAX_INSTANTIATED_COMPONENTS 32
+//#define MAX_SUPPORTED_COMPONENTS 10 		// e.g. 10 = PV -MP4, PV-H263, PV-AVC, PV-WMV, PV-AAC, PV-AMR, PV-MP3, ...
+#define MAX_SUPPORTED_COMPONENTS 15 		// e.g. 10 = PV -MP4, PV-H263, PV-AVC, PV-WMV, PV-AAC, PV-AMR, PV-MP3, ...
+#define MAX_INSTANTIATED_COMPONENTS 7
+
+//#define INSERT_NAL_START_CODE
+// while there is no documented number of max NALs per frame, this should be more than enough
+// this used to keep track of the NAL sizes in full-frame, multiple NAL output buffers
+#define MAX_NAL_PER_FRAME 100
 
 // maximum length of component names
 #define PV_OMX_MAX_COMPONENT_NAME_LENGTH 128
@@ -35,11 +41,6 @@
 // 1 - Multithreaded, 0 - AO
 #define PROXY_INTERFACE 1
 
-//Enable/disable HW codec
-#ifndef HARDWARE_OMX
-#define HARDWARE_OMX 0
-#endif
-
 // The following is needed for dll linking of APIs
 #define __OMX_EXPORTS
 
@@ -49,7 +50,7 @@
 /** Defines the major version of the core */
 #define SPECVERSIONMAJOR  1
 /** Defines the minor version of the core */
-#define SPECVERSIONMINOR  1
+#define SPECVERSIONMINOR  0
 /** Defines the revision of the core */
 #define SPECREVISION      0
 /** Defines the step version of the core */

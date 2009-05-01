@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,6 +60,7 @@ static const OMX_S32 WBIETFFrameSize[16] =
     , 1
     , 1
     , 1
+    , 1
     , 1		// WBAMR Frame No Data
     , 1		// WBAMR Frame No Data
 };
@@ -85,12 +86,30 @@ static const OMX_S32 IETFFrameSize[16] =
     , 1		// AMR Frame No Data
 };
 
-
+static const OMX_S32 IF2FrameSize[16] =
+{
+    13		// AMR 4.75 Kbps
+    , 14		// AMR 5.15 Kbps
+    , 16		// AMR 5.90 Kbps
+    , 18		// AMR 6.70 Kbps
+    , 19		// AMR 7.40 Kbps
+    , 21		// AMR 7.95 Kbps
+    , 26		// AMR 10.2 Kbps
+    , 31		// AMR 12.2 Kbps
+    , 6		// AMR Frame SID
+    , 6		// AMR Frame GSM EFR SID
+    , 6		// AMR Frame TDMA EFR SID
+    , 6		// AMR Frame PDC EFR SID
+    , 1		// future use; 0 length but set to 1 to skip the frame type byte
+    , 1		// future use; 0 length but set to 1 to skip the frame type byte
+    , 1		// future use; 0 length but set to 1 to skip the frame type byte
+    , 1		// AMR Frame No Data
+};
 
 OmxAmrDecoder::OmxAmrDecoder()
 {
     iOmxInputFormat = PV_AMR_ETS;
-    iBytesProcessed = 0;
+    iAMRFramesinTOC = 0;
     iAmrInitFlag = 0;
     iNarrowBandFlag = OMX_TRUE;
 
@@ -99,6 +118,10 @@ OmxAmrDecoder::OmxAmrDecoder()
 
     iCodecExternals = NULL;
     iAudioAmrDecoder = NULL;
+    iTocTablePtr = NULL;
+    /* Initialize decoder homing flags */
+    iDecHomingFlag = 0;
+    iDecHomingFlagOld = 1;
 }
 
 /* Decoder Initialization function */
@@ -226,7 +249,10 @@ void OmxAmrDecoder::ResetDecoder()
     {
         iAudioAmrDecoder->ResetDecoderL();
     }
+    iAMRFramesinTOC = 0;
 }
+
+
 /* Find the start point & size of TOC table in case of IETF_Combined format */
 void OmxAmrDecoder::GetStartPointsForIETFCombinedMode
 (OMX_U8* aPtrIn, OMX_U32 aLength, OMX_U8* &aTocPtr, OMX_S32* aNumOfBytes)
@@ -252,9 +278,6 @@ OMX_BOOL OmxAmrDecoder::AmrDecodeFrame(OMX_S16* aOutputBuffer,
                                        OMX_U32* aInBufSize, OMX_S32* aIsFirstBuffer,
                                        OMX_BOOL* aResizeFlag)
 {
-    /* Initialize decoder homing flags */
-    static OMX_S16 DecHomingFlag = 0;        /* Decoder currently not homed  */
-    static OMX_S16 DecHomingFlagOld = 1;    /* Decoder was previously homed */
     OMX_BOOL Status = OMX_TRUE;
 
     *aResizeFlag = OMX_FALSE;
@@ -264,7 +287,6 @@ OMX_BOOL OmxAmrDecoder::AmrDecodeFrame(OMX_S16* aOutputBuffer,
 
     /* 3GPP Frame Type Buffer */
     Frame_Type_3GPP FrameType3gpp;
-    OMX_U8* pTocPtr;
 
     /* Takes care of extra bytes above the decoded ones
      * e.g. toc length for ietf_combined, frame header length &
@@ -274,7 +296,7 @@ OMX_BOOL OmxAmrDecoder::AmrDecodeFrame(OMX_S16* aOutputBuffer,
 
     /* Reset speech_bits buffer pointer */
     OMX_U8* pSpeechBits = *aInBuffer;
-
+    OMX_U8 *pTocPtr;
     //ETS mode requires a 16-bit pointer
     OMX_S16* pEtsSpeechBits = (OMX_S16*) * aInBuffer;
 
@@ -283,23 +305,24 @@ OMX_BOOL OmxAmrDecoder::AmrDecodeFrame(OMX_S16* aOutputBuffer,
     {
         if ((PV_AMR_IETF_COMBINED == iOmxInputFormat) || (PV_AMRWB_IETF_PAYLOAD == iOmxInputFormat))
         {
-            if (0 == iBytesProcessed)
+            if (0 == iAMRFramesinTOC)
             {
                 pTocPtr = NULL;
                 GetStartPointsForIETFCombinedMode(pSpeechBits, *aInBufSize,
-                                                  pTocPtr, &iBytesProcessed);
-                pSpeechBits += iBytesProcessed;
-                FrameBytesProcessed = iBytesProcessed;
-                oscl_memcpy(iTocTable, pTocPtr, iBytesProcessed);
-                iBytesProcessed--;
+                                                  pTocPtr, &iAMRFramesinTOC);
+                pSpeechBits += iAMRFramesinTOC;
+                FrameBytesProcessed = iAMRFramesinTOC;
+
+                iTocTablePtr = pTocPtr;
+                iAMRFramesinTOC--; // ctr of amr frames
             }
             else
             {
-                iBytesProcessed--;
+                iAMRFramesinTOC--;
                 FrameBytesProcessed = 0;
             }
 
-            FrameType3gpp = GetFrameTypeLength(iTocTable, &FrameLength);
+            FrameType3gpp = GetFrameTypeLength(iTocTablePtr, &FrameLength);
         }
         else //iOmxInputFormat == PV_AMR_IETF or (PV_AMRWB_IETF == iOmxInputFormat)
         {
@@ -316,65 +339,89 @@ OMX_BOOL OmxAmrDecoder::AmrDecodeFrame(OMX_S16* aOutputBuffer,
             FrameType3gpp = GetFrameTypeLength(pSpeechBits, &FrameLength);
         }
 
-        /* Set up pointer to the start of frame to be decoded */
-
-        iCodecExternals->frame_type = (uint32)FrameType3gpp;
-        iCodecExternals->mode = (uint32)FrameType3gpp;
-        iCodecExternals->pInputBuffer = (uint8*) pSpeechBits;
-        iCodecExternals->pOutputBuffer = (int16*) aOutputBuffer;
-
-        ByteOffset = iAudioAmrDecoder->ExecuteL(iCodecExternals);
-
-        if (PV_GSMAMR_DECODE_STATUS_ERR == ByteOffset)
-        {
-            Status = OMX_FALSE;
-            printf("DEECODER RETURNED FALSE \n");
-        }
-
+        // check if the frame size exceeds buffer boundaries
         if ((FrameLength + FrameBytesProcessed) <= (OMX_S32) *aInBufSize)
         {
-            *aInBufSize -= (FrameLength + FrameBytesProcessed);
-            *aInBuffer += (FrameLength + FrameBytesProcessed);
-            *aOutputLength = iOutputFrameSize;
+            /* Set up pointer to the start of frame to be decoded */
+            iCodecExternals->mode = (uint32)FrameType3gpp;
+            iCodecExternals->pInputBuffer = (uint8*) pSpeechBits;
+            iCodecExternals->pOutputBuffer = (int16*) aOutputBuffer;
+
+            ByteOffset = iAudioAmrDecoder->ExecuteL(iCodecExternals);
+
+            if (PV_GSMAMR_DECODE_STATUS_ERR == ByteOffset)
+            {
+                *aInBufSize = 0;
+                *aOutputLength = 0;
+                iAMRFramesinTOC = 0; // make sure the TOC table (if necessary) gets initialized for the next time
+                Status = OMX_FALSE;
+            }
+            else
+            {
+                *aInBufSize -= (FrameLength + FrameBytesProcessed);
+                *aInBuffer += (FrameLength + FrameBytesProcessed);
+                *aOutputLength = iOutputFrameSize;
+                // in case of TOC, make sure that
+                // a) if no more data in the buffer and TOC indicates more data, reset TOC
+                // b) if TOC indicates no more data, and there is more data in the buffer, reset the buffer
+                if ((PV_AMR_IETF_COMBINED == iOmxInputFormat) || (PV_AMRWB_IETF_PAYLOAD == iOmxInputFormat))
+                {
+                    if ((0 == iAMRFramesinTOC) || (0 == *aInBufSize))
+                    {
+                        *aInBufSize = 0;
+                        iAMRFramesinTOC = 0;
+                    }
+                }
+
+            }
         }
         else
         {
             *aInBufSize = 0;
             *aOutputLength = 0;
+            iAMRFramesinTOC = 0; // make sure the TOC table (if necessary) gets initialized for the next time
+            Status = OMX_FALSE; // treat buffer overrun as an error
         }
 
     }
     else if (PV_AMR_IF2 == iOmxInputFormat)
     {
         FrameType3gpp = (Frame_Type_3GPP)(pSpeechBits[0] & 0xF);
+        FrameLength = IF2FrameSize[FrameType3gpp];
 
-        /* Set up pointer to the start of frame to be decoded */
-        iCodecExternals->frame_type = (uint32)FrameType3gpp;
-        iCodecExternals->mode = (uint32)FrameType3gpp;
-        iCodecExternals->pInputBuffer = (uint8*) pSpeechBits;
-        iCodecExternals->pOutputBuffer = (int16*) aOutputBuffer;
-
-        ByteOffset = iAudioAmrDecoder->ExecuteL(iCodecExternals);
-
-        if (PV_GSMAMR_DECODE_STATUS_ERR == ByteOffset)
+        // check if the frame size exceeds buffer boundaries
+        if ((FrameLength + FrameBytesProcessed) <= (OMX_S32) *aInBufSize)
         {
-            Status = OMX_FALSE;
-        }
+            /* Set up pointer to the start of frame to be decoded */
+            iCodecExternals->mode = (uint32)FrameType3gpp;
+            iCodecExternals->pInputBuffer = (uint8*) pSpeechBits;
+            iCodecExternals->pOutputBuffer = (int16*) aOutputBuffer;
 
-        //Frame type is a part of ByteOffset.
-        if (ByteOffset <= (OMX_S32) *aInBufSize)
-        {
-            *aInBufSize -= ByteOffset;
-            *aInBuffer += ByteOffset;
-            *aOutputLength = iOutputFrameSize;
+            ByteOffset = iAudioAmrDecoder->ExecuteL(iCodecExternals);
+
+            if (PV_GSMAMR_DECODE_STATUS_ERR == ByteOffset)
+            {
+                Status = OMX_FALSE;
+            }
+
+            if (ByteOffset <= (OMX_S32)*aInBufSize)
+            {
+                *aInBufSize -= ByteOffset;
+                *aInBuffer += ByteOffset;
+                *aOutputLength = iOutputFrameSize;
+            }
+            else
+            {
+                *aInBufSize = 0;
+                *aOutputLength = 0;
+                Status = OMX_FALSE;
+            }
         }
-        /* EOS has arrived & the data is less than a full frame,
-         * discard that data so that EOS callback can be send.
-         * This is done to pass BufferFlagTest conformance */
         else
         {
             *aInBufSize = 0;
             *aOutputLength = 0;
+            Status = OMX_FALSE; // treat buffer overrun as an error
         }
     }
     else if (PV_AMR_ETS == iOmxInputFormat)
@@ -425,16 +472,16 @@ OMX_BOOL OmxAmrDecoder::AmrDecodeFrame(OMX_S16* aOutputBuffer,
         }
 
         /* if homed: check if this frame is another homing frame */
-        if (1 == DecHomingFlagOld)
+        if (1 == iDecHomingFlagOld)
         {
             /* only check until end of first subframe */
-            DecHomingFlag = decoder_homing_frame_test_first(
-                                (OMX_S16*) & pEtsSpeechBits[1],
-                                (enum Mode) FrameType3gpp);
+            iDecHomingFlag = decoder_homing_frame_test_first(
+                                 (OMX_S16*) & pEtsSpeechBits[1],
+                                 (enum Mode) FrameType3gpp);
         }
 
         /* produce encoder homing frame if homed & input=decoder homing frame */
-        if ((0 != DecHomingFlag) && (0 != DecHomingFlagOld))
+        if ((0 != iDecHomingFlag) && (0 != iDecHomingFlagOld))
         {
             for (ii = 0; ii < L_FRAME; ii++)
             {
@@ -444,7 +491,6 @@ OMX_BOOL OmxAmrDecoder::AmrDecodeFrame(OMX_S16* aOutputBuffer,
         else
         {
             /* Set up pointer to the start of frame to be decoded */
-            iCodecExternals->frame_type = (uint32)FrameType3gpp;
             iCodecExternals->mode = (uint32)FrameType3gpp;
             iCodecExternals->pInputBuffer = (uint8*) pEtsSpeechBits;
             iCodecExternals->pOutputBuffer = (int16*) aOutputBuffer;
@@ -459,20 +505,20 @@ OMX_BOOL OmxAmrDecoder::AmrDecodeFrame(OMX_S16* aOutputBuffer,
         }
 
         /* if not homed: check whether current frame is a homing frame */
-        if (0 == DecHomingFlagOld)
+        if (0 == iDecHomingFlagOld)
         {
             /* check whole frame */
-            DecHomingFlag = decoder_homing_frame_test(
-                                (OMX_S16*) & pEtsSpeechBits[1],
-                                (enum Mode) FrameType3gpp);
+            iDecHomingFlag = decoder_homing_frame_test(
+                                 (OMX_S16*) & pEtsSpeechBits[1],
+                                 (enum Mode) FrameType3gpp);
         }
         /* reset decoder if current frame is a homing frame */
-        if (0 != DecHomingFlag)
+        if (0 != iDecHomingFlag)
         {
             iAudioAmrDecoder->ResetDecoderL();
         }
 
-        DecHomingFlagOld = DecHomingFlag;
+        iDecHomingFlagOld = iDecHomingFlag;
 
         //Input buffer requirement per frame is constant at ETS_INPUT_FRAME_SIZE
         *aInBufSize -= ETS_INPUT_FRAME_SIZE;
@@ -501,7 +547,6 @@ OMX_BOOL OmxAmrDecoder::AmrDecodeSilenceFrame(OMX_S16* aOutputBuffer,
     OMX_U8 FrameType = 15; // silence frame
 
     iCodecExternals->mode = (uint32) FrameType;
-    iCodecExternals->frame_type = (uint32) FrameType;
     iCodecExternals->pInputBuffer = (uint8*) & FrameType;
     iCodecExternals->pOutputBuffer = (int16*) aOutputBuffer;
 
@@ -521,10 +566,10 @@ OMX_BOOL OmxAmrDecoder::AmrDecodeSilenceFrame(OMX_S16* aOutputBuffer,
 
 
 /* Get Frame type for format == PVMF_AMR_IETF or PVMF_AMR_IETF_COMBINED and the WB counterparts*/
-Frame_Type_3GPP OmxAmrDecoder::GetFrameTypeLength(OMX_U8* aFrame, OMX_S32* aFrameLength)
+Frame_Type_3GPP OmxAmrDecoder::GetFrameTypeLength(OMX_U8* &aFrame, OMX_S32* aFrameLength)
 {
     Frame_Type_3GPP  FrameType3gpp;
-    OMX_S32 ii;
+
 
     FrameType3gpp = (Frame_Type_3GPP)((aFrame[0] >> 3) & 0x0F);
 
@@ -539,18 +584,18 @@ Frame_Type_3GPP OmxAmrDecoder::GetFrameTypeLength(OMX_U8* aFrame, OMX_S32* aFram
     }
 
 
+
     if (PV_AMR_IETF_COMBINED == iOmxInputFormat || PV_AMRWB_IETF_PAYLOAD == iOmxInputFormat)
     {
+        // move ptr for TOC
         aFrame++;
-        (*aFrameLength)--;
+        (*aFrameLength)--; // account for the 1 byte of length being not in the frame, but in the TOC
     }
-    else
+    else if ((PV_AMR_IETF == iOmxInputFormat) || (PV_AMRWB_IETF == iOmxInputFormat))
     {
-        for (ii = 0; ii < *aFrameLength; ii++)
-        {
-            aFrame[ii] = aFrame[ii+1];
-        }
+        aFrame++; // move ptr to data to skip the frame type/size field
     }
+
 
     return (FrameType3gpp);
 }

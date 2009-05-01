@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*********************************************************************************/
 /*
     This PVA_FF_DataReferenceAtom Class contains a table of data references which declare
     the location of the media data used within the MPEG-4 presentation.
@@ -31,7 +30,6 @@
 
 typedef Oscl_Vector<PVA_FF_DataEntryAtom*, OsclMemAllocator> PVA_FF_DataEntryAtomVecType;
 
-//extern pvostream& operator<<(pvostream& fp, PVA_FF_DataEntryUrlAtom &a);
 // Constructor
 PVA_FF_DataReferenceAtom::PVA_FF_DataReferenceAtom()
         : PVA_FF_FullAtom(DATA_REFERENCE_ATOM, (uint8)0, (uint32)0)
@@ -129,5 +127,3 @@ PVA_FF_DataReferenceAtom::recomputeSize()
         _pparent->recomputeSize();
     }
 }
-
-

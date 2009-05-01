@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -526,30 +526,6 @@ void MotionEstimation(VideoEncData *video)
     /*********************************/
 #endif
 
-#if 0
-    fstat = fopen("sad_stat.txt", "a");
-    fprintf(fstat, "frame%d = [", frame_num++);
-    mbnum = 0;
-
-    for (i = 0; i < currVol->nMBPerCol; i++)
-    {
-        for (j = 0; j < currVol->nMBPerRow; j++)
-        {
-            if (video->headerInfo.Mode[mbnum] == MODE_INTRA)
-            {
-                fprintf(fstat, "-10 ");
-            }
-            else
-            {
-                fprintf(fstat, "%d ", video->mot[mbnum][0].sad);
-            }
-            mbnum++;
-        }
-        fprintf(fstat, "\n");
-    }
-    fprintf(fstat, "];\n");
-    fclose(fstat);
-#endif
     return ;
 }
 
@@ -697,7 +673,8 @@ void CalcThreshold(double pf, double exp_lamda[], Int nrmlz_th[])
 
 void	HTFMPrepareCurMB(VideoEncData *video, HTFM_Stat *htfm_stat, UChar *cur)
 {
-    ULong *htfmMB = (ULong*)(video->currYMB);
+    void* tmp = (void*)(video->currYMB);
+    ULong *htfmMB = (ULong*)tmp;
     UChar *ptr, byte;
     Int *offset;
     Int i;
@@ -761,7 +738,8 @@ void	HTFMPrepareCurMB(VideoEncData *video, HTFM_Stat *htfm_stat, UChar *cur)
 
 void	PrepareCurMB(VideoEncData *video, UChar *cur)
 {
-    ULong *currYMB = (ULong*)(video->currYMB);
+    void* tmp = (void*)(video->currYMB);
+    ULong *currYMB = (ULong*)tmp;
     Int i;
     Int width = video->currVop->width;
 

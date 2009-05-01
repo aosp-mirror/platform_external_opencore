@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,55 +36,6 @@ terms listed above has been obtained from the copyright holder.
            Levinson_reset
            Levinson_exit
            Levinson
-
-     Date: 06/02/2000
-
-------------------------------------------------------------------------------
- REVISION HISTORY
-
- Description: Updated template used to PV coding template. First attempt at
-          optimizing C code.
-
- Description: Updated file per comments gathered from Phase 2/3 review.
-
- Description: Synchronized file with UMTS version 3.2.0. Updated coding
-              template. Removed unnecessary include files.
-
- Description: Replaced basic_op.h and oper_32b.h with the header files of
-              the math functions used in the file.
-
- Description: Defined one local variable per line.
-
- Description: Added pOverflow as a variable passed into levinson as per
-              changed needed for EPOC.
-
- Description: Removed nested function calls by adding temp variables.
-
- Description: Fixed a bug where the returned value (32bit) was being stored in
-              a 16 bit temp variable. This was changed, and the value is now
-              stored in temp32_3.
-
- Description:  For levinson()
-              1. Eliminated unused include files.
-              2. Replaced array addressing by pointers
-              3. Eliminated math operations that unnecessary checked for
-                 saturation, by evaluating the operands
-              4. Combined shift operations to eliminate calls to mult() and
-                 shr(), extrac_h(), extract_l()
-              5. Eliminated if-else statements for sign extension when
-                 right-shifting
-
- Description:  1. Replaced OSCL mem type functions and eliminated include
-                  files that now are chosen by OSCL definitions
-               2. Modified "int" definition by Word16
-
- Description:  Replaced "int" and/or "char" with OSCL defined types.
-
-
- Description: Changed round function name to pv_round to avoid conflict with
-              round function in C standard library.
-
- Description:
 
 ------------------------------------------------------------------------------
  MODULE DESCRIPTION

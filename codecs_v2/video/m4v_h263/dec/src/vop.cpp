@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -478,10 +478,6 @@ decode_vol:
         if (currVol->quantType)
         {
 #ifdef PV_SUPPORT_MAIN_PROFILE
-#if 0
-            video->vlcDequantIntraBlock = &VlcDequantMpegIntraBlock ;
-            video->vlcDequantInterBlock = &VlcDequantMpegInterBlock ;
-#endif
             /* load quantization matrices.   5/22/2000 */
             /* load_intra_quant_mat (1 bit) */
             qmat = currVol->iqmat;
@@ -827,12 +823,6 @@ PV_STATUS DecodeVOPHeader(VideoDecData *video, Vop *currVop, Bool use_ext_timest
         {
             return status;
         }
-#if 0  // turn this ON if you want to use internal timestamps for GOVHeader frames */
-        if (!use_ext_timestamp)
-        {
-            currVol->moduloTimeBase = tmpvar * 1000;  /* millisecond MTB  01/31/2002 */
-        }
-#endif
 //		use_ext_timestamp = TRUE;   /*  02/08/2002 */
         /* We should have a VOP header following the GOV header.  03/15/2001 */
         BitstreamShowBits32HC(stream, &tmpvar);

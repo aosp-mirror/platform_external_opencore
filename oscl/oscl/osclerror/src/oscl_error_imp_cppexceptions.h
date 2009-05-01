@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@
 
 
 /** \file oscl_error_imp_cppexceptions.h
-    \brief Implementation File for Leave and Panic using C++ exceptions.
+    \brief Implementation File for Leave using C++ exceptions.
 */
 
 #ifndef OSCL_ERROR_IMP_CPPEXCEPTIONS_H_INCLUDED
@@ -39,27 +39,21 @@
 #include "oscl_error_trapcleanup.h"
 #endif
 
-//Implementation file for Leave and Panic using C++ exceptions.
+//Implementation file for Leave using C++ exceptions.
 
-//This is a full implementation of Leave and Panic.
+//This is a full implementation of Leave.
 
 class internalLeave
 {
     public:
         int a;
 };
-class internalPanic
-{
-    public:
-        int b;
-};
 
-//Leave and Panic throw C++ exceptions.
+//Leave throws C++ exceptions.
 #define PVError_DoLeave() internalLeave __ilv;__ilv.a=0;throw(__ilv)
-#define PVError_DoPanic() internalPanic __ipn;__ipn.b=0;throw(__ipn)
 
 
-//_PV_TRAP catches Leaves but allows panics to bubble.
+//_PV_TRAP catches Leaves.
 //_r is the leave code, _s are statements to execute
 #define _PV_TRAP(__r,__s)\
 	__r=OsclErrNone;\
@@ -69,12 +63,10 @@ class internalPanic
 		try{__s;}\
 		catch(internalLeave __lv)\
 		{__lv.a=__r=__tr->iLeave;}\
-		catch(internalPanic __pn)\
-		{__tr->UnTrap();throw(__pn);}\
 		__tr->UnTrap();}\
 	}
 
-//_PV_TRAP_NO_TLS catches Leaves but allows panics to bubble.
+//_PV_TRAP_NO_TLS catches Leaves.
 //_r is the leave code, _s are statements to execute
 #define _PV_TRAP_NO_TLS(__trapimp,__r,__s)\
 	__r=OsclErrNone;\
@@ -84,24 +76,6 @@ class internalPanic
 		try{__s;}\
 		catch(internalLeave __lv)\
 		{__lv.a=__r=__tr->iLeave;}\
-		catch(internalPanic __pn)\
-		{__tr->UnTrap();throw(__pn);}\
-		__tr->UnTrap();}\
-	}
-
-//_PV_TRAP_ALL catches Leaves and panics.
-//_r is leave code, _p is TPVErrorPanic, _s is statements to execute.
-#define _PV_TRAP_ALL(__r,__p,__s)\
-	__r=OsclErrNone;\
-	__p.iReason=OsclErrNone;\
-	{\
-		OsclErrorTrapImp* __tr=OsclErrorTrapImp::Trap();\
-		if(!__tr){__s;}else{\
-		try{__s;}\
-		catch(internalLeave __lv)\
-		{__lv.a=__r=__tr->iLeave;}\
-		catch(internalPanic __pn)\
-		{__pn.b=__p.iReason=__tr->iPanic.iReason;__p.iCategory.Set(__tr->iPanic.iCategory.Str());}\
 		__tr->UnTrap();}\
 	}
 

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -189,7 +189,8 @@ void highpass_50Hz_at_12k8(
         y1_lo = (int16)((L_tmp1 - (y1_hi << 16)) >> 1);
 
         /* coeff Q14 --> Q15 with saturation */
-        *(pt_sign++) = (int16)((L_tmp1 + 0x00004000) >> 15);
+        *(pt_sign++) = amr_wb_shl1_round(L_tmp1);
+
     }
 
 

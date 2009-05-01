@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,15 +27,13 @@ Permission to distribute, modify and use this file under the standard license
 terms listed above has been obtained from the copyright holder.
 ****************************************************************************************/
 /*
-
  Name: pvamrnbdecoder_api.h
-
-     Date: 05/09/2007
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
 
 
+ Who:                                       Date:
  Description:
 
 ------------------------------------------------------------------------------
@@ -47,14 +45,8 @@ terms listed above has been obtained from the copyright holder.
  with the library. The internal data structures within the library are
  purposely hidden.
 
- ---* Need description of the input buffering. *-------
-
- ---* Need an example of calling the library here *----
-
 ------------------------------------------------------------------------------
  REFERENCES
-
-  (Normally header files do not have a reference section)
 
 ------------------------------------------------------------------------------
 */

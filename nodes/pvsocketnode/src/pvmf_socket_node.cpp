@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@
 #include "oscl_rand.h"
 #include "oscl_time.h"
 #include "pvmf_socket_node_tunables.h"
-
+#include "oscl_bin_stream.h"
 // Use default DLL entry point for Symbian
 #include "oscl_dll.h"
 
@@ -42,9 +42,156 @@ PVMFSocketNodeMemPool::PVMFSocketNodeMemPool(uint32 aMemPoolNumBufs)
 {
     iMediaDataMemPool = OSCL_NEW(OsclMemPoolFixedChunkAllocator, (aMemPoolNumBufs, MEDIA_DATA_CLASS_SIZE));
     iInternalAlloc = NULL;
-#if SNODE_ENABLE_UDP_MULTI_PACKET
+    iSharedBufferAlloc = NULL;
+    iMediaMsgAllocator = NULL;
     iMediaFragGroupAlloc = NULL;
     iMediaFragGroupAllocMempool = NULL;
+}
+
+void PVMFSocketNodeMemPool::CreateAllocators(const OSCL_HeapString<OsclMemAllocator>& iMime, uint32 aSize, uint32 aExpectedNumberOfBlocksPerBuffer, uint32 aResizeSize, uint32 aMaxNumResizes)
+{
+    if (!iSharedBufferAlloc)
+    {
+        iSharedDataBufferInfo.Init(aSize, aExpectedNumberOfBlocksPerBuffer, aResizeSize, aMaxNumResizes);
+        const uint32 maxAllocatorNameLen = 255;
+        char allocatorName[maxAllocatorNameLen];
+        const uint32 strLenForMimeName  = maxAllocatorNameLen - oscl_strlen("InternalSocketBuffer");
+        oscl_strncpy(allocatorName, iMime.get_cstr(), strLenForMimeName);
+        allocatorName[strLenForMimeName] = '\0';
+        oscl_strcat(allocatorName, "InternalSocketBuffer");
+        CreateDefaultDataBufferAllocator(allocatorName);
+    }
+#if SNODE_ENABLE_UDP_MULTI_PACKET
+    CreateUDPMultipleRecvAllocator();
+#endif
+}
+
+OsclMemPoolResizableAllocator* PVMFSocketNodeMemPool::CreateResizableDataBufferAllocator(const char* allocatorName)
+{
+    OSCL_UNUSED_ARG(allocatorName);
+    if (iMediaMsgAllocator)
+    {
+        /*
+         * It may be possible that the allocator was binded to iInternalAlloc/iSharedBufferAlloc
+         * So destruct it.
+         * Deallocation of iInternalAlloc/iSharedBufferAlloc will be done as part of Reset/Destruction of node
+         */
+        OSCL_DELETE(iMediaMsgAllocator);
+        iMediaMsgAllocator = NULL;
+    }
+
+    OSCL_ASSERT(iSharedBufferAlloc == NULL);
+    if (iSharedBufferAlloc)
+        return NULL;
+
+
+    iSharedBufferAlloc = OSCL_NEW(OsclMemPoolResizableAllocator, (iSharedDataBufferInfo.iSize, (1 + iSharedDataBufferInfo.iMaxNumResizes),
+                                  iSharedDataBufferInfo.iExpectedNumberOfBlocksPerBuffer));
+    iSharedBufferAlloc->setMaxSzForNewMemPoolBuffer(iSharedDataBufferInfo.iResizeSize);
+    iMediaMsgAllocator = OSCL_NEW(PVMFResizableSimpleMediaMsgAlloc, (iSharedBufferAlloc));
+    return iSharedBufferAlloc;
+}
+
+void PVMFSocketNodeMemPool::CreateDefaultDataBufferAllocator(const char* allocatorName)
+{
+    OSCL_UNUSED_ARG(allocatorName);
+    if (iMediaMsgAllocator)
+    {
+        /*
+         * It may be possible that the allocator was binded to iInternalAlloc/iSharedBufferAlloc
+         * So destruct it.
+         * Deallocation of iInternalAlloc/iSharedBufferAlloc will be done as part of Reset/Destruction of node
+         */
+        OSCL_DELETE(iMediaMsgAllocator);
+        iMediaMsgAllocator = NULL;
+    }
+
+    OSCL_ASSERT(iInternalAlloc == NULL);
+    if (iInternalAlloc)
+        return;
+
+    iInternalAlloc = OSCL_NEW(OsclMemPoolResizableAllocator, (iSharedDataBufferInfo.iSize, (1 + iSharedDataBufferInfo.iMaxNumResizes),
+                              iSharedDataBufferInfo.iExpectedNumberOfBlocksPerBuffer));
+    iInternalAlloc->setMaxSzForNewMemPoolBuffer(iSharedDataBufferInfo.iResizeSize);
+    iMediaMsgAllocator = OSCL_NEW(PVMFResizableSimpleMediaMsgAlloc, (iInternalAlloc));
+}
+
+void PVMFSocketNodeMemPool::CreateUDPMultipleRecvAllocator()
+{
+#if SNODE_ENABLE_UDP_MULTI_PACKET
+    //Create the multiple-receive allocator
+    iMediaFragGroupAllocMempool
+    = OSCL_NEW(OsclMemPoolFixedChunkAllocator
+               , (SNODE_UDP_MULTI_FRAG_ALLOCATOR_MAX_MSGS)
+              );
+    iMediaFragGroupAlloc
+    = OSCL_NEW(PVMFMediaFragGroupCombinedAlloc<PVMFSocketNodeAllocator>
+               , (SNODE_UDP_MULTI_FRAG_ALLOCATOR_MAX_MSGS
+                  , SNODE_UDP_MULTI_FRAG_ALLOCATOR_MAX_FRAGS_PER_MSG
+                  , iMediaFragGroupAllocMempool)
+              );
+    iMediaFragGroupAlloc->create();
+#endif
+}
+
+uint32 PVMFSocketNodeMemPool::GetMaxSizeMediaMsgLen()
+{
+    OsclMemPoolResizableAllocator* resizableAllocator = NULL;
+
+    const uint32 wrappingOverhead = iMediaMsgAllocator->GetMediaMsgAllocationOverheadBytes();
+
+    if (iSharedBufferAlloc)
+    {
+        resizableAllocator = OSCL_STATIC_CAST(OsclMemPoolResizableAllocator*, iSharedBufferAlloc);
+    }
+    else if (iInternalAlloc)
+    {
+        resizableAllocator = OSCL_STATIC_CAST(OsclMemPoolResizableAllocator*, iInternalAlloc);
+    }
+
+    if (resizableAllocator)
+    {
+        return (resizableAllocator->getLargestContiguousFreeBlockSize() - wrappingOverhead);
+    }
+
+    return 0;
+}
+
+void PVMFSocketNodeMemPool::DestroyAllocators()
+{
+    if (iInternalAlloc != NULL)
+    {
+        iInternalAlloc->CancelFreeChunkAvailableCallback();
+        iInternalAlloc->removeRef();
+    }
+    if (iSharedBufferAlloc != NULL)
+    {
+        iSharedBufferAlloc->CancelFreeChunkAvailableCallback();
+        iSharedBufferAlloc->removeRef();
+    }
+    if (iMediaMsgAllocator)
+    {
+        OSCL_DELETE(iMediaMsgAllocator);
+        iMediaMsgAllocator = NULL;
+    }
+#if SNODE_ENABLE_UDP_MULTI_PACKET
+    DestroyUDPMultipleRecvAllocator();
+#endif
+}
+
+void PVMFSocketNodeMemPool::DestroyUDPMultipleRecvAllocator()
+{
+#if SNODE_ENABLE_UDP_MULTI_PACKET
+    if (iMediaFragGroupAlloc)
+    {
+        iMediaFragGroupAlloc->removeRef();
+        iMediaFragGroupAlloc = NULL;
+    }
+    if (iMediaFragGroupAllocMempool)
+    {
+        iMediaFragGroupAllocMempool->removeRef();
+        iMediaFragGroupAllocMempool = NULL;
+    }
 #endif
 }
 
@@ -87,91 +234,22 @@ void SocketNodeStats::Log(PVMFPortVector<PVMFSocketPort, PVMFSocketNodeAllocator
 // SocketPortConfig
 //////////////////////////////////////////////////
 
-void SocketPortConfig::DoSetSocketPortMemAllocator(PVLogger* aLogger, OsclSharedPtr<PVMFSharedSocketDataBufferAlloc> aAlloc)
+void SocketPortConfig::CreateAllocators(uint32 aSize, uint32 aExpectedNumberOfBlocksPerBuffer, uint32 aResizeSize, uint32 aMaxNumResizes)
 {
-    if (aAlloc.GetRep())
+    iMemPool->CreateAllocators(iMime, aSize, aExpectedNumberOfBlocksPerBuffer, aResizeSize, aMaxNumResizes);
+}
+
+void SocketPortConfig::CleanupMemPools(Oscl_DefAlloc& aAlloc)
+{
+    if (iMemPool)
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, aLogger, PVLOGMSG_INFO, (0, "SocketPortConfig::DoSetSocketPortMemAllocator() Using input mem allocator"));
-        /*
-         * Deletion of any previously created allocators is handled as part of
-         * reset / node delete. So just re-assign the shared ptr here.
-         */
-        if (iMemPool->iSocketAllocSharedPtr.GetRep() != NULL)
-        {
-            iMemPool->iSocketAllocSharedPtr.Unbind();
-        }
-        iMemPool->iSocketAllocSharedPtr = aAlloc;
-
-#if SNODE_ENABLE_UDP_MULTI_PACKET
-        //Create the multiple-receive allocator
-        iMemPool->iMediaFragGroupAllocMempool
-        = OSCL_NEW(OsclMemPoolFixedChunkAllocator
-                   , (SNODE_UDP_MULTI_FRAG_ALLOCATOR_MAX_MSGS)
-                  );
-        iMemPool->iMediaFragGroupAlloc
-        = OSCL_NEW(PVMFMediaFragGroupCombinedAlloc<PVMFSocketNodeAllocator>
-                   , (SNODE_UDP_MULTI_FRAG_ALLOCATOR_MAX_MSGS
-                      , SNODE_UDP_MULTI_FRAG_ALLOCATOR_MAX_FRAGS_PER_MSG
-                      , iMemPool->iMediaFragGroupAllocMempool)
-                  );
-        iMemPool->iMediaFragGroupAlloc->create();
-#endif
-    }
-    else
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, aLogger, PVLOGMSG_INFO, (0, "SocketPortConfig::DoSetSocketPortMemAllocator() no mem allocator. Create one"));
-
-        uint aligned_socket_alloc_size = oscl_mem_aligned_size(sizeof(PVMFSMSharedBufferAllocWithReSize));
-
-        uint aligned_refcnt_size = 	oscl_mem_aligned_size(sizeof(OsclRefCounterSA<PVMFSharedSocketDataBufferAllocCleanupSA>));
-
-        OsclMemAllocator my_alloc;
-        uint8 *my_ptr = (uint8*) my_alloc.ALLOCATE(aligned_refcnt_size + aligned_socket_alloc_size);
-        OsclRefCounter *my_refcnt = OSCL_PLACEMENT_NEW(my_ptr, OsclRefCounterSA<PVMFSharedSocketDataBufferAllocCleanupSA>(my_ptr));
-        my_ptr += aligned_refcnt_size;
-
-        // allow one resize for a maximum mempool size of TCP_BUFFER_SIZE*TCP_BUFFER_IN_MEMPOOL
-        iMemPool->iInternalAlloc = OSCL_NEW(PVMFSMSharedBufferAllocWithReSize, (
-                                                iContainer->iMaxTcpRecvBufferSize * (iContainer->iMaxTcpRecvBufferCount - 1), "TCPsocketBuffer",
-                                                1, iContainer->iMaxTcpRecvBufferSize));
-
-        PVMFSharedSocketDataBufferAlloc *alloc_ptr = OSCL_PLACEMENT_NEW(my_ptr, PVMFSharedSocketDataBufferAlloc(iMemPool->iInternalAlloc));
-
-        OsclSharedPtr<PVMFSharedSocketDataBufferAlloc> shared_alloc(alloc_ptr, my_refcnt);
-        iMemPool->iSocketAllocSharedPtr = shared_alloc;
+        iMemPool->DestroyAllocators();
+        iMemPool->~PVMFSocketNodeMemPool();
+        aAlloc.deallocate((OsclAny*)(iMemPool));
+        iMemPool = NULL;
     }
 }
 
-void SocketPortConfig::CleanupMemPools()
-{
-    if (iMemPool->iInternalAlloc != NULL)
-    {
-        iMemPool->iInternalAlloc->DecrementKeepAliveCount();
-        uint32 numOutStandingBuffers =
-            iMemPool->iInternalAlloc->getNumOutStandingBuffers();
-        if (numOutStandingBuffers == 0)
-        {
-            OSCL_DELETE((iMemPool->iInternalAlloc));
-            iMemPool->iInternalAlloc = NULL;
-        }
-    }
-#if SNODE_ENABLE_UDP_MULTI_PACKET
-    if (iMemPool->iMediaFragGroupAlloc)
-    {
-        iMemPool->iMediaFragGroupAlloc->removeRef();
-        iMemPool->iMediaFragGroupAlloc = NULL;
-    }
-    if (iMemPool->iMediaFragGroupAllocMempool)
-    {
-        iMemPool->iMediaFragGroupAllocMempool->removeRef();
-        iMemPool->iMediaFragGroupAllocMempool = NULL;
-    }
-#endif
-    PVMFSocketNodeAllocator alloc;
-    iMemPool->~PVMFSocketNodeMemPool();
-    alloc.deallocate((OsclAny*)(iMemPool));
-    iMemPool = NULL;
-}
 //////////////////////////////////////////////////
 // End SocketPortConfig
 //////////////////////////////////////////////////
@@ -190,19 +268,20 @@ OSCL_EXPORT_REF PVMFSocketNode::PVMFSocketNode(int32 aPriority)
         , TIMEOUT_SHUTDOWN(10000)
         , UDP_PORT_RANGE(2000)
         , MAX_UDP_PACKET_SIZE(MAX_SOCKET_BUFFER_SIZE)
-
+        , MIN_UDP_PACKET_SIZE(MIN_SOCKET_BUFFER_SIZE)
 {
     iLogger = NULL;
     iDataPathLogger = NULL;
+    iDataPathLoggerRTP = NULL;
+    iDataPathLoggerRTCP = NULL;
     iOsclErrorTrapImp = NULL;
-    iExtensionRefCount = 0;
     iSockServ = NULL;
     iMaxTcpRecvBufferSize = SNODE_DEFAULT_SOCKET_TCP_BUFFER_SIZE;
     iMaxTcpRecvBufferCount = SNODE_DEFAULT_SOCKET_TCP_BUFFER_COUNT;
     iSocketID = 0;
     iCommandErrorCode = PVMFSocketNodeErrorEventStart;
     iErrorEventErrorCode = PVMFSocketNodeErrorEventStart;
-
+    iExtensionInterface = NULL;
     iInSocketCallback = false;
     iNumStopPortActivityPending = (-1);//inactive.
 
@@ -229,13 +308,14 @@ OSCL_EXPORT_REF PVMFSocketNode::PVMFSocketNode(int32 aPriority)
              iCapability.iHasMaxNumberOfPorts = false;
              iCapability.iMaxNumberOfPorts = 0;//no maximum
 
-             iCapability.iInputFormatCapability.push_back(PVMF_INET_UDP);
-             iCapability.iInputFormatCapability.push_back(PVMF_INET_TCP);
+             iCapability.iInputFormatCapability.push_back(PVMF_MIME_INET_UDP);
+             iCapability.iInputFormatCapability.push_back(PVMF_MIME_INET_TCP);
 
-             iCapability.iOutputFormatCapability.push_back(PVMF_INET_TCP);
-             iCapability.iOutputFormatCapability.push_back(PVMF_INET_UDP);
+             iCapability.iOutputFormatCapability.push_back(PVMF_MIME_INET_TCP);
+             iCapability.iOutputFormatCapability.push_back(PVMF_MIME_INET_UDP);
 
              iDnsCache.NewL();
+
             );
 
     if (err != OsclErrNone)
@@ -266,6 +346,10 @@ OSCL_EXPORT_REF PVMFSocketNode::~PVMFSocketNode()
     if (IsAdded())
         RemoveFromScheduler();
 
+    if (iExtensionInterface)
+    {
+        iExtensionInterface->removeRef();
+    }
 
     /* Cleanup allocated ports */
     CleanupPorts();
@@ -273,7 +357,6 @@ OSCL_EXPORT_REF PVMFSocketNode::~PVMFSocketNode()
     CleanupClosedTCPSockets();
     CleanupClosedUDPSockets();
     CleanupClosedDNS();
-
     //Cleanup commands
     //The command queues are self-deleting, but we want to
     //notify the observer of unprocessed commands.
@@ -313,13 +396,13 @@ OSCL_EXPORT_REF PVMFStatus PVMFSocketNode::ThreadLogon()
                 AddToScheduler();
             iLogger = PVLogger::GetLoggerObject("PVMFSocketNode");
             iDataPathLogger = PVLogger::GetLoggerObject("datapath.socketnode");
+            iDataPathLoggerRTP = PVLogger::GetLoggerObject("datapath.socketnode.rtp");
+            iDataPathLoggerRTCP = PVLogger::GetLoggerObject("datapath.socketnode.rtcp");
             iOsclErrorTrapImp = OsclErrorTrap::GetErrorTrapImp();
             SetState(EPVMFNodeIdle);
             return PVMFSuccess;
-            // break;	This break statement was removed to avoid compiler warning for Unreachable Code
         default:
             return PVMFErrInvalidState;
-            // break;	This break statement was removed to avoid compiler warning for Unreachable Code
     }
 }
 
@@ -336,6 +419,8 @@ OSCL_EXPORT_REF PVMFStatus PVMFSocketNode::ThreadLogoff()
                 RemoveFromScheduler();
             iLogger = NULL;
             iDataPathLogger = NULL;
+            iDataPathLoggerRTP = NULL;
+            iDataPathLoggerRTCP = NULL;
             iOsclErrorTrapImp = NULL;
             SetState(EPVMFNodeCreated);
 #if(ENABLE_SOCKET_NODE_STATS)
@@ -343,9 +428,11 @@ OSCL_EXPORT_REF PVMFStatus PVMFSocketNode::ThreadLogoff()
 #endif
             return PVMFSuccess;
         }
+        // break;	This break statement was removed to avoid compiler warning for Unreachable Code
 
         default:
             return PVMFErrInvalidState;
+            // break;	This break statement was removed to avoid compiler warning for Unreachable Code
     }
 }
 
@@ -357,7 +444,7 @@ OSCL_EXPORT_REF PVMFStatus PVMFSocketNode::GetCapability(PVMFNodeCapability& aNo
     return PVMFSuccess;
 }
 
-//retrive a port iterator.
+//retrieve a port iterator.
 OSCL_EXPORT_REF PVMFPortIter* PVMFSocketNode::GetPorts(const PVMFPortFilter* aFilter)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFSocketNode:GetPorts"));
@@ -493,12 +580,10 @@ void PVMFSocketNode::HandlePortActivity(const PVMFPortActivity &aActivity)
             PVMFSocketPort* sockPort = OSCL_STATIC_CAST(PVMFSocketPort*, aActivity.iPort);
             OSCL_ASSERT(sockPort && sockPort->iConfig);
             SocketPortConfig& aSockConfig = *sockPort->iConfig;
-
+            aSockConfig.CreateAllocators(iMaxTcpRecvBufferSize * (iMaxTcpRecvBufferCount - 1), iMaxTcpRecvBufferCount - 1, iMaxTcpRecvBufferSize, 1);
 #if(ENABLE_SOCKET_NODE_STATS)
             aSockConfig.iPortStats.iNumPortEventConnect++;
 #endif
-
-            setSocketPortMemAllocator(aActivity.iPort, sockPort->iAllocSharedPtr);
 
             //Receives may have been blocked waiting on the port to be connected, so check here.
             //Note: This is a known use case for HTTP streaming, where the port request and connect
@@ -611,52 +696,10 @@ OSCL_EXPORT_REF bool PVMFSocketNode::SetPortConfig(PVMFPortInterface &aPort, Osc
     return false;
 }
 
-OSCL_EXPORT_REF bool PVMFSocketNode::setSocketPortMemAllocator(PVMFPortInterface* aInPort,
-        OsclSharedPtr<PVMFSharedSocketDataBufferAlloc> aAlloc)
-{
-
-    PVMFSocketPort* aPort = OSCL_STATIC_CAST(PVMFSocketPort*, aInPort);
-    SocketPortConfig* tmpSockConfig = (aPort) ? aPort->iConfig : NULL;
-    if (NULL != tmpSockConfig)
-    {
-        tmpSockConfig->DoSetSocketPortMemAllocator(iLogger, aAlloc);
-        return true;
-    }
-    return false;
-}
-
 //////////////////////////////////////////////////
 // End Additional Public APIs unique to Socket Node
 //////////////////////////////////////////////////
 
-///////////////////////////
-// Socket Extension Interface
-///////////////////////////
-
-OSCL_EXPORT_REF void PVMFSocketNode::addRef()
-{
-    ++iExtensionRefCount;
-}
-
-OSCL_EXPORT_REF void PVMFSocketNode::removeRef()
-{
-    --iExtensionRefCount;
-}
-
-OSCL_EXPORT_REF bool PVMFSocketNode::queryInterface(const PVUuid& uuid, PVInterface*& iface)
-{
-    PVUuid my_uuid(PVMF_SOCKET_NODE_EXTENSION_INTERFACE_UUID);
-    if (uuid == my_uuid)
-    {
-        PVMFSocketNodeExtensionInterface* myInterface =
-            OSCL_STATIC_CAST(PVMFSocketNodeExtensionInterface*, this);
-        iface = OSCL_STATIC_CAST(PVInterface*, myInterface);
-        ++iExtensionRefCount;
-        return true;
-    }
-
-    return false;
-}
 
 //Create UDP sockets on consecutive ports.
 //This is needed because 3GPP streaming servers require consecutive ports.
@@ -725,6 +768,7 @@ PVMFStatus PVMFSocketNode::AllocateConsecutivePorts(PvmfMimeString* aPortConfig,
         higher_sock_config->iAddr.iLocalAdd.port =
             lower_sock_config->iAddr.iLocalAdd.port + 1;
         higher_sock_config->iSockId = startSockID++;
+        higher_sock_config->iRTCP = true;
 
         if (NULL == (higher_sock_config->iUDPSocket = (OsclUDPSocket*)CreateOsclSocketAndBind(higher_sock_config->iAddr, higher_sock_config->iSockId)))
         {
@@ -757,13 +801,11 @@ PVMFStatus PVMFSocketNode::AllocateConsecutivePorts(PvmfMimeString* aPortConfig,
         {
             //Delete and try again
             OsclUDPSocket* udpSocket1 = lower_sock_config->iUDPSocket;
-            udpSocket1->Close();
             udpSocket1->~OsclUDPSocket();
             iAlloc.deallocate(udpSocket1);
             lower_sock_config->iUDPSocket = NULL;
 
             OsclUDPSocket* udpSocket2 = higher_sock_config->iUDPSocket;
-            udpSocket2->Close();
             udpSocket2->~OsclUDPSocket();
             iAlloc.deallocate(udpSocket2);
             higher_sock_config->iUDPSocket = NULL;
@@ -801,18 +843,32 @@ OSCL_EXPORT_REF PVMFStatus PVMFSocketNode::GetMaxTCPRecvBufferSize(uint32& aSize
     return PVMFSuccess;
 }
 
-OSCL_EXPORT_REF PVMFStatus PVMFSocketNode::SetMaxTCPRecvBufferCount(uint32 aBufferSize)
+OSCL_EXPORT_REF PVMFStatus PVMFSocketNode::SetMaxTCPRecvBufferCount(uint32 aCount)
 {
-    iMaxTcpRecvBufferCount = aBufferSize;
+    iMaxTcpRecvBufferCount = aCount;
     return PVMFSuccess;
 }
 
-OSCL_EXPORT_REF PVMFStatus PVMFSocketNode::GetMaxTCPRecvBufferCount(uint32& aSize)
+OSCL_EXPORT_REF PVMFStatus PVMFSocketNode::GetMaxTCPRecvBufferCount(uint32& aCount)
 {
-    aSize = iMaxTcpRecvBufferCount;
+    aCount = iMaxTcpRecvBufferCount;
     return PVMFSuccess;
 }
 
+OsclMemPoolResizableAllocator* PVMFSocketNode::CreateSharedBuffer(const PVMFPortInterface* aPort , uint32 aBufferSize, uint32 aExpectedNumberOfBlocksPerBuffer, uint32 aResizeSize, uint32 aMaxNumResizes)
+{
+    //validate input params if required..
+    OSCL_ASSERT(aPort);
+    if (!aPort)
+        return NULL;
+
+    //If data buffer for the port is already created and is existing, then destroy the prev buffer and create new one (with requested attributes).
+    //CreateResizableDataBufferAllocator func will take care of this.
+    SocketPortConfig* portConfig = OSCL_STATIC_CAST(PVMFSocketPort*, aPort)->iConfig;
+    PVMFSocketNodeMemPool * portMemPool = portConfig->iMemPool;
+    portMemPool->iSharedDataBufferInfo.Init(aBufferSize, aExpectedNumberOfBlocksPerBuffer, aResizeSize, aMaxNumResizes);
+    return portMemPool->CreateResizableDataBufferAllocator(portConfig->iMime.get_cstr());
+}
 ///////////////////////////
 // End Socket Extension Interface
 ///////////////////////////
@@ -1485,7 +1541,15 @@ void PVMFSocketNode::StartRecvWaitOnMemory(SocketPortConfig& aSockConfig, int32 
     if (aSize)
     {//wait on data buffer
         PVMF_SOCKETNODE_LOGDATATRAFFIC_I((0, "PVMFSocketNode::StartRecvWaitOnMemory, wait on data buffer - SockId=%d, Mime=%s ", aSockConfig.iSockId, aSockConfig.iMime.get_str()));
-        aSockConfig.iMemPool->notifyfreechunkavailable(aSockConfig, aSize, NULL);
+        if (aSockConfig.iMemPool->iSharedBufferAlloc)
+        {
+            aSockConfig.iMemPool->iSharedBufferAlloc->notifyfreeblockavailable(aSockConfig, aSize, NULL);
+        }
+        else
+        {
+            if (aSockConfig.iMemPool->iInternalAlloc)
+                aSockConfig.iMemPool->iInternalAlloc->notifyfreeblockavailable(aSockConfig, aSize, NULL);
+        }
     }
     else
     {//wait on media data wrapper
@@ -1591,11 +1655,54 @@ PVMFStatus PVMFSocketNode::StartRecvOperation(SocketPortConfig& aSockConfig)
                 break;
         }
 
+        //Socket node provides the buffer to receive the data on the socket
+        //Socket node gets this from the mem pool.
+        //It may be possible that socket node may not be able to get the
+        //buffer of required size from the mempool
+        //If we are not able to get the packets from the OS, then the packets
+        //received from server will eventually be lost.
+        //In general, streaming server will be sending the UDP packets of small size
+        //(say 2048 bytes.. = MIN_UDP_PACKET_SIZE)
+        //So its better to attempt to allocate the memory of size
+        //SNODE_UDP_MULTI_MIN_BYTES_PER_RECV + MIN_UDP_PACKET_SIZE/MIN_UDP_PACKET_SIZE
+        //in such cases.
+
+        const int32 largestMediaMsgSz = aSockConfig.iMemPool->GetMaxSizeMediaMsgLen();
+
+        PVMF_SOCKETNODE_LOGINFO((0, "PVMFSocketNode::StartRecvOperation - MaxSizeMediMsg  %d memSize %d", largestMediaMsgSz, memSize));
+
+        if (memSize > largestMediaMsgSz)
+        {
+#if SNODE_ENABLE_UDP_MULTI_PACKET
+            multiRecvLimitBytes = MIN_UDP_PACKET_SIZE;
+
+            const int32 minBufferToContinueRecv = (SNODE_UDP_MULTI_MIN_BYTES_PER_RECV + MIN_UDP_PACKET_SIZE);
+
+            if (largestMediaMsgSz >= minBufferToContinueRecv)
+            {
+                memSize = largestMediaMsgSz;
+            }
+            else
+            {
+                memSize = minBufferToContinueRecv;
+            }
+#else
+            if (largestMediaMsgSz >= MIN_UDP_PACKET_SIZE)
+            {
+                memSize = largestMediaMsgSz;
+            }
+            else
+            {
+                memSize = MIN_UDP_PACKET_SIZE;
+            }
+#endif
+            PVMF_SOCKETNODE_LOGINFO((0, "PVMFSocketNode::StartRecvOperation - Resizing Mem Request Attributes## NewSz %d recvLimitBytes %d", memSize, multiRecvLimitBytes));
+        }
+
         //Create the media data impl.
         int32 err;
         OsclSharedPtr<PVMFMediaDataImpl> mediaDataImpl;
-        OSCL_TRY_NO_TLS(iOsclErrorTrapImp, err,
-                        mediaDataImpl = aSockConfig.iMemPool->getMediaDataImpl(memSize););
+        err = GetMediaDataImpl(aSockConfig, mediaDataImpl, memSize);
         if (err != OsclErrNone)
         {
             StartRecvWaitOnMemory(aSockConfig, memSize);
@@ -1605,8 +1712,7 @@ PVMFStatus PVMFSocketNode::StartRecvOperation(SocketPortConfig& aSockConfig)
         }
 
         //Create the media data buffer.
-        OSCL_TRY_NO_TLS(iOsclErrorTrapImp, err,
-                        aSockConfig.iPendingRecvMediaData = PVMFMediaData::createMediaData(mediaDataImpl, aSockConfig.iMemPool->iMediaDataMemPool););
+        err = CreateMediaData(aSockConfig, mediaDataImpl);
         if (err != OsclErrNone)
         {
             StartRecvWaitOnMemory(aSockConfig);
@@ -1652,9 +1758,8 @@ PVMFStatus PVMFSocketNode::StartRecvOperation(SocketPortConfig& aSockConfig)
         //Allocate memory
         int32 err;
         OsclSharedPtr<PVMFMediaDataImpl> mediaDataImpl;
-        OSCL_TRY(err,
-                 mediaDataImpl = aSockConfig.iMemPool->getMediaDataImpl(iMaxTcpRecvBufferSize););
-        if (err != OsclErrNone)
+        mediaDataImpl = aSockConfig.iMemPool->getMediaDataImpl(iMaxTcpRecvBufferSize);
+        if (NULL == mediaDataImpl.GetRep())
         {
             StartRecvWaitOnMemory(aSockConfig, iMaxTcpRecvBufferSize);
             status = PVMFPending;
@@ -1728,6 +1833,7 @@ PVMFStatus PVMFSocketNode::RecvOperationComplete(SocketPortConfig& aSockConfig, 
     OSCL_ASSERT(aStatus != PVMFPending);
 
     PVMFStatus status = aStatus;
+    bool recvOperationCanceled = aSockConfig.iState.iRecvOperationCanceled;
 
     //Update the state
     TPVSocketPortRecvOperation curOp = aSockConfig.iState.iRecvOperation;
@@ -1756,12 +1862,12 @@ PVMFStatus PVMFSocketNode::RecvOperationComplete(SocketPortConfig& aSockConfig, 
                     case EPVSocketRecv:
                         HandleRecvComplete(aSockConfig
                                            , aSockConfig.iSocketRecvActivity.iStatus
-                                           , &aSockConfig.iSocketRecvActivity);
+                                           , &aSockConfig.iSocketRecvActivity, recvOperationCanceled);
                         break;
                     case EPVSocketRecvFrom:
                         HandleRecvFromComplete(aSockConfig
                                                , aSockConfig.iSocketRecvActivity.iStatus
-                                               , &aSockConfig.iSocketRecvActivity);
+                                               , &aSockConfig.iSocketRecvActivity, recvOperationCanceled);
                         break;
                     default:
                         OSCL_ASSERT(0);//invalid arg
@@ -1774,14 +1880,14 @@ PVMFStatus PVMFSocketNode::RecvOperationComplete(SocketPortConfig& aSockConfig, 
             //TCP receive is complete
             PVMF_SOCKETNODE_LOGDATATRAFFIC_I((0, "PVMFSocketNode::RecvOperationComplete Recv - SockId=%d, Mime=%s ", aSockConfig.iSockId, aSockConfig.iMime.get_str()));
 
-            HandleRecvComplete(aSockConfig, aStatus, aSocketActivity);
+            HandleRecvComplete(aSockConfig, aStatus, aSocketActivity, recvOperationCanceled);
             break;
 
         case EPVSocketPortRecvOperation_RecvFrom:
             //UDP receive from is complete
             PVMF_SOCKETNODE_LOGDATATRAFFIC_I((0, "PVMFSocketNode::RecvOperationComplete RecvFrom - SockId=%d, Mime=%s ", aSockConfig.iSockId, aSockConfig.iMime.get_str()));
 
-            HandleRecvFromComplete(aSockConfig, aStatus, aSocketActivity);
+            HandleRecvFromComplete(aSockConfig, aStatus, aSocketActivity, recvOperationCanceled);
             break;
 
         default:
@@ -1860,7 +1966,12 @@ PVMFStatus PVMFSocketNode::CancelRecvOperation(SocketPortConfig& aSockConfig)
         case EPVSocketPortRecvOperation_WaitOnMemory:
             PVMF_SOCKETNODE_LOGDATATRAFFIC_I((0, "PVMFSocketNode::CancelRecvOperation Cancelling WaitOnMemory - SockId=%d, Mime=%s ", aSockConfig.iSockId, aSockConfig.iMime.get_str()));
             if (aSockConfig.iMemPool != NULL)
-                aSockConfig.iMemPool->CancelFreeChunkAvailableCallback();
+            {
+                if (aSockConfig.iMemPool->iInternalAlloc)
+                    aSockConfig.iMemPool->iInternalAlloc->CancelFreeChunkAvailableCallback();
+                if (aSockConfig.iMemPool->iSharedBufferAlloc)
+                    aSockConfig.iMemPool->iSharedBufferAlloc->CancelFreeChunkAvailableCallback();
+            }
             //clear the state
             aSockConfig.iState.iRecvOperation = EPVSocketPortRecvOperation_None;
             break;
@@ -1891,6 +2002,11 @@ void SocketPortConfig::freechunkavailable(OsclAny* aContextData)
     }
 }
 
+void SocketPortConfig::freeblockavailable(OsclAny* aContextData)
+{
+    freechunkavailable(aContextData);
+}
+
 //Handler for a "recv" complete.  This handles two input cases:
 // - Operation failed to initiate.  Status will be in aStatus and aSocketActivity will be NULL.
 // - Operation completed asynchronously via HandleSocketEvent callback. Status will be in aStatus
@@ -1900,18 +2016,35 @@ void SocketPortConfig::freechunkavailable(OsclAny* aContextData)
 // - Received data sent to connected port
 // - Result queued on socket activity queue for later processing.
 // - Error or cancellation processed.
-void PVMFSocketNode::HandleRecvComplete(SocketPortConfig& aSockConfig, PVMFStatus aStatus, PVMFSocketActivity* aSocketActivity)
+void PVMFSocketNode::HandleRecvComplete(SocketPortConfig& aSockConfig, PVMFStatus aStatus, PVMFSocketActivity* aSocketActivity, bool aRecvOperationCanceled)
 {
     PVMF_SOCKETNODE_LOGSTACKTRACE((0, "PVMFSocketNode::HandleRecvComplete() In"));
 
     //operation should be complete when this is called.
     OSCL_ASSERT(aStatus != PVMFPending);
 
+
+    int32 sockActivityEvent = aSocketActivity->iEvent;
+    PVMFStatus status = aStatus;
+
+    int32 tmplen;
+    aSockConfig.iTCPSocket->GetRecvData(&tmplen);
+
+    // If data length is <= zero and aSocketActivity->iEvent is EPVSocketSuccess, it should be treated as failure.
+    // On some platforms, its possible to get data length as zero and aSocketActivity->iEvent as EPVSocketSuccess.
+    if (EPVSocketSuccess == sockActivityEvent && tmplen <= 0)
+    {
+        PVMF_SOCKETNODE_LOGINFO((0, "PVMFSocketNode::HandleRecvFromComplete() Sucessful Recv With Zero Length. Treating as failure."));
+
+        sockActivityEvent = EPVSocketFailure;
+        status = PVMFFailure;
+    }
+
     //If there's no socket activity input, then this must be a failure in initiating
     //a Recv operation.
     if (!aSocketActivity)
     {
-        OSCL_ASSERT(aStatus != PVMFSuccess);
+        OSCL_ASSERT(status != PVMFSuccess);
         PVMF_SOCKETNODE_LOGDATATRAFFIC_E((0, "PVMFSocketNode::HandleRecvComplete: Request Failed - SockId=%d, Mime=%s", aSockConfig.iSockId, aSockConfig.iMime.get_str()));
         ReportSocketNodeError(PVMFErrResource, PVMFSocketNodeErrorSocketFailure);
         //release media data
@@ -1923,7 +2056,7 @@ void PVMFSocketNode::HandleRecvComplete(SocketPortConfig& aSockConfig, PVMFStatu
     //Otherwise this is a result from Oscl Sockets of a Recv call.
 
     //See whether we can send this data to the connected port
-    if (aSocketActivity->iEvent == EPVSocketSuccess)
+    if (sockActivityEvent == EPVSocketSuccess)
     {
         if (!aSockConfig.iPVMFPort
                 || !aSockConfig.iPVMFPort->IsConnected())
@@ -1944,24 +2077,19 @@ void PVMFSocketNode::HandleRecvComplete(SocketPortConfig& aSockConfig, PVMFStatu
     //If we get here then it's time to process the recv result.
 
     //Release media data on failure
-    if (aStatus != PVMFSuccess)
+    if (status != PVMFSuccess)
     {
         if (aSockConfig.iPendingRecvMediaData.GetRep())
             aSockConfig.iPendingRecvMediaData.Unbind();
     }
 
-    switch (aSocketActivity->iEvent)
+    switch (sockActivityEvent)
     {
         case EPVSocketSuccess:
         {
             //Get data length and set media buffer size
             int32 len;
             aSockConfig.iTCPSocket->GetRecvData(&len);
-            if (len <= 0)
-            {
-                PVMF_SOCKETNODE_LOGERROR((0, "PVMFSocketNode::HandleRecvComplete - Sucessful Recv With Zero Length"));
-                OSCL_ASSERT(false);
-            }
             aSockConfig.iPendingRecvMediaData->setMediaFragFilledLen(0, len);
 
             // Resize the buffer
@@ -2007,11 +2135,21 @@ void PVMFSocketNode::HandleRecvComplete(SocketPortConfig& aSockConfig, PVMFStatu
         case EPVSocketTimeout:
         {
             PVMF_SOCKETNODE_LOGDATATRAFFIC_E((0, "PVMFSocketNode::HandleRecvComplete: Request TimedOut - SockId=%d, Mime=%s", aSockConfig.iSockId, aSockConfig.iMime.get_str()));
-            PVMF_SOCKETNODE_LOGERROR((0, "PVMFSocketNode::HandleSocketRecv() ERROR EPVSocketTimeout Ln %d", __LINE__));
+            PVMF_SOCKETNODE_LOGERROR((0, "PVMFSocketNode::HandleRecvComplete() ERROR EPVSocketTimeout Ln %d", __LINE__));
             ReportSocketNodeError(PVMFErrTimeout, PVMFSocketNodeErrorSocketTimeOut);
         }
         break;
 
+        case EPVSocketCancel:
+            //On some OS we may get EPVSocketCancel for recv failures, so check whether this
+            //was response to a cancel command or not.
+            if (aRecvOperationCanceled)
+            {
+                PVMF_SOCKETNODE_LOGDATATRAFFIC_E((0, "PVMFSocketNode::HandleRecvComplete: Request Cancelled - SockId=%d, Mime=%s", aSockConfig.iSockId, aSockConfig.iMime.get_str()));
+                PVMF_SOCKETNODE_LOGINFO((0, "PVMFSocketNode::HandleRecvComplete() EPVSocketCancel"));
+                break;
+            }
+            //else fallthrough to the failure processing...
         case EPVSocketFailure:
         {
             //After a receive failure, we may need to do a TCP shutdown.
@@ -2045,13 +2183,6 @@ void PVMFSocketNode::HandleRecvComplete(SocketPortConfig& aSockConfig, PVMFStatu
         }
         break;
 
-        case EPVSocketCancel:
-        {
-            PVMF_SOCKETNODE_LOGDATATRAFFIC_E((0, "PVMFSocketNode::HandleRecvComplete: Request Cancelled - SockId=%d, Mime=%s", aSockConfig.iSockId, aSockConfig.iMime.get_str()));
-            PVMF_SOCKETNODE_LOGINFO((0, "PVMFSocketNode::HandleRecvComplete() EPVSocketCancel"));
-        }
-        break;
-
         default:
             OSCL_ASSERT(0);
             break;
@@ -2067,8 +2198,9 @@ void PVMFSocketNode::HandleRecvComplete(SocketPortConfig& aSockConfig, PVMFStatu
 // - Received data sent to connected port
 // - Result queued on socket activity queue for later processing.
 // - Error or cancellation processed.
-void PVMFSocketNode::HandleRecvFromComplete(SocketPortConfig& aSockConfig, PVMFStatus aStatus, PVMFSocketActivity* aSocketActivity)
+void PVMFSocketNode::HandleRecvFromComplete(SocketPortConfig& aSockConfig, PVMFStatus aStatus, PVMFSocketActivity* aSocketActivity, bool aRecvOperationCanceled)
 {
+    OSCL_UNUSED_ARG(aStatus);
     PVMF_SOCKETNODE_LOGSTACKTRACE((0, "PVMFSocketNode::HandleRecvFromComplete() In"));
 
     //operation should be complete when this is called.
@@ -2137,7 +2269,7 @@ void PVMFSocketNode::HandleRecvFromComplete(SocketPortConfig& aSockConfig, PVMFS
             }
             else
             {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFSocketNode::HandleSocketRecvFrom() ERROR:mempool not found"));
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFSocketNode::HandleRecvFromComplete() ERROR:mempool not found"));
                 PVMF_SOCKETNODE_LOGDATATRAFFIC_E((0, "PVMFSocketNode::HandleRecvFromComplete: ERROR mempool not found - SockId=%d, Mime=%s", aSockConfig.iSockId, aSockConfig.iMime.get_str()));
                 return;//unexpected, cleanup
             }
@@ -2149,8 +2281,7 @@ void PVMFSocketNode::HandleRecvFromComplete(SocketPortConfig& aSockConfig, PVMFS
             //Allocate a new media frag group.
             int32 err;
             OsclSharedPtr< PVMFMediaDataImpl > mediaFragGroup;
-            OSCL_TRY_NO_TLS(iOsclErrorTrapImp, err,
-                            mediaFragGroup = aSockConfig.iMemPool->iMediaFragGroupAlloc->allocate(););
+            err = Allocate(aSockConfig, mediaFragGroup);
             if (err != OsclErrNone)
             {
                 //Unexpected error.  With current usage by JB node, this pool should
@@ -2180,7 +2311,13 @@ void PVMFSocketNode::HandleRecvFromComplete(SocketPortConfig& aSockConfig, PVMFS
                 mediaFragGroup->appendMediaFragment(multiFrag);
 #if (PVLOGGER_INST_LEVEL > PVLOGMSG_INST_LLDBG)
                 if (aSockConfig.iRTP)
+                {
                     LogRTPHeaderFields(aSockConfig, multiFrag);
+                }
+                else if (aSockConfig.iRTCP)
+                {
+                    LogRTCPHeaderFields(aSockConfig, multiFrag);
+                }
 #endif
             }
 
@@ -2189,8 +2326,7 @@ void PVMFSocketNode::HandleRecvFromComplete(SocketPortConfig& aSockConfig, PVMFS
             //can just unbind the current message then re-allocate it with the
             //new data.
             aSockConfig.iPendingRecvMediaData.Unbind();
-            OSCL_TRY_NO_TLS(iOsclErrorTrapImp, err,
-                            aSockConfig.iPendingRecvMediaData = PVMFMediaData::createMediaData(mediaFragGroup, aSockConfig.iMemPool->iMediaDataMemPool););
+            err = CreateMediaData(aSockConfig, mediaFragGroup);
             if (err != OsclErrNone)
             {
                 //unexpected since we just freed one message
@@ -2208,6 +2344,12 @@ void PVMFSocketNode::HandleRecvFromComplete(SocketPortConfig& aSockConfig, PVMFS
                 aSockConfig.iPendingRecvMediaData->getMediaFragment(0, memfrag);
                 LogRTPHeaderFields(aSockConfig, memfrag);
             }
+            else if (aSockConfig.iRTCP)
+            {
+                OsclRefCounterMemFrag memfrag;
+                aSockConfig.iPendingRecvMediaData->getMediaFragment(0, memfrag);
+                LogRTCPHeaderFields(aSockConfig, memfrag);
+            }
 #endif
 
 #endif //SNODE_ENABLE_UDP_MULTI_PACKET
@@ -2223,7 +2365,7 @@ void PVMFSocketNode::HandleRecvFromComplete(SocketPortConfig& aSockConfig, PVMFS
             if (status != PVMFSuccess)
             {
                 //should never get here because we already checked outgoign queue earlier.
-                PVMF_SOCKETNODE_LOGERROR((0, "PVMFSocketNode::HandleSocketRecvFrom() ERROR:%d, Outgoing queue size=%d. Data discarded!", status, aSockConfig.iPVMFPort->OutgoingMsgQueueSize()));
+                PVMF_SOCKETNODE_LOGERROR((0, "PVMFSocketNode::HandleRecvFromComplete() ERROR:%d, Outgoing queue size=%d. Data discarded!", status, aSockConfig.iPVMFPort->OutgoingMsgQueueSize()));
                 ReportErrorEvent(PVMFInfoOverflow);
             }
 
@@ -2241,28 +2383,31 @@ void PVMFSocketNode::HandleRecvFromComplete(SocketPortConfig& aSockConfig, PVMFS
         //report error events.
         switch (aSocketActivity->iEvent)
         {
+            case EPVSocketCancel:
+                //On some OS we may get EPVSocketCancel for recv failures, so check whether this
+                //was response to a cancel command or not.
+                if (aRecvOperationCanceled)
+                {
+                    PVMF_SOCKETNODE_LOGDATATRAFFIC_E((0, "PVMFSocketNode::HandleRecvFromComplete: Request Cancelled - SockId=%d, Mime=%s", aSockConfig.iSockId, aSockConfig.iMime.get_str()));
+                    break;
+                }
+                //else fallthrough to failure processing...
             case EPVSocketFailure:
                 //report RTP failures.
                 //Note: do not report RTCP errors, because some servers send zero-byte packets
                 //and we want to be tolerant of that case.
                 if (aSockConfig.iTag == PVMF_SOCKET_NODE_PORT_TYPE_SOURCE)
                 {
-                    PVMF_SOCKETNODE_LOGDATATRAFFIC_E((0, "PVMFSocketNode::HandleSocketRecvFrom: Request Failed - SockId=%d, Mime=%s", aSockConfig.iSockId, aSockConfig.iMime.get_str()));
+                    PVMF_SOCKETNODE_LOGDATATRAFFIC_E((0, "PVMFSocketNode::HandleRecvFromComplete: Request Failed - SockId=%d, Mime=%s", aSockConfig.iSockId, aSockConfig.iMime.get_str()));
                     ReportSocketNodeError(PVMFErrResource, PVMFSocketNodeErrorSocketFailure);
                 }
                 break;
 
             case EPVSocketTimeout:
             {
-                PVMF_SOCKETNODE_LOGDATATRAFFIC_E((0, "PVMFSocketNode::HandleSocketRecvFrom: Request TimedOut - SockId=%d, Mime=%s", aSockConfig.iSockId, aSockConfig.iMime.get_str()));
-                PVMF_SOCKETNODE_LOGERROR((0, "PVMFSocketNode::HandleSocketRecvFrom() ERROR EPVSocketTimeout Ln %d", __LINE__));
+                PVMF_SOCKETNODE_LOGDATATRAFFIC_E((0, "PVMFSocketNode::HandleRecvFromComplete: Request TimedOut - SockId=%d, Mime=%s", aSockConfig.iSockId, aSockConfig.iMime.get_str()));
+                PVMF_SOCKETNODE_LOGERROR((0, "PVMFSocketNode::HandleRecvFromComplete() ERROR EPVSocketTimeout Ln %d", __LINE__));
                 ReportSocketNodeError(PVMFErrTimeout, PVMFSocketNodeErrorSocketTimeOut);
-            }
-            break;
-
-            case EPVSocketCancel:
-            {
-                PVMF_SOCKETNODE_LOGDATATRAFFIC_E((0, "PVMFSocketNode::HandleSocketRecvFrom: Request Cancelled - SockId=%d, Mime=%s", aSockConfig.iSockId, aSockConfig.iMime.get_str()));
             }
             break;
 
@@ -2746,6 +2891,7 @@ void PVMFSocketNode::SequenceComplete(SocketPortConfig& aSockConfig, PVMFStatus 
     //All sequences other than input data message will
     //block receive operations, so may need to start or resume receives now.
     if (curSequence != EPVSocketPortSequence_InputDataMsg
+            && (aStatus == PVMFSuccess)
             && CanReceive(aSockConfig))
     {
         StartRecvOperation(aSockConfig);
@@ -2753,8 +2899,11 @@ void PVMFSocketNode::SequenceComplete(SocketPortConfig& aSockConfig, PVMFStatus 
 
     //Input message processing may have been blocked waiting on
     //this sequence to complete, so resume now.
-    if (CanProcessIncomingMsg(aSockConfig))
+    if (CanProcessIncomingMsg(aSockConfig)
+            && (aStatus == PVMFSuccess))
+    {
         ProcessIncomingMsg(aSockConfig);
+    }
 }
 
 //////////////////////////////////////
@@ -2978,7 +3127,6 @@ void PVMFSocketNode::CommandComplete(PVMFSocketNodeCmdQ& aCmdQ,
                     //go back to Idle state
                     iPortVector.Reconstruct();
                     SetState(EPVMFNodeIdle);
-                    ThreadLogoff();
                 }
                 break;
 
@@ -3053,7 +3201,7 @@ void PVMFSocketNode::ReportErrorEvent(PVMFEventType aEventType,
                                       PVUuid* aEventUUID,
                                       int32* aEventCode)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_ERR,
                     (0, "PVMFSocketNode:NodeErrorEvent Type %d Data %d"
                      , aEventType, aEventData));
 
@@ -3165,6 +3313,31 @@ PVMFStatus PVMFSocketNode::DoQueryUuid(PVMFSocketNodeCommand& aCmd)
     return PVMFSuccess;
 }
 
+bool PVMFSocketNode::queryInterface(const PVUuid& uuid, PVInterface*& iface)
+{
+    iface = NULL;
+    if (uuid == PVUuid(PVMF_SOCKET_NODE_EXTENSION_INTERFACE_UUID))
+    {
+        if (!iExtensionInterface)
+        {
+            iExtensionInterface = OSCL_NEW(PVMFSocketNodeExtensionInterfaceImpl, (this));
+        }
+        if (iExtensionInterface)
+        {
+            return (iExtensionInterface->queryInterface(uuid, iface));
+        }
+        else
+        {
+            PVMF_SOCKETNODE_LOGERROR((0, "PVMFSocketNode::queryInterface: Error - Out of memory"));
+            OSCL_LEAVE(OsclErrNoMemory);
+            return false;
+        }
+    }
+    else
+    {
+        return false;
+    }
+}
 
 PVMFStatus PVMFSocketNode::DoQueryInterface(PVMFSocketNodeCommand&  aCmd)
 {
@@ -3174,14 +3347,27 @@ PVMFStatus PVMFSocketNode::DoQueryInterface(PVMFSocketNodeCommand&  aCmd)
     PVUuid* uuid;
     PVInterface** ptr;
     aCmd.PVMFSocketNodeCommandBase::Parse(uuid, ptr);
-
     if (*uuid == PVUuid(PVMF_SOCKET_NODE_EXTENSION_INTERFACE_UUID))
     {
-        addRef();
-        PVMFSocketNodeExtensionInterface* myInterface =
-            OSCL_STATIC_CAST(PVMFSocketNodeExtensionInterface*, this);
-        *ptr = OSCL_STATIC_CAST(PVInterface*, myInterface);
-        return PVMFSuccess;
+        if (!iExtensionInterface)
+        {
+            iExtensionInterface = OSCL_NEW(PVMFSocketNodeExtensionInterfaceImpl, (this));
+        }
+        if (iExtensionInterface)
+        {
+            if (iExtensionInterface->queryInterface(*uuid, *ptr))
+            {
+                return PVMFSuccess;
+            }
+            else
+            {
+                return PVMFErrNotSupported;
+            }
+        }
+        else
+        {
+            return PVMFErrNoMemory;
+        }
     }
     else
     {//not supported
@@ -3315,6 +3501,8 @@ PVMFStatus PVMFSocketNode::DoRequestPort(PVMFSocketNodeCommand& aCmd, PVMFSocket
             PVMF_SOCKETNODE_LOGERROR((0, "PVMFSocketNode::DoRequestPort: ERROR - Invalid protocol for port request"));
             return PVMFFailure;
     }
+    PVMF_SOCKETNODE_LOGERROR((0, "PVMFSocketNode::DoRequestPort: ERROR - Invalid protocol for port request"));
+    return PVMFFailure;
 }
 
 //Release ports is a do-nothing for this node.
@@ -3624,6 +3812,7 @@ PVMFStatus PVMFSocketNode::DoCancelCommand(PVMFSocketNodeCommand& aCmd)
 
 PVMFStatus PVMFSocketNode::DoCancelAllCommands(PVMFSocketNodeCommand& aCmd)
 {
+    OSCL_UNUSED_ARG(aCmd);
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFSocketNode::DoCancelCommand() IN"));
 
     //This is not a conventional "cancel all" implementation.
@@ -3651,6 +3840,7 @@ PVMFStatus PVMFSocketNode::DoCancelAllCommands(PVMFSocketNodeCommand& aCmd)
 //It only needs to handle those commands that may have asynchronous completion.
 PVMFStatus PVMFSocketNode::DoCancelCurrentCommand(PVMFSocketNodeCmdQ& aCmdQ, PVMFSocketNodeCommand& aCmd)
 {
+    OSCL_UNUSED_ARG(aCmdQ);
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFSocketNode::DoCancelCurrentCommand()"));
     switch (aCmd.iCmd)
     {
@@ -3768,11 +3958,6 @@ OSCL_EXPORT_REF  void PVMFSocketNode::HandleSocketEvent(int32 aId, TPVSocketFxn 
 
     iInSocketCallback = true;
 
-    if (aEvent != EPVSocketSuccess)
-    {
-        PVMF_SOCKETNODE_LOGERROR((0, "PVMFSocketNode::HandleSocketEvent: Error - Failure"));
-    }
-
     SocketPortConfig* sockConfigPtr = FindSocketPortConfig((uint32)aId);
     if (!sockConfigPtr)
     {
@@ -3781,6 +3966,11 @@ OSCL_EXPORT_REF  void PVMFSocketNode::HandleSocketEvent(int32 aId, TPVSocketFxn 
     }
     else
     {
+        if (aEvent != EPVSocketSuccess)
+        {
+            PVMF_SOCKETNODE_LOGERROR((0, "PVMFSocketNode::HandleSocketEvent: Error - Event=%d, SockId=%d, Mime=%s",
+                                      aEvent, aId, sockConfigPtr->iMime.get_cstr()));
+        }
 #if(ENABLE_SOCKET_NODE_STATS)
         sockConfigPtr->iPortStats.iNumSocketCallback++;
 #endif
@@ -3902,7 +4092,7 @@ PVMFStatus PVMFSocketNode::AllocatePortMemPool(int32 tag, PVMFSocketNodeMemPool*
             //source tag is used for RTP
         {
             int32 errcode = 0;
-            OSCL_TRY(errcode, aMemPool = OSCL_PLACEMENT_NEW(MemPtr, PVMFSocketNodeMemPool(DEFAULT_NUM_MEDIA_MSGS_IN_JITTER_BUFFER);));
+            errcode = SocketPlacementNew(aMemPool, MemPtr, DEFAULT_NUM_MEDIA_MSGS_IN_JITTER_BUFFER);
             if (errcode != OsclErrNone)
             {
                 PVMF_SOCKETNODE_LOGERROR((0, "PVMFSocketNode::DoRequestPort: PVMFSocketNodeMemPool Construct Failed Ln %d", err, __LINE__));
@@ -3916,7 +4106,7 @@ PVMFStatus PVMFSocketNode::AllocatePortMemPool(int32 tag, PVMFSocketNodeMemPool*
             //sink tag is used for RTCP
         {
             int32 errcode = 0;
-            OSCL_TRY(errcode, aMemPool = OSCL_PLACEMENT_NEW(MemPtr, PVMFSocketNodeMemPool(SNODE_DEFAULT_NUMBER_MEDIADATA_IN_MEMPOOL);));
+            errcode = SocketPlacementNew(aMemPool, MemPtr, SNODE_DEFAULT_NUMBER_MEDIADATA_IN_MEMPOOL);
             if (errcode != OsclErrNone)
             {
                 PVMF_SOCKETNODE_LOGERROR((0, "PVMFSocketNode::DoRequestPort: PVMFSocketNodeMemPool Construct Failed Ln %d", err, __LINE__));
@@ -4156,7 +4346,6 @@ void PVMFSocketNode::CleanupUDP(SocketPortConfig& aSockConfig)
         }
         else
         {
-            aSockConfig.iUDPSocket->Close();
             aSockConfig.iUDPSocket->~OsclUDPSocket();
             iAlloc.deallocate(aSockConfig.iUDPSocket);
             aSockConfig.iUDPSocket = NULL;
@@ -4209,7 +4398,7 @@ void PVMFSocketNode::CleanupPorts()
             CleanupTCP(*it);
             CleanupUDP(*it);
             CleanupDNS(*it);
-            it->CleanupMemPools();
+            it->CleanupMemPools(iAlloc);
             OSCL_DELETE(it);
             iPortVector.front()->iConfig = NULL;
         }
@@ -4223,7 +4412,7 @@ void PVMFSocketNode::CleanupPorts()
         CleanupTCP(*it);
         CleanupUDP(*it);
         CleanupDNS(*it);
-        it->CleanupMemPools();
+        it->CleanupMemPools(iAlloc);
         OSCL_DELETE(it);
         iAllocatedPortVector.erase(&iAllocatedPortVector.front());
     }
@@ -4297,11 +4486,11 @@ bool PVMFSocketNode::ParseTransportConfig(char *aPortConfig,
 
     OSCL_StackString<128> address("remote_address=");
 
-    char *tmpHead = oscl_strstr(head, address.get_cstr());
+    char *tmpHead = OSCL_CONST_CAST(char*, oscl_strstr(head, address.get_cstr()));
     if (tmpHead)
     {
         tmpHead += address.get_size();
-        char *tmpTail = oscl_strstr(tmpHead, ";");
+        char *tmpTail = OSCL_CONST_CAST(char*, oscl_strstr(tmpHead, ";"));
         if (tmpTail == NULL)
         {
             tmpTail = tail;
@@ -4328,11 +4517,11 @@ bool PVMFSocketNode::ParseTransportConfig(char *aPortConfig,
         aSockConfig.iLocalAdd.port = (myport >> 1) << 1;	//start from even;
     }
     OSCL_StackString<128> client_port("client_port=");
-    tmpHead = oscl_strstr(head, client_port.get_cstr());
+    tmpHead = OSCL_CONST_CAST(char*, oscl_strstr(head, client_port.get_cstr()));
     if (tmpHead)
     {
         tmpHead += client_port.get_size();
-        char *tmpTail = oscl_strstr(tmpHead, ";");
+        char *tmpTail = OSCL_CONST_CAST(char*, oscl_strstr(tmpHead, ";"));
         if (tmpTail == NULL)
         {
             tmpTail = tail;
@@ -4350,11 +4539,11 @@ bool PVMFSocketNode::ParseTransportConfig(char *aPortConfig,
 
     aSockConfig.iRemoteAdd.port = 0;
     OSCL_StackString<128> server_port("remote_port=");
-    tmpHead = oscl_strstr(head, server_port.get_cstr());
+    tmpHead = OSCL_CONST_CAST(char*, oscl_strstr(head, server_port.get_cstr()));
     if (tmpHead)
     {
         tmpHead += server_port.get_size();
-        char *tmpTail = oscl_strstr(tmpHead, ";");
+        char *tmpTail = OSCL_CONST_CAST(char*, oscl_strstr(tmpHead, ";"));
         if (tmpTail == NULL)
         {
             tmpTail = tail;
@@ -4372,11 +4561,11 @@ bool PVMFSocketNode::ParseTransportConfig(char *aPortConfig,
     }
 
     OSCL_StackString<128> mime("mime=");
-    tmpHead = oscl_strstr(head, mime.get_cstr());
+    tmpHead = OSCL_CONST_CAST(char*, oscl_strstr(head, mime.get_cstr()));
     if (tmpHead)
     {
         tmpHead += mime.get_size();
-        char *tmpTail = oscl_strstr(tmpHead, ";");
+        char *tmpTail = OSCL_CONST_CAST(char*, oscl_strstr(tmpHead, ";"));
         if (tmpTail == NULL)
         {
             tmpTail = tail;
@@ -4398,6 +4587,7 @@ bool PVMFSocketNode::ParseTransportConfig(char *aPortConfig,
 void PVMFSocketNode::LogRTPHeaderFields(SocketPortConfig& aSockConfig,
                                         OsclRefCounterMemFrag& memFragIn)
 {
+    OSCL_UNUSED_ARG(aSockConfig);
     uint8* rtpHeader = NULL;
     uint32 rtpPacketLen = 0;
 
@@ -4437,25 +4627,119 @@ void PVMFSocketNode::LogRTPHeaderFields(SocketPortConfig& aSockConfig,
         uint16 seqNum16 = 0;
         oscl_memcpy((char *)&seqNum16, rtpHeader, sizeof(seqNum16));
         big_endian_to_host((char *)&seqNum16, sizeof(seqNum16));
-        uint32 seqNum = (uint32)seqNum16;
         rtpHeader += 2;
 
         /* Parse rtp time stamp */
         uint32 ts32 = 0;
         oscl_memcpy((char *)&ts32, rtpHeader, sizeof(ts32));
         big_endian_to_host((char *)&ts32, sizeof(ts32));
-        PVMFTimestamp rtpTimeStamp = (PVMFTimestamp)ts32;
         rtpHeader += 4;
 
         /* Parse SSRC */
         uint32 ssrc32 = 0;
         oscl_memcpy((char *)&ssrc32, rtpHeader, sizeof(ssrc32));
         big_endian_to_host((char *)&ssrc32, sizeof(ssrc32));
-        uint32 SSRC = ssrc32;
         rtpHeader += 4;
 
-        PVMF_SOCKETNODE_LOGDATATRAFFIC_I((0, "SN-RTP - Mime=%s, ssrc=%d, seq=%d, ts=%d, len=%d",
-                                          aSockConfig.iMime.get_cstr(), SSRC, seqNum, rtpTimeStamp, rtpPacketLen));
+        PVMF_SOCKETNODE_LOGDATATRAFFIC_RTP((0, "SN-RTP - Mime=%s, ssrc=%d, seq=%d, ts=%d, len=%d",
+                                            aSockConfig.iMime.get_cstr(), ssrc32, (uint32)seqNum16, (PVMFTimestamp)ts32, rtpPacketLen));
+    }
+}
+
+void PVMFSocketNode::LogRTCPHeaderFields(SocketPortConfig& aSockConfig,
+        OsclRefCounterMemFrag& memFragIn)
+{
+    OSCL_UNUSED_ARG(aSockConfig);
+    const uint8 SR_PACKET_TYPE = 200;
+    const uint8 RR_PACKET_TYPE = 201;
+    const uint8 SDES_PACKET_TYPE = 202;
+    const uint8 BYE_PACKET_TYPE = 203;
+    const uint8 APP_PACKET_TYPE = 204;
+    uint8* rtcpHeader = NULL;
+    int32 rtcpPacketLen = 0;
+
+    /* Get start of RTP packet */
+    rtcpHeader    = (uint8*)(memFragIn.getMemFrag().ptr);
+    rtcpPacketLen = (int32)(memFragIn.getMemFrag().len);
+
+    if ((rtcpHeader != NULL) && (rtcpPacketLen > 0))
+    {
+        while (rtcpPacketLen > 0)
+        {
+            OsclBinIStreamBigEndian inStream;
+            inStream.Attach(rtcpHeader, rtcpPacketLen);
+            uint8 tempChar;
+            inStream >> tempChar;
+            if (inStream.fail())
+            {
+                PVMF_SOCKETNODE_LOGDATATRAFFIC_RTCP((0, "SN-RTCP - Mime=%s, Invalid RTCP Packet",
+                                                     aSockConfig.iMime.get_cstr()));
+                return;
+            }
+            // read the type
+            uint8 payloadType;
+            uint16 rtcpLength;
+            inStream >> payloadType;
+            inStream >> rtcpLength;
+            if (inStream.fail())
+            {
+                PVMF_SOCKETNODE_LOGDATATRAFFIC_RTCP((0, "SN-RTCP - Mime=%s, Invalid RTCP Packet Headers",
+                                                     aSockConfig.iMime.get_cstr()));
+                return;
+            }
+            switch (payloadType)
+            {
+                case SR_PACKET_TYPE:
+                {
+                    PVMF_SOCKETNODE_LOGDATATRAFFIC_RTCP((0, "SN-RTCP - Mime=%s, RTCP_SR RECVD",
+                                                         aSockConfig.iMime.get_cstr()));
+                }
+                break;
+
+                case RR_PACKET_TYPE:
+                {
+                    PVMF_SOCKETNODE_LOGDATATRAFFIC_RTCP((0, "SN-RTCP - Mime=%s, RTCP_RR RECVD",
+                                                         aSockConfig.iMime.get_cstr()));
+                }
+                break;
+
+                case SDES_PACKET_TYPE:
+                {
+                    PVMF_SOCKETNODE_LOGDATATRAFFIC_RTCP((0, "SN-RTCP - Mime=%s, RTCP_SDES_PKT RECVD",
+                                                         aSockConfig.iMime.get_cstr()));
+                }
+                break;
+
+                case BYE_PACKET_TYPE:
+                {
+                    PVMF_SOCKETNODE_LOGDATATRAFFIC_RTCP((0, "SN-RTCP - Mime=%s, RTCP_BYE RECVD",
+                                                         aSockConfig.iMime.get_cstr()));
+                }
+                break;
+
+                case APP_PACKET_TYPE:
+                {
+                    PVMF_SOCKETNODE_LOGDATATRAFFIC_RTCP((0, "SN-RTCP - Mime=%s, RTCP_APP_PKT RECVD",
+                                                         aSockConfig.iMime.get_cstr()));
+                }
+                break;
+
+                default:
+                    break;
+            }
+            rtcpPacketLen -= (rtcpLength + 1) * 4;
+            rtcpHeader += (rtcpLength + 1) * 4;
+            if (rtcpLength)
+            {
+                inStream.seekFromCurrentPosition((rtcpLength*4));
+                if (inStream.fail())
+                {
+                    PVMF_SOCKETNODE_LOGDATATRAFFIC_RTCP((0, "SN-RTCP - Mime=%s, RTCP Packet Read Failed",
+                                                         aSockConfig.iMime.get_cstr()));
+                    return;
+                }
+            }
+        } //end of while loop
     }
 }
 
@@ -4488,11 +4772,41 @@ void PVMFSocketNode::Run()
         ProcessCommand(iPendingCmdQueue, iPendingCmdQueue.front());
 }
 
+int32 PVMFSocketNode::SocketPlacementNew(PVMFSocketNodeMemPool *& aMemPool, OsclAny *aMemPtr, int32 aMemPoolNumBufs)
+{
+    int32 errcode = 0;
+    OSCL_TRY(errcode, aMemPool = OSCL_PLACEMENT_NEW(aMemPtr, PVMFSocketNodeMemPool(aMemPoolNumBufs);));
+    return errcode;
+}
 
+int32 PVMFSocketNode::CreateMediaData(SocketPortConfig& aSockConfig, OsclSharedPtr< PVMFMediaDataImpl > &aMediaptr)
+{
+    int32 err = 0;
+    OSCL_TRY_NO_TLS(iOsclErrorTrapImp, err,
+                    aSockConfig.iPendingRecvMediaData = PVMFMediaData::createMediaData(aMediaptr, aSockConfig.iMemPool->iMediaDataMemPool););
+    return err;
+}
 
+int32 PVMFSocketNode::Allocate(SocketPortConfig &aSockConfig, OsclSharedPtr< PVMFMediaDataImpl > &aMediaFragGroup)
+{
+#if SNODE_ENABLE_UDP_MULTI_PACKET
+    int32 err = 0;
+    OSCL_TRY_NO_TLS(iOsclErrorTrapImp, err,
+                    aMediaFragGroup = aSockConfig.iMemPool->iMediaFragGroupAlloc->allocate(););
+    return err;
+#else
+    return OsclErrNotSupported;
+#endif
+}
 
-
-
-
-
+int32 PVMFSocketNode::GetMediaDataImpl(SocketPortConfig& aSockConfig, OsclSharedPtr<PVMFMediaDataImpl> &aMediaDataImpl, int32 aMemSize)
+{
+    int32 err = 0;
+    aMediaDataImpl = aSockConfig.iMemPool->getMediaDataImpl(aMemSize);
+    if (NULL == aMediaDataImpl.GetRep())
+    {
+        err = OsclErrNoMemory;
+    }
+    return err;
+}
 

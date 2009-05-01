@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,7 +69,7 @@ H263PayloadParser::Parse(const Payload& inputPacket,
 {
     //	H263 Payload Header Masks
     static const uint8 RR = 0xF8;	//	Reserved Bits Mask
-    static const uint8 Pbit = 0x04;	//	Picture Start bit mask
+    static const uint8 Pbit = 0x04;	//	Picture or GOB Start bit mask
     static const uint8 Vbit = 0x02;	//	VRC mask
 
     bool bPBit;	    //	indicates whether picture start code is present or not
@@ -90,11 +90,26 @@ H263PayloadParser::Parse(const Payload& inputPacket,
     //check for VRC
     bVBit = (*vb & Vbit) > 0;
 
+    // 1st bit of PLEN in the 1st byte of the payload header
+    uint8 plenHI = (*vb & 0x01);
+    // the next 5 bits of PLEN in the 2nd byte of the payload header
+    uint8 plenLow = (*(vb + 1) & 0xF8);
+
+    // reconstruct PLEN
+    uint16 plen = (((uint16)plenHI << 8) + plenLow) >> 3;
 
     Payload output;
 
-    if (bPBit) // Picture start code present
+    if (bPBit) // Picture or GOB start code present
     {
+        if (plen > 0) // If extra picture header presents in the midlle of the frame
+        {
+            // skip the extra picture header from the payload
+            vb += plen;
+            // start the output payload from offset plen
+            input += plen;
+        }
+
         // we need to prepend the payload with two zero bytes
 
         if (bVBit) // VRC Header present - payload starts at 1

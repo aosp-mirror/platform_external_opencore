@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,14 @@
 
 #ifndef PAYLOAD_PARSER_H_INCLUDED
 #include "payload_parser.h"
+#endif
+
+#ifndef PVMF_EVENT_HANDLING_H_INCLUDED
+#include "pvmf_event_handling.h"
+#endif
+
+#ifndef PVMF_SM_CONFIG_H_INCLUDED
+#include "pvmf_sm_config.h"
 #endif
 
 // UUID for the extension interface
@@ -111,6 +119,7 @@ class PVRTSPEngineNodeServerInfo
         {
             iIsPVServer = false;
             iRoundTripDelayInMS = 0;
+            iServerVersionNumber = 0;
         }
 
         virtual ~PVRTSPEngineNodeServerInfo()
@@ -120,13 +129,20 @@ class PVRTSPEngineNodeServerInfo
         bool iIsPVServer;
         uint32 iRoundTripDelayInMS;
         OSCL_HeapString<OsclMemAllocator> iServerName;
+        uint32 	iServerVersionNumber;
 };
 
 #define PVRTSPENGINENODE_DEFAULT_KEEP_ALIVE_INTERVAL 55
+#define PVRTSPENGINENODE_DEFAULT_RTSP_INACTIVITY_TIMER 15
+#define PVRTSPENGINENODE_DEFAULT_NUMBER_OF_REDIRECT_TRIALS 1
+
+//Forward Declarations
+class PVMFPortInterface;
 
 class PVRTSPEngineNodeExtensionInterface : public PVInterface
 {
     public:
+        virtual ~PVRTSPEngineNodeExtensionInterface() {}
         //**********begin PVInterface
         OSCL_IMPORT_REF virtual void addRef() = 0;
         OSCL_IMPORT_REF virtual void removeRef() = 0;
@@ -200,6 +216,9 @@ class PVRTSPEngineNodeExtensionInterface : public PVInterface
         *
         */
 
+        OSCL_IMPORT_REF virtual PVMFStatus GetRTSPTimeOut(int32 &aTimeout) = 0;
+        OSCL_IMPORT_REF virtual PVMFStatus SetRTSPTimeOut(int32 aTimeout) = 0;
+        OSCL_IMPORT_REF virtual void UpdateSessionCompletionStatus(bool aSessionCompleted) = 0;
 };
 
 #endif //PVRTSP_ENGINE_NODE_EXTENSION_INTERFACE_H_INCLUDED

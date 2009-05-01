@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,19 +27,15 @@ Permission to distribute, modify and use this file under the standard license
 terms listed above has been obtained from the copyright holder.
 ****************************************************************************************/
 /*
-------------------------------------------------------------------------------
-
-
 
  Filename: /audio/gsm_amr/c/src/include/d_gain_c.h
-
-     Date: 01/29/2002
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
 
  Description: Moved _cplusplus #ifdef after Include section.
 
+ Who:                       Date:
  Description:
 
 ------------------------------------------------------------------------------

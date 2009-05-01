@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,6 +93,7 @@ enum PVProtocolEngineNodeErrorEventType
     // some processing errors, especially for pending commands with failure, within the range [200, 299], which is not HTTP status error code range
     PVProtocolEngineNodeErrorNotHTTPErrorStart									 = PVProtocolEngineNodeErrorEventStart + 200,
     PVProtocolEngineNodeErrorProcessingFailure									 = PVProtocolEngineNodeErrorNotHTTPErrorStart + 90, // 1314
+    PVProtocolEngineNodeErrorProcessingFailure_MaximumSizeLimitation			 = PVProtocolEngineNodeErrorProcessingFailure - 19, // 1295
     PVProtocolEngineNodeErrorProcessingFailure_ContentLengthNotMatch			 = PVProtocolEngineNodeErrorProcessingFailure - 16, // 1298
     PVProtocolEngineNodeErrorProcessingFailure_TimeoutServerInactivity		     = PVProtocolEngineNodeErrorProcessingFailure - 15, // 1299
     PVProtocolEngineNodeErrorProcessingFailure_TimeoutServerNoResponce			 = PVProtocolEngineNodeErrorProcessingFailure - 14, // 1300
@@ -114,6 +115,9 @@ enum PVProtocolEngineNodeErrorEventType
     PVProtocolEngineNodeErrorHTTPRedirect_NotValidUrl						= PVProtocolEngineNodeErrorProcessingFailure + 1,	// 1315
     PVProtocolEngineNodeErrorHTTPRedirect_TrialsExceedLimit,																// 1316
     PVProtocolEngineNodeErrorHTTPErrorCode401_InvalidRealm,																	// 1317
+    PVProtocolEngineNodeErrorHTTPErrorCode401_UnsupportedAuthenticationType,												// 1318
+    PVProtocolEngineNodeErrorHTTPErrorCode401_NoAuthenticationHeader,														// 1319
+
 
     PVProtocolEngineNodeErrorNotHTTPErrorEnd								= PVProtocolEngineNodeErrorEventStart + 299,
 

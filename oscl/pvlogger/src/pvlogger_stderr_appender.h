@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,9 @@
 
 #ifndef OSCLCONFIG_UTIL_H_INCLUDED
 #include "osclconfig_util.h"
+#endif
+#ifndef OSCL_MEM_H_INCLUDED
+#include "oscl_mem.h"
 #endif
 
 /**
@@ -65,7 +68,7 @@ class StdErrAppender : public PVLoggerAppender
             size = _layout.FormatString(stringbuf, LayoutBufferSize, msgID, fmt, va);
 
             {
-                fprintf(stderr, stringbuf);
+                fprintf(stderr, "%s", stringbuf);
                 fprintf(stderr, "\n");
             }
 

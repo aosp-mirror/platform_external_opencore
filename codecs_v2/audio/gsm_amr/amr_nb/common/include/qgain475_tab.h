@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,11 +30,10 @@ terms listed above has been obtained from the copyright holder.
 
  Pathname: .audio/gsm-amr/c/include/qgain475_tab.h
 
-     Date: 12/09/2002
-
 ------------------------------------------------------------------------------
  REVISION HISTORY
 
+ Who:                        Date:
  Description:
 
 ------------------------------------------------------------------------------
@@ -50,6 +49,8 @@ terms listed above has been obtained from the copyright holder.
 ----------------------------------------------------------------------------*/
 #ifndef QGAIN475_TAB_H
 #define QGAIN475_TAB_H
+
+#define MR475_VQ_SIZE 256
 
 /*----------------------------------------------------------------------------
 ; INCLUDES

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@
 #include "osclconfig_error.h"
 #endif
 
-/** Internal leave/trap/panic implementation.
+/** Internal leave/trap implementation.
 */
 
 //This selects the type of implementation
@@ -54,7 +54,7 @@
 */
 
 /**
-//include the internal leave/trap/panic implementation macros.
+//include the internal leave/trap implementation macros.
 */
 #if defined( PVERROR_IMP_JUMPS)
 #include "oscl_error_imp_jumps.h"
@@ -63,16 +63,9 @@
 #elif defined(PVERROR_IMP_FATAL_ERROR)
 #include "oscl_error_imp_fatalerror.h"
 #else
-#error No leave/panic implementation!
+#error No leave implementation!
 #endif
 
-/** Option to enable the trap level check.
-** When enabled, the cleanup stack will generate
-** panics for any Push operation outside a Trap.
-** Symbian generates these panics, but they're optional
-** on non-Symbian.
-*/
-#undef PVERROR_TRAP_LEVEL_CHECKS
 
 
 

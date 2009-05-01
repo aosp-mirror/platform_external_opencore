@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -174,28 +174,13 @@ void MBIntraSearch(AVCEncObject *encvid, int mbnum, uint8 *curL, int picPitch)
         encvid->min_cost[mbnum] = min_cost; /* update min_cost */
     }
 
-#if 0
-    /* then do chroma search for intra mode */
-    if (intra == true && currMB->mb_intra == 0)
-    {
-        encvid->numFalseAlarm++;
-    }
-    else if (intra == true && currMB->mb_intra)
-    {
-        encvid->numDetected++;
-    }
-    else if (intra == false && currMB->mb_intra)
-    {
-        encvid->numMisDetected++;
-    }
-#endif
 
     if (currMB->mb_intra)
     {
         chroma_intra_search(encvid);
 
         /* need to set this in order for the MBInterPrediction to work!! */
-        oscl_memset(currMB->mvL0, 0, sizeof(int16)*32);
+        oscl_memset(currMB->mvL0, 0, sizeof(int32)*16);
         currMB->ref_idx_L0[0] = currMB->ref_idx_L0[1] =
                                     currMB->ref_idx_L0[2] = currMB->ref_idx_L0[3] = -1;
     }
@@ -1042,7 +1027,7 @@ int blk_intra4x4_search(AVCEncObject *encvid, int blkidx, uint8 *cur, uint8 *org
         Q_y = (P_I + 2 * P_J + P_K + 2) >> 2;
         R_y = (P_J + 2 * P_K + P_L + 2) >> 2;
 
-        /* we can pack these MC */
+        /* we can pack these */
         temp =  D | (P_x << 8);   //[D   P_x Q_x R_x]
         //[P_y D   P_x Q_x]
         temp |= (Q_x << 16); //[Q_y P_y D   P_x]
@@ -1132,7 +1117,7 @@ int blk_intra4x4_search(AVCEncObject *encvid, int blkidx, uint8 *cur, uint8 *org
         S0 >>= 1;
 
 
-        /* we can pack these MC */
+        /* we can pack these */
         temp = P0 | (D << 8);   //[P0 D  P2 Q2]
         //[Q0 P1 P0 D ]
         temp |= (P2 << 16);  //[R0 Q1 Q0 P1]
@@ -2005,8 +1990,8 @@ void MBIntraSearch(AVCEncObject *encvid, AVCMacroblock *currMB, int mbNum)
     }
 
     /* also reset the motion vectors */
-    /* set MV and Ref_Idx codes of Intra blocks in P-slices MC */
-    oscl_memset(currMB->mvL0, 0, sizeof(int16)*32);
+    /* set MV and Ref_Idx codes of Intra blocks in P-slices */
+    oscl_memset(currMB->mvL0, 0, sizeof(int32)*16);
     currMB->ref_idx_L0[0] = -1;
     currMB->ref_idx_L0[1] = -1;
     currMB->ref_idx_L0[2] = -1;
@@ -2067,55 +2052,6 @@ void MBIntraSearch(AVCEncObject *encvid, AVCMacroblock *currMB, int mbNum)
 
     /* currently we're doing exhaustive search. Smart search will be used later */
 
-#if 0
-    /* I4 mode */
-    block_x = block_y = 0;
-
-    sadI4 = 24 * encvid->lambda_mode;  // cost function
-
-    for (component = 0; component < 4; component++)
-    {
-        block_x = ((component & 1) << 1);
-        block_y = ((component >> 1) << 1);
-        comp = curL;
-
-        for (SubBlock_indx = 0; SubBlock_indx < 4; SubBlock_indx++)
-        {
-            sad4 = Intra4x4PredSearch(encvid, block_x, block_y, comp);
-
-            sadI4 += sad4;
-
-            temp = SubBlock_indx & 1;
-            if (temp)
-            {
-                block_y++;
-                block_x--;
-                comp += ((pitch << 2) - 4);
-            }
-            else
-            {
-                block_x++;
-                comp += 4;
-            }
-        }
-        if (component&1)
-        {
-            curL += (pitch << 3) - 8;
-        }
-        else
-        {
-            curL += 8;
-        }
-    }
-
-    /* selection between intra4, intra16 or inter mode */
-    if (sadI4 < encvid->min_cost)
-    {
-        currMB->mb_intra = TRUE;
-        currMB->mbMode = AVC_I4;
-        encvid->min_cost = sadI4;
-    }
-#endif
     /* I16 modes */
     curL = currInput->YCbCr[0] + offset;
     video->pintra_pred_top = curL - pitch;
@@ -2248,8 +2184,8 @@ void MBIntraSearch(AVCEncObject *encvid, AVCMacroblock *currMB, int mbNum)
         }
 
         /* also reset the motion vectors */
-        /* set MV and Ref_Idx codes of Intra blocks in P-slices MC */
-        oscl_memset(currMB->mvL0, 0, sizeof(int16)*32);
+        /* set MV and Ref_Idx codes of Intra blocks in P-slices */
+        oscl_memset(currMB->mvL0, 0, sizeof(int32)*16);
         oscl_memset(currMB->ref_idx_L0, -1, sizeof(int16)*4);
 
     }

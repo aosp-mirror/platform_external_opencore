@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@
 /*		RTP packet payload parser.                                          */
 /*																			*/
 /*	Rev:   0.2																*/
-/*	Created: Apr. 26, 2001												    */
 /*	=====================================================================	*/
 /*																			*/
 /*	Revision History:														*/
@@ -120,11 +119,14 @@ class PV_LATM_Parser
         {
             return mediaDataOut;
         }
+        OSCL_IMPORT_REF uint8 compose(uint8* aData, uint32 aDataLen, uint32 aTimestamp, uint32 aSeqNum, uint32 aMbit);
 
 
     private:
         uint8 composeSingleFrame(PVMFSharedMediaDataPtr&);
         uint8 composeMultipleFrame(PVMFSharedMediaDataPtr&);
+        uint8 composeSingleFrame(uint8* aData, uint32 aDataLen, uint32 aTimestamp, uint32 aSeqNum, uint32 aMbit);
+        uint8 composeMultipleFrame(uint8* aData, uint32 aDataLen, uint32 aTimestamp, uint32 aSeqNum, uint32 aMbit);
 
 
     private:

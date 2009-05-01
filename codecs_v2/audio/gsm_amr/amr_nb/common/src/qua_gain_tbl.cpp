@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,11 +28,7 @@ terms listed above has been obtained from the copyright holder.
 ****************************************************************************************/
 /*
 
-
-
  Filename: /audio/gsm_amr/c/src/qua_gain_tbl.c
-
-     Date: 02/05/2002
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
@@ -44,6 +40,7 @@ terms listed above has been obtained from the copyright holder.
 
  Description: Put "extern" back.
 
+ Who:                               Date:
  Description:
 
 ------------------------------------------------------------------------------

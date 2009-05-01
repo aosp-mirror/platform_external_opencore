@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -393,6 +393,13 @@ class CPMPlugInParams
             iPlugInMetaDataExtensionInterface = NULL;
             iPlugInLicenseInterface = NULL;
             iPlugInCapConfigExtensionInterface = NULL;
+            iPlugInAuthenticationInterfacePVI = NULL;
+            iPlugInAuthorizationInterfacePVI = NULL;
+            iPlugInAccessInterfaceFactoryPVI = NULL;
+            iPlugInMetaDataExtensionInterfacePVI = NULL;
+            iPlugInLicenseInterfacePVI = NULL;
+            iPlugInCapConfigExtensionInterfacePVI = NULL;
+
             iAuthorizationRequestTimeOut =
                 PVMF_CPM_DEFAULT_PLUGIN_AUTHORIZATION_TIMEOUT_IN_MS;
             iConnected = false;
@@ -419,6 +426,12 @@ class CPMPlugInParams
         PVMFMetadataExtensionInterface* iPlugInMetaDataExtensionInterface;
         PVMFCPMPluginLicenseInterface* iPlugInLicenseInterface;
         PvmiCapabilityAndConfig* iPlugInCapConfigExtensionInterface;
+        PVInterface* iPlugInAuthenticationInterfacePVI;
+        PVInterface* iPlugInAuthorizationInterfacePVI;
+        PVInterface* iPlugInAccessInterfaceFactoryPVI;
+        PVInterface* iPlugInMetaDataExtensionInterfacePVI;
+        PVInterface* iPlugInLicenseInterfacePVI;
+        PVInterface* iPlugInCapConfigExtensionInterfacePVI;
         uint32 iAuthorizationRequestTimeOut;
         bool iConnected;
         bool iAuthorized;
@@ -752,7 +765,7 @@ class PVMFCPMImpl : public OsclActiveObject,
         CPMContentUsageContext* LookUpContentUsageContext(PVMFCPMUsageID);
         CPMPlugInParams* LookUpPlugInParams(uint32);
         CPMPlugInParams* LookUpPlugInParamsFromActiveList(uint32);
-
+        int32 PushKVPKey(OSCL_String& aString, PVMFMetadataList& aKeyList);
         PVLogger* iLogger;
 
         CPMPluginRegistry* iPluginRegistry;
@@ -786,7 +799,6 @@ class PVMFCPMImpl : public OsclActiveObject,
         PVMFCPMPluginLicenseInterface* iLicenseInterface ;
         PVMFCommandId iGetLicenseCmdId;
         PVMFCommandId iCancelGetLicenseCmdId;
-
 };
 
 
@@ -817,6 +829,7 @@ struct CPMPluginMimeStringCompare
 #include "oscl_map.h"
 #endif
 
+class OsclSharedLibraryList;
 class CPMPluginRegistryImpl: public CPMPluginRegistry
 {
     public:
@@ -832,6 +845,10 @@ class CPMPluginRegistryImpl: public CPMPluginRegistry
 
         OSCL_IMPORT_REF bool GetPluginMimeType(uint32 aIndex, OSCL_String& aMimeType) ;
 
+        OsclSharedLibraryList*& AccessSharedLibraryList()
+        {
+            return iSharedLibList;
+        }
 
     private:
         friend class CPMPluginRegistryFactory;
@@ -844,6 +861,8 @@ class CPMPluginRegistryImpl: public CPMPluginRegistry
         Oscl_Vector<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator> iListofPlugInMimeTypes;
 
         int32 iRefCount;
+
+        OsclSharedLibraryList* iSharedLibList;
 };
 
 #endif //CPM_INTERNAL_H_INCLUDED

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ OSCL_EXPORT_REF FileTypeAtom::FileTypeAtom(MP4_FF_FILE *fp, uint32 size, uint32 
     if (_success)
     {
         PV_MP4_FF_NEW(fp->auditCB, uint32VecType, (), _pCompatible_brand);
+
 
         // ftype size is only 8. In that case we should not read beyond the atom boundry blindly
         atomSize = getSize();

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*********************************************************************************/
 /*
     This PVA_FF_ChunkOffsetAtom Class gives the index of each chunk into the
     containing FILE.
@@ -80,21 +79,10 @@ PVA_FF_ChunkOffsetAtom::nextSample(uint32 size,
         case MEDIA_TYPE_TEXT: //for timed text track
         case MEDIA_TYPE_AUDIO:
         case MEDIA_TYPE_VISUAL:
-        case MEDIA_TYPE_OBJECT_DESCRIPTOR:
-        case MEDIA_TYPE_SCENE_DESCRIPTION:
-        case MEDIA_TYPE_IPMP:
         {
             _currentDataOffset += size;
         }
         break;
-        case MEDIA_TYPE_CLOCK_REFERENCE:
-            break;
-        case MEDIA_TYPE_MPEG7:
-            break;
-        case MEDIA_TYPE_OBJECT_CONTENT_INFO:
-            break;
-        case MEDIA_TYPE_MPEG_J:
-            break;
         case MEDIA_TYPE_UNKNOWN:
         default:
             break;
@@ -147,6 +135,10 @@ PVA_FF_ChunkOffsetAtom::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
     }
     rendered += 4;
 
+    if (_pchunkOffsets->size() < getEntryCount())
+    {
+        return false;
+    }
     for (uint32 i = 0; i < getEntryCount(); i++)
     {
         if (!PVA_FF_AtomUtils::render32(fp, (*_pchunkOffsets)[i]))

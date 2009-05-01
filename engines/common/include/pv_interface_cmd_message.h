@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,10 @@
 #include "pv_common_types.h"
 #endif
 
+#ifndef PV_ENGINE_TYPES_H_INCLUDED
+#include "pv_engine_types.h"
+#endif
+
 /**
  * CPVInterfaceCmdMessage Class
  *
@@ -35,7 +39,7 @@
 class CPVCmnInterfaceCmdMessage
 {
     public:
-        CPVCmnInterfaceCmdMessage(TPVCmnCommandType aType,
+        CPVCmnInterfaceCmdMessage(int aType,
                                   OsclAny* aContextData) : iId(0),
                 iType(aType),
                 iPriority(0),
@@ -45,11 +49,11 @@ class CPVCmnInterfaceCmdMessage
 
         virtual ~CPVCmnInterfaceCmdMessage() {};
 
-        TPVCmnCommandId GetCommandId()
+        PVCommandId GetCommandId()
         {
             return iId;
         }
-        TPVCmnCommandType GetType()
+        int GetType()
         {
             return iType;
         }
@@ -78,18 +82,18 @@ class CPVCmnInterfaceCmdMessage
 
         friend int32 operator<(const CPVCmnInterfaceCmdMessage& a, const CPVCmnInterfaceCmdMessage& b);
 
-        void SetId(TPVCmnCommandId aId)
+        void SetId(PVCommandId aId)
         {
             iId = aId;
         }
 
     protected:
-        TPVCmnCommandId iId;
-        TPVCmnCommandType iType;
+        PVCommandId iId;
+        int iType;
         int32 iPriority;
         OsclAny* iContextData;
 
-        friend class CPVInterfaceProxy;
+        friend class PVInterfaceProxy;
 };
 
 inline int32 operator<(const CPVCmnInterfaceCmdMessage& a, const CPVCmnInterfaceCmdMessage& b)
@@ -110,7 +114,6 @@ inline int32 operator<(const CPVCmnInterfaceCmdMessage& a, const CPVCmnInterface
         return false;
     }
 }
-
 #endif
 
 

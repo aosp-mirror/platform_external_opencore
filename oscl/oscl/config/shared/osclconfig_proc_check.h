@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,51 @@
 #ifndef OSCLCONFIG_PROC_CHECK_H_INCLUDED
 #define OSCLCONFIG_PROC_CHECK_H_INCLUDED
 
+/**
+OSCL_HAS_THREAD_SUPPORT macro should be set to 1 if
+the target platform supports threads.
+Otherwise it should be set to 0.
+*/
+#ifndef OSCL_HAS_THREAD_SUPPORT
+#error "ERROR: OSCL_HAS_THREAD_SUPPORT has to be defined to either 1 or 0"
+#endif
 
+/**
+OSCL_HAS_NON_PREEMPTIVE_THREAD_SUPPORT macro should be set to 1 if
+the target platform supports non-pre-emptive threads.
+Otherwise it should be set to 0.
+*/
+#ifndef OSCL_HAS_NON_PREEMPTIVE_THREAD_SUPPORT
+#error "ERROR: OSCL_HAS_NON_PREEMPTIVE_THREAD_SUPPORT has to be defined to either 1 or 0"
+#endif
 
+/**
+OSCL_HAS_SYMBIAN_SCHEDULER macro should be set to 1 if
+the target platform supports Symbian active object scheduler.
+Otherwise it should be set to 0.
+*/
+#ifndef OSCL_HAS_SYMBIAN_SCHEDULER
+#error "ERROR: OSCL_HAS_SYMBIAN_SCHEDULER has to be defined to either 1 or 0"
+#endif
 
+/**
+OSCL_HAS_SEM_TIMEDWAIT_SUPPORT macro should be set to 1 if
+the target platform supports POSIX-compliant semaphores (semaphore.h)
+with advanced realtime features including sem_timedwait.
+Otherwise it should be set to 0.
+*/
+#ifndef OSCL_HAS_SEM_TIMEDWAIT_SUPPORT
+#error "ERROR: OSCL_HAS_SEM_TIMEDWAIT_SUPPORT has to be defined to either 1 or 0"
+#endif
+
+/**
+OSCL_HAS_PTHREAD_SUPPORT macro should be set to 1 if
+the target platform supports POSIX-compliand pthreads (pthread.h).
+Otherwise it should be set to 0.
+*/
+#ifndef OSCL_HAS_PTHREAD_SUPPORT
+#error "ERROR: OSCL_HAS_PTHREAD_SUPPORT has to be defined to either 1 or 0"
+#endif
 
 /**
 type TOsclThreadId should be defined as the type used as

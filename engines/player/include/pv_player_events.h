@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -223,6 +223,12 @@ typedef enum
      from the current playback position ASAP.
      **/
     PVPlayerInfoAttemptingSFRAsPartOfSetPlayBackRange,
+
+    /**
+     pvPlayer sends this event when engine is changing position and
+     Source node sends NotSupported to Change Position request.
+     **/
+    PVPlayerInfoChangePlaybackPositionNotSupported,
 
     /**
      Placeholder for the last pvPlayer informational event

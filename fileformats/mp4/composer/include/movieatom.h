@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*********************************************************************************/
 /*
     This PVA_FF_MovieAtom Class is the main atom class in the MPEG-4 File that stores
     all the meta data about the MPEG-4 presentation.
@@ -33,7 +32,6 @@
 #include "pv_mp4ffcomposer_config.h"
 
 #include "movieheaderatom.h"
-#include "objectdescriptoratom.h"
 #include "trackatom.h"
 
 #include "userdataatom.h"
@@ -45,6 +43,9 @@
 #include "movieextendsatom.h"
 #include "moviefragmentatom.h"
 #include "moviefragmentrandomaccessatom.h"
+#ifndef PVMI_KVP_H_INCLUDED
+#include "pvmi_kvp.h"
+#endif
 
 
 class PVA_FF_MovieAtom : public PVA_FF_Atom, public PVA_FF_ISucceedFail
@@ -84,25 +85,12 @@ class PVA_FF_MovieAtom : public PVA_FF_Atom, public PVA_FF_ISucceedFail
             _pmovieHeaderAtom = header;
         }
 
-        const PVA_FF_ObjectDescriptorAtom &getObjectDescriptorAtom()
-        {
-            return *_pobjectDescriptorAtom;
-        }
-        PVA_FF_ObjectDescriptorAtom &getMutableObjectDescriptorAtom()
-        {
-            return *_pobjectDescriptorAtom;
-        }
-        void setObjectDescriptorAtom(PVA_FF_ObjectDescriptorAtom *od)
-        {
-            _pobjectDescriptorAtom = od;
-        }
-
         // Track gets and adds
         void addTrackAtom(PVA_FF_TrackAtom *a); // Adds to appropriate vector
 
         const Oscl_Vector<PVA_FF_TrackAtom*, OsclMemAllocator>& getMpeg4TrackVec()
         {
-            return *_pmpeg4TrackVec;    // Contains OD and BIFS tracks
+            return *_pmpeg4TrackVec;
         }
         PVA_FF_TrackAtom *getMpeg4Track(int32 index);
 
@@ -124,12 +112,6 @@ class PVA_FF_MovieAtom : public PVA_FF_Atom, public PVA_FF_ISucceedFail
 
         // Getting and setting the Mpeg4 VOL header for timed text
         void addTextDecoderSpecificInfo(PVA_FF_TextSampleDescInfo *pinfo, int32 trackID);
-
-        // Gets and sets for BIFS binary encoded scene
-        void setBIFSDecoderInfo(PVA_FF_DecoderSpecificInfo *info)
-        {
-            _pBIFSTrack->addDecoderSpecificInfo(info);
-        }
 
         PVA_FF_TrackAtom *getMediaTrack(uint32 trackID);
         void addSampleToTrack(uint32 trackID, uint8 *psample,
@@ -306,27 +288,54 @@ class PVA_FF_MovieAtom : public PVA_FF_Atom, public PVA_FF_ISucceedFail
             return false;
         }
 
-        bool setLocationInfo(PVA_FF_UNICODE_STRING_PARAM locationName,
-                             PVA_FF_UNICODE_STRING_PARAM locationInfoAstrBody,
-                             PVA_FF_UNICODE_STRING_PARAM locationInfoAddNotes,
-                             uint8 locationInfoRole,
-                             uint32 locationInfoLongitude,
-                             uint32 locationInfoLatitude,
-                             uint32 locationInfoAltitude,
-                             uint16 langCode)
+        bool setLocationInfo(PvmfAssetInfo3GPPLocationStruct *ptr_loc_struct)
         {
             if (_pAssetInfoLocationInfoAtom != NULL)
             {
-                _pAssetInfoLocationInfoAtom->setLocationInfoLangCode(langCode);
-                _pAssetInfoLocationInfoAtom->setLocationInfoRole(locationInfoRole);
-                _pAssetInfoLocationInfoAtom->setLocationInfoLongitude(locationInfoLongitude);
-                _pAssetInfoLocationInfoAtom->setLocationInfoLatitude(locationInfoLatitude);
-                _pAssetInfoLocationInfoAtom->setLocationInfoAltitude(locationInfoAltitude);
+                _pAssetInfoLocationInfoAtom->setLocationInfoLangCode(ptr_loc_struct->_langCode);
+                _pAssetInfoLocationInfoAtom->setLocationInfoRole(ptr_loc_struct->_role);
+                _pAssetInfoLocationInfoAtom->setLocationInfoLongitude(ptr_loc_struct->_longitude);
+                _pAssetInfoLocationInfoAtom->setLocationInfoLatitude(ptr_loc_struct->_latitude);
+                _pAssetInfoLocationInfoAtom->setLocationInfoAltitude(ptr_loc_struct->_altitude);
 
-                _pAssetInfoLocationInfoAtom->setLocationInfoName(locationName);
-                _pAssetInfoLocationInfoAtom->setLocationInfoAstrBody(locationInfoAstrBody);
-                _pAssetInfoLocationInfoAtom->setLocationInfoAddNotes(locationInfoAddNotes);
+                _pAssetInfoLocationInfoAtom->setLocationInfoName(ptr_loc_struct->_location_name);
+                _pAssetInfoLocationInfoAtom->setLocationInfoAstrBody(ptr_loc_struct->_astronomical_body);
+                _pAssetInfoLocationInfoAtom->setLocationInfoAddNotes(ptr_loc_struct->_additional_notes);
+                setLanguage(ptr_loc_struct->_langCode);
+                return true;
+            }
+
+            return false;
+        }
+
+        bool setAlbumInfo(PVA_FF_UNICODE_STRING_PARAM albumtitle, uint16 langCode)
+        {
+            if (_pAssetInfoKeyAlbumAtom != NULL)
+            {
+                _pAssetInfoKeyAlbumAtom->setAlbumLangCode(langCode);
+                _pAssetInfoKeyAlbumAtom->setAlbumInfo(albumtitle);
                 setLanguage(langCode);
+                return true;
+            }
+
+            return false;
+        }
+
+		bool setAlbumTrackNumber(uint8 trackNumber)
+		{
+            if (_pAssetInfoKeyAlbumAtom != NULL)
+            {
+				_pAssetInfoKeyAlbumAtom->setAlbumTrackNumber(trackNumber);
+				return true;
+			}
+			return false;
+		}
+
+        bool setRecordingYearInfo(uint16 recordingYear)
+        {
+            if (_pAssetInfoKeyRecordingYearAtom != NULL)
+            {
+                _pAssetInfoKeyRecordingYearAtom->setRecordingYear(recordingYear);
                 return true;
             }
 
@@ -337,17 +346,14 @@ class PVA_FF_MovieAtom : public PVA_FF_Atom, public PVA_FF_ISucceedFail
         void	setMovieFragmentDuration();
         void	updateMovieFragmentDuration(uint32 trackID, uint32 ts);
         void	writeMovieFragmentDuration(MP4_AUTHOR_FF_FILE_IO_WRAP* fp);
-        void	setVideoWidthHeight(uint32 trackID, int16 width, int16 height);
-
+        void    SetMaxSampleSize(uint32, uint32);
+        void	writeMaxSampleSize(MP4_AUTHOR_FF_FILE_IO_WRAP*);
     private:
         virtual void recomputeSize();
 
         PVA_FF_MovieHeaderAtom *_pmovieHeaderAtom;
-        PVA_FF_ObjectDescriptorAtom *_pobjectDescriptorAtom;
 
-        Oscl_Vector<PVA_FF_TrackAtom*, OsclMemAllocator> *_pmpeg4TrackVec; // Vector of misc tracks (OD and BIFS)
-        PVA_FF_TrackAtom *_pBIFSTrack;
-        PVA_FF_TrackAtom *_pODTrack;
+        Oscl_Vector<PVA_FF_TrackAtom*, OsclMemAllocator> *_pmpeg4TrackVec;
 
         PVA_FF_UserDataAtom *_puserDataAtom;
         Oscl_Vector<PVA_FF_TrackAtom*, OsclMemAllocator> *_pMediaTrackVec; // Vector of tracks
@@ -365,6 +371,8 @@ class PVA_FF_MovieAtom : public PVA_FF_Atom, public PVA_FF_ISucceedFail
         PVA_FF_AssetInfoClassificationAtom	*_pAssetInfoClassificationAtom;
         PVA_FF_AssetInfoKeyWordsAtom		*_pAssetInfoKeyWordsAtom;
         PVA_FF_AssetInfoLocationInfoAtom	*_pAssetInfoLocationInfoAtom;
+        PVA_FF_AssetInfoAlbumAtom			*_pAssetInfoKeyAlbumAtom;
+        PVA_FF_AssetInfoRecordingYearAtom	*_pAssetInfoKeyRecordingYearAtom;
 
         // Movie Fragment : Atoms needed in movie fragment mode
         PVA_FF_MovieExtendsAtom				*_pMovieExtendsAtom;

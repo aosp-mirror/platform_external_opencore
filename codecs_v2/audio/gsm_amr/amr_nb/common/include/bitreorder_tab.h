@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,8 +30,6 @@ terms listed above has been obtained from the copyright holder.
 
  Pathname: .audio/gsm-amr/c/include/bitreorder.h
 
-     Date: 01/24/2002
-
 ------------------------------------------------------------------------------
  REVISION HISTORY
 
@@ -42,6 +40,7 @@ terms listed above has been obtained from the copyright holder.
 
  Description: Added #ifdef __cplusplus after Include section.
 
+ Who:                       Date:
  Description:
 
 ------------------------------------------------------------------------------

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,10 +58,6 @@
 #include "pv_gau.h"
 #endif
 
-#ifndef AUDIOMETADATA_H_INCLUDED
-#include "audiometadata.h"
-#endif
-
 #ifndef PVFILE_H_INCLUDED
 #include "pvfile.h"
 #endif
@@ -114,7 +110,7 @@ OSCL_DELETE(ptr);\
 
 #define PV_AAC_FF_TEMPLATED_DELETE(auditCB,T,Tsimple,ptr)\
 {\
-OSCL_TEMPLATED_DELETE(ptr, T, Tsimple);\
+OSCL_DELETE(ptr);\
 }
 
 #define PV_AAC_FF_ARRAY_MALLOC(auditCB,T,count,ptr)\
@@ -138,13 +134,14 @@ OSCL_TEMPLATED_DELETE(ptr, T, Tsimple);\
     OSCL_ARRAY_DELETE(ptr);\
 }
 
-typedef enum
+enum ParserErrorCode
 {
+    GENERIC_ERROR     = -4,
+    INSUFFICIENT_DATA = -3,
     FILE_OPEN_ERROR = -2,
-    MEMEORY_ERROR   = -1,
-    OK           = 1
-
-} PARSER_ERROR_CODES;
+    MEMORY_ERROR    = -1,
+    OK              = 1
+};
 
 /*
  * AAC format types supported
@@ -226,7 +223,8 @@ class AACBitstreamObject
             MISC_ERROR = -2,
             READ_ERROR = -1,
             EVERYTHING_OK = 0,
-            END_OF_FILE = 62
+            END_OF_FILE = 62,
+            INSUFFICIENT_DATA = 141
         };
 
         /**
@@ -380,6 +378,13 @@ class AACBitstreamObject
         */
         int32 find_adts_syncword(uint8 *pBuffer);
 
+        /**
+        * @brief Determines if clip is AAC
+        *
+        * @param PVFile&
+        * @returns Result of operation: EVERYTHING_OK, READ_ERROR etc.
+        */
+        int32 isAACFile();
 
     private:
 
@@ -605,10 +610,17 @@ class CAACFileParser
         */
         OSCL_IMPORT_REF TAACFormat GetAACFormat(void);
 
-        OSCL_IMPORT_REF  uint32 getAACHeaderLen(OSCL_wString& aClip,  bool aInitParsingEnable, Oscl_FileServer* iFileSession, PVMFCPMPluginAccessInterfaceFactory* aCPMAccess, OsclFileHandle*aHandle);
+        OSCL_IMPORT_REF  ParserErrorCode getAACHeaderLen(OSCL_wString& aClip,  bool aInitParsingEnable, Oscl_FileServer* iFileSession, PVMFCPMPluginAccessInterfaceFactory* aCPMAccess, OsclFileHandle*aHandle, uint32* HeaderLen);
 
         OSCL_IMPORT_REF  PVID3Version GetID3Version() const;
 
+        /**
+        * @brief Returns if file is AAC
+        *
+        * @param
+        * @returns status
+        */
+        OSCL_IMPORT_REF ParserErrorCode IsAACFile(OSCL_wString& aClip, Oscl_FileServer* aFileSession, PVMFCPMPluginAccessInterfaceFactory* aCPMAccess, OsclFileHandle* aHandle = NULL);
 
     private:
         PVFile     iAACFile;

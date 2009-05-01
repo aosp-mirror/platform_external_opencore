@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,13 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
+// only include pvmf_downloadmanager_config.h if CML2 is NOT being used
+#ifndef USE_CML2_CONFIG
 #ifndef PVMF_DOWNLOADMANAGER_CONFIG_H_INCLUDED
 #include "pvmf_downloadmanager_config.h"
 #endif
+#endif
+
 #if(PVMF_DOWNLOADMANAGER_SUPPORT_PPB)
 
 #ifndef PVMF_MEMORYBUFFERDATASTREAM_FACTORY_H_INCLUDED
@@ -64,34 +68,30 @@
 #endif
 
 
-//#define PV_MB_MAX_NUMBER_OF_READ_CONNECTIONS    8
-#define PV_MB_MAX_NUMBER_OF_READ_CONNECTIONS	16
+#define PV_MBDS_MAX_NUMBER_OF_READ_CONNECTIONS	16
 
-#define PV_MB_MAX_NUMBER_OF_WRITE_CONNECTIONS	1
+#define PV_MBDS_MAX_NUMBER_OF_WRITE_CONNECTIONS	1
 
-#define PV_MB_MAX_NUMBER_OF_TOTAL_CONNECTIONS  PV_MB_MAX_NUMBER_OF_WRITE_CONNECTIONS + PV_MB_MAX_NUMBER_OF_READ_CONNECTIONS
+#define PV_MBDS_MAX_NUMBER_OF_TOTAL_CONNECTIONS  PV_MB_MAX_NUMBER_OF_WRITE_CONNECTIONS + PV_MB_MAX_NUMBER_OF_READ_CONNECTIONS
 
-// this is the minimum size of the sliding window
-// the file format parsers used this number to decide if a clip can be played properly in a progressive manner
-// TBD this needs to be tied to the socket memory pool size
-#define READ_BUFFER_SIZE        1680000
 
-#define READ_BUFFER_TRIM_THRESHOLD      900 * 1024
-
-// starts trimming if the cache is grown beyond this margin
-#define READ_BUFFER_MARGIN 		4 * 1024
+#define PV_MBDS_TEMP_CACHE_TRIM_MARGIN_PS					64000
+#define PV_MBDS_TEMP_CACHE_TRIM_THRESHOLD_PS(capacity)				(capacity * 2) / 3
+// for shoutcast
+#define PV_MBDS_TEMP_CACHE_TRIM_MARGIN_SC					4096
+#define PV_MBDS_TEMP_CACHE_TRIM_THRESHOLD_SC(capacity)                          capacity / 6
 
 #define NO_LIMIT		0
-#define PERM_CACHE_SIZE		NO_LIMIT
+#define PV_MBDS_PERM_CACHE_SIZE		NO_LIMIT
 
 // how many bytes are we willing to wait for assuming they are coming
 // instead of repositioning
 // this depends on channel bandwidth and network condition
-#define BYTES_TO_WAIT         4 * 1024
+#define PV_MBDS_BYTES_TO_WAIT         4 * 1024
 
 // In forward repositioning, if the data is going to come in soon,
-// which is defined as requested offset minus the download offset
-// is less than this threshold, then don't disconnect and send a new GET request.
+// which is defined as requested offset minus the download offset (aka current write pointer)
+// being less than this threshold, then don't disconnect to send a new GET request.
 #define PV_MBDS_FWD_SEEKING_NO_GET_REQUEST_THRESHOLD 64000
 
 typedef enum
@@ -108,6 +108,13 @@ typedef enum
     MBDS_REPOSITION_EXACT,
     MBDS_REPOSITION_WITH_MARGIN
 } MBDSRepositionMode;
+
+typedef enum
+{
+    MBDS_STREAM_FORMAT_UNKNOWN,
+    MBDS_STREAM_FORMAT_PROGRESSIVE_PLAYBACK,
+    MBDS_STREAM_FORMAT_SHOUTCAST
+} MBDSStreamFormat;
 
 class PVMFMemoryBufferWriteDataStreamImpl;
 
@@ -136,8 +143,6 @@ class PVMFMemoryBufferDataStreamTempCache
         void GetLastEntryInfo(uint32& entryOffset, uint32& entrySize);
 
         uint32 GetNumEntries();
-
-        uint32 GetCacheSize();
 
     private:
 
@@ -278,7 +283,7 @@ class PVMFMemoryBufferWriteDataStreamFactoryImpl : public PVMFDataStreamFactory
 {
     public:
         OSCL_IMPORT_REF PVMFMemoryBufferWriteDataStreamFactoryImpl(PVMFMemoryBufferDataStreamTempCache* aTempCache,
-                PVMFMemoryBufferDataStreamPermCache* aPermCache);
+                PVMFMemoryBufferDataStreamPermCache* aPermCache, MBDSStreamFormat aStreamFormat, uint32 aTempCacheCapacity);
 
         OSCL_IMPORT_REF ~PVMFMemoryBufferWriteDataStreamFactoryImpl();
 
@@ -307,6 +312,10 @@ class PVMFMemoryBufferWriteDataStreamFactoryImpl : public PVMFDataStreamFactory
         PVMFMemoryBufferDataStreamPermCache* iPermCache;
 
         bool iDownloadComplete;
+
+        MBDSStreamFormat iStreamFormat;
+
+        uint32 iTempCacheCapacity;
 };
 
 
@@ -428,7 +437,8 @@ class PVMFMemoryBufferWriteDataStreamImpl : public PVMIDataStreamSyncInterface
 {
     public:
         OSCL_IMPORT_REF PVMFMemoryBufferWriteDataStreamImpl(PVMFMemoryBufferDataStreamTempCache* aTempCache,
-                PVMFMemoryBufferDataStreamPermCache* aPermCache);
+                PVMFMemoryBufferDataStreamPermCache* aPermCache, MBDSStreamFormat aStreamFormat,
+                uint32 aTempCacheCapacity);
 
         OSCL_IMPORT_REF ~PVMFMemoryBufferWriteDataStreamImpl();
 
@@ -510,6 +520,7 @@ class PVMFMemoryBufferWriteDataStreamImpl : public PVMIDataStreamSyncInterface
 
         OSCL_IMPORT_REF PvmiDataStreamStatus SetReadPointerPosition(PvmiDataStreamSession aSessionID, uint32 aFilePosition);
 
+
         OSCL_IMPORT_REF PvmiDataStreamStatus SetReadPointerCacheLocation(PvmiDataStreamSession aSessionID, bool aInTempCache);
 
         OSCL_IMPORT_REF void ManageCache();
@@ -519,6 +530,15 @@ class PVMFMemoryBufferWriteDataStreamImpl : public PVMIDataStreamSyncInterface
         OSCL_IMPORT_REF void UpdateReadPointersAfterMakePersistent();
 
         OSCL_IMPORT_REF bool GetPermCachePersistence(uint32& aFirstOffset, uint32& aLastOffset);
+
+        OSCL_IMPORT_REF void SetStreamFormat(MBDSStreamFormat aStreamFormat);
+
+        OSCL_IMPORT_REF void SetTempCacheCapacity(uint32 aCapacity);
+
+        OSCL_IMPORT_REF MBDSStreamFormat GetStreamFormat();
+
+        OSCL_IMPORT_REF uint32 GetTempCacheCapacity();
+
     public:
         bool iDownloadComplete;
 
@@ -602,11 +622,11 @@ class PVMFMemoryBufferWriteDataStreamImpl : public PVMIDataStreamSyncInterface
 
         uint32 iNumReadSessions;
 
-        ReadCapacityNotificationStruct iReadNotifications[PV_MB_MAX_NUMBER_OF_READ_CONNECTIONS];
+        ReadCapacityNotificationStruct iReadNotifications[PV_MBDS_MAX_NUMBER_OF_READ_CONNECTIONS];
 
         RepositionRequestStruct iRepositionRequest;
 
-        ReadFilePositionStruct iReadFilePositions[PV_MB_MAX_NUMBER_OF_READ_CONNECTIONS];
+        ReadFilePositionStruct iReadFilePositions[PV_MBDS_MAX_NUMBER_OF_READ_CONNECTIONS];
 
         PvmiDataStreamSession iSessionID;
 
@@ -632,6 +652,14 @@ class PVMFMemoryBufferWriteDataStreamImpl : public PVMIDataStreamSyncInterface
         uint32 iAVTOffsetDelta;
 
         bool iMadePersistent;
+
+        MBDSStreamFormat iStreamFormat;
+
+        uint32 iTempCacheCapacity;
+
+        uint32 iTempCacheTrimThreshold;
+
+        uint32 iTempCacheTrimMargin;
 };
 
 
@@ -641,7 +669,8 @@ class PVMFMemoryBufferWriteDataStreamImpl : public PVMIDataStreamSyncInterface
 class PVMFMemoryBufferDataStream
 {
     public:
-        OSCL_IMPORT_REF PVMFMemoryBufferDataStream();
+        // in case we would want to pass the constructor an existing cache
+        OSCL_IMPORT_REF PVMFMemoryBufferDataStream(PVMFFormatType& aStreamFormat, uint32 aTempCacheCapacity);
 
         OSCL_IMPORT_REF ~PVMFMemoryBufferDataStream();
 

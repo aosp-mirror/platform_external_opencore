@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,31 @@
 
 #include "cvei.h"
 #include "mp4enc_api.h"
+#include "ccrgb24toyuv420.h"
+#include "ccrgb12toyuv420.h"
+#include "ccyuv420semitoyuv420.h"
 
 #define KCVEIMaxOutputBuffer	10
+#define VISUAL_OBJECT_SEQUENCE_START_CODE 	0x01B0
+#define VISUAL_OBJECT_SEQUENCE_END_CODE 	0x01B1
+#define VISUAL_OBJECT_START_CODE   0x01B5
+#define VO_START_CODE 		    0x8
+#define VO_HEADER_LENGTH        32
+#define VOL_START_CODE 0x12
+#define VOL_START_CODE_LENGTH 28
+
+#define GROUP_START_CODE	0x01B3
+#define GROUP_START_CODE_LENGTH  32
+
+#define VOP_ID_CODE_LENGTH		5
+#define VOP_TEMP_REF_CODE_LENGTH	16
+
+#define USER_DATA_START_CODE	    0x01B2
+#define USER_DATA_START_CODE_LENGTH 32
+
+#define SHORT_VIDEO_START_MARKER		0x20
+#define SHORT_VIDEO_START_MARKER_LENGTH  22
+
 
 /** Encoding mode specific to MPEG4. */
 enum TMP4EncodingMode
@@ -52,6 +75,29 @@ enum TParamEncMode
     EPV_ON
 };
 
+typedef struct
+{
+    uint8 *data;
+    uint32 numBytes;
+    uint32 bytePos;
+    uint32 bitBuf;
+    uint32 dataBitPos;
+    uint32  bitPos;
+} mp4StreamType;
+
+static const uint32 MASK[33] =
+{
+    0x00000000, 0x00000001, 0x00000003, 0x00000007,
+    0x0000000f, 0x0000001f, 0x0000003f, 0x0000007f,
+    0x000000ff, 0x000001ff, 0x000003ff, 0x000007ff,
+    0x00000fff, 0x00001fff, 0x00003fff, 0x00007fff,
+    0x0000ffff, 0x0001ffff, 0x0003ffff, 0x0007ffff,
+    0x000fffff, 0x001fffff, 0x003fffff, 0x007fffff,
+    0x00ffffff, 0x01ffffff, 0x03ffffff, 0x07ffffff,
+    0x0fffffff, 0x1fffffff, 0x3fffffff, 0x7fffffff,
+    0xffffffff
+};
+
 /** MPEG4 encoder class interface. See CommonVideoEncoder APIs for
 virtual functions definitions. */
 class CPVM4VEncoder : public CommonVideoEncoder
@@ -69,7 +115,7 @@ class CPVM4VEncoder : public CommonVideoEncoder
         OSCL_IMPORT_REF virtual int32 GetBufferSize();
         OSCL_IMPORT_REF virtual TCVEI_RETVAL GetVolHeader(uint8 *volHeader, int32 *size, int32 layer);
 
-        OSCL_IMPORT_REF virtual TCVEI_RETVAL EncodeFrame(TPVVideoInputData  *aVidIn, TPVVideoOutputData *aVidOut
+        OSCL_IMPORT_REF virtual TCVEI_RETVAL EncodeFrame(TPVVideoInputData  *aVidIn, TPVVideoOutputData *aVidOut, int *aRemainingBytes
 #ifdef PVAUTHOR_PROFILING
                 , void *aParam1 = 0
 #endif
@@ -95,27 +141,28 @@ class CPVM4VEncoder : public CommonVideoEncoder
 #ifdef	YUV_INPUT
         void CopyToYUVIn(uint8 *YUV, int width, int height, int width_16, int height_16);
 #endif
-        /* RGB->YUV conversion */
-#if defined(RGB12_INPUT)||defined(RGB24_INPUT)
-        TCVEI_RETVAL initRGB2YUVTables();
-        void freeRGB2YUVTables();
-#endif
-        //void RGB2YUV420_12bit(uint16 *inputRGB, int width, int height,int width_16,int height_16);
-#ifdef RGB12_INPUT
-        void RGB2YUV420_12bit(uint32 *inputRGB, int width, int height, int width_16, int height_16);
-#endif
-#ifdef RGB24_INPUT
-        void RGB2YUV420_24bit(uint8 *inputRGB, int width, int height, int width_16, int height_16);
+
+        /** Color conversion instance RGB24/RGB12/YUV420SEMI to YUV 420 */
+#if defined(RGB24_INPUT) || defined (RGB12_INPUT) || defined(YUV420SEMIPLANAR_INPUT)
+        ColorConvertBase *ccRGBtoYUV;
 #endif
 
 #ifdef FOR_3GPP_COMPLIANCE
         void Check3GPPCompliance(TPVVideoEncodeParam *aEncParam, int *aEncWidth, int *aEncHeight);
 #endif
 
+        /* Parsing FSI */
+        TCVEI_RETVAL ParseFSI(uint8* aFSIBuff, int FSILength, VideoEncOptions *aEncOption);
+        int16 ShowBits(mp4StreamType *pStream, uint8 ucNBits, uint32 *pulOutData);
+        int16 FlushBits(mp4StreamType *pStream, uint8 ucNBits);
+        int16 ReadBits(mp4StreamType *pStream, uint8 ucNBits, uint32 *pulOutData);
+        int16 ByteAlign(mp4StreamType *pStream);
+        int16 iDecodeShortHeader(mp4StreamType *psBits, VideoEncOptions *aEncOption);
+
+
         /* Pure virtuals from OsclActiveObject implemented in this derived class */
         virtual void Run(void);
         virtual void DoCancel(void);
-
         MPVCVEIObserver *iObserver;
 
         int		iSrcWidth;
@@ -137,6 +184,8 @@ class CPVM4VEncoder : public CommonVideoEncoder
         int32		iNumOutputData;
         uint32		iTimeStamp;
         uint32		iNextModTime;
+        uint8	*iOverrunBuffer;
+        int		iOBSize;
 
         /* Tables in color coversion */
         uint8  *iY_Table;

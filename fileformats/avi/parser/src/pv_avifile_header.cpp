@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -335,7 +335,7 @@ uint32 PVAviFileHeader::GetAudioFormat(uint32 aStreamNo)
 
     for (ii = 0; ii < strnum; ii++)
     {
-        if ((iStreamList[ii].GetStreamType() == AUDIO) && (aStreamNo == ii))
+        if ((iStreamList[ii].GetStreamType() == PV_2_AUDIO) && (aStreamNo == ii))
         {
             retType = iStreamList[ii].GetAudioFormat();
         }
@@ -353,7 +353,7 @@ uint32 PVAviFileHeader::GetNumAudioChannels(uint32 aStreamNo)
 
     for (ii = 0; ii < strnum; ii++)
     {
-        if ((iStreamList[ii].GetStreamType() == AUDIO) && (ii == aStreamNo))
+        if ((iStreamList[ii].GetStreamType() == PV_2_AUDIO) && (ii == aStreamNo))
         {
             retType = iStreamList[ii].GetNumAudioChannels();
         }

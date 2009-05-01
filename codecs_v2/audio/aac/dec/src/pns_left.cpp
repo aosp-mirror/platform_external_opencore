@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,12 @@
  * -------------------------------------------------------------------
  */
 /*
-------------------------------------------------------------------------------
-
-
- Pathname: ./src/pns_left.c
-
-     Date: 10/25/2000
+ Pathname: pns_left.c
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
 
- Description:  Modified from original code
+ Description:  Modified from original shareware code
 
  Description:  Brought code in-line with PV standards.
                Merged PNS and Intensity blocks into one function.
@@ -57,6 +52,7 @@
  Description:  Modified how groups and windows are handled, as the multigroup
  case was not correct
 
+ Who:                       Date:
  Description:
 ------------------------------------------------------------------------------
  INPUT AND OUTPUT DEFINITIONS

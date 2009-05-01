@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,18 +18,6 @@
 /*
 
  Pathname: ./include/e_tMP4AudioObjectType.h
-
-     Date: 06/28/2001
-
-------------------------------------------------------------------------------
- REVISION HISTORY
-
- Description: Fix ARM warning.
-
- Description:
-
-------------------------------------------------------------------------------
- INCLUDE DESCRIPTION
 
  This file contains enumerated types for MP4 Audio Object Types, as defined
  in ISO/IEC 14496-3, AMMENDMENT 1 Dated 2000-09-15

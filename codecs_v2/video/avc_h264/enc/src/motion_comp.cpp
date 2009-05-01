@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,9 +86,9 @@ void AVCMBMotionComp(AVCEncObject *encvid, AVCCommonObj *video)
 
         for (subMbPartIdx = 0; subMbPartIdx < currMB->NumSubMbPart[mbPartIdx]; subMbPartIdx++)
         {
-            block_x = (mbPartIdx_X << 1) + ((subMbPartIdx + offset_indx) & 1);  // check this MC
+            block_x = (mbPartIdx_X << 1) + ((subMbPartIdx + offset_indx) & 1);
             block_y = (mbPartIdx_Y << 1) + (((subMbPartIdx + offset_indx) >> 1) & 1);
-            mv = &currMB->mvL0[0] + (block_x << 1) + (block_y << 3);
+            mv = (int16*)(currMB->mvL0 + block_x + (block_y << 2));
             offset_x = x_position + (block_x << 2);
             offset_y = y_position + (block_y << 2);
             x_pos = (offset_x << 2) + *mv++;   /*quarter pel */
@@ -1834,7 +1834,7 @@ void eChromaMotionComp(uint8 *ref, int picwidth, int picheight,
 }
 
 
-/* SIMD routines, unroll the loops in vertical direction, decreasing loops (things to be done) MC */
+/* SIMD routines, unroll the loops in vertical direction, decreasing loops (things to be done) */
 void eChromaDiagonalMC_SIMD(uint8 *pRef, int srcPitch, int dx, int dy,
                             uint8 *pOut, int predPitch, int blkwidth, int blkheight)
 {
@@ -1922,7 +1922,7 @@ void eChromaDiagonalMC_SIMD(uint8 *pRef, int srcPitch, int dx, int dy,
             ref += 32;
         }
         pOut += 4;
-        ref = temp + 4; /* since it can only iterate twice max MC */
+        ref = temp + 4; /* since it can only iterate twice max */
     }
     return;
 }
@@ -2084,7 +2084,6 @@ void eChromaHorizontalMC2_SIMD(uint8 *pRef, int srcPitch, int dx, int dy,
     }
     return;
 }
-#if 1
 void eChromaVerticalMC2_SIMD(uint8 *pRef, int srcPitch, int dx, int dy,
                              uint8 *pOut, int predPitch, int blkwidth, int blkheight)
 {
@@ -2110,37 +2109,6 @@ void eChromaVerticalMC2_SIMD(uint8 *pRef, int srcPitch, int dx, int dy,
     }
     return;
 }
-#else
-void eChromaVerticalMC2_SIMD(uint8 *pRef, int srcPitch, int dx, int dy,
-                             uint8 *pOut, int predPitch, int blkwidth, int blkheight)
-{
-    (void)(dx);
-    (void)(dy);
-
-    int32 r0, r1, result;
-    int i, temp0, temp1;
-
-    temp0 = pRef[0];
-    temp1 = pRef[1];
-    pRef += srcPitch;
-    for (i = 0; i < blkheight; i++)
-    {
-        temp2 = pRef[0];
-        temp3 = pRef[1];
-
-        result0 = ((temp0 << 3) + dy * (temp2 - temp0) + 4);
-        result0 >>= 3;
-        result1 = ((temp1 << 3) + dy * (temp3 - temp1) + 4);
-        result1 >>= 3;
-        *(int32 *)pOut = result0 | (result1 << 8);
-        temp0 = temp2;
-        temp1 = temp3;
-        pRef += srcPitch;
-        pOut += predPitch;
-    }
-    return;
-}
-#endif
 
 void eChromaFullMC_SIMD(uint8 *pRef, int srcPitch, int dx, int dy,
                         uint8 *pOut, int predPitch, int blkwidth, int blkheight)

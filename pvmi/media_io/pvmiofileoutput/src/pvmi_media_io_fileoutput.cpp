@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,12 +24,19 @@
 
 #include "oscl_dll.h"
 
+#include "pvmf_video.h"
+#include "pvmf_common_audio_decnode.h"
+
+#define LOG_OUTPUT_TO_FILE	1
+
 // Define entry point for this DLL
 OSCL_DLL_ENTRY_POINT_DEFAULT()
 
 //The factory functions.
 #include "pvmi_media_io_fileoutput_registry_factory.h"
 #include "oscl_mem.h"
+
+#define QUEUE_LIMIT 10
 
 OSCL_EXPORT_REF PvmiMIOControl* PVMFMediaFileOutputRegistryFactory::CreateMediaIO(OsclAny* aParam)
 {
@@ -51,9 +58,15 @@ OSCL_EXPORT_REF void PVMFMediaFileOutputRegistryFactory::ReleaseMediaIO(PvmiMIOC
 OSCL_EXPORT_REF PVRefFileOutput::PVRefFileOutput(const OSCL_wString& aFileName, bool logStrings)
         : OsclTimerObject(OsclActiveObject::EPriorityNominal, "pvreffileoutput")
         , iOutputFileName(aFileName)
+#if (LOG_OUTPUT_TO_FILE)
+        , iLogOutputToFile(true)
+#else
+        , iLogOutputToFile(false)
+#endif
 {
     initData();
     iLogStrings = logStrings;
+    iMediaType = MEDIATYPE_UNKNOWN;
 }
 
 
@@ -64,12 +77,18 @@ OSCL_EXPORT_REF PVRefFileOutput::PVRefFileOutput(const OSCL_wString& aFileName
         , bool logStrings)
         : OsclTimerObject(OsclActiveObject::EPriorityNominal, "pvreffileoutput")
         , iOutputFileName(aFileName)
+#if (LOG_OUTPUT_TO_FILE)
+        , iLogOutputToFile(true)
+#else
+        , iLogOutputToFile(false)
+#endif
 {
     initData();
     //test features...
     iSimFlowControl = aSimFlowControl;
     iTestObserver = aTestObs;
     iActiveTiming = NULL;
+    iMediaType = MEDIATYPE_UNKNOWN;
     if (aSimTiming)
     {
         OsclMemAllocator alloc;
@@ -78,36 +97,62 @@ OSCL_EXPORT_REF PVRefFileOutput::PVRefFileOutput(const OSCL_wString& aFileName
         {
             iActiveTiming = OSCL_PLACEMENT_NEW(ptr, PVRefFileOutputActiveTimingSupport(aQueueLimit));
         }
+        // For active MIO assuming it to be audio MIO.
+        iMediaType = MEDIATYPE_AUDIO;
     }
     iLogStrings = logStrings;
     iParametersLogged = false;
 }
 
-OSCL_EXPORT_REF PVRefFileOutput::PVRefFileOutput(const oscl_wchar* aFileName,
-        bool aActiveTiming)
+OSCL_EXPORT_REF PVRefFileOutput::PVRefFileOutput(const oscl_wchar* aFileName
+        , bool aActiveTiming)
         : OsclTimerObject(OsclActiveObject::EPriorityNominal, "pvreffileoutput")
         , iOutputFileName(aFileName)
+#if (LOG_OUTPUT_TO_FILE)
+        , iLogOutputToFile(true)
+#else
+        , iLogOutputToFile(false)
+#endif
 {
     initData();
     iActiveTiming = NULL;
+    iMediaType = MEDIATYPE_UNKNOWN;
     if (aActiveTiming)
     {
         OsclMemAllocator alloc;
         OsclAny*ptr = alloc.allocate(sizeof(PVRefFileOutputActiveTimingSupport));
         if (ptr)
         {
-            iActiveTiming = OSCL_PLACEMENT_NEW(ptr, PVRefFileOutputActiveTimingSupport(10));
+            iActiveTiming = OSCL_PLACEMENT_NEW(ptr, PVRefFileOutputActiveTimingSupport(QUEUE_LIMIT));
         }
+        // For active MIO assuming it to be audio MIO.
+        iMediaType = MEDIATYPE_AUDIO;
     }
+}
+
+OSCL_EXPORT_REF PVRefFileOutput::PVRefFileOutput(const oscl_wchar* aFileName,
+        MediaType aMediaType,
+        bool aCompressedMedia)
+        : OsclTimerObject(OsclActiveObject::EPriorityNominal, "pvreffileoutput")
+        , iOutputFileName(aFileName)
+        , iMediaType(aMediaType)
+        , iCompressedMedia(aCompressedMedia)
+#if (LOG_OUTPUT_TO_FILE)
+        , iLogOutputToFile(true)
+#else
+        , iLogOutputToFile(false)
+#endif
+{
+    initData();
 }
 
 void PVRefFileOutput::initData()
 {
-    iAudioFormat = PVMF_FORMAT_UNKNOWN;
+    iAudioFormat = PVMF_MIME_FORMAT_UNKNOWN;
     iAudioNumChannelsValid = false;
     iAudioSamplingRateValid = false;
 
-    iVideoFormat = PVMF_FORMAT_UNKNOWN;
+    iVideoFormat = PVMF_MIME_FORMAT_UNKNOWN;
     iVideoHeightValid = false;
     iVideoWidthValid = false;
     iVideoDisplayHeightValid = false;
@@ -133,12 +178,8 @@ void PVRefFileOutput::initData()
     iLogStrings = false;
     iParametersLogged = false;
     iFormatMask = 0;
-    iTextFormat = PVMF_FORMAT_UNKNOWN;
-#if PVFILEOUTPUT_CLOCK_EXTN_SUPPORTED
-    iUseClockExtension = true;
-#else
+    iTextFormat = PVMF_MIME_FORMAT_UNKNOWN;
     iUseClockExtension = false;
-#endif
     iRIFFChunk.chunkID = FOURCC_RIFF;//0x46464952;   //"RIFF" in ASCII form, big-endian form
     iRIFFChunk.chunkSize = 0;
     iRIFFChunk.format  = FOURCC_WAVE;//0x45564157;   //"WAVE" in ASCII form, big-endian form
@@ -156,23 +197,50 @@ void PVRefFileOutput::initData()
     iDataSubchunk.subchunk2Size = 0;
 
     iHeaderWritten = false;
-    iAudioFormatType = 0;
-    iVideoFormatType = 0;
+    iAudioFormat = 0;
+    iVideoFormat = 0;
     iInitializeAVIDone = false;
     iAVIChunkSize = 0;
     iVideoLastTimeStamp = 0;
     iVideoCount = 0;
+    iIsMIOConfigured = false;
+    iClock = NULL;
+    //Connect with file server.
+    if (!iFsConnected)
+    {
+        if (iFs.Connect() == 0)
+        {
+            iFsConnected = true;
+        }
+        else
+        {
+            OSCL_ASSERT(false);
+        }
+    }
+}
+
+void PVRefFileOutput::setUserClockExtnInterface(bool aEnable)
+{
+    if (aEnable == true)
+    {
+        iUseClockExtension = true;
+    }
+    else
+    {
+        iUseClockExtension = false;
+    }
+
 }
 
 void PVRefFileOutput::ResetData()
 //reset all data from this session.
 {
-    if (iAudioFormatType == PVMF_PCM16 || iAudioFormatType == PVMF_PCM8)
+    if (iAudioFormat == PVMF_MIME_PCM16 || iAudioFormat == PVMF_MIME_PCM8)
     {
         UpdateWaveChunkSize();
     }
 
-    if (iVideoFormatType == PVMF_YUV420)
+    if (iVideoFormat == PVMF_MIME_YUV420)
     {
         UpdateVideoChunkHeaderIdx();
     }
@@ -181,19 +249,20 @@ void PVRefFileOutput::ResetData()
     //reset all the received media parameters.
 
     iAudioFormatString = "";
-    iAudioFormat = PVMF_FORMAT_UNKNOWN;
+    iAudioFormat = PVMF_MIME_FORMAT_UNKNOWN;
     iAudioNumChannelsValid = false;
     iAudioSamplingRateValid = false;
 
     iVideoFormatString = "";
-    iVideoFormat = PVMF_FORMAT_UNKNOWN;
+    iVideoFormat = PVMF_MIME_FORMAT_UNKNOWN;
     iVideoHeightValid = false;
     iVideoWidthValid = false;
     iVideoDisplayHeightValid = false;
     iVideoDisplayWidthValid = false;
+    iIsMIOConfigured = false;
 
     iTextFormatString = "";
-    iTextFormat = PVMF_FORMAT_UNKNOWN;
+    iTextFormat = PVMF_MIME_FORMAT_UNKNOWN;
 
     iParametersLogged = false;
 }
@@ -207,11 +276,6 @@ void PVRefFileOutput::Cleanup()
         iOutputFile.Close();
     }
     iFileOpened = false;
-    if (iFsConnected)
-    {
-        iFs.Close();
-    }
-    iFsConnected = false;
 
     while (!iCommandResponseQueue.empty())
     {
@@ -242,6 +306,12 @@ PVRefFileOutput::~PVRefFileOutput()
         alloc.deallocate(iActiveTiming);
         iActiveTiming = NULL;
     }
+
+    if (iFsConnected)
+    {
+        iFs.Close();
+    }
+    iFsConnected = false;
 }
 
 
@@ -267,25 +337,8 @@ PVMFStatus PVRefFileOutput::disconnect(PvmiMIOSession aSession)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVRefFileOutput::disconnect() called"));
     OSCL_UNUSED_ARG(aSession);
-    //currently supports only one session
 
-    while (!iCommandResponseQueue.empty())
-    {
-        if (iObserver)
-        {
-            iObserver->RequestCompleted(PVMFCmdResp(iCommandResponseQueue[0].iCmdId, iCommandResponseQueue[0].iContext, iCommandResponseQueue[0].iStatus));
-        }
-        iCommandResponseQueue.erase(&iCommandResponseQueue[0]);
-    }
-    while (!iWriteResponseQueue.empty())
-    {
-        if (iPeer)
-        {
-            iPeer->writeComplete(iWriteResponseQueue[0].iStatus, iWriteResponseQueue[0].iCmdId, (OsclAny*)iWriteResponseQueue[0].iContext);
-        }
-        iWriteResponseQueue.erase(&iWriteResponseQueue[0]);
-    }
-
+    // just set the observer to NULL, any command completes should be done before disconnect.
     iObserver = NULL;
     return PVMFSuccess;
 }
@@ -490,6 +543,7 @@ PVMFCommandId PVRefFileOutput::Start(const OsclAny* aContext)
         case STATE_PAUSED:
             iState = STATE_STARTED;
             status = PVMFSuccess;
+
             break;
 
         default:
@@ -677,30 +731,11 @@ void PVRefFileOutput::ThreadLogon()
         AddToScheduler();
         iState = STATE_LOGGED_ON;
     }
-
-    //Open the file.
-    if (!iFsConnected)
-    {
-        if (iFs.Connect() != 0)
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVRefFileOutput::ThreadLogon() Unable to Connect File Server"));
-        }
-        else
-        {
-            iFsConnected = true;
-        }
-    }
 }
 
 
 void PVRefFileOutput::ThreadLogoff()
 {
-    if (iFsConnected)
-    {
-        iFs.Close();
-        iFsConnected = false;
-    }
-
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVRefFileOutput::ThreadLogoff() called"));
     if (iState != STATE_IDLE)
     {
@@ -768,75 +803,81 @@ bool PVRefFileOutput::CheckWriteBusy(uint32 aSeqNum)
 void PVRefFileOutput::LogParameters()
 {
     iParametersLogged = true;
-    char string[128];
-    int32 len;
-    if (iVideoFormatString.get_size() > 0)
+    if (iLogOutputToFile)
     {
-        len = oscl_snprintf(string, 128, "Video Format %s ", iVideoFormatString.get_str());
-        iOutputFile.Write(string, sizeof(uint8), len) ;
-    }
-    if (iVideoHeightValid)
-    {
-        len = oscl_snprintf(string, 128, "Video Height %d ", iVideoHeight);
-        iOutputFile.Write(string, sizeof(uint8), len) ;
-    }
-    if (iVideoWidthValid)
-    {
-        len = oscl_snprintf(string, 128, "Video Width %d ", iVideoWidth);
-        iOutputFile.Write(string, sizeof(uint8), len) ;
-    }
-    if (iVideoDisplayHeightValid)
-    {
-        len = oscl_snprintf(string, 128, "Video Display Height %d ", iVideoDisplayHeight);
-        iOutputFile.Write(string, sizeof(uint8), len) ;
-    }
-    if (iVideoDisplayWidthValid)
-    {
-        len = oscl_snprintf(string, 128, "Video Display Width %d ", iVideoDisplayWidth);
-        iOutputFile.Write(string, sizeof(uint8), len) ;
-    }
-    if (iAudioFormatString.get_size() > 0)
-    {
-        len = oscl_snprintf(string, 128, "Audio Format %s ", iAudioFormatString.get_str());
-        iOutputFile.Write(string, sizeof(uint8), len) ;
-    }
-    if (iAudioNumChannelsValid)
-    {
-        len = oscl_snprintf(string, 128, "Audio Num Channels %d ", iAudioNumChannels);
-        iOutputFile.Write(string, sizeof(uint8), len) ;
-    }
-    if (iAudioSamplingRateValid)
-    {
-        len = oscl_snprintf(string, 128, "Audio Sampling Rate %d ", iAudioSamplingRate);
-        iOutputFile.Write(string, sizeof(uint8), len) ;
-    }
-    if (iTextFormatString.get_size() > 0)
-    {
-        len = oscl_snprintf(string, 128, "Text Format %s ", iTextFormatString.get_str());
-        iOutputFile.Write(string, sizeof(uint8), len) ;
+        char string[128];
+        int32 len;
+        if (iVideoFormatString.get_size() > 0)
+        {
+            len = oscl_snprintf(string, 128, "Video Format %s ", iVideoFormatString.get_str());
+            iOutputFile.Write(string, sizeof(uint8), len) ;
+        }
+        if (iVideoHeightValid)
+        {
+            len = oscl_snprintf(string, 128, "Video Height %d ", iVideoHeight);
+            iOutputFile.Write(string, sizeof(uint8), len) ;
+        }
+        if (iVideoWidthValid)
+        {
+            len = oscl_snprintf(string, 128, "Video Width %d ", iVideoWidth);
+            iOutputFile.Write(string, sizeof(uint8), len) ;
+        }
+        if (iVideoDisplayHeightValid)
+        {
+            len = oscl_snprintf(string, 128, "Video Display Height %d ", iVideoDisplayHeight);
+            iOutputFile.Write(string, sizeof(uint8), len) ;
+        }
+        if (iVideoDisplayWidthValid)
+        {
+            len = oscl_snprintf(string, 128, "Video Display Width %d ", iVideoDisplayWidth);
+            iOutputFile.Write(string, sizeof(uint8), len) ;
+        }
+        if (iAudioFormatString.get_size() > 0)
+        {
+            len = oscl_snprintf(string, 128, "Audio Format %s ", iAudioFormatString.get_str());
+            iOutputFile.Write(string, sizeof(uint8), len) ;
+        }
+        if (iAudioNumChannelsValid)
+        {
+            len = oscl_snprintf(string, 128, "Audio Num Channels %d ", iAudioNumChannels);
+            iOutputFile.Write(string, sizeof(uint8), len) ;
+        }
+        if (iAudioSamplingRateValid)
+        {
+            len = oscl_snprintf(string, 128, "Audio Sampling Rate %d ", iAudioSamplingRate);
+            iOutputFile.Write(string, sizeof(uint8), len) ;
+        }
+        if (iTextFormatString.get_size() > 0)
+        {
+            len = oscl_snprintf(string, 128, "Text Format %s ", iTextFormatString.get_str());
+            iOutputFile.Write(string, sizeof(uint8), len) ;
+        }
     }
 }
 
 void PVRefFileOutput::LogCodecHeader(uint32 aSeqNum, const PVMFTimestamp& aTimestamp, uint32 datalen)
 {
-    if (iLogStrings)
+    if (iLogOutputToFile)
     {
-        char string[128];
-        int32 len = oscl_snprintf(string, 128, "SeqNum %d Timestamp %d Len %d Codec Header", aSeqNum, aTimestamp, datalen);
-        iOutputFile.Write(string, sizeof(uint8), len) ;
-    }
-    else
-    {
-        if (iVideoFormat == PVMF_H264)
+        if (iLogStrings)
         {
-            iOutputFile.Write(&datalen, sizeof(uint8), sizeof(uint32));
+            char string[128];
+            int32 len = oscl_snprintf(string, 128, "SeqNum %d Timestamp %d Len %d Codec Header", aSeqNum, aTimestamp, datalen);
+            iOutputFile.Write(string, sizeof(uint8), len) ;
+        }
+        else
+        {
+            if (iVideoFormat == PVMF_MIME_H264_VIDEO_MP4)
+            {
+                iOutputFile.Write(&datalen, sizeof(uint8), sizeof(uint32));
+            }
         }
     }
 }
 
 void PVRefFileOutput::LogEndOfStream(uint32 aSeqNum, const PVMFTimestamp& aTimestamp)
 {
-    if (iLogStrings)
+    if (iLogOutputToFile && iLogStrings)
     {
         char string[128];
         int32 len = oscl_snprintf(string, 128, "SeqNum %d Timestamp %d EOS", aSeqNum, aTimestamp);
@@ -846,17 +887,20 @@ void PVRefFileOutput::LogEndOfStream(uint32 aSeqNum, const PVMFTimestamp& aTimes
 
 void PVRefFileOutput::LogFrame(uint32 aSeqNum, const PVMFTimestamp& aTimestamp, uint32 datalen)
 {
-    if (iLogStrings)
+    if (iLogOutputToFile)
     {
-        char string[128];
-        int32 len = oscl_snprintf(string, 128, "SeqNum %d Timestamp %d Len %d Frame", aSeqNum, aTimestamp, datalen);
-        iOutputFile.Write(string, sizeof(uint8), len) ;
-    }
-    else
-    {
-        if (iVideoFormat == PVMF_H264)
+        if (iLogStrings)
         {
-            iOutputFile.Write(&datalen, sizeof(uint8), sizeof(uint32));
+            char string[128];
+            int32 len = oscl_snprintf(string, 128, "SeqNum %d Timestamp %d Len %d Frame", aSeqNum, aTimestamp, datalen);
+            iOutputFile.Write(string, sizeof(uint8), len) ;
+        }
+        else
+        {
+            if (iVideoFormat == PVMF_MIME_H264_VIDEO_MP4)
+            {
+                iOutputFile.Write(&datalen, sizeof(uint8), sizeof(uint32));
+            }
         }
     }
 }
@@ -920,7 +964,9 @@ PVMFCommandId PVRefFileOutput::writeAsync(uint8 aFormatType, int32 aFormatIndex,
                     {
                         PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
                                         (0, "PVRefFileOutput::writeAsync: Error - Invalid state"));
-                        status = PVMFErrInvalidState;
+                        iWriteBusy = true;
+                        OSCL_LEAVE(OsclErrInvalidState);
+                        return -1;
                     }
                     else
                     {
@@ -933,7 +979,7 @@ PVMFCommandId PVRefFileOutput::writeAsync(uint8 aFormatType, int32 aFormatIndex,
                         if (aDataLen > 0)
                         {
                             LogCodecHeader(data_header_info.seq_num, data_header_info.timestamp, aDataLen);
-                            if (iOutputFile.Write(aData, sizeof(uint8), aDataLen) != aDataLen)
+                            if (iLogOutputToFile && iOutputFile.Write(aData, sizeof(uint8), aDataLen) != aDataLen)
                             {
                                 PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
                                                 (0, "PVRefFileOutput::writeAsync: Error - File write failed"));
@@ -961,7 +1007,9 @@ PVMFCommandId PVRefFileOutput::writeAsync(uint8 aFormatType, int32 aFormatIndex,
                     {
                         PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
                                         (0, "PVRefFileOutput::writeAsync: Error - Invalid state"));
-                        status = PVMFErrInvalidState;
+                        iWriteBusy = true;
+                        OSCL_LEAVE(OsclErrInvalidState);
+                        return -1;
                     }
                     //Check whether we can accept data now and leave if we can't.
                     else if (CheckWriteBusy(data_header_info.seq_num))
@@ -991,7 +1039,7 @@ PVMFCommandId PVRefFileOutput::writeAsync(uint8 aFormatType, int32 aFormatIndex,
                         {
                             //check whether the player clock is in frame-step mode.
                             //do not render audio in frame-step mode.
-                            if (iAudioFormat != PVMF_FORMAT_UNKNOWN
+                            if (iAudioFormat != PVMF_MIME_FORMAT_UNKNOWN
                                     && iActiveTiming
                                     && iActiveTiming->FrameStepMode())
                             {
@@ -999,10 +1047,10 @@ PVMFCommandId PVRefFileOutput::writeAsync(uint8 aFormatType, int32 aFormatIndex,
                             }
 
                             LogFrame(data_header_info.seq_num, data_header_info.timestamp, aDataLen);
-                            if (iTextFormat == PVMF_3GPP_TIMEDTEXT)
+                            if (iTextFormat == PVMF_MIME_3GPP_TIMEDTEXT)
                             {
                                 // Guard against somebody setting this MIO component for multiple data types
-                                OSCL_ASSERT(iVideoFormat == PVMF_FORMAT_UNKNOWN && iAudioFormat == PVMF_FORMAT_UNKNOWN);
+                                OSCL_ASSERT(iVideoFormat == PVMF_MIME_FORMAT_UNKNOWN && iAudioFormat == PVMF_MIME_FORMAT_UNKNOWN);
 
                                 PVMFTimedTextMediaData* textmediadata = (PVMFTimedTextMediaData*)aData;
 
@@ -1010,7 +1058,7 @@ PVMFCommandId PVRefFileOutput::writeAsync(uint8 aFormatType, int32 aFormatIndex,
                                 if (textmediadata->iTextSampleEntry.GetRep() != NULL)
                                 {
                                     // @todo Write out the text sample entry in a better format
-                                    if (iOutputFile.Write((OsclAny*)(textmediadata->iTextSampleEntry.GetRep()), sizeof(PVMFTimedTextSampleEntry), 1) != 1)
+                                    if (iLogOutputToFile && iOutputFile.Write((OsclAny*)(textmediadata->iTextSampleEntry.GetRep()), sizeof(PVMFTimedTextSampleEntry), 1) != 1)
                                     {
                                         PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
                                                         (0, "PVRefFileOutput::writeAsync: Error - File write failed for text sample entry"));
@@ -1020,7 +1068,7 @@ PVMFCommandId PVRefFileOutput::writeAsync(uint8 aFormatType, int32 aFormatIndex,
                                 }
 
                                 // Write out the raw text sample
-                                if (iOutputFile.Write(textmediadata->iTextSample, sizeof(uint8), textmediadata->iTextSampleLength) != textmediadata->iTextSampleLength)
+                                if (iLogOutputToFile && iOutputFile.Write(textmediadata->iTextSample, sizeof(uint8), textmediadata->iTextSampleLength) != textmediadata->iTextSampleLength)
                                 {
                                     PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
                                                     (0, "PVRefFileOutput::writeAsync: Error - File write failed for text sample data"));
@@ -1036,7 +1084,7 @@ PVMFCommandId PVRefFileOutput::writeAsync(uint8 aFormatType, int32 aFormatIndex,
                                 //do not render this frame.
                                 char string[128];
                                 int32 len = oscl_snprintf(string, 128, "discard-- frame-step mode");
-                                if (iOutputFile.Write(string, sizeof(uint8), len) != (uint32)len)
+                                if (iLogOutputToFile && iOutputFile.Write(string, sizeof(uint8), len) != (uint32)len)
                                 {
                                     PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
                                                     (0, "PVRefFileOutput::writeAsync: Error - File write failed"));
@@ -1045,22 +1093,29 @@ PVMFCommandId PVRefFileOutput::writeAsync(uint8 aFormatType, int32 aFormatIndex,
                             }
                             else
                             {
-                                if (iHeaderWritten != true && (iAudioFormatType == PVMF_PCM16 || iAudioFormatType == PVMF_PCM8))
+                                if (iHeaderWritten != true && (iAudioFormat == PVMF_MIME_PCM16 || iAudioFormat == PVMF_MIME_PCM8))
                                 {
-                                    iOutputFile.Write(&iRIFFChunk, sizeof(uint8), sizeof(RIFFChunk));
-                                    iOutputFile.Write(&iFmtSubchunk, sizeof(uint8), sizeof(fmtSubchunk));
-                                    iOutputFile.Write(&iDataSubchunk, sizeof(uint8), sizeof(dataSubchunk));
+                                    if (iLogOutputToFile)
+                                    {
+                                        iOutputFile.Write(&iRIFFChunk, sizeof(uint8), sizeof(RIFFChunk));
+                                        iOutputFile.Write(&iFmtSubchunk, sizeof(uint8), sizeof(fmtSubchunk));
+                                        iOutputFile.Write(&iDataSubchunk, sizeof(uint8), sizeof(dataSubchunk));
+                                    }
                                     iHeaderWritten = true;
                                 }
-                                if (iHeaderWritten != true && (iVideoFormatType == PVMF_YUV420 || iVideoFormatType == PVMF_YUV422))
+                                if (iHeaderWritten != true && (iVideoFormat == PVMF_MIME_YUV420 || iVideoFormat == PVMF_MIME_YUV422))
                                 {
                                     WriteHeaders();
                                     iHeaderWritten = true;
                                 }
 
-                                if (iAudioFormatType == PVMF_AMR_IETF || iAudioFormatType == PVMF_AMR_IF2 || iVideoFormatType == PVMF_H263 || iVideoFormatType == PVMF_M4V)
+                                if (iAudioFormat == PVMF_MIME_AMR_IETF ||
+                                        iAudioFormat == PVMF_MIME_AMR_IF2 ||
+                                        iVideoFormat == PVMF_MIME_H2631998 ||
+                                        iVideoFormat == PVMF_MIME_H2632000 ||
+                                        iVideoFormat == PVMF_MIME_M4V)
                                 {
-                                    if (iOutputFile.Write(aData, sizeof(uint8), aDataLen) != aDataLen)
+                                    if (iLogOutputToFile && iOutputFile.Write(aData, sizeof(uint8), aDataLen) != aDataLen)
                                     {
                                         PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
                                                         (0, "PVRefFileOutput::writeAsync: Error - File write failed"));
@@ -1072,9 +1127,9 @@ PVMFCommandId PVRefFileOutput::writeAsync(uint8 aFormatType, int32 aFormatIndex,
                                     }
                                 }
                                 //'render' this frame
-                                if (iAudioFormatType == PVMF_PCM16 || iAudioFormatType == PVMF_PCM8)
+                                if (iAudioFormat == PVMF_MIME_PCM16 || iAudioFormat == PVMF_MIME_PCM8)
                                 {
-                                    if (iOutputFile.Write(aData, sizeof(uint8), aDataLen) != aDataLen)
+                                    if (iLogOutputToFile && iOutputFile.Write(aData, sizeof(uint8), aDataLen) != aDataLen)
                                     {
                                         PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
                                                         (0, "PVRefFileOutput::writeAsync: Error - File write failed"));
@@ -1082,16 +1137,15 @@ PVMFCommandId PVRefFileOutput::writeAsync(uint8 aFormatType, int32 aFormatIndex,
                                     }
                                     else
                                     {
-                                        if (iAudioFormatType == PVMF_PCM16 || iAudioFormatType == PVMF_PCM8)
+                                        if (iAudioFormat == PVMF_MIME_PCM16 || iAudioFormat == PVMF_MIME_PCM8)
                                             iDataSubchunk.subchunk2Size += aDataLen;
                                         status = PVMFSuccess;
                                     }
                                 }
 
-                                if (iVideoFormatType == PVMF_YUV420 || iVideoFormatType == PVMF_YUV422)
+                                if (iVideoFormat == PVMF_MIME_YUV420 || iVideoFormat == PVMF_MIME_YUV422)
                                 {
 #ifdef AVI_OUTPUT
-#if 1
                                     unsigned char *u, *v, ch;
                                     uint32 fsize = iVideoWidth * iVideoHeight;
                                     uint32 bsize = iVideoWidth * iVideoHeight * 3 / 2;
@@ -1106,18 +1160,10 @@ PVMFCommandId PVRefFileOutput::writeAsync(uint8 aFormatType, int32 aFormatIndex,
                                     AddChunk(aData, bsize, videoChunkID);
                                     iVideoLastTimeStamp = data_header_info.timestamp;
                                     iAVIChunkSize += bsize + 4 + 4;
-#else
-                                    uint8 pBufRGBRev[80120];
-                                    yuv2rgb(pBufRGBRev, aData, iVideoWidth, iVideoHeight);
-                                    uint32 bsize = iVideoWidth * iVideoHeight * 3;
-                                    AddChunk(pBufRGBRev, bsize, videoChunkID);
-                                    iVideoLastTimeStamp = data_header_info.timestamp;
-                                    iAVIChunkSize += bsize + 4 + 4;
-#endif
                                     status = PVMFSuccess;
 #else
                                     uint32 size = iVideoWidth * iVideoHeight * 3 / 2;
-                                    if (iOutputFile.Write(aData, sizeof(uint8), size) != size)
+                                    if (iLogOutputToFile && iOutputFile.Write(aData, sizeof(uint8), size) != size)
                                     {
                                         PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
                                                         (0, "PVRefFileOutput::writeAsync: Error - File write failed"));
@@ -1285,25 +1331,39 @@ PVMFStatus PVRefFileOutput::getParametersSync(PvmiMIOSession aSession, PvmiKeyTy
 
         //Generate a list of all the PVMF audio & video formats...
         int32 count = 0;
-        if (iFormatMask == 0 || (iFormatMask & PVMF_UNCOMPRESSED_AUDIO_FORMAT))
+        if (iMediaType == MEDIATYPE_AUDIO)
         {
-            count += (1 + PVMF_LAST_UNCOMPRESSED_AUDIO - PVMF_FIRST_UNCOMPRESSED_AUDIO);
+            if (iCompressedMedia)
+            {
+                count = PVMF_SUPPORTED_COMPRESSED_AUDIO_FORMATS_COUNT;
+            }
+            else
+            {
+                count = PVMF_SUPPORTED_UNCOMPRESSED_AUDIO_FORMATS_COUNT;
+            }
         }
-        if (iFormatMask == 0 || (iFormatMask & PVMF_COMPRESSED_AUDIO_FORMAT))
+        else if (iMediaType == MEDIATYPE_VIDEO)
         {
-            count += (1 + PVMF_LAST_COMPRESSED_AUDIO - PVMF_FIRST_COMPRESSED_AUDIO);
+            if (iCompressedMedia)
+            {
+                count = PVMF_SUPPORTED_COMPRESSED_VIDEO_FORMATS_COUNT;
+            }
+            else
+            {
+                count = PVMF_SUPPORTED_UNCOMPRESSED_VIDEO_FORMATS_COUNT;
+            }
         }
-        if (iFormatMask == 0 || (iFormatMask & PVMF_UNCOMPRESSED_VIDEO_FORMAT))
+        else if (iMediaType == MEDIATYPE_TEXT)
         {
-            count += (1 + PVMF_LAST_UNCOMPRESSED_VIDEO - PVMF_FIRST_UNCOMPRESSED_VIDEO);
+            count = PVMF_SUPPORTED_TEXT_FORMAT_COUNT;
         }
-        if (iFormatMask == 0 || (iFormatMask & PVMF_COMPRESSED_VIDEO_FORMAT))
+        else
         {
-            count += (1 + PVMF_LAST_COMPRESSED_VIDEO - PVMF_FIRST_COMPRESSED_VIDEO);
-        }
-        if (iFormatMask == 0 || (iFormatMask & PVMF_TEXT_FORMAT))
-        {
-            count += ( + 1 + PVMF_LAST_TEXT - PVMF_FIRST_TEXT);
+            count = PVMF_SUPPORTED_UNCOMPRESSED_AUDIO_FORMATS_COUNT +
+                    PVMF_SUPPORTED_UNCOMPRESSED_VIDEO_FORMATS_COUNT +
+                    PVMF_SUPPORTED_COMPRESSED_AUDIO_FORMATS_COUNT +
+                    PVMF_SUPPORTED_COMPRESSED_VIDEO_FORMATS_COUNT +
+                    PVMF_SUPPORTED_TEXT_FORMAT_COUNT;
         }
 
         aParameters = (PvmiKvp*)oscl_malloc(count * sizeof(PvmiKvp));
@@ -1311,72 +1371,154 @@ PVMFStatus PVRefFileOutput::getParametersSync(PvmiMIOSession aSession, PvmiKeyTy
         if (aParameters)
         {
             PVMFFormatType fmt;
-            if (iFormatMask == 0 || (iFormatMask & PVMF_UNCOMPRESSED_AUDIO_FORMAT))
+            if (iMediaType == MEDIATYPE_AUDIO || iMediaType == MEDIATYPE_UNKNOWN)
             {
-                for (fmt = PVMF_FIRST_UNCOMPRESSED_AUDIO;fmt <= PVMF_LAST_UNCOMPRESSED_AUDIO;fmt++)
+                if (iCompressedMedia || iMediaType == MEDIATYPE_UNKNOWN)
                 {
-                    aParameters[num_parameter_elements].value.uint32_value = (uint32)fmt;
-                    aParameters[num_parameter_elements].key = (PvmiKeyType)oscl_malloc(oscl_strlen(MOUT_AUDIO_FORMAT_KEY) + 1);
-                    if (!aParameters[num_parameter_elements].key)
+                    int32 i = 0;
+                    if (iMediaType == MEDIATYPE_UNKNOWN)
                     {
-                        return PVMFErrNoMemory;
-                        // (hope it's safe to leave array partially
-                        //  allocated, caller will free?)
+                        i = num_parameter_elements;
                     }
-                    oscl_strncpy(aParameters[num_parameter_elements++].key, MOUT_AUDIO_FORMAT_KEY, oscl_strlen(MOUT_AUDIO_FORMAT_KEY) + 1);
+
+                    aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_AMR;
+                    aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_AMRWB;
+                    aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_AMR_IETF;
+                    aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_AMRWB_IETF;
+                    aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_AMR_IF2;
+                    aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_EVRC;
+                    aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_MP3;
+                    aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_ADIF;
+                    aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_ADTS;
+                    aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_LATM;
+                    aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_MPEG4_AUDIO;
+                    aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_G723;
+                    aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_G726;
+                    aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_WMA;
+                    aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_ASF_AMR;
+                    aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_REAL_AUDIO;
+                    aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_ASF_MPEG4_AUDIO;
+                    aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_3640;
+
+                    while (i < count)
+                    {
+                        aParameters[i].key = (PvmiKeyType)oscl_malloc(oscl_strlen(MOUT_AUDIO_FORMAT_KEY) + 1);
+                        if (!aParameters[i].key)
+                        {
+                            return PVMFErrNoMemory;
+                            // (hope it's safe to leave array partially
+                            //  allocated, caller will free?)
+                        }
+                        oscl_strncpy(aParameters[i++].key, MOUT_AUDIO_FORMAT_KEY, oscl_strlen(MOUT_AUDIO_FORMAT_KEY) + 1);
+                    }
+                }
+
+                if (!iCompressedMedia || iMediaType == MEDIATYPE_UNKNOWN)
+                {
+                    int32 i = 0;
+                    if (iMediaType == MEDIATYPE_UNKNOWN)
+                    {
+                        i = num_parameter_elements;
+                    }
+
+                    aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_PCM;
+                    aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_PCM8;
+                    aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_PCM16;
+                    aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_PCM16_BE;
+                    aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_ULAW;
+                    aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_ALAW;
+
+                    while (i < count)
+                    {
+                        aParameters[i].key = (PvmiKeyType)oscl_malloc(oscl_strlen(MOUT_AUDIO_FORMAT_KEY) + 1);
+                        if (!aParameters[i].key)
+                        {
+                            return PVMFErrNoMemory;
+                            // (hope it's safe to leave array partially
+                            //  allocated, caller will free?)
+                        }
+                        oscl_strncpy(aParameters[i++].key, MOUT_AUDIO_FORMAT_KEY, oscl_strlen(MOUT_AUDIO_FORMAT_KEY) + 1);
+                    }
                 }
             }
-            if (iFormatMask == 0 || (iFormatMask & PVMF_COMPRESSED_AUDIO_FORMAT))
+            if (iMediaType == MEDIATYPE_VIDEO || iMediaType == MEDIATYPE_UNKNOWN)
             {
-                for (fmt = PVMF_FIRST_COMPRESSED_AUDIO;fmt <= PVMF_LAST_COMPRESSED_AUDIO;fmt++)
+                if (iCompressedMedia || iMediaType == MEDIATYPE_UNKNOWN)
                 {
-                    aParameters[num_parameter_elements].value.uint32_value = (uint32)fmt;
-                    aParameters[num_parameter_elements].key = (PvmiKeyType)oscl_malloc(oscl_strlen(MOUT_AUDIO_FORMAT_KEY) + 1);
-                    if (!aParameters[num_parameter_elements].key)
+                    int32 i = 0;
+                    if (iMediaType == MEDIATYPE_UNKNOWN)
                     {
-                        return PVMFErrNoMemory;
+                        i = num_parameter_elements;
                     }
-                    oscl_strncpy(aParameters[num_parameter_elements++].key, MOUT_AUDIO_FORMAT_KEY, oscl_strlen(MOUT_AUDIO_FORMAT_KEY) + 1);
+
+                    aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_M4V;
+                    aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_H2631998;
+                    aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_H2632000;
+                    aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_H264_VIDEO_RAW;
+                    aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_H264_VIDEO_MP4;
+                    aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_H264_VIDEO;
+                    aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_WMV;
+                    aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_REAL_VIDEO;
+
+                    while (i < count)
+                    {
+                        aParameters[i].key = (PvmiKeyType)oscl_malloc(oscl_strlen(MOUT_VIDEO_FORMAT_KEY) + 1);
+                        if (!aParameters[i].key)
+                        {
+                            return PVMFErrNoMemory;
+                            // (hope it's safe to leave array partially
+                            //  allocated, caller will free?)
+                        }
+                        oscl_strncpy(aParameters[i++].key, MOUT_VIDEO_FORMAT_KEY, oscl_strlen(MOUT_VIDEO_FORMAT_KEY) + 1);
+                    }
+                }
+
+                if (!iCompressedMedia || iMediaType == MEDIATYPE_UNKNOWN)
+                {
+                    int32 i = 0;
+                    if (iMediaType == MEDIATYPE_UNKNOWN)
+                    {
+                        i = num_parameter_elements;
+                    }
+
+                    aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_YUV420;
+                    aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_YUV422;
+                    aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_RGB8;
+                    aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_RGB12;
+                    aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_RGB16;
+                    aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_RGB24;
+
+                    while (i < count)
+                    {
+                        aParameters[i].key = (PvmiKeyType)oscl_malloc(oscl_strlen(MOUT_VIDEO_FORMAT_KEY) + 1);
+                        if (!aParameters[i].key)
+                        {
+                            return PVMFErrNoMemory;
+                            // (hope it's safe to leave array partially
+                            //  allocated, caller will free?)
+                        }
+                        oscl_strncpy(aParameters[i++].key, MOUT_VIDEO_FORMAT_KEY, oscl_strlen(MOUT_VIDEO_FORMAT_KEY) + 1);
+                    }
                 }
             }
-            if (iFormatMask == 0 || (iFormatMask & PVMF_UNCOMPRESSED_VIDEO_FORMAT))
+
+            if (iMediaType == MEDIATYPE_TEXT || iMediaType == MEDIATYPE_UNKNOWN)
             {
-                for (fmt = PVMF_FIRST_UNCOMPRESSED_VIDEO;fmt <= PVMF_LAST_UNCOMPRESSED_VIDEO;fmt++)
+                int32 i = 0;
+                if (iMediaType == MEDIATYPE_UNKNOWN)
                 {
-                    aParameters[num_parameter_elements].value.uint32_value = (uint32)fmt;
-                    aParameters[num_parameter_elements].key = (PvmiKeyType)oscl_malloc(oscl_strlen(MOUT_VIDEO_FORMAT_KEY) + 1);
-                    if (!aParameters[num_parameter_elements].key)
-                    {
-                        return PVMFErrNoMemory;
-                    }
-                    oscl_strncpy(aParameters[num_parameter_elements++].key, MOUT_VIDEO_FORMAT_KEY, oscl_strlen(MOUT_VIDEO_FORMAT_KEY) + 1);
+                    i = num_parameter_elements;
                 }
-            }
-            if (iFormatMask == 0 || (iFormatMask & PVMF_COMPRESSED_VIDEO_FORMAT))
-            {
-                for (fmt = PVMF_FIRST_COMPRESSED_VIDEO;fmt <= PVMF_LAST_COMPRESSED_VIDEO;fmt++)
+
+                aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_3GPP_TIMEDTEXT;
+                aParameters[i].key = (PvmiKeyType)oscl_malloc(oscl_strlen(MOUT_TEXT_FORMAT_KEY) + 1);
+                if (!aParameters[i].key)
                 {
-                    aParameters[num_parameter_elements].value.uint32_value = (uint32)fmt;
-                    aParameters[num_parameter_elements].key = (PvmiKeyType)oscl_malloc(oscl_strlen(MOUT_VIDEO_FORMAT_KEY) + 1);
-                    if (!aParameters[num_parameter_elements].key)
-                    {
-                        return PVMFErrNoMemory;
-                    }
-                    oscl_strncpy(aParameters[num_parameter_elements++].key, MOUT_VIDEO_FORMAT_KEY, oscl_strlen(MOUT_VIDEO_FORMAT_KEY) + 1);
+                    return PVMFErrNoMemory;
+                    // (hope it's safe to leave array partially
+                    //  allocated, caller will free?)
                 }
-            }
-            if (iFormatMask == 0 || (iFormatMask & PVMF_TEXT_FORMAT))
-            {
-                for (fmt = PVMF_FIRST_TEXT;fmt <= PVMF_LAST_TEXT;fmt++)
-                {
-                    aParameters[num_parameter_elements].value.uint32_value = (uint32)fmt;
-                    aParameters[num_parameter_elements].key = (PvmiKeyType)oscl_malloc(oscl_strlen(MOUT_TEXT_FORMAT_KEY) + 1);
-                    if (!aParameters[num_parameter_elements].key)
-                    {
-                        return PVMFErrNoMemory;
-                    }
-                    oscl_strncpy(aParameters[num_parameter_elements++].key, MOUT_TEXT_FORMAT_KEY, oscl_strlen(MOUT_TEXT_FORMAT_KEY) + 1);
-                }
+                oscl_strncpy(aParameters[i++].key, MOUT_TEXT_FORMAT_KEY, oscl_strlen(MOUT_TEXT_FORMAT_KEY) + 1);
             }
             return PVMFSuccess;
         }
@@ -1393,6 +1535,25 @@ PVMFStatus PVRefFileOutput::getParametersSync(PvmiMIOSession aSession, PvmiKeyTy
         aParameters[0].value.uint32_value = DEFAULT_NUM_DECODED_FRAMES_CAPABILITY;
         return PVMFSuccess;
     }
+#if TEST_BUFFER_ALLOCATOR
+    else if (pv_mime_strcmp(aIdentifier, PVMF_BUFFER_ALLOCATOR_KEY) == 0)
+    {
+        int32 err;
+        aParameters = (PvmiKvp*)oscl_malloc(sizeof(PvmiKvp));
+        if (!aParameters)
+        {
+            return PVMFErrNoMemory;
+        }
+
+        OSCL_TRY(err, aParameters[0].value.key_specific_value = (PVInterface *)OSCL_NEW(PVRefBufferAlloc, (iBufferSize, iNumberOfBuffers)) ;);
+        if (err || (NULL == aParameters[0].value.key_specific_value))
+        {
+            return PVMFErrNoMemory;
+
+        }
+        return PVMFSuccess;
+    }
+#endif
     //other queries are not currently supported.
 
     //unrecognized key.
@@ -1458,16 +1619,15 @@ void PVRefFileOutput::setParametersSync(PvmiMIOSession aSession,
         if (pv_mime_strcmp(aParameters[i].key, MOUT_AUDIO_FORMAT_KEY) == 0)
         {
             if (oscl_strncmp(aParameters[i].value.pChar_value, "audio/L16", sizeof("audio/L16")) == 0)
-                iAudioFormatType = PVMF_PCM16;
+                iAudioFormat = PVMF_MIME_PCM16;
             else if (oscl_strncmp(aParameters[i].value.pChar_value, "audio/L8", sizeof("audio/L8")) == 0)
-                iAudioFormatType = PVMF_PCM8;
+                iAudioFormat = PVMF_MIME_PCM8;
             else if (oscl_strncmp(aParameters[i].value.pChar_value, "X-AMR-IF2", sizeof("X-AMR-IF2")) == 0)
-                iAudioFormatType = PVMF_AMR_IF2;
+                iAudioFormat = PVMF_MIME_AMR_IF2;
             else if (oscl_strncmp(aParameters[i].value.pChar_value, "X-AMR-IETF-SEPARATE", sizeof("X-AMR-IETF-SEPARATE")) == 0)
-                iAudioFormatType = PVMF_AMR_IETF;
+                iAudioFormat = PVMF_MIME_AMR_IETF;
 
-            iAudioFormat = iAudioFormatType;
-            GetFormatString(iAudioFormat, iAudioFormatString);
+            iAudioFormatString = iAudioFormat.getMIMEStrPtr();
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                             (0, "PVRefFileOutput::setParametersSync() Audio Format Key, Value %s", iAudioFormatString.get_str()));
         }
@@ -1492,19 +1652,17 @@ void PVRefFileOutput::setParametersSync(PvmiMIOSession aSession,
         {
 
             if (oscl_strncmp(aParameters[i].value.pChar_value, "X-YUV-420", sizeof("X-YUV-420")) == 0)
-                iVideoFormatType = PVMF_YUV420;
+                iVideoFormat = PVMF_MIME_YUV420;
             else if (oscl_strncmp(aParameters[i].value.pChar_value, "X-YUV-422", sizeof("X-YUV-422")) == 0)
-                iVideoFormatType = PVMF_YUV422;
+                iVideoFormat = PVMF_MIME_YUV422;
             else if (oscl_strncmp(aParameters[i].value.pChar_value, "video/H263-2000", sizeof("video/H263-2000")) == 0)
-                iVideoFormatType = PVMF_H263;
+                iVideoFormat = PVMF_MIME_H2632000;
             else if (oscl_strncmp(aParameters[i].value.pChar_value, "video/H263-1998", sizeof("video/H263-1998")) == 0)
-                iVideoFormatType = PVMF_H263;
+                iVideoFormat = PVMF_MIME_H2631998;
             else if (oscl_strncmp(aParameters[i].value.pChar_value, "video/MP4V-ES", sizeof("video/MP4V-ES")) == 0)
-                iVideoFormatType = PVMF_M4V;
+                iVideoFormat = PVMF_MIME_M4V;
 
-            iVideoFormat = iVideoFormatType;
-
-            GetFormatString(iVideoFormat, iVideoFormatString);
+            iVideoFormatString = iVideoFormat.getMIMEStrPtr();
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                             (0, "PVRefFileOutput::setParametersSync() Video Format Key, Value %s", iVideoFormatString.get_str()));
         }
@@ -1540,7 +1698,7 @@ void PVRefFileOutput::setParametersSync(PvmiMIOSession aSession,
         else if (pv_mime_strcmp(aParameters[i].key, MOUT_TEXT_FORMAT_KEY) == 0)
         {
             iTextFormatString = aParameters[i].value.pChar_value;
-            iTextFormat = GetFormatIndex(iTextFormatString.get_str());
+            iTextFormat = iTextFormatString.get_str();
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                             (0, "PVRefFileOutput::setParametersSync() Text Format Key, Value %s", iTextFormatString.get_str()));
         }
@@ -1565,15 +1723,87 @@ void PVRefFileOutput::setParametersSync(PvmiMIOSession aSession,
                 {
                     iFileOpened = true;
                     LogCodecHeader(0, 0, (int32)aParameters[i].capacity);
-                    if (iOutputFile.Write(aParameters[i].value.pChar_value,
-                                          sizeof(uint8),
-                                          (int32)aParameters[i].capacity) != (uint32)aParameters[i].length)
+                    if (aParameters[i].value.pChar_value != NULL)
                     {
-                        PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
-                                        (0, "PVRefFileOutput::setParametersSync: Error - File write failed"));
+                        if (iLogOutputToFile && iOutputFile.Write(aParameters[i].value.pChar_value,
+                                sizeof(uint8),
+                                (int32)aParameters[i].capacity) != (uint32)aParameters[i].length)
+                        {
+                            PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
+                                            (0, "PVRefFileOutput::setParametersSync: Error - File write failed"));
+                        }
                     }
                 }
             }
+        }
+        //All FSI for video will be set here in one go
+        else if (pv_mime_strcmp(aParameters[i].key, PVMF_FORMAT_SPECIFIC_INFO_KEY_YUV) == 0)
+        {
+            uint8* data = (uint8*)aParameters->value.key_specific_value;
+            PVMFYuvFormatSpecificInfo0* yuvInfo = (PVMFYuvFormatSpecificInfo0*)data;
+
+            iVideoWidth = (int32)yuvInfo->width;
+            iVideoWidthValid = true;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVRefFileOutput::setParametersSync() Video Width, Value %d", iVideoWidth));
+
+            iVideoHeight = (int32)yuvInfo->height;
+            iVideoHeightValid = true;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVRefFileOutput::setParametersSync() Video Height, Value %d", iVideoHeight));
+
+            iVideoDisplayHeight = (int32)yuvInfo->display_height;
+            iVideoDisplayHeightValid = true;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVRefFileOutput::setParametersSync() Video Display Height, Value %d", iVideoDisplayHeight));
+
+
+            iVideoDisplayWidth = (int32)yuvInfo->display_width;
+            iVideoDisplayWidthValid = true;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVRefFileOutput::setParametersSync() Video Display Width, Value %d", iVideoDisplayWidth));
+
+            iNumberOfBuffers = (int32)yuvInfo->num_buffers;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVRefFileOutput::setParametersSync() Number of Buffer, Value %d", iNumberOfBuffers));
+
+            iBufferSize = (int32)yuvInfo->buffer_size;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVRefFileOutput::setParametersSync() Buffer Size, Value %d", iBufferSize));
+
+        }
+        //All FSI for audio will be set here in one go
+        else if (pv_mime_strcmp(aParameters[i].key, PVMF_FORMAT_SPECIFIC_INFO_KEY_PCM) == 0)
+        {
+            uint8* data = (uint8*)aParameters->value.key_specific_value;
+            channelSampleInfo* pcm16Info = (channelSampleInfo*)data;
+
+            iAudioSamplingRate = pcm16Info->samplingRate;
+            iAudioSamplingRateValid = true;
+            iFmtSubchunk.sampleRate = iAudioSamplingRate;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVRefFileOutput::setParametersSync() Audio Sampling Rate, Value %d", iAudioSamplingRate));
+
+
+            iAudioNumChannels = pcm16Info->desiredChannels;
+            iAudioNumChannelsValid = true;
+            iFmtSubchunk.numChannels = iAudioNumChannels;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVRefFileOutput::setParametersSync() Audio Num Channels, Value %d", iAudioNumChannels));
+
+
+            iFmtSubchunk.bitsPerSample = (int32)pcm16Info->bitsPerSample;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVRefFileOutput::setParametersSync() Audio Bits Per Sample, Value %d", iFmtSubchunk.bitsPerSample));
+
+            iNumberOfBuffers = (int32)pcm16Info->num_buffers;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVRefFileOutput::setParametersSync() Number of Buffer, Value %d", iNumberOfBuffers));
+
+            iBufferSize = (int32)pcm16Info->buffer_size;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVRefFileOutput::setParametersSync() Buffer Size, Value %d", iBufferSize));
+
         }
         else
         {
@@ -1587,7 +1817,7 @@ void PVRefFileOutput::setParametersSync(PvmiMIOSession aSession,
             return;
         }
     }
-    if (iAudioFormatType == PVMF_PCM16)
+    if (iAudioFormat == PVMF_MIME_PCM16)
     {
         iFmtSubchunk.bitsPerSample = 16;
         iFmtSubchunk.byteRate = iFmtSubchunk.sampleRate * iFmtSubchunk.numChannels * iFmtSubchunk.bitsPerSample / 8;
@@ -1601,10 +1831,23 @@ void PVRefFileOutput::setParametersSync(PvmiMIOSession aSession,
 
     }
 
-    if ((iVideoFormatType == PVMF_YUV420 || iVideoFormatType == PVMF_YUV422) && (iVideoHeightValid == true && iVideoHeightValid == true && iInitializeAVIDone == false))
+    if ((iVideoFormat == PVMF_MIME_YUV420 || iVideoFormat == PVMF_MIME_YUV422) && (iVideoHeightValid == true && iVideoHeightValid == true && iInitializeAVIDone == false))
     {
         InitializeAVI(iVideoWidth, iVideoHeight);
         iInitializeAVIDone = true;
+    }
+
+    //No configuration is required for this MIO to function.
+    //So, send PVMFMIOConfigurationComplete() from Run()
+
+    //If MIO is configured, send PVMFMIOConfigurationComplete event to observer.
+    if (!iIsMIOConfigured)
+    {
+        if (iObserver)
+        {
+            iObserver->ReportInfoEvent(PVMFMIOConfigurationComplete);
+            iIsMIOConfigured = true;
+        }
     }
 }
 
@@ -1633,9 +1876,160 @@ PVMFStatus PVRefFileOutput::verifyParametersSync(PvmiMIOSession aSession,
         int num_elements)
 {
     OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aParameters);
-    OSCL_UNUSED_ARG(num_elements);
-    /* Since we are just logging to file, we can always return success */
+
+    // Go through each parameter
+    for (int32 paramind = 0; paramind < num_elements; ++paramind)
+    {
+        // Retrieve the first component from the key string
+        char* compstr = NULL;
+        pv_mime_string_extract_type(0, aParameters[paramind].key, compstr);
+
+        if (pv_mime_strcmp(compstr, _STRLIT_CHAR("x-pvmf/media/format-type")) == 0)
+        {
+            if (iMediaType == MEDIATYPE_UNKNOWN)
+            {
+                // For an unknown media type return PVMFErrNotSupported always.
+                return PVMFErrNotSupported;
+            }
+
+            if (pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_FORMAT_UNKNOWN) == 0)
+            {
+                return PVMFErrNotSupported;
+            }
+
+            // The Sink will return success based on following conditions:
+            // i) The MIME string is supported by the sink, Text Sink will support Text MIME,
+            //    Audio Sink - Audio MIME and Video Sink - Video MIME.
+            // ii) For all compressed formats, if the sink itself is Compressed. If the sink
+            //      is UnCompressed here, Sink will send PVMFErrNotSupported.
+            // iii) For all uncompressed formats, if the sink itself is Uncompressed. If the sink
+            //      is Compressed here, Sink will send PVMFErrNotSupported.
+            if (pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_3GPP_TIMEDTEXT) == 0)
+            {
+                if (iMediaType == MEDIATYPE_TEXT)
+                {
+                    return PVMFSuccess;
+                }
+                else
+                {
+                    return PVMFErrNotSupported;
+                }
+            }
+            else if ((pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_YUV420) == 0) ||
+                     (pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_YUV422) == 0) ||
+                     (pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_RGB8) == 0) ||
+                     (pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_RGB12) == 0) ||
+                     (pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_RGB16) == 0) ||
+                     (pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_RGB24) == 0))
+            {
+                // Uncompressed Video formats
+                if (iMediaType == MEDIATYPE_VIDEO)
+                {
+                    if (iCompressedMedia)
+                    {
+                        return PVMFErrNotSupported;
+                    }
+                    else
+                    {
+                        return PVMFSuccess;
+                    }
+                }
+                else
+                {
+                    return PVMFErrNotSupported;
+                }
+            }
+            else if ((pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_M4V) == 0) ||
+                     (pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_H2631998) == 0) ||
+                     (pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_H2632000) == 0) ||
+                     (pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_H264_VIDEO_RAW) == 0) ||
+                     (pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_H264_VIDEO_MP4) == 0) ||
+                     (pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_H264_VIDEO) == 0) ||
+                     (pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_WMV) == 0) ||
+                     (pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_REAL_VIDEO) == 0))
+            {
+                // Compressed Video formats
+                if (iMediaType == MEDIATYPE_VIDEO)
+                {
+                    if (iCompressedMedia)
+                    {
+                        return PVMFSuccess;
+                    }
+                    else
+                    {
+                        return PVMFErrNotSupported;
+                    }
+                }
+                else
+                {
+                    return PVMFErrNotSupported;
+                }
+            }
+            else if ((pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_PCM) == 0) ||
+                     (pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_PCM8) == 0) ||
+                     (pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_PCM16) == 0) ||
+                     (pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_PCM16_BE) == 0) ||
+                     (pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_ULAW) == 0) ||
+                     (pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_ALAW) == 0))
+            {
+                // Uncompressed Audio formats
+                if (iMediaType == MEDIATYPE_AUDIO)
+                {
+                    if (iCompressedMedia)
+                    {
+                        return PVMFErrNotSupported;
+                    }
+                    else
+                    {
+                        return PVMFSuccess;
+                    }
+                }
+                else
+                {
+                    return PVMFErrNotSupported;
+                }
+            }
+            else if ((pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_AMR) == 0) ||
+                     (pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_AMRWB) == 0) ||
+                     (pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_AMR_IETF) == 0) ||
+                     (pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_AMRWB_IETF) == 0) ||
+                     (pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_AMR_IF2) == 0) ||
+                     (pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_EVRC) == 0) ||
+                     (pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_MP3) == 0) ||
+                     (pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_ADIF) == 0) ||
+                     (pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_ADTS) == 0) ||
+                     (pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_LATM) == 0) ||
+                     (pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_MPEG4_AUDIO) == 0) ||
+                     (pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_G723) == 0) ||
+                     (pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_G726) == 0) ||
+                     (pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_WMA) == 0) ||
+                     (pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_ASF_AMR) == 0) ||
+                     (pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_REAL_AUDIO) == 0) ||
+                     (pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_ASF_MPEG4_AUDIO) == 0) ||
+                     (pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_3640) == 0))
+            {
+                // Compressed audio formats
+                if (iMediaType == MEDIATYPE_AUDIO)
+                {
+                    if (iCompressedMedia)
+                    {
+                        return PVMFSuccess;
+                    }
+                    else
+                    {
+                        return PVMFErrNotSupported;
+                    }
+                }
+                else
+                {
+                    return PVMFErrNotSupported;
+                }
+            }
+        }
+    }
+
+    // For all other parameters return a default success
+
     return PVMFSuccess;
 }
 
@@ -1644,10 +2038,34 @@ void PVRefFileOutput::setFormatMask(uint32 mask)
     iFormatMask = mask;
 }
 
+OSCL_EXPORT_REF PVMFStatus PVRefFileOutput::SetClock(PVMFMediaClock *clockVal)
+{
+    iClock = clockVal;
+    return PVMFSuccess;
+}
+
+OSCL_EXPORT_REF void PVRefFileOutput::addRef()
+{
+}
+
+OSCL_EXPORT_REF void PVRefFileOutput::removeRef()
+{
+}
+
+OSCL_EXPORT_REF bool PVRefFileOutput::queryInterface(const PVUuid& aUuid, PVInterface*& aInterface)
+{
+    OSCL_UNUSED_ARG(aInterface);
+    OSCL_UNUSED_ARG(aUuid);
+    return true;
+}
+void PVRefFileOutput::queryUuid(PVUuid& uuid)
+{
+    OSCL_UNUSED_ARG(uuid);
+}
 //
 // For active timing support
 //
-OSCL_EXPORT_REF PVMFStatus PVRefFileOutputActiveTimingSupport::SetClock(OsclClock *clockVal)
+OSCL_EXPORT_REF PVMFStatus PVRefFileOutputActiveTimingSupport::SetClock(PVMFMediaClock *clockVal)
 {
     iClock = clockVal;
     return PVMFSuccess;
@@ -1710,9 +2128,10 @@ void PVRefFileOutputActiveTimingSupport::AdjustClock(PVMFTimestamp& aTs)
 
     if (iClock)
     {
-        uint64 clktime;
-        uint64 tbtime;
-        iClock->GetCurrentTime64(clktime, OSCLCLOCK_MSEC, tbtime);
+        uint32 clktime;
+        uint32 tbtime;
+        bool overflow = 0;
+        iClock->GetCurrentTime32(clktime, overflow, PVMF_MEDIA_CLOCK_MSEC, tbtime);
         {
             // always adjust clock if not in frame step mode
             // if in framestep mode, only adjust clock if the timestamp is ahead
@@ -1723,10 +2142,10 @@ void PVRefFileOutputActiveTimingSupport::AdjustClock(PVMFTimestamp& aTs)
                 {
                     iLogger = PVLogger::GetLoggerObject("PVRefFileOutput");
                 }
-                uint64 adjtime = aTs;
+                uint32 adjtime = aTs;
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                                 (0, "PVRefFileOutputActiveTimingSupport::AdjustClock: from %d to %d", (uint32)clktime, (uint32)adjtime));
-                iClock->AdjustClockTime64(clktime, tbtime, adjtime, OSCLCLOCK_MSEC);
+                iClock->AdjustClockTime32(clktime, tbtime, adjtime, PVMF_MEDIA_CLOCK_MSEC, overflow);
             }
         }
     }
@@ -1816,6 +2235,7 @@ void PVRefFileOutput::Run()
         iCommandResponseQueue.erase(&iCommandResponseQueue[0]);
     }
 
+
     //send async write completion
     while (!iWriteResponseQueue.empty())
     {
@@ -1847,7 +2267,7 @@ void PVRefFileOutput::Run()
     }
 
     //Re-start the data transfer if needed.
-    if (iWriteBusy)
+    if (iWriteBusy && iPeer)
     {
         iWriteBusy = false;
         iPeer->statusUpdate(PVMI_MEDIAXFER_STATUS_WRITE);
@@ -1896,7 +2316,7 @@ void PVRefFileOutput::InitializeAVI(int width, int height)
     iAVIMainHeader.dwMicroSecPerFrame = 200000;
     iAVIMainHeader.dwMaxBytesPerSec    = 5 * 3 * width * height;
     iAVIMainHeader.dwPaddingGranularity = 0;
-    iAVIMainHeader.dwFlags = AVIF_TRUSTCKTYPE | AVIF_HASINDEX;
+    iAVIMainHeader.dwFlags = AVIF_TRUSTCKTYPE_FILE_OUT | AVIF_HASINDEX_FILE_OUT;
     iAVIMainHeader.dwTotalFrames = DEFAULT_COUNT;
     iAVIMainHeader.dwInitialFrames = 0;
     iAVIMainHeader.dwStreams = 1;
@@ -1944,71 +2364,67 @@ void PVRefFileOutput::InitializeAVI(int width, int height)
 
 void PVRefFileOutput::WriteHeaders()
 {
-    uint32 tmp;
+    if (iLogOutputToFile)
+    {
+
+        uint32 tmp;
 
 #ifndef AVI_OUTPUT
-    return;
+        return;
 #endif
 
-    tmp = FOURCC_RIFF;
-    iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //"RIFF"
-    tmp = 38016;
-    iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //4-byte size til the end
-    tmp = formtypeAVI;
-    iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //"AVI "
-    tmp = FOURCC_LIST;
-    iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //"LIST"
-    tmp = 4 + 4 + 4 + sizeof(AVIMainHeader) + 4 + 4 + 4 + 4 + 4 + 4 + 4 + sizeof(AVIStreamHeader) + sizeof(BitMapInfoHeader);
-    iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //4-byte list chunk size (entire list including all streams)
+        tmp = FOURCC_RIFF;
+        iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //"RIFF"
+        tmp = 38016;
+        iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //4-byte size til the end
+        tmp = formtypeAVI;
+        iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //"AVI "
+        tmp = FOURCC_LIST;
+        iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //"LIST"
+        tmp = 4 + 4 + 4 + sizeof(AVIMainHeader) + 4 + 4 + 4 + 4 + 4 + 4 + 4 + sizeof(AVIStreamHeader) + sizeof(BitMapInfoHeader);
+        iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //4-byte list chunk size (entire list including all streams)
 
-    // Write AVIMainHeader
-    tmp = listtypeAVIHEADER;
-    iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //"hdrl"
-    tmp = ckidAVIMAINHDR;
-    iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //"avih"
-    tmp = sizeof(AVIMainHeader);
-    iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //4-byte AVI Header size
-    iAVIMainHeaderPosition = iOutputFile.Tell();
-    iOutputFile.Write(&iAVIMainHeader, sizeof(uint8), sizeof(AVIMainHeader));  //AVI Header Data
+        // Write AVIMainHeader
+        tmp = listtypeAVIHEADER;
+        iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //"hdrl"
+        tmp = ckidAVIMAINHDR;
+        iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //"avih"
+        tmp = sizeof(AVIMainHeader);
+        iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //4-byte AVI Header size
+        iAVIMainHeaderPosition = (TOsclFileOffsetInt32)iOutputFile.Tell();
+        iOutputFile.Write(&iAVIMainHeader, sizeof(uint8), sizeof(AVIMainHeader));  //AVI Header Data
 
-    tmp = FOURCC_LIST;
-    iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //"LIST"
-    tmp = 4 + 4 + 4 + 4 + 4 + sizeof(AVIStreamHeader) + sizeof(BitMapInfoHeader);
-    iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //4-byte size of second LIST chunk (for the first stream)
-    tmp = listtypeSTREAMHEADER;
-    iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //"strl"
-    tmp = ckidSTREAMHEADER;
-    iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //"strh"
-    tmp = sizeof(AVIStreamHeader);  //size of strh
-    iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //4-byte size of strh
+        tmp = FOURCC_LIST;
+        iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //"LIST"
+        tmp = 4 + 4 + 4 + 4 + 4 + sizeof(AVIStreamHeader) + sizeof(BitMapInfoHeader);
+        iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //4-byte size of second LIST chunk (for the first stream)
+        tmp = listtypeSTREAMHEADER;
+        iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //"strl"
+        tmp = ckidSTREAMHEADER;
+        iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //"strh"
+        tmp = sizeof(AVIStreamHeader);  //size of strh
+        iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //4-byte size of strh
 
-    iAVIStreamHeaderPosition = iOutputFile.Tell();
-    iOutputFile.Write(&iAVIStreamHeader, sizeof(uint8), sizeof(AVIStreamHeader));
+        iAVIStreamHeaderPosition = (TOsclFileOffsetInt32)iOutputFile.Tell();
+        iOutputFile.Write(&iAVIStreamHeader, sizeof(uint8), sizeof(AVIStreamHeader));
 
 
-    tmp = ckidSTREAMFORMAT;    //same format as BITMAPINFO
-    iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //"strf"
-    tmp = sizeof(BitMapInfoHeader);
-    iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //4-byte size of  strf
-    iOutputFile.Write(&bi_hdr, sizeof(uint8), sizeof(BitMapInfoHeader));  //stream format data
+        tmp = ckidSTREAMFORMAT;    //same format as BITMAPINFO
+        iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //"strf"
+        tmp = sizeof(BitMapInfoHeader);
+        iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //4-byte size of  strf
+        iOutputFile.Write(&bi_hdr, sizeof(uint8), sizeof(BitMapInfoHeader));  //stream format data
 
-    tmp = FOURCC_LIST;
-    iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //"LIST"
-    iVideoHeaderPosition = iOutputFile.Tell();
-    tmp = 0;
-    iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //4-byte size of movi chunk below
-    tmp = listtypeAVIMOVIE;
-    iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //"movi"
-#if 0
-    tmp = ckidAVIPADDING;
-    iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //"movi"
-    tmp = 0x6E0;
-    iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //"movi"
-    char junk[0x6E0];
-    oscl_memset(junk, 0, 0x6E0);
-    iOutputFile.Write(junk, sizeof(uint8), 0x6E0);  //"movi"
-#endif
+        tmp = FOURCC_LIST;
+        iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //"LIST"
+        iVideoHeaderPosition = (TOsclFileOffsetInt32)iOutputFile.Tell();
+        tmp = 0;
+        iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //4-byte size of movi chunk below
+        tmp = listtypeAVIMOVIE;
+        iOutputFile.Write(&tmp, sizeof(uint8), sizeof(uint32));  //"movi"
+    }
 
+    uint32 tmp;
     tmp = ckidAVINEWINDEX;
     oscl_memcpy(&iIndexBuffer.indexBuffer[0], &tmp, sizeof(uint32));
     iIndexBuffer.length = 4;
@@ -2019,9 +2435,12 @@ void PVRefFileOutput::WriteHeaders()
 
 void PVRefFileOutput::AddChunk(uint8* chunk, uint32 size, uint32 ckid)
 {
-    iOutputFile.Write(&ckid, sizeof(uint8), sizeof(uint32));
-    iOutputFile.Write(&size, sizeof(uint8), sizeof(uint32));
-    iOutputFile.Write(chunk, sizeof(uint8), size);
+    if (iLogOutputToFile)
+    {
+        iOutputFile.Write(&ckid, sizeof(uint8), sizeof(uint32));
+        iOutputFile.Write(&size, sizeof(uint8), sizeof(uint32));
+        iOutputFile.Write(chunk, sizeof(uint8), size);
+    }
 
     iAVIIndex.chunkID = videoChunkID;
     iAVIIndex.flags = 0x10;
@@ -2045,14 +2464,20 @@ void PVRefFileOutput::AddChunk(uint8* chunk, uint32 size, uint32 ckid)
 
 void PVRefFileOutput::UpdateWaveChunkSize()
 {
-    int32 ret = iOutputFile.Tell();
-    iOutputFile.Seek(4, Oscl_File::SEEKSET);
-    ret = iOutputFile.Tell();
+    if (iLogOutputToFile)
+    {
+        int32 ret = (TOsclFileOffsetInt32)iOutputFile.Tell();
+        iOutputFile.Seek(4, Oscl_File::SEEKSET);
+        ret = (TOsclFileOffsetInt32)iOutputFile.Tell();
+    }
     iRIFFChunk.chunkSize = 36 + iDataSubchunk.subchunk2Size;
-    iOutputFile.Write(&iRIFFChunk.chunkSize, sizeof(uint8), 4);
-    iOutputFile.Seek(40, Oscl_File::SEEKSET);
-    iOutputFile.Write(&iDataSubchunk.subchunk2Size, sizeof(uint8), 4);
-    iOutputFile.Flush();
+    if (iLogOutputToFile)
+    {
+        iOutputFile.Write(&iRIFFChunk.chunkSize, sizeof(uint8), 4);
+        iOutputFile.Seek(40, Oscl_File::SEEKSET);
+        iOutputFile.Write(&iDataSubchunk.subchunk2Size, sizeof(uint8), 4);
+        iOutputFile.Flush();
+    }
 }
 
 void PVRefFileOutput::UpdateVideoChunkHeaderIdx()
@@ -2063,28 +2488,118 @@ void PVRefFileOutput::UpdateVideoChunkHeaderIdx()
     iAVIMainHeader.dwMaxBytesPerSec    = (uint32)((float)(iVideoCount * 3 * iVideoHeight * iVideoWidth) / (float)iVideoLastTimeStamp * 1000);
     iAVIMainHeader.dwTotalFrames = iVideoCount;
 
-    iOutputFile.Seek(iAVIMainHeaderPosition, Oscl_File::SEEKSET);
-    iOutputFile.Write(&iAVIMainHeader, sizeof(uint8), sizeof(AVIMainHeader));
+    if (iLogOutputToFile)
+    {
+        iOutputFile.Seek(iAVIMainHeaderPosition, Oscl_File::SEEKSET);
+        iOutputFile.Write(&iAVIMainHeader, sizeof(uint8), sizeof(AVIMainHeader));
+    }
 
     iAVIStreamHeader.dwRate = (uint32)((float)(iVideoCount * 1000000) / (float)iVideoLastTimeStamp);
     iAVIStreamHeader.dwLength = iVideoCount;
 
-    iOutputFile.Seek(iAVIStreamHeaderPosition, Oscl_File::SEEKSET);
-    iOutputFile.Write(&iAVIStreamHeader, sizeof(uint8), sizeof(AVIStreamHeader));
+    if (iLogOutputToFile)
+    {
+        iOutputFile.Seek(iAVIStreamHeaderPosition, Oscl_File::SEEKSET);
+        iOutputFile.Write(&iAVIStreamHeader, sizeof(uint8), sizeof(AVIStreamHeader));
+        iOutputFile.Seek(0, Oscl_File::SEEKEND);
+    }
 
-    iOutputFile.Seek(0, Oscl_File::SEEKEND);
     uint32 tmp = iIndexBuffer.length - 8;
 
     //write the indexBuffer to the file
     oscl_memcpy(&iIndexBuffer.indexBuffer[4], &tmp, sizeof(uint32));
-    iOutputFile.Write(iIndexBuffer.indexBuffer, sizeof(uint8), iIndexBuffer.length);
-    iOutputFile.Seek(0, Oscl_File::SEEKEND);
-    uint32 iAVISize = iOutputFile.Tell() - 8;
-    iOutputFile.Seek(4, Oscl_File::SEEKSET);
-    iOutputFile.Write(&iAVISize, sizeof(uint8), 4);
-    iOutputFile.Seek(iVideoHeaderPosition, Oscl_File::SEEKSET);
+    if (iLogOutputToFile)
+    {
+        iOutputFile.Write(iIndexBuffer.indexBuffer, sizeof(uint8), iIndexBuffer.length);
+        iOutputFile.Seek(0, Oscl_File::SEEKEND);
+    }
+    uint32 iAVISize = (TOsclFileOffsetInt32)iOutputFile.Tell() - 8;
+    if (iLogOutputToFile)
+    {
+        iOutputFile.Seek(4, Oscl_File::SEEKSET);
+        iOutputFile.Write(&iAVISize, sizeof(uint8), 4);
+        iOutputFile.Seek(iVideoHeaderPosition, Oscl_File::SEEKSET);
+    }
     iAVIChunkSize += 4;
-    iOutputFile.Write(&iAVIChunkSize, sizeof(uint8), 4);
+    if (iLogOutputToFile)
+    {
+        iOutputFile.Write(&iAVIChunkSize, sizeof(uint8), 4);
+    }
+}
+
+#if TEST_BUFFER_ALLOCATOR
+
+PVRefBufferAlloc::PVRefBufferAlloc(uint32 size, uint32 buffers): refCount(0), bufferSize(size), maxBuffers(buffers), numAllocated(0)
+{
+}
+
+PVRefBufferAlloc::~PVRefBufferAlloc()
+{
 
 }
+
+void PVRefBufferAlloc::addRef()
+{
+    ++refCount;
+}
+
+void PVRefBufferAlloc::removeRef()
+{
+    --refCount;
+    if (refCount <= 0)
+    {
+        this->~PVRefBufferAlloc();
+        OSCL_DELETE(this);
+    }
+}
+
+
+OsclAny* PVRefBufferAlloc::allocate()
+{
+    if (numAllocated < maxBuffers)
+    {
+        OsclAny* ptr = oscl_malloc(bufferSize);
+        if (ptr) ++numAllocated;
+        return ptr;
+    }
+    return NULL;
+}
+
+void PVRefBufferAlloc::deallocate(OsclAny* ptr)
+{
+    if (ptr)
+    {
+        oscl_free(ptr);
+        --numAllocated;
+    }
+}
+
+uint32 PVRefBufferAlloc::getBufferSize()
+{
+    return bufferSize;
+}
+
+uint32 PVRefBufferAlloc::getNumBuffers()
+{
+    return maxBuffers;
+}
+
+
+bool PVRefBufferAlloc::queryInterface(const PVUuid& uuid, PVInterface*& aInterface)
+{
+    aInterface = NULL; // initialize aInterface to NULL in case uuid is not supported
+
+    if (PVMFFixedSizeBufferAllocUUID == uuid)
+    {
+        // Send back ptr to the allocator interface object
+        PVMFFixedSizeBufferAlloc* myInterface	= OSCL_STATIC_CAST(PVMFFixedSizeBufferAlloc*, this);
+        refCount++; // increment interface refcount before returning ptr
+        aInterface = OSCL_STATIC_CAST(PVInterface*, myInterface);
+        return true;
+    }
+
+    return false;
+}
+
+#endif
 

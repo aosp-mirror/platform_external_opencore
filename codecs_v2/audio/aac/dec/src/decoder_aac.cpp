@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,9 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
+//////////////////////////////////////////////////////////////////////////////////
 //                                                                              //
-//  File: decoder_aac.cpp                                                   //
+//  File: decoder_aac.cpp                                                       //
 //                                                                              //
 //////////////////////////////////////////////////////////////////////////////////
 
@@ -27,7 +28,7 @@
 
 #include "e_tmp4audioobjecttype.h"
 
-// Use default DLL entry point for Symbian
+// Use default DLL entry point
 #include "oscl_dll.h"
 OSCL_DLL_ENTRY_POINT_DEFAULT()
 

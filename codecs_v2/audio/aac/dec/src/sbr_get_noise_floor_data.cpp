@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,15 @@
  * -------------------------------------------------------------------
  */
 /*
-------------------------------------------------------------------------------
-
-
 
  Filename: sbr_get_noise_floor_data.c
 
-     Date: 07/23/2003
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
 
 
+ Who:                                   Date: MM/DD/YYYY
  Description:
 
 ------------------------------------------------------------------------------
@@ -156,14 +153,14 @@ void sbr_get_noise_floor_data(SBR_FRAME_DATA * h_frame_data,
 
     if (coupling == COUPLING_BAL)
     {
-        hcb_noise  = (SbrHuffman) & bookSbrNoiseBalance11T;
-        hcb_noiseF = (SbrHuffman) & bookSbrEnvBalance11F;  /* "bookSbrNoiseBalance11F" */
+        hcb_noise  = bookSbrNoiseBalance11T;
+        hcb_noiseF = bookSbrEnvBalance11F;  /* "bookSbrNoiseBalance11F" */
         envDataTableCompFactor = 1;
     }
     else
     {
-        hcb_noise  = (SbrHuffman) & bookSbrNoiseLevel11T;
-        hcb_noiseF = (SbrHuffman) & bookSbrEnvLevel11F;  /* "bookSbrNoiseLevel11F" */
+        hcb_noise  = bookSbrNoiseLevel11T;
+        hcb_noiseF = bookSbrEnvLevel11F;  /* "bookSbrNoiseLevel11F" */
         envDataTableCompFactor = 0;
     }
 

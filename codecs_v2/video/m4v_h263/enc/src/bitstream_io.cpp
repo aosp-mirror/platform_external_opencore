@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,6 +73,9 @@ BitstreamEncVideo *BitStreamCreateEnc(Int bufferSize)
 #endif
     stream->byteCount = 0;
 
+    stream->overrunBuffer = NULL;
+    stream->oBSize = 0;
+
     return stream;
 }
 
@@ -98,6 +101,7 @@ Void  BitstreamCloseEnc(BitstreamEncVideo *stream)
         M4VENC_FREE(stream);
     }
 }
+
 
 /* ======================================================================== */
 /*	Function : BitstreamPutBits(BitstreamEncVideo *stream, Int Length,
@@ -207,7 +211,11 @@ PV_STATUS BitstreamSaveWord(BitstreamEncVideo *stream)
     /* assume that stream->bitLeft is always zero when this function is called */
     if (stream->byteCount + WORD_SIZE > stream->bufferSize)
     {
-        return PV_FAIL;
+        if (PV_SUCCESS != BitstreamUseOverrunBuffer(stream, WORD_SIZE))
+        {
+            stream->byteCount += WORD_SIZE;
+            return PV_FAIL;
+        }
     }
 
     ptr = stream->bitstreamBuffer + stream->byteCount;
@@ -257,7 +265,11 @@ PV_STATUS BitstreamSavePartial(BitstreamEncVideo *stream, Int *fraction)
 
     if (stream->byteCount + numbyte > stream->bufferSize)
     {
-        return PV_FAIL;
+        if (PV_SUCCESS != BitstreamUseOverrunBuffer(stream, numbyte))
+        {
+            stream->byteCount += numbyte;
+            return PV_FAIL;
+        }
     }
 
     ptr = stream->bitstreamBuffer + stream->byteCount;
@@ -286,8 +298,8 @@ PV_STATUS BitstreamSavePartial(BitstreamEncVideo *stream, Int *fraction)
     }
 
     if (*fraction)
-    {
-        *ptr = (UChar)((word >> shift) & 0xFF); /* need to do it for the last fractional byte */
+    {// this could lead to buffer overrun when ptr is already out of bound.
+        //	*ptr = (UChar)((word>>shift)&0xFF); /* need to do it for the last fractional byte */
     }
 
     /* save new values */
@@ -348,14 +360,14 @@ Int BitstreamMpeg4ByteAlignStuffing(BitstreamEncVideo *stream)
        need to check with  */
     /*if (!(getPointerENC(index1, index2)%8) && short_video_header[0]) return 0;*/
 
-    /* need stuffing bits,  08/23/1999 */
+    /* need stuffing bits, */
     BitstreamPutBits(stream, 1, 0);
 
     restBits = (stream->bitLeft & 0x7); /* modulo 8 */
 
     if (restBits)  /*short_video_header[0] is 1 in h263 baseline*/
     {
-        /* need stuffing bits,  08/23/1999 */
+        /* need stuffing bits, */
         BitstreamPutBits(stream, restBits, Mask[restBits]);
     }
 
@@ -432,7 +444,11 @@ PV_STATUS BitstreamAppendEnc(BitstreamEncVideo *bitstream1, BitstreamEncVideo *b
     /* we read one byte from bitstream2 and use BitstreamPutBits to do the job */
     if (bitstream1->byteCount + bitstream2->byteCount + offset > bitstream1->bufferSize)
     {
-        return PV_FAIL;
+        if (PV_SUCCESS != BitstreamUseOverrunBuffer(bitstream1, bitstream2->byteCount + offset))
+        {
+            bitstream1->byteCount += (bitstream2->byteCount + offset);
+            return PV_FAIL;
+        }
     }
 
     ptrBS1 = bitstream1->bitstreamBuffer + bitstream1->byteCount; /* move ptr bs1*/
@@ -480,8 +496,11 @@ PV_STATUS BitstreamAppendPacket(BitstreamEncVideo *bitstream1, BitstreamEncVideo
 
     if (bitstream1->byteCount + bitstream2->byteCount  > bitstream1->bufferSize)
     {
-        bitstream1->byteCount += bitstream2->byteCount; /* legacy, to keep track of total bytes */
-        return PV_FAIL;
+        if (PV_SUCCESS != BitstreamUseOverrunBuffer(bitstream1, bitstream2->byteCount))
+        {
+            bitstream1->byteCount += bitstream2->byteCount; /* legacy, to keep track of total bytes */
+            return PV_FAIL;
+        }
     }
 
     ptrBS1 = bitstream1->bitstreamBuffer + bitstream1->byteCount; /* move ptr bs1*/
@@ -750,4 +769,90 @@ void BitstreamEncReset(BitstreamEncVideo *stream)
     stream->byteCount = 0;
     return ;
 }
+
+/* This function set the overrun buffer, and VideoEncData context for callback to reallocate
+overrun buffer.  */
+Void  BitstreamSetOverrunBuffer(BitstreamEncVideo* stream, UChar* overrunBuffer, Int oBSize, VideoEncData *video)
+{
+    stream->overrunBuffer = overrunBuffer;
+    stream->oBSize = oBSize;
+    stream->video = video;
+
+    return ;
+}
+
+
+/* determine whether overrun buffer can be used or not */
+PV_STATUS BitstreamUseOverrunBuffer(BitstreamEncVideo* stream, Int numExtraBytes)
+{
+    VideoEncData *video = stream->video;
+
+    if (stream->overrunBuffer != NULL) // overrunBuffer is set
+    {
+        if (stream->bitstreamBuffer != stream->overrunBuffer) // not already used
+        {
+            if (stream->byteCount + numExtraBytes >= stream->oBSize)
+            {
+                stream->oBSize = stream->byteCount + numExtraBytes + 100;
+                stream->oBSize &= (~0x3); // make it multiple of 4
+
+                // allocate new overrun Buffer
+                if (video->overrunBuffer)
+                {
+                    M4VENC_FREE(video->overrunBuffer);
+                }
+                video->oBSize = stream->oBSize;
+                video->overrunBuffer = (UChar*) M4VENC_MALLOC(sizeof(UChar) * stream->oBSize);
+                stream->overrunBuffer = video->overrunBuffer;
+                if (stream->overrunBuffer == NULL)
+                {
+                    return PV_FAIL;
+                }
+            }
+
+            // copy everything to overrun buffer and start using it.
+            oscl_memcpy(stream->overrunBuffer, stream->bitstreamBuffer, stream->byteCount);
+            stream->bitstreamBuffer = stream->overrunBuffer;
+            stream->bufferSize = stream->oBSize;
+        }
+        else // overrun buffer is already used
+        {
+            if (stream->byteCount + numExtraBytes >= stream->oBSize)
+            {
+                stream->oBSize = stream->byteCount + numExtraBytes + 100;
+            }
+
+            // allocate new overrun buffer
+            stream->oBSize &= (~0x3); // make it multiple of 4
+            video->oBSize = stream->oBSize;
+            video->overrunBuffer = (UChar*) M4VENC_MALLOC(sizeof(UChar) * stream->oBSize);
+            if (video->overrunBuffer == NULL)
+            {
+                return PV_FAIL;
+            }
+
+            // copy from the old buffer to new buffer
+            oscl_memcpy(video->overrunBuffer, stream->overrunBuffer, stream->byteCount);
+            // free old buffer
+            M4VENC_FREE(stream->overrunBuffer);
+            // assign pointer to new buffer
+            stream->overrunBuffer = video->overrunBuffer;
+            stream->bitstreamBuffer = stream->overrunBuffer;
+            stream->bufferSize = stream->oBSize;
+        }
+
+        return PV_SUCCESS;
+    }
+    else // overrunBuffer is not enable.
+    {
+        return PV_FAIL;
+    }
+
+}
+
+
+
+
+
+
 

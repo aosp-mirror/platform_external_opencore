@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,6 +56,7 @@ class OsclSocketI: public OsclSocketIBase
         int32 Join(OsclNetworkAddress& anAddr);
         int32 Close();
         int32 Listen(uint32 qSize);
+        int32 SetRecvBufferSize(uint32 size);
 
         //asynchronous methods.
 
@@ -106,7 +107,6 @@ class OsclSocketI: public OsclSocketIBase
         static bool MakeAddr(OsclNetworkAddress& in, TOsclSockAddr& addr);
         static void MakeAddr(TOsclSockAddr& in, OsclNetworkAddress& addr);
 
-#ifdef OsclSocketSelect
         //routines to handle each type of socket request under the
         //server thread.
         void ProcessConnect(OsclSocketServRequestQElem*);
@@ -116,7 +116,6 @@ class OsclSocketI: public OsclSocketIBase
         void ProcessRecvFrom(OsclSocketServRequestQElem*);
         void ProcessSend(OsclSocketServRequestQElem*);
         void ProcessRecv(OsclSocketServRequestQElem*);
-#endif //osclsocketselect
 
     private:
         bool iSocketValid;
@@ -157,6 +156,7 @@ class OsclSocketI: public OsclSocketIBase
 };
 
 #endif
+
 
 
 

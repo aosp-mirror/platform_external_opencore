@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*********************************************************************************/
 /*
     This PVA_FF_SLConfigDescriptor Class
 */
@@ -115,7 +114,6 @@ PVA_FF_SLConfigDescriptor::recomputeSize()
         contents += 4; // (32 bits for start Dec TS)
         contents += 4; // (32 bits for start Comp TS)
     }
-
     _sizeOfClass = contents;
     _sizeOfSizeField = PVA_FF_AtomUtils::getNumberOfBytesUsedToStoreSizeOfClass(contents);
 

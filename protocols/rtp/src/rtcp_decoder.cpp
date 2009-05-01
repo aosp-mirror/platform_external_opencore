@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -565,7 +565,7 @@ RTCP_Decoder::DecodeSDESChunk(OsclBinIStreamBigEndian & inStream,
     }
 
     // record any remaining items beyond the temp storage size
-    if (loop_limit < num_items)
+    if ((loop_limit < num_items) && (ii < TMP_SDES_STORAGE))
     {
         uint8* cp_ptr = (uint8*) tmp_sdes_items[ii].content.ptr;
         uint8 cp_len = (uint8)(tmp_sdes_items[ii].content.len & 0xFF);

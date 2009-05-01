@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 #ifndef _VLC_ENCODE_INLINE_H_
 #define _VLC_ENCODE_INLINE_H_
 
-#if !defined(PV_ARM_GCC)&& defined(__arm__)
+#if !defined(PV_ARM_GCC_V5) && !defined(PV_ARM_GCC_V4)
 
 __inline  Int zero_run_search(UInt *bitmapzz, Short *dataBlock, RunLevelBlock *RLB, Int nc)
 {
@@ -112,6 +112,7 @@ __inline  Int zero_run_search(UInt *bitmapzz, Short *dataBlock, RunLevelBlock *R
 
 __inline  Int zero_run_search(UInt *bitmapzz, Short *dataBlock, RunLevelBlock *RLB, Int nc)
 {
+    OSCL_UNUSED_ARG(nc);
     Int idx, run, level, j;
     UInt end, match;
     Int  zzorder;
@@ -208,7 +209,7 @@ __inline  Int zero_run_search(UInt *bitmapzz, Short *dataBlock, RunLevelBlock *R
     return idx;
 }
 
-#elif defined(PV_ARM_GCC) && defined(__arm__) /* ARM GNU COMPILER  */
+#elif ( defined(PV_ARM_GCC_V4) || defined(PV_ARM_GCC_V5) ) /* ARM GNU COMPILER  */
 
 __inline Int m4v_enc_clz(UInt temp)
 {
@@ -225,6 +226,7 @@ __inline Int m4v_enc_clz(UInt temp)
 
 __inline  Int zero_run_search(UInt *bitmapzz, Short *dataBlock, RunLevelBlock *RLB, Int nc)
 {
+    OSCL_UNUSED_ARG(nc);
     Int idx, run, level = 0, j;
     UInt end = 0, match;
     Int  zzorder;

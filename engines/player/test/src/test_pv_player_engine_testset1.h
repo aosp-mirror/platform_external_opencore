@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,17 @@
 #include "pvmf_cpmplugin_factory_registry.h"
 #endif
 
-#define  USE_REF_FILEOUTPUT_FOR_VIDEO
+#ifndef PVMF_STREAMING_DATA_SOURCE_H_INCLUDED
+#include "pvmf_streaming_data_source.h"
+#endif
+
+#ifndef PVMF_SOURCE_CONTEXT_DATA_H_INCLUDED
+#include "pvmf_source_context_data.h"
+#endif
+
+
+
+#define AMR_MPEG4_RTSP_URL "rtsp://pvserveroha.pv.com/public/Interop/3GPP/pv2/pv-amr-475_mpeg4-20.3gp"
 
 
 class PVPlayerDataSink;
@@ -166,7 +176,6 @@ class pvplayer_async_test_openplaystopreset : public pvplayer_async_test_base
             STATE_REMOVEDATASINK_TEXT,
             STATE_RESET,
             STATE_REMOVEDATASOURCE,
-            STATE_WAIT_FOR_ERROR_HANDLING,
             STATE_CLEANUPANDCOMPLETE
         };
 
@@ -193,6 +202,8 @@ class pvplayer_async_test_openplaystopreset : public pvplayer_async_test_base
 
 class PVMFLocalDataSource;
 class PVMFOma1PassthruPluginFactory;
+class PVMFCPMPluginAccessInterfaceFactory;
+class PVMFSourceContextData;
 
 /*!
  *  A test case to test the normal engine sequence of playing a specified source with pass-through CPM plug-in
@@ -222,7 +233,7 @@ class PVMFOma1PassthruPluginFactory;
 class pvplayer_async_test_cpmopenplaystopreset : public pvplayer_async_test_base
 {
     public:
-        pvplayer_async_test_cpmopenplaystopreset(PVPlayerAsyncTestParam aTestParam):
+        pvplayer_async_test_cpmopenplaystopreset(PVPlayerAsyncTestParam aTestParam, bool aUsingDataStreamInput = false):
                 pvplayer_async_test_base(aTestParam)
                 , iPlayer(NULL)
                 , iDataSource(NULL)
@@ -236,8 +247,18 @@ class pvplayer_async_test_cpmopenplaystopreset : public pvplayer_async_test_base
                 , iIONodeText(NULL)
                 , iMIOFileOutText(NULL)
                 , iCurrentCmdId(0)
+                , iDataStreamFactory(NULL)
+                , iSourceContextData(NULL)
+                , iUsingDataStreamInput(aUsingDataStreamInput)
         {
-            iTestCaseName = _STRLIT_CHAR("CPM Open-Play-Stop-Reset");
+            if (aUsingDataStreamInput)
+            {
+                iTestCaseName = _STRLIT_CHAR("CPM Open-Play-Stop-Reset Using DataStream Input");
+            }
+            else
+            {
+                iTestCaseName = _STRLIT_CHAR("CPM Open-Play-Stop-Reset");
+            }
             iLocalDataSource = NULL;
             iPluginFactory = NULL;
         }
@@ -267,7 +288,6 @@ class pvplayer_async_test_cpmopenplaystopreset : public pvplayer_async_test_base
             STATE_REMOVEDATASINK_TEXT,
             STATE_RESET,
             STATE_REMOVEDATASOURCE,
-            STATE_WAIT_FOR_ERROR_HANDLING,
             STATE_CLEANUPANDCOMPLETE
         };
 
@@ -290,10 +310,13 @@ class pvplayer_async_test_cpmopenplaystopreset : public pvplayer_async_test_base
         PVMFCPMPluginFactoryRegistryClient iPluginRegistryClient;
         PVMFOma1PassthruPluginFactory* iPluginFactory;
         OSCL_HeapString<OsclMemAllocator> iPluginMimeType;
+        PVMFCPMPluginAccessInterfaceFactory* iDataStreamFactory;
+        PVMFSourceContextData* iSourceContextData;
 
     private:
         OSCL_wHeapString<OsclMemAllocator> wFileName;
         oscl_wchar output[512];
+        bool iUsingDataStreamInput;
 };
 
 
@@ -380,7 +403,6 @@ class pvplayer_async_test_metadata : public pvplayer_async_test_base
             STATE_REMOVEDATASINK_AUDIO,
             STATE_RESET,
             STATE_REMOVEDATASOURCE,
-            STATE_WAIT_FOR_ERROR_HANDLING,
             STATE_CLEANUPANDCOMPLETE
         };
 
@@ -1469,8 +1491,11 @@ class pvplayer_async_test_setstartpositionplaystop : public pvplayer_async_test_
                 , iIONodeAudio(NULL)
                 , iMIOFileOutAudio(NULL)
                 , iCurrentCmdId(0)
+                , iSourceContextData(NULL)
         {
             iTestCaseName = _STRLIT_CHAR("Set Begin Position-Play-Stop");
+            iTargetNumSeek = 1;
+            iNumSeek = 0;
         }
 
         ~pvplayer_async_test_setstartpositionplaystop() {}
@@ -1511,9 +1536,19 @@ class pvplayer_async_test_setstartpositionplaystop : public pvplayer_async_test_
         PVMFNodeInterface* iIONodeAudio;
         PvmiMIOControl* iMIOFileOutAudio;
         PVCommandId iCurrentCmdId;
+
+        void setMultipleSeekMode(uint32 aNum)
+        {
+            iTargetNumSeek = aNum;
+        }
+
     private:
         OSCL_wHeapString<OsclMemAllocator> wFileName;
         oscl_wchar output[512];
+        uint32 iTargetNumSeek;
+        uint32 iNumSeek;
+
+        PVMFSourceContextData* iSourceContextData;
 };
 
 
@@ -2418,7 +2453,6 @@ class pvplayer_async_test_multipauseresume : public pvplayer_async_test_base
             STATE_RESUME,
             STATE_PAUSERESUME2,
             STATE_SHUTDOWN,
-            STATE_WAIT_FOR_ERROR_HANDLING,
             STATE_CLEANUPANDCOMPLETE
         };
 
@@ -2614,7 +2648,6 @@ class pvplayer_async_test_capconfigiftest : public pvplayer_async_test_base, pub
             STATE_REMOVEDATASINK_AUDIO,
             STATE_RESET,
             STATE_REMOVEDATASOURCE,
-            STATE_WAIT_FOR_ERROR_HANDLING,
             STATE_CLEANUPANDCOMPLETE
         };
 
@@ -2664,22 +2697,16 @@ class pvplayer_async_test_setplaybackafterprepare : public pvplayer_async_test_b
                 , iPlayer(NULL)
                 , iDataSource(NULL)
                 , iDataSinkVideo(NULL)
-                , iDataSinkAudio(NULL)
-                , iDataSinkText(NULL)
                 , iIONodeVideo(NULL)
-                , iIONodeAudio(NULL)
-                , iIONodeText(NULL)
-#ifdef USE_REF_FILEOUTPUT_FOR_VIDEO
                 , iMIOFileOutVideo(NULL)
-#else
-                , iMIOOutVideo(NULL)
-#endif
-                , iMIOOutAudio(NULL)
+                , iDataSinkAudio(NULL)
+                , iIONodeAudio(NULL)
+                , iMIOFileOutAudio(NULL)
+                , iDataSinkText(NULL)
+                , iIONodeText(NULL)
                 , iMIOFileOutText(NULL)
-#if USE_AUDIO_EXTN_INTERFACE
-                , iAudioOutputController(NULL)
-#endif // USE_AUDIO_EXTN_INTERFACE
                 , iCurrentCmdId(0)
+                , iSourceContextData(NULL)
         {
             iTestCaseName = _STRLIT_CHAR("SetPlaybackRange After Prepare");
         }
@@ -2710,6 +2737,331 @@ class pvplayer_async_test_setplaybackafterprepare : public pvplayer_async_test_b
             STATE_REMOVEDATASINK_TEXT,
             STATE_RESET,
             STATE_REMOVEDATASOURCE,
+            STATE_CLEANUPANDCOMPLETE
+        };
+
+        PVTestState iState;
+
+        PVPlayerInterface* iPlayer;
+        PVPlayerDataSourceURL* iDataSource;
+        PVPlayerDataSink* iDataSinkVideo;
+        PVMFNodeInterface* iIONodeVideo;
+        PvmiMIOControl* iMIOFileOutVideo;
+        PVPlayerDataSink* iDataSinkAudio;
+        PVMFNodeInterface* iIONodeAudio;
+        PvmiMIOControl* iMIOFileOutAudio;
+        PVPlayerDataSink* iDataSinkText;
+        PVMFNodeInterface* iIONodeText;
+        PvmiMIOControl* iMIOFileOutText;
+        PVCommandId iCurrentCmdId;
+        Oscl_Vector<PVCommandId, OsclMemAllocator> iCmdIds;
+
+        Oscl_FileServer iFS;
+        Oscl_File iTimeLogFile;
+
+    private:
+        OSCL_wHeapString<OsclMemAllocator> wFileName;
+        oscl_wchar output[512];
+        PVMFSourceContextData* iSourceContextData;
+};
+
+/*!
+ *  A test case to test if the player engine can handle multiple pause seek resume during playback
+ *  - Data Source: Specified source
+ *  - Data Sink(s): Video[FileOutputNode-test_player_multireposition_[SRCFILENAME]_video.dat]\n
+ *                  Audio[FileOutputNode-test_player_multireposition_[SRCFILENAME]_audio.dat]\n
+ *                  Text[FileOutputNode-test_player_multireposition_[SRCFILENAME]_text.dat]
+ *  - Sequence:
+ *             -# CreatePlayer()
+ *             -# AddDataSource()/Init()/AddDataSink() (video)/AddDataSink() (audio)/AddDataSink() (text)/Prepare()/Start()
+ *             -# WAIT Duration/10 sec.
+ *             -# Pause()/SetPlaybackRange(Duration/4 sec, indeterminate)/Resume()
+ *             -# WAIT Duration/10 sec.
+ *             -# Pause()/SetPlaybackRange(Duration/4 sec, indeterminate)/Resume()
+ *             -#	:
+ *             -# EOS
+ *             -# Stop()/RemoveDataSink() (video)/RemoveDataSink() (audio)/RemoveDataSink() (text)/Reset()/RemoveDataSource()
+ *             -# DeletePlayer()
+ *
+ */
+class pvplayer_async_test_multipauseseekresume : public pvplayer_async_test_base
+{
+    public:
+        pvplayer_async_test_multipauseseekresume(PVPlayerAsyncTestParam aTestParam):
+                pvplayer_async_test_base(aTestParam)
+                , iPlayer(NULL)
+                , iDataSource(NULL)
+                , iDataSinkVideo(NULL)
+                , iIONodeVideo(NULL)
+                , iMIOFileOutVideo(NULL)
+                , iDataSinkAudio(NULL)
+                , iIONodeAudio(NULL)
+                , iMIOFileOutAudio(NULL)
+                , iDataSinkText(NULL)
+                , iIONodeText(NULL)
+                , iMIOFileOutText(NULL)
+                , iCurrentCmdId(0)
+                , iSessionDuration(0)
+                , iSourceContextData(NULL)
+        {
+            iTestCaseName = _STRLIT_CHAR("Multiple Pause SetPlaybackRange Resume");
+            iTargetNumPause = 1;
+            iNumPause = 0;
+        }
+
+        ~pvplayer_async_test_multipauseseekresume() {}
+
+        void StartTest();
+        void Run();
+
+        void CommandCompleted(const PVCmdResponse& aResponse);
+        void HandleErrorEvent(const PVAsyncErrorEvent& aEvent);
+        void HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent);
+
+        enum PVTestState
+        {
+            STATE_CREATE,
+            STATE_ADDDATASOURCE,
+            STATE_INIT,
+            STATE_GETMETADATAKEYLIST,
+            STATE_GETMETADATAVALUELIST,
+            STATE_ADDDATASINK_VIDEO,
+            STATE_ADDDATASINK_AUDIO,
+            STATE_ADDDATASINK_TEXT,
+            STATE_PREPARE,
+            STATE_START,
+            STATE_PAUSE,
+            STATE_SETPLAYBACKRANGE,
+            STATE_RESUME,
+            STATE_STOP,
+            STATE_REMOVEDATASINK_VIDEO,
+            STATE_REMOVEDATASINK_AUDIO,
+            STATE_REMOVEDATASINK_TEXT,
+            STATE_RESET,
+            STATE_REMOVEDATASOURCE,
+            STATE_CLEANUPANDCOMPLETE
+        };
+
+        PVTestState iState;
+
+        PVPlayerInterface* iPlayer;
+        PVPlayerDataSourceURL* iDataSource;
+        PVPlayerDataSink* iDataSinkVideo;
+        PVMFNodeInterface* iIONodeVideo;
+        PvmiMIOControl* iMIOFileOutVideo;
+        PVPlayerDataSink* iDataSinkAudio;
+        PVMFNodeInterface* iIONodeAudio;
+        PvmiMIOControl* iMIOFileOutAudio;
+        PVPlayerDataSink* iDataSinkText;
+        PVMFNodeInterface* iIONodeText;
+        PvmiMIOControl* iMIOFileOutText;
+        PVCommandId iCurrentCmdId;
+        Oscl_Vector<PVCommandId, OsclMemAllocator> iCmdIds;
+
+        void setMultiplePauseMode(uint32 aNum)
+        {
+            iTargetNumPause = aNum;
+        }
+
+    private:
+        OSCL_wHeapString<OsclMemAllocator> wFileName;
+        oscl_wchar output[512];
+
+        PVPMetadataList iMetadataKeyList;
+        Oscl_Vector<PvmiKvp, OsclMemAllocator> iMetadataValueList;
+        int32 iNumValues;
+
+        uint32 iTargetNumPause;
+        uint32 iNumPause;
+        uint32 iSessionDuration;
+
+        PVMFSourceContextData* iSourceContextData;
+};
+
+/**
+* pvplayer_async_test_multiple_instance is an Open-Play-Stop test case
+* that launches a 2nd engine instance and plays the selected input
+* simultaneously from the two instances.
+*/
+class PVMFLocalDataSource;
+class PvOmapVideo;
+class PVRefOmapAudioOutput;
+
+
+class pvplayer_async_test_multiple_instance : public pvplayer_async_test_base
+{
+    public:
+        pvplayer_async_test_multiple_instance(PVPlayerAsyncTestParam aTestParam):
+                pvplayer_async_test_base(aTestParam)
+                , iPlayer(NULL)
+                , iDataSource(NULL)
+                , iDataSinkVideo(NULL)
+                , iDataSinkAudio(NULL)
+                , iDataSinkText(NULL)
+                , iIONodeVideo(NULL)
+                , iIONodeAudio(NULL)
+                , iIONodeText(NULL)
+                , iMOutVideo(NULL)
+                , iMOutAudio(NULL)
+                , iMOutText(NULL)
+                , iCurrentCmdId(0)
+        {
+            iSinkName = _STRLIT_WCHAR("pvplayer_async_test_multiple_instance_");
+            iTestCaseName = _STRLIT_CHAR("Multiple Instance Open-Play-Stop");
+            iLocalDataSource = NULL;
+
+            iParentInstance = NULL;
+            iChildThreadFailures = 0;
+            iChildThreadLeave = 0;
+            iChildThreadExit = false;
+            //make a persistent copy of the test params.
+            iParam = new PVPlayerAsyncTestParam();
+            iParam->Copy(aTestParam);
+        }
+
+        ~pvplayer_async_test_multiple_instance()
+        {
+            delete iParam;
+        }
+
+        //To support the 2nd instance of the test case.
+        pvplayer_async_test_multiple_instance* iParentInstance;
+        int32 iChildThreadFailures;
+        int32 iChildThreadLeave;
+        bool iChildThreadExit;
+        PVPlayerAsyncTestParam* iParam;
+        void ChildTestIsTrue(bool);
+        static void InThread(pvplayer_async_test_multiple_instance* parent);
+        //An observer class for the 2nd instance of the test case.
+        class ChildObserver: public pvplayer_async_test_observer
+        {
+            public:
+                void TestCompleted(test_case &tc);
+        };
+        //End 2nd instance support.
+
+        void StartTest();
+        void Run();
+
+        void CommandCompleted(const PVCmdResponse& aResponse);
+        void HandleErrorEvent(const PVAsyncErrorEvent& aEvent);
+        void HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent);
+
+        enum PVTestState
+        {
+            STATE_CREATE,
+            STATE_ADDDATASOURCE,
+            STATE_INIT,
+            STATE_GETMETADATAKEYLIST,
+            STATE_GETMETADATAVALUELIST,
+            STATE_ADDDATASINK_VIDEO,
+            STATE_ADDDATASINK_AUDIO,
+            STATE_ADDDATASINK_TEXT,
+            STATE_PREPARE,
+            STATE_START,
+            STATE_STOP,
+            STATE_REMOVEDATASINK_VIDEO,
+            STATE_REMOVEDATASINK_AUDIO,
+            STATE_REMOVEDATASINK_TEXT,
+            STATE_RESET,
+            STATE_REMOVEDATASOURCE,
+            STATE_CLEANUPANDCOMPLETE
+        };
+
+        PVTestState iState;
+
+        PVPlayerInterface* iPlayer;
+        PVPlayerDataSourceURL* iDataSource;
+        PVPlayerDataSink* iDataSinkVideo;
+        PVPlayerDataSink* iDataSinkAudio;
+        PVPlayerDataSink* iDataSinkText;
+        PVMFNodeInterface* iIONodeVideo;
+        PVMFNodeInterface* iIONodeAudio;
+        PVMFNodeInterface* iIONodeText;
+        PvmiMIOControl* iMOutVideo;
+        PvmiMIOControl* iMOutAudio;
+        PvmiMIOControl* iMOutText;
+        PVCommandId iCurrentCmdId;
+
+        OSCL_wHeapString<OsclMemAllocator> iFileNameWStr;
+        oscl_wchar iTmpWCharBuffer[512];
+
+        PVMFLocalDataSource* iLocalDataSource;
+
+        void PrintMetadata();
+        PVPMetadataList iMetadataKeyList;
+        Oscl_Vector<PvmiKvp, OsclMemAllocator> iMetadataValueList;
+        int32 iNumValues;
+        OSCL_wHeapString<OsclMemAllocator> iSinkName;
+
+};
+
+/**
+* pvplayer_async_test_multiple_thread is an Open-Play-Stop test case
+* that launches engine instance in a second thread and tests controlling
+* engine from an app thread.
+*/
+class PVMFLocalDataSource;
+class PvOmapVideo;
+class PVRefOmapAudioOutput;
+class OsclExecScheduler;
+
+#include "threadsafe_queue.h"
+
+class pvplayer_async_test_multiple_thread : public pvplayer_async_test_base
+            , public ThreadSafeQueueObserver
+{
+    public:
+        pvplayer_async_test_multiple_thread(PVPlayerAsyncTestParam aTestParam):
+                pvplayer_async_test_base(aTestParam)
+                , iPlayer(NULL)
+                , iDataSource(NULL)
+                , iDataSinkVideo(NULL)
+                , iDataSinkAudio(NULL)
+                , iDataSinkText(NULL)
+                , iIONodeVideo(NULL)
+                , iIONodeAudio(NULL)
+                , iIONodeText(NULL)
+                , iMOutVideo(NULL)
+                , iMOutAudio(NULL)
+                , iMOutText(NULL)
+                , iCurrentCmdId(0)
+        {
+            iSinkName = _STRLIT_WCHAR("pvplayer_async_test_multiple_thread_");
+            iTestCaseName = _STRLIT_CHAR("Multiple Thread Open-Play-Stop");
+            iLocalDataSource = NULL;
+        }
+
+        ~pvplayer_async_test_multiple_thread()
+        {
+        }
+
+        void StartTest();
+        void Run();
+
+        void CommandCompleted(const PVCmdResponse& aResponse);
+        void HandleErrorEvent(const PVAsyncErrorEvent& aEvent);
+        void HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent);
+
+        enum PVTestState
+        {
+            STATE_CREATE,
+            STATE_ADDDATASOURCE,
+            STATE_INIT,
+            STATE_GETMETADATAKEYLIST,
+            STATE_GETMETADATAVALUELIST,
+            STATE_RELEASEMETADATAVALUES,
+            STATE_ADDDATASINK_VIDEO,
+            STATE_ADDDATASINK_AUDIO,
+            STATE_ADDDATASINK_TEXT,
+            STATE_PREPARE,
+            STATE_START,
+            STATE_STOP,
+            STATE_REMOVEDATASINK_VIDEO,
+            STATE_REMOVEDATASINK_AUDIO,
+            STATE_REMOVEDATASINK_TEXT,
+            STATE_RESET,
+            STATE_REMOVEDATASOURCE,
             STATE_WAIT_FOR_ERROR_HANDLING,
             STATE_CLEANUPANDCOMPLETE
         };
@@ -2721,34 +3073,34 @@ class pvplayer_async_test_setplaybackafterprepare : public pvplayer_async_test_b
         PVPlayerDataSink* iDataSinkVideo;
         PVPlayerDataSink* iDataSinkAudio;
         PVPlayerDataSink* iDataSinkText;
-
         PVMFNodeInterface* iIONodeVideo;
         PVMFNodeInterface* iIONodeAudio;
         PVMFNodeInterface* iIONodeText;
-#ifdef USE_REF_FILEOUTPUT_FOR_VIDEO
-        PVRefFileOutput* iMIOFileOutVideo;
-#else
-        PvmiMIOControl* iMIOOutVideo;
-#endif
-
-        PvmiMIOControl* iMIOOutAudio;
-
-        PVRefFileOutput* iMIOFileOutText;
-
-#if USE_AUDIO_EXTN_INTERFACE
-        PVMioAudioOutputControl* iAudioOutputController;
-#endif // USE_AUDIO_EXTN_INTERFACE
+        PvmiMIOControl* iMOutVideo;
+        PvmiMIOControl* iMOutAudio;
+        PvmiMIOControl* iMOutText;
         PVCommandId iCurrentCmdId;
-        Oscl_Vector<PVCommandId, OsclMemAllocator> iCmdIds;
 
-        Oscl_FileServer iFS;
-        Oscl_File iTimeLogFile;
+        OSCL_wHeapString<OsclMemAllocator> iFileNameWStr;
+        oscl_wchar iTmpWCharBuffer[512];
 
-    private:
-        OSCL_wHeapString<OsclMemAllocator> wFileName;
-        oscl_wchar output[512];
+        PVMFLocalDataSource* iLocalDataSource;
+
+        void PrintMetadata();
+        PVPMetadataList iMetadataKeyList;
+        Oscl_Vector<PvmiKvp, OsclMemAllocator> iMetadataValueList;
+        int32 iNumValues;
+        OSCL_wHeapString<OsclMemAllocator> iSinkName;
+
+        ThreadSafeQueue iThreadSafeCommandQueue;
+        ThreadSafeQueue iThreadSafeErrorQueue;
+        ThreadSafeQueue iThreadSafeInfoQueue;
+        void ThreadSafeQueueDataAvailable(ThreadSafeQueue*);
+        OsclSemaphore iThreadReadySem;
+        OsclSemaphore iThreadExitSem;
+        int32 iThreadErrors;
+        OsclExecScheduler* iThreadScheduler;
 };
-
 
 #endif // TEST_PV_PLAYER_ENGINE_TESTSET1_H_INCLUDED
 

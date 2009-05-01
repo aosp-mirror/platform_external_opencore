@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,20 +96,36 @@ class pvplayer_async_test_observer
 };
 
 
-typedef struct
+class PVPlayerAsyncTestParam
 {
-    pvplayer_async_test_observer* iObserver;
-    test_case* iTestCase;
-    FILE* iTestMsgOutputFile;
-    const char* iFileName;
-    PVMFFormatType iFileType;
-    bool iCompressedVideo;
-    bool iCompressedAudio;
-    bool iFileInput;
-    bool iBCS;
-    int iCurrentTestNumber;
-    bool iProxyEnabled;
-} PVPlayerAsyncTestParam;
+    public:
+        pvplayer_async_test_observer* iObserver;
+        test_case* iTestCase;
+        FILE* iTestMsgOutputFile;
+        const char* iFileName;
+        PVMFFormatType iFileType;
+        bool iCompressedVideo;
+        bool iCompressedAudio;
+        bool iFileInput;
+        bool iBCS;
+        int iCurrentTestNumber;
+        bool iProxyEnabled;
+        //explicit copy constructor
+        void Copy(const PVPlayerAsyncTestParam& aParam)
+        {
+            iObserver = aParam.iObserver;
+            iTestCase = aParam.iTestCase;
+            iTestMsgOutputFile = aParam.iTestMsgOutputFile;
+            iFileName = aParam.iFileName;
+            iFileType = aParam.iFileType;
+            iCompressedVideo = aParam.iCompressedVideo;
+            iCompressedAudio = aParam.iCompressedAudio;
+            iFileInput = aParam.iFileInput;
+            iBCS = aParam.iBCS;
+            iCurrentTestNumber = aParam.iCurrentTestNumber;
+            iProxyEnabled = aParam.iProxyEnabled;
+        }
+} ;
 
 #define PVPATB_TEST_IS_TRUE(condition) (iTestCase->test_is_true_stub( (condition), (#condition), __FILE__, __LINE__ ))
 
@@ -143,9 +159,9 @@ typedef enum
     STATE_REMOVEDATASINK_AUDIO,
     STATE_RESET,
     STATE_REMOVEDATASOURCE,
-    STATE_WAIT_FOR_ERROR_HANDLING,
     STATE_CLEANUPANDCOMPLETE,
-    STATE_PROTOCOLROLLOVER
+    STATE_PROTOCOLROLLOVER,
+    STATE_RECONNECT
 } PVTestState;
 
 /*!
@@ -159,12 +175,32 @@ class PVPlayerTestMioFactory
         virtual ~PVPlayerTestMioFactory() {}
 
         virtual PvmiMIOControl* CreateAudioOutput(OsclAny* aParam) = 0;
+        virtual PvmiMIOControl* CreateAudioOutput(OsclAny* aParam, MediaType aMediaType, bool aCompressedAudio = false)
+        {
+            OSCL_UNUSED_ARG(aParam);
+            OSCL_UNUSED_ARG(aMediaType);
+            OSCL_UNUSED_ARG(aCompressedAudio);
+            return 0;
+        };
         virtual PvmiMIOControl* CreateAudioOutput(OsclAny* aParam, PVRefFileOutputTestObserver* aObserver, bool aActiveTiming, uint32 aQueueLimit, bool aSimFlowControl, bool logStrings = true) = 0;
         virtual void DestroyAudioOutput(PvmiMIOControl* aMio) = 0;
         virtual PvmiMIOControl* CreateVideoOutput(OsclAny* aParam) = 0;
+        virtual PvmiMIOControl* CreateVideoOutput(OsclAny* aParam, MediaType aMediaType, bool aCompressedVideo = false)
+        {
+            OSCL_UNUSED_ARG(aParam);
+            OSCL_UNUSED_ARG(aMediaType);
+            OSCL_UNUSED_ARG(aCompressedVideo);
+            return 0;
+        };
         virtual PvmiMIOControl* CreateVideoOutput(OsclAny* aParam, PVRefFileOutputTestObserver* aObserver, bool aActiveTiming, uint32 aQueueLimit, bool aSimFlowControl, bool logStrings = true) = 0;
         virtual void DestroyVideoOutput(PvmiMIOControl* aMio) = 0;
         virtual PvmiMIOControl* CreateTextOutput(OsclAny* aParam) = 0;
+        virtual PvmiMIOControl* CreateTextOutput(OsclAny* aParam, MediaType aMediaType)
+        {
+            OSCL_UNUSED_ARG(aParam);
+            OSCL_UNUSED_ARG(aMediaType);
+            return 0;
+        };
         virtual void DestroyTextOutput(PvmiMIOControl* aMio) = 0;
 };
 
@@ -229,15 +265,15 @@ class pvplayer_async_test_base : public OsclTimerObject,
             bool foundlastslash = false;
             while (!foundlastslash)
             {
-                oscl_wchar* tmp1 = oscl_strstr(lastslash, _STRLIT_WCHAR("\\"));
-                oscl_wchar* tmp2 = oscl_strstr(lastslash, _STRLIT_WCHAR("/"));
+                const oscl_wchar* tmp1 = oscl_strstr(lastslash, _STRLIT_WCHAR("\\"));
+                const oscl_wchar* tmp2 = oscl_strstr(lastslash, _STRLIT_WCHAR("/"));
                 if (tmp1 != NULL)
                 {
-                    lastslash = tmp1 + 1;
+                    lastslash = (oscl_wchar*)tmp1 + 1;
                 }
                 else if (tmp2 != NULL)
                 {
-                    lastslash = tmp2 + 1;
+                    lastslash = (oscl_wchar*)tmp2 + 1;
                 }
                 else
                 {
@@ -255,7 +291,7 @@ class pvplayer_async_test_base : public OsclTimerObject,
             bool finishedreplace = false;
             while (!finishedreplace)
             {
-                oscl_wchar* tmp = oscl_strstr(aFilename.get_cstr(), _STRLIT_WCHAR("."));
+                oscl_wchar* tmp = OSCL_CONST_CAST(oscl_wchar*, oscl_strstr(aFilename.get_cstr(), _STRLIT_WCHAR(".")));
                 if (tmp != NULL)
                 {
                     oscl_strncpy(tmp, _STRLIT_WCHAR("_"), 1);
@@ -401,7 +437,12 @@ class pvplayer_engine_test : public test_case,
             MediaIONodeBackwardForwardTest = 83,
             MediaIONodePauseNearEOSBackwardResumeTest,
             MediaIONodeMultiplePauseSetPlaybackRateResumeTest,
-            MediaIONodBackwardNearEOSForwardNearStartTest,
+            MediaIONodeBackwardNearEOSForwardNearStartTest,
+
+            MultiplePauseSeekResumeTest = 87,
+            MultipleSetStartPositionPlayStopTest,
+
+            OpenPlayStopResetCPMRecognizeTest = 89, //Start of testing recognizer using DataStream input
 
             LastLocalTest,//placeholder
 
@@ -439,8 +480,17 @@ class pvplayer_engine_test : public test_case,
             ProgPlaybackMP4StartPauseSeekResumeLoopTest, //156
             ProgPlaybackMP4SeekForwardStepLoopTest,	//157
             ProgPlaybackPlayStopPlayTest, //158
+            ProgPlaybackMP4SeekToBOCAfterDownloadCompleteTest, //159
+            ProgPlaybackMP4SeekInCacheAfterDownloadCompleteTest, //160
+            ProgPlaybackMP4EOSStopPlayAgainTest, //161
 
             LastProgressivePlaybackTest, //placeholder
+
+            ShoutcastPlayback5MinuteTest = 180,
+            ShoutcastPlaybackPauseResumeTest = 181,
+            ShoutcastPlaybackPlayStopPlayTest = 182,
+
+            LastShoutcastPlaybackTest, // placeholder
 
             FirstStreamingTest = 200, //placeholder
 
@@ -451,6 +501,12 @@ class pvplayer_engine_test : public test_case,
 
             LastStreamingTest, //placeholder
 
+            //Multiple Instance tests.
+            MultipleInstanceOpenPlayStopTest = 300,
+            MultipleThreadOpenPlayStopTest = 301,
+            //this range reserved for future multiple instance tests.
+            LastMultipleInstanceTest = 325,//placeholder
+
             FirstProjTest = 700, // placeholder
             // Project specific unit tests should have numbers 701 to 799
             LastProjTest = 799,
@@ -460,6 +516,7 @@ class pvplayer_engine_test : public test_case,
             PrintMetadataTest = 801,
             PrintMemStatsTest,
             PlayUntilEOSTest,
+            ReleaseMetadataTest,
 
             StreamingOpenPlayUntilEOSTest = 851,//851
             StreamingOpenPlayPausePlayUntilEOSTest,//852
@@ -473,6 +530,13 @@ class pvplayer_engine_test : public test_case,
             StreamingProtocolRollOverTestWithUnknownURLType, //860
             StreamingPlayListSeekTest, //861
             StreamingSeekAfterEOSTest, //862
+            /*
+             * TC 863: This test case checks the engine behavior when the server responds
+             * with any of the following error codes - 404 (URL Not Found), 415 (Media Unsupported),
+             * 457 (Invalid Range). In all cases, the test should not error out, and complete as in TC 861
+             */
+            StreamingPlayListErrorCodeTest, // 863
+            StreamingOpenPlayMultipleSeekToEndOfClipUntilEOSTest, //864
 
 
             StreamingOpenPlayMultiplePausePlayUntilEOSTest = 875, //875
@@ -485,7 +549,8 @@ class pvplayer_engine_test : public test_case,
             CPM_DLA_OMA1PASSTRHU_OpenPlayStopResetTest, //880
             CPM_DLA_OMA1PASSTRHU_UnknownContentOpenPlayStopResetTest, //881
 
-            //882-888 available
+            StreamingOpenPlayUntilEOSTestWithFileHandle,//882
+            //883-888 available
 
             //GetLicense returns commandCompleted before CancelLic could be triggered
             CPM_DLA_OMA1PASSTRHU_CancelAcquireLicenseTooLate_CancelFails = 889, //889
@@ -497,6 +562,7 @@ class pvplayer_engine_test : public test_case,
 
             //Multiple CPM Plugins
             OpenPlayStop_MultiCPMTest, //893
+            StreamingLongPauseSeekTest,	//894
 
             GenericReset_AddDataSource = 900,
             GenericReset_Init,
@@ -643,10 +709,6 @@ class pvplayer_engine_test : public test_case,
             GenericOpenPlayStop_SleepAddDataSinkAudio,
             GenericOpenPlayStop_SleepPrepare,
             GenericOpenPlayStop_SleepGetMetaDataValueList,
-            GenericOpenPlayStop_SleepStart,
-            GenericOpenPlayStop_SleepPause,
-            GenericOpenPlayStop_SleepResume,
-            GenericOpenPlayStop_SleepSetPlaybackRange,
             GenericOpenPlayStop_SleepStop,
 
             GenericOpenPlayPauseResumeSeekStopProfiling = 1125,
@@ -793,10 +855,6 @@ class pvplayer_engine_test : public test_case,
             DLA_StreamingOpenPlayStop_SleepAddDataSinkVideo,
             DLA_StreamingOpenPlayStop_SleepAddDataSinkAudio,
             DLA_StreamingOpenPlayStop_SleepPrepare,
-            DLA_StreamingOpenPlayStop_SleepStart,
-            DLA_StreamingOpenPlayStop_SleepPause,
-            DLA_StreamingOpenPlayStop_SleepResume,
-            DLA_StreamingOpenPlayStop_SleepSetPlaybackRange,
             DLA_StreamingOpenPlayStop_SleepStop = 1301,
             //END JANUS CPM TESTS
 
@@ -812,7 +870,6 @@ class pvplayer_engine_test : public test_case,
             ApplicationInvolvedTrackSelectionTestTextOnly = 1307,
             ApplicationInvolvedTrackSelectionTestNoTracks = 1308,
 
-            //BEGIN Jupiter CPM Tests
             //Metadata Query tests
             DLA_QueryEngine_JupiterCPMTest_v2_WMA = 1400,
             DLA_QueryEngine_JupiterCPMTest_v24_WMA,//1401
@@ -837,11 +894,11 @@ class pvplayer_engine_test : public test_case,
             //Special license protocol sequence tests
             DLA_OpenPlayStop_JupiterCPMTest_redirect,//1418
             DLA_OpenPlayStop_JupiterCPMTest_v24_WMA_fallback,//1419
-            DLA_OpenPlayStop_JupiterCPMTest_v24_WMA_ringtone,//1420
-            DLA_OpenPlayStop_JupiterCPMTest_v24_WMA_domain,//1421
-            DLA_OpenPlayStop_JupiterCPMTest_v24_WMA_domain_renew,//1422
-            DLA_OpenPlayStop_JupiterCPMTest_v24_WMA_domain_offline,//1423
-            DLA_OpenPlayStop_JupiterCPMTest_v24_WMA_domain_history,//1424
+            DLA_OpenPlayStop_JupiterCPMTest_v4_WMA_ringtone,//1420
+            DLA_OpenPlayStop_JupiterCPMTest_v4_WMA_domain,//1421
+            DLA_OpenPlayStop_JupiterCPMTest_v4_WMA_domain_renew,//1422
+            DLA_OpenPlayStop_JupiterCPMTest_v4_WMA_domain_offline,//1423
+            DLA_OpenPlayStop_JupiterCPMTest_v4_WMA_domain_history,//1424
             //Jupiter utility tests
             DLA_JoinDomain_JupiterCPMTest,//1425
             DLA_LeaveDomain_JupiterCPMTest,//1426
@@ -866,10 +923,361 @@ class pvplayer_engine_test : public test_case,
             DLA_StreamingProtocolRollOverTest_JupiterCPMTest,//1443
             DLA_StreamingProtocolRollOverTestWithUnknownURLType_JupiterCPMTest,//1444
             //RESERVED FOR FUTURE JUPITER CPM TESTS.
-            LastJupiterCPMTest = 1600,//placeholder
+            LastJupiterCPMTest = 1599,//placeholder
             //End JUPITER CPM TESTS.
+            /*
+             * Note: Starting PVR tests from 1600 since the number of tests exceed the range
+             * from 895 and 900 (the earlier location of the tests)
+             */
+            /*
+             * =========== Basic PVR tests ===========
+             */
+
+            /*
+             * 1600:        Play->pause->resume->stop test
+             * Description: Self-explanatory
+             */
+
+            /**
+            PVR Memory Live Buffer tests start at 1600
+            */
+
+            PVR_MLB_StreamingOpenPlayLivePausePlayStopTest = 1600,//1600
+            PVR_MLB_StreamingOpenPlayLivePausePlaySeekStopTest,//1601
+            PVR_MLB_StreamingOpenPlayLiveBufferBoundaryCheckTest,//1602
+            /*
+             * 1601:        Reposition after a play pause
+             * Description: See TC 1611
+             */
+
+            /*
+             * 1602:        Check live buffer boundary
+             * Description: To maintain TC numbers, this test case
+             *              does a play followed by a stop.
+             */
+
+            /*
+             * =========== Live pause tests ===========
+             */
+
+            /*
+             * 1603:        Quick successive pause/resume
+             * Description: This test case will call pause/resume in a quick and
+             *              repetitive sequence to test quick successive pause/resume stress condition.
+             * Input:       1. repeat count
+             */
+            PVR_MLB_StreamingOpenPlayMultipleLivePausePlayTest,//1603
+            /*
+             * 1604:        Pause with random duration
+             * Description: This test case will call pause/resume repeatedly.
+             *              Each pause has random duration in a range.
+             * Inputs:      1. repeat count.
+             *              2. pause duration range
+             */
+            PVR_MLB_StreamingOpenPlayMultipleLivePauseRandomDurationPlayTest,//1604
+            /*
+             * 1605:        Long pause
+             * Description: This test case will pause long period of time (> live buffer duration)
+             * Input:       1. pause duration
+             */
+            PVR_MLB_StreamingOpenPlayLongLivePausePlayTest,//1605
+            /*
+             * 1606:        Stop during live pause
+             * Description: This test case stop the session during live pause.
+             *              Then it starts the same session again.
+             */
+            PVR_MLB_StreamingOpenPlayLivePauseStopTest,//1606
+
+            /*
+             * =========== Random position tests ===========
+             */
+
+            /*
+             * 1607:        Jump to live after pause
+             * Description: This test case jumps to live session (not buffer) after a pause.
+             *				The above step is repeated several times, after pausing for a random duration.
+             * Inputs:      1. Repeat count
+             *              2. Pause duration range
+             */
+            PVR_MLB_StreamingOpenPauseJumpToLiveStopTest, //1607
+            /*
+             * 1608:        Jump to live after pause/resume
+             * Description: This test case pauses a live session for a random duration, resumes
+             *              a for random duration that is less than the pause duration, and then
+             *              jumps to live. This is repeated several times.
+             * Inputs:      1. Repeat count
+             *              2. Pause duration range
+             *              3. Resume duration range
+             */
+            PVR_MLB_StreamingOpenPauseResumeJumpToLiveStopTest, //1608
+            /*
+             * 1609:        Stop during playing back from live buffer
+             * Description: This test case pauses a live session for a random duration, resumes
+             *              and then stops the session while playing from the live buffer. The same
+             *              session is started after the stop.
+             */
+            PVR_MLB_StreamingOpenPauseResumeStopTest, //1609
+            /*
+             * 1610:        RTSP URL test
+             * Description: This test case uses an RTSP URL as the input for the streaming session.
+             *              Both live and VOD cases are handled.
+             */
+            PVR_MLB_StreamingRTSPUrlPauseResumeStopTest, //1610
+
+            /*
+             * 1611:        PVR Repositioning test
+             * Description: This test case does a sequence of repositioning requests within the live buffer.
+             *              The followed sequence is: start, pause, resume, repositioning sequence, stop.
+            				The repos. sequence consists of 6 repositioning requests back and forward.
+             */
+            PVR_MLB_StreamingPauseResumeRepositionStopTest, //1611
+
+            /*
+            * 1612:        PVR Repositioning test
+            * Description: This test case does a sequence of repositioning requests within the live buffer.
+            *              The followed sequence is: start, pause, repositioning, resume. This sequence is
+               			done six times, followed by a stop.
+            */
+            PVR_MLB_StreamingPauseRepositionResumeStopTest, //1612
+
+            /*
+             * 1613:        RTSP END_OF_STREAM test for memory live buffer.
+             * Description: This test is design to test the case where and RTSP END_OF_STREAM arrives
+             *              during a live pause. Total playback time must equal the cumulative playlist clip
+             *              duration.
+             * Input:
+             */
+            PVR_MLB_StreamingOpenPlayLivePauseWaitForRTSPEOSResumeTest = 1613,//1613
+
+
+            /*
+            * 1614:        PVR Playlist switch with a full live buffer after JTL
+            * Description: This test case makes a live pause it resumes once the live buffer gets full, and makes
+            *              a JTL followed by a channel switch, the channel switch time is measured.
+
+            */
+            PVR_MLB_StreamingOpenPauseJmpToLiveChannelSwitchTest, //1614
+
+
+
+            /*
+            * 1615       PVR Bitrate estimation test
+            * Description: Test case for mismatch between advertised and real bitrate,
+            *              the root of the problem with higher-than-advertised bitrates is that it
+            *              may cause overwrites in the LiveBuffer, which is then reflected in quality artifacts.
+            *
+            *              PLEASE USE A SDP FILE THAT ANOUNCES A SMALLER BITRATE THAN THE REAL ONE
+
+            */
+            PVR_MLB_StreamingBitrateEstimationTest = 1615,
+
+            /**
+            PVR FileSystem Live Buffer tests start at 1630
+            */
+            PVR_FSLB_StreamingOpenPlayLivePausePlayStopTest = 1630,//1630
+            PVR_FSLB_StreamingOpenPlayLivePausePlaySeekStopTest,//1631
+            PVR_FSLB_StreamingOpenPlayLiveBufferBoundaryCheckTest,//1632
+            /*
+             * =========== Live pause tests ===========
+             */
+
+            /*
+             * 1633:        Quick successive pause/resume
+             * Description: This test case will call pause/resume in a quick and
+             *              repetitive sequence to test quick successive pause/resume stress condition.
+             * Input:       1. repeat count
+             */
+            PVR_FSLB_StreamingOpenPlayMultipleLivePausePlayTest,//1633
+            /*
+             * 1634:        Pause with random duration
+             * Description: This test case will call pause/resume repeatedly.
+             *              Each pause has random duration in a range.
+             * Inputs:      1. repeat count.
+             *              2. pause duration range
+             */
+            PVR_FSLB_StreamingOpenPlayMultipleLivePauseRandomDurationPlayTest,//1634
+            /*
+             * 1635:        Long pause
+             * Description: This test case will pause long period of time (> live buffer duration)
+             * Input:       1. pause duration
+             */
+            PVR_FSLB_StreamingOpenPlayLongLivePausePlayTest,//1635
+            /*
+             * 1636:        Stop during live pause
+             * Description: This test case stop the session during live pause.
+             *              Then it starts the same session again.
+             */
+            PVR_FSLB_StreamingOpenPlayLivePauseStopTest,//1636
+
+            /*
+             * =========== Random position tests ===========
+             */
+
+            /*
+             * 1637:        Jump to live after pause
+             * Description: This test case jumps to live session (not buffer) after a pause.
+             *				The above step is repeated several times, after pausing for a random duration.
+             * Inputs:      1. Repeat count
+             *              2. Pause duration range
+             */
+            PVR_FSLB_StreamingOpenPauseJumpToLiveStopTest, //1637
+            /*
+             * 1638:        Jump to live after pause/resume
+             * Description: This test case pauses a live session for a random duration, resumes
+             *              a for random duration that is less than the pause duration, and then
+             *              jumps to live. This is repeated several times.
+             * Inputs:      1. Repeat count
+             *              2. Pause duration range
+             *              3. Resume duration range
+             */
+            PVR_FSLB_StreamingOpenPauseResumeJumpToLiveStopTest, //1638
+            /*
+             * 1639:        Stop during playing back from live buffer
+             * Description: This test case pauses a live session for a random duration, resumes
+             *              and then stops the session while playing from the live buffer. The same
+             *              session is started after the stop.
+             */
+            PVR_FSLB_StreamingOpenPauseResumeStopTest, //1639
+
+            /*
+             * 1640:        RTSP URL test
+             * Description: This test case uses an RTSP URL as the input for the streaming session.
+             *              Both live and VOD cases are handled.
+             */
+            PVR_FSLB_StreamingRTSPUrlPauseResumeStopTest, //1640
+
+            /*
+             * 1641:        PVR Repositioning test
+             * Description: This test case does a sequence of repositioning requests within the live buffer.
+             *              The followed sequence is: start, pause, resume, repositioning sequence, stop.
+            				The repos. sequence consists of 6 repositioning requests back and forward.
+             */
+            PVR_FSLB_StreamingPauseResumeRepositionStopTest, //1641
+
+            /*
+            * 1642:        PVR Repositioning test
+            * Description: This test case does a sequence of repositioning requests within the live buffer.
+            *              The followed sequence is: start, pause, repositioning, resume. This sequence is
+               			done six times, followed by a stop.
+            */
+            PVR_FSLB_StreamingPauseRepositionResumeStopTest, //1642
+
+            /*
+            * 1643:        RTSP END_OF_STREAM test for file system live buffer.
+            * Description: Same as 1643.
+            * Input:
+            */
+
+            PVR_FSLB_StreamingOpenPlayLivePauseWaitForRTSPEOSResumeTest, //1643
+
+            /*
+            * 1644:        PVR Playlist switch with a full live buffer after JTL
+            * Description: This test case makes a live pause it resumes once the live buffer gets full, and makes
+            *              a JTL followed by a channel switch, the channel switch time is measured.
+
+            */
+            PVR_FSLB_StreamingOpenPauseJmpToLiveChannelSwitchTest, //1644
+
+
+            /**
+            PVR local file playback tests start at 1660
+            */
+
+            PVR_FILEPLAYBACK_OpenPlayUntilEOFTest = 1660,// 1660
+
+            /*
+            * 1661       PVR Local Playback Open-Play-Reposition-Play-Stop
+            * Description: This test case plays a local pvr file for 10 seconds, then
+            *              it repositions to 50, 75, 40, 0, 60 and 95% of the local file
+            *              and then it stops playback.
+            *
+
+            */
+
+            PVR_FILEPLAYBACK_OpenPlayRepositionPlayStopTest,  // 1661
+
+
+            /*
+            * 1662       PVR Local Playback Open-Play-Pause-Reposition
+            * Description: This test case plays a local pvr file for 10 seconds, then pauses playback
+            *              it repositions to 50, 75, 40, 0, 60 and 95% of the local file
+            *              and then it stops playback.
+            *
+
+            */
+
+            PVR_FILEPLAYBACK_OpenPlayPauseRepositionTest,  // 1662
+
+            /*
+            * 1663       PVR Local Playback Retrieved duration is correct
+            * Description: This test case plays a local pvr file for 3 seconds and
+            *              verifies if the retrieved duration is correct
+            *
+
+            */
+
+            PVR_FILEPLAYBACK_OpenPlayVerifyDurationTest,  // 1663
+
+
+
+
+            /*===========================PVR Recorder Test cases============================*/
+
+            /*
+            * 1680       PVR_Recorder_RecordOnStartUp
+            * Description: - Recording will start from NPT zero until playback is stopped.
+            *              - Pass criteria will be: No playback or recording errors.
+            */
+
+            PVR_Recorder_RecordOnStartUp = 1680,
+
+            /*
+            * 1681       PVR_Recorder_RecordOnDemand
+            * Description: - Recording will start from an arbitrary NPT different than zero to a point before playback is stopped.
+            *              - Pass criteria will be: No playback or recording errors.
+            */
+
+            PVR_Recorder_RecordOnDemand,
+
+            /*
+            * 1682       PVR_Recorder_MultiplePause
+            * Description: - Recording will start from NPT zero.
+            *              - Multiple pause/resume resume will be performed
+            *              - Pass criteria will be: No playback or recording errors.
+            */
+
+            PVR_Recorder_MultiplePause,
+
+            /*
+            * 1683       PVR_Recorder_MultiplePauseJTL
+            * Description: - Recording will start from NPT zero.
+            *              - Multiple pause/resume will be performed
+            *              - After last pause JTL
+            *              - Pass criteria will be: No playback or recording errors.
+            */
+
+            PVR_Recorder_MultiplePauseJTL,
+
+            /*
+            * 1684       PVR_Recorder_MultipleRepos
+            * Description: - Recording will start from NPT zero.
+            *              - Multiple Reposition/resume will be performed
+            *              - Pass criteria will be: No playback or recording errors.
+            */
+
+            PVR_Recorder_MultipleRepos,
+
+            /*
+            * 1685       PVR_Recorder_MultipleRecord
+            * Description: - Recording will start from an arbitrary NPT different than zero.
+            *              - Multiple StartRecord/StopRecord will be performed
+            *              - Pass criteria will be: No playback or recording errors
+            */
+
+            PVR_Recorder_MultipleRecord,
 
             LastInteractiveTest = 2000, // placeholder
+
 
             BeyondLastTest = 9999 //placeholder
         };

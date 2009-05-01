@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*********************************************************************************/
 /*
     This PVA_FF_SampleTableAtom Class contains all the time and data indexing of the
     media samples in a track.
@@ -46,7 +45,6 @@ class PVA_FF_SampleTableAtom : public PVA_FF_Atom
         PVA_FF_SampleTableAtom(uint32 mediaType,
                                int32 codecType,
                                uint32 fileAuthoringFlags,
-                               bool o3GPPCompliant = false,
                                uint32 protocol = 0,
                                uint8 profile = 1,
                                uint8 profileComp = 0xFF,
@@ -117,11 +115,6 @@ class PVA_FF_SampleTableAtom : public PVA_FF_Atom
         {
             _psyncSampleAtom = ssa;
         }
-        /*
-        const PVA_FF_CompositionOffsetAtom *getCompositionOffset(); // No inline for optional atoms - may have null value
-        const PVA_FF_ShadowSyncSampleAtom *getShadowSynchAtom(); // No inline for optional atoms - may have null value
-        const PVA_FF_DegradationPriorityAtom *getDegradationPriorityAtom(); // No inline for optional atoms - may have null value
-        */
         // Creation methods for optional member atoms
         void createCompositionOffsetAtom() {};
         void createSyncSampleAtom() {};
@@ -163,16 +156,18 @@ class PVA_FF_SampleTableAtom : public PVA_FF_Atom
             _psampleDescriptionAtom->setH263ProfileLevel(profile, level);
         }
 
-        void setBIFSODSampleDuration(int32 duration)
-        {
-            _ptimeToSampleAtom->setBIFSODSampleDuration(duration);
-        }
-
         void setESID(uint16 esid)
         {
             _psampleDescriptionAtom->setESID(esid);
         }
+        void SetMaxSampleSize(uint32);
+        void writeMaxSampleSize(MP4_AUTHOR_FF_FILE_IO_WRAP*);
 
+
+        uint32 getSampleCount() const
+        {
+            return _psampleSizeAtom->getSampleCount();
+        }
     private:
         virtual void recomputeSize();
 

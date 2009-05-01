@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,6 +59,8 @@ typedef int32 OsclLeaveCode;
 #define OsclErrNotInstalled 115
 #define OsclErrAlreadyInstalled 116
 #define OsclErrSystemCallFailed 117
+#define OsclErrNoHandler 118
+#define OsclErrThreadContextIncorrect 119
 
 /** For backward compatibility with old definitions
 */

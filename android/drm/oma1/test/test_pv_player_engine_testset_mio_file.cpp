@@ -21,35 +21,35 @@
 
 PvmiMIOControl* PVPlayerTestMioFactory::CreateAudioOutput(OsclAny* aParam)
 {
-	return new PVRefFileOutput(((OSCL_wString*)aParam)->get_cstr());
+    return new PVRefFileOutput(((OSCL_wString*)aParam)->get_cstr());
 }
 
 PvmiMIOControl* PVPlayerTestMioFactory::CreateAudioOutput(
-	OsclAny* aParam, 
-	PVRefFileOutputTestObserver* aObserver, 
-	bool aActiveTiming,
-	uint32 aQueueLimit,
-	bool aSimFlowControl,
-	bool logStrings)
+    OsclAny* aParam, 
+    PVRefFileOutputTestObserver* aObserver, 
+    bool aActiveTiming,
+    uint32 aQueueLimit,
+    bool aSimFlowControl,
+    bool logStrings)
 {
-	return new PVRefFileOutput(
-		*(OSCL_wString*)aParam,
-		aObserver,
-		aActiveTiming,
-		aQueueLimit,
-		aSimFlowControl,
-		logStrings);
+    return new PVRefFileOutput(
+        *(OSCL_wString*)aParam,
+        aObserver,
+        aActiveTiming,
+        aQueueLimit,
+        aSimFlowControl,
+        logStrings);
 }
 
 void PVPlayerTestMioFactory::DestroyAudioOutput(PvmiMIOControl* aMio)
 {
-	PVRefFileOutput* mio=(PVRefFileOutput*)aMio;
-	delete mio;
+    PVRefFileOutput* mio=(PVRefFileOutput*)aMio;
+    delete mio;
 }
 
 PvmiMIOControl* PVPlayerTestMioFactory::CreateVideoOutput(OsclAny* aParam)
 {
-	return new PVRefFileOutput(((OSCL_wString*)aParam)->get_cstr());
+    return new PVRefFileOutput(((OSCL_wString*)aParam)->get_cstr());
 }
 
 PvmiMIOControl* PVPlayerTestMioFactory::CreateVideoOutput(
@@ -58,7 +58,7 @@ PvmiMIOControl* PVPlayerTestMioFactory::CreateVideoOutput(
         bool aActiveTiming,
         uint32 aQueueLimit,
         bool aSimFlowControl,
-	bool logStrings)
+    bool logStrings)
 {
         return new PVRefFileOutput(
                 *(OSCL_wString*)aParam,
@@ -71,19 +71,19 @@ PvmiMIOControl* PVPlayerTestMioFactory::CreateVideoOutput(
 
 void PVPlayerTestMioFactory::DestroyVideoOutput(PvmiMIOControl* aMio)
 {
-	PVRefFileOutput* mio=(PVRefFileOutput*)aMio;
-	delete mio;
+    PVRefFileOutput* mio=(PVRefFileOutput*)aMio;
+    delete mio;
 }
 
 PvmiMIOControl* PVPlayerTestMioFactory::CreateTextOutput(OsclAny* aParam)
 {
-	return new PVRefFileOutput(((OSCL_wString*)aParam)->get_cstr());
+    return new PVRefFileOutput(((OSCL_wString*)aParam)->get_cstr());
 }
 
 void PVPlayerTestMioFactory::DestroyTextOutput(PvmiMIOControl* aMio)
 {
-	PVRefFileOutput* mio=(PVRefFileOutput*)aMio;
-	delete mio;
+    PVRefFileOutput* mio=(PVRefFileOutput*)aMio;
+    delete mio;
 }
 
 

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,17 +49,15 @@ class PVMFStreamingDataSource : public PVInterface
 {
     public:
         //default constructor
-        PVMFStreamingDataSource(bool aUseCPMPluginRegistry = false
-                                , OsclFileHandle*aFileHandle = NULL)
-                : iUseCPMPluginRegistry(aUseCPMPluginRegistry)
-                , iFileHandle(aFileHandle)
+        PVMFStreamingDataSource(OsclFileHandle*aFileHandle = NULL)
+                : iFileHandle(aFileHandle)
                 , iPreviewMode(false)
                 , iIntent(BITMASK_PVMF_SOURCE_INTENT_PLAY)
-        {}
+        {
+        }
 
         //copy constructor
         PVMFStreamingDataSource(const PVMFStreamingDataSource& source) : PVInterface(source)
-                , iUseCPMPluginRegistry(source.iUseCPMPluginRegistry)
                 , iFileHandle(source.iFileHandle)
                 , iStreamStatsLoggingURL(source.iStreamStatsLoggingURL)
                 , iPreviewMode(source.iPreviewMode)
@@ -90,11 +88,6 @@ class PVMFStreamingDataSource : public PVInterface
         }
         int32 iRefCounter;
 
-        bool iUseCPMPluginRegistry;
-        //Optional CPM usage flag.
-        //When true, CPM will be used as needed.
-        //When false, CPM will never be used.
-
         OsclFileHandle* iFileHandle;
         //Optional file handle.
         //When not NULL, the sdp file will be accessed using this handle.
@@ -103,6 +96,7 @@ class PVMFStreamingDataSource : public PVInterface
         OSCL_wHeapString<OsclMemAllocator> iStreamStatsLoggingURL;
         //Optional logging url.
         //When present, streaming stats will be sent to this URL.
+        //Typically applies to MS HTTP Streaming sessions
 
         bool iPreviewMode;
         //Optional field to indicate if the source that is being

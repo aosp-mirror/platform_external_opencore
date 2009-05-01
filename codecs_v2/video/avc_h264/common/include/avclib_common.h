@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,9 +78,8 @@ AVCStatus CleanUpDPB(AVCHandle *avcHandle, AVCCommonObj *video);
 This function finds empty frame in the decoded picture buffer to be used for the
 current picture, initializes the corresponding picture structure with Sl, Scb, Scr,
 width, height and pitch.
+\param "avcHandle" "Pointer to the main handle object."
 \param "video"	"Pointer to AVCCommonObj."
-\param "CurrPicNum" "Current picture number (only used in decoder)."
-\param "enc_flag" "Encoding flag (used by encoder)."
 \return "AVC_SUCCESS or AVC_FAIL."
 */
 AVCStatus DPBInitBuffer(AVCHandle *avcHandle, AVCCommonObj *video);
@@ -96,8 +95,17 @@ width, height and pitch.
 void DPBInitPic(AVCCommonObj *video, int CurrPicNum);
 
 /**
+This function releases the current frame back to the available pool for skipped frame after encoding.
+\param "avcHandle" "Pointer to the main handle object."
+\param "video" "Pointer to the AVCCommonObj."
+\return "void."
+*/
+void DPBReleaseCurrentFrame(AVCHandle *avcHandle, AVCCommonObj *video);
+
+/**
 This function performs decoded reference picture marking process and store the current picture to the
 corresponding frame storage in the decoded picture buffer.
+\param "avcHandle" "Pointer to the main handle object."
 \param "video" "Pointer to the AVCCommonObj."
 \return "AVC_SUCCESS or AVC_FAIL."
 */
@@ -106,6 +114,7 @@ AVCStatus StorePictureInDPB(AVCHandle *avcHandle, AVCCommonObj *video);
 /**
 This function perform sliding window operation on the reference picture lists, see subclause 8.2.5.3.
 It removes short-term ref frames with smallest FrameNumWrap from the reference list.
+\param "avcHandle" "Pointer to the main handle object."
 \param "video" "Pointer to the AVCCommonObj."
 \param "dpb"  "Pointer to the AVCDecPicBuffer."
 \return "AVC_SUCCESS or AVC_FAIL (contradicting values or scenario as in the Note in the draft)."

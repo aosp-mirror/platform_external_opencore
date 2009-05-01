@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*********************************************************************************/
 /*
     This PVA_FF_DecoderConfigDescriptor Class
 */
@@ -119,7 +118,7 @@ class PVA_FF_DecoderConfigDescriptor : public PVA_FF_BaseDescriptor
         }
 
         virtual void recomputeSize();
-
+        void writeMaxSampleSize(MP4_AUTHOR_FF_FILE_IO_WRAP*);
     private:
         uint8 _objectTypeIndication; // (8)
         uint8 _streamType; // (6) 0x04 for VisualStream, 0x05 for AudioStream
@@ -129,6 +128,7 @@ class PVA_FF_DecoderConfigDescriptor : public PVA_FF_BaseDescriptor
         uint32 _maxBitrate; // (32)
         uint32 _avgBitrate; // (32)
         int32 _codecType;
+        uint32 iCurrFilePos;
 
         Oscl_Vector<PVA_FF_DecoderSpecificInfo*, OsclMemAllocator> *_pdecSpecificInfoVec;
 };

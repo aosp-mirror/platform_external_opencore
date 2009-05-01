@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,8 +53,8 @@
 #include "oscl_bin_stream.h"
 #endif
 
-#ifndef OSCL_CLOCK_H_INCLUDED
-#include "oscl_clock.h"
+#ifndef PVMF_MEDIA_CLOCK_H_INCLUDED
+#include "pvmf_media_clock.h"
 #endif
 
 #ifndef OSCL_TIMER_H_INCLUDED
@@ -138,32 +138,19 @@ class PVAMRFFNodeTrackPortInfo : public OsclMemPoolFixedChunkAllocatorObserver,
             public OsclMemPoolResizableAllocatorObserver
 {
     public:
-        enum TrackState
-        {
-            TRACKSTATE_UNINITIALIZED,
-            TRACKSTATE_INITIALIZED,
-            TRACKSTATE_TRANSMITTING_GETDATA,
-            TRACKSTATE_TRANSMITTING_SENDDATA,
-            TRACKSTATE_MEDIADATAPOOLEMPTY,
-            TRACKSTATE_DESTFULL,
-            TRACKSTATE_SOURCEEMPTY,
-            TRACKSTATE_ENDOFTRACK,
-            TRACKSTATE_ERROR
-        };
 
         PVAMRFFNodeTrackPortInfo()
         {
             iTrackId = -1;
             iPort = NULL;
             iClockConverter = NULL;
-            iState = TRACKSTATE_UNINITIALIZED;
             iTrackDataMemoryPool = NULL;
             iMediaDataImplAlloc = NULL;
             iMediaDataMemPool = NULL;
             iNode = NULL;
             iSeqNum = 0;
             iTimestampOffset = 0;
-            iFormatType                   = PVMF_FORMAT_UNKNOWN;
+            iFormatType                   = PVMF_MIME_FORMAT_UNKNOWN;
 
             iResizableDataMemoryPool      = NULL;
             iResizableSimpleMediaMsgAlloc = NULL;
@@ -211,7 +198,6 @@ class PVAMRFFNodeTrackPortInfo : public OsclMemPoolFixedChunkAllocatorObserver,
             iTag = aSrc.iTag;
             iClockConverter = aSrc.iClockConverter;
             iMediaData = aSrc.iMediaData;
-            iState = aSrc.iState;
             iTrackDataMemoryPool = aSrc.iTrackDataMemoryPool;
             iMediaDataImplAlloc = aSrc.iMediaDataImplAlloc;
             iMediaDataMemPool = aSrc.iMediaDataMemPool;
@@ -355,8 +341,6 @@ class PVAMRFFNodeTrackPortInfo : public OsclMemPoolFixedChunkAllocatorObserver,
         OSCL_wHeapString<OsclMemAllocator> iCodecName;
         OSCL_wHeapString<OsclMemAllocator> iCodecDescription;
 
-        // Current state of this track
-        TrackState iState;
         // Output buffer memory pool
         OsclMemPoolFixedChunkAllocator *iTrackDataMemoryPool;
         // Allocator for simple media data buffer impl

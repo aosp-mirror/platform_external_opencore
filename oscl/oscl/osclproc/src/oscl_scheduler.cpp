@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,13 +31,13 @@
 #define OSCL_DISABLE_WARNING_CONDITIONAL_IS_CONSTANT
 #include "osclconfig_compiler_warnings.h"
 
+
 #include "oscl_scheduler_tuneables.h"
 
-#if(PV_SCHED_LOG_Q)
-#define LOGQ(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG,iLogger,PVLOGMSG_DEBUG,m);
-#else
-#define LOGQ(m)
-#endif
+
+/////////////////////////////////////
+// Logger Macros
+/////////////////////////////////////
 
 //LOGERROR is for scheduler errors.
 //This logging also goes to stderr on platforms with ANSI stdio.
@@ -58,25 +58,28 @@
 #define LOGPERF2(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF,iLogger,LOGPERF2_LEVEL,m);
 //max perf log string length
 #define LOGPERFMAXSTR 64
-//runtime check for whether perf logging level is enabled.
-#define DO_LOGPERF (iLogger->GetLogLevel()<0||iLogger->GetLogLevel()>=LOGPERF_LEVEL)
+#define RESET_LOG_PERF(m)\
+	ResetLogPerf();\
+	LOGPERF(m);
 #else
 #define LOGSTATS(m)
 #define LOGPERF(m)
 #define LOGPERF2(m)
 #define LOGPERFMAXSTR 64
-#define DO_LOGPERF (0)
+#define RESET_LOG_PERF(m)
 #endif//(PV_SCHED_ENABLE_PERF_LOGGING)
 
+/////////////////////////////////////
+// DLL Entry
+/////////////////////////////////////
 #ifndef OSCL_COMBINED_DLL
 #include "oscl_dll.h"
 OSCL_DLL_ENTRY_POINT_DEFAULT()
 #endif
 
-//
+/////////////////////////////////////
 // OsclScheduler
-//
-
+/////////////////////////////////////
 
 OSCL_EXPORT_REF void OsclScheduler::Init(const char *name, Oscl_DefAlloc *alloc, int nreserve)
 //Init the scheduler for this thread.
@@ -86,8 +89,9 @@ OSCL_EXPORT_REF void OsclScheduler::Init(const char *name, Oscl_DefAlloc *alloc,
              OsclExecScheduler *sched = OsclExecScheduler::NewL(name, alloc, nreserve);
              sched->InstallScheduler(););
     if (err != OsclErrNone)
-        PV_SCHEDULERPANIC(EPVPanicSchedulerNotInstalled);
+        OsclError::Leave(OsclErrNotInstalled);
 }
+
 
 
 OSCL_EXPORT_REF void OsclScheduler::Cleanup()
@@ -95,41 +99,55 @@ OSCL_EXPORT_REF void OsclScheduler::Cleanup()
 {
     OsclExecSchedulerCommonBase *sched = OsclExecSchedulerCommonBase::GetScheduler();
     if (!sched)
-        PV_SCHEDULERPANIC(EPVPanicSchedulerNotInstalled);
+        OsclError::Leave(OsclErrNotInstalled);
     sched->UninstallScheduler();
     Oscl_DefAlloc *alloc = sched->iAlloc;
     sched->~OsclExecSchedulerCommonBase();
     alloc->deallocate(sched);
 }
 
-//
+/////////////////////////////////////
 // OsclExecSchedulerCommonBase
-//
+/////////////////////////////////////
 
-//
+/////////////////////////////////////
 // OsclExecScheduler
-//
+/////////////////////////////////////
 
 //use the TLS registry, or the singleton registry if no TLS.
+//Note: singleton registry only works for single-threaded
+//scenarios, since this implementation assumes a per-thread registry.
 #include "oscl_error.h"
 #define PVSCHEDULER_REGISTRY OsclTLSRegistryEx
 #define PVSCHEDULER_REGISTRY_ID OSCL_TLS_ID_PVSCHEDULER
 
+
+/////////////////////////////////////
 //For AO statistics.
+/////////////////////////////////////
+
 #if !(PV_SCHED_ENABLE_AO_STATS)
 //no stats
 #define PVTICK uint32
+#define PVTICK_INT uint32
+#define INIT_TICK(tick)
 #define SET_TICK(tick)
 #define GET_TICKFREQ(tick)
 #define TICK_INT(tick1)
 #define TICKSTR ""
+#define TICK_INT_STR ""
+#define TICK_INT_EXPR(x)
 #else
 //else use the oscl timer.
 #define PVTICK uint32
+#define PVTICK_INT uint32
+#define INIT_TICK(tick) tick=0
 #define SET_TICK(tick) tick=OsclTickCount::TickCount()
 #define GET_TICKFREQ(tick) tick=OsclTickCount::TickCountFrequency()
 #define TICK_INT(tick1) tick1
 #define TICKSTR "Ticks"
+#define TICK_INT_STR "%u"
+#define TICK_INT_EXPR(x) x
 #endif
 
 #if !(PV_SCHED_ENABLE_AO_STATS)
@@ -140,20 +158,20 @@ OSCL_EXPORT_REF void OsclScheduler::Cleanup()
 #else
 #define DIFF_TICK(tick1,diff) PVTICK _now;SET_TICK(_now);diff=TICK_INT(_now)-TICK_INT(tick1)
 #define UPDATE_RUNERROR_TIME(stats,delta)\
-		if(stats->i64Valid) stats->i64TotalTicksInRunL+=delta;\
-		else stats->iTotalTicksInRunL+=delta;\
+		if(stats->i64Valid) stats->i64TotalTicksInRun+=delta;\
+		else stats->iTotalTicksInRun+=delta;\
+		if(delta>stats->iMaxTicksInRun) stats->iMaxTicksInRun=delta;\
 		stats->iNumRunError++
 #define UPDATE_RUNL_TIME(stats,delta)\
-		if(stats->i64Valid) stats->i64TotalTicksInRunL+=delta;\
-		else stats->iTotalTicksInRunL+=delta;\
+		if(stats->i64Valid) stats->i64TotalTicksInRun+=delta;\
+		else stats->iTotalTicksInRun+=delta;\
+		if(delta>stats->iMaxTicksInRun) stats->iMaxTicksInRun=delta;\
 		stats->iNumRun++;
 #define UPDATE_LEAVE_CODE(stats,err)if (err!=OsclErrNone)stats->iLeave=err
 #endif
 
 #if (PV_SCHED_ENABLE_LOOP_STATS)
-#define DECLARE_LOOP_STATS\
-		int64 loopdelta = 0;\
-		PVTICK looptime;
+#define DECLARE_LOOP_STATS int64 loopdelta = 0; PVTICK looptime;
 
 #define START_LOOP_STATS(stats)SET_TICK(looptime);
 
@@ -164,8 +182,8 @@ OSCL_EXPORT_REF void OsclScheduler::Cleanup()
 #define END_LOOP_STATS(stats)\
 		{\
 			DIFF_TICK(looptime,loopdelta);\
-			if(stats->i64Valid) stats->i64TotalTicksInRunL+=loopdelta;\
-			else stats->iTotalTicksInRunL+=loopdelta;\
+			if(stats->i64Valid) stats->i64TotalTicksInRun+=loopdelta;\
+			else stats->iTotalTicksInRun+=Oscl_Int64_Utils::get_int64_lower32(loopdelta);\
 			stats->iNumRun++;\
 			LOGPERF((0,"PVSCHED: Run %d %s AO %s",(int32)loopdelta,TICKSTR,stats->iAOName.get_cstr()));\
 		}
@@ -174,17 +192,19 @@ OSCL_EXPORT_REF void OsclScheduler::Cleanup()
 		if (rc<1)\
 		{\
 			DIFF_TICK(looptime,loopdelta);\
-			if(stats->i64Valid) stats->i64TotalTicksInRunL+=loopdelta;\
-			else stats->iTotalTicksInRunL+=loopdelta;\
+			if(stats->i64Valid) stats->i64TotalTicksInRun+=loopdelta;\
+			else stats->iTotalTicksInRun+=Oscl_Int64_Utils::get_int64_lower32(loopdelta);\
 			stats->iNumRun++;\
 			LOGPERF((0,"PVSCHED: Run %d %s AO %s",(int32)loopdelta,TICKSTR,stats->iAOName.get_cstr()));\
 		}
+
 #else
 #define DECLARE_LOOP_STATS
 #define START_LOOP_STATS(stats)
 #define START_WAIT_LOOP_STATS(rc,stats)
 #define END_LOOP_STATS(stats)
 #define END_WAIT_LOOP_STATS(rc,stats)
+
 #endif
 
 #if(PV_SCHED_ENABLE_PERF_LOGGING)
@@ -215,7 +235,6 @@ void OsclExecSchedulerCommonBase::IncLogPerf(uint32 delta)
         iLogPerfIndentStr[iLogPerfIndentStrLen] = '\0';
     }
 }
-//end perf logging.
 #endif//(PV_SCHED_ENABLE_PERF_LOGGING)
 
 OsclExecSchedulerCommonBase* OsclExecSchedulerCommonBase::GetScheduler()
@@ -269,7 +288,7 @@ OsclExecSchedulerCommonBase::~OsclExecSchedulerCommonBase()
     //make sure scheduler is not currently installed in
     //any thread.
     if (IsInstalled())
-        PV_SCHEDULERPANIC(EPVPanicSchedulerNotStopped);
+        OsclError::Leave(OsclErrInvalidState);//scheduler not stopped
 
     if (iStopper)
     {
@@ -293,7 +312,6 @@ OsclExecSchedulerCommonBase::OsclExecSchedulerCommonBase(Oscl_DefAlloc *alloc)
     iLogPerfIndentStr = NULL;
     iLogPerfTotal = 0;
 #endif
-    iCallback = NULL;
 }
 
 OsclExecScheduler::OsclExecScheduler(Oscl_DefAlloc *alloc)
@@ -310,45 +328,8 @@ void OsclExecSchedulerCommonBase::ConstructL(const char *name, int nreserve)
     iStopper = new(ptr) PVSchedulerStopper;
 
 #if(PV_SCHED_ENABLE_AO_STATS)
-    //create a placeholder for summary stats for
-    //all AOs that are not PVActiveBase.
-    for (uint32 i = 0;i < EOtherExecStats_Last;i++)
-        iOtherExecStats[i] = NULL;
-
-    ptr = iAlloc->ALLOCATE(sizeof(PVActiveStats));
-    OsclError::LeaveIfNull(ptr);
-    iOtherExecStats[EOtherExecStats_NativeOS] = OSCL_PLACEMENT_NEW(ptr, PVActiveStats(this, "Sched_TotalNativeOS", NULL));
-    //init the stat queue offset.
-    {
-        int offset = (int) & (iOtherExecStats[EOtherExecStats_NativeOS])->iPVStatQLink - (int)(iOtherExecStats[EOtherExecStats_NativeOS]);
-        iPVStatQ.SetOffset(offset);
-    }
-
-#if(PV_SCHED_ENABLE_LOOP_STATS)
-    //create nodes for summary stats for scheduler loop time
-
-    ptr = iAlloc->ALLOCATE(sizeof(PVActiveStats));
-    OsclError::LeaveIfNull(ptr);
-    iOtherExecStats[EOtherExecStats_LockTime] = OSCL_PLACEMENT_NEW(ptr, PVActiveStats(this, "Sched_LockTime", NULL));
-
-    ptr = iAlloc->ALLOCATE(sizeof(PVActiveStats));
-    OsclError::LeaveIfNull(ptr);
-    iOtherExecStats[EOtherExecStats_QueueTime] = OSCL_PLACEMENT_NEW(ptr, PVActiveStats(this, "Sched_QueueTime", NULL));
-
-    ptr = iAlloc->ALLOCATE(sizeof(PVActiveStats));
-    OsclError::LeaveIfNull(ptr);
-    iOtherExecStats[EOtherExecStats_WaitTime] = OSCL_PLACEMENT_NEW(ptr, PVActiveStats(this, "Sched_WaitTime", NULL));
+    ConstructStatQ();
 #endif
-    //add the non-AO stats nodes to the stat Q.
-    {
-        for (uint32 i = 0;i < EOtherExecStats_Last;i++)
-        {
-            if (iOtherExecStats[i])
-                iPVStatQ.InsertTail(*iOtherExecStats[i]);
-        }
-    }
-
-#endif //PV_SCHED_ENABLE_AO_STATS
 
     InitExecQ(nreserve);
 
@@ -356,13 +337,11 @@ void OsclExecSchedulerCommonBase::ConstructL(const char *name, int nreserve)
     iNativeMode = false;
     iName.Set(name);
     iLogger = PVLogger::GetLoggerObject("pvscheduler");
+
 #if (PV_SCHED_ENABLE_PERF_LOGGING)
-    if (DO_LOGPERF)
-    {
-        iLogPerfIndentStr = (char*)_oscl_malloc(LOGPERFMAXSTR + 1);
-        OsclError::LeaveIfNull(iLogPerfIndentStr);
-        ResetLogPerf();
-    }
+    iLogPerfIndentStr = (char*)_oscl_malloc(LOGPERFMAXSTR + 1);
+    OsclError::LeaveIfNull(iLogPerfIndentStr);
+    ResetLogPerf();
 #endif
 }
 
@@ -376,10 +355,10 @@ void OsclExecSchedulerCommonBase::InstallScheduler()
     //make sure this scheduler is not installed in
     //any thread.
     if (IsInstalled())
-        PV_SCHEDULERPANIC(EPVPanicSchedulerAlreadyInstalled);
+        OsclError::Leave(OsclErrAlreadyInstalled);
     //make sure no scheduler is installed in this thread.
     if (GetScheduler())
-        PV_SCHEDULERPANIC(EPVPanicSchedulerAlreadyInstalled);
+        OsclError::Leave(OsclErrAlreadyInstalled);
 
     SetScheduler(this);
 
@@ -387,28 +366,25 @@ void OsclExecSchedulerCommonBase::InstallScheduler()
 
     iErrorTrapImp = OsclErrorTrap::GetErrorTrapImp();
     if (!iErrorTrapImp)
-        PV_SCHEDULERPANIC(EPVPanicErrorTrapNotInstalled);
+        OsclError::Leave(OsclErrNotInstalled);//error trap not installed.
 
     if (iStopperCrit.Create() != OsclProcStatus::SUCCESS_ERROR)
-        PV_SCHEDULERPANIC(EPVPanicMutexError);
+        OsclError::Leave(OsclErrSystemCallFailed);//mutex error
 
     iResumeSem.Create();
     iDoStop = iDoSuspend = iSuspended = false;
 
-    iReadyQ.Open();
+    iReadyQ.ThreadLogon();
 
     LOGNOTICE((0, "PVSCHED:Scheduler '%s', Thread 0x%x: Installed", iName.Str(), PVThreadContext::Id()));
 
 #if (PV_SCHED_ENABLE_PERF_LOGGING)
-    if (DO_LOGPERF)
-    {//print tick frequencies that will show up in the perf log.
-        PVTICK f;
-        GET_TICKFREQ(f);
-        LOGPERF((0, "PVSCHED: %s frequency %u", TICKSTR, TICK_INT(f)));
-        uint32 freq = OsclTickCount::TickCountFrequency();
-        LOGPERF((0, "PVSCHED: %s frequency %u", "Ticks", freq));
-        OSCL_UNUSED_ARG(freq);
-    }
+    //print tick frequencies that will show up in the perf log.
+    PVTICK f;
+    GET_TICKFREQ(f);
+    PVTICK_INT tickint = TICK_INT(f);
+    LOGPERF((0, "PVSCHED: %s frequency %s", TICKSTR, TICK_INT_STR, TICK_INT_EXPR(tickint)));
+    OSCL_UNUSED_ARG(tickint);
 #endif
 }
 
@@ -417,20 +393,20 @@ void OsclExecSchedulerCommonBase::UninstallScheduler()
     //make sure this scheduler is currently installed in
     //this thread.
     if (!IsInstalled() || GetScheduler() != this)
-        PV_SCHEDULERPANIC(EPVPanicSchedulerNotInstalled);
+        OsclError::Leave(OsclErrNotInstalled);
 
 
     if (iBlockingMode)
     {
-        //in case a thread panic happened, go ahead and end
+        //in case a thread error happened, go ahead and end
         //scheduling.
         OsclErrorTrapImp *trap = OsclErrorTrapImp::GetErrorTrap();
         if (trap
-                && trap->iPanic.iReason != OsclErrNone)
+                && trap->iLeave != OsclErrNone)
             EndScheduling();
-        //make sure scheduler is stopped.  If not, panic instead.
+        //make sure scheduler is stopped.  If not, leave instead.
         if (IsStarted())
-            PV_SCHEDULERPANIC(EPVPanicSchedulerNotStopped);
+            OsclError::Leave(OsclErrInvalidState);//scheduler not stopped
     }
     else if (IsStarted())
     {
@@ -450,9 +426,9 @@ void OsclExecSchedulerCommonBase::UninstallScheduler()
 #endif
 
     if (iStopperCrit.Close() != OsclProcStatus::SUCCESS_ERROR)
-        PV_SCHEDULERPANIC(EPVPanicMutexError);
+        OsclError::Leave(OsclErrSystemCallFailed);//mutex error
 
-    iReadyQ.Close();
+    iReadyQ.ThreadLogoff();
     iResumeSem.Close();
 
     LOGNOTICE((0, "PVSCHED:Scheduler '%s', Thread 0x%x: Uninstalled", iName.Str(), PVThreadContext::Id()));
@@ -482,11 +458,11 @@ void OsclExecSchedulerCommonBase::BeginScheduling(bool blocking, bool native)
 {
     //make sure scheduler is installed...
     if (!IsInstalled() || GetScheduler() != this)
-        PV_SCHEDULERPANIC(EPVPanicSchedulerNotInstalled);
+        OsclError::Leave(OsclErrNotInstalled);
 
     //make sure scheduler is idle...
     if (IsStarted())
-        PV_SCHEDULERPANIC(EPVPanicSchedulerNotStopped);
+        OsclError::Leave(OsclErrInvalidState);
 
     iBlockingMode = blocking;
     iNativeMode = native;
@@ -526,6 +502,55 @@ void OsclExecSchedulerCommonBase::EndScheduling()
 }
 
 #if(PV_SCHED_ENABLE_AO_STATS)
+void OsclExecSchedulerCommonBase::ConstructStatQ()
+{
+    //create a placeholder for summary stats for
+    //all AOs that are not PVActiveBase.
+    for (uint32 i = 0;i < EOtherExecStats_Last;i++)
+        iOtherExecStats[i] = NULL;
+
+    OsclAny* ptr = iAlloc->ALLOCATE(sizeof(PVActiveStats));
+    OsclError::LeaveIfNull(ptr);
+    iOtherExecStats[EOtherExecStats_NativeOS] = OSCL_PLACEMENT_NEW(ptr, PVActiveStats(this, "Sched_TotalNativeOS", NULL));
+    //init the stat queue offset.
+    {
+        int offset = (int) & (iOtherExecStats[EOtherExecStats_NativeOS])->iPVStatQLink - (int)(iOtherExecStats[EOtherExecStats_NativeOS]);
+        iPVStatQ.SetOffset(offset);
+    }
+
+#if(PV_SCHED_ENABLE_LOOP_STATS)
+    //create nodes for summary stats for scheduler loop time
+
+    ptr = iAlloc->ALLOCATE(sizeof(PVActiveStats));
+    OsclError::LeaveIfNull(ptr);
+    iOtherExecStats[EOtherExecStats_QueueTime] = OSCL_PLACEMENT_NEW(ptr, PVActiveStats(this, "Sched_QueueTime", NULL));
+
+    ptr = iAlloc->ALLOCATE(sizeof(PVActiveStats));
+    OsclError::LeaveIfNull(ptr);
+    iOtherExecStats[EOtherExecStats_WaitTime] = OSCL_PLACEMENT_NEW(ptr, PVActiveStats(this, "Sched_WaitTime", NULL));
+
+#endif
+    //add the non-AO stats nodes to the stat Q.
+    {
+        for (uint32 i = 0;i < EOtherExecStats_Last;i++)
+        {
+            if (iOtherExecStats[i])
+                iPVStatQ.InsertTail(*iOtherExecStats[i]);
+        }
+    }
+}
+
+void OsclExecSchedulerCommonBase::CleanupStatQ()
+{
+    while (!iPVStatQ.IsEmpty())
+    {
+        PVActiveStats* first = iPVStatQ.Head();
+        first->iPVStatQLink.Remove();
+        first->~PVActiveStats();
+        first->iScheduler->iAlloc->deallocate(first);
+    }
+}
+
 void OsclExecSchedulerCommonBase::ShowStats(PVActiveStats *active)
 //static routine to print stats for a PV AO.
 {
@@ -539,13 +564,16 @@ void OsclExecSchedulerCommonBase::ShowStats(PVActiveStats *active)
     PVLogger* iLogger = PVLogger::GetLoggerObject("pvscheduler");
     if (active->i64Valid)
     {
-        int64 avgTicksPerRunL = (active->iNumRun == 0) ? 0 : active->i64TotalTicksInRunL / (int64)active->iNumRun;
-        LOGSTATS((0, "PVSCHED:Scheduler '%s', AO '%s': NumRunL %d, AvgTicksPerRunL (hi,lo) (0x%x,0x%08x) Units %s, NumCancel %d, NumError %d, LeaveCode %d"
+        int64 avgTicksPerRun = (active->iNumRun == 0) ? 0 : active->i64TotalTicksInRun / (int64)active->iNumRun;
+
+        LOGSTATS((0, "PVSCHED:Scheduler '%s', AO '%s': Pri %d NumRun %d, MaxTicksInRun 0x%x, AvgTicksPerRun (hi,lo) (0x%x,0x%08x) Units %s, NumCancel %d, NumError %d, LeaveCode %d"
                   , active->iScheduler->iName.Str()
                   , active->iAOName.get_cstr()
+                  , active->iPriority
                   , active->iNumRun
-                  , Oscl_Int64_Utils::get_int64_upper32(avgTicksPerRunL)
-                  , Oscl_Int64_Utils::get_int64_lower32(avgTicksPerRunL)
+                  , active->iMaxTicksInRun
+                  , Oscl_Int64_Utils::get_int64_upper32(avgTicksPerRun)
+                  , Oscl_Int64_Utils::get_int64_lower32(avgTicksPerRun)
                   , TICKSTR
                   , active->iNumCancel
                   , active->iNumRunError
@@ -554,12 +582,14 @@ void OsclExecSchedulerCommonBase::ShowStats(PVActiveStats *active)
     }
     else
     {
-        uint32 avgTicksPerRunL = (active->iNumRun == 0) ? 0 : active->iTotalTicksInRunL / active->iNumRun;
-        LOGSTATS((0, "PVSCHED:Scheduler '%s', AO '%s': NumRunL %d, AvgTicksPerRunL %d Units %s, NumCancel %d, NumError %d, LeaveCode %d"
+        uint32 avgTicksPerRun = (active->iNumRun == 0) ? 0 : active->iTotalTicksInRun / active->iNumRun;
+        LOGSTATS((0, "PVSCHED:Scheduler '%s', AO '%s': Pri %d NumRun %d, MaxTicksInRun %d, AvgTicksPerRun %d Units %s, NumCancel %d, NumError %d, LeaveCode %d"
                   , active->iScheduler->iName.Str()
                   , active->iAOName.get_cstr()
+                  , active->iPriority
                   , active->iNumRun
-                  , avgTicksPerRunL
+                  , active->iMaxTicksInRun
+                  , avgTicksPerRun
                   , TICKSTR
                   , active->iNumCancel
                   , active->iNumRunError
@@ -584,13 +614,13 @@ void OsclExecSchedulerCommonBase::ShowSummaryStats(PVActiveStats *active, PVLogg
     //calculate percent of the total time that was spent in this AO.
     if (active->i64Valid)
     {
-        active->iPercent = 100.0 * active->i64TotalTicksInRunL / total;
-        aGrandTotal += active->i64TotalTicksInRunL;
+        active->iPercent = 100.0 * active->i64TotalTicksInRun / total;
+        aGrandTotal += active->i64TotalTicksInRun;
     }
     else
     {
-        active->iPercent = 100.0 * active->iTotalTicksInRunL / total;
-        aGrandTotal += active->iTotalTicksInRunL;
+        active->iPercent = 100.0 * active->iTotalTicksInRun / total;
+        aGrandTotal += active->iTotalTicksInRun;
     }
     aTotalPercent += active->iPercent;
 
@@ -602,12 +632,14 @@ void OsclExecSchedulerCommonBase::ShowSummaryStats(PVActiveStats *active, PVLogg
     if (active->i64Valid)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF, logger, PVLOGMSG_INFO
-                        , (0, "  TIME PERCENT %d.%02d, AO '%s', NumRunL %d, TotalTicksInRunL Hi,Lo (0x%x,0x%08x), NumCancel %d, NumError %d, LeaveCode %d, NumInstance %d"
+                        , (0, "  TIME PERCENT %d.%02d, AO '%s', Pri %d NumRun %d, MaxTicksInRun 0x%x, TotalTicksInRun Hi,Lo (0x%x,0x%08x), NumCancel %d, NumError %d, LeaveCode %d, NumInstance %d"
                            , (int32)active->iPercent, (int32)decimal
                            , active->iAOName.get_cstr()
+                           , active->iPriority
                            , active->iNumRun
-                           , Oscl_Int64_Utils::get_int64_upper32(active->i64TotalTicksInRunL)
-                           , Oscl_Int64_Utils::get_int64_lower32(active->i64TotalTicksInRunL)
+                           , active->iMaxTicksInRun
+                           , Oscl_Int64_Utils::get_int64_upper32(active->i64TotalTicksInRun)
+                           , Oscl_Int64_Utils::get_int64_lower32(active->i64TotalTicksInRun)
                            , active->iNumCancel
                            , active->iNumRunError
                            , active->iLeave
@@ -617,11 +649,13 @@ void OsclExecSchedulerCommonBase::ShowSummaryStats(PVActiveStats *active, PVLogg
     else
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF, logger, PVLOGMSG_INFO
-                        , (0, "  TIME PERCENT %d.%02d, AO '%s', NumRunL %d, TotalTicksInRunL 0x%x, NumCancel %d, NumError %d, LeaveCode %d, NumInstance %d"
+                        , (0, "  TIME PERCENT %d.%02d, AO '%s', Pri %d NumRun %d, MaxTicksInRun 0x%x, TotalTicksInRun 0x%x, NumCancel %d, NumError %d, LeaveCode %d, NumInstance %d"
                            , (int32)active->iPercent, (int32)decimal
                            , active->iAOName.get_cstr()
+                           , active->iPriority
                            , active->iNumRun
-                           , (int32)active->iTotalTicksInRunL
+                           , active->iMaxTicksInRun
+                           , (int32)active->iTotalTicksInRun
                            , active->iNumCancel
                            , active->iNumRunError
                            , active->iLeave
@@ -711,13 +745,20 @@ void OsclExecSchedulerCommonBase::EndStats()
     decimal *= 100.0;
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF, logger, PVLOGMSG_INFO,
-                    (0, "   Total Time (hi,lo): (0x%x,0x%08x) Units: %s", Oscl_Int64_Utils::get_int64_upper32(total), Oscl_Int64_Utils::get_int64_lower32(total), TICKSTR)
+                    (0, "  Total Time (hi,lo): (0x%x,0x%08x) Units: %s", Oscl_Int64_Utils::get_int64_upper32(total), Oscl_Int64_Utils::get_int64_lower32(total), TICKSTR)
                    )
     PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF, logger, PVLOGMSG_INFO,
-                    (0, "   Total Time Accounted (hi,lo): (0x%x,0x%08x) Units: %s", Oscl_Int64_Utils::get_int64_upper32(iGrandTotalTicks), Oscl_Int64_Utils::get_int64_lower32(iGrandTotalTicks), TICKSTR)
+                    (0, "  Total Time Accounted (hi,lo): (0x%x,0x%08x) Units: %s", Oscl_Int64_Utils::get_int64_upper32(iGrandTotalTicks), Oscl_Int64_Utils::get_int64_lower32(iGrandTotalTicks), TICKSTR)
                    )
     PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF, logger, PVLOGMSG_INFO,
-                    (0, "   Total Percent Accounted: %d.%02d", (int32)iTotalPercent, (int32)decimal)
+                    (0, "  Total Percent Accounted: %d.%02d", (int32)iTotalPercent, (int32)decimal)
+                   )
+
+    PVTICK f;
+    GET_TICKFREQ(f);
+    PVTICK_INT tickint = TICK_INT(f);
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF, logger, PVLOGMSG_INFO,
+                    (0, "  Tick Units: %s Frequency: %s", TICKSTR, TICK_INT_STR, TICK_INT_EXPR(tickint))
                    )
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF, logger, PVLOGMSG_INFO,
@@ -726,8 +767,6 @@ void OsclExecSchedulerCommonBase::EndStats()
 
 }
 #endif //PV_SCHED_ENABLE_AO_STATS
-
-
 
 
 void OsclExecSchedulerCommonBase::Error(int32 anError) const
@@ -739,7 +778,6 @@ void OsclExecSchedulerCommonBase::Error(int32 anError) const
     //propagate the leave
     OsclError::Leave(anError);
 }
-
 
 OSCL_EXPORT_REF void OsclExecSchedulerCommonBase::StartScheduler(OsclSemaphore *aSignal)
 //blocking call to start PV scheduler.
@@ -765,12 +803,11 @@ OSCL_EXPORT_REF void OsclExecSchedulerCommonBase::StartScheduler(OsclSemaphore *
 
 }
 
-
 OSCL_EXPORT_REF void OsclExecSchedulerCommonBase::StartNativeScheduler()
 //blocking call to start native scheduler.
 //Will leave if any AO leaves.
 {
-    PV_SCHEDULERPANIC(EPVPanicNativeSchedulerError);
+    OsclError::Leave(OsclErrNotSupported);//native scheduler not supported.
 }
 
 //scheduler stopper request status codes.
@@ -782,7 +819,7 @@ OSCL_EXPORT_REF void OsclExecSchedulerCommonBase::StopScheduler()
 //any thread can use this to stop the blocking scheduler.
 {
     if (!IsInstalled())
-        PV_SCHEDULERPANIC(EPVPanicSchedulerNotInstalled);
+        OsclError::Leave(OsclErrNotInstalled);
 
     if (!iBlockingMode)
         OsclError::Leave(OsclErrNotReady);
@@ -807,7 +844,7 @@ OSCL_EXPORT_REF void OsclExecSchedulerCommonBase::SuspendScheduler()
 //any thread can use this to suspend the blocking scheduler.
 {
     if (!IsInstalled())
-        PV_SCHEDULERPANIC(EPVPanicSchedulerNotInstalled);
+        OsclError::Leave(OsclErrNotInstalled);
 
     if (iNativeMode)
         OsclError::Leave(OsclErrNotSupported);
@@ -829,7 +866,7 @@ OSCL_EXPORT_REF void OsclExecSchedulerCommonBase::ResumeScheduler()
 //any thread can use this to resume the blocking scheduler.
 {
     if (!IsInstalled())
-        PV_SCHEDULERPANIC(EPVPanicSchedulerNotInstalled);
+        OsclError::Leave(OsclErrNotInstalled);
 
     if (iDoSuspend || iSuspended)
     {
@@ -851,13 +888,13 @@ OSCL_EXPORT_REF void OsclExecScheduler::RunSchedulerNonBlocking(int32 aCount, in
 
     //make sure this scheduler is installed.
     if (!IsInstalled())
-        PV_SCHEDULERPANIC(EPVPanicSchedulerNotInstalled);
+        OsclError::Leave(OsclErrNotInstalled);
 
 #if !(OSCL_RELEASE_BUILD)  && !defined(NDEBUG)
     //make sure this scheduler is really installed in this
     //thread.
     if (GetScheduler() != this)
-        PV_SCHEDULERPANIC(EPVPanicSchedulerNotInstalled);
+        OsclError::Leave(OsclErrNotInstalled);
 #endif
 
     //start scheduling if needed.
@@ -866,7 +903,7 @@ OSCL_EXPORT_REF void OsclExecScheduler::RunSchedulerNonBlocking(int32 aCount, in
         BeginScheduling(false, false);//nonblocking, non-native
     }
     else if (iBlockingMode || iNativeMode)
-        PV_SCHEDULERPANIC(EPVPanicSchedulerNotStopped);
+        OsclError::Leave(OsclErrInvalidState);//not stopped
 
     //Process timers.  All ready timers will get
     //moved to the ready queue.
@@ -877,9 +914,7 @@ OSCL_EXPORT_REF void OsclExecScheduler::RunSchedulerNonBlocking(int32 aCount, in
     for (int32 count = 0;count < aCount;)
     {
         //find highest pri ready AO.
-        iReadyQ.Lock();
         PVActiveBase* pvactive = iReadyQ.PopTop();
-        iReadyQ.Unlock();
         if (pvactive)
         {
             //run it
@@ -902,29 +937,11 @@ OSCL_EXPORT_REF void OsclExecScheduler::RunSchedulerNonBlocking(int32 aCount, in
 OSCL_EXPORT_REF void OsclExecScheduler::RegisterForCallback(OsclSchedulerObserver* aCallback, OsclAny* aCallbackContext)
 {
     //Update the callback pointers.
-
-    //Use the ready Q lock to avoid thread contention over
-    //callback pointer.
-    iReadyQ.Lock();
-    int32 depth = iReadyQ.Depth();
-    if (depth && aCallback)
-    {
-        //need to callback now!
-        iCallback = NULL;
-        aCallback->OsclSchedulerReadyCallback(aCallbackContext);
-    }
-    else
-    {
-        //save the new pointers.  Callback will happen when timer Q or ready Q is
-        //updated.
-        iCallback = aCallback;
-        iCallbackContext = aCallbackContext;
-    }
-    iReadyQ.Unlock();
+    iReadyQ.RegisterForCallback(aCallback, aCallbackContext);
 }
 
 ////////////////////////////////////////
-// Queue management
+// Queue Management
 ////////////////////////////////////////
 
 
@@ -940,19 +957,6 @@ PVActiveBase * OsclExecSchedulerCommonBase::FindPVBase(PVActiveBase *active, Osc
     return NULL;
 }
 
-#if(PV_SCHED_ENABLE_AO_STATS)
-void OsclExecSchedulerCommonBase::CleanupStatQ()
-{
-    while (!iPVStatQ.IsEmpty())
-    {
-        PVActiveStats* first = iPVStatQ.Head();
-        first->iPVStatQLink.Remove();
-        first->~PVActiveStats();
-        first->iScheduler->iAlloc->deallocate(first);
-    }
-}
-#endif
-
 void OsclExecSchedulerCommonBase::CleanupExecQ()
 {
     //Cleanup timers.
@@ -962,40 +966,34 @@ void OsclExecSchedulerCommonBase::CleanupExecQ()
             top->RemoveFromScheduler();
     }
     //Cleanup ready AOs.
-    iReadyQ.Lock();
     PVActiveBase* top = iReadyQ.Top();
-    iReadyQ.Unlock();
     while (top)
     {
         top->RemoveFromScheduler();
-        iReadyQ.Lock();
         top = iReadyQ.Top();
-        iReadyQ.Unlock();
     }
 }
 
 void OsclExecSchedulerCommonBase::InitExecQ(int nreserve)
 //init the pvactive queues.
 {
-    iExecTimerQ.Init(nreserve, "ExecTimerQ");
-    iReadyQ.Init(nreserve, "ReadyQ");
+    iExecTimerQ.Construct(nreserve);
+    iReadyQ.Construct(nreserve);
 }
 
 ////////////////////////////////////////
-// Ready queue management.
+// Non-Symbian queue management
 ////////////////////////////////////////
-
 
 void OsclExecSchedulerCommonBase::AddToExecTimerQ(PVActiveBase* anActive, uint32 aDelayMicrosec)
 //timer implementation.
 //Add an AO to the pending timer queue.
 {
-    if (!anActive)
-        PV_EXECPANIC(EExecNull);
+    OSCL_ASSERT(anActive);//EExecNull
 
     //make sure this AO is not already added.
-    if (OsclReadyQ::IsInAny(anActive))
-        PV_EXECPANIC(EExecAlreadyAdded);
+    if (anActive->IsInAnyQ())
+        OsclError::Leave(OsclErrInvalidState);//EExecAlreadyAdded
 
     //Set time in ticks when AO should run.
 
@@ -1018,23 +1016,15 @@ void OsclExecSchedulerCommonBase::AddToExecTimerQ(PVActiveBase* anActive, uint32
                   , timenow));
     }
 
-    //queue with timer sort
-    iExecTimerQ.Add(anActive, true);
+    //queue it
+    iExecTimerQ.Add(anActive);
 
     //if this AO is in the front of the queue now, we need to do a
     //callback, because the shortest delay interval has changed.
-    if (iCallback
+    if (iReadyQ.Callback()
             && anActive == iExecTimerQ.Top())
     {
-        //must use the lock when updating callback pointer.
-        iReadyQ.Lock();
-        OsclSchedulerObserver* callback = iCallback;
-        iCallback = NULL;
-        iReadyQ.Unlock();
-        //callback needs to happen outside the lock, to allow code
-        //to register for additional callback.
-        if (callback)
-            callback->OsclSchedulerTimerCallback(iCallbackContext, aDelayMicrosec / 1000);
+        iReadyQ.TimerCallback(aDelayMicrosec);
     }
 }
 
@@ -1142,370 +1132,25 @@ PVActiveBase* OsclExecSchedulerCommonBase::UpdateTimersMsec(uint32 &aShortestDel
     return NULL;//no pending timers.
 }
 
-//scheduler has an allocator but there's no way to use
-//it here since this allocator must be a template argument
-//to oscl priority queue.
-OsclAny* OsclReadyAlloc::allocate_fl(const uint32 size, const char * file_name, const int line_num)
-{
-    OsclAny*p = iBasicAlloc.allocate_fl(size, file_name, line_num);
-    OsclError::LeaveIfNull(p);
-    return p;
-}
-OsclAny* OsclReadyAlloc::allocate(const uint32 size)
-{
-    OsclAny*p = iBasicAlloc.ALLOCATE(size);
-    OsclError::LeaveIfNull(p);
-    return p;
-}
-void OsclReadyAlloc::deallocate(OsclAny* p)
-{
-    iBasicAlloc.deallocate(p);
-}
-
-//evalute "priority of a is less than priority of b"
-int OsclReadyCompare::compare(TOsclReady& a, TOsclReady& b) const
-{
-    if (a->iPVReadyQLink.iTimerSort)
-    {
-        //first sort: by time to run.  Earlier "time to run" has precedence.
-        if (a->iPVReadyQLink.iTimeToRunTicks != b->iPVReadyQLink.iTimeToRunTicks)
-        {
-            //calculate a>b, taking possible rollover into account.
-            uint32 delta = b->iPVReadyQLink.iTimeToRunTicks - a->iPVReadyQLink.iTimeToRunTicks;
-            return (delta > OsclExecScheduler::iTimeCompareThreshold);
-        }
-    }
-
-    //second sort: by AO priority.  Higher priority has precedence.
-    if (a->iPVReadyQLink.iAOPriority != b->iPVReadyQLink.iAOPriority)
-        return (a->iPVReadyQLink.iAOPriority < b->iPVReadyQLink.iAOPriority);
-
-    //if there was a priority tie, impose a FIFO order.
-
-//This section allows switching between "fair scheduling" and linear
-//behavior.  We always use fair scheduling, but for testing it can be helpful to
-//swap in the linear behavior.
-#if PV_SCHED_FAIR_SCHEDULING
-    //third sort: by FIFO order, to create fair scheduling.
-    //AOs that have been queued the longest have precedence.
-    return (a->iPVReadyQLink.iSeqNum >= b->iPVReadyQLink.iSeqNum);
-#else
-    //third sort: by the order when AO was added to scheduler, to simulate
-    //Symbian native ActiveScheduler behavior.
-    //AOs that were added earlier have precedence.
-    return (a->iAddedNum > b->iAddedNum);
-#endif
-//End fair scheduling option.
-}
-
-
-void OsclReadyQ::Init(int nreserve, const char* name)
-{
-    iSeqNumCounter = 0;
-    if (nreserve > 0)
-        c.reserve(nreserve);
-    iName = name;
-    iLogger = PVLogger::GetLoggerObject(name);
-    LOGQ((0, "PVSCHED:OsclReadyQ(%s) Init", iName.get_cstr()));
-}
-
-void OsclReadyQ::Print()
-{
-#if(PV_SCHED_LOG_Q)
-    LOGQ((0, "PVSCHED:OsclReadyQ(%s) Size %d", iName.get_cstr(), size()));
-    for (uint32 i = 0;i < size();i++)
-    {
-        PVActiveBase* elem = vec()[i];
-        LOGQ((0, " '%s' addr 0x%x pri %d active %d status %d TimeQueued %d"
-              , elem->iName.Str()
-              , elem
-              , elem->iPVReadyQLink.iAOPriority
-              , elem->iBusy
-              , elem->iStatus
-              , elem->iPVReadyQLink.iTimeQueuedTicks
-             ));
-        LOGQ((0, "    TimeToRunTicks %d TimerSort %d SeqNum %d IsIn 0x%x"
-              , elem->iPVReadyQLink.iTimeToRunTicks
-              , elem->iPVReadyQLink.iTimerSort
-              , elem->iPVReadyQLink.iSeqNum
-              , elem->iPVReadyQLink.iIsIn
-             ));
-        if (elem->iStats.iEnable)
-        {
-            LOGQ((0, "    NumRunL %d Leave %d NumCancel %d"
-                  , elem->iStats.iNumRun
-                  , elem->iStats.iLeave
-                  , elem->iStats.iNumCancel
-                 ));
-        }
-    }
-#endif
-}
-
-void OsclReadyQ::Open()
-{
-    iSem.Create();
-    iCrit.Create();
-}
-
-void OsclReadyQ::Close()
-{
-    iSem.Close();
-    iCrit.Close();
-    LOGQ((0, "PVSCHED:OsclReadyQ(%s) Close", iName.get_cstr()));
-    iLogger = NULL;
-}
-
-void OsclReadyQ::Lock()
-{
-    iCrit.Lock();
-}
-
-void OsclReadyQ::Unlock()
-{
-    iCrit.Unlock();
-}
-
-void OsclReadyQ::Wait()
-{
-    LOGQ((0, "PVSCHED:OsclReadyQ(%s) Wait IN", iName.get_cstr()));
-    iSem.Wait();
-    LOGQ((0, "PVSCHED:OsclReadyQ(%s) Wait OUT", iName.get_cstr()));
-}
-
-bool OsclReadyQ::Wait(uint32 timeout)
-{
-    LOGQ((0, "PVSCHED:OsclReadyQ(%s) Wait %d IN", iName.get_cstr(), timeout));
-    bool ok = (iSem.Wait(timeout) == OsclProcStatus::WAIT_TIMEOUT_ERROR);
-    LOGQ((0, "PVSCHED:OsclReadyQ(%s) Wait %d OUT returning ok=%d", iName.get_cstr(), timeout, ok));
-    return ok;
-}
-
-void OsclReadyQ::Signal(uint32 count)
-{
-    LOGQ((0, "PVSCHED:OsclReadyQ(%s) Signal %d IN", iName.get_cstr(), count));
-    for (uint32 i = 0;i < count;i++)
-        iSem.Signal();
-    LOGQ((0, "PVSCHED:OsclReadyQ(%s) Signal %d OUT", iName.get_cstr(), count));
-}
-
-void OsclReadyQ::Clear()
-{
-    LOGQ((0, "PVSCHED:OsclReadyQ(%s) Clear IN", iName.get_cstr()));
-    for (PVActiveBase *elem = PopTop();elem;elem = PopTop())
-        ;
-    LOGQ((0, "PVSCHED:OsclReadyQ(%s) Clear OUT", iName.get_cstr()));
-}
-
-bool OsclReadyQ::IsIn(TOsclReady b)
-//tell if elemement is in this q.
-{
-    return (b->iPVReadyQLink.iIsIn == this);
-}
-
-bool OsclReadyQ::IsInMT(TOsclReady b)
-//tell if elemement is in this q, with thread lock.
-{
-    Lock();
-    bool val = (b->iPVReadyQLink.iIsIn == this);
-    Unlock();
-    return val;
-}
-
-bool OsclReadyQ::IsInAny(TOsclReady b)
-//tell if elemement is in any q.
-{
-    return (b->iPVReadyQLink.iIsIn != NULL);
-}
-
-PVActiveBase* OsclReadyQ::PopTop()
-//deque and return highest pri element.
-{
-    LOGQ((0, "PVSCHED:OsclReadyQ(%s) PopTop IN", iName.get_cstr()));
-
-    PVActiveBase*top = Top();
-    if (top)
-        Pop(top);
-
-    LOGQ((0, "PVSCHED:OsclReadyQ(%s) PopTop top= 0x%x", iName.get_cstr(), top));
-    if (top)
-    {
-        LOGQ((0, "PVSCHED:OsclReadyQ(%s) PopTop returning AO 0x%x '%s'", iName.get_cstr(), top, top->iName.Str()));
-        OSCL_ASSERT(!IsInAny(top));
-    }
-
-    return top;
-}
-
-PVActiveBase* OsclReadyQ::Top()
-//return highest pri element without removing.
-{
-    if (size() > 0)
-        return top();
-    return NULL;
-}
-
-void OsclReadyQ::Pop(TOsclReady b)
-//remove queue top.
-{
-    LOGQ((0, "PVSCHED:OsclReadyQ(%s) Pop '%s' IN", iName.get_cstr(), b->iName.Str()));
-
-#if(PV_SCHED_CHECK_Q)
-    OSCL_ASSERT(b == Top());
-    OSCL_ASSERT(size() > 0);
-#endif
-
-    b->iPVReadyQLink.iIsIn = NULL;
-
-#if(PV_SCHED_CHECK_Q)
-    uint32 n = size();
-#endif
-
-    pop();
-
-#if(PV_SCHED_LOG_Q)
-    Print();
-#endif
-
-    iSem.Wait();//won't block, just decrementing the sem.
-
-#if(PV_SCHED_CHECK_Q)
-    OSCL_ASSERT(size() == n - 1);
-#endif
-
-    LOGQ((0, "PVSCHED:OsclReadyQ(%s) Pop '%s' OUT", iName.get_cstr(), b->iName.Str()));
-}
-
-void OsclReadyQ::Remove(TOsclReady a)
-{
-    LOGQ((0, "PVSCHED:OsclReadyQ(%s) Remove '%s' addr 0x%x IN"
-          , iName.get_cstr(), a->iName.Str(), a));
-
-#if(PV_SCHED_CHECK_Q)
-    OSCL_ASSERT(IsIn(a));
-    OSCL_ASSERT(size() > 0);
-    uint32 n = size();
-#endif
-
-    a->iPVReadyQLink.iIsIn = NULL;
-
-    int32 nfound = remove(a);
-
-#if(PV_SCHED_CHECK_Q)
-    OSCL_ASSERT(nfound == 1);
-#endif
-
-#if(PV_SCHED_LOG_Q)
-    Print();
-#endif
-
-    if (nfound > 0)
-        iSem.Wait();//won't block, just decrementing the sem.
-
-#if(PV_SCHED_CHECK_Q)
-    OSCL_ASSERT(size() == n - 1);
-#endif
-
-    LOGQ((0, "PVSCHED:OsclReadyQ(%s) Remove '%s' OUT", iName.get_cstr(), a->iName.Str()));
-
-}
-
-void OsclReadyQ::Add(TOsclReady b, bool timersort)
-{
-    LOGQ((0, "PVSCHED:OsclReadyQ(%s) Add IN AO '%s' timer %d seqnum %d", iName.get_cstr()
-          , b->iName.Str(), timersort, iSeqNum + 1));
-
-#if(PV_SCHED_CHECK_Q)
-    OSCL_ASSERT(!IsInAny(b));
-#endif
-
-    b->iPVReadyQLink.iTimerSort = timersort;
-    b->iPVReadyQLink.iIsIn = this;
-    b->iPVReadyQLink.iTimeQueuedTicks = OsclTickCount::TickCount();
-    //inc the sequence num for the FIFO sort.
-    b->iPVReadyQLink.iSeqNum = ++iSeqNumCounter;
-
-#if(PV_SCHED_CHECK_Q)
-    uint32 n = size();
-#endif
-
-    push(b);
-
-#if(PV_SCHED_LOG_Q)
-    Print();
-#endif
-
-    iSem.Signal();
-
-#if(PV_SCHED_CHECK_Q)
-    OSCL_ASSERT(size() == n + 1);
-#endif
-
-    LOGQ((0, "PVSCHED:OsclReadyQ(%s) Add OUT", iName.get_cstr()));
-}
-
-uint32 OsclReadyQ::Depth()
-{
-    return size();
-}
-
-
-////////////////////////////////////////
-// request handling
-////////////////////////////////////////
-
-
 void OsclExecSchedulerCommonBase::PendComplete(PVActiveBase *pvbase, int32 aReason, TPVThreadContext aThreadContext)
 //complete a request for this scheduler.
 //Calling context can be any thread.
 {
+    //During timer cancellation, the AO may still be in the ExecTimerQ.
+    //Remove it now, since it won't get removed by the scheduler loop.
+    //Check thread context first, to accessing timer queue from out-of-thread.
     if (aThreadContext == EPVThreadContext_InThread)
     {
         LOGPERF2((0, "PVSCHED: %s AO %s Request complete", iLogPerfIndentStr, pvbase->iName.Str()));
 
-        //for timer cancellation, the AO may still be queued at
-        //this point, so remove it.
-        //check thread context first so we don't try to access
-        //timer Q from out-of-thread.
         if (iExecTimerQ.IsIn(pvbase))
             iExecTimerQ.Remove(pvbase);
     }
 
-    iReadyQ.Lock();
+    //Pass this to the ReadyQ so it can do appropriate queue locks
+    int32 err = iReadyQ.PendComplete(pvbase, aReason);
 
-    //make sure this AO is not already queued.
-    if (OsclReadyQ::IsInAny(pvbase))
-    {
-        iReadyQ.Unlock();
-        PV_EXECPANIC(EExecAlreadyAdded);
-        return;
-    }
-
-    //make sure the AO has a request active
-    if (!pvbase->iBusy
-            || pvbase->iStatus != OSCL_REQUEST_PENDING)
-    {
-        iReadyQ.Unlock();
-        PV_EXECPANIC(EExecStrayEvent);
-        return;
-    }
-
-    //add to ready queue with priority sort.
-    iReadyQ.Add(pvbase, false);
-
-    //update the AO status
-    pvbase->iStatus = aReason;
-
-    //make scheduler callback if needed.
-    //note: this needs to happen under the lock since we're updating
-    //the callback pointer.
-    if (iCallback)
-    {
-        iCallback->OsclSchedulerReadyCallback(iCallbackContext);
-        iCallback = NULL;
-    }
-
-    iReadyQ.Unlock();
+    OsclError::LeaveIfError(err);
 }
 
 void OsclExecSchedulerCommonBase::RequestCanceled(PVActiveBase* pvbase)
@@ -1513,68 +1158,49 @@ void OsclExecSchedulerCommonBase::RequestCanceled(PVActiveBase* pvbase)
     LOGPERF2((0, "PVSCHED: %s AO %s Request canceled", iLogPerfIndentStr, pvbase->iName.Str()));
 
     //This gets called right after the AO's DoCancel was
-    //called.
-    //Calling context is always in-thread.
+    //called.  It must wait on the request to cancel, and remove it
+    //from the ready Q.
+
+    //Calling context is always in-thread, since Cancel context is always
+    //in-thread.
 
     //See if the request was completed by the DoCancel.
-    bool complete = iReadyQ.IsInMT(pvbase);
+    bool complete = iReadyQ.IsIn(pvbase);
+
+    DECLARE_LOOP_STATS;
 
     if (!complete)
     {
         //If request is still pending after DoCancel is called, it
         //means some other thread will complete the request cancellation.
-        //If the AO does not have a proper DoCancel, this will hang up.
+        //If the AO does not have a proper DoCancel, this wait will hang up.
 
-#if (PV_SCHED_PERF_LOGGING)
-        uint32 time = 0;
+        //reset the perf indent when scheduler gives up CPU...
+        RESET_LOG_PERF((0, "PVSCHED: Waiting on cancel... AO '%s'", pvbase->iName.Str()));
+
+#if (PV_SCHED_ENABLE_PERF_LOGGING)
+        uint32 ticks = OsclTickCount::TickCount();
 #endif
-        int32 nwait = 0;
-        while (!complete)
-        {
-#if (PV_SCHED_PERF_LOGGING)
-            if (nwait == 0)
-            {
-                if (DO_LOGPERF)
-                {
-                    //reset the perf indent when scheduler gives up CPU...
-                    ResetLogPerf();
-                    LOGPERF((0, "PVSCHED: Waiting on cancel... AO '%s'", pvbase->iName.Str()));
-                    time = OsclTickCount::TickCount();
-                }
-            }
+        START_LOOP_STATS(iOtherExecStats[EOtherExecStats_WaitTime]);
+        int32 err = iReadyQ.WaitForRequestComplete(pvbase);
+        END_LOOP_STATS(iOtherExecStats[EOtherExecStats_WaitTime]);
+
+#if (PV_SCHED_ENABLE_PERF_LOGGING)
+        LOGPERF((0, "PVSCHED: ...Cancel took %d Ticks", OsclTickCount::TickCount() - ticks));
 #endif
-            //Wait on some request to complete.
-            iReadyQ.Wait();
-            nwait++;
 
-            //Some request was complete but it might not be this one, so
-            //check again.
-            complete = iReadyQ.IsInMT(pvbase);
-        }
-
-        //Restore the request semaphore value since we decremented it without
-        //removing anything from the ReadyQ.
-        if (nwait > 0)
-        {
-            iReadyQ.Signal(nwait);
-        }
-
-#if (PV_SCHED_PERF_LOGGING)
-        if (DO_LOGPERF)
-        {
-            uint32 delta = OsclTickCount::TickCount() - time;
-            LOGPERF((0, "PVSCHED: ...Cancel took %d Ticks", delta));
-        }
-#endif
+        OsclError::LeaveIfError(err);
     }
 
     //Set request idle and remove from ready Q.
     //The AO will not run
     pvbase->iBusy = false;
-    iReadyQ.Lock();
+
+    START_LOOP_STATS(iOtherExecStats[EOtherExecStats_QueueTime]);
     iReadyQ.Remove(pvbase);
-    iReadyQ.Unlock();
+    END_LOOP_STATS(iOtherExecStats[EOtherExecStats_QueueTime]);
 }
+
 
 
 
@@ -1593,13 +1219,12 @@ void OsclExecSchedulerCommonBase::CallRunExec(PVActiveBase *pvactive)
 
     //start stats
 #if (PV_SCHED_ENABLE_AO_STATS)
-    PVActiveStats* pvstats = pvactive->iPVActiveStats;
-    uint32 delta = 0;
-    PVTICK time;
-    time = 0;
+    iPVStats = pvactive->iPVActiveStats;//save value now since it may change in the Run call.
+    iDelta = 0;
+    INIT_TICK(iTime);
 #endif
 
-    SET_TICK(time);
+    SET_TICK(iTime);
 
     //Call the Run under a trap harness.
     //Pass the ErrorTrapImp pointer to reduce overhead of the Try call.
@@ -1608,31 +1233,28 @@ void OsclExecSchedulerCommonBase::CallRunExec(PVActiveBase *pvactive)
     OSCL_TRY_NO_TLS(iErrorTrapImp, err, pvactive->Run(););
 
     //end stats
-    DIFF_TICK(time, delta);
-    UPDATE_RUNL_TIME(pvstats, delta);
-    UPDATE_LEAVE_CODE(pvstats, err);
+    DIFF_TICK(iTime, iDelta);
+    UPDATE_RUNL_TIME(iPVStats, iDelta);
+    UPDATE_LEAVE_CODE(iPVStats, err);
 
 #if(PV_SCHED_ENABLE_PERF_LOGGING)
     //show AO time.
-    if (DO_LOGPERF)
-    {
-        IncLogPerf(delta);
-        LOGPERF((0, "PVSCHED: %s Run %d %s AO %s", iLogPerfIndentStr, (int32)delta, TICKSTR, pvactive->iName.Str()));
-    }
+    IncLogPerf(iDelta);
+    LOGPERF((0, "PVSCHED: %s Run %d %s AO %s", iLogPerfIndentStr, (int32)iDelta, TICKSTR, pvactive->iName.Str()));
 #endif
 
     //check for a leave in the Run...
     if (err != OsclErrNone)
     {
         //start stats
-        SET_TICK(time);
+        SET_TICK(iTime);
 
         //call the AO error handler
         err = pvactive->RunError(err);
 
         //end stats
-        DIFF_TICK(time, delta);
-        UPDATE_RUNERROR_TIME(pvstats, delta);
+        DIFF_TICK(iTime, iDelta);
+        UPDATE_RUNERROR_TIME(iPVStats, iDelta);
 
         //If the AO did not handle the error, indicated by returning
         //ErrNone, then call the scheduler error handler.
@@ -1648,6 +1270,7 @@ void OsclExecSchedulerCommonBase::CallRunExec(PVActiveBase *pvactive)
             Error(err);
         }
     }
+
 }
 
 
@@ -1656,96 +1279,21 @@ void OsclExecSchedulerCommonBase::BlockingLoopL()
 //Will leave if any AO leaves.
 {
 
+    PVActiveBase* pvactive;
+
+
     while (!iDoStop)
     {
-        DECLARE_LOOP_STATS;
-
-
-
-        //First process timers.
-        //All ready timers will get moved to the run Q.
-        uint32 waitTicks;
-
-        START_LOOP_STATS(iOtherExecStats[EOtherExecStats_QueueTime]);
-        PVActiveBase* pvtimer = UpdateTimers(waitTicks);
-        END_LOOP_STATS(iOtherExecStats[EOtherExecStats_QueueTime]);
-
-        //now find the highest priority ready AO.
-
-        START_LOOP_STATS(iOtherExecStats[EOtherExecStats_LockTime]);
-        iReadyQ.Lock();
-        END_LOOP_STATS(iOtherExecStats[EOtherExecStats_LockTime]);
-
-        START_LOOP_STATS(iOtherExecStats[EOtherExecStats_QueueTime]);
-        PVActiveBase* pvactive = iReadyQ.PopTop();
-        END_LOOP_STATS(iOtherExecStats[EOtherExecStats_QueueTime]);
-
-        START_LOOP_STATS(iOtherExecStats[EOtherExecStats_LockTime]);
-        iReadyQ.Unlock();
-        END_LOOP_STATS(iOtherExecStats[EOtherExecStats_LockTime]);
-
+        //Get the next AO to run.  This call may block until an AO is ready.
+        pvactive = WaitForReadyAO();
 
         if (pvactive)
         {
-            //Run this AO.
             CallRunExec(pvactive);
-
         }
-        else //nothing is ready.
+        else
         {
-            //We have to wait on either a timer interval to expire,
-            //or a request to be completed by some other thread.
-            if (pvtimer)
-            {
-#if (PV_SCHED_ENABLE_PERF_LOGGING)
-                //reset the perf logging indent each time scheduler gives up CPU.
-                ResetLogPerf();
-                LOGPERF((0, "PVSCHED: Waiting on timer... Ticks %d AO %s", waitTicks, pvtimer->iName.Str()));
-#endif
-
-                START_LOOP_STATS(iOtherExecStats[EOtherExecStats_WaitTime]);
-
-                //Wait on shortest timer expiration or a new request.
-                if (iReadyQ.Wait(OsclTickCount::TicksToMsec(waitTicks)))
-                {
-                    END_LOOP_STATS(iOtherExecStats[EOtherExecStats_WaitTime]);
-
-                    //Timeout.
-                    //It's time to complete this timer's request and run it.
-                    //There's no need to move it to the ReadyQ, just run it.
-                    pvtimer->iStatus = OSCL_REQUEST_ERR_NONE;
-                    //it's the top of the queue so we can remove it with Pop.
-                    START_LOOP_STATS(iOtherExecStats[EOtherExecStats_QueueTime]);
-                    iExecTimerQ.Pop(pvtimer);
-                    END_LOOP_STATS(iOtherExecStats[EOtherExecStats_QueueTime]);
-                    CallRunExec(pvtimer);
-                }
-                else //another thread completed a request during the wait.
-                {
-                    //restore request sem since we didn't run the AO yet.
-                    iReadyQ.Signal();
-
-                    END_LOOP_STATS(iOtherExecStats[EOtherExecStats_WaitTime]);
-
-                }
-            }
-            else //nothing ready and no timers pending.
-            {
-#if (PV_SCHED_ENABLE_PERF_LOGGING)
-                //reset the perf logging indent each time scheduler gives up CPU.
-                ResetLogPerf();
-                LOGPERF((0, "PVSCHED: Waiting on any request..."));
-#endif
-
-                START_LOOP_STATS(iOtherExecStats[EOtherExecStats_WaitTime]);
-
-                //this will block until a request is completed by another thread.
-                iReadyQ.Wait();
-                //restore request sem since we didn't run the AO yet.
-                iReadyQ.Signal();
-
-                END_LOOP_STATS(iOtherExecStats[EOtherExecStats_WaitTime]);
-            }
+            OsclError::Leave(OsclErrCorrupt);//EExecStrayEvent
         }
 
         //check for a suspend signal..
@@ -1760,12 +1308,82 @@ void OsclExecSchedulerCommonBase::BlockingLoopL()
     }//while !dostop
 
     iDoStop = false;
-
 }
 
 
+PVActiveBase* OsclExecSchedulerCommonBase::WaitForReadyAO()
+//Find the next AO to run-- non-Symbian version.
+{
+    DECLARE_LOOP_STATS;
+
+    //First process timers.
+    //All ready timers will get moved to the run Q.
+    uint32 waitTicks;
+    START_LOOP_STATS(iOtherExecStats[EOtherExecStats_QueueTime]);
+    PVActiveBase* pvtimer = UpdateTimers(waitTicks);
+    END_LOOP_STATS(iOtherExecStats[EOtherExecStats_QueueTime]);
+
+    //Check for a ready AO.
+    START_LOOP_STATS(iOtherExecStats[EOtherExecStats_QueueTime]);
+    PVActiveBase* pvactive = iReadyQ.PopTop();
+    END_LOOP_STATS(iOtherExecStats[EOtherExecStats_QueueTime]);
+
+    if (pvactive)
+    {
+        //An AO is ready.
+        return pvactive;
+    }
+    else if (pvtimer)
+    {
+        //No AO is ready, but at least one timer is pending.
+        //Wait on shortest timer expiration or a new request.
+
+        //reset the perf logging indent each time scheduler gives up CPU.
+        RESET_LOG_PERF((0, "PVSCHED: Waiting on timer... Ticks %d AO %s", waitTicks, pvtimer->iName.Str()));
+
+        START_LOOP_STATS(iOtherExecStats[EOtherExecStats_WaitTime]);
+        pvactive = iReadyQ.WaitAndPopTop(OsclTickCount::TicksToMsec(waitTicks));
+        END_LOOP_STATS(iOtherExecStats[EOtherExecStats_WaitTime]);
+
+        if (pvactive)
+        {
+            //Another AO's request completed while we were waiting.
+            //Run that one instead of the timer.
+            return pvactive;
+        }
+        else
+        {
+            //It's time to complete this timer's request and run it.
+            //To save overhead, don't move it to the ReadyQ, just pop it
+            //from its current location on the top of the timer queue.
+
+            pvtimer->iStatus = OSCL_REQUEST_ERR_NONE;
+
+            START_LOOP_STATS(iOtherExecStats[EOtherExecStats_QueueTime]);
+            iExecTimerQ.Pop(pvtimer);
+            END_LOOP_STATS(iOtherExecStats[EOtherExecStats_QueueTime]);
+
+            return pvtimer;
+        }
+    }
+    else
+    {
+        //Nothing is ready and no timer is pending.
+        //Wait on a request to be completed by another thread.
+
+        //reset the perf logging indent each time scheduler gives up CPU.
+        RESET_LOG_PERF((0, "PVSCHED: Waiting on any request..."));
+
+        START_LOOP_STATS(iOtherExecStats[EOtherExecStats_WaitTime]);
+        pvactive = iReadyQ.WaitAndPopTop();
+        END_LOOP_STATS(iOtherExecStats[EOtherExecStats_WaitTime]);
+
+        return pvactive;
+    }
+}
+
 ////////////////////////////////////////
-// PVSchedulerStopper Implementation
+// PVSchedulerStopper
 ////////////////////////////////////////
 PVSchedulerStopper::PVSchedulerStopper()
         : OsclActiveObject((int32)OsclActiveObject::EPriorityHighest, "Stopper")
@@ -1808,6 +1426,9 @@ void PVSchedulerStopper::Run()
     }
 }
 
+////////////////////////////////////////
+// Symbian Coe Scheduler
+////////////////////////////////////////
 
 
 

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +16,8 @@
  * -------------------------------------------------------------------
  */
 /*
-------------------------------------------------------------------------------
 
-
-
- Pathname: /audio/
-                aac_mpeg4/
-                    AAC_baseline/
-                        pv_aac_dec/
-                            c/
-                                include/
-                                    s_TNSfilt.h
-
-     Date: 05/09/2001
+ Pathname: s_TNSfilt.h
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
@@ -65,6 +54,7 @@
 
  (2) Updated the copyright header.
 
+ Who:                       Date:
  Description:
 ------------------------------------------------------------------------------
  INCLUDE DESCRIPTION

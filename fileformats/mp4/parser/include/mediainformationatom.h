@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -410,16 +410,11 @@ class MediaInformationAtom : public Atom
             }
         }
 
-        OSCL_wHeapString<OsclMemAllocator> getMIMEType()
+        void getMIMEType(OSCL_String& aMimeType)
         {
             if (_psampleTableAtom != NULL)
             {
-                return _psampleTableAtom->getMIMEType();
-            }
-            else
-            {
-                OSCL_wHeapString<OsclMemAllocator> temp(_STRLIT("UNKNOWN"));
-                return temp;
+                _psampleTableAtom->getMIMEType(aMimeType);
             }
         }
 

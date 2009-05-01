@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,6 +51,7 @@ int VlcDequantMpegIntraBlock(void *vid, int comp, int switched,
                              uint8 *bitmapcol, uint8 *bitmaprow)
 {
     VideoDecData *video = (VideoDecData*) vid;
+    Vol *currVol = video->vol[video->currLayer];
     BitstreamDecVideo *stream = video->bitstream;
     int16 *datablock = video->mblock->block[comp]; /* 10/20/2000, assume it has been reset of all-zero !!!*/
     int mbnum = video->mbnum;
@@ -384,10 +385,10 @@ int VlcDequantMpegInterBlock(void *vid, int comp,
 {
     VideoDecData *video = (VideoDecData*) vid;
     BitstreamDecVideo *stream = video->bitstream;
+    Vol *currVol = video->vol[video->currLayer];
     int16 *datablock = video->mblock->block[comp]; /* 10/20/2000, assume it has been reset of all-zero !!!*/
     int mbnum = video->mbnum;
     int QP = video->QPMB[mbnum];
-    uint8 *pbyte;
     /*** VLC *****/
     int i, k;
     Tcoef run_level;
@@ -857,13 +858,13 @@ int VlcDequantH263IntraBlock_SH(VideoDecData *video, int comp, uint8 *bitmapcol,
         if ((CBP & (1 << (5 - comp))) == 0)
         {
 #ifdef FAST_IDCT
-            bitmapcol[0] = 128;
-            bitmapcol[1] = bitmapcol[2] = bitmapcol[3] = bitmapcol[4] = bitmapcol[5] = bitmapcol[6] = bitmapcol[7] = 0;
+        bitmapcol[0] = 128;
+        bitmapcol[1] = bitmapcol[2] = bitmapcol[3] = bitmapcol[4] = bitmapcol[5] = bitmapcol[6] = bitmapcol[7] = 0;
 #endif
-            datablock[0] <<= 3;  /* no need to clip */
-            return 1;//ncoeffs;
-        }
-        else
+        datablock[0] <<= 3;  /* no need to clip */
+        return 1;//ncoeffs;
+    }
+    else
         {
             /* enter the zero run decoding loop */
             do

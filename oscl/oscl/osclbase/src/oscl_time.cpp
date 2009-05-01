@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -126,6 +126,8 @@ OSCL_EXPORT_REF void PV8601ToRFC822(PV8601timeStrBuf pv8601_buffer, CtimeStrBuf 
     buf[2] = 0;
     strncpy(buf, pv8601_buffer + 4, 2);
     mon = atoi(buf);
+    if (mon <= 0 || mon > 13)
+        mon = 13;
     strncpy(buf, pv8601_buffer + 6, 2);
     day = atoi(buf);
     strncpy(buf, pv8601_buffer + 9, 2);

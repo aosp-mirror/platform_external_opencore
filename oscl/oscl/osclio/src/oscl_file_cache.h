@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,16 +60,16 @@ class OsclFileCache : public HeapBase
 
         uint32 Read(void* outputBuffer, uint32 size, uint32 numelements);
 
-        int32 Write(const void* inputBuffer, uint32 size, uint32 numelements);
+        uint32 Write(const void* inputBuffer, uint32 size, uint32 numelements);
 
-        int32 FileSize()
+        TOsclFileOffset  FileSize()
         {
             return _fileSize;
         }
 
-        int32 Seek(int32 offset, Oscl_File::seek_type origin);
+        int32 Seek(TOsclFileOffset  offset, Oscl_File::seek_type origin);
 
-        int32 Tell()
+        TOsclFileOffset  Tell()
         {
             return (_cacheFilePosition + _currentCachePos);
         }
@@ -95,7 +95,7 @@ class OsclFileCache : public HeapBase
 
         //the native file position corresponding to the start of the
         //cache
-        uint32 _cacheFilePosition;
+        TOsclFileOffset  _cacheFilePosition;
 
         //current working position (virtual file pointer) in the cache.
         //units: 0-based byte offset from beginning of cache
@@ -115,12 +115,12 @@ class OsclFileCache : public HeapBase
         //Current file size.  This is a virtual file size and
         //may not match the native file size when there is
         //cached data.
-        uint32	_fileSize;
+        TOsclFileOffset 	_fileSize;
 
         //Current true native file position.
-        uint32 _nativePosition;
+        TOsclFileOffset  _nativePosition;
 
-        int32 SetCachePosition(uint32 pos);
+        int32 SetCachePosition(TOsclFileOffset  pos);
         int32 FillCacheFromFile();
         int32 WriteCacheToFile();
 

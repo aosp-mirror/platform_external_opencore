@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,7 +69,6 @@ terms listed above has been obtained from the copyright holder.
 
 #include "dec_gain.h"
 #include "typedef.h"
-//#include "stdlib.h"
 #include "mode.h"
 #include "cnst.h"
 #include "pow2.h"
@@ -217,9 +216,13 @@ void Dec_gain(
     {
         if (mode == MR475)
         {
-            temp1 = sub(1, evenSubfr, pOverflow);
-            temp2 = shl(temp1, 1, pOverflow);
-            index = add(index, temp2, pOverflow);
+            index += (1 ^ evenSubfr) << 1; /* evenSubfr is 0 or 1 */
+
+            if (index > (MR475_VQ_SIZE*4 - 2))
+            {
+                index = (MR475_VQ_SIZE * 4 - 2); /* avoid possible buffer overflow */
+            }
+
             p = &table_gain_MR475[index];
 
             *gain_pit = *p++;

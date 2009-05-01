@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,8 @@
 #include "payload_parser_factory.h"
 
 //use the TLS registry, or the singleton registry if no TLS.
+//Note: singleton registry only works in single-threaded scenarios, since this
+//implementation assumes a per-thread registry.
 #include "oscl_error.h"
 #define PAYLOADPARSER_REGISTRY OsclTLSRegistryEx
 #define PAYLOADPARSER_REGISTRY_ID OSCL_TLS_ID_PAYLOADPARSER
@@ -112,7 +114,7 @@ class PayloadParserRegistry
             OsclMemAllocator, MimeStringCompare >::iterator it;
             it = iRegistry.find(mimeString);
 
-            /* This check is necessary for ADS1.2 compiler*/
+            /* This check is necessary for the ADS1.2 compiler*/
             if (!(it == iRegistry.end()))
             {
                 return (((*it).second));

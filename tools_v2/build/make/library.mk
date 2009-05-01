@@ -1,462 +1,198 @@
+# -*- makefile -*-
 #
 # This makefile template should be included by makefiles in
-# library directories.  The including makefile may define the
-# HDRS variable to a list of header files to get installed.
-# See also the rules.mk file for descriptions of meanings of
-# other variables.
+# library directories.
 #
 
+# Set the directories for the local sources and headers
+LOCAL_SRCDIR :=  $(abspath $(LOCAL_PATH)/$(SRCDIR))
+TMP_SRCDIR := $(abspath $(LOCAL_PATH)/$(SRCDIR))
+LOCAL_INCSRCDIR :=  $(abspath $(LOCAL_PATH)/$(INCSRCDIR))
 
-# If we have headers, we should install those, too. 
-# The only exception is if the NOHDRINST macro is defined.
-# The NOHDRINST macro is used to bypass the headers-install
-# build step.  It is useful for situations where all the header
-# files are already visible within the compiler search path.
-# ONLY DEFINE THE MACRO IF YOU KNOW WHAT YOU'RE DOING
-ifndef NOHDRINST
-  ifneq ($(HDRS),)
-    ifneq ($(INCDESTDIR),)
-      TARGETS_TO_INSTALL+=headers
+#$(info LOCAL_PATH = $(LOCAL_PATH))
+#$(info LOCAL_SRCDIR = $(LOCAL_SRCDIR))
+#$(info TMP_SRCDIR = $(TMP_SRCDIR))
+#$(info LOCAL_INCSRCDIR = $(LOCAL_INCSRCDIR))
+
+
+###########################################################
+#
+# See if there are any plugin files to include
+#
+MY_TARGET_PLUGINS := $($(TARGET)_plugins)
+SOLIB_OBJDIR_COMP :=
+SOLIB_TARGET_COMP :=
+ifeq ($(DEFAULT_LIBTYPE),shared-archive)
+  ifneq ($(strip $(SOLIB)),)
+    SOLIB_TARGET_COMP :=_$(SOLIB)
+    ifneq ($(strip $($(TARGET)_plugins_$(SOLIB))),)
+      MY_TARGET_PLUGINS := $($(TARGET)_plugins_$(SOLIB))
+      SOLIB_OBJDIR_COMP := /$(SOLIB)
     endif
   endif
 endif
 
-ifneq ($(INCSRCDIR),)
-   headers_srcdir=$(INCSRCDIR)
-else
-   headers_srcdir=.
-endif
-headers_destdir=$(INCDESTDIR)
-headers_files=$(HDRS)
-headers_ifunction=_header_install_
-
-define _header_install_
-	$(INSTALL) -c -m 444 WHAT_TO_INSTALL $(headers_destdir)
-endef
-
-
-# if TARGET is empty then just do the headers install
-ifeq ($(strip $(TARGET)),)
-
-include $(MK)/rules.mk
-
-library-install:
-
-cm-release:
-
-.PHONY:: cm-release library-install
-else
-
-# if DBG_SUFFIX not set then set to _debug
-ifeq ($(strip $(DBG_SUFFIX)),)
-  DBG_SUFFIX = _debug
+# $(info plugins to include $(TARGET) = $(MY_TARGET_PLUGINS))
+ifneq ($(strip $(MY_TARGET_PLUGINS)),)
+include $(call process_include_list,$(LOCAL_PATH),$(MY_TARGET_PLUGINS))
 endif
 
-ifeq ($(RELEASE),1)
-  # if LIBTARGET not set then set to 
-  ifeq ($(strip $(LIBTARGET)),)
-    LIBTARGET = $(STAT_REL_LIB)
-  endif
+
+#
+# See if there are any additional src files listed. E.g. assembly src files for codecs
+#
+-include $(call process_include_list,$(LOCAL_PATH),$(TOOLSET)_$(PROCESSOR).mk)
+###########################################################
+# Rules for installing the header files
+
+HDR_FILES := $(notdir $(HDRS))
+LOCAL_INSTALLED_HDRS := $(HDR_FILES:%=$(INCDESTDIR)/%)
+
+$(foreach hdr, $(strip $(HDRS)), $(eval $(call INST_TEMPLATE,$(notdir $(hdr)),$(patsubst %/,%,$(LOCAL_INCSRCDIR)/$(dir $(hdr))),$(INCDESTDIR))))
+
+$(INCDESTDIR)/ALL_HDRS_INSTALLED: $(LOCAL_INSTALLED_HDRS)
+
+###################################################################
+# 
+#                   Set up the target
+
+# remove any leading / trailing whitespace
+TARGET := $(strip $(TARGET))
+
+
+$(TARGET)_libmode ?= $(DEFAULT_LIBMODE)
+$(TARGET)_libtype ?= $(DEFAULT_LIBTYPE)
+
+$(TARGET)_asm_flags ?= $(DEFAULT_CPP_ASM_FLAGS)
+XCPPFLAGS += $($(TARGET)_asm_flags) 
+
+# $(info target = $(TARGET), libtype = $($(TARGET)_libtype))
+
+ifeq ($($(TARGET)_libtype),shared-archive)
+  CUMULATIVE_TARGET_LIST := $(CUMULATIVE_TARGET_LIST) $(TARGET)
+  LIB_EXT:=$(SHARED_ARCHIVE_LIB_EXT)
+  OBJSUBDIR:=shared
+  XCXXFLAGS+=$(SHARED_CXXFLAGS)
+  TMPDEPS = $(patsubst %,$$(%_fullname),$(LIBS))
+  $(eval $(TARGET)_LIBDEPS = $(TMPDEPS))
 else 
-  ifeq ($(strip $(LIBTARGET)),)
-    LIBTARGET = $(STAT_DBG_LIB)
-  endif
-endif
-
-ifneq ($(word 2,$(strip $(LIBTARGET))),)
-
-# there is more than one target listed in libtarget so 
-# go through them one-by-one
-
-#echo "running make with target $(target)"; echo ""
-#$(shell $(MAKE) LIBTARGET=$(target))
-define single_target_make
-$(shell echo "$(target)")
-endef
-
-default:
-	@export MAKEFLAGS
-	$(MK)/../bin/make_list	$(MAKE) $@ LIBTARGET $(LIBTARGET)
-
-%: 
-	@export MAKEFLAGS
-	$(MK)/../bin/make_list $(MAKE) $@ LIBTARGET $(LIBTARGET)
-
-
-else
-
-
-ifneq ($(strip $(MAJOR_VERSION)),)
-  SONAME_EXT = .$(MAJOR_VERSION)
-  ifneq ($(strip $(MINOR_VERSION)),)
-      SHAR_LIB_EXT = .$(MAJOR_VERSION).$(MINOR_VERSION)
+  ifeq ($($(TARGET)_libtype),shared)
+    LIB_EXT:=$(SHARED_LIB_EXT)
+    OBJSUBDIR:=shared
+    XCXXFLAGS+=$(SHARED_CXXFLAGS)
+    TMPDEPS = $(patsubst %,$$(%_fullname),$(LIBS))
+    $(eval $(TARGET)_LIBDEPS = $(TMPDEPS))
   else
-      SHAR_LIB_EXT = .$(MAJOR_VERSION)
+    LIB_EXT:=$(STAT_LIB_EXT)
+    OBJSUBDIR:=static
+    $(TARGET)_LIBDEPS =
   endif
+endif
+
+ifeq ($($(TARGET)_libmode),debug)
+  TARGET_NAME_SUFFIX:=_debug
+  OBJSUBDIR:=$(OBJSUBDIR)-dbg
+  XCPPFLAGS+=$(DEBUG_CPPFLAGS)
+  XCXXFLAGS+=$(DEBUG_CXXFLAGS)
 else
-  SHAR_LIB_EXT = 
+  TARGET_NAME_SUFFIX:=
+  OBJSUBDIR:=$(OBJSUBDIR)-rel
+  XCXXFLAGS+=$(OPT_CXXFLAG)
+  XCXXFLAGS+=$(RELEASE_CXXFLAGS)
+  XCPPFLAGS+=$(RELEASE_CPPFLAGS)
 endif
 
-MY_TARGET = $(strip $(TARGET))
+ifneq ($(strip $(OPTIMIZE_FOR_PERFORMANCE_OVER_SIZE)),true)
+  XCXXFLAGS += $(OPTIMIZE_FOR_SIZE)
+endif
 
-STAT_REL_OBJDIR = $(BUILD_ARCH)/static_rel
-STAT_DBG_OBJDIR = $(BUILD_ARCH)/static_dbg
-SHAR_REL_OBJDIR = $(BUILD_ARCH)/shared_rel
-SHAR_DBG_OBJDIR = $(BUILD_ARCH)/shared_dbg
-MODL_REL_OBJDIR = $(BUILD_ARCH)/module_rel
-MODL_DBG_OBJDIR = $(BUILD_ARCH)/module_dbg
+OBJDIR := $(subst $(SRC_ROOT),$(BUILD_ROOT),$(abspath $(LOCAL_PATH)/$(OUTPUT_DIR_COMPONENT)$(SOLIB_OBJDIR_COMP)/$(OBJSUBDIR)))
 
-OBJDIRS = $(STAT_REL_OBJDIR) $(STAT_DBG_OBJDIR) $(SHAR_REL_OBJDIR) $(SHAR_DBG_OBJDIR) $(MODL_REL_OBJDIR) $(MODL_DBG_OBJDIR)
-
-ifeq ($(BUILD_ARCH),win32)
-  STAT_REL_LIB = $(MY_TARGET:%=$(STAT_REL_OBJDIR)/%.$(STAT_LIB_EXT))
-  STAT_DBG_LIB = $(MY_TARGET:%=$(STAT_DBG_OBJDIR)/%$(DBG_SUFFIX).$(STAT_LIB_EXT))
-  SHAR_REL_LIB = $(MY_TARGET:%=$(SHAR_REL_OBJDIR)/%.so$(SHAR_LIB_EXT))
-  SHAR_DBG_LIB = $(MY_TARGET:%=$(SHAR_DBG_OBJDIR)/%$(DBG_SUFFIX).so$(SHAR_LIB_EXT))
+ifeq ($($(TARGET)_libtype),shared-archive)
+  LIBTARGET := $(TARGET:%=$(OBJDIR)/lib%$(TARGET_NAME_SUFFIX).$(LIB_EXT))
 else
-  STAT_REL_LIB = $(MY_TARGET:%=$(STAT_REL_OBJDIR)/lib%.$(STAT_LIB_EXT))
-  STAT_DBG_LIB = $(MY_TARGET:%=$(STAT_DBG_OBJDIR)/lib%$(DBG_SUFFIX).$(STAT_LIB_EXT))
-  SHAR_REL_LIB = $(MY_TARGET:%=$(SHAR_REL_OBJDIR)/lib%.so$(SHAR_LIB_EXT))
-  SHAR_DBG_LIB = $(MY_TARGET:%=$(SHAR_DBG_OBJDIR)/lib%$(DBG_SUFFIX).so$(SHAR_LIB_EXT))
-  MODL_REL_LIB = $(MY_TARGET:%=$(MODL_REL_OBJDIR)/lib%_mod.$(STAT_LIB_EXT))
-  MODL_DBG_LIB = $(MY_TARGET:%=$(MODL_DBG_OBJDIR)/lib%_mod$(DBG_SUFFIX).$(STAT_LIB_EXT))
+  LIBTARGET := $(TARGET:%=$(DESTDIR)/lib%$(TARGET_NAME_SUFFIX).$(LIB_EXT))
 endif
 
-STAT_REL_OBJS = $(COMPILED_OBJS:%.$(STAT_OBJS_EXT)=$(STAT_REL_OBJDIR)/%.$(STAT_OBJS_EXT))
-STAT_REL_DEPS = $(STAT_REL_OBJS:%.$(STAT_OBJS_EXT)=%.d)
+$(TARGET)$(SOLIB_TARGET_COMP)_fullname := $(LIBTARGET)
+
+#$(info src_root = $(abspath $(SRC_ROOT)))
+#$(info build_root = $(abspath $(BUILD_ROOT)))
+#$(info objdir = $(OBJDIR))
+
+$(eval $(call set-src-and-obj-names,$(SRCS),$(LOCAL_SRCDIR)))
+
+TMPOBJS := $(patsubst %,$$(%_compiled_objs),$(COMPONENT_LIBS))
+$(eval COMPILED_OBJS += $(TMPOBJS))
 
 
-STAT_DBG_OBJS = $(COMPILED_OBJS:%.$(STAT_OBJS_EXT)=$(STAT_DBG_OBJDIR)/%.$(STAT_OBJS_EXT))
-STAT_DBG_DEPS = $(STAT_DBG_OBJS:%.$(STAT_OBJS_EXT)=%.d)
+# save compiled objects in a macro
+$(TARGET)_compiled_objs := $(COMPILED_OBJS)
 
-
-SHAR_REL_OBJS = $(COMPILED_OBJS:%.$(STAT_OBJS_EXT)=$(SHAR_REL_OBJDIR)/%.$(STAT_OBJS_EXT))
-SHAR_REL_DEPS = $(SHAR_REL_OBJS:%.$(STAT_OBJS_EXT)=%.d)
-
-
-SHAR_DBG_OBJS = $(COMPILED_OBJS:%.$(STAT_OBJS_EXT)=$(SHAR_DBG_OBJDIR)/%.$(STAT_OBJS_EXT))
-SHAR_DBG_DEPS = $(SHAR_DBG_OBJS:%.$(STAT_OBJS_EXT)=%.d)
-
-MODL_REL_OBJS = $(COMPILED_OBJS:%.$(STAT_OBJS_EXT)=$(MODL_REL_OBJDIR)/%.$(STAT_OBJS_EXT))
-MODL_REL_DEPS = $(MODL_REL_OBJS:%.$(STAT_OBJS_EXT)=%.d)
-
-MODL_DBG_OBJS = $(COMPILED_OBJS:%.$(STAT_OBJS_EXT)=$(MODL_DBG_OBJDIR)/%.$(STAT_OBJS_EXT))
-MODL_DBG_DEPS = $(MODL_DBG_OBJS:%.$(STAT_OBJS_EXT)=%.d)
-
-ifeq ($(LIBTARGET),static-dbg)
-  override LIBTARGET = $(STAT_DBG_LIB)
+ifneq ($(strip $(FORCED_OBJS)),)
+ # The point of this dependency is to force object rebuilds when the 
+ # corresponding dependency files are missing (even if the object file exists).
+ $(FORCED_OBJS): FORCE
 endif
 
-ifeq ($(LIBTARGET),static-rel)
-  override LIBTARGET = $(STAT_REL_LIB)
-endif
+# $(info DEPS = $(DEPS))
 
-ifeq ($(LIBTARGET),shared-dbg)
-  override LIBTARGET = $(SHAR_DBG_LIB)
-endif
-
-ifeq ($(LIBTARGET),shared-rel)
-  override LIBTARGET = $(SHAR_REL_LIB)
-endif
-
-ifeq ($(LIBTARGET),module-dbg)
-  override LIBTARGET = $(MODL_DBG_LIB)
-endif
-
-ifeq ($(LIBTARGET),module-rel)
-  override LIBTARGET = $(MODL_REL_LIB)
-endif
-
-ifeq ($(LIBTARGET),$(STAT_REL_LIB))
-  COMPILED_TARGETS = $(STAT_REL_LIB)
-  DEPS = $(STAT_REL_DEPS)
-  TARGETS_TO_INSTALL+=static
-  CLEAN+=$(STAT_REL_OBJS) $(STAT_REL_DEPS)
-
-  library-install: static-install
-
-.PHONY:: library-install
-endif
-
-
-ifeq ($(LIBTARGET),$(STAT_DBG_LIB))
-  COMPILED_TARGETS = $(STAT_DBG_LIB)
-  DEPS = $(STAT_DBG_DEPS)
-  TARGETS_TO_INSTALL+=static
-  CLEAN+=$(STAT_DBG_OBJS) $(STAT_DBG_DEPS)
-
-  library-install: static-install
-
-.PHONY:: library-install
-endif
-
-
-ifeq ($(LIBTARGET),$(SHAR_REL_LIB))
-  COMPILED_TARGETS = $(SHAR_REL_LIB)
-  DEPS = $(SHAR_REL_DEPS)
-  XCFLAGS += $(SHARED_CFLAGS)
-  XCXXFLAGS += $(SHARED_CXXFLAGS)
-  XLDFLAGS += $(SHARED_LDFLAGS)
-  LIBNAME_NO_VERSION = $(MY_TARGET:%=lib%.so)
-  TARGETS_TO_INSTALL+=shared
-  ifeq ($(strip $(SONAME)),)
-    SONAME = $(MY_TARGET:%=lib%.so$(SONAME_EXT))
+ifneq "$(MAKECMDGOALS)" "clean"
+  ifneq ($(strip $(FOUND_DEPS)),)
+  -include $(FOUND_DEPS)
   endif
-  CLEAN+=$(SHAR_REL_OBJS) $(SHAR_REL_DEPS)
-
-  library-install: shared-install
-
-.PHONY:: library-install
-endif
-
-ifeq ($(LIBTARGET),$(SHAR_DBG_LIB))
-  COMPILED_TARGETS = $(SHAR_DBG_LIB)
-  DEPS = $(SHAR_DBG_DEPS)
-  XCFLAGS += $(SHARED_CFLAGS)
-  XCXXFLAGS += $(SHARED_CXXFLAGS)
-  XLDFLAGS += $(SHARED_LDFLAGS)
-  LIBNAME_NO_VERSION = $(MY_TARGET:%=lib%$(DBG_SUFFIX).so)
-  TARGETS_TO_INSTALL+=shared
-  ifeq ($(strip $(SONAME)),)
-    SONAME = $(MY_TARGET:%=lib%$(DBG_SUFFIX).so$(SONAME_EXT))
-  endif
-  CLEAN+=$(SHAR_DBG_OBJS) $(SHAR_DBG_DEPS)
-
-  library-install: shared-install
-
-.PHONY:: library-install
-endif
-
-ifeq ($(LIBTARGET),$(MODL_REL_LIB))
-  COMPILED_TARGETS = $(MODL_REL_LIB)
-  DEPS = $(MODL_REL_DEPS)
-  XCFLAGS += $(SHARED_CFLAGS)
-  XCXXFLAGS += $(SHARED_CXXFLAGS)
-  XLDFLAGS += $(SHARED_LDFLAGS)
-  CLEAN+=$(MODL_REL_OBJS) $(MODL_REL_DEPS)
-
-  library-install: module-install
-
-.PHONY:: library-install
-endif
-
-ifeq ($(LIBTARGET),$(MODL_DBG_LIB))
-  COMPILED_TARGETS = $(MODL_DBG_LIB)
-  DEPS = $(MODL_DBG_DEPS)
-  XCFLAGS += $(SHARED_CFLAGS)
-  XCXXFLAGS += $(SHARED_CXXFLAGS)
-  XLDFLAGS += $(SHARED_LDFLAGS)
-  CLEAN+=$(MODL_DBG_OBJS) $(MODL_DBG_DEPS)
-
-  library-install: module-install
-
-.PHONY:: library-install
 endif
 
 
-REALTARGET = $(LIBTARGET)
+# LOCAL_XINCDIRS := $(abspath $(patsubst %,$(LOCAL_PATH)/%,$(filter ../%,$(XINCDIRS))))
+
+# Currently remove -I until the old makefiles are obsoleted
+LOCAL_XINCDIRS := $(abspath $(patsubst ../%,$(LOCAL_PATH)/../%,$(patsubst -I%,%,$(XINCDIRS))))
 
 
+LOCAL_TOTAL_INCDIRS := $(LOCAL_SRCDIR) $(LOCAL_INCSRCDIR) $(LOCAL_XINCDIRS)
 
+# $(info  LOCAL_TOTAL_INCDIRS = $(LOCAL_TOTAL_INCDIRS), XCXXFLAGS = $(XCXXFLAGS))
 
-static_srcdir=$(patsubst %/,%,$(dir $(LIBTARGET)))
-static_destdir=$(DESTDIR)
-static_files=$(notdir $(LIBTARGET))
-static_ifunction=_static_install_
+$(COMPILED_OBJS): XFLAGS := $(XCPPFLAGS) $(patsubst %,-I%,$(LOCAL_TOTAL_INCDIRS)) $(XCXXFLAGS)
 
-ifneq ($(RANLIB),)
-  RANDOMLIB=$(RANLIB) $(static_destdir)/$(static_files)
+#$(info remote_dirs = $(REMOTE_DIRS))
+
+ifneq ($(strip $(REMOTE_DIRS)),)
+# $(info remote dirs = $(REMOTE_DIRS))
+$(foreach srcdir, $(strip $(REMOTE_DIRS)), $(eval $(call OBJ_TEMPLATE,$(srcdir),$(OBJDIR))))
 endif
 
 
-define _static_install_
-	$(INSTALL) -c -m 664 WHAT_TO_INSTALL $(static_destdir)
-	$(RANDOMLIB)
-endef
+$(OBJDIR)/%.$(OBJ_EXT): $(LOCAL_SRCDIR)/%.cpp 
+	$(call make-cpp-obj-and-depend,$<,$@,$(subst .$(OBJ_EXT),.d,$@),$(XFLAGS))
 
-shared_srcdir=$(patsubst %/,%,$(dir $(LIBTARGET)))
-shared_destdir=$(DESTDIR)
-shared_files=$(notdir $(LIBTARGET))
-shared_ifunction=_shared_install_
+$(OBJDIR)/%.$(OBJ_EXT): $(LOCAL_SRCDIR)/%.c
+	$(call make-c-obj-and-depend,$<,$@,$(subst .$(OBJ_EXT),.d,$@),$(XFLAGS))
 
-define _shared_install_
-	$(INSTALL) -c -m 775 WHAT_TO_INSTALL $(shared_destdir)
-        @if [ $(notdir $(LIBTARGET)) != $(LIBNAME_NO_VERSION) ] ; then cd $(shared_destdir) ; rm -f $(LIBNAME_NO_VERSION) ; ln -sf $(notdir $(LIBTARGET)) $(LIBNAME_NO_VERSION); fi
-    
-endef
+# $(info target = $(TARGET), LIBDEPS = $($(TARGET)_LIBDEPS))
 
-module_srcdir=$(patsubst %/,%,$(dir $(LIBTARGET)))
-module_destdir=$(DESTDIR)
-module_files=$(notdir $(LIBTARGET))
-module_ifunction=_module_install_
+$(LIBTARGET): LIBTYPE := $($(TARGET)_libtype)
 
-define _module_install_
-	$(INSTALL) -c -m 775 WHAT_TO_INSTALL $(module_destdir)
-endef
+$(LIBTARGET): $(COMPILED_OBJS) $($(TARGET)_LIBDEPS)
+	@echo Build $@
+	$(call create_objdir,$(@D))
+	$(call generate_$(LIBTYPE)_lib,$@,$^)
+	@echo Done
 
-include $(MK)/rules.mk
+ALL_LIBS_INSTALLED: $(LIBTARGET)
 
+# Pseudo-targets for libraries. With this, we can use "make lib$(TARGET)" instead of "make $(DESTDIR)/lib%$(TARGET_NAME_SUFFIX).$(LIB_EXT)"
+# E.g., make libunit_test
+lib$(TARGET): $(LIBTARGET)
 
-define build_shared
-	-$(RM) $@
-	$(SHARED_LINK) $(SONAME_ARG) -o $@  $(filter-out -l%,$(LDFLAGS)) \
-		$^ $(filter -l%,$(LDFLAGS)) $(POST_LDFLAGS)
-	-chmod g+w $@
-endef
+-include $(MK)/depgraph.mk
+
+TARGET_TYPE := library
+
+-include $(PLATFORM_EXTRAS)
 
 
-
-# If $(BUILD_LIBRARY) isn't defined, use GNUmake's special archive
-# dependencies to build individual members as needed.  Otherwise,
-# make the finished library depend explicitly on the objects and
-# use $(BUILD_LIBRARY) to build it.
+.PRECIOUS:: $(DEPS) $(COMPILED_OBJS)
 
 
-static-rel: 
-	@export MAKEFLAGS
-	$(MAKE) LIBTARGET=$(STAT_REL_LIB) RELEASE=1
-
-static-dbg: 
-	@export MAKEFLAGS
-	$(MAKE) LIBTARGET=$(STAT_DBG_LIB) 
-
-shared-dbg: 
-	@export MAKEFLAGS
-	$(MAKE) LIBTARGET=$(SHAR_DBG_LIB) 
-
-shared-rel: 
-	@export MAKEFLAGS
-	$(MAKE) LIBTARGET=$(SHAR_REL_LIB) RELEASE=1
-
-module-dbg: 
-	@export MAKEFLAGS
-	$(MAKE) LIBTARGET=$(MODL_DBG_LIB) 
-
-module-rel: 
-	@export MAKEFLAGS
-	$(MAKE) LIBTARGET=$(MODL_REL_LIB) RELEASE=1
-
-install-static-rel: 
-	@export MAKEFLAGS
-	$(MAKE) LIBTARGET=$(STAT_REL_LIB) RELEASE=1 install
-
-install-static-dbg: 
-	@export MAKEFLAGS
-	$(MAKE) LIBTARGET=$(STAT_DBG_LIB) install
-
-install-shared-dbg: 
-	@export MAKEFLAGS
-	$(MAKE) LIBTARGET=$(SHAR_DBG_LIB) install
-
-install-shared-rel: 
-	@export MAKEFLAGS
-	$(MAKE) LIBTARGET=$(SHAR_REL_LIB) RELEASE=1 install
-
-install-module-dbg: 
-	@export MAKEFLAGS
-	$(MAKE) LIBTARGET=$(MODL_DBG_LIB) install
-
-install-module-rel: 
-	@export MAKEFLAGS
-	$(MAKE) LIBTARGET=$(MODL_REL_LIB) RELEASE=1 install
-
-
-all-libs:
-	@export MAKEFLAGS
-	$(MAKE) LIBTARGET=$(STAT_REL_LIB)
-	$(MAKE) LIBTARGET=$(STAT_DBG_LIB)
-	$(MAKE) LIBTARGET=$(SHAR_REL_LIB)
-	$(MAKE) LIBTARGET=$(SHAR_DBG_LIB)
-	$(MAKE) LIBTARGET=$(MODL_REL_LIB)
-	$(MAKE) LIBTARGET=$(MODL_DBG_LIB)
-
-install-all:
-	@export MAKEFLAGS
-	$(MAKE) LIBTARGET=$(STAT_REL_LIB) install
-	$(MAKE) LIBTARGET=$(STAT_DBG_LIB) install
-	$(MAKE) LIBTARGET=$(SHAR_REL_LIB) install
-	$(MAKE) LIBTARGET=$(SHAR_DBG_LIB) install
-	$(MAKE) LIBTARGET=$(MODL_REL_LIB) install
-	$(MAKE) LIBTARGET=$(MODL_DBG_LIB) install
-
-ifeq ($(BUILD_LIBRARY),)
-
-$(STAT_REL_LIB): $(STAT_REL_OBJS:%=$(STAT_REL_LIB)(%))
-
-$(STAT_DBG_LIB): $(STAT_DBG_OBJS:%=$(STAT_DBG_LIB)(%))
-
-print-lobjs:
-	@echo $(SHAR_DBG_OBJS)	
-	@echo $(STAT_DBG_OBJS)	
-
-.PHONY:: print-lobjs
-
-else
-
-.PRECIOUS:: $(STAT_REL_OBJS) $(STAT_DBG_OBJS)
-
-$(STAT_REL_LIB):: $(STAT_REL_OBJS)
-	-$(RM) $@
-	$(BUILD_LIBRARY)
-
-$(STAT_DBG_LIB):: $(STAT_DBG_OBJS)
-	-$(RM) $@
-	$(BUILD_LIBRARY)
-
-print-lobjs:
-	@echo $(STAT_DBG_OBJS)	
-
-.PHONY:: print-lobjs
-
-endif
-
-$(SHAR_REL_LIB):: $(SHAR_REL_OBJS)
-	$(build_shared)
-
-$(SHAR_DBG_LIB):: $(SHAR_DBG_OBJS)
-	$(build_shared)
-
-
-$(MODL_REL_LIB): $(MODL_REL_OBJS:%=$(MODL_REL_LIB)(%))
-
-$(MODL_DBG_LIB): $(MODL_DBG_OBJS:%=$(MODL_DBG_LIB)(%))
-
-# Rules for checking in files to the configuration 
-# management/source control system
-ifeq ($(strip $(CM_DESTDIR)),)
- TMP_CM_DIRS = $(shell $(FIND_DIR) 0 sdk_lib $(TOP))
- TMP_CM_DIRS += $(shell $(FIND_DIR) 0 SDK_lib $(TOP))
-CM_DESTDIR = $(firstword $(TMP_CM_DIRS))/$(BUILD_ARCH)
-endif
-
-
-ifeq ($(strip $(CM_DESTDIR)),)
-cm-release:
-	@echo "ERROR -- Must define CM_DESTDIR to location where target should be checked-in"
-	/bin/false;
-
-.PHONY:: cm-release
-else
-
-ifeq ($(strip $(CM_LABEL)),)
-cm-release:
-	@error "Must define CM_LABEL to the label name that will be applied to the target"
-	/bin/false
-
-.PHONY:: cm-release
-
-else 
-
-cm-release: $(LIBTARGET)
-	#@echo "Running cm-release on target $(LIBTARGET), dest = $(CM_DESTDIR)/$(BUILD_ARCH), label = $(CM_LABEL) "
-	$(MK)/../bin/newcob.pl --label $(CM_LABEL) $(CM_BRANCH) $(REALTARGET) $(CM_DESTDIR)
-
-.PHONY:: cm-release
-endif #CM_LABEL is NULL
-
-endif #CM_DESTDIR is NULL
-
-
-
-endif
-endif

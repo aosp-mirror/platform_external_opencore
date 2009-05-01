@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,26 +27,6 @@ Permission to distribute, modify and use this file under the standard license
 terms listed above has been obtained from the copyright holder.
 ****************************************************************************************/
 /*
-
- Pathname: ./include/cor_h_x.h
-
-     Date: 09/07/2000
-
-------------------------------------------------------------------------------
- REVISION HISTORY
-
- Description: Created separate header file for cor_h_x.
-
- Description: Changed to reflect inclusion of pOverflow flag in the cor_h_x
- function.
-
- Description: Updated template to make it build in Symbian. Updated copyright
-              year.
-
- Description: Moved _cplusplus #ifdef after Include section.
-
- Description:
-
 ------------------------------------------------------------------------------
  INCLUDE DESCRIPTION
 

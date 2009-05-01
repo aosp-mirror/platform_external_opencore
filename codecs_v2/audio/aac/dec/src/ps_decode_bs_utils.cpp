@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,6 @@
  * -------------------------------------------------------------------
  */
 /*
-------------------------------------------------------------------------------
-
-
 
  Filename: ps_decode_bs_utils.c
 
@@ -28,12 +25,11 @@
         map34IndexTo20
         limitMinMax
 
-     Date: 01/10/2005
-
 ------------------------------------------------------------------------------
  REVISION HISTORY
 
 
+ Who:                                   Date: MM/DD/YYYY
  Description:
 
 ------------------------------------------------------------------------------

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,7 +68,7 @@ terms listed above has been obtained from the copyright holder.
 ; DEFINES AND SIMPLE TYPEDEF'S
 ----------------------------------------------------------------------------*/
 
-#if defined(_ARM_V5)
+#if defined(PV_ARM_V5)
 
 __inline int16 normalize_amr_wb(int32 x)
 {
@@ -82,7 +82,7 @@ __inline int16 normalize_amr_wb(int32 x)
 }
 
 
-#elif defined(_ARM_GCC)
+#elif defined(PV_ARM_GCC_V5)
 
 
 __inline int16 normalize_amr_wb(int32 x)

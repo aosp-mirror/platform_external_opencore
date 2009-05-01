@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,10 @@
 #ifndef PV_INTERFACE_H_INCLUDED
 #include "pv_interface.h"
 #endif
+#ifndef OSCL_BASE_MACROS_H_INCLUDED
+#include "oscl_base_macros.h"
+#endif
+
 #include "pvmf_return_codes.h"
 #include "pvmf_event_handling.h"
 
@@ -141,6 +145,7 @@ class PVMFCPMPluginLicenseInterface : public PVInterface
         virtual PVMFStatus GetLicenseStatus(
             PVMFCPMLicenseStatus& aStatus)
         {
+            OSCL_UNUSED_ARG(&aStatus);
             return PVMFErrNotSupported;
         };
 };

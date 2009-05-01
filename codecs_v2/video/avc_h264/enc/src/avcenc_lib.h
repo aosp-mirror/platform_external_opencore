@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -150,6 +150,23 @@ extern "C"
     AVCEnc_Status EncodeSPS(AVCEncObject *encvid, AVCEncBitstream *stream);
 
     /**
+    This function encodes the VUI parameters into the sequence parameter set bitstream.
+    \param "stream" "Pointer to AVCEncBitstream."
+    \param "vui"	"Pointer to AVCVUIParams."
+    \return "nothing."
+    */
+    void EncodeVUI(AVCEncBitstream* stream, AVCVUIParams* vui);
+
+    /**
+    This function encodes HRD parameters into the sequence parameter set bitstream
+    \param "stream" "Pointer to AVCEncBitstream."
+    \param "hrd"	"Pointer to AVCHRDParams."
+    \return "nothing."
+    */
+    void EncodeHRD(AVCEncBitstream* stream, AVCHRDParams* hrd);
+
+
+    /**
     This function performs bitstream encoding of the picture parameter set NAL.
     \param "encvid"	"Pointer to the AVCEncObject."
     \param "stream" "Pointer to AVCEncBitstream."
@@ -211,9 +228,12 @@ extern "C"
     \param "bitstream"	"Pointer to the AVCEncBitstream structure."
     \param "buffer"		"Pointer to the unsigned char buffer for output."
     \param "buf_size"	"The size of the buffer in bytes."
+    \param "overrunBuffer"	"Pointer to extra overrun buffer."
+    \param "oBSize"		"Size of overrun buffer in bytes."
     \return "AVCENC_SUCCESS if success, AVCENC_BITSTREAM_INIT_FAIL if fail"
     */
-    AVCEnc_Status BitstreamEncInit(AVCEncBitstream *bitstream, uint8 *buffer, int buf_size);
+    AVCEnc_Status BitstreamEncInit(AVCEncBitstream *bitstream, uint8 *buffer, int buf_size,
+                                   uint8 *overrunBuffer, int oBSize);
 
     /**
     This function writes the data from the cache into the bitstream buffer. It also adds the
@@ -257,6 +277,17 @@ extern "C"
     */
     bool byte_aligned(AVCEncBitstream *stream);
 
+
+    /**
+    This function checks the availability of overrun buffer and switches to use it when
+    normal bufffer is not big enough.
+    \param "stream" "Pointer to the bitstream structure."
+    \param "numExtraBytes" "Number of extra byte needed."
+    \return "AVCENC_SUCCESS or AVCENC_FAIL."
+    */
+    AVCEnc_Status AVCBitstreamUseOverrunBuffer(AVCEncBitstream* stream, int numExtraBytes);
+
+
     /*-------------- intra_est.c ---------------*/
 
     /** This function performs intra/inter decision based on ABE.
@@ -267,7 +298,8 @@ extern "C"
     \return "Boolean for intra mode."
     */
 
-    bool IntraDecisionABE(AVCEncObject *encvid, int min_cost, uint8 *curL, int picPitch);
+//bool IntraDecisionABE(AVCEncObject *encvid, int min_cost, uint8 *curL, int picPitch);
+    bool IntraDecision(int *min_cost, uint8 *cur, int pitch, bool ave);
 
     /**
     This function performs intra prediction mode search.
@@ -584,10 +616,10 @@ extern "C"
     \param "ypos"	"The current MB position in y."
     \param "hp_guess"	"Input to help speedup the search."
     \param "cmvx, cmvy" "Predicted motion vector use for mvcost."
-    \return "void."
+    \return "Minimal cost (SATD) without MV cost. (for rate control purpose)"
     */
-    void AVCFindHalfPelMB(AVCEncObject *encvid, uint8 *cur, AVCMV *mot, uint8 *ncand,
-                          int xpos, int ypos, int hp_guess, int cmvx, int cmvy);
+    int AVCFindHalfPelMB(AVCEncObject *encvid, uint8 *cur, AVCMV *mot, uint8 *ncand,
+                         int xpos, int ypos, int hp_guess, int cmvx, int cmvy);
 
     /**
     This function generates sub-pel pixels required to do subpel MV search.
@@ -596,7 +628,25 @@ extern "C"
     \param "lx" "Pitch of the ref frame."
     \return "void"
      */
-    void GenerateSubPelPred(uint8* subpel_pred, uint8 *ncand, int lx);
+    void GenerateHalfPelPred(uint8 *subpel_pred, uint8 *ncand, int lx);
+
+    /**
+    This function calculate vertical interpolation at half-point of size 4x17.
+    \param "dst" "Pointer to destination."
+    \param "ref" "Pointer to the starting reference pixel."
+    \return "void."
+    */
+    void VertInterpWClip(uint8 *dst, uint8 *ref);
+
+    /**
+    This function generates quarter-pel pixels around the best half-pel result
+    during the sub-pel MV search.
+    \param "bilin_base"  "Array of pointers to be used as basis for q-pel interp."
+    \param "qpel_pred"  "Array of pointers pointing to quarter-pel candidates."
+    \param "hpel_pos" "Best half-pel position at the center."
+    \return "void"
+    */
+    void GenerateQuartPelPred(uint8 **bilin_base, uint8 *qpel_pred, int hpel_pos);
 
     /**
     This function calculates the SATD of a subpel candidate.
@@ -608,6 +658,12 @@ extern "C"
     int SATD_MB(uint8 *cand, uint8 *cur, int dmin);
 
     /*------------- rate_control.c -------------------*/
+
+    /** This function is a utility function. It returns average QP of the previously encoded frame.
+    \param "rateCtrl" "Pointer to AVCRateControl structure."
+    \return "Average QP."
+    */
+    int GetAvgFrameQP(AVCRateControl *rateCtrl);
 
     /**
     This function takes the timestamp of the input and determine whether it should be encoded
@@ -680,6 +736,16 @@ extern "C"
     \return "void."
     */
     void RCInitMBQP(AVCEncObject *encvid);
+
+    /**
+    This function updates bits usage stats after encoding an macroblock.
+    \param "video" "Pointer to AVCCommonObj."
+    \param "rateCtrl" "Pointer to AVCRateControl."
+    \param "num_header_bits" "Number of bits used for MB header."
+    \param "num_texture_bits" "Number of bits used for MB texture."
+    \return "void"
+    */
+    void RCPostMB(AVCCommonObj *video, AVCRateControl *rateCtrl, int num_header_bits, int num_texture_bits);
 
     /**
     This function calculates the difference between prediction and original MB.

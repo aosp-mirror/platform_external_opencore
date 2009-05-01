@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -275,12 +275,6 @@ typedef struct tagVideoDecData
 
     PV_STATUS(*vlcDecCoeffIntra)(BitstreamDecVideo *stream, Tcoef *pTcoef/*, int intra_luma*/);
     PV_STATUS(*vlcDecCoeffInter)(BitstreamDecVideo *stream, Tcoef *pTcoef);
-#if 0
-    int (*vlcDequantIntraBlock)(void *video, int comp, int switched,
-                                uint8 *bitmaprow, uint8 *bitmapcol);
-    int (*vlcDequantInterBlock)(void *video, int comp,
-                                uint8 *bitmaprow, uint8 *bitmapcol);
-#endif
     int					initialized;
 
     /* Annex IJKT */

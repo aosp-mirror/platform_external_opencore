@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,11 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/**
-	Implements a simple FIFO structure used for queueing OMX buffers.
-*/
+
+/*******************
+ * Implementation of a FIFO structure for queueing OMX buffers and commands.
+********************/
+
 
 #ifndef PV_OMX_QUEUE_H_INCLUDED
 #define PV_OMX_QUEUE_H_INCLUDED
@@ -27,36 +29,53 @@
 #endif
 
 #ifndef OMX_Types_h
-#include "omx_types.h"
+#include "OMX_Types.h"
 #endif
 
-/* Maximum number of elements in a queue.
- * Note that we make no attempt to deal with buffer-full
- * situations. This is OK, since there is a limited number
- * of buffers that can be enqueued, so we will never
- * fill up the queue as long as the queue is bigger than
- * the number of buffers.
- */
-#define MAX_QUEUE_ELEMENTS 32
+#ifndef OMX_Core_h
+#include "OMX_Core.h"
+#endif
+
+/* Queue Depth i.e maximum number of elements */
+#define MAX_QUEUE_ELEMENTS 12
+
+
+/* Queue Element Type */
+struct QueueElement
+{
+    QueueElement* pQueueNext;
+    void* pData;
+};
 
 typedef struct QueueType
 {
-    void *queue[MAX_QUEUE_ELEMENTS];
-    int inptr;
-    int outptr;
+    QueueElement* pFirst;	/** Queue Front */
+    QueueElement* pLast;	/** Queue Rear (last filled element of queue) */
+    OMX_S32 NumElem;		/** Number of elements currently in the queue */
+    OMX_S32 NumElemAdded;	/** Number of elements added extra at run time*/
 }QueueType;
 
-OSCL_IMPORT_REF void QueueInit(QueueType* aQueue);
 
+
+//QUEUE OPERATIONS
+
+/* Queue initialization routine */
+OSCL_IMPORT_REF OMX_ERRORTYPE QueueInit(QueueType* aQueue);
+
+/* Queue deinitialization routine */
 OSCL_IMPORT_REF void QueueDeinit(QueueType* aQueue);
 
-OSCL_IMPORT_REF void Queue(QueueType* aQueue, void* aData);
+/* Function to queue an element in the given queue*/
+OSCL_IMPORT_REF OMX_ERRORTYPE Queue(QueueType* aQueue, void* aData);
 
-// returns NULL if the queue is empty
+/* Function to dequeue an element from the given queue
+ * Returns NULL if the queue is empty */
 OSCL_IMPORT_REF void* DeQueue(QueueType* aQueue);
 
+/* Function to get number of elements currently in the queue */
 OSCL_IMPORT_REF OMX_S32 GetQueueNumElem(QueueType* aQueue);
 
+/* Add new element in the queue if required */
+OSCL_IMPORT_REF OMX_BOOL AddQueueElem(QueueType* aQueue);
+
 #endif		//#ifndef PV_OMX_QUEUE_H_INCLUDED
-
-

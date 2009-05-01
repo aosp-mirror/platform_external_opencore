@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,13 +24,15 @@
 #include "oscl_types.h"
 #include "oscl_string_containers.h"
 #include "sdp_memory.h"
-
+#include "pvmi_kvp.h"
 
 #define MAX_METRICS_NAME	7
-#define ASSET_NAME_SIZE		11
+#define ASSET_NAME_SIZE		13
 #define MAX_ALTERNATIVES	16
 #define ALT_SIZE			128
 
+
+//code in basemediainfoparser.cpp depends on FIRST_STATIC_PAYLOAD == 0
 #define FIRST_STATIC_PAYLOAD 0
 #define LAST_STATIC_PAYLOAD 33
 
@@ -75,6 +77,8 @@ struct QoEMetricsType
 
 };
 
+#define MAX_ASSET_INFO_KEYWORDS 256
+
 class AssetInfoType
 {
     public:
@@ -90,27 +94,76 @@ class AssetInfoType
             CLASSIFICATION = 7,
             KEYWORDS = 8,
             LOCATION = 9,
-            ASSET_EXTENTION = 10
+            ALBUM = 10,
+            RECORDINGYEAR = 11,
+            ASSET_EXTENTION = 12
         };
 
         AssetInfoType()
         {
+            ResetAssetInfoType();
+        };
+
+        void ResetAssetInfoType()
+        {
+            URL = NULL;
+            int ii;
+            for (ii = 0;ii < ASSET_NAME_SIZE;ii++)
+            {
+                Box[ii] = NULL;
+            }
             oTitlePresent = false;
             oDescriptionPresent = false;
             oCopyRightPresent = false;
             oPerformerPresent = false;
             oAuthorPresent = false;
-            oGenrePresent = false;
-            oRatingPresent = false;
+            oGenrePresent  = false;
+            oRatingPresent  = false;
             oClassificationPresent = false;
             oKeyWordsPresent = false;
+            iNumKeyWords = 0;
+            for (ii = 0;ii < MAX_ASSET_INFO_KEYWORDS; ii++)
+            {
+                KeyWords[ii] = NULL;
+            }
             oLocationPresent = false;
+            oAlbumPresent = false;
+            oRecordingYearPresent = false;
             oAssetExtensionPresent = false;
+            iRecordingYear = 0;
+            CleanUp();
         };
+
+        void CleanUp()
+        {
+            if (iLocationStruct._location_name != NULL)
+            {
+                oscl_free(iLocationStruct._location_name);
+                iLocationStruct._location_name = NULL;
+            }
+            if (iLocationStruct._astronomical_body != NULL)
+            {
+                oscl_free(iLocationStruct._astronomical_body);
+                iLocationStruct._astronomical_body = NULL;
+            }
+            if (iLocationStruct._additional_notes != NULL)
+            {
+                oscl_free(iLocationStruct._additional_notes);
+                iLocationStruct._additional_notes = NULL;
+            }
+        };
+
+        AssetInfoType& operator=(const AssetInfoType& a)
+        {
+            if (&a != this)
+            {
+                MyCopy(a);
+            }
+            return *this;
+        }
 
         OSCL_HeapString<SDPParserAlloc> URL;
         OSCL_HeapString<SDPParserAlloc> Box[ASSET_NAME_SIZE];
-
         bool oTitlePresent;
         bool oDescriptionPresent;
         bool oCopyRightPresent;
@@ -120,8 +173,45 @@ class AssetInfoType
         bool oRatingPresent;
         bool oClassificationPresent;
         bool oKeyWordsPresent;
+        uint32 iNumKeyWords;
+        OSCL_HeapString<SDPParserAlloc> KeyWords[MAX_ASSET_INFO_KEYWORDS];
         bool oLocationPresent;
+        bool oAlbumPresent;
         bool oAssetExtensionPresent;
+        bool oRecordingYearPresent;
+        uint16 iRecordingYear;
+        PvmfAssetInfo3GPPLocationStruct iLocationStruct;
+
+    private:
+        void MyCopy(const AssetInfoType&a)
+        {
+            URL = a.URL;
+            int ii = 0;
+            for (ii = 0;ii < ASSET_NAME_SIZE; ii++)
+            {
+                Box[ii] = a.Box[ii];
+            }
+            oTitlePresent = a.oTitlePresent;
+            oDescriptionPresent = a.oDescriptionPresent;
+            oCopyRightPresent = a.oCopyRightPresent;
+            oPerformerPresent = a.oPerformerPresent;
+            oAuthorPresent = a.oAuthorPresent;
+            oGenrePresent  = a.oGenrePresent;
+            oRatingPresent  = a.oRatingPresent;
+            oClassificationPresent = a.oClassificationPresent;
+            oKeyWordsPresent = a.oKeyWordsPresent;
+            iNumKeyWords = a.iNumKeyWords;
+            for (ii = 0;ii < MAX_ASSET_INFO_KEYWORDS; ii++)
+            {
+                KeyWords[ii] = a.KeyWords[ii];
+            }
+            oLocationPresent = a.oLocationPresent;
+            oAlbumPresent = a.oAlbumPresent;
+            oRecordingYearPresent = a.oRecordingYearPresent;
+            iRecordingYear = a.iRecordingYear;
+            oAssetExtensionPresent = a.oAssetExtensionPresent;
+            iLocationStruct = a.iLocationStruct;
+        }
 };
 
 

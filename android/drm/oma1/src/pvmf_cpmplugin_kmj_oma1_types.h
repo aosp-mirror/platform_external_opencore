@@ -17,7 +17,7 @@
 #define PVMF_CPMPLUGIN_KMJ_OMA1_TYPES_H_
 
 /** Mime type for KMJ plugin */
-#define PVMF_CPM_MIME_KMJ_OMA1	"X-CPM-PLUGIN/PV-DRM-KMJ-OMA1"
+#define PVMF_CPM_MIME_KMJ_OMA1  "X-CPM-PLUGIN/PV-DRM-KMJ-OMA1"
 
 #ifdef KMJ_PLUGIN_UT
     #define PROTECTED public

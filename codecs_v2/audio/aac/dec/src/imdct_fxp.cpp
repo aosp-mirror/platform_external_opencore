@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,71 +17,8 @@
  */
 /*
 
- Pathname: ./src/imdct_fxp.c
+ Pathname: imdct_fxp.c
  Funtions: imdct_fxp
-
-     Date: 2/23/2001
-
-------------------------------------------------------------------------------
- REVISION HISTORY
-
- Description:  Unscambled arrays are now of type const, stored in twiddle.h
-
- Description:  Convertion to fixed point
-
- Description:  Modified according to MDCT code review comments, which applied
-               to IMDCT
-
- Description:  Modified according to IMDCT code review comments
-
- Description:  Changed definitions from Int to Int32 for Data[]
-
-
- Description:  down shifting was change to avoid overflow.
-
- Description:  Modified pointer updating schemes to avoid setting the pointers
- outside the allowable range of memory, and then rewinding them back inside
- the allowable range.  No bug existed - this just seems to be a "safer"
- method, at no penalty.
-
- Description:  When type Int holds 16 bits, there is an overflow problem.
-               This problem has its origins on the normalization routine,
-               called before the imdct_fxp(). A simplification used on
-               buffer_adaptation() offers some cycle reduction, but it fails
-               to compute the max. when 16 bits are used. To overcome this
-               problem without sacrificing cycle count, the order of the
-               computation (before calling the FFT) has been changed.
-               The problem manifest when the spectral data is equal to 0x8000,
-               when multplied by -1, the number results 0x8000 (-1), creating
-               a sign flipping problem.
-
- Description:  Modified interface so a vector with extended precision is
-               returned, this is a 32 bit vector whose MSB 16 bits will be
-               extracted later. This avoid a constant shift down. Also, the
-               number of stack variables has been reduced and casting has been
-               added to support more platforms. Added copyright notice.
-
- Description:   Eliminate constant down shifting before call to IFFT. Highest
-                precision is kept now by adaptive shifting in buffer_adaptation().
-
- Description:   Introduced a mix-radix FFT and a routine that combines the
-                post-rotation, reorder sample sequencing and normalization of
-                the time domain data. Modified function interface to accomodate
-                the normalization now done in this function.
-
- Description:   modify the mix-radix FFT input arguments, no shifts.
-
- Description:
-            (1) Changed function interface to avoid passing same parameter with
-                just a casting difference (Int and Int32)
-            (2) Updated interfaces to functions inv_short_complex_rot() and
-                inv_long_complex_rot() so no max is returned.
-            (3) Eliminated shifting after post complex rotation
-            (4) Updated normalization calculation and shift constants
-
- Description:   Eliminated unused max1 variable.
-
- Description:
 
 ------------------------------------------------------------------------------
  INPUT AND OUTPUT DEFINITIONS

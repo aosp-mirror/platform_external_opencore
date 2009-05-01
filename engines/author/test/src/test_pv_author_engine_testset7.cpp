@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,9 +58,45 @@ void pv_mediainput_async_test_reset::HandleErrorEvent(const PVAsyncErrorEvent& a
 ////////////////////////////////////////////////////////////////////////////
 void pv_mediainput_async_test_reset::HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent)
 {
-    OSCL_UNUSED_ARG(aEvent);
     PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "pv_mediainput_async_test_reset::HandleInformationalEvent"));
+    OsclAny* eventData = NULL;
+    switch (aEvent.GetEventType())
+    {
+        case PVMF_COMPOSER_MAXFILESIZE_REACHED:
+        case PVMF_COMPOSER_MAXDURATION_REACHED:
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                            (0, "pv_mediainput_async_test_reset::HandleNodeInformationalEvent: Max file size reached"));
+            Cancel();
+            PVPATB_TEST_IS_TRUE(true);
+            iObserver->CompleteTest(*iTestCase);
+            break;
+
+        case PVMF_COMPOSER_DURATION_PROGRESS:
+            aEvent.GetEventData(eventData);
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                            (0, "pv_mediainput_async_test_reset::HandleNodeInformationalEvent: Duration progress: %d ms",
+                             (int32)eventData));
+            break;
+
+        case PVMF_COMPOSER_FILESIZE_PROGRESS:
+            aEvent.GetEventData(eventData);
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                            (0, "pv_mediainput_async_test_reset::HandleNodeInformationalEvent: File size progress: %d bytes",
+                             (int32)eventData));
+            break;
+
+        case PVMF_COMPOSER_EOS_REACHED:
+            //Engine already stopped at EOS so send reset command.
+            iState = PVAE_CMD_RESET;
+            //cancel recording timeout scheduled for timer object.
+            Cancel();
+            RunIfNotReady();
+            break;
+
+        default:
+            break;
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -71,7 +107,7 @@ bool pv_mediainput_async_test_reset::CreateTestInputs()
     iFileParser = NULL;
     iFileServer.Connect();
 
-    if (PVMF_AVIFF == iMediaInputType)
+    if (iMediaInputType == PVMF_MIME_AVIFF)
     {
         OSCL_TRY(error, iFileParser = PVAviFile::CreateAviFileParser(iInputFileName, error, &iFileServer););
 
@@ -107,7 +143,7 @@ bool pv_mediainput_async_test_reset::CreateTestInputs()
         }
 
     }
-    else if (PVMF_WAVFF == iMediaInputType)
+    else if (iMediaInputType == PVMF_MIME_WAVFF)
     {
         OSCL_TRY(error, iFileParser = OSCL_NEW(PV_Wav_Parser, ()););
         if (error || (NULL == iFileParser))
@@ -132,8 +168,6 @@ bool pv_mediainput_async_test_reset::CreateTestInputs()
             PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
                             (0, "pv_mediainput_async_test_opencomposestop::CreateTestInputs: Error - CreateMIOInputNode failed"));
 
-            //delete any MIO Comp created.
-            MIOComp.DeleteInputNode();
             goto ERROR_CODE;
 
         }
@@ -152,14 +186,14 @@ bool pv_mediainput_async_test_reset::CreateTestInputs()
 ERROR_CODE:
     {
         //remove file parser
-        if (PVMF_AVIFF == iMediaInputType)
+        if (iMediaInputType == PVMF_MIME_AVIFF)
         {
             PVAviFile* fileparser = OSCL_STATIC_CAST(PVAviFile*, iFileParser);
             PVAviFile::DeleteAviFileParser(fileparser);
             fileparser = NULL;
             iFileParser = NULL;
         }
-        else if (PVMF_WAVFF == iMediaInputType)
+        else if (iMediaInputType == PVMF_MIME_WAVFF)
         {
             PV_Wav_Parser* fileparser = OSCL_STATIC_CAST(PV_Wav_Parser*, iFileParser);
             delete(fileparser);
@@ -175,25 +209,25 @@ ERROR_CODE:
 bool pv_mediainput_async_test_reset::AddDataSource()
 {
     int32 err = 0;
-    uint32 ii = 0;
     uint32 noOfNodes = iMIOComponent.iMIONode.size();
 
-    for (ii = 0; ii < noOfNodes; ii++)
-    {
-        AddEngineCommand();
+    OSCL_TRY(err,
+             for (uint32 ii = 0; ii < noOfNodes; ii++)
+{
+    AddEngineCommand();
 
-        OSCL_TRY(err, iAuthor->AddDataSource(*(iMIOComponent.iMIONode[ii]), (OsclAny*)iAuthor););
-
-        if (err != OSCL_ERR_NONE)
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
-                            (0, "pvauthor_async_test_miscellaneous::AddDataSource: Error - iAuthor->AddDataSource failed. err=0x%x", err));
-
-            iMIOComponent.DeleteInputNode();
-            return false;
-        }
+        //OSCL_TRY(err, iAuthor->AddDataSource(*(iMIOComponent.iMIONode[ii]), (OsclAny*)iAuthor););
+        iAuthor->AddDataSource(*(iMIOComponent.iMIONode[ii]), (OsclAny*)iAuthor);
     }
+            );
+    if (err != OSCL_ERR_NONE)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
+                        (0, "pvauthor_async_test_miscellaneous::AddDataSource: Error - iAuthor->AddDataSource failed. err=0x%x", err));
 
+        iMIOComponent.DeleteInputNode();
+        return false;
+    }
     return true;
 }
 
@@ -266,15 +300,20 @@ bool pv_mediainput_async_test_reset::ConfigMp43gpComposer()
     OSCL_wHeapString<OsclMemAllocator> copyrightString = _STRLIT("copyright");
     OSCL_wHeapString<OsclMemAllocator> descriptionString = _STRLIT("description");
     OSCL_wHeapString<OsclMemAllocator> ratingString = _STRLIT("rating");
+    OSCL_wHeapString<OsclMemAllocator> iAlbumTitle = _STRLIT("albumtitle");
+    uint16 iRecordingYear = 2008;
+    OSCL_HeapString<OsclMemAllocator> lang_code = "eng";
 
     clipConfig->SetOutputFileName(iOutputFileName);
     clipConfig->SetPresentationTimescale(1000);
-    clipConfig->SetVersion(versionString);
-    clipConfig->SetTitle(titleString);
-    clipConfig->SetAuthor(authorString);
-    clipConfig->SetCopyright(copyrightString);
-    clipConfig->SetDescription(descriptionString);
-    clipConfig->SetRating(ratingString);
+    clipConfig->SetVersion(versionString, lang_code);
+    clipConfig->SetTitle(titleString, lang_code);
+    clipConfig->SetAuthor(authorString, lang_code);
+    clipConfig->SetCopyright(copyrightString, lang_code);
+    clipConfig->SetDescription(descriptionString, lang_code);
+    clipConfig->SetRating(ratingString, lang_code);
+    clipConfig->SetAlbumInfo(iAlbumTitle, lang_code);
+    clipConfig->SetRecordingYear(iRecordingYear);
 
 
     return true;
@@ -287,7 +326,7 @@ bool pv_mediainput_async_test_reset::AddMediaTrack()
 
     if (iAddAudioMediaTrack)
     {
-        if (PVMF_AVIFF == iMediaInputType)
+        if (iMediaInputType == PVMF_MIME_AVIFF)
         {
             Oscl_Vector<uint32, OsclMemAllocator> audioStrNum;
 
@@ -304,7 +343,7 @@ bool pv_mediainput_async_test_reset::AddMediaTrack()
             AddEngineCommand();
 
         }
-        else if (PVMF_WAVFF == iMediaInputType)
+        else if (iMediaInputType == PVMF_MIME_WAVFF)
         {
             PVWAVFileInfo wavFileInfo;
             (iMIOComponent.iPVWavFile)->RetrieveFileInfo(wavFileInfo);
@@ -318,15 +357,12 @@ bool pv_mediainput_async_test_reset::AddMediaTrack()
 
         }
 
-        if (!PVAETestNodeConfig::ConfigureAudioEncoder(iAudioEncoderConfig))
-        {
-            return false;
-        }
+
     }
 
     if (iAddVideoMediaTrack)
     {
-        if (PVMF_AVIFF == iMediaInputType)
+        if (iMediaInputType == PVMF_MIME_AVIFF)
         {
             Oscl_Vector<uint32, OsclMemAllocator> vidStrNum;
             vidStrNum = (iMIOComponent.iPVAviFile)->GetVideoStreamCountList();
@@ -342,7 +378,7 @@ bool pv_mediainput_async_test_reset::AddMediaTrack()
             AddEngineCommand();
 
         }
-        else if (PVMF_WAVFF == iMediaInputType)
+        else if (iMediaInputType == PVMF_MIME_WAVFF)
         {
             return false;
         }
@@ -368,10 +404,10 @@ bool pv_mediainput_async_test_reset::ConfigureVideoEncoder()
 
     uint32 width = 0;
     uint32 height = 0;
-    uint32 frameRate = 0;
+    OsclFloat frameRate = 0;
     uint32 frameInterval = 0;
 
-    if (PVMF_AVIFF == iMediaInputType)
+    if (iMediaInputType == PVMF_MIME_AVIFF)
     {
         Oscl_Vector<uint32, OsclMemAllocator> vidStrNum =
             (iMIOComponent.iPVAviFile)->GetVideoStreamCountList();
@@ -379,7 +415,7 @@ bool pv_mediainput_async_test_reset::ConfigureVideoEncoder()
         width = (iMIOComponent.iPVAviFile)->GetWidth(vidStrNum[0]);
         bool orient = false;
         height = (iMIOComponent.iPVAviFile)->GetHeight(orient, vidStrNum[0]);
-        frameRate = (uint32)(iMIOComponent.iPVAviFile)->GetFrameRate(vidStrNum[0]);
+        frameRate = (iMIOComponent.iPVAviFile)->GetFrameRate(vidStrNum[0]);
         frameInterval = (iMIOComponent.iPVAviFile)->GetFrameDuration();
 
     }
@@ -388,11 +424,31 @@ bool pv_mediainput_async_test_reset::ConfigureVideoEncoder()
     config->SetOutputBitRate(0, KVideoBitrate);
     config->SetOutputFrameSize(0, width , height);
     config->SetOutputFrameRate(0, frameRate);
-    config->SetIFrameInterval(frameInterval);
+    config->SetIFrameInterval(KVideoIFrameInterval);
+    config->SetSceneDetection(true);
 
     return true;
 }
 
+bool pv_mediainput_async_test_reset::ConfigureAudioEncoder()
+{
+
+    PVAudioEncExtensionInterface* config;
+    config = OSCL_STATIC_CAST(PVAudioEncExtensionInterface*, iAudioEncoderConfig);
+    if (!config)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                        (0, "pv_mediainput_async_test_reset::Encoder: No configuration needed"));
+
+        return true;
+    }
+
+    if (!PVAETestNodeConfig::ConfigureAudioEncoder(iAudioEncoderConfig, iAudioEncoderMimeType))
+    {
+        return false;
+    }
+    return true;
+}
 ////////////////////////////////////////////////////////////////////////////
 void pv_mediainput_async_test_reset::ResetAuthorConfig()
 {
@@ -458,8 +514,18 @@ void pv_mediainput_async_test_reset::Run()
             }
             else
             {
-                iState = PVAE_CMD_OPEN;
-                RunIfNotReady();
+                if (PVAE_CMD_CREATE == iCurrentResetState)
+                {
+                    iNextResetState = PVAE_CMD_OPEN;
+                    iState = PVAE_CMD_RESET;
+                    PVPATB_TEST_IS_TRUE(true);
+                    RunIfNotReady();
+                }
+                else
+                {
+                    iState = PVAE_CMD_OPEN;
+                    RunIfNotReady();
+                }
             }
         }
         break;
@@ -532,7 +598,17 @@ void pv_mediainput_async_test_reset::Run()
         case PVAE_CMD_RESET:
         {
             ResetAuthorConfig();
-            iAuthor->Reset((OsclAny*)iAuthor);
+            if (iAuthor->GetPVAuthorState() != PVAE_STATE_IDLE)
+            {
+                iAuthor->Reset((OsclAny*)iAuthor);
+            }
+            else
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
+                                (0, "pv_mediainput_async_test_opencomposestop::PVAE_CMD_RESET - State PVAE_STATE_IDLE"));
+                iState = PVAE_CMD_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
+            }
         }
         break;
 
@@ -608,7 +684,7 @@ void pv_mediainput_async_test_reset::CommandCompleted(const PVCmdResponse& aResp
     if (aResponse.GetCmdStatus() != PVMFSuccess)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "pvauthor_async_test_generic_reset::CommandCompleted iState:%d FAILED", iState));
+                        (0, "pv_mediainput_async_test_reset::CommandCompleted iState:%d FAILED", iState));
     }
 
     switch (iState)
@@ -718,6 +794,10 @@ void pv_mediainput_async_test_reset::CommandCompleted(const PVCmdResponse& aResp
                 if (iAddVideoMediaTrack)
                 {
                     ConfigureVideoEncoder();
+                }
+                if (iAddAudioMediaTrack)
+                {
+                    ConfigureAudioEncoder();
                 }
 
                 if (PVAE_CMD_ADD_MEDIA_TRACK == iCurrentResetState)
@@ -900,8 +980,9 @@ void pv_mediainput_async_test_reset::CommandCompleted(const PVCmdResponse& aResp
                         PVPATB_TEST_IS_TRUE(false);
                     }
                     //Since there are no MIO Components/Nodes, we end here
-                    //No need to call RemoveDataSource
-                    iObserver->CompleteTest(*iTestCase);
+                    //No need to call RemoveDataSource. Just call cleanup.
+                    iState = PVAE_CMD_CLEANUPANDCOMPLETE;
+                    RunIfNotReady();
                     break;
                 }
 
@@ -910,9 +991,20 @@ void pv_mediainput_async_test_reset::CommandCompleted(const PVCmdResponse& aResp
             }
             else
             {
-                // Reset failed
-                PVPATB_TEST_IS_TRUE(false);
-                iObserver->CompleteTest(*iTestCase);
+                if (PVAE_CMD_CREATE == iCurrentResetState)
+                {
+                    //Reset in create state will return error.
+                    PVPATB_TEST_IS_TRUE(true);
+                    iState = PVAE_CMD_CLEANUPANDCOMPLETE;
+                    RunIfNotReady();
+                }
+                else
+                {
+                    // Reset failed
+                    PVPATB_TEST_IS_TRUE(false);
+                    OSCL_ASSERT("ERROR -- Response failure for CMD_RESET");
+                    iObserver->CompleteTest(*iTestCase);
+                }
             }
         }
         break;
@@ -925,14 +1017,14 @@ void pv_mediainput_async_test_reset::CommandCompleted(const PVCmdResponse& aResp
                 {
                     iOutputFileName = NULL;
                     iMIOComponent.DeleteInputNode();
-                    if (PVMF_AVIFF == iMediaInputType)
+                    if (iMediaInputType == PVMF_MIME_AVIFF)
                     {
                         PVAviFile* fileparser = OSCL_STATIC_CAST(PVAviFile*, iFileParser);
                         PVAviFile::DeleteAviFileParser(fileparser);
                         fileparser = NULL;
                         iFileParser = NULL;
                     }
-                    else if (PVMF_WAVFF == iMediaInputType)
+                    else if (iMediaInputType == PVMF_MIME_WAVFF)
                     {
                         PV_Wav_Parser* fileparser = OSCL_STATIC_CAST(PV_Wav_Parser*, iFileParser);
                         delete(fileparser);

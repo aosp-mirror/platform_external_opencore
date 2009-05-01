@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,8 +54,7 @@ extern "C"
 #endif
 
 
-#if defined(_ARM_GCC)
-
+#if (defined(PV_ARM_GCC_V5)||defined(PV_ARM_GCC_V4))
 
     static inline int16 sub_int16(int16 var1, int16 var2)
     {
@@ -238,6 +237,23 @@ extern "C"
                     "r"(rb));
         return (int16)L_var_out;
     }
+
+    static inline int16 amr_wb_shl1_round(int32 L_var1)
+{
+        register int32 L_var_out;
+        register int32 ra = (int32)L_var1;
+        register int32 rb = (int32)0x00008000L;
+
+        asm volatile(
+            "qadd %0, %1, %1\n"
+            "qadd %0, %0, %2\n"
+            "mov %0, %0, asr #16"
+    : "=&r*i"(L_var_out)
+                    : "r"(ra),
+                    "r"(rb));
+        return (int16)L_var_out;
+    }
+
 
     static inline int32 fxp_mac_16by16(const int16 L_var1, const int16 L_var2, int32 L_add)
 {

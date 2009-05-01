@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,21 +27,6 @@ Permission to distribute, modify and use this file under the standard license
 terms listed above has been obtained from the copyright holder.
 ****************************************************************************************/
 /*
-
- Pathname: ./gsm-amr/c/src/l_negate.c
-
-     Date: 08/11/2000
-
-------------------------------------------------------------------------------
- REVISION HISTORY
-
- Description: Created separate file for the L_negate function. Sync'ed up
-	      with the current template and fixed tabs.
-
- Description: Removed conditional code that updates WMOPS counter
-
- Description:
-
 ------------------------------------------------------------------------------
  INPUT AND OUTPUT DEFINITIONS
 

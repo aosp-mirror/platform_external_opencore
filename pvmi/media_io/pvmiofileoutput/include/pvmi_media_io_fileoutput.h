@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,14 +43,49 @@
 #include "pvmi_media_io_clock_extension.h"
 #endif
 
+#ifndef AVI_WRITE_H_INCLUDED
 #include "avi_write.h"
+#endif
+
+#define TEST_BUFFER_ALLOCATOR 0
+
+#if TEST_BUFFER_ALLOCATOR
+#ifndef PV_INTERFACE_H
+#include "pv_interface.h"
+#endif
+
+#ifndef PVMF_FIXEDSIZE_BUFFER_ALLOC_H_INCLUDED
+#include "pvmf_fixedsize_buffer_alloc.h"
+#endif
+#endif
 
 class PVLogger;
 class PVRefFileOutputTestObserver;
-class OsclClock;
+class PVMFMediaClock;
 class PVRefFileOutput;
 
 #define DEFAULT_NUM_DECODED_FRAMES_CAPABILITY	6
+
+// To maintain the count of supported uncompressed audio formats.
+// Should be updated whenever new format is added
+#define PVMF_SUPPORTED_UNCOMPRESSED_AUDIO_FORMATS_COUNT 6
+
+// To maintain the count of supported uncompressed video formats.
+// Should be updated whenever new format is added
+#define PVMF_SUPPORTED_UNCOMPRESSED_VIDEO_FORMATS_COUNT 6
+
+// To maintain the count of supported compressed audio formats.
+// Should be updated whenever new format is added
+#define PVMF_SUPPORTED_COMPRESSED_AUDIO_FORMATS_COUNT 18
+
+// To maintain the count of supported compressed video formats.
+// Should be updated whenever new format is added
+#define PVMF_SUPPORTED_COMPRESSED_VIDEO_FORMATS_COUNT 8
+
+#define PVMF_SUPPORTED_TEXT_FORMAT_COUNT 1
+
+
+
 
 typedef struct
 {
@@ -77,6 +112,14 @@ typedef struct
     uint32      subchunk2Size;
 } dataSubchunk;
 
+typedef enum
+{
+    MEDIATYPE_VIDEO,
+    MEDIATYPE_AUDIO,
+    MEDIATYPE_TEXT,
+    MEDIATYPE_UNKNOWN
+} MediaType;
+
 // A test feature for simulating a component with active timing.
 class PVRefFileOutputActiveTimingSupport: public PvmiClockExtensionInterface
 {
@@ -93,7 +136,7 @@ class PVRefFileOutputActiveTimingSupport: public PvmiClockExtensionInterface
         {}
 
         //from PvmiClockExtensionInterface
-        OSCL_IMPORT_REF PVMFStatus SetClock(OsclClock *clockVal) ;
+        OSCL_IMPORT_REF PVMFStatus SetClock(PVMFMediaClock *clockVal) ;
 
         //from PVInterface
         OSCL_IMPORT_REF void addRef() ;
@@ -111,7 +154,7 @@ class PVRefFileOutputActiveTimingSupport: public PvmiClockExtensionInterface
 
         uint32 iQueueLimit;
 
-        OsclClock* iClock;
+        PVMFMediaClock* iClock;
         PVLogger* iLogger;
 
         //query for whether playback clock is in frame-step mode.
@@ -127,11 +170,16 @@ class PVRefFileOutput :	public OsclTimerObject
             , public PvmiMIOControl
             , public PvmiMediaTransfer
             , public PvmiCapabilityAndConfig
+            , public PvmiClockExtensionInterface
 
 {
     public:
         OSCL_IMPORT_REF PVRefFileOutput(const oscl_wchar* aFileName,
                                         bool aActiveTiming = false);
+
+        OSCL_IMPORT_REF PVRefFileOutput(const oscl_wchar* aFileName,
+                                        MediaType aMediaType,
+                                        bool aCompressedMedia = false);
 
         OSCL_IMPORT_REF PVRefFileOutput(const OSCL_wString& aFileName, bool logStrings = false);
 
@@ -145,6 +193,7 @@ class PVRefFileOutput :	public OsclTimerObject
         ~PVRefFileOutput();
 
         // APIs from PvmiMIOControl
+
 
         PVMFStatus connect(PvmiMIOSession& aSession, PvmiMIOObserver* aObserver);
 
@@ -212,6 +261,8 @@ class PVRefFileOutput :	public OsclTimerObject
 
         void cancelAllCommands();
 
+        void setUserClockExtnInterface(bool aEnable);
+
         // Pure virtuals from PvmiCapabilityAndConfig
 
         void setObserver(PvmiConfigAndCapabilityCmdObserver* aObserver);
@@ -247,6 +298,15 @@ class PVRefFileOutput :	public OsclTimerObject
         void AddChunk(uint8* chunk, uint32 size, uint32 ckid);
         int32 yuv2rgb(uint8 * pBufRGBRev, uint8 * pBufYUV, int32 width, int32 height);
         void UpdateVideoChunkHeaderIdx();
+
+        //from PvmiClockExtensionInterface
+        OSCL_IMPORT_REF PVMFStatus SetClock(PVMFMediaClock *clockVal) ;
+
+        //from PVInterface
+        OSCL_IMPORT_REF void addRef() ;
+        OSCL_IMPORT_REF void removeRef() ;
+        OSCL_IMPORT_REF bool queryInterface(const PVUuid& uuid, PVInterface*& iface) ;
+        void queryUuid(PVUuid& uuid);
 
     private:
         void initData();
@@ -336,6 +396,9 @@ class PVRefFileOutput :	public OsclTimerObject
         int32 iVideoDisplayWidth;
         bool iVideoDisplayWidthValid;
 
+        int32 iNumberOfBuffers;
+        int32 iBufferSize;
+
         // Text parameters
         OSCL_HeapString<OsclMemAllocator> iTextFormatString;
         PVMFFormatType iTextFormat;
@@ -376,13 +439,14 @@ class PVRefFileOutput :	public OsclTimerObject
         //if iUseClockExtension set to true, no data is dropped
         bool iUseClockExtension;
 
+        //Used for deciding when to send ConfigComplete event to MIO node
+        bool iIsMIOConfigured;
+
         // used to create the WAV file output.
         RIFFChunk    iRIFFChunk;
         fmtSubchunk  iFmtSubchunk;
         dataSubchunk iDataSubchunk;
         bool         iHeaderWritten;
-        uint32       iAudioFormatType;
-        uint32       iVideoFormatType;
         PVMFTimestamp iVideoLastTimeStamp;
         bool         iInitializeAVIDone;
 
@@ -397,6 +461,11 @@ class PVRefFileOutput :	public OsclTimerObject
         uint32		  iAVIStreamHeaderPosition;
         uint32        iVideoCount;
         uint32        iPreviousOffset;
+
+        MediaType	  iMediaType;
+        bool		  iCompressedMedia;
+        PVMFMediaClock* iClock;
+        const bool iLogOutputToFile;
 };
 
 //An observer class for test support.
@@ -408,6 +477,38 @@ class PVRefFileOutputTestObserver
         OSCL_IMPORT_REF virtual void Pos(PVMFTimestamp& aTimestamp) = 0;
 };
 
+#if TEST_BUFFER_ALLOCATOR
+
+class PVRefBufferAlloc: public PVInterface, public PVMFFixedSizeBufferAlloc
+{
+    public:
+
+        PVRefBufferAlloc(uint32 size, uint32 buffers);
+
+        virtual ~PVRefBufferAlloc();
+
+        virtual void addRef();
+
+        virtual void removeRef();
+
+        virtual bool queryInterface(const PVUuid& uuid, PVInterface*& aInterface) ;
+
+        virtual OsclAny* allocate();
+
+        virtual void deallocate(OsclAny* ptr) ;
+
+        virtual uint32 getBufferSize() ;
+
+        virtual uint32 getNumBuffers() ;
+
+    private:
+        int32 refCount;
+        int32 bufferSize;
+        int32 maxBuffers;
+        int32 numAllocated;
+};
+
+#endif
 
 #endif // PVMI_MEDIA_IO_FILEOUTPUT_H_INCLUDED
 

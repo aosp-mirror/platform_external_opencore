@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,11 +44,8 @@
 #ifndef OSCL_SCHEDULER_AO_H_INCLUDED
 #include "oscl_scheduler_ao.h"
 #endif
-#ifndef OSCL_CLOCK_H_INCLUDED
-#include "oscl_clock.h"
-#endif
-#ifndef OSCL_CLOCK_H_INCLUDED
-#include "oscl_clock.h"
+#ifndef PVMF_MEDIA_CLOCK_H_INCLUDED
+#include "pvmf_media_clock.h"
 #endif
 #ifndef PVMF_FORMAT_TYPE_H_INCLUDED
 #include "pvmf_format_type.h"
@@ -84,6 +81,10 @@
 // Macros for AMR header
 #define	AMR_HEADER		"#!AMR\n"
 #define AMR_HEADER_SIZE	6
+
+// Macros for AMR-WB header
+#define	AMRWB_HEADER		"#!AMR-WB\n"
+#define AMRWB_HEADER_SIZE	9
 
 ////////////////////////////////////////////////////////////////////////////
 class PVMFFileOutputAlloc : public Oscl_DefAlloc
@@ -209,8 +210,8 @@ class PVMFFileOutputNode :	public OsclActiveObject, public PVMFNodeInterface,
         void HandlePortActivity(const PVMFPortActivity& aActivity);
 
         // Pure virtual from PvmfFileOutputNodeConfigInterface
-        PVMFStatus SetOutputFile(OsclFileHandle* aFileHandle);
         PVMFStatus SetOutputFileName(const OSCL_wString& aFileName);
+        PVMFStatus SetOutputFileDescriptor(const OsclFileHandle* aFileHandle);
 
         // Pure virtual from PvmfComposerSizeAndDurationInterface
         PVMFStatus SetMaxFileSize(bool aEnable, uint32 aMaxFileSizeBytes);
@@ -223,16 +224,14 @@ class PVMFFileOutputNode :	public OsclActiveObject, public PVMFNodeInterface,
         void GetDurationProgressReportConfig(bool& aEnable, uint32& aReportFrequency);
 
         // Pure virtuals from PvmfNodesSyncControlInterface
-        PVMFStatus SetClock(OsclClock* aClock);
+        PVMFStatus SetClock(PVMFMediaClock* aClock);
         PVMFStatus ChangeClockRate(int32 aRate);
         PVMFStatus SetMargins(int32 aEarlyMargin, int32 aLateMargin);
         void ClockStarted(void);
         void ClockStopped(void);
         PVMFCommandId SkipMediaData(PVMFSessionId aSessionId,
-                                    PVMFTimestamp aStartingTimestamp,
                                     PVMFTimestamp aResumeTimestamp,
                                     uint32 aStreamID,
-                                    bool aRenderSkippedData = false,
                                     bool aPlayBackPositionContinuous = false,
                                     OsclAny* aContext = NULL);
 
@@ -382,6 +381,7 @@ class PVMFFileOutputNode :	public OsclActiveObject, public PVMFNodeInterface,
 
         // Output file name
         OSCL_wHeapString<OsclMemAllocator> iOutputFileName;
+        OsclFileHandle* iFileHandle;
 
         // Allocator
         Oscl_DefAlloc* iAlloc;
@@ -422,7 +422,7 @@ class PVMFFileOutputNode :	public OsclActiveObject, public PVMFNodeInterface,
         uint32 iNextDurationReport;
 
         // Variables for media data queue and synchronization
-        OsclClock* iClock;
+        PVMFMediaClock* iClock;
         int32 iEarlyMargin;
         int32 iLateMargin;
 };

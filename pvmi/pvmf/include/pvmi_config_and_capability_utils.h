@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ class PvmiCapabilityAndConfigPortFormatImpl
 {
     public:
         PvmiCapabilityAndConfigPortFormatImpl()
-                : iFormat(PVMF_FORMAT_UNKNOWN)
+                : iFormat(PVMF_MIME_FORMAT_UNKNOWN)
         {}
 
         virtual ~PvmiCapabilityAndConfigPortFormatImpl() {};

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -399,7 +399,6 @@ UserDataAtom::UserDataAtom(MP4_FF_FILE *fp, uint32 size, uint32 type)
                 }
             }
 
-
             else
             {
                 // skip unknown atom
@@ -424,6 +423,7 @@ UserDataAtom::UserDataAtom(MP4_FF_FILE *fp, uint32 size, uint32 type)
 
 }
 
+
 // Destructor
 UserDataAtom::~UserDataAtom()
 {
@@ -442,7 +442,6 @@ UserDataAtom::~UserDataAtom()
     {
         PV_MP4_FF_DELETE(NULL, MetaDataAtom, _pMetaDataAtom);
     }
-
 
 
     if (_pCopyRightAtomArray != NULL)
@@ -543,7 +542,7 @@ UserDataAtom::~UserDataAtom()
         {
             PV_MP4_FF_DELETE(NULL, AssetInfoAlbumAtom, (*_pAssetInfoAlbumAtomArray)[i]);
         }
-        PV_MP4_FF_TEMPLATED_DELETE(NULL, assetInfoLocationAtomVecType, Oscl_Vector, _pAssetInfoAlbumAtomArray);
+        PV_MP4_FF_TEMPLATED_DELETE(NULL, assetInfoAlbumAtomVecType, Oscl_Vector, _pAssetInfoAlbumAtomArray);
     }
 
     if (_pAssetInfoRecordingYearArray != NULL)
@@ -553,7 +552,7 @@ UserDataAtom::~UserDataAtom()
         {
             PV_MP4_FF_DELETE(NULL, AssetInfoRecordingYearAtom, (*_pAssetInfoRecordingYearArray)[i]);
         }
-        PV_MP4_FF_TEMPLATED_DELETE(NULL, assetInfoLocationAtomVecType, Oscl_Vector, _pAssetInfoRecordingYearArray);
+        PV_MP4_FF_TEMPLATED_DELETE(NULL, assetInfoRecordingYearAtomVecType, Oscl_Vector, _pAssetInfoRecordingYearArray);
     }
 
 

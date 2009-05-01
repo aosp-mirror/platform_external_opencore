@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -121,6 +121,7 @@ class SampleToChunkAtom : public FullAtom
         int32 _maxChunkDataSize;
 
         uint32 _Index;
+
         int32 _numChunksInRun;
         int32 _majorGetIndex;
         int32 _currGetChunk;

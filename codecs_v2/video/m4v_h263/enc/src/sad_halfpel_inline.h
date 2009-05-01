@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ extern "C"
 {
 #endif
 
-#if !defined(PV_ARM_GCC) && defined(__arm__) /* ARM GNU COMPILER  */
+#if !defined(PV_ARM_GCC_V5) && !defined(PV_ARM_GCC_V4) /* ARM GNU COMPILER  */
 
     __inline int32 INTERP1_SUB_SAD(int32 sad, int32 tmp, int32 tmp2)
     {
@@ -75,7 +75,7 @@ extern "C"
         return sad;
     }
 
-#elif defined(PV_ARM_GCC) && defined(__arm__) /* ARM GNU COMPILER  */
+#elif ( defined(PV_ARM_GCC_V5) || defined(PV_ARM_GCC_V4) ) /* ARM GNU COMPILER  */
 
 
     __inline int32 INTERP1_SUB_SAD(int32 sad, int32 tmp, int32 tmp2)

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,12 +43,12 @@
 class OsclNativeFile;
 
 //non-modifiable buffer pointer container
-class OsclPtrC: public OsclHeapBase
+class OsclPtrC: public HeapBase
 {
     public:
         OsclPtrC(const uint8* ptr, int32 len, int32 max): iPtr(ptr), iMaxLength(max), iLength(len)
         {}
-        OsclPtrC(const OsclPtrC& d): OsclHeapBase(d), iPtr(d.iPtr), iMaxLength(d.iMaxLength), iLength(d.iLength)
+        OsclPtrC(const OsclPtrC& d): HeapBase(d), iPtr(d.iPtr), iMaxLength(d.iMaxLength), iLength(d.iLength)
         {}
         const uint8* Ptr()
         {
@@ -100,12 +100,12 @@ class OsclPtrC: public OsclHeapBase
 };
 
 //modifiable buffer pointer container
-class OsclPtr: public OsclHeapBase
+class OsclPtr: public HeapBase
 {
     public:
         OsclPtr(uint8* ptr, int32& len, int32 max): iPtr(ptr), iMaxLength(max), iLength(len)
         {}
-        OsclPtr(const OsclPtr& d): OsclHeapBase(d), iPtr(d.iPtr), iMaxLength(d.iMaxLength), iLength(d.iLength)
+        OsclPtr(const OsclPtr& d): HeapBase(d), iPtr(d.iPtr), iMaxLength(d.iMaxLength), iLength(d.iLength)
         {}
         uint8* Ptr()
         {
@@ -149,7 +149,7 @@ class OsclPtr: public OsclHeapBase
 };
 
 //buffer container that allocates from the heap
-class OsclBuf: public OsclHeapBase
+class OsclBuf: public HeapBase
 {
     public:
         static OsclBuf* NewL(int32 size)
@@ -204,7 +204,7 @@ class OsclBuf: public OsclHeapBase
 ** consecutive areas of the file.  This allows for some seeking without requiring
 ** a full flush & refill each time.
 */
-class OsclAsyncFileBuffer: public OsclHeapBase
+class OsclAsyncFileBuffer: public HeapBase
 {
     public:
         static OsclAsyncFileBuffer* NewL(int32 aBufferSize, int32 aId);
@@ -227,11 +227,11 @@ class OsclAsyncFileBuffer: public OsclHeapBase
         {
             return iValid;
         }
-        int32 Offset()
+        TOsclFileOffset Offset()
         {
             return iOffset;
         }
-        void SetOffset(int32 aOffset)
+        void SetOffset(TOsclFileOffset aOffset)
         {
             iOffset = aOffset;
         }
@@ -239,7 +239,7 @@ class OsclAsyncFileBuffer: public OsclHeapBase
         {
             return iLength;
         }
-        bool HasThisOffset(int32 aOffset);
+        bool HasThisOffset(TOsclFileOffset aOffset);
         int32 Id()
         {
             return iId;
@@ -254,7 +254,7 @@ class OsclAsyncFileBuffer: public OsclHeapBase
 
     private:
         OsclBuf* iBuffer;
-        int32 iOffset;
+        TOsclFileOffset iOffset;
         bool iInUse;
         int32 iLength;
         bool iValid;
@@ -297,6 +297,7 @@ class OsclAsyncFile : public OsclActiveObject
     private:
         //From OsclActiveObject
         void Run();
+        void DoCancel();
 
     public:
         ////////////////////////
@@ -310,11 +311,11 @@ class OsclAsyncFile : public OsclActiveObject
                     , const OsclNativeFileParams& params
                     , Oscl_FileServer& fileserv);
 
-        int32 Seek(int32 offset, Oscl_File::seek_type origin);
-        int32 Tell();
+        int32 Seek(TOsclFileOffset offset, Oscl_File::seek_type origin);
+        TOsclFileOffset Tell();
         uint32 Read(OsclAny* aBuffer1, uint32 aDataSize, uint32 aNumElements);
         int32 EndOfFile();
-        int32 Size();
+        TOsclFileOffset Size();
         int32 Close();
 
         uint32 Write(const OsclAny* aBuffer1, uint32 aDataSize, uint32 aNumElements)
@@ -339,25 +340,25 @@ class OsclAsyncFile : public OsclActiveObject
     private:
         // private utility methods
         void StartAsyncRead(bool aStartAsyncRead);
-        bool FindDataBuffer(OsclAsyncFileBuffer*& aDataBuffer, int32& aBufferId, int32 aOffset, int32 aSize);
+        bool FindDataBuffer(OsclAsyncFileBuffer*& aDataBuffer, int32& aBufferId, TOsclFileOffset aOffset, int32 aSize);
         void UpdateReading();
-        int32 BytesReadAhead(int32 aOffset);
+        int32 BytesReadAhead();
         int32 SortDataBuffers();
-        bool GetNextDataBuffer(OsclAsyncFileBuffer*& aDataBuffer, int32 aFilePointerToReadFrom);
-        void StartNextRead(int32 aPosToReadFrom);
-        void ReOrderBuffersQueue(int32 aOffset, int32 aFirstBufferId);
+        bool GetNextDataBuffer(OsclAsyncFileBuffer*& aDataBuffer, TOsclFileOffset aFilePointerToReadFrom);
+        void StartNextRead(TOsclFileOffset aPosToReadFrom);
+        void ReOrderBuffersQueue(int32 aFirstBufferId);
         bool IsLinkedDataBuffer(OsclAsyncFileBuffer* aDataBuffer);
         bool CanBeLinked(OsclAsyncFileBuffer* aDataBuffer);
-        uint32 doRead(uint8*& aBuffer1, uint32 aDataSize, uint32 aNumElements, int32 aOffset);
+        uint32 doRead(uint8*& aBuffer1, uint32 aDataSize, uint32 aNumElements, TOsclFileOffset aOffset);
 
     private:
-        int32 iFileSize;
+        TOsclFileOffset iFileSize;
 
         // File object to do async read from
         OsclNativeFile& iNativeFile;
 
         // File position for async reads.
-        int32 iAsyncFilePosition;
+        TOsclFileOffset iAsyncFilePosition;
 
         // For verification
         OsclNativeFile* iNativeFileVerify;
@@ -367,7 +368,7 @@ class OsclAsyncFile : public OsclActiveObject
         OsclNativeFile* iNativeFileDuplicate;
 
         // File position for sync reads.
-        int32 iSyncFilePosition;
+        TOsclFileOffset iSyncFilePosition;
 
         // Arrays of data buffers
         Oscl_Vector<OsclAsyncFileBuffer*, OsclMemAllocator> iDataBufferArray;
@@ -385,10 +386,10 @@ class OsclAsyncFile : public OsclActiveObject
         uint32 iTotalCacheSize;
 
         // Logical File Position (as seen by the client of this class)
-        int32 iFilePosition;
+        TOsclFileOffset iFilePosition;
 
         // Last offset after a user read operation
-        int32 iLastUserFileRead;
+        TOsclFileOffset iLastUserFileRead;
 
         // Start async read enable flag
         bool iStartAsyncRead;
@@ -448,6 +449,10 @@ class OsclAsyncFile : public OsclActiveObject
         // Request an async read.
         void StartNonNativeAsyncRead();
 
+    public:
+        // for test&stat
+        uint32 iNumOfRun;
+        uint32 iNumOfRunErr;
 };
 
 #endif

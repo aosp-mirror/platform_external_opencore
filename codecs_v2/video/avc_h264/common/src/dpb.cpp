@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -109,7 +109,7 @@ AVCStatus AVCConfigureSequence(AVCHandle *avcHandle, AVCCommonObj *video, bool p
 {
     void *userData = avcHandle->userData;
     AVCDecPicBuffer *dpb = video->decPicBuf;
-    int framesize, i; /* size of one frame */
+    int framesize, ii; /* size of one frame */
     uint PicWidthInMbs, PicHeightInMapUnits, FrameHeightInMbs, PicSizeInMapUnits;
     uint num_fs;
     /* derived variables from SPS */
@@ -121,10 +121,10 @@ AVCStatus AVCConfigureSequence(AVCHandle *avcHandle, AVCCommonObj *video, bool p
     if (video->PicSizeInMapUnits != PicSizeInMapUnits || video->currSeqParams->level_idc != video->level_idc)
     {
         /* make sure you mark all the frames as unused for reference for flushing*/
-        for (i = 0; i < dpb->num_fs; i++)
+        for (ii = 0; ii < dpb->num_fs; ii++)
         {
-            dpb->fs[i]->IsReference = 0;
-            dpb->fs[i]->IsOutputted |= 0x02;
+            dpb->fs[ii]->IsReference = 0;
+            dpb->fs[ii]->IsOutputted |= 0x02;
         }
 
         num_fs = (uint32)(MaxDPBX2[(uint32)mapLev2Idx[video->currSeqParams->level_idc]] << 2) / (3 * PicSizeInMapUnits) + 1;
@@ -160,9 +160,9 @@ AVCStatus AVCConfigureSequence(AVCHandle *avcHandle, AVCCommonObj *video, bool p
         {
             return AVC_FAIL;
         }
-        for (i = 0; i < framesize; i++)
+        for (ii = 0; ii < framesize; ii++)
         {
-            video->mblock[i].slice_id = -1;
+            video->mblock[ii].slice_id = -1;
         }
         /* Allocate memory for intra prediction */
 #ifdef MB_BASED_DEBLOCK
@@ -195,6 +195,8 @@ AVCStatus AVCConfigureSequence(AVCHandle *avcHandle, AVCCommonObj *video, bool p
         {
             return AVC_FAIL;
         }
+        video->PicSizeInMapUnits = PicSizeInMapUnits;
+        video->level_idc = video->currSeqParams->level_idc;
 
     }
     return AVC_SUCCESS;
@@ -203,15 +205,15 @@ AVCStatus AVCConfigureSequence(AVCHandle *avcHandle, AVCCommonObj *video, bool p
 AVCStatus CleanUpDPB(AVCHandle *avcHandle, AVCCommonObj *video)
 {
     AVCDecPicBuffer *dpb = video->decPicBuf;
-    int i;
+    int ii;
     void *userData = avcHandle->userData;
 
-    for (i = 0; i < MAX_FS; i++)
+    for (ii = 0; ii < MAX_FS; ii++)
     {
-        if (dpb->fs[i] != NULL)
+        if (dpb->fs[ii] != NULL)
         {
-            avcHandle->CBAVC_Free(userData, (int)dpb->fs[i]);
-            dpb->fs[i] = NULL;
+            avcHandle->CBAVC_Free(userData, (int)dpb->fs[ii]);
+            dpb->fs[ii] = NULL;
         }
     }
 #ifndef PV_MEMORY_POOL
@@ -230,7 +232,7 @@ AVCStatus CleanUpDPB(AVCHandle *avcHandle, AVCCommonObj *video)
 AVCStatus DPBInitBuffer(AVCHandle *avcHandle, AVCCommonObj *video)
 {
     AVCDecPicBuffer *dpb = video->decPicBuf;
-    int i, status;
+    int ii, status;
 
     /* Before doing any decoding, check if there's a frame memory available */
     /* look for next unused dpb->fs, or complementary field pair */
@@ -238,14 +240,14 @@ AVCStatus DPBInitBuffer(AVCHandle *avcHandle, AVCCommonObj *video)
 
     /* There's also restriction on the frame_num, see page 59 of JVT-I1010.doc. */
 
-    for (i = 0; i < dpb->num_fs; i++)
+    for (ii = 0; ii < dpb->num_fs; ii++)
     {
         /* looking for the one not used or not reference and has been outputted */
-        if (dpb->fs[i]->IsReference == 0 && dpb->fs[i]->IsOutputted == 3)
+        if (dpb->fs[ii]->IsReference == 0 && dpb->fs[ii]->IsOutputted == 3)
         {
-            video->currFS = dpb->fs[i];
+            video->currFS = dpb->fs[ii];
 #ifdef PV_MEMORY_POOL
-            status = avcHandle->CBAVC_FrameBind(avcHandle->userData, i, &(video->currFS->base_dpb));
+            status = avcHandle->CBAVC_FrameBind(avcHandle->userData, ii, &(video->currFS->base_dpb));
             if (status == AVC_FAIL)
             {
                 return AVC_NO_BUFFER; /* this should not happen */
@@ -254,7 +256,7 @@ AVCStatus DPBInitBuffer(AVCHandle *avcHandle, AVCCommonObj *video)
             break;
         }
     }
-    if (i == dpb->num_fs)
+    if (ii == dpb->num_fs)
     {
         return AVC_PICTURE_OUTPUT_READY; /* no empty frame available */
     }
@@ -270,7 +272,7 @@ void DPBInitPic(AVCCommonObj *video, int CurrPicNum)
     /* used in GetOutput API */
     video->currFS->PicOrderCnt = video->PicOrderCnt;
     video->currFS->FrameNum = video->sliceHdr->frame_num;
-    video->currFS->FrameNumWrap = CurrPicNum;    //
+    video->currFS->FrameNumWrap = CurrPicNum;    // MC_FIX
     /* initialize everything to zero */
     video->currFS->IsOutputted = 0;
     video->currFS->IsReference = 0;
@@ -310,13 +312,38 @@ void DPBInitPic(AVCCommonObj *video, int CurrPicNum)
     video->currPic->PicNum = CurrPicNum;
 }
 
+/* to release skipped frame after encoding */
+void DPBReleaseCurrentFrame(AVCHandle *avcHandle, AVCCommonObj *video)
+{
+    AVCDecPicBuffer *dpb = video->decPicBuf;
+    int ii;
+
+    video->currFS->IsOutputted = 3; // return this buffer.
+
+#ifdef PV_MEMORY_POOL /* for non-memory pool, no need to do anything */
+
+    /* search for current frame index */
+    ii = dpb->num_fs;
+    while (ii--)
+    {
+        if (dpb->fs[ii] == video->currFS)
+        {
+            avcHandle->CBAVC_FrameUnbind(avcHandle->userData, ii);
+            break;
+        }
+    }
+#endif
+
+    return ;
+}
+
 /* see subclause 8.2.5.1 */
 AVCStatus StorePictureInDPB(AVCHandle *avcHandle, AVCCommonObj *video)
 {
     AVCStatus status;
     AVCDecPicBuffer *dpb = video->decPicBuf;
     AVCSliceHeader *sliceHdr = video->sliceHdr;
-    int i, num_ref;
+    int ii, num_ref;
 
     /* number 1 of 8.2.5.1, we handle gaps in frame_num differently without using the memory */
     /* to be done!!!! */
@@ -324,17 +351,17 @@ AVCStatus StorePictureInDPB(AVCHandle *avcHandle, AVCCommonObj *video)
     /* number 3 of 8.2.5.1 */
     if (video->nal_unit_type == AVC_NALTYPE_IDR)
     {
-        for (i = 0; i < dpb->num_fs; i++)
+        for (ii = 0; ii < dpb->num_fs; ii++)
         {
-            if (dpb->fs[i] != video->currFS) /* not current frame */
+            if (dpb->fs[ii] != video->currFS) /* not current frame */
             {
-                dpb->fs[i]->IsReference = 0; /* mark as unused for reference */
-                dpb->fs[i]->IsLongTerm = 0;  /* but still used until output */
-                dpb->fs[i]->IsOutputted |= 0x02;
+                dpb->fs[ii]->IsReference = 0; /* mark as unused for reference */
+                dpb->fs[ii]->IsLongTerm = 0;  /* but still used until output */
+                dpb->fs[ii]->IsOutputted |= 0x02;
 #ifdef PV_MEMORY_POOL
-                if (dpb->fs[i]->IsOutputted == 3)
+                if (dpb->fs[ii]->IsOutputted == 3)
                 {
-                    avcHandle->CBAVC_FrameUnbind(avcHandle->userData, i);
+                    avcHandle->CBAVC_FrameUnbind(avcHandle->userData, ii);
                 }
 #endif
             }
@@ -358,18 +385,18 @@ AVCStatus StorePictureInDPB(AVCHandle *avcHandle, AVCCommonObj *video)
         }
         if (sliceHdr->no_output_of_prior_pics_flag)
         {
-            for (i = 0; i < dpb->num_fs; i++)
+            for (ii = 0; ii < dpb->num_fs; ii++)
             {
-                if (dpb->fs[i] != video->currFS) /* not current frame */
+                if (dpb->fs[ii] != video->currFS) /* not current frame */
                 {
-                    dpb->fs[i]->IsOutputted = 3;
+                    dpb->fs[ii]->IsOutputted = 3;
 #ifdef PV_MEMORY_POOL
-                    avcHandle->CBAVC_FrameUnbind(avcHandle->userData, i);
+                    avcHandle->CBAVC_FrameUnbind(avcHandle->userData, ii);
 #endif
                 }
             }
         }
-        video->mem_mgr_ctrl_eq_5 = TRUE;    /* flush reference frames  */
+        video->mem_mgr_ctrl_eq_5 = TRUE;    /* flush reference frames MC_FIX */
     }
     else
     {
@@ -411,9 +438,9 @@ AVCStatus StorePictureInDPB(AVCHandle *avcHandle, AVCCommonObj *video)
 
     /* check if number of reference frames doesn't exceed num_ref_frames */
     num_ref = 0;
-    for (i = 0; i < dpb->num_fs; i++)
+    for (ii = 0; ii < dpb->num_fs; ii++)
     {
-        if (dpb->fs[i]->IsReference)
+        if (dpb->fs[ii]->IsReference)
         {
             num_ref++;
         }
@@ -430,22 +457,22 @@ AVCStatus StorePictureInDPB(AVCHandle *avcHandle, AVCCommonObj *video)
 
 AVCStatus sliding_window_process(AVCHandle *avcHandle, AVCCommonObj *video, AVCDecPicBuffer *dpb)
 {
-    int i, numShortTerm, numLongTerm;
+    int ii, numShortTerm, numLongTerm;
     int32 MinFrameNumWrap;
     int	MinIdx;
 
 
     numShortTerm = 0;
     numLongTerm = 0;
-    for (i = 0; i < dpb->num_fs; i++)
+    for (ii = 0; ii < dpb->num_fs; ii++)
     {
-        if (dpb->fs[i] != video->currFS) /* do not count the current frame */
+        if (dpb->fs[ii] != video->currFS) /* do not count the current frame */
         {
-            if (dpb->fs[i]->IsLongTerm)
+            if (dpb->fs[ii]->IsLongTerm)
             {
                 numLongTerm++;
             }
-            else if (dpb->fs[i]->IsReference)
+            else if (dpb->fs[ii]->IsReference)
             {
                 numShortTerm++;
             }
@@ -464,14 +491,14 @@ AVCStatus sliding_window_process(AVCHandle *avcHandle, AVCCommonObj *video, AVCD
 
         MinFrameNumWrap = 0x7FFFFFFF;
         MinIdx = -1;
-        for (i = 0; i < dpb->num_fs; i++)
+        for (ii = 0; ii < dpb->num_fs; ii++)
         {
-            if (dpb->fs[i]->IsReference && !dpb->fs[i]->IsLongTerm)
+            if (dpb->fs[ii]->IsReference && !dpb->fs[ii]->IsLongTerm)
             {
-                if (dpb->fs[i]->FrameNumWrap < MinFrameNumWrap)
+                if (dpb->fs[ii]->FrameNumWrap < MinFrameNumWrap)
                 {
-                    MinFrameNumWrap = dpb->fs[i]->FrameNumWrap;
-                    MinIdx = i;
+                    MinFrameNumWrap = dpb->fs[ii]->FrameNumWrap;
+                    MinIdx = ii;
                 }
             }
         }
@@ -500,25 +527,25 @@ AVCStatus sliding_window_process(AVCHandle *avcHandle, AVCCommonObj *video, AVCD
 /* see subclause 8.2.5.4 */
 AVCStatus adaptive_memory_marking(AVCHandle *avcHandle, AVCCommonObj *video, AVCDecPicBuffer *dpb, AVCSliceHeader *sliceHdr)
 {
-    int i;
+    int ii;
 
-    i = 0;
-    while (i < MAX_DEC_REF_PIC_MARKING && sliceHdr->memory_management_control_operation[i] != 0)
+    ii = 0;
+    while (ii < MAX_DEC_REF_PIC_MARKING && sliceHdr->memory_management_control_operation[ii] != 0)
     {
-        switch (sliceHdr->memory_management_control_operation[i])
+        switch (sliceHdr->memory_management_control_operation[ii])
         {
             case 1:
-                MemMgrCtrlOp1(avcHandle, video, dpb, sliceHdr->difference_of_pic_nums_minus1[i]);
+                MemMgrCtrlOp1(avcHandle, video, dpb, sliceHdr->difference_of_pic_nums_minus1[ii]);
                 //		update_ref_list(dpb);
                 break;
             case 2:
-                MemMgrCtrlOp2(avcHandle, dpb, sliceHdr->long_term_pic_num[i]);
+                MemMgrCtrlOp2(avcHandle, dpb, sliceHdr->long_term_pic_num[ii]);
                 break;
             case 3:
-                MemMgrCtrlOp3(avcHandle, video, dpb, sliceHdr->difference_of_pic_nums_minus1[i], sliceHdr->long_term_frame_idx[i]);
+                MemMgrCtrlOp3(avcHandle, video, dpb, sliceHdr->difference_of_pic_nums_minus1[ii], sliceHdr->long_term_frame_idx[ii]);
                 break;
             case 4:
-                MemMgrCtrlOp4(avcHandle, video, dpb, sliceHdr->max_long_term_frame_idx_plus1[i]);
+                MemMgrCtrlOp4(avcHandle, video, dpb, sliceHdr->max_long_term_frame_idx_plus1[ii]);
                 break;
             case 5:
                 MemMgrCtrlOp5(avcHandle, video, dpb);
@@ -526,13 +553,13 @@ AVCStatus adaptive_memory_marking(AVCHandle *avcHandle, AVCCommonObj *video, AVC
                 video->currFS->PicOrderCnt = 0;
                 break;
             case 6:
-                MemMgrCtrlOp6(avcHandle, video, dpb, sliceHdr->long_term_frame_idx[i]);
+                MemMgrCtrlOp6(avcHandle, video, dpb, sliceHdr->long_term_frame_idx[ii]);
                 break;
         }
-        i++;
+        ii++;
     }
 
-    if (i == MAX_DEC_REF_PIC_MARKING)
+    if (ii == MAX_DEC_REF_PIC_MARKING)
     {
         return AVC_FAIL; /* exceed the limit */
     }
@@ -544,17 +571,17 @@ AVCStatus adaptive_memory_marking(AVCHandle *avcHandle, AVCCommonObj *video, AVC
 /* see subclause 8.2.5.4.1, mark short-term picture as "unused for reference" */
 void MemMgrCtrlOp1(AVCHandle *avcHandle, AVCCommonObj *video, AVCDecPicBuffer *dpb, int difference_of_pic_nums_minus1)
 {
-    int picNumX, i;
+    int picNumX, ii;
 
     picNumX = video->CurrPicNum - (difference_of_pic_nums_minus1 + 1);
 
-    for (i = 0; i < dpb->num_fs; i++)
+    for (ii = 0; ii < dpb->num_fs; ii++)
     {
-        if (dpb->fs[i]->IsReference == 3 && dpb->fs[i]->IsLongTerm == 0)
+        if (dpb->fs[ii]->IsReference == 3 && dpb->fs[ii]->IsLongTerm == 0)
         {
-            if (dpb->fs[i]->frame.PicNum == picNumX)
+            if (dpb->fs[ii]->frame.PicNum == picNumX)
             {
-                unmark_for_reference(avcHandle, dpb, i);
+                unmark_for_reference(avcHandle, dpb, ii);
                 return ;
             }
         }
@@ -566,15 +593,15 @@ void MemMgrCtrlOp1(AVCHandle *avcHandle, AVCCommonObj *video, AVCDecPicBuffer *d
 /* see subclause 8.2.5.4.2 mark long-term picture as "unused for reference" */
 void MemMgrCtrlOp2(AVCHandle *avcHandle, AVCDecPicBuffer *dpb, int long_term_pic_num)
 {
-    int i;
+    int ii;
 
-    for (i = 0; i < dpb->num_fs; i++)
+    for (ii = 0; ii < dpb->num_fs; ii++)
     {
-        if (dpb->fs[i]->IsLongTerm == 3)
+        if (dpb->fs[ii]->IsLongTerm == 3)
         {
-            if (dpb->fs[i]->frame.LongTermPicNum == long_term_pic_num)
+            if (dpb->fs[ii]->frame.LongTermPicNum == long_term_pic_num)
             {
-                unmark_for_reference(avcHandle, dpb, i);
+                unmark_for_reference(avcHandle, dpb, ii);
             }
         }
     }
@@ -584,7 +611,7 @@ void MemMgrCtrlOp2(AVCHandle *avcHandle, AVCDecPicBuffer *dpb, int long_term_pic
 void MemMgrCtrlOp3(AVCHandle *avcHandle, AVCCommonObj *video, AVCDecPicBuffer *dpb, uint difference_of_pic_nums_minus1,
                    uint long_term_frame_idx)
 {
-    int picNumX, i;
+    int picNumX, ii;
 
     picNumX = video->CurrPicNum - (difference_of_pic_nums_minus1 + 1);
 
@@ -595,18 +622,18 @@ void MemMgrCtrlOp3(AVCHandle *avcHandle, AVCCommonObj *video, AVCDecPicBuffer *d
 
     /* now mark the picture with picNumX to long term frame idx */
 
-    for (i = 0; i < dpb->num_fs; i++)
+    for (ii = 0; ii < dpb->num_fs; ii++)
     {
-        if (dpb->fs[i]->IsReference == 3)
+        if (dpb->fs[ii]->IsReference == 3)
         {
-            if ((dpb->fs[i]->frame.isLongTerm == FALSE) && (dpb->fs[i]->frame.PicNum == picNumX))
+            if ((dpb->fs[ii]->frame.isLongTerm == FALSE) && (dpb->fs[ii]->frame.PicNum == picNumX))
             {
-                dpb->fs[i]->LongTermFrameIdx = long_term_frame_idx;
-                dpb->fs[i]->frame.LongTermPicNum = long_term_frame_idx;
+                dpb->fs[ii]->LongTermFrameIdx = long_term_frame_idx;
+                dpb->fs[ii]->frame.LongTermPicNum = long_term_frame_idx;
 
-                dpb->fs[i]->frame.isLongTerm = TRUE;
+                dpb->fs[ii]->frame.isLongTerm = TRUE;
 
-                dpb->fs[i]->IsLongTerm = 3;
+                dpb->fs[ii]->IsLongTerm = 3;
                 return;
             }
         }
@@ -617,18 +644,18 @@ void MemMgrCtrlOp3(AVCHandle *avcHandle, AVCCommonObj *video, AVCDecPicBuffer *d
 /* see subclause 8.2.5.4.4, MaxLongTermFrameIdx */
 void MemMgrCtrlOp4(AVCHandle *avcHandle, AVCCommonObj *video, AVCDecPicBuffer *dpb, uint max_long_term_frame_idx_plus1)
 {
-    int i;
+    int ii;
 
     video->MaxLongTermFrameIdx = max_long_term_frame_idx_plus1 - 1;
 
     /* then mark long term frame with exceeding LongTermFrameIdx to unused for reference. */
-    for (i = 0; i < dpb->num_fs; i++)
+    for (ii = 0; ii < dpb->num_fs; ii++)
     {
-        if (dpb->fs[i]->IsLongTerm && dpb->fs[i] != video->currFS)
+        if (dpb->fs[ii]->IsLongTerm && dpb->fs[ii] != video->currFS)
         {
-            if (dpb->fs[i]->LongTermFrameIdx > video->MaxLongTermFrameIdx)
+            if (dpb->fs[ii]->LongTermFrameIdx > video->MaxLongTermFrameIdx)
             {
-                unmark_for_reference(avcHandle, dpb, i);
+                unmark_for_reference(avcHandle, dpb, ii);
             }
         }
     }
@@ -638,14 +665,14 @@ void MemMgrCtrlOp4(AVCHandle *avcHandle, AVCCommonObj *video, AVCDecPicBuffer *d
 MaxLongTermFrameIdx to "no long-term frame indices" */
 void MemMgrCtrlOp5(AVCHandle *avcHandle, AVCCommonObj *video, AVCDecPicBuffer *dpb)
 {
-    int i;
+    int ii;
 
     video->MaxLongTermFrameIdx = -1;
-    for (i = 0; i < dpb->num_fs; i++)
+    for (ii = 0; ii < dpb->num_fs; ii++) /* including the current frame ??????*/
     {
-        if (dpb->fs[i] != video->currFS)
+        if (dpb->fs[ii] != video->currFS) // MC_FIX
         {
-            unmark_for_reference(avcHandle, dpb, i);
+            unmark_for_reference(avcHandle, dpb, ii);
         }
     }
 
@@ -687,13 +714,13 @@ void unmark_for_reference(AVCHandle *avcHandle, AVCDecPicBuffer *dpb, uint idx)
 
 void unmark_long_term_frame_for_reference_by_frame_idx(AVCHandle *avcHandle, AVCDecPicBuffer *dpb, uint long_term_frame_idx)
 {
-    int i;
-    for (i = 0; i < dpb->num_fs; i++)
+    int ii;
+    for (ii = 0; ii < dpb->num_fs; ii++)
     {
 
-        if (dpb->fs[i]->IsLongTerm && (dpb->fs[i]->LongTermFrameIdx == (int)long_term_frame_idx))
+        if (dpb->fs[ii]->IsLongTerm && (dpb->fs[ii]->LongTermFrameIdx == (int)long_term_frame_idx))
         {
-            unmark_for_reference(avcHandle, dpb, i);
+            unmark_for_reference(avcHandle, dpb, ii);
         }
 
     }

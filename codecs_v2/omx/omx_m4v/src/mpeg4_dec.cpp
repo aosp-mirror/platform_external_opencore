@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,9 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
+#ifndef OSCL_BASE_H_INCLUDED
+#include "oscl_base.h"
+#endif
 
 #include "mpeg4_dec.h"
 #include "oscl_mem.h"
@@ -25,13 +28,19 @@
 #define PVH263DEFAULTHEIGHT 288
 #define PVH263DEFAULTWIDTH 352
 
+#include <utils/Log.h>
+#undef LOG_TAG
+#define LOG_TAG "SW_DEC"
 // from m4v_config_parser.h
-OSCL_IMPORT_REF int16 iGetM4VConfigInfo(uint8 *buffer, int length, int *width, int *height, int *, int *);
+OSCL_IMPORT_REF int16 iGetM4VConfigInfo(uint8 *buffer, int32 length, int32 *width, int32 *height, int32 *, int32 *);
 
 Mpeg4Decoder_OMX::Mpeg4Decoder_OMX()
 {
     pFrame0 = NULL;
     pFrame1 = NULL;
+
+    iDisplay_Width = 0;
+    iDisplay_Height = 0;
 
     VO_START_CODE1[0] = 0x00;
     VO_START_CODE1[1] = 0x00;
@@ -67,10 +76,9 @@ OMX_ERRORTYPE Mpeg4Decoder_OMX::Mp4DecInit()
 OMX_BOOL Mpeg4Decoder_OMX::Mp4DecodeVideo(OMX_U8* aOutBuffer, OMX_U32* aOutputLength,
         OMX_U8** aInputBuf, OMX_U32* aInBufSize,
         OMX_PARAM_PORTDEFINITIONTYPE* aPortParam,
-        OMX_S32* aIsFirstBuffer, OMX_BOOL aMarkerFlag, OMX_BOOL *aResizeFlag)
+        OMX_S32* aFrameCount, OMX_BOOL aMarkerFlag, OMX_BOOL *aResizeFlag)
 {
     OMX_BOOL Status = OMX_TRUE;
-    static OMX_S32 display_Width, display_Height;
     OMX_S32 OldWidth, OldHeight, OldFrameSize;
 
     OldWidth = aPortParam->format.video.nFrameWidth;
@@ -80,67 +88,74 @@ OMX_BOOL Mpeg4Decoder_OMX::Mp4DecodeVideo(OMX_U8* aOutBuffer, OMX_U32* aOutputLe
 #ifdef _DEBUG
     static OMX_U32 FrameCount = 0;
 #endif
-    OMX_U32 UseExtTimestamp = 0;
-    OMX_S32 TimeStamp;
-    OMX_S32 MaxSize = BIT_BUFF_SIZE, FrameSize, InputSize, InitSize;
+    uint32 UseExtTimestamp = 0;
+    uint32 TimeStamp;
+    //OMX_S32 MaxSize = BIT_BUFF_SIZE;
+    OMX_S32 FrameSize, InputSize, InitSize;
     OMX_U8* pTempFrame, *pSrc[3];
 
     if (Mpeg4InitFlag == 0)
     {
         if (!aMarkerFlag)
         {
-            InitSize = m4v_getVideoHeader(0, *aInputBuf, *aInBufSize);
+            InitSize = GetVideoHeader(0, *aInputBuf, *aInBufSize);
         }
         else
         {
             InitSize = *aInBufSize;
         }
 
-        if (PV_TRUE != InitializeVideoDecode(&display_Width, &display_Height,
+        if (PV_TRUE != InitializeVideoDecode(&iDisplay_Width, &iDisplay_Height,
                                              aInputBuf, (OMX_S32*)aInBufSize, MPEG4_MODE))
             return OMX_FALSE;
 
         Mpeg4InitFlag = 1;
-        aPortParam->format.video.nFrameWidth = display_Width;
-        aPortParam->format.video.nFrameHeight = display_Height;
-        if ((display_Width != OldWidth) || (display_Height != OldHeight))
+        aPortParam->format.video.nFrameWidth = iDisplay_Width;
+        aPortParam->format.video.nFrameHeight = iDisplay_Height;
+        if ((iDisplay_Width != OldWidth) || (iDisplay_Height != OldHeight))
             *aResizeFlag = OMX_TRUE;
 
-        *aIsFirstBuffer = 1;
+        *aFrameCount = 1;
         *aInBufSize -= InitSize;
         return OMX_TRUE;
     }
 
-    MaxSize = *aInBufSize;
+    //MaxSize = *aInBufSize;
 
     if ((* (OMX_S32*)aInBufSize) <= 0)
     {
         return OMX_FALSE;
     }
 
-    TimeStamp = -1;
+    TimeStamp = 0xFFFFFFFF;
     InputSize = *aInBufSize;
 
     // in case of H263, read the 1st frame to find out the sizes (use the m4v_config)
-    if ((0 == *aIsFirstBuffer) && (H263_MODE == CodecMode))
+    if ((0 == *aFrameCount) && (H263_MODE == CodecMode))
     {
-        OMX_S32 aligned_width, aligned_height;
-        if (iGetM4VConfigInfo(*aInputBuf, *aInBufSize, (int *) &aligned_width, (int *) &aligned_height, (int*) &display_Width, (int *) &display_Height))
-            return OMX_FALSE;
+        int32 aligned_width, aligned_height;
+        int32 display_width, display_height;
 
-        aPortParam->format.video.nFrameWidth = display_Width; // use non 16byte aligned values (display_width) for H263
-        aPortParam->format.video.nFrameHeight = display_Height; // like in the case of M4V (PVGetVideoDimensions also returns display_width/height)
-        if ((display_Width != OldWidth) || (display_Height != OldHeight))
+        if (iGetM4VConfigInfo(*aInputBuf, *aInBufSize, &aligned_width, &aligned_height, &display_width, &display_height))
+        {
+            return OMX_FALSE;
+        }
+
+        iDisplay_Width = display_width;
+        iDisplay_Height = display_height;
+        aPortParam->format.video.nFrameWidth = iDisplay_Width; // use non 16byte aligned values (display_width) for H263
+        aPortParam->format.video.nFrameHeight = iDisplay_Height; // like in the case of M4V (PVGetVideoDimensions also returns display_width/height)
+        if ((iDisplay_Width != OldWidth) || (iDisplay_Height != OldHeight))
             *aResizeFlag = OMX_TRUE;
 
-        *aIsFirstBuffer = 1;
+        *aFrameCount = 1;
         return OMX_TRUE;
     }
 
     Status = (OMX_BOOL) PVDecodeVideoFrame(&VideoCtrl, aInputBuf,
-                                           (uint32*) & TimeStamp,
+                                           &TimeStamp,
                                            (int32*)aInBufSize,
-                                           (uint32*) & UseExtTimestamp,
+                                           &UseExtTimestamp,
                                            (OMX_U8*) pFrame0);
 
     if (Status == PV_TRUE)
@@ -156,15 +171,18 @@ OMX_BOOL Mpeg4Decoder_OMX::Mp4DecodeVideo(OMX_U8* aOutBuffer, OMX_U32* aOutputLe
         pFrame0 = (OMX_U8*) pFrame1;
         pFrame1 = (OMX_U8*) pTempFrame;
 
-        PVGetVideoDimensions(&VideoCtrl, (int32*) &display_Width, (int32*) &display_Height);
-        if ((display_Width != OldWidth) || (display_Height != OldHeight))
+        int32 display_width, display_height;
+        PVGetVideoDimensions(&VideoCtrl, &display_width, &display_height);
+        iDisplay_Width = display_width;
+        iDisplay_Height = display_height;
+        if ((iDisplay_Width != OldWidth) || (iDisplay_Height != OldHeight))
         {
 
-            aPortParam->format.video.nFrameWidth = display_Width;
-            aPortParam->format.video.nFrameHeight = display_Height;
+            aPortParam->format.video.nFrameWidth = iDisplay_Width;
+            aPortParam->format.video.nFrameHeight = iDisplay_Height;
             *aResizeFlag = OMX_TRUE;
         }
-        FrameSize = (((display_Width + 15) >> 4) << 4) * (((display_Height + 15) >> 4) << 4);
+        FrameSize = (((iDisplay_Width + 15) >> 4) << 4) * (((iDisplay_Height + 15) >> 4) << 4);
         OldFrameSize = (((OldWidth + 15) >> 4) << 4) * (((OldHeight + 15) >> 4) << 4);
 
         // THIS SHOULD NEVER HAPPEN, but just in case
@@ -188,7 +206,7 @@ OMX_BOOL Mpeg4Decoder_OMX::Mp4DecodeVideo(OMX_U8* aOutBuffer, OMX_U32* aOutputLe
             *aOutputLength = 0;
         }
 
-
+        (*aFrameCount)++;
     }
     else
     {
@@ -208,7 +226,12 @@ OMX_S32 Mpeg4Decoder_OMX::InitializeVideoDecode(
 
     if (mode == MODE_H263)
     {
+	LOGE("PV SW DECODER is used for H.263");
         CodecMode = H263_MODE;
+    }
+    else
+    {
+	LOGE("PV SW DECODER is used for MPEG4");
     }
 
     OK = PVInitVideoDecoder(&VideoCtrl, aBuffer, (int32*) aSize, 1,
@@ -261,5 +284,50 @@ OMX_ERRORTYPE Mpeg4Decoder_OMX::Mp4DecDeinit()
         return OMX_ErrorUndefined;
     }
     return OMX_ErrorNone;
+}
+
+OMX_S32 Mpeg4Decoder_OMX::GetVideoHeader(int32 aLayer, uint8* aBuf, int32 aMaxSize)
+{
+    OSCL_UNUSED_ARG(aLayer);
+
+    int32 count = 0;
+    char my_sc[4];
+
+    uint8 *tmp_bs = aBuf;
+
+    oscl_memcpy(my_sc, tmp_bs, 4);
+    my_sc[3] &= 0xf0;
+
+    if (aMaxSize >= 4)
+    {
+        if (oscl_memcmp(my_sc, VOSH_START_CODE1, 4) && oscl_memcmp(my_sc, VO_START_CODE1, 4))
+        {
+            count = 0;
+            iShortVideoHeader = OMX_TRUE;
+        }
+        else
+        {
+            count = 0;
+            iShortVideoHeader = FALSE;
+            while (oscl_memcmp(tmp_bs + count, VOP_START_CODE1, 4))
+            {
+                count++;
+                if (count > 1000)
+                {
+                    iShortVideoHeader = OMX_TRUE;
+                    break;
+                }
+            }
+            if (iShortVideoHeader == OMX_TRUE)
+            {
+                count = 0;
+                while (oscl_memcmp(tmp_bs + count, H263_START_CODE1, 3))
+                {
+                    count++;
+                }
+            }
+        }
+    }
+    return count;
 }
 

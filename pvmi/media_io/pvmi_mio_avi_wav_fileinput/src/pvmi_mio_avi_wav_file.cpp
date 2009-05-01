@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,8 @@ OSCL_DLL_ENTRY_POINT_DEFAULT()
 #define LOG_STACK_TRACE(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, m)
 #define LOG_DEBUG(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, m)
 #define LOG_ERR(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iLogger,PVLOGMSG_ERR,m)
+#define LOGDATATRAFFIC(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iDataPathLogger,PVLOGMSG_INFO,m);
+#define LOGDIAGNOSTICS_AVI_FF(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iDiagnosticsLoggerAVIFF,PVLOGMSG_INFO,m);
 
 ////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF PvmiMIOControl* PvmiMIOAviWavFileFactory::Create(uint32 aNumLoops, bool aRecordingMode, uint32 aStreamNo, OsclAny* aFileParser, FileFormatType aFileType, int32& arError)
@@ -56,7 +58,7 @@ OSCL_EXPORT_REF bool PvmiMIOAviWavFileFactory::Delete(PvmiMIOControl* aMio)
     {
         return false;
     }
-    delete mioFilein;
+    OSCL_DELETE(mioFilein);
 
     mioFilein = NULL;
     return true;
@@ -70,12 +72,25 @@ PvmiMIOAviWavFile::~PvmiMIOAviWavFile()
     if (!oDiagnosticsLogged)
         LogDiagnostics();
 #endif
+
     if (iMediaBufferMemPool)
     {
-        OSCL_TEMPLATED_DELETE(iMediaBufferMemPool, OsclMemPoolFixedChunkAllocator, OsclMemPoolFixedChunkAllocator);
+        if (iSentMediaData.size() > 0)
+        {
+            for (int ii = iSentMediaData.size() - 1; ii >= 0; ii--)
+            {
+                iMediaBufferMemPool->deallocate(iSentMediaData[ii].iData);
+            }
+        }
+        if (iData)
+        {
+            iMediaBufferMemPool->deallocate(iData);
+            iData = NULL;
+            iDataSize = 0;
+        }
+        OSCL_DELETE(iMediaBufferMemPool);
         iMediaBufferMemPool = NULL;
     }
-    delete(iMioClock);
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -230,12 +245,6 @@ OSCL_EXPORT_REF PVMFCommandId PvmiMIOAviWavFile::Flush(const OsclAny* aContext)
 ////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF PVMFCommandId PvmiMIOAviWavFile::Reset(const OsclAny* aContext)
 {
-    if (iState != STATE_STARTED || iState != STATE_PAUSED)
-    {
-        OSCL_LEAVE(OsclErrInvalidState);
-        return -1;
-    }
-
     return AddCmdToQueue(CMD_RESET, aContext);
 }
 
@@ -274,10 +283,20 @@ OSCL_EXPORT_REF PVMFCommandId PvmiMIOAviWavFile::Stop(const OsclAny* aContext)
 ////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF void PvmiMIOAviWavFile::ThreadLogon()
 {
+
     if (!iThreadLoggedOn)
     {
+        if (iSettings.iRecModeSyncWithClock)
+        {
+            iMioClock =  OSCL_NEW(PVMFMediaClock, ());
+            iMioClock->SetClockTimebase(iClockTimeBase);
+            uint32 start = 0;
+            bool overflowFlag = false;
+            iMioClock->SetStartTime32(start, PVMF_MEDIA_CLOCK_MSEC, overflowFlag);
+        }
         AddToScheduler();
         iThreadLoggedOn = true;
+
     }
 }
 
@@ -286,10 +305,16 @@ OSCL_EXPORT_REF void PvmiMIOAviWavFile::ThreadLogoff()
 {
     if (iThreadLoggedOn)
     {
+        if (iSettings.iRecModeSyncWithClock && iMioClock != NULL)
+        {
+            OSCL_DELETE(iMioClock);
+        }
         RemoveFromScheduler();
         iLogger = NULL;
+        iDataPathLogger = NULL;
         iThreadLoggedOn = false;
     }
+
 }
 
 
@@ -400,14 +425,22 @@ OSCL_EXPORT_REF void PvmiMIOAviWavFile::readComplete(PVMFStatus aStatus, PVMFCom
 ////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF void PvmiMIOAviWavFile::statusUpdate(uint32 aStatus_flags)
 {
-    OSCL_UNUSED_ARG(aStatus_flags);
-    // Ideally this routine should update the status of media input component.
-    // It should check then for the status. If media input buffer is consumed,
-    // media input object should be resheduled.
-    // Since the Media avifile component is designed with single buffer, two
-    // asynchronous reads are not possible. So this function will not be required
-    // and hence not been implemented.
-    OSCL_LEAVE(OsclErrNotSupported);
+    if (aStatus_flags == PVMI_MEDIAXFER_STATUS_WRITE)
+    {
+        iWriteState = EWriteOK;
+        iMicroSecondsPerDataEvent = 0;
+        AddDataEventToQueue(iMicroSecondsPerDataEvent);
+    }
+    else
+    {
+        // Ideally this routine should update the status of media input component.
+        // It should check then for the status. If media input buffer is consumed,
+        // media input object should be resheduled.
+        // Since the Media avifile component is designed with single buffer, two
+        // asynchronous reads are not possible. So this function will not be required
+        // and hence not been implemented.
+        OSCL_LEAVE(OsclErrNotSupported);
+    }
 }
 
 
@@ -451,21 +484,21 @@ OSCL_EXPORT_REF PVMFStatus PvmiMIOAviWavFile::getParametersSync(PvmiMIOSession a
             pv_mime_strcmp(aIdentifier, OUTPUT_FORMATS_CUR_QUERY) == 0)
     {
         aNum_parameter_elements = 1;
-        status = AllocateKvp(aParameters, OUTPUT_FORMATS_VALTYPE, aNum_parameter_elements);
+        status = AllocateKvp(aParameters, (PvmiKeyType)OUTPUT_FORMATS_VALTYPE, aNum_parameter_elements);
         if (status != PVMFSuccess)
         {
             LOG_ERR((0, "PvmiMIOAviWavFile::GetOutputParametersSync: Error - AllocateKvp failed. status=%d", status));
         }
         else
         {
-            aParameters[0].value.uint32_value = iSettings.iMediaFormat;
+            aParameters[0].value.pChar_value = (char*)iSettings.iMediaFormat.getMIMEStrPtr();
 
         }
     }
     else if (pv_mime_strcmp(aIdentifier, VIDEO_OUTPUT_WIDTH_CUR_QUERY) == 0)
     {
         aNum_parameter_elements = 1;
-        status = AllocateKvp(aParameters, VIDEO_OUTPUT_WIDTH_CUR_VALUE, aNum_parameter_elements);
+        status = AllocateKvp(aParameters, (PvmiKeyType)VIDEO_OUTPUT_WIDTH_CUR_VALUE, aNum_parameter_elements);
         if (status != PVMFSuccess)
         {
             LOG_ERR((0, "PvmiMIOAviWavFile::GetOutputParametersSync: Error - AllocateKvp failed. status=%d", status));
@@ -477,7 +510,7 @@ OSCL_EXPORT_REF PVMFStatus PvmiMIOAviWavFile::getParametersSync(PvmiMIOSession a
     else if (pv_mime_strcmp(aIdentifier, VIDEO_FRAME_ORIENTATION_CUR_QUERY) == 0)
     {
         aNum_parameter_elements = 1;
-        status = AllocateKvp(aParameters, VIDEO_FRAME_ORIENTATION_CUR_VALUE, aNum_parameter_elements);
+        status = AllocateKvp(aParameters, (PvmiKeyType)VIDEO_FRAME_ORIENTATION_CUR_VALUE, aNum_parameter_elements);
         if (status != PVMFSuccess)
         {
             LOG_ERR((0, "PvmiMIOAviWavFile::GetOutputParametersSync: Error - AllocateKvp failed. status=%d", status));
@@ -490,7 +523,7 @@ OSCL_EXPORT_REF PVMFStatus PvmiMIOAviWavFile::getParametersSync(PvmiMIOSession a
     else if (pv_mime_strcmp(aIdentifier, VIDEO_OUTPUT_HEIGHT_CUR_QUERY) == 0)
     {
         aNum_parameter_elements = 1;
-        status = AllocateKvp(aParameters, VIDEO_OUTPUT_HEIGHT_CUR_VALUE, aNum_parameter_elements);
+        status = AllocateKvp(aParameters, (PvmiKeyType)VIDEO_OUTPUT_HEIGHT_CUR_VALUE, aNum_parameter_elements);
         if (status != PVMFSuccess)
         {
             LOG_ERR((0, "PvmiMIOAviWavFile::GetOutputParametersSync: Error - AllocateKvp failed. status=%d", status));
@@ -502,7 +535,7 @@ OSCL_EXPORT_REF PVMFStatus PvmiMIOAviWavFile::getParametersSync(PvmiMIOSession a
     else if (pv_mime_strcmp(aIdentifier, VIDEO_OUTPUT_FRAME_RATE_CUR_QUERY) == 0)
     {
         aNum_parameter_elements = 1;
-        status = AllocateKvp(aParameters, VIDEO_OUTPUT_FRAME_RATE_CUR_VALUE, aNum_parameter_elements);
+        status = AllocateKvp(aParameters, (PvmiKeyType)VIDEO_OUTPUT_FRAME_RATE_CUR_VALUE, aNum_parameter_elements);
         if (status != PVMFSuccess)
         {
             LOG_ERR((0, "PvmiMIOAviWavFile::GetOutputParametersSync: Error - AllocateKvp failed. status=%d", status));
@@ -511,10 +544,34 @@ OSCL_EXPORT_REF PVMFStatus PvmiMIOAviWavFile::getParametersSync(PvmiMIOSession a
 
         aParameters[0].value.float_value = iSettings.iFrameRate;
     }
+    else if (pv_mime_strcmp(aIdentifier, AUDIO_OUTPUT_SAMPLING_RATE_CUR_QUERY) == 0)
+    {
+        aNum_parameter_elements = 1;
+        status = AllocateKvp(aParameters, (PvmiKeyType)AUDIO_OUTPUT_SAMPLING_RATE_CUR_VALUE, aNum_parameter_elements);
+        if (status != PVMFSuccess)
+        {
+            LOG_ERR((0, "PvmiMIOAviWavFile::GetOutputParametersSync: Error - AllocateKvp failed. status=%d", status));
+            return status;
+        }
+
+        aParameters[0].value.uint32_value = (uint32)iSettings.iSamplingFrequency;
+    }
+    else if (pv_mime_strcmp(aIdentifier, AUDIO_OUTPUT_NUM_CHANNELS_CUR_QUERY) == 0)
+    {
+        aNum_parameter_elements = 1;
+        status = AllocateKvp(aParameters, (PvmiKeyType)AUDIO_OUTPUT_NUM_CHANNELS_CUR_VALUE, aNum_parameter_elements);
+        if (status != PVMFSuccess)
+        {
+            LOG_ERR((0, "PvmiMIOAviWavFile::GetOutputParametersSync: Error - AllocateKvp failed. status=%d", status));
+            return status;
+        }
+
+        aParameters[0].value.uint32_value = (uint32)iSettings.iNumChannels;
+    }
     else if (pv_mime_strcmp(aIdentifier, OUTPUT_TIMESCALE_CUR_QUERY) == 0)
     {
         aNum_parameter_elements = 1;
-        status = AllocateKvp(aParameters, OUTPUT_TIMESCALE_CUR_VALUE, aNum_parameter_elements);
+        status = AllocateKvp(aParameters, (PvmiKeyType)OUTPUT_TIMESCALE_CUR_VALUE, aNum_parameter_elements);
         if (status != PVMFSuccess)
         {
             LOG_ERR((0, "PVMFVideoEncPort::GetOutputParametersSync: Error - AllocateKvp failed. status=%d", status));
@@ -522,15 +579,13 @@ OSCL_EXPORT_REF PVMFStatus PvmiMIOAviWavFile::getParametersSync(PvmiMIOSession a
         }
         else
         {
-            switch (GetMediaTypeIndex(iSettings.iMediaFormat))
+            if (iSettings.iMediaFormat.isAudio())
             {
-                case PVMF_UNCOMPRESSED_AUDIO_FORMAT:
-                case PVMF_COMPRESSED_AUDIO_FORMAT:
-                    aParameters[0].value.uint32_value = (uint32)iSettings.iSamplingFrequency;
-                    break;
-                default:
-                    aParameters[0].value.uint32_value = iSettings.iTimescale;
-                    break;
+                aParameters[0].value.uint32_value = (uint32)iSettings.iSamplingFrequency;
+            }
+            else
+            {
+                aParameters[0].value.uint32_value = iSettings.iTimescale;
             }
         }
     }
@@ -651,12 +706,15 @@ PvmiMIOAviWavFile::PvmiMIOAviWavFile(uint32 aNumLoops, bool aRecordingMode, uint
         iMicroSecondsPerDataEvent(0),
         iMediaBufferMemPool(NULL),
         iLogger(NULL),
+        iDataPathLogger(NULL),
         iState(STATE_IDLE),
+        iWaitingOnClock(false),
+        iTimeStamp(0),
         iStreamDuration(0),
-        iBaseTimeStamp(0),
         iCurrentTimeStamp(0),
-        iNextTimeStamp(0),
-        iWaitingOnClock(false)
+        iWriteState(EWriteOK),
+        iData(NULL),
+        iNoMemBufferData(false)
 {
 #if PROFILING_ON
     iNumEarlyFrames = 0;
@@ -673,16 +731,29 @@ PvmiMIOAviWavFile::PvmiMIOAviWavFile(uint32 aNumLoops, bool aRecordingMode, uint
     iSettings.iStreamNumber = aStreamNo;
     iSettings.iRecModeSyncWithClock = aRecordingMode;
     arError = InitComp(aFileParser, aFileType);
-    iMioClock = new OsclClock();
-    iMioClock->SetClockTimebase(iClockTimeBase);
-    uint32 start = 0;
-    iMioClock->SetStartTime32(start, OSCLCLOCK_MSEC);
 
     iLogger = PVLogger::GetLoggerObject("PvmiMIOAviWavFile");
     iDiagnosticsLogger = PVLogger::GetLoggerObject("pvauthordiagnostics.mio.aviwav");
-
+    iDiagnosticsLoggerAVIFF = PVLogger::GetLoggerObject("pvauthordiagnostics.mio.aviwav.ff");
+    iDataPathLogger = PVLogger::GetLoggerObject("datapath.mio.aviwav");
 }
 
+bool PvmiMIOAviWavFile::IsYUVFormat_Supported(uint32 aFcc)
+{
+    uint32  ii;
+    bool pattern_found = false;
+
+    for (ii = 0 ; ii < NUM_YUV_FMT; ii++)
+    {
+        if (YUV_FMT[ii] == aFcc)
+        {
+            pattern_found = true;
+            break;
+        }
+    }
+
+    return pattern_found;
+}
 ////////////////////////////////////////////////////////////////////////////
 int32 PvmiMIOAviWavFile::InitComp(OsclAny* aFileParser, FileFormatType aFileType)
 {
@@ -708,26 +779,37 @@ int32 PvmiMIOAviWavFile::InitComp(OsclAny* aFileParser, FileFormatType aFileType
                 uint32 size = 4;
 
                 iPVAviFile->GetVideoFormatType((uint8*)fmtType, size, ii);
-                fmtType[size] = '\0';
-                /*@todo: add YUV*/
+
+                uint32 temp = MAKE_FOURCC(fmtType[0], fmtType[1], fmtType[2], fmtType[3]);
+
+                BitmapInfoHhr* videoHdr = OSCL_STATIC_CAST(BitmapInfoHhr*, iFormatSpecificDataFrag.getMemFragPtr());
+
                 if (!oscl_strncmp((char*)fmtType, "DIB ", size))
                 {
-                    BitmapInfoHhr* videoHdr = OSCL_STATIC_CAST(BitmapInfoHhr*, iFormatSpecificDataFrag.getMemFragPtr());
 
                     if (BITS_PER_SAMPLE12 == videoHdr->BiBitCount)
                     {
-                        iSettings.iMediaFormat = PVMF_RGB12;
+                        iSettings.iMediaFormat = PVMF_MIME_RGB12;
+                        iSettings.iMimeType = PVMF_MIME_RGB12;
                         iSettings.iSampleSize = videoHdr->BiBitCount;
                     }
                     else if (BITS_PER_SAMPLE24 == videoHdr->BiBitCount)
                     {
-                        iSettings.iMediaFormat = PVMF_RGB24;
+                        iSettings.iMediaFormat = PVMF_MIME_RGB24;
+                        iSettings.iMimeType = PVMF_MIME_RGB24;
+
                         iSettings.iSampleSize = videoHdr->BiBitCount;
                     }
                     else
                     {
                         return PVMFErrNotSupported;
                     }
+                }
+                else if (IsYUVFormat_Supported(temp))
+                {
+                    iSettings.iMediaFormat = PVMF_MIME_YUV420;
+                    iSettings.iMimeType = PVMF_MIME_YUV420;
+
                 }
                 else
                 {
@@ -750,11 +832,13 @@ int32 PvmiMIOAviWavFile::InitComp(OsclAny* aFileParser, FileFormatType aFileType
                 {
                     if (BITS_PER_SAMPLE8 == audioHdr->BitsPerSample)
                     {
-                        iSettings.iMediaFormat = PVMF_PCM8;
+                        iSettings.iMediaFormat = PVMF_MIME_PCM8;
+                        iSettings.iMimeType = PVMF_MIME_PCM8;
                     }
                     else if (BITS_PER_SAMPLE16 == audioHdr->BitsPerSample)
                     {
-                        iSettings.iMediaFormat = PVMF_PCM16;
+                        iSettings.iMediaFormat = PVMF_MIME_PCM16;
+                        iSettings.iMimeType = PVMF_MIME_PCM16;
                     }
                     else
                     {
@@ -788,18 +872,20 @@ int32 PvmiMIOAviWavFile::InitComp(OsclAny* aFileParser, FileFormatType aFileType
             }
 
             iSettings.iNumChannels = wavFileInfo.NumChannels;
-            iSettings.iSamplingFrequency = wavFileInfo.SampleRate;
+            iSettings.iSamplingFrequency = (OsclFloat)wavFileInfo.SampleRate;
             iSettings.iSampleSize = wavFileInfo.BitsPerSample;
             iSettings.iByteRate = wavFileInfo.ByteRate;
             iStreamDuration = (1000000 / wavFileInfo.SampleRate) * wavFileInfo.NumSamples;
 
             if (BITS_PER_SAMPLE16 == wavFileInfo.BitsPerSample)
             {
-                iSettings.iMediaFormat = PVMF_PCM16;
+                iSettings.iMediaFormat = PVMF_MIME_PCM16;
+                iSettings.iMimeType = PVMF_MIME_PCM16;
             }
             else if (BITS_PER_SAMPLE8 == wavFileInfo.BitsPerSample)
             {
-                iSettings.iMediaFormat = PVMF_PCM8;
+                iSettings.iMediaFormat = PVMF_MIME_PCM8;
+                iSettings.iMimeType = PVMF_MIME_PCM8;
             }
             else
             {
@@ -893,7 +979,12 @@ PVMFCommandId PvmiMIOAviWavFile::AddCmdToQueue(PvmiMIOAviWavFileCmdType aType,
     cmd.iData1 = aData1;
     cmd.iId = iCmdIdCounter;
     ++iCmdIdCounter;
-    iCmdQueue.push_back(cmd);
+
+    if (CMD_RESET == aType)
+        iCmdQueue.push_front(cmd);
+    else
+        iCmdQueue.push_back(cmd);
+
     RunIfNotReady();
     return cmd.iId;
 }
@@ -931,7 +1022,7 @@ PVMFStatus PvmiMIOAviWavFile::DoInit()
     OSCL_TRY(err,
              if (iMediaBufferMemPool)
 {
-    OSCL_TEMPLATED_DELETE(iMediaBufferMemPool, OsclMemPoolFixedChunkAllocator, OsclMemPoolFixedChunkAllocator);
+    OSCL_DELETE(iMediaBufferMemPool);
         iMediaBufferMemPool = NULL;
     }
     iMediaBufferMemPool = OSCL_NEW(OsclMemPoolFixedChunkAllocator,
@@ -949,7 +1040,7 @@ PVMFStatus PvmiMIOAviWavFile::DoInit()
     //set chunk size
     uint32 dataSize = GetDataSize();
     //add bytes in 1 msec
-    dataSize += (iSettings.iSampleSize / BYTE_COUNT * iSettings.iSamplingFrequency / 1000);
+    dataSize += (uint32)(iSettings.iSampleSize / BYTE_COUNT * iSettings.iSamplingFrequency / 1000);
     iSettings.iDataBufferSize = dataSize;
 
     uint8* data = (uint8*)iMediaBufferMemPool->allocate(dataSize);
@@ -970,13 +1061,19 @@ PVMFStatus PvmiMIOAviWavFile::DoStart()
 PVMFStatus PvmiMIOAviWavFile::DoPause()
 {
     iState = STATE_PAUSED;
-    iMioClock->Pause();
+    if ((iMioClock) && (iSettings.iRecModeSyncWithClock))
+    {
+        iMioClock->Pause();
+    }
     return PVMFSuccess;
 }
 
 PVMFStatus PvmiMIOAviWavFile::DoReset()
 {
+    while (!iCmdQueue.empty())
+        iCmdQueue.erase(&iCmdQueue.front());
 
+    iWriteState = EWriteOK;
 #if PROFILING_ON
     if (!oDiagnosticsLogged)
         LogDiagnostics();
@@ -998,15 +1095,19 @@ PVMFStatus PvmiMIOAviWavFile::DoFlush()
 ////////////////////////////////////////////////////////////////////////////
 PVMFStatus PvmiMIOAviWavFile::DoStop()
 {
+    iWriteState = EWriteOK;
     iDataEventCounter = 0;
     iState = STATE_STOPPED;
-    iMioClock->Stop();
-
+    if ((iMioClock != NULL) && (iSettings.iRecModeSyncWithClock))
+    {
+        iMioClock->Stop();
+    }
 #if PROFILING_ON
     if (!oDiagnosticsLogged)
         LogDiagnostics();
 #endif
 
+    iState = STATE_STOPPED;
     return PVMFSuccess;
 }
 
@@ -1035,12 +1136,28 @@ uint32 PvmiMIOAviWavFile::GetDataSize()
 ////////////////////////////////////////////////////////////////////////////
 PVMFStatus PvmiMIOAviWavFile::GetMediaData(uint8* aData, uint32& aDataSize, uint32& aTimeStamp)
 {
-
+    aTimeStamp = iCurrentTimeStamp;
+    uint32 iNptTS = 0;
     // Read data from file
     if (iPVAviFile != NULL)
     {
         PV_AVI_FILE_PARSER_ERROR_TYPE error = PV_AVI_FILE_PARSER_SUCCESS;
-        error = iPVAviFile->GetNextStreamMediaSample(iSettings.iStreamNumber, aData, aDataSize, aTimeStamp);
+
+        uint32 currticks  = 0;
+        currticks = OsclTickCount::TickCount();
+        uint32 starttime = 0;
+        starttime = OsclTickCount::TicksToMsec(currticks);
+
+        error = iPVAviFile->GetNextStreamMediaSample(iSettings.iStreamNumber, aData, aDataSize, iNptTS);
+
+        currticks = OsclTickCount::TickCount();
+        uint32 endtime = 0;
+        endtime = OsclTickCount::TicksToMsec(currticks);
+
+        LOGDIAGNOSTICS_AVI_FF((0, "PvmiMIOAviWavFile::GetMediaData:"
+                               "StreamNum=%d, NptTS=%d, Size=%d, TimeToRead=%d, MimeType=%s",
+                               iSettings.iStreamNumber,  iNptTS, aDataSize, (endtime - starttime),
+                               iSettings.iMimeType.get_cstr()));
 
         if (error != PV_AVI_FILE_PARSER_SUCCESS)
         {
@@ -1054,10 +1171,24 @@ PVMFStatus PvmiMIOAviWavFile::GetMediaData(uint8* aData, uint32& aDataSize, uint
 
                     iPVAviFile->Reset(iSettings.iStreamNumber);
                     iSettings.iNumLoops--;
-                    iBaseTimeStamp = iNextTimeStamp;
                     //retrieve sample again
                     PV_AVI_FILE_PARSER_ERROR_TYPE error = PV_AVI_FILE_PARSER_SUCCESS;
-                    error = iPVAviFile->GetNextStreamMediaSample(iSettings.iStreamNumber, aData, aDataSize, aTimeStamp);
+
+                    uint32 currticks  = 0;
+                    currticks = OsclTickCount::TickCount();
+                    uint32 starttime = 0;
+                    starttime = OsclTickCount::TicksToMsec(currticks);
+
+                    error = iPVAviFile->GetNextStreamMediaSample(iSettings.iStreamNumber, aData, aDataSize, iNptTS);
+
+                    currticks = OsclTickCount::TickCount();
+                    uint32 endtime = 0;
+                    endtime = OsclTickCount::TicksToMsec(currticks);
+
+                    LOGDIAGNOSTICS_AVI_FF((0, "PvmiMIOAviWavFile::GetMediaData:"
+                                           "StreamNum=%d, NptTS=%d, Size=%d, TimeToRead=%d, MimeType=%s",
+                                           iSettings.iStreamNumber,  iNptTS, aDataSize, (endtime - starttime),
+                                           iSettings.iMimeType.get_cstr()));
 
                     if (error != PV_AVI_FILE_PARSER_SUCCESS)
                     {
@@ -1065,11 +1196,13 @@ PVMFStatus PvmiMIOAviWavFile::GetMediaData(uint8* aData, uint32& aDataSize, uint
                     }
                     else
                     {
+                        UpdateCurrentTimeStamp(aDataSize);
                         return PVMFSuccess;
                     }
                 }
                 else
                 {
+                    UpdateCurrentTimeStamp(aDataSize);
                     return PVMFInfoEndOfData;
                 }
             }
@@ -1090,8 +1223,6 @@ PVMFStatus PvmiMIOAviWavFile::GetMediaData(uint8* aData, uint32& aDataSize, uint
             {
                 aDataSize = samplesRead * iSettings.iNumChannels * (iSettings.iSampleSize / BYTE_COUNT);
             }
-
-            aTimeStamp = iCurrentTimeStamp + PVWAV_MSEC_PER_BUFFER;
         }
         else if (PVWAVPARSER_END_OF_FILE == retcode)
         {
@@ -1109,8 +1240,7 @@ PVMFStatus PvmiMIOAviWavFile::GetMediaData(uint8* aData, uint32& aDataSize, uint
                     {
                         aDataSize = samplesRead * iSettings.iNumChannels * (iSettings.iSampleSize / BYTE_COUNT);
                     }
-
-                    aTimeStamp = iCurrentTimeStamp + PVWAV_MSEC_PER_BUFFER;
+                    UpdateCurrentTimeStamp(aDataSize);
                     return PVMFSuccess;
                 }
                 else
@@ -1120,6 +1250,7 @@ PVMFStatus PvmiMIOAviWavFile::GetMediaData(uint8* aData, uint32& aDataSize, uint
             }
             else
             {
+                UpdateCurrentTimeStamp(aDataSize);
                 return PVMFInfoEndOfData;
             }
         }
@@ -1128,31 +1259,27 @@ PVMFStatus PvmiMIOAviWavFile::GetMediaData(uint8* aData, uint32& aDataSize, uint
             return PVMFFailure;
         }
     }
-
+    UpdateCurrentTimeStamp(aDataSize);
     return PVMFSuccess;
 }
 ////////////////////////////////////////////////////////////////////////////
-void PvmiMIOAviWavFile::GetNextTimeStamp(uint32 aDataSize)
+void PvmiMIOAviWavFile::UpdateCurrentTimeStamp(uint32 aDataSize)
 {
     if (iPVAviFile != NULL)
     {
         if (oscl_strstr((iPVAviFile->GetStreamMimeType(iSettings.iStreamNumber)).get_cstr(), "video"))
         {
-            iNextTimeStamp = iCurrentTimeStamp + (iPVAviFile->GetFrameDuration() / 1000); //in msec
+            iCurrentTimeStamp += (iPVAviFile->GetFrameDuration() / 1000); //in msec
         }
         else if (oscl_strstr((iPVAviFile->GetStreamMimeType(iSettings.iStreamNumber)).get_cstr(), "audio"))
         {
-            if (aDataSize == 0)
-            {
-                uint32 ii = 0;
-            }
             uint32 numSamples = aDataSize * BYTE_COUNT / iSettings.iSampleSize;
-            iNextTimeStamp = iCurrentTimeStamp + (numSamples * 1000) / iSettings.iSamplingFrequency;
+            iCurrentTimeStamp = (uint32)((OsclFloat)iCurrentTimeStamp + (OsclFloat)(numSamples * 1000) / iSettings.iSamplingFrequency);
         }
     }
     else  //WAV File
     {
-        iNextTimeStamp = iCurrentTimeStamp + PVWAV_MSEC_PER_BUFFER;
+        iCurrentTimeStamp += PVWAV_MSEC_PER_BUFFER;
     }
 
 
@@ -1191,10 +1318,10 @@ PVMFStatus PvmiMIOAviWavFile::DoRead()
     int32 err = 0;
 
     //process new data only if previous data has been send to MIO node.
-    if (!iWaitingOnClock)
+    if ((!iWaitingOnClock) && (iWriteState == EWriteOK))
     {
         // Create new media data buffer
-        OSCL_TRY(err, data = (uint8*)iMediaBufferMemPool->allocate(dataSize););
+        data = AllocateMemPool(iMediaBufferMemPool, dataSize, err);
 
         if (err)
         {
@@ -1210,181 +1337,165 @@ PVMFStatus PvmiMIOAviWavFile::DoRead()
             return PVMFSuccess;
         }
 
-        iData = NULL;
-        iDataSize = 0;
-        iTimeStamp = 0;
-
-#if PROFILING_ON
-        uint32 start = OsclTickCount::TickCount();
-#endif
-        //read media data
-        error = GetMediaData(data, dataSize, timeStamp);
-
-#if PROFILING_ON
-        uint32 stop = OsclTickCount::TickCount();
-        uint32 freadTime = OsclTickCount::TicksToMsec(stop - start);
-
-        if (error == PVMFSuccess)
+        if (iNoMemBufferData)//check added for ErrorHandling test case for no memory buffer
         {
-            if (iMaxDataSize < dataSize)
-            {
-                iMaxDataSize = dataSize;
-            }
-            if ((iMinDataSize > dataSize) || (0 == iMinDataSize))
-            {
-                iMinDataSize = dataSize;
-            }
-            if (iMaxFileReadTime < freadTime)
-            {
-                iMaxFileReadTime = freadTime;
-            }
-            if ((iMinFileReadTime > freadTime) || (0 == iMinFileReadTime))
-            {
-                iMinFileReadTime = freadTime;
-            }
+            iMediaBufferMemPool->deallocate(iData);
+            iData = NULL;
+            iDataSize = 0;
+            iNoMemBufferData = false;
         }
-#endif
-        if (error != PVMFSuccess)
+        else
         {
-            if (PVMFInfoEndOfData == error) //EOS Reached
+            iData = NULL;
+            iDataSize = 0;
+            iTimeStamp = 0;
+        }
+
+        bool senddata = false;
+
+
+        while (!senddata)
+        {
+
+#if PROFILING_ON
+            uint32 start = OsclTickCount::TickCount();
+#endif
+            //read media data
+            error = GetMediaData(data, dataSize, timeStamp);
+
+#if PROFILING_ON
+            uint32 stop = OsclTickCount::TickCount();
+            uint32 freadTime = OsclTickCount::TicksToMsec(stop - start);
+
+            if (error == PVMFSuccess)
             {
-                //free the allocated data buffer
-                iMediaBufferMemPool->deallocate(data);
-                data = NULL;
-
-                PvmiMediaXferHeader data_hdr;
-                data_hdr.seq_num = iDataEventCounter - 1;
-                data_hdr.timestamp = iNextTimeStamp;
-                data_hdr.flags = 0;
-                data_hdr.duration = 0;
-                data_hdr.stream_id = iSettings.iStreamNumber;
-                dataSize = 0;
-                //send EOS information to MIO Node
-                OSCL_TRY(error, writeAsyncID = iPeer->writeAsync(PVMI_MEDIAXFER_FMT_TYPE_NOTIFICATION, PVMI_MEDIAXFER_FMT_INDEX_END_OF_STREAM,
-                                               NULL, dataSize, data_hdr););
-
-                if (error)
+                if (iMaxDataSize < dataSize)
                 {
-                    if (iSettings.iRecModeSyncWithClock)
-                        CalcMicroSecPerDataEvent(dataSize);
-                    else
-                        iMicroSecondsPerDataEvent = 0;
+                    iMaxDataSize = dataSize;
+                }
+                if ((iMinDataSize > dataSize) || (0 == iMinDataSize))
+                {
+                    iMinDataSize = dataSize;
+                }
+                if (iMaxFileReadTime < freadTime)
+                {
+                    iMaxFileReadTime = freadTime;
+                }
+                if ((iMinFileReadTime > freadTime) || (0 == iMinFileReadTime))
+                {
+                    iMinFileReadTime = freadTime;
+                }
+            }
+#endif
+            if (error != PVMFSuccess)
+            {
+                if (PVMFInfoEndOfData == error) //EOS Reached
+                {
+                    //free the allocated data buffer
+                    iMediaBufferMemPool->deallocate(data);
+                    data = NULL;
 
-                    //some error occured, retry sending EOS next time.
-                    AddDataEventToQueue(iMicroSecondsPerDataEvent);
+                    PvmiMediaXferHeader data_hdr;
+                    data_hdr.seq_num = iDataEventCounter - 1;
+                    data_hdr.timestamp = timeStamp;
+                    data_hdr.flags = 0;
+                    data_hdr.duration = 0;
+                    data_hdr.stream_id = iSettings.iStreamNumber;
+                    dataSize = 0;
+                    //send EOS information to MIO Node
+                    error = WriteAsyncDataHdr(writeAsyncID, iPeer, dataSize, data_hdr, NULL, PVMI_MEDIAXFER_FMT_TYPE_NOTIFICATION, PVMI_MEDIAXFER_FMT_INDEX_END_OF_STREAM);
+
+                    if (error)
+                    {
+                        if (iSettings.iRecModeSyncWithClock)
+                            CalcMicroSecPerDataEvent(dataSize);
+                        else
+                            iMicroSecondsPerDataEvent = 0;
+
+                        //some error occured, retry sending EOS next time.
+                        AddDataEventToQueue(iMicroSecondsPerDataEvent);
+                        return PVMFSuccess;
+                    }
+                    iWriteState = EWriteOK;
+
+                    LOGDATATRAFFIC((0, "PvmiMIOAviWavFile::DoRead - EOS Sent:"
+                                    "StreamID=%d, TS=%d, SN=%d, MimeType=%s",
+                                    data_hdr.stream_id,  data_hdr.timestamp,
+                                    data_hdr.seq_num, iSettings.iMimeType.get_cstr()));
+                    //EOS message was sent so PAUSE MIO Component.
+                    AddCmdToQueue(CMD_PAUSE, NULL);
+
+                    return PVMFSuccess;
+                }
+                else
+                {
+                    //free the allocated data buffer
+                    iMediaBufferMemPool->deallocate(data);
+                    data = NULL;
+                    AddCmdToQueue(CMD_STOP, NULL);
+                    return error;
+                }
+            }
+
+#if PROFILING_ON
+            iTotalFrames++;
+#endif
+            if (iSettings.iRecModeSyncWithClock)
+            {
+
+                uint32 clockTime32 = 0;
+                uint32 clockTimeBase32 = 0;
+                bool overflowFlag = false;
+
+                if (iMioClock->GetState() != PVMFMediaClock::RUNNING)
+                {
+                    iMioClock->SetStartTime32(timeStamp, PVMF_MEDIA_CLOCK_MSEC, overflowFlag);
+                    iMioClock->Start();
+                }
+
+
+                //Compare with Clock time to pass data forward.
+                iMioClock->GetCurrentTime32(clockTime32, overflowFlag, PVMF_MEDIA_CLOCK_MSEC, clockTimeBase32);
+
+                if (timeStamp > clockTime32)
+                {
+                    uint32 delta = timeStamp - clockTime32;
+                    //store data info to be send forward in next callback.
+                    iData = data;
+                    iDataSize = dataSize;
+                    iTimeStamp = timeStamp;
+                    AddDataEventToQueue(delta * 1000); //delta in microseconds.
+                    iWaitingOnClock = true;
+#if PROFILING_ON
+                    iNumEarlyFrames++;
+#endif
                     return PVMFSuccess;
                 }
 
-                //EOS message was sent so PAUSE MIO Component.
-                AddCmdToQueue(CMD_PAUSE, NULL);
-
-                return PVMFSuccess;
-            }
-            else
-            {
-                //free the allocated data buffer
-                iMediaBufferMemPool->deallocate(data);
-                data = NULL;
-                AddCmdToQueue(CMD_STOP, NULL);
-                return error;
-            }
-        }
-
-#if PROFILING_ON
-        iTotalFrames++;
-#endif
-        timeStamp += iBaseTimeStamp;
-
-        if ((iBaseTimeStamp > 0) && timeStamp < iBaseTimeStamp)
-        {
-            //timestamp rollover. reset base timestamp
-            iBaseTimeStamp = 0;
-        }
-
-        iCurrentTimeStamp = timeStamp;
-
-        if (iSettings.iRecModeSyncWithClock)
-        {
-
-            uint64 clockTime64 = 0;
-            uint64 clockTimeBase64 = 0;
-            uint32 clockTime32 = 0;
-            uint64 adjustTime64 = 0;
-
-            if (iMioClock->GetState() != OsclClock::RUNNING)
-            {
-                iMioClock->SetStartTime32(timeStamp, OSCLCLOCK_MSEC);
-                iMioClock->Start();
-            }
-
-
-            //Compare with Clock time to pass data forward.
-            iMioClock->GetCurrentTime64(clockTime64, OSCLCLOCK_MSEC, clockTimeBase64);
-            clockTime32 = Oscl_Int64_Utils::get_uint64_lower32(clockTime64);
-
-            Oscl_Int64_Utils::set_uint64(adjustTime64, 0, iCurrentTimeStamp);
-
-            if (adjustTime64 > clockTime64)
-            {
-                uint32 delta = iCurrentTimeStamp - clockTime32;
-                //store data info to be send forward in next callback.
-                iData = data;
-                iDataSize = dataSize;
-                iTimeStamp = timeStamp;
-                AddDataEventToQueue(delta * 1000); //delta in microseconds.
-                iWaitingOnClock = true;
-#if PROFILING_ON
-                iNumEarlyFrames++;
-#endif
-                return PVMFSuccess;
-            }
-
-#if PROFILING_ON
-            if (adjustTime64 < clockTime64)
-            {
-                iNumLateFrames++;
-            }
-#endif
-
-        }	// 	if (iSettings.iRecModeSyncWithClock)
-
-        GetNextTimeStamp(dataSize);
-
-        if (iSettings.iNumLoops && (iCurrentTimeStamp == iNextTimeStamp))
-        {
-            //could be due to small data chunk in the end of the file.
-            //If looping, store this data chunk and read more data from file
-            uint8* newdata = data + dataSize;
-            uint32 newDataSize = iSettings.iDataBufferSize - dataSize;
-            uint32 numLoops = iSettings.iNumLoops;
-
-            //read more data
-            error = GetMediaData(newdata, newDataSize, timeStamp);
-
-            if (PVMFSuccess == error)
-            {
-                dataSize += newDataSize;
-                if (numLoops > iSettings.iNumLoops) //received EOS recalculate base timestamp
+                if (timeStamp < clockTime32)
                 {
-                    GetNextTimeStamp(dataSize);
-                    iBaseTimeStamp = iNextTimeStamp;
+#if PROFILING_ON
+                    iNumLateFrames++;
+#endif
+                    dataSize = iSettings.iDataBufferSize;
 
-                    //use the timestamp of last sample (in the end of file).
-                    timeStamp = iCurrentTimeStamp;
+                    if (dataSize <= 0)
+                    {
+                        return PVMFErrArgument;
+                    }
                 }
-            }
+
+                if (timeStamp == clockTime32)
+                {
+                    senddata = true;
+                }
+
+            }	// 	if (iSettings.iRecModeSyncWithClock)
             else
             {
-                //if read fails, do nothing here, send the original data
-                // and hope that we will be able to read more data next time.
-                // Set dummy timestamp for next sample.
-
-                iNextTimeStamp += 1;
+                senddata = true;
             }
-
-        }  //if (iSettings.iNumLoops && (iCurrentTimeStamp == iNextTimeStamp))
-
-
+        }   // while (!senddata)
     }	//	if (!iWaitingOnClock)
 
     iWaitingOnClock = false;
@@ -1394,40 +1505,50 @@ PVMFStatus PvmiMIOAviWavFile::DoRead()
         data = iData;
         dataSize = iDataSize;
         timeStamp = iTimeStamp;
+        iData = NULL;
     }
 
     // send data to Peer & store the id
     PvmiMediaXferHeader data_hdr;
     data_hdr.seq_num = iDataEventCounter - 1;
-    data_hdr.timestamp = iCurrentTimeStamp;
+    data_hdr.timestamp = timeStamp;
     data_hdr.flags = 0;
     data_hdr.duration = 0;
     data_hdr.stream_id = iSettings.iStreamNumber;
-
 
     if (!iPeer)
     {
         return PVMFSuccess;
     }
-
-    OSCL_TRY(err, writeAsyncID = iPeer->writeAsync(0, 0, data, dataSize, data_hdr););
+    err = WriteAsyncDataHdr(writeAsyncID, iPeer, dataSize, data_hdr, data, PVMI_MEDIAXFER_FMT_TYPE_DATA, 0);
     if (!err)
     {
+        LOGDATATRAFFIC((0, "PvmiMIOAviWavFile::DoRead:"
+                        "StreamID=%d, TS=%d, Size=%d, SN=%d, MimeType=%s",
+                        data_hdr.stream_id,  data_hdr.timestamp, dataSize,
+                        data_hdr.seq_num, iSettings.iMimeType.get_cstr()));
+
         // Save the id and data pointer on iSentMediaData queue for writeComplete call
         PvmiMIOAviWavFileMediaData sentData;
         sentData.iId = writeAsyncID;
         sentData.iData = data;
         iSentMediaData.push_back(sentData);
+        iMicroSecondsPerDataEvent = 0;
+        // Queue the next data event
+        AddDataEventToQueue(iMicroSecondsPerDataEvent);
+    }
+    else if (err == OsclErrBusy)
+    {
+        iData = data;
+        iDataSize = dataSize;
+        iTimeStamp = timeStamp;
+        iWriteState = EWriteBusy;
+        iNoMemBufferData = true;
     }
     else
     {
         iMediaBufferMemPool->deallocate(data);
     }
-
-
-    iMicroSecondsPerDataEvent = 0;
-    // Queue the next data event
-    AddDataEventToQueue(iMicroSecondsPerDataEvent);
 
     return PVMFSuccess;
 }
@@ -1435,40 +1556,31 @@ PVMFStatus PvmiMIOAviWavFile::DoRead()
 PVMFStatus PvmiMIOAviWavFile::CalcMicroSecPerDataEvent(uint32 aDataSize)
 {
     //calculate time for a buffer to fill
-    switch (iSettings.iMediaFormat)
+    if (iSettings.iMediaFormat == PVMF_MIME_YUV420)
     {
-            //case PVMF_YUV422:
-        case PVMF_YUV420:
-        {
-            //calculate time for a buffer to fill
-            iMilliSecondsPerDataEvent = (int32)(1000 / iSettings.iFrameRate);
+        //calculate time for a buffer to fill
+        iMilliSecondsPerDataEvent = (int32)(1000 / iSettings.iFrameRate);
 
-            iMicroSecondsPerDataEvent = (int32)(1000000 / iSettings.iFrameRate);
-        }
-        break;
-
-        case PVMF_RGB16:
-        case PVMF_RGB24:
-        {
-            //calculate time for a buffer to fill
-            iMilliSecondsPerDataEvent = (int32)(1000 / iSettings.iFrameRate);
-            iMicroSecondsPerDataEvent = (int32)(1000000 / iSettings.iFrameRate);
-        }
-        break;
-
-        case PVMF_PCM16:
-        case PVMF_PCM8:
-        {
-            OsclFloat chunkrate = (OsclFloat)((OsclFloat)iSettings.iByteRate / (OsclFloat)aDataSize);
-            iMilliSecondsPerDataEvent = (uint32)(1000 / chunkrate);
-            iMicroSecondsPerDataEvent = iMilliSecondsPerDataEvent * 1000;
-        }
-        break;
-
-        default:
-            return PVMFErrArgument;
-
-    } // end switch
+        iMicroSecondsPerDataEvent = (int32)(1000000 / iSettings.iFrameRate);
+    }
+    else if (iSettings.iMediaFormat == PVMF_MIME_RGB16 ||
+             iSettings.iMediaFormat == PVMF_MIME_RGB24)
+    {
+        //calculate time for a buffer to fill
+        iMilliSecondsPerDataEvent = (int32)(1000 / iSettings.iFrameRate);
+        iMicroSecondsPerDataEvent = (int32)(1000000 / iSettings.iFrameRate);
+    }
+    else if (iSettings.iMediaFormat == PVMF_MIME_PCM16 ||
+             iSettings.iMediaFormat == PVMF_MIME_PCM8)
+    {
+        OsclFloat chunkrate = (OsclFloat)((OsclFloat)iSettings.iByteRate / (OsclFloat)aDataSize);
+        iMilliSecondsPerDataEvent = (uint32)(1000 / chunkrate);
+        iMicroSecondsPerDataEvent = iMilliSecondsPerDataEvent * 1000;
+    }
+    else
+    {
+        return PVMFErrArgument;
+    }
 
     return PVMFSuccess;
 }
@@ -1517,6 +1629,7 @@ PVMFStatus PvmiMIOAviWavFile::AllocateKvp(PvmiKvp*& aKvp, PvmiKeyType aKey, int3
 ////////////////////////////////////////////////////////////////////////////
 PVMFStatus PvmiMIOAviWavFile::VerifyAndSetParameter(PvmiKvp* aKvp, bool aSetParam)
 {
+    OSCL_UNUSED_ARG(aSetParam);
     LOG_STACK_TRACE((0, "PvmiMIOAviWavFile::VerifyAndSetParameter: aKvp=0x%x, aSetParam=%d", aKvp, aSetParam));
 
     if (!aKvp)
@@ -1527,7 +1640,7 @@ PVMFStatus PvmiMIOAviWavFile::VerifyAndSetParameter(PvmiKvp* aKvp, bool aSetPara
 
     if (pv_mime_strcmp(aKvp->key, OUTPUT_FORMATS_VALTYPE) == 0)
     {
-        if (aKvp->value.uint32_value == iSettings.iMediaFormat)
+        if (aKvp->value.pChar_value == (char*)iSettings.iMediaFormat.getMIMEStrPtr())
         {
             return PVMFSuccess;
         }
@@ -1547,10 +1660,12 @@ void PvmiMIOAviWavFile::LogDiagnostics()
 {
 #if PROFILING_ON
     oDiagnosticsLogged = true;
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iDiagnosticsLogger, PVLOGMSG_DEBUG,
-                    (0, "PvmiMIOAviWavFile Stats: Stream :%s\n",
-                     (iPVAviFile->GetStreamMimeType(iSettings.iStreamNumber)).get_cstr()));
-
+    if (iPVAviFile)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iDiagnosticsLogger, PVLOGMSG_DEBUG,
+                        (0, "PvmiMIOAviWavFile Stats: Stream :%s\n",
+                         (iPVAviFile->GetStreamMimeType(iSettings.iStreamNumber)).get_cstr()));
+    }
     uint32 framerate = 0;
 
     if (iCurrentTimeStamp > 0)
@@ -1575,3 +1690,16 @@ void PvmiMIOAviWavFile::LogDiagnostics()
 #endif
 }
 
+uint8* PvmiMIOAviWavFile::AllocateMemPool(OsclMemPoolFixedChunkAllocator*& aMediaBufferMemPool, uint32 aDataSize, int32 &aErr)
+{
+    uint8* data = NULL;;
+    OSCL_TRY(aErr, data = (uint8*)aMediaBufferMemPool->allocate(aDataSize););
+    return data;
+}
+
+int32 PvmiMIOAviWavFile::WriteAsyncDataHdr(uint32& aWriteAsyncID, PvmiMediaTransfer*& aPeer, uint32& aBytesToRead, PvmiMediaXferHeader& aData_hdr, uint8* aData, uint32 aFormatType, uint32 aFormatIndex)
+{
+    int err = 0;
+    OSCL_TRY(err, aWriteAsyncID = aPeer->writeAsync(aFormatType, aFormatIndex, aData, aBytesToRead, aData_hdr););
+    return err;
+}

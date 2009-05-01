@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,9 +47,9 @@
  * This AO can be used across threads, i.e. the request
  * can be activated in one thread and completed in another.
  */
-class OsclActiveObject: public HeapBase
-            , public PVActiveBase
-            , public OsclActiveObj
+class OsclActiveObject:
+            public HeapBase,
+            public PVActiveBase
 {
     public:
         /**
@@ -97,7 +97,7 @@ class OsclActiveObject: public HeapBase
         /**
          * Set object ready for this AO,
          * additionally sets the request status to OSCL_REQUEST_PENDING.
-         * Will panic if the request is already readied,
+         * Will leave if the request is already readied,
          * or the execution object is not added to any scheduler,
          * or the calling thread context does not match
          * the scheduler thread.
@@ -120,7 +120,7 @@ class OsclActiveObject: public HeapBase
         /**
          * Complete the active request for the AO.
          * This API is thread-safe.
-         * If the request is not pending, this call will panic.
+         * If the request is not pending, this call will leave.
          * @param aStatus: request completion status.
          */
         OSCL_IMPORT_REF void PendComplete(int32 aStatus);
@@ -132,7 +132,7 @@ class OsclActiveObject: public HeapBase
 
         /**
          * Remove this AO from its scheduler.
-         * Will panic if the calling thread context does
+         * Will leave if the calling thread context does
          * not match the scheduling thread.
          * Cancels any readied request before removing.
          */
@@ -142,7 +142,7 @@ class OsclActiveObject: public HeapBase
         /**
          * Complete this AO's request immediately.
          * If the AO is already active, this will do nothing.
-         * Will panic if the AO is not acced to any scheduler,
+         * Will leave if the AO is not added to any scheduler,
          * or if the calling thread context does not match the
          * scheduling thread.
          */
@@ -204,7 +204,6 @@ class OsclActiveObject: public HeapBase
  */
 class OsclTimerObject: public HeapBase
             , public PVActiveBase
-            , public OsclTimerBase
 {
     public:
         /**
@@ -227,7 +226,7 @@ class OsclTimerObject: public HeapBase
 
         /**
          * Remove this AO from its scheduler.
-         * Will panic if the calling thread context does
+         * Will leave if the calling thread context does
          * not match the scheduling thread.
          * Cancels any pending request before removing.
          */
@@ -241,7 +240,7 @@ class OsclTimerObject: public HeapBase
         * status OSCL_REQUEST_ERR_NONE.
         * Must be called from the same thread in which the
         * active object is scheduled.
-        * Will panic if the request is already readied, the object
+        * Will leave if the request is already readied, the object
         * is not added to any scheduler, or the calling thread
         * does not match the scheduling thread.
         * @param anInterval: timeout interval in microseconds.
@@ -260,7 +259,7 @@ class OsclTimerObject: public HeapBase
 
         /**
          * Set request ready for this AO.
-         * Will panic if the request is already readied,
+         * Will leave if the request is already readied,
          * or the exec object is not added to any scheduler,
          * or the calling thread context does not match
          * the scheduler thread.

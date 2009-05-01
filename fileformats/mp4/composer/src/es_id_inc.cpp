@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*********************************************************************************/
 /*
     This ESID_Inc Class contains information on the Elementary Stream that will
 	be replaced when streaming to a client.  The file format replaces the actual
@@ -27,6 +26,7 @@
 #include "es_id_inc.h"
 #include "atomutils.h"
 #include "a_atomdefs.h"
+
 
 // Alternate constructor
 PVA_FF_ES_ID_Inc::PVA_FF_ES_ID_Inc(uint32 trackid)

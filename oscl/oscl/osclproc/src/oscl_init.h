@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,9 +37,7 @@
 //For logging memory leaks, this module relies directly on fprintf to FILE.
 #include <stdio.h>
 
-class OsclLockBase;
 class Oscl_DefAlloc;
-class TPVErrorPanic;
 
 /**
 * Oscl Module selection and Init/Cleanup options.
@@ -54,7 +52,6 @@ class OsclSelect
                 , iOsclLogger(true)
                 , iOsclScheduler(true)
                 , iErrAlloc(NULL)
-                , iMemLock(NULL)
                 , iSchedulerAlloc(NULL)
                 , iSchedulerName(NULL)
                 , iSchedulerReserve(10)
@@ -64,7 +61,6 @@ class OsclSelect
 
         //this constructor is mainly for back-compatibility with the old OsclInit argument list.
         OsclSelect(Oscl_DefAlloc* erralloc
-                   , OsclLockBase* lock
                    , Oscl_DefAlloc* schedalloc
                    , const char*name
                    , int32 reserve = 10
@@ -76,7 +72,6 @@ class OsclSelect
                 , iOsclLogger(true)
                 , iOsclScheduler(true)
                 , iErrAlloc(erralloc)
-                , iMemLock(lock)
                 , iSchedulerAlloc(schedalloc)
                 , iSchedulerName(name)
                 , iSchedulerReserve(reserve)
@@ -91,9 +86,6 @@ class OsclSelect
         bool iOsclScheduler;    //Init/Cleanup OsclScheduler?
 
         Oscl_DefAlloc *iErrAlloc; //Allocator for OsclErrorTrap::Init
-
-        OsclLockBase*iMemLock; //Lock for OsclMem::Init
-
         Oscl_DefAlloc *iSchedulerAlloc; //Allocator for OsclScheduler::Init
         const char *iSchedulerName;     //Name for OsclScheduler::Init
         int32 iSchedulerReserve;        //Queue reserve for OsclScheduler::Init
@@ -114,8 +106,6 @@ class OsclInit
          *
          * @param err: (output) error code of any leave that occurs in
          *   initialization.
-         * @param panic: (output) will contain any panic that occurs
-         *   during initialization.
          *
          * @param config: (input param) optional set of initialization parameters.
          *   If null, then full initialization with default parameters will be performed.
@@ -123,7 +113,6 @@ class OsclInit
          */
         OSCL_IMPORT_REF static void Init(
             int32& aError
-            , TPVErrorPanic& aPanic
             , const OsclSelect *aSelect = NULL
         );
 
@@ -132,8 +121,6 @@ class OsclInit
          *
          * @param err: (output) error code of any leave that occurs in
          *   initialization.
-         * @param panic: (output) will contain any panic that occurs
-         *   during initialization.
          * @param config: (input param) optional set of initialization parameters.
          *   If null, then full initialization with default parameters will be performed.
          *   For proper cleanup, the parameters should match the ones used during
@@ -142,7 +129,6 @@ class OsclInit
          */
         OSCL_IMPORT_REF static void Cleanup(
             int32& aError
-            , TPVErrorPanic& aPanic
             , const OsclSelect *aSelect = NULL
         );
 };

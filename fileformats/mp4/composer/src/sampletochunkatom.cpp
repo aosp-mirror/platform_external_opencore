@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*********************************************************************************/
 /*
     This PVA_FF_SampleSizeAtom Class contains the sample count and a table giving the
     size of each sample.
@@ -196,7 +195,6 @@ PVA_FF_SampleToChunkAtom::isNewChunk(uint32 size, int32 index)
     {
         case MEDIA_TYPE_TEXT://added for timed text support
         case MEDIA_TYPE_AUDIO:
-        case MEDIA_TYPE_OBJECT_DESCRIPTOR:
         case MEDIA_TYPE_VISUAL:
         {
             // Checking actual data size - if current chunk size plus this sample
@@ -216,20 +214,7 @@ PVA_FF_SampleToChunkAtom::isNewChunk(uint32 size, int32 index)
             }
         }
         break;
-        case MEDIA_TYPE_CLOCK_REFERENCE: // TBA
-            break;
-        case MEDIA_TYPE_SCENE_DESCRIPTION:
-            // Sample fp an BIFS SceneDescriptor (or a BIFS Command)
-            break;
-        case MEDIA_TYPE_MPEG7: // TBA
-            break;
-        case MEDIA_TYPE_OBJECT_CONTENT_INFO: // TBA
-            break;
-        case MEDIA_TYPE_IPMP: // TBA
-            break;
-        case MEDIA_TYPE_MPEG_J: // TBA
-            break;
-        case MEDIA_TYPE_UNKNOWN: // TBA
+        case MEDIA_TYPE_UNKNOWN:
         default:
             break;
     }
@@ -263,8 +248,6 @@ PVA_FF_SampleToChunkAtom::replaceLastChunkEntry(uint32 chunk, uint32 samples, ui
     _pfirstChunkVec->push_back(chunk);
     _psamplesPerChunkVec->push_back(samples);
     _psampleDescriptionIndexVec->push_back(index);
-
-    //recomputeSize();
 }
 
 
@@ -303,6 +286,12 @@ PVA_FF_SampleToChunkAtom::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
 
     // Need to render in a 1-based index vector instead of a 0-based index array
     int32 ARRAY_OFFSET_1_BASE = 1;
+    if ((_pfirstChunkVec->size() < _entryCount) ||
+            (_psamplesPerChunkVec->size() < _entryCount) ||
+            (_psampleDescriptionIndexVec->size() < _entryCount))
+    {
+        return false;
+    }
     for (uint32 i = 0; i < _entryCount; i++)
     {
         if (!PVA_FF_AtomUtils::render32(fp, (*_pfirstChunkVec)[i] + ARRAY_OFFSET_1_BASE))
@@ -323,9 +312,6 @@ PVA_FF_SampleToChunkAtom::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
     return true;
 }
 
-
-
-
 void
 PVA_FF_SampleToChunkAtom::recomputeSize()
 {
@@ -342,4 +328,3 @@ PVA_FF_SampleToChunkAtom::recomputeSize()
         _pparent->recomputeSize();
     }
 }
-

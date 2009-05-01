@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -272,6 +272,32 @@ class PVMFCPMPluginFactory
         virtual void DestroyCPMPlugin(PVMFCPMPluginInterface*) = 0;
         virtual ~PVMFCPMPluginFactory() {}
 };
+
+/**
+ * Content Policy Manager Plugin Registry Populator interface for use
+ * with dynamic loading.
+ */
+class OSCL_String;
+class PVMFCPMPluginRegistryPopulator
+{
+    public:
+        /*
+        ** GetFactoryAndMimeString.  Called by CPM framework to retrieve the plugin factory and
+        **   plugin mimestring.  Note this will be called twice-- when creating the plugin and
+        **   again when destroying the plugin.
+        **
+        ** @param (out) aMimestring: the plugin mimestring
+        ** @return : factory pointer.
+        */
+        virtual PVMFCPMPluginFactory* GetFactoryAndMimeString(OSCL_String& aMimestring) = 0;
+        /*
+        ** ReleaseFactory.  Called by CPM framework to indicate that the the plugin factory
+        **   retrieved by prior calls to GetFactoryAndMimeString is no longer needed.
+        */
+        virtual void ReleaseFactory() = 0;
+};
+
+#define PVMF_CPM_PLUGIN_REGISTRY_POPULATOR_UUID OsclUuid(0x8c988150,0x9b1b,0x11dd,0xad,0x8b,0x08,0x00,0x20,0x0c,0x9a,0x66)
 
 #endif //PVMF_CPMPLUGIN_INTERFACE_H_INCLUDED
 

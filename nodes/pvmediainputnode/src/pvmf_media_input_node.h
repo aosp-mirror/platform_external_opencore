@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -182,6 +182,8 @@ class PvmfMediaInputNode : public OsclActiveObject,
 
         // PvmiMIOObserver implementation
         OSCL_IMPORT_REF void RequestCompleted(const PVMFCmdResp& aResponse);
+        OSCL_IMPORT_REF void ReportErrorEvent(PVMFEventType aEventType, PVInterface* aExtMsg = NULL);
+        OSCL_IMPORT_REF void ReportInfoEvent(PVMFEventType aEventType, PVInterface* aExtMsg = NULL);
 
         friend class PvmfMediaInputNodeOutPort;
 
@@ -218,6 +220,7 @@ class PvmfMediaInputNode : public OsclActiveObject,
             , EStart
             , EPause
             , EStop
+            , EReset
         } EMioRequest;
 
         PvmfMediaInputNode();
@@ -260,7 +263,6 @@ class PvmfMediaInputNode : public OsclActiveObject,
         void SetState(TPVMFNodeInterfaceState);
 
         bool PortQueuesEmpty();
-        void Assert(bool condition);
         void SendEndOfTrackCommand(const PvmiMediaXferHeader& data_header_info);
 
         // Node capability.
@@ -275,6 +277,7 @@ class PvmfMediaInputNode : public OsclActiveObject,
         PvmiMIOControl* iMediaIOControl;
         PvmiMIOSession iMediaIOSession;
         PvmiCapabilityAndConfig* iMediaIOConfig;
+        PVInterface* iMediaIOConfigPVI;
         enum
         {
             MIO_STATE_IDLE
@@ -303,6 +306,26 @@ class PvmfMediaInputNode : public OsclActiveObject,
 
         //logger
         PVLogger* iLogger;
+#ifdef _TEST_AE_ERROR_HANDLING
+        bool iErrorHandlingInitFailed;
+        bool iErrorHandlingStartFailed;
+        bool iErrorHandlingStopFailed;
+        bool iErrorCancelMioRequest;
+        bool iError_No_Memory;
+        bool iError_Out_Queue_Busy;
+        uint32 iErrorSendMioRequest;
+        uint32 iErrorNodeCmd;
+        uint32 iChunkCount;
+        int32 iErrorTrackID;
+        uint32 iTrackID;
+        typedef struct timeStamp_keytpe
+        {
+            uint8 mode;
+            uint32 duration;
+            uint32 track_no;
+        }TimeStamp_KSV;
+        TimeStamp_KSV iErrorTimeStamp;
+#endif
 };
 
 #endif // PVMF_MEDIA_INPUT_NODE_H_INCLUDED

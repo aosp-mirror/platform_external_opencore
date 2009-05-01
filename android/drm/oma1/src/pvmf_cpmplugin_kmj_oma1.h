@@ -713,7 +713,7 @@ PRIVATE:
     friend class PVMFCPMKmjPlugInOMA1LocalSyncAccessInterfaceImpl;
 };
 
-class PVMFCPMKmjPlugInOMA1LocalSyncAccessInterfaceImpl : public PVMFCPMPluginLocalSyncAccessInterface
+class PVMFCPMKmjPlugInOMA1LocalSyncAccessInterfaceImpl // : public PVMFCPMPluginLocalSyncAccessInterface
 {
 public:
     PVMFCPMKmjPlugInOMA1LocalSyncAccessInterfaceImpl(PVMFCPMKmjPlugInOMA1&c)

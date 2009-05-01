@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +61,10 @@ const uint32 OSCL_SINGLETON_ID_PAYLOADPARSER  =  6;
 const uint32 OSCL_SINGLETON_ID_CPM_PLUGIN     =  7;
 const uint32 OSCL_SINGLETON_ID_PVMFRECOGNIZER =  8;
 const uint32 OSCL_SINGLETON_ID_OSCLREGISTRY   =  9;
-const uint32 OSCL_SINGLETON_ID_LAST           = 10;
+const uint32 OSCL_SINGLETON_ID_OMX            = 10;
+const uint32 OSCL_SINGLETON_ID_OMXMASTERCORE  = 11;
+const uint32 OSCL_SINGLETON_ID_TICKCOUNT      = 12;
+const uint32 OSCL_SINGLETON_ID_LAST           = 13;
 
 
 class OsclSingletonRegistry
@@ -70,17 +73,38 @@ class OsclSingletonRegistry
         /*
         ** Get an entry
         ** @param ID: identifier
-        ** @param error (output) 0 for success or an error from TPVBasePanicEnum
+        ** @param error (output) 0 for success or an error from TPVBaseErrorEnum
         ** @returns: the entry value
         */
         OSCL_IMPORT_REF static OsclAny* getInstance(uint32 ID, int32 &error);
         /*
         ** Set an entry
         ** @param ID: identifier
-        ** @param error (output) 0 for success or an error from TPVBasePanicEnum
+        ** @param error (output) 0 for success or an error from TPVBaseErrorEnum
         ** @returns: the entry value
         */
         OSCL_IMPORT_REF static void registerInstance(OsclAny* ptr, uint32 ID, int32 &error);
+
+        /*
+        //These two APIs can be used to do "test and set" operations on a singleton.
+        //Be sure to always call both APIs to avoid deadlock.
+        */
+
+        /*
+        * Return the current value of the singleton and leave the singleton table locked
+        * on return.
+        * @param ID the singleton ID
+        ** @param error (output) 0 for success or an error from TPVBaseErrorEnum
+        * @returns the singleton value.
+        */
+        OSCL_IMPORT_REF static OsclAny* lockAndGetInstance(uint32 ID, int32& error);
+        /*
+        * Set the value of the singleton.  Assume the singleton table is locked on entry.
+        * @param ptr the singleton value
+        * @param ID the singleton ID
+        ** @param error (output) 0 for success or an error from TPVBaseErrorEnum
+        */
+        OSCL_IMPORT_REF static void registerInstanceAndUnlock(OsclAny* ptr, uint32 ID, int32& error);
 
     private:
         OsclSingletonRegistry()
@@ -102,9 +126,10 @@ class OsclSingletonRegistry
                     for (uint32 i = 0;i < OSCL_SINGLETON_ID_LAST;i++)
                         iSingletons[i] = NULL;
                 }
-                _OsclBasicLock iLock;
+                _OsclBasicLock iTableLock;
                 uint32 iRefCount;
                 OsclAny* iSingletons[OSCL_SINGLETON_ID_LAST];
+                _OsclBasicLock iSingletonLocks[OSCL_SINGLETON_ID_LAST];
         };
         //The singleton table is a global variable.
         static SingletonTable* iSingletonTable;
@@ -121,10 +146,13 @@ template < class T, uint32 ID, class Registry = OsclSingletonRegistry > class Os
 
     protected:
         T* _Ptr;
-        int32 _error;
 
     public:
-        OsclSingleton(): _Ptr(OSCL_STATIC_CAST(T*, Registry::getInstance(ID, _error))) {};
+        OsclSingleton()
+        {
+            int32 err;
+            _Ptr = OSCL_STATIC_CAST(T*, Registry::getInstance(ID, err));
+        }
 
         ~OsclSingleton() {};
 
@@ -161,7 +189,8 @@ template < class T, uint32 ID, class Registry = OsclSingletonRegistry > class Os
         */
         bool set()
         {
-            _Ptr = OSCL_STATIC_CAST(T*, Registry::getInstance(ID, _error));
+            int32 err;
+            _Ptr = OSCL_STATIC_CAST(T*, Registry::getInstance(ID, err));
             return (_Ptr ? true : false);
         }
 

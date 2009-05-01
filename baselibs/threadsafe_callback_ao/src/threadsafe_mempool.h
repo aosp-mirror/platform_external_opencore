@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,7 +99,7 @@ class ThreadSafeMemPoolFixedChunkAllocator: public OsclMemPoolFixedChunkAllocato
 
         /* copy constructor - declared protected to prevent usage of the default copy constructor */
         /* NOTE: This copy constructor should never be used */
-        OSCL_IMPORT_REF ThreadSafeMemPoolFixedChunkAllocator(const ThreadSafeMemPoolFixedChunkAllocator &alloc): OsclMemPoolFixedChunkAllocator(alloc) {};
+        ThreadSafeMemPoolFixedChunkAllocator(const ThreadSafeMemPoolFixedChunkAllocator &alloc): OsclMemPoolFixedChunkAllocator(alloc) {};
 
 
     protected:

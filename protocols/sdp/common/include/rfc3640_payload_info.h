@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,24 +15,6 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/* /////////////////////////////////////////////////////////////////////// */
-/*                                        																*/
-/*	=====================================================================	*/
-/*	File: rfc3640_payload_info.h													                        */
-/*	Description:															                            */
-/*																			                                  */
-/*																			                                  */
-/*	Rev:																	                                */
-/*	Created: 04/27/07														                          */
-/*	=====================================================================	*/
-/*																			                                  */
-/*	Revision History:														                          */
-/*																			                                  */
-/*	Rev:																	                                */
-/*	Date:																	                                */
-/*	Description:															                            */
-/*																			                                  */
-/* /////////////////////////////////////////////////////////////////////// */
 
 #ifndef RFC3640_PAYLOAD_INFO_H
 #define RFC3640_PAYLOAD_INFO_H

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,16 +17,15 @@
  */
 /*
 
- Pathname: ./src/fft_rx8.c
+ Pathname: fft_rx8.c
  Funtions: ps_fft_rx8
-
-     Date: 1/06/2005
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
 
 
 
+ Who:                       Date:
  Description:
 
 ------------------------------------------------------------------------------

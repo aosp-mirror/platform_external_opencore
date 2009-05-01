@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,8 @@
 #ifndef OSCL_SHARED_PTR_H_INCLUDED
 #include "oscl_shared_ptr.h"
 #endif
-#ifndef OSCL_CLOCK_H_INCLUDED
-#include "oscl_clock.h"
+#ifndef PVMF_MEDIA_CLOCK_H_INCLUDED
+#include "pvmf_media_clock.h"
 #endif
 #ifndef PV_UUID_H_INCLUDED
 #include "pv_uuid.h"
@@ -82,9 +82,9 @@ class PVMFDownloadProgressInterface : public PVInterface
         /**
          * Returns the download progress clock
          *
-         * @return OsclSharedPtr<OsclClock> - the shared pointer to the download progress clock.
+         * @return OsclSharedPtr<PVMFMediaClock> - the shared pointer to the download progress clock.
          */
-        virtual OsclSharedPtr<OsclClock> getDownloadProgressClock() = 0;
+        virtual OsclSharedPtr<PVMFMediaClock> getDownloadProgressClock() = 0;
 
         /**
          * Requests notification when playback can continue uninterrupted based on the

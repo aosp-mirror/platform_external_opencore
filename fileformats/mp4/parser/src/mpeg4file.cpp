@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,6 +95,7 @@ Mpeg4File::Mpeg4File(MP4_FF_FILE *fp,
     PV_MP4_FF_NEW(fp->auditCB, movieFragmentRandomAccessAtomVecType, (), _pMovieFragmentRandomAccessAtomVec);
     PV_MP4_FF_NEW(fp->auditCB, PVID3ParCom, (), _pID3Parser);
 
+
     iLogger = PVLogger::GetLoggerObject("mp4ffparser");
     iStateVarLogger = PVLogger::GetLoggerObject("mp4ffparser_mediasamplestats");
     iParsedDataLogger = PVLogger::GetLoggerObject("mp4ffparser_parseddata");
@@ -111,15 +112,7 @@ Mpeg4File::Mpeg4File(MP4_FF_FILE *fp,
     _oPVContent = false;
     _oPVContentDownloadable = false;
     _commonFilePtr = NULL;
-
-    OsclAny*ptr = oscl_malloc(sizeof(MP4_FF_FILE));
-    if (ptr == NULL)
-    {
-        _success = false;
-        _mp4ErrorCode = MEMORY_ALLOCATION_FAILED;
-        return;
-    }
-    _commonFilePtr = OSCL_PLACEMENT_NEW(ptr, MP4_FF_FILE(*fp));
+    _fileSize = fsize;
 
     int32 count = fileSize - filePointer;// -DEFAULT_ATOM_SIZE;
 
@@ -216,6 +209,8 @@ Mpeg4File::Mpeg4File(MP4_FF_FILE *fp,
                 atomSize -= DEFAULT_ATOM_SIZE;
                 AtomUtils::seekFromCurrPos(fp, atomSize);
             }
+
+
         }
         else if (atomType == FILE_TYPE_ATOM)
         {
@@ -327,9 +322,10 @@ Mpeg4File::Mpeg4File(MP4_FF_FILE *fp,
             }
             else
             {
-                //multiple "ftyp" atom not allowed.
-                _mp4ErrorCode = DUPLICATE_FILE_TYPE_ATOMS;
-                break;
+                //multiple "ftyp" atom not allowed.skipping
+                count -= atomSize;
+                atomSize -= DEFAULT_ATOM_SIZE;
+                AtomUtils::seekFromCurrPos(fp, atomSize);
             }
         }
         else if (atomType == MOVIE_ATOM)
@@ -360,6 +356,7 @@ Mpeg4File::Mpeg4File(MP4_FF_FILE *fp,
                 _isMovieFragmentsPresent = _pmovieAtom->IsMovieFragmentPresent();
                 populateTrackDurationVec();
                 _pTrackExtendsAtomVec = _pmovieAtom->getTrackExtendsAtomVec();
+
                 if (_isMovieFragmentsPresent)
                 {
                     atomSize -= DEFAULT_ATOM_SIZE;
@@ -394,6 +391,8 @@ Mpeg4File::Mpeg4File(MP4_FF_FILE *fp,
                     //we are done parsing the moov atom
                     break;
                 }
+
+
             }
             else
             { //after the change above, we will never hit here.
@@ -459,11 +458,6 @@ Mpeg4File::Mpeg4File(MP4_FF_FILE *fp,
         }
         else
         {
-            //Populate the title vector with all the title metadata values.
-            if (!populateMetadataVectors())
-            {
-                PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "Mpeg4File::populateTitleVector() Failed"));
-            }
             // CHECK IF THERE ARE ANY VALID MEDIA TRACKS IN THE FILE
             int32 numMediaTracks = getNumTracks();
             if (numMediaTracks == 0)
@@ -544,6 +538,7 @@ Mpeg4File::Mpeg4File(MP4_FF_FILE *fp,
         }
     }
 
+
     // Check for any atoms that may have read past the EOF that were not
     // already caught by any earlier error handling
 
@@ -559,6 +554,12 @@ Mpeg4File::Mpeg4File(MP4_FF_FILE *fp,
     {
         parseID3Header(fp);
     }
+    //Populate the title vector with all the title metadata values.
+    if (!populateMetadataVectors())
+    {
+        PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "Mpeg4File::populateTitleVector() Failed"));
+    }
+
 }
 
 
@@ -591,6 +592,20 @@ uint32 Mpeg4File::getNumTitle()
     {
         numTitle++;
     }
+    PvmiKvpSharedPtrVector framevector;
+    GetID3MetaData(framevector);
+    uint32 num_frames = framevector.size();
+    for (uint32 i = 0; i < num_frames; i++)
+    {
+        if (framevector.size() > 0)
+        {
+            if (oscl_strstr(framevector[i]->key, "title") != 0)
+            {
+                numTitle++;
+                break;
+            }
+        }
+    }
     return numTitle;
 }
 
@@ -599,8 +614,8 @@ PVMFStatus Mpeg4File::populateTitleVector()
 {
     int32 leavecode = 0, leavecode1 = 0, leavecode2 = 0;
     int32 numTitle = getNumTitle();
-    OSCL_TRY(leavecode, titleValues.reserve(numTitle));
-    OSCL_TRY(leavecode1, iTitleLangCode.reserve(numTitle));
+    ReserveMemoryForValuesVector(titleValues, numTitle, leavecode);
+    ReserveMemoryForLangCodeVector(iTitleLangCode, numTitle, leavecode1);
     OSCL_TRY(leavecode2, iTitleCharType.reserve(numTitle));
     MP4FFParserOriginalCharEnc charType = ORIGINAL_CHAR_TYPE_UNKNOWN;
     if (leavecode != 0 || leavecode1 != 0 || leavecode2 != 0)
@@ -634,6 +649,25 @@ PVMFStatus Mpeg4File::populateTitleVector()
         titleValues.push_front(valuestring);
         iTitleLangCode.push_front(0);
         iTitleCharType.push_front(ORIGINAL_CHAR_TYPE_UNKNOWN);
+    }
+    PvmiKvpSharedPtrVector framevector;
+    GetID3MetaData(framevector);
+    uint32 num_frames = framevector.size();
+    for (uint32 i = 0; i < num_frames; i++)
+    {
+        if (framevector.size() > 0)
+        {
+            if (oscl_strstr(framevector[i]->key, "title") != 0)
+            {
+                uint32 len = oscl_strlen(framevector[i]->value.pChar_value);
+                oscl_memset(_id3v1Title, 0, ID3V1_STR_MAX_SIZE);
+                oscl_UTF8ToUnicode(framevector[i]->value.pChar_value, len, _id3v1Title, len*2 + 2);
+                titleValues.push_front(_id3v1Title);
+                iTitleLangCode.push_front(0);
+                iTitleCharType.push_front(ORIGINAL_CHAR_TYPE_UNKNOWN);
+                break;
+            }
+        }
     }
     return PVMFSuccess;
 }
@@ -672,8 +706,8 @@ PVMFStatus Mpeg4File::populateAuthorVector()
 {
     int32 leavecode = 0, leavecode1 = 0, leavecode2 = 0;
     int32 numAuthor = getNumAuthor();
-    OSCL_TRY(leavecode, authorValues.reserve(numAuthor));
-    OSCL_TRY(leavecode1, iAuthorLangCode.reserve(numAuthor));
+    ReserveMemoryForValuesVector(authorValues, numAuthor, leavecode);
+    ReserveMemoryForLangCodeVector(iAuthorLangCode, numAuthor, leavecode1);
     OSCL_TRY(leavecode2, iAuthorCharType.reserve(numAuthor));
     MP4FFParserOriginalCharEnc charType = ORIGINAL_CHAR_TYPE_UNKNOWN;
     if (leavecode != 0 || leavecode1 != 0 || leavecode2 != 0)
@@ -720,11 +754,24 @@ PVMFStatus Mpeg4File::getAuthor(uint32 index, OSCL_wString& aVal, uint16& aLangC
 uint32 Mpeg4File::getNumAlbum()
 {
     uint32 numAlbum = 0;
-    MP4FFParserOriginalCharEnc chartype = ORIGINAL_CHAR_TYPE_UNKNOWN;
     numAlbum = getNumAssetInfoAlbumAtoms();
     if (getITunesAlbum().get_size() > 0)
     {
         numAlbum++;
+    }
+    PvmiKvpSharedPtrVector framevector;
+    GetID3MetaData(framevector);
+    uint32 num_frames = framevector.size();
+    for (uint32 i = 0; i < num_frames; i++)
+    {
+        if (framevector.size() > 0)
+        {
+            if (oscl_strstr(framevector[i]->key, "album") != 0)
+            {
+                numAlbum++;
+                break;
+            }
+        }
     }
     return numAlbum;
 }
@@ -734,8 +781,8 @@ PVMFStatus Mpeg4File::populateAlbumVector()
 {
     int32 leavecode = 0, leavecode1 = 0, leavecode2 = 0;
     int32 numAlbum = getNumAlbum();
-    OSCL_TRY(leavecode, albumValues.reserve(numAlbum));
-    OSCL_TRY(leavecode1, iAlbumLangCode.reserve(numAlbum));
+    ReserveMemoryForValuesVector(albumValues, numAlbum, leavecode);
+    ReserveMemoryForLangCodeVector(iAlbumLangCode, numAlbum, leavecode1);
     OSCL_TRY(leavecode2, iAlbumCharType.reserve(numAlbum));
     MP4FFParserOriginalCharEnc charType = ORIGINAL_CHAR_TYPE_UNKNOWN;
     if (leavecode != 0 || leavecode1 != 0 || leavecode2 != 0)
@@ -760,6 +807,26 @@ PVMFStatus Mpeg4File::populateAlbumVector()
         iAlbumLangCode.push_front(0);
         iAlbumCharType.push_front(ORIGINAL_CHAR_TYPE_UNKNOWN);
     }
+    PvmiKvpSharedPtrVector framevector;
+    GetID3MetaData(framevector);
+    uint32 num_frames = framevector.size();
+    for (uint32 i = 0; i < num_frames; i++)
+    {
+        if (framevector.size() > 0)
+        {
+            if (oscl_strstr(framevector[i]->key, "album") != 0)
+            {
+                uint32 len = oscl_strlen(framevector[i]->value.pChar_value);
+                oscl_memset(_id3v1Album, 0, ID3V1_STR_MAX_SIZE);
+                oscl_UTF8ToUnicode(framevector[i]->value.pChar_value, len, _id3v1Album, len*2 + 2);
+                albumValues.push_front(_id3v1Album);
+                iAlbumLangCode.push_front(0);
+                iAlbumCharType.push_front(ORIGINAL_CHAR_TYPE_UNKNOWN);
+                break;
+            }
+        }
+    }
+
     return PVMFSuccess;
 }
 
@@ -782,11 +849,30 @@ PVMFStatus Mpeg4File::getAlbum(uint32 index, OSCL_wString& aVal, uint16& aLangCo
 uint32 Mpeg4File::getNumArtist()
 {
     uint32 numArtist = 0;
-    MP4FFParserOriginalCharEnc chartype = ORIGINAL_CHAR_TYPE_UNKNOWN;
     numArtist = getNumAssetInfoPerformerAtoms();
+
     if (getITunesArtist().get_size() > 0)
     {
         numArtist++;
+    }
+    if (getITunesAlbumArtist().get_size() > 0) //AlbumArtist
+    {
+        numArtist++;
+    }
+
+    PvmiKvpSharedPtrVector framevector;
+    GetID3MetaData(framevector);
+    uint32 num_frames = framevector.size();
+    for (uint32 i = 0; i < num_frames; i++)
+    {
+        if (framevector.size() > 0)
+        {
+            if (oscl_strstr(framevector[i]->key, "artist") != 0)
+            {
+                numArtist++;
+                break;
+            }
+        }
     }
     return numArtist;
 }
@@ -797,8 +883,8 @@ PVMFStatus Mpeg4File::populateArtistVector()
 {
     int32 leavecode = 0, leavecode1 = 0, leavecode2 = 0;
     int32 numArtist = getNumArtist();
-    OSCL_TRY(leavecode, artistValues.reserve(numArtist));
-    OSCL_TRY(leavecode1, iArtistLangCode.reserve(numArtist));
+    ReserveMemoryForValuesVector(artistValues, numArtist, leavecode);
+    ReserveMemoryForLangCodeVector(iArtistLangCode, numArtist, leavecode1);
     OSCL_TRY(leavecode2, iArtistCharType.reserve(numArtist));
     MP4FFParserOriginalCharEnc charType = ORIGINAL_CHAR_TYPE_UNKNOWN;
     if (leavecode != 0 || leavecode1 != 0 || leavecode2 != 0)
@@ -823,6 +909,32 @@ PVMFStatus Mpeg4File::populateArtistVector()
         iArtistLangCode.push_front(0);
         iArtistCharType.push_front(ORIGINAL_CHAR_TYPE_UNKNOWN);
     }
+    if (getITunesAlbumArtist().get_size() > 0) //AlbumArtist
+    {
+        OSCL_wHeapString<OsclMemAllocator> valuestring = getITunesAlbumArtist();
+        artistValues.push_front(valuestring);
+        iArtistLangCode.push_front(0);
+        iArtistCharType.push_front(ORIGINAL_CHAR_TYPE_UNKNOWN);
+    }
+    PvmiKvpSharedPtrVector framevector;
+    GetID3MetaData(framevector);
+    uint32 num_frames = framevector.size();
+    for (uint32 i = 0; i < num_frames; i++)
+    {
+        if (framevector.size() > 0)
+        {
+            if (oscl_strstr(framevector[i]->key, "artist") != 0)
+            {
+                uint32 len = oscl_strlen(framevector[i]->value.pChar_value);
+                oscl_memset(_id3v1Artist, 0, ID3V1_STR_MAX_SIZE);
+                oscl_UTF8ToUnicode(framevector[i]->value.pChar_value, len, _id3v1Artist, len*2 + 2);
+                artistValues.push_front(_id3v1Artist);
+                iArtistLangCode.push_front(0);
+                iArtistCharType.push_front(ORIGINAL_CHAR_TYPE_UNKNOWN);
+                break;
+            }
+        }
+    }
     return PVMFSuccess;
 }
 
@@ -845,8 +957,8 @@ PVMFStatus Mpeg4File::getArtist(uint32 index, OSCL_wString& aVal, uint16& aLangC
 uint32 Mpeg4File::getNumGenre()
 {
     uint32 numGenre = 0;
-    MP4FFParserOriginalCharEnc chartype = ORIGINAL_CHAR_TYPE_UNKNOWN;
     numGenre = getNumAssetInfoGenreAtoms();
+
     if (getITunesGnreString().get_size() > 0)
     {
         numGenre++;
@@ -863,8 +975,8 @@ PVMFStatus Mpeg4File::populateGenreVector()
 {
     int32 leavecode = 0, leavecode1 = 0, leavecode2 = 0;
     int32 numGenre = getNumGenre();
-    OSCL_TRY(leavecode, genreValues.reserve(numGenre));
-    OSCL_TRY(leavecode1, iGenreLangCode.reserve(numGenre));
+    ReserveMemoryForValuesVector(genreValues, numGenre, leavecode);
+    ReserveMemoryForLangCodeVector(iGenreLangCode, numGenre, leavecode1);
     OSCL_TRY(leavecode2, iGenreCharType.reserve(numGenre));
     MP4FFParserOriginalCharEnc charType = ORIGINAL_CHAR_TYPE_UNKNOWN;
     if (leavecode != 0 || leavecode1 != 0 || leavecode2 != 0)
@@ -931,8 +1043,8 @@ PVMFStatus Mpeg4File::populateCopyrightVector()
 {
     int32 leavecode = 0, leavecode1 = 0, leavecode2 = 0;
     int32 numCopyright = getNumCopyright();
-    OSCL_TRY(leavecode, copyrightValues.reserve(numCopyright));
-    OSCL_TRY(leavecode1, iCopyrightLangCode.reserve(numCopyright));
+    ReserveMemoryForValuesVector(copyrightValues, numCopyright, leavecode);
+    ReserveMemoryForLangCodeVector(iCopyrightLangCode, numCopyright, leavecode1);
     OSCL_TRY(leavecode2, iCopyrightCharType.reserve(numCopyright));
     MP4FFParserOriginalCharEnc charType = ORIGINAL_CHAR_TYPE_UNKNOWN;
     if (leavecode != 0 || leavecode1 != 0 || leavecode2 != 0)
@@ -987,13 +1099,27 @@ PVMFStatus Mpeg4File::getCopyright(uint32 index, OSCL_wString& aVal, uint16& aLa
 uint32 Mpeg4File::getNumComment()
 {
     uint32 numComment = 0;
-    MP4FFParserOriginalCharEnc chartype = ORIGINAL_CHAR_TYPE_UNKNOWN;
 
 
     if (getITunesComment().get_size() > 0)
     {
         numComment++;
     }
+    PvmiKvpSharedPtrVector framevector;
+    GetID3MetaData(framevector);
+    uint32 num_frames = framevector.size();
+    for (uint32 i = 0; i < num_frames; i++)
+    {
+        if (framevector.size() > 0)
+        {
+            if (oscl_strstr(framevector[i]->key, "comment") != 0)
+            {
+                numComment++;
+                break;
+            }
+        }
+    }
+
     return numComment;
 }
 
@@ -1003,10 +1129,9 @@ PVMFStatus Mpeg4File::populateCommentVector()
 {
     int32 leavecode = 0, leavecode1 = 0, leavecode2 = 0;
     int32 numComment = getNumComment();
-    OSCL_TRY(leavecode, commentValues.reserve(numComment));
-    OSCL_TRY(leavecode1, iCommentLangCode.reserve(numComment));
+    ReserveMemoryForValuesVector(commentValues, numComment, leavecode);
+    ReserveMemoryForLangCodeVector(iCommentLangCode, numComment, leavecode1);
     OSCL_TRY(leavecode2, iCommentCharType.reserve(numComment));
-    MP4FFParserOriginalCharEnc charType = ORIGINAL_CHAR_TYPE_UNKNOWN;
     if (leavecode != 0 || leavecode1 != 0 || leavecode2 != 0)
     {
         return PVMFFailure;
@@ -1019,6 +1144,26 @@ PVMFStatus Mpeg4File::populateCommentVector()
         iCommentLangCode.push_front(0);
         iCommentCharType.push_front(ORIGINAL_CHAR_TYPE_UNKNOWN);
     }
+    PvmiKvpSharedPtrVector framevector;
+    GetID3MetaData(framevector);
+    uint32 num_frames = framevector.size();
+    for (uint32 i = 0; i < num_frames; i++)
+    {
+        if (framevector.size() > 0)
+        {
+            if (oscl_strstr(framevector[i]->key, "comment") != 0)
+            {
+                uint32 len = oscl_strlen(framevector[i]->value.pChar_value);
+                oscl_memset(_id3v1Comment, 0, ID3V1_STR_MAX_SIZE);
+                oscl_UTF8ToUnicode(framevector[i]->value.pChar_value, len, _id3v1Comment, len*2 + 2);
+                commentValues.push_front(_id3v1Comment);
+                iCommentLangCode.push_front(0);
+                iCommentCharType.push_front(ORIGINAL_CHAR_TYPE_UNKNOWN);
+                break;
+            }
+        }
+    }
+
     return PVMFSuccess;
 }
 
@@ -1052,6 +1197,7 @@ uint32 Mpeg4File::getNumDescription()
     {
         numDescription++;
     }
+
     return numDescription;
 }
 
@@ -1061,8 +1207,8 @@ PVMFStatus Mpeg4File::populateDescriptionVector()
 {
     int32 leavecode = 0, leavecode1 = 0, leavecode2 = 0;
     int32 numDescription = getNumDescription();
-    OSCL_TRY(leavecode, descriptionValues.reserve(numDescription));
-    OSCL_TRY(leavecode1, iDescriptionLangCode.reserve(numDescription));
+    ReserveMemoryForValuesVector(descriptionValues, numDescription, leavecode);
+    ReserveMemoryForLangCodeVector(iDescriptionLangCode, numDescription, leavecode1);
     OSCL_TRY(leavecode2, iDescriptionCharType.reserve(numDescription));
     MP4FFParserOriginalCharEnc charType = ORIGINAL_CHAR_TYPE_UNKNOWN;
     if (leavecode != 0 || leavecode1 != 0 || leavecode2 != 0)
@@ -1087,6 +1233,7 @@ PVMFStatus Mpeg4File::populateDescriptionVector()
         iDescriptionLangCode.push_front(0);
         iDescriptionCharType.push_front(charType);
     }
+
     if (getITunesDescription().get_size() > 0)
     {
         OSCL_wHeapString<OsclMemAllocator> valuestring = getITunesDescription();
@@ -1094,6 +1241,7 @@ PVMFStatus Mpeg4File::populateDescriptionVector()
         iDescriptionLangCode.push_front(0);
         iDescriptionCharType.push_front(ORIGINAL_CHAR_TYPE_UNKNOWN);
     }
+
     return PVMFSuccess;
 }
 
@@ -1134,8 +1282,8 @@ PVMFStatus Mpeg4File::populateRatingVector()
 {
     int32 leavecode = 0, leavecode1 = 0, leavecode2 = 0;
     int32 numRating = getNumRating();
-    OSCL_TRY(leavecode, ratingValues.reserve(numRating));
-    OSCL_TRY(leavecode1, iRatingLangCode.reserve(numRating));
+    ReserveMemoryForValuesVector(ratingValues, numRating, leavecode);
+    ReserveMemoryForLangCodeVector(iRatingLangCode, numRating, leavecode1);
     OSCL_TRY(leavecode2, iRatingCharType.reserve(numRating));
     MP4FFParserOriginalCharEnc charType = ORIGINAL_CHAR_TYPE_UNKNOWN;
     if (leavecode != 0 || leavecode1 != 0 || leavecode2 != 0)
@@ -1190,6 +1338,21 @@ uint32 Mpeg4File::getNumYear()
     {
         numYear++;
     }
+
+    PvmiKvpSharedPtrVector framevector;
+    GetID3MetaData(framevector);
+    uint32 num_frames = framevector.size();
+    for (uint32 i = 0; i < num_frames; i++)
+    {
+        if (framevector.size() > 0)
+        {
+            if (oscl_strstr(framevector[i]->key, "year") != 0)
+            {
+                numYear++;
+                break;
+            }
+        }
+    }
     return numYear;
 }
 
@@ -1223,6 +1386,22 @@ PVMFStatus Mpeg4File::populateYearVector()
         i = PV_atoi(valuestring, 'd', value);
         yearValues.push_front(value);
     }
+    PvmiKvpSharedPtrVector framevector;
+    GetID3MetaData(framevector);
+    uint32 num_frames = framevector.size();
+    for (uint32 i = 0; i < num_frames; i++)
+    {
+        if (framevector.size() > 0)
+        {
+            if (oscl_strstr(framevector[i]->key, "year") != 0)
+            {
+                PV_atoi(framevector[i]->value.pChar_value, 'd', _id3v1Year);
+                yearValues.push_front(_id3v1Year);
+                break;
+            }
+        }
+    }
+
     return PVMFSuccess;
 }
 
@@ -1231,7 +1410,7 @@ PVMFStatus Mpeg4File::getYear(uint32 index, uint32& aVal)
 {
     if (index < yearValues.size())
     {
-        aVal = NULL;
+        aVal = 0;
         aVal = yearValues[index];
 
         return PVMFSuccess;
@@ -1483,6 +1662,8 @@ Mpeg4File::~Mpeg4File()
 
     if (_pMoofOffsetVec != NULL)
         PV_MP4_FF_TEMPLATED_DELETE(NULL, movieFragmentOffsetVecType, Oscl_Vector, _pMoofOffsetVec);
+
+
     if (_pMfraOffsetAtom != NULL)
     {
         PV_MP4_FF_DELETE(NULL, MfraOffsetAtom, _pMfraOffsetAtom);
@@ -1510,16 +1691,12 @@ Mpeg4File::~Mpeg4File()
         PV_MP4_FF_DELETE(NULL, FileTypeAtom, _pFileTypeAtom);
     }
 
-    if (_commonFilePtr != NULL)
-    {
-        if (_commonFilePtr->IsOpen())
-        {
-            AtomUtils::CloseMP4File(_commonFilePtr);
-        }
-        oscl_free(_commonFilePtr);
-    }
     if (_movieFragmentFilePtr != NULL)
     {
+        if (_movieFragmentFilePtr->IsOpen())
+        {
+            AtomUtils::CloseMP4File(_movieFragmentFilePtr);
+        }
         oscl_free(_movieFragmentFilePtr);
     }
     if (_pID3Parser)
@@ -1536,7 +1713,7 @@ uint64 Mpeg4File::getMovieDuration() const
     uint32 id = 0;
     if (_isMovieFragmentsPresent)
     {
-        uint64 overallMovieDuration = _pmovieAtom->getMovieFragmentDuration();
+        overallMovieDuration = _pmovieAtom->getMovieFragmentDuration();
         if (Oscl_Int64_Utils::get_uint64_lower32(overallMovieDuration) != 0)
         {
             return overallMovieDuration;
@@ -1699,7 +1876,7 @@ uint64 Mpeg4File::getTrackDuration(uint32 id)
             if (!trackList)
                 return 0;	// malloc failed
             _pmovieAtom->getTrackWholeIDList(trackList);
-            uint64 prevtrackDuration = 0, trackduration = 0;
+            uint64 trackduration = 0;
             for (int32 i = 0; i < numTracks; i++)
             {
                 if (trackList[i] == id)
@@ -1769,7 +1946,7 @@ uint64 Mpeg4File::getTrackMediaDuration(uint32 id)
             if (!trackList)
                 return 0;	// malloc failed
             _pmovieAtom->getTrackWholeIDList(trackList);
-            uint32 prevtrackDuration = 0, trackduration = 0;
+            uint32 trackduration = 0;
             for (int32 i = 0; i < numTracks; i++)
             {
                 if (trackList[i] == id)
@@ -1814,6 +1991,31 @@ uint32 Mpeg4File::getTrackMediaTimescale(uint32 id)
     {
         // RETURN UNDEFINED VALUE
         return (0xFFFFFFFF);
+    }
+}
+
+uint16 Mpeg4File::getTrackLangCode(uint32 id)
+{
+
+    TrackAtom *trackAtom;
+    if (_pmovieAtom != NULL)
+    {
+        trackAtom = _pmovieAtom->getTrackForID(id);
+    }
+    else
+    {
+        // RETURN UNDEFINED VALUE
+        return (0xFFFF);
+    }
+
+    if (trackAtom != NULL)
+    {
+        return trackAtom->getLanguageCode();
+    }
+    else
+    {
+        // RETURN UNDEFINED VALUE
+        return (0xFFFF);
     }
 }
 
@@ -1936,53 +2138,18 @@ uint32 Mpeg4File::getTrackDecoderSpecificInfoSize(uint32 id)
 }
 
 
-OSCL_wHeapString<OsclMemAllocator> Mpeg4File::getTrackMIMEType(uint32 id) // Based on OTI value
+void Mpeg4File::getTrackMIMEType(uint32 id, OSCL_String& aMimeType) // Based on OTI value
 {
-    TrackAtom *trackAtom;
-
-    OSCL_wHeapString<OsclMemAllocator> unknown_oti(_STRLIT("UNKNOWN"));
+    TrackAtom *trackAtom = NULL;
 
     if (_pmovieAtom != NULL)
     {
         trackAtom =  _pmovieAtom->getTrackForID(id);
     }
-    else
-    {
-        return unknown_oti;
-    }
 
     if (trackAtom != NULL)
     {
-        return (trackAtom->getMIMEType());
-    }
-    else
-    {
-        return unknown_oti;
-    }
-}
-
-uint8  Mpeg4File::getTrackOTIType(uint32 id) // Based on OTI value
-{
-    TrackAtom *trackAtom;
-
-    if (_pmovieAtom != NULL)
-    {
-        trackAtom =  _pmovieAtom->getTrackForID(id);
-    }
-    else
-    {
-        // RETURN SOME UNDEFINED VALUE
-        return (0xFF);
-    }
-
-    if (trackAtom != NULL)
-    {
-        return trackAtom->getObjectTypeIndication();
-    }
-    else
-    {
-        // RETURN SOME UNDEFINED VALUE
-        return (0xFF);
+        trackAtom->getMIMEType(aMimeType);
     }
 }
 
@@ -2101,7 +2268,6 @@ Mpeg4File::getMovieTimescale() const
 }
 
 /* ======================================================================== */
-// IMOTION_PSEUDO_STREAMING start
 bool
 Mpeg4File::IsMobileMP4()
 {
@@ -2152,7 +2318,6 @@ Mpeg4File::IsMobileMP4()
 
     return (oMMP4);
 }
-// IMOTION_PSEUDO_STREAMING end
 
 uint8
 Mpeg4File::parseBufferAndGetNumAMRFrames(uint8* buffer, uint32 size)
@@ -2247,24 +2412,28 @@ Mpeg4File::RequestReadCapacityNotification(PvmiDataStreamObserver& aObserver,
 {
     PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "Mpeg4File::RequestReadCapacityNotification In Offset %d", aFileOffset));
     uint32 capacity = 0;
-    uint32 currPos = (uint32)(AtomUtils::getCurrentFilePosition(_commonFilePtr));
-    if (aFileOffset > currPos)
+    if (_commonFilePtr != NULL)
     {
-        capacity = (aFileOffset - currPos);
-        bool retVal =
-            _commonFilePtr->_pvfile.RequestReadCapacityNotification(aObserver,
-                    capacity,
-                    aContextData);
-        if (retVal)
+        uint32 currPos = (uint32)(AtomUtils::getCurrentFilePosition(_commonFilePtr));
+        if (aFileOffset > currPos)
         {
-            return EVERYTHING_FINE;
+            capacity = (aFileOffset - currPos);
+            bool retVal =
+                _commonFilePtr->_pvfile.RequestReadCapacityNotification(aObserver,
+                        capacity,
+                        aContextData);
+            if (retVal)
+            {
+                return EVERYTHING_FINE;
+            }
+            else
+            {
+                return DEFAULT_ERROR;
+            }
         }
-        else
-        {
-            return DEFAULT_ERROR;
-        }
+        return SUFFICIENT_DATA_IN_FILE;
     }
-    return SUFFICIENT_DATA_IN_FILE;
+    return DEFAULT_ERROR;
 }
 
 
@@ -2274,6 +2443,11 @@ Mpeg4File::GetCurrentFileSize(uint32& aFileSize)
     aFileSize = 0;
     if (AtomUtils::getCurrentFileSize(_commonFilePtr, aFileSize) == true)
     {
+        return EVERYTHING_FINE;
+    }
+    if (_commonFilePtr == NULL && _fileSize != 0)
+    {
+        aFileSize = _fileSize;
         return EVERYTHING_FINE;
     }
     return DEFAULT_ERROR;
@@ -2320,7 +2494,7 @@ int32 Mpeg4File::getNextBundledAccessUnits(const uint32 trackID,
                     MovieFragmentAtom *pMovieFragmentAtom = (*_pMovieFragmentAtomVec)[movieFragmentIdx];
                     if (pMovieFragmentAtom != NULL)
                     {
-                        if (pMovieFragmentAtom->getSequenceNumber() == _movieFragmentSeqIdx[trackID])
+                        if ((uint32)pMovieFragmentAtom->getSequenceNumber() == _movieFragmentSeqIdx[trackID])
                         {
                             TrackFragmentAtom *trackfragment = pMovieFragmentAtom->getTrackFragmentforID(trackID);
                             if (trackfragment != NULL)
@@ -2572,6 +2746,7 @@ int32 Mpeg4File::getNextBundledAccessUnits(const uint32 trackID,
                                         atomSize -= DEFAULT_ATOM_SIZE;
                                         AtomUtils::seekFromCurrPos(_movieFragmentFilePtr, atomSize);
                                     }
+
                                 }
                             }
                             if (count <= 0)
@@ -2583,7 +2758,7 @@ int32 Mpeg4File::getNextBundledAccessUnits(const uint32 trackID,
                         }
                         else if (!moofParsingCompleted)
                         {
-                            if (currMoofNum != _pMovieFragmentAtom->getSequenceNumber())
+                            if (currMoofNum != (uint32) _pMovieFragmentAtom->getSequenceNumber())
                             {
                                 uint32 size = _pMovieFragmentAtomVec->size();
                                 _pMovieFragmentAtom = (*_pMovieFragmentAtomVec)[size - 1];
@@ -2979,7 +3154,7 @@ int32 Mpeg4File::getOffsetByTime(uint32 id, uint32 ts, int32* sampleFileOffset ,
                     }
                     else
                     {
-                        if (_pMovieFragmentAtom->getSequenceNumber() == _movieFragmentSeqIdx[id])
+                        if ((uint32)_pMovieFragmentAtom->getSequenceNumber() == _movieFragmentSeqIdx[id])
                         {
                             AtomUtils::seekFromStart(_movieFragmentFilePtr, moofPtrPos);
 
@@ -3499,7 +3674,7 @@ uint32 Mpeg4File::resetPlayback(uint32 time, uint16 numTracks, uint32 *trackList
                                         for (uint32 idx = prevMoofSeqNum; idx < currMoofNum - 1;idx++)
                                         {
                                             _pMovieFragmentAtomVec->push_back(NULL);
-                                            _pMoofOffsetVec->push_back(NULL);
+                                            _pMoofOffsetVec->push_back(0);
                                         }
                                         if (currMoofNum > i)
                                         {
@@ -3511,7 +3686,13 @@ uint32 Mpeg4File::resetPlayback(uint32 time, uint16 numTracks, uint32 *trackList
                                             (*_pMovieFragmentAtomVec)[currMoofNum-1] = _pMovieFragmentAtom;
                                             (*_pMoofOffsetVec)[currMoofNum-1] = moofStartOffset;
                                         }
+                                        else
+                                        {
+                                            PV_MP4_FF_DELETE(_movieFragmentFilePtr->auditCB, MovieFragmentAtom, _pMovieFragmentAtom);
+                                            _pMovieFragmentAtom = NULL;
+                                            break;
 
+                                        }
                                         _movieFragmentSeqIdx[trackID] = currMoofNum;
                                         _movieFragmentIdx[trackID] = currMoofNum - 1;
                                         _peekMovieFragmentIdx[trackID] = currMoofNum - 1;
@@ -3563,6 +3744,7 @@ uint32 Mpeg4File::resetPlayback(uint32 time, uint16 numTracks, uint32 *trackList
                                             atomSize -= DEFAULT_ATOM_SIZE;
                                             AtomUtils::seekFromCurrPos(_movieFragmentFilePtr, atomSize);
                                         }
+
                                     }
                                 }
                             }
@@ -3574,6 +3756,11 @@ uint32 Mpeg4File::resetPlayback(uint32 time, uint16 numTracks, uint32 *trackList
 
                         if (_pMovieFragmentAtom != NULL)
                             returnedTS = _pMovieFragmentAtom->resetPlayback(trackID, convertedTS, traf_number, trun_number, sample_num);
+                    }
+                    else
+                    {
+                        // Not a valid tfra entries, cannot reposition.
+                        return 0;
                     }
                 }
 
@@ -3697,7 +3884,8 @@ uint32 Mpeg4File::resetPlayback(uint32 time, uint16 numTracks, uint32 *trackList
                     }
                     else
                     {
-                        oMoofFound = false;
+                        // Not a valid tfra entries, cannot reposition.
+                        return 0;
                     }
                 }
                 if (_parsing_mode == 1 && !oMoofFound)
@@ -3769,7 +3957,7 @@ uint32 Mpeg4File::resetPlayback(uint32 time, uint16 numTracks, uint32 *trackList
                                 for (uint32 idx = prevMoofSeqNum; idx < currMoofNum - 1;idx++)
                                 {
                                     _pMovieFragmentAtomVec->push_back(NULL);
-                                    _pMoofOffsetVec->push_back(NULL);
+                                    _pMoofOffsetVec->push_back(0);
                                 }
 
                                 if (currMoofNum > i)
@@ -3782,7 +3970,13 @@ uint32 Mpeg4File::resetPlayback(uint32 time, uint16 numTracks, uint32 *trackList
                                     (*_pMovieFragmentAtomVec)[currMoofNum-1] = _pMovieFragmentAtom;
                                     (*_pMoofOffsetVec)[currMoofNum-1] = moofStartOffset;
                                 }
+                                else
+                                {
+                                    PV_MP4_FF_DELETE(_movieFragmentFilePtr->auditCB, MovieFragmentAtom, _pMovieFragmentAtom);
+                                    _pMovieFragmentAtom = NULL;
+                                    break;
 
+                                }
                                 if (oMfraFound)
                                 {
                                     currMoofNum = _pMovieFragmentAtom->getSequenceNumber();
@@ -3855,6 +4049,7 @@ uint32 Mpeg4File::resetPlayback(uint32 time, uint16 numTracks, uint32 *trackList
                                     atomSize -= DEFAULT_ATOM_SIZE;
                                     AtomUtils::seekFromCurrPos(_movieFragmentFilePtr, atomSize);
                                 }
+
                             }
                         }
                     }
@@ -3983,6 +4178,7 @@ int32 Mpeg4File::queryRepositionTime(uint32 time,
                     oMfraFound = true;
                     for (uint32 idx = 0; idx < _pMovieFragmentRandomAccessAtomVec->size();idx++)
                     {
+
                         MovieFragmentRandomAccessAtom *pMovieFragmentRandomAccessAtom = (*_pMovieFragmentRandomAccessAtomVec)[idx];
                         returnedTS = pMovieFragmentRandomAccessAtom->queryRepositionTime(trackID, convertedTS, bResetToIFrame,
                                      bBeforeRequestedTime);
@@ -4036,6 +4232,7 @@ int32 Mpeg4File::queryRepositionTime(uint32 time,
 
                 for (uint32 idx = 0; idx < _pMovieFragmentRandomAccessAtomVec->size();idx++)
                 {
+
                     MovieFragmentRandomAccessAtom *pMovieFragmentRandomAccessAtom = (*_pMovieFragmentRandomAccessAtomVec)[idx];
                     returnedTS = pMovieFragmentRandomAccessAtom->queryRepositionTime(trackID, convertedTS, bResetToIFrame,
                                  bBeforeRequestedTime);
@@ -4201,7 +4398,7 @@ int32 Mpeg4File::peekNextBundledAccessUnits(const uint32 trackID,
                     MovieFragmentAtom *pMovieFragmentAtom = (*_pMovieFragmentAtomVec)[peekMovieFragmentIdx];
                     if (pMovieFragmentAtom != NULL)
                     {
-                        if (pMovieFragmentAtom->getSequenceNumber() == _peekMovieFragmentSeqIdx[trackID])
+                        if ((uint32)pMovieFragmentAtom->getSequenceNumber() == _peekMovieFragmentSeqIdx[trackID])
                         {
                             TrackFragmentAtom *trackfragment = pMovieFragmentAtom->getTrackFragmentforID(trackID);
                             if (trackfragment != NULL)
@@ -4304,6 +4501,7 @@ int32 Mpeg4File::peekNextBundledAccessUnits(const uint32 trackID,
                                     _pMovieFragmentAtomVec->push_back(_pMovieFragmentAtom);
                                 }
                                 _ptrMoofEnds = AtomUtils::getCurrentFilePosition(_movieFragmentFilePtr);
+
                                 break;
                             }
                             else if (atomType == MEDIA_DATA_ATOM)
@@ -4407,6 +4605,7 @@ int32 Mpeg4File::peekNextBundledAccessUnits(const uint32 trackID,
                         }
                     }
                     _peekMovieFragmentIdx[trackID]++;
+
                 }
             }
         }
@@ -4455,6 +4654,7 @@ bool Mpeg4File::IsTFRAPresentForTrack(uint32 TrackId, bool oVideoAudioTextTrack)
     {
         for (uint32 idx = 0; idx < _pMovieFragmentRandomAccessAtomVec->size();idx++)
         {
+
             MovieFragmentRandomAccessAtom *pMovieFragmentRandomAccessAtom = (*_pMovieFragmentRandomAccessAtomVec)[idx];
             return pMovieFragmentRandomAccessAtom->IsTFRAPresentForTrack(TrackId, oVideoAudioTextTrack);
         }
@@ -4588,6 +4788,10 @@ uint32 Mpeg4File::repositionFromMoof(uint32 time, uint32 trackID)
 
     if (_isMovieFragmentsPresent)
     {
+        if (IsTFRAPresentForTrack(trackID, false) == false)
+        {
+            return 0;
+        }
         if (modifiedTimeStamp >= trackDuration)
         {
             return 1; //repos in moof
@@ -4611,3 +4815,67 @@ MP4_ERROR_CODE Mpeg4File::CancelNotificationSync()
         return DEFAULT_ERROR;
     }
 }
+
+bool Mpeg4File::CreateDataStreamSessionForExternalDownload(OSCL_wString& aFilename,
+        PVMFCPMPluginAccessInterfaceFactory* aCPMAccessFactory,
+        OsclFileHandle* aHandle,
+        Oscl_FileServer* aFileServSession)
+{
+    OsclAny*ptr = oscl_malloc(sizeof(MP4_FF_FILE));
+    if (ptr == NULL)
+    {
+        _success = false;
+        _mp4ErrorCode = MEMORY_ALLOCATION_FAILED;
+        return false;
+    }
+    _commonFilePtr = OSCL_PLACEMENT_NEW(ptr, MP4_FF_FILE());
+
+    if (_commonFilePtr != NULL)
+    {
+        _commonFilePtr->_fileServSession = aFileServSession;
+        _commonFilePtr->_pvfile.SetCPM(aCPMAccessFactory);
+        _commonFilePtr->_pvfile.SetFileHandle(aHandle);
+
+        if (AtomUtils::OpenMP4File(aFilename,
+                                   Oscl_File::MODE_READ | Oscl_File::MODE_BINARY,
+                                   _commonFilePtr) != 0)
+        {
+            return false;
+        }
+
+        uint32 fileSize;
+        AtomUtils::getCurrentFileSize(_commonFilePtr, fileSize);
+        _commonFilePtr->_fileSize = (int32)fileSize;
+    }
+    return true;
+}
+
+void Mpeg4File::DestroyDataStreamForExternalDownload()
+{
+    if (_commonFilePtr != NULL)
+    {
+        if (_commonFilePtr->IsOpen())
+        {
+            AtomUtils::CloseMP4File(_commonFilePtr);
+        }
+        oscl_free(_commonFilePtr);
+        _commonFilePtr = NULL;
+    }
+}
+
+//Below APIs are used to supress Warning
+void Mpeg4File::ReserveMemoryForLangCodeVector(Oscl_Vector<uint16, OsclMemAllocator> &iLangCode, int32 capacity, int32 &leavecode)
+{
+    leavecode = 0;
+    OSCL_TRY(leavecode, iLangCode.reserve(capacity));
+
+}
+
+void Mpeg4File::ReserveMemoryForValuesVector(Oscl_Vector<OSCL_wHeapString<OsclMemAllocator>, OsclMemAllocator> &iValues, int32 capacity, int32 &leavecode)
+{
+    leavecode = 0;
+    OSCL_TRY(leavecode, iValues.reserve(capacity));
+
+}
+
+

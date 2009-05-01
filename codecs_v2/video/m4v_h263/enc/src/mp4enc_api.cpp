@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -154,11 +154,11 @@ extern FILE *fec;
 /*																			*/
 /* ======================================================================== */
 
-Bool PVGetDefaultEncOption(VideoEncOptions *encOption, Int encUseCase)
+OSCL_EXPORT_REF Bool PVGetDefaultEncOption(VideoEncOptions *encOption, Int encUseCase)
 {
     VideoEncOptions defaultUseCase = {H263_MODE, profile_level_max_packet_size[SIMPLE_PROFILE_LEVEL0] >> 3,
-                                      SIMPLE_PROFILE_LEVEL0, PV_OFF, 1, 1000, 33, {144, 144}, {176, 176}, {15, 30}, {64000, 128000},
-                                      {10, 10}, {12, 12}, {0, 0}, CBR_1, 0.0, PV_OFF, 5, 0, PV_OFF, 16, PV_OFF
+                                      SIMPLE_PROFILE_LEVEL0, PV_OFF, 0, 1, 1000, 33, {144, 144}, {176, 176}, {15, 30}, {64000, 128000},
+                                      {10, 10}, {12, 12}, {0, 0}, CBR_1, 0.0, PV_OFF, -1, 0, PV_OFF, 16, PV_OFF, 0, PV_ON
                                      };
 
     OSCL_UNUSED_ARG(encUseCase); // unused for now. Later we can add more defaults setting and use this
@@ -183,7 +183,7 @@ Bool PVGetDefaultEncOption(VideoEncOptions *encOption, Int encUseCase)
 /*	Modified :	5/21/01, allocate only yChan and assign uChan & vChan	*/
 /*				12/12/05, add encoding option as input argument			*/
 /* ======================================================================== */
-Bool 	PVInitVideoEncoder(VideoEncControls *encoderControl, VideoEncOptions *encOption)
+OSCL_EXPORT_REF Bool 	PVInitVideoEncoder(VideoEncControls *encoderControl, VideoEncOptions *encOption)
 {
 
     Bool		status = PV_TRUE;
@@ -217,20 +217,6 @@ Bool 	PVInitVideoEncoder(VideoEncControls *encoderControl, VideoEncOptions *encO
     }
     encoderControl->videoEncoderInit = 0;	/* reset this value */
 
-    /* Check whether the input packetsize is valid (Note: put code here (before any memory allocation) in order to avoid memory leak */
-    if ((Int)profile_level < (Int)(SIMPLE_SCALABLE_PROFILE_LEVEL0))  /* non-scalable profile */
-    {
-        profile_level_table = (Int *)profile_level_max_packet_size;
-        profile_table_index = (Int)profile_level;
-    }
-    else   /* scalable profile */
-    {
-        profile_level_table = (Int *)scalable_profile_level_max_packet_size;
-        profile_table_index = (Int)profile_level - (Int)(SIMPLE_SCALABLE_PROFILE_LEVEL0);
-    }
-
-    if (PacketSize > profile_level_table[profile_table_index]) return PV_FALSE;
-
     video = (VideoEncData *)M4VENC_MALLOC(sizeof(VideoEncData)); /* allocate memory for encData */
 
     if (video == NULL)
@@ -242,19 +228,77 @@ Bool 	PVInitVideoEncoder(VideoEncControls *encoderControl, VideoEncOptions *encO
 
     video->encParams = (VideoEncParams *)M4VENC_MALLOC(sizeof(VideoEncParams));
     if (video->encParams == NULL)
-        return PV_FALSE;
+        goto CLEAN_UP;
 
     M4VENC_MEMSET(video->encParams, 0, sizeof(VideoEncParams));
 
     encParams = video->encParams;
+    encParams->nLayers = encOption->numLayers;
+
+    /* Check whether the input packetsize is valid (Note: put code here (before any memory allocation) in order to avoid memory leak */
+    if ((Int)profile_level < (Int)(SIMPLE_SCALABLE_PROFILE_LEVEL0))  /* non-scalable profile */
+    {
+        profile_level_table = (Int *)profile_level_max_packet_size;
+        profile_table_index = (Int)profile_level;
+        if (encParams->nLayers != 1)
+        {
+            goto CLEAN_UP;
+        }
+
+        encParams->LayerMaxMbsPerSec[0] = profile_level_max_mbsPerSec[profile_table_index];
+
+    }
+    else   /* scalable profile */
+    {
+        profile_level_table = (Int *)scalable_profile_level_max_packet_size;
+        profile_table_index = (Int)profile_level - (Int)(SIMPLE_SCALABLE_PROFILE_LEVEL0);
+        if (encParams->nLayers < 2)
+        {
+            goto CLEAN_UP;
+        }
+        for (i = 0; i < encParams->nLayers; i++)
+        {
+            encParams->LayerMaxMbsPerSec[i] = scalable_profile_level_max_mbsPerSec[profile_table_index];
+        }
+
+    }
+
+    /* cannot have zero size packet with these modes */
+    if (PacketSize == 0)
+    {
+        if (encOption->encMode == DATA_PARTITIONING_MODE)
+        {
+            goto CLEAN_UP;
+        }
+        if (encOption->encMode == COMBINE_MODE_WITH_ERR_RES)
+        {
+            encOption->encMode = COMBINE_MODE_NO_ERR_RES;
+        }
+    }
+
+    if (encOption->gobHeaderInterval == 0)
+    {
+        if (encOption->encMode == H263_MODE_WITH_ERR_RES)
+        {
+            encOption->encMode = H263_MODE;
+        }
+
+        if (encOption->encMode == SHORT_HEADER_WITH_ERR_RES)
+        {
+            encOption->encMode = SHORT_HEADER;
+        }
+    }
+
+    if (PacketSize > profile_level_table[profile_table_index])
+        goto CLEAN_UP;
 
     /* Initial Defaults for all Modes */
 
-    encParams->nLayers = encOption->numLayers;
     encParams->SequenceStartCode = 1;
     encParams->GOV_Enabled = 0;
     encParams->RoundingType = 0;
-    encParams->IntraDCVlcThr = 0;
+    encParams->IntraDCVlcThr = PV_MAX(PV_MIN(encOption->intraDCVlcTh, 7), 0);
+    encParams->ACDCPrediction = ((encOption->useACPred == PV_ON) ? TRUE : FALSE);
     encParams->RC_Type = encOption->rcType;
     encParams->Refresh = encOption->numIntraMB;
     encParams->ResyncMarkerDisable = 0; /* Enable Resync Marker */
@@ -272,7 +316,7 @@ Bool 	PVInitVideoEncoder(VideoEncControls *encoderControl, VideoEncOptions *encO
         }
         else
         {
-            return PV_FALSE;
+            goto CLEAN_UP;
         }
         if (encOption->iQuant[i] >= 1 && encOption->iQuant[i] <= 31)
         {
@@ -280,7 +324,7 @@ Bool 	PVInitVideoEncoder(VideoEncControls *encoderControl, VideoEncOptions *encO
         }
         else
         {
-            return PV_FALSE;
+            goto CLEAN_UP;
         }
     }
 
@@ -293,7 +337,7 @@ Bool 	PVInitVideoEncoder(VideoEncControls *encoderControl, VideoEncOptions *encO
     encParams->MV8x8_Enabled = 0;// comment out for now!! encOption->mv8x8Enable;
 #endif
     encParams->H263_Enabled = 0;
-    encParams->GOB_Header_Enabled = 0;
+    encParams->GOB_Header_Interval = 0; // need to be reset to 0
     encParams->IntraPeriod = encOption->intraPeriod;	/* Intra update period update default*/
     encParams->SceneChange_Det = encOption->sceneDetect;
     encParams->FineFrameSkip_Enabled = 0;
@@ -324,13 +368,10 @@ Bool 	PVInitVideoEncoder(VideoEncControls *encoderControl, VideoEncOptions *encO
             encParams->IntraDCVlcThr = 7;	/* use_intra_dc_vlc = 0 */
             encParams->MV8x8_Enabled = 0;
 
+            encParams->GOB_Header_Interval = encOption->gobHeaderInterval;
             encParams->H263_Enabled = 2;
             encParams->GOV_Enabled = 0;
             encParams->TimeIncrementRes = 30000;		/* timeIncrementRes for H263 */
-
-            if (encOption->encMode == SHORT_HEADER_WITH_ERR_RES)
-                encParams->GOB_Header_Enabled = 1;
-
             break;
 
         case H263_MODE:
@@ -349,9 +390,6 @@ Bool 	PVInitVideoEncoder(VideoEncControls *encoderControl, VideoEncOptions *encO
             encParams->H263_Enabled = 1;
             encParams->GOV_Enabled = 0;
             encParams->TimeIncrementRes = 30000;		/* timeIncrementRes for H263 */
-
-            if (encOption->encMode == H263_MODE_WITH_ERR_RES)
-                encParams->GOB_Header_Enabled = 1;
 
             break;
 #ifndef H263_ONLY
@@ -383,19 +421,13 @@ Bool 	PVInitVideoEncoder(VideoEncControls *encoderControl, VideoEncOptions *encO
             break;
 #endif
         default:
-            return PV_FALSE;
+            goto CLEAN_UP;
     }
     /* Set the constraints (maximum values) according to the input profile and level */
     /* Note that profile_table_index is already figured out above */
 
     /* base layer */
     encParams->profile_table_index    = profile_table_index; /* Used to limit the profile and level in SetProfile_BufferSize() */
-
-    /* New check: given the scalable profile, the number of the layers should not be 1, or
-    			  given the non-scalable profile, the number of the layers should not be 2 */
-    if ((encParams->LayerMaxMbsPerSec[1] > 0 && encParams->nLayers == 1) ||
-            (encParams->LayerMaxMbsPerSec[1] == 0 && encParams->nLayers == 2))
-        return FALSE;
 
     /* check timeIncRes */
     timeIncRes = encOption->timeIncRes;
@@ -416,7 +448,7 @@ Bool 	PVInitVideoEncoder(VideoEncControls *encoderControl, VideoEncOptions *encO
     }
     else
     {
-        return PV_FALSE;
+        goto CLEAN_UP;
     }
 
     /* check frame dimension */
@@ -426,28 +458,28 @@ Bool 	PVInitVideoEncoder(VideoEncControls *encoderControl, VideoEncOptions *encO
         {
             case 128:
                 if (encOption->encHeight[0] != 96) /* source_format = 1 */
-                    return PV_FALSE;
+                    goto CLEAN_UP;
                 break;
             case 176:
                 if (encOption->encHeight[0] != 144) /* source_format = 2 */
-                    return PV_FALSE;
+                    goto CLEAN_UP;
                 break;
             case 352:
                 if (encOption->encHeight[0] != 288) /* source_format = 2 */
-                    return PV_FALSE;
+                    goto CLEAN_UP;
                 break;
 
             case 704:
                 if (encOption->encHeight[0] != 576) /* source_format = 2 */
-                    return PV_FALSE;
+                    goto CLEAN_UP;
                 break;
             case 1408:
                 if (encOption->encHeight[0] != 1152) /* source_format = 2 */
-                    return PV_FALSE;
+                    goto CLEAN_UP;
                 break;
 
             default:
-                return PV_FALSE;
+                goto CLEAN_UP;
         }
     }
     for (i = 0; i < encParams->nLayers;i++)
@@ -466,7 +498,7 @@ Bool 	PVInitVideoEncoder(VideoEncControls *encoderControl, VideoEncOptions *encO
     {
         if (encOption->encFrameRate[0] == encOption->encFrameRate[1] ||
                 encOption->encFrameRate[0] == 0. || encOption->encFrameRate[1] == 0.) /* 7/31/03 */
-            return PV_FALSE;
+            goto CLEAN_UP;
     }
     /* set max frame rate */
     for (i = 0; i < encParams->nLayers;i++)
@@ -495,7 +527,7 @@ Bool 	PVInitVideoEncoder(VideoEncControls *encoderControl, VideoEncOptions *encO
     {
         if (encOption->bitRate[0] == encOption->bitRate[1] ||
                 encOption->bitRate[0] == 0 || encOption->bitRate[1] == 0) /* 7/31/03 */
-            return PV_FALSE;
+            goto CLEAN_UP;
     }
     /* check rate control and vbv delay*/
     encParams->RC_Type = encOption->rcType;
@@ -562,17 +594,6 @@ Bool 	PVInitVideoEncoder(VideoEncControls *encoderControl, VideoEncOptions *encO
 #endif
     }
 
-    if ((video->encParams->IntraPeriod > 0) && ((video->encParams->IntraPeriod * video->encParams->LayerFrameRate[0]) < 1))
-    {
-        video->encParams->IntraPeriod = (Int)((1 / video->encParams->LayerFrameRate[0]) + 1);
-    }
-
-//  No longer enforce this rule, let users choose num refresh MB even if without error resilience
-//	if((video->encParams->ResyncMarkerDisable != 0) && (video->encParams->GOB_Header_Enabled != 1))
-//	{
-//		video->encParams->Refresh = 0; /* no refresh MB */
-//	}
-
     /******************************************/
     /******************************************/
 
@@ -603,7 +624,7 @@ Bool 	PVInitVideoEncoder(VideoEncControls *encoderControl, VideoEncOptions *encO
     if (video->encParams->RC_Type == CBR_LOWDELAY) video->encParams->VBV_delay = 0.5; /* For CBR_LOWDELAY, we set 0.5sec buffer */
     status = SetProfile_BufferSize(video, video->encParams->VBV_delay, 1);
     if (status != PV_TRUE)
-        return PV_FALSE;
+        goto CLEAN_UP;
 
     /****************************************/
     /* memory allocation and initialization */
@@ -616,7 +637,6 @@ Bool 	PVInitVideoEncoder(VideoEncControls *encoderControl, VideoEncOptions *encO
 
     //video->currLayer = 0;	/* Set current Layer to 0 */
     //video->currFrameNo = 0; /* Set current frame Number to 0 */
-    video->wrapModTime = 0;
     video->nextModTime = 0;
     video->nextEncIVop = 0; /* Sets up very first frame to be I-VOP! */
     video->numVopsInGOP = 0; /* counter for Vops in Gop, 2/8/01 */
@@ -685,6 +705,26 @@ Bool 	PVInitVideoEncoder(VideoEncControls *encoderControl, VideoEncOptions *encO
     if (video->bitstream2 == NULL) goto CLEAN_UP;
     video->bitstream3 = BitStreamCreateEnc(2 * 4096); /*allocate working stream 3*/
     if (video->bitstream3 == NULL) goto CLEAN_UP;
+
+    /* allocate overrun buffer */
+    // this buffer is used when user's buffer is too small to hold one frame.
+    // It is not needed for slice-based encoding.
+    if (nLayers == 1)
+    {
+        video->oBSize = encParams->BufferSize[0] >> 3;
+    }
+    else
+    {
+        video->oBSize = PV_MAX((encParams->BufferSize[0] >> 3), (encParams->BufferSize[1] >> 3));
+    }
+
+    if (video->oBSize > DEFAULT_OVERRUN_BUFFER_SIZE || encParams->RC_Type == CONSTANT_Q) // set limit
+    {
+        video->oBSize = DEFAULT_OVERRUN_BUFFER_SIZE;
+    }
+    video->overrunBuffer = (UChar*) M4VENC_MALLOC(sizeof(UChar) * video->oBSize);
+    if (video->overrunBuffer == NULL) goto CLEAN_UP;
+
 
     video->currVop = (Vop *) M4VENC_MALLOC(sizeof(Vop)); /* Memory for Current VOP */
     if (video->currVop == NULL) goto CLEAN_UP;
@@ -1035,7 +1075,7 @@ CLEAN_UP:
 /*																			*/
 /* ======================================================================== */
 
-Bool	PVCleanUpVideoEncoder(VideoEncControls *encoderControl)
+OSCL_EXPORT_REF Bool	PVCleanUpVideoEncoder(VideoEncControls *encoderControl)
 {
     Int	idx, i;
     VideoEncData *video = (VideoEncData *)encoderControl->videoEncoderData;
@@ -1107,6 +1147,8 @@ Bool	PVCleanUpVideoEncoder(VideoEncControls *encoderControl)
         if (video->bitstream1)BitstreamCloseEnc(video->bitstream1);
         if (video->bitstream2)BitstreamCloseEnc(video->bitstream2);
         if (video->bitstream3)BitstreamCloseEnc(video->bitstream3);
+
+        if (video->overrunBuffer) M4VENC_FREE(video->overrunBuffer);
 
         max_width = video->encParams->LayerWidth[0];
         max_width = (((max_width + 15) >> 4) << 4); /* 09/19/05 */
@@ -1237,7 +1279,7 @@ Bool	PVCleanUpVideoEncoder(VideoEncControls *encoderControl)
 /*																			*/
 /* ======================================================================== */
 
-Bool PVGetVolHeader(VideoEncControls *encCtrl, UChar *volHeader, Int *size, Int layer)
+OSCL_EXPORT_REF Bool PVGetVolHeader(VideoEncControls *encCtrl, UChar *volHeader, Int *size, Int layer)
 {
     VideoEncData	*encData;
     PV_STATUS	EncodeVOS_Start(VideoEncControls *encCtrl);
@@ -1272,15 +1314,30 @@ Bool PVGetVolHeader(VideoEncControls *encCtrl, UChar *volHeader, Int *size, Int 
     return PV_TRUE;
 }
 
-#if 0
-static Int PVTIMESTAMP[2] = {0, 0};
-static Int PVMS = 0;
-#endif
+/* ======================================================================== */
+/*	Function : PVGetOverrunBuffer()											*/
+/*	Purpose  : Get the overrun buffer `										*/
+/*	In/out   :																*/
+/*	Return   : Pointer to overrun buffer.									*/
+/*	Modified :																*/
+/* ======================================================================== */
 
-#if 0
-static Int PVTIMESTAMP[2] = {0, 0};
-static Int PVMS = 0;
-#endif
+OSCL_EXPORT_REF UChar* PVGetOverrunBuffer(VideoEncControls *encCtrl)
+{
+    VideoEncData *video = (VideoEncData *)encCtrl->videoEncoderData;
+    Int currLayer = video->currLayer;
+    Vol *currVol = video->vol[currLayer];
+
+    if (currVol->stream->bitstreamBuffer != video->overrunBuffer) // not used
+    {
+        return NULL;
+    }
+
+    return video->overrunBuffer;
+}
+
+
+
 
 /* ======================================================================== */
 /*	Function : EncodeVideoFrame()											*/
@@ -1293,8 +1350,8 @@ static Int PVMS = 0;
 /*				Finishing new timestamp 32-bit input 						*/
 /*				Applications need to take care of wrap-around				*/
 /* ======================================================================== */
-Bool PVEncodeVideoFrame(VideoEncControls *encCtrl, VideoEncFrameIO *vid_in, VideoEncFrameIO *vid_out,
-                        ULong *nextModTime, UChar *bstream, Int *size, Int *nLayer)
+OSCL_EXPORT_REF Bool PVEncodeVideoFrame(VideoEncControls *encCtrl, VideoEncFrameIO *vid_in, VideoEncFrameIO *vid_out,
+                                        ULong *nextModTime, UChar *bstream, Int *size, Int *nLayer)
 {
     Bool status = PV_TRUE;
     PV_STATUS pv_status;
@@ -1331,6 +1388,8 @@ Bool PVEncodeVideoFrame(VideoEncControls *encCtrl, VideoEncFrameIO *vid_in, Vide
 
     encodeVop = DetermineCodingLayer(video, nLayer, modTime);
     currLayer = *nLayer;
+    if ((currLayer < 0) || (currLayer > encParams->nLayers - 1))
+        return PV_FALSE;
 
     /******************************************/
     /* If post-skipping still effective --- return */
@@ -1374,6 +1433,7 @@ Bool PVEncodeVideoFrame(VideoEncControls *encCtrl, VideoEncFrameIO *vid_in, Vide
     currVol->stream->bitstreamBuffer = bstream;
     currVol->stream->bufferSize = *size;
     BitstreamEncReset(currVol->stream);
+    BitstreamSetOverrunBuffer(currVol->stream, video->overrunBuffer, video->oBSize, video);
 
     /***********************************************************/
     /* Encode VOS and VOL Headers on first call for each layer */
@@ -1427,7 +1487,7 @@ Bool PVEncodeVideoFrame(VideoEncControls *encCtrl, VideoEncFrameIO *vid_in, Vide
     video->currVop->timeInc = currVol->timeIncrement;
     video->currVop->vopCoded = 1;
     video->currVop->roundingType = 0;
-    video->currVop->intraDCVlcThr = 0;
+    video->currVop->intraDCVlcThr = encParams->IntraDCVlcThr;
 
     if (currLayer == 0
 #ifdef RANDOM_REFSELCODE   /* add random selection of reference Vop */
@@ -1498,7 +1558,7 @@ Bool PVEncodeVideoFrame(VideoEncControls *encCtrl, VideoEncFrameIO *vid_in, Vide
 
     /* If I-VOP was encoded, reset IntraPeriod */
     if ((currLayer == 0) && (encParams->IntraPeriod > 0) && (video->currVop->predictionType == I_VOP))
-        video->nextEncIVop = encParams->IntraPeriod * encParams->LayerFrameRate[encParams->nLayers-1];
+        video->nextEncIVop = encParams->IntraPeriod;
 
     /* Set HintTrack Information */
     if (currLayer != -1)
@@ -1516,10 +1576,6 @@ Bool PVEncodeVideoFrame(VideoEncControls *encCtrl, VideoEncFrameIO *vid_in, Vide
     /* Determine nLayer and timeInc for next encode */
     /* 12/27/00 always go by the highest layer*/
     /************************************************/
-#if 0
-    PVTIMESTAMP[currLayer] += vol[currLayer]->prevModuloTimeBase * 1000;
-    PVMS = vol[currLayer]->timeIncrement * 1000 / vol[currLayer]->timeIncrementResolution;
-#endif
 
     /**********************************************************/
     /* Copy Reconstructed Buffer to Output Video Frame Buffer */
@@ -1589,7 +1645,7 @@ Bool PVEncodeVideoFrame(VideoEncControls *encCtrl, VideoEncFrameIO *vid_in, Vide
 /*	Modified :																*/
 /*																			*/
 /* ======================================================================== */
-Bool PVEncodeFrameSet(VideoEncControls *encCtrl, VideoEncFrameIO *vid_in, ULong *nextModTime, Int *nLayer)
+OSCL_EXPORT_REF Bool PVEncodeFrameSet(VideoEncControls *encCtrl, VideoEncFrameIO *vid_in, ULong *nextModTime, Int *nLayer)
 {
     Bool status = PV_TRUE;
     VideoEncData *video = (VideoEncData *)encCtrl->videoEncoderData;
@@ -1701,7 +1757,7 @@ Bool PVEncodeFrameSet(VideoEncControls *encCtrl, VideoEncFrameIO *vid_in, ULong 
     video->currVop->timeInc = currVol->timeIncrement;
     video->currVop->vopCoded = 1;
     video->currVop->roundingType = 0;
-    video->currVop->intraDCVlcThr = 0;
+    video->currVop->intraDCVlcThr = encParams->IntraDCVlcThr;
 
     if (currLayer == 0
 #ifdef RANDOM_REFSELCODE   /* add random selection of reference Vop */
@@ -1779,8 +1835,8 @@ Bool PVEncodeFrameSet(VideoEncControls *encCtrl, VideoEncFrameIO *vid_in, ULong 
 /*	Modified :																*/
 /*																			*/
 /* ======================================================================== */
-Bool PVEncodeSlice(VideoEncControls *encCtrl, UChar *bstream, Int *size,
-                   Int *endofFrame, VideoEncFrameIO *vid_out, ULong *nextModTime)
+OSCL_EXPORT_REF Bool PVEncodeSlice(VideoEncControls *encCtrl, UChar *bstream, Int *size,
+                                   Int *endofFrame, VideoEncFrameIO *vid_out, ULong *nextModTime)
 {
     PV_STATUS pv_status;
     VideoEncData *video = (VideoEncData *)encCtrl->videoEncoderData;
@@ -1842,7 +1898,7 @@ Bool PVEncodeSlice(VideoEncControls *encCtrl, UChar *bstream, Int *size,
 
         /* If I-VOP was encoded, reset IntraPeriod */
         if ((currLayer == 0) && (encParams->IntraPeriod > 0) && (video->currVop->predictionType == I_VOP))
-            video->nextEncIVop = encParams->IntraPeriod * encParams->LayerFrameRate[encParams->nLayers-1];
+            video->nextEncIVop = encParams->IntraPeriod;
 
         /**********************************************************/
         /* Copy Reconstructed Buffer to Output Video Frame Buffer */
@@ -1917,7 +1973,7 @@ Bool PVEncodeSlice(VideoEncControls *encCtrl, UChar *bstream, Int *size,
 /*			   max_h263_width[2], max_h263_height[2] are global				*/
 /*																			*/
 /* ======================================================================== */
-Bool PVGetH263ProfileLevelID(VideoEncControls *encCtrl, Int *profileID, Int *levelID)
+OSCL_EXPORT_REF Bool PVGetH263ProfileLevelID(VideoEncControls *encCtrl, Int *profileID, Int *levelID)
 {
     VideoEncData *encData;
     Int width, height;
@@ -1978,6 +2034,48 @@ Bool PVGetH263ProfileLevelID(VideoEncControls *encCtrl, Int *profileID, Int *lev
     }
 }
 
+/* ======================================================================== */
+/*	Function : PVGetMPEG4ProfileLevelID()									*/
+/*	Date     : 26/06/2008													*/
+/*	Purpose  : Get MPEG4 Level after initialized			 				*/
+/*	In/out   : profile_level according to interface							*/
+/*	Return   : PV_TRUE if successed, PV_FALSE if failed.					*/
+/*	Modified :																*/
+/*																			*/
+/* ======================================================================== */
+OSCL_EXPORT_REF Bool PVGetMPEG4ProfileLevelID(VideoEncControls *encCtrl, Int *profile_level, Int nLayer)
+{
+    VideoEncData* video;
+    Int i;
+
+    video = (VideoEncData *)encCtrl->videoEncoderData;
+
+    if (nLayer == 0)
+    {
+        for (i = 0; i < 8; i++)
+        {
+            if (video->encParams->ProfileLevel[0] == profile_level_code[i])
+            {
+                break;
+            }
+        }
+        *profile_level = i;
+    }
+    else
+    {
+        for (i = 0; i < 8; i++)
+        {
+            if (video->encParams->ProfileLevel[0] == scalable_profile_level_code[i])
+            {
+                break;
+            }
+        }
+        *profile_level = i + SIMPLE_SCALABLE_PROFILE_LEVEL0;
+    }
+
+    return true;
+}
+
 #ifndef LIMITED_API
 /* ======================================================================== */
 /*	Function : PVUpdateEncFrameRate											*/
@@ -1990,7 +2088,7 @@ Bool PVGetH263ProfileLevelID(VideoEncControls *encCtrl, Int *profileID, Int *lev
 /*																			*/
 /* ======================================================================== */
 
-Bool PVUpdateEncFrameRate(VideoEncControls *encCtrl, float *frameRate)
+OSCL_EXPORT_REF Bool PVUpdateEncFrameRate(VideoEncControls *encCtrl, float *frameRate)
 {
     VideoEncData	*encData;
     Int i;// nTotalMB, mbPerSec;
@@ -2031,7 +2129,7 @@ Bool PVUpdateEncFrameRate(VideoEncControls *encCtrl, float *frameRate)
 /*																			*/
 /* ======================================================================== */
 
-Bool PVUpdateBitRate(VideoEncControls *encCtrl, Int *bitRate)
+OSCL_EXPORT_REF Bool PVUpdateBitRate(VideoEncControls *encCtrl, Int *bitRate)
 {
     VideoEncData	*encData;
     Int i;
@@ -2109,7 +2207,7 @@ Bool PVUpdateVBVDelay(VideoEncControls *encCtrl, float delay)
 /*																			*/
 /* ======================================================================== */
 
-Bool PVUpdateIFrameInterval(VideoEncControls *encCtrl, Int aIFramePeriod)
+OSCL_EXPORT_REF Bool PVUpdateIFrameInterval(VideoEncControls *encCtrl, Int aIFramePeriod)
 {
     VideoEncData	*encData;
 
@@ -2134,7 +2232,7 @@ Bool PVUpdateIFrameInterval(VideoEncControls *encCtrl, Int aIFramePeriod)
 /*	Modified :																*/
 /*																			*/
 /* ======================================================================== */
-Bool	PVUpdateNumIntraMBRefresh(VideoEncControls *encCtrl, Int numMB)
+OSCL_EXPORT_REF Bool	PVUpdateNumIntraMBRefresh(VideoEncControls *encCtrl, Int numMB)
 {
     VideoEncData	*encData;
 
@@ -2159,7 +2257,7 @@ Bool	PVUpdateNumIntraMBRefresh(VideoEncControls *encCtrl, Int numMB)
 /*																			*/
 /* ======================================================================== */
 
-Bool PVIFrameRequest(VideoEncControls *encCtrl)
+OSCL_EXPORT_REF Bool PVIFrameRequest(VideoEncControls *encCtrl)
 {
     VideoEncData	*encData;
 
@@ -2185,7 +2283,7 @@ Bool PVIFrameRequest(VideoEncControls *encCtrl)
 /*																			*/
 /* ======================================================================== */
 
-Int PVGetEncMemoryUsage(VideoEncControls *encCtrl)
+OSCL_EXPORT_REF Int PVGetEncMemoryUsage(VideoEncControls *encCtrl)
 {
     VideoEncData	*encData;
 
@@ -2209,7 +2307,7 @@ Int PVGetEncMemoryUsage(VideoEncControls *encCtrl)
 /*																			*/
 /* ======================================================================== */
 
-Bool PVGetHintTrack(VideoEncControls *encCtrl, MP4HintTrack *info)
+OSCL_EXPORT_REF Bool PVGetHintTrack(VideoEncControls *encCtrl, MP4HintTrack *info)
 {
     VideoEncData	*encData;
 
@@ -2237,7 +2335,7 @@ Bool PVGetHintTrack(VideoEncControls *encCtrl, MP4HintTrack *info)
 /*																			*/
 /* ======================================================================== */
 
-Bool PVGetMaxVideoFrameSize(VideoEncControls *encCtrl, Int *maxVideoFrameSize)
+OSCL_EXPORT_REF Bool PVGetMaxVideoFrameSize(VideoEncControls *encCtrl, Int *maxVideoFrameSize)
 {
     VideoEncData	*encData;
 
@@ -2273,7 +2371,7 @@ Bool PVGetMaxVideoFrameSize(VideoEncControls *encCtrl, Int *maxVideoFrameSize)
 /*																			*/
 /* ======================================================================== */
 
-Bool PVGetVBVSize(VideoEncControls *encCtrl, Int *VBVSize)
+OSCL_EXPORT_REF Bool PVGetVBVSize(VideoEncControls *encCtrl, Int *VBVSize)
 {
     VideoEncData	*encData;
 
@@ -2516,15 +2614,6 @@ Int DetermineCodingLayer(VideoEncData *video, Int *nLayer, ULong modTime)
     video->nextEncIVop--;  /* number of Vops in highest layer resolution. */
     video->numVopsInGOP++;
 
-    /* map modTime to frame no. from modTimeRef*/
-    if (modTime < modTimeRef) /* modTime wrapped around */
-    {
-        video->wrapModTime += ((ULong)(-1) - modTimeRef) + 1;
-        video->modTimeRef = modTimeRef = 0;
-    }
-
-    modTime += video->wrapModTime; /* wrapModTime is non zero after wrap-around */
-    /* modify modTime with wrapModTime */
     /* from this point frameModTime and nextFrmModTime are internal */
 
     frameNum[i] = (UInt)((modTime - modTimeRef) * LayerFrameRate[i] + 500) / 1000;
@@ -2541,11 +2630,6 @@ Int DetermineCodingLayer(VideoEncData *video, Int *nLayer, ULong modTime)
     frameModTime = (ULong)(((frameNum[i] * 1000) / LayerFrameRate[i]) + modTimeRef + 0.5); /* rec. time */
     nextFrmModTime = (ULong)((((frameNum[i] + 1) * 1000) / LayerFrameRate[i]) + modTimeRef + 0.5); /* rec. time */
 
-#ifdef _PRINT_STAT
-    printf("TS: %u ", frameModTime - video->wrapModTime);
-#endif
-
-
     srcFrameInterval = 1000 / video->FrameRate;
 
     video->nextModTime = nextFrmModTime - (ULong)(srcFrameInterval / 2.) - 1; /* between current and next frame */
@@ -2558,7 +2642,6 @@ Int DetermineCodingLayer(VideoEncData *video, Int *nLayer, ULong modTime)
         video->nextModTime += ((delta - video->nextModTime + modTime)); /* empirical formula  */
     }
 #endif
-    video->nextModTime -= video->wrapModTime; /* make it external */
     /****************************************************/
 
     /* map frame no.to tick from modTimeRef */
@@ -2719,7 +2802,7 @@ void DetermineVopType(VideoEncData *video, Int currLayer)
         {
             if (video->nextEncIVop <= 0 || video->currVop->predictionType == I_VOP)
             {
-                video->nextEncIVop = encParams->IntraPeriod * encParams->LayerFrameRate[encParams->nLayers-1];
+                video->nextEncIVop = encParams->IntraPeriod;
                 video->currVop->predictionType = I_VOP;
                 video->numVopsInGOP = 0;
             }
@@ -2891,6 +2974,7 @@ Bool SetProfile_BufferSize(VideoEncData *video, float delay, Int bInitialized)
     float upper_bound_ratio;
     Int bFound = 0;
     Int k = 0, width16, height16, index;
+    Int lowest_level;
 
 #define MIN_BUFF	16000 /* 16k minimum buffer size */
 #define BUFF_CONST  2.0    /* 2000ms */
@@ -3047,7 +3131,17 @@ Bool SetProfile_BufferSize(VideoEncData *video, float delay, Int bInitialized)
         }
 
         /* Search the appropriate profile@level index */
-        for (i = 0; i <= index; i++)
+        if (!video->encParams->H263_Enabled &&
+                (video->encParams->IntraDCVlcThr != 0 || video->encParams->SearchRange > 16))
+        {
+            lowest_level = 1; /* cannot allow SPL0 */
+        }
+        else
+        {
+            lowest_level = 0; /* SPL0 */
+        }
+
+        for (i = lowest_level; i <= index; i++)
         {
             if (i != 4 && /* skip Core Profile@Level1 because the parameters in it are smaller than those in Simple Profile@Level3 */
                     base_bitrate	 <= profile_level_max_bitrate[i]	 &&
@@ -3146,20 +3240,6 @@ Bool SetProfile_BufferSize(VideoEncData *video, float delay, Int bInitialized)
         if (!bFound) // && start == 4)
             return PV_FALSE; /* mis-match in the profiles between base layer and enhancement layer */
 
-#if 0 /* Do not go to the higher level */
-        else if (!bFound)
-        {
-            i = j = 4; /* Choose Core (scalable) profile level 1 */
-            if (base_bitrate		> profile_level_max_bitrate[j]		||
-                    base_packet_size	> profile_level_max_packet_size[j]  ||
-                    base_MBsPerSec		> profile_level_max_mbsPerSec[j]	||
-                    base_VBV_size		> profile_level_max_VBV_size[j])
-
-            {
-                i = j = 5; /* Choose Core (scalable) profile level 2 */
-            }
-        }
-#endif
         /* j for base layer, i for enhancement layer */
         video->encParams->ProfileLevel[0] = profile_level_code[j];
         video->encParams->ProfileLevel[1] = scalable_profile_level_code[i];
@@ -3180,6 +3260,14 @@ Bool SetProfile_BufferSize(VideoEncData *video, float delay, Int bInitialized)
 
 
     } /* end of: if(nLayers == 1) */
+
+
+    if (!video->encParams->H263_Enabled && (video->encParams->ProfileLevel[0] == 0x08)) /* SPL0 restriction*/
+    {
+        /* PV only allow frame-based rate control, no QP change from one MB to another
+        if(video->encParams->ACDCPrediction == TRUE && MB-based rate control)
+         return PV_FALSE */
+    }
 
     return PV_TRUE;
 }

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,9 @@
 #ifndef __MEDIA_CLOCK_CONVERTER_H
 #include "media_clock_converter.h"
 #endif
-
+#ifndef PVLOGGER_H_INCLUDED
+#include "pvlogger.h"
+#endif
 
 //----------------------------------------------------------------------
 // Global Type Declarations
@@ -97,7 +99,7 @@
 #define DEFAULT_NUM_FRAMES_TO_SCAN 20
 #define ID3_V1_TAG_SIZE 128
 
-
+#define MAX_TOC_ENTRY_COUNT 200
 
 typedef struct mp3Header_tag
 {
@@ -296,7 +298,16 @@ class MP3Parser
         * @param pMP3COnfig Data structure that will contain the header
         * @returns True if successful; False otherwise
         */
-        bool    GetMP3FileHeader(MP3ConfigInfoType * pMP3COnfig);
+        bool GetMP3FileHeader(MP3ConfigInfoType * pMP3COnfig);
+
+        /**
+        * @brief Retreives and returns channel mode for the current
+        * of mp3 file
+        *
+        * @param
+        * @returns
+        */
+        uint32 GetChannelMode() const;
 
         /**
         * @brief Returns the content of decoder specific info.
@@ -347,12 +358,20 @@ class MP3Parser
         uint32  GetDuration(bool aMetadataDuration = false);
 
         /**
+        * @brief Returns the approximate duration of downloaded data.
+        *
+        * @param aFileSize, aNPTInMS
+        * @returns aNPTInMS
+        */
+        int32 ConvertSizeToTime(uint32 aFileSize, uint32& aNPTInMS);
+
+        /**
         * @brief outputs the size of id3v2 tags
         *
         * @param aSize, carries the tag size
         * @returns success if meta data is parsed, failure otherwise
         */
-        MP3ErrorType GetMetadataSize(int32 &aSize);
+        MP3ErrorType GetMetadataSize(uint32 &aSize);
 
         /**
         * @brief Retrieves minimum bytes required for getting the config info
@@ -360,7 +379,7 @@ class MP3Parser
         * @param
         * @returns byte size of firstframe and id3 tags.
         */
-        uint32 GetMinBytesRequired();
+        uint32 GetMinBytesRequired(bool aNextBytes = false);
 
         /**
         * @brief Copies the metadata to the structure specified.
@@ -396,6 +415,8 @@ class MP3Parser
 
         uint32 GetDurationFromMetadata();
 
+        void FillTOCTable(uint32 aFilePos, uint32 aTimeStampToFrame);
+
         //duration related values
         uint32 iClipDurationInMsec;
         uint32 iClipDurationFromEstimation;
@@ -405,52 +426,47 @@ class MP3Parser
         uint32 iClipDurationFromMetadata;
         bool iDurationScanComplete;
         uint32 iTimestamp;
-        uint32 iAvgBitrateInbpsFromRandomScan;
-        uint32 iAvgBitrateInbps;
-        uint32 iAvgBitrateInbpsFromCompleteScan;
-
+        int32 iAvgBitrateInbpsFromRandomScan;
+        int32 iAvgBitrateInbps;
+        int32 iAvgBitrateInbpsFromCompleteScan;
 
 
     protected:
-        int32 iLocalFileSize;
-        int32 iFileSizeFromExternalSource;
+        uint32 iLocalFileSize;
+        uint32 iFileSizeFromExternalSource;
+        uint32 iInitSearchFileSize;
         bool iLocalFileSizeSet;
-        int32 iInitSearchFileSize;
         PVFile * fp;
         MediaClockConverter iClockConverter;
         bool iFirstScan;
         uint32 iLastScanPosition;
         bool iScanEnable;
-    public:
-        /*scan file related */
-        int32 currentFilePosn; // current file position
-        uint32 firstHeader;
-        uint8 pFrameHeader[4];
-        int32 startOffset;
-        uint32 seekOffset;
-        MP3HeaderType mp3HeaderInfo;
-        MP3ConfigInfoType mp3ConfigInfo;
-        uint32 frameCount;
-
-#ifdef PROFILING_ENABLED
-        uint32 starttick;
-        uint32 endtick;
-        uint32 totaltick;
-        FILE* outFile;
-#endif
 
     private:
         MP3ErrorType IsValidFrame(uint8 * pBuffer, uint32 offset, uint32 seekPoint, PVFile* aFile = NULL);
         MP3ErrorType IsValidFrameHeader(uint8 * mp3FrameHeader, bool &bCRCPresent, uint32 offset, uint32 seekPoint, PVFile* aFile = NULL);
         bool  IsValidFrameCRC(uint8 *pFrame, int32 size, uint32 crcValue);
 
-        bool  GetMP3Header(uint32 &fh, MP3HeaderType &hi);
+        bool GetMP3Header(uint32 &fh, MP3HeaderType &hi);
         bool DecodeMP3Header(MP3HeaderType &aHeaderInfoType, MP3ConfigInfoType &aConfigInfoType, bool aComputeAvgBitrate);
         bool DecodeXINGHeader(uint8 *XingBuffer, XINGHeaderType &mp3XingHI, MP3HeaderType &hi);
-        bool  DecodeVBRIHeader(uint8 * VbriBuffer, VBRIHeaderType &vbriHDI, MP3HeaderType &hi);
+        bool DecodeVBRIHeader(uint8 * VbriBuffer, VBRIHeaderType &vbriHDI, MP3HeaderType &hi);
         MP3ErrorType mp3FindSync(uint32 seekPoint, uint32 &syncOffset, PVFile* aFile = NULL);
         uint16 CalcCRC16(uint8* pBuffer, uint32 dwBitSize);
         MP3ErrorType mp3VerifyCRC(MP3HeaderType mp3HdrInfo, MP3ConfigInfoType mp3CI);
+
+
+        /* scan file related */
+        uint32 iScannedFrameCount;
+        /* toc related */
+        int32* iTOC;
+        uint32 iTOCFilledCount;
+        uint32 iTimestampPrev;
+        uint32 iScanTimestamp;
+        uint32 iBinWidth;
+
+        uint32 iSamplingRate;
+        uint32 iSamplesPerFrame;
 
         int32 CalculateBufferSizeForHeader(uint8 *VbriHead);
         int32 iCurrFrameNumber;
@@ -462,7 +478,6 @@ class MP3Parser
         uint32 StartOffset;
         uint8 * pSyncBuffer;
         uint32 iMaxSyncBufferSize;
-
 
         MP3ConfigInfoType  iMP3ConfigInfo;
         MP3HeaderType      iMP3HeaderInfo;

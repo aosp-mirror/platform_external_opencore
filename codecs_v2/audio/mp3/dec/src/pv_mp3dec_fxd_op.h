@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,24 +52,27 @@ extern "C"
 #endif
 
 
-#if defined(PV_ARM)
+#if (defined(PV_ARM_V5)||defined(PV_ARM_V4))
 
 #include "pv_mp3dec_fxd_op_arm.h"
 
-#endif
+#elif (defined(PV_ARM_GCC_V5)||defined(PV_ARM_GCC_V4))
 
-#if defined(C_EQUIVALENT)
+#include "pv_mp3dec_fxd_op_arm_gcc.h"
+
+#elif (defined(PV_ARM_MSC_EVC_V5)||defined(PV_ARM_MSC_EVC_V4))
+
+#include "pv_mp3dec_fxd_op_msc_evc.h"
+
+#else
+
+#ifndef C_EQUIVALENT
+#define C_EQUIVALENT
+#endif
 
 #include "pv_mp3dec_fxd_op_c_equivalent.h"
 
 #endif
-
-#if defined(PV_ARM_GCC)
-
-#include "pv_mp3dec_fxd_op_arm_gcc.h"
-
-#endif
-
 
 
 #ifdef __cplusplus

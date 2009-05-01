@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -442,6 +442,12 @@ class PVMFNodeCommandQueue
         typedef Command vec_element;
         typedef vec_element* vec_element_ptr;
 
+        PVMFNodeCommandQueue()
+        {
+            iCommandCounter = 0;
+        }
+
+        //note: usage of the class requires calling the Construct function
         void Construct(int32 init, uint32 nres)
         {//construct the vector
             iCommandCounter = init;

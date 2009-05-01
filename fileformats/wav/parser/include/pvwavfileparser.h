@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -120,7 +120,7 @@ class PV_Wav_Parser
         OSCL_IMPORT_REF bool SetOutputToUncompressedPCM(void);
     private:
         PVWavParserReturnCode ReadData(uint8* buff, uint32 size, uint32& bytesread);
-        void CleanupWAVFile(void);
+        OSCL_IMPORT_REF void CleanupWAVFile(void);
 
         //Subchunk 1
         uint16 AudioFormat;

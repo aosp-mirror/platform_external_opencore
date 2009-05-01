@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,36 +35,6 @@ terms listed above has been obtained from the copyright holder.
  Funtions: MR475_quant_store_results
            MR475_update_unq_pred
            MR475_gain_quant
-
-     Date: 05/17/2000
-
-------------------------------------------------------------------------------
- REVISION HISTORY
-
- Description: Synchronized file with UMTS version 3.2.0. Updated coding
-              template. Removed unnecessary include files.
-
- Description: Made the following chnages per comments from Phase 2/3 review:
-              1. Updated copyright year,
-              2. Used short-hand notation for math operations, e.g., "+=",
-                 in the code.
-              3. Defined one local variable per line.
-              4. Moved #defines to qgain475.h.
-
- Description: Added parameter "pOverflow" for EPOC compatibility.
-
- Description: Removed bug where a variable was incorrectly used as a
- temporary placeholder.
-
- Description: Optimized file to reduce clock cycle usage. Updated copyright
-              year. Removed unused files in Include section.
-
- Description:  Replaced "int" and/or "char" with OSCL defined types.
-
- Description: Changed round function name to pv_round to avoid conflict with
-              round function in C standard library.
-
- Description:
 
 ------------------------------------------------------------------------------
  MODULE DESCRIPTION

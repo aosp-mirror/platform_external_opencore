@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,9 @@
 #endif
 
 #define MAX_NUM_COMPOSITE_FRAMES            32
-#define PVLATMPARSER_MEDIADATA_POOLNUM      10
+/* Mempool size of latm parser should be at least 1 more than OMX component
+   mempool size, which is 10 */
+#define PVLATMPARSER_MEDIADATA_POOLNUM      12
 #define PVLATMPARSER_LATMDATA_CHUNKSIZE     1536*10 // 10 maximum aac frames
 #define PVLATMPARSER_MEDIADATA_CHUNKSIZE    128
 
@@ -58,7 +60,7 @@ OSCL_EXPORT_REF PV_LATM_Parser::PV_LATM_Parser() :
         iLATMDataMemPool(PVLATMPARSER_MEDIADATA_POOLNUM, PVLATMPARSER_LATMDATA_CHUNKSIZE),
         iMediaDataMemPool(PVLATMPARSER_MEDIADATA_POOLNUM, PVLATMPARSER_MEDIADATA_CHUNKSIZE),
         sMC(NULL),
-        // used only for composemultipleframe, allow at least 10 AAC frames
+        // used only for composemultipleframe, allow at least 4 AAC frames
         currSize(PVLATMPARSER_LATMDATA_CHUNKSIZE),
         firstPacket(true),
         dropFrames(false),
@@ -70,7 +72,7 @@ OSCL_EXPORT_REF PV_LATM_Parser::PV_LATM_Parser() :
     multiFrameBuf = (uint8 *) oscl_calloc(currSize, sizeof(uint8));
 
     // calculate a max frame size to check if the latm parser gets out of sync
-    maxFrameSize = currSize; // currently allows 10 max length case AAC frames
+    maxFrameSize = currSize; // currently allows 4 max length case AAC frames
 
     iOsclErrorTrapImp = OsclErrorTrap::GetErrorTrapImp();
 }
@@ -100,7 +102,6 @@ OSCL_EXPORT_REF PV_LATM_Parser::~PV_LATM_Parser()
 
 /* ======================================================================== */
 /*  Function : compose()                                                    */
-/*  Date     : 04/03/2002                                                   */
 /*  Purpose  : parse AAC LATM payload                                       */
 /*  In/out   :                                                              */
 /*  Return   :                                                              */
@@ -231,9 +232,126 @@ OSCL_EXPORT_REF uint8 PV_LATM_Parser::compose(PVMFSharedMediaDataPtr& mediaDataI
     return retVal;
 }
 
+OSCL_EXPORT_REF uint8 PV_LATM_Parser::compose(uint8* aData, uint32 aDataLen, uint32 aTimestamp, uint32 aSeqNum, uint32 aMbit)
+{
+    uint8 retVal = 0;
+
+    // Don't need the ref to iMediaData so unbind it
+    mediaDataOut.Unbind();
+
+    int errcode = 0;
+    OsclSharedPtr<PVMFMediaDataImpl> mediaDataImpl;
+    OSCL_TRY_NO_TLS(iOsclErrorTrapImp, errcode, mediaDataImpl = iMediaDataSimpleAlloc.allocate(aDataLen));
+    OSCL_FIRST_CATCH_ANY(errcode, return FRAME_OUTPUTNOTAVAILABLE);
+
+    errcode = 0;
+    OSCL_TRY_NO_TLS(iOsclErrorTrapImp, errcode, mediaDataOut = PVMFMediaData::createMediaData(mediaDataImpl, &iMediaDataMemPool));
+    OSCL_FIRST_CATCH_ANY(errcode, return FRAME_OUTPUTNOTAVAILABLE);
+
+    OsclRefCounterMemFrag memFragOut;
+    mediaDataOut->getMediaFragment(0, memFragOut);
+
+    /*
+     *  Latch for very first packet, sequence number is not established yet.
+     */
+
+    if (!firstPacket)
+    {
+        if ((aSeqNum - last_sequence_num) > 1)    /* detect any gap in sequence */
+        {
+            // means we missed an RTP packet.
+            dropFrames = true;
+        }
+    }
+    else
+    {
+        firstPacket = false;
+    }
+
+    last_timestamp = aTimestamp;
+    last_sequence_num = aSeqNum;
+    last_mbit = aMbit;
+
+    if (dropFrames)
+    {
+        if (last_mbit)
+        {
+            /*
+             *  try to recover packet as sequencing was broken, new packet could be valid
+             *  it is possible that the received packet contains a complete audioMuxElement()
+             *  so try to retrieve it.
+             */
+
+            dropFrames = false;
+        }
+        else
+        {
+
+            /*
+             *  we are in the middle of a spread audioMuxElement(), or faulty rtp header
+             *  return error
+             */
+
+            framesize = 0;
+            frameNum = 0;
+            bytesRead = 0;
+            compositenumframes = 0;
+
+            /*
+             *  Drop frame as we are not certain if it is a valid frame
+             */
+            memFragOut.getMemFrag().len = 0;
+            mediaDataOut->setMediaFragFilledLen(0, 0);
+
+            firstBlock = true; // set for next call
+            return FRAME_ERROR;
+        }
+    }
+
+
+    if (sMC->numSubFrames > 0 || (sMC->cpresent == 1 && ((*aData) & (0x80))))
+    {
+        // this is a less efficient version that must be used when you know an AudioMuxElement has
+        // more than one subFrame -- I also added the case where the StreamMuxConfig is inline
+        // The reason for this is that the StreamMuxConfig can be possibly large and there is no
+        // way to know its size without parsing it. (the problem is it can straddle an RTP boundary)
+        // it is less efficient because it composes the AudioMuxElement in a separate buffer (one
+        // oscl_memcpy() per rtp packet) then parses it (one oscl_memcpy() per audio frame to the output
+        // buffer (newpkt->outptr)) when it gets a whole AudioMuxElement.
+        // The function below does a oscl_memcpy() directly into the output buffer
+        // note, composeMultipleFrame will also work for the simple case in case there is another reason
+        // to have to use it..
+
+        retVal = composeMultipleFrame(aData, aDataLen, aTimestamp, aSeqNum, aMbit);
+    }
+    else
+    {
+        // this is an efficient version that can be used when you know an AudioMuxElement has
+        // only one subFrame
+        retVal = composeSingleFrame(aData, aDataLen, aTimestamp, aSeqNum, aMbit);
+    }
+
+    // set this to drop frames in the future -- till we find another marker bit
+    if (retVal == FRAME_ERROR)
+    {
+        dropFrames = true;
+
+        framesize = 0;
+        frameNum = 0;
+        bytesRead = 0;
+        compositenumframes = 0;
+
+        //changed
+        memFragOut.getMemFrag().len = 0;
+        mediaDataOut->setMediaFragFilledLen(0, 0);
+
+        firstBlock = true; // set for next call
+
+    }
+    return retVal;
+}
 /* ======================================================================== */
 /*  Function : composeSingleFrame()                                         */
-/*  Date     : 04/03/2002                                                   */
 /*  Purpose  : parse AAC LATM payload                                       */
 /*  In/out   :                                                              */
 /*  Return   :                                                              */
@@ -391,7 +509,6 @@ uint8 PV_LATM_Parser::composeSingleFrame(PVMFSharedMediaDataPtr& mediaDataIn)
 
 /* ======================================================================== */
 /*  Function : composeMulitpleFrame()                                       */
-/*  Date     : 04/03/2002                                                   */
 /*  Purpose  : parse AAC LATM payload                                       */
 /*  In/out   :                                                              */
 /*  Return   :                                                              */
@@ -926,6 +1043,245 @@ OSCL_EXPORT_REF uint8 * PV_LATM_Parser::ParseStreamMuxConfig(uint8* decoderSpeci
 
     ascAutoPtr.release();
     return ASCPtr;
+}
+uint8 PV_LATM_Parser::composeSingleFrame(uint8* aData, uint32 aDataLen, uint32 aTimestamp, uint32 aSeqNum, uint32 aMbit)
+{
+    int32 tmp = 0;
+
+    // pool made for output data
+    OsclRefCounterMemFrag memFragOut;
+    mediaDataOut->getMediaFragment(0, memFragOut);
+
+    //uint8 * myData = newpkt->data;
+    uint8 * myData = aData;
+
+    /*
+     *  Total Payload length, in bytes, includes
+     *      length of the AudioMuxElement()
+     *      AudioMuxElement()
+     *      Other data (for RF3016 not supported)
+     */
+    int32 pktsize = aDataLen;
+
+    int32 m_bit = aMbit;
+
+    /*
+     *  All streams have same time framing (there is only one stream anyway)
+     */
+    if (firstBlock)
+    {
+        /*
+         *  AudioMuxElement() fits in a single rtp packet or this is the first
+         *  block of an AudioMuxElement() spread accross more than one rtp packet
+         */
+
+
+        int32 bUsed = 0;
+
+        /*
+         *      PayLoadlenghtInfo( )
+         */
+
+        do
+        {
+            tmp = *(myData++);      /* get payload lenght  8-bit in bytes */
+            framesize += tmp;
+            bUsed++;
+        }
+        while (tmp == 0xff);      /* 0xff is the escape sequence for values bigger than 255 */
+
+
+        /*
+         *      PayLoadMux( )
+         */
+
+        bytesRead = (pktsize - bUsed);
+
+        // framesize must be equal to the bytesRead if mbit is 1
+        // or greater than bytesRead if mbit is 0
+        if ((m_bit && framesize != bytesRead && !sMC->otherDataPresent) ||
+                (!m_bit && framesize < bytesRead && !sMC->otherDataPresent))
+        {
+            // to update number of bytes copied
+            memFragOut.getMemFrag().len = 0;
+            mediaDataOut->setMediaFragFilledLen(0, 0);
+            bytesRead = 0;
+
+            return FRAME_ERROR;
+        }
+
+        oscl_memcpy((uint8*)memFragOut.getMemFrag().ptr, myData, bytesRead); //ptr +1 changed
+
+        if (sMC->otherDataPresent)
+        {
+            ;   /* dont' care at this point, no MUX other than aac supported */
+        }
+
+    }
+    else
+    {
+        /*
+         *  We have an AudioMuxElement() spread accross more than one rtp packet
+         */
+        if ((m_bit && framesize != pktsize + (bytesRead - 1) && !sMC->otherDataPresent) /* last block */ ||
+                (!m_bit && framesize <  pktsize + (bytesRead - 1) && !sMC->otherDataPresent) /* intermediate block */)
+        {
+
+            // to update number of bytes copied
+            memFragOut.getMemFrag().len = 0;
+            mediaDataOut->setMediaFragFilledLen(0, 0);
+
+            return FRAME_ERROR;
+        }
+
+        /*
+         *  Accumulate  blocks until the full frame is complete
+         */
+        oscl_memcpy((uint8*)memFragOut.getMemFrag().ptr + bytesRead, myData, pktsize);
+        bytesRead += pktsize;
+    }
+
+
+    // to update number of bytes copied
+    memFragOut.getMemFrag().len = bytesRead;
+    mediaDataOut->setMediaFragFilledLen(0, bytesRead);
+    mediaDataOut->setSeqNum(aSeqNum);
+    mediaDataOut->setTimestamp(aTimestamp);
+
+
+    firstBlock = false;     /* we already processed the first block, so this should be false  */
+
+    if (m_bit)              /* check if it is a complete packet (m bit ==1) */
+    {
+        firstBlock = true;  /* if m-bit is "1", then the farme fits in a block or this was the last
+                               block of the frame, set for next call */
+        framesize = 0;
+        frameNum = 0;
+        bytesRead = 0;
+        compositenumframes = 0;
+    }
+    else
+    {
+        /*
+         *  We have an AudioMuxElement() spread accross more than one rtp packet
+         */
+        compositenumframes++;
+
+        if (compositenumframes < MAX_NUM_COMPOSITE_FRAMES)
+        {
+            // this is not yet a finished packet
+            return FRAME_INCOMPLETE;
+        }
+        else
+        {
+            return FRAME_ERROR;
+        }
+
+    }
+    return FRAME_COMPLETE;
+}
+
+
+
+uint8 PV_LATM_Parser::composeMultipleFrame(uint8* aData, uint32 aDataLen, uint32 aTimestamp, uint32 aSeqNum, uint32 aMbit)
+{
+
+    uint32 tmp;
+    uint8 * myData;
+    uint32 i;
+
+    int32 pktsize = aDataLen;
+    // pool made for output data
+    OsclRefCounterMemFrag memFragOut;
+    mediaDataOut->getMediaFragment(0, memFragOut);
+    // make sure we have enough memory to hold the data
+    if (bytesRead + pktsize > currSize)
+    {
+        uint8 * tempPtr = (uint8*) oscl_calloc(bytesRead + pktsize, sizeof(uint8));
+        if (tempPtr == NULL)
+        {
+            // memory problem?
+            return FRAME_ERROR;
+        }
+        currSize = bytesRead + pktsize;
+        oscl_memcpy(tempPtr, multiFrameBuf, bytesRead);
+        oscl_free(multiFrameBuf);
+        multiFrameBuf = tempPtr;
+    }
+
+    oscl_memcpy(multiFrameBuf + bytesRead, aData, pktsize);
+
+    bytesRead += pktsize;
+    //newpkt->frame_size = bytesRead;
+
+    // to update number of bytes copied
+    memFragOut.getMemFrag().len = bytesRead;
+    mediaDataOut->setMediaFragFilledLen(0, bytesRead);
+    mediaDataOut->setSeqNum(aSeqNum);
+    mediaDataOut->setTimestamp(aTimestamp);
+
+    if (aMbit)
+    {
+        // means this is the last packet for this audioMuxElement
+
+        myData = multiFrameBuf;
+
+        uint32 outPtrPos = 0;
+        for (i = 0;i <= sMC->numSubFrames;i++)
+        {
+            framesize = 0;
+            do
+            {
+                tmp = *(myData);
+                framesize += tmp;
+            }
+            while (*(myData++) == 0xff);
+
+            //int32 bUsed = (framesize/255)+1; // 0-254: 1, 255-511: 2 ...
+            // do a check on the last one
+            if (i == sMC->numSubFrames && !sMC->otherDataPresent)
+            {
+                if (framesize != bytesRead - (myData - multiFrameBuf))
+                {
+                    // to update number of bytes copied
+                    memFragOut.getMemFrag().len = 0;
+                    mediaDataOut->setMediaFragFilledLen(0, 0);
+
+                    return FRAME_INCOMPLETE;
+                }
+            }
+            oscl_memcpy((uint8*)memFragOut.getMemFrag().ptr + outPtrPos, myData, framesize);
+            myData += framesize;
+            outPtrPos += framesize;
+        }
+
+
+
+        // to update number of bytes copied
+        memFragOut.getMemFrag().len = outPtrPos;
+        mediaDataOut->setMediaFragFilledLen(0, outPtrPos);
+
+        bytesRead = 0;
+        framesize = 0;
+        compositenumframes = 0;
+
+    }
+    else
+    {
+        compositenumframes++;
+
+        if (compositenumframes < MAX_NUM_COMPOSITE_FRAMES)
+        {
+            return FRAME_INCOMPLETE;
+        }
+        else
+        {
+            return FRAME_ERROR;
+        }
+
+    }
+
+    return FRAME_COMPLETE;
 }
 
 uint32 BufferShowBits(uint8 *inbuf, uint32 pos1, uint32 pos2)

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,8 @@
  * -------------------------------------------------------------------
  */
 /*
-------------------------------------------------------------------------------
 
-
-
- Pathname: /audio/
-                aac_mpeg4/
-                    AAC_baseline/
-                        pv_aac_dec/
-                            c/
-                                include/
-                                    s_Hcb.h
+ Pathname: s_Hcb.h
 
      Date: 05/07/2001
 
@@ -54,6 +45,7 @@
  Description: Modified the declaration of the structure so no pointers are
               used in the structure.
 
+ Who:                       Date:
  Description:
 
 ------------------------------------------------------------------------------

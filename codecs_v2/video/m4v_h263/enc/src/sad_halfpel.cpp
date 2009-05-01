@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -209,7 +209,7 @@ extern "C"
     	Input/Output:	hmem is assumed to be a pointer to the starting
     				point of the search in the 33x33 matrix search region
     	Changes:
-    	11/7/00:	 implemented MMX
+    11/7/00:	 implemented MMX
       ===============================================================*/
     /*==================================================================
     	Function:	SAD_MB_HalfPel_C

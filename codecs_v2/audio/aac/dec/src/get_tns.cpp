@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,24 +16,15 @@
  * -------------------------------------------------------------------
  */
 /*
-------------------------------------------------------------------------------
 
-
-
- Pathname: /audio/
-                aac_mpeg4/
-                    AAC_baseline/
-                        pv_aac_dec/
-                            c/
-                                src/
-                                    get_tns.c
+ Pathname: get_tns.c
 
      Date: 10/25/2000
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
 
- Description:  Modified from original code
+ Description:  Modified from original shareware code
 
  Description:  Modified to pass variables by reference to eliminate use
                of global variables.
@@ -64,6 +55,7 @@
  Description: Replace some instances of getbits to get1bits
 			  when only 1 bit is read.
 
+ Who:                       Date:
  Description:
 
 ------------------------------------------------------------------------------
@@ -380,7 +372,6 @@ void get_tns(
 
         tns_bands = tns_max_bands_tbl_long_wndw[pMC_Info->sampling_rate_idx];
 
-#if 1
         /*
          *  Definition from 14496-3:1999 doc. Our first encoder follows this rule,
          *  later encoders don't
@@ -394,22 +385,6 @@ void get_tns(
         {
             max_order = 12;
         }
-#else
-        /*
-         *  This code was recently added to conform with the Errata on the Amd 1. 14496-3:2001
-         *  However, file created by old encoders, used the previous definition of
-         *  TNS_MAX_ORDER on the first 14496-3 doc. To be compatible with the previous
-         *  version we are going to keep the old defintions
-         */
-        if (pMC_Info->audioObjectType == MP4AUDIO_AAC_LC)
-        {
-            max_order = 12;
-        }
-        else            /* else LTP */
-        {
-            max_order = 20;
-        }
-#endif
     }
     else
     {

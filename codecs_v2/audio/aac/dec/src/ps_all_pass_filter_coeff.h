@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,12 @@
  */
 /*
 
- Pathname: ./include/ps_all_pass_filter_coeff.h
-
-     Date: 01/11/2005
+ Pathname: ps_all_pass_filter_coeff.h
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
 
+ Who:                   Date:
  Description:
 
 ------------------------------------------------------------------------------

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,14 @@
  * -------------------------------------------------------------------
  */
 /*
-------------------------------------------------------------------------------
 
-
- Pathname: ./AAC_baseline/pv_aac_dec/c/src/getfill.c
+ Pathname: getfill.c
  Funtions: getfill
-
-     Date: 10/25/2000
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
 
- Description:  Modified from original code
+ Description:  Modified from original shareware code
 
  Description:  Modified to pass variables by reference to eliminate use
                of global variables.
@@ -46,6 +42,7 @@
  Description: Replace some instances of getbits to get9_n_lessbits
 			  when the number of bits read is 9 or less.
 
+ Who:                                   Date:
  Description:
 
 ------------------------------------------------------------------------------

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,10 +43,6 @@ AVCDec_Status DecodeSPS(AVCDecObject *decvid, AVCDecBitstream *stream)
     BitstreamRead1Bit(stream, &constrained_set1_flag);
     BitstreamRead1Bit(stream, &constrained_set2_flag);
     BitstreamReadBits(stream, 5, &temp);
-#if 0
-    if (temp != 0)
-        return AVCDEC_FAIL;
-#endif
     BitstreamReadBits(stream, 8, &level_idc);
     if (level_idc > 51)
     {
@@ -448,13 +444,6 @@ AVCDec_Status DecodePPS(AVCDecObject *decvid, AVCCommonObj *video, AVCDecBitstre
                 BitstreamReadBits(stream, numBits, &(picParam->slice_group_id[i]));
             }
         }
-#if 0
-        else
-        {
-            status = AVCDEC_FAIL; /* out of range */
-            goto clean_up;
-        }
-#endif
 
     }
 
@@ -541,17 +530,11 @@ AVCDec_Status DecodeSliceHeader(AVCDecObject *decvid, AVCCommonObj *video, AVCDe
 
     if (sliceHdr->first_mb_in_slice != 0)
     {
-        if ((int)sliceHdr->slice_type >= 5 && slice_type != (int)sliceHdr->slice_type)
+        if ((int)sliceHdr->slice_type >= 5 && slice_type != (int)sliceHdr->slice_type - 5)
         {
             return AVCDEC_FAIL; /* slice type doesn't follow the first slice in the picture */
         }
     }
-#if 0
-    else
-    {
-        video->newPic = TRUE;
-    }
-#endif
     sliceHdr->slice_type = (AVCSliceType) slice_type;
     if (slice_type > 4)
     {
@@ -645,13 +628,6 @@ AVCDec_Status DecodeSliceHeader(AVCDecObject *decvid, AVCCommonObj *video, AVCDe
             return AVCDEC_FAIL;
         }
         ue_v(stream, &idr_pic_id);
-#if 0 // 
-        if (sliceHdr->first_mb_in_slice != 0) /* if not the first slice in this IDR picture */
-        {
-            if (idr_pic_id != (int)sliceHdr->idr_pic_id) /* value must be the same */
-                return AVCDEC_FAIL;
-        }
-#endif
     }
 
     sliceHdr->delta_pic_order_cnt_bottom = 0; /* default value */
@@ -690,12 +666,6 @@ AVCDec_Status DecodeSliceHeader(AVCDecObject *decvid, AVCCommonObj *video, AVCDe
         if (sliceHdr->redundant_pic_cnt > 0) /* redundant picture */
             return AVCDEC_FAIL; /* not supported */
     }
-#if 0
-    if (slice_type == AVC_B_SLICE)
-    {
-        BitstreamRead1Bit(stream, &(sliceHdr->direct_spatial_mv_pred_flag));
-    }
-#endif
     sliceHdr->num_ref_idx_l0_active_minus1 = currPPS->num_ref_idx_l0_active_minus1;
     sliceHdr->num_ref_idx_l1_active_minus1 = currPPS->num_ref_idx_l1_active_minus1;
 
@@ -705,12 +675,6 @@ AVCDec_Status DecodeSliceHeader(AVCDecObject *decvid, AVCCommonObj *video, AVCDe
         if (sliceHdr->num_ref_idx_active_override_flag)
         {
             ue_v(stream, &(sliceHdr->num_ref_idx_l0_active_minus1));
-#if 0
-            if (slice_type == AVC_B_SLICE)
-            {
-                ue_v(stream, &(sliceHdr->num_ref_idx_l1_active_minus1));
-            }
-#endif
         }
         else  /* the following condition is not allowed if the flag is zero */
         {
@@ -743,16 +707,6 @@ AVCDec_Status DecodeSliceHeader(AVCDecObject *decvid, AVCCommonObj *video, AVCDe
     {
         dec_ref_pic_marking(video, stream, sliceHdr);
     }
-#if 0
-    if (currPPS->entropy_coding_mode_flag && slice_type != AVC_I_SLICE)
-    {
-        ue_v(stream, &(sliceHdr->cabac_init_idc));
-        if (sliceHdr->cabac_init_idc > 2)
-        {
-            return AVCDEC_FAIL;
-        }
-    }
-#endif
     se_v(stream, &(sliceHdr->slice_qp_delta));
 
     video->QPy = 26 + currPPS->pic_init_qp_minus26 + sliceHdr->slice_qp_delta;
@@ -973,7 +927,7 @@ AVCDec_Status dec_ref_pic_marking(AVCCommonObj *video, AVCDecBitstream *stream, 
                 i++;
             }
             while (sliceHdr->memory_management_control_operation[i-1] != 0 && i < MAX_DEC_REF_PIC_MARKING);
-            if (i == MAX_DEC_REF_PIC_MARKING && sliceHdr->memory_management_control_operation[i-1] != 0)
+            if (i >= MAX_DEC_REF_PIC_MARKING)
             {
                 return AVCDEC_FAIL; /* we're screwed!!, not enough memory */
             }
@@ -1129,37 +1083,6 @@ AVCDec_Status DecodeSEI(AVCDecObject *decvid, AVCDecBitstream *stream)
 {
     OSCL_UNUSED_ARG(decvid);
     OSCL_UNUSED_ARG(stream);
-#if 0
-    AVCDec_Status status;
-    uint payloadType, payloadSize;
-    uint temp;
-
-
-    return AVCDEC_SUCCESS;
-
-
-    do
-    {
-        payloadType = 0;
-        do
-        {
-            BitstreamReadBits(stream, 8, &temp);
-            payloadType += temp;
-        }
-        while (temp == 0xFF);
-
-        payloadSize = 0;
-        do
-        {
-            BitstreamReadBits(stream, 8, &temp);
-            payloadSize += temp;
-        }
-        while (temp == 0xFF);
-
-        status = sei_payload(decvid, stream, payloadType, payloadSize);
-    }
-    while (stream->read_pos < stream->data_end_pos);
-#endif
     return AVCDEC_SUCCESS;
 }
 

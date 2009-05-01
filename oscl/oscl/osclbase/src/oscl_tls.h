@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,10 +51,6 @@
 #if (OSCL_TLS_IS_KEYED)
 
 //Keyed TLS requires global variable support
-
-//Maximum number of thread slots for keyed TLS.
-#define OSCL_TLS_MAX_THREADS 128
-
 #else
 
 //unused value.
@@ -64,18 +60,19 @@ typedef OsclAny TOsclTlsKey;
 
 
 // list of TLS objects
-const uint32 OSCL_TLS_ID_OSCLMEM        = 0;
-const uint32 OSCL_TLS_ID_PVLOGGER       = 1;
-const uint32 OSCL_TLS_ID_TEST           = 2;
-const uint32 OSCL_TLS_ID_PVSCHEDULER    = 3;
-const uint32 OSCL_TLS_ID_PVERRORTRAP    = 4;
-const uint32 OSCL_TLS_ID_SDPMEDIAPARSER = 5;
-const uint32 OSCL_TLS_ID_PAYLOADPARSER  = 6;
-const uint32 OSCL_TLS_ID_PVMFRECOGNIZER = 7;
-const uint32 OSCL_TLS_ID_WMDRM = 8;
-const uint32 OSCL_TLS_ID_OSCLREGISTRY = 9;
-const uint32 OSCL_TLS_ID_SQLITE3        = 10;
-const uint32 OSCL_TLS_ID_BASE_LAST      = 10; // should always equal the largest ID defined here
+const uint32 OSCL_TLS_ID_MAGICNUM       = 0;
+const uint32 OSCL_TLS_ID_ERRORHOOK      = 1;
+const uint32 OSCL_TLS_ID_PVLOGGER       = 2;
+const uint32 OSCL_TLS_ID_TEST           = 3;
+const uint32 OSCL_TLS_ID_PVSCHEDULER    = 4;
+const uint32 OSCL_TLS_ID_PVERRORTRAP    = 5;
+const uint32 OSCL_TLS_ID_SDPMEDIAPARSER = 6;
+const uint32 OSCL_TLS_ID_PAYLOADPARSER  = 7;
+const uint32 OSCL_TLS_ID_PVMFRECOGNIZER = 8;
+const uint32 OSCL_TLS_ID_WMDRM          = 9;
+const uint32 OSCL_TLS_ID_OSCLREGISTRY   = 10;
+const uint32 OSCL_TLS_ID_SQLITE3        = 11;
+const uint32 OSCL_TLS_ID_BASE_LAST      = 11; // should always equal the largest ID defined here
 
 #define OSCL_TLS_BASE_SLOTS OSCL_TLS_ID_BASE_LAST +1
 
@@ -84,8 +81,7 @@ const uint32 OSCL_TLS_ID_BASE_LAST      = 10; // should always equal the largest
 #define OSCL_TLS_EXTERNAL_SLOTS 0
 #endif
 
-//#define OSCL_TLS_MAX_SLOTS ( OSCL_TLS_BASE_SLOTS + OSCL_TLS_EXTERNAL_SLOTS)
-#define OSCL_TLS_MAX_SLOTS 64
+#define OSCL_TLS_MAX_SLOTS ( OSCL_TLS_BASE_SLOTS + OSCL_TLS_EXTERNAL_SLOTS)
 
 class TLSStorageOps
 {
@@ -100,14 +96,14 @@ class OsclTLSRegistry
         /*
         ** Get an entry
         ** @param ID: identifier
-        ** @param error (output) 0 for success or an error from TPVBasePanicEnum
+        ** @param error (output) 0 for success or an error from TPVBaseErrorEnum
         ** @returns: the entry value
         */
         OSCL_IMPORT_REF static OsclAny* getInstance(uint32 ID, int32 &error);
         /*
         ** Set an entry
         ** @param ID: identifier
-        ** @param error (output) 0 for success or an error from TPVBasePanicEnum
+        ** @param error (output) 0 for success or an error from TPVBaseErrorEnum
         ** @returns: the entry value
         */
         OSCL_IMPORT_REF static void registerInstance(OsclAny* ptr, uint32 ID, int32 &error);
@@ -119,31 +115,18 @@ class OsclTLSRegistry
         typedef registry_type* registry_pointer_type;
 
 #if ( OSCL_TLS_IS_KEYED)
-        class TKeyItem
+        class TlsKey
         {
             public:
-                TKeyItem(): iTlsKey(NULL), iThreadId(0)
-                {}
-                TOsclTlsKey *iTlsKey;
-                TOsclTlsThreadId iThreadId;
-        };
-        class TlsKeyTable
-        {
-            public:
-                TlsKeyTable(): iNumKeys(0)
+                TlsKey(): iRefCnt(0), iOsclTlsKey(NULL)
                 {}
                 _OsclBasicLock iLock;
-                uint32 iNumKeys;
-                TKeyItem iKeys[OSCL_TLS_MAX_THREADS];
+                uint32 iRefCnt;
+                TOsclTlsKey *iOsclTlsKey;
         };
 
-        //The key table is a global variable.
-        static TlsKeyTable* iTlsKeyTable;
-
-        static void GetThreadId(TOsclTlsThreadId &threadId, int32&);
-        static TOsclTlsKey* LookupTlsKey(int32&);
-        static bool SaveTlsKey(TOsclTlsKey* key, int32&);
-        static bool RemoveTlsKey(Oscl_DefAlloc& alloc, TOsclTlsKey* key, int32&);
+        //The key is a global variable.
+        static TlsKey* iTlsKey;
 #endif
 
     private:
@@ -164,10 +147,13 @@ template < class T, uint32 ID, class Registry = OsclTLSRegistry > class OsclTLS
 
     protected:
         T* _Ptr;
-        int32 _error;
 
     public:
-        OsclTLS(): _Ptr(OSCL_STATIC_CAST(T*, Registry::getInstance(ID, _error))) {};
+        OsclTLS()
+        {
+            int32 err;
+            _Ptr = OSCL_STATIC_CAST(T*, Registry::getInstance(ID, err));
+        }
 
         ~OsclTLS() {};
 
@@ -204,7 +190,8 @@ template < class T, uint32 ID, class Registry = OsclTLSRegistry > class OsclTLS
         */
         bool set()
         {
-            _Ptr = OSCL_STATIC_CAST(T*, Registry::getInstance(ID, _error));
+            int32 err;
+            _Ptr = OSCL_STATIC_CAST(T*, Registry::getInstance(ID, err));
             return (_Ptr ? true : false);
         }
 

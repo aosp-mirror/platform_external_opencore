@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@
 
 
 /** \file oscl_error_imp_jumps.h
-    \brief Implemenation of Leave and Panic using Setjmp / Longjmp.
+    \brief Implemenation of using Setjmp / Longjmp.
 */
 
 #ifndef OSCL_ERROR_IMP_JUMPS_H_INCLUDED
@@ -42,7 +42,7 @@
 #include "oscl_assert.h"
 #endif
 
-// Implemenation of Leave and Panic using Setjmp / Longjmp.
+// Implemenation of Leave using Setjmp / Longjmp.
 
 //ANSI setjmp/longjmp implementation.  This is needed on any OS
 //that does not support C++ exceptions.  This is a complete implementation.
@@ -59,9 +59,6 @@
 #endif
 #ifndef OSCL_ERROR_H_INCLUDED
 #include "oscl_error.h"
-#endif
-#ifndef OSCL_EXECPANIC_H_INCLUDED
-#include "oscl_execpanic.h"
 #endif
 
 class Oscl_DefAlloc;
@@ -82,7 +79,7 @@ class OsclJump
         {
             if (!Top())
             {
-                //Note: you can't panic here, since panic would
+                //Note: you can't leave here, since leave would
                 //invoke this routine again.  It is not safe to return
                 //either, because calling code is expecting an execution
                 //end.
@@ -109,18 +106,14 @@ class OsclJump
 
         void PushMark()
         {
-            if (iJumpIndex == (OSCL_JUMP_MAX_JUMP_MARKS - 1))
-                PV_EXECPANIC(ETrapNoFreeSlotItem);//jump stack is full!
-            else
-                iJumpIndex++;
+            OSCL_ASSERT(iJumpIndex < (OSCL_JUMP_MAX_JUMP_MARKS - 1));//jump stack is full!
+            iJumpIndex++;
         }
 
         void PopMark()
         {
-            if (iJumpIndex < 0)
-                PV_EXECPANIC(ETrapPopUnderflow);
-            else
-                iJumpIndex--;
+            OSCL_ASSERT(iJumpIndex >= 0);//jump stack is empty!
+            iJumpIndex--;
         }
 
         jmp_buf iJumpArray[OSCL_JUMP_MAX_JUMP_MARKS];
@@ -134,13 +127,11 @@ class OsclJump
 
 //internal jump type codes.
 #define internalLeave (-1)
-#define internalPanic (-2)
 
-//Leave and Panic use the OsclJump methods
+//Leave uses the OsclJump methods
 #define PVError_DoLeave() OsclJump::StaticJump(internalLeave)
-#define PVError_DoPanic() OsclJump::StaticJump(internalPanic)
 
-//_PV_TRAP macro catches leaves but allows panics to bubble
+//_PV_TRAP macro catches leaves.
 //_r is leave code, _s is statements to execute.
 #define _PV_TRAP(__r,__s)\
 	__r=OsclErrNone;\
@@ -152,8 +143,6 @@ class OsclJump
 		{__s;}\
 		else if (__tr==internalLeave)\
 		{__r=__trap->iLeave;}\
-		else if (__tr==internalPanic)\
-		{__trap->UnTrap();__trap->iJumpData->Jump(__tr);}\
 		__trap->UnTrap();}\
 	}
 
@@ -169,29 +158,9 @@ class OsclJump
 		{__s;}\
 		else if (__tr==internalLeave)\
 		{__r=__trap->iLeave;}\
-		else if (__tr==internalPanic)\
-		{__trap->UnTrap();__trap->iJumpData->Jump(__tr);}\
 		__trap->UnTrap();}\
 	}
 
-//_PV_TRAP_ALL macro catches leaves and panics.
-//_r is leave code, _p is TPVErrorPanic,
-//_s is statements to execute.
-#define _PV_TRAP_ALL(__r,__p,__s)\
-	__r=OsclErrNone;\
-	__p.iReason=OsclErrNone;\
-	{\
-		OsclErrorTrapImp* __trap=OsclErrorTrapImp::Trap();\
-		if(!__trap){__s;}else{\
-		int __tr=setjmp(*(__trap->iJumpData->Top()));\
-		if (__tr==0)\
-		{__s;}\
-		else if (__tr==internalLeave)\
-		{__r=__trap->iLeave;}\
-		else if (__tr==internalPanic)\
-		{__p.iReason=__trap->iPanic.iReason;__p.iCategory.Set(__trap->iPanic.iCategory.Str());}\
-		__trap->UnTrap();}\
-	}
 
 #endif // OSCL_ERROR_IMP_JUMPS_H_INCLUDED
 

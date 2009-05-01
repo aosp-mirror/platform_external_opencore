@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -123,7 +123,6 @@ class pvframemetadata_async_test_base : public OsclTimerObject,
             iFileName = aTestParam.iFileName;
             iFileType = aTestParam.iFileType;
             iOutputFrameType = aTestParam.iOutputFrameType;
-            GetFormatString(iOutputFrameType, iOutputFrameTypeString);
             oscl_UTF8ToUnicode(iOutputFrameTypeString.get_str(), iOutputFrameTypeString.get_size(), iTempWCharBuf, 512);
             iOutputFrameTypeWString.set(iTempWCharBuf, oscl_strlen(iTempWCharBuf));
 
@@ -155,15 +154,15 @@ class pvframemetadata_async_test_base : public OsclTimerObject,
             bool foundlastslash = false;
             while (!foundlastslash)
             {
-                oscl_wchar* tmp1 = oscl_strstr(lastslash, _STRLIT_WCHAR("\\"));
-                oscl_wchar* tmp2 = oscl_strstr(lastslash, _STRLIT_WCHAR("/"));
+                const oscl_wchar* tmp1 = oscl_strstr(lastslash, _STRLIT_WCHAR("\\"));
+                const oscl_wchar* tmp2 = oscl_strstr(lastslash, _STRLIT_WCHAR("/"));
                 if (tmp1 != NULL)
                 {
-                    lastslash = tmp1 + 1;
+                    lastslash = (oscl_wchar*)tmp1 + 1;
                 }
                 else if (tmp2 != NULL)
                 {
-                    lastslash = tmp2 + 1;
+                    lastslash = (oscl_wchar*)tmp2 + 1;
                 }
                 else
                 {
@@ -181,10 +180,10 @@ class pvframemetadata_async_test_base : public OsclTimerObject,
             bool finishedreplace = false;
             while (!finishedreplace)
             {
-                oscl_wchar* tmp = oscl_strstr(aFilename.get_cstr(), _STRLIT_WCHAR("."));
+                const oscl_wchar* tmp = oscl_strstr(aFilename.get_cstr(), _STRLIT_WCHAR("."));
                 if (tmp != NULL)
                 {
-                    oscl_strncpy(tmp, _STRLIT_WCHAR("_"), 1);
+                    oscl_strncpy((oscl_wchar*)tmp, _STRLIT_WCHAR("_"), 1);
                 }
                 else
                 {
@@ -250,8 +249,9 @@ class pvframemetadata_utility_test : public test_case,
             ProtectedMetadataTest = NoVideoTrackTest + 1,
 
             SetTimeoutAndGetFrameTest = ProtectedMetadataTest + 1,
+            SetPlayerKeyTest = SetTimeoutAndGetFrameTest + 1,
 
-            LastTest = SetTimeoutAndGetFrameTest + 1,//placeholder
+            LastTest = SetPlayerKeyTest + 1,//placeholder
 
             BeyondLastTest = 999 //placeholder
         };

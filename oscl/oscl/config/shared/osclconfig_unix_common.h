@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,26 +50,24 @@
 #endif
 #include <math.h>
 
-#ifndef OSCL_DISABLE_INLINES
 #define OSCL_DISABLE_INLINES                0
-#endif
 
+#define OSCL_HAS_ANSI_STDLIB_SUPPORT        1
+#define OSCL_HAS_ANSI_MATH_SUPPORT          1
+#define OSCL_HAS_GLOBAL_VARIABLE_SUPPORT    1
+#define OSCL_HAS_ANSI_STRING_SUPPORT        1
+#define OSCL_HAS_ANSI_WIDE_STRING_SUPPORT   1
+#define OSCL_HAS_ANSI_STDIO_SUPPORT         1
 
-
-
-
-
-
-#ifndef OSCL_MEMFRAG_PTR_BEFORE_LEN
 #define OSCL_MEMFRAG_PTR_BEFORE_LEN         1
-#endif
 
-
-
+#define OSCL_HAS_UNIX_SUPPORT               1
+#define OSCL_HAS_MSWIN_SUPPORT              0
+#define OSCL_HAS_SYMBIAN_SUPPORT            0
 
 // 64-bit int
-
-
+#define OSCL_HAS_NATIVE_INT64_TYPE 1
+#define OSCL_HAS_NATIVE_UINT64_TYPE 1
 #define OSCL_NATIVE_INT64_TYPE     int64_t
 #define OSCL_NATIVE_UINT64_TYPE    uint64_t
 #define INT64(x) x##LL
@@ -78,28 +76,27 @@
 #define UINT64_HILO(high,low) ((((high##ULL))<<32)|low)
 
 // character set.
-
+#define OSCL_HAS_UNICODE_SUPPORT            1
 #define OSCL_NATIVE_WCHAR_TYPE wchar_t
+#if (OSCL_HAS_UNICODE_SUPPORT)
 #define _STRLIT(x) L ## x
+#else
+#define _STRLIT(x) x
+#endif
 #define _STRLIT_CHAR(x) x
 #define _STRLIT_WCHAR(x) L ## x
 
 // Thread-local storage.  Unix has keyed TLS.
-
-#ifndef OSCL_TLS_IS_KEYED
+#define OSCL_HAS_TLS_SUPPORT    1
 #define OSCL_TLS_IS_KEYED 1
-#endif
-
 typedef pthread_key_t TOsclTlsKey ;
 #define OSCL_TLS_KEY_CREATE_FUNC(key) (pthread_key_create(&key,NULL)==0)
 #define OSCL_TLS_KEY_DELETE_FUNC(key) pthread_key_delete(key)
 #define OSCL_TLS_STORE_FUNC(key,ptr) (pthread_setspecific(key,(const void*)ptr)==0)
 #define OSCL_TLS_GET_FUNC(key) pthread_getspecific(key)
-typedef pthread_t TOsclTlsThreadId;
-#define OSCL_TLS_THREAD_ID_FUNC() pthread_self()
-#define OSCL_TLS_THREAD_ID_EQUAL(t1,t2) (pthread_equal(t1,t2)!=0)
 
 //Basic lock
+#define OSCL_HAS_BASIC_LOCK 1
 #include <pthread.h>
 typedef pthread_mutex_t TOsclBasicLockObject;
 

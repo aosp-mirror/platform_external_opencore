@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,23 @@ Otherwise it should be set to 0.
 #error "ERROR: OSCL_BYPASS_MEMMGT has to be defined to either 1 or 0"
 #endif
 
+/**
+OSCL_HAS_ANSI_MEMORY_FUNCS macro should be set to 1 if
+the target platform supports ANSI C memory functions (malloc, free, etc).
+Otherwise it should be set to 0.
+*/
+#ifndef OSCL_HAS_ANSI_MEMORY_FUNCS
+#error "ERROR: OSCL_HAS_ANSI_MEMORY_FUNCS has to be defined to either 1 or 0"
+#endif
 
+/**
+OSCL_HAS_SYMBIAN_MEMORY_FUNCS macro should be set to 1 if
+the target platform supports Symbian memory functions User::Alloc, User::Free, etc.
+Otherwise it should be set to 0.
+*/
+#ifndef OSCL_HAS_SYMBIAN_MEMORY_FUNCS
+#error "ERROR: OSCL_HAS_SYMBIAN_MEMORY_FUNCS has to be defined to either 1 or 0"
+#endif
 
 /*
  * OSCL_HAS_HEAP_BASE_SUPPORT macro should be set to 1 for the

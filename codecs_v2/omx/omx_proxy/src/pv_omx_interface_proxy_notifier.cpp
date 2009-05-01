@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,10 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
+#ifndef PV_OMXDEFS_H_INCLUDED
+#include "pv_omxdefs.h"
+#endif
+
 
 #ifndef PV_OMX_INTERFACE_PROXY_H_INCLUDED
 #include "pv_omx_interface_proxy.h"
@@ -24,6 +28,7 @@
 #include "pv_omx_interface_proxy_notifier.h"
 #endif
 
+#if PROXY_INTERFACE
 void CPVInterfaceProxyNotifier_OMX::Run()
 {
     if (Status() != OSCL_REQUEST_ERR_NONE)
@@ -59,7 +64,8 @@ void CPVInterfaceProxyNotifier_OMX::Run()
         if (proxy)
             proxy->iClient->HandleNotification(notice.iMsgId, notice.iMsg);
         else
-            OsclError::Panic("PVPROXYDEBUG", 2);//debug error.
+            OSCL_ASSERT(NULL != proxy);//debug error.
     }
 
 }
+#endif

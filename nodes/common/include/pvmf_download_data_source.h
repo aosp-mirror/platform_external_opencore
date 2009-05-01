@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,19 +55,13 @@ class PVMFDownloadDataSourceHTTP : public PVInterface
         } TPVPlaybackControl;
         TPVPlaybackControl	iPlaybackControl;
 
-        //Optional CPM usage flag.
-        //If true, CPM will be used during playback.
-        //If false, CPM will not be used during playback.
-        bool iUseCPMPluginRegistryForPlayback;
-
         PVMFDownloadDataSourceHTTP(bool aIsNewSession
                                    , OSCL_wString &aConfigFile
                                    , OSCL_wString &aDownloadFileName
                                    , uint32 aMaxSize
                                    , OSCL_String &aProxyName
                                    , int32 aProxyPort
-                                   , TPVPlaybackControl aPlaybackControl
-                                   , bool aUseCPMPluginRegistryForPlayback = false)
+                                   , TPVPlaybackControl aPlaybackControl)
                 : bIsNewSession(aIsNewSession)
                 , iConfigFileName(aConfigFile)
                 , iDownloadFileName(aDownloadFileName)
@@ -75,8 +69,8 @@ class PVMFDownloadDataSourceHTTP : public PVInterface
                 , iProxyName(aProxyName)
                 , iProxyPort(aProxyPort)
                 , iPlaybackControl(aPlaybackControl)
-                , iUseCPMPluginRegistryForPlayback(aUseCPMPluginRegistryForPlayback)
-        {}
+        {
+        }
 
         /* From PVInterface */
         void addRef()
@@ -107,6 +101,7 @@ class PVMFDownloadDataSourceHTTP : public PVInterface
 
 class CPVXInfo;
 
+//Source data for Fasttrack download (format type PVMF_DATA_SOURCE_PVX_FILE)
 class PVMFDownloadDataSourcePVX : public PVInterface
 {
     public:

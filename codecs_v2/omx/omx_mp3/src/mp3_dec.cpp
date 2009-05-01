@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,10 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
+#ifndef OSCL_BASE_H_INCLUDED
+#include "oscl_base.h"
+#endif
+
 #include "mp3_dec.h"
 #include "pvmp3decoder_api.h"
 
@@ -87,7 +91,7 @@ void Mp3Decoder::Mp3DecDeinit()
 
 Int Mp3Decoder::Mp3DecodeAudio(OMX_S16* aOutBuff,
                                OMX_U32* aOutputLength, OMX_U8** aInputBuf,
-                               OMX_U32* aInBufSize, OMX_S32* aIsFirstBuffer,
+                               OMX_U32* aInBufSize, OMX_S32* aFrameCount,
                                OMX_AUDIO_PARAM_PCMMODETYPE* aAudioPcmParam,
                                OMX_AUDIO_PARAM_MP3TYPE* aAudioMp3Param,
                                OMX_BOOL aMarkerFlag,
@@ -102,7 +106,7 @@ Int Mp3Decoder::Mp3DecodeAudio(OMX_S16* aOutBuff,
     {
         //Initialization is required again when the client inbetween rewinds the input bitstream
         //Added to pass khronous conformance tests
-        if (*aIsFirstBuffer != 0)
+        if (*aFrameCount != 0)
         {
             e_equalization EqualizType = iMP3DecExt->equalizerType;
             iMP3DecExt->inputBufferCurrentLength = 0;
@@ -121,28 +125,38 @@ Int Mp3Decoder::Mp3DecodeAudio(OMX_S16* aOutBuff,
 
     if (OMX_FALSE == aMarkerFlag)
     {
-        //If the marker flag is not set, find out the frame boundaries
-        Status = iAudioMp3Decoder->SeekMp3Synchronization(iMP3DecExt);
-
-        if (1 == Status)
+        //If the input buffer has finished off, do not check the frame boundaries just return from here
+        //This will detect the EOS for without marker test case.
+        if (0 == iMP3DecExt->inputBufferCurrentLength)
         {
-            if (0 == iMP3DecExt->inputBufferCurrentLength)
-            {
-                //This indicates the case of corrupt frame, discard input bytes equal to inputBufferMaxLength
-                *aInBufSize -= iMP3DecExt->inputBufferMaxLength;
-                iInputUsedLength += iMP3DecExt->inputBufferMaxLength;
-                iMP3DecExt->inputBufferUsedLength += iMP3DecExt->inputBufferMaxLength;;
+            iInputUsedLength = 0;
+            return MP3DEC_INCOMPLETE_FRAME;
+        }
+        //If the marker flag is not set, find out the frame boundaries
+        else
+        {
+            Status = iAudioMp3Decoder->SeekMp3Synchronization(iMP3DecExt);
 
-                //return sucess so that we can continue decoding with rest of the buffer,
-                //after discarding the corrupted bit-streams
-                return MP3DEC_SUCCESS;
-            }
-            else
+            if (1 == Status)
             {
-                *aInputBuf += iInputUsedLength;
-                iMP3DecExt->inputBufferUsedLength = 0;
-                iInputUsedLength = 0;
-                return MP3DEC_INCOMPLETE_FRAME;
+                if (0 == iMP3DecExt->inputBufferCurrentLength)
+                {
+                    //This indicates the case of corrupt frame, discard input bytes equal to inputBufferMaxLength
+                    *aInBufSize -= iMP3DecExt->inputBufferMaxLength;
+                    iInputUsedLength += iMP3DecExt->inputBufferMaxLength;
+                    iMP3DecExt->inputBufferUsedLength += iMP3DecExt->inputBufferMaxLength;;
+
+                    //return sucess so that we can continue decoding with rest of the buffer,
+                    //after discarding the corrupted bit-streams
+                    return MP3DEC_SUCCESS;
+                }
+                else
+                {
+                    *aInputBuf += iInputUsedLength;
+                    iMP3DecExt->inputBufferUsedLength = 0;
+                    iInputUsedLength = 0;
+                    return MP3DEC_INCOMPLETE_FRAME;
+                }
             }
         }
     }
@@ -165,9 +179,8 @@ Int Mp3Decoder::Mp3DecodeAudio(OMX_S16* aOutBuff,
         *aOutputLength = iMP3DecExt->outputFrameSize * iMP3DecExt->num_channels;
 
         //After decoding the first frame, update all the input & output port settings
-        if (0 == *aIsFirstBuffer)
+        if (0 == *aFrameCount)
         {
-            (*aIsFirstBuffer)++;
 
             //Output Port Parameters
             aAudioPcmParam->nSamplingRate = iMP3DecExt->samplingRate;
@@ -179,6 +192,8 @@ Int Mp3Decoder::Mp3DecodeAudio(OMX_S16* aOutBuff,
             //Set the Resize flag to send the port settings changed callback
             *aResizeFlag = OMX_TRUE;
         }
+
+        (*aFrameCount)++;
 
         return Status;
 
@@ -199,6 +214,8 @@ Int Mp3Decoder::Mp3DecodeAudio(OMX_S16* aOutBuff,
         *aInputBuf += iInputUsedLength;
         iInputUsedLength = 0;
     }
+
+    (*aFrameCount)++;
 
     return Status;
 

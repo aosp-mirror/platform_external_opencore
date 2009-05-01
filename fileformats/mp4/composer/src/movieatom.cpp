@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*********************************************************************************/
 /*
     This PVA_FF_MovieAtom Class fp the main atom class in the MPEG-4 File that stores
     all the meta data about the MPEG-4 presentation.
@@ -42,8 +41,6 @@ PVA_FF_MovieAtom::PVA_FF_MovieAtom(uint32 fileAuthoringFlags)
     _fileType = 0;
 
     // Initializations
-    _pBIFSTrack = NULL;
-    _pODTrack = NULL;
 
     _pAssetInfoCopyRightAtom		= NULL;
     _pAssetInfoAuthorAtom			= NULL;
@@ -55,6 +52,8 @@ PVA_FF_MovieAtom::PVA_FF_MovieAtom(uint32 fileAuthoringFlags)
     _pAssetInfoClassificationAtom	= NULL;
     _pAssetInfoKeyWordsAtom			= NULL;
     _pAssetInfoLocationInfoAtom		= NULL;
+    _pAssetInfoKeyAlbumAtom			= NULL;
+    _pAssetInfoKeyRecordingYearAtom = NULL;
 
     _oMovieFragmentEnabled = false;
     //Movie Fragment : Enable movie fragment mode and create movie extends atom
@@ -66,8 +65,6 @@ PVA_FF_MovieAtom::PVA_FF_MovieAtom(uint32 fileAuthoringFlags)
     }
 
     PV_MP4_FF_NEW(fp->auditCB, PVA_FF_MovieHeaderAtom, ((uint8)0, (uint32)0, fileAuthoringFlags), _pmovieHeaderAtom);
-
-    PV_MP4_FF_NEW(fp->auditCB, PVA_FF_ObjectDescriptorAtom, ((uint8)0, (uint32)0), _pobjectDescriptorAtom);
 
 
     PV_MP4_FF_NEW(fp->auditCB, PVA_FF_TrackAtomVecType, (), _pMediaTrackVec);
@@ -82,7 +79,6 @@ PVA_FF_MovieAtom::PVA_FF_MovieAtom(uint32 fileAuthoringFlags)
     recomputeSize();
 
     _pmovieHeaderAtom->setParent(this);
-    _pobjectDescriptorAtom->setParent(this);
 }
 
 // Destructor - delete the vector(s) of TrackAtoms from the heap
@@ -92,20 +88,12 @@ PVA_FF_MovieAtom::~PVA_FF_MovieAtom()
 
     PV_MP4_FF_DELETE(NULL, PVA_FF_MovieHeaderAtom, _pmovieHeaderAtom);
 
-    PV_MP4_FF_DELETE(NULL, PVA_FF_ObjectDescriptorAtom, _pobjectDescriptorAtom);
-
     // Delete mpeg4 general tracks
     for (i = 0; i < _pmpeg4TrackVec->size(); i++)
     {
         PV_MP4_FF_DELETE(NULL, PVA_FF_TrackAtom, (*_pmpeg4TrackVec)[i]);
     }
     PV_MP4_FF_TEMPLATED_DELETE(NULL, PVA_FF_TrackAtomVecType, Oscl_Vector, _pmpeg4TrackVec);
-
-    if (_pBIFSTrack != NULL)
-        PV_MP4_FF_DELETE(NULL, PVA_FF_TrackAtom, _pBIFSTrack);
-
-    if (_pODTrack != NULL)
-        PV_MP4_FF_DELETE(NULL, PVA_FF_TrackAtom, _pODTrack);
 
     // Delete media tracks
     for (i = 0; i < _pMediaTrackVec->size(); i++)
@@ -173,18 +161,6 @@ PVA_FF_MovieAtom::addTrackAtom(PVA_FF_TrackAtom *a)
             }
         }
         break;
-        case MEDIA_TYPE_SCENE_DESCRIPTION:
-        {
-            _pBIFSTrack = a;
-            a->setParent(this);
-            break;
-        }
-        case MEDIA_TYPE_OBJECT_DESCRIPTOR:
-        {
-            _pODTrack = a;
-            a->setParent(this);
-            break;
-        }
         default:
             PV_MP4_FF_DELETE(NULL, PVA_FF_TrackAtom, a);
             break;
@@ -238,14 +214,6 @@ PVA_FF_MovieAtom::setTimeScale(uint32 ts)
     // Set timescale in movieheader atom
     _pmovieHeaderAtom->setTimeScale(ts);
 
-    if (_pBIFSTrack != NULL)
-    {
-        _pBIFSTrack->setTimeScale(ts);
-    }
-    if (_pODTrack != NULL)
-    {
-        _pODTrack->setTimeScale(ts);
-    }
 }
 
 
@@ -264,8 +232,6 @@ PVA_FF_MovieAtom::recomputeSize()
 
     size += _pmovieHeaderAtom->getSize();
 
-    size += _pobjectDescriptorAtom->getSize();
-
     if (_puserDataAtom != NULL)
     {
         if (_puserDataAtom->getUserDataAtomVecSize() > 0)
@@ -278,15 +244,13 @@ PVA_FF_MovieAtom::recomputeSize()
     {
         for (uint32 i = 0; i < _pMediaTrackVec->size(); i++)
         {
-            size += (*_pMediaTrackVec)[i]->getSize();
+            if ((*_pMediaTrackVec)[i]->getSampleCount() > 0)
+            {
+                size += (*_pMediaTrackVec)[i]->getSize();
+            }
         }
     }
-    {
-        if (_pBIFSTrack != NULL)
-            size += _pBIFSTrack->getSize();
-        if (_pODTrack != NULL)
-            size += _pODTrack->getSize();
-    }
+
     // in movie fragment mode add size of mvex
     if (_oMovieFragmentEnabled == true)
     {
@@ -341,36 +305,6 @@ PVA_FF_MovieAtom::prepareToRender()
         }
     }
 
-    if (_pBIFSTrack != NULL)
-    {
-        /* Set the duration of the BIFS/OD sample to that of the clip duration */
-        _pBIFSTrack->setBIFSODSampleDuration(maxTrackDuration);
-        _pBIFSTrack->setDuration(maxTrackDuration);
-
-        PVA_FF_TrackHeaderAtom *tkhdPtr = _pBIFSTrack->getTrackHeaderAtomPtr();
-
-        if (tkhdPtr != NULL)
-        {
-            tkhdPtr->setCreationTime(creationTime);
-            tkhdPtr->setModificationTime(modTime);
-        }
-    }
-
-    if (_pODTrack != NULL)
-    {
-        /* Set the duration of the BIFS/OD sample to that of the clip duration */
-        _pODTrack->setBIFSODSampleDuration(maxTrackDuration);
-        _pODTrack->setDuration(maxTrackDuration);
-
-        PVA_FF_TrackHeaderAtom *tkhdPtr = _pODTrack->getTrackHeaderAtomPtr();
-
-        if (tkhdPtr != NULL)
-        {
-            tkhdPtr->setCreationTime(creationTime);
-            tkhdPtr->setModificationTime(modTime);
-        }
-    }
-
     recomputeSize();
 
     return;
@@ -410,41 +344,18 @@ PVA_FF_MovieAtom::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
         }
     }
     // Render the object descriptor
-    {
-        if (!_pobjectDescriptorAtom->renderToFileStream(fp))
-        {
-            return false;
-        }
-        rendered += _pobjectDescriptorAtom->getSize();
-    }
     if (_pMediaTrackVec != NULL)
     {
         for (uint32 i = 0; i < _pMediaTrackVec->size(); i++)
         {
-            if (!((*_pMediaTrackVec)[i]->renderToFileStream(fp)))
+            if ((*_pMediaTrackVec)[i]->getSampleCount() > 0)
             {
-                return false;
+                if (!((*_pMediaTrackVec)[i]->renderToFileStream(fp)))
+                {
+                    return false;
+                }
+                rendered += (*_pMediaTrackVec)[i]->getSize();
             }
-            rendered += (*_pMediaTrackVec)[i]->getSize();
-        }
-    }
-    {
-        if (_pBIFSTrack != NULL)
-        {
-            if (!_pBIFSTrack->renderToFileStream(fp))
-            {
-                return false;
-            }
-            rendered += _pBIFSTrack->getSize();
-        }
-
-        if (_pODTrack != NULL)
-        {
-            if (!_pODTrack->renderToFileStream(fp))
-            {
-                return false;
-            }
-            rendered += _pODTrack->getSize();
         }
     }
     // render MVEX atom in movie fragment mode
@@ -524,24 +435,6 @@ PVA_FF_MovieAtom::setMaxBufferSizeDB(uint32 trackID, uint32 max)
     }
 }
 
-void PVA_FF_MovieAtom::setVideoWidthHeight(uint32 trackID, int16 width, int16 height)
-{
-    PVA_FF_TrackAtom *mediaTrack;
-    uint32 mediaType = 0;
-    mediaTrack = getMediaTrack(trackID);
-
-    if (mediaTrack != NULL)
-    {
-        mediaType  = mediaTrack->getMediaType();
-        if (mediaType == MEDIA_TYPE_VISUAL)
-        {
-            mediaTrack->setVideoWidthHeight(width, height);
-        }
-    }
-}
-
-
-
 void
 PVA_FF_MovieAtom::addSampleToTrack(uint32 trackID,
                                    uint8 *psample,
@@ -569,10 +462,7 @@ PVA_FF_MovieAtom::addSampleToTrack(uint32 trackID,
             _pmovieHeaderAtom->addSample(ts_in_milliseconds);
         }
     }
-    else
-    {
-        //cerr << "ERROR: MediaTrack" << trackID << "not found" << endl;
-    }
+
 
     if (mediaType == MEDIA_TYPE_VISUAL)
     {
@@ -638,10 +528,7 @@ PVA_FF_MovieAtom::addTextSampleToTrack(uint32 trackID,
             _pmovieHeaderAtom->addSample(ts_in_milliseconds);
         }
     }
-    else
-    {
-        //cerr << "ERROR: MediaTrack" << trackID << "not found" << endl;
-    }
+
 
     if (mediaType == MEDIA_TYPE_TEXT)
     {
@@ -683,10 +570,6 @@ PVA_FF_MovieAtom::addSampleToTrack(uint32 trackID,
             // Add sample to movie header so can update its _duration
             _pmovieHeaderAtom->addSample(ts_in_milliseconds);
         }
-    }
-    else
-    {
-        //cerr << "ERROR: MediaTrack" << trackID << "not found" << endl;
     }
 
     if (mediaType == MEDIA_TYPE_VISUAL)
@@ -754,10 +637,6 @@ PVA_FF_MovieAtom::addTextSampleToTrack(uint32 trackID,
             // Add sample to movie header so can update its _duration
             _pmovieHeaderAtom->addSample(ts_in_milliseconds);
         }
-    }
-    else
-    {
-        //cerr << "ERROR: MediaTrack" << trackID << "not found" << endl;
     }
 
     if (mediaType == MEDIA_TYPE_TEXT)//added for the support of timed text track
@@ -890,6 +769,24 @@ PVA_FF_MovieAtom::createAssetInfoAtoms()
         }
     }
 
+    if (_pAssetInfoKeyAlbumAtom == NULL)
+    {
+        PV_MP4_FF_NEW(fp->auditCB, PVA_FF_AssetInfoAlbumAtom, (), _pAssetInfoKeyAlbumAtom);
+        if (_puserDataAtom != NULL)
+        {
+            _puserDataAtom->addAtom(_pAssetInfoKeyAlbumAtom);
+        }
+    }
+
+    if (_pAssetInfoKeyRecordingYearAtom == NULL)
+    {
+        PV_MP4_FF_NEW(fp->auditCB, PVA_FF_AssetInfoRecordingYearAtom, (), _pAssetInfoKeyRecordingYearAtom);
+        if (_puserDataAtom != NULL)
+        {
+            _puserDataAtom->addAtom(_pAssetInfoKeyRecordingYearAtom);
+        }
+    }
+
 }
 
 // functions to set and update fragment duration in MVEX atom
@@ -920,4 +817,31 @@ void
 PVA_FF_MovieAtom::writeMovieFragmentDuration(MP4_AUTHOR_FF_FILE_IO_WRAP* fp)
 {
     _pMovieExtendsAtom->writeMovieFragmentDuration(fp);
+}
+
+void
+PVA_FF_MovieAtom::SetMaxSampleSize(uint32 aTrackID, uint32 aSize)
+{
+    PVA_FF_TrackAtom *mediaTrack = NULL;
+    mediaTrack = getMediaTrack(aTrackID);
+    if (NULL != mediaTrack)
+        mediaTrack->SetMaxSampleSize(aSize);
+}
+
+void
+PVA_FF_MovieAtom::writeMaxSampleSize(MP4_AUTHOR_FF_FILE_IO_WRAP *_afp)
+{
+    for (uint32 i = 0; i < _pMediaTrackVec->size(); i++)
+    {
+        PVA_FF_TrackHeaderAtom *ptkhdr = NULL;
+        ptkhdr = (*_pMediaTrackVec)[i]->getTrackHeaderAtomPtr();
+        if (NULL != ptkhdr)
+        {
+            uint32 trackID = ptkhdr->getTrackID();
+            PVA_FF_TrackAtom *mediaTrack = NULL;
+            mediaTrack = getMediaTrack(trackID);
+            if (NULL != mediaTrack)
+                mediaTrack->writeMaxSampleSize(_afp);
+        }
+    }
 }

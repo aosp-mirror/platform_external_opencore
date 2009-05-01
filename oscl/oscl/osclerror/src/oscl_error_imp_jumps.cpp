@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ OSCL_EXPORT_REF void OsclJump::StaticJump(int jmpcode)
     OsclErrorTrapImp *trap = OsclErrorTrapImp::GetErrorTrap(error);
     if (!trap)
     {
-        //Note: you can't panic here, since panic would
+        //Note: you can't leave here, since leave would
         //invoke this routine again.  It is not safe to return
         //either, because calling code is expecting an execution
         //end.

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -121,7 +121,8 @@ template<class T> class OsclExclusivePtr
         */
         virtual ~OsclExclusivePtr()
         {
-            delete _Ptr;
+            if (_Ptr)
+                delete _Ptr;
         }
 
         /**
@@ -259,7 +260,8 @@ template<class T> class OsclExclusiveArrayPtr
         */
         virtual ~OsclExclusiveArrayPtr()
         {
-            delete [] _Ptr;
+            if (_Ptr)
+                delete [] _Ptr;
         }
 
         /**

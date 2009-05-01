@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,11 +30,13 @@ PVFMAudioMIO::PVFMAudioMIO() :
 
 void PVFMAudioMIO::InitData()
 {
-    iAudioFormat = PVMF_FORMAT_UNKNOWN;
+    iAudioFormat = PVMF_MIME_FORMAT_UNKNOWN;
     iAudioSamplingRateValid = false;
     iAudioNumChannelsValid = false;
+    iIsMIOConfigured = false;
     iAudioSamplingRate = 0;
     iAudioNumChannels = 0;
+    iWriteBusy = false;
 
     iCommandCounter = 0;
     iLogger = NULL;
@@ -54,12 +56,13 @@ void PVFMAudioMIO::ResetData()
     Cleanup();
 
     // Reset all the received media parameters.
-    iAudioFormatString = "";
-    iAudioFormat = PVMF_FORMAT_UNKNOWN;
+    iAudioFormat = PVMF_MIME_FORMAT_UNKNOWN;
     iAudioSamplingRateValid = false;
     iAudioNumChannelsValid = false;
     iAudioSamplingRate = 0;
     iAudioNumChannels = 0;
+    iIsMIOConfigured = false;
+    iWriteBusy = false;
 }
 
 
@@ -240,8 +243,14 @@ PVMFCommandId PVFMAudioMIO::Init(const OsclAny* aContext)
 
 PVMFCommandId PVFMAudioMIO::Reset(const OsclAny* aContext)
 {
-    OSCL_UNUSED_ARG(aContext);
-    return 0;
+    ResetData();
+
+    PVMFCommandId cmdid = iCommandCounter++;
+    PVMFStatus status = PVMFSuccess;
+
+    CommandResponse resp(status, cmdid, aContext);
+    QueueCommandResponse(resp);
+    return cmdid;
 }
 
 PVMFCommandId PVFMAudioMIO::Start(const OsclAny* aContext)
@@ -258,6 +267,11 @@ PVMFCommandId PVFMAudioMIO::Start(const OsclAny* aContext)
         case STATE_PAUSED:
             iState = STATE_STARTED;
             status = PVMFSuccess;
+            if (iPeer && iWriteBusy)
+            {
+                iWriteBusy = false;
+                iPeer->statusUpdate(PVMI_MEDIAXFER_STATUS_WRITE);
+            }
             break;
 
         default:
@@ -436,8 +450,6 @@ void PVFMAudioMIO::ThreadLogoff()
         RemoveFromScheduler();
         iLogger = NULL;
         iState = STATE_IDLE;
-        // Reset all data from this session
-        ResetData();
     }
 }
 
@@ -465,9 +477,20 @@ void PVFMAudioMIO::useMemoryAllocators(OsclMemAllocator* write_alloc)
 PVMFCommandId PVFMAudioMIO::writeAsync(uint8 aFormatType, int32 aFormatIndex, uint8* aData, uint32 aDataLen,
                                        const PvmiMediaXferHeader& data_header_info, OsclAny* aContext)
 {
+    OSCL_UNUSED_ARG(aData);
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMAudioMIO::writeAsync() seqnum %d ts %d context %d", data_header_info.seq_num, data_header_info.timestamp, aContext));
 
     PVMFStatus status = PVMFFailure;
+
+    // Do a leave if MIO is not configured except when it is an EOS
+    if (!iIsMIOConfigured &&
+            !((PVMI_MEDIAXFER_FMT_TYPE_NOTIFICATION == aFormatType) &&
+              (PVMI_MEDIAXFER_FMT_INDEX_END_OF_STREAM == aFormatIndex)))
+    {
+        iWriteBusy = true;
+        OSCL_LEAVE(OsclErrInvalidState);
+        return -1;
+    }
 
     switch (aFormatType)
     {
@@ -501,7 +524,9 @@ PVMFCommandId PVFMAudioMIO::writeAsync(uint8 aFormatType, int32 aFormatIndex, ui
                     if (iState < STATE_INITIALIZED)
                     {
                         PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR, (0, "PVFMAudioMIO::writeAsync: Error - Invalid state"));
-                        status = PVMFErrInvalidState;
+                        iWriteBusy = true;
+                        OSCL_LEAVE(OsclErrInvalidState);
+                        return -1;
                     }
                     else
                     {
@@ -524,7 +549,9 @@ PVMFCommandId PVFMAudioMIO::writeAsync(uint8 aFormatType, int32 aFormatIndex, ui
                     if (iState != STATE_STARTED)
                     {
                         PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR, (0, "PVFMAudioMIO::writeAsync: Error - Invalid state"));
-                        status = PVMFErrInvalidState;
+                        iWriteBusy = true;
+                        OSCL_LEAVE(OsclErrInvalidState);
+                        return -1;
                     }
                     else
                     {
@@ -694,17 +721,18 @@ PVMFStatus PVFMAudioMIO::getParametersSync(PvmiMIOSession aSession, PvmiKeyType 
         // This is a query for the list of supported formats.
         // This component supports any audio format
         // Generate a list of all the PVMF audio formats...
-        int32 count = 1 + PVMF_LAST_UNCOMPRESSED_AUDIO - PVMF_FIRST_UNCOMPRESSED_AUDIO;
 
+        uint32 count = PVMF_SUPPORTED_UNCOMPRESSED_AUDIO_FORMATS_COUNT;
         aParameters = (PvmiKvp*)oscl_malloc(count * sizeof(PvmiKvp));
 
         if (aParameters)
         {
-            PVMFFormatType fmt;
-            for (fmt = PVMF_FIRST_UNCOMPRESSED_AUDIO;fmt <= PVMF_LAST_UNCOMPRESSED_AUDIO;fmt++)
-            {
-                aParameters[num_parameter_elements++].value.uint32_value = (uint32)fmt;
-            }
+            aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_PCM;
+            aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_PCM8;
+            aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_PCM16;
+            aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_PCM16_BE;
+            aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_ULAW;
+            aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_ALAW;
             return PVMFSuccess;
         }
         return PVMFErrNoMemory;
@@ -784,9 +812,8 @@ void PVFMAudioMIO::setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParamete
         //Check against known audio parameter keys...
         if (pv_mime_strcmp(aParameters[i].key, MOUT_AUDIO_FORMAT_KEY) == 0)
         {
-            iAudioFormatString = aParameters[i].value.pChar_value;
-            iAudioFormat = GetFormatIndex(iAudioFormatString.get_str());
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMAudioMIO::setParametersSync() Audio Format Key, Value %s", iAudioFormatString.get_str()));
+            iAudioFormat = aParameters[i].value.pChar_value;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMAudioMIO::setParametersSync() Audio Format Key, Value %s", iAudioFormat.getMIMEStrPtr()));
         }
         else if (pv_mime_strcmp(aParameters[i].key, MOUT_AUDIO_SAMPLING_RATE_KEY) == 0)
         {
@@ -806,12 +833,39 @@ void PVFMAudioMIO::setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParamete
         }
         else
         {
+            if (iAudioSamplingRateValid && iAudioNumChannelsValid && !iIsMIOConfigured)
+            {
+                if (iObserver)
+                {
+                    iIsMIOConfigured = true;
+                    iObserver->ReportInfoEvent(PVMFMIOConfigurationComplete);
+                    if (iPeer && iWriteBusy)
+                    {
+                        iWriteBusy = false;
+                        iPeer->statusUpdate(PVMI_MEDIAXFER_STATUS_WRITE);
+                    }
+                }
+            }
+
             // If we get here the key is unrecognized.
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMAudioMIO::setParametersSync() Error, unrecognized key "));
 
             // Set the return value to indicate the unrecognized key and return.
             aRet_kvp = &aParameters[i];
             return;
+        }
+    }
+    if (iAudioSamplingRateValid && iAudioNumChannelsValid && !iIsMIOConfigured)
+    {
+        if (iObserver)
+        {
+            iIsMIOConfigured = true;
+            iObserver->ReportInfoEvent(PVMFMIOConfigurationComplete);
+            if (iPeer && iWriteBusy)
+            {
+                iWriteBusy = false;
+                iPeer->statusUpdate(PVMI_MEDIAXFER_STATUS_WRITE);
+            }
         }
     }
 }
@@ -848,10 +902,33 @@ PVMFStatus PVFMAudioMIO::verifyParametersSync(PvmiMIOSession aSession, PvmiKvp* 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFMAudioMIO::verifyParametersSync() called"));
 
     OSCL_UNUSED_ARG(aSession);
-    OSCL_UNUSED_ARG(aParameters);
-    OSCL_UNUSED_ARG(num_elements);
 
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO, (0, "PVFMAudioMIO::verifyParametersSync() NOT SUPPORTED"));
+    // Go through each parameter
+    for (int32 paramind = 0; paramind < num_elements; ++paramind)
+    {
+        // Retrieve the first component from the key string
+        char* compstr = NULL;
+        pv_mime_string_extract_type(0, aParameters[paramind].key, compstr);
+
+        if (pv_mime_strcmp(compstr, _STRLIT_CHAR("x-pvmf/media/format-type")) == 0)
+        {
+            //This component supports PCM8 or PCM16 only.
+            if ((pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_PCM8) == 0) ||
+                    (pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_PCM16) == 0) ||
+                    (pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_PCM16) == 0) ||
+                    (pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_PCM16_BE) == 0) ||
+                    (pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_ULAW) == 0) ||
+                    (pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_ALAW) == 0))
+            {
+                return PVMFSuccess;
+            }
+            else
+            {
+                return PVMFErrNotSupported;
+            }
+        }
+    }
+    // For all other parameters return success.
     return PVMFSuccess;
 }
 
@@ -859,7 +936,7 @@ PVMFStatus PVFMAudioMIO::verifyParametersSync(PvmiMIOSession aSession, PvmiKvp* 
 //
 // For active timing support
 //
-PVMFStatus PVFMAudioMIOActiveTimingSupport::SetClock(OsclClock *clockVal)
+PVMFStatus PVFMAudioMIOActiveTimingSupport::SetClock(PVMFMediaClock *clockVal)
 {
     iClock = clockVal;
     return PVMFSuccess;

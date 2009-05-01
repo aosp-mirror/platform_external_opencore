@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,22 +34,50 @@ struct MediaInputNodeKeyStringData
     PvmiKvpValueType iValueType;
 };
 
+#ifdef _TEST_AE_ERROR_HANDLING
+#define MEDIAINPUTNODECONFIG_BASE_NUMKEYS 12
+#else
 #define MEDIAINPUTNODECONFIG_BASE_NUMKEYS 2
+#endif
 #define MEDIAINPUTCONFIG_KEYSTRING_SIZE 128
 
-static const MediaInputNodeKeyStringData MediaInputNodeConfig_BaseKeys[] =
+const MediaInputNodeKeyStringData MediaInputNodeConfig_BaseKeys[] =
 {
     {"parameter1", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_UINT32},
     {"parameter2", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_UINT32}
+#ifdef _TEST_AE_ERROR_HANDLING
+    , {"error_adddatasource_start", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_BOOL}
+    , {"error_adddatasource_stop", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_BOOL}
+    , {"error_no_memorybuffer_avaliable", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_BOOL}
+    , {"error_out_queue_busy", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_BOOL}
+    , {"error-time-stamp", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_KSV}
+    , {"error-sendmiorequest", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_UINT32}
+    , {"error-cancelmiorequest", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_BOOL}
+    , {"error-corruptinputdata", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_UINT32}
+    , {"error-node-cmd", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_UINT32}
+    , {"error-data-path-stall", PVMI_KVPTYPE_VALUE, PVMI_KVPVALTYPE_UINT32}
+#endif
 };
 
 enum BaseKeys_IndexMapType
 {
     PARAMETER1 = 0,
     PARAMETER2
+#ifdef _TEST_AE_ERROR_HANDLING
+    , ERROR_ADDDATASOURCE_START
+    , ERROR_ADDDATASOURCE_STOP
+    , ERROR_NO_MEMORY
+    , ERROR_OUT_QUEUE_BUSY
+    , ERROR_TIME_STAMP
+    , ERROR_SENDMIOREQUEST
+    , ERROR_CANCELMIOREQUEST
+    , ERROR_CORRUPT_INPUTDATA
+    , ERROR_NODE_CMD
+    , ERROR_DATAPATH_STALL
+#endif
 };
 
-static const uint MediaInputNodeConfig_NumBaseKeys =
+const uint MediaInputNodeConfig_NumBaseKeys =
     (sizeof(MediaInputNodeConfig_BaseKeys) /
      sizeof(MediaInputNodeKeyStringData));
 
@@ -131,9 +159,9 @@ PVMFStatus PvmfMediaInputNode::verifyParametersSync(PvmiMIOSession aSession, Pvm
         char* compstr = NULL;
         pv_mime_string_extract_type(0, aParameters[paramind].key, compstr);
 
-        if ((pv_mime_strcmp(compstr, _STRLIT_CHAR("x-pvmf/media-io")) < 0) || compcount < 3)
+        if ((pv_mime_strcmp(compstr, _STRLIT_CHAR("x-pvmf/datasource")) < 0) || compcount < 3)
         {
-            // First 3 components should be "x-pvmf/media-io" and there must
+            // First 3 components should be "x-pvmf/datasource" and there must
             // be at least four components
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PvmfMediaInputNode::verifyParametersSync() Unsupported key"));
             return PVMFErrNotSupported;
@@ -178,9 +206,9 @@ PVMFStatus PvmfMediaInputNode::releaseParameters(PvmiMIOSession aSession, PvmiKv
     char* compstr = NULL;
     pv_mime_string_extract_type(0, aParameters[0].key, compstr);
 
-    if ((pv_mime_strcmp(compstr, _STRLIT_CHAR("x-pvmf/media-io")) < 0) || compcount < 2)
+    if ((pv_mime_strcmp(compstr, _STRLIT_CHAR("x-pvmf/datasource")) < 0) || compcount < 2)
     {
-        // First 2 component should be "x-pvmf/media-io" and there must
+        // First 2 component should be "x-pvmf/datasource" and there must
         // be at least three components
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PvmfMediaInputNode::releaseParameters() Unsupported key"));
         return PVMFErrNotSupported;
@@ -219,7 +247,7 @@ PVMFStatus PvmfMediaInputNode::releaseParameters(PvmiMIOSession aSession, PvmiKv
                 aParameters[ii].value.key_specific_value = NULL;
                 oscl_free(rui32);
             }
-            // TODO Add more types if media io node starts returning more types
+            // @TODO Add more types if media io node starts returning more types
         }
     }
 
@@ -251,21 +279,21 @@ PVMFStatus PvmfMediaInputNode::getParametersSync(PvmiMIOSession aSession, PvmiKe
     char* compstr = NULL;
     pv_mime_string_extract_type(0, aIdentifier, compstr);
 
-    if ((pv_mime_strcmp(compstr, _STRLIT_CHAR("x-pvmf/media-io")) < 0) || compcount < 2)
+    if ((pv_mime_strcmp(compstr, _STRLIT_CHAR("x-pvmf/datasource")) < 0) || compcount < 2)
     {
-        // First 2 components should be "x-pvmf/media-io" and there must
+        // First 2 components should be "x-pvmf/datasource" and there must
         // be at least 2 components
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PvmfMediaInputNode::getParametersSync() Invalid key string"));
         return PVMFErrNotSupported;
     }
 
-    // Retrieve the fourth component from the key string
+    // Retrieve the third component from the key string
     pv_mime_string_extract_type(2, aIdentifier, compstr);
 
-    for (int32 mediaio4ind = 0; mediaio4ind < MEDIAINPUTNODECONFIG_BASE_NUMKEYS; ++mediaio4ind)
+    for (int32 mediaiovalidind = 0; mediaiovalidind < MEDIAINPUTNODECONFIG_BASE_NUMKEYS; ++mediaiovalidind)
     {
-        // Go through each media io component string at 4th level
-        if (pv_mime_strcmp(compstr, (char*)(MediaInputNodeConfig_BaseKeys[mediaio4ind].iString)) >= 0)
+        // Go through each media io component string at 3rd level
+        if (pv_mime_strcmp(compstr, (char*)(MediaInputNodeConfig_BaseKeys[mediaiovalidind].iString)) >= 0)
         {
             if (3 == compcount)
             {
@@ -277,7 +305,7 @@ PVMFStatus PvmfMediaInputNode::getParametersSync(PvmiMIOSession aSession, PvmiKe
                 }
 
                 // Return the requested info
-                PVMFStatus retval = GetConfigParameter(aParameters, aNumParamElements, mediaio4ind, reqattr);
+                PVMFStatus retval = GetConfigParameter(aParameters, aNumParamElements, mediaiovalidind, reqattr);
                 if (PVMFSuccess != retval)
                 {
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PvmfMediaInputNode::getParametersSync() Retrieving media io node parameter failed"));
@@ -291,7 +319,7 @@ PVMFStatus PvmfMediaInputNode::getParametersSync(PvmiMIOSession aSession, PvmiKe
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PvmfMediaInputNode::getParametersSync() Unsupported key"));
                 return PVMFErrNotSupported;
             }
-            // Breakout of the for(mediaio4ind) loop
+            // Breakout of the for(mediaiovalidind) loop
             break;
         }
     }
@@ -334,9 +362,9 @@ void PvmfMediaInputNode::setParametersSync(PvmiMIOSession aSession, PvmiKvp* aPa
         char* compstr = NULL;
         pv_mime_string_extract_type(0, aParameters[paramind].key, compstr);
 
-        if ((pv_mime_strcmp(compstr, _STRLIT_CHAR("x-pvmf/media-io")) < 0) || compcount < 2)
+        if ((pv_mime_strcmp(compstr, _STRLIT_CHAR("x-pvmf/datasource")) < 0) || compcount < 2)
         {
-            // First 2 components should be "x-pvmf/media-io" and there must
+            // First 2 components should be "x-pvmf/datasource" and there must
             // be at least four components
             aRetKVP = &aParameters[paramind];
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PvmfMediaInputNode::setParametersSync() Unsupported key"));
@@ -378,22 +406,22 @@ PVMFStatus PvmfMediaInputNode::VerifyAndSetConfigParameter(PvmiKvp& aParameter, 
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PvmfMediaInputNode::VerifyAndSetConfigParameter() Valtype in key string unknown"));
         return PVMFErrNotSupported;
     }
-    // Retrieve the fourth component from the key string
+    // Retrieve the third component from the key string
     char* compstr = NULL;
     pv_mime_string_extract_type(2, aParameter.key, compstr);
 
-    int32 mediaio4ind;
-    for (mediaio4ind = 0; mediaio4ind < MEDIAINPUTNODECONFIG_BASE_NUMKEYS; ++mediaio4ind)
+    int32 mediaiovalidind;
+    for (mediaiovalidind = 0; mediaiovalidind < MEDIAINPUTNODECONFIG_BASE_NUMKEYS; ++mediaiovalidind)
     {
-        // Go through each component string at 4th level
-        if (pv_mime_strcmp(compstr, (char*)(MediaInputNodeConfig_BaseKeys[mediaio4ind].iString)) >= 0)
+        // Go through each component string at 3rd level
+        if (pv_mime_strcmp(compstr, (char*)(MediaInputNodeConfig_BaseKeys[mediaiovalidind].iString)) >= 0)
         {
             // Break out of the for loop
             break;
         }
     }
 
-    if (MEDIAINPUTNODECONFIG_BASE_NUMKEYS <= mediaio4ind)
+    if (MEDIAINPUTNODECONFIG_BASE_NUMKEYS <= mediaiovalidind)
     {
         // Match couldn't be found or non-leaf node specified
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PvmfMediaInputNode::VerifyAndSetConfigParameter() Unsupported key or non-leaf node"));
@@ -401,13 +429,13 @@ PVMFStatus PvmfMediaInputNode::VerifyAndSetConfigParameter(PvmiKvp& aParameter, 
     }
 
     // Verify the valtype
-    if (keyvaltype != MediaInputNodeConfig_BaseKeys[mediaio4ind].iValueType)
+    if (keyvaltype != MediaInputNodeConfig_BaseKeys[mediaiovalidind].iValueType)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PvmfMediaInputNode::VerifyAndSetConfigParameter() Valtype does not match for key"));
         return PVMFErrNotSupported;
     }
 
-    switch (mediaio4ind)
+    switch (mediaiovalidind)
     {
         case PARAMETER1: // parameter1
             // Change the parameter
@@ -424,7 +452,75 @@ PVMFStatus PvmfMediaInputNode::VerifyAndSetConfigParameter(PvmiKvp& aParameter, 
                 // set the parameter here
             }
             break;
-
+#ifdef _TEST_AE_ERROR_HANDLING
+        case ERROR_ADDDATASOURCE_START://error_adddatasource_start
+            if (aSetParam)
+            {
+                iErrorHandlingStartFailed = aParameter.value.bool_value;
+            }
+            break;
+        case ERROR_ADDDATASOURCE_STOP://error_adddatasource_stop
+            if (aSetParam)
+            {
+                iErrorHandlingStopFailed = aParameter.value.bool_value;
+            }
+            break;
+        case ERROR_NO_MEMORY:
+            if (aSetParam)
+            {
+                iError_No_Memory = aParameter.value.bool_value;
+            }
+            break;
+        case ERROR_OUT_QUEUE_BUSY:
+            if (aSetParam)
+            {
+                iError_Out_Queue_Busy = aParameter.value.bool_value;
+            }
+            break;
+        case ERROR_TIME_STAMP: //error-time-stamp
+            if (aSetParam)
+            {
+                TimeStamp_KSV* TempTimeStamp = NULL;
+                TempTimeStamp = OSCL_DYNAMIC_CAST(TimeStamp_KSV*, aParameter.value.key_specific_value);
+                iErrorTimeStamp.mode = TempTimeStamp->mode;
+                iErrorTimeStamp.duration = TempTimeStamp->duration;
+                iErrorTimeStamp.track_no = TempTimeStamp->track_no;
+            }
+            break;
+        case ERROR_SENDMIOREQUEST: //error-sendmiorequest
+            if (aSetParam)
+            {
+                iErrorSendMioRequest = aParameter.value.uint32_value;
+            }
+            break;
+        case ERROR_CANCELMIOREQUEST:  //error-cancelmiorequest
+            if (aSetParam)
+            {
+                iErrorCancelMioRequest = aParameter.value.bool_value;
+            }
+            break;
+        case ERROR_CORRUPT_INPUTDATA:  //error-corrupt-input-data
+            if (aSetParam)
+            {
+                iChunkCount = aParameter.value.uint32_value;
+                char* x = (char*)oscl_strstr(aParameter.key, "=");
+                x = x + 1;
+                PV_atoi(x, 'd', oscl_strlen(x), iTrackID);
+            }
+            break;
+        case ERROR_NODE_CMD: //error-node-cmd
+            if (aSetParam)
+            {
+                iErrorNodeCmd = aParameter.value.uint32_value;
+            }
+            break;
+        case ERROR_DATAPATH_STALL: //error-data-path-stall
+            if (aSetParam)
+            {
+                iErrorTrackID = aParameter.value.uint32_value;
+            }
+            break;
+#endif
         default:
             OSCL_ASSERT(0);
     }
@@ -465,7 +561,7 @@ PVMFStatus PvmfMediaInputNode::GetConfigParameter(PvmiKvp*& aParameters, int& aN
     aParameters[0].key = memblock;
 
     // Copy the key string
-    oscl_strncat(aParameters[0].key, _STRLIT_CHAR("x-pvmf/media-io/"), 21);
+    oscl_strncat(aParameters[0].key, _STRLIT_CHAR("x-pvmf/datasource/"), 21);
     oscl_strncat(aParameters[0].key, MediaInputNodeConfig_BaseKeys[aIndex].iString, oscl_strlen(MediaInputNodeConfig_BaseKeys[aIndex].iString));
     oscl_strncat(aParameters[0].key, _STRLIT_CHAR(";valtype="), 20);
 
@@ -536,7 +632,76 @@ PVMFStatus PvmfMediaInputNode::GetConfigParameter(PvmiKvp*& aParameters, int& aN
                 // Return capability
             }
             break;
-
+#ifdef _TEST_AE_ERROR_HANDLING
+        case ERROR_ADDDATASOURCE_START: //error_adddatasource_start
+            if (PVMI_KVPATTR_CUR == aReqattr)
+            {
+                // Return current value
+                aParameters[0].value.bool_value = iErrorHandlingStartFailed;
+            }
+            else if (PVMI_KVPATTR_DEF == aReqattr)
+            {
+                // Return default
+                aParameters[0].value.bool_value = true;
+            }
+            else
+            {
+                // Return capability
+            }
+            break;
+        case ERROR_ADDDATASOURCE_STOP: //error_adddatasource_stop
+            if (PVMI_KVPATTR_CUR == aReqattr)
+            {
+                // Return current value
+                aParameters[0].value.bool_value = iErrorHandlingStopFailed;
+            }
+            else if (PVMI_KVPATTR_DEF == aReqattr)
+            {
+                // Return default
+                aParameters[0].value.bool_value = true;
+            }
+            else
+            {
+                // Return capability
+            }
+            break;
+        case ERROR_NO_MEMORY:
+        {
+            if (PVMI_KVPATTR_CUR == aReqattr)
+            {
+                // Return current value
+                aParameters[0].value.bool_value = iError_No_Memory;
+            }
+            else if (PVMI_KVPATTR_DEF == aReqattr)
+            {
+                // Return default
+                aParameters[0].value.bool_value = true;
+            }
+            else
+            {
+                // Return capability
+            }
+        }
+        break;
+        case ERROR_OUT_QUEUE_BUSY:
+        {
+            if (PVMI_KVPATTR_CUR == aReqattr)
+            {
+                // Return current value
+                aParameters[0].value.bool_value = iError_Out_Queue_Busy;
+            }
+            else if (PVMI_KVPATTR_DEF == aReqattr)
+            {
+                // Return default
+                aParameters[0].value.bool_value = true;
+            }
+            else
+            {
+                // Return capability
+            }
+        }
+        break;
+#endif
         default:
             // Invalid index
             oscl_free(aParameters[0].key);

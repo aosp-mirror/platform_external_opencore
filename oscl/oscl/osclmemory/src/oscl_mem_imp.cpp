@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,12 +27,10 @@
 //////////////////////
 
 
-OSCL_EXPORT_REF void OsclMem::Init(OsclLockBase*lock)
+OSCL_EXPORT_REF void OsclMem::Init()
 {
 #if(!OSCL_BYPASS_MEMMGT)
-    OsclMemGlobalAuditObject::createGlobalMemAuditObject(lock);
-#else
-    OSCL_UNUSED_ARG(lock);
+    OsclMemGlobalAuditObject::createGlobalMemAuditObject();
 #endif
 }
 
@@ -63,64 +61,55 @@ OSCL_EXPORT_REF void OsclMemInit(OsclAuditCB & auditCB)
 
 #include "oscl_mem_audit.h"
 
-// the version of GetLock() for !OSCL_BYPASS_MEMMGT returns the actual lock (even though the lock itself
-//	could be NULL
-// the version of GetLock() for OSCL_BYPASS_MEMMGT always returns NULL
-OSCL_EXPORT_REF OsclLockBase* OsclMem::GetLock()
-{
+#include "oscl_singleton.h"
 
-    OsclMemGlobalAuditObject::audit_type* audit = OsclMemGlobalAuditObject::getGlobalMemAuditObject();
-
-    return audit->GetLock();
-}
 //////////////////////
 // OsclMemGlobalAuditObject
 //////////////////////
 
-//Note: The memory stats are maintained in each thread, although
-// allocation and deallocation can occur in different threads.
-
-//Need an appropriate registry
-#include "oscl_error.h"
-// TLS registry is available, use it
-#define PVMEM_REGISTRY OsclTLSRegistryEx
-#define PVMEM_REGISTRY_ID OSCL_TLS_ID_OSCLMEM
-
-
 OSCL_EXPORT_REF OsclMemGlobalAuditObject::audit_type* OsclMemGlobalAuditObject::getGlobalMemAuditObject()
 {
-    return (audit_type*)PVMEM_REGISTRY::getInstance(PVMEM_REGISTRY_ID);
+    return (audit_type*)OsclSingletonRegistryEx::getInstance(OSCL_SINGLETON_ID_OSCLMEM);
 }
 
-void OsclMemGlobalAuditObject::createGlobalMemAuditObject(OsclLockBase *lock)
+void OsclMemGlobalAuditObject::createGlobalMemAuditObject()
 {
-    //make sure OsclMem is only initilized once per thread.
-    if (getGlobalMemAuditObject() != NULL)
+    audit_type* audit = (audit_type*)OsclSingletonRegistryEx::lockAndGetInstance(OSCL_SINGLETON_ID_OSCLMEM);
+    if (audit)
     {
-        OsclError::Leave(OsclErrAlreadyInstalled);
-        return;
+        audit->iRefCount++;
     }
-    OsclAny *ptr = _oscl_malloc(sizeof(audit_type));
-    if (!ptr)
+    else
     {
-        OsclError::Leave(OsclErrNoMemory);
-        return;
+        OsclAny *ptr = _oscl_malloc(sizeof(audit_type));
+        if (!ptr)
+        {
+            OsclSingletonRegistryEx::registerInstanceAndUnlock(audit, OSCL_SINGLETON_ID_OSCLMEM);
+            OsclError::Leave(OsclErrNoMemory);
+            return;
+        }
+        audit = OSCL_PLACEMENT_NEW(ptr, audit_type());
     }
-    audit_type *audit = OSCL_PLACEMENT_NEW(ptr, audit_type(lock));
-    PVMEM_REGISTRY::registerInstance(audit, PVMEM_REGISTRY_ID);
+    OsclSingletonRegistryEx::registerInstanceAndUnlock(audit, OSCL_SINGLETON_ID_OSCLMEM);
 }
 
 void OsclMemGlobalAuditObject::deleteGlobalMemAuditObject()
 {
-    audit_type *audit = getGlobalMemAuditObject();
+    audit_type* audit = (audit_type*)OsclSingletonRegistryEx::lockAndGetInstance(OSCL_SINGLETON_ID_OSCLMEM);
     if (!audit)
     {
+        OsclSingletonRegistryEx::registerInstanceAndUnlock(audit, OSCL_SINGLETON_ID_OSCLMEM);
         OsclError::Leave(OsclErrNotInstalled);
         return;
     }
-    audit->~OsclMemAudit();
-    _oscl_free(audit);
-    PVMEM_REGISTRY::registerInstance(NULL, PVMEM_REGISTRY_ID);
+    audit->iRefCount--;
+    if (audit->iRefCount == 0)
+    {
+        audit->~OsclMemAudit();
+        _oscl_free(audit);
+        audit = NULL;
+    }
+    OsclSingletonRegistryEx::registerInstanceAndUnlock(audit, OSCL_SINGLETON_ID_OSCLMEM);
 }
 
 //////////////////////
@@ -250,14 +239,6 @@ OSCL_EXPORT_REF void* _oscl_default_new(size_t nBytes)
     if (!pTmp)
         OsclError::LeaveIfNull(pTmp);
     return pTmp;
-}
-
-// the version of GetLock() for !OSCL_BYPASS_MEMMGT returns the actual lock (even though the lock itself
-//	could be NULL
-// the version of GetLock() for OSCL_BYPASS_MEMMGT always returns NULL
-OSCL_EXPORT_REF OsclLockBase* OsclMem::GetLock()
-{
-    return NULL;
 }
 
 #endif //OSCL_BYPASS_MEMMGT

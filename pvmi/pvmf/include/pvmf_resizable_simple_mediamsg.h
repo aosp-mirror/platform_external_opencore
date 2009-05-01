@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,6 +79,7 @@ class PVMFResizableSimpleMediaMsgAlloc
             if (in_gen_alloc)
             {
                 gen_alloc = in_gen_alloc;
+                gen_alloc->enablenullpointerreturn();
                 iBufferOverhead = 0;
                 uint aligned_class_size =
                     oscl_mem_aligned_size(sizeof(PVMFSimpleMediaBuffer));
@@ -103,6 +104,8 @@ class PVMFResizableSimpleMediaMsgAlloc
 
         OsclSharedPtr<PVMFMediaDataImpl> allocate(uint32 size)
         {
+            OsclSharedPtr<PVMFMediaDataImpl> shared_media_data;
+
             if (size == 0)
             {
                 OSCL_ASSERT(false);
@@ -127,6 +130,11 @@ class PVMFResizableSimpleMediaMsgAlloc
                                                   aligned_class_size +
                                                   aligned_in_size);
 
+            if (my_ptr == NULL)
+            {
+                return shared_media_data;
+            }
+
             OsclMemPoolResizableAllocatorCleanupDA *my_cleanup =
                 OSCL_PLACEMENT_NEW(my_ptr + aligned_refcnt_size, OsclMemPoolResizableAllocatorCleanupDA(gen_alloc));
 
@@ -143,8 +151,7 @@ class PVMFResizableSimpleMediaMsgAlloc
                                                   aligned_in_size,
                                                   my_refcnt);
 
-            OsclSharedPtr<PVMFMediaDataImpl> shared_media_data(media_data_ptr,
-                    my_refcnt);
+            shared_media_data.Bind(media_data_ptr, my_refcnt);
             return shared_media_data;
         }
 
@@ -171,9 +178,14 @@ class PVMFResizableSimpleMediaMsgAlloc
             }
         }
 
+        uint32 GetMediaMsgAllocationOverheadBytes()
+        {
+            return iBufferOverhead;
+        }
+
     private:
         uint iBufferOverhead;
-        Oscl_DefAlloc* gen_alloc;
+        OsclMemPoolResizableAllocator* gen_alloc;
 };
 
 class PVMFResizableSimpleMediaMsgAllocCleanupSA : public OsclDestructDealloc

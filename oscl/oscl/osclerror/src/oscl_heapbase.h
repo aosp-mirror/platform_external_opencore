@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,21 +43,21 @@
 #endif
 
 /**
-//OsclHeapBase is used as the base for cleanup stack
+//_OsclHeapBase is used as the base for cleanup stack
 //items with virtual destructor.
 */
 
 
-class OsclHeapBase
+class _OsclHeapBase
 {
     public:
-        virtual ~OsclHeapBase() {}
+        virtual ~_OsclHeapBase() {}
 
     protected:
-        OsclHeapBase() {}
-        OsclHeapBase(const OsclHeapBase&) {}
+        _OsclHeapBase() {}
+        _OsclHeapBase(const _OsclHeapBase&) {}
     private:
-        OsclHeapBase& operator=(const OsclHeapBase&);
+        _OsclHeapBase& operator=(const _OsclHeapBase&);
         friend class PVCleanupStack;
 };
 

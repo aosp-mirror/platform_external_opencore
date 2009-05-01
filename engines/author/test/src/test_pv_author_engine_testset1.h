@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,8 @@ class pvauthor_async_test_miscellaneous: public pvauthor_async_test_base
                                           const char* aOutputFileName, PVAETestInputType aAudioInputType,
                                           PVAETestInputType aVideoInputType, PVAETestInputType aTextInputType,
                                           const char* aComposerMimeType, const char* aAudioEncoderMimeType, const char* aVideoEncoderMimeType,
-                                          const char* aTextEncoderMimeType, AVTConfig aAVTConfig, bool aPauseResumeEnable, uint32 aAuthoringTime)
+                                          const char* aTextEncoderMimeType, AVTConfig aAVTConfig, bool aPauseResumeEnable, uint32 aAuthoringTime,
+                                          bool aUseExtrnFileDesc = false)
 
                 : pvauthor_async_test_base(aTestParam)
 
@@ -61,9 +62,11 @@ class pvauthor_async_test_miscellaneous: public pvauthor_async_test_base
                 , iPauseResumeEnable(aPauseResumeEnable)
                 , iAuthoringTime(aAuthoringTime)
                 , iAuthoringCounter(0)
+                , iUseExtrnFileDesc(aUseExtrnFileDesc)
 
         {
             iLogger = PVLogger::GetLoggerObject("pvauthor_async_test_miscellaneous");
+            iFileHandle = NULL;
 
             if (iAuthoringTime > 0)
             {
@@ -166,9 +169,6 @@ class pvauthor_async_test_miscellaneous: public pvauthor_async_test_base
         bool ConfigAmrAacComposer();
         bool ConfigMp43gpComposer();
 
-        // Method to configure max filesize/duration interface
-        bool QueryComposerOutputInterface();
-        bool ConfigComposerOutput();
 
         // Methods to add media tracks
         bool AddAudioMediaTrack();
@@ -203,6 +203,8 @@ class pvauthor_async_test_miscellaneous: public pvauthor_async_test_base
         OSCL_wHeapString<OsclMemAllocator> iCopyrightString;
         OSCL_wHeapString<OsclMemAllocator> iDescriptionString;
         OSCL_wHeapString<OsclMemAllocator> iRatingString;
+        OSCL_wHeapString<OsclMemAllocator> iAlbumTitle;
+        uint16							   iRecordingYear;
 
         AVTConfig iAVTConfig;
         Oscl_Vector<PVAETestInput, OsclMemAllocator> iTestInputs;
@@ -216,6 +218,9 @@ class pvauthor_async_test_miscellaneous: public pvauthor_async_test_base
         uint32 iAuthoringTime;
         int iAuthoringCounter;
         uint32 iTestDuration;
+        bool iUseExtrnFileDesc;
+        OsclFileHandle *iFileHandle;
+        Oscl_FileServer fileserv;
 };
 
 #endif

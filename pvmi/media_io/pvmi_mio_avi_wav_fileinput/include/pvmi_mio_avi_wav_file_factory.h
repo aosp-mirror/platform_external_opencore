@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ class PvmiMIOAviWavFileSettings
     public:
         PvmiMIOAviWavFileSettings()
         {
-            iMediaFormat = PVMF_FORMAT_UNKNOWN;
+            iMediaFormat = PVMF_MIME_FORMAT_UNKNOWN;
             iNumLoops = 0;
             iRecModeSyncWithClock = false;
             iStreamNumber = 0;
@@ -66,6 +66,7 @@ class PvmiMIOAviWavFileSettings
         PvmiMIOAviWavFileSettings(const PvmiMIOAviWavFileSettings& aSettings)
         {
             iMediaFormat = aSettings.iMediaFormat;
+            iMimeType = aSettings.iMimeType;
             iNumLoops = 0;
             iRecModeSyncWithClock = aSettings.iRecModeSyncWithClock;
             iStreamNumber = aSettings.iStreamNumber;
@@ -87,6 +88,7 @@ class PvmiMIOAviWavFileSettings
 
         // General settings
         PVMFFormatType  iMediaFormat;
+        OSCL_HeapString<OsclMemAllocator> iMimeType;
         uint32			iNumLoops;
         bool iRecModeSyncWithClock;
         uint32 iStreamNumber;

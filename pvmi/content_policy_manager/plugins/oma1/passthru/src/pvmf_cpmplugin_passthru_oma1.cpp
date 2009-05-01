@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -308,8 +308,16 @@ PVMFCPMPassThruPlugInOMA1::SetSourceInitializationData(OSCL_wString& aSourceURL,
         OsclAny* aSourceData)
 {
     OSCL_UNUSED_ARG(aSourceData);
-    //just save the parameters-- the passthru plugin does not
-    //do any format checks.
+
+    //In a real OMA1 plugin, we would be able to verify whether the source is really OMA1
+    //content or not.  This passthru plugin is not smart enough to do that, so it
+    //generally accepts all formats.  However, it rejects ASF content to avoid conflicts
+    //with the PV Janus plugin.
+    if (aSourceFormat == PVMF_MIME_ASFFF || PVMF_MIME_DATA_SOURCE_MS_HTTP_STREAMING_URL)
+    {
+        return PVMFErrNotSupported;
+    }
+    else
     {
         iFilename = aSourceURL;
         iSourceFormatType = aSourceFormat;
@@ -341,7 +349,7 @@ PVMFCPMPassThruPlugInOMA1::GetCPMContentType()
 
 PVMFStatus PVMFCPMPassThruPlugInOMA1::QueryAccessInterfaceUUIDs(Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids)
 {
-    aUuids.push_back(PVMFCPMPluginLocalSyncAccessInterfaceUuid);
+    aUuids.push_back(PVMIDataStreamSyncInterfaceUuid);
     return PVMFSuccess;
 }
 
@@ -683,19 +691,24 @@ void PVMFCPMPassThruPlugInOMA1::DoAuthorizeUsage(PVMFCPMPassThruPlugInOMA1Comman
         return;
     }
     MakeMetadata();
-    PvmiKvp* requestedUsage;
-    PvmiKvp* approvedUsage;
-    PvmiKvp* authorizationData;
-    uint32*  requestTimeOutInMS;
-    aCmd.Parse(OSCL_STATIC_CAST(OsclAny*&, requestedUsage),
-               OSCL_STATIC_CAST(OsclAny*&, approvedUsage),
-               OSCL_STATIC_CAST(OsclAny*&, authorizationData),
-               OSCL_STATIC_CAST(OsclAny*&, requestTimeOutInMS));
 
+    OsclAny* temp1 = NULL;
+    OsclAny* temp2 = NULL;
+    OsclAny* temp3 = NULL;
+    OsclAny* temp4 = NULL;
+
+    aCmd.Parse(temp1, temp2, temp3, temp4);
+
+    PvmiKvp* requestedUsage = OSCL_STATIC_CAST(PvmiKvp*, temp1);
+    PvmiKvp* approvedUsage = OSCL_STATIC_CAST(PvmiKvp*, temp2);
+    PvmiKvp* authorizationData = OSCL_STATIC_CAST(PvmiKvp*, temp3);
+    uint32*  requestTimeOutInMS = OSCL_STATIC_CAST(uint32*, temp4);
 
     /* No check needed - approve everything */
     approvedUsage->value.uint32_value = requestedUsage->value.uint32_value;
     CommandComplete(iInputCommands, aCmd, PVMFSuccess);
+    OSCL_UNUSED_ARG(authorizationData);
+    OSCL_UNUSED_ARG(requestTimeOutInMS);
 }
 
 void PVMFCPMPassThruPlugInOMA1::DoUsageComplete(PVMFCPMPassThruPlugInOMA1Command& aCmd)
@@ -947,7 +960,7 @@ OSCL_EXPORT_REF PVMFCommandId PVMFCPMPassThruPlugInOMA1::GetNodeMetadataValues(P
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "PVMFCPMPassThruPlugInOMA1::GetNodeMetadataValues() called"));
-    uint32 total = 0;
+    int32 total = 0;
     for (uint32 j = 0;j < aKeyList.size();j++)
     {
         for (int32 i = aStartingValueIndex;i < ELicLastOMA1;i++)
@@ -1148,7 +1161,7 @@ PVMFCPMPassThruPlugInOMA1DataStreamSyncInterfaceImpl::QueryReadCapacity(PvmiData
     {
         if (!iFileObject)
             return PVDS_FAILURE;
-        int32 result = iFileObject->Size();
+        int32 result = (TOsclFileOffsetInt32)iFileObject->Size();
         PVMF_CPMPLUGIN_PASSTHRUOMA1_LOGDEBUG((0, "PVMFCPMPassThruPlugInOMA1DataStreamSyncInterfaceImpl::QueryReadCapacity returning %d", result));
         if (result < 0)
         {
@@ -1281,7 +1294,7 @@ PVMFCPMPassThruPlugInOMA1DataStreamSyncInterfaceImpl::GetCurrentPointerPosition(
     OSCL_UNUSED_ARG(sessionID);
     if (!iFileObject)
         return PVDS_FAILURE;
-    int32 result = iFileObject->Tell();
+    int32 result = (TOsclFileOffsetInt32)iFileObject->Tell();
     PVMF_CPMPLUGIN_PASSTHRUOMA1_LOGDEBUG((0, "PVMFCPMPassThruPlugInOMA1DataStreamSyncInterfaceImpl::GetCurrentContentPosition returning %d", result));
     return (uint32)(result);
 }
@@ -1297,6 +1310,7 @@ PVMFCPMPassThruPlugInOMA1DataStreamSyncInterfaceImpl::Flush(PvmiDataStreamSessio
     }
     int32 result = iFileObject->Flush();
     PVMF_CPMPLUGIN_PASSTHRUOMA1_LOGDEBUG((0, "PVMFCPMPassThruPlugInOMA1DataStreamSyncInterfaceImpl::Flush returning %d", result));
+    OSCL_UNUSED_ARG(result);
     return PVDS_SUCCESS;
 }
 

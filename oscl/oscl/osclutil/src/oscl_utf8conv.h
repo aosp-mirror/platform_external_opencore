@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@
 
 
 /** \file oscl_utf8conv.h
-    \brief Utilities to convert unicode to utf8.
+    \brief Utilities to convert unicode to utf8 and vice versa
 */
 
 
@@ -56,44 +56,54 @@ NOTE:
 #include "oscl_base.h"
 #endif
 
-/**********************************************************************************/
-/*                                                                                */
-/* Function:     oscl_UnicodeToUTF8                                                    */
-/* Description:  Convert UTF8 byte sequence to Unicode string		    	  */
-/*                                                                                */
-/* Parameters:   szSrc - UTF8 byte sequence to be converted			  */
-/*				 nSrcLen - Length of szSrc                        */
-/*               strDest - unicode char buffer for				  */
-/*               nDestLen - size (in characters) of buffer			  */
-/*										  */
-/* Returns:      On success, the number of characters in the destination buffer   */
-/*               0 on failure due to insufficient buffer size			  */
-/*                                                                                */
-/* History:      Created  {DATE]  {BY} {NAME} {PRODUCT REV}                       */
-/*               Modified {DATE]  {BY} {NAME} {PRODUCT REV}                       */
-/*                                                                                */
-/**********************************************************************************/
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Function prototypes
+/*!
+	\brief Convert UTF8 byte sequence to Unicode string
+
+	       The function converts UTF8 byte sequence (or ASCII sequence) to Unicode string.
+		   The length of input UTF8 byte sequence is specified. It stops at two conditions:
+		   (A) Whole input UTF8 byte sequence is successfully converted.
+		   (B) Output buferr is not enough for output, or parse error.
+		   In case of (A), it adds a terminated '\0' at the end of the output Unicode string,
+		   and returns length of the output Unicode string(without counting terminated '\0').
+		   In case of (B), it converts as much as possible to the output buffer and adds a terminated '\0'
+		   at the end of the output Unicode string"(no '\0' added if outLength is less than or
+		   equal to 0, return 0)", and returns 0.
+
+	\param input            Ptr to an input UTF8 byte sequence. '\0' termanation is not neccesary.
+	\param inLength         The length of the input UTF8 byte sequence, without counting terminated '\0'(if any).
+	\param output           Ptr to an output buffer which output Unicode string is written in.
+	\param outLength        The size of output buffer, also the maximum number of oscl_wchar could be written in.
+	\return                 Length of output (excludes '\0') : completely converts all input string and appends '\0' to output;
+	                        0 : insufficient buffer or error in conversion
+*/
 
 OSCL_IMPORT_REF int32 oscl_UTF8ToUnicode(const char *input, int32 inLength, oscl_wchar *output, int32 outLength);
 
 
-/**********************************************************************************/
-/*                                                                                */
-/* Function:     oscl_UnicodeToUTF8                                                    */
-/* Description:  Convert Unicode string to UTF8 byte sequence		    	  */
-/*                                                                                *//*                                                                                */
-/* Parameters:   szSrc - Unicode string to be converted				  */
-/*				 nSrcLen - Length of szSrc                        */
-/*               strDest - char buffer for UTF8 text				  */
-/*               nDestLen - size (in characters) of buffer			  */
-/*										  */
-/* Returns:      On success, the number of bytes in the destination buffer        */
-/*               0 on failure due to insufficient buffer size			  */
-/*                                                                                */
-/* History:      Created  {DATE]  {BY} {NAME} {PRODUCT REV}                       */
-/*               Modified {DATE]  {BY} {NAME} {PRODUCT REV}                       */
-/*                                                                                */
-/**********************************************************************************/
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Function prototypes
+/*!
+	\brief Convert Unicode string to UTF8 byte sequence
+
+	       The function converts Unicode string to UTF8 byte sequence.
+		   The length of input Unicode string is specified. It stops at two conditions:
+		   (A) Whole input Unicode string is successfully converted.
+		   (B) Destination buferr is not enough for output.
+		   In case of (A), it adds a terminated '\0' at the end of the output UTF8 byte sequence.
+		   and returns length of the output UTF8 byte sequence(without counting terminated '\0').
+		   In case of (B), it converts as much as possible to the output buffer and adds a terminated '\0'
+		   at the end of the output UTF8 byte sequence"(no '\0' added if outLength is less than or
+		   equal to 0, return 0)", and returns 0.
+
+	\param input            Ptr to an input Unicode string. '\0' termanation is not neccesary.
+	\param inLength         The length of the input Unicode string, without counting terminated '\0'(if any).
+	\param output           Ptr to an output buffer which output UTF8 byte sequence is written in.
+	\param outLength        The size of output buffer, also the maximum number of char could be written in.
+	\return	                length of output (excludes '\0') : completely converts all input string and appends '\0' to output;
+	                        0 : insufficient buffer or error in conversion
+*/
 
 OSCL_IMPORT_REF int32 oscl_UnicodeToUTF8(const oscl_wchar *input, int32 inLength, char *output, int32 outLength);
 

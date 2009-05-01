@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -184,7 +184,7 @@ class SimpleMediaBufferCombinedCleanupDA : public OsclDestructDealloc
 
 OSCL_EXPORT_REF OsclSharedPtr<PVMFMediaDataImpl> PVMFSimpleMediaBufferCombinedAlloc::allocate(uint32 requested_size)
 {
-
+    OsclSharedPtr<PVMFMediaDataImpl> shared_media_data;
     if (requested_size == 0)
     {
         requested_size = PVMF_SIMPLE_MEDIA_BUF_DEFAULT_SIZE;
@@ -195,38 +195,30 @@ OSCL_EXPORT_REF OsclSharedPtr<PVMFMediaDataImpl> PVMFSimpleMediaBufferCombinedAl
     OsclRefCounter* my_refcnt;
     uint8* my_ptr;
 
-    if (! gen_alloc)
-    {
-        OsclMemAllocator my_alloc;
-        aligned_refcnt_size = oscl_mem_aligned_size(sizeof(OsclRefCounterSA<SimpleMediaBufferCombinedCleanupSA>));
-        my_ptr = (uint8*) my_alloc.ALLOCATE(aligned_refcnt_size +
-                                            aligned_class_size + requested_size);
-        my_refcnt = OSCL_PLACEMENT_NEW(my_ptr, OsclRefCounterSA<SimpleMediaBufferCombinedCleanupSA>(my_ptr));
-        my_ptr += aligned_refcnt_size;
-    }
-    else
-    {
-        uint aligned_cleanup_size = oscl_mem_aligned_size(sizeof(SimpleMediaBufferCombinedCleanupDA));
-        aligned_refcnt_size = oscl_mem_aligned_size(sizeof(OsclRefCounterDA));
-        my_ptr = (uint8*) gen_alloc->ALLOCATE(aligned_refcnt_size + aligned_cleanup_size +
-                                              aligned_class_size + requested_size);
-        SimpleMediaBufferCombinedCleanupDA* cleanup_ptr = OSCL_PLACEMENT_NEW(my_ptr + aligned_refcnt_size, SimpleMediaBufferCombinedCleanupDA(gen_alloc));
+    uint aligned_cleanup_size = oscl_mem_aligned_size(sizeof(SimpleMediaBufferCombinedCleanupDA));
+    aligned_refcnt_size = oscl_mem_aligned_size(sizeof(OsclRefCounterDA));
+    my_ptr = (uint8*) gen_alloc->ALLOCATE(aligned_refcnt_size + aligned_cleanup_size +
+                                          aligned_class_size + requested_size);
 
-        // create the recounter after the cleanup object
-        my_refcnt = OSCL_PLACEMENT_NEW(my_ptr, OsclRefCounterDA(my_ptr, cleanup_ptr));
-        my_ptr += aligned_refcnt_size + aligned_cleanup_size;
+    if (my_ptr == NULL)
+    {
+        //we assume that gen_alloc (Oscl_DefAlloc implementation) provided to this
+        //class does not throw an exception during the normal course of operation
+        //viz. running out of memory in a memory pool temporarily
+        return shared_media_data;
     }
+    SimpleMediaBufferCombinedCleanupDA* cleanup_ptr = OSCL_PLACEMENT_NEW(my_ptr + aligned_refcnt_size, SimpleMediaBufferCombinedCleanupDA(gen_alloc));
+
+    // create the recounter after the cleanup object
+    my_refcnt = OSCL_PLACEMENT_NEW(my_ptr, OsclRefCounterDA(my_ptr, cleanup_ptr));
+    my_ptr += aligned_refcnt_size + aligned_cleanup_size;
 
 
 
     void *ptr;
     ptr = my_ptr + aligned_class_size;
-
     PVMFMediaDataImpl* media_data_ptr = OSCL_PLACEMENT_NEW(my_ptr, PVMFSimpleMediaBuffer(ptr, requested_size, my_refcnt));
-
-    OsclSharedPtr<PVMFMediaDataImpl> shared_media_data(media_data_ptr, my_refcnt);
-
+    shared_media_data.Bind(media_data_ptr, my_refcnt);
     return shared_media_data;
-
 }
 

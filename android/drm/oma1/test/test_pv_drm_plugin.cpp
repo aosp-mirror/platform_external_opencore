@@ -145,9 +145,8 @@ void pvplayer_async_test_drmcpmplugin::Run()
             iDataSource->SetDataSourceURL(wFileName);
             iDataSource->SetDataSourceFormatType(iFileType);
 
-            //Create a data source with the CPM usage flag set.
-            bool useCPM = true;
-            iLocalDataSource = new PVMFLocalDataSource(useCPM);
+            //Create a data source 
+            iLocalDataSource = new PVMFLocalDataSource();
             iDataSource->SetDataSourceContextData((OsclAny*)iLocalDataSource);
 
             //Add the data source
@@ -623,7 +622,7 @@ void pvplayer_async_test_drmcpmplugin::CommandCompleted(const PVCmdResponse& aRe
             {
                 if (bForceDownloadRights)
                 {
-                	  bForceDownloadRights = false;
+                      bForceDownloadRights = false;
                     iState=STATE_ACQUIRELICENSE;
                 }
                 else
@@ -639,8 +638,8 @@ void pvplayer_async_test_drmcpmplugin::CommandCompleted(const PVCmdResponse& aRe
             {
                 if (DRM_DOWNLOAD_RIGHTS_AND_PLAY == iUseMethod)
                 {
-                	  if(true == bForceDownloadRights)
-                	 	{
+                      if(true == bForceDownloadRights)
+                        {
                         bForceDownloadRights = false;
                         iState=STATE_ACQUIRELICENSE;
                         RunIfNotReady();

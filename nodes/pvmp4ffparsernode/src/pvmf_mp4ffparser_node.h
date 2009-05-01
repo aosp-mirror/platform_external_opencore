@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,8 @@
 #include "oscl_base.h"
 #endif
 
-#ifndef OSCL_CLOCK_H_INCLUDED
-#include "oscl_clock.h"
+#ifndef PVMF_MEDIA_CLOCK_H_INCLUDED
+#include "pvmf_media_clock.h"
 #endif
 
 #ifndef OSCL_TIMER_H_INCLUDED
@@ -170,6 +170,15 @@
 #ifndef PVMI_KVP_UTIL_H_INCLUDED
 #include "pvmi_kvp_util.h"
 #endif
+
+#ifndef PVMF_BASIC_ERRORINFOMESSAGE_H_INCLUDED
+#include "pvmf_basic_errorinfomessage.h"
+#endif
+
+#ifndef PVMF_DATA_SOURCE_DIRECTION_CONTROL_H_INCLUDED
+#include "pvmf_data_source_direction_control.h"
+#endif
+
 /**
 * Node command handling
 */
@@ -191,6 +200,8 @@ class PVMFMP4ParserNodeLoggerDestructDealloc : public OsclDestructDealloc
 
 #define PVMF_MP4FFPARSERNODE_MAX_CPM_METADATA_KEYS 256
 
+#define NORMAL_PLAYRATE 100000
+
 typedef PVMFGenericNodeCommand<OsclMemAllocator> PVMFMP4FFParserNodeCommandBase;
 
 enum PVMFMP4FFParserNodeCommandType
@@ -204,6 +215,7 @@ enum PVMFMP4FFParserNodeCommandType
     , PVMP4FF_NODE_CMD_GET_LICENSE
     , PVMP4FF_NODE_CMD_CANCEL_GET_LICENSE
     , PVMF_MP4_PARSER_NODE_CAPCONFIG_SETPARAMS
+    , PVMP4FF_NODE_CMD_SETDATASOURCEDIRECTION
 };
 
 class PVMFMP4FFParserNodeCommand : public PVMFMP4FFParserNodeCommandBase
@@ -340,9 +352,31 @@ class PVMFMP4FFParserNodeCommand : public PVMFMP4FFParserNodeCommandBase
             aSeekPointAfterTargetNPT = (PVMFTimestamp*)iParam5;
             aSeekToSyncPoint = (iParam3) ? true : false;
         }
+        /* Constructor and parser for SetDataSourceDirection */
+        void Construct(PVMFSessionId s, int32 cmd, int32 aDirection,
+                       PVMFTimestamp& aActualNPT, PVMFTimestamp& aActualMediaDataTS,
+                       PVMFTimebase* aTimebase, OsclAny* aContext)
+        {
+            PVMFMP4FFParserNodeCommandBase::Construct(s, cmd, aContext);
+            iParam1 = (OsclAny*)aDirection;
+            iParam2 = (OsclAny*) & aActualNPT;
+            iParam3 = (OsclAny*) & aActualMediaDataTS;
+            iParam4 = (OsclAny*)aTimebase;
+            iParam5 = NULL;
+        }
+        void Parse(int32& aDirection,
+                   PVMFTimestamp*& aActualNPT,
+                   PVMFTimestamp*& aActualMediaDataTS,
+                   PVMFTimebase*& aTimebase)
+        {
+            aDirection = (int32)iParam1;
+            aActualNPT = (PVMFTimestamp*)iParam2;
+            aActualMediaDataTS = (PVMFTimestamp*)iParam3;
+            aTimebase = (PVMFTimebase*)iParam4;
+        }
 
         // Constructor and parser for SetDataSourceRate
-        void Construct(PVMFSessionId s, int32 cmd, int32 aRate, OsclTimebase* aTimebase, const OsclAny*aContext)
+        void Construct(PVMFSessionId s, int32 cmd, int32 aRate, PVMFTimebase* aTimebase, const OsclAny*aContext)
         {
             PVMFMP4FFParserNodeCommandBase::Construct(s, cmd, aContext);
             iParam1 = (OsclAny*)aRate;
@@ -351,10 +385,10 @@ class PVMFMP4FFParserNodeCommand : public PVMFMP4FFParserNodeCommandBase
             iParam4 = NULL;
             iParam5 = NULL;
         }
-        void Parse(int32& aRate, OsclTimebase*& aTimebase)
+        void Parse(int32& aRate, PVMFTimebase*& aTimebase)
         {
             aRate = (int32)iParam1;
-            aTimebase = (OsclTimebase*)iParam2;
+            aTimebase = (PVMFTimebase*)iParam2;
         }
 
         /* Constructor and parser for GetLicenseW */
@@ -454,46 +488,6 @@ class PVMFMP4FFParserNodeCommand : public PVMFMP4FFParserNodeCommandBase
 };
 typedef PVMFNodeCommandQueue<PVMFMP4FFParserNodeCommand, OsclMemAllocator> PVMFMP4FFParserNodeCmdQueue;
 
-
-// Allocator wrapper for the memory pool that saves the last block pointer allocated
-// so it can be resized later
-class TrackDataMemPoolProxyAlloc : public Oscl_DefAlloc
-{
-    public:
-        TrackDataMemPoolProxyAlloc(OsclMemPoolResizableAllocator& aMemPool)
-        {
-            iMemPoolAllocPtr = &aMemPool;
-            iLastAllocatedBlockPtr = NULL;
-        }
-
-        virtual ~TrackDataMemPoolProxyAlloc()
-        {
-        }
-
-        OsclAny* allocate(const uint32 size)
-        {
-            OSCL_ASSERT(iMemPoolAllocPtr);
-            iLastAllocatedBlockPtr = iMemPoolAllocPtr->allocate(size);
-            return iLastAllocatedBlockPtr;
-        }
-
-        void deallocate(OsclAny* p)
-        {
-            OSCL_ASSERT(iMemPoolAllocPtr);
-            iMemPoolAllocPtr->deallocate(p);
-        }
-
-        bool trim(uint32 aBytesToFree)
-        {
-            OSCL_ASSERT(iMemPoolAllocPtr);
-            OSCL_ASSERT(iLastAllocatedBlockPtr);
-            return iMemPoolAllocPtr->trim(iLastAllocatedBlockPtr, aBytesToFree);
-        }
-
-        OsclMemPoolResizableAllocator* iMemPoolAllocPtr;
-        OsclAny* iLastAllocatedBlockPtr;
-};
-
 //Command queue type
 typedef PVMFNodeCommandQueue<PVMFMP4FFParserNodeCommand, OsclMemAllocator> PVMFMP4FFParserNodeCmdQueue;
 
@@ -505,7 +499,7 @@ class IMpeg4File;
 class PVMFMP4FFParserOutPort;
 class PVMFMP4FFPortIter;
 class PVLogger;
-class OsclClock;
+class PVMFMediaClock;
 
 enum BaseKeys_SelectionType
 {
@@ -529,7 +523,9 @@ class PVMFMP4FFParserNode : public OsclTimerObject,
             public PVMFFormatProgDownloadSupportInterface,
             public OsclTimerObserver,
             public PVMFCPMPluginLicenseInterface,
-            public PvmiCapabilityAndConfig
+            public PvmiCapabilityAndConfig,
+            public PVMFMediaClockStateObserver, // For observing the playback clock states
+            public PvmfDataSourceDirectionControlInterface
 {
     public:
         PVMFMP4FFParserNode(int32 aPriority = OsclActiveObject::EPriorityNominal);
@@ -567,6 +563,9 @@ class PVMFMP4FFParserNode : public OsclTimerObject,
 
         PVMFCommandId CancelAllCommands(PVMFSessionId aSessionId, const OsclAny* aContextData = NULL);
         PVMFCommandId CancelCommand(PVMFSessionId aSessionId, PVMFCommandId aCmdId, const OsclAny* aContextData = NULL);
+        PVMFStatus QueryInterfaceSync(PVMFSessionId aSession,
+                                      const PVUuid& aUuid,
+                                      PVInterface*& aInterfacePtr);
 
         /* cap config interface */
         virtual void setObserver(PvmiConfigAndCapabilityCmdObserver* aObserver)
@@ -611,8 +610,8 @@ class PVMFMP4FFParserNode : public OsclTimerObject,
 
         // From PVMFDataSourceInitializationExtensionInterface
         PVMFStatus SetSourceInitializationData(OSCL_wString& aSourceURL, PVMFFormatType& aSourceFormat, OsclAny* aSourceData);
-        PVMFStatus SetClientPlayBackClock(OsclClock* aClientClock);
-        PVMFStatus SetEstimatedServerClock(OsclClock* aClientClock);
+        PVMFStatus SetClientPlayBackClock(PVMFMediaClock* aClientClock);
+        PVMFStatus SetEstimatedServerClock(PVMFMediaClock* aClientClock);
 
         // From PVMFTrackSelectionExtensionInterface
         PVMFStatus GetMediaPresentationInfo(PVMFMediaPresentationInfo& aInfo);
@@ -637,7 +636,9 @@ class PVMFMP4FFParserNode : public OsclTimerObject,
         PVMFCommandId QueryDataSourcePosition(PVMFSessionId aSessionId, PVMFTimestamp aTargetNPT,
                                               PVMFTimestamp& aSeekPointBeforeTargetNPT, PVMFTimestamp& aSeekPointAfterTargetNPT,  OsclAny* aContext = NULL, bool aSeekToSyncPoint = true);
 
-        PVMFCommandId SetDataSourceRate(PVMFSessionId aSession, int32 aRate, OsclTimebase* aTimebase = NULL, OsclAny* aContext = NULL);
+        PVMFCommandId SetDataSourceRate(PVMFSessionId aSession, int32 aRate, PVMFTimebase* aTimebase = NULL, OsclAny* aContext = NULL);
+        PVMFCommandId SetDataSourceDirection(PVMFSessionId aSessionId, int32 aDirection, PVMFTimestamp& aActualNPT,
+                                             PVMFTimestamp& aActualMediaDataTS, PVMFTimebase* aTimebase, OsclAny* aContext);
 
         // From PVMFTrackLevelInfoExtensionInterface
         PVMFStatus GetAvailableTracks(Oscl_Vector<PVMFTrackInfo, OsclMemAllocator>& aTracks);
@@ -716,6 +717,10 @@ class PVMFMP4FFParserNode : public OsclTimerObject,
         PVMFStatus GetLicenseStatus(
             PVMFCPMLicenseStatus& aStatus) ;
 
+        //from PVMFMediaClockStateObserver
+        void ClockStateUpdated();
+        void NotificationsInterfaceDestroyed();
+
     private:
         // from OsclTimerObject
         void Run();
@@ -740,7 +745,7 @@ class PVMFMP4FFParserNode : public OsclTimerObject,
         PVMFStatus DoQueryUuid(PVMFMP4FFParserNodeCommand& aCmd);
         PVMFStatus DoQueryInterface(PVMFMP4FFParserNodeCommand& aCmd);
         PVMFStatus DoRequestPort(PVMFMP4FFParserNodeCommand& aCmd, PVMFPortInterface*&);
-        void GetTrackMaxParameters(PVMFFormatType& aFormatType, uint32& aMaxDataSize, uint32& aMaxQueueDepth);
+        void GetTrackMaxParameters(PVMFFormatType aFormatType, uint32& aMaxDataSize, uint32& aMaxQueueDepth);
         PVMFStatus DoReleasePort(PVMFMP4FFParserNodeCommand& aCmd);
 
         PVMFStatus DoInit(PVMFMP4FFParserNodeCommand& aCmd);
@@ -796,6 +801,8 @@ class PVMFMP4FFParserNode : public OsclTimerObject,
         PVMFStatus DoQueryDataSourcePosition(PVMFMP4FFParserNodeCommand& aCmd);
         PVMFStatus DoSetDataSourceRate(PVMFMP4FFParserNodeCommand& aCmd);
 
+        PVMFStatus DoSetDataSourceDirection(PVMFMP4FFParserNodeCommand& aCmd);
+
         void HandleTrackState();
         bool RetrieveTrackConfigInfo(uint32 aTrackId,
                                      PVMFFormatType aFormatType,
@@ -839,7 +846,8 @@ class PVMFMP4FFParserNode : public OsclTimerObject,
 
         OSCL_wHeapString<OsclMemAllocator> iFilename;
         PVMFFormatType iSourceFormat;
-        OsclClock* iClientPlayBackClock;
+        PVMFMediaClock* iClientPlayBackClock;
+        PVMFMediaClockNotificationsInterface *iClockNotificationsInf;
         bool iUseCPMPluginRegistry;
         PVMFLocalDataSource iCPMSourceData;
         PVMFSourceContextData iSourceContextData;
@@ -863,13 +871,14 @@ class PVMFMP4FFParserNode : public OsclTimerObject,
         PVMFNodeCapability iCapability;
         PVLogger* iLogger;
         PVLogger* iDataPathLogger;
+        PVLogger* iAVCDataPathLogger;
         PVLogger* iClockLogger;
         PVLogger* iDiagnosticsLogger;
         // Reference counter for extension
         uint32 iExtensionRefCount;
 
         // variables to support download autopause
-        OsclSharedPtr<OsclClock> download_progress_clock;
+        OsclSharedPtr<PVMFMediaClock> download_progress_clock;
         PVMFDownloadProgressInterface* download_progress_interface;
         uint32 iDownloadFileSize;
         bool autopaused;
@@ -893,12 +902,14 @@ class PVMFMP4FFParserNode : public OsclTimerObject,
         PVMFCPMPluginAccessInterfaceFactory* iCPMContentAccessFactory;
         PVMFMetadataExtensionInterface* iCPMMetaDataExtensionInterface;
         PVMFCPMPluginLicenseInterface* iCPMLicenseInterface;
+        PVInterface* iCPMLicenseInterfacePVI;
         PVMFCPMPluginAccessUnitDecryptionInterface* iDecryptionInterface;
         PvmiKvp iRequestedUsage;
         PvmiKvp iApprovedUsage;
         PvmiKvp iAuthorizationDataKvp;
         PVMFCPMUsageID iUsageID;
         bool oWaitingOnLicense;
+        bool iPoorlyInterleavedContentEventSent;
 
         PVMFCommandId iCPMInitCmdId;
         PVMFCommandId iCPMOpenSessionCmdId;
@@ -955,6 +966,13 @@ class PVMFMP4FFParserNode : public OsclTimerObject,
         void getBrand(uint32 langcode, char *LangCode);
 
         PVMFStatus CheckForMP4HeaderAvailability();
+        int32 CreateErrorInfoMsg(PVMFBasicErrorInfoMessage** aErrorMsg, PVUuid aEventUUID, int32 aEventCode);
+        void CreateDurationInfoMsg(uint32 adurationms);
+        PVMFStatus PushKVPToMetadataValueList(Oscl_Vector<PvmiKvp, OsclMemAllocator>* aVecPtr, PvmiKvp& aKvpVal);
+        PVMFStatus CreateNewArray(uint32** aTrackidList, uint32 aNumTracks);
+        PVMFStatus PushValueToList(Oscl_Vector<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator> &aRefMetadataKeys,
+                                   PVMFMetadataList *&aKeyListPtr,
+                                   uint32 aLcv);
         PVMIDataStreamSyncInterface* iDataStreamInterface;
         PVMFDataStreamFactory* iDataStreamFactory;
         PVMFDataStreamReadCapacityObserver* iDataStreamReadCapacityObserver;
@@ -970,7 +988,6 @@ class PVMFMP4FFParserNode : public OsclTimerObject,
         /* External PseudoStreaming related */
         bool iExternalDownload;
 
-        uint32 iNPTAtUnderFlow;
         bool iUnderFlowEventReported;
         PVMFStatus ReportUnderFlow();
         OsclTimer<OsclMemAllocator> *iUnderFlowCheckTimer;
@@ -1010,7 +1027,18 @@ class PVMFMP4FFParserNode : public OsclTimerObject,
         BaseKeys_SelectionType iBaseKey;
         uint32 iJitterBufferDurationInMs;
         bool iDataStreamRequestPending;
-        bool iPoorlyInterleavedContentEventSent;
+        bool iCPMSequenceInProgress;
+        bool oIsAACFramesFragmented;
+
+        int32 iPlayBackDirection;
+        int32 iStartForNextTSSearch;
+        int32 iPrevSampleTS;
+        bool iParseAudioDuringFF;
+        bool iParseAudioDuringREW;
+        bool iParseVideoOnly;
+        int32 iDataRate;
+
+        int32 minFileOffsetTrackID;
 };
 
 

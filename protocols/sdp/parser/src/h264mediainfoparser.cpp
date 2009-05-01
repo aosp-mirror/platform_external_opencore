@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -335,29 +335,6 @@ SDPH264MediaInfoParser::parseMediaInfo(const char *buff,
                                         return SDP_BAD_MEDIA_FMTP;
                                     }
                                     uint32 parameterSetLength = (int)(tmp_end_line - temp);
-#if 0
-                                    SDPAllocDestructDealloc<uint8> SDP_alloc;
-                                    uint8 *mptr = SDP_alloc.ALLOCATE(parameterSetLength);
-                                    OsclRefCounterSA< SDPAllocDestructDealloc<uint8> > *refcnt =
-                                        new OsclRefCounterSA< SDPAllocDestructDealloc<uint8> >(mptr);
-                                    OsclSharedPtr<uint8> parameterSetPtr(mptr, refcnt);
-
-                                    uint8* inBuf = (uint8*)(temp);
-                                    uint32 outBufLen = 0;
-                                    if (!sdp_decodebase64(inBuf,
-                                                          parameterSetLength,
-                                                          mptr,
-                                                          outBufLen,
-                                                          parameterSetLength))
-                                    {
-                                        return SDP_BAD_MEDIA_FORMAT;
-                                    }
-
-                                    if (!h264V->setDecoderSpecificInfo(parameterSetPtr, payloadNumber))
-                                        return SDP_PAYLOAD_MISMATCH;
-                                    if (!h264V->setDecoderSpecificInfoSize(parameterSetLength, payloadNumber))
-                                        return SDP_PAYLOAD_MISMATCH;
-#else
                                     SDP_ERROR_CODE errCode =
                                         parseParameterSets(temp,
                                                            parameterSetLength,
@@ -368,7 +345,6 @@ SDPH264MediaInfoParser::parseMediaInfo(const char *buff,
                                     {
                                         return errCode;
                                     }
-#endif
 
                                 }
                                 if (!oscl_strncmp(temp,

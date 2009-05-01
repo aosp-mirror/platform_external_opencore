@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,9 @@
  */
 /*
 
-  Pathname: ./src/trans4m_freq_2_time_fxp.c
+  Pathname: trans4m_freq_2_time_fxp.c
   Function: trans4m_freq_2_time_fxp
 
-      Date: 4/02/2001
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
@@ -131,6 +130,7 @@
  Description:
     Replaced for-loop with memset and memcopy.
 
+ Who:                         Date:
  Description:
 
 ------------------------------------------------------------------------------
@@ -458,7 +458,7 @@ OUT          ==============================================================
 #define  ROUNDING_SCALED     (ROUNDING<<(16 - SCALING))
 
 
-#if defined(_ARM)
+#if defined(PV_ARM_V5)
 
 
 __inline Int16 sat(Int32 y)
@@ -479,7 +479,7 @@ __inline Int16 sat(Int32 y)
 
 
 
-#elif defined(_ARM_GCC)
+#elif defined(PV_ARM_GCC_V5)
 
 
 __inline Int16 sat(Int32 y)
@@ -501,6 +501,13 @@ __inline Int16 sat(Int32 y)
 }
 
 #define  limiter( y, x)   y = sat(x);
+
+
+#elif defined(PV_ARM_MSC_EVC_V5)
+
+
+#define  limiter( y, x)       z = x<< (15-SCALING); \
+                              y = _DAddSatInt( ROUNDING_SCALED, z)>>16;
 
 
 #else
@@ -571,7 +578,7 @@ void trans4m_freq_2_time_fxp_1(
 
     Int  i;
     Int  wnd;
-#if !(defined( _ARM_GCC)||(_ARM))
+#if !(defined( PV_ARM_GCC_V5)||(PV_ARM_V5))
     Int32 z;
 #endif
 
@@ -1575,7 +1582,7 @@ void trans4m_freq_2_time_fxp_2(
 
     Int  i;
     Int  wnd;
-#if !(defined( _ARM_GCC)||(_ARM))
+#if !(defined( PV_ARM_GCC_V5)||(PV_ARM_V5))
     Int32 z;
 #endif
     Int16 *pFreqInfo;

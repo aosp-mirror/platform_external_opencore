@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +66,6 @@ OSCL_EXPORT_REF RFC3640PayloadParser::RFC3640PayloadParser()
 
 OSCL_EXPORT_REF RFC3640PayloadParser::~RFC3640PayloadParser()
 {
-
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -85,7 +84,7 @@ OSCL_EXPORT_REF bool RFC3640PayloadParser::Init(mediaInfo* config)
     rfc3640_mediaInfo *r3640m = OSCL_STATIC_CAST(rfc3640_mediaInfo *, config);
     bool retVal = false;
 
-    // \todo: Implement other modes (such as CELP-cbr, CELP-vbr, AAC-lbr, etc...).
+    //TODO: Implement other modes (such as CELP-cbr, CELP-vbr, AAC-lbr, etc...).
     sizeLength             = r3640PayloadInfo->getSizeLength();
     indexLength            = r3640PayloadInfo->getIndexLength();
     indexDeltaLength       = r3640PayloadInfo->getIndexDeltaLength();
@@ -94,7 +93,7 @@ OSCL_EXPORT_REF bool RFC3640PayloadParser::Init(mediaInfo* config)
     randomAccessIndication = false;
 
     //We support AAC-hbr mode only.
-    if (!oscl_strcmp(r3640m->getMode(), "AAC-hbr"))
+    if (!oscl_strncmp(r3640m->getMode(), "AAC-hbr", oscl_strlen("AAC-hbr")))
     {
         headersPresent         = true;
         headersLength          = AAC_HBR_HEADERSLENGTH_DEFAULT_VALUE;
@@ -132,7 +131,7 @@ RFC3640PayloadParser::Parse(const Payload& inputPacket,
     //should be const functions so this casting away constness is not necessary.
     Payload& input = const_cast<Payload&>(inputPacket);
 
-    // \todo: Implement AU de-interleaving
+    //@TODO: Implement AU de-interleaving
 
     Payload out;
 
@@ -141,18 +140,28 @@ RFC3640PayloadParser::Parse(const Payload& inputPacket,
     out.randAccessPt = inputPacket.randAccessPt;
     out.sequence     = inputPacket.sequence + 1;
     out.timestamp    = inputPacket.timestamp;
+    //Creating a boolean for checking whether RFC3640_ONE_FRAGMENT_PER_MEDIA_MSG is defined or not
+    bool rfc3640_one_fragement_per_media	 = false;
 
-    //Loop through all of the packets.
-    for (uint32 fragmentNumber = 0; fragmentNumber < inputPacket.vfragments.size(); fragmentNumber++)
-    {
-        //
-        // Strip RFC 3640 header section and auxiliary section.
-        //
+#ifndef RFC3640_ONE_FRAGMENT_PER_MEDIA_MSG
+    rfc3640_one_fragement_per_media = true;
+#endif
 
-        //Establish a pointer to the payload fragment for iterating past the
-        //header and aux section.
-        BitStreamParser fragment((uint8*)input.vfragments[fragmentNumber].getMemFragPtr(),
-                                 input.vfragments[fragmentNumber].getMemFragSize());
+    // Many functions calls inside this for loop may Leave because of an
+    // overflow.
+    int32 err;
+    OSCL_TRY(err,
+             //Loop through all of the packets.
+             for (uint32 fragmentNumber = 0; fragmentNumber < inputPacket.vfragments.size(); fragmentNumber++)
+{
+    //
+    // Strip RFC 3640 header section and auxiliary section.
+    //
+
+    //Establish a pointer to the payload fragment for iterating past the
+    //header and aux section.
+    BitStreamParser fragment((uint8*)input.vfragments[fragmentNumber].getMemFragPtr(),
+                             input.vfragments[fragmentNumber].getMemFragSize());
 
         //In some cases, such as with fixed-length AUs, the header is not present.
         //Only process the header if it is present.
@@ -229,33 +238,38 @@ RFC3640PayloadParser::Parse(const Payload& inputPacket,
                 }
             }
 
-#ifndef RFC3640_ONE_FRAGMENT_PER_MEDIA_MSG
-            // At this time the decoder cannot handle multiple fragments.
-            OsclMemoryFragment memfrag;
-            //memfrag.ptr = NULL; //Unknown at this time.
-            memfrag.len = size;
-            input.vfragments[fragmentNumber].getRefCounter()->addRef();
-            OsclRefCounterMemFrag refCntMemFrag(memfrag,
-                                                input.vfragments[fragmentNumber].getRefCounter(),
-                                                memfrag.len);
-            out.vfragments.push_back(refCntMemFrag);
-#else
-            // Instead of creating multiple fragments, point to the first fragment, but
-            // increment the size field to span all access units. The decoder is still
-            // getting multiple frames in memory, but the data structure makes it appear as just one.
-            // This only works for non-interleaved access units & can only be a temporary solution
-            if (accessUnits == 0)
+
+            if (rfc3640_one_fragement_per_media == true)
             {
+                // At this time the decoder cannot handle multiple fragments.
+
                 OsclMemoryFragment memfrag;
-                memfrag.ptr = (uint8*)(input.vfragments[fragmentNumber].getMemFragPtr()) + (headersLength / 8);
-                memfrag.len = input.vfragments[fragmentNumber].getMemFragSize() - (headersLength / 8);
+                //memfrag.ptr = NULL; //Unknown at this time.
+                memfrag.len = size;
                 input.vfragments[fragmentNumber].getRefCounter()->addRef();
                 OsclRefCounterMemFrag refCntMemFrag(memfrag,
                                                     input.vfragments[fragmentNumber].getRefCounter(),
                                                     memfrag.len);
                 out.vfragments.push_back(refCntMemFrag);
             }
-#endif
+            else
+            {
+                // Instead of creating multiple fragments, point to the first fragment, but
+                // increment the size field to span all access units. The decoder is still
+                // getting multiple frames in memory, but the data structure makes it appear as just one.
+                // This only works for non-interleaved access units & can only be a temporary solution
+                if (accessUnits == 0)
+                {
+                    OsclMemoryFragment memfrag;
+                    memfrag.ptr = (uint8*)(input.vfragments[fragmentNumber].getMemFragPtr()) + (headersLength / 8);
+                    memfrag.len = input.vfragments[fragmentNumber].getMemFragSize() - (headersLength / 8);
+                    input.vfragments[fragmentNumber].getRefCounter()->addRef();
+                    OsclRefCounterMemFrag refCntMemFrag(memfrag,
+                                                        input.vfragments[fragmentNumber].getRefCounter(),
+                                                        memfrag.len);
+                    out.vfragments.push_back(refCntMemFrag);
+                }
+            }
 
             accessUnits++;
         }
@@ -282,19 +296,26 @@ RFC3640PayloadParser::Parse(const Payload& inputPacket,
             }
         }
 
-#ifndef RFC3640_ONE_FRAGMENT_PER_MEDIA_MSG
-        //Update the fragment pointers with real values now that we have
-        //parsed the headers.
-        //The output vector may contain fragments from previous runs, so
-        //start with the last fragments that we pushed on the back of the vector.
-        for (uint32 i = (out.vfragments.size() - accessUnits); i < out.vfragments.size(); i++)
+        if (rfc3640_one_fragement_per_media == true)
         {
-            out.vfragments[i].getMemFrag().ptr = fragment.GetBytePos();
-            fragment.NextBits(out.vfragments[i].getMemFrag().len * BITS_PER_BYTE);
+            //Update the fragment pointers with real values now that we have
+            //parsed the headers.
+            //The output vector may contain fragments from previous runs, so
+            //start with the last fragments that we pushed on the back of the vector.
+            for (uint32 i = (out.vfragments.size() - accessUnits); i < out.vfragments.size(); i++)
+            {
+                out.vfragments[i].getMemFrag().ptr = fragment.GetBytePos();
+                fragment.NextBits(out.vfragments[i].getMemFrag().len * BITS_PER_BYTE);
+            }
         }
-#endif
-    }
 
+    }
+            ); // End of OSCL_TRY
+
+    if (err != OsclErrNone)
+    {
+        return PayloadParserStatus_Failure;
+    }
     vParsedPayloads.push_back(out);
 
     return PayloadParserStatus_Success;

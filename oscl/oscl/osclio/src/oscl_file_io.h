@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,6 +65,7 @@ class OsclNativeFile;
 class OsclFileStats;
 class OsclNativeFileParams;
 class OsclAsyncFile;
+#define TOsclFileOffsetInt32 int32
 
 class Oscl_File : public HeapBase
 {
@@ -220,6 +221,12 @@ class Oscl_File : public HeapBase
          *   When using RFileBuf access mode with an RFile handle, the RFileBuf
          *   will be attached to the open RFile handle.
          *
+         *   To use the external file handle, the caller starts with a native file handle to an open file.  The caller must
+         *   wrap the native file handle in an OsclFileHandle object, pass the OsclFileHandle pointer to SetFileHandle,
+         *   call Oscl_File::Open, then proceed to use the Oscl_File object, finally calling Oscl_File::Close.
+         *   In this usage mode, Oscl_File::Open and Oscl_File::Close do not actually call native file open and close.
+         *   It is assumed that the caller will close the original native file handle after usage is complete.
+         *
          * @param aHandle: container for an open file handle.
          * @return returns 0 if successful, non-zero if error.
          *
@@ -300,14 +307,14 @@ class Oscl_File : public HeapBase
          *
          * @return returns 0 on success, and a non-zero value otherwise
          */
-        OSCL_IMPORT_REF int32 Seek(int32 offset,
+        OSCL_IMPORT_REF int32 Seek(TOsclFileOffset offset,
                                    seek_type origin);
 
         /**
          * The File Tell operation
          * Returns the current file position for file specified by fp
          */
-        OSCL_IMPORT_REF int32 Tell();
+        OSCL_IMPORT_REF TOsclFileOffset Tell();
 
 
         /**
@@ -331,17 +338,6 @@ class Oscl_File : public HeapBase
          * @return returns 0 if successful, and a non-zero value otherwise
          */
         OSCL_IMPORT_REF int32 Flush();
-
-        /**
-         * The File SetSize operation
-         * If the file has been opened for writing
-         * This sets the size of the file.  The file pointer position
-         * is unchanged unless the pointers position is greated than
-         * the new filesize.
-         *
-         * @return returns 0 if successful, and a non-zero value otherwise
-         */
-        OSCL_IMPORT_REF int32 SetSize(uint32 size);
 
 
         /**
@@ -378,7 +374,7 @@ class Oscl_File : public HeapBase
          *
          * @return - The size of the file, or -1 on error.
          */
-        OSCL_IMPORT_REF int32 Size();
+        OSCL_IMPORT_REF TOsclFileOffset Size();
 
         /**
          * SetLoggingEnable configures the PVLogger output for this file.
@@ -402,6 +398,9 @@ class Oscl_File : public HeapBase
 
     private:
         friend class OsclFileCache;
+        friend class asyncfilereadwrite_test;
+        friend class largeasyncfilereadwrite_test;
+        friend class asyncfilereadcancel_test;
 
         void Construct();
         void OldCacheDefaults();
@@ -454,15 +453,16 @@ class Oscl_File : public HeapBase
                               , Oscl_FileServer& fileserv);
         uint32 CallNativeRead(OsclAny *buffer, uint32 size, uint32 numelements);
         uint32 CallNativeWrite(const OsclAny *buffer, uint32 size, uint32 numelements);
-        int32  CallNativeSeek(int32 offset, Oscl_File::seek_type origin);
-        int32  CallNativeSetSize(uint32 size);
-        int32  CallNativeTell();
+        int32  CallNativeSeek(TOsclFileOffset offset, Oscl_File::seek_type origin);
+        TOsclFileOffset  CallNativeTell();
         int32  CallNativeFlush();
         int32  CallNativeEndOfFile();
-        int32 CallNativeSize();
+        TOsclFileOffset CallNativeSize();
         int32 CallNativeClose();
         uint32 CallNativeMode();
         int32 CallNativeGetError();
+        OSCL_IMPORT_REF uint32 GetAsyncFileNumOfRun();
+        OSCL_IMPORT_REF uint32 GetAsyncFileNumOfRunError();
 
 };
 

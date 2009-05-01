@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,8 +30,8 @@
 #ifndef OSCL_EXCLUSIVE_PTR_H_INCLUDED
 #include "oscl_exclusive_ptr.h"
 #endif
-#ifndef OSCL_CLOCK_H_INCLUDED
-#include "oscl_clock.h"
+#ifndef PVMF_MEDIA_CLOCK_H_INCLUDED
+#include "pvmf_media_clock.h"
 #endif
 #ifndef PVLOGGER_H_INCLUDED
 #include "pvlogger.h"
@@ -155,7 +155,8 @@ class PVMFMediaLayerNodeExtensionInterface : public PVInterface
         OSCL_IMPORT_REF virtual PVMFStatus setPayloadParserRegistry(PayloadParserRegistry*) = 0;
         OSCL_IMPORT_REF virtual PVMFStatus setPortDataLogging(bool logEnable, OSCL_String* logPath = NULL) = 0;
         OSCL_IMPORT_REF virtual bool setPlayRange(int32 aStartTimeInMS,
-                int32 aStopTimeInMS) = 0;
+                int32 aStopTimeInMS,
+                bool oRepositioning = false) = 0;
         OSCL_IMPORT_REF virtual bool setPortMediaParams(PVMFPortInterface* aPort,
                 OsclRefCounterMemFrag& aConfig,
                 mediaInfo* aMediaInfo = NULL) = 0;
@@ -170,7 +171,7 @@ class PVMFMediaLayerNodeExtensionInterface : public PVInterface
         OSCL_IMPORT_REF virtual void setInPortReposFlag(PVMFPortInterface* aPort, uint32 aSeekTimeInMS = 0) = 0;
         OSCL_IMPORT_REF virtual uint32 getMaxOutPortTimestamp(PVMFPortInterface* aPort,
                 bool oPeek = false) = 0;
-        OSCL_IMPORT_REF virtual bool setClientPlayBackClock(OsclClock* aClientPlayBackClock) = 0;
+        OSCL_IMPORT_REF virtual bool setClientPlayBackClock(PVMFMediaClock* aClientPlayBackClock) = 0;
         OSCL_IMPORT_REF virtual void addRef() = 0;
         OSCL_IMPORT_REF virtual void removeRef() = 0;
         OSCL_IMPORT_REF virtual bool queryInterface(const PVUuid& uuid, PVInterface*& iface) = 0;
@@ -200,7 +201,7 @@ class PVMFMediaLayerNodeExtensionInterfaceImpl :
 
         virtual PVMFStatus setPortDataLogging(bool logEnable, OSCL_String* logPath = NULL);
 
-        virtual bool setClientPlayBackClock(OsclClock* aClientPlayBackClock);
+        virtual bool setClientPlayBackClock(PVMFMediaClock* aClientPlayBackClock);
 
         void addRef()
         {
@@ -214,6 +215,7 @@ class PVMFMediaLayerNodeExtensionInterfaceImpl :
         {
             if (uuid == Uuid())
             {
+                addRef();
                 iface = this;
                 return true;
             }
@@ -225,7 +227,8 @@ class PVMFMediaLayerNodeExtensionInterfaceImpl :
         }
 
         bool setPlayRange(int32 aStartTimeInMS,
-                          int32 aStopTimeInMS);
+                          int32 aStopTimeInMS,
+                          bool oRepositioning = false);
 
         bool setPortMediaParams(PVMFPortInterface* aPort,
                                 OsclRefCounterMemFrag& aConfig,
@@ -250,7 +253,8 @@ class PVMFMediaLayerNodeExtensionInterfaceImpl :
 
 class PVLogger;
 
-class PVMFMediaLayerNode : public PVMFNodeInterface,
+class PVMFMediaLayerNode : public PVInterface,
+            public PVMFNodeInterface,
             public OsclActiveObject,
             public PVMFNodeErrorEventObserver,
             public PVMFNodeInfoEventObserver,
@@ -338,6 +342,40 @@ class PVMFMediaLayerNode : public PVMFNodeInterface,
         //callback from the port when memory is available in the rtp
         //payload parser.
         void freechunkavailable(PVMFPortInterface*);
+        virtual void addRef()
+        {
+        }
+        virtual void removeRef()
+        {
+        }
+        virtual bool queryInterface(const PVUuid& uuid, PVInterface*& iface)
+        {
+            iface = NULL;
+            if (uuid == PVUuid(PVMF_MEDIALAYERNODE_EXTENSIONINTERFACE_UUID))
+            {
+                if (!iExtensionInterface)
+                {
+                    PVMFMediaLayerNodeAllocator alloc;
+                    int32 err;
+                    OsclAny*ptr = NULL;
+                    OSCL_TRY(err,
+                             ptr = alloc.ALLOCATE(sizeof(PVMFMediaLayerNodeExtensionInterfaceImpl));
+                            );
+                    if (err != OsclErrNone || !ptr)
+                    {
+                        PVMF_MLNODE_LOGERROR((0, "PVMFMediaLayerNode::queryInterface: Error - Out of memory"));
+                        OSCL_LEAVE(OsclErrNoMemory);
+                    }
+                    iExtensionInterface =
+                        OSCL_PLACEMENT_NEW(ptr, PVMFMediaLayerNodeExtensionInterfaceImpl(this));
+                }
+                return (iExtensionInterface->queryInterface(uuid, iface));
+            }
+            else
+            {
+                return false;
+            }
+        }
 
     private:
         /* from OsclActiveObject */
@@ -362,6 +400,11 @@ class PVMFMediaLayerNode : public PVMFNodeInterface,
         PVMFStatus sendAccessUnits(PVMFMediaLayerPortContainer* pinputPort);
         PVMFStatus dispatchAccessUnits(PVMFMediaLayerPortContainer* pinputPort,
                                        PVMFMediaLayerPortContainer* poutPort);
+
+        bool Allocate(OsclSharedPtr<PVMFMediaDataImpl>& mediaDataImplOut, PVMFMediaLayerPortContainer* poutPort);
+        bool Allocate(OsclAny*& ptr);
+        bool Push(PVMFMediaLayerPortContainer portParams);
+        bool AddPort(PVMFMediaLayerPort* port);
 
         /**
          * Process an outgoing message of a the specified port by sending the message to
@@ -498,10 +541,11 @@ class PVMFMediaLayerNode : public PVMFNodeInterface,
 
         bool CheckForEOS();
         bool setPlayRange(int32 aStartTimeInMS,
-                          int32 aStopTimeInMS);
+                          int32 aStopTimeInMS,
+                          bool oRepositioning = false);
 
-        OsclClock* iClientPlayBackClock;
-        bool setClientPlayBackClock(OsclClock* aClientPlayBackClock)
+        PVMFMediaClock* iClientPlayBackClock;
+        bool setClientPlayBackClock(PVMFMediaClock* aClientPlayBackClock)
         {
             iClientPlayBackClock = aClientPlayBackClock;
             return true;

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,9 @@
 #include "oscl_int64_utils.h"
 #endif
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
+#ifndef OSCL_MEM_BASIC_FUNCTIONS_H
+#include "oscl_mem_basic_functions.h"
+#endif
 
 
 
@@ -117,6 +119,15 @@ struct AbsTimeFormat
 
 struct RtspRangeType
 {
+    enum
+    {
+        PlaylistUrlLen = 1024
+    };
+
+    RtspRangeType(): format(UNKNOWN_RANGE), start_is_set(false), end_is_set(false)
+    {
+        oscl_memset(iPlaylistUrl, 0, (PlaylistUrlLen * sizeof(mbchar)));
+    }
     enum RtspRangeFormat { NPT_RANGE, SMPTE_RANGE, SMPTE_25_RANGE,
                            SMPTE_30_RANGE,
                            ABS_RANGE,
@@ -125,7 +136,6 @@ struct RtspRangeType
 //#endif //#ifdef RTSP_PLAYLIST_SUPPORT
                            UNKNOWN_RANGE, INVALID_RANGE
                          };
-
     RtspRangeFormat format;
     bool start_is_set;
     union
@@ -146,7 +156,7 @@ struct RtspRangeType
     };
 
 //#ifdef RTSP_PLAYLIST_SUPPORT
-    mbchar iPlaylistUrl[1024];
+    mbchar iPlaylistUrl[PlaylistUrlLen];
 //#endif //#ifdef RTSP_PLAYLIST_SUPPORT
     /***********************************************************************************/
     /*Function : int32 convertToMillisec(int32 &startTime, int32 &stopTime)                  */

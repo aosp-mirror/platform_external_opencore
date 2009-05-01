@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -379,6 +379,7 @@ SampleDescriptionAtom::SampleDescriptionAtom(MP4_FF_FILE *fp,
             }
 
         } // end if success
+
     }
     else
     {
@@ -443,6 +444,7 @@ SampleDescriptionAtom::~SampleDescriptionAtom()
                 MpegSampleEntry *ptr = (MpegSampleEntry *)(*_psampleEntryVec)[i];
                 PV_MP4_FF_DELETE(NULL, MpegSampleEntry, ptr);
             }
+
             else
             {
                 SampleEntry *ptr = (SampleEntry *)(*_psampleEntryVec)[i];
@@ -513,7 +515,7 @@ SampleDescriptionAtom::getDecoderSpecificInfo(uint32 index)
         }
     }
 
-    if (_o3GPPAMR)
+    if ((_o3GPPAMR) || (_o3GPPWBAMR))
     {
         if (_pAMRSampleEntryAtom != NULL)
         {
@@ -650,7 +652,7 @@ int32 SampleDescriptionAtom::getWidth()
 
 int32 SampleDescriptionAtom::getHeight()
 {
-    uint16 height = 0;
+
     uint32 i = 0;
     if (_o3GPPH263)
     {
@@ -687,6 +689,7 @@ SampleDescriptionAtom::getMaxBufferSizeDB()
             return 512;
         }
     }
+
 
     if (_psampleEntryVec->size() == 0)
     {
@@ -816,64 +819,56 @@ uint8* SampleDescriptionAtom::getTrackLevelOMA2DRMInfo()
 }
 
 
-OSCL_wHeapString<OsclMemAllocator> SampleDescriptionAtom::getMIMEType()
+void SampleDescriptionAtom::getMIMEType(OSCL_String& aMimeType)
 {
     uint8 objectType;
     objectType = getObjectTypeIndication();
 
-    if ((objectType == AMR_AUDIO) ||
-            (objectType == AMR_AUDIO_3GPP) ||
-            (objectType == AMRWB_AUDIO_3GPP))
+    OSCL_HeapString<OsclMemAllocator> mimeType;
+
+    mimeType.set(PVMF_MIME_FORMAT_UNKNOWN, oscl_strlen(PVMF_MIME_FORMAT_UNKNOWN));
+
+    if (objectType == AMR_AUDIO)
     {
-        OSCL_wHeapString<OsclMemAllocator> temp(_STRLIT("AMR"));
-        return temp;
+        mimeType.set(PVMF_MIME_AMR, oscl_strlen(PVMF_MIME_AMR));
+    }
+    else if	(objectType == AMR_AUDIO_3GPP)
+    {
+        mimeType.set(PVMF_MIME_AMR_IETF, oscl_strlen(PVMF_MIME_AMR_IETF));
+    }
+    else if (objectType == AMRWB_AUDIO_3GPP)
+    {
+        mimeType.set(PVMF_MIME_AMRWB_IETF, oscl_strlen(PVMF_MIME_AMRWB_IETF));
     }
     else if (objectType == MPEG4_AUDIO)
     {
-        OSCL_wHeapString<OsclMemAllocator> temp(_STRLIT("AAC"));
-        return temp;
+        mimeType.set(PVMF_MIME_MPEG4_AUDIO, oscl_strlen(PVMF_MIME_MPEG4_AUDIO));
     }
     else if (objectType == MPEG2_AUDIO_LC)
     {
-        OSCL_wHeapString<OsclMemAllocator> temp(_STRLIT("AAC"));
-        return temp;
+        mimeType.set(_STRLIT_CHAR(PVMF_MIME_MPEG4_AUDIO), oscl_strlen(PVMF_MIME_MPEG4_AUDIO));
     }
     else if (objectType == MPEG4_VIDEO)
     {
-        OSCL_wHeapString<OsclMemAllocator> temp(_STRLIT("MP4V-ES"));
-        return temp;
+        mimeType.set(PVMF_MIME_M4V, oscl_strlen(PVMF_MIME_M4V));
     }
     else if (objectType == H263_VIDEO)
     {
-        OSCL_wHeapString<OsclMemAllocator> temp(_STRLIT("H263-2000"));
-        return temp;
-
+        mimeType.set(PVMF_MIME_H2632000, oscl_strlen(PVMF_MIME_H2632000));
     }
     else if (objectType == AVC_VIDEO)
     {
-        OSCL_wHeapString<OsclMemAllocator> temp(_STRLIT("AVC_VIDEO"));
-        return temp;
-
+        mimeType.set(PVMF_MIME_H264_VIDEO_MP4, oscl_strlen(PVMF_MIME_H264_VIDEO_MP4));
     }
-    else if (objectType == AVC_VIDEO)
-    {
-        OSCL_wHeapString<OsclMemAllocator> temp(_STRLIT("X-AVC-VIDEO"));
-        return temp;
-    }
-
     else
     {
         if (_pMediaType == MEDIA_TYPE_TEXT)
         {
-            OSCL_wHeapString<OsclMemAllocator> temp(_STRLIT("3GPP_TIMED_TEXT"));
-            return temp;
-        }
-        else
-        {
-            OSCL_wHeapString<OsclMemAllocator> temp(_STRLIT("UNKNOWN"));
-            return temp;
+            mimeType.set(PVMF_MIME_3GPP_TIMEDTEXT, oscl_strlen(PVMF_MIME_3GPP_TIMEDTEXT));
         }
     }
+
+    aMimeType = mimeType;
 }
 
 

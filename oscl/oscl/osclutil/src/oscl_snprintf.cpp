@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -361,6 +361,48 @@
 #endif
 
 
+
+//An implementation of swprintf for platforms that have native sprintf, but not swprintf.
+//Note this routine converts input oscl_wchar strings to single-wide without any
+//Unicode-to-UTF8 conversion.  This is sufficient for the usage in this module, since
+//we know that format strings are ASCII character only, and there are no string arguments
+//in the argument list passed to this routine.
+static int32 oscl_default_swprintf(oscl_wchar *buffer, int32 bufferlen, const oscl_wchar *format, ...)
+{
+    OSCL_UNUSED_ARG(bufferlen);
+
+    int32 result;
+    int32 nformat = oscl_strlen(format);
+    char* sformat = (char*)format;
+    char* sbuffer = (char*)buffer;
+
+    //Compress the format-string to single-wide.
+    int32 i;
+    for (i = 0;i < nformat;i++)
+        sformat[i] = (char)format[i];
+    sformat[nformat] = '\0';
+
+    va_list args;
+    va_start(args, format);
+    result = vsprintf(sbuffer, sformat, args);
+    va_end(args);
+
+    //Restore the original format string.  Probably unnecessary.
+    oscl_wchar* oformat = (oscl_wchar*)format;
+    oformat[nformat] = '\0';
+    for (i = 0;i < nformat;i++)
+        oformat[nformat-i-1] = (oscl_wchar)sformat[nformat-i-1];
+
+    //Stretch the result string from single-wide to wide.
+    int32 nsbuffer = oscl_strlen(sbuffer);
+    buffer[nsbuffer] = '\0';
+    for (i = 0;i < nsbuffer;i++)
+        buffer[nsbuffer-i-1] = (oscl_wchar)sbuffer[nsbuffer-i-1];
+
+    return result;
+}
+
+OSCL_IMPORT_REF int32 oscl_UnicodeToUTF8(const oscl_wchar *input, int32 inLength, char *output, int32 outLength);
 
 OsclAny * oscl_memchr(const OsclAny * str, int32 c, int32 count)
 {
@@ -1662,7 +1704,7 @@ int portable_vswprintf(oscl_wchar *str, size_t str_m, const oscl_wchar *fmt, va_
                         f[f_l++] = '\0';
                         if (fmt_spec == 'p')
                         {
-                            OSCL_ASSERT(false);//non-functional-- no swprintf
+                            str_arg_l += oscl_default_swprintf(tmp + str_arg_l, NUMERIC_CONV_BUF_SIZE - str_arg_l, f, ptr_arg);
                         }
                         else if (fmt_spec == 'd')    /* signed */
                         {
@@ -1670,16 +1712,16 @@ int portable_vswprintf(oscl_wchar *str, size_t str_m, const oscl_wchar *fmt, va_
                             {
                                 case '\0':
                                 case 'h':
-                                    OSCL_ASSERT(false);//non-functional-- no swprintf
+                                    str_arg_l += oscl_default_swprintf(tmp + str_arg_l, NUMERIC_CONV_BUF_SIZE - str_arg_l, f, int_arg);
                                     break;
 
                                 case 'l':
-                                    OSCL_ASSERT(false);//non-functional-- no swprintf
+                                    str_arg_l += oscl_default_swprintf(tmp + str_arg_l, NUMERIC_CONV_BUF_SIZE - str_arg_l, f, long_arg);
                                     break;
 
 #ifdef SNPRINTF_LONGLONG_SUPPORT
                                 case '2':
-                                    OSCL_ASSERT(false);//non-functional-- no swprintf
+                                    str_arg_l += oscl_default_swprintf(tmp + str_arg_l, NUMERIC_CONV_BUF_SIZE - str_arg_l, f, long_long_arg);
                                     break;
 #endif //snprintf_longlong_support
 
@@ -1691,16 +1733,16 @@ int portable_vswprintf(oscl_wchar *str, size_t str_m, const oscl_wchar *fmt, va_
                             {
                                 case '\0':
                                 case 'h':
-                                    OSCL_ASSERT(false);//non-functional-- no swprintf
+                                    str_arg_l += oscl_default_swprintf(tmp + str_arg_l, NUMERIC_CONV_BUF_SIZE - str_arg_l, f, uint_arg);
                                     break;
 
                                 case 'l':
-                                    OSCL_ASSERT(false);//non-functional-- no swprintf
+                                    str_arg_l += oscl_default_swprintf(tmp + str_arg_l, NUMERIC_CONV_BUF_SIZE - str_arg_l, f, ulong_arg);
                                     break;
 
 #ifdef SNPRINTF_LONGLONG_SUPPORT
                                 case '2':
-                                    OSCL_ASSERT(false);//non-functional-- no swprintf
+                                    str_arg_l += oscl_default_swprintf(tmp + str_arg_l, NUMERIC_CONV_BUF_SIZE - str_arg_l, f, ulong_long_arg);
                                     break;
 #endif //snprintf_longlong_support
 

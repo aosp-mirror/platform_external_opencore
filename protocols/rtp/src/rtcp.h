@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -376,71 +376,6 @@ struct RTCP_APP
 };
 
 
-#if 0
-typedef uint8 RTCPReportBitMap;
-
-struct CompoundRTCPInfo
-{
-    RTCP_RR infoRR;
-    RTCP_SR infoSR;
-    RTCP_SDES infoSDES;
-    RTCP_APP  infoAPP;
-    RTCP_BYE  infoBYE;
-    uint8      num_additional_packets;
-
-    // This will indicate either the reports to encode
-    // or the decoded reports found
-    RTCPReportBitMap reportBitMap;
-
-    CompoundRTCPInfo()
-    {
-        oscl_memset(this, 0, sizeof(CompoundRTCPInfo));
-        //infoRR = infoSR = infoSDES = infoAPP = infoBYE = NULL;
-    };
-
-    ~CompoundRTCPInfo() {};
-
-    int32 getHighestSN() const
-    {
-        return infoRR.highestSequenceNumberReceived;
-    };
-
-    int32 getCumulativePacketsLost() const
-    {
-        return infoRR.cumulativeNumberOfPacketsLost;
-    };
-
-    int32 getHighestControlMediaSN() const
-    {
-        return infoAPP.known_app_data.common.highestCtrlMediaSeqNum;
-    };
-
-    // the following includes bytes recvd on all tracks
-    int32 getTotalCumulativeBytesRcvd() const
-    {
-        return infoAPP.known_app_data.common.cumulativeBytes;
-    }
-
-    // the following includes packets recvd on all tracks
-    int32 getTotalCumulativePacketsRcvd() const
-    {
-        return infoAPP.known_app_data.extraDRC.cumulativePacketsReceived;
-    }
-
-    int32 getTotalCumulativePacketsLost() const
-    {
-        return infoAPP.known_app_data.extraDRC.cumulativePacketsLost;
-    }
-
-    uint32 getSendTime() const
-    {
-        uint32 tmp = infoRR.lastSR;
-        tmp += infoRR.delaySinceLastSR;
-        return tmp;
-    }
-};
-
-#endif
 
 /*
 ** Classes

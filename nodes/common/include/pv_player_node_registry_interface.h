@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,15 +46,11 @@
 #include "pv_uuid.h"
 #endif
 
-#ifdef HAS_OSCL_LIB_SUPPORT
 #ifndef PVMF_RECOGNIZER_PLUGIN_H_INCLUDED
 #include "pvmf_recognizer_plugin.h"
 #endif
-#endif
 
-// FORWARD DECLARATION
 class OsclSharedLibrary;
-
 
 // CLASS DECLARATION
 /**
@@ -68,11 +64,8 @@ class PVPlayerNodeInfo
          **/
         PVPlayerNodeInfo()
         {
-#ifdef HAS_OSCL_LIB_SUPPORT
-            iSharedLibrary = NULL;
             iNodeCreateFunc = NULL;
             iNodeReleaseFunc = NULL;
-#endif
         }
 
         /**
@@ -85,7 +78,6 @@ class PVPlayerNodeInfo
             iNodeReleaseFunc = aInfo.iNodeReleaseFunc;
             iInputTypes = aInfo.iInputTypes;
             iOutputType = aInfo.iOutputType;
-            iSharedLibrary = aInfo.iSharedLibrary;
         }
 
         /**
@@ -100,7 +92,6 @@ class PVPlayerNodeInfo
         bool (*iNodeReleaseFunc)(PVMFNodeInterface *);
         Oscl_Vector<PVMFFormatType, OsclMemAllocator> iInputTypes;
         Oscl_Vector<PVMFFormatType, OsclMemAllocator> iOutputType;
-        OsclSharedLibrary* iSharedLibrary;
 };
 
 
@@ -149,7 +140,6 @@ class PVPlayerNodeRegistryInterface
          **/
         virtual void RegisterNode(const PVPlayerNodeInfo& aNodeInfo) = 0;
 
-#ifdef HAS_OSCL_LIB_SUPPORT
         /**
          * The UnregisterNode for PVPlayerNodeRegistry. Used for unregistering nodes through the NodeInfo object.
          *
@@ -157,10 +147,8 @@ class PVPlayerNodeRegistryInterface
          *
          **/
         virtual void UnregisterNode(const PVPlayerNodeInfo& aNodeInfo) = 0;
-#endif
 };
 
-#ifdef HAS_OSCL_LIB_SUPPORT
 class PVPlayerRecognizerRegistryInterface
 {
     public:
@@ -181,7 +169,60 @@ class PVPlayerRecognizerRegistryInterface
         virtual void UnregisterRecognizer(PVMFRecognizerPluginFactory* aRecognizerPluginFactory) = 0;
 
 };
-#endif
+
+/*
+** NodeRegistryPopulatorInterface is an abstract interface that is used to register and
+** unregister nodes in a registry.  A registry uses this interface to allow registry populators
+** to add and remove objects in the registry.
+*/
+#define PV_NODE_REGISTRY_POPULATOR_INTERFACE OsclUuid(0x1d4769f0,0xca0c,0x11dc,0x95,0xff,0x08,0x00,0x20,0x0c,0x9a,0x66)
+
+class NodeRegistryPopulatorInterface
+{
+    public:
+        /*
+        ** RegisterAllNodes will register one or more nodes in the registry
+        ** @param aRegistry: the registry
+        ** @param aContext (out): a returned context value.  The registry must
+        **    include this value in the UnregisterAllNodes call.
+        */
+        virtual void RegisterAllNodes(PVPlayerNodeRegistryInterface* aRegistry, OsclAny*& aContext) = 0;
+
+        /*
+        ** UnregisterAllNodes will unregister one or more nodes in the registry
+        ** @param aRegistry: the registry
+        ** @param aContext (in): the context value that was returned in the RegisterAllNodes
+        **    call.
+        */
+        virtual void UnregisterAllNodes(PVPlayerNodeRegistryInterface* aRegistry, OsclAny* aContext) = 0;
+};
+
+/*
+** RecognizerPopulatorInterface is an abstract interface that is used to register and
+** unregister recognizers in a registry.  A registry uses this interface to allow registry populators
+** to add and remove objects in the registry.
+*/
+#define PV_RECOGNIZER_POPULATOR_INTERFACE OsclUuid(0x6d3413a0,0xca0c,0x11dc,0x95,0xff,0x08,0x00,0x20,0x0c,0x9a,0x66)
+
+class RecognizerPopulatorInterface
+{
+    public:
+        /*
+        ** RegisterAllRecognizers will register one or more recognizers in the registry
+        ** @param aRegistry: the registry
+        ** @param aContext (out): a returned context value.  The registry must
+        **    include this value in the UnregisterAllRecognizers call.
+        */
+        virtual void RegisterAllRecognizers(PVPlayerRecognizerRegistryInterface* aRegistry, OsclAny*& aContext) = 0;
+
+        /*
+        ** UnregisterAllNodes will unregister one or more recognizers in the registry
+        ** @param aRegistry: the registry
+        ** @param aContext (in): the context value that was returned in the RegisterAllRecognizers
+        **    call.
+        */
+        virtual void UnregisterAllRecognizers(PVPlayerRecognizerRegistryInterface* aRegistry, OsclAny* aContext) = 0;
+};
 
 #endif // PV_PLAYER_NODE_REGISTRY_INTERFACE_H_INCLUDED
 

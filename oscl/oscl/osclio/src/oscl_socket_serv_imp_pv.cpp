@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,6 +56,7 @@
 #endif//PV_OSCL_SOCKET_STATS_LOGGING
 
 
+#if PV_SOCKET_SERVER_SELECT_LOOPBACK_SOCKET
 //
 //OsclSocketServI::LoopbackSocket
 //
@@ -124,7 +125,7 @@ void OsclSocketServI::LoopbackSocket::Init(OsclSocketServI* aContainer)
 
     //let's test a send & recv here just to be extra sure
     //the loopsock is usable.
-    char tmpBuf[2] = {0, 0};
+    const char tmpBuf[2] = {0, 0};
     int nbytes;
     bool wouldblock;
     wouldblock = false;
@@ -228,7 +229,7 @@ void OsclSocketServI::LoopbackSocket::Read()
     }
 }
 
-void OsclSocketServI::LoopbackSocket::ProcessSelect(bool aSelect, TOsclSocket& maxsocket)
+void OsclSocketServI::LoopbackSocket::ProcessSelect(TOsclSocket& maxsocket)
 //Do the necessary select loop processing to keep
 //the loopback socket going.
 {
@@ -236,7 +237,7 @@ void OsclSocketServI::LoopbackSocket::ProcessSelect(bool aSelect, TOsclSocket& m
         return;
 
     //Monitor this socket whenever we will be doing a select.
-    if (aSelect)
+    if (maxsocket)
     {
         FD_SET(iSocket, &iContainer->iReadset);
         if (iSocket > maxsocket)
@@ -255,11 +256,225 @@ void OsclSocketServI::LoopbackSocket::Write()
     bool wouldblock, ok;
     OsclSendTo(iSocket, tmpBuf, 1, iAddr, ok, err, nbytes, wouldblock);
 
-    if (!ok)
-    {//the select call will hang forever, so just go ahead and panic now.
-        OsclError::Panic("OSCLSOCK", 1);
-    }
+    //if send failed, the select call will hang forever, so just go ahead and abort now.
+    OSCL_ASSERT(ok);
 }
+#endif //#if PV_SOCKET_SERVER_SELECT_LOOPBACK_SOCKET
+
+// Socket server stats for winmobile perf investigation.
+#if (PV_SOCKET_SERVI_STATS)
+
+//breakdown of time in the Session
+enum TServiSessionStats
+{
+    EServiSession_All
+    , EServiSession_Last
+};
+
+//breakdown of time in the Run() call
+enum TServiRunStats
+{
+    EServiRun_Proc = EServiSession_Last
+    , EServiRun_Select
+    , EServiRun_Reschedule
+    , EServiRun_Last
+};
+//breakdown of time in the ProcessSocketRequests call
+enum TServiProcStats
+{
+    EServiProc_Queue = EServiRun_Last
+    , EServiProc_Loop
+    , EServiProc_Fdset
+    , EServiProc_Last
+};
+//breakdown of time in the ProcessXXX calls in ProcessSocketRequests
+enum TServiProcLoopStats
+{
+    EServiProcLoop_Cancel = EServiProc_Last
+    , EServiProcLoop_Closed
+    , EServiProcLoop_Connect
+    , EServiProcLoop_Accept
+    , EServiProcLoop_Shutdown
+    , EServiProcLoop_Recv
+    , EServiProcLoop_Send
+    , EServiProcLoop_RecvFrom
+    , EServiProcLoop_SendTo
+    , EServiProcLoop_Last
+};
+static const char* const TServiStr[] =
+{
+    "EServiSession_All"
+    , "EServiRun_Proc"
+    , "EServiRun_Select"
+    , "EServiRun_Reschedule"
+    , "EServiProc_Queue"
+    , "EServiProc_Loop"
+    , "EServiProc_Fdset"
+    , "EServiProcLoop_Cancel"
+    , "EServiProcLoop_Closed"
+    , "EServiProcLoop_Connect"
+    , "EServiProcLoop_Accept"
+    , "EServiProcLoop_Shutdown"
+    , "EServiProcLoop_Recv"
+    , "EServiProcLoop_Send"
+    , "EServiProcLoop_RecvFrom"
+    , "EServiProcLoop_SendTo"
+};
+
+
+#define PV_SERVI_STATS_SIZE (EServiProcLoop_Last)
+#include "oscl_int64_utils.h"
+
+class PVServiStats
+{
+    public:
+        //use oscl tick count
+        typedef uint32 TPVTick;
+        const char* Tickstr()
+        {
+            return "Ticks";
+        }
+        void settick(TPVTick &tick)
+        {
+            tick = OsclTickCount::TickCount();
+        }
+        int64 tickint(TPVTick& tick)
+        {
+            return tick;
+        }
+
+        PVServiStats(): iCount(0), iRunningTotal(0)
+        {}
+        ~PVServiStats()
+        {}
+
+        uint32 iCount;
+        int64 iRunningTotal;
+
+        TPVTick _start;
+
+        //start an interval
+        void Start()
+        {
+            settick(_start);
+        }
+
+        //end an interval
+        void End()
+        {
+            TPVTick now;
+            settick(now);
+            int32 delta = tickint(now) - tickint(_start);
+            //winmobile clock sometimes goes backward so treat any negative delta as zero.
+            if (delta > 0)
+                iRunningTotal += delta;
+            iCount++;
+        }
+        //end a long interval
+        void LongEnd()
+        {
+            TPVTick now;
+            settick(now);
+            int64 delta = tickint(now) - tickint(_start);
+            //winmobile clock sometimes goes backward so treat any negative delta as zero.
+            if (delta > 0)
+                iRunningTotal += delta;
+            iCount++;
+        }
+
+        static PVServiStats* Create()
+        {
+            _OsclBasicAllocator alloc;
+            OsclAny* ptr = alloc.allocate(PV_SERVI_STATS_SIZE * sizeof(PVServiStats));
+            PVServiStats* ptr2 = (PVServiStats*)ptr;
+            for (uint32 i = 0;i < PV_SERVI_STATS_SIZE;i++)
+            {
+                new(ptr2++) PVServiStats();
+            }
+            return (PVServiStats*)ptr;
+        }
+
+        static void Destroy(PVServiStats* aStats)
+        {
+            if (aStats)
+            {
+                _OsclBasicAllocator alloc;
+                //don't bother with destructor since it's empty.
+                alloc.deallocate(aStats);
+            }
+        }
+
+        void ShowStats(PVLogger* logger, int32 aIndex, PVServiStats& aInterval)
+        {
+            if (!iCount)
+                return;//don't print any that didn't run
+            if (aInterval.iRunningTotal == (int64)0)
+                return;//to avoid div by zero
+
+            float percent = 100.0 * iRunningTotal / aInterval.iRunningTotal;
+            int32 fraction = (int32)percent;
+            float decimal = percent - fraction;
+            decimal *= 100.0;
+
+            //print results
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF, logger, PVLOGMSG_INFO
+                            , (0, "  TIME PERCENT %d.%02d, Interval '%s', Count %d, TotalTicks Hi,Lo (0x%x,0x%08x)"
+                               , (int32)percent, (int32)decimal
+                               , TServiStr[aIndex]
+                               , iCount
+                               , Oscl_Int64_Utils::get_int64_upper32(iRunningTotal)
+                               , Oscl_Int64_Utils::get_int64_lower32(iRunningTotal)
+                              ));
+        }
+
+        static void ShowSummaryStats(PVServiStats* aArray)
+        {
+            //lump this logging with Oscl scheduler perf logging.
+            uint32 index = 0;
+            PVLogger* logger = PVLogger::GetLoggerObject("OsclSchedulerPerfStats");
+
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF, logger, PVLOGMSG_INFO, (0, "Session Breakdown:"));
+            while (index < EServiSession_Last)
+            {
+                aArray[index].ShowStats(logger, index, aArray[EServiSession_All]);
+                index++;
+            }
+
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF, logger, PVLOGMSG_INFO, (0, "Run Breakdown:"));
+            while (index < EServiRun_Last)
+            {
+                aArray[index].ShowStats(logger, index, aArray[EServiSession_All]);
+                index++;
+            }
+
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF, logger, PVLOGMSG_INFO, (0, "ProcessRequests Breakdown:"));
+            while (index < EServiProc_Last)
+            {
+                aArray[index].ShowStats(logger, index, aArray[EServiSession_All]);
+                index++;
+            }
+
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF, logger, PVLOGMSG_INFO, (0, "ProcessRequests Loop Breakdown:"));
+            while (index < EServiProcLoop_Last)
+            {
+                aArray[index].ShowStats(logger, index, aArray[EServiSession_All]);
+                index++;
+            }
+        }
+};
+#define START_SERVI_STATS(x) iServiStats[x].Start()
+#define END_SERVI_STATS(x) iServiStats[x].End()
+#define LONG_END_SERVI_STATS(x) iServiStats[x].LongEnd()
+//2nd level of detail-- switched off for now.
+#define START_SERVI_STATS2(x) iServiStats[x].Start()
+#define END_SERVI_STATS2(x) iServiStats[x].End()
+#else
+#define START_SERVI_STATS(x)
+#define END_SERVI_STATS(x)
+#define LONG_END_SERVI_STATS(x)
+#define START_SERVI_STATS2(x)
+#define END_SERVI_STATS2(x)
+#endif //PV_SOCKET_SERVI_STATS
 
 //
 //OsclSocketServI-- PV implementation
@@ -306,6 +521,11 @@ void OsclSocketServI::ConstructL()
 int32 OsclSocketServI::Connect(uint32 aMessageSlots)
 {
     CONSTRUCT_STATS(this);
+
+#if (PV_SOCKET_SERVI_STATS)
+    iServiStats = PVServiStats::Create();
+    START_SERVI_STATS(EServiSession_All);
+#endif
 
     //Connect to Oscl socket server
 
@@ -355,7 +575,9 @@ void OsclSocketServI::Close(bool aCleanup)
         StopServImp();
     }
 
+#if PV_SOCKET_SERVER_SELECT_LOOPBACK_SOCKET
     iLoopbackSocket.Cleanup();
+#endif
 
 #ifdef OsclSocketCleanup
     //close the socket system
@@ -367,6 +589,16 @@ void OsclSocketServI::Close(bool aCleanup)
 #endif//OsclSocketCleanup
 
     DUMP_STATS;
+
+#if (PV_SOCKET_SERVI_STATS)
+    if (iServiStats)
+    {
+        LONG_END_SERVI_STATS(EServiSession_All);
+        PVServiStats::ShowSummaryStats(iServiStats);
+        PVServiStats::Destroy(iServiStats);
+        iServiStats = NULL;
+    }
+#endif
 }
 
 bool OsclSocketServI::IsServerThread()
@@ -380,33 +612,46 @@ bool OsclSocketServI::IsServerThread()
 #endif
 }
 
-#ifdef OsclSocketSelect
 /**
  * Process all active socket requests.
  *
  * This is called under the server thread or server AO.
  *
- * @param aSelect(output): True if we need to do another Select call.
- * @param aNfds(output): Value = 1 + maximum socket handle for all sockets
+ * @param aNhandles(input/output): nHandles returned by last Select call.
+ * @param aNfds(output): Value = 1+maximum socket handle for all sockets
  *    that we are monitoring with the select call.
  */
-void OsclSocketServI::ProcessSocketRequests(bool &aSelect, int &aNfds)
+#if PV_SOCKET_SERVER_SELECT
+void OsclSocketServI::ProcessSocketRequests(int& aNhandles, int &aNfds)
+#else
+void OsclSocketServI::ProcessSocketRequests()
+#endif
 {
     //process all active requests
 
-    aSelect = false;
+#if PV_SOCKET_SERVER_SELECT
+    //keep track of max socket handle to monitor.
     TOsclSocket maxsocket = 0;
     aNfds = (int)maxsocket + 1;
 
+    //save input handle count, then clear it until the next select operation.
+    int nhandles = aNhandles;
+    aNhandles = 0;
+#endif
+
     // Pick up new requests from the app thread.
+    START_SERVI_STATS2(EServiProc_Queue);
     iSockServRequestList.Lock();
     {
         iSockServRequestList.GetNewRequests();
 
+#if PV_SOCKET_SERVER_SELECT_LOOPBACK_SOCKET
         //flush any data on the loopback socket.
         iLoopbackSocket.Read();
+#endif
     }
     iSockServRequestList.Unlock();
+    END_SERVI_STATS2(EServiProc_Queue);
 
     if (iSockServRequestList.iActiveRequests.empty())
     {
@@ -415,6 +660,7 @@ void OsclSocketServI::ProcessSocketRequests(bool &aSelect, int &aNfds)
     }
 
     //Make a pass through the open request list and cancel or process each request.
+    START_SERVI_STATS2(EServiProc_Loop);
     uint32 i;
     for (i = 0;i < iSockServRequestList.iActiveRequests.size();i++)
     {
@@ -423,50 +669,74 @@ void OsclSocketServI::ProcessSocketRequests(bool &aSelect, int &aNfds)
         if (elem->iCancel)
         {
             //Request was canceled
+            START_SERVI_STATS2(EServiProcLoop_Cancel);
             elem->iSocketRequest->Complete(elem, OSCL_REQUEST_ERR_CANCEL);
+            END_SERVI_STATS2(EServiProcLoop_Cancel);
         }
         else if (!IsServConnected())
         {
             //Server died or was closed.
+            START_SERVI_STATS2(EServiProcLoop_Closed);
             elem->iSocketRequest->Complete(elem, OSCL_REQUEST_ERR_GENERAL
                                            , (iServError) ? iServError : PVSOCK_ERR_SERV_NOT_CONNECTED);
+            END_SERVI_STATS2(EServiProcLoop_Closed);
         }
+#if PV_SOCKET_SERVER_SELECT
+        else if (nhandles == 0 && elem->iSelect)
+        {
+            //we're monitoring this socket but there is no current
+            //socket activity-- just keep waiting.
+            ;
+        }
+#endif
         else
         {
             //These routines will start the request, or else process
             //the results of prior select call, and also set the select
             //flags for the next call.
 
-            elem->iSelect = 0;
-
             switch (elem->iSocketRequest->Fxn())
             {
                 case EPVSocketShutdown:
+                    START_SERVI_STATS2(EServiProcLoop_Shutdown);
                     elem->iSocketRequest->iSocketI->ProcessShutdown(elem);
+                    END_SERVI_STATS2(EServiProcLoop_Shutdown);
                     break;
 
                 case EPVSocketConnect:
+                    START_SERVI_STATS2(EServiProcLoop_Connect);
                     elem->iSocketRequest->iSocketI->ProcessConnect(elem);
+                    END_SERVI_STATS2(EServiProcLoop_Connect);
                     break;
 
                 case EPVSocketAccept:
+                    START_SERVI_STATS2(EServiProcLoop_Accept);
                     elem->iSocketRequest->iSocketI->ProcessAccept(elem);
+                    END_SERVI_STATS2(EServiProcLoop_Accept);
                     break;
 
                 case EPVSocketSend:
+                    START_SERVI_STATS2(EServiProcLoop_Send);
                     elem->iSocketRequest->iSocketI->ProcessSend(elem);
+                    END_SERVI_STATS2(EServiProcLoop_Send);
                     break;
 
                 case EPVSocketSendTo:
+                    START_SERVI_STATS2(EServiProcLoop_SendTo);
                     elem->iSocketRequest->iSocketI->ProcessSendTo(elem);
+                    END_SERVI_STATS2(EServiProcLoop_SendTo);
                     break;
 
                 case EPVSocketRecv:
+                    START_SERVI_STATS2(EServiProcLoop_Recv);
                     elem->iSocketRequest->iSocketI->ProcessRecv(elem);
+                    END_SERVI_STATS2(EServiProcLoop_Recv);
                     break;
 
                 case EPVSocketRecvFrom:
+                    START_SERVI_STATS2(EServiProcLoop_RecvFrom);
                     elem->iSocketRequest->iSocketI->ProcessRecvFrom(elem);
+                    END_SERVI_STATS2(EServiProcLoop_RecvFrom);
                     break;
 
                 default:
@@ -475,11 +745,15 @@ void OsclSocketServI::ProcessSocketRequests(bool &aSelect, int &aNfds)
             }
         }
     }
+    END_SERVI_STATS2(EServiProc_Loop);
 
     //Zero out any old select set
+    START_SERVI_STATS2(EServiProc_Fdset);
+#if PV_SOCKET_SERVER_SELECT
     FD_ZERO(&iReadset);
     FD_ZERO(&iWriteset);
     FD_ZERO(&iExceptset);
+#endif
     LOGSERV((0, "OsclSocketServI::ProcessSocketRequests Clearing select set"));
 
     //Now make a pass to either delete the request or collate the select flags.
@@ -492,12 +766,10 @@ void OsclSocketServI::ProcessSocketRequests(bool &aSelect, int &aNfds)
             //request is still active
             i++;
 
+#if PV_SOCKET_SERVER_SELECT
             if (elem->iSelect > 0)
             {
                 //Need to do a select call for this socket
-
-                if (!aSelect)
-                    aSelect = true;
 
                 TOsclSocket osock = elem->iSocketRequest->iSocketI->Socket();
 
@@ -531,6 +803,7 @@ void OsclSocketServI::ProcessSocketRequests(bool &aSelect, int &aNfds)
                     LOGSERV((0, "OsclSocketServI::ProcessSocketRequests Setting Exceptset for %d", osock));
                 }
             }
+#endif
         }
         else
         {
@@ -538,17 +811,24 @@ void OsclSocketServI::ProcessSocketRequests(bool &aSelect, int &aNfds)
             iSockServRequestList.iActiveRequests.erase(elem);
         }
     }
+    END_SERVI_STATS2(EServiProc_Fdset);
 
-    //also monitor the loopback socket if we're going to call select.
-    iLoopbackSocket.ProcessSelect(aSelect, maxsocket);
-
-    if (aSelect)
+#if PV_SOCKET_SERVER_SELECT
+    if (maxsocket)
     {
-        aNfds = (int)(maxsocket + 1);
+#if PV_SOCKET_SERVER_SELECT_LOOPBACK_SOCKET
+        //also monitor the loopback socket if we're going to call select.
+        iLoopbackSocket.ProcessSelect(maxsocket);
+#endif
+
+        //set Nfds to 1+maxsocket handle.
+        aNfds = (int)maxsocket + 1;
     }
-    LOGSERV((0, "OsclSocketServI::ProcessSocketRequests Select %d, NFDS %d", aSelect, aNfds));
+
+    LOGSERV((0, "OsclSocketServI::ProcessSocketRequests NFDS %d", aNfds));
+#endif
+
 }
-#endif //OsclSocketSelect
 
 void OsclSocketServI::ServerEntry()
 //Server entry processing
@@ -560,7 +840,7 @@ void OsclSocketServI::ServerEntry()
 
     iSockServRequestList.Open(this);
 
-#ifdef OsclSocketSelect
+#if PV_SOCKET_SERVER_SELECT
     FD_ZERO(&iReadset);
     FD_ZERO(&iWriteset);
     FD_ZERO(&iExceptset);
@@ -576,21 +856,25 @@ void OsclSocketServI::ServerExit()
         iServState = OsclSocketServI::ESocketServ_Idle;
     }
 
-#ifdef OsclSocketSelect
     //Go through the active requests one last time.
     //All the requests will complete with errors
     //since the server is no longer connected.
-    bool doSelect;
+#if PV_SOCKET_SERVER_SELECT
     int nfds;
-    ProcessSocketRequests(doSelect, nfds);
+    int nhandles = 0;
+    ProcessSocketRequests(nhandles, nfds);
+#else
+    ProcessSocketRequests();
+#endif
 
     iSockServRequestList.Close();
 
     //make sure sets are clear so resources get cleaned up.
+#if PV_SOCKET_SERVER_SELECT
     FD_ZERO(&iReadset);
     FD_ZERO(&iWriteset);
     FD_ZERO(&iExceptset);
-#endif//OsclSocketSelect
+#endif
 }
 
 void OsclSocketServI::ConstructServImp()
@@ -620,7 +904,9 @@ int32 OsclSocketServI::StartServImp()
 #if(PV_SOCKET_SERVER_IS_THREAD)
 
     //setup the loopback socket and/or polling interval.
+#if PV_SOCKET_SERVER_SELECT_LOOPBACK_SOCKET
     iLoopbackSocket.iEnable = false;
+#endif
     iSelectPollIntervalMsec = 0;
 
     //check the select timeout in the configuration.
@@ -629,11 +915,15 @@ int32 OsclSocketServI::StartServImp()
     {
         //non-polling option selected.
         //create the select cancel pipe.
+#if PV_SOCKET_SERVER_SELECT_LOOPBACK_SOCKET
         iLoopbackSocket.Init(this);
 
         //if loopback socket isn't available, we must poll.
         if (!iLoopbackSocket.iEnable)
+#endif
+        {
             iSelectPollIntervalMsec = 10;
+        }
     }
     else
     {
@@ -664,12 +954,18 @@ int32 OsclSocketServI::StartServImp()
 
     //Socket server AO startup.
 
+#if PV_SOCKET_SERVER_SELECT_LOOPBACK_SOCKET
     iLoopbackSocket.iEnable = false;
+#endif
 
     ServerEntry();
 
     if (!IsAdded())
     {
+#if PV_SOCKET_SERVER_SELECT
+        iNhandles = 0;
+        iNfds = 0;
+#endif
         AddToScheduler();
     }
     return OsclErrNone;
@@ -723,13 +1019,6 @@ void OsclSocketServI::InThread()
 
     ServerEntry();
 
-#ifndef OsclSocketSelect
-    //no implementation!
-    iServState = OsclSocketServI::ESocketServ_Error;
-    iStart.Signal();
-    return;
-#else
-
     //Let server know thread is started and ready to
     //process requests.
     iStart.Signal();
@@ -737,17 +1026,17 @@ void OsclSocketServI::InThread()
     //create select timeout structure
     timeval timeout;
 
-    bool doSelect, ok;
+    bool ok;
     int nfds;
     int nhandles = 0;
 
     while (!iClose)
     {
-        //process active requests.
-        ProcessSocketRequests(doSelect, nfds);
+        //process new requests and new socket activity on existing requests.
+        ProcessSocketRequests(nhandles, nfds);
 
         //Make the select call if needed.
-        if (doSelect)
+        if (nfds > 1)
         {
             //Set the fixed timeout.  The select call may update this value
             //so it needs to be set on each call.
@@ -793,8 +1082,6 @@ void OsclSocketServI::InThread()
     }//select loop
 
     ServerExit();
-
-#endif //OsclSocketSelect
 
     //signal close complete to caller...
     if (iClose)
@@ -861,7 +1148,6 @@ static TOsclThreadFuncRet OSCL_THREAD_DECL sockthreadmain2(TOsclThreadFuncArg ar
     //create logger appenders.
     PVLoggerAppender* appender;
 
-#if 1
 //File logger
     //find an unused filename so we don't over-write any prior logs
     Oscl_FileServer fs;
@@ -887,12 +1173,6 @@ static TOsclThreadFuncRet OSCL_THREAD_DECL sockthreadmain2(TOsclThreadFuncArg ar
     appender = TextFileAppender<TimeAndIdLayout, 1024>::CreateAppender((OSCL_TCHAR*)filename.get_cstr());
     OsclRefCounterSA<LogAppenderDestructDealloc<TextFileAppender<TimeAndIdLayout, 1024> > > *appenderRefCounter =
         new OsclRefCounterSA<LogAppenderDestructDealloc<TextFileAppender<TimeAndIdLayout, 1024> > >(appender);
-#else
-//stderr logger.
-    appender = new StdErrAppender<TimeAndIdLayout, 1024>();
-    OsclRefCounterSA<LogAppenderDestructDealloc<StdErrAppender<TimeAndIdLayout, 1024> > > *appenderRefCounter =
-        new OsclRefCounterSA<LogAppenderDestructDealloc<StdErrAppender<TimeAndIdLayout, 1024> > >(appender);
-#endif
     //Set logging options.
     OsclSharedPtr<PVLoggerAppender> appenderPtr(appender, appenderRefCounter);
     PVLogger *rootnode = PVLogger::GetLoggerObject("");
@@ -909,78 +1189,108 @@ static TOsclThreadFuncRet OSCL_THREAD_DECL sockthreadmain2(TOsclThreadFuncArg ar
 #else//PV_SOCKET_SERVER_IS_THREAD
 //Non-threaded section
 
-
 void OsclSocketServI::Run()
 //Socket server AO
 {
-    int nhandles = 0;
-    bool doSelect = false;;
+#if !PV_SOCKET_SERVER_SELECT
+    //non-select-loop implementation.
 
-#ifdef OsclSocketSelect
-    int nfds;
+    //Process active requests.
+    START_SERVI_STATS(EServiRun_Proc);
+    ProcessSocketRequests();
+    END_SERVI_STATS(EServiRun_Proc);
 
-    //process active requests.
-    ProcessSocketRequests(doSelect, nfds);
-
-    //Make the select call if needed.
-    if (doSelect)
+    //Re-schedule
+    START_SERVI_STATS(EServiRun_Reschedule);
+    if (!iSockServRequestList.iActiveRequests.empty())
     {
-        // Reset the flag
-        doSelect = false;
+        // Re-schedule after a delay for continued monitoring
+        // of active requests.
+        // Note: new requests will interrupt this polling interval
+        // and schedule ASAP.
+        ADD_STATS(EOsclSocketServ_SelectReschedulePoll);
+        RunIfNotReady(1000*PV_SOCKET_SERVER_AO_INTERVAL_MSEC);
+    }
+    END_SERVI_STATS(EServiRun_Reschedule);
 
-        //use a delay of zero since we're essentially polling for socket activity.
-        timeval timeout;
-        timeout.tv_sec = 0;
-        timeout.tv_usec = 0;
-        bool ok;
-        OsclSocketSelect(nfds, iReadset, iWriteset, iExceptset, timeout, ok, iServError, nhandles);
-        if (!ok)
-        {
-            //a select error is fatal.
-            StopServImp();//stop the AO
-            iServState = OsclSocketServI::ESocketServ_Error;
-            return;
-        }
+#else
+    //select loop implementation.
 
-        if (nhandles)
-        {
-            ADD_STATS(EOsclSocketServ_SelectActivity);
-        }
-        else
-        {
-            ADD_STATS(EOsclSocketServ_SelectNoActivity);
-        }
+    //loop 2x so we can complete some requests in one call.
+    for (uint32 i = 0;i < 2;i++)
+    {
+        //Process active requests.
+        START_SERVI_STATS(EServiRun_Proc);
+        ProcessSocketRequests(iNhandles, iNfds);
+        END_SERVI_STATS(EServiRun_Proc);
 
-        if (nhandles > 0)
+        //Make the select call if needed.
+        if (iNfds > 1)
         {
-            // Select() call reported a request was completed so complete the socket request
-            ProcessSocketRequests(doSelect, nfds);
+            START_SERVI_STATS(EServiRun_Select);
+            //use a delay of zero since we're essentially polling for socket activity.
+            //note the select call may update this value so it must be set prior to each call.
+            timeval timeout;
+            timeout.tv_sec = 0;
+            timeout.tv_usec = 0;
+            bool ok;
+            OsclSocketSelect(iNfds, iReadset, iWriteset, iExceptset, timeout, ok, iServError, iNhandles);
+            END_SERVI_STATS(EServiRun_Select);
+            if (!ok)
+            {
+                //a select error is fatal.
+                StopServImp();//stop the AO
+                iServState = OsclSocketServI::ESocketServ_Error;
+                return;
+            }
+
+            if (iNhandles)
+            {
+                ADD_STATS(EOsclSocketServ_SelectActivity);
+            }
+            else
+            {
+                ADD_STATS(EOsclSocketServ_SelectNoActivity);
+            }
         }
     }
 
-#else
-    OsclError::Panic("OSCLSOCK", 1);//no implementation.
-#endif //OsclSocketSelect
-
-    // Re-schedule as long as there are requests and waiting for
-    // select() to report a request is complete
+    //Re-schedule
+    START_SERVI_STATS(EServiRun_Reschedule);
     if (!iSockServRequestList.iActiveRequests.empty())
     {
-        if (doSelect)
+        if (iNhandles)
         {
-            // Requests were processed and there are still requests waiting
-            // for select() to report a request is complete so check again
-            // as possible as.
+            // Re-schedule ASAP when we have socket activity.
             ADD_STATS(EOsclSocketServ_SelectRescheduleAsap);
             RunIfNotReady();
         }
         else
         {
-            // The select() call did not report any completion so check again
-            // afte the specified interval
+            // Re-schedule after a delay for continued monitoring
+            // of active requests.
+            // Note: new requests will interrupt this polling interval
+            // and schedule ASAP.
             ADD_STATS(EOsclSocketServ_SelectReschedulePoll);
             RunIfNotReady(1000*PV_SOCKET_SERVER_AO_INTERVAL_MSEC);
         }
+    }
+    END_SERVI_STATS(EServiRun_Reschedule);
+
+#endif //PV_SOCKET_SERVER_SELECT
+}
+
+//re-schedule the AO when a new request comes in.
+void OsclSocketServI::WakeupAO()
+{
+    if (IsAdded())
+    {
+        // To avoid waiting for the polling period to expire,
+        // cancel and activate for immediate run
+        if (IsBusy())
+            Cancel();
+
+        RunIfNotReady();
     }
 }
 

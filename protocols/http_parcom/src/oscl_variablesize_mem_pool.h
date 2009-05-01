@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -316,6 +316,13 @@ class OsclMemPoolVariableChunkAllocator : public Oscl_DefAlloc
             return true;
         }
 
+        int32 PushMemChunkToChunkVector(OsclMemoryFragment* aMemChunk)
+        {
+            int32 leavecode = OsclErrNone;
+            OSCL_TRY(leavecode, iUsedMemChunkList.push_back(*aMemChunk));
+            return leavecode;
+        }
+
         OsclAny* doAllocate(const uint32 n)
         {
             OsclMemoryFragment memChunk;
@@ -331,8 +338,7 @@ class OsclMemPoolVariableChunkAllocator : public Oscl_DefAlloc
             }
 
             // insert the removed segment into the iUsedMemChunkList if there is
-            int32 err = 0;
-            OSCL_TRY(err, iUsedMemChunkList.push_back(*pMemChunk));
+            int32 err = PushMemChunkToChunkVector(pMemChunk);
             if (err)
             {
                 OSCL_LEAVE(OsclErrNoMemory);

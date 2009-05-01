@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -154,7 +154,7 @@ void pvDecoder_AmrWb_Init(void **spd_state, void *pt_st, int16 **ScratchMem)
     /* Decoder states */
     Decoder_State *st = &(((PV_AmrWbDec *)pt_st)->state);
 
-    *ScratchMem = (int16 *)(&(((PV_AmrWbDec *)pt_st)->ScratchMem));
+    *ScratchMem = ((PV_AmrWbDec *)pt_st)->ScratchMem;
     /*
      *  Init dtx decoding
      */

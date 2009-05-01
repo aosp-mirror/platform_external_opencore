@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
+#include "oscl_base.h"
+
 #ifndef TEST_PV_PLAYER_ENGINE_TESTSET5_H_INCLUDED
 #include "test_pv_player_engine_testset5.h"
 #endif
@@ -60,6 +62,10 @@
 #include "pvmf_cpmplugin_passthru_oma1_types.h"
 #endif
 
+#ifndef PVMF_DURATIONINFOMESSAGE_EXTENSION_H_INCLUDED
+#include "pvmf_durationinfomessage_extension.h"
+#endif
+
 #ifndef PVMF_ERRORINFOMESSAGE_EXTENSION_H_INCLUDED
 #include "pvmf_errorinfomessage_extension.h"
 #endif
@@ -96,6 +102,30 @@
 #include "pvmf_socket_node_events.h"
 #endif
 
+#ifndef PVMF_METADTA_INFOMESSAGE_H
+#include "pvmf_metadata_infomessage.h"
+#endif
+
+#if(RUN_CPMJANUS_TESTCASES)
+
+#ifndef PVMF_JANUS_TYPES_H_INCLUDED
+#include "pvmf_janus_types.h"
+#endif
+
+#if !(JANUS_IS_LOADABLE_MODULE)
+#ifndef PVMF_JANUS_PLUGIN_FACTORY_H_INCLUDED
+#include "pvmf_janus_plugin_factory.h"
+#endif
+#endif
+
+#ifndef PVMI_DRM_KVP_H_INCLUDED
+#include "pvmi_drm_kvp.h"
+#endif
+
+#ifndef TEST_PV_PLAYER_ENGINE_TESTSET_CPMJANUS_TYPES_H_INCLUDED
+#include "test_pv_player_engine_testset_cpmjanus_types.h"
+#endif
+#endif//RUN_CPMJANUS_TESTCASES
 
 
 //Default Fast-track download file
@@ -104,29 +134,32 @@
 //Default 3gpp download URL, in both single and wide-char versions.
 #if(RUN_MP4FILE_TESTCASES)
 #undef DEFAULT_3GPPDL_URL
-#define DEFAULT_3GPPDL_URL "http://test.mp4"
+#define DEFAULT_3GPPDL_URL "http://pvwmsoha.pv.com:7070/MediaDownloadContent/MP4/prog_dl/mpeg4+aac_metadata_qt.mp4"
+//#define DEFAULT_3GPPDL_URL "http://pvwmsoha.pv.com:7070/MediaDownloadContent/MP4/prog_dl/ec36-av-clon-100-10-h176x144p-uc-g7a24;16s-rvdqmt.mp4"
 #elif(RUN_ASFFILE_TESTCASES)
 #undef DEFAULT_3GPPDL_URL
-#define DEFAULT_3GPPDL_URL "http://test.wmv"
+#define DEFAULT_3GPPDL_URL "http://pvwmsoha.pv.com:7070/MediaDownloadContent/UserUploads/av5.wmv"
 #endif
 
 #if(RUN_ASFFILE_TESTCASES)
 //For slow download use this one
-#define DEFAULT_3GPPDL_URL_SLOW "http://test.wmv"
+#define DEFAULT_3GPPDL_URL_SLOW "http://reallinux.pv.com:1415/av5.wmv?bitrate=100000"
 #elif (RUN_MP4FILE_TESTCASES)
-#define DEFAULT_3GPPDL_URL_SLOW "http://test.3gp"
+#define DEFAULT_3GPPDL_URL_SLOW "http://reallinux.pv.com:1415/at_vh264qc128_1_amr_12.2_of.3gp?bitrate=100000"
 #endif
 
 //Default Bad URL for the error-case test
-#define DEFAULT_BADURL "http://test.wmv"
+#define DEFAULT_BADURL "http://reallinux.pv.com:1415/xxxxx_320x240_15fps_200kbps_wmv7.wmv"
 
-#define DEFAULT_TRUNCATED_TEST_URL "http://test.wmv"
+#define DEFAULT_TRUNCATED_TEST_URL "http://reallinux.pv.com:1415/av5.wmv?no_content_length=true"
 
-#define DEFAULT_CANCEL_DURING_INIT_TEST_URL "http://test.wmv"
+#define DEFAULT_CANCEL_DURING_INIT_TEST_URL "http://reallinux.pv.com:1415/av5.wmv?bitrate=1000"
 
-#define DEFAULT_CANCEL_DURING_INIT_DELAY_TEST_URL "http://test.mp4"
+#define DEFAULT_CANCEL_DURING_INIT_DELAY_TEST_URL "http://reallinux.pv.com:1415/blz4-110302-aac-h263.mp4?bitrate=1000000"
 
-#define DEFAULT_3GPP_PPB_URL "http://test.3gp"
+#define DEFAULT_3GPP_PPB_URL "http://wms.pv.com:7070/MediaDownloadContent/UserUploads/youtube_singer.3gp"
+
+#define DEFAULT_SHOUTCAST_URL "http://scfire-dtc-aa05.stream.aol.com/stream/1018"
 
 extern FILE* file;
 
@@ -190,7 +223,7 @@ void pvplayer_async_test_downloadbase::PrintMetadata()
             iSessionDuration = iMetadataValueList[i].value.uint32_value;
 
             // Check the timescale. If not available, assume millisecond (1000)
-            char *retTSstr;
+            const char *retTSstr;
             retTSstr = oscl_strstr(iMetadataValueList[i].key, "timescale=");
             uint32 retTSstrLen = 0;
             uint32 tsstrlen = oscl_strlen(_STRLIT_CHAR("timescale="));
@@ -268,9 +301,10 @@ void pvplayer_async_test_downloadbase::Run()
 
             //set user-agent, make sure to set as "PVPLAYER VersionNumber" to satisfy Fast Track PV server for Fast Track test
 
-            iKeyStringSetAsync = _STRLIT_CHAR("x-pvmf/net/user-agent;valtype=wchar*");
+            iKeyStringSetAsync = _STRLIT_CHAR("x-pvmf/net/user-agent;valtype=wchar*;mode=download");
             iKVPSetAsync.key = iKeyStringSetAsync.get_str();
 
+//			OSCL_wHeapString<OsclMemAllocator> userAgent(_STRLIT_WCHAR("PVPLAYER 18akljfaljfa"));
             OSCL_wHeapString<OsclMemAllocator> userAgent(_STRLIT_WCHAR("PVPLAYER 18.07.00.02"));
             iKVPSetAsync.value.pWChar_value = userAgent.get_str();
             iErrorKVP = NULL;
@@ -344,7 +378,12 @@ void pvplayer_async_test_downloadbase::Run()
             // set extension header
             // set arbitrary extension headers all together
             PvmiKvp kvpheader[3];
+            //OSCL_StackString<128> paramkey(_STRLIT_CHAR("x-pvmf/net/protocol-extension-header;valtype=char*;mode=download"));
             OSCL_StackString<128> paramkey(_STRLIT_CHAR("x-pvmf/net/protocol-extension-header;valtype=char*;mode=download;purge-on-redirect"));
+            //OSCL_StackString<128> paramkey(_STRLIT_CHAR("x-pvmf/net/protocol-extension-header;valtype=char*;purge-on-redirect"));
+            //OSCL_StackString<128> paramkey(_STRLIT_CHAR("x-pvmf/net/protocol-extension-header;valtype=char*"));
+            //OSCL_StackString<128> paramkey(_STRLIT_CHAR("x-pvmf/net/protocol-extension-header;valtype=char*;mode=streaming"));
+
 
             kvpheader[0].key = paramkey.get_str();
             OSCL_HeapString<OsclMemAllocator> protocolExtensionHeader1(_STRLIT_CHAR("key=X1;value=Y1;method=GET,HEAD"));
@@ -562,6 +601,7 @@ void pvplayer_async_test_downloadbase::Run()
                 PVPPlaybackPosition start, end;
                 start.iIndeterminate = false;
                 start.iPosUnit = PVPPBPOSUNIT_MILLISEC;
+                start.iMode = PVPPBPOS_MODE_NOW;
                 start.iPosValue.millisec_value = iSessionDuration / 4;
                 end.iIndeterminate = true;
                 OSCL_TRY(error, iCurrentCmdId = iPlayer->SetPlaybackRange(start, end, false, (OsclAny*) & iContextObject));
@@ -612,16 +652,6 @@ void pvplayer_async_test_downloadbase::Run()
         {
             OSCL_TRY(error, iCurrentCmdId = iPlayer->RemoveDataSource(*iDataSource, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
-        }
-        break;
-
-        case STATE_WAIT_FOR_ERROR_HANDLING:
-        {
-            // Timed out waiting for error handling to complete
-            PVPATB_TEST_IS_TRUE(false);
-            // Forcibly terminate the test
-            iState = STATE_CLEANUPANDCOMPLETE;
-            RunIfNotReady();
         }
         break;
 
@@ -723,12 +753,6 @@ void pvplayer_async_test_downloadbase::CommandCompleted(const PVCmdResponse& aRe
     }
 
 //#if(RUN_CPMJANUS_TESTCASES)
-#if 0
-    if (aResponse.GetCmdStatus() != PVMFSuccess)
-    {
-        PrintJanusError(aResponse);
-    }
-#endif
 
     switch (iState)
     {
@@ -757,8 +781,8 @@ void pvplayer_async_test_downloadbase::CommandCompleted(const PVCmdResponse& aRe
             {
                 // AddDataSource failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -815,8 +839,8 @@ void pvplayer_async_test_downloadbase::CommandCompleted(const PVCmdResponse& aRe
                 {
                     // Init failed
                     PVPATB_TEST_IS_TRUE(false);
-                    iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                    RunIfNotReady(5000000);
+                    iState = STATE_CLEANUPANDCOMPLETE;
+                    RunIfNotReady();
                 }
             }
             break;
@@ -831,8 +855,8 @@ void pvplayer_async_test_downloadbase::CommandCompleted(const PVCmdResponse& aRe
             {
                 // AddDataSink failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -846,8 +870,8 @@ void pvplayer_async_test_downloadbase::CommandCompleted(const PVCmdResponse& aRe
             {
                 // AddDataSink failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -861,8 +885,8 @@ void pvplayer_async_test_downloadbase::CommandCompleted(const PVCmdResponse& aRe
             {
                 // Prepare failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -876,8 +900,8 @@ void pvplayer_async_test_downloadbase::CommandCompleted(const PVCmdResponse& aRe
             {
                 // Prepare failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -897,8 +921,8 @@ void pvplayer_async_test_downloadbase::CommandCompleted(const PVCmdResponse& aRe
             {
                 // GetMetadataKeys failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -929,8 +953,8 @@ void pvplayer_async_test_downloadbase::CommandCompleted(const PVCmdResponse& aRe
             {
                 // GetMetadataValue failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -994,8 +1018,8 @@ void pvplayer_async_test_downloadbase::CommandCompleted(const PVCmdResponse& aRe
             {
                 // Start failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -1011,8 +1035,8 @@ void pvplayer_async_test_downloadbase::CommandCompleted(const PVCmdResponse& aRe
             {
                 // Start failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -1030,8 +1054,8 @@ void pvplayer_async_test_downloadbase::CommandCompleted(const PVCmdResponse& aRe
             {
                 // Pause failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -1056,8 +1080,8 @@ void pvplayer_async_test_downloadbase::CommandCompleted(const PVCmdResponse& aRe
             {
                 // Resume failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -1074,8 +1098,8 @@ void pvplayer_async_test_downloadbase::CommandCompleted(const PVCmdResponse& aRe
                 fprintf(iTestMsgOutputFile, "***Repositioning Failed...\n");
                 // Repos failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -1094,8 +1118,8 @@ void pvplayer_async_test_downloadbase::CommandCompleted(const PVCmdResponse& aRe
             else
             {
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -1108,8 +1132,8 @@ void pvplayer_async_test_downloadbase::CommandCompleted(const PVCmdResponse& aRe
             else
             {
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -1123,8 +1147,8 @@ void pvplayer_async_test_downloadbase::CommandCompleted(const PVCmdResponse& aRe
             {
                 // RemoveDataSink failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -1138,8 +1162,8 @@ void pvplayer_async_test_downloadbase::CommandCompleted(const PVCmdResponse& aRe
             {
                 // RemoveDataSink failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -1153,8 +1177,8 @@ void pvplayer_async_test_downloadbase::CommandCompleted(const PVCmdResponse& aRe
             {
                 // Reset failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -1316,7 +1340,38 @@ void pvplayer_async_test_downloadbase::HandleProtocolEngineNodeErrors(int32 aErr
 
 void pvplayer_async_test_downloadbase::PrintJanusError(const PVCmdResponse& aResp)
 {
+#if(RUN_CPMJANUS_TESTCASES)
+//#if 0
+    //Get the extended error info.
+    if (aResp.GetCmdStatus() != PVMFSuccess)
+    {
+        PVInterface* iface = (PVInterface*)(aResp.GetEventExtensionInterface());
+        if (iface)
+        {
+            PVUuid errUuid(PVMFErrorInfoMessageInterfaceUUID);
+            PVMFErrorInfoMessageInterface* errMsg = NULL;
+            if (iface->queryInterface(errUuid, (PVInterface*&)errMsg))
+            {
+                //search for a janus error in the error list.
+                PVUuid janusUuid(PVMFJanusPluginErrorMessageUuid);
+                PVMFJanusPluginErrorMessage* janusErr = NULL;
+                PVMFErrorInfoMessageInterface* nextErr = errMsg->GetNextMessage();
+                while (nextErr)
+                {
+                    if (nextErr->queryInterface(janusUuid, (PVInterface*&)janusErr))
+                    {
+                        uint32 drmErr = janusErr->DrmResult();
+                        fprintf(file, "  Janus DRM Error! 0x%x\n", drmErr);
+                        break;
+                    }
+                    nextErr = nextErr->GetNextMessage();
+                }
+            }
+        }
+    }
+#else
     OSCL_UNUSED_ARG(aResp);
+#endif
 }
 
 void pvplayer_async_test_downloadbase::HandleErrorEvent(const PVAsyncErrorEvent& aEvent)
@@ -1361,41 +1416,20 @@ void pvplayer_async_test_downloadbase::HandleErrorEvent(const PVAsyncErrorEvent&
 
     // Wait for engine to handle the error
     Cancel();
-    iState = STATE_WAIT_FOR_ERROR_HANDLING;
-    RunIfNotReady(5000000);
 }
 
 
 void pvplayer_async_test_downloadbase::HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent)
 {
-    // Wait for error handling to complete
-    if (iState == STATE_WAIT_FOR_ERROR_HANDLING && aEvent.GetEventType() == PVMFInfoErrorHandlingComplete)
+    if (aEvent.GetEventType() == PVMFInfoErrorHandlingStart)
     {
-        PVPlayerState pstate;
-        iPlayer->GetPVPlayerStateSync(pstate);
-        switch (pstate)
-        {
-            case PVP_STATE_INITIALIZED:
-                Cancel();
-                iState = STATE_REMOVEDATASINK_VIDEO;
-                RunIfNotReady();
-                break;
-
-            case PVP_STATE_IDLE:
-                Cancel();
-                iState = STATE_REMOVEDATASOURCE;
-                RunIfNotReady();
-                break;
-
-            default:
-                // Engine should not be in any other state when
-                // error handling completes
-                PVPATB_TEST_IS_TRUE(false);
-                Cancel();
-                iState = STATE_CLEANUPANDCOMPLETE;
-                RunIfNotReady();
-                break;
-        }
+        fprintf(file, "PVMFInfoErrorHandlingStart...\n");
+    }
+    if (aEvent.GetEventType() == PVMFInfoErrorHandlingComplete)
+    {
+        fprintf(file, "PVMFInfoErrorHandlingComplete...\n");
+        iState = STATE_CLEANUPANDCOMPLETE;
+        RunIfNotReady();
     }
 
     // Check for EOS event
@@ -1665,6 +1699,155 @@ void pvplayer_async_test_downloadbase::HandleInformationalEvent(const PVAsyncInf
     }
 }
 
+#if RUN_FASTTRACK_TESTCASES
+//
+// pvplayer_async_test_ftdlnormal section
+//
+pvplayer_async_test_ftdlnormal::~pvplayer_async_test_ftdlnormal()
+{
+}
+
+void pvplayer_async_test_ftdlnormal::CreateDataSource()
+{
+    //fasttrack download using PVX.
+
+    //read the pvx file into a memory fragment.
+    OsclMemoryFragment pvxmemfrag;
+    {
+        Oscl_FileServer fs;
+        fs.Connect();
+        Oscl_File file;
+        OSCL_StackString<64> filename;
+
+        if (oscl_strstr(iFileName, DEFAULTSOURCEFILENAME) != NULL)
+        {
+            filename = SOURCENAME_PREPEND_STRING;
+            filename += DEFAULT_FASTTRACK_DL_FILE;
+        }
+        else
+        {
+            filename = iFileName;
+        }
+
+        if (file.Open(filename.get_str(), Oscl_File::MODE_READ | Oscl_File::MODE_TEXT, fs))
+        {
+            PVPATB_TEST_IS_TRUE(false);
+            iObserver->TestCompleted(*iTestCase);
+            return;
+        }
+
+        int32 size = file.Read(iPVXFileBuf, 1, 4096);
+        pvxmemfrag.len = size;
+        pvxmemfrag.ptr = iPVXFileBuf;
+        file.Close();
+        fs.Close();
+    }
+
+    //Parse, extracting iDownloadPvxInfo and url8.
+    OSCL_HeapString<OsclMemAllocator> url8;
+    {
+        CPVXParser* parser = NULL;
+        parser = new CPVXParser;
+        if (parser == NULL)
+        {
+            PVPATB_TEST_IS_TRUE(false);
+            iObserver->TestCompleted(*iTestCase);
+            return;
+        }
+        CPVXParser::CPVXParserStatus status = parser->ParsePVX(pvxmemfrag, url8, iDownloadPvxInfo);
+        delete parser;
+        if (status != CPVXParser::CPVXParser_Success)
+        {
+            PVPATB_TEST_IS_TRUE(false);
+            iObserver->TestCompleted(*iTestCase);
+            return;
+        }
+        //set the playback mode in the test case base class to match
+        //the PVX setting.
+        switch (iDownloadPvxInfo.iPlaybackControl)
+        {
+            case CPVXInfo::ENoPlayback:
+                iDownloadOnly = true;
+                break;
+            case CPVXInfo::EAfterDownload:
+                iDownloadThenPlay = true;
+                break;
+            case CPVXInfo::EAsap:
+                break;
+            default:
+                break;
+        }
+    }
+
+    //convert the url8 to unicode iDownloadURL
+    {
+        oscl_wchar* wtemp = new oscl_wchar[url8.get_size()+1];
+        if (wtemp == NULL)
+        {
+            // Memory allocation failure
+            PVPATB_TEST_IS_TRUE(false);
+            iObserver->TestCompleted(*iTestCase);
+            return;
+        }
+        int32 wtemplen = oscl_UTF8ToUnicode(url8.get_cstr(), url8.get_size(), wtemp, url8.get_size() + 1);
+        iDownloadURL.set(wtemp, wtemplen);
+        delete [] wtemp;
+    }
+
+    //create the opaque data
+    iDownloadProxy = _STRLIT_CHAR("");
+    int32 iDownloadProxyPort = 0;
+
+    iDownloadConfigFilename = OUTPUTNAME_PREPEND_WSTRING;
+    iDownloadConfigFilename += _STRLIT_WCHAR("mydlconfig");
+
+    iDownloadMaxfilesize = 0x7FFFFFFF;
+
+    iDownloadFilename = OUTPUTNAME_PREPEND_WSTRING;
+    iDownloadFilename += _STRLIT_WCHAR("test_ftdownload.loc");
+
+    iContentTooLarge = false;
+
+    //bool aIsNewSession = false;
+    bool aIsNewSession = true;
+
+    iDownloadContextData = new PVMFSourceContextData();
+    iDownloadContextData->EnableCommonSourceContext();
+    iDownloadContextData->EnableDownloadPVXSourceContext();
+    iDownloadContextData->DownloadPVXData()->bIsNewSession = aIsNewSession;
+    iDownloadContextData->DownloadPVXData()->iConfigFileName = iDownloadConfigFilename;
+    iDownloadContextData->DownloadPVXData()->iDownloadFileName = iDownloadFilename;
+    iDownloadContextData->DownloadPVXData()->iMaxFileSize = iDownloadMaxfilesize;
+    iDownloadContextData->DownloadPVXData()->iProxyName = iDownloadProxy;
+    iDownloadContextData->DownloadPVXData()->iProxyPort = iDownloadProxyPort;
+    iDownloadContextData->DownloadPVXData()->iPvxInfo = &iDownloadPvxInfo;
+
+    iDataSource = new PVPlayerDataSourceURL;
+    iDataSource->SetDataSourceURL(iDownloadURL);
+    iDataSource->SetDataSourceFormatType(PVMF_MIME_DATA_SOURCE_PVX_FILE);
+    iDataSource->SetDataSourceContextData(iDownloadContextData);
+
+}
+void pvplayer_async_test_ftdlnormal::CreateDataSinkVideo()
+{
+    OSCL_wHeapString<OsclMemAllocator> sinkfile = OUTPUTNAME_PREPEND_WSTRING;
+    sinkfile += _STRLIT_WCHAR("test_player_ftdlnormal_video.dat");
+    iMIOFileOutVideo = iMioFactory->CreateVideoOutput((OsclAny*) & sinkfile, MEDIATYPE_VIDEO, iCompressedVideo);
+    iIONodeVideo = PVMediaOutputNodeFactory::CreateMediaOutputNode(iMIOFileOutVideo);
+    iDataSinkVideo = new PVPlayerDataSinkPVMFNode;
+    ((PVPlayerDataSinkPVMFNode*)iDataSinkVideo)->SetDataSinkNode(iIONodeVideo);
+}
+void pvplayer_async_test_ftdlnormal::CreateDataSinkAudio()
+{
+    OSCL_wHeapString<OsclMemAllocator> sinkfile = OUTPUTNAME_PREPEND_WSTRING;
+    sinkfile += _STRLIT_WCHAR("test_player_ftdlnormal_audio.dat");
+    iMIOFileOutAudio = iMioFactory->CreateAudioOutput((OsclAny*) & sinkfile, MEDIATYPE_AUDIO, iCompressedAudio);
+    iIONodeAudio = PVMediaOutputNodeFactory::CreateMediaOutputNode(iMIOFileOutAudio);
+    iDataSinkAudio = new PVPlayerDataSinkPVMFNode;
+    ((PVPlayerDataSinkPVMFNode*)iDataSinkAudio)->SetDataSinkNode(iIONodeAudio);
+}
+#endif
+
 //
 // pvplayer_async_test_3gppdlnormal section
 //
@@ -1703,12 +1886,12 @@ void pvplayer_async_test_3gppdlnormal::CreateDataSource()
 
     if (iProtocolRollOver == true)
     {
-        iDataSource->SetDataSourceFormatType(PVMF_DATA_SOURCE_MS_HTTP_STREAMING_URL);
-        iDataSource->SetAlternateSourceFormatType(PVMF_DATA_SOURCE_HTTP_URL);
+        iDataSource->SetDataSourceFormatType(PVMF_MIME_DATA_SOURCE_MS_HTTP_STREAMING_URL);
+        iDataSource->SetAlternateSourceFormatType(PVMF_MIME_DATA_SOURCE_HTTP_URL);
     }
     else
     {
-        iDataSource->SetDataSourceFormatType(PVMF_DATA_SOURCE_HTTP_URL);
+        iDataSource->SetDataSourceFormatType(PVMF_MIME_DATA_SOURCE_HTTP_URL);
     }
 
     iDownloadFilename = OUTPUTNAME_PREPEND_WSTRING;
@@ -1730,6 +1913,26 @@ void pvplayer_async_test_3gppdlnormal::CreateDataSource()
     uint32 iMaxFileSize = 0x7FFFFFFF;
     bool aIsNewSession = true;
 
+#if(RUN_CPMJANUS_TESTCASES) && !(JANUS_IS_LOADABLE_MODULE)
+    //Select the device info configuration.
+    bool ok = GetJanusFactories(iTestNumber
+                                , iDrmDeviceInfoFactory
+                                , iDrmSystemClockFactory);
+    if (!ok)
+        PVPATB_TEST_IS_TRUE(false);
+
+    //Define the janus configuration.
+    PVMFJanusPluginConfiguration config;
+    config.iDeviceInfoFactory = iDrmDeviceInfoFactory;
+    config.iSystemClockFactory = iDrmSystemClockFactory;
+    if (!RegisterJanusPlugin(config))
+    {
+        PVPATB_TEST_IS_TRUE(false);
+        iState = STATE_CLEANUPANDCOMPLETE;
+        RunIfNotReady();
+        return;
+    }
+#endif
 
     iDownloadContextData = new PVMFSourceContextData();
     iDownloadContextData->EnableCommonSourceContext();
@@ -1743,49 +1946,82 @@ void pvplayer_async_test_3gppdlnormal::CreateDataSource()
     iDownloadContextData->DownloadHTTPData()->iUserID = _STRLIT_CHAR("abc");
     iDownloadContextData->DownloadHTTPData()->iUserPasswd = _STRLIT_CHAR("xyz");
     iDownloadContextData->DownloadHTTPData()->iPlaybackControl = PVMFSourceContextDataDownloadHTTP::EAsap;
-    iDownloadContextData->CommonData()->iUseCPMPluginRegistry = iUseCpmForPlayback;
 
     iDataSource->SetDataSourceContextData(iDownloadContextData);
 }
 
+#if !(JANUS_IS_LOADABLE_MODULE)
+#if RUN_CPMJANUS_TESTCASES
+bool pvplayer_async_test_3gppdlnormal::RegisterJanusPlugin(PVMFJanusPluginConfiguration& aConfig)
+{
+#if(RUN_CPMJANUS_TESTCASES)
+//#if 0
+    //Connect to plugin registry
+    PVMFStatus status;
+    status = iPluginRegistryClient.Connect();
+    if (status != PVMFSuccess)
+    {
+        PVPATB_TEST_IS_TRUE(false);
+        return false;
+    }
+    //Create & the plugin factory.
+    iPluginFactory = new PVMFJanusPluginFactory(aConfig);
+    if (!iPluginFactory)
+    {
+        PVPATB_TEST_IS_TRUE(false);
+        return false;
+    }
+    //Register the plugin factory.
+    iPluginMimeType = PVMF_CPM_MIME_JANUS_PLUGIN;
+    if (iPluginRegistryClient.RegisterPlugin(iPluginMimeType, *iPluginFactory) != PVMFSuccess)
+    {
+        PVPATB_TEST_IS_TRUE(false);
+        return false;
+    }
+    return true;
+#else
+    //OSCL_UNUSED_ARG(aConfig);
+    return false;
+#endif
+}
+#endif
+#endif
 
 void pvplayer_async_test_3gppdlnormal::CleanupData()
 {
+#if(RUN_CPMJANUS_TESTCASES) && !(JANUS_IS_LOADABLE_MODULE)
+    //close the plugin registry client session.
+    iPluginRegistryClient.Close();
+
+    //delete the plugin factory.
+    if (iPluginFactory)
+    {
+        delete iPluginFactory;
+        iPluginFactory = NULL;
+    }
+    CleanupJanusFactories(iTestNumber,
+                          iDrmDeviceInfoFactory,
+                          iDrmSystemClockFactory);
+#endif
 }
 
 void pvplayer_async_test_3gppdlnormal::CreateDataSinkVideo()
 {
     OSCL_wHeapString<OsclMemAllocator> sinkfile = OUTPUTNAME_PREPEND_WSTRING;
     sinkfile += _STRLIT_WCHAR("test_player_3gppdlnormal_video.dat");
-    iMIOFileOutVideo = iMioFactory->CreateVideoOutput((OsclAny*) & sinkfile);
+    iMIOFileOutVideo = iMioFactory->CreateVideoOutput((OsclAny*) & sinkfile, MEDIATYPE_VIDEO, iCompressedVideo);
     iIONodeVideo = PVMediaOutputNodeFactory::CreateMediaOutputNode(iMIOFileOutVideo);
     iDataSinkVideo = new PVPlayerDataSinkPVMFNode;
     ((PVPlayerDataSinkPVMFNode*)iDataSinkVideo)->SetDataSinkNode(iIONodeVideo);
-    if (iCompressedVideo)
-    {
-        ((PVPlayerDataSinkPVMFNode*)iDataSinkVideo)->SetDataSinkFormatType(PVMF_M4V);
-    }
-    else
-    {
-        ((PVPlayerDataSinkPVMFNode*)iDataSinkVideo)->SetDataSinkFormatType(PVMF_YUV420);
-    }
 }
 void pvplayer_async_test_3gppdlnormal::CreateDataSinkAudio()
 {
     OSCL_wHeapString<OsclMemAllocator> sinkfile = OUTPUTNAME_PREPEND_WSTRING;
     sinkfile += _STRLIT_WCHAR("test_player_3gppdlnormal_audio.dat");
-    iMIOFileOutAudio = iMioFactory->CreateAudioOutput((OsclAny*) & sinkfile);
+    iMIOFileOutAudio = iMioFactory->CreateAudioOutput((OsclAny*) & sinkfile, MEDIATYPE_AUDIO, iCompressedAudio);
     iIONodeAudio = PVMediaOutputNodeFactory::CreateMediaOutputNode(iMIOFileOutAudio);
     iDataSinkAudio = new PVPlayerDataSinkPVMFNode;
     ((PVPlayerDataSinkPVMFNode*)iDataSinkAudio)->SetDataSinkNode(iIONodeAudio);
-    if (iCompressedAudio)
-    {
-        ((PVPlayerDataSinkPVMFNode*)iDataSinkAudio)->SetDataSinkFormatType(PVMF_MPEG4_AUDIO);
-    }
-    else
-    {
-        ((PVPlayerDataSinkPVMFNode*)iDataSinkAudio)->SetDataSinkFormatType(AUDIOSINK_FORMAT_TYPE);
-    }
 }
 
 //
@@ -1819,12 +2055,12 @@ void pvplayer_async_test_ppbnormal::CreateDataSource()
 
     if (iProtocolRollOver == true)
     {
-        iDataSource->SetDataSourceFormatType(PVMF_DATA_SOURCE_MS_HTTP_STREAMING_URL);
-        iDataSource->SetAlternateSourceFormatType(PVMF_DATA_SOURCE_HTTP_URL);
+        iDataSource->SetDataSourceFormatType(PVMF_MIME_DATA_SOURCE_MS_HTTP_STREAMING_URL);
+        iDataSource->SetAlternateSourceFormatType(PVMF_MIME_DATA_SOURCE_HTTP_URL);
     }
     else
     {
-        iDataSource->SetDataSourceFormatType(PVMF_DATA_SOURCE_HTTP_URL);
+        iDataSource->SetDataSourceFormatType(PVMF_MIME_DATA_SOURCE_HTTP_URL);
     }
 
     iDownloadFilename = NULL;
@@ -1857,7 +2093,6 @@ void pvplayer_async_test_ppbnormal::CreateDataSource()
     iDownloadContextData->DownloadHTTPData()->iUserID = _STRLIT_CHAR("abc");
     iDownloadContextData->DownloadHTTPData()->iUserPasswd = _STRLIT_CHAR("xyz");
     iDownloadContextData->DownloadHTTPData()->iPlaybackControl = PVMFSourceContextDataDownloadHTTP::ENoSaveToFile;
-    iDownloadContextData->CommonData()->iUseCPMPluginRegistry = false;
 
     iDataSource->SetDataSourceContextData(iDownloadContextData);
 }
@@ -1866,35 +2101,19 @@ void pvplayer_async_test_ppbnormal::CreateDataSinkVideo()
 {
     OSCL_wHeapString<OsclMemAllocator> sinkfile = OUTPUTNAME_PREPEND_WSTRING;
     sinkfile += _STRLIT_WCHAR("test_player_3gppdlnormal_video.dat");
-    iMIOFileOutVideo = iMioFactory->CreateVideoOutput((OsclAny*) & sinkfile);
+    iMIOFileOutVideo = iMioFactory->CreateVideoOutput((OsclAny*) & sinkfile, MEDIATYPE_VIDEO, iCompressedVideo);
     iIONodeVideo = PVMediaOutputNodeFactory::CreateMediaOutputNode(iMIOFileOutVideo);
     iDataSinkVideo = new PVPlayerDataSinkPVMFNode;
     ((PVPlayerDataSinkPVMFNode*)iDataSinkVideo)->SetDataSinkNode(iIONodeVideo);
-    if (iCompressedVideo)
-    {
-        ((PVPlayerDataSinkPVMFNode*)iDataSinkVideo)->SetDataSinkFormatType(PVMF_M4V);
-    }
-    else
-    {
-        ((PVPlayerDataSinkPVMFNode*)iDataSinkVideo)->SetDataSinkFormatType(PVMF_YUV420);
-    }
 }
 void pvplayer_async_test_ppbnormal::CreateDataSinkAudio()
 {
     OSCL_wHeapString<OsclMemAllocator> sinkfile = OUTPUTNAME_PREPEND_WSTRING;
     sinkfile += _STRLIT_WCHAR("test_player_3gppdlnormal_audio.dat");
-    iMIOFileOutAudio = iMioFactory->CreateAudioOutput((OsclAny*) & sinkfile);
+    iMIOFileOutAudio = iMioFactory->CreateAudioOutput((OsclAny*) & sinkfile, MEDIATYPE_AUDIO, iCompressedAudio);
     iIONodeAudio = PVMediaOutputNodeFactory::CreateMediaOutputNode(iMIOFileOutAudio);
     iDataSinkAudio = new PVPlayerDataSinkPVMFNode;
     ((PVPlayerDataSinkPVMFNode*)iDataSinkAudio)->SetDataSinkNode(iIONodeAudio);
-    if (iCompressedAudio)
-    {
-        ((PVPlayerDataSinkPVMFNode*)iDataSinkAudio)->SetDataSinkFormatType(PVMF_MPEG4_AUDIO);
-    }
-    else
-    {
-        ((PVPlayerDataSinkPVMFNode*)iDataSinkAudio)->SetDataSinkFormatType(AUDIOSINK_FORMAT_TYPE);
-    }
 }
 
 // pvplayer_async_test_3gppdlnormal_dlthenplay section
@@ -1922,7 +2141,7 @@ void pvplayer_async_test_3gppdlnormal_dlthenplay::CreateDataSource()
     }
     iDataSource = new PVPlayerDataSourceURL;
     iDataSource->SetDataSourceURL(iDownloadURL);
-    iDataSource->SetDataSourceFormatType(PVMF_DATA_SOURCE_HTTP_URL);
+    iDataSource->SetDataSourceFormatType(PVMF_MIME_DATA_SOURCE_HTTP_URL);
 
     iDownloadFilename = OUTPUTNAME_PREPEND_WSTRING;
     iDownloadFilename += _STRLIT_WCHAR("test_3gppdownload_dlthenplay.loc");
@@ -1955,7 +2174,6 @@ void pvplayer_async_test_3gppdlnormal_dlthenplay::CreateDataSource()
     iDownloadContextData->DownloadHTTPData()->iProxyName = iDownloadProxy;
     iDownloadContextData->DownloadHTTPData()->iProxyPort = iDownloadProxyPort;
     iDownloadContextData->DownloadHTTPData()->iPlaybackControl = PVMFSourceContextDataDownloadHTTP::EAfterDownload;
-    iDownloadContextData->CommonData()->iUseCPMPluginRegistry = false;
 
     iDataSource->SetDataSourceContextData(iDownloadContextData);
 }
@@ -1964,35 +2182,19 @@ void pvplayer_async_test_3gppdlnormal_dlthenplay::CreateDataSinkVideo()
 {
     OSCL_wHeapString<OsclMemAllocator> sinkfile = OUTPUTNAME_PREPEND_WSTRING;
     sinkfile += _STRLIT_WCHAR("test_player_3gppdlnormal_dlthenplay_video.dat");
-    iMIOFileOutVideo = iMioFactory->CreateVideoOutput((OsclAny*) & sinkfile);
+    iMIOFileOutVideo = iMioFactory->CreateVideoOutput((OsclAny*) & sinkfile, MEDIATYPE_VIDEO, iCompressedVideo);
     iIONodeVideo = PVMediaOutputNodeFactory::CreateMediaOutputNode(iMIOFileOutVideo);
     iDataSinkVideo = new PVPlayerDataSinkPVMFNode;
     ((PVPlayerDataSinkPVMFNode*)iDataSinkVideo)->SetDataSinkNode(iIONodeVideo);
-    if (iCompressedVideo)
-    {
-        ((PVPlayerDataSinkPVMFNode*)iDataSinkVideo)->SetDataSinkFormatType(PVMF_M4V);
-    }
-    else
-    {
-        ((PVPlayerDataSinkPVMFNode*)iDataSinkVideo)->SetDataSinkFormatType(PVMF_YUV420);
-    }
 }
 void pvplayer_async_test_3gppdlnormal_dlthenplay::CreateDataSinkAudio()
 {
     OSCL_wHeapString<OsclMemAllocator> sinkfile = OUTPUTNAME_PREPEND_WSTRING;
     sinkfile += _STRLIT_WCHAR("test_player_3gppdlnormal_dlthenplay_audio.dat");
-    iMIOFileOutAudio = iMioFactory->CreateAudioOutput((OsclAny*) & sinkfile);
+    iMIOFileOutAudio = iMioFactory->CreateAudioOutput((OsclAny*) & sinkfile, MEDIATYPE_AUDIO, iCompressedAudio);
     iIONodeAudio = PVMediaOutputNodeFactory::CreateMediaOutputNode(iMIOFileOutAudio);
     iDataSinkAudio = new PVPlayerDataSinkPVMFNode;
     ((PVPlayerDataSinkPVMFNode*)iDataSinkAudio)->SetDataSinkNode(iIONodeAudio);
-    if (iCompressedAudio)
-    {
-        ((PVPlayerDataSinkPVMFNode*)iDataSinkAudio)->SetDataSinkFormatType(PVMF_MPEG4_AUDIO);
-    }
-    else
-    {
-        ((PVPlayerDataSinkPVMFNode*)iDataSinkAudio)->SetDataSinkFormatType(AUDIOSINK_FORMAT_TYPE);
-    }
 }
 //
 // pvplayer_async_test_3gppdlnormal_dlonly section
@@ -2021,7 +2223,7 @@ void pvplayer_async_test_3gppdlnormal_dlonly::CreateDataSource()
     }
     iDataSource = new PVPlayerDataSourceURL;
     iDataSource->SetDataSourceURL(iDownloadURL);
-    iDataSource->SetDataSourceFormatType(PVMF_DATA_SOURCE_HTTP_URL);
+    iDataSource->SetDataSourceFormatType(PVMF_MIME_DATA_SOURCE_HTTP_URL);
 
     iDownloadFilename = OUTPUTNAME_PREPEND_WSTRING;
     iDownloadFilename += _STRLIT_WCHAR("test_3gppdownload_dlonly.loc");
@@ -2054,7 +2256,6 @@ void pvplayer_async_test_3gppdlnormal_dlonly::CreateDataSource()
     iDownloadContextData->DownloadHTTPData()->iProxyName = iDownloadProxy;
     iDownloadContextData->DownloadHTTPData()->iProxyPort = iDownloadProxyPort;
     iDownloadContextData->DownloadHTTPData()->iPlaybackControl = PVMFSourceContextDataDownloadHTTP::ENoPlayback;
-    iDownloadContextData->CommonData()->iUseCPMPluginRegistry = false;
 
     iDataSource->SetDataSourceContextData(iDownloadContextData);
 }
@@ -2146,7 +2347,7 @@ void pvplayer_async_test_3gppdlcancelduringinit::Run()
 
             iDataSource = new PVPlayerDataSourceURL;
             iDataSource->SetDataSourceURL(iDownloadURL);
-            iDataSource->SetDataSourceFormatType(PVMF_DATA_SOURCE_HTTP_URL);
+            iDataSource->SetDataSourceFormatType(PVMF_MIME_DATA_SOURCE_HTTP_URL);
             iDataSource->SetDataSourceContextData(iDownloadHttpContextData);
             OSCL_TRY(error, iCurrentCmdId = iPlayer->AddDataSource(*iDataSource, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
@@ -2159,6 +2360,8 @@ void pvplayer_async_test_3gppdlcancelduringinit::Run()
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
 
             iState = STATE_CANCELALL;
+            //if this is commmented out. The BufferingStart(change below) could do RunIfInactiv()
+            //RunIfNotReady(10*1000*1000);
         }
         break;
 
@@ -2197,16 +2400,6 @@ void pvplayer_async_test_3gppdlcancelduringinit::Run()
         {
             OSCL_TRY(error, iCurrentCmdId = iPlayer->RemoveDataSource(*iDataSource, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
-        }
-        break;
-
-        case STATE_WAIT_FOR_ERROR_HANDLING:
-        {
-            // Timed out waiting for error handling to complete
-            PVPATB_TEST_IS_TRUE(false);
-            // Forcibly terminate the test
-            iState = STATE_CLEANUPANDCOMPLETE;
-            RunIfNotReady();
         }
         break;
 
@@ -2270,8 +2463,8 @@ void pvplayer_async_test_3gppdlcancelduringinit::CommandCompleted(const PVCmdRes
             {
                 // AddDataSource failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -2290,8 +2483,8 @@ void pvplayer_async_test_3gppdlcancelduringinit::CommandCompleted(const PVCmdRes
             {
                 // Init failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -2325,8 +2518,8 @@ void pvplayer_async_test_3gppdlcancelduringinit::CommandCompleted(const PVCmdRes
             {
                 // Cancel failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -2340,8 +2533,8 @@ void pvplayer_async_test_3gppdlcancelduringinit::CommandCompleted(const PVCmdRes
             {
                 // Reset failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -2404,37 +2597,23 @@ void pvplayer_async_test_3gppdlcancelduringinit::HandleErrorEvent(const PVAsyncE
 
     // Wait for engine to handle the error
     Cancel();
-    iState = STATE_WAIT_FOR_ERROR_HANDLING;
-    RunIfNotReady(5000000);
 }
 
 
 void pvplayer_async_test_3gppdlcancelduringinit::HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent)
 {
-    // Wait for error handling to complete
-    if (iState == STATE_WAIT_FOR_ERROR_HANDLING && aEvent.GetEventType() == PVMFInfoErrorHandlingComplete)
+    if (aEvent.GetEventType() == PVMFInfoErrorHandlingStart)
     {
-        PVPlayerState pstate;
-        iPlayer->GetPVPlayerStateSync(pstate);
-        switch (pstate)
-        {
-            case PVP_STATE_IDLE:
-                Cancel();
-                iState = STATE_REMOVEDATASOURCE;
-                RunIfNotReady();
-                break;
-
-            default:
-                // Engine should not be in any other state when
-                // error handling completes
-                PVPATB_TEST_IS_TRUE(false);
-                Cancel();
-                iState = STATE_CLEANUPANDCOMPLETE;
-                RunIfNotReady();
-                break;
-        }
+        fprintf(file, "PVMFInfoErrorHandlingStart...\n");
     }
-    else if (iState == STATE_CANCELALL && aEvent.GetEventType() == PVMFInfoBufferingStart)
+    if (aEvent.GetEventType() == PVMFInfoErrorHandlingComplete)
+    {
+        fprintf(file, "PVMFInfoErrorHandlingComplete...\n");
+        iState = STATE_CLEANUPANDCOMPLETE;
+        RunIfNotReady();
+    }
+
+    if (iState == STATE_CANCELALL && aEvent.GetEventType() == PVMFInfoBufferingStart)
     {
         RunIfNotReady(10*1000);
     }
@@ -2614,7 +2793,7 @@ void pvplayer_async_test_3gppdlcancelduringinitdelay::Run()
 
             iDataSource = new PVPlayerDataSourceURL;
             iDataSource->SetDataSourceURL(iDownloadURL);
-            iDataSource->SetDataSourceFormatType(PVMF_DATA_SOURCE_HTTP_URL);
+            iDataSource->SetDataSourceFormatType(PVMF_MIME_DATA_SOURCE_HTTP_URL);
             iDataSource->SetDataSourceContextData(iDownloadHttpContextData);
             OSCL_TRY(error, iCurrentCmdId = iPlayer->AddDataSource(*iDataSource, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
@@ -2671,16 +2850,6 @@ void pvplayer_async_test_3gppdlcancelduringinitdelay::Run()
         {
             OSCL_TRY(error, iCurrentCmdId = iPlayer->RemoveDataSource(*iDataSource, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
-        }
-        break;
-
-        case STATE_WAIT_FOR_ERROR_HANDLING:
-        {
-            // Timed out waiting for error handling to complete
-            PVPATB_TEST_IS_TRUE(false);
-            // Forcibly terminate the test
-            iState = STATE_CLEANUPANDCOMPLETE;
-            RunIfNotReady();
         }
         break;
 
@@ -2744,8 +2913,8 @@ void pvplayer_async_test_3gppdlcancelduringinitdelay::CommandCompleted(const PVC
             {
                 // AddDataSource failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -2764,8 +2933,8 @@ void pvplayer_async_test_3gppdlcancelduringinitdelay::CommandCompleted(const PVC
             {
                 // Init failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -2798,8 +2967,8 @@ void pvplayer_async_test_3gppdlcancelduringinitdelay::CommandCompleted(const PVC
                 fprintf(file, "\n Previous command was not cancelled or cancel failed ...\n");
 
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -2813,8 +2982,8 @@ void pvplayer_async_test_3gppdlcancelduringinitdelay::CommandCompleted(const PVC
             {
                 // Reset failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -2877,35 +3046,20 @@ void pvplayer_async_test_3gppdlcancelduringinitdelay::HandleErrorEvent(const PVA
 
     // Wait for engine to handle the error
     Cancel();
-    iState = STATE_WAIT_FOR_ERROR_HANDLING;
-    RunIfNotReady(5000000);
 }
 
 
 void pvplayer_async_test_3gppdlcancelduringinitdelay::HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent)
 {
-    // Wait for error handling to complete
-    if (iState == STATE_WAIT_FOR_ERROR_HANDLING && aEvent.GetEventType() == PVMFInfoErrorHandlingComplete)
+    if (aEvent.GetEventType() == PVMFInfoErrorHandlingStart)
     {
-        PVPlayerState pstate;
-        iPlayer->GetPVPlayerStateSync(pstate);
-        switch (pstate)
-        {
-            case PVP_STATE_IDLE:
-                Cancel();
-                iState = STATE_REMOVEDATASOURCE;
-                RunIfNotReady();
-                break;
-
-            default:
-                // Engine should not be in any other state when
-                // error handling completes
-                PVPATB_TEST_IS_TRUE(false);
-                Cancel();
-                iState = STATE_CLEANUPANDCOMPLETE;
-                RunIfNotReady();
-                break;
-        }
+        fprintf(file, "PVMFInfoErrorHandlingStart...\n");
+    }
+    if (aEvent.GetEventType() == PVMFInfoErrorHandlingComplete)
+    {
+        fprintf(file, "PVMFInfoErrorHandlingComplete...\n");
+        iState = STATE_CLEANUPANDCOMPLETE;
+        RunIfNotReady();
     }
 
     switch (aEvent.GetEventType())
@@ -3037,7 +3191,7 @@ void pvplayer_async_test_3gppdlcontenttoolarge::CreateDataSource()
     }
     iDataSource = new PVPlayerDataSourceURL;
     iDataSource->SetDataSourceURL(iDownloadURL);
-    iDataSource->SetDataSourceFormatType(PVMF_DATA_SOURCE_HTTP_URL);
+    iDataSource->SetDataSourceFormatType(PVMF_MIME_DATA_SOURCE_HTTP_URL);
 
     iDownloadFilename = OUTPUTNAME_PREPEND_WSTRING;
     iDownloadFilename += _STRLIT_WCHAR("test_3gppcontenttoolarge.loc");
@@ -3070,7 +3224,6 @@ void pvplayer_async_test_3gppdlcontenttoolarge::CreateDataSource()
     iDownloadContextData->DownloadHTTPData()->iProxyName = iDownloadProxy;
     iDownloadContextData->DownloadHTTPData()->iProxyPort = iDownloadProxyPort;
     iDownloadContextData->DownloadHTTPData()->iPlaybackControl = PVMFSourceContextDataDownloadHTTP::ENoPlayback;
-    iDownloadContextData->CommonData()->iUseCPMPluginRegistry = false;
 
     iDataSource->SetDataSourceContextData(iDownloadContextData);
 }
@@ -3114,7 +3267,7 @@ void pvplayer_async_test_3gppdlContentTruncated::CreateDataSource()
     }
     iDataSource = new PVPlayerDataSourceURL;
     iDataSource->SetDataSourceURL(iDownloadURL);
-    iDataSource->SetDataSourceFormatType(PVMF_DATA_SOURCE_HTTP_URL);
+    iDataSource->SetDataSourceFormatType(PVMF_MIME_DATA_SOURCE_HTTP_URL);
 
     iDownloadFilename = OUTPUTNAME_PREPEND_WSTRING;
     iDownloadFilename += _STRLIT_WCHAR("test_3gppdownload_truncated.loc");
@@ -3142,7 +3295,6 @@ void pvplayer_async_test_3gppdlContentTruncated::CreateDataSource()
     iDownloadContextData->DownloadHTTPData()->iProxyName = iDownloadProxy;
     iDownloadContextData->DownloadHTTPData()->iProxyPort = iDownloadProxyPort;
     iDownloadContextData->DownloadHTTPData()->iPlaybackControl = PVMFSourceContextDataDownloadHTTP::EAsap;
-    iDownloadContextData->CommonData()->iUseCPMPluginRegistry = false;
 
     iDataSource->SetDataSourceContextData(iDownloadContextData);
 }
@@ -3151,35 +3303,19 @@ void pvplayer_async_test_3gppdlContentTruncated::CreateDataSinkVideo()
 {
     OSCL_wHeapString<OsclMemAllocator> sinkfile = OUTPUTNAME_PREPEND_WSTRING;
     sinkfile += _STRLIT_WCHAR("test_player_3gppdl_truncated_video.dat");
-    iMIOFileOutVideo = iMioFactory->CreateVideoOutput((OsclAny*) & sinkfile);
+    iMIOFileOutVideo = iMioFactory->CreateVideoOutput((OsclAny*) & sinkfile, MEDIATYPE_VIDEO, iCompressedVideo);
     iIONodeVideo = PVMediaOutputNodeFactory::CreateMediaOutputNode(iMIOFileOutVideo);
     iDataSinkVideo = new PVPlayerDataSinkPVMFNode;
     ((PVPlayerDataSinkPVMFNode*)iDataSinkVideo)->SetDataSinkNode(iIONodeVideo);
-    if (iCompressedVideo)
-    {
-        ((PVPlayerDataSinkPVMFNode*)iDataSinkVideo)->SetDataSinkFormatType(PVMF_M4V);
-    }
-    else
-    {
-        ((PVPlayerDataSinkPVMFNode*)iDataSinkVideo)->SetDataSinkFormatType(PVMF_YUV420);
-    }
 }
 void pvplayer_async_test_3gppdlContentTruncated::CreateDataSinkAudio()
 {
     OSCL_wHeapString<OsclMemAllocator> sinkfile = OUTPUTNAME_PREPEND_WSTRING;
     sinkfile += _STRLIT_WCHAR("test_player_3gppdl_truncated_audio.dat");
-    iMIOFileOutAudio = iMioFactory->CreateAudioOutput((OsclAny*) & sinkfile);
+    iMIOFileOutAudio = iMioFactory->CreateAudioOutput((OsclAny*) & sinkfile, MEDIATYPE_AUDIO, iCompressedAudio);
     iIONodeAudio = PVMediaOutputNodeFactory::CreateMediaOutputNode(iMIOFileOutAudio);
     iDataSinkAudio = new PVPlayerDataSinkPVMFNode;
     ((PVPlayerDataSinkPVMFNode*)iDataSinkAudio)->SetDataSinkNode(iIONodeAudio);
-    if (iCompressedAudio)
-    {
-        ((PVPlayerDataSinkPVMFNode*)iDataSinkAudio)->SetDataSinkFormatType(PVMF_MPEG4_AUDIO);
-    }
-    else
-    {
-        ((PVPlayerDataSinkPVMFNode*)iDataSinkAudio)->SetDataSinkFormatType(AUDIOSINK_FORMAT_TYPE);
-    }
 }
 
 
@@ -3235,7 +3371,7 @@ void pvplayer_async_test_ppb_base::PrintMetadata()
             iSessionDuration = iMetadataValueList[i].value.uint32_value;
 
             // Check the timescale. If not available, assume millisecond (1000)
-            char *retTSstr;
+            const char *retTSstr;
             retTSstr = oscl_strstr(iMetadataValueList[i].key, "timescale=");
             uint32 retTSstrLen = 0;
             uint32 tsstrlen = oscl_strlen(_STRLIT_CHAR("timescale="));
@@ -3313,9 +3449,10 @@ void pvplayer_async_test_ppb_base::Run()
 
             //set user-agent, make sure to set as "PVPLAYER VersionNumber" to satisfy Fast Track PV server for Fast Track test
 
-            iKeyStringSetAsync = _STRLIT_CHAR("x-pvmf/net/user-agent;valtype=wchar*");
+            iKeyStringSetAsync = _STRLIT_CHAR("x-pvmf/net/user-agent;valtype=wchar*;mode=download");
             iKVPSetAsync.key = iKeyStringSetAsync.get_str();
 
+//                      OSCL_wHeapString<OsclMemAllocator> userAgent(_STRLIT_WCHAR("PVPLAYER 18akljfaljfa"));
             OSCL_wHeapString<OsclMemAllocator> userAgent(_STRLIT_WCHAR("PVPLAYER 18.07.00.02"));
             iKVPSetAsync.value.pWChar_value = userAgent.get_str();
             iErrorKVP = NULL;
@@ -3389,7 +3526,12 @@ void pvplayer_async_test_ppb_base::Run()
             // set extension header
             // set arbitrary extension headers all together
             PvmiKvp kvpheader[3];
+            //OSCL_StackString<128> paramkey(_STRLIT_CHAR("x-pvmf/net/protocol-extension-header;valtype=char*;mode=download"));
             OSCL_StackString<128> paramkey(_STRLIT_CHAR("x-pvmf/net/protocol-extension-header;valtype=char*;mode=download;purge-on-redirect"));
+            //OSCL_StackString<128> paramkey(_STRLIT_CHAR("x-pvmf/net/protocol-extension-header;valtype=char*;purge-on-redirect"));
+            //OSCL_StackString<128> paramkey(_STRLIT_CHAR("x-pvmf/net/protocol-extension-header;valtype=char*"));
+            //OSCL_StackString<128> paramkey(_STRLIT_CHAR("x-pvmf/net/protocol-extension-header;valtype=char*;mode=streaming"));
+
 
             kvpheader[0].key = paramkey.get_str();
             OSCL_HeapString<OsclMemAllocator> protocolExtensionHeader1(_STRLIT_CHAR("key=X1;value=Y1;method=GET,HEAD"));
@@ -3497,6 +3639,7 @@ void pvplayer_async_test_ppb_base::Run()
         break;
 
         case STATE_PREPARE:
+        case STATE_PREPARE_AFTERSTOP:
         {
             OSCL_TRY(error, iCurrentCmdId = iPlayer->Prepare((OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
@@ -3539,6 +3682,7 @@ void pvplayer_async_test_ppb_base::Run()
         break;
 
         case STATE_START:
+        case STATE_START_AFTERSTOP:
         {
             OSCL_TRY(error, iCurrentCmdId = iPlayer->Start((OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
@@ -3553,6 +3697,7 @@ void pvplayer_async_test_ppb_base::Run()
                 PVPPlaybackPosition start, end;
                 start.iIndeterminate = false;
                 start.iPosUnit = PVPPBPOSUNIT_MILLISEC;
+                start.iMode = PVPPBPOS_MODE_NOW;
                 start.iPosValue.millisec_value = iSessionDuration / 4;
                 end.iIndeterminate = true;
                 OSCL_TRY(error, iCurrentCmdId = iPlayer->SetPlaybackRange(start, end, false, (OsclAny*) & iContextObject));
@@ -3573,6 +3718,7 @@ void pvplayer_async_test_ppb_base::Run()
             PVPPlaybackPosition start, end;
             start.iIndeterminate = false;
             start.iPosUnit = PVPPBPOSUNIT_MILLISEC;
+            start.iMode = PVPPBPOS_MODE_NOW;
             if (iForwardStep)
             {
                 fprintf(iTestMsgOutputFile, "\n***Repositioning to %d ms\n", iForwardSeekTime);
@@ -3605,6 +3751,7 @@ void pvplayer_async_test_ppb_base::Run()
             PVPPlaybackPosition start, end;
             start.iIndeterminate = false;
             start.iPosUnit = PVPPBPOSUNIT_MILLISEC;
+            start.iMode = PVPPBPOS_MODE_NOW;
             start.iPosValue.millisec_value = 120000;
             end.iIndeterminate = true;
             OSCL_TRY(error, iCurrentCmdId = iPlayer->SetPlaybackRange(start, end, false, (OsclAny*) & iContextObject));
@@ -3619,6 +3766,7 @@ void pvplayer_async_test_ppb_base::Run()
             PVPPlaybackPosition start, end;
             start.iIndeterminate = false;
             start.iPosUnit = PVPPBPOSUNIT_MILLISEC;
+            start.iMode = PVPPBPOS_MODE_NOW;
             if (iForwardStep)
             {
                 fprintf(iTestMsgOutputFile, "\n***Repositioning to %d ms\n", iForwardSeekTime);
@@ -3643,8 +3791,35 @@ void pvplayer_async_test_ppb_base::Run()
         }
         break;
 
+        case STATE_SETPLAYBACKRANGE_AFTERDOWNLOADCOMPLETE:
+        {
+            PVPPlaybackPosition start, end, current;
+            start.iIndeterminate = false;
+            start.iPosUnit = PVPPBPOSUNIT_MILLISEC;
+            start.iMode = PVPPBPOS_MODE_NOW;
+            end.iIndeterminate = true;
+            if (iSeekToBOC)
+            {
+                // download has completed, rewind back to 0 sec
+                fprintf(iTestMsgOutputFile, "\n***Repositioning to 0 ms\n");
+                start.iPosValue.millisec_value = 0;
+            }
+            else if (iSeekInCache)
+            {
+                current.iPosUnit = PVPPBPOSUNIT_MILLISEC;
+                iPlayer->GetCurrentPositionSync(current);
+                // download has completed, seek to a position in cache (the rest of the clip should be there)
+                fprintf(iTestMsgOutputFile, "\n***Repositioning to %d ms", current.iPosValue.millisec_value + 5000);
+                start.iPosValue.millisec_value = current.iPosValue.millisec_value + 5000;
+            }
+            OSCL_TRY(error, iCurrentCmdId = iPlayer->SetPlaybackRange(start, end, false, (OsclAny*) & iContextObject));
+            OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
+        }
+        break;
+
         case STATE_PAUSE:
         case STATE_PAUSE_TWICE:
+        case STATE_PAUSE_AFTERDOWNLOADCOMPLETE:
         {
             OSCL_TRY(error, iCurrentCmdId = iPlayer->Pause((OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
@@ -3653,6 +3828,7 @@ void pvplayer_async_test_ppb_base::Run()
 
         case STATE_RESUME:
         case STATE_RESUME_TWICE:
+        case STATE_RESUME_AFTERDOWNLOADCOMPLETE:
         {
             OSCL_TRY(error, iCurrentCmdId = iPlayer->Resume((OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
@@ -3660,7 +3836,15 @@ void pvplayer_async_test_ppb_base::Run()
         break;
 
         case STATE_STOP:
+        case STATE_STOP_TWICE:
         {
+            if (iState == STATE_STOP)
+            {
+                if (iSessionDuration == 0)
+                    fprintf(file, "   DURATION Not Received\n");
+                else
+                    fprintf(file, "   GOT Duration %d \n\n", iSessionDuration);
+            }
             OSCL_TRY(error, iCurrentCmdId = iPlayer->Stop((OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
         }
@@ -3691,16 +3875,6 @@ void pvplayer_async_test_ppb_base::Run()
         {
             OSCL_TRY(error, iCurrentCmdId = iPlayer->RemoveDataSource(*iDataSource, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
-        }
-        break;
-
-        case STATE_WAIT_FOR_ERROR_HANDLING:
-        {
-            // Timed out waiting for error handling to complete
-            PVPATB_TEST_IS_TRUE(false);
-            // Forcibly terminate the test
-            iState = STATE_CLEANUPANDCOMPLETE;
-            RunIfNotReady();
         }
         break;
 
@@ -3788,12 +3962,6 @@ void pvplayer_async_test_ppb_base::CommandCompleted(const PVCmdResponse& aRespon
     }
 
 //#if(RUN_CPMJANUS_TESTCASES)
-#if 0
-    if (aResponse.GetCmdStatus() != PVMFSuccess)
-    {
-        PrintJanusError(aResponse);
-    }
-#endif
 
     switch (iState)
     {
@@ -3822,8 +3990,8 @@ void pvplayer_async_test_ppb_base::CommandCompleted(const PVCmdResponse& aRespon
             {
                 // AddDataSource failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -3854,8 +4022,8 @@ void pvplayer_async_test_ppb_base::CommandCompleted(const PVCmdResponse& aRespon
                 {
                     // Init failed
                     PVPATB_TEST_IS_TRUE(false);
-                    iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                    RunIfNotReady(5000000);
+                    iState = STATE_CLEANUPANDCOMPLETE;
+                    RunIfNotReady();
                 }
             }
             break;
@@ -3870,8 +4038,8 @@ void pvplayer_async_test_ppb_base::CommandCompleted(const PVCmdResponse& aRespon
             {
                 // AddDataSink failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -3892,8 +4060,8 @@ void pvplayer_async_test_ppb_base::CommandCompleted(const PVCmdResponse& aRespon
             {
                 // AddDataSink failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -3906,8 +4074,8 @@ void pvplayer_async_test_ppb_base::CommandCompleted(const PVCmdResponse& aRespon
             else
             {
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
 
             break;
@@ -3923,8 +4091,23 @@ void pvplayer_async_test_ppb_base::CommandCompleted(const PVCmdResponse& aRespon
             {
                 // Prepare failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
+            }
+            break;
+
+        case STATE_PREPARE_AFTERSTOP:
+            if (aResponse.GetCmdStatus() == PVMFSuccess)
+            {
+                iState = STATE_START_AFTERSTOP;
+                RunIfNotReady();
+            }
+            else
+            {
+                // Prepare failed
+                PVPATB_TEST_IS_TRUE(false);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -3944,8 +4127,8 @@ void pvplayer_async_test_ppb_base::CommandCompleted(const PVCmdResponse& aRespon
             {
                 // GetMetadataKeys failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -3975,8 +4158,8 @@ void pvplayer_async_test_ppb_base::CommandCompleted(const PVCmdResponse& aRespon
             {
                 // GetMetadataValue failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -3988,21 +4171,42 @@ void pvplayer_async_test_ppb_base::CommandCompleted(const PVCmdResponse& aRespon
                     if (iLongPauseResume || iShortPauseResume)
                     {
                         iState = STATE_PAUSE;
-                        //just play for 20 seconds then stop
-                        RunIfNotReady(20*1000*1000);
-                    }
-                    else
-                    {
-                        iState = STATE_STOP;
-                        if (!iPlayUntilEOS)
+
+                        if (iShoutcastSession)
+                        {
+                            //just play for 1 minutes then stop
+                            RunIfNotReady(iSCListenTime);
+                        }
+                        else
                         {
                             //just play for 20 seconds then stop
                             RunIfNotReady(20*1000*1000);
                         }
+                    }
+                    else if (iSeekAfterDownloadComplete && 0 == iNumBufferingComplete)
+                    {
+                        iState = STATE_PAUSE_AFTERDOWNLOADCOMPLETE;
+                    }
+                    else if (!iPlayUntilEOS)
+                    {
+                        iState = STATE_STOP;
+
+                        if (iShoutcastSession)
+                        {
+                            //just play for 5 minutes then stop
+                            // or 1 minute when it is play stop play
+                            RunIfNotReady(iSCListenTime);
+                        }
                         else
                         {
-                            // wait for EOS
+                            //just play for 20 second then stop
+                            RunIfNotReady(20*1000*1000);
                         }
+                    }
+                    else
+                    {
+                        // wait for EOS
+                        iState = STATE_STOP;
                     }
                 }
                 else
@@ -4025,8 +4229,34 @@ void pvplayer_async_test_ppb_base::CommandCompleted(const PVCmdResponse& aRespon
             {
                 // Start failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
+            }
+            break;
+
+        case STATE_START_AFTERSTOP:
+            if (aResponse.GetCmdStatus() == PVMFSuccess)
+            {
+                if (iNumDataReady)
+                {
+                    if (iEOSStopPlay)
+                    {
+                        iState = STATE_STOP_TWICE;
+                        RunIfNotReady(3*1000*1000);	// Play for 3 seconds
+                    }
+                    else if (iShoutcastPlayStopPlay)
+                    {
+                        iState = STATE_STOP_TWICE;
+                        RunIfNotReady(iSCListenTime);	// Play for another minute
+                    }
+                }
+            }
+            else
+            {
+                // Start failed
+                PVPATB_TEST_IS_TRUE(false);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -4043,8 +4273,8 @@ void pvplayer_async_test_ppb_base::CommandCompleted(const PVCmdResponse& aRespon
                 fprintf(iTestMsgOutputFile, "***Repositioning Failed...\n");
                 // Repos failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -4077,12 +4307,27 @@ void pvplayer_async_test_ppb_base::CommandCompleted(const PVCmdResponse& aRespon
             else
             {
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
+            }
+            break;
+
+        case STATE_PAUSE_AFTERDOWNLOADCOMPLETE:
+            if (aResponse.GetCmdStatus() == PVMFSuccess)
+            {
+                iState = STATE_SETPLAYBACKRANGE_AFTERDOWNLOADCOMPLETE;
+                RunIfNotReady();
+            }
+            else
+            {
+                PVPATB_TEST_IS_TRUE(false);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
         case STATE_SETPLAYBACKRANGE_AFTERSTART:
+        case STATE_SETPLAYBACKRANGE_AFTERDOWNLOADCOMPLETE:
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
                 iState = STATE_RESUME;
@@ -4091,8 +4336,8 @@ void pvplayer_async_test_ppb_base::CommandCompleted(const PVCmdResponse& aRespon
             else
             {
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
 
             break;
@@ -4123,16 +4368,25 @@ void pvplayer_async_test_ppb_base::CommandCompleted(const PVCmdResponse& aRespon
                     }
                     else
                     {
-                        // play for another 20 seconds and stop
-                        RunIfNotReady(20*1000*1000);
+
+                        if (iShoutcastSession)
+                        {
+                            //just play for 1 minutes then stop
+                            RunIfNotReady(iSCListenTime);
+                        }
+                        else
+                        {
+                            // play for another 20 seconds and stop
+                            RunIfNotReady(20*1000*1000);
+                        }
                     }
                 }
             }
             else
             {
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -4164,8 +4418,8 @@ void pvplayer_async_test_ppb_base::CommandCompleted(const PVCmdResponse& aRespon
             else
             {
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -4178,8 +4432,8 @@ void pvplayer_async_test_ppb_base::CommandCompleted(const PVCmdResponse& aRespon
             else
             {
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
 
             break;
@@ -4218,12 +4472,33 @@ void pvplayer_async_test_ppb_base::CommandCompleted(const PVCmdResponse& aRespon
             else
             {
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
         case STATE_STOP:
+            if (aResponse.GetCmdStatus() == PVMFSuccess)
+            {
+                if (iEOSStopPlay || iShoutcastPlayStopPlay)
+                {
+                    iState = STATE_PREPARE_AFTERSTOP;
+                }
+                else
+                {
+                    iState = STATE_REMOVEDATASINK_VIDEO;
+                }
+                RunIfNotReady();
+            }
+            else
+            {
+                PVPATB_TEST_IS_TRUE(false);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
+            }
+            break;
+
+        case STATE_STOP_TWICE:
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
                 iState = STATE_REMOVEDATASINK_VIDEO;
@@ -4232,8 +4507,8 @@ void pvplayer_async_test_ppb_base::CommandCompleted(const PVCmdResponse& aRespon
             else
             {
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -4247,8 +4522,8 @@ void pvplayer_async_test_ppb_base::CommandCompleted(const PVCmdResponse& aRespon
             {
                 // RemoveDataSink failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -4262,8 +4537,8 @@ void pvplayer_async_test_ppb_base::CommandCompleted(const PVCmdResponse& aRespon
             {
                 // RemoveDataSink failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -4277,8 +4552,8 @@ void pvplayer_async_test_ppb_base::CommandCompleted(const PVCmdResponse& aRespon
             {
                 // Reset failed
                 PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
+                iState = STATE_CLEANUPANDCOMPLETE;
+                RunIfNotReady();
             }
             break;
 
@@ -4353,6 +4628,7 @@ void pvplayer_async_test_ppb_base::HandleSocketNodeErrors(int32 aErr)
     {
         fprintf(iTestMsgOutputFile, "PVMFSocketNodeErrorSocketServerCreateError\n");
     }
+
     else if (aErr == PVMFSocketNodeErrorSocketServConnectError)
     {
         fprintf(iTestMsgOutputFile, "PVMFSocketNodeErrorSocketServConnectError\n");
@@ -4430,7 +4706,38 @@ void pvplayer_async_test_ppb_base::HandleProtocolEngineNodeErrors(int32 aErr)
 }
 void pvplayer_async_test_ppb_base::PrintJanusError(const PVCmdResponse& aResp)
 {
+#if(RUN_CPMJANUS_TESTCASES)
+//#if 0
+    //Get the extended error info.
+    if (aResp.GetCmdStatus() != PVMFSuccess)
+    {
+        PVInterface* iface = (PVInterface*)(aResp.GetEventExtensionInterface());
+        if (iface)
+        {
+            PVUuid errUuid(PVMFErrorInfoMessageInterfaceUUID);
+            PVMFErrorInfoMessageInterface* errMsg = NULL;
+            if (iface->queryInterface(errUuid, (PVInterface*&)errMsg))
+            {
+                //search for a janus error in the error list.
+                PVUuid janusUuid(PVMFJanusPluginErrorMessageUuid);
+                PVMFJanusPluginErrorMessage* janusErr = NULL;
+                PVMFErrorInfoMessageInterface* nextErr = errMsg->GetNextMessage();
+                while (nextErr)
+                {
+                    if (nextErr->queryInterface(janusUuid, (PVInterface*&)janusErr))
+                    {
+                        uint32 drmErr = janusErr->DrmResult();
+                        fprintf(file, "  Janus DRM Error! 0x%x\n", drmErr);
+                        break;
+                    }
+                    nextErr = nextErr->GetNextMessage();
+                }
+            }
+        }
+    }
+#else
     OSCL_UNUSED_ARG(aResp);
+#endif
 }
 
 void pvplayer_async_test_ppb_base::HandleErrorEvent(const PVAsyncErrorEvent& aEvent)
@@ -4475,42 +4782,20 @@ void pvplayer_async_test_ppb_base::HandleErrorEvent(const PVAsyncErrorEvent& aEv
 
     // Wait for engine to handle the error
     Cancel();
-    iState = STATE_WAIT_FOR_ERROR_HANDLING;
-    RunIfNotReady(5000000);
 }
 
 void pvplayer_async_test_ppb_base::HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent)
 {
-    // Wait for error handling to complete
-    if (iState == STATE_WAIT_FOR_ERROR_HANDLING && aEvent.GetEventType() == PVMFInfoErrorHandlingComplete)
+    if (aEvent.GetEventType() == PVMFInfoErrorHandlingStart)
     {
-        PVPlayerState pstate;
-        iPlayer->GetPVPlayerStateSync(pstate);
-        switch (pstate)
-        {
-            case PVP_STATE_INITIALIZED:
-                Cancel();
-                iState = STATE_REMOVEDATASINK_VIDEO;
-                RunIfNotReady();
-                break;
-
-            case PVP_STATE_IDLE:
-                Cancel();
-                iState = STATE_REMOVEDATASOURCE;
-                RunIfNotReady();
-                break;
-
-            default:
-                // Engine should not be in any other state when
-                // error handling completes
-                PVPATB_TEST_IS_TRUE(false);
-                Cancel();
-                iState = STATE_CLEANUPANDCOMPLETE;
-                RunIfNotReady();
-                break;
-        }
+        fprintf(file, "PVMFInfoErrorHandlingStart...\n");
     }
-
+    if (aEvent.GetEventType() == PVMFInfoErrorHandlingComplete)
+    {
+        fprintf(file, "PVMFInfoErrorHandlingComplete...\n");
+        iState = STATE_CLEANUPANDCOMPLETE;
+        RunIfNotReady();
+    }
     // Check for EOS event
     if (aEvent.GetEventType() == PVMFInfoEndOfData)
     {
@@ -4565,6 +4850,13 @@ void pvplayer_async_test_ppb_base::HandleInformationalEvent(const PVAsyncInforma
             {
                 fprintf(file, ".%d.", *percent);
             }
+
+            // get buffer fullness
+            PVExclusivePtr eventData;
+            aEvent.GetEventData(eventData);
+            uint32 aBufferFullness = (uint32)(eventData);
+            fprintf(file, ".(%d%%).", aBufferFullness);
+
         }
         break;
         case PVMFInfoBufferingStart:
@@ -4572,7 +4864,10 @@ void pvplayer_async_test_ppb_base::HandleInformationalEvent(const PVAsyncInforma
             iNumBufferingStart++;
             //we should only get one of these.
             if (iNumBufferingStart == 2)
-                PVPATB_TEST_IS_TRUE(false);
+            {
+                if (!iEOSStopPlay && !iShoutcastPlayStopPlay)
+                    PVPATB_TEST_IS_TRUE(false);
+            }
             break;
 
         case PVMFInfoBufferingComplete:
@@ -4580,14 +4875,16 @@ void pvplayer_async_test_ppb_base::HandleInformationalEvent(const PVAsyncInforma
             PVExclusivePtr eventData;
             aEvent.GetEventData(eventData);
             uint32 contentSize = (uint32)(eventData);
-            fprintf(file, "   PVMFInfoBufferingComplete (contentSize=%d)\n", contentSize);
             iNumBufferingComplete++;
+            fprintf(file, "   PVMFInfoBufferingComplete (contentSize=%d), iNumBufferingComplete=%d\n", contentSize, iNumBufferingComplete);
             //we should only get one of these.
-            if (iNumBufferingComplete == 2)
+            if (iNumBufferingComplete == 2 && !iEOSStopPlay && iLoopReq == 0)
                 PVPATB_TEST_IS_TRUE(false);
+
             if (iNumBufferingComplete == 1)
             {
-                if (iState == STATE_WAIT_FOR_BUFFCOMPLETE)
+                // if seek after download complete or waiting for download complete
+                if ((iState == STATE_PAUSE_AFTERDOWNLOADCOMPLETE) || (iState == STATE_WAIT_FOR_BUFFCOMPLETE))
                 {
                     Cancel();
                     RunIfNotReady();
@@ -4727,6 +5024,68 @@ void pvplayer_async_test_ppb_base::HandleInformationalEvent(const PVAsyncInforma
             }
         }
         break;
+        case PVMFInfoDurationAvailable:
+        {
+            PVMFDurationInfoMessageInterface* eventMsg = NULL;
+            PVInterface* infoExtInterface = aEvent.GetEventExtensionInterface();
+
+            if (infoExtInterface &&
+                    infoExtInterface->queryInterface(PVMFDurationInfoMessageInterfaceUUID, (PVInterface*&)eventMsg))
+            {
+                PVUuid eventuuid;
+                int32 infoCode;
+                eventMsg->GetCodeUUID(infoCode, eventuuid);
+                if (eventuuid == PVMFDurationInfoMessageInterfaceUUID)
+                {
+                    iSessionDuration = eventMsg->GetDuration();
+                }
+            }
+        }
+        break;
+        case PVMFInfoMetadataAvailable:
+        {
+            PVUuid infomsguuid = PVMFMetadataInfoMessageInterfaceUUID;
+            PVMFMetadataInfoMessageInterface* eventMsg = NULL;
+            PVInterface* infoExtInterface = aEvent.GetEventExtensionInterface();
+            if (infoExtInterface &&
+                    infoExtInterface->queryInterface(infomsguuid, (PVInterface*&)eventMsg))
+            {
+                PVUuid eventuuid;
+                int32 infoCode;
+                eventMsg->GetCodeUUID(infoCode, eventuuid);
+                if (eventuuid == infomsguuid)
+                {
+                    Oscl_Vector<PvmiKvp, OsclMemAllocator> kvpVector = eventMsg->GetMetadataVector();
+                    for (uint32 i = 0;i < kvpVector.size();i++)
+                    {
+                        //arora
+                        if (oscl_strstr(kvpVector[i].key, "valtype=char*"))
+                        {
+                            fprintf(file, "\n*********************************");
+                            fprintf(file, "\nMetadata Key '%s', value '%s'\n", kvpVector[i].key, kvpVector[i].value.pChar_value);
+                            fprintf(file, "\n*********************************");
+                        }
+                        else if (oscl_strstr(kvpVector[i].key, "valtype=wchar*"))
+                        {
+                            OSCL_HeapString<OsclMemAllocator> ostr;
+                            char buf[2];
+                            buf[1] = '\0';
+                            for (uint32 j = 0;;j++)
+                            {
+                                if (kvpVector[i].value.pWChar_value[j] == '\0')
+                                    break;
+                                buf[0] = kvpVector[i].value.pWChar_value[j];
+                                ostr += buf;
+                            }
+                            fprintf(file, "\n*********************************");
+                            fprintf(file, "  Metadata Key '%s', value '%s'\n", kvpVector[i].key, ostr.get_str());
+                            fprintf(file, "\n*********************************");
+                        }
+                    }
+                }
+            }
+        }
+
         default:
             break;
     }
@@ -4746,11 +5105,26 @@ void pvplayer_async_test_ppb_normal::CreateDataSource()
     OSCL_HeapString<OsclMemAllocator> url(iFileName);
     OSCL_HeapString<OsclMemAllocator> default_source(SOURCENAME_PREPEND_STRING);
     default_source += DEFAULTSOURCEFILENAME;
+
+    if (iFileType == PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL)
+    {
+        iShoutcastSession = true;
+    }
+
     if (url == default_source)
     {
-        fprintf(file, "Setting source to %s\n", DEFAULT_3GPP_PPB_URL);
-        url = DEFAULT_3GPP_PPB_URL;
+        if (iFileType == PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL)
+        {
+            fprintf(file, "Setting source to %s\n", DEFAULT_SHOUTCAST_URL);
+            url = DEFAULT_SHOUTCAST_URL;
+        }
+        else
+        {
+            fprintf(file, "Setting source to %s\n", DEFAULT_3GPP_PPB_URL);
+            url = DEFAULT_3GPP_PPB_URL;
+        }
     }
+
     oscl_wchar wbuf[2];
     wbuf[1] = '\0';
     for (uint32 i = 0; i < url.get_size(); i++)
@@ -4760,7 +5134,15 @@ void pvplayer_async_test_ppb_normal::CreateDataSource()
     }
     iDataSource = new PVPlayerDataSourceURL;
     iDataSource->SetDataSourceURL(iDownloadURL);
-    iDataSource->SetDataSourceFormatType(PVMF_DATA_SOURCE_HTTP_URL);
+
+    if (iFileType == PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL)
+    {
+        iDataSource->SetDataSourceFormatType(PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL);
+    }
+    else
+    {
+        iDataSource->SetDataSourceFormatType(PVMF_MIME_DATA_SOURCE_HTTP_URL);
+    }
 
     iDownloadFilename = NULL;
 
@@ -4786,7 +5168,6 @@ void pvplayer_async_test_ppb_normal::CreateDataSource()
     iDownloadContextData->DownloadHTTPData()->iProxyName = iDownloadProxy;
     iDownloadContextData->DownloadHTTPData()->iProxyPort = iDownloadProxyPort;
     iDownloadContextData->DownloadHTTPData()->iPlaybackControl = PVMFSourceContextDataDownloadHTTP::ENoSaveToFile;
-    iDownloadContextData->CommonData()->iUseCPMPluginRegistry = false;
 
     iDataSource->SetDataSourceContextData(iDownloadContextData);
 }
@@ -4795,6 +5176,7 @@ void pvplayer_async_test_ppb_normal::CreateDataSinkVideo()
 {
     OSCL_wHeapString<OsclMemAllocator> sinkfile = OUTPUTNAME_PREPEND_WSTRING;
     sinkfile += _STRLIT_WCHAR("test_player_3gp_ppb_");
+
     if (iShortPauseResume)
     {
         sinkfile += _STRLIT_WCHAR("sht_ps_rsm_");
@@ -4832,24 +5214,23 @@ void pvplayer_async_test_ppb_normal::CreateDataSinkVideo()
         sinkfile += _STRLIT_WCHAR("nml_video.dat");
     }
 
-    iMIOFileOutVideo = iMioFactory->CreateVideoOutput((OsclAny*) & sinkfile);
+    iMIOFileOutVideo = iMioFactory->CreateVideoOutput((OsclAny*) & sinkfile, MEDIATYPE_VIDEO, iCompressedVideo);
     iIONodeVideo = PVMediaOutputNodeFactory::CreateMediaOutputNode(iMIOFileOutVideo);
     iDataSinkVideo = new PVPlayerDataSinkPVMFNode;
     ((PVPlayerDataSinkPVMFNode*)iDataSinkVideo)->SetDataSinkNode(iIONodeVideo);
-    if (iCompressedVideo)
-    {
-        ((PVPlayerDataSinkPVMFNode*)iDataSinkVideo)->SetDataSinkFormatType(PVMF_M4V);
-    }
-    else
-    {
-        ((PVPlayerDataSinkPVMFNode*)iDataSinkVideo)->SetDataSinkFormatType(PVMF_YUV420);
-    }
 }
 
 void pvplayer_async_test_ppb_normal::CreateDataSinkAudio()
 {
     OSCL_wHeapString<OsclMemAllocator> sinkfile = OUTPUTNAME_PREPEND_WSTRING;
-    sinkfile += _STRLIT_WCHAR("test_player_3gp_ppb_");
+    if (iShoutcastSession)
+    {
+        sinkfile += _STRLIT_WCHAR("test_player_shout_");
+    }
+    else
+    {
+        sinkfile += _STRLIT_WCHAR("test_player_3gp_ppb_");
+    }
     if (iShortPauseResume)
     {
         sinkfile += _STRLIT_WCHAR("sht_ps_rsm_");
@@ -4878,6 +5259,11 @@ void pvplayer_async_test_ppb_normal::CreateDataSinkAudio()
         sinkfile += _STRLIT_WCHAR("lp_");
     }
 
+    if (iShoutcastPlayStopPlay)
+    {
+        sinkfile += _STRLIT_WCHAR("ply_stp_ply_");
+    }
+
     if (iPlayUntilEOS)
     {
         sinkfile += _STRLIT_WCHAR("utl_eos_audio.dat");
@@ -4887,18 +5273,10 @@ void pvplayer_async_test_ppb_normal::CreateDataSinkAudio()
         sinkfile += _STRLIT_WCHAR("nml_audio.dat");
     }
 
-    iMIOFileOutAudio = iMioFactory->CreateAudioOutput((OsclAny*) & sinkfile);
+    iMIOFileOutAudio = iMioFactory->CreateAudioOutput((OsclAny*) & sinkfile, MEDIATYPE_AUDIO, iCompressedAudio);
     iIONodeAudio = PVMediaOutputNodeFactory::CreateMediaOutputNode(iMIOFileOutAudio);
     iDataSinkAudio = new PVPlayerDataSinkPVMFNode;
     ((PVPlayerDataSinkPVMFNode*)iDataSinkAudio)->SetDataSinkNode(iIONodeAudio);
-    if (iCompressedAudio)
-    {
-        ((PVPlayerDataSinkPVMFNode*)iDataSinkAudio)->SetDataSinkFormatType(PVMF_MPEG4_AUDIO);
-    }
-    else
-    {
-        ((PVPlayerDataSinkPVMFNode*)iDataSinkAudio)->SetDataSinkFormatType(AUDIOSINK_FORMAT_TYPE);
-    }
 }
 
 
@@ -4932,12 +5310,12 @@ void pvplayer_async_test_PDLPauseResumeAfterUnderFlow::CreateDataSource()
 
     if (iProtocolRollOver == true)
     {
-        iDataSource->SetDataSourceFormatType(PVMF_DATA_SOURCE_MS_HTTP_STREAMING_URL);
-        iDataSource->SetAlternateSourceFormatType(PVMF_DATA_SOURCE_HTTP_URL);
+        iDataSource->SetDataSourceFormatType(PVMF_MIME_DATA_SOURCE_MS_HTTP_STREAMING_URL);
+        iDataSource->SetAlternateSourceFormatType(PVMF_MIME_DATA_SOURCE_HTTP_URL);
     }
     else
     {
-        iDataSource->SetDataSourceFormatType(PVMF_DATA_SOURCE_HTTP_URL);
+        iDataSource->SetDataSourceFormatType(PVMF_MIME_DATA_SOURCE_HTTP_URL);
     }
 
     iDownloadFilename = OUTPUTNAME_PREPEND_WSTRING;
@@ -4972,7 +5350,6 @@ void pvplayer_async_test_PDLPauseResumeAfterUnderFlow::CreateDataSource()
     iDownloadContextData->DownloadHTTPData()->iUserID = _STRLIT_CHAR("abc");
     iDownloadContextData->DownloadHTTPData()->iUserPasswd = _STRLIT_CHAR("xyz");
     iDownloadContextData->DownloadHTTPData()->iPlaybackControl = PVMFSourceContextDataDownloadHTTP::EAsap;
-    iDownloadContextData->CommonData()->iUseCPMPluginRegistry = false;
 
     iDataSource->SetDataSourceContextData(iDownloadContextData);
 }
@@ -4980,35 +5357,19 @@ void pvplayer_async_test_PDLPauseResumeAfterUnderFlow::CreateDataSinkVideo()
 {
     OSCL_wHeapString<OsclMemAllocator> sinkfile = OUTPUTNAME_PREPEND_WSTRING;
     sinkfile += _STRLIT_WCHAR("test_player_3gppdlnormal_video.dat");
-    iMIOFileOutVideo = iMioFactory->CreateVideoOutput((OsclAny*) & sinkfile);
+    iMIOFileOutVideo = iMioFactory->CreateVideoOutput((OsclAny*) & sinkfile, MEDIATYPE_VIDEO, iCompressedVideo);
     iIONodeVideo = PVMediaOutputNodeFactory::CreateMediaOutputNode(iMIOFileOutVideo);
     iDataSinkVideo = new PVPlayerDataSinkPVMFNode;
     ((PVPlayerDataSinkPVMFNode*)iDataSinkVideo)->SetDataSinkNode(iIONodeVideo);
-    if (iCompressedVideo)
-    {
-        ((PVPlayerDataSinkPVMFNode*)iDataSinkVideo)->SetDataSinkFormatType(PVMF_M4V);
-    }
-    else
-    {
-        ((PVPlayerDataSinkPVMFNode*)iDataSinkVideo)->SetDataSinkFormatType(PVMF_YUV420);
-    }
 }
 void pvplayer_async_test_PDLPauseResumeAfterUnderFlow::CreateDataSinkAudio()
 {
     OSCL_wHeapString<OsclMemAllocator> sinkfile = OUTPUTNAME_PREPEND_WSTRING;
     sinkfile += _STRLIT_WCHAR("test_player_3gppdlnormal_audio.dat");
-    iMIOFileOutAudio = iMioFactory->CreateAudioOutput((OsclAny*) & sinkfile);
+    iMIOFileOutAudio = iMioFactory->CreateAudioOutput((OsclAny*) & sinkfile, MEDIATYPE_AUDIO, iCompressedAudio);
     iIONodeAudio = PVMediaOutputNodeFactory::CreateMediaOutputNode(iMIOFileOutAudio);
     iDataSinkAudio = new PVPlayerDataSinkPVMFNode;
     ((PVPlayerDataSinkPVMFNode*)iDataSinkAudio)->SetDataSinkNode(iIONodeAudio);
-    if (iCompressedAudio)
-    {
-        ((PVPlayerDataSinkPVMFNode*)iDataSinkAudio)->SetDataSinkFormatType(PVMF_MPEG4_AUDIO);
-    }
-    else
-    {
-        ((PVPlayerDataSinkPVMFNode*)iDataSinkAudio)->SetDataSinkFormatType(AUDIOSINK_FORMAT_TYPE);
-    }
 }
 void pvplayer_async_test_PDLPauseResumeAfterUnderFlow::CleanupData()
 {

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,25 +69,26 @@ void PVMFMP4FFParserOutPort::Construct()
 
 bool PVMFMP4FFParserOutPort::IsFormatSupported(PVMFFormatType aFmt)
 {
-    switch (aFmt)
+    if (aFmt == PVMF_MIME_M4V ||
+            aFmt == PVMF_MIME_H2631998 ||
+            aFmt == PVMF_MIME_H2632000 ||
+            aFmt == PVMF_MIME_H264_VIDEO_MP4 ||
+            aFmt == PVMF_MIME_MPEG4_AUDIO ||
+            aFmt == PVMF_MIME_AMR_IETF ||
+            aFmt == PVMF_MIME_3GPP_TIMEDTEXT)
     {
-        case PVMF_M4V:
-        case PVMF_H263:
-        case PVMF_H264_MP4:
-        case PVMF_MPEG4_AUDIO:
-        case PVMF_AMR_IETF:
-        case PVMF_3GPP_TIMEDTEXT:
-            return true;
-
-        default:
-            return false;
+        return true;
+    }
+    else
+    {
+        return false;
     }
 }
 
 
 void PVMFMP4FFParserOutPort::FormatUpdated()
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_INFO, (0, "PVMFMP4FFParserOutPort::FormatUpdated %d", iFormat));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_INFO, (0, "PVMFMP4FFParserOutPort::FormatUpdated %s", iFormat.getMIMEStrPtr()));
 }
 
 PVMFStatus PVMFMP4FFParserOutPort::Connect(PVMFPortInterface* aPort)
@@ -106,10 +107,9 @@ PVMFStatus PVMFMP4FFParserOutPort::Connect(PVMFPortInterface* aPort)
         return PVMFFailure;
     }
 
-    PvmiCapabilityAndConfig *config;
-
-    aPort->QueryInterface(PVMI_CAPABILITY_AND_CONFIG_PVUUID,
-                          (OsclAny*&)config);
+    OsclAny* temp = NULL;
+    aPort->QueryInterface(PVMI_CAPABILITY_AND_CONFIG_PVUUID, temp);
+    PvmiCapabilityAndConfig *config = OSCL_STATIC_CAST(PvmiCapabilityAndConfig*, temp);
 
     if (config != NULL)
     {

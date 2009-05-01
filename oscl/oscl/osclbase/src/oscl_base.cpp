@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,6 +86,7 @@ void PVOsclBase_Cleanup()
 OSCL_DLL_ENTRY_POINT_DEFAULT()
 
 
+#if(OSCL_HAS_BASIC_LOCK)
 //
 // _OsclBasicLock
 //
@@ -131,5 +132,7 @@ OSCL_EXPORT_REF void _OsclBasicLock::Unlock()
         iError = result;
 
 }
+#endif //OSCL_HAS_BASIC_LOCK
+
 
 

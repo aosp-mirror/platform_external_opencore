@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -226,24 +226,21 @@ __inline int32 shr_int32(int32 L_var1, int16 var2)
 
 
 
-
-
-#if defined(_ARM_V5)
+#if defined(PV_ARM_V5)
 
 #include "pvamrwbdecoder_basic_op_armv5.h"
 
-#endif
-
-#if defined(C_EQUIVALENT)
-
-#include "pvamrwbdecoder_basic_op_cequivalent.h"
-
-#endif
-
-
-#if defined(_ARM_GCC)
+#elif defined(PV_ARM_GCC_V5)
 
 #include "pvamrwbdecoder_basic_op_gcc_armv5.h"
+
+#else
+
+#ifndef C_EQUIVALENT
+#define C_EQUIVALENT		// default to C_EQUIVALENT
+#endif
+
+#include "pvamrwbdecoder_basic_op_cequivalent.h"
 
 #endif
 

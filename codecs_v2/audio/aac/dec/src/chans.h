@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +16,8 @@
  * -------------------------------------------------------------------
  */
 /*
-------------------------------------------------------------------------------
 
-
-
- Pathname: /audio/
-                aac_mpeg4/
-                    AAC_baseline/
-                        pv_aac_dec/
-                            c/
-                                include/
-                                    chans.h
-
-     Date: 05/09/2001
+ Pathname:   chans.h
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
@@ -67,17 +56,10 @@ extern "C"
     ; Include all pre-processor statements here.
     ----------------------------------------------------------------------------*/
     /* #define is required in order to use these args in #if () directive */
-#if 0
-#define ICChans 1   /* independently switched coupling channels */
-#define DCChans 2   /* dependently switched coupling channels */
-#define XCChans 1   /* scratch space for parsing unused coupling channels */
-#define CChans  (ICChans + DCChans + XCChans)
-#else
 #define ICChans 0
 #define DCChans 0
 #define XCChans 0
 #define CChans  0
-#endif
 
     /*----------------------------------------------------------------------------
     ; EXTERNAL VARIABLES REFERENCES
@@ -97,15 +79,6 @@ extern "C"
          * channels for 5.1 main profile configuration
          * (modify for any desired decoder configuration)
          */
-#if 0
-        FChans  = 3,    /* front channels: left, center, right */
-        FCenter = 0,    /* 1 if decoder has front center channel */
-        SChans  = 2,    /* side channels: */
-        BChans  = 1,    /* back channels: left surround, right surround */
-        BCenter = 0,    /* 1 if decoder has back center channel */
-        LChans  = 1,    /* LFE channels */
-        XChans  = 1,    /* scratch space for parsing unused channels */
-#else
         FChans  = 2,    /* front channels: left, center, right */
         FCenter = 0,    /* 1 if decoder has front center channel */
         SChans  = 0,    /* side channels: */
@@ -113,7 +86,6 @@ extern "C"
         BCenter = 0,    /* 1 if decoder has back center channel */
         LChans  = 0,    /* LFE channels */
         XChans  = 0,    /* scratch space for parsing unused channels */
-#endif
 
         Chans   = FChans + SChans + BChans + LChans + XChans
     };

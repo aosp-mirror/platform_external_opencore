@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,17 +36,20 @@
 #ifndef PVMF_MEDIA_DATA_IMPL_H_INCLUDED
 #include "pvmf_media_data_impl.h"
 #endif
+#ifndef OSCL_MEM_MEMPOOL_H_INCLUDED
+#include "oscl_mem_mempool.h"
+#endif
 
 class PvmfMediaInputDataBufferCleanup : public OsclDestructDealloc
 {
     public:
-        PvmfMediaInputDataBufferCleanup(Oscl_DefAlloc* in_gen_alloc, PvmiMediaTransfer* aMediaInput,
+        PvmfMediaInputDataBufferCleanup(OsclMemPoolFixedChunkAllocator* in_gen_alloc, PvmiMediaTransfer* aMediaInput,
                                         PVMFCommandId aCmdId, OsclAny* aContext = NULL);
         virtual ~PvmfMediaInputDataBufferCleanup() {};
         virtual void destruct_and_dealloc(OsclAny* ptr);
 
     private:
-        Oscl_DefAlloc* gen_alloc;
+        OsclMemPoolFixedChunkAllocator* gen_alloc;
 
         // Variables needed to call writeComplete
         PvmiMediaTransfer* iMediaInput;
@@ -59,12 +62,12 @@ class PvmfMediaInputDataBufferCleanup : public OsclDestructDealloc
 class PvmfMediaInputDataBufferAlloc
 {
     public:
-        PvmfMediaInputDataBufferAlloc(Oscl_DefAlloc* opt_gen_alloc = 0);
+        PvmfMediaInputDataBufferAlloc(OsclMemPoolFixedChunkAllocator* opt_gen_alloc = 0);
         virtual OsclSharedPtr<PVMFMediaDataImpl> allocate(PvmiMediaTransfer* aMediaInput, uint8* aData,
                 uint32 aDataLength, PVMFCommandId aCmdId, OsclAny* aContext = NULL);
 
     private:
-        Oscl_DefAlloc* gen_alloc;
+        OsclMemPoolFixedChunkAllocator* gen_alloc;
         PVLogger* iLogger;
 };
 

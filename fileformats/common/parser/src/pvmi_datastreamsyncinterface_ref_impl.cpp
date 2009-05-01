@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -125,7 +125,7 @@ PVMIDataStreamSyncInterfaceRefImpl::OpenSession(PvmiDataStreamSession& aSessionI
         int32 res = iFileObject->Seek(0, Oscl_File::SEEKEND);
         if (res == 0)
         {
-            iFileNumBytes = iFileObject->Tell();
+            iFileNumBytes = (TOsclFileOffsetInt32)iFileObject->Tell();
             iFileObject->Seek(0, Oscl_File::SEEKSET);
         }
         aSessionID = iSessionID;
@@ -295,7 +295,7 @@ PVMIDataStreamSyncInterfaceRefImpl::GetCurrentPointerPosition(PvmiDataStreamSess
 
     if (!iFileObject)
         return 0;
-    int32 result = iFileObject->Tell();
+    int32 result = (TOsclFileOffsetInt32)iFileObject->Tell();
     LOGDEBUG((0, "PVMIDataStreamSyncInterfaceRefImpl::GetCurrentContentPosition returning %d", result));
     return (uint32)(result);
 }
@@ -310,9 +310,14 @@ PVMIDataStreamSyncInterfaceRefImpl::Flush(PvmiDataStreamSession sessionID)
         LOGDEBUG((0, "PVMIDataStreamSyncInterfaceRefImpl::Flush returning %d", -1));
         return PVDS_FAILURE;
     }
-    int32 result = iFileObject->Flush();
+    int32 result;
+    result = iFileObject->Flush();
     LOGDEBUG((0, "PVMIDataStreamSyncInterfaceRefImpl::Flush returning %d", result));
-    return PVDS_SUCCESS;
+    if (result == 0) //Flush will return 0 when successful
+        return PVDS_SUCCESS;
+    else
+        return PVDS_FAILURE;
+
 }
 
 

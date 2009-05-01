@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,21 +40,12 @@ OSCL_DLL_ENTRY_POINT_DEFAULT()
 #define LOGINFOMED(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG,iLogger,PVLOGMSG_INFO,m);
 #define LOGINFOLOW(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG,iLogger,PVLOGMSG_INFO,m);
 #define LOGINFO(m) LOGINFOMED(m)
+#define LOGDIAGNOSTICS(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF,iDiagnosticsLogger,PVLOGMSG_INFO,m);
 
 //this should always be 1. set this to zero if
 //you want to bypass avsync (typically used in
 //case one wants to decode and render ASAP)
 #define PVMF_MEDIA_OUTPUT_NODE_ENABLE_AV_SYNC 1
-
-////////////////////////////////////////////////////////////////////////////
-void PVMediaOutputNode::Assert(bool condition)
-{
-    if (!condition)
-    {
-        LOGERROR((0, "PVMediaOutputNode::Assert Failed!"));
-        OSCL_ASSERT(0);
-    }
-}
 
 ////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF PVMFNodeInterface* PVMediaOutputNodeFactory::CreateMediaOutputNode(
@@ -91,6 +82,8 @@ void PVMediaOutputNode::Release(PVMFNodeInterface* aNode)
 ////////////////////////////////////////////////////////////////////////////
 PVMediaOutputNode::~PVMediaOutputNode()
 {
+    LogDiagnostics();
+
     Cancel();
     if (IsAdded())
         RemoveFromScheduler();
@@ -110,7 +103,7 @@ PVMediaOutputNode::~PVMediaOutputNode()
     //a crash when they callback-- so panic here instead.
     if (!iCancelCommand.empty()
             || iMediaIORequest != ENone)
-        OsclError::Panic("PVMOUT", PVMoutPanic_OutstandingMIO_Command);
+        OSCL_ASSERT(0);//OsclError::Panic("PVMOUT",PVMoutPanic_OutstandingMIO_Command);
 
     //Cleanup allocated ports
     while (!iInPortVector.empty())
@@ -138,6 +131,7 @@ OSCL_EXPORT_REF PVMFStatus PVMediaOutputNode::ThreadLogon()
 
     iLogger = PVLogger::GetLoggerObject("PVMediaOutputNode");
     iReposLogger = PVLogger::GetLoggerObject("pvplayerrepos.mionode");
+    iDiagnosticsLogger = PVLogger::GetLoggerObject("pvplayerdiagnostics.mionode");
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "PVMediaOutputNode::ThreadLogon"));
@@ -149,6 +143,13 @@ OSCL_EXPORT_REF PVMFStatus PVMediaOutputNode::ThreadLogon()
     {
         iMIOControl->ThreadLogon();
         iMediaIOState = STATE_LOGGED_ON;
+    }
+
+    if (iMIOControl->connect(iMIOSession, this) != PVMFSuccess)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                        (0, "PVMediaOutputNode::ThreadLogon: Error - iMIOControl->connect failed"));
+        return PVMFFailure;
     }
 
     SetState(EPVMFNodeIdle);
@@ -180,7 +181,7 @@ OSCL_EXPORT_REF PVMFStatus PVMediaOutputNode::ThreadLogoff()
         // This is to reduce risk to existing MIOs.
         //
         // It can be moved to the internal node reset in the future.
-        PVMFStatus status = iMIOControl->Reset(iMIOSession);
+        PVMFStatus status = PVMFFailure;
         status = iMIOControl->disconnect(iMIOSession);
         //ignore any returned errors.
         iMIOControl->ThreadLogoff();
@@ -211,12 +212,12 @@ OSCL_EXPORT_REF PVMFStatus PVMediaOutputNode::GetCapability(PVMFNodeCapability& 
     // Get input formats capability from media IO
     kvp = NULL;
     numParams = 0;
-    status = iMIOConfig->getParametersSync(NULL, INPUT_FORMATS_CAP_QUERY, kvp, numParams, NULL);
+    status = iMIOConfig->getParametersSync(NULL, (char*)INPUT_FORMATS_CAP_QUERY, kvp, numParams, NULL);
     if (status == PVMFSuccess)
     {
         OSCL_TRY(err,
                  for (i = 0; i < numParams; i++)
-                 aNodeCapability.iInputFormatCapability.push_back(kvp[i].value.uint32_value);
+                 aNodeCapability.iInputFormatCapability.push_back(PVMFFormatType(kvp[i].value.pChar_value));
                 );
         if (kvp)
             iMIOConfig->releaseParameters(0, kvp, numParams);
@@ -226,12 +227,12 @@ OSCL_EXPORT_REF PVMFStatus PVMediaOutputNode::GetCapability(PVMFNodeCapability& 
     // Get output formats capability from media IO
     kvp = NULL;
     numParams = 0;
-    status = iMIOConfig->getParametersSync(NULL, OUTPUT_FORMATS_CAP_QUERY, kvp, numParams, NULL);
+    status = iMIOConfig->getParametersSync(NULL, (char*)OUTPUT_FORMATS_CAP_QUERY, kvp, numParams, NULL);
     if (status == PVMFSuccess)
     {
         OSCL_TRY(err,
                  for (i = 0; i < numParams; i++)
-                 aNodeCapability.iOutputFormatCapability.push_back(kvp[i].value.uint32_value);
+                 aNodeCapability.iOutputFormatCapability.push_back(PVMFFormatType(kvp[i].value.pChar_value));
                 );
         if (kvp)
             iMIOConfig->releaseParameters(0, kvp, numParams);
@@ -425,7 +426,7 @@ OSCL_EXPORT_REF bool PVMediaOutputNode::queryInterface(const PVUuid& uuid, PVInt
 }
 
 ////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFStatus PVMediaOutputNode::SetClock(OsclClock* aClock)
+OSCL_EXPORT_REF PVMFStatus PVMediaOutputNode::SetClock(PVMFMediaClock* aClock)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "PVMediaOutputNode::SetClock: aClock=0x%x", aClock));
@@ -524,10 +525,8 @@ OSCL_EXPORT_REF void PVMediaOutputNode::ClockStopped()
 
 ////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF PVMFCommandId PVMediaOutputNode::SkipMediaData(PVMFSessionId s,
-        PVMFTimestamp aStartingTimestamp,
         PVMFTimestamp aResumeTimestamp,
         uint32 aStreamID,
-        bool aRenderSkippedData ,
         bool aPlayBackPositionContinuous,
         OsclAny* aContext)
 {
@@ -538,9 +537,7 @@ OSCL_EXPORT_REF PVMFCommandId PVMediaOutputNode::SkipMediaData(PVMFSessionId s,
     PVMediaOutputNodeCmd cmd;
     cmd.Construct(s,
                   PVMF_MEDIAOUTPUTNODE_SKIPMEDIADATA,
-                  aStartingTimestamp,
                   aResumeTimestamp,
-                  aRenderSkippedData,
                   aStreamID,
                   aPlayBackPositionContinuous,
                   aContext);
@@ -560,7 +557,7 @@ OSCL_EXPORT_REF void PVMediaOutputNode::RequestCompleted(const PVMFCmdResp& aRes
     {
         iMediaIOCancelPending = false;
 
-        Assert(!iCancelCommand.empty());
+        OSCL_ASSERT(!iCancelCommand.empty());
 
         //Current cancel command is now complete.
         CommandComplete(iCancelCommand, iCancelCommand.front(), PVMFSuccess);
@@ -569,12 +566,14 @@ OSCL_EXPORT_REF void PVMediaOutputNode::RequestCompleted(const PVMFCmdResp& aRes
     else if (iMediaIORequest != ENone
              && aResponse.GetCmdId() == iMediaIOCmdId)
     {
-        Assert(!iCurrentCommand.empty());
+        OSCL_ASSERT(!iCurrentCommand.empty());
         PVMediaOutputNodeCmd& cmd = iCurrentCommand.front();
 
         switch (iMediaIORequest)
         {
             case EQueryCapability:
+                iMIOConfig = OSCL_STATIC_CAST(PvmiCapabilityAndConfig*, iMIOConfigPVI);
+                iMIOConfigPVI = NULL;
                 if (aResponse.GetCmdStatus() != PVMFSuccess)
                     cmd.iEventCode = PVMFMoutNodeErr_MediaIOQueryCapConfigInterface;
                 CommandComplete(iCurrentCommand, iCurrentCommand.front(), aResponse.GetCmdStatus());
@@ -583,6 +582,8 @@ OSCL_EXPORT_REF void PVMediaOutputNode::RequestCompleted(const PVMFCmdResp& aRes
             case EQueryClockExtension:
                 //ignore any error from this query since the interface is optional.
                 iMediaIORequest = ENone;
+                iMIOClockExtension = OSCL_STATIC_CAST(PvmiClockExtensionInterface*, iMIOClockExtensionPVI);
+                iMIOClockExtensionPVI = NULL;
                 //re-do the clock setting call since iMIOClockExtension may have changed.
                 if (aResponse.GetCmdStatus() == PVMFSuccess
                         && iMIOClockExtension)
@@ -651,8 +652,22 @@ OSCL_EXPORT_REF void PVMediaOutputNode::RequestCompleted(const PVMFCmdResp& aRes
             }
             break;
 
+            case EReset:
+            {
+                if (aResponse.GetCmdStatus() != PVMFSuccess)
+                {
+                    cmd.iEventCode = PVMFMoutNodeErr_MediaIOReset;
+                }
+                else
+                {
+                    iMediaIOState = STATE_LOGGED_ON;
+                }
+                CommandComplete(iCurrentCommand, iCurrentCommand.front(), aResponse.GetCmdStatus());
+            }
+            break;
+
             default:
-                Assert(false);
+                OSCL_ASSERT(false);
                 CommandComplete(iCurrentCommand, iCurrentCommand.front(), PVMFFailure);
                 break;
         }
@@ -666,6 +681,25 @@ OSCL_EXPORT_REF void PVMediaOutputNode::RequestCompleted(const PVMFCmdResp& aRes
     }
 }
 
+OSCL_EXPORT_REF void PVMediaOutputNode::ReportErrorEvent(PVMFEventType aEventType, PVInterface* aExtMsg)
+{
+    OSCL_UNUSED_ARG(aEventType);
+    OSCL_UNUSED_ARG(aExtMsg);
+}
+OSCL_EXPORT_REF void PVMediaOutputNode::ReportInfoEvent(PVMFEventType aEventType, PVInterface* aExtMsg)
+{
+    OSCL_UNUSED_ARG(aExtMsg);
+    if (PVMFMIOConfigurationComplete == aEventType)
+    {
+        LOGINFO((0, "PVMediaOutputNode::ReportInfoEvent PVMFMIOConfigurationComplete received"));
+        for (uint32 i = 0; i < iInPortVector.size(); i++)
+        {
+            iInPortVector[i]->SetMIOComponentConfigStatus(true);
+        }
+    }
+}
+
+
 ////////////////////////////////////////////////////////////////////////////
 PVMediaOutputNode::PVMediaOutputNode()
         : OsclActiveObject(OsclActiveObject::EPriorityNominal, "PVMediaOutputNode")
@@ -673,12 +707,17 @@ PVMediaOutputNode::PVMediaOutputNode()
         , iMIOControl(NULL)
         , iMIOSession(NULL)
         , iMIOConfig(NULL)
+        , iMIOConfigPVI(NULL)
+        , iMediaIOState(STATE_IDLE)
         , iClock(NULL)
         , iEarlyMargin(DEFAULT_EARLY_MARGIN)
         , iLateMargin(DEFAULT_LATE_MARGIN)
+        , iDiagnosticsLogger(NULL)
+        , iDiagnosticsLogged(false)
         , iExtensionRefCount(0)
         , iLogger(NULL)
-        , iMediaIOState(STATE_IDLE)
+        , iReposLogger(NULL)
+        , iRecentBOSStreamID(0)
 {
 }
 
@@ -694,7 +733,8 @@ void PVMediaOutputNode::ConstructL(PvmiMIOControl* aIOInterfacePtr)
     iMediaIORequest = ENone;
     iMediaIOCancelPending = false;
     iMIOClockExtension = NULL;
-    iClockRate = 1;
+    iMIOClockExtensionPVI = NULL;
+    iClockRate = 100000;
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -763,6 +803,9 @@ void PVMediaOutputNode::CommandComplete(PVMediaOutputNodeCmdQ& aCmdQ, PVMediaOut
                     for (uint32 i = 0;i < iInPortVector.size();i++)
                         iInPortVector[i]->ResumeInput();
                 }
+                break;
+            case PVMF_GENERIC_NODE_RESET:
+                SetState(EPVMFNodeIdle);
                 break;
             default:
                 break;
@@ -874,7 +917,7 @@ void PVMediaOutputNode::ProcessCommand()
     }
 
     //The newest or highest pri command is in the front of the queue.
-    Assert(!iInputCommands.empty());
+    OSCL_ASSERT(!iInputCommands.empty());
     PVMediaOutputNodeCmd& aCmd = iInputCommands.front();
 
     PVMFStatus cmdstatus;
@@ -902,7 +945,7 @@ void PVMediaOutputNode::ProcessCommand()
                     break;
 
                 default:
-                    Assert(false);
+                    OSCL_ASSERT(false);
                     cmdstatus = PVMFFailure;
                     break;
             }
@@ -986,7 +1029,7 @@ void PVMediaOutputNode::ProcessCommand()
                     break;
 
                 default://unknown command type
-                    Assert(false);
+                    OSCL_ASSERT(false);
                     cmdstatus = PVMFFailure;
                     break;
             }
@@ -1069,21 +1112,6 @@ PVMFStatus PVMediaOutputNode::DoRequestPort(PVMediaOutputNodeCmd& aCmd, OsclAny*
             }
             PVMediaOutputNodePort *port = OSCL_PLACEMENT_NEW(ptr, PVMediaOutputNodePort(this));
 
-            //set the format from the mimestring, if provided
-            if (mimetype)
-            {
-                GetFormatIndex(mimetype->get_str());
-                PVMFStatus status = port->Configure(*mimetype);
-                if (status != PVMFSuccess)
-                {
-                    //bad format!
-                    iInPortVector.DestructAndDealloc(port);
-                    return PVMFErrArgument;
-                }
-            }
-
-            iSinkFormatString = *mimetype;
-
             //Add the port to the port vector.
             OSCL_TRY(err, iInPortVector.AddL(port););
             if (err != OsclErrNone)
@@ -1091,6 +1119,21 @@ PVMFStatus PVMediaOutputNode::DoRequestPort(PVMediaOutputNodeCmd& aCmd, OsclAny*
                 iInPortVector.DestructAndDealloc(port);
                 return PVMFErrNoMemory;
             }
+
+            //set the format from the mimestring, if provided
+            if (mimetype)
+            {
+                PVMFStatus status = port->Configure(*mimetype);
+                if (status != PVMFSuccess)
+                {
+                    //bad format!
+                    iInPortVector.Erase(&port);
+                    iInPortVector.DestructAndDealloc(port);
+                    return PVMFErrArgument;
+                }
+            }
+
+            iSinkFormatString = *mimetype;
 
             //pass the current clock settings to the port.
             SetClock(iClock);
@@ -1129,14 +1172,6 @@ PVMFStatus PVMediaOutputNode::DoInit(PVMediaOutputNodeCmd& aCmd)
         return PVMFFailure;
     }
 
-    if (iMIOControl->connect(iMIOSession, this) != PVMFSuccess)
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "PVMediaOutputNode::DoInit: Error - iMIOControl->connect failed"));
-        aCmd.iEventCode = PVMFMoutNodeErr_MediaIOConnect;
-        return PVMFFailure;
-    }
-
     //Query for MIO interfaces.
     return SendMioRequest(aCmd, EQueryClockExtension);
 }
@@ -1164,35 +1199,15 @@ PVMFStatus PVMediaOutputNode::DoStart(PVMediaOutputNodeCmd& aCmd)
             && iInterfaceState != EPVMFNodePaused)
         return PVMFErrInvalidState;
 
-    //see whether to delay the MIO start command until config info
-    //is received on the port.  When the config is received the
-    //port will call MioConfigured. Media output node start will
-    //not complete till MioConfigured is called.
-    if (iInPortVector.size() > 0 && iInPortVector[0]->iWaitForConfig)
-    {
-        return PVMFPending;
-    }
+    iDiagnosticsLogged = false;
+    iInPortVector[0]->iFramesDropped = 0;
+    iInPortVector[0]->iTotalFrames = 0;
+
     //Start the MIO
+
     return SendMioRequest(aCmd, EStart);
 }
 
-////////////////////////////////////////////////////////////////////////////
-void PVMediaOutputNode::MioConfigured()
-//called by the port when the MIO was just configured.
-//only called for ports that need to wait on config before starting
-//the MIO.
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "PVMediaOutputNode::MioConfigured() called"));
-    if (iCurrentCommand.front().iCmd == PVMF_GENERIC_NODE_START)
-    {
-        //implies that media output node start is waiting for
-        //media output comp to be configured
-        //Now that media output comp has been configured,
-        //start it
-        SendMioRequest(iCurrentCommand.front(), EStart);
-    }
-}
 
 ////////////////////////////////////////////////////////////////////////////
 PVMFStatus PVMediaOutputNode::DoStop(PVMediaOutputNodeCmd& aCmd)
@@ -1207,6 +1222,7 @@ PVMFStatus PVMediaOutputNode::DoStop(PVMediaOutputNodeCmd& aCmd)
             && iInterfaceState != EPVMFNodePaused)
         return PVMFErrInvalidState;
 
+    LogDiagnostics();
 
     if (iMediaIOState == STATE_STARTED || iMediaIOState == STATE_PAUSED)
     {
@@ -1262,13 +1278,10 @@ PVMFStatus PVMediaOutputNode::DoSkipMediaData(PVMediaOutputNodeCmd& aCmd)
     //3) Then we wait for all discard data to complete and all ports to
     //report BOS. Ports call "ReportBOS" when they recv BOS.
 
-    PVMFTimestamp startingTimestamp, resumeTimestamp;
-    bool renderSkippedData ;
+    PVMFTimestamp resumeTimestamp;
     bool playbackpositioncontinuous;
     uint32 streamID;
-    aCmd.Parse(startingTimestamp,
-               resumeTimestamp,
-               renderSkippedData,
+    aCmd.Parse(resumeTimestamp,
                playbackpositioncontinuous,
                streamID);
     iRecentBOSStreamID = streamID;
@@ -1503,7 +1516,6 @@ PVMFStatus PVMediaOutputNode::DoCancelCommand(PVMediaOutputNodeCmd& aCmd)
 PVMFStatus PVMediaOutputNode::DoReleasePort(PVMediaOutputNodeCmd& aCmd)
 {
     //This node supports release port from any state
-
     PVMFPortInterface* p;
     aCmd.PVMediaOutputNodeCmdBase::Parse(p);
     //search the input port vector
@@ -1526,22 +1538,29 @@ PVMFStatus PVMediaOutputNode::DoReset(PVMediaOutputNodeCmd& aCmd)
 {
     OSCL_UNUSED_ARG(aCmd);
 
-    //delete all ports and notify observer.
-    while (!iInPortVector.empty())
-        iInPortVector.Erase(&iInPortVector.front());
+    LogDiagnostics();
 
-    //restore original port vector reserve.
+    // delete all ports and notify observer.
+    while (!iInPortVector.empty())
+    {
+        iInPortVector.front()->Disconnect();
+        iInPortVector.Erase(&iInPortVector.front());
+    }
+
+    // restore original port vector reserve.
     iInPortVector.Reconstruct();
 
-    //logoff & go back to Created state.
-    SetState(EPVMFNodeIdle);
-    PVMFStatus status = ThreadLogoff();
-    //currently thread logoff can't fail.
-    //if any error returns are added, then a node error event should
-    //be added also.
-    Assert(status == PVMFSuccess);
-
-    return status;
+    if ((iInterfaceState == EPVMFNodeIdle) ||
+            (iInterfaceState == EPVMFNodeCreated))
+    {
+        // node is either in Created or Idle state, no need to call Reset on MIO. MIO has not been
+        // connected yet so no need to send a asynchronous command to MIO.
+        return PVMFSuccess;
+    }
+    else
+    {
+        return SendMioRequest(aCmd, EReset);
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -1550,9 +1569,9 @@ PVMFStatus PVMediaOutputNode::CancelMioRequest(PVMediaOutputNodeCmd& aCmd)
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "PVMediaOutputNode::CancelMioRequest In"));
 
-    Assert(iMediaIORequest != ENone);
+    OSCL_ASSERT(iMediaIORequest != ENone);
 
-    Assert(!iMediaIOCancelPending);
+    OSCL_ASSERT(!iMediaIOCancelPending);
 
     //Issue the cancel to the MIO.
     iMediaIOCancelPending = true;
@@ -1577,7 +1596,7 @@ PVMFStatus PVMediaOutputNode::SendMioRequest(PVMediaOutputNodeCmd& aCmd, EMioReq
 
 
     //there should not be a MIO command in progress..
-    Assert(iMediaIORequest == ENone);
+    OSCL_ASSERT(iMediaIORequest == ENone);
 
 
     //save media io request.
@@ -1591,15 +1610,16 @@ PVMFStatus PVMediaOutputNode::SendMioRequest(PVMediaOutputNodeCmd& aCmd, EMioReq
         case EQueryCapability:
         {
             int32 err ;
+            iMIOConfigPVI = NULL;
             OSCL_TRY(err,
                      iMediaIOCmdId = iMIOControl->QueryInterface(PVMI_CAPABILITY_AND_CONFIG_PVUUID,
-                                     (PVInterface*&)iMIOConfig, NULL);
+                                     iMIOConfigPVI, NULL);
                     );
 
             if (err != OsclErrNone)
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
-                                (0, "PVMediaOutputNode::DoInit: Error - iMIOControl->QueryInterface(cap & config) failed"));
+                                (0, "PVMediaOutputNode::SendMioRequest: Error - iMIOControl->QueryInterface(cap & config) failed"));
                 aCmd.iEventCode = PVMFMoutNodeErr_MediaIOQueryCapConfigInterface;
                 status = PVMFFailure;
             }
@@ -1613,15 +1633,16 @@ PVMFStatus PVMediaOutputNode::SendMioRequest(PVMediaOutputNodeCmd& aCmd, EMioReq
         case EQueryClockExtension:
         {
             int32 err ;
+            iMIOClockExtensionPVI = NULL;
             OSCL_TRY(err,
                      iMediaIOCmdId = iMIOControl->QueryInterface(PvmiClockExtensionInterfaceUuid,
-                                     (PVInterface*&)iMIOClockExtension, NULL);
+                                     iMIOClockExtensionPVI, NULL);
                     );
 
             if (err != OsclErrNone)
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
-                                (0, "PVMediaOutputNode::DoInit: Error iMIOControl->QueryInterface(clock ext) failed"));
+                                (0, "PVMediaOutputNode::SendMioRequest: Error iMIOControl->QueryInterface(clock ext) failed"));
                 //this interface is optional so ignore the error
                 status = PVMFSuccess;
             }
@@ -1634,13 +1655,18 @@ PVMFStatus PVMediaOutputNode::SendMioRequest(PVMediaOutputNodeCmd& aCmd, EMioReq
 
         case EInit:
         {
-            int32 err ;
-            OSCL_TRY(err, iMediaIOCmdId = iMIOControl->Init(););
+            int32 err = OsclErrNone;
+            PvmiMediaTransfer* mediaTransfer = NULL;
+            if (iInPortVector.size() > 0)
+            {
+                mediaTransfer = iInPortVector[0]->getMediaTransfer();
+            }
 
-            if (err != OsclErrNone)
+            OSCL_TRY(err, iMediaIOCmdId = iMIOControl->Init(););
+            if ((err != OsclErrNone))
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
-                                (0, "PVMediaOutputNode::DoInit: Error - iMIOControl->Init failed"));
+                                (0, "PVMediaOutputNode::SendMioRequest: Error - iMIOControl->Init failed"));
                 aCmd.iEventCode = PVMFMoutNodeErr_MediaIOInit;
                 status = PVMFFailure;
             }
@@ -1654,13 +1680,20 @@ PVMFStatus PVMediaOutputNode::SendMioRequest(PVMediaOutputNodeCmd& aCmd, EMioReq
         case EStart:
         {
 
-            int32 err ;
-            OSCL_TRY(err, iMediaIOCmdId = iMIOControl->Start(););
-
-            if (err != OsclErrNone)
+            int32 err = OsclErrNone;
+            PvmiMediaTransfer* mediaTransfer = NULL;
+            if (iInPortVector.size() > 0)
+            {
+                mediaTransfer = iInPortVector[0]->getMediaTransfer();
+            }
+            if (mediaTransfer != NULL)
+            {
+                OSCL_TRY(err, iMediaIOCmdId = iMIOControl->Start(););
+            }
+            if ((err != OsclErrNone) || (mediaTransfer == NULL))
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
-                                (0, "PVMediaOutputNode::DoInit: Error - iMIOControl->Start failed"));
+                                (0, "PVMediaOutputNode::SendMioRequest: Error - iMIOControl->Start failed"));
                 aCmd.iEventCode = PVMFMoutNodeErr_MediaIOStart;
                 status = PVMFFailure;
             }
@@ -1673,14 +1706,20 @@ PVMFStatus PVMediaOutputNode::SendMioRequest(PVMediaOutputNodeCmd& aCmd, EMioReq
 
         case EPause:
         {
-
-            int32 err ;
-            OSCL_TRY(err, iMediaIOCmdId = iMIOControl->Pause(););
-
-            if (err != OsclErrNone)
+            int32 err = OsclErrNone;
+            PvmiMediaTransfer* mediaTransfer = NULL;
+            if (iInPortVector.size() > 0)
+            {
+                mediaTransfer = iInPortVector[0]->getMediaTransfer();
+            }
+            if (mediaTransfer != NULL)
+            {
+                OSCL_TRY(err, iMediaIOCmdId = iMIOControl->Pause(););
+            }
+            if ((err != OsclErrNone) || (mediaTransfer == NULL))
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
-                                (0, "PVMediaOutputNode::DoInit: Error - iMIOControl->Pause failed"));
+                                (0, "PVMediaOutputNode::SendMioRequest: Error - iMIOControl->Pause failed"));
                 aCmd.iEventCode = PVMFMoutNodeErr_MediaIOPause;
                 status = PVMFFailure;
             }
@@ -1694,13 +1733,27 @@ PVMFStatus PVMediaOutputNode::SendMioRequest(PVMediaOutputNodeCmd& aCmd, EMioReq
         case EStop:
         {
 
-            int32 err ;
-            OSCL_TRY(err, iMediaIOCmdId = iMIOControl->Stop(););
-
-            if (err != OsclErrNone)
+            int32 err = OsclErrNone;
+            PvmiMediaTransfer* mediaTransfer = NULL;
+            if (iInPortVector.size() > 0)
+            {
+                mediaTransfer = iInPortVector[0]->getMediaTransfer();
+            }
+            else
+            {
+                /*There can be cases where stop is called after ports have been released and in such cases
+                we succeed stop as no-op assuming a subsequent reset will be called which would
+                guarantee proper reset of mio comp. */
+                return PVMFSuccess;
+            }
+            if (mediaTransfer != NULL)
+            {
+                OSCL_TRY(err, iMediaIOCmdId = iMIOControl->Stop(););
+            }
+            if ((err != OsclErrNone) || (mediaTransfer == NULL))
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
-                                (0, "PVMediaOutputNode::DoInit: Error - iMIOControl->Stop failed"));
+                                (0, "PVMediaOutputNode::SendMioRequest: Error - iMIOControl->Stop failed"));
                 aCmd.iEventCode = PVMFMoutNodeErr_MediaIOStop;
                 status = PVMFFailure;
             }
@@ -1713,17 +1766,23 @@ PVMFStatus PVMediaOutputNode::SendMioRequest(PVMediaOutputNodeCmd& aCmd, EMioReq
 
         case EDiscard:
         {
-            int32 err;
-            PVMFTimestamp startingTimestamp, resumeTimestamp;
-            bool renderSkippedData;
-            bool playbackpositioncontinuous;
-            uint32 streamId;
-            aCmd.Parse(startingTimestamp, resumeTimestamp, renderSkippedData, playbackpositioncontinuous, streamId);
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iReposLogger, PVLOGMSG_INFO,
-                            (0, "PVMediaOutputNode::SendMioRequest(EDiscard): skipTimestamp=%d", resumeTimestamp));
-            OSCL_TRY(err, iMediaIOCmdId = iMIOControl->DiscardData(resumeTimestamp););
-
-            if (err != OsclErrNone)
+            int32 err = OsclErrNone;
+            PvmiMediaTransfer* mediaTransfer = NULL;
+            if (iInPortVector.size() > 0)
+            {
+                mediaTransfer = iInPortVector[0]->getMediaTransfer();
+            }
+            if (mediaTransfer != NULL)
+            {
+                PVMFTimestamp resumeTimestamp;
+                bool playbackpositioncontinuous;
+                uint32 streamId;
+                aCmd.Parse(resumeTimestamp, playbackpositioncontinuous, streamId);
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iReposLogger, PVLOGMSG_INFO,
+                                (0, "PVMediaOutputNode::SendMioRequest(EDiscard): skipTimestamp=%d", resumeTimestamp));
+                OSCL_TRY(err, iMediaIOCmdId = iMIOControl->DiscardData(resumeTimestamp););
+            }
+            if ((err != OsclErrNone) || (mediaTransfer == NULL))
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
                                 (0, "PVMediaOutputNode::SendMioRequest: Error - iMIOControl->DiscardData failed"));
@@ -1737,8 +1796,26 @@ PVMFStatus PVMediaOutputNode::SendMioRequest(PVMediaOutputNodeCmd& aCmd, EMioReq
         }
         break;
 
+        case EReset:
+        {
+            int32 err ;
+            OSCL_TRY(err, iMediaIOCmdId = iMIOControl->Reset(););
+            if (err != OsclErrNone)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                                (0, "PVMediaOutputNode::SendMioRequest: Error - iMIOControl->Reset failed"));
+                aCmd.iEventCode = PVMFMoutNodeErr_MediaIOReset;
+                status = PVMFFailure;
+            }
+            else
+            {
+                status = PVMFPending;
+            }
+        }
+        break;
+
         default:
-            Assert(false);//unrecognized command.
+            OSCL_ASSERT(false);//unrecognized command.
             status = PVMFFailure;
             break;
     }
@@ -1800,7 +1877,30 @@ void PVMediaOutputNode::ReportInfoEvent(PVMFEventType aEventType, OsclAny* aEven
 OSCL_EXPORT_REF PVMFStatus PVMediaOutputNode::verifyParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements)
 {
     OSCL_UNUSED_ARG(aSession);
-    return (iMIOConfig->verifyParametersSync(iMIOSession, aParameters, num_elements));
+    if (iMIOConfig)
+    {
+        return (iMIOConfig->verifyParametersSync(iMIOSession, aParameters, num_elements));
+    }
+    else
+    {
+        return PVMFFailure;
+    }
+}
+
+OSCL_EXPORT_REF PVMFStatus PVMediaOutputNode::getParametersSync(PvmiMIOSession aSession,
+        PvmiKeyType aIdentifier,
+        PvmiKvp*& aParameters,
+        int& aNumParamElements,
+        PvmiCapabilityContext aContext)
+{
+    OSCL_UNUSED_ARG(aSession);
+    return (iMIOConfig->getParametersSync(iMIOSession, aIdentifier, aParameters, aNumParamElements, aContext));
+}
+
+OSCL_EXPORT_REF PVMFStatus PVMediaOutputNode::releaseParameters(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements)
+{
+    OSCL_UNUSED_ARG(aSession);
+    return (iMIOConfig->releaseParameters(iMIOSession, aParameters, num_elements));
 }
 
 void PVMediaOutputNode::ReportBOS()
@@ -1825,6 +1925,20 @@ PVMFStatus PVMediaOutputNode::CheckForBOS()
         }
     }
     return PVMFPending;
+}
+
+void PVMediaOutputNode::LogDiagnostics()
+{
+    if (iDiagnosticsLogged == false)
+    {
+        iDiagnosticsLogged = true;
+
+        if (!iInPortVector.empty())
+        {
+            LOGDIAGNOSTICS((0, "PVMediaOutputNode:LogDiagnostics Mime %s, FramesDropped/TotalFrames %d/%d"
+                            , iSinkFormatString.get_str(), iInPortVector[0]->iFramesDropped, iInPortVector[0]->iTotalFrames));
+        }
+    }
 }
 
 

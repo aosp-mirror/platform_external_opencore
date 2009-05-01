@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,33 +33,6 @@ terms listed above has been obtained from the copyright holder.
 
  Pathname: ./audio/gsm-amr/c/src/d_plsf_3.c
  Functions: D_plsf_3
-
-     Date: 01/31/2002
-
-------------------------------------------------------------------------------
- REVISION HISTORY
-
- Description: Updated to accept new parameter, Flag *pOverflow.  Placed
- file in the proper PV Software template.
-
- Description:
- (1) Removed "count.h" and "basic_op.h" and replaced with individual include
-     files (add.h, sub.h, etc.)
-
- Description:
- (1) Removed optimization -- mult(i, 3, pOverflow) is NOT the same as adding
-     i to itself 3 times.  The reason is because the mult function does a
-     right shift by 15, which will obliterate smaller numbers.
-
- Description:
- (1) Logic error -- a comparison against zero should have been DOES NOT EQUAL
- zero, but instead, was translated into EQUALS ZERO.  The bug has been fixed.
-
- Description:  Replaced "int" and/or "char" with OSCL defined types.
-
- Description: Added #ifdef __cplusplus around extern'ed table.
-
- Description:
 
  ------------------------------------------------------------------------------
  INPUT AND OUTPUT DEFINITIONS
@@ -142,66 +115,45 @@ terms listed above has been obtained from the copyright holder.
 #include "lsp_lsf.h"
 #include "reorder.h"
 #include "copy.h"
-
-/*--------------------------------------------------------------------------*/
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
-    /*----------------------------------------------------------------------------
-    ; MACROS
-    ; Define module specific macros here
-    ----------------------------------------------------------------------------*/
+#include "q_plsf_3_tbl.h"
 
 
-    /*----------------------------------------------------------------------------
-    ; DEFINES
-    ; Include all pre-processor statements here. Include conditional
-    ; compile variables also.
-    ----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------
+; MACROS
+; Define module specific macros here
+----------------------------------------------------------------------------*/
+
+
+/*----------------------------------------------------------------------------
+; DEFINES
+; Include all pre-processor statements here. Include conditional
+; compile variables also.
+----------------------------------------------------------------------------*/
 #define ALPHA     29491     /* ALPHA    ->  0.9                            */
 #define ONE_ALPHA 3277      /* ONE_ALPHA-> (1.0-ALPHA)                     */
 
 
-    /*----------------------------------------------------------------------------
-    ; LOCAL FUNCTION DEFINITIONS
-    ; Function Prototype declaration
-    ----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------
+; LOCAL FUNCTION DEFINITIONS
+; Function Prototype declaration
+----------------------------------------------------------------------------*/
 
 
-    /*----------------------------------------------------------------------------
-    ; LOCAL STORE/BUFFER/POINTER DEFINITIONS
-    ; Variable declaration - defined here and used outside this module
-    ----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------
+; LOCAL STORE/BUFFER/POINTER DEFINITIONS
+; Variable declaration - defined here and used outside this module
+----------------------------------------------------------------------------*/
 
-    /*----------------------------------------------------------------------------
-    ; EXTERNAL FUNCTION REFERENCES
-    ; Declare functions defined elsewhere and referenced in this module
-    ----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------
+; EXTERNAL FUNCTION REFERENCES
+; Declare functions defined elsewhere and referenced in this module
+----------------------------------------------------------------------------*/
 
-    /*----------------------------------------------------------------------------
-    ; EXTERNAL GLOBAL STORE/BUFFER/POINTER REFERENCES
-    ; Declare variables used in this module but defined elsewhere
-    ----------------------------------------------------------------------------*/
-    /* Codebooks of LSF prediction residual */
-    extern const Word16 mean_lsf_3[];
+/*----------------------------------------------------------------------------
+; EXTERNAL GLOBAL STORE/BUFFER/POINTER REFERENCES
+; Declare variables used in this module but defined elsewhere
+----------------------------------------------------------------------------*/
 
-    extern const Word16 pred_fac_3[];
-
-    extern const Word16 dico1_lsf_3[];
-    extern const Word16 dico2_lsf_3[];
-    extern const Word16 dico3_lsf_3[];
-
-    extern const Word16 mr515_3_lsf[];
-    extern const Word16 mr795_1_lsf[];
-
-    extern const Word16 past_rq_init[];
-
-    /*--------------------------------------------------------------------------*/
-#ifdef __cplusplus
-}
-#endif
 
 /*----------------------------------------------------------------------------
 ; FUNCTION CODE
@@ -218,13 +170,8 @@ void D_plsf_3(
 )
 {
     Word16 i;
-    Word16 index;
-
-    const Word16 *p_cb1;
-    const Word16 *p_cb2;
-    const Word16 *p_cb3;
-    const Word16 *p_dico;
     Word16 temp;
+    Word16 index;
 
     Word16 lsf1_r[M];
     Word16 lsf1_q[M];
@@ -306,23 +253,45 @@ void D_plsf_3(
 
     else  /* if good LSFs received */
     {
+
+        Word16 index_limit_1 = 0;
+        Word16 index_limit_2 = (DICO2_SIZE - 1) * 3;
+        Word16 index_limit_3 = 0;
+
+        const Word16 *p_cb1;
+        const Word16 *p_cb2;
+        const Word16 *p_cb3;
+        const Word16 *p_dico;
+
+
+        p_cb2 = dico2_lsf_3;    /* size DICO2_SIZE*3 */
+
         if ((mode == MR475) || (mode == MR515))
         {   /* MR475, MR515 */
-            p_cb1 = dico1_lsf_3;
-            p_cb2 = dico2_lsf_3;
-            p_cb3 = mr515_3_lsf;
+            p_cb1 = dico1_lsf_3;    /* size DICO1_SIZE*3 */
+            p_cb3 = mr515_3_lsf;    /* size MR515_3_SIZE*4 */
+
+            index_limit_1 = (DICO1_SIZE - 1) * 3;
+            index_limit_3 = (MR515_3_SIZE - 1) * 4;
+
         }
         else if (mode == MR795)
         {   /* MR795 */
-            p_cb1 = mr795_1_lsf;
-            p_cb2 = dico2_lsf_3;
-            p_cb3 = dico3_lsf_3;
+            p_cb1 = mr795_1_lsf;    /* size MR795_1_SIZE*3 */
+            p_cb3 = dico3_lsf_3;    /* size DICO3_SIZE*4 */
+
+            index_limit_1 = (MR795_1_SIZE - 1) * 3;
+            index_limit_3 = (DICO3_SIZE - 1) * 4;
+
         }
         else
         {   /* MR59, MR67, MR74, MR102, MRDTX */
-            p_cb1 = dico1_lsf_3;
-            p_cb2 = dico2_lsf_3;
-            p_cb3 = dico3_lsf_3;
+            p_cb1 = dico1_lsf_3;    /* size DICO1_SIZE*3 */
+            p_cb3 = dico3_lsf_3;    /* size DICO3_SIZE*4 */
+
+            index_limit_1 = (DICO1_SIZE - 1) * 3;
+            index_limit_3 = (DICO3_SIZE - 1) * 4;
+
         }
 
         /* decode prediction residuals from 3 received indices */
@@ -330,8 +299,12 @@ void D_plsf_3(
         index = *indice++;
 
         /* temp = 3*index; */
-        temp = add(index, index, pOverflow);
-        temp = add(temp, index, pOverflow);
+        temp = index + (index << 1);
+
+        if (temp > index_limit_1)
+        {
+            temp = index_limit_1;  /* avoid buffer overrun */
+        }
 
         p_dico = &p_cb1[temp];
 
@@ -343,16 +316,16 @@ void D_plsf_3(
 
         if (mode == MR475 || mode == MR515)
         {   /* MR475, MR515 only using every second entry */
-            index =
-                shl(
-                    index,
-                    1,
-                    pOverflow);
+            index <<= 1;
         }
 
         /* temp = 3*index */
-        temp = add(index, index, pOverflow);
-        temp = add(index, temp, pOverflow);
+        temp = index + (index << 1);
+
+        if (temp > index_limit_2)
+        {
+            temp = index_limit_2;  /* avoid buffer overrun */
+        }
 
         p_dico = &p_cb2[temp];
 
@@ -362,11 +335,13 @@ void D_plsf_3(
 
         index = *indice++;
 
-        temp =
-            shl(
-                index,
-                2,
-                pOverflow);
+        temp = index << 2;
+
+        if (temp > index_limit_3)
+        {
+            temp = index_limit_3;  /* avoid buffer overrun */
+        }
+
 
         p_dico = &p_cb3[temp];
 

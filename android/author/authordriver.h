@@ -25,6 +25,9 @@
 
 #include <utils.h>
 
+#include <ui/ICamera.h>
+
+
 #include <media/mediarecorder.h>
 
 #include "oscl_scheduler.h"
@@ -41,7 +44,6 @@
 #include "oscl_mem.h"
 #include "oscl_mem_audit.h"
 #include "oscl_error.h"
-#include "oscl_error_panic.h"
 #include "oscl_utf8conv.h"
 #include "oscl_string_utils.h"
 #include "android_camera_input.h"
@@ -55,7 +57,9 @@
 #ifndef PVMF_FILEOUTPUT_CONFIG_H_INCLUDED
 #include "pvmf_fileoutput_config.h"
 #endif
-#include "pvmfamrencnode_extension.h"
+#ifndef PVMF_AUDIO_ENCNODE_EXTENSION_H_INCLUDED
+#include "pvmf_audio_encnode_extension.h"
+#endif
 
 // FIXME:
 // Platform-specic and temporal workaround to prevent video size
@@ -153,7 +157,6 @@ struct set_output_file_command : author_command
     int64_t                     offset;
     int64_t                     length;
 };
-
 struct set_video_size_command : author_command
 {
     set_video_size_command() : author_command(AUTHOR_SET_VIDEO_SIZE) {};
@@ -241,7 +244,6 @@ public:
 
     status_t getMaxAmplitude(int *max);
     PVAEState getAuthorEngineState();
-
     status_t setListener(const sp<IMediaPlayerClient>& listener);
 
 private:
@@ -309,6 +311,8 @@ private:
 
     sp<ICamera>             mCamera;
     sp<IMediaPlayerClient>  mListener;
+
+    FILE*       ifpOutput;
 };
 
 class AuthorDriverWrapper

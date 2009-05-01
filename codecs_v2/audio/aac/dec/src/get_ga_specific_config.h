@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,7 @@
  */
 /*
 
- Pathname: ./include/get_GA_specific_config.h
-
-     Date: 07/10/2001
+ Pathname: get_GA_specific_config.h
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
@@ -27,6 +25,7 @@
  Description: (1) use enum type for audioObjectType
               (2) update revision history
 
+ Who:                       Date:
  Description:
 ------------------------------------------------------------------------------
  INCLUDE DESCRIPTION

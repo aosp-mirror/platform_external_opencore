@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ SampleSizeAtom::SampleSizeAtom(MP4_FF_FILE *fp,
     _curr_entry_point = 0;
     _stbl_fptr_vec = NULL;
     _parsing_mode = parsingMode;
-    _firstSampleOnBkwdRepos = false;
+    _SkipOldEntry = false;
     if (_success)
     {
         if (_size < (DEFAULT_FULL_ATOM_SIZE + 4 + 4))
@@ -195,6 +195,7 @@ SampleSizeAtom::SampleSizeAtom(MP4_FF_FILE *fp,
 
 bool SampleSizeAtom::ParseEntryUnit(uint32 sample_cnt)
 {
+
     uint32 threshold = 0;
     if (0 != AtomUtils::getFileBufferingCapacity(_fileptr))
     {
@@ -285,7 +286,7 @@ SampleSizeAtom::getSampleSizeAt(uint32 index)
             else
             {
                 uint32 entryLoc = index / _stbl_buff_size;
-                if (!_firstSampleOnBkwdRepos) //Not to use old entries in case of backward Repos.
+                if (!_SkipOldEntry) //Not to use old entries in case of backward Repos.
                 {
                     uint32 actualEntryIndex = _parsed_entry_cnt % _stbl_buff_size;
                     uint32 prevEntriesInBuffer = _stbl_buff_size - actualEntryIndex;
@@ -297,7 +298,7 @@ SampleSizeAtom::getSampleSizeAt(uint32 index)
                             return (_psampleSizeVec[index%_stbl_buff_size]);
                     }
                 }
-                _firstSampleOnBkwdRepos = false;
+                _SkipOldEntry = false;
                 if (_curr_buff_number != entryLoc)
                 {
                     _parsed_entry_cnt = entryLoc * _stbl_buff_size;

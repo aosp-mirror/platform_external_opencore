@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,6 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*																			                                    */
-/*	=====================================================================	  */
-/*	File: MediaInfo.h														                            */
-/*	Description:															                              */
-/*																			                                    */
-/*																			                                    */
-/*	Rev:																	                                  */
-/*	Created: 05/24/01														                            */
-/*	=====================================================================	  */
-/*																			                                    */
-/*	Revision History:														                            */
-/*																			                                    */
-/*	Rev:																	                                  */
-/*	Date:																	                                  */
-/*	Description:															                              */
-/*																			                                    */
-/* //////////////////////////////////////////////////////////////////////// */
 
 #ifndef MEDIAINFO_H
 #define MEDIAINFO_H
@@ -51,7 +34,6 @@
 #include "pcma_payload_info.h"
 #include "h263_payload_info.h"
 #include "h264_payload_info.h"
-#include "evrc_payload_info.h"
 #include "m4v_payload_info.h"
 #include "rfc3640_payload_info.h"
 
@@ -105,7 +87,6 @@ class mediaInfo
         int BWtias;
         RtspRangeType range;
 
-        uint16 contentVersion; //Implement set and get functions.
 
         int parameter_size;
         OSCL_HeapString<SDPParserAlloc> dependsonURL;
@@ -151,7 +132,6 @@ class mediaInfo
             rtcpBWSender = -1;
             rtcpBWReceiver = -1;
             BWtias = 0;
-            contentVersion = 0;
             allowRecord = false;
             select = false;
             parameter_size = 0;
@@ -217,6 +197,7 @@ class mediaInfo
                 payloadSpecificInfoVector[ii]->~PayloadSpecificInfoTypeBase();
                 dealloc(payloadSpecificInfoVector[ii]);
             }
+            assetInfo.CleanUp();
         };
 
         void *alloc(const int size)
@@ -389,10 +370,6 @@ class mediaInfo
         {
             mediaInfoID = id;
         };
-        inline void setContentVersion(uint16 cv)
-        {
-            contentVersion = cv;
-        };
 
         inline void setAllowRecord(bool allrec)
         {
@@ -451,13 +428,8 @@ class mediaInfo
         }
         inline void setAssetInfo(const AssetInfoType &ainfo)
         {
-            if (ainfo.URL.get_size() > 0)
-                assetInfo.URL = ainfo.URL;
-
-            for (int ii = 0; ii < ASSET_NAME_SIZE; ii++)
-                assetInfo.Box[ii] = ainfo.Box[ii];
+            assetInfo = ainfo;
         }
-
         inline void setCNetworkType(char *nType)
         {
             connectInfo.connectionNetworkType = nType;
@@ -788,11 +760,7 @@ class mediaInfo
         {
             return allowRecord;
         };
-        inline virtual void getContentVersion(uint8 & major_version, uint8 & minor_version)
-        {
-            major_version = (uint8)((contentVersion & 0xff00) >> 8);
-            minor_version = (uint8)(contentVersion & 0x00ff);
-        };
+
         inline bool getRandomAccessDenied()
         {
             return randomAccessDenied;
@@ -929,7 +897,6 @@ class mediaInfo
 
             setControlTrackID(pSource.controlURLTrackID);
             setMediaInfoID(pSource.mediaInfoID);
-            setContentVersion(pSource.contentVersion);
             setAllowRecord(pSource.allowRecord);
             setRange(pSource.range);
 
@@ -1000,7 +967,6 @@ class mediaInfo
                 setNumOfChannelsForPayloads(pSource.payloadSpecificInfoVector);
 
                 setControlTrackID(pSource.controlURLTrackID);
-                setContentVersion(pSource.contentVersion);
                 setAllowRecord(pSource.allowRecord);
                 setRange(pSource.range);
                 if (pSource.select == true)

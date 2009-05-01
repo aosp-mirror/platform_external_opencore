@@ -33,7 +33,7 @@
 #include "oscl_string_utils.h"
 #include "unit_test_args.h"
 
-#include "omx_core.h"
+#include "OMX_Core.h"
 
 void FindSourceFile( cmd_line* command_line,
                      OSCL_HeapString<OsclMemAllocator> &aFileNameInfo,

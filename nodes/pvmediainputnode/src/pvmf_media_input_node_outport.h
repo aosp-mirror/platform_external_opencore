@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,6 +63,7 @@
 class PvmfMediaInputNode;
 
 class PvmfMediaInputNodeOutPort : public OsclTimerObject,
+            public OsclMemPoolFixedChunkAllocatorObserver,
             public PvmfPortBaseImpl,
             public PvmiMediaTransfer,
             public PVMFPortActivityHandler,
@@ -77,7 +78,7 @@ class PvmfMediaInputNodeOutPort : public OsclTimerObject,
         void Pause();
         void Stop();
 
-        PVMFStatus Configure(PVMFFormatType aPortProperty);
+        PVMFStatus Configure(PVMFFormatType aPortProperty, OSCL_String* aMime);
 
         // these override the PvmfPortBaseImpl routines
         OSCL_IMPORT_REF PVMFStatus Connect(PVMFPortInterface* aPort);
@@ -133,7 +134,7 @@ class PvmfMediaInputNodeOutPort : public OsclTimerObject,
     private:
 
         void Run();
-
+        void freechunkavailable(OsclAny*);
         // Container node
         PvmfMediaInputNode* iNode;
 
@@ -145,21 +146,24 @@ class PvmfMediaInputNodeOutPort : public OsclTimerObject,
 
         uint32 iCmdId;
 
-        PvmfMediaInputDataBufferAlloc iMediaDataAlloc;
-        OsclMemPoolFixedChunkAllocator iMediaDataMemPool;
+        PvmfMediaInputDataBufferAlloc* iMediaDataAlloc;
+        OsclMemPoolFixedChunkAllocator* iMediaDataAllocMemPool;
+        OsclMemPoolFixedChunkAllocator* iMediaDataMemPool;
 
+        enum WriteState {EWriteBusy, EWriteOK};
+        WriteState iWriteState;
         enum PortState
         {
             PORT_STATE_BUFFERING = 0,
             PORT_STATE_STARTED,
-            PORT_STATE_ENDOFTRACK,
-            PORT_STATE_STOPPED
+            PORT_STATE_STOPPED,
+            PORT_STATE_ENDOFTRACK
         };
         PortState iState;
         PVMFFormatType iFormat;
 
         //for flow control
-        bool iWriteFailed;
+
         PvmiMediaTransfer* iPeer;
 
 
@@ -171,6 +175,12 @@ class PvmfMediaInputNodeOutPort : public OsclTimerObject,
         OsclRefCounterMemFrag iFormatSpecificInfo;
         uint32 inum_text_sample;
         uint32 imax_num_sample;
+#ifdef _TEST_AE_ERROR_HANDLING
+        uint32 iTimeStampJunk;
+#endif
+        //logging
+        OSCL_HeapString<OsclMemAllocator> iMimeType;
+        PVLogger* iDataPathLogger;
 };
 
 #endif // PVMF_MEDIA_INPUT_NODE_INPORT_H_INCLUDED

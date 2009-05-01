@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*********************************************************************************/
 /*
     This PVA_FF_HandlerAtom Class declares the nature of the media in the stream.
 */
@@ -56,34 +55,6 @@ PVA_FF_HandlerAtom::init(int32 handlerType)
         case MEDIA_TYPE_VISUAL:
             _handlerType = MEDIA_TYPE_VISUAL;
             _name = "VideoHandler";
-            break;
-        case MEDIA_TYPE_OBJECT_DESCRIPTOR:
-            _handlerType = MEDIA_TYPE_OBJECT_DESCRIPTOR;
-            _name = "ODHandler";
-            break;
-        case MEDIA_TYPE_CLOCK_REFERENCE:
-            _handlerType = MEDIA_TYPE_CLOCK_REFERENCE;
-            _name = "ClockRefHandler";
-            break;
-        case MEDIA_TYPE_SCENE_DESCRIPTION:
-            _handlerType = MEDIA_TYPE_SCENE_DESCRIPTION;
-            _name = "SceneDescHandler";
-            break;
-        case MEDIA_TYPE_MPEG7:
-            _handlerType = MEDIA_TYPE_MPEG7;
-            _name = "Mpeg7Handler";
-            break;
-        case MEDIA_TYPE_OBJECT_CONTENT_INFO:
-            _handlerType = MEDIA_TYPE_OBJECT_CONTENT_INFO;
-            _name = "ObjContentHandler";
-            break;
-        case MEDIA_TYPE_IPMP:
-            _handlerType = MEDIA_TYPE_IPMP;
-            _name = "IPHandler";
-            break;
-        case MEDIA_TYPE_MPEG_J:
-            _handlerType = MEDIA_TYPE_MPEG_J;
-            _name = "Mpeg-JHandler";
             break;
         default:
             _handlerType = UNKNOWN_HANDLER; // Error condition!

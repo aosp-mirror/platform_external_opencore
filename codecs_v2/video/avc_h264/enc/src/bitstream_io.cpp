@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
  * -------------------------------------------------------------------
  */
 #include "avcenc_lib.h"
+#include "oscl_mem.h"
 
 #define WORD_SIZE 32
 
@@ -42,7 +43,8 @@ const static uint8 trailing_bits[9] = {0, 0x1, 0x2, 0x4, 0x8, 0x10, 0x20, 0x40, 
 	 bit_left
  ======================================================================== */
 
-AVCEnc_Status BitstreamEncInit(AVCEncBitstream *stream, uint8 *buffer, int buf_size)
+AVCEnc_Status BitstreamEncInit(AVCEncBitstream *stream, uint8 *buffer, int buf_size,
+                               uint8 *overrunBuffer, int oBSize)
 {
     if (stream == NULL || buffer == NULL || buf_size <= 0)
     {
@@ -60,6 +62,10 @@ AVCEnc_Status BitstreamEncInit(AVCEncBitstream *stream, uint8 *buffer, int buf_s
     stream->current_word = 0;
 
     stream->bit_left = WORD_SIZE;
+
+    stream->overrunBuffer = overrunBuffer;
+
+    stream->oBSize = oBSize;
 
     return AVCENC_SUCCESS;
 }
@@ -82,16 +88,19 @@ AVCEnc_Status AVCBitstreamSaveWord(AVCEncBitstream *stream)
 
     /* check number of bytes in current_word, must always be byte-aligned!!!! */
     num_bits = WORD_SIZE - stream->bit_left; /* must be multiple of 8 !!*/
-    write_pnt = stream->bitstreamBuffer + stream->write_pos;
 
-    if (stream->buf_size - stream->write_pos <= (num_bits >> 3))
+    if (stream->buf_size - stream->write_pos <= (num_bits >> 3) + 2) /* 2 more bytes for possible EPBS */
     {
-        return AVCENC_BITSTREAM_BUFFER_FULL;
+        if (AVCENC_SUCCESS != AVCBitstreamUseOverrunBuffer(stream, (num_bits >> 3) + 2))
+        {
+            return AVCENC_BITSTREAM_BUFFER_FULL;
+        }
     }
 
     /* write word, byte-by-byte */
+    write_pnt = stream->bitstreamBuffer + stream->write_pos;
     current_word = stream->current_word;
-    while (num_bits && stream->write_pos < stream->buf_size)
+    while (num_bits) /* no need to check stream->buf_size and stream->write_pos, taken care already */
     {
         num_bits -= 8;
         byte = (current_word >> num_bits) & 0xFF;
@@ -106,8 +115,8 @@ AVCEnc_Status AVCBitstreamSaveWord(AVCEncBitstream *stream)
             stream->count_zeros++;
             *write_pnt++ = byte;
             stream->write_pos++;
-            if (stream->count_zeros == 2) /* don't have to check write_pos here */
-            {
+            if (stream->count_zeros == 2)
+            {	/* for num_bits = 32, this can add 2 more bytes extra for EPBS */
                 *write_pnt++ = 0x3;
                 stream->write_pos++;
                 stream->count_zeros = 0;
@@ -118,12 +127,6 @@ AVCEnc_Status AVCBitstreamSaveWord(AVCEncBitstream *stream)
     /* reset current_word and bit_left */
     stream->current_word = 0;
     stream->bit_left = WORD_SIZE;
-
-    /* not enough to put into the buffer */
-    if (stream->write_pos >= stream->buf_size)
-    {
-        return AVCENC_BITSTREAM_BUFFER_FULL;
-    }
 
     return AVCENC_SUCCESS;
 }
@@ -139,7 +142,7 @@ AVCEnc_Status AVCBitstreamSaveWord(AVCEncBitstream *stream)
 /* ======================================================================== */
 AVCEnc_Status BitstreamWriteBits(AVCEncBitstream *stream, int nBits, uint code)
 {
-    AVCEnc_Status status;
+    AVCEnc_Status status = AVCENC_SUCCESS;
     int bit_left = stream->bit_left;
     uint current_word = stream->current_word;
 
@@ -163,25 +166,20 @@ AVCEnc_Status BitstreamWriteBits(AVCEncBitstream *stream, int nBits, uint code)
     }
     else
     {
-        if (nBits > bit_left + ((stream->buf_size - stream->write_pos) << 3))
-        {
-            return AVCENC_BITSTREAM_BUFFER_FULL;
-        }
-
         stream->current_word = (current_word << bit_left) | (code >> (nBits - bit_left));
 
         nBits -= bit_left;
 
         stream->bit_left = 0;
 
-        AVCBitstreamSaveWord(stream); /* save current word */
+        status = AVCBitstreamSaveWord(stream); /* save current word */
 
         stream->bit_left = WORD_SIZE - nBits;
 
         stream->current_word = code; /* no extra masking for code, must be handled before saving */
     }
 
-    return AVCENC_SUCCESS;
+    return status;
 }
 
 
@@ -233,6 +231,7 @@ AVCEnc_Status BitstreamTrailingBits(AVCEncBitstream *bitstream, uint *nal_size)
 
     bit_left &= 0x7; /* modulo by 8 */
     if (bit_left == 0) bit_left = 8;
+    /* bitstream->bit_left == 0 cannot happen here since it would have been Saved already */
 
     status = BitstreamWriteBits(bitstream, bit_left, trailing_bits[bit_left]);
 
@@ -242,7 +241,7 @@ AVCEnc_Status BitstreamTrailingBits(AVCEncBitstream *bitstream, uint *nal_size)
     }
 
     /* if it's not saved, save it. */
-    if (bitstream->bit_left < (WORD_SIZE << 3))
+    //if(bitstream->bit_left<(WORD_SIZE<<3)) /* in fact, no need to check */
     {
         status = AVCBitstreamSaveWord(bitstream);
     }
@@ -258,3 +257,81 @@ bool byte_aligned(AVCEncBitstream *stream)
     else
         return true;
 }
+
+
+/* determine whether overrun buffer can be used or not */
+AVCEnc_Status AVCBitstreamUseOverrunBuffer(AVCEncBitstream* stream, int numExtraBytes)
+{
+    AVCEncObject *encvid = (AVCEncObject*)stream->encvid;
+
+    if (stream->overrunBuffer != NULL) // overrunBuffer is set
+    {
+        if (stream->bitstreamBuffer != stream->overrunBuffer) // not already used
+        {
+            if (stream->write_pos + numExtraBytes >= stream->oBSize)
+            {
+                stream->oBSize = stream->write_pos + numExtraBytes + 100;
+                stream->oBSize &= (~0x3); // make it multiple of 4
+
+                // allocate new overrun Buffer
+                if (encvid->overrunBuffer)
+                {
+                    encvid->avcHandle->CBAVC_Free((uint32*)encvid->avcHandle->userData,
+                                                  (int)encvid->overrunBuffer);
+                }
+
+                encvid->oBSize = stream->oBSize;
+                encvid->overrunBuffer = (uint8*) encvid->avcHandle->CBAVC_Malloc(encvid->avcHandle->userData,
+                                        stream->oBSize, DEFAULT_ATTR);
+
+                stream->overrunBuffer = encvid->overrunBuffer;
+                if (stream->overrunBuffer == NULL)
+                {
+                    return AVCENC_FAIL;
+                }
+            }
+
+            // copy everything to overrun buffer and start using it.
+            oscl_memcpy(stream->overrunBuffer, stream->bitstreamBuffer, stream->write_pos);
+            stream->bitstreamBuffer = stream->overrunBuffer;
+            stream->buf_size = stream->oBSize;
+        }
+        else // overrun buffer is already used
+        {
+            stream->oBSize = stream->write_pos + numExtraBytes + 100;
+            stream->oBSize &= (~0x3); // make it multiple of 4
+
+            // allocate new overrun buffer
+            encvid->oBSize = stream->oBSize;
+            encvid->overrunBuffer = (uint8*) encvid->avcHandle->CBAVC_Malloc(encvid->avcHandle->userData,
+                                    stream->oBSize, DEFAULT_ATTR);
+
+            if (encvid->overrunBuffer == NULL)
+            {
+                return AVCENC_FAIL;
+            }
+
+
+            // copy from the old buffer to new buffer
+            oscl_memcpy(encvid->overrunBuffer, stream->overrunBuffer, stream->write_pos);
+            // free old buffer
+            encvid->avcHandle->CBAVC_Free((uint32*)encvid->avcHandle->userData,
+                                          (int)stream->overrunBuffer);
+
+            // assign pointer to new buffer
+            stream->overrunBuffer = encvid->overrunBuffer;
+            stream->bitstreamBuffer = stream->overrunBuffer;
+            stream->buf_size = stream->oBSize;
+        }
+
+        return AVCENC_SUCCESS;
+    }
+    else // overrunBuffer is not enable.
+    {
+        return AVCENC_FAIL;
+    }
+
+}
+
+
+

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*********************************************************************************/
 /*
     This ESID_Ref Class contains information on the Elementary Stream that will
 	be replaced when streaming to a client.  The file format replaces the actual
@@ -49,8 +48,6 @@ PVA_FF_ES_ID_Ref::recomputeSize()
 {
     _sizeOfClass = 2;
     _sizeOfSizeField = 1;
-    // | (8) | (8)  |    (16)    |
-    // | tag | size | trackindex |
 }
 
 // Rendering the PVA_FF_Atom in proper format (bitlengths, etc.) to an ostream

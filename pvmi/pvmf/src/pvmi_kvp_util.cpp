@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,21 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
+#ifndef PVMI_KVP_UTIL_H_INCLUDED
 #include "pvmi_kvp_util.h"
+#endif
 
+#ifndef OSCL_MIME_STRING_UTILS_H
 #include "pv_mime_string_utils.h"
+#endif
 
+#ifndef OSCL_STRING_CONTAINERS_H_INCLUDED
 #include "oscl_string_containers.h"
+#endif
 
-
+#ifndef OSCL_EXCLUSIVE_PTR_H_INCLUDED
+#include "oscl_exclusive_ptr.h"
+#endif
 
 OSCL_EXPORT_REF PvmiKvpType GetTypeFromKeyString(PvmiKeyType aKeyString)
 {
@@ -346,10 +354,13 @@ OSCL_EXPORT_REF PVMFStatus PVMFCreateKVPUtils::CreateKVPForWStringValue(PvmiKvp&
     }
     uint32 valuelen = aValString.get_size() + 1;
 
-// Allocate memory for the strings
-    int32 leavecode = 0, leavecode1 = 0;
-    OSCL_TRY(leavecode,
-             aKeyVal.key = OSCL_ARRAY_NEW(char, keylen););
+    /* Allocate memory for the strings
+    "keyExclusivePtr" pointer is used to prevent any memory leak
+     in case some exception occurs while allocating memory for "value array" */
+
+    OsclExclusiveArrayPtr<char> keyExclusivePtr;
+    aKeyVal.key = OSCL_ARRAY_NEW(char, keylen);
+    keyExclusivePtr.set(aKeyVal.key);
 
     if (aTruncateFlag)
     {
@@ -360,47 +371,29 @@ OSCL_EXPORT_REF PVMFStatus PVMFCreateKVPUtils::CreateKVPForWStringValue(PvmiKvp&
     }
     if (aMaxSize >= valuelen)
     {
-        OSCL_TRY(leavecode,
-                 aKeyVal.value.pWChar_value = OSCL_ARRAY_NEW(oscl_wchar, valuelen););
+        aKeyVal.value.pWChar_value = OSCL_ARRAY_NEW(oscl_wchar, valuelen);
     }
 
-    if (leavecode == 0 && leavecode1 == 0)
+    keyExclusivePtr.release();
+    // Copy the key string
+    oscl_strncpy(aKeyVal.key, aKeyTypeString, oscl_strlen(aKeyTypeString) + 1);
+    oscl_strncat(aKeyVal.key, PVMI_KVP_SEMICOLON_STRING_CONSTCHAR, oscl_strlen(PVMI_KVP_SEMICOLON_STRING_CONSTCHAR));
+    oscl_strncat(aKeyVal.key, PVMI_KVPVALTYPE_STRING_CONSTCHAR, oscl_strlen(PVMI_KVPVALTYPE_STRING_CONSTCHAR));
+    oscl_strncat(aKeyVal.key, PVMI_KVPVALTYPE_WCHARPTR_STRING_CONSTCHAR, oscl_strlen(PVMI_KVPVALTYPE_WCHARPTR_STRING_CONSTCHAR));
+    if (aMiscKeyParam)
     {
-        // Copy the key string
-        oscl_strncpy(aKeyVal.key, aKeyTypeString, oscl_strlen(aKeyTypeString) + 1);
-        oscl_strncat(aKeyVal.key, PVMI_KVP_SEMICOLON_STRING_CONSTCHAR, oscl_strlen(PVMI_KVP_SEMICOLON_STRING_CONSTCHAR));
-        oscl_strncat(aKeyVal.key, PVMI_KVPVALTYPE_STRING_CONSTCHAR, oscl_strlen(PVMI_KVPVALTYPE_STRING_CONSTCHAR));
-        oscl_strncat(aKeyVal.key, PVMI_KVPVALTYPE_WCHARPTR_STRING_CONSTCHAR, oscl_strlen(PVMI_KVPVALTYPE_WCHARPTR_STRING_CONSTCHAR));
-        if (aMiscKeyParam)
-        {
-            oscl_strncat(aKeyVal.key, aMiscKeyParam, oscl_strlen(aMiscKeyParam));
-        }
-        aKeyVal.key[keylen-1] = '\0';
-        // Copy the value
-        if (aKeyVal.value.pWChar_value != NULL)
-        {
-            oscl_strncpy(aKeyVal.value.pWChar_value, aValString.get_cstr(), valuelen);
-            aKeyVal.value.pWChar_value[valuelen-1] = '\0';
-        }
-        // Set the length and capacity
-        aKeyVal.length = valuelen;
-        aKeyVal.capacity = valuelen;
+        oscl_strncat(aKeyVal.key, aMiscKeyParam, oscl_strlen(aMiscKeyParam));
     }
-    else
+    aKeyVal.key[keylen-1] = '\0';
+    // Copy the value
+    if (aKeyVal.value.pWChar_value != NULL)
     {
-        // Memory allocation failed so clean up
-        if (aKeyVal.key)
-        {
-            OSCL_ARRAY_DELETE(aKeyVal.key);
-            aKeyVal.key = NULL;
-        }
-        if (aKeyVal.value.pWChar_value)
-        {
-            OSCL_ARRAY_DELETE(aKeyVal.value.pWChar_value);
-        }
-
-        return PVMFErrNoMemory;
+        oscl_strncpy(aKeyVal.value.pWChar_value, aValString.get_cstr(), valuelen);
+        aKeyVal.value.pWChar_value[valuelen-1] = '\0';
     }
+    // Set the length and capacity
+    aKeyVal.length = valuelen;
+    aKeyVal.capacity = valuelen;
 
     return PVMFSuccess;
 }
@@ -432,11 +425,11 @@ OSCL_EXPORT_REF PVMFStatus PVMFCreateKVPUtils::CreateKVPForCharStringValue(PvmiK
     }
 
     uint32 valuelen = oscl_strlen(aValString) + 1;
-
-    // Allocate memory for the strings
-    int32 leavecode = 0, leavecode1 = 0;
-
-    OSCL_TRY(leavecode, aKeyVal.key = OSCL_ARRAY_NEW(char, keylen);)
+    /* keyExclusivePtr" pointer is used to prevent any memory leak
+       in case some exception occurs while allocating memory for "value array" */
+    OsclExclusiveArrayPtr<char> keyExclusivePtr;
+    aKeyVal.key = OSCL_ARRAY_NEW(char, keylen);
+    keyExclusivePtr.set(aKeyVal.key);
 
     if (aTruncateFlag)
     {
@@ -447,45 +440,28 @@ OSCL_EXPORT_REF PVMFStatus PVMFCreateKVPUtils::CreateKVPForCharStringValue(PvmiK
 
     }
     if (aMaxSize >= valuelen)
-        OSCL_TRY(leavecode1, aKeyVal.value.pChar_value = OSCL_ARRAY_NEW(char, valuelen););
+        aKeyVal.value.pChar_value = OSCL_ARRAY_NEW(char, valuelen);
 
-    if (leavecode == 0 && leavecode1 == 0)
+    keyExclusivePtr.release();
+    // Copy the key string
+    oscl_strncpy(aKeyVal.key, aKeyTypeString, oscl_strlen(aKeyTypeString) + 1);
+    oscl_strncat(aKeyVal.key, PVMI_KVP_SEMICOLON_STRING_CONSTCHAR, oscl_strlen(PVMI_KVP_SEMICOLON_STRING_CONSTCHAR));
+    oscl_strncat(aKeyVal.key, PVMI_KVPVALTYPE_STRING_CONSTCHAR, oscl_strlen(PVMI_KVPVALTYPE_STRING_CONSTCHAR));
+    oscl_strncat(aKeyVal.key, PVMI_KVPVALTYPE_CHARPTR_STRING_CONSTCHAR, oscl_strlen(PVMI_KVPVALTYPE_CHARPTR_STRING_CONSTCHAR));
+    if (aMiscKeyParam)
     {
-        // Copy the key string
-        oscl_strncpy(aKeyVal.key, aKeyTypeString, oscl_strlen(aKeyTypeString) + 1);
-        oscl_strncat(aKeyVal.key, PVMI_KVP_SEMICOLON_STRING_CONSTCHAR, oscl_strlen(PVMI_KVP_SEMICOLON_STRING_CONSTCHAR));
-        oscl_strncat(aKeyVal.key, PVMI_KVPVALTYPE_STRING_CONSTCHAR, oscl_strlen(PVMI_KVPVALTYPE_STRING_CONSTCHAR));
-        oscl_strncat(aKeyVal.key, PVMI_KVPVALTYPE_CHARPTR_STRING_CONSTCHAR, oscl_strlen(PVMI_KVPVALTYPE_CHARPTR_STRING_CONSTCHAR));
-        if (aMiscKeyParam)
-        {
-            oscl_strncat(aKeyVal.key, aMiscKeyParam, oscl_strlen(aMiscKeyParam));
-        }
-        aKeyVal.key[keylen-1] = '\0';
-        // Copy the value
-        if (aKeyVal.value.pChar_value != NULL)
-        {
-            oscl_strncpy(aKeyVal.value.pChar_value, aValString, valuelen);
-            aKeyVal.value.pChar_value[valuelen-1] = '\0';
-        }
-        // Set the length and capacity
-        aKeyVal.length = valuelen;
-        aKeyVal.capacity = valuelen;
+        oscl_strncat(aKeyVal.key, aMiscKeyParam, oscl_strlen(aMiscKeyParam));
     }
-    else
+    aKeyVal.key[keylen-1] = '\0';
+    // Copy the value
+    if (aKeyVal.value.pChar_value != NULL)
     {
-        // Memory allocation failed so clean up
-        if (aKeyVal.key)
-        {
-            OSCL_ARRAY_DELETE(aKeyVal.key);
-            aKeyVal.key = NULL;
-        }
-        if (aKeyVal.value.pChar_value)
-        {
-            OSCL_ARRAY_DELETE(aKeyVal.value.pChar_value);
-        }
-
-        return PVMFErrNoMemory;
+        oscl_strncpy(aKeyVal.value.pChar_value, aValString, valuelen);
+        aKeyVal.value.pChar_value[valuelen-1] = '\0';
     }
+    // Set the length and capacity
+    aKeyVal.length = valuelen;
+    aKeyVal.capacity = valuelen;
 
     return PVMFSuccess;
 }
@@ -513,52 +489,38 @@ OSCL_EXPORT_REF PVMFStatus PVMFCreateKVPUtils::CreateKVPForByteArrayValue(PvmiKv
         keylen += oscl_strlen(aMiscKeyParam);
     }
 
-    /* Allocate memory for the strings */
-    int32 leavecode = 0;
-    OSCL_TRY(leavecode,
-             aKeyVal.key = OSCL_ARRAY_NEW(char, keylen);
-             aKeyVal.value.pUint8_value = OSCL_ARRAY_NEW(uint8, aValueLen);
-            );
+    /* Allocate memory for the strings
+       "keyExclusivePtr" pointer is used to prevent any memory leak
+       in case some exception occurs while allocating memory for "value array" */
+    OsclExclusiveArrayPtr<char> keyExclusivePtr;
+    aKeyVal.key = OSCL_ARRAY_NEW(char, keylen);
+    keyExclusivePtr.set(aKeyVal.key);
+    aKeyVal.value.pUint8_value = OSCL_ARRAY_NEW(uint8, aValueLen);
+    keyExclusivePtr.release();
 
-    if (leavecode == 0)
+    /* Copy the key string */
+    oscl_strncpy(aKeyVal.key,
+                 aKeyTypeString,
+                 oscl_strlen(aKeyTypeString) + 1);
+    oscl_strncat(aKeyVal.key,
+                 PVMI_KVP_SEMICOLON_STRING_CONSTCHAR,
+                 oscl_strlen(PVMI_KVP_SEMICOLON_STRING_CONSTCHAR));
+    oscl_strncat(aKeyVal.key,
+                 PVMI_KVPVALTYPE_STRING_CONSTCHAR,
+                 oscl_strlen(PVMI_KVPVALTYPE_STRING_CONSTCHAR));
+    oscl_strncat(aKeyVal.key,
+                 PVMI_KVPVALTYPE_UINT8PTR_STRING,
+                 oscl_strlen(PVMI_KVPVALTYPE_UINT8PTR_STRING));
+    if (aMiscKeyParam)
     {
-        /* Copy the key string */
-        oscl_strncpy(aKeyVal.key,
-                     aKeyTypeString,
-                     oscl_strlen(aKeyTypeString) + 1);
-        oscl_strncat(aKeyVal.key,
-                     PVMI_KVP_SEMICOLON_STRING_CONSTCHAR,
-                     oscl_strlen(PVMI_KVP_SEMICOLON_STRING_CONSTCHAR));
-        oscl_strncat(aKeyVal.key,
-                     PVMI_KVPVALTYPE_STRING_CONSTCHAR,
-                     oscl_strlen(PVMI_KVPVALTYPE_STRING_CONSTCHAR));
-        oscl_strncat(aKeyVal.key,
-                     PVMI_KVPVALTYPE_UINT8PTR_STRING,
-                     oscl_strlen(PVMI_KVPVALTYPE_UINT8PTR_STRING));
-        if (aMiscKeyParam)
-        {
-            oscl_strncat(aKeyVal.key, aMiscKeyParam, oscl_strlen(aMiscKeyParam));
-        }
-        aKeyVal.key[keylen-1] = NULL_TERM_CHAR;
-        /* Copy the value */
-        oscl_memcpy(aKeyVal.value.pUint8_value, aValue, aValueLen);
-        aKeyVal.length   = aValueLen;
-        aKeyVal.capacity = aValueLen;
+        oscl_strncat(aKeyVal.key, aMiscKeyParam, oscl_strlen(aMiscKeyParam));
     }
-    else
-    {
-        /* Memory allocation failed so clean up */
-        if (aKeyVal.key)
-        {
-            OSCL_ARRAY_DELETE(aKeyVal.key);
-            aKeyVal.key = NULL;
-        }
-        if (aKeyVal.value.pUint8_value)
-        {
-            OSCL_ARRAY_DELETE(aKeyVal.value.pUint8_value);
-        }
-        return PVMFErrNoMemory;
-    }
+    aKeyVal.key[keylen-1] = NULL_TERM_CHAR;
+    /* Copy the value */
+    oscl_memcpy(aKeyVal.value.pUint8_value, aValue, aValueLen);
+    aKeyVal.length   = aValueLen;
+    aKeyVal.capacity = aValueLen;
+
     return PVMFSuccess;
 }
 
@@ -583,40 +545,24 @@ OSCL_EXPORT_REF PVMFStatus PVMFCreateKVPUtils::CreateKVPForUInt32Value(PvmiKvp& 
     }
 
     // Allocate memory for the strings
-    int32 leavecode = 0;
-    OSCL_TRY(leavecode,
-             aKeyVal.key = OSCL_ARRAY_NEW(char, keylen);
-            );
+    aKeyVal.key = OSCL_ARRAY_NEW(char, keylen);
 
-    if (leavecode == 0)
-    {
-        // Copy the key string
-        oscl_strncpy(aKeyVal.key, aKeyTypeString, oscl_strlen(aKeyTypeString) + 1);
-        oscl_strncat(aKeyVal.key, PVMI_KVP_SEMICOLON_STRING_CONSTCHAR, oscl_strlen(PVMI_KVP_SEMICOLON_STRING_CONSTCHAR));
-        oscl_strncat(aKeyVal.key, PVMI_KVPVALTYPE_STRING_CONSTCHAR, oscl_strlen(PVMI_KVPVALTYPE_STRING_CONSTCHAR));
-        oscl_strncat(aKeyVal.key, PVMI_KVPVALTYPE_UINT32_STRING_CONSTCHAR, oscl_strlen(PVMI_KVPVALTYPE_UINT32_STRING_CONSTCHAR));
-        if (aMiscKeyParam)
-        {
-            oscl_strncat(aKeyVal.key, aMiscKeyParam, oscl_strlen(aMiscKeyParam));
-        }
-        aKeyVal.key[keylen-1] = '\0';
-        // Copy the value
-        aKeyVal.value.uint32_value = aValueUInt32;
-        // Set the length and capacity
-        aKeyVal.length = 1;
-        aKeyVal.capacity = 1;
-    }
-    else
-    {
-        // Memory allocation failed so clean up
-        if (aKeyVal.key)
-        {
-            OSCL_ARRAY_DELETE(aKeyVal.key);
-            aKeyVal.key = NULL;
-        }
 
-        return PVMFErrNoMemory;
+    // Copy the key string
+    oscl_strncpy(aKeyVal.key, aKeyTypeString, oscl_strlen(aKeyTypeString) + 1);
+    oscl_strncat(aKeyVal.key, PVMI_KVP_SEMICOLON_STRING_CONSTCHAR, oscl_strlen(PVMI_KVP_SEMICOLON_STRING_CONSTCHAR));
+    oscl_strncat(aKeyVal.key, PVMI_KVPVALTYPE_STRING_CONSTCHAR, oscl_strlen(PVMI_KVPVALTYPE_STRING_CONSTCHAR));
+    oscl_strncat(aKeyVal.key, PVMI_KVPVALTYPE_UINT32_STRING_CONSTCHAR, oscl_strlen(PVMI_KVPVALTYPE_UINT32_STRING_CONSTCHAR));
+    if (aMiscKeyParam)
+    {
+        oscl_strncat(aKeyVal.key, aMiscKeyParam, oscl_strlen(aMiscKeyParam));
     }
+    aKeyVal.key[keylen-1] = '\0';
+    // Copy the value
+    aKeyVal.value.uint32_value = aValueUInt32;
+    // Set the length and capacity
+    aKeyVal.length = 1;
+    aKeyVal.capacity = 1;
 
     return PVMFSuccess;
 }
@@ -643,40 +589,23 @@ OSCL_EXPORT_REF PVMFStatus PVMFCreateKVPUtils::CreateKVPForFloatValue(PvmiKvp& a
     }
 
     // Allocate memory for the strings
-    int32 leavecode = 0;
-    OSCL_TRY(leavecode,
-             aKeyVal.key = OSCL_ARRAY_NEW(char, keylen);
-            );
+    aKeyVal.key = OSCL_ARRAY_NEW(char, keylen);
 
-    if (leavecode == 0)
+    // Copy the key string
+    oscl_strncpy(aKeyVal.key, aKeyTypeString, oscl_strlen(aKeyTypeString) + 1);
+    oscl_strncat(aKeyVal.key, PVMI_KVP_SEMICOLON_STRING_CONSTCHAR, oscl_strlen(PVMI_KVP_SEMICOLON_STRING_CONSTCHAR));
+    oscl_strncat(aKeyVal.key, PVMI_KVPVALTYPE_STRING_CONSTCHAR, oscl_strlen(PVMI_KVPVALTYPE_STRING_CONSTCHAR));
+    oscl_strncat(aKeyVal.key, PVMI_KVPVALTYPE_FLOAT_STRING_CONSTCHAR, oscl_strlen(PVMI_KVPVALTYPE_FLOAT_STRING_CONSTCHAR));
+    if (aMiscKeyParam)
     {
-        // Copy the key string
-        oscl_strncpy(aKeyVal.key, aKeyTypeString, oscl_strlen(aKeyTypeString) + 1);
-        oscl_strncat(aKeyVal.key, PVMI_KVP_SEMICOLON_STRING_CONSTCHAR, oscl_strlen(PVMI_KVP_SEMICOLON_STRING_CONSTCHAR));
-        oscl_strncat(aKeyVal.key, PVMI_KVPVALTYPE_STRING_CONSTCHAR, oscl_strlen(PVMI_KVPVALTYPE_STRING_CONSTCHAR));
-        oscl_strncat(aKeyVal.key, PVMI_KVPVALTYPE_FLOAT_STRING_CONSTCHAR, oscl_strlen(PVMI_KVPVALTYPE_FLOAT_STRING_CONSTCHAR));
-        if (aMiscKeyParam)
-        {
-            oscl_strncat(aKeyVal.key, aMiscKeyParam, oscl_strlen(aMiscKeyParam));
-        }
-        aKeyVal.key[keylen-1] = '\0';
-        // Copy the value
-        aKeyVal.value.float_value = aValueFloat;
-        // Set length and capacity
-        aKeyVal.length = 1;
-        aKeyVal.capacity = 1;
+        oscl_strncat(aKeyVal.key, aMiscKeyParam, oscl_strlen(aMiscKeyParam));
     }
-    else
-    {
-        // Memory allocation failed so clean up
-        if (aKeyVal.key)
-        {
-            OSCL_ARRAY_DELETE(aKeyVal.key);
-            aKeyVal.key = NULL;
-        }
-
-        return PVMFErrNoMemory;
-    }
+    aKeyVal.key[keylen-1] = '\0';
+    // Copy the value
+    aKeyVal.value.float_value = aValueFloat;
+    // Set length and capacity
+    aKeyVal.length = 1;
+    aKeyVal.capacity = 1;
 
     return PVMFSuccess;
 }
@@ -703,40 +632,23 @@ OSCL_EXPORT_REF PVMFStatus PVMFCreateKVPUtils::CreateKVPForBoolValue(PvmiKvp& aK
     }
 
     // Allocate memory for the strings
-    int32 leavecode = 0;
-    OSCL_TRY(leavecode,
-             aKeyVal.key = OSCL_ARRAY_NEW(char, keylen);
-            );
+    aKeyVal.key = OSCL_ARRAY_NEW(char, keylen);
 
-    if (leavecode == 0)
+    // Copy the key string
+    oscl_strncpy(aKeyVal.key, aKeyTypeString, oscl_strlen(aKeyTypeString) + 1);
+    oscl_strncat(aKeyVal.key, PVMI_KVP_SEMICOLON_STRING_CONSTCHAR, oscl_strlen(PVMI_KVP_SEMICOLON_STRING_CONSTCHAR));
+    oscl_strncat(aKeyVal.key, PVMI_KVPVALTYPE_STRING_CONSTCHAR, oscl_strlen(PVMI_KVPVALTYPE_STRING_CONSTCHAR));
+    oscl_strncat(aKeyVal.key, PVMI_KVPVALTYPE_BOOL_STRING_CONSTCHAR, oscl_strlen(PVMI_KVPVALTYPE_BOOL_STRING_CONSTCHAR));
+    if (aMiscKeyParam)
     {
-        // Copy the key string
-        oscl_strncpy(aKeyVal.key, aKeyTypeString, oscl_strlen(aKeyTypeString) + 1);
-        oscl_strncat(aKeyVal.key, PVMI_KVP_SEMICOLON_STRING_CONSTCHAR, oscl_strlen(PVMI_KVP_SEMICOLON_STRING_CONSTCHAR));
-        oscl_strncat(aKeyVal.key, PVMI_KVPVALTYPE_STRING_CONSTCHAR, oscl_strlen(PVMI_KVPVALTYPE_STRING_CONSTCHAR));
-        oscl_strncat(aKeyVal.key, PVMI_KVPVALTYPE_BOOL_STRING_CONSTCHAR, oscl_strlen(PVMI_KVPVALTYPE_BOOL_STRING_CONSTCHAR));
-        if (aMiscKeyParam)
-        {
-            oscl_strncat(aKeyVal.key, aMiscKeyParam, oscl_strlen(aMiscKeyParam));
-        }
-        aKeyVal.key[keylen-1] = '\0';
-        // Copy the value
-        aKeyVal.value.bool_value = aValueBool;
-        // Set length and capacity
-        aKeyVal.length = 1;
-        aKeyVal.capacity = 1;
+        oscl_strncat(aKeyVal.key, aMiscKeyParam, oscl_strlen(aMiscKeyParam));
     }
-    else
-    {
-        // Memory allocation failed so clean up
-        if (aKeyVal.key)
-        {
-            OSCL_ARRAY_DELETE(aKeyVal.key);
-            aKeyVal.key = NULL;
-        }
-
-        return PVMFErrNoMemory;
-    }
+    aKeyVal.key[keylen-1] = '\0';
+    // Copy the value
+    aKeyVal.value.bool_value = aValueBool;
+    // Set length and capacity
+    aKeyVal.length = 1;
+    aKeyVal.capacity = 1;
 
     return PVMFSuccess;
 }
@@ -762,49 +674,31 @@ OSCL_EXPORT_REF PVMFStatus PVMFCreateKVPUtils::CreateKVPForKSVValue(PvmiKvp& aKe
     }
 
     /* Allocate memory for the strings */
-    int32 leavecode = 0;
-    OSCL_TRY(leavecode,
-             aKeyVal.key = OSCL_ARRAY_NEW(char, keylen);
-             aKeyVal.value.key_specific_value = NULL;
-            );
+    aKeyVal.key = OSCL_ARRAY_NEW(char, keylen);
+    aKeyVal.value.key_specific_value = NULL;
 
-    if (leavecode == 0)
+
+    /* Copy the key string */
+    oscl_strncpy(aKeyVal.key,
+                 aKeyTypeString,
+                 oscl_strlen(aKeyTypeString) + 1);
+    oscl_strncat(aKeyVal.key,
+                 PVMI_KVP_SEMICOLON_STRING_CONSTCHAR,
+                 oscl_strlen(PVMI_KVP_SEMICOLON_STRING_CONSTCHAR));
+    oscl_strncat(aKeyVal.key,
+                 PVMI_KVPVALTYPE_STRING_CONSTCHAR,
+                 oscl_strlen(PVMI_KVPVALTYPE_STRING_CONSTCHAR));
+    oscl_strncat(aKeyVal.key,
+                 PVMI_KVPVALTYPE_KSV_STRING,
+                 oscl_strlen(PVMI_KVPVALTYPE_KSV_STRING));
+    if (aMiscKeyParam)
     {
-        /* Copy the key string */
-        oscl_strncpy(aKeyVal.key,
-                     aKeyTypeString,
-                     oscl_strlen(aKeyTypeString) + 1);
-        oscl_strncat(aKeyVal.key,
-                     PVMI_KVP_SEMICOLON_STRING_CONSTCHAR,
-                     oscl_strlen(PVMI_KVP_SEMICOLON_STRING_CONSTCHAR));
-        oscl_strncat(aKeyVal.key,
-                     PVMI_KVPVALTYPE_STRING_CONSTCHAR,
-                     oscl_strlen(PVMI_KVPVALTYPE_STRING_CONSTCHAR));
-        oscl_strncat(aKeyVal.key,
-                     PVMI_KVPVALTYPE_KSV_STRING,
-                     oscl_strlen(PVMI_KVPVALTYPE_KSV_STRING));
-        if (aMiscKeyParam)
-        {
-            oscl_strncat(aKeyVal.key, aMiscKeyParam, oscl_strlen(aMiscKeyParam));
-        }
-        aKeyVal.key[keylen-1] = '\0';
-        /* Copy the value */
-        aKeyVal.value.key_specific_value = aValue;
+        oscl_strncat(aKeyVal.key, aMiscKeyParam, oscl_strlen(aMiscKeyParam));
     }
-    else
-    {
-        /* Memory allocation failed so clean up */
-        if (aKeyVal.key)
-        {
-            OSCL_ARRAY_DELETE(aKeyVal.key);
-            aKeyVal.key = NULL;
-        }
-        return PVMFErrNoMemory;
-    }
+    aKeyVal.key[keylen-1] = '\0';
+    /* Copy the value */
+    aKeyVal.value.key_specific_value = aValue;
+
     return PVMFSuccess;
 }
-
-
-
-
 

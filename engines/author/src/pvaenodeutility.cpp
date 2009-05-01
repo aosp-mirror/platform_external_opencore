@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -331,7 +331,7 @@ void PVAuthorEngineNodeUtility::NodeCommandCompleted(const PVMFCmdResp& aRespons
             status = CompleteStateTransition(cmd, EPVMFNodePrepared);
             break;
         case PVAENU_CMD_RESET:
-            status = CompleteStateTransition(cmd, EPVMFNodeCreated);
+            status = CompleteStateTransition(cmd, EPVMFNodeIdle);
             break;
         default:
             status = PVMFFailure;
@@ -339,12 +339,7 @@ void PVAuthorEngineNodeUtility::NodeCommandCompleted(const PVMFCmdResp& aRespons
     }
 
     if (status != PVMFPending)
-    {
         CompleteUtilityCmd(cmd, status);
-    }
-    else if (iCmdQueue.size() == 1) {  // kick off the execution of the command
-        RunIfNotReady();
-    }
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -445,73 +440,46 @@ void PVAuthorEngineNodeUtility::CompleteUtilityCmd(const PVAENodeUtilCmd& aCmd, 
     {
         LOG_ERR((0, "PVAuthorEngineNodeUtility::CompleteUtilityCmd: Error - Observer not set"));
         OSCL_LEAVE(OsclErrGeneral);
-        // return;    This statement was removed to avoid compiler warning for Unreachable Code
+        // return;	This statement was removed to avoid compiler warning for Unreachable Code
     }
 
-    // make the error logs more specific
-    bool emptyCmdQueueOrMismatchedCmd = false;
-    if (iCmdQueue.empty())
+    if (iCmdQueue.empty() || aCmd.iType != iCmdQueue[0].iType)
     {
-        emptyCmdQueueOrMismatchedCmd = true;
-        LOG_ERR((0, "PVAuthorEngineNodeUtility::CompleteUtilityCmd: Error - Empty command queue"));
-    }
-    else if (aCmd.iType != iCmdQueue[0].iType)
-    {
-        emptyCmdQueueOrMismatchedCmd = true;
-        LOG_ERR((0, "PVAuthorEngineNodeUtility::CompleteUtilityCmd: Error - Mismatched command (%d vs %d)", aCmd.iType, iCmdQueue[0].iType));
-    }
-    if (emptyCmdQueueOrMismatchedCmd)
-    {
+        LOG_ERR((0, "PVAuthorEngineNodeUtility::CompleteUtilityCmd: Error - Empty command queue or mismatched command"));
         PVMFAsyncEvent event(PVMFErrorEvent, PVMFFailure, NULL, NULL);
         iObserver->NodeUtilErrorEvent(event);
-        return;
+	return;
     }
 
-    if (aStatus == PVMFFailure)
-    {
-        // if one cmd failed, skip the remaining commands in the queue.
-        // send the same error code via callbacks to author engine
-        // to signal the (failure) completion of these commands.
-        while (!iCmdQueue.empty())
-        {
-            PVAENodeUtilCmd cmd = iCmdQueue[0];
-            iCmdQueue.erase(iCmdQueue.begin());
-            PVMFCmdResp resp(0, cmd.iContext, aStatus);
-            iObserver->NodeUtilCommandCompleted(resp);
-        }
-    }
-    else
-    {
-        iCmdQueue.erase(iCmdQueue.begin());
-        PVMFCmdResp resp(0, aCmd.iContext, aStatus);
-        iObserver->NodeUtilCommandCompleted(resp);
-    }
+    // Remove command from queue
+    iCmdQueue.erase(iCmdQueue.begin());
+
+    // Callback to engine
+    PVMFCmdResp resp(0, aCmd.iContext, aStatus);
+    iObserver->NodeUtilCommandCompleted(resp);
 
     // Run next command when needed
     if (!iCmdQueue.empty())
-    {
         RunIfNotReady();
-    }
 }
 
 ////////////////////////////////////////////////////////////////////////////
 PVMFStatus PVAuthorEngineNodeUtility::DoConnect(const PVAENodeUtilCmd& aCmd)
 {
     LOG_STACK_TRACE((0, "PVAuthorEngineNodeUtility::DoConnect"));
-
-    int32 tag1 = 0;
-    int32 tag2 = 0;
-    OSCL_HeapString<OsclMemAllocator> mimeType;
-    PVMFStatus status = ((PVAENodeUtilCmd)aCmd).ParseConnect(tag1, tag2, mimeType);
-    if (status != PVMFSuccess)
-    {
-        LOG_ERR((0, "PVAuthorEngineNodeUtility::DoConnect: Error - cmd.ParseConnect failed. status=%d", status));
+    int32 err = 0;
+    OSCL_TRY(err,
+             int32 tag1 = 0;
+             int32 tag2 = 0;
+             OSCL_HeapString<OsclMemAllocator> mimeType;
+             PVMFStatus status = ((PVAENodeUtilCmd)aCmd).ParseConnect(tag1, tag2, mimeType);
+             if (status != PVMFSuccess)
+{
+    LOG_ERR((0, "PVAuthorEngineNodeUtility::DoConnect: Error - cmd.ParseConnect failed. status=%d", status));
         return status;
     }
 
-    int32 err = 0;
-    OSCL_TRY(err,
-             if (mimeType.get_size() > 0)
+    if (mimeType.get_size() > 0)
 {
     // Request a port from the master node
     aCmd.iNodes[0]->iNode->RequestPort(aCmd.iNodes[0]->iSessionId, tag1,
@@ -534,6 +502,26 @@ PVMFStatus PVAuthorEngineNodeUtility::DoConnect(const PVAENodeUtilCmd& aCmd)
     return PVMFPending;
 }
 
+
+// This is a work-around function to eliminate the compiler warning on certain platforms:
+// "Variable might be clobbered by 'longjmp' or vfork'
+static int32 requestport(PVMFNodeInterface* n, int32 id, int32 t2, OSCL_String& mt, OsclAny* p)
+{
+    int32 err;
+    OSCL_TRY(err,
+             if (mt.get_size() > 0)
+{
+    n->RequestPort(id, t2, &mt, p);
+    }
+    else
+    {
+        n->RequestPort(id, t2, NULL, p);
+    }
+            );
+    return err;
+}
+
+
 ////////////////////////////////////////////////////////////////////////////
 PVMFStatus PVAuthorEngineNodeUtility::CompleteConnect(const PVAENodeUtilCmd& aCmd, const PVMFCmdResp& aResponse)
 {
@@ -551,6 +539,7 @@ PVMFStatus PVAuthorEngineNodeUtility::CompleteConnect(const PVAENodeUtilCmd& aCm
     int32 tag2 = 0;
     OSCL_HeapString<OsclMemAllocator> mimeType;
     PVMFStatus status = ((PVAENodeUtilCmd)aCmd).ParseConnect(tag1, tag2, mimeType);
+
     if (status != PVMFSuccess)
     {
         LOG_ERR((0, "PVAuthorEngineNodeUtility::CompleteConnect: Error - cmd.ParseConnect failed. status=%d", status));
@@ -558,12 +547,11 @@ PVMFStatus PVAuthorEngineNodeUtility::CompleteConnect(const PVAENodeUtilCmd& aCm
     }
 
     int32 err = 0;
-    OSCL_TRY(err,
-             // Add port to port vector of node container
-             switch (tag1)
-{
-    case PVAE_NODE_INPUT_PORT_TAG:
-        nodeContainer->iInputPorts.push_back(port);
+    // Add port to port vector of node container
+    switch (tag1)
+    {
+        case PVAE_NODE_INPUT_PORT_TAG:
+            nodeContainer->iInputPorts.push_back(port);
             break;
         case PVAE_NODE_OUTPUT_PORT_TAG:
             nodeContainer->iOutputPorts.push_back(port);
@@ -573,27 +561,10 @@ PVMFStatus PVAuthorEngineNodeUtility::CompleteConnect(const PVAENodeUtilCmd& aCm
             OSCL_LEAVE(OsclErrNotSupported);
             break;
     }
-            );
-
-    OSCL_FIRST_CATCH_ANY(err,
-                         LOG_ERR((0, "PVAuthorEngineNodeUtility::CompleteConnect: Error - Failed to add port to port vector"));
-                         return PVMFFailure;
-                        );
 
     if (nodeContainer == aCmd.iNodes[0])
     {
-        OSCL_TRY(err,
-                 if (mimeType.get_size() > 0)
-    {
-        aCmd.iNodes[1]->iNode->RequestPort(aCmd.iNodes[1]->iSessionId, tag2,
-                                               &mimeType, (OsclAny*)aCmd.iNodes[1]);
-        }
-        else
-        {
-            aCmd.iNodes[1]->iNode->RequestPort(aCmd.iNodes[1]->iSessionId, tag2,
-                                               NULL, (OsclAny*)aCmd.iNodes[1]);
-        }
-                );
+        err = requestport(aCmd.iNodes[1]->iNode, aCmd.iNodes[1]->iSessionId, tag2, mimeType, (OsclAny*)aCmd.iNodes[1]);
 
         OSCL_FIRST_CATCH_ANY(err,
                              LOG_ERR((0, "PVAuthorEngineNodeUtility::CompleteConnect: Error - RequestPort failed. node=0x%x",
@@ -666,15 +637,8 @@ PVMFStatus PVAuthorEngineNodeUtility::DoDisconnect(const PVAENodeUtilCmd& aCmd)
         return PVMFSuccess;
     }
 
-    int32 err = 0;
-    OSCL_TRY(err,
-             port->Disconnect();
-             container->iNode->ReleasePort(container->iSessionId, *port, (OsclAny*)container);
-            );
-    OSCL_FIRST_CATCH_ANY(err,
-                         LOG_ERR((0, "PVAuthorEngineNodeUtility::DoDisconnect: Error - ReleasePort failed"));
-                         return PVMFFailure;
-                        );
+    if (PVMFFailure == ReleasePort(container, port))
+        return PVMFFailure;
 
     return PVMFPending;
 }
@@ -713,18 +677,18 @@ PVMFStatus PVAuthorEngineNodeUtility::DoQueryInterface(const PVAENodeUtilCmd& aC
 {
     LOG_STACK_TRACE((0, "PVAuthorEngineNodeUtility::DoQueryInterface"));
 
-    PVInterface** interfacePtr = NULL;
-    PVMFStatus status = ((PVAENodeUtilCmd)aCmd).ParseQueryInterface(interfacePtr);
-    if (status != PVMFSuccess || !interfacePtr)
-    {
-        LOG_ERR((0, "PVAuthorEngineNodeUtility::DoQueryInterface: Error - aCmd.ParseQueryInterface failed"));
+    int32 err = 0;
+    OSCL_TRY(err,
+             PVInterface** interfacePtr = NULL;
+             PVMFStatus status = ((PVAENodeUtilCmd)aCmd).ParseQueryInterface(interfacePtr);
+             if (status != PVMFSuccess || !interfacePtr)
+{
+    LOG_ERR((0, "PVAuthorEngineNodeUtility::DoQueryInterface: Error - aCmd.ParseQueryInterface failed"));
         return PVMFFailure;
     }
 
-    int32 err = 0;
-    OSCL_TRY(err,
-             aCmd.iNodes[0]->iNode->QueryInterface(aCmd.iNodes[0]->iSessionId, aCmd.iUuid,
-                                                   (PVInterface*&)*interfacePtr, aCmd.iContext);
+    aCmd.iNodes[0]->iNode->QueryInterface(aCmd.iNodes[0]->iSessionId, aCmd.iUuid,
+                                          (PVInterface*&)*interfacePtr, aCmd.iContext);
             );
 
     OSCL_FIRST_CATCH_ANY(err,
@@ -741,19 +705,18 @@ PVMFStatus PVAuthorEngineNodeUtility::CompleteQueryInterface(const PVAENodeUtilC
 {
     LOG_STACK_TRACE((0, "PVAuthorEngineNodeUtility::CompleteQueryInterface"));
 
-    PVInterface** interfacePtr = NULL;
-    PVMFStatus status = ((PVAENodeUtilCmd)aCmd).ParseQueryInterface(interfacePtr);
-    if (status != PVMFSuccess || !interfacePtr)
-    {
-        LOG_ERR((0, "PVAuthorEngineNodeUtility::CompleteQueryInterface: Error - aCmd.ParseQueryInterface failed"));
-        return PVMFFailure;
-    }
-
     int32 err = 0;
     OSCL_TRY(err,
-             aCmd.iNodes[0]->iExtensionUuids.push_back(aCmd.iUuid);
-             (*interfacePtr)->addRef();
-             aCmd.iNodes[0]->iExtensions.push_back(*interfacePtr);
+             PVInterface** interfacePtr = NULL;
+             PVMFStatus status = ((PVAENodeUtilCmd)aCmd).ParseQueryInterface(interfacePtr);
+             if (status != PVMFSuccess || !interfacePtr)
+{
+    LOG_ERR((0, "PVAuthorEngineNodeUtility::CompleteQueryInterface: Error - aCmd.ParseQueryInterface failed"));
+        return PVMFFailure;
+    }
+    aCmd.iNodes[0]->iExtensionUuids.push_back(aCmd.iUuid);
+    (*interfacePtr)->addRef();
+    aCmd.iNodes[0]->iExtensions.push_back(*interfacePtr);
             );
 
     OSCL_FIRST_CATCH_ANY(err,
@@ -940,28 +903,52 @@ PVMFStatus PVAuthorEngineNodeUtility::DoReset(const PVAENodeUtilCmd& aCmd)
 PVMFStatus PVAuthorEngineNodeUtility::CompleteStateTransition(const PVAENodeUtilCmd& aCmd,
         TPVMFNodeInterfaceState aState)
 {
-    LOG_STACK_TRACE((0, "PVAuthorEngineNodeUtility::CompleteStateTransition"));
+    LOG_STACK_TRACE((0, "PVAuthorEngineNodeUtility::CompleteStateTransition: aState=%d", aState));
 
+    //Handle reset differently since we need to thread logoff here
+    //if a node state is EPVMFNodeIdle (which is what aState would be if aCmd.iType is PVAENU_CMD_RESET)
+    //do threadlogoff and take the node back to created
+    if (aCmd.iType == PVAENU_CMD_RESET)
+    {
+        for (uint32 i = 0; i < aCmd.iNodes.size(); i++)
+        {
+            if (aCmd.iNodes[i]->iNode->GetState() == aState)
+            {
+                // reset completed, perform threadlogoff on the node.
+                PVMFStatus status = aCmd.iNodes[i]->iNode->ThreadLogoff();
+                if (PVMFSuccess != status)
+                {
+                    LOG_ERR((0, "PVAuthorEngineNodeUtility::CompleteStateTransition: Error - Node ThreadLogoff failed for node=0x%x", aCmd.iNodes[i]->iNode));
+                    OSCL_ASSERT(false);
+                }
+            }
+        }
+        //now that we have taken the nodes in idle back to created,
+        //override aState to EPVMFNodeCreated
+        aState = EPVMFNodeCreated;
+    }
     for (uint32 i = 0; i < aCmd.iNodes.size(); i++)
     {
         if (aCmd.iNodes[i]->iNode->GetState() != aState)
         {
-            LOG_STACK_TRACE((0, "PVAuthorEngineNodeUtility::CompleteStateTransition: node %d (%d) does not have the same state as the node util(%d)", i, aCmd.iNodes[i]->iNode->GetState(), aState));
-            if ((aCmd.iType == PVAENU_CMD_RESET) && (aCmd.iNodes[i]->iNode->GetState() == EPVMFNodeIdle))
-            {
-                LOG_STACK_TRACE((0, "PVAuthorEngineNodeUtility::CompleteStateTransition: RESET and EPVMFNodeIdle - do nothing"));
-                //If the command is RESET and GetState() == EPVMFNodeIdle, be tolerant
-                //do nothing;
-            }
-            else
-            {
-                // Some nodes have not completed this command. Continue to wait
-                LOG_STACK_TRACE((0, "PVAuthorEngineNodeUtility::CompleteStateTransition: Continue to wait"));
-                return PVMFPending;
-            }
+            // Some nodes have not completed this command. Continue to wait
+            return PVMFPending;
         }
     }
+    return PVMFSuccess;
+}
 
-    LOG_STACK_TRACE((0, "PVAuthorEngineNodeUtility::CompleteStateTransition: return PVMFSuccess"));
+////////////////////////////////////////////////////////////////////////////
+PVMFStatus PVAuthorEngineNodeUtility::ReleasePort(PVAENodeContainer*& aContainer, PVMFPortInterface*& aPort)
+{
+    int32 err = 0;
+    OSCL_TRY(err,
+             aPort->Disconnect();
+             aContainer->iNode->ReleasePort(aContainer->iSessionId, *aPort, (OsclAny*)aContainer);
+            );
+    OSCL_FIRST_CATCH_ANY(err,
+                         LOG_ERR((0, "PVAuthorEngineNodeUtility::DoDisconnect: Error - ReleasePort failed"));
+                         return PVMFFailure;
+                        );
     return PVMFSuccess;
 }

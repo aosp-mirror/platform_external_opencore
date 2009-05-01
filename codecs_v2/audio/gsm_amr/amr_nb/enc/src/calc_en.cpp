@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,41 +35,6 @@ terms listed above has been obtained from the copyright holder.
  Funtions: calc_unfilt_energies
            calc_filt_energies
            calc_target_energy
-
-     Date: 06/16/2000
-
-------------------------------------------------------------------------------
- REVISION HISTORY
-
- Description:  After review changes
-
- Description:  Replaced the inlined code for norm_l and saturation checks
-    with the original code to fix a bug with 4.75k encode.
-
- Description: Synchronized file with UMTS version 3.2.0. Updated coding
-              template. Removed unnecessary include files.
-
- Description: Replaced basic_op.h and oper_32b.h with the header files of the
-              math functions used by the file.
-
- Description: Undid optimization in the loop that calculates various dot
-              products in calc_filt_energies. Added calls to L_mac function
-              instead of doing a straight multiply-accumulate. Updated
-              copyright year. Fixed typecasting issue with TI C compiler.
-
- Description: Add pOverflow as a passed in variable for the EPOC changes.
-              Updated code as per review comments regarding pOverflow.
-
- Description: Changed round function name to pv_round to avoid conflict with
-              round function in C standard library.
-
- Description:  Replaced "int" and/or "char" with OSCL defined types.
-
- Description: Using inlines from fxp_arithmetic.h .
-
- Description: Replacing fxp_arithmetic.h with basic_op.h.
-
- Description:
 
 ------------------------------------------------------------------------------
  MODULE DESCRIPTION

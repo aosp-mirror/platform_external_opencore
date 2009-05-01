@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -414,6 +414,7 @@ TimeToSampleAtom::getSampleNumberFromTimestamp(uint32 ts, bool oAlwaysRetSampleC
         }
     }
 
+
     sampleCount += 1;
     if (ts >= timeCount)
     {
@@ -563,6 +564,8 @@ TimeToSampleAtom::getTimeDeltaForSampleNumberPeek(uint32 sampleNum)
             return (PV_ERROR);
         }
     }
+
+
 }
 
 // Returns the timestamp delta (ms) for the current sample given by num.  This value
@@ -612,6 +615,8 @@ TimeToSampleAtom::getTimeDeltaForSampleNumberGet(uint32 sampleNum)
             return (PV_ERROR);
         }
     }
+
+
 }
 
 int32
@@ -658,6 +663,7 @@ TimeToSampleAtom::resetStateVariables(uint32 sampleNum)
         {
             return (EVERYTHING_FINE);
         }
+
     }
 
     // Went past end of list - not a valid sample number

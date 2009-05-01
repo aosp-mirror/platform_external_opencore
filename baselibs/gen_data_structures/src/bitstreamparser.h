@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,8 @@
 
 
 #include "oscl_assert.h"
-
+#include "oscl_error_codes.h"
+#include "oscl_exception.h"
 
 #define MOST_SIG_BIT              7
 #define LEAST_SIG_BIT             0
@@ -41,6 +42,9 @@ class BitStreamParser
     public:
         //Constructor requires a pointer to the stream and the size in bytes.
         OSCL_IMPORT_REF BitStreamParser(uint8* stream, uint32 size);
+
+        // Reset bitstream parser
+        OSCL_IMPORT_REF void ResetBitStreamParser(uint8* stream, uint32 size);
 
         //Returns the specified number of bits from the stream (up to 32 bits).
         OSCL_IMPORT_REF uint32 ReadBits(uint8 numberOfBits);
@@ -69,10 +73,16 @@ class BitStreamParser
         //Skips over exactly one bit.  This is more efficient than NextBits(1).
         OSCL_EXPORT_REF inline void NextBit(void)
         {
-            if (0 != bitpos) bitpos--;
+            if (0 != bitpos)
+            {
+                bitpos--;
+            }
             else
             {
-                OSCL_ASSERT(bytepos < (start + size));
+                if (bytepos >= (start + size))
+                {
+                    OSCL_LEAVE(OsclErrOverflow);
+                }
                 bitpos = MOST_SIG_BIT;
                 bytepos++;
             }

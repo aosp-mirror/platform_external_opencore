@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,10 @@
  * -------------------------------------------------------------------
  */
 /*
-------------------------------------------------------------------------------
 
+ Pathname: get_tns.h
 
-
- Pathname: /audio/
-                aac_mpeg4/
-                    AAC_baseline/
-                        pv_aac_dec/
-                            c/
-                                include/
-                                    get_tns.h
-
+   Author:
      Date: 03/08/2001
 
 ------------------------------------------------------------------------------
@@ -50,6 +42,7 @@
  the combination of the get_tns and tns_setup_filter routines.  Also, moved
  pInputStream to be the 2nd parameter, for a slight optimization.
 
+ Who:						Date:
  Description:
 
 ------------------------------------------------------------------------------

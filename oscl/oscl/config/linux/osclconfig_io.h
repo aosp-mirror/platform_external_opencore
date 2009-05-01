@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,18 +53,20 @@
 
 
 //For File I/O
-
-
-
-
+#define OSCL_HAS_GLOB 1
+#define OSCL_HAS_ANSI_FILE_IO_SUPPORT 1
+#define OSCL_HAS_SYMBIAN_COMPATIBLE_IO_FUNCTION 0
+#define OSCL_HAS_NATIVE_FILE_CACHE_ENABLE 1
 #define OSCL_FILE_BUFFER_MAX_SIZE	32768
-
+#define OSCL_HAS_PV_FILE_CACHE	1
+#define OSCL_HAS_LARGE_FILE_SUPPORT 1
 
 //For Sockets
-
-
-
-
+#define OSCL_HAS_SYMBIAN_SOCKET_SERVER 0
+#define OSCL_HAS_SYMBIAN_DNS_SERVER 0
+#define OSCL_HAS_BERKELEY_SOCKETS 1
+#define OSCL_HAS_SOCKET_SUPPORT 1
+#define OSCL_HAS_SELECTABLE_PIPES 1
 
 //basic socket types
 typedef int TOsclSocket;
@@ -91,7 +93,9 @@ typedef socklen_t TOsclSockAddrLen;
 	if (!ok)err=errno
 
 #define OsclBind(s,addr,ok,err)\
-	    ok=(bind(s,(sockaddr*)&addr,sizeof(addr))!=(-1));\
+    TOsclSockAddr* tmpadr = &addr;\
+    sockaddr* sadr = OSCL_STATIC_CAST(sockaddr*, tmpadr);\
+	ok=(bind(s,sadr,sizeof(addr))!=(-1));\
         if (!ok)err=errno
 
 #define OsclJoin(s,addr,ok,err)\
@@ -106,10 +110,10 @@ typedef socklen_t TOsclSockAddrLen;
 	ok=(listen(iSocket,qSize)!=(-1));\
 	if (!ok)err=errno
 
-#define OsclAccept(s,accept_s,ok,err)\
+#define OsclAccept(s,accept_s,ok,err,wouldblock)\
 	accept_s=accept(s,NULL,NULL);\
 	ok=(accept_s!=(-1));\
-	if (!ok)err=errno
+	if (!ok){err=errno;wouldblock=(err==EAGAIN||err==EWOULDBLOCK);}
 
 #define OsclSetNonBlocking(s,ok,err)\
 	ok=(fcntl(s,F_SETFL,O_NONBLOCK)!=(-1));\
@@ -125,7 +129,9 @@ typedef socklen_t TOsclSockAddrLen;
 	if (!ok)err=errno
 
 #define OsclSendTo(s,buf,len,addr,ok,err,nbytes,wouldblock)\
-	nbytes=sendto(s,(const void*)(buf),(size_t)(len),0,(const struct sockaddr*)&addr,(socklen_t)sizeof(addr));\
+    TOsclSockAddr* tmpadr = &addr;\
+    sockaddr* sadr = OSCL_STATIC_CAST(sockaddr*, tmpadr);\
+	nbytes=sendto(s,buf,(size_t)(len),0,sadr,(socklen_t)sizeof(addr));\
 	ok=(nbytes!=(-1));\
 	if (!ok){err=errno;wouldblock=(err==EAGAIN||err==EWOULDBLOCK);}
 
@@ -139,7 +145,9 @@ typedef socklen_t TOsclSockAddrLen;
 	if (!ok)err=errno
 
 #define OsclConnect(s,addr,ok,err,wouldblock)\
-	ok=(connect(s,(sockaddr*)&addr,sizeof(addr))!=(-1));\
+    TOsclSockAddr* tmpadr = &addr;\
+    sockaddr* sadr = OSCL_STATIC_CAST(sockaddr*, tmpadr);\
+	ok=(connect(s,sadr,sizeof(addr))!=(-1));\
 	if (!ok){err=errno;wouldblock=(err==EINPROGRESS);}
 
 #define OsclGetAsyncSockErr(s,ok,err)\
@@ -220,6 +228,15 @@ typedef struct hostent TOsclHostent;
 #define OSCL_IPPROTO_UDP IPPROTO_UDP
 
 //End sockets
+
+// file IO support
+#if (OSCL_HAS_LARGE_FILE_SUPPORT)
+#define _FILE_OFFSET_BITS 64
+typedef off_t TOsclFileOffset;
+#else
+typedef int32 TOsclFileOffset;
+#endif
+
 
 #include "osclconfig_io_check.h"
 

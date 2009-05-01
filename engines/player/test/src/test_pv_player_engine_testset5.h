@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,18 +33,29 @@
 #include "test_pv_player_engine_config.h"
 #endif
 
+#if RUN_FASTTRACK_TESTCASES
+#ifndef PVPVXPARSER_H_INCLUDED
+#include "pvpvxparser.h"
+#endif
+#endif
 
+#if !(JANUS_IS_LOADABLE_MODULE)
 #ifndef PVMF_CPMPLUGIN_FACTORY_REGISTRY_H_INCLUDED
 #include "pvmf_cpmplugin_factory_registry.h"
+#endif
 #endif
 
 class PVPlayerDataSourceURL;
 class PVPlayerDataSinkFilename;
 class PVLogger;
+class PVMFDownloadDataSourcePVX;
 class PVMFDownloadDataSourceHTTP;
 class PVMFSourceContextData;
 class PvmiCapabilityAndConfig;
 class PVMFJanusPluginFactory;
+#if RUN_CPMJANUS_TESTCASES
+class PVMFJanusPluginConfiguration;
+#endif
 class WmDrmDeviceInfoFactory;
 class PVWmdrmDeviceSystemClockFactory;
 
@@ -113,7 +124,6 @@ class pvplayer_async_test_downloadbase : public pvplayer_async_test_base
             STATE_REMOVEDATASINK_AUDIO,
             STATE_RESET,
             STATE_REMOVEDATASOURCE,
-            STATE_WAIT_FOR_ERROR_HANDLING,
             STATE_CLEANUPANDCOMPLETE,
             STATE_PREPARE2,
             STATE_START2,
@@ -206,10 +216,56 @@ class pvplayer_async_test_downloadbase : public pvplayer_async_test_base
         OSCL_StackString<256> iKeyStringSetAsync;
 };
 
+#if RUN_FASTTRACK_TESTCASES
+/*!
+ *  A test case to test the normal FastTrack download and playback from a PVX file
+ *  - Data Source: test.pvx
+ *  - Data Sink(s): Video[FileOutputNode-test_player_ftdlnormal_video.dat]\n
+ *                  Audio[FileOutputNode-test_player_ftdlnormal_audio.dat]
+ *  - Sequence:
+ *             -# CreatePlayer()
+ *             -# AddDataSource()
+ *             -# Init()
+ *             -# AddDataSink() (video)
+ *             -# AddDataSink() (audio)
+ *             -# Prepare()
+ *             -# Wait for Data Ready event
+ *             -# Start()
+ *             -# Play until either EOS is reached or 10 seconds after download
+ *					finishes.
+ *             -# Stop()
+ *             -# RemoveDataSink() (video)
+ *             -# RemoveDataSink() (audio)
+ *             -# Reset()
+ *             -# RemoveDataSource()
+ *             -# DeletePlayer()
+ *
+ */
+class pvplayer_async_test_ftdlnormal : public pvplayer_async_test_downloadbase
+{
+    public:
+        pvplayer_async_test_ftdlnormal(PVPlayerAsyncTestParam aTestParam)
+                : pvplayer_async_test_downloadbase(aTestParam)
+        {
+            iLogger = PVLogger::GetLoggerObject("pvplayer_async_test_ftdlnormal");
+            iTestCaseName = _STRLIT_CHAR("FastTrack Download Normal");
+        }
+
+        ~pvplayer_async_test_ftdlnormal();
+
+        void CreateDataSource();
+        void CreateDataSinkVideo();
+        void CreateDataSinkAudio();
+
+        uint8 iPVXFileBuf[4096];
+        int32 iDownloadMaxfilesize;
+        CPVXInfo iDownloadPvxInfo;
+};
+#endif
 
 /*!
  *  A test case to test the normal 3GPP download and playback from an HTTP URL.
- *  - Data Source: http://172.16.6.54/JaniePorche_176.3gp
+ *  - Data Source: http://0.0.0.0/test.3gp
  *  - Data Sink(s): Video[FileOutputNode-test_player_3gppdlnormal_video.dat]\n
  *                  Audio[FileOutputNode-test_player_3gppdlnormal_audio.dat]
  *  - Sequence:
@@ -239,10 +295,11 @@ class pvplayer_async_test_3gppdlnormal : public pvplayer_async_test_downloadbase
         {
             iLogger = PVLogger::GetLoggerObject("pvplayer_async_test_3gppdlnormal");
             iTestCaseName = _STRLIT_CHAR("3GPP Download Play ASAP");
+#if RUN_CPMJANUS_TESTCASES && !(JANUS_IS_LOADABLE_MODULE)
             iPluginFactory = NULL;
-            iUseCpmForPlayback = false;
             iDrmDeviceInfoFactory = NULL;
             iDrmSystemClockFactory = NULL;
+#endif
         }
 
         ~pvplayer_async_test_3gppdlnormal();
@@ -252,18 +309,21 @@ class pvplayer_async_test_3gppdlnormal : public pvplayer_async_test_downloadbase
         void CreateDataSinkAudio();
 
         //for janus DRM
+#if RUN_CPMJANUS_TESTCASES && !(JANUS_IS_LOADABLE_MODULE)
         PVMFCPMPluginFactoryRegistryClient iPluginRegistryClient;
         PVMFJanusPluginFactory* iPluginFactory;
         OSCL_HeapString<OsclMemAllocator> iPluginMimeType;
-        bool iUseCpmForPlayback;
+        bool RegisterJanusPlugin(PVMFJanusPluginConfiguration& aConfig);
+        void CleanupJanusPlugin();
         WmDrmDeviceInfoFactory* iDrmDeviceInfoFactory;
         PVWmdrmDeviceSystemClockFactory* iDrmSystemClockFactory;
+#endif
         void CleanupData();
 };
 
 /*!
  *  A test case to test the normal PPB from an HTTP URL.
- *  - Data Source: http://172.16.6.54/JaniePorche_176.3gp
+ *  - Data Source: http://0.0.0.0/test.3gp
  *  - Data Sink(s): Video[FileOutputNode-test_player_3gppdlnormal_video.dat]\n
  *                  Audio[FileOutputNode-test_player_3gppdlnormal_audio.dat]
  *  - Sequence:
@@ -423,7 +483,6 @@ class pvplayer_async_test_3gppdlcancelduringinit : public pvplayer_async_test_ba
             STATE_WAIT_FOR_CANCELALL,
             STATE_RESET,
             STATE_REMOVEDATASOURCE,
-            STATE_WAIT_FOR_ERROR_HANDLING,
             STATE_CLEANUPANDCOMPLETE
         };
 
@@ -489,7 +548,6 @@ class pvplayer_async_test_3gppdlcancelduringinitdelay : public pvplayer_async_te
             STATE_WAIT_FOR_CANCELALL,
             STATE_RESET,
             STATE_REMOVEDATASOURCE,
-            STATE_WAIT_FOR_ERROR_HANDLING,
             STATE_CLEANUPANDCOMPLETE
         };
 
@@ -512,7 +570,7 @@ class pvplayer_async_test_3gppdlcancelduringinitdelay : public pvplayer_async_te
  *  A test case to test the return of PVMFErrContentTooLarge from Init()
  *         when the iMaxFileSize is set to a lower number than the size of
  *         the downloading file.
- *  - Data Source: "http://wms.pv.com:7070/MediaDownloadContent/UserUploads/av5.wmv"
+ *  - Data Source: "http://pvwmsoha.pv.com:7070/MediaDownloadContent/UserUploads/av5.wmv"
  *  - Data Sink(s): N/A
  *  - Sequence:
  *             -# CreatePlayer()
@@ -619,6 +677,13 @@ class pvplayer_async_test_ppb_base : public pvplayer_async_test_base
                 , iBackwardStep(false)
                 , iBackwardSeekStep(0)
                 , iBackwardSeekTime(0)
+                , iSeekAfterDownloadComplete(false)
+                , iSeekToBOC(false)
+                , iSeekInCache(false)
+                , iEOSStopPlay(false)
+                , iShoutcastSession(false)
+                , iSCListenTime(0)
+                , iShoutcastPlayStopPlay(false)
                 , iSessionDuration(0)
         {
             iNumBufferingStart = iNumBufferingComplete = iNumUnderflow = iNumDataReady = iNumEOS = 0;
@@ -644,11 +709,13 @@ class pvplayer_async_test_ppb_base : public pvplayer_async_test_base
             STATE_ADDDATASINK_AUDIO,
             STATE_SETPLAYBACKRANGE_BEFORESTART,
             STATE_PREPARE,
+            STATE_PREPARE_AFTERSTOP,
             STATE_GETMETADATAKEYLIST,
             STATE_GETMETADATAVALUELIST,
             STATE_WAIT_FOR_DATAREADY,
             STATE_WAIT_FOR_BUFFCOMPLETE,
             STATE_START,
+            STATE_START_AFTERSTOP,
             STATE_SETPLAYBACKRANGE,
             STATE_PAUSE,
             STATE_SETPLAYBACKRANGE_AFTERSTART,
@@ -656,12 +723,15 @@ class pvplayer_async_test_ppb_base : public pvplayer_async_test_base
             STATE_PAUSE_TWICE,
             STATE_SETPLAYBACKRANGE_AFTERSTART_TWICE,
             STATE_RESUME_TWICE,
+            STATE_PAUSE_AFTERDOWNLOADCOMPLETE,
+            STATE_SETPLAYBACKRANGE_AFTERDOWNLOADCOMPLETE,
+            STATE_RESUME_AFTERDOWNLOADCOMPLETE,
             STATE_STOP,
+            STATE_STOP_TWICE,
             STATE_REMOVEDATASINK_VIDEO,
             STATE_REMOVEDATASINK_AUDIO,
             STATE_RESET,
             STATE_REMOVEDATASOURCE,
-            STATE_WAIT_FOR_ERROR_HANDLING,
             STATE_CLEANUPANDCOMPLETE
         };
 
@@ -772,6 +842,50 @@ class pvplayer_async_test_ppb_base : public pvplayer_async_test_base
         int32 iBackwardSeekStep;
         int32 iBackwardSeekTime;
 
+        void enableSeekAfterDownloadComplete()
+        {
+            iSeekAfterDownloadComplete = true;
+        }
+        bool iSeekAfterDownloadComplete;
+
+        void enableSeekToBOC()
+        {
+            iSeekToBOC = true;
+        }
+        bool iSeekToBOC;
+
+        void enableSeekInCache()
+        {
+            iSeekInCache = true;
+        }
+        bool iSeekInCache;
+
+        void enableEOSStopPlay()
+        {
+            iEOSStopPlay = true;
+        }
+        bool iEOSStopPlay;
+
+        void setShoutcastSessionDuration()
+        {
+            iSCListenTime = 5 * 60 * 1000 * 1000;
+        }
+        bool iShoutcastSession;
+        int32 iSCListenTime;
+        bool iShoutcastPlayStopPlay;
+
+        void enableShoutcastPauseResume()
+        {
+            iSCListenTime = 1 * 60 * 1000 * 1000;
+            enableShortPauseResume();
+        }
+
+        void enableShoutcastPlayStopPlay()
+        {
+            iSCListenTime = 30 * 1000 * 1000;
+            iShoutcastPlayStopPlay = true;
+        }
+
         //for janus drm.
         void PrintJanusError(const PVCmdResponse& aResponse);
 
@@ -808,7 +922,7 @@ class pvplayer_async_test_ppb_normal : public pvplayer_async_test_ppb_base
 
 /*!
  *  A test case to test the normal PDL Pause Resume After UnderFlow and playback from an HTTP URL.
- *  - Data Source: http://172.16.6.54/JaniePorche_176.3gp
+ *  - Data Source: http://0.0.0.0/test.3gp
  *  - Data Sink(s): Video[FileOutputNode-test_player_3gppdlnormal_video.dat]\n
  *                  Audio[FileOutputNode-test_player_3gppdlnormal_audio.dat]
  *  - Sequence:

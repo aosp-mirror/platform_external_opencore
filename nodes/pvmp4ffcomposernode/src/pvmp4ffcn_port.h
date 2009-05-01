@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -121,18 +121,32 @@ class PVMp4FFComposerPort : public PvmfPortBaseImpl,
         void SetFormat(PVMFFormatType aFormat)
         {
             iFormat = aFormat;
+            iMimeType = aFormat.getMIMEStrPtr();
         }
         PVMFFormatType GetFormat()
         {
             return iFormat;
+        }
+        OSCL_String& GetMimeType()
+        {
+            return iMimeType;
+        }
+        void SetCodecType(int32 aCodecType)
+        {
+            iCodecType = aCodecType;
+        }
+        int32 GetCodecType()
+        {
+            return iCodecType;
         }
         PVMP4FFCNFormatSpecificConfig* GetFormatSpecificConfig()
         {
             PvmiCapabilityAndConfig* config = NULL;
             if (iConnectedPort)
             {
-                iConnectedPort->QueryInterface(PVMI_CAPABILITY_AND_CONFIG_PVUUID,
-                                               (OsclAny*&)config);
+                OsclAny* temp = NULL;
+                iConnectedPort->QueryInterface(PVMI_CAPABILITY_AND_CONFIG_PVUUID, temp);
+                config = OSCL_STATIC_CAST(PvmiCapabilityAndConfig*, temp);
                 if (config)
                 {
                     GetInputParametersFromPeer(config);
@@ -217,6 +231,7 @@ class PVMp4FFComposerPort : public PvmfPortBaseImpl,
         // Port configuration
         int32 iTrackId;
         PVMFFormatType iFormat;
+        int32 iCodecType; //integer value to avoid formatype comparisons
         PVMP4FFCNFormatSpecificConfig iFormatSpecificConfig;
         PVMp4FFComposerPort* iReferencePort;
         OsclMemoryFragment* memfrag_sps;
@@ -227,6 +242,9 @@ class PVMp4FFComposerPort : public PvmfPortBaseImpl,
         OsclMemAllocator iAlloc;
         PVLogger* iLogger;
         bool iEndOfDataReached;
+
+        //logging
+        OSCL_HeapString<OsclMemAllocator> iMimeType;
 };
 
 #endif // PVMP4FFCN_PORT_H_INCLUDED

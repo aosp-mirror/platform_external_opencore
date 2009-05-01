@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,16 @@
  * -------------------------------------------------------------------
  */
 /*
+
  Pathname: ./src/unpack_idx.c
  Function:	unpack_idx
 			unpack_idx_sgn
 			unpack_idx_esc
 
-     Date: 10/25/2000
-
 ------------------------------------------------------------------------------
  REVISION HISTORY
 
- Description:  Modified from original code
+ Description:  Modified from original shareware code
 
  Description:  Eliminated 3 divisions and 1 multiplication through a table
  look-up method for calculating 1/mod and constant allocation of 1/mod^3
@@ -59,6 +58,7 @@
               updated (defaulted to 0), leading to block processing in other
               magnitude sensitive stages.
 
+ Who:                       Date:
  Description:
 ------------------------------------------------------------------------------
  INPUT AND OUTPUT DEFINITIONS
@@ -247,7 +247,7 @@
 #define LOWER_5_BITS_MASK 0x1F
 
 
-#if ( defined(_ARM) || defined(_ARM_V4))
+#if ( defined(PV_ARM_V5) || defined(PV_ARM_V4))
 
 __inline Int32 abs1(Int32 x)
 {

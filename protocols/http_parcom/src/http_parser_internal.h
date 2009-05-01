@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,11 +51,7 @@ enum HTTPContentType
     HTTP_CONTENT_CHUNKED_TRANSFER_ENCODING	// for Transfer-Encoding : chunked
 };
 
-#if 1
 #define LOGINFO(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG,iLogger,PVLOGMSG_INFO,m);
-#else
-#define LOGINFO(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iLogger,PVLOGMSG_ERR,m);
-#endif
 
 
 
@@ -496,7 +492,7 @@ class HTTPParserMultipartContentObject : public HTTPParserEntityBodyObject
         bool needSkipCRLF()
         {
             // iPrevCRLF&0x3!=0x3 means iPrevCRLF hasn't got complete CRLF (i.e.both CR and LF)
-            return (iNumChunks == 0 && (iPrevCRLF&0x3 != 0x3));
+            return ((iNumChunks == 0) && ((iPrevCRLF&0x3) != 0x3));
         }
 
         int32 parseChunkHeader(HTTPParserInput &aParserInput);

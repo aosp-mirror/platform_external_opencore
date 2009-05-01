@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,7 @@
  */
 /*
 
- Pathname: ./include/huffman.h
-
-     Date: 04/24/2001
+ Pathname: .huffman.h
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
@@ -48,6 +46,7 @@
  Description: Added function definition for table specific huffman decoding
 			  functions.
 
+ Who:                                         Date:
  Description:
 
 ------------------------------------------------------------------------------
@@ -155,7 +154,7 @@ extern "C"
     Int decode_huff_scl(
         BITS          *pInputStream);
 
-    void infoinit(
+    Int infoinit(
         const  Int sampling_rate_idx,
         FrameInfo   **ppWin_seq_info,
         Int    *pSfbwidth128);

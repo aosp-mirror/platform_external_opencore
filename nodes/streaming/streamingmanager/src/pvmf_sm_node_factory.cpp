@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,9 +27,7 @@
 #ifndef PVMF_STREAMING_MANAGER_NODE_H_INCLUDED
 #include "pvmf_streaming_manager_node.h"
 #endif
-#ifndef PVMF_STREAMING_MANAGER_INTERNAL_H_INCLUDED
-#include "pvmf_streaming_manager_internal.h"
-#endif
+
 
 OSCL_EXPORT_REF PVMFNodeInterface*
 PVMFStreamingManagerNodeFactory::CreateStreamingManagerNode(int32 aPriority)
@@ -42,7 +40,7 @@ PVMFStreamingManagerNodeFactory::CreateStreamingManagerNode(int32 aPriority)
              /*
               * Create Streaming Manager Node
               */
-             streamingManagerNode = OSCL_NEW(PVMFStreamingManagerNode, (aPriority));
+             streamingManagerNode = PVMFStreamingManagerNode::New(aPriority);
             );
 
     if (err != OsclErrNone)
@@ -54,10 +52,22 @@ PVMFStreamingManagerNodeFactory::CreateStreamingManagerNode(int32 aPriority)
 
 OSCL_EXPORT_REF bool PVMFStreamingManagerNodeFactory::DeleteStreamingManagerNode(PVMFNodeInterface* aNode)
 {
+    bool retval = false;
+
     if (aNode)
     {
         OSCL_DELETE(aNode);
-        return true;
+        retval = true;
+        aNode = NULL;
     }
-    return false;
+
+    /*if(EPVMFNodeIdle == aNode->GetState())
+    {
+    	if(aNode)
+    	{
+    		OSCL_DELETE(aNode);
+    		retval = true;
+    	}
+    }*/
+    return retval;
 }

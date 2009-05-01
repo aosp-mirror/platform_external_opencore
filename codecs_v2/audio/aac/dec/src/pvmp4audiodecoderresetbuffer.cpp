@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +16,8 @@
  * -------------------------------------------------------------------
  */
 /*
-------------------------------------------------------------------------------
 
-
-
- Pathname: /audio/
-                aac_mpeg4/
-                    AAC_baseline/
-                        pv_aac_dec/
-                            c/
-                                src/
-                                    PVMP4AudioDecoderResetBuffer.c
-
-     Date: 01/29/2002
+ Pathname: PVMP4AudioDecoderResetBuffer.c
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
@@ -38,6 +27,7 @@
  Description: perChan[] is an array of structures in tDec_Int_File. Made
               corresponding changes.
 
+ Who:                                         Date:
  Description:
 
 ------------------------------------------------------------------------------
@@ -167,7 +157,7 @@
 ; FUNCTION CODE
 ----------------------------------------------------------------------------*/
 
-void PVMP4AudioDecoderResetBuffer(void  *pMem)
+OSCL_EXPORT_REF void PVMP4AudioDecoderResetBuffer(void  *pMem)
 {
 
     tDec_Int_File *pVars;           /* Helper pointer */

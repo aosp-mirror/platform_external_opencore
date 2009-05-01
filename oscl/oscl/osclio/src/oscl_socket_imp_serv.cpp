@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 2008 PacketVideo
+ * Copyright (C) 1998-2009 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,16 +66,16 @@
  */
 void OsclSocketI::ProcessConnect(OsclSocketServRequestQElem* aElem)
 {
-    bool select = false;
+    bool iscomplete = false;
     int sockerr = 0;
     int32 complete = 0;
     OsclSocketRequest *req = aElem->iSocketRequest;
-    ConnectParam *param = (ConnectParam*)req->iParam;
-    if (param->iConnecting)
+    if (aElem->iSelect)
     {
         //check for completion by examining
         //writeset and exceptset
         bool ok, success, fail;
+#if (PV_SOCKET_SERVER_SELECT)
         OsclConnectComplete(iSocket,
                             iSocketServ->iWriteset,
                             iSocketServ->iExceptset,
@@ -83,6 +83,45 @@ void OsclSocketI::ProcessConnect(OsclSocketServRequestQElem* aElem)
                             fail,
                             ok,
                             sockerr);
+#else
+        //since there was no select call we have to do it now.
+        fd_set readset, writeset, exceptset;
+        FD_ZERO(&writeset);
+        FD_ZERO(&readset);
+        FD_ZERO(&exceptset);
+        FD_SET(iSocket, &writeset);
+        FD_SET(iSocket, &exceptset);
+        timeval timeout;
+        timeout.tv_sec = 0;
+        timeout.tv_usec = 0;
+        int nfds = iSocket + 1;
+        int serverr;
+        int nhandles;
+        OsclSocketSelect(nfds, readset, writeset, exceptset, timeout, ok, serverr, nhandles);
+        if (!ok)
+        {
+            //select failed.
+            sockerr = serverr;
+            complete = OSCL_REQUEST_ERR_GENERAL;
+            iscomplete = true;
+        }
+        else if (!nhandles)
+        {
+            //keep waiting.
+            success = fail = false;
+        }
+        else
+        {
+            //examine results
+            OsclConnectComplete(iSocket,
+                                writeset,
+                                exceptset,
+                                success,
+                                fail,
+                                ok,
+                                sockerr);
+        }
+#endif
 
         if (success)
         {
@@ -91,6 +130,7 @@ void OsclSocketI::ProcessConnect(OsclSocketServRequestQElem* aElem)
 
             iSocketConnected = true;
             complete = OSCL_REQUEST_ERR_NONE;
+            iscomplete = true;
         }
         else if (fail)
         {
@@ -98,17 +138,18 @@ void OsclSocketI::ProcessConnect(OsclSocketServRequestQElem* aElem)
             ADD_STATS(req->iParam->iFxn, EOsclSocket_Except);
 
             complete = OSCL_REQUEST_ERR_GENERAL;
+            iscomplete = true;
         }
         else
         {
             //keep waiting
-            select = true;
             ADD_STATS(req->iParam->iFxn, EOsclSocket_ServPoll);
         }
     }
     else
     {
         //Start connecting
+        ConnectParam *param = (ConnectParam*)req->iParam;
         TOsclSockAddr addr;
         MakeAddr(param->iAddr, addr);
         bool ok, wouldblock;
@@ -120,13 +161,13 @@ void OsclSocketI::ProcessConnect(OsclSocketServRequestQElem* aElem)
             {
                 //we expect a non-blocking socket to return an error...
                 //start monitoring the writeset and exceptset.
-                param->iConnecting = true;
-                select = true;
+                aElem->iSelect = (OSCL_WRITESET_FLAG | OSCL_EXCEPTSET_FLAG);
             }
             else
             {
                 //connect error.
                 complete = OSCL_REQUEST_ERR_GENERAL;
+                iscomplete = true;
             }
         }
         else
@@ -134,15 +175,15 @@ void OsclSocketI::ProcessConnect(OsclSocketServRequestQElem* aElem)
             //Finished.
             iSocketConnected = true;
             complete = OSCL_REQUEST_ERR_NONE;
+            iscomplete = true;
         }
     }
 
     //either keep monitoring activity, or complete the request.
-    if (select)
+    if (!iscomplete)
     {
         LOGSERV((0, "OsclSocketI::ProcessConnect (0x%x) select=true", this));
-        // Set the write and except bits to notify the caller
-        aElem->iSelect |= (OSCL_WRITESET_FLAG | OSCL_EXCEPTSET_FLAG);
+        OSCL_ASSERT(aElem->iSelect);//should have bits set.
     }
     else
     {
@@ -199,17 +240,27 @@ void OsclSocketI::ProcessShutdown(OsclSocketServRequestQElem* aElem)
  */
 void OsclSocketI::ProcessAccept(OsclSocketServRequestQElem* aElem)
 {
-    bool select = false;
+    bool iscomplete = false;
     int sockerr = 0;
     int32 complete = 0;
     OsclSocketRequest *req = aElem->iSocketRequest;
-    AcceptParam* param = (AcceptParam*)req->iParam;
-    if (!param->iBlankSocket)
+    if (!aElem->iSelect)
     {
-        //bad request.
-        complete = OSCL_REQUEST_ERR_GENERAL;
-        sockerr = PVSOCK_ERR_BAD_PARAM;//unexpected
+        //start monitoring.
+        AcceptParam* param = (AcceptParam*)req->iParam;
+        if (!param->iBlankSocket)
+        {
+            //bad request.
+            complete = OSCL_REQUEST_ERR_GENERAL;
+            iscomplete = true;
+            sockerr = PVSOCK_ERR_BAD_PARAM;//unexpected
+        }
+        else
+        {
+            aElem->iSelect = (OSCL_READSET_FLAG | OSCL_EXCEPTSET_FLAG);
+        }
     }
+#if (PV_SOCKET_SERVER_SELECT)
     else if (FD_ISSET(iSocket, &iSocketServ->iExceptset))
     {
         ADD_STATS(req->iParam->iFxn, EOsclSocket_Except);
@@ -217,20 +268,39 @@ void OsclSocketI::ProcessAccept(OsclSocketServRequestQElem* aElem)
         bool ok;
         OsclGetAsyncSockErr(iSocket, ok, sockerr);
         complete = OSCL_REQUEST_ERR_GENERAL;
+        iscomplete = true;
     }
     else if (FD_ISSET(iSocket, &iSocketServ->iReadset))
     {
         //socket is readable, we can do an accept call now.
         ADD_STATS(req->iParam->iFxn, EOsclSocket_Readable);
-
+#else
+    {
+        //try the accept.
+#endif
         TOsclSocket acceptsock;
-        bool ok;
+        bool ok, wouldblock;
         ADD_STATS(req->iParam->iFxn, EOsclSocket_OS);
-        OsclAccept(iSocket, acceptsock, ok, sockerr);
+        OsclAccept(iSocket, acceptsock, ok, sockerr, wouldblock);
         if (!ok)
         {
-            //accept error
-            complete = OSCL_REQUEST_ERR_GENERAL;
+            if (wouldblock)
+            {
+#if (PV_SOCKET_SERVER_SELECT)
+                //we don't expect wouldblock when socket is readable.
+                complete = OSCL_REQUEST_ERR_GENERAL;
+                iscomplete = true;
+#else
+                //keep waiting for socket to be readable.
+                ADD_STATS(req->iParam->iFxn, EOsclSocket_ServPoll);
+#endif
+            }
+            else
+            {
+                //accept error
+                complete = OSCL_REQUEST_ERR_GENERAL;
+                iscomplete = true;
+            }
         }
         else
         {
@@ -240,32 +310,35 @@ void OsclSocketI::ProcessAccept(OsclSocketServRequestQElem* aElem)
             {
                 OsclCloseSocket(acceptsock, ok, sockerr);
                 complete = OSCL_REQUEST_ERR_GENERAL;
+                iscomplete = true;
             }
             else
             {
                 //Save the accept socket in the blank socket that was provided
                 //in the Accept command.
+                AcceptParam* param = (AcceptParam*)req->iParam;
                 param->iBlankSocket->iSocket = acceptsock;
                 //the blank socket is now valid and connected.
                 param->iBlankSocket->InitSocket(true);
                 param->iBlankSocket->iSocketConnected = true;
                 complete = OSCL_REQUEST_ERR_NONE;
+                iscomplete = true;
             }
         }
     }
+#if (PV_SOCKET_SERVER_SELECT)
     else
     {
         //keep waiting for socket to be readable.
         ADD_STATS(req->iParam->iFxn, EOsclSocket_ServPoll);
-        select = true;
     }
+#endif
 
     //either keep monitoring activity, or complete the request.
-    if (select)
+    if (!iscomplete)
     {
         LOGSERV((0, "OsclSocketI::ProcessAccept (0x%x) select=true", this));
-        // Set the read and except bits to notify the caller
-        aElem->iSelect |= (OSCL_READSET_FLAG | OSCL_EXCEPTSET_FLAG);
+        OSCL_ASSERT(aElem->iSelect);
     }
     else
     {
@@ -286,30 +359,37 @@ void OsclSocketI::ProcessAccept(OsclSocketServRequestQElem* aElem)
  */
 void OsclSocketI::ProcessSend(OsclSocketServRequestQElem* aElem)
 {
-    bool select = false;
+    bool iscomplete = false;
     int32 complete = 0;
     int sockerr = 0;
     OsclSocketRequest *req = aElem->iSocketRequest;
-    SendParam *param = (SendParam*)req->iParam;
-    if (!param->iBufSend.iPtr)
+    if (!aElem->iSelect)
     {
-        //bad request
-        complete = OSCL_REQUEST_ERR_GENERAL;
-        sockerr = PVSOCK_ERR_BAD_PARAM;
+        //start monitoring.
+        //don't monitor exceptset b/c windows reports some false errors.
+        SendParam *param = (SendParam*)req->iParam;
+        if (!param->iBufSend.iPtr)
+        {
+            //bad request
+            complete = OSCL_REQUEST_ERR_GENERAL;
+            iscomplete = true;
+            sockerr = PVSOCK_ERR_BAD_PARAM;
+        }
+        else
+        {
+            aElem->iSelect = (OSCL_WRITESET_FLAG);
+        }
     }
-    else if (FD_ISSET(iSocket, &iSocketServ->iExceptset))
-    {
-        ADD_STATS(req->iParam->iFxn, EOsclSocket_Except);
-
-        bool ok;
-        OsclGetAsyncSockErr(iSocket, ok, sockerr);
-        complete = OSCL_REQUEST_ERR_GENERAL;
-    }
+#if (PV_SOCKET_SERVER_SELECT)
     else if (FD_ISSET(iSocket, &iSocketServ->iWriteset))
     {
         //socket is writable, send data
         ADD_STATS(req->iParam->iFxn, EOsclSocket_Writable);
-
+#else
+    {
+        //go ahead and try to send
+#endif
+        SendParam *param = (SendParam*)req->iParam;
         int nbytes;
         bool ok, wouldblock;
         ADD_STATS(req->iParam->iFxn, EOsclSocket_OS);
@@ -328,12 +408,13 @@ void OsclSocketI::ProcessSend(OsclSocketServRequestQElem* aElem)
             {
                 //non-blocking sockets return this when there's no receiver.
                 //just keep waiting.
-                select = true;
+                ADD_STATS(req->iParam->iFxn, EOsclSocket_ServPoll);
             }
             else
             {
                 //send error
                 complete = OSCL_REQUEST_ERR_GENERAL;
+                iscomplete = true;
             }
         }
         else
@@ -348,33 +429,35 @@ void OsclSocketI::ProcessSend(OsclSocketServRequestQElem* aElem)
             {
                 //all data sent.
                 complete = OSCL_REQUEST_ERR_NONE;
+                iscomplete = true;
             }
             else if (nbytes == 0)
             {
                 //connection closed
                 complete = OSCL_REQUEST_ERR_GENERAL;
+                iscomplete = true;
                 //(sockerr will be zero in this case.)
             }
             else
             {
                 //keep sending data.
-                select = true;
+                ;
             }
         }
     }
+#if (PV_SOCKET_SERVER_SELECT)
     else
     {
         //keep waiting for socket to be writable.
         ADD_STATS(req->iParam->iFxn, EOsclSocket_ServPoll);
-        select = true;
     }
+#endif
 
     //either keep monitoring activity, or complete the request.
-    if (select)
+    if (!iscomplete)
     {
         LOGSERV((0, "OsclSocketI::ProcessSend (0x%x) select=true", this));
-        // Set the write and except bits to notify the caller
-        aElem->iSelect |= (OSCL_WRITESET_FLAG | OSCL_EXCEPTSET_FLAG);
+        OSCL_ASSERT(aElem->iSelect);
     }
     else
     {
@@ -395,39 +478,37 @@ void OsclSocketI::ProcessSend(OsclSocketServRequestQElem* aElem)
  */
 void OsclSocketI::ProcessSendTo(OsclSocketServRequestQElem* aElem)
 {
-    bool select = false;
+    bool iscomplete = false;
     int32 complete = 0;
     int sockerr = 0;
     OsclSocketRequest *req = aElem->iSocketRequest;
-    SendToParam *param = (SendToParam*)req->iParam;
-    if (!param->iBufSend.iPtr)
+    if (!aElem->iSelect)
     {
-        //bad request
-        complete = OSCL_REQUEST_ERR_GENERAL;
-        sockerr = PVSOCK_ERR_BAD_PARAM;//unexpected
-    }
-    else if (FD_ISSET(iSocket, &iSocketServ->iExceptset))
-    {
-        bool ok;
-        int sockerr;
-        OsclGetAsyncSockErr(iSocket, ok, sockerr);
-        if (ok)
+        //start monitoring.  don't monitor exceptset b/c windows reports some false errors.
+        SendToParam *param = (SendToParam*)req->iParam;
+        if (!param->iBufSend.iPtr)
         {
-            ADD_STATSP(req->iParam->iFxn, EOsclSocket_Except, sockerr);
+            //bad request
+            complete = OSCL_REQUEST_ERR_GENERAL;
+            iscomplete = true;
+            sockerr = PVSOCK_ERR_BAD_PARAM;//unexpected
         }
         else
         {
-            ADD_STATS(req->iParam->iFxn, EOsclSocket_Except);
+            aElem->iSelect = (OSCL_WRITESET_FLAG);
         }
-        //Note: Windows reports some false errors here, so
-        //any exceptset flags are ignored.
-        select = true;
     }
+#if (PV_SOCKET_SERVER_SELECT)
     else if (FD_ISSET(iSocket, &iSocketServ->iWriteset))
     {
         //socket is writable, send data
         ADD_STATS(req->iParam->iFxn, EOsclSocket_Writable);
+#else
+    {
+        //go ahead and try to send
+#endif
 
+        SendToParam *param = (SendToParam*)req->iParam;
         int nbytes;
         bool wouldblock, ok;
         TOsclSockAddr toaddr;
@@ -448,12 +529,13 @@ void OsclSocketI::ProcessSendTo(OsclSocketServRequestQElem* aElem)
             {
                 //nonblocking socket returns this error
                 //just keep waiting
-                select = true;
+                ADD_STATS(req->iParam->iFxn, EOsclSocket_ServPoll);
             }
             else
             {
                 //sendto error
                 complete = OSCL_REQUEST_ERR_GENERAL;
+                iscomplete = true;
             }
         }
         else
@@ -468,33 +550,35 @@ void OsclSocketI::ProcessSendTo(OsclSocketServRequestQElem* aElem)
             {
                 //all data sent.
                 complete = OSCL_REQUEST_ERR_NONE;
+                iscomplete = true;
             }
             else if (nbytes == 0)
             {
                 //connection closed
                 complete = OSCL_REQUEST_ERR_GENERAL;
+                iscomplete = true;
                 //(sockerr will be zero in this case)
             }
             else
             {
                 //keep sending data.
-                select = true;
+                ;
             }
         }
     }
+#if (PV_SOCKET_SERVER_SELECT)
     else
     {
         //keep waiting for socket to be writable.
         ADD_STATS(req->iParam->iFxn, EOsclSocket_ServPoll);
-        select = true;
     }
+#endif
 
     //either keep monitoring activity, or complete the request.
-    if (select)
+    if (!iscomplete)
     {
         LOGSERV((0, "OsclSocketI::ProcessSendTo (0x%x) select=true", this));
-        // Set the write and except bits to notify the caller
-        aElem->iSelect |= (OSCL_WRITESET_FLAG | OSCL_EXCEPTSET_FLAG);
+        OSCL_ASSERT(aElem->iSelect);
     }
     else
     {
@@ -515,39 +599,36 @@ void OsclSocketI::ProcessSendTo(OsclSocketServRequestQElem* aElem)
  */
 void OsclSocketI::ProcessRecv(OsclSocketServRequestQElem* aElem)
 {
-    bool select = false;
+    bool iscomplete = false;
     int sockerr = 0;
     int32 complete = 0;
     OsclSocketRequest *req = aElem->iSocketRequest;
-    RecvParam* param = (RecvParam*)req->iParam;
-    if (!param->iBufRecv.iPtr)
+    if (!aElem->iSelect)
     {
-        //bad request.
-        complete = OSCL_REQUEST_ERR_GENERAL;
-        sockerr = PVSOCK_ERR_BAD_PARAM;//unexpected
-    }
-    else if (FD_ISSET(iSocket, &iSocketServ->iExceptset))
-    {
-        bool ok;
-        int sockerr;
-        OsclGetAsyncSockErr(iSocket, ok, sockerr);
-        if (ok)
+        //start monitoring.  don't monitor exceptset b/c windows reports some false errors.
+        RecvParam* param = (RecvParam*)req->iParam;
+        if (!param->iBufRecv.iPtr)
         {
-            ADD_STATSP(req->iParam->iFxn, EOsclSocket_Except, sockerr);
+            //bad request.
+            complete = OSCL_REQUEST_ERR_GENERAL;
+            iscomplete = true;
+            sockerr = PVSOCK_ERR_BAD_PARAM;//unexpected
         }
         else
         {
-            ADD_STATS(req->iParam->iFxn, EOsclSocket_Except);
+            aElem->iSelect = (OSCL_READSET_FLAG);
         }
-        //Note: Windows reports some false errors here, so
-        //any exceptset flags are ignored.
-        select = true;
     }
+#if (PV_SOCKET_SERVER_SELECT)
     else if (FD_ISSET(iSocket, &iSocketServ->iReadset))
     {
         //socket is readable, get data.
         ADD_STATS(req->iParam->iFxn, EOsclSocket_Readable);
-
+#else
+    {
+        //try to read
+#endif
+        RecvParam* param = (RecvParam*)req->iParam;
         int nbytes;
         bool ok, wouldblock;
         ADD_STATS(req->iParam->iFxn, EOsclSocket_OS);
@@ -567,12 +648,13 @@ void OsclSocketI::ProcessRecv(OsclSocketServRequestQElem* aElem)
                 //nonblocking sockets return this when there's no
                 //data.
                 //keep waiting for data.
-                select = true;
+                ADD_STATS(req->iParam->iFxn, EOsclSocket_ServPoll);
             }
             else
             {
                 //recv error
                 complete = OSCL_REQUEST_ERR_GENERAL;
+                iscomplete = true;
             }
         }
         else if (nbytes > 0)
@@ -583,27 +665,29 @@ void OsclSocketI::ProcessRecv(OsclSocketServRequestQElem* aElem)
             param->iBufRecv.iLen += nbytes;
 
             complete = OSCL_REQUEST_ERR_NONE;
+            iscomplete = true;
         }
         else
         {
             //this usually means connection was closed.
             complete = OSCL_REQUEST_ERR_GENERAL;
+            iscomplete = true;
             //(sockerr will be zero in this case)
         }
     }
+#if (PV_SOCKET_SERVER_SELECT)
     else
     {
         //keep waiting for socket to be readable.
         ADD_STATS(req->iParam->iFxn, EOsclSocket_ServPoll);
-        select = true;
     }
+#endif
 
     //either keep monitoring activity, or complete the request.
-    if (select)
+    if (!iscomplete)
     {
         LOGSERV((0, "OsclSocketI::ProcessRecv (0x%x) select=true", this));
-        // Set the read and except bits to notify the caller
-        aElem->iSelect |= (OSCL_READSET_FLAG | OSCL_EXCEPTSET_FLAG);
+        OSCL_ASSERT(aElem->iSelect);
     }
     else
     {
@@ -624,45 +708,46 @@ void OsclSocketI::ProcessRecv(OsclSocketServRequestQElem* aElem)
  */
 void OsclSocketI::ProcessRecvFrom(OsclSocketServRequestQElem* aElem)
 {
-    bool select = false;
+    bool iscomplete = false;
     int sockerr = 0;
     int32 complete = 0;
     OsclSocketRequest *req = aElem->iSocketRequest;
-    RecvFromParam* param = (RecvFromParam*)req->iParam;
-    if (!param->iBufRecv.iPtr)
+    if (!aElem->iSelect)
     {
-        //bad request.
-        complete = OSCL_REQUEST_ERR_GENERAL;
-        sockerr = PVSOCK_ERR_BAD_PARAM;//unexpected
-    }
-    else if (FD_ISSET(iSocket, &iSocketServ->iExceptset))
-    {
-        bool ok;
-        int sockerr;
-        OsclGetAsyncSockErr(iSocket, ok, sockerr);
-        if (ok)
+        //start monitoring.  don't monitor exceptset b/c windows reports some false errors.
+        RecvFromParam* param = (RecvFromParam*)req->iParam;
+        if (!param->iBufRecv.iPtr)
         {
-            ADD_STATSP(req->iParam->iFxn, EOsclSocket_Except, sockerr);
+            //bad request.
+            complete = OSCL_REQUEST_ERR_GENERAL;
+            iscomplete = true;
+            sockerr = PVSOCK_ERR_BAD_PARAM;//unexpected
         }
         else
         {
-            ADD_STATS(req->iParam->iFxn, EOsclSocket_Except);
+            aElem->iSelect = (OSCL_READSET_FLAG);
         }
-        //Note: Windows reports some false errors here, so
-        //any exceptset flags are ignored.
-        select = true;
     }
+#if (PV_SOCKET_SERVER_SELECT)
     else if (FD_ISSET(iSocket, &iSocketServ->iReadset))
     {
         //socket is readable, get data.
         ADD_STATS(req->iParam->iFxn, EOsclSocket_Readable);
+#else
+    {
+        //try the read
+#endif
 
+        //we loop through multiple "recvfrom" calls and stop when
+        //either a byte limit is reached or else no more data is available
+        //without waiting.
         bool loop;
         uint32 loopcount;
         for (loop = true, loopcount = 0;loop;loopcount++)
         {
             loop = false;
 
+            RecvFromParam* param = (RecvFromParam*)req->iParam;
             int nbytes;
             bool ok, wouldblock;
             TOsclSockAddr sourceaddr;
@@ -688,19 +773,20 @@ void OsclSocketI::ProcessRecvFrom(OsclSocketServRequestQElem* aElem)
                     if (loopcount == 0)
                     {
                         //keep waiting for data.
-                        select = true;
+                        ADD_STATS(req->iParam->iFxn, EOsclSocket_ServPoll);
                     }
                     else
                     {
-                        //if we already got some data, we don't
-                        //wait for more, even in multi-recv mode.
+                        //if we already got some data, don't wait for more.
                         complete = OSCL_REQUEST_ERR_NONE;
+                        iscomplete = true;
                     }
                 }
                 else
                 {
                     //recvfrom error
                     complete = OSCL_REQUEST_ERR_GENERAL;
+                    iscomplete = true;
                 }
             }
             else if (nbytes > 0)
@@ -731,29 +817,31 @@ void OsclSocketI::ProcessRecvFrom(OsclSocketServRequestQElem* aElem)
                 else
                 {
                     complete = OSCL_REQUEST_ERR_NONE;
+                    iscomplete = true;
                 }
             }
             else
             {
                 //this usually means connection was closed.
                 complete = OSCL_REQUEST_ERR_GENERAL;
+                iscomplete = true;
                 //(sockerr will be zero in this case)
             }
         }//for loop
     }
+#if (PV_SOCKET_SERVER_SELECT)
     else
     {
         //keep waiting for socket to be readable.
         ADD_STATS(req->iParam->iFxn, EOsclSocket_ServPoll);
-        select = true;
     }
+#endif
 
     //either keep monitoring activity, or complete the request.
-    if (select)
+    if (!iscomplete)
     {
         LOGSERV((0, "OsclSocketI::ProcessRecvFrom (0x%x) select=true", this));
-        // Set the read and except bits to notify the caller
-        aElem->iSelect |= (OSCL_READSET_FLAG | OSCL_EXCEPTSET_FLAG);
+        OSCL_ASSERT(aElem->iSelect);
     }
     else
     {
