@@ -196,12 +196,12 @@ static PVMFStatus parseMP3(const char *filename, MediaScannerClient& client)
         MP3ErrorType    err;
         IMpeg3File mp3File(mp3filename, err);
         if (err != MP3_SUCCESS) {
-            LOGE("IMpeg3File constructor returned %d.\n", err);
+            LOGE("IMpeg3File constructor returned %d for %s\n", err, filename);
             return err;
         }
         err = mp3File.ParseMp3File();
         if (err != MP3_SUCCESS) {
-            LOGE("IMpeg3File::ParseMp3File returned %d.\n", err);
+            LOGE("IMpeg3File::ParseMp3File returned %d for %s\n", err, filename);
             return err;
         }
 
