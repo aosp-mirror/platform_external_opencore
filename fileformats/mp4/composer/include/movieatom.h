@@ -321,6 +321,16 @@ class PVA_FF_MovieAtom : public PVA_FF_Atom, public PVA_FF_ISucceedFail
             return false;
         }
 
+        bool setAlbumTrackNumber(uint8 trackNumber)
+        {
+            if (_pAssetInfoKeyAlbumAtom != NULL)
+            {
+                _pAssetInfoKeyAlbumAtom->setAlbumTrackNumber(trackNumber);
+                return true;
+            }
+            return false;
+        }
+
         bool setRecordingYearInfo(uint16 recordingYear)
         {
             if (_pAssetInfoKeyRecordingYearAtom != NULL)
@@ -333,11 +343,11 @@ class PVA_FF_MovieAtom : public PVA_FF_Atom, public PVA_FF_ISucceedFail
         }
 
         // Movie Fragment : add movie extend atom usage APIs
-        void	setMovieFragmentDuration();
-        void	updateMovieFragmentDuration(uint32 trackID, uint32 ts);
-        void	writeMovieFragmentDuration(MP4_AUTHOR_FF_FILE_IO_WRAP* fp);
+        void    setMovieFragmentDuration();
+        void    updateMovieFragmentDuration(uint32 trackID, uint32 ts);
+        void    writeMovieFragmentDuration(MP4_AUTHOR_FF_FILE_IO_WRAP* fp);
         void    SetMaxSampleSize(uint32, uint32);
-        void	writeMaxSampleSize(MP4_AUTHOR_FF_FILE_IO_WRAP*);
+        void    writeMaxSampleSize(MP4_AUTHOR_FF_FILE_IO_WRAP*);
     private:
         virtual void recomputeSize();
 

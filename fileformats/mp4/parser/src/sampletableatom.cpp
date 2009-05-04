@@ -1986,12 +1986,16 @@ int32 SampleTableAtom::getTimestampForRandomAccessPoints(uint32 *num, uint32 *ts
 {
     if (_psyncSampleAtom == NULL)
     {
-        return 2;	//success : every sample is a random access point
+        if (_psampleSizeAtom != NULL)
+        {
+            *num =_psampleSizeAtom->getSampleCount();
+        }
+        return 2;  //success : every sample is a random access point
     }
 
     if (_ptimeToSampleAtom == NULL)
     {
-        return 0;	//fail
+        return 0;  //fail
     }
 
     uint32 tmp = _psyncSampleAtom->getEntryCount();
@@ -1999,7 +2003,7 @@ int32 SampleTableAtom::getTimestampForRandomAccessPoints(uint32 *num, uint32 *ts
     if (*num == 0)
     {
         *num = tmp;
-        return 1;	//success. This is only the query mode.
+        return 1;  //success. This is only the query mode.
     }
     if (*num > tmp)
         *num = tmp;

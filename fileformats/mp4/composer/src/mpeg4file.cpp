@@ -1145,6 +1145,15 @@ PVA_FF_Mpeg4File::setAlbumInfo(PVA_FF_UNICODE_STRING_PARAM albumInfo, uint16 lan
 }
 
 void
+PVA_FF_Mpeg4File::setAlbumTrackNumber(uint8 trackNumber)
+{
+    if (_pmovieAtom != NULL)
+    {
+        _pmovieAtom->setAlbumTrackNumber(trackNumber);
+    }
+}
+
+void
 PVA_FF_Mpeg4File::setRecordingYear(uint16 recordingYear)
 {
     if (!_oSetRecordingYearDone)

@@ -121,6 +121,7 @@ class PVA_FF_Mpeg4File : public PVA_FF_IMpeg4File, public PVA_FF_Parentable
 
         virtual void setAlbumInfo(PVA_FF_UNICODE_STRING_PARAM albumInfo,
                                   uint16 langCode = LANGUAGE_CODE_UNKNOWN);
+        virtual void setAlbumTrackNumber(uint8 trackNumber);
 
         virtual void setRecordingYear(uint16 recordingYear);
 

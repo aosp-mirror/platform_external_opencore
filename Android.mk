@@ -16,7 +16,7 @@ endif
 include $(PV_TOP)/build_config/opencore_dynamic/Android_opencore_common.mk
 include $(PV_TOP)/build_config/opencore_dynamic/Android_opencore_author.mk
 include $(PV_TOP)/build_config/opencore_dynamic/Android_opencore_player.mk
-include $(PV_TOP)/build_config/opencore_dynamic/Android_opencore_2way.mk
+#include $(PV_TOP)/build_config/opencore_dynamic/Android_opencore_2way.mk
 include $(PV_TOP)/build_config/opencore_dynamic/Android_omx_sharedlibrary.mk
 include $(PV_TOP)/build_config/opencore_dynamic/Android_omx_avcdec_sharedlibrary.mk
 include $(PV_TOP)/build_config/opencore_dynamic/Android_omx_m4vdec_sharedlibrary.mk

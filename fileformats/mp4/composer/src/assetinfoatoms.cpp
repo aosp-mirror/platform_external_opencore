@@ -113,6 +113,7 @@ PVA_FF_AssetInfoAlbumAtom::PVA_FF_AssetInfoAlbumAtom()
 {
     _albumTitle = (_STRLIT(""));
     _langCode = LANGUAGE_CODE_UNKNOWN;
+    _trackNumber = 1;
     _byteOrderMask = BYTE_ORDER_MASK;
     recomputeSize();
 }
@@ -790,6 +791,7 @@ void PVA_FF_AssetInfoAlbumAtom::recomputeSize()
     _size += sizeof(_langCode);
     _size += sizeof(_byteOrderMask);
     _size += 2 * (_albumTitle.get_size() + 1);
+    _size += sizeof(_trackNumber);
     // Update the size of the parent atom since this child atom may have changed
     if (_pparent != NULL)
     {
@@ -827,6 +829,13 @@ PVA_FF_AssetInfoAlbumAtom::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
         return false;
     }
     rendered += _albumTitle.get_size() + 1; // 1 for the NULL entry
+
+    if (!PVA_FF_AtomUtils::render8(fp, _trackNumber))
+    {
+        return false;
+    }
+    rendered += 1;
+
     //recomputeSize();
     return true;
 

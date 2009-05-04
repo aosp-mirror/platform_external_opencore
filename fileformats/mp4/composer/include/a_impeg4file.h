@@ -263,6 +263,7 @@ class PVA_FF_IMpeg4File : public PVA_FF_ISucceedFail
 
         virtual void setLocationInfo(PvmfAssetInfo3GPPLocationStruct*) = 0;
         virtual void setAlbumInfo(PVA_FF_UNICODE_STRING_PARAM albumInfo, uint16 langCode = LANGUAGE_CODE_UNKNOWN) = 0;
+        virtual void setAlbumTrackNumber(uint8 trackNumber) =0;
         virtual void setRecordingYear(uint16 recordingYear) = 0;
 
         virtual void setCreationDate(PVA_FF_UNICODE_STRING_PARAM creationDate) = 0;

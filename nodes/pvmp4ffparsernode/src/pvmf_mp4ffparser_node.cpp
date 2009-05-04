@@ -4940,6 +4940,7 @@ bool PVMFMP4FFParserNode::RetrieveTrackData(PVMP4FFNodeTrackPortInfo& aTrackPort
             PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC((0, "PVMFMP4FFParserNode::RetrieveTrackData() - Auto Pause Triggered, TS = %d, FileSize=%d",
                                                  aTrackPortInfo.iTimestamp, currentFileSize));
 
+
             // check if content is poorly interleaved only for PS
             // After repositioning, parser will get INSUFFICIENT_DATA immediately and then the poorlyinterleavedcontent event logic will be excercised.
             // To make sure that the reposition behaviour and the playback without interruption behavior are consistent, disable the check for first INSUFFICIENT_DATA after repositioning.
@@ -8707,7 +8708,7 @@ PVMFStatus PVMFMP4FFParserNode::FindBestThumbnailKeyFrame(uint32 aId, uint32& aK
                    &numsamples,
                    NULL,
                    NULL);
-    if (numsamples > 0)
+    if (retval == 1 && numsamples > 0)
     {
         /* It is possible that for some big contents the number of sync samples is a very big
         ** value. For these contents retrieval of timesatamps and frame numbers of sync sample
@@ -8794,11 +8795,36 @@ PVMFStatus PVMFMP4FFParserNode::FindBestThumbnailKeyFrame(uint32 aId, uint32& aK
             OSCL_ARRAY_DELETE(syncfrnum);
         }
     }
+    else if (retval == 2)
+    {
+        // All samples are sync samples
+        if (numsamples > NUMSAMPLES_BEST_THUMBNAIL_MODE)
+        {
+            numsamples = NUMSAMPLES_BEST_THUMBNAIL_MODE;
+        }
+        PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC((0, "PVMFMP4FFParserNode:FindBestThumbnailKeyFrame - NumKeySamples=%d, TrackID=%d", numsamples, aId));
+
+        //go thru the key frame list and determine the optimal key frame
+        int32 maxKeySampleSize = 0;
+        int32 keySampleSize = 0;
+        aKeyFrameNum = 0;
+        for (uint32 i = 0; i < numsamples; i++)
+        {
+            keySampleSize = iMP4FileHandle->getSampleSizeAt(aId, i);
+
+            if (keySampleSize > maxKeySampleSize)
+            {
+                maxKeySampleSize = keySampleSize;
+                aKeyFrameNum = i;
+            }
+        }
+        PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC((0, "PVMFMP4FFParserNode:FindBestThumbnailKeyFrame - Picked Best KeyFrame=%d", aKeyFrameNum));
+    }
     else
     {
         numsamples = 0;
         aKeyFrameNum = 0;
-    	return PVMFFailure;
+        return PVMFFailure;
     }
     return PVMFSuccess;
 }
