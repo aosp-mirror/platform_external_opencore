@@ -2,14 +2,16 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
 LOCAL_WHOLE_STATIC_LIBRARIES := \
-	libpv2wayengine \
- 	libpv324m \
- 	libpvvideoparsernode \
- 	libpvcommsionode \
- 	libpvmio_comm_loopback \
- 	libpvgeneraltools
+    libpv2wayengine \
+    libpv324m \
+    libpvvideoparsernode \
+    libpvcommsionode \
+    libpvmio_comm_loopback \
+    libpvgeneraltools
 
 LOCAL_MODULE := libopencore_2way
+
+LOCAL_PRELINK_MODULE := false
 
 -include $(PV_TOP)/Android_platform_extras.mk
 
