@@ -143,7 +143,7 @@ typedef struct xingHeader_tag
     int32 frames;         // total bitstream frames from xing header
     int32 bytes;          // total bitstream bytes from Xing header
     int32 vbr_scale;      // encoded VBR scale from Xing header data
-    int32 TOC[100];		  // pointer to TOC[100], maybe NULL
+    int32 TOC[100];       // pointer to TOC[100], maybe NULL
 } XINGHeaderType;
 // End of XING VBR Header Support
 
@@ -206,7 +206,7 @@ class MP3Parser
         * @param enableCRC, CRC check flag
         * @returns error type.
         */
-        MP3ErrorType	ParseMP3File(PVFile * fpUsed, bool enableCRC);
+        MP3ErrorType    ParseMP3File(PVFile * fpUsed, bool enableCRC);
 
         /**
         * @brief Checks the file is valid mp3 clip or not
@@ -451,7 +451,7 @@ class MP3Parser
         bool DecodeMP3Header(MP3HeaderType &aHeaderInfoType, MP3ConfigInfoType &aConfigInfoType, bool aComputeAvgBitrate);
         bool DecodeXINGHeader(uint8 *XingBuffer, XINGHeaderType &mp3XingHI, MP3HeaderType &hi);
         bool DecodeVBRIHeader(uint8 * VbriBuffer, VBRIHeaderType &vbriHDI, MP3HeaderType &hi);
-        MP3ErrorType mp3FindSync(uint32 seekPoint, uint32 &syncOffset, PVFile* aFile = NULL);
+        MP3ErrorType mp3FindSync(uint32 seekPoint, uint32 &syncOffset, PVFile* aFile);
         uint16 CalcCRC16(uint8* pBuffer, uint32 dwBitSize);
         MP3ErrorType mp3VerifyCRC(MP3HeaderType mp3HdrInfo, MP3ConfigInfoType mp3CI);
 
