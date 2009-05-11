@@ -492,7 +492,7 @@ PVMFMemoryBufferReadDataStreamImpl::Read(PvmiDataStreamSession aSessionID, uint8
 
     // for debugging only
     //LOGERROR((0, "PVMFMemoryBufferReadDataStreamImpl::Read session %d offset %d size %d firstTempByteOffset %d lastTempByteOffset %d",
-    //	iSessionID, iFilePtrPos, aSize * aNumElements, firstTempByteOffset, lastTempByteOffset));
+    //  iSessionID, iFilePtrPos, aSize * aNumElements, firstTempByteOffset, lastTempByteOffset));
 
     uint32 bytesRead = 0;
     uint32 firstEntry = 0;
@@ -1910,8 +1910,16 @@ PVMFMemoryBufferWriteDataStreamImpl::Reposition(PvmiDataStreamSession aSessionID
         {
             if (smallest < iFilePtrPos)
             {
-                //LOGE("Ln %d Do nothing. found %d smalltest %d", __LINE__, found, smallest );
-                return status;
+        	uint32 firstTempOffset = 0;
+        	uint32 lastTempOffset = 0;
+        	iTempCache->GetFileOffsets(firstTempOffset, lastTempOffset);
+        	uint32 bytesToWait = aOffset - lastTempOffset;
+
+        	if (bytesToWait <= PV_MBDS_FWD_SEEKING_NO_GET_REQUEST_THRESHOLD)
+        	{
+        	    LOGDEBUG((0, "Ln %d Do nothing. found %d smalltest %d bytesToWait", __LINE__, found, smallest, bytesToWait));
+        	    return status;
+        	}
             }
 
             if ((smallest >= iFilePtrPos) &&
