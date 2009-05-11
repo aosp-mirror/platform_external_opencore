@@ -64,12 +64,13 @@ OsclTLSRegistry::TlsKey* OsclTLSRegistry::iTlsKey = NULL;
 
 #endif //OSCL_TLS_IS_KEYED
 
-
+_OsclBasicLock OsclTLSRegistry::sLock;
 
 OSCL_EXPORT_REF void OsclTLSRegistry::initialize(Oscl_DefAlloc &alloc, int32 &aError)
 {
     TOsclTlsKey* pkey = NULL;
     aError = 0;
+    sLock.Lock();
 
 #if ( OSCL_TLS_IS_KEYED)
     //Allocate the table on the first init call.
@@ -81,6 +82,7 @@ OSCL_EXPORT_REF void OsclTLSRegistry::initialize(Oscl_DefAlloc &alloc, int32 &aE
         if (!table)
         {
             aError = EPVErrorBaseOutOfMemory;
+            sLock.Unlock();
             return;
         }
 
@@ -90,6 +92,7 @@ OSCL_EXPORT_REF void OsclTLSRegistry::initialize(Oscl_DefAlloc &alloc, int32 &aE
         {
             aError = EPVErrorBaseOutOfMemory;
             alloc.deallocate(table);
+            sLock.Unlock();
             return;
         }
 
@@ -99,21 +102,18 @@ OSCL_EXPORT_REF void OsclTLSRegistry::initialize(Oscl_DefAlloc &alloc, int32 &aE
             aError = EPVErrorBaseSystemCallFailed;
             alloc.deallocate(pkey);
             alloc.deallocate(table);
+            sLock.Unlock();
             return;
         }
 
         iTlsKey = new(table) TlsKey();
-        iTlsKey->iLock.Lock();
         iTlsKey->iRefCnt++;
         iTlsKey->iOsclTlsKey = pkey;
-        iTlsKey->iLock.Unlock();
     }
     else
     {
-        iTlsKey->iLock.Lock();
         iTlsKey->iRefCnt++;
         pkey = iTlsKey->iOsclTlsKey;
-        iTlsKey->iLock.Unlock();
     }
 
 #endif
@@ -124,6 +124,7 @@ OSCL_EXPORT_REF void OsclTLSRegistry::initialize(Oscl_DefAlloc &alloc, int32 &aE
     if (registry == 0)
     {
         aError = EPVErrorBaseOutOfMemory;
+        sLock.Unlock();
         return;
     }
 
@@ -135,17 +136,20 @@ OSCL_EXPORT_REF void OsclTLSRegistry::initialize(Oscl_DefAlloc &alloc, int32 &aE
 
     // save it away
     TLSStorageOps::save_registry(pkey, registry, aError);
+    sLock.Unlock();
 }
 
 OSCL_EXPORT_REF void OsclTLSRegistry::cleanup(Oscl_DefAlloc &alloc, int32 &aError)
 {
     TOsclTlsKey* pkey = NULL;
     aError = 0;
+    sLock.Lock();
 
 #if (OSCL_TLS_IS_KEYED)
     if (!iTlsKey)
     {
         aError = EPVErrorBaseNotInstalled;//No key!
+        sLock.Unlock();
         return;
     }
     pkey = iTlsKey->iOsclTlsKey;
@@ -156,35 +160,33 @@ OSCL_EXPORT_REF void OsclTLSRegistry::cleanup(Oscl_DefAlloc &alloc, int32 &aErro
     if (!OSCL_TLS_REGISTRY_VALID(registry))
     {
         aError = EPVErrorBaseNotInstalled;//No registry!
+        sLock.Unlock();
         return;
     }
     alloc.deallocate(registry);
 
     TLSStorageOps::save_registry(pkey, NULL, aError);
     if (aError)
+    {
+        sLock.Unlock();
         return;
+    }
 
 #if (OSCL_TLS_IS_KEYED)
-
     //Remove Tls key
-
-    iTlsKey->iLock.Lock();
     iTlsKey->iRefCnt--;
     if (iTlsKey->iRefCnt == 0)
     {
         //Deallocate key.
         OSCL_TLS_KEY_DELETE_FUNC(*pkey);
         alloc.deallocate(pkey);
-        iTlsKey->iLock.Unlock();
         iTlsKey->~TlsKey();
         alloc.deallocate(iTlsKey);
         iTlsKey = NULL;
     }
-    else
-    {
-        iTlsKey->iLock.Unlock();
-    }
 #endif
+
+    sLock.Unlock();
 }
 
 OSCL_EXPORT_REF OsclAny* OsclTLSRegistry::getInstance(uint32 ID, int32 &aError)
@@ -192,13 +194,16 @@ OSCL_EXPORT_REF OsclAny* OsclTLSRegistry::getInstance(uint32 ID, int32 &aError)
     OSCL_ASSERT(ID < OSCL_TLS_MAX_SLOTS);
 
     aError = 0;
-
     TOsclTlsKey* pkey = NULL;
+    registry_type id = 0;
+
+    sLock.Lock();
 
 #if (OSCL_TLS_IS_KEYED)
     if (!iTlsKey)
     {
         aError = EPVErrorBaseNotInstalled;//No table!
+        sLock.Unlock();
         return NULL;
     }
     pkey = iTlsKey->iOsclTlsKey;
@@ -208,10 +213,13 @@ OSCL_EXPORT_REF OsclAny* OsclTLSRegistry::getInstance(uint32 ID, int32 &aError)
     if (!OSCL_TLS_REGISTRY_VALID(registry))
     {
         aError = EPVErrorBaseNotInstalled;//No registry!
+        sLock.Unlock();
         return NULL;
     }
+    id = registry[ID];
+    sLock.Unlock();
 
-    return registry[ID];
+    return id;
 }
 
 OSCL_EXPORT_REF void OsclTLSRegistry::registerInstance(OsclAny* ptr, uint32 ID, int32 &aError)
@@ -220,11 +228,13 @@ OSCL_EXPORT_REF void OsclTLSRegistry::registerInstance(OsclAny* ptr, uint32 ID, 
 
     aError = 0;
     TOsclTlsKey *pkey = NULL;
+    sLock.Lock();
 
 #if (OSCL_TLS_IS_KEYED)
     if (!iTlsKey)
     {
         aError = EPVErrorBaseNotInstalled;//No table!
+        sLock.Unlock();
         return ;
     }
     pkey = iTlsKey->iOsclTlsKey;
@@ -234,11 +244,11 @@ OSCL_EXPORT_REF void OsclTLSRegistry::registerInstance(OsclAny* ptr, uint32 ID, 
     if (!OSCL_TLS_REGISTRY_VALID(registry))
     {
         aError = EPVErrorBaseNotInstalled;//no registry!
+        sLock.Unlock();
         return;
     }
-
     registry[ID] = ptr;
-
+    sLock.Unlock();
 }
 
 
