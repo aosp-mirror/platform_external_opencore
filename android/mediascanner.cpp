@@ -640,6 +640,8 @@ status_t MediaScanner::doProcessDirectory(char *path, int pathRemaining, const c
                 strcat(fileSpot, "/");
                 int err = doProcessDirectory(path, pathRemaining - nameLength - 1, extensions, client, exceptionCheck, exceptionEnv);
                 if (err) {
+                    // pass exceptions up - ignore other errors
+                    if (exceptionCheck && exceptionCheck(exceptionEnv)) goto failure;
                     LOGE("Error processing '%s' - skipping\n", path);
                     continue;
                 }
