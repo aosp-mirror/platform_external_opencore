@@ -150,7 +150,7 @@ class PVMFOMXVideoDecNode
 
         // for WMV params
         bool VerifyParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
-    protected:
+    private:
 
         void DoQueryUuid(PVMFOMXBaseDecNodeCommand&);
         void DoRequestPort(PVMFOMXBaseDecNodeCommand&);
