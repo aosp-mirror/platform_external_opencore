@@ -342,6 +342,30 @@ PVMFOMXEncNode::~PVMFOMXEncNode()
         iInBufMemoryPool = NULL;
     }
 
+    if(in_ctrl_struct_ptr)
+    {
+        oscl_free(in_ctrl_struct_ptr);
+        in_ctrl_struct_ptr = NULL;
+    }
+
+    if(in_buff_hdr_ptr)
+    {
+        oscl_free(in_buff_hdr_ptr);
+        in_buff_hdr_ptr = NULL;
+    }
+
+    if(out_ctrl_struct_ptr)
+    {
+        oscl_free(out_ctrl_struct_ptr);
+        out_ctrl_struct_ptr = NULL;
+    }
+
+    if(out_buff_hdr_ptr)
+    {
+        oscl_free(out_buff_hdr_ptr);
+        out_buff_hdr_ptr = NULL;
+    }
+
     //Thread logoff
     if (IsAdded())
     {
@@ -752,6 +776,11 @@ PVMFOMXEncNode::PVMFOMXEncNode(int32 aPriority) :
 
     iInBufMemoryPool = NULL;
     iOutBufMemoryPool = NULL;
+
+    in_ctrl_struct_ptr = NULL;
+    in_buff_hdr_ptr = NULL;
+    out_ctrl_struct_ptr = NULL;
+    out_buff_hdr_ptr = NULL;
 
     // init to some value
     iOMXComponentOutputBufferSize = 0;
@@ -4105,16 +4134,7 @@ bool PVMFOMXEncNode::ProvideBuffersToComponent(OsclMemPoolFixedChunkAllocator *a
 
     uint32 ii = 0;
     OMX_ERRORTYPE err = OMX_ErrorNone;
-    OsclAny **ctrl_struct_ptr = NULL;   // temporary array to keep the addresses of buffer ctrl structures and buffers
-
-    ctrl_struct_ptr = (OsclAny **) oscl_malloc(aNumBuffers * sizeof(OsclAny *));
-    if (ctrl_struct_ptr == NULL)
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXEncNode-%s::ProvideBuffersToComponent ctrl_struct_ptr == NULL", iNodeTypeId));
-        return false;
-    }
-
+    OsclAny **ctrl_struct_ptr = aIsThisInputBuffer? in_ctrl_struct_ptr: out_ctrl_struct_ptr;
 
     // Now, go through all buffers and tell component to
     // either use a buffer, or to allocate its own buffer
@@ -4179,7 +4199,6 @@ bool PVMFOMXEncNode::ProvideBuffersToComponent(OsclMemPoolFixedChunkAllocator *a
                                     (OMX_U32)aActualBufferSize,     // buffer size
                                     pB);                        // buffer data ptr
 
-                in_ctrl_struct_ptr[ii] = ctrl_struct_ptr[ii];
                 in_buff_hdr_ptr[ii] = temp->pBufHdr;
 
             }
@@ -4213,7 +4232,6 @@ bool PVMFOMXEncNode::ProvideBuffersToComponent(OsclMemPoolFixedChunkAllocator *a
                                     (OMX_U32)aActualBufferSize,     // buffer size
                                     pB);                        // buffer data ptr
 
-                out_ctrl_struct_ptr[ii] = ctrl_struct_ptr[ii];
                 out_buff_hdr_ptr[ii] = temp->pBufHdr;
 
 
@@ -4228,7 +4246,7 @@ bool PVMFOMXEncNode::ProvideBuffersToComponent(OsclMemPoolFixedChunkAllocator *a
             {
 
                 InputBufCtrlStruct *temp = (InputBufCtrlStruct *) ctrl_struct_ptr[ii];
-                // initialize the media data field to 0 //TODO review needed. JJ 03/23/09
+                // initialize the media data field to 0 //TODO cleanup work started in another record. JJ 05/12/09
                 oscl_memset(&(temp->pMediaData), 0, sizeof(PVMFSharedMediaDataPtr));
                 temp->pMediaData = PVMFSharedMediaDataPtr(NULL, NULL);
 
@@ -4238,7 +4256,6 @@ bool PVMFOMXEncNode::ProvideBuffersToComponent(OsclMemPoolFixedChunkAllocator *a
                                          ctrl_struct_ptr[ii],
                                          (OMX_U32)aActualBufferSize);
 
-                in_ctrl_struct_ptr[ii] = ctrl_struct_ptr[ii];
                 in_buff_hdr_ptr[ii] = temp->pBufHdr;
             }
             else
@@ -4250,7 +4267,6 @@ bool PVMFOMXEncNode::ProvideBuffersToComponent(OsclMemPoolFixedChunkAllocator *a
                                          ctrl_struct_ptr[ii],
                                          (OMX_U32)aActualBufferSize);
 
-                out_ctrl_struct_ptr[ii] = ctrl_struct_ptr[ii];
                 out_buff_hdr_ptr[ii] = temp->pBufHdr;
             }
 
@@ -4274,7 +4290,6 @@ bool PVMFOMXEncNode::ProvideBuffersToComponent(OsclMemPoolFixedChunkAllocator *a
         aMemPool->deallocate((OsclAny*) ctrl_struct_ptr[ii]);
     }
 
-    oscl_free(ctrl_struct_ptr);
     // set the flags
     if (aIsThisInputBuffer)
     {
@@ -4301,14 +4316,7 @@ bool PVMFOMXEncNode::FreeBuffersFromComponent(OsclMemPoolFixedChunkAllocator *aM
 
     uint32 ii = 0;
     OMX_ERRORTYPE err = OMX_ErrorNone;
-    OsclAny **ctrl_struct_ptr = NULL;   // temporary array to keep the addresses of buffer ctrl structures and buffers
-
-    ctrl_struct_ptr = (OsclAny **) oscl_malloc(aNumBuffers * sizeof(OsclAny *));
-    if (ctrl_struct_ptr == NULL)
-    {
-        return false;
-    }
-
+    OsclAny **ctrl_struct_ptr = aIsThisInputBuffer? in_ctrl_struct_ptr: out_ctrl_struct_ptr;
 
     // Now, go through all buffers and tell component to free them
     for (ii = 0; ii < aNumBuffers; ii++)
@@ -4378,7 +4386,6 @@ bool PVMFOMXEncNode::FreeBuffersFromComponent(OsclMemPoolFixedChunkAllocator *aM
         aMemPool->deallocate((OsclAny*) ctrl_struct_ptr[ii]);
     }
 
-    oscl_free(ctrl_struct_ptr);
 
     // mark buffers as freed (so as not to do it twice)
     if (aIsThisInputBuffer)
@@ -5884,8 +5891,16 @@ void PVMFOMXEncNode::DoPrepare(PVMFOMXEncNodeCommand& aCmd)
                     return;
                 }
 
-                in_ctrl_struct_ptr = NULL;
-                in_buff_hdr_ptr = NULL;
+                if(in_ctrl_struct_ptr)
+                {
+                    oscl_free(in_ctrl_struct_ptr);
+                    in_ctrl_struct_ptr = NULL;
+                }
+                if(in_buff_hdr_ptr)
+                {
+                    oscl_free(in_buff_hdr_ptr);
+                    in_buff_hdr_ptr = NULL;
+                }
 
                 in_ctrl_struct_ptr = (OsclAny **) oscl_malloc(iNumInputBuffers * sizeof(OsclAny *));
 
@@ -5937,8 +5952,16 @@ void PVMFOMXEncNode::DoPrepare(PVMFOMXEncNodeCommand& aCmd)
                     return;
                 }
 
-                out_ctrl_struct_ptr = NULL;
-                out_buff_hdr_ptr = NULL;
+                if(out_ctrl_struct_ptr)
+                {
+                    oscl_free(out_ctrl_struct_ptr);
+                    out_ctrl_struct_ptr = NULL;
+                }
+                if(out_buff_hdr_ptr)
+                {
+                    oscl_free(out_buff_hdr_ptr);
+                    out_buff_hdr_ptr = NULL;
+                }
 
                 out_ctrl_struct_ptr = (OsclAny **) oscl_malloc(iNumOutputBuffers * sizeof(OsclAny *));
 
