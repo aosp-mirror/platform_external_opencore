@@ -972,7 +972,7 @@ void AuthorDriver::CommandCompleted(const PVCmdResponse& aResponse)
                             mAudioEncoderConfig);
                     if (config) {
                         config->SetMaxNumOutputFramesPerBuffer(10);
-                        config->SetOutputBitRate(GSM_AMR_5_15); // 5150 bps XXX
+                        config->SetOutputBitRate(GSM_AMR_12_2); // TODO: Get rid of hardcoded value
                     }
                 } 
                 break;
