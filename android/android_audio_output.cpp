@@ -420,7 +420,7 @@ int AndroidAudioOutput::audout_thread_func()
                         len = 0;
                     }
                 }
-                if (iDataQueued) {
+                if (iDataQueued || len) {
                     LOGV("start");
                     mAudioSink->start();
                     state = STARTED;
