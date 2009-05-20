@@ -14,7 +14,7 @@ LOCAL_MODULE := libopencore_author
 
 -include $(PV_TOP)/Android_system_extras.mk
 
-LOCAL_SHARED_LIBRARIES +=   libopencore_common
+LOCAL_SHARED_LIBRARIES += libbinder libopencore_common
 
 include $(BUILD_SHARED_LIBRARY)
 include   $(PV_TOP)/fileformats/mp4/composer/Android.mk
