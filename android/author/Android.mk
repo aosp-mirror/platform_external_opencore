@@ -30,7 +30,7 @@ LOCAL_C_INCLUDES := $(PV_INCLUDES) \
     libs/drm/mobile1/include \
     $(call include-path-for, graphics corecg)
 
-LOCAL_SHARED_LIBRARIES := libmedia
+LOCAL_SHARED_LIBRARIES := libmedia libbinder
 
 LOCAL_MODULE := libandroidpvauthor
 
