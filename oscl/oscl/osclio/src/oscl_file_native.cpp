@@ -155,48 +155,8 @@ int32 OsclNativeFile::Open(const oscl_wchar *filename, uint32 mode
         if (!filename || *filename == '\0') return -1; // Null string not supported in fopen, error out
 
         char openmode[4];
-        uint32 index = 0;
 
-        if (mode & Oscl_File::MODE_READWRITE)
-        {
-            if (mode & Oscl_File::MODE_APPEND)
-            {
-                openmode[index++] = 'a';
-                openmode[index++] = '+';
-            }
-            else
-            {
-                openmode[index++] = 'w';
-                openmode[index++] = '+';
-            }
-        }
-        else if (mode & Oscl_File::MODE_APPEND)
-        {
-            openmode[index++] = 'a';
-            openmode[index++] = '+';
-        }
-        else if (mode & Oscl_File::MODE_READ)
-        {
-            openmode[index++] = 'r';
-        }
-        else if (mode & Oscl_File::MODE_READ_PLUS)
-        {
-            openmode[index++] = 'r';
-            openmode[index++] = '+';
-        }
-
-
-
-        if (mode & Oscl_File::MODE_TEXT)
-        {
-            openmode[index++] = 't';
-        }
-        else
-        {
-            openmode[index++] = 'b';
-        }
-
-        openmode[index++] = '\0';
+        OpenModeToString(mode, openmode);
 
 #ifdef _UNICODE
         oscl_wchar convopenmode[4];
@@ -216,7 +176,7 @@ int32 OsclNativeFile::Open(const oscl_wchar *filename, uint32 mode
         {
             return -1;
         }
-	return OpenFileOrSharedFd(convfilename, openmode);
+        return OpenFileOrSharedFd(convfilename, openmode);
 #endif
     }
 
@@ -235,47 +195,8 @@ int32 OsclNativeFile::Open(const char *filename, uint32 mode
     if (!filename || *filename == '\0') return -1; // Null string not supported in fopen, error out
 
     char openmode[4];
-    uint32 index = 0;
 
-    if (mode & Oscl_File::MODE_READWRITE)
-    {
-	if (mode & Oscl_File::MODE_APPEND)
-	{
-	    openmode[index++] = 'a';
-	    openmode[index++] = '+';
-	}
-	else
-	{
-	    openmode[index++] = 'w';
-	    openmode[index++] = '+';
-
-	}
-    }
-    else if (mode & Oscl_File::MODE_APPEND)
-    {
-	openmode[index++] = 'a';
-	openmode[index++] = '+';
-    }
-    else if (mode & Oscl_File::MODE_READ)
-    {
-	openmode[index++] = 'r';
-    }
-    else if (mode & Oscl_File::MODE_READ_PLUS)
-    {
-	openmode[index++] = 'r';
-	openmode[index++] = '+';
-    }
-
-    if (mode & Oscl_File::MODE_TEXT)
-    {
-	openmode[index++] = 't';
-    }
-    else
-    {
-	openmode[index++] = 'b';
-    }
-
-    openmode[index++] = '\0';
+    OpenModeToString(mode, openmode);
 
     return OpenFileOrSharedFd(filename, openmode);
 
