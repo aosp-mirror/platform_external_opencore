@@ -390,7 +390,8 @@ PlayerCommand* PlayerDriver::dequeueCommand()
 status_t PlayerDriver::enqueueCommand(PlayerCommand* command)
 {
     if (mPlayer == NULL) {
-        delete command;
+        // Only commands which can come in this use-case is PLAYER_SETUP and PLAYER_QUIT
+        // The calling function should take responsibility to delete the command and cleanup
         return NO_INIT;
     }
 
@@ -1330,7 +1331,11 @@ PVPlayer::PVPlayer()
     LOGV("construct PlayerDriver");
     mPlayerDriver = new PlayerDriver(this);
     LOGV("send PLAYER_SETUP");
-    mInit = mPlayerDriver->enqueueCommand(new PlayerSetup(0,0));
+    PlayerSetup* setup = new PlayerSetup(0,0);
+    mInit = mPlayerDriver->enqueueCommand(setup);
+    if (mInit == NO_INIT) {
+        delete setup;
+    }
 }
 
 status_t PVPlayer::initCheck()

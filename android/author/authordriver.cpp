@@ -151,6 +151,9 @@ author_command *AuthorDriver::dequeueCommand()
 
 status_t AuthorDriver::enqueueCommand(author_command *ac, media_completion_f comp, void *cookie)
 {
+    if (mAuthor == NULL) {
+        return NO_INIT;
+    }
     // If the user didn't specify a completion callback, we
     // are running in synchronous mode.
     if (comp == NULL) {
