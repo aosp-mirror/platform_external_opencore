@@ -44,12 +44,13 @@ static const int32 AUTO_RAMP_START_MS = 300;
 static const int32 AUTO_RAMP_DURATION_MS = 300;
 
 ////////////////////////////////////////////////////////////////////////////
-AndroidAudioInput::AndroidAudioInput()
+AndroidAudioInput::AndroidAudioInput(uint32 audioSource)
     : OsclTimerObject(OsclActiveObject::EPriorityNominal, "AndroidAudioInput"),
     iCmdIdCounter(0),
     iPeer(NULL),
     iThreadLoggedOn(false),
     iAudioSamplingRate(8000),
+    iAudioSource(audioSource),
     iDataEventCounter(0),
     iWriteCompleteAO(NULL),
     iTimeStamp(0),
@@ -1007,7 +1008,7 @@ int AndroidAudioInput::audin_thread_func() {
     LOGV("create AudioRecord %p", this);
     android::AudioRecord
             * record = new android::AudioRecord(
-                    android::AudioRecord::DEFAULT_INPUT, iAudioSamplingRate,
+                    iAudioSource, iAudioSamplingRate,
                     android::AudioSystem::PCM_16_BIT, iAudioNumChannels,
                     4*kBufferSize/iAudioNumChannels/sizeof(int16), flags);
     LOGV("AudioRecord created %p, this %p", record, this);

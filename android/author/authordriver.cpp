@@ -297,26 +297,14 @@ void AuthorDriver::handleSetAudioSource(set_audio_source_command *ac)
 {
     int error = 0;
 
-    switch(ac->as) {
-    case AUDIO_SOURCE_DEFAULT:
-    case AUDIO_SOURCE_MIC:
-        mAudioInputMIO = new AndroidAudioInput();
-        if(mAudioInputMIO != NULL){
-            LOGV("create mio input audio");
-            mAudioNode = PvmfMediaInputNodeFactory::Create(static_cast<PvmiMIOControl *>(mAudioInputMIO.get()));
-            if(mAudioNode){
-                break;
-            }
-            else{
-            // do nothing, let it go in default case
-            }
+    mAudioInputMIO = new AndroidAudioInput(ac->as);
+    if (mAudioInputMIO != NULL) {
+        LOGV("create mio input audio");
+        mAudioNode = PvmfMediaInputNodeFactory::Create(static_cast<PvmiMIOControl *>(mAudioInputMIO.get()));
+        if (mAudioNode == NULL) {
+            commandFailed(ac);
+            return;
         }
-        else{
-        // do nothing, let it go in default case
-        }
-    default:
-        commandFailed(ac);
-        return;
     }
 
     OSCL_TRY(error, mAuthor->AddDataSource(*mAudioNode, ac));

@@ -38,9 +38,6 @@
 #ifndef OSCL_VECTOR_H_INCLUDED
 #include "oscl_vector.h"
 #endif
-#ifndef PVLOGGER_H_INCLUDED
-#include "pvlogger.h"
-#endif
 #ifndef PVMI_MIO_CONTROL_H_INCLUDED
 #include "pvmi_mio_control.h"
 #endif
@@ -198,7 +195,7 @@ class AndroidAudioInput : public OsclTimerObject,
     public RefBase
 {
 public:
-    AndroidAudioInput();
+    AndroidAudioInput(uint32 audioSource);
     virtual ~AndroidAudioInput();
 
     // Pure virtuals from PvmiMIOControl
@@ -278,6 +275,7 @@ public:
     int maxAmplitude();
 
 private:
+    AndroidAudioInput();
     void Run();
 
     int audin_thread_func();
@@ -369,6 +367,7 @@ private:
     bool iAudioNumChannelsValid;
     int32 iAudioSamplingRate;
     bool iAudioSamplingRateValid;
+    uint32 iAudioSource;
 
     int32 iFrameSize;
     int32 iDataEventCounter;
