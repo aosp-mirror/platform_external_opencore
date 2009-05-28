@@ -264,7 +264,7 @@ class PlayerDriver :
 
     PVPlayerDataSink        *mVideoSink;
     PVMFNodeInterface       *mVideoNode;
-    PvmiMIOControl          *mVideoOutputMIO;
+    AndroidSurfaceOutput    *mVideoOutputMIO;
 
     PvmiCapabilityAndConfig *mPlayerCapConfig;
 
@@ -297,6 +297,9 @@ class PlayerDriver :
 
     bool                    mEmulation;
     void*                   mLibHandle;
+
+    // video display surface
+    android::sp<android::ISurface> mSurface;
 };
 
 PlayerDriver::PlayerDriver(PVPlayer* pvPlayer) :
@@ -323,6 +326,7 @@ PlayerDriver::PlayerDriver(PVPlayer* pvPlayer) :
     mVideoSink = NULL;
     mVideoNode = NULL;
     mVideoOutputMIO = NULL;
+    mSurface = NULL;
 
     mPlayerCapConfig = NULL;
     mDownloadContextData = NULL;
@@ -712,41 +716,53 @@ void PlayerDriver::handleInit(PlayerInit* command)
 
 void PlayerDriver::handleSetVideoSurface(PlayerSetVideoSurface* command)
 {
-    int error = 0;
-    AndroidSurfaceOutput* mio = NULL;
 
-    // attempt to load device-specific video MIO
-    if (mLibHandle != NULL) {
-        VideoMioFactory f = (VideoMioFactory) ::dlsym(mLibHandle, VIDEO_MIO_FACTORY_NAME);
-        if (f != NULL) {
-            mio = f();
+    // create video MIO if needed
+    if (mVideoOutputMIO == NULL) {
+        int error = 0;
+        AndroidSurfaceOutput* mio = NULL;
+
+        // attempt to load device-specific video MIO
+        if (mLibHandle != NULL) {
+            VideoMioFactory f = (VideoMioFactory) ::dlsym(mLibHandle, VIDEO_MIO_FACTORY_NAME);
+            if (f != NULL) {
+                mio = f();
+            }
+        }
+
+        // if no device-specific MIO was created, use the generic one
+        if (mio == NULL) {
+            LOGW("Using generic video MIO");
+            mio = new AndroidSurfaceOutput();
+        }
+
+        // initialize the MIO parameters
+        status_t ret = mio->set(mPvPlayer, command->surface(), mEmulation);
+        if (ret != NO_ERROR) {
+            LOGE("Video MIO set failed");
+            commandFailed(command);
+            delete mio;
+            return;
+        }
+        mVideoOutputMIO = mio;
+
+        mVideoNode = PVMediaOutputNodeFactory::CreateMediaOutputNode(mVideoOutputMIO);
+        mVideoSink = new PVPlayerDataSinkPVMFNode;
+
+        ((PVPlayerDataSinkPVMFNode *)mVideoSink)->SetDataSinkNode(mVideoNode);
+        ((PVPlayerDataSinkPVMFNode *)mVideoSink)->SetDataSinkFormatType((char*)PVMF_MIME_YUV420);
+
+        OSCL_TRY(error, mPlayer->AddDataSink(*mVideoSink, command));
+        OSCL_FIRST_CATCH_ANY(error, commandFailed(command));
+    } else {
+        // change display surface
+        if (mVideoOutputMIO->set(mPvPlayer, command->surface(), mEmulation) == NO_ERROR) {
+            FinishSyncCommand(command);
+        } else {
+            LOGE("Video MIO set failed");
+            commandFailed(command);
         }
     }
-
-    // if no device-specific MIO was created, use the generic one
-    if (mio == NULL) {
-        LOGW("Using generic video MIO");
-        mio = new AndroidSurfaceOutput();
-    }
-
-    // initialize the MIO parameters
-    status_t ret = mio->set(mPvPlayer, command->surface(), mEmulation);
-    if (ret != NO_ERROR) {
-        LOGE("Video MIO set failed");
-        commandFailed(command);
-        delete mio;
-        return;
-    }
-    mVideoOutputMIO = mio;
-
-    mVideoNode = PVMediaOutputNodeFactory::CreateMediaOutputNode(mVideoOutputMIO);
-    mVideoSink = new PVPlayerDataSinkPVMFNode;
-
-    ((PVPlayerDataSinkPVMFNode *)mVideoSink)->SetDataSinkNode(mVideoNode);
-    ((PVPlayerDataSinkPVMFNode *)mVideoSink)->SetDataSinkFormatType((char*)PVMF_MIME_YUV420);
-
-    OSCL_TRY(error, mPlayer->AddDataSink(*mVideoSink, command));
-    OSCL_FIRST_CATCH_ANY(error, commandFailed(command));
 }
 
 void PlayerDriver::handleSetAudioSink(PlayerSetAudioSink* command)
