@@ -95,6 +95,7 @@ public:
 
     // parameter initialization
     virtual status_t set(android::PVPlayer* pvPlayer, const sp<ISurface>& surface, bool emulation);
+    virtual status_t setVideoSurface(const sp<ISurface>& surface);
 
     // For frame buffer
     virtual bool initCheck();
@@ -307,6 +308,7 @@ protected:
     static const int kBufferCount = 2;
     int                         mFrameBufferIndex;
     sp<MemoryHeapBase>          mFrameHeap;
+    ISurface::BufferHeap        mBufferHeap;
     size_t                      mFrameBuffers[kBufferCount];
 
     void convertFrame(void* src, void* dst, size_t len);

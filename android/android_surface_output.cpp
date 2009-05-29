@@ -53,8 +53,25 @@ OSCL_EXPORT_REF AndroidSurfaceOutput::AndroidSurfaceOutput() :
 status_t AndroidSurfaceOutput::set(PVPlayer* pvPlayer, const sp<ISurface>& surface, bool emulation)
 {
     mPvPlayer = pvPlayer;
-    mSurface = surface;
     mEmulation = emulation;
+    setVideoSurface(surface);
+    return NO_ERROR;
+}
+
+status_t AndroidSurfaceOutput::setVideoSurface(const sp<ISurface>& surface)
+{
+    LOGV("setVideoSurface(%p)", surface.get());
+    // unregister buffers for the old surface
+    if (mSurface != NULL) {
+        LOGV("unregisterBuffers from old surface");
+        mSurface->unregisterBuffers();
+    }
+    mSurface = surface;
+    // register buffers for the new surface
+    if ((mSurface != NULL) && (mFrameHeap != NULL)) {
+        LOGV("registerBuffers from old surface");
+        mSurface->registerBuffers(mBufferHeap);
+    }
     return NO_ERROR;
 }
 
@@ -311,6 +328,8 @@ PVMFCommandId AndroidSurfaceOutput::Start(const OsclAny* aContext)
 // post the last video frame to refresh screen after pause
 void AndroidSurfaceOutput::postLastFrame()
 {
+    // ignore if no surface or heap
+    if ((mSurface == NULL) || (mFrameHeap == NULL)) return;
     mSurface->postBuffer(mFrameBuffers[mFrameBufferIndex]);
 }
 
@@ -957,9 +976,9 @@ OSCL_EXPORT_REF bool AndroidSurfaceOutput::initCheck()
     return false;
     }
     
-    ISurface::BufferHeap buffers(displayWidth, displayHeight,
+    mBufferHeap = ISurface::BufferHeap(displayWidth, displayHeight,
             frameWidth, frameHeight, PIXEL_FORMAT_RGB_565, mFrameHeap);
-    mSurface->registerBuffers(buffers);
+    mSurface->registerBuffers(mBufferHeap);
 
     // create frame buffers
     for (int i = 0; i < kBufferCount; i++) {
@@ -986,12 +1005,12 @@ OSCL_EXPORT_REF bool AndroidSurfaceOutput::initCheck()
 
 OSCL_EXPORT_REF PVMFStatus AndroidSurfaceOutput::writeFrameBuf(uint8* aData, uint32 aDataLen, const PvmiMediaXferHeader& data_header_info)
 {
-    if (mSurface == 0) return PVMFFailure;
-
-    iColorConverter->Convert(aData, static_cast<uint8*>(mFrameHeap->base()) + mFrameBuffers[mFrameBufferIndex]);
     // post to SurfaceFlinger
-    if (++mFrameBufferIndex == kBufferCount) mFrameBufferIndex = 0;
-    mSurface->postBuffer(mFrameBuffers[mFrameBufferIndex]);
+    if ((mSurface != NULL) && (mFrameHeap != NULL)) {
+        if (++mFrameBufferIndex == kBufferCount) mFrameBufferIndex = 0;
+        iColorConverter->Convert(aData, static_cast<uint8*>(mFrameHeap->base()) + mFrameBuffers[mFrameBufferIndex]);
+        mSurface->postBuffer(mFrameBuffers[mFrameBufferIndex]);
+    }
     return PVMFSuccess;
 }
 
