@@ -756,7 +756,7 @@ void PlayerDriver::handleSetVideoSurface(PlayerSetVideoSurface* command)
         OSCL_FIRST_CATCH_ANY(error, commandFailed(command));
     } else {
         // change display surface
-        if (mVideoOutputMIO->set(mPvPlayer, command->surface(), mEmulation) == NO_ERROR) {
+        if (mVideoOutputMIO->setVideoSurface(command->surface()) == NO_ERROR) {
             FinishSyncCommand(command);
         } else {
             LOGE("Video MIO set failed");
