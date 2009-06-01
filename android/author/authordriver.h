@@ -23,7 +23,10 @@
 #ifndef _AUTHORDRIVER_PRIV_H
 #define _AUTHORDRIVER_PRIV_H
 
-#include <utils.h>
+#include <utils/Log.h>
+#include <utils/threads.h>
+#include <utils/List.h>
+#include <utils/Errors.h>
 
 #include <ui/ICamera.h>
 
