@@ -112,7 +112,7 @@ status_t PVMediaRecorder::setOutputFile(const char *path)
     }
 
     // use file descriptor interface
-    int fd = open(path, O_RDWR | O_CREAT );
+    int fd = open(path, O_RDWR | O_CREAT, S_IWUSR);
     if (-1 == fd) {
         LOGE("Ln %d open() error %d", __LINE__, fd);
         return -errno;
