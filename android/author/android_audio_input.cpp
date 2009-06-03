@@ -1131,7 +1131,17 @@ void AndroidAudioInput::SendMicData(void)
     data_hdr.flags=0;
     data_hdr.duration = data.iDuration;
     data_hdr.stream_id=0;
-    uint32 writeAsyncID = iPeer->writeAsync(PVMI_MEDIAXFER_FMT_TYPE_DATA, 0, data.iData, data.iDataLen, data_hdr);
+    int32 err = 0;
+    PVMFCommandId writeAsyncID = 0;
+    OSCL_TRY(err,
+             writeAsyncID = iPeer->writeAsync(PVMI_MEDIAXFER_FMT_TYPE_DATA, 0, data.iData, data.iDataLen, data_hdr);
+            );
+    OSCL_FIRST_CATCH_ANY(err,
+             // send data failed, data sent out in wrong state.
+             LOGE("send data failed");
+             iWriteResponseQueueLock.Unlock();
+             return;
+             );
 
     // Save the id and data pointer on iSentMediaData queue for writeComplete call
     AndroidAudioInputMediaData sentData;
