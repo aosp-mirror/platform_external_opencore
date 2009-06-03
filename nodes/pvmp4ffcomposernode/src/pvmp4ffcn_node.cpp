@@ -19,6 +19,13 @@
  * @file pvmp4ffcn_node.cpp
  * @brief Node for PV MPEG4 file format composer
  */
+#ifdef ANDROID
+// #define LOG_NDEBUG 0
+#define LOG_TAG "PvMp4Composer"
+#include <utils/Log.h>
+#include <utils/Errors.h>
+#include <utils/threads.h>
+#endif // ANDROID
 
 #ifndef PVMP4FFCN_NODE_H_INCLUDED
 #include "pvmp4ffcn_node.h"
@@ -35,6 +42,216 @@
 #ifndef OSCL_MEM_BASIC_FUNCTIONS_H
 #include "oscl_mem_basic_functions.h"
 #endif
+#include "pvmf_omx_basedec_node.h"  // for NUMBER_OUTPUT_BUFFER
+
+#ifdef ANDROID
+namespace android {
+
+// FragmentWriter is a queue of media fragment to be written in the
+// media file. The caller enqueues the next fragment and returns
+// immediately. An separate thread dequeues the fragment and writes it.
+//
+// This class is friend with the composer node it belongs to, in order
+// to be able to call the original AddMemFragToTrack which does all
+// the work.
+//
+// The queue is implemented using a circular buffer. mBuffer is the
+// start of the array and mEnd points just after the last element in
+// the array.
+// mFirst points to the oldest fragment.
+// mLast points to the next available cell for a new fragment.
+// When the array is empty or full mFirst == mLast.
+
+class FragmentWriter: public Thread
+{
+  public:
+    FragmentWriter(PVMp4FFComposerNode *composer) :
+        Thread(kThreadCallJava), mSize(0), mEnd(mBuffer + kCapacity),
+        mFirst(mBuffer), mLast(mBuffer), mComposer(composer),
+        mPrevWriteStatus(PVMFSuccess), mDropped(0) {}
+
+    virtual ~FragmentWriter()
+    {
+        Mutex::Autolock l(mRequestMutex);
+        LOG_ASSERT(0 == mSize, "The queue should be empty by now.");
+        LOG_ASSERT(!exitPending(), "Should have passed the pending stage.");
+    }
+
+    // Mark the thread as exiting and kick it so it can see the
+    // exitPending state.
+    virtual void requestExit()
+    {
+        Thread::requestExit();
+        mRequestMutex.lock();
+        mRequestCv.signal();
+        mRequestMutex.unlock();
+    }
+
+    // Wait for all the fragment to be written.
+    virtual void flush()
+    {
+        bool done = false;
+        int iter = 0;
+        while (!done)
+        {
+            mRequestMutex.lock();
+            done = mSize == 0 || iter > kMaxFlushAttempts;
+            mRequestCv.signal();
+            mRequestMutex.unlock();
+            usleep(kFlushSleepMicros);
+            ++iter;
+        }
+        LOG_ASSERT(iter <= kMaxFlushAttempts, "Failed to flush");
+    }
+
+    // Called by the ProcessIncomingMsg method from the
+    // PVMp4FFComposerNode to append the fragment to the track.
+    // @return The result of the *previous* fragment written. Since the call
+    //         is asynch we cannot wait.
+    PVMFStatus enqueueMemFragToTrack(Oscl_Vector<OsclMemoryFragment, OsclMemAllocator> aFrame,
+                                     OsclRefCounterMemFrag& aMemFrag, PVMFFormatType aFormat,
+                                     uint32& aTimestamp, int32 aTrackId, PVMp4FFComposerPort *aPort)
+    {
+        if (exitPending()) return PVMFErrCancelled;
+
+        Mutex::Autolock lock(mRequestMutex);
+
+        // When the queue is full, we drop the request. This frees the
+        // memory fragment and keeps the system running. Decoders are
+        // unhappy when there is no buffer available to write the
+        // output.
+        // An alternative would be to discard the oldest fragment
+        // enqueued to free some space. However that would modify
+        // mFirst and require extra locking because the thread maybe
+        // in the process of writing it.
+        if (mSize == kCapacity)
+        {
+            ++mDropped;
+            LOGW_IF((mDropped % kLogDroppedPeriod) == 0, "Frame %d dropped.", mDropped);
+            // TODO: Should we return an error code here?
+            return mPrevWriteStatus;
+        }
+
+        mLast->set(aFrame, aMemFrag, aFormat, aTimestamp, aTrackId, aPort);
+        incrPendingRequests();
+
+        mRequestCv.signal();
+        return mPrevWriteStatus;
+    }
+
+  private:
+    static const bool kThreadCallJava = false;
+    static const size_t kLogDroppedPeriod = 10;  // Arbitrary.
+    // Must match the number of buffers allocated in the decoder.
+    static const size_t kCapacity = NUMBER_OUTPUT_BUFFER;
+    static const size_t kWarningThreshold = kCapacity * 3 / 4; // Warn at 75%
+    static const OsclRefCounterMemFrag kEmptyFrag;
+    // Flush blocks for 2 seconds max.
+    static const size_t kMaxFlushAttempts = 10;
+    static const int kFlushSleepMicros = 200 * 1000;
+
+    struct Request
+    {
+        void set(Oscl_Vector<OsclMemoryFragment, OsclMemAllocator> aFrame,
+                 OsclRefCounterMemFrag& aMemFrag, PVMFFormatType aFormat,
+                 uint32 aTimestamp, int32 aTrackId, PVMp4FFComposerPort *aPort) {
+            mFrame = aFrame;
+            mFrag = aMemFrag;
+            mFormat = aFormat;
+            mTimestamp = aTimestamp;
+            mTrackId = aTrackId;
+            mPort = aPort;
+        }
+
+        Oscl_Vector<OsclMemoryFragment, OsclMemAllocator> mFrame;
+        OsclRefCounterMemFrag mFrag;
+        PVMFFormatType mFormat;
+        uint32 mTimestamp;
+        uint32 mTrackId;
+        PVMp4FFComposerPort *mPort;
+    };
+
+    void incrPendingRequests()
+    {
+        ++mLast;
+        if (mEnd == mLast) mLast = mBuffer;
+        ++mSize;
+    }
+
+    void decrPendingRequests()
+    {
+        mFirst->mFrame.clear();
+        // Release the memory fragment tracked using a refcount
+        // class. Need to assign an empty frag to release the memory
+        // fragment. We cannot wait for the array to wrap around.
+        mFirst->mFrag = kEmptyFrag;  // FIXME: This assignement to decr the ref count is ugly.
+        ++mFirst;
+        if (mEnd == mFirst) mFirst = mBuffer;
+        --mSize;
+    }
+
+    // Called by the base class Thread.
+    // @return true if there more work to do. false when done.
+    // @Override Thread
+    virtual bool threadLoop()
+    {
+        int numFrags = 0;
+
+        if (!exitPending())
+        {
+            // Check if there's work to do. Otherwise wait for new fragment.
+            mRequestMutex.lock();
+            numFrags = mSize;
+            mRequestMutex.unlock();
+
+            bool doneWaiting = numFrags != 0;
+            while(!doneWaiting)
+            {
+                mRequestMutex.lock();
+                mRequestCv.wait(mRequestMutex);
+                doneWaiting = mSize > 0 || exitPending();
+                numFrags = mSize;
+                mRequestMutex.unlock();
+            }
+        }
+
+        if (exitPending()) return false;
+
+        LOGW_IF(numFrags > kWarningThreshold, "%d fragments in queue.", numFrags);
+        for (size_t i = 0; i < numFrags; ++i)
+        {
+            // Don't lock the array while we are calling
+            // AddMemFragToTrack, which may last a long time, because
+            // we are the only thread accessing mFirst.
+            mPrevWriteStatus = mComposer->AddMemFragToTrack(
+                    mFirst->mFrame, mFirst->mFrag, mFirst->mFormat,
+                    mFirst->mTimestamp, mFirst->mTrackId, mFirst->mPort);
+
+            mRequestMutex.lock();
+            decrPendingRequests();
+            mRequestMutex.unlock();
+        }
+        return true;
+    }
+
+
+    Mutex mRequestMutex;  // Protects mRequestCv, mBuffer, mFirst, mLast, mDropped
+    Condition mRequestCv;
+    Request mBuffer[kCapacity];
+    size_t mSize;
+    void *const mEnd;  // Marker for the end of the array.
+    Request *mFirst, *mLast;
+
+    // mComposer with the real implementation of the AddMemFragToTrack method.
+    PVMp4FFComposerNode *mComposer;
+    // TODO: lock needed for mPrevWriteStatus? Are int assignement atomic on arm?
+    PVMFStatus mPrevWriteStatus;
+
+    size_t mDropped;
+};
+const OsclRefCounterMemFrag FragmentWriter::kEmptyFrag;
+}
+#endif // ANDROID
 
 #define LOG_STACK_TRACE(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, m);
 #define LOG_DEBUG(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, m);
@@ -55,6 +272,8 @@ const uint32 FAIL_NODE_CMD_RELEASE_PORT = 7;
 
 // Define entry point for this DLL
 OSCL_DLL_ENTRY_POINT_DEFAULT()
+
+
 
 ////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF PVMFNodeInterface* PVMp4FFComposerNodeFactory::CreateMp4FFComposer(int32 aPriority)
@@ -165,6 +384,11 @@ PVMp4FFComposerNode::PVMp4FFComposerNode(int32 aPriority)
                          OSCL_LEAVE(err);
                         );
 
+#ifdef ANDROID
+    iFragmentWriter = new android::FragmentWriter(this);
+    iFragmentWriter->run(LOG_TAG);
+#endif
+
 #ifdef _TEST_AE_ERROR_HANDLING
     iErrorHandlingAddMemFrag = false;
     iErrorHandlingAddTrack = false;
@@ -190,6 +414,15 @@ PVMp4FFComposerNode::~PVMp4FFComposerNode()
         LogDiagnostics();
     }
 #endif
+
+#ifdef ANDROID
+    if (iFragmentWriter != NULL)
+    {
+        iFragmentWriter->requestExit(); // kick the thread
+        iFragmentWriter->requestExitAndWait();
+    }
+#endif
+
     if (iMpeg4File)
     {
         PVA_FF_IMpeg4File::DestroyMP4FileObject(iMpeg4File);
@@ -1719,6 +1952,10 @@ PVMFStatus PVMp4FFComposerNode::RenderToFile()
     }
 #endif
 
+#ifdef ANDROID
+    iFragmentWriter->flush();
+#endif
+
     if (!iMpeg4File || !iMpeg4File->renderToFile(iFileName))
     {
         LOG_ERR((0, "PVMp4FFComposerNode::RenderToFile: Error - renderToFile failed"));
@@ -2055,6 +2292,7 @@ PVMFStatus PVMp4FFComposerNode::ProcessIncomingMsg(PVMFPortInterface* aPort)
                 //since we do not have data to process, we can safely break here.
                 break;
             }
+
             PVMFSharedMediaDataPtr mediaDataPtr;
             convertToPVMFMediaData(mediaDataPtr, msg);
 
@@ -2144,9 +2382,16 @@ PVMFStatus PVMp4FFComposerNode::ProcessIncomingMsg(PVMFPortInterface* aPort)
                     pFrame.push_back(memfragment);
                 }
             }
+
+            // TODO: We are passing port and port->GetFormat(), should pass port only.
+#ifdef ANDROID
+            status = iFragmentWriter->enqueueMemFragToTrack(
+                    pFrame, memFrag, port->GetFormat(), timestamp,
+                    trackId, (PVMp4FFComposerPort*)aPort);
+#else
             status = AddMemFragToTrack(pFrame, memFrag, port->GetFormat(), timestamp,
                                        trackId, (PVMp4FFComposerPort*)aPort);
-
+#endif
             if (status == PVMFFailure)
                 ReportErrorEvent(PVMF_MP4FFCN_ERROR_ADD_SAMPLE_TO_TRACK_FAILED, (OsclAny*)aPort);
         }
@@ -2856,8 +3101,3 @@ int32 PVMp4FFComposerNode::StoreCurrentCommand(PVMp4FFCNCmdQueue& aCurrentCmd, P
                         );
     return err;
 }
-
-
-
-
-
