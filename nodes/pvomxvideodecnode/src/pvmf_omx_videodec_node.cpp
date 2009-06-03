@@ -1360,7 +1360,7 @@ OMX_ERRORTYPE PVMFOMXVideoDecNode::EventHandlerProcessing(OMX_OUT OMX_HANDLETYPE
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
                                 (0, "PVMFOMXVideoDecNode::EventHandlerProcessing: OMX_EventError"));
                 // for now, any error from the component will be reported as error
-                ReportErrorEvent(PVMFErrorEvent, NULL, NULL);
+                ReportErrorEvent(PVMFErrProcessing, NULL, NULL);
                 SetState(EPVMFNodeError);
             }
             break;

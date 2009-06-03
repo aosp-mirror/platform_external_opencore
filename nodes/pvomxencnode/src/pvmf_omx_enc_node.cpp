@@ -4513,7 +4513,7 @@ OMX_ERRORTYPE PVMFOMXEncNode::EventHandlerProcessing(OMX_OUT OMX_HANDLETYPE aCom
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
                                     (0, "PVMFOMXEncNode-%s::EventHandlerProcessing: OMX_EventError", iNodeTypeId));
                     // for now, any error from the component will be reported as error
-                    ReportErrorEvent(PVMFErrorEvent, NULL, NULL);
+                    ReportErrorEvent(PVMFErrProcessing, NULL, NULL);
                     SetState(EPVMFNodeError);
                 }
                 break;
