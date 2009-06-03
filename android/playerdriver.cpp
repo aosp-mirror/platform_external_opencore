@@ -231,9 +231,10 @@ class PlayerDriver :
     void handleGetPosition(PlayerGetPosition* command);
     void handleGetDuration(PlayerGetDuration* command);
     void handleGetStatus(PlayerGetStatus* command);
+    void handleCheckLiveStreaming(PlayerCheckLiveStreaming* cmd);
 
-    void endOfData();
-
+    //void endOfData();
+    PVMFFormatType getFormatType();
     void CommandCompleted(const PVCmdResponse& aResponse);
     void HandleErrorEvent(const PVAsyncErrorEvent& aEvent);
     void HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent);
@@ -244,6 +245,7 @@ class PlayerDriver :
     void FinishSyncCommand(PlayerCommand* command);
 
     void handleGetDurationComplete(PlayerGetDuration* cmd);
+    void handleCheckLiveStreamingComplete(PlayerCheckLiveStreaming* cmd);
 
     int setupHttpStreamPre();
     int setupHttpStreamPost();
@@ -277,6 +279,9 @@ class PlayerDriver :
     PVPMetadataList mMetaKeyList;
     Oscl_Vector<PvmiKvp,OsclMemAllocator> mMetaValueList;
     int mNumMetaValues;
+    PVPMetadataList mCheckLiveKey;
+    Oscl_Vector<PvmiKvp,OsclMemAllocator> mCheckLiveValue;
+    int mCheckLiveMetaValues;
 
     // Semaphore used for synchronous commands.
     OsclSemaphore           *mSyncSem;
@@ -295,7 +300,7 @@ class PlayerDriver :
     int                     mRecentSeek;
     bool                    mSeekComp;
     bool                    mSeekPending;
-
+    bool                    mIsLiveStreaming;
     bool                    mEmulation;
     void*                   mLibHandle;
 
@@ -314,6 +319,7 @@ PlayerDriver::PlayerDriver(PVPlayer* pvPlayer) :
         mRecentSeek(0),
         mSeekComp(true),
         mSeekPending(false),
+        mIsLiveStreaming(false),
         mEmulation(false)
 {
     LOGV("constructor");
@@ -440,7 +446,7 @@ status_t PlayerDriver::enqueueCommand(PlayerCommand* command)
 
 void PlayerDriver::FinishSyncCommand(PlayerCommand* command)
 {
-    command->complete(0, false);
+    command->complete(NO_ERROR, false);
     delete command;
 }
 
@@ -511,11 +517,26 @@ void PlayerDriver::Run()
                 break;
 
             case PlayerCommand::PLAYER_PAUSE:
-                handlePause(static_cast<PlayerPause*>(command));
+                {
+                    if(mIsLiveStreaming) {
+                        LOGW("Pause denied");
+                        FinishSyncCommand(command);
+                        return;
+                    }
+                    handlePause(static_cast<PlayerPause*>(command));
+                }
                 break;
 
             case PlayerCommand::PLAYER_SEEK:
-                handleSeek(static_cast<PlayerSeek*>(command));
+                {
+                    if(mIsLiveStreaming) {
+                        LOGW("Seek denied");
+                        mPvPlayer->sendEvent(MEDIA_SEEK_COMPLETE);
+                        FinishSyncCommand(command);
+                        return;
+                    }
+                    handleSeek(static_cast<PlayerSeek*>(command));
+                }
                 break;
 
             case PlayerCommand::PLAYER_GET_POSITION:
@@ -527,6 +548,10 @@ void PlayerDriver::Run()
                 handleGetStatus(static_cast<PlayerGetStatus*>(command));
                 FinishSyncCommand(command);
                 return;
+
+            case PlayerCommand::PLAYER_CHECK_LIVE_STREAMING:
+                handleCheckLiveStreaming(static_cast<PlayerCheckLiveStreaming*>(command));
+                break;
 
             case PlayerCommand::PLAYER_GET_DURATION:
                 handleGetDuration(static_cast<PlayerGetDuration*>(command));
@@ -569,14 +594,7 @@ void PlayerDriver::commandFailed(PlayerCommand* command)
     }
 
     LOGV("Command failed: %d", command->code());
-    // FIXME: Ignore seek failure because it might not work when streaming
-    if (mSeekPending) {
-        LOGV("Ignoring failed seek");
-        command->complete(NO_ERROR, false);
-        mSeekPending = false;
-    } else {
-        command->complete(UNKNOWN_ERROR, false);
-    }
+    command->complete(UNKNOWN_ERROR, false);
     delete command;
 }
 
@@ -916,6 +934,17 @@ void PlayerDriver::handleGetStatus(PlayerGetStatus* command)
     }
 }
 
+void PlayerDriver::handleCheckLiveStreaming(PlayerCheckLiveStreaming* command)
+{
+    LOGV("handleCheckLiveStreaming ...");
+    mCheckLiveKey.clear();
+    mCheckLiveKey.push_back(OSCL_HeapString<OsclMemAllocator>("pause-denied"));
+    mCheckLiveValue.clear();
+    int error = 0;
+    OSCL_TRY(error, mPlayer->GetMetadataValues(mCheckLiveKey, 0, 1, mCheckLiveMetaValues, mCheckLiveValue, command));
+    OSCL_FIRST_CATCH_ANY(error, commandFailed(command));
+}
+
 void PlayerDriver::handleGetDuration(PlayerGetDuration* command)
 {
     command->set(-1);
@@ -994,6 +1023,11 @@ void PlayerDriver::handleQuit(PlayerQuit* command)
 {
     OsclExecScheduler *sched = OsclExecScheduler::Current();
     sched->StopScheduler();
+}
+
+PVMFFormatType PlayerDriver::getFormatType()
+{
+    return mDataSource->GetDataSourceFormatType();
 }
 
 /*static*/ int PlayerDriver::startPlayerThread(void *cookie)
@@ -1092,6 +1126,20 @@ int PlayerDriver::playerThread()
     ed->mSyncSem->Signal();
 }
 
+void PlayerDriver::handleCheckLiveStreamingComplete(PlayerCheckLiveStreaming* cmd)
+{
+    if (mCheckLiveValue.empty())
+        return;
+
+    const char* substr = oscl_strstr((char*)(mCheckLiveValue[0].key), _STRLIT_CHAR("pause-denied;valtype=bool"));
+    if (substr!=NULL) {
+        if ( mCheckLiveValue[0].value.bool_value == true ) {
+            LOGI("Live Streaming ... \n");
+            mIsLiveStreaming = true;
+        }
+    }
+}
+
 void PlayerDriver::handleGetDurationComplete(PlayerGetDuration* cmd)
 {
     cmd->set(-1);
@@ -1164,6 +1212,10 @@ void PlayerDriver::CommandCompleted(const PVCmdResponse& aResponse)
 
             case PlayerCommand::PLAYER_GET_DURATION:
                 handleGetDurationComplete(static_cast<PlayerGetDuration*>(command));
+                break;
+
+            case PlayerCommand::PLAYER_CHECK_LIVE_STREAMING:
+                handleCheckLiveStreamingComplete(static_cast<PlayerCheckLiveStreaming*>(command));
                 break;
 
             case PlayerCommand::PLAYER_PAUSE:
@@ -1493,7 +1545,21 @@ status_t PVPlayer::prepare()
 
     // prepare
     LOGV("  prepare");
-    return mPlayerDriver->enqueueCommand(new PlayerPrepare(0,0));
+    return mPlayerDriver->enqueueCommand(new PlayerPrepare(check_for_live_streaming, this));
+
+
+}
+
+void PVPlayer::check_for_live_streaming(status_t s, void *cookie, bool cancelled)
+{
+    LOGV("check_for_live_streaming s=%d, cancelled=%d", s, cancelled);
+    if (s == NO_ERROR && !cancelled) {
+        PVPlayer *p = (PVPlayer*)cookie;
+        if ( (p->mPlayerDriver->getFormatType() == PVMF_MIME_DATA_SOURCE_RTSP_URL) ||
+             (p->mPlayerDriver->getFormatType() == PVMF_MIME_DATA_SOURCE_MS_HTTP_STREAMING_URL) ) {
+            p->mPlayerDriver->enqueueCommand(new PlayerCheckLiveStreaming( do_nothing, NULL));
+        }
+    }
 }
 
 void PVPlayer::run_init(status_t s, void *cookie, bool cancelled)
@@ -1533,7 +1599,7 @@ void PVPlayer::run_prepare(status_t s, void *cookie, bool cancelled)
     LOGV("run_prepare s=%d, cancelled=%d", s, cancelled);
     if (s == NO_ERROR && !cancelled) {
         PVPlayer *p = (PVPlayer*)cookie;
-        p->mPlayerDriver->enqueueCommand(new PlayerPrepare(do_nothing,0));
+        p->mPlayerDriver->enqueueCommand(new PlayerPrepare(check_for_live_streaming, cookie));
     }
 }
 
@@ -1550,7 +1616,7 @@ status_t PVPlayer::prepareAsync()
     } else {  // If data source has been already set.
         // No need to run a sequence of commands.
         // The only code needed to run is PLAYER_PREPARE.
-        ret = mPlayerDriver->enqueueCommand(new PlayerPrepare(do_nothing, NULL));
+        ret = mPlayerDriver->enqueueCommand(new PlayerPrepare(check_for_live_streaming, this));
     }
 
     return ret;

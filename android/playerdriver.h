@@ -71,6 +71,7 @@ class PlayerCommand
         // TODO: clarify the scope of PLAYER_CANCEL_ALL_COMMANDS, does it work
         // for asynchronous commands only or for synchronous as well?
         PLAYER_CANCEL_ALL_COMMANDS      = 18,
+        PLAYER_CHECK_LIVE_STREAMING     = 19,
     };
 
     virtual             ~PlayerCommand() {}
@@ -247,6 +248,15 @@ class PlayerGetDuration: public PlayerCommand
   private:
     PlayerGetDuration();
     int*                mMsec;
+};
+
+class PlayerCheckLiveStreaming: public PlayerCommand
+{
+  public:
+    PlayerCheckLiveStreaming(media_completion_f cbf, void* cookie) :
+            PlayerCommand(PLAYER_CHECK_LIVE_STREAMING, cbf, cookie) {}
+  private:
+    PlayerCheckLiveStreaming();
 };
 
 class PlayerGetStatus: public PlayerCommand
