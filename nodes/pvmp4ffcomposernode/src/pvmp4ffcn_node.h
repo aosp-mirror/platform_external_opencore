@@ -85,6 +85,8 @@
 #ifndef PVMI_KVP_H_INCLUDED
 #include "pvmi_kvp.h"
 #endif
+
+
 // Forward declaration
 class PVMp4FFComposerPort;
 
@@ -107,6 +109,14 @@ typedef PVMFPortVector<PVMp4FFComposerPort, PVMp4FFCNAlloc> PVMp4FFCNPortVector;
 #ifndef PVMF_MEDIA_CLOCK_H_INCLUDED
 #include "pvmf_media_clock.h"
 #endif
+#endif
+
+#ifdef ANDROID
+#include <utils/RefBase.h>
+
+namespace android {
+class FragmentWriter;
+}
 #endif
 
 ////////////////////////////////////////////////////////////////////////////
@@ -229,6 +239,9 @@ class PVMp4FFComposerNode : public PVMFNodeInterface,
         PVMFStatus VerifyAndSetConfigParameter(PvmiKvp& aParameter, bool aSetParam);
 
     private:
+#ifdef ANDROID
+        friend class android::FragmentWriter;  // Access AddMemFragToTrack
+#endif
 
         // Pure virtual from OsclActiveObject
         void Run();
@@ -350,10 +363,14 @@ class PVMp4FFComposerNode : public PVMFNodeInterface,
         uint32 iPresentationTimescale;
         uint32 iMovieFragmentDuration;
         Oscl_File* iFileObject;
+
+#ifdef ANDROID
+        // Fragment to track writer thread.
+        android::sp<android::FragmentWriter> iFragmentWriter;
+#endif
         // Meta data strings
         struct PVMP4FFCN_MetaDataString
         {
-public:
             PVMP4FFCN_MetaDataString(): iClassificationEntity(0), iClassificationTable(0), iLangCode(0) {};
             OSCL_wHeapString<OsclMemAllocator> iDataString;
             uint32 iClassificationEntity;
@@ -467,4 +484,3 @@ public:
 };
 
 #endif // PVMP4FFC_NODE_H_INCLUDED
-
