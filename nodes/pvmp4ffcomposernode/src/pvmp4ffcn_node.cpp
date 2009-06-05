@@ -19,6 +19,7 @@
  * @file pvmp4ffcn_node.cpp
  * @brief Node for PV MPEG4 file format composer
  */
+#undef ANDROID
 #ifdef ANDROID
 // #define LOG_NDEBUG 0
 #define LOG_TAG "PvMp4Composer"
