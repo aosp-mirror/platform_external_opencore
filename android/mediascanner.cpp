@@ -47,7 +47,7 @@
 #include "media/mediametadataretriever.h"
 
 #include <media/thread_init.h>
-#include <utils/string_array.h>
+#include <utils/StringArray.h>
 
 #define MAX_BUFF_SIZE   1024
 
