@@ -105,7 +105,7 @@ AVCStatus InitDPB(AVCHandle *avcHandle, AVCCommonObj *video, int FrameHeightInMb
     return AVC_SUCCESS;
 }
 
-AVCStatus AVCConfigureSequence(AVCHandle *avcHandle, AVCCommonObj *video, bool padding)
+OSCL_EXPORT_REF AVCStatus AVCConfigureSequence(AVCHandle *avcHandle, AVCCommonObj *video, bool padding)
 {
     void *userData = avcHandle->userData;
     AVCDecPicBuffer *dpb = video->decPicBuf;
@@ -202,7 +202,7 @@ AVCStatus AVCConfigureSequence(AVCHandle *avcHandle, AVCCommonObj *video, bool p
     return AVC_SUCCESS;
 }
 
-AVCStatus CleanUpDPB(AVCHandle *avcHandle, AVCCommonObj *video)
+OSCL_EXPORT_REF AVCStatus CleanUpDPB(AVCHandle *avcHandle, AVCCommonObj *video)
 {
     AVCDecPicBuffer *dpb = video->decPicBuf;
     int ii;
@@ -229,7 +229,7 @@ AVCStatus CleanUpDPB(AVCHandle *avcHandle, AVCCommonObj *video)
     return AVC_SUCCESS;
 }
 
-AVCStatus DPBInitBuffer(AVCHandle *avcHandle, AVCCommonObj *video)
+OSCL_EXPORT_REF AVCStatus DPBInitBuffer(AVCHandle *avcHandle, AVCCommonObj *video)
 {
     AVCDecPicBuffer *dpb = video->decPicBuf;
     int ii, status;
@@ -263,7 +263,7 @@ AVCStatus DPBInitBuffer(AVCHandle *avcHandle, AVCCommonObj *video)
     return AVC_SUCCESS;
 }
 
-void DPBInitPic(AVCCommonObj *video, int CurrPicNum)
+OSCL_EXPORT_REF void DPBInitPic(AVCCommonObj *video, int CurrPicNum)
 {
     int offset = 0;
     int offsetc = 0;
@@ -313,7 +313,7 @@ void DPBInitPic(AVCCommonObj *video, int CurrPicNum)
 }
 
 /* to release skipped frame after encoding */
-void DPBReleaseCurrentFrame(AVCHandle *avcHandle, AVCCommonObj *video)
+OSCL_EXPORT_REF void DPBReleaseCurrentFrame(AVCHandle *avcHandle, AVCCommonObj *video)
 {
     AVCDecPicBuffer *dpb = video->decPicBuf;
     int ii;
@@ -338,7 +338,7 @@ void DPBReleaseCurrentFrame(AVCHandle *avcHandle, AVCCommonObj *video)
 }
 
 /* see subclause 8.2.5.1 */
-AVCStatus StorePictureInDPB(AVCHandle *avcHandle, AVCCommonObj *video)
+OSCL_EXPORT_REF AVCStatus StorePictureInDPB(AVCHandle *avcHandle, AVCCommonObj *video)
 {
     AVCStatus status;
     AVCDecPicBuffer *dpb = video->decPicBuf;

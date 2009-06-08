@@ -60,11 +60,11 @@ class Mp4NodesInterface: public OsclSharedLibraryInterface,
 
 extern "C"
 {
-    OsclSharedLibraryInterface *PVGetInterface(void)
+    OSCL_EXPORT_REF OsclSharedLibraryInterface *PVGetInterface(void)
     {
         return OSCL_NEW(Mp4NodesInterface, ());
     }
-    void PVReleaseInterface(OsclSharedLibraryInterface* aInstance)
+    OSCL_EXPORT_REF void PVReleaseInterface(OsclSharedLibraryInterface* aInstance)
     {
         OSCL_DELETE(aInstance);
     }

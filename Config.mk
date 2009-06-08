@@ -4,6 +4,7 @@ ifndef EXTERNAL_OPENCORE_CONFIG_ONCE
 
   PV_TOP := $(my-dir)
     PV_CFLAGS := -Wno-non-virtual-dtor -DENABLE_SHAREDFD_PLAYBACK -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -DUSE_CML2_CONFIG
+
   FORMAT := android
 
 ifeq ($(ENABLE_PV_LOGGING),1)
@@ -36,6 +37,12 @@ include $(CLEAR_VARS)
   endif
   alternate_config :=
 
+# Using -fvisibility=hidden option increases the DSO size beyond what's allocated in prelink map.
+# Use PV_CFLAGS_MINUS_VISIBILITY instead of PV_CFLAGS until we figure out the reason.
+# JJ 06/05/09
+    PV_CFLAGS_MINUS_VISIBILITY := $(PV_CFLAGS)
+    PV_CFLAGS += -fvisibility=hidden
+
   PV_INCLUDES := \
 	$(PV_TOP)/android \
 	$(PV_TOP)/extern_libs_v2/khronos/openmax/include \
@@ -56,6 +63,7 @@ include $(CLEAR_VARS)
   # Stash these values for the next includer of this file.
   OPENCORE.PV_TOP := $(PV_TOP)
   OPENCORE.PV_CFLAGS := $(PV_CFLAGS)
+  OPENCORE.PV_CFLAGS_MINUS_VISIBILITY := $(PV_CFLAGS_MINUS_VISIBILITY)
   OPENCORE.FORMAT := $(FORMAT)
   OPENCORE.PV_OSCL_LIB := $(OPENCORE.PV_OSCL_LIB)
   OPENCORE.PV_COPY_HEADERS_TO := $(PV_COPY_HEADERS_TO)
@@ -66,6 +74,7 @@ else
   # use the precomputed values.
   PV_TOP := $(OPENCORE.PV_TOP)
   PV_CFLAGS := $(OPENCORE.PV_CFLAGS)
+  PV_CFLAGS_MINUS_VISIBILITY := $(OPENCORE.PV_CFLAGS_MINUS_VISIBILITY)
   FORMAT := $(OPENCORE.FORMAT)
   PV_OSCL_LIB := $(OPENCORE.PV_OSCL_LIB)
   PV_COPY_HEADERS_TO := $(OPENCORE.PV_COPY_HEADERS_TO)

@@ -227,11 +227,11 @@ class DownloadNodesRegistryInterface: public OsclSharedLibraryInterface,
 
 extern "C"
 {
-    OsclSharedLibraryInterface* PVGetInterface(void)
+    OSCL_EXPORT_REF OsclSharedLibraryInterface* PVGetInterface(void)
     {
         return OSCL_NEW(DownloadNodesRegistryInterface, ());
     }
-    void PVReleaseInterface(OsclSharedLibraryInterface* aInstance)
+    OSCL_EXPORT_REF void PVReleaseInterface(OsclSharedLibraryInterface* aInstance)
     {
         OSCL_DELETE(aInstance);
     }

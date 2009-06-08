@@ -8,7 +8,7 @@ LOCAL_SRC_FILES := \
 
 LOCAL_MODULE := libomx_m4venc_component_lib
 
-LOCAL_CFLAGS :=  $(PV_CFLAGS)
+LOCAL_CFLAGS :=  $(PV_CFLAGS_MINUS_VISIBILITY)
 
 LOCAL_ARM_MODE := arm
 

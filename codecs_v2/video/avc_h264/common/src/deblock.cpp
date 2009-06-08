@@ -70,7 +70,7 @@ static void EdgeLoop_Chroma_horizontal(uint8* SrcPtr, uint8 *Strength, int Alpha
  *****************************************************************************************
 */
 
-AVCStatus DeblockPicture(AVCCommonObj *video)
+OSCL_EXPORT_REF AVCStatus DeblockPicture(AVCCommonObj *video)
 {
     uint   i, j;
     int	  pitch = video->currPic->pitch, pitch_c, width;
