@@ -127,7 +127,7 @@ $1: FORCE
 	$$(quiet) echo "PV_TOP := $$(esc_dollar)(LOCAL_PATH)" >> $$@
 	$$(quiet) echo "include $$(esc_dollar)(CLEAR_VARS)" >> $$@
 	$$(quiet) echo "" >> $$@
-	$$(quiet) echo "PV_CFLAGS := -Wno-non-virtual-dtor -DENABLE_MEMORY_PLAYBACK -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -DUSE_CML2_CONFIG" >> $$@
+	$$(quiet) echo "PV_CFLAGS := -fvisibility=hidden -Wno-non-virtual-dtor -DENABLE_SHAREDFD_PLAYBACK -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -DUSE_CML2_CONFIG" >> $$@
 	$$(quiet) echo "" >> $$@
 	$$(quiet) echo "ifeq ($$(esc_dollar)(ENABLE_PV_LOGGING),1)" >> $$@
 	$$(quiet) echo " PV_CFLAGS += -DPVLOGGER_INST_LEVEL=5" >> $$@

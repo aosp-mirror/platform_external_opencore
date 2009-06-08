@@ -18,7 +18,7 @@
 #include "avclib_common.h"
 
 /** see subclause 8.2.4 Decoding process for reference picture lists construction. */
-void RefListInit(AVCCommonObj *video)
+OSCL_EXPORT_REF void RefListInit(AVCCommonObj *video)
 {
     AVCSliceHeader *sliceHdr = video->sliceHdr;
     AVCDecPicBuffer *dpb = video->decPicBuf;
@@ -136,7 +136,7 @@ void RefListInit(AVCCommonObj *video)
     return ;
 }
 /* see subclause 8.2.4.3 */
-AVCStatus ReOrderList(AVCCommonObj *video)
+OSCL_EXPORT_REF AVCStatus ReOrderList(AVCCommonObj *video)
 {
     AVCSliceHeader *sliceHdr = video->sliceHdr;
     AVCStatus status = AVC_SUCCESS;

@@ -38,6 +38,9 @@
 #define OSCL_HAS_ANDROID_SUPPORT 1
 #define OSCL_HAS_ANDROID_FILE_IO_SUPPORT 1
 
+#define OSCL_EXPORT_REF __attribute__ ((visibility("default")))
+#define OSCL_IMPORT_REF __attribute__ ((visibility("default")))
+
 // include common include for determining sizes from limits.h
 #include "osclconfig_limits_typedefs.h"
 
