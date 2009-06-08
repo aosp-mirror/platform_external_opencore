@@ -2,16 +2,16 @@
  * Copyright (C) 2008, The Android Open Source Project
  * Copyright (C) 2008 HTC Inc.
  *
- * Licensed under the Apache License, Version 2.0 (the "License"); 
- * you may not use this file except in compliance with the License. 
- * You may obtain a copy of the License at 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0 
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software 
- * distributed under the License is distributed on an "AS IS" BASIS, 
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
- * See the License for the specific language governing permissions and 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
  * limitations under the License.
  */
 
@@ -110,8 +110,11 @@ AuthorDriver::AuthorDriver()
     mVideoFrameRate((int)ANDROID_DEFAULT_FRAME_RATE),
     mVideoEncoder(VIDEO_ENCODER_DEFAULT),
     mOutputFormat(OUTPUT_FORMAT_DEFAULT),
-    mAudioEncoder(AUDIO_ENCODER_DEFAULT)
-      ,ifpOutput(NULL)
+    mAudioEncoder(AUDIO_ENCODER_DEFAULT),
+    mSamplingRate(0),
+    mNumberOfChannels(0),
+    mAudio_bitrate_setting(DEFAULT_AUDIO_BITRATE_SETTING),
+    ifpOutput(NULL)
 {
     mSyncSem = new OsclSemaphore();
     mSyncSem->Create();
@@ -327,7 +330,7 @@ void AuthorDriver::handleSetVideoSource(set_video_source_command *ac)
             mVideoNode = PvmfMediaInputNodeFactory::Create(cameraInput);
             if (mVideoNode) {
                 // pass in the application supplied camera object
-                if (mCamera == 0 || 
+                if (mCamera == 0 ||
                     (mCamera != 0 && cameraInput->SetCamera(mCamera) == PVMFSuccess)) {
                     mVideoInputMIO = cameraInput;
                     break;
@@ -350,23 +353,37 @@ void AuthorDriver::handleSetVideoSource(set_video_source_command *ac)
 void AuthorDriver::handleSetOutputFormat(set_output_format_command *ac)
 {
     int error = 0;
-    OSCL_HeapString<OsclMemAllocator> iComposerMimeType;
 
     if (ac->of == OUTPUT_FORMAT_DEFAULT) {
         ac->of = OUTPUT_FORMAT_THREE_GPP;
     }
 
+    OSCL_HeapString<OsclMemAllocator> mComposerMimeType;
+
     switch(ac->of) {
     case OUTPUT_FORMAT_THREE_GPP:
-        iComposerMimeType = "/x-pvmf/ff-mux/3gp";
+        mComposerMimeType = "/x-pvmf/ff-mux/3gp";
         break;
 
     case OUTPUT_FORMAT_MPEG_4:
-        iComposerMimeType = "/x-pvmf/ff-mux/mp4";
+        mComposerMimeType = "/x-pvmf/ff-mux/mp4";
         break;
 
-    case OUTPUT_FORMAT_RAW_AMR:
-        iComposerMimeType = "/x-pvmf/ff-mux/amr-nb"; 
+    //case OUTPUT_FORMAT_RAW_AMR: //"duplicate case value" keep this to be backward compatible
+    case OUTPUT_FORMAT_AMR_NB:
+        mComposerMimeType = "/x-pvmf/ff-mux/amr-nb";
+        break;
+
+    case OUTPUT_FORMAT_AMR_WB:
+        mComposerMimeType = "/x-pvmf/ff-mux/amr-wb";
+        break;
+
+    case OUTPUT_FORMAT_AAC_ADIF:
+        mComposerMimeType = "/x-pvmf/ff-mux/adif";
+        break;
+
+    case OUTPUT_FORMAT_AAC_ADTS:
+        mComposerMimeType = "/x-pvmf/ff-mux/adts";
         break;
 
     default:
@@ -377,7 +394,7 @@ void AuthorDriver::handleSetOutputFormat(set_output_format_command *ac)
 
     mOutputFormat = ac->of;
 
-    OSCL_TRY(error, mAuthor->SelectComposer(iComposerMimeType, mComposerConfig, ac));
+    OSCL_TRY(error, mAuthor->SelectComposer(mComposerMimeType, mComposerConfig, ac));
     OSCL_FIRST_CATCH_ANY(error, commandFailed(ac));
 }
 
@@ -390,6 +407,8 @@ void AuthorDriver::media_track_added(status_t status, void *cookie)
 
 void AuthorDriver::handleSetAudioEncoder(set_audio_encoder_command *ac)
 {
+    LOGV("AuthorDriver::handleSetAudioEncoder(%d)", ac->ae);
+
     int error = 0;
     OSCL_HeapString<OsclMemAllocator> iAudioEncoderMimeType;
 
@@ -399,9 +418,118 @@ void AuthorDriver::handleSetAudioEncoder(set_audio_encoder_command *ac)
     switch(ac->ae) {
     case AUDIO_ENCODER_AMR_NB:
         iAudioEncoderMimeType = "/x-pvmf/audio/encode/amr-nb";
+        // AMR_NB only supports 8kHz sampling rate
+        if (mSamplingRate == 0)
+        {
+            // Sampling rate not set, use the default
+            mSamplingRate = 8000;
+        }
+        else if (mSamplingRate != 8000)
+        {
+            LOGE("Only valid sampling rate for AMR_NB is 8kHz.");
+            commandFailed(ac);
+            return;
+        }
+
+        // AMR_NB only supports mono (IE 1 channel)
+        if (mNumberOfChannels == 0)
+        {
+            // Number of channels not set, use the default
+            mNumberOfChannels = 1;
+        }
+        else if (mNumberOfChannels != 1)
+        {
+            LOGE("Only valid number of channels for ANR_NB is 1.");
+            commandFailed(ac);
+            return;
+        }
         break;
 
+    case AUDIO_ENCODER_AMR_WB:
+        iAudioEncoderMimeType = "/x-pvmf/audio/encode/amr-wb";
+        // AMR_WB only supports 16kHz sampling rate
+        if (mSamplingRate == 0)
+        {
+            // Sampling rate not set, use the default
+            mSamplingRate = 16000;
+        }
+        else if (mSamplingRate != 16000)
+        {
+            LOGE("Only valid sampling rate for AMR_WB is 16kHz.");
+            commandFailed(ac);
+            return;
+        }
+
+        // AMR_WB only supports mono (IE 1 channel)
+        if (mNumberOfChannels == 0)
+        {
+            // Number of channels not set, use the default
+            mNumberOfChannels = 1;
+        }
+        else if (mNumberOfChannels != 1)
+        {
+            LOGE("Only valid number of channels for ANR_WB is 1.");
+            commandFailed(ac);
+            return;
+        }
+        break;
+
+    case AUDIO_ENCODER_AAC:
+        // Check the sampling rate
+        if (mSamplingRate == 0)
+        {
+            // No sampling rate set, use the default
+            mSamplingRate = DEFAULT_AUDIO_SAMPLING_RATE;
+        }
+        // Check the number of channels
+        if (mNumberOfChannels == 0)
+        {
+            // Number of channels not set, use the default
+            mNumberOfChannels = DEFAULT_AUDIO_NUMBER_OF_CHANNELS;
+        }
+
+        // Is file container type AAC-ADIF?
+        if(mOutputFormat == OUTPUT_FORMAT_AAC_ADIF)
+        {
+            // This is an audio only file container, set the correct encoder
+            iAudioEncoderMimeType = "/x-pvmf/audio/encode/aac/adif";
+        }
+        // AAC-ADTS?
+        else if (mOutputFormat == OUTPUT_FORMAT_AAC_ADTS)
+        {
+            // This is an audio only file container, set the correct encoder
+            iAudioEncoderMimeType = "/x-pvmf/audio/encode/aac/adts";
+        }
+        // else MPEG4 or 3GPP container ... use AAC-RAW
+        else
+        {
+            // AAC for mixed audio/video containers
+            iAudioEncoderMimeType = "/x-pvmf/audio/encode/X-MPEG4-AUDIO";
+        }
+        break;
+
+    case AUDIO_ENCODER_AAC_PLUS:
+    case AUDIO_ENCODER_EAAC_PLUS:
+        // Added for future use.  Not currently supported by pvauthor
+        LOGE("AAC_PLUS and EAAC_PLUS audio formats are currently not supported");
+        // NO BREAK!  Fall through from the unsupported AAC_PLUS and EAAC_PLUS cases into default case
     default:
+        commandFailed(ac);
+        return;
+    }
+
+    LOGV("AuthorDriver::handleSetAudioEncoder() set %d %d \"%s\"", mSamplingRate, mNumberOfChannels, iAudioEncoderMimeType.get_cstr());
+
+    // Set the sampling rate and number of channels
+    if (!mAudioInputMIO->setAudioSamplingRate(mSamplingRate))
+    {
+        LOGE("Failed to set the sampling rate %d", mSamplingRate);
+        commandFailed(ac);
+        return;
+    }
+    if (!mAudioInputMIO->setAudioNumChannels(mNumberOfChannels))
+    {
+        LOGE("Failed to set the number of channels %d", mNumberOfChannels);
         commandFailed(ac);
         return;
     }
@@ -478,7 +606,7 @@ void AuthorDriver::handleSetVideoFrameRate(set_video_frame_rate_command *ac)
         commandFailed(ac);
         return;
     }
-    
+
     // FIXME:
     // Platform-specific and temporal workaround to accept a reasonable frame rate range
     if (ac->rate < ANDROID_MIN_FRAME_RATE_FPS) {
@@ -526,20 +654,21 @@ void AuthorDriver::handleSetOutputFile(set_output_file_command *ac)
         LOGE("Ln %d fopen() error", __LINE__);
         goto exit;
     }
-    
-    if ( OUTPUT_FORMAT_RAW_AMR == mOutputFormat ) {
+
+    if (( OUTPUT_FORMAT_AMR_NB == mOutputFormat ) || ( OUTPUT_FORMAT_AMR_WB == mOutputFormat ) ||
+        ( OUTPUT_FORMAT_AAC_ADIF == mOutputFormat ) || ( OUTPUT_FORMAT_AAC_ADTS == mOutputFormat )) {
         PvmfFileOutputNodeConfigInterface *config = OSCL_DYNAMIC_CAST(PvmfFileOutputNodeConfigInterface*, mComposerConfig);
         if (!config) goto exit;
-        
+
         ret = config->SetOutputFileDescriptor(&OsclFileHandle(ifpOutput));
-    }  else if((OUTPUT_FORMAT_THREE_GPP == mOutputFormat) || (OUTPUT_FORMAT_MPEG_4 == mOutputFormat)) {
+    }  else if((OUTPUT_FORMAT_THREE_GPP == mOutputFormat) || (OUTPUT_FORMAT_MPEG_4 == mOutputFormat)){
         PVMp4FFCNClipConfigInterface *config = OSCL_DYNAMIC_CAST(PVMp4FFCNClipConfigInterface*, mComposerConfig);
         if (!config) goto exit;
-        
+
         config->SetPresentationTimescale(1000);
         ret = config->SetOutputFileDescriptor(&OsclFileHandle(ifpOutput));
     }
-    
+
 
 exit:
     if (ret == PVMFSuccess) {
@@ -599,6 +728,56 @@ PVMFStatus AuthorDriver::setMaxDurationOrFileSize(
     return ret;
 }
 
+PVMFStatus AuthorDriver::setParamAudioSamplingRate(int64_t aSamplingRate)
+{
+    // Do a rough check on the incoming sampling rate
+    if ((aSamplingRate < MIN_AUDIO_SAMPLING_RATE) || (aSamplingRate > MAX_AUDIO_SAMPLING_RATE))
+    {
+        LOGE("setParamAudioSamplingRate() invalid sampling rate.");
+        return PVMFErrArgument;
+    }
+
+    mSamplingRate = aSamplingRate;
+    LOGV("setParamAudioSamplingRate() set sampling rate %d", mSamplingRate);
+    return PVMFSuccess;
+}
+
+
+PVMFStatus AuthorDriver::setParamAudioNumberOfChannels(int64_t aNumberOfChannels)
+{
+    // Check the number of channels
+    if ((aNumberOfChannels < MIN_AUDIO_NUMBER_OF_CHANNELS) || (aNumberOfChannels > MAX_AUDIO_NUMBER_OF_CHANNELS))
+    {
+        LOGE("setParamAudioNumberOfChannels() invalid number of channels.");
+        return PVMFErrArgument;
+    }
+
+    mNumberOfChannels = aNumberOfChannels;
+    LOGV("setParamAudioNumberOfChannels() set num channels %d", mNumberOfChannels);
+    return PVMFSuccess;
+}
+
+PVMFStatus AuthorDriver::setParamAudioEncodingBitrate(int64_t aAudioBitrate)
+{
+    // Map the incoming audio bitrate settings
+    if ((aAudioBitrate < MIN_AUDIO_BITRATE_SETTING) || (aAudioBitrate > MAX_AUDIO_BITRATE_SETTING))
+    {
+        LOGE("setParamAudioEncodingBitrate() invalid audio bitrate.  Set call ignored.");
+        return PVMFErrArgument;
+    }
+
+    // Blindly set the bitrate according to the incoming value
+    mAudio_bitrate_setting = aAudioBitrate;
+
+
+    LOGV("setParamAudioEncodingBitrate() AMR_NB %d AMR_WB %d Audio Other %d\n",
+          DEFAULT_AMR_NARROW_BAND_BITRATE_SETTING,
+          DEFAULT_AMR_WIDE_BAND_BITRATE_SETTING,
+          mAudio_bitrate_setting);
+
+    return PVMFSuccess;
+}
+
 // Attempt to parse an int64 literal optionally surrounded by whitespace,
 // returns true on success, false otherwise.
 static bool safe_strtoi64(const char *s, int64 *val) {
@@ -652,8 +831,25 @@ PVMFStatus AuthorDriver::setParameter(
             return setMaxDurationOrFileSize(
                     max_filesize_bytes, false /* limit is filesize */);
         }
+    } else if (key == "audio-param-sampling-rate") {
+        int64_t sampling_rate;
+        if (safe_strtoi64(value.string(), &sampling_rate)) {
+            return setParamAudioSamplingRate(sampling_rate);
+        }
+    } else if (key == "audio-param-number-of-channels") {
+        int64_t number_of_channels;
+        if (safe_strtoi64(value.string(), &number_of_channels)) {
+            return setParamAudioNumberOfChannels(number_of_channels);
+        }
+    } else if (key == "audio-param-encoding-bitrate") {
+        int64_t audio_bitrate;
+        if (safe_strtoi64(value.string(), &audio_bitrate)) {
+            return setParamAudioEncodingBitrate(audio_bitrate);
+        }
     }
 
+    // Return error if the key wasnt found
+    LOGE("AuthorDriver::setParameter() unrecognized key \"%s\"", key.string());
     return PVMFErrArgument;
 }
 
@@ -709,12 +905,14 @@ void AuthorDriver::handleSetParameters(set_parameters_command *ac) {
     if (ret == PVMFSuccess) {
         FinishNonAsyncCommand(ac);
     } else {
-        LOGE("Ln %d handleSetParameters(%s) error", __LINE__, params);
+        LOGE("Ln %d handleSetParameters(\"%s\") error", __LINE__, params);
     commandFailed(ac);
     }
 }
+
 void AuthorDriver::handlePrepare(author_command *ac)
 {
+    LOGV("handlePrepare");
     int error = 0;
     OSCL_TRY(error, mAuthor->Init(ac));
     OSCL_FIRST_CATCH_ANY(error, commandFailed(ac));
@@ -722,6 +920,7 @@ void AuthorDriver::handlePrepare(author_command *ac)
 
 void AuthorDriver::handleStart(author_command *ac)
 {
+    LOGV("handleStart");
     int error = 0;
     OSCL_TRY(error, mAuthor->Start(ac));
     OSCL_FIRST_CATCH_ANY(error, commandFailed(ac));
@@ -760,7 +959,7 @@ void AuthorDriver::handleRemoveVideoSource(author_command *ac)
         OSCL_TRY(error, mAuthor->RemoveDataSource(*mVideoNode, ac));
         OSCL_FIRST_CATCH_ANY(error, commandFailed(ac));
     } else {
-       FinishNonAsyncCommand(ac); 
+       FinishNonAsyncCommand(ac);
     }
 }
 
@@ -786,7 +985,7 @@ void AuthorDriver::removeConfigRefs(author_command *ac)
     }
     if (mVideoEncoderConfig) {
         mVideoEncoderConfig->removeRef();
-        mVideoEncoderConfig = NULL; 
+        mVideoEncoderConfig = NULL;
     }
     if (mAudioEncoderConfig) {
         mAudioEncoderConfig->removeRef();
@@ -867,7 +1066,7 @@ int AuthorDriver::authorThread()
     LOGV("Delete Author");
     PVAuthorEngineFactory::DeleteAuthor(mAuthor);
     mAuthor = NULL;
- 
+
 
     // Let the destructor know that we're out
     mSyncStatus = OK;
@@ -908,10 +1107,11 @@ void AuthorDriver::CommandCompleted(const PVCmdResponse& aResponse)
     }
 
     if (ac->which == AUTHOR_SET_VIDEO_ENCODER) {
+        // Perform the cast to get the video config interface
+        PVMp4H263EncExtensionInterface *config = OSCL_STATIC_CAST(PVMp4H263EncExtensionInterface*,
+                                                                  mVideoEncoderConfig);
         switch(mVideoEncoder) {
         case VIDEO_ENCODER_H263: {
-            PVMp4H263EncExtensionInterface *config = OSCL_STATIC_CAST(PVMp4H263EncExtensionInterface*,
-                                                                      mVideoEncoderConfig);
             // TODO:
             // fix the hardcoded bit rate settings.
             if (config) {
@@ -931,8 +1131,6 @@ void AuthorDriver::CommandCompleted(const PVCmdResponse& aResponse)
             }
         } break;
         case VIDEO_ENCODER_MPEG_4_SP: {
-            PVMp4H263EncExtensionInterface *config = OSCL_STATIC_CAST(PVMp4H263EncExtensionInterface*,
-                                                                      mVideoEncoderConfig);
             if (config) {
                 int bitrate_setting = 192000;
                 if (mVideoWidth >= 480) {
@@ -956,22 +1154,44 @@ void AuthorDriver::CommandCompleted(const PVCmdResponse& aResponse)
     }
 
     if (ac->which == AUTHOR_SET_AUDIO_ENCODER) {
-        switch(mAudioEncoder) {
-            case AUDIO_ENCODER_AMR_NB: 
-                {
-                    PVAudioEncExtensionInterface *config = OSCL_STATIC_CAST(PVAudioEncExtensionInterface *,
-                            mAudioEncoderConfig);
-                    if (config) {
-                        config->SetMaxNumOutputFramesPerBuffer(10);
-                        config->SetOutputBitRate(GSM_AMR_12_2); // TODO: Get rid of hardcoded value
-                    }
-                } 
-                break;
+        // Perform the cast to get the audio config interface
+        PVAudioEncExtensionInterface *config = OSCL_STATIC_CAST(PVAudioEncExtensionInterface*,
+                                                                mAudioEncoderConfig);
 
-            default:
-                break;
-        }
-    }
+        if (config)
+        {
+            switch(mAudioEncoder) {
+                case AUDIO_ENCODER_AMR_NB:
+                    {
+                        config->SetMaxNumOutputFramesPerBuffer(10);
+                        config->SetOutputBitRate(DEFAULT_AMR_NARROW_BAND_BITRATE_SETTING);
+                    }
+                    break;
+
+                case AUDIO_ENCODER_AMR_WB:
+                    {
+                        config->SetMaxNumOutputFramesPerBuffer(10);
+                        config->SetOutputBitRate(DEFAULT_AMR_WIDE_BAND_BITRATE_SETTING);
+                    }
+                    break;
+
+                case AUDIO_ENCODER_AAC:
+                    {
+                        config->SetOutputBitRate(mAudio_bitrate_setting);
+                    }
+                    break;
+
+                case AUDIO_ENCODER_AAC_PLUS:
+                case AUDIO_ENCODER_EAAC_PLUS:
+                   LOGE("AAC_PLUS and EAAC_PLUS audio formats are currently not supported");
+                   // We shouldn't get here.  The setAudioEncoder function should have rejected these.
+                   //  These are currently not supported by pvauthor.
+                   // NO BREAK!  Fall through from the unsupported AAC_PLUS and EAAC_PLUS cases into default case
+                default:
+                    break;
+            } // End switch(mAudioEncoder)
+        } // End if (config)
+    } // End if (ac->which == AUTHOR_SET_AUDIO_ENCODER)
 
     // delete video and/or audio nodes to prevent memory leakage
     // when an authroing session is reused
@@ -980,7 +1200,7 @@ void AuthorDriver::CommandCompleted(const PVCmdResponse& aResponse)
         doCleanUp();
     }
 
-    // Translate the PVMF error codes into Android ones 
+    // Translate the PVMF error codes into Android ones
     switch(s) {
         case PVMFSuccess: s = android::OK; break;
         case PVMFPending: *(char *)0 = 0; break; /* XXX assert */
