@@ -26,13 +26,17 @@ This file contains declarations of internal functions for common encoder/decoder
 #include "avcint_common.h"
 #endif
 
+#ifndef OSCL_BASE_H_INCLUDED
+#include "oscl_base.h"
+#endif
+
 /*----------- deblock.c --------------*/
 /**
 This function performs conditional deblocking on a complete picture.
 \param "video"	"Pointer to AVCCommonObj."
 \return "AVC_SUCCESS for success and AVC_FAIL otherwise."
 */
-AVCStatus DeblockPicture(AVCCommonObj *video);
+OSCL_IMPORT_REF AVCStatus DeblockPicture(AVCCommonObj *video);
 
 /**
 This function performs MB-based deblocking when MB_BASED_DEBLOCK
@@ -51,7 +55,7 @@ This function is called everytime a new sequence is detected.
 \param "padding"	"Flag specifying whether padding in luma component is needed (used for encoding)."
 \return "AVC_SUCCESS or AVC_FAIL."
 */
-AVCStatus AVCConfigureSequence(AVCHandle *avcHandle, AVCCommonObj *video, bool padding);
+OSCL_IMPORT_REF AVCStatus AVCConfigureSequence(AVCHandle *avcHandle, AVCCommonObj *video, bool padding);
 
 /**
 This function allocates and initializes the decoded picture buffer structure based on
@@ -72,7 +76,7 @@ This function frees the DPB memory.
 \param "video" "Pointer to AVCCommonObj."
 \return "AVC_SUCCESS or AVC_FAIL."
 */
-AVCStatus CleanUpDPB(AVCHandle *avcHandle, AVCCommonObj *video);
+OSCL_IMPORT_REF AVCStatus CleanUpDPB(AVCHandle *avcHandle, AVCCommonObj *video);
 
 /**
 This function finds empty frame in the decoded picture buffer to be used for the
@@ -82,7 +86,7 @@ width, height and pitch.
 \param "video"	"Pointer to AVCCommonObj."
 \return "AVC_SUCCESS or AVC_FAIL."
 */
-AVCStatus DPBInitBuffer(AVCHandle *avcHandle, AVCCommonObj *video);
+OSCL_IMPORT_REF AVCStatus DPBInitBuffer(AVCHandle *avcHandle, AVCCommonObj *video);
 /**
 This function finds empty frame in the decoded picture buffer to be used for the
 current picture, initializes the corresponding picture structure with Sl, Scb, Scr,
@@ -92,7 +96,7 @@ width, height and pitch.
 \return "AVC_SUCCESS or AVC_FAIL."
 */
 
-void DPBInitPic(AVCCommonObj *video, int CurrPicNum);
+OSCL_IMPORT_REF void DPBInitPic(AVCCommonObj *video, int CurrPicNum);
 
 /**
 This function releases the current frame back to the available pool for skipped frame after encoding.
@@ -100,7 +104,7 @@ This function releases the current frame back to the available pool for skipped 
 \param "video" "Pointer to the AVCCommonObj."
 \return "void."
 */
-void DPBReleaseCurrentFrame(AVCHandle *avcHandle, AVCCommonObj *video);
+OSCL_IMPORT_REF void DPBReleaseCurrentFrame(AVCHandle *avcHandle, AVCCommonObj *video);
 
 /**
 This function performs decoded reference picture marking process and store the current picture to the
@@ -109,7 +113,7 @@ corresponding frame storage in the decoded picture buffer.
 \param "video" "Pointer to the AVCCommonObj."
 \return "AVC_SUCCESS or AVC_FAIL."
 */
-AVCStatus StorePictureInDPB(AVCHandle *avcHandle, AVCCommonObj *video);
+OSCL_IMPORT_REF AVCStatus StorePictureInDPB(AVCHandle *avcHandle, AVCCommonObj *video);
 
 /**
 This function perform sliding window operation on the reference picture lists, see subclause 8.2.5.3.
@@ -219,7 +223,7 @@ This function initializes flexible macroblock reordering.
 \param "video"	"Pointer to AVCCommonObj."
 \return "AVC_SUCCESS for success and AVC_FAIL otherwise."
 */
-AVCStatus FMOInit(AVCCommonObj *video);
+OSCL_IMPORT_REF AVCStatus FMOInit(AVCCommonObj *video);
 
 /**
 This function fills up an array that maps Map unit to the slice group
@@ -359,7 +363,7 @@ This function initializes the neighboring information before start macroblock de
 \param "currMB"	"Pointer to the current AVCMacroblock structure."
 \return "void"
 */
-void InitNeighborAvailability(AVCCommonObj *video, int mbNum);
+OSCL_IMPORT_REF void InitNeighborAvailability(AVCCommonObj *video, int mbNum);
 
 /**
 This function checks whether the requested neighboring macroblock is available.
@@ -378,7 +382,7 @@ This function performs prediction of the nonzero coefficient for a luma block (i
 \param "j"	"Block index, vertical."
 \return "Predicted number of nonzero coefficient."
 */
-int predict_nnz(AVCCommonObj *video, int i, int j);
+OSCL_IMPORT_REF int predict_nnz(AVCCommonObj *video, int i, int j);
 
 /**
 This function performs prediction of the nonzero coefficient for a chroma block (i,j).
@@ -387,7 +391,7 @@ This function performs prediction of the nonzero coefficient for a chroma block 
 \param "j"	"Block index, vertical."
 \return "Predicted number of nonzero coefficient."
 */
-int predict_nnz_chroma(AVCCommonObj *video, int i, int j);
+OSCL_IMPORT_REF int predict_nnz_chroma(AVCCommonObj *video, int i, int j);
 
 /**
 This function calculates the predicted motion vectors for the current macroblock.
@@ -395,7 +399,7 @@ This function calculates the predicted motion vectors for the current macroblock
 \param "encFlag"	"Boolean whether this function is used by encoder or decoder."
 \return "void."
 */
-void GetMotionVectorPredictor(AVCCommonObj *video, int encFlag);
+OSCL_IMPORT_REF void GetMotionVectorPredictor(AVCCommonObj *video, int encFlag);
 
 /*---------- reflist.c -----------------*/
 /**
@@ -405,7 +409,7 @@ at the beginning of each slice decoding. See subclause 8.2.4.
 \return "void"
 Output is video->RefPicList0, video->RefPicList1, video->refList0Size and video->refList1Size.
 */
-void RefListInit(AVCCommonObj *video);
+OSCL_IMPORT_REF void RefListInit(AVCCommonObj *video);
 
 /**
 This function generates picture list from frame list. Used when current picture is field.
@@ -424,7 +428,7 @@ ref_pic_list_reordering() syntax. See subclause 8.2.4.3.
 \return "AVC_SUCCESS or AVC_FAIL"
 Output is video->RefPicList0, video->RefPicList1, video->refList0Size and video->refList1Size.
 */
-AVCStatus ReOrderList(AVCCommonObj *video);
+OSCL_IMPORT_REF AVCStatus ReOrderList(AVCCommonObj *video);
 
 /**
 This function performs reference picture list reordering according to the

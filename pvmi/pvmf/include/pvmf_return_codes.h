@@ -384,6 +384,6 @@ const PVMFStatus PVMFInfoLast = 100;
 // Convert a PVMFStatus code to a string that can be used in logs.
 // @param status code.
 // @return a human readable string representing the status.
-const char *PVMFStatusToString(const PVMFStatus status);
+OSCL_IMPORT_REF const char *PVMFStatusToString(const PVMFStatus status);
 
 #endif

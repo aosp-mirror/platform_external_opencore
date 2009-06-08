@@ -66,7 +66,7 @@ LOCAL_SRC_FILES := \
 
 LOCAL_MODULE := libpv_amr_nb_common_lib
 
-LOCAL_CFLAGS :=  $(PV_CFLAGS)
+LOCAL_CFLAGS :=  $(PV_CFLAGS_MINUS_VISIBILITY)
 
 LOCAL_ARM_MODE := arm
 
