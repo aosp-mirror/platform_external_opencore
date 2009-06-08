@@ -58,6 +58,16 @@
 
 namespace android {
 
+static const int32 DEFAULT_AUDIO_NUMBER_OF_CHANNELS = 1;
+static const int32 DEFAULT_AUDIO_SAMPLING_RATE = 8000;
+
+static const int32 MAX_AUDIO_SAMPLING_RATE = 96000; // In Hz
+static const int32 MIN_AUDIO_SAMPLING_RATE = 7350;  // In Hz
+
+static const int32 MAX_AUDIO_NUMBER_OF_CHANNELS = 2;
+static const int32 MIN_AUDIO_NUMBER_OF_CHANNELS = 1;
+
+
 class AndroidAudioInput;
 class Mutex;
 class Condition;
@@ -274,6 +284,12 @@ public:
      */
     int maxAmplitude();
 
+    /* Sets the input sampling rate */
+    OSCL_IMPORT_REF bool setAudioSamplingRate(int32 iSamplingRate);
+
+    /* Set the input number of channels */
+    OSCL_IMPORT_REF bool setAudioNumChannels(int32 iNumChannels);
+
 private:
     AndroidAudioInput();
     void Run();
@@ -364,9 +380,7 @@ private:
     OSCL_HeapString<OsclMemAllocator> iAudioFormatString;
     PVMFFormatType iAudioFormat;
     int32 iAudioNumChannels;
-    bool iAudioNumChannelsValid;
     int32 iAudioSamplingRate;
-    bool iAudioSamplingRateValid;
     uint32 iAudioSource;
 
     int32 iFrameSize;
