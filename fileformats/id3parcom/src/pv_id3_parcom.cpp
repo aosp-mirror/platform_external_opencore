@@ -1258,11 +1258,15 @@ int PVID3ParCom::ReadTagID3V2(PVID3Version aVersion)
             }
             else if ((frameType == PV_ID3_FRAME_APIC) || (frameType == PV_ID3_FRAME_PIC))
             {
-                if (ReadAlbumArtFrame(frameType, unicodeCheck, currFrameLength)  != PVMFSuccess)
-                {
-                    LOG_ERR((0, "PVID3ParCom::ReadTagID3V2: Error - ReadAPICFrame failed"));
-
-                    return count;
+                if (currFrameLength > 3000000) {
+                    // TODO: scale down album art to something manageable right here
+                    LOG_DEBUG((0, "PVID3ParCom::ReadTagID3V2: skipping > 3MB album art"));
+                } else {
+                    if (ReadAlbumArtFrame(frameType, unicodeCheck, currFrameLength)  != PVMFSuccess)
+                    {
+                        LOG_ERR((0, "PVID3ParCom::ReadTagID3V2: Error - ReadAPICFrame failed"));
+                        return count;
+                    }
                 }
             }
             else if (unicodeCheck < PV_ID3_CHARSET_END)
@@ -1643,6 +1647,11 @@ void PVID3ParCom::HandleID3V2FrameUnsupported(PVID3FrameType aFrameType,
         uint32         aPos,
         uint32         aSize)
 {
+// In Android, don't try to read unsupported metadata, because a) we don't
+// know what to do with it anyway, and b) we end up here for corrupted files
+// too, in which case the size is likely bogus and will result in running
+// out of RAM.
+#ifndef ANDROID
     OSCL_StackString<128> keyStr;
     PvmiKvpSharedPtr kvpPtr;
     PVMFStatus status = PVMFSuccess;
@@ -1658,7 +1667,7 @@ void PVID3ParCom::HandleID3V2FrameUnsupported(PVID3FrameType aFrameType,
         LOG_ERR((0, "PVID3ParCom::HandleID3V2FrameDataASCII: Error - ReadStringValueFrame failed. status=%d", status));
         OSCL_LEAVE(OsclErrGeneral);
     }
-
+#endif
 }
 
 ////////////////////////////////////////////////////////////////////////////
