@@ -219,7 +219,7 @@ class OSCL_EXPORT_REF OSCL_String : public HeapBase
 	for the character format.
 	For descriptions, see OSCL_String.
 */
-class OSCL_wString
+class OSCL_EXPORT_REF OSCL_wString
 {
     public:
         typedef oscl_wchar chartype;
