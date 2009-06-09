@@ -55,7 +55,7 @@
 	A common base class for string classes with
 	"char" character format
 */
-class OSCL_String : public HeapBase
+class OSCL_EXPORT_REF OSCL_String : public HeapBase
 
 {
     public:
