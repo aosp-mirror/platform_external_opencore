@@ -230,7 +230,7 @@ class PVMFPortActivityHandler
     virtual void HandlePortActivity(const PVMFPortActivity &) = 0;
 };
 
-class PVMFNodeInterface: public PVMFPortActivityHandler
+class OSCL_IMPORT_REF PVMFNodeInterface: public PVMFPortActivityHandler
 {
   public:
 
