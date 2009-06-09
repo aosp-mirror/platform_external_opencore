@@ -527,7 +527,7 @@ class OSCL_IMPORT_REF OmxComponentBase : public OsclActiveObject
 };
 
 
-class OmxComponentAudio : public OmxComponentBase
+class OSCL_IMPORT_REF OmxComponentAudio : public OmxComponentBase
 {
     public:
         OSCL_IMPORT_REF OmxComponentAudio();
@@ -551,7 +551,7 @@ class OmxComponentAudio : public OmxComponentBase
 
 
 
-class OmxComponentVideo : public OmxComponentBase
+class OSCL_IMPORT_REF OmxComponentVideo : public OmxComponentBase
 {
     public:
         OSCL_IMPORT_REF OmxComponentVideo();
