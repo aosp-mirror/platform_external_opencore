@@ -1464,7 +1464,7 @@ class PVMFMediaClock :  public OsclTimerObject,
     the OSCL's system tickcount as the timebase. This class is provided
     as the default PVMFTimebase that is available on any platform with OSCL support.
 */
-class PVMFTimebase_Tickcount : public PVMFTimebase
+class OSCL_IMPORT_REF PVMFTimebase_Tickcount : public PVMFTimebase
 {
     public:
         /**

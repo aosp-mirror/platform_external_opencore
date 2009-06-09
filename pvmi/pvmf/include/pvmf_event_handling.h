@@ -77,7 +77,7 @@ class PVMFEventBase
  * PVMFCmdResp class is used to pass completion status on previously issued
  * commands
  **/
-class PVMFCmdResp : public PVMFEventBase
+class OSCL_IMPORT_REF PVMFCmdResp : public PVMFEventBase
 {
   public:
     /**
@@ -250,7 +250,7 @@ class PVMFCmdResp : public PVMFEventBase
  * event
  **/
 #define PVMF_ASYNC_EVENT_LOCAL_BUF_SIZE 16
-class PVMFAsyncEvent : public PVMFEventBase
+class OSCL_IMPORT_REF PVMFAsyncEvent : public PVMFEventBase
 {
   public:
     PVMFAsyncEvent(PVMFEventCategory aEventCategory,

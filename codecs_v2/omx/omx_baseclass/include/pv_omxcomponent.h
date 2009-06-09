@@ -124,7 +124,7 @@ typedef struct ComponentPortType
 
 
 
-class OmxComponentBase : public OsclActiveObject
+class OSCL_IMPORT_REF OmxComponentBase : public OsclActiveObject
 {
     public:
 

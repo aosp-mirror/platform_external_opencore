@@ -59,7 +59,7 @@ OSCL_IMPORT_REF PVMFStatus AllocateKvp(OsclMemAllocator& aAlloc, PvmiKvp*& aKvp,
 ** and must implement the IsFormatSupported and FormatUpdated
 ** routines.
 */
-class PvmiCapabilityAndConfigPortFormatImpl
+class OSCL_IMPORT_REF PvmiCapabilityAndConfigPortFormatImpl
             : public PvmiCapabilityAndConfig
 {
     public:
@@ -120,5 +120,3 @@ class PvmiCapabilityAndConfigPortFormatImpl
 };
 
 #endif //PVMI_CONFIG_AND_CAPABILITY_UTILS_H_INCLUDED
-
-
