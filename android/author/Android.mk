@@ -1,6 +1,9 @@
 LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
+# don't export mio symbols
+LOCAL_CFLAGS += -DHIDE_MIO_SYMBOLS
+
 LOCAL_SRC_FILES := \
     authordriver.cpp \
     PVMediaRecorder.cpp \
