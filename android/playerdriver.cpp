@@ -1583,12 +1583,20 @@ status_t PVPlayer::reset()
 {
     LOGV("reset");
     status_t ret = mPlayerDriver->enqueueCommand(new PlayerCancelAllCommands(0,0));
-    if (ret == NO_ERROR) {
-        ret = mPlayerDriver->enqueueCommand(new PlayerReset(0,0));
+
+    // Log failure from CancelAllCommands() and call Reset() regardless.
+    if (ret != NO_ERROR) {
+        LOGE("failed to cancel all exiting PV player engine commands with error code (%d)", ret);
     }
-    if (ret == NO_ERROR) {
+    ret = mPlayerDriver->enqueueCommand(new PlayerReset(0,0));
+
+    // We should never fail in Reset(), but logs the failure just in case.
+    if (ret != NO_ERROR) {
+        LOGE("failed to reset PV player engine with error code (%d)", ret);
+    } else {
         ret = mPlayerDriver->enqueueCommand(new PlayerRemoveDataSource(0,0));
     }
+
     mSurface.clear();
     LOGV("unmap file");
     if (mSharedFd >= 0) {
