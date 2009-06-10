@@ -3027,7 +3027,7 @@ PVMFStatus PVMp4FFComposerNode::CheckMaxFileSize(uint32 aFrameSize)
 PVMFStatus PVMp4FFComposerNode::CheckMaxDuration(uint32 aTimestamp)
 {
     //if(!iInfoObserver)
-    //	return PVMFFailure;
+    //  return PVMFFailure;
 
     if (iMaxDurationEnabled)
     {
