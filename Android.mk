@@ -6,11 +6,7 @@ include $(CLEAR_VARS)
 # Set up the PV variables.
 include $(LOCAL_PATH)/Config.mk
 
-# Install the default configuration file
-# if no value-add configuration is present.
-ifneq ($(VALUE_ADD),1)
 $(call add-prebuilt-files, ETC, pvplayer.cfg)
-endif
 
 
 include $(PV_TOP)/build_config/opencore_dynamic/Android_opencore_common.mk
