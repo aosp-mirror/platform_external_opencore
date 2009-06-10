@@ -56,6 +56,10 @@
 
 #include <utils/RefBase.h>
 
+#ifdef HIDE_MIO_SYMBOLS
+#pragma GCC visibility push(hidden)
+#endif
+
 namespace android {
 
 static const int32 DEFAULT_AUDIO_NUMBER_OF_CHANNELS = 1;
@@ -209,72 +213,72 @@ public:
     virtual ~AndroidAudioInput();
 
     // Pure virtuals from PvmiMIOControl
-    OSCL_IMPORT_REF PVMFStatus connect(PvmiMIOSession& aSession, PvmiMIOObserver* aObserver);
-    OSCL_IMPORT_REF PVMFStatus disconnect(PvmiMIOSession aSession);
-    OSCL_IMPORT_REF PvmiMediaTransfer* createMediaTransfer(PvmiMIOSession& aSession,
+    PVMFStatus connect(PvmiMIOSession& aSession, PvmiMIOObserver* aObserver);
+    PVMFStatus disconnect(PvmiMIOSession aSession);
+    PvmiMediaTransfer* createMediaTransfer(PvmiMIOSession& aSession,
                                                          PvmiKvp* read_formats=NULL,
                                                          int32 read_flags=0,
                                                          PvmiKvp* write_formats=NULL,
                                                          int32 write_flags=0);
-    OSCL_IMPORT_REF void deleteMediaTransfer(PvmiMIOSession& aSession,
+    void deleteMediaTransfer(PvmiMIOSession& aSession,
                                            PvmiMediaTransfer* media_transfer);
-    OSCL_IMPORT_REF PVMFCommandId QueryUUID(const PvmfMimeString& aMimeType,
+    PVMFCommandId QueryUUID(const PvmfMimeString& aMimeType,
                                           Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids,
                                           bool aExactUuidsOnly=false,
                                           const OsclAny* aContext=NULL);
-    OSCL_IMPORT_REF PVMFCommandId QueryInterface(const PVUuid& aUuid,
+    PVMFCommandId QueryInterface(const PVUuid& aUuid,
                                                PVInterface*& aInterfacePtr,
                                                const OsclAny* aContext=NULL);
-    OSCL_IMPORT_REF PVMFCommandId Init(const OsclAny* aContext=NULL);
-    OSCL_IMPORT_REF PVMFCommandId Start(const OsclAny* aContext=NULL);
-    OSCL_IMPORT_REF PVMFCommandId Reset(const OsclAny* aContext=NULL);
-    OSCL_IMPORT_REF PVMFCommandId Pause(const OsclAny* aContext=NULL);
-    OSCL_IMPORT_REF PVMFCommandId Flush(const OsclAny* aContext=NULL);
-    OSCL_IMPORT_REF PVMFCommandId DiscardData(PVMFTimestamp aTimestamp, const OsclAny* aContext=NULL);
-    OSCL_IMPORT_REF PVMFCommandId DiscardData(const OsclAny* aContext=NULL);
-    OSCL_IMPORT_REF PVMFCommandId Stop(const OsclAny* aContext=NULL);
-    OSCL_IMPORT_REF PVMFCommandId CancelCommand(PVMFCommandId aCmdId, const OsclAny* aContext=NULL);
-    OSCL_IMPORT_REF PVMFCommandId CancelAllCommands(const OsclAny* aContext=NULL);
-    OSCL_IMPORT_REF void ThreadLogon();
-    OSCL_IMPORT_REF void ThreadLogoff();
+    PVMFCommandId Init(const OsclAny* aContext=NULL);
+    PVMFCommandId Start(const OsclAny* aContext=NULL);
+    PVMFCommandId Reset(const OsclAny* aContext=NULL);
+    PVMFCommandId Pause(const OsclAny* aContext=NULL);
+    PVMFCommandId Flush(const OsclAny* aContext=NULL);
+    PVMFCommandId DiscardData(PVMFTimestamp aTimestamp, const OsclAny* aContext=NULL);
+    PVMFCommandId DiscardData(const OsclAny* aContext=NULL);
+    PVMFCommandId Stop(const OsclAny* aContext=NULL);
+    PVMFCommandId CancelCommand(PVMFCommandId aCmdId, const OsclAny* aContext=NULL);
+    PVMFCommandId CancelAllCommands(const OsclAny* aContext=NULL);
+    void ThreadLogon();
+    void ThreadLogoff();
 
     // Pure virtuals from PvmiMediaTransfer
-    OSCL_IMPORT_REF void setPeer(PvmiMediaTransfer* aPeer);
-    OSCL_IMPORT_REF void useMemoryAllocators(OsclMemAllocator* write_alloc=NULL);
-    OSCL_IMPORT_REF PVMFCommandId writeAsync(uint8 format_type, int32 format_index,
+    void setPeer(PvmiMediaTransfer* aPeer);
+    void useMemoryAllocators(OsclMemAllocator* write_alloc=NULL);
+    PVMFCommandId writeAsync(uint8 format_type, int32 format_index,
                                            uint8* data, uint32 data_len,
                                            const PvmiMediaXferHeader& data_header_info,
                                            OsclAny* aContext=NULL);
-    OSCL_IMPORT_REF void writeComplete(PVMFStatus aStatus, PVMFCommandId write_cmd_id,
+    void writeComplete(PVMFStatus aStatus, PVMFCommandId write_cmd_id,
                                      OsclAny* aContext);
-    OSCL_IMPORT_REF PVMFCommandId readAsync(uint8* data, uint32 max_data_len, OsclAny* aContext=NULL,
+    PVMFCommandId readAsync(uint8* data, uint32 max_data_len, OsclAny* aContext=NULL,
                                           int32* formats=NULL, uint16 num_formats=0);
-    OSCL_IMPORT_REF void readComplete(PVMFStatus aStatus, PVMFCommandId read_cmd_id,
+    void readComplete(PVMFStatus aStatus, PVMFCommandId read_cmd_id,
                                     int32 format_index,
                                     const PvmiMediaXferHeader& data_header_info,
                                     OsclAny* aContext);
-    OSCL_IMPORT_REF void statusUpdate(uint32 status_flags);
-    OSCL_IMPORT_REF void cancelCommand(PVMFCommandId aCmdId);
-    OSCL_IMPORT_REF void cancelAllCommands();
+    void statusUpdate(uint32 status_flags);
+    void cancelCommand(PVMFCommandId aCmdId);
+    void cancelAllCommands();
 
     // Pure virtuals from PvmiCapabilityAndConfig
-    OSCL_IMPORT_REF void setObserver (PvmiConfigAndCapabilityCmdObserver* aObserver);
-    OSCL_IMPORT_REF PVMFStatus getParametersSync(PvmiMIOSession aSession, PvmiKeyType aIdentifier,
+    void setObserver (PvmiConfigAndCapabilityCmdObserver* aObserver);
+    PVMFStatus getParametersSync(PvmiMIOSession aSession, PvmiKeyType aIdentifier,
                                                PvmiKvp*& aParameters, int& num_parameter_elements,
                                                PvmiCapabilityContext aContext);
-    OSCL_IMPORT_REF PVMFStatus releaseParameters(PvmiMIOSession aSession, PvmiKvp* aParameters,
+    PVMFStatus releaseParameters(PvmiMIOSession aSession, PvmiKvp* aParameters,
                                                int num_elements);
-    OSCL_IMPORT_REF void createContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext);
-    OSCL_IMPORT_REF void setContextParameters(PvmiMIOSession aSession, PvmiCapabilityContext& aContext,
+    void createContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext);
+    void setContextParameters(PvmiMIOSession aSession, PvmiCapabilityContext& aContext,
                                             PvmiKvp* aParameters, int num_parameter_elements);
-    OSCL_IMPORT_REF void DeleteContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext);
-    OSCL_IMPORT_REF void setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters,
+    void DeleteContext(PvmiMIOSession aSession, PvmiCapabilityContext& aContext);
+    void setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters,
                                          int num_elements, PvmiKvp * & aRet_kvp);
-    OSCL_IMPORT_REF PVMFCommandId setParametersAsync(PvmiMIOSession aSession, PvmiKvp* aParameters,
+    PVMFCommandId setParametersAsync(PvmiMIOSession aSession, PvmiKvp* aParameters,
                                                    int num_elements, PvmiKvp*& aRet_kvp,
                                                    OsclAny* context=NULL);
-    OSCL_IMPORT_REF uint32 getCapabilityMetric (PvmiMIOSession aSession);
-    OSCL_IMPORT_REF PVMFStatus verifyParametersSync (PvmiMIOSession aSession,
+    uint32 getCapabilityMetric (PvmiMIOSession aSession);
+    PVMFStatus verifyParametersSync (PvmiMIOSession aSession,
                                                    PvmiKvp* aParameters, int num_elements);
 
     // Android-specific stuff
@@ -285,10 +289,10 @@ public:
     int maxAmplitude();
 
     /* Sets the input sampling rate */
-    OSCL_IMPORT_REF bool setAudioSamplingRate(int32 iSamplingRate);
+    bool setAudioSamplingRate(int32 iSamplingRate);
 
     /* Set the input number of channels */
-    OSCL_IMPORT_REF bool setAudioNumChannels(int32 iNumChannels);
+    bool setAudioNumChannels(int32 iNumChannels);
 
 private:
     AndroidAudioInput();
@@ -443,5 +447,9 @@ private:
 };
 
 }; // namespace android
+
+#ifdef HIDE_MIO_SYMBOLS
+#pragma GCC visibility pop
+#endif
 
 #endif // ANDROID_AUDIO_INPUT_H_INCLUDED
