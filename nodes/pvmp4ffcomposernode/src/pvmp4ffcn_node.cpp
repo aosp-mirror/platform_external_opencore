@@ -69,19 +69,25 @@ class FragmentWriter: public Thread
     FragmentWriter(PVMp4FFComposerNode *composer) :
         Thread(kThreadCallJava), mSize(0), mEnd(mBuffer + kCapacity),
         mFirst(mBuffer), mLast(mBuffer), mComposer(composer),
-        mPrevWriteStatus(PVMFSuccess), mDropped(0) {}
+        mPrevWriteStatus(PVMFPending), mTid(NULL), mDropped(0), mExitRequested(false) {}
 
     virtual ~FragmentWriter()
     {
         Mutex::Autolock l(mRequestMutex);
         LOG_ASSERT(0 == mSize, "The queue should be empty by now.");
-        LOG_ASSERT(!exitPending(), "Should have passed the pending stage.");
+        LOG_ASSERT(mExitRequested, "Deleting an active instance.");
+        LOGD_IF(0 < mSize, "Flushing %d frags in dtor", mSize);
+        while (0 < mSize)  // make sure we are flushed
+        {
+            decrPendingRequests();
+        }
     }
 
     // Mark the thread as exiting and kick it so it can see the
     // exitPending state.
     virtual void requestExit()
     {
+        mExitRequested = true;
         Thread::requestExit();
         mRequestMutex.lock();
         mRequestCv.signal();
@@ -91,15 +97,17 @@ class FragmentWriter: public Thread
     // Wait for all the fragment to be written.
     virtual void flush()
     {
+        LOG_ASSERT(androidGetThreadId() != mTid, "Reentrant call");
+
         bool done = false;
-        int iter = 0;
+        size_t iter = 0;
         while (!done)
         {
             mRequestMutex.lock();
             done = mSize == 0 || iter > kMaxFlushAttempts;
-            mRequestCv.signal();
+            if (!done) mRequestCv.signal();
             mRequestMutex.unlock();
-            usleep(kFlushSleepMicros);
+            if (!done) usleep(kFlushSleepMicros);
             ++iter;
         }
         LOG_ASSERT(iter <= kMaxFlushAttempts, "Failed to flush");
@@ -113,8 +121,7 @@ class FragmentWriter: public Thread
                                      OsclRefCounterMemFrag& aMemFrag, PVMFFormatType aFormat,
                                      uint32& aTimestamp, int32 aTrackId, PVMp4FFComposerPort *aPort)
     {
-        if (exitPending()) return PVMFErrCancelled;
-
+        if (mExitRequested) return PVMFErrCancelled;
         Mutex::Autolock lock(mRequestMutex);
 
         // When the queue is full, we drop the request. This frees the
@@ -196,27 +203,28 @@ class FragmentWriter: public Thread
     // @Override Thread
     virtual bool threadLoop()
     {
-        int numFrags = 0;
+        if (!mTid) mTid = androidGetThreadId();
 
-        if (!exitPending())
+        LOG_ASSERT(androidGetThreadId() == mTid,
+                   "Thread id has changed!: %p != %p", mTid, androidGetThreadId());
+
+        size_t numFrags = 0;
+        // Check if there's work to do. Otherwise wait for new fragment.
+        mRequestMutex.lock();
+        numFrags = mSize;
+        mRequestMutex.unlock();
+
+        bool doneWaiting = numFrags != 0;
+        while(!doneWaiting)
         {
-            // Check if there's work to do. Otherwise wait for new fragment.
             mRequestMutex.lock();
+            mRequestCv.wait(mRequestMutex);
+            doneWaiting = mSize > 0 || mExitRequested;
             numFrags = mSize;
             mRequestMutex.unlock();
-
-            bool doneWaiting = numFrags != 0;
-            while(!doneWaiting)
-            {
-                mRequestMutex.lock();
-                mRequestCv.wait(mRequestMutex);
-                doneWaiting = mSize > 0 || exitPending();
-                numFrags = mSize;
-                mRequestMutex.unlock();
-            }
         }
 
-        if (exitPending()) return false;
+        if (mExitRequested) return false;
 
         LOGW_IF(numFrags > kWarningThreshold, "%d fragments in queue.", numFrags);
         for (size_t i = 0; i < numFrags; ++i)
@@ -248,7 +256,10 @@ class FragmentWriter: public Thread
     // TODO: lock needed for mPrevWriteStatus? Are int assignement atomic on arm?
     PVMFStatus mPrevWriteStatus;
 
+    android_thread_id_t mTid;
     size_t mDropped;
+    // Unlike exitPending(), stays to true once exit has been called.
+    bool mExitRequested;
 };
 const OsclRefCounterMemFrag FragmentWriter::kEmptyFrag;
 }
@@ -386,6 +397,8 @@ PVMp4FFComposerNode::PVMp4FFComposerNode(int32 aPriority)
                         );
 
 #ifdef ANDROID
+    iMaxReachedEvent = 0;
+    iMaxReachedReported = false;
     iFragmentWriter = new android::FragmentWriter(this);
     iFragmentWriter->run(LOG_TAG);
 #endif
@@ -1841,6 +1854,9 @@ void PVMp4FFComposerNode::DoStop(PVMp4FFCNCmd& aCmd)
         case EPVMFNodeStarted:
         case EPVMFNodePaused:
         {
+#ifdef ANDROID
+            iFragmentWriter->flush();
+#endif
             if (!iNodeEndOfDataReached)
             {
                 WriteDecoderSpecificInfo();
@@ -2074,6 +2090,9 @@ void PVMp4FFComposerNode::FlushComplete()
             return;
         }
     }
+#ifdef ANDROID
+    iFragmentWriter->flush();
+#endif
     if (!iNodeEndOfDataReached)
     {
         WriteDecoderSpecificInfo();
@@ -2384,11 +2403,20 @@ PVMFStatus PVMp4FFComposerNode::ProcessIncomingMsg(PVMFPortInterface* aPort)
                 }
             }
 
-            // TODO: We are passing port and port->GetFormat(), should pass port only.
 #ifdef ANDROID
-            status = iFragmentWriter->enqueueMemFragToTrack(
-                    pFrame, memFrag, port->GetFormat(), timestamp,
-                    trackId, (PVMp4FFComposerPort*)aPort);
+            if (!iMaxReachedEvent)
+            {
+                // TODO: We are passing port and port->GetFormat(), should pass port only.
+                status = iFragmentWriter->enqueueMemFragToTrack(
+                        pFrame, memFrag, port->GetFormat(), timestamp,
+                        trackId, (PVMp4FFComposerPort*)aPort);
+            }
+            else if (!iMaxReachedReported)
+            {
+                iMaxReachedReported = true;
+                ReportInfoEvent(static_cast<PVMFComposerSizeAndDurationEvent>(iMaxReachedEvent), NULL);
+                status = PVMFSuccess;
+            }
 #else
             status = AddMemFragToTrack(pFrame, memFrag, port->GetFormat(), timestamp,
                                        trackId, (PVMp4FFComposerPort*)aPort);
@@ -3005,6 +3033,14 @@ PVMFStatus PVMp4FFComposerNode::CheckMaxFileSize(uint32 aFrameSize)
 
         if ((metaDataSize + mediaDataSize + aFrameSize) >= iMaxFileSize)
         {
+#ifdef ANDROID
+            // This code is executed on the fragment writer thread, we
+            // don't want to call RenderToFile since it will call
+            // flush() on the writer from this very same
+            // thread. Instead, we use a marker to report an event to
+            // the author node next time a new fragment is processed.
+            iMaxReachedEvent = PVMF_COMPOSER_MAXFILESIZE_REACHED;
+#else
             // Finalized output file
             if (iSampleInTrack)
             {
@@ -3015,6 +3051,7 @@ PVMFStatus PVMp4FFComposerNode::CheckMaxFileSize(uint32 aFrameSize)
 
             ReportInfoEvent(PVMF_COMPOSER_MAXFILESIZE_REACHED, NULL);
             return PVMFSuccess;
+#endif
         }
 
         return PVMFPending;
@@ -3033,6 +3070,15 @@ PVMFStatus PVMp4FFComposerNode::CheckMaxDuration(uint32 aTimestamp)
     {
         if (aTimestamp >= iMaxTimeDuration)
         {
+#ifdef ANDROID
+            // This code is executed on the fragment writer thread, we
+            // don't want to call RenderToFile since it will call
+            // flush() on the writer from this very same
+            // thread. Instead, we use a marker to report an event to
+            // the author node next time a new fragment is processed.
+            iMaxReachedEvent = PVMF_COMPOSER_MAXDURATION_REACHED;
+#else
+
             // Finalize output file
             if (iSampleInTrack)
             {
@@ -3041,9 +3087,9 @@ PVMFStatus PVMp4FFComposerNode::CheckMaxDuration(uint32 aTimestamp)
                     return PVMFFailure;
             }
 
-
             ReportInfoEvent(PVMF_COMPOSER_MAXDURATION_REACHED, NULL);
             return PVMFSuccess;
+#endif
         }
 
         return PVMFPending;
