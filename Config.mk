@@ -28,15 +28,6 @@ include $(CLEAR_VARS)
 
   PV_COPY_HEADERS_TO := libpv
 
-  alternate_config := $(if $(wildcard vendor/pv/pvplayer.cfg),true)
-  ifeq ($(alternate_config), true)
-    VALUE_ADD := 1
-    PV_CFLAGS += -DPV_USE_VALUE_ADD=1
-  else
-    VALUE_ADD :=
-  endif
-  alternate_config :=
-
 # Using -fvisibility=hidden option increases the DSO size beyond what's allocated in prelink map.
 # Use PV_CFLAGS_MINUS_VISIBILITY instead of PV_CFLAGS until we figure out the reason.
 # JJ 06/05/09
@@ -67,7 +58,6 @@ include $(CLEAR_VARS)
   OPENCORE.FORMAT := $(FORMAT)
   OPENCORE.PV_OSCL_LIB := $(OPENCORE.PV_OSCL_LIB)
   OPENCORE.PV_COPY_HEADERS_TO := $(PV_COPY_HEADERS_TO)
-  OPENCORE.VALUE_ADD := $(VALUE_ADD)
   OPENCORE.PV_INCLUDES := $(PV_INCLUDES)
 else
   # This file has already been included by someone, so we can
@@ -78,6 +68,5 @@ else
   FORMAT := $(OPENCORE.FORMAT)
   PV_OSCL_LIB := $(OPENCORE.PV_OSCL_LIB)
   PV_COPY_HEADERS_TO := $(OPENCORE.PV_COPY_HEADERS_TO)
-  VALUE_ADD := $(OPENCORE.VALUE_ADD)
   PV_INCLUDES := $(OPENCORE.PV_INCLUDES)
 endif
