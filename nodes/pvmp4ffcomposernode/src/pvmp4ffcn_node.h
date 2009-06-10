@@ -367,6 +367,12 @@ class PVMp4FFComposerNode : public PVMFNodeInterface,
 #ifdef ANDROID
         // Fragment to track writer thread.
         android::sp<android::FragmentWriter> iFragmentWriter;
+
+        // Marker to report to the author node an event. It is really of
+        // type PVMFComposerSizeAndDurationEvent but there is no value
+        // in the enum for 'none' so we use a generic int.
+        int iMaxReachedEvent;
+        bool iMaxReachedReported;
 #endif
         // Meta data strings
         struct PVMP4FFCN_MetaDataString
