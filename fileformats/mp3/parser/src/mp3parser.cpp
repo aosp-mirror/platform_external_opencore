@@ -47,6 +47,9 @@
 // Initial search range, resetted to the file size once valid mp3
 // frame is found
 #define KMAX_INITIAL_SEARCH_FILE_SIZE_IN_BYTES  500000
+// If the Xing header reports a size that is smaller than the file length
+// by this much, consider the Xing header invalid.
+#define XING_SIZE_FUZZINESS 0.90
 
 /***********************************************************************
  * Global constant definitions
@@ -662,7 +665,7 @@ MP3ErrorType MP3Parser::ParseMP3File(PVFile * fpUsed, bool aEnableCRC)
     iSamplesPerFrame = spfIndexTable[iMP3HeaderInfo.frameVer][iMP3HeaderInfo.layerID];
     iSamplingRate = srIndexTable[((iMP3HeaderInfo.frameVer)*4) + iMP3HeaderInfo.srIndex];
 
-    if (mp3Type != EXINGType && mp3Type != EVBRIType)
+    if ((mp3Type != EXINGType || !(iXingHeader.flags & TOC_FLAG)) && mp3Type != EVBRIType)
     {
         // if XING or VBRI Headers are not present then we need to build our own TOC for
         // repositioning.
@@ -1074,6 +1077,32 @@ bool  MP3Parser::DecodeXINGHeader(uint8 *XingBuffer,
     {
         mp3XingHD.bytes = SwapFileToHostByteOrderInt32(pBuf);
         pBuf += 4;
+
+        if (head_flags & FRAMES_FLAG)
+        {
+            // check if the number of frames and the number of
+            // bytes roughly match up
+            int bytesperframe = mp3XingHD.bytes / mp3XingHD.frames;
+            // 52 and 1440 are the minimum and maximum number of bytes per frame for
+            // a compliant mp3 stream (8kbps@22050Hz and 320kbps@32000Hz respectively)
+            if (bytesperframe < 52 || bytesperframe > 1440)
+            {
+                head_flags = mp3XingHD.flags = 0;
+            }
+        }
+        if (iLocalFileSize != 0)
+        {
+            // check if the number of bytes and the file size roughly
+            // match up
+            if (mp3XingHD.bytes > iLocalFileSize)
+            {
+                head_flags = mp3XingHD.flags = 0;
+            }
+            if (mp3XingHD.bytes < iLocalFileSize * XING_SIZE_FUZZINESS)
+            {
+                head_flags = mp3XingHD.flags = 0;
+            }
+        }
     }
 
     if (head_flags & TOC_FLAG)
@@ -1091,7 +1120,10 @@ bool  MP3Parser::DecodeXINGHeader(uint8 *XingBuffer,
         mp3XingHD.vbr_scale = SwapFileToHostByteOrderInt32(pBuf);
         pBuf += 4;;
     }
-    iNumberOfFrames = mp3XingHD.frames;
+    if (head_flags & FRAMES_FLAG)
+    {
+        iNumberOfFrames = mp3XingHD.frames;
+    }
     return true;
 }
 
