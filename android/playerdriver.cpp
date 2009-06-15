@@ -648,14 +648,6 @@ int PlayerDriver::setupHttpStreamPost()
     OSCL_TRY(error, mPlayerCapConfig->setParametersSync(NULL, &iKVPSetAsync, 1, iErrorKVP));
     OSCL_FIRST_CATCH_ANY(error, return -1);
 
-    // enable or disable HEAD request
-    iKeyStringSetAsync=_STRLIT_CHAR("x-pvmf/net/http-header-request-disabled;valtype=bool");
-    iKVPSetAsync.key=iKeyStringSetAsync.get_str();
-    iKVPSetAsync.value.bool_value=false;
-    iErrorKVP=NULL;
-    OSCL_TRY(error, mPlayerCapConfig->setParametersSync(NULL, &iKVPSetAsync, 1, iErrorKVP));
-    OSCL_FIRST_CATCH_ANY(error, return -1);
-
     iKeyStringSetAsync=_STRLIT_CHAR("x-pvmf/net/max-tcp-recv-buffer-size-download;valtype=uint32");
     iKVPSetAsync.key=iKeyStringSetAsync.get_str();
     iKVPSetAsync.value.uint32_value=64000;
