@@ -119,7 +119,7 @@ AndroidAudioInput::~AndroidAudioInput()
 }
 
 ////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFStatus AndroidAudioInput::connect(PvmiMIOSession& aSession, PvmiMIOObserver* aObserver)
+PVMFStatus AndroidAudioInput::connect(PvmiMIOSession& aSession, PvmiMIOObserver* aObserver)
 {
     LOGV("connect");
 
@@ -137,7 +137,7 @@ OSCL_EXPORT_REF PVMFStatus AndroidAudioInput::connect(PvmiMIOSession& aSession, 
 }
 
 ////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFStatus AndroidAudioInput::disconnect(PvmiMIOSession aSession)
+PVMFStatus AndroidAudioInput::disconnect(PvmiMIOSession aSession)
 {
     LOGV("disconnect");
     uint32 index = (uint32)aSession;
@@ -152,7 +152,7 @@ OSCL_EXPORT_REF PVMFStatus AndroidAudioInput::disconnect(PvmiMIOSession aSession
 }
 
 ////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PvmiMediaTransfer* AndroidAudioInput::createMediaTransfer(PvmiMIOSession& aSession,
+PvmiMediaTransfer* AndroidAudioInput::createMediaTransfer(PvmiMIOSession& aSession,
         PvmiKvp* read_formats,
         int32 read_flags,
         PvmiKvp* write_formats,
@@ -179,7 +179,7 @@ OSCL_EXPORT_REF PvmiMediaTransfer* AndroidAudioInput::createMediaTransfer(PvmiMI
 }
 
 ////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF void AndroidAudioInput::deleteMediaTransfer(PvmiMIOSession& aSession,
+void AndroidAudioInput::deleteMediaTransfer(PvmiMIOSession& aSession,
         PvmiMediaTransfer* media_transfer)
 {
     LOGV("deleteMediaTransfer %p", this);
@@ -193,7 +193,7 @@ OSCL_EXPORT_REF void AndroidAudioInput::deleteMediaTransfer(PvmiMIOSession& aSes
 }
 
 ////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFCommandId AndroidAudioInput::QueryUUID(const PvmfMimeString& aMimeType,
+PVMFCommandId AndroidAudioInput::QueryUUID(const PvmfMimeString& aMimeType,
         Oscl_Vector<PVUuid, OsclMemAllocator>& aUuids,
         bool aExactUuidsOnly,
         const OsclAny* aContext)
@@ -209,7 +209,7 @@ OSCL_EXPORT_REF PVMFCommandId AndroidAudioInput::QueryUUID(const PvmfMimeString&
 }
 
 ////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFCommandId AndroidAudioInput::QueryInterface(const PVUuid& aUuid,
+PVMFCommandId AndroidAudioInput::QueryInterface(const PVUuid& aUuid,
         PVInterface*& aInterfacePtr,
         const OsclAny* aContext)
 {
@@ -227,7 +227,7 @@ OSCL_EXPORT_REF PVMFCommandId AndroidAudioInput::QueryInterface(const PVUuid& aU
 }
 
 ////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFCommandId AndroidAudioInput::Init(const OsclAny* aContext)
+PVMFCommandId AndroidAudioInput::Init(const OsclAny* aContext)
 {
     LOGV("Init");
     if(iState != STATE_IDLE)
@@ -242,7 +242,7 @@ OSCL_EXPORT_REF PVMFCommandId AndroidAudioInput::Init(const OsclAny* aContext)
 
 
 ////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFCommandId AndroidAudioInput::Start(const OsclAny* aContext)
+PVMFCommandId AndroidAudioInput::Start(const OsclAny* aContext)
 {
     LOGV("Start");
     if(iState != STATE_INITIALIZED && iState != STATE_PAUSED)
@@ -256,7 +256,7 @@ OSCL_EXPORT_REF PVMFCommandId AndroidAudioInput::Start(const OsclAny* aContext)
 }
 
 ////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFCommandId AndroidAudioInput::Pause(const OsclAny* aContext)
+PVMFCommandId AndroidAudioInput::Pause(const OsclAny* aContext)
 {
     LOGV("Pause");
     if(iState != STATE_STARTED)
@@ -270,7 +270,7 @@ OSCL_EXPORT_REF PVMFCommandId AndroidAudioInput::Pause(const OsclAny* aContext)
 }
 
 ////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFCommandId AndroidAudioInput::Flush(const OsclAny* aContext)
+PVMFCommandId AndroidAudioInput::Flush(const OsclAny* aContext)
 {
     LOGV("Flush");
     if(iState != STATE_STARTED || iState != STATE_PAUSED)
@@ -284,14 +284,14 @@ OSCL_EXPORT_REF PVMFCommandId AndroidAudioInput::Flush(const OsclAny* aContext)
 }
 
 ////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFCommandId AndroidAudioInput::Reset(const OsclAny* aContext)
+PVMFCommandId AndroidAudioInput::Reset(const OsclAny* aContext)
 {
     LOGV("Reset");
     return AddCmdToQueue(AI_CMD_RESET, aContext);
 }
 
 ////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFCommandId AndroidAudioInput::DiscardData(PVMFTimestamp aTimestamp, const OsclAny* aContext)
+PVMFCommandId AndroidAudioInput::DiscardData(PVMFTimestamp aTimestamp, const OsclAny* aContext)
 {
     OSCL_UNUSED_ARG(aContext);
     OSCL_UNUSED_ARG(aTimestamp);
@@ -299,7 +299,7 @@ OSCL_EXPORT_REF PVMFCommandId AndroidAudioInput::DiscardData(PVMFTimestamp aTime
     return -1;
 }
 
-OSCL_EXPORT_REF PVMFCommandId AndroidAudioInput::DiscardData(const OsclAny* aContext)
+PVMFCommandId AndroidAudioInput::DiscardData(const OsclAny* aContext)
 {
     OSCL_UNUSED_ARG(aContext);
     OSCL_LEAVE(OsclErrNotSupported);
@@ -308,7 +308,7 @@ OSCL_EXPORT_REF PVMFCommandId AndroidAudioInput::DiscardData(const OsclAny* aCon
 
 
 ////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFCommandId AndroidAudioInput::Stop(const OsclAny* aContext)
+PVMFCommandId AndroidAudioInput::Stop(const OsclAny* aContext)
 {
     LOGV("Stop %p", this);
     if(iState != STATE_STARTED && iState != STATE_PAUSED)
@@ -322,7 +322,7 @@ OSCL_EXPORT_REF PVMFCommandId AndroidAudioInput::Stop(const OsclAny* aContext)
 }
 
 ////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF void AndroidAudioInput::ThreadLogon()
+void AndroidAudioInput::ThreadLogon()
 {
     LOGV("ThreadLogon %p", this);
     if(!iThreadLoggedOn)
@@ -333,7 +333,7 @@ OSCL_EXPORT_REF void AndroidAudioInput::ThreadLogon()
 }
 
 ////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF void AndroidAudioInput::ThreadLogoff()
+void AndroidAudioInput::ThreadLogoff()
 {
     LOGV("ThreadLogoff");
     if(iThreadLoggedOn)
@@ -344,7 +344,7 @@ OSCL_EXPORT_REF void AndroidAudioInput::ThreadLogoff()
 }
 
 ////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFCommandId AndroidAudioInput::CancelAllCommands( const OsclAny* aContext)
+PVMFCommandId AndroidAudioInput::CancelAllCommands( const OsclAny* aContext)
 {
     OSCL_UNUSED_ARG(aContext);
     OSCL_LEAVE(OsclErrNotSupported);
@@ -352,7 +352,7 @@ OSCL_EXPORT_REF PVMFCommandId AndroidAudioInput::CancelAllCommands( const OsclAn
 }
 
 ////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFCommandId AndroidAudioInput::CancelCommand( PVMFCommandId aCmdId, const OsclAny* aContext)
+PVMFCommandId AndroidAudioInput::CancelCommand( PVMFCommandId aCmdId, const OsclAny* aContext)
 {
     OSCL_UNUSED_ARG(aCmdId);
     OSCL_UNUSED_ARG(aContext);
@@ -361,7 +361,7 @@ OSCL_EXPORT_REF PVMFCommandId AndroidAudioInput::CancelCommand( PVMFCommandId aC
 }
 
 ////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF void AndroidAudioInput::setPeer(PvmiMediaTransfer* aPeer)
+void AndroidAudioInput::setPeer(PvmiMediaTransfer* aPeer)
 {
     LOGV("setPeer");
     if(iPeer && aPeer)
@@ -374,14 +374,14 @@ OSCL_EXPORT_REF void AndroidAudioInput::setPeer(PvmiMediaTransfer* aPeer)
 }
 
 ////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF void AndroidAudioInput::useMemoryAllocators(OsclMemAllocator* write_alloc)
+void AndroidAudioInput::useMemoryAllocators(OsclMemAllocator* write_alloc)
 {
     OSCL_UNUSED_ARG(write_alloc);
     OSCL_LEAVE(OsclErrNotSupported);
 }
 
 ////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFCommandId AndroidAudioInput::writeAsync(uint8 aFormatType, int32 aFormatIndex,
+PVMFCommandId AndroidAudioInput::writeAsync(uint8 aFormatType, int32 aFormatIndex,
         uint8* aData, uint32 aDataLen,
         const PvmiMediaXferHeader& data_header_info,
         OsclAny* aContext)
@@ -398,7 +398,7 @@ OSCL_EXPORT_REF PVMFCommandId AndroidAudioInput::writeAsync(uint8 aFormatType, i
 }
 
 ////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF void AndroidAudioInput::writeComplete(PVMFStatus aStatus, PVMFCommandId write_cmd_id,
+void AndroidAudioInput::writeComplete(PVMFStatus aStatus, PVMFCommandId write_cmd_id,
         OsclAny* aContext)
 {
     LOGV("writeComplete(%d, %p)", write_cmd_id, aContext);
@@ -434,7 +434,7 @@ OSCL_EXPORT_REF void AndroidAudioInput::writeComplete(PVMFStatus aStatus, PVMFCo
 }
 
 ////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFCommandId AndroidAudioInput::readAsync(uint8* data, uint32 max_data_len,
+PVMFCommandId AndroidAudioInput::readAsync(uint8* data, uint32 max_data_len,
         OsclAny* aContext, int32* formats, uint16 num_formats)
 {
     OSCL_UNUSED_ARG(data);
@@ -448,7 +448,7 @@ OSCL_EXPORT_REF PVMFCommandId AndroidAudioInput::readAsync(uint8* data, uint32 m
 }
 
 ////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF void AndroidAudioInput::readComplete(PVMFStatus aStatus, PVMFCommandId read_cmd_id,
+void AndroidAudioInput::readComplete(PVMFStatus aStatus, PVMFCommandId read_cmd_id,
         int32 format_index, const PvmiMediaXferHeader& data_header_info,
         OsclAny* aContext)
 {
@@ -463,7 +463,7 @@ OSCL_EXPORT_REF void AndroidAudioInput::readComplete(PVMFStatus aStatus, PVMFCom
 }
 
 ////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF void AndroidAudioInput::statusUpdate(uint32 status_flags)
+void AndroidAudioInput::statusUpdate(uint32 status_flags)
 {
     OSCL_UNUSED_ARG(status_flags);
     // Ideally this routine should update the status of media input component.
@@ -477,7 +477,7 @@ OSCL_EXPORT_REF void AndroidAudioInput::statusUpdate(uint32 status_flags)
 
 
 ////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF void AndroidAudioInput::cancelCommand(PVMFCommandId aCmdId)
+void AndroidAudioInput::cancelCommand(PVMFCommandId aCmdId)
 {
     OSCL_UNUSED_ARG(aCmdId);
     // This cancel command ( with a small "c" in cancel ) is for the media transfer interface.
@@ -486,19 +486,19 @@ OSCL_EXPORT_REF void AndroidAudioInput::cancelCommand(PVMFCommandId aCmdId)
 }
 
 ////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF void AndroidAudioInput::cancelAllCommands()
+void AndroidAudioInput::cancelAllCommands()
 {
     OSCL_LEAVE(OsclErrNotSupported);
 }
 
 ////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF void AndroidAudioInput::setObserver(PvmiConfigAndCapabilityCmdObserver* aObserver)
+void AndroidAudioInput::setObserver(PvmiConfigAndCapabilityCmdObserver* aObserver)
 {
     OSCL_UNUSED_ARG(aObserver);
 }
 
 ////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFStatus AndroidAudioInput::getParametersSync(PvmiMIOSession session,
+PVMFStatus AndroidAudioInput::getParametersSync(PvmiMIOSession session,
         PvmiKeyType identifier,
         PvmiKvp*& parameters,
         int& num_parameter_elements,
@@ -516,7 +516,7 @@ OSCL_EXPORT_REF PVMFStatus AndroidAudioInput::getParametersSync(PvmiMIOSession s
             pv_mime_strcmp(identifier, OUTPUT_FORMATS_CUR_QUERY) == 0)
     {
         num_parameter_elements = 1;
-        status = AllocateKvp(parameters, OUTPUT_FORMATS_VALTYPE, num_parameter_elements);
+        status = AllocateKvp(parameters, (PvmiKeyType)OUTPUT_FORMATS_VALTYPE, num_parameter_elements);
         if(status != PVMFSuccess)
         {
             LOGE("AndroidAudioInput::getParametersSync() OUTPUT_FORMATS_VALTYPE AllocateKvp failed");
@@ -528,7 +528,7 @@ OSCL_EXPORT_REF PVMFStatus AndroidAudioInput::getParametersSync(PvmiMIOSession s
     else if(pv_mime_strcmp(identifier, OUTPUT_TIMESCALE_CUR_QUERY) == 0)
     {
         num_parameter_elements = 1;
-        status = AllocateKvp(parameters, OUTPUT_TIMESCALE_CUR_VALUE, num_parameter_elements);
+        status = AllocateKvp(parameters, (PvmiKeyType)OUTPUT_TIMESCALE_CUR_VALUE, num_parameter_elements);
         if(status != PVMFSuccess)
         {
             LOGE("AndroidAudioInput::getParametersSync() OUTPUT_TIMESCALE_CUR_VALUE AllocateKvp failed");
@@ -567,7 +567,7 @@ OSCL_EXPORT_REF PVMFStatus AndroidAudioInput::getParametersSync(PvmiMIOSession s
 }
 
 ////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFStatus AndroidAudioInput::releaseParameters(PvmiMIOSession session,
+PVMFStatus AndroidAudioInput::releaseParameters(PvmiMIOSession session,
         PvmiKvp* parameters,
         int num_elements)
 {
@@ -586,14 +586,14 @@ OSCL_EXPORT_REF PVMFStatus AndroidAudioInput::releaseParameters(PvmiMIOSession s
 }
 
 ////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF void AndroidAudioInput::createContext(PvmiMIOSession session, PvmiCapabilityContext& context)
+void AndroidAudioInput::createContext(PvmiMIOSession session, PvmiCapabilityContext& context)
 {
     OSCL_UNUSED_ARG(session);
     OSCL_UNUSED_ARG(context);
 }
 
 ////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF void AndroidAudioInput::setContextParameters(PvmiMIOSession session,
+void AndroidAudioInput::setContextParameters(PvmiMIOSession session,
         PvmiCapabilityContext& context,
         PvmiKvp* parameters, int num_parameter_elements)
 {
@@ -604,14 +604,14 @@ OSCL_EXPORT_REF void AndroidAudioInput::setContextParameters(PvmiMIOSession sess
 }
 
 ////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF void AndroidAudioInput::DeleteContext(PvmiMIOSession session, PvmiCapabilityContext& context)
+void AndroidAudioInput::DeleteContext(PvmiMIOSession session, PvmiCapabilityContext& context)
 {
     OSCL_UNUSED_ARG(session);
     OSCL_UNUSED_ARG(context);
 }
 
 ////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF void AndroidAudioInput::setParametersSync(PvmiMIOSession session, PvmiKvp* parameters,
+void AndroidAudioInput::setParametersSync(PvmiMIOSession session, PvmiKvp* parameters,
         int num_elements, PvmiKvp*& ret_kvp)
 {
     LOGV("setParametersSync");
@@ -632,7 +632,7 @@ OSCL_EXPORT_REF void AndroidAudioInput::setParametersSync(PvmiMIOSession session
 }
 
 ////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFCommandId AndroidAudioInput::setParametersAsync(PvmiMIOSession session,
+PVMFCommandId AndroidAudioInput::setParametersAsync(PvmiMIOSession session,
         PvmiKvp* parameters,
         int num_elements,
         PvmiKvp*& ret_kvp,
@@ -648,14 +648,14 @@ OSCL_EXPORT_REF PVMFCommandId AndroidAudioInput::setParametersAsync(PvmiMIOSessi
 }
 
 ////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF uint32 AndroidAudioInput::getCapabilityMetric (PvmiMIOSession session)
+uint32 AndroidAudioInput::getCapabilityMetric (PvmiMIOSession session)
 {
     OSCL_UNUSED_ARG(session);
     return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFStatus AndroidAudioInput::verifyParametersSync(PvmiMIOSession session,
+PVMFStatus AndroidAudioInput::verifyParametersSync(PvmiMIOSession session,
         PvmiKvp* parameters, int num_elements)
 {
     OSCL_UNUSED_ARG(session);
@@ -665,7 +665,7 @@ OSCL_EXPORT_REF PVMFStatus AndroidAudioInput::verifyParametersSync(PvmiMIOSessio
 }
 
 ////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF bool AndroidAudioInput::setAudioSamplingRate(int32 iSamplingRate)
+bool AndroidAudioInput::setAudioSamplingRate(int32 iSamplingRate)
 {
     LOGV("AndroidAudioInput::setAudioSamplingRate( %d )", iSamplingRate);
 
@@ -681,7 +681,7 @@ OSCL_EXPORT_REF bool AndroidAudioInput::setAudioSamplingRate(int32 iSamplingRate
     return true;
 }
 ////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF bool AndroidAudioInput::setAudioNumChannels(int32 iNumChannels)
+bool AndroidAudioInput::setAudioNumChannels(int32 iNumChannels)
 {
     LOGV("AndroidAudioInput::setAudioNumChannels( %d )", iNumChannels);
 

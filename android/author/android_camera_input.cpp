@@ -109,7 +109,6 @@ AndroidCameraInput::~AndroidCameraInput()
     iFrameQueueMutex.Close();
 }
 
-OSCL_EXPORT_REF
 PVMFStatus AndroidCameraInput::connect(PvmiMIOSession& aSession,
         PvmiMIOObserver* aObserver)
 {
@@ -129,7 +128,6 @@ PVMFStatus AndroidCameraInput::connect(PvmiMIOSession& aSession,
     return PVMFSuccess;
 }
 
-OSCL_EXPORT_REF
 PVMFStatus AndroidCameraInput::disconnect(PvmiMIOSession aSession)
 {
     LOGV("disconnect");
@@ -144,7 +142,6 @@ PVMFStatus AndroidCameraInput::disconnect(PvmiMIOSession aSession)
     return PVMFSuccess;
 }
 
-OSCL_EXPORT_REF
 PvmiMediaTransfer* AndroidCameraInput::createMediaTransfer(
         PvmiMIOSession& aSession,
         PvmiKvp* read_formats,
@@ -169,7 +166,6 @@ PvmiMediaTransfer* AndroidCameraInput::createMediaTransfer(
     return (PvmiMediaTransfer*)this;
 }
 
-OSCL_EXPORT_REF
 void AndroidCameraInput::deleteMediaTransfer(PvmiMIOSession& aSession,
         PvmiMediaTransfer* media_transfer)
 {
@@ -193,7 +189,6 @@ void AndroidCameraInput::deleteMediaTransfer(PvmiMIOSession& aSession,
     //    is any outstanding buffer?
 }
 
-OSCL_EXPORT_REF
 PVMFCommandId AndroidCameraInput::QueryUUID(const PvmfMimeString& aMimeType,
         Oscl_Vector<PVUuid,
         OsclMemAllocator>& aUuids,
@@ -212,7 +207,6 @@ PVMFCommandId AndroidCameraInput::QueryUUID(const PvmfMimeString& aMimeType,
     return AddCmdToQueue(CMD_QUERY_UUID, aContext);
 }
 
-OSCL_EXPORT_REF
 PVMFCommandId AndroidCameraInput::QueryInterface(const PVUuid& aUuid,
         PVInterface*& aInterfacePtr,
         const OsclAny* aContext)
@@ -232,7 +226,6 @@ PVMFCommandId AndroidCameraInput::QueryInterface(const PVUuid& aUuid,
                          (OsclAny*)&aInterfacePtr);
 }
 
-OSCL_EXPORT_REF
 PVMFCommandId AndroidCameraInput::Init(const OsclAny* aContext)
 {
     LOGV("Init");
@@ -246,7 +239,6 @@ PVMFCommandId AndroidCameraInput::Init(const OsclAny* aContext)
 }
 
 
-OSCL_EXPORT_REF
 PVMFCommandId AndroidCameraInput::Start(const OsclAny* aContext)
 {
     LOGV("Start");
@@ -259,7 +251,6 @@ PVMFCommandId AndroidCameraInput::Start(const OsclAny* aContext)
     return AddCmdToQueue(CMD_START, aContext);
 }
 
-OSCL_EXPORT_REF
 PVMFCommandId AndroidCameraInput::Pause(const OsclAny* aContext)
 {
     LOGV("Pause");
@@ -272,7 +263,6 @@ PVMFCommandId AndroidCameraInput::Pause(const OsclAny* aContext)
     return AddCmdToQueue(CMD_PAUSE, aContext);
 }
 
-OSCL_EXPORT_REF
 PVMFCommandId AndroidCameraInput::Flush(const OsclAny* aContext)
 {
     LOGV("Flush");
@@ -285,14 +275,12 @@ PVMFCommandId AndroidCameraInput::Flush(const OsclAny* aContext)
     return AddCmdToQueue(CMD_FLUSH, aContext);
 }
 
-OSCL_EXPORT_REF
 PVMFCommandId AndroidCameraInput::Reset(const OsclAny* aContext)
 {
     LOGV("Reset");
     return AddCmdToQueue(CMD_RESET, aContext);
 }
 
-OSCL_EXPORT_REF
 PVMFCommandId AndroidCameraInput::DiscardData(PVMFTimestamp aTimestamp,
         const OsclAny* aContext)
 {
@@ -303,7 +291,6 @@ PVMFCommandId AndroidCameraInput::DiscardData(PVMFTimestamp aTimestamp,
     return -1;
 }
 
-OSCL_EXPORT_REF
 PVMFCommandId AndroidCameraInput::DiscardData(const OsclAny* aContext)
 {
     LOGV("DiscardData");
@@ -312,7 +299,6 @@ PVMFCommandId AndroidCameraInput::DiscardData(const OsclAny* aContext)
     return -1;
 }
 
-OSCL_EXPORT_REF
 PVMFCommandId AndroidCameraInput::Stop(const OsclAny* aContext)
 {
     LOGV("Stop");
@@ -325,7 +311,6 @@ PVMFCommandId AndroidCameraInput::Stop(const OsclAny* aContext)
     return AddCmdToQueue(CMD_STOP, aContext);
 }
 
-OSCL_EXPORT_REF
 void AndroidCameraInput::ThreadLogon()
 {
     LOGV("ThreadLogon");
@@ -335,7 +320,6 @@ void AndroidCameraInput::ThreadLogon()
     }
 }
 
-OSCL_EXPORT_REF
 void AndroidCameraInput::ThreadLogoff()
 {
     LOGV("ThreadLogoff");
@@ -345,7 +329,6 @@ void AndroidCameraInput::ThreadLogoff()
     }
 }
 
-OSCL_EXPORT_REF
 PVMFCommandId AndroidCameraInput::CancelAllCommands(const OsclAny* aContext)
 {
     LOGV("CancelAllCommands");
@@ -354,7 +337,6 @@ PVMFCommandId AndroidCameraInput::CancelAllCommands(const OsclAny* aContext)
     return -1;
 }
 
-OSCL_EXPORT_REF
 PVMFCommandId AndroidCameraInput::CancelCommand(PVMFCommandId aCmdId,
         const OsclAny* aContext)
 {
@@ -365,12 +347,11 @@ PVMFCommandId AndroidCameraInput::CancelCommand(PVMFCommandId aCmdId,
     return -1;
 }
 
-OSCL_EXPORT_REF
 void AndroidCameraInput::setPeer(PvmiMediaTransfer* aPeer)
 {
-    LOGV("setPeer iPeer 0x%x aPeer 0x%x", iPeer, aPeer);
+    LOGV("setPeer iPeer %p aPeer %p", iPeer, aPeer);
     if(iPeer && aPeer){
-    LOGE("setPeer iPeer 0x%x aPeer 0x%x", iPeer, aPeer);
+        LOGE("setPeer iPeer %p aPeer %p", iPeer, aPeer);
         OSCL_LEAVE(OsclErrGeneral);
         return;
     }
@@ -378,7 +359,6 @@ void AndroidCameraInput::setPeer(PvmiMediaTransfer* aPeer)
     iPeer = aPeer;
 }
 
-OSCL_EXPORT_REF
 void AndroidCameraInput::useMemoryAllocators(OsclMemAllocator* write_alloc)
 {
     LOGV("useMemoryAllocators");
@@ -386,7 +366,6 @@ void AndroidCameraInput::useMemoryAllocators(OsclMemAllocator* write_alloc)
     OSCL_LEAVE(OsclErrNotSupported);
 }
 
-OSCL_EXPORT_REF
 PVMFCommandId AndroidCameraInput::writeAsync(uint8 aFormatType,
         int32 aFormatIndex,
         uint8* aData,
@@ -406,7 +385,6 @@ PVMFCommandId AndroidCameraInput::writeAsync(uint8 aFormatType,
     return -1;
 }
 
-OSCL_EXPORT_REF
 void AndroidCameraInput::writeComplete(PVMFStatus aStatus,
        PVMFCommandId write_cmd_id,
        OsclAny* aContext)
@@ -449,7 +427,6 @@ void AndroidCameraInput::writeComplete(PVMFStatus aStatus,
     }
 }
 
-OSCL_EXPORT_REF
 PVMFCommandId AndroidCameraInput::readAsync(uint8* data,
         uint32 max_data_len,
         OsclAny* aContext,
@@ -467,7 +444,6 @@ PVMFCommandId AndroidCameraInput::readAsync(uint8* data,
     return -1;
 }
 
-OSCL_EXPORT_REF
 void AndroidCameraInput::readComplete(PVMFStatus aStatus,
         PVMFCommandId read_cmd_id,
         int32 format_index,
@@ -485,7 +461,6 @@ void AndroidCameraInput::readComplete(PVMFStatus aStatus,
     return;
 }
 
-OSCL_EXPORT_REF
 void AndroidCameraInput::statusUpdate(uint32 status_flags)
 {
     LOGV("statusUpdate");
@@ -499,7 +474,6 @@ void AndroidCameraInput::statusUpdate(uint32 status_flags)
     OSCL_LEAVE(OsclErrNotSupported);
 }
 
-OSCL_EXPORT_REF
 void AndroidCameraInput::cancelCommand(PVMFCommandId aCmdId)
 {
     LOGV("cancelCommand");
@@ -511,14 +485,12 @@ void AndroidCameraInput::cancelCommand(PVMFCommandId aCmdId)
     OSCL_LEAVE(OsclErrNotSupported);
 }
 
-OSCL_EXPORT_REF
 void AndroidCameraInput::cancelAllCommands()
 {
     LOGV("cancelAllCommands");
     OSCL_LEAVE(OsclErrNotSupported);
 }
 
-OSCL_EXPORT_REF
 void AndroidCameraInput::setObserver(
         PvmiConfigAndCapabilityCmdObserver* aObserver)
 {
@@ -526,7 +498,6 @@ void AndroidCameraInput::setObserver(
     OSCL_UNUSED_ARG(aObserver);
 }
 
-OSCL_EXPORT_REF
 PVMFStatus AndroidCameraInput::getParametersSync(PvmiMIOSession session,
         PvmiKeyType identifier,
         PvmiKvp*& params,
@@ -544,15 +515,15 @@ PVMFStatus AndroidCameraInput::getParametersSync(PvmiMIOSession session,
     if (!pv_mime_strcmp(identifier, OUTPUT_FORMATS_CAP_QUERY) ||
         !pv_mime_strcmp(identifier, OUTPUT_FORMATS_CUR_QUERY)) {
         num_params = 1;
-        status = AllocateKvp(params, OUTPUT_FORMATS_VALTYPE, num_params);
+        status = AllocateKvp(params, (PvmiKeyType)OUTPUT_FORMATS_VALTYPE, num_params);
         if (status != PVMFSuccess) {
             LOGE("AllocateKvp failed for OUTPUT_FORMATS_VALTYP");
             return status;
         }
-        params[0].value.pChar_value = ANDROID_VIDEO_FORMAT;
+        params[0].value.pChar_value = (char*)ANDROID_VIDEO_FORMAT;
     } else if (!pv_mime_strcmp(identifier, VIDEO_OUTPUT_WIDTH_CUR_QUERY)) {
         num_params = 1;
-        status = AllocateKvp(params, VIDEO_OUTPUT_WIDTH_CUR_VALUE, num_params);
+        status = AllocateKvp(params, (PvmiKeyType)VIDEO_OUTPUT_WIDTH_CUR_VALUE, num_params);
         if (status != PVMFSuccess) {
             LOGE("AllocateKvp failed for VIDEO_OUTPUT_WIDTH_CUR_VALUE");
             return status;
@@ -560,7 +531,7 @@ PVMFStatus AndroidCameraInput::getParametersSync(PvmiMIOSession session,
         params[0].value.uint32_value = mFrameWidth;
     } else if (!pv_mime_strcmp(identifier, VIDEO_OUTPUT_HEIGHT_CUR_QUERY)) {
         num_params = 1;
-        status = AllocateKvp(params, VIDEO_OUTPUT_HEIGHT_CUR_VALUE, num_params);
+        status = AllocateKvp(params, (PvmiKeyType)VIDEO_OUTPUT_HEIGHT_CUR_VALUE, num_params);
         if (status != PVMFSuccess) {
             LOGE("AllocateKvp failed for VIDEO_OUTPUT_HEIGHT_CUR_VALUE");
             return status;
@@ -569,7 +540,7 @@ PVMFStatus AndroidCameraInput::getParametersSync(PvmiMIOSession session,
     } else if (!pv_mime_strcmp(identifier, VIDEO_OUTPUT_FRAME_RATE_CUR_QUERY)) {
         num_params = 1;
         status = AllocateKvp(params,
-            VIDEO_OUTPUT_FRAME_RATE_CUR_VALUE, num_params);
+            (PvmiKeyType)VIDEO_OUTPUT_FRAME_RATE_CUR_VALUE, num_params);
         if (status != PVMFSuccess) {
             LOGE("AllocateKvp failed for VIDEO_OUTPUT_FRAME_RATE_CUR_VALUE");
             return status;
@@ -577,7 +548,7 @@ PVMFStatus AndroidCameraInput::getParametersSync(PvmiMIOSession session,
         params[0].value.float_value = mFrameRate;
     } else if (!pv_mime_strcmp(identifier, OUTPUT_TIMESCALE_CUR_QUERY)) {
         num_params = 1;
-        status = AllocateKvp(params, OUTPUT_TIMESCALE_CUR_VALUE, num_params);
+        status = AllocateKvp(params, (PvmiKeyType)OUTPUT_TIMESCALE_CUR_VALUE, num_params);
         if (status != PVMFSuccess) {
             LOGE("AllocateKvp failed for OUTPUT_TIMESCALE_CUR_VALUE");
             return status;
@@ -590,7 +561,6 @@ PVMFStatus AndroidCameraInput::getParametersSync(PvmiMIOSession session,
     return status;
 }
 
-OSCL_EXPORT_REF
 PVMFStatus AndroidCameraInput::releaseParameters(PvmiMIOSession session,
         PvmiKvp* parameters,
         int num_elements)
@@ -607,7 +577,6 @@ PVMFStatus AndroidCameraInput::releaseParameters(PvmiMIOSession session,
     return PVMFSuccess;
 }
 
-OSCL_EXPORT_REF
 void AndroidCameraInput::createContext(PvmiMIOSession session,
         PvmiCapabilityContext& context)
 {
@@ -616,7 +585,6 @@ void AndroidCameraInput::createContext(PvmiMIOSession session,
     OSCL_UNUSED_ARG(context);
 }
 
-OSCL_EXPORT_REF
 void AndroidCameraInput::setContextParameters(PvmiMIOSession session,
         PvmiCapabilityContext& context,
         PvmiKvp* parameters,
@@ -629,7 +597,6 @@ void AndroidCameraInput::setContextParameters(PvmiMIOSession session,
     OSCL_UNUSED_ARG(num_parameter_elements);
 }
 
-OSCL_EXPORT_REF
 void AndroidCameraInput::DeleteContext(PvmiMIOSession session,
         PvmiCapabilityContext& context)
 {
@@ -638,7 +605,6 @@ void AndroidCameraInput::DeleteContext(PvmiMIOSession session,
     OSCL_UNUSED_ARG(context);
 }
 
-OSCL_EXPORT_REF
 void AndroidCameraInput::setParametersSync(PvmiMIOSession session,
         PvmiKvp* parameters,
         int num_elements,
@@ -659,7 +625,6 @@ void AndroidCameraInput::setParametersSync(PvmiMIOSession session,
     }
 }
 
-OSCL_EXPORT_REF
 PVMFCommandId AndroidCameraInput::setParametersAsync(PvmiMIOSession session,
         PvmiKvp* parameters,
         int num_elements,
@@ -676,7 +641,6 @@ PVMFCommandId AndroidCameraInput::setParametersAsync(PvmiMIOSession session,
     return -1;
 }
 
-OSCL_EXPORT_REF
 uint32 AndroidCameraInput::getCapabilityMetric (PvmiMIOSession session)
 {
     LOGV("getCapabilityMetric");
@@ -684,7 +648,6 @@ uint32 AndroidCameraInput::getCapabilityMetric (PvmiMIOSession session)
     return 0;
 }
 
-OSCL_EXPORT_REF
 PVMFStatus AndroidCameraInput::verifyParametersSync(PvmiMIOSession session,
         PvmiKvp* parameters,
         int num_elements)
@@ -753,7 +716,7 @@ void AndroidCameraInput::Run()
                             data.iFrameSize, data.iXferHeader););
             } else {
                 //FIXME Check why camera sends NULL frames
-                LOGE("Ln %d ERROR null pointer");
+                LOGE("Ln %d ERROR null pointer", __LINE__);
                 error = OsclErrBadHandle;
             }
 
