@@ -2232,9 +2232,6 @@ bool PVMFOMXEncNode::NegotiateVideoComponentParameters()
         return false;
     }
 
-    // let the component decide output buffer size
-    iOMXComponentOutputBufferSize = iParamPort.nBufferSize;
-
     // let the component decide num output buffers
     iNumOutputBuffers = iParamPort.nBufferCountActual;
 
@@ -2281,8 +2278,6 @@ bool PVMFOMXEncNode::NegotiateVideoComponentParameters()
         iParamPort.format.video.eCompressionFormat = OMX_VIDEO_CodingAutoDetect;
     }
 
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "PVMFOMXEncNode-%s::NegotiateVideoComponentParameters() Outport buffers %d,size %d", iNodeTypeId, iNumOutputBuffers, iOMXComponentOutputBufferSize));
     CONFIG_SIZE_AND_VERSION(iParamPort);
     Err = OMX_SetParameter(iOMXEncoder, OMX_IndexParamPortDefinition, &iParamPort);
     if (Err != OMX_ErrorNone)
@@ -2291,6 +2286,19 @@ bool PVMFOMXEncNode::NegotiateVideoComponentParameters()
                         (0, "PVMFOMXEncNode-%s::NegotiateVideoComponentParameters() Problem setting parameters in output port %d ", iNodeTypeId, iOutputPortIndex));
         return false;
     }
+
+    //ask for the calculated buffer size
+    Err = OMX_GetParameter(iOMXEncoder, OMX_IndexParamPortDefinition, &iParamPort);
+    if (Err != OMX_ErrorNone)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXEncNode-%s::NegotiateVideoComponentParameters() Problem negotiating with output port %d ", iNodeTypeId, iOutputPortIndex));
+        return false;
+    }
+
+    iOMXComponentOutputBufferSize = iParamPort.nBufferSize;
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "PVMFOMXEncNode-%s::NegotiateVideoComponentParameters() Outport buffers %d size %d", iNodeTypeId, iNumOutputBuffers, iOMXComponentOutputBufferSize));
 
     InputRotationType.nPortIndex = iInputPortIndex;
     Err = OMX_GetParameter(iOMXEncoder, OMX_IndexConfigCommonRotate, &InputRotationType);
