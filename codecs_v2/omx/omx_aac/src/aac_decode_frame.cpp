@@ -138,16 +138,15 @@ Int OmxAacDecoder::AacDecodeFrames(OMX_S16* aOutputBuffer,
             *aSamplesPerFrame = AACDEC_PCM_FRAME_SAMPLE_SIZE;
         }
 
-        *aInBufSize -= iExt.inputBufferUsedLength;
 
-        if (0 == *aInBufSize)
-        {
-            iInputUsedLength = 0;
-        }
-        else
-        {
-            iInputUsedLength = iExt.inputBufferUsedLength;
-        }
+        /*
+         *  *aInBufSize -= iExt.inputBufferUsedLength;  should render *aInBufSize == 0,
+         *  If the size of the audio config buffer exceeds the size of the audio config data
+         *  the excess bits could be taken as part of next raw aac stream. To avoid that
+         *  we force to consume all bits of the audio config buffer, by making *aInBufSize == 0
+         */
+        *aInBufSize = 0;
+        iInputUsedLength = 0;
 
         return Status;
     }
