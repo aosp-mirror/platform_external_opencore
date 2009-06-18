@@ -1100,7 +1100,11 @@ void AuthorDriver::CommandCompleted(const PVCmdResponse& aResponse)
 {
     author_command *ac = (author_command *)aResponse.GetContext();
     status_t s = aResponse.GetCmdStatus();
-    LOGV("Command (%d) completed with status(%d)", ac->which, s);
+    LOGV("Command (%d) completed with status(%d)", ac? ac->which: -1, s);
+    if (ac == NULL) {
+        LOGE("CommandCompleted: Error - null author command!");
+        return;
+    }
 
     if (ac->which == AUTHOR_SET_OUTPUT_FORMAT) {
         mSelectedComposer = aResponse.GetResponseData();
