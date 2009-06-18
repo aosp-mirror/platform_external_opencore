@@ -1062,7 +1062,13 @@ int AuthorDriver::authorThread()
     PendForExec();
 
     OsclExecScheduler *sched = OsclExecScheduler::Current();
-    sched->StartScheduler(mSyncSem);
+    error = OsclErrNone;
+    OSCL_TRY(error, sched->StartScheduler(mSyncSem));
+    OSCL_FIRST_CATCH_ANY(error,
+             // Some AO did a leave, log it
+             LOGE("Author Engine AO did a leave, error=%d", error)
+            );
+
     LOGV("Delete Author");
     PVAuthorEngineFactory::DeleteAuthor(mAuthor);
     mAuthor = NULL;

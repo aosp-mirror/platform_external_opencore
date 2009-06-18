@@ -1017,7 +1017,12 @@ int PlayerDriver::playerThread()
     LOGV("OsclActiveScheduler::Current");
     OsclExecScheduler *sched = OsclExecScheduler::Current();
     LOGV("StartScheduler");
-    sched->StartScheduler(mSyncSem);
+    error = OsclErrNone;
+    OSCL_TRY(error, sched->StartScheduler(mSyncSem));
+    OSCL_FIRST_CATCH_ANY(error,
+                         // Some AO did a leave, log it
+                         LOGE("Player Engine AO did a leave, error=%d", error)
+                        );
 
     LOGV("DeletePlayer");
     PVPlayerFactory::DeletePlayer(mPlayer);
