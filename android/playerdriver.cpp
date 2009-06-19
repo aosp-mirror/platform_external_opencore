@@ -26,6 +26,7 @@
 #include <utils/threads.h>
 #include <utils/List.h>
 #include <cutils/properties.h>
+#include <binder/Parcel.h>
 
 #include <media/MediaPlayerInterface.h>
 
@@ -1608,6 +1609,30 @@ status_t PVPlayer::setLooping(int loop)
 {
     LOGV("setLooping(%d)", loop);
     return mPlayerDriver->enqueueCommand(new PlayerSetLoop(loop,0,0));
+}
+
+// This is a stub for the direct invocation API.
+// From include/media/MediaPlayerInterface.h where the abstract method
+// is declared:
+//
+//   Invoke a generic method on the player by using opaque parcels
+//   for the request and reply.
+//   @param request Parcel that must start with the media player
+//   interface token.
+//   @param[out] reply Parcel to hold the reply data. Cannot be null.
+//   @return OK if the invocation was made successfully.
+//
+// This stub should be replaced with a concrete implementation.
+//
+// Typically the request parcel will contain an opcode to identify an
+// operation to be executed. There might also be a handle used to
+// create a session between the client and the player.
+//
+// The concrete implementation can then dispatch the request
+// internally based on the double (opcode, handle).
+status_t PVPlayer::invoke(const Parcel& request, Parcel *reply)
+{
+    return INVALID_OPERATION;
 }
 
 }; // namespace android
