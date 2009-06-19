@@ -559,6 +559,7 @@ OSCL_EXPORT_REF PVMFOMXBaseDecNode::PVMFOMXBaseDecNode(int32 aPriority, const ch
     // init to some value
     iOMXComponentOutputBufferSize = 0;
     iNumOutputBuffers = 0;
+    iNumOutstandingOutputBuffers = 0;
     iOMXComponentInputBufferSize = 0;
     iNumInputBuffers = 0;
 
@@ -573,6 +574,16 @@ OSCL_EXPORT_REF PVMFOMXBaseDecNode::PVMFOMXBaseDecNode(int32 aPriority, const ch
     iDynamicReconfigInProgress = false;
     iPauseCommandWasSentToComponent = false;
     iStopCommandWasSentToComponent = false;
+
+    // capability related, set to default values
+    iOMXComponentSupportsExternalOutputBufferAlloc = false;
+    iOMXComponentSupportsExternalInputBufferAlloc = false;
+    iOMXComponentSupportsMovableInputBuffers = false;
+    iIsOMXComponentMultiThreaded = true;
+    iOMXComponentSupportsPartialFrames = false;
+    iOMXComponentUsesNALStartCodes = true;
+    iOMXComponentUsesFullAVCFrames = false;
+    iOMXComponentCanHandleIncompleteFrames = true;
 
     // EOS flag init
     iIsEOSSentToComponent = false;
