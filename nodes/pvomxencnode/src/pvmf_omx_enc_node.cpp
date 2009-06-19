@@ -848,7 +848,9 @@ PVMFOMXEncNode::PVMFOMXEncNode(int32 aPriority) :
     iVideoEncodeParam.iRVLCEnable = false;
     iVideoEncodeParam.iIFrameInterval = DEFAULT_I_FRAME_INTERVAL;
     iVideoEncodeParam.iBufferDelay = (float)0.2;
-    iVideoEncodeParam.iContentType = EI_H263;
+    iVideoEncodeParam.iShortHeader = false;
+    iVideoEncodeParam.iDataPartitioning = false;
+    iVideoEncodeParam.iResyncMarker = true;
 
     // set the default rate control type to variable bit rate control
     // since it has better performance
@@ -2524,16 +2526,8 @@ bool PVMFOMXEncNode::SetMP4EncoderParameters()
 
     //Set the parameters now
     ErrCorrType.nPortIndex = iOutputPortIndex;
-    if (iVideoEncodeParam.iContentType == EI_M4V_STREAMING)
-    {
-        ErrCorrType.bEnableDataPartitioning = OMX_TRUE;
-        ErrCorrType.bEnableResync = OMX_TRUE;
-    }
-    else
-    {
-        ErrCorrType.bEnableDataPartitioning = OMX_FALSE;
-        ErrCorrType.bEnableResync = OMX_FALSE;
-    }
+    ErrCorrType.bEnableDataPartitioning = ((iVideoEncodeParam.iDataPartitioning == true) ? OMX_TRUE : OMX_FALSE);
+    ErrCorrType.bEnableResync = ((iVideoEncodeParam.iResyncMarker == true) ? OMX_TRUE : OMX_FALSE);
 
     // extra parameters - hardcoded
     ErrCorrType.bEnableHEC = OMX_FALSE;
@@ -4923,16 +4917,18 @@ OMX_ERRORTYPE PVMFOMXEncNode::FillBufferDoneProcessing(OMX_OUT OMX_HANDLETYPE aC
         uint32 bufLen = (uint32) aBuffer->nFilledLen;
 
         // in case of mp4 streaming and the very 1st buffer, save vol header separately
-        if ((iOutFormat == PVMF_MIME_M4V) && (iVideoEncodeParam.iContentType == EI_M4V_STREAMING)
-                && (iFrameCounter == 1))
+        if ((iOutFormat == PVMF_MIME_M4V) && (iFrameCounter == 1))
         {
 
             // save the first buffer since this is the VOL header
-
             uint refCounterSize = oscl_mem_aligned_size(sizeof(OsclRefCounterDA));
             OsclMemoryFragment volHeader;
+
+            int vol_len = aBuffer->nFilledLen;
+            bool frameInVolHdr = CheckM4vVopStartCode(pBufdata, &vol_len);
+
             volHeader.ptr = NULL;
-            volHeader.len = aBuffer->nFilledLen; // vol header size should be (28)
+            volHeader.len = vol_len;
             uint8* memBuffer = (uint8*)iAlloc.allocate(refCounterSize + volHeader.len);
             oscl_memset(memBuffer, 0, refCounterSize + volHeader.len);
             OsclRefCounter* refCounter = OSCL_PLACEMENT_NEW(memBuffer, OsclRefCounterDA(memBuffer, (OsclDestructDealloc*) & iAlloc));
@@ -4945,9 +4941,17 @@ OMX_ERRORTYPE PVMFOMXEncNode::FillBufferDoneProcessing(OMX_OUT OMX_HANDLETYPE aC
             // save in class variable
             iVolHeader = OsclRefCounterMemFrag(volHeader, refCounter, volHeader.len);
 
-            // release the OMX buffer
-            iOutBufMemoryPool->deallocate(pContext);
-            return OMX_ErrorNone;
+            if (frameInVolHdr == false)
+            {
+                // release the OMX buffer
+                iOutBufMemoryPool->deallocate(pContext);
+                return OMX_ErrorNone;
+            }
+            else  // there is a frame in this buffer, update the pointer and continue to process it.
+            {
+                pBufdata += vol_len;
+                bufLen -= vol_len;
+            }
         }
 
         if (iFrameCounter == 1)
@@ -5315,7 +5319,7 @@ bool PVMFOMXEncNode::QueueOutputBuffer(OsclSharedPtr<PVMFMediaDataImpl> &mediada
         // Check if Fsi needs to be sent (VOL header)
         if (sendYuvFsi)
         {
-            if (iVideoEncodeParam.iContentType == EI_M4V_STREAMING)
+            if (iOutFormat == PVMF_MIME_M4V)
             {
                 mediaDataOut->setFormatSpecificInfo(iVolHeader);
 
@@ -8326,20 +8330,10 @@ OSCL_EXPORT_REF bool PVMFOMXEncNode::SetDataPartitioning(bool aDataPartitioning)
             break;
     }
 
-    if (iVideoEncodeParam.iContentType == EI_H263 || iVideoEncodeParam.iContentType == EI_H264)
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "PVMFOMXEncNode-%s::SetDataPartitioning: Error data partitioning not supported for H263 or H264", iNodeTypeId));
+    iVideoEncodeParam.iDataPartitioning = aDataPartitioning;
 
-        // ignore the error
-        return true;
-        //return false;
-    }
-
-    if (aDataPartitioning)
-        iVideoEncodeParam.iContentType = EI_M4V_STREAMING;
-    else
-        iVideoEncodeParam.iContentType = EI_M4V_DOWNLOAD;
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                    (0, "PVMFOMXEncNode-%s::SetDataPartitioning Called", iNodeTypeId));
 
     return true;
 }
@@ -8404,16 +8398,8 @@ OSCL_EXPORT_REF bool PVMFOMXEncNode::SetRVLC(bool aRVLC)
             break;
     }
 
-    if (iVideoEncodeParam.iContentType == EI_H263 || iVideoEncodeParam.iContentType == EI_H264)
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "PVMFOMXEncNode-%s::SetRVLC : RVLC not supported for H263 or H264", iNodeTypeId));
-
-        // ignore the error
-        return true;
-    }
-
     iVideoEncodeParam.iRVLCEnable = aRVLC;
+
     return true;
 }
 
@@ -8443,7 +8429,7 @@ OSCL_EXPORT_REF bool PVMFOMXEncNode::GetVolHeader(OsclRefCounterMemFrag& aVolHea
             return false;
     }
 
-    if ((iVideoEncodeParam.iContentType == EI_H263) || (iVideoEncodeParam.iContentType == EI_H264))
+    if (iOutFormat != PVMF_MIME_M4V)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
                         (0, "PVMFOMXEncNode-%s::GetVolHeader: Error - VOL header only for M4V encode", iNodeTypeId));
@@ -8452,12 +8438,12 @@ OSCL_EXPORT_REF bool PVMFOMXEncNode::GetVolHeader(OsclRefCounterMemFrag& aVolHea
 
     uint8 *ptr = (uint8 *) iVolHeader.getMemFragPtr();
     //If data partioning mode
-    if (iVideoEncodeParam.iContentType == EI_M4V_STREAMING)
+    if (iVideoEncodeParam.iDataPartitioning == true)
     {
         ptr[iVolHeader.getMemFragSize() - 1] = 0x8F;
     }
     //else combined mode
-    else if (iVideoEncodeParam.iContentType == EI_M4V_DOWNLOAD)
+    else
     {
         ptr[iVolHeader.getMemFragSize() - 1] = 0x1F;
     }
@@ -8525,23 +8511,19 @@ PVMFStatus PVMFOMXEncNode::SetCodecType(PVMFFormatType aCodec)
 
     if (aCodec == PVMF_MIME_H2631998)
     {
-        iVideoEncodeParam.iContentType = EI_H263;
         iOutFormat = PVMF_MIME_H2631998;
     }
     else if (aCodec == PVMF_MIME_H2632000)
     {
-        iVideoEncodeParam.iContentType = EI_H263;
         iOutFormat = PVMF_MIME_H2632000;
     }
     else if (aCodec == PVMF_MIME_M4V)
     {
-        iVideoEncodeParam.iContentType = EI_M4V_STREAMING;
         iOutFormat = PVMF_MIME_M4V;
     }
     else if (aCodec == PVMF_MIME_H264_VIDEO_RAW ||
              aCodec == PVMF_MIME_H264_VIDEO_MP4)
     {
-        iVideoEncodeParam.iContentType = EI_H264;
         iOutFormat = aCodec;
     }
     else if (aCodec == PVMF_MIME_AMR_IETF ||
@@ -9920,3 +9902,38 @@ bool PVMFOMXEncNode::AVCAnnexBGetNALUnit(uint8 *bitstream, uint8 **nal_unit, int
 
     return true;
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+bool PVMFOMXEncNode::CheckM4vVopStartCode(uint8* data, int* len)
+{
+    int32 count = 0;
+    int32 i = *len;
+
+    if (i < 4)  // at least the size of frame header
+    {
+        return false;
+    }
+    while (--i)
+    {
+        if ((count > 1) && (data[0] == 0x01) && (data[1] == 0xB6))
+        {
+            i += 2;
+            break;
+        }
+
+        if (*data++)
+            count = 0;
+        else
+            count++;
+    }
+
+    // i is number of bytes left (including 00 00 01 B6)
+    if (i > 0)
+    {
+        *len = (*len - i - 1); // len before finding VOP start code
+        return true;
+    }
+
+    return false;
+}
+
