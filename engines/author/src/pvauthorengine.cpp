@@ -538,7 +538,19 @@ void PVAuthorEngine::NodeUtilCommandCompleted(const PVMFCmdResp& aResponse)
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "PVAuthorEngine::NodeUtilCommandCompleted"));
 
-    // Retrieve the first pending command from queue
+    if (iPendingCmds.empty())
+    {
+        // Prevent from out-of-boundary access to iPendingCmds queue
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                        (0, "PVAuthorEngine::NodeUtilCommandCompleted: empty pending command queue while receiving response for command: id(%d), status(%d) and context(%p)!", aResponse.GetCmdId(), aResponse.GetCmdStatus(), aResponse.GetContext()));
+        SetPVAEState(PVAE_STATE_ERROR);
+        PVAsyncErrorEvent event(PVMFFailure);
+        iErrorEventObserver->HandleErrorEvent(event);
+        OSCL_ASSERT(false);  // debugging build does abort; release build does nothing
+        return;
+    }
+
+    // Now it is safe to retrieve the first pending command from queue
     PVEngineCommand cmd(iPendingCmds[0]);
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "PVAuthorEngine::NodeUtilCommandCompleted cmdType:%d", cmd.GetCmdType()));
