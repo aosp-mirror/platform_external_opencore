@@ -292,7 +292,7 @@ int32 CCYUV420SEMItoYUV420::Convert(uint8 *inyuv, uint8 **outyuv)
 
             break;
 
-        case 3: // Rotation270	CW
+        case 3: // Rotation270  CW
             /* To traverse in raster scan for output and vertical scan on the input.
             ** You can write output 4 bytes at a time.
             ** However, it takes more number of variables and more code size.

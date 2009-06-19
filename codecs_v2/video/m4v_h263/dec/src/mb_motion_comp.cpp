@@ -20,32 +20,32 @@
  INPUT AND OUTPUT DEFINITIONS
 
  Inputs:
-	video = pointer to structure of type VideoDecData
+    video = pointer to structure of type VideoDecData
 
  Local Stores/Buffers/Pointers Needed:
-	roundtab16 = rounding table
+    roundtab16 = rounding table
 
  Global Stores/Buffers/Pointers Needed:
-	None
+    None
 
  Outputs:
-	None
+    None
 
  Pointers and Buffers Modified:
-	video->currVop->yChan contents are the newly calculated luminance
-	  data
-	video->currVop->uChan contents are the newly calculated chrominance
-	  b data
-	video->currVop->vChan contents are the newly calculated chrominance
-	  r data
-	video->pstprcTypCur contents are the updated semaphore propagation
-	  values
+    video->currVop->yChan contents are the newly calculated luminance
+      data
+    video->currVop->uChan contents are the newly calculated chrominance
+      b data
+    video->currVop->vChan contents are the newly calculated chrominance
+      r data
+    video->pstprcTypCur contents are the updated semaphore propagation
+      values
 
  Local Stores Modified:
-	None
+    None
 
  Global Stores Modified:
-	None
+    None
 
 ------------------------------------------------------------------------------
  FUNCTION DESCRIPTION
@@ -146,11 +146,11 @@ void  MBMotionComp(
     /* Motion vector (dx,dy) in half-pel resolution */
     int dx, dy;
 
-    MOT	px[4], py[4];
+    MOT px[4], py[4];
     int xpred, ypred;
     int xsum;
     int round1;
-#ifdef PV_POSTPROC_ON // 2/14/2001		
+#ifdef PV_POSTPROC_ON // 2/14/2001      
     /* Total number of pixels in the VOL */
     int32 size = (int32) video->nTotalMB << 8;
     uint8 *pp_dec_y, *pp_dec_u;
@@ -247,9 +247,9 @@ void  MBMotionComp(
 
 
     /* Call function that performs luminance prediction */
-    /*		luminance_pred_mode_inter4v(xpos, ypos, px, py, c_prev,
-    				video->mblock->pred_block, width, height,
-    				round1, mvwidth, &xsum, &ysum);*/
+    /*      luminance_pred_mode_inter4v(xpos, ypos, px, py, c_prev,
+                    video->mblock->pred_block, width, height,
+                    round1, mvwidth, &xsum, &ysum);*/
     c_comp = video->currVop->yChan + offset;
 
 
@@ -270,7 +270,7 @@ void  MBMotionComp(
     /* check whether the MV points outside the frame */
     if (xpred >= 0 && xpred <= ((width << 1) - (2*B_SIZE)) &&
             ypred >= 0 && ypred <= ((height << 1) - (2*B_SIZE)))
-    {	/*****************************/
+    {   /*****************************/
         /* (x,y) is inside the frame */
         /*****************************/
         ;
@@ -278,7 +278,7 @@ void  MBMotionComp(
                                            pred, width, (pred_width << 1) | round1);
     }
     else
-    {	/******************************/
+    {   /******************************/
         /* (x,y) is outside the frame */
         /******************************/
         GetPredOutside(xpred, ypred, c_prev,
@@ -288,7 +288,7 @@ void  MBMotionComp(
 
     /* Compute prediction values over current luminance MB */
     /* (blocks 1); add motion vector prior to input;       */
-    /* add 8 to x_pos to advance to next block	       */
+    /* add 8 to x_pos to advance to next block         */
     xpred = (int)(((xpos + B_SIZE) << 1) + px[1]);
     ypred = (int)((ypos << 1) + py[1]);
 
@@ -306,14 +306,14 @@ void  MBMotionComp(
     /* check whether the MV points outside the frame */
     if (xpred >= 0 && xpred <= ((width << 1) - (2*B_SIZE)) &&
             ypred >= 0 && ypred <= ((height << 1) - (2*B_SIZE)))
-    {	/*****************************/
+    {   /*****************************/
         /* (x,y) is inside the frame */
         /*****************************/
         GetPredAdvBTable[ypred&1][xpred&1](c_prev + (xpred >> 1) + ((ypred >> 1)*width),
                                            pred, width, (pred_width << 1) | round1);
     }
     else
-    {	/******************************/
+    {   /******************************/
         /* (x,y) is outside the frame */
         /******************************/
         GetPredOutside(xpred, ypred, c_prev,
@@ -342,14 +342,14 @@ void  MBMotionComp(
     /* check whether the MV points outside the frame */
     if (xpred >= 0 && xpred <= ((width << 1) - (2*B_SIZE)) &&
             ypred >= 0 && ypred <= ((height << 1) - (2*B_SIZE)))
-    {	/*****************************/
+    {   /*****************************/
         /* (x,y) is inside the frame */
         /*****************************/
         GetPredAdvBTable[ypred&1][xpred&1](c_prev + (xpred >> 1) + ((ypred >> 1)*width),
                                            pred, width, (pred_width << 1) | round1);
     }
     else
-    {	/******************************/
+    {   /******************************/
         /* (x,y) is outside the frame */
         /******************************/
         GetPredOutside(xpred, ypred, c_prev,
@@ -361,7 +361,7 @@ void  MBMotionComp(
     /* Compute prediction values over current luminance MB */
     /* (blocks 3); add motion vector prior to input;       */
     /* add 8 to x_pos and y_pos to advance to next block   */
-    /* on next row					       */
+    /* on next row                         */
     xpred = (int)(((xpos + B_SIZE) << 1) + px[3]);
     ypred = (int)(((ypos + B_SIZE) << 1) + py[3]);
 
@@ -379,14 +379,14 @@ void  MBMotionComp(
     /* check whether the MV points outside the frame */
     if (xpred >= 0 && xpred <= ((width << 1) - (2*B_SIZE)) &&
             ypred >= 0 && ypred <= ((height << 1) - (2*B_SIZE)))
-    {	/*****************************/
+    {   /*****************************/
         /* (x,y) is inside the frame */
         /*****************************/
         GetPredAdvBTable[ypred&1][xpred&1](c_prev + (xpred >> 1) + ((ypred >> 1)*width),
                                            pred, width, (pred_width << 1) | round1);
     }
     else
-    {	/******************************/
+    {   /******************************/
         /* (x,y) is outside the frame */
         /******************************/
         GetPredOutside(xpred, ypred, c_prev,
@@ -464,9 +464,9 @@ void  MBMotionComp(
     cv_comp = video->currVop->vChan + (offset >> 2) + (xpos >> 2);
 
     /* Call function that performs chrominance prediction */
-    /*		chrominance_pred(xpred, ypred, cu_prev, cv_prev,
-    	    pred_block, width_uv, height_uv,
-    		round1);*/
+    /*      chrominance_pred(xpred, ypred, cu_prev, cv_prev,
+            pred_block, width_uv, height_uv,
+            round1);*/
     if (xpred >= 0 && xpred <= ((width << 1) - (2*B_SIZE)) && ypred >= 0 &&
             ypred <= ((height << 1) - (2*B_SIZE)))
     {
@@ -521,7 +521,7 @@ void  MBMotionComp(
         }
 
         /* Compute prediction for Chrominance b (block[4]) */
-        GetPredOutside(xpred, ypred,	cu_prev,
+        GetPredOutside(xpred, ypred,    cu_prev,
                        pred, width, height, round1, pred_width);
 
         if (CBP&1)
@@ -536,7 +536,7 @@ void  MBMotionComp(
         }
 
         /* Compute prediction for Chrominance r (block[5]) */
-        GetPredOutside(xpred, ypred,	cv_prev,
+        GetPredOutside(xpred, ypred,    cv_prev,
                        pred, width, height, round1, pred_width);
 
         return ;
@@ -557,7 +557,7 @@ void  SkippedMBMotionComp(
     PIXEL *cv_comp, *cv_prev;
     int width, width_uv;
     int32 offset;
-#ifdef PV_POSTPROC_ON // 2/14/2001		
+#ifdef PV_POSTPROC_ON // 2/14/2001      
     int imv;
     int32 size = (int32) video->nTotalMB << 8;
     uint8 *pp_dec_y, *pp_dec_u;

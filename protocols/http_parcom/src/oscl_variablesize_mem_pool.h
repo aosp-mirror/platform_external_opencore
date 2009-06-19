@@ -93,7 +93,7 @@ class OsclMemPoolVariableChunkAllocator : public Oscl_DefAlloc
             if (!allocateSanityCheck(request_size))
             {
                 OSCL_LEAVE(OsclErrNoMemory);
-                // return NULL;	This statement was removed to avoid compiler warning for Unreachable Code
+                // return NULL; This statement was removed to avoid compiler warning for Unreachable Code
             }
 
             // do actual allocation
@@ -113,7 +113,7 @@ class OsclMemPoolVariableChunkAllocator : public Oscl_DefAlloc
             if (!deallocateSanityCheck(p))
             {
                 OSCL_LEAVE(OsclErrNoMemory);
-                // return;	This statement was removed to avoid compiler warning for Unreachable Code
+                // return;  This statement was removed to avoid compiler warning for Unreachable Code
             }
 
             // re-claim "p"
@@ -121,7 +121,7 @@ class OsclMemPoolVariableChunkAllocator : public Oscl_DefAlloc
             {
                 // Returned memory is not aligned to the chunk.
                 OSCL_LEAVE(OsclErrNoMemory);
-                // return;	This statement was removed to avoid compiler warning for Unreachable Code
+                // return;  This statement was removed to avoid compiler warning for Unreachable Code
             }
 
             // Notify the observer about free chunk available if waiting for such callback
@@ -266,7 +266,7 @@ class OsclMemPoolVariableChunkAllocator : public Oscl_DefAlloc
             if (iMaxPoolSize == 0)
             {
                 OSCL_LEAVE(OsclErrNoMemory);
-                // return;	This statement was removed to avoid compiler warning for Unreachable Code
+                // return;  This statement was removed to avoid compiler warning for Unreachable Code
             }
 
             // Create one block of memory for the memory pool
@@ -275,7 +275,7 @@ class OsclMemPoolVariableChunkAllocator : public Oscl_DefAlloc
             if (iMemPool == NULL)
             {
                 OSCL_LEAVE(OsclErrNoMemory);
-                // return;	This statement was removed to avoid compiler warning for Unreachable Code
+                // return;  This statement was removed to avoid compiler warning for Unreachable Code
             }
 
             // Set up the free and used mem chunk list vector
@@ -287,7 +287,7 @@ class OsclMemPoolVariableChunkAllocator : public Oscl_DefAlloc
             if (err)
             {
                 OSCL_LEAVE(OsclErrNoMemory);
-                // return;	This statement was removed to avoid compiler warning for Unreachable Code
+                // return;  This statement was removed to avoid compiler warning for Unreachable Code
             }
 
             // set up the first memory segment in the free mem chunk list
@@ -334,7 +334,7 @@ class OsclMemPoolVariableChunkAllocator : public Oscl_DefAlloc
             {
                 // No free chunk is available
                 OSCL_LEAVE(OsclErrNoMemory);
-                // return NULL;		This statement was removed to avoid compiler warning for Unreachable Code
+                // return NULL;     This statement was removed to avoid compiler warning for Unreachable Code
             }
 
             // insert the removed segment into the iUsedMemChunkList if there is
@@ -342,7 +342,7 @@ class OsclMemPoolVariableChunkAllocator : public Oscl_DefAlloc
             if (err)
             {
                 OSCL_LEAVE(OsclErrNoMemory);
-                // return NULL;		This statement was removed to avoid compiler warning for Unreachable Code
+                // return NULL;     This statement was removed to avoid compiler warning for Unreachable Code
             }
 
             // calculate the average alloc size for next split decision --
@@ -449,8 +449,8 @@ class OsclMemPoolVariableChunkAllocator : public Oscl_DefAlloc
             // the input memory segment can be continuous with one or two existing memory segments in iFreeMemChunkList
             // and thus it can be merged into the existing continuous memory segments
             // so search the continuities: left continuity(the input segment is continuous to an existing memory segment on its left side)
-            //							   right continuity(the input segment is continuous to an existing memory segment on its right side)
-            //							   both continuity(the input segment is continuous to two existing memory segments on both sides)
+            //                             right continuity(the input segment is continuous to an existing memory segment on its right side)
+            //                             both continuity(the input segment is continuous to two existing memory segments on both sides)
             int32 index_leftContinuity = -1, index_rightContinuity = -1;
             searchSegmentContinuity(aMemChunk, index_leftContinuity, index_rightContinuity);
 
@@ -462,13 +462,13 @@ class OsclMemPoolVariableChunkAllocator : public Oscl_DefAlloc
           * the input memory segment can be continuous with one or two existing memory segments in iFreeMemChunkList
           * and thus it can be merged into the existing continuous memory segments
           * so search the continuities; left continuity(the input segment is continuous to an existing memory segment on its left side)
-          *							    right continuity(the input segment is continuous to an existing memory segment on its right side)
-          *							    both-sided continuity(the input segment is continuous to two existing memory segments on both sides)
-             * @param aMemChunk,			  input memory segment
+          *                             right continuity(the input segment is continuous to an existing memory segment on its right side)
+          *                             both-sided continuity(the input segment is continuous to two existing memory segments on both sides)
+             * @param aMemChunk,              input memory segment
            * @param index_leftContinuity,  index of the existing memory segment in iFreeMemChunkList that is continuous to
-          *								  the input memory segment on its left side
+          *                               the input memory segment on its left side
           * @param index_rightContinuity, index of the existing memory segment in iFreeMemChunkList that is continuous to
-          *								  the input memory segment on its left side
+          *                               the input memory segment on its left side
         **/
         void searchSegmentContinuity(OsclMemoryFragment *aMemChunk, int32 &index_leftContinuity, int32 &index_rightContinuity)
         {
@@ -494,11 +494,11 @@ class OsclMemPoolVariableChunkAllocator : public Oscl_DefAlloc
         /**
          * merge the two or three continuous memory segments if there are
          *
-            * @param aMemChunk,			 input memory segment
-          * @param index_leftContinuity,	 index of the existing memory segment in iFreeMemChunkList that is continuous to
-         *								 the input memory segment on its left side, or not
+            * @param aMemChunk,          input memory segment
+          * @param index_leftContinuity,     index of the existing memory segment in iFreeMemChunkList that is continuous to
+         *                               the input memory segment on its left side, or not
          * @param index_rightContinuity, index of the existing memory segment in iFreeMemChunkList that is continuous to
-         *								 the input memory segment on its left side, or not
+         *                               the input memory segment on its left side, or not
          * @return true => success, false => fail in push_back operation
          **/
         bool doMerge(OsclMemoryFragment *aMemChunk, const int32 index_leftContinuity, const int32 index_rightContinuity)

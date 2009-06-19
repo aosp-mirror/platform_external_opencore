@@ -65,7 +65,7 @@ void OsclRegistryServTlsImpl::Close()
     if (!iIdVec.empty())
     {
         //unregister all comps that were registered by this session
-        for (uint32 i = 0;i < iIdVec.size();i++)
+        for (uint32 i = 0; i < iIdVec.size(); i++)
             GetOsclComponentRegistry()->Unregister(iIdVec[i]);
         //clear our comp list.
         iIdVec.destroy();

@@ -33,11 +33,11 @@
 */
 
 /***************************************************************************************
-File Name		: oscl_mempool_allocator.h
-Description		: File containing definition of class OsclMemPoolAllocator that provides
-				  methods for creating, deleting memory pool.
-Coding History	:
-				  Achint Kaur			April 11, 2006		Initial Draft
+File Name       : oscl_mempool_allocator.h
+Description     : File containing definition of class OsclMemPoolAllocator that provides
+                  methods for creating, deleting memory pool.
+Coding History  :
+                  Achint Kaur           April 11, 2006      Initial Draft
 ***************************************************************************************/
 #ifndef OSCL_MEMPOOL_ALLOCATOR_H_INCLUDED
 #define OSCL_MEMPOOL_ALLOCATOR_H_INCLUDED

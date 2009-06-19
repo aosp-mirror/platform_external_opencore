@@ -182,7 +182,7 @@ void TSC_324m::initVarsSession()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "TSC_324m::initVarsSession"));
-    iTerminalStatus = Phase0_Idle;		/* Terminal Status */
+    iTerminalStatus = Phase0_Idle;      /* Terminal Status */
 
 
     iDisconnectInitiator = EPVT_NONE;
@@ -555,7 +555,7 @@ CPVTerminalParam* TSC_324m::GetTerminalParam()
     iTSCcomponent->GetTerminalParam(*h324param);
     h324param->iMasterSlave = (TPVMasterSlave)iTSCstatemanager.ReadState(TSC_MSD_DECISION);
     h324param->SetH223Param(&h223Param);
-    return 	h324param;
+    return  h324param;
 }
 
 TPVStatusCode
@@ -836,7 +836,7 @@ TPVStatusCode TSC_324m::Disconnect()
 
 TPVStatusCode TSC_324m::Abort()
 {
-//	iMutex->Lock();
+//  iMutex->Lock();
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "TSC: Abort."));
     //LogStats(OUTGOING);
@@ -871,7 +871,7 @@ TPVStatusCode TSC_324m::Abort()
 
     initVarsSession();
 
-//	iMutex->Unlock();
+//  iMutex->Unlock();
     return ret;
 }
 
@@ -881,7 +881,7 @@ TPVStatusCode TSC_324m::Abort()
         PhaseA          ,
         PhaseB          ,
         PhaseC          ,
-		PhaseD_CSUP		,  // Call Setup
+        PhaseD_CSUP     ,  // Call Setup
         PhaseE_Comm     ,  // Ongoing Communication
         PhaseF_Clc      ,  // Closing all outgoing LCNs
         PhaseF_End      ,  // End of Session
@@ -894,7 +894,7 @@ void TSC_324m::Handle(PS_ControlMsgHeader msg)
     DISPATCH_PTR func_ptr = NULL;
     bool handled = false;
 
-//	iMutex->Lock();
+//  iMutex->Lock();
 
     /* Event Receive; a non blocking call */
     EventNo = Tsc_EventReceive(msg);
@@ -1129,7 +1129,7 @@ void TSC_324m::SetDispatchTable()
         { OSCL_FUNCTION_PTR(TSC_324m::MiscIndicationRecv), PhaseD_CSUP, 58}, //E_PtvId_Idc_Mscl_Cfm
         { OSCL_FUNCTION_PTR(TSC_324m::SkewIndicationRecv), PhaseD_CSUP, 59}, //E_PtvId_Idc_H223skw_Cfm
         { OSCL_FUNCTION_PTR(TSC_324m::FlowControlIndicationReceived)   ,  PhaseD_CSUP  ,  60 }, //E_PtvId_Cmd_Fc
-//		{ InternalError_CSUP,  PhaseD_CSUP  ,  38 }, //H245_INTERNAL_ERROR
+//      { InternalError_CSUP,  PhaseD_CSUP  ,  38 }, //H245_INTERNAL_ERROR
         /* ----------------------------------------- */
         /* --------- ONGOING COMM EVENTS ----------- */
         /* ----------------------------------------- */
@@ -2381,9 +2381,9 @@ void TSC_324m::ConfigureSrp(TPVH223Level aLevel)
     iOutgoingSrpPort = iSrp->RequestLLPort(SRP_INPUT_PORT_TAG);
     iIncomingSrpPort = iSrp->RequestLLPort(SRP_OUTPUT_PORT_TAG);
     iOutgoingSrpPort->Connect(incoming_control_channel);
-//	incoming_control_channel->Connect(iOutgoingSrpPort);
+//  incoming_control_channel->Connect(iOutgoingSrpPort);
     iIncomingSrpPort->Connect(outgoing_control_channel);
-//	outgoing_control_channel->Connect(iIncomingSrpPort);
+//  outgoing_control_channel->Connect(iIncomingSrpPort);
 
     iTscSrpBuffer->Start();
     iSrp->SrpStart();

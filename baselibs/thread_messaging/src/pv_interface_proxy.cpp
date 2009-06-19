@@ -115,7 +115,7 @@ OSCL_EXPORT_REF void CPVInterfaceProxy::ConstructL(uint32 nreserve1, uint32 nres
     if (nreserve2 > 0)
     {
         iCommandQueue.reserve(nreserve2);
-//		iNotificationQueue.reserve(nreserve2);
+//      iNotificationQueue.reserve(nreserve2);
     }
 
     //create handler
@@ -246,7 +246,7 @@ OSCL_EXPORT_REF void CPVInterfaceProxy::DeliverNotifications(int32 aTargetCount,
     if (iPVThreadContext.IsSameThreadContext())
         OsclError::Leave(OsclErrThreadContextIncorrect);
 
-    for (int32 count = 0;count < aTargetCount;)
+    for (int32 count = 0; count < aTargetCount;)
     {
         //get next notification or cleanup message.
         iNotifierQueueCrit.Lock();
@@ -265,7 +265,7 @@ OSCL_EXPORT_REF void CPVInterfaceProxy::DeliverNotifications(int32 aTargetCount,
             if (ext)
                 ext->iClient->HandleNotification(notice.iMsgId, notice.iMsg);
             else
-            {	//since messages are cleaned up when interfaces
+            {   //since messages are cleaned up when interfaces
                 //get unregistered, we should not get here.
                 OSCL_ASSERT(0);//debug error.
             }
@@ -337,7 +337,7 @@ void CPVInterfaceProxy::CleanupCommands(CPVProxyInterface *aExt, bool aAll, TPVP
     if (!aExt)
         return ;
     iHandlerQueueCrit.Lock();
-    for (uint32 i = 0;i < iCommandQueue.size();i++)
+    for (uint32 i = 0; i < iCommandQueue.size(); i++)
     {
         CPVProxyMsg *msg = &iCommandQueue[i];
         if (msg->iProxyId == aExt->iProxyId
@@ -371,7 +371,7 @@ void CPVInterfaceProxy::CleanupNotifications(CPVProxyInterface *aExt, bool aAll,
     if (!aExt)
         return ;
     iNotifierQueueCrit.Lock();
-    for (uint i = 0;i < iNotificationQueue.size();i++)
+    for (uint i = 0; i < iNotificationQueue.size(); i++)
     {
         CPVProxyMsg *msg = &iNotificationQueue[i];
         if (msg->iProxyId == aExt->iProxyId
@@ -478,7 +478,7 @@ CPVProxyInterface * CPVInterfaceProxy::FindInterface(TPVProxyId aId, bool locked
 {
     if (!locked)
         iProxyListCrit.Lock();
-    for (uint32 i = 0;i < iProxyList.size();i++)
+    for (uint32 i = 0; i < iProxyList.size(); i++)
     {
         if (iProxyList[i].iProxyId == aId)
         {

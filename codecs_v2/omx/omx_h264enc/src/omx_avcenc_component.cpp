@@ -25,11 +25,11 @@
 const uint8 NAL_START_CODE[4] = {0, 0, 0, 1};
 
 #define CONFIG_SIZE_AND_VERSION(param) \
-	    param.nSize=sizeof(param); \
-	    param.nVersion.s.nVersionMajor = SPECVERSIONMAJOR; \
-	    param.nVersion.s.nVersionMinor = SPECVERSIONMINOR; \
-	    param.nVersion.s.nRevision = SPECREVISION; \
-	    param.nVersion.s.nStep = SPECSTEP;
+        param.nSize=sizeof(param); \
+        param.nVersion.s.nVersionMajor = SPECVERSIONMAJOR; \
+        param.nVersion.s.nVersionMinor = SPECVERSIONMINOR; \
+        param.nVersion.s.nRevision = SPECREVISION; \
+        param.nVersion.s.nStep = SPECSTEP;
 
 // This function is called by OMX_GetHandle and it creates an instance of the avc component AO
 OMX_ERRORTYPE AvcEncOmxComponentFactory(OMX_OUT OMX_HANDLETYPE* pHandle, OMX_IN OMX_PTR pAppData, OMX_PTR pProxy, OMX_STRING aOmxLibName, OMX_PTR &aOmxLib, OMX_PTR aOsclUuid, OMX_U32 &aRefCount)
@@ -83,7 +83,7 @@ OMX_ERRORTYPE AvcEncOmxComponentDestructor(OMX_IN OMX_HANDLETYPE pHandle, OMX_PT
 #if DYNAMIC_LOAD_OMX_AVCENC_COMPONENT
 
 class AvcEncOmxSharedLibraryInterface: public OsclSharedLibraryInterface,
-            public OmxSharedLibraryInterface
+        public OmxSharedLibraryInterface
 
 {
     public:
@@ -120,13 +120,13 @@ extern "C"
 {
     OSCL_EXPORT_REF OsclAny* PVGetInterface()
     {
-      return (OsclAny*) OSCL_NEW(AvcEncOmxSharedLibraryInterface,());
+        return (OsclAny*) OSCL_NEW(AvcEncOmxSharedLibraryInterface, ());
     }
-    
+
     OSCL_EXPORT_REF void PVReleaseInterface(OsclSharedLibraryInterface* aInstance)
     {
-          AvcEncOmxSharedLibraryInterface* module = (AvcEncOmxSharedLibraryInterface*)aInstance;
-          OSCL_DELETE(module);
+        AvcEncOmxSharedLibraryInterface* module = (AvcEncOmxSharedLibraryInterface*)aInstance;
+        OSCL_DELETE(module);
     }
 }
 
@@ -285,20 +285,20 @@ OMX_ERRORTYPE OmxComponentAvcEncAO::ConstructComponent(OMX_PTR pAppData, OMX_PTR
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.bPopulated = OMX_FALSE;
 
 
-    //OMX_VIDEO_PARAM_AVCTYPE	//Default values for avc video output param port
+    //OMX_VIDEO_PARAM_AVCTYPE   //Default values for avc video output param port
     oscl_memset(&ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->VideoAvc, 0, sizeof(OMX_VIDEO_PARAM_AVCTYPE));
     SetHeader(&ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->VideoAvc, sizeof(OMX_VIDEO_PARAM_AVCTYPE));
 
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->VideoAvc.nPortIndex = OMX_PORT_OUTPUTPORT_INDEX;
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->VideoAvc.eProfile = OMX_VIDEO_AVCProfileBaseline;
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->VideoAvc.eLevel = OMX_VIDEO_AVCLevel1b;
-    ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->VideoAvc.nPFrames = 0xFFFFFFFF;	//Default value
-    ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->VideoAvc.nBFrames = 0;		//No support for B frames
+    ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->VideoAvc.nPFrames = 0xFFFFFFFF; //Default value
+    ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->VideoAvc.nBFrames = 0;      //No support for B frames
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->VideoAvc.nAllowedPictureTypes = OMX_VIDEO_PictureTypeI | OMX_VIDEO_PictureTypeP;
 
-    ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->VideoAvc.nRefFrames = 1;	//Only support this value
+    ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->VideoAvc.nRefFrames = 1;    //Only support this value
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->VideoAvc.eLoopFilterMode = OMX_VIDEO_AVCLoopFilterEnable;
-    ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->VideoAvc.bEnableFMO = OMX_FALSE;	//Default value is false
+    ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->VideoAvc.bEnableFMO = OMX_FALSE;    //Default value is false
 
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->VideoAvc.bFrameMBsOnly = OMX_TRUE;
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->VideoAvc.bMBAFF = OMX_FALSE;
@@ -401,16 +401,16 @@ OMX_ERRORTYPE OmxComponentAvcEncAO::ConstructComponent(OMX_PTR pAppData, OMX_PTR
     //OMX_VIDEO_PARAM_QUANTIZATIONTYPE settings of output port
     SetHeader(&pOutPort->VideoQuantType, sizeof(OMX_VIDEO_PARAM_QUANTIZATIONTYPE));
     pOutPort->VideoQuantType.nPortIndex = OMX_PORT_OUTPUTPORT_INDEX;
-    pOutPort->VideoQuantType.nQpI = 0;	//Not required by encoder
-    pOutPort->VideoQuantType.nQpP = 0;	//Default is 0
-    pOutPort->VideoQuantType.nQpB = 0;	//Not required by encoder
+    pOutPort->VideoQuantType.nQpI = 0;  //Not required by encoder
+    pOutPort->VideoQuantType.nQpP = 0;  //Default is 0
+    pOutPort->VideoQuantType.nQpB = 0;  //Not required by encoder
 
 
     //OMX_VIDEO_PARAM_VBSMCTYPE settings of output port
     oscl_memset(&pOutPort->VideoBlockMotionSize, 0, sizeof(OMX_VIDEO_PARAM_VBSMCTYPE));
     SetHeader(&pOutPort->VideoBlockMotionSize, sizeof(OMX_VIDEO_PARAM_VBSMCTYPE));
     pOutPort->VideoBlockMotionSize.nPortIndex = OMX_PORT_OUTPUTPORT_INDEX;
-    pOutPort->VideoBlockMotionSize.b16x16 = OMX_TRUE;		//Encoder only support this mode
+    pOutPort->VideoBlockMotionSize.b16x16 = OMX_TRUE;       //Encoder only support this mode
 
 
     //OMX_VIDEO_PARAM_MOTIONVECTORTYPE settings of output port
@@ -418,7 +418,7 @@ OMX_ERRORTYPE OmxComponentAvcEncAO::ConstructComponent(OMX_PTR pAppData, OMX_PTR
     SetHeader(&pOutPort->VideoMotionVector, sizeof(OMX_VIDEO_PARAM_MOTIONVECTORTYPE));
     pOutPort->VideoMotionVector.nPortIndex = OMX_PORT_OUTPUTPORT_INDEX;
     pOutPort->VideoMotionVector.eAccuracy = OMX_Video_MotionVectorQuarterPel;
-    pOutPort->VideoMotionVector.bUnrestrictedMVs = OMX_TRUE;		//Only support true
+    pOutPort->VideoMotionVector.bUnrestrictedMVs = OMX_TRUE;        //Only support true
     pOutPort->VideoMotionVector.sXSearchRange = 16;
     pOutPort->VideoMotionVector.sYSearchRange = 16;
 
@@ -436,7 +436,7 @@ OMX_ERRORTYPE OmxComponentAvcEncAO::ConstructComponent(OMX_PTR pAppData, OMX_PTR
     pOutPort->AvcSliceFMO.nPortIndex = OMX_PORT_OUTPUTPORT_INDEX;
     pOutPort->AvcSliceFMO.eSliceMode = OMX_VIDEO_SLICEMODE_AVCDefault;
     pOutPort->AvcSliceFMO.nNumSliceGroups = 1;
-    pOutPort->AvcSliceFMO.nSliceGroupMapType = 1;			//Only support map type of 1
+    pOutPort->AvcSliceFMO.nSliceGroupMapType = 1;           //Only support map type of 1
 
 
     //OMX_CONFIG_INTRAREFRESHVOPTYPE settings of output port
@@ -477,8 +477,8 @@ OMX_ERRORTYPE OmxComponentAvcEncAO::ConstructComponent(OMX_PTR pAppData, OMX_PTR
 
 
 /** This function is called by the omx core when the component
-	* is disposed by the IL client with a call to FreeHandle().
-	*/
+    * is disposed by the IL client with a call to FreeHandle().
+    */
 
 OMX_ERRORTYPE OmxComponentAvcEncAO::DestroyComponent()
 {
@@ -515,12 +515,12 @@ void OmxComponentAvcEncAO::ProcessData()
     QueueType* pInputQueue = ipPorts[OMX_PORT_INPUTPORT_INDEX]->pBufferQueue;
     QueueType* pOutputQueue = ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->pBufferQueue;
 
-    ComponentPortType*	pInPort = ipPorts[OMX_PORT_INPUTPORT_INDEX];
+    ComponentPortType*  pInPort = ipPorts[OMX_PORT_INPUTPORT_INDEX];
 
-    OMX_U8*					pOutBuffer;
-    OMX_U32					OutputLength;
-    AVCEnc_Status			EncodeReturn = AVCENC_SUCCESS;
-    OMX_COMPONENTTYPE*		pHandle = &iOmxComponent;
+    OMX_U8*                 pOutBuffer;
+    OMX_U32                 OutputLength;
+    AVCEnc_Status           EncodeReturn = AVCENC_SUCCESS;
+    OMX_COMPONENTTYPE*      pHandle = &iOmxComponent;
 
     if ((!iIsInputBufferEnded) || (iEndofStream))
     {
@@ -659,8 +659,8 @@ void OmxComponentAvcEncAO::ProcessData()
                     iBufferOverRun = OMX_FALSE;
                     CopyDataToOutputBuffer();
 
-                }	//else loop of if (OMX_FALSE == iMantainOutInternalBuffer)
-            }	//if (OutputLength > 0)	 loop
+                }   //else loop of if (OMX_FALSE == iMantainOutInternalBuffer)
+            }   //if (OutputLength > 0)  loop
 
             //If encoder returned error in case of frame skip/corrupt frame, report it to the client via a callback
             if (((AVCENC_SKIPPED_PICTURE == EncodeReturn) || (AVCENC_FAIL == EncodeReturn))
@@ -761,7 +761,7 @@ void OmxComponentAvcEncAO::ProcessData()
 
 OMX_BOOL OmxComponentAvcEncAO::CopyDataToOutputBuffer()
 {
-    ComponentPortType*	pOutPort = ipPorts[OMX_PORT_OUTPUTPORT_INDEX];
+    ComponentPortType*  pOutPort = ipPorts[OMX_PORT_OUTPUTPORT_INDEX];
     QueueType* pOutputQueue = ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->pBufferQueue;
 
     while (iInternalOutBufFilledLen > 0)
@@ -814,7 +814,7 @@ OMX_BOOL OmxComponentAvcEncAO::CopyDataToOutputBuffer()
             ipOutputBuffer->nOffset = 0;
             iNewOutBufRequired = OMX_FALSE;
         }
-    }	//while (iInternalOutBufFilledLen > 0)
+    }   //while (iInternalOutBufFilledLen > 0)
 
     return OMX_TRUE;
 
@@ -1160,7 +1160,7 @@ void OmxComponentAvcEncAO::ManageFrameBoundaries()
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_NOTICE,
                     (0, "OmxComponentAvcEncAO::ManageFrameBoundaries() In"));
 
-    ComponentPortType*	pOutPort = ipPorts[OMX_PORT_OUTPUTPORT_INDEX];
+    ComponentPortType*  pOutPort = ipPorts[OMX_PORT_OUTPUTPORT_INDEX];
 
     if (!iPVCapabilityFlags.iOMXComponentUsesFullAVCFrames || !ipAvcEncoderObject->GetSpsPpsHeaderFlag())
     {

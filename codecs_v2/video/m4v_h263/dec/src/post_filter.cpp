@@ -16,10 +16,10 @@
  * -------------------------------------------------------------------
  */
 
-#include 	"mp4dec_lib.h"
+#include    "mp4dec_lib.h"
 
 #ifdef PV_ANNEX_IJKT_SUPPORT
-#include	"motion_comp.h"
+#include    "motion_comp.h"
 #include "mbtype_mode.h"
 const static int STRENGTH_tab[] = {0, 1, 1, 2, 2, 3, 3, 4, 4, 4, 5, 5, 6, 6, 7, 7, 7, 8, 8, 8, 9, 9, 9, 10, 10, 10, 11, 11, 11, 12, 12, 12};
 #endif

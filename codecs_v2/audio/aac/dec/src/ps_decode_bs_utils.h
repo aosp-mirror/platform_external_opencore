@@ -86,13 +86,13 @@ extern "C"
 #endif
 
     void differential_Decoding(Int32 enable,
-                               Int32 *aIndex,
-                               Int32 *aPrevFrameIndex,
-                               Int32 DtDf,
-                               Int32 nrElements,
-                               Int32 stride,
-                               Int32 minIdx,
-                               Int32 maxIdx);
+    Int32 *aIndex,
+    Int32 *aPrevFrameIndex,
+    Int32 DtDf,
+    Int32 nrElements,
+    Int32 stride,
+    Int32 minIdx,
+    Int32 maxIdx);
 
     Int32 limitMinMax(Int32 i,
                       Int32 min,

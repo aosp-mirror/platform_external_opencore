@@ -508,24 +508,24 @@ enum BaseKeys_SelectionType
     FILE_IO
 };
 
-#define PVMFFFPARSERNODE_MAX_NUM_TRACKS	6
+#define PVMFFFPARSERNODE_MAX_NUM_TRACKS 6
 
 class PVMFMP4FFParserNode : public OsclTimerObject,
-            public PVMFNodeInterface,
-            public PVMFDataSourceInitializationExtensionInterface,
-            public PVMFTrackSelectionExtensionInterface,
-            public PvmfDataSourcePlaybackControlInterface,
-            public PVMFMetadataExtensionInterface,
-            public PVMFTrackLevelInfoExtensionInterface,
-            public PVMFCPMStatusObserver,
-            public PvmiDataStreamObserver,
-            public PVMIDatastreamuserInterface,
-            public PVMFFormatProgDownloadSupportInterface,
-            public OsclTimerObserver,
-            public PVMFCPMPluginLicenseInterface,
-            public PvmiCapabilityAndConfig,
-            public PVMFMediaClockStateObserver, // For observing the playback clock states
-            public PvmfDataSourceDirectionControlInterface
+        public PVMFNodeInterface,
+        public PVMFDataSourceInitializationExtensionInterface,
+        public PVMFTrackSelectionExtensionInterface,
+        public PvmfDataSourcePlaybackControlInterface,
+        public PVMFMetadataExtensionInterface,
+        public PVMFTrackLevelInfoExtensionInterface,
+        public PVMFCPMStatusObserver,
+        public PvmiDataStreamObserver,
+        public PVMIDatastreamuserInterface,
+        public PVMFFormatProgDownloadSupportInterface,
+        public OsclTimerObserver,
+        public PVMFCPMPluginLicenseInterface,
+        public PvmiCapabilityAndConfig,
+        public PVMFMediaClockStateObserver, // For observing the playback clock states
+        public PvmfDataSourceDirectionControlInterface
 {
     public:
         PVMFMP4FFParserNode(int32 aPriority = OsclActiveObject::EPriorityNominal);

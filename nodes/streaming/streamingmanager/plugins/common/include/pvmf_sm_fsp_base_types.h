@@ -410,18 +410,18 @@ class PVMFSMFSPChildNodeContainer
         }
 
 
-        int32				commandStartOffset;
-        PVMFNodeInterface*	iNode;
-        int32				iNodeTag;
-        PVMFSessionId		iSessionId;
+        int32               commandStartOffset;
+        PVMFNodeInterface*  iNode;
+        int32               iNodeTag;
+        PVMFSessionId       iSessionId;
         PVMFSMFSPChildNodeCmdState  iNodeCmdState;
-        int32				iNumRequestPortsPending;
-        bool				iAutoPaused;
+        int32               iNumRequestPortsPending;
+        bool                iAutoPaused;
         Oscl_Vector<PVMFPortInterface*, OsclMemAllocator> iInputPorts;
         Oscl_Vector<PVMFPortInterface*, OsclMemAllocator> iOutputPorts;
         Oscl_Vector<PVMFPortInterface*, OsclMemAllocator> iFeedBackPorts;
-        Oscl_Vector<PVInterface*, OsclMemAllocator>		  iExtensions;
-        Oscl_Vector<PVUuid, OsclMemAllocator>			  iExtensionUuids;
+        Oscl_Vector<PVInterface*, OsclMemAllocator>       iExtensions;
+        Oscl_Vector<PVUuid, OsclMemAllocator>             iExtensionUuids;
 
 };
 

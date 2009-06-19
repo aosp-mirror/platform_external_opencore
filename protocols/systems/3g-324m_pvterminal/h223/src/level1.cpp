@@ -16,8 +16,8 @@
  * -------------------------------------------------------------------
  */
 /*
- * File:	muxpdu.c
- * Comment:	Mux level 1 specific routines
+ * File:    muxpdu.c
+ * Comment: Mux level 1 specific routines
  */
 #include "level1.h"
 #include "h223.h"
@@ -72,7 +72,7 @@ Level1PduParcom::GetStuffing(uint8* pPdu, uint32 buf_size, uint8 mux_code)
             size_left -= 2;
         }
     }
-    return (buf_size -size_left);
+    return (buf_size - size_left);
 }
 
 PVMFStatus Level1PduParcom::CompletePdu(OsclSharedPtr<PVMFMediaDataImpl>& pdu, int8 MuxTblNum, uint8 pm)
@@ -113,7 +113,7 @@ PVMFStatus Level1PduParcom::CompletePdu(OsclSharedPtr<PVMFMediaDataImpl>& pdu, i
         pPdu = (uint8*)frag.getMemFragPtr();
         *pPdu = 0xe1;
         *(pPdu + 1) = 0x4d;
-        if (iDf) 	/* L1 Double Flag */
+        if (iDf)    /* L1 Double Flag */
         {
             *(pPdu + 2) = 0xe1;
             *(pPdu + 3) = 0x4d;

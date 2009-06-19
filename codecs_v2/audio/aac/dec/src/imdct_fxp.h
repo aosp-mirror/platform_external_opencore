@@ -32,7 +32,7 @@
  Description:   Modified function interface to accomodate the normalization
                 that now is done in this function.
 
- Who:						Date:
+ Who:                       Date:
  Description:
 
 ------------------------------------------------------------------------------
@@ -47,8 +47,8 @@
 /*----------------------------------------------------------------------------
 ; CONTINUE ONLY IF NOT ALREADY DEFINED
 ----------------------------------------------------------------------------*/
-#ifndef	IMDCT_FXP_H
-#define	IMDCT_FXP_H
+#ifndef IMDCT_FXP_H
+#define IMDCT_FXP_H
 
 #ifdef __cplusplus
 extern "C"
@@ -119,4 +119,4 @@ extern "C"
 /*----------------------------------------------------------------------------
 ; END
 ----------------------------------------------------------------------------*/
-#endif	/* IMDCT_FXP_H */
+#endif  /* IMDCT_FXP_H */

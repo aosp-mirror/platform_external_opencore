@@ -135,20 +135,20 @@ class PVMFRTPJitterBufferImpl: public PVMFJitterBufferImpl
         uint32 iPrevPacketRecvTime;
 
         //Burst detection variables:
-        bool			iBurstDetect;
-        uint32			iBurstStartTimestamp;
-        uint32			iEstServerClockBurstStartTimestamp;
-        PVMFMediaClock  *iBurstClock;				//may be wallclock owned by the jitterbuffer Misc can be used instead
+        bool            iBurstDetect;
+        uint32          iBurstStartTimestamp;
+        uint32          iEstServerClockBurstStartTimestamp;
+        PVMFMediaClock  *iBurstClock;               //may be wallclock owned by the jitterbuffer Misc can be used instead
         PVMFTimebase_Tickcount iBurstClockTimeBase;
-        bool			iRTPDataArrived;
-        uint32			iEarlyDecodingTime;
-        bool			iServerBurst;
-        float			iBurstThreshold;
-        uint32			iBurstDetectDurationInMilliSec;
-        bool			iInitialBuffering;
+        bool            iRTPDataArrived;
+        uint32          iEarlyDecodingTime;
+        bool            iServerBurst;
+        float           iBurstThreshold;
+        uint32          iBurstDetectDurationInMilliSec;
+        bool            iInitialBuffering;
 
-        uint32			iPlayListRTPTimeBase;
-        bool			iPlayListRTPTimeBaseSet;
+        uint32          iPlayListRTPTimeBase;
+        bool            iPlayListRTPTimeBaseSet;
 
         bool   isPrevRtpTimeSet;
         uint32 iPrevRtpTimeBase;

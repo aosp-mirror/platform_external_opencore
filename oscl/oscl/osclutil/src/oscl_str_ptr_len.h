@@ -249,7 +249,7 @@ public:
     {
         if (len != rhs.len)
         {
-            return (len -rhs.len);
+            return (len - rhs.len);
         }
         return(!oscl_strncmp(ptr, rhs.ptr, rhs.len));
     }

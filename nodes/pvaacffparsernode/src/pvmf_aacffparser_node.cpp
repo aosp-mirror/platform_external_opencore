@@ -51,9 +51,9 @@ PVMFAACFFParserNode::PVMFAACFFParserNode(int32 aPriority)
     iLogger = NULL;
     iExtensionRefCount = 0;
     iFirstFrame = true;
-    iDataPathLogger			   = NULL;
-    iClockLogger			   = NULL;
-    iClientClock			   = NULL;
+    iDataPathLogger            = NULL;
+    iClockLogger               = NULL;
+    iClientClock               = NULL;
 
     iCPM                       = NULL;
     iCPMSessionID              = 0xFFFFFFFF;
@@ -78,7 +78,7 @@ PVMFAACFFParserNode::PVMFAACFFParserNode(int32 aPriority)
     iCPMGetMetaDataValuesCmdId     = 0;
     iCPMGetLicenseInterfaceCmdId   = 0;
     iCPMGetLicenseCmdId            = 0;
-    iCPMCancelGetLicenseCmdId	   = 0;
+    iCPMCancelGetLicenseCmdId      = 0;
     iAACParserNodeMetadataValueCount = 0;
 
     iGenreIndex = 0;
@@ -92,7 +92,7 @@ PVMFAACFFParserNode::PVMFAACFFParserNode(int32 aPriority)
     iDataStreamFactory         = NULL;
     iAutoPaused                = false;
 
-    iStreamID				   = 0;
+    iStreamID                  = 0;
     int32 err;
     OSCL_TRY(err, ConstructL());
 
@@ -1968,7 +1968,7 @@ void PVMFAACFFParserNode::DoCancelAllCommands(PVMFAACFFParserNodeCommand& aCmd)
     while (!iCurrentCommand.empty())
     {
         MoveCmdToCancelQueue(aCmd);
-        //	CommandComplete(iCurrentCommand,iCurrentCommand[0],PVMFErrCancelled);
+        //  CommandComplete(iCurrentCommand,iCurrentCommand[0],PVMFErrCancelled);
     }
 
     //next cancel all queued commands
@@ -3028,13 +3028,13 @@ PVMFAACFFParserNode::DoSetDataSourcePosition(PVMFAACFFParserNodeCommand& aCmd)
         }
 
         // Adjust the timestamp to the end of the last sample, i.e. adding the delta to next sample
-        //	iTrack.iClockConverter->update_clock(timestamp);
+        //  iTrack.iClockConverter->update_clock(timestamp);
 
         uint32 millisecTS = iTrack.iClockConverter->get_converted_ts(1000);
         *actualMediaDataTS = millisecTS;
 
         // Reset the clock to this new starting point.
-        //	iTrack.iClockConverter->set_clock(timestamp,0);
+        //  iTrack.iClockConverter->set_clock(timestamp,0);
         // Reposition
         // If new position is past the end of clip, AAC FF should set the position to the last frame
         uint32 tmpuint32 = 0;
@@ -4285,7 +4285,7 @@ PVMFStatus PVMFAACFFParserNode::PushValueToList(Oscl_Vector<OSCL_HeapString<Oscl
 {
     int32 leavecode = 0;
     OSCL_TRY(leavecode, aKeyListPtr->push_back(aRefMetaDataKeys[aLcv]));
-    OSCL_FIRST_CATCH_ANY(leavecode, PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFAACFFParserNode::PushValueToList() Memory allocation failure when copying metadata key"));return PVMFErrNoMemory);
+    OSCL_FIRST_CATCH_ANY(leavecode, PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFAACFFParserNode::PushValueToList() Memory allocation failure when copying metadata key")); return PVMFErrNoMemory);
     return PVMFSuccess;
 }
 

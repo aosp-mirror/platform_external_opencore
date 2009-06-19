@@ -65,7 +65,7 @@
      FrameInfo.
 
  Description: Replace some instances of getbits to get1bits
-			  when only 1 bit is read.
+              when only 1 bit is read.
 
  Description:
 

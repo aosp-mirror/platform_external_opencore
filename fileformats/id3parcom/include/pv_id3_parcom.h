@@ -191,7 +191,7 @@ class PVID3ParCom
         OSCL_IMPORT_REF PVMFStatus GetID3Frame(const OSCL_String& aFrameType, PvmiKvpSharedPtrVector& aFrame);
 
         /**
-        *	Check if frame of aFrameType is available
+        *   Check if frame of aFrameType is available
         * @param aFrameType Type of ID3 frame
         * @return true if frame is available otherwise false
         */
@@ -297,7 +297,7 @@ class PVID3ParCom
             PV_ID3_CHARSET_UTF16    = 1,
             PV_ID3_CHARSET_UTF16BE  = 2,
             PV_ID3_CHARSET_UTF8     = 3,
-            PV_ID3_CHARSET_END		= 4,
+            PV_ID3_CHARSET_END      = 4,
         } PVID3CharacterSet;
 
     private:
@@ -305,43 +305,43 @@ class PVID3ParCom
         typedef enum
         {
             PV_ID3_FRAME_INVALID = -3,
-            PV_ID3_FRAME_CANDIDATE,		/**< Frame ID doesn't match with known frame IDs.
-										 The frame ID made out of the characters capital A-Z and 0-9.*/
-            PV_ID3_FRAME_UNRECOGNIZED,	/** Valid frame ID, but ID3 parcom doesn't support. */
+            PV_ID3_FRAME_CANDIDATE,     /**< Frame ID doesn't match with known frame IDs.
+                                         The frame ID made out of the characters capital A-Z and 0-9.*/
+            PV_ID3_FRAME_UNRECOGNIZED,  /** Valid frame ID, but ID3 parcom doesn't support. */
             PV_ID3_FRAME_TITLE,         /**< Title. Supported by all ID3 versions. Maximum 30 characters for
-										 ID3v1.x. There is no maximum length limit for ID3v2.x. */
+                                         ID3v1.x. There is no maximum length limit for ID3v2.x. */
             PV_ID3_FRAME_ARTIST,        /**< Artist. Supported by all ID3 versions. Maximum 30 characters for
-										 ID3v1.x. There is no maximum length limit for ID3v2.x*/
+                                         ID3v1.x. There is no maximum length limit for ID3v2.x*/
             PV_ID3_FRAME_ALBUM,         /**< Album. Supported by all ID3 versions. Maximum 30 characters for
-										 ID3v1.x. There is no maximum length limit for ID3v2.x */
+                                         ID3v1.x. There is no maximum length limit for ID3v2.x */
             PV_ID3_FRAME_YEAR,          /**< 4-character numeric string with the year of the recording.
-										 Supported by all ID3 version. */
+                                         Supported by all ID3 version. */
             PV_ID3_FRAME_COMMENT,       /**< Comment. Supported by all ID3 versions. Maximum 30 characters for
-										 ID3v1.x. There is no maximum length limit for ID3v2.x. */
+                                         ID3v1.x. There is no maximum length limit for ID3v2.x. */
             PV_ID3_FRAME_TRACK_NUMBER,  /**< Numeric string of track number on Album. Supported by ID3v1.1 and later. */
             PV_ID3_FRAME_GENRE,         /**< Genre of the music. For ID3v1.x, numeric string of genre type value
-										 defined at http://www.id3.org/id3v2.3.0.html#secA should be used.
-										 ID3v2.x should use the genre name, or refer to ID3v1.x genre type
-										 using the format "(genre_number)" where genre_number is a numeric
-										 string of ID3v1.x genre type value. */
+                                         defined at http://www.id3.org/id3v2.3.0.html#secA should be used.
+                                         ID3v2.x should use the genre name, or refer to ID3v1.x genre type
+                                         using the format "(genre_number)" where genre_number is a numeric
+                                         string of ID3v1.x genre type value. */
             PV_ID3_FRAME_COPYRIGHT,      /**< Copyright message. It must begin with a 4-character numeric string of
-										 the year of copyright and a space character. Supported by ID3v2.x or later. */
-            PV_ID3_FRAME_TRACK_LENGTH,	 /**< Track length. The duration in milliseconds.*/
+                                         the year of copyright and a space character. Supported by ID3v2.x or later. */
+            PV_ID3_FRAME_TRACK_LENGTH,   /**< Track length. The duration in milliseconds.*/
             PV_ID3_FRAME_DATE,
-            PV_ID3_FRAME_PADDED,		 /**< Padding. A frame padded with zero.*/
+            PV_ID3_FRAME_PADDED,         /**< Padding. A frame padded with zero.*/
 
-            PV_ID3_FRAME_PIC,			 /**< PIC. */
-            PV_ID3_FRAME_APIC,			 /**< APIC.*/
-            PV_ID3_FRAME_LYRICS,			 /**< Unsynchronized Lyrics.*/
-            PV_ID3_FRAME_SEEK,			 /* For SEEK frame */
+            PV_ID3_FRAME_PIC,            /**< PIC. */
+            PV_ID3_FRAME_APIC,           /**< APIC.*/
+            PV_ID3_FRAME_LYRICS,             /**< Unsynchronized Lyrics.*/
+            PV_ID3_FRAME_SEEK,           /* For SEEK frame */
             PV_ID3_FRAME_RECORDING_TIME,  /* RECORDING TIME */
-            PV_ID3_FRAME_AUTHOR,		  /* author or writer*/
-            PV_ID3_FRAME_COMPOSER,		  /* music composer */
-            PV_ID3_FRAME_DESCRIPTION,	  /* brief description of the content */
-            PV_ID3_FRAME_VERSION,		  /* Software version of the authoring software */
+            PV_ID3_FRAME_AUTHOR,          /* author or writer*/
+            PV_ID3_FRAME_COMPOSER,        /* music composer */
+            PV_ID3_FRAME_DESCRIPTION,     /* brief description of the content */
+            PV_ID3_FRAME_VERSION,         /* Software version of the authoring software */
             PV_ID3_FRAME_PART_OF_SET,     /* Which part of a set this belongs to */
 
-            PV_ID3_FRAME_EEND			 /**< End. Marks end of frames.*/
+            PV_ID3_FRAME_EEND            /**< End. Marks end of frames.*/
         } PVID3FrameType;
 
         /**
@@ -356,14 +356,14 @@ class PVID3ParCom
             PVID3CharacterSet iTextType;
 
             uint32    iID3V2FrameSize;
-            uint32	  iID3V2SeekOffset;
+            uint32    iID3V2SeekOffset;
             uint8     iID3V2TagFlagsV2;
             uint32    iID3V2ExtendedHeaderSize;
             uint32    iID3V2TagSize;
             uint8     iID3V2FrameID[5];
             uint8     iID3V2FrameFlag[2];
-            bool	  iFooterPresent;
-            uint8	  iID3V2LanguageID[4];
+            bool      iFooterPresent;
+            uint8     iID3V2LanguageID[4];
 
         };
 
@@ -731,9 +731,9 @@ class PVID3ParCom
          * @param picture type
          * @param data length
          * @return Success if conversion is successfull.
-         	*/
+            */
         PVMFStatus GetAlbumArtInfo(PVID3FrameType aFrameType, uint32 aFrameSize, OSCL_HeapString<OsclMemAllocator> &ImageFormat,
-                                   uint8 &PicType, OSCL_HeapString<OsclMemAllocator> &Description, 	uint32 &DataLen);
+                                   uint8 &PicType, OSCL_HeapString<OsclMemAllocator> &Description,  uint32 &DataLen);
         /**
          * @brief This function extracts the albumart information, for unicode data, based on frametype (apic/pic).
          * @param frame type

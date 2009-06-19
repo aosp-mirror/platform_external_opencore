@@ -59,13 +59,13 @@ Can be replaced with assembly instructions for speedup.
 /* a:block address, b:block width, c:block height, d:total_width, e:x or y coordinate */
 
 #define DEFAULT_ATTR  0  /* default memory attribute  */
-#define	FAST_MEM_ATTR 1	 /* fast memory attribute */
+#define FAST_MEM_ATTR 1  /* fast memory attribute */
 
 
 /* This section is for definition of constants. */
 #define MB_SIZE 16
 #define BLOCK_SIZE 4
-#define EMULATION_PREVENTION_THREE_BYTE	0x3
+#define EMULATION_PREVENTION_THREE_BYTE 0x3
 #define NUM_PIXELS_IN_MB  (24*16)
 #define NUM_BLKS_IN_MB 24
 
@@ -74,10 +74,10 @@ Can be replaced with assembly instructions for speedup.
 #define AVCNumIChromaMode  4
 
 /* constants used in the structures below */
-#define MAXIMUMVALUEOFcpb_cnt   32	/* used in HRDParams */
-#define MAX_NUM_REF_FRAMES_IN_PIC_ORDER_CNT_CYCLE 255	/* used in SeqParamSet */
-#define MAX_NUM_SLICE_GROUP  8		/* used in PicParamSet */
-#define MAX_REF_PIC_LIST_REORDERING 32	/* 32 is maximum according to Annex A, SliceHeader */
+#define MAXIMUMVALUEOFcpb_cnt   32  /* used in HRDParams */
+#define MAX_NUM_REF_FRAMES_IN_PIC_ORDER_CNT_CYCLE 255   /* used in SeqParamSet */
+#define MAX_NUM_SLICE_GROUP  8      /* used in PicParamSet */
+#define MAX_REF_PIC_LIST_REORDERING 32  /* 32 is maximum according to Annex A, SliceHeader */
 #define MAX_DEC_REF_PIC_MARKING 64   /* 64 is the maximum possible given the max num ref pictures to 31. */
 #define MAX_FS (16+1)  /* pre-defined size of frame store array */
 #define MAX_LEVEL_IDX  15  /* only 15 levels defined for now */
@@ -233,7 +233,7 @@ Some variables may be removed from the structure if they are found to be useless
 */
 typedef struct tagHRDParams
 {
-    uint  cpb_cnt_minus1;									/* ue(v), range 0..31 */
+    uint  cpb_cnt_minus1;                                   /* ue(v), range 0..31 */
     uint  bit_rate_scale;                          /* u(4) */
     uint  cpb_size_scale;                          /* u(4) */
     uint32  bit_rate_value_minus1[MAXIMUMVALUEOFcpb_cnt];/* ue(v), range 0..2^32-2 */
@@ -278,7 +278,7 @@ typedef struct tagVUIParam
     AVCHRDParams vcl_hrd_parameters;               /* hrd_paramters */
     /* if ((nal_hrd_parameters_present_flag || (vcl_hrd_parameters_present_flag)) */
     uint      low_delay_hrd_flag;               /* u(1) */
-    uint	pic_struct_present_flag;
+    uint    pic_struct_present_flag;
     uint      bitstream_restriction_flag;         /* u(1) */
     uint      motion_vectors_over_pic_boundaries_flag;    /* u(1) */
     uint  max_bytes_per_pic_denom;              /* ue(v), default 2 */
@@ -299,7 +299,7 @@ typedef struct tagSeqParamSet
 {
     uint   Valid;            /* indicates the parameter set is valid */
 
-    uint  profile_idc;				/* u(8) */
+    uint  profile_idc;              /* u(8) */
     uint   constrained_set0_flag;  /* u(1) */
     uint   constrained_set1_flag;  /* u(1) */
     uint   constrained_set2_flag;  /* u(1) */
@@ -307,16 +307,16 @@ typedef struct tagSeqParamSet
     uint  level_idc;               /* u(8) */
     uint  seq_parameter_set_id;    /* ue(v), range 0..31 */
     uint  log2_max_frame_num_minus4; /* ue(v), range 0..12 */
-    uint pic_order_cnt_type;		/* ue(v), range 0..2 */
+    uint pic_order_cnt_type;        /* ue(v), range 0..2 */
     /* if( pic_order_cnt_type == 0 )  */
     uint log2_max_pic_order_cnt_lsb_minus4; /* ue(v), range 0..12 */
     /* else if( pic_order_cnt_type == 1 ) */
     uint delta_pic_order_always_zero_flag;  /* u(1) */
-    int32  offset_for_non_ref_pic;		 /* se(v) */
+    int32  offset_for_non_ref_pic;       /* se(v) */
     int32  offset_for_top_to_bottom_field;  /* se(v) */
     uint  num_ref_frames_in_pic_order_cnt_cycle;   /* ue(v) , range 0..255 */
     /* for( i = 0; i < num_ref_frames_in_pic_order_cnt_cycle; i++ ) */
-    int32   offset_for_ref_frame[MAX_NUM_REF_FRAMES_IN_PIC_ORDER_CNT_CYCLE];		/* se(v) */
+    int32   offset_for_ref_frame[MAX_NUM_REF_FRAMES_IN_PIC_ORDER_CNT_CYCLE];        /* se(v) */
     uint  num_ref_frames;                           /* ue(v), range 0..16 */
     uint   gaps_in_frame_num_value_allowed_flag;    /* u(1) */
     uint  pic_width_in_mbs_minus1;                  /* ue(v) */
@@ -332,10 +332,10 @@ typedef struct tagSeqParamSet
     uint  frame_crop_top_offset;                 /* ue(v) */
     uint  frame_crop_bottom_offset;              /* ue(v) */
     uint   vui_parameters_present_flag;                      /* u(1) */
-//	uint nal_hrd_parameters_present_flag;
-//	uint vcl_hrd_parameters_present_flag;
-//	AVCHRDParams *nal_hrd_parameters;
-//	AVCHRDParams *vcl_hrd_parameters;
+//  uint nal_hrd_parameters_present_flag;
+//  uint vcl_hrd_parameters_present_flag;
+//  AVCHRDParams *nal_hrd_parameters;
+//  AVCHRDParams *vcl_hrd_parameters;
     AVCVUIParams vui_parameters;                  /* AVCVUIParam */
 } AVCSeqParamSet;
 
@@ -352,7 +352,7 @@ typedef struct tagPicParamSet
     uint  pic_order_present_flag;        /* u(1) */
     uint  num_slice_groups_minus1;           /* ue(v), range in Annex A */
     /* if( num_slice_groups_minus1 > 0) */
-    uint  slice_group_map_type;			  /* ue(v), range 0..6 */
+    uint  slice_group_map_type;           /* ue(v), range 0..6 */
     /* if( slice_group_map_type = = 0 ) */
     /* for(0:1:num_slice_groups_minus1) */
     uint  run_length_minus1[MAX_NUM_SLICE_GROUP]; /* ue(v) */
@@ -387,20 +387,20 @@ Some variables may be removed from the structure if they are found to be useless
 */
 typedef struct tagSliceHeader
 {
-    uint	first_mb_in_slice;		/* ue(v) */
-    AVCSliceType slice_type;				/* ue(v), Table 7-3, range 0..9 */
-    uint	pic_parameter_set_id;	/* ue(v), range 0..255 */
-    uint	frame_num;				/* u(v), see log2max_frame_num_minus4 */
+    uint    first_mb_in_slice;      /* ue(v) */
+    AVCSliceType slice_type;                /* ue(v), Table 7-3, range 0..9 */
+    uint    pic_parameter_set_id;   /* ue(v), range 0..255 */
+    uint    frame_num;              /* u(v), see log2max_frame_num_minus4 */
     /* if( !frame_mbs_only_flag) */
-    uint	field_pic_flag;			/* u(1) */
+    uint    field_pic_flag;         /* u(1) */
     /* if(field_pic_flag) */
-    uint bottom_field_flag;	/* u(1) */
+    uint bottom_field_flag; /* u(1) */
     /* if(nal_unit_type == 5) */
-    uint	idr_pic_id;			/* ue(v), range 0..65535 */
+    uint    idr_pic_id;         /* ue(v), range 0..65535 */
     /* if(pic_order_cnt_type==0) */
-    uint	pic_order_cnt_lsb;  /* u(v), range 0..MaxPicOrderCntLsb-1 */
+    uint    pic_order_cnt_lsb;  /* u(v), range 0..MaxPicOrderCntLsb-1 */
     /* if(pic_order_present_flag && !field_pic_flag) */
-    int32 delta_pic_order_cnt_bottom;	/* se(v) */
+    int32 delta_pic_order_cnt_bottom;   /* se(v) */
     /* if(pic_order_cnt_type==1 && !delta_pic_order_always_zero_flag) */
     /* if(pic_order_present_flag && !field_pic_flag) */
     int32 delta_pic_order_cnt[2];
@@ -409,49 +409,49 @@ typedef struct tagSliceHeader
     /* if(slice_type == B) */
     uint direct_spatial_mv_pred_flag; /* u(1) */
     /* if(slice_type == P || slice_type==SP || slice_type==B) */
-    uint num_ref_idx_active_override_flag;	/* u(1) */
+    uint num_ref_idx_active_override_flag;  /* u(1) */
     /* if(num_ref_idx_active_override_flag) */
-    uint num_ref_idx_l0_active_minus1;	/* ue(v) */
+    uint num_ref_idx_l0_active_minus1;  /* ue(v) */
     /* if(slie_type == B) */
-    uint num_ref_idx_l1_active_minus1;	/* ue(v) */
+    uint num_ref_idx_l1_active_minus1;  /* ue(v) */
 
     /* ref_pic_list_reordering() */
-    uint ref_pic_list_reordering_flag_l0;	/* u(1) */
+    uint ref_pic_list_reordering_flag_l0;   /* u(1) */
     uint reordering_of_pic_nums_idc_l0[MAX_REF_PIC_LIST_REORDERING];   /* ue(v), range 0..3 */
-    uint abs_diff_pic_num_minus1_l0[MAX_REF_PIC_LIST_REORDERING];	/* ue(v) */
-    uint long_term_pic_num_l0[MAX_REF_PIC_LIST_REORDERING];		/* ue(v) */
-    uint ref_pic_list_reordering_flag_l1;	/* u(1) */
+    uint abs_diff_pic_num_minus1_l0[MAX_REF_PIC_LIST_REORDERING];   /* ue(v) */
+    uint long_term_pic_num_l0[MAX_REF_PIC_LIST_REORDERING];     /* ue(v) */
+    uint ref_pic_list_reordering_flag_l1;   /* u(1) */
     uint reordering_of_pic_nums_idc_l1[MAX_REF_PIC_LIST_REORDERING];   /* ue(v), range 0..3 */
-    uint abs_diff_pic_num_minus1_l1[MAX_REF_PIC_LIST_REORDERING];	/* ue(v) */
-    uint long_term_pic_num_l1[MAX_REF_PIC_LIST_REORDERING];		/* ue(v) */
+    uint abs_diff_pic_num_minus1_l1[MAX_REF_PIC_LIST_REORDERING];   /* ue(v) */
+    uint long_term_pic_num_l1[MAX_REF_PIC_LIST_REORDERING];     /* ue(v) */
 
     /* end ref_pic_list_reordering() */
     /* if(nal_ref_idc!=0) */
     /* dec_ref_pic_marking() */
-    uint	no_output_of_prior_pics_flag;	/* u(1) */
-    uint long_term_reference_flag;		/* u(1) */
-    uint	adaptive_ref_pic_marking_mode_flag;	/* u(1) */
-    uint	memory_management_control_operation[MAX_DEC_REF_PIC_MARKING];	/* ue(v), range 0..6 */
-    uint difference_of_pic_nums_minus1[MAX_DEC_REF_PIC_MARKING];	/* ue(v) */
-    uint	long_term_pic_num[MAX_DEC_REF_PIC_MARKING];				/* ue(v) */
-    uint	long_term_frame_idx[MAX_DEC_REF_PIC_MARKING];			/* ue(v) */
-    uint	max_long_term_frame_idx_plus1[MAX_DEC_REF_PIC_MARKING];	/* ue(v) */
+    uint    no_output_of_prior_pics_flag;   /* u(1) */
+    uint long_term_reference_flag;      /* u(1) */
+    uint    adaptive_ref_pic_marking_mode_flag; /* u(1) */
+    uint    memory_management_control_operation[MAX_DEC_REF_PIC_MARKING];   /* ue(v), range 0..6 */
+    uint difference_of_pic_nums_minus1[MAX_DEC_REF_PIC_MARKING];    /* ue(v) */
+    uint    long_term_pic_num[MAX_DEC_REF_PIC_MARKING];             /* ue(v) */
+    uint    long_term_frame_idx[MAX_DEC_REF_PIC_MARKING];           /* ue(v) */
+    uint    max_long_term_frame_idx_plus1[MAX_DEC_REF_PIC_MARKING]; /* ue(v) */
     /* end dec_ref_pic_marking() */
     /* if(entropy_coding_mode_flag && slice_type!=I && slice_type!=SI) */
-    uint cabac_init_idc;		/* ue(v), range 0..2 */
-    int	slice_qp_delta;		/* se(v), range 0..51 */
+    uint cabac_init_idc;        /* ue(v), range 0..2 */
+    int slice_qp_delta;     /* se(v), range 0..51 */
     /* if(slice_type==SP || slice_type==SI) */
     /* if(slice_type==SP) */
-    uint	sp_for_switch_flag;	/* u(1) */
-    int	slice_qs_delta;		/* se(v) */
+    uint    sp_for_switch_flag; /* u(1) */
+    int slice_qs_delta;     /* se(v) */
 
     /* if(deblocking_filter_control_present_flag)*/
-    uint disable_deblocking_filter_idc;	/* ue(v), range 0..2 */
+    uint disable_deblocking_filter_idc; /* ue(v), range 0..2 */
     /* if(disable_deblocking_filter_idc!=1) */
-    int	slice_alpha_c0_offset_div2;	/* se(v), range -6..6, default 0 */
-    int	slice_beta_offset_div_2; /* se(v), range -6..6, default 0 */
+    int slice_alpha_c0_offset_div2; /* se(v), range -6..6, default 0 */
+    int slice_beta_offset_div_2; /* se(v), range -6..6, default 0 */
     /* if(num_slice_groups_minus1>0 && slice_group_map_type>=3 && slice_group_map_type<=5)*/
-    uint	slice_group_change_cycle;	/* u(v), use ceil(log2(PicSizeInMapUnits/SliceGroupChangeRate + 1)) bits*/
+    uint    slice_group_change_cycle;   /* u(v), use ceil(log2(PicSizeInMapUnits/SliceGroupChangeRate + 1)) bits*/
 
 } AVCSliceHeader;
 
@@ -462,18 +462,18 @@ This struct contains information about the neighboring pixel.
 typedef struct tagPixPos
 {
     int available;
-    int mb_addr;	/* macroblock address of the current pixel, see below */
-    int x;		/* x,y positions of current pixel relative to the macroblock mb_addr */
+    int mb_addr;    /* macroblock address of the current pixel, see below */
+    int x;      /* x,y positions of current pixel relative to the macroblock mb_addr */
     int y;
-    int pos_x;	/* x,y positions of current pixel relative to the picture. */
+    int pos_x;  /* x,y positions of current pixel relative to the picture. */
     int pos_y;
 } AVCPixelPos;
 
 typedef struct tagNeighborAvailability
 {
     int left;
-    int top;	/* macroblock address of the current pixel, see below */
-    int top_right;		/* x,y positions of current pixel relative to the macroblock mb_addr */
+    int top;    /* macroblock address of the current pixel, see below */
+    int top_right;      /* x,y positions of current pixel relative to the macroblock mb_addr */
 } AVCNeighborAvailability;
 
 
@@ -484,27 +484,27 @@ reference frame.
 */
 typedef struct tagPictureData
 {
-    uint16 RefIdx;	/* index used for reference frame */
-    uint8 *Sl;	 /* derived from base_dpb in AVCFrameStore */
+    uint16 RefIdx;  /* index used for reference frame */
+    uint8 *Sl;   /* derived from base_dpb in AVCFrameStore */
     uint8 *Scb;  /* for complementary fields, YUV are interlaced */
-    uint8 *Scr;	 /* Sl of top_field and bottom_fields will be one line apart and the
-				    stride will be 2 times the width. */
+    uint8 *Scr;  /* Sl of top_field and bottom_fields will be one line apart and the
+                    stride will be 2 times the width. */
     /* For non-complementary field, the above still applies. A special
        output formatting is required. */
 
     /* Then, necessary variables that need to be stored */
-    AVCPictureType	picType; /* frame, top-field or bot-field */
+    AVCPictureType  picType; /* frame, top-field or bot-field */
     /*bool*/
-    uint	isReference;
+    uint    isReference;
     /*bool*/
-    uint	isLongTerm;
-    int		PicOrderCnt;
-    int		PicNum;
-    int		LongTermPicNum;
+    uint    isLongTerm;
+    int     PicOrderCnt;
+    int     PicNum;
+    int     LongTermPicNum;
 
-    int		width; /* how many pixel per line */
-    int		height;/* how many line */
-    int		pitch; /* how many pixel between the line */
+    int     width; /* how many pixel per line */
+    int     height;/* how many line */
+    int     pitch; /* how many pixel between the line */
 
     uint    padded; /* flag for being padded */
 
@@ -516,22 +516,22 @@ This structure contains information for frame storage.
 */
 typedef struct tagFrameStore
 {
-    uint8 *base_dpb;	/* base pointer for the YCbCr */
+    uint8 *base_dpb;    /* base pointer for the YCbCr */
 
-    int		IsReference; /*  0=not used for ref; 1=top used; 2=bottom used; 3=both fields (or frame) used */
-    int		IsLongTerm;  /*  0=not used for ref; 1=top used; 2=bottom used; 3=both fields (or frame) used */
+    int     IsReference; /*  0=not used for ref; 1=top used; 2=bottom used; 3=both fields (or frame) used */
+    int     IsLongTerm;  /*  0=not used for ref; 1=top used; 2=bottom used; 3=both fields (or frame) used */
     /* if IsLongTerm is true, IsReference can be ignored. */
     /* if IsReference is true, IsLongterm will be checked for short-term or long-term. */
     /* IsUsed must be true to enable the validity of IsReference and IsLongTerm */
 
-    int		IsOutputted;  /* has it been outputted via AVCDecGetOutput API, then don't output it again,
-							wait until it is returned. */
+    int     IsOutputted;  /* has it been outputted via AVCDecGetOutput API, then don't output it again,
+                            wait until it is returned. */
     AVCPictureData frame;
 
-    int		FrameNum;
-    int		FrameNumWrap;
-    int		LongTermFrameIdx;
-    int		PicOrderCnt; /* of the frame, smaller of the 2 fields */
+    int     FrameNum;
+    int     FrameNumWrap;
+    int     LongTermFrameIdx;
+    int     PicOrderCnt; /* of the frame, smaller of the 2 fields */
 
 } AVCFrameStore;
 
@@ -546,7 +546,7 @@ assigned at a time. Two opposite fields reside in the same frame memory.
 
   |-------|---|---|---|xxx|-------|xxx|---|-------|   decoded_picture_buffer
     frame  top bot top      frame      bot  frame
-	  0     1   1   2         3         4     5
+      0     1   1   2         3         4     5
 
   bot 2 and top 4 do not exist, the memory is not used.
 
@@ -555,10 +555,10 @@ assigned at a time. Two opposite fields reside in the same frame memory.
 typedef struct tagDecPicBuffer
 {
     uint8 *decoded_picture_buffer;  /* actual memory */
-    uint32  dpb_size;		/* size of dpb in bytes */
-    uint32  used_size;	/* used size */
-    struct tagFrameStore	*fs[MAX_FS]; /* list of frame stored, actual buffer */
-    int		num_fs;  /* size of fs */
+    uint32  dpb_size;       /* size of dpb in bytes */
+    uint32  used_size;  /* used size */
+    struct tagFrameStore    *fs[MAX_FS]; /* list of frame stored, actual buffer */
+    int     num_fs;  /* size of fs */
 
 } AVCDecPicBuffer;
 
@@ -569,7 +569,7 @@ This structure contains macroblock related variables.
 */
 typedef struct tagMacroblock
 {
-    AVCIntraChromaPredMode	intra_chroma_pred_mode;  /* ue(v) */
+    AVCIntraChromaPredMode  intra_chroma_pred_mode;  /* ue(v) */
 
     int32 mvL0[16];  /* motion vectors, 16 bit packed (x,y) per element  */
     int32 mvL1[16];
@@ -578,28 +578,28 @@ typedef struct tagMacroblock
     uint16 RefIdx[4]; /* ref index, has value of AVCPictureData->RefIdx */
     /* stored data */
     /*bool*/
-    uint	mb_intra; /* intra flag */
+    uint    mb_intra; /* intra flag */
     /*bool*/
-    uint	mb_bottom_field;
+    uint    mb_bottom_field;
 
-    AVCMBMode mbMode; 	/* type of MB prediction */
+    AVCMBMode mbMode;   /* type of MB prediction */
     AVCSubMBMode subMbMode[4]; /* for each 8x8 partition */
 
-    uint	CBP; /* CodeBlockPattern */
+    uint    CBP; /* CodeBlockPattern */
     AVCIntra16x16PredMode i16Mode; /* Intra16x16PredMode */
     AVCIntra4x4PredMode i4Mode[16]; /* Intra4x4PredMode, in raster scan order */
-    int	NumMbPart; /* number of partition */
-    AVCPredMode	MBPartPredMode[4][4]; /* prediction mode [MBPartIndx][subMBPartIndx] */
-    int	MbPartWidth;
-    int	MbPartHeight;
+    int NumMbPart; /* number of partition */
+    AVCPredMode MBPartPredMode[4][4]; /* prediction mode [MBPartIndx][subMBPartIndx] */
+    int MbPartWidth;
+    int MbPartHeight;
     int NumSubMbPart[4];  /* for each 8x8 partition */
-    int	SubMbPartWidth[4];	/* for each 8x8 partition */
-    int	SubMbPartHeight[4]; /* for each 8x8 partition */
+    int SubMbPartWidth[4];  /* for each 8x8 partition */
+    int SubMbPartHeight[4]; /* for each 8x8 partition */
 
-    uint8 nz_coeff[NUM_BLKS_IN_MB];	 /* [blk_y][blk_x], Chroma is [4..5][0...3], see predict_nnz() function */
+    uint8 nz_coeff[NUM_BLKS_IN_MB];  /* [blk_y][blk_x], Chroma is [4..5][0...3], see predict_nnz() function */
 
-    int	QPy; /* Luma QP */
-    int	QPc; /* Chroma QP */
+    int QPy; /* Luma QP */
+    int QPc; /* Chroma QP */
     int QSc; /* Chroma QP S-picture */
 
     int slice_id;           // MC slice
@@ -614,34 +614,34 @@ such that some functions can be shared among them.
 typedef struct tagCommonObj
 {
     /* put these 2 up here to make sure they are word-aligned */
-    int16	block[NUM_PIXELS_IN_MB]; /* for transformed residue coefficient */
-    uint8	*pred_block;	/* pointer to prediction block, could point to a frame */
+    int16   block[NUM_PIXELS_IN_MB]; /* for transformed residue coefficient */
+    uint8   *pred_block;    /* pointer to prediction block, could point to a frame */
 #ifdef USE_PRED_BLOCK
-    uint8	pred[688];	/* for prediction */
+    uint8   pred[688];  /* for prediction */
     /* Luma [0-399], Cb [400-543], Cr[544-687] */
 #endif
-    int		pred_pitch; /* either equal to 20 or to frame pitch */
+    int     pred_pitch; /* either equal to 20 or to frame pitch */
 
     /* temporary buffers for intra prediction */
     /* these variables should remain inside fast RAM */
 #ifdef MB_BASED_DEBLOCK
-    uint8	*intra_pred_top; /* a row of pixel for intra prediction */
-    uint8	intra_pred_left[17]; /* a column of pixel for intra prediction */
-    uint8	*intra_pred_top_cb;
-    uint8	intra_pred_left_cb[9];
-    uint8	*intra_pred_top_cr;
-    uint8	intra_pred_left_cr[9];
+    uint8   *intra_pred_top; /* a row of pixel for intra prediction */
+    uint8   intra_pred_left[17]; /* a column of pixel for intra prediction */
+    uint8   *intra_pred_top_cb;
+    uint8   intra_pred_left_cb[9];
+    uint8   *intra_pred_top_cr;
+    uint8   intra_pred_left_cr[9];
 #endif
     /* pointer to the prediction area for intra prediction */
-    uint8	*pintra_pred_top;	/* pointer to the top intra prediction value */
-    uint8	*pintra_pred_left;	/* pointer to the left intra prediction value */
-    uint8	intra_pred_topleft; /* the [-1,-1] neighboring pixel */
-    uint8	*pintra_pred_top_cb;
-    uint8	*pintra_pred_left_cb;
-    uint8	intra_pred_topleft_cb;
-    uint8	*pintra_pred_top_cr;
-    uint8	*pintra_pred_left_cr;
-    uint8	intra_pred_topleft_cr;
+    uint8   *pintra_pred_top;   /* pointer to the top intra prediction value */
+    uint8   *pintra_pred_left;  /* pointer to the left intra prediction value */
+    uint8   intra_pred_topleft; /* the [-1,-1] neighboring pixel */
+    uint8   *pintra_pred_top_cb;
+    uint8   *pintra_pred_left_cb;
+    uint8   intra_pred_topleft_cb;
+    uint8   *pintra_pred_top_cr;
+    uint8   *pintra_pred_left_cr;
+    uint8   intra_pred_topleft_cr;
 
     int QPy;
     int QPc;
@@ -651,125 +651,125 @@ typedef struct tagCommonObj
     int QPc_mod_6;
     /**** nal_unit ******/
     /* previously in AVCNALUnit format */
-    uint	NumBytesInRBSP;
-    int		forbidden_bit;
-    int		nal_ref_idc;
-    AVCNalUnitType	nal_unit_type;
+    uint    NumBytesInRBSP;
+    int     forbidden_bit;
+    int     nal_ref_idc;
+    AVCNalUnitType  nal_unit_type;
     AVCNalUnitType  prev_nal_unit_type;
     /*bool*/
-    uint	slice_data_partitioning; /* flag when nal_unit_type is between 2 and 4 */
+    uint    slice_data_partitioning; /* flag when nal_unit_type is between 2 and 4 */
     /**** ******** ******/
     AVCSliceType slice_type;
-    AVCDecPicBuffer		*decPicBuf; /* decoded picture buffer */
+    AVCDecPicBuffer     *decPicBuf; /* decoded picture buffer */
 
     AVCSeqParamSet *currSeqParams; /*  the currently used one */
 
-    AVCPicParamSet	*currPicParams;	/* the currently used one */
-    uint		seq_parameter_set_id;
+    AVCPicParamSet  *currPicParams; /* the currently used one */
+    uint        seq_parameter_set_id;
     /* slice header */
-    AVCSliceHeader *sliceHdr;	/* slice header param syntax variables */
+    AVCSliceHeader *sliceHdr;   /* slice header param syntax variables */
 
-    AVCPictureData	*currPic; /* pointer to current picture */
-    AVCFrameStore	*currFS;  /* pointer to current frame store */
-    AVCPictureType	currPicType; /* frame, top-field or bot-field */
+    AVCPictureData  *currPic; /* pointer to current picture */
+    AVCFrameStore   *currFS;  /* pointer to current frame store */
+    AVCPictureType  currPicType; /* frame, top-field or bot-field */
     /*bool*/
-    uint	newPic; /* flag for new picture */
-    uint			newSlice; /* flag for new slice */
-    AVCPictureData	*prevRefPic; /* pointer to previous picture */
+    uint    newPic; /* flag for new picture */
+    uint            newSlice; /* flag for new slice */
+    AVCPictureData  *prevRefPic; /* pointer to previous picture */
 
-    AVCMacroblock	*mblock; /* array of macroblocks covering entire picture */
-    AVCMacroblock	*currMB; /* pointer to current macroblock */
-    uint					mbNum; /* number of current MB */
-    int					mb_x;  /* x-coordinate of the current mbNum */
-    int					mb_y;  /* y-coordinate of the current mbNum */
+    AVCMacroblock   *mblock; /* array of macroblocks covering entire picture */
+    AVCMacroblock   *currMB; /* pointer to current macroblock */
+    uint                    mbNum; /* number of current MB */
+    int                 mb_x;  /* x-coordinate of the current mbNum */
+    int                 mb_y;  /* y-coordinate of the current mbNum */
 
     /* For internal operation, scratch memory for MV, prediction, transform, etc.*/
     uint32 cbp4x4; /* each bit represent nonzero 4x4 block in reverse raster scan order */
     /* starting from luma, Cb and Cr, lsb toward msb */
-    int	mvd_l0[4][4][2]; /* [mbPartIdx][subMbPartIdx][compIdx], se(v) */
-    int	mvd_l1[4][4][2]; /* [mbPartIdx][subMbPartIdx][compIdx], se(v) */
+    int mvd_l0[4][4][2]; /* [mbPartIdx][subMbPartIdx][compIdx], se(v) */
+    int mvd_l1[4][4][2]; /* [mbPartIdx][subMbPartIdx][compIdx], se(v) */
 
-    int	mbAddrA, mbAddrB, mbAddrC, mbAddrD; /* address of neighboring MBs */
+    int mbAddrA, mbAddrB, mbAddrC, mbAddrD; /* address of neighboring MBs */
     /*bool*/
-    uint	mbAvailA, mbAvailB, mbAvailC, mbAvailD; /* availability */
+    uint    mbAvailA, mbAvailB, mbAvailC, mbAvailD; /* availability */
     /*bool*/
-    uint	intraAvailA, intraAvailB, intraAvailC, intraAvailD; /* for intra mode */
+    uint    intraAvailA, intraAvailB, intraAvailC, intraAvailD; /* for intra mode */
     /***********************************************/
     /* The following variables are defined in the draft. */
     /* They may need to be stored in PictureData structure and used for reference. */
     /* In that case, just move or copy it to AVCDecPictureData structure. */
 
-    int		padded_size;	/* size of extra padding to a frame */
+    int     padded_size;    /* size of extra padding to a frame */
 
-    uint	MaxFrameNum;	/*2^(log2_max_frame_num_minus4+4), range 0.. 2^16-1 */
-    uint	MaxPicOrderCntLsb; /*2^(log2_max_pic_order_cnt_lsb_minus4+4), 0..2^16-1 */
-    uint	PicWidthInMbs;	/*pic_width_in_mbs_minus1+1 */
-    uint	PicWidthInSamplesL;	/* PicWidthInMbs*16 */
-    uint	PicWidthInSamplesC;	/* PicWIdthInMbs*8 */
-    uint	PicHeightInMapUnits; /* pic_height_in_map_units_minus1+1 */
-    uint	PicSizeInMapUnits;	/* PicWidthInMbs*PicHeightInMapUnits */
-    uint	FrameHeightInMbs;	/*(2-frame_mbs_only_flag)*PicHeightInMapUnits */
+    uint    MaxFrameNum;    /*2^(log2_max_frame_num_minus4+4), range 0.. 2^16-1 */
+    uint    MaxPicOrderCntLsb; /*2^(log2_max_pic_order_cnt_lsb_minus4+4), 0..2^16-1 */
+    uint    PicWidthInMbs;  /*pic_width_in_mbs_minus1+1 */
+    uint    PicWidthInSamplesL; /* PicWidthInMbs*16 */
+    uint    PicWidthInSamplesC; /* PicWIdthInMbs*8 */
+    uint    PicHeightInMapUnits; /* pic_height_in_map_units_minus1+1 */
+    uint    PicSizeInMapUnits;  /* PicWidthInMbs*PicHeightInMapUnits */
+    uint    FrameHeightInMbs;   /*(2-frame_mbs_only_flag)*PicHeightInMapUnits */
 
-    uint	SliceGroupChangeRate; /* slice_group_change_rate_minus1 + 1 */
+    uint    SliceGroupChangeRate; /* slice_group_change_rate_minus1 + 1 */
 
     /* access unit */
-    uint	primary_pic_type;	/* u(3), Table 7-2, kinda informative only */
+    uint    primary_pic_type;   /* u(3), Table 7-2, kinda informative only */
 
     /* slice data partition */
-    uint	slice_id;			/* ue(v) */
+    uint    slice_id;           /* ue(v) */
 
-    uint	UnusedShortTermFrameNum;
-    uint	PrevRefFrameNum;
-    uint	MbaffFrameFlag;	/* (mb_adaptive_frame_field_flag && !field_pic_flag) */
-    uint	PicHeightInMbs; /* FrameHeightInMbs/(1+field_pic_flag) */
-    int		PicHeightInSamplesL; /* PicHeightInMbs*16 */
-    int		PicHeightInSamplesC; /* PicHeightInMbs*8 */
-    uint	PicSizeInMbs;	/* PicWidthInMbs*PicHeightInMbs */
-    uint	level_idc;
-    int		numMBs;
-    uint	MaxPicNum;
-    uint	CurrPicNum;
-    int		QSy;	/* 26+pic_init_qp_minus26+slice_qs_delta */
-    int		FilterOffsetA;
-    int		FilterOffsetB;
-    uint	MapUnitsInSliceGroup0;	/* Min(slie_group_change_cycle*SliceGroupChangeRate,PicSizeInMapUnits) */
+    uint    UnusedShortTermFrameNum;
+    uint    PrevRefFrameNum;
+    uint    MbaffFrameFlag; /* (mb_adaptive_frame_field_flag && !field_pic_flag) */
+    uint    PicHeightInMbs; /* FrameHeightInMbs/(1+field_pic_flag) */
+    int     PicHeightInSamplesL; /* PicHeightInMbs*16 */
+    int     PicHeightInSamplesC; /* PicHeightInMbs*8 */
+    uint    PicSizeInMbs;   /* PicWidthInMbs*PicHeightInMbs */
+    uint    level_idc;
+    int     numMBs;
+    uint    MaxPicNum;
+    uint    CurrPicNum;
+    int     QSy;    /* 26+pic_init_qp_minus26+slice_qs_delta */
+    int     FilterOffsetA;
+    int     FilterOffsetB;
+    uint    MapUnitsInSliceGroup0;  /* Min(slie_group_change_cycle*SliceGroupChangeRate,PicSizeInMapUnits) */
     /* dec_ref_pic_marking */
-    int		MaxLongTermFrameIdx;
-    int		LongTermFrameIdx;
+    int     MaxLongTermFrameIdx;
+    int     LongTermFrameIdx;
 
     /* POC related variables */
     /*bool*/
-    uint	mem_mgr_ctrl_eq_5;  /* if memory_management_control_operation equal to 5 flag */
-    int		PicOrderCnt;
-    int		BottomFieldOrderCnt, TopFieldOrderCnt;
+    uint    mem_mgr_ctrl_eq_5;  /* if memory_management_control_operation equal to 5 flag */
+    int     PicOrderCnt;
+    int     BottomFieldOrderCnt, TopFieldOrderCnt;
     /* POC mode 0 */
-    int		prevPicOrderCntMsb;
-    uint	prevPicOrderCntLsb;
-    int		PicOrderCntMsb;
+    int     prevPicOrderCntMsb;
+    uint    prevPicOrderCntLsb;
+    int     PicOrderCntMsb;
     /* POC mode 1 */
-    int		prevFrameNumOffset, FrameNumOffset;
-    uint	prevFrameNum;
-    int		absFrameNum;
-    int		picOrderCntCycleCnt, frameNumInPicOrderCntCycle;
-    int		expectedDeltaPerPicOrderCntCycle;
-    int		expectedPicOrderCnt;
+    int     prevFrameNumOffset, FrameNumOffset;
+    uint    prevFrameNum;
+    int     absFrameNum;
+    int     picOrderCntCycleCnt, frameNumInPicOrderCntCycle;
+    int     expectedDeltaPerPicOrderCntCycle;
+    int     expectedPicOrderCnt;
 
     /* FMO */
-    int	*MbToSliceGroupMap;  /* to be re-calculate at the beginning */
+    int *MbToSliceGroupMap;  /* to be re-calculate at the beginning */
 
     /* ref pic list */
-    AVCPictureData	*RefPicList0[MAX_REF_PIC_LIST]; /* list 0 */
-    AVCPictureData	*RefPicList1[MAX_REF_PIC_LIST]; /* list 1 */
-    AVCFrameStore	*refFrameList0ShortTerm[32];
-    AVCFrameStore	*refFrameList1ShortTerm[32];
-    AVCFrameStore	*refFrameListLongTerm[32];
-    int		refList0Size;
-    int		refList1Size;
+    AVCPictureData  *RefPicList0[MAX_REF_PIC_LIST]; /* list 0 */
+    AVCPictureData  *RefPicList1[MAX_REF_PIC_LIST]; /* list 1 */
+    AVCFrameStore   *refFrameList0ShortTerm[32];
+    AVCFrameStore   *refFrameList1ShortTerm[32];
+    AVCFrameStore   *refFrameListLongTerm[32];
+    int     refList0Size;
+    int     refList1Size;
 
     /* slice data semantics*/
-    int	mb_skip_run;	/* ue(v) */
-    /*uint	mb_skip_flag;*/	/* ae(v) */
-    /* uint	end_of_slice_flag;*//* ae(v) */
+    int mb_skip_run;    /* ue(v) */
+    /*uint  mb_skip_flag;*/ /* ae(v) */
+    /* uint end_of_slice_flag;*//* ae(v) */
     /***********************************************/
 
     /* function pointers */
@@ -828,12 +828,12 @@ const static int dequant_coefres[6][16] =
 From jm7.6 block.c. (in zigzag scan) */
 const static int quant_coef[6][16] =
 {
-    {13107,	8066,	8066,	13107,	5243,	13107,	8066,	8066,	8066,	8066,	5243,	13107,	5243,	8066,	8066,	5243},
-    {11916,	7490,	7490,	11916,	4660,	11916,	7490,	7490,	7490,	7490,	4660,	11916,	4660,	7490,	7490,	4660},
-    {10082,	6554,	6554,	10082,	4194,	10082,	6554,	6554,	6554,	6554,	4194,	10082,	4194,	6554,	6554,	4194},
-    {9362,	5825,	5825,	9362,	3647,	9362,	5825,	5825,	5825,	5825,	3647,	9362,	3647,	5825,	5825,	3647},
-    {8192,	5243,	5243,	8192,	3355,	8192,	5243,	5243,	5243,	5243,	3355,	8192,	3355,	5243,	5243,	3355},
-    {7282,	4559,	4559,	7282,	2893,	7282,	4559,	4559,	4559,	4559,	2893,	7282,	2893,	4559,	4559,	2893}
+    {13107, 8066,   8066,   13107,  5243,   13107,  8066,   8066,   8066,   8066,   5243,   13107,  5243,   8066,   8066,   5243},
+    {11916, 7490,   7490,   11916,  4660,   11916,  7490,   7490,   7490,   7490,   4660,   11916,  4660,   7490,   7490,   4660},
+    {10082, 6554,   6554,   10082,  4194,   10082,  6554,   6554,   6554,   6554,   4194,   10082,  4194,   6554,   6554,   4194},
+    {9362,  5825,   5825,   9362,   3647,   9362,   5825,   5825,   5825,   5825,   3647,   9362,   3647,   5825,   5825,   3647},
+    {8192,  5243,   5243,   8192,   3355,   8192,   5243,   5243,   5243,   5243,   3355,   8192,   3355,   5243,   5243,   3355},
+    {7282,  4559,   4559,   7282,   2893,   7282,   4559,   4559,   4559,   4559,   2893,   7282,   2893,   4559,   4559,   2893}
 };
 
 /**

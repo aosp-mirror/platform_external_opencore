@@ -62,23 +62,23 @@ OSCL_DELETE(ptr);\
 
 #define PV_MP4_FF_ARRAY_MALLOC(auditCB,T,count,ptr)\
 {\
-	ptr = (T*)OSCL_MALLOC(count);\
+    ptr = (T*)OSCL_MALLOC(count);\
 }
 
 
 #define PV_MP4_ARRAY_FREE(auditCB,ptr)\
 {\
-	OSCL_FREE(ptr);\
+    OSCL_FREE(ptr);\
 }
 
 #define PV_MP4_FF_ARRAY_NEW(auditCB, T, count, ptr)\
 {\
-	ptr = OSCL_ARRAY_NEW(T, count);\
+    ptr = OSCL_ARRAY_NEW(T, count);\
 }
 
 #define PV_MP4_ARRAY_DELETE(auditCB, ptr)\
 {\
-	OSCL_ARRAY_DELETE(ptr);\
+    OSCL_ARRAY_DELETE(ptr);\
 }
 
 typedef struct

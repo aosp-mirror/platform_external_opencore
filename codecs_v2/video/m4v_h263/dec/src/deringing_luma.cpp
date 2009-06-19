@@ -15,8 +15,8 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-#include 	"mp4dec_lib.h"
-#include 	"post_proc.h"
+#include    "mp4dec_lib.h"
+#include    "post_proc.h"
 
 #ifdef PV_POSTPROC_ON
 
@@ -76,10 +76,10 @@ void Deringing_Luma(
         }
 
         blks = 0;
-        for (v_blk = 0;v_blk < MBSIZE;v_blk += BLKSIZE)
+        for (v_blk = 0; v_blk < MBSIZE; v_blk += BLKSIZE)
         {
             v0 = ((v_blk - 1) >= 1) ? (v_blk - 1) : 1;
-            for (h_blk = MB_H;h_blk < MB_H + MBSIZE;h_blk += BLKSIZE)
+            for (h_blk = MB_H; h_blk < MB_H + MBSIZE; h_blk += BLKSIZE)
             {
                 h0 = ((h_blk - 1) >= 1) ? (h_blk - 1) : 1;
 
@@ -130,10 +130,10 @@ void Deringing_Luma(
         }
 
         blks = 0;
-        for (v_blk = MB_V;v_blk < MB_V + MBSIZE;v_blk += BLKSIZE)
+        for (v_blk = MB_V; v_blk < MB_V + MBSIZE; v_blk += BLKSIZE)
         {
             v0 = v_blk - 1;
-            for (h_blk = 0;h_blk < MBSIZE;h_blk += BLKSIZE)
+            for (h_blk = 0; h_blk < MBSIZE; h_blk += BLKSIZE)
             {
                 h0 = ((h_blk - 1) >= 1) ? (h_blk - 1) : 1;
 
@@ -189,11 +189,11 @@ void Deringing_Luma(
             }
 
             blks = 0;
-            for (v_blk = MB_V;v_blk < MB_V + MBSIZE;v_blk += BLKSIZE)
+            for (v_blk = MB_V; v_blk < MB_V + MBSIZE; v_blk += BLKSIZE)
             {
                 v0 = v_blk - 1;
                 mb_indx = (v_blk / 8) * (width / 8);
-                for (h_blk = MB_H;h_blk < MB_H + MBSIZE;h_blk += BLKSIZE)
+                for (h_blk = MB_H; h_blk < MB_H + MBSIZE; h_blk += BLKSIZE)
                 {
                     h0 = h_blk - 1;
                     blk_indx = mb_indx + h_blk / 8;

@@ -22,11 +22,11 @@
 
 void TSC_capability::InitVarsSession()
 {
-    iTcsIn_H263_sqcifMPI = 0;		// Units 1/30 second
-    iTcsIn_H263_qcifMPI = 2;		// Units 1/30 second
-    iTcsIn_H263_cifMPI = 0;		// Units 1/30 second
-    iTcsIn_H263_4cifMPI = 0;		// Units 1/30 second
-    iTcsIn_H263_16cifMPI = 0;		// Units 1/30 second
+    iTcsIn_H263_sqcifMPI = 0;       // Units 1/30 second
+    iTcsIn_H263_qcifMPI = 2;        // Units 1/30 second
+    iTcsIn_H263_cifMPI = 0;     // Units 1/30 second
+    iTcsIn_H263_4cifMPI = 0;        // Units 1/30 second
+    iTcsIn_H263_16cifMPI = 0;       // Units 1/30 second
 }
 
 void TSC_capability::InitVarsLocal()
@@ -79,7 +79,7 @@ void TSC_capability::SetVideoResolutions(TPVDirection dir,
 uint32 TSC_capability::GetRemoteBitrate(PVCodecType_t codec_type)
 {
     /* lookup the bitrate from remote capabilities */
-    for (uint16 i = 0; i < iRemoteCapability->GetNumCapabilityItems();i++)
+    for (uint16 i = 0; i < iRemoteCapability->GetNumCapabilityItems(); i++)
     {
         if (iRemoteCapability->GetCapabilityItem(i)->GetFormatType() == PVCodecTypeToPVMFFormatType(codec_type))
         {
@@ -193,7 +193,7 @@ void TSC_capability::ParseTcsCapabilities(S_Capability &aCapability, Oscl_Vector
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                         (0, "TSC_capability::ParseTcsCapabilities Remote video caps Video index(%d)\n",
                          pVideo->index));
-        if (format_type == PVMF_MIME_H2632000) 			// H263VideoCapability
+        if (format_type == PVMF_MIME_H2632000)          // H263VideoCapability
         {
             pVideo->index = 3;
             media_capability = new CPvtH263Capability();
@@ -253,11 +253,11 @@ PS_DataType TSC_capability::GetOutgoingDataType(PVCodecType_t codecType,
 
     PS_DataType pDataType = (PS_DataType) OSCL_DEFAULT_MALLOC(sizeof(S_DataType));
     oscl_memset(pDataType, 0, sizeof(S_DataType));
-    PS_GenericCapability	genericCap = NULL;
+    PS_GenericCapability    genericCap = NULL;
     uint16 index = 0;
 
     /* lookup the bitrate from remote capabilities */
-    for (index = 0; index < iRemoteCapability->GetNumCapabilityItems();index++)
+    for (index = 0; index < iRemoteCapability->GetNumCapabilityItems(); index++)
     {
         if (iRemoteCapability->GetCapabilityItem(index)->GetFormatType() ==
                 PVCodecTypeToPVMFFormatType(codecType))
@@ -271,7 +271,7 @@ PS_DataType TSC_capability::GetOutgoingDataType(PVCodecType_t codecType,
     {
         case PV_AUD_TYPE_G723: /* WWURM: change H324_AUDIO_RECV to H324_AUDIO_SEND */
             /* (LCN=2): G723 Audio */
-            PS_G7231		g723Cap;
+            PS_G7231        g723Cap;
             pDataType->index = 3;
             /* NEW245: allocate memory for audioData*/
             pDataType->audioData = (PS_AudioCapability) OSCL_DEFAULT_MALLOC(sizeof(S_AudioCapability));
@@ -322,7 +322,7 @@ PS_DataType TSC_capability::GetOutgoingDataType(PVCodecType_t codecType,
             break;
         case PV_VID_TYPE_H263:
             /* (LCN=3): H263 Video */
-            PS_H263VideoCapability	h263VideoCap;
+            PS_H263VideoCapability  h263VideoCap;
             pDataType->index = 2;
             /* NEW245: allocate memory for videoData */
             pDataType->videoData = (PS_VideoCapability) OSCL_DEFAULT_MALLOC(sizeof(S_VideoCapability));
@@ -417,13 +417,13 @@ PS_DataType TSC_capability::GetOutgoingDataType(PVCodecType_t codecType,
             genericCap->nonCollapsing[0].parameterIdentifier.standard = 0;
             genericCap->nonCollapsing[0].parameterValue.index = 3;
             // Value on next line changed to 8 (RAN - PandL)
-            genericCap->nonCollapsing[0].parameterValue.unsignedMax = 8;	/* simple profile level 0 */
+            genericCap->nonCollapsing[0].parameterValue.unsignedMax = 8;    /* simple profile level 0 */
             genericCap->nonCollapsing[0].option_of_supersedes = false;
 
             genericCap->nonCollapsing[1].parameterIdentifier.index = 0;
             genericCap->nonCollapsing[1].parameterIdentifier.standard = 1;
             genericCap->nonCollapsing[1].parameterValue.index = 3;
-            genericCap->nonCollapsing[1].parameterValue.unsignedMax = 1;	/* simple profile object */
+            genericCap->nonCollapsing[1].parameterValue.unsignedMax = 1;    /* simple profile object */
             genericCap->nonCollapsing[1].option_of_supersedes = false;
 
             /* WWU_VOAL2: BLCMP4 temporally off */
@@ -485,7 +485,7 @@ PVMFStatus TSC_capability::ValidateIncomingDataType(bool forRev, PS_DataType pDa
         PS_VideoCapability video_cap = pDataType->videoData;
         if (video_cap->index == 3) /* H263 */
         {
-            PS_H263VideoCapability	h263Cap = video_cap->h263VideoCapability;
+            PS_H263VideoCapability  h263Cap = video_cap->h263VideoCapability;
             // checks only valid on forward parameters
             if (forRev)
             {
@@ -835,7 +835,7 @@ uint32 TSC_capability::GetMaxBitrateForOutgoingChannel(PVCodecType_t codecType)
 {
     uint32 bitrate = 0;
     /* lookup the bitrate from remote capabilities */
-    for (uint16 i = 0; i < iRemoteCapability->GetNumCapabilityItems();i++)
+    for (uint16 i = 0; i < iRemoteCapability->GetNumCapabilityItems(); i++)
     {
         if (iRemoteCapability->GetCapabilityItem(i)->GetFormatType() == PVCodecTypeToPVMFFormatType(codecType))
             bitrate = iRemoteCapability->GetCapabilityItem(i)->GetBitrate();
@@ -855,13 +855,13 @@ TSC_capability::GetDataType(PVCodecType_t codecType,
     bitrate /= 100;
     PS_DataType pDataType = (PS_DataType) OSCL_DEFAULT_MALLOC(sizeof(S_DataType));
     oscl_memset(pDataType , 0, sizeof(S_DataType));
-    PS_GenericCapability	genericCap = NULL;
+    PS_GenericCapability    genericCap = NULL;
 
     switch (codecType)
     {
         case PV_AUD_TYPE_G723: /* WWURM: change H324_AUDIO_RECV to H324_AUDIO_SEND */
             /* (LCN=2): G723 Audio */
-            PS_G7231		g723Cap;
+            PS_G7231        g723Cap;
             pDataType->index = 3;
             /* NEW245: allocate memory for audioData*/
             pDataType->audioData = (PS_AudioCapability) OSCL_DEFAULT_MALLOC(sizeof(S_AudioCapability));
@@ -912,7 +912,7 @@ TSC_capability::GetDataType(PVCodecType_t codecType,
             break;
         case PV_VID_TYPE_H263:
             /* (LCN=3): H263 Video */
-            PS_H263VideoCapability	h263VideoCap;
+            PS_H263VideoCapability  h263VideoCap;
             pDataType->index = 2;
             /* NEW245: allocate memory for videoData */
             pDataType->videoData = (PS_VideoCapability) OSCL_DEFAULT_MALLOC(sizeof(S_VideoCapability));
@@ -1007,13 +1007,13 @@ TSC_capability::GetDataType(PVCodecType_t codecType,
             genericCap->nonCollapsing[0].parameterIdentifier.standard = 0;
             genericCap->nonCollapsing[0].parameterValue.index = 3;
             // Value on next line changed to 8 (RAN - PandL)
-            genericCap->nonCollapsing[0].parameterValue.unsignedMax = 8;	/* simple profile level 0 */
+            genericCap->nonCollapsing[0].parameterValue.unsignedMax = 8;    /* simple profile level 0 */
             genericCap->nonCollapsing[0].option_of_supersedes = false;
 
             genericCap->nonCollapsing[1].parameterIdentifier.index = 0;
             genericCap->nonCollapsing[1].parameterIdentifier.standard = 1;
             genericCap->nonCollapsing[1].parameterValue.index = 3;
-            genericCap->nonCollapsing[1].parameterValue.unsignedMax = 1;	/* simple profile object */
+            genericCap->nonCollapsing[1].parameterValue.unsignedMax = 1;    /* simple profile object */
             genericCap->nonCollapsing[1].option_of_supersedes = false;
 
             if (dci && dci_len)
@@ -1061,7 +1061,7 @@ TSC_capability::GetSupportedCodecCapabilityInfo(TPVDirection dir,
                         (0, "TSC_capability::GetSupportedCodecCapabilityInfo channel config for this direction == NULL"));
         return 0;
     }
-    for (unsigned n = 0;n < channel_config->size();n++)
+    for (unsigned n = 0; n < channel_config->size(); n++)
     {
         PV2WayMediaType channelMediaType = (*channel_config)[n].GetMediaType();
         if (channelMediaType != mediaType)
@@ -1075,7 +1075,7 @@ TSC_capability::GetSupportedCodecCapabilityInfo(TPVDirection dir,
                             (0, "TSC_capability::GetSupportedCodecCapabilityInfo No formats specified for format type(%d)", channelMediaType));
             continue;
         }
-        for (unsigned m = 0;m < formats->size();m++)
+        for (unsigned m = 0; m < formats->size(); m++)
         {
             CodecCapabilityInfo* info = NULL;
             PVCodecType_t codec_type = PVMFFormatTypeToPVCodecType((*formats)[m].format);
@@ -1100,7 +1100,7 @@ TSC_capability::GetSupportedCodecCapabilityInfo(TPVDirection dir,
 bool
 TSC_capability::HasSymmetryConstraint(Oscl_Vector<CodecCapabilityInfo*, OsclMemAllocator>& codec_list)
 {
-    for (unsigned i = 0;i < codec_list.size();i++)
+    for (unsigned i = 0; i < codec_list.size(); i++)
     {
         if (codec_list[i]->dir == PV_DIRECTION_BOTH)
             return true;
@@ -1121,7 +1121,7 @@ TSC_capability::SelectOutgoingCodec(Oscl_Vector<CodecCapabilityInfo*, OsclMemAll
         list1 = local_list;
         list2 = remote_list;
     }
-    for (unsigned i = 0;i < (*list1).size();i++)
+    for (unsigned i = 0; i < (*list1).size(); i++)
     {
         CodecCapabilityInfo* supported_codec_info =::IsSupported((*list1)[i], *list2);
         if (supported_codec_info == NULL)
@@ -1147,7 +1147,7 @@ CodecCapabilityInfo*
 TSC_capability::SelectOutgoingCodec(Oscl_Vector < CodecCapabilityInfo*,
                                     OsclMemAllocator > * remote_list)
 {
-    for (unsigned i = 0;i < (*remote_list).size();i++)
+    for (unsigned i = 0; i < (*remote_list).size(); i++)
     {
         // check if this includes receive capability
         if ((*remote_list)[i]->dir == OUTGOING)

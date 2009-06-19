@@ -60,8 +60,8 @@ class PVMFClientServerSocketNode;
 class SocketPortConfig;
 
 
-class PVMFClientServerSocketPort :	public PvmfPortBaseImpl,
-            public PvmiCapabilityAndConfigPortFormatImpl
+class PVMFClientServerSocketPort :  public PvmfPortBaseImpl,
+        public PvmiCapabilityAndConfigPortFormatImpl
 {
     public:
         /**

@@ -105,9 +105,9 @@ static const char PVMP4METADATA_MAXSIZE[] = "maxsize=";
 static const char PVMP4METADATA_REQ_SIZE[] = "reqsize=";
 static const char PVMP4METADATA_ORIG_CHAR_ENC[] = "orig-char-enc=";
 
-#define PVMF_MP4_MIME_FORMAT_AUDIO_UNKNOWN	"x-pvmf/audio/unknown"
-#define PVMF_MP4_MIME_FORMAT_VIDEO_UNKNOWN	"x-pvmf/video/unknown"
-#define PVMF_MP4_MIME_FORMAT_UNKNOWN		"x-pvmf/unknown-media/unknown"
+#define PVMF_MP4_MIME_FORMAT_AUDIO_UNKNOWN  "x-pvmf/audio/unknown"
+#define PVMF_MP4_MIME_FORMAT_VIDEO_UNKNOWN  "x-pvmf/video/unknown"
+#define PVMF_MP4_MIME_FORMAT_UNKNOWN        "x-pvmf/unknown-media/unknown"
 
 #define MILLISECOND_TIMESCALE (1000)
 #define PVMF_MP4_MAX_UINT32   (0xffffffffU)
@@ -1093,20 +1093,20 @@ PVMFStatus PVMFMP4FFParserNode::ReleaseNodeMetadataValues(Oscl_Vector<PvmiKvp, O
                 case PVMI_KVPVALTYPE_KSV:
 
 
-                    /*				if (aValueList[i].value.key_specific_value != NULL)
-                    				 {
+                    /*              if (aValueList[i].value.key_specific_value != NULL)
+                                     {
 
-                    				     	if( ((PvmfApicStruct *)aValueList[i].value.key_specific_value)->iGraphicData != NULL)
-                    						{
-                    							oscl_free(((PvmfApicStruct *)aValueList[i].value.key_specific_value)->iGraphicData);											//OSCL_DEFAULT_FREE(((PvmfApicStruct *)aValueKVP.value.key_specific_value)->iGraphicMimeType);
-                     							((PvmfApicStruct *)aValueList[i].value.key_specific_value)->iGraphicData=NULL;
-                    						}
+                                            if( ((PvmfApicStruct *)aValueList[i].value.key_specific_value)->iGraphicData != NULL)
+                                            {
+                                                oscl_free(((PvmfApicStruct *)aValueList[i].value.key_specific_value)->iGraphicData);                                            //OSCL_DEFAULT_FREE(((PvmfApicStruct *)aValueKVP.value.key_specific_value)->iGraphicMimeType);
+                                                ((PvmfApicStruct *)aValueList[i].value.key_specific_value)->iGraphicData=NULL;
+                                            }
 
-                    						OSCL_DELETE(((PvmfApicStruct *)aValueList[i].value.key_specific_value));
+                                            OSCL_DELETE(((PvmfApicStruct *)aValueList[i].value.key_specific_value));
 
-                    						aValueList[i].value.key_specific_value=NULL;
+                                            aValueList[i].value.key_specific_value=NULL;
 
-                    				}
+                                    }
                     */
                     break;
 
@@ -5273,6 +5273,6 @@ PVMFStatus PVMFMP4FFParserNode::PushValueToList(Oscl_Vector<OSCL_HeapString<Oscl
 {
     int32 leavecode = 0;
     OSCL_TRY(leavecode, aKeyListPtr->push_back(aRefMetaDataKeys[aLcv]));
-    OSCL_FIRST_CATCH_ANY(leavecode, PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFMP4FFParserNode::PushValueToList() Memory allocation failure when copying metadata key"));return PVMFErrNoMemory);
+    OSCL_FIRST_CATCH_ANY(leavecode, PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFMP4FFParserNode::PushValueToList() Memory allocation failure when copying metadata key")); return PVMFErrNoMemory);
     return PVMFSuccess;
 }

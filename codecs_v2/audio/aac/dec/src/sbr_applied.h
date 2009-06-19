@@ -116,13 +116,13 @@ extern "C"
 
 
     SBR_ERROR  sbr_applied(SBRDECODER_DATA * self,
-                           SBRBITSTREAM * stream,
-                           Int16 *ch_left,
-                           Int16 *ch_right,
-                           Int16 *timeData,
-                           SBR_DEC *sbrDec,
-                           tDec_Int_File  *pVars,
-                           Int32 numChannels);
+    SBRBITSTREAM * stream,
+    Int16 *ch_left,
+    Int16 *ch_right,
+    Int16 *timeData,
+    SBR_DEC *sbrDec,
+    tDec_Int_File  *pVars,
+    Int32 numChannels);
 
 #ifdef __cplusplus
 }

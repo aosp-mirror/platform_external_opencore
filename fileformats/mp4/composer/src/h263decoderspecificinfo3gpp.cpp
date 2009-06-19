@@ -17,7 +17,7 @@
  */
 /*
     This PVA_FF_DecoderSpecificInfo Class that holds the Mpeg4 VOL header for the
-	video stream
+    video stream
 */
 
 #define __IMPLEMENT_H263DecoderSpecificInfo3GPP__

@@ -84,7 +84,7 @@ const uint MediaInputNodeConfig_NumBaseKeys =
 
 
 ////////////////////////////////////////////////////////////////////////////
-//					PvmiCapConfigInterface
+//                  PvmiCapConfigInterface
 ////////////////////////////////////////////////////////////////////////////
 
 void PvmfMediaInputNode::createContext(PvmiMIOSession aSession,
@@ -602,7 +602,7 @@ PVMFStatus PvmfMediaInputNode::GetConfigParameter(PvmiKvp*& aParameters, int& aN
     // Copy the requested info
     switch (aIndex)
     {
-        case PARAMETER1:	// "parameter1"
+        case PARAMETER1:    // "parameter1"
             if (PVMI_KVPATTR_CUR == aReqattr)
             {
                 // get the parameter here
@@ -618,7 +618,7 @@ PVMFStatus PvmfMediaInputNode::GetConfigParameter(PvmiKvp*& aParameters, int& aN
             }
             break;
 
-        case PARAMETER2:	// "parameter2"
+        case PARAMETER2:    // "parameter2"
             if (PVMI_KVPATTR_CUR == aReqattr)
             {
                 // get the parameter here

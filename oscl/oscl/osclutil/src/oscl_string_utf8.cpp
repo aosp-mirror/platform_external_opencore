@@ -54,10 +54,10 @@
 #define UTF8_4_BYTES_SIG_4     0x80     //1000 0000 -> 10xx xxxx
 
 /* ========================================================================
- *	Function : oscl_str_is_valid_and_truncate_utf8
- *	Date     : 10/25/2002
+ *  Function : oscl_str_is_valid_and_truncate_utf8
+ *  Date     : 10/25/2002
  *  Purpose  :
- *	Modified :
+ *  Modified :
  * ========================================================================
  */
 OSCL_EXPORT_REF bool  oscl_str_is_valid_and_truncate_utf8(const uint8 *str_buf, uint32& num_valid_characters, uint32 max_bytes, uint32& truncate_pos_index,
@@ -200,10 +200,10 @@ OSCL_EXPORT_REF bool  oscl_str_is_valid_and_truncate_utf8(const uint8 *str_buf, 
 }
 
 /* ========================================================================
- *	Function : oscl_str_is_valid_utf8
- *	Date     : 10/25/2002
+ *  Function : oscl_str_is_valid_utf8
+ *  Date     : 10/25/2002
  *  Purpose  : see oscl_string_utf8.h
- *	Modified :
+ *  Modified :
  * ========================================================================
  */
 OSCL_EXPORT_REF bool  oscl_str_is_valid_utf8(const uint8 *str_buf, uint32& num_valid_characters, uint32 max_bytes,
@@ -222,10 +222,10 @@ OSCL_EXPORT_REF bool  oscl_str_is_valid_utf8(const uint8 *str_buf, uint32& num_v
     return result;
 }
 /* ========================================================================
- *	Function : oscl_str_truncate_utf8
- *	Date     : 10/25/2002
+ *  Function : oscl_str_truncate_utf8
+ *  Date     : 10/25/2002
  *  Purpose  : see oscl_string_utf8.h
- *	Modified :
+ *  Modified :
  * ========================================================================
  */
 OSCL_EXPORT_REF int32  oscl_str_truncate_utf8(uint8 *str_buf, uint32 max_chars, uint32 max_bytes)

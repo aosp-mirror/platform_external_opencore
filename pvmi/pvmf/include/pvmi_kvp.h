@@ -329,15 +329,15 @@ class PvmfAssetInfo3GPPLocationStruct
         oscl_wchar* _astronomical_body;
         oscl_wchar* _additional_notes;
         OSCL_HeapString<OsclMemAllocator> Lang_code;
-        uint8	_role;
+        uint8   _role;
 
-        uint32	_longitude;//fixed-point 16.16 number indicating the longitude in degrees.
+        uint32  _longitude;//fixed-point 16.16 number indicating the longitude in degrees.
         //Negative values represent western longitude
 
-        uint32	_latitude;//fixed-point 16.16 number indicating the latitude in degrees.
+        uint32  _latitude;//fixed-point 16.16 number indicating the latitude in degrees.
         //Negative values represent southern latitude
 
-        uint32	_altitude;//fixed-point 16.16 number indicating the altitude in meters.
+        uint32  _altitude;//fixed-point 16.16 number indicating the altitude in meters.
         //The reference altitude, indicated by zero, is set to the sea level.
         uint16 _langCode;
 };
@@ -513,7 +513,7 @@ class PvmfAssetInfo3GPPLocationStruct
 #define TEXT_INPUT_HEIGHT_CUR_VALUE ".../input/height;valtype=uint32"
 
 //AVC Encoder
-#define PVMF_AVC_ENCODER_ENCODINGMODE_KEY	"x-pvmf/encoder/video/encoding_mode;valtype=uint32"
+#define PVMF_AVC_ENCODER_ENCODINGMODE_KEY   "x-pvmf/encoder/video/encoding_mode;valtype=uint32"
 
 #define INPUT_TIMESCALE_CUR_QUERY ".../input/timescale;attr=cur"
 #define INPUT_TIMESCALE_CUR_VALUE ".../input/timescale;valtype=uint32"

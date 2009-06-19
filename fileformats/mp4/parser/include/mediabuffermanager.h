@@ -21,10 +21,10 @@
 /*     -------------------------------------------------------------------       */
 /*********************************************************************************/
 /*
-	This MediaBufferManager Class is responsible for maintaining list of used
-	and free MediaBuffers.  This is promarily used by the Mpeg4File class when
-	it is retrieving media data from disk.  It needs buffers to store data and
-	to pass to the consumers of the media data - namesly PVServer and PVPlayer.
+    This MediaBufferManager Class is responsible for maintaining list of used
+    and free MediaBuffers.  This is promarily used by the Mpeg4File class when
+    it is retrieving media data from disk.  It needs buffers to store data and
+    to pass to the consumers of the media data - namesly PVServer and PVPlayer.
 */
 
 

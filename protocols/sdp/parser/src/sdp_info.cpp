@@ -153,7 +153,7 @@ SDPInfo::~SDPInfo()
     int ss = 0;
     for (ii = 0; ii < numMediaObjects; ii++)
     {
-        for (ss = 0; ss < (int)pMediaInfo[ii].size();ss++)
+        for (ss = 0; ss < (int)pMediaInfo[ii].size(); ss++)
         {
             pMediaInfo[ii][ss]->~mediaInfo();
             dealloc(pMediaInfo[ii][ss]);
@@ -171,7 +171,7 @@ void SDPInfo::freeLastMediaInfoObject(void)
         return;
     }
 
-    for (int ss = 0; ss < (int)pMediaInfo[numMediaObjects].size();ss++)
+    for (int ss = 0; ss < (int)pMediaInfo[numMediaObjects].size(); ss++)
     {
         pMediaInfo[numMediaObjects][ss]->~mediaInfo();
         dealloc(pMediaInfo[numMediaObjects][ss]);

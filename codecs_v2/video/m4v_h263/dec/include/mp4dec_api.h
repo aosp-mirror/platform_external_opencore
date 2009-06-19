@@ -44,7 +44,7 @@ typedef uint Bool;
 /* flag for post-processing  4/25/00 */
 
 #ifdef DEC_NOPOSTPROC
-#undef PV_POSTPROC_ON	/* enable compilation of post-processing code */
+#undef PV_POSTPROC_ON   /* enable compilation of post-processing code */
 #else
 #define PV_POSTPROC_ON
 #endif
@@ -67,34 +67,34 @@ typedef uint Bool;
 /* The application has to allocate space for this structure */
 typedef struct tagOutputFrame
 {
-    uint8		*data;			/* pointer to output YUV buffer */
-    uint32		timeStamp;		/* time stamp */
+    uint8       *data;          /* pointer to output YUV buffer */
+    uint32      timeStamp;      /* time stamp */
 } OutputFrame;
 
 typedef struct tagApplicationData
 {
-    int	layer;			/* current video layer */
-    void *object;		/* some optional data field */
+    int layer;          /* current video layer */
+    void *object;       /* some optional data field */
 } applicationData;
 
 /* Application controls, this structed shall be allocated */
 /*    and initialized in the application.                 */
 typedef struct tagvideoDecControls
 {
-    /* The following fucntion pointer is copied to BitstreamDecVideo structure	*/
-    /*    upon initialization and never used again.	*/
+    /* The following fucntion pointer is copied to BitstreamDecVideo structure  */
+    /*    upon initialization and never used again. */
     int (*readBitstreamData)(uint8 *buf, int nbytes_required, void *appData);
     applicationData appData;
 
     uint8 *outputFrame;
-    void *videoDecoderData;		/* this is an internal pointer that is only used */
+    void *videoDecoderData;     /* this is an internal pointer that is only used */
     /* in the decoder library.   */
 #ifdef PV_MEMORY_POOL
     int32 size;
 #endif
     int nLayers;
     /* pointers to VOL data for frame-based decoding. */
-    uint8 *volbuf[2];			/* maximum of 2 layers for now */
+    uint8 *volbuf[2];           /* maximum of 2 layers for now */
     int32 volbuf_size[2];
 
 } VideoDecControls;
@@ -111,11 +111,11 @@ typedef enum
 
 typedef struct tagVopHeaderInfo
 {
-    int		currLayer;
-    uint32	timestamp;
-    MP4FrameType	frameType;
-    int		refSelCode;
-    int16		quantizer;
+    int     currLayer;
+    uint32  timestamp;
+    MP4FrameType    frameType;
+    int     refSelCode;
+    int16       quantizer;
 } VopHeaderInfo;
 
 /*--------------------------------------------------------------------------*
@@ -125,18 +125,18 @@ typedef struct tagVopHeaderInfo
  *--------------------------------------------------------------------------*/
 typedef struct tagVideoRefCopyInfoPtr
 {
-    uint8	*yChan;				/* The Y component frame the user can copy a new reference to */
-    uint8	*uChan;				/* The U component frame the user can copy a new reference to */
-    uint8	*vChan;				/* The V component frame the user can copy a new reference to */
-    uint8	*currentVop;		/* The Vop for video the user can copy a new reference to */
+    uint8   *yChan;             /* The Y component frame the user can copy a new reference to */
+    uint8   *uChan;             /* The U component frame the user can copy a new reference to */
+    uint8   *vChan;             /* The V component frame the user can copy a new reference to */
+    uint8   *currentVop;        /* The Vop for video the user can copy a new reference to */
 } VideoRefCopyInfoPtr;
 
 typedef struct tagVideoRefCopyInfoData
 {
-    int16	width;				/* Width */
-    int16	height;				/* Height */
-    int16	realWidth;			/* Non-padded width, not a multiple of 16. */
-    int16	realHeight;			/* Non-padded height, not a multiple of 16. */
+    int16   width;              /* Width */
+    int16   height;             /* Height */
+    int16   realWidth;          /* Non-padded width, not a multiple of 16. */
+    int16   realHeight;         /* Non-padded height, not a multiple of 16. */
 } VideoRefCopyInfoData;
 
 typedef struct tagVideoRefCopyInfo
@@ -153,31 +153,31 @@ extern "C"
 #endif
 
 
-    OSCL_IMPORT_REF Bool	PVInitVideoDecoder(VideoDecControls *decCtrl, uint8 *volbuf[], int32 *volbuf_size, int nLayers, int width, int height, MP4DecodingMode mode);
-    Bool	PVAllocVideoData(VideoDecControls *decCtrl, int width, int height, int nLayers);
-    OSCL_IMPORT_REF Bool	PVCleanUpVideoDecoder(VideoDecControls *decCtrl);
-    Bool	PVResetVideoDecoder(VideoDecControls *decCtrl);
-    OSCL_IMPORT_REF void	PVSetReferenceYUV(VideoDecControls *decCtrl, uint8 *refYUV);
-    Bool	PVDecSetReference(VideoDecControls *decCtrl, uint8 *refYUV, uint32 timestamp);
-    Bool	PVDecSetEnhReference(VideoDecControls *decCtrl, uint8 *refYUV, uint32 timestamp);
-    OSCL_IMPORT_REF Bool	PVDecodeVideoFrame(VideoDecControls *decCtrl, uint8 *bitstream[], uint32 *timestamp, int32 *buffer_size, uint use_ext_timestamp[], uint8* currYUV);
-    Bool	PVDecodeVopHeader(VideoDecControls *decCtrl, uint8 *buffer[], uint32 timestamp[], int32 buffer_size[], VopHeaderInfo *header_info, uint use_ext_timestamp[], uint8 *currYUV);
-    Bool	PVDecodeVopBody(VideoDecControls *decCtrl, int32 buffer_size[]);
-    void	PVDecPostProcess(VideoDecControls *decCtrl, uint8 *outputYUV);
-    OSCL_IMPORT_REF void	PVGetVideoDimensions(VideoDecControls *decCtrl, int32 *display_width, int32 *display_height);
-    OSCL_IMPORT_REF void	PVSetPostProcType(VideoDecControls *decCtrl, int mode);
-    uint32	PVGetVideoTimeStamp(VideoDecControls *decoderControl);
-    int		PVGetDecBitrate(VideoDecControls *decCtrl);
-    int		PVGetDecFramerate(VideoDecControls *decCtrl);
-    uint8	*PVGetDecOutputFrame(VideoDecControls *decCtrl);
-    int		PVGetLayerID(VideoDecControls *decCtrl);
-    int32	PVGetDecMemoryUsage(VideoDecControls *decCtrl);
+    OSCL_IMPORT_REF Bool    PVInitVideoDecoder(VideoDecControls *decCtrl, uint8 *volbuf[], int32 *volbuf_size, int nLayers, int width, int height, MP4DecodingMode mode);
+    Bool    PVAllocVideoData(VideoDecControls *decCtrl, int width, int height, int nLayers);
+    OSCL_IMPORT_REF Bool    PVCleanUpVideoDecoder(VideoDecControls *decCtrl);
+    Bool    PVResetVideoDecoder(VideoDecControls *decCtrl);
+    OSCL_IMPORT_REF void    PVSetReferenceYUV(VideoDecControls *decCtrl, uint8 *refYUV);
+    Bool    PVDecSetReference(VideoDecControls *decCtrl, uint8 *refYUV, uint32 timestamp);
+    Bool    PVDecSetEnhReference(VideoDecControls *decCtrl, uint8 *refYUV, uint32 timestamp);
+    OSCL_IMPORT_REF Bool    PVDecodeVideoFrame(VideoDecControls *decCtrl, uint8 *bitstream[], uint32 *timestamp, int32 *buffer_size, uint use_ext_timestamp[], uint8* currYUV);
+    Bool    PVDecodeVopHeader(VideoDecControls *decCtrl, uint8 *buffer[], uint32 timestamp[], int32 buffer_size[], VopHeaderInfo *header_info, uint use_ext_timestamp[], uint8 *currYUV);
+    Bool    PVDecodeVopBody(VideoDecControls *decCtrl, int32 buffer_size[]);
+    void    PVDecPostProcess(VideoDecControls *decCtrl, uint8 *outputYUV);
+    OSCL_IMPORT_REF void    PVGetVideoDimensions(VideoDecControls *decCtrl, int32 *display_width, int32 *display_height);
+    OSCL_IMPORT_REF void    PVSetPostProcType(VideoDecControls *decCtrl, int mode);
+    uint32  PVGetVideoTimeStamp(VideoDecControls *decoderControl);
+    int     PVGetDecBitrate(VideoDecControls *decCtrl);
+    int     PVGetDecFramerate(VideoDecControls *decCtrl);
+    uint8   *PVGetDecOutputFrame(VideoDecControls *decCtrl);
+    int     PVGetLayerID(VideoDecControls *decCtrl);
+    int32   PVGetDecMemoryUsage(VideoDecControls *decCtrl);
     OSCL_IMPORT_REF MP4DecodingMode PVGetDecBitstreamMode(VideoDecControls *decCtrl);
-    Bool	PVExtractVolHeader(uint8 *video_buffer, uint8 *vol_header, int32 *vol_header_size);
-    int32	PVLocateFrameHeader(uint8 *video_buffer, int32 vop_size);
-    int32	PVLocateH263FrameHeader(uint8 *video_buffer, int32 vop_size);
+    Bool    PVExtractVolHeader(uint8 *video_buffer, uint8 *vol_header, int32 *vol_header_size);
+    int32   PVLocateFrameHeader(uint8 *video_buffer, int32 vop_size);
+    int32   PVLocateH263FrameHeader(uint8 *video_buffer, int32 vop_size);
     Bool    PVGetVolInfo(VideoDecControls *decCtrl, VolInfo *pVolInfo); // BX 6/24/04
-    Bool	IsIntraFrame(VideoDecControls *decoderControl);
+    Bool    IsIntraFrame(VideoDecControls *decoderControl);
 
 #ifdef __cplusplus
 }

@@ -30,13 +30,13 @@ OmxAmrEncoder::OmxAmrEncoder()
     ipEncProps   = NULL;
     iNextStartTime = 0;
 
-    iOutputFormat			  = PVMF_MIME_AMR_IETF;
+    iOutputFormat             = PVMF_MIME_AMR_IETF;
     ipSizeArrayForOutputFrames = NULL;
-    iNextStartTime			  = 0;
+    iNextStartTime            = 0;
 
     iMaxNumOutputFramesPerBuffer = MAX_NUM_OUTPUT_FRAMES_PER_BUFFER;
-    iOneInputFrameLength		 = 320;
-    iMaxInputSize				 = 0;
+    iOneInputFrameLength         = 320;
+    iMaxInputSize                = 0;
 
     iAmrInitFlag = 0;
 }
@@ -48,7 +48,7 @@ OMX_BOOL OmxAmrEncoder::AmrEncInit(OMX_AUDIO_PARAM_PCMMODETYPE aPcmMode,
                                    OMX_U32* aInputFrameLength,
                                    OMX_U32* aMaxNumberOutputFrames)
 {
-    OMX_U32	MaxOutputBufferSize;
+    OMX_U32 MaxOutputBufferSize;
 
 
     iAmrInitFlag = 0;
@@ -208,10 +208,10 @@ OMX_BOOL OmxAmrEncoder::AmrEncodeFrame(OMX_U8*    aOutputBuffer,
 
     StreamInput.iSampleBuffer = (uint8*) aInBuffer;
     StreamInput.iSampleLength = (int32) aInBufSize;
-    StreamInput.iMode		  = ipEncProps->iMode;
-    StreamInput.iStartTime	  = (iNextStartTime >= aInTimeStamp  ? iNextStartTime : aInTimeStamp);
-    StreamInput.iStopTime	  = StreamInput.iStartTime + AMR_FRAME_LENGTH_IN_TIMESTAMP * InputFrameNum;
-    iNextStartTime			  = StreamInput.iStopTime; // for the next encoding
+    StreamInput.iMode         = ipEncProps->iMode;
+    StreamInput.iStartTime    = (iNextStartTime >= aInTimeStamp  ? iNextStartTime : aInTimeStamp);
+    StreamInput.iStopTime     = StreamInput.iStartTime + AMR_FRAME_LENGTH_IN_TIMESTAMP * InputFrameNum;
+    iNextStartTime            = StreamInput.iStopTime; // for the next encoding
 
     // Do encoding at one time for multiple frame input
     if (ipGsmEncoder->Encode(StreamInput, StreamOutput) < 0 || StreamOutput.iNumSampleFrames != InputFrameNum)

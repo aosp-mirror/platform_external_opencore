@@ -74,11 +74,11 @@ class OsclNameString
         */
         void Set(uint8* a)
         {
-            for (int i = 0;i < __len;i++)
+            for (int i = 0; i < __len; i++)
                 iStr[i] = '\0';
             if (a)
             {
-                for (int i = 0;i < __len - 1;i++)
+                for (int i = 0; i < __len - 1; i++)
                 {
                     iStr[i] = a[i];
                     if (a[i] == '\0')

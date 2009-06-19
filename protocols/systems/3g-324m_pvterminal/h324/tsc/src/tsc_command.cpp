@@ -36,7 +36,7 @@
 #include    "oscl_base.h"
 #include    "h245def.h"
 #include    "tsc_sub.h"         /* Sub Routine Information Header            */
-#include	"tscmain.h"
+#include    "tscmain.h"
 
 /*****************************************************************************/
 /*  function name        : Tsc_EndSessionCommand                             */
@@ -298,7 +298,7 @@ OSCL_EXPORT_REF void TSC_324m::SendModeRequestCommand()
     PS_ModeDescription      pModeDescription;
     PS_ModeElement          pModeElement, pModeElement2;
     PS_VideoMode            pVideoMode; /* RAN */
-    PS_AudioMode			pAudioMode;	/* WWURM */
+    PS_AudioMode            pAudioMode; /* WWURM */
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "TSC_324m::SendModeRequestCommand"));
 
@@ -349,7 +349,7 @@ OSCL_EXPORT_REF void TSC_324m::SendModeRequestCommand()
     pModeElement2->modeType.audioMode =
 
         pAudioMode = (PS_AudioMode) OSCL_DEFAULT_MALLOC(sizeof(S_AudioMode));
-    PS_GenericCapability	genericCap;
+    PS_GenericCapability    genericCap;
     pAudioMode->index = 20;
     pAudioMode->genericAudioMode = genericCap =
                                        (PS_GenericCapability) OSCL_DEFAULT_MALLOC(sizeof(S_GenericCapability));

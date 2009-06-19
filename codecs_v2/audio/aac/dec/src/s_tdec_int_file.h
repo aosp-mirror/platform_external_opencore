@@ -179,20 +179,20 @@ extern "C"
         Int            ltp_buffer_state;
 
         /*
-         *	For eaac+, a scratch matrix is created with the rigth element ( perChan[1] is not used)
+         *  For eaac+, a scratch matrix is created with the rigth element ( perChan[1] is not used)
          *  and the fxpCoef matrix. These  2 matrices are [2][38][64] == 4864 Int32
          *    2349 coming from the perChan[1] plus 4096 coming from fxpCoef
          */
         tDec_Int_Chan  perChan[Chans];
 
-        Int32		   fxpCoef[2][LN];         /* LN  = 2048     */
+        Int32          fxpCoef[2][LN];         /* LN  = 2048     */
 
 
 
 #ifdef AAC_PLUS
 
         SBRDECODER_DATA sbrDecoderData;/* allocates 2 SBR_CHANNEL, each has a SBR_FRAME_DATA */
-        SBR_DEC			sbrDec;
+        SBR_DEC         sbrDec;
         SBRBITSTREAM    sbrBitStr;
 
 #endif
@@ -242,7 +242,7 @@ extern "C"
          */
 
         /*
-         *	also used by the circular buffer scheme on aac+ (needs 4096 + 1152)
+         *  also used by the circular buffer scheme on aac+ (needs 4096 + 1152)
          *  from scratch_mem[2] + 5248  (uses most of shared_memory).
          *  For eaac+, shared memory is used by sbrQmfBufferReal which needs
          *  1824 bytes

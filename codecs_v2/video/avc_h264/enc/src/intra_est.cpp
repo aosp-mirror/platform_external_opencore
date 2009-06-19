@@ -22,12 +22,12 @@
 #define TH_Intra  0 /* threshold biasing toward INTER mode instead of intra mode */
 
 #define FIXED_INTRAPRED_MODE  AVC_I16
-#define FIXED_I16_MODE	AVC_I16_DC
-#define FIXED_I4_MODE	AVC_I4_Diagonal_Down_Left
-#define FIXED_INTRA_CHROMA_MODE	AVC_IC_DC
+#define FIXED_I16_MODE  AVC_I16_DC
+#define FIXED_I4_MODE   AVC_I4_Diagonal_Down_Left
+#define FIXED_INTRA_CHROMA_MODE AVC_IC_DC
 
-#define CLIP_RESULT(x) 		if((uint)x > 0xFF){ \
-			     x = 0xFF & (~(x>>31));}
+#define CLIP_RESULT(x)      if((uint)x > 0xFF){ \
+                 x = 0xFF & (~(x>>31));}
 
 
 bool IntraDecisionABE(AVCEncObject *encvid, int min_cost, uint8 *curL, int picPitch)
@@ -860,10 +860,10 @@ int blk_intra4x4_search(AVCEncObject *encvid, int blkidx, uint8 *cur, uint8 *org
         P0 = ((P_I + P_J + 1) >> 1);
         P1 = ((P_I + (P_J << 1) + P_K + 2) >> 2);
 
-        temp = P0 | (P1 << 8);		// [P0 P1 Q0 Q1]
-        temp |= (Q0 << 16);		// [Q0 Q1 R0 DO]
-        temp |= (Q1 << 24);		// [R0 D0 D1 D1]
-        *((uint32*)pred) = temp;	  // [D1 D1 D1 D1]
+        temp = P0 | (P1 << 8);      // [P0 P1 Q0 Q1]
+        temp |= (Q0 << 16);     // [Q0 Q1 R0 DO]
+        temp |= (Q1 << 24);     // [R0 D0 D1 D1]
+        *((uint32*)pred) = temp;      // [D1 D1 D1 D1]
 
         D0 = (P_K + 3 * P_L + 2) >> 2;
         R0 = (P_K + P_L + 1) >> 1;
@@ -1176,7 +1176,7 @@ int blk_intra4x4_search(AVCEncObject *encvid, int blkidx, uint8 *cur, uint8 *org
 
         *((uint32*)(pred += 4)) = temp2;
 
-        temp1 = (temp1 >> 8) | ((x4 >> 1) << 24); 	/* rotate out old value */
+        temp1 = (temp1 >> 8) | ((x4 >> 1) << 24);   /* rotate out old value */
         *((uint32*)(pred += 4)) = temp1;
 
         temp2 = (temp2 >> 8) | (((x4 + x5) >> 2) << 24); /* rotate out old value */
@@ -1844,9 +1844,9 @@ int SATDChroma(uint8 *orgCb, uint8 *orgCr, int org_pitch, uint8 *pred, int min_c
 ///////////////////////////////// old code, unused
 /* find the best intra mode based on original (unencoded) frame */
 /* output is
-	currMB->mb_intra, currMB->mbMode,
-	currMB->i16Mode  (if currMB->mbMode == AVC_I16)
-	currMB->i4Mode[..] (if currMB->mbMode == AVC_I4) */
+    currMB->mb_intra, currMB->mbMode,
+    currMB->i16Mode  (if currMB->mbMode == AVC_I16)
+    currMB->i4Mode[..] (if currMB->mbMode == AVC_I4) */
 
 #ifdef FIXED_INTRAPRED_MODE
 void MBIntraSearch(AVCEncObject *encvid, AVCMacroblock *currMB, int mbNum)

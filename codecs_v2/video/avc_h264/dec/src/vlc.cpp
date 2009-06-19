@@ -21,7 +21,7 @@
 //#define PV_ARM_V5
 #ifdef PV_ARM_V5
 #define PV_CLZ(A,B) __asm{CLZ (A),(B)}  \
-	A -= 16;
+    A -= 16;
 #else
 #define PV_CLZ(A,B) while (((B) & 0x8000) == 0) {(B) <<=1; A++;}
 #endif
@@ -143,8 +143,8 @@ AVCDec_Status  se_v(AVCDecBitstream *bitstream, int *value)
     if (temp & 0x01)                          // lsb is signed bit
         *value = -(*value);
 
-//	leading_zeros = temp >> 1;
-//	*value = leading_zeros - (leading_zeros*2*(temp&1));
+//  leading_zeros = temp >> 1;
+//  *value = leading_zeros - (leading_zeros*2*(temp&1));
 
     return AVCDEC_SUCCESS;
 }
@@ -260,8 +260,8 @@ AVCDec_Status DecodeCBP(AVCMacroblock *currMB, AVCDecBitstream *stream)
         coded_block_pattern = MapCBP[codeNum][1];
     }
 
-//	currMB->cbpL = coded_block_pattern&0xF;  /* modulo 16 */
-//	currMB->cbpC = coded_block_pattern>>4;   /* divide 16 */
+//  currMB->cbpL = coded_block_pattern&0xF;  /* modulo 16 */
+//  currMB->cbpC = coded_block_pattern>>4;   /* divide 16 */
     currMB->CBP = coded_block_pattern;
 
     return AVCDEC_SUCCESS;
@@ -610,7 +610,7 @@ AVCDec_Status ce_TotalZeros(AVCDecBitstream *stream, int *code, int TotalCoeff)
     };
 
     uint temp, mask;
-    int	indx;
+    int indx;
     uint8 *pcode;
 
     if (TotalCoeff == 1)

@@ -225,7 +225,7 @@ PVMFCommandId PVMFDummyFileOutputInPort::SkipMediaData(PVMFSessionId aSessionId,
 void PVMFDummyFileOutputInPort::ScheduleProcessData(PvmfSyncUtilDataQueue* aDataQueue, uint32 aTimeMilliseconds)
 {
     OSCL_UNUSED_ARG(aDataQueue);
-//	if(iSkipMediaDataPending || iState == PORT_STATE_STARTED)
+//  if(iSkipMediaDataPending || iState == PORT_STATE_STARTED)
     {
         RunIfNotReady(aTimeMilliseconds * 1000);
     }

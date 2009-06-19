@@ -19,8 +19,8 @@
 #include "avcenc_api.h"
 #include "oscl_string.h"
 
-#define LOG2_MAX_FRAME_NUM_MINUS4	12   /* 12 default */
-#define SLICE_GROUP_CHANGE_CYCLE	1    /* default */
+#define LOG2_MAX_FRAME_NUM_MINUS4   12   /* 12 default */
+#define SLICE_GROUP_CHANGE_CYCLE    1    /* default */
 
 /* initialized variables to be used in SPS*/
 AVCEnc_Status  SetEncodeParam(AVCHandle* avcHandle, AVCEncParams* encParam,
@@ -527,7 +527,7 @@ AVCEnc_Status  SetEncodeParam(AVCHandle* avcHandle, AVCEncParams* encParam,
     }
 
     rateCtrl->frame_rate = (OsclFloat)(encParam->frame_rate * 1.0 / 1000);
-//	rateCtrl->srcInterval = encParam->src_interval;
+//  rateCtrl->srcInterval = encParam->src_interval;
     rateCtrl->first_frame = 1; /* set this flag for the first time */
 
     /* contrained_setx_flag will be set inside the VerifyProfile called below.*/
@@ -578,7 +578,7 @@ AVCEnc_Status VerifyProfile(AVCEncObject *encvid, AVCSeqParamSet *seqParam, AVCP
         if (seqParam->direct_8x8_inference_flag == TRUE &&
                 picParam->entropy_coding_mode_flag == FALSE &&
                 picParam->num_slice_groups_minus1 <= 7 /*&&
-			picParam->num_slice_groups_minus1>=0 (no need, it's unsigned) */)
+            picParam->num_slice_groups_minus1>=0 (no need, it's unsigned) */)
         {
             seqParam->profile_idc = AVC_EXTENDED;
             seqParam->constrained_set2_flag = TRUE;
@@ -599,7 +599,7 @@ AVCEnc_Status VerifyProfile(AVCEncObject *encvid, AVCSeqParamSet *seqParam, AVCP
                 picParam->weighted_bipred_idc == 0 &&
                 picParam->entropy_coding_mode_flag == FALSE &&
                 picParam->num_slice_groups_minus1 <= 7 /*&&
-			picParam->num_slice_groups_minus1>=0 (no need, it's unsigned)*/)
+            picParam->num_slice_groups_minus1>=0 (no need, it's unsigned)*/)
         {
             seqParam->profile_idc = AVC_BASELINE;
             seqParam->constrained_set0_flag = TRUE;
@@ -622,7 +622,7 @@ AVCEnc_Status VerifyProfile(AVCEncObject *encvid, AVCSeqParamSet *seqParam, AVCP
                     picParam->weighted_bipred_idc != 0 ||
                     picParam->entropy_coding_mode_flag == TRUE ||
                     picParam->num_slice_groups_minus1 > 7 /*||
-			picParam->num_slice_groups_minus1<0 (no need, it's unsigned) */)
+            picParam->num_slice_groups_minus1<0 (no need, it's unsigned) */)
             {
                 status = AVCENC_TOOLS_NOT_SUPPORTED;
             }
@@ -652,7 +652,7 @@ AVCEnc_Status VerifyLevel(AVCEncObject *encvid, AVCSeqParamSet *seqParam, AVCPic
 
     if (seqParam->level_idc == 0) /* find level for this setting */
     {
-        for (ii = 0;ii < MAX_LEVEL_IDX;ii++)
+        for (ii = 0; ii < MAX_LEVEL_IDX; ii++)
         {
             if (mb_per_sec <= MaxMBPS[ii] &&
                     video->PicSizeInMbs <= (uint)MaxFS[ii] &&
@@ -820,7 +820,7 @@ AVCEnc_Status InitSlice(AVCEncObject *encvid)
 
     /* sliceHdr->frame_num already set in InitFrame */
 
-    if (!currSPS->frame_mbs_only_flag) 	/* we shouldn't need this check */
+    if (!currSPS->frame_mbs_only_flag)  /* we shouldn't need this check */
     {
         sliceHdr->field_pic_flag = sliceHdr->bottom_field_flag = FALSE;
         return AVCENC_TOOLS_NOT_SUPPORTED;
@@ -851,7 +851,7 @@ AVCEnc_Status InitSlice(AVCEncObject *encvid)
     if ((currPPS->weighted_pred_flag && (slice_type == AVC_P_SLICE || slice_type == AVC_SP_SLICE)) ||
             (currPPS->weighted_bipred_idc == 1 && slice_type == AVC_B_SLICE))
     {
-        //		pred_weight_table(); // not supported !!
+        //      pred_weight_table(); // not supported !!
         return AVCENC_TOOLS_NOT_SUPPORTED;
     }
 

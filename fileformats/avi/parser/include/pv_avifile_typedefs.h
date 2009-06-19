@@ -72,40 +72,40 @@
 #endif
 
 //avi file parser specific typedefines
-const uint32   CHUNK_SIZE				= 4;
-const uint32   RES_BYTES_SZ				= 4;
-const uint32   MAX_STRN_SZ				= 100;
-const uint32   OFFSET_FROM_MOVI_LST		= 4;
-const uint32   MAX_COLOR_TABLE_SIZE		= 256;
-const uint32   BIT_COUNT1				= 1;
-const uint32   BIT_COUNT2				= 2;
-const uint32   BIT_COUNT4				= 4;
-const uint32   BIT_COUNT8				= 8;
-const uint32   BIT_COUNT16				= 16;
-const uint32   BIT_COUNT24				= 24;
-const uint32   BIT_COUNT32				= 32;
+const uint32   CHUNK_SIZE               = 4;
+const uint32   RES_BYTES_SZ             = 4;
+const uint32   MAX_STRN_SZ              = 100;
+const uint32   OFFSET_FROM_MOVI_LST     = 4;
+const uint32   MAX_COLOR_TABLE_SIZE     = 256;
+const uint32   BIT_COUNT1               = 1;
+const uint32   BIT_COUNT2               = 2;
+const uint32   BIT_COUNT4               = 4;
+const uint32   BIT_COUNT8               = 8;
+const uint32   BIT_COUNT16              = 16;
+const uint32   BIT_COUNT24              = 24;
+const uint32   BIT_COUNT32              = 32;
 
-#define MAKE_FOURCC(a , b, c, d)		((uint32(a) << 24) | (uint32(b) << 16) | (uint32(c) << 8) | uint32(d))
+#define MAKE_FOURCC(a , b, c, d)        ((uint32(a) << 24) | (uint32(b) << 16) | (uint32(c) << 8) | uint32(d))
 
-const uint32	RIFF	MAKE_FOURCC('R', 'I', 'F', 'F');
-const uint32	AVI		MAKE_FOURCC('A', 'V', 'I', ' ');
-const uint32	LIST	MAKE_FOURCC('L', 'I', 'S', 'T');
-const uint32	HDRL	MAKE_FOURCC('h', 'd', 'r', 'l');
-const uint32	AVIH	MAKE_FOURCC('a', 'v', 'i', 'h');
-const uint32	STRL	MAKE_FOURCC('s', 't', 'r', 'l');
-const uint32	STRH	MAKE_FOURCC('s', 't', 'r', 'h');
-const uint32	STRF	MAKE_FOURCC('s', 't', 'r', 'f');
-const uint32	STRN	MAKE_FOURCC('s', 't', 'r', 'n');
-const uint32	STRD	MAKE_FOURCC('s', 't', 'r', 'd');
-const uint32	IDX1	MAKE_FOURCC('i', 'd', 'x', '1');
+const uint32    RIFF    MAKE_FOURCC('R', 'I', 'F', 'F');
+const uint32    AVI     MAKE_FOURCC('A', 'V', 'I', ' ');
+const uint32    LIST    MAKE_FOURCC('L', 'I', 'S', 'T');
+const uint32    HDRL    MAKE_FOURCC('h', 'd', 'r', 'l');
+const uint32    AVIH    MAKE_FOURCC('a', 'v', 'i', 'h');
+const uint32    STRL    MAKE_FOURCC('s', 't', 'r', 'l');
+const uint32    STRH    MAKE_FOURCC('s', 't', 'r', 'h');
+const uint32    STRF    MAKE_FOURCC('s', 't', 'r', 'f');
+const uint32    STRN    MAKE_FOURCC('s', 't', 'r', 'n');
+const uint32    STRD    MAKE_FOURCC('s', 't', 'r', 'd');
+const uint32    IDX1    MAKE_FOURCC('i', 'd', 'x', '1');
 const uint32    INDX    MAKE_FOURCC('i', 'n', 'd', 'x');
-const uint32	VIDS	MAKE_FOURCC('v', 'i', 'd', 's');
-const uint32	AUDS	MAKE_FOURCC('a', 'u', 'd', 's');
-const uint32	MIDS	MAKE_FOURCC('m', 'i', 'd', 's');
-const uint32	TXTS    MAKE_FOURCC('t', 'x', 't', 's');
-const uint32    DIB     MAKE_FOURCC('D', 'I', 'B', ' '); 	//Device-independent Bit Map
-const uint32	MOVI    MAKE_FOURCC('m', 'o', 'v', 'i');
-const uint32	JUNK	MAKE_FOURCC('J', 'U', 'N', 'K');
+const uint32    VIDS    MAKE_FOURCC('v', 'i', 'd', 's');
+const uint32    AUDS    MAKE_FOURCC('a', 'u', 'd', 's');
+const uint32    MIDS    MAKE_FOURCC('m', 'i', 'd', 's');
+const uint32    TXTS    MAKE_FOURCC('t', 'x', 't', 's');
+const uint32    DIB     MAKE_FOURCC('D', 'I', 'B', ' ');    //Device-independent Bit Map
+const uint32    MOVI    MAKE_FOURCC('m', 'o', 'v', 'i');
+const uint32    JUNK    MAKE_FOURCC('J', 'U', 'N', 'K');
 
 
 #define WAVE_FORMAT_UNKNOWN             (0x0000)
@@ -130,23 +130,23 @@ const uint32	JUNK	MAKE_FOURCC('J', 'U', 'N', 'K');
 #define IBM_FORMAT_ADPCM                (0x0103)
 
 #ifndef BI_RGB
-#define BI_RGB			  0
+#define BI_RGB            0
 #endif
 #ifndef BI_REL4
-#define BI_REL4			  1
+#define BI_REL4           1
 #endif
 #ifndef BI_REL8
-#define BI_REL8			  2
+#define BI_REL8           2
 #endif
 #ifndef BI_BITFIELDS
-#define BI_BITFIELDS	  3
+#define BI_BITFIELDS      3
 #endif
 #ifndef BI_ALPHABITFIELDS
 #define BI_ALPHABITFIELDS 4
 #endif
 
-class	PVAviFileParserStatus;
-class	PVAviFileParser;
+class   PVAviFileParserStatus;
+class   PVAviFileParser;
 class   PVAviFileHeader;
 class   PVAviFileIdxChunk;
 
@@ -157,24 +157,24 @@ typedef enum
     MIDI,
     TEXT,
     UNKNOWN
-}StreamType;
+} StreamType;
 
 
 //avih flags
-const uint32	AVIF_COPYRIGHTED		= 0x01000000;
-const uint32	AVIF_HASINDEX			= 0x10000000;
-const uint32	AVIF_ISINTERLEAVED		= 0x100000;
-const uint32	AVIF_MUSTUSEINDEX		= 0x010000;
-const uint32	AVIF_WASCAPTUREFILE		= 0x100;
+const uint32    AVIF_COPYRIGHTED        = 0x01000000;
+const uint32    AVIF_HASINDEX           = 0x10000000;
+const uint32    AVIF_ISINTERLEAVED      = 0x100000;
+const uint32    AVIF_MUSTUSEINDEX       = 0x010000;
+const uint32    AVIF_WASCAPTUREFILE     = 0x100;
 
 //strh flags
 const uint32    AVISF_DISABLED          = 0x01000000;
-const uint32	AVISF_VIDEO_PALCHANGES  = 0x10000000;
+const uint32    AVISF_VIDEO_PALCHANGES  = 0x10000000;
 
 //idx1 flags
 const uint32    AVIIF_KEYFRAME          = 0x01000000;
-const uint32	AVIIF_LIST				= 0x10000000;
-const uint32	AVIIF_NO_TIME           = 0x100000;
+const uint32    AVIIF_LIST              = 0x10000000;
+const uint32    AVIIF_NO_TIME           = 0x100000;
 
 typedef struct
 {
@@ -182,7 +182,7 @@ typedef struct
     uint16 top;
     uint16 right;
     uint16 bottom;
-}rcFrameType;
+} rcFrameType;
 
 
 //structure to store information present in avi file main header
@@ -232,22 +232,22 @@ class PVAviFileMainHeaderStruct
 
         };
 
-        bool	iIsAVIFileCopyrighted;
-        bool	iAVIFileHasIndxTbl;
-        bool	iISAVIFileInterleaved;
-        bool	iAVIFileMustUseIndex;
-        bool	iAVIFileWasCaptureFile;
-        uint32	iMicroSecPerFrame;
-        uint32	iMaxBytesPerSec;
-        uint32	iPadding;
-        uint32	iFlags;
-        uint32	iTotalFrames;
-        uint32	iInitialFrames;
-        uint32	iStreams;
-        uint32	iSuggestedBufferSize;
-        uint32	iWidth;
-        uint32	iHeight;
-        uint32	iReserved[RES_BYTES_SZ];
+        bool    iIsAVIFileCopyrighted;
+        bool    iAVIFileHasIndxTbl;
+        bool    iISAVIFileInterleaved;
+        bool    iAVIFileMustUseIndex;
+        bool    iAVIFileWasCaptureFile;
+        uint32  iMicroSecPerFrame;
+        uint32  iMaxBytesPerSec;
+        uint32  iPadding;
+        uint32  iFlags;
+        uint32  iTotalFrames;
+        uint32  iInitialFrames;
+        uint32  iStreams;
+        uint32  iSuggestedBufferSize;
+        uint32  iWidth;
+        uint32  iHeight;
+        uint32  iReserved[RES_BYTES_SZ];
 
 };
 
@@ -298,25 +298,25 @@ class PVAviFileStreamHeaderStruct
         }
 
 
-        uint32	iStreamTypeFCC;
-        uint32	iFlags;
-        bool	iIsVidPalChangeAvailable;
-        bool	iAVISF_Disabled;
+        uint32  iStreamTypeFCC;
+        uint32  iFlags;
+        bool    iIsVidPalChangeAvailable;
+        bool    iAVISF_Disabled;
 
         //stores codec type info for Audio and Video Stream.
-        uint8		iStreamHandler[CHUNK_SIZE];
-        uint16		iPriority;
-        uint16		iLanguage;
-        uint32		iInitFrames;
-        uint32		iScale;
-        uint32		iRate;
-        uint32		iStart;
-        uint32		iLength;	//Duration of stream
-        uint32		iSugBufSize;
-        uint32		iQuality;
-        uint32		iSampleSize;
-        rcFrameType	ircFrame;
-        OsclFloat	iSamplingRate;
+        uint8       iStreamHandler[CHUNK_SIZE];
+        uint16      iPriority;
+        uint16      iLanguage;
+        uint32      iInitFrames;
+        uint32      iScale;
+        uint32      iRate;
+        uint32      iStart;
+        uint32      iLength;    //Duration of stream
+        uint32      iSugBufSize;
+        uint32      iQuality;
+        uint32      iSampleSize;
+        rcFrameType ircFrame;
+        OsclFloat   iSamplingRate;
 
 };
 
@@ -333,19 +333,19 @@ typedef enum
     MP3,
     PCM,
     ADPCM
-}StreamHandlerType;
+} StreamHandlerType;
 
 typedef struct
 {
-    uint32	chunkId;
-    uint32	flags;
-    uint32	offset;
-    uint32	size;
+    uint32  chunkId;
+    uint32  flags;
+    uint32  offset;
+    uint32  size;
     bool    isKeyFrame;
     bool    ifRecList;
-    bool	ifNoTime;
+    bool    ifNoTime;
 
-}IdxTblType;
+} IdxTblType;
 
 typedef struct
 {
@@ -353,7 +353,7 @@ typedef struct
     uint8 Green;
     uint8 Blue;
     uint8 Flags;   //alpha entry
-}PalletEntryStruct;
+} PalletEntryStruct;
 
 typedef struct
 {
@@ -362,14 +362,14 @@ typedef struct
     uint32 Flags;
     Oscl_Vector<PalletEntryStruct, OsclMemAllocator> NewEntry;
 
-}AviPalChangeStruct;
+} AviPalChangeStruct;
 
 
 typedef struct
 {
-    uint32	BiSize;
-    uint32	BiWidth;
-    uint32	BiHeight;
+    uint32  BiSize;
+    uint32  BiWidth;
+    uint32  BiHeight;
     uint16    BiPlanes;
     uint16    BiBitCount;
     uint32    BiCompression;
@@ -378,7 +378,7 @@ typedef struct
     uint32    BiYPelsPerMeter;
     uint32    BiClrUsed;
     uint32    BiClrImportant;
-}BitmapInfoHhr;
+} BitmapInfoHhr;
 
 
 typedef struct
@@ -388,7 +388,7 @@ typedef struct
     uint8   Red;
     uint8   Reserved;
 
-}RGBQuad;
+} RGBQuad;
 
 typedef struct
 {
@@ -396,7 +396,7 @@ typedef struct
     uint32 BmiColorsCount;  //number of RGBQuads actually present
     RGBQuad BmiColors[MAX_COLOR_TABLE_SIZE];
 
-}BitMapInfoStruct;
+} BitMapInfoStruct;
 
 typedef struct
 {
@@ -408,7 +408,7 @@ typedef struct
     uint16    BitsPerSample;
     uint16    Size;
 
-}WaveFormatExStruct;
+} WaveFormatExStruct;
 
-#endif		//#ifndef PV_AVIFILE_TYPEDEFS_H_INCLUDED
+#endif      //#ifndef PV_AVIFILE_TYPEDEFS_H_INCLUDED
 

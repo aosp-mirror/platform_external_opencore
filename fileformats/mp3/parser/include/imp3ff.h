@@ -106,7 +106,7 @@ typedef enum
     MP3_CHANNEL_MODE_JOINT_CHANNEL_STEREO = 1,
     MP3_CHANNEL_MODE_DUAL_CHANNEL_STEREO = 2,
     MP3_CHANNEL_MODE_MONO = 3
-}MP3ChannelMode;
+} MP3ChannelMode;
 
 typedef enum
 {
@@ -129,7 +129,7 @@ typedef enum
     MP3_METADATA_NOTPARSED = 15,
     /* Duration related Info value*/
     MP3_DURATION_PRESENT = 16
-}MP3ErrorType;
+} MP3ErrorType;
 
 //----------------------------------------------------------------------
 // Forward Class Declarations
@@ -387,7 +387,7 @@ class IMpeg3File
         * @brief Requests call back for parser node when data stream is out of data
         *
         * @param aObserver - observer, which would receive the call back once
-        *					the file has been downloaded till provided offset.
+        *                   the file has been downloaded till provided offset.
         * @param aFileOffset - offset for which data is not available.
         * @param aContextData - context data
         */

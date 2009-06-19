@@ -1042,9 +1042,9 @@ class pvplayer_async_test_playpausestop : public pvplayer_async_test_base
  *
  */
 class pvplayer_async_test_outsidenodeforvideosink : public pvplayer_async_test_base,
-            public PVMFNodeCmdStatusObserver,
-            public PVMFNodeInfoEventObserver,
-            public PVMFNodeErrorEventObserver
+        public PVMFNodeCmdStatusObserver,
+        public PVMFNodeInfoEventObserver,
+        public PVMFNodeErrorEventObserver
 {
     public:
         pvplayer_async_test_outsidenodeforvideosink(PVPlayerAsyncTestParam aTestParam):
@@ -2683,9 +2683,9 @@ class pvplayer_async_test_capconfigiftest : public pvplayer_async_test_base, pub
  *  - Sequence:
  *             -# CreatePlayer()
  *             -# AddDataSource()/Init()/AddDataSink() (video)/AddDataSink() (audio)/AddDataSink() (text)
- *			   -# Prepare()/ SetPlaybackRange() / Start()
- *			   -# Wait for 5secs.
- *			   -# Stop()/RemoveDataSink() (video)/RemoveDataSink() (audio)/RemoveDataSink() (text)/Reset()/RemoveDataSource()
+ *             -# Prepare()/ SetPlaybackRange() / Start()
+ *             -# Wait for 5secs.
+ *             -# Stop()/RemoveDataSink() (video)/RemoveDataSink() (audio)/RemoveDataSink() (text)/Reset()/RemoveDataSource()
  *             -# DeletePlayer()
  *
  */
@@ -2778,7 +2778,7 @@ class pvplayer_async_test_setplaybackafterprepare : public pvplayer_async_test_b
  *             -# Pause()/SetPlaybackRange(Duration/4 sec, indeterminate)/Resume()
  *             -# WAIT Duration/10 sec.
  *             -# Pause()/SetPlaybackRange(Duration/4 sec, indeterminate)/Resume()
- *             -#	:
+ *             -#   :
  *             -# EOS
  *             -# Stop()/RemoveDataSink() (video)/RemoveDataSink() (audio)/RemoveDataSink() (text)/Reset()/RemoveDataSource()
  *             -# DeletePlayer()
@@ -3009,7 +3009,7 @@ class OsclExecScheduler;
 #include "threadsafe_queue.h"
 
 class pvplayer_async_test_multiple_thread : public pvplayer_async_test_base
-            , public ThreadSafeQueueObserver
+        , public ThreadSafeQueueObserver
 {
     public:
         pvplayer_async_test_multiple_thread(PVPlayerAsyncTestParam aTestParam):

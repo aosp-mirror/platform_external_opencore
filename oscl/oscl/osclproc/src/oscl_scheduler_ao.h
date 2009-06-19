@@ -48,8 +48,8 @@
  * can be activated in one thread and completed in another.
  */
 class OsclActiveObject:
-            public HeapBase,
-            public PVActiveBase
+        public HeapBase,
+        public PVActiveBase
 {
     public:
         /**
@@ -203,7 +203,7 @@ class OsclActiveObject:
 
  */
 class OsclTimerObject: public HeapBase
-            , public PVActiveBase
+        , public PVActiveBase
 {
     public:
         /**

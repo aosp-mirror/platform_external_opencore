@@ -538,7 +538,7 @@ Level2PduParcom::GetStuffing(uint8* pPdu, uint32 max_size, uint8 mux_code)
         size_left -= stuffing_size;
     }
 
-    return (max_size -size_left);
+    return (max_size - size_left);
 }
 
 PVMFStatus

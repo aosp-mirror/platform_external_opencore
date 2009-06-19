@@ -202,8 +202,8 @@ typedef PVMFNodeCommandQueue<PVCommsIONodeCmd, OsclMemAllocator> PVCommsIONodeCm
  * class PVCommsIONode is a node wrapper around the io interface
  */
 class PVCommsIONode : public OsclActiveObject,
-            public PVMFNodeInterface,
-            public PvmiMIOObserver
+        public PVMFNodeInterface,
+        public PvmiMIOObserver
 {
     public:
         static PVMFNodeInterface* Create(PvmiMIOControl* aMIOControl, bool logBitstream = false);

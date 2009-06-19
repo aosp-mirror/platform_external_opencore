@@ -250,7 +250,7 @@ OSCL_EXPORT_REF int32 oscl_CIstrcmp(const oscl_wchar *str1, const oscl_wchar *st
 
 OSCL_EXPORT_REF int32 oscl_CIstrncmp(const char *str1, const char *str2, uint32 count)
 {
-    for (uint32 i = 0;i < count;i++)
+    for (uint32 i = 0; i < count; i++)
     {
         if ((*str1 == '\0') || (oscl_tolower(*str1) != oscl_tolower(*str2)))
             return (oscl_tolower(*str1) - oscl_tolower(*str2));
@@ -262,7 +262,7 @@ OSCL_EXPORT_REF int32 oscl_CIstrncmp(const char *str1, const char *str2, uint32 
 
 OSCL_EXPORT_REF int32 oscl_CIstrncmp(const oscl_wchar *str1, const oscl_wchar *str2, uint32 count)
 {
-    for (uint32 i = 0;i < count;i++)
+    for (uint32 i = 0; i < count; i++)
     {
         if ((*str1 == '\0') || (oscl_tolower(*str1) != oscl_tolower(*str2)))
             return (oscl_tolower(*str1) - oscl_tolower(*str2));

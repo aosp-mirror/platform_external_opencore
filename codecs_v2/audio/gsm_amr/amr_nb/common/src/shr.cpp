@@ -34,7 +34,7 @@ terms listed above has been obtained from the copyright holder.
  REVISION HISTORY
 
  Description: Created separate file for the shr function. Sync'ed up with
-	      the current template and fixed tabs.
+          the current template and fixed tabs.
 
  Description: 1. Modified code by seperating var2=0 condition.
               2. Changed Input range definitions.
@@ -46,17 +46,17 @@ terms listed above has been obtained from the copyright holder.
               4. Moved var2>0 condition in front of var2<0 condition.
 
  Description: Changed the function prototype to pass in a pointer to the
-			  overflow flag instead of using global data.
+              overflow flag instead of using global data.
 
  Description: Made changes per formal review. Updated template.
-			  Removed code that updates MOPS counter.
-			  Changed parameter name from "overflow" and "pOverflow".
-			  Optimized code by eliminating unnecessary typecasting.
-			  Filled in the PSEUDO CODE section
+              Removed code that updates MOPS counter.
+              Changed parameter name from "overflow" and "pOverflow".
+              Optimized code by eliminating unnecessary typecasting.
+              Filled in the PSEUDO CODE section
 
  Description: Further optimized typecasting for overflow case
 
- Who:		  				Date:
+ Who:                       Date:
  Description:
 ------------------------------------------------------------------------------
 ------------------------------------------------------------------------------
@@ -68,7 +68,7 @@ terms listed above has been obtained from the copyright holder.
 /*----------------------------------------------------------------------------
 ; INCLUDES
 ----------------------------------------------------------------------------*/
-#include	"basic_op.h"
+#include    "basic_op.h"
 
 /*----------------------------------------------------------------------------
 ; MACROS
@@ -99,19 +99,19 @@ terms listed above has been obtained from the copyright holder.
  INPUT AND OUTPUT DEFINITIONS
 
  Inputs:
-	var1 = 16 bit short signed integer (Word16) whose value falls in
-	       the range : 0xffff 8000 <= var1 <= 0x0000 7fff.
+    var1 = 16 bit short signed integer (Word16) whose value falls in
+           the range : 0xffff 8000 <= var1 <= 0x0000 7fff.
 
-	var2 = 16 bit short signed integer (Word16) whose value falls in
-	       the range : 0xffff 8000 <= var2 <= 0x0000 7fff.
+    var2 = 16 bit short signed integer (Word16) whose value falls in
+           the range : 0xffff 8000 <= var2 <= 0x0000 7fff.
 
-	pOverflow = pointer to overflow (Flag)
+    pOverflow = pointer to overflow (Flag)
 
  Outputs:
-	pOverflow -> 1 if the shift operation resulted in overflow
+    pOverflow -> 1 if the shift operation resulted in overflow
 
  Returns:
-	product = Shifted result limited to 16 bits (Word16)
+    product = Shifted result limited to 16 bits (Word16)
 
  Global Variables Used:
     None
@@ -234,7 +234,7 @@ Word16 shr(register Word16 var1, register Word16 var2, Flag *pOverflow)
                 var2 = -16;
             }
 
-            var2 = -var2;	/* Shift right negative is equivalent */
+            var2 = -var2;   /* Shift right negative is equivalent */
             /*   to shifting left positive.       */
 
             temp_res = ((Word32) var1) << var2;

@@ -42,17 +42,17 @@ PVA_FF_MovieAtom::PVA_FF_MovieAtom(uint32 fileAuthoringFlags)
 
     // Initializations
 
-    _pAssetInfoCopyRightAtom		= NULL;
-    _pAssetInfoAuthorAtom			= NULL;
-    _pAssetInfoTitleAtom			= NULL;
-    _pAssetInfoDescAtom				= NULL;
-    _pAssetInfoPerformerAtom		= NULL;
-    _pAssetInfoGenreAtom			= NULL;
-    _pAssetInfoRatingAtom			= NULL;
-    _pAssetInfoClassificationAtom	= NULL;
-    _pAssetInfoKeyWordsAtom			= NULL;
-    _pAssetInfoLocationInfoAtom		= NULL;
-    _pAssetInfoKeyAlbumAtom			= NULL;
+    _pAssetInfoCopyRightAtom        = NULL;
+    _pAssetInfoAuthorAtom           = NULL;
+    _pAssetInfoTitleAtom            = NULL;
+    _pAssetInfoDescAtom             = NULL;
+    _pAssetInfoPerformerAtom        = NULL;
+    _pAssetInfoGenreAtom            = NULL;
+    _pAssetInfoRatingAtom           = NULL;
+    _pAssetInfoClassificationAtom   = NULL;
+    _pAssetInfoKeyWordsAtom         = NULL;
+    _pAssetInfoLocationInfoAtom     = NULL;
+    _pAssetInfoKeyAlbumAtom         = NULL;
     _pAssetInfoKeyRecordingYearAtom = NULL;
 
     _oMovieFragmentEnabled = false;

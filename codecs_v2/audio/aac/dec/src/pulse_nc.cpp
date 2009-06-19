@@ -55,7 +55,7 @@
                       Variable is named (pLongFrameInfo) because this function
                       is only used for LONG windows.
                       (FrameInfo *)
-	max				= Pointer to the maximum value of coef[]
+    max             = Pointer to the maximum value of coef[]
 
  Local Stores/Buffers/Pointers Needed:
     None
@@ -225,7 +225,7 @@ void pulse_nc(
     Int16      coef[],
     const PulseInfo  *pPulseInfo,
     const FrameInfo  *pLongFrameInfo,
-    Int		 *max)
+    Int      *max)
 {
     Int index;
 

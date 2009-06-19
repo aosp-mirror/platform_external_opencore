@@ -36,14 +36,14 @@ terms listed above has been obtained from the copyright holder.
  Description: Created separate header file for shr function.
 
  Description: Changed the function prototype declaration.
-			  Updated template.
+              Updated template.
 
  Description: Updated template. Changed the parameter name from "overflow" to
-			  "pOverflow" in the function prototype declaration
+              "pOverflow" in the function prototype declaration
 
  Description: Moved _cplusplus #ifdef after Include section.
 
- Who:						Date:
+ Who:                       Date:
  Description:
 
 ------------------------------------------------------------------------------
@@ -58,13 +58,13 @@ terms listed above has been obtained from the copyright holder.
 /*----------------------------------------------------------------------------
 ; CONTINUE ONLY IF NOT ALREADY DEFINED
 ----------------------------------------------------------------------------*/
-#ifndef	SHR_H
-#define	SHR_H
+#ifndef SHR_H
+#define SHR_H
 
 /*----------------------------------------------------------------------------
 ; INCLUDES
 ----------------------------------------------------------------------------*/
-#include	"basicop_malloc.h"
+#include    "basicop_malloc.h"
 
 /*--------------------------------------------------------------------------*/
 #ifdef __cplusplus
@@ -112,4 +112,4 @@ extern "C"
 }
 #endif
 
-#endif	/* _SHR_H_ */
+#endif  /* _SHR_H_ */

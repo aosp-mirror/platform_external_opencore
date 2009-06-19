@@ -106,10 +106,10 @@ void ConcealTexture_P(VideoDecData *video, int mb_start, int mb_stop, int slice_
 }
 
 /***************************************************************
-Function:	ConcealPacket
-Purpose	:	Conceal motion and texture of a packet by direct
+Function:   ConcealPacket
+Purpose :   Conceal motion and texture of a packet by direct
 copying from previous frame.
-Returned:	void
+Returned:   void
 Modified:
 *************************************************************/
 void ConcealPacket(VideoDecData *video,
@@ -129,16 +129,16 @@ void ConcealPacket(VideoDecData *video,
 }
 
 /****************************************************************************
-Function:	CopyVopMB
-Purpose	:	Fill a macroblock with previous Vop.
-Returned	:	void
-Modified:	6/04/2001 rewrote the function
-			copies from concealFrame
+Function:   CopyVopMB
+Purpose :   Fill a macroblock with previous Vop.
+Returned    :   void
+Modified:   6/04/2001 rewrote the function
+            copies from concealFrame
 ****************************************************************************/
 void CopyVopMB(Vop *curr, uint8 *prevFrame, int mbnum, int width_Y, int height)
 {
     int width_C = width_Y >> 1;
-    int	row = MB_SIZE;
+    int row = MB_SIZE;
     uint8              *y1, *y2, *u1, *u2, *v1, *v2;
     int xpos, ypos, MB_in_width;
     int32 lumstart, chrstart, size;
@@ -189,5 +189,5 @@ void CopyVopMB(Vop *curr, uint8 *prevFrame, int mbnum, int width_Y, int height)
         row -= 4;
     }
     return;
-}				/* CopyVopMB */
+}               /* CopyVopMB */
 

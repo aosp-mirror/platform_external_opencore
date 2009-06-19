@@ -82,7 +82,7 @@ extern "C"
 #endif
 
     Int32 ps_allocate_decoder(SBRDECODER_DATA *self,
-                              UInt32  noSubSamples);
+    UInt32  noSubSamples);
 
 #ifdef __cplusplus
 }

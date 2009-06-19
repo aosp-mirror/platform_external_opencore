@@ -100,20 +100,20 @@ class Mpeg4Encoder_OMX
         //Routine to compare two timestamps a and b
         OMX_BOOL LessThan(uint32& a, uint32& b, uint32 Threshold);
 
-        VideoEncControls	 iEncoderControl;
-        OMX_BOOL			 iInitialized;
+        VideoEncControls     iEncoderControl;
+        OMX_BOOL             iInitialized;
         OMX_COLOR_FORMATTYPE iVideoFormat;
 
-        int		iSrcWidth;
-        int		iSrcHeight;
-        int		iFrameOrientation;
-        uint32	iSrcFrameRate;
-        uint8*	iYUVIn;
-        uint8*	iVideoIn;
-        uint8*	iVideoOut;
-        uint32	iNextModTime;
+        int     iSrcWidth;
+        int     iSrcHeight;
+        int     iFrameOrientation;
+        uint32  iSrcFrameRate;
+        uint8*  iYUVIn;
+        uint8*  iVideoIn;
+        uint8*  iVideoOut;
+        uint32  iNextModTime;
         MP4HintTrack iHintTrack;
-        MP4EncodingMode	ENC_Mode;
+        MP4EncodingMode ENC_Mode;
 
         OMX_U8 iVolHeader[DEFAULT_VOL_HEADER_LENGTH]; /** Vol header */
         OMX_U32 iVolHeaderSize;

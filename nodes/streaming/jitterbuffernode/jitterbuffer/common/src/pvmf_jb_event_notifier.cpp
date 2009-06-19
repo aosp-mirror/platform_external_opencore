@@ -176,7 +176,7 @@ OSCL_EXPORT_REF bool PVMFJBEventNotifier::RequestCallBack(const PVMFJBEventNotif
             PVMFJBEventNotifierRequestInfo *notifierReqInfo = OSCL_NEW(PVMFJBEventNotifierRequestInfo, ());
             if (notifierReqInfo)
             {
-                PVMFJBEventNotificationRequestInfo*	obsRequestInfo = OSCL_NEW(PVMFJBEventNotificationRequestInfo, (aNotificationRequestInfo));
+                PVMFJBEventNotificationRequestInfo* obsRequestInfo = OSCL_NEW(PVMFJBEventNotificationRequestInfo, (aNotificationRequestInfo));
                 notifierReqInfo->ipRequestInfo = obsRequestInfo;
                 notifierReqInfo->iCallBackId = aCallBkId;
                 jbEvntNtfrRequestInfoVect->push_back(notifierReqInfo);
@@ -267,7 +267,7 @@ OSCL_EXPORT_REF bool PVMFJBEventNotifier::RequestAbsoluteTimeCallBack(const PVMF
             PVMFJBEventNotifierRequestInfo *notifierReqInfo = OSCL_NEW(PVMFJBEventNotifierRequestInfo, ());
             if (notifierReqInfo)
             {
-                PVMFJBEventNotificationRequestInfo*	obsRequestInfo = OSCL_NEW(PVMFJBEventNotificationRequestInfo, (aNotificationRequestInfo));
+                PVMFJBEventNotificationRequestInfo* obsRequestInfo = OSCL_NEW(PVMFJBEventNotificationRequestInfo, (aNotificationRequestInfo));
                 notifierReqInfo->ipRequestInfo = obsRequestInfo;
                 notifierReqInfo->iCallBackId = aCallBkId;
                 jbEvntNtfrRequestInfoVect->push_back(notifierReqInfo);

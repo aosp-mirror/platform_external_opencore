@@ -215,9 +215,9 @@ void PVMFProtocolEngineNodeRegistry::AddLoadableModules()
                 if (result == OsclLibSuccess && interfacePtr != NULL)
                 {
                     struct PVProtocolEngineNodeSharedLibInfo *libInfo =
-                                    (struct PVProtocolEngineNodeSharedLibInfo *)oscl_malloc(sizeof(struct PVProtocolEngineNodeSharedLibInfo));
+                        (struct PVProtocolEngineNodeSharedLibInfo *)oscl_malloc(sizeof(struct PVProtocolEngineNodeSharedLibInfo));
                     if (NULL != libInfo)
-            {
+                    {
                         libInfo->iLib = lib;
 
                         PVMFProtocolEngineNodeRegistryPopulatorInterface* nodeLibIntPtr = OSCL_DYNAMIC_CAST(PVMFProtocolEngineNodeRegistryPopulatorInterface*, interfacePtr);

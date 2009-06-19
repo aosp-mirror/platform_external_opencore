@@ -142,5 +142,5 @@ class OsclSemaphore
 
 
 
-#endif	//	END OF File
+#endif  //  END OF File
 

@@ -88,7 +88,7 @@ typedef enum
     EUnpausing,
     EClosing,
     EMaxDataPathStates
-}TPV2WayDatapathState;
+} TPV2WayDatapathState;
 
 /**
  * TPVPortFormatSetType enum

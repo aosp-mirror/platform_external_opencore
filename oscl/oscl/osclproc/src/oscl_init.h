@@ -79,7 +79,7 @@ class OsclSelect
                 , iOutputFile(output)
         {}
 
-        bool iOsclBase;	        //Init/Cleanup OsclBase?
+        bool iOsclBase;         //Init/Cleanup OsclBase?
         bool iOsclMemory;       //Init/Cleanup OsclMemory?
         bool iOsclErrorTrap;    //Init/Cleanup OsclErrorTrap?
         bool iOsclLogger;       //Init/Cleanup PVLogger?

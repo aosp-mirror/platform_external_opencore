@@ -37,7 +37,7 @@ typedef enum TPVPostDisconnectOption
 {
     EDisconnectLine,
     EAnalogueTelephony
-}PV2WayPostDisconnectOption;
+} PV2WayPostDisconnectOption;
 
 
 /**
@@ -48,7 +48,7 @@ typedef enum TPVUserInputType
 {
     EAlphanumeric = 0,
     EDtmf,
-}PV2WayUserInputType;
+} PV2WayUserInputType;
 
 /**
  * PV2Way324InitInfo Class

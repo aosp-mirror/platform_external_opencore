@@ -164,28 +164,28 @@ typedef OsclMemAllocator PVRTSPEngineNodeAllocator;
 class SessionInfo
 {
     public:
-        //bool sdpFlag;			    //Used to make sure that we read into the mediainfo array after it has been assigned
+        //bool sdpFlag;             //Used to make sure that we read into the mediainfo array after it has been assigned
         //SDP_ERROR_CODE sdpErrorCode;            //Saves the value returned from the sdp parser
 
         OSCL_HeapString<PVRTSPEngineNodeAllocator> iSessionURL;
         OSCL_HeapString<PVRTSPEngineNodeAllocator> iContentBaseURL;//Per session control URL from content base field
 
-        OSCL_HeapString<PVRTSPEngineNodeAllocator> iServerName;	//could be either DNS or ip address
+        OSCL_HeapString<PVRTSPEngineNodeAllocator> iServerName; //could be either DNS or ip address
 
-        OSCL_HeapString<PVRTSPEngineNodeAllocator> iProxyName;	//could be either DNS or ip address
-        uint32	iProxyPort;
+        OSCL_HeapString<PVRTSPEngineNodeAllocator> iProxyName;  //could be either DNS or ip address
+        uint32  iProxyPort;
 
         OsclNetworkAddress iSrvAdd;
 
-        bool bExternalSDP;			//true if got SDP through external(NOT DESCRIBE) methods
+        bool bExternalSDP;          //true if got SDP through external(NOT DESCRIBE) methods
 
-        RtspRangeType	iReqPlayRange;
-        RtspRangeType	iActPlayRange;
+        RtspRangeType   iReqPlayRange;
+        RtspRangeType   iActPlayRange;
 
-        OsclRefCounterMemFrag	pSDPBuf;
+        OsclRefCounterMemFrag   pSDPBuf;
 
-        OsclSharedPtr<SDPInfo>	iSDPinfo;
-        //SDP_Parser *iSDPparser;		//Pointer to the SDP_Parser class object
+        OsclSharedPtr<SDPInfo>  iSDPinfo;
+        //SDP_Parser *iSDPparser;       //Pointer to the SDP_Parser class object
         Oscl_Vector<StreamInfo, PVRTSPEngineNodeAllocator> iSelectedStream;
 
         //Form the track to channel association table. This table is used while
@@ -206,38 +206,38 @@ class SessionInfo
         int number_of_channels;                 //Used for interaction with the media buffer class
         int channel_tbl[MAX_TOTAL_TRACKS];      //Index from SDP track IDs to tracks actually selected
 
-        OSCL_HeapString<PVRTSPEngineNodeAllocator> iSID;	//alphanumeric session ID
+        OSCL_HeapString<PVRTSPEngineNodeAllocator> iSID;    //alphanumeric session ID
 
         //OsclMemoryFragment pImgBuf;
 
-        bool serverReplyFlag;		    //Used for communication between the PVStream modules (network module and the task scheduler)
-        bool getStateFlag;			    //Used to ensure that the PE's main loop has been called
-        bool pvServerIsSetFlag; 		    //Used to indicate if we are streaming from PVServer or not
-        bool tSIDIsSetFlag;			    //Used to send session id from second SETUP request
+        bool serverReplyFlag;           //Used for communication between the PVStream modules (network module and the task scheduler)
+        bool getStateFlag;              //Used to ensure that the PE's main loop has been called
+        bool pvServerIsSetFlag;             //Used to indicate if we are streaming from PVServer or not
+        bool tSIDIsSetFlag;             //Used to send session id from second SETUP request
         uint32 iServerVersionNumber;    // Version number of PVSS
         int32 prerollDuration;                  //Saves the jitter buffer size
 
-        int32 fwp_counter;			    //Id of the first returned firewall packet
+        int32 fwp_counter;              //Id of the first returned firewall packet
         int32 rtt;                              //Saves the round trip time for firewall exchange
         uint32 roundTripDelay;                   //Saves the round trip delay for a DESCRIBE request
         uint64 clientServerDelay;                //Saves the client server delay during a DESCRIBE request
 
         bool pipeLineFlag;                      //Used to indicate a pipe lined request
 
-        OSCL_HeapString<PVRTSPEngineNodeAllocator>	iUserAgent;
-        OSCL_HeapString<PVRTSPEngineNodeAllocator>	iUserNetwork;
-        OSCL_HeapString<PVRTSPEngineNodeAllocator>	iDeviceInfo;
+        OSCL_HeapString<PVRTSPEngineNodeAllocator>  iUserAgent;
+        OSCL_HeapString<PVRTSPEngineNodeAllocator>  iUserNetwork;
+        OSCL_HeapString<PVRTSPEngineNodeAllocator>  iDeviceInfo;
 
-        OSCL_HeapString<PVRTSPEngineNodeAllocator>	iUserID;
-        OSCL_HeapString<PVRTSPEngineNodeAllocator>	iAuthentication;
-        OSCL_HeapString<PVRTSPEngineNodeAllocator>	iExpiration;
-        OSCL_HeapString<PVRTSPEngineNodeAllocator>	iApplicationSpecificString;
-        OSCL_HeapString<PVRTSPEngineNodeAllocator>	iVerification;
-        OSCL_HeapString<PVRTSPEngineNodeAllocator>	iSignature;
+        OSCL_HeapString<PVRTSPEngineNodeAllocator>  iUserID;
+        OSCL_HeapString<PVRTSPEngineNodeAllocator>  iAuthentication;
+        OSCL_HeapString<PVRTSPEngineNodeAllocator>  iExpiration;
+        OSCL_HeapString<PVRTSPEngineNodeAllocator>  iApplicationSpecificString;
+        OSCL_HeapString<PVRTSPEngineNodeAllocator>  iVerification;
+        OSCL_HeapString<PVRTSPEngineNodeAllocator>  iSignature;
 
         enum PVRTSPStreamingType iStreamingType;
 
-        bool									   iSessionCompleted;
+        bool                                       iSessionCompleted;
         void UpdateSessionCompletionStatus(bool aSessionCompleted)
         {
             iSessionCompleted = aSessionCompleted;
@@ -324,7 +324,7 @@ class PVRTSPGenericMessageCompareLess
         * The algorithm used in OsclPriorityQueue needs a compare function
         * that returns true when A's priority is less than B's
         * @return true if A's priority is less than B's, else false
-        	*/
+            */
         int compare(RTSPGenericMessage* a, RTSPGenericMessage* b) const
         {
             return (PVRTSPGenericMessageCompareLess::GetPriority(*a) > PVRTSPGenericMessageCompareLess::GetPriority(*b));
@@ -376,13 +376,13 @@ class GetPostCorrelationObject
 };
 
 class PVRTSPEngineNode
-            : public PVInterface,
-            public PVMFNodeInterface,
-            public OsclTimerObject,
-            public OsclSocketObserver,
-            public OsclDNSObserver,
-            public OsclTimerObserver,
-            public OsclMemPoolFixedChunkAllocatorObserver
+        : public PVInterface,
+        public PVMFNodeInterface,
+        public OsclTimerObject,
+        public OsclSocketObserver,
+        public OsclDNSObserver,
+        public OsclTimerObserver,
+        public OsclMemPoolFixedChunkAllocatorObserver
 {
     public:
         OSCL_IMPORT_REF PVRTSPEngineNode(int32 aPriority);
@@ -615,11 +615,11 @@ class PVRTSPEngineNode
 
         typedef struct _SocketEvent
         {
-            int32			iSockId;
-            TPVSocketFxn	iSockFxn;
-            TPVSocketEvent	iSockEvent;
-            int32			iSockError;
-        }SocketEvent;
+            int32           iSockId;
+            TPVSocketFxn    iSockFxn;
+            TPVSocketEvent  iSockEvent;
+            int32           iSockError;
+        } SocketEvent;
 
         enum PVRTSPEngineState
         {
@@ -652,7 +652,7 @@ class PVRTSPEngineNode
             PVRTSP_ENGINE_NODE_STATE_WAIT_CALLBACK,
 
             PVRTSP_ENGINE_NODE_STATE_INVALID
-        }iState;
+        } iState;
 
     private:
         OsclSharedPtr<PVMFMediaDataImpl> AllocateMediaData(int32& errCode);
@@ -662,7 +662,7 @@ class PVRTSPEngineNode
 
         PVMFCommandId iCurrentCmdId;
 
-        OsclSocketServ	*iSockServ;
+        OsclSocketServ  *iSockServ;
 
 //note: this class is for internal use only, but must be public to avoid ADS v1.2 compile error.
     public:
@@ -755,8 +755,8 @@ class PVRTSPEngineNode
         bool bNoSendPending;//a Send() is pending on RTSP socket
 
         PVMFPortInterface* iTheBusyPort;
-        //OsclMemoryFragment entityBody;		    //Used to register with RTSP parser
-        //OsclMemoryFragment embeddedDataMemory;	//Used to save embedded binary data
+        //OsclMemoryFragment entityBody;            //Used to register with RTSP parser
+        //OsclMemoryFragment embeddedDataMemory;    //Used to save embedded binary data
 
         SessionInfo iSessionInfo;
 
@@ -764,7 +764,7 @@ class PVRTSPEngineNode
 
         //uint8 iBufEmbedded[2048];
         //RTSPEntityBody iEmbeddedData;
-        PVMFSharedMediaDataPtr	iEmbeddedDataPtr;
+        PVMFSharedMediaDataPtr  iEmbeddedDataPtr;
         // Reference counter for extension
         uint32 iExtensionRefCount;
         uint32 iNumRedirectTrials;
@@ -772,7 +772,7 @@ class PVRTSPEngineNode
         //socket server will callback even if Cancel() is called
         //most likely this is the case for OsclDNS as well
         //But this is NOT the case for OsclTimer
-        uint32	iNumHostCallback, iNumConnectCallback, iNumSendCallback, iNumRecvCallback;
+        uint32  iNumHostCallback, iNumConnectCallback, iNumSendCallback, iNumRecvCallback;
         int BASE_REQUEST_ID;
         static const int REQ_SEND_SOCKET_ID;
         static const int REQ_RECV_SOCKET_ID;
@@ -798,15 +798,15 @@ class PVRTSPEngineNode
         class PVRTSPErrorContext
         {
             public:
-                SocketEvent		iErrSockEvent;
-                PVRTSPEngineState	iErrState;
+                SocketEvent     iErrSockEvent;
+                PVRTSPEngineState   iErrState;
         };
 
 
         //temp string compose buffer for internal use RTSP_MAX_FULL_REQUEST_SIZE
-        OsclMemoryFragment	iRTSPEngTmpBuf;
-        OsclMemoryFragment	iEntityMemFrag;
-        //OsclRefCounterMemFrag	iEntityMemFrag;
+        OsclMemoryFragment  iRTSPEngTmpBuf;
+        OsclMemoryFragment  iEntityMemFrag;
+        //OsclRefCounterMemFrag iEntityMemFrag;
 
         // Queue of commands for cancel
         PVRTSPEngineNodeCmdQ iCancelCmdQueue;
@@ -829,22 +829,22 @@ class PVRTSPEngineNode
         PVMFNodeCapability iCapability;
 
         //OsclPriorityQueue<PVRTSPEngineCommand,PVRTSPEngineNodeAllocator,Oscl_Vector<PVRTSPEngineCommand,PVRTSPEngineNodeAllocator>,PVRTSPEngineCommandCompareLess> iPendingCmdQueue;
-//	Oscl_Vector<PVRTSPEngineAsyncEvent, PVRTSPEngineNodeAllocator> iPendingEvents;
+//  Oscl_Vector<PVRTSPEngineAsyncEvent, PVRTSPEngineNodeAllocator> iPendingEvents;
 
-//	OsclPriorityQueue<RTSPIncomingMessage,PVRTSPEngineNodeAllocator,Oscl_Vector<RTSPIncomingMessage,PVRTSPEngineNodeAllocator>,PVRTSPGenericMessageCompareLess> iIncomingMsgQueue;
+//  OsclPriorityQueue<RTSPIncomingMessage,PVRTSPEngineNodeAllocator,Oscl_Vector<RTSPIncomingMessage,PVRTSPEngineNodeAllocator>,PVRTSPGenericMessageCompareLess> iIncomingMsgQueue;
         OsclPriorityQueue<RTSPOutgoingMessage*, PVRTSPEngineNodeAllocator, Oscl_Vector<RTSPOutgoingMessage*, PVRTSPEngineNodeAllocator>, PVRTSPGenericMessageCompareLess> iOutgoingMsgQueue;
         RTSPOutgoingMessage* iSrvResponse;
-        bool	bSrvRespPending;
+        bool    bSrvRespPending;
 
-        OsclTimer<PVRTSPEngineNodeAllocator>	*iWatchdogTimer;
+        OsclTimer<PVRTSPEngineNodeAllocator>    *iWatchdogTimer;
 
         int32 iCurrentErrorCode;
         PVUuid iEventUUID;
 
-        bool	bKeepAliveInPlay;
-        RTSPMethod	iKeepAliveMethod;
+        bool    bKeepAliveInPlay;
+        RTSPMethod  iKeepAliveMethod;
 
-        bool	bAddXStrHeader;
+        bool    bAddXStrHeader;
 
         OsclMemPoolResizableAllocator *iMediaDataResizableAlloc;
         PVMFSimpleMediaBufferCombinedAlloc *iMediaDataImplAlloc;
@@ -852,9 +852,9 @@ class PVRTSPEngineNode
         /* Round trip delay calculation */
         PVMFTimebase_Tickcount iRoundTripClockTimeBase;
 
-        int32	iErrorRecoveryAttempt;
+        int32   iErrorRecoveryAttempt;
 
-        //uint8	iGetPostCorrelation;
+        //uint8 iGetPostCorrelation;
         GetPostCorrelationObject *iGetPostCorrelationObject;
     private:
         PVRTSPEngineNode();

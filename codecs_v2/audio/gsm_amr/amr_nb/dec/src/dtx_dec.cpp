@@ -1263,8 +1263,8 @@ void dtx_dec(
     /* For use in postfilter */
     Copy(acoeff, &A_t[0],           M + 1);
     Copy(acoeff, &A_t[M + 1],       M + 1);
-    Copy(acoeff, &A_t[2 * (M + 1)], M + 1);
-    Copy(acoeff, &A_t[3 * (M + 1)], M + 1);
+    Copy(acoeff, &A_t[2 *(M + 1)], M + 1);
+    Copy(acoeff, &A_t[3 *(M + 1)], M + 1);
 
     /* Compute reflection coefficients Q15 */
     A_Refl(&acoeff[1], refl, pOverflow);

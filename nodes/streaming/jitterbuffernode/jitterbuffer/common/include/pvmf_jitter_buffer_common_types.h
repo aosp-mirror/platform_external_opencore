@@ -23,7 +23,7 @@
 #include "pvmf_sm_tunables.h"
 
 //Jitter buffer node specific leave codes
-#define JBPacketRegistrationConfigurationCorrupted	1000
+#define JBPacketRegistrationConfigurationCorrupted  1000
 
 
 enum PVMFJitterBufferDataState
@@ -147,17 +147,17 @@ class PVMFJitterBufferConstructParams
                 , ipContextData(aContext)
         {}
 
-        PVMFMediaClock&	GetEstimatedServerClock() const
+        PVMFMediaClock& GetEstimatedServerClock() const
         {
             return irEstimatedServerClock;
         }
 
-        PVMFMediaClock&	GetClientPlaybackClock() const
+        PVMFMediaClock& GetClientPlaybackClock() const
         {
             return irClientPlaybackClock;
         }
 
-        OSCL_HeapString<OsclMemAllocator>&	GetMimeType() const
+        OSCL_HeapString<OsclMemAllocator>&  GetMimeType() const
         {
             return irMimeType;
         }
@@ -182,7 +182,7 @@ class PVMFJitterBufferConstructParams
             return ipObserver;
         }
 
-        OsclAny* const	GetContextData() const
+        OsclAny* const  GetContextData() const
         {
             return ipContextData;
         }
@@ -193,15 +193,15 @@ class PVMFJitterBufferConstructParams
         }
 
     private:
-        PVMFMediaClock&	irEstimatedServerClock;
-        PVMFMediaClock&	irClientPlaybackClock;
+        PVMFMediaClock& irEstimatedServerClock;
+        PVMFMediaClock& irClientPlaybackClock;
         OSCL_HeapString<OsclMemAllocator>& irMimeType;
-        PVMFJBEventNotifier&	irJBEventNotifier;
+        PVMFJBEventNotifier&    irJBEventNotifier;
         bool& irDelayEstablished;
         int& irJitterDelayPercent;
-        PVMFJitterBufferDataState&	irJitterBufferState;
-        PVMFJitterBufferObserver *const	ipObserver;
-        OsclAny* const	ipContextData;
+        PVMFJitterBufferDataState&  irJitterBufferState;
+        PVMFJitterBufferObserver *const ipObserver;
+        OsclAny* const  ipContextData;
 };
 
 ///////////////////////////////////////////////////////////////////////////////

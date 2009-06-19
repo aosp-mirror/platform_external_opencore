@@ -22,7 +22,7 @@ AVCEnc_Status EncodeIntraPCM(AVCEncObject *encvid)
 {
     AVCEnc_Status status = AVCENC_SUCCESS;
     AVCCommonObj *video = encvid->common;
-    AVCFrameIO	*currInput = encvid->currInput;
+    AVCFrameIO  *currInput = encvid->currInput;
     AVCEncBitstream *stream = encvid->bitstream;
     int x_position = (video->mb_x << 4);
     int y_position = (video->mb_y << 4);
@@ -171,7 +171,7 @@ AVCEnc_Status enc_residual_block(AVCEncObject *encvid, AVCResidualType type, int
             maxNumCoeff = 16;
             level = encvid->leveldc;
             run = encvid->rundc;
-            TotalCoeff = cindx;	/* special case */
+            TotalCoeff = cindx; /* special case */
             bindx = 0;
             cindx = 0;
             break;
@@ -299,7 +299,7 @@ AVCEnc_Status enc_residual_block(AVCEncObject *encvid, AVCResidualType type, int
             if (level_two_or_higher)
             {
                 if (value > 0) value--;
-                else	value++;
+                else    value++;
                 level_two_or_higher = 0;
             }
 

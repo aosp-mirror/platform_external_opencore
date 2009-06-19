@@ -147,8 +147,8 @@ bool StreamingNodesCoreLibraryLoader::DeleteStreamingManagerNode(PVMFNodeInterfa
 
 
 class StreamingNodesRegistryInterface: public OsclSharedLibraryInterface,
-            public NodeRegistryPopulatorInterface,
-            public RecognizerPopulatorInterface
+        public NodeRegistryPopulatorInterface,
+        public RecognizerPopulatorInterface
 {
     public:
         StreamingNodesRegistryInterface() {};

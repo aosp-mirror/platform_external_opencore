@@ -42,12 +42,12 @@
 /** Enumerated list of supported ID3 versions */
 typedef enum
 {
-    PV_ID3_INVALID_VERSION = -1,	/**< Invalid ID3 version */
-    PV_ID3_V1 = 0,		/**< ID3 Version 1 */
-    PV_ID3_V1_1 = 1,	/**< ID3 Version 1.1 */
-    PV_ID3_V2_2 = 2,	/**< ID3 Version 2.2 */
-    PV_ID3_V2_3 = 3,	/**< ID3 Version 2.3 */
-    PV_ID3_V2_4 = 4		/**< ID3 Version 2.4 */
+    PV_ID3_INVALID_VERSION = -1,    /**< Invalid ID3 version */
+    PV_ID3_V1 = 0,      /**< ID3 Version 1 */
+    PV_ID3_V1_1 = 1,    /**< ID3 Version 1.1 */
+    PV_ID3_V2_2 = 2,    /**< ID3 Version 2.2 */
+    PV_ID3_V2_3 = 3,    /**< ID3 Version 2.3 */
+    PV_ID3_V2_4 = 4     /**< ID3 Version 2.4 */
 } PVID3Version;
 
 /** Shared pointer of a key-value pair */

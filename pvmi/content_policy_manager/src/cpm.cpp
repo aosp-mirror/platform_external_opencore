@@ -106,7 +106,7 @@ static void _AddLoadablePlugins(CPMPluginRegistry* pRegistry)
     pRegistry->AccessSharedLibraryList()->Populate(configPath, PVMF_CPM_PLUGIN_REGISTRY_POPULATOR_UUID);
 
     //For each lib, add its factory to the registry.
-    for (uint32 i = 0;i < pRegistry->AccessSharedLibraryList()->Size();i++)
+    for (uint32 i = 0; i < pRegistry->AccessSharedLibraryList()->Size(); i++)
     {
         OsclAny* temp = NULL;
         pRegistry->AccessSharedLibraryList()->QueryInterfaceAt(i, temp);
@@ -128,7 +128,7 @@ static void _RemoveLoadablePlugins(CPMPluginRegistry* aRegistry)
     if (aRegistry->AccessSharedLibraryList())
     {
         //Loop through loaded modules & remove plugin from list.
-        for (uint32 i = 0;i < aRegistry->AccessSharedLibraryList()->Size();i++)
+        for (uint32 i = 0; i < aRegistry->AccessSharedLibraryList()->Size(); i++)
         {
             OsclAny* temp = NULL;
             aRegistry->AccessSharedLibraryList()->QueryInterfaceAt(i, temp);
@@ -168,7 +168,7 @@ static CPMPluginRegistry* PopulateCPMPluginRegistry()
             cli.GetFactories(id, factories);
 
             //Add each plugin
-            for (uint32 i = 0;i < factories.size();i++)
+            for (uint32 i = 0; i < factories.size(); i++)
             {
                 if (factories[i].iFactory)
                 {
@@ -202,7 +202,7 @@ static void DePopulateCPMPluginRegistry(CPMPluginRegistry* aRegistry)
             OSCL_HeapString<OsclMemAllocator> id("X-CPM-PLUGIN");//PVMF_MIME_CPM_PLUGIN
             cli.GetFactories(id, factories);
 
-            for (uint32 i = 0;i < factories.size();i++)
+            for (uint32 i = 0; i < factories.size(); i++)
             {
                 if (factories[i].iFactory)
                 {
@@ -2683,7 +2683,7 @@ PVMFCPMImpl::CompleteGetMetaDataValues(PVMFCPMCommandContext* aContext)
             LookUpPlugInParamsFromActiveList(aContext->plugInID);
         OSCL_ASSERT(currPlugInParams);
         if (!currPlugInParams)
-            return;	// unlikely: lookup failed.
+            return; // unlikely: lookup failed.
         currPlugInParams->iMetaDataValueEndIndex = iValueListPtr->size();
         currPlugInParams->iGetMetaDataValuesComplete = true;
 
@@ -3054,7 +3054,7 @@ OSCL_EXPORT_REF void CPMPluginRegistryImpl::removePluginFromRegistry(OSCL_String
     {
         OSCL_DELETE(container);
     }
-    for (uint32 i = 0;i < iListofPlugInMimeTypes.size();i++)
+    for (uint32 i = 0; i < iListofPlugInMimeTypes.size(); i++)
     {
         if (iListofPlugInMimeTypes[i] == aMimeType)
         {
@@ -3105,7 +3105,7 @@ OSCL_EXPORT_REF CPMPluginRegistryImpl::CPMPluginRegistryImpl()
 OSCL_EXPORT_REF CPMPluginRegistryImpl::~CPMPluginRegistryImpl()
 {
     //just in case plugins weren't removed, go through and cleanup
-    for (uint32 i = 0;i < iListofPlugInMimeTypes.size();i++)
+    for (uint32 i = 0; i < iListofPlugInMimeTypes.size(); i++)
     {
         CPMPluginContainer* container = lookupPlugin(iListofPlugInMimeTypes[i]);
         if (container)

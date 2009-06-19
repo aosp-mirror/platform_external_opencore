@@ -58,18 +58,18 @@ extern "C"
      */
     typedef struct sbc_t
     {
-        UInt		sf_index;
-        UWord8		blocks;
-        UInt		channel_mode;
-        UWord8		channels;
-        UInt		allocation_method;
-        UWord8		subbands;
-        Int			bitpool;
-        UWord8		join;                   /* bit number x set means joint stereo has been used in subband x */
-        Int			bits[2][8];             /* bits distribution */
-        Int			bitpointer;
+        UInt        sf_index;
+        UWord8      blocks;
+        UInt        channel_mode;
+        UWord8      channels;
+        UInt        allocation_method;
+        UWord8      subbands;
+        Int         bitpool;
+        UWord8      join;                   /* bit number x set means joint stereo has been used in subband x */
+        Int         bits[2][8];             /* bits distribution */
+        Int         bitpointer;
         UWord32     scale_factor[2][8];
-        Int			sb_sample[16][2][8];    /* modified subband samples */
+        Int         sb_sample[16][2][8];    /* modified subband samples */
     } sbc_t;
 
     typedef struct  crc_t

@@ -485,8 +485,8 @@ void PVAuthorEngine::HandleNodeErrorEvent(const PVMFAsyncEvent& aEvent)
     else if (iState != PVAE_STATE_ERROR) //no pending command*
     {
         SetPVAEState(PVAE_STATE_ERROR);
-    PVAsyncErrorEvent event(aEvent.GetEventType(), aEvent.GetEventData());
-    iErrorEventObserver->HandleErrorEvent(event);
+        PVAsyncErrorEvent event(aEvent.GetEventType(), aEvent.GetEventData());
+        iErrorEventObserver->HandleErrorEvent(event);
     }
 }
 

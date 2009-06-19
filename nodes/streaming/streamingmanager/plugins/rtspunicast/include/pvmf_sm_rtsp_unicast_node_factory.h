@@ -62,7 +62,7 @@ class PVMFSMRTSPUnicastNodeFactory
          * @param aNode The PVMFSMFSPBaseNode instance to be deleted
          * @returns bool
          *  true: node was in created state
-         *	false: either node was not in created state or deletion failed
+         *  false: either node was not in created state or deletion failed
          **/
         OSCL_IMPORT_REF static bool DeleteSMRTSPUnicastNodeFactory(PVMFSMFSPBaseNode* aNode);
 };

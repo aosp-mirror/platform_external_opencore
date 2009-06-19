@@ -262,7 +262,7 @@ class PVAENodeUtilObserver
  * of this utility.
  */
 class PVAuthorEngineNodeUtility : public OsclTimerObject,
-            public PVMFNodeCmdStatusObserver
+        public PVMFNodeCmdStatusObserver
 {
     public:
         PVAuthorEngineNodeUtility();

@@ -38,10 +38,10 @@ ULong num_sad_HP_MB = 0;
 ULong num_sad_HP_Blk = 0;
 ULong num_sad_HP_MB_call = 0;
 ULong num_sad_HP_Blk_call = 0;
-#define NUM_SAD_HP_MB_CALL()	num_sad_HP_MB_call++
-#define NUM_SAD_HP_MB()			num_sad_HP_MB++
-#define NUM_SAD_HP_BLK_CALL()	num_sad_HP_Blk_call++
-#define NUM_SAD_HP_BLK()		num_sad_HP_Blk++
+#define NUM_SAD_HP_MB_CALL()    num_sad_HP_MB_call++
+#define NUM_SAD_HP_MB()         num_sad_HP_MB++
+#define NUM_SAD_HP_BLK_CALL()   num_sad_HP_Blk_call++
+#define NUM_SAD_HP_BLK()        num_sad_HP_Blk++
 #else
 #define NUM_SAD_HP_MB_CALL()
 #define NUM_SAD_HP_MB()
@@ -55,11 +55,11 @@ extern "C"
 {
 #endif
     /*==================================================================
-    	Function:	HalfPel1_SAD_MB
-    	Date:		03/27/2001
-    	Purpose:	Compute SAD 16x16 between blk and ref in halfpel
-    				resolution,
-    	Changes:
+        Function:   HalfPel1_SAD_MB
+        Date:       03/27/2001
+        Purpose:    Compute SAD 16x16 between blk and ref in halfpel
+                    resolution,
+        Changes:
       ==================================================================*/
     /* One component is half-pel */
     Int HalfPel1_SAD_MB(UChar *ref, UChar *blk, Int dmin, Int width, Int ih, Int jh)
@@ -129,11 +129,11 @@ extern "C"
 
 #ifndef NO_INTER4V
     /*==================================================================
-    	Function:	HalfPel1_SAD_Blk
-    	Date:		03/27/2001
-    	Purpose:	Compute SAD 8x8 between blk and ref in halfpel
-    				resolution.
-    	Changes:
+        Function:   HalfPel1_SAD_Blk
+        Date:       03/27/2001
+        Purpose:    Compute SAD 8x8 between blk and ref in halfpel
+                    resolution.
+        Changes:
       ==================================================================*/
     /* One component needs half-pel */
     Int HalfPel1_SAD_Blk(UChar *ref, UChar *blk, Int dmin, Int width, Int ih, Int jh)
@@ -203,20 +203,20 @@ extern "C"
     }
 #endif // NO_INTER4V
     /*===============================================================
-    	Function:	SAD_MB_HalfPel
-    	Date:		09/17/2000
-    	Purpose:	Compute the SAD on the half-pel resolution
-    	Input/Output:	hmem is assumed to be a pointer to the starting
-    				point of the search in the 33x33 matrix search region
-    	Changes:
-    11/7/00:	 implemented MMX
+        Function:   SAD_MB_HalfPel
+        Date:       09/17/2000
+        Purpose:    Compute the SAD on the half-pel resolution
+        Input/Output:   hmem is assumed to be a pointer to the starting
+                    point of the search in the 33x33 matrix search region
+        Changes:
+    11/7/00:     implemented MMX
       ===============================================================*/
     /*==================================================================
-    	Function:	SAD_MB_HalfPel_C
-    	Date:		04/30/2001
-    	Purpose:	Compute SAD 16x16 between blk and ref in halfpel
-    				resolution,
-    	Changes:
+        Function:   SAD_MB_HalfPel_C
+        Date:       04/30/2001
+        Purpose:    Compute SAD 16x16 between blk and ref in halfpel
+                    resolution,
+        Changes:
       ==================================================================*/
     /* One component is half-pel */
     Int SAD_MB_HalfPel_Cxhyh(UChar *ref, UChar *blk, Int dmin_rx, void *extra_info)
@@ -224,7 +224,7 @@ extern "C"
         Int i, j;
         Int sad = 0;
         UChar *kk, *p1, *p2, *p3, *p4;
-//	Int sumref=0;
+//  Int sumref=0;
         Int temp;
         Int rx = dmin_rx & 0xFFFF;
 
@@ -265,7 +265,7 @@ extern "C"
         Int i, j;
         Int sad = 0;
         UChar *kk, *p1, *p2;
-//	Int sumref=0;
+//  Int sumref=0;
         Int temp;
         Int rx = dmin_rx & 0xFFFF;
 
@@ -301,7 +301,7 @@ extern "C"
         Int i, j;
         Int sad = 0;
         UChar *kk, *p1;
-//	Int sumref=0;
+//  Int sumref=0;
         Int temp;
         Int rx = dmin_rx & 0xFFFF;
 
@@ -771,11 +771,11 @@ extern "C"
 
 #ifndef NO_INTER4V
     /*==================================================================
-    	Function:	SAD_Blk_HalfPel_C
-    	Date:		04/30/2001
-    	Purpose:	Compute SAD 16x16 between blk and ref in halfpel
-    				resolution,
-    	Changes:
+        Function:   SAD_Blk_HalfPel_C
+        Date:       04/30/2001
+        Purpose:    Compute SAD 16x16 between blk and ref in halfpel
+                    resolution,
+        Changes:
       ==================================================================*/
     /* One component is half-pel */
     Int SAD_Blk_HalfPel_C(UChar *ref, UChar *blk, Int dmin, Int width, Int rx, Int xh, Int yh, void *extra_info)

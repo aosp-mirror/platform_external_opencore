@@ -89,7 +89,7 @@ extern "C"
         int32  work_buf_int32[SUBBANDS_NUMBER*FILTERBANK_BANDS]; /* working buffer */
         int32  circ_buffer[480 + 576];
 
-    }tmp3dec_chan;
+    } tmp3dec_chan;
 
 
 #ifdef __cplusplus

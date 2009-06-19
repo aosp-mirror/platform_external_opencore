@@ -33,7 +33,7 @@
 
 
 //Set this to 1 to indicate this platform has oscllib support
-#define OSCL_HAS_RUNTIME_LIB_LOADING_SUPPORT	1
+#define OSCL_HAS_RUNTIME_LIB_LOADING_SUPPORT    1
 #define PV_RUNTIME_LIB_FILENAME_EXTENSION "so"
 
 //Set this to 1 to enable looking for debug versions of libraries.

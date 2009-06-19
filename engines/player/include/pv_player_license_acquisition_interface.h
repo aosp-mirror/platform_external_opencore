@@ -60,7 +60,7 @@ class PVPlayerLicenseAcquisitionInterface : public PVInterface
          *                          It's format is DRM-agent specific.
          * @param aDataSize [in] Amount of data (in bytes) in the license_data.
          * @param aTimeoutMsec [in] Timeout for the request, or (-1) to
-         * 							indicate no timeout (infinite wait).
+         *                          indicate no timeout (infinite wait).
          * @param aContentName [in] Null terminated Unicode (UCS-2) string containing
          *                          the content name
          * @param aContextData [in] Optional opaque data that will be passed back to
@@ -83,7 +83,7 @@ class PVPlayerLicenseAcquisitionInterface : public PVInterface
          * @param aContentName [in] Null terminated UTF-8 string containing
          *                          the content name
          * @param aTimeoutMsec [in] Timeout for the request, or (-1) to
-         * 							indicate no timeout (infinite wait).
+         *                          indicate no timeout (infinite wait).
          * @param aContextData [in] Optional opaque data that will be passed back to
          *                          the user with the command response
          *

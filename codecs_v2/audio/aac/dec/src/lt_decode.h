@@ -27,7 +27,7 @@
 
  Description: Replaced "e_WINDOW_TYPE.h" with "e_WINDOW_SEQUENCE.h"
 
- Who:						Date:
+ Who:                       Date:
  Description:
 ------------------------------------------------------------------------------
  INCLUDE DESCRIPTION
@@ -40,8 +40,8 @@
 /*----------------------------------------------------------------------------
 ; CONTINUE ONLY IF NOT ALREADY DEFINED
 ----------------------------------------------------------------------------*/
-#ifndef	LT_DECODE_H
-#define	LT_DECODE_H
+#ifndef LT_DECODE_H
+#define LT_DECODE_H
 
 /*----------------------------------------------------------------------------
 ; INCLUDES

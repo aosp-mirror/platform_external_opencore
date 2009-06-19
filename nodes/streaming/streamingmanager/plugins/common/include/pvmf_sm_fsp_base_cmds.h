@@ -24,11 +24,11 @@
 #define PVMF_SM_FSP_MEDIA_LAYER_COMMAND_START              4000
 #define PVMF_SM_FSP_HTTP_SESSION_CONTROLLER_COMMAND_START  5000
 #define PVMF_SM_FSP_RTPPACKETSOURCE_NODE_COMMAND_START     6000
-#define PVMF_SM_FSP_PVR_NODE_COMMAND_START				   7000
-#define PVMF_SM_FSP_NODE_COMMAND_ID_START				  10000
+#define PVMF_SM_FSP_PVR_NODE_COMMAND_START                 7000
+#define PVMF_SM_FSP_NODE_COMMAND_ID_START                 10000
 
-#define PVMF_SM_FSP_VECTOR_RESERVE							 10
-#define PVMF_SMFSP_INTERNAL_CMDQ_SIZE		                 40
+#define PVMF_SM_FSP_VECTOR_RESERVE                           10
+#define PVMF_SMFSP_INTERNAL_CMDQ_SIZE                        40
 
 ///////////////////////////////////////////////
 //IDs for all of the asynchronous node commands.
@@ -63,7 +63,7 @@ enum TPVMFSMFSPBaseNodeCommand
     PVMF_SMFSP_NODE_EXTENSION_INTERFACE_COMMAND_LAST,
 
     /* add commands which are internal to the implementation of Streaming Node and are common for are types of feature specific plugins*/
-    PVMF_SMFSP_NODE_CONSTRUCT_SESSION = PVMF_SMFSP_NODE_EXTENSION_INTERFACE_COMMAND_LAST + 1,	//to construct the graph
+    PVMF_SMFSP_NODE_CONSTRUCT_SESSION = PVMF_SMFSP_NODE_EXTENSION_INTERFACE_COMMAND_LAST + 1,   //to construct the graph
     PVMF_SMFSP_NODE_CANCEL_DUE_TO_ERROR,
     PVMF_SMFSP_NODE_RESET_DUE_TO_ERROR,
     PVMF_SMFSP_NODE_COMMAND_LAST

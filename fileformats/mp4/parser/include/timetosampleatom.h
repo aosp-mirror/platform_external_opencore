@@ -100,7 +100,7 @@ class TimeToSampleAtom : public FullAtom
         uint32 _curr_buff_number;
         uint32 _next_buff_number;
 
-        uint32	_parsed_entry_cnt;
+        uint32  _parsed_entry_cnt;
 
         uint32 _currGetSampleCount;
         int32 _currGetIndex;

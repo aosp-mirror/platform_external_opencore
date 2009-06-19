@@ -141,7 +141,7 @@ RFC3640PayloadParser::Parse(const Payload& inputPacket,
     out.sequence     = inputPacket.sequence + 1;
     out.timestamp    = inputPacket.timestamp;
     //Creating a boolean for checking whether RFC3640_ONE_FRAGMENT_PER_MEDIA_MSG is defined or not
-    bool rfc3640_one_fragement_per_media	 = false;
+    bool rfc3640_one_fragement_per_media     = false;
 
 #ifndef RFC3640_ONE_FRAGMENT_PER_MEDIA_MSG
     rfc3640_one_fragement_per_media = true;

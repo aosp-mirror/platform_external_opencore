@@ -106,7 +106,7 @@ void PVMFJitterBufferImpl::ResetParams(bool aReleaseMemory)
     iJitterBufferDurationCallBkPending = false;
 
     ipMediaClockConverter = NULL;
-    iTimeScale	= 0;
+    iTimeScale  = 0;
 }
 
 void PVMFJitterBufferImpl::DestroyAllocators()
@@ -132,13 +132,13 @@ void PVMFJitterBufferImpl::DestroyAllocators()
 
 OSCL_EXPORT_REF void PVMFJitterBufferImpl::StreamingSessionStarted()
 {
-    iStreamingState	= STREAMINGSTATE_STARTED;
+    iStreamingState = STREAMINGSTATE_STARTED;
     iNumUnderFlow = 0;
 }
 
 OSCL_EXPORT_REF void PVMFJitterBufferImpl::StreamingSessionPaused()
 {
-    iStreamingState	=	STREAMINGSTATE_PAUSED;
+    iStreamingState =   STREAMINGSTATE_PAUSED;
     CancelEventCallBack(JB_NOTIFY_WAIT_FOR_OOO_PACKET_COMPLETE);
     CancelEventCallBack(JB_MONITOR_REBUFFERING);
     CancelEventCallBack(JB_BUFFERING_DURATION_COMPLETE);
@@ -146,7 +146,7 @@ OSCL_EXPORT_REF void PVMFJitterBufferImpl::StreamingSessionPaused()
 
 OSCL_EXPORT_REF void PVMFJitterBufferImpl::StreamingSessionStopped()
 {
-    iStreamingState	=	STREAMINGSTATE_STOPPED;
+    iStreamingState =   STREAMINGSTATE_STOPPED;
     CancelEventCallBack(JB_NOTIFY_WAIT_FOR_OOO_PACKET_COMPLETE);
     CancelEventCallBack(JB_MONITOR_REBUFFERING);
     CancelEventCallBack(JB_BUFFERING_DURATION_COMPLETE);
@@ -278,7 +278,7 @@ OSCL_EXPORT_REF PVMFJitterBufferRegisterMediaMsgStatus PVMFJitterBufferImpl::Reg
     PVMFJitterBufferRegisterMediaMsgStatus retval = PVMF_JB_REGISTER_MEDIA_MSG_SUCCESS;
     PVMFSharedMediaDataPtr dataPacket;
 
-    if (aMsg->getFormatID() > PVMF_MEDIA_CMD_FORMAT_IDS_START)	//IsCmdMsg
+    if (aMsg->getFormatID() > PVMF_MEDIA_CMD_FORMAT_IDS_START)  //IsCmdMsg
     {
         RegisterCmdPacket(aMsg);
     }
@@ -731,7 +731,7 @@ PVMFJitterBufferRegisterMediaMsgStatus PVMFJitterBufferImpl::AddPacket(PVMFShare
 
         bool bNoErr = true;
         Oscl_Vector<PVMFSharedMediaDataPtr, OsclMemAllocator>::iterator it;
-        for (it = iFirstDataPackets.begin(); it != iFirstDataPackets.end();		it++)
+        for (it = iFirstDataPackets.begin(); it != iFirstDataPackets.end();     it++)
         {
             if ((*it)->getStreamID() == SSRCLock)
             {
@@ -783,7 +783,7 @@ PVMFJitterBufferRegisterMediaMsgStatus PVMFJitterBufferImpl::AddPacket(PVMFShare
             * Calculate adjusted RTP TS - Will be used to update
             * the estimated server clock, if any only if some rtp-info
             * params have been set
-            	*/
+                */
             ComputeMaxAdjustedRTPTS();
         }
 
@@ -1372,7 +1372,7 @@ OSCL_EXPORT_REF void PVMFJitterBufferImpl::SetPlayRange(int32 aStartTimeInMS, bo
     iStartTimeInMS = aStartTimeInMS;
     if (aStopTimeAvailable)
     {
-        iPlayStopTimeAvailable	= aStopTimeAvailable;
+        iPlayStopTimeAvailable  = aStopTimeAvailable;
         iStopTimeInMS = aStopTimeInMS;
     }
 

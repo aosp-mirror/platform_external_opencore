@@ -30,8 +30,8 @@
 
 /*! \file oscl_file_types.h
     \brief The file oscl_file_types.h defines some constants and types
-	for file I/O implementations.  Anything that needs to be shared
-	across implementation modules can go here.
+    for file I/O implementations.  Anything that needs to be shared
+    across implementation modules can go here.
 
 */
 

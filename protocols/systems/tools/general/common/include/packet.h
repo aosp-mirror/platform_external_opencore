@@ -113,6 +113,6 @@ class Packet : public MediaData<Packet, DEF_PACKET_MAX_FRAGMENTS, DEF_PACKET_IMM
 typedef enum PacketTypes
 {
     EPacketDefault
-}EPacketType;
+} EPacketType;
 
 #endif

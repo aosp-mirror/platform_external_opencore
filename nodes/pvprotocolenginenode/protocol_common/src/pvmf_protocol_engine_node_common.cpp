@@ -34,10 +34,10 @@
 #define LOGERRORDATAPATH(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iDataPathLogger,PVLOGMSG_ERR,m);
 #define LOGINFOCLOCK(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG,iClockLogger,PVLOGMSG_INFO,m);
 #define PVMF_PROTOCOL_ENGINE_LOGBIN(iPortLogger, m) PVLOGGER_LOGBIN(PVLOGMSG_INST_LLDBG, iPortLogger, PVLOGMSG_ERR, m);
-#define	NODEDATAPATHLOGGER_TAG "datapath.sourcenode.protocolenginenode"
+#define NODEDATAPATHLOGGER_TAG "datapath.sourcenode.protocolenginenode"
 
 ////////////////////////////////////////////////////////////////////////////////////
-//////	ProtocolContainer implementation
+//////  ProtocolContainer implementation
 ////////////////////////////////////////////////////////////////////////////////////
 
 // constructor
@@ -49,16 +49,16 @@ OSCL_EXPORT_REF ProtocolContainer::ProtocolContainer(PVMFProtocolEngineNode *aNo
 
 OSCL_EXPORT_REF void ProtocolContainer::clear()
 {
-    iProtocol			= NULL;
-    iNodeOutput			= NULL;
-    iDownloadControl	= NULL;
-    iDownloadProgess	= NULL;
-    iEventReport		= NULL;
-    iCfgFileContainer	= NULL;
-    iDownloadSource		= NULL;
-    iNodeTimer			= NULL;
+    iProtocol           = NULL;
+    iNodeOutput         = NULL;
+    iDownloadControl    = NULL;
+    iDownloadProgess    = NULL;
+    iEventReport        = NULL;
+    iCfgFileContainer   = NULL;
+    iDownloadSource     = NULL;
+    iNodeTimer          = NULL;
     iInterfacingObjectContainer = NULL;
-    iUserAgentField		= NULL;
+    iUserAgentField     = NULL;
     iPortInForData = iPortInForLogging = iPortOut = NULL;
     iInternalEventQueue = NULL;
 }
@@ -115,8 +115,8 @@ OSCL_EXPORT_REF OsclAny* ProtocolContainer::getObject(const NodeObjectType aObje
 
 OSCL_EXPORT_REF bool ProtocolContainer::isObjectsReady()
 {
-    if (!iProtocol			||
-            !iNodeOutput			||
+    if (!iProtocol          ||
+            !iNodeOutput            ||
             !iInterfacingObjectContainer ||
             iInterfacingObjectContainer->getURIObject().empty() ||
             !iInterfacingObjectContainer->getDataStreamFactory() ||
@@ -353,25 +353,25 @@ bool ProtocolContainer::createNetworkTimer()
 
 OSCL_EXPORT_REF void ProtocolContainer::deleteProtocolObjects()
 {
-    if (iInterfacingObjectContainer)	OSCL_DELETE(iInterfacingObjectContainer);
+    if (iInterfacingObjectContainer)    OSCL_DELETE(iInterfacingObjectContainer);
     iInterfacingObjectContainer = NULL;
 
-    if (iNodeTimer)	OSCL_DELETE(iNodeTimer);
-    iNodeTimer	= NULL;
+    if (iNodeTimer) OSCL_DELETE(iNodeTimer);
+    iNodeTimer  = NULL;
 
 
-    if (iProtocol)					OSCL_DELETE(iProtocol);
-    iProtocol			  = NULL;
-    if (iNodeOutput)					OSCL_DELETE(iNodeOutput);
-    iNodeOutput			  = NULL;
-    if (iDownloadControl)				OSCL_DELETE(iDownloadControl);
-    iDownloadControl		  = NULL;
-    if (iDownloadProgess)				OSCL_DELETE(iDownloadProgess);
-    iDownloadProgess		  = NULL;
-    if (iUserAgentField)				OSCL_DELETE(iUserAgentField);
-    iUserAgentField		  = NULL;
-    if (iEventReport)					OSCL_DELETE(iEventReport);
-    iEventReport			  = NULL;
+    if (iProtocol)                  OSCL_DELETE(iProtocol);
+    iProtocol             = NULL;
+    if (iNodeOutput)                    OSCL_DELETE(iNodeOutput);
+    iNodeOutput           = NULL;
+    if (iDownloadControl)               OSCL_DELETE(iDownloadControl);
+    iDownloadControl          = NULL;
+    if (iDownloadProgess)               OSCL_DELETE(iDownloadProgess);
+    iDownloadProgess          = NULL;
+    if (iUserAgentField)                OSCL_DELETE(iUserAgentField);
+    iUserAgentField       = NULL;
+    if (iEventReport)                   OSCL_DELETE(iEventReport);
+    iEventReport              = NULL;
 }
 
 OSCL_EXPORT_REF void ProtocolContainer::handleTimeout(const int32 timerID)
@@ -452,7 +452,7 @@ OSCL_EXPORT_REF bool ProtocolContainer::handleProtocolStateComplete(PVProtocolEn
 
 
 ////////////////////////////////////////////////////////////////////////////////////
-//////	PVMFProtocolEngineNodeOutput implementation
+//////  PVMFProtocolEngineNodeOutput implementation
 ////////////////////////////////////////////////////////////////////////////////////
 
 // constructor
@@ -630,7 +630,7 @@ OSCL_EXPORT_REF bool PVMFProtocolEngineNodeOutput::isPortBusy()
 
 
 ////////////////////////////////////////////////////////////////////////////////////
-//////	UserAgentField implementation
+//////  UserAgentField implementation
 ////////////////////////////////////////////////////////////////////////////////////
 // constructor
 OSCL_EXPORT_REF UserAgentField::UserAgentField(OSCL_wString &aUserAgent, const bool isOverwritable)
@@ -713,7 +713,7 @@ OSCL_EXPORT_REF bool UserAgentField::getUserAgent(OSCL_String &aUserAgent)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////
-//////	EventReporter implementation
+//////  EventReporter implementation
 ////////////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF EventReporter::EventReporter(EventReporterObserver *aObserver) : iObserver(aObserver)
 {
@@ -733,7 +733,7 @@ OSCL_EXPORT_REF void EventReporter::startRealDataflow()
 
 
 ////////////////////////////////////////////////////////////////////////////////////
-//////	InterfacingObjectContainer implementation
+//////  InterfacingObjectContainer implementation
 ////////////////////////////////////////////////////////////////////////////////////
 
 // constructor
@@ -795,7 +795,7 @@ OSCL_EXPORT_REF void InterfacingObjectContainer::setNumBuffersInMediaDataPoolSMC
 
 
 ////////////////////////////////////////////////////////////////////////////////////
-//////	PVMFProtocolEngineNodeTimer implementation
+//////  PVMFProtocolEngineNodeTimer implementation
 ////////////////////////////////////////////////////////////////////////////////////
 
 OSCL_EXPORT_REF PVMFProtocolEngineNodeTimer* PVMFProtocolEngineNodeTimer::create(OsclTimerObserver *aObserver)

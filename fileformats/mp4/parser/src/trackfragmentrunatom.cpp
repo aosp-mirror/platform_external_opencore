@@ -156,7 +156,7 @@ TrackFragmentRunAtom ::TrackFragmentRunAtom(MP4_FF_FILE *fp, uint32 size, uint32
 
         uint32 sigmaSampleSize = 0;
         uint32 sample_offset = _trun_start_offset;
-        for (uint32 idx = 0; idx < _samplesToBeParsed ;idx++)
+        for (uint32 idx = 0; idx < _samplesToBeParsed ; idx++)
         {
             TFrunSampleTable *pTFrunSampleTable = NULL;
             PV_MP4_FF_NEW(fp->auditCB, TFrunSampleTable, (fp, tr_flag, sample_offset, _sampleTimeStamp), pTFrunSampleTable);
@@ -225,7 +225,7 @@ void TrackFragmentRunAtom::ParseTrunAtom(MP4_FF_FILE *fp,
 
     uint32 sigmaSampleSize = 0;
     uint32 sample_offset = _partialTrunOffset;
-    for (uint32 idx = 0; idx < _samplesToBeParsed ;idx++)
+    for (uint32 idx = 0; idx < _samplesToBeParsed ; idx++)
     {
         TFrunSampleTable *pTFrunSampleTable = NULL;
         PV_MP4_FF_NEW(fp->auditCB, TFrunSampleTable, (fp, tr_flag, sample_offset, _sampleTimeStamp), pTFrunSampleTable);
@@ -251,7 +251,7 @@ void TrackFragmentRunAtom::ParseTrunAtom(MP4_FF_FILE *fp,
 
 void TrackFragmentRunAtom::setDefaultDuration(uint32 default_duration)
 {
-    for (uint32 idx = 0; idx < _sample_count ;idx++)
+    for (uint32 idx = 0; idx < _sample_count ; idx++)
     {
         TFrunSampleTable *pTFrunSampleTable = NULL;
         if (_pTFrunSampleTable != NULL)
@@ -266,7 +266,7 @@ void TrackFragmentRunAtom::setDefaultDuration(uint32 default_duration)
 void TrackFragmentRunAtom::setSampleDurationAndTimeStampFromSampleNum(uint32 startSampleNum, uint32 startSampleTS, uint32 default_duration)
 {
     _sampleTimeStamp = startSampleTS;
-    for (uint32 idx = startSampleNum; idx < _sample_count ;idx++)
+    for (uint32 idx = startSampleNum; idx < _sample_count ; idx++)
     {
         TFrunSampleTable *pTFrunSampleTable = NULL;
         if (_pTFrunSampleTable != NULL)
@@ -287,7 +287,7 @@ void TrackFragmentRunAtom::setDefaultSampleSize(uint32 default_samplesize, uint3
 {
     uint32 sumSampleSize = 0;
     uint32 sample_offset = _trun_start_offset;
-    for (uint32 idx = 0; idx < _sample_count ;idx++)
+    for (uint32 idx = 0; idx < _sample_count ; idx++)
     {
         TFrunSampleTable *pTFrunSampleTable = NULL;
         if (_pTFrunSampleTable != NULL)

@@ -28,7 +28,7 @@
  Description:  Modified interface so a vector with extended precision is
                returned. Added copyright notice.
 
- Who:						Date:
+ Who:                       Date:
  Description:
 
 ------------------------------------------------------------------------------
@@ -43,8 +43,8 @@
 /*----------------------------------------------------------------------------
 ; CONTINUE ONLY IF NOT ALREADY DEFINED
 ----------------------------------------------------------------------------*/
-#ifndef	MDCT_FXP_H
-#define	MDCT_FXP_H
+#ifndef MDCT_FXP_H
+#define MDCT_FXP_H
 
 #ifdef __cplusplus
 extern "C"
@@ -104,4 +104,4 @@ extern "C"
 /*----------------------------------------------------------------------------
 ; END
 ----------------------------------------------------------------------------*/
-#endif	/* MDCT_FXP_H */
+#endif  /* MDCT_FXP_H */

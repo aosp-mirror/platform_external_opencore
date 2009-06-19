@@ -2489,14 +2489,14 @@ void PVMFSMFSPBaseNode::ResetCPMParams(bool aReleaseMem)
     }
     iCPMMetadataKeys.clear();
     iPreviewMode = false;
-    iUseCPMPluginRegistry =	false;
+    iUseCPMPluginRegistry = false;
     iDRMResetPending = false;
     iCPMInitPending = false;
     maxPacketSize = 0;
     iPVMFStreamingManagerNodeMetadataValueCount = 0;
 
     iCPMSourceData.iRefCounter = 0;
-    iCPMSourceData.iFileHandle	= NULL;
+    iCPMSourceData.iFileHandle  = NULL;
     iCPMSourceData.iStreamStatsLoggingURL = _STRLIT("");
     iCPMSourceData.iPreviewMode = false;
     iCPMSourceData.iIntent = BITMASK_PVMF_SOURCE_INTENT_PLAY;
@@ -4856,7 +4856,7 @@ void PVMFSMFSPBaseNode::HandleError(const PVMFCmdResp& aResponse)
         OSCL_REINTERPRET_CAST(PVMFSMFSPCommandContext*, aResponse.GetContext());
     if (EPVMFNodeError != iInterfaceState)
     {
-        if (cmdContextData)	//It may be possible that cmdContextData == NULL for internal commands
+        if (cmdContextData) //It may be possible that cmdContextData == NULL for internal commands
         {
             OSCL_ASSERT(cmdContextData->parentCmd != PVMF_SMFSP_NODE_RESET);
         }
@@ -5012,7 +5012,7 @@ void PVMFSMFSPBaseNode::ErrHandlingComplete(const PVMFSMFSPBaseNodeCommand* aErr
     iChildNodeErrHandler->Reset();
     //remove commands from the input command Q
     const int32 inputCmndsSz = iInputCommands.size();
-    if (inputCmndsSz > 0 && (!iInputCommands[0].hipri()))	//For command at index 0 is hipri, let the command complete asynchronously in next AO cycles.
+    if (inputCmndsSz > 0 && (!iInputCommands[0].hipri()))   //For command at index 0 is hipri, let the command complete asynchronously in next AO cycles.
     {
         for (int ii = 0; ii < inputCmndsSz ; ii++)
         {
@@ -5085,7 +5085,7 @@ void PVMFSMFSPChildNodeErrorHandler::InitiateErrorHandling(const PVMFAsyncEvent&
     PerformErrorHandling();
 }
 
-void PVMFSMFSPChildNodeErrorHandler::CompleteErrorHandling(const PVMFCmdResp& aResponse)	//called by NodeCommandCompleted
+void PVMFSMFSPChildNodeErrorHandler::CompleteErrorHandling(const PVMFCmdResp& aResponse)    //called by NodeCommandCompleted
 {
     PVMF_SM_ERRHANDLER_LOGSTACKTRACE((0, "PVMFSMFSPChildNodeErrorHandler::CompleteErrorHandling In CmdId [%d] ErrHandlerState [%d]", aResponse.GetCmdId(), iState));
     OSCL_UNUSED_ARG(aResponse);
@@ -5177,7 +5177,7 @@ void PVMFSMFSPChildNodeErrorHandler::SaveErrorInfo(const PVMFCmdResp& aCmdRespon
 {
     PVMF_SM_ERRHANDLER_LOGSTACKTRACE((0, "PVMFSMFSPChildNodeErrorHandler::SaveErrorInfo - ErrSource is Command Completion"));
     iErrSource = SMFSP_ERR_SOURCE_NODE_CMD_COMPLETION;
-    if (!iCmdResponse)	//make deep copy of aCmdResponse, may be we can use the response info to persist event data too
+    if (!iCmdResponse)  //make deep copy of aCmdResponse, may be we can use the response info to persist event data too
     {
         bool eventDataLenAvailable = false;
         uint32 eventDataLen = 0;
@@ -5430,7 +5430,7 @@ void PVMFSMFSPChildNodeErrorHandler::ErrHandlingCommandComplete(PVMFFSPNodeCmdQ&
             PVMF_SM_ERRHANDLER_LOGDEBUG((0, "PVMFSMFSPChildNodeErrorHandler::ErrHandlingCommandComplete - Reset Due To Err completed"));
 
             //Do command completion or notify err event
-            iState = SMFSP_ERRHANDLER_IDLE;	//error handling complete
+            iState = SMFSP_ERRHANDLER_IDLE; //error handling complete
             iSMFSPNode->CompleteResetDueToErr();
             iSMFSPNode->ErrHandlingComplete(iErrCmd);
         }

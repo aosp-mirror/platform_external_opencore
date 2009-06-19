@@ -87,7 +87,7 @@ typedef enum
     /**
      End of file detected
      **/
-    PVMFFFInfoEndOfFile	= 8192,
+    PVMFFFInfoEndOfFile = 8192,
 
     /**
      Not supported so skipped

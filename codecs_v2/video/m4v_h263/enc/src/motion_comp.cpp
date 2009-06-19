@@ -24,10 +24,10 @@
 //const static Int roundtab12[] = {0,0,0,1,1,1,1,1,1,1,2,2};
 const static Int roundtab16[] = {0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2};
 
-#define FORWARD_MODE	1
-#define BACKWARD_MODE	2
-#define BIDIRECTION_MODE	3
-#define DIRECT_MODE			4
+#define FORWARD_MODE    1
+#define BACKWARD_MODE   2
+#define BIDIRECTION_MODE    3
+#define DIRECT_MODE         4
 
 #ifdef __cplusplus
 extern "C"
@@ -36,7 +36,7 @@ extern "C"
     /*Function Prototype */
     /* no-edge padding */
     Int EncGetPredOutside(Int xpos, Int ypos, UChar *c_prev, UChar *rec,
-                          Int width, Int height, Int rnd1);
+    Int width, Int height, Int rnd1);
 
     void Copy_MB_from_Vop(UChar *comp, Int yChan[][NCOEFF_BLOCK], Int width);
     void Copy_B_from_Vop(UChar *comp, Int cChan[], Int width);
@@ -46,30 +46,30 @@ extern "C"
                 Short mb[6][64], Int lx, Int lx_uv);
 
     Int GetPredAdvBy0x0(
-        UChar *c_prev,		/* i */
-        UChar *pred_block,		/* i */
-        Int lx,		/* i */
+        UChar *c_prev,      /* i */
+        UChar *pred_block,      /* i */
+        Int lx,     /* i */
         Int rnd1 /* i */
     );
 
     Int GetPredAdvBy0x1(
-        UChar *c_prev,		/* i */
-        UChar *pred_block,		/* i */
-        Int lx,		/* i */
+        UChar *c_prev,      /* i */
+        UChar *pred_block,      /* i */
+        Int lx,     /* i */
         Int rnd1 /* i */
     );
 
     Int GetPredAdvBy1x0(
-        UChar *c_prev,		/* i */
-        UChar *pred_block,		/* i */
-        Int lx,		/* i */
+        UChar *c_prev,      /* i */
+        UChar *pred_block,      /* i */
+        Int lx,     /* i */
         Int rnd1 /* i */
     );
 
     Int GetPredAdvBy1x1(
-        UChar *c_prev,		/* i */
-        UChar *pred_block,		/* i */
-        Int lx,		/* i */
+        UChar *c_prev,      /* i */
+        UChar *pred_block,      /* i */
+        Int lx,     /* i */
         Int rnd1 /* i */
     );
 
@@ -86,21 +86,21 @@ extern "C"
 
 
 /* ======================================================================== */
-/*	Function : getMotionCompensatedMB( )									*/
-/*	Date     : 4/17/2001													*/
-/*	Purpose  : Get the motion compensate block into video->predictionMB		*/
-/*				and generate video->predictionErrorMB						*/
-/*				modified from MBMotionComp() function in the decoder		*/
-/*	In/out   :																*/
-/*	Return   :																*/
-/*	Modified :																*/
+/*  Function : getMotionCompensatedMB( )                                    */
+/*  Date     : 4/17/2001                                                    */
+/*  Purpose  : Get the motion compensate block into video->predictionMB     */
+/*              and generate video->predictionErrorMB                       */
+/*              modified from MBMotionComp() function in the decoder        */
+/*  In/out   :                                                              */
+/*  Return   :                                                              */
+/*  Modified :                                                              */
 /* ======================================================================== */
 
 void getMotionCompensatedMB(VideoEncData *video, Int ind_x, Int ind_y, Int offset)
 {
     Vop *prevVop = video->forwardRefVop; //reference frame
     Vop *currVop = video->currVop;
-    Int mbnum = video->mbnum;		//mb index
+    Int mbnum = video->mbnum;       //mb index
     MOT *mot = video->mot[mbnum];
     Int ypos, xpos;
     UChar *c_prev, *cu_prev, *cv_prev;
@@ -130,7 +130,7 @@ void getMotionCompensatedMB(VideoEncData *video, Int ind_x, Int ind_y, Int offse
 
     if (mode == MODE_INTER || mode == MODE_INTER_Q)
     {
-        /* Motion vector in x direction	      */
+        /* Motion vector in x direction       */
         dx = mot[0].x;
         dy = mot[0].y;
 
@@ -143,11 +143,11 @@ void getMotionCompensatedMB(VideoEncData *video, Int ind_x, Int ind_y, Int offse
         EncPrediction_INTER(xpred, ypred, c_prev, c_rec,
                             pitch, round1);
 
-        if ((dx & 3) == 0)	dx = dx >> 1;
-        else		dx = (dx >> 1) | 1;
+        if ((dx & 3) == 0)  dx = dx >> 1;
+        else        dx = (dx >> 1) | 1;
 
-        if ((dy & 3) == 0)		dy = dy >> 1;
-        else		dy = (dy >> 1) | 1;
+        if ((dy & 3) == 0)      dy = dy >> 1;
+        else        dy = (dy >> 1) | 1;
 
         xpred = xpos + dx;
         ypred = ypos + dy;
@@ -192,19 +192,19 @@ void getMotionCompensatedMB(VideoEncData *video, Int ind_x, Int ind_y, Int offse
 }
 
 /***************************************************************************
-	Function:	EncPrediction_INTER
-	Date:		04/17/2001
-	Purpose:	Get predicted area for luminance and compensate with the residue.
-				Modified from luminance_pred_mode_inter() in decoder.
+    Function:   EncPrediction_INTER
+    Date:       04/17/2001
+    Purpose:    Get predicted area for luminance and compensate with the residue.
+                Modified from luminance_pred_mode_inter() in decoder.
 ***************************************************************************/
 
 void EncPrediction_INTER(
-    Int xpred,			/* i */
-    Int ypred,			/* i */
-    UChar *c_prev,			/* i */
-    UChar *c_rec,		/* i */
-    Int lx,			/* i */
-    Int round1			/* i */
+    Int xpred,          /* i */
+    Int ypred,          /* i */
+    UChar *c_prev,          /* i */
+    UChar *c_rec,       /* i */
+    Int lx,         /* i */
+    Int round1          /* i */
 )
 {
     c_prev += (xpred >> 1) + ((ypred >> 1) * lx);
@@ -231,23 +231,23 @@ void EncPrediction_INTER(
 
 #ifndef NO_INTER4V
 /***************************************************************************
-	Function:	EncPrediction_INTER4V
-	Date:		04/17/2001
-	Purpose:	Get predicted area for luminance and compensate with the residue.
-				Modified from luminance_pred_mode_inter4v() in decoder.
+    Function:   EncPrediction_INTER4V
+    Date:       04/17/2001
+    Purpose:    Get predicted area for luminance and compensate with the residue.
+                Modified from luminance_pred_mode_inter4v() in decoder.
 ***************************************************************************/
 
 void EncPrediction_INTER4V(
-    Int xpos,			/* i */
-    Int ypos,			/* i */
-    MOT *mot,			/* i */
-    UChar *c_prev,			/* i */
-    UChar *c_rec,			/* i */
-    Int lx,			/* i */
-    Int round1			/* i */
+    Int xpos,           /* i */
+    Int ypos,           /* i */
+    MOT *mot,           /* i */
+    UChar *c_prev,          /* i */
+    UChar *c_rec,           /* i */
+    Int lx,         /* i */
+    Int round1          /* i */
 )
 {
-    Int	ypred, xpred;
+    Int ypred, xpred;
 
     xpred = (Int)((xpos << 1) + mot[1].x);
     ypred = (Int)((ypos << 1) + mot[1].y);
@@ -284,23 +284,23 @@ void EncPrediction_INTER4V(
 #endif /* NO_INTER4V */
 
 /***************************************************************************
-	Function:	EncPrediction_Chrom
-	Date:		04/17/2001
-	Purpose:	Get predicted area for chrominance and compensate with the residue.
-				Modified from chrominance_pred() in decoder.
+    Function:   EncPrediction_Chrom
+    Date:       04/17/2001
+    Purpose:    Get predicted area for chrominance and compensate with the residue.
+                Modified from chrominance_pred() in decoder.
 ***************************************************************************/
 
 void EncPrediction_Chrom(
-    Int xpred,			/* i */
-    Int ypred,			/* i */
-    UChar *cu_prev,			/* i */
-    UChar *cv_prev,			/* i */
+    Int xpred,          /* i */
+    Int ypred,          /* i */
+    UChar *cu_prev,         /* i */
+    UChar *cv_prev,         /* i */
     UChar *cu_rec,
     UChar *cv_rec,
     Int lx,
-    Int width_uv,			/* i */
-    Int height_uv,			/* i */
-    Int round1			/* i */
+    Int width_uv,           /* i */
+    Int height_uv,          /* i */
+    Int round1          /* i */
 )
 {
     /* check whether the MV points outside the frame */
@@ -318,7 +318,7 @@ void EncPrediction_Chrom(
 
         /* Compute prediction for Chrominance r (block[5]) */
         GetPredAdvBTable[ypred&1][xpred&1](cv_prev + (xpred >> 1) + ((ypred >> 1)*lx),
-                                           cv_rec,	lx, round1);
+                                           cv_rec,  lx, round1);
     }
     else
     {
@@ -340,22 +340,22 @@ void EncPrediction_Chrom(
     return;
 }
 /***************************************************************************
-	Function:	GetPredAdvancedB
-	Date:		04/17/2001
-	Purpose:	Get predicted area (block) and compensate with the residue.
-				- modified from GetPredAdvancedBAdd in decoder.
-	Intput/Output:
-	Modified:
+    Function:   GetPredAdvancedB
+    Date:       04/17/2001
+    Purpose:    Get predicted area (block) and compensate with the residue.
+                - modified from GetPredAdvancedBAdd in decoder.
+    Intput/Output:
+    Modified:
 ***************************************************************************/
 
 Int GetPredAdvBy0x0(
-    UChar *prev,		/* i */
-    UChar *rec,		/* i */
-    Int lx,		/* i */
+    UChar *prev,        /* i */
+    UChar *rec,     /* i */
+    Int lx,     /* i */
     Int rnd /* i */
 )
 {
-    Int	i;		/* loop variable */
+    Int i;      /* loop variable */
     ULong  pred_word, word1, word2;
     Int tmp;
 
@@ -389,7 +389,7 @@ Int GetPredAdvBy0x0(
             word1 = *((ULong*)(prev += lx)); /* read 4 bytes, b4 b3 b2 b1 */
             word2 = *((ULong*)(prev + 4));  /* read 4 bytes, b8 b7 b6 b5 */
             word1 >>= 8; /* 0 b4 b3 b2 */
-            pred_word = word1 | (word2 << 24);	/* b5 b4 b3 b2 */
+            pred_word = word1 | (word2 << 24);  /* b5 b4 b3 b2 */
             *((ULong*)(rec += 16)) = pred_word;
 
             word1 = *((ULong*)(prev + 8)); /* b12 b11 b10 b9 */
@@ -411,7 +411,7 @@ Int GetPredAdvBy0x0(
             word1 = *((ULong*)(prev += lx)); /* read 4 bytes, b4 b3 b2 b1 */
             word2 = *((ULong*)(prev + 4));  /* read 4 bytes, b8 b7 b6 b5 */
             word1 >>= 16; /* 0 0 b4 b3 */
-            pred_word = word1 | (word2 << 16);	/* b6 b5 b4 b3 */
+            pred_word = word1 | (word2 << 16);  /* b6 b5 b4 b3 */
             *((ULong*)(rec += 16)) = pred_word;
 
             word1 = *((ULong*)(prev + 8)); /* b12 b11 b10 b9 */
@@ -433,7 +433,7 @@ Int GetPredAdvBy0x0(
             word1 = *((ULong*)(prev += lx)); /* read 4 bytes, b4 b3 b2 b1 */
             word2 = *((ULong*)(prev + 4));  /* read 4 bytes, b8 b7 b6 b5 */
             word1 >>= 24; /* 0 0 0 b4 */
-            pred_word = word1 | (word2 << 8);	/* b7 b6 b5 b4 */
+            pred_word = word1 | (word2 << 8);   /* b7 b6 b5 b4 */
             *((ULong*)(rec += 16)) = pred_word;
 
             word1 = *((ULong*)(prev + 8)); /* b12 b11 b10 b9 */
@@ -448,14 +448,14 @@ Int GetPredAdvBy0x0(
 }
 /**************************************************************************/
 Int GetPredAdvBy0x1(
-    UChar *prev,		/* i */
-    UChar *rec,		/* i */
-    Int lx,		/* i */
+    UChar *prev,        /* i */
+    UChar *rec,     /* i */
+    Int lx,     /* i */
     Int rnd1 /* i */
 )
 {
-    Int	i;		/* loop variable */
-    Int	offset;
+    Int i;      /* loop variable */
+    Int offset;
     ULong word1, word2, word3, word12;
     Int tmp;
     ULong mask;
@@ -773,14 +773,14 @@ Int GetPredAdvBy0x1(
 
 /**************************************************************************/
 Int GetPredAdvBy1x0(
-    UChar *prev,		/* i */
-    UChar *rec,		/* i */
-    Int lx,		/* i */
+    UChar *prev,        /* i */
+    UChar *rec,     /* i */
+    Int lx,     /* i */
     Int rnd1 /* i */
 )
 {
-    Int	i;		/* loop variable */
-    Int	offset;
+    Int i;      /* loop variable */
+    Int offset;
     ULong  word1, word2, word3, word12, word22;
     Int tmp;
     ULong mask;
@@ -835,7 +835,7 @@ Int GetPredAdvBy1x0(
             {
                 word1 = *((ULong*)(prev += 4));
                 word2 = *((ULong*)(prev + lx));
-                word3 = word1 & word2;	/* rnd1 = 0; */
+                word3 = word1 & word2;  /* rnd1 = 0; */
                 word1 &= mask;
                 word3 &= (~mask); /* 0x1010101, check last bit */
                 word2 &= mask;
@@ -845,7 +845,7 @@ Int GetPredAdvBy1x0(
                 *((ULong*)(rec += 12)) = word1;
                 word1 = *((ULong*)(prev += 4));
                 word2 = *((ULong*)(prev + lx));
-                word3 = word1 & word2;	/* rnd1 = 0; */
+                word3 = word1 & word2;  /* rnd1 = 0; */
                 word1 &= mask;
                 word3 &= (~mask); /* 0x1010101, check last bit */
                 word2 &= mask;
@@ -1116,14 +1116,14 @@ Int GetPredAdvBy1x0(
 
 /**********************************************************************************/
 Int GetPredAdvBy1x1(
-    UChar *prev,		/* i */
-    UChar *rec,		/* i */
-    Int lx,		/* i */
+    UChar *prev,        /* i */
+    UChar *rec,     /* i */
+    Int lx,     /* i */
     Int rnd1 /* i */
 )
 {
-    Int	i;		/* loop variable */
-    Int	offset;
+    Int i;      /* loop variable */
+    Int offset;
     ULong  x1, x2, x1m, x2m, y1, y2, y1m, y2m; /* new way */
     Int tmp;
     Int rnd2;
@@ -1446,76 +1446,76 @@ Int GetPredAdvBy1x1(
 
 
 /*=============================================================================
-	Function: 	EncGetPredOutside
-	Date:		04/17/2001
-	Purpose:	- modified from GetPredOutside in the decoder.
-	Modified:	 09/24/05
-				use the existing non-initialized padded region
+    Function:   EncGetPredOutside
+    Date:       04/17/2001
+    Purpose:    - modified from GetPredOutside in the decoder.
+    Modified:    09/24/05
+                use the existing non-initialized padded region
 =============================================================================*/
 // not really needed since padding is included
 #define PAD_CORNER  { temp = *src; \
-					 temp |= (temp<<8); \
-					 temp |= (temp<<16); \
-					 *((ULong*)dst) = temp; \
-					 *((ULong*)(dst+4)) = temp; \
-					 *((ULong*)(dst+=lx)) = temp; \
-					 *((ULong*)(dst+4)) = temp; \
-					 *((ULong*)(dst+=lx)) = temp; \
-					 *((ULong*)(dst+4)) = temp; \
-					 *((ULong*)(dst+=lx)) = temp; \
-					 *((ULong*)(dst+4)) = temp; \
-					 *((ULong*)(dst+=lx)) = temp; \
-					 *((ULong*)(dst+4)) = temp; \
-					 *((ULong*)(dst+=lx)) = temp; \
-					 *((ULong*)(dst+4)) = temp; \
-					 *((ULong*)(dst+=lx)) = temp; \
-					 *((ULong*)(dst+4)) = temp; \
-					 *((ULong*)(dst+=lx)) = temp; \
-					 *((ULong*)(dst+4)) = temp; }
+                     temp |= (temp<<8); \
+                     temp |= (temp<<16); \
+                     *((ULong*)dst) = temp; \
+                     *((ULong*)(dst+4)) = temp; \
+                     *((ULong*)(dst+=lx)) = temp; \
+                     *((ULong*)(dst+4)) = temp; \
+                     *((ULong*)(dst+=lx)) = temp; \
+                     *((ULong*)(dst+4)) = temp; \
+                     *((ULong*)(dst+=lx)) = temp; \
+                     *((ULong*)(dst+4)) = temp; \
+                     *((ULong*)(dst+=lx)) = temp; \
+                     *((ULong*)(dst+4)) = temp; \
+                     *((ULong*)(dst+=lx)) = temp; \
+                     *((ULong*)(dst+4)) = temp; \
+                     *((ULong*)(dst+=lx)) = temp; \
+                     *((ULong*)(dst+4)) = temp; \
+                     *((ULong*)(dst+=lx)) = temp; \
+                     *((ULong*)(dst+4)) = temp; }
 
-#define PAD_ROW		{ temp = *((ULong*)src); \
-					  temp2 = *((ULong*)(src+4)); \
-					  *((ULong*)dst) = temp; \
-					  *((ULong*)(dst+4)) = temp2; \
-					  *((ULong*)(dst+=lx)) = temp; \
-					  *((ULong*)(dst+4)) = temp2; \
-					  *((ULong*)(dst+=lx)) = temp; \
-					  *((ULong*)(dst+4)) = temp2; \
-					  *((ULong*)(dst+=lx)) = temp; \
-					  *((ULong*)(dst+4)) = temp2; \
-					  *((ULong*)(dst+=lx)) = temp; \
-					  *((ULong*)(dst+4)) = temp2; \
-					  *((ULong*)(dst+=lx)) = temp; \
-					  *((ULong*)(dst+4)) = temp2; \
-					  *((ULong*)(dst+=lx)) = temp; \
-					  *((ULong*)(dst+4)) = temp2; \
-					  *((ULong*)(dst+=lx)) = temp; \
-					  *((ULong*)(dst+4)) = temp2; }
+#define PAD_ROW     { temp = *((ULong*)src); \
+                      temp2 = *((ULong*)(src+4)); \
+                      *((ULong*)dst) = temp; \
+                      *((ULong*)(dst+4)) = temp2; \
+                      *((ULong*)(dst+=lx)) = temp; \
+                      *((ULong*)(dst+4)) = temp2; \
+                      *((ULong*)(dst+=lx)) = temp; \
+                      *((ULong*)(dst+4)) = temp2; \
+                      *((ULong*)(dst+=lx)) = temp; \
+                      *((ULong*)(dst+4)) = temp2; \
+                      *((ULong*)(dst+=lx)) = temp; \
+                      *((ULong*)(dst+4)) = temp2; \
+                      *((ULong*)(dst+=lx)) = temp; \
+                      *((ULong*)(dst+4)) = temp2; \
+                      *((ULong*)(dst+=lx)) = temp; \
+                      *((ULong*)(dst+4)) = temp2; \
+                      *((ULong*)(dst+=lx)) = temp; \
+                      *((ULong*)(dst+4)) = temp2; }
 
-#define PAD_COL		{ temp = *src;	 temp |= (temp<<8);  temp |= (temp<<16); \
-					  *((ULong*)dst) = temp; \
-					 *((ULong*)(dst+4)) = temp; \
-					  temp = *(src+=lx);	 temp |= (temp<<8);  temp |= (temp<<16); \
-					  *((ULong*)(dst+=lx)) = temp; \
-					 *((ULong*)(dst+4)) = temp; \
-					  temp = *(src+=lx);	 temp |= (temp<<8);  temp |= (temp<<16); \
-					  *((ULong*)(dst+=lx)) = temp; \
-					 *((ULong*)(dst+4)) = temp; \
-					  temp = *(src+=lx);	 temp |= (temp<<8);  temp |= (temp<<16); \
-					  *((ULong*)(dst+=lx)) = temp; \
-					 *((ULong*)(dst+4)) = temp; \
-					  temp = *(src+=lx);	 temp |= (temp<<8);  temp |= (temp<<16); \
-					  *((ULong*)(dst+=lx)) = temp; \
-					 *((ULong*)(dst+4)) = temp; \
-					  temp = *(src+=lx);	 temp |= (temp<<8);  temp |= (temp<<16); \
-					  *((ULong*)(dst+=lx)) = temp; \
-					 *((ULong*)(dst+4)) = temp; \
-					  temp = *(src+=lx);	 temp |= (temp<<8);  temp |= (temp<<16); \
-					  *((ULong*)(dst+=lx)) = temp; \
-					 *((ULong*)(dst+4)) = temp; \
-					  temp = *(src+=lx);	 temp |= (temp<<8);  temp |= (temp<<16); \
-					  *((ULong*)(dst+=lx)) = temp; \
-					  *((ULong*)(dst+4)) = temp; }
+#define PAD_COL     { temp = *src;   temp |= (temp<<8);  temp |= (temp<<16); \
+                      *((ULong*)dst) = temp; \
+                     *((ULong*)(dst+4)) = temp; \
+                      temp = *(src+=lx);     temp |= (temp<<8);  temp |= (temp<<16); \
+                      *((ULong*)(dst+=lx)) = temp; \
+                     *((ULong*)(dst+4)) = temp; \
+                      temp = *(src+=lx);     temp |= (temp<<8);  temp |= (temp<<16); \
+                      *((ULong*)(dst+=lx)) = temp; \
+                     *((ULong*)(dst+4)) = temp; \
+                      temp = *(src+=lx);     temp |= (temp<<8);  temp |= (temp<<16); \
+                      *((ULong*)(dst+=lx)) = temp; \
+                     *((ULong*)(dst+4)) = temp; \
+                      temp = *(src+=lx);     temp |= (temp<<8);  temp |= (temp<<16); \
+                      *((ULong*)(dst+=lx)) = temp; \
+                     *((ULong*)(dst+4)) = temp; \
+                      temp = *(src+=lx);     temp |= (temp<<8);  temp |= (temp<<16); \
+                      *((ULong*)(dst+=lx)) = temp; \
+                     *((ULong*)(dst+4)) = temp; \
+                      temp = *(src+=lx);     temp |= (temp<<8);  temp |= (temp<<16); \
+                      *((ULong*)(dst+=lx)) = temp; \
+                     *((ULong*)(dst+4)) = temp; \
+                      temp = *(src+=lx);     temp |= (temp<<8);  temp |= (temp<<16); \
+                      *((ULong*)(dst+=lx)) = temp; \
+                      *((ULong*)(dst+4)) = temp; }
 
 
 Int EncGetPredOutside(Int xpos, Int ypos, UChar *c_prev, UChar *rec,
@@ -1711,8 +1711,8 @@ Int EncGetPredOutside(Int xpos, Int ypos, UChar *c_prev, UChar *rec,
 }
 
 /* ====================================================================== /
-	Function : Copy_MB_from_Vop()
-	Date     : 04/17/2001
+    Function : Copy_MB_from_Vop()
+    Date     : 04/17/2001
  ====================================================================== */
 
 void Copy_MB_from_Vop(UChar *comp, Int yChan[][NCOEFF_BLOCK], Int pitch)
@@ -1759,8 +1759,8 @@ void Copy_MB_from_Vop(UChar *comp, Int yChan[][NCOEFF_BLOCK], Int pitch)
 }
 
 /* ====================================================================== /
-	Function : Copy_B_from_Vop()
-	Date     : 04/17/2001
+    Function : Copy_B_from_Vop()
+    Date     : 04/17/2001
 / ====================================================================== */
 
 void Copy_B_from_Vop(UChar *comp, Int cChan[], Int pitch)
@@ -1788,9 +1788,9 @@ void Copy_B_from_Vop(UChar *comp, Int cChan[], Int pitch)
 }
 
 /* ====================================================================== /
-	Function : Copy_MB_into_Vop()
-	Date     : 04/17/2001
-	History  : From decoder
+    Function : Copy_MB_into_Vop()
+    Date     : 04/17/2001
+    History  : From decoder
 / ====================================================================== */
 
 void Copy_MB_into_Vop(UChar *comp, Int yChan[][NCOEFF_BLOCK], Int pitch)
@@ -1856,9 +1856,9 @@ void Copy_MB_into_Vop(UChar *comp, Int yChan[][NCOEFF_BLOCK], Int pitch)
 
 
 /* ====================================================================== /
-	Function : Copy_B_into_Vop()
-	Date     : 04/17/2001
-	History  : From decoder
+    Function : Copy_B_into_Vop()
+    Date     : 04/17/2001
+    History  : From decoder
 / ====================================================================== */
 
 void Copy_B_into_Vop(UChar *comp, Int cChan[], Int pitch)
@@ -1896,12 +1896,12 @@ void Copy_B_into_Vop(UChar *comp, Int cChan[], Int pitch)
 }
 
 /* ======================================================================== */
-/*	Function : get_MB( )													*/
-/*	Date     : 10/03/2000													*/
-/*	Purpose  : Copy 4 Y to reference frame									*/
-/*	In/out   :																*/
-/*	Return   :																*/
-/*	Modified :																*/
+/*  Function : get_MB( )                                                    */
+/*  Date     : 10/03/2000                                                   */
+/*  Purpose  : Copy 4 Y to reference frame                                  */
+/*  In/out   :                                                              */
+/*  Return   :                                                              */
+/*  Modified :                                                              */
 /* ======================================================================== */
 void get_MB(UChar *c_prev, UChar *c_prev_u  , UChar *c_prev_v,
             Short mb[6][64], Int lx, Int lx_uv)
@@ -1910,16 +1910,16 @@ void get_MB(UChar *c_prev, UChar *c_prev_u  , UChar *c_prev_v,
     Int i, j, count = 0, count1 = 0;
     Int k1 = lx - MB_SIZE, k2 = lx_uv - B_SIZE;
 
-    for (i = 0;i < B_SIZE;i++)
+    for (i = 0; i < B_SIZE; i++)
     {
-        for (j = 0; j < B_SIZE;j++)
+        for (j = 0; j < B_SIZE; j++)
         {
             mb[0][count] = (Int)(*c_prev++);
             mb[4][count] = (Int)(*c_prev_u++);
             mb[5][count++] = (Int)(*c_prev_v++);
         }
 
-        for (j = 0; j < B_SIZE;j++)
+        for (j = 0; j < B_SIZE; j++)
             mb[1][count1++] = (Int)(*c_prev++);
 
         c_prev += k1;
@@ -1930,12 +1930,12 @@ void get_MB(UChar *c_prev, UChar *c_prev_u  , UChar *c_prev_v,
     }
 
     count = count1 = 0;
-    for (i = 0;i < B_SIZE;i++)
+    for (i = 0; i < B_SIZE; i++)
     {
-        for (j = 0; j < B_SIZE;j++)
+        for (j = 0; j < B_SIZE; j++)
             mb[2][count++] = (Int)(*c_prev++);
 
-        for (j = 0; j < B_SIZE;j++)
+        for (j = 0; j < B_SIZE; j++)
             mb[3][count1++] = (Int)(*c_prev++);
 
         c_prev += k1;

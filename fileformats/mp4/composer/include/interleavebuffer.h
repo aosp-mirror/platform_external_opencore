@@ -35,41 +35,41 @@ class PVA_FF_InterLeaveBuffer
 
         PVA_FF_InterLeaveBuffer(uint32 mediaType, uint32 codecType, uint32 trackId);
 
-        virtual	~PVA_FF_InterLeaveBuffer();
+        virtual ~PVA_FF_InterLeaveBuffer();
 
-        bool	addSampleToInterLeaveBuffer(Oscl_Vector < OsclMemoryFragment,
-                                         OsclMemAllocator > & fragmentList,
-                                         uint32 size, uint32 ts, uint8 flags, int32 index);
+        bool    addSampleToInterLeaveBuffer(Oscl_Vector < OsclMemoryFragment,
+                                            OsclMemAllocator > & fragmentList,
+                                            uint32 size, uint32 ts, uint8 flags, int32 index);
 
-        bool	checkInterLeaveBufferSpace(uint32 size);
+        bool    checkInterLeaveBufferSpace(uint32 size);
 
         Oscl_Vector<uint32, OsclMemAllocator>* getTimeStampVec();
         Oscl_Vector<uint32, OsclMemAllocator>* getSampleSizeVec();
         Oscl_Vector<uint8, OsclMemAllocator>* getFlagsVec();
         Oscl_Vector<int32, OsclMemAllocator>* getTextIndexVec();
 
-        uint8*	resetInterLeaveBuffer(uint32 &chunkSize);
-        uint32	getCurrentInterLeaveBufferSize();
+        uint8*  resetInterLeaveBuffer(uint32 &chunkSize);
+        uint32  getCurrentInterLeaveBufferSize();
 
-        uint32	getLastChunkEndTime();
-        void	setLastChunkEndTime();
-        void	setLastChunkEndTime(uint32 time);
-        uint32	getTrackID();
-        uint32	getFirstTSEntry();
-        uint32	getLastSampleTS();
+        uint32  getLastChunkEndTime();
+        void    setLastChunkEndTime();
+        void    setLastChunkEndTime(uint32 time);
+        uint32  getTrackID();
+        uint32  getFirstTSEntry();
+        uint32  getLastSampleTS();
 
     private:
 
-        uint32	_trackId;
-        uint32	_mediaType;
-        uint32	_codecType;
-        uint32	_lastChunkEndTime;		// use to calculate present trun duration from sample time stamp
-        uint8*	_interLeaveBuffer;		// samples copied to buffer before written to file
-        uint32	_maxInterLeaveBufferSize;	// max size if interleave buffer ( codec dependent)
-        uint32	_currInterLeaveBufferSize;	// current occupancy in interleave buffer
-        uint32	_lastInterLeaveBufferTS;	// Time stamp of last interleave buffer
+        uint32  _trackId;
+        uint32  _mediaType;
+        uint32  _codecType;
+        uint32  _lastChunkEndTime;      // use to calculate present trun duration from sample time stamp
+        uint8*  _interLeaveBuffer;      // samples copied to buffer before written to file
+        uint32  _maxInterLeaveBufferSize;   // max size if interleave buffer ( codec dependent)
+        uint32  _currInterLeaveBufferSize;  // current occupancy in interleave buffer
+        uint32  _lastInterLeaveBufferTS;    // Time stamp of last interleave buffer
         // to calculate duration of interleave buffer
-        uint32	_lastSampleTS;
+        uint32  _lastSampleTS;
 
 
 

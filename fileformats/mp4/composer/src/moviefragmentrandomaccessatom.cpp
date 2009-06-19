@@ -57,7 +57,7 @@ PVA_FF_MovieFragmentRandomAccessAtom::~PVA_FF_MovieFragmentRandomAccessAtom()
 void
 PVA_FF_MovieFragmentRandomAccessAtom::addTrackFragmentRandomAccessAtom(uint32 trackId)
 {
-    PVA_FF_TfraAtom*	pTfraAtom;
+    PVA_FF_TfraAtom*    pTfraAtom;
     PV_MP4_FF_NEW(fp->auditCB, PVA_FF_TfraAtom, ((trackId)), pTfraAtom);
 
     _pTfraList->push_back(pTfraAtom);
@@ -87,8 +87,8 @@ PVA_FF_MovieFragmentRandomAccessAtom::getTfraAtom(uint32 trackId)
 // add new random access entry for given track
 void
 PVA_FF_MovieFragmentRandomAccessAtom::addSampleEntry(uint32 trackId, uint32 time,
-        uint32 moofOffset,	uint32 trafNumber,
-        uint32 trunNumber,	uint32 sampleNumber)
+        uint32 moofOffset,  uint32 trafNumber,
+        uint32 trunNumber,  uint32 sampleNumber)
 {
     if (_pTfraList->size() != 0)
     {
@@ -174,7 +174,7 @@ PVA_FF_MovieFragmentRandomAccessAtom::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_W
     }
 
     // Render the movie fragment random access offset atom
-    _pMfroAtom->setSize(_size);	// before rendering set the size field in MFRO atom
+    _pMfroAtom->setSize(_size); // before rendering set the size field in MFRO atom
     if (!_pMfroAtom->renderToFileStream(fp))
     {
         return false;

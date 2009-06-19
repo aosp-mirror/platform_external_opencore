@@ -18,7 +18,7 @@
 // -*- c++ -*-
 // = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 
-//				 Oscl Registry Access Client
+//               Oscl Registry Access Client
 
 // = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 
@@ -93,6 +93,6 @@ class OsclRegistryAccessClient
 };
 
 
-#endif	 // OSCL_STRING_H_INCLUDED
+#endif   // OSCL_STRING_H_INCLUDED
 
 /*! @} */

@@ -79,7 +79,7 @@ extern "C"
 #endif
 
     void sbr_get_envelope(SBR_FRAME_DATA * h_frame_data,
-                          BIT_BUFFER  * hBitBuf);
+    BIT_BUFFER  * hBitBuf);
 
 #ifdef __cplusplus
 }

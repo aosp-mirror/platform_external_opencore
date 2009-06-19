@@ -69,14 +69,14 @@
 typedef enum
 {
     /* block switch windows for single channels or channel pairs */
-    Winds	= Chans,
+    Winds   = Chans,
 
     /* average channel block length, bytes */
-    Avjframe	= 341,
+    Avjframe    = 341,
 
-    TEXP	= 128,		/* size of exp cache table */
-    MAX_IQ_TBL	= 128,		/* size of inv quant table */
-    MAXFFT	= LN4
+    TEXP    = 128,      /* size of exp cache table */
+    MAX_IQ_TBL  = 128,      /* size of inv quant table */
+    MAXFFT  = LN4
 
 } infoinitConst;
 

@@ -181,8 +181,8 @@ class Oscl_Queue_Base
 
 template<class T, class Alloc>
 class Oscl_Queue
-            : public Oscl_Queue_Base
-            , public Oscl_Opaque_Type_Alloc
+        : public Oscl_Queue_Base
+        , public Oscl_Opaque_Type_Alloc
 {
 
     public:

@@ -201,7 +201,7 @@ void video_only_test::VideoAddSinkSucceeded()
     if (iVideoSourceAdded)
     {
         i324mConfigInterface = iH324MConfig;
-//		OSCL_TRY(error, i324mIFCommandId = terminal->QueryInterface(PVH324MConfigUuid, i324mConfigInterface,NULL));
+//      OSCL_TRY(error, i324mIFCommandId = terminal->QueryInterface(PVH324MConfigUuid, i324mConfigInterface,NULL));
         if (i324mConfigInterface == NULL)
         {
             test_is_true(false);
@@ -216,7 +216,7 @@ void video_only_test::VideoAddSourceSucceeded()
     if (iVideoSinkAdded)
     {
         i324mConfigInterface = iH324MConfig;
-//			OSCL_TRY(error, i324mIFCommandId = terminal->QueryInterface(PVH324MConfigUuid, i324mConfigInterface,NULL));
+//          OSCL_TRY(error, i324mIFCommandId = terminal->QueryInterface(PVH324MConfigUuid, i324mConfigInterface,NULL));
         if (i324mConfigInterface == NULL)
         {
             test_is_true(false);
@@ -254,7 +254,7 @@ void video_only_test::DisCmdFailed()
 void video_only_test::DisCmdSucceeded()
 {
     printf("Finished disconnecting \n");
-//	destroy_sink_source();
+//  destroy_sink_source();
     if (i324mConfigInterface)
         i324mConfigInterface->removeRef();
     reset();

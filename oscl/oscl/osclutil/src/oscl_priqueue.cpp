@@ -95,7 +95,7 @@ OSCL_EXPORT_REF OsclAny* OsclPriorityQueueBase::find_heap(const OsclAny* input, 
     * It is assumed that the input element is present.
     * If not present, it will return NULL.
     */
-    for (OsclAny* pos = first;pos < last;pos = pVec->increment_T(pos, 1))
+    for (OsclAny* pos = first; pos < last; pos = pVec->increment_T(pos, 1))
     {
         if (pOpaqueType->compare_EQ(pos, input))
             return pos;

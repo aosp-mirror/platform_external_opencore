@@ -232,7 +232,7 @@ class pvplayer_async_test_downloadbase : public pvplayer_async_test_base
  *             -# Wait for Data Ready event
  *             -# Start()
  *             -# Play until either EOS is reached or 10 seconds after download
- *					finishes.
+ *                  finishes.
  *             -# Stop()
  *             -# RemoveDataSink() (video)
  *             -# RemoveDataSink() (audio)
@@ -278,7 +278,7 @@ class pvplayer_async_test_ftdlnormal : public pvplayer_async_test_downloadbase
  *             -# Wait for Data Ready event
  *             -# Start()
  *             -# Play until either EOS is reached or 10 seconds after download
- *					finishes.
+ *                  finishes.
  *             -# Stop()
  *             -# RemoveDataSink() (video)
  *             -# RemoveDataSink() (audio)
@@ -336,7 +336,7 @@ class pvplayer_async_test_3gppdlnormal : public pvplayer_async_test_downloadbase
  *             -# Wait for Data Ready event
  *             -# Start()
  *             -# Play until either EOS is reached or 10 seconds after download
- *					finishes.
+ *                  finishes.
  *             -# Stop()
  *             -# RemoveDataSink() (video)
  *             -# RemoveDataSink() (audio)
@@ -934,11 +934,11 @@ class pvplayer_async_test_ppb_normal : public pvplayer_async_test_ppb_base
  *             -# Prepare()
  *             -# Wait for Data Ready event
  *             -# Start()
- *			   -# After getting UnderFlow event
- *			   -# Pause()
- *			   -# Resume()
+ *             -# After getting UnderFlow event
+ *             -# Pause()
+ *             -# Resume()
  *             -# Play until either EOS is reached or 10 seconds after download
- *					finishes.
+ *                  finishes.
  *             -# Stop()
  *             -# RemoveDataSink() (video)
  *             -# RemoveDataSink() (audio)

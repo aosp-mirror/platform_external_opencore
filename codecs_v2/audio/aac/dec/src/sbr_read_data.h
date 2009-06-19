@@ -112,8 +112,8 @@ extern "C"
 #endif
 
     SBR_ERROR sbr_read_data(SBRDECODER_DATA * self,
-                            SBR_DEC * sbrDec,
-                            SBRBITSTREAM *stream);
+    SBR_DEC * sbrDec,
+    SBRBITSTREAM *stream);
 
 #ifdef __cplusplus
 }

@@ -27,7 +27,7 @@
 
 
 ////////////////////////////////////////////////////////////////////////////////////
-//////	ProgressiveDownloadContainer
+//////  ProgressiveDownloadContainer
 ////////////////////////////////////////////////////////////////////////////////////
 class ProgressiveDownloadContainer : public DownloadContainer
 {
@@ -63,7 +63,7 @@ class ProgressiveDownloadContainer : public DownloadContainer
 };
 
 ////////////////////////////////////////////////////////////////////////////////////
-//////	progressiveDownloadControl
+//////  progressiveDownloadControl
 ////////////////////////////////////////////////////////////////////////////////////
 class progressiveDownloadControl : public pvDownloadControl
 {
@@ -74,7 +74,7 @@ class progressiveDownloadControl : public pvDownloadControl
                 const uint32 aFileSize);
 
         // ret_val: 0 success, 1 playback rate is not close to clip bitrate, but the information is all available
-        //			-1, related information, e.g. duration=0, size2time conversion is not available, is not available
+        //          -1, related information, e.g. duration=0, size2time conversion is not available, is not available
         // called by isDlAlgoPreConditionMet()
         OSCL_IMPORT_REF virtual int32 isPlaybackRateCloseToClipBitrate(const uint32 aDurationMsec,
                 const uint32 aCurrDownloadSize,
@@ -114,7 +114,7 @@ class progressiveDownloadControl : public pvDownloadControl
 };
 
 ////////////////////////////////////////////////////////////////////////////////////
-//////	ProgressiveDownloadProgress
+//////  ProgressiveDownloadProgress
 ////////////////////////////////////////////////////////////////////////////////////
 class PVDlCfgFileContainer;
 class ProgressiveDownloadProgress : public DownloadProgress
@@ -159,7 +159,7 @@ class ProgressiveDownloadProgress : public DownloadProgress
 };
 
 ////////////////////////////////////////////////////////////////////////////////////
-//////	UserAgentField and its derived class definition
+//////  UserAgentField and its derived class definition
 ////////////////////////////////////////////////////////////////////////////////////
 class UserAgentFieldForProgDownload : public UserAgentField
 {
@@ -177,7 +177,7 @@ class UserAgentFieldForProgDownload : public UserAgentField
 };
 
 ////////////////////////////////////////////////////////////////////////////////////
-//////	PVProgressiveDownloadCfgFileContainer
+//////  PVProgressiveDownloadCfgFileContainer
 ////////////////////////////////////////////////////////////////////////////////////
 class PVProgressiveDownloadCfgFileContainer : public PVDlCfgFileContainer
 {

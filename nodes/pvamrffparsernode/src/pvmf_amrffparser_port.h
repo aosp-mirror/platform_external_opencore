@@ -135,7 +135,7 @@ class MediaClockConverter;
 class PVMFAMRFFParserNode;
 
 class PVAMRFFNodeTrackPortInfo : public OsclMemPoolFixedChunkAllocatorObserver,
-            public OsclMemPoolResizableAllocatorObserver
+        public OsclMemPoolResizableAllocatorObserver
 {
     public:
 
@@ -175,8 +175,8 @@ class PVAMRFFNodeTrackPortInfo : public OsclMemPoolFixedChunkAllocatorObserver,
             iAudioNumChannels             = 0;
 
             iAudioBitsPerSample           = 0;
-            iCodecName					  = NULL;
-            iCodecDescription			  = NULL;
+            iCodecName                    = NULL;
+            iCodecDescription             = NULL;
 
             iSendBOS = false;
 
@@ -226,16 +226,16 @@ class PVAMRFFNodeTrackPortInfo : public OsclMemPoolFixedChunkAllocatorObserver,
 
             iResizableDataMemoryPoolSize       = aSrc.iResizableDataMemoryPoolSize;
             iTrackMaxSampleSize                = aSrc.iTrackMaxSampleSize;
-            iLogger					           = aSrc.iLogger;
-            iDataPathLogger			           = aSrc.iDataPathLogger;
-            iClockLogger			           = aSrc.iClockLogger;
+            iLogger                            = aSrc.iLogger;
+            iDataPathLogger                    = aSrc.iDataPathLogger;
+            iClockLogger                       = aSrc.iClockLogger;
             iPortLogger                        = aSrc.iPortLogger;
             oFormatSpecificInfoLogged          = aSrc.oFormatSpecificInfoLogged;
             iAudioSampleRate                   = aSrc.iAudioSampleRate;
             iAudioNumChannels                  = aSrc.iAudioNumChannels;
             iAudioBitsPerSample                = aSrc.iAudioBitsPerSample;
-            iCodecName						   = aSrc.iCodecName;;
-            iCodecDescription				   = aSrc.iCodecDescription;
+            iCodecName                         = aSrc.iCodecName;;
+            iCodecDescription                  = aSrc.iCodecDescription;
 
             iSendBOS = aSrc.iSendBOS;
 
@@ -371,7 +371,7 @@ class PVAMRFFNodeTrackPortInfo : public OsclMemPoolFixedChunkAllocatorObserver,
 };
 
 class PVMFAMRFFParserOutPort : public PvmfPortBaseImpl
-            , public PvmiCapabilityAndConfig
+        , public PvmiCapabilityAndConfig
 {
     public:
         /**
@@ -427,7 +427,7 @@ class PVMFAMRFFParserOutPort : public PvmfPortBaseImpl
 
         /* Implement pure virtuals from PvmiCapabilityAndConfig interface */
         PVMFStatus getParametersSync(PvmiMIOSession aSession, PvmiKeyType aIdentifier,
-                                     PvmiKvp*& aParameters, int& num_parameter_elements,	PvmiCapabilityContext aContext);
+                                     PvmiKvp*& aParameters, int& num_parameter_elements,    PvmiCapabilityContext aContext);
         PVMFStatus releaseParameters(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
         void setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters,
                                int num_elements, PvmiKvp * & aRet_kvp);

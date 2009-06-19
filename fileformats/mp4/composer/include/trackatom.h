@@ -275,7 +275,7 @@ class PVA_FF_TrackAtom : public PVA_FF_Atom, public PVA_FF_ISucceedFail
         int32 _mediaType;
 
         bool FIRST_SAMPLE;
-        PVA_FF_EditAtom	*_eList;
+        PVA_FF_EditAtom *_eList;
 
         bool   _oInterLeaveMode;
 

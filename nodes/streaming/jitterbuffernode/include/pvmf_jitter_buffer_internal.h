@@ -83,26 +83,26 @@ typedef PVMFGenericNodeCommand<OsclMemAllocator> PVMFJitterBufferNodeCommandBase
 
 class PVMFJitterBufferNodeCommand : public PVMFJitterBufferNodeCommandBase
 {
-  public:
-    void Construct(PVMFSessionId s,
-                   int32 cmd,
-                   int32 arg1,
-                   int32 arg2,
-                   int32& arg3,
-                   const OsclAny*aContext)
-    {
-        PVMFJitterBufferNodeCommandBase::Construct(s, cmd, aContext);
-        iParam1 = (OsclAny*)arg1;
-        iParam2 = (OsclAny*)arg2;
-        iParam3 = (OsclAny*) & arg3;
-    };
+    public:
+        void Construct(PVMFSessionId s,
+                       int32 cmd,
+                       int32 arg1,
+                       int32 arg2,
+                       int32& arg3,
+                       const OsclAny*aContext)
+        {
+            PVMFJitterBufferNodeCommandBase::Construct(s, cmd, aContext);
+            iParam1 = (OsclAny*)arg1;
+            iParam2 = (OsclAny*)arg2;
+            iParam3 = (OsclAny*) & arg3;
+        };
 
-    void Parse(int32&arg1, int32&arg2, int32*&arg3)
-    {
-        arg1 = (int32)iParam1;
-        arg2 = (int32)iParam2;
-        arg3 = (int32*)iParam3;
-    };
+        void Parse(int32&arg1, int32&arg2, int32*&arg3)
+        {
+            arg1 = (int32)iParam1;
+            arg2 = (int32)iParam2;
+            arg3 = (int32*)iParam3;
+        };
 };
 
 //Command queue type
@@ -125,119 +125,119 @@ class PVMFJitterBufferExtensionInterfaceImpl :
         public PVInterfaceImpl<OsclMemAllocator>,
         public PVMFJitterBufferExtensionInterface
 {
-  public:
-    PVMFJitterBufferExtensionInterfaceImpl(PVMFJitterBufferNode*);
-    ~PVMFJitterBufferExtensionInterfaceImpl();
+    public:
+        PVMFJitterBufferExtensionInterfaceImpl(PVMFJitterBufferNode*);
+        ~PVMFJitterBufferExtensionInterfaceImpl();
 
-    OSCL_IMPORT_REF void setRTCPIntervalInMicroSecs(uint32 aRTCPInterval);
+        OSCL_IMPORT_REF void setRTCPIntervalInMicroSecs(uint32 aRTCPInterval);
 
-    OSCL_IMPORT_REF bool setPortParams(PVMFPortInterface* aPort,
-                                       uint32 aTimeScale,
-                                       uint32 aBitRate,
-                                       OsclRefCounterMemFrag& aConfig,
-                                       bool aRateAdaptation = false,
-                                       uint32 aRateAdaptationFeedBackFrequency = 0);
+        OSCL_IMPORT_REF bool setPortParams(PVMFPortInterface* aPort,
+                                           uint32 aTimeScale,
+                                           uint32 aBitRate,
+                                           OsclRefCounterMemFrag& aConfig,
+                                           bool aRateAdaptation = false,
+                                           uint32 aRateAdaptationFeedBackFrequency = 0);
 
-    OSCL_IMPORT_REF bool setPlayRange(int32 aStartTimeInMS,
-                                      int32 aStopTimeInMS,
-                                      bool oPlayAfterASeek,
-                                      bool aStopTimeAvailable = true);
+        OSCL_IMPORT_REF bool setPlayRange(int32 aStartTimeInMS,
+                                          int32 aStopTimeInMS,
+                                          bool oPlayAfterASeek,
+                                          bool aStopTimeAvailable = true);
 
-    OSCL_IMPORT_REF void setPlayBackThresholdInMilliSeconds(uint32 threshold);
+        OSCL_IMPORT_REF void setPlayBackThresholdInMilliSeconds(uint32 threshold);
 
-    OSCL_IMPORT_REF void setJitterBufferRebufferingThresholdInMilliSeconds(uint32 aThreshold);
-    OSCL_IMPORT_REF void getJitterBufferRebufferingThresholdInMilliSeconds(uint32& aThreshold);
-    OSCL_IMPORT_REF void setJitterBufferDurationInMilliSeconds(uint32 duration);
-    OSCL_IMPORT_REF void getJitterBufferDurationInMilliSeconds(uint32& duration);
+        OSCL_IMPORT_REF void setJitterBufferRebufferingThresholdInMilliSeconds(uint32 aThreshold);
+        OSCL_IMPORT_REF void getJitterBufferRebufferingThresholdInMilliSeconds(uint32& aThreshold);
+        OSCL_IMPORT_REF void setJitterBufferDurationInMilliSeconds(uint32 duration);
+        OSCL_IMPORT_REF void getJitterBufferDurationInMilliSeconds(uint32& duration);
 
-    OSCL_IMPORT_REF void setEarlyDecodingTimeInMilliSeconds(uint32 duration);
-    OSCL_IMPORT_REF void setBurstThreshold(float burstThreshold);
+        OSCL_IMPORT_REF void setEarlyDecodingTimeInMilliSeconds(uint32 duration);
+        OSCL_IMPORT_REF void setBurstThreshold(float burstThreshold);
 
-    OSCL_IMPORT_REF void setClientPlayBackClock(PVMFMediaClock* clientClock);
-    OSCL_IMPORT_REF void setMaxInactivityDurationForMediaInMs(uint32 duration);
-    OSCL_IMPORT_REF void getMaxInactivityDurationForMediaInMs(uint32& duration);
+        OSCL_IMPORT_REF void setClientPlayBackClock(PVMFMediaClock* clientClock);
+        OSCL_IMPORT_REF void setMaxInactivityDurationForMediaInMs(uint32 duration);
+        OSCL_IMPORT_REF void getMaxInactivityDurationForMediaInMs(uint32& duration);
 
-    OSCL_IMPORT_REF bool PrepareForRepositioning(bool oUseExpectedClientClockVal = false,
-                                                 uint32 aExpectedClientClockVal = 0);
+        OSCL_IMPORT_REF bool PrepareForRepositioning(bool oUseExpectedClientClockVal = false,
+                uint32 aExpectedClientClockVal = 0);
 
-    OSCL_IMPORT_REF bool setPortSSRC(PVMFPortInterface* aPort, uint32 aSSRC);
+        OSCL_IMPORT_REF bool setPortSSRC(PVMFPortInterface* aPort, uint32 aSSRC);
 
-    OSCL_IMPORT_REF bool setPortRTPParams(PVMFPortInterface* aPort,
-                                          bool   aSeqNumBasePresent,
-                                          uint32 aSeqNumBase,
-                                          bool   aRTPTimeBasePresent,
-                                          uint32 aRTPTimeBase,
-                                          bool   aNPTTimeBasePresent,
-                                          uint32 aNPTInMS,
-                                          bool oPlayAfterASeek = false);
+        OSCL_IMPORT_REF bool setPortRTPParams(PVMFPortInterface* aPort,
+                                              bool   aSeqNumBasePresent,
+                                              uint32 aSeqNumBase,
+                                              bool   aRTPTimeBasePresent,
+                                              uint32 aRTPTimeBase,
+                                              bool   aNPTTimeBasePresent,
+                                              uint32 aNPTInMS,
+                                              bool oPlayAfterASeek = false);
 
-    OSCL_IMPORT_REF bool setPortRTCPParams(PVMFPortInterface* aPort,
-                                           int aNumSenders,
-                                           uint32 aRR,
-                                           uint32 aRS);
+        OSCL_IMPORT_REF bool setPortRTCPParams(PVMFPortInterface* aPort,
+                                               int aNumSenders,
+                                               uint32 aRR,
+                                               uint32 aRS);
 
-    OSCL_IMPORT_REF PVMFTimestamp getActualMediaDataTSAfterSeek();
-    OSCL_IMPORT_REF PVMFTimestamp getMaxMediaDataTS();
+        OSCL_IMPORT_REF PVMFTimestamp getActualMediaDataTSAfterSeek();
+        OSCL_IMPORT_REF PVMFTimestamp getMaxMediaDataTS();
 
-    void addRef()
-    {
-        PVInterfaceImpl<OsclMemAllocator>::addRef();
-    }
-    void removeRef()
-    {
-        PVInterfaceImpl<OsclMemAllocator>::removeRef();
-    }
-    bool queryInterface(const PVUuid& uuid, PVInterface*& iface)
-    {
-        if (uuid == Uuid())
+        void addRef()
         {
-            addRef();
-            iface = this;
-            return true;
+            PVInterfaceImpl<OsclMemAllocator>::addRef();
         }
-        else
+        void removeRef()
         {
-            iface = NULL;
-            return false;
+            PVInterfaceImpl<OsclMemAllocator>::removeRef();
         }
-    }
+        bool queryInterface(const PVUuid& uuid, PVInterface*& iface)
+        {
+            if (uuid == Uuid())
+            {
+                addRef();
+                iface = this;
+                return true;
+            }
+            else
+            {
+                iface = NULL;
+                return false;
+            }
+        }
 
-    OSCL_IMPORT_REF PVMFStatus setServerInfo(PVMFJitterBufferFireWallPacketInfo& aServerInfo);
+        OSCL_IMPORT_REF PVMFStatus setServerInfo(PVMFJitterBufferFireWallPacketInfo& aServerInfo);
 
-    OSCL_IMPORT_REF PVMFStatus NotifyOutOfBandEOS();
-    OSCL_IMPORT_REF PVMFStatus SendBOSMessage(uint32 aStramID);
+        OSCL_IMPORT_REF PVMFStatus NotifyOutOfBandEOS();
+        OSCL_IMPORT_REF PVMFStatus SendBOSMessage(uint32 aStramID);
 
-    OSCL_IMPORT_REF void SetSharedBufferResizeParams(uint32 maxNumResizes, uint32 resizeSize);
-    OSCL_IMPORT_REF void GetSharedBufferResizeParams(uint32& maxNumResizes, uint32& resizeSize);
+        OSCL_IMPORT_REF void SetSharedBufferResizeParams(uint32 maxNumResizes, uint32 resizeSize);
+        OSCL_IMPORT_REF void GetSharedBufferResizeParams(uint32& maxNumResizes, uint32& resizeSize);
 
-    OSCL_IMPORT_REF bool ClearJitterBuffer(PVMFPortInterface* aPort, uint32 aSeqNum);
-    OSCL_IMPORT_REF void FlushJitterBuffer();
+        OSCL_IMPORT_REF bool ClearJitterBuffer(PVMFPortInterface* aPort, uint32 aSeqNum);
+        OSCL_IMPORT_REF void FlushJitterBuffer();
 
-    OSCL_IMPORT_REF bool NotifyAutoPauseComplete();
+        OSCL_IMPORT_REF bool NotifyAutoPauseComplete();
 
-    OSCL_IMPORT_REF bool NotifyAutoResumeComplete();
+        OSCL_IMPORT_REF bool NotifyAutoResumeComplete();
 
-    OSCL_IMPORT_REF PVMFStatus SetInputMediaHeaderPreParsed(PVMFPortInterface* aPort,
-                                                            bool aHeaderPreParsed);
+        OSCL_IMPORT_REF PVMFStatus SetInputMediaHeaderPreParsed(PVMFPortInterface* aPort,
+                bool aHeaderPreParsed);
 
-    OSCL_IMPORT_REF PVMFStatus HasSessionDurationExpired(bool& aExpired);
-    OSCL_IMPORT_REF bool PurgeElementsWithNPTLessThan(NptTimeFormat &aNPTTime);
+        OSCL_IMPORT_REF PVMFStatus HasSessionDurationExpired(bool& aExpired);
+        OSCL_IMPORT_REF bool PurgeElementsWithNPTLessThan(NptTimeFormat &aNPTTime);
 
-    OSCL_IMPORT_REF void SetBroadCastSession();
-    OSCL_IMPORT_REF void DisableFireWallPackets();
+        OSCL_IMPORT_REF void SetBroadCastSession();
+        OSCL_IMPORT_REF void DisableFireWallPackets();
 
 
-    OSCL_IMPORT_REF void StartOutputPorts();
-    OSCL_IMPORT_REF void StopOutputPorts();
-    OSCL_IMPORT_REF void UpdateJitterBufferState();
-    OSCL_IMPORT_REF virtual void SetJitterBufferMemPoolInfo(const PvmfPortBaseImpl* aPort, uint32 aSize, uint32 aResizeSize, uint32 aMaxNumResizes, uint32 aExpectedNumberOfBlocksPerBuffer);
-    OSCL_IMPORT_REF virtual void GetJitterBufferMemPoolInfo(const PvmfPortBaseImpl* aPort, uint32& aSize, uint32& aResizeSize, uint32& aMaxNumResizes, uint32& aExpectedNumberOfBlocksPerBuffer) const;
-    OSCL_IMPORT_REF void SetJitterBufferChunkAllocator(OsclMemPoolResizableAllocator* aDataBufferAllocator, const PVMFPortInterface* aPort);
-    OSCL_IMPORT_REF virtual bool PrepareForPlaylistSwitch();
+        OSCL_IMPORT_REF void StartOutputPorts();
+        OSCL_IMPORT_REF void StopOutputPorts();
+        OSCL_IMPORT_REF void UpdateJitterBufferState();
+        OSCL_IMPORT_REF virtual void SetJitterBufferMemPoolInfo(const PvmfPortBaseImpl* aPort, uint32 aSize, uint32 aResizeSize, uint32 aMaxNumResizes, uint32 aExpectedNumberOfBlocksPerBuffer);
+        OSCL_IMPORT_REF virtual void GetJitterBufferMemPoolInfo(const PvmfPortBaseImpl* aPort, uint32& aSize, uint32& aResizeSize, uint32& aMaxNumResizes, uint32& aExpectedNumberOfBlocksPerBuffer) const;
+        OSCL_IMPORT_REF void SetJitterBufferChunkAllocator(OsclMemPoolResizableAllocator* aDataBufferAllocator, const PVMFPortInterface* aPort);
+        OSCL_IMPORT_REF virtual bool PrepareForPlaylistSwitch();
 
-  private:
-    PVMFJitterBufferNode *iContainer;
-    friend class PVMFJitterBufferNode;
+    private:
+        PVMFJitterBufferNode *iContainer;
+        friend class PVMFJitterBufferNode;
 };
 
 #endif

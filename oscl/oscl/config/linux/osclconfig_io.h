@@ -57,8 +57,8 @@
 #define OSCL_HAS_ANSI_FILE_IO_SUPPORT 1
 #define OSCL_HAS_SYMBIAN_COMPATIBLE_IO_FUNCTION 0
 #define OSCL_HAS_NATIVE_FILE_CACHE_ENABLE 1
-#define OSCL_FILE_BUFFER_MAX_SIZE	32768
-#define OSCL_HAS_PV_FILE_CACHE	1
+#define OSCL_FILE_BUFFER_MAX_SIZE   32768
+#define OSCL_HAS_PV_FILE_CACHE  1
 #define OSCL_HAS_LARGE_FILE_SUPPORT 1
 
 //For Sockets
@@ -78,138 +78,138 @@ typedef socklen_t TOsclSockAddrLen;
 
 //address conversion macro-- from string to network address.
 #define OsclMakeSockAddr(sockaddr,port,addrstr,ok)\
-  	sockaddr.sin_family=OSCL_AF_INET;\
-	sockaddr.sin_port=htons(port);\
-	int32 result=inet_aton((const char*)addrstr,&sockaddr.sin_addr);\
-	ok=(result!=0);
+    sockaddr.sin_family=OSCL_AF_INET;\
+    sockaddr.sin_port=htons(port);\
+    int32 result=inet_aton((const char*)addrstr,&sockaddr.sin_addr);\
+    ok=(result!=0);
 
 //address conversion macro-- from network address to string
 #define OsclUnMakeSockAddr(sockaddr,addrstr)\
-	addrstr=inet_ntoa(sockaddr.sin_addr);
+    addrstr=inet_ntoa(sockaddr.sin_addr);
 
 //wrappers for berkeley socket calls
 #define OsclSetRecvBufferSize(s,val,ok,err) \
-	ok=(setsockopt(s,SOL_SOCKET,SO_RCVBUF,(char*)&val, sizeof(int)) !=-1);\
-	if (!ok)err=errno
+    ok=(setsockopt(s,SOL_SOCKET,SO_RCVBUF,(char*)&val, sizeof(int)) !=-1);\
+    if (!ok)err=errno
 
 #define OsclBind(s,addr,ok,err)\
     TOsclSockAddr* tmpadr = &addr;\
     sockaddr* sadr = OSCL_STATIC_CAST(sockaddr*, tmpadr);\
-	ok=(bind(s,sadr,sizeof(addr))!=(-1));\
+    ok=(bind(s,sadr,sizeof(addr))!=(-1));\
         if (!ok)err=errno
 
 #define OsclJoin(s,addr,ok,err)\
-		struct ip_mreq mreq; \
-	    ok=(bind(s,(sockaddr*)&addr,sizeof(addr))!=(-1));\
+        struct ip_mreq mreq; \
+        ok=(bind(s,(sockaddr*)&addr,sizeof(addr))!=(-1));\
         mreq.imr_multiaddr.s_addr = addr.sin_addr.s_addr ; \
         mreq.imr_interface.s_addr = htonl(INADDR_ANY); \
         ok=(setsockopt(s, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(struct ip_mreq))!=(-1)); \
         if (!ok)err=errno
 
 #define OsclListen(s,size,ok,err)\
-	ok=(listen(iSocket,qSize)!=(-1));\
-	if (!ok)err=errno
+    ok=(listen(iSocket,qSize)!=(-1));\
+    if (!ok)err=errno
 
 #define OsclAccept(s,accept_s,ok,err,wouldblock)\
-	accept_s=accept(s,NULL,NULL);\
-	ok=(accept_s!=(-1));\
-	if (!ok){err=errno;wouldblock=(err==EAGAIN||err==EWOULDBLOCK);}
+    accept_s=accept(s,NULL,NULL);\
+    ok=(accept_s!=(-1));\
+    if (!ok){err=errno;wouldblock=(err==EAGAIN||err==EWOULDBLOCK);}
 
 #define OsclSetNonBlocking(s,ok,err)\
-	ok=(fcntl(s,F_SETFL,O_NONBLOCK)!=(-1));\
-	if (!ok)err=errno
+    ok=(fcntl(s,F_SETFL,O_NONBLOCK)!=(-1));\
+    if (!ok)err=errno
 
 #define OsclShutdown(s,how,ok,err)\
-	ok=(shutdown(iSocket,how)!=(-1));\
-	if (!ok)err=errno
+    ok=(shutdown(iSocket,how)!=(-1));\
+    if (!ok)err=errno
 
 #define OsclSocket(s,fam,type,prot,ok,err)\
-	s=socket(fam,type,prot);\
-	ok=(s!=(-1));\
-	if (!ok)err=errno
+    s=socket(fam,type,prot);\
+    ok=(s!=(-1));\
+    if (!ok)err=errno
 
 #define OsclSendTo(s,buf,len,addr,ok,err,nbytes,wouldblock)\
     TOsclSockAddr* tmpadr = &addr;\
     sockaddr* sadr = OSCL_STATIC_CAST(sockaddr*, tmpadr);\
-	nbytes=sendto(s,buf,(size_t)(len),0,sadr,(socklen_t)sizeof(addr));\
-	ok=(nbytes!=(-1));\
-	if (!ok){err=errno;wouldblock=(err==EAGAIN||err==EWOULDBLOCK);}
+    nbytes=sendto(s,buf,(size_t)(len),0,sadr,(socklen_t)sizeof(addr));\
+    ok=(nbytes!=(-1));\
+    if (!ok){err=errno;wouldblock=(err==EAGAIN||err==EWOULDBLOCK);}
 
 #define OsclSend(s,buf,len,ok,err,nbytes,wouldblock)\
-	nbytes=send(s,(const void*)(buf),(size_t)(len),0);\
-	ok=(nbytes!=(-1));\
-	if (!ok){err=errno;wouldblock=(err==EAGAIN||err==EWOULDBLOCK);}
+    nbytes=send(s,(const void*)(buf),(size_t)(len),0);\
+    ok=(nbytes!=(-1));\
+    if (!ok){err=errno;wouldblock=(err==EAGAIN||err==EWOULDBLOCK);}
 
 #define OsclCloseSocket(s,ok,err)\
-	ok=(close(s)!=(-1));\
-	if (!ok)err=errno
+    ok=(close(s)!=(-1));\
+    if (!ok)err=errno
 
 #define OsclConnect(s,addr,ok,err,wouldblock)\
     TOsclSockAddr* tmpadr = &addr;\
     sockaddr* sadr = OSCL_STATIC_CAST(sockaddr*, tmpadr);\
-	ok=(connect(s,sadr,sizeof(addr))!=(-1));\
-	if (!ok){err=errno;wouldblock=(err==EINPROGRESS);}
+    ok=(connect(s,sadr,sizeof(addr))!=(-1));\
+    if (!ok){err=errno;wouldblock=(err==EINPROGRESS);}
 
 #define OsclGetAsyncSockErr(s,ok,err)\
-	int opterr;socklen_t optlen=sizeof(opterr);\
-	ok=(getsockopt(s,SOL_SOCKET,SO_ERROR,(void *)&opterr,&optlen)!=(-1));\
-	if(ok)err=opterr;else err=errno;
+    int opterr;socklen_t optlen=sizeof(opterr);\
+    ok=(getsockopt(s,SOL_SOCKET,SO_ERROR,(void *)&opterr,&optlen)!=(-1));\
+    if(ok)err=opterr;else err=errno;
 
-#define OsclPipe(x) 		pipe(x)
-#define OsclReadFD(fd,buf,cnt) 	read(fd,buf,cnt)
+#define OsclPipe(x)         pipe(x)
+#define OsclReadFD(fd,buf,cnt)  read(fd,buf,cnt)
 #define OsclWriteFD(fd,buf,cnt) write(fd,buf,cnt)
 
 //unix reports connect completion in write set in the getsockopt
 //error.
 #define OsclConnectComplete(s,wset,eset,success,fail,ok,err)\
-	success=fail=false;\
-	if (FD_ISSET(s,&eset))\
-	{fail=true;OsclGetAsyncSockErr(s,ok,err);}\
-	else if (FD_ISSET(s,&wset))\
-	{OsclGetAsyncSockErr(s,ok,err);if (ok && err==0)success=true;else fail=true;}
+    success=fail=false;\
+    if (FD_ISSET(s,&eset))\
+    {fail=true;OsclGetAsyncSockErr(s,ok,err);}\
+    else if (FD_ISSET(s,&wset))\
+    {OsclGetAsyncSockErr(s,ok,err);if (ok && err==0)success=true;else fail=true;}
 
 #define OsclRecv(s,buf,len,ok,err,nbytes,wouldblock)\
-	nbytes=recv(s,(void *)(buf),(size_t)(len),0);\
-	ok=(nbytes!=(-1));\
-	if (!ok){err=errno;wouldblock=(err==EAGAIN);}
+    nbytes=recv(s,(void *)(buf),(size_t)(len),0);\
+    ok=(nbytes!=(-1));\
+    if (!ok){err=errno;wouldblock=(err==EAGAIN);}
 
 #define OsclRecvFrom(s,buf,len,paddr,paddrlen,ok,err,nbytes,wouldblock)\
-	nbytes=recvfrom(s,(void*)(buf),(size_t)(len),0,(struct sockaddr*)paddr,paddrlen);\
-	ok=(nbytes!=(-1));\
-	if (!ok){err=errno;wouldblock=(err==EAGAIN);}
+    nbytes=recvfrom(s,(void*)(buf),(size_t)(len),0,(struct sockaddr*)paddr,paddrlen);\
+    ok=(nbytes!=(-1));\
+    if (!ok){err=errno;wouldblock=(err==EAGAIN);}
 
 #define OsclSocketSelect(nfds,rd,wr,ex,timeout,ok,err,nhandles)\
-	nhandles=select(nfds,&rd,&wr,&ex,&timeout);\
-	ok=(nhandles!=(-1));\
-	if (!ok)err=errno
+    nhandles=select(nfds,&rd,&wr,&ex,&timeout);\
+    ok=(nhandles!=(-1));\
+    if (!ok)err=errno
 
 //there's not really any socket startup needed on unix, but
 //you need to define a signal handler for SIGPIPE to avoid
 //broken pipe crashes.
 #define OsclSocketStartup(ok)\
-	signal(SIGPIPE,SIG_IGN);\
-	ok=true
+    signal(SIGPIPE,SIG_IGN);\
+    ok=true
 
 #define OsclSocketCleanup(ok)\
-	signal(SIGPIPE,SIG_DFL);\
-	ok=true
+    signal(SIGPIPE,SIG_DFL);\
+    ok=true
 
 //hostent type
 typedef struct hostent TOsclHostent;
 
 //wrapper for gethostbyname
 #define OsclGethostbyname(name,hostent,ok,err)\
-	hostent=gethostbyname((const char*)name);\
-	ok=(hostent!=NULL);\
-	if (!ok)err=errno;
+    hostent=gethostbyname((const char*)name);\
+    ok=(hostent!=NULL);\
+    if (!ok)err=errno;
 
 //extract dotted address from a hostent
 #define OsclGetDottedAddr(hostent,dottedaddr,ok)\
-	long *_hostaddr=(long*)hostent->h_addr_list[0];\
-	struct in_addr _inaddr;\
-	_inaddr.s_addr=*_hostaddr;\
-	dottedaddr=inet_ntoa(_inaddr);\
-	ok=(dottedaddr!=NULL);
+    long *_hostaddr=(long*)hostent->h_addr_list[0];\
+    struct in_addr _inaddr;\
+    _inaddr.s_addr=*_hostaddr;\
+    dottedaddr=inet_ntoa(_inaddr);\
+    ok=(dottedaddr!=NULL);
 
 //socket shutdown codes
 #define OSCL_SD_RECEIVE SHUT_RD

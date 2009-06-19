@@ -38,8 +38,8 @@ class PVA_FF_TextSampleEntry : public PVA_FF_SampleEntry
 {
 
     public:
-        OSCL_IMPORT_REF	 PVA_FF_TextSampleEntry();
-        OSCL_IMPORT_REF	 virtual ~PVA_FF_TextSampleEntry();  // Destructor
+        OSCL_IMPORT_REF  PVA_FF_TextSampleEntry();
+        OSCL_IMPORT_REF  virtual ~PVA_FF_TextSampleEntry();  // Destructor
 
         OSCL_IMPORT_REF void setBoxTop(int16 top);
         OSCL_IMPORT_REF void setBoxLeft(int16 left);
@@ -72,16 +72,16 @@ class PVA_FF_TextSampleEntry : public PVA_FF_SampleEntry
         int16  _preDefined2;
         int16  _predefined3;
 
-        uint32			_start_sample_num;
-        uint32			_end_sample_num;
-        int32			_sdIndex;
-        uint32 	        _displayFlags;
-        int8  	        _horzJustification;
-        int8  	        _vertJustification;
-        uint8 		    *_pBackgroundRGBA;
-        PVA_FF_BoxRecord 	    *_pBoxRecord;
-        PVA_FF_StyleRecord 		*_pStyleRecord;
-        PVA_FF_FontTableAtom	*_pFontTableAtom;
+        uint32          _start_sample_num;
+        uint32          _end_sample_num;
+        int32           _sdIndex;
+        uint32          _displayFlags;
+        int8            _horzJustification;
+        int8            _vertJustification;
+        uint8           *_pBackgroundRGBA;
+        PVA_FF_BoxRecord        *_pBoxRecord;
+        PVA_FF_StyleRecord      *_pStyleRecord;
+        PVA_FF_FontTableAtom    *_pFontTableAtom;
 };
 
 

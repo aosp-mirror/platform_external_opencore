@@ -44,11 +44,11 @@ OMX_BOOL OmxAacDecoder::AacDecInit(OMX_U32 aDesiredChannels)
     iExt.inputBufferMaxLength = PVMP4AUDIODECODER_INBUFSIZE;
     iExt.outputFormat         = OUTPUTFORMAT_16PCM_INTERLEAVED;
     iExt.desiredChannels      = aDesiredChannels;
-    iExt.aacPlusEnabled		  = TRUE;
+    iExt.aacPlusEnabled       = TRUE;
     iAacInitFlag = 0;
     iInputUsedLength = 0;
     //This var is required to do init again inbetween
-    iNumOfChannels			 = aDesiredChannels;
+    iNumOfChannels           = aDesiredChannels;
 
 
     Status = PVMP4AudioDecoderInitLibrary(&iExt, ipMem);
@@ -102,7 +102,7 @@ Int OmxAacDecoder::AacDecodeFrames(OMX_S16* aOutputBuffer,
             iExt.inputBufferMaxLength = PVMP4AUDIODECODER_INBUFSIZE;
             iExt.outputFormat         = OUTPUTFORMAT_16PCM_INTERLEAVED;
             iExt.desiredChannels      = iNumOfChannels;
-            iExt.aacPlusEnabled		  = TRUE;
+            iExt.aacPlusEnabled       = TRUE;
             iInputUsedLength = 0;
 
             PVMP4AudioDecoderInitLibrary(&iExt, ipMem);

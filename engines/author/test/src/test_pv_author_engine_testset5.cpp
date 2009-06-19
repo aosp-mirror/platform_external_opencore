@@ -675,7 +675,7 @@ void pv_mediainput_async_test_opencomposestop::Cleanup()
         iAuthor = NULL;
     }
 
-//	iMIOComponent.DeleteInputNode();
+//  iMIOComponent.DeleteInputNode();
     iOutputFileName = NULL;
     iFileServer.Close();
     if (iFileHandle)
@@ -1400,7 +1400,7 @@ bool pv_mediainput_async_test_opencomposestop::CapConfigSync()
         // set the KVP array
         PvmiKvp paramkvp1;
         // set cache size for composer node
-        //	PVMI_FILEIO_PV_CACHE_SIZE (MACRO defined in "pvmi_fileio_kvp.h")
+        //  PVMI_FILEIO_PV_CACHE_SIZE (MACRO defined in "pvmi_fileio_kvp.h")
         OSCL_StackString<64> paramkey1(_STRLIT_CHAR(PVMI_FILEIO_PV_CACHE_SIZE));
         paramkey1 += _STRLIT_CHAR(";valtype=uint32");
         // set KVP values
@@ -1439,7 +1439,7 @@ bool pv_mediainput_async_test_opencomposestop::CapConfigSync()
         /*
         else
         {
-        	return false;
+            return false;
         }*/
 
         //MIME for file output node

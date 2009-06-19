@@ -87,7 +87,7 @@ Copyright (c) ISO/IEC 2002.
 
 #include    "sbr_create_limiter_bands.h"
 #include    "shellsort.h"
-#include	"s_patch.h"
+#include    "s_patch.h"
 #include    "pv_log2.h"
 
 #include "fxp_mul32.h"

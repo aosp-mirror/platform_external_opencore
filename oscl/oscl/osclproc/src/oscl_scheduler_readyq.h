@@ -84,13 +84,13 @@ class OsclTimerCompare
 
 /** This is a thread-safe priority queue for holding the
     active objects that are ready to run.
-	This queue also contains the request semaphore and the
-	queue observer callback logic.
+    This queue also contains the request semaphore and the
+    queue observer callback logic.
 */
 class PVLogger;
 class OsclSchedulerObserver;
 class OsclReadyQ
-            : public OsclPriorityQueue<TOsclReady, OsclReadyAlloc, Oscl_Vector<TOsclReady, OsclReadyAlloc>, OsclReadyCompare>
+        : public OsclPriorityQueue<TOsclReady, OsclReadyAlloc, Oscl_Vector<TOsclReady, OsclReadyAlloc>, OsclReadyCompare>
 {
     public:
         void Construct(int);
@@ -145,7 +145,7 @@ class OsclReadyQ
 ** A non-thread-safe queue for holding pending timers.
 */
 class OsclTimerQ
-            : public OsclPriorityQueue<TOsclReady, OsclReadyAlloc, Oscl_Vector<TOsclReady, OsclReadyAlloc>, OsclTimerCompare>
+        : public OsclPriorityQueue<TOsclReady, OsclReadyAlloc, Oscl_Vector<TOsclReady, OsclReadyAlloc>, OsclTimerCompare>
 {
     public:
         void Construct(int);

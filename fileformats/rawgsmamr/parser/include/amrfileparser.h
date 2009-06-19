@@ -84,14 +84,14 @@
 /* Bit format supported by the parser */
 enum TAMRFormat
 {
-    EAMRIF2,			// IF2
-    EAMRETS,			// ETS
-    EAMRIETF_SingleNB,	// IETF storage, single channel, AMR-NB
-    EAMRIETF_MultiNB,	// IETF storage, multichannel, AMR-NB
-    EAMRIETF_SingleWB,	// IETF storage, single channel, AMR-WB
-    EAMRIETF_MultiWB,	// IETF storage, multichannel, AMR-WB
-    EAMRWMF,			// WMF format (PV's proprietary format)
-    EAMRUnrecognized	// Unknown
+    EAMRIF2,            // IF2
+    EAMRETS,            // ETS
+    EAMRIETF_SingleNB,  // IETF storage, single channel, AMR-NB
+    EAMRIETF_MultiNB,   // IETF storage, multichannel, AMR-NB
+    EAMRIETF_SingleWB,  // IETF storage, single channel, AMR-WB
+    EAMRIETF_MultiWB,   // IETF storage, multichannel, AMR-WB
+    EAMRWMF,            // WMF format (PV's proprietary format)
+    EAMRUnrecognized    // Unknown
 };
 
 /* Bit rates supported by the parser */
@@ -444,10 +444,10 @@ class CAMRFileParser
         void SetBitRate(AMRFF_WB_Frame_Type_3GPP aFrameType3GPP);
 
     private:
-        PVFile			iAMRFile;
+        PVFile          iAMRFile;
         int32           iAMRDuration;
         int32           iAMRBitRate;
-        int32			iAMRFormat;
+        int32           iAMRFormat;
         int32           iAMRFileSize;
         int32           iTotalNumFramesRead;
         bool            iEndOfFileReached;

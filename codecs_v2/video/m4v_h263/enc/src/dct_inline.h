@@ -15,9 +15,9 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*  Filename: dct_inline.h														*/
-/*  Description: Implementation for in-line functions used in dct.cpp			*/
-/*  Modified:																	*/
+/*  Filename: dct_inline.h                                                      */
+/*  Description: Implementation for in-line functions used in dct.cpp           */
+/*  Modified:                                                                   */
 /*********************************************************************************/
 #ifndef _DCT_INLINE_H_
 #define _DCT_INLINE_H_
@@ -246,21 +246,21 @@ __inline int32 sum_abs(int32 k0, int32 k1, int32 k2, int32 k3,
     int32 carry, abs_sum;
     __asm
     {
-        eor	    carry, k0, k0, asr #31 ;
-        eors	abs_sum, k1, k1, asr #31 ;
-        adc		abs_sum, abs_sum, carry ;
-        eors	carry,	k2, k2, asr #31 ;
-        adc		abs_sum, abs_sum, carry ;
-        eors	carry,	k3, k3, asr #31 ;
-        adc		abs_sum, abs_sum, carry ;
-        eors	carry,	k4, k4, asr #31 ;
-        adc		abs_sum, abs_sum, carry ;
-        eors	carry,	k5, k5, asr #31 ;
-        adc		abs_sum, abs_sum, carry ;
-        eors	carry,	k6, k6, asr #31 ;
-        adc		abs_sum, abs_sum, carry ;
-        eors	carry,	k7, k7, asr #31 ;
-        adc		abs_sum, abs_sum, carry ;
+        eor     carry, k0, k0, asr #31 ;
+        eors    abs_sum, k1, k1, asr #31 ;
+        adc     abs_sum, abs_sum, carry ;
+        eors    carry,  k2, k2, asr #31 ;
+        adc     abs_sum, abs_sum, carry ;
+        eors    carry,  k3, k3, asr #31 ;
+        adc     abs_sum, abs_sum, carry ;
+        eors    carry,  k4, k4, asr #31 ;
+        adc     abs_sum, abs_sum, carry ;
+        eors    carry,  k5, k5, asr #31 ;
+        adc     abs_sum, abs_sum, carry ;
+        eors    carry,  k6, k6, asr #31 ;
+        adc     abs_sum, abs_sum, carry ;
+        eors    carry,  k7, k7, asr #31 ;
+        adc     abs_sum, abs_sum, carry ;
     }
 
     return abs_sum;

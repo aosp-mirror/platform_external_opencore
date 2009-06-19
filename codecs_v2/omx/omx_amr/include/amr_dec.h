@@ -26,7 +26,7 @@
 #include "OMX_Component.h"
 #endif
 
-#ifndef	FRAME_TYPE_3GPP_H
+#ifndef FRAME_TYPE_3GPP_H
 #include "frame_type_3gpp.h"
 #endif
 
@@ -87,5 +87,5 @@ class OmxAmrDecoder
 
 
 
-#endif	//#ifndef AMR_DEC_H_INCLUDED
+#endif  //#ifndef AMR_DEC_H_INCLUDED
 

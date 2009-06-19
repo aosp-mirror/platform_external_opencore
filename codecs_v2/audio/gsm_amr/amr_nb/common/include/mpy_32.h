@@ -62,7 +62,7 @@ terms listed above has been obtained from the copyright holder.
 /*----------------------------------------------------------------------------
 ; INCLUDES
 ----------------------------------------------------------------------------*/
-#include	"basicop_malloc.h"
+#include    "basicop_malloc.h"
 
 /*--------------------------------------------------------------------------*/
 #ifdef __cplusplus
@@ -105,10 +105,10 @@ extern "C"
 #if defined(PV_ARM_V5) /* Instructions for ARM Assembly on ADS*/
 
     __inline Word32 Mpy_32(Word16 L_var1_hi,
-                           Word16 L_var1_lo,
-                           Word16 L_var2_hi,
-                           Word16 L_var2_lo,
-                           Flag   *pOverflow)
+    Word16 L_var1_lo,
+    Word16 L_var2_hi,
+    Word16 L_var2_lo,
+    Flag   *pOverflow)
 
     {
         /*----------------------------------------------------------------------------

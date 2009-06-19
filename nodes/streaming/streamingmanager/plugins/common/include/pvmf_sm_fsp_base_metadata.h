@@ -65,9 +65,9 @@ static const char PVMFSTREAMINGMGRNODE_TRACKINFO_CODEC_DATA_KEY[] = "track-info/
 //Extended metadata [FF specific]
 
 //Streaming specific metadata keys
-static const char PVMFSTREAMINGMGRNODE_TRACKINFO_BITRATE_KEY[] = "track-info/bit-rate";			//RTSP Specific
-static const char PVMFSTREAMINGMGRNODE_PAUSE_DENIED_KEY[] = "pause-denied";						//RTSP Unicast Specific
-static const char PVMFSTREAMINGMGRNODE_TRACKINFO_MAX_BITRATE_KEY[] = "track-info/max-bitrate";	//HTTP streaming Specific
+static const char PVMFSTREAMINGMGRNODE_TRACKINFO_BITRATE_KEY[] = "track-info/bit-rate";         //RTSP Specific
+static const char PVMFSTREAMINGMGRNODE_PAUSE_DENIED_KEY[] = "pause-denied";                     //RTSP Unicast Specific
+static const char PVMFSTREAMINGMGRNODE_TRACKINFO_MAX_BITRATE_KEY[] = "track-info/max-bitrate";  //HTTP streaming Specific
 
 ///////////////////////////////////////////////////////////////////////////////
 static const char PVMFSTREAMINGMGRNODE_SEMICOLON[] = ";";

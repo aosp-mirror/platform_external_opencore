@@ -223,15 +223,15 @@ typedef struct
     uint32 iPlaylistNPTMillsec;
 
     //max 256
-    uint32	iPlaylistMediaNameLen;
-    //char	*iPlaylistMediaNamePtr;
+    uint32  iPlaylistMediaNameLen;
+    //char  *iPlaylistMediaNamePtr;
     char iPlaylistMediaNamePtr[256];
 
     //max 512
-    uint32	iPlaylistUserDataLen;
-    //char	*iPlaylistUserDataPtr;
+    uint32  iPlaylistUserDataLen;
+    //char  *iPlaylistUserDataPtr;
     char iPlaylistUserDataPtr[512];
-}PVMFRTSPClientEngineNodePlaylistInfoType;
+} PVMFRTSPClientEngineNodePlaylistInfoType;
 #endif
 
 

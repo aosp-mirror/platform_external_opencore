@@ -63,10 +63,10 @@ class PVMFDummyFileOutputNode;
 #define PVMF_MAX_CMDID_CNTR 0x7FFFFFFF
 #define PVMF_MAX_TIME_STAMP 0xFFFFFFFF
 class PVMFDummyFileOutputInPort : public PvmfPortBaseImpl
-            , public PvmiCapabilityAndConfig
-            , public PvmfSyncUtilDataQueueObserver
-            , public OsclTimerObject
-            , public PvmfNodesSyncControlInterface
+        , public PvmiCapabilityAndConfig
+        , public PvmfSyncUtilDataQueueObserver
+        , public OsclTimerObject
+        , public PvmfNodesSyncControlInterface
 {
     public:
         PVMFDummyFileOutputInPort(int32 aTag, PVMFNodeInterface* aNode);

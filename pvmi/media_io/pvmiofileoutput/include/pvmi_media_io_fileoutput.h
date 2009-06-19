@@ -64,7 +64,7 @@ class PVRefFileOutputTestObserver;
 class PVMFMediaClock;
 class PVRefFileOutput;
 
-#define DEFAULT_NUM_DECODED_FRAMES_CAPABILITY	6
+#define DEFAULT_NUM_DECODED_FRAMES_CAPABILITY   6
 
 // To maintain the count of supported uncompressed audio formats.
 // Should be updated whenever new format is added
@@ -166,11 +166,11 @@ class PVRefFileOutputActiveTimingSupport: public PvmiClockExtensionInterface
 // This class implements the reference media IO for file output.
 // This class constitutes the Media IO component
 
-class PVRefFileOutput :	public OsclTimerObject
-            , public PvmiMIOControl
-            , public PvmiMediaTransfer
-            , public PvmiCapabilityAndConfig
-            , public PvmiClockExtensionInterface
+class PVRefFileOutput : public OsclTimerObject
+        , public PvmiMIOControl
+        , public PvmiMediaTransfer
+        , public PvmiCapabilityAndConfig
+        , public PvmiClockExtensionInterface
 
 {
     public:
@@ -457,13 +457,13 @@ class PVRefFileOutput :	public OsclTimerObject
         uint32        iAVIChunkSize;
         uint32        iVideoHeaderPosition;
         IndexBuffer   iIndexBuffer;
-        uint32		  iAVIMainHeaderPosition;
-        uint32		  iAVIStreamHeaderPosition;
+        uint32        iAVIMainHeaderPosition;
+        uint32        iAVIStreamHeaderPosition;
         uint32        iVideoCount;
         uint32        iPreviousOffset;
 
-        MediaType	  iMediaType;
-        bool		  iCompressedMedia;
+        MediaType     iMediaType;
+        bool          iCompressedMedia;
         PVMFMediaClock* iClock;
         const bool iLogOutputToFile;
 };

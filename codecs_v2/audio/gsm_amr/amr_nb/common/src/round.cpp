@@ -34,7 +34,7 @@ terms listed above has been obtained from the copyright holder.
  REVISION HISTORY
 
  Description: Created separate file for the round function. Sync'ed up
-	      with the current template and fixed tabs.
+          with the current template and fixed tabs.
 
  Description: Made changes based on review meeting:
               1. Removed long in Inputs Definitions.
@@ -54,7 +54,7 @@ terms listed above has been obtained from the copyright holder.
  Description: Changed function name to pv_round to avoid conflict with
               round function in C standard library.
 
- Who:   					Date:
+ Who:                       Date:
  Description:
 
 ------------------------------------------------------------------------------
@@ -98,13 +98,13 @@ terms listed above has been obtained from the copyright holder.
  INPUT AND OUTPUT DEFINITIONS
 
  Inputs:
-	L_var1 = 32 bit signed integer (Word32) whose value falls
-	         in the range : 0x8000 0000 <= L_var1 <= 0x7fff ffff.
+    L_var1 = 32 bit signed integer (Word32) whose value falls
+             in the range : 0x8000 0000 <= L_var1 <= 0x7fff ffff.
 
-	pOverflow = pointer to overflow (Flag)
+    pOverflow = pointer to overflow (Flag)
 
  Outputs:
-	None
+    None
 
  Returns:
         result = MS 16 bits of rounded input L_var1.
@@ -121,7 +121,7 @@ terms listed above has been obtained from the copyright holder.
  This function rounds the lower 16 bits of the 32 bit input number into the
  MS 16 bits with saturation. Shift the resulting bits right by 16 and return
  the 16 bit number:
-	pv_round(L_var1) = extract_h(L_add(L_var1,32768))
+    pv_round(L_var1) = extract_h(L_add(L_var1,32768))
 
 ------------------------------------------------------------------------------
  REQUIREMENTS

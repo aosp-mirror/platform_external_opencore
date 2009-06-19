@@ -40,7 +40,7 @@ terms listed above has been obtained from the copyright holder.
 
  Description: Moved _cplusplus #ifdef after Include section.
 
- Who:						Date:
+ Who:                       Date:
  Description:
 
 ------------------------------------------------------------------------------
@@ -55,13 +55,13 @@ terms listed above has been obtained from the copyright holder.
 /*----------------------------------------------------------------------------
 ; CONTINUE ONLY IF NOT ALREADY DEFINED
 ----------------------------------------------------------------------------*/
-#ifndef	L_DEPOSIT_H_H
-#define	L_DEPOSIT_H_H
+#ifndef L_DEPOSIT_H_H
+#define L_DEPOSIT_H_H
 
 /*----------------------------------------------------------------------------
 ; INCLUDES
 ----------------------------------------------------------------------------*/
-#include	"basicop_malloc.h"
+#include    "basicop_malloc.h"
 
 /*--------------------------------------------------------------------------*/
 #ifdef __cplusplus

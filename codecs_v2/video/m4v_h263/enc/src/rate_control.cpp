@@ -28,15 +28,15 @@ void updateRateControl(rateControl *rc, VideoEncData *video);
 void updateRC_PostProc(rateControl *rc, VideoEncData *video);
 
 /***************************************************************************
-**************	RC APIs to core encoding modules  *******************
+**************  RC APIs to core encoding modules  *******************
 
 PV_STATUS RC_Initialize(void *video);
 PV_STATUS RC_Cleanup(rateControl *rc[],Int numLayers);
 PV_STATUS RC_VopQPSetting(VideoEncData *video,rateControl *rc[]);
 PV_STATUS RC_VopUpdateStat(VideoEncData *video,rateControl *rc[]);
 PV_STATUS RC_UpdateBuffer(VideoEncData *video, Int currLayer, Int num_skip);
-Int		  RC_GetSkipNextFrame(VideoEncData *video,Int currLayer);
-void	  RC_ResetSkipNextFrame(void *video,Int currLayer);
+Int       RC_GetSkipNextFrame(VideoEncData *video,Int currLayer);
+void      RC_ResetSkipNextFrame(void *video,Int currLayer);
 
 PV_STATUS RC_UpdateBXRCParams(void *input);  Parameters update for target bitrate or framerate change
 
@@ -117,7 +117,7 @@ PV_STATUS RC_Initialize(void *input)
             rc[n]->TMN_W = (Int)(rc[n]->VBV_fullness + pMP[n]->counter_BTsrc * (rc[n]->bitrate / rc[n]->framerate / 10.0));
 
             rc[n]->low_bound = -rc[n]->Bs / 2;
-            rc[n]->	VBV_fullness_offset = 0;
+            rc[n]-> VBV_fullness_offset = 0;
         }
         else   /* this part doesn't work in some cases, the low_bound is too high, Jan 4,2006 */
         {
@@ -126,7 +126,7 @@ PV_STATUS RC_Initialize(void *input)
             //rc[n]->VBV_fullness = (rc[n]->Bs-video->encParams->maxFrameSize)/2 + video->encParams->maxFrameSize;
 
             rc[n]->VBV_fullness -= rc[n]->Bs / 2; /* the buffer range is [-Bs/2, Bs/2] */
-            rc[n]->low_bound = -rc[n]->Bs / 2 + video->encParams->maxFrameSize;	 /*  too high */
+            rc[n]->low_bound = -rc[n]->Bs / 2 + video->encParams->maxFrameSize;  /*  too high */
             rc[n]->VBV_fullness_offset = video->encParams->maxFrameSize / 2; /*  don't understand the meaning of this */
             pMP[n]->counter_BTdst = pMP[n]->counter_BTsrc = 0;
 
@@ -144,12 +144,12 @@ PV_STATUS RC_Initialize(void *input)
 
 
 /* ======================================================================== */
-/*	Function : RC_Cleanup								   				    */
-/*	Date     : 12/20/2000													*/
-/*	Purpose  : free Rate Control memory										*/
-/*	In/out   :																*/
-/*	Return   :																*/
-/*	Modified :																*/
+/*  Function : RC_Cleanup                                                   */
+/*  Date     : 12/20/2000                                                   */
+/*  Purpose  : free Rate Control memory                                     */
+/*  In/out   :                                                              */
+/*  Return   :                                                              */
+/*  Modified :                                                              */
 /* ======================================================================== */
 
 
@@ -164,21 +164,21 @@ PV_STATUS RC_Cleanup(rateControl *rc[], Int numLayers)
 
 
 /* ======================================================================== */
-/*	Function : RC_VopQPSetting								   				*/
-/*	Date     : 4/11/2001													*/
-/*	Purpose  : Reset rate control before coding VOP, moved from vop.c		*/
-/*				Compute QP for the whole VOP and initialize MB-based RC
-				reset QPMB[], currVop->quantizer, rc->Ec, video->header_bits */
-/* to		   In order to  work RC_VopQPSetting has to do the followings
-				1. Set video->QPMB of all macroblocks.
-				2. Set currVop->quantizer
-				3. Reset video->header_bits to zero.
-				4. Initialize internal RC parameters for Vop cooding		*/
-/*	In/out   :																*/
-/*	Return   : PV_STATUS													*/
-/*	Modified :																*/
+/*  Function : RC_VopQPSetting                                              */
+/*  Date     : 4/11/2001                                                    */
+/*  Purpose  : Reset rate control before coding VOP, moved from vop.c       */
+/*              Compute QP for the whole VOP and initialize MB-based RC
+                reset QPMB[], currVop->quantizer, rc->Ec, video->header_bits */
+/* to          In order to  work RC_VopQPSetting has to do the followings
+                1. Set video->QPMB of all macroblocks.
+                2. Set currVop->quantizer
+                3. Reset video->header_bits to zero.
+                4. Initialize internal RC parameters for Vop cooding        */
+/*  In/out   :                                                              */
+/*  Return   : PV_STATUS                                                    */
+/*  Modified :                                                              */
 /* ======================================================================== */
-/* To be moved to rate_control.c and separate between BX_RC and ANNEX_L		*/
+/* To be moved to rate_control.c and separate between BX_RC and ANNEX_L     */
 
 PV_STATUS RC_VopQPSetting(VideoEncData *video, rateControl *prc[])
 {
@@ -227,7 +227,7 @@ PV_STATUS RC_VopQPSetting(VideoEncData *video, rateControl *prc[])
     }
 
     /* update pMP->framePos */
-    if (++pMP->framePos == pMP->frameRange)	pMP->framePos = 0;
+    if (++pMP->framePos == pMP->frameRange) pMP->framePos = 0;
 
     if (rc->T == 0)
     {
@@ -245,7 +245,7 @@ PV_STATUS RC_VopQPSetting(VideoEncData *video, rateControl *prc[])
     pMP->QP  = currVop->quantizer;
 
     pMP->mad = video->sumMAD / (float)currVol->nTotalMB;
-    if (pMP->mad < MAD_MIN)	pMP->mad = MAD_MIN; /* MAD_MIN is defined as 1 in mp4def.h */
+    if (pMP->mad < MAD_MIN) pMP->mad = MAD_MIN; /* MAD_MIN is defined as 1 in mp4def.h */
 
     pMP->bitrate = rc->bitrate; /* calculated in RCVopQPSetting */
     pMP->framerate = rc->framerate;
@@ -258,14 +258,14 @@ PV_STATUS RC_VopQPSetting(VideoEncData *video, rateControl *prc[])
 
 
 /* ======================================================================== */
-/*	Function : SaveRDSamples()												*/
-/*	Date     : 08/29/2001													*/
-/*	History  :																*/
-/*	Purpose  : Save QP, actual_bits, mad and R_D of the current iteration	*/
-/*	In/out   :																*/
-/*	Return   :																*/
-/*	Modified :																*/
-/*																			*/
+/*  Function : SaveRDSamples()                                              */
+/*  Date     : 08/29/2001                                                   */
+/*  History  :                                                              */
+/*  Purpose  : Save QP, actual_bits, mad and R_D of the current iteration   */
+/*  In/out   :                                                              */
+/*  Return   :                                                              */
+/*  Modified :                                                              */
+/*                                                                          */
 /* ======================================================================== */
 
 Void SaveRDSamples(MultiPass *pMP, Int counter_samples)
@@ -279,13 +279,13 @@ Void SaveRDSamples(MultiPass *pMP, Int counter_samples)
     return ;
 }
 /* ======================================================================== */
-/*	Function : RC_VopUpdateStat								   				*/
-/*	Date     : 12/20/2000													*/
-/*	Purpose  : Update statistics for rate control after encoding each VOP.	*/
-/*			   No need to change anything in VideoEncData structure.		*/
-/*	In/out   :																*/
-/*	Return   :																*/
-/*	Modified :																*/
+/*  Function : RC_VopUpdateStat                                             */
+/*  Date     : 12/20/2000                                                   */
+/*  Purpose  : Update statistics for rate control after encoding each VOP.  */
+/*             No need to change anything in VideoEncData structure.        */
+/*  In/out   :                                                              */
+/*  Return   :                                                              */
+/*  Modified :                                                              */
 /* ======================================================================== */
 
 PV_STATUS RC_VopUpdateStat(VideoEncData *video, rateControl *rc)
@@ -331,8 +331,8 @@ PV_STATUS RC_VopUpdateStat(VideoEncData *video, rateControl *rc)
             rc->T = pMP->target_bits = rc->TMN_TH - rc->TMN_W;
             pMP->diff_counter -= diff_BTCounter;
 
-            rc->Rc = currVol->stream->byteCount << 3;	/* Total Bits for current frame */
-            rc->Hc = video->header_bits;	/* Total Bits in Header and Motion Vector */
+            rc->Rc = currVol->stream->byteCount << 3;   /* Total Bits for current frame */
+            rc->Hc = video->header_bits;    /* Total Bits in Header and Motion Vector */
 
             /* BX_RC */
             updateRateControl(rc, video);
@@ -349,12 +349,12 @@ PV_STATUS RC_VopUpdateStat(VideoEncData *video, rateControl *rc)
 }
 
 /* ======================================================================== */
-/*	Function : RC_GetSkipNextFrame, RC_GetRemainingVops						*/
-/*	Date     : 2/20/2001													*/
-/*	Purpose  : To access RC parameters from other parts of the code.		*/
-/*	In/out   :																*/
-/*	Return   :																*/
-/*	Modified :																*/
+/*  Function : RC_GetSkipNextFrame, RC_GetRemainingVops                     */
+/*  Date     : 2/20/2001                                                    */
+/*  Purpose  : To access RC parameters from other parts of the code.        */
+/*  In/out   :                                                              */
+/*  Return   :                                                              */
+/*  Modified :                                                              */
 /* ======================================================================== */
 
 Int RC_GetSkipNextFrame(VideoEncData *video, Int currLayer)
@@ -370,13 +370,13 @@ void RC_ResetSkipNextFrame(VideoEncData *video, Int currLayer)
 }
 
 /* ======================================================================== */
-/*	Function : RC_UpdateBuffer							   			*/
-/*	Date     : 2/20/2001													*/
-/*	Purpose  : Update RC in case of there are frames skipped (camera freeze)*/
-/*				from the application level in addition to what RC requested	*/
-/*	In/out   : Nr, B, Rr													*/
-/*	Return   : Void															*/
-/*	Modified :																*/
+/*  Function : RC_UpdateBuffer                                      */
+/*  Date     : 2/20/2001                                                    */
+/*  Purpose  : Update RC in case of there are frames skipped (camera freeze)*/
+/*              from the application level in addition to what RC requested */
+/*  In/out   : Nr, B, Rr                                                    */
+/*  Return   : Void                                                         */
+/*  Modified :                                                              */
 /* ======================================================================== */
 
 
@@ -404,13 +404,13 @@ PV_STATUS RC_UpdateBuffer(VideoEncData *video, Int currLayer, Int num_skip)
 
 
 /* ======================================================================== */
-/*	Function : RC_UpdateBXRCParams								   			*/
-/*	Date     : 4/08/2002													*/
-/*	Purpose  : Update RC parameters specifically for target bitrate or		*/
-/*			   framerate update during an encoding session					*/
-/*	In/out   :																*/
-/*	Return   : PV_TRUE if successed, PV_FALSE if failed.					*/
-/*	Modified :																*/
+/*  Function : RC_UpdateBXRCParams                                          */
+/*  Date     : 4/08/2002                                                    */
+/*  Purpose  : Update RC parameters specifically for target bitrate or      */
+/*             framerate update during an encoding session                  */
+/*  In/out   :                                                              */
+/*  Return   : PV_TRUE if successed, PV_FALSE if failed.                    */
+/*  Modified :                                                              */
 /* ======================================================================== */
 
 PV_STATUS RC_UpdateBXRCParams(void *input)
@@ -491,7 +491,7 @@ PV_STATUS RC_UpdateBXRCParams(void *input)
         else if (diff_counter < 0)
             pMP[n]->counter_BTsrc = -diff_counter;
 
-        rc[n]->TMN_W = (Int)(rc[n]->VBV_fullness -		/* re-calculate rc[n]->TMN_W in order for higher accuracy */
+        rc[n]->TMN_W = (Int)(rc[n]->VBV_fullness -      /* re-calculate rc[n]->TMN_W in order for higher accuracy */
                              (pMP[n]->target_bits_per_frame / 10) * (pMP[n]->counter_BTdst - pMP[n]->counter_BTsrc));
 
         /* Keep the current average mad */
@@ -516,14 +516,14 @@ PV_STATUS RC_UpdateBXRCParams(void *input)
 }
 
 
-/* ================================================================================	*/
-/*	Function : targetBitCalculation						   							*/
-/*	Date     : 10/01/2001															*/
-/*	Purpose  : quadratic bit allocation model: T(n) = C*sqrt(mad(n)/aver_mad(n-1))	*/
-/*																					*/
-/*	In/out   : rc->T																*/
-/*	Return   : Void																	*/
-/*	Modified :																		*/
+/* ================================================================================ */
+/*  Function : targetBitCalculation                                                 */
+/*  Date     : 10/01/2001                                                           */
+/*  Purpose  : quadratic bit allocation model: T(n) = C*sqrt(mad(n)/aver_mad(n-1))  */
+/*                                                                                  */
+/*  In/out   : rc->T                                                                */
+/*  Return   : Void                                                                 */
+/*  Modified :                                                                      */
 /* ================================================================================ */
 
 void targetBitCalculation(void *input)
@@ -553,7 +553,7 @@ void targetBitCalculation(void *input)
     /* ---------------------------------------------------------------------------------------------------*/
     /* target calculation */
     curr_mad = video->sumMAD / (float)currVol->nTotalMB;
-    if (curr_mad < MAD_MIN)	curr_mad = MAD_MIN; /* MAD_MIN is defined as 1 in mp4def.h */
+    if (curr_mad < MAD_MIN) curr_mad = MAD_MIN; /* MAD_MIN is defined as 1 in mp4def.h */
     diff_counter_BTsrc = diff_counter_BTdst = 0;
     pMP->diff_counter = 0;
 
@@ -612,7 +612,7 @@ void targetBitCalculation(void *input)
                 curr_mad <= pMP->aver_mad_prev*1.1 && pMP->counter_BTsrc < pMP->counter_BTdst)
             diff_counter_BTsrc = 1;
 
-        if (--pMP->overlapped_win_size <= 0)	pMP->overlapped_win_size = 0;
+        if (--pMP->overlapped_win_size <= 0)    pMP->overlapped_win_size = 0;
     }
 
 
@@ -624,8 +624,8 @@ void targetBitCalculation(void *input)
 
     /* Second, set another upper bound for current bit allocation: 4-5*bitrate/framerate */
     bound = 50;
-//	if(video->encParams->RC_Type == CBR_LOWDELAY)
-//  not necessary		bound = 10;  	/*  1/17/02 -- For Low delay */
+//  if(video->encParams->RC_Type == CBR_LOWDELAY)
+//  not necessary       bound = 10;     /*  1/17/02 -- For Low delay */
 
     diff_counter_BTsrc =  PV_MIN(diff_counter_BTsrc, bound);
     diff_counter_BTdst =  PV_MIN(diff_counter_BTdst, bound);
@@ -636,7 +636,7 @@ void targetBitCalculation(void *input)
     curr_counter_diff = prev_counter_diff + (diff_counter_BTdst - diff_counter_BTsrc);
 
     if (PV_ABS(prev_counter_diff) >= rc->max_BitVariance_num || PV_ABS(curr_counter_diff) >= rc->max_BitVariance_num) // PV_ABS(curr_counter_diff) >= PV_ABS(prev_counter_diff) )
-    {	//diff_counter_BTsrc = diff_counter_BTdst = 0;
+    {   //diff_counter_BTsrc = diff_counter_BTdst = 0;
 
         if (curr_counter_diff > rc->max_BitVariance_num && diff_counter_BTdst)
         {
@@ -685,14 +685,14 @@ void targetBitCalculation(void *input)
 
 }
 
-/* ================================================================================	*/
-/*	Function : calculateQuantizer_Multipass				   							*/
-/*	Date     : 10/01/2001															*/
-/*	Purpose  : variable rate bit allocation + new QP determination scheme			*/
-/*																					*/
-/*	In/out   : rc->T and rc->Qc														*/
-/*	Return   : Void																	*/
-/*	Modified :																		*/
+/* ================================================================================ */
+/*  Function : calculateQuantizer_Multipass                                         */
+/*  Date     : 10/01/2001                                                           */
+/*  Purpose  : variable rate bit allocation + new QP determination scheme           */
+/*                                                                                  */
+/*  In/out   : rc->T and rc->Qc                                                     */
+/*  Return   : Void                                                                 */
+/*  Modified :                                                                      */
 /* ================================================================================ */
 
 /* Mad based variable bit allocation + QP calculation with a new quadratic method */
@@ -716,7 +716,7 @@ void calculateQuantizer_Multipass(void *input)
 
     if (rc->T <= 0 || video->sumMAD == 0)
     {
-        if (rc->T < 0)	rc->Qc = 31;
+        if (rc->T < 0)  rc->Qc = 31;
         return;
     }
 
@@ -724,7 +724,7 @@ void calculateQuantizer_Multipass(void *input)
     /* current frame QP estimation */
     curr_target = rc->T;
     curr_mad = video->sumMAD / (float)currVol->nTotalMB;
-    if (curr_mad < MAD_MIN)	curr_mad = MAD_MIN; /* MAD_MIN is defined as 1 in mp4def.h */
+    if (curr_mad < MAD_MIN) curr_mad = MAD_MIN; /* MAD_MIN is defined as 1 in mp4def.h */
     curr_RD  = (float)curr_target / curr_mad;
 
     /* Another version of search the optimal point */
@@ -773,11 +773,11 @@ void calculateQuantizer_Multipass(void *input)
     // When mad is already low, lower bound on Qc doesn't have to be small.
     // Note, this doesn't work well for low complexity clip encoded at high bit rate
     // it doesn't hit the target bit rate due to this QP lower bound.
-///	if((curr_mad < 8) && (rc->Qc < 12))	rc->Qc = 12;
-//	else	if((curr_mad < 128) && (rc->Qc < 3)) rc->Qc = 3;
+/// if((curr_mad < 8) && (rc->Qc < 12)) rc->Qc = 12;
+//  else    if((curr_mad < 128) && (rc->Qc < 3)) rc->Qc = 3;
 
     if (rc->Qc < 1) rc->Qc = 1;
-    if (rc->Qc > 31)	rc->Qc = 31;
+    if (rc->Qc > 31)    rc->Qc = 31;
 
 
     /* active bit resource protection */
@@ -797,17 +797,17 @@ void calculateQuantizer_Multipass(void *input)
 
 
 /* ======================================================================== */
-/*	Function : updateRateControl							   				*/
-/*	Date     : 11/17/2000													*/
-/*	Purpose  :Update the RD Modal (After Encoding the Current Frame)		*/
-/*	In/out   :																*/
-/*	Return   :																*/
-/*	Modified :																*/
+/*  Function : updateRateControl                                            */
+/*  Date     : 11/17/2000                                                   */
+/*  Purpose  :Update the RD Modal (After Encoding the Current Frame)        */
+/*  In/out   :                                                              */
+/*  Return   :                                                              */
+/*  Modified :                                                              */
 /* ======================================================================== */
 
 void updateRateControl(rateControl *rc, VideoEncData *video)
 {
-    Int	 frame_bits;
+    Int  frame_bits;
 
 
     /* rate contro\l */
@@ -846,13 +846,13 @@ void updateRateControl(rateControl *rc, VideoEncData *video)
 }
 
 /* ======================================================================== */
-/*	Function : updateRC_PostProc						   				    */
-/*	Date     : 04/08/2002													*/
-/*	Purpose  : Remaing RC update stuff for frame skip and buffer underflow  */
-/*			   check														*/
-/*	In/out   :																*/
-/*	Return   :																*/
-/*	Modified :																*/
+/*  Function : updateRC_PostProc                                            */
+/*  Date     : 04/08/2002                                                   */
+/*  Purpose  : Remaing RC update stuff for frame skip and buffer underflow  */
+/*             check                                                        */
+/*  In/out   :                                                              */
+/*  Return   :                                                              */
+/*  Modified :                                                              */
 /* ======================================================================== */
 void updateRC_PostProc(rateControl *rc, VideoEncData *video)
 {

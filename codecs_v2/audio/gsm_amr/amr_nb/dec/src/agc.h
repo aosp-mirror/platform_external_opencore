@@ -138,7 +138,7 @@ extern "C"
         Word16 *sig_out,   /* i/o : postfilter output signal, (l_trm) */
         Word16 agc_fac,    /* i   : AGC factor                        */
         Word16 l_trm,      /* i   : subframe size                     */
-        Flag *pOverflow    /* i   : overflow flag					  */
+        Flag *pOverflow    /* i   : overflow flag                     */
     );
 
     /*----------------------------------------------------------------------------
@@ -151,7 +151,7 @@ extern "C"
         Word16 *sig_in,    /* i   : postfilter input signal   */
         Word16 *sig_out,   /* i/o : postfilter output signal  */
         Word16 l_trm,      /* i   : subframe size             */
-        Flag *pOverflow    /* i   : overflow flag			  */
+        Flag *pOverflow    /* i   : overflow flag             */
     );
 
 #ifdef __cplusplus

@@ -167,12 +167,12 @@ class OsclFileHandle;
  */
 
 class PVMFCPMPassThruPlugInOMA1 : public OsclActiveObject,
-            public PVMFCPMPluginInterface,
-            public PVMFCPMPluginAuthenticationInterface,
-            public PVMFCPMPluginAuthorizationInterface,
-            public PVMFCPMPluginAccessInterfaceFactory,
-            public PVMFCPMPluginLicenseInterface,
-            public PVMFMetadataExtensionInterface
+        public PVMFCPMPluginInterface,
+        public PVMFCPMPluginAuthenticationInterface,
+        public PVMFCPMPluginAuthorizationInterface,
+        public PVMFCPMPluginAccessInterfaceFactory,
+        public PVMFCPMPluginLicenseInterface,
+        public PVMFMetadataExtensionInterface
 {
     public:
         static PVMFCPMPluginInterface* CreatePlugIn(bool aFailAuthorizeUsage = false, bool aCancelAcquireLicense = false,

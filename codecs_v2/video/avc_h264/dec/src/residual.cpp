@@ -206,7 +206,7 @@ AVCDec_Status residual(AVCDecObject *decvid, AVCMacroblock *currMB)
                 return AVCDEC_FAIL;
             }
             idx = zz_scan[coeffNum] << 2;
-            /*			idx = ((idx>>2)<<6) + ((idx&3)<<2); */
+            /*          idx = ((idx>>2)<<6) + ((idx&3)<<2); */
             block[idx] = level[i];
         }
 
@@ -329,7 +329,7 @@ AVCDec_Status residual(AVCDecObject *decvid, AVCMacroblock *currMB)
 
 
                     /* then transform */
-                    //				itrans(block); /* transform */
+                    //              itrans(block); /* transform */
                     currMB->nz_coeff[(j<<2)+i] = numcoeff;    //
                     if (numcoeff)
                     {
@@ -396,25 +396,25 @@ AVCDec_Status residual_block_cavlc(AVCDecObject *decvid, int nC, int maxNumCoeff
         {
             if (level_prefix < 14)
             {
-//				levelSuffixSize = 0;
+//              levelSuffixSize = 0;
                 levelCode = level_prefix;
             }
             else if (level_prefix == 14)
             {
-//				levelSuffixSize = 4;
+//              levelSuffixSize = 4;
                 BitstreamReadBits(stream, 4, &level_suffix);
                 levelCode = 14 + level_suffix;
             }
             else /* if (level_prefix == 15) */
             {
-//				levelSuffixSize = 12;
+//              levelSuffixSize = 12;
                 BitstreamReadBits(stream, 12, &level_suffix);
                 levelCode = 30 + level_suffix;
             }
         }
         else
         {
-            /*				suffixLength = 1; */
+            /*              suffixLength = 1; */
             if (level_prefix < 15)
             {
                 levelSuffixSize = suffixLength;
@@ -447,7 +447,7 @@ AVCDec_Status residual_block_cavlc(AVCDecObject *decvid, int nC, int maxNumCoeff
 
     }
 
-    for (j = TotalCoeff - i; j > 0 ;j--)
+    for (j = TotalCoeff - i; j > 0 ; j--)
     {
         ce_LevelPrefix(stream, &level_prefix);
         if (level_prefix < 15)
@@ -509,7 +509,7 @@ AVCDec_Status residual_block_cavlc(AVCDecObject *decvid, int nC, int maxNumCoeff
     if (zerosLeft < 0)
     {
         zerosLeft = 0;
-//		return AVCDEC_FAIL;
+//      return AVCDEC_FAIL;
     }
 
     run[TotalCoeff-1] = zerosLeft;

@@ -41,7 +41,7 @@
 #include "genericper.h"
 #include "analyzeper.h"
 
-#ifdef PVANALYZER	// Analyzer interface function
+#ifdef PVANALYZER   // Analyzer interface function
 #include <tchar.h>
 void PVAnalyzer(unsigned int tag, Tint8 *message_fmt, ...);
 #endif
@@ -53,10 +53,10 @@ void PVAnalyzer(unsigned int tag, Tint8 *message_fmt, ...);
 /*
 void MyPVAnalyzer(uint16 tag, uint8 *outString)
 {
-	FILE *fp = fopen("analyzer.txt","a");
-	fprintf(fp, outString);
-	fprintf(fp, "\n");
-	fclose(fp);
+    FILE *fp = fopen("analyzer.txt","a");
+    fprintf(fp, outString);
+    fprintf(fp, "\n");
+    fclose(fp);
 }
 */
 
@@ -77,7 +77,7 @@ void Show245(uint16 tag, uint16 indent, const char* inString)
     uint8 outString[200];
 
     /* Construct outString with proper indent */
-    for (i = 0;i < indent;++i)
+    for (i = 0; i < indent; ++i)
     {
         outString[i] = ' ';
     }
@@ -107,7 +107,7 @@ void ShowHexData(uint16 tag, uint16 indent, uint16 size, uint8* data)
     uint32 i;
     uint8 outString[100];
 
-    for (i = 0;i < size;++i)
+    for (i = 0; i < size; ++i)
     {
         sprintf(outString + 3*(i % 16), "%02x ", data[i]);
         if ((i % 16) == 15 || (i + 1) == size)

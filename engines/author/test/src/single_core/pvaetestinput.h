@@ -117,7 +117,7 @@ typedef enum
     , AMRWB_IETF_FILE
 } PVAETestInputType;
 
-#define ARRAY_SIZE	512
+#define ARRAY_SIZE  512
 
 ////////////////////////////////////////////////////////////////////////////
 class PVAETestInput

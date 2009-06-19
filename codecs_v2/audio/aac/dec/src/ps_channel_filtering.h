@@ -83,9 +83,9 @@ extern "C"
 #endif
 
     void two_ch_filtering(const Int32 *pQmf_r,
-                          const Int32 *pQmf_i,
-                          Int32 *mHybrid_r,
-                          Int32 *mHybrid_i);
+    const Int32 *pQmf_i,
+    Int32 *mHybrid_r,
+    Int32 *mHybrid_i);
 
 
     void eight_ch_filtering(const Int32 *pQmfReal,

@@ -40,18 +40,18 @@ OSCL_DLL_ENTRY_POINT_DEFAULT()
 const int32 iEstimatedServerKeepAheadInMilliSeconds = 2000;
 
 /* RTP HEADER CONSTANTS */
-#define SUPPORTED_RTP_HEADER_VERSION	2
-#define RTP_FIXED_HEADER_SIZE			12
-#define RTP_HEADER_V_BIT_MASK			0xC0
-#define RTP_HEADER_V_BIT_OFFSET			6
-#define RTP_HEADER_P_BIT_MASK			0x20
-#define RTP_HEADER_P_BIT_OFFSET			5
-#define RTP_HEADER_X_BIT_MASK			0x10
-#define RTP_HEADER_X_BIT_OFFSET			4
-#define RTP_HEADER_CC_BIT_MASK			0x0F
-#define RTP_HEADER_M_BIT_MASK			0x80
-#define RTP_HEADER_M_BIT_OFFSET			7
-#define RTP_HEADER_PT_MASK				0x7F
+#define SUPPORTED_RTP_HEADER_VERSION    2
+#define RTP_FIXED_HEADER_SIZE           12
+#define RTP_HEADER_V_BIT_MASK           0xC0
+#define RTP_HEADER_V_BIT_OFFSET         6
+#define RTP_HEADER_P_BIT_MASK           0x20
+#define RTP_HEADER_P_BIT_OFFSET         5
+#define RTP_HEADER_X_BIT_MASK           0x10
+#define RTP_HEADER_X_BIT_OFFSET         4
+#define RTP_HEADER_CC_BIT_MASK          0x0F
+#define RTP_HEADER_M_BIT_MASK           0x80
+#define RTP_HEADER_M_BIT_OFFSET         7
+#define RTP_HEADER_PT_MASK              0x7F
 
 OSCL_EXPORT_REF PVMFJitterBuffer* PVMFRTPJitterBufferImpl::New(const PVMFJitterBufferConstructParams& aCreationData)
 {
@@ -696,7 +696,7 @@ void PVMFRTPJitterBufferImpl::EOSCmdReceived()
 //_______________________________________________________________________________________________
 // Ver |P |X |    CC     |M |         PT         |                 Sequence Number               |
 //_______________________________________________________________________________________________
-//                                     Timestamp												 |
+//                                     Timestamp                                                 |
 //_______________________________________________________________________________________________
 //                                      SSRC                                                     |
 //_______________________________________________________________________________________________
@@ -978,7 +978,7 @@ void PVMFRTPJitterBufferImpl::UpdatePacketArrivalStats(PVMFSharedMediaDataPtr& a
 {
     //Update interarrival jitter
     /* D(i-1,i) = (RecvT(i) - RTP_TS(i)) -
-    			  (RecvT(i-1) - RTP_TS(i-1)) */
+                  (RecvT(i-1) - RTP_TS(i-1)) */
 
     uint32 currPacketRecvTime32;
     bool overflowFlag = false;

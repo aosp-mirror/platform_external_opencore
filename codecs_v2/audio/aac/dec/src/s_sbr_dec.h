@@ -71,8 +71,8 @@ Copyright (c) ISO/IEC 2002.
 ----------------------------------------------------------------------------*/
 
 #include    "s_sbr_frame_data.h"
-#include	"pv_audio_type_defs.h"
-#include	"s_patch.h"
+#include    "pv_audio_type_defs.h"
+#include    "s_patch.h"
 #include    "e_blockswitching.h"
 
 /*----------------------------------------------------------------------------
@@ -126,10 +126,10 @@ typedef struct
     Int32 NoNoiseBands;                            /* Number of noisebands */
     Int32 Num_Master;                              /* Number of bands in V_k_master*/
 
-    struct PATCH Patch;							/* Used by sbr_generate_high_freq */
+    struct PATCH Patch;                         /* Used by sbr_generate_high_freq */
     /* Used by calc_sbr_envelope */
     Int32 gateMode[4];
-    Int32 limSbc[4][12 + 1];							/* Limiting bands */
+    Int32 limSbc[4][12 + 1];                            /* Limiting bands */
 
     Int32 sqrt_cache[8][4];                     /* cache memory for repeated sqrt() calculations */
 

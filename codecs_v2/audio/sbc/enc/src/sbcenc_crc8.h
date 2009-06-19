@@ -15,8 +15,8 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-#ifndef		__CRC8__
-#define		__CRC8__
+#ifndef     __CRC8__
+#define     __CRC8__
 
 #ifdef __cplusplus
 extern "C"

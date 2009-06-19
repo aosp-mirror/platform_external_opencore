@@ -59,8 +59,8 @@
 //max perf log string length
 #define LOGPERFMAXSTR 64
 #define RESET_LOG_PERF(m)\
-	ResetLogPerf();\
-	LOGPERF(m);
+    ResetLogPerf();\
+    LOGPERF(m);
 #else
 #define LOGSTATS(m)
 #define LOGPERF(m)
@@ -158,15 +158,15 @@ OSCL_EXPORT_REF void OsclScheduler::Cleanup()
 #else
 #define DIFF_TICK(tick1,diff) PVTICK _now;SET_TICK(_now);diff=TICK_INT(_now)-TICK_INT(tick1)
 #define UPDATE_RUNERROR_TIME(stats,delta)\
-		if(stats->i64Valid) stats->i64TotalTicksInRun+=delta;\
-		else stats->iTotalTicksInRun+=delta;\
-		if(delta>stats->iMaxTicksInRun) stats->iMaxTicksInRun=delta;\
-		stats->iNumRunError++
+        if(stats->i64Valid) stats->i64TotalTicksInRun+=delta;\
+        else stats->iTotalTicksInRun+=delta;\
+        if(delta>stats->iMaxTicksInRun) stats->iMaxTicksInRun=delta;\
+        stats->iNumRunError++
 #define UPDATE_RUNL_TIME(stats,delta)\
-		if(stats->i64Valid) stats->i64TotalTicksInRun+=delta;\
-		else stats->iTotalTicksInRun+=delta;\
-		if(delta>stats->iMaxTicksInRun) stats->iMaxTicksInRun=delta;\
-		stats->iNumRun++;
+        if(stats->i64Valid) stats->i64TotalTicksInRun+=delta;\
+        else stats->iTotalTicksInRun+=delta;\
+        if(delta>stats->iMaxTicksInRun) stats->iMaxTicksInRun=delta;\
+        stats->iNumRun++;
 #define UPDATE_LEAVE_CODE(stats,err)if (err!=OsclErrNone)stats->iLeave=err
 #endif
 
@@ -176,27 +176,27 @@ OSCL_EXPORT_REF void OsclScheduler::Cleanup()
 #define START_LOOP_STATS(stats)SET_TICK(looptime);
 
 #define START_WAIT_LOOP_STATS(rc,stats)\
-		if (rc<1)\
-			SET_TICK(looptime);
+        if (rc<1)\
+            SET_TICK(looptime);
 
 #define END_LOOP_STATS(stats)\
-		{\
-			DIFF_TICK(looptime,loopdelta);\
-			if(stats->i64Valid) stats->i64TotalTicksInRun+=loopdelta;\
-			else stats->iTotalTicksInRun+=Oscl_Int64_Utils::get_int64_lower32(loopdelta);\
-			stats->iNumRun++;\
-			LOGPERF((0,"PVSCHED: Run %d %s AO %s",(int32)loopdelta,TICKSTR,stats->iAOName.get_cstr()));\
-		}
+        {\
+            DIFF_TICK(looptime,loopdelta);\
+            if(stats->i64Valid) stats->i64TotalTicksInRun+=loopdelta;\
+            else stats->iTotalTicksInRun+=Oscl_Int64_Utils::get_int64_lower32(loopdelta);\
+            stats->iNumRun++;\
+            LOGPERF((0,"PVSCHED: Run %d %s AO %s",(int32)loopdelta,TICKSTR,stats->iAOName.get_cstr()));\
+        }
 
 #define END_WAIT_LOOP_STATS(rc,stats)\
-		if (rc<1)\
-		{\
-			DIFF_TICK(looptime,loopdelta);\
-			if(stats->i64Valid) stats->i64TotalTicksInRun+=loopdelta;\
-			else stats->iTotalTicksInRun+=Oscl_Int64_Utils::get_int64_lower32(loopdelta);\
-			stats->iNumRun++;\
-			LOGPERF((0,"PVSCHED: Run %d %s AO %s",(int32)loopdelta,TICKSTR,stats->iAOName.get_cstr()));\
-		}
+        if (rc<1)\
+        {\
+            DIFF_TICK(looptime,loopdelta);\
+            if(stats->i64Valid) stats->i64TotalTicksInRun+=loopdelta;\
+            else stats->iTotalTicksInRun+=Oscl_Int64_Utils::get_int64_lower32(loopdelta);\
+            stats->iNumRun++;\
+            LOGPERF((0,"PVSCHED: Run %d %s AO %s",(int32)loopdelta,TICKSTR,stats->iAOName.get_cstr()));\
+        }
 
 #else
 #define DECLARE_LOOP_STATS
@@ -506,7 +506,7 @@ void OsclExecSchedulerCommonBase::ConstructStatQ()
 {
     //create a placeholder for summary stats for
     //all AOs that are not PVActiveBase.
-    for (uint32 i = 0;i < EOtherExecStats_Last;i++)
+    for (uint32 i = 0; i < EOtherExecStats_Last; i++)
         iOtherExecStats[i] = NULL;
 
     OsclAny* ptr = iAlloc->ALLOCATE(sizeof(PVActiveStats));
@@ -532,7 +532,7 @@ void OsclExecSchedulerCommonBase::ConstructStatQ()
 #endif
     //add the non-AO stats nodes to the stat Q.
     {
-        for (uint32 i = 0;i < EOtherExecStats_Last;i++)
+        for (uint32 i = 0; i < EOtherExecStats_Last; i++)
         {
             if (iOtherExecStats[i])
                 iPVStatQ.InsertTail(*iOtherExecStats[i]);
@@ -684,7 +684,7 @@ void OsclExecSchedulerCommonBase::EndStats()
     {
         OsclDoubleRunner<PVActiveStats> iter(iPVStatQ);
         PVActiveStats *item;
-        for (iter.SetToHead(); ;iter++)
+        for (iter.SetToHead(); ; iter++)
         {
             item = iter;
             //find all subsequent entries in the list that have
@@ -694,7 +694,7 @@ void OsclExecSchedulerCommonBase::EndStats()
             {
                 OsclDoubleRunner<PVActiveStats> iter2(iPVStatQ);
                 PVActiveStats* item2;
-                for (iter2 = iter, iter2++; ;iter2++)
+                for (iter2 = iter, iter2++; ; iter2++)
                 {
                     item2 = iter2;
                     if (item2->iAOName == item->iAOName)
@@ -911,7 +911,7 @@ OSCL_EXPORT_REF void OsclExecScheduler::RunSchedulerNonBlocking(int32 aCount, in
 
     //Run until the requested count is reached, or there
     //aren't any AOs ready.
-    for (int32 count = 0;count < aCount;)
+    for (int32 count = 0; count < aCount;)
     {
         //find highest pri ready AO.
         PVActiveBase* pvactive = iReadyQ.PopTop();
@@ -1051,7 +1051,7 @@ PVActiveBase* OsclExecSchedulerCommonBase::UpdateTimers(uint32 &aShortestDelay)
     //Find all timers that are ready, and the first
     //timer that isn't.  The list is sorted by
     //time then priority.
-    for (;top;top = iExecTimerQ.Top())
+    for (; top; top = iExecTimerQ.Top())
     {
         //calculate time to run <= timenow, taking possible rollover into account
         uint32 deltaTicks = timenow - top->iPVReadyQLink.iTimeToRunTicks;
@@ -1093,7 +1093,7 @@ PVActiveBase* OsclExecSchedulerCommonBase::UpdateTimersMsec(uint32 &aShortestDel
     //Find all timers that are ready, and the first
     //timer that isn't.  The list is sorted by
     //time then priority.
-    for (;top;top = iExecTimerQ.Top())
+    for (; top; top = iExecTimerQ.Top())
     {
         //calculate time to run <= timenow, taking possible rollover into account
         uint32 deltaTicks = timenow - top->iPVReadyQLink.iTimeToRunTicks;

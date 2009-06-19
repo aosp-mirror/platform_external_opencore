@@ -28,10 +28,10 @@
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 /* ========================================================================
- *	Function : oscl_str_check_and_escape_xml
- *	Date     : 11/04/2002
+ *  Function : oscl_str_check_and_escape_xml
+ *  Date     : 11/04/2002
  *  Purpose  :
- *	Modified :
+ *  Modified :
  * ========================================================================
  */
 OSCL_EXPORT_REF bool  oscl_str_check_and_escape_utf8(const char *str_buf_in, char *str_buf_out, uint32& num_escape_bytes,
@@ -231,10 +231,10 @@ OSCL_EXPORT_REF bool  oscl_str_check_and_escape_utf8(const char *str_buf_in, cha
 }
 
 /* ========================================================================
- *	Function : oscl_str_need_escape_xml
- *	Date     : 11/04/2002
+ *  Function : oscl_str_need_escape_xml
+ *  Date     : 11/04/2002
  *  Purpose  : see oscl_string_xml.h
- *	Modified :
+ *  Modified :
  * ========================================================================
  */
 OSCL_EXPORT_REF bool  oscl_str_need_escape_xml(const char *str_buf, uint32& num_escape_bytes, uint32 max_bytes)
@@ -248,10 +248,10 @@ OSCL_EXPORT_REF bool  oscl_str_need_escape_xml(const char *str_buf, uint32& num_
 }
 
 /* ========================================================================
- *	Function : oscl_str_escape_xml
- *	Date     : 11/04/2002
+ *  Function : oscl_str_escape_xml
+ *  Date     : 11/04/2002
  *  Purpose  : see oscl_string_xml.h
- *	Modified :
+ *  Modified :
  * ========================================================================
  */
 OSCL_EXPORT_REF int32  oscl_str_escape_xml(const char *str_buf_in, char *str_buf_out, uint32 max_out_buf_bytes, uint32 max_bytes,

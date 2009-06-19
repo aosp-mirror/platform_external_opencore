@@ -68,8 +68,8 @@ class PVH264PayLoadOutputMediaData
 
     public:
         IPayloadParser::Payload data;
-        uint32	don;
-        uint32  fuType;	// First byte: current fuType
+        uint32  don;
+        uint32  fuType; // First byte: current fuType
         // 0 complete NAL
         // 1 starting FU
         // 2 intermediate FU
@@ -240,8 +240,8 @@ class InterleaveModeProcessing
             else   // FU-A
             {
                 iPrevNALType >>= 2;
-                iPrevNALType <<= 2;		// clear bit 1 and bit 0
-                iPrevNALType |= fuType;	// keep bit 2 unchanged for FU-A, for isCurrRTPPacketIgnored()
+                iPrevNALType <<= 2;     // clear bit 1 and bit 0
+                iPrevNALType |= fuType; // keep bit 2 unchanged for FU-A, for isCurrRTPPacketIgnored()
             }
         }
 

@@ -38,7 +38,7 @@ terms listed above has been obtained from the copyright holder.
 
  Description: Put "extern" back.
 
- Who: 						Date:
+ Who:                       Date:
  Description:
 
 ------------------------------------------------------------------------------
@@ -82,22 +82,22 @@ extern "C"
     ; [Variable declaration - defined here and used outside this module]
     ----------------------------------------------------------------------------*/
     extern const Word32 overflow_tbl [32]   = {0x7fffffffL, 0x3fffffffL,
-                0x1fffffffL, 0x0fffffffL,
-                0x07ffffffL, 0x03ffffffL,
-                0x01ffffffL, 0x00ffffffL,
-                0x007fffffL, 0x003fffffL,
-                0x001fffffL, 0x000fffffL,
-                0x0007ffffL, 0x0003ffffL,
-                0x0001ffffL, 0x0000ffffL,
-                0x00007fffL, 0x00003fffL,
-                0x00001fffL, 0x00000fffL,
-                0x000007ffL, 0x000003ffL,
-                0x000001ffL, 0x000000ffL,
-                0x0000007fL, 0x0000003fL,
-                0x0000001fL, 0x0000000fL,
-                0x00000007L, 0x00000003L,
-                0x00000001L, 0x00000000L
-                                                  };
+        0x1fffffffL, 0x0fffffffL,
+        0x07ffffffL, 0x03ffffffL,
+        0x01ffffffL, 0x00ffffffL,
+        0x007fffffL, 0x003fffffL,
+        0x001fffffL, 0x000fffffL,
+        0x0007ffffL, 0x0003ffffL,
+        0x0001ffffL, 0x0000ffffL,
+        0x00007fffL, 0x00003fffL,
+        0x00001fffL, 0x00000fffL,
+        0x000007ffL, 0x000003ffL,
+        0x000001ffL, 0x000000ffL,
+        0x0000007fL, 0x0000003fL,
+        0x0000001fL, 0x0000000fL,
+        0x00000007L, 0x00000003L,
+        0x00000001L, 0x00000000L
+    };
 
     /*--------------------------------------------------------------------------*/
 #ifdef __cplusplus
@@ -111,13 +111,13 @@ extern "C"
  INPUT AND OUTPUT DEFINITIONS
 
  Inputs:
-	None
+    None
 
  Outputs:
-	None
+    None
 
  Returns:
-	None
+    None
 
  Global Variables Used:
     None

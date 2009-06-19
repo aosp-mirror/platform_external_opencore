@@ -52,8 +52,8 @@ TrackFragmentAtom::TrackFragmentAtom(MP4_FF_FILE *fp,
 {
     OSCL_UNUSED_ARG(movieFragmentCurrentOffset);
 
-    _pTrackFragmentHeaderAtom		= NULL;
-    _pTrackFragmentRunAtom			= NULL;
+    _pTrackFragmentHeaderAtom       = NULL;
+    _pTrackFragmentRunAtom          = NULL;
     _pinput = NULL;
     _commonFilePtr = NULL;
     _fileSize = 0;
@@ -139,7 +139,7 @@ TrackFragmentAtom::TrackFragmentAtom(MP4_FF_FILE *fp,
                     trun_start = base_data_offset;
                     if (trackDurationContainer != NULL)
                     {
-                        for (int32 i = 0; i < trackDurationContainer->getNumTrackInfoVec();i++)
+                        for (int32 i = 0; i < trackDurationContainer->getNumTrackInfoVec(); i++)
                         {
                             TrackDurationInfo* trackInfo = trackDurationContainer->getTrackdurationInfoAt(i);
                             if (trackInfo->trackId == trackId)
@@ -200,7 +200,7 @@ TrackFragmentAtom::TrackFragmentAtom(MP4_FF_FILE *fp,
                     }
                     else
                     {
-                        for (uint32 idx = 0; idx < trackExtendAtomVec->size();idx++)
+                        for (uint32 idx = 0; idx < trackExtendAtomVec->size(); idx++)
                         {
                             TrackExtendsAtom* pTrackExtendAtom = (*trackExtendAtomVec)[idx];
                             uint32 id = pTrackExtendAtom->getTrackId();
@@ -219,7 +219,7 @@ TrackFragmentAtom::TrackFragmentAtom(MP4_FF_FILE *fp,
                         _pTrackFragmentRunAtom->setDefaultSampleSize(_pTrackFragmentHeaderAtom->getDefaultSampleSize(), trun_offset);
                     else
                     {
-                        for (uint32 idx = 0; idx < trackExtendAtomVec->size();idx++)
+                        for (uint32 idx = 0; idx < trackExtendAtomVec->size(); idx++)
                         {
                             TrackExtendsAtom* pTrackExtendAtom = (*trackExtendAtomVec)[idx];
                             uint32 id = pTrackExtendAtom->getTrackId();
@@ -286,7 +286,7 @@ void TrackFragmentAtom::ParseTrafAtom(MP4_FF_FILE *fp,
 
     if (_success)
     {
-        for (uint32 i = 0;i < 1;i++)
+        for (uint32 i = 0; i < 1; i++)
         {
             if (count > 0)
             {
@@ -332,7 +332,7 @@ void TrackFragmentAtom::ParseTrafAtom(MP4_FF_FILE *fp,
                                 }
                                 else
                                 {
-                                    for (uint32 idx = 0; idx < trackExtendAtomVec->size();idx++)
+                                    for (uint32 idx = 0; idx < trackExtendAtomVec->size(); idx++)
                                     {
                                         TrackExtendsAtom* pTrackExtendAtom = (*trackExtendAtomVec)[idx];
                                         uint32 id = pTrackExtendAtom->getTrackId();
@@ -351,7 +351,7 @@ void TrackFragmentAtom::ParseTrafAtom(MP4_FF_FILE *fp,
                                     _pTrackFragmentRunAtom->setDefaultSampleSize(_pTrackFragmentHeaderAtom->getDefaultSampleSize(), trun_offset);
                                 else
                                 {
-                                    for (uint32 idx = 0; idx < trackExtendAtomVec->size();idx++)
+                                    for (uint32 idx = 0; idx < trackExtendAtomVec->size(); idx++)
                                     {
                                         TrackExtendsAtom* pTrackExtendAtom = (*trackExtendAtomVec)[idx];
                                         uint32 id = pTrackExtendAtom->getTrackId();
@@ -403,7 +403,7 @@ void TrackFragmentAtom::ParseTrafAtom(MP4_FF_FILE *fp,
                             }
                             else
                             {
-                                for (uint32 idx = 0; idx < trackExtendAtomVec->size();idx++)
+                                for (uint32 idx = 0; idx < trackExtendAtomVec->size(); idx++)
                                 {
                                     TrackExtendsAtom* pTrackExtendAtom = (*trackExtendAtomVec)[idx];
                                     uint32 id = pTrackExtendAtom->getTrackId();
@@ -422,7 +422,7 @@ void TrackFragmentAtom::ParseTrafAtom(MP4_FF_FILE *fp,
                                 _pTrackFragmentRunAtom->setDefaultSampleSize(_pTrackFragmentHeaderAtom->getDefaultSampleSize(), trun_offset);
                             else
                             {
-                                for (uint32 idx = 0; idx < trackExtendAtomVec->size();idx++)
+                                for (uint32 idx = 0; idx < trackExtendAtomVec->size(); idx++)
                                 {
                                     TrackExtendsAtom* pTrackExtendAtom = (*trackExtendAtomVec)[idx];
                                     uint32 id = pTrackExtendAtom->getTrackId();
@@ -1280,7 +1280,7 @@ void TrackDurationContainer::updateTrackDurationForTrackId(int32 id, uint32 dura
 {
     if (_pTrackdurationInfoVec != NULL)
     {
-        for (uint32 i = 0; i < _pTrackdurationInfoVec->size();i++)
+        for (uint32 i = 0; i < _pTrackdurationInfoVec->size(); i++)
         {
             if ((int32)((*_pTrackdurationInfoVec)[i]->trackId) == id)
             {

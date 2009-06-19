@@ -2805,7 +2805,7 @@ PVMFStatus PVMFDownloadManagerRecognizerContainer::IssueCommand(int32 aCmd)
             }
             return status;
         }
-        // break;	This statement was removed to avoid compiler warning for Unreachable Code
+        // break;   This statement was removed to avoid compiler warning for Unreachable Code
 
         case ERecognizerClose:
             //close the recognizer session.
@@ -3075,7 +3075,7 @@ void PVMFDownloadManagerSubNodeContainer::HandleNodeInformationalEvent(const PVM
     {
         switch (aEvent.GetEventType())
         {
-            case PVMFInfoRemoteSourceNotification:	//To let the socket node events propagate to pvengine
+            case PVMFInfoRemoteSourceNotification:  //To let the socket node events propagate to pvengine
                 filter = false;
                 break;
             default:

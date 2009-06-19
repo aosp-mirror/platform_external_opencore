@@ -75,25 +75,25 @@ class HTTPParser
         // return codes for parse function
         enum PARSE_RETURN_CODES
         {
-            PARSE_SUCCESS						 = 0,	// success with left over of the current input, don't send the new input next time
-            PARSE_SUCCESS_END_OF_INPUT		     = 1,	// success with end of the current input
-            PARSE_SUCCESS_END_OF_MESSAGE         = 2,	// success with end of the message (get data with the size of content-length)
+            PARSE_SUCCESS                        = 0,   // success with left over of the current input, don't send the new input next time
+            PARSE_SUCCESS_END_OF_INPUT           = 1,   // success with end of the current input
+            PARSE_SUCCESS_END_OF_MESSAGE         = 2,   // success with end of the message (get data with the size of content-length)
             PARSE_SUCCESS_END_OF_MESSAGE_WITH_EXTRA_DATA = 3, // success with end of the message (get data with the size of content-length), but input has more extra data
 
-            PARSE_HEADER_AVAILABLE				 = 4,	// HTTP header is parsed
-            PARSE_STATUS_LINE_SHOW_NOT_SUCCESSFUL = 5,	// parse the first http status line,
+            PARSE_HEADER_AVAILABLE               = 4,   // HTTP header is parsed
+            PARSE_STATUS_LINE_SHOW_NOT_SUCCESSFUL = 5,  // parse the first http status line,
             // got status code >= 300, 3xx=>redirection, 4xx=>client error, 5xx=>server error
             // note that this is return code when parser just finishes parsing the first line,
             // user can continue calling parse function to get the complete http header
-            PARSE_NEED_MORE_DATA				 = 6,	// no ouput, no entity units
+            PARSE_NEED_MORE_DATA                 = 6,   // no ouput, no entity units
 
             // errors
-            PARSE_GENERAL_ERROR	= -1,
-            PARSE_SYNTAX_ERROR = -2,				// syntax is not understandable
-            PARSE_HTTP_VERSION_NOT_SUPPORTED = -3,	// no HTTP version or HTTP version is different from 1.0 or 1.1.
+            PARSE_GENERAL_ERROR = -1,
+            PARSE_SYNTAX_ERROR = -2,                // syntax is not understandable
+            PARSE_HTTP_VERSION_NOT_SUPPORTED = -3,  // no HTTP version or HTTP version is different from 1.0 or 1.1.
             PARSE_TRANSFER_ENCODING_NOT_SUPPORTED = -4,
-            PARSE_MEMORY_ALLOCATION_FAILURE = -5,	// memory allocation for entity units
-            PARSE_HEADER_NOT_PARSED_YET = -6		// HTTP header hasn't been parsed yet, so shouldn't expect parsing entity body
+            PARSE_MEMORY_ALLOCATION_FAILURE = -5,   // memory allocation for entity units
+            PARSE_HEADER_NOT_PARSED_YET = -6        // HTTP header hasn't been parsed yet, so shouldn't expect parsing entity body
         };
 
 
@@ -140,7 +140,7 @@ class HTTPParser
         // HTTPParserInput handles input data stream concatenation and fragment grouping for parsing and entity unit output
         // HTTPContentInfo contains content type, content length and content range information and does infomation parsing.
         // HTTPParserHeaderObject and HTTPParserEntityBodyObject handles header and entity body parsing
-        HTTPParserInput			*iParserInput;
+        HTTPParserInput         *iParserInput;
         HTTPContentInfoInternal *iContentInfo;
         HTTPParserHeaderObject  *iHeader;
         HTTPParserEntityBodyObject *iEntityBody;

@@ -70,10 +70,10 @@ typedef enum
      * this is also the highest number of bins used
      * by predictor for any sampling rate
      */
-    MAX_PRED_SFB	= 40,	/* 48 kHz only, now obsolete */
-    MAX_PRED_BINS	= 672,
+    MAX_PRED_SFB    = 40,   /* 48 kHz only, now obsolete */
+    MAX_PRED_BINS   = 672,
 
-    ID_SCE 		= 0,
+    ID_SCE      = 0,
     ID_CPE,
     ID_CCE,
     ID_LFE,

@@ -18,17 +18,17 @@
 #include "oscl_mem.h"
 #include "avcenc_lib.h"
 
-#define MIN_GOP		1	/* minimum size of GOP, 1/23/01, need to be tested */
+#define MIN_GOP     1   /* minimum size of GOP, 1/23/01, need to be tested */
 
-#define DEFAULT_REF_IDX		0  /* always from the first frame in the reflist */
+#define DEFAULT_REF_IDX     0  /* always from the first frame in the reflist */
 
 #define ALL_CAND_EQUAL  10  /*  any number greater than 5 will work */
 
 
 /* from TMN 3.2 */
-#define PREF_NULL_VEC 129	/* zero vector bias */
-#define PREF_16_VEC 129		/* 1MV bias versus 4MVs*/
-#define PREF_INTRA	3024//512		/* bias for INTRA coding */
+#define PREF_NULL_VEC 129   /* zero vector bias */
+#define PREF_16_VEC 129     /* 1MV bias versus 4MVs*/
+#define PREF_INTRA  3024//512       /* bias for INTRA coding */
 
 const static int tab_exclude[9][9] =  // [last_loc][curr_loc]
 {
@@ -54,15 +54,15 @@ uint32 num_cand = 0;
 #endif
 
 /************************************************************************/
-#define TH_INTER_2	100  /* temporary for now */
+#define TH_INTER_2  100  /* temporary for now */
 
-//#define FIXED_INTERPRED_MODE	AVC_P16
-#define	FIXED_REF_IDX	0
+//#define FIXED_INTERPRED_MODE  AVC_P16
+#define FIXED_REF_IDX   0
 #define FIXED_MVX 0
 #define FIXED_MVY 0
 
 // only use when AVC_P8 or AVC_P8ref0
-#define FIXED_SUBMB_MODE	AVC_4x4
+#define FIXED_SUBMB_MODE    AVC_4x4
 /*************************************************************************/
 
 /* Initialize arrays necessary for motion search */
@@ -85,7 +85,7 @@ AVCEnc_Status InitMotionSearchModule(AVCHandle *avcHandle)
         number_of_subpel_positions >>= 1;
     }
 
-    max_mv_bits = 3	+ 2 * temp_bits;
+    max_mv_bits = 3 + 2 * temp_bits;
     max_mvd  = (1 << (max_mv_bits >> 1)) - 1;
 
     encvid->mvbits_array = (uint8*) avcHandle->CBAVC_Malloc(encvid->avcHandle->userData,
@@ -256,7 +256,7 @@ void AVCMotionEstimation(AVCEncObject *encvid)
     int NumIntraSearch, start_i, numLoop, incr_i;
     int mbnum, offset;
     uint8 *cur, *best_cand[5];
-    int totalSAD = 0;	/* average SAD for rate control */
+    int totalSAD = 0;   /* average SAD for rate control */
     int type_pred;
     int abe_cost;
 
@@ -334,7 +334,7 @@ void AVCMotionEstimation(AVCEncObject *encvid)
     /* First pass, loop thru half the macroblock */
     /* determine scene change */
     /* Second pass, for the rest of macroblocks */
-    NumIntraSearch = 0;	// to be intra searched in the encoding loop.
+    NumIntraSearch = 0; // to be intra searched in the encoding loop.
     while (numLoop--)
     {
         for (j = 0; j < mbheight; j++)
@@ -398,7 +398,7 @@ void AVCMotionEstimation(AVCEncObject *encvid)
 
                     totalSAD += (int) rateCtrl->MADofMB[mbnum];//mot_mb_16x16->sad;
                 }
-                else 	/* INTRA update, use for prediction */
+                else    /* INTRA update, use for prediction */
                 {
                     mot_mb_16x16[0].x = mot_mb_16x16[0].y = 0;
 
@@ -448,7 +448,7 @@ void AVCMotionEstimation(AVCEncObject *encvid)
                     encvid->min_cost[i] = 0x7FFFFFFF;  /* max value for int */
                 }
 
-                rateCtrl->totalSAD = totalSAD * 2;	/* SAD */
+                rateCtrl->totalSAD = totalSAD * 2;  /* SAD */
 
                 return ;
             }
@@ -458,7 +458,7 @@ void AVCMotionEstimation(AVCEncObject *encvid)
         type_pred++; /* second pass */
     }
 
-    rateCtrl->totalSAD = totalSAD;	/* SAD */
+    rateCtrl->totalSAD = totalSAD;  /* SAD */
 
 #ifdef HTFM
     /***** HYPOTHESIS TESTING ********/
@@ -474,9 +474,9 @@ void AVCMotionEstimation(AVCEncObject *encvid)
 }
 
 /*=====================================================================
-	Function:	PaddingEdge
-	Date:		09/16/2000
-	Purpose:	Pad edge of a Vop
+    Function:   PaddingEdge
+    Date:       09/16/2000
+    Purpose:    Pad edge of a Vop
 =====================================================================*/
 
 void  AVCPaddingEdge(AVCPictureData *refPic)
@@ -564,10 +564,10 @@ void  AVCPaddingEdge(AVCPictureData *refPic)
 }
 
 /*===========================================================================
-	Function:	AVCRasterIntraUpdate
-	Date:		2/26/01
-	Purpose:	To raster-scan assign INTRA-update .
-				N macroblocks are updated (also was programmable).
+    Function:   AVCRasterIntraUpdate
+    Date:       2/26/01
+    Purpose:    To raster-scan assign INTRA-update .
+                N macroblocks are updated (also was programmable).
 ===========================================================================*/
 void AVCRasterIntraUpdate(AVCEncObject *encvid, AVCMacroblock *mblock, int totalMB, int numRefresh)
 {
@@ -625,7 +625,7 @@ void InitHTFM(VideoEncData *encvid, HTFM_Stat *htfm_stat, double *newvar, int *c
         {
             newvar[i] = 0.0;
         }
-//		encvid->functionPointer->SAD_MB_PADDING = &SAD_MB_PADDING_HTFM_Collect;
+//      encvid->functionPointer->SAD_MB_PADDING = &SAD_MB_PADDING_HTFM_Collect;
         encvid->functionPointer->SAD_Macroblock = &SAD_MB_HTFM_Collect;
         encvid->functionPointer->SAD_MB_HalfPel[0] = NULL;
         encvid->functionPointer->SAD_MB_HalfPel[1] = &SAD_MB_HP_HTFM_Collectxh;
@@ -637,7 +637,7 @@ void InitHTFM(VideoEncData *encvid, HTFM_Stat *htfm_stat, double *newvar, int *c
     }
     else
     {
-//		encvid->functionPointer->SAD_MB_PADDING = &SAD_MB_PADDING_HTFM;
+//      encvid->functionPointer->SAD_MB_PADDING = &SAD_MB_PADDING_HTFM;
         encvid->functionPointer->SAD_Macroblock = &SAD_MB_HTFM;
         encvid->functionPointer->SAD_MB_HalfPel[0] = NULL;
         encvid->functionPointer->SAD_MB_HalfPel[1] = &SAD_MB_HP_HTFMxh;
@@ -726,7 +726,7 @@ void CalcThreshold(double pf, double exp_lamda[], int nrmlz_th[])
     /* parametric PREMODELling */
     for (i = 0; i < 15; i++)
     {
-        //	  printf("%g ",exp_lamda[i]);
+        //    printf("%g ",exp_lamda[i]);
         if (pf < 0.5)
             temp[i] = 1 / exp_lamda[i] * M4VENC_LOG(2 * pf);
         else
@@ -740,7 +740,7 @@ void CalcThreshold(double pf, double exp_lamda[], int nrmlz_th[])
     return ;
 }
 
-void	HTFMPrepareCurMB_AVC(AVCEncObject *encvid, HTFM_Stat *htfm_stat, uint8 *cur, int pitch)
+void    HTFMPrepareCurMB_AVC(AVCEncObject *encvid, HTFM_Stat *htfm_stat, uint8 *cur, int pitch)
 {
     AVCCommonObj *video = encvid->common;
     uint32 *htfmMB = (uint32*)(encvid->currYMB);
@@ -804,7 +804,7 @@ void	HTFMPrepareCurMB_AVC(AVCEncObject *encvid, HTFM_Stat *htfm_stat, uint8 *cur
 
 #endif // HTFM
 
-void	AVCPrepareCurMB(AVCEncObject *encvid, uint8 *cur, int pitch)
+void    AVCPrepareCurMB(AVCEncObject *encvid, uint8 *cur, int pitch)
 {
     void* tmp = (void*)(encvid->currYMB);
     uint32 *currYMB = (uint32*) tmp;
@@ -829,12 +829,12 @@ void	AVCPrepareCurMB(AVCEncObject *encvid, uint8 *cur, int pitch)
 a macroblock here just yet. */
 /* We will find the best motion vector and the best intra prediction mode for each block. */
 /* output are
-	currMB->NumMbPart,	currMB->MbPartWidth, currMB->MbPartHeight,
-	currMB->NumSubMbPart[], currMB->SubMbPartWidth[], currMB->SubMbPartHeight,
-	currMB->MBPartPredMode[][] (L0 or L1 or BiPred)
-	currMB->RefIdx[], currMB->ref_idx_L0[],
-	currMB->mvL0[], currMB->mvL1[]
-	*/
+    currMB->NumMbPart,  currMB->MbPartWidth, currMB->MbPartHeight,
+    currMB->NumSubMbPart[], currMB->SubMbPartWidth[], currMB->SubMbPartHeight,
+    currMB->MBPartPredMode[][] (L0 or L1 or BiPred)
+    currMB->RefIdx[], currMB->ref_idx_L0[],
+    currMB->mvL0[], currMB->mvL1[]
+    */
 
 AVCEnc_Status AVCMBMotionSearch(AVCEncObject *encvid, AVCMacroblock *currMB, int mbNum,
                                 int num_pass)
@@ -1035,7 +1035,7 @@ void AVCMBMotionSearch(AVCEncObject *encvid, uint8 *cur, uint8 *best_cand[],
     {
         jlow = j0 - MaxVmvR[lev_idx] + 1;
     }
-    if (jlow < -13)		// same reason as above
+    if (jlow < -13)     // same reason as above
     {
         jlow = -13;
     }
@@ -1045,7 +1045,7 @@ void AVCMBMotionSearch(AVCEncObject *encvid, uint8 *cur, uint8 *best_cand[],
     {
         jhigh = j0 + MaxVmvR[lev_idx] - 1;
     }
-    if (jhigh > height - 3)	// same reason as above
+    if (jhigh > height - 3) // same reason as above
     {
         jhigh = height - 3;
     }
@@ -1067,8 +1067,8 @@ void AVCMBMotionSearch(AVCEncObject *encvid, uint8 *cur, uint8 *best_cand[],
         ncand = ref + imin + jmin * lx;
     }
     else
-    {	/*		 fullsearch the top row to only upto (0,3) MB */
-        /*		 upto 30% complexity saving with the same complexity */
+    {   /*       fullsearch the top row to only upto (0,3) MB */
+        /*       upto 30% complexity saving with the same complexity */
         if (video->PrevRefFrameNum == 0 && j0 == 0 && i0 <= 64 && type_pred != 1)
         {
             *hp_guess = 0; /* no guess for fast half-pel */
@@ -1135,7 +1135,7 @@ void AVCMBMotionSearch(AVCEncObject *encvid, uint8 *cur, uint8 *best_cand[],
             /******************* local refinement ***************************/
             center_again = 0;
             last_loc = new_loc = 0;
-            //			ncand = ref + jmin*lx + imin;  /* center of the search */
+            //          ncand = ref + jmin*lx + imin;  /* center of the search */
             step = 0;
             dn[0] = dmin;
             while (!center_again && step <= max_step)
@@ -1153,7 +1153,7 @@ void AVCMBMotionSearch(AVCEncObject *encvid, uint8 *cur, uint8 *best_cand[],
                 for (k = 2; k <= 8; k += 2)
                 {
                     if (!tab_exclude[last_loc][k]) /* exclude last step computation */
-                    {		/* not already computed */
+                    {       /* not already computed */
                         if (i >= ilow && i <= ihigh && j >= jlow && j <= jhigh)
                         {
                             d = (*SAD_Macroblock)(cand, cur, (dmin << 16) | lx, extra_info);
@@ -1251,12 +1251,12 @@ void AVCMBMotionSearch(AVCEncObject *encvid, uint8 *cur, uint8 *best_cand[],
 #endif
 
 /*===============================================================================
-	Function:	AVCFullSearch
-	Date:		09/16/2000
-	Purpose:	Perform full-search motion estimation over the range of search
-				region in a spiral-outward manner.
-	Input/Output:	VideoEncData, current Vol, previou Vop, pointer to the left corner of
-				current VOP, current coord (also output), boundaries.
+    Function:   AVCFullSearch
+    Date:       09/16/2000
+    Purpose:    Perform full-search motion estimation over the range of search
+                region in a spiral-outward manner.
+    Input/Output:   VideoEncData, current Vol, previou Vop, pointer to the left corner of
+                current VOP, current coord (also output), boundaries.
 ===============================================================================*/
 int AVCFullSearch(AVCEncObject *encvid, uint8 *prev, uint8 *cur,
                   int *imin, int *jmin, int ilow, int ihigh, int jlow, int jhigh,
@@ -1267,13 +1267,13 @@ int AVCFullSearch(AVCEncObject *encvid, uint8 *prev, uint8 *cur,
     uint8 *cand;
     int i, j, k, l;
     int d, dmin;
-    int i0 = *imin;	/* current position */
+    int i0 = *imin; /* current position */
     int j0 = *jmin;
     int (*SAD_Macroblock)(uint8*, uint8*, int, void*) = encvid->functionPointer->SAD_Macroblock;
     void *extra_info = encvid->sad_extra_info;
     int lx = currPic->pitch; /* with padding */
 
-    int	offset = i0 + j0 * lx;
+    int offset = i0 + j0 * lx;
 
     int lambda_motion = encvid->lambda_motion;
     uint8 *mvbits = encvid->mvbits;
@@ -1344,14 +1344,14 @@ int AVCFullSearch(AVCEncObject *encvid, uint8 *prev, uint8 *cur,
 }
 
 /*===============================================================================
-	Function:	AVCCandidateSelection
-	Date:		09/16/2000
-	Purpose:	Fill up the list of candidate using spatio-temporal correlation
-				among neighboring blocks.
-	Input/Output:	type_pred = 0: first pass, 1: second pass, or no SCD
-	Modified:	, 09/23/01, get rid of redundant candidates before passing back.
-				, 09/11/07, added return for modified predicted MV, this will be
-					needed for both fast search and fullsearch.
+    Function:   AVCCandidateSelection
+    Date:       09/16/2000
+    Purpose:    Fill up the list of candidate using spatio-temporal correlation
+                among neighboring blocks.
+    Input/Output:   type_pred = 0: first pass, 1: second pass, or no SCD
+    Modified:   , 09/23/01, get rid of redundant candidates before passing back.
+                , 09/11/07, added return for modified predicted MV, this will be
+                    needed for both fast search and fullsearch.
 ===============================================================================*/
 
 void AVCCandidateSelection(int *mvx, int *mvy, int *num_can, int imb, int jmb,
@@ -1374,7 +1374,7 @@ void AVCCandidateSelection(int *mvx, int *mvy, int *num_can, int imb, int jmb,
     if (video->PrevRefFrameNum != 0) // previous frame is an IDR frame
     {
         /* Spatio-Temporal Candidate (five candidates) */
-        if (type_pred == 0)	/* first pass */
+        if (type_pred == 0) /* first pass */
         {
             pmot = &mot16x16[mbnum]; /* same coordinate previous frame */
             mvx[(*num_can)] = (pmot->x) >> 2;
@@ -1418,7 +1418,7 @@ void AVCCandidateSelection(int *mvx, int *mvy, int *num_can, int imb, int jmb,
                 mvy[(*num_can)++] = (pmot->y) >> 2;
             }
         }
-        else	/* second pass */
+        else    /* second pass */
             /* original ST1 algorithm */
         {
             pmot = &mot16x16[mbnum]; /* same coordinate previous frame */
@@ -1452,7 +1452,7 @@ void AVCCandidateSelection(int *mvx, int *mvy, int *num_can, int imb, int jmb,
         }
 
         /* get predicted MV */
-        if (imb > 0)	/* get MV from left (A) neighbor either on current or previous frame */
+        if (imb > 0)    /* get MV from left (A) neighbor either on current or previous frame */
         {
             availA = 1;
             pmot = &mot16x16[mbnum-1];
@@ -1484,7 +1484,7 @@ void AVCCandidateSelection(int *mvx, int *mvy, int *num_can, int imb, int jmb,
     }
     else  /* only Spatial Candidate (four candidates)*/
     {
-        if (type_pred == 0)	/*first pass*/
+        if (type_pred == 0) /*first pass*/
         {
             if (imb > 1)  /* neighbor two blocks away to the left */
             {
@@ -1506,7 +1506,7 @@ void AVCCandidateSelection(int *mvx, int *mvy, int *num_can, int imb, int jmb,
             }
 
             /* get predicted MV */
-            if (imb > 1)	/* get MV from 2nd left (A) neighbor either of current frame */
+            if (imb > 1)    /* get MV from 2nd left (A) neighbor either of current frame */
             {
                 availA = 1;
                 pmot = &mot16x16[mbnum-2];
@@ -1594,7 +1594,7 @@ void AVCCandidateSelection(int *mvx, int *mvy, int *num_can, int imb, int jmb,
             }
 
             /* get predicted MV */
-            if (imb > 0)	/* get MV from left (A) neighbor either on current or previous frame */
+            if (imb > 0)    /* get MV from left (A) neighbor either on current or previous frame */
             {
                 availA = 1;
                 pmot = &mot16x16[mbnum-1];
@@ -1673,9 +1673,9 @@ void AVCCandidateSelection(int *mvx, int *mvy, int *num_can, int imb, int jmb,
 
 
 /*************************************************************
-	Function:	AVCMoveNeighborSAD
-	Date:		3/27/01
-	Purpose:	Move neighboring SAD around when center has shifted
+    Function:   AVCMoveNeighborSAD
+    Date:       3/27/01
+    Purpose:    Move neighboring SAD around when center has shifted
 *************************************************************/
 
 void AVCMoveNeighborSAD(int dn[], int new_loc)

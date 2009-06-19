@@ -160,29 +160,29 @@ class pvplayer_async_test_genericprofiling : public pvplayer_async_test_base
 
         /*enum PVTestState
         {
-        	STATE_CREATE,
+            STATE_CREATE,
             STATE_QUERYINTERFACE,
-        	STATE_ADDDATASOURCE,
-        	STATE_CONFIGPARAMS,
-        	STATE_INIT,
-        	STATE_GETMETADATAKEYLIST,
-        	STATE_GETMETADATAVALUELIST,
-        	STATE_ADDDATASINK_VIDEO,
-        	STATE_ADDDATASINK_AUDIO,
-        	STATE_PREPARE,
-        	STATE_CANCELALL,
-        	STATE_WAIT_FOR_CANCELALL,
-        	STATE_START,
-        	STATE_SETPLAYBACKRANGE,
-        	STATE_PAUSE,
-        	STATE_RESUME,
-        	STATE_EOSNOTREACHED,
-        	STATE_STOP,
-        	STATE_REMOVEDATASINK_VIDEO,
-        	STATE_REMOVEDATASINK_AUDIO,
-        	STATE_RESET,
-        	STATE_REMOVEDATASOURCE,
-        	STATE_CLEANUPANDCOMPLETE
+            STATE_ADDDATASOURCE,
+            STATE_CONFIGPARAMS,
+            STATE_INIT,
+            STATE_GETMETADATAKEYLIST,
+            STATE_GETMETADATAVALUELIST,
+            STATE_ADDDATASINK_VIDEO,
+            STATE_ADDDATASINK_AUDIO,
+            STATE_PREPARE,
+            STATE_CANCELALL,
+            STATE_WAIT_FOR_CANCELALL,
+            STATE_START,
+            STATE_SETPLAYBACKRANGE,
+            STATE_PAUSE,
+            STATE_RESUME,
+            STATE_EOSNOTREACHED,
+            STATE_STOP,
+            STATE_REMOVEDATASINK_VIDEO,
+            STATE_REMOVEDATASINK_AUDIO,
+            STATE_RESET,
+            STATE_REMOVEDATASOURCE,
+            STATE_CLEANUPANDCOMPLETE
         };*/
 
         PVTestState iState;
@@ -379,29 +379,29 @@ class pvplayer_async_test_genericplaypauserepositionresumetest : public pvplayer
 
         /*enum PVTestState
         {
-        	STATE_CREATE,
+            STATE_CREATE,
             STATE_QUERYINTERFACE,
-        	STATE_ADDDATASOURCE,
-        	STATE_CONFIGPARAMS,
-        	STATE_INIT,
-        	STATE_GETMETADATAKEYLIST,
-        	STATE_GETMETADATAVALUELIST,
-        	STATE_ADDDATASINK_VIDEO,
-        	STATE_ADDDATASINK_AUDIO,
-        	STATE_PREPARE,
-        	STATE_CANCELALL,
-        	STATE_WAIT_FOR_CANCELALL,
-        	STATE_START,
-        	STATE_SETPLAYBACKRANGE,
-        	STATE_PAUSE,
-        	STATE_RESUME,
-        	STATE_EOSNOTREACHED,
-        	STATE_STOP,
-        	STATE_REMOVEDATASINK_VIDEO,
-        	STATE_REMOVEDATASINK_AUDIO,
-        	STATE_RESET,
-        	STATE_REMOVEDATASOURCE,
-        	STATE_CLEANUPANDCOMPLETE
+            STATE_ADDDATASOURCE,
+            STATE_CONFIGPARAMS,
+            STATE_INIT,
+            STATE_GETMETADATAKEYLIST,
+            STATE_GETMETADATAVALUELIST,
+            STATE_ADDDATASINK_VIDEO,
+            STATE_ADDDATASINK_AUDIO,
+            STATE_PREPARE,
+            STATE_CANCELALL,
+            STATE_WAIT_FOR_CANCELALL,
+            STATE_START,
+            STATE_SETPLAYBACKRANGE,
+            STATE_PAUSE,
+            STATE_RESUME,
+            STATE_EOSNOTREACHED,
+            STATE_STOP,
+            STATE_REMOVEDATASINK_VIDEO,
+            STATE_REMOVEDATASINK_AUDIO,
+            STATE_RESET,
+            STATE_REMOVEDATASOURCE,
+            STATE_CLEANUPANDCOMPLETE
         };*/
 
         PVTestState iState;
@@ -587,29 +587,29 @@ class pvplayer_async_test_genericopensetplaybackrangestartplaystoptest : public 
 
         /*enum PVTestState
         {
-        	STATE_CREATE,
+            STATE_CREATE,
             STATE_QUERYINTERFACE,
-        	STATE_ADDDATASOURCE,
-        	STATE_CONFIGPARAMS,
-        	STATE_INIT,
-        	STATE_GETMETADATAKEYLIST,
-        	STATE_GETMETADATAVALUELIST,
-        	STATE_ADDDATASINK_VIDEO,
-        	STATE_ADDDATASINK_AUDIO,
-        	STATE_PREPARE,
-        	STATE_CANCELALL,
-        	STATE_WAIT_FOR_CANCELALL,
-        	STATE_START,
-        	STATE_SETPLAYBACKRANGE,
-        	STATE_PAUSE,
-        	STATE_RESUME,
-        	STATE_EOSNOTREACHED,
-        	STATE_STOP,
-        	STATE_REMOVEDATASINK_VIDEO,
-        	STATE_REMOVEDATASINK_AUDIO,
-        	STATE_RESET,
-        	STATE_REMOVEDATASOURCE,
-        	STATE_CLEANUPANDCOMPLETE
+            STATE_ADDDATASOURCE,
+            STATE_CONFIGPARAMS,
+            STATE_INIT,
+            STATE_GETMETADATAKEYLIST,
+            STATE_GETMETADATAVALUELIST,
+            STATE_ADDDATASINK_VIDEO,
+            STATE_ADDDATASINK_AUDIO,
+            STATE_PREPARE,
+            STATE_CANCELALL,
+            STATE_WAIT_FOR_CANCELALL,
+            STATE_START,
+            STATE_SETPLAYBACKRANGE,
+            STATE_PAUSE,
+            STATE_RESUME,
+            STATE_EOSNOTREACHED,
+            STATE_STOP,
+            STATE_REMOVEDATASINK_VIDEO,
+            STATE_REMOVEDATASINK_AUDIO,
+            STATE_RESET,
+            STATE_REMOVEDATASOURCE,
+            STATE_CLEANUPANDCOMPLETE
         };*/
 
         PVTestState iState;
@@ -795,29 +795,29 @@ class pvplayer_async_test_genericopenplayrepositiontoendtest : public pvplayer_a
 
         /*enum PVTestState
         {
-        	STATE_CREATE,
+            STATE_CREATE,
             STATE_QUERYINTERFACE,
-        	STATE_ADDDATASOURCE,
-        	STATE_CONFIGPARAMS,
-        	STATE_INIT,
-        	STATE_GETMETADATAKEYLIST,
-        	STATE_GETMETADATAVALUELIST,
-        	STATE_ADDDATASINK_VIDEO,
-        	STATE_ADDDATASINK_AUDIO,
-        	STATE_PREPARE,
-        	STATE_CANCELALL,
-        	STATE_WAIT_FOR_CANCELALL,
-        	STATE_START,
-        	STATE_SETPLAYBACKRANGE,
-        	STATE_PAUSE,
-        	STATE_RESUME,
-        	STATE_EOSNOTREACHED,
-        	STATE_STOP,
-        	STATE_REMOVEDATASINK_VIDEO,
-        	STATE_REMOVEDATASINK_AUDIO,
-        	STATE_RESET,
-        	STATE_REMOVEDATASOURCE,
-        	STATE_CLEANUPANDCOMPLETE
+            STATE_ADDDATASOURCE,
+            STATE_CONFIGPARAMS,
+            STATE_INIT,
+            STATE_GETMETADATAKEYLIST,
+            STATE_GETMETADATAVALUELIST,
+            STATE_ADDDATASINK_VIDEO,
+            STATE_ADDDATASINK_AUDIO,
+            STATE_PREPARE,
+            STATE_CANCELALL,
+            STATE_WAIT_FOR_CANCELALL,
+            STATE_START,
+            STATE_SETPLAYBACKRANGE,
+            STATE_PAUSE,
+            STATE_RESUME,
+            STATE_EOSNOTREACHED,
+            STATE_STOP,
+            STATE_REMOVEDATASINK_VIDEO,
+            STATE_REMOVEDATASINK_AUDIO,
+            STATE_RESET,
+            STATE_REMOVEDATASOURCE,
+            STATE_CLEANUPANDCOMPLETE
         };*/
 
         PVTestState iState;
@@ -1051,12 +1051,12 @@ class pvplayer_async_test_genericnetworkdisconnect : public pvplayer_async_test_
         void disableNetwork()
         {
 
-#if	PVPLAYER_TEST_LINUX_DISABLE_NETWORK
+#if PVPLAYER_TEST_LINUX_DISABLE_NETWORK
             fprintf(iTestMsgOutputFile, "***Disconnecting Network...\n");
             system("/sbin/ifconfig eth0 down");
 #endif
 
-#if	PVPLAYER_TEST_WIN32_DISABLE_NETWORK
+#if PVPLAYER_TEST_WIN32_DISABLE_NETWORK
             fprintf(iTestMsgOutputFile, "***Disconnecting Network...\n");
             system("ipconfig /release");
 #endif
@@ -1068,13 +1068,13 @@ class pvplayer_async_test_genericnetworkdisconnect : public pvplayer_async_test_
             char cmd_str[48] = "/sbin/route add default gw ";
             oscl_strcat(cmd_str, DEFAULT_GATEWAY);
 
-#if	PVPLAYER_TEST_LINUX_DISABLE_NETWORK
+#if PVPLAYER_TEST_LINUX_DISABLE_NETWORK
             fprintf(iTestMsgOutputFile, "***Reconnecting Network...\n");
             system("/sbin/ifconfig eth0 up");
             system(cmd_str);
 #endif
 
-#if	PVPLAYER_TEST_WIN32_DISABLE_NETWORK
+#if PVPLAYER_TEST_WIN32_DISABLE_NETWORK
             fprintf(iTestMsgOutputFile, "***Reconnecting Network...\n");
             system("ipconfig /renew");
 #endif
@@ -1279,12 +1279,12 @@ class pvplayer_async_test_genericnetworkdisconnectreconnect : public pvplayer_as
         void disableNetwork()
         {
 
-#if	PVPLAYER_TEST_LINUX_DISABLE_NETWORK
+#if PVPLAYER_TEST_LINUX_DISABLE_NETWORK
             fprintf(iTestMsgOutputFile, "***Disconnecting Network...\n");
             system("/sbin/ifconfig eth0 down");
 #endif
 
-#if	PVPLAYER_TEST_WIN32_DISABLE_NETWORK
+#if PVPLAYER_TEST_WIN32_DISABLE_NETWORK
             fprintf(iTestMsgOutputFile, "***Disconnecting Network...\n");
             system("ipconfig /release");
 #endif
@@ -1297,13 +1297,13 @@ class pvplayer_async_test_genericnetworkdisconnectreconnect : public pvplayer_as
             {
                 char cmd_str[48] = "/sbin/route add default gw ";
                 oscl_strcat(cmd_str, DEFAULT_GATEWAY);
-#if	PVPLAYER_TEST_LINUX_DISABLE_NETWORK
+#if PVPLAYER_TEST_LINUX_DISABLE_NETWORK
                 fprintf(iTestMsgOutputFile, "***Reconnecting Network...\n");
                 system("/sbin/ifconfig eth0 up");
                 system(cmd_str);
 #endif
 
-#if	PVPLAYER_TEST_WIN32_DISABLE_NETWORK
+#if PVPLAYER_TEST_WIN32_DISABLE_NETWORK
                 fprintf(iTestMsgOutputFile, "***Reconnecting Network...\n");
                 system("ipconfig /renew");
 #endif
@@ -1505,12 +1505,12 @@ class pvplayer_async_test_genericcancelallnetworkdisconnect : public pvplayer_as
         void disableNetwork()
         {
 
-#if	PVPLAYER_TEST_LINUX_DISABLE_NETWORK
+#if PVPLAYER_TEST_LINUX_DISABLE_NETWORK
             fprintf(iTestMsgOutputFile, "***Disconnecting Network...\n");
             system("/sbin/ifconfig eth0 down");
 #endif
 
-#if	PVPLAYER_TEST_WIN32_DISABLE_NETWORK
+#if PVPLAYER_TEST_WIN32_DISABLE_NETWORK
             fprintf(iTestMsgOutputFile, "***Disconnecting Network...\n");
             system("ipconfig /release");
 #endif
@@ -1525,13 +1525,13 @@ class pvplayer_async_test_genericcancelallnetworkdisconnect : public pvplayer_as
                 char cmd_str[48] = "/sbin/route add default gw ";
                 oscl_strcat(cmd_str, DEFAULT_GATEWAY);
 
-#if	PVPLAYER_TEST_LINUX_DISABLE_NETWORK
+#if PVPLAYER_TEST_LINUX_DISABLE_NETWORK
                 fprintf(iTestMsgOutputFile, "***Reconnecting Network...\n");
                 system("/sbin/ifconfig eth0 up");
                 system(cmd_str);
 #endif
 
-#if	PVPLAYER_TEST_WIN32_DISABLE_NETWORK
+#if PVPLAYER_TEST_WIN32_DISABLE_NETWORK
                 fprintf(iTestMsgOutputFile, "***Reconnecting Network...\n");
                 system("ipconfig /renew");
 #endif
@@ -1622,7 +1622,7 @@ class pvplayer_async_test_genericcancelallnetworkdisconnect : public pvplayer_as
  *             -# SetPlaybackRange()
  *             -# WAIT 5 sec
  *             -# Resume()
- *			   -# Network disconnection followed by CancelAllCmds()
+ *             -# Network disconnection followed by CancelAllCmds()
  *             -# RemoveDataSink() (video)
  *             -# RemoveDataSink() (audio)
  *             -# Reset()
@@ -1686,31 +1686,31 @@ class pvplayer_async_test_genericplaypauserepositionresumenwdisconnectcancelallt
 
         /*enum PVTestState
         {
-        	STATE_CREATE,
+            STATE_CREATE,
             STATE_QUERYINTERFACE,
-        	STATE_ADDDATASOURCE,
-        	STATE_CONFIGPARAMS,
-        	STATE_INIT,
-        	STATE_GETMETADATAKEYLIST,
-        	STATE_GETMETADATAVALUELIST,
-        	STATE_ADDDATASINK_VIDEO,
-        	STATE_ADDDATASINK_AUDIO,
-        	STATE_PREPARE,
-        	STATE_WAIT_FOR_DATAREADY,
-        	STATE_WAIT_FOR_BUFFCOMPLETE,
-        	STATE_CANCELALL,
-        	STATE_WAIT_FOR_CANCELALL,
-        	STATE_START,
-        	STATE_SETPLAYBACKRANGE,
-        	STATE_PAUSE,
-        	STATE_RESUME,
-        	STATE_EOSNOTREACHED,
-        	STATE_STOP,
-        	STATE_REMOVEDATASINK_VIDEO,
-        	STATE_REMOVEDATASINK_AUDIO,
-        	STATE_RESET,
-        	STATE_REMOVEDATASOURCE,
-        	STATE_CLEANUPANDCOMPLETE
+            STATE_ADDDATASOURCE,
+            STATE_CONFIGPARAMS,
+            STATE_INIT,
+            STATE_GETMETADATAKEYLIST,
+            STATE_GETMETADATAVALUELIST,
+            STATE_ADDDATASINK_VIDEO,
+            STATE_ADDDATASINK_AUDIO,
+            STATE_PREPARE,
+            STATE_WAIT_FOR_DATAREADY,
+            STATE_WAIT_FOR_BUFFCOMPLETE,
+            STATE_CANCELALL,
+            STATE_WAIT_FOR_CANCELALL,
+            STATE_START,
+            STATE_SETPLAYBACKRANGE,
+            STATE_PAUSE,
+            STATE_RESUME,
+            STATE_EOSNOTREACHED,
+            STATE_STOP,
+            STATE_REMOVEDATASINK_VIDEO,
+            STATE_REMOVEDATASINK_AUDIO,
+            STATE_RESET,
+            STATE_REMOVEDATASOURCE,
+            STATE_CLEANUPANDCOMPLETE
         };*/
 
         PVTestState iState;
@@ -1755,12 +1755,12 @@ class pvplayer_async_test_genericplaypauserepositionresumenwdisconnectcancelallt
         void disableNetwork()
         {
 
-#if	PVPLAYER_TEST_LINUX_DISABLE_NETWORK
+#if PVPLAYER_TEST_LINUX_DISABLE_NETWORK
             fprintf(iTestMsgOutputFile, "***Disconnecting Network...\n");
             system("/sbin/ifconfig eth0 down");
 #endif
 
-#if	PVPLAYER_TEST_WIN32_DISABLE_NETWORK
+#if PVPLAYER_TEST_WIN32_DISABLE_NETWORK
             fprintf(iTestMsgOutputFile, "***Disconnecting Network...\n");
             system("ipconfig /release");
 #endif
@@ -1772,13 +1772,13 @@ class pvplayer_async_test_genericplaypauserepositionresumenwdisconnectcancelallt
             char cmd_str[48] = "/sbin/route add default gw ";
             oscl_strcat(cmd_str, DEFAULT_GATEWAY);
 
-#if	PVPLAYER_TEST_LINUX_DISABLE_NETWORK
+#if PVPLAYER_TEST_LINUX_DISABLE_NETWORK
             fprintf(iTestMsgOutputFile, "***Reconnecting Network...\n");
             system("/sbin/ifconfig eth0 up");
             system(cmd_str);
 #endif
 
-#if	PVPLAYER_TEST_WIN32_DISABLE_NETWORK
+#if PVPLAYER_TEST_WIN32_DISABLE_NETWORK
             fprintf(iTestMsgOutputFile, "***Reconnecting Network...\n");
             system("ipconfig /renew");
 #endif
@@ -1917,29 +1917,29 @@ class pvplayer_async_test_genericpvmferrorcorruptrenotified : public pvplayer_as
 
         /*enum PVTestState
         {
-        	STATE_CREATE,
+            STATE_CREATE,
             STATE_QUERYINTERFACE,
-        	STATE_ADDDATASOURCE,
-        	STATE_CONFIGPARAMS,
-        	STATE_INIT,
-        	STATE_GETMETADATAKEYLIST,
-        	STATE_GETMETADATAVALUELIST,
-        	STATE_ADDDATASINK_VIDEO,
-        	STATE_ADDDATASINK_AUDIO,
-        	STATE_PREPARE,
-        	STATE_CANCELALL,
-        	STATE_WAIT_FOR_CANCELALL,
-        	STATE_START,
-        	STATE_SETPLAYBACKRANGE,
-        	STATE_PAUSE,
-        	STATE_RESUME,
-        	STATE_EOSNOTREACHED,
-        	STATE_STOP,
-        	STATE_REMOVEDATASINK_VIDEO,
-        	STATE_REMOVEDATASINK_AUDIO,
-        	STATE_RESET,
-        	STATE_REMOVEDATASOURCE,
-        	STATE_CLEANUPANDCOMPLETE
+            STATE_ADDDATASOURCE,
+            STATE_CONFIGPARAMS,
+            STATE_INIT,
+            STATE_GETMETADATAKEYLIST,
+            STATE_GETMETADATAVALUELIST,
+            STATE_ADDDATASINK_VIDEO,
+            STATE_ADDDATASINK_AUDIO,
+            STATE_PREPARE,
+            STATE_CANCELALL,
+            STATE_WAIT_FOR_CANCELALL,
+            STATE_START,
+            STATE_SETPLAYBACKRANGE,
+            STATE_PAUSE,
+            STATE_RESUME,
+            STATE_EOSNOTREACHED,
+            STATE_STOP,
+            STATE_REMOVEDATASINK_VIDEO,
+            STATE_REMOVEDATASINK_AUDIO,
+            STATE_RESET,
+            STATE_REMOVEDATASOURCE,
+            STATE_CLEANUPANDCOMPLETE
         };*/
 
         PVTestState iState;

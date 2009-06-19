@@ -38,7 +38,7 @@
 #endif
 
 #if defined(_GNU_SOURCE) || (ARBT_HAS_LINUX_SUPPORT)
-#define LINUX		1
+#define LINUX       1
 #endif
 
 //! A typedef for a signed 8 bit integer.

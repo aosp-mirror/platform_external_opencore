@@ -202,8 +202,8 @@ class PVMp4H263EncExtensionInterface : public PVInterface
         /**
         * Set FSI buff to encoding param
         *
-        * @param aFSIBuff			FSI Buffer
-        * @param aFSIBuffLength		Length of FSI Buffer
+        * @param aFSIBuff           FSI Buffer
+        * @param aFSIBuffLength     Length of FSI Buffer
         * @return True for success, else false
         */
         virtual bool SetFSIParam(uint8* aFSIBuff, int aFSIBuffLength) = 0;

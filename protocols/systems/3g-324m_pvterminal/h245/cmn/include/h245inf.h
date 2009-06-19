@@ -80,7 +80,7 @@ typedef enum _userreportid
     E_User_Ml_Req_Idc ,             /* (21) Maintenance Loop Request Indication */
     E_User_Ml_Rjt_Idc ,             /* (22) Maintenance Loop Reject Indication  */
     E_User_Ml_Err_Idc ,             /* (23) Maintenance Loop Error Indication  */
-    E_User_CSUP_Done				/* (24) Call Setup Done Signal (WWU)		*/
+    E_User_CSUP_Done                /* (24) Call Setup Done Signal (WWU)        */
 } ENUM_UserReportId ;
 
 
@@ -181,7 +181,7 @@ typedef enum _primitiveid
     E_PtvId_Lc_Etb_Cfm ,            /* ( 51) ESTABLISH.confirm ( LC ) */
     E_PtvId_Lc_Rls_Cfm ,            /* ( 52) RELEASE.confirm ( LC ) */
     E_PtvId_Blc_Etb_Cfm ,           /* ( 53) ESTABLISH.confirm ( BLC ) */
-    E_PtvId_Blc_Etb_Cfm2,			/* WWU_BLC */
+    E_PtvId_Blc_Etb_Cfm2,           /* WWU_BLC */
     E_PtvId_Blc_Rls_Cfm ,           /* ( 54) RELEASE.confirm ( BLC ) */
     E_PtvId_Clc_Cls_Cfm ,           /* ( 55) CLOSE.confirm ( CLC ) */
     E_PtvId_Mt_Trf_Cfm ,            /* ( 56) TRANSFER.confirm ( MT ) */
@@ -305,7 +305,7 @@ typedef struct
     uint32 iT107; /* RME */
     uint32 iT108; /* CLC */
     uint32 iT109; /* MR */
-}H245TimerValues;
+} H245TimerValues;
 
 #endif /* _H245INF_ */
 

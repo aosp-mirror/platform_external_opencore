@@ -44,7 +44,7 @@ typedef enum TPvSbcChanMode
     CM_DUAL_CHANNEL,
     CM_STEREO,
     CM_JOINT_STEREO
-}TPvSbcChanMode;
+} TPvSbcChanMode;
 
 /*! \enum TPvSbcEncStatus
  *  \brief An enumeration type that defines the Encoder status.

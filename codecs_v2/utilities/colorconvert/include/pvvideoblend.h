@@ -59,7 +59,7 @@ typedef enum
 } PVRotationCLKWise;
 
 /**
-	This is for the mirror effect. */
+    This is for the mirror effect. */
 #define MirrorDisable 0
 #define MirrorEnable  4
 
@@ -68,11 +68,11 @@ typedef enum
  **/
 typedef struct
 {
-    uint8 *pBuffer; 	/*!< contain the YUV data in contiguous manner */
-    uint32 bufSize;		/*!< size of the allocated pBuffer, can be larger than needed. */
-    int32 width;		/*!< in pixels for Y component */
-    int32 height;		/*!< in lines for Y component */
-    PVYUVFormat	format;	/*!< indicates the specific YUV format for pBuffer */
+    uint8 *pBuffer;     /*!< contain the YUV data in contiguous manner */
+    uint32 bufSize;     /*!< size of the allocated pBuffer, can be larger than needed. */
+    int32 width;        /*!< in pixels for Y component */
+    int32 height;       /*!< in lines for Y component */
+    PVYUVFormat format; /*!< indicates the specific YUV format for pBuffer */
 } PVBlendFrame;
 
 
@@ -81,11 +81,11 @@ typedef struct
  **/
 typedef struct
 {
-    uint8 *pBuffer;		/*!< RGB565 data */
-    uint32 bufSize;		/*!< size of the allocated pBuffer, can be larger than needed. */
-    int32 width;		/*!< in pixels */
-    int32 height;		/*!< in lines */
-    int16 color_key;	/*!< the color key for pBuffer data, to be ignored by the blend function */
+    uint8 *pBuffer;     /*!< RGB565 data */
+    uint32 bufSize;     /*!< size of the allocated pBuffer, can be larger than needed. */
+    int32 width;        /*!< in pixels */
+    int32 height;       /*!< in lines */
+    int16 color_key;    /*!< the color key for pBuffer data, to be ignored by the blend function */
 } PVBitmap;
 
 
@@ -94,8 +94,8 @@ typedef struct
  **/
 typedef struct
 {
-    int32 width;		/*!< width in pixels */
-    int32 height;		/*!< height in lines */
+    int32 width;        /*!< width in pixels */
+    int32 height;       /*!< height in lines */
 
 } PVDimension;
 
@@ -104,8 +104,8 @@ typedef struct
  **/
 typedef struct
 {
-    int32 x;		/*!< horizontal */
-    int32 y;		/*!< vertical */
+    int32 x;        /*!< horizontal */
+    int32 y;        /*!< vertical */
 
 } PVCoordinate;
 
@@ -121,7 +121,7 @@ class CPVVideoBlend
          This function performs initialization to the input blend functionality, especially, for the RGB16 to YUV
          conversion part. Look at BlendInput function for detailed operation.
          @param frameSize Pointer to the size of the camera input frame, assuming the bitmap (if present)
-        	has the same frame size as the camera input frame.
+            has the same frame size as the camera input frame.
          @param rotation Angle of rotation, for the input from camera.
          @return 1 for success and 0 for fail.
          **/
@@ -159,8 +159,8 @@ class CPVVideoBlend
           @param srcEncodeFrm The original dimension of Input #2. The top_left element is ignored.
           @param dstEncodeFrm The output dimension after the scaling of Input #2.
           @param rotateMirrorEncFrm A flag to signify whether the Input#2 is to be rotated and/or mirror, for
-        					example, it can be set to Rotation90|MirrorEnable.
-          @param pitch	The pitch of the bitmap memory to be input as pDisplayOutput in FrameBlendOutput API.
+                            example, it can be set to Rotation90|MirrorEnable.
+          @param pitch  The pitch of the bitmap memory to be input as pDisplayOutput in FrameBlendOutput API.
           @return 1 for success and 0 for fail.
         */
 

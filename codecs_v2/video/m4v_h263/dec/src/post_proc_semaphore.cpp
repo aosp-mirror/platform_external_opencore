@@ -20,28 +20,28 @@
  INPUT AND OUTPUT DEFINITIONS
 
  Inputs:
-	q_block = pointer to buffer of inverse quantized DCT coefficients of type
+    q_block = pointer to buffer of inverse quantized DCT coefficients of type
               int for intra-VOP mode or buffer of residual data of type int
               for inter-VOP mode
 
  Local Stores/Buffers/Pointers Needed:
-	None
+    None
 
  Global Stores/Buffers/Pointers Needed:
-	None
+    None
 
  Outputs:
-	postmode = post processing semaphore with the vertical deblocking,
+    postmode = post processing semaphore with the vertical deblocking,
                horizontal deblocking, and deringing bits set up accordingly
 
  Pointers and Buffers Modified:
-	None
+    None
 
  Local Stores Modified:
-	None
+    None
 
  Global Stores Modified:
-	None
+    None
 
 ------------------------------------------------------------------------------
  FUNCTION DESCRIPTION
@@ -86,9 +86,9 @@
 /*----------------------------------------------------------------------------
 ; INCLUDES
 ----------------------------------------------------------------------------*/
-#include 	"mp4dec_lib.h"
+#include    "mp4dec_lib.h"
 #include    "mp4def.h"
-#include 	"post_proc.h"
+#include    "post_proc.h"
 
 /*----------------------------------------------------------------------------
 ; MACROS

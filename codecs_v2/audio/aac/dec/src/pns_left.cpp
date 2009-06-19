@@ -370,14 +370,14 @@ void pns_left(
         pGroup[3] = 8
         -----------------------------------------------------------*/
 
-        partition = *pGroup++;		/* partition = index of last sbk in group */
+        partition = *pGroup++;      /* partition = index of last sbk in group */
 
         do
         {
             Int band_start = 0;
             for (sfb = 0; sfb < num_bands; sfb++)
             {
-                band_stop = pBand[sfb];	/* band is offset table, band_stop is last coef in band */
+                band_stop = pBand[sfb]; /* band is offset table, band_stop is last coef in band */
 
                 Int band_length =  band_stop - band_start;
                 if (pCodebookMap[sfb] == NOISE_HCB)
@@ -412,7 +412,7 @@ void pns_left(
 
                 band_start = band_stop;
 
-            }	/* for (sfb) */
+            }   /* for (sfb) */
 
             spec += pFrameInfo->coef_per_win[win_indx++];
             pFactors += num_bands;

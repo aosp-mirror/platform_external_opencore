@@ -16,11 +16,11 @@
  * -------------------------------------------------------------------
  */
 /*
-	This PVA_FF_Parentable Class is the base class for all other classes here - including
-	both Atoms and Descriptors.  This allows the maintenance of the tree structure
-	where every element has a parent - and that parent has three methods, getParent(),
-	setParent(), and recomputeSize().  This allows the classes to recompute the size
-	of their parent class when a child class is changed or added to.
+    This PVA_FF_Parentable Class is the base class for all other classes here - including
+    both Atoms and Descriptors.  This allows the maintenance of the tree structure
+    where every element has a parent - and that parent has three methods, getParent(),
+    setParent(), and recomputeSize().  This allows the classes to recompute the size
+    of their parent class when a child class is changed or added to.
 */
 
 

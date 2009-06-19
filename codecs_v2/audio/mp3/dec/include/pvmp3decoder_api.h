@@ -223,7 +223,7 @@ extern "C"
 
         int16       *pOutputBuffer;
 
-    }tPVMP3DecoderExternal;
+    } tPVMP3DecoderExternal;
 
 
 #ifdef __cplusplus

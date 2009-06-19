@@ -29,12 +29,12 @@ class PVA_FF_MfroAtom : public PVA_FF_FullAtom
 
         virtual ~PVA_FF_MfroAtom();
 
-        void	setSize(uint32 size);
+        void    setSize(uint32 size);
 
         virtual bool renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP* fp);
 
     private:
-        uint32		_atomSize;
+        uint32      _atomSize;
 
         virtual void recomputeSize();
 

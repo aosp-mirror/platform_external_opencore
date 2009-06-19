@@ -20,9 +20,9 @@
 /* 3/29/01 fast half-pel search based on neighboring guess */
 /* value ranging from 0 to 4, high complexity (more accurate) to
    low complexity (less accurate) */
-#define HP_DISTANCE_TH		5 // 2  /* half-pel distance threshold */
+#define HP_DISTANCE_TH      5 // 2  /* half-pel distance threshold */
 
-#define PREF_16_VEC 129		/* 1MV bias versus 4MVs*/
+#define PREF_16_VEC 129     /* 1MV bias versus 4MVs*/
 
 const static int distance_tab[9][9] =   /* [hp_guess][k] */
 {
@@ -37,19 +37,19 @@ const static int distance_tab[9][9] =   /* [hp_guess][k] */
     {1, 0, 1, 2, 3, 2, 1, 0, 0}
 };
 
-#define CLIP_RESULT(x) 		if((uint)x > 0xFF){ \
-			     x = 0xFF & (~(x>>31));}
+#define CLIP_RESULT(x)      if((uint)x > 0xFF){ \
+                 x = 0xFF & (~(x>>31));}
 
 #define CLIP_UPPER16(x)     if((uint)x >= 0x20000000){ \
-		x = 0xFF0000 & (~(x>>31));} \
-		else { \
-		x = (x>>5)&0xFF0000; \
-		}
+        x = 0xFF0000 & (~(x>>31));} \
+        else { \
+        x = (x>>5)&0xFF0000; \
+        }
 
 /*=====================================================================
-	Function:	AVCFindHalfPelMB
-	Date:		10/31/2007
-	Purpose:	Find half pel resolution MV surrounding the full-pel MV
+    Function:   AVCFindHalfPelMB
+    Date:       10/31/2007
+    Purpose:    Find half pel resolution MV surrounding the full-pel MV
 =====================================================================*/
 
 int AVCFindHalfPelMB(AVCEncObject *encvid, uint8 *cur, AVCMV *mot, uint8 *ncand,
@@ -398,7 +398,7 @@ void GenerateHalfPelPred(uint8* subpel_pred, uint8 *ncand, int lx)
             f = (e >> 8) & 0xFF00FF;
             e &= 0xFF00FF;
 
-            c = *((uint32*)(ref + 48));	/* c, d */
+            c = *((uint32*)(ref + 48)); /* c, d */
             d = (c >> 8) & 0xFF00FF;
             c &= 0xFF00FF;
 
@@ -433,12 +433,12 @@ void GenerateHalfPelPred(uint8* subpel_pred, uint8 *ncand, int lx)
 
             a |= (c >> 16);
             b |= (d >> 16);
-            //	a>>=5;
-            //	b>>=5;
+            //  a>>=5;
+            //  b>>=5;
             /* clip */
-            //	msk |= b;  msk|=a;
-            //	a &= 0xFF00FF;
-            //	b &= 0xFF00FF;
+            //  msk |= b;  msk|=a;
+            //  a &= 0xFF00FF;
+            //  b &= 0xFF00FF;
             a |= (b << 8);  /* pack it back */
 
             *((uint16*)(dst += 24)) = a & 0xFFFF; //dst is not word-aligned.
@@ -447,10 +447,10 @@ void GenerateHalfPelPred(uint8* subpel_pred, uint8 *ncand, int lx)
         }
         dst -= 404; // 24*17-4
         ref -= 404;
-        /*		if(msk & 0xFF00FF00) // need clipping
-        		{
-        			VertInterpWClip(dst,ref); // re-do 4 column with clip
-        		}*/
+        /*      if(msk & 0xFF00FF00) // need clipping
+                {
+                    VertInterpWClip(dst,ref); // re-do 4 column with clip
+                }*/
     }
 
     return ;

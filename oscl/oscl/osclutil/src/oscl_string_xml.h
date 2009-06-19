@@ -49,37 +49,37 @@
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Function prototypes
 /*!
-	\brief Check if the input string contains any special ASCII character
+    \brief Check if the input string contains any special ASCII character
            like &, <, >, ', ".
-	       The function scans the string and check if each character is a special character.
+           The function scans the string and check if each character is a special character.
            It stops at the first NULL character (if max_bytes = 0), or the max_byte value.
 
-	\param str_buf			Ptr to an input string, which may not terminate with null, to be checked
-	\param num_escape_bytes This is an output parameter which is the number of bytes needed to hold
+    \param str_buf          Ptr to an input string, which may not terminate with null, to be checked
+    \param num_escape_bytes This is an output parameter which is the number of bytes needed to hold
                             the result string.
                             Value 0 indicates that there is no special character found.
                             If max_bytes = 0, the return value does not include the null character.
     \param max_bytes        The maximum number of bytes to read (a zero value means read to the first NULL character).
-	\return					True if the function succeeds, and
+    \return                 True if the function succeeds, and
                             num_escape_bytes = 0 means that no special character is found,
                             num_escape_bytes >0 means the number of bytes of the result string.
                             False if there is any error occurred.
 */
 OSCL_IMPORT_REF bool  oscl_str_need_escape_xml(const char *str_buf, uint32& num_escape_bytes, uint32 max_bytes = 0);
 /*!
-	\brief Escape any of the following special characters in the string
+    \brief Escape any of the following special characters in the string
            Special ASCII characters: &, <, >, ', ".
 
-	       The function scans the string and replaces each special character with its corresponding
+           The function scans the string and replaces each special character with its corresponding
            escape sequence. It stops at the first NULL character, the max_byte value.
 
-	\param str_buf_in		Ptr to an input string
+    \param str_buf_in       Ptr to an input string
     \param str_buf_out      Ptr to an output buffer which stores the modified string
     \param max_out_buf_bytes The size of str_buf_out.
     \param max_bytes        The maximum number of bytes to read (a zero value means read to the first NULL character).
                             It is the length of str_buf_in.
     \param num_bytes_written Number of bytes written in the output buffer, str_buf_out
-	\return					It returns the number of bytes in the str_buf_outring if succeeded.
+    \return                 It returns the number of bytes in the str_buf_outring if succeeded.
                             It returns negative number if failed, and its absolute value indicates
                             the total number bytes written to the output buffer, str_buf_out,
                             if str_buf_out != null.

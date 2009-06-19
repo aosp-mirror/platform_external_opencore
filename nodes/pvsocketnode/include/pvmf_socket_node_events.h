@@ -21,7 +21,7 @@
 #define PVMFSocketNodeEventTypeUUID PVUuid(0xbe846567,0xae17,0x44c8,0x9c,0x9a,0x87,0xb8,0x33,0xa0,0xf9,0x1d)
 
 /* Debug macros*/
-#define ENABLE_SOCKET_NODE_DEBUG_INFO_EVENT	0
+#define ENABLE_SOCKET_NODE_DEBUG_INFO_EVENT 0
 
 /**
  * An enumeration of error codes from PVMFSocketNode

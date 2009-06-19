@@ -40,7 +40,7 @@
  Description: Placed typecast to Int in places where UInt->Int
 
  Description: Replace some instances of getbits to get9_n_lessbits
-			  when the number of bits read is 9.
+              when the number of bits read is 9.
 
  Who:                                  Date:
  Description:

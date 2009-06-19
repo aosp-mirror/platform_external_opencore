@@ -40,7 +40,7 @@ extern "C"
     inverse transform and residue compensation on a 4x4 block.
     \param "encvid" "Pointer to AVCEncObject."
     \param "blkidx"  "raster scan block index of the current 4x4 block."
-    \param "cur"	"Pointer to the reconstructed block."
+    \param "cur"    "Pointer to the reconstructed block."
     \param "org"    "Pointer to the original block."
     \param "coef_cost"  "Pointer to the coefficient cost to be filled in and returned."
     \return "Number of non-zero coefficients."
@@ -50,8 +50,8 @@ extern "C"
     /**
     This function performs IDCT on an INTER macroblock.
     \param "video"  "Pointer to AVCCommonObj."
-    \param "curL"	"Pointer to the origin of the macroblock on the current frame."
-    \param "currMB"	"Pointer to the AVCMacroblock structure."
+    \param "curL"   "Pointer to the origin of the macroblock on the current frame."
+    \param "currMB" "Pointer to the AVCMacroblock structure."
     \param "picPitch" "Pitch of the current frame."
     \return "void".
     */
@@ -61,7 +61,7 @@ extern "C"
     This function perform residue calculation, transform, quantize, inverse quantize,
     inverse transform and residue compensation on a macroblock.
     \param "encvid" "Pointer to AVCEncObject."
-    \param "curL"	"Pointer to the reconstructed MB."
+    \param "curL"   "Pointer to the reconstructed MB."
     \param "orgL"    "Pointer to the original MB."
     \return "void"
     */
@@ -71,9 +71,9 @@ extern "C"
     This function perform residue calculation, transform, quantize, inverse quantize,
     inverse transform and residue compensation for chroma components of an MB.
     \param "encvid" "Pointer to AVCEncObject."
-    \param "curC"	"Pointer to the reconstructed MB."
+    \param "curC"   "Pointer to the reconstructed MB."
     \param "orgC"    "Pointer to the original MB."
-    \param "cr"		"Flag whether it is Cr or not."
+    \param "cr"     "Flag whether it is Cr or not."
     \return "void"
     */
     void dct_chroma(AVCEncObject *encvid, uint8 *curC, uint8 *orgC, int cr);
@@ -82,10 +82,10 @@ extern "C"
     /**
     This function interprets the encoding parameters provided by users in encParam.
     The results are kept in AVCEncObject, AVCSeqParamSet, AVCPicParamSet and AVCSliceHeader.
-    \param "encvid"		"Pointer to AVCEncObject."
-    \param "encParam"	"Pointer to AVCEncParam."
-    \param "extSPS"		"External SPS template to be followed. NULL if not present."
-    \param "extPPS"		"External PPS template to be followed. NULL if not present."
+    \param "encvid"     "Pointer to AVCEncObject."
+    \param "encParam"   "Pointer to AVCEncParam."
+    \param "extSPS"     "External SPS template to be followed. NULL if not present."
+    \param "extPPS"     "External PPS template to be followed. NULL if not present."
     \return "see AVCEnc_Status."
     */
     AVCEnc_Status  SetEncodeParam(AVCHandle *avcHandle, AVCEncParams *encParam,
@@ -95,14 +95,14 @@ extern "C"
     This function verifies the encoding parameters whether they meet the set of supported
     tool by a specific profile. If the profile is not set, it will just find the closest
     profile instead of verifying it.
-    \param "video"	"Pointer to AVCEncObject."
-    \param "seqParam"	"Pointer to AVCSeqParamSet."
-    \param "picParam"	"Pointer to AVCPicParamSet."
+    \param "video"  "Pointer to AVCEncObject."
+    \param "seqParam"   "Pointer to AVCSeqParamSet."
+    \param "picParam"   "Pointer to AVCPicParamSet."
     \return "AVCENC_SUCCESS if success,
-    		AVCENC_PROFILE_NOT_SUPPORTED if the specified profile
-    			is not supported by this version of the library,
-    		AVCENC_TOOLS_NOT_SUPPORTED if any of the specified encoding tools are
-    		not supported by the user-selected profile."
+            AVCENC_PROFILE_NOT_SUPPORTED if the specified profile
+                is not supported by this version of the library,
+            AVCENC_TOOLS_NOT_SUPPORTED if any of the specified encoding tools are
+            not supported by the user-selected profile."
     */
     AVCEnc_Status VerifyProfile(AVCEncObject *video, AVCSeqParamSet *seqParam, AVCPicParamSet *picParam);
 
@@ -110,31 +110,31 @@ extern "C"
     This function verifies the encoding parameters whether they meet the requirement
     for a specific level. If the level is not set, it will just find the closest
     level instead of verifying it.
-    \param "video"	"Pointer to AVCEncObject."
-    \param "seqParam"	"Pointer to AVCSeqParamSet."
-    \param "picParam"	"Pointer to AVCPicParamSet."
+    \param "video"  "Pointer to AVCEncObject."
+    \param "seqParam"   "Pointer to AVCSeqParamSet."
+    \param "picParam"   "Pointer to AVCPicParamSet."
     \return "AVCENC_SUCCESS if success,
-    		AVCENC_LEVEL_NOT_SUPPORTED if the specified level
-    			is not supported by this version of the library,
-    		AVCENC_LEVEL_FAIL if any of the encoding parameters exceed
-    		the range of the user-selected level."
+            AVCENC_LEVEL_NOT_SUPPORTED if the specified level
+                is not supported by this version of the library,
+            AVCENC_LEVEL_FAIL if any of the encoding parameters exceed
+            the range of the user-selected level."
     */
     AVCEnc_Status VerifyLevel(AVCEncObject *video, AVCSeqParamSet *seqParam, AVCPicParamSet *picParam);
 
     /**
     This funciton initializes the frame encoding by setting poc/frame_num related parameters. it
     also performs motion estimation.
-    \param "encvid"	"Pointer to the AVCEncObject."
+    \param "encvid" "Pointer to the AVCEncObject."
     \return "AVCENC_SUCCESS if success, AVCENC_NO_PICTURE if there is no input picture
-    		in the queue to encode, AVCENC_POC_FAIL or AVCENC_CONSECUTIVE_NONREF for POC
-    		related errors, AVCENC_NEW_IDR if new IDR is detected."
+            in the queue to encode, AVCENC_POC_FAIL or AVCENC_CONSECUTIVE_NONREF for POC
+            related errors, AVCENC_NEW_IDR if new IDR is detected."
     */
     AVCEnc_Status InitFrame(AVCEncObject *encvid);
 
     /**
     This function initializes slice header related variables and other variables necessary
     for decoding one slice.
-    \param "encvid"	"Pointer to the AVCEncObject."
+    \param "encvid" "Pointer to the AVCEncObject."
     \return "AVCENC_SUCCESS if success."
     */
     AVCEnc_Status InitSlice(AVCEncObject *encvid);
@@ -142,7 +142,7 @@ extern "C"
     /*----------- header.c ----------------*/
     /**
     This function performs bitstream encoding of the sequence parameter set NAL.
-    \param "encvid"	"Pointer to the AVCEncObject."
+    \param "encvid" "Pointer to the AVCEncObject."
     \param "stream" "Pointer to AVCEncBitstream."
     \return "AVCENC_SUCCESS if success or AVCENC_SPS_FAIL or others for unexpected failure which
     should not occur. The SPS parameters should all be verified before this function is called."
@@ -152,7 +152,7 @@ extern "C"
     /**
     This function encodes the VUI parameters into the sequence parameter set bitstream.
     \param "stream" "Pointer to AVCEncBitstream."
-    \param "vui"	"Pointer to AVCVUIParams."
+    \param "vui"    "Pointer to AVCVUIParams."
     \return "nothing."
     */
     void EncodeVUI(AVCEncBitstream* stream, AVCVUIParams* vui);
@@ -160,7 +160,7 @@ extern "C"
     /**
     This function encodes HRD parameters into the sequence parameter set bitstream
     \param "stream" "Pointer to AVCEncBitstream."
-    \param "hrd"	"Pointer to AVCHRDParams."
+    \param "hrd"    "Pointer to AVCHRDParams."
     \return "nothing."
     */
     void EncodeHRD(AVCEncBitstream* stream, AVCHRDParams* hrd);
@@ -168,7 +168,7 @@ extern "C"
 
     /**
     This function performs bitstream encoding of the picture parameter set NAL.
-    \param "encvid"	"Pointer to the AVCEncObject."
+    \param "encvid" "Pointer to the AVCEncObject."
     \param "stream" "Pointer to AVCEncBitstream."
     \return "AVCENC_SUCCESS if success or AVCENC_PPS_FAIL or others for unexpected failure which
     should not occur. The SPS parameters should all be verified before this function is called."
@@ -178,7 +178,7 @@ extern "C"
     /**
     This function encodes slice header information which has been initialized or fabricated
     prior to entering this funciton.
-    \param "encvid"	"Pointer to the AVCEncObject."
+    \param "encvid" "Pointer to the AVCEncObject."
     \param "stream" "Pointer to AVCEncBitstream."
     \return "AVCENC_SUCCESS if success or bitstream fail statuses."
     */
@@ -207,10 +207,10 @@ extern "C"
     This function initializes the POC related variables and the POC syntax to be encoded
     to the slice header derived from the disp_order and is_reference flag of the original
     input frame to be encoded.
-    \param "video"	"Pointer to the AVCEncObject."
+    \param "video"  "Pointer to the AVCEncObject."
     \return "AVCENC_SUCCESS if success,
-    		AVCENC_POC_FAIL if the poc type is undefined or
-    		AVCENC_CONSECUTIVE_NONREF if there are consecutive non-reference frame for POC type 2."
+            AVCENC_POC_FAIL if the poc type is undefined or
+            AVCENC_CONSECUTIVE_NONREF if there are consecutive non-reference frame for POC type 2."
     */
     AVCEnc_Status InitPOC(AVCEncObject *video);
 
@@ -225,11 +225,11 @@ extern "C"
     /**
     This function initializes the bitstream structure with the information given by
     the users.
-    \param "bitstream"	"Pointer to the AVCEncBitstream structure."
-    \param "buffer"		"Pointer to the unsigned char buffer for output."
-    \param "buf_size"	"The size of the buffer in bytes."
-    \param "overrunBuffer"	"Pointer to extra overrun buffer."
-    \param "oBSize"		"Size of overrun buffer in bytes."
+    \param "bitstream"  "Pointer to the AVCEncBitstream structure."
+    \param "buffer"     "Pointer to the unsigned char buffer for output."
+    \param "buf_size"   "The size of the buffer in bytes."
+    \param "overrunBuffer"  "Pointer to extra overrun buffer."
+    \param "oBSize"     "Size of overrun buffer in bytes."
     \return "AVCENC_SUCCESS if success, AVCENC_BITSTREAM_INIT_FAIL if fail"
     */
     AVCEnc_Status BitstreamEncInit(AVCEncBitstream *bitstream, uint8 *buffer, int buf_size,
@@ -238,7 +238,7 @@ extern "C"
     /**
     This function writes the data from the cache into the bitstream buffer. It also adds the
     emulation prevention code if necessary.
-    \param "stream"		"Pointer to the AVCEncBitstream structure."
+    \param "stream"     "Pointer to the AVCEncBitstream structure."
     \return "AVCENC_SUCCESS if success or AVCENC_BITSTREAM_BUFFER_FULL if fail."
     */
     AVCEnc_Status AVCBitstreamSaveWord(AVCEncBitstream *stream);
@@ -246,9 +246,9 @@ extern "C"
     /**
     This function writes the codeword into the cache which will eventually be written to
     the bitstream buffer.
-    \param "stream"		"Pointer to the AVCEncBitstream structure."
-    \param "nBits"		"Number of bits in the codeword."
-    \param "code"		"The codeword."
+    \param "stream"     "Pointer to the AVCEncBitstream structure."
+    \param "nBits"      "Number of bits in the codeword."
+    \param "code"       "The codeword."
     \return "AVCENC_SUCCESS if success or AVCENC_BITSTREAM_BUFFER_FULL if fail."
     */
     AVCEnc_Status BitstreamWriteBits(AVCEncBitstream *stream, int nBits, uint code);
@@ -256,16 +256,16 @@ extern "C"
     /**
     This function writes one bit of data into the cache which will eventually be written
     to the bitstream buffer.
-    \param "stream"		"Pointer to the AVCEncBitstream structure."
-    \param "code"		"The codeword."
+    \param "stream"     "Pointer to the AVCEncBitstream structure."
+    \param "code"       "The codeword."
     \return "AVCENC_SUCCESS if success or AVCENC_BITSTREAM_BUFFER_FULL if fail."
     */
     AVCEnc_Status BitstreamWrite1Bit(AVCEncBitstream *stream, uint code);
 
     /**
     This function adds trailing bits to the bitstream and reports back the final EBSP size.
-    \param "stream"		"Pointer to the AVCEncBitstream structure."
-    \param "nal_size"	"Output the final NAL size."
+    \param "stream"     "Pointer to the AVCEncBitstream structure."
+    \param "nal_size"   "Output the final NAL size."
     \return "AVCENC_SUCCESS if success or AVCENC_BITSTREAM_BUFFER_FULL if fail."
     */
     AVCEnc_Status BitstreamTrailingBits(AVCEncBitstream *bitstream, uint *nal_size);
@@ -292,8 +292,8 @@ extern "C"
 
     /** This function performs intra/inter decision based on ABE.
     \param "encvid" "Pointer to AVCEncObject."
-    \param "min_cost"	"Best inter cost."
-    \param "curL"	"Pointer to the current MB origin in reconstructed frame."
+    \param "min_cost"   "Best inter cost."
+    \param "curL"   "Pointer to the current MB origin in reconstructed frame."
     \param "picPitch" "Pitch of the reconstructed frame."
     \return "Boolean for intra mode."
     */
@@ -304,8 +304,8 @@ extern "C"
     /**
     This function performs intra prediction mode search.
     \param "encvid" "Pointer to AVCEncObject."
-    \param "mbnum"	"Current MB number."
-    \param "curL"	"Pointer to the current MB origin in reconstructed frame."
+    \param "mbnum"  "Current MB number."
+    \param "curL"   "Pointer to the current MB origin in reconstructed frame."
     \param "picPitch" "Pitch of the reconstructed frame."
     \return "void."
     */
@@ -322,7 +322,7 @@ extern "C"
     /**
     This function calculate the cost of all I16 modes and compare them to get the minimum.
     \param "encvid" "Pointer to AVCEncObject."
-    \param "orgY"	"Pointer to the original luma MB."
+    \param "orgY"   "Pointer to the original luma MB."
     \param "min_cost" "Pointer to the minimal cost so-far."
     \return "void"
     */
@@ -330,7 +330,7 @@ extern "C"
 
     /**
     This function calculates the cost of each I16 mode.
-    \param "org"	"Pointer to the original luma MB."
+    \param "org"    "Pointer to the original luma MB."
     \param "org_pitch" "Stride size of the original frame."
     \param "pred"   "Pointer to the prediction values."
     \param "min_cost" "Minimal cost so-far."
@@ -352,8 +352,8 @@ extern "C"
     /**
     This function calculates the most probable I4 mode of a given 4x4 block
     from neighboring informationaccording to AVC/H.264 standard.
-    \param "video"	"Pointer to AVCCommonObj."
-    \param "blkidx"	"The current block index."
+    \param "video"  "Pointer to AVCCommonObj."
+    \param "blkidx" "The current block index."
     \return "Most probable mode."
     */
     int FindMostProbableI4Mode(AVCCommonObj *video, int blkidx);
@@ -362,8 +362,8 @@ extern "C"
     This function is where a lot of actions take place in the 4x4 block level inside
     mb_intra4x4_search.
     \param "encvid" "Pointer to AVCEncObject."
-    \param "blkidx"	"The current 4x4 block index."
-    \param "cur"	"Pointer to the reconstructed block."
+    \param "blkidx" "The current 4x4 block index."
+    \param "cur"    "Pointer to the reconstructed block."
     \param "org"    "Pointer to the original block."
     \return "Minimal cost, also set currMB->i4Mode"
     */
@@ -371,10 +371,10 @@ extern "C"
 
     /**
     This function calculates the cost of a given I4 prediction mode.
-    \param "org"	"Pointer to the original block."
+    \param "org"    "Pointer to the original block."
     \param "org_pitch"  "Stride size of the original frame."
-    \param "pred"	"Pointer to the prediction block. (encvid->pred_i4)"
-    \param "cost"	"Pointer to the minimal cost (to be updated)."
+    \param "pred"   "Pointer to the prediction block. (encvid->pred_i4)"
+    \param "cost"   "Pointer to the minimal cost (to be updated)."
     \return "void"
     */
     void cost_i4(uint8 *org, int org_pitch, uint8 *pred, uint16 *cost);
@@ -388,11 +388,11 @@ extern "C"
 
     /**
     This function calculates the cost of a chroma prediction mode.
-    \param "orgCb"	"Pointer to the original Cb block."
-    \param "orgCr"	"Pointer to the original Cr block."
+    \param "orgCb"  "Pointer to the original Cb block."
+    \param "orgCr"  "Pointer to the original Cr block."
     \param "org_pitch"  "Stride size of the original frame."
-    \param "pred"	"Pointer to the prediction block (encvid->pred_ic)"
-    \param "mincost"	"Minimal cost so far."
+    \param "pred"   "Pointer to the prediction block (encvid->pred_ic)"
+    \param "mincost"    "Minimal cost so far."
     \return "Cost."
     */
 
@@ -402,8 +402,8 @@ extern "C"
 
     /**
     This is a main function to peform inter prediction.
-    \param "encvid"		"Pointer to AVCEncObject."
-    \param "video"		"Pointer to AVCCommonObj."
+    \param "encvid"     "Pointer to AVCEncObject."
+    \param "video"      "Pointer to AVCCommonObj."
     \return "void".
     */
     void AVCMBMotionComp(AVCEncObject *encvid, AVCCommonObj *video);
@@ -411,15 +411,15 @@ extern "C"
 
     /**
     This function is called for luma motion compensation.
-    \param "ref"	"Pointer to the origin of a reference luma."
-    \param "picwidth"	"Width of the picture."
-    \param "picheight"	"Height of the picture."
-    \param "x_pos"	"X-coordinate of the predicted block in quarter pel resolution."
-    \param "y_pos"	"Y-coordinate of the predicted block in quarter pel resolution."
-    \param "pred"	"Pointer to the output predicted block."
-    \param "pred_pitch"	"Width of pred."
-    \param "blkwidth"	"Width of the current partition."
-    \param "blkheight"	"Height of the current partition."
+    \param "ref"    "Pointer to the origin of a reference luma."
+    \param "picwidth"   "Width of the picture."
+    \param "picheight"  "Height of the picture."
+    \param "x_pos"  "X-coordinate of the predicted block in quarter pel resolution."
+    \param "y_pos"  "Y-coordinate of the predicted block in quarter pel resolution."
+    \param "pred"   "Pointer to the output predicted block."
+    \param "pred_pitch" "Width of pred."
+    \param "blkwidth"   "Width of the current partition."
+    \param "blkheight"  "Height of the current partition."
     \return "void"
     */
     void eLumaMotionComp(uint8 *ref, int picwidth, int picheight,
@@ -515,7 +515,7 @@ extern "C"
     /**
     This function keeps track of intra refresh macroblock locations.
     \param "encvid" "Pointer to the global array structure AVCEncObject."
-    \param "mblock"	"Pointer to the array of AVCMacroblock structures."
+    \param "mblock" "Pointer to the array of AVCMacroblock structures."
     \param "totalMB" "Total number of MBs in a frame."
     \param "numRefresh" "Number of MB to be intra refresh in a single frame."
     \return "void"
@@ -526,44 +526,44 @@ extern "C"
     void InitHTFM(VideoEncData *encvid, HTFM_Stat *htfm_stat, double *newvar, int *collect);
     void UpdateHTFM(AVCEncObject *encvid, double *newvar, double *exp_lamda, HTFM_Stat *htfm_stat);
     void CalcThreshold(double pf, double exp_lamda[], int nrmlz_th[]);
-    void	HTFMPrepareCurMB_AVC(AVCEncObject *encvid, HTFM_Stat *htfm_stat, uint8 *cur, int pitch);
+    void    HTFMPrepareCurMB_AVC(AVCEncObject *encvid, HTFM_Stat *htfm_stat, uint8 *cur, int pitch);
 #endif
 
     /**
     This function reads the input MB into a smaller faster memory space to minimize the cache miss.
     \param "encvid" "Pointer to the global AVCEncObject."
-    \param "cur"	"Pointer to the original input macroblock."
-    \param "pitch"	"Stride size of the input frame (luma)."
+    \param "cur"    "Pointer to the original input macroblock."
+    \param "pitch"  "Stride size of the input frame (luma)."
     \return "void"
     */
-    void	AVCPrepareCurMB(AVCEncObject *encvid, uint8 *cur, int pitch);
+    void    AVCPrepareCurMB(AVCEncObject *encvid, uint8 *cur, int pitch);
 
     /**
     Performs motion vector search for a macroblock.
-    \param "encvid"	"Pointer to AVCEncObject structure."
-    \param "cur"	"Pointer to the current macroblock in the input frame."
+    \param "encvid" "Pointer to AVCEncObject structure."
+    \param "cur"    "Pointer to the current macroblock in the input frame."
     \param "best_cand" "Array of best candidates (to be filled in and returned)."
-    \param "i0"		"X-coordinate of the macroblock."
-    \param "j0"		"Y-coordinate of the macroblock."
+    \param "i0"     "X-coordinate of the macroblock."
+    \param "j0"     "Y-coordinate of the macroblock."
     \param "type_pred" "Indicates the type of operations."
-    \param "FS_en"		"Flag for fullsearch enable."
-    \param "hp_guess"	"Guess for half-pel search."
+    \param "FS_en"      "Flag for fullsearch enable."
+    \param "hp_guess"   "Guess for half-pel search."
     \return "void"
     */
     void AVCMBMotionSearch(AVCEncObject *encvid, uint8 *cur, uint8 *best_cand[],
                            int i0, int j0, int type_pred, int FS_en, int *hp_guess);
 
 //AVCEnc_Status AVCMBMotionSearch(AVCEncObject *encvid, AVCMacroblock *currMB, int mbNum,
-//							 int num_pass);
+//                           int num_pass);
 
     /**
     Perform full-pel exhaustive search around the predicted MV.
-    \param "encvid"	"Pointer to AVCEncObject structure."
-    \param "prev"	"Pointer to the reference frame."
-    \param "cur"	"Pointer to the input macroblock."
-    \param "imin"	"Pointer to minimal mv (x)."
-    \param "jmin"	"Pointer to minimal mv (y)."
-    \param "ilow, ihigh, jlow, jhigh"	"Lower bound on search range."
+    \param "encvid" "Pointer to AVCEncObject structure."
+    \param "prev"   "Pointer to the reference frame."
+    \param "cur"    "Pointer to the input macroblock."
+    \param "imin"   "Pointer to minimal mv (x)."
+    \param "jmin"   "Pointer to minimal mv (y)."
+    \param "ilow, ihigh, jlow, jhigh"   "Lower bound on search range."
     \param "cmvx, cmvy" "Predicted MV value."
 
     \return "The cost function of the best candidate."
@@ -575,13 +575,13 @@ extern "C"
     /**
     Select candidates from neighboring blocks according to the type of the
     prediction selection.
-    \param "mvx"	"Pointer to the candidate, x-coordinate."
-    \param "mvy"	"Pointer to the candidate, y-coordinate."
-    \param "num_can"	"Pointer to the number of candidates returned."
-    \param "imb"	"The MB index x-coordinate."
-    \param "jmb"	"The MB index y-coordinate."
-    \param "type_pred"	"Type of the prediction."
-    \param "cmvx, cmvy"	"Pointer to predicted MV (modified version)."
+    \param "mvx"    "Pointer to the candidate, x-coordinate."
+    \param "mvy"    "Pointer to the candidate, y-coordinate."
+    \param "num_can"    "Pointer to the number of candidates returned."
+    \param "imb"    "The MB index x-coordinate."
+    \param "jmb"    "The MB index y-coordinate."
+    \param "type_pred"  "Type of the prediction."
+    \param "cmvx, cmvy" "Pointer to predicted MV (modified version)."
     \return "void."
     */
     void AVCCandidateSelection(int *mvx, int *mvy, int *num_can, int imb, int jmb,
@@ -590,15 +590,15 @@ extern "C"
     /**
     Utility function to move the values in the array dn according to the new
     location to avoid redundant calculation.
-    \param "dn"	"Array of integer of size 9."
-    \param "new_loc"	"New location index."
+    \param "dn" "Array of integer of size 9."
+    \param "new_loc"    "New location index."
     \return "void."
     */
     void AVCMoveNeighborSAD(int dn[], int new_loc);
 
     /**
     Find minimum index of dn.
-    \param "dn"	"Array of integer of size 9."
+    \param "dn" "Array of integer of size 9."
     \return "The index of dn with the smallest dn[] value."
     */
     int AVCFindMin(int dn[]);
@@ -609,12 +609,12 @@ extern "C"
     /**
     Search for the best half-pel resolution MV around the full-pel MV.
     \param "encvid" "Pointer to the global AVCEncObject structure."
-    \param "cur"	"Pointer to the current macroblock."
-    \param "mot"	"Pointer to the AVCMV array of the frame."
-    \param "ncand"	"Pointer to the origin of the fullsearch result."
-    \param "xpos"	"The current MB position in x."
-    \param "ypos"	"The current MB position in y."
-    \param "hp_guess"	"Input to help speedup the search."
+    \param "cur"    "Pointer to the current macroblock."
+    \param "mot"    "Pointer to the AVCMV array of the frame."
+    \param "ncand"  "Pointer to the origin of the fullsearch result."
+    \param "xpos"   "The current MB position in x."
+    \param "ypos"   "The current MB position in y."
+    \param "hp_guess"   "Input to help speedup the search."
     \param "cmvx, cmvy" "Predicted motion vector use for mvcost."
     \return "Minimal cost (SATD) without MV cost. (for rate control purpose)"
     */
@@ -650,9 +650,9 @@ extern "C"
 
     /**
     This function calculates the SATD of a subpel candidate.
-    \param "cand"	"Pointer to a candidate."
-    \param "cur"	"Pointer to the current block."
-    \param "dmin"	"Min-so-far SATD."
+    \param "cand"   "Pointer to a candidate."
+    \param "cur"    "Pointer to the current block."
+    \param "dmin"   "Min-so-far SATD."
     \return "Sum of Absolute Transformed Difference."
     */
     int SATD_MB(uint8 *cand, uint8 *cur, int dmin);
@@ -668,10 +668,10 @@ extern "C"
     /**
     This function takes the timestamp of the input and determine whether it should be encoded
     or skipped.
-    \param "encvid"	"Pointer to the AVCEncObject structure."
-    \param "rateCtrl"	"Pointer to the AVCRateControl structure."
-    \param "modTime"	"The 32 bit timestamp of the input frame."
-    \param "frameNum"	"Pointer to the frame number if to be encoded."
+    \param "encvid" "Pointer to the AVCEncObject structure."
+    \param "rateCtrl"   "Pointer to the AVCRateControl structure."
+    \param "modTime"    "The 32 bit timestamp of the input frame."
+    \param "frameNum"   "Pointer to the frame number if to be encoded."
     \return "AVC_SUCCESS or else."
     */
     AVCEnc_Status RCDetermineFrameNum(AVCEncObject *encvid, AVCRateControl *rateCtrl, uint32 modTime, uint *frameNum);
@@ -710,7 +710,7 @@ extern "C"
 
     /**
     This function calculates target bits for a particular frame.
-    \param "video"	"Pointer to the AVCEncObject structure."
+    \param "video"  "Pointer to the AVCEncObject structure."
     \return "void"
     */
     void RCInitFrameQP(AVCEncObject *video);
@@ -725,7 +725,7 @@ extern "C"
 
     /**
     This function translates the luma QP to chroma QP and calculates lambda based on QP.
-    \param "video"	"Pointer to the AVCEncObject structure."
+    \param "video"  "Pointer to the AVCEncObject structure."
     \return "void"
     */
     void RCInitChromaQP(AVCEncObject *encvid);
@@ -778,7 +778,7 @@ extern "C"
     /**
     This function encodes the intra pcm data and fill it in the corresponding location
     on the current picture.
-    \param "video"	"Pointer to AVCEncObject."
+    \param "video"  "Pointer to AVCEncObject."
     \return "AVCENC_SUCCESS if success, or else for bitstream errors."
     */
     AVCEnc_Status EncodeIntraPCM(AVCEncObject *video);
@@ -787,12 +787,12 @@ extern "C"
     This function performs CAVLC syntax encoding on the run and level information of the coefficients.
     The level and run arrays are elements in AVCEncObject structure, populated by TransQuantZZ,
     TransQuantIntraDC and TransQuantChromaDC functions.
-    \param "video"	"Pointer to AVCEncObject."
-    \param "type"	"One of AVCResidualType for a particular 4x4 block."
-    \param "bindx"	"Block index or number of nonzero coefficients for AVC_Intra16DC and AVC_ChromaDC mode."
-    \param "currMB"	"Pointer to the current macroblock structure."
+    \param "video"  "Pointer to AVCEncObject."
+    \param "type"   "One of AVCResidualType for a particular 4x4 block."
+    \param "bindx"  "Block index or number of nonzero coefficients for AVC_Intra16DC and AVC_ChromaDC mode."
+    \param "currMB" "Pointer to the current macroblock structure."
     \return "AVCENC_SUCCESS for success."
-    \Note	"This function has 32-bit machine specific instruction!!!!"
+    \Note   "This function has 32-bit machine specific instruction!!!!"
     */
     AVCEnc_Status enc_residual_block(AVCEncObject *encvid, AVCResidualType type, int bindx, AVCMacroblock *currMB);
 
@@ -805,7 +805,7 @@ extern "C"
     int AVCSAD_MB_HalfPel_Cxh(uint8 *ref, uint8 *blk, int dmin_lx, void *extra_info);
     int AVCSAD_Macroblock_C(uint8 *ref, uint8 *blk, int dmin_lx, void *extra_info);
 
-#ifdef HTFM	/*  3/2/1, Hypothesis Testing Fast Matching */
+#ifdef HTFM /*  3/2/1, Hypothesis Testing Fast Matching */
     int AVCSAD_MB_HP_HTFM_Collectxhyh(uint8 *ref, uint8 *blk, int dmin_x, void *extra_info);
     int AVCSAD_MB_HP_HTFM_Collectyh(uint8 *ref, uint8 *blk, int dmin_x, void *extra_info);
     int AVCSAD_MB_HP_HTFM_Collectxh(uint8 *ref, uint8 *blk, int dmin_x, void *extra_info);
@@ -821,9 +821,9 @@ extern "C"
 
     /**
     This function performs the main encoding loop for a slice.
-    \param "encvid"	"Pointer to AVCEncObject."
+    \param "encvid" "Pointer to AVCEncObject."
     \return "AVCENC_SUCCESS for success, AVCENC_PICTURE_READY for end-of-picture and
-    		 AVCENC_FAIL or AVCENC_SLICE_EMPTY otherwise."
+             AVCENC_FAIL or AVCENC_SLICE_EMPTY otherwise."
     */
     AVCEnc_Status AVCEncodeSlice(AVCEncObject *encvid);
 
@@ -838,9 +838,9 @@ extern "C"
     This function calls prediction INTRA/INTER functions, transform,
     quantization and zigzag scanning to get the run-level symbols.
     \param "encvid" "pointer to AVCEncObject."
-    \param "curL"	"pointer to Luma component of the current frame.
-    \param "curCb"	"pointer to Cb component of the current frame.
-    \param "curCr"	"pointer to Cr component of the current frame.
+    \param "curL"   "pointer to Luma component of the current frame.
+    \param "curCb"  "pointer to Cb component of the current frame.
+    \param "curCr"  "pointer to Cr component of the current frame.
     \return "void for now."
      */
     void MBPredTransQuantZZ(AVCEncObject *encvid, uint8 *curL, uint8 *curCb, uint8 *curCr);
@@ -848,18 +848,18 @@ extern "C"
     /**
     This function copies the content of the prediction MB into the reconstructed YUV
     frame directly.
-    \param "curL"	"Pointer to the destination Y component."
-    \param "curCb"	"Pointer to the destination Cb component."
-    \param "curCr"	"Pointer to the destination Cr component."
-    \param "predBlock"	"Pointer to the prediction MB."
-    \param "picWidth"	"The width of the frame."
+    \param "curL"   "Pointer to the destination Y component."
+    \param "curCb"  "Pointer to the destination Cb component."
+    \param "curCr"  "Pointer to the destination Cr component."
+    \param "predBlock"  "Pointer to the prediction MB."
+    \param "picWidth"   "The width of the frame."
     \return "None."
     */
     void Copy_MB(uint8 *curL, uint8 *curCb, uint8 *curCr, uint8 *predBlock, int picWidth);
 
     /**
     This function encodes the mb_type, CBP, prediction mode, ref idx and MV.
-    \param "currMB"	"Pointer to the current macroblock structure."
+    \param "currMB" "Pointer to the current macroblock structure."
     \param "video" "Pointer to the AVCEncObject structure."
     \return "AVCENC_SUCCESS for success or else for fail."
     */
@@ -868,26 +868,26 @@ extern "C"
     /**
     This function finds the right mb_type for a macroblock given the mbMode, CBP,
     NumPart, PredPartMode.
-    \param "currMB"	"Pointer to the current macroblock structure."
-    \param "slice_type"	"Value of the slice_type."
+    \param "currMB" "Pointer to the current macroblock structure."
+    \param "slice_type" "Value of the slice_type."
     \return "mb_type."
     */
     uint InterpretMBType(AVCMacroblock *currMB, int slice_type);
 
     /**
     This function encodes the mb_pred part of the macroblock data.
-    \param "video"	"Pointer to the AVCCommonObj structure."
-    \param "currMB"	"Pointer to the current macroblock structure."
-    \param "stream"	"Pointer to the AVCEncBitstream structure."
+    \param "video"  "Pointer to the AVCCommonObj structure."
+    \param "currMB" "Pointer to the current macroblock structure."
+    \param "stream" "Pointer to the AVCEncBitstream structure."
     \return "AVCENC_SUCCESS for success or bitstream fail status."
     */
     AVCEnc_Status mb_pred(AVCCommonObj *video, AVCMacroblock *currMB, AVCEncBitstream *stream);
 
     /**
     This function encodes the sub_mb_pred part of the macroblock data.
-    \param "video"	"Pointer to the AVCCommonObj structure."
-    \param "currMB"	"Pointer to the current macroblock structure."
-    \param "stream"	"Pointer to the AVCEncBitstream structure."
+    \param "video"  "Pointer to the AVCCommonObj structure."
+    \param "currMB" "Pointer to the current macroblock structure."
+    \param "stream" "Pointer to the AVCEncBitstream structure."
     \return "AVCENC_SUCCESS for success or bitstream fail status."
     */
     AVCEnc_Status sub_mb_pred(AVCCommonObj *video, AVCMacroblock *currMB, AVCEncBitstream *stream);
@@ -896,7 +896,7 @@ extern "C"
     This function interprets the sub_mb_type and sets necessary information
     when the slice type is AVC_P_SLICE.
     in the macroblock structure.
-    \param "mblock"	"Pointer to current AVCMacroblock."
+    \param "mblock" "Pointer to current AVCMacroblock."
     \param "sub_mb_type" "From the syntax bitstream."
     \return "void"
     */
@@ -906,7 +906,7 @@ extern "C"
     This function interprets the sub_mb_type and sets necessary information
     when the slice type is AVC_B_SLICE.
     in the macroblock structure.
-    \param "mblock"	"Pointer to current AVCMacroblock."
+    \param "mblock" "Pointer to current AVCMacroblock."
     \param "sub_mb_type" "From the syntax bitstream."
     \return "void"
     */
@@ -915,9 +915,9 @@ extern "C"
     /**
     This function encodes intra 4x4 mode. It calculates the predicted I4x4 mode and the
     remnant to be encoded.
-    \param "video"	"Pointer to AVCEncObject structure."
-    \param "currMB"	"Pointer to the AVCMacroblock structure."
-    \param "stream"	"Pointer to AVCEncBitstream sructure."
+    \param "video"  "Pointer to AVCEncObject structure."
+    \param "currMB" "Pointer to the AVCMacroblock structure."
+    \param "stream" "Pointer to AVCEncBitstream sructure."
     \return "AVCENC_SUCCESS for success."
     */
     AVCEnc_Status EncodeIntra4x4Mode(AVCCommonObj *video, AVCMacroblock *currMB, AVCEncBitstream *stream);
@@ -934,7 +934,7 @@ extern "C"
     /**
     This function maps and encodes signed Exp-Golomb codes.
     \param "bitstream" "Pointer to AVCEncBitstream."
-    \param "value"	"Pointer to syntax element value."
+    \param "value"  "Pointer to syntax element value."
     \return "AVCENC_SUCCESS or AVCENC_FAIL."
     */
     AVCEnc_Status  se_v(AVCEncBitstream *bitstream, int value);
@@ -942,8 +942,8 @@ extern "C"
     /**
     This function maps and encodes truncated Exp-Golomb codes.
     \param "bitstream" "Pointer to AVCEncBitstream."
-    \param "value"	"Pointer to syntax element value."
-    \param "range"	"Range of the value as input to determine the algorithm."
+    \param "value"  "Pointer to syntax element value."
+    \param "range"  "Range of the value as input to determine the algorithm."
     \return "AVCENC_SUCCESS or AVCENC_FAIL."
     */
     AVCEnc_Status te_v(AVCEncBitstream *bitstream, uint value, uint range);
@@ -959,54 +959,54 @@ extern "C"
     /**
     This function performs CAVLC encoding of the CBP (coded block pattern) of a macroblock
     by calling ue_v() and then mapping the CBP to the corresponding VLC codeNum.
-    \param "currMB"	 "Pointer to the current AVCMacroblock structure."
-    \param "stream"	 "Pointer to the AVCEncBitstream."
+    \param "currMB"  "Pointer to the current AVCMacroblock structure."
+    \param "stream"  "Pointer to the AVCEncBitstream."
     \return "void"
     */
     AVCEnc_Status EncodeCBP(AVCMacroblock *currMB, AVCEncBitstream *stream);
 
     /**
     This function encodes trailing ones and total coefficient.
-    \param "stream"	"Pointer to the AVCEncBitstream."
-    \param "TrailingOnes"	"The trailing one variable output."
-    \param "TotalCoeff"	"The total coefficient variable output."
-    \param "nC"	"Context for number of nonzero coefficient (prediction context)."
+    \param "stream" "Pointer to the AVCEncBitstream."
+    \param "TrailingOnes"   "The trailing one variable output."
+    \param "TotalCoeff" "The total coefficient variable output."
+    \param "nC" "Context for number of nonzero coefficient (prediction context)."
     \return "AVCENC_SUCCESS for success or else for bitstream failure."
     */
     AVCEnc_Status ce_TotalCoeffTrailingOnes(AVCEncBitstream *stream, int TrailingOnes, int TotalCoeff, int nC);
 
     /**
     This function encodes trailing ones and total coefficient for chroma DC block.
-    \param "stream"	"Pointer to the AVCEncBitstream."
-    \param "TrailingOnes"	"The trailing one variable output."
-    \param "TotalCoeff"	"The total coefficient variable output."
+    \param "stream" "Pointer to the AVCEncBitstream."
+    \param "TrailingOnes"   "The trailing one variable output."
+    \param "TotalCoeff" "The total coefficient variable output."
     \return "AVCENC_SUCCESS for success or else for bitstream failure."
     */
     AVCEnc_Status ce_TotalCoeffTrailingOnesChromaDC(AVCEncBitstream *stream, int TrailingOnes, int TotalCoeff);
 
     /**
     This function encodes total_zeros value as in Table 9-7 and 9-8.
-    \param "stream"	"Pointer to the AVCEncBitstream."
-    \param "TotalZeros"	"The total_zeros value."
-    \param "TotalCoeff"	"The total coefficient variable output."
+    \param "stream" "Pointer to the AVCEncBitstream."
+    \param "TotalZeros" "The total_zeros value."
+    \param "TotalCoeff" "The total coefficient variable output."
     \return "AVCENC_SUCCESS for success or else for bitstream failure."
     */
     AVCEnc_Status ce_TotalZeros(AVCEncBitstream *stream, int total_zeros, int TotalCoeff);
 
     /**
     This function encodes total_zeros VLC syntax for chroma DC as in Table 9-9.
-    \param "stream"	"Pointer to the AVCEncBitstream."
-    \param "TotalZeros"	"The total_zeros value."
-    \param "TotalCoeff"	"The total coefficient variable output."
+    \param "stream" "Pointer to the AVCEncBitstream."
+    \param "TotalZeros" "The total_zeros value."
+    \param "TotalCoeff" "The total coefficient variable output."
     \return "AVCENC_SUCCESS for success or else for bitstream failure."
     */
     AVCEnc_Status ce_TotalZerosChromaDC(AVCEncBitstream *stream, int total_zeros, int TotalCoeff);
 
     /**
     This function encodes run_before VLC syntax as in Table 9-10.
-    \param "stream"	"Pointer to the AVCEncBitstream."
-    \param "run_before"	"The run_before value."
-    \param "zerosLeft"	"The context for number of zeros left."
+    \param "stream" "Pointer to the AVCEncBitstream."
+    \param "run_before" "The run_before value."
+    \param "zerosLeft"  "The context for number of zeros left."
     \return "AVCENC_SUCCESS for success or else for bitstream failure."
     */
     AVCEnc_Status ce_RunBefore(AVCEncBitstream *stream, int run_before, int zerosLeft);

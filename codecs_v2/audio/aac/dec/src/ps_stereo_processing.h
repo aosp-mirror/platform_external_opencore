@@ -83,10 +83,10 @@ extern "C"
 #endif
 
     void ps_stereo_processing(STRUCT_PS_DEC  *pms,
-                              Int32          *qmfLeftReal,
-                              Int32          *qmfLeftImag,
-                              Int32          *qmfRightReal,
-                              Int32          *qmfRightImag);
+    Int32          *qmfLeftReal,
+    Int32          *qmfLeftImag,
+    Int32          *qmfRightReal,
+    Int32          *qmfRightImag);
 
 #ifdef __cplusplus
 }

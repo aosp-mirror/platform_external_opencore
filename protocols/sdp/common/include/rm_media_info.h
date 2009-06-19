@@ -117,7 +117,7 @@ class rm_mediaInfo : public mediaInfo
 
         inline int getAvgBitRate()
         {
-            return	rm_AvgBitRate;
+            return  rm_AvgBitRate;
         };
 
         inline void setAvgPacketSize(int pack_sz)
@@ -126,7 +126,7 @@ class rm_mediaInfo : public mediaInfo
         };
         inline int getAvgPacketSize()
         {
-            return	rm_AvgPacketSize;
+            return  rm_AvgPacketSize;
         };
         inline void setMaxBitRate(int max_bit_rate)
         {
@@ -134,7 +134,7 @@ class rm_mediaInfo : public mediaInfo
         };
         inline int getMaxBitRate()
         {
-            return	rm_MaxBitRate;
+            return  rm_MaxBitRate;
         };
 
         inline void setMaxPacketSize(int max_pack_sz)
@@ -143,7 +143,7 @@ class rm_mediaInfo : public mediaInfo
         };
         inline int getMaxPacketSize()
         {
-            return	rm_MaxPacketSize;
+            return  rm_MaxPacketSize;
         };
 
         inline void setPreroll(int preroll)
@@ -152,7 +152,7 @@ class rm_mediaInfo : public mediaInfo
         };
         inline int getPreroll()
         {
-            return	rm_Preroll;
+            return  rm_Preroll;
         };
         inline void setActualPreroll(int acpreroll)
         {
@@ -161,7 +161,7 @@ class rm_mediaInfo : public mediaInfo
 
         inline int getActualPreroll()
         {
-            return	rm_ActualPreroll;
+            return  rm_ActualPreroll;
         };
 
         inline void setEndTime(int endtime)
@@ -171,7 +171,7 @@ class rm_mediaInfo : public mediaInfo
 
         inline int getEndTime()
         {
-            return	rm_EndTime;
+            return  rm_EndTime;
         };
         inline void setEndOneRuleEndAll(int endrule)
         {
@@ -180,7 +180,7 @@ class rm_mediaInfo : public mediaInfo
 
         inline int getEndOneRuleEndAll()
         {
-            return	rm_EndOneRuleEndAll;
+            return  rm_EndOneRuleEndAll;
         };
 
         inline void setRMFlags(const char* flag)

@@ -15,7 +15,7 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-#ifndef	PV_AVIFILE_STREAMLIST_H_INCLUDED
+#ifndef PV_AVIFILE_STREAMLIST_H_INCLUDED
 #define PV_AVIFILE_STREAMLIST_H_INCLUDED
 
 #ifndef PV_AVIFILE_TYPEDEFS_H_INCLUDED
@@ -45,12 +45,12 @@ class PVAviFileStreamFormatStruct
         }
 
         //Depending on stream type, either iVidBitMapInfo or iAudWaveFormatEx will be valid.
-        StreamType					iType;
+        StreamType                  iType;
 
         union
         {
-            BitMapInfoStruct	iVidBitMapInfo;		//Video Format Info
-            WaveFormatExStruct	iAudWaveFormatEx;	//Audio Format Info
+            BitMapInfoStruct    iVidBitMapInfo;     //Video Format Info
+            WaveFormatExStruct  iAudWaveFormatEx;   //Audio Format Info
         };
 };
 
@@ -170,17 +170,17 @@ class PVAviFileStreamlist: public PVAviFileParserStatus
 
     private:
 
-        PV_AVI_FILE_PARSER_ERROR_TYPE	ParseStreamHeader(PVFile *aFp, uint32 aHdrSize);
-        PV_AVI_FILE_PARSER_ERROR_TYPE	ParseStreamFormat(PVFile *aFp, uint32 aHdrSize);
+        PV_AVI_FILE_PARSER_ERROR_TYPE   ParseStreamHeader(PVFile *aFp, uint32 aHdrSize);
+        PV_AVI_FILE_PARSER_ERROR_TYPE   ParseStreamFormat(PVFile *aFp, uint32 aHdrSize);
 
-        uint32							iStreamListSize;
-        PVAviFileStreamHeaderStruct		iStreamHdr;
-        PVAviFileStreamFormatStruct		iStreamFmt;
-        uint8*						    ipCodecSpecificHdrData;	   //strd chunk
-        uint32						    iCodecSpecificHdrDataSize;
-        char						    iStreamName[MAX_STRN_SZ];  //strn chunk
+        uint32                          iStreamListSize;
+        PVAviFileStreamHeaderStruct     iStreamHdr;
+        PVAviFileStreamFormatStruct     iStreamFmt;
+        uint8*                          ipCodecSpecificHdrData;    //strd chunk
+        uint32                          iCodecSpecificHdrDataSize;
+        char                            iStreamName[MAX_STRN_SZ];  //strn chunk
 };
 
 
-#endif //#ifndef	PV_AVIFILE_STREAMLIST_H_INCLUDED
+#endif //#ifndef    PV_AVIFILE_STREAMLIST_H_INCLUDED
 

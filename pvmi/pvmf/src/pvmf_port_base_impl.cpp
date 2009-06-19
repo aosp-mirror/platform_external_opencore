@@ -32,7 +32,7 @@
 #include "pvmf_media_msg_format_ids.h"
 #include "pvmf_media_data.h"
 
-#define LOGDATAPATH(x)	PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iDatapathLogger, PVLOGMSG_INFO, x);
+#define LOGDATAPATH(x)  PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iDatapathLogger, PVLOGMSG_INFO, x);
 
 void PvmfPortBaseImplQueue::Construct(uint32 aCap, uint32 aReserve, uint32 aThresh)
 {

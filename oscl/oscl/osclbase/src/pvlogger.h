@@ -178,10 +178,10 @@ const int32 PVLOGGER_LEVEL_UNINTIALIZED = -1;
 {\
     if (LOGGER)\
     {\
-    	if (LOGGER->IsActive(LEVEL))\
-    	{\
-    		LOGGER->LogMsgBuffers MESSAGE;\
-    	}\
+        if (LOGGER->IsActive(LEVEL))\
+        {\
+            LOGGER->LogMsgBuffers MESSAGE;\
+        }\
     }\
 }
 
@@ -189,10 +189,10 @@ const int32 PVLOGGER_LEVEL_UNINTIALIZED = -1;
 {\
     if (LOGGER)\
     {\
-    	if (LOGGER->IsActive(LEVEL))\
-    	{\
-    		LOGGER->LogMsgBuffersV MESSAGE;\
-    	}\
+        if (LOGGER->IsActive(LEVEL))\
+        {\
+            LOGGER->LogMsgBuffersV MESSAGE;\
+        }\
     }\
 }
 
@@ -291,16 +291,16 @@ const int32 PVLOGGER_LEVEL_UNINTIALIZED = -1;
 /**
  * This is the text based API to log messages
  *
- * @param IL		Instrumentation level.
- * @param LOGGER	Pointer to the logger object, that acts as the logging
- *					control/interface point
- * @param LEVEL		Log level of the message
- * @param MESSAGE	Log Message which includes the message id, and any kind
- *					of formatting information
+ * @param IL        Instrumentation level.
+ * @param LOGGER    Pointer to the logger object, that acts as the logging
+ *                  control/interface point
+ * @param LEVEL     Log level of the message
+ * @param MESSAGE   Log Message which includes the message id, and any kind
+ *                  of formatting information
  *
  * Example Usage:
  * PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, logger_1, PVLOGMSG_WARNING, (13, "Test Messsage to Node 1\n"));
- *	-This message of log level PVLOGMSG_WARNING, and has a message id of 13
+ *  -This message of log level PVLOGMSG_WARNING, and has a message id of 13
  */
 #define PVLOGGER_LOGMSG(IL, LOGGER, LEVEL, MESSAGE) PVLOGGER_LOGMSG_ ## IL (LOGGER, LEVEL, MESSAGE)
 #define PVLOGGER_LOGMSG_V(IL, LOGGER, LEVEL, MESSAGE) PVLOGGER_LOGMSG_V_ ## IL (LOGGER, LEVEL, MESSAGE)
@@ -308,19 +308,19 @@ const int32 PVLOGGER_LEVEL_UNINTIALIZED = -1;
 /**
  * This is a binary API to log messages
  *
- * @param IL		Instrumentation level.
- * @param LOGGER	Pointer to the logger object, that acts as the logging
- *					control/interface point
- * @param LEVEL		Log level of the message
- * @param MESSAGE	Log Message which includes the message id, and message
+ * @param IL        Instrumentation level.
+ * @param LOGGER    Pointer to the logger object, that acts as the logging
+ *                  control/interface point
+ * @param LEVEL     Log level of the message
+ * @param MESSAGE   Log Message which includes the message id, and message
  *                  buffers that need to be logged.
  *
  * Example Usage:
  * PVLOGGER_LOGBIN (PVLOGMSG_INST_LLDBG, logger_1, PVLOGMSG_WARNING, (10, 3, msgBuf1Size, msgBuf1,
  *                                                            msgBuf2Size, msgBuf2,
- *											                  msgBuf3Size, msgBuf3));
+ *                                                            msgBuf3Size, msgBuf3));
  *
- *	-This message contains THREE (ptr_len, ptr) pairs.
+ *  -This message contains THREE (ptr_len, ptr) pairs.
  *   Log level of this msg is PVLOGMSG_WARNING,
  *   message id is 10.
  */
@@ -553,7 +553,7 @@ class PVLogger
          * This method determines if a msg passed to the logging control point is active
          * or not. Only messages that are deemed active are logged. Messages are considered
          * not active if any of the following criteria are met:
-         *		- All logging is disabled at this logging control point
+         *      - All logging is disabled at this logging control point
          *      - If all the log levels, leading upto the root log point are uninitialized
          *      - If the log level of the incoming message is LESS THAN that of the active
          *        log level of the logging control point.

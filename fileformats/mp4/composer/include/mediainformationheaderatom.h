@@ -16,11 +16,11 @@
  * -------------------------------------------------------------------
  */
 /*
-	This PVA_FF_MediaInformationHeaderAtom Class is an abstract base class for the
-	atoms VideoMediaHeaderAton, AudioMediaHeaderAtom, PVA_FF_HintMediaHeaderAtom,
-	and PVA_FF_Mpeg4MediaHeaderAtom.  This class onbly contains one pure virtual method
-	getMediaHeaderType() that will return what type of mediaInformationHeader
-	this atom is.
+    This PVA_FF_MediaInformationHeaderAtom Class is an abstract base class for the
+    atoms VideoMediaHeaderAton, AudioMediaHeaderAtom, PVA_FF_HintMediaHeaderAtom,
+    and PVA_FF_Mpeg4MediaHeaderAtom.  This class onbly contains one pure virtual method
+    getMediaHeaderType() that will return what type of mediaInformationHeader
+    this atom is.
 */
 
 

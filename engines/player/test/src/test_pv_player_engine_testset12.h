@@ -65,12 +65,12 @@
 #endif
 
 #define NUM_PAUSE -1 // No of times 'PAUSE' infinite in case of Multiple Pause
-#define	SEQUENTIAL_PAUSE_INTERVAL 1
-#define	FIRST_PAUSE_AFTER_START 10
-#define	PAUSE_RESUME_INTERVAL 1
+#define SEQUENTIAL_PAUSE_INTERVAL 1
+#define FIRST_PAUSE_AFTER_START 10
+#define PAUSE_RESUME_INTERVAL 1
 
-#define	SEQUENTIAL_SEEK_INTERVAL 2
-#define	FIRST_SEEK_AFTER_START 2
+#define SEQUENTIAL_SEEK_INTERVAL 2
+#define FIRST_SEEK_AFTER_START 2
 
 #define SLEEP_TIME_SECS 60
 
@@ -100,9 +100,9 @@ class PVMFDownloadDataSourcePVX;
  *             -# Start()
  *             -# Play 10 sec
  *             -# SetPlaybackRange() if seekEnable flag is made true, set 10 times
- *				   if in case of multiple seek test
+ *                 if in case of multiple seek test
  *             -# Pause() if pauseresumeEnable flag is made true, pauseresume multiple times
- *					in multiple pauseresume test
+ *                  in multiple pauseresume test
  *             -# WAIT 10 sec
  *             -# Resume()
  *             -# Play until EOS
@@ -186,29 +186,29 @@ class pvplayer_async_test_genericopenplaystop : public pvplayer_async_test_base
 
         /*enum PVTestState
         {
-        	STATE_CREATE,
+            STATE_CREATE,
             STATE_QUERYINTERFACE,
-        	STATE_ADDDATASOURCE,
-        	STATE_CONFIGPARAMS,
-        	STATE_INIT,
-        	STATE_GETMETADATAKEYLIST,
-        	STATE_GETMETADATAVALUELIST,
-        	STATE_ADDDATASINK_VIDEO,
-        	STATE_ADDDATASINK_AUDIO,
-        	STATE_PREPARE,
-        	STATE_CANCELALL,
-        	STATE_WAIT_FOR_CANCELALL,
-        	STATE_START,
-        	STATE_SETPLAYBACKRANGE,
-        	STATE_PAUSE,
-        	STATE_RESUME,
-        	STATE_EOSNOTREACHED,
-        	STATE_STOP,
-        	STATE_REMOVEDATASINK_VIDEO,
-        	STATE_REMOVEDATASINK_AUDIO,
-        	STATE_RESET,
-        	STATE_REMOVEDATASOURCE,
-        	STATE_CLEANUPANDCOMPLETE
+            STATE_ADDDATASOURCE,
+            STATE_CONFIGPARAMS,
+            STATE_INIT,
+            STATE_GETMETADATAKEYLIST,
+            STATE_GETMETADATAVALUELIST,
+            STATE_ADDDATASINK_VIDEO,
+            STATE_ADDDATASINK_AUDIO,
+            STATE_PREPARE,
+            STATE_CANCELALL,
+            STATE_WAIT_FOR_CANCELALL,
+            STATE_START,
+            STATE_SETPLAYBACKRANGE,
+            STATE_PAUSE,
+            STATE_RESUME,
+            STATE_EOSNOTREACHED,
+            STATE_STOP,
+            STATE_REMOVEDATASINK_VIDEO,
+            STATE_REMOVEDATASINK_AUDIO,
+            STATE_RESET,
+            STATE_REMOVEDATASOURCE,
+            STATE_CLEANUPANDCOMPLETE
         };*/
 
         PVTestState iState;

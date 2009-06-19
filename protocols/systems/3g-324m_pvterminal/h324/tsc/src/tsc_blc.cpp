@@ -158,8 +158,8 @@ void TSC_blc::BlcEtbReq(TPVChannelId Lcn,
 /*****************************************************************************/
 void TSC_blc::BlcEtbRps(TPVChannelId incoming_lcn, TPVChannelId outgoing_lcn)
 {
-    S_ControlMsgHeader	infHeader;
-    S_ReverseData		parameter;
+    S_ControlMsgHeader  infHeader;
+    S_ReverseData       parameter;
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0,
                      "TSC_blc::BlcEtbRps incoming(%d), outgoing(%d)\n", incoming_lcn, outgoing_lcn));
@@ -203,10 +203,10 @@ void TSC_blc::BlcEtbRps(TPVChannelId incoming_lcn, TPVChannelId outgoing_lcn)
 /*****************************************************************************/
 TPVDirection TSC_blc::BlcRlsReq(int32 ReleaseType,
                                 uint32 CloseLcn,
-                                uint32 Cause)	// WWU_VOAL2: add Cause
+                                uint32 Cause)   // WWU_VOAL2: add Cause
 {
-    S_ControlMsgHeader	infHeader;
-    S_OlcRejectCause	parameter;
+    S_ControlMsgHeader  infHeader;
+    S_OlcRejectCause    parameter;
     TPVDirection dir = OUTGOING;
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0,

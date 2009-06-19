@@ -21,8 +21,8 @@
 
 
 /***********************************************************CommentBegin******
-*		04/13/2000 : initial modification to the new PV-Decoder
-*							 Lib format.
+*       04/13/2000 : initial modification to the new PV-Decoder
+*                            Lib format.
 *       04/16/2001 : Removed PV_END_OF_BUFFER case, error resilience
 ***********************************************************CommentEnd********/
 PV_STATUS PV_ReadVideoPacketHeader(VideoDecData *video, int *next_MB)
@@ -45,16 +45,16 @@ PV_STATUS PV_ReadVideoPacketHeader(VideoDecData *video, int *next_MB)
     if (currVop->predictionType != I_VOP) resync_marker_length = 16 + fcode_forward;
 
     status = PV_BitstreamShowBitsByteAlign(stream, resync_marker_length, &tmpvar32);
-    /*	if (status != PV_SUCCESS && status != PV_END_OF_BUFFER) return status; */
+    /*  if (status != PV_SUCCESS && status != PV_END_OF_BUFFER) return status; */
     if (tmpvar32 == RESYNC_MARKER)
     {
-//		DecNextStartCode(stream);
+//      DecNextStartCode(stream);
         PV_BitstreamByteAlign(stream);
         BitstreamReadBits32(stream, resync_marker_length);
 
         *next_MB = (int) BitstreamReadBits16(stream, nbits);
-//		if (*next_MB <= video->mbnum)   /*  needs more investigation */
-//			*next_MB = video->mbnum+1;
+//      if (*next_MB <= video->mbnum)   /*  needs more investigation */
+//          *next_MB = video->mbnum+1;
 
         if (*next_MB >= nTotalMB)  /* fix  04/05/01 */
         {
@@ -137,8 +137,8 @@ PV_STATUS PV_ReadVideoPacketHeader(VideoDecData *video, int *next_MB)
 
 
 /***********************************************************CommentBegin******
-*		3/10/00  : initial modification to the
-*				 new PV-Decoder Lib format.
+*       3/10/00  : initial modification to the
+*                new PV-Decoder Lib format.
 *       04/17/01 : remove PV_END_OF_BUFFER, error checking
 ***********************************************************CommentEnd********/
 PV_STATUS PV_GobHeader(VideoDecData *video)

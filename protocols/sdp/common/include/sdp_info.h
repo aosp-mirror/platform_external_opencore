@@ -40,8 +40,8 @@
 //----------------------------------------------------------------------
 // Global Constant Declarations
 //----------------------------------------------------------------------
-#define MAX_MEDIA_OBJECTS	50
-#define MAX_SEGMENTS		10
+#define MAX_MEDIA_OBJECTS   50
+#define MAX_SEGMENTS        10
 
 struct segmentSpecific
 {

@@ -537,7 +537,7 @@ void Analyze_TerminalCapabilitySet(PS_TerminalCapabilitySet x, const char* label
     if (x->option_of_capabilityTable)
     {
         ShowPERInteger(tag, indent, "size_of_capabilityTable", (uint32)x->size_of_capabilityTable);
-        for (i = 0;i < x->size_of_capabilityTable;++i)
+        for (i = 0; i < x->size_of_capabilityTable; ++i)
         {
             sprintf(tempLabelString, "capabilityTable[%hu]", i);
             Analyze_CapabilityTableEntry(x->capabilityTable + i, tempLabelString, tag, indent);
@@ -546,7 +546,7 @@ void Analyze_TerminalCapabilitySet(PS_TerminalCapabilitySet x, const char* label
     if (x->option_of_capabilityDescriptors)
     {
         ShowPERInteger(tag, indent, "size_of_capabilityDescriptors", (uint32)x->size_of_capabilityDescriptors);
-        for (i = 0;i < x->size_of_capabilityDescriptors;++i)
+        for (i = 0; i < x->size_of_capabilityDescriptors; ++i)
         {
             sprintf(tempLabelString, "capabilityDescriptors[%hu]", i);
             Analyze_CapabilityDescriptor(x->capabilityDescriptors + i, tempLabelString, tag, indent);
@@ -588,7 +588,7 @@ void Analyze_CapabilityDescriptor(PS_CapabilityDescriptor x, const char* label, 
     if (x->option_of_simultaneousCapabilities)
     {
         ShowPERInteger(tag, indent, "size_of_simultaneousCapabilities", (uint32)x->size_of_simultaneousCapabilities);
-        for (i = 0;i < x->size_of_simultaneousCapabilities;++i)
+        for (i = 0; i < x->size_of_simultaneousCapabilities; ++i)
         {
             sprintf(tempLabelString, "simultaneousCapabilities[%hu]", i);
             Analyze_AlternativeCapabilitySet(x->simultaneousCapabilities + i, tempLabelString, tag, indent);
@@ -607,7 +607,7 @@ void Analyze_AlternativeCapabilitySet(PS_AlternativeCapabilitySet x, const char*
     ShowPERSequenceof(tag, indent, label, "AlternativeCapabilitySet");
     indent += 2;
     ShowPERInteger(tag, indent, "size", (uint32)x->size);
-    for (i = 0;i < x->size;++i)
+    for (i = 0; i < x->size; ++i)
     {
         ShowPERIntegers(tag, indent, "item", (uint32)x->item[i], i);
     }
@@ -864,7 +864,7 @@ void Analyze_H222Capability(PS_H222Capability x, const char* label, uint16 tag, 
     indent += 2;
     ShowPERInteger(tag, indent, "numberOfVCs", (int32)x->numberOfVCs);
     ShowPERInteger(tag, indent, "size_of_vcCapability", (uint32)x->size_of_vcCapability);
-    for (i = 0;i < x->size_of_vcCapability;++i)
+    for (i = 0; i < x->size_of_vcCapability; ++i)
     {
         sprintf(tempLabelString, "vcCapability[%hu]", i);
         Analyze_VCCapability(x->vcCapability + i, tempLabelString, tag, indent);
@@ -916,7 +916,7 @@ void Analyze_Aal1ViaGateway(PS_Aal1ViaGateway x, const char* label, uint16 tag, 
     ShowPERSequence(tag, indent, label, "Aal1ViaGateway");
     indent += 2;
     ShowPERInteger(tag, indent, "size_of_gatewayAddress", (uint32)x->size_of_gatewayAddress);
-    for (i = 0;i < x->size_of_gatewayAddress;++i)
+    for (i = 0; i < x->size_of_gatewayAddress; ++i)
     {
         sprintf(tempLabelString, "gatewayAddress[%hu]", i);
         Analyze_Q2931Address(x->gatewayAddress + i, tempLabelString, tag, indent);
@@ -1227,7 +1227,7 @@ void Analyze_H2250Capability(PS_H2250Capability x, const char* label, uint16 tag
     if (x->option_of_redundancyEncodingCapability)
     {
         ShowPERInteger(tag, indent, "size_of_redundancyEncodingCapability", (uint32)x->size_of_redundancyEncodingCapability);
-        for (i = 0;i < x->size_of_redundancyEncodingCapability;++i)
+        for (i = 0; i < x->size_of_redundancyEncodingCapability; ++i)
         {
             sprintf(tempLabelString, "redundancyEncodingCapability[%hu]", i);
             Analyze_RedundancyEncodingCapability(x->redundancyEncodingCapability + i, tempLabelString, tag, indent);
@@ -1276,7 +1276,7 @@ void Analyze_MediaPacketizationCapability(PS_MediaPacketizationCapability x, con
     if (x->option_of_rtpPayloadType)
     {
         ShowPERInteger(tag, indent, "size_of_rtpPayloadType", (uint32)x->size_of_rtpPayloadType);
-        for (i = 0;i < x->size_of_rtpPayloadType;++i)
+        for (i = 0; i < x->size_of_rtpPayloadType; ++i)
         {
             sprintf(tempLabelString, "rtpPayloadType[%hu]", i);
             Analyze_RTPPayloadType(x->rtpPayloadType + i, tempLabelString, tag, indent);
@@ -1485,7 +1485,7 @@ void Analyze_TransportCapability(PS_TransportCapability x, const char* label, ui
     if (x->option_of_qOSCapabilities)
     {
         ShowPERInteger(tag, indent, "size_of_qOSCapabilities", (uint32)x->size_of_qOSCapabilities);
-        for (i = 0;i < x->size_of_qOSCapabilities;++i)
+        for (i = 0; i < x->size_of_qOSCapabilities; ++i)
         {
             sprintf(tempLabelString, "qOSCapabilities[%hu]", i);
             Analyze_QOSCapability(x->qOSCapabilities + i, tempLabelString, tag, indent);
@@ -1494,7 +1494,7 @@ void Analyze_TransportCapability(PS_TransportCapability x, const char* label, ui
     if (x->option_of_mediaChannelCapabilities)
     {
         ShowPERInteger(tag, indent, "size_of_mediaChannelCapabilities", (uint32)x->size_of_mediaChannelCapabilities);
-        for (i = 0;i < x->size_of_mediaChannelCapabilities;++i)
+        for (i = 0; i < x->size_of_mediaChannelCapabilities; ++i)
         {
             sprintf(tempLabelString, "mediaChannelCapabilities[%hu]", i);
             Analyze_MediaChannelCapability(x->mediaChannelCapabilities + i, tempLabelString, tag, indent);
@@ -1521,7 +1521,7 @@ void Analyze_RedundancyEncodingCapability(PS_RedundancyEncodingCapability x, con
     if (x->option_of_secondaryEncoding)
     {
         ShowPERInteger(tag, indent, "size_of_secondaryEncoding", (uint32)x->size_of_secondaryEncoding);
-        for (i = 0;i < x->size_of_secondaryEncoding;++i)
+        for (i = 0; i < x->size_of_secondaryEncoding; ++i)
         {
             ShowPERIntegers(tag, indent, "secondaryEncoding", (uint32)x->secondaryEncoding[i], i);
         }
@@ -1576,7 +1576,7 @@ void Analyze_RTPH263VideoRedundancyEncoding(PS_RTPH263VideoRedundancyEncoding x,
     if (x->option_of_containedThreads)
     {
         ShowPERInteger(tag, indent, "size_of_containedThreads", (uint32)x->size_of_containedThreads);
-        for (i = 0;i < x->size_of_containedThreads;++i)
+        for (i = 0; i < x->size_of_containedThreads; ++i)
         {
             ShowPERIntegers(tag, indent, "containedThreads", (uint32)x->containedThreads[i], i);
         }
@@ -1604,7 +1604,7 @@ void Analyze_FrameToThreadMapping(PS_FrameToThreadMapping x, const char* label, 
             break;
         case 1:
             ShowPERInteger(tag, indent, "size", (uint32)x->size);
-            for (i = 0;i < x->size;++i)
+            for (i = 0; i < x->size; ++i)
             {
                 sprintf(tempLabelString, "custom[%hu]", i);
                 Analyze_RTPH263VideoRedundancyFrameMapping(x->custom + i, tempLabelString, tag, indent);
@@ -1630,7 +1630,7 @@ void Analyze_RTPH263VideoRedundancyFrameMapping(PS_RTPH263VideoRedundancyFrameMa
     indent += 2;
     ShowPERInteger(tag, indent, "threadNumber", (int32)x->threadNumber);
     ShowPERInteger(tag, indent, "size_of_frameSequence", (uint32)x->size_of_frameSequence);
-    for (i = 0;i < x->size_of_frameSequence;++i)
+    for (i = 0; i < x->size_of_frameSequence; ++i)
     {
         ShowPERIntegers(tag, indent, "frameSequence", (uint32)x->frameSequence[i], i);
     }
@@ -1652,7 +1652,7 @@ void Analyze_MultipointCapability(PS_MultipointCapability x, const char* label, 
     ShowPERBoolean(tag, indent, "multicastCapability", x->multicastCapability);
     ShowPERBoolean(tag, indent, "multiUniCastConference", x->multiUniCastConference);
     ShowPERInteger(tag, indent, "size_of_mediaDistributionCapability", (uint32)x->size_of_mediaDistributionCapability);
-    for (i = 0;i < x->size_of_mediaDistributionCapability;++i)
+    for (i = 0; i < x->size_of_mediaDistributionCapability; ++i)
     {
         sprintf(tempLabelString, "mediaDistributionCapability[%hu]", i);
         Analyze_MediaDistributionCapability(x->mediaDistributionCapability + i, tempLabelString, tag, indent);
@@ -1683,7 +1683,7 @@ void Analyze_MediaDistributionCapability(PS_MediaDistributionCapability x, const
     if (x->option_of_centralizedData)
     {
         ShowPERInteger(tag, indent, "size_of_centralizedData", (uint32)x->size_of_centralizedData);
-        for (i = 0;i < x->size_of_centralizedData;++i)
+        for (i = 0; i < x->size_of_centralizedData; ++i)
         {
             sprintf(tempLabelString, "centralizedData[%hu]", i);
             Analyze_DataApplicationCapability(x->centralizedData + i, tempLabelString, tag, indent);
@@ -1692,7 +1692,7 @@ void Analyze_MediaDistributionCapability(PS_MediaDistributionCapability x, const
     if (x->option_of_distributedData)
     {
         ShowPERInteger(tag, indent, "size_of_distributedData", (uint32)x->size_of_distributedData);
-        for (i = 0;i < x->size_of_distributedData;++i)
+        for (i = 0; i < x->size_of_distributedData; ++i)
         {
             sprintf(tempLabelString, "distributedData[%hu]", i);
             Analyze_DataApplicationCapability(x->distributedData + i, tempLabelString, tag, indent);
@@ -1931,7 +1931,7 @@ void Analyze_EnhancementLayerInfo(PS_EnhancementLayerInfo x, const char* label, 
     if (x->option_of_snrEnhancement)
     {
         ShowPERInteger(tag, indent, "size_of_snrEnhancement", (uint32)x->size_of_snrEnhancement);
-        for (i = 0;i < x->size_of_snrEnhancement;++i)
+        for (i = 0; i < x->size_of_snrEnhancement; ++i)
         {
             sprintf(tempLabelString, "snrEnhancement[%hu]", i);
             Analyze_EnhancementOptions(x->snrEnhancement + i, tempLabelString, tag, indent);
@@ -1940,7 +1940,7 @@ void Analyze_EnhancementLayerInfo(PS_EnhancementLayerInfo x, const char* label, 
     if (x->option_of_spatialEnhancement)
     {
         ShowPERInteger(tag, indent, "size_of_spatialEnhancement", (uint32)x->size_of_spatialEnhancement);
-        for (i = 0;i < x->size_of_spatialEnhancement;++i)
+        for (i = 0; i < x->size_of_spatialEnhancement; ++i)
         {
             sprintf(tempLabelString, "spatialEnhancement[%hu]", i);
             Analyze_EnhancementOptions(x->spatialEnhancement + i, tempLabelString, tag, indent);
@@ -1949,7 +1949,7 @@ void Analyze_EnhancementLayerInfo(PS_EnhancementLayerInfo x, const char* label, 
     if (x->option_of_bPictureEnhancement)
     {
         ShowPERInteger(tag, indent, "size_of_bPictureEnhancement", (uint32)x->size_of_bPictureEnhancement);
-        for (i = 0;i < x->size_of_bPictureEnhancement;++i)
+        for (i = 0; i < x->size_of_bPictureEnhancement; ++i)
         {
             sprintf(tempLabelString, "bPictureEnhancement[%hu]", i);
             Analyze_BEnhancementParameters(x->bPictureEnhancement + i, tempLabelString, tag, indent);
@@ -2098,7 +2098,7 @@ void Analyze_H263Options(PS_H263Options x, const char* label, uint16 tag, uint16
     if (x->option_of_customPictureClockFrequency)
     {
         ShowPERInteger(tag, indent, "size_of_customPictureClockFrequency", (uint32)x->size_of_customPictureClockFrequency);
-        for (i = 0;i < x->size_of_customPictureClockFrequency;++i)
+        for (i = 0; i < x->size_of_customPictureClockFrequency; ++i)
         {
             sprintf(tempLabelString, "customPictureClockFrequency[%hu]", i);
             Analyze_CustomPictureClockFrequency(x->customPictureClockFrequency + i, tempLabelString, tag, indent);
@@ -2107,7 +2107,7 @@ void Analyze_H263Options(PS_H263Options x, const char* label, uint16 tag, uint16
     if (x->option_of_customPictureFormat)
     {
         ShowPERInteger(tag, indent, "size_of_customPictureFormat", (uint32)x->size_of_customPictureFormat);
-        for (i = 0;i < x->size_of_customPictureFormat;++i)
+        for (i = 0; i < x->size_of_customPictureFormat; ++i)
         {
             sprintf(tempLabelString, "customPictureFormat[%hu]", i);
             Analyze_CustomPictureFormat(x->customPictureFormat + i, tempLabelString, tag, indent);
@@ -2116,7 +2116,7 @@ void Analyze_H263Options(PS_H263Options x, const char* label, uint16 tag, uint16
     if (x->option_of_modeCombos)
     {
         ShowPERInteger(tag, indent, "size_of_modeCombos", (uint32)x->size_of_modeCombos);
-        for (i = 0;i < x->size_of_modeCombos;++i)
+        for (i = 0; i < x->size_of_modeCombos; ++i)
         {
             sprintf(tempLabelString, "modeCombos[%hu]", i);
             Analyze_H263VideoModeCombos(x->modeCombos + i, tempLabelString, tag, indent);
@@ -2319,14 +2319,14 @@ void Analyze_PixelAspectInformation(PS_PixelAspectInformation x, const char* lab
             break;
         case 1:
             ShowPERInteger(tag, indent, "size", (uint32)x->size);
-            for (i = 0;i < x->size;++i)
+            for (i = 0; i < x->size; ++i)
             {
                 ShowPERIntegers(tag, indent, "pixelAspectCode", (uint32)x->pixelAspectCode[i], i);
             }
             break;
         case 2:
             ShowPERInteger(tag, indent, "size", (uint32)x->size);
-            for (i = 0;i < x->size;++i)
+            for (i = 0; i < x->size; ++i)
             {
                 sprintf(tempLabelString, "extendedPAR[%hu]", i);
                 Analyze_ExtendedPARItem(x->extendedPAR + i, tempLabelString, tag, indent);
@@ -2374,7 +2374,7 @@ void Analyze_MPI(PS_MPI x, const char* label, uint16 tag, uint16 indent)
     if (x->option_of_customPCF)
     {
         ShowPERInteger(tag, indent, "size_of_customPCF", (uint32)x->size_of_customPCF);
-        for (i = 0;i < x->size_of_customPCF;++i)
+        for (i = 0; i < x->size_of_customPCF; ++i)
         {
             sprintf(tempLabelString, "customPCF[%hu]", i);
             Analyze_CustomPCFItem(x->customPCF + i, tempLabelString, tag, indent);
@@ -2413,7 +2413,7 @@ void Analyze_H263VideoModeCombos(PS_H263VideoModeCombos x, const char* label, ui
     indent += 2;
     Analyze_H263ModeComboFlags(&x->h263VideoUncoupledModes, "h263VideoUncoupledModes", tag, indent);
     ShowPERInteger(tag, indent, "size_of_h263VideoCoupledModes", (uint32)x->size_of_h263VideoCoupledModes);
-    for (i = 0;i < x->size_of_h263VideoCoupledModes;++i)
+    for (i = 0; i < x->size_of_h263VideoCoupledModes; ++i)
     {
         sprintf(tempLabelString, "h263VideoCoupledModes[%hu]", i);
         Analyze_H263ModeComboFlags(x->h263VideoCoupledModes + i, tempLabelString, tag, indent);
@@ -3167,7 +3167,7 @@ void Analyze_EncryptionCapability(PS_EncryptionCapability x, const char* label, 
     ShowPERSequenceof(tag, indent, label, "EncryptionCapability");
     indent += 2;
     ShowPERInteger(tag, indent, "size", (uint32)x->size);
-    for (i = 0;i < x->size;++i)
+    for (i = 0; i < x->size; ++i)
     {
         sprintf(tempLabelString, "item[%hu]", i);
         Analyze_MediaEncryptionAlgorithm(x->item + i, tempLabelString, tag, indent);
@@ -3250,7 +3250,7 @@ void Analyze_UserInputCapability(PS_UserInputCapability x, const char* label, ui
     {
         case 0:
             ShowPERInteger(tag, indent, "size", (uint32)x->size);
-            for (i = 0;i < x->size;++i)
+            for (i = 0; i < x->size; ++i)
             {
                 sprintf(tempLabelString, "nonStandard[%hu]", i);
                 Analyze_NonStandardParameter(x->nonStandard + i, tempLabelString, tag, indent);
@@ -3293,7 +3293,7 @@ void Analyze_ConferenceCapability(PS_ConferenceCapability x, const char* label, 
     if (x->option_of_nonStandardData)
     {
         ShowPERInteger(tag, indent, "size_of_nonStandardData", (uint32)x->size_of_nonStandardData);
-        for (i = 0;i < x->size_of_nonStandardData;++i)
+        for (i = 0; i < x->size_of_nonStandardData; ++i)
         {
             sprintf(tempLabelString, "nonStandardData[%hu]", i);
             Analyze_NonStandardParameter(x->nonStandardData + i, tempLabelString, tag, indent);
@@ -3338,7 +3338,7 @@ void Analyze_GenericCapability(PS_GenericCapability x, const char* label, uint16
     if (x->option_of_collapsing)
     {
         ShowPERInteger(tag, indent, "size_of_collapsing", (uint32)x->size_of_collapsing);
-        for (i = 0;i < x->size_of_collapsing;++i)
+        for (i = 0; i < x->size_of_collapsing; ++i)
         {
             sprintf(tempLabelString, "collapsing[%hu]", i);
             Analyze_GenericParameter(x->collapsing + i, tempLabelString, tag, indent);
@@ -3347,7 +3347,7 @@ void Analyze_GenericCapability(PS_GenericCapability x, const char* label, uint16
     if (x->option_of_nonCollapsing)
     {
         ShowPERInteger(tag, indent, "size_of_nonCollapsing", (uint32)x->size_of_nonCollapsing);
-        for (i = 0;i < x->size_of_nonCollapsing;++i)
+        for (i = 0; i < x->size_of_nonCollapsing; ++i)
         {
             sprintf(tempLabelString, "nonCollapsing[%hu]", i);
             Analyze_GenericParameter(x->nonCollapsing + i, tempLabelString, tag, indent);
@@ -3413,7 +3413,7 @@ void Analyze_GenericParameter(PS_GenericParameter x, const char* label, uint16 t
     if (x->option_of_supersedes)
     {
         ShowPERInteger(tag, indent, "size_of_supersedes", (uint32)x->size_of_supersedes);
-        for (i = 0;i < x->size_of_supersedes;++i)
+        for (i = 0; i < x->size_of_supersedes; ++i)
         {
             sprintf(tempLabelString, "supersedes[%hu]", i);
             Analyze_ParameterIdentifier(x->supersedes + i, tempLabelString, tag, indent);
@@ -3491,7 +3491,7 @@ void Analyze_ParameterValue(PS_ParameterValue x, const char* label, uint16 tag, 
             break;
         case 7:
             ShowPERInteger(tag, indent, "size", (uint32)x->size);
-            for (i = 0;i < x->size;++i)
+            for (i = 0; i < x->size; ++i)
             {
                 sprintf(tempLabelString, "genericParameter[%hu]", i);
                 Analyze_GenericParameter(x->genericParameter + i, tempLabelString, tag, indent);
@@ -4543,7 +4543,7 @@ void Analyze_H2250LogicalChannelParameters(PS_H2250LogicalChannelParameters x, c
     if (x->option_of_nonStandard)
     {
         ShowPERInteger(tag, indent, "size_of_nonStandard", (uint32)x->size_of_nonStandard);
-        for (i = 0;i < x->size_of_nonStandard;++i)
+        for (i = 0; i < x->size_of_nonStandard; ++i)
         {
             sprintf(tempLabelString, "nonStandard[%hu]", i);
             Analyze_NonStandardParameter(x->nonStandard + i, tempLabelString, tag, indent);
@@ -4781,7 +4781,7 @@ void Analyze_IPSourceRouteAddress(PS_IPSourceRouteAddress x, const char* label, 
     ShowPEROctetString(tag, indent, "network", &x->network);
     ShowPERInteger(tag, indent, "tsapIdentifier", (int32)x->tsapIdentifier);
     ShowPERInteger(tag, indent, "size_of_route", (uint32)x->size_of_route);
-    for (i = 0;i < x->size_of_route;++i)
+    for (i = 0; i < x->size_of_route; ++i)
     {
         ShowPEROctetStrings(tag, indent, "route", x->route + i, i);
     }
@@ -4940,7 +4940,7 @@ void Analyze_EncryptionSync(PS_EncryptionSync x, const char* label, uint16 tag, 
     if (x->option_of_escrowentry)
     {
         ShowPERInteger(tag, indent, "size_of_escrowentry", (uint32)x->size_of_escrowentry);
-        for (i = 0;i < x->size_of_escrowentry;++i)
+        for (i = 0; i < x->size_of_escrowentry; ++i)
         {
             sprintf(tempLabelString, "escrowentry[%hu]", i);
             Analyze_EscrowData(x->escrowentry + i, tempLabelString, tag, indent);
@@ -5184,7 +5184,7 @@ void Analyze_H2250LogicalChannelAckParameters(PS_H2250LogicalChannelAckParameter
     if (x->option_of_nonStandard)
     {
         ShowPERInteger(tag, indent, "size_of_nonStandard", (uint32)x->size_of_nonStandard);
-        for (i = 0;i < x->size_of_nonStandard;++i)
+        for (i = 0; i < x->size_of_nonStandard; ++i)
         {
             sprintf(tempLabelString, "nonStandard[%hu]", i);
             Analyze_NonStandardParameter(x->nonStandard + i, tempLabelString, tag, indent);
@@ -5437,7 +5437,7 @@ void Analyze_MultiplexEntrySend(PS_MultiplexEntrySend x, const char* label, uint
     indent += 2;
     ShowPERInteger(tag, indent, "sequenceNumber", (int32)x->sequenceNumber);
     ShowPERInteger(tag, indent, "size_of_multiplexEntryDescriptors", (uint32)x->size_of_multiplexEntryDescriptors);
-    for (i = 0;i < x->size_of_multiplexEntryDescriptors;++i)
+    for (i = 0; i < x->size_of_multiplexEntryDescriptors; ++i)
     {
         sprintf(tempLabelString, "multiplexEntryDescriptors[%hu]", i);
         Analyze_MultiplexEntryDescriptor(x->multiplexEntryDescriptors + i, tempLabelString, tag, indent);
@@ -5462,7 +5462,7 @@ void Analyze_MultiplexEntryDescriptor(PS_MultiplexEntryDescriptor x, const char*
     if (x->option_of_elementList)
     {
         ShowPERInteger(tag, indent, "size_of_elementList", (uint32)x->size_of_elementList);
-        for (i = 0;i < x->size_of_elementList;++i)
+        for (i = 0; i < x->size_of_elementList; ++i)
         {
             sprintf(tempLabelString, "elementList[%hu]", i);
             Analyze_MultiplexElement(x->elementList + i, tempLabelString, tag, indent);
@@ -5522,7 +5522,7 @@ void Analyze_MuxType(PS_MuxType x, const char* label, uint16 tag, uint16 indent)
             break;
         case 1:
             ShowPERInteger(tag, indent, "size", (uint32)x->size);
-            for (i = 0;i < x->size;++i)
+            for (i = 0; i < x->size; ++i)
             {
                 sprintf(tempLabelString, "subElementList[%hu]", i);
                 Analyze_MultiplexElement(x->subElementList + i, tempLabelString, tag, indent);
@@ -5545,7 +5545,7 @@ void Analyze_MultiplexEntrySendAck(PS_MultiplexEntrySendAck x, const char* label
     indent += 2;
     ShowPERInteger(tag, indent, "sequenceNumber", (int32)x->sequenceNumber);
     ShowPERInteger(tag, indent, "size_of_multiplexTableEntryNumber", (uint32)x->size_of_multiplexTableEntryNumber);
-    for (i = 0;i < x->size_of_multiplexTableEntryNumber;++i)
+    for (i = 0; i < x->size_of_multiplexTableEntryNumber; ++i)
     {
         ShowPERIntegers(tag, indent, "multiplexTableEntryNumber", (uint32)x->multiplexTableEntryNumber[i], i);
     }
@@ -5566,7 +5566,7 @@ void Analyze_MultiplexEntrySendReject(PS_MultiplexEntrySendReject x, const char*
     indent += 2;
     ShowPERInteger(tag, indent, "sequenceNumber", (int32)x->sequenceNumber);
     ShowPERInteger(tag, indent, "size_of_rejectionDescriptions", (uint32)x->size_of_rejectionDescriptions);
-    for (i = 0;i < x->size_of_rejectionDescriptions;++i)
+    for (i = 0; i < x->size_of_rejectionDescriptions; ++i)
     {
         sprintf(tempLabelString, "rejectionDescriptions[%hu]", i);
         Analyze_MultiplexEntryRejectionDescriptions(x->rejectionDescriptions + i, tempLabelString, tag, indent);
@@ -5627,7 +5627,7 @@ void Analyze_MultiplexEntrySendRelease(PS_MultiplexEntrySendRelease x, const cha
     ShowPERSequence(tag, indent, label, "MultiplexEntrySendRelease");
     indent += 2;
     ShowPERInteger(tag, indent, "size_of_multiplexTableEntryNumber", (uint32)x->size_of_multiplexTableEntryNumber);
-    for (i = 0;i < x->size_of_multiplexTableEntryNumber;++i)
+    for (i = 0; i < x->size_of_multiplexTableEntryNumber; ++i)
     {
         ShowPERIntegers(tag, indent, "multiplexTableEntryNumber", (uint32)x->multiplexTableEntryNumber[i], i);
     }
@@ -5647,7 +5647,7 @@ void Analyze_RequestMultiplexEntry(PS_RequestMultiplexEntry x, const char* label
     ShowPERSequence(tag, indent, label, "RequestMultiplexEntry");
     indent += 2;
     ShowPERInteger(tag, indent, "size_of_entryNumbers", (uint32)x->size_of_entryNumbers);
-    for (i = 0;i < x->size_of_entryNumbers;++i)
+    for (i = 0; i < x->size_of_entryNumbers; ++i)
     {
         ShowPERIntegers(tag, indent, "entryNumbers", (uint32)x->entryNumbers[i], i);
     }
@@ -5667,7 +5667,7 @@ void Analyze_RequestMultiplexEntryAck(PS_RequestMultiplexEntryAck x, const char*
     ShowPERSequence(tag, indent, label, "RequestMultiplexEntryAck");
     indent += 2;
     ShowPERInteger(tag, indent, "size_of_entryNumbers", (uint32)x->size_of_entryNumbers);
-    for (i = 0;i < x->size_of_entryNumbers;++i)
+    for (i = 0; i < x->size_of_entryNumbers; ++i)
     {
         ShowPERIntegers(tag, indent, "entryNumbers", (uint32)x->entryNumbers[i], i);
     }
@@ -5687,12 +5687,12 @@ void Analyze_RequestMultiplexEntryReject(PS_RequestMultiplexEntryReject x, const
     ShowPERSequence(tag, indent, label, "RequestMultiplexEntryReject");
     indent += 2;
     ShowPERInteger(tag, indent, "size_of_entryNumbers", (uint32)x->size_of_entryNumbers);
-    for (i = 0;i < x->size_of_entryNumbers;++i)
+    for (i = 0; i < x->size_of_entryNumbers; ++i)
     {
         ShowPERIntegers(tag, indent, "entryNumbers", (uint32)x->entryNumbers[i], i);
     }
     ShowPERInteger(tag, indent, "size_of_rejectionDescriptions", (uint32)x->size_of_rejectionDescriptions);
-    for (i = 0;i < x->size_of_rejectionDescriptions;++i)
+    for (i = 0; i < x->size_of_rejectionDescriptions; ++i)
     {
         sprintf(tempLabelString, "rejectionDescriptions[%hu]", i);
         Analyze_RequestMultiplexEntryRejectionDescriptions(x->rejectionDescriptions + i, tempLabelString, tag, indent);
@@ -5750,7 +5750,7 @@ void Analyze_RequestMultiplexEntryRelease(PS_RequestMultiplexEntryRelease x, con
     ShowPERSequence(tag, indent, label, "RequestMultiplexEntryRelease");
     indent += 2;
     ShowPERInteger(tag, indent, "size_of_entryNumbers", (uint32)x->size_of_entryNumbers);
-    for (i = 0;i < x->size_of_entryNumbers;++i)
+    for (i = 0; i < x->size_of_entryNumbers; ++i)
     {
         ShowPERIntegers(tag, indent, "entryNumbers", (uint32)x->entryNumbers[i], i);
     }
@@ -5771,7 +5771,7 @@ void Analyze_RequestMode(PS_RequestMode x, const char* label, uint16 tag, uint16
     indent += 2;
     ShowPERInteger(tag, indent, "sequenceNumber", (int32)x->sequenceNumber);
     ShowPERInteger(tag, indent, "size_of_requestedModes", (uint32)x->size_of_requestedModes);
-    for (i = 0;i < x->size_of_requestedModes;++i)
+    for (i = 0; i < x->size_of_requestedModes; ++i)
     {
         sprintf(tempLabelString, "requestedModes[%hu]", i);
         Analyze_ModeDescription(x->requestedModes + i, tempLabelString, tag, indent);
@@ -5890,7 +5890,7 @@ void Analyze_ModeDescription(PS_ModeDescription x, const char* label, uint16 tag
     ShowPERSetof(tag, indent, label, "ModeDescription");
     indent += 2;
     ShowPERInteger(tag, indent, "size", (uint32)x->size);
-    for (i = 0;i < x->size;++i)
+    for (i = 0; i < x->size; ++i)
     {
         sprintf(tempLabelString, "item[%hu]", i);
         Analyze_ModeElement(x->item + i, tempLabelString, tag, indent);
@@ -7149,7 +7149,7 @@ void Analyze_CommunicationModeCommand(PS_CommunicationModeCommand x, const char*
     ShowPERSequence(tag, indent, label, "CommunicationModeCommand");
     indent += 2;
     ShowPERInteger(tag, indent, "size_of_communicationModeTable", (uint32)x->size_of_communicationModeTable);
-    for (i = 0;i < x->size_of_communicationModeTable;++i)
+    for (i = 0; i < x->size_of_communicationModeTable; ++i)
     {
         sprintf(tempLabelString, "communicationModeTable[%hu]", i);
         Analyze_CommunicationModeTableEntry(x->communicationModeTable + i, tempLabelString, tag, indent);
@@ -7189,7 +7189,7 @@ void Analyze_CommunicationModeResponse(PS_CommunicationModeResponse x, const cha
     {
         case 0:
             ShowPERInteger(tag, indent, "size", (uint32)x->size);
-            for (i = 0;i < x->size;++i)
+            for (i = 0; i < x->size; ++i)
             {
                 sprintf(tempLabelString, "communicationModeTable[%hu]", i);
                 Analyze_CommunicationModeTableEntry(x->communicationModeTable + i, tempLabelString, tag, indent);
@@ -7223,7 +7223,7 @@ void Analyze_CommunicationModeTableEntry(PS_CommunicationModeTableEntry x, const
     if (x->option_of_nonStandard)
     {
         ShowPERInteger(tag, indent, "size_of_nonStandard", (uint32)x->size_of_nonStandard);
-        for (i = 0;i < x->size_of_nonStandard;++i)
+        for (i = 0; i < x->size_of_nonStandard; ++i)
         {
             sprintf(tempLabelString, "nonStandard[%hu]", i);
             Analyze_NonStandardParameter(x->nonStandard + i, tempLabelString, tag, indent);
@@ -7410,7 +7410,7 @@ void Analyze_CertSelectionCriteria(PS_CertSelectionCriteria x, const char* label
     ShowPERSequenceof(tag, indent, label, "CertSelectionCriteria");
     indent += 2;
     ShowPERInteger(tag, indent, "size", (uint32)x->size);
-    for (i = 0;i < x->size;++i)
+    for (i = 0; i < x->size; ++i)
     {
         sprintf(tempLabelString, "item[%hu]", i);
         Analyze_Criteria(x->item + i, tempLabelString, tag, indent);
@@ -7474,7 +7474,7 @@ void Analyze_ConferenceResponse(PS_ConferenceResponse x, const char* label, uint
             break;
         case 4:
             ShowPERInteger(tag, indent, "size", (uint32)x->size);
-            for (i = 0;i < x->size;++i)
+            for (i = 0; i < x->size; ++i)
             {
                 sprintf(tempLabelString, "terminalListResponse[%hu]", i);
                 Analyze_TerminalLabel(x->terminalListResponse + i, tempLabelString, tag, indent);
@@ -7744,7 +7744,7 @@ void Analyze_RequestAllTerminalIDsResponse(PS_RequestAllTerminalIDsResponse x, c
     ShowPERSequence(tag, indent, label, "RequestAllTerminalIDsResponse");
     indent += 2;
     ShowPERInteger(tag, indent, "size_of_terminalInformation", (uint32)x->size_of_terminalInformation);
-    for (i = 0;i < x->size_of_terminalInformation;++i)
+    for (i = 0; i < x->size_of_terminalInformation; ++i)
     {
         sprintf(tempLabelString, "terminalInformation[%hu]", i);
         Analyze_TerminalInformation(x->terminalInformation + i, tempLabelString, tag, indent);
@@ -8180,7 +8180,7 @@ void Analyze_DialingInformation(PS_DialingInformation x, const char* label, uint
             break;
         case 1:
             ShowPERInteger(tag, indent, "size", (uint32)x->size);
-            for (i = 0;i < x->size;++i)
+            for (i = 0; i < x->size; ++i)
             {
                 sprintf(tempLabelString, "differential[%hu]", i);
                 Analyze_DialingInformationNumber(x->differential + i, tempLabelString, tag, indent);
@@ -8214,7 +8214,7 @@ void Analyze_DialingInformationNumber(PS_DialingInformationNumber x, const char*
         ShowPERCharString(tag, indent, "subAddress", &x->subAddress);
     }
     ShowPERInteger(tag, indent, "size_of_networkType", (uint32)x->size_of_networkType);
-    for (i = 0;i < x->size_of_networkType;++i)
+    for (i = 0; i < x->size_of_networkType; ++i)
     {
         sprintf(tempLabelString, "networkType[%hu]", i);
         Analyze_DialingInformationNetworkType(x->networkType + i, tempLabelString, tag, indent);
@@ -8401,7 +8401,7 @@ void Analyze_SpecificRequest(PS_SpecificRequest x, const char* label, uint16 tag
     if (x->option_of_capabilityTableEntryNumbers)
     {
         ShowPERInteger(tag, indent, "size_of_capabilityTableEntryNumbers", (uint32)x->size_of_capabilityTableEntryNumbers);
-        for (i = 0;i < x->size_of_capabilityTableEntryNumbers;++i)
+        for (i = 0; i < x->size_of_capabilityTableEntryNumbers; ++i)
         {
             ShowPERIntegers(tag, indent, "capabilityTableEntryNumbers", (uint32)x->capabilityTableEntryNumbers[i], i);
         }
@@ -8409,7 +8409,7 @@ void Analyze_SpecificRequest(PS_SpecificRequest x, const char* label, uint16 tag
     if (x->option_of_capabilityDescriptorNumbers)
     {
         ShowPERInteger(tag, indent, "size_of_capabilityDescriptorNumbers", (uint32)x->size_of_capabilityDescriptorNumbers);
-        for (i = 0;i < x->size_of_capabilityDescriptorNumbers;++i)
+        for (i = 0; i < x->size_of_capabilityDescriptorNumbers; ++i)
         {
             ShowPERIntegers(tag, indent, "capabilityDescriptorNumbers", (uint32)x->capabilityDescriptorNumbers[i], i);
         }

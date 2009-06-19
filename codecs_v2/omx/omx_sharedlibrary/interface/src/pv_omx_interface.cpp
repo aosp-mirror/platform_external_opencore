@@ -79,7 +79,7 @@ extern "C"
     {
         PVOMXInterface* pInterface = (PVOMXInterface*)interface;
         if (pInterface)
-       {
+        {
             OSCL_DELETE(pInterface);
         }
     }

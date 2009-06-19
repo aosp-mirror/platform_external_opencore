@@ -102,7 +102,7 @@
 #define DEFAULT_FASTTRACK_DL_FILE "test.pvx"
 #undef USE_NEW_PVMF_COMMONSOURCE_CONTEXT_DATA
 #define USE_NEW_PVMF_COMMONSOURCE_CONTEXT_DATA 1
-#define USE_NEW_PVMF_SOURCE_CONTEXT_DATA	1
+#define USE_NEW_PVMF_SOURCE_CONTEXT_DATA    1
 #define DLA_TIMEOUT_MSEC (30*1000)
 //
 // pvplayer_async_test_cpmdlapassthru section
@@ -611,7 +611,7 @@ void pvplayer_async_test_cpmdlapassthru::Run()
                                                        NULL , 0 //DLA data
                                                        , (oscl_wchar*)wFileName.get_cstr() //content name
                                                        , DLA_TIMEOUT_MSEC););
-            OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); fprintf(iTestMsgOutputFile, "... Failed\n");iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
+            OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); fprintf(iTestMsgOutputFile, "... Failed\n"); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
             //Fire CancelAcquireLic only for this testcase
             if (iTestMode == OMA1_DLA_CANCEL_ACQUIRE_LICENSE_SUCCEEDS)
             {
@@ -625,7 +625,7 @@ void pvplayer_async_test_cpmdlapassthru::Run()
         {
             fprintf(iTestMsgOutputFile, "\nCancel Acquiring License...");
             OSCL_TRY(error, iCancelCmdId = iLicenseIF->CancelAcquireLicense(iAcquireLicenseCmdId););
-            OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); fprintf(iTestMsgOutputFile, "... Failed\n");iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
+            OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); fprintf(iTestMsgOutputFile, "... Failed\n"); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
         }
         break;
 

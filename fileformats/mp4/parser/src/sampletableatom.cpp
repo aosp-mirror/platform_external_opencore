@@ -134,7 +134,7 @@ SampleTableAtom::SampleTableAtom(MP4_FF_FILE *fp,
             AtomUtils::getNextAtomType(fp, atomSize, atomType);
 
             if (atomType == TIME_TO_SAMPLE_ATOM)
-            {	//"stts"
+            {   //"stts"
                 PV_MP4_FF_NEW(fp->auditCB, TimeToSampleAtom,
                               (fp, mediaType, atomSize,
                                atomType, filename, parsingMode),
@@ -152,7 +152,7 @@ SampleTableAtom::SampleTableAtom(MP4_FF_FILE *fp,
             }
 
             else if (atomType == COMPOSITION_OFFSET_ATOM)
-            {	//"ctts"
+            {   //"ctts"
                 PV_MP4_FF_NEW(fp->auditCB, CompositionOffsetAtom,
                               (fp, mediaType, atomSize,
                                atomType, filename, parsingMode),
@@ -537,7 +537,7 @@ SampleTableAtom::getSample(uint32 sampleNum, uint8 *buf, int32 &size, uint32 &in
     index = _SDIndex;
 
     if (sampleSize == 0)
-    {	//shortcut
+    {   //shortcut
         return EVERYTHING_FINE;
     }
 
@@ -1986,16 +1986,16 @@ int32 SampleTableAtom::getTimestampForRandomAccessPoints(uint32 *num, uint32 *ts
 {
     if (_psyncSampleAtom == NULL)
     {
-		if (_psampleSizeAtom != NULL)
+        if (_psampleSizeAtom != NULL)
         {
-            *num =_psampleSizeAtom->getSampleCount();
+            *num = _psampleSizeAtom->getSampleCount();
         }
-        return 2;	//success : every sample is a random access point
+        return 2;   //success : every sample is a random access point
     }
 
     if (_ptimeToSampleAtom == NULL)
     {
-        return 0;	//fail
+        return 0;   //fail
     }
 
     uint32 tmp = _psyncSampleAtom->getEntryCount();
@@ -2003,7 +2003,7 @@ int32 SampleTableAtom::getTimestampForRandomAccessPoints(uint32 *num, uint32 *ts
     if (*num == 0)
     {
         *num = tmp;
-        return 1;	//success. This is only the query mode.
+        return 1;   //success. This is only the query mode.
     }
     if (*num > tmp)
         *num = tmp;
@@ -2024,7 +2024,7 @@ int32 SampleTableAtom::getTimestampForRandomAccessPoints(uint32 *num, uint32 *ts
                 offsetBuf[i] = offset;
         }
     }
-    return	1;	//success
+    return  1;  //success
 }
 
 
@@ -2032,12 +2032,12 @@ int32 SampleTableAtom::getTimestampForRandomAccessPointsBeforeAfter(uint32 ts, u
 {
     if (_psyncSampleAtom == NULL)
     {
-        return 2;	//success : every sample is a random access point
+        return 2;   //success : every sample is a random access point
     }
 
     if (_ptimeToSampleAtom == NULL)
     {
-        return 0;	//fail
+        return 0;   //fail
     }
 
 
@@ -2061,7 +2061,7 @@ int32 SampleTableAtom::getTimestampForRandomAccessPointsBeforeAfter(uint32 ts, u
         return PV_ERROR;
     }
     uint32 startIdx = 0, endIdx = 0, k = 0, idx = 0;
-    for (idx = 0; idx < numSyncSamples;idx++)
+    for (idx = 0; idx < numSyncSamples; idx++)
     {
         int32 tempSampleNum = _psyncSampleAtom->getSampleNumberAt(idx);
         if (SampleNumberForTS == tempSampleNum)
@@ -2098,7 +2098,7 @@ int32 SampleTableAtom::getTimestampForRandomAccessPointsBeforeAfter(uint32 ts, u
     }
     numsamplestoget = k;
 
-    return	1;	//success
+    return  1;  //success
 }
 
 uint32 SampleTableAtom::getTimestampForSampleNumber(uint32 sampleNumber)
@@ -2268,7 +2268,7 @@ SampleTableAtom::getNextBundledAccessUnits(uint32 *n,
     if (_currentPlaybackSampleNumber >= (int32)numSamples)
     {
         *n = 0;
-        pgau->info[0].ts = 0;	//_currentPlaybackSampleTimestamp;
+        pgau->info[0].ts = 0;   //_currentPlaybackSampleTimestamp;
         nReturn = END_OF_TRACK;
         return nReturn;
     }
@@ -2987,7 +2987,7 @@ SampleTableAtom::peekNextNSamples(uint32 startSampleNum,
         // Find chunk
         uint32 lastSampleNum = startSampleNum + samplesToBePeeked - 1;
 
-        int32 chunk = 	_psampleToChunkAtom->getChunkNumberForSamplePeek(sampleNum);
+        int32 chunk =   _psampleToChunkAtom->getChunkNumberForSamplePeek(sampleNum);
 
         if (chunk == PV_ERROR)
         {
@@ -3175,7 +3175,7 @@ int32 SampleTableAtom::updateFileSize(uint32 filesize)
     {
         if (AtomUtils::Flush(_pinput))
         {
-            return DEFAULT_ERROR;	//error
+            return DEFAULT_ERROR;   //error
         }
     }
     return EVERYTHING_FINE;

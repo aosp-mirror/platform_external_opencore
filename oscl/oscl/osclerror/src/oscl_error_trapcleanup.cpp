@@ -258,7 +258,7 @@ inline void OsclTrapStack::PopTrap()
 void OsclTrapStack::Pop(int32 aCount)
 {
     OSCL_ASSERT(aCount >= 0);//ETrapPopCountNegative
-    for (int i = 0;i < aCount;i++)
+    for (int i = 0; i < aCount; i++)
         Pop();
 }
 
@@ -293,7 +293,7 @@ void OsclTrapStack::PopDealloc()
 
 void OsclTrapStack::PopDealloc(int32 aCount)
 {
-    for (int i = 0;i < aCount;i++)
+    for (int i = 0; i < aCount; i++)
         PopDealloc();
 }
 

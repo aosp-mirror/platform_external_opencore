@@ -121,10 +121,10 @@ PVMFStatus PVMFDummyFileOutputNode::GetConfigParameter(PvmiKvp*& aParameters, in
     // Copy the requested info
     switch (aIndex)
     {
-        case PARAMETER1:	// "parameter1"
+        case PARAMETER1:    // "parameter1"
             break;
 
-        case PARAMETER2:	// "parameter2"
+        case PARAMETER2:    // "parameter2"
             break;
 
         default:
@@ -202,7 +202,7 @@ PVMFStatus PVMFDummyFileOutputNode::VerifyAndSetConfigParameter(PvmiKvp& aParame
 }
 
 ////////////////////////////////////////////////////////////////////////////
-//					PvmiCapConfigInterface Virtual Functions
+//                  PvmiCapConfigInterface Virtual Functions
 ////////////////////////////////////////////////////////////////////////////
 
 void PVMFDummyFileOutputNode::createContext(PvmiMIOSession aSession,
@@ -241,9 +241,9 @@ PVMFCommandId PVMFDummyFileOutputNode::setParametersAsync(PvmiMIOSession aSessio
     OSCL_UNUSED_ARG(aParameters);
     OSCL_UNUSED_ARG(aRet_kvp);
     OSCL_UNUSED_ARG(aNumElements);
-//	PVMFDummyFileOutputNodeCommand cmd;
-//	cmd.PVMFMP4FFParserNodeCommand::Construct(NULL, PVMF_MP4_PARSER_NODE_CAPCONFIG_SETPARAMS,aSession, aParameters, aNumElements, aRet_kvp, aContext);
-//	return QueueCommandL(cmd);
+//  PVMFDummyFileOutputNodeCommand cmd;
+//  cmd.PVMFMP4FFParserNodeCommand::Construct(NULL, PVMF_MP4_PARSER_NODE_CAPCONFIG_SETPARAMS,aSession, aParameters, aNumElements, aRet_kvp, aContext);
+//  return QueueCommandL(cmd);
     return 0;
 }
 

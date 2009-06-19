@@ -177,7 +177,7 @@ class NTPTime
 //! The TimeValue class represents a time value in a format native to the system.
 /*!
     This class provides common time functions independent of any OS. The actual representation used
-	is native to the system that the class is compiled on to increase efficiency.
+    is native to the system that the class is compiled on to increase efficiency.
    Macros used in this class:
    - OSCL_HAS_ANSI_STRING_SUPPORT:
 

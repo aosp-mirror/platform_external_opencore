@@ -127,7 +127,7 @@ class OsclDestructDealloc
 };
 
 class OsclAllocDestructDealloc
-            : public OsclDestructDealloc, public Oscl_DefAlloc
+        : public OsclDestructDealloc, public Oscl_DefAlloc
 {
 
     public:
@@ -142,8 +142,8 @@ class Oscl_TAlloc : public OsclDestructDealloc
         typedef T           * pointer;
         typedef const T     * const_pointer;
         typedef uint32      size_type;
-        typedef T&			reference;
-        typedef const T&	const_reference;
+        typedef T&          reference;
+        typedef const T&    const_reference;
 
         virtual ~Oscl_TAlloc() {};
 

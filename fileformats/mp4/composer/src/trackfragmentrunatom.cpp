@@ -88,7 +88,7 @@ PVA_FF_TrackFragmentRunAtom::addSample(uint32 size, uint32 ts, uint8 flags)
 
         uint32 size = _psampleEntriesVec->size();
 
-        (*_psampleEntriesVec)[size-1].sampleDuration = delta;	// add sample duration for last sample.. same as second last sample
+        (*_psampleEntriesVec)[size-1].sampleDuration = delta;   // add sample duration for last sample.. same as second last sample
         // last sample duration added while rendering
     }
     //Store meta data params
@@ -117,7 +117,7 @@ PVA_FF_TrackFragmentRunAtom::recomputeSize()
     int32 size = getDefaultSize();
 
     size += 4;  // sample count;
-    size += 4;	// data offset
+    size += 4;  // data offset
 
     if (_psampleEntriesVec->size() != 0)
     {

@@ -18,7 +18,7 @@
 #ifndef _BITSTREAM_IO_H_
 #define _BITSTREAM_IO_H_
 
-#define BitstreamPut1Bits(x,y)	BitstreamPutBits(x,1,y)
+#define BitstreamPut1Bits(x,y)  BitstreamPutBits(x,1,y)
 #define BitstreamPutGT8Bits(x,y,z) BitstreamPutBits(x,y,z)
 
 #include "mp4lib_int.h"
@@ -33,7 +33,7 @@ extern "C"
     PV_STATUS BitstreamPutGT16Bits(BitstreamEncVideo *stream, Int Length, ULong Value);
     PV_STATUS BitstreamSaveWord(BitstreamEncVideo *stream);
     PV_STATUS BitstreamSavePartial(BitstreamEncVideo *stream, Int *fraction);
-    Int	BitstreamGetPos(BitstreamEncVideo *stream);
+    Int BitstreamGetPos(BitstreamEncVideo *stream);
     void BitstreamEncReset(BitstreamEncVideo *stream);
 
     Int BitstreamShortHeaderByteAlignStuffing(BitstreamEncVideo *stream);

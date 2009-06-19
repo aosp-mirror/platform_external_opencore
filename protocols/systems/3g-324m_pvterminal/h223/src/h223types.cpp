@@ -709,7 +709,7 @@ unsigned CPVMultiplexEntryDescriptor::FindLcns(
 
     for (int cnt = ListSize ; cnt != 0 ; cnt --)
     {
-        /* SubElemnt Search	*/
+        /* SubElemnt Search */
         if (pElement->muxType.index)
         {
             int size = 0;

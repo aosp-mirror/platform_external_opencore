@@ -88,7 +88,7 @@ class PVCommandStatusObserver
         /**
         Handle an event that has been generated.
 
-        @param "aResponse"	"The response to a previously issued command."
+        @param "aResponse"  "The response to a previously issued command."
         */
         virtual void CommandCompleted(const PVCmdResponse& aResponse) = 0;
         virtual ~PVCommandStatusObserver() {}

@@ -85,7 +85,7 @@ OSCL_EXPORT_REF OMX_ERRORTYPE AmrOmxComponentDestructor(OMX_IN OMX_HANDLETYPE pH
 
 #if DYNAMIC_LOAD_OMX_AMR_COMPONENT
 class AmrOmxSharedLibraryInterface: public OsclSharedLibraryInterface,
-            public OmxSharedLibraryInterface
+        public OmxSharedLibraryInterface
 
 {
     public:
@@ -121,12 +121,12 @@ extern "C"
 {
     OSCL_EXPORT_REF OsclAny* PVGetInterface()
     {
-      return (OsclAny*) OSCL_NEW(AmrOmxSharedLibraryInterface, ());
+        return (OsclAny*) OSCL_NEW(AmrOmxSharedLibraryInterface, ());
     }
     OSCL_EXPORT_REF void PVReleaseInterface(OsclSharedLibraryInterface* aInstance)
     {
-          AmrOmxSharedLibraryInterface* module = (AmrOmxSharedLibraryInterface*)aInstance;
-          OSCL_DELETE(module);
+        AmrOmxSharedLibraryInterface* module = (AmrOmxSharedLibraryInterface*)aInstance;
+        OSCL_DELETE(module);
     }
 }
 
@@ -316,9 +316,9 @@ OMX_ERRORTYPE OpenmaxAmrAO::ConstructComponent(OMX_PTR pAppData, OMX_PTR pProxy)
 
 
 /** This function is called by the omx core when the component
-	* is disposed by the IL client with a call to FreeHandle().
-	* \param Component, the component to be disposed
-	*/
+    * is disposed by the IL client with a call to FreeHandle().
+    * \param Component, the component to be disposed
+    */
 
 OMX_ERRORTYPE OpenmaxAmrAO::DestroyComponent()
 {
@@ -440,15 +440,15 @@ void OpenmaxAmrAO::DecodeWithoutMarker()
 
     QueueType* pInputQueue = ipPorts[OMX_PORT_INPUTPORT_INDEX]->pBufferQueue;
     QueueType* pOutputQueue = ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->pBufferQueue;
-    ComponentPortType*	pOutPort = ipPorts[OMX_PORT_OUTPUTPORT_INDEX];
+    ComponentPortType*  pOutPort = ipPorts[OMX_PORT_OUTPUTPORT_INDEX];
     OMX_COMPONENTTYPE  *pHandle = &iOmxComponent;
 
-    OMX_U8*					pOutBuffer;
-    OMX_U32					OutputLength;
-    OMX_U8*					pTempInBuffer;
-    OMX_U32					TempInLength;
-    OMX_BOOL				ResizeNeeded = OMX_FALSE;
-    OMX_BOOL				DecodeReturn = OMX_FALSE;
+    OMX_U8*                 pOutBuffer;
+    OMX_U32                 OutputLength;
+    OMX_U8*                 pTempInBuffer;
+    OMX_U32                 TempInLength;
+    OMX_BOOL                ResizeNeeded = OMX_FALSE;
+    OMX_BOOL                DecodeReturn = OMX_FALSE;
 
     OMX_U32 TempInputBufferSize = (2 * sizeof(uint8) * (ipPorts[OMX_PORT_INPUTPORT_INDEX]->PortParam.nBufferSize));
 
@@ -728,14 +728,14 @@ void OpenmaxAmrAO::DecodeWithMarker()
     QueueType* pInputQueue = ipPorts[OMX_PORT_INPUTPORT_INDEX]->pBufferQueue;
     QueueType* pOutputQueue = ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->pBufferQueue;
 
-    ComponentPortType*	pInPort = ipPorts[OMX_PORT_INPUTPORT_INDEX];
-    ComponentPortType*	pOutPort = ipPorts[OMX_PORT_OUTPUTPORT_INDEX];
+    ComponentPortType*  pInPort = ipPorts[OMX_PORT_INPUTPORT_INDEX];
+    ComponentPortType*  pOutPort = ipPorts[OMX_PORT_OUTPUTPORT_INDEX];
 
-    OMX_U8*					pOutBuffer;
-    OMX_U32					OutputLength;
-    OMX_BOOL				DecodeReturn = OMX_FALSE;
-    OMX_COMPONENTTYPE*		pHandle = &iOmxComponent;
-    OMX_BOOL				ResizeNeeded = OMX_FALSE;
+    OMX_U8*                 pOutBuffer;
+    OMX_U32                 OutputLength;
+    OMX_BOOL                DecodeReturn = OMX_FALSE;
+    OMX_COMPONENTTYPE*      pHandle = &iOmxComponent;
+    OMX_BOOL                ResizeNeeded = OMX_FALSE;
 
     if ((!iIsInputBufferEnded) || (iEndofStream))
     {
@@ -907,7 +907,7 @@ void OpenmaxAmrAO::DecodeWithMarker()
                 OMX_COMPONENTTYPE* pHandle = (OMX_COMPONENTTYPE*) ipAppPriv->CompHandle;
 
                 // set the flag to disable further processing until Client reacts to this
-                //	by doing dynamic port reconfiguration
+                //  by doing dynamic port reconfiguration
 
                 (*(ipCallbacks->EventHandler))
                 (pHandle,
@@ -1153,8 +1153,8 @@ void OpenmaxAmrAO::DoSilenceInsertion()
     QueueType* pOutputQueue = ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->pBufferQueue;
     ComponentPortType* pOutPort = ipPorts[OMX_PORT_OUTPUTPORT_INDEX];
 
-    OMX_U8*	pOutBuffer = NULL;
-    OMX_U32	OutputLength;
+    OMX_U8* pOutBuffer = NULL;
+    OMX_U32 OutputLength;
     //OMX_BOOL ResizeNeeded = OMX_FALSE;
     OMX_BOOL DecodeReturn;
 

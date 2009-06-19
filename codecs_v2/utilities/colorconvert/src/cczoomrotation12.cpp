@@ -24,7 +24,7 @@
 #include "cczoomrotation12.h"
 
 //for debug only
-//#define	OUTPUT_RGB_565
+//#define   OUTPUT_RGB_565
 
 
 OSCL_EXPORT_REF ColorConvertBase* ColorConvert12::NewL(void)
@@ -118,7 +118,7 @@ int32 ColorConvert12::Init(int32 Src_width, int32 Src_height, int32 Src_pitch, i
     int32 tmp;
     for (int32 i = -384; i < 640; i++)
     {
-        tmp	= (int32)(1.164 * (i - 16));
+        tmp = (int32)(1.164 * (i - 16));
         mClip[i] = (tmp < 0) ? 0 : ((tmp > 255) ? 255 : (uint8)tmp);
     }
 
@@ -141,19 +141,19 @@ int32  ColorConvert12::SetYuvFullRange(bool range)
 }
 
 
-int32 ColorConvert12::SetMode(int32 nMode)	//nMode : 0 Off, 1 On
+int32 ColorConvert12::SetMode(int32 nMode)  //nMode : 0 Off, 1 On
 {
     OSCL_ASSERT(_mInitialized == true);
 
     if (nMode == 0)
     {
-        mPtrYUV2RGB	=	&ColorConvert12::get_frame12;
-        _mState		=	0;
+        mPtrYUV2RGB =   &ColorConvert12::get_frame12;
+        _mState     =   0;
         _mDisp.src_pitch = _mSrc_pitch  ;
         _mDisp.dst_pitch = _mSrc_width  ;
-        _mDisp.src_width = _mSrc_width	;
+        _mDisp.src_width = _mSrc_width  ;
         _mDisp.src_height = _mSrc_height ;
-        _mDisp.dst_width = _mSrc_width	;
+        _mDisp.dst_width = _mSrc_width  ;
         _mDisp.dst_height = _mSrc_height ;
     }
     else
@@ -166,7 +166,7 @@ int32 ColorConvert12::SetMode(int32 nMode)	//nMode : 0 Off, 1 On
             }
             else /* zoom only */
             {
-                mPtrYUV2RGB	=	&ColorConvert12::cc12ZoomIn;
+                mPtrYUV2RGB =   &ColorConvert12::cc12ZoomIn;
             }
         }
         else
@@ -177,15 +177,15 @@ int32 ColorConvert12::SetMode(int32 nMode)	//nMode : 0 Off, 1 On
             }
             else /* no zoom, no rotate, SetMode(1) = SetMode(0) */
             {
-                mPtrYUV2RGB	=	&ColorConvert12::get_frame12;
+                mPtrYUV2RGB =   &ColorConvert12::get_frame12;
             }
         }
-        _mState		=	nMode;
+        _mState     =   nMode;
         _mDisp.src_pitch = _mSrc_pitch  ;
-        _mDisp.dst_pitch = _mDst_pitch	;
-        _mDisp.src_width = _mSrc_width	;
+        _mDisp.dst_pitch = _mDst_pitch  ;
+        _mDisp.src_width = _mSrc_width  ;
         _mDisp.src_height = _mSrc_height ;
-        _mDisp.dst_width = _mDst_width	;
+        _mDisp.dst_width = _mDst_width  ;
         _mDisp.dst_height = _mDst_height ;
     }
 
@@ -200,11 +200,11 @@ int32 ColorConvert12::GetOutputBufferSize(void)
     if (_mIsZoom)
     {
         // for zoom, need extra line of RGB buffer for processing otherwise memory will corrupt.
-        return	_mState ? ((_mDst_height + 1)*_mDst_pitch*2) : (_mSrc_width*_mSrc_height*2);
+        return  _mState ? ((_mDst_height + 1)*_mDst_pitch*2) : (_mSrc_width*_mSrc_height*2);
     }
     else
     {
-        return	_mState ? ((_mDst_height)*_mDst_pitch*2) : (_mSrc_width*_mSrc_height*2);
+        return  _mState ? ((_mDst_height)*_mDst_pitch*2) : (_mSrc_width*_mSrc_height*2);
     }
 
 }
@@ -254,9 +254,9 @@ int32 ColorConvert12::Convert(uint8 *yuvBuf, uint8 *rgbBuf)
         return 0;
     }
 
-    TmpYuvBuf[0]	=	yuvBuf;
-    TmpYuvBuf[1]	=	yuvBuf + (_mSrc_pitch) * (_mSrc_mheight);
-    TmpYuvBuf[2]	=	TmpYuvBuf[1] + (_mSrc_pitch * _mSrc_mheight) / 4;
+    TmpYuvBuf[0]    =   yuvBuf;
+    TmpYuvBuf[1]    =   yuvBuf + (_mSrc_pitch) * (_mSrc_mheight);
+    TmpYuvBuf[2]    =   TmpYuvBuf[1] + (_mSrc_pitch * _mSrc_mheight) / 4;
 
     (*this.*mPtrYUV2RGB)(TmpYuvBuf, rgbBuf, &_mDisp, mClip, (uint8 *)(mErr_horz[0]));
 
@@ -270,61 +270,61 @@ int32 ColorConvert12::get_frame12(uint8 **src, uint8 *dst,
 {
     {
         asm("stmfd		sp!, {r0, r4-r11, r14}");
-        asm("mov		r0, r1");	//src
-        asm("mov		r1, r2");	//dst
-        asm("mov		r2, r3");	//disp
-        asm("ldr		r3, [sp, #40]");	//COFF_TBL
+        asm("mov		r0, r1"); //src
+        asm("mov		r1, r2"); //dst
+        asm("mov		r2, r3"); //disp
+        asm("ldr		r3, [sp, #40]");  //COFF_TBL
 
         asm("ldmfd		r2, {r4-r9};");
 
-        asm("rsb		r8, r6, r4, lsl #1;");	//r8 = src_pitch*2-src_width
-        asm("sub		r9, r4, r6;");			//r9 = src_pitch - src_width
-        asm("mov		r9, r9, lsr #1;");		//r9 = (src_pitch - src_width)/2
-        asm("rsb		r10,r6, r5, lsl #1;");	//r10= (dst_pitch - src_width)
-        asm("mov		r10, r10, lsl #1;");	//r10= (dst_pitch - src_width)*2
-        asm("sub		r6, r6, #1;");			//r6 = src_width-1
-        asm("orr		r6, r4, r6, lsl #18;");	//r6 = src_pitch | ( (src_width-1)<<18)
+        asm("rsb		r8, r6, r4, lsl #1;");    //r8 = src_pitch*2-src_width
+        asm("sub		r9, r4, r6;");            //r9 = src_pitch - src_width
+        asm("mov		r9, r9, lsr #1;");        //r9 = (src_pitch - src_width)/2
+        asm("rsb		r10,r6, r5, lsl #1;");    //r10= (dst_pitch - src_width)
+        asm("mov		r10, r10, lsl #1;");  //r10= (dst_pitch - src_width)*2
+        asm("sub		r6, r6, #1;");            //r6 = src_width-1
+        asm("orr		r6, r4, r6, lsl #18;");   //r6 = src_pitch | ( (src_width-1)<<18)
         //dst_pitch, r6, src_height, src_pitch*2-src_width, (src_pitch - src_width)/2, (dst_pitch - src_width)*2
         asm("stmfd		sp!, {r5-r10};");
-        asm("ldmfd		r0, {r4, r5, r7};");	//pY, pCb, pCr
-        asm("stmfd		sp!, { r5, r7 };");		//push pCb, pCr
+        asm("ldmfd		r0, {r4, r5, r7};");    //pY, pCb, pCr
+        asm("stmfd		sp!, { r5, r7 };");     //push pCb, pCr
 
         asm("LOOP_ROW:");
-        asm("ldr		r9, [sp, #76]");		//load r9 = ErrRow
+        asm("ldr		r9, [sp, #76]");      //load r9 = ErrRow
 
-        asm("mov		r8, #0");				//;	reset error from left pixel
+        asm("mov		r8, #0");             //; reset error from left pixel
         asm("LOOP_COL:");
-        asm("ldmfd		sp!, { r5, r7 }");		//load pCb, pCr
-        asm("ldrb		r0, [r5], #1");			//Cb
-        asm("ldrb		r2, [r7], #1");			//Cr
+        asm("ldmfd		sp!, { r5, r7 }");      //load pCb, pCr
+        asm("ldrb		r0, [r5], #1");          //Cb
+        asm("ldrb		r2, [r7], #1");          //Cr
         asm("stmfd		sp!, { r5, r7 }");
-        asm("mov		r10, r6, lsl #16");		//r10 = src_pitch <<16;
+        asm("mov		r10, r6, lsl #16");       //r10 = src_pitch <<16;
         asm("ldrb		r10, [r4, r10, lsr #16]");//r10 = Y (bottom left)
 
-        asm("sub		r0, r0, #128;");		//r0 = Cb-128
-        asm("sub		r2, r2, #128;");		//r2 = Cr-128
+        asm("sub		r0, r0, #128;");      //r0 = Cb-128
+        asm("sub		r2, r2, #128;");      //r2 = Cr-128
 
         asm("ldr		r7,   =45774");
         asm("ldr		r11,  =22014");
-        asm("mul		r7, r2, r7");			//r7	=	(Cr-128)*JCoeff[0];
-        asm("mla		r7, r0, r11, r7");		//r7	=	(Cb-128)*22014 + (Cr-128)*JCoeff[0];
+        asm("mul		r7, r2, r7");         //r7    =   (Cr-128)*JCoeff[0];
+        asm("mla		r7, r0, r11, r7");        //r7    =   (Cb-128)*22014 + (Cr-128)*JCoeff[0];
         asm("ldr		r11, =89859");
-        asm("mul		r2, r11, r2");			//r2	=	(Cr-128)*89859
+        asm("mul		r2, r11, r2");            //r2    =   (Cr-128)*89859
         asm("ldr		r11, =113618");
-        asm("mul		r0, r11, r0");			//r0	=	(Cb-128)*113618
+        asm("mul		r0, r11, r0");            //r0    =   (Cb-128)*113618
 
-        asm("add		r11, r2, r10, lsl #16");	// (Cr-128)*89859 + (Y<<16)
-        asm("rsb		r12, r7, r10, lsl #16");	// (Y<<16) - ((Cb-128)*22014 + (Cr-128)*JCoeff[0])
-        asm("add		r14, r0, r10, lsl #16");	// (Cb-128)*113618 + (Y<<16)
+        asm("add		r11, r2, r10, lsl #16");  // (Cr-128)*89859 + (Y<<16)
+        asm("rsb		r12, r7, r10, lsl #16");  // (Y<<16) - ((Cb-128)*22014 + (Cr-128)*JCoeff[0])
+        asm("add		r14, r0, r10, lsl #16");  // (Cb-128)*113618 + (Y<<16)
 
-        asm("ldr		r10, [r9, r6, lsr #16]");	//;load error from upper row/pixel
-        asm("add		r8, r8, r10, lsr #1");		//get the bottom error, only the LSB 16 bits is meaningful
+        asm("ldr		r10, [r9, r6, lsr #16]"); //;load error from upper row/pixel
+        asm("add		r8, r8, r10, lsr #1");        //get the bottom error, only the LSB 16 bits is meaningful
 
-        asm("and		r10, r8, #0xF");			//error B
+        asm("and		r10, r8, #0xF");          //error B
         asm("add		r14, r14, r10");
-        asm("and		r10, r8, #0xF0");			//error G
+        asm("and		r10, r8, #0xF0");         //error G
         asm("add		r12, r12, r10, lsr #4");
-        asm("and		r10, r8, #0xF00");			//error R
+        asm("and		r10, r8, #0xF00");            //error R
 
         asm("add		r11, r11, r10, lsr #8");
 
@@ -332,7 +332,7 @@ int32 ColorConvert12::get_frame12(uint8 **src, uint8 *dst,
         asm("ldrb		r12, [r3, r12, asr #16]");
         asm("ldrb		r14, [r3, r14, asr #16]");
 
-#ifdef	OUTPUT_RGB_565
+#ifdef  OUTPUT_RGB_565
         // get RGB_565
         asm("mov		r10, r11, lsr #3");
         asm("mov		r10, r10, lsl #6");
@@ -341,10 +341,10 @@ int32 ColorConvert12::get_frame12(uint8 **src, uint8 *dst,
         asm("orr		r10, r10, r14, lsr #3");
 #else
         //RGB_444
-        asm("and		r10, r12, #0xF0");			//G
-        asm("orr		r10, r10, r14, lsr #4");	//B
+        asm("and		r10, r12, #0xF0");            //G
+        asm("orr		r10, r10, r14, lsr #4");  //B
         asm("and		r11, r11, #0xF0");
-        asm("orr		r10, r10, r11, lsl #4");	//R
+        asm("orr		r10, r10, r11, lsl #4");  //R
 #endif
 
         asm("and		r11, r11, #0xE");
@@ -353,32 +353,32 @@ int32 ColorConvert12::get_frame12(uint8 **src, uint8 *dst,
 
         asm("orr		r11, r11, r12, lsl #4");
 
-        asm("ldr		r12, [sp, #8]");		//should be det_pitch
-        asm("add		r1, r1, r12, lsl #1");	//pDst move to bottom left pixel
+        asm("ldr		r12, [sp, #8]");      //should be det_pitch
+        asm("add		r1, r1, r12, lsl #1");    //pDst move to bottom left pixel
 
-        asm("strh		r10, [r1]");			//	store bottom left pixel
+        asm("strh		r10, [r1]");         //  store bottom left pixel
         asm("sub		r1, r1, r12, lsl #1");
 
         //////**************************/////////////////////
-        asm("orr		r10, r11, r14, lsl #8");	//RGB dither error
+        asm("orr		r10, r11, r14, lsl #8");  //RGB dither error
 
         asm("mov		r8, r8, lsr #16");
         asm("mov		r8, r8, lsl #16");
         asm("orr		r8, r8, r10, lsr #1");
 
-        asm("ldrb		r14, [r4], #1");		// p14 = Y (top left)
+        asm("ldrb		r14, [r4], #1");     // p14 = Y (top left)
 
         asm("add		r11, r2, r14, lsl #16");
         asm("rsb		r12, r7, r14, lsl #16");
         asm("add		r14, r0, r14, lsl #16");
 
-        asm("add		r8, r8, r10, lsl #15");	//get the top error, only the HSB 16 bits is meaningful
+        asm("add		r8, r8, r10, lsl #15");   //get the top error, only the HSB 16 bits is meaningful
 
-        asm("and		r10, r8,	#0xF0000");		//error B
+        asm("and		r10, r8,	#0xF0000");      //error B
         asm("add		r14, r14, r10, lsr #16");
-        asm("and		r10, r8, #0xF00000");		//error G
+        asm("and		r10, r8, #0xF00000");     //error G
         asm("add		r12, r12, r10, lsr #20");
-        asm("and		r10, r8, #0xF000000");		//error R
+        asm("and		r10, r8, #0xF000000");        //error R
         asm("add		r11, r11, r10, lsr #24");
 
         //clip
@@ -387,7 +387,7 @@ int32 ColorConvert12::get_frame12(uint8 **src, uint8 *dst,
         asm("ldrb		r12, [r3, r12, asr #16]");
         asm("ldrb		r14, [r3, r14, asr #16]");
 
-#ifdef	OUTPUT_RGB_565
+#ifdef  OUTPUT_RGB_565
         // get RGB_565
         asm("mov		r10, r11, lsr #3");
         asm("mov		r10, r10, lsl #6");
@@ -396,14 +396,14 @@ int32 ColorConvert12::get_frame12(uint8 **src, uint8 *dst,
         asm("orr		r10, r10, r14, lsr #3");
 #else
         //RGB_444
-        asm("and		r10, r12, #0xF0");			//G
-        asm("orr		r10, r10, r14, lsr #4");	//B
+        asm("and		r10, r12, #0xF0");            //G
+        asm("orr		r10, r10, r14, lsr #4");  //B
         asm("and		r11, r11, #0xF0");
-        asm("orr		r10, r10, r11, lsl #4");	//R
+        asm("orr		r10, r10, r11, lsl #4");  //R
 #endif
 
 
-        asm("strh		r10, [r1], #2");	//strore top left RGB
+        asm("strh		r10, [r1], #2"); //strore top left RGB
 
         asm("and		r11, r11, #0xE");
         asm("and		r12, r12, #0xE");
@@ -418,7 +418,7 @@ int32 ColorConvert12::get_frame12(uint8 **src, uint8 *dst,
 
         asm("str		r11, [r9, r6, lsr #16]");
 
-        asm("sub		r6, r6, #0x40000");		//col
+        asm("sub		r6, r6, #0x40000");       //col
 
         /********************************LEFT END, RIGHT BEGIN****************/
 
@@ -444,7 +444,7 @@ int32 ColorConvert12::get_frame12(uint8 **src, uint8 *dst,
         asm("ldrb		r12, [r3, r12, asr #16]");
         asm("ldrb		r14, [r3, r14, asr #16]");
 
-#ifdef	OUTPUT_RGB_565
+#ifdef  OUTPUT_RGB_565
         // get RGB_565
         asm("mov		r10, r11, lsr #3");
         asm("mov		r10, r10, lsl #6");
@@ -453,10 +453,10 @@ int32 ColorConvert12::get_frame12(uint8 **src, uint8 *dst,
         asm("orr		r10, r10, r14, lsr #3");
 #else
         //RGB_444
-        asm("and		r10, r12, #0xF0");			//G
-        asm("orr		r10, r10, r14, lsr #4");	//B
+        asm("and		r10, r12, #0xF0");            //G
+        asm("orr		r10, r10, r14, lsr #4");  //B
         asm("and		r11, r11, #0xF0");
-        asm("orr		r10, r10, r11, lsl #4");	//R
+        asm("orr		r10, r10, r11, lsl #4");  //R
 #endif
 
         asm("and		r11, r11, #0xE");
@@ -469,7 +469,7 @@ int32 ColorConvert12::get_frame12(uint8 **src, uint8 *dst,
 
         asm("add		r1, r1, r12, lsl #1");
 
-        asm("strh		r10, [r1]");			//store RGB bottom right
+        asm("strh		r10, [r1]");         //store RGB bottom right
         asm("sub		r1, r1, r12, lsl #1");
 
         asm("orr		r10, r11, r14, lsl #8");
@@ -478,7 +478,7 @@ int32 ColorConvert12::get_frame12(uint8 **src, uint8 *dst,
         asm("mov		r8, r8, lsl #16");
         asm("orr		r8, r8, r10, lsr #1");
 
-        asm("ldrb		r14, [r4], #1");		//r14 = Y (top right pixel)
+        asm("ldrb		r14, [r4], #1");     //r14 = Y (top right pixel)
 
         asm("add		r11, r2, r14, lsl #16");
         asm("rsb		r12, r7, r14, lsl #16");
@@ -496,7 +496,7 @@ int32 ColorConvert12::get_frame12(uint8 **src, uint8 *dst,
         asm("ldrb		r11, [r3, r11, asr #16]");
         asm("ldrb		r12, [r3, r12, asr #16]");
         asm("ldrb		r14, [r3, r14, asr #16]");
-#ifdef	OUTPUT_RGB_565
+#ifdef  OUTPUT_RGB_565
         // get RGB_565
         asm("mov		r10, r11, lsr #3");
         asm("mov		r10, r10, lsl #6");
@@ -505,13 +505,13 @@ int32 ColorConvert12::get_frame12(uint8 **src, uint8 *dst,
         asm("orr		r10, r10, r14, lsr #3");
 #else
         //RGB_444
-        asm("and		r10, r12, #0xF0");			//G
-        asm("orr		r10, r10, r14, lsr #4");	//B
+        asm("and		r10, r12, #0xF0");            //G
+        asm("orr		r10, r10, r14, lsr #4");  //B
         asm("and		r11, r11, #0xF0");
-        asm("orr		r10, r10, r11, lsl #4");	//R
+        asm("orr		r10, r10, r11, lsl #4");  //R
 #endif
 
-        asm("strh		r10, [r1], #2");		//store RGB (top right pixel)
+        asm("strh		r10, [r1], #2");     //store RGB (top right pixel)
 
         asm("and		r11, r11, #0xE");
         asm("and		r12, r12, #0xE");
@@ -545,7 +545,7 @@ int32 ColorConvert12::get_frame12(uint8 **src, uint8 *dst,
         asm("mov		r0, #1");
         asm("add		sp, sp, #32");
         asm("ldmfd		sp!, {r0, r4-r11, pc}");
-//		asm(".ltorg");
+//      asm(".ltorg");
     }
     return 1;
 }
@@ -555,41 +555,41 @@ int32 ColorConvert12::get_frame12(uint8 **src, uint8 *dst,
 int32 ColorConvert12::get_frame12(uint8 **src, uint8 *dst,
                                   DisplayProperties *disp, uint8 *clip, uint8 *pErr_horz)
 {
-    const static uint32	JCoeff[4] =
+    const static uint32 JCoeff[4] =
     {
-        45774,	//65536*0.813/1.164;
-        89859,	//65536*1.596/1.164;
-        22014,	//65536*0.391/1.164;
-        113618	//65536*2.018/1.164;
+        45774,  //65536*0.813/1.164;
+        89859,  //65536*1.596/1.164;
+        22014,  //65536*0.391/1.164;
+        113618  //65536*2.018/1.164;
     };
 
     uint8 *pCb, *pCr;
-    uint16	*pY;
-    uint16	*pDst;
-    int32		src_width, dst_width, display_width;
-    int32		Y, Cb, Cr, Cg;
-    uint32	left_err_t, left_err_b; /* error from the left pixels */
-    uint32	top_err_l, top_err_r; /* error from the top pixels */
-    int32		deltaY, deltaDst, deltaCbCr;
-    int32		row, col;
-    int32		tmp0, tmp1, tmp2;
-    uint32	rgb;
+    uint16  *pY;
+    uint16  *pDst;
+    int32       src_width, dst_width, display_width;
+    int32       Y, Cb, Cr, Cg;
+    uint32  left_err_t, left_err_b; /* error from the left pixels */
+    uint32  top_err_l, top_err_r; /* error from the top pixels */
+    int32       deltaY, deltaDst, deltaCbCr;
+    int32       row, col;
+    int32       tmp0, tmp1, tmp2;
+    uint32  rgb;
 
 
-    src_width	=	disp->src_pitch;
-    dst_width	=	disp->dst_pitch;
-    display_width	=	disp->src_width;
+    src_width   =   disp->src_pitch;
+    dst_width   =   disp->dst_pitch;
+    display_width   =   disp->src_width;
 
-    deltaY		=	(src_width << 1) - display_width;
-    deltaCbCr	=	(src_width - display_width) >> 1;
-    deltaDst	=	(dst_width << 1) - display_width;
+    deltaY      = (src_width << 1) - display_width;
+    deltaCbCr   = (src_width - display_width) >> 1;
+    deltaDst    = (dst_width << 1) - display_width;
 
     pY = (uint16 *) src[0];
     src_width >>= 1;
     pCb = src[1];
     pCr = src[2];
 
-    pDst =	(uint16 *)dst;
+    pDst = (uint16 *)dst;
 
     for (row = disp->src_height; row > 0; row -= 2)
     {
@@ -607,136 +607,136 @@ int32 ColorConvert12::get_frame12(uint8 **src, uint8 *dst,
 
             Cb -= 128;
             Cr -= 128;
-            Cg	=	Cr * JCoeff[0];
-            Cg	+=	Cb * JCoeff[2];
+            Cg  =   Cr * JCoeff[0];
+            Cg  +=  Cb * JCoeff[2];
 
-            Cr	*=	JCoeff[1];
-            Cb	*=	JCoeff[3];
+            Cr  *=  JCoeff[1];
+            Cb  *=  JCoeff[3];
 
-            tmp0	=	Y & 0xFF;	//Low endian	left pixel
-            //tmp0	=	pY[src_width];
+            tmp0    =   Y & 0xFF;   //Low endian    left pixel
+            //tmp0  =   pY[src_width];
 
-            tmp1	=	(tmp0 << 16) - Cg;
-            tmp2	=	(tmp0 << 16) + Cb;
-            tmp0	=	(tmp0 << 16) + Cr;
+            tmp1    = (tmp0 << 16) - Cg;
+            tmp2    = (tmp0 << 16) + Cb;
+            tmp0    = (tmp0 << 16) + Cr;
 
             //add the error from top and left
             //This is not exact error diffusion since
             //we process the bottom two pixels first !!
-            tmp0	+=	((left_err_b & 0xFF) << 16);// err_vert[0];
-            tmp1	+=	(((left_err_b >> 8) & 0xFF) << 16);//err_vert[1];
-            tmp2	+=	(((left_err_b >> 16) & 0xFF) << 16);//err_vert[2];
+            tmp0    += ((left_err_b & 0xFF) << 16); // err_vert[0];
+            tmp1    += (((left_err_b >> 8) & 0xFF) << 16); //err_vert[1];
+            tmp2    += (((left_err_b >> 16) & 0xFF) << 16); //err_vert[2];
 
             top_err_l = *((uint*)(pErr_horz + (col << 2)));
-            tmp0	+=	((top_err_l & 0xFF) << 16);//pErr_horz[col];
-            tmp1	+=	(((top_err_l >> 8) & 0xFF) << 16);//mErr_horz[1][col];
-            tmp2	+=	(((top_err_l >> 16) & 0xFF) << 16);//mErr_horz[2][col];
+            tmp0    += ((top_err_l & 0xFF) << 16); //pErr_horz[col];
+            tmp1    += (((top_err_l >> 8) & 0xFF) << 16); //mErr_horz[1][col];
+            tmp2    += (((top_err_l >> 16) & 0xFF) << 16); //mErr_horz[2][col];
 
-            tmp0	=	clip[tmp0>>16];
-            tmp1	=	clip[tmp1>>16];
-            tmp2	=	clip[tmp2>>16];
+            tmp0    =   clip[tmp0>>16];
+            tmp1    =   clip[tmp1>>16];
+            tmp2    =   clip[tmp2>>16];
 
-#ifdef	OUTPUT_RGB_565
+#ifdef  OUTPUT_RGB_565
             //RGB_565
-            rgb		= (tmp0 >> 3);
-            rgb		= (tmp1 >> 2) | (rgb << 6);
-            rgb		= (tmp2 >> 3) | (rgb << 5);
+            rgb     = (tmp0 >> 3);
+            rgb     = (tmp1 >> 2) | (rgb << 6);
+            rgb     = (tmp2 >> 3) | (rgb << 5);
 #else
-            //RGB_444
-            rgb		= (tmp0 & 0xF0) << 4;
-            rgb		|= (tmp1 & 0xF0);
-            rgb		|= (tmp2 >> 4);
+//RGB_444
+rgb     = (tmp0 & 0xF0) << 4;
+rgb     |= (tmp1 & 0xF0);
+rgb     |= (tmp2 >> 4);
 #endif
-            tmp0	&= 0xE;
-            tmp1	&= 0xE;
-            tmp2	&= 0xE;
-            tmp0	>>= 1;
-            tmp1	>>= 1;
-            tmp2	>>= 1;
+            tmp0    &= 0xE;
+            tmp1    &= 0xE;
+            tmp2    &= 0xE;
+            tmp0    >>= 1;
+            tmp1    >>= 1;
+            tmp2    >>= 1;
 
             //save error
             top_err_l = tmp0 | (tmp1 << 8) | (tmp2 << 16);
 
-            Y	>>=	8;
-            //Y	=	pY[src_width+1];
+            Y   >>= 8;
+            //Y =   pY[src_width+1];
 
             // error from the left already available
-            tmp1	=	(Y << 16) - Cg + (tmp1 << 16);
-            tmp2	=	(Y << 16) + Cb + (tmp2 << 16);
-            tmp0	=	(Y << 16) + Cr + (tmp0 << 16);
+            tmp1    = (Y << 16) - Cg + (tmp1 << 16);
+            tmp2    = (Y << 16) + Cb + (tmp2 << 16);
+            tmp0    = (Y << 16) + Cr + (tmp0 << 16);
 
             //add the error from top
             top_err_r = *((uint*)(pErr_horz + (col << 2) + 4));
-            tmp0	+=	((top_err_r & 0xFF) << 16);//pErr_horz[col+1];
-            tmp1	+=	(((top_err_r >> 8) & 0xFF) << 16);//mErr_horz[1][col+1];
-            tmp2	+=	(((top_err_r >> 16) & 0xFF) << 16);//mErr_horz[2][col+1];
+            tmp0    += ((top_err_r & 0xFF) << 16); //pErr_horz[col+1];
+            tmp1    += (((top_err_r >> 8) & 0xFF) << 16); //mErr_horz[1][col+1];
+            tmp2    += (((top_err_r >> 16) & 0xFF) << 16); //mErr_horz[2][col+1];
 
-            tmp0	=	clip[tmp0>>16];
-            tmp1	=	clip[tmp1>>16];
-            tmp2	=	clip[tmp2>>16];
+            tmp0    =   clip[tmp0>>16];
+            tmp1    =   clip[tmp1>>16];
+            tmp2    =   clip[tmp2>>16];
 
-#ifdef	OUTPUT_RGB_565
+#ifdef  OUTPUT_RGB_565
             //RGB_565
-            rgb		|= ((tmp0 >> 3) << 27);
-            rgb		|= ((tmp1 >> 2) << 21);
-            rgb		|= ((tmp2 >> 3) << 16);
+            rgb     |= ((tmp0 >> 3) << 27);
+            rgb     |= ((tmp1 >> 2) << 21);
+            rgb     |= ((tmp2 >> 3) << 16);
 #else
-            //RGB_444
-            rgb		|= (tmp0 & 0xF0) << 20;
-            rgb		|= (tmp1 & 0xF0) << 16;
-            rgb		|= (tmp2 >> 4) << 16;
+//RGB_444
+rgb     |= (tmp0 & 0xF0) << 20;
+rgb     |= (tmp1 & 0xF0) << 16;
+rgb     |= (tmp2 >> 4) << 16;
 #endif
-            *((uint*)(pDst + dst_width))	= rgb;
+            *((uint*)(pDst + dst_width))    = rgb;
 
-            tmp0	&= 0xE;
-            tmp1	&= 0xE;
-            tmp2	&= 0xE;
-            tmp0	>>= 1;
-            tmp1	>>= 1;
-            tmp2	>>= 1;
+            tmp0    &= 0xE;
+            tmp1    &= 0xE;
+            tmp2    &= 0xE;
+            tmp0    >>= 1;
+            tmp1    >>= 1;
+            tmp2    >>= 1;
 
             //save error
             left_err_b = tmp0 | (tmp1 << 8) | (tmp2 << 16);
             top_err_r = left_err_b;
 
             //load the top two pixels
-            //Y	=	*((uint16 *)pY)++;
+            //Y =   *((uint16 *)pY)++;
             Y = *pY++;
 
-            tmp0	=	Y & 0xFF;	//Low endian	left pixel
-            //tmp0	=	*pY++;
-            tmp1	=	(tmp0 << 16) - Cg;
-            tmp2	=	(tmp0 << 16) + Cb;
-            tmp0	=	(tmp0 << 16) + Cr;
+            tmp0    =   Y & 0xFF;   //Low endian    left pixel
+            //tmp0  =   *pY++;
+            tmp1    = (tmp0 << 16) - Cg;
+            tmp2    = (tmp0 << 16) + Cb;
+            tmp0    = (tmp0 << 16) + Cr;
 
             //add the error from top and left
-            tmp0	+=	((left_err_t & 0xFF) << 16);// err_vert[3];
-            tmp1	+=	(((left_err_t >> 8) & 0xFF) << 16);//err_vert[4];
-            tmp2	+=	(((left_err_t >> 16) & 0xFF) << 16);//err_vert[5];
+            tmp0    += ((left_err_t & 0xFF) << 16); // err_vert[3];
+            tmp1    += (((left_err_t >> 8) & 0xFF) << 16); //err_vert[4];
+            tmp2    += (((left_err_t >> 16) & 0xFF) << 16); //err_vert[5];
 
-            tmp0	+=	((top_err_l & 0xFF) << 16);//pErr_horz[col];
-            tmp1	+=	(((top_err_l >> 8) & 0xFF) << 16);//mErr_horz[1][col];
-            tmp2	+=	(((top_err_l >> 8) & 0xFF) << 16);//mErr_horz[2][col];
+            tmp0    += ((top_err_l & 0xFF) << 16); //pErr_horz[col];
+            tmp1    += (((top_err_l >> 8) & 0xFF) << 16); //mErr_horz[1][col];
+            tmp2    += (((top_err_l >> 8) & 0xFF) << 16); //mErr_horz[2][col];
 
-            tmp0	=	clip[tmp0>>16];
-            tmp1	=	clip[tmp1>>16];
-            tmp2	=	clip[tmp2>>16];
+            tmp0    =   clip[tmp0>>16];
+            tmp1    =   clip[tmp1>>16];
+            tmp2    =   clip[tmp2>>16];
 
-#ifdef	OUTPUT_RGB_565
+#ifdef  OUTPUT_RGB_565
             //RGB_565
-            rgb		= (tmp0 >> 3);
-            rgb		= (tmp1 >> 2) | (rgb << 6);
-            rgb		= (tmp2 >> 3) | (rgb << 5);
+            rgb     = (tmp0 >> 3);
+            rgb     = (tmp1 >> 2) | (rgb << 6);
+            rgb     = (tmp2 >> 3) | (rgb << 5);
 #else
-            //RGB_444
-            rgb		= (tmp0 & 0xF0) << 4;
-            rgb		|= (tmp1 & 0xF0);
-            rgb		|= (tmp2 >> 4);
+//RGB_444
+rgb     = (tmp0 & 0xF0) << 4;
+rgb     |= (tmp1 & 0xF0);
+rgb     |= (tmp2 >> 4);
 #endif
             // calculate error
-            tmp0	&= 0xE;
-            tmp1	&= 0xE;
-            tmp2	&= 0xE;
+            tmp0    &= 0xE;
+            tmp1    &= 0xE;
+            tmp2    &= 0xE;
             tmp0 >>= 1;
             tmp1 >>= 1;
             tmp2 >>= 1;
@@ -744,42 +744,42 @@ int32 ColorConvert12::get_frame12(uint8 **src, uint8 *dst,
             top_err_l = tmp0 | (tmp1 << 8) | (tmp2 << 16);
             *((uint*)(pErr_horz + (col << 2))) = top_err_l;
 
-            Y	>>=	8;
-            //Y	=	*pY++;
+            Y   >>= 8;
+            //Y =   *pY++;
 
             //error from the left is already available
-            tmp1	=	(Y << 16) - Cg + (tmp1 << 16);
-            tmp2	=	(Y << 16) + Cb + (tmp2 << 16);
-            tmp0	=	(Y << 16) + Cr + (tmp0 << 16);
+            tmp1    = (Y << 16) - Cg + (tmp1 << 16);
+            tmp2    = (Y << 16) + Cb + (tmp2 << 16);
+            tmp0    = (Y << 16) + Cr + (tmp0 << 16);
 
             //add the error from top
-            tmp0	+=	((top_err_r & 0xFF) << 16);//pErr_horz[col+1];
-            tmp1	+=	(((top_err_r >> 8) & 0xFF) << 16);//mErr_horz[1][col+1];
-            tmp2	+=	(((top_err_r >> 16) & 0xFF) << 16);//mErr_horz[2][col+1];
+            tmp0    += ((top_err_r & 0xFF) << 16); //pErr_horz[col+1];
+            tmp1    += (((top_err_r >> 8) & 0xFF) << 16); //mErr_horz[1][col+1];
+            tmp2    += (((top_err_r >> 16) & 0xFF) << 16); //mErr_horz[2][col+1];
 
-            tmp0	=	clip[tmp0>>16];
-            tmp1	=	clip[tmp1>>16];
-            tmp2	=	clip[tmp2>>16];
+            tmp0    =   clip[tmp0>>16];
+            tmp1    =   clip[tmp1>>16];
+            tmp2    =   clip[tmp2>>16];
 
-#ifdef	OUTPUT_RGB_565
+#ifdef  OUTPUT_RGB_565
             //RGB_565
-            rgb		|= ((tmp0 >> 3) << 27);
-            rgb		|= ((tmp1 >> 2) << 21);
-            rgb		|= ((tmp2 >> 3) << 16);
+            rgb     |= ((tmp0 >> 3) << 27);
+            rgb     |= ((tmp1 >> 2) << 21);
+            rgb     |= ((tmp2 >> 3) << 16);
 #else
-            //RGB_444
-            rgb		|= (tmp0 & 0xF0) << 20;
-            rgb		|= (tmp1 & 0xF0) << 16;
-            rgb		|= (tmp2 >> 4) << 16;
+//RGB_444
+rgb     |= (tmp0 & 0xF0) << 20;
+rgb     |= (tmp1 & 0xF0) << 16;
+rgb     |= (tmp2 >> 4) << 16;
 #endif
 
-            //			*( (uint *)pDst)++	= rgb;
-            *((uint *)pDst)	= rgb;
+            //          *( (uint *)pDst)++  = rgb;
+            *((uint *)pDst) = rgb;
             pDst += 2;
 
-            tmp0	&= 0xE;
-            tmp1	&= 0xE;
-            tmp2	&= 0xE;
+            tmp0    &= 0xE;
+            tmp1    &= 0xE;
+            tmp2    &= 0xE;
             tmp0 >>= 1;
             tmp1 >>= 1;
             tmp2 >>= 1;
@@ -790,10 +790,10 @@ int32 ColorConvert12::get_frame12(uint8 **src, uint8 *dst,
 
         }//end of COL
 
-        pY	+=	(deltaY >> 1);
-        pCb	+=	deltaCbCr;
-        pCr	+=	deltaCbCr;
-        pDst +=	(deltaDst);	//coz pDst defined as UINT *
+        pY  += (deltaY >> 1);
+        pCb +=  deltaCbCr;
+        pCr +=  deltaCbCr;
+        pDst += (deltaDst); //coz pDst defined as UINT *
     }
     return 1;
 }
@@ -894,9 +894,9 @@ int32 ColorConvert12::cc12Rotate(uint8 **src, uint8 *dst,
         asm("SUB      r6,r6,#0x80");
         asm("MUL      r9,r11,r6");
         asm("ADD      r8,r8,r9,LSL #1");
-        asm("LDR      r9,L1.2840");//asm("LDR	  r9, =0x00015f03 ");
+        asm("LDR      r9,L1.2840");//asm("LDR     r9, =0x00015f03 ");
         asm("MUL      r7,r9,r7");
-        asm("LDR      r9,L1.2844");//asm("LDR	  r9, =0x0001bbd2");
+        asm("LDR      r9,L1.2844");//asm("LDR     r9, =0x0001bbd2");
         asm("MUL      r6,r9,r6");
         asm("LDR      r9,[sp,#4]");
         asm("LDRB     r9,[r0,r9]");
@@ -1146,12 +1146,12 @@ int32 ColorConvert12::cc12Rotate(uint8 **src, uint8 *dst,
                                  DisplayProperties *disp, uint8 *clip, uint8 *pErr_horz)
 {
 #if CCROTATE
-    const static uint32	JCoeff[4] =
+    const static uint32 JCoeff[4] =
     {
-        45774,	//65536*0.813/1.164;
-        89859,	//65536*1.596/1.164;
-        22014,	//65536*0.391/1.164;
-        113618	//65536*2.018/1.164;
+        45774,  //65536*0.813/1.164;
+        89859,  //65536*1.596/1.164;
+        22014,  //65536*0.391/1.164;
+        113618  //65536*2.018/1.164;
     };
 
     uint8 *pCb, *pCr;
@@ -1167,25 +1167,25 @@ int32 ColorConvert12::cc12Rotate(uint8 **src, uint8 *dst,
     uint32 rgb;
 
 
-    src_width	=	disp->src_pitch;
-    dst_width	=	disp->dst_pitch;
-    display_width	=	disp->src_width;
+    src_width   =   disp->src_pitch;
+    dst_width   =   disp->dst_pitch;
+    display_width   =   disp->src_width;
 
-    deltaDst	=	(disp->dst_pitch << 1) - disp->dst_width; // (dst_pitch<<1) - src_height
+    deltaDst    = (disp->dst_pitch << 1) - disp->dst_width;   // (dst_pitch<<1) - src_height
     if (_mRotation == CCROTATE_CLKWISE)
-    {	// go from top-left to bottom-left
-        deltaY		=  src_width * disp->src_height + 2;
-        deltaCbCr	= ((src_width * disp->src_height) >> 2) + 1;
+    {   // go from top-left to bottom-left
+        deltaY      =  src_width * disp->src_height + 2;
+        deltaCbCr   = ((src_width * disp->src_height) >> 2) + 1;
     }
     else  // rotate counterclockwise
     {   // go from bottom-right back to top-right
-        deltaY		=  -(src_width * disp->src_height + 2);
-        deltaCbCr	=  -(((src_width * disp->src_height) >> 2) + 1);
+        deltaY      =  -(src_width * disp->src_height + 2);
+        deltaCbCr   =  -(((src_width * disp->src_height) >> 2) + 1);
     }
 
     // map origin of the destination to the source
     if (_mRotation == CCROTATE_CLKWISE)
-    {	// goto bottom-left
+    {   // goto bottom-left
         pY = src[0] + src_width * (disp->src_height - 1);
         pCb = src[1] + ((src_width >> 1) * ((disp->src_height >> 1) - 1));
         pCr = src[2] + ((src_width >> 1) * ((disp->src_height >> 1) - 1));
@@ -1197,7 +1197,7 @@ int32 ColorConvert12::cc12Rotate(uint8 **src, uint8 *dst,
         pCr = src[2] + (display_width >> 1) - 1;
     }
 
-    pDst =	(uint16 *)dst;
+    pDst = (uint16 *)dst;
 
     int half_src_width, read_idx, tmp_src_width;
     if (_mRotation == CCROTATE_CLKWISE)
@@ -1228,92 +1228,92 @@ int32 ColorConvert12::cc12Rotate(uint8 **src, uint8 *dst,
 
             Cb -= 128;
             Cr -= 128;
-            Cg	=	Cr * JCoeff[0];
-            Cg	+=	Cb * JCoeff[2];
+            Cg  =   Cr * JCoeff[0];
+            Cg  +=  Cb * JCoeff[2];
 
-            Cr	*=	JCoeff[1];
-            Cb	*=	JCoeff[3];
+            Cr  *=  JCoeff[1];
+            Cb  *=  JCoeff[3];
 
             //process the bottom two pixels in RGB plane
-            tmp0	=	pY[read_idx]; /* top-left pixel */
+            tmp0    =   pY[read_idx]; /* top-left pixel */
 
-            tmp1	=	(tmp0 << 16) - Cg;
-            tmp2	=	(tmp0 << 16) + Cb;
-            tmp0	=	(tmp0 << 16) + Cr;
+            tmp1    = (tmp0 << 16) - Cg;
+            tmp2    = (tmp0 << 16) + Cb;
+            tmp0    = (tmp0 << 16) + Cr;
 
             //add the error from top and left
             //This is not exact error diffusion since
             //we process the bottom two pixels first !!
-            tmp0	+=	((left_err_b & 0xFF) << 16);// err_vert[0];
-            tmp1	+=	(((left_err_b >> 8) & 0xFF) << 16);//err_vert[1];
-            tmp2	+=	(((left_err_b >> 16) & 0xFF) << 16);//err_vert[2];
+            tmp0    += ((left_err_b & 0xFF) << 16); // err_vert[0];
+            tmp1    += (((left_err_b >> 8) & 0xFF) << 16); //err_vert[1];
+            tmp2    += (((left_err_b >> 16) & 0xFF) << 16); //err_vert[2];
 
             top_err_l = *((uint*)(pErr_horz + (col << 2)));
-            tmp0	+=	((top_err_l & 0xFF) << 16);//pErr_horz[col];
-            tmp1	+=	(((top_err_l >> 8) & 0xFF) << 16);//mErr_horz[1][col];
-            tmp2	+=	(((top_err_l >> 16) & 0xFF) << 16);//mErr_horz[2][col];
+            tmp0    += ((top_err_l & 0xFF) << 16); //pErr_horz[col];
+            tmp1    += (((top_err_l >> 8) & 0xFF) << 16); //mErr_horz[1][col];
+            tmp2    += (((top_err_l >> 16) & 0xFF) << 16); //mErr_horz[2][col];
 
-            tmp0	=	clip[tmp0>>16];
-            tmp1	=	clip[tmp1>>16];
-            tmp2	=	clip[tmp2>>16];
+            tmp0    =   clip[tmp0>>16];
+            tmp1    =   clip[tmp1>>16];
+            tmp2    =   clip[tmp2>>16];
 
-#ifdef	OUTPUT_RGB_565
+#ifdef  OUTPUT_RGB_565
             //RGB_565
-            rgb		= (tmp0 >> 3);
-            rgb		= (tmp1 >> 2) | (rgb << 6);
-            rgb		= (tmp2 >> 3) | (rgb << 5);
+            rgb     = (tmp0 >> 3);
+            rgb     = (tmp1 >> 2) | (rgb << 6);
+            rgb     = (tmp2 >> 3) | (rgb << 5);
 #else
-            //RGB_444
-            rgb		= (tmp0 & 0xF0) << 4;
-            rgb		|= (tmp1 & 0xF0);
-            rgb		|= (tmp2 >> 4);
+//RGB_444
+rgb     = (tmp0 & 0xF0) << 4;
+rgb     |= (tmp1 & 0xF0);
+rgb     |= (tmp2 >> 4);
 #endif
-            tmp0	&=	0xE;
-            tmp1	&=	0xE;
-            tmp2	&=	0xE;
-            tmp0	>>= 1;
-            tmp1	>>= 1;
-            tmp2	>>= 1;
+            tmp0    &=  0xE;
+            tmp1    &=  0xE;
+            tmp2    &=  0xE;
+            tmp0    >>= 1;
+            tmp1    >>= 1;
+            tmp2    >>= 1;
 
             //save error
             top_err_l = tmp0 | (tmp1 << 8) | (tmp2 << 16);
 
-            Y		=	pY[read_idx+tmp_src_width];  /* bottom-left pixel */
+            Y       =   pY[read_idx+tmp_src_width];  /* bottom-left pixel */
 
             // error from the left already available
-            tmp1	=	(Y << 16) - Cg + (tmp1 << 16);
-            tmp2	=	(Y << 16) + Cb + (tmp2 << 16);
-            tmp0	=	(Y << 16) + Cr + (tmp0 << 16);
+            tmp1    = (Y << 16) - Cg + (tmp1 << 16);
+            tmp2    = (Y << 16) + Cb + (tmp2 << 16);
+            tmp0    = (Y << 16) + Cr + (tmp0 << 16);
 
             //add the error from top
             top_err_r = *((uint*)(pErr_horz + (col << 2) + 4));
-            tmp0	+=	((top_err_r & 0xFF) << 16);//pErr_horz[col+1];
-            tmp1	+=	(((top_err_r >> 8) & 0xFF) << 16);//mErr_horz[1][col+1];
-            tmp2	+=	(((top_err_r >> 16) & 0xFF) << 16);//mErr_horz[2][col+1];
+            tmp0    += ((top_err_r & 0xFF) << 16); //pErr_horz[col+1];
+            tmp1    += (((top_err_r >> 8) & 0xFF) << 16); //mErr_horz[1][col+1];
+            tmp2    += (((top_err_r >> 16) & 0xFF) << 16); //mErr_horz[2][col+1];
 
-            tmp0	=	clip[tmp0>>16];
-            tmp1	=	clip[tmp1>>16];
-            tmp2	=	clip[tmp2>>16];
+            tmp0    =   clip[tmp0>>16];
+            tmp1    =   clip[tmp1>>16];
+            tmp2    =   clip[tmp2>>16];
 
-#ifdef	OUTPUT_RGB_565
+#ifdef  OUTPUT_RGB_565
             //RGB_565
-            rgb		|= ((tmp0 >> 3) << 27);
-            rgb		|= ((tmp1 >> 2) << 21);
-            rgb		|= ((tmp2 >> 3) << 16);
+            rgb     |= ((tmp0 >> 3) << 27);
+            rgb     |= ((tmp1 >> 2) << 21);
+            rgb     |= ((tmp2 >> 3) << 16);
 #else
-            //RGB_444
-            rgb		|= (tmp0 & 0xF0) << 20;
-            rgb		|= (tmp1 & 0xF0) << 16;
-            rgb		|= (tmp2 >> 4) << 16;
+//RGB_444
+rgb     |= (tmp0 & 0xF0) << 20;
+rgb     |= (tmp1 & 0xF0) << 16;
+rgb     |= (tmp2 >> 4) << 16;
 #endif
-            *((uint*)(pDst + dst_width))	= rgb;
+            *((uint*)(pDst + dst_width))    = rgb;
 
-            tmp0	&=	0xE;
-            tmp1	&=	0xE;
-            tmp2	&=	0xE;
-            tmp0	>>= 1;
-            tmp1	>>= 1;
-            tmp2	>>= 1;
+            tmp0    &=  0xE;
+            tmp1    &=  0xE;
+            tmp2    &=  0xE;
+            tmp0    >>= 1;
+            tmp1    >>= 1;
+            tmp2    >>= 1;
 
             //save error
             left_err_b = tmp0 | (tmp1 << 8) | (tmp2 << 16);
@@ -1321,39 +1321,39 @@ int32 ColorConvert12::cc12Rotate(uint8 **src, uint8 *dst,
 
             //process the top two pixels in RGB plane
 
-            tmp0	=	*pY; /*upper-right pixel */
-            tmp1	=	(tmp0 << 16) - Cg;
-            tmp2	=	(tmp0 << 16) + Cb;
-            tmp0	=	(tmp0 << 16) + Cr;
+            tmp0    =   *pY; /*upper-right pixel */
+            tmp1    = (tmp0 << 16) - Cg;
+            tmp2    = (tmp0 << 16) + Cb;
+            tmp0    = (tmp0 << 16) + Cr;
 
             //add the error from top and left
-            tmp0	+=	((left_err_t & 0xFF) << 16);// err_vert[3];
-            tmp1	+=	(((left_err_t >> 8) & 0xFF) << 16);//err_vert[4];
-            tmp2	+=	(((left_err_t >> 16) & 0xFF) << 16);//err_vert[5];
+            tmp0    += ((left_err_t & 0xFF) << 16); // err_vert[3];
+            tmp1    += (((left_err_t >> 8) & 0xFF) << 16); //err_vert[4];
+            tmp2    += (((left_err_t >> 16) & 0xFF) << 16); //err_vert[5];
 
-            tmp0	+=	((top_err_l & 0xFF) << 16);//pErr_horz[col];
-            tmp1	+=	(((top_err_l >> 8) & 0xFF) << 16);//mErr_horz[1][col];
-            tmp2	+=	(((top_err_l >> 8) & 0xFF) << 16);//mErr_horz[2][col];
+            tmp0    += ((top_err_l & 0xFF) << 16); //pErr_horz[col];
+            tmp1    += (((top_err_l >> 8) & 0xFF) << 16); //mErr_horz[1][col];
+            tmp2    += (((top_err_l >> 8) & 0xFF) << 16); //mErr_horz[2][col];
 
-            tmp0	=	clip[tmp0>>16];
-            tmp1	=	clip[tmp1>>16];
-            tmp2	=	clip[tmp2>>16];
+            tmp0    =   clip[tmp0>>16];
+            tmp1    =   clip[tmp1>>16];
+            tmp2    =   clip[tmp2>>16];
 
-#ifdef	OUTPUT_RGB_565
+#ifdef  OUTPUT_RGB_565
             //RGB_565
-            rgb		= (tmp0 >> 3);
-            rgb		= (tmp1 >> 2) | (rgb << 6);
-            rgb		= (tmp2 >> 3) | (rgb << 5);
+            rgb     = (tmp0 >> 3);
+            rgb     = (tmp1 >> 2) | (rgb << 6);
+            rgb     = (tmp2 >> 3) | (rgb << 5);
 #else
-            //RGB_444
-            rgb		= (tmp0 & 0xF0) << 4;
-            rgb		|= (tmp1 & 0xF0);
-            rgb		|= (tmp2 >> 4);
+//RGB_444
+rgb     = (tmp0 & 0xF0) << 4;
+rgb     |= (tmp1 & 0xF0);
+rgb     |= (tmp2 >> 4);
 #endif
 
-            tmp0	&=	0xE;
-            tmp1	&=	0xE;
-            tmp2	&=	0xE;
+            tmp0    &=  0xE;
+            tmp1    &=  0xE;
+            tmp2    &=  0xE;
             tmp0 >>= 1;
             tmp1 >>= 1;
             tmp2 >>= 1;
@@ -1361,42 +1361,42 @@ int32 ColorConvert12::cc12Rotate(uint8 **src, uint8 *dst,
             top_err_l = tmp0 | (tmp1 << 8) | (tmp2 << 16);
             *((uint*)(pErr_horz + (col << 2))) = top_err_l;
 
-            Y		=	pY[tmp_src_width]; /* bottom-right pixel */
+            Y       =   pY[tmp_src_width]; /* bottom-right pixel */
             pY += (tmp_src_width << 1);
 
             //error from the left is already available
-            tmp1	=	(Y << 16) - Cg + (tmp1 << 16);
-            tmp2	=	(Y << 16) + Cb + (tmp2 << 16);
-            tmp0	=	(Y << 16) + Cr + (tmp0 << 16);
+            tmp1    = (Y << 16) - Cg + (tmp1 << 16);
+            tmp2    = (Y << 16) + Cb + (tmp2 << 16);
+            tmp0    = (Y << 16) + Cr + (tmp0 << 16);
 
             //add the error from top
-            tmp0	+=	((top_err_r & 0xFF) << 16);//pErr_horz[col+1];
-            tmp1	+=	(((top_err_r >> 8) & 0xFF) << 16);//mErr_horz[1][col+1];
-            tmp2	+=	(((top_err_r >> 16) & 0xFF) << 16);//mErr_horz[2][col+1];
+            tmp0    += ((top_err_r & 0xFF) << 16); //pErr_horz[col+1];
+            tmp1    += (((top_err_r >> 8) & 0xFF) << 16); //mErr_horz[1][col+1];
+            tmp2    += (((top_err_r >> 16) & 0xFF) << 16); //mErr_horz[2][col+1];
 
-            tmp0	=	clip[tmp0>>16];
-            tmp1	=	clip[tmp1>>16];
-            tmp2	=	clip[tmp2>>16];
+            tmp0    =   clip[tmp0>>16];
+            tmp1    =   clip[tmp1>>16];
+            tmp2    =   clip[tmp2>>16];
 
-#ifdef	OUTPUT_RGB_565
+#ifdef  OUTPUT_RGB_565
             //RGB_565
-            rgb		|= ((tmp0 >> 3) << 27);
-            rgb		|= ((tmp1 >> 2) << 21);
-            rgb		|= ((tmp2 >> 3) << 16);
+            rgb     |= ((tmp0 >> 3) << 27);
+            rgb     |= ((tmp1 >> 2) << 21);
+            rgb     |= ((tmp2 >> 3) << 16);
 #else
-            //RGB_444
-            rgb		|= (tmp0 & 0xF0) << 20;
-            rgb		|= (tmp1 & 0xF0) << 16;
-            rgb		|= (tmp2 >> 4) << 16;
+//RGB_444
+rgb     |= (tmp0 & 0xF0) << 20;
+rgb     |= (tmp1 & 0xF0) << 16;
+rgb     |= (tmp2 >> 4) << 16;
 #endif
 
-            *((uint *)pDst)	= rgb;
+            *((uint *)pDst) = rgb;
 
             pDst += 2;
 
-            tmp0	&=	0xE;
-            tmp1	&=	0xE;
-            tmp2	&=	0xE;
+            tmp0    &=  0xE;
+            tmp1    &=  0xE;
+            tmp2    &=  0xE;
             tmp0 >>= 1;
             tmp1 >>= 1;
             tmp2 >>= 1;
@@ -1407,14 +1407,14 @@ int32 ColorConvert12::cc12Rotate(uint8 **src, uint8 *dst,
 
         }//end of COL
 
-        pY	+=	deltaY;
-        pCb	+=	deltaCbCr;
-        pCr	+=	deltaCbCr;
-        pDst +=	(deltaDst);	//coz pDst defined as UINT *
+        pY  +=  deltaY;
+        pCb +=  deltaCbCr;
+        pCr +=  deltaCbCr;
+        pDst += (deltaDst); //coz pDst defined as UINT *
     }
     return 1;
 #else
-    return 0;
+return 0;
 #endif // CCROTATE
 }
 #endif // USE_ARM_ASM_FOR_COLORCONVERT
@@ -1941,12 +1941,12 @@ int32 cc12scaling(uint8 **src, uint8 *dst, int *disp,
                   uint8 *_mRowPix, uint8 *_mColPix)
 {
 #if CCSCALING
-    const static uint32	JCoeff[4] =
+    const static uint32 JCoeff[4] =
     {
-        45774,	//65536*0.813/1.164;
-        89859,	//65536*1.596/1.164;
-        22014,	//65536*0.391/1.164;
-        113618	//65536*2.018/1.164;
+        45774,  //65536*0.813/1.164;
+        89859,  //65536*1.596/1.164;
+        22014,  //65536*0.391/1.164;
+        113618  //65536*2.018/1.164;
     };
 
     uint8 *pCb, *pCr, *pY;
@@ -1962,23 +1962,23 @@ int32 cc12scaling(uint8 **src, uint8 *dst, int *disp,
     int32 offset;
 
 
-    src_pitch	=	disp[0];
-    dst_pitch	=	disp[1];
-    src_width	=	disp[2];
+    src_pitch   =   disp[0];
+    dst_pitch   =   disp[1];
+    src_width   =   disp[2];
 
-    deltaY		=	(src_pitch << 1) - src_width;
-    deltaCbCr	=	(src_pitch - src_width) >> 1;
-    dst_width	=	disp[4];
+    deltaY      = (src_pitch << 1) - src_width;
+    deltaCbCr   = (src_pitch - src_width) >> 1;
+    dst_width   =   disp[4];
 
     pY = src[0];
     pCb = src[1];
     pCr = src[2];
 
-    pDst =	(uint16 *)dst;
+    pDst = (uint16 *)dst;
 
     for (row = disp[3] - 1; row >= 0; row -= 2)
     {/* decrement index, _mColPix[.] is
-													 symmetric to increment index */
+                                                     symmetric to increment index */
 
         if ((_mColPix[row-1] == 0) && (_mColPix[row] == 0))
         {
@@ -1992,283 +1992,283 @@ int32 cc12scaling(uint8 **src, uint8 *dst, int *disp,
 
         for (col = src_width - 2; col >= 0; col -= 2)
         { /* decrement index, _mRowPix[.] is
-													 symmetric to increment index */
+                                                     symmetric to increment index */
 
             Cb = *pCb++;
             Cr = *pCr++;
 
             //load the bottom two pixels
-            //Y	=	*(((uint16 *)pY)+src_pitch);
-            //Y	=	*((uint16 *)(((uint16 *)pY) + src_pitch));
+            //Y =   *(((uint16 *)pY)+src_pitch);
+            //Y =   *((uint16 *)(((uint16 *)pY) + src_pitch));
 
             Cb -= 128;
             Cr -= 128;
-            Cg	=	Cr * JCoeff[0];
-            Cg	+=	Cb * JCoeff[2];
+            Cg  =   Cr * JCoeff[0];
+            Cg  +=  Cb * JCoeff[2];
 
-            Cr	*=	JCoeff[1];
-            Cb	*=	JCoeff[3];
+            Cr  *=  JCoeff[1];
+            Cb  *=  JCoeff[3];
 
             if (_mRowPix[col]) /* compute this pixel */
             {
-                tmp0	=	pY[src_pitch];			//bottom left
+                tmp0    =   pY[src_pitch];          //bottom left
 
-                tmp1	=	(tmp0 << 16) - Cg;
-                tmp2	=	(tmp0 << 16) + Cb;
-                tmp0	=	(tmp0 << 16) + Cr;
+                tmp1    = (tmp0 << 16) - Cg;
+                tmp2    = (tmp0 << 16) + Cb;
+                tmp0    = (tmp0 << 16) + Cr;
 
-                tmp0	+=	((left_err_b & 0xFF) << 16);// err_vert[0];
-                tmp1	+=	(((left_err_b >> 8) & 0xFF) << 16);//err_vert[1];
-                tmp2	+=	(((left_err_b >> 16) & 0xFF) << 16);//err_vert[2];
+                tmp0    += ((left_err_b & 0xFF) << 16); // err_vert[0];
+                tmp1    += (((left_err_b >> 8) & 0xFF) << 16); //err_vert[1];
+                tmp2    += (((left_err_b >> 16) & 0xFF) << 16); //err_vert[2];
 
                 top_err_l = *((uint*)(pErr_horz + (col << 2)));
-                tmp0	+=	((top_err_l & 0xFF) << 16);//pErr_horz[col];
-                tmp1	+=	(((top_err_l >> 8) & 0xFF) << 16);//mErr_horz[1][col];
-                tmp2	+=	(((top_err_l >> 16) & 0xFF) << 16);//mErr_horz[2][col];
+                tmp0    += ((top_err_l & 0xFF) << 16); //pErr_horz[col];
+                tmp1    += (((top_err_l >> 8) & 0xFF) << 16); //mErr_horz[1][col];
+                tmp2    += (((top_err_l >> 16) & 0xFF) << 16); //mErr_horz[2][col];
 
-                tmp0	=	clip[tmp0>>16];
-                tmp1	=	clip[tmp1>>16];
-                tmp2	=	clip[tmp2>>16];
-#ifdef	OUTPUT_RGB_565
+                tmp0    =   clip[tmp0>>16];
+                tmp1    =   clip[tmp1>>16];
+                tmp2    =   clip[tmp2>>16];
+#ifdef  OUTPUT_RGB_565
                 //RGB_565
-                rgb		= (tmp0 >> 3);
-                rgb		= (tmp1 >> 2) | (rgb << 6);
-                rgb		= (tmp2 >> 3) | (rgb << 5);
+                rgb     = (tmp0 >> 3);
+                rgb     = (tmp1 >> 2) | (rgb << 6);
+                rgb     = (tmp2 >> 3) | (rgb << 5);
 #else
-                //RGB_444
-                rgb		= (tmp0 & 0xF0) << 4;
-                rgb		|= (tmp1 & 0xF0);
-                rgb		|= (tmp2 >> 4);
+//RGB_444
+rgb     = (tmp0 & 0xF0) << 4;
+rgb     |= (tmp1 & 0xF0);
+rgb     |= (tmp2 >> 4);
 #endif
-                tmp0	&= 0xE;
-                tmp1	&= 0xE;
-                tmp2	&= 0xE;
-                tmp0	>>= 1;
-                tmp1	>>= 1;
-                tmp2	>>= 1;
+                tmp0    &= 0xE;
+                tmp1    &= 0xE;
+                tmp2    &= 0xE;
+                tmp0    >>= 1;
+                tmp1    >>= 1;
+                tmp2    >>= 1;
 
                 //save error
                 left_err_b = tmp0 | (tmp1 << 8) | (tmp2 << 16); // = top_err_l also
 
-                Y	=	*pY++;						//upper left
+                Y   =   *pY++;                      //upper left
 
                 // error from the top already available
-                tmp1	=	(Y << 16) - Cg + (tmp1 << 16);
-                tmp2	=	(Y << 16) + Cb + (tmp2 << 16);
-                tmp0	=	(Y << 16) + Cr + (tmp0 << 16);
+                tmp1    = (Y << 16) - Cg + (tmp1 << 16);
+                tmp2    = (Y << 16) + Cb + (tmp2 << 16);
+                tmp0    = (Y << 16) + Cr + (tmp0 << 16);
 
                 //add the error from left
-                tmp0	+=	((left_err_t & 0xFF) << 16);// err_vert[3];
-                tmp1	+=	(((left_err_t >> 8) & 0xFF) << 16);//err_vert[4];
-                tmp2	+=	(((left_err_t >> 16) & 0xFF) << 16);//err_vert[5];
+                tmp0    += ((left_err_t & 0xFF) << 16); // err_vert[3];
+                tmp1    += (((left_err_t >> 8) & 0xFF) << 16); //err_vert[4];
+                tmp2    += (((left_err_t >> 16) & 0xFF) << 16); //err_vert[5];
 
-                tmp0	=	clip[tmp0>>16];
-                tmp1	=	clip[tmp1>>16];
-                tmp2	=	clip[tmp2>>16];
+                tmp0    =   clip[tmp0>>16];
+                tmp1    =   clip[tmp1>>16];
+                tmp2    =   clip[tmp2>>16];
 
                 //save error
                 left_err_t = ((tmp0 & 0xE) >> 1) | ((tmp1 & 0xE) << 7) | ((tmp2 & 0xE) << 15); //= top_err_l also
                 *((uint*)(pErr_horz + (col << 2))) = left_err_t; // =top_err_l;
 
-#ifdef	OUTPUT_RGB_565
+#ifdef  OUTPUT_RGB_565
                 //RGB_565
-                tmp0		= (tmp0 >> 3);
-                tmp0		= (tmp1 >> 2) | (tmp0 << 6);
-                tmp0		= (tmp2 >> 3) | (tmp0 << 5);
+                tmp0        = (tmp0 >> 3);
+                tmp0        = (tmp1 >> 2) | (tmp0 << 6);
+                tmp0        = (tmp2 >> 3) | (tmp0 << 5);
 #else
-                //RGB_444
-                tmp0		= (tmp0 & 0xF0) << 4;
-                tmp0		|= (tmp1 & 0xF0);
-                tmp0		|= (tmp2 >> 4);
+//RGB_444
+tmp0        = (tmp0 & 0xF0) << 4;
+tmp0        |= (tmp1 & 0xF0);
+tmp0        |= (tmp2 >> 4);
 #endif
                 if (((uint)pDst) & 3)  //half word aligned
                 {
                     if (_mRowPix[col] == 2)
                     {
-                        *(pDst + dst_pitch)	=	rgb;
-                        *(pDst + dst_pitch + 1)	=	rgb;
-                        *(pDst)	=	tmp0;
-                        *(pDst + 1)	=	tmp0;
+                        *(pDst + dst_pitch) =   rgb;
+                        *(pDst + dst_pitch + 1) =   rgb;
+                        *(pDst) =   tmp0;
+                        *(pDst + 1) =   tmp0;
                     }
                     else if (_mRowPix[col] == 3)
                     {
-                        *(pDst + dst_pitch)	=	rgb;
-                        *((uint*)(pDst + dst_pitch + 1))	= rgb | (rgb << 16);
+                        *(pDst + dst_pitch) =   rgb;
+                        *((uint*)(pDst + dst_pitch + 1))    = rgb | (rgb << 16);
 
-                        *(pDst)	=	tmp0;
-                        *((uint*)(pDst + 1))	= tmp0 | (tmp0 << 16);
+                        *(pDst) =   tmp0;
+                        *((uint*)(pDst + 1))    = tmp0 | (tmp0 << 16);
                     }
                     else
                     {
-                        *(pDst + dst_pitch)	=	rgb;
-                        *(pDst)	=	tmp0;
+                        *(pDst + dst_pitch) =   rgb;
+                        *(pDst) =   tmp0;
                     }
                 }
                 else //word aligned
                 {
                     if (_mRowPix[col] == 2)
                     {
-                        *((uint*)(pDst + dst_pitch))	= rgb | (rgb << 16);
-                        *((uint*)(pDst))	= tmp0 | (tmp0 << 16);
+                        *((uint*)(pDst + dst_pitch))    = rgb | (rgb << 16);
+                        *((uint*)(pDst))    = tmp0 | (tmp0 << 16);
                     }
                     else if (_mRowPix[col] == 3)
                     {
-                        *((uint*)(pDst + dst_pitch))	= rgb | (rgb << 16);
-                        *(pDst + dst_pitch + 2)	=	rgb;
+                        *((uint*)(pDst + dst_pitch))    = rgb | (rgb << 16);
+                        *(pDst + dst_pitch + 2) =   rgb;
 
-                        *((uint*)(pDst))	= tmp0 | (tmp0 << 16);
-                        *(pDst + 2)	=	tmp0;
+                        *((uint*)(pDst))    = tmp0 | (tmp0 << 16);
+                        *(pDst + 2) =   tmp0;
                     }
                     else
                     {
-                        *(pDst + dst_pitch)	=	rgb;
-                        *(pDst)	=	tmp0;
+                        *(pDst + dst_pitch) =   rgb;
+                        *(pDst) =   tmp0;
                     }
                 }
-            } /*	if(_mRowPix[col])  */
+            } /*    if(_mRowPix[col])  */
             else
             {
                 pY++;
             }
 
-            pDst	+= _mRowPix[col];
+            pDst    += _mRowPix[col];
 
             if (_mRowPix[col+1]) /* compute this pixel */
             {
                 //load the top two pixels
-                //Y	=	*((uint16 *)pY)++;
-                tmp0	=	pY[src_pitch];		//bottom right
+                //Y =   *((uint16 *)pY)++;
+                tmp0    =   pY[src_pitch];      //bottom right
 
-                tmp1	=	(tmp0 << 16) - Cg;
-                tmp2	=	(tmp0 << 16) + Cb;
-                tmp0	=	(tmp0 << 16) + Cr;
+                tmp1    = (tmp0 << 16) - Cg;
+                tmp2    = (tmp0 << 16) + Cb;
+                tmp0    = (tmp0 << 16) + Cr;
 
                 //add the error from top and left
-                tmp0	+=	((left_err_b & 0xFF) << 16);// err_vert[0];
-                tmp1	+=	(((left_err_b >> 8) & 0xFF) << 16);//err_vert[1];
-                tmp2	+=	(((left_err_b >> 16) & 0xFF) << 16);//err_vert[2];
+                tmp0    += ((left_err_b & 0xFF) << 16); // err_vert[0];
+                tmp1    += (((left_err_b >> 8) & 0xFF) << 16); //err_vert[1];
+                tmp2    += (((left_err_b >> 16) & 0xFF) << 16); //err_vert[2];
 
                 top_err_r = *((uint*)(pErr_horz + (col << 2) + 4));
-                tmp0	+=	((top_err_r & 0xFF) << 16);//pErr_horz[col+1];
-                tmp1	+=	(((top_err_r >> 8) & 0xFF) << 16);//mErr_horz[1][col+1];
-                tmp2	+=	(((top_err_r >> 16) & 0xFF) << 16);//mErr_horz[2][col+1];
+                tmp0    += ((top_err_r & 0xFF) << 16); //pErr_horz[col+1];
+                tmp1    += (((top_err_r >> 8) & 0xFF) << 16); //mErr_horz[1][col+1];
+                tmp2    += (((top_err_r >> 16) & 0xFF) << 16); //mErr_horz[2][col+1];
 
-                tmp0	=	clip[tmp0>>16];
-                tmp1	=	clip[tmp1>>16];
-                tmp2	=	clip[tmp2>>16];
+                tmp0    =   clip[tmp0>>16];
+                tmp1    =   clip[tmp1>>16];
+                tmp2    =   clip[tmp2>>16];
 
-#ifdef	OUTPUT_RGB_565
+#ifdef  OUTPUT_RGB_565
                 //RGB_565
-                rgb		= (tmp0 >> 3);
-                rgb		= (tmp1 >> 2) | (rgb << 6);
-                rgb		= (tmp2 >> 3) | (rgb << 5);
+                rgb     = (tmp0 >> 3);
+                rgb     = (tmp1 >> 2) | (rgb << 6);
+                rgb     = (tmp2 >> 3) | (rgb << 5);
 #else
-                //RGB_444
-                rgb		= (tmp0 & 0xF0) << 4;
-                rgb		|= (tmp1 & 0xF0);
-                rgb		|= (tmp2 >> 4);
+//RGB_444
+rgb     = (tmp0 & 0xF0) << 4;
+rgb     |= (tmp1 & 0xF0);
+rgb     |= (tmp2 >> 4);
 #endif
 
-                tmp0	&=	0xE;
-                tmp1	&=	0xE;
-                tmp2	&=	0xE;
-                tmp0	>>= 1;
-                tmp1	>>= 1;
-                tmp2	>>= 1;
+                tmp0    &=  0xE;
+                tmp1    &=  0xE;
+                tmp2    &=  0xE;
+                tmp0    >>= 1;
+                tmp1    >>= 1;
+                tmp2    >>= 1;
 
                 //save error
                 left_err_b = tmp0 | (tmp1 << 8) | (tmp2 << 16); // = top_err_r also
 
-                Y	=	*pY++;
+                Y   =   *pY++;
 
                 // error from the top already available
-                tmp1	=	(Y << 16) - Cg + (tmp1 << 16);
-                tmp2	=	(Y << 16) + Cb + (tmp2 << 16);
-                tmp0	=	(Y << 16) + Cr + (tmp0 << 16);
+                tmp1    = (Y << 16) - Cg + (tmp1 << 16);
+                tmp2    = (Y << 16) + Cb + (tmp2 << 16);
+                tmp0    = (Y << 16) + Cr + (tmp0 << 16);
 
                 //add the error from left
-                tmp0	+=	((left_err_t & 0xFF) << 16);// err_vert[3];
-                tmp1	+=	(((left_err_t >> 8) & 0xFF) << 16);//err_vert[4];
-                tmp2	+=	(((left_err_t >> 16) & 0xFF) << 16);//err_vert[5];
+                tmp0    += ((left_err_t & 0xFF) << 16); // err_vert[3];
+                tmp1    += (((left_err_t >> 8) & 0xFF) << 16); //err_vert[4];
+                tmp2    += (((left_err_t >> 16) & 0xFF) << 16); //err_vert[5];
 
-                tmp0	=	clip[tmp0>>16];
-                tmp1	=	clip[tmp1>>16];
-                tmp2	=	clip[tmp2>>16];
+                tmp0    =   clip[tmp0>>16];
+                tmp1    =   clip[tmp1>>16];
+                tmp2    =   clip[tmp2>>16];
 
                 //save error
                 left_err_t = ((tmp0 & 0xE) >> 1) | ((tmp1 & 0xE) << 7) | ((tmp2 & 0xE) << 15);//= top_err_r also
                 *((uint*)(pErr_horz + (col << 2) + 4)) = left_err_t;// =top_err_r;
 
-#ifdef	OUTPUT_RGB_565
+#ifdef  OUTPUT_RGB_565
                 //RGB_565
-                tmp0		= (tmp0 >> 3);
-                tmp0		= (tmp1 >> 2) | (tmp0 << 6);
-                tmp0		= (tmp2 >> 3) | (tmp0 << 5);
+                tmp0        = (tmp0 >> 3);
+                tmp0        = (tmp1 >> 2) | (tmp0 << 6);
+                tmp0        = (tmp2 >> 3) | (tmp0 << 5);
 #else
-                //RGB_444
-                tmp0		= (tmp0 & 0xF0) << 4;
-                tmp0		|= (tmp1 & 0xF0);
-                tmp0		|= (tmp2 >> 4);
+//RGB_444
+tmp0        = (tmp0 & 0xF0) << 4;
+tmp0        |= (tmp1 & 0xF0);
+tmp0        |= (tmp2 >> 4);
 #endif
 
                 if (((uint)pDst) & 3)  //half word aligned
                 {
                     if (_mRowPix[col+1] == 2)
                     {
-                        *(pDst + dst_pitch)	=	rgb;
-                        *(pDst + dst_pitch + 1)	=	rgb;
-                        *(pDst)	=	tmp0;
-                        *(pDst + 1)	=	tmp0;
+                        *(pDst + dst_pitch) =   rgb;
+                        *(pDst + dst_pitch + 1) =   rgb;
+                        *(pDst) =   tmp0;
+                        *(pDst + 1) =   tmp0;
                     }
                     else if (_mRowPix[col+1] == 3)
                     {
-                        *(pDst + dst_pitch)	=	rgb;
-                        *((uint*)(pDst + dst_pitch + 1))	= rgb | (rgb << 16);
+                        *(pDst + dst_pitch) =   rgb;
+                        *((uint*)(pDst + dst_pitch + 1))    = rgb | (rgb << 16);
 
-                        *(pDst)	=	tmp0;
-                        *((uint*)(pDst + 1))	= tmp0 | (tmp0 << 16);
+                        *(pDst) =   tmp0;
+                        *((uint*)(pDst + 1))    = tmp0 | (tmp0 << 16);
                     }
                     else
                     {
-                        *(pDst + dst_pitch)	=	rgb;
-                        *(pDst)	=	tmp0;
+                        *(pDst + dst_pitch) =   rgb;
+                        *(pDst) =   tmp0;
                     }
                 }
                 else //word aligned
                 {
                     if (_mRowPix[col+1] == 2)
                     {
-                        *((uint*)(pDst + dst_pitch))	= rgb | (rgb << 16);
-                        *((uint*)(pDst))	= tmp0 | (tmp0 << 16);
+                        *((uint*)(pDst + dst_pitch))    = rgb | (rgb << 16);
+                        *((uint*)(pDst))    = tmp0 | (tmp0 << 16);
                     }
                     else if (_mRowPix[col+1] == 3)
                     {
-                        *((uint*)(pDst + dst_pitch))	= rgb | (rgb << 16);
-                        *(pDst + dst_pitch + 2)	=	rgb;
+                        *((uint*)(pDst + dst_pitch))    = rgb | (rgb << 16);
+                        *(pDst + dst_pitch + 2) =   rgb;
 
-                        *((uint*)(pDst))	= tmp0 | (tmp0 << 16);
-                        *(pDst + 2)	=	tmp0;
+                        *((uint*)(pDst))    = tmp0 | (tmp0 << 16);
+                        *(pDst + 2) =   tmp0;
                     }
                     else
                     {
-                        *(pDst + dst_pitch)	=	rgb;
-                        *(pDst)	=	tmp0;
+                        *(pDst + dst_pitch) =   rgb;
+                        *(pDst) =   tmp0;
                     }
                 }
-            } /*	if(_mRowPix[col])  */
+            } /*    if(_mRowPix[col])  */
             else
             {
                 pY++;
             }
 
-            pDst	+= _mRowPix[col+1];
+            pDst    += _mRowPix[col+1];
         }//end of COL
 
-        pY	+=	(deltaY);
-        pCb	+=	deltaCbCr;
-        pCr	+=	deltaCbCr;
+        pY  += (deltaY);
+        pCb +=  deltaCbCr;
+        pCr +=  deltaCbCr;
 
-        pDst -=	(dst_width);	//goes back to the beginning of the line;
+        pDst -= (dst_width);    //goes back to the beginning of the line;
 
         //copy down
         offset = (_mColPix[row] * dst_pitch);
@@ -2296,11 +2296,11 @@ int32 cc12scaling(uint8 **src, uint8 *dst, int *disp,
             oscl_memcpy(pDst + dst_pitch*2, pDst, dst_width*2);
         }
 
-        pDst	+=	dst_pitch * (_mColPix[row-1] + _mColPix[row]);
+        pDst    +=  dst_pitch * (_mColPix[row-1] + _mColPix[row]);
     }
     return 1;
 #else
-    return 0;
+return 0;
 #endif // CCSCALING
 }
 #endif // USE_ARM_ASM_FOR_COLORCONVERT
@@ -2894,14 +2894,14 @@ int32 cc12sc_rotate(uint8 **src, uint8 *dst, int *disp,
 #if (CCROTATE && CCSCALING)
     const static uint32 JCoeff[4] =
     {
-        45774,	//65536*0.813/1.164;
-        89859,	//65536*1.596/1.164;
-        22014,	//65536*0.391/1.164;
-        113618	//65536*2.018/1.164;
+        45774,  //65536*0.813/1.164;
+        89859,  //65536*1.596/1.164;
+        22014,  //65536*0.391/1.164;
+        113618  //65536*2.018/1.164;
     };
 
     uint8 *pCb, *pCr, *pY;
-    uint16	*pDst;
+    uint16  *pDst;
     int32 src_pitch, dst_pitch, src_width;
     int32 Y, Cb, Cr, Cg;
     uint32 left_err_t, left_err_b; /* error from the left pixels */
@@ -2913,20 +2913,20 @@ int32 cc12sc_rotate(uint8 **src, uint8 *dst, int *disp,
     int32 offset;
 
 
-    src_pitch	=	disp[0];
-    dst_pitch	=	disp[1];
-    src_width	=	disp[2];
-    dst_width	=  disp[4];
+    src_pitch   =   disp[0];
+    dst_pitch   =   disp[1];
+    src_width   =   disp[2];
+    dst_width   =  disp[4];
 
     if (_mIsRotateClkwise)
     {
-        deltaY		=  src_pitch * disp[3] + 2;
-        deltaCbCr	= ((src_pitch * disp[3]) >> 2) + 1;
+        deltaY      =  src_pitch * disp[3] + 2;
+        deltaCbCr   = ((src_pitch * disp[3]) >> 2) + 1;
     }
     else // rotate counterclockwise
     {
-        deltaY		=  -(src_pitch * disp[3] + 2);
-        deltaCbCr	=  -(((src_pitch * disp[3]) >> 2) + 1);
+        deltaY      =  -(src_pitch * disp[3] + 2);
+        deltaCbCr   =  -(((src_pitch * disp[3]) >> 2) + 1);
     }
 
     // map origin of the destination to the source
@@ -2943,7 +2943,7 @@ int32 cc12sc_rotate(uint8 **src, uint8 *dst, int *disp,
         pCr = src[2] + (src_width >> 1) - 1;
     }
 
-    pDst =	(uint16 *)dst;
+    pDst = (uint16 *)dst;
 
     int half_src_pitch, read_idx, tmp_src_pitch;
     if (_mIsRotateClkwise)
@@ -2961,7 +2961,7 @@ int32 cc12sc_rotate(uint8 **src, uint8 *dst, int *disp,
 
     for (row = src_width - 1; row > 0; row -= 2)
     { /* decrement index, _mColPix[.] is
-													 symmetric to increment index */
+                                                     symmetric to increment index */
 
         if ((_mColPix[row-1] == 0) && (_mColPix[row] == 0))
         {
@@ -2975,296 +2975,296 @@ int32 cc12sc_rotate(uint8 **src, uint8 *dst, int *disp,
 
         for (col = disp[3] - 2; col >= 0; col -= 2)
         {/* decrement index, _mRowPix[.] is
-													 symmetric to increment index */
+                                                     symmetric to increment index */
 
             Cb = *pCb;
             pCb += half_src_pitch;
             Cr = *pCr;
             pCr += half_src_pitch;
 
-            //Cb = *pCb++;	Cr = *pCr++;
+            //Cb = *pCb++;  Cr = *pCr++;
 
             //load the bottom two pixels
-            //Y	=	*(((uint16 *)pY)+src_pitch);
-            //Y	=	*((uint16 *)(((uint16 *)pY) + src_pitch));
+            //Y =   *(((uint16 *)pY)+src_pitch);
+            //Y =   *((uint16 *)(((uint16 *)pY) + src_pitch));
 
             Cb -= 128;
             Cr -= 128;
-            Cg	=	Cr * JCoeff[0];
-            Cg	+=	Cb * JCoeff[2];
+            Cg  =   Cr * JCoeff[0];
+            Cg  +=  Cb * JCoeff[2];
 
-            Cr	*=	JCoeff[1];
-            Cb	*=	JCoeff[3];
+            Cr  *=  JCoeff[1];
+            Cb  *=  JCoeff[3];
 
             if (_mRowPix[col]) /* compute this pixel */
             {
-                //tmp0	=	pY[src_pitch];			//bottom left
+                //tmp0  =   pY[src_pitch];          //bottom left
 
-                tmp0	=	pY[read_idx];
+                tmp0    =   pY[read_idx];
 
-                tmp1	=	(tmp0 << 16) - Cg;
-                tmp2	=	(tmp0 << 16) + Cb;
-                tmp0	=	(tmp0 << 16) + Cr;
+                tmp1    = (tmp0 << 16) - Cg;
+                tmp2    = (tmp0 << 16) + Cb;
+                tmp0    = (tmp0 << 16) + Cr;
 
                 //add the error from top and left
-                tmp0	+=	((left_err_b & 0xFF) << 16);// err_vert[0];
-                tmp1	+=	(((left_err_b >> 8) & 0xFF) << 16);//err_vert[1];
-                tmp2	+=	(((left_err_b >> 16) & 0xFF) << 16);//err_vert[2];
+                tmp0    += ((left_err_b & 0xFF) << 16); // err_vert[0];
+                tmp1    += (((left_err_b >> 8) & 0xFF) << 16); //err_vert[1];
+                tmp2    += (((left_err_b >> 16) & 0xFF) << 16); //err_vert[2];
 
                 top_err_l = *((uint*)(pErr_horz + (col << 2)));
-                tmp0	+=	((top_err_l & 0xFF) << 16);//pErr_horz[col];
-                tmp1	+=	(((top_err_l >> 8) & 0xFF) << 16);//mErr_horz[1][col];
-                tmp2	+=	(((top_err_l >> 16) & 0xFF) << 16);//mErr_horz[2][col];
+                tmp0    += ((top_err_l & 0xFF) << 16); //pErr_horz[col];
+                tmp1    += (((top_err_l >> 8) & 0xFF) << 16); //mErr_horz[1][col];
+                tmp2    += (((top_err_l >> 16) & 0xFF) << 16); //mErr_horz[2][col];
 
-                tmp0	=	clip[tmp0>>16];
-                tmp1	=	clip[tmp1>>16];
-                tmp2	=	clip[tmp2>>16];
-#ifdef	OUTPUT_RGB_565
+                tmp0    =   clip[tmp0>>16];
+                tmp1    =   clip[tmp1>>16];
+                tmp2    =   clip[tmp2>>16];
+#ifdef  OUTPUT_RGB_565
                 //RGB_565
-                rgb		= (tmp0 >> 3);
-                rgb		= (tmp1 >> 2) | (rgb << 6);
-                rgb		= (tmp2 >> 3) | (rgb << 5);
+                rgb     = (tmp0 >> 3);
+                rgb     = (tmp1 >> 2) | (rgb << 6);
+                rgb     = (tmp2 >> 3) | (rgb << 5);
 #else
-                //RGB_444
-                rgb		= (tmp0 & 0xF0) << 4;
-                rgb		|= (tmp1 & 0xF0);
-                rgb		|= (tmp2 >> 4);
+//RGB_444
+rgb     = (tmp0 & 0xF0) << 4;
+rgb     |= (tmp1 & 0xF0);
+rgb     |= (tmp2 >> 4);
 #endif
-                tmp0	&=	0xE;
-                tmp1	&=	0xE;
-                tmp2	&=	0xE;
-                tmp0	>>= 1;
-                tmp1	>>= 1;
-                tmp2	>>= 1;
+                tmp0    &=  0xE;
+                tmp1    &=  0xE;
+                tmp2    &=  0xE;
+                tmp0    >>= 1;
+                tmp1    >>= 1;
+                tmp2    >>= 1;
 
                 //save error
                 left_err_b = tmp0 | (tmp1 << 8) | (tmp2 << 16); // = top_err_l also
 
-                //Y	=	*pY++;						//upper left
-                Y	=	*pY;
+                //Y =   *pY++;                      //upper left
+                Y   =   *pY;
                 pY += tmp_src_pitch;
 
                 // error from the top already available
-                tmp1	=	(Y << 16) - Cg + (tmp1 << 16);
-                tmp2	=	(Y << 16) + Cb + (tmp2 << 16);
-                tmp0	=	(Y << 16) + Cr + (tmp0 << 16);
+                tmp1    = (Y << 16) - Cg + (tmp1 << 16);
+                tmp2    = (Y << 16) + Cb + (tmp2 << 16);
+                tmp0    = (Y << 16) + Cr + (tmp0 << 16);
 
                 //add the error from left
-                tmp0	+=	((left_err_t & 0xFF) << 16);// err_vert[3];
-                tmp1	+=	(((left_err_t >> 8) & 0xFF) << 16);//err_vert[4];
-                tmp2	+=	(((left_err_t >> 16) & 0xFF) << 16);//err_vert[5];
+                tmp0    += ((left_err_t & 0xFF) << 16); // err_vert[3];
+                tmp1    += (((left_err_t >> 8) & 0xFF) << 16); //err_vert[4];
+                tmp2    += (((left_err_t >> 16) & 0xFF) << 16); //err_vert[5];
 
-                tmp0	=	clip[tmp0>>16];
-                tmp1	=	clip[tmp1>>16];
-                tmp2	=	clip[tmp2>>16];
+                tmp0    =   clip[tmp0>>16];
+                tmp1    =   clip[tmp1>>16];
+                tmp2    =   clip[tmp2>>16];
 
                 //save error
                 left_err_t = ((tmp0 & 0xE) >> 1) | ((tmp1 & 0xE) << 7) | ((tmp2 & 0xE) << 15); //= top_err_l also
                 *((uint*)(pErr_horz + (col << 2))) = left_err_t; // =top_err_l;
 
-#ifdef	OUTPUT_RGB_565
+#ifdef  OUTPUT_RGB_565
                 //RGB_565
-                tmp0		= (tmp0 >> 3);
-                tmp0		= (tmp1 >> 2) | (tmp0 << 6);
-                tmp0		= (tmp2 >> 3) | (tmp0 << 5);
+                tmp0        = (tmp0 >> 3);
+                tmp0        = (tmp1 >> 2) | (tmp0 << 6);
+                tmp0        = (tmp2 >> 3) | (tmp0 << 5);
 #else
-                //RGB_444
-                tmp0		= (tmp0 & 0xF0) << 4;
-                tmp0		|= (tmp1 & 0xF0);
-                tmp0		|= (tmp2 >> 4);
+//RGB_444
+tmp0        = (tmp0 & 0xF0) << 4;
+tmp0        |= (tmp1 & 0xF0);
+tmp0        |= (tmp2 >> 4);
 #endif
                 if (((uint)pDst) & 3)  //half word aligned
                 {
                     if (_mRowPix[col] == 2)
                     {
-                        *(pDst + dst_pitch)	=	rgb;
-                        *(pDst + dst_pitch + 1)	=	rgb;
-                        *(pDst)	=	tmp0;
-                        *(pDst + 1)	=	tmp0;
+                        *(pDst + dst_pitch) =   rgb;
+                        *(pDst + dst_pitch + 1) =   rgb;
+                        *(pDst) =   tmp0;
+                        *(pDst + 1) =   tmp0;
                     }
                     else if (_mRowPix[col] == 3)
                     {
-                        *(pDst + dst_pitch)	=	rgb;
-                        *((uint*)(pDst + dst_pitch + 1))	= rgb | (rgb << 16);
+                        *(pDst + dst_pitch) =   rgb;
+                        *((uint*)(pDst + dst_pitch + 1))    = rgb | (rgb << 16);
 
-                        *(pDst)	=	tmp0;
-                        *((uint*)(pDst + 1))	= tmp0 | (tmp0 << 16);
+                        *(pDst) =   tmp0;
+                        *((uint*)(pDst + 1))    = tmp0 | (tmp0 << 16);
                     }
                     else
                     {
-                        *(pDst + dst_pitch)	=	rgb;
-                        *(pDst)	=	tmp0;
+                        *(pDst + dst_pitch) =   rgb;
+                        *(pDst) =   tmp0;
                     }
                 }
                 else //word aligned
                 {
                     if (_mRowPix[col] == 2)
                     {
-                        *((uint*)(pDst + dst_pitch))	= rgb | (rgb << 16);
-                        *((uint*)(pDst))	= tmp0 | (tmp0 << 16);
+                        *((uint*)(pDst + dst_pitch))    = rgb | (rgb << 16);
+                        *((uint*)(pDst))    = tmp0 | (tmp0 << 16);
                     }
                     else if (_mRowPix[col] == 3)
                     {
-                        *((uint*)(pDst + dst_pitch))	= rgb | (rgb << 16);
-                        *(pDst + dst_pitch + 2)	=	rgb;
+                        *((uint*)(pDst + dst_pitch))    = rgb | (rgb << 16);
+                        *(pDst + dst_pitch + 2) =   rgb;
 
-                        *((uint*)(pDst))	= tmp0 | (tmp0 << 16);
-                        *(pDst + 2)	=	tmp0;
+                        *((uint*)(pDst))    = tmp0 | (tmp0 << 16);
+                        *(pDst + 2) =   tmp0;
                     }
                     else
                     {
-                        *(pDst + dst_pitch)	=	rgb;
-                        *(pDst)	=	tmp0;
+                        *(pDst + dst_pitch) =   rgb;
+                        *(pDst) =   tmp0;
                     }
                 }
-            } /*	if(_mRowPix[col]) */
+            } /*    if(_mRowPix[col]) */
             else
             {
 
                 pY += tmp_src_pitch;
             }
-            pDst	+= _mRowPix[col];
+            pDst    += _mRowPix[col];
 
             if (_mRowPix[col+1]) /* compute this pixel */
             {
                 //load the top two pixels
-                //Y	=	*((uint16 *)pY)++;
+                //Y =   *((uint16 *)pY)++;
 
-                tmp0	=   pY[read_idx];
-                //tmp0	=	pY[src_pitch];		//bottom right
+                tmp0    =   pY[read_idx];
+                //tmp0  =   pY[src_pitch];      //bottom right
 
-                tmp1	=	(tmp0 << 16) - Cg;
-                tmp2	=	(tmp0 << 16) + Cb;
-                tmp0	=	(tmp0 << 16) + Cr;
+                tmp1    = (tmp0 << 16) - Cg;
+                tmp2    = (tmp0 << 16) + Cb;
+                tmp0    = (tmp0 << 16) + Cr;
 
                 //add the error from top and left
-                tmp0	+=	((left_err_b & 0xFF) << 16);// err_vert[0];
-                tmp1	+=	(((left_err_b >> 8) & 0xFF) << 16);//err_vert[1];
-                tmp2	+=	(((left_err_b >> 16) & 0xFF) << 16);//err_vert[2];
+                tmp0    += ((left_err_b & 0xFF) << 16); // err_vert[0];
+                tmp1    += (((left_err_b >> 8) & 0xFF) << 16); //err_vert[1];
+                tmp2    += (((left_err_b >> 16) & 0xFF) << 16); //err_vert[2];
 
                 top_err_r = *((uint*)(pErr_horz + (col << 2) + 4));
-                tmp0	+=	((top_err_r & 0xFF) << 16);//pErr_horz[col+1];
-                tmp1	+=	(((top_err_r >> 8) & 0xFF) << 16);//mErr_horz[1][col+1];
-                tmp2	+=	(((top_err_r >> 16) & 0xFF) << 16);//mErr_horz[2][col+1];
+                tmp0    += ((top_err_r & 0xFF) << 16); //pErr_horz[col+1];
+                tmp1    += (((top_err_r >> 8) & 0xFF) << 16); //mErr_horz[1][col+1];
+                tmp2    += (((top_err_r >> 16) & 0xFF) << 16); //mErr_horz[2][col+1];
 
-                tmp0	=	clip[tmp0>>16];
-                tmp1	=	clip[tmp1>>16];
-                tmp2	=	clip[tmp2>>16];
+                tmp0    =   clip[tmp0>>16];
+                tmp1    =   clip[tmp1>>16];
+                tmp2    =   clip[tmp2>>16];
 
-#ifdef	OUTPUT_RGB_565
+#ifdef  OUTPUT_RGB_565
                 //RGB_565
-                rgb		= (tmp0 >> 3);
-                rgb		= (tmp1 >> 2) | (rgb << 6);
-                rgb		= (tmp2 >> 3) | (rgb << 5);
+                rgb     = (tmp0 >> 3);
+                rgb     = (tmp1 >> 2) | (rgb << 6);
+                rgb     = (tmp2 >> 3) | (rgb << 5);
 #else
-                //RGB_444
-                rgb		= (tmp0 & 0xF0) << 4;
-                rgb		|= (tmp1 & 0xF0);
-                rgb		|= (tmp2 >> 4);
+//RGB_444
+rgb     = (tmp0 & 0xF0) << 4;
+rgb     |= (tmp1 & 0xF0);
+rgb     |= (tmp2 >> 4);
 #endif
 
-                tmp0	&=	0xE;
-                tmp1	&=	0xE;
-                tmp2	&=	0xE;
-                tmp0	>>= 1;
-                tmp1	>>= 1;
-                tmp2	>>= 1;
+                tmp0    &=  0xE;
+                tmp1    &=  0xE;
+                tmp2    &=  0xE;
+                tmp0    >>= 1;
+                tmp1    >>= 1;
+                tmp2    >>= 1;
 
                 //save error
                 left_err_b = tmp0 | (tmp1 << 8) | (tmp2 << 16); // = top_err_r also
 
-                Y	=	*pY;
+                Y   =   *pY;
                 pY += tmp_src_pitch;
-                //			Y	=	*pY++;
+                //          Y   =   *pY++;
 
                 // error from the top already available
-                tmp1	=	(Y << 16) - Cg + (tmp1 << 16);
-                tmp2	=	(Y << 16) + Cb + (tmp2 << 16);
-                tmp0	=	(Y << 16) + Cr + (tmp0 << 16);
+                tmp1    = (Y << 16) - Cg + (tmp1 << 16);
+                tmp2    = (Y << 16) + Cb + (tmp2 << 16);
+                tmp0    = (Y << 16) + Cr + (tmp0 << 16);
 
                 //add the error from left
-                tmp0	+=	((left_err_t & 0xFF) << 16);// err_vert[3];
-                tmp1	+=	(((left_err_t >> 8) & 0xFF) << 16);//err_vert[4];
-                tmp2	+=	(((left_err_t >> 16) & 0xFF) << 16);//err_vert[5];
+                tmp0    += ((left_err_t & 0xFF) << 16); // err_vert[3];
+                tmp1    += (((left_err_t >> 8) & 0xFF) << 16); //err_vert[4];
+                tmp2    += (((left_err_t >> 16) & 0xFF) << 16); //err_vert[5];
 
-                tmp0	=	clip[tmp0>>16];
-                tmp1	=	clip[tmp1>>16];
-                tmp2	=	clip[tmp2>>16];
+                tmp0    =   clip[tmp0>>16];
+                tmp1    =   clip[tmp1>>16];
+                tmp2    =   clip[tmp2>>16];
 
                 //save error
                 left_err_t = ((tmp0 & 0xE) >> 1) | ((tmp1 & 0xE) << 7) | ((tmp2 & 0xE) << 15);//= top_err_r also
                 *((uint*)(pErr_horz + (col << 2) + 4)) = left_err_t;// =top_err_r;
 
-#ifdef	OUTPUT_RGB_565
+#ifdef  OUTPUT_RGB_565
                 //RGB_565
-                tmp0		= (tmp0 >> 3);
-                tmp0		= (tmp1 >> 2) | (tmp0 << 6);
-                tmp0		= (tmp2 >> 3) | (tmp0 << 5);
+                tmp0        = (tmp0 >> 3);
+                tmp0        = (tmp1 >> 2) | (tmp0 << 6);
+                tmp0        = (tmp2 >> 3) | (tmp0 << 5);
 #else
-                //RGB_444
-                tmp0		= (tmp0 & 0xF0) << 4;
-                tmp0		|= (tmp1 & 0xF0);
-                tmp0		|= (tmp2 >> 4);
+//RGB_444
+tmp0        = (tmp0 & 0xF0) << 4;
+tmp0        |= (tmp1 & 0xF0);
+tmp0        |= (tmp2 >> 4);
 #endif
 
                 if (((uint)pDst) & 3)  //half word aligned
                 {
                     if (_mRowPix[col+1] == 2)
                     {
-                        *(pDst + dst_pitch)	=	rgb;
-                        *(pDst + dst_pitch + 1)	=	rgb;
-                        *(pDst)	=	tmp0;
-                        *(pDst + 1)	=	tmp0;
+                        *(pDst + dst_pitch) =   rgb;
+                        *(pDst + dst_pitch + 1) =   rgb;
+                        *(pDst) =   tmp0;
+                        *(pDst + 1) =   tmp0;
                     }
                     else if (_mRowPix[col+1] == 3)
                     {
-                        *(pDst + dst_pitch)	=	rgb;
-                        *((uint*)(pDst + dst_pitch + 1))	= rgb | (rgb << 16);
+                        *(pDst + dst_pitch) =   rgb;
+                        *((uint*)(pDst + dst_pitch + 1))    = rgb | (rgb << 16);
 
-                        *(pDst)	=	tmp0;
-                        *((uint*)(pDst + 1))	= tmp0 | (tmp0 << 16);
+                        *(pDst) =   tmp0;
+                        *((uint*)(pDst + 1))    = tmp0 | (tmp0 << 16);
                     }
                     else
                     {
-                        *(pDst + dst_pitch)	=	rgb;
-                        *(pDst)	=	tmp0;
+                        *(pDst + dst_pitch) =   rgb;
+                        *(pDst) =   tmp0;
                     }
                 }
                 else //word aligned
                 {
                     if (_mRowPix[col+1] == 2)
                     {
-                        *((uint*)(pDst + dst_pitch))	= rgb | (rgb << 16);
-                        *((uint*)(pDst))	= tmp0 | (tmp0 << 16);
+                        *((uint*)(pDst + dst_pitch))    = rgb | (rgb << 16);
+                        *((uint*)(pDst))    = tmp0 | (tmp0 << 16);
                     }
                     else if (_mRowPix[col+1] == 3)
                     {
-                        *((uint*)(pDst + dst_pitch))	= rgb | (rgb << 16);
-                        *(pDst + dst_pitch + 2)	=	rgb;
+                        *((uint*)(pDst + dst_pitch))    = rgb | (rgb << 16);
+                        *(pDst + dst_pitch + 2) =   rgb;
 
-                        *((uint*)(pDst))	= tmp0 | (tmp0 << 16);
-                        *(pDst + 2)	=	tmp0;
+                        *((uint*)(pDst))    = tmp0 | (tmp0 << 16);
+                        *(pDst + 2) =   tmp0;
                     }
                     else
                     {
-                        *(pDst + dst_pitch)	=	rgb;
-                        *(pDst)	=	tmp0;
+                        *(pDst + dst_pitch) =   rgb;
+                        *(pDst) =   tmp0;
                     }
                 }
-            } /*	if(_mRowPix[col]) */
+            } /*    if(_mRowPix[col]) */
             else
             {
                 pY += tmp_src_pitch;
             }
-            pDst	+= _mRowPix[col+1];
+            pDst    += _mRowPix[col+1];
 
         }//end of COL
 
-        pY	+=	(deltaY);
-        pCb +=	deltaCbCr;
-        pCr +=	deltaCbCr;
+        pY  += (deltaY);
+        pCb +=  deltaCbCr;
+        pCr +=  deltaCbCr;
 
-        pDst -=	(dst_width); //goes back to the beginning of the line;
+        pDst -= (dst_width); //goes back to the beginning of the line;
 
         //copy down
         offset = (_mColPix[row] * dst_pitch);
@@ -3292,11 +3292,11 @@ int32 cc12sc_rotate(uint8 **src, uint8 *dst, int *disp,
             oscl_memcpy(pDst + dst_pitch*2, pDst, dst_width*2);
         }
 
-        pDst	+=	dst_pitch * (_mColPix[row-1] + _mColPix[row]);
+        pDst    +=  dst_pitch * (_mColPix[row-1] + _mColPix[row]);
     }
     return 1;
 #else
-    return 0;
+return 0;
 #endif // defined(CCROTATE) && defined(CCSCALING)
 }
 #endif // USE_ARM_ASM_FOR_COLORCONVERT

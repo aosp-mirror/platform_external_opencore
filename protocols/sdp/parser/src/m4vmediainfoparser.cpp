@@ -413,7 +413,7 @@ SDPMPEG4MediaInfoParser::parseMediaInfo(const char *buff, const int index, SDPIn
                         sptr = eptr;
                         sptr = skip_whitespace(sptr , line_end_ptr);
 
-                        for (;*eptr != '-' ; ++eptr);
+                        for (; *eptr != '-' ; ++eptr);
 
                         if (!PV_atoi(sptr, 'd', eptr - sptr, width))
                         {
@@ -474,12 +474,12 @@ SDPMPEG4MediaInfoParser::parseMediaInfo(const char *buff, const int index, SDPIn
                 return SDP_BAD_MEDIA_ALT_ID;
         }
 
-        if (m4Video->getCFieldStatus()	|| session->getCFieldStatus())
+        if (m4Video->getCFieldStatus()  || session->getCFieldStatus())
         {
             //if sample rate is zero override with defaults
             Oscl_Vector<PayloadSpecificInfoTypeBase*, SDPParserAlloc> payloadSpecificInfoVector =
                 m4Video->getPayloadSpecificInfoVector();
-            for (int ii = 0; ii < (int)payloadSpecificInfoVector.size();ii++)
+            for (int ii = 0; ii < (int)payloadSpecificInfoVector.size(); ii++)
             {
                 if (payloadSpecificInfoVector[ii]->getSampleRate() == 0)
                 {

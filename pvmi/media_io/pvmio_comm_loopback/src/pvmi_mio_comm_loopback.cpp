@@ -388,7 +388,7 @@ OSCL_EXPORT_REF void PvmiMIOCommLoopback::writeComplete(PVMFStatus aStatus, PVMF
         //asynchronous completion
         //do any memory cleanup
         uint32 i;
-        for (i = 0;i < iCleanupQueue.size();i++)
+        for (i = 0; i < iCleanupQueue.size(); i++)
         {
             if (iCleanupQueue[i].iCmdId == aCmdId)
             {

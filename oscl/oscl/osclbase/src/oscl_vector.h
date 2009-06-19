@@ -220,8 +220,8 @@ class Oscl_Vector_Base
  */
 template<class T, class Alloc>
 class Oscl_Vector
-            : public Oscl_Vector_Base
-            , public Oscl_Opaque_Type_Alloc
+        : public Oscl_Vector_Base
+        , public Oscl_Opaque_Type_Alloc
 {
 
     public:

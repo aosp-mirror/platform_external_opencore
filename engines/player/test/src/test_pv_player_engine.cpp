@@ -167,20 +167,20 @@ FILE *file;
 class PVLoggerConfigFile
 {
         /*  To change the logging settings without the need to compile the test application
-        	Let us read the logging settings from the file instead of hard coding them over here
-        	The name of the config file is pvlogger.ini
-        	The format of entries in it is like
-        	First entry will decide if the file appender has to be used or error appender will be used.
-        	0 -> ErrAppender will be used
-        	1 -> File Appender will be used
-        	2 -> Mem Appender will be used
-        	Entries after this will decide the module whose logging has to be taken.For example, contents of one sample config file could be
-        	1
-        	1,PVPlayerEngine
-        	8,PVSocketNode
-        	(pls note that no space is allowed between loglevel and logger tag)
-        	This means, we intend to have logging of level 1 for the module PVPlayerEngine
-        	and of level 8 for the PVSocketNode on file.
+            Let us read the logging settings from the file instead of hard coding them over here
+            The name of the config file is pvlogger.ini
+            The format of entries in it is like
+            First entry will decide if the file appender has to be used or error appender will be used.
+            0 -> ErrAppender will be used
+            1 -> File Appender will be used
+            2 -> Mem Appender will be used
+            Entries after this will decide the module whose logging has to be taken.For example, contents of one sample config file could be
+            1
+            1,PVPlayerEngine
+            8,PVSocketNode
+            (pls note that no space is allowed between loglevel and logger tag)
+            This means, we intend to have logging of level 1 for the module PVPlayerEngine
+            and of level 8 for the PVSocketNode on file.
         */
     public:
 
@@ -381,7 +381,7 @@ class CmdLinePopulator
         }
         ~CmdLinePopulator()
         {
-            for (int ii = 0; ii < MAXNUMARGS ;ii++)
+            for (int ii = 0; ii < MAXNUMARGS ; ii++)
             {
                 if (iArgArr[ii] != NULL)
                 {
@@ -564,12 +564,12 @@ template <typename T> bool CmdLinePopulator<T>::PopulateCmdLine(oscl_wchar* apFi
 
 /** Name: ConvertToLowerCase
   * Description: Utility function to convert a string in lower case
-  *				 convert upper case ASCII String to lower case.
-  *				 behaviour of this function for non-ASCII characters
-  * 			 is not defined.
+  *              convert upper case ASCII String to lower case.
+  *              behaviour of this function for non-ASCII characters
+  *              is not defined.
   *
   * @param char    input string.
-  * @return		   lower case String.
+  * @return        lower case String.
   */
 void ConvertToLowerCase(char *aString)
 {
@@ -719,7 +719,7 @@ void FindSourceType(cmd_line* command_line, OSCL_HeapString<OsclMemAllocator> &a
 }
 
 // Pull out source file name from arguments
-//	-source sometestfile.mp4
+//  -source sometestfile.mp4
 
 void FindSourceFile(cmd_line* command_line, OSCL_HeapString<OsclMemAllocator> &aFileNameInfo, PVMFFormatType &aInputFileFormatType, FILE *aFile)
 {
@@ -881,14 +881,14 @@ void FindSourceFile(cmd_line* command_line, OSCL_HeapString<OsclMemAllocator> &a
 
 //Find test range args:
 //To run a range of tests by enum ID:
-//	-test 17 29
+//  -test 17 29
 //To run all Local play tests>
-//	-test L
+//  -test L
 //To run all Download tests
-//	-test D
+//  -test D
 //To run all Streaming tests:
-//	-test S
-void FindTestRange(cmd_line *command_line,	int32 &iFirstTest, int32 &iLastTest, FILE *aFile)
+//  -test S
+void FindTestRange(cmd_line *command_line,  int32 &iFirstTest, int32 &iLastTest, FILE *aFile)
 {
     //default is to run all tests.
     iFirstTest = 0;
@@ -1403,59 +1403,59 @@ void FindLoggerNode(cmd_line* command_line, int32& lognode, FILE* aFile)
         }
         else if (oscl_strcmp(iSourceFind, "-logall") == 0)
         {
-            lognode = 1;		//log everything
+            lognode = 1;        //log everything
         }
         else if (oscl_strcmp(iSourceFind, "-logdatapath") == 0)
         {
-            lognode = 2;		//datapath only
+            lognode = 2;        //datapath only
         }
         else if (oscl_strcmp(iSourceFind, "-logclock") == 0)
         {
-            lognode = 3;		//clock only
+            lognode = 3;        //clock only
         }
         else if (oscl_strcmp(iSourceFind, "-logoscl") == 0)
         {
-            lognode = 4;		//oscl only
+            lognode = 4;        //oscl only
         }
         else if (oscl_strcmp(iSourceFind, "-logperf") == 0)
         {
-            lognode = 5;		//scheduler perf logging
+            lognode = 5;        //scheduler perf logging
         }
         else if (oscl_strcmp(iSourceFind, "-logdatapathsrc") == 0)
         {
-            lognode = 6;		//source node data path only
+            lognode = 6;        //source node data path only
         }
         else if (oscl_strcmp(iSourceFind, "-logdatapathdec") == 0)
         {
-            lognode = 7;		//source node data path only
+            lognode = 7;        //source node data path only
         }
         else if (oscl_strcmp(iSourceFind, "-logsync") == 0)
         {
-            lognode = 8;		//media output node datapath only
+            lognode = 8;        //media output node datapath only
         }
         else if (oscl_strcmp(iSourceFind, "-logdiagnostics") == 0)
         {
-            lognode = 9;		//diagnostics log only
+            lognode = 9;        //diagnostics log only
         }
         else if (oscl_strcmp(iSourceFind, "-logosclfileio") == 0)
         {
-            lognode = 10; 	//hds access log only
+            lognode = 10;   //hds access log only
         }
         else if (oscl_strcmp(iSourceFind, "-loghds") == 0)
         {
-            lognode = 11; 	//oscl file-io access log only
+            lognode = 11;   //oscl file-io access log only
         }
         else if (oscl_strcmp(iSourceFind, "-loghdsandosclfileio") == 0)
         {
-            lognode = 12; 	//file-io and hds access log only
+            lognode = 12;   //file-io and hds access log only
         }
         else if (oscl_strcmp(iSourceFind, "-logjupiter") == 0)
         {
-            lognode = 13; 	//jupiter DRM only
+            lognode = 13;   //jupiter DRM only
         }
         else if (oscl_strcmp(iSourceFind, "-logjanus") == 0)
         {
-            lognode = 14; 	//janus DRM only
+            lognode = 14;   //janus DRM only
         }
         else if (oscl_strcmp(iSourceFind, "-logperfmin") == 0)
         {
@@ -1463,19 +1463,19 @@ void FindLoggerNode(cmd_line* command_line, int32& lognode, FILE* aFile)
         }
         else if (oscl_strcmp(iSourceFind, "-logppb") == 0)
         {
-            lognode = 16;	//progressive playback log only
+            lognode = 16;   //progressive playback log only
         }
         else if (oscl_strcmp(iSourceFind, "-logrepos") == 0)
         {
-            lognode = 17; 	//repos related
+            lognode = 17;   //repos related
         }
         else if (oscl_strcmp(iSourceFind, "-logsnode") == 0)
         {
-            lognode = 18; 	//socket node related
+            lognode = 18;   //socket node related
         }
         else if (oscl_strcmp(iSourceFind, "-logshout") == 0)
         {
-            lognode = 19;	//shoutcast playback log only
+            lognode = 19;   //shoutcast playback log only
         }
     }
 
@@ -1756,7 +1756,7 @@ int local_main(FILE *filehandle, cmd_line* command_line)
                 {
                     fprintf(file, "ERROR: Leak info is incomplete.\n");
                 }
-                for (uint32 i = 0;i < leakinfo;i++)
+                for (uint32 i = 0; i < leakinfo; i++)
                 {
                     fprintf(file, "Leak Info:\n");
                     fprintf(file, "  allocNum %d\n", info[i].allocNum);
@@ -1973,7 +1973,7 @@ bool pvplayer_engine_test::ValidateTestCase(int& aCurrentTestCaseNumber)
     int testCaseNumber = 0;
     if (iFileFormatType == MP3_ENABLED) //For MP3
     {
-        for (testCaseNumber = 0;testCaseNumber < NO_OF_MP3_INVALID_TESTCASES ;testCaseNumber++)
+        for (testCaseNumber = 0; testCaseNumber < NO_OF_MP3_INVALID_TESTCASES ; testCaseNumber++)
         {
             if (aCurrentTestCaseNumber < MP3_INVALID_TEST_ARRAY[testCaseNumber])
                 return true;//aCurrentTestCaseNumber;
@@ -1988,9 +1988,9 @@ bool pvplayer_engine_test::ValidateTestCase(int& aCurrentTestCaseNumber)
         if (aCurrentTestCaseNumber > MP3_INVALID_TEST_ARRAY[NO_OF_MP3_INVALID_TESTCASES -1])
             return  true; //aCurrentTestCaseNumber ; //Sending when CurrentCount is more than all the element of array
     }
-    else if (iFileFormatType == AMR_ENABLED) 	//For AMR
+    else if (iFileFormatType == AMR_ENABLED)    //For AMR
     {
-        for (testCaseNumber = 0;testCaseNumber < NO_OF_AMR_INVALID_TESTCASES;testCaseNumber++)
+        for (testCaseNumber = 0; testCaseNumber < NO_OF_AMR_INVALID_TESTCASES; testCaseNumber++)
         {
             if (aCurrentTestCaseNumber < AMR_INVALID_TEST_ARRAY[testCaseNumber])
                 return true; //aCurrentTestCaseNumber;
@@ -2007,7 +2007,7 @@ bool pvplayer_engine_test::ValidateTestCase(int& aCurrentTestCaseNumber)
     }
     else if (iFileFormatType == MP4_ENABLED) // MP4 Enabled
     {
-        for (testCaseNumber = 0;testCaseNumber < NO_OF_3GP_OR_MP4_INVALID_TESTCASES;testCaseNumber++)
+        for (testCaseNumber = 0; testCaseNumber < NO_OF_3GP_OR_MP4_INVALID_TESTCASES; testCaseNumber++)
         {
             if (aCurrentTestCaseNumber < FILE_3GP_OR_MP4_INVALID_TEST_ARRAY[testCaseNumber])
                 return true; //aCurrentTestCaseNumber;
@@ -2024,7 +2024,7 @@ bool pvplayer_engine_test::ValidateTestCase(int& aCurrentTestCaseNumber)
     }
     else if (iFileFormatType == THREE_GP_ENABLED)// 3GP Enabled
     {
-        for (testCaseNumber = 0;testCaseNumber < NO_OF_3GP_OR_MP4_INVALID_TESTCASES;testCaseNumber++)
+        for (testCaseNumber = 0; testCaseNumber < NO_OF_3GP_OR_MP4_INVALID_TESTCASES; testCaseNumber++)
         {
             if (aCurrentTestCaseNumber < FILE_3GP_OR_MP4_INVALID_TEST_ARRAY[testCaseNumber])
                 return true;//aCurrentTestCaseNumber;
@@ -2039,9 +2039,9 @@ bool pvplayer_engine_test::ValidateTestCase(int& aCurrentTestCaseNumber)
         if (aCurrentTestCaseNumber > FILE_3GP_OR_MP4_INVALID_TEST_ARRAY[NO_OF_3GP_OR_MP4_INVALID_TESTCASES -1])
             return true; //aCurrentTestCaseNumber ; //Sending when CurrentCount is more than all the element of array
     }
-    else if (iFileFormatType == ASF_ENABLED) 	//ASF Enabled
+    else if (iFileFormatType == ASF_ENABLED)    //ASF Enabled
     {
-        for (testCaseNumber = 0;testCaseNumber < NO_OF_ASF_INVALID_TESTCASES ;testCaseNumber++)
+        for (testCaseNumber = 0; testCaseNumber < NO_OF_ASF_INVALID_TESTCASES ; testCaseNumber++)
         {
             if (aCurrentTestCaseNumber < ASF_INVALID_TEST_ARRAY[testCaseNumber])
                 return true; //aCurrentTestCaseNumber;
@@ -2058,9 +2058,9 @@ bool pvplayer_engine_test::ValidateTestCase(int& aCurrentTestCaseNumber)
         if (aCurrentTestCaseNumber > ASF_INVALID_TEST_ARRAY[NO_OF_ASF_INVALID_TESTCASES -1])
             return true; //aCurrentTestCaseNumber ; //Sending when CurrentCount is more than all the element of array
     }
-    else if (iFileFormatType == WMV_ENABLED)	//WMV Enabled
+    else if (iFileFormatType == WMV_ENABLED)    //WMV Enabled
     {
-        for (testCaseNumber = 0;testCaseNumber < NO_OF_WMV_INVALID_TESTCASES;testCaseNumber++)
+        for (testCaseNumber = 0; testCaseNumber < NO_OF_WMV_INVALID_TESTCASES; testCaseNumber++)
         {
             if (aCurrentTestCaseNumber < WMV_INVALID_TEST_ARRAY[testCaseNumber])
                 return true; //aCurrentTestCaseNumber;
@@ -2075,9 +2075,9 @@ bool pvplayer_engine_test::ValidateTestCase(int& aCurrentTestCaseNumber)
         if (aCurrentTestCaseNumber > WMV_INVALID_TEST_ARRAY[NO_OF_WMV_INVALID_TESTCASES-1])
             return true; //aCurrentTestCaseNumber ; //Sending when CurrentCount is more than all the element of array
     }
-    else if (iFileFormatType == WMA_ENABLED)	//WMA Enabled
+    else if (iFileFormatType == WMA_ENABLED)    //WMA Enabled
     {
-        for (testCaseNumber = 0;testCaseNumber < NO_OF_WMA_INVALID_TESTCASES ;testCaseNumber++)
+        for (testCaseNumber = 0; testCaseNumber < NO_OF_WMA_INVALID_TESTCASES ; testCaseNumber++)
         {
             if (aCurrentTestCaseNumber < WMA_INVALID_TEST_ARRAY[testCaseNumber])
                 return true; //aCurrentTestCaseNumber;
@@ -2092,9 +2092,9 @@ bool pvplayer_engine_test::ValidateTestCase(int& aCurrentTestCaseNumber)
         if (aCurrentTestCaseNumber > WMA_INVALID_TEST_ARRAY[NO_OF_WMA_INVALID_TESTCASES -1])
             return true; //aCurrentTestCaseNumber ; //Sending when CurrentCount is more than all the element of array
     }
-    else if (iFileFormatType == WAV_ENABLED) 	//WAV Enabled
+    else if (iFileFormatType == WAV_ENABLED)    //WAV Enabled
     {
-        for (testCaseNumber = 0;testCaseNumber < NO_OF_WAV_INVALID_TESTCASES ;testCaseNumber++)
+        for (testCaseNumber = 0; testCaseNumber < NO_OF_WAV_INVALID_TESTCASES ; testCaseNumber++)
         {
             if (aCurrentTestCaseNumber < WAV_INVALID_TEST_ARRAY[testCaseNumber])
                 return true; //aCurrentTestCaseNumber;
@@ -2111,7 +2111,7 @@ bool pvplayer_engine_test::ValidateTestCase(int& aCurrentTestCaseNumber)
     }
     else if (iFileFormatType == RM_ENABLED) //RM Enabled
     {
-        for (testCaseNumber = 0;testCaseNumber < NO_OF_REAL_INVALID_TESTCASES ;testCaseNumber++)
+        for (testCaseNumber = 0; testCaseNumber < NO_OF_REAL_INVALID_TESTCASES ; testCaseNumber++)
         {
             if (aCurrentTestCaseNumber < REAL_INVALID_TEST_ARRAY[testCaseNumber])
                 return true; //aCurrentTestCaseNumber;
@@ -2126,9 +2126,9 @@ bool pvplayer_engine_test::ValidateTestCase(int& aCurrentTestCaseNumber)
         if (aCurrentTestCaseNumber > REAL_INVALID_TEST_ARRAY[NO_OF_REAL_INVALID_TESTCASES -1])
             return true;//Sending when CurrentCount is more than all the element of array
     }
-    else if (iFileFormatType == AAC_ENABLED) 	//For AAC
+    else if (iFileFormatType == AAC_ENABLED)    //For AAC
     {
-        for (testCaseNumber = 0;testCaseNumber < NO_OF_AAC_INVALID_TESTCASES;testCaseNumber++)
+        for (testCaseNumber = 0; testCaseNumber < NO_OF_AAC_INVALID_TESTCASES; testCaseNumber++)
         {
             if (aCurrentTestCaseNumber < AAC_INVALID_TEST_ARRAY[testCaseNumber])
                 return true; //aCurrentTestCaseNumber;
@@ -9796,94 +9796,94 @@ void pvplayer_engine_test::SetupLoggerScheduler()
             node->AddAppender(appenderPtr);
             node->SetLogLevel(iLogLevel);
             /*
-            		node = PVLogger::GetLoggerObject("PVMFMP4FFParserNode");
-            		node->AddAppender(appenderPtr);
-            		node->SetLogLevel(iLogLevel);
+                    node = PVLogger::GetLoggerObject("PVMFMP4FFParserNode");
+                    node->AddAppender(appenderPtr);
+                    node->SetLogLevel(iLogLevel);
             */
             /*
-            		node = PVLogger::GetLoggerObject("PVMFAMRFFParserNode");
-            		node->AddAppender(appenderPtr);
-            		node->SetLogLevel(iLogLevel);
+                    node = PVLogger::GetLoggerObject("PVMFAMRFFParserNode");
+                    node->AddAppender(appenderPtr);
+                    node->SetLogLevel(iLogLevel);
             */
             /*
-            		node = PVLogger::GetLoggerObject("PVMFAACFFParserNode");
-            		node->AddAppender(appenderPtr);
-            		node->SetLogLevel(iLogLevel);
+                    node = PVLogger::GetLoggerObject("PVMFAACFFParserNode");
+                    node->AddAppender(appenderPtr);
+                    node->SetLogLevel(iLogLevel);
             */
             /*
-            		node = PVLogger::GetLoggerObject("PVMFMP3FFParserNode");
-            		node->AddAppender(appenderPtr);
-            		node->SetLogLevel(iLogLevel);
+                    node = PVLogger::GetLoggerObject("PVMFMP3FFParserNode");
+                    node->AddAppender(appenderPtr);
+                    node->SetLogLevel(iLogLevel);
             */
             /*
-            		node = PVLogger::GetLoggerObject("PVMFASFParserNode");
-            		node->AddAppender(appenderPtr);
-            		node->SetLogLevel(iLogLevel);
+                    node = PVLogger::GetLoggerObject("PVMFASFParserNode");
+                    node->AddAppender(appenderPtr);
+                    node->SetLogLevel(iLogLevel);
             */
             /*
-            		node = PVLogger::GetLoggerObject("PVMFVideoDecNode");
-            		node->AddAppender(appenderPtr);
-            		node->SetLogLevel(iLogLevel);
+                    node = PVLogger::GetLoggerObject("PVMFVideoDecNode");
+                    node->AddAppender(appenderPtr);
+                    node->SetLogLevel(iLogLevel);
             */
             /*
-            		node = PVLogger::GetLoggerObject("PVMFAVCDecNode");
-            		node->AddAppender(appenderPtr);
-            		node->SetLogLevel(iLogLevel);
+                    node = PVLogger::GetLoggerObject("PVMFAVCDecNode");
+                    node->AddAppender(appenderPtr);
+                    node->SetLogLevel(iLogLevel);
             */
             /*
-            		node = PVLogger::GetLoggerObject("PVMFWmvDecNode");
-            		node->AddAppender(appenderPtr);
-            		node->SetLogLevel(iLogLevel);
+                    node = PVLogger::GetLoggerObject("PVMFWmvDecNode");
+                    node->AddAppender(appenderPtr);
+                    node->SetLogLevel(iLogLevel);
             */
             /*
-            		node = PVLogger::GetLoggerObject("PVMFGSMAMRDecNode");
-            		node->AddAppender(appenderPtr);
-            		node->SetLogLevel(iLogLevel);
+                    node = PVLogger::GetLoggerObject("PVMFGSMAMRDecNode");
+                    node->AddAppender(appenderPtr);
+                    node->SetLogLevel(iLogLevel);
             */
             /*
-            		node = PVLogger::GetLoggerObject("PVMFAACDecNode");
-            		node->AddAppender(appenderPtr);
-            		node->SetLogLevel(iLogLevel);
+                    node = PVLogger::GetLoggerObject("PVMFAACDecNode");
+                    node->AddAppender(appenderPtr);
+                    node->SetLogLevel(iLogLevel);
             */
             /*
-            		node = PVLogger::GetLoggerObject("PVMFMP3DecNode");
-            		node->AddAppender(appenderPtr);
-            		node->SetLogLevel(iLogLevel);
+                    node = PVLogger::GetLoggerObject("PVMFMP3DecNode");
+                    node->AddAppender(appenderPtr);
+                    node->SetLogLevel(iLogLevel);
             */
             /*
-            		node = PVLogger::GetLoggerObject("PVMFWMADecNode");
-            		node->AddAppender(appenderPtr);
-            		node->SetLogLevel(iLogLevel);
+                    node = PVLogger::GetLoggerObject("PVMFWMADecNode");
+                    node->AddAppender(appenderPtr);
+                    node->SetLogLevel(iLogLevel);
             */
             /*
-            		node = PVLogger::GetLoggerObject("PVMFFileOutputNode");
-            		node->AddAppender(appenderPtr);
-            		node->SetLogLevel(iLogLevel);
+                    node = PVLogger::GetLoggerObject("PVMFFileOutputNode");
+                    node->AddAppender(appenderPtr);
+                    node->SetLogLevel(iLogLevel);
             */
             /*
-            		node = PVLogger::GetLoggerObject("PVMediaOutputNode");
-            		node->AddAppender(appenderPtr);
-            		node->SetLogLevel(iLogLevel);
+                    node = PVLogger::GetLoggerObject("PVMediaOutputNode");
+                    node->AddAppender(appenderPtr);
+                    node->SetLogLevel(iLogLevel);
             */
             /*
-            		node = PVLogger::GetLoggerObject("PVMediaOutputNodePort");
-            		node->AddAppender(appenderPtr);
-            		node->SetLogLevel(iLogLevel);
+                    node = PVLogger::GetLoggerObject("PVMediaOutputNodePort");
+                    node->AddAppender(appenderPtr);
+                    node->SetLogLevel(iLogLevel);
             */
             /*
-            		node = PVLogger::GetLoggerObject("PvmfSyncUtil");
-            		node->AddAppender(appenderPtr);
-            		node->SetLogLevel(iLogLevel);
+                    node = PVLogger::GetLoggerObject("PvmfSyncUtil");
+                    node->AddAppender(appenderPtr);
+                    node->SetLogLevel(iLogLevel);
             */
             /*
-            		node = PVLogger::GetLoggerObject("PvmfSyncUtilDataQueue");
-            		node->AddAppender(appenderPtr);
-            		node->SetLogLevel(iLogLevel);
+                    node = PVLogger::GetLoggerObject("PvmfSyncUtilDataQueue");
+                    node->AddAppender(appenderPtr);
+                    node->SetLogLevel(iLogLevel);
             */
             /*
-            		node = PVLogger::GetLoggerObject("datapath.asfparsernode");
-            		node->AddAppender(appenderPtr);
-            		node->SetLogLevel(iLogLevel);
+                    node = PVLogger::GetLoggerObject("datapath.asfparsernode");
+                    node->AddAppender(appenderPtr);
+                    node->SetLogLevel(iLogLevel);
             */
         }
         break;

@@ -61,9 +61,9 @@ class PVLogger;
 class PVMFLoopbackNode;
 
 class PVMFLoopbackIOPort : public PvmfPortBaseImpl
-            , public PvmiCapabilityAndConfigPortFormatImpl
-            , public OsclActiveObject
-            , public PVMFPortActivityHandler
+        , public PvmiCapabilityAndConfigPortFormatImpl
+        , public OsclActiveObject
+        , public PVMFPortActivityHandler
 {
     public:
         PVMFLoopbackIOPort(int32 aTag

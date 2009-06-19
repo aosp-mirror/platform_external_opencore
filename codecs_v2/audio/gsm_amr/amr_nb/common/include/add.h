@@ -38,14 +38,14 @@ terms listed above has been obtained from the copyright holder.
  Description: Created separate header file for add function.
 
  Description: Changed function prototype; pointer to  overflow flag is passed
-			  in as a parameter.
+              in as a parameter.
 
  Description: Updated copyright section.
-			  Changed "overflow" to "pOverflow" in the function prototype.
+              Changed "overflow" to "pOverflow" in the function prototype.
 
  Description: Moved _cplusplus #ifdef after Include section.
 
- Who: 							Date:
+ Who:                           Date:
  Description:
 
 
@@ -58,13 +58,13 @@ terms listed above has been obtained from the copyright holder.
 ------------------------------------------------------------------------------
 */
 
-#ifndef	ADD_H
-#define	ADD_H
+#ifndef ADD_H
+#define ADD_H
 
 /*----------------------------------------------------------------------------
 ; INCLUDES
 ----------------------------------------------------------------------------*/
-#include	"basicop_malloc.h"
+#include    "basicop_malloc.h"
 
 /*--------------------------------------------------------------------------*/
 #ifdef __cplusplus

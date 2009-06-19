@@ -25,8 +25,8 @@
 ////////////////////////////////////////////////////////////////////////////
 // test_base-based class which will run async tests on pvPlayer engine
 class PVAuthorEngineTest : public test_case,
-            public pvauthor_async_test_observer,
-            public PVLoggerSchedulerSetup
+        public pvauthor_async_test_observer,
+        public PVLoggerSchedulerSetup
 
 {
     public:

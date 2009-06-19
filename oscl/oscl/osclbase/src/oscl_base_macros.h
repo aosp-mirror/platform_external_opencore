@@ -138,15 +138,15 @@
  * These macros are used by MTP to avoid byte aligning structures.
  */
 #ifndef OSCL_PACKED_VAR
-#define OSCL_PACKED_VAR		"error"
+#define OSCL_PACKED_VAR     "error"
 #endif
 
 #ifndef OSCL_BEGIN_PACKED
-#define OSCL_BEGIN_PACKED	"error"
+#define OSCL_BEGIN_PACKED   "error"
 #endif
 
 #ifndef OSCL_END_PACKED
-#define OSCL_END_PACKED		"error"
+#define OSCL_END_PACKED     "error"
 #endif
 
 /*! @} */

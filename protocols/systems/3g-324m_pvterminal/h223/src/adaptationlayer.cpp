@@ -16,8 +16,8 @@
  * -------------------------------------------------------------------
  */
 #include "adaptationlayer.h"
-#define SREJ	    0
-#define	DRTX	    255
+#define SREJ        0
+#define DRTX        255
 #define PV2WAY_H223_AL2_SN_WRAPAROUND 256
 #define PV2WAY_H223_AL2_CRC_SIZE 1
 #define PV2WAY_H223_AL3_CRC_SIZE 2
@@ -127,7 +127,7 @@ PVMFStatus AdaptationLayer2::CompletePacket(OsclSharedPtr<PVMFMediaDataImpl>& pk
     return PVMFSuccess;
 }
 
-#define WINSIZE	10
+#define WINSIZE 10
 
 void AdaptationLayer2::ParsePacket(OsclSharedPtr<PVMFMediaDataImpl>& pkt, IncomingALPduInfo& info)
 {
@@ -202,12 +202,12 @@ void AdaptationLayer2::ParsePacket(OsclSharedPtr<PVMFMediaDataImpl>& pkt, Incomi
         {
             unsigned int fragnum;
             frags[0] = first_frag;
-            for (fragnum = 1;fragnum < num_frags;fragnum++)
+            for (fragnum = 1; fragnum < num_frags; fragnum++)
             {
                 pkt->getMediaFragment(fragnum, frags[fragnum]);
             }
             pkt->clearMediaFragments();
-            for (fragnum = 0;fragnum < num_frags;fragnum++)
+            for (fragnum = 0; fragnum < num_frags; fragnum++)
             {
                 pkt->appendMediaFragment(frags[fragnum]);
             }
@@ -291,7 +291,7 @@ PVMFStatus AdaptationLayer3::CompletePacket(OsclSharedPtr<PVMFMediaDataImpl>& pk
                 iSeqNum ++;
             else
                 iSeqNum = 0;
-            break;			/* SN( 15bit )*/
+            break;          /* SN( 15bit )*/
     }
 
     Crc = crc.Crc16Check(pkt);
@@ -304,7 +304,7 @@ PVMFStatus AdaptationLayer3::CompletePacket(OsclSharedPtr<PVMFMediaDataImpl>& pk
     return PVMFSuccess;
 }
 
-#define WINSIZE	10
+#define WINSIZE 10
 
 void AdaptationLayer3::ParsePacket(OsclSharedPtr<PVMFMediaDataImpl>& pkt, IncomingALPduInfo& info)
 {
@@ -329,11 +329,11 @@ void AdaptationLayer3::ParsePacket(OsclSharedPtr<PVMFMediaDataImpl>& pkt, Incomi
     switch (iSNPos)
     {
         case 0:
-//		not used currently
+//      not used currently
             break;
         case 1:
             SeqNum = (uint16)(((uint8*)first_frag.getMemFragPtr())[0] >> (sizeof(uint8)));
-            VrMax = PV2WAY_H223_AL3_SNPOS1_VRMAX;			    /* 0-127 */
+            VrMax = PV2WAY_H223_AL3_SNPOS1_VRMAX;               /* 0-127 */
             break;
         case 2:
             SeqNum = (uint16)((((uint8*)first_frag.getMemFragPtr())[0] >> 1) << 8 | ((uint8*)first_frag.getMemFragPtr())[1]);
@@ -416,12 +416,12 @@ void AdaptationLayer3::ParsePacket(OsclSharedPtr<PVMFMediaDataImpl>& pkt, Incomi
         unsigned int num_frags = pkt->getNumFragments();
         unsigned int fragnum;
         frags[0] = first_frag;
-        for (fragnum = 1;fragnum < num_frags;fragnum++)
+        for (fragnum = 1; fragnum < num_frags; fragnum++)
         {
             pkt->getMediaFragment(fragnum, frags[fragnum]);
         }
         pkt->clearMediaFragments();
-        for (fragnum = 0;fragnum < num_frags;fragnum++)
+        for (fragnum = 0; fragnum < num_frags; fragnum++)
         {
             pkt->appendMediaFragment(frags[fragnum]);
         }

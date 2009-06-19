@@ -193,25 +193,25 @@ Int fft_rx4_short(
     Int32      *peak_value)
 
 {
-    Int		n1;
-    Int		n2;
-    Int		n3;
-    Int		j;
-    Int		k;
-    Int		i;
-    Int32  	exp_jw1;
-    Int32  	exp_jw2;
-    Int32  	exp_jw3;
+    Int     n1;
+    Int     n2;
+    Int     n3;
+    Int     j;
+    Int     k;
+    Int     i;
+    Int32   exp_jw1;
+    Int32   exp_jw2;
+    Int32   exp_jw3;
 
 
-    Int32  	t1;
-    Int32  	t2;
-    Int32  	r1;
-    Int32  	r2;
-    Int32  	r3;
-    Int32  	s1;
-    Int32  	s2;
-    Int32  	s3;
+    Int32   t1;
+    Int32   t2;
+    Int32   r1;
+    Int32   r2;
+    Int32   r3;
+    Int32   s1;
+    Int32   s2;
+    Int32   s3;
 
     Int32   *pData1;
     Int32   *pData2;

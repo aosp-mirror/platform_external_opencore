@@ -38,12 +38,12 @@ terms listed above has been obtained from the copyright holder.
  Description: Changed function prototype declaration.
 
  Description: Updated copyright information.
-			  Updated variable name from "overflow" to "pOverflow" to match
-			  with original function declaration.
+              Updated variable name from "overflow" to "pOverflow" to match
+              with original function declaration.
 
  Description: Moved _cplusplus #ifdef after Include section.
 
- Who:						Date:
+ Who:                       Date:
  Description:
 
 ------------------------------------------------------------------------------
@@ -58,13 +58,13 @@ terms listed above has been obtained from the copyright holder.
 /*----------------------------------------------------------------------------
 ; CONTINUE ONLY IF NOT ALREADY DEFINED
 ----------------------------------------------------------------------------*/
-#ifndef	SUB_H
-#define	SUB_H
+#ifndef SUB_H
+#define SUB_H
 
 /*----------------------------------------------------------------------------
 ; INCLUDES
 ----------------------------------------------------------------------------*/
-#include	"basicop_malloc.h"
+#include    "basicop_malloc.h"
 
 /*--------------------------------------------------------------------------*/
 #ifdef __cplusplus
@@ -112,4 +112,4 @@ extern "C"
 }
 #endif
 
-#endif	/* _SUB_H_ */
+#endif  /* _SUB_H_ */

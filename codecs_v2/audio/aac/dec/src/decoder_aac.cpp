@@ -120,8 +120,8 @@ OSCL_EXPORT_REF int32 CDecoder_AAC::StartL(tPVMP4AudioDecoderExternal * pExt,
         uint8  num_channels,
         bool aAllocateInputBuffer,
         bool aAllocateOutputBuffer,
-        Int	upsamplingFactor,
-        Int	samp_rate,
+        Int upsamplingFactor,
+        Int samp_rate,
         tMP4AudioObjectType  audioObjectType)
 {
     iFirstFrame = true;

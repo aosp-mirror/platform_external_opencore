@@ -330,7 +330,7 @@ class OsclExecSchedulerCommonBase
 class OsclErrorTrapImp;
 
 class OsclExecScheduler: public OsclExecSchedulerCommonBase
-            , public OsclExecSchedulerBase
+        , public OsclExecSchedulerBase
 {
     public:
         /**

@@ -83,11 +83,11 @@ extern "C"
 #endif
 
     void ps_decorrelate(STRUCT_PS_DEC *h_ps_dec,
-                        Int32 *rIntBufferLeft,
-                        Int32 *iIntBufferLeft,
-                        Int32 *rIntBufferRight,
-                        Int32 *iIntBufferRight,
-                        Int32 scratch_mem[]);
+    Int32 *rIntBufferLeft,
+    Int32 *iIntBufferLeft,
+    Int32 *rIntBufferRight,
+    Int32 *iIntBufferRight,
+    Int32 scratch_mem[]);
 
 #ifdef __cplusplus
 }

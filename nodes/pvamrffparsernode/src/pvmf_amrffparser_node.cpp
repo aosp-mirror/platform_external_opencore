@@ -63,7 +63,7 @@ PVMFAMRFFParserNode::PVMFAMRFFParserNode(int32 aPriority) :
     iLogger                    = NULL;
     iDataPathLogger            = NULL;
     iClockLogger               = NULL;
-    iDownloadComplete		   = false;
+    iDownloadComplete          = false;
 
     iFileSizeLastConvertedToTime = 0;
     iLastNPTCalcInConvertSizeToTime = 0;
@@ -944,43 +944,43 @@ PVMFStatus PVMFAMRFFParserNode::DoSetDataSourcePosition(PVMFAMRFFNodeCommand& aC
             *actualNPT = result;
             return PVMFSuccess;
         }
-	else if (bitstreamObject::DATA_INSUFFICIENT == result)
-	{
-	    // This condition could mean 2 things
-	    // 1) End Of File reached for a local content
-	    // 2) Insufficient data condition met for PDL use-case
-	    // For 1 treat it as End of File and send End of Track
-	    // For 2 we dont support reposition until the clip is fully downloaded,
-	    // if the clip is fully downloaded and then we get Insufficient data condition
-	    // treat it as End Of File.
-	    if (iDownloadProgressInterface != NULL)
-	    {
-		// Check if the file is completely Downloaded or not
-		if (!iDownloadComplete)
-		{
-		    // File not downloaded completely, return not Supported
-		    return PVMFErrNotSupported;
-		}
-	    }
+        else if (bitstreamObject::DATA_INSUFFICIENT == result)
+        {
+            // This condition could mean 2 things
+            // 1) End Of File reached for a local content
+            // 2) Insufficient data condition met for PDL use-case
+            // For 1 treat it as End of File and send End of Track
+            // For 2 we dont support reposition until the clip is fully downloaded,
+            // if the clip is fully downloaded and then we get Insufficient data condition
+            // treat it as End Of File.
+            if (iDownloadProgressInterface != NULL)
+            {
+                // Check if the file is completely Downloaded or not
+                if (!iDownloadComplete)
+                {
+                    // File not downloaded completely, return not Supported
+                    return PVMFErrNotSupported;
+                }
+            }
 
-	    // Here either file is completely downlaoded if doing PDL or it is a local file,
-	    // treat it as End of File in both cases
-	    for (uint32 i = 0; i < iSelectedTrackList.size(); ++i)
-	    {
-		iSelectedTrackList[i].iSeqNum = 0;
-		iSelectedTrackList[i].oEOSReached = true;
-		iSelectedTrackList[i].oQueueOutgoingMessages = true;
-		iSelectedTrackList[i].oEOSSent = false;
-	    }
-	    result = iAMRParser->ResetPlayback(0);
-	    if (result != bitstreamObject::EVERYTHING_OK)
-	    {
-		return PVMFErrResource;
-	    }
+            // Here either file is completely downlaoded if doing PDL or it is a local file,
+            // treat it as End of File in both cases
+            for (uint32 i = 0; i < iSelectedTrackList.size(); ++i)
+            {
+                iSelectedTrackList[i].iSeqNum = 0;
+                iSelectedTrackList[i].oEOSReached = true;
+                iSelectedTrackList[i].oQueueOutgoingMessages = true;
+                iSelectedTrackList[i].oEOSSent = false;
+            }
+            result = iAMRParser->ResetPlayback(0);
+            if (result != bitstreamObject::EVERYTHING_OK)
+            {
+                return PVMFErrResource;
+            }
 
-	    *actualNPT = result;
-	    return PVMFSuccess;
-	}
+            *actualNPT = result;
+            return PVMFSuccess;
+        }
         else
         {
             return PVMFErrResource;
@@ -1962,7 +1962,7 @@ void PVMFAMRFFParserNode::DoReleasePort(PVMFAMRFFNodeCommand& aCmd)
     // set the address to NULL
 
     // Remove the selected track from the track list
-    for (uint32 i = 0;i < iSelectedTrackList.size();i++)
+    for (uint32 i = 0; i < iSelectedTrackList.size(); i++)
     {
         if (iSelectedTrackList[i].iPort == aCmd.iParam1)
         {
@@ -4092,7 +4092,7 @@ PVMFStatus PVMFAMRFFParserNode::PushValueToList(Oscl_Vector<OSCL_HeapString<Oscl
 {
     int32 leavecode = 0;
     OSCL_TRY(leavecode, aKeyListPtr->push_back(aRefMetaDataKeys[aLcv]));
-    OSCL_FIRST_CATCH_ANY(leavecode, PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFAMRFFParserNode::PushValueToList() Memory allocation failure when copying metadata key"));return PVMFErrNoMemory);
+    OSCL_FIRST_CATCH_ANY(leavecode, PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFAMRFFParserNode::PushValueToList() Memory allocation failure when copying metadata key")); return PVMFErrNoMemory);
     return PVMFSuccess;
 }
 

@@ -57,48 +57,48 @@ Copyright (c) 1997.
 #define DELAY 2048
 
 /*
-  Purpose:	Length of the bitstream element ltp_data_present.  */
-#define	LEN_LTP_DATA_PRESENT 1
+  Purpose:  Length of the bitstream element ltp_data_present.  */
+#define LEN_LTP_DATA_PRESENT 1
 
 /*
-  Purpose:	Length of the bitstream element ltp_lag.  */
-#define	LEN_LTP_LAG 11
+  Purpose:  Length of the bitstream element ltp_lag.  */
+#define LEN_LTP_LAG 11
 
 /*
-  Purpose:	Length of the bitstream element ltp_coef.  */
-#define	LEN_LTP_COEF 3
+  Purpose:  Length of the bitstream element ltp_coef.  */
+#define LEN_LTP_COEF 3
 
 /*
-  Purpose:	Length of the bitstream element ltp_short_used.  */
-#define	LEN_LTP_SHORT_USED 1
+  Purpose:  Length of the bitstream element ltp_short_used.  */
+#define LEN_LTP_SHORT_USED 1
 
 /*
-  Purpose:	Length of the bitstream element ltp_short_lag_present.  */
-#define	LEN_LTP_SHORT_LAG_PRESENT 1
+  Purpose:  Length of the bitstream element ltp_short_lag_present.  */
+#define LEN_LTP_SHORT_LAG_PRESENT 1
 
 /*
-  Purpose:	Length of the bitstream element ltp_short_lag.  */
-#define	LEN_LTP_SHORT_LAG 5
+  Purpose:  Length of the bitstream element ltp_short_lag.  */
+#define LEN_LTP_SHORT_LAG 5
 
 /*
-  Purpose:	Offset of the lags written in the bitstream.  */
-#define	LTP_LAG_OFFSET 16
+  Purpose:  Offset of the lags written in the bitstream.  */
+#define LTP_LAG_OFFSET 16
 
 /*
-  Purpose:	Length of the bitstream element ltp_long_used.  */
-#define	LEN_LTP_LONG_USED 1
+  Purpose:  Length of the bitstream element ltp_long_used.  */
+#define LEN_LTP_LONG_USED 1
 
 /*
-  Purpose:	Upper limit for the number of scalefactor bands
-   		which can use lt prediction with long windows.
-  Explanation:	Bands 0..MAX_LT_PRED_SFB-1 can use lt prediction.  */
-#define	MAX_LT_PRED_LONG_SFB 40
+  Purpose:  Upper limit for the number of scalefactor bands
+        which can use lt prediction with long windows.
+  Explanation:  Bands 0..MAX_LT_PRED_SFB-1 can use lt prediction.  */
+#define MAX_LT_PRED_LONG_SFB 40
 
 /*
-  Purpose:	Upper limit for the number of scalefactor bands
-   		which can use lt prediction with short windows.
-  Explanation:	Bands 0..MAX_LT_PRED_SFB-1 can use lt prediction.  */
-#define	MAX_LT_PRED_SHORT_SFB 13
+  Purpose:  Upper limit for the number of scalefactor bands
+        which can use lt prediction with short windows.
+  Explanation:  Bands 0..MAX_LT_PRED_SFB-1 can use lt prediction.  */
+#define MAX_LT_PRED_SHORT_SFB 13
 
 /*
    Purpose:      Buffer offset to maintain block alignment.
@@ -106,7 +106,7 @@ Copyright (c) 1997.
 #define SHORT_SQ_OFFSET (BLOCK_LEN_LONG-(BLOCK_LEN_SHORT*4+BLOCK_LEN_SHORT/2))
 
 /*
-  Purpose:	Number of codes for LTP weight. */
+  Purpose:  Number of codes for LTP weight. */
 #define CODESIZE 8
 
 /* number of scalefactor bands used for reconstruction for short windows */

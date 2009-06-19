@@ -15,8 +15,8 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-#ifndef		__SCALEFACTOR__
-#define		__SCALEFACTOR__
+#ifndef     __SCALEFACTOR__
+#define     __SCALEFACTOR__
 
 #ifdef __cplusplus
 extern "C"

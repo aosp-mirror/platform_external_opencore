@@ -30,7 +30,7 @@ OSCL_EXPORT_REF void HTTPComposer::reset(const bool aKeepAllSettingsExceptURI)
 {
     // reset URI
     iURI.setPtrLen("", 0);
-    iHeaderLength	  = 0;
+    iHeaderLength     = 0;
     iFirstLineLength  = 0;
     iEntityBodyLength = 0;
     if (aKeepAllSettingsExceptURI) return;

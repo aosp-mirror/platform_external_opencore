@@ -219,13 +219,13 @@ class PVAviFileParser: public PVAviFile
         //method to retrieve stream format specific info
         OSCL_IMPORT_REF bool GetFormatSpecificInfo(uint32 aStreamNum, OsclRefCounterMemFrag& arFormatSpecificDataFrag);
 
-        Oscl_Vector<uint32, OsclMemAllocator>	GetStreamCountList()
+        Oscl_Vector<uint32, OsclMemAllocator>   GetStreamCountList()
         {
             return iStreamCount;
         }
 
-        OSCL_IMPORT_REF Oscl_Vector<uint32, OsclMemAllocator>	GetAudioStreamCountList();
-        OSCL_IMPORT_REF Oscl_Vector<uint32, OsclMemAllocator>	GetVideoStreamCountList();
+        OSCL_IMPORT_REF Oscl_Vector<uint32, OsclMemAllocator>   GetAudioStreamCountList();
+        OSCL_IMPORT_REF Oscl_Vector<uint32, OsclMemAllocator>   GetVideoStreamCountList();
 
     private:
 
@@ -236,34 +236,34 @@ class PVAviFileParser: public PVAviFile
         GetStreamOffset(uint32 aStreamNo, uint32& aSampleSize, uint32& aOffset);
 
 
-        PVAviFileHeader*		ipFileHeader;
-        PVAviFileIdxChunk*		ipIdxChunk;
-        bool					iIdxChunkPresent;
-        uint32					iFileSize;
-        uint32					iHeaderChunkSize;
-        uint32					iMovieChunkSize;
+        PVAviFileHeader*        ipFileHeader;
+        PVAviFileIdxChunk*      ipIdxChunk;
+        bool                    iIdxChunkPresent;
+        uint32                  iFileSize;
+        uint32                  iHeaderChunkSize;
+        uint32                  iMovieChunkSize;
 
         //store the offset of first sample. used if index table is not present.
-        uint32					iMovieChunkStartOffset;
-        uint32					iIndxChunkSize;
+        uint32                  iMovieChunkStartOffset;
+        uint32                  iIndxChunkSize;
         Oscl_Vector < uint32,
-        OsclMemAllocator >	iStreamCount;
+        OsclMemAllocator >  iStreamCount;
 
         Oscl_Vector < uint32,
-        OsclMemAllocator >		iStreamSampleCount;
+        OsclMemAllocator >      iStreamSampleCount;
 
         //stores current offset if index table is not present
-        uint32					iSampleOffset;
+        uint32                  iSampleOffset;
 
         //store latest sample offset if index table is not present
         Oscl_Vector < uint32,
-        OsclMemAllocator >		iStreamSampleOffset;
+        OsclMemAllocator >      iStreamSampleOffset;
 
-        PVFile*					ipFilePtr;
-        uint32					iTimeStampAudio;
-        uint32					iTimeStampVideo;
+        PVFile*                 ipFilePtr;
+        uint32                  iTimeStampAudio;
+        uint32                  iTimeStampVideo;
 
 };
 
-#endif	//#ifndef PV_AVIFILE_PARSER_H_INCLUDED
+#endif  //#ifndef PV_AVIFILE_PARSER_H_INCLUDED
 

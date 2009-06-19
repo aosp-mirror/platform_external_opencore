@@ -67,13 +67,13 @@ OSCL_EXPORT_REF PayloadParserStatus
 H263PayloadParser::Parse(const Payload& inputPacket,
                          Oscl_Vector<Payload, OsclMemAllocator>& vParsedPayloads)
 {
-    //	H263 Payload Header Masks
-    static const uint8 RR = 0xF8;	//	Reserved Bits Mask
-    static const uint8 Pbit = 0x04;	//	Picture or GOB Start bit mask
-    static const uint8 Vbit = 0x02;	//	VRC mask
+    //  H263 Payload Header Masks
+    static const uint8 RR = 0xF8;   //  Reserved Bits Mask
+    static const uint8 Pbit = 0x04; //  Picture or GOB Start bit mask
+    static const uint8 Vbit = 0x02; //  VRC mask
 
-    bool bPBit;	    //	indicates whether picture start code is present or not
-    bool bVBit;	    //	indicates presence of VRC data
+    bool bPBit;     //  indicates whether picture start code is present or not
+    bool bVBit;     //  indicates presence of VRC data
 
     VirtualBuffer<uint8> input = VirtualBuffer<uint8>(inputPacket.vfragments);
     VirtualBuffer<uint8> vb(input);
@@ -129,7 +129,7 @@ H263PayloadParser::Parse(const Payload& inputPacket,
                 outFrags.copy(output.vfragments);
             }
         }
-        else	   // VRC header not present - payload starts at 0
+        else       // VRC header not present - payload starts at 0
         {
             // set bytes at offset 0 and 1 to zero
             *vb = 0;

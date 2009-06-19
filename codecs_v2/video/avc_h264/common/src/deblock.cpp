@@ -42,16 +42,16 @@ const static int CLIP_TAB[52][5]  =
 };
 
 // NOTE: this table is only QP clipping, index = QP + video->FilterOffsetA/B, clipped to [0, 51]
-//		 video->FilterOffsetA/B is in {-12, 12]
+//       video->FilterOffsetA/B is in {-12, 12]
 const static int QP_CLIP_TAB[76] =
 {
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,				// [-12, 0]
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,              // [-12, 0]
     1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
     13, 14, 15, 16, 17, 18, 19, 20, 21,
     22, 23, 24, 25, 26, 27, 28, 29, 30,
     31, 32, 33, 34, 35, 36, 37, 38, 39,
-    40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51,	// [1, 51]
-    51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51		// [52,63]
+    40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, // [1, 51]
+    51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51      // [52,63]
 };
 
 static void DeblockMb(AVCCommonObj *video, int mb_x, int mb_y, uint8 *SrcY, uint8 *SrcU, uint8 *SrcV);
@@ -73,10 +73,10 @@ static void EdgeLoop_Chroma_horizontal(uint8* SrcPtr, uint8 *Strength, int Alpha
 OSCL_EXPORT_REF AVCStatus DeblockPicture(AVCCommonObj *video)
 {
     uint   i, j;
-    int	  pitch = video->currPic->pitch, pitch_c, width;
+    int   pitch = video->currPic->pitch, pitch_c, width;
     uint8 *SrcY, *SrcU, *SrcV;
 
-    SrcY = video->currPic->Sl;		// pointers to source
+    SrcY = video->currPic->Sl;      // pointers to source
     SrcU = video->currPic->Scb;
     SrcV = video->currPic->Scr;
     pitch_c = pitch >> 1;
@@ -183,7 +183,7 @@ void MBInLoopDeblock(AVCCommonObj *video)
     predCr = predCb + 144;
 
     /* find the range of the block inside pred_block to be copied back */
-    if (y_pos)	/* the first row */
+    if (y_pos)  /* the first row */
     {
         curL -= (pitch << 2);
         curCb -= (pitch << 1);
@@ -289,17 +289,17 @@ void DeblockMb(AVCCommonObj *video, int mb_x, int mb_y, uint8 *SrcY, uint8 *SrcU
 {
     AVCMacroblock *MbP, *MbQ;
     int     edge, QP, QPC;
-    int		filterLeftMbEdgeFlag = (mb_x != 0);
+    int     filterLeftMbEdgeFlag = (mb_x != 0);
     int     filterTopMbEdgeFlag  = (mb_y != 0);
-    int		pitch = video->currPic->pitch;
-    int		indexA, indexB, tmp;
-    int		Alpha, Beta, Alpha_c, Beta_c;
-    int 	mbNum = mb_y * video->PicWidthInMbs + mb_x;
-    int		*clipTable, *clipTable_c, *qp_clip_tab;
-    uint8	Strength[16];
+    int     pitch = video->currPic->pitch;
+    int     indexA, indexB, tmp;
+    int     Alpha, Beta, Alpha_c, Beta_c;
+    int     mbNum = mb_y * video->PicWidthInMbs + mb_x;
+    int     *clipTable, *clipTable_c, *qp_clip_tab;
+    uint8   Strength[16];
     void*     str;
 
-    MbQ = &(video->mblock[mbNum]);		// current Mb
+    MbQ = &(video->mblock[mbNum]);      // current Mb
 
 
     // If filter is disabled, return
@@ -490,7 +490,7 @@ void DeblockMb(AVCCommonObj *video, int mb_x, int mb_y, uint8 *SrcY, uint8 *SrcU
 
     for (edge = 1; edge < 4; edge++)  // 4 horicontal strips of 16 pel
     {
-        //GetStrength(video, Strength, MbP, MbQ, 1, edge); // Strength for 4 blks in 1 stripe	1 => horizontal edge
+        //GetStrength(video, Strength, MbP, MbQ, 1, edge); // Strength for 4 blks in 1 stripe   1 => horizontal edge
         if (*((int*)(Strength + (edge << 2)))) // only if one of the 4 Strength bytes is != 0
         {
             if (Alpha > 0 && Beta > 0)
@@ -730,10 +730,10 @@ void GetStrength_Edge0(uint8 *Strength, AVCMacroblock* MbP, AVCMacroblock* MbQ, 
 
 void GetStrength_VerticalEdges(uint8 *Strength, AVCMacroblock* MbQ)
 {
-    int		idx, tmp;
-    int16	*ptr, *pmvx, *pmvy;
+    int     idx, tmp;
+    int16   *ptr, *pmvx, *pmvy;
     uint8   *pnz;
-    uint8	*pStrength, *pStr;
+    uint8   *pStrength, *pStr;
     void* refIdx;
 
     if (MbQ->mbMode == AVC_I4 || MbQ->mbMode == AVC_I16)
@@ -905,9 +905,9 @@ void GetStrength_VerticalEdges(uint8 *Strength, AVCMacroblock* MbQ)
 
 void GetStrength_HorizontalEdges(uint8 Strength[12], AVCMacroblock* MbQ)
 {
-    int		idx, tmp;
-    int16	*ptr, *pmvx, *pmvy;
-    uint8	*pStrength, *pStr;
+    int     idx, tmp;
+    int16   *ptr, *pmvx, *pmvy;
+    uint8   *pStrength, *pStr;
     void* refIdx;
 
     if (MbQ->mbMode == AVC_I4 || MbQ->mbMode == AVC_I16)
@@ -1201,7 +1201,7 @@ void EdgeLoop_Luma_horizontal(uint8* SrcPtr, uint8 *Strength, int Alpha, int Bet
                     ap = tmp - Beta;
 
 
-                    c0 = C0	= clipTable[Strng];
+                    c0 = C0 = clipTable[Strng];
                     if (ap < 0) c0++;
                     if (aq < 0) c0++;
 
@@ -1234,7 +1234,7 @@ void EdgeLoop_Luma_horizontal(uint8* SrcPtr, uint8 *Strength, int Alpha, int Bet
 
                     if (C0 != 0) /* Multiple zeros in the clip tables */
                     {
-                        if (aq < 0)  //	SrcPtr[inc]   += IClip(-C0, C0,(R2 + ((RL0 + 1) >> 1) - (R1<<1)) >> 1);
+                        if (aq < 0)  // SrcPtr[inc]   += IClip(-C0, C0,(R2 + ((RL0 + 1) >> 1) - (R1<<1)) >> 1);
                         {
                             R2 = (R2 + ((RL0 + 1) >> 1) - (R1 << 1)) >> 1;
                             tmp = R2 + C0;
@@ -1287,8 +1287,8 @@ void EdgeLoop_Luma_vertical(uint8* SrcPtr, uint8 *Strength, int Alpha, int Beta,
         {
 
             // Read 8 pels
-            R_in = *((uint *)SrcPtr);		// R_in = {R3, R2, R1, R0}
-            L_in = *((uint *)(SrcPtr - 4));	// L_in = {L0, L1, L2, L3}
+            R_in = *((uint *)SrcPtr);       // R_in = {R3, R2, R1, R0}
+            L_in = *((uint *)(SrcPtr - 4)); // L_in = {L0, L1, L2, L3}
             R1   = (R_in >> 8) & 0xff;
             R0   = R_in & 0xff;
             L0   = L_in >> 24;
@@ -1378,8 +1378,8 @@ void EdgeLoop_Luma_vertical(uint8* SrcPtr, uint8 *Strength, int Alpha, int Beta,
             if (Strng)
             {
                 // Read 8 pels
-                R_in = *((uint *)SrcPtr);		// R_in = {R3, R2, R1, R0}
-                L_in = *((uint *)(SrcPtr - 4));	// L_in = {L0, L1, L2, L3}
+                R_in = *((uint *)SrcPtr);       // R_in = {R3, R2, R1, R0}
+                L_in = *((uint *)(SrcPtr - 4)); // L_in = {L0, L1, L2, L3}
                 R1   = (R_in >> 8) & 0xff;
                 R0   = R_in & 0xff;
                 L0   = L_in >> 24;
@@ -1416,7 +1416,7 @@ void EdgeLoop_Luma_vertical(uint8* SrcPtr, uint8 *Strength, int Alpha, int Beta,
                     ap = tmp - Beta;
 
 
-                    c0 = C0	= clipTable[Strng];
+                    c0 = C0 = clipTable[Strng];
                     if (ap < 0) c0++;
                     if (aq < 0) c0++;
 
@@ -1462,7 +1462,7 @@ void EdgeLoop_Luma_vertical(uint8* SrcPtr, uint8 *Strength, int Alpha, int Beta,
                             *ptr1 += L2;
                         }
 
-                        if (aq < 0)  //	SrcPtr[inc] += IClip(-C0, C0,(R2 + ((RL0 + 1) >> 1) - (R1<<1)) >> 1);
+                        if (aq < 0)  // SrcPtr[inc] += IClip(-C0, C0,(R2 + ((RL0 + 1) >> 1) - (R1<<1)) >> 1);
                         {
                             R2 = (R2 + ((R0 + L0 + 1) >> 1) - (R1 << 1)) >> 1;
                             tmp = R2 + C0;
@@ -1492,8 +1492,8 @@ void EdgeLoop_Chroma_vertical(uint8* SrcPtr, uint8 *Strength, int Alpha, int Bet
     int     pel, Strng;
     int     c0, dif;
     int     L1, L0, R0, R1, tmp, tmp1;
-    uint8	*ptr;
-    uint	R_in, L_in;
+    uint8   *ptr;
+    uint    R_in, L_in;
 
 
     for (pel = 0; pel < 16; pel++)
@@ -1502,8 +1502,8 @@ void EdgeLoop_Chroma_vertical(uint8* SrcPtr, uint8 *Strength, int Alpha, int Bet
         if (Strng)
         {
             // Read 8 pels
-            R_in = *((uint *)SrcPtr);		// R_in = {R3, R2, R1, R0}
-            L_in = *((uint *)(SrcPtr - 4));	// L_in = {L0, L1, L2, L3}
+            R_in = *((uint *)SrcPtr);       // R_in = {R3, R2, R1, R0}
+            L_in = *((uint *)(SrcPtr - 4)); // L_in = {L0, L1, L2, L3}
             R1   = (R_in >> 8) & 0xff;
             R0   = R_in & 0xff;
             L0   = L_in >> 24;

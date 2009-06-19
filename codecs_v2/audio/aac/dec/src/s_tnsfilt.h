@@ -67,7 +67,7 @@
 /*----------------------------------------------------------------------------
 ; CONTINUE ONLY IF NOT ALREADY DEFINED
 ----------------------------------------------------------------------------*/
-#ifndef	S_TNSFILT_H
+#ifndef S_TNSFILT_H
 #define S_TNSFILT_H
 
 #ifdef __cplusplus

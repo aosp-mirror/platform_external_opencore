@@ -353,7 +353,7 @@ void Encode_GenericInformation(PS_GenericInformation x, PS_OutStream stream)
     if (x->option_of_messageContent)
     {
         PutLengthDet(x->size_of_messageContent, stream);
-        for (i = 0;i < x->size_of_messageContent;++i)
+        for (i = 0; i < x->size_of_messageContent; ++i)
         {
             Encode_GenericParameter(x->messageContent + i, stream);
         }
@@ -524,7 +524,7 @@ void Encode_TerminalCapabilitySet(PS_TerminalCapabilitySet x, PS_OutStream strea
     if (x->option_of_capabilityTable)
     {
         PutInteger(1, 256, (uint32)x->size_of_capabilityTable, stream);
-        for (i = 0;i < x->size_of_capabilityTable;++i)
+        for (i = 0; i < x->size_of_capabilityTable; ++i)
         {
             Encode_CapabilityTableEntry(x->capabilityTable + i, stream);
         }
@@ -532,7 +532,7 @@ void Encode_TerminalCapabilitySet(PS_TerminalCapabilitySet x, PS_OutStream strea
     if (x->option_of_capabilityDescriptors)
     {
         PutInteger(1, 256, (uint32)x->size_of_capabilityDescriptors, stream);
-        for (i = 0;i < x->size_of_capabilityDescriptors;++i)
+        for (i = 0; i < x->size_of_capabilityDescriptors; ++i)
         {
             Encode_CapabilityDescriptor(x->capabilityDescriptors + i, stream);
         }
@@ -547,7 +547,7 @@ void Encode_TerminalCapabilitySet(PS_TerminalCapabilitySet x, PS_OutStream strea
     {
         tempStream = NewOutStream();  /* Write to temp stream */
         PutLengthDet(x->size_of_genericInformation, tempStream);
-        for (i = 0;i < x->size_of_genericInformation;++i)
+        for (i = 0; i < x->size_of_genericInformation; ++i)
         {
             Encode_GenericInformation(x->genericInformation + i, tempStream);
         }
@@ -579,7 +579,7 @@ void Encode_CapabilityDescriptor(PS_CapabilityDescriptor x, PS_OutStream stream)
     if (x->option_of_simultaneousCapabilities)
     {
         PutInteger(1, 256, (uint32)x->size_of_simultaneousCapabilities, stream);
-        for (i = 0;i < x->size_of_simultaneousCapabilities;++i)
+        for (i = 0; i < x->size_of_simultaneousCapabilities; ++i)
         {
             Encode_AlternativeCapabilitySet(x->simultaneousCapabilities + i, stream);
         }
@@ -593,7 +593,7 @@ void Encode_AlternativeCapabilitySet(PS_AlternativeCapabilitySet x, PS_OutStream
 {
     uint16 i;
     PutInteger(1, 256, (uint32)x->size, stream);
-    for (i = 0;i < x->size;++i)
+    for (i = 0; i < x->size; ++i)
     {
         PutInteger(1, 65535, (uint32)x->item[i], stream);
     }
@@ -824,7 +824,7 @@ void Encode_H222Capability(PS_H222Capability x, PS_OutStream stream)
     PutBoolean(0, stream); /* Extension Bit OFF */
     PutInteger(1, 256, (uint32)x->numberOfVCs, stream);
     PutLengthDet(x->size_of_vcCapability, stream);
-    for (i = 0;i < x->size_of_vcCapability;++i)
+    for (i = 0; i < x->size_of_vcCapability; ++i)
     {
         Encode_VCCapability(x->vcCapability + i, stream);
     }
@@ -876,7 +876,7 @@ void Encode_Aal1ViaGateway(PS_Aal1ViaGateway x, PS_OutStream stream)
     uint16 i;
     PutBoolean(0, stream); /* Extension Bit OFF */
     PutInteger(1, 256, (uint32)x->size_of_gatewayAddress, stream);
-    for (i = 0;i < x->size_of_gatewayAddress;++i)
+    for (i = 0; i < x->size_of_gatewayAddress; ++i)
     {
         Encode_Q2931Address(x->gatewayAddress + i, stream);
     }
@@ -1182,7 +1182,7 @@ void Encode_H2250Capability(PS_H2250Capability x, PS_OutStream stream)
     {
         tempStream = NewOutStream();  /* Write to temp stream */
         PutInteger(1, 256, (uint32)x->size_of_redundancyEncodingCapability, tempStream);
-        for (i = 0;i < x->size_of_redundancyEncodingCapability;++i)
+        for (i = 0; i < x->size_of_redundancyEncodingCapability; ++i)
         {
             Encode_RedundancyEncodingCapability(x->redundancyEncodingCapability + i, tempStream);
         }
@@ -1234,7 +1234,7 @@ void Encode_MediaPacketizationCapability(PS_MediaPacketizationCapability x, PS_O
     {
         tempStream = NewOutStream();  /* Write to temp stream */
         PutInteger(1, 256, (uint32)x->size_of_rtpPayloadType, tempStream);
-        for (i = 0;i < x->size_of_rtpPayloadType;++i)
+        for (i = 0; i < x->size_of_rtpPayloadType; ++i)
         {
             Encode_RTPPayloadType(x->rtpPayloadType + i, tempStream);
         }
@@ -1424,7 +1424,7 @@ void Encode_TransportCapability(PS_TransportCapability x, PS_OutStream stream)
     if (x->option_of_qOSCapabilities)
     {
         PutInteger(1, 256, (uint32)x->size_of_qOSCapabilities, stream);
-        for (i = 0;i < x->size_of_qOSCapabilities;++i)
+        for (i = 0; i < x->size_of_qOSCapabilities; ++i)
         {
             Encode_QOSCapability(x->qOSCapabilities + i, stream);
         }
@@ -1432,7 +1432,7 @@ void Encode_TransportCapability(PS_TransportCapability x, PS_OutStream stream)
     if (x->option_of_mediaChannelCapabilities)
     {
         PutInteger(1, 256, (uint32)x->size_of_mediaChannelCapabilities, stream);
-        for (i = 0;i < x->size_of_mediaChannelCapabilities;++i)
+        for (i = 0; i < x->size_of_mediaChannelCapabilities; ++i)
         {
             Encode_MediaChannelCapability(x->mediaChannelCapabilities + i, stream);
         }
@@ -1455,7 +1455,7 @@ void Encode_RedundancyEncodingCapability(PS_RedundancyEncodingCapability x, PS_O
     if (x->option_of_secondaryEncoding)
     {
         PutInteger(1, 256, (uint32)x->size_of_secondaryEncoding, stream);
-        for (i = 0;i < x->size_of_secondaryEncoding;++i)
+        for (i = 0; i < x->size_of_secondaryEncoding; ++i)
         {
             PutInteger(1, 65535, (uint32)x->secondaryEncoding[i], stream);
         }
@@ -1504,7 +1504,7 @@ void Encode_RTPH263VideoRedundancyEncoding(PS_RTPH263VideoRedundancyEncoding x, 
     if (x->option_of_containedThreads)
     {
         PutInteger(1, 256, (uint32)x->size_of_containedThreads, stream);
-        for (i = 0;i < x->size_of_containedThreads;++i)
+        for (i = 0; i < x->size_of_containedThreads; ++i)
         {
             PutInteger(0, 15, (uint32)x->containedThreads[i], stream);
         }
@@ -1528,7 +1528,7 @@ void Encode_FrameToThreadMapping(PS_FrameToThreadMapping x, PS_OutStream stream)
             break;
         case 1:
             PutInteger(1, 256, (uint32)x->size, stream);
-            for (i = 0;i < x->size;++i)
+            for (i = 0; i < x->size; ++i)
             {
                 Encode_RTPH263VideoRedundancyFrameMapping(x->custom + i, stream);
             }
@@ -1550,7 +1550,7 @@ void Encode_RTPH263VideoRedundancyFrameMapping(PS_RTPH263VideoRedundancyFrameMap
     PutBoolean(0, stream); /* Extension Bit OFF */
     PutInteger(0, 15, (uint32)x->threadNumber, stream);
     PutInteger(1, 256, (uint32)x->size_of_frameSequence, stream);
-    for (i = 0;i < x->size_of_frameSequence;++i)
+    for (i = 0; i < x->size_of_frameSequence; ++i)
     {
         PutInteger(0, 255, (uint32)x->frameSequence[i], stream);
     }
@@ -1569,7 +1569,7 @@ void Encode_MultipointCapability(PS_MultipointCapability x, PS_OutStream stream)
     PutBoolean(x->multicastCapability, stream);
     PutBoolean(x->multiUniCastConference, stream);
     PutLengthDet(x->size_of_mediaDistributionCapability, stream);
-    for (i = 0;i < x->size_of_mediaDistributionCapability;++i)
+    for (i = 0; i < x->size_of_mediaDistributionCapability; ++i)
     {
         Encode_MediaDistributionCapability(x->mediaDistributionCapability + i, stream);
     }
@@ -1596,7 +1596,7 @@ void Encode_MediaDistributionCapability(PS_MediaDistributionCapability x, PS_Out
     if (x->option_of_centralizedData)
     {
         PutLengthDet(x->size_of_centralizedData, stream);
-        for (i = 0;i < x->size_of_centralizedData;++i)
+        for (i = 0; i < x->size_of_centralizedData; ++i)
         {
             Encode_DataApplicationCapability(x->centralizedData + i, stream);
         }
@@ -1604,7 +1604,7 @@ void Encode_MediaDistributionCapability(PS_MediaDistributionCapability x, PS_Out
     if (x->option_of_distributedData)
     {
         PutLengthDet(x->size_of_distributedData, stream);
-        for (i = 0;i < x->size_of_distributedData;++i)
+        for (i = 0; i < x->size_of_distributedData; ++i)
         {
             Encode_DataApplicationCapability(x->distributedData + i, stream);
         }
@@ -1843,7 +1843,7 @@ void Encode_EnhancementLayerInfo(PS_EnhancementLayerInfo x, PS_OutStream stream)
     if (x->option_of_snrEnhancement)
     {
         PutInteger(1, 14, (uint32)x->size_of_snrEnhancement, stream);
-        for (i = 0;i < x->size_of_snrEnhancement;++i)
+        for (i = 0; i < x->size_of_snrEnhancement; ++i)
         {
             Encode_EnhancementOptions(x->snrEnhancement + i, stream);
         }
@@ -1851,7 +1851,7 @@ void Encode_EnhancementLayerInfo(PS_EnhancementLayerInfo x, PS_OutStream stream)
     if (x->option_of_spatialEnhancement)
     {
         PutInteger(1, 14, (uint32)x->size_of_spatialEnhancement, stream);
-        for (i = 0;i < x->size_of_spatialEnhancement;++i)
+        for (i = 0; i < x->size_of_spatialEnhancement; ++i)
         {
             Encode_EnhancementOptions(x->spatialEnhancement + i, stream);
         }
@@ -1859,7 +1859,7 @@ void Encode_EnhancementLayerInfo(PS_EnhancementLayerInfo x, PS_OutStream stream)
     if (x->option_of_bPictureEnhancement)
     {
         PutInteger(1, 14, (uint32)x->size_of_bPictureEnhancement, stream);
-        for (i = 0;i < x->size_of_bPictureEnhancement;++i)
+        for (i = 0; i < x->size_of_bPictureEnhancement; ++i)
         {
             Encode_BEnhancementParameters(x->bPictureEnhancement + i, stream);
         }
@@ -2000,7 +2000,7 @@ void Encode_H263Options(PS_H263Options x, PS_OutStream stream)
     if (x->option_of_customPictureClockFrequency)
     {
         PutInteger(1, 16, (uint32)x->size_of_customPictureClockFrequency, stream);
-        for (i = 0;i < x->size_of_customPictureClockFrequency;++i)
+        for (i = 0; i < x->size_of_customPictureClockFrequency; ++i)
         {
             Encode_CustomPictureClockFrequency(x->customPictureClockFrequency + i, stream);
         }
@@ -2008,7 +2008,7 @@ void Encode_H263Options(PS_H263Options x, PS_OutStream stream)
     if (x->option_of_customPictureFormat)
     {
         PutInteger(1, 16, (uint32)x->size_of_customPictureFormat, stream);
-        for (i = 0;i < x->size_of_customPictureFormat;++i)
+        for (i = 0; i < x->size_of_customPictureFormat; ++i)
         {
             Encode_CustomPictureFormat(x->customPictureFormat + i, stream);
         }
@@ -2016,7 +2016,7 @@ void Encode_H263Options(PS_H263Options x, PS_OutStream stream)
     if (x->option_of_modeCombos)
     {
         PutInteger(1, 16, (uint32)x->size_of_modeCombos, stream);
-        for (i = 0;i < x->size_of_modeCombos;++i)
+        for (i = 0; i < x->size_of_modeCombos; ++i)
         {
             Encode_H263VideoModeCombos(x->modeCombos + i, stream);
         }
@@ -2201,14 +2201,14 @@ void Encode_PixelAspectInformation(PS_PixelAspectInformation x, PS_OutStream str
             break;
         case 1:
             PutInteger(1, 14, (uint32)x->size, stream);
-            for (i = 0;i < x->size;++i)
+            for (i = 0; i < x->size; ++i)
             {
                 PutInteger(1, 14, (uint32)x->pixelAspectCode[i], stream);
             }
             break;
         case 2:
             PutInteger(1, 256, (uint32)x->size, stream);
-            for (i = 0;i < x->size;++i)
+            for (i = 0; i < x->size; ++i)
             {
                 Encode_ExtendedPARItem(x->extendedPAR + i, stream);
             }
@@ -2250,7 +2250,7 @@ void Encode_MPI(PS_MPI x, PS_OutStream stream)
     if (x->option_of_customPCF)
     {
         PutInteger(1, 16, (uint32)x->size_of_customPCF, stream);
-        for (i = 0;i < x->size_of_customPCF;++i)
+        for (i = 0; i < x->size_of_customPCF; ++i)
         {
             Encode_CustomPCFItem(x->customPCF + i, stream);
         }
@@ -2283,7 +2283,7 @@ void Encode_H263VideoModeCombos(PS_H263VideoModeCombos x, PS_OutStream stream)
     PutBoolean(0, stream); /* Extension Bit OFF */
     Encode_H263ModeComboFlags(&x->h263VideoUncoupledModes, stream);
     PutInteger(1, 16, (uint32)x->size_of_h263VideoCoupledModes, stream);
-    for (i = 0;i < x->size_of_h263VideoCoupledModes;++i)
+    for (i = 0; i < x->size_of_h263VideoCoupledModes; ++i)
     {
         Encode_H263ModeComboFlags(x->h263VideoCoupledModes + i, stream);
     }
@@ -2975,7 +2975,7 @@ void Encode_EncryptionCapability(PS_EncryptionCapability x, PS_OutStream stream)
 {
     uint16 i;
     PutInteger(1, 256, (uint32)x->size, stream);
-    for (i = 0;i < x->size;++i)
+    for (i = 0; i < x->size; ++i)
     {
         Encode_MediaEncryptionAlgorithm(x->item + i, stream);
     }
@@ -3046,7 +3046,7 @@ void Encode_UserInputCapability(PS_UserInputCapability x, PS_OutStream stream)
     {
         case 0:
             PutInteger(1, 16, (uint32)x->size, stream);
-            for (i = 0;i < x->size;++i)
+            for (i = 0; i < x->size; ++i)
             {
                 Encode_NonStandardParameter(x->nonStandard + i, stream);
             }
@@ -3090,7 +3090,7 @@ void Encode_ConferenceCapability(PS_ConferenceCapability x, PS_OutStream stream)
     if (x->option_of_nonStandardData)
     {
         PutLengthDet(x->size_of_nonStandardData, stream);
-        for (i = 0;i < x->size_of_nonStandardData;++i)
+        for (i = 0; i < x->size_of_nonStandardData; ++i)
         {
             Encode_NonStandardParameter(x->nonStandardData + i, stream);
         }
@@ -3133,7 +3133,7 @@ void Encode_GenericCapability(PS_GenericCapability x, PS_OutStream stream)
     if (x->option_of_collapsing)
     {
         PutLengthDet(x->size_of_collapsing, stream);
-        for (i = 0;i < x->size_of_collapsing;++i)
+        for (i = 0; i < x->size_of_collapsing; ++i)
         {
             Encode_GenericParameter(x->collapsing + i, stream);
         }
@@ -3141,7 +3141,7 @@ void Encode_GenericCapability(PS_GenericCapability x, PS_OutStream stream)
     if (x->option_of_nonCollapsing)
     {
         PutLengthDet(x->size_of_nonCollapsing, stream);
-        for (i = 0;i < x->size_of_nonCollapsing;++i)
+        for (i = 0; i < x->size_of_nonCollapsing; ++i)
         {
             Encode_GenericParameter(x->nonCollapsing + i, stream);
         }
@@ -3200,7 +3200,7 @@ void Encode_GenericParameter(PS_GenericParameter x, PS_OutStream stream)
     if (x->option_of_supersedes)
     {
         PutLengthDet(x->size_of_supersedes, stream);
-        for (i = 0;i < x->size_of_supersedes;++i)
+        for (i = 0; i < x->size_of_supersedes; ++i)
         {
             Encode_ParameterIdentifier(x->supersedes + i, stream);
         }
@@ -3270,7 +3270,7 @@ void Encode_ParameterValue(PS_ParameterValue x, PS_OutStream stream)
             break;
         case 7:
             PutLengthDet(x->size, stream);
-            for (i = 0;i < x->size;++i)
+            for (i = 0; i < x->size; ++i)
             {
                 Encode_GenericParameter(x->genericParameter + i, stream);
             }
@@ -4263,7 +4263,7 @@ void Encode_H2250LogicalChannelParameters(PS_H2250LogicalChannelParameters x, PS
     if (x->option_of_nonStandard)
     {
         PutLengthDet(x->size_of_nonStandard, stream);
-        for (i = 0;i < x->size_of_nonStandard;++i)
+        for (i = 0; i < x->size_of_nonStandard; ++i)
         {
             Encode_NonStandardParameter(x->nonStandard + i, stream);
         }
@@ -4483,7 +4483,7 @@ void Encode_IPSourceRouteAddress(PS_IPSourceRouteAddress x, PS_OutStream stream)
     PutOctetString(0, 4, 4, &x->network, stream);
     PutInteger(0, 65535, (uint32)x->tsapIdentifier, stream);
     PutLengthDet(x->size_of_route, stream);
-    for (i = 0;i < x->size_of_route;++i)
+    for (i = 0; i < x->size_of_route; ++i)
     {
         PutOctetString(0, 4, 4, x->route + i, stream);
     }
@@ -4623,7 +4623,7 @@ void Encode_EncryptionSync(PS_EncryptionSync x, PS_OutStream stream)
     if (x->option_of_escrowentry)
     {
         PutInteger(1, 256, (uint32)x->size_of_escrowentry, stream);
-        for (i = 0;i < x->size_of_escrowentry;++i)
+        for (i = 0; i < x->size_of_escrowentry; ++i)
         {
             Encode_EscrowData(x->escrowentry + i, stream);
         }
@@ -4863,7 +4863,7 @@ void Encode_H2250LogicalChannelAckParameters(PS_H2250LogicalChannelAckParameters
     if (x->option_of_nonStandard)
     {
         PutLengthDet(x->size_of_nonStandard, stream);
-        for (i = 0;i < x->size_of_nonStandard;++i)
+        for (i = 0; i < x->size_of_nonStandard; ++i)
         {
             Encode_NonStandardParameter(x->nonStandard + i, stream);
         }
@@ -5103,7 +5103,7 @@ void Encode_MultiplexEntrySend(PS_MultiplexEntrySend x, PS_OutStream stream)
     PutBoolean(0, stream); /* Extension Bit OFF */
     PutInteger(0, 255, (uint32)x->sequenceNumber, stream);
     PutInteger(1, 15, (uint32)x->size_of_multiplexEntryDescriptors, stream);
-    for (i = 0;i < x->size_of_multiplexEntryDescriptors;++i)
+    for (i = 0; i < x->size_of_multiplexEntryDescriptors; ++i)
     {
         Encode_MultiplexEntryDescriptor(x->multiplexEntryDescriptors + i, stream);
     }
@@ -5123,7 +5123,7 @@ void Encode_MultiplexEntryDescriptor(PS_MultiplexEntryDescriptor x, PS_OutStream
     if (x->option_of_elementList)
     {
         PutInteger(1, 256, (uint32)x->size_of_elementList, stream);
-        for (i = 0;i < x->size_of_elementList;++i)
+        for (i = 0; i < x->size_of_elementList; ++i)
         {
             Encode_MultiplexElement(x->elementList + i, stream);
         }
@@ -5172,7 +5172,7 @@ void Encode_MuxType(PS_MuxType x, PS_OutStream stream)
             break;
         case 1:
             PutInteger(2, 255, (uint32)x->size, stream);
-            for (i = 0;i < x->size;++i)
+            for (i = 0; i < x->size; ++i)
             {
                 Encode_MultiplexElement(x->subElementList + i, stream);
             }
@@ -5191,7 +5191,7 @@ void Encode_MultiplexEntrySendAck(PS_MultiplexEntrySendAck x, PS_OutStream strea
     PutBoolean(0, stream); /* Extension Bit OFF */
     PutInteger(0, 255, (uint32)x->sequenceNumber, stream);
     PutInteger(1, 15, (uint32)x->size_of_multiplexTableEntryNumber, stream);
-    for (i = 0;i < x->size_of_multiplexTableEntryNumber;++i)
+    for (i = 0; i < x->size_of_multiplexTableEntryNumber; ++i)
     {
         PutInteger(1, 15, (uint32)x->multiplexTableEntryNumber[i], stream);
     }
@@ -5209,7 +5209,7 @@ void Encode_MultiplexEntrySendReject(PS_MultiplexEntrySendReject x, PS_OutStream
     PutBoolean(0, stream); /* Extension Bit OFF */
     PutInteger(0, 255, (uint32)x->sequenceNumber, stream);
     PutInteger(1, 15, (uint32)x->size_of_rejectionDescriptions, stream);
-    for (i = 0;i < x->size_of_rejectionDescriptions;++i)
+    for (i = 0; i < x->size_of_rejectionDescriptions; ++i)
     {
         Encode_MultiplexEntryRejectionDescriptions(x->rejectionDescriptions + i, stream);
     }
@@ -5261,7 +5261,7 @@ void Encode_MultiplexEntrySendRelease(PS_MultiplexEntrySendRelease x, PS_OutStre
     uint16 i;
     PutBoolean(0, stream); /* Extension Bit OFF */
     PutInteger(1, 15, (uint32)x->size_of_multiplexTableEntryNumber, stream);
-    for (i = 0;i < x->size_of_multiplexTableEntryNumber;++i)
+    for (i = 0; i < x->size_of_multiplexTableEntryNumber; ++i)
     {
         PutInteger(1, 15, (uint32)x->multiplexTableEntryNumber[i], stream);
     }
@@ -5278,7 +5278,7 @@ void Encode_RequestMultiplexEntry(PS_RequestMultiplexEntry x, PS_OutStream strea
     uint16 i;
     PutBoolean(0, stream); /* Extension Bit OFF */
     PutInteger(1, 15, (uint32)x->size_of_entryNumbers, stream);
-    for (i = 0;i < x->size_of_entryNumbers;++i)
+    for (i = 0; i < x->size_of_entryNumbers; ++i)
     {
         PutInteger(1, 15, (uint32)x->entryNumbers[i], stream);
     }
@@ -5295,7 +5295,7 @@ void Encode_RequestMultiplexEntryAck(PS_RequestMultiplexEntryAck x, PS_OutStream
     uint16 i;
     PutBoolean(0, stream); /* Extension Bit OFF */
     PutInteger(1, 15, (uint32)x->size_of_entryNumbers, stream);
-    for (i = 0;i < x->size_of_entryNumbers;++i)
+    for (i = 0; i < x->size_of_entryNumbers; ++i)
     {
         PutInteger(1, 15, (uint32)x->entryNumbers[i], stream);
     }
@@ -5312,12 +5312,12 @@ void Encode_RequestMultiplexEntryReject(PS_RequestMultiplexEntryReject x, PS_Out
     uint16 i;
     PutBoolean(0, stream); /* Extension Bit OFF */
     PutInteger(1, 15, (uint32)x->size_of_entryNumbers, stream);
-    for (i = 0;i < x->size_of_entryNumbers;++i)
+    for (i = 0; i < x->size_of_entryNumbers; ++i)
     {
         PutInteger(1, 15, (uint32)x->entryNumbers[i], stream);
     }
     PutInteger(1, 15, (uint32)x->size_of_rejectionDescriptions, stream);
-    for (i = 0;i < x->size_of_rejectionDescriptions;++i)
+    for (i = 0; i < x->size_of_rejectionDescriptions; ++i)
     {
         Encode_RequestMultiplexEntryRejectionDescriptions(x->rejectionDescriptions + i, stream);
     }
@@ -5366,7 +5366,7 @@ void Encode_RequestMultiplexEntryRelease(PS_RequestMultiplexEntryRelease x, PS_O
     uint16 i;
     PutBoolean(0, stream); /* Extension Bit OFF */
     PutInteger(1, 15, (uint32)x->size_of_entryNumbers, stream);
-    for (i = 0;i < x->size_of_entryNumbers;++i)
+    for (i = 0; i < x->size_of_entryNumbers; ++i)
     {
         PutInteger(1, 15, (uint32)x->entryNumbers[i], stream);
     }
@@ -5384,7 +5384,7 @@ void Encode_RequestMode(PS_RequestMode x, PS_OutStream stream)
     PutBoolean(0, stream); /* Extension Bit OFF */
     PutInteger(0, 255, (uint32)x->sequenceNumber, stream);
     PutInteger(1, 256, (uint32)x->size_of_requestedModes, stream);
-    for (i = 0;i < x->size_of_requestedModes;++i)
+    for (i = 0; i < x->size_of_requestedModes; ++i)
     {
         Encode_ModeDescription(x->requestedModes + i, stream);
     }
@@ -5485,7 +5485,7 @@ void Encode_ModeDescription(PS_ModeDescription x, PS_OutStream stream)
 {
     uint16 i;
     PutInteger(1, 256, (uint32)x->size, stream);
-    for (i = 0;i < x->size;++i)
+    for (i = 0; i < x->size; ++i)
     {
         Encode_ModeElement(x->item + i, stream);
     }
@@ -6637,7 +6637,7 @@ void Encode_CommunicationModeCommand(PS_CommunicationModeCommand x, PS_OutStream
     uint16 i;
     PutBoolean(0, stream); /* Extension Bit OFF */
     PutInteger(1, 256, (uint32)x->size_of_communicationModeTable, stream);
-    for (i = 0;i < x->size_of_communicationModeTable;++i)
+    for (i = 0; i < x->size_of_communicationModeTable; ++i)
     {
         Encode_CommunicationModeTableEntry(x->communicationModeTable + i, stream);
     }
@@ -6669,7 +6669,7 @@ void Encode_CommunicationModeResponse(PS_CommunicationModeResponse x, PS_OutStre
     {
         case 0:
             PutInteger(1, 256, (uint32)x->size, stream);
-            for (i = 0;i < x->size;++i)
+            for (i = 0; i < x->size; ++i)
             {
                 Encode_CommunicationModeTableEntry(x->communicationModeTable + i, stream);
             }
@@ -6705,7 +6705,7 @@ void Encode_CommunicationModeTableEntry(PS_CommunicationModeTableEntry x, PS_Out
     if (x->option_of_nonStandard)
     {
         PutLengthDet(x->size_of_nonStandard, stream);
-        for (i = 0;i < x->size_of_nonStandard;++i)
+        for (i = 0; i < x->size_of_nonStandard; ++i)
         {
             Encode_NonStandardParameter(x->nonStandard + i, stream);
         }
@@ -6881,7 +6881,7 @@ void Encode_CertSelectionCriteria(PS_CertSelectionCriteria x, PS_OutStream strea
 {
     uint16 i;
     PutInteger(1, 16, (uint32)x->size, stream);
-    for (i = 0;i < x->size;++i)
+    for (i = 0; i < x->size; ++i)
     {
         Encode_Criteria(x->item + i, stream);
     }
@@ -6936,7 +6936,7 @@ void Encode_ConferenceResponse(PS_ConferenceResponse x, PS_OutStream stream)
             break;
         case 4:
             PutInteger(1, 256, (uint32)x->size, stream);
-            for (i = 0;i < x->size;++i)
+            for (i = 0; i < x->size; ++i)
             {
                 Encode_TerminalLabel(x->terminalListResponse + i, stream);
             }
@@ -7176,7 +7176,7 @@ void Encode_RequestAllTerminalIDsResponse(PS_RequestAllTerminalIDsResponse x, PS
     uint16 i;
     PutBoolean(0, stream); /* Extension Bit OFF */
     PutLengthDet(x->size_of_terminalInformation, stream);
-    for (i = 0;i < x->size_of_terminalInformation;++i)
+    for (i = 0; i < x->size_of_terminalInformation; ++i)
     {
         Encode_TerminalInformation(x->terminalInformation + i, stream);
     }
@@ -7557,7 +7557,7 @@ void Encode_DialingInformation(PS_DialingInformation x, PS_OutStream stream)
             break;
         case 1:
             PutInteger(1, 65535, (uint32)x->size, stream);
-            for (i = 0;i < x->size;++i)
+            for (i = 0; i < x->size; ++i)
             {
                 Encode_DialingInformationNumber(x->differential + i, stream);
             }
@@ -7587,7 +7587,7 @@ void Encode_DialingInformationNumber(PS_DialingInformationNumber x, PS_OutStream
         PutCharString("IA5String", 0, 1, 40, NULL, &x->subAddress, stream);
     }
     PutInteger(1, 255, (uint32)x->size_of_networkType, stream);
-    for (i = 0;i < x->size_of_networkType;++i)
+    for (i = 0; i < x->size_of_networkType; ++i)
     {
         Encode_DialingInformationNetworkType(x->networkType + i, stream);
     }
@@ -7750,7 +7750,7 @@ void Encode_SpecificRequest(PS_SpecificRequest x, PS_OutStream stream)
     if (x->option_of_capabilityTableEntryNumbers)
     {
         PutInteger(1, 65535, (uint32)x->size_of_capabilityTableEntryNumbers, stream);
-        for (i = 0;i < x->size_of_capabilityTableEntryNumbers;++i)
+        for (i = 0; i < x->size_of_capabilityTableEntryNumbers; ++i)
         {
             PutInteger(1, 65535, (uint32)x->capabilityTableEntryNumbers[i], stream);
         }
@@ -7758,7 +7758,7 @@ void Encode_SpecificRequest(PS_SpecificRequest x, PS_OutStream stream)
     if (x->option_of_capabilityDescriptorNumbers)
     {
         PutInteger(1, 256, (uint32)x->size_of_capabilityDescriptorNumbers, stream);
-        for (i = 0;i < x->size_of_capabilityDescriptorNumbers;++i)
+        for (i = 0; i < x->size_of_capabilityDescriptorNumbers; ++i)
         {
             PutInteger(0, 255, (uint32)x->capabilityDescriptorNumbers[i], stream);
         }

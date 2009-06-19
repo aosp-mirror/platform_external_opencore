@@ -64,8 +64,8 @@ typedef struct
     uint16 BytesPerSample;  // takes into account byte alignment
     uint32 SampleRate;
     uint32 ByteRate;
-    uint32 NumSamples;	// Total number of Samples
-    bool isLittleEndian;	// 1 if data is little endian and 0 if it is big endian
+    uint32 NumSamples;  // Total number of Samples
+    bool isLittleEndian;    // 1 if data is little endian and 0 if it is big endian
 } PVWAVFileInfo;
 
 enum PVWavParserReturnCode
@@ -130,7 +130,7 @@ class PV_Wav_Parser
         uint16 BlockAlign;
         uint16 BitsPerSample;
         uint16 BytesPerSample;
-        bool isLittleEndian;	// 1 if data is little endian and 0 if it is big endian
+        bool isLittleEndian;    // 1 if data is little endian and 0 if it is big endian
 
         short *xLawTable;
 

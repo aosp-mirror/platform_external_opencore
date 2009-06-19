@@ -800,7 +800,7 @@ void PVMediaOutputNode::CommandComplete(PVMediaOutputNodeCmdQ& aCmdQ, PVMediaOut
                 SetState(EPVMFNodePrepared);
                 //resume port input so the ports can be re-started.
                 {
-                    for (uint32 i = 0;i < iInPortVector.size();i++)
+                    for (uint32 i = 0; i < iInPortVector.size(); i++)
                         iInPortVector[i]->ResumeInput();
                 }
                 break;
@@ -881,7 +881,7 @@ void PVMediaOutputNode::Run()
 bool PVMediaOutputNode::PortQueuesEmpty()
 {
     uint32 i;
-    for (i = 0;i < iInPortVector.size();i++)
+    for (i = 0; i < iInPortVector.size(); i++)
     {
         if (iInPortVector[i]->IncomingMsgQueueSize() > 0 ||
                 iInPortVector[i]->OutgoingMsgQueueSize())
@@ -1248,7 +1248,7 @@ PVMFStatus PVMediaOutputNode::DoFlush(PVMediaOutputNodeCmd& aCmd)
     //Disable the input.
     if (iInPortVector.size() > 0)
     {
-        for (uint32 i = 0;i < iInPortVector.size();i++)
+        for (uint32 i = 0; i < iInPortVector.size(); i++)
             iInPortVector[i]->SuspendInput();
     }
 
@@ -1394,7 +1394,7 @@ PVMFStatus PVMediaOutputNode::DoCancelAllCommands(PVMediaOutputNodeCmd& aCmd)
     {
         if (iCurrentCommand.front().iCmd == PVMF_MEDIAOUTPUTNODE_SKIPMEDIADATA)
         {
-            for (uint32 i = 0;i < iInPortVector.size();i++)
+            for (uint32 i = 0; i < iInPortVector.size(); i++)
             {
                 iInPortVector[i]->CancelSkip();
             }
@@ -1462,7 +1462,7 @@ PVMFStatus PVMediaOutputNode::DoCancelCommand(PVMediaOutputNodeCmd& aCmd)
             if (cmd->iCmd == PVMF_MEDIAOUTPUTNODE_SKIPMEDIADATA)
             {
                 //cancel any SkipMediaData in progress on the ports.
-                for (uint32 i = 0;i < iInPortVector.size();i++)
+                for (uint32 i = 0; i < iInPortVector.size(); i++)
                 {
                     iInPortVector[i]->CancelSkip();
                 }

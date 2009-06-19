@@ -91,10 +91,10 @@ class mediaInfo
         int parameter_size;
         OSCL_HeapString<SDPParserAlloc> dependsonURL;
 
-        int	DependsOnTrackID;	// ID of track for DependsOn field.
-        bool allowRecord;		// Allows recording of media type.
+        int DependsOnTrackID;   // ID of track for DependsOn field.
+        bool allowRecord;       // Allows recording of media type.
 
-        bool select;			//Used for track selection
+        bool select;            //Used for track selection
         int ssrc;
 
         bool ssrcIsSet;
@@ -158,7 +158,7 @@ class mediaInfo
 
             reportFrequency = 0;
             assetInfo.URL = NULL;
-            for (int ii = 0; ii < ASSET_NAME_SIZE;ii++)
+            for (int ii = 0; ii < ASSET_NAME_SIZE; ii++)
                 assetInfo.Box[ii] = NULL;
 
             connectInfo.connectionNetworkType = "IP";
@@ -218,7 +218,7 @@ class mediaInfo
         inline PayloadSpecificInfoTypeBase* getPayloadSpecificInfoTypePtr(uint32 number)
         {
             PayloadSpecificInfoTypeBase* retVal = NULL;
-            for (int ii = 0; ii < (int)payloadSpecificInfoVector.size();ii++)
+            for (int ii = 0; ii < (int)payloadSpecificInfoVector.size(); ii++)
             {
                 if (payloadSpecificInfoVector[ii]->getPayloadNumber() == number)
                 {
@@ -231,7 +231,7 @@ class mediaInfo
 
         inline bool lookupPayloadNumber(uint32 number, int &pPosition)
         {
-            for (int ii = 0; ii < (int)payloadSpecificInfoVector.size();ii++)
+            for (int ii = 0; ii < (int)payloadSpecificInfoVector.size(); ii++)
             {
                 if (payloadSpecificInfoVector[ii]->getPayloadNumber() == number)
                 {
@@ -891,7 +891,7 @@ class mediaInfo
             setDependsonURL(pSource.dependsonURL);
             setMIMEType(pSource.MIMEType);
 
-//		setpayloadSpacificInfoVector(pSource.payloadSpecificInfoVector);
+//      setpayloadSpacificInfoVector(pSource.payloadSpecificInfoVector);
             setSampleRateForPayloads(pSource.payloadSpecificInfoVector);
             setNumOfChannelsForPayloads(pSource.payloadSpecificInfoVector);
 
@@ -962,7 +962,7 @@ class mediaInfo
                 setDependsonURL(pSource.dependsonURL);
 
                 setMIMEType(pSource.MIMEType);
-//			setpayloadSpacificInfoVector(pSource.payloadSpecificInfoVector);
+//          setpayloadSpacificInfoVector(pSource.payloadSpecificInfoVector);
                 setSampleRateForPayloads(pSource.payloadSpecificInfoVector);
                 setNumOfChannelsForPayloads(pSource.payloadSpecificInfoVector);
 

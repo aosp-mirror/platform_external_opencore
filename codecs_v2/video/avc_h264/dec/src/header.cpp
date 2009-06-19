@@ -36,10 +36,10 @@ AVCDec_Status DecodeSPS(AVCDecObject *decvid, AVCDecBitstream *stream)
 
     BitstreamReadBits(stream, 8, &profile_idc);
     BitstreamRead1Bit(stream, &constrained_set0_flag);
-//	if (profile_idc != 66 && constrained_set0_flag != 1)
-//	{
-//		return AVCDEC_FAIL;
-//	}
+//  if (profile_idc != 66 && constrained_set0_flag != 1)
+//  {
+//      return AVCDEC_FAIL;
+//  }
     BitstreamRead1Bit(stream, &constrained_set1_flag);
     BitstreamRead1Bit(stream, &constrained_set2_flag);
     BitstreamReadBits(stream, 5, &temp);
@@ -99,7 +99,7 @@ AVCDec_Status DecodeSPS(AVCDecObject *decvid, AVCDecBitstream *stream)
         ue_v(stream, &(seqParam->log2_max_pic_order_cnt_lsb_minus4));
     }
     else if (seqParam->pic_order_cnt_type == 1)
-    {				// MC_CHECK
+    {               // MC_CHECK
         BitstreamRead1Bit(stream, (uint*)&(seqParam->delta_pic_order_always_zero_flag));
         se_v32bit(stream, &(seqParam->offset_for_non_ref_pic));
         se_v32bit(stream, &(seqParam->offset_for_top_to_bottom_field));
@@ -214,7 +214,7 @@ AVCDec_Status vui_parameters(AVCDecObject *decvid, AVCDecBitstream *stream, AVCS
             BitstreamReadBits(stream, 8, &temp);
         }
     }
-    /*	chroma_loc_info_present_flag */
+    /*  chroma_loc_info_present_flag */
     BitstreamRead1Bit(stream, &temp);
     if (temp)
     {
@@ -224,26 +224,26 @@ AVCDec_Status vui_parameters(AVCDecObject *decvid, AVCDecBitstream *stream, AVCS
         ue_v(stream, &temp);
     }
 
-    /*	timing_info_present_flag*/
+    /*  timing_info_present_flag*/
     BitstreamRead1Bit(stream, &temp);
     if (temp)
     {
         /*  num_unit_in_tick*/
         BitstreamReadBits(stream, 32, &temp32);
-        /*	time_scale */
+        /*  time_scale */
         BitstreamReadBits(stream, 32, &temp32);
-        /*	fixed_frame_rate_flag */
+        /*  fixed_frame_rate_flag */
         BitstreamRead1Bit(stream, &temp);
     }
 
-    /*	nal_hrd_parameters_present_flag */
+    /*  nal_hrd_parameters_present_flag */
     BitstreamRead1Bit(stream, &temp);
     currSPS->vui_parameters.nal_hrd_parameters_present_flag = temp;
     if (temp)
     {
         hrd_parameters(decvid, stream, &(currSPS->vui_parameters.nal_hrd_parameters));
     }
-    /*	vcl_hrd_parameters_present_flag*/
+    /*  vcl_hrd_parameters_present_flag*/
     BitstreamRead1Bit(stream, &temp);
     currSPS->vui_parameters.vcl_hrd_parameters_present_flag = temp;
     if (temp)
@@ -252,29 +252,29 @@ AVCDec_Status vui_parameters(AVCDecObject *decvid, AVCDecBitstream *stream, AVCS
     }
     if (currSPS->vui_parameters.nal_hrd_parameters_present_flag || currSPS->vui_parameters.vcl_hrd_parameters_present_flag)
     {
-        /*	low_delay_hrd_flag */
+        /*  low_delay_hrd_flag */
         BitstreamRead1Bit(stream, &temp);
     }
-    /*	pic_struct_present_flag */
+    /*  pic_struct_present_flag */
     BitstreamRead1Bit(stream, &temp);
     currSPS->vui_parameters.pic_struct_present_flag = temp;
-    /*	bitstream_restriction_flag */
+    /*  bitstream_restriction_flag */
     BitstreamRead1Bit(stream, &temp);
     if (temp)
     {
-        /*	motion_vectors_over_pic_boundaries_flag */
+        /*  motion_vectors_over_pic_boundaries_flag */
         BitstreamRead1Bit(stream, &temp);
-        /*	max_bytes_per_pic_denom */
+        /*  max_bytes_per_pic_denom */
         ue_v(stream, &temp);
-        /*	max_bits_per_mb_denom */
+        /*  max_bits_per_mb_denom */
         ue_v(stream, &temp);
-        /*	log2_max_mv_length_horizontal */
+        /*  log2_max_mv_length_horizontal */
         ue_v(stream, &temp);
-        /*	log2_max_mv_length_vertical */
+        /*  log2_max_mv_length_vertical */
         ue_v(stream, &temp);
-        /*	num_reorder_frames */
+        /*  num_reorder_frames */
         ue_v(stream, &temp);
-        /*	max_dec_frame_buffering */
+        /*  max_dec_frame_buffering */
         ue_v(stream, &temp);
     }
     return AVCDEC_SUCCESS;
@@ -287,28 +287,28 @@ AVCDec_Status hrd_parameters(AVCDecObject *decvid, AVCDecBitstream *stream, AVCH
     uint i;
     ue_v(stream, &cpb_cnt_minus1);
     HRDParam->cpb_cnt_minus1 = cpb_cnt_minus1;
-    /*	bit_rate_scale */
+    /*  bit_rate_scale */
     BitstreamReadBits(stream, 4, &temp);
-    /*	cpb_size_scale */
+    /*  cpb_size_scale */
     BitstreamReadBits(stream, 4, &temp);
     for (i = 0; i <= cpb_cnt_minus1; i++)
     {
-        /*	bit_rate_value_minus1[i] */
+        /*  bit_rate_value_minus1[i] */
         ue_v(stream, &temp);
-        /*	cpb_size_value_minus1[i] */
+        /*  cpb_size_value_minus1[i] */
         ue_v(stream, &temp);
-        /*	cbr_flag[i] */
+        /*  cbr_flag[i] */
         ue_v(stream, &temp);
     }
-    /*	initial_cpb_removal_delay_length_minus1 */
+    /*  initial_cpb_removal_delay_length_minus1 */
     BitstreamReadBits(stream, 5, &temp);
-    /*	cpb_removal_delay_length_minus1 */
+    /*  cpb_removal_delay_length_minus1 */
     BitstreamReadBits(stream, 5, &temp);
     HRDParam->cpb_removal_delay_length_minus1 = temp;
-    /*	dpb_output_delay_length_minus1 */
+    /*  dpb_output_delay_length_minus1 */
     BitstreamReadBits(stream, 5, &temp);
     HRDParam->dpb_output_delay_length_minus1 = temp;
-    /*	time_offset_length	*/
+    /*  time_offset_length  */
     BitstreamReadBits(stream, 5, &temp);
     HRDParam->time_offset_length = temp;
     return AVCDEC_SUCCESS;
@@ -383,7 +383,7 @@ AVCDec_Status DecodePPS(AVCDecObject *decvid, AVCCommonObj *video, AVCDecBitstre
             }
         }
         else if (picParam->slice_group_map_type == 2)
-        {	// MC_CHECK  <= or <
+        {   // MC_CHECK  <= or <
             for (iGroup = 0; iGroup < (int)picParam->num_slice_groups_minus1; iGroup++)
             {
                 ue_v(stream, &(picParam->top_left[iGroup]));
@@ -514,7 +514,7 @@ clean_up:
 
 
 /* FirstPartOfSliceHeader();
-	RestOfSliceHeader() */
+    RestOfSliceHeader() */
 /** see subclause 7.4.3 */
 AVCDec_Status DecodeSliceHeader(AVCDecObject *decvid, AVCCommonObj *video, AVCDecBitstream *stream)
 {
@@ -639,7 +639,7 @@ AVCDec_Status DecodeSliceHeader(AVCDecObject *decvid, AVCCommonObj *video, AVCDe
                           &(sliceHdr->pic_order_cnt_lsb));
         video->MaxPicOrderCntLsb =  1 << (currSPS->log2_max_pic_order_cnt_lsb_minus4 + 4);
         if (sliceHdr->pic_order_cnt_lsb > video->MaxPicOrderCntLsb - 1)
-            return AVCDEC_FAIL;	/* out of range */
+            return AVCDEC_FAIL; /* out of range */
 
         if (currPPS->pic_order_present_flag)
         {
@@ -713,9 +713,9 @@ AVCDec_Status DecodeSliceHeader(AVCDecObject *decvid, AVCCommonObj *video, AVCDe
     if (video->QPy > 51 || video->QPy < 0)
     {
         video->QPy = AVC_CLIP3(0, 51, video->QPy);
-//					return AVCDEC_FAIL;
+//                  return AVCDEC_FAIL;
     }
-    video->QPc = mapQPi2QPc[AVC_CLIP3(0,51,video->QPy + video->currPicParams->chroma_qp_index_offset)];
+    video->QPc = mapQPi2QPc[AVC_CLIP3(0, 51, video->QPy + video->currPicParams->chroma_qp_index_offset)];
 
     video->QPy_div_6 = (video->QPy * 43) >> 8;
     video->QPy_mod_6 = video->QPy - 6 * video->QPy_div_6;
@@ -1093,11 +1093,11 @@ AVCDec_Status sei_payload(AVCDecObject *decvid, AVCDecBitstream *stream, uint pa
     switch (payloadType)
     {
         case 0:
-            /*	buffering period SEI */
+            /*  buffering period SEI */
             status = buffering_period(decvid, stream);
             break;
         case 1:
-            /*	picture timing SEI */
+            /*  picture timing SEI */
             status = pic_timing(decvid, stream);
             break;
         case 2:
@@ -1127,27 +1127,27 @@ AVCDec_Status sei_payload(AVCDecObject *decvid, AVCDecBitstream *stream, uint pa
         case 16:
 
         case 17:
-            for (i = 0; i < payloadSize;i++)
+            for (i = 0; i < payloadSize; i++)
             {
                 BitstreamFlushBits(stream, 8);
             }
             break;
         case 6:
-            /*		recovery point SEI				*/
+            /*      recovery point SEI              */
             status = recovery_point(decvid, stream);
             break;
         case 7:
-            /*		decoded reference picture marking repetition SEI */
+            /*      decoded reference picture marking repetition SEI */
             status = dec_ref_pic_marking_repetition(decvid, stream);
             break;
 
         case 18:
-            /*		motion-constrained slice group set SEI */
+            /*      motion-constrained slice group set SEI */
             status = motion_constrained_slice_group_set(decvid, stream);
             break;
         default:
-            /*			reserved_sei_message */
-            for (i = 0; i < payloadSize;i++)
+            /*          reserved_sei_message */
+            for (i = 0; i < payloadSize; i++)
             {
                 BitstreamFlushBits(stream, 8);
             }
@@ -1169,7 +1169,7 @@ AVCDec_Status buffering_period(AVCDecObject *decvid, AVCDecBitstream *stream)
         return AVCDEC_FAIL;
     }
 
-//	decvid->common->seq_parameter_set_id = seq_parameter_set_id;
+//  decvid->common->seq_parameter_set_id = seq_parameter_set_id;
 
     currSPS = decvid->seqParams[seq_parameter_set_id];
     if (currSPS->vui_parameters.nal_hrd_parameters_present_flag)
@@ -1353,7 +1353,7 @@ AVCDec_Status dec_ref_pic_marking_repetition(AVCDecObject *decvid, AVCDecBitstre
         }
     }
 
-    /*	dec_ref_pic_marking(video,stream,sliceHdr); */
+    /*  dec_ref_pic_marking(video,stream,sliceHdr); */
 
 
     return AVCDEC_SUCCESS;

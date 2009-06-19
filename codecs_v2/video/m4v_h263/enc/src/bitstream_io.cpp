@@ -15,11 +15,11 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/* Date: 8/02/04																*/
-/* Description:																	*/
-/*	Change the bitstream parsing algorithm. Use temporary word of 2 or 4 bytes  */
-/*	before writing it to the bitstream buffer.									*/
-/*	Note byteCount doesn't have to be multiple of 2 or 4						*/
+/* Date: 8/02/04                                                                */
+/* Description:                                                                 */
+/*  Change the bitstream parsing algorithm. Use temporary word of 2 or 4 bytes  */
+/*  before writing it to the bitstream buffer.                                  */
+/*  Note byteCount doesn't have to be multiple of 2 or 4                        */
 /*********************************************************************************/
 
 #include "bitstream_io.h"
@@ -30,22 +30,22 @@ static const UChar Mask[ ] =
     0x00, 0x01, 0x03, 0x07, 0x0F, 0x1F, 0x3F, 0x7F, 0xFF
 };
 
-#define WORD_SIZE	4	/* for 32-bit machine */
+#define WORD_SIZE   4   /* for 32-bit machine */
 
 /*Note:
-	1. There is a problem when output the last bits(which can not form a byte yet
-	so when you output, you need to stuff to make sure it is a byte
-	2.	I now hard coded byte to be 8 bits*/
+    1. There is a problem when output the last bits(which can not form a byte yet
+    so when you output, you need to stuff to make sure it is a byte
+    2.  I now hard coded byte to be 8 bits*/
 
 
 /* ======================================================================== */
-/*	Function : BitStreamCreateEnc(Int bufferSize )							*/
-/*	Date     : 08/29/2000													*/
-/*	Purpose  : Create a bitstream to hold one encoded video packet or frame */
-/*	In/out   :																*/
-/*		bufferSize	:	size of the bitstream buffer in bytes 				*/
-/*	Return   : Pointer to the BitstreamEncVideo								*/
-/*	Modified :																*/
+/*  Function : BitStreamCreateEnc(Int bufferSize )                          */
+/*  Date     : 08/29/2000                                                   */
+/*  Purpose  : Create a bitstream to hold one encoded video packet or frame */
+/*  In/out   :                                                              */
+/*      bufferSize  :   size of the bitstream buffer in bytes               */
+/*  Return   : Pointer to the BitstreamEncVideo                             */
+/*  Modified :                                                              */
 /* ======================================================================== */
 
 BitstreamEncVideo *BitStreamCreateEnc(Int bufferSize)
@@ -80,13 +80,13 @@ BitstreamEncVideo *BitStreamCreateEnc(Int bufferSize)
 }
 
 /* ======================================================================== */
-/*	Function : BitstreamCloseEnc( )											*/
-/*	Date     : 08/29/2000													*/
-/*	Purpose  : close a bitstream											*/
-/*	In/out   :
-		stream	:	the bitstream to be closed								*/
-/*	Return   :																*/
-/*	Modified :																*/
+/*  Function : BitstreamCloseEnc( )                                         */
+/*  Date     : 08/29/2000                                                   */
+/*  Purpose  : close a bitstream                                            */
+/*  In/out   :
+        stream  :   the bitstream to be closed                              */
+/*  Return   :                                                              */
+/*  Modified :                                                              */
 /* ======================================================================== */
 
 Void  BitstreamCloseEnc(BitstreamEncVideo *stream)
@@ -104,17 +104,17 @@ Void  BitstreamCloseEnc(BitstreamEncVideo *stream)
 
 
 /* ======================================================================== */
-/*	Function : BitstreamPutBits(BitstreamEncVideo *stream, Int Length,
-						 Int Value)											*/
-/*	Date     : 08/29/2000													*/
-/*	Purpose  : put Length (1-16) number of bits to the stream 				*/
-/*			  for 32-bit machine this function can do upto 32 bit input		*/
-/*	In/out   :																*/
-/*		stream		the bitstream where the bits are put in					*/
-/*		Length		bits length (should belong to 1 to 16)					*/
-/*		Value		those bits value										*/
-/*	Return   :	PV_STATUS													*/
-/*	Modified :																*/
+/*  Function : BitstreamPutBits(BitstreamEncVideo *stream, Int Length,
+                         Int Value)                                         */
+/*  Date     : 08/29/2000                                                   */
+/*  Purpose  : put Length (1-16) number of bits to the stream               */
+/*            for 32-bit machine this function can do upto 32 bit input     */
+/*  In/out   :                                                              */
+/*      stream      the bitstream where the bits are put in                 */
+/*      Length      bits length (should belong to 1 to 16)                  */
+/*      Value       those bits value                                        */
+/*  Return   :  PV_STATUS                                                   */
+/*  Modified :                                                              */
 /* ======================================================================== */
 PV_STATUS BitstreamPutBits(BitstreamEncVideo *stream, Int Length, UInt Value)
 {
@@ -123,7 +123,7 @@ PV_STATUS BitstreamPutBits(BitstreamEncVideo *stream, Int Length, UInt Value)
     if (stream->bitLeft > Length)
     {
         stream->word <<= Length;
-        stream->word |= Value;	/* assuming Value is not larger than Length */
+        stream->word |= Value;  /* assuming Value is not larger than Length */
         stream->bitLeft -= Length;
         return PV_SUCCESS;
     }
@@ -147,22 +147,22 @@ PV_STATUS BitstreamPutBits(BitstreamEncVideo *stream, Int Length, UInt Value)
         /* assuming that Length is no more than 16 bits */
         /* stream->bitLeft should be greater than zero at this point */
         //if(stream->bitLeft<=0)
-        //	exit(-1);
+        //  exit(-1);
         return PV_SUCCESS;
     }
 }
 
 /* ======================================================================== */
-/*	Function : BitstreamPutGT16Bits(BitstreamEncVideo *stream, Int Length, UInt32 Value)	*/
-/*	Date     : 08/29/2000													*/
-/*	Purpose  : Use this function to put Length (17-32) number of bits to	*/
-/*				for 16-bit machine	the stream.				 				*/
-/*	In/out   :																*/
-/*		stream		the bitstream where the bits are put in					*/
-/*		Length		bits length (should belong to 17 to 32)					*/
-/*		Value		those bits value										*/
-/*	Return   :	PV_STATUS													*/
-/*	Modified :																*/
+/*  Function : BitstreamPutGT16Bits(BitstreamEncVideo *stream, Int Length, UInt32 Value)    */
+/*  Date     : 08/29/2000                                                   */
+/*  Purpose  : Use this function to put Length (17-32) number of bits to    */
+/*              for 16-bit machine  the stream.                             */
+/*  In/out   :                                                              */
+/*      stream      the bitstream where the bits are put in                 */
+/*      Length      bits length (should belong to 17 to 32)                 */
+/*      Value       those bits value                                        */
+/*  Return   :  PV_STATUS                                                   */
+/*  Modified :                                                              */
 /* ======================================================================== */
 PV_STATUS BitstreamPutGT16Bits(BitstreamEncVideo *stream, Int Length, ULong Value)
 {
@@ -194,13 +194,13 @@ PV_STATUS BitstreamPutGT16Bits(BitstreamEncVideo *stream, Int Length, ULong Valu
 }
 
 /* ======================================================================== */
-/*	Function : BitstreamSaveWord											*/
-/*	Date     : 08/03/2004													*/
-/*	Purpose  : save written word into the bitstream buffer. 				*/
-/*	In/out   :																*/
-/*		stream		the bitstream where the bits are put in					*/
-/*	Return   :	PV_STATUS													*/
-/*	Modified :																*/
+/*  Function : BitstreamSaveWord                                            */
+/*  Date     : 08/03/2004                                                   */
+/*  Purpose  : save written word into the bitstream buffer.                 */
+/*  In/out   :                                                              */
+/*      stream      the bitstream where the bits are put in                 */
+/*  Return   :  PV_STATUS                                                   */
+/*  Modified :                                                              */
 /* ======================================================================== */
 
 PV_STATUS BitstreamSaveWord(BitstreamEncVideo *stream)
@@ -244,13 +244,13 @@ PV_STATUS BitstreamSaveWord(BitstreamEncVideo *stream)
 
 
 /* ======================================================================== */
-/*	Function : BitstreamSavePartial											*/
-/*	Date     : 08/03/2004													*/
-/*	Purpose  : save unfinished written word into the bitstream buffer. 		*/
-/*	In/out   :																*/
-/*		stream		the bitstream where the bits are put in					*/
-/*	Return   :	PV_STATUS													*/
-/*	Modified :																*/
+/*  Function : BitstreamSavePartial                                         */
+/*  Date     : 08/03/2004                                                   */
+/*  Purpose  : save unfinished written word into the bitstream buffer.      */
+/*  In/out   :                                                              */
+/*      stream      the bitstream where the bits are put in                 */
+/*  Return   :  PV_STATUS                                                   */
+/*  Modified :                                                              */
 /* ======================================================================== */
 
 PV_STATUS BitstreamSavePartial(BitstreamEncVideo *stream, Int *fraction)
@@ -261,7 +261,7 @@ PV_STATUS BitstreamSavePartial(BitstreamEncVideo *stream, Int *fraction)
 
     bitleft = stream->bitLeft;
     bitused = (WORD_SIZE << 3) - bitleft; /* number of bits used */
-    numbyte = bitused >> 3;	/* number of byte fully used */
+    numbyte = bitused >> 3; /* number of byte fully used */
 
     if (stream->byteCount + numbyte > stream->bufferSize)
     {
@@ -274,8 +274,8 @@ PV_STATUS BitstreamSavePartial(BitstreamEncVideo *stream, Int *fraction)
 
     ptr = stream->bitstreamBuffer + stream->byteCount;
     word = stream->word;
-    word <<= bitleft;	/* word is not all consumed */
-    bitleft = bitused - (numbyte << 3);	/* number of bits used (fraction) */
+    word <<= bitleft;   /* word is not all consumed */
+    bitleft = bitused - (numbyte << 3); /* number of bits used (fraction) */
     stream->byteCount += numbyte;
     if (bitleft)
     {
@@ -299,7 +299,7 @@ PV_STATUS BitstreamSavePartial(BitstreamEncVideo *stream, Int *fraction)
 
     if (*fraction)
     {// this could lead to buffer overrun when ptr is already out of bound.
-        //	*ptr = (UChar)((word>>shift)&0xFF); /* need to do it for the last fractional byte */
+        //  *ptr = (UChar)((word>>shift)&0xFF); /* need to do it for the last fractional byte */
     }
 
     /* save new values */
@@ -313,13 +313,13 @@ PV_STATUS BitstreamSavePartial(BitstreamEncVideo *stream, Int *fraction)
 
 
 /* ======================================================================== */
-/*	Function : BitstreamShortHeaderByteAlignStuffing(						*/
-/*										BitstreamEncVideo *stream)			*/
-/*	Date     : 08/29/2000													*/
-/*	Purpose  : bit stuffing for next start code in short video header       */
-/*	In/out   :																*/
-/*	Return   :	number of bits to be stuffed								*/
-/*	Modified :																*/
+/*  Function : BitstreamShortHeaderByteAlignStuffing(                       */
+/*                                      BitstreamEncVideo *stream)          */
+/*  Date     : 08/29/2000                                                   */
+/*  Purpose  : bit stuffing for next start code in short video header       */
+/*  In/out   :                                                              */
+/*  Return   :  number of bits to be stuffed                                */
+/*  Modified :                                                              */
 /* ======================================================================== */
 
 Int BitstreamShortHeaderByteAlignStuffing(BitstreamEncVideo *stream)
@@ -344,12 +344,12 @@ Int BitstreamShortHeaderByteAlignStuffing(BitstreamEncVideo *stream)
 }
 
 /* ======================================================================== */
-/*	Function : BitstreamMpeg4ByteAlignStuffing(BitstreamEncVideo *stream)	*/
-/*	Date     : 08/29/2000													*/
-/*	Purpose  : bit stuffing for next start code in MPEG-4			       */
-/*	In/out   :																*/
-/*	Return   :	number of bits to be stuffed								*/
-/*	Modified :																*/
+/*  Function : BitstreamMpeg4ByteAlignStuffing(BitstreamEncVideo *stream)   */
+/*  Date     : 08/29/2000                                                   */
+/*  Purpose  : bit stuffing for next start code in MPEG-4                  */
+/*  In/out   :                                                              */
+/*  Return   :  number of bits to be stuffed                                */
+/*  Modified :                                                              */
 /* ======================================================================== */
 Int BitstreamMpeg4ByteAlignStuffing(BitstreamEncVideo *stream)
 {
@@ -380,7 +380,7 @@ Int BitstreamMpeg4ByteAlignStuffing(BitstreamEncVideo *stream)
 }
 
 /*does bit stuffing for next resync marker*/
-/*	does bit stuffing for next resync marker
+/*  does bit stuffing for next resync marker
  *                                            "0"
  *                                           "01"
  *                                          "011"
@@ -401,14 +401,14 @@ Int BitstreamMpeg4ByteAlignStuffing(BitstreamEncVideo *stream)
 }*/
 
 /* ======================================================================== */
-/*	Function : BitstreamAppendEnc( BitstreamEncVideo *bitstream1,			*/
-/*										BitstreamEncVideo *bitstream2	)	*/
-/*	Date     : 08/29/2000													*/
-/*	Purpose  : Append the intermediate bitstream (bitstream2) to the end of */
-/*								output bitstream(bitstream1)   		        */
-/*	In/out   :																*/
-/*	Return   :																*/
-/*	Modified :																*/
+/*  Function : BitstreamAppendEnc( BitstreamEncVideo *bitstream1,           */
+/*                                      BitstreamEncVideo *bitstream2   )   */
+/*  Date     : 08/29/2000                                                   */
+/*  Purpose  : Append the intermediate bitstream (bitstream2) to the end of */
+/*                              output bitstream(bitstream1)                */
+/*  In/out   :                                                              */
+/*  Return   :                                                              */
+/*  Modified :                                                              */
 /* ======================================================================== */
 
 
@@ -417,7 +417,7 @@ PV_STATUS BitstreamAppendEnc(BitstreamEncVideo *bitstream1, BitstreamEncVideo *b
     PV_STATUS status;
     UChar *ptrBS2, *ptrBS1;
     UChar byteBS2, byteBS1;
-    Int	 numbyte2;
+    Int  numbyte2;
     Int bitused, bitleft, offset, fraction;
 
     status = BitstreamSavePartial(bitstream1, &fraction);
@@ -457,10 +457,10 @@ PV_STATUS BitstreamAppendEnc(BitstreamEncVideo *bitstream1, BitstreamEncVideo *b
     bitused = (WORD_SIZE << 3) - bitstream1->bitLeft; /* this must be between 1-7 */
     bitleft = 8 - bitused;
 
-    numbyte2 = bitstream2->byteCount;	/* number of byte to copy from bs2 */
+    numbyte2 = bitstream2->byteCount;   /* number of byte to copy from bs2 */
     bitstream1->byteCount += numbyte2;  /* new byteCount */
 
-    byteBS1 = ((UChar) bitstream1->word) << bitleft;	/* fraction byte from bs1 */
+    byteBS1 = ((UChar) bitstream1->word) << bitleft;    /* fraction byte from bs1 */
 
     while (numbyte2)
     {
@@ -480,19 +480,19 @@ PV_STATUS BitstreamAppendEnc(BitstreamEncVideo *bitstream1, BitstreamEncVideo *b
 }
 
 /* ======================================================================== */
-/*	Function : BitstreamAppendPacket( BitstreamEncVideo *bitstream1,		*/
-/*										BitstreamEncVideo *bitstream2	)	*/
-/*	Date     : 05/31/2001													*/
-/*	Purpose  : Append the intermediate bitstream (bitstream2) to the end of */
-/*				output bitstream(bitstream1) knowing that bitstream1 is byte-aligned*/
-/*	In/out   :																*/
-/*	Return   :																*/
-/*	Modified :																*/
+/*  Function : BitstreamAppendPacket( BitstreamEncVideo *bitstream1,        */
+/*                                      BitstreamEncVideo *bitstream2   )   */
+/*  Date     : 05/31/2001                                                   */
+/*  Purpose  : Append the intermediate bitstream (bitstream2) to the end of */
+/*              output bitstream(bitstream1) knowing that bitstream1 is byte-aligned*/
+/*  In/out   :                                                              */
+/*  Return   :                                                              */
+/*  Modified :                                                              */
 /* ======================================================================== */
 PV_STATUS BitstreamAppendPacket(BitstreamEncVideo *bitstream1, BitstreamEncVideo *bitstream2)
 {
     UChar *ptrBS2, *ptrBS1;
-    Int	 numbyte2;
+    Int  numbyte2;
 
     if (bitstream1->byteCount + bitstream2->byteCount  > bitstream1->bufferSize)
     {
@@ -519,20 +519,20 @@ PV_STATUS BitstreamAppendPacket(BitstreamEncVideo *bitstream1, BitstreamEncVideo
 }
 
 /* ======================================================================== */
-/*	Function : BitstreamAppendPacketNoOffset( BitstreamEncVideo *bitstream1,*/
-/*										BitstreamEncVideo *bitstream2	)	*/
-/*	Date     : 04/23/2002													*/
-/*	Purpose  : Append the intermediate bitstream (bitstream2) to the end of */
-/*				output bitstream(bitstream1) , for slice-based coding only */
-/*	In/out   :																*/
-/*	Return   :																*/
-/*	Modified :																*/
+/*  Function : BitstreamAppendPacketNoOffset( BitstreamEncVideo *bitstream1,*/
+/*                                      BitstreamEncVideo *bitstream2   )   */
+/*  Date     : 04/23/2002                                                   */
+/*  Purpose  : Append the intermediate bitstream (bitstream2) to the end of */
+/*              output bitstream(bitstream1) , for slice-based coding only */
+/*  In/out   :                                                              */
+/*  Return   :                                                              */
+/*  Modified :                                                              */
 /* ======================================================================== */
 PV_STATUS BitstreamAppendPacketNoOffset(BitstreamEncVideo *bitstream1, BitstreamEncVideo *bitstream2)
 {
     PV_STATUS status = PV_SUCCESS;
     UChar *ptrBS2, *ptrBS1;
-    Int	 numbyte2;
+    Int  numbyte2;
     Int  byteleft;
 
     numbyte2 = bitstream2->byteCount;
@@ -540,7 +540,7 @@ PV_STATUS BitstreamAppendPacketNoOffset(BitstreamEncVideo *bitstream1, Bitstream
     if (bitstream1->byteCount + bitstream2->byteCount > bitstream1->bufferSize)
     {
         numbyte2 =  bitstream1->bufferSize - bitstream1->byteCount;
-        status =  PV_END_OF_BUF;	/* signal end of buffer */
+        status =  PV_END_OF_BUF;    /* signal end of buffer */
     }
 
     ptrBS1 = bitstream1->bitstreamBuffer; /* move ptr bs1*/
@@ -569,15 +569,15 @@ PV_STATUS BitstreamAppendPacketNoOffset(BitstreamEncVideo *bitstream1, Bitstream
 
 #ifndef NO_SLICE_ENCODE
 /* ======================================================================== */
-/*	Function : BitstreamRepos( BitstreamEncVideo *bitstream,				*/
-/*										Int byteCount, Int bitCount)		*/
-/*	Date     : 04/28/2002													*/
-/*	Purpose  : Reposition the size of the buffer content (curtail)			*/
-/*	In/out   :																*/
-/*	Return   :																*/
-/*	Modified :																*/
+/*  Function : BitstreamRepos( BitstreamEncVideo *bitstream,                */
+/*                                      Int byteCount, Int bitCount)        */
+/*  Date     : 04/28/2002                                                   */
+/*  Purpose  : Reposition the size of the buffer content (curtail)          */
+/*  In/out   :                                                              */
+/*  Return   :                                                              */
+/*  Modified :                                                              */
 /* ======================================================================== */
-PV_STATUS	BitstreamRepos(BitstreamEncVideo *bitstream, Int byteCount, Int bitCount)
+PV_STATUS   BitstreamRepos(BitstreamEncVideo *bitstream, Int byteCount, Int bitCount)
 {
     UChar *ptr, byte;
     UInt word;
@@ -611,13 +611,13 @@ PV_STATUS	BitstreamRepos(BitstreamEncVideo *bitstream, Int byteCount, Int bitCou
 }
 
 /* ======================================================================== */
-/*	Function : BitstreamFlushBits(BitstreamEncVideo *bitstream1,			*/
-/*								Int num_bit_left)							*/
-/*	Date     : 04/24/2002													*/
-/*	Purpose  : Flush buffer except the last num_bit_left bits.  		    */
-/*	In/out   :																*/
-/*	Return   :																*/
-/*	Modified :																*/
+/*  Function : BitstreamFlushBits(BitstreamEncVideo *bitstream1,            */
+/*                              Int num_bit_left)                           */
+/*  Date     : 04/24/2002                                                   */
+/*  Purpose  : Flush buffer except the last num_bit_left bits.              */
+/*  In/out   :                                                              */
+/*  Return   :                                                              */
+/*  Modified :                                                              */
 /* ======================================================================== */
 
 
@@ -646,7 +646,7 @@ PV_STATUS BitstreamFlushBits(BitstreamEncVideo *bitstream1, Int num_bit_left)
     else
     {
         /*copy all the bytes in bitstream2*/
-        for (i = 0;i < new_byte;i++)
+        for (i = 0; i < new_byte; i++)
         {
             *ptrDst++ = (ptrSrc[0] << bitused) | (ptrSrc[1] >> leftover);
             ptrSrc++;
@@ -668,19 +668,19 @@ PV_STATUS BitstreamFlushBits(BitstreamEncVideo *bitstream1, Int num_bit_left)
 }
 
 /* ======================================================================== */
-/*	Function : BitstreamPrependPacket( BitstreamEncVideo *bitstream1,		*/
-/*										BitstreamEncVideo *bitstream2	)	*/
-/*	Date     : 04/26/2002													*/
-/*	Purpose  : Prepend the intermediate bitstream (bitstream2) to the beginning of */
-/*				output bitstream(bitstream1) */
-/*	In/out   :																*/
-/*	Return   :																*/
-/*	Modified :																*/
+/*  Function : BitstreamPrependPacket( BitstreamEncVideo *bitstream1,       */
+/*                                      BitstreamEncVideo *bitstream2   )   */
+/*  Date     : 04/26/2002                                                   */
+/*  Purpose  : Prepend the intermediate bitstream (bitstream2) to the beginning of */
+/*              output bitstream(bitstream1) */
+/*  In/out   :                                                              */
+/*  Return   :                                                              */
+/*  Modified :                                                              */
 /* ======================================================================== */
 PV_STATUS BitstreamPrependPacket(BitstreamEncVideo *bitstream1, BitstreamEncVideo *bitstream2)
 {
     UChar *pSrc, *pDst, byte;
-    Int		movebyte, bitused, leftover, i, fraction;
+    Int     movebyte, bitused, leftover, i, fraction;
 
     BitstreamSavePartial(bitstream2, &fraction); /* make sure only fraction of byte left */
     BitstreamSavePartial(bitstream1, &fraction);
@@ -710,7 +710,7 @@ PV_STATUS BitstreamPrependPacket(BitstreamEncVideo *bitstream1, BitstreamEncVide
     pDst = bitstream1->bitstreamBuffer + bitstream2->byteCount;
 
     bitused = (WORD_SIZE << 3) - bitstream2->bitLeft;
-    leftover = 8 - bitused;		/* bitused should be 0-7 */
+    leftover = 8 - bitused;     /* bitused should be 0-7 */
 
     byte = (bitstream2->word) << leftover;
 
@@ -749,14 +749,14 @@ PV_STATUS BitstreamPrependPacket(BitstreamEncVideo *bitstream1, BitstreamEncVide
 
 
 /* ======================================================================== */
-/*	Function : BitstreamGetPos( BitstreamEncVideo *stream					*/
-/*	Date     : 08/05/2004													*/
-/*	Purpose  : Get the bit position.										*/
-/*	In/out   :																*/
-/*	Return   :																*/
-/*	Modified :																*/
+/*  Function : BitstreamGetPos( BitstreamEncVideo *stream                   */
+/*  Date     : 08/05/2004                                                   */
+/*  Purpose  : Get the bit position.                                        */
+/*  In/out   :                                                              */
+/*  Return   :                                                              */
+/*  Modified :                                                              */
 /* ======================================================================== */
-Int	BitstreamGetPos(BitstreamEncVideo *stream)
+Int BitstreamGetPos(BitstreamEncVideo *stream)
 {
 
     return stream->byteCount*8 + (WORD_SIZE << 3) - stream->bitLeft;

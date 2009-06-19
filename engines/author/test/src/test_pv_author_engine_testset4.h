@@ -205,7 +205,7 @@ class pvauthor_async_compressed_test_errorhandling: public pvauthor_async_test_b
         OSCL_wHeapString<OsclMemAllocator> iDescriptionString;
         OSCL_wHeapString<OsclMemAllocator> iRatingString;
         OSCL_wHeapString<OsclMemAllocator> iAlbumTitle;
-        uint16							   iRecordingYear;
+        uint16                             iRecordingYear;
 
         AVTConfig iAVTConfig;
         Oscl_Vector<PVAETestInput, OsclMemAllocator> iTestInputs;
@@ -218,7 +218,7 @@ class pvauthor_async_compressed_test_errorhandling: public pvauthor_async_test_b
         uint32 iAuthoringTime;
         int iAuthoringCounter;
         uint32 iTestDuration;
-        FAIL_STATE	iFailureState;
+        FAIL_STATE  iFailureState;
         //For CapConfig
         PvmiCapabilityAndConfig* iAuthorCapConfigIF;
         PvmiKvp* iErrorKVP;

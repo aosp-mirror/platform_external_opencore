@@ -89,7 +89,7 @@ bool OsclComponentRegistryElement::Match(OSCL_String& id, bool aExact)
 
 OsclComponentRegistryElement* OsclComponentRegistryData::Find(OSCL_String& id, bool aExact)
 {
-    for (uint32 i = 0;i < iVec.size();i++)
+    for (uint32 i = 0; i < iVec.size(); i++)
     {
         if (iVec[i].Match(id, aExact))
             return &iVec[i];
@@ -181,7 +181,7 @@ void OsclComponentRegistry::FindHierarchical(OSCL_String& aReg, Oscl_Vector<Oscl
     //gracefully.
     int32 err;
     OSCL_TRY(err,
-             for (uint32 i = 0;i < iData.iVec.size();i++)
+             for (uint32 i = 0; i < iData.iVec.size(); i++)
 {
     if (iData.iVec[i].Match(aReg, false))//hierarchical match.
         {
@@ -220,7 +220,7 @@ int32 OsclComponentRegistry::Unregister(uint32 aId)
     //no choice but to search all registries...
 
     iMutex.Lock();
-    for (uint32 i = 0;i < iData.iVec.size();i++)
+    for (uint32 i = 0; i < iData.iVec.size(); i++)
     {
         if (iData.iVec[i].iComponentId == aId)
         {

@@ -55,7 +55,7 @@ class PVMFMP3FFParserNode;
  * same flow-control scheme.
  */
 class PVMFMP3FFParserPort : public PvmfPortBaseImpl
-            , public PvmiCapabilityAndConfigPortFormatImpl
+        , public PvmiCapabilityAndConfigPortFormatImpl
 {
     public:
         /**
@@ -109,7 +109,7 @@ class PVMFMP3FFParserPort : public PvmfPortBaseImpl
 
         /* Implement pure virtuals from PvmiCapabilityAndConfig interface */
         PVMFStatus getParametersSync(PvmiMIOSession aSession, PvmiKeyType aIdentifier,
-                                     PvmiKvp*& aParameters, int& num_parameter_elements,	PvmiCapabilityContext aContext);
+                                     PvmiKvp*& aParameters, int& num_parameter_elements,    PvmiCapabilityContext aContext);
         PVMFStatus releaseParameters(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
 
         /* Unsupported PvmiCapabilityAndConfig methods */

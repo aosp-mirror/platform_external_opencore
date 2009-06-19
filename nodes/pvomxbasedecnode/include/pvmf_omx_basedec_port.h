@@ -69,7 +69,7 @@ typedef enum
 
 
 class PVMFOMXDecPort : public PvmfPortBaseImpl
-            , public PvmiCapabilityAndConfigPortFormatImpl
+        , public PvmiCapabilityAndConfigPortFormatImpl
 {
     public:
         OSCL_IMPORT_REF PVMFOMXDecPort(int32 aTag, PVMFNodeInterface* aNode, const char*);

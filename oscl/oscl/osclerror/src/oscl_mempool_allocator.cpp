@@ -33,11 +33,11 @@
 */
 
 /***************************************************************************************
-File Name		: oscl_mempool_allocator.cpp
-Description		: File containing implementation of class OsclMemPoolAllocator that provides
-				  methods for creating, deleting memory pool.
-Coding History	:
-				  Achint Kaur			April 11, 2006		Initial Draft
+File Name       : oscl_mempool_allocator.cpp
+Description     : File containing implementation of class OsclMemPoolAllocator that provides
+                  methods for creating, deleting memory pool.
+Coding History  :
+                  Achint Kaur           April 11, 2006      Initial Draft
 ***************************************************************************************/
 
 #include "oscl_mempool_allocator.h"
@@ -47,12 +47,12 @@ Coding History	:
 #include "oscl_mem_basic_functions.h"
 
 /***************************************************************************************
-Description		: Constructor method for memory pool allocation. Sets iCustomAllocator
-			      to the passed allocator pointer. Also initializes iBaseAddress to NULL.
-Arguments		: gen_alloc - Custom allocator for memory. This is an input argument.
-Return Values	: None
-Assumptions		: None
-Known Issues	: None
+Description     : Constructor method for memory pool allocation. Sets iCustomAllocator
+                  to the passed allocator pointer. Also initializes iBaseAddress to NULL.
+Arguments       : gen_alloc - Custom allocator for memory. This is an input argument.
+Return Values   : None
+Assumptions     : None
+Known Issues    : None
 ***************************************************************************************/
 OsclMemPoolAllocator::OsclMemPoolAllocator(Oscl_DefAlloc* gen_alloc)
         : iCustomAllocator(gen_alloc),
@@ -61,12 +61,12 @@ OsclMemPoolAllocator::OsclMemPoolAllocator(Oscl_DefAlloc* gen_alloc)
 }
 
 /***************************************************************************************
-Description		: Virtual destructor for memory pool allocation. Calls DestroyMemPool, if
-				  iBaseAddress is not NULL i.e. memory pool exists.
-Arguments		: None
-Return Values	: None
-Assumptions		: None
-Known Issues	: None
+Description     : Virtual destructor for memory pool allocation. Calls DestroyMemPool, if
+                  iBaseAddress is not NULL i.e. memory pool exists.
+Arguments       : None
+Return Values   : None
+Assumptions     : None
+Known Issues    : None
 ***************************************************************************************/
 OsclMemPoolAllocator::~OsclMemPoolAllocator()
 {
@@ -77,18 +77,18 @@ OsclMemPoolAllocator::~OsclMemPoolAllocator()
 }
 
 /***************************************************************************************
-Description		: Method for creating memory pool given the number of chunks and chunk size.
-Arguments		: aNumChunk - Default number of chunks in a memory pool is 2.
-				  aChunkSize - Default size of each chunk is 4.
-Return Values	: OsclAny* - Base address for the memory pool
-Assumptions		: It is assumed that memory audit is not required so, _oscl_malloc used directly.
-				  Client can pass its custom allocator for memory.
-				  Malloc will be used if custom allocator is not set.
-				  Memory alignment is taken from osclmemory.
-				  uint32 and int32 are assumed to be oscl compliant.
-Known Issues	: Is there a naming convention for leaving methods in oscl ?
-				  Is there a need for memory alignment as done ?
-				  Is OSCL_MEM_FILL_WITH_PATTERN required ?
+Description     : Method for creating memory pool given the number of chunks and chunk size.
+Arguments       : aNumChunk - Default number of chunks in a memory pool is 2.
+                  aChunkSize - Default size of each chunk is 4.
+Return Values   : OsclAny* - Base address for the memory pool
+Assumptions     : It is assumed that memory audit is not required so, _oscl_malloc used directly.
+                  Client can pass its custom allocator for memory.
+                  Malloc will be used if custom allocator is not set.
+                  Memory alignment is taken from osclmemory.
+                  uint32 and int32 are assumed to be oscl compliant.
+Known Issues    : Is there a naming convention for leaving methods in oscl ?
+                  Is there a need for memory alignment as done ?
+                  Is OSCL_MEM_FILL_WITH_PATTERN required ?
 ***************************************************************************************/
 OsclAny* OsclMemPoolAllocator::CreateMemPool(const uint32 aNumChunk, const uint32 aChunkSize)
 {
@@ -96,7 +96,7 @@ OsclAny* OsclMemPoolAllocator::CreateMemPool(const uint32 aNumChunk, const uint3
     {
         OSCL_LEAVE(OsclErrArgument);
 
-        // OSCL_UNUSED_RETURN(NULL);	This statement was removed to avoid compiler warning for Unreachable Code
+        // OSCL_UNUSED_RETURN(NULL);    This statement was removed to avoid compiler warning for Unreachable Code
     }
 
     // Heap memory alligned chunk size
@@ -117,7 +117,7 @@ OsclAny* OsclMemPoolAllocator::CreateMemPool(const uint32 aNumChunk, const uint3
     {
         OSCL_LEAVE(OsclErrNoMemory);
 
-        // OSCL_UNUSED_RETURN(NULL);	This statement was removed to avoid compiler warning for Unreachable Code
+        // OSCL_UNUSED_RETURN(NULL);    This statement was removed to avoid compiler warning for Unreachable Code
 
     }
 
@@ -132,11 +132,11 @@ OsclAny* OsclMemPoolAllocator::CreateMemPool(const uint32 aNumChunk, const uint3
 }
 
 /***************************************************************************************
-Description		: Performs memory alignment for the passed size argument.
-Arguments		: x - uint representing the size to be memory aligned
-Return Values	: uint - Memory aligned size
-Assumptions		: None
-Known Issues	: None
+Description     : Performs memory alignment for the passed size argument.
+Arguments       : x - uint representing the size to be memory aligned
+Return Values   : uint - Memory aligned size
+Assumptions     : None
+Known Issues    : None
 ***************************************************************************************/
 uint OsclMemPoolAllocator::oscl_mem_aligned_size(uint x)
 {
@@ -157,12 +157,12 @@ uint OsclMemPoolAllocator::oscl_mem_aligned_size(uint x)
 }
 
 /***************************************************************************************
-Description		: Method for destroying memory pool
-Arguments		: None
-Return Values	: None
-Assumptions		: It is assumed that memory audit is not required so, _oscl_free used directly.
-Known Issues	: None
-Condition		: Is there any naming convention for leaving methods in oscl ?
+Description     : Method for destroying memory pool
+Arguments       : None
+Return Values   : None
+Assumptions     : It is assumed that memory audit is not required so, _oscl_free used directly.
+Known Issues    : None
+Condition       : Is there any naming convention for leaving methods in oscl ?
 ***************************************************************************************/
 void OsclMemPoolAllocator::DestroyMemPool()
 {

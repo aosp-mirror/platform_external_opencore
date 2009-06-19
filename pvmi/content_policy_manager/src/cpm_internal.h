@@ -113,7 +113,7 @@ enum TPVMFCPMCommand
 #define PVMF_CPM_INTERNAL_INIT_CMD                               1001
 #define PVMF_CPM_INTERNAL_QUERY_AUTHENTICATION_INTERFACE_CMD     1002
 #define PVMF_CPM_INTERNAL_QUERY_AUTHORIZATION_INTERFACE_CMD      1003
-#define PVMF_CPM_INTERNAL_QUERY_ACCESS_INTERFACE_FACTORY_CMD	 1004
+#define PVMF_CPM_INTERNAL_QUERY_ACCESS_INTERFACE_FACTORY_CMD     1004
 #define PVMF_CPM_INTERNAL_QUERY_METADATA_EXTENSION_INTERFACE_CMD 1005
 #define PVMF_CPM_INTERNAL_AUTHENTICATE_CMD                       1006
 #define PVMF_CPM_INTERNAL_AUTHORIZE_CMD                          1007
@@ -124,7 +124,7 @@ enum TPVMFCPMCommand
 #define PVMF_CPM_INTERNAL_QUERY_LICENSE_INTERFACE_CMD            1012
 #define PVMF_CPM_INTERNAL_GET_LICENSE_CMD                        1013
 #define PVMF_CPM_INTERNAL_QUERY_CAP_CONFIG_INTERFACE_CMD         1014
-#define PVMF_CPM_INTERNAL_CANCEL_GET_LICENSE					 1015
+#define PVMF_CPM_INTERNAL_CANCEL_GET_LICENSE                     1015
 
 #define PVMF_CPM_INTERNAL_CMDQ_SIZE 10
 
@@ -486,11 +486,11 @@ typedef struct tagPVMFCPMCommandContext
 } PVMFCPMCommandContext;
 
 class PVMFCPMImpl : public OsclActiveObject,
-            public PVMFCPM,
-            public PVMFMetadataExtensionInterface,
-            public PvmiCapabilityAndConfig,
-            public PVMFCPMPluginCmdStatusObserver,
-            public PVMFCPMPluginLicenseInterface
+        public PVMFCPM,
+        public PVMFMetadataExtensionInterface,
+        public PvmiCapabilityAndConfig,
+        public PVMFCPMPluginCmdStatusObserver,
+        public PVMFCPMPluginLicenseInterface
 {
     public:
         OSCL_IMPORT_REF PVMFCPMImpl(PVMFCPMStatusObserver& aObserver,

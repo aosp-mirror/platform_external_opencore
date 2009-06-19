@@ -77,7 +77,7 @@ class PVA_FF_MovieHeaderAtom : public PVA_FF_FullAtom
         {
             return _duration;
         }
-        uint32 getLastTS()	const
+        uint32 getLastTS()  const
         {
             return _prevTS;
         }

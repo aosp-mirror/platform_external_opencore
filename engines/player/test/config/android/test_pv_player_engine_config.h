@@ -227,7 +227,7 @@ typedef enum Flag_Tag
     WMA_ENABLED,
     THREE_GP_ENABLED,
     LAST_FORMAT_ENABLED // Place holder
-}Flag;
+} Flag;
 
 #endif
 

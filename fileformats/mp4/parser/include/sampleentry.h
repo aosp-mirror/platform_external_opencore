@@ -21,8 +21,8 @@
 /*     -------------------------------------------------------------------       */
 /*********************************************************************************/
 /*
-	This SampleEntry Class is the base class for the HinstSampleEntry,
-	VisualSampleEntry, AudioSampleEntry. and MpegSampleEntry classes.
+    This SampleEntry Class is the base class for the HinstSampleEntry,
+    VisualSampleEntry, AudioSampleEntry. and MpegSampleEntry classes.
 */
 
 

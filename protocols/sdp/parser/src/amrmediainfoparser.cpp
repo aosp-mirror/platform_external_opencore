@@ -377,12 +377,12 @@ SDPAMRMediaInfoParser::parseMediaInfo(const char *buff,
                 return SDP_BAD_MEDIA_ALT_ID;
         }
 
-        if (amrA->getCFieldStatus()	|| session->getCFieldStatus())
+        if (amrA->getCFieldStatus() || session->getCFieldStatus())
         {
             //if sample rate is zero override with defaults
             Oscl_Vector<PayloadSpecificInfoTypeBase*, SDPParserAlloc> payloadSpecificInfoVector =
                 amrA->getPayloadSpecificInfoVector();
-            for (int ii = 0; ii < (int)payloadSpecificInfoVector.size();ii++)
+            for (int ii = 0; ii < (int)payloadSpecificInfoVector.size(); ii++)
             {
                 if (payloadSpecificInfoVector[ii]->getSampleRate() == 0)
                 {

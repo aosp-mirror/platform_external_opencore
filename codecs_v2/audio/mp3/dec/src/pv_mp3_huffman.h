@@ -82,10 +82,10 @@ extern "C"
 #endif
 
     int32 pvmp3_huffman_parsing(int32 is[SUBBANDS_NUMBER*FILTERBANK_BANDS],
-                                granuleInfo *grInfo,
-                                tmp3dec_file   *pVars,
-                                int32 part2_start,
-                                mp3Header *info);
+    granuleInfo *grInfo,
+    tmp3dec_file   *pVars,
+    int32 part2_start,
+    mp3Header *info);
 
 
     void pvmp3_huffman_quad_decoding(struct huffcodetab *h,

@@ -20,41 +20,41 @@
  INPUT AND OUTPUT DEFINITIONS
 
  Inputs:
-	xpred = x-axis coordinate of the MB used for prediction (int)
-	ypred = y-axis coordinate of the MB used for prediction (int)
-	pp_dec_y = pointer to the post processing semaphore for current
-		   luminance frame (uint8)
-	pstprcTypPrv = pointer the previous frame's post processing type
-	               (uint8)
-	ll = pointer to the buffer (int)
-	mv_loc = flag indicating location of the motion compensated
-		 (x,y) position with respect to the luminance MB (int);
-		 0 -> inside MB, 1 -> outside MB
-	dx = horizontal component of the motion vector (int)
-	dy = vertical component of the motion vector (int)
-	mvwidth = number of blocks per row (int)
-	width = luminance VOP width in pixels (int)
-	height = luminance VOP height in pixels (int)
+    xpred = x-axis coordinate of the MB used for prediction (int)
+    ypred = y-axis coordinate of the MB used for prediction (int)
+    pp_dec_y = pointer to the post processing semaphore for current
+           luminance frame (uint8)
+    pstprcTypPrv = pointer the previous frame's post processing type
+                   (uint8)
+    ll = pointer to the buffer (int)
+    mv_loc = flag indicating location of the motion compensated
+         (x,y) position with respect to the luminance MB (int);
+         0 -> inside MB, 1 -> outside MB
+    dx = horizontal component of the motion vector (int)
+    dy = vertical component of the motion vector (int)
+    mvwidth = number of blocks per row (int)
+    width = luminance VOP width in pixels (int)
+    height = luminance VOP height in pixels (int)
 
  Local Stores/Buffers/Pointers Needed:
-	None
+    None
 
  Global Stores/Buffers/Pointers Needed:
-	None
+    None
 
  Outputs:
-	msk_deblock = flag that indicates whether deblocking is to be
-		      performed (msk_deblock = 0) or not (msk_deblock =
-		      1) (uint8)
+    msk_deblock = flag that indicates whether deblocking is to be
+              performed (msk_deblock = 0) or not (msk_deblock =
+              1) (uint8)
 
  Pointers and Buffers Modified:
-	pp_dec_y contents are the updated semapohore propagation data
+    pp_dec_y contents are the updated semapohore propagation data
 
  Local Stores Modified:
-	None
+    None
 
  Global Stores Modified:
-	None
+    None
 
 ------------------------------------------------------------------------------
  FUNCTION DESCRIPTION
@@ -68,8 +68,8 @@
 /*----------------------------------------------------------------------------
 ; INCLUDES
 ----------------------------------------------------------------------------*/
-#include	"mp4dec_api.h"
-#include	"mp4def.h"
+#include    "mp4dec_api.h"
+#include    "mp4def.h"
 
 /*----------------------------------------------------------------------------
 ; MACROS
@@ -110,25 +110,25 @@ extern "C"
     ; FUNCTION CODE
     ----------------------------------------------------------------------------*/
     uint8 pp_semaphore_luma(
-        int	xpred,		/* i */
-        int	ypred,		/* i */
-        uint8   *pp_dec_y,	/* i/o */
-        uint8   *pstprcTypPrv,	/* i */
-        int	*ll,		/* i */
-        int	*mv_loc,	/* i/o */
-        int	dx,		/* i */
-        int	dy,		/* i */
-        int	mvwidth,	/* i */
-        int	width,		/* i */
-        int	height		/* i */
+        int xpred,      /* i */
+        int ypred,      /* i */
+        uint8   *pp_dec_y,  /* i/o */
+        uint8   *pstprcTypPrv,  /* i */
+        int *ll,        /* i */
+        int *mv_loc,    /* i/o */
+        int dx,     /* i */
+        int dy,     /* i */
+        int mvwidth,    /* i */
+        int width,      /* i */
+        int height      /* i */
     )
     {
         /*----------------------------------------------------------------------------
         ; Define all local variables
         ----------------------------------------------------------------------------*/
         int kk, mmvy, mmvx, nmvx, nmvy;
-        uint8	*pp_prev1, *pp_prev2, *pp_prev3, *pp_prev4;
-        uint8	msk_deblock = 0;		/*  11/3/00 */
+        uint8   *pp_prev1, *pp_prev2, *pp_prev3, *pp_prev4;
+        uint8   msk_deblock = 0;        /*  11/3/00 */
 
         /*----------------------------------------------------------------------------
         ; Function body here
@@ -138,7 +138,7 @@ extern "C"
         /* check whether the MV points outside the frame */
         if (xpred >= 0 && xpred <= ((width << 1) - (2*MB_SIZE)) && ypred >= 0 &&
                 ypred <= ((height << 1) - (2*MB_SIZE)))
-        {	/*****************************/
+        {   /*****************************/
             /* (x,y) is inside the frame */
             /*****************************/
 
@@ -157,49 +157,49 @@ extern "C"
             mmvy = ypred >> 4;
 
             /* Find post processing semaphore location for block */
-            /* used for prediction, i.e., 			     */
-            /* pp_prev1 = &pstprcTypPrv[mmvy*mvwidth][mmvx]	     */
+            /* used for prediction, i.e.,                */
+            /* pp_prev1 = &pstprcTypPrv[mmvy*mvwidth][mmvx]      */
             pp_prev1 = pstprcTypPrv + mmvx + mmvy * mvwidth;
 
             /* Check if MV is a multiple of 16 */
             if ((dx&0xF) != 0)
-            {	/* dx is not a multiple of 16 */
+            {   /* dx is not a multiple of 16 */
 
                 /* pp_prev2 is the block to the right of */
-                /* pp_prev1 block			 */
+                /* pp_prev1 block            */
                 pp_prev2 = pp_prev1 + 1;
 
                 if ((dy&0xF) != 0)
-                {	/* dy is not a multiple of 16 */
+                {   /* dy is not a multiple of 16 */
 
                     /* pp_prev3 is the block below */
-                    /* pp_prev1 block	       */
+                    /* pp_prev1 block          */
                     pp_prev3 = pp_prev1 + mvwidth;
                 }
                 else
-                {	/* dy is a multiple of 16 */
+                {   /* dy is a multiple of 16 */
 
                     pp_prev3 = pp_prev1;
                 }
 
                 /* pp_prev4 is the block to the right of */
-                /* pp_prev3 block.			 */
+                /* pp_prev3 block.           */
                 pp_prev4 = pp_prev3 + 1;
             }
             else
-            {	/* dx is a multiple of 16 */
+            {   /* dx is a multiple of 16 */
 
                 pp_prev2 = pp_prev1;
 
                 if ((dy&0xF) != 0)
-                {	/* dy is not a multiple of 16 */
+                {   /* dy is not a multiple of 16 */
 
                     /* pp_prev3 is the block below */
-                    /* pp_prev1 block.	       */
+                    /* pp_prev1 block.         */
                     pp_prev3 = pp_prev1 + mvwidth;
                 }
                 else
-                {	/* dy is a multiple of 16 */
+                {   /* dy is a multiple of 16 */
 
                     pp_prev3 = pp_prev1;
                     msk_deblock = 0x3;
@@ -209,7 +209,7 @@ extern "C"
             }
 
             /* Perform post processing semaphore propagation for each */
-            /* of the 4 blocks in a MB.				  */
+            /* of the 4 blocks in a MB.               */
             for (kk = 0; kk < 4; kk++)
             {
                 /* Deringing semaphore propagation */
@@ -234,7 +234,7 @@ extern "C"
 
         }
         else
-        {	/******************************/
+        {   /******************************/
             /* (x,y) is outside the frame */
             /******************************/
 
@@ -245,18 +245,18 @@ extern "C"
             *mv_loc = 1;
 
             /* Perform post processing semaphore propagation for each */
-            /* of the 4 blocks in a MB.				  */
+            /* of the 4 blocks in a MB.               */
             for (kk = 0; kk < 4; kk++)
             {
                 /* Calculate block x coordinate and round (?).  */
                 /* Divide by 16 is for converting half-pixel    */
-                /* resolution to block.				*/
+                /* resolution to block.             */
                 mmvx = (xpred + ((kk & 1) << 3)) >> 4;
                 nmvx = mmvx;
 
                 /* Calculate block y coordinate and round (?).  */
                 /* Divide by 16 is for converting half-pixel    */
-                /* resolution to block.				*/
+                /* resolution to block.             */
                 mmvy = (ypred + ((kk & 2) << 2)) >> 4;
                 nmvy = mmvy;
 
@@ -280,66 +280,66 @@ extern "C"
                 }
 
                 /* Find post processing semaphore location for block */
-                /* used for prediction, i.e., 			     */
-                /* pp_prev1 = &pstprcTypPrv[nmvy*mvwidth][nmvx]	     */
+                /* used for prediction, i.e.,                */
+                /* pp_prev1 = &pstprcTypPrv[nmvy*mvwidth][nmvx]      */
                 pp_prev1 = pstprcTypPrv + nmvx + nmvy * mvwidth;
 
                 /* Check if x component of MV is a multiple of 16    */
                 /* and check if block x coordinate is out of bounds  */
                 if (((dx&0xF) != 0) && (mmvx + 1 < mvwidth - 1))
-                {	/* dx is not a multiple of 16 and the block */
+                {   /* dx is not a multiple of 16 and the block */
                     /* x coordinate is within the bounds        */
 
                     /* pp_prev2 is the block to the right of */
-                    /* pp_prev1 block			 */
+                    /* pp_prev1 block            */
                     pp_prev2 = pp_prev1 + 1;
 
                     /* Check if y component of MV is a multiple */
                     /* of 16 and check if block y coordinate is */
-                    /* out of bounds			    */
+                    /* out of bounds                */
                     if (((dy&0xF) != 0) && (mmvy + 1 < (height >> 3) - 1))
-                    {	/* dy is not a multiple of 16 and */
+                    {   /* dy is not a multiple of 16 and */
                         /* the block y coordinate is      */
                         /* within the bounds              */
 
                         /* pp_prev3 is the block below */
-                        /* pp_prev1 block	       */
+                        /* pp_prev1 block          */
                         pp_prev3 = pp_prev1 + mvwidth;
 
                         /* all prediction are from different blocks */
                         msk_deblock = 0x3;
                     }
                     else
-                    {	/* dy is a multiple of 16 or the block */
+                    {   /* dy is a multiple of 16 or the block */
                         /* y coordinate is out of bounds       */
 
                         pp_prev3 = pp_prev1;
                     }
 
                     /* pp_prev4 is the block to the right of */
-                    /* pp_prev3 block.			 */
+                    /* pp_prev3 block.           */
                     pp_prev4 = pp_prev3 + 1;
                 }
                 else
-                {	/* dx is a multiple of 16 or the block x */
+                {   /* dx is a multiple of 16 or the block x */
                     /* coordinate is out of bounds           */
 
                     pp_prev2 = pp_prev1;
 
                     /* Check if y component of MV is a multiple */
                     /* of 16 and check if block y coordinate is */
-                    /* out of bounds			    */
+                    /* out of bounds                */
                     if (((dy&0xF) != 0) && (mmvy + 1 < (height >> 3) - 1))
-                    {	/* dy is not a multiple of 16 and */
+                    {   /* dy is not a multiple of 16 and */
                         /* the block y coordinate is      */
                         /* within the bounds              */
 
                         /* pp_prev3 is the block below */
-                        /* pp_prev1 block.	       */
+                        /* pp_prev1 block.         */
                         pp_prev3 = pp_prev1 + mvwidth;
                     }
                     else
-                    {	/* dy is a multiple of 16 or the block */
+                    {   /* dy is a multiple of 16 or the block */
                         /* y coordinate is out of bounds       */
 
                         pp_prev3 = pp_prev1;

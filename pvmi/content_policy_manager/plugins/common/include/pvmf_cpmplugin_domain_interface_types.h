@@ -113,16 +113,16 @@ class PVMFCPMDomainJoinData
                 , iCustomDataLen(0)
         {}
 
-        OSCL_String* iDomainUrl;	//the domain server URL
+        OSCL_String* iDomainUrl;    //the domain server URL
 
-        uint32 iFlags;				//Flag that indicates the type of custom data.
+        uint32 iFlags;              //Flag that indicates the type of custom data.
 
-        PVMFCPMDomainId iDomainId;	//Domain ID to be registered with the server.
+        PVMFCPMDomainId iDomainId;  //Domain ID to be registered with the server.
 
-        OSCL_String* iFriendlyName;	//Pointer to the friendly name. Can be NULL.
+        OSCL_String* iFriendlyName; //Pointer to the friendly name. Can be NULL.
 
-        uint8* iCustomData;			//Optional custom data.  Can be NULL
-        uint32 iCustomDataLen;		//length of the custom data in bytes.
+        uint8* iCustomData;         //Optional custom data.  Can be NULL
+        uint32 iCustomDataLen;      //length of the custom data in bytes.
 };
 
 //Data associated with a Domain Leave request
@@ -136,17 +136,17 @@ class PVMFCPMDomainLeaveData
                 , iCustomDataLen(0)
         {}
 
-        OSCL_String* iDomainUrl;	//Domain URL.
+        OSCL_String* iDomainUrl;    //Domain URL.
 
-        uint32 iFlags;				//Flag that indicates the type of custom data.
+        uint32 iFlags;              //Flag that indicates the type of custom data.
 
-        PVMFCPMDomainId iDomainId;	//Domain ID to be unregistered with the server.
+        PVMFCPMDomainId iDomainId;  //Domain ID to be unregistered with the server.
 
-        uint8* iCustomData;			//Pointer to a buffer that contains the custom data
+        uint8* iCustomData;         //Pointer to a buffer that contains the custom data
         //sent to the server. The format of the custom data
         //is based on the value of iFlags. It may be NULL.
 
-        uint32 iCustomDataLen;		//Size (in bytes) of the custom data buffer.
+        uint32 iCustomDataLen;      //Size (in bytes) of the custom data buffer.
         //It must be 0 if iCustomData is NULL.
 };
 

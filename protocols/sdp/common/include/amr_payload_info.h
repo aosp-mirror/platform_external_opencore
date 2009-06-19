@@ -121,14 +121,14 @@ class AmrPayloadSpecificInfoType : public PayloadSpecificInfoTypeBase
 
 
     private:
-        int		amr_codecModeList;
-        int		amr_modeChangePeriod;
-        bool	amr_modeChangeNeighbor;
-        int		amr_maximumPTime;
-        bool	amr_robustSorting;
-        bool	amr_octetAlign;
-        bool	amr_CRC;
-        int		amr_interLeaving;
+        int     amr_codecModeList;
+        int     amr_modeChangePeriod;
+        bool    amr_modeChangeNeighbor;
+        int     amr_maximumPTime;
+        bool    amr_robustSorting;
+        bool    amr_octetAlign;
+        bool    amr_CRC;
+        int     amr_interLeaving;
 };
 
 #endif

@@ -83,8 +83,8 @@ enum OMA1_DLA_TESTMODE
  *             -# CreatePlayer()
  *             -# AddDataSource()
  *             -# Init() will Fail depending on the TestMode chosen
- *	       -# Query License
- *	       -# Acquire License
+ *         -# Query License
+ *         -# Acquire License
  *             -# AddDataSink() (video)
  *             -# AddDataSink() (audio)
  *             -# Prepare()

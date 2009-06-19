@@ -33,7 +33,7 @@
 
 /*
  * License types fall into following categories:
- *	- time based (has an start and end time)
+ *  - time based (has an start and end time)
  *  - duration based (a certain amount of time since first use)
  *  - count based
  *  - or a combination of both
@@ -55,20 +55,20 @@
  * The format is as follows. Exactly the components shown here must be present,
  * with exactly this punctuation. Note that the "T" appears literally in the string.
  * to indicate the beginning of the time element, as specified in ISO 8601.
- *		Year:
- *			YYYY (eg 1997)
- *		Year and month:
- *			YYYY-MM (eg 1997-07)
- *		Complete date:
- *			YYYY-MM-DD (eg 1997-07-16)
- *		Complete date plus hours and minutes:
- *			YYYY-MM-DDThh:mmTZD (eg 1997-07-16T19:20+01:00)
- *		Complete date plus hours, minutes and seconds:
- *			YYYY-MM-DDThh:mm:ssTZD (eg 1997-07-16T19:20:30+01:00)
- *		Complete date plus hours, minutes, seconds and a decimal fraction of a
- *		second
- *			YYYY-MM-DDThh:mm:ss.sTZD (eg 1997-07-16T19:20:30.45+01:00)
- *	where:
+ *      Year:
+ *          YYYY (eg 1997)
+ *      Year and month:
+ *          YYYY-MM (eg 1997-07)
+ *      Complete date:
+ *          YYYY-MM-DD (eg 1997-07-16)
+ *      Complete date plus hours and minutes:
+ *          YYYY-MM-DDThh:mmTZD (eg 1997-07-16T19:20+01:00)
+ *      Complete date plus hours, minutes and seconds:
+ *          YYYY-MM-DDThh:mm:ssTZD (eg 1997-07-16T19:20:30+01:00)
+ *      Complete date plus hours, minutes, seconds and a decimal fraction of a
+ *      second
+ *          YYYY-MM-DDThh:mm:ss.sTZD (eg 1997-07-16T19:20:30.45+01:00)
+ *  where:
  *  YYYY = four-digit year
  *  MM   = two-digit month (01=January, etc.)
  *  DD   = two-digit day of month (01 through 31)
@@ -79,10 +79,10 @@
  *  TZD  = time zone designator (Z or +hh:mm or -hh:mm)
  *
  * This profile defines two ways of handling time zone offsets:
- *		- Times are expressed in UTC (Coordinated Universal Time),
+ *      - Times are expressed in UTC (Coordinated Universal Time),
  *      with a special UTC designator ("Z").
  *
- *		- Times are expressed in local time, together with a time zone offset
+ *      - Times are expressed in local time, together with a time zone offset
  *      in hours and minutes. A time zone offset of "+hh:mm" indicates that
  *      the date/time uses a local time zone which is "hh" hours and "mm"
  *      minutes ahead of UTC. A time zone offset of "-hh:mm" indicates that

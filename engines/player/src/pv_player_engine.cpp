@@ -1217,7 +1217,7 @@ void PVPlayerEngine::Run()
      *    Either start error handling or complete it.
      *    (ii) If Engine has Reset or CancelAllCommands in CurrentCommandQueue,
      *    engine will do CommandComplete for the CurrentCommand.
-     *	  (iii) If Engine has Prepare in CurrentCommandQueue, engine will call DoPrepare again
+     *    (iii) If Engine has Prepare in CurrentCommandQueue, engine will call DoPrepare again
      *    as a part of track selection logic
      *    (iv) If Engine has CancelAllCommands or CancelAcquireLicense in Pending CommandQueue,
      *    engine will start Cancel commands.
@@ -2864,7 +2864,7 @@ void PVPlayerEngine::ThreadSafeQueueDataAvailable(ThreadSafeQueue* aQueue)
 
     //pull all available data off the thread-safe queue and transfer
     //it to the internal queue.
-    for (uint32 ndata = 1;ndata;)
+    for (uint32 ndata = 1; ndata;)
     {
         ThreadSafeQueueId id;
         OsclAny* data;
@@ -5350,11 +5350,11 @@ PVMFStatus PVPlayerEngine::DoSourceNodeGetLicense(PVCommandId aCmdId, OsclAny* a
 
     if (iNumPendingNodeCmd <= 0)
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,	(0, "PVPlayerEngine::DoSourceNodeGetLicense() Out No pending QueryInterface() on source node"));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::DoSourceNodeGetLicense() Out No pending QueryInterface() on source node"));
         return PVMFFailure;
     }
 
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,	(0, "PVPlayerEngine::DoSourceNodeGetLicense() Out"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::DoSourceNodeGetLicense() Out"));
     return PVMFSuccess;
 }
 
@@ -6483,7 +6483,7 @@ PVMFStatus PVPlayerEngine::DoSinkNodeQueryCapConfigIF(PVCommandId aCmdId, OsclAn
         iTrackSelectionList.push_back(trackSelection);
     }
 
-    for (i = 0;i < iDatapathList.size(); ++i)
+    for (i = 0; i < iDatapathList.size(); ++i)
     {
         // Destroy the track info if present
         if (iDatapathList[i].iTrackInfo)
@@ -9326,7 +9326,7 @@ PVMFStatus PVPlayerEngine::DoSourceDataReadyAutoResume(PVPlayerEngineCommand& aC
             // Change state back to PREPARED, since Underflow and Dataready cancel each other out.
             // Wait for Start command from App to Start the clock and change state to STARTED.
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "PVPlayerEngine::DoSourceDataReadyAutoResume: DataReady rcvd in PVP_ENGINE_STATE_AUTO_PAUSED state. Set state back to PREPARED."));
+                            (0, "PVPlayerEngine::DoSourceDataReadyAutoResume: DataReady rcvd in PVP_ENGINE_STATE_AUTO_PAUSED state. Set state back to PREPARED."));
             SetEngineState(PVP_ENGINE_STATE_PREPARED);
         }
         else
@@ -10559,7 +10559,7 @@ PVMFStatus PVPlayerEngine::DoGetPlayerParameter(PvmiKvp*& aParameters, int& aNum
             }
             break;
 
-        case PBPOS_INTERVAL:	// "pbpos_interval"
+        case PBPOS_INTERVAL:    // "pbpos_interval"
             if (reqattr == PVMI_KVPATTR_CUR)
             {
                 // Return current value
@@ -10587,7 +10587,7 @@ PVMFStatus PVPlayerEngine::DoGetPlayerParameter(PvmiKvp*& aParameters, int& aNum
             }
             break;
 
-        case ENDTIMECHECK_INTERVAL:	// "endtimecheck_interval"
+        case ENDTIMECHECK_INTERVAL: // "endtimecheck_interval"
             if (reqattr == PVMI_KVPATTR_CUR)
             {
                 // Return current value
@@ -10615,7 +10615,7 @@ PVMFStatus PVPlayerEngine::DoGetPlayerParameter(PvmiKvp*& aParameters, int& aNum
             }
             break;
 
-        case SEEKTOSYNCPOINT:	// "seektosyncpoint"
+        case SEEKTOSYNCPOINT:   // "seektosyncpoint"
             if (reqattr == PVMI_KVPATTR_CUR)
             {
                 // Return current value
@@ -10633,7 +10633,7 @@ PVMFStatus PVPlayerEngine::DoGetPlayerParameter(PvmiKvp*& aParameters, int& aNum
             }
             break;
 
-        case SKIPTOREQUESTEDPOSITION:	// "skiptorequestedpos"
+        case SKIPTOREQUESTEDPOSITION:   // "skiptorequestedpos"
             if (reqattr == PVMI_KVPATTR_CUR)
             {
                 // Return current value
@@ -10651,7 +10651,7 @@ PVMFStatus PVPlayerEngine::DoGetPlayerParameter(PvmiKvp*& aParameters, int& aNum
             }
             break;
 
-        case SYNCPOINTSEEKWINDOW:	// "syncpointseekwindow"
+        case SYNCPOINTSEEKWINDOW:   // "syncpointseekwindow"
             if (reqattr == PVMI_KVPATTR_CUR)
             {
                 // Return current value
@@ -10679,9 +10679,9 @@ PVMFStatus PVPlayerEngine::DoGetPlayerParameter(PvmiKvp*& aParameters, int& aNum
             }
             break;
 
-        case SYNCMARGIN_VIDEO:	// "syncmargin_video"
-        case SYNCMARGIN_AUDIO:	// "syncmargin_audio"
-        case SYNCMARGIN_TEXT:	// "syncmargin_text"
+        case SYNCMARGIN_VIDEO:  // "syncmargin_video"
+        case SYNCMARGIN_AUDIO:  // "syncmargin_audio"
+        case SYNCMARGIN_TEXT:   // "syncmargin_text"
         {
             range_int32* ri32 = (range_int32*)oscl_malloc(sizeof(range_int32));
             if (ri32 == NULL)
@@ -10732,7 +10732,7 @@ PVMFStatus PVPlayerEngine::DoGetPlayerParameter(PvmiKvp*& aParameters, int& aNum
         }
         break;
 
-        case NODECMD_TIMEOUT:	// "nodecmd_timeout"
+        case NODECMD_TIMEOUT:   // "nodecmd_timeout"
             if (reqattr == PVMI_KVPATTR_CUR)
             {
                 // Return current value
@@ -10760,7 +10760,7 @@ PVMFStatus PVPlayerEngine::DoGetPlayerParameter(PvmiKvp*& aParameters, int& aNum
             }
             break;
 
-        case NODEDATAQUEIUING_TIMEOUT:	// "nodedataqueuing_timeout"
+        case NODEDATAQUEIUING_TIMEOUT:  // "nodedataqueuing_timeout"
             if (reqattr == PVMI_KVPATTR_CUR)
             {
                 // Return current value
@@ -10788,7 +10788,7 @@ PVMFStatus PVPlayerEngine::DoGetPlayerParameter(PvmiKvp*& aParameters, int& aNum
             }
             break;
 
-        case PBPOS_ENABLE:	// "pbpos_enable"
+        case PBPOS_ENABLE:  // "pbpos_enable"
             if (reqattr == PVMI_KVPATTR_CUR)
             {
                 // Return current value
@@ -16540,10 +16540,10 @@ PVMFStatus PVPlayerEngine::SetupDataSourceForUnknownURLAccess()
          *  1) First Alternate source format would be PVMF_DATA_SOURCE_RTSP_URL,
          *  implying that we would attempt a RTSP streaming session
          *
-         *	2) Primary source format would be set to PVMF_DATA_SOURCE_HTTP_URL,
+         *  2) Primary source format would be set to PVMF_DATA_SOURCE_HTTP_URL,
          *  implying that we would attempt a progressive download first.
          *
-         *	3) Second Alternate source format would be PVMF_DATA_SOURCE_REAL_HTTP_CLOAKING_URL,
+         *  3) Second Alternate source format would be PVMF_DATA_SOURCE_REAL_HTTP_CLOAKING_URL,
          *  implying that we would attempt a real media cloaking session
          *
          *  4) Third alternate source format would be PVMF_DATA_SOURCE_MS_HTTP_STREAMING_URL,
@@ -17062,7 +17062,7 @@ PVMFStatus PVPlayerEngine::DoErrorHandling()
     // just send the error handling complete event
     SendInformationalEvent(PVMFInfoErrorHandlingComplete, NULL);
 
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,	(0, "PVPlayerEngine::DoErrorHandling() Out"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoErrorHandling() Out"));
 
     return PVMFSuccess;
 }

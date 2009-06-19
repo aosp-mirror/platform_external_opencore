@@ -58,7 +58,7 @@ OSCL_COND_EXPORT_REF OSCL_INLINE uint32 OsclTickCount::TickCount()
     struct timeval tv;
 
     static struct timeval stv = {0, 0};
-    static	uint32 prev_val = 0;
+    static  uint32 prev_val = 0;
 
     if ((0 == stv.tv_sec) && (0 == stv.tv_usec))
         gettimeofday(&stv, NULL);

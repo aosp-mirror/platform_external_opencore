@@ -35,7 +35,7 @@ terms listed above has been obtained from the copyright holder.
 
  Description: Added #ifdef __cplusplus after Include section.
 
- Who:						Date:
+ Who:                       Date:
  Description:
 
 ------------------------------------------------------------------------------
@@ -49,8 +49,8 @@ terms listed above has been obtained from the copyright holder.
 /*----------------------------------------------------------------------------
 ; CONTINUE ONLY IF NOT ALREADY DEFINED
 ----------------------------------------------------------------------------*/
-#ifndef	BYTESUSED_H
-#define	BYTESUSED_H
+#ifndef BYTESUSED_H
+#define BYTESUSED_H
 
 /*----------------------------------------------------------------------------
 ; INCLUDES

@@ -134,7 +134,7 @@ class BitStreamParser
     private:
         uint8* start;
         uint32 size;
-        uint8* bytepos;	//The current byte position in the stream.
+        uint8* bytepos; //The current byte position in the stream.
         uint8  bitpos;  //The current bit position of the current byte.  Counts down from 7 to 0.
 };
 

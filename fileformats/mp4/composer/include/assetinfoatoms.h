@@ -53,7 +53,7 @@ class PVA_FF_AssetInfoTitleAtom : public PVA_FF_FullAtom
             _title = aTitle;
             recomputeSize();
         }
-        virtual	void recomputeSize();
+        virtual void recomputeSize();
     private:
         uint16 _langCode;
         uint16  _byteOrderMask;
@@ -243,7 +243,7 @@ class PVA_FF_AssetInfoClassificationAtom : public PVA_FF_FullAtom
             recomputeSize();
         }
 
-        virtual	void recomputeSize();
+        virtual void recomputeSize();
     private:
         uint16 _langCode;
         uint16  _byteOrderMask;
@@ -377,15 +377,15 @@ class PVA_FF_AssetInfoAlbumAtom : public PVA_FF_FullAtom
             _albumTitle = aAlbumTitle;
             recomputeSize();
         }
-		void setAlbumTrackNumber(uint8 trackNumber)
-		{
-			_trackNumber = trackNumber;
-		}
-        virtual	void recomputeSize();
+        void setAlbumTrackNumber(uint8 trackNumber)
+        {
+            _trackNumber = trackNumber;
+        }
+        virtual void recomputeSize();
     private:
         uint16 _langCode;
         uint16  _byteOrderMask;
-		uint8 _trackNumber;
+        uint8 _trackNumber;
         PVA_FF_UNICODE_HEAP_STRING _albumTitle;
 };
 
@@ -402,7 +402,7 @@ class PVA_FF_AssetInfoRecordingYearAtom : public PVA_FF_FullAtom
             _recordingYear = aRecordingYear;
             recomputeSize();
         }
-        virtual	void recomputeSize();
+        virtual void recomputeSize();
     private:
         uint16 _recordingYear;
 };

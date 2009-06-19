@@ -120,7 +120,7 @@ void user_input_test::DisCmdFailed()
 void user_input_test::ConnectSucceeeded()
 {
     i324mConfigInterface = iH324MConfig;
-//		OSCL_TRY(error, i324mIFCommandId = terminal->QueryInterface(PVH324MConfigUuid, i324mConfigInterface,NULL));
+//      OSCL_TRY(error, i324mIFCommandId = terminal->QueryInterface(PVH324MConfigUuid, i324mConfigInterface,NULL));
     if (i324mConfigInterface == NULL)
     {
         test_is_true(false);

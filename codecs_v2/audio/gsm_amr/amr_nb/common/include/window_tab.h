@@ -32,7 +32,7 @@ terms listed above has been obtained from the copyright holder.
 ------------------------------------------------------------------------------
  REVISION HISTORY
 
- Who:						Date:
+ Who:                       Date:
  Description:
 
 ------------------------------------------------------------------------------
@@ -46,8 +46,8 @@ terms listed above has been obtained from the copyright holder.
 /*----------------------------------------------------------------------------
 ; CONTINUE ONLY IF NOT ALREADY DEFINED
 ----------------------------------------------------------------------------*/
-#ifndef	WINDOW_TAB_H
-#define	WINDOW_TAB_H
+#ifndef WINDOW_TAB_H
+#define WINDOW_TAB_H
 
 /*----------------------------------------------------------------------------
 ; INCLUDES

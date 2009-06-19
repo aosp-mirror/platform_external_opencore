@@ -24,10 +24,10 @@
 
 
 ///////////////////////////////////////////////////////////////////////////////////////
-const char HTTP_CHAR_CR 	 = 13;
-const char HTTP_CHAR_LF 	 = 10;
-const char HTTP_CHAR_NULL 	 = 0;
-const char HTTP_CHAR_COLON	 = ':';
+const char HTTP_CHAR_CR      = 13;
+const char HTTP_CHAR_LF      = 10;
+const char HTTP_CHAR_NULL    = 0;
+const char HTTP_CHAR_COLON   = ':';
 const char HTTP_CHAR_DOLLAR  = '$';
 const char HTTP_CHAR_SPACE   = ' ';
 const char HTTP_CHAR_SLASH   = '/';
@@ -44,16 +44,16 @@ const char HTTP_CHAR_EQUAL   = '=';
 //An array of strings corresponding to HTTPMethod enum
 static const char* const HTTPMethodString[] =
 {
-    "GET",		//METHOD_GET
-    "HEAD",		//METHOD_HEAD
-    "POST",		//METHOD_POST
-    "DELETE",	//METHOD_DELETE
-    "LINK",		//METHOD_LINK
-    "UNLINK",	//METHOD_UNLINK
-    "OPTIONS",	//METHOD_OPTIONS
-    "PUT",		//METHOD_PUT
-    "TRACE",	//METHOD_TRACE
-    "CONNECT",	//METHOD_CONNECT
+    "GET",      //METHOD_GET
+    "HEAD",     //METHOD_HEAD
+    "POST",     //METHOD_POST
+    "DELETE",   //METHOD_DELETE
+    "LINK",     //METHOD_LINK
+    "UNLINK",   //METHOD_UNLINK
+    "OPTIONS",  //METHOD_OPTIONS
+    "PUT",      //METHOD_PUT
+    "TRACE",    //METHOD_TRACE
+    "CONNECT",  //METHOD_CONNECT
 };
 
 // The following structure is an extension of OsclMemoryFragment with a differentation between memory usage and memory capacity
@@ -149,7 +149,7 @@ struct HTTPMemoryFragment
     }
     uint32 getAvailableSpace()
     {
-        return iCapacity -iLen;
+        return iCapacity - iLen;
     }
 
     // update length

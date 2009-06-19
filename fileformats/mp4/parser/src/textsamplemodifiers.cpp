@@ -44,7 +44,7 @@ TextStyleBox:: TextStyleBox(uint8  *buf) : Atom(buf)
 
         for (uint16 i = 0; i < _entryCount; i++)
         {
-            StyleRecord *pStyleRecord	= NULL;
+            StyleRecord *pStyleRecord   = NULL;
             PV_MP4_FF_NEW(fp->auditCB, StyleRecord, (buf), pStyleRecord);
             if (!pStyleRecord->MP4Success())
             {
@@ -141,7 +141,7 @@ TextKaraokeBox::TextKaraokeBox(uint8  *buf) : Atom(buf)
 {
     _pHighLightEndTimeVec = NULL;
     _pStartCharOffsetVec  = NULL;
-    _pEndCharOffsetVec	  = NULL;
+    _pEndCharOffsetVec    = NULL;
 
     if (_success)
     {
@@ -410,14 +410,14 @@ TextSampleModifiers:: TextSampleModifiers(uint8  *buf, uint32 size)
 {
     TimedTextModifiers *timedTextModifier = NULL;
 
-    timedTextModifier->value->_pBlinkBox			= NULL;
-    timedTextModifier->value->_pTextBoxBox			= NULL;
-    timedTextModifier->value->_pTextHighlightBox	= NULL;
-    timedTextModifier->value->_pTextHilightColorBox	= NULL;
-    timedTextModifier->value->_pTextHyperTextBox	= NULL;
-    timedTextModifier->value->_pTextKaraokeBox		= NULL;
-    timedTextModifier->value->_pTextScrollDelay		= NULL;
-    timedTextModifier->value->_pTextStyleBox		= NULL;
+    timedTextModifier->value->_pBlinkBox            = NULL;
+    timedTextModifier->value->_pTextBoxBox          = NULL;
+    timedTextModifier->value->_pTextHighlightBox    = NULL;
+    timedTextModifier->value->_pTextHilightColorBox = NULL;
+    timedTextModifier->value->_pTextHyperTextBox    = NULL;
+    timedTextModifier->value->_pTextKaraokeBox      = NULL;
+    timedTextModifier->value->_pTextScrollDelay     = NULL;
+    timedTextModifier->value->_pTextStyleBox        = NULL;
 
     _success = true;
 
@@ -658,7 +658,7 @@ TextSampleModifiers::~TextSampleModifiers()
 int32 geTextSampleModifiers::tNumTextStyleBoxes()
 {
     int32 styleboxcount = 0;
-    for (uint32 idx = 0; idx < _pTimedTextModifiersVec->size();idx++)
+    for (uint32 idx = 0; idx < _pTimedTextModifiersVec->size(); idx++)
     {
         if ((*_pTimedTextModifiersVec)[idx]->type == TEXT_STYLE)
             styleboxcount++;
@@ -669,7 +669,7 @@ int32 geTextSampleModifiers::tNumTextStyleBoxes()
 TextStyleBox* TextSampleModifiers::getTextStyleBoxAt(int32 index)
 {
     uint32 styleboxcount = 0;
-    for (uint32 idx = 0; idx < _pTimedTextModifiersVec->size();idx++)
+    for (uint32 idx = 0; idx < _pTimedTextModifiersVec->size(); idx++)
     {
         if ((*_pTimedTextModifiersVec)[idx]->type == TEXT_STYLE)
             styleboxcount++;
@@ -683,7 +683,7 @@ TextStyleBox* TextSampleModifiers::getTextStyleBoxAt(int32 index)
 int32 TextSampleModifiers::getNumTextHighlightBoxes()
 {
     int32 texthighlightboxcount = 0;
-    for (uint32 idx = 0; idx < _pTimedTextModifiersVec->size();idx++)
+    for (uint32 idx = 0; idx < _pTimedTextModifiersVec->size(); idx++)
     {
         if ((*_pTimedTextModifiersVec)[idx]->type == TEXT_HIGHLIGHT)
             texthighlightboxcount++;
@@ -694,7 +694,7 @@ int32 TextSampleModifiers::getNumTextHighlightBoxes()
 TextHighlightBox* TextSampleModifiers::getTextHighlightBoxAt(int32 index)
 {
     uint32 texthighlightboxcount = 0;
-    for (uint32 idx = 0; idx < _pTimedTextModifiersVec->size();idx++)
+    for (uint32 idx = 0; idx < _pTimedTextModifiersVec->size(); idx++)
     {
         if ((*_pTimedTextModifiersVec)[idx]->type == TEXT_HIGHLIGHT)
             texthighlightboxcount++;
@@ -708,7 +708,7 @@ TextHighlightBox* TextSampleModifiers::getTextHighlightBoxAt(int32 index)
 int32 TextSampleModifiers::getNumTextKaraokeBoxes()
 {
     int32 textkoraokboxcount = 0;
-    for (uint32 idx = 0; idx < _pTimedTextModifiersVec->size();idx++)
+    for (uint32 idx = 0; idx < _pTimedTextModifiersVec->size(); idx++)
     {
         if ((*_pTimedTextModifiersVec)[idx]->type == TEXT_KARAOKE)
             textkoraokboxcount ++;
@@ -719,7 +719,7 @@ int32 TextSampleModifiers::getNumTextKaraokeBoxes()
 TextKaraokeBox* TextSampleModifiers::getTextKaraokeBoxAt(int32 index)
 {
     uint32 textkoraokboxcount = 0;
-    for (uint32 idx = 0; idx < _pTimedTextModifiersVec->size();idx++)
+    for (uint32 idx = 0; idx < _pTimedTextModifiersVec->size(); idx++)
     {
         if ((*_pTimedTextModifiersVec)[idx]->type == TEXT_KARAOKE)
             textkoraokboxcount++;
@@ -733,7 +733,7 @@ TextKaraokeBox* TextSampleModifiers::getTextKaraokeBoxAt(int32 index)
 int32 TextSampleModifiers::getNumTextHyperTextBoxes()
 {
     int32 texthypertextboxcount = 0;
-    for (uint32 idx = 0; idx < _pTimedTextModifiersVec->size();idx++)
+    for (uint32 idx = 0; idx < _pTimedTextModifiersVec->size(); idx++)
     {
         if ((*_pTimedTextModifiersVec)[idx]->type == TEXT_HYPERTEXT)
             texthypertextboxcount ++;
@@ -744,7 +744,7 @@ int32 TextSampleModifiers::getNumTextHyperTextBoxes()
 TextHyperTextBox* TextSampleModifiers::getTextHyperTextBoxAt(int32 index)
 {
     uint32 texthypertextboxcount = 0;
-    for (uint32 idx = 0; idx < _pTimedTextModifiersVec->size();idx++)
+    for (uint32 idx = 0; idx < _pTimedTextModifiersVec->size(); idx++)
     {
         if ((*_pTimedTextModifiersVec)[idx]->type == TEXT_HYPERTEXT)
             texthypertextboxcount++;
@@ -759,7 +759,7 @@ TextHyperTextBox* TextSampleModifiers::getTextHyperTextBoxAt(int32 index)
 int32 TextSampleModifiers::getNumTextBlinkBoxes()
 {
     int32 textblinkboxcount = 0;
-    for (uint32 idx = 0; idx < _pTimedTextModifiersVec->size();idx++)
+    for (uint32 idx = 0; idx < _pTimedTextModifiersVec->size(); idx++)
     {
         if ((*_pTimedTextModifiersVec)[idx]->type == TEXT_BLINK)
             textblinkboxcount ++;
@@ -771,7 +771,7 @@ int32 TextSampleModifiers::getNumTextBlinkBoxes()
 BlinkBox* TextSampleModifiers::getTextBlinkBoxAt(int32 index)
 {
     uint32 textblinkboxcount = 0;
-    for (uint32 idx = 0; idx < _pTimedTextModifiersVec->size();idx++)
+    for (uint32 idx = 0; idx < _pTimedTextModifiersVec->size(); idx++)
     {
         if ((*_pTimedTextModifiersVec)[idx]->type == TEXT_BLINK)
             textblinkboxcount++;
@@ -784,7 +784,7 @@ BlinkBox* TextSampleModifiers::getTextBlinkBoxAt(int32 index)
 
 TextHilightColorBox* TextSampleModifiers::getTextHilightColorBox()
 {
-    for (uint32 idx = 0; idx < _pTimedTextModifiersVec->size();idx++)
+    for (uint32 idx = 0; idx < _pTimedTextModifiersVec->size(); idx++)
     {
         if ((*_pTimedTextModifiersVec)[idx]->type == TEXT_WRAP)
         {
@@ -796,7 +796,7 @@ TextHilightColorBox* TextSampleModifiers::getTextHilightColorBox()
 
 TextScrollDelay* TextSampleModifiers::getTextScrollDelayBox();
 {
-    for (uint32 idx = 0; idx < _pTimedTextModifiersVec->size();idx++)
+    for (uint32 idx = 0; idx < _pTimedTextModifiersVec->size(); idx++)
     {
         if ((*_pTimedTextModifiersVec)[idx]->type == TEXT_SCROLL_DELAY)
         {
@@ -809,7 +809,7 @@ TextScrollDelay* TextSampleModifiers::getTextScrollDelayBox();
 
 TextBoxBox* TextSampleModifiers::getTextOverideBox()
 {
-    for (uint32 idx = 0; idx < _pTimedTextModifiersVec->size();idx++)
+    for (uint32 idx = 0; idx < _pTimedTextModifiersVec->size(); idx++)
     {
         if ((*_pTimedTextModifiersVec)[idx]->type == TEXT_BOX)
         {

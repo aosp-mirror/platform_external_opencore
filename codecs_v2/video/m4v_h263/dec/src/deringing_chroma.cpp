@@ -15,8 +15,8 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-#include 	"mp4dec_lib.h"
-#include 	"post_proc.h"
+#include    "mp4dec_lib.h"
+#include    "post_proc.h"
 
 #ifdef PV_POSTPROC_ON
 
@@ -52,7 +52,7 @@ void Deringing_Chroma(
     ----------------------------------------------------------------------------*/
     /* chrominance */
     /* Do the first line (7 pixels at a time => Don't use MMX)*/
-    for (h_blk = 0;h_blk < width;h_blk += BLKSIZE)
+    for (h_blk = 0; h_blk < width; h_blk += BLKSIZE)
     {
         max_diff = (QP_store[h_blk>>3] >> 2) + 4;
         ptr = &Rec_C[h_blk];
@@ -65,7 +65,7 @@ void Deringing_Chroma(
             thres = (max_blk + min_blk + 1) >> 1;
 
 
-            for (v_pel = 1;v_pel < BLKSIZE - 1;v_pel++)
+            for (v_pel = 1; v_pel < BLKSIZE - 1; v_pel++)
             {
                 addr_v = (int32)v_pel * width;
                 ptr = &Rec_C[addr_v + h0 - 1];
@@ -86,7 +86,7 @@ void Deringing_Chroma(
                 *ptr2++ = pelu + (pelc << 1) + pell;
                 *ptr3++ = INDEX(pelu, thres) + INDEX(pelc, thres) + INDEX(pell, thres);
 
-                for (h_pel = h0;h_pel < h_blk + BLKSIZE - 1;h_pel++)
+                for (h_pel = h0; h_pel < h_blk + BLKSIZE - 1; h_pel++)
                 {
                     pelu = *(ptr - width);
                     pelc = *ptr;
@@ -118,7 +118,7 @@ void Deringing_Chroma(
         }
     }
 
-    for (v_blk = BLKSIZE;v_blk < height;v_blk += BLKSIZE)
+    for (v_blk = BLKSIZE; v_blk < height; v_blk += BLKSIZE)
     {
         v0 = v_blk - 1;
         /* Do the first block (pixels=7 => No MMX) */
@@ -131,7 +131,7 @@ void Deringing_Chroma(
         {
             thres = (max_blk + min_blk + 1) >> 1;
 
-            for (v_pel = v0;v_pel < v_blk + BLKSIZE - 1;v_pel++)
+            for (v_pel = v0; v_pel < v_blk + BLKSIZE - 1; v_pel++)
             {
                 addr_v = v_pel * width;
                 ptr = &Rec_C[addr_v];
@@ -152,7 +152,7 @@ void Deringing_Chroma(
                 *ptr2++ = pelu + (pelc << 1) + pell;
                 *ptr3++ = INDEX(pelu, thres) + INDEX(pelc, thres) + INDEX(pell, thres);
 
-                for (h_pel = 1;h_pel < BLKSIZE - 1;h_pel++)
+                for (h_pel = 1; h_pel < BLKSIZE - 1; h_pel++)
                 {
                     pelu = *(ptr - width);
                     pelc = *ptr;
@@ -185,7 +185,7 @@ void Deringing_Chroma(
 
 
         /* Do the rest in MMX */
-        for (h_blk = BLKSIZE;h_blk < width;h_blk += BLKSIZE)
+        for (h_blk = BLKSIZE; h_blk < width; h_blk += BLKSIZE)
         {
             if ((pp_mod[(v_blk/8)*(width/8)+h_blk/8]&0x4) != 0)
             {

@@ -92,27 +92,27 @@
 
 #define PVMF_AMR_PARSER_NODE_NEW(auditCB,T,params,ptr)\
 {\
-	ptr = OSCL_NEW(T,params);\
+    ptr = OSCL_NEW(T,params);\
 }
 
 #define PVMF_AMR_PARSER_NODE_DELETE(auditCB,T,ptr)\
 {\
-	OSCL_DELETE(ptr);\
+    OSCL_DELETE(ptr);\
 }
 
 #define PVMF_AMR_PARSER_NODE_TEMPLATED_DELETE(auditCB, T, Tsimple, ptr)\
 {\
-	OSCL_DELETE(ptr);\
+    OSCL_DELETE(ptr);\
 }
 
 #define PV_AMR_PARSER_NODE_ARRAY_NEW(auditCB, T, count, ptr)\
 {\
-	ptr = OSCL_ARRAY_NEW(T, count);\
+    ptr = OSCL_ARRAY_NEW(T, count);\
 }
 
 #define PV_AMR_PARSER_NODE_ARRAY_DELETE(auditCB, ptr)\
 {\
-	OSCL_ARRAY_DELETE(ptr);\
+    OSCL_ARRAY_DELETE(ptr);\
 }
 
 
@@ -217,7 +217,7 @@ class PVMFAMRFFNodeCommand : public PVMFAMRFFNodeCommandBase
         }
 
         // Constructor and parser for QueryDataSourcePosition
-        void Construct(PVMFSessionId s, int32 cmd, PVMFTimestamp aTargetNPT, PVMFTimestamp& aActualNPT,	bool aSeekToSyncPoint, const OsclAny*aContext)
+        void Construct(PVMFSessionId s, int32 cmd, PVMFTimestamp aTargetNPT, PVMFTimestamp& aActualNPT, bool aSeekToSyncPoint, const OsclAny*aContext)
         {
             PVMFAMRFFNodeCommandBase::Construct(s, cmd, aContext);
             iParam1 = (OsclAny*)aTargetNPT;
@@ -374,16 +374,16 @@ class PVMFAMRFFParserOutPort;
 class PVLogger;
 
 class PVMFAMRFFParserNode :  public OsclTimerObject
-            , public PVMFNodeInterface
-            , public PVMFDataSourceInitializationExtensionInterface
-            , public PVMFTrackSelectionExtensionInterface
-            , public PvmfDataSourcePlaybackControlInterface
-            , public PVMFMetadataExtensionInterface
-            , public PVMFCPMStatusObserver
-            , public PVMIDatastreamuserInterface
-            , public PvmiDataStreamObserver
-            , public PVMFFormatProgDownloadSupportInterface
-            , public PVMFCPMPluginLicenseInterface
+        , public PVMFNodeInterface
+        , public PVMFDataSourceInitializationExtensionInterface
+        , public PVMFTrackSelectionExtensionInterface
+        , public PvmfDataSourcePlaybackControlInterface
+        , public PVMFMetadataExtensionInterface
+        , public PVMFCPMStatusObserver
+        , public PVMIDatastreamuserInterface
+        , public PvmiDataStreamObserver
+        , public PVMFFormatProgDownloadSupportInterface
+        , public PVMFCPMPluginLicenseInterface
 {
     public:
         PVMFAMRFFParserNode(int32 aPriority = OsclActiveObject::EPriorityNominal);

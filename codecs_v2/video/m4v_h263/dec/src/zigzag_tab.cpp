@@ -16,9 +16,9 @@
  * -------------------------------------------------------------------
  */
 
-#include	"mp4dec_api.h"
-#include	"mp4def.h"
-#include	"zigzag.h"
+#include    "mp4dec_api.h"
+#include    "mp4def.h"
+#include    "zigzag.h"
 /*----------------------------------------------------------------------------
 ; MACROS
 ; Define module specific macros here

@@ -82,7 +82,7 @@ void MultiplexEntrySendMgr::MultiplexEntrySendReject(PS_MultiplexEntrySendReject
 
 void MultiplexEntrySendMgr::T104Timeout()
 {
-//	Print("MultiplexEntrySendMgr::TimeoutOccurred Error: T104 timer timed out for sn(%d)",iSn);
+//  Print("MultiplexEntrySendMgr::TimeoutOccurred Error: T104 timer timed out for sn(%d)",iSn);
     StatusWrite(MT_OUTGOING_IDLE) ;
     iUtil->MsgMtRlsSend(iOutMTEntries) ;
     iUtil->PtvRjtIdcSend(S_InfHeader::OUTGOING, Src_PROTOCOL , NULL, iSn) ;
@@ -400,10 +400,10 @@ void MT::MsgMtSend(PS_MuxDescriptor p_MuxDescriptor, uint8 sn)
 /************************************************************************/
 void MT::MsgMtAckSend(uint32 sequenceNumber, PS_MuxDescriptor pMux)
 {
-    S_MultiplexEntrySendAck		multiplexEntrySendAck ;
-    uint32						multiplexTableEntryNumber[15];
-    S_H245Msg					h245Msg ;
-    uint32						i, numEntries;
+    S_MultiplexEntrySendAck     multiplexEntrySendAck ;
+    uint32                      multiplexTableEntryNumber[15];
+    S_H245Msg                   h245Msg ;
+    uint32                      i, numEntries;
 
     numEntries = pMux->size_of_multiplexEntryDescriptors;
 
@@ -411,7 +411,7 @@ void MT::MsgMtAckSend(uint32 sequenceNumber, PS_MuxDescriptor pMux)
     multiplexEntrySendAck.size_of_multiplexTableEntryNumber = (uint16) numEntries;
 
     // Copy the entry numbers into the MESAck codeword... (RAN-MT)
-    for (i = 0;i < numEntries && i < 15;++i)
+    for (i = 0; i < numEntries && i < 15; ++i)
     {
         multiplexTableEntryNumber[i] = pMux->multiplexEntryDescriptors[i].multiplexTableEntryNumber;
     }
@@ -602,7 +602,7 @@ void MT::PtvTrfCfmSend(int32 sn)
 
 #ifdef PVANALYZER /* --------SE Analyzer Tool -------- */
 
-#define ANALYZER_SE 0x0020		// (Assume tag is fixed)
+#define ANALYZER_SE 0x0020      // (Assume tag is fixed)
 void Show245(uint16 tag, uint16 indent, char *inString);
 
 // =========================================================

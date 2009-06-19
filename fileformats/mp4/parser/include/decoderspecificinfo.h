@@ -17,7 +17,7 @@
  */
 /*
     This DecoderSpecificInfo Class that holds the Mpeg4 VOL header for the
-	video stream
+    video stream
 */
 
 #ifndef DECODERSPECIFICINFO_H_INCLUDED

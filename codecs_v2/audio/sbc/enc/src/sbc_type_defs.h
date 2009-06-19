@@ -15,8 +15,8 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-#ifndef		__SBC_TYPE_DEFS__
-#define		__SBC_TYPE_DEFS__
+#ifndef     __SBC_TYPE_DEFS__
+#define     __SBC_TYPE_DEFS__
 
 #ifdef __cplusplus
 extern "C"
@@ -27,7 +27,7 @@ extern "C"
     /*********************************************
      * Include files
      *********************************************/
-#include	"oscl_types.h"
+#include    "oscl_types.h"
 
     /*********************************************
      * Defines
@@ -37,11 +37,11 @@ extern "C"
      *==== TRUE / FALSE ===========================================================*
      *=============================================================================*/
 #ifndef FALSE
-#	define                  FALSE                           0
+#   define                  FALSE                           0
 #endif
 
 #ifndef TRUE
-#	define                  TRUE                            1
+#   define                  TRUE                            1
 #endif
 
     /*=============================================================================*
@@ -59,11 +59,11 @@ extern "C"
      *==== EXIT_SUCCESS / EXIT_FAILURE=============================================*
      *=============================================================================*/
 #ifndef EXIT_SUCCESS
-#	define                  EXIT_SUCCESS                    0
+#   define                  EXIT_SUCCESS                    0
 #endif
 
 #ifndef EXIT_FAILURE
-#	define		            EXIT_FAILURE                    1
+#   define                  EXIT_FAILURE                    1
 #endif
 
     /*----------------------------------------------------*
@@ -122,7 +122,7 @@ extern "C"
 }
 #endif
 
-#endif		/* __SYSTEM__ */
+#endif      /* __SYSTEM__ */
 
 /*******************************************************************************
  *                                  END OF FILE

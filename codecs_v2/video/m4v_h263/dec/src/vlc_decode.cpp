@@ -55,32 +55,32 @@
 
 /***********************************************************HeaderBegin*******
 *
-* File:	vlc_dec.c
+* File: vlc_dec.c
 *
-* Author:	Paulo Nunes (IST) - Paulo.Nunes@lx.it.pt
-* Created:	1-Mar-96
+* Author:   Paulo Nunes (IST) - Paulo.Nunes@lx.it.pt
+* Created:  1-Mar-96
 *
 * Description: This file contains the VLC functions needed to decode a
-*		bitstream.
+*       bitstream.
 *
 * Notes:
-*		The functions contained in this file were adapted from
-*		tmndecode
-* 		Written by Karl Olav Lillevold <kol@nta.no>,
-*		1995 Telenor R&D.
-* 		Donated to the Momusys-project as background code by
-*		Telenor.
+*       The functions contained in this file were adapted from
+*       tmndecode
+*       Written by Karl Olav Lillevold <kol@nta.no>,
+*       1995 Telenor R&D.
+*       Donated to the Momusys-project as background code by
+*       Telenor.
 *
-*		based on mpeg2decode, (C) 1994, MPEG Software Simulation Group
-*		and mpeg2play, (C) 1994 Stefan Eckart
-*					<stefan@lis.e-technik.tu-muenchen.de>
+*       based on mpeg2decode, (C) 1994, MPEG Software Simulation Group
+*       and mpeg2play, (C) 1994 Stefan Eckart
+*                   <stefan@lis.e-technik.tu-muenchen.de>
 *
 *
-* Modified:	9-May-96 Paulo Nunes: Reformatted. New headers.
+* Modified: 9-May-96 Paulo Nunes: Reformatted. New headers.
 *              17-Jan-97 Jan De Lameillieure (HHI) : corrected in
 *              01.05.97 Luis Ducla-Soares: added RvlcDecTCOEF() to allow decoding
 *                                          of Reversible VLCs.
-*		09.03.98 Paulo Nunes: Cleaning.
+*       09.03.98 Paulo Nunes: Cleaning.
 *
 ***********************************************************HeaderEnd*********/
 
@@ -92,13 +92,13 @@
 
 
 /* ====================================================================== /
-	Function : DecodeUserData()
-	Date     : 04/10/2000
-	History  :
-	Modified : 04/16/2001 : removed status checking of PV_BitstreamFlushBits
+    Function : DecodeUserData()
+    Date     : 04/10/2000
+    History  :
+    Modified : 04/16/2001 : removed status checking of PV_BitstreamFlushBits
 
-		This is simply a realization of the user_data() function
-		in the ISO/IEC 14496-2 manual.
+        This is simply a realization of the user_data() function
+        in the ISO/IEC 14496-2 manual.
 / ====================================================================== */
 PV_STATUS DecodeUserData(BitstreamDecVideo *stream)
 {
@@ -123,10 +123,10 @@ PV_STATUS DecodeUserData(BitstreamDecVideo *stream)
 
 /***********************************************************CommentBegin******
 *
-*		3/10/00  : initial modification to the
-*				 new PV-Decoder Lib format.
-*		3/29/00  : added return code check to some functions and
-*				 optimize the code.
+*       3/10/00  : initial modification to the
+*                new PV-Decoder Lib format.
+*       3/29/00  : added return code check to some functions and
+*                optimize the code.
 *
 ***********************************************************CommentEnd********/
 PV_STATUS PV_GetMBvectors(VideoDecData *video, uint mode)
@@ -258,10 +258,10 @@ PV_STATUS PV_GetMBvectors(VideoDecData *video, uint mode)
 
 
 /***********************************************************CommentBegin******
-*		3/10/00  : initial modification to the
-*				 new PV-Decoder Lib format.
-*		3/29/00  : added return code check to some functions
-*		5/10/00  : check whether the decoded vector is legal.
+*       3/10/00  : initial modification to the
+*                new PV-Decoder Lib format.
+*       3/29/00  : added return code check to some functions
+*       5/10/00  : check whether the decoded vector is legal.
 *       4/17/01  : use MOT type
 ***********************************************************CommentEnd********/
 PV_STATUS PV_DecodeMBVec(BitstreamDecVideo *stream, MOT *mv_x, MOT *mv_y, int f_code_f)
@@ -311,9 +311,9 @@ PV_STATUS PV_DecodeMBVec(BitstreamDecVideo *stream, MOT *mv_x, MOT *mv_y, int f_
 
 
 /***********************************************************CommentBegin******
-*		3/31/2000 : initial modification to the new PV-Decoder Lib format.
-*		5/10/2000 : check to see if the decoded vector falls within
-*							the legal fcode range.
+*       3/31/2000 : initial modification to the new PV-Decoder Lib format.
+*       5/10/2000 : check to see if the decoded vector falls within
+*                           the legal fcode range.
 *
 ***********************************************************CommentEnd********/
 PV_STATUS PV_DeScaleMVD(
@@ -324,7 +324,7 @@ PV_STATUS PV_DeScaleMVD(
 )
 {
     int   half_range = (1 << (f_code + 4));
-    int	  mask = (half_range << 1) - 1;
+    int   mask = (half_range << 1) - 1;
     int   diff_vector;
 
 
@@ -360,17 +360,17 @@ void mv_prediction(
     /*----------------------------------------------------------------------------
     ; Define all local variables
     ----------------------------------------------------------------------------*/
-    MOT	*motxdata = video->motX;
-    MOT	*motydata = video->motY;
-    int	mbnum_col = video->mbnum_col;
-    int	mbnum_row = video->mbnum_row;
+    MOT *motxdata = video->motX;
+    MOT *motydata = video->motY;
+    int mbnum_col = video->mbnum_col;
+    int mbnum_row = video->mbnum_row;
     uint8 *slice_nb = video->sliceNo;
     int nMBPerRow = video->nMBPerRow;
     int nMVPerRow = nMBPerRow << 1;
     int mbnum = video->mbnum;
-    int	p1x = 0, p2x = 0, p3x = 0;
-    int	p1y = 0, p2y = 0, p3y = 0;
-    int	rule1 = 0, rule2 = 0, rule3 = 0;
+    int p1x = 0, p2x = 0, p3x = 0;
+    int p1y = 0, p2y = 0, p3y = 0;
+    int rule1 = 0, rule2 = 0, rule3 = 0;
     int     indx;
 
     indx = ((mbnum_col << 1) + (block & 1)) + ((mbnum_row << 1)  + (block >> 1)) * nMVPerRow - 1; /* left block */
@@ -381,7 +381,7 @@ void mv_prediction(
         p1y = motydata[indx];
         rule1 = 1;
     }
-    else					/* block 0, 2 */
+    else                    /* block 0, 2 */
     {
         if (mbnum_col > 0 && slice_nb[mbnum] == slice_nb[mbnum-1])
         {
@@ -402,7 +402,7 @@ void mv_prediction(
         rule2 = rule3 = 1;
     }
     else
-    {							/* block 0,1 */
+    {                           /* block 0,1 */
         if (mbnum_row)
         {
             if (slice_nb[mbnum] == slice_nb[mbnum-nMBPerRow])
@@ -445,8 +445,8 @@ void mv_prediction(
 
 /***********************************************************CommentBegin******
 *
-*		3/30/2000 : initial modification to the new PV-Decoder Lib format.
-*		4/16/2001 : removed checking of status for PV_BitstreamFlushBits
+*       3/30/2000 : initial modification to the new PV-Decoder Lib format.
+*       4/16/2001 : removed checking of status for PV_BitstreamFlushBits
 ***********************************************************CommentEnd********/
 
 PV_STATUS PV_VlcDecMV(BitstreamDecVideo *stream, int *mv)
@@ -495,8 +495,8 @@ PV_STATUS PV_VlcDecMV(BitstreamDecVideo *stream, int *mv)
 
 
 /***********************************************************CommentBegin******
-*		3/30/2000 : initial modification to the new PV-Decoder Lib
-*							format and the change of error-handling method.
+*       3/30/2000 : initial modification to the new PV-Decoder Lib
+*                           format and the change of error-handling method.
 *       4/16/01   : removed status checking of PV_BitstreamFlushBits
 ***********************************************************CommentEnd********/
 
@@ -528,9 +528,9 @@ int PV_VlcDecMCBPC_com_intra(BitstreamDecVideo *stream)
 
 /***********************************************************CommentBegin******
 *
-*		3/30/2000 : initial modification to the new PV-Decoder Lib
-*							format and the change of error-handling method.
-*		4/16/2001 : removed checking of return status of PV_BitstreamFlushBits
+*       3/30/2000 : initial modification to the new PV-Decoder Lib
+*                           format and the change of error-handling method.
+*       4/16/2001 : removed checking of return status of PV_BitstreamFlushBits
 ***********************************************************CommentEnd********/
 
 int PV_VlcDecMCBPC_com_inter(BitstreamDecVideo *stream)
@@ -582,9 +582,9 @@ int PV_VlcDecMCBPC_com_inter_H263(BitstreamDecVideo *stream)
 }
 #endif
 /***********************************************************CommentBegin******
-*		3/30/2000 : initial modification to the new PV-Decoder Lib
-*							format and the change of error-handling method.
-*		4/16/2001 : removed status checking for PV_BitstreamFlushBits
+*       3/30/2000 : initial modification to the new PV-Decoder Lib
+*                           format and the change of error-handling method.
+*       4/16/2001 : removed status checking for PV_BitstreamFlushBits
 ***********************************************************CommentEnd********/
 
 int PV_VlcDecCBPY(BitstreamDecVideo *stream, int intra)
@@ -617,13 +617,13 @@ int PV_VlcDecCBPY(BitstreamDecVideo *stream, int intra)
 
 
 /***********************************************************CommentBegin******
-*		3/31/2000 : initial modification to the new PV-Decoder Lib format.
+*       3/31/2000 : initial modification to the new PV-Decoder Lib format.
 *
-*		8/23/2000 : optimize the function by removing unnecessary BitstreamShowBits()
-*						function calls.
+*       8/23/2000 : optimize the function by removing unnecessary BitstreamShowBits()
+*                       function calls.
 *
-*		9/6/2000 : change the API to check for end-of-buffer for proper
-*							termination of decoding process.
+*       9/6/2000 : change the API to check for end-of-buffer for proper
+*                           termination of decoding process.
 ***********************************************************CommentEnd********/
 PV_STATUS PV_VlcDecIntraDCPredSize(BitstreamDecVideo *stream, int compnum, uint *DC_size)
 {
@@ -829,8 +829,8 @@ PV_STATUS PV_VlcDecIntraDCPredSize(BitstreamDecVideo *stream, int compnum, uint 
 /***********************************************************CommentBegin******
 *
 *
-*		3/30/2000 : initial modification to the new PV-Decoder Lib
-*							format and the change of error-handling method.
+*       3/30/2000 : initial modification to the new PV-Decoder Lib
+*                           format and the change of error-handling method.
 *
 ***********************************************************CommentEnd********/
 
@@ -844,7 +844,7 @@ PV_STATUS VlcDecTCOEFIntra(BitstreamDecVideo *stream, Tcoef *pTcoef)
     BitstreamShow13Bits(stream, &code);
 
     /* 10/17/2000, perform a little bit better on ARM by putting the whole function in VlcDecTCOEFFIntra */
-    /*	if(GetTcoeffIntra(code,pTcoef,&tab,stream)!=PV_SUCCESS) return status;*/
+    /*  if(GetTcoeffIntra(code,pTcoef,&tab,stream)!=PV_SUCCESS) return status;*/
     if (code >= 1024)
     {
         tab = &PV_DCT3Dtab3[(code >> 6) - 16];
@@ -889,7 +889,7 @@ PV_STATUS VlcDecTCOEFIntra(BitstreamDecVideo *stream, Tcoef *pTcoef)
         BitstreamShow13Bits(stream, &code);
 
         /* 10/17/2000, perform a little bit better on ARM by putting the whole function in VlcDecTCOEFFIntra */
-        /*			if(GetTcoeffIntra(code,pTcoef,&tab,stream)!=PV_SUCCESS) return status;*/
+        /*          if(GetTcoeffIntra(code,pTcoef,&tab,stream)!=PV_SUCCESS) return status;*/
         if (code >= 1024)
         {
             tab = &PV_DCT3Dtab3[(code >> 6) - 16];
@@ -942,7 +942,7 @@ PV_STATUS VlcDecTCOEFIntra(BitstreamDecVideo *stream, Tcoef *pTcoef)
             BitstreamShow13Bits(stream, &code);
 
             /* 10/17/2000, perform a little bit better on ARM by putting the whole function in VlcDecTCOEFFIntra */
-            /*				if(GetTcoeffIntra(code,pTcoef,&tab,stream)!=PV_SUCCESS) return status;*/
+            /*              if(GetTcoeffIntra(code,pTcoef,&tab,stream)!=PV_SUCCESS) return status;*/
             if (code >= 1024)
             {
                 tab = &PV_DCT3Dtab3[(code >> 6) - 16];
@@ -1027,7 +1027,7 @@ PV_STATUS VlcDecTCOEFInter(BitstreamDecVideo *stream, Tcoef *pTcoef)
     BitstreamShow13Bits(stream, &code);
 
     /* 10/17/2000, perform a little bit better on ARM by putting the whole function in VlcDecTCOEFFInter */
-    /*	if(GetTcoeffInter(code,pTcoef,&tab,stream)!=PV_SUCCESS) return status;*/
+    /*  if(GetTcoeffInter(code,pTcoef,&tab,stream)!=PV_SUCCESS) return status;*/
     if (code >= 1024)
     {
         tab = &PV_DCT3Dtab0[(code >> 6) - 16];
@@ -1070,7 +1070,7 @@ PV_STATUS VlcDecTCOEFInter(BitstreamDecVideo *stream, Tcoef *pTcoef)
         BitstreamShow13Bits(stream, &code);
 
         /* 10/17/2000, perform a little bit better on ARM by putting the whole function in VlcDecTCOEFFInter */
-        /*			if(GetTcoeffInter(code,pTcoef,&tab,stream)!=PV_SUCCESS) return status;*/
+        /*          if(GetTcoeffInter(code,pTcoef,&tab,stream)!=PV_SUCCESS) return status;*/
         if (code >= 1024)
         {
             tab = &PV_DCT3Dtab0[(code >> 6) - 16];
@@ -1191,12 +1191,12 @@ PV_STATUS VlcDecTCOEFInter(BitstreamDecVideo *stream, Tcoef *pTcoef)
 } /* VlcDecTCOEFInter */
 
 /*=======================================================
-	Function:	VlcDecTCOEFShortHeader()
-	Date	:	04/27/99
-	Purpose	:	New function used in decoding of video planes
-				with short header
-	Modified:	05/23/2000
-				for new decoder structure.
+    Function:   VlcDecTCOEFShortHeader()
+    Date    :   04/27/99
+    Purpose :   New function used in decoding of video planes
+                with short header
+    Modified:   05/23/2000
+                for new decoder structure.
 =========================================================*/
 PV_STATUS VlcDecTCOEFShortHeader(BitstreamDecVideo *stream, Tcoef *pTcoef/*, int intra*/)
 {
@@ -1225,7 +1225,7 @@ PV_STATUS VlcDecTCOEFShortHeader(BitstreamDecVideo *stream, Tcoef *pTcoef/*, int
     pTcoef->last = (uint)tab->last;//(tab->val >> 12) & 1;
 
     /* the following is modified for 3-mode escape -- boon */
-    if (((tab->run << 4) | (tab->level) | (tab->last << 12)) != VLC_ESCAPE_CODE)	/* ESCAPE */
+    if (((tab->run << 4) | (tab->level) | (tab->last << 12)) != VLC_ESCAPE_CODE)    /* ESCAPE */
     {
         return PV_SUCCESS;
     }
@@ -1255,7 +1255,7 @@ PV_STATUS VlcDecTCOEFShortHeader(BitstreamDecVideo *stream, Tcoef *pTcoef/*, int
 
     return PV_SUCCESS;
 
-}	/* VlcDecTCOEFShortHeader */
+}   /* VlcDecTCOEFShortHeader */
 
 #ifdef PV_ANNEX_IJKT_SUPPORT
 PV_STATUS VlcDecTCOEFShortHeader_AnnexI(BitstreamDecVideo *stream, Tcoef *pTcoef/*, int intra*/)
@@ -1285,7 +1285,7 @@ PV_STATUS VlcDecTCOEFShortHeader_AnnexI(BitstreamDecVideo *stream, Tcoef *pTcoef
     pTcoef->last = (uint)tab->last;//(tab->val >> 12) & 1;
 
     /* the following is modified for 3-mode escape -- boon */
-    if (((tab->run << 6) | (tab->level) | (tab->last << 12)) != VLC_ESCAPE_CODE)	/* ESCAPE */
+    if (((tab->run << 6) | (tab->level) | (tab->last << 12)) != VLC_ESCAPE_CODE)    /* ESCAPE */
     {
         return PV_SUCCESS;
     }
@@ -1311,7 +1311,7 @@ PV_STATUS VlcDecTCOEFShortHeader_AnnexI(BitstreamDecVideo *stream, Tcoef *pTcoef
 
     return PV_SUCCESS;
 
-}	/* VlcDecTCOEFShortHeader_AnnexI */
+}   /* VlcDecTCOEFShortHeader_AnnexI */
 
 PV_STATUS VlcDecTCOEFShortHeader_AnnexT(BitstreamDecVideo *stream, Tcoef *pTcoef/*, int intra*/)
 {
@@ -1340,7 +1340,7 @@ PV_STATUS VlcDecTCOEFShortHeader_AnnexT(BitstreamDecVideo *stream, Tcoef *pTcoef
     pTcoef->last = (uint)tab->last;//(tab->val >> 12) & 1;
 
     /* the following is modified for 3-mode escape --  */
-    if (((tab->run << 4) | (tab->level) | (tab->last << 12)) != VLC_ESCAPE_CODE)	/* ESCAPE */
+    if (((tab->run << 4) | (tab->level) | (tab->last << 12)) != VLC_ESCAPE_CODE)    /* ESCAPE */
     {
         return PV_SUCCESS;
     }
@@ -1383,7 +1383,7 @@ PV_STATUS VlcDecTCOEFShortHeader_AnnexT(BitstreamDecVideo *stream, Tcoef *pTcoef
 
     return PV_SUCCESS;
 
-}	/* VlcDecTCOEFShortHeader */
+}   /* VlcDecTCOEFShortHeader */
 
 
 PV_STATUS VlcDecTCOEFShortHeader_AnnexIT(BitstreamDecVideo *stream, Tcoef *pTcoef/*, int intra*/)
@@ -1413,7 +1413,7 @@ PV_STATUS VlcDecTCOEFShortHeader_AnnexIT(BitstreamDecVideo *stream, Tcoef *pTcoe
     pTcoef->last = (uint)tab->last;//(tab->val >> 12) & 1;
 
     /* the following is modified for 3-mode escape --  */
-    if (((tab->run << 6) | (tab->level) | (tab->last << 12)) != VLC_ESCAPE_CODE)	/* ESCAPE */
+    if (((tab->run << 6) | (tab->level) | (tab->last << 12)) != VLC_ESCAPE_CODE)    /* ESCAPE */
     {
         return PV_SUCCESS;
     }
@@ -1457,13 +1457,13 @@ PV_STATUS VlcDecTCOEFShortHeader_AnnexIT(BitstreamDecVideo *stream, Tcoef *pTcoe
 
     return PV_SUCCESS;
 
-}	/* VlcDecTCOEFShortHeader_AnnexI */
+}   /* VlcDecTCOEFShortHeader_AnnexI */
 #endif
 /***********************************************************CommentBegin******
-*		3/30/2000 : initial modification to the new PV-Decoder Lib
-*							format and the change of error-handling method.
-*							The coefficient is now returned thru a pre-
-*							initialized parameters for speedup.
+*       3/30/2000 : initial modification to the new PV-Decoder Lib
+*                           format and the change of error-handling method.
+*                           The coefficient is now returned thru a pre-
+*                           initialized parameters for speedup.
 *
 ***********************************************************CommentEnd********/
 
@@ -1491,7 +1491,7 @@ PV_STATUS RvlcDecTCOEFInter(BitstreamDecVideo *stream, Tcoef *pTcoef)
         //  09/20/99 The length for LEVEL used to be 7 in the old version
         pTcoef->level = (int)(BitstreamReadBits16_INLINE(stream, 12) >> 1);
         //  09/20/99 Another new marker bit
-//		PV_BitstreamFlushBitsCheck(stream, 1);
+//      PV_BitstreamFlushBitsCheck(stream, 1);
         pTcoef->sign = BitstreamReadBits16_INLINE(stream, 5) & 0x1;  /* fix   3/13/01  */
         return PV_SUCCESS;
     }
@@ -1528,13 +1528,13 @@ PV_STATUS RvlcDecTCOEFInter(BitstreamDecVideo *stream, Tcoef *pTcoef)
 
     /*  1/30/01, add fast decoding algorithm here */
     /* code is in two forms : 0xxxx0xxx00 or 0xxx0xxx01
-    					 num[1] and num[0] x
-    					or  : 1xxxxx10 or 1xxxxx11
-    							num[0]  x      */
+                         num[1] and num[0] x
+                        or  : 1xxxxx10 or 1xxxxx11
+                                num[0]  x      */
 
     /* len+1 is the length of the above */
 
-    if (num[1] > 10 || num[0] > 11)	/* invalid RVLC code */
+    if (num[1] > 10 || num[0] > 11) /* invalid RVLC code */
         return PV_FAIL;
 
     if (code&(1 << len))
@@ -1549,7 +1549,7 @@ PV_STATUS RvlcDecTCOEFInter(BitstreamDecVideo *stream, Tcoef *pTcoef)
 
     pTcoef->sign = BitstreamRead1Bits_INLINE(stream);
     return PV_SUCCESS;
-}				/* RvlcDecTCOEFInter */
+}               /* RvlcDecTCOEFInter */
 
 PV_STATUS RvlcDecTCOEFIntra(BitstreamDecVideo *stream, Tcoef *pTcoef)
 {
@@ -1574,7 +1574,7 @@ PV_STATUS RvlcDecTCOEFIntra(BitstreamDecVideo *stream, Tcoef *pTcoef)
         //  09/20/99 The length for LEVEL used to be 7 in the old version
         pTcoef->level = (int)(BitstreamReadBits16_INLINE(stream, 12) >> 1);
         //  09/20/99 Another new marker bit
-//		PV_BitstreamFlushBitsCheck(stream, 1);
+//      PV_BitstreamFlushBitsCheck(stream, 1);
         pTcoef->sign = BitstreamReadBits16_INLINE(stream, 5) & 0x1; /* fix   03/13/01 */
         return PV_SUCCESS;
     }
@@ -1611,9 +1611,9 @@ PV_STATUS RvlcDecTCOEFIntra(BitstreamDecVideo *stream, Tcoef *pTcoef)
 
     /*  1/30/01, add fast decoding algorithm here */
     /* code is in two forms : 0xxxx0xxx00 or 0xxx0xxx01
-    					 num[1] and num[0] x
-    					or  : 1xxxxx10 or 1xxxxx11
-    							num[0]  x      */
+                         num[1] and num[0] x
+                        or  : 1xxxxx10 or 1xxxxx11
+                                num[0]  x      */
 
     /* len+1 is the length of the above */
 
@@ -1632,5 +1632,5 @@ PV_STATUS RvlcDecTCOEFIntra(BitstreamDecVideo *stream, Tcoef *pTcoef)
 
     pTcoef->sign = BitstreamRead1Bits_INLINE(stream);
     return PV_SUCCESS;
-}				/* RvlcDecTCOEFIntra */
+}               /* RvlcDecTCOEFIntra */
 

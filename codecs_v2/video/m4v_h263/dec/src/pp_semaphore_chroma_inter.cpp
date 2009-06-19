@@ -20,40 +20,40 @@
  INPUT AND OUTPUT DEFINITIONS
 
  Inputs:
-	xpred = x-axis coordinate of the block used for prediction (int)
-	ypred = y-axis coordinate of the block used for prediction (int)
-	pp_dec_u = pointer to the post processing semaphore for chrominance
-	           (uint8)
-	pstprcTypPrv = pointer the previous frame's post processing type
-	               (uint8)
-	dx = horizontal component of the motion vector (int)
-	dy = vertical component of the motion vector (int)
-	mvwidth = number of blocks per row in the luminance VOP (int)
-	height = luminance VOP height in pixels (int)
-	size = total number of pixel in the current luminance VOP (int)
-	mv_loc = flag indicating location of the motion compensated
-		 (x,y) position with respect to the luminance MB (int);
-		 0 -> inside MB, 1 -> outside MB
-	msk_deblock = flag indicating whether to perform deblocking
-		      (msk_deblock = 0) or not (msk_deblock = 1) (uint8)
+    xpred = x-axis coordinate of the block used for prediction (int)
+    ypred = y-axis coordinate of the block used for prediction (int)
+    pp_dec_u = pointer to the post processing semaphore for chrominance
+               (uint8)
+    pstprcTypPrv = pointer the previous frame's post processing type
+                   (uint8)
+    dx = horizontal component of the motion vector (int)
+    dy = vertical component of the motion vector (int)
+    mvwidth = number of blocks per row in the luminance VOP (int)
+    height = luminance VOP height in pixels (int)
+    size = total number of pixel in the current luminance VOP (int)
+    mv_loc = flag indicating location of the motion compensated
+         (x,y) position with respect to the luminance MB (int);
+         0 -> inside MB, 1 -> outside MB
+    msk_deblock = flag indicating whether to perform deblocking
+              (msk_deblock = 0) or not (msk_deblock = 1) (uint8)
 
  Local Stores/Buffers/Pointers Needed:
-	None
+    None
 
  Global Stores/Buffers/Pointers Needed:
-	None
+    None
 
  Outputs:
-	None
+    None
 
  Pointers and Buffers Modified:
-	pp_dec_u contents are the updated semaphore propagation data
+    pp_dec_u contents are the updated semaphore propagation data
 
  Local Stores Modified:
-	None
+    None
 
  Global Stores Modified:
-	None
+    None
 
 ------------------------------------------------------------------------------
  FUNCTION DESCRIPTION
@@ -67,8 +67,8 @@
 /*----------------------------------------------------------------------------
 ; INCLUDES
 ----------------------------------------------------------------------------*/
-#include	"mp4dec_api.h"
-#include	"mp4def.h"
+#include    "mp4dec_api.h"
+#include    "mp4def.h"
 
 /*----------------------------------------------------------------------------
 ; MACROS
@@ -109,17 +109,17 @@ extern "C"
     ; FUNCTION CODE
     ----------------------------------------------------------------------------*/
     void pp_semaphore_chroma_inter(
-        int	xpred,		/* i */
-        int	ypred,		/* i */
-        uint8   *pp_dec_u,	/* i/o */
-        uint8   *pstprcTypPrv,	/* i */
-        int	dx,		/* i */
-        int	dy,		/* i */
-        int	mvwidth,	/* i */
-        int	height,		/* i */
-        int32	size,		/* i */
-        int	mv_loc,		/* i */
-        uint8   msk_deblock	/* i */
+        int xpred,      /* i */
+        int ypred,      /* i */
+        uint8   *pp_dec_u,  /* i/o */
+        uint8   *pstprcTypPrv,  /* i */
+        int dx,     /* i */
+        int dy,     /* i */
+        int mvwidth,    /* i */
+        int height,     /* i */
+        int32   size,       /* i */
+        int mv_loc,     /* i */
+        uint8   msk_deblock /* i */
     )
     {
         /*----------------------------------------------------------------------------
@@ -134,10 +134,10 @@ extern "C"
 
         /* 09/28/2000, modify semaphore propagation to */
         /* accommodate smart indexing */
-        mmvx = xpred >> 4;	/* block x coor */
+        mmvx = xpred >> 4;  /* block x coor */
         nmvx = mmvx;
 
-        mmvy = ypred >> 4;	/* block y coor */
+        mmvy = ypred >> 4;  /* block y coor */
         nmvy = mmvy;
 
         /* Check if MV is outside the frame */
@@ -165,8 +165,8 @@ extern "C"
 
         /* Calculate pointer to first chrominance b semaphores in       */
         /* pstprcTypPrv, i.e., first chrominance b semaphore is in      */
-        /* (pstprcTypPrv + (size>>6)).					*/
-        /* Since total number of chrominance blocks per row in a VOP 	*/
+        /* (pstprcTypPrv + (size>>6)).                  */
+        /* Since total number of chrominance blocks per row in a VOP    */
         /* is half of the total number of luminance blocks per row in a */
         /* VOP, we use (mvwidth >> 1) when calculating the row offset.  */
         pp_prev1 = pstprcTypPrv + (size >> 6) + nmvx + nmvy * (mvwidth >> 1) ;
@@ -174,29 +174,29 @@ extern "C"
         /* Check if MV is a multiple of 16 */
         /*  1/5/01, make sure it doesn't go out of bound */
         if (((dy&0xF) != 0) && (mmvy + 1 < (height >> 4) - 1))
-        {	/* dy is not a multiple of 16 */
+        {   /* dy is not a multiple of 16 */
 
             /* pp_prev3 is the block below pp_prev1 block */
             pp_prev3 = pp_prev1 + (mvwidth >> 1);
         }
         else
-        {	/* dy is a multiple of 16 */
+        {   /* dy is a multiple of 16 */
             pp_prev3 = pp_prev1;
         }
 
         /*  1/5/01, make sure it doesn't go out of bound */
         if (((dx&0xF) != 0) && (mmvx + 1 < (mvwidth >> 1) - 1))
-        {	/* dx is not a multiple of 16 */
+        {   /* dx is not a multiple of 16 */
 
             /* pp_prev2 is the block to the right of pp_prev1 block */
             pp_prev2 = pp_prev1 + 1;
 
             /* pp_prev4 is the block to the right of the block */
-            /* below pp_prev1 block				   */
+            /* below pp_prev1 block                */
             pp_prev4 = pp_prev3 + 1;
         }
         else
-        {	/* dx is a multiple of 16 */
+        {   /* dx is a multiple of 16 */
 
             pp_prev2 = pp_prev1;
             pp_prev4 = pp_prev3;
@@ -204,11 +204,11 @@ extern "C"
 
         /* Advance offset to location of first Chrominance R semaphore in */
         /* pstprcTypPrv. Since the number of pixels in a Chrominance VOP  */
-        /* is (number of pixels in Luminance VOP/4), and there are 64	  */
-        /* pixels in an 8x8 Chrominance block, the offset can be	  */
-        /* calculated as:						  */
-        /*	mv_loc = (number of pixels in Luminance VOP/(4*64))	  */
-        /*	       = size/256 = size>>8				  */
+        /* is (number of pixels in Luminance VOP/4), and there are 64     */
+        /* pixels in an 8x8 Chrominance block, the offset can be      */
+        /* calculated as:                         */
+        /*  mv_loc = (number of pixels in Luminance VOP/(4*64))   */
+        /*         = size/256 = size>>8               */
         mv_loc = (size >> 8);
 
         /*  11/3/00, change the propagation for deblocking */
@@ -216,14 +216,14 @@ extern "C"
         {
 
             /* Deblocking semaphore propagation for Chrominance */
-            /* b semaphores					    */
+            /* b semaphores                     */
             *(pp_dec_u) = 0;
 
             /* Advance offset to point to Chrominance r semaphores */
             pp_dec_u += mv_loc;
 
             /* Deblocking semaphore propagation for Chrominance */
-            /* r semaphores					    */
+            /* r semaphores                     */
             *(pp_dec_u) = 0;
         }
         else

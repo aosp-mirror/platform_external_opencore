@@ -44,8 +44,8 @@
 
 
 class PVMFBufferDataSink : public PvmfPortBaseImpl,
-            public PVMFPortActivityHandler,
-            public PvmiCapabilityAndConfig
+        public PVMFPortActivityHandler,
+        public PvmiCapabilityAndConfig
 {
     public:
         OSCL_IMPORT_REF PVMFBufferDataSink(int32 aPortTag);

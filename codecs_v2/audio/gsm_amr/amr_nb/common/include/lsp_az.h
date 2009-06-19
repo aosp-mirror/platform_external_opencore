@@ -35,7 +35,7 @@ terms listed above has been obtained from the copyright holder.
 
  Description: Moved _cplusplus #ifdef after Include section.
 
- Who:						Date:
+ Who:                       Date:
  Description:
 
 ------------------------------------------------------------------------------
@@ -50,8 +50,8 @@ terms listed above has been obtained from the copyright holder.
 /*----------------------------------------------------------------------------
 ; CONTINUE ONLY IF NOT ALREADY DEFINED
 ----------------------------------------------------------------------------*/
-#ifndef	LSP_AZ_H
-#define	LSP_AZ_H
+#ifndef LSP_AZ_H
+#define LSP_AZ_H
 
 /*----------------------------------------------------------------------------
 ; INCLUDES

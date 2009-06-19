@@ -35,41 +35,41 @@ class PVA_FF_MovieFragmentAtom : public PVA_FF_Atom
         virtual ~PVA_FF_MovieFragmentAtom();
 
         // Add and get track fragment
-        void	addTrackFragment(uint32 mediaType, uint32 codecType, uint32 trackId,
-                              uint32 timescale);
+        void    addTrackFragment(uint32 mediaType, uint32 codecType, uint32 trackId,
+                                 uint32 timescale);
 
         PVA_FF_TrackFragmentAtom* getTrackFragment(uint32 trackId);
 
 
-        void	addSampleToFragment(uint32 trackId, uint32 size,
-                                 uint32 ts, uint8 flags, uint32 baseOffset, bool otrunStart);
+        void    addSampleToFragment(uint32 trackId, uint32 size,
+                                    uint32 ts, uint8 flags, uint32 baseOffset, bool otrunStart);
 
-        int32	 getTrackFragmentDuration(uint32 trackId);
+        int32    getTrackFragmentDuration(uint32 trackId);
 
 
-        uint32	 getSequenceNumber();
+        uint32   getSequenceNumber();
 
-        void	setTrackFragmentHeaderData(uint32 trackId, uint32 flags);
+        void    setTrackFragmentHeaderData(uint32 trackId, uint32 flags);
 
-        void	setTrackFragmentBaseDataOffset(uint32 trackId, uint32 offset);
+        void    setTrackFragmentBaseDataOffset(uint32 trackId, uint32 offset);
 
-        uint32	getTrackFragmentNumber(uint32 trackId);
+        uint32  getTrackFragmentNumber(uint32 trackId);
 
         virtual bool renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP* fp);
 
-        int32	getMaxTrackDuration();
+        int32   getMaxTrackDuration();
 
 
     private:
 
-        uint32	_movieFragmentDuration;		// determine the duration of samples in this movie fragment
-        uint32	_interleaveDuration;		// determine the duration of samples in each trun
+        uint32  _movieFragmentDuration;     // determine the duration of samples in this movie fragment
+        uint32  _interleaveDuration;        // determine the duration of samples in each trun
 
-        uint32	_fragmentDuration;			// determines the duration of samples in this fragment
+        uint32  _fragmentDuration;          // determines the duration of samples in this fragment
 
 
-        PVA_FF_MovieFragmentHeaderAtom								*_pMfhdAtom;
-        Oscl_Vector <PVA_FF_TrackFragmentAtom*, OsclMemAllocator>	*_pTrafList;	// list of TRAF corresponding to tracks
+        PVA_FF_MovieFragmentHeaderAtom                              *_pMfhdAtom;
+        Oscl_Vector <PVA_FF_TrackFragmentAtom*, OsclMemAllocator>   *_pTrafList;    // list of TRAF corresponding to tracks
 
         virtual void recomputeSize();
 };

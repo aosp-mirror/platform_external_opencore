@@ -37,7 +37,7 @@ PVA_FF_TimeToSampleAtom::PVA_FF_TimeToSampleAtom(uint32 mediaType)
     // Initializing members and vectors
     _firstEntry = true;
     _entryCount = 0;
-    _lastTSUpdated = false;		// used in movie fragment mode not to update table before rendering
+    _lastTSUpdated = false;     // used in movie fragment mode not to update table before rendering
 
     PV_MP4_FF_NEW(fp->auditCB, uint32VecType, (), _psampleCountVec);
     PV_MP4_FF_NEW(fp->auditCB, int32VecType, (), _psampleDeltaVec);
@@ -60,7 +60,7 @@ PVA_FF_TimeToSampleAtom::nextSample(uint32 ts)
     {
         case MEDIA_TYPE_AUDIO: // sample fp an IMediaSample
         case MEDIA_TYPE_VISUAL: // sample fp an IMediaSample
-        case MEDIA_TYPE_TEXT:	// sample fp an IMediatextSample for timed text
+        case MEDIA_TYPE_TEXT:   // sample fp an IMediatextSample for timed text
         {
             if (_firstEntry)
             {

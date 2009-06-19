@@ -300,25 +300,25 @@ class OsclMemPoolResizableAllocator : public Oscl_DefAlloc
 
         struct MemPoolBufferInfo
         {
-            uint32 iBufferPreFence;		// Pre-fence to check for memory corruption
-            OsclAny* iStartAddr;		// Starting memory address of the memory pool buffer after the buffer info
-            OsclAny* iEndAddr;			// Ending memory address of the memory pool buffer
-            uint32 iBufferSize;			// Total size of the memory pool buffer including the buffer info header
-            uint32 iNumOutstanding;		// Number of outstanding blocks from this memory pool buffer
+            uint32 iBufferPreFence;     // Pre-fence to check for memory corruption
+            OsclAny* iStartAddr;        // Starting memory address of the memory pool buffer after the buffer info
+            OsclAny* iEndAddr;          // Ending memory address of the memory pool buffer
+            uint32 iBufferSize;         // Total size of the memory pool buffer including the buffer info header
+            uint32 iNumOutstanding;     // Number of outstanding blocks from this memory pool buffer
             MemPoolBlockInfo* iNextFreeBlock; // Pointer to the next free memory block
-            uint32 iAllocatedSz;		//Number of butes allocated from the mempool
-            uint32 iBufferPostFence;	// Post-fence to check for memory corruption
+            uint32 iAllocatedSz;        //Number of butes allocated from the mempool
+            uint32 iBufferPostFence;    // Post-fence to check for memory corruption
         };
 
         struct MemPoolBlockInfo
         {
-            uint32 iBlockPreFence;		// Pre-fence to check for memory corruption
+            uint32 iBlockPreFence;      // Pre-fence to check for memory corruption
             MemPoolBlockInfo* iNextFreeBlock; // Pointer to the next (right neighbor) free block in the buffer. NULL if none.
             MemPoolBlockInfo* iPrevFreeBlock; // Pointer to the previous (left neighbor) free block in the buffer. NULL if first free block
-            uint32 iBlockSize;			// Total size of the block including the block info header
-            uint8* iBlockBuffer;		// Pointer to the buffer area of the block
+            uint32 iBlockSize;          // Total size of the block including the block info header
+            uint8* iBlockBuffer;        // Pointer to the buffer area of the block
             MemPoolBufferInfo* iParentBuffer; // Pointer to the block's parent memory pool buffer
-            uint32 iBlockPostFence;		// Post-fence to check for memory corruption
+            uint32 iBlockPostFence;     // Post-fence to check for memory corruption
         };
 
     protected:

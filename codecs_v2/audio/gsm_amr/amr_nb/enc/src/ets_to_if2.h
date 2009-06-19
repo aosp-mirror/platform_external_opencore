@@ -106,8 +106,8 @@ extern "C"
     ----------------------------------------------------------------------------*/
 
     void ets_to_if2(enum Frame_Type_3GPP mode,
-                    Word16   *ets_input_ptr,
-                    UWord8   *if2_output_ptr);
+    Word16   *ets_input_ptr,
+    UWord8   *if2_output_ptr);
 
 
 

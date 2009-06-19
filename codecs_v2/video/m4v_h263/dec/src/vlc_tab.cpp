@@ -15,11 +15,11 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-#include	"mp4dec_api.h"
-#include	"mp4def.h"
-#include	"mp4lib_int.h"
-#include	"vlc_dec_tab.h"
-#include	"max_level.h"
+#include    "mp4dec_api.h"
+#include    "mp4def.h"
+#include    "mp4lib_int.h"
+#include    "vlc_dec_tab.h"
+#include    "max_level.h"
 
 
 const int intra_max_level[2][NCOEFF_BLOCK] =
@@ -433,7 +433,7 @@ const int ptrRvlcTab[11] = {0, 24, 46, 66, 84, 100, 114, 126, 134, 140, 144};
 
 const VLCtab2 RvlcDCTtabIntra[170] = /* 00xxxx00 or 00xxxx01 */
 {
-    {27, 255, 0, 5},	/* 0000 is escape code */
+    {27, 255, 0, 5},    /* 0000 is escape code */
     {1, 1, 0, 4},
     {2, 1, 0, 5},
     {3, 1, 0, 5},
@@ -618,7 +618,7 @@ const VLCtab2 RvlcDCTtabIntra[170] = /* 00xxxx00 or 00xxxx01 */
 
 const VLCtab2 RvlcDCTtabInter[170] = /* 00xxxx00 or 00xxxx01 */
 {
-    {27, 255, 0, 5},	/* 0000 is escape code */
+    {27, 255, 0, 5},    /* 0000 is escape code */
     {0, 2, 0, 4},
     {0, 3, 0, 5},
     {3, 1, 0, 5},

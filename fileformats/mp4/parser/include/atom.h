@@ -67,7 +67,7 @@ class MP4_FF_FILE;
 //using namespace std;
 
 //add atom size, so there will be no dead loop when skip sth in atom field
-#define DEFAULT_ATOM_SIZE 8	//need to change when they use various size field
+#define DEFAULT_ATOM_SIZE 8 //need to change when they use various size field
 
 class Atom : public Parentable, public Renderable, public ISucceedFail
 {

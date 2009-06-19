@@ -250,11 +250,11 @@ enum TimedTextModifierType
 
 union TimedTextModUnion
 {
-    TextStyleBox		*_pTextStyleBox;
-    TextHighlightBox	*_pTextHighlightBox;
-    TextKaraokeBox		*_pTextKaraokeBox;
-    TextHyperTextBox	*_pTextHyperTextBox;
-    BlinkBox			*_pBlinkBox;
+    TextStyleBox        *_pTextStyleBox;
+    TextHighlightBox    *_pTextHighlightBox;
+    TextKaraokeBox      *_pTextKaraokeBox;
+    TextHyperTextBox    *_pTextHyperTextBox;
+    BlinkBox            *_pBlinkBox;
     TextHilightColorBox *_pTextHilightColorBox;
     TextScrollDelay     *_pTextScrollDelay;
     TextBoxBox          *_pTextBoxBox;

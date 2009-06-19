@@ -15,7 +15,7 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-#ifndef	_h223types_H
+#ifndef _h223types_H
 #define _h223types_H
 
 #include "oscl_base.h"
@@ -63,9 +63,9 @@ typedef H223Error_t H223Ret_t;
 #define H223_ERROR_MAX_LCNS 8
 #define H223_ERROR_INVALID_PARAM 9
 
-#define	NO_ERR	    0
-#define	CRC_ERR	    1
-#define	SN_ERR	    2
+#define NO_ERR      0
+#define CRC_ERR     1
+#define SN_ERR      2
 #define H223_RC_UCF 1
 #define H223_RC_FINITE 0
 #define H223_MUXTYPE_LCN 0
@@ -357,4 +357,4 @@ typedef PoolMemAlloc<MAX_H223_PDU_PACKETS_PER_SEND, 512> PoolMemAlloc_OsclMemAll
 typedef Oscl_Vector<OsclSharedPtr<PVMFMediaDataImpl>, OsclMemAllocator> MuxPduPacketList;
 
 
-#endif	/* _h223api_H */
+#endif  /* _h223api_H */

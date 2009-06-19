@@ -294,8 +294,8 @@ OSCL_EXPORT_REF OsclLibStatus OsclSharedLibrary::Close()
                                 (0, "OsclLib::Close: Could not access PVReleaseInterface "
                                  "symbol in library: %s", pErr));
             }
-	    dlclose(ipHandle);
-	    pSharedLibInterface = NULL;
+            dlclose(ipHandle);
+            pSharedLibInterface = NULL;
             return OsclLibFail;
         }
         releaseInterface(pSharedLibInterface);
@@ -363,11 +363,11 @@ OSCL_EXPORT_REF void OsclSharedLibraryList::Populate(const OSCL_String& aPath, c
     iInterfaceId = aInterfaceId;
     OsclConfigFileList configFileList;
     configFileList.Populate(aPath);
-    for (uint32 i = 0;i < configFileList.Size();i++)
+    for (uint32 i = 0; i < configFileList.Size(); i++)
     {
         OsclLibraryList libList;
         libList.Populate(aInterfaceId, configFileList.GetConfigfileAt(i));
-        for (uint32 j = 0;j < libList.Size();j++)
+        for (uint32 j = 0; j < libList.Size(); j++)
         {
             OsclSharedLibrary* sharedLib = OSCL_NEW(OsclSharedLibrary, (libList.GetLibraryPathAt(j)));
             iList.push_back(sharedLib);

@@ -46,9 +46,9 @@ OSCL_EXPORT_REF BitStreamParser::BitStreamParser(uint8* stream, uint32 size)
 OSCL_EXPORT_REF void BitStreamParser::ResetBitStreamParser(uint8* stream, uint32 size)
 {
     this->size = size;
-    start 	= OSCL_STATIC_CAST(uint8*, stream);
-    bytepos	= OSCL_STATIC_CAST(uint8*, start);
-    bitpos 	= MOST_SIG_BIT;
+    start   = OSCL_STATIC_CAST(uint8*, stream);
+    bytepos = OSCL_STATIC_CAST(uint8*, start);
+    bitpos  = MOST_SIG_BIT;
 }
 
 OSCL_EXPORT_REF uint32 BitStreamParser::ReadBits(uint8 numberOfBits)
@@ -84,7 +84,7 @@ OSCL_EXPORT_REF uint32 BitStreamParser::ReadBits(uint8 numberOfBits)
             //Decrement the number of bits left to read.
             numberOfBits -= BITS_PER_UINT8;
         }
-        else	//Read one or more bits at a time.
+        else    //Read one or more bits at a time.
         {
             //Define the bitmask corresponding to the number of bits
             //to read from the current byte.
@@ -175,7 +175,7 @@ OSCL_EXPORT_REF void BitStreamParser::WriteBits(uint8 numberOfBits, const uint8*
         //READ
         uint8 byte = *bytepos;
         //MODIFY
-        byte &= ~(bitmask);			             //Clear the bit being written.
+        byte &= ~(bitmask);                      //Clear the bit being written.
         byte |= (input.ReadBits(1) << bitpos); //Write the bit.
         //WRITE
         *bytepos = byte;

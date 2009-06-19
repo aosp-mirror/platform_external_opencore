@@ -71,7 +71,7 @@ void derive_allocation(const sbc_t * sbc, Int bits[2][8])
 {
     /*~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     const UInt  sf = sbc->sf_index;
-    Int	  t_var;
+    Int   t_var;
     /*~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
     if (sbc->channel_mode == CM_MONO || sbc->channel_mode == CM_DUAL_CHANNEL)

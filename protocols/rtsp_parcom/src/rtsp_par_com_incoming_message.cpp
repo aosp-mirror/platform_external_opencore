@@ -80,9 +80,9 @@ RTSPIncomingMessage::parseFirstFields()
     if (secondaryBufferSizeUsed >= 4)
     {// Real http cloaking. H\02\00\00
         if (('H' != secondaryBufferSpace[0])
-                ||	('T' != secondaryBufferSpace[1])
-                ||	('T' != secondaryBufferSpace[2])
-                ||	('P' != secondaryBufferSpace[3])
+                || ('T' != secondaryBufferSpace[1])
+                || ('T' != secondaryBufferSpace[2])
+                || ('P' != secondaryBufferSpace[3])
            )
         {
             if ('H' == secondaryBufferSpace[0])
@@ -209,10 +209,10 @@ RTSPIncomingMessage::parseFirstFields()
     StrCSumPtrLen firstWordPLSS = wordPtr[0];
 
     if (('R' == *(wordPtr[0]))
-            &&	('T' == *(wordPtr[0] + 1))
-            &&	('S' == *(wordPtr[0] + 2))
-            &&	('P' == *(wordPtr[0] + 3))
-            &&	('/' == *(wordPtr[0] + 4))
+            && ('T' == *(wordPtr[0] + 1))
+            && ('S' == *(wordPtr[0] + 2))
+            && ('P' == *(wordPtr[0] + 3))
+            && ('/' == *(wordPtr[0] + 4))
        )
     {
         // it has to be a response
@@ -252,8 +252,8 @@ RTSPIncomingMessage::parseFirstFields()
 ////        }
 
 ////      endOfString = secondaryBufferSpace;
-////      while( 			(CHAR_CR != *endOfString)
-////                                &&	(CHAR_LF != *endOfString)
+////      while(            (CHAR_CR != *endOfString)
+////                                &&  (CHAR_LF != *endOfString)
 ////                                )
 ////        {
 ////          ++endOfString;
@@ -274,10 +274,10 @@ RTSPIncomingMessage::parseFirstFields()
     }
 #ifdef SIMPLE_HTTP_SUPPORT
     else if (('H' == *(wordPtr[0]))
-             &&	('T' == *(wordPtr[0] + 1))
-             &&	('T' == *(wordPtr[0] + 2))
-             &&	('P' == *(wordPtr[0] + 3))
-             &&	('/' == *(wordPtr[0] + 4))
+             && ('T' == *(wordPtr[0] + 1))
+             && ('T' == *(wordPtr[0] + 2))
+             && ('P' == *(wordPtr[0] + 3))
+             && ('/' == *(wordPtr[0] + 4))
             )
     {
         msgType = RTSPResponseMsg;
@@ -298,7 +298,7 @@ RTSPIncomingMessage::parseFirstFields()
     }
 #endif
     else
-    {	// okay, it could be a request
+    {   // okay, it could be a request
 
         // but for requests there must be exactly three words on the
         // status line
@@ -583,7 +583,7 @@ RTSPIncomingMessage::parseNextPortion()
 
 
     for (numPtrFields = 0;
-            (numPtrFields < RTSP_MAX_NUMBER_OF_FIELDS) &&	(ptr < endOfMessage);
+            (numPtrFields < RTSP_MAX_NUMBER_OF_FIELDS) && (ptr < endOfMessage);
             ++numPtrFields)
     {
         char *endOfValue = ptr;
@@ -608,7 +608,7 @@ RTSPIncomingMessage::parseNextPortion()
 
         char * separator = ptr;
 
-        while ((CHAR_COLON != *separator)	&&	(CHAR_NULL != *separator))
+        while ((CHAR_COLON != *separator)   && (CHAR_NULL != *separator))
         {
             ++separator;
         }
@@ -797,7 +797,7 @@ RTSPIncomingMessage::parseSupported(const char *supportedString, int length)
         char * separator = sptr;
 
         while ((CHAR_COMMA != *separator)
-                &&	(CHAR_NULL != *separator)
+                && (CHAR_NULL != *separator)
                 && (separator < end)
               )
         {
@@ -1669,7 +1669,7 @@ RTSPIncomingMessage::parseEntityBody(RTSPEntityBody * entityBody)
         char * separator = ptr;
 
         while ((CHAR_COLON != *separator)
-                &&	(CHAR_NULL != *separator)
+                && (CHAR_NULL != *separator)
               )
         {
             ++separator;
@@ -1680,7 +1680,7 @@ RTSPIncomingMessage::parseEntityBody(RTSPEntityBody * entityBody)
             amMalformed = RTSPErrorSyntax;
         }
         else
-        {	// field is pretty much normal
+        {   // field is pretty much normal
 
             *separator = CHAR_NULL;
 

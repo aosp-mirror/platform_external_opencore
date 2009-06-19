@@ -37,7 +37,7 @@
 #if PROXY_INTERFACE
 
 class CPVInterfaceProxyHandler_OMX :
-            public OsclActiveObject
+        public OsclActiveObject
 {
     public:
         CPVInterfaceProxyHandler_OMX(CPVInterfaceProxy_OMX *aProxy, int32 pri):

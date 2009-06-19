@@ -42,7 +42,7 @@ enum TPVMFRTSPNodeErrors
     PVMF_RTSPNODE_ERROR_RECV,
 
     PVMF_RTSPNODE_ERROR_SERVER_REJECT,//for all non 2xx and 3xx
-    PVMF_RTSPNODE_ERROR_SERVER	//for faulty servers, like wrong seq number etc
+    PVMF_RTSPNODE_ERROR_SERVER  //for faulty servers, like wrong seq number etc
 };
 
 ///////////////////////////////////////////////

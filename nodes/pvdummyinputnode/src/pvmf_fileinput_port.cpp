@@ -344,23 +344,23 @@ OSCL_EXPORT_REF PVMFStatus PVMFFileDummyInputPort::Connect(PVMFPortInterface* aP
 ////////////////////////////////////////////////////////////////////////////
 bool PVMFFileDummyInputPort::IsFormatSupported(PVMFFormatType aFmt)
 {
-    return ((aFmt == PVMF_MIME_YUV420)		        ||
-            (aFmt == PVMF_MIME_RGB16)		        ||
-            (aFmt == PVMF_MIME_M4V)		        ||
-            (aFmt == PVMF_MIME_WMV)				||
-            (aFmt == PVMF_MIME_WMA)				||
-            (aFmt == PVMF_MIME_H2632000)		        ||
-            (aFmt == PVMF_MIME_AMR_IF2)	        ||
-            (aFmt == PVMF_MIME_AMR_IETF)	        ||
-            (aFmt == PVMF_MIME_PCM16)		        ||
-            (aFmt == PVMF_MIME_ADTS)		        ||
+    return ((aFmt == PVMF_MIME_YUV420)              ||
+            (aFmt == PVMF_MIME_RGB16)               ||
+            (aFmt == PVMF_MIME_M4V)             ||
+            (aFmt == PVMF_MIME_WMV)             ||
+            (aFmt == PVMF_MIME_WMA)             ||
+            (aFmt == PVMF_MIME_H2632000)                ||
+            (aFmt == PVMF_MIME_AMR_IF2)         ||
+            (aFmt == PVMF_MIME_AMR_IETF)            ||
+            (aFmt == PVMF_MIME_PCM16)               ||
+            (aFmt == PVMF_MIME_ADTS)                ||
             (aFmt == PVMF_MIME_MPEG4_AUDIO)        ||
-            (aFmt == PVMF_MIME_LATM)		        ||
-            (aFmt == PVMF_MIME_MP3)		        ||
-            (aFmt == PVMF_MIME_ADIF)		        ||
-            (aFmt == PVMF_MIME_AAC_SIZEHDR)		||
-            (aFmt == PVMF_MIME_G726)		        ||
-            (aFmt == PVMF_MIME_YUV420)				||
+            (aFmt == PVMF_MIME_LATM)                ||
+            (aFmt == PVMF_MIME_MP3)             ||
+            (aFmt == PVMF_MIME_ADIF)                ||
+            (aFmt == PVMF_MIME_AAC_SIZEHDR)     ||
+            (aFmt == PVMF_MIME_G726)                ||
+            (aFmt == PVMF_MIME_YUV420)              ||
             (aFmt == PVMF_MIME_REAL_AUDIO));
 }
 

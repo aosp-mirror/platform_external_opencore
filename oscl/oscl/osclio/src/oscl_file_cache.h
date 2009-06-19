@@ -99,23 +99,23 @@ class OsclFileCache : public HeapBase
 
         //current working position (virtual file pointer) in the cache.
         //units: 0-based byte offset from beginning of cache
-        uint32	  _currentCachePos;
+        uint32    _currentCachePos;
 
         //end of valid data in the cache.
         //units: 0-based byte offset from beginning of cache
-        uint32	  _endCachePos;
+        uint32    _endCachePos;
 
         //variables to track the range of data in the cache that
         //has been updated by write operations, but has not yet
         //been written to disk.
         //units: 0-based byte offset from beginning of cache
-        uint32	  _cacheUpdateStart;
+        uint32    _cacheUpdateStart;
         uint32    _cacheUpdateEnd;
 
         //Current file size.  This is a virtual file size and
         //may not match the native file size when there is
         //cached data.
-        TOsclFileOffset 	_fileSize;
+        TOsclFileOffset     _fileSize;
 
         //Current true native file position.
         TOsclFileOffset  _nativePosition;

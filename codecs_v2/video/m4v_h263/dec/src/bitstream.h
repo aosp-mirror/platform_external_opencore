@@ -28,7 +28,7 @@ extern "C"
 
 #define PV_BS_INLINE  /* support inline bitstream functions */
 
-#define PV_BitstreamFlushBits(A,B) 	{(A)->bitcnt += (B); (A)->incnt -= (B); (A)->curr_word <<= (B);}
+#define PV_BitstreamFlushBits(A,B)  {(A)->bitcnt += (B); (A)->incnt -= (B); (A)->curr_word <<= (B);}
 
     PV_STATUS BitstreamFillBuffer(BitstreamDecVideo *stream);
     PV_STATUS BitstreamFillCache(BitstreamDecVideo *stream);
@@ -109,7 +109,7 @@ extern "C"
 
     __inline uint BitstreamRead1Bits_INLINE(BitstreamDecVideo *stream)
     {
-        uint	code;
+        uint    code;
 
         if (stream->incnt < 1)
         {

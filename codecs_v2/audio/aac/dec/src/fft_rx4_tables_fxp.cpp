@@ -24,8 +24,8 @@
  REVISION HISTORY
 
  Description:  Reduce the accuracy of w_256rx4 and w_512rx2 to Q10 format.
-			Try to to pack sin and cos into one 32-bit number to reduce the
-			memory access, but doesn't help in speed, so commented out for now.
+            Try to to pack sin and cos into one 32-bit number to reduce the
+            memory access, but doesn't help in speed, so commented out for now.
 
  Description:
         (1) Reduced precision of w_64rx4 from Q15 to Q12.
@@ -50,7 +50,7 @@
 
  for j=1; j<log4(n); j *= 4
 
-	for i=0; i<n/4; i +=j
+    for i=0; i<n/4; i +=j
 
         phi_1 = 2*pi*i/n;
         phi_2 = 4*pi*i/n;

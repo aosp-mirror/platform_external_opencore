@@ -15,14 +15,14 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*	=====================================================================	*/
-/*	File: FastCodeMB.h														*/
-/*	Description: This file contains structure and function prototypes used
-			in FastCodeMB() function. When it is decided to use FastCodeMB
-			instead of CodeMB, all of this prototypes should be migrated to
-			mp4enc_lib.h.													*/
-/*	Rev:																	*/
-/*	Created: 8/14/01														*/
+/*  =====================================================================   */
+/*  File: FastCodeMB.h                                                      */
+/*  Description: This file contains structure and function prototypes used
+            in FastCodeMB() function. When it is decided to use FastCodeMB
+            instead of CodeMB, all of this prototypes should be migrated to
+            mp4enc_lib.h.                                                   */
+/*  Rev:                                                                    */
+/*  Created: 8/14/01                                                        */
 /* //////////////////////////////////////////////////////////////////////// */
 
 typedef struct struct_approxDCT  approxDCT;
@@ -57,11 +57,11 @@ Int Sad8x8(UChar *rec, UChar *prev, Int lx);
 Int getBlockSum(UChar *rec, Int lx);
 
 /*---- AppVCA_dct.c -----*/
-Int  	AppVCA1_dct(Int block[], Int out[ ], approxDCT *function);
-Int  	AppVCA2_dct(Int block[], Int out[ ], approxDCT *function);
-Int  	AppVCA3_dct(Int block[], Int out[ ], approxDCT *function);
-Int  	AppVCA4_dct(Int block[], Int out[ ], approxDCT *function);
-Int  	AppVCA5_dct(Int block[], Int out[ ], approxDCT *function);
+Int     AppVCA1_dct(Int block[], Int out[ ], approxDCT *function);
+Int     AppVCA2_dct(Int block[], Int out[ ], approxDCT *function);
+Int     AppVCA3_dct(Int block[], Int out[ ], approxDCT *function);
+Int     AppVCA4_dct(Int block[], Int out[ ], approxDCT *function);
+Int     AppVCA5_dct(Int block[], Int out[ ], approxDCT *function);
 
 /*---- FastQuant.c -----*/
 Int cal_dc_scalerENC(Int QP, Int type) ;

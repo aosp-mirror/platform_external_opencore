@@ -107,23 +107,23 @@ typedef enum
     PV_UI_GENERAL_STRING,
     PV_UI_DTMF,
     PV_CODEC_TYPE_NONE = 99
-}PVCodecType_t;
+} PVCodecType_t;
 
 typedef uint32 TPVChannelId;
 #define CHANNEL_ID_UNKNOWN 0xFFFFFFFF
 #define CHANNEL_ID_DEFAULT 0xFFFFFFFF
 
 /*********************************/
-/* H324 System Definition Value	 */
+/* H324 System Definition Value  */
 /*********************************/
-//#define	OK	    1
-#define NG	    0
-#define	ON	    1
-#define OFF	    0
+//#define   OK      1
+#define NG      0
+#define ON      1
+#define OFF     0
 #define PVT_NOT_SET (-1)
 
 const int KPVDefaultVideoBitRate = 42000; // bits/s
-const int KPVDefaultFrameRate = 5;	 // frames/s
+const int KPVDefaultFrameRate = 5;   // frames/s
 const int KPVDefaultIFrameInterval = 10000;  // s
 const int KPVDefaultIFrameRequestInterval = 10000;  // s
 
@@ -201,7 +201,7 @@ typedef enum
     E_EP_LOW = 1,
     E_EP_MEDIUM,
     E_EP_HIGH
-}ErrorProtectionLevel_t;
+} ErrorProtectionLevel_t;
 
 
 // Used to convey audio type down (App->324)
@@ -218,7 +218,7 @@ typedef enum
     PV_AUD_TYPE_G723_53,
     PV_AUD_TYPE_G723_63,
     PV_AUD_TYPE_NONE = 99
-}PVAudType_t;
+} PVAudType_t;
 
 
 const PVCodecType_t PV_VID_TYPE_NONE = PV_CODEC_TYPE_NONE ;
@@ -338,7 +338,7 @@ class CPVTrackInfo
         virtual int* GetSduSizes() = 0;
         virtual CPVMediaParam* GetMediaParam() = 0;
         virtual CPVTrackInfo* Copy() = 0;
-//	friend bool operator== (CPVTrackInfo &a, CPVTrackInfo &b);
+//  friend bool operator== (CPVTrackInfo &a, CPVTrackInfo &b);
 };
 
 OSCL_IMPORT_REF bool operator==(CPVTrackInfo &a, CPVTrackInfo &b);
@@ -393,7 +393,7 @@ class CPvtVideoCapability : public CPvtMediaCapability
     public:
         CPvtVideoCapability(PVMFFormatType format_type, uint32 bitrate = 0, bool aMandatory = false)
                 : CPvtMediaCapability(format_type, bitrate, aMandatory) {}
-        virtual ~CPvtVideoCapability() {	}
+        virtual ~CPvtVideoCapability() {    }
         PVMFFormatType GetFormatType()const
         {
             return iFormatType;
@@ -517,7 +517,7 @@ class CPvtTerminalCapability
         }
         ~CPvtTerminalCapability()
         {
-            for (uint16 i = 0;i < iCapabilityItems.size();i++)
+            for (uint16 i = 0; i < iCapabilityItems.size(); i++)
                 OSCL_DELETE(iCapabilityItems[i]);
         }
         uint16 GetNumCapabilityItems()const
@@ -845,7 +845,7 @@ typedef enum
     PVT_AL2,
     PVT_AL3,
     PVT_AL_UNKNOWN
-}TPVAdaptationLayer;
+} TPVAdaptationLayer;
 
 OSCL_IMPORT_REF int IndexForAdaptationLayer(TPVAdaptationLayer al);
 OSCL_IMPORT_REF TPVAdaptationLayer AdaptationLayerForIndex(int al_index);
@@ -864,23 +864,23 @@ class CPVH324MParam : public CPVTerminalParam
         OSCL_IMPORT_REF OsclAny SetSRPParam(CPVSrpParam* srpParam);
         OSCL_IMPORT_REF OsclAny SetH245Param(CPVH245Param* h245Param);
 
-        bool iAllowAl1Video;		/* Local terminal */
-        bool iAllowAl2Video;		/* Local terminal */
-        bool iAllowAl3Video;		/*   (These are sent in outgoing CE) */
+        bool iAllowAl1Video;        /* Local terminal */
+        bool iAllowAl2Video;        /* Local terminal */
+        bool iAllowAl3Video;        /*   (These are sent in outgoing CE) */
         /* The above flags determine if support for the layers will be indicate in the
            TSC.  The following  determine if they will be used or not */
         bool iUseAl1Video;
         bool iUseAl2Video;
         bool iUseAl3Video;
-        TPVAdaptationLayer iVideoLayer;			/* Layer to use, decided by local terminal */
-        TPVAdaptationLayer iForceVideoLayerIfMaster;			/* Force the terminal to use this layer - for testing purposes */
-        TPVAdaptationLayer iForceVideoLayerIfSlave;			/* Force the terminal to use this layer - for testing purposes */
+        TPVAdaptationLayer iVideoLayer;         /* Layer to use, decided by local terminal */
+        TPVAdaptationLayer iForceVideoLayerIfMaster;            /* Force the terminal to use this layer - for testing purposes */
+        TPVAdaptationLayer iForceVideoLayerIfSlave;         /* Force the terminal to use this layer - for testing purposes */
         TPVMasterSlave iMasterSlave;
         bool iSpecifyReceiveAndTransmitCapability;
         bool iSendRme; /* Send Request Multiplex Entry to the remote terminal */
         bool iSkipMsd; /* 1 = Skip MSD */
         uint16 iRequestMaxMuxPduSize; /* Requests maxMuxPduSize to the remote terminal if > 0.  This is done after TCS
-												 if the remote terminal supports the maxMuxPduCapability */
+                                                 if the remote terminal supports the maxMuxPduCapability */
         CPVH245Param* iH245Param;
         CPVSrpParam* iSrpParam;
 };
@@ -923,7 +923,7 @@ class TPVVideoEncoderParam
         int16 qp_min;
         int16 qp_delta_frame;
         int16 qp_delta_slice;
-        int	  iframe_interval;
+        int   iframe_interval;
         int   iframe_request_interval;
 
     public:
@@ -931,9 +931,9 @@ class TPVVideoEncoderParam
 
 typedef enum
 {
-    PV_PANIC_ON_ERROR =		0x0001,
-    PV_RELEASE_ON_ERROR =	0x0002,
-    PV_RESYNC_ON_ERROR =		0x0003
+    PV_PANIC_ON_ERROR =     0x0001,
+    PV_RELEASE_ON_ERROR =   0x0002,
+    PV_RESYNC_ON_ERROR =        0x0003
 } TPVGCErrorHandleMode;
 
 class CPVTerminalStatistics
@@ -977,7 +977,7 @@ typedef enum
     PV_H324COMPONENT_H245,
     PV_H324COMPONENT_SRP,
     PV_H324COMPONENT_H223
-}TPVH324Component;
+} TPVH324Component;
 
 const PVMFStatus PV2WayH324ErrorStatusStart = (-10600);
 const PVMFStatus PV2WayH324ErrorSymmetryViolation = PV2WayH324ErrorStatusStart;
@@ -1017,7 +1017,7 @@ typedef enum
 {
     APP,
     ENG
-}TPVPriority;
+} TPVPriority;
 
 class FormatCapabilityInfo
 {
@@ -1081,7 +1081,7 @@ typedef enum
 {
     EH324Timer,
     EH324Counter
-}TPVH324TimerCounter;
+} TPVH324TimerCounter;
 
 
 #define PVH324MLogicalChannelInfoUuid PVUuid(0x200306a0,0xffab,0x11d9,0xba,0x43,0x00,0x02,0xa5,0xd5,0xc5,0x1b)

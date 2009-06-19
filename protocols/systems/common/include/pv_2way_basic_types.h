@@ -62,7 +62,7 @@ typedef enum TPVTerminalType
     PV_324M, /* based on H.324m */
     PV_SIP, /* based on SIP */
     PV_TERMINAL_TYPE_NONE
-}PV2WayTerminalType;
+} PV2WayTerminalType;
 
 /**
  * TPVLoopbackMode Enum
@@ -75,7 +75,7 @@ typedef enum TPVLoopbackMode
     PV_LOOPBACK_COMM, /* Loops back from Comm source to Comm sink */
     PV_LOOPBACK_ENGINE, /* Loops back media at the engine level, no mux involved */
     PV_LOOPBACK_MUX /* Loops back at the output of the mux */
-}PV2WayLoopbackMode;
+} PV2WayLoopbackMode;
 
 /**
  * TPVDirection Enum
@@ -88,7 +88,7 @@ typedef enum TPVDirection
     INCOMING = 1,
     OUTGOING = 2,
     PV_DIRECTION_BOTH = 3
-}PV2WayDirection;
+} PV2WayDirection;
 
 /**
 Enumeration of high level media types supported by the SDK
@@ -103,7 +103,7 @@ typedef enum TPVMediaType_t
     PV_USER_INPUT = 16,
     PV_MULTIPLEXED = 32,
     PV_MEDIA_ALL = 0xFFFF
-}PV2WayMediaType;
+} PV2WayMediaType;
 
 /**
  * PVTrackId uniquely identifies a track for transferring audio/video in a particular direction -
@@ -120,40 +120,40 @@ typedef unsigned int PVTrackId;
 typedef enum
 {
     /**
-    	The state immediately after the pv2way instance has been successfully created or instantiated.
-    	No resources have been allocated yet.
+        The state immediately after the pv2way instance has been successfully created or instantiated.
+        No resources have been allocated yet.
     **/
     EIdle = 0,
     /**
-    	The pv2way is in this state when it is initializing from the EIdle to the ESetup state.  The terminal queries the
-    	available device capabilities (encode, decode, mux), acquires resources to make a two-way call (codecs, formats, memory etc)
-    	and transitions to the ESetup state when it will be ready to accept setup parameters and Connect.
-    	If initializing fails, the pv2way relinquishes the resources and reverts to the EIdle state.
+        The pv2way is in this state when it is initializing from the EIdle to the ESetup state.  The terminal queries the
+        available device capabilities (encode, decode, mux), acquires resources to make a two-way call (codecs, formats, memory etc)
+        and transitions to the ESetup state when it will be ready to accept setup parameters and Connect.
+        If initializing fails, the pv2way relinquishes the resources and reverts to the EIdle state.
     **/
     EInitializing,
     /**
-    	The state where the pv2way instance is in the process of receiving setup parameters from the application, for encoding,
-    	multiplexing, capturing and rendering.  Each time a new set of parameters is passed in, validation will take place and a
-    	status will be returned accordingly.  A valid data source and data sink for the communications port are to be added to the
-    	terminal in this state before it can be transitioned to the Econnecting state.  Media sources and sinks can also be added
-    	at this time.
+        The state where the pv2way instance is in the process of receiving setup parameters from the application, for encoding,
+        multiplexing, capturing and rendering.  Each time a new set of parameters is passed in, validation will take place and a
+        status will be returned accordingly.  A valid data source and data sink for the communications port are to be added to the
+        terminal in this state before it can be transitioned to the Econnecting state.  Media sources and sinks can also be added
+        at this time.
     **/
     ESetup,
     /**
-    	The state where the pv2way instance has received a call to start connecting.  It starts communication with the remote terminal
-    	to exchange media capabilities and channel configuration in preparation for the establishment of media channels.
+        The state where the pv2way instance has received a call to start connecting.  It starts communication with the remote terminal
+        to exchange media capabilities and channel configuration in preparation for the establishment of media channels.
     **/
     EConnecting,
     /**
-    	The state after all control signaling is completed.  The terminal is now able to open media tracks for audio and video.
+        The state after all control signaling is completed.  The terminal is now able to open media tracks for audio and video.
     **/
     EConnected,
     /**
-    	The state where the terminal is shutting down all tracks and the multiplex.
+        The state where the terminal is shutting down all tracks and the multiplex.
     **/
     EDisconnecting,
     /**
-    	The state where the terminal is releasing all resources and transitioning to the EIdle state.
+        The state where the terminal is releasing all resources and transitioning to the EIdle state.
     **/
     EResetting
 } PV2WayState;

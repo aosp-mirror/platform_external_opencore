@@ -55,7 +55,7 @@ class H324MConfigInterface : public PVInterface
          * This API allows the user to specify the starting H223 multiplex level
          *
          * @param aLevel
-         *			The starting H223 multiplex level.  Note that the final level that is neotiated will depend
+         *          The starting H223 multiplex level.  Note that the final level that is neotiated will depend
          *          on the starting level of the peer
          *
          * @param aContextData
@@ -69,9 +69,9 @@ class H324MConfigInterface : public PVInterface
          * This API allows the user to specify maximum outgoing sdu sizes for each adaptation layer
          *
          * @param aLayer
-         *			The h223 adaptation layer type
+         *          The h223 adaptation layer type
          * @param aSize
-         *			The sdu size
+         *          The sdu size
          *
          * @param aContextData
          *         Optional opaque data that will be passed back to the user with the command response
@@ -86,9 +86,9 @@ class H324MConfigInterface : public PVInterface
          * to the peer via the TCS
          *
          * @param aLayer
-         *			The h223 adaptation layer type
+         *          The h223 adaptation layer type
          * @param aSize
-         *			The sdu size
+         *          The sdu size
          *
          * @param aContextData
          *         Optional opaque data that will be passed back to the user with the command response
@@ -104,7 +104,7 @@ class H324MConfigInterface : public PVInterface
          * @param aMediaTypes
          *          Media types for which configuration is being specified
          * @param aConfig
-         *			Adaptation Layer configuration
+         *          Adaptation Layer configuration
          * @param aContextData
          *         Optional opaque data that will be passed back to the user with the command response
          * @returns A unique command id for asynchronous completion
@@ -135,7 +135,7 @@ class H324MConfigInterface : public PVInterface
          * This API allows the user to limit the size of the outgoing h223 pdus
          *
          * @param aMaxPduSize
-         *			The max pdu size
+         *          The max pdu size
          *
          * @param aContextData
          *         Optional opaque data that will be passed back to the user with the command response
@@ -168,7 +168,7 @@ class H324MConfigInterface : public PVInterface
 
         /**
          * This API causes a maxMuxPduSize request to be sent to the remote terminal if set to a valid value (64 - 255).
-        	   This is done after TCS if the remote terminal supports the maxMuxPduCapability
+               This is done after TCS if the remote terminal supports the maxMuxPduCapability
          *
          * @param aRequestMaxMuxPduSize The max mux pdu size
          * @param aContextData
@@ -260,17 +260,17 @@ class H324MConfigInterface : public PVInterface
         /**
          * Sets an H.324 timer/counter value.  This should be called before ConnectL is invoked.
          * The  supported timers are:
-         *		T106	Master Slave Determination (in units of 1s)
-         *		T101	Capability Exchange (in units of 1s)
-         *		T103	Uni-directional and Bi-directional Logical Channel Signalling (in units of 1s)
-         *		T108	Close Logical Channel (in units of 1s)
-         *		T104	H.223 Multiplex Table (in units of 1s)
-         *		T109	Mode Request (in units of 1s)
-         *		T105	Round Trip Delay (in units of 1s)
-         *		T107	Request Multiplex Entry (in units of 100ms)
+         *      T106    Master Slave Determination (in units of 1s)
+         *      T101    Capability Exchange (in units of 1s)
+         *      T103    Uni-directional and Bi-directional Logical Channel Signalling (in units of 1s)
+         *      T108    Close Logical Channel (in units of 1s)
+         *      T104    H.223 Multiplex Table (in units of 1s)
+         *      T109    Mode Request (in units of 1s)
+         *      T105    Round Trip Delay (in units of 1s)
+         *      T107    Request Multiplex Entry (in units of 100ms)
          *      T401    SRP retransmission (in units of 100ms)
          * The supported counters are:
-         *      N100	H245 (TCS, MSD)
+         *      N100    H245 (TCS, MSD)
          *      N401    SRP retransmission
          * @param aTimerCounter
          *         Identifies whether a timer or counter is being set.

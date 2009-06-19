@@ -53,8 +53,8 @@ class PVMFJBEventNotifierRequestInfo
     public:
         PVMFJBEventNotifierRequestInfo(): ipRequestInfo(NULL)
                 , iCallBackId(0) {}
-        PVMFJBEventNotificationRequestInfo*	ipRequestInfo;
-        uint32	iCallBackId;
+        PVMFJBEventNotificationRequestInfo* ipRequestInfo;
+        uint32  iCallBackId;
 };
 
 class NonDecClkNotificationInterfaceObserver: public PVMFMediaClockNotificationsObs
@@ -172,16 +172,16 @@ class PVMFJBEventNotifier
         void CleanUp();
         void CancelCallBack(CLOCK_NOTIFICATION_INTF_TYPE aType, PVMFJBEventNotifierObserver* aObserver, uint32& aCallBkId);
 
-        PVMFMediaClock&	irNonDecreasingClock;
-        PVMFMediaClock&	irClientPlaybackClock;
-        PVMFMediaClock&	irEstimatedServerClock;
+        PVMFMediaClock& irNonDecreasingClock;
+        PVMFMediaClock& irClientPlaybackClock;
+        PVMFMediaClock& irEstimatedServerClock;
 
         //Notification interfaces
         PVMFMediaClockNotificationsInterface* ipNonDecreasingClockNotificationsInf;
         PVMFMediaClockNotificationsInterface* ipClientPlayBackClockNotificationsInf;
         PVMFMediaClockNotificationsInterface* ipEstimatedClockNotificationsInf;
 
-        NonDecClkNotificationInterfaceObserver*	ipNonDecreasingClkNotificationInterfaceObserver;
+        NonDecClkNotificationInterfaceObserver* ipNonDecreasingClkNotificationInterfaceObserver;
         ClientPlaybackClkNotificationInterfaceObserver* ipClientPlaybackClkNotificationInterfaceObserver;
         EstimatedSrvrClkNotificationInterfaceObserver* ipEstimatedSrvrClkNotificationInterfaceObserver;
 

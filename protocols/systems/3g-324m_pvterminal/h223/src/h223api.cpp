@@ -120,7 +120,7 @@ uint H223MuxStuffing(TPVH223Level level, uint8* pPdu, uint bufSz)
         pPdu += stuffing_size;
         size_left -= stuffing_size;
     }
-    return (bufSz -size_left);
+    return (bufSz - size_left);
 }
 
 bool H223CheckSync(TPVH223Level level, uint8* buf, uint bufSz, uint tolerance)

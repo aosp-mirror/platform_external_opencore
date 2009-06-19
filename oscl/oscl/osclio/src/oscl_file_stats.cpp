@@ -74,7 +74,7 @@ void OsclFileStats::LogAll(PVLogger* aLogger, uint32 aLogLevel)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, aLogger, aLogLevel
                     , (0, "OsclFileStats(0x%x): +++++++++++++++++++++ Begin", iContainer));
-    for (uint32 op = 0;op < EOsclFileOp_Last;op++)
+    for (uint32 op = 0; op < EOsclFileOp_Last; op++)
     {
         if (iStats[op].iOpCount > 0)
         {

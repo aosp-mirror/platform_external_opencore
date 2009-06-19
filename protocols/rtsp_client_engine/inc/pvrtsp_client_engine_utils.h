@@ -123,4 +123,4 @@ void dropTextAfterFirstSlash(char *copyOfBaseURL);
  */
 bool generatePseudoUUID(OSCL_String& aUUID);
 
-#endif	//PVRTSP_CLIENT_ENGINE_UTILS_H
+#endif  //PVRTSP_CLIENT_ENGINE_UTILS_H

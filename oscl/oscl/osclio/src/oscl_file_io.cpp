@@ -75,13 +75,13 @@ void Oscl_File::OldCacheDefaults()
 
     SetNativeAccessMode(ESymbianAccessMode_RfileBuf);
 
-#if defined(OSCL_FILE_BUFFER_MAX_SIZE) 
+#if defined(OSCL_FILE_BUFFER_MAX_SIZE)
     //native buffer size defaults to max buffer size
 
     SetNativeBufferSize(OSCL_FILE_BUFFER_MAX_SIZE);
 #endif
 
-#if defined(OSCL_ASYNC_READ_BUFFER_SIZE) 
+#if defined(OSCL_ASYNC_READ_BUFFER_SIZE)
     // enable async file read operation
 
     SetAsyncReadBufferSize(OSCL_ASYNC_READ_BUFFER_SIZE);
@@ -327,7 +327,7 @@ OSCL_EXPORT_REF int32 Oscl_File::Open(const oscl_wchar *filename, uint32 mode, O
         OSCL_HeapString<OsclMemAllocator> str;
         char buf[2];
         buf[1] = '\0';
-        for (uint32 i = 0;i < wstr.get_size();i++)
+        for (uint32 i = 0; i < wstr.get_size(); i++)
         {
             buf[0] = (char)wstr[i];
             str += buf;
@@ -786,7 +786,7 @@ int32  Oscl_File::CallNativeOpen(const oscl_wchar *filename, uint32 mode
         OSCL_HeapString<OsclMemAllocator> str;
         char buf[2];
         buf[1] = '\0';
-        for (uint32 i = 0;i < wstr.get_size();i++)
+        for (uint32 i = 0; i < wstr.get_size(); i++)
         {
             buf[0] = (char)wstr[i];
             str += buf;

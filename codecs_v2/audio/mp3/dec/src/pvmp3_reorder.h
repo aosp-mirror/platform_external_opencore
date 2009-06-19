@@ -86,10 +86,10 @@ extern "C"
 #endif
 
     void pvmp3_reorder(int32 xr[SUBBANDS_NUMBER*FILTERBANK_BANDS],
-                       granuleInfo *gr_info,
-                       int32 *used_freq_lines,
-                       mp3Header *info,
-                       int32  Scratch_mem[168]);
+    granuleInfo *gr_info,
+    int32 *used_freq_lines,
+    mp3Header *info,
+    int32  Scratch_mem[168]);
 
 #ifdef __cplusplus
 }

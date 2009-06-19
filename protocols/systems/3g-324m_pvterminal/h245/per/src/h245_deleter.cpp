@@ -421,7 +421,7 @@ void Delete_GenericInformation(PS_GenericInformation x)
     }
     if (x->option_of_messageContent)
     {
-        for (i = 0;i < x->size_of_messageContent;++i)
+        for (i = 0; i < x->size_of_messageContent; ++i)
         {
             Delete_GenericParameter(x->messageContent + i);
         }
@@ -575,7 +575,7 @@ void Delete_TerminalCapabilitySet(PS_TerminalCapabilitySet x)
     }
     if (x->option_of_capabilityTable)
     {
-        for (i = 0;i < x->size_of_capabilityTable;++i)
+        for (i = 0; i < x->size_of_capabilityTable; ++i)
         {
             Delete_CapabilityTableEntry(x->capabilityTable + i);
         }
@@ -583,7 +583,7 @@ void Delete_TerminalCapabilitySet(PS_TerminalCapabilitySet x)
     }
     if (x->option_of_capabilityDescriptors)
     {
-        for (i = 0;i < x->size_of_capabilityDescriptors;++i)
+        for (i = 0; i < x->size_of_capabilityDescriptors; ++i)
         {
             Delete_CapabilityDescriptor(x->capabilityDescriptors + i);
         }
@@ -595,7 +595,7 @@ void Delete_TerminalCapabilitySet(PS_TerminalCapabilitySet x)
     if (!extension) return; /* (No items present?) */
     if (x->option_of_genericInformation)
     {
-        for (i = 0;i < x->size_of_genericInformation;++i)
+        for (i = 0; i < x->size_of_genericInformation; ++i)
         {
             Delete_GenericInformation(x->genericInformation + i);
         }
@@ -622,7 +622,7 @@ void Delete_CapabilityDescriptor(PS_CapabilityDescriptor x)
     uint16 i = 0;
     if (x->option_of_simultaneousCapabilities)
     {
-        for (i = 0;i < x->size_of_simultaneousCapabilities;++i)
+        for (i = 0; i < x->size_of_simultaneousCapabilities; ++i)
         {
             Delete_AlternativeCapabilitySet(x->simultaneousCapabilities + i);
         }
@@ -870,7 +870,7 @@ void Delete_MultiplexCapability(PS_MultiplexCapability x)
 void Delete_H222Capability(PS_H222Capability x)
 {
     uint16 i = 0;
-    for (i = 0;i < x->size_of_vcCapability;++i)
+    for (i = 0; i < x->size_of_vcCapability; ++i)
     {
         Delete_VCCapability(x->vcCapability + i);
     }
@@ -913,7 +913,7 @@ void Delete_VCCapability(PS_VCCapability x)
 void Delete_Aal1ViaGateway(PS_Aal1ViaGateway x)
 {
     uint16 i = 0;
-    for (i = 0;i < x->size_of_gatewayAddress;++i)
+    for (i = 0; i < x->size_of_gatewayAddress; ++i)
     {
         Delete_Q2931Address(x->gatewayAddress + i);
     }
@@ -1121,7 +1121,7 @@ void Delete_H2250Capability(PS_H2250Capability x)
     }
     if (x->option_of_redundancyEncodingCapability)
     {
-        for (i = 0;i < x->size_of_redundancyEncodingCapability;++i)
+        for (i = 0; i < x->size_of_redundancyEncodingCapability; ++i)
         {
             Delete_RedundancyEncodingCapability(x->redundancyEncodingCapability + i);
         }
@@ -1161,7 +1161,7 @@ void Delete_MediaPacketizationCapability(PS_MediaPacketizationCapability x)
     if (!extension) return; /* (No items present?) */
     if (x->option_of_rtpPayloadType)
     {
-        for (i = 0;i < x->size_of_rtpPayloadType;++i)
+        for (i = 0; i < x->size_of_rtpPayloadType; ++i)
         {
             Delete_RTPPayloadType(x->rtpPayloadType + i);
         }
@@ -1320,7 +1320,7 @@ void Delete_TransportCapability(PS_TransportCapability x)
     }
     if (x->option_of_qOSCapabilities)
     {
-        for (i = 0;i < x->size_of_qOSCapabilities;++i)
+        for (i = 0; i < x->size_of_qOSCapabilities; ++i)
         {
             Delete_QOSCapability(x->qOSCapabilities + i);
         }
@@ -1328,7 +1328,7 @@ void Delete_TransportCapability(PS_TransportCapability x)
     }
     if (x->option_of_mediaChannelCapabilities)
     {
-        for (i = 0;i < x->size_of_mediaChannelCapabilities;++i)
+        for (i = 0; i < x->size_of_mediaChannelCapabilities; ++i)
         {
             Delete_MediaChannelCapability(x->mediaChannelCapabilities + i);
         }
@@ -1407,7 +1407,7 @@ void Delete_FrameToThreadMapping(PS_FrameToThreadMapping x)
             /* (roundrobin is NULL) */
             break;
         case 1:
-            for (i = 0;i < x->size;++i)
+            for (i = 0; i < x->size; ++i)
             {
                 Delete_RTPH263VideoRedundancyFrameMapping(x->custom + i);
             }
@@ -1438,7 +1438,7 @@ void Delete_RTPH263VideoRedundancyFrameMapping(PS_RTPH263VideoRedundancyFrameMap
 void Delete_MultipointCapability(PS_MultipointCapability x)
 {
     uint16 i = 0;
-    for (i = 0;i < x->size_of_mediaDistributionCapability;++i)
+    for (i = 0; i < x->size_of_mediaDistributionCapability; ++i)
     {
         Delete_MediaDistributionCapability(x->mediaDistributionCapability + i);
     }
@@ -1456,7 +1456,7 @@ void Delete_MediaDistributionCapability(PS_MediaDistributionCapability x)
     uint16 i = 0;
     if (x->option_of_centralizedData)
     {
-        for (i = 0;i < x->size_of_centralizedData;++i)
+        for (i = 0; i < x->size_of_centralizedData; ++i)
         {
             Delete_DataApplicationCapability(x->centralizedData + i);
         }
@@ -1464,7 +1464,7 @@ void Delete_MediaDistributionCapability(PS_MediaDistributionCapability x)
     }
     if (x->option_of_distributedData)
     {
-        for (i = 0;i < x->size_of_distributedData;++i)
+        for (i = 0; i < x->size_of_distributedData; ++i)
         {
             Delete_DataApplicationCapability(x->distributedData + i);
         }
@@ -1634,7 +1634,7 @@ void Delete_EnhancementLayerInfo(PS_EnhancementLayerInfo x)
     uint16 i = 0;
     if (x->option_of_snrEnhancement)
     {
-        for (i = 0;i < x->size_of_snrEnhancement;++i)
+        for (i = 0; i < x->size_of_snrEnhancement; ++i)
         {
             Delete_EnhancementOptions(x->snrEnhancement + i);
         }
@@ -1642,7 +1642,7 @@ void Delete_EnhancementLayerInfo(PS_EnhancementLayerInfo x)
     }
     if (x->option_of_spatialEnhancement)
     {
-        for (i = 0;i < x->size_of_spatialEnhancement;++i)
+        for (i = 0; i < x->size_of_spatialEnhancement; ++i)
         {
             Delete_EnhancementOptions(x->spatialEnhancement + i);
         }
@@ -1650,7 +1650,7 @@ void Delete_EnhancementLayerInfo(PS_EnhancementLayerInfo x)
     }
     if (x->option_of_bPictureEnhancement)
     {
-        for (i = 0;i < x->size_of_bPictureEnhancement;++i)
+        for (i = 0; i < x->size_of_bPictureEnhancement; ++i)
         {
             Delete_BEnhancementParameters(x->bPictureEnhancement + i);
         }
@@ -1732,7 +1732,7 @@ void Delete_H263Options(PS_H263Options x)
     }
     if (x->option_of_customPictureClockFrequency)
     {
-        for (i = 0;i < x->size_of_customPictureClockFrequency;++i)
+        for (i = 0; i < x->size_of_customPictureClockFrequency; ++i)
         {
             Delete_CustomPictureClockFrequency(x->customPictureClockFrequency + i);
         }
@@ -1740,7 +1740,7 @@ void Delete_H263Options(PS_H263Options x)
     }
     if (x->option_of_customPictureFormat)
     {
-        for (i = 0;i < x->size_of_customPictureFormat;++i)
+        for (i = 0; i < x->size_of_customPictureFormat; ++i)
         {
             Delete_CustomPictureFormat(x->customPictureFormat + i);
         }
@@ -1748,7 +1748,7 @@ void Delete_H263Options(PS_H263Options x)
     }
     if (x->option_of_modeCombos)
     {
-        for (i = 0;i < x->size_of_modeCombos;++i)
+        for (i = 0; i < x->size_of_modeCombos; ++i)
         {
             Delete_H263VideoModeCombos(x->modeCombos + i);
         }
@@ -1894,7 +1894,7 @@ void Delete_PixelAspectInformation(PS_PixelAspectInformation x)
             OSCL_DEFAULT_FREE(x->pixelAspectCode);
             break;
         case 2:
-            for (i = 0;i < x->size;++i)
+            for (i = 0; i < x->size; ++i)
             {
                 Delete_ExtendedPARItem(x->extendedPAR + i);
             }
@@ -1930,7 +1930,7 @@ void Delete_MPI(PS_MPI x)
     }
     if (x->option_of_customPCF)
     {
-        for (i = 0;i < x->size_of_customPCF;++i)
+        for (i = 0; i < x->size_of_customPCF; ++i)
         {
             Delete_CustomPCFItem(x->customPCF + i);
         }
@@ -1959,7 +1959,7 @@ void Delete_H263VideoModeCombos(PS_H263VideoModeCombos x)
 {
     uint16 i = 0;
     Delete_H263ModeComboFlags(&x->h263VideoUncoupledModes);
-    for (i = 0;i < x->size_of_h263VideoCoupledModes;++i)
+    for (i = 0; i < x->size_of_h263VideoCoupledModes; ++i)
     {
         Delete_H263ModeComboFlags(x->h263VideoCoupledModes + i);
     }
@@ -2525,7 +2525,7 @@ void Delete_EncryptionAuthenticationAndIntegrity(PS_EncryptionAuthenticationAndI
 void Delete_EncryptionCapability(PS_EncryptionCapability x)
 {
     uint16 i;
-    for (i = 0;i < x->size;++i)
+    for (i = 0; i < x->size; ++i)
     {
         Delete_MediaEncryptionAlgorithm(x->item + i);
     }
@@ -2591,7 +2591,7 @@ void Delete_UserInputCapability(PS_UserInputCapability x)
     switch (x->index)
     {
         case 0:
-            for (i = 0;i < x->size;++i)
+            for (i = 0; i < x->size; ++i)
             {
                 Delete_NonStandardParameter(x->nonStandard + i);
             }
@@ -2632,7 +2632,7 @@ void Delete_ConferenceCapability(PS_ConferenceCapability x)
                 x->option_of_multipointVisualizationCapability;
     if (x->option_of_nonStandardData)
     {
-        for (i = 0;i < x->size_of_nonStandardData;++i)
+        for (i = 0; i < x->size_of_nonStandardData; ++i)
         {
             Delete_NonStandardParameter(x->nonStandardData + i);
         }
@@ -2662,7 +2662,7 @@ void Delete_GenericCapability(PS_GenericCapability x)
     }
     if (x->option_of_collapsing)
     {
-        for (i = 0;i < x->size_of_collapsing;++i)
+        for (i = 0; i < x->size_of_collapsing; ++i)
         {
             Delete_GenericParameter(x->collapsing + i);
         }
@@ -2670,7 +2670,7 @@ void Delete_GenericCapability(PS_GenericCapability x)
     }
     if (x->option_of_nonCollapsing)
     {
-        for (i = 0;i < x->size_of_nonCollapsing;++i)
+        for (i = 0; i < x->size_of_nonCollapsing; ++i)
         {
             Delete_GenericParameter(x->nonCollapsing + i);
         }
@@ -2727,7 +2727,7 @@ void Delete_GenericParameter(PS_GenericParameter x)
     Delete_ParameterValue(&x->parameterValue);
     if (x->option_of_supersedes)
     {
-        for (i = 0;i < x->size_of_supersedes;++i)
+        for (i = 0; i < x->size_of_supersedes; ++i)
         {
             Delete_ParameterIdentifier(x->supersedes + i);
         }
@@ -2790,7 +2790,7 @@ void Delete_ParameterValue(PS_ParameterValue x)
             FreeOctetString(x->octetString);
             break;
         case 7:
-            for (i = 0;i < x->size;++i)
+            for (i = 0; i < x->size; ++i)
             {
                 Delete_GenericParameter(x->genericParameter + i);
             }
@@ -3699,7 +3699,7 @@ void Delete_H2250LogicalChannelParameters(PS_H2250LogicalChannelParameters x)
                 x->option_of_symmetricMediaAddress;
     if (x->option_of_nonStandard)
     {
-        for (i = 0;i < x->size_of_nonStandard;++i)
+        for (i = 0; i < x->size_of_nonStandard; ++i)
         {
             Delete_NonStandardParameter(x->nonStandard + i);
         }
@@ -4023,7 +4023,7 @@ void Delete_EncryptionSync(PS_EncryptionSync x)
     }
     if (x->option_of_escrowentry)
     {
-        for (i = 0;i < x->size_of_escrowentry;++i)
+        for (i = 0; i < x->size_of_escrowentry; ++i)
         {
             Delete_EscrowData(x->escrowentry + i);
         }
@@ -4226,7 +4226,7 @@ void Delete_H2250LogicalChannelAckParameters(PS_H2250LogicalChannelAckParameters
                 x->option_of_portNumber;
     if (x->option_of_nonStandard)
     {
-        for (i = 0;i < x->size_of_nonStandard;++i)
+        for (i = 0; i < x->size_of_nonStandard; ++i)
         {
             Delete_NonStandardParameter(x->nonStandard + i);
         }
@@ -4437,7 +4437,7 @@ void Delete_RequestChannelCloseRelease(PS_RequestChannelCloseRelease x)
 void Delete_MultiplexEntrySend(PS_MultiplexEntrySend x)
 {
     uint16 i = 0;
-    for (i = 0;i < x->size_of_multiplexEntryDescriptors;++i)
+    for (i = 0; i < x->size_of_multiplexEntryDescriptors; ++i)
     {
         Delete_MultiplexEntryDescriptor(x->multiplexEntryDescriptors + i);
     }
@@ -4455,7 +4455,7 @@ OSCL_EXPORT_REF void Delete_MultiplexEntryDescriptor(PS_MultiplexEntryDescriptor
     uint16 i = 0;
     if (x->option_of_elementList)
     {
-        for (i = 0;i < x->size_of_elementList;++i)
+        for (i = 0; i < x->size_of_elementList; ++i)
         {
             Delete_MultiplexElement(x->elementList + i);
         }
@@ -4500,7 +4500,7 @@ void Delete_MuxType(PS_MuxType x)
         case 0:
             break;
         case 1:
-            for (i = 0;i < x->size;++i)
+            for (i = 0; i < x->size; ++i)
             {
                 Delete_MultiplexElement(x->subElementList + i);
             }
@@ -4528,7 +4528,7 @@ void Delete_MultiplexEntrySendAck(PS_MultiplexEntrySendAck x)
 void Delete_MultiplexEntrySendReject(PS_MultiplexEntrySendReject x)
 {
     uint16 i = 0;
-    for (i = 0;i < x->size_of_rejectionDescriptions;++i)
+    for (i = 0; i < x->size_of_rejectionDescriptions; ++i)
     {
         Delete_MultiplexEntryRejectionDescriptions(x->rejectionDescriptions + i);
     }
@@ -4610,7 +4610,7 @@ void Delete_RequestMultiplexEntryReject(PS_RequestMultiplexEntryReject x)
 {
     uint16 i = 0;
     OSCL_DEFAULT_FREE(x->entryNumbers);
-    for (i = 0;i < x->size_of_rejectionDescriptions;++i)
+    for (i = 0; i < x->size_of_rejectionDescriptions; ++i)
     {
         Delete_RequestMultiplexEntryRejectionDescriptions(x->rejectionDescriptions + i);
     }
@@ -4666,7 +4666,7 @@ void Delete_RequestMultiplexEntryRelease(PS_RequestMultiplexEntryRelease x)
 void Delete_RequestMode(PS_RequestMode x)
 {
     uint16 i = 0;
-    for (i = 0;i < x->size_of_requestedModes;++i)
+    for (i = 0; i < x->size_of_requestedModes; ++i)
     {
         Delete_ModeDescription(x->requestedModes + i);
     }
@@ -4760,7 +4760,7 @@ void Delete_RequestModeRelease(PS_RequestModeRelease x)
 void Delete_ModeDescription(PS_ModeDescription x)
 {
     uint16 i;
-    for (i = 0;i < x->size;++i)
+    for (i = 0; i < x->size; ++i)
     {
         Delete_ModeElement(x->item + i);
     }
@@ -5847,7 +5847,7 @@ void Delete_MaintenanceLoopOffCommand(PS_MaintenanceLoopOffCommand x)
 void Delete_CommunicationModeCommand(PS_CommunicationModeCommand x)
 {
     uint16 i = 0;
-    for (i = 0;i < x->size_of_communicationModeTable;++i)
+    for (i = 0; i < x->size_of_communicationModeTable; ++i)
     {
         Delete_CommunicationModeTableEntry(x->communicationModeTable + i);
     }
@@ -5877,7 +5877,7 @@ void Delete_CommunicationModeResponse(PS_CommunicationModeResponse x)
     switch (x->index)
     {
         case 0:
-            for (i = 0;i < x->size;++i)
+            for (i = 0; i < x->size; ++i)
             {
                 Delete_CommunicationModeTableEntry(x->communicationModeTable + i);
             }
@@ -5904,7 +5904,7 @@ void Delete_CommunicationModeTableEntry(PS_CommunicationModeTableEntry x)
                 x->option_of_destination;
     if (x->option_of_nonStandard)
     {
-        for (i = 0;i < x->size_of_nonStandard;++i)
+        for (i = 0; i < x->size_of_nonStandard; ++i)
         {
             Delete_NonStandardParameter(x->nonStandard + i);
         }
@@ -6068,7 +6068,7 @@ void Delete_RequestTerminalCertificate(PS_RequestTerminalCertificate x)
 void Delete_CertSelectionCriteria(PS_CertSelectionCriteria x)
 {
     uint16 i;
-    for (i = 0;i < x->size;++i)
+    for (i = 0; i < x->size; ++i)
     {
         Delete_Criteria(x->item + i);
     }
@@ -6122,7 +6122,7 @@ void Delete_ConferenceResponse(PS_ConferenceResponse x)
             OSCL_DEFAULT_FREE(x->passwordResponse);
             break;
         case 4:
-            for (i = 0;i < x->size;++i)
+            for (i = 0; i < x->size; ++i)
             {
                 Delete_TerminalLabel(x->terminalListResponse + i);
             }
@@ -6351,7 +6351,7 @@ void Delete_MCTerminalIDResponse(PS_MCTerminalIDResponse x)
 void Delete_RequestAllTerminalIDsResponse(PS_RequestAllTerminalIDsResponse x)
 {
     uint16 i = 0;
-    for (i = 0;i < x->size_of_terminalInformation;++i)
+    for (i = 0; i < x->size_of_terminalInformation; ++i)
     {
         Delete_TerminalInformation(x->terminalInformation + i);
     }
@@ -6722,7 +6722,7 @@ void Delete_DialingInformation(PS_DialingInformation x)
             OSCL_DEFAULT_FREE(x->nonStandard);
             break;
         case 1:
-            for (i = 0;i < x->size;++i)
+            for (i = 0; i < x->size; ++i)
             {
                 Delete_DialingInformationNumber(x->differential + i);
             }
@@ -6747,7 +6747,7 @@ void Delete_DialingInformationNumber(PS_DialingInformationNumber x)
     if (x->option_of_subAddress)
     {
     }
-    for (i = 0;i < x->size_of_networkType;++i)
+    for (i = 0; i < x->size_of_networkType; ++i)
     {
         Delete_DialingInformationNetworkType(x->networkType + i);
     }

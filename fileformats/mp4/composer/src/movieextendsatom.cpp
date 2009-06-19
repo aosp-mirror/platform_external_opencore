@@ -84,7 +84,7 @@ PVA_FF_MovieExtendsAtom::writeMovieFragmentDuration(MP4_AUTHOR_FF_FILE_IO_WRAP* 
 uint32
 PVA_FF_MovieExtendsAtom::getDuration()
 {
-    return	_pMehdAtom->getFragmentDuration();
+    return  _pMehdAtom->getFragmentDuration();
 }
 
 

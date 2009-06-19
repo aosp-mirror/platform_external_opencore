@@ -40,27 +40,27 @@
  INPUT AND OUTPUT DEFINITIONS FOR idct
 
  Inputs:
- 	blk = pointer to the buffer containing the dequantized DCT
-	      coefficients of type int for an 8r8 image block;
-	      values range from (-2048, 2047) which defined as standard.
+    blk = pointer to the buffer containing the dequantized DCT
+          coefficients of type int for an 8r8 image block;
+          values range from (-2048, 2047) which defined as standard.
 
  Local Stores/Buffers/Pointers Needed:
-	None
+    None
 
  Global Stores/Buffers/Pointers Needed:
-	None
+    None
 
  Outputs:
-	None
+    None
 
  Pointers and Buffers Modified:
-	blk points to the found IDCT values for an 8r8 image block.
+    blk points to the found IDCT values for an 8r8 image block.
 
  Local Stores Modified:
-	None
+    None
 
  Global Stores Modified:
-	None
+    None
 
 ------------------------------------------------------------------------------
  FUNCTION DESCRIPTION FOR idct
@@ -69,31 +69,31 @@
  (F(u,v)) to spatial domain pirel values (f(r,y)) by performing the two
  dimensional inverse discrete cosine transform (IDCT).
 
-		 _7_ _7_      C(u) C(v)
-	f(r,y) = \   \	F(u,v)---- ----cos[(2r+1)*u*pi/16]cos[(2y+1)*v*pi/16]
-		 /__ /__	2    2
-		 u=0 v=0
+         _7_ _7_      C(u) C(v)
+    f(r,y) = \   \  F(u,v)---- ----cos[(2r+1)*u*pi/16]cos[(2y+1)*v*pi/16]
+         /__ /__    2    2
+         u=0 v=0
 
-	where	C(i) = 1/sqrt(2)	if i=0
-		C(i) = 1		otherwise
+    where   C(i) = 1/sqrt(2)    if i=0
+        C(i) = 1        otherwise
 
  2-D IDCT can be separated as horizontal(row-wise) and vertical(column-wise)
  1-D IDCTs. Therefore, 2-D IDCT values are found by the following two steps:
  1. Find horizontal 1-D IDCT values for each row from 8r8 dequantized DCT
     coefficients by row IDCT operation.
 
- 		  _7_        C(u)
-	g(r,v) =  \   F(u,v) ---- cos[(2r+1)*u*pi/16]
-		  /__ 	      2
-		  u=0
+          _7_        C(u)
+    g(r,v) =  \   F(u,v) ---- cos[(2r+1)*u*pi/16]
+          /__         2
+          u=0
 
  2. Find vertical 1-D IDCT values for each column from the results of 1
     by column IDCT operation.
 
-    		  _7_ 	     C(v)
-	f(r,y) =  \   g(r,v) ---- cos[(2y+1)*v*pi/16]
-		  /__ 	      2
-		  v=0
+              _7_        C(v)
+    f(r,y) =  \   g(r,v) ---- cos[(2y+1)*v*pi/16]
+          /__         2
+          v=0
 
 ------------------------------------------------------------------------------
  REQUIREMENTS FOR idct
@@ -102,7 +102,7 @@
 
 ------------------------------------------------------------------------------
 */
-/*  REFERENCES FOR idct	*/
+/*  REFERENCES FOR idct */
 /* idct.c, inverse fast discrete cosine transform
  inverse two dimensional DCT, Chen-Wang algorithm
  (cf. IEEE ASSP-32, pp. 803-816, Aug. 1984)
@@ -125,11 +125,11 @@ void idct_intra(
     /*----------------------------------------------------------------------------
     ; Define all local variables
     ----------------------------------------------------------------------------*/
-    int	i;
-    int32	tmpBLK[64];
-    int32	*tmpBLK32 = &tmpBLK[0];
-    int32	r0, r1, r2, r3, r4, r5, r6, r7, r8;	/* butterfly nodes */
-    int32	a;
+    int i;
+    int32   tmpBLK[64];
+    int32   *tmpBLK32 = &tmpBLK[0];
+    int32   r0, r1, r2, r3, r4, r5, r6, r7, r8; /* butterfly nodes */
+    int32   a;
     int offset = width - 8;
     /*----------------------------------------------------------------------------
     ; Function body here
@@ -206,15 +206,15 @@ void idct_intra(
             r8 -= r3;
             r3 = r0 + r2;
             r0 -= r2;
-            r2 = (181 * (r4 + r5) + 128) >> 8;	/* rounding */
+            r2 = (181 * (r4 + r5) + 128) >> 8;  /* rounding */
             r4 = (181 * (r4 - r5) + 128) >> 8;
 
             /* fourth stage */
-            /* net shift of IDCT is >>3 after the following	*/
+            /* net shift of IDCT is >>3 after the following */
             /* shift operation, it makes output of 2-D IDCT */
             /* scaled by 1/8, that is scaled twice by       */
             /* 1/(2*sqrt(2)) for row IDCT and column IDCT.  */
-            /* see detail analysis in design doc.	        */
+            /* see detail analysis in design doc.           */
             tmpBLK32[0 + i] = (r7 + r1) >> 8;
             tmpBLK32[(1<<3) + i] = (r3 + r2) >> 8;
             tmpBLK32[(2<<3) + i] = (r0 + r4) >> 8;
@@ -226,15 +226,15 @@ void idct_intra(
         }
     }
     /* row (horizontal) IDCT */
-    for (i = 0 ; i < B_SIZE;i++)
+    for (i = 0 ; i < B_SIZE; i++)
     {
         /* initialize butterfly nodes at the first stage */
 
         r1 = ((int32)tmpBLK32[4+(i<<3)]) << 8;
-        /* r1 left shift by 11 is to maintain the same	*/
-        /* scale as that of coefficients (W1,...W7)	*/
-        /* since blk[4] won't multiply with Wi.		*/
-        /* see detail diagram in design document.	*/
+        /* r1 left shift by 11 is to maintain the same  */
+        /* scale as that of coefficients (W1,...W7) */
+        /* since blk[4] won't multiply with Wi.     */
+        /* see detail diagram in design document.   */
 
         r2 = tmpBLK32[6+(i<<3)];
         r3 = tmpBLK32[2+(i<<3)];
@@ -301,7 +301,7 @@ void idct_intra(
             r4 = (181 * (r4 - r5) + 128) >> 8;
 
             /* fourth stage */
-            /* net shift of this function is <<3 after the	  */
+            /* net shift of this function is <<3 after the    */
             /* following shift operation, it makes output of  */
             /* row IDCT scaled by 8 to retain 3 bits precision*/
             a = ((r7 + r1) >> 14);
@@ -347,11 +347,11 @@ void idct(
     /*----------------------------------------------------------------------------
     ; Define all local variables
     ----------------------------------------------------------------------------*/
-    int	i;
-    int32	tmpBLK[64];
-    int32	*tmpBLK32 = &tmpBLK[0];
-    int32	r0, r1, r2, r3, r4, r5, r6, r7, r8;	/* butterfly nodes */
-    int32	a;
+    int i;
+    int32   tmpBLK[64];
+    int32   *tmpBLK32 = &tmpBLK[0];
+    int32   r0, r1, r2, r3, r4, r5, r6, r7, r8; /* butterfly nodes */
+    int32   a;
     int res;
 
     /*----------------------------------------------------------------------------
@@ -429,15 +429,15 @@ void idct(
             r8 -= r3;
             r3 = r0 + r2;
             r0 -= r2;
-            r2 = (181 * (r4 + r5) + 128) >> 8;	/* rounding */
+            r2 = (181 * (r4 + r5) + 128) >> 8;  /* rounding */
             r4 = (181 * (r4 - r5) + 128) >> 8;
 
             /* fourth stage */
-            /* net shift of IDCT is >>3 after the following	*/
+            /* net shift of IDCT is >>3 after the following */
             /* shift operation, it makes output of 2-D IDCT */
             /* scaled by 1/8, that is scaled twice by       */
             /* 1/(2*sqrt(2)) for row IDCT and column IDCT.  */
-            /* see detail analysis in design doc.	        */
+            /* see detail analysis in design doc.           */
             tmpBLK32[0 + i] = (r7 + r1) >> 8;
             tmpBLK32[(1<<3) + i] = (r3 + r2) >> 8;
             tmpBLK32[(2<<3) + i] = (r0 + r4) >> 8;
@@ -454,10 +454,10 @@ void idct(
         /* initialize butterfly nodes at the first stage */
 
         r1 = ((int32)tmpBLK32[4+(i<<3)]) << 8;
-        /* r1 left shift by 11 is to maintain the same	*/
-        /* scale as that of coefficients (W1,...W7)	*/
-        /* since blk[4] won't multiply with Wi.		*/
-        /* see detail diagram in design document.	*/
+        /* r1 left shift by 11 is to maintain the same  */
+        /* scale as that of coefficients (W1,...W7) */
+        /* since blk[4] won't multiply with Wi.     */
+        /* see detail diagram in design document.   */
 
         r2 = tmpBLK32[6+(i<<3)];
         r3 = tmpBLK32[2+(i<<3)];
@@ -522,7 +522,7 @@ void idct(
             r4 = (181 * (r4 - r5) + 128) >> 8;
 
             /* fourth stage */
-            /* net shift of this function is <<3 after the	  */
+            /* net shift of this function is <<3 after the    */
             /* following shift operation, it makes output of  */
             /* row IDCT scaled by 8 to retain 3 bits precision*/
             blk[0+(i<<3)] = (r7 + r1) >> 14;

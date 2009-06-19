@@ -33,7 +33,7 @@
 */
 
 class PVMFAMRFFParserNodeRegistryFactory: public PVMFNodeCreationInterface
-            , public PvmiCapabilityAndConfig
+        , public PvmiCapabilityAndConfig
 {
     public:
         /*
@@ -71,7 +71,7 @@ class PVMFAMRFFParserNodeRegistryFactory: public PVMFNodeCreationInterface
 
         //from PvmiCapabilityAndConfig interface
         PVMFStatus getParametersSync(PvmiMIOSession , PvmiKeyType ,
-                                     PvmiKvp*& , int& ,	PvmiCapabilityContext)
+                                     PvmiKvp*& , int& , PvmiCapabilityContext)
         {
             return PVMFFailure;//nothing available yet.
         }

@@ -21,7 +21,7 @@
 
 
 ////////////////////////////////////////////////////////////////////////////////////
-//////	PVMFProtocolEngineNodeProgressiveDownloadContainerFactory implementation
+//////  PVMFProtocolEngineNodeProgressiveDownloadContainerFactory implementation
 ////////////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF ProtocolContainer* PVMFProtocolEngineNodeProgressiveDownloadContainerFactory::Create(PVMFProtocolEngineNode *aNode)
 {

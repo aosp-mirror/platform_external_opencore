@@ -277,9 +277,9 @@ OSCL_EXPORT_REF bool PVMFJitterBufferMisc::PrepareForRepositioning(bool oUseExpe
     bool overflowFlag = false;
 
     //A session will have three things
-    //Media channel		:	Valid for any type of streaming
-    //Feedback Channel	:	Valid for RTSP based streaming
-    //Session Info	:	Valid for any type of streaming
+    //Media channel     :   Valid for any type of streaming
+    //Feedback Channel  :   Valid for RTSP based streaming
+    //Session Info  :   Valid for any type of streaming
 
     Oscl_Vector<PVMFJitterBufferPortParams*, OsclMemAllocator>::iterator it;
     for (it = irPortParamsQueue.begin();
@@ -501,7 +501,7 @@ OSCL_EXPORT_REF PVMFStatus PVMFJitterBufferMisc::PrepareMediaReceivingChannel()
             ipObserver->MediaReceivingChannelPrepared(true);
             return PVMFSuccess;
         }
-        return PVMFPending;	//Wait for the SetServerInfo call
+        return PVMFPending; //Wait for the SetServerInfo call
     }
 }
 
@@ -840,7 +840,7 @@ OSCL_EXPORT_REF PVMFTimestamp PVMFJitterBufferMisc::GetMaxMediaDataTS()
         }
     }
 
-    if (numOfJitterBuffers > 1)	//Need to normalize ts across jb's with the session (E.g. RTSP based streaming).
+    if (numOfJitterBuffers > 1) //Need to normalize ts across jb's with the session (E.g. RTSP based streaming).
     {
         for (i = 0; i < irPortParamsQueue.size(); i++)
         {
@@ -892,7 +892,7 @@ OSCL_EXPORT_REF PVMFTimestamp PVMFJitterBufferMisc::GetActualMediaDataTSAfterSee
         }
     }
 
-    if (numOfJitterBuffers > 1)	//Need to normalize ts across jb's with the session (E.g. RTSP based streaming).
+    if (numOfJitterBuffers > 1) //Need to normalize ts across jb's with the session (E.g. RTSP based streaming).
     {
         for (i = 0; i < irPortParamsQueue.size(); i++)
         {
@@ -1158,7 +1158,7 @@ bool PVMFJitterBufferMisc::LookupRTCPChannelParams(PVMFPortInterface* rtpPort, P
 
     if (LocateFeedBackPort(inputPortParams, feedbackPortParams))
     {
-        rtcpPort = 	&feedbackPortParams->irPort;
+        rtcpPort =  &feedbackPortParams->irPort;
         rtpPktJitterBuffer = inputPortParams->ipJitterBuffer;
         retval = true;
     }

@@ -90,42 +90,42 @@ extern "C"
     ; Include all pre-processor statements here.
     ----------------------------------------------------------------------------*/
     /*
-      Macro:	MAX_SHORT_WINDOWS
-      Purpose:	Number of short windows in one long window.
-      Explanation:	-  */
+      Macro:    MAX_SHORT_WINDOWS
+      Purpose:  Number of short windows in one long window.
+      Explanation:  -  */
 #ifndef MAX_SHORT_WINDOWS
 #define MAX_SHORT_WINDOWS NSHORT
 #endif
 
     /*
-      Macro:	MAX_SCFAC_BANDS
-      Purpose:	Maximum number of scalefactor bands in one frame.
-      Explanation:	-  */
+      Macro:    MAX_SCFAC_BANDS
+      Purpose:  Maximum number of scalefactor bands in one frame.
+      Explanation:  -  */
 #ifndef MAX_SCFAC_BANDS
 #define MAX_SCFAC_BANDS MAXBANDS
 #endif
 
     /*
-      Macro:	BLOCK_LEN_LONG
-      Purpose:	Length of one long window
-      Explanation:	-  */
+      Macro:    BLOCK_LEN_LONG
+      Purpose:  Length of one long window
+      Explanation:  -  */
 #ifndef BLOCK_LEN_LONG
 #define BLOCK_LEN_LONG LN2
 #endif
 
 
     /*
-      Macro:	LTP_MAX_BLOCK_LEN_LONG
-      Purpose:	Informs the routine of the maximum block size used.
-      Explanation:	This is needed since the TwinVQ long window
-      		is different from the AAC long window.  */
-#define	LTP_MAX_BLOCK_LEN_LONG BLOCK_LEN_LONG //(2 * BLOCK_LEN_LONG) 
+      Macro:    LTP_MAX_BLOCK_LEN_LONG
+      Purpose:  Informs the routine of the maximum block size used.
+      Explanation:  This is needed since the TwinVQ long window
+            is different from the AAC long window.  */
+#define LTP_MAX_BLOCK_LEN_LONG BLOCK_LEN_LONG //(2 * BLOCK_LEN_LONG) 
 
     /*
-      Macro:	LT_BLEN
-      Purpose:	Length of the history buffer.
-      Explanation:	Has to hold 2 long windows of time domain data.  */
-#ifndef	LT_BLEN
+      Macro:    LT_BLEN
+      Purpose:  Length of the history buffer.
+      Explanation:  Has to hold 2 long windows of time domain data.  */
+#ifndef LT_BLEN
 #define LT_BLEN (2 * LTP_MAX_BLOCK_LEN_LONG)
 #endif
 
@@ -146,9 +146,9 @@ extern "C"
     ; STRUCTURES TYPEDEF'S
     ----------------------------------------------------------------------------*/
     /*
-      Type:		LT_PRED_STATUS
-      Purpose:	Type of the struct holding the LTP encoding parameters.
-      Explanation:	-  */
+      Type:     LT_PRED_STATUS
+      Purpose:  Type of the struct holding the LTP encoding parameters.
+      Explanation:  -  */
     typedef struct
     {
         Int weight_index;

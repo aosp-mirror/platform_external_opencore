@@ -32,7 +32,7 @@ typedef Oscl_Vector<DecoderSpecificInfo*, OsclMemAllocator> decoderSpecificInfoV
 OMADRMKMSBox:: OMADRMKMSBox(MP4_FF_FILE *fp,
                             uint32 size,
                             uint32 type)
-        :	FullAtom(fp, size, type)
+        :   FullAtom(fp, size, type)
 {
     _pODKMData = NULL;
 
@@ -71,14 +71,14 @@ OMADRMKMSBox::~OMADRMKMSBox()
 MutableDRMInformationBox:: MutableDRMInformationBox(MP4_FF_FILE *fp,
         uint32 size,
         uint32 type)
-        :	Atom(fp, size, type)
+        :   Atom(fp, size, type)
 {
 }
 
 SchemeInformationBox:: SchemeInformationBox(MP4_FF_FILE *fp,
         uint32 size,
         uint32 type)
-        :	Atom(fp, size, type)
+        :   Atom(fp, size, type)
 {
     _pOMADRMKMSBox = NULL;
 
@@ -140,7 +140,7 @@ SchemeInformationBox::~SchemeInformationBox()
 ProtectionSchemeInformationBox:: ProtectionSchemeInformationBox(MP4_FF_FILE *fp,
         uint32 size,
         uint32 type)
-        :	Atom(fp, size, type)
+        :   Atom(fp, size, type)
 {
     _pSchemeInformationBox = NULL;
     _pOriginalFormatBox = NULL;
@@ -231,7 +231,7 @@ ProtectionSchemeInformationBox::~ProtectionSchemeInformationBox()
 }
 
 OriginalFormatbox::OriginalFormatbox(MP4_FF_FILE *fp, uint32 size, uint32 type)
-        :	Atom(fp, size, type)
+        :   Atom(fp, size, type)
 {
     if (!AtomUtils::read32(fp, _data_format))
         _success = false;
@@ -772,7 +772,7 @@ EcnvBox::createAVCDecoderSpecificInfo(MP4_FF_FILE *fp)
 
         uint8* info = (uint8*)(oscl_malloc(sizeof(uint8) * len));
         if (!info)
-            return false;	// malloc failed (unlikely)
+            return false;   // malloc failed (unlikely)
         uint8* destPtr = info;
         if (numSPS > 0)
         {
@@ -1004,8 +1004,8 @@ OSCL_EXPORT_REF EnctBox:: EnctBox(MP4_FF_FILE *fp, uint32 size, uint32 type)
     _pparent = NULL;
 
     _pBackgroundRGBA = NULL;
-    _pBoxRecord  	 = NULL;
-    _pStyleRecord	 = NULL;
+    _pBoxRecord      = NULL;
+    _pStyleRecord    = NULL;
     _pFontTableAtom  = NULL;
     _pProtectionSchemeInformationBox = NULL;
 

@@ -87,18 +87,18 @@ This may go to avccommon_api.h later (external common).
 */
 typedef enum
 {
-    AVC_NALTYPE_SLICE = 1,	/* non-IDR non-data partition */
-    AVC_NALTYPE_DPA = 2,	/* data partition A */
-    AVC_NALTYPE_DPB = 3,	/* data partition B */
-    AVC_NALTYPE_DPC = 4,	/* data partition C */
-    AVC_NALTYPE_IDR = 5,	/* IDR NAL */
-    AVC_NALTYPE_SEI = 6,	/* supplemental enhancement info */
-    AVC_NALTYPE_SPS = 7,	/* sequence parameter set */
-    AVC_NALTYPE_PPS = 8,	/* picture parameter set */
-    AVC_NALTYPE_AUD = 9,	/* access unit delimiter */
-    AVC_NALTYPE_EOSEQ = 10,	/* end of sequence */
+    AVC_NALTYPE_SLICE = 1,  /* non-IDR non-data partition */
+    AVC_NALTYPE_DPA = 2,    /* data partition A */
+    AVC_NALTYPE_DPB = 3,    /* data partition B */
+    AVC_NALTYPE_DPC = 4,    /* data partition C */
+    AVC_NALTYPE_IDR = 5,    /* IDR NAL */
+    AVC_NALTYPE_SEI = 6,    /* supplemental enhancement info */
+    AVC_NALTYPE_SPS = 7,    /* sequence parameter set */
+    AVC_NALTYPE_PPS = 8,    /* picture parameter set */
+    AVC_NALTYPE_AUD = 9,    /* access unit delimiter */
+    AVC_NALTYPE_EOSEQ = 10, /* end of sequence */
     AVC_NALTYPE_EOSTREAM = 11, /* end of stream */
-    AVC_NALTYPE_FILL = 12	/* filler data */
+    AVC_NALTYPE_FILL = 12   /* filler data */
 } AVCNalUnitType;
 
 /**
@@ -173,60 +173,60 @@ typedef struct tagAVCFrameIO
 
 
 /** CALLBACK FUNCTION TO BE IMPLEMENTED BY APPLICATION */
-/**	In AVCDecControls structure, userData is a pointer to an object with the following
-	member functions.
+/** In AVCDecControls structure, userData is a pointer to an object with the following
+    member functions.
 */
 
 
 /** @brief Decoded picture buffers (DPB) must be allocated or re-allocated before an
-	IDR frame is decoded. If PV_MEMORY_POOL is not defined, AVC lib will allocate DPB
-	internally which cannot be shared with the application. In that case, this function
-	will not be called.
-	@param userData  The same value of userData in AVCHandle object.
-	@param frame_size_in_mbs  The size of each frame in number of macroblocks.
-	@param num_frames The number of frames in DPB.
-	@return 1 for success, 0 for fail (cannot allocate DPB)
+    IDR frame is decoded. If PV_MEMORY_POOL is not defined, AVC lib will allocate DPB
+    internally which cannot be shared with the application. In that case, this function
+    will not be called.
+    @param userData  The same value of userData in AVCHandle object.
+    @param frame_size_in_mbs  The size of each frame in number of macroblocks.
+    @param num_frames The number of frames in DPB.
+    @return 1 for success, 0 for fail (cannot allocate DPB)
 */
 
 typedef int (*FunctionType_DPBAlloc)(void *userData, uint frame_size_in_mbs, uint num_buffers);
 
 /** @brief AVC library calls this function is reserve a memory of one frame from the DPB.
-	Once reserved, this frame shall not be deleted or over-written by the app.
-	@param userData  The same value of userData in AVCHandle object.
-	@param indx		 Index of a frame in DPB (AVC library keeps track of the index).
-	@param yuv		The address of the yuv pointer returned to the AVC lib.
-	@return			1 for success, 0 for fail (no frames available to bind).
-	*/
+    Once reserved, this frame shall not be deleted or over-written by the app.
+    @param userData  The same value of userData in AVCHandle object.
+    @param indx      Index of a frame in DPB (AVC library keeps track of the index).
+    @param yuv      The address of the yuv pointer returned to the AVC lib.
+    @return         1 for success, 0 for fail (no frames available to bind).
+    */
 typedef int (*FunctionType_FrameBind)(void *userData, int indx, uint8 **yuv);
 
 /** @brief AVC library calls this function once a bound frame is not needed for decoding
-	operation (falls out of the sliding window, or marked unused for reference).
-	@param userData  The same value of userData in AVCHandle object.
-	@param indx		 Index of frame to be unbound (AVC library keeps track of the index).
-	@return  none.
+    operation (falls out of the sliding window, or marked unused for reference).
+    @param userData  The same value of userData in AVCHandle object.
+    @param indx      Index of frame to be unbound (AVC library keeps track of the index).
+    @return  none.
 */
 typedef void (*FuctionType_FrameUnbind)(void *userData, int);
 
 /** Pointer to malloc function for general memory allocation, so that application can keep track of
-	memory usage.
+    memory usage.
 \param "size" "Size of requested memory in bytes."
 \param "attribute" "Some value specifying types, priority, etc. of the memory."
 \return "The address of the allocated memory casted to int"
 */
-typedef	int (*FunctionType_Malloc)(void *userData, int32 size, int attribute);
+typedef int (*FunctionType_Malloc)(void *userData, int32 size, int attribute);
 
 /** Function pointer to free
 \param "mem" "Pointer to the memory to be freed casted to int"
 \return "void"
 */
-typedef	void (*FunctionType_Free)(void *userData, int mem);
+typedef void (*FunctionType_Free)(void *userData, int mem);
 
 /** Debug logging information is returned to the application thru this function.
-\param "type"	"Type of logging message, see definition of AVCLogType."
-\param "string1"	"Logging message."
-\param "string2"	"To be defined."
+\param "type"   "Type of logging message, see definition of AVCLogType."
+\param "string1"    "Logging message."
+\param "string2"    "To be defined."
 */
-typedef	void (*FunctionType_DebugLog)(uint32 *userData, AVCLogType type, char *string1, int val1, int val2);
+typedef void (*FunctionType_DebugLog)(uint32 *userData, AVCLogType type, char *string1, int val1, int val2);
 
 /**
 This structure has to be allocated and maintained by the user of the library.
@@ -235,13 +235,13 @@ This structure is used as a handle to the library object.
 typedef struct tagAVCHandle
 {
     /** A pointer to the internal data structure. Users have to make sure that this value
-    	is NULL at the beginning.
+        is NULL at the beginning.
     */
-    void		*AVCObject;
+    void        *AVCObject;
 
     /** A pointer to user object which has the following member functions used for
     callback purpose.  !!! */
-    void		*userData;
+    void        *userData;
 
     /** Pointers to functions implemented by the users of AVC library */
     FunctionType_DPBAlloc CBAVC_DPBAlloc;
@@ -257,7 +257,7 @@ typedef struct tagAVCHandle
     FunctionType_DebugLog CBAVC_DebugLog;
 
     /** Flag to enable debugging */
-    uint32	debugEnable;
+    uint32  debugEnable;
 
 } AVCHandle;
 

@@ -57,18 +57,18 @@
 
 /***********************************************************HeaderBegin*******
  *
- * File:	vlc.h
+ * File:    vlc.h
  *
- * Author:	Robert Danielsen
- * Created:	07.06.96
+ * Author:  Robert Danielsen
+ * Created: 07.06.96
  *
  * Description: vlc tables for encoder
  *
- * Notes: 	Idea taken from MPEG-2 software simulation group
+ * Notes:   Idea taken from MPEG-2 software simulation group
  *
  * Modified:
- *	28.10.96 Robert Danielsen: Added tables for Intra luminance
- *			coefficients
+ *  28.10.96 Robert Danielsen: Added tables for Intra luminance
+ *          coefficients
  *      01.05.97 Luis Ducla-Soares: added VM7.0 Reversible VLC tables (RVLC).
  *      13.05.97 Minhua Zhou: added cbpy_tab3,cbpy_tab2
  *

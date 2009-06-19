@@ -142,7 +142,7 @@ static  const S_EventIdTable      EventIdTable[] =
     { 49,  H245_PRIMITIVE,  E_PtvId_Idc_Fns_Cfm         },
     { 49,  H245_PRIMITIVE,  E_PtvId_Idc_Fc_Cfm          },
     /* WWU_BLC: added table entries */
-    { 50,  H245_PRIMITIVE,	E_PtvId_Blc_Etb_Cfm2		},
+    { 50,  H245_PRIMITIVE,  E_PtvId_Blc_Etb_Cfm2        },
     { 52,  H245_PRIMITIVE,  E_PtvId_Cmd_Stcs_Cfm        }, /* RAN STCS */
     { 53,  H245_PRIMITIVE,  E_PtvId_Cmd_Fc_Cfm          }, /* RAN FC */
     { 54,  H245_PRIMITIVE,  E_PtvId_Cmd_Mscl_Cfm        }, /* RAN MSCL */

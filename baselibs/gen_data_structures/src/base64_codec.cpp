@@ -25,19 +25,19 @@ OSCL_EXPORT_REF PVBase64Codec::PVBase64Codec()
     int32 i;
     //encoder table
     {
-        for (i = 0;i < 9;i++)
+        for (i = 0; i < 9; i++)
         {
             etable[i] = OSCL_STATIC_CAST(uint8, 'A' + i);
             etable[i+9] = OSCL_STATIC_CAST(uint8, 'J' + i);
             etable[26+i] = OSCL_STATIC_CAST(uint8, 'a' + i);
             etable[26+i+9] = OSCL_STATIC_CAST(uint8, 'j' + i);
         }
-        for (i = 0;i < 8;i++)
+        for (i = 0; i < 8; i++)
         {
             etable[i+18] = OSCL_STATIC_CAST(uint8, 'S' + i);
             etable[26+i+18] = OSCL_STATIC_CAST(uint8, 's' + i);
         }
-        for (i = 0;i < 10;i++)
+        for (i = 0; i < 10; i++)
         {
             etable[52+i] = OSCL_STATIC_CAST(uint8, '0' + i);
         }
@@ -46,35 +46,35 @@ OSCL_EXPORT_REF PVBase64Codec::PVBase64Codec()
     }
 
     //deocder table
-    for (i = 0;i < 255;i++)
+    for (i = 0; i < 255; i++)
     {
         dtable[i] = 0x80;
     }
-    for (i = 'A';i <= 'I';i++)
+    for (i = 'A'; i <= 'I'; i++)
     {
         dtable[i] = OSCL_STATIC_CAST(uint8, 0 + (i - 'A'));
     }
-    for (i = 'J';i <= 'R';i++)
+    for (i = 'J'; i <= 'R'; i++)
     {
         dtable[i] = OSCL_STATIC_CAST(uint8, 9 + (i - 'J'));
     }
-    for (i = 'S';i <= 'Z';i++)
+    for (i = 'S'; i <= 'Z'; i++)
     {
         dtable[i] = OSCL_STATIC_CAST(uint8, 18 + (i - 'S'));
     }
-    for (i = 'a';i <= 'i';i++)
+    for (i = 'a'; i <= 'i'; i++)
     {
         dtable[i] = OSCL_STATIC_CAST(uint8, 26 + (i - 'a'));
     }
-    for (i = 'j';i <= 'r';i++)
+    for (i = 'j'; i <= 'r'; i++)
     {
         dtable[i] = OSCL_STATIC_CAST(uint8, 35 + (i - 'j'));
     }
-    for (i = 's';i <= 'z';i++)
+    for (i = 's'; i <= 'z'; i++)
     {
         dtable[i] = OSCL_STATIC_CAST(uint8, 44 + (i - 's'));
     }
-    for (i = '0';i <= '9';i++)
+    for (i = '0'; i <= '9'; i++)
     {
         dtable[i] = OSCL_STATIC_CAST(uint8, 52 + (i - '0'));
     }
@@ -96,7 +96,7 @@ bool PVBase64Codec::Decode(uint8* aInBuf, uint32 aInBufLen,
         uint8 a[4], b[4], o[3];
 
         int i;
-        for (i = 0;i < 4;i++)
+        for (i = 0; i < 4; i++)
         {
             uint8 c = *(aInBuf++);
             read_count++;

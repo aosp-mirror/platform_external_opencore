@@ -298,7 +298,7 @@ OSCL_EXPORT_REF void CPVInterfaceProxy_OMX::DeliverNotifications(int32 aTargetCo
     if (iPVThreadContext.IsSameThreadContext())
         OsclError::Leave(OsclErrThreadContextIncorrect);
 
-    for (int32 count = 0;count < aTargetCount;)
+    for (int32 count = 0; count < aTargetCount;)
     {
         //get next notification or cleanup message.
         iNotifierQueueCrit.Lock();
@@ -389,7 +389,7 @@ void CPVInterfaceProxy_OMX::CleanupCommands(CPVProxyInterface_OMX *aExt, bool aA
     if (!aExt)
         return ;
     iHandlerQueueCrit.Lock();
-    for (uint32 i = 0;i < iCommandQueue.size();i++)
+    for (uint32 i = 0; i < iCommandQueue.size(); i++)
     {
         CPVProxyMsg_OMX *msg = &iCommandQueue[i];
         if (msg->iProxyId == aExt->iProxyId
@@ -423,7 +423,7 @@ void CPVInterfaceProxy_OMX::CleanupNotifications(CPVProxyInterface_OMX *aExt, bo
     if (!aExt)
         return ;
     iNotifierQueueCrit.Lock();
-    for (uint i = 0;i < iNotificationQueue.size();i++)
+    for (uint i = 0; i < iNotificationQueue.size(); i++)
     {
         CPVProxyMsg_OMX *msg = &iNotificationQueue[i];
         if (msg->iProxyId == aExt->iProxyId
@@ -535,7 +535,7 @@ CPVProxyInterface_OMX * CPVInterfaceProxy_OMX::FindInterface(TPVProxyId aId, boo
 {
     if (!locked)
         iProxyListCrit.Lock();
-    for (uint32 i = 0;i < iProxyList.size();i++)
+    for (uint32 i = 0; i < iProxyList.size(); i++)
     {
         if (iProxyList[i].iProxyId == aId)
         {

@@ -34,7 +34,7 @@
 
 #include "h245.h"
 #include "h245def.h"
-#include "h245msg.h"				    /* H245 Message I/F  Header	    	    */
+#include "h245msg.h"                    /* H245 Message I/F  Header             */
 #include "per.h"
 #include "se.h"
 #include "genericper.h"
@@ -94,8 +94,8 @@ OSCL_EXPORT_REF PER::~PER()
 // ========================================================
 OSCL_EXPORT_REF void PER::Encode(PS_H245Msg pMsg)
 {
-    uint16		GetSize = 0;
-    uint8*		pCodeData;
+    uint16      GetSize = 0;
+    uint8*      pCodeData;
 
     // -----------------------
     // Analyzer output
@@ -166,12 +166,12 @@ class DecodedMsgDestructDealloc : public OsclDestructDealloc
 // ========================================================
 OSCL_EXPORT_REF void PER::Decode(uint8* pBuffer, uint32 size)
 {
-    uint8		MsgType1 = 0;
+    uint8       MsgType1 = 0;
     uint8       MsgType2 = 0;
-    uint16		GetSize = 0;
-    uint8*		pData = NULL;
-    uint8*		pBufferTop = NULL;
-    int			nBytes = 0;
+    uint16      GetSize = 0;
+    uint8*      pData = NULL;
+    uint8*      pBufferTop = NULL;
+    int         nBytes = 0;
 
     decodeSizeLeft =  size;
 
@@ -234,7 +234,7 @@ OSCL_EXPORT_REF void PER::Decode(uint8* pBuffer, uint32 size)
 
 
 bool PER::Decode(int& nBytes, uint8* pBuffer, uint16& GetSize, uint8*& pData,
-                 uint8&	MsgType1, uint8& MsgType2)
+                 uint8& MsgType1, uint8& MsgType2)
 {
     int32 leave_status = 0;
     OSCL_TRY(leave_status, nBytes = MultiSysCtrlMessage_decode(pBuffer, &GetSize,
@@ -761,11 +761,11 @@ void PER::IndicationMessage_encode(uint8* pDataIn,
 // MultiSysCtrlMessage_decode()
 //
 // ========================================================
-int PER::MultiSysCtrlMessage_decode(uint8*	pDataIn,
-                                    uint16*	pGetSize,
-                                    uint8*	*ppDataOut,
-                                    uint8*	pType1,
-                                    uint8*	pType2)
+int PER::MultiSysCtrlMessage_decode(uint8*  pDataIn,
+                                    uint16* pGetSize,
+                                    uint8*  *ppDataOut,
+                                    uint8*  pType1,
+                                    uint8*  pType2)
 {
     PS_InStream stream;
 
@@ -1522,108 +1522,108 @@ void IndicationMessage_analyze(uint16 tag, uint8 type2, uint8* message)
 }
 
 /*********************************************/
-/* Text Descriptions of Codewords	         */
+/* Text Descriptions of Codewords            */
 /* (For printing to codeword.txt)            */
 /*********************************************/
 char *EncodeDescription[ 4][ 24 ] =
 {
     /* Request Message */
-    {   "NonStandardMessage",		/* 0: NonStandardMessage		    */
-        "MasterSlaveDetermination",	/* 1: MasterSlaveDetermination	    */
-        "TerminalCapabilitySet",		/* 2: TerminalCapabilitySet		    */
-        "OpenLogicalChannel",		/* 3: OpenLogicalChannel 		    */
-        "CloseLogicalChannel",		/* 4: CloseLogicalChannel		    */
-        "RequestChannelClose",		/* 5: RequestChannelClose		    */
-        "MultiplexEntrySend",		/* 6: MultiplexEntrySend		    */
-        "RequestMultiplexEntry",		/* 7: RequestMultiplexEntry		    */
-        "RequestMode",				/* 8: RequestMode			    */
-        "RoundTripDelayRequest",		/* 9: RoundTripDelayRequest		    */
-        "MaintenanceLoopRequest",	/* A: MaintenanceLoopRequest	    */
-        "CommunicationModeRequest",	/* B: CommunicationModeRequest	    */
-        "ConferenceRequest",			/* C: ConferenceRequest		    */
-        "H223AnnexAReConfiguration", /* D: H223AnnexAReconfiguration	    */
-        "(Not Defined)",					    /* E: ( Not Define  )		    */
-        "(Not Defined)",					    /* 10: ( Not Define  )		    */
-        "(Not Defined)",					    /* 11: ( Not Define  )		    */
-        "(Not Defined)",					    /* 12: ( Not Define  )		    */
-        "(Not Defined)",					    /* 13: ( Not Define  )		    */
-        "(Not Defined)",					    /* 14: ( Not Define  )		    */
-        "(Not Defined)",					    /* 15: ( Not Define  )		    */
-        "(Not Defined)" },				    /* 16: ( Not Define  )		    */
+    {   "NonStandardMessage",       /* 0: NonStandardMessage            */
+        "MasterSlaveDetermination", /* 1: MasterSlaveDetermination      */
+        "TerminalCapabilitySet",        /* 2: TerminalCapabilitySet         */
+        "OpenLogicalChannel",       /* 3: OpenLogicalChannel            */
+        "CloseLogicalChannel",      /* 4: CloseLogicalChannel           */
+        "RequestChannelClose",      /* 5: RequestChannelClose           */
+        "MultiplexEntrySend",       /* 6: MultiplexEntrySend            */
+        "RequestMultiplexEntry",        /* 7: RequestMultiplexEntry         */
+        "RequestMode",              /* 8: RequestMode               */
+        "RoundTripDelayRequest",        /* 9: RoundTripDelayRequest         */
+        "MaintenanceLoopRequest",   /* A: MaintenanceLoopRequest        */
+        "CommunicationModeRequest", /* B: CommunicationModeRequest      */
+        "ConferenceRequest",            /* C: ConferenceRequest         */
+        "H223AnnexAReConfiguration", /* D: H223AnnexAReconfiguration        */
+        "(Not Defined)",                        /* E: ( Not Define  )           */
+        "(Not Defined)",                        /* 10: ( Not Define  )          */
+        "(Not Defined)",                        /* 11: ( Not Define  )          */
+        "(Not Defined)",                        /* 12: ( Not Define  )          */
+        "(Not Defined)",                        /* 13: ( Not Define  )          */
+        "(Not Defined)",                        /* 14: ( Not Define  )          */
+        "(Not Defined)",                        /* 15: ( Not Define  )          */
+        "(Not Defined)" },                  /* 16: ( Not Define  )          */
 
     /* Response Messeage */
-    {   "NonStandardMessage",			    /* 0: NonStandradMessage		    */
-        "MasterSlaveDeterminationAck",             /* 1: MasterSlaveDeterminationAck	    */
+    {   "NonStandardMessage",               /* 0: NonStandradMessage            */
+        "MasterSlaveDeterminationAck",             /* 1: MasterSlaveDeterminationAck        */
         "MasterSlaveDeterminationReject",          /* 2: MasterSlaveDeterminationReject    */
-        "TerminalCapabilitySetAck",                /* 3: TerminalCapabilitySetAck	    */
-        "TerminalCapabilitySetReject",             /* 4: TerminalCapabilitySetReject	    */
-        "OpenLogicalChannelAck",                   /* 5: OpenLogicalChannelAck		    */
-        "OpenLogicalChannelReject",                /* 6: OpenLogicalChannelReject	    */
-        "CloseLogicalChannelAck",                  /* 7: CloseLogicalChannelAck	    */
-        "RequestChannelCloseAck",                  /* 8: RequestChannelCloseAck	    */
-        "RequestChannelCloseReject",               /* 9: RequestChannelCloseReject	    */
-        "MultiplexEntrySendAck",                   /* A: MultiplexEntrySendAck		    */
-        "MultiplexEntrySendReject",                /* B: MultiplexEntrySendReject	    */
-        "RequestMultiplexEntryAck",                /* C: RequestMultiplexEntryAck	    */
-        "RequestMultiplexEntryReject",	    	    /* D: RequestMultiplexEntryReject	    */
-        "RequestModeAck",                          /* E: RequestModeAck		    */
-        "RequestModeReject",                       /* F RequestModeReject		    */
-        "RoundTripDelayResponse",                  /* 10 RoundTripDelayResponse	    */
-        "MaintenanceLoopAck",                      /* 11 MaintenanceLoopAck		    */
-        "MaintenanceLoopReject",                   /* 12 MaintenanceLoopReject		    */
-        "CommunicationModeResponse",               /* 13 CommunicationModeResponse	    */
-        "ConferenceResponse",		    	    /* 14 ConferenceResponse		    */
-        "H223AnnexAReConfigurationAck",	    /* 15 H223AnnexAReconfigurationAck	    */
-        "H223AnnexAReConfigurationReject" },	    /* 16 H223AnnexAReconfigurationReject   */
+        "TerminalCapabilitySetAck",                /* 3: TerminalCapabilitySetAck       */
+        "TerminalCapabilitySetReject",             /* 4: TerminalCapabilitySetReject        */
+        "OpenLogicalChannelAck",                   /* 5: OpenLogicalChannelAck          */
+        "OpenLogicalChannelReject",                /* 6: OpenLogicalChannelReject       */
+        "CloseLogicalChannelAck",                  /* 7: CloseLogicalChannelAck     */
+        "RequestChannelCloseAck",                  /* 8: RequestChannelCloseAck     */
+        "RequestChannelCloseReject",               /* 9: RequestChannelCloseReject      */
+        "MultiplexEntrySendAck",                   /* A: MultiplexEntrySendAck          */
+        "MultiplexEntrySendReject",                /* B: MultiplexEntrySendReject       */
+        "RequestMultiplexEntryAck",                /* C: RequestMultiplexEntryAck       */
+        "RequestMultiplexEntryReject",              /* D: RequestMultiplexEntryReject       */
+        "RequestModeAck",                          /* E: RequestModeAck         */
+        "RequestModeReject",                       /* F RequestModeReject           */
+        "RoundTripDelayResponse",                  /* 10 RoundTripDelayResponse     */
+        "MaintenanceLoopAck",                      /* 11 MaintenanceLoopAck         */
+        "MaintenanceLoopReject",                   /* 12 MaintenanceLoopReject          */
+        "CommunicationModeResponse",               /* 13 CommunicationModeResponse      */
+        "ConferenceResponse",                   /* 14 ConferenceResponse            */
+        "H223AnnexAReConfigurationAck",     /* 15 H223AnnexAReconfigurationAck      */
+        "H223AnnexAReConfigurationReject" },        /* 16 H223AnnexAReconfigurationReject   */
 
     /* Command Messeage */
-    {   "NonStandardMessage",			    /* 0: NonStandradMessage		    */
-        "MaintenanceLoopOffCommand",               /* 1: MaintenanceLoopOffCommand	    */
-        "SendTerminalCapabilitySet",               /* 2: SendTerminalCapabilitySet	    */
-        "EncryptionCommand",                       /* 3: EncryptionCommand		    */
-        "FlowControlCommand",                      /* 4: FlowControlCommand		    */
-        "EndSessionCommand",                       /* 5: EndSessionCommand		    */
-        "MiscellaneousCommand",                    /* 6: MiscellaneousCommand		    */
-        "CommunicationModeCommand",                /* 7: CommunicationModeCommand	    */
-        "ConferenceCommand",			    /* 8: ConferenceCommand		    */
+    {   "NonStandardMessage",               /* 0: NonStandradMessage            */
+        "MaintenanceLoopOffCommand",               /* 1: MaintenanceLoopOffCommand      */
+        "SendTerminalCapabilitySet",               /* 2: SendTerminalCapabilitySet      */
+        "EncryptionCommand",                       /* 3: EncryptionCommand          */
+        "FlowControlCommand",                      /* 4: FlowControlCommand         */
+        "EndSessionCommand",                       /* 5: EndSessionCommand          */
+        "MiscellaneousCommand",                    /* 6: MiscellaneousCommand           */
+        "CommunicationModeCommand",                /* 7: CommunicationModeCommand       */
+        "ConferenceCommand",                /* 8: ConferenceCommand         */
         "H223MultiplexReconfiguration",
-        "(Not Defined)",					    /* B:  ( Not Define  )		    */
-        "(Not Defined)",					    /* C:  ( Not Define  )		    */
-        "(Not Defined)",					    /* D:  ( Not Define  )		    */
-        "(Not Defined)",					    /* E:  ( Not Define  )		    */
-        "(Not Defined)",					    /* F:  ( Not Define  )		    */
-        "(Not Defined)",					    /* 10: ( Not Define  )		    */
-        "(Not Defined)",					    /* 11: ( Not Define  )		    */
-        "(Not Defined)",					    /* 12: ( Not Define  )		    */
-        "(Not Defined)",					    /* 13: ( Not Define  )		    */
-        "(Not Defined)",					    /* 14: ( Not Define  )		    */
-        "(Not Defined)",					    /* 15: ( Not Define  )		    */
-        "(Not Defined)" },				    /* 16: ( Not Define  )		    */
+        "(Not Defined)",                        /* B:  ( Not Define  )          */
+        "(Not Defined)",                        /* C:  ( Not Define  )          */
+        "(Not Defined)",                        /* D:  ( Not Define  )          */
+        "(Not Defined)",                        /* E:  ( Not Define  )          */
+        "(Not Defined)",                        /* F:  ( Not Define  )          */
+        "(Not Defined)",                        /* 10: ( Not Define  )          */
+        "(Not Defined)",                        /* 11: ( Not Define  )          */
+        "(Not Defined)",                        /* 12: ( Not Define  )          */
+        "(Not Defined)",                        /* 13: ( Not Define  )          */
+        "(Not Defined)",                        /* 14: ( Not Define  )          */
+        "(Not Defined)",                        /* 15: ( Not Define  )          */
+        "(Not Defined)" },                  /* 16: ( Not Define  )          */
 
     /* Indication Message */
-    {   "NonStandardMessage",			    /* 0: NonStandradMessage		    */
-        "FunctionNotUnderstood",                   /* 1: FunctionNotUnderstood		    */
+    {   "NonStandardMessage",               /* 0: NonStandradMessage            */
+        "FunctionNotUnderstood",                   /* 1: FunctionNotUnderstood          */
         "MasterSlaveDeterminationRelease",         /* 2: MasterSlaveDeterminationRelease   */
-        "TerminalCapabilitySetRelease",            /* 3: TerminalCapabilitySetRelease	    */
-        "OpenLogicalChannelConfirm",               /* 4: OpenLogicalChannelConfirm	    */
-        "RequestChannelCloseRelease",              /* 5: RequestChannelCloseRelease	    */
-        "MultiplexEntrySendRelease",               /* 6: MultiplexEntrySendRelease	    */
-        "RequestMultiplexEntryRelease",            /* 7: RequestMultiplexEntryRelease	    */
-        "RequestModeRelease",                      /* 8: RequestModeRelease		    */
-        "MiscellaneousIndication",		    /* 9: MiscellaneousIndication	    */
-        "JitterIndication",                        /* A: JitterIndication		    */
-        "H223SkewIndication",                      /* B: H223SkewIndication		    */
-        "NewATMVCIndication",                      /* C: NewATMVCIndication		    */
-        "UserInputIndication",                     /* D: UserInputIndication		    */
-        "H2250MaximumSkewIndication",              /* E: H2250MaximumSkewIndication	    */
-        "MCLocationIndication",                    /* F: MCLocationIndication		    */
-        "ConferenceIndication",                    /* 10:ConferenceIndication		    */
-        "VendorIdentification",                    /* 11:VendorIndication		    */
-        "FunctionNotSupported",		    /* 12:FunctionNotSupported		    */
-        "(Not Defined)",					    /* 13: ( Not Define  )		    */
-        "(Not Defined)",					    /* 14: ( Not Define  )		    */
-        "FlowControlCommand",	/* WWU_IND 15: FlowControl		*/
-        "(Not Defined)" }					    /* 16: ( Not Define  )		    */
+        "TerminalCapabilitySetRelease",            /* 3: TerminalCapabilitySetRelease       */
+        "OpenLogicalChannelConfirm",               /* 4: OpenLogicalChannelConfirm      */
+        "RequestChannelCloseRelease",              /* 5: RequestChannelCloseRelease     */
+        "MultiplexEntrySendRelease",               /* 6: MultiplexEntrySendRelease      */
+        "RequestMultiplexEntryRelease",            /* 7: RequestMultiplexEntryRelease       */
+        "RequestModeRelease",                      /* 8: RequestModeRelease         */
+        "MiscellaneousIndication",          /* 9: MiscellaneousIndication       */
+        "JitterIndication",                        /* A: JitterIndication           */
+        "H223SkewIndication",                      /* B: H223SkewIndication         */
+        "NewATMVCIndication",                      /* C: NewATMVCIndication         */
+        "UserInputIndication",                     /* D: UserInputIndication            */
+        "H2250MaximumSkewIndication",              /* E: H2250MaximumSkewIndication     */
+        "MCLocationIndication",                    /* F: MCLocationIndication           */
+        "ConferenceIndication",                    /* 10:ConferenceIndication           */
+        "VendorIdentification",                    /* 11:VendorIndication           */
+        "FunctionNotSupported",         /* 12:FunctionNotSupported          */
+        "(Not Defined)",                        /* 13: ( Not Define  )          */
+        "(Not Defined)",                        /* 14: ( Not Define  )          */
+        "FlowControlCommand",   /* WWU_IND 15: FlowControl      */
+        "(Not Defined)" }                       /* 16: ( Not Define  )          */
 };
 
 /* ================================================= */

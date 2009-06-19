@@ -24,14 +24,14 @@
 #include "m4venc_oscl.h"
 
 /* ======================================================================== */
-/*	Function : EncodeFrameDataPartMode()									*/
-/*	Date     : 09/6/2000													*/
-/*	History  :																*/
-/*	Purpose  : Encode a frame of MPEG4 bitstream in datapartitioning mode.	*/
-/*	In/out   :																*/
-/*	Return   :	PV_SUCCESS if successful else PV_FAIL						*/
-/*	Modified :																*/
-/*																			*/
+/*  Function : EncodeFrameDataPartMode()                                    */
+/*  Date     : 09/6/2000                                                    */
+/*  History  :                                                              */
+/*  Purpose  : Encode a frame of MPEG4 bitstream in datapartitioning mode.  */
+/*  In/out   :                                                              */
+/*  Return   :  PV_SUCCESS if successful else PV_FAIL                       */
+/*  Modified :                                                              */
+/*                                                                          */
 /* ======================================================================== */
 PV_STATUS EncodeFrameDataPartMode(VideoEncData *video)
 {
@@ -42,7 +42,7 @@ PV_STATUS EncodeFrameDataPartMode(VideoEncData *video)
     Int width = currVop->width; /* has to be Vop, for multiple of 16 */
     Int lx = currVop->pitch; /*  with padding */
     Int offset = 0;
-    Int	ind_x, ind_y;
+    Int ind_x, ind_y;
     Int start_packet_header = 0;
     UChar *QPMB = video->QPMB;
     Int QP;
@@ -62,7 +62,7 @@ PV_STATUS EncodeFrameDataPartMode(VideoEncData *video)
 
     numHeaderBits = BitstreamGetPos(bs1); /* Number of bits in VOP Header */
 
-    /* determine type of quantization	*/
+    /* determine type of quantization   */
 #ifndef NO_MPEG_QUANT
     if (currVol->quantType == 0)
         CodeMB = &CodeMB_H263;
@@ -92,16 +92,16 @@ PV_STATUS EncodeFrameDataPartMode(VideoEncData *video)
 
     video->usePrevQP = 0;
 
-    for (ind_y = 0;ind_y < currVol->nMBPerCol;ind_y++) 	/* Col MB Loop */
+    for (ind_y = 0; ind_y < currVol->nMBPerCol; ind_y++)    /* Col MB Loop */
     {
 
         video->outputMB->mb_y = ind_y; /*  5/28/01 */
 
-        for (ind_x = 0;ind_x < currVol->nMBPerRow;ind_x++)  /* Row MB Loop */
+        for (ind_x = 0; ind_x < currVol->nMBPerRow; ind_x++)  /* Row MB Loop */
         {
             video->outputMB->mb_x = ind_x; /*  5/28/01 */
             video->mbnum = mbnum;
-            video->sliceNo[mbnum] = slice_counter;		/* Update MB slice number */
+            video->sliceNo[mbnum] = slice_counter;      /* Update MB slice number */
             QP = QPMB[mbnum];   /* always read new QP */
 
             /****************************************************************************************/
@@ -112,10 +112,10 @@ PV_STATUS EncodeFrameDataPartMode(VideoEncData *video)
 
             if (start_packet_header)
             {
-                slice_counter++;						/* Increment slice counter */
-                video->sliceNo[mbnum] = slice_counter;	/* Update MB slice number*/
+                slice_counter++;                        /* Increment slice counter */
+                video->sliceNo[mbnum] = slice_counter;  /* Update MB slice number*/
                 video->header_bits -= BitstreamGetPos(bs1); /* Header Bits */
-                video->QP_prev = currVop->quantizer;						/* store QP */
+                video->QP_prev = currVop->quantizer;                        /* store QP */
                 status = EncodeVideoPacketHeader(video, mbnum, video->QP_prev, 0);
                 video->header_bits += BitstreamGetPos(bs1); /* Header Bits */
                 numHeaderBits = BitstreamGetPos(bs1);
@@ -149,17 +149,17 @@ PV_STATUS EncodeFrameDataPartMode(VideoEncData *video)
             if (num_bits > packet_size)
             {
                 if (video->currVop->predictionType == I_VOP)
-                    BitstreamPutGT16Bits(bs1, 19, DC_MARKER);	/* Add dc_marker */
+                    BitstreamPutGT16Bits(bs1, 19, DC_MARKER);   /* Add dc_marker */
                 else
                     BitstreamPutGT16Bits(bs1, 17, MOTION_MARKER_COMB); /*Add motion_marker*/
-                BitstreamAppendEnc(bs1, bs2);	/* Combine bs1 and bs2 */
-                BitstreamAppendEnc(bs1, bs3);	/* Combine bs1 and bs3 */
+                BitstreamAppendEnc(bs1, bs2);   /* Combine bs1 and bs2 */
+                BitstreamAppendEnc(bs1, bs3);   /* Combine bs1 and bs3 */
                 video->header_bits += BitstreamMpeg4ByteAlignStuffing(bs1); /* Byte align Packet */
 
                 status = BitstreamAppendPacket(currVol->stream, bs1); /* Put Packet to Buffer */
                 /* continue even if status == PV_END_OF_BUF, to get the stats */
 
-                BitstreamEncReset(bs1);	/* Initialize to 0 */
+                BitstreamEncReset(bs1); /* Initialize to 0 */
                 BitstreamEncReset(bs2);
                 BitstreamEncReset(bs3);
                 start_packet_header = 1;
@@ -175,7 +175,7 @@ PV_STATUS EncodeFrameDataPartMode(VideoEncData *video)
     {
         if (video->currVop->predictionType == I_VOP)
         {
-            BitstreamPutGT16Bits(bs1, 19, DC_MARKER);	/* Add dc_marker */
+            BitstreamPutGT16Bits(bs1, 19, DC_MARKER);   /* Add dc_marker */
             video->header_bits += 19;
         }
         else
@@ -188,7 +188,7 @@ PV_STATUS EncodeFrameDataPartMode(VideoEncData *video)
         video->header_bits += BitstreamMpeg4ByteAlignStuffing(bs1); /* Byte align Packet */
         status = BitstreamAppendPacket(currVol->stream, bs1); /* Put Packet to Buffer */
         /* continue even if status == PV_END_OF_BUF, to get the stats */
-        BitstreamEncReset(bs1);	/* Initialize to 0 */
+        BitstreamEncReset(bs1); /* Initialize to 0 */
         BitstreamEncReset(bs2);
         BitstreamEncReset(bs3);
     }
@@ -198,15 +198,15 @@ PV_STATUS EncodeFrameDataPartMode(VideoEncData *video)
 
 #ifndef  NO_SLICE_ENCODE
 /* ======================================================================== */
-/*	Function : EncodeSliceDataPartMode()									*/
-/*	Date     : 04/19/2002													*/
-/*	History  :																*/
-/*	Purpose  : Encode a slice of MPEG4 bitstream in DataPar mode and save	*/
-/*				the current MB to continue next time it is called.			*/
-/*	In/out   :																*/
-/*	Return   :	PV_SUCCESS if successful else PV_FAIL						*/
-/*	Modified :																*/
-/*																			*/
+/*  Function : EncodeSliceDataPartMode()                                    */
+/*  Date     : 04/19/2002                                                   */
+/*  History  :                                                              */
+/*  Purpose  : Encode a slice of MPEG4 bitstream in DataPar mode and save   */
+/*              the current MB to continue next time it is called.          */
+/*  In/out   :                                                              */
+/*  Return   :  PV_SUCCESS if successful else PV_FAIL                       */
+/*  Modified :                                                              */
+/*                                                                          */
 /* ======================================================================== */
 PV_STATUS EncodeSliceDataPartMode(VideoEncData *video)
 {
@@ -220,8 +220,8 @@ PV_STATUS EncodeSliceDataPartMode(VideoEncData *video)
     Int lx = currVop->pitch; /* , with pading */
     UChar *QPMB = video->QPMB;
     Int QP;
-    Int	ind_x = video->outputMB->mb_x, ind_y = video->outputMB->mb_y;
-    Int offset = video->offset;					/* get current MB location */
+    Int ind_x = video->outputMB->mb_x, ind_y = video->outputMB->mb_y;
+    Int offset = video->offset;                 /* get current MB location */
     Int mbnum = video->mbnum, slice_counter = video->sliceNo[mbnum]; /* get current MB location */
     Int firstMB = mbnum;
     Int start_packet_header = (mbnum != 0);
@@ -230,7 +230,7 @@ PV_STATUS EncodeSliceDataPartMode(VideoEncData *video)
     BitstreamEncVideo *bs1 = video->bitstream1;
     BitstreamEncVideo *bs2 = video->bitstream2;
     BitstreamEncVideo *bs3 = video->bitstream3;
-    Int	bitCount1 = 0, bitCount2 = 0, bitCount3 = 0, byteCount1 = 0, byteCount2 = 0, byteCount3 = 0;
+    Int bitCount1 = 0, bitCount2 = 0, bitCount3 = 0, byteCount1 = 0, byteCount2 = 0, byteCount3 = 0;
     Int numHeaderBits = 0;
     approxDCT fastDCTfunction;
     Int ncoefblck[6] = {64, 64, 64, 64, 64, 64}; /* for FastCodeMB,  5/18/2001 */
@@ -266,9 +266,9 @@ PV_STATUS EncodeSliceDataPartMode(VideoEncData *video)
 
     /* Re-assign fast functions on every slice, don't have to put it in the memory */
     QP = QPMB[mbnum];
-    if (mbnum > 0)	 video->QP_prev = QPMB[mbnum-1];
+    if (mbnum > 0)   video->QP_prev = QPMB[mbnum-1];
 
-    /* determine type of quantization	*/
+    /* determine type of quantization   */
 #ifndef NO_MPEG_QUANT
     if (currVol->quantType == 0)
         CodeMB = &CodeMB_H263;
@@ -299,17 +299,17 @@ PV_STATUS EncodeSliceDataPartMode(VideoEncData *video)
         goto JUMP_IN;
     }
 
-    for (ind_y = 0;ind_y < currVol->nMBPerCol;ind_y++) 	/* Col MB Loop */
+    for (ind_y = 0; ind_y < currVol->nMBPerCol; ind_y++)    /* Col MB Loop */
     {
 
         video->outputMB->mb_y = ind_y; /*  5/28/01 */
 
-        for (ind_x = 0;ind_x < currVol->nMBPerRow;ind_x++)  /* Row MB Loop */
+        for (ind_x = 0; ind_x < currVol->nMBPerRow; ind_x++)  /* Row MB Loop */
         {
 
             video->outputMB->mb_x = ind_x; /*  5/28/01 */
             video->mbnum = mbnum;
-            video->sliceNo[mbnum] = slice_counter;		/* Update MB slice number */
+            video->sliceNo[mbnum] = slice_counter;      /* Update MB slice number */
 
             /****************************************************************************************/
             /* MB Prediction:Put into MC macroblock, substract from currVop, put in predMB */
@@ -322,9 +322,9 @@ JUMP_IN:
 
             if (start_packet_header)
             {
-                slice_counter++;						/* Increment slice counter */
-                video->sliceNo[mbnum] = slice_counter;	/* Update MB slice number*/
-                video->QP_prev = currVop->quantizer;						/* store QP */
+                slice_counter++;                        /* Increment slice counter */
+                video->sliceNo[mbnum] = slice_counter;  /* Update MB slice number*/
+                video->QP_prev = currVop->quantizer;                        /* store QP */
                 num_bits = BitstreamGetPos(bs1);
                 status = EncodeVideoPacketHeader(video, mbnum, video->QP_prev, 0);
                 numHeaderBits = BitstreamGetPos(bs1) - num_bits;
@@ -383,7 +383,7 @@ JUMP_IN:
 
                 if (video->currVop->predictionType == I_VOP)
                 {
-                    BitstreamPutGT16Bits(bs1, 19, DC_MARKER);	/* Add dc_marker */
+                    BitstreamPutGT16Bits(bs1, 19, DC_MARKER);   /* Add dc_marker */
                     video->header_bits += 19;
                 }
                 else
@@ -392,8 +392,8 @@ JUMP_IN:
                     video->header_bits += 17;
                 }
 
-                status = BitstreamAppendEnc(bs1, bs2);	/* Combine with bs2 */
-                status = BitstreamAppendEnc(bs1, bs3);	/* Combine with bs3 */
+                status = BitstreamAppendEnc(bs1, bs2);  /* Combine with bs2 */
+                status = BitstreamAppendEnc(bs1, bs3);  /* Combine with bs3 */
 
                 video->header_bits += BitstreamMpeg4ByteAlignStuffing(bs1); /* Byte align Packet */
                 status = BitstreamAppendPacketNoOffset(currVol->stream, bs1);
@@ -441,7 +441,7 @@ JUMP_IN:
     {
         if (video->currVop->predictionType == I_VOP)
         {
-            BitstreamPutGT16Bits(bs1, 19, DC_MARKER);	/* Add dc_marker */
+            BitstreamPutGT16Bits(bs1, 19, DC_MARKER);   /* Add dc_marker */
             video->header_bits += 19;
         }
         else
@@ -450,8 +450,8 @@ JUMP_IN:
             video->header_bits += 17;
         }
 
-        status = BitstreamAppendEnc(bs1, bs2);	/* Combine with bs2 */
-        status = BitstreamAppendEnc(bs1, bs3);	/* Combine with bs3 */
+        status = BitstreamAppendEnc(bs1, bs2);  /* Combine with bs2 */
+        status = BitstreamAppendEnc(bs1, bs3);  /* Combine with bs3 */
 
         video->header_bits += BitstreamMpeg4ByteAlignStuffing(bs1); /* Byte align Packet */
         status = BitstreamAppendPacketNoOffset(currVol->stream, bs1);

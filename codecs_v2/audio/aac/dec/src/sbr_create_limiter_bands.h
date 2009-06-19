@@ -78,10 +78,10 @@ extern "C"
 #endif
 
     void sbr_create_limiter_bands(Int32 limSbc[4][12 + 1],
-                                  Int32 gateMode[4],
-                                  Int   *freqTable,
-                                  struct PATCH Patch,
-                                  const Int32 noBands);
+    Int32 gateMode[4],
+    Int   *freqTable,
+    struct PATCH Patch,
+    const Int32 noBands);
 
 #ifdef __cplusplus
 }

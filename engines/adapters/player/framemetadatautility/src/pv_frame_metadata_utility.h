@@ -399,13 +399,13 @@ class PVFMAudioMIO;
 class OsclMemPoolResizableAllocator;
 
 class PVFrameAndMetadataUtility : public OsclTimerObject,
-            public PVFrameAndMetadataInterface,
-            public PvmiCapabilityAndConfig,
-            public PVCommandStatusObserver,
-            public PVErrorEventObserver,
-            public PVInformationalEventObserver,
-            public PVFMVideoMIOGetFrameObserver,
-            public OsclTimerObserver
+        public PVFrameAndMetadataInterface,
+        public PvmiCapabilityAndConfig,
+        public PVCommandStatusObserver,
+        public PVErrorEventObserver,
+        public PVInformationalEventObserver,
+        public PVFMVideoMIOGetFrameObserver,
+        public OsclTimerObserver
 {
     public:
         static PVFrameAndMetadataUtility* New(char *aOutputFormatMIMEType,
@@ -429,8 +429,8 @@ class PVFrameAndMetadataUtility : public OsclTimerObject,
         PVCommandId RemoveDataSource(PVPlayerDataSource& aDataSource, const OsclAny* aContextData = NULL);
         PVMFStatus  SetMode(uint32 aMode);
 
-        void		SetThumbnailDimensions(uint32 aWidth, uint32 aHeight);
-        void		GetThumbnailDimensions(uint32 &aWidth, uint32 &aHeight);
+        void        SetThumbnailDimensions(uint32 aWidth, uint32 aHeight);
+        void        GetThumbnailDimensions(uint32 &aWidth, uint32 &aHeight);
         // From PvmiCapabilityAndConfig
         void setObserver(PvmiConfigAndCapabilityCmdObserver* aObserver);
         PVMFStatus getParametersSync(PvmiMIOSession aSession, PvmiKeyType aIdentifier, PvmiKvp*& aParameters, int& aNumParamElements, PvmiCapabilityContext aContext);

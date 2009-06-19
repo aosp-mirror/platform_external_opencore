@@ -67,14 +67,14 @@ int16 ColorConvertBase::GetCapability(void)
 
 /**************************************************************
 nRotation : Rotation direction is defined at run time
-			0 -- No rotation
-			1 -- 90 degree counter clockwise (default)
-			2 -- 180 degree rotation (upside-down)
-			3 -- 90 degree clockwise
-			-1 -- flip left-right
-			-2 -- flip and rotate 90 degree cnt clk
-			-3 -- flip and rotate 180 degree
-			-4 -- flip and rotate 270 degree
+            0 -- No rotation
+            1 -- 90 degree counter clockwise (default)
+            2 -- 180 degree rotation (upside-down)
+            3 -- 90 degree clockwise
+            -1 -- flip left-right
+            -2 -- flip and rotate 90 degree cnt clk
+            -3 -- flip and rotate 180 degree
+            -4 -- flip and rotate 270 degree
 **************************************************************/
 int32 ColorConvertBase::Init(int32 Src_width, int32 Src_height, int32 Src_pitch, int32 Dst_width, int32 Dst_height, int32 Dst_pitch, int32 nRotation)
 {
@@ -87,13 +87,13 @@ int32 ColorConvertBase::Init(int32 Src_width, int32 Src_height, int32 Src_pitch,
 
     _mInitialized = false;
     _mSrc_mheight = Src_height;
-    _mRotation	=	nRotation;
-    _mDisp.src_pitch = _mSrc_pitch  =	Src_pitch;
-    _mDisp.dst_pitch = _mDst_pitch	=	Dst_pitch;
-    _mDisp.src_width = _mSrc_width	=	Src_width;
-    _mDisp.src_height = _mSrc_height =	Src_height;
-    _mDisp.dst_width = _mDst_width	=	Dst_width;
-    _mDisp.dst_height = _mDst_height =	Dst_height;
+    _mRotation  =   nRotation;
+    _mDisp.src_pitch = _mSrc_pitch  =   Src_pitch;
+    _mDisp.dst_pitch = _mDst_pitch  =   Dst_pitch;
+    _mDisp.src_width = _mSrc_width  =   Src_width;
+    _mDisp.src_height = _mSrc_height =  Src_height;
+    _mDisp.dst_width = _mDst_width  =   Dst_width;
+    _mDisp.dst_height = _mDst_height =  Dst_height;
 
     /* Check support for rotation */
     if (_mRotation&0x1)
@@ -313,9 +313,9 @@ void ColorConvertBase::StretchLine(uint8 *pLinePix, int32 iSrcLen, int32 iDstLen
 
             if (j < iSrcLen)
             {
-                pLinePix[j]--;		/* remove pixel by one */
+                pLinePix[j]--;      /* remove pixel by one */
                 e--;
-                j++;				/* move to the next pixel */
+                j++;                /* move to the next pixel */
             }
             else
             {
@@ -333,9 +333,9 @@ void ColorConvertBase::StretchLine(uint8 *pLinePix, int32 iSrcLen, int32 iDstLen
 
             if (j < iSrcLen)
             {
-                pLinePix[j]++;	/* add pixel by one */
+                pLinePix[j]++;  /* add pixel by one */
                 e++;
-                j++;		    /* move to the next pixel */
+                j++;            /* move to the next pixel */
             }
             else
             {

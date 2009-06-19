@@ -207,7 +207,7 @@ class PVMFSubNodeContainerBaseMp3
 };
 
 class PVMFCPMContainerMp3: public PVMFSubNodeContainerBaseMp3,
-            public PVMFCPMStatusObserver
+        public PVMFCPMStatusObserver
 {
     public:
         PVMFCPMContainerMp3()
@@ -375,19 +375,19 @@ class PVMp3DurationCalculator : public OsclTimerObject
 * */
 
 class PVMFMP3FFParserNode : public OsclTimerObject,
-            public PVMFNodeInterface,
-            public PVMFDataSourceInitializationExtensionInterface,
-            public PVMFTrackSelectionExtensionInterface,
-            public PVMFMetadataExtensionInterface,
-            public OsclMemPoolFixedChunkAllocatorObserver,
-            public PVMFFormatProgDownloadSupportInterface,
-            public PvmiDataStreamObserver,
-            public PVMIDatastreamuserInterface,
-            public OsclMemPoolResizableAllocatorObserver,
-            public PvmfDataSourcePlaybackControlInterface,
-            public PVMFCPMPluginLicenseInterface
+        public PVMFNodeInterface,
+        public PVMFDataSourceInitializationExtensionInterface,
+        public PVMFTrackSelectionExtensionInterface,
+        public PVMFMetadataExtensionInterface,
+        public OsclMemPoolFixedChunkAllocatorObserver,
+        public PVMFFormatProgDownloadSupportInterface,
+        public PvmiDataStreamObserver,
+        public PVMIDatastreamuserInterface,
+        public OsclMemPoolResizableAllocatorObserver,
+        public PvmfDataSourcePlaybackControlInterface,
+        public PVMFCPMPluginLicenseInterface
 #if PV_HAS_SHOUTCAST_SUPPORT_ENABLED
-            , public PVMFMetadataUpdatesObserver
+        , public PVMFMetadataUpdatesObserver
 #endif
 {
     public:

@@ -17,7 +17,7 @@
  */
 /************************************************************************/
 /*  file name       : layer.h                                           */
-/*  file contents   :											        */
+/*  file contents   :                                                   */
 /*  draw            :                                                   */
 /*----------------------------------------------------------------------*/
 /*  amendment       :                                                   */
@@ -39,7 +39,7 @@ class Layer
         {
             PACKET_INPUT = 0,
             PACKET_OUTPUT
-        }TLayerNode;
+        } TLayerNode;
         virtual ~Layer() {}
         OSCL_IMPORT_REF virtual PacketInput* GetPacketInput() = 0;
         OSCL_IMPORT_REF virtual PacketOutput* GetPacketOutput() = 0;

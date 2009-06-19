@@ -112,7 +112,7 @@ extern "C"
 #endif
 
     void get_sbr_bitstream(SBRBITSTREAM *sbrBitStream,
-                           BITS *pInputStream);
+    BITS *pInputStream);
 
 #ifdef __cplusplus
 }

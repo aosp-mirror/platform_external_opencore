@@ -35,10 +35,10 @@ uint32 num_sad_HP_MB = 0;
 uint32 num_sad_HP_Blk = 0;
 uint32 num_sad_HP_MB_call = 0;
 uint32 num_sad_HP_Blk_call = 0;
-#define NUM_SAD_HP_MB_CALL()	num_sad_HP_MB_call++
-#define NUM_SAD_HP_MB()			num_sad_HP_MB++
-#define NUM_SAD_HP_BLK_CALL()	num_sad_HP_Blk_call++
-#define NUM_SAD_HP_BLK()		num_sad_HP_Blk++
+#define NUM_SAD_HP_MB_CALL()    num_sad_HP_MB_call++
+#define NUM_SAD_HP_MB()         num_sad_HP_MB++
+#define NUM_SAD_HP_BLK_CALL()   num_sad_HP_Blk_call++
+#define NUM_SAD_HP_BLK()        num_sad_HP_Blk++
 #else
 #define NUM_SAD_HP_MB_CALL()
 #define NUM_SAD_HP_MB()
@@ -49,20 +49,20 @@ uint32 num_sad_HP_Blk_call = 0;
 
 
 /*===============================================================
-	Function:	SAD_MB_HalfPel
-	Date:		09/17/2000
-	Purpose:	Compute the SAD on the half-pel resolution
-	Input/Output:	hmem is assumed to be a pointer to the starting
-				point of the search in the 33x33 matrix search region
-	Changes:
-	11/7/00:	implemented MMX
+    Function:   SAD_MB_HalfPel
+    Date:       09/17/2000
+    Purpose:    Compute the SAD on the half-pel resolution
+    Input/Output:   hmem is assumed to be a pointer to the starting
+                point of the search in the 33x33 matrix search region
+    Changes:
+    11/7/00:    implemented MMX
   ===============================================================*/
 /*==================================================================
-	Function:	AVCSAD_MB_HalfPel_C
-	Date:		04/30/2001
-	Purpose:	Compute SAD 16x16 between blk and ref in halfpel
-				resolution,
-	Changes:
+    Function:   AVCSAD_MB_HalfPel_C
+    Date:       04/30/2001
+    Purpose:    Compute SAD 16x16 between blk and ref in halfpel
+                resolution,
+    Changes:
   ==================================================================*/
 /* One component is half-pel */
 int AVCSAD_MB_HalfPel_Cxhyh(uint8 *ref, uint8 *blk, int dmin_rx, void *extra_info)
@@ -72,7 +72,7 @@ int AVCSAD_MB_HalfPel_Cxhyh(uint8 *ref, uint8 *blk, int dmin_rx, void *extra_inf
     int i, j;
     int sad = 0;
     uint8 *kk, *p1, *p2, *p3, *p4;
-//	int sumref=0;
+//  int sumref=0;
     int temp;
     int rx = dmin_rx & 0xFFFF;
 
@@ -113,7 +113,7 @@ int AVCSAD_MB_HalfPel_Cyh(uint8 *ref, uint8 *blk, int dmin_rx, void *extra_info)
     int i, j;
     int sad = 0;
     uint8 *kk, *p1, *p2;
-//	int sumref=0;
+//  int sumref=0;
     int temp;
     int rx = dmin_rx & 0xFFFF;
 

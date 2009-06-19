@@ -257,7 +257,7 @@ PVMFCommandId PvmfMediaInputNodeOutPort::writeAsync(uint8 format_type, int32 for
         // In Stopped state we are not going to accept any buffers
         OsclError::Leave(OsclErrNotReady);
         LOG_DEBUG((0, "Ignoring PvmfMediaInputNodeOutPort::writeAsync"));
-        return -1;  
+        return -1;
     }
     if (iWriteState == EWriteOK)
     {

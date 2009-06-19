@@ -87,11 +87,11 @@ extern "C"
 
 
     void pvmp3_stereo_proc(int32 xr[SUBBANDS_NUMBER*FILTERBANK_BANDS],
-                           int32 xl[SUBBANDS_NUMBER*FILTERBANK_BANDS],
-                           mp3ScaleFactors *scalefac,
-                           granuleInfo *gr_info,
-                           int32 used_freq_lines,
-                           mp3Header *info);
+    int32 xl[SUBBANDS_NUMBER*FILTERBANK_BANDS],
+    mp3ScaleFactors *scalefac,
+    granuleInfo *gr_info,
+    int32 used_freq_lines,
+    mp3Header *info);
 
     void pvmp3_st_intensity(int32 xr[SUBBANDS_NUMBER*FILTERBANK_BANDS],
                             int32 xl[SUBBANDS_NUMBER*FILTERBANK_BANDS],

@@ -22,7 +22,7 @@
 #include "osclconfig.h"
 
 class Mp4NodesInterface: public OsclSharedLibraryInterface,
-            public NodeSharedLibraryInterface
+        public NodeSharedLibraryInterface
 {
     public:
         Mp4NodesInterface() {};

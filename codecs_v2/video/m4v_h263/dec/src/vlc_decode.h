@@ -54,21 +54,21 @@
 
 /***********************************************************HeaderBegin*******
 *
-* File:	vlc_dec.h
+* File: vlc_dec.h
 *
-* Author:	Paulo Nunes (IST) - Paulo.Nunes@lx.it.pt
+* Author:   Paulo Nunes (IST) - Paulo.Nunes@lx.it.pt
 * Created:
 *
 * Description: This is the header file for the "vlcdec" module.
 *
 * Notes:
 *
-* Modified:	9-May-96 Paulo Nunes: Reformatted. New headers.
+* Modified: 9-May-96 Paulo Nunes: Reformatted. New headers.
 *
 * ================= PacketVideo Modification ================================
 *
-*		3/30/00  : initial modification to the
-*				 new PV-Decoder Lib format.
+*       3/30/00  : initial modification to the
+*                new PV-Decoder Lib format.
 *
 ***********************************************************CommentEnd********/
 
@@ -79,10 +79,10 @@
 #include "mp4lib_int.h"
 
 #define VLC_ERROR_DETECTED(x) ((x) < 0)
-#define VLC_IO_ERROR	-1
-#define VLC_CODE_ERROR	-2
-#define VLC_MB_STUFFING	-4
-#define VLC_NO_LAST_BIT	-5
+#define VLC_IO_ERROR    -1
+#define VLC_CODE_ERROR  -2
+#define VLC_MB_STUFFING -4
+#define VLC_NO_LAST_BIT -5
 
 #define VLC_ESCAPE_CODE  7167
 

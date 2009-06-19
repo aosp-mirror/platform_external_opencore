@@ -22,7 +22,7 @@
 #include "tsc_h324m_config_interface.h"
 
 class video_only_test : public test_base//,
-            //public H324MConfigObserver
+        //public H324MConfigObserver
 {
     public:
         video_only_test(PVMFFormatType video_src_format = PVMF_MIME_YUV420, PVMFFormatType video_sink_format = PVMF_MIME_YUV420, bool aUseProxy = false)

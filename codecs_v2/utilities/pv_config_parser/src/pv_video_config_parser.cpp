@@ -50,14 +50,14 @@
 
 #define FOURCC_WMV2     mmioFOURCC_WMC('W','M','V','2')
 #define FOURCC_WMV3     mmioFOURCC_WMC('W','M','V','3')
-#define FOURCC_WMVA		mmioFOURCC_WMC('W','M','V','A')
-#define FOURCC_WVC1		mmioFOURCC_WMC('W','V','C','1')
+#define FOURCC_WMVA     mmioFOURCC_WMC('W','M','V','A')
+#define FOURCC_WVC1     mmioFOURCC_WMC('W','V','C','1')
 //For WMVA
 #define ASFBINDING_SIZE                   1   // size of ASFBINDING is 1 byte
-#define FOURCC_MP42		mmioFOURCC_WMC('M','P','4','2')
-#define FOURCC_MP43		mmioFOURCC_WMC('M','P','4','3')
-#define FOURCC_mp42		mmioFOURCC_WMC('m','p','4','2')
-#define FOURCC_mp43		mmioFOURCC_WMC('m','p','4','3')
+#define FOURCC_MP42     mmioFOURCC_WMC('M','P','4','2')
+#define FOURCC_MP43     mmioFOURCC_WMC('M','P','4','3')
+#define FOURCC_mp42     mmioFOURCC_WMC('m','p','4','2')
+#define FOURCC_mp43     mmioFOURCC_WMC('m','p','4','3')
 
 
 OSCL_DLL_ENTRY_POINT_DEFAULT()
@@ -215,7 +215,7 @@ OSCL_EXPORT_REF int16 pv_video_config_parser(pvVideoConfigParserInputs *aInputs,
                 pData = aInputs->inPtr;
                 pData += (11 + 40 + ASFBINDING_SIZE); //sizeof(BITMAPINFOHEADER); // position to sequence header
 
-                LoadDWORD(dwdat, pData); // prefix	// this is little endian read sequence header
+                LoadDWORD(dwdat, pData); // prefix  // this is little endian read sequence header
                 LoadDWORD(dwdat, pData);
                 NewSeqHeader = dwdat;
 
@@ -241,7 +241,7 @@ OSCL_EXPORT_REF int16 pv_video_config_parser(pvVideoConfigParserInputs *aInputs,
 
 
 /* This function finds a nal from the SC's, moves the bitstream pointer to the beginning of the NAL unit, returns the
-	size of the NAL, and at the same time, updates the remaining size in the bitstream buffer that is passed in */
+    size of the NAL, and at the same time, updates the remaining size in the bitstream buffer that is passed in */
 int32 GetNAL_Config(uint8** bitstream, int32* size)
 {
     int i = 0;
@@ -284,5 +284,5 @@ int32 GetNAL_Config(uint8** bitstream, int32* size)
     }
 
     *size -= i;
-    return (i -j);
+    return (i - j);
 }

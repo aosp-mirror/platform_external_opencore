@@ -38,7 +38,7 @@ void
 test_case::run_subtests(void)
 {
     _VECTOR(test_case*, unit_test_allocator)::iterator iter = m_subtests.begin();
-    for (;iter != m_subtests.end();
+    for (; iter != m_subtests.end();
             ++iter)
     {
         (*iter)->run_test();
@@ -221,7 +221,7 @@ test_case::~test_case(void)
 
     _VECTOR(test_case*, unit_test_allocator)::iterator iter = m_subtests.begin();
 
-    for (;iter != m_subtests.end();
+    for (; iter != m_subtests.end();
             ++iter)
     {
         delete((*iter));

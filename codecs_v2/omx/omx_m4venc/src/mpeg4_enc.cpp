@@ -24,7 +24,7 @@
 const uint8 DEFAULT_VOL_HEADER[DEFAULT_VOL_HEADER_LENGTH] =
 {
     0x00, 0x00, 0x01, 0xB0, 0x08, 0x00, 0x00, 0x01,
-    0xB5, 0x09,	0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
+    0xB5, 0x09, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
     0x01, 0x20, 0x00, 0x84, 0x40, 0xFA, 0x28, 0x2C,
     0x20, 0x90, 0xA2, 0x1F
 };
@@ -74,7 +74,7 @@ OMX_ERRORTYPE Mpeg4Encoder_OMX::Mp4EncInit(OMX_S32 iEncMode,
     OMX_U8* pMemBuffer;
     VideoEncOptions aEncOption; /* encoding options */
 
-    Int	quantType[2] = {0, 0};		/* default H.263 quant*/
+    Int quantType[2] = {0, 0};      /* default H.263 quant*/
 
     oscl_memset((void*) &iEncoderControl, 0, sizeof(VideoEncControls));
 
@@ -613,7 +613,7 @@ OMX_ERRORTYPE Mpeg4Encoder_OMX::Mp4RequestIFrame()
 
 OMX_BOOL Mpeg4Encoder_OMX::Mp4UpdateBitRate(OMX_U32 aEncodedBitRate)
 {
-    Int	BitRate[2] = {0, 0};
+    Int BitRate[2] = {0, 0};
     OMX_BOOL Status = OMX_TRUE;
 
     //Update the bit rate only if encoder has been initialized
@@ -698,7 +698,7 @@ OMX_BOOL Mpeg4Encoder_OMX::Mp4EncodeVideo(OMX_U8*    aOutBuffer,
             return OMX_FALSE;
         }
     }
-    else if	(OMX_COLOR_Format12bitRGB444 == iVideoFormat)
+    else if (OMX_COLOR_Format12bitRGB444 == iVideoFormat)
     {
         if (aInBufSize < (OMX_U32)(iSrcWidth * iSrcHeight * 2))
         {
@@ -784,7 +784,7 @@ OMX_BOOL Mpeg4Encoder_OMX::Mp4EncodeVideo(OMX_U8*    aOutBuffer,
         {
             iNextModTime = modTime;
 
-            if ((nLayer >= 0) && ((OMX_U32) Size > *aOutputLength))	// overrun buffer is used by the encoder
+            if ((nLayer >= 0) && ((OMX_U32) Size > *aOutputLength)) // overrun buffer is used by the encoder
             {
                 *aOverBufferPointer = PVGetOverrunBuffer(&iEncoderControl);
                 *aBufferOverRun = OMX_TRUE;
@@ -859,7 +859,7 @@ OMX_ERRORTYPE Mpeg4Encoder_OMX::Mp4EncDeinit()
 /* COLOUR CONVERSION ROUTINES ARE WRITTEN BELOW*/
 
 /* ///////////////////////////////////////////////////////////////////////// */
-/* Copy from YUV input to YUV frame inside M4VEnc lib						*/
+/* Copy from YUV input to YUV frame inside M4VEnc lib                       */
 /* When input is not YUV, the color conv will write it directly to iVideoInOut. */
 /* ///////////////////////////////////////////////////////////////////////// */
 
@@ -981,7 +981,7 @@ void Mpeg4Encoder_OMX::CopyToYUVIn(uint8 *YUV, Int width, Int height, Int width_
     }
     else
     {
-        for (y_ind = 0; y_ind < (jlimit - 1) ;y_ind++)
+        for (y_ind = 0; y_ind < (jlimit - 1) ; y_ind++)
         {
             oscl_memcpy(yChan, y, ilimit);
             oscl_memset(yChan + ilimit, 16, ioffset); /* pad with zero */
@@ -999,7 +999,7 @@ void Mpeg4Encoder_OMX::CopyToYUVIn(uint8 *YUV, Int width, Int height, Int width_
     }
     else
     {
-        for (y_ind = 0; y_ind < (jlimit >> 1) - 1;y_ind++)
+        for (y_ind = 0; y_ind < (jlimit >> 1) - 1; y_ind++)
         {
             oscl_memcpy(uChan, u, ilimit >> 1);
             oscl_memcpy(vChan, v, ilimit >> 1);

@@ -16,10 +16,10 @@
  * -------------------------------------------------------------------
  */
 /**
-	@file src/base/amr_component.h
+    @file src/base/amr_component.h
 
-	OpenMax base_component component. This component does not perform any multimedia
-	processing.	It is used as a base_component for new components development.
+    OpenMax base_component component. This component does not perform any multimedia
+    processing. It is used as a base_component for new components development.
 
 */
 
@@ -77,9 +77,9 @@ class OpenmaxAmrAO : public OmxComponentAudio
         void CheckForSilenceInsertion();
         void DoSilenceInsertion();
 
-        OMX_TICKS				iCurrentTimestamp;
-        OMX_S32 				iPreviousFrameLength;
-        OMX_U32					iZeroFramesNeeded;
+        OMX_TICKS               iCurrentTimestamp;
+        OMX_S32                 iPreviousFrameLength;
+        OMX_U32                 iZeroFramesNeeded;
 
         OmxAmrDecoder* ipAmrDec;
 };

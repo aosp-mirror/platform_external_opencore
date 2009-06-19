@@ -99,9 +99,9 @@ class PVA_FF_IMpeg4File : public PVA_FF_ISucceedFail
         *                           This mode requires the use of temp files as well.
         */
 
-        /*							 SET_MOVIE_FRAGMENT_MODE - Authors Movie fragment clips. This implies
-        *							 that file is interleaved, meta data is after the media data in moov
-        *							 and movie fragments.
+        /*                           SET_MOVIE_FRAGMENT_MODE - Authors Movie fragment clips. This implies
+        *                            that file is interleaved, meta data is after the media data in moov
+        *                            and movie fragments.
         *
         * @return PVA_FF_IMpeg4File*  Pointer to PVA_FF_IMpeg4File class. This is the interface
         *                             object, that the user of the library would use to invoke
@@ -263,7 +263,7 @@ class PVA_FF_IMpeg4File : public PVA_FF_ISucceedFail
 
         virtual void setLocationInfo(PvmfAssetInfo3GPPLocationStruct*) = 0;
         virtual void setAlbumInfo(PVA_FF_UNICODE_STRING_PARAM albumInfo, uint16 langCode = LANGUAGE_CODE_UNKNOWN) = 0;
-		virtual void setAlbumTrackNumber(uint8 trackNumber) =0;
+        virtual void setAlbumTrackNumber(uint8 trackNumber) = 0;
         virtual void setRecordingYear(uint16 recordingYear) = 0;
 
         virtual void setCreationDate(PVA_FF_UNICODE_STRING_PARAM creationDate) = 0;
@@ -304,10 +304,10 @@ class PVA_FF_IMpeg4File : public PVA_FF_ISucceedFail
                                  uint8 level = 0xFF) = 0;
 
         virtual bool addSampleToTrack(uint32 trackID,
-                                      Oscl_Vector <OsclMemoryFragment, OsclMemAllocator>& fragmentList,	// vector which contains either NALs or samples
+                                      Oscl_Vector <OsclMemoryFragment, OsclMemAllocator>& fragmentList, // vector which contains either NALs or samples
                                       uint32 ts, uint8 flags) = 0;
         virtual bool addTextSampleToTrack(uint32 trackID,
-                                          Oscl_Vector <OsclMemoryFragment, OsclMemAllocator>& fragmentList,	// vector which contains either NALs or samples
+                                          Oscl_Vector <OsclMemoryFragment, OsclMemAllocator>& fragmentList, // vector which contains either NALs or samples
                                           uint32 ts, uint8 flags, int32 index, uint8* modifierinfo) = 0;
         virtual void addTrackReference(uint32 currtrackID, int32 reftrackID) = 0;
         virtual void setTargetBitRate(uint32 trackID, uint32 bitrate) = 0;

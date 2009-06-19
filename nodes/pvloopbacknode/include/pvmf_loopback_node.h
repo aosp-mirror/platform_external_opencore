@@ -156,7 +156,7 @@ class PVMFLoopbackIOPort;
 
 ////////////////////////////////////////////////////////////////////////////
 class PVMFLoopbackNode : public PVMFNodeInterface
-            , public OsclActiveObject
+        , public OsclActiveObject
 {
     public:
 

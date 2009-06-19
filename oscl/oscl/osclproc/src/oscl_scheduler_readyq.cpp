@@ -289,7 +289,7 @@ int32 OsclReadyQ::WaitForRequestComplete(PVActiveBase* pvbase)
 {
     int32 nwait = 0;//count the number of request sem waits.
 
-    for (bool complete = false;!complete;)
+    for (bool complete = false; !complete;)
     {
         //Wait on any request to complete.
         if (iSem.Wait() != OsclProcStatus::SUCCESS_ERROR)

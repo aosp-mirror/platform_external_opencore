@@ -35,40 +35,40 @@ class RTSPGenericMessage
         char *        secondaryBufferSpace;
         int           secondaryBufferSizeUsed;
 
-        StrCSumPtrLen	fieldKeys[ RTSP_MAX_NUMBER_OF_FIELDS ];
-        StrPtrLen 		fieldVals[ RTSP_MAX_NUMBER_OF_FIELDS ];
-        uint16						numPtrFields;
+        StrCSumPtrLen   fieldKeys[ RTSP_MAX_NUMBER_OF_FIELDS ];
+        StrPtrLen       fieldVals[ RTSP_MAX_NUMBER_OF_FIELDS ];
+        uint16                      numPtrFields;
 
     public:
 
-        RTSPMsgType		  msgType;
+        RTSPMsgType       msgType;
 
-        RTSPMethod		  method;	// for requests
-        RTSPStatusCode	statusCode; // for responses
+        RTSPMethod        method;   // for requests
+        RTSPStatusCode  statusCode; // for responses
 
-        StrPtrLen	  methodString;
-        StrPtrLen	  reasonString;
+        StrPtrLen     methodString;
+        StrPtrLen     reasonString;
 
-        uint32			    cseq;
-        bool			      cseqIsSet;
+        uint32              cseq;
+        bool                  cseqIsSet;
 
         uint32          bufferSize;
         bool            bufferSizeIsSet;
 
-        uint32			    authorizationFlag;
-        bool		      	authorizationFlagIsSet;
+        uint32              authorizationFlag;
+        bool                authorizationFlagIsSet;
 
-        //		RTSPTransport	  transport;
-        RtspTransport	  transport[RTSP_MAX_NUMBER_OF_TRANSPORT_ENTRIES];
+        //      RTSPTransport     transport;
+        RtspTransport     transport[RTSP_MAX_NUMBER_OF_TRANSPORT_ENTRIES];
         uint32          numOfTransportEntries;
 
 
-        //		RTSPRange		    range;
-        RtspRangeType		range;
-        bool			      rangeIsSet;
+        //      RTSPRange           range;
+        RtspRangeType       range;
+        bool                  rangeIsSet;
 
-        RTSPSessionId	  sessionId;
-        bool			      sessionIdIsSet;
+        RTSPSessionId     sessionId;
+        bool                  sessionIdIsSet;
 
 
         RTSPRTPInfo     rtpInfo[ RTSP_MAX_NUMBER_OF_RTP_INFO_ENTRIES ];
@@ -80,16 +80,16 @@ class RTSPGenericMessage
         // to be filled out by Parser
         //
 
-        StrPtrLen	contentType;
-        bool			    contentTypeIsSet;
+        StrPtrLen   contentType;
+        bool                contentTypeIsSet;
 
-        StrPtrLen	contentBase;
+        StrPtrLen   contentBase;
         enum ContentBaseModeType {NO_CONTENT_BASE = 0, CONTENT_BASE_SET, INCLUDE_TRAILING_SLASH};
-        ContentBaseModeType			    contentBaseMode;
+        ContentBaseModeType             contentBaseMode;
 
         // for Content-Length
-        uint32		    contentLength;
-        bool			    contentLengthIsSet;
+        uint32          contentLength;
+        bool                contentLengthIsSet;
 
         // some more recognized fields
         StrPtrLen  userAgent;
@@ -108,33 +108,33 @@ class RTSPGenericMessage
         bool comPvServerPlaylistIsSet;
 #endif
 
-        StrPtrLen			    eofField;
-        bool			      eofFieldIsSet;
+        StrPtrLen               eofField;
+        bool                  eofFieldIsSet;
         char XMLBufferPtr[ RTSP_MAX_FULL_REQUEST_SIZE];
         bool XMLIsSet;
 
-        uint32	timeout;
+        uint32  timeout;
     public:
 
         OSCL_IMPORT_REF void          reset();
 
-        OSCL_IMPORT_REF const StrPtrLen *	queryField(const StrCSumPtrLen & query) const;
+        OSCL_IMPORT_REF const StrPtrLen *   queryField(const StrCSumPtrLen & query) const;
 };
 
 
 class RTSPIncomingMessage
-            : public RTSPGenericMessage
+        : public RTSPGenericMessage
 {
     protected:
 
         RTSPStructureStatus amMalformed;
 
-        uint32					totalFields;
-        uint32					totalFieldsParsed;
-        void					parseRange(char *rangeString, RtspRangeType *range);
+        uint32                  totalFields;
+        uint32                  totalFieldsParsed;
+        void                    parseRange(char *rangeString, RtspRangeType *range);
 
 #ifdef RTSP_PLAYLIST_SUPPORT
-        void 		  parseSupported(const char *supportedString, int length);
+        void          parseSupported(const char *supportedString, int length);
 #endif /* RTSP_PLAYLIST_SUPPORT */
 
         void          parseTransport(uint16);
@@ -147,13 +147,13 @@ class RTSPIncomingMessage
 
 
         // original requested URI without the last part
-        StrPtrLen	  originalURIBase;
+        StrPtrLen     originalURIBase;
 
         // the control portion of the original URI
-        StrPtrLen	  originalURIControlCandidate;
+        StrPtrLen     originalURIControlCandidate;
 
         // for remapped URI
-        StrPtrLen	  remappedURI;
+        StrPtrLen     remappedURI;
 
 #ifdef RTSP_PLAYLIST_SUPPORT
         StrPtrLen playlistRangeField;
@@ -176,10 +176,10 @@ class RTSPIncomingMessage
         //
 
 
-        StrCSumPtrLen	rtspVersionString;
+        StrCSumPtrLen   rtspVersionString;
 
         OSCL_IMPORT_REF void            reset();
-        OSCL_IMPORT_REF 	RTSPStructureStatus isMalformed()
+        OSCL_IMPORT_REF     RTSPStructureStatus isMalformed()
         {
             return amMalformed;
         }
@@ -215,7 +215,7 @@ class RTSPIncomingMessage
         uint8 channelID;
 
     private:
-        bool	 parseNextPortion();
+        bool     parseNextPortion();
 
 
     public:
@@ -225,22 +225,22 @@ class RTSPIncomingMessage
 
 
 class RTSPOutgoingMessage
-            : public RTSPGenericMessage
+        : public RTSPGenericMessage
 {
     protected:
 
         RTSPIncomingMessage * boundMessage;
 
         StrPtrLen  fullRequestPLS;
-        void	   composeTransport(char* trans, RtspTransport* rtspTrans);
+        void       composeTransport(char* trans, RtspTransport* rtspTrans);
     public:
 
 
         // null-terminated buffer with the original
         // RTSP request
-        char	        fullRequestBuffer[ RTSP_MAX_FULL_REQUEST_SIZE +1 ];
+        char            fullRequestBuffer[ RTSP_MAX_FULL_REQUEST_SIZE +1 ];
         char *        fullRequestBufferSpace;
-        int						fullRequestBufferSizeUsed;
+        int                     fullRequestBufferSizeUsed;
 
 
         char      rtpInfoUrlBuffer[ RTSP_MAX_NUMBER_OF_RTP_INFO_ENTRIES ][200+1];

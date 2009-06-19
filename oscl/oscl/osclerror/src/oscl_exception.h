@@ -73,7 +73,7 @@ template <int LeaveCode> class OsclException
 
 //! Use this macro to cause a Leave. It terminates the execution of the current active function
 /*!
-	It also tries to cleanup the items on the cleanup stack.
+    It also tries to cleanup the items on the cleanup stack.
    \param oscl_leave_status tells the cause for the Leave
 */
 #define OSCL_LEAVE(_leave_status) OsclError::Leave(_leave_status)
@@ -114,7 +114,7 @@ template <int LeaveCode> class OsclException
    This macro MUST be used in conjunction with either OSCL_LAST_CATCH or OSCL_CATCH_ANY
 */
 #define OSCL_FIRST_CATCH( _leave_status, _catch_value, _statements) \
-	if (_leave_status!=OsclErrNone && _leave_status == _catch_value){_statements;}
+    if (_leave_status!=OsclErrNone && _leave_status == _catch_value){_statements;}
 
 //! Use this macro to define a block of code for catching additional exception types
 /*!
@@ -125,7 +125,7 @@ template <int LeaveCode> class OsclException
    \param exceptiontype is the exception handled by this catch block
 */
 #define OSCL_CATCH( _leave_status, _catch_value, _statements) \
-	else if (_leave_status!=OsclErrNone && _leave_status == _catch_value){_statements;}
+    else if (_leave_status!=OsclErrNone && _leave_status == _catch_value){_statements;}
 
 //! Use this macro to call a function that will catch all remaining exception types
 /*!
@@ -135,7 +135,7 @@ template <int LeaveCode> class OsclException
    This macro ends the try block.
 */
 #define OSCL_CATCH_ANY(_leave_status,_statements) \
-	else if (_leave_status!=OsclErrNone){ _statements;}
+    else if (_leave_status!=OsclErrNone){ _statements;}
 
 //! Use this macro if OSCL_CATCH_ANY has not been used. It will mark the end of the catch block
 /*!
@@ -145,7 +145,7 @@ template <int LeaveCode> class OsclException
 */
 
 #define OSCL_LAST_CATCH(_leave_status) \
-	else if (_leave_status!=OsclErrNone){OSCL_LEAVE(_leave_status);}
+    else if (_leave_status!=OsclErrNone){OSCL_LEAVE(_leave_status);}
 
 
 #endif // INCLUDED_OSCL_EXCEPTION_H

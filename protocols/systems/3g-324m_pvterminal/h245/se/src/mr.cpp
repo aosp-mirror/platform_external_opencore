@@ -476,7 +476,7 @@ void MR::PtvTrnsCfmSend(PS_RequestModeAck pRequestModeAck)
 
 #ifdef PVANALYZER /* --------SE Analyzer Tool -------- */
 
-#define ANALYZER_SE 0x0020		// (Assume tag is fixed)
+#define ANALYZER_SE 0x0020      // (Assume tag is fixed)
 void Show245(uint16 tag, uint16 indent, char* inString);
 
 // =========================================================

@@ -121,7 +121,7 @@ class PVA_FF_Mpeg4File : public PVA_FF_IMpeg4File, public PVA_FF_Parentable
 
         virtual void setAlbumInfo(PVA_FF_UNICODE_STRING_PARAM albumInfo,
                                   uint16 langCode = LANGUAGE_CODE_UNKNOWN);
-		virtual void setAlbumTrackNumber(uint8 trackNumber);
+        virtual void setAlbumTrackNumber(uint8 trackNumber);
 
         virtual void setRecordingYear(uint16 recordingYear);
 
@@ -248,8 +248,8 @@ class PVA_FF_Mpeg4File : public PVA_FF_IMpeg4File, public PVA_FF_Parentable
                                           Oscl_Vector <OsclMemoryFragment, OsclMemAllocator>& fragmentList,
                                           uint32 size, uint32 ts, uint8 flags, int32 index);
         //interleave buffer vector functions
-        void addInterLeaveBuffer(PVA_FF_InterLeaveBuffer	*pInterLeaveBuffer);
-        PVA_FF_InterLeaveBuffer*	getInterLeaveBuffer(uint32	trackID);
+        void addInterLeaveBuffer(PVA_FF_InterLeaveBuffer    *pInterLeaveBuffer);
+        PVA_FF_InterLeaveBuffer*    getInterLeaveBuffer(uint32  trackID);
 
         bool setOutputFileName(PVA_FF_UNICODE_STRING_PARAM outputFileName);
         bool setOutputFileHandle(MP4_AUTHOR_FF_FILE_HANDLE outputFileHandle);
@@ -318,8 +318,8 @@ class PVA_FF_Mpeg4File : public PVA_FF_IMpeg4File, public PVA_FF_Parentable
         PVA_FF_UNICODE_HEAP_STRING _albumInfo;
         bool         _oSetAlbumDone;
 
-        uint16	_recordingYear;
-        bool	_oSetRecordingYearDone;
+        uint16  _recordingYear;
+        bool    _oSetRecordingYearDone;
 
 
         PVA_FF_UNICODE_HEAP_STRING _creationDate;
@@ -337,8 +337,8 @@ class PVA_FF_Mpeg4File : public PVA_FF_IMpeg4File, public PVA_FF_Parentable
         // In movie fragment mode these parameters hold
         // the current MOOF and MDAT to add samples. They are destroyed once
         // they are written to file
-        PVA_FF_MovieFragmentAtom								*_pCurrentMoofAtom;
-        PVA_FF_MediaDataAtom									*_pCurrentMediaDataAtom;
+        PVA_FF_MovieFragmentAtom                                *_pCurrentMoofAtom;
+        PVA_FF_MediaDataAtom                                    *_pCurrentMediaDataAtom;
 
         // This media data atom holds MDAT for movie fragments only
 
@@ -346,14 +346,14 @@ class PVA_FF_Mpeg4File : public PVA_FF_IMpeg4File, public PVA_FF_Parentable
         PVA_FF_MovieFragmentRandomAccessAtom *_pMfraAtom;
 
         // Movie Fragment mode parameters
-        bool		_oMovieFragmentEnabled;
-        bool		_oComposeMoofAtom;			// flag when true, samples are added in MOOF
-        uint32		_currentMoofOffset;			// contains the offset of current MOOF before MDAT,
+        bool        _oMovieFragmentEnabled;
+        bool        _oComposeMoofAtom;          // flag when true, samples are added in MOOF
+        uint32      _currentMoofOffset;         // contains the offset of current MOOF before MDAT,
         // actual offset is current offset + size of MDAT for this MOOF
-        uint32		_movieFragmentDuration;		// always in milliseconds : decides total sample length in MOOF and MOOV
-        bool		_oTrunStart;				// true when new TRUN is to be added in MOOF from interleave buffer
+        uint32      _movieFragmentDuration;     // always in milliseconds : decides total sample length in MOOF and MOOV
+        bool        _oTrunStart;                // true when new TRUN is to be added in MOOF from interleave buffer
         // made true for 1st sample of interleave buffer
-        uint32		_sequenceNumber;			// keep track of number of movie fragments added
+        uint32      _sequenceNumber;            // keep track of number of movie fragments added
 
         // interleave buffers and vectors
         Oscl_Vector<PVA_FF_InterLeaveBuffer*, OsclMemAllocator> *_pInterLeaveBufferVec;
@@ -422,7 +422,7 @@ class PVA_FF_Mpeg4File : public PVA_FF_IMpeg4File, public PVA_FF_Parentable
 
         bool        _oFirstSampleEditMode;
         uint32      iCacheSize;
-        bool		_oIsFileOpen;
+        bool        _oIsFileOpen;
 };
 
 

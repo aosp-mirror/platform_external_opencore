@@ -210,11 +210,11 @@ TPVStatusCode CPVH223Multiplex::Close()
         iInterleavingMultiplexFlags = NULL;
     }
 
-    for (unsigned out_lcn = 0;out_lcn < iOutgoingChannels.size(); out_lcn++)
+    for (unsigned out_lcn = 0; out_lcn < iOutgoingChannels.size(); out_lcn++)
     {
         CloseChannel(OUTGOING, iOutgoingChannels[out_lcn]->GetLogicalChannelNumber());
     }
-    for (unsigned in_lcn = 0;in_lcn < iIncomingChannels.size(); in_lcn++)
+    for (unsigned in_lcn = 0; in_lcn < iIncomingChannels.size(); in_lcn++)
     {
         CloseChannel(INCOMING, iIncomingChannels[in_lcn]->GetLogicalChannelNumber());
     }
@@ -333,7 +333,7 @@ PVMFStatus CPVH223Multiplex::GetOutgoingMuxPdus(MuxPduPacketList& packets)
     uint16 stuffing_size = (uint16)iLowerLayer->GetStuffingSize();
     OsclSharedPtr<PVMFMediaDataImpl> pkt;
 
-    for (unsigned n = 0;n < iNumMuxIntervalsPerTimerInterval; n++)
+    for (unsigned n = 0; n < iNumMuxIntervalsPerTimerInterval; n++)
     {
         // fill the sdu data lists with lcns that contain data
         UpdateSduDataLists();
@@ -490,10 +490,10 @@ uint16 CPVH223Multiplex::GetMaxSduSize(TPVDirection direction, ErrorProtectionLe
 TPVStatusCode CPVH223Multiplex::SetMuxLevel(TPVH223Level muxLevel)
 {
     TPVStatusCode ret = EPVT_Success;
-//	iMutex->Lock();
+//  iMutex->Lock();
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "Mux: Set Level request (%d)\n", muxLevel));
     ret = iLowerLayer->SetLevel(muxLevel);
-//	iMutex->Unlock();
+//  iMutex->Unlock();
     return ret;
 }
 
@@ -510,9 +510,9 @@ PVMFPortInterface* CPVH223Multiplex::GetLowerLayer()
 
 TPVStatusCode CPVH223Multiplex::SetIncomingMuxTableEntries(CPVMultiplexDescriptor* descriptor)
 {
-//	iMutex->Lock();
+//  iMutex->Lock();
     iMuxTblMgr->SetIncomingDescriptors(descriptor->GetDescriptor());
-//	iMutex->Unlock();
+//  iMutex->Unlock();
 
     return EPVT_Success;
 }
@@ -1141,7 +1141,7 @@ MuxSduData* CPVH223Multiplex::FindMuxSduData(TPVChannelId lcn,
         uint32* p_index)
 {
     MuxSduDataList& list = GET_SDU_DATA_LIST(segmentable);
-    for (unsigned index = 0; index < list.size();index++)
+    for (unsigned index = 0; index < list.size(); index++)
     {
         if (list[index].lcn->GetLogicalChannelNumber() == lcn)
         {
@@ -1312,7 +1312,7 @@ uint16 CPVH223Multiplex::MuxLcnData(MuxSduDataList& list,
 
     int32 pdu_size_left = max_size;
     PS_MultiplexEntryDescriptor mux_entry = NULL;
-    for (unsigned n = 0;n < list.size();n++)
+    for (unsigned n = 0; n < list.size(); n++)
     {
         // get descriptor for this logical channel
         mux_entry = iMuxTblMgr->GetOutgoingDescriptor(list[n].lcn,
@@ -1415,7 +1415,7 @@ void CPVH223Multiplex::SetMioLatency(int32 aLatency, bool aAudio)
     H223IncomingChannel* channel = NULL;
     if (iIncomingChannels.size() != 0)
     {
-        for (int32 ii = 0;ii < (int32)iIncomingChannels.size();ii++)
+        for (int32 ii = 0; ii < (int32)iIncomingChannels.size(); ii++)
         {
             channel = iIncomingChannels[ii];
             if (aAudio)

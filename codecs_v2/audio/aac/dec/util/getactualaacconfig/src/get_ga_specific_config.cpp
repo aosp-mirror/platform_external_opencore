@@ -34,7 +34,7 @@
  Description: Updated to use scratch memory for the temporary prog config.
 
  Description: Replace some instances of getbits to get1bits
-			  when only 1 bit is read.
+              when only 1 bit is read.
 
  Who:                               Date:
  Description:

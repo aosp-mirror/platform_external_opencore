@@ -79,9 +79,9 @@ AVCDec_Status DecodeSlice(AVCDecObject *decvid)
 #ifdef MB_BASED_DEBLOCK
         if (video->currPicParams->num_slice_groups_minus1 == 0)
         {
-            MBInLoopDeblock(video);	/* MB-based deblocking */
+            MBInLoopDeblock(video); /* MB-based deblocking */
         }
-        else	/* this mode cannot be used if the number of slice group is not one. */
+        else    /* this mode cannot be used if the number of slice group is not one. */
         {
             return AVCDEC_FAIL;
         }
@@ -222,11 +222,11 @@ AVCDec_Status DecodeMB(AVCDecObject *decvid)
                 if (currMB->QPy > 51 || currMB->QPy < 0)
                 {
                     video->QPy = AVC_CLIP3(0, 51, video->QPy);
-//					return AVCDEC_FAIL;
+//                  return AVCDEC_FAIL;
                 }
                 video->QPy_div_6 = (video->QPy * 43) >> 8;
                 video->QPy_mod_6 = video->QPy - 6 * video->QPy_div_6;
-                currMB->QPc = video->QPc = mapQPi2QPc[AVC_CLIP3(0,51,video->QPy + video->currPicParams->chroma_qp_index_offset)];
+                currMB->QPc = video->QPc = mapQPi2QPc[AVC_CLIP3(0, 51, video->QPy + video->currPicParams->chroma_qp_index_offset)];
                 video->QPc_div_6 = (video->QPc * 43) >> 8;
                 video->QPc_mod_6 = video->QPc - 6 * video->QPc_div_6;
             }
@@ -248,7 +248,7 @@ AVCDec_Status DecodeMB(AVCDecObject *decvid)
         DecodeIntraPCM(video, stream);
 
         currMB->QPy = 0;  /* necessary for deblocking */ // _OPTIMIZE
-        currMB->QPc = mapQPi2QPc[AVC_CLIP3(0,51,video->currPicParams->chroma_qp_index_offset)];
+        currMB->QPc = mapQPi2QPc[AVC_CLIP3(0, 51, video->currPicParams->chroma_qp_index_offset)];
 
         /* default values, don't know if really needed */
         currMB->CBP = 0x3F;
@@ -339,7 +339,7 @@ AVCDec_Status mb_pred(AVCCommonObj *video, AVCMacroblock *currMB, AVCDecBitstrea
         oscl_memset(currMB->ref_idx_L0, 0, sizeof(int16)*4);
 
         /* see subclause 7.4.5.1 for the range of ref_idx_lX */
-//		max_ref_idx = sliceHdr->num_ref_idx_l0_active_minus1;
+//      max_ref_idx = sliceHdr->num_ref_idx_l0_active_minus1;
         max_ref_idx = video->refList0Size - 1;
 
         /* decode ref index for L0 */
@@ -411,7 +411,7 @@ AVCDec_Status sub_mb_pred(AVCCommonObj *video, AVCMacroblock *currMB, AVCDecBits
 
 
     /* see subclause 7.4.5.1 for the range of ref_idx_lX */
-//		max_ref_idx = sliceHdr->num_ref_idx_l0_active_minus1;
+//      max_ref_idx = sliceHdr->num_ref_idx_l0_active_minus1;
     max_ref_idx = video->refList0Size - 1;
 
     if (sliceHdr->num_ref_idx_l0_active_minus1 > 0 && currMB->mbMode != AVC_P8ref0)
@@ -429,8 +429,8 @@ AVCDec_Status sub_mb_pred(AVCCommonObj *video, AVCMacroblock *currMB, AVCDecBits
     /* see subclause 7.4.5.1 for the range of ref_idx_lX */
 
     max_ref_idx = sliceHdr->num_ref_idx_l1_active_minus1;
-    /*	if(video->MbaffFrameFlag && currMB->mb_field_decoding_flag)
-    		max_ref_idx = 2*sliceHdr->num_ref_idx_l1_active_minus1 + 1;*/
+    /*  if(video->MbaffFrameFlag && currMB->mb_field_decoding_flag)
+            max_ref_idx = 2*sliceHdr->num_ref_idx_l1_active_minus1 + 1;*/
     for (mbPartIdx = 0; mbPartIdx < 4; mbPartIdx++)
     {
         for (subMbPartIdx = 0; subMbPartIdx < currMB->NumSubMbPart[mbPartIdx]; subMbPartIdx++)
@@ -567,7 +567,7 @@ void InterpretSubMBModeP(AVCMacroblock *mblock, uint *sub_mb_type)
 {
     int i,  sub_type;
     /* see enum AVCMBType declaration */
-//	const static AVCSubMBMode map2subMbMode[4] = {AVC_8x8,AVC_8x4,AVC_4x8,AVC_4x4};
+//  const static AVCSubMBMode map2subMbMode[4] = {AVC_8x8,AVC_8x4,AVC_4x8,AVC_4x4};
     const static int map2subPartWidth[4] = {8, 8, 4, 4};
     const static int map2subPartHeight[4] = {8, 4, 8, 4};
     const static int map2numSubPart[4] = {1, 2, 2, 4};
@@ -575,7 +575,7 @@ void InterpretSubMBModeP(AVCMacroblock *mblock, uint *sub_mb_type)
     for (i = 0; i < 4 ; i++)
     {
         sub_type = (int) sub_mb_type[i];
-        //	mblock->subMbMode[i] = map2subMbMode[sub_type];
+        //  mblock->subMbMode[i] = map2subMbMode[sub_type];
         mblock->NumSubMbPart[i] = map2numSubPart[sub_type];
         mblock->SubMbPartWidth[i] = map2subPartWidth[sub_type];
         mblock->SubMbPartHeight[i] = map2subPartHeight[sub_type];
@@ -618,8 +618,8 @@ AVCDec_Status DecodeIntra4x4Mode(AVCCommonObj *video, AVCMacroblock *currMB, AVC
     int intra4x4PredModeA = 0, intra4x4PredModeB = 0, predIntra4x4PredMode = 0;
     int component, SubBlock_indx, block_x, block_y;
     int dcOnlyPredictionFlag;
-    uint	prev_intra4x4_pred_mode_flag[16];
-    int		rem_intra4x4_pred_mode[16];
+    uint    prev_intra4x4_pred_mode_flag[16];
+    int     rem_intra4x4_pred_mode[16];
     int bindx = 0;
 
     for (component = 0; component < 4; component++) /* partition index */

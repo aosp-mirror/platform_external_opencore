@@ -33,7 +33,7 @@ terms listed above has been obtained from the copyright holder.
  REVISION HISTORY
 
  Description: Created separate file for the div_s function. Sync'ed up
-	      with the current template and fixed tabs.
+          with the current template and fixed tabs.
 
  Description: Making changes based on review meeting.
 
@@ -46,35 +46,35 @@ terms listed above has been obtained from the copyright holder.
                  pass, using only five iterations of the loop and saving
                  shifts cycles
 
- Who: 						Date:
+ Who:                       Date:
  Description:
 
 ------------------------------------------------------------------------------
  INPUT AND OUTPUT DEFINITIONS
 
  Inputs:
-	var1 = 16 bit signed integer (Word16) whose value falls in
-	       the range : 0x0000 <= var1 <= 0x7fff.
-	var2 = 16 bit signed integer (Word16) whose value falls in
-	       the range : 0x0000 <= var1 <= 0x7fff.
+    var1 = 16 bit signed integer (Word16) whose value falls in
+           the range : 0x0000 <= var1 <= 0x7fff.
+    var2 = 16 bit signed integer (Word16) whose value falls in
+           the range : 0x0000 <= var1 <= 0x7fff.
 
  Local Stores/Buffers/Pointers Needed:
-	None
+    None
 
  Global Stores/Buffers/Pointers Needed:
-	None
+    None
 
  Outputs:
-	var_out = quotient of var1 divided by var2 (Word16)
+    var_out = quotient of var1 divided by var2 (Word16)
 
  Pointers and Buffers Modified:
-	None
+    None
 
  Local Stores Modified:
-	None
+    None
 
  Global Stores Modified:
-	None
+    None
 
 ------------------------------------------------------------------------------
  FUNCTION DESCRIPTION
@@ -148,21 +148,21 @@ Word16 div_s (Word16 var1, Word16 var2)
      the resources used should be documented below.
 
  STACK USAGE: [stack count for this module] + [variable to represent
-		  stack usage for each subroutine called]
+          stack usage for each subroutine called]
 
      where: [stack usage variable] = stack usage for [subroutine
-		 name] (see [filename].ext)
+         name] (see [filename].ext)
 
  DATA MEMORY USED: x words
 
  PROGRAM MEMORY USED: x words
 
  CLOCK CYCLES: [cycle count equation for this module] + [variable
-		   used to represent cycle count for each subroutine
-		   called]
+           used to represent cycle count for each subroutine
+           called]
 
      where: [cycle count variable] = cycle count for [subroutine
-		name] (see [filename].ext)
+        name] (see [filename].ext)
 
 ------------------------------------------------------------------------------
 */
@@ -171,7 +171,7 @@ Word16 div_s (Word16 var1, Word16 var2)
 /*----------------------------------------------------------------------------
 ; INCLUDES
 ----------------------------------------------------------------------------*/
-#include	"basic_op.h"
+#include    "basic_op.h"
 
 /*----------------------------------------------------------------------------
 ; MACROS

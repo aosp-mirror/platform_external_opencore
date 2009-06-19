@@ -77,7 +77,7 @@ PVA_FF_TrackFragmentAtom::~PVA_FF_TrackFragmentAtom()
 PVA_FF_TrackFragmentRunAtom*
 PVA_FF_TrackFragmentAtom::addTrackRun()
 {
-    PVA_FF_TrackFragmentRunAtom	*pTrunAtom;
+    PVA_FF_TrackFragmentRunAtom *pTrunAtom;
 
     PV_MP4_FF_NEW(fp->auditCB, PVA_FF_TrackFragmentRunAtom, (), pTrunAtom);
 
@@ -99,7 +99,7 @@ PVA_FF_TrackFragmentAtom::addSampleToFragment(uint32 size, uint32 ts, uint8 flag
     if (otrunStart == false)
     {
         // add sample to current Trun
-        PVA_FF_TrackFragmentRunAtom*	pTrunAtom;
+        PVA_FF_TrackFragmentRunAtom*    pTrunAtom;
         pTrunAtom = _pTrunList->back();
 
         pTrunAtom->addSample(size, ts, flags);
@@ -107,7 +107,7 @@ PVA_FF_TrackFragmentAtom::addSampleToFragment(uint32 size, uint32 ts, uint8 flag
     else
     {
         // make new trun
-        PVA_FF_TrackFragmentRunAtom*	pTrunAtom = addTrackRun();
+        PVA_FF_TrackFragmentRunAtom*    pTrunAtom = addTrackRun();
 
         if (_ofirstTrun)
         {

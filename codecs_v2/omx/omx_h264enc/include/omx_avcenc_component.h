@@ -16,8 +16,8 @@
  * -------------------------------------------------------------------
  */
 /**
-	@file omx_avcenc_component.h
-	OpenMax encoder_component component.
+    @file omx_avcenc_component.h
+    OpenMax encoder_component component.
 
 */
 
@@ -33,7 +33,7 @@
 #endif
 
 
-#define INPUT_BUFFER_SIZE_AVCENC 38016			//(176 * 144 * 1.5) for YUV 420 format.
+#define INPUT_BUFFER_SIZE_AVCENC 38016          //(176 * 144 * 1.5) for YUV 420 format.
 
 #if (defined(TEST_FULL_AVC_FRAME_MODE) || defined(TEST_FULL_AVC_FRAME_MODE_SC))
 #define OUTPUT_BUFFER_SIZE_AVCENC 38581 // (20 + 4 * MAX_NAL_PER_FRAME + 20 + 6) is size of extra data
@@ -78,16 +78,16 @@ class OmxComponentAvcEncAO : public OmxComponentVideo
 
         AvcEncoder_OMX*   ipAvcEncoderObject;
 
-        OMX_BOOL		  iBufferOverRun;
-        OMX_U8*			  ipInternalOutBuffer;
-        OMX_U32			  iInternalOutBufFilledLen;
-        OMX_TICKS		  iOutputTimeStamp;
-        OMX_BOOL		  iSyncFlag;
+        OMX_BOOL          iBufferOverRun;
+        OMX_U8*           ipInternalOutBuffer;
+        OMX_U32           iInternalOutBufFilledLen;
+        OMX_TICKS         iOutputTimeStamp;
+        OMX_BOOL          iSyncFlag;
         OMX_BOOL          iEndOfOutputFrame;
 
-        OMX_U32			  iNALSizeArray[MAX_NAL_PER_FRAME];
-        OMX_U32			  iNALSizeSum;
-        OMX_U32			  iNALCount;
+        OMX_U32           iNALSizeArray[MAX_NAL_PER_FRAME];
+        OMX_U32           iNALSizeSum;
+        OMX_U32           iNALCount;
 };
 
 #endif // OMX_AVCENC_COMPONENT_H_INCLUDED

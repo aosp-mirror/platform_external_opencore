@@ -147,8 +147,8 @@ bool DownloadNodesCoreLibraryLoader::DeleteDownloadManagerNode(PVMFNodeInterface
 
 
 class DownloadNodesRegistryInterface: public OsclSharedLibraryInterface,
-            public NodeRegistryPopulatorInterface,
-            public RecognizerPopulatorInterface
+        public NodeRegistryPopulatorInterface,
+        public RecognizerPopulatorInterface
 {
     public:
         DownloadNodesRegistryInterface() {};

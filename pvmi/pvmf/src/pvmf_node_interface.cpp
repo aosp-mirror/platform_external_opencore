@@ -29,7 +29,7 @@ OSCL_EXPORT_REF void PVMFNodeInterface::SetState(TPVMFNodeInterfaceState s)
 }
 
 OSCL_EXPORT_REF void PVMFNodeInterface::ReportCmdCompleteEvent(
-        PVMFSessionId session, const PVMFCmdResp& resp)
+    PVMFSessionId session, const PVMFCmdResp& resp)
 {
     const unsigned int size = iSessions.size();
 
@@ -49,7 +49,7 @@ OSCL_EXPORT_REF void PVMFNodeInterface::ReportCmdCompleteEvent(
 }
 
 OSCL_EXPORT_REF void PVMFNodeInterface::ReportErrorEvent(
-        PVMFEventType aEventType, OsclAny* aEventData, PVInterface*aExtMsg)
+    PVMFEventType aEventType, OsclAny* aEventData, PVInterface*aExtMsg)
 {
     ReportErrorEvent(PVMFAsyncEvent(PVMFErrorEvent,
                                     aEventType,
@@ -59,7 +59,7 @@ OSCL_EXPORT_REF void PVMFNodeInterface::ReportErrorEvent(
 }
 
 OSCL_EXPORT_REF void PVMFNodeInterface::ReportErrorEvent(
-        const PVMFAsyncEvent& aEvent)
+    const PVMFAsyncEvent& aEvent)
 {
     if (aEvent.IsA() != PVMFErrorEvent)
     {
@@ -88,7 +88,7 @@ OSCL_EXPORT_REF void PVMFNodeInterface::ReportErrorEvent(
 }
 
 OSCL_EXPORT_REF void PVMFNodeInterface::ReportInfoEvent(
-        PVMFEventType aEventType, OsclAny* aEventData, PVInterface*aExtMsg)
+    PVMFEventType aEventType, OsclAny* aEventData, PVInterface*aExtMsg)
 {
     ReportInfoEvent(PVMFAsyncEvent(PVMFInfoEvent,
                                    aEventType,
@@ -98,7 +98,7 @@ OSCL_EXPORT_REF void PVMFNodeInterface::ReportInfoEvent(
 }
 
 OSCL_EXPORT_REF void PVMFNodeInterface::ReportInfoEvent(
-        const PVMFAsyncEvent& aEvent)
+    const PVMFAsyncEvent& aEvent)
 {
     if (aEvent.IsA() != PVMFInfoEvent)
     {

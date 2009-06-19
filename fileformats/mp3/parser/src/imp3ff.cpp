@@ -197,7 +197,7 @@ OSCL_EXPORT_REF MP3ErrorType IMpeg3File::ParseMp3File()
 
         // Populate metadata key list vector
         int32 leavecode = OsclErrNone;
-        for (uint32 p = 0;p < id3Frames.size();p++)
+        for (uint32 p = 0; p < id3Frames.size(); p++)
         {
             OSCL_HeapString<OsclMemAllocator> keystr((const char *)((*id3Frames[p]).key), oscl_strlen((const char *)((*id3Frames[p]).key)));
             leavecode = PushKVPKey(keystr, iAvailableMetadataKeys);
@@ -518,7 +518,7 @@ OSCL_EXPORT_REF MP3ErrorType IMpeg3File::SetFileSize(const uint32 aFileSize)
     MP3ErrorType errCode = MP3_ERROR_UNKNOWN;
     if (pMP3Parser != NULL)
     {
-        errCode	= pMP3Parser->SetFileSize(aFileSize);
+        errCode = pMP3Parser->SetFileSize(aFileSize);
     }
     return errCode;
 }
@@ -736,7 +736,7 @@ OSCL_EXPORT_REF PVMFStatus IMpeg3File::GetMetadataValues(PVMFMetadataList& aKeyL
             }
         }
 
-        if (gotvalue)	//get next key since this key has already been parsed.
+        if (gotvalue)   //get next key since this key has already been parsed.
         {
             gotvalue = false;
             continue;

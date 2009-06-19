@@ -53,8 +53,8 @@ enum ProtocolEngineOutputDataType
 struct ProtocolEngineOutputDataSideInfo
 {
     ProtocolEngineOutputDataType iDataType;
-    // for OutputDataType_FirstDataPacket,	iData = iFirstPacketNumber
-    // for OutputDataType_NormalData,		iData = iCurrentDataStreamOffset (for fasttrack) / iCurrPacketNum (for http streaming)
+    // for OutputDataType_FirstDataPacket,  iData = iFirstPacketNumber
+    // for OutputDataType_NormalData,       iData = iCurrentDataStreamOffset (for fasttrack) / iCurrPacketNum (for http streaming)
     OsclAny *iData;
 
     // constructors
@@ -94,8 +94,8 @@ enum ProtocolRequestType
 struct ProtocolStateCompleteInfo
 {
     bool isDownloadStreamingDone;  // true => current state complete means download or streaming is done/complete
-    bool isWholeSessionDone;		 // true => current state is the last state of the state transition table
-    bool isEOSAchieved;				 // true => EOS packet is received in streaming, or download reaches EOS (content-length, server discconnect or maximum file size)
+    bool isWholeSessionDone;         // true => current state is the last state of the state transition table
+    bool isEOSAchieved;              // true => EOS packet is received in streaming, or download reaches EOS (content-length, server discconnect or maximum file size)
     // for protocol engine side, isDownloadStreamingDone=true <=> isEOSAchieved=true, but node will use this structure for other
     // purposes, e.g. this flag can be used to differentiate stop case and true EOS case
     // constructors
@@ -106,8 +106,8 @@ struct ProtocolStateCompleteInfo
     ProtocolStateCompleteInfo(const ProtocolStateCompleteInfo &x)
     {
         isDownloadStreamingDone = x.isDownloadStreamingDone;
-        isWholeSessionDone		= x.isWholeSessionDone;
-        isEOSAchieved			= x.isEOSAchieved;
+        isWholeSessionDone      = x.isWholeSessionDone;
+        isEOSAchieved           = x.isEOSAchieved;
     }
     ProtocolStateCompleteInfo(const bool aDownloadStreamingDone, const bool aSessionDone, const bool aEOSAchieved) :
             isDownloadStreamingDone(aDownloadStreamingDone),
@@ -121,8 +121,8 @@ struct ProtocolStateCompleteInfo
     ProtocolStateCompleteInfo& operator=(const ProtocolStateCompleteInfo& x)
     {
         isDownloadStreamingDone = x.isDownloadStreamingDone;
-        isWholeSessionDone		= x.isWholeSessionDone;
-        isEOSAchieved			= x.isEOSAchieved;
+        isWholeSessionDone      = x.isWholeSessionDone;
+        isEOSAchieved           = x.isEOSAchieved;
         return *this;
     }
 
@@ -130,8 +130,8 @@ struct ProtocolStateCompleteInfo
     void clear()
     {
         isDownloadStreamingDone = false;
-        isWholeSessionDone		= false;
-        isEOSAchieved			= false;
+        isWholeSessionDone      = false;
+        isEOSAchieved           = false;
     }
 };
 
@@ -152,7 +152,7 @@ class ProtocolStateObserver
 
 // This class is based on state pattern, to encapsulate all state specific behavior.
 class ProtocolState : public HttpParsingBasicObjectObserver,
-            public UserCommands
+        public UserCommands
 {
     public:
         // has base implementation, basically create a templete
@@ -429,7 +429,7 @@ class ProtocolObserver
 // Any http-based protocol(progressive download, fasttrack, ms http streaming and real http cloaking)
 // can be viewed as a http request-response sequence, which can be addressed by GoF state pattern
 class HttpBasedProtocol : public ProtocolStateObserver,
-            public UserCommands
+        public UserCommands
 {
     public:
         // each http based protocol must implment this interface

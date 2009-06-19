@@ -59,11 +59,11 @@ class MuxTableMgr
         PS_MultiplexEntryDescriptor GetControlDescriptor(uint16 mux_entry_num);
 
         /* multiplex table information */
-        uint16		iOutgoingMuxTblCount;
-        uint16		iIncomingMuxTblCount;
+        uint16      iOutgoingMuxTblCount;
+        uint16      iIncomingMuxTblCount;
 
-        uint8		iMuxDescriptorFlagR[MAX_MUX_ENTRIES];
-        PS_MultiplexEntryDescriptor	iMuxDescriptorR[MAX_MUX_ENTRIES];
+        uint8       iMuxDescriptorFlagR[MAX_MUX_ENTRIES];
+        PS_MultiplexEntryDescriptor iMuxDescriptorR[MAX_MUX_ENTRIES];
 
         uint32 iNumCorruptMcRx;
         uint32 iMcAccessCnt[MAX_MUX_ENTRIES];

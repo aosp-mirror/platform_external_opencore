@@ -68,21 +68,21 @@
 #endif
 
 
-#define PV_MBDS_MAX_NUMBER_OF_READ_CONNECTIONS	16
+#define PV_MBDS_MAX_NUMBER_OF_READ_CONNECTIONS  16
 
-#define PV_MBDS_MAX_NUMBER_OF_WRITE_CONNECTIONS	1
+#define PV_MBDS_MAX_NUMBER_OF_WRITE_CONNECTIONS 1
 
 #define PV_MBDS_MAX_NUMBER_OF_TOTAL_CONNECTIONS  PV_MB_MAX_NUMBER_OF_WRITE_CONNECTIONS + PV_MB_MAX_NUMBER_OF_READ_CONNECTIONS
 
 
-#define PV_MBDS_TEMP_CACHE_TRIM_MARGIN_PS					64000
-#define PV_MBDS_TEMP_CACHE_TRIM_THRESHOLD_PS(capacity)				(capacity * 2) / 3
+#define PV_MBDS_TEMP_CACHE_TRIM_MARGIN_PS                   64000
+#define PV_MBDS_TEMP_CACHE_TRIM_THRESHOLD_PS(capacity)              (capacity * 2) / 3
 // for shoutcast
-#define PV_MBDS_TEMP_CACHE_TRIM_MARGIN_SC					4096
+#define PV_MBDS_TEMP_CACHE_TRIM_MARGIN_SC                   4096
 #define PV_MBDS_TEMP_CACHE_TRIM_THRESHOLD_SC(capacity)                          capacity / 6
 
-#define NO_LIMIT		0
-#define PV_MBDS_PERM_CACHE_SIZE		NO_LIMIT
+#define NO_LIMIT        0
+#define PV_MBDS_PERM_CACHE_SIZE     NO_LIMIT
 
 // how many bytes are we willing to wait for assuming they are coming
 // instead of repositioning
@@ -96,11 +96,11 @@
 
 typedef enum
 {
-    MBDS_CACHE_TRIM_NONE,		// invalid node
-    MBDS_CACHE_TRIM_HEAD_ONLY,	// trim the beginning of cache only
-    MBDS_CACHE_TRIM_TAIL_ONLY,	// trim from the end of cache only
-    MBDS_CACHE_TRIM_HEAD_AND_TAIL,	// trim the both ends of cache
-    MBDS_CACHE_TRIM_EMPTY,		// empty the cache
+    MBDS_CACHE_TRIM_NONE,       // invalid node
+    MBDS_CACHE_TRIM_HEAD_ONLY,  // trim the beginning of cache only
+    MBDS_CACHE_TRIM_TAIL_ONLY,  // trim from the end of cache only
+    MBDS_CACHE_TRIM_HEAD_AND_TAIL,  // trim the both ends of cache
+    MBDS_CACHE_TRIM_EMPTY,      // empty the cache
 } MBDSCacheTrimMode;
 
 typedef enum
@@ -498,7 +498,7 @@ class PVMFMemoryBufferWriteDataStreamImpl : public PVMIDataStreamSyncInterface
                 PvmiDataStreamSeekType origin);
 
         OSCL_IMPORT_REF PvmiDataStreamStatus Reposition(PvmiDataStreamSession aSessionID,
-                uint32 aOffset,	MBDSRepositionMode aMode);
+                uint32 aOffset, MBDSRepositionMode aMode);
 
         OSCL_IMPORT_REF uint32 GetCurrentPointerPosition(PvmiDataStreamSession aSessionID) ;
 

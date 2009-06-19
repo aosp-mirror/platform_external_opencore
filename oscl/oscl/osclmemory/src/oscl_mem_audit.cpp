@@ -49,12 +49,12 @@ const uint32 BLOCK_OVERHEAD_SIZE = BLOCK_HDR_SIZE + POST_FENCE_SIZE;
  */
 
 /* ======================================================================== */
-/*	Function : MM_Audit()													*/
-/*	Date     : 10/08/2002													*/
-/*	Purpose  : Constructor, create the root node in statistics table		*/
-/*	In/out   :																*/
-/*	Return   :																*/
-/*	Modified :																*/
+/*  Function : MM_Audit()                                                   */
+/*  Date     : 10/08/2002                                                   */
+/*  Purpose  : Constructor, create the root node in statistics table        */
+/*  In/out   :                                                              */
+/*  Return   :                                                              */
+/*  Modified :                                                              */
 /* ======================================================================== */
 
 const char root_tag[] = "";
@@ -81,13 +81,13 @@ MM_Audit_Imp::MM_Audit_Imp()
 }
 
 /* ======================================================================== */
-/*	Function : ~MM_Audit()													*/
-/*	Date     : 10/08/2002													*/
-/*	Purpose  : destructor, remove all the nodes in allocation and			*/
-/*			   statistics table												*/
-/*	In/out   :																*/
-/*	Return   :																*/
-/*	Modified :																*/
+/*  Function : ~MM_Audit()                                                  */
+/*  Date     : 10/08/2002                                                   */
+/*  Purpose  : destructor, remove all the nodes in allocation and           */
+/*             statistics table                                             */
+/*  In/out   :                                                              */
+/*  Return   :                                                              */
+/*  Modified :                                                              */
 /* ======================================================================== */
 
 MM_Audit_Imp::~MM_Audit_Imp()
@@ -116,15 +116,15 @@ MM_Audit_Imp::~MM_Audit_Imp()
 */
 
 /* ============================================================================ */
-/*	Function : MM_allocate()													*/
-/*	Date     : 10/08/2002														*/
-/*	Purpose  : API for a memory allocation attempt: create a new node in		*/
-/*			   allocation table and update/create the corresponding node in		*/
-/*			   statistics table													*/
-/*	In/out   : all parameters are input											*/
-/*	Return   : memory pointer, if something is wrong, the pointer will be NULL	*/
-/*	Modified :																	*/
-/* ============================================================================	*/
+/*  Function : MM_allocate()                                                    */
+/*  Date     : 10/08/2002                                                       */
+/*  Purpose  : API for a memory allocation attempt: create a new node in        */
+/*             allocation table and update/create the corresponding node in     */
+/*             statistics table                                                 */
+/*  In/out   : all parameters are input                                         */
+/*  Return   : memory pointer, if something is wrong, the pointer will be NULL  */
+/*  Modified :                                                                  */
+/* ============================================================================ */
 
 OSCL_EXPORT_REF void* MM_Audit_Imp::MM_allocate(const OsclMemStatsNode* pInStatsNode,
         uint32 sizeIn,
@@ -264,15 +264,15 @@ OSCL_EXPORT_REF void* MM_Audit_Imp::MM_allocate(const OsclMemStatsNode* pInStats
 }
 
 /* ============================================================================ */
-/*	Function : MM_deallocate()													*/
-/*	Date     : 10/08/2002														*/
-/*	Purpose  : API for a memory de-allocation attempt: remove a node in			*/
-/*			   allocation table and update the corresponding node in			*/
-/*			   statistics table													*/
-/*	In/out   : all parameters are input											*/
-/*	Return   :																	*/
-/*	Modified :																	*/
-/* ============================================================================	*/
+/*  Function : MM_deallocate()                                                  */
+/*  Date     : 10/08/2002                                                       */
+/*  Purpose  : API for a memory de-allocation attempt: remove a node in         */
+/*             allocation table and update the corresponding node in            */
+/*             statistics table                                                 */
+/*  In/out   : all parameters are input                                         */
+/*  Return   :                                                                  */
+/*  Modified :                                                                  */
+/* ============================================================================ */
 
 OSCL_EXPORT_REF bool  MM_Audit_Imp::MM_deallocate(void *pMemBlockIn)
 {
@@ -350,14 +350,14 @@ OSCL_EXPORT_REF bool  MM_Audit_Imp::MM_deallocate(void *pMemBlockIn)
 
 
 /* ============================================================================ */
-/*	Function : MM_GetTreeNodes()												*/
-/*	Date     : 10/31/2002														*/
-/*	Purpose  : API to get the number of tree nodes including the tag node and   */
-/*			   its subtree														*/
-/*	In/out   : all parameters are input											*/
-/*	Return   : 0 means no tag node ; >0 means the number of tree nodes			*/
-/*	Modified :																	*/
-/* ============================================================================	*/
+/*  Function : MM_GetTreeNodes()                                                */
+/*  Date     : 10/31/2002                                                       */
+/*  Purpose  : API to get the number of tree nodes including the tag node and   */
+/*             its subtree                                                      */
+/*  In/out   : all parameters are input                                         */
+/*  Return   : 0 means no tag node ; >0 means the number of tree nodes          */
+/*  Modified :                                                                  */
+/* ============================================================================ */
 
 OSCL_EXPORT_REF uint32 MM_Audit_Imp::MM_GetTreeNodes(const char *  tagIn)
 {
@@ -378,13 +378,13 @@ OSCL_EXPORT_REF uint32 MM_Audit_Imp::MM_GetTreeNodes(const char *  tagIn)
 
 
 /* ================================================================================ */
-/*	Function : MM_GetStats()														*/
-/*	Date     : 10/08/2002															*/
-/*	Purpose  : API to get memory statistics through context string(tag)				*/
-/*	In/out   : all parameters are input												*/
-/*	Return   : the statistics (pointer) for the current tag node					*/
-/*			   if something is wrong, return NULL									*/
-/*	Modified :																		*/
+/*  Function : MM_GetStats()                                                        */
+/*  Date     : 10/08/2002                                                           */
+/*  Purpose  : API to get memory statistics through context string(tag)             */
+/*  In/out   : all parameters are input                                             */
+/*  Return   : the statistics (pointer) for the current tag node                    */
+/*             if something is wrong, return NULL                                   */
+/*  Modified :                                                                      */
 /* ================================================================================ */
 
 
@@ -419,14 +419,14 @@ OSCL_EXPORT_REF uint32 MM_Audit_Imp::MM_GetStatsInDepth(const char *tagIn,
 
 
 /* ============================================================================ */
-/*	Function : getNodeChildren()												*/
-/*	Date     : 10/08/2002														*/
-/*	Purpose  : recursive function to go throught each child node for the 		*/
-/*			   current node and counter it										*/
-/*	In/out   : all parameters are input											*/
-/*	Return   :																	*/
-/*	Modified :																	*/
-/* ============================================================================	*/
+/*  Function : getNodeChildren()                                                */
+/*  Date     : 10/08/2002                                                       */
+/*  Purpose  : recursive function to go throught each child node for the        */
+/*             current node and counter it                                      */
+/*  In/out   : all parameters are input                                         */
+/*  Return   :                                                                  */
+/*  Modified :                                                                  */
+/* ============================================================================ */
 
 void MM_Audit_Imp::populateChildren(const char *tagIn,
                                     MM_Stats_CB *array_ptr,
@@ -485,13 +485,13 @@ void MM_Audit_Imp::populateChildren(const char *tagIn,
 }
 
 /* ============================================================================ */
-/*	Function : MM_GetTag()														*/
-/*	Date     : 10/08/2002														*/
-/*	Purpose  : API to get an StatsNode or creates one if it doesn't exist */
-/*	In/out   : all parameters are input											*/
-/*	Return   : pointer to OsclMemStatsNode if operation succeeds, NULL otherwise										*/
-/*	Modified :																	*/
-/* ============================================================================	*/
+/*  Function : MM_GetTag()                                                      */
+/*  Date     : 10/08/2002                                                       */
+/*  Purpose  : API to get an StatsNode or creates one if it doesn't exist */
+/*  In/out   : all parameters are input                                         */
+/*  Return   : pointer to OsclMemStatsNode if operation succeeds, NULL otherwise                                        */
+/*  Modified :                                                                  */
+/* ============================================================================ */
 
 OSCL_EXPORT_REF const OsclMemStatsNode* MM_Audit_Imp::MM_GetTagNode(const char * tagIn)
 {
@@ -505,13 +505,13 @@ OSCL_EXPORT_REF const OsclMemStatsNode* MM_Audit_Imp::MM_GetTagNode(const char *
 }
 
 /* ============================================================================ */
-/*	Function : MM_GetTag()														*/
-/*	Date     : 10/08/2002														*/
-/*	Purpose  : API to get an existing node  */
-/*	In/out   : all parameters are input											*/
-/*	Return   : pointer to OsclMemStatsNode if operation succeeds, NULL otherwise										*/
-/*	Modified :																	*/
-/* ============================================================================	*/
+/*  Function : MM_GetTag()                                                      */
+/*  Date     : 10/08/2002                                                       */
+/*  Purpose  : API to get an existing node  */
+/*  In/out   : all parameters are input                                         */
+/*  Return   : pointer to OsclMemStatsNode if operation succeeds, NULL otherwise                                        */
+/*  Modified :                                                                  */
+/* ============================================================================ */
 
 OSCL_EXPORT_REF const OsclMemStatsNode* MM_Audit_Imp::MM_GetExistingTag(const char * tagIn)
 {
@@ -528,14 +528,14 @@ OSCL_EXPORT_REF const OsclMemStatsNode* MM_Audit_Imp::MM_GetExistingTag(const ch
 
 
 /* ============================================================================ */
-/*	Function : MM_Validate()													*/
-/*	Date     : 10/08/2002														*/
-/*	Purpose  : API to check the input pointer is a valid pointer to a chunk of  */
-/*			   memory															*/
-/*	In/out   : all parameters are input											*/
-/*	Return   :																	*/
-/*	Modified :																	*/
-/* ============================================================================	*/
+/*  Function : MM_Validate()                                                    */
+/*  Date     : 10/08/2002                                                       */
+/*  Purpose  : API to check the input pointer is a valid pointer to a chunk of  */
+/*             memory                                                           */
+/*  In/out   : all parameters are input                                         */
+/*  Return   :                                                                  */
+/*  Modified :                                                                  */
+/* ============================================================================ */
 
 OSCL_EXPORT_REF bool MM_Audit_Imp::MM_Validate(const void *ptrIn)
 {
@@ -544,13 +544,13 @@ OSCL_EXPORT_REF bool MM_Audit_Imp::MM_Validate(const void *ptrIn)
 }
 
 /* ============================================================================ */
-/*	Function : MM_SetTagLevel()													*/
-/*	Date     : 10/08/2002														*/
-/*	Purpose  : API to set the maximum tag level,i.e. tag level for a.b.c.d = 4	*/
-/*	In/out   : all parameters are input											*/
-/*	Return   :																	*/
-/*	Modified :																	*/
-/* ============================================================================	*/
+/*  Function : MM_SetTagLevel()                                                 */
+/*  Date     : 10/08/2002                                                       */
+/*  Purpose  : API to set the maximum tag level,i.e. tag level for a.b.c.d = 4  */
+/*  In/out   : all parameters are input                                         */
+/*  Return   :                                                                  */
+/*  Modified :                                                                  */
+/* ============================================================================ */
 
 OSCL_EXPORT_REF void MM_Audit_Imp::MM_SetTagLevel(uint32 level)
 {
@@ -655,14 +655,14 @@ OSCL_EXPORT_REF uint32 MM_Audit_Imp::MM_GetAllocNodeInfo(MM_AllocQueryInfo* outp
 }
 
 /* ============================================================================ */
-/*	Function : MM_SetFailurePoint()												*/
-/*	Date     : 11/05/2002														*/
-/*	Purpose  : API to insert allocation failure deterministically according to  */
-/*			   allocation number associated with tag							*/
-/*	In/out   : all parameters are input											*/
-/*	Return   : true if operation succeeds										*/
-/*	Modified :																	*/
-/* ============================================================================	*/
+/*  Function : MM_SetFailurePoint()                                             */
+/*  Date     : 11/05/2002                                                       */
+/*  Purpose  : API to insert allocation failure deterministically according to  */
+/*             allocation number associated with tag                            */
+/*  In/out   : all parameters are input                                         */
+/*  Return   : true if operation succeeds                                       */
+/*  Modified :                                                                  */
+/* ============================================================================ */
 
 OSCL_EXPORT_REF bool MM_Audit_Imp::MM_SetFailurePoint(const char * tagIn, uint32 alloc_number)
 {
@@ -700,13 +700,13 @@ OSCL_EXPORT_REF bool MM_Audit_Imp::MM_SetFailurePoint(const char * tagIn, uint32
 
 
 /* ============================================================================ */
-/*	Function : MM_UnsetFailurePoint()											*/
-/*	Date     : 11/05/2002														*/
-/*	Purpose  : API to cancel the allocation failure point associated with tag	*/
-/*	In/out   : all parameters are input											*/
-/*	Return   :																	*/
-/*	Modified :																	*/
-/* ============================================================================	*/
+/*  Function : MM_UnsetFailurePoint()                                           */
+/*  Date     : 11/05/2002                                                       */
+/*  Purpose  : API to cancel the allocation failure point associated with tag   */
+/*  In/out   : all parameters are input                                         */
+/*  Return   :                                                                  */
+/*  Modified :                                                                  */
+/* ============================================================================ */
 
 OSCL_EXPORT_REF void MM_Audit_Imp::MM_UnsetFailurePoint(const char * tagIn)
 {
@@ -733,15 +733,15 @@ OSCL_EXPORT_REF void MM_Audit_Imp::MM_UnsetFailurePoint(const char * tagIn)
 
 #if MM_AUDIT_ALLOC_NODE_SUPPORT
 /* ============================================================================ */
-/*	Function : addAllocNode()													*/
-/*	Date     : 10/08/2002														*/
-/*	Purpose  : add a node in memory allocation table triggered by an allocation	*/
-/*			   attempt, i.e. MM_allocate(); then update/creat the corresponding */
-/*			   node in memory statistics table									*/
-/*	In/out   : all parameters are input											*/
-/*	Return   : true if operation succeeds										*/
-/*	Modified :																	*/
-/* ============================================================================	*/
+/*  Function : addAllocNode()                                                   */
+/*  Date     : 10/08/2002                                                       */
+/*  Purpose  : add a node in memory allocation table triggered by an allocation */
+/*             attempt, i.e. MM_allocate(); then update/creat the corresponding */
+/*             node in memory statistics table                                  */
+/*  In/out   : all parameters are input                                         */
+/*  Return   : true if operation succeeds                                       */
+/*  Modified :                                                                  */
+/* ============================================================================ */
 
 MM_AllocNode* MM_Audit_Imp::addAllocNode(void *pMemBlockIn, uint32 sizeIn,
         OsclMemStatsNode *pStatsNode,
@@ -801,7 +801,7 @@ MM_AllocNode* MM_Audit_Imp::addAllocNode(void *pMemBlockIn, uint32 sizeIn,
     mnAllocNum++;
 
     pAllocInfo->pMemBlock = pMemBlockIn;
-    pAllocInfo->size	  = sizeIn;
+    pAllocInfo->size      = sizeIn;
     pAllocInfo->lineNo  = lineNumber;
     pAllocInfo->pStatsNode = pStatsNode;
 
@@ -828,14 +828,14 @@ MM_AllocNode* MM_Audit_Imp::addAllocNode(void *pMemBlockIn, uint32 sizeIn,
 }
 
 /* ============================================================================ */
-/*	Function : removeAllocNode()												*/
-/*	Date     : 10/08/2002														*/
-/*	Purpose  : remove a node in memory allocation table triggered by an			*/
-/*			   de-allocationattempt, i.e. MM_deallocate()						*/
-/*	In/out   : all parameters are input											*/
-/*	Return   : true if operation succeeds										*/
-/*	Modified :																	*/
-/* ============================================================================	*/
+/*  Function : removeAllocNode()                                                */
+/*  Date     : 10/08/2002                                                       */
+/*  Purpose  : remove a node in memory allocation table triggered by an         */
+/*             de-allocationattempt, i.e. MM_deallocate()                       */
+/*  In/out   : all parameters are input                                         */
+/*  Return   : true if operation succeeds                                       */
+/*  Modified :                                                                  */
+/* ============================================================================ */
 
 OsclMemStatsNode* MM_Audit_Imp::removeAllocNode(void *pMemBlockIn, uint32& size)
 {
@@ -925,14 +925,14 @@ OsclMemStatsNode* MM_Audit_Imp::removeAllocNode(void *pMemBlockIn, uint32& size)
 }
 
 /* ============================================================================ */
-/*	Function : removeALLAllocNodes()											*/
-/*	Date     : 10/08/2002														*/
-/*	Purpose  : remove all the nodes in memory allocation table needed in 		*/
-/*			   destructor														*/
-/*	In/out   :																	*/
-/*	Return   :																	*/
-/*	Modified :																	*/
-/* ============================================================================	*/
+/*  Function : removeALLAllocNodes()                                            */
+/*  Date     : 10/08/2002                                                       */
+/*  Purpose  : remove all the nodes in memory allocation table needed in        */
+/*             destructor                                                       */
+/*  In/out   :                                                                  */
+/*  Return   :                                                                  */
+/*  Modified :                                                                  */
+/* ============================================================================ */
 
 void MM_Audit_Imp::removeALLAllocNodes()
 {
@@ -998,13 +998,13 @@ bool MM_Audit_Imp::validate_all_heap()
 #endif // #if MM_AUDIT_ALLOC_NODE_SUPPORT
 
 /* ============================================================================ */
-/*	Function : validate()														*/
-/*	Date     : 11/05/2002														*/
-/*	Purpose  : validate the input pointer to a chunk of memory					*/
-/*	In/out   : input the memory pointer						*/
-/*	Return   : true if operation succeeds										*/
-/*	Modified :																	*/
-/* ============================================================================	*/
+/*  Function : validate()                                                       */
+/*  Date     : 11/05/2002                                                       */
+/*  Purpose  : validate the input pointer to a chunk of memory                  */
+/*  In/out   : input the memory pointer                     */
+/*  Return   : true if operation succeeds                                       */
+/*  Modified :                                                                  */
+/* ============================================================================ */
 
 bool MM_Audit_Imp::validate(void *ptrIn)
 {
@@ -1121,14 +1121,14 @@ uint32 MM_Audit_Imp::getSize(void *ptrIn)
 
 
 /* ============================================================================ */
-/*	Function : createStatsNode()												*/
-/*	Date     : 10/08/2002														*/
-/*	Purpose  : creat a new node in memory statistics table triggered by an		*/
-/*			   allocation attempt,												*/
-/*	In/out   : all parameters are input											*/
-/*	Return   : true if operation succeeds										*/
-/*	Modified :																	*/
-/* ============================================================================	*/
+/*  Function : createStatsNode()                                                */
+/*  Date     : 10/08/2002                                                       */
+/*  Purpose  : creat a new node in memory statistics table triggered by an      */
+/*             allocation attempt,                                              */
+/*  In/out   : all parameters are input                                         */
+/*  Return   : true if operation succeeds                                       */
+/*  Modified :                                                                  */
+/* ============================================================================ */
 
 
 OsclMemStatsNode* MM_Audit_Imp::createStatsNode(const char *  tagIn)
@@ -1212,14 +1212,14 @@ OsclMemStatsNode* MM_Audit_Imp::createStatsNode(const char *  tagIn)
 
 
 /* ============================================================================ */
-/*	Function : updateStatsNode()												*/
-/*	Date     : 10/08/2002														*/
-/*	Purpose  : update the node in memory statistics table triggered by an		*/
-/*			   allocation/de-alocation attempt,									*/
-/*	In/out   : all parameters are input											*/
-/*	Return   : true if operation succeeds										*/
-/*	Modified :																	*/
-/* ============================================================================	*/
+/*  Function : updateStatsNode()                                                */
+/*  Date     : 10/08/2002                                                       */
+/*  Purpose  : update the node in memory statistics table triggered by an       */
+/*             allocation/de-alocation attempt,                                 */
+/*  In/out   : all parameters are input                                         */
+/*  Return   : true if operation succeeds                                       */
+/*  Modified :                                                                  */
+/* ============================================================================ */
 
 
 bool MM_Audit_Imp::updateStatsNode(OsclMemStatsNode *pCurrStatsNode, const MM_Stats_t& delta, bool add)
@@ -1249,14 +1249,14 @@ bool MM_Audit_Imp::updateStatsNode(OsclMemStatsNode *pCurrStatsNode, const MM_St
 
 
 /* ============================================================================ */
-/*	Function : updateStatsNodeInFailure()										*/
-/*	Date     : 11/05/2002														*/
-/*	Purpose  : update "pMMStats->numAllocFails" for the current tag node with 	*/
-/*			   its parent tag nodes												*/
-/*	In/out   : all parameters are input											*/
-/*	Return   : true if operation succeeds										*/
-/*	Modified :																	*/
-/* ============================================================================	*/
+/*  Function : updateStatsNodeInFailure()                                       */
+/*  Date     : 11/05/2002                                                       */
+/*  Purpose  : update "pMMStats->numAllocFails" for the current tag node with   */
+/*             its parent tag nodes                                             */
+/*  In/out   : all parameters are input                                         */
+/*  Return   : true if operation succeeds                                       */
+/*  Modified :                                                                  */
+/* ============================================================================ */
 bool MM_Audit_Imp::updateStatsNodeInFailure(const char * tagIn)
 {
     MMAuditCharAutoPtr tag;
@@ -1303,13 +1303,13 @@ bool MM_Audit_Imp::updateStatsNodeInFailure(OsclMemStatsNode * pStatsNode)
 }
 
 /* ============================================================================ */
-/*	Function : isSetFailure()													*/
-/*	Date     : 11/05/2002														*/
-/*	Purpose  : do allocation failure check										*/
-/*	In/out   : all parameters are input											*/
-/*	Return   : true if operation succeeds										*/
-/*	Modified :																	*/
-/* ============================================================================	*/
+/*  Function : isSetFailure()                                                   */
+/*  Date     : 11/05/2002                                                       */
+/*  Purpose  : do allocation failure check                                      */
+/*  In/out   : all parameters are input                                         */
+/*  Return   : true if operation succeeds                                       */
+/*  Modified :                                                                  */
+/* ============================================================================ */
 
 bool MM_Audit_Imp::isSetFailure(const char * tagIn)
 {
@@ -1347,20 +1347,20 @@ bool MM_Audit_Imp::isSetFailure(OsclMemStatsNode* pStatsNode)
     return false;
 }
 /* ========================================================================================== */
-/*	Function : retrieveParentTagLength()													  */
-/*	Date     : 10/16/2002																	  */
-/*	Purpose  : get the length of the parent tag(i.e."a.b.c") of the input tag(i.e. "a.b.c.d") */
-/*			   current node and counter it													  */
-/*	In/out   : all parameters are input														  */
-/*	Return   : length of the parent tag(sub-string)	of an input tag							  */
-/*	Modified :																				  */
+/*  Function : retrieveParentTagLength()                                                      */
+/*  Date     : 10/16/2002                                                                     */
+/*  Purpose  : get the length of the parent tag(i.e."a.b.c") of the input tag(i.e. "a.b.c.d") */
+/*             current node and counter it                                                    */
+/*  In/out   : all parameters are input                                                       */
+/*  Return   : length of the parent tag(sub-string) of an input tag                           */
+/*  Modified :                                                                                */
 /* ========================================================================================== */
 
 int32 MM_Audit_Imp::retrieveParentTagLength(const char *tag, int32 bound)
 {
     if (!tag)  return 0;
 
-#define PV_MIN(a,b)	  ((a)<(b)? (a):(b))
+#define PV_MIN(a,b)   ((a)<(b)? (a):(b))
 
     int count = 0;
     int len = PV_MIN((int32)(oscl_strlen(tag)), bound);
@@ -1377,7 +1377,7 @@ int32 MM_Audit_Imp::retrieveParentTagLength(const char *tag, int32 bound)
                 break;
             }
         }
-        if (!bFound)	 count = 0;
+        if (!bFound)     count = 0;
     }
 
     return count + 1;
@@ -1408,14 +1408,14 @@ void MM_Audit_Imp::retrieveParentTag(char *tag)
 }
 
 /* ========================================================================================== */
-/*	Function : makeValidTag()																  */
-/*	Date     : 10/25/2002																	  */
-/*	Purpose  : check the input tag and make sure its level would be bounded in maximum tag    */
-/*			   level, if its level is larger, then truncate it								  */
-/*			   Note that level of "a.b.c.d" = 4												  */
-/*	In/out   : In: tagIn ; Out: *bFree														  */
-/*	Return   : a valid tag within the maximum tag level constraint							  */
-/*	Modified :																				  */
+/*  Function : makeValidTag()                                                                 */
+/*  Date     : 10/25/2002                                                                     */
+/*  Purpose  : check the input tag and make sure its level would be bounded in maximum tag    */
+/*             level, if its level is larger, then truncate it                                */
+/*             Note that level of "a.b.c.d" = 4                                               */
+/*  In/out   : In: tagIn ; Out: *bFree                                                        */
+/*  Return   : a valid tag within the maximum tag level constraint                            */
+/*  Modified :                                                                                */
 /* ========================================================================================== */
 
 void MM_Audit_Imp::makeValidTag(const char * tagIn, MMAuditCharAutoPtr& autoptr)
@@ -1446,13 +1446,13 @@ void MM_Audit_Imp::makeValidTag(const char * tagIn, MMAuditCharAutoPtr& autoptr)
 }
 
 /* ========================================================================================== */
-/*	Function : getTagActualSize()															  */
-/*	Date     : 10/25/2002																	  */
-/*	Purpose  : get the actual size of an input tag within the maximum tag level constraint    */
-/*			   Note that level of "a.b.c.d" = 4												  */
-/*	In/out   : In: tagIn ; Out: *bFree														  */
-/*	Return   : 0 means no truncation ; >0 means truncated size								  */
-/*	Modified :																				  */
+/*  Function : getTagActualSize()                                                             */
+/*  Date     : 10/25/2002                                                                     */
+/*  Purpose  : get the actual size of an input tag within the maximum tag level constraint    */
+/*             Note that level of "a.b.c.d" = 4                                               */
+/*  In/out   : In: tagIn ; Out: *bFree                                                        */
+/*  Return   : 0 means no truncation ; >0 means truncated size                                */
+/*  Modified :                                                                                */
 /* ========================================================================================== */
 
 uint32 MM_Audit_Imp::getTagActualSize(const char * tagIn)

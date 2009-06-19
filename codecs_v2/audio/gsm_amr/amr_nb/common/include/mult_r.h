@@ -36,16 +36,16 @@ terms listed above has been obtained from the copyright holder.
  Description: Created separate header file for mult_r function.
 
  Description: Changed prototype of the mult() function. Instead of using global
-			  data, a pointer to overflow flag is now passed into the function.
+              data, a pointer to overflow flag is now passed into the function.
 
  Description: Made the following based on P2/P3 review
-			  1) Changed the parameter name from "overflow" to "pOverflow"
-			  in the function prototype declaration.
-			  2) Updated template
+              1) Changed the parameter name from "overflow" to "pOverflow"
+              in the function prototype declaration.
+              2) Updated template
 
  Description: Moved _cplusplus #ifdef after Include section.
 
- Who:						Date:
+ Who:                       Date:
  Description:
 
 ------------------------------------------------------------------------------
@@ -57,14 +57,14 @@ terms listed above has been obtained from the copyright holder.
 ------------------------------------------------------------------------------
 */
 
-#ifndef	MULT_R__H
-#define	MULT_R__H
+#ifndef MULT_R__H
+#define MULT_R__H
 
 /*----------------------------------------------------------------------------
 ; INCLUDES
 ----------------------------------------------------------------------------*/
 
-#include	"basicop_malloc.h"
+#include    "basicop_malloc.h"
 
 /*--------------------------------------------------------------------------*/
 #ifdef __cplusplus
@@ -113,7 +113,7 @@ extern "C"
 #endif
 
 
-#endif	/* _MULT_R_H_ */
+#endif  /* _MULT_R_H_ */
 
 
 

@@ -41,7 +41,7 @@ terms listed above has been obtained from the copyright holder.
  Description:
 ------------------------------------------------------------------------------
  INCLUDE DESCRIPTION
-	Static memory, constants and frametypes for the DTX
+    Static memory, constants and frametypes for the DTX
 ------------------------------------------------------------------------------
 */
 #ifndef DTX_H

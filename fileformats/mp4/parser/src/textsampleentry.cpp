@@ -41,8 +41,8 @@ OSCL_EXPORT_REF TextSampleEntry:: TextSampleEntry(MP4_FF_FILE *fp, uint32 size, 
     _pparent = NULL;
 
     _pBackgroundRGBA = NULL;
-    _pBoxRecord  	 = NULL;
-    _pStyleRecord	 = NULL;
+    _pBoxRecord      = NULL;
+    _pStyleRecord    = NULL;
     _pFontTableAtom  = NULL;
 
     if (_success)

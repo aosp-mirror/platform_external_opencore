@@ -52,13 +52,13 @@ PVA_FF_TfraAtom::addSampleEntry(uint32 ts, uint32 moofOffset, uint32 trafNumber,
                                 uint32 trunNumber, uint32 sampleNumber)
 {
     PVA_FF_RandomAccessEntry sampleEntry;
-    sampleEntry.time			= ts;
-    sampleEntry.moofOffset		= moofOffset;
-    sampleEntry.trafNumber		= trafNumber;
-    sampleEntry.trunNumber		= trunNumber;
-    sampleEntry.sampleNumber	= sampleNumber;
+    sampleEntry.time            = ts;
+    sampleEntry.moofOffset      = moofOffset;
+    sampleEntry.trafNumber      = trafNumber;
+    sampleEntry.trunNumber      = trunNumber;
+    sampleEntry.sampleNumber    = sampleNumber;
 
-    _pSampleEntries->push_back(sampleEntry)	;
+    _pSampleEntries->push_back(sampleEntry) ;
 
     _entryCount++;
 
@@ -69,7 +69,7 @@ PVA_FF_TfraAtom::addSampleEntry(uint32 ts, uint32 moofOffset, uint32 trafNumber,
 uint32
 PVA_FF_TfraAtom::getTrackId()
 {
-    return	_trackId;
+    return  _trackId;
 }
 
 
@@ -98,19 +98,19 @@ PVA_FF_TfraAtom::recomputeSize()
 {
     int32 size = getDefaultSize();
 
-    size += 4;	// track id
-    size += 4;	// reserved
-    size += 4;	// entry count
+    size += 4;  // track id
+    size += 4;  // reserved
+    size += 4;  // entry count
 
     if (_entryCount != 0)
     {
         for (uint32 ii = 0; ii < _entryCount; ii++)
         {
-            size += 4;	// time
-            size += 4;	// MoofOffset
-            size += 2;	// traf number
-            size += 2;	// trun number
-            size += 2;	// sample number
+            size += 4;  // time
+            size += 4;  // MoofOffset
+            size += 2;  // traf number
+            size += 2;  // trun number
+            size += 2;  // sample number
         }
     }
 

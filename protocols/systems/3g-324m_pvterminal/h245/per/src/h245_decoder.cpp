@@ -483,7 +483,7 @@ void Decode_GenericInformation(PS_GenericInformation x, PS_InStream stream)
         x->size_of_messageContent = (uint16)GetLengthDet(stream);
         x->messageContent = (PS_GenericParameter)
                             OSCL_DEFAULT_MALLOC(x->size_of_messageContent * sizeof(S_GenericParameter));
-        for (i = 0;i < x->size_of_messageContent;++i)
+        for (i = 0; i < x->size_of_messageContent; ++i)
         {
             Decode_GenericParameter(x->messageContent + i, stream);
         }
@@ -721,7 +721,7 @@ void Decode_TerminalCapabilitySet(PS_TerminalCapabilitySet x, PS_InStream stream
         x->size_of_capabilityTable = (uint16) GetInteger(1, 256, stream);
         x->capabilityTable = (PS_CapabilityTableEntry)
                              OSCL_DEFAULT_MALLOC(x->size_of_capabilityTable * sizeof(S_CapabilityTableEntry));
-        for (i = 0;i < x->size_of_capabilityTable;++i)
+        for (i = 0; i < x->size_of_capabilityTable; ++i)
         {
             Decode_CapabilityTableEntry(x->capabilityTable + i, stream);
         }
@@ -731,7 +731,7 @@ void Decode_TerminalCapabilitySet(PS_TerminalCapabilitySet x, PS_InStream stream
         x->size_of_capabilityDescriptors = (uint16) GetInteger(1, 256, stream);
         x->capabilityDescriptors = (PS_CapabilityDescriptor)
                                    OSCL_DEFAULT_MALLOC(x->size_of_capabilityDescriptors * sizeof(S_CapabilityDescriptor));
-        for (i = 0;i < x->size_of_capabilityDescriptors;++i)
+        for (i = 0; i < x->size_of_capabilityDescriptors; ++i)
         {
             Decode_CapabilityDescriptor(x->capabilityDescriptors + i, stream);
         }
@@ -750,7 +750,7 @@ void Decode_TerminalCapabilitySet(PS_TerminalCapabilitySet x, PS_InStream stream
             x->size_of_genericInformation = (uint16)GetLengthDet(stream);
             x->genericInformation = (PS_GenericInformation)
                                     OSCL_DEFAULT_MALLOC(x->size_of_genericInformation * sizeof(S_GenericInformation));
-            for (i = 0;i < x->size_of_genericInformation;++i)
+            for (i = 0; i < x->size_of_genericInformation; ++i)
             {
                 Decode_GenericInformation(x->genericInformation + i, stream);
             }
@@ -789,7 +789,7 @@ void Decode_CapabilityDescriptor(PS_CapabilityDescriptor x, PS_InStream stream)
         x->size_of_simultaneousCapabilities = (uint16) GetInteger(1, 256, stream);
         x->simultaneousCapabilities = (PS_AlternativeCapabilitySet)
                                       OSCL_DEFAULT_MALLOC(x->size_of_simultaneousCapabilities * sizeof(S_AlternativeCapabilitySet));
-        for (i = 0;i < x->size_of_simultaneousCapabilities;++i)
+        for (i = 0; i < x->size_of_simultaneousCapabilities; ++i)
         {
             Decode_AlternativeCapabilitySet(x->simultaneousCapabilities + i, stream);
         }
@@ -804,7 +804,7 @@ void Decode_AlternativeCapabilitySet(PS_AlternativeCapabilitySet x, PS_InStream 
     uint16 i;
     x->size = (uint16) GetInteger(1, 256, stream);
     x->item = (uint32*) OSCL_DEFAULT_MALLOC(x->size * sizeof(uint32));
-    for (i = 0;i < x->size;++i)
+    for (i = 0; i < x->size; ++i)
     {
         x->item[i] = GetInteger(1, 65535, stream);
     }
@@ -1142,7 +1142,7 @@ void Decode_H222Capability(PS_H222Capability x, PS_InStream stream)
     x->size_of_vcCapability = (uint16) GetLengthDet(stream);
     x->vcCapability = (PS_VCCapability)
                       OSCL_DEFAULT_MALLOC(x->size_of_vcCapability * sizeof(S_VCCapability));
-    for (i = 0;i < x->size_of_vcCapability;++i)
+    for (i = 0; i < x->size_of_vcCapability; ++i)
     {
         Decode_VCCapability(x->vcCapability + i, stream);
     }
@@ -1215,7 +1215,7 @@ void Decode_Aal1ViaGateway(PS_Aal1ViaGateway x, PS_InStream stream)
     x->size_of_gatewayAddress = (uint16) GetInteger(1, 256, stream);
     x->gatewayAddress = (PS_Q2931Address)
                         OSCL_DEFAULT_MALLOC(x->size_of_gatewayAddress * sizeof(S_Q2931Address));
-    for (i = 0;i < x->size_of_gatewayAddress;++i)
+    for (i = 0; i < x->size_of_gatewayAddress; ++i)
     {
         Decode_Q2931Address(x->gatewayAddress + i, stream);
     }
@@ -1632,7 +1632,7 @@ void Decode_H2250Capability(PS_H2250Capability x, PS_InStream stream)
             x->size_of_redundancyEncodingCapability = (uint16) GetInteger(1, 256, stream);
             x->redundancyEncodingCapability = (PS_RedundancyEncodingCapability)
                                               OSCL_DEFAULT_MALLOC(x->size_of_redundancyEncodingCapability * sizeof(S_RedundancyEncodingCapability));
-            for (i = 0;i < x->size_of_redundancyEncodingCapability;++i)
+            for (i = 0; i < x->size_of_redundancyEncodingCapability; ++i)
             {
                 Decode_RedundancyEncodingCapability(x->redundancyEncodingCapability + i, stream);
             }
@@ -1708,7 +1708,7 @@ void Decode_MediaPacketizationCapability(PS_MediaPacketizationCapability x, PS_I
             x->size_of_rtpPayloadType = (uint16) GetInteger(1, 256, stream);
             x->rtpPayloadType = (PS_RTPPayloadType)
                                 OSCL_DEFAULT_MALLOC(x->size_of_rtpPayloadType * sizeof(S_RTPPayloadType));
-            for (i = 0;i < x->size_of_rtpPayloadType;++i)
+            for (i = 0; i < x->size_of_rtpPayloadType; ++i)
             {
                 Decode_RTPPayloadType(x->rtpPayloadType + i, stream);
             }
@@ -1968,7 +1968,7 @@ void Decode_TransportCapability(PS_TransportCapability x, PS_InStream stream)
         x->size_of_qOSCapabilities = (uint16) GetInteger(1, 256, stream);
         x->qOSCapabilities = (PS_QOSCapability)
                              OSCL_DEFAULT_MALLOC(x->size_of_qOSCapabilities * sizeof(S_QOSCapability));
-        for (i = 0;i < x->size_of_qOSCapabilities;++i)
+        for (i = 0; i < x->size_of_qOSCapabilities; ++i)
         {
             Decode_QOSCapability(x->qOSCapabilities + i, stream);
         }
@@ -1978,7 +1978,7 @@ void Decode_TransportCapability(PS_TransportCapability x, PS_InStream stream)
         x->size_of_mediaChannelCapabilities = (uint16) GetInteger(1, 256, stream);
         x->mediaChannelCapabilities = (PS_MediaChannelCapability)
                                       OSCL_DEFAULT_MALLOC(x->size_of_mediaChannelCapabilities * sizeof(S_MediaChannelCapability));
-        for (i = 0;i < x->size_of_mediaChannelCapabilities;++i)
+        for (i = 0; i < x->size_of_mediaChannelCapabilities; ++i)
         {
             Decode_MediaChannelCapability(x->mediaChannelCapabilities + i, stream);
         }
@@ -2013,7 +2013,7 @@ void Decode_RedundancyEncodingCapability(PS_RedundancyEncodingCapability x, PS_I
     {
         x->size_of_secondaryEncoding = (uint16) GetInteger(1, 256, stream);
         x->secondaryEncoding = (uint32*) OSCL_DEFAULT_MALLOC(x->size_of_secondaryEncoding * sizeof(uint32));
-        for (i = 0;i < x->size_of_secondaryEncoding;++i)
+        for (i = 0; i < x->size_of_secondaryEncoding; ++i)
         {
             x->secondaryEncoding[i] = GetInteger(1, 65535, stream);
         }
@@ -2079,7 +2079,7 @@ void Decode_RTPH263VideoRedundancyEncoding(PS_RTPH263VideoRedundancyEncoding x, 
     {
         x->size_of_containedThreads = (uint16) GetInteger(1, 256, stream);
         x->containedThreads = (uint32*) OSCL_DEFAULT_MALLOC(x->size_of_containedThreads * sizeof(uint32));
-        for (i = 0;i < x->size_of_containedThreads;++i)
+        for (i = 0; i < x->size_of_containedThreads; ++i)
         {
             x->containedThreads[i] = GetInteger(0, 15, stream);
         }
@@ -2113,7 +2113,7 @@ void Decode_FrameToThreadMapping(PS_FrameToThreadMapping x, PS_InStream stream)
             x->size = (uint16) GetInteger(1, 256, stream);
             x->custom = (PS_RTPH263VideoRedundancyFrameMapping)
                         OSCL_DEFAULT_MALLOC(x->size * sizeof(S_RTPH263VideoRedundancyFrameMapping));
-            for (i = 0;i < x->size;++i)
+            for (i = 0; i < x->size; ++i)
             {
                 Decode_RTPH263VideoRedundancyFrameMapping(x->custom + i, stream);
             }
@@ -2140,7 +2140,7 @@ void Decode_RTPH263VideoRedundancyFrameMapping(PS_RTPH263VideoRedundancyFrameMap
     x->threadNumber = (uint8) GetInteger(0, 15, stream);
     x->size_of_frameSequence = (uint16) GetInteger(1, 256, stream);
     x->frameSequence = (uint32*) OSCL_DEFAULT_MALLOC(x->size_of_frameSequence * sizeof(uint32));
-    for (i = 0;i < x->size_of_frameSequence;++i)
+    for (i = 0; i < x->size_of_frameSequence; ++i)
     {
         x->frameSequence[i] = GetInteger(0, 255, stream);
     }
@@ -2172,7 +2172,7 @@ void Decode_MultipointCapability(PS_MultipointCapability x, PS_InStream stream)
     x->size_of_mediaDistributionCapability = (uint16) GetLengthDet(stream);
     x->mediaDistributionCapability = (PS_MediaDistributionCapability)
                                      OSCL_DEFAULT_MALLOC(x->size_of_mediaDistributionCapability * sizeof(S_MediaDistributionCapability));
-    for (i = 0;i < x->size_of_mediaDistributionCapability;++i)
+    for (i = 0; i < x->size_of_mediaDistributionCapability; ++i)
     {
         Decode_MediaDistributionCapability(x->mediaDistributionCapability + i, stream);
     }
@@ -2212,7 +2212,7 @@ void Decode_MediaDistributionCapability(PS_MediaDistributionCapability x, PS_InS
         x->size_of_centralizedData = (uint16) GetLengthDet(stream);
         x->centralizedData = (PS_DataApplicationCapability)
                              OSCL_DEFAULT_MALLOC(x->size_of_centralizedData * sizeof(S_DataApplicationCapability));
-        for (i = 0;i < x->size_of_centralizedData;++i)
+        for (i = 0; i < x->size_of_centralizedData; ++i)
         {
             Decode_DataApplicationCapability(x->centralizedData + i, stream);
         }
@@ -2222,7 +2222,7 @@ void Decode_MediaDistributionCapability(PS_MediaDistributionCapability x, PS_InS
         x->size_of_distributedData = (uint16) GetLengthDet(stream);
         x->distributedData = (PS_DataApplicationCapability)
                              OSCL_DEFAULT_MALLOC(x->size_of_distributedData * sizeof(S_DataApplicationCapability));
-        for (i = 0;i < x->size_of_distributedData;++i)
+        for (i = 0; i < x->size_of_distributedData; ++i)
         {
             Decode_DataApplicationCapability(x->distributedData + i, stream);
         }
@@ -2527,7 +2527,7 @@ void Decode_EnhancementLayerInfo(PS_EnhancementLayerInfo x, PS_InStream stream)
         x->size_of_snrEnhancement = (uint8) GetInteger(1, 14, stream);
         x->snrEnhancement = (PS_EnhancementOptions)
                             OSCL_DEFAULT_MALLOC(x->size_of_snrEnhancement * sizeof(S_EnhancementOptions));
-        for (i = 0;i < x->size_of_snrEnhancement;++i)
+        for (i = 0; i < x->size_of_snrEnhancement; ++i)
         {
             Decode_EnhancementOptions(x->snrEnhancement + i, stream);
         }
@@ -2537,7 +2537,7 @@ void Decode_EnhancementLayerInfo(PS_EnhancementLayerInfo x, PS_InStream stream)
         x->size_of_spatialEnhancement = (uint8) GetInteger(1, 14, stream);
         x->spatialEnhancement = (PS_EnhancementOptions)
                                 OSCL_DEFAULT_MALLOC(x->size_of_spatialEnhancement * sizeof(S_EnhancementOptions));
-        for (i = 0;i < x->size_of_spatialEnhancement;++i)
+        for (i = 0; i < x->size_of_spatialEnhancement; ++i)
         {
             Decode_EnhancementOptions(x->spatialEnhancement + i, stream);
         }
@@ -2547,7 +2547,7 @@ void Decode_EnhancementLayerInfo(PS_EnhancementLayerInfo x, PS_InStream stream)
         x->size_of_bPictureEnhancement = (uint8) GetInteger(1, 14, stream);
         x->bPictureEnhancement = (PS_BEnhancementParameters)
                                  OSCL_DEFAULT_MALLOC(x->size_of_bPictureEnhancement * sizeof(S_BEnhancementParameters));
-        for (i = 0;i < x->size_of_bPictureEnhancement;++i)
+        for (i = 0; i < x->size_of_bPictureEnhancement; ++i)
         {
             Decode_BEnhancementParameters(x->bPictureEnhancement + i, stream);
         }
@@ -2723,7 +2723,7 @@ void Decode_H263Options(PS_H263Options x, PS_InStream stream)
         x->size_of_customPictureClockFrequency = (uint8) GetInteger(1, 16, stream);
         x->customPictureClockFrequency = (PS_CustomPictureClockFrequency)
                                          OSCL_DEFAULT_MALLOC(x->size_of_customPictureClockFrequency * sizeof(S_CustomPictureClockFrequency));
-        for (i = 0;i < x->size_of_customPictureClockFrequency;++i)
+        for (i = 0; i < x->size_of_customPictureClockFrequency; ++i)
         {
             Decode_CustomPictureClockFrequency(x->customPictureClockFrequency + i, stream);
         }
@@ -2733,7 +2733,7 @@ void Decode_H263Options(PS_H263Options x, PS_InStream stream)
         x->size_of_customPictureFormat = (uint8) GetInteger(1, 16, stream);
         x->customPictureFormat = (PS_CustomPictureFormat)
                                  OSCL_DEFAULT_MALLOC(x->size_of_customPictureFormat * sizeof(S_CustomPictureFormat));
-        for (i = 0;i < x->size_of_customPictureFormat;++i)
+        for (i = 0; i < x->size_of_customPictureFormat; ++i)
         {
             Decode_CustomPictureFormat(x->customPictureFormat + i, stream);
         }
@@ -2743,7 +2743,7 @@ void Decode_H263Options(PS_H263Options x, PS_InStream stream)
         x->size_of_modeCombos = (uint8) GetInteger(1, 16, stream);
         x->modeCombos = (PS_H263VideoModeCombos)
                         OSCL_DEFAULT_MALLOC(x->size_of_modeCombos * sizeof(S_H263VideoModeCombos));
-        for (i = 0;i < x->size_of_modeCombos;++i)
+        for (i = 0; i < x->size_of_modeCombos; ++i)
         {
             Decode_H263VideoModeCombos(x->modeCombos + i, stream);
         }
@@ -2993,7 +2993,7 @@ void Decode_PixelAspectInformation(PS_PixelAspectInformation x, PS_InStream stre
         case 1:
             x->size = (uint8) GetInteger(1, 14, stream);
             x->pixelAspectCode = (uint32*) OSCL_DEFAULT_MALLOC(x->size * sizeof(uint32));
-            for (i = 0;i < x->size;++i)
+            for (i = 0; i < x->size; ++i)
             {
                 x->pixelAspectCode[i] = GetInteger(1, 14, stream);
             }
@@ -3002,7 +3002,7 @@ void Decode_PixelAspectInformation(PS_PixelAspectInformation x, PS_InStream stre
             x->size = (uint16) GetInteger(1, 256, stream);
             x->extendedPAR = (PS_ExtendedPARItem)
                              OSCL_DEFAULT_MALLOC(x->size * sizeof(S_ExtendedPARItem));
-            for (i = 0;i < x->size;++i)
+            for (i = 0; i < x->size; ++i)
             {
                 Decode_ExtendedPARItem(x->extendedPAR + i, stream);
             }
@@ -3061,7 +3061,7 @@ void Decode_MPI(PS_MPI x, PS_InStream stream)
         x->size_of_customPCF = (uint8) GetInteger(1, 16, stream);
         x->customPCF = (PS_CustomPCFItem)
                        OSCL_DEFAULT_MALLOC(x->size_of_customPCF * sizeof(S_CustomPCFItem));
-        for (i = 0;i < x->size_of_customPCF;++i)
+        for (i = 0; i < x->size_of_customPCF; ++i)
         {
             Decode_CustomPCFItem(x->customPCF + i, stream);
         }
@@ -3118,7 +3118,7 @@ void Decode_H263VideoModeCombos(PS_H263VideoModeCombos x, PS_InStream stream)
     x->size_of_h263VideoCoupledModes = (uint8) GetInteger(1, 16, stream);
     x->h263VideoCoupledModes = (PS_H263ModeComboFlags)
                                OSCL_DEFAULT_MALLOC(x->size_of_h263VideoCoupledModes * sizeof(S_H263ModeComboFlags));
-    for (i = 0;i < x->size_of_h263VideoCoupledModes;++i)
+    for (i = 0; i < x->size_of_h263VideoCoupledModes; ++i)
     {
         Decode_H263ModeComboFlags(x->h263VideoCoupledModes + i, stream);
     }
@@ -4039,7 +4039,7 @@ void Decode_EncryptionCapability(PS_EncryptionCapability x, PS_InStream stream)
     x->size = (uint16) GetInteger(1, 256, stream);
     x->item = (PS_MediaEncryptionAlgorithm)
               OSCL_DEFAULT_MALLOC(x->size * sizeof(S_MediaEncryptionAlgorithm));
-    for (i = 0;i < x->size;++i)
+    for (i = 0; i < x->size; ++i)
     {
         Decode_MediaEncryptionAlgorithm(x->item + i, stream);
     }
@@ -4137,7 +4137,7 @@ void Decode_UserInputCapability(PS_UserInputCapability x, PS_InStream stream)
             x->size = (uint8) GetInteger(1, 16, stream);
             x->nonStandard = (PS_NonStandardParameter)
                              OSCL_DEFAULT_MALLOC(x->size * sizeof(S_NonStandardParameter));
-            for (i = 0;i < x->size;++i)
+            for (i = 0; i < x->size; ++i)
             {
                 Decode_NonStandardParameter(x->nonStandard + i, stream);
             }
@@ -4182,7 +4182,7 @@ void Decode_ConferenceCapability(PS_ConferenceCapability x, PS_InStream stream)
         x->size_of_nonStandardData = (uint16) GetLengthDet(stream);
         x->nonStandardData = (PS_NonStandardParameter)
                              OSCL_DEFAULT_MALLOC(x->size_of_nonStandardData * sizeof(S_NonStandardParameter));
-        for (i = 0;i < x->size_of_nonStandardData;++i)
+        for (i = 0; i < x->size_of_nonStandardData; ++i)
         {
             Decode_NonStandardParameter(x->nonStandardData + i, stream);
         }
@@ -4242,7 +4242,7 @@ void Decode_GenericCapability(PS_GenericCapability x, PS_InStream stream)
         x->size_of_collapsing = (uint16) GetLengthDet(stream);
         x->collapsing = (PS_GenericParameter)
                         OSCL_DEFAULT_MALLOC(x->size_of_collapsing * sizeof(S_GenericParameter));
-        for (i = 0;i < x->size_of_collapsing;++i)
+        for (i = 0; i < x->size_of_collapsing; ++i)
         {
             Decode_GenericParameter(x->collapsing + i, stream);
         }
@@ -4252,7 +4252,7 @@ void Decode_GenericCapability(PS_GenericCapability x, PS_InStream stream)
         x->size_of_nonCollapsing = (uint16) GetLengthDet(stream);
         x->nonCollapsing = (PS_GenericParameter)
                            OSCL_DEFAULT_MALLOC(x->size_of_nonCollapsing * sizeof(S_GenericParameter));
-        for (i = 0;i < x->size_of_nonCollapsing;++i)
+        for (i = 0; i < x->size_of_nonCollapsing; ++i)
         {
             Decode_GenericParameter(x->nonCollapsing + i, stream);
         }
@@ -4329,7 +4329,7 @@ void Decode_GenericParameter(PS_GenericParameter x, PS_InStream stream)
         x->size_of_supersedes = (uint16) GetLengthDet(stream);
         x->supersedes = (PS_ParameterIdentifier)
                         OSCL_DEFAULT_MALLOC(x->size_of_supersedes * sizeof(S_ParameterIdentifier));
-        for (i = 0;i < x->size_of_supersedes;++i)
+        for (i = 0; i < x->size_of_supersedes; ++i)
         {
             Decode_ParameterIdentifier(x->supersedes + i, stream);
         }
@@ -4414,7 +4414,7 @@ void Decode_ParameterValue(PS_ParameterValue x, PS_InStream stream)
             x->size = (uint16) GetLengthDet(stream);
             x->genericParameter = (PS_GenericParameter)
                                   OSCL_DEFAULT_MALLOC(x->size * sizeof(S_GenericParameter));
-            for (i = 0;i < x->size;++i)
+            for (i = 0; i < x->size; ++i)
             {
                 Decode_GenericParameter(x->genericParameter + i, stream);
             }
@@ -5657,7 +5657,7 @@ void Decode_H2250LogicalChannelParameters(PS_H2250LogicalChannelParameters x, PS
         x->size_of_nonStandard = (uint16) GetLengthDet(stream);
         x->nonStandard = (PS_NonStandardParameter)
                          OSCL_DEFAULT_MALLOC(x->size_of_nonStandard * sizeof(S_NonStandardParameter));
-        for (i = 0;i < x->size_of_nonStandard;++i)
+        for (i = 0; i < x->size_of_nonStandard; ++i)
         {
             Decode_NonStandardParameter(x->nonStandard + i, stream);
         }
@@ -5944,7 +5944,7 @@ void Decode_IPSourceRouteAddress(PS_IPSourceRouteAddress x, PS_InStream stream)
     x->size_of_route = (uint16) GetLengthDet(stream);
     x->route = (PS_OCTETSTRING)
                OSCL_DEFAULT_MALLOC(x->size_of_route * sizeof(S_OCTETSTRING));
-    for (i = 0;i < x->size_of_route;++i)
+    for (i = 0; i < x->size_of_route; ++i)
     {
         GetOctetString(0, 4, 4, x->route + i, stream);
     }
@@ -6161,7 +6161,7 @@ void Decode_EncryptionSync(PS_EncryptionSync x, PS_InStream stream)
         x->size_of_escrowentry = (uint16) GetInteger(1, 256, stream);
         x->escrowentry = (PS_EscrowData)
                          OSCL_DEFAULT_MALLOC(x->size_of_escrowentry * sizeof(S_EscrowData));
-        for (i = 0;i < x->size_of_escrowentry;++i)
+        for (i = 0; i < x->size_of_escrowentry; ++i)
         {
             Decode_EscrowData(x->escrowentry + i, stream);
         }
@@ -6486,7 +6486,7 @@ void Decode_H2250LogicalChannelAckParameters(PS_H2250LogicalChannelAckParameters
         x->size_of_nonStandard = (uint16) GetLengthDet(stream);
         x->nonStandard = (PS_NonStandardParameter)
                          OSCL_DEFAULT_MALLOC(x->size_of_nonStandard * sizeof(S_NonStandardParameter));
-        for (i = 0;i < x->size_of_nonStandard;++i)
+        for (i = 0; i < x->size_of_nonStandard; ++i)
         {
             Decode_NonStandardParameter(x->nonStandard + i, stream);
         }
@@ -6808,7 +6808,7 @@ void Decode_MultiplexEntrySend(PS_MultiplexEntrySend x, PS_InStream stream)
     x->size_of_multiplexEntryDescriptors = (uint8) GetInteger(1, 15, stream);
     x->multiplexEntryDescriptors = (PS_MultiplexEntryDescriptor)
                                    OSCL_DEFAULT_MALLOC(x->size_of_multiplexEntryDescriptors * sizeof(S_MultiplexEntryDescriptor));
-    for (i = 0;i < x->size_of_multiplexEntryDescriptors;++i)
+    for (i = 0; i < x->size_of_multiplexEntryDescriptors; ++i)
     {
         Decode_MultiplexEntryDescriptor(x->multiplexEntryDescriptors + i, stream);
     }
@@ -6838,7 +6838,7 @@ void Decode_MultiplexEntryDescriptor(PS_MultiplexEntryDescriptor x, PS_InStream 
         x->size_of_elementList = (uint16) GetInteger(1, 256, stream);
         x->elementList = (PS_MultiplexElement)
                          OSCL_DEFAULT_MALLOC(x->size_of_elementList * sizeof(S_MultiplexElement));
-        for (i = 0;i < x->size_of_elementList;++i)
+        for (i = 0; i < x->size_of_elementList; ++i)
         {
             Decode_MultiplexElement(x->elementList + i, stream);
         }
@@ -6889,7 +6889,7 @@ void Decode_MuxType(PS_MuxType x, PS_InStream stream)
             x->size = (uint8) GetInteger(2, 255, stream);
             x->subElementList = (PS_MultiplexElement)
                                 OSCL_DEFAULT_MALLOC(x->size * sizeof(S_MultiplexElement));
-            for (i = 0;i < x->size;++i)
+            for (i = 0; i < x->size; ++i)
             {
                 Decode_MultiplexElement(x->subElementList + i, stream);
             }
@@ -6912,7 +6912,7 @@ void Decode_MultiplexEntrySendAck(PS_MultiplexEntrySendAck x, PS_InStream stream
     x->sequenceNumber = (uint8) GetInteger(0, 255, stream);
     x->size_of_multiplexTableEntryNumber = (uint8) GetInteger(1, 15, stream);
     x->multiplexTableEntryNumber = (uint32*) OSCL_DEFAULT_MALLOC(x->size_of_multiplexTableEntryNumber * sizeof(uint32));
-    for (i = 0;i < x->size_of_multiplexTableEntryNumber;++i)
+    for (i = 0; i < x->size_of_multiplexTableEntryNumber; ++i)
     {
         x->multiplexTableEntryNumber[i] = GetInteger(1, 15, stream);
     }
@@ -6943,7 +6943,7 @@ void Decode_MultiplexEntrySendReject(PS_MultiplexEntrySendReject x, PS_InStream 
     x->size_of_rejectionDescriptions = (uint8) GetInteger(1, 15, stream);
     x->rejectionDescriptions = (PS_MultiplexEntryRejectionDescriptions)
                                OSCL_DEFAULT_MALLOC(x->size_of_rejectionDescriptions * sizeof(S_MultiplexEntryRejectionDescriptions));
-    for (i = 0;i < x->size_of_rejectionDescriptions;++i)
+    for (i = 0; i < x->size_of_rejectionDescriptions; ++i)
     {
         Decode_MultiplexEntryRejectionDescriptions(x->rejectionDescriptions + i, stream);
     }
@@ -7019,7 +7019,7 @@ void Decode_MultiplexEntrySendRelease(PS_MultiplexEntrySendRelease x, PS_InStrea
     extension = GetBoolean(stream);
     x->size_of_multiplexTableEntryNumber = (uint8) GetInteger(1, 15, stream);
     x->multiplexTableEntryNumber = (uint32*) OSCL_DEFAULT_MALLOC(x->size_of_multiplexTableEntryNumber * sizeof(uint32));
-    for (i = 0;i < x->size_of_multiplexTableEntryNumber;++i)
+    for (i = 0; i < x->size_of_multiplexTableEntryNumber; ++i)
     {
         x->multiplexTableEntryNumber[i] = GetInteger(1, 15, stream);
     }
@@ -7048,7 +7048,7 @@ void Decode_RequestMultiplexEntry(PS_RequestMultiplexEntry x, PS_InStream stream
     extension = GetBoolean(stream);
     x->size_of_entryNumbers = (uint8) GetInteger(1, 15, stream);
     x->entryNumbers = (uint32*) OSCL_DEFAULT_MALLOC(x->size_of_entryNumbers * sizeof(uint32));
-    for (i = 0;i < x->size_of_entryNumbers;++i)
+    for (i = 0; i < x->size_of_entryNumbers; ++i)
     {
         x->entryNumbers[i] = GetInteger(1, 15, stream);
     }
@@ -7077,7 +7077,7 @@ void Decode_RequestMultiplexEntryAck(PS_RequestMultiplexEntryAck x, PS_InStream 
     extension = GetBoolean(stream);
     x->size_of_entryNumbers = (uint8) GetInteger(1, 15, stream);
     x->entryNumbers = (uint32*) OSCL_DEFAULT_MALLOC(x->size_of_entryNumbers * sizeof(uint32));
-    for (i = 0;i < x->size_of_entryNumbers;++i)
+    for (i = 0; i < x->size_of_entryNumbers; ++i)
     {
         x->entryNumbers[i] = GetInteger(1, 15, stream);
     }
@@ -7106,14 +7106,14 @@ void Decode_RequestMultiplexEntryReject(PS_RequestMultiplexEntryReject x, PS_InS
     extension = GetBoolean(stream);
     x->size_of_entryNumbers = (uint8) GetInteger(1, 15, stream);
     x->entryNumbers = (uint32*) OSCL_DEFAULT_MALLOC(x->size_of_entryNumbers * sizeof(uint32));
-    for (i = 0;i < x->size_of_entryNumbers;++i)
+    for (i = 0; i < x->size_of_entryNumbers; ++i)
     {
         x->entryNumbers[i] = GetInteger(1, 15, stream);
     }
     x->size_of_rejectionDescriptions = (uint8) GetInteger(1, 15, stream);
     x->rejectionDescriptions = (PS_RequestMultiplexEntryRejectionDescriptions)
                                OSCL_DEFAULT_MALLOC(x->size_of_rejectionDescriptions * sizeof(S_RequestMultiplexEntryRejectionDescriptions));
-    for (i = 0;i < x->size_of_rejectionDescriptions;++i)
+    for (i = 0; i < x->size_of_rejectionDescriptions; ++i)
     {
         Decode_RequestMultiplexEntryRejectionDescriptions(x->rejectionDescriptions + i, stream);
     }
@@ -7186,7 +7186,7 @@ void Decode_RequestMultiplexEntryRelease(PS_RequestMultiplexEntryRelease x, PS_I
     extension = GetBoolean(stream);
     x->size_of_entryNumbers = (uint8) GetInteger(1, 15, stream);
     x->entryNumbers = (uint32*) OSCL_DEFAULT_MALLOC(x->size_of_entryNumbers * sizeof(uint32));
-    for (i = 0;i < x->size_of_entryNumbers;++i)
+    for (i = 0; i < x->size_of_entryNumbers; ++i)
     {
         x->entryNumbers[i] = GetInteger(1, 15, stream);
     }
@@ -7217,7 +7217,7 @@ void Decode_RequestMode(PS_RequestMode x, PS_InStream stream)
     x->size_of_requestedModes = (uint16) GetInteger(1, 256, stream);
     x->requestedModes = (PS_ModeDescription)
                         OSCL_DEFAULT_MALLOC(x->size_of_requestedModes * sizeof(S_ModeDescription));
-    for (i = 0;i < x->size_of_requestedModes;++i)
+    for (i = 0; i < x->size_of_requestedModes; ++i)
     {
         Decode_ModeDescription(x->requestedModes + i, stream);
     }
@@ -7364,7 +7364,7 @@ void Decode_ModeDescription(PS_ModeDescription x, PS_InStream stream)
     x->size = (uint16) GetInteger(1, 256, stream);
     x->item = (PS_ModeElement)
               OSCL_DEFAULT_MALLOC(x->size * sizeof(S_ModeElement));
-    for (i = 0;i < x->size;++i)
+    for (i = 0; i < x->size; ++i)
     {
         Decode_ModeElement(x->item + i, stream);
     }
@@ -8840,7 +8840,7 @@ void Decode_CommunicationModeCommand(PS_CommunicationModeCommand x, PS_InStream 
     x->size_of_communicationModeTable = (uint16) GetInteger(1, 256, stream);
     x->communicationModeTable = (PS_CommunicationModeTableEntry)
                                 OSCL_DEFAULT_MALLOC(x->size_of_communicationModeTable * sizeof(S_CommunicationModeTableEntry));
-    for (i = 0;i < x->size_of_communicationModeTable;++i)
+    for (i = 0; i < x->size_of_communicationModeTable; ++i)
     {
         Decode_CommunicationModeTableEntry(x->communicationModeTable + i, stream);
     }
@@ -8894,7 +8894,7 @@ void Decode_CommunicationModeResponse(PS_CommunicationModeResponse x, PS_InStrea
             x->size = (uint16) GetInteger(1, 256, stream);
             x->communicationModeTable = (PS_CommunicationModeTableEntry)
                                         OSCL_DEFAULT_MALLOC(x->size * sizeof(S_CommunicationModeTableEntry));
-            for (i = 0;i < x->size;++i)
+            for (i = 0; i < x->size; ++i)
             {
                 Decode_CommunicationModeTableEntry(x->communicationModeTable + i, stream);
             }
@@ -8930,7 +8930,7 @@ void Decode_CommunicationModeTableEntry(PS_CommunicationModeTableEntry x, PS_InS
         x->size_of_nonStandard = (uint16) GetLengthDet(stream);
         x->nonStandard = (PS_NonStandardParameter)
                          OSCL_DEFAULT_MALLOC(x->size_of_nonStandard * sizeof(S_NonStandardParameter));
-        for (i = 0;i < x->size_of_nonStandard;++i)
+        for (i = 0; i < x->size_of_nonStandard; ++i)
         {
             Decode_NonStandardParameter(x->nonStandard + i, stream);
         }
@@ -9161,7 +9161,7 @@ void Decode_CertSelectionCriteria(PS_CertSelectionCriteria x, PS_InStream stream
     x->size = (uint8) GetInteger(1, 16, stream);
     x->item = (PS_Criteria)
               OSCL_DEFAULT_MALLOC(x->size * sizeof(S_Criteria));
-    for (i = 0;i < x->size;++i)
+    for (i = 0; i < x->size; ++i)
     {
         Decode_Criteria(x->item + i, stream);
     }
@@ -9244,7 +9244,7 @@ void Decode_ConferenceResponse(PS_ConferenceResponse x, PS_InStream stream)
             x->size = (uint16) GetInteger(1, 256, stream);
             x->terminalListResponse = (PS_TerminalLabel)
                                       OSCL_DEFAULT_MALLOC(x->size * sizeof(S_TerminalLabel));
-            for (i = 0;i < x->size;++i)
+            for (i = 0; i < x->size; ++i)
             {
                 Decode_TerminalLabel(x->terminalListResponse + i, stream);
             }
@@ -9596,7 +9596,7 @@ void Decode_RequestAllTerminalIDsResponse(PS_RequestAllTerminalIDsResponse x, PS
     x->size_of_terminalInformation = (uint16) GetLengthDet(stream);
     x->terminalInformation = (PS_TerminalInformation)
                              OSCL_DEFAULT_MALLOC(x->size_of_terminalInformation * sizeof(S_TerminalInformation));
-    for (i = 0;i < x->size_of_terminalInformation;++i)
+    for (i = 0; i < x->size_of_terminalInformation; ++i)
     {
         Decode_TerminalInformation(x->terminalInformation + i, stream);
     }
@@ -10134,7 +10134,7 @@ void Decode_DialingInformation(PS_DialingInformation x, PS_InStream stream)
             x->size = (uint16) GetInteger(1, 65535, stream);
             x->differential = (PS_DialingInformationNumber)
                               OSCL_DEFAULT_MALLOC(x->size * sizeof(S_DialingInformationNumber));
-            for (i = 0;i < x->size;++i)
+            for (i = 0; i < x->size; ++i)
             {
                 Decode_DialingInformationNumber(x->differential + i, stream);
             }
@@ -10170,7 +10170,7 @@ void Decode_DialingInformationNumber(PS_DialingInformationNumber x, PS_InStream 
     x->size_of_networkType = (uint8) GetInteger(1, 255, stream);
     x->networkType = (PS_DialingInformationNetworkType)
                      OSCL_DEFAULT_MALLOC(x->size_of_networkType * sizeof(S_DialingInformationNetworkType));
-    for (i = 0;i < x->size_of_networkType;++i)
+    for (i = 0; i < x->size_of_networkType; ++i)
     {
         Decode_DialingInformationNetworkType(x->networkType + i, stream);
     }
@@ -10406,7 +10406,7 @@ void Decode_SpecificRequest(PS_SpecificRequest x, PS_InStream stream)
     {
         x->size_of_capabilityTableEntryNumbers = (uint16) GetInteger(1, 65535, stream);
         x->capabilityTableEntryNumbers = (uint32*) OSCL_DEFAULT_MALLOC(x->size_of_capabilityTableEntryNumbers * sizeof(uint32));
-        for (i = 0;i < x->size_of_capabilityTableEntryNumbers;++i)
+        for (i = 0; i < x->size_of_capabilityTableEntryNumbers; ++i)
         {
             x->capabilityTableEntryNumbers[i] = GetInteger(1, 65535, stream);
         }
@@ -10415,7 +10415,7 @@ void Decode_SpecificRequest(PS_SpecificRequest x, PS_InStream stream)
     {
         x->size_of_capabilityDescriptorNumbers = (uint16) GetInteger(1, 256, stream);
         x->capabilityDescriptorNumbers = (uint32*) OSCL_DEFAULT_MALLOC(x->size_of_capabilityDescriptorNumbers * sizeof(uint32));
-        for (i = 0;i < x->size_of_capabilityDescriptorNumbers;++i)
+        for (i = 0; i < x->size_of_capabilityDescriptorNumbers; ++i)
         {
             x->capabilityDescriptorNumbers[i] = GetInteger(0, 255, stream);
         }

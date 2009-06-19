@@ -269,9 +269,9 @@ void RME::_0607_0011(PS_RequestMultiplexEntryRelease pRequestMultiplexEntryRelea
 /************************************************************************/
 void RME::MsgEntrySend(void)
 {
-    S_RequestMultiplexEntry		requestMultiplexEntry;
-    uint32						entryNumbers[15];
-    S_H245Msg					h245Msg;
+    S_RequestMultiplexEntry     requestMultiplexEntry;
+    uint32                      entryNumbers[15];
+    S_H245Msg                   h245Msg;
 
     requestMultiplexEntry.size_of_entryNumbers = (uint16) OutRMEntries.SizeRead();
     OutRMEntries.EntriesCopy(entryNumbers);
@@ -299,9 +299,9 @@ void RME::MsgEntrySend(void)
 /************************************************************************/
 void RME::MsgEntryAckSend(void)
 {
-    S_RequestMultiplexEntryAck	requestMultiplexEntryAck ;
-    uint32						entryNumbers[15];
-    S_H245Msg					h245Msg ;
+    S_RequestMultiplexEntryAck  requestMultiplexEntryAck ;
+    uint32                      entryNumbers[15];
+    S_H245Msg                   h245Msg ;
 
     requestMultiplexEntryAck.size_of_entryNumbers = (uint16) InRMEntries.SizeRead();
     InRMEntries.EntriesCopy(entryNumbers);
@@ -331,10 +331,10 @@ void RME::MsgEntryAckSend(void)
 /************************************************************************/
 void RME::MsgEntryRjtSend(PS_RmeRejectCause pCause_rmese)
 {
-    S_RequestMultiplexEntryReject					requestMultiplexEntryReject ;
-    uint32											entryNumbers[15];
-    S_RequestMultiplexEntryRejectionDescriptions	requestMultiplexEntryRejectionDescriptions ;
-    S_H245Msg										h245Msg ;
+    S_RequestMultiplexEntryReject                   requestMultiplexEntryReject ;
+    uint32                                          entryNumbers[15];
+    S_RequestMultiplexEntryRejectionDescriptions    requestMultiplexEntryRejectionDescriptions ;
+    S_H245Msg                                       h245Msg ;
 
     requestMultiplexEntryReject.size_of_entryNumbers = (uint16) InRMEntries.SizeRead();
     InRMEntries.EntriesCopy(entryNumbers);
@@ -370,9 +370,9 @@ void RME::MsgEntryRjtSend(PS_RmeRejectCause pCause_rmese)
 /************************************************************************/
 void RME::MsgEntryRlsSend(void)
 {
-    S_RequestMultiplexEntryRelease	requestMultiplexEntryRelease;
-    uint32							entryNumbers[15];
-    S_H245Msg						h245Msg;
+    S_RequestMultiplexEntryRelease  requestMultiplexEntryRelease;
+    uint32                          entryNumbers[15];
+    S_H245Msg                       h245Msg;
 
     requestMultiplexEntryRelease.size_of_entryNumbers = (uint16) OutRMEntries.SizeRead();
     OutRMEntries.EntriesCopy(entryNumbers);
@@ -475,7 +475,7 @@ void RME::PtvSendCfmSend(void)
 
 #ifdef PVANALYZER /* --------SE Analyzer Tool -------- */
 
-#define ANALYZER_SE 0x0020		// (Assume tag is fixed)
+#define ANALYZER_SE 0x0020      // (Assume tag is fixed)
 void Show245(uint16 tag, uint16 indent, char *inString);
 
 // =========================================================

@@ -90,7 +90,7 @@ class PVFrameSelector
 
         union
         {
-            uint32 iFrameIndex;	   // Specific frame or max frame index for autodetect
+            uint32 iFrameIndex;    // Specific frame or max frame index for autodetect
             uint32 iTimeOffsetMilliSec; // Time of frame or max time offset for autodetect
         } iFrameInfo;
 };
@@ -111,22 +111,22 @@ public:
 typedef enum
 {
     /**
-    	The state immediately after the pvFrameAndMetadata instance has been successfully created or instantiated.
-    	pvFrameAndMetadata utility also returns to this state after successful completion of RemoveDataSource command.
-    	The player data source can be added during this state.
-    	No resources have been allocated yet.
+        The state immediately after the pvFrameAndMetadata instance has been successfully created or instantiated.
+        pvFrameAndMetadata utility also returns to this state after successful completion of RemoveDataSource command.
+        The player data source can be added during this state.
+        No resources have been allocated yet.
     **/
-    PVFM_STATE_IDLE	= 1,
+    PVFM_STATE_IDLE = 1,
 
     /**
-    	pvFrameAndMetadata utility is in this state after successfully completing initialization of data source.
-    	Video frames and metadata can be retrieved in this state.
+        pvFrameAndMetadata utility is in this state after successfully completing initialization of data source.
+        Video frames and metadata can be retrieved in this state.
     **/
     PVFM_STATE_INITIALIZED = 2,
 
     /**
-    	pvFrameAndMetadata utility enters this state when it encounters an error. This is a transitional state and
-    	after pvFrameAndMetadata performs error recovery, it should end up in PVFM_STATE_IDLE state.
+        pvFrameAndMetadata utility enters this state when it encounters an error. This is a transitional state and
+        after pvFrameAndMetadata performs error recovery, it should end up in PVFM_STATE_IDLE state.
     **/
     PVFM_STATE_ERROR = 3
 } PVFrameAndMetadataState;
@@ -176,7 +176,7 @@ typedef enum
      pvPlayer sends this event when the playback has reached
      the specified end time and playback has been paused.
      **/
-//	PVPlayerInfoEndTimeReached	= 8192,
+//  PVPlayerInfoEndTimeReached  = 8192,
 
     /**
      Placeholder for the last pvFrameAndMetadata informational event
@@ -306,7 +306,7 @@ class PVFrameAndMetadataInterface
          *         Reference to the player data source to be used to retrieve video frames and metadata
          * @param aContextData
          *         Optional opaque data that will be passed back to the user with the command response
-         * @leave	This method can leave with one of the following error codes
+         * @leave   This method can leave with one of the following error codes
          *         OsclErrNotSupported if the format of the source is incompatible with what the utility can handle
          *         OsclErrInvalidState if invoked in the incorrect state
          *         OsclErrNoMemory if the utility failed to allocate memory during this operation

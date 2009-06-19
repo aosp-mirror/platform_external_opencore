@@ -83,7 +83,7 @@
 #endif
 
 
-#define MAKE_FOURCC(a , b, c, d)		((uint32(a) << 24) | (uint32(b) << 16) | (uint32(c) << 8) | uint32(d))
+#define MAKE_FOURCC(a , b, c, d)        ((uint32(a) << 24) | (uint32(b) << 16) | (uint32(c) << 8) | uint32(d))
 
 // Forward declaration
 class PvmiMIOAviWavFileSettings;
@@ -164,14 +164,14 @@ const uint32   YUV_FMT[] =
     MAKE_FOURCC('U', 'Y', 'V', 'Y'),
     MAKE_FOURCC('u', 'y', 'v', 'y'),
 };
-const uint32 BITS_PER_SAMPLE8		= 8;
-const uint32 BITS_PER_SAMPLE12		= 12;
-const uint32 BITS_PER_SAMPLE16		= 16;
-const uint32 BITS_PER_SAMPLE24		= 24;
-const uint32 PVWAV_MSEC_PER_BUFFER	= 100;
-const uint32 BYTE_COUNT				= 8;
-const uint32 DATA_BUFF_THRESHOLD	= 1;
-const uint32   NUM_YUV_FMT				= 54;
+const uint32 BITS_PER_SAMPLE8       = 8;
+const uint32 BITS_PER_SAMPLE12      = 12;
+const uint32 BITS_PER_SAMPLE16      = 16;
+const uint32 BITS_PER_SAMPLE24      = 24;
+const uint32 PVWAV_MSEC_PER_BUFFER  = 100;
+const uint32 BYTE_COUNT             = 8;
+const uint32 DATA_BUFF_THRESHOLD    = 1;
+const uint32   NUM_YUV_FMT              = 54;
 
 #define PROFILING_ON (PVLOGGER_INST_LEVEL >= PVLOGMSG_INST_PROF)
 
@@ -239,9 +239,9 @@ class PvmiMIOAviWavFileMediaData
 };
 
 class PvmiMIOAviWavFile : public OsclTimerObject,
-            public PvmiMIOControl,
-            public PvmiMediaTransfer,
-            public PvmiCapabilityAndConfig
+        public PvmiMIOControl,
+        public PvmiMediaTransfer,
+        public PvmiCapabilityAndConfig
 {
     public:
         PvmiMIOAviWavFile(uint32 aNumLoops, bool aRecordingMode, uint32 aStreamNo, OsclAny* aFileParser, FileFormatType aFileType, int32& arError);

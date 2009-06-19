@@ -43,7 +43,7 @@ terms listed above has been obtained from the copyright holder.
 
  Description: Put "extern" back.
 
- Who: 						Date:
+ Who:                       Date:
  Description:
 
 ------------------------------------------------------------------------------
@@ -1100,13 +1100,13 @@ extern "C"
  INPUT AND OUTPUT DEFINITIONS
 
  Inputs:
-	None
+    None
 
  Outputs:
-	None
+    None
 
  Returns:
-	None
+    None
 
  Global Variables Used:
     None

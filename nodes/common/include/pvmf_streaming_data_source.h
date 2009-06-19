@@ -108,7 +108,7 @@ class PVMFStreamingDataSource : public PVInterface
 
         OSCL_wHeapString<OsclMemAllocator> iProxyName;
         //HTTP proxy name, either ip or dns
-        int32	iProxyPort;
+        int32   iProxyPort;
         //HTTP proxy port
 };
 

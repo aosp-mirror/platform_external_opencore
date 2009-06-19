@@ -266,7 +266,7 @@ PVMFFileBufferReadDataStreamImpl::OpenSession(PvmiDataStreamSession& aSessionID,
                     aSessionID = 0;
                     return (result == 0 ? PVDS_SUCCESS : PVDS_FAILURE);
                 }
-                // break;	This statement was removed to avoid compiler warning for Unreachable Code
+                // break;   This statement was removed to avoid compiler warning for Unreachable Code
                 default:
                     // Attempt to open in an unsported mode.
                     // Have a iFileObject so clean it up and report PVDS_UNSUPPORTED_MODE
@@ -468,7 +468,7 @@ PVMFFileBufferReadDataStreamImpl::CancelNotification(PvmiDataStreamSession aSess
     if (error)
     {
         OSCL_LEAVE(error);
-        // return iCommandID;	This statement was removed to avoid compiler warning for Unreachable Code
+        // return iCommandID;   This statement was removed to avoid compiler warning for Unreachable Code
     }
 
     // No error return the Command ID
@@ -978,7 +978,7 @@ PVMFFileBufferWriteDataStreamImpl::Write(PvmiDataStreamSession aSessionID,
     Flush(0);
     iFileNumBytes += (size * numelements);
 
-//	LOGDEBUG((0,"PVMFFileBufferWriteDataStreamImpl::Write returning %d",result));
+//  LOGDEBUG((0,"PVMFFileBufferWriteDataStreamImpl::Write returning %d",result));
     numelements = result;
 
     // Loop through the iReadNotifications for a Read Notification

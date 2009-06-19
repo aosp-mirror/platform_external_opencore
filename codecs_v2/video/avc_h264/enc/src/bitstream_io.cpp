@@ -25,22 +25,22 @@
 const static uint8 trailing_bits[9] = {0, 0x1, 0x2, 0x4, 0x8, 0x10, 0x20, 0x40, 0x80};
 
 /* ======================================================================== */
-/*	Function : BitstreamInit()												*/
-/*	Date     : 11/4/2003													*/
-/*	Purpose  : Populate bitstream structure with bitstream buffer and size 	*/
-/*			   it also initializes internal data							*/
-/*	In/out   :																*/
-/*	Return   : AVCENC_SUCCESS if successed, AVCENC_FAIL if failed.				*/
-/*	Modified :																*/
+/*  Function : BitstreamInit()                                              */
+/*  Date     : 11/4/2003                                                    */
+/*  Purpose  : Populate bitstream structure with bitstream buffer and size  */
+/*             it also initializes internal data                            */
+/*  In/out   :                                                              */
+/*  Return   : AVCENC_SUCCESS if successed, AVCENC_FAIL if failed.              */
+/*  Modified :                                                              */
 /* ======================================================================== */
 /* |--------|--------|----~~~~~-----|---------|---------|---------|
-   ^                                          ^write_pos		  ^buf_size
-   bitstreamBuffer					<--------->
-									current_word
+   ^                                          ^write_pos          ^buf_size
+   bitstreamBuffer                  <--------->
+                                    current_word
 
    |-----xxxxxxxxxxxxx|  = current_word 32 or 16 bits
     <---->
-	 bit_left
+     bit_left
  ======================================================================== */
 
 AVCEnc_Status BitstreamEncInit(AVCEncBitstream *stream, uint8 *buffer, int buf_size,
@@ -71,14 +71,14 @@ AVCEnc_Status BitstreamEncInit(AVCEncBitstream *stream, uint8 *buffer, int buf_s
 }
 
 /* ======================================================================== */
-/*	Function : AVCBitstreamSaveWord()											*/
-/*	Date     : 3/29/2004													*/
-/*	Purpose  : Save the current_word into the buffer, byte-swap, and		*/
-/*				add emulation prevention insertion.							*/
-/*	In/out   :																*/
-/*	Return   : AVCENC_SUCCESS if successed, AVCENC_WRITE_FAIL if buffer is	*/
-/*				full.														*/
-/*	Modified :																*/
+/*  Function : AVCBitstreamSaveWord()                                           */
+/*  Date     : 3/29/2004                                                    */
+/*  Purpose  : Save the current_word into the buffer, byte-swap, and        */
+/*              add emulation prevention insertion.                         */
+/*  In/out   :                                                              */
+/*  Return   : AVCENC_SUCCESS if successed, AVCENC_WRITE_FAIL if buffer is  */
+/*              full.                                                       */
+/*  Modified :                                                              */
 /* ======================================================================== */
 AVCEnc_Status AVCBitstreamSaveWord(AVCEncBitstream *stream)
 {
@@ -116,7 +116,7 @@ AVCEnc_Status AVCBitstreamSaveWord(AVCEncBitstream *stream)
             *write_pnt++ = byte;
             stream->write_pos++;
             if (stream->count_zeros == 2)
-            {	/* for num_bits = 32, this can add 2 more bytes extra for EPBS */
+            {   /* for num_bits = 32, this can add 2 more bytes extra for EPBS */
                 *write_pnt++ = 0x3;
                 stream->write_pos++;
                 stream->count_zeros = 0;
@@ -132,13 +132,13 @@ AVCEnc_Status AVCBitstreamSaveWord(AVCEncBitstream *stream)
 }
 
 /* ======================================================================== */
-/*	Function : BitstreamWriteBits()											*/
-/*	Date     : 3/29/2004													*/
-/*	Purpose  : Write up to machine word.									*/
-/*	In/out   : Unused bits in 'code' must be all zeros.						*/
-/*	Return   : AVCENC_SUCCESS if successed, AVCENC_WRITE_FAIL if buffer is	*/
-/*				full.														*/
-/*	Modified :																*/
+/*  Function : BitstreamWriteBits()                                         */
+/*  Date     : 3/29/2004                                                    */
+/*  Purpose  : Write up to machine word.                                    */
+/*  In/out   : Unused bits in 'code' must be all zeros.                     */
+/*  Return   : AVCENC_SUCCESS if successed, AVCENC_WRITE_FAIL if buffer is  */
+/*              full.                                                       */
+/*  Modified :                                                              */
 /* ======================================================================== */
 AVCEnc_Status BitstreamWriteBits(AVCEncBitstream *stream, int nBits, uint code)
 {
@@ -184,13 +184,13 @@ AVCEnc_Status BitstreamWriteBits(AVCEncBitstream *stream, int nBits, uint code)
 
 
 /* ======================================================================== */
-/*	Function : BitstreamWrite1Bit()											*/
-/*	Date     : 3/30/2004													*/
-/*	Purpose  : Write 1 bit													*/
-/*	In/out   : Unused bits in 'code' must be all zeros.						*/
-/*	Return   : AVCENC_SUCCESS if successed, AVCENC_WRITE_FAIL if buffer is	*/
-/*				full.														*/
-/*	Modified :																*/
+/*  Function : BitstreamWrite1Bit()                                         */
+/*  Date     : 3/30/2004                                                    */
+/*  Purpose  : Write 1 bit                                                  */
+/*  In/out   : Unused bits in 'code' must be all zeros.                     */
+/*  Return   : AVCENC_SUCCESS if successed, AVCENC_WRITE_FAIL if buffer is  */
+/*              full.                                                       */
+/*  Modified :                                                              */
 /* ======================================================================== */
 AVCEnc_Status BitstreamWrite1Bit(AVCEncBitstream *stream, uint code)
 {
@@ -214,13 +214,13 @@ AVCEnc_Status BitstreamWrite1Bit(AVCEncBitstream *stream, uint code)
 
 
 /* ======================================================================== */
-/*	Function : BitstreamTrailingBits()										*/
-/*	Date     : 3/31/2004													*/
-/*	Purpose  : Add trailing bits and report the final EBSP size.			*/
-/*	In/out   :																*/
-/*	Return   : AVCENC_SUCCESS if successed, AVCENC_WRITE_FAIL if buffer is	*/
-/*				full.														*/
-/*	Modified :																*/
+/*  Function : BitstreamTrailingBits()                                      */
+/*  Date     : 3/31/2004                                                    */
+/*  Purpose  : Add trailing bits and report the final EBSP size.            */
+/*  In/out   :                                                              */
+/*  Return   : AVCENC_SUCCESS if successed, AVCENC_WRITE_FAIL if buffer is  */
+/*              full.                                                       */
+/*  Modified :                                                              */
 /* ======================================================================== */
 AVCEnc_Status BitstreamTrailingBits(AVCEncBitstream *bitstream, uint *nal_size)
 {

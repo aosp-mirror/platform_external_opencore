@@ -59,15 +59,15 @@
 
 
 /* SRP frame information */
-#define SRP_HEADER_SIZE		1
-#define SRP_SEQUENCE_SIZE	1
-#define SRP_FCS_SIZE		2
-#define CCSRL_HEADER_SIZE	1
-#define SRP_COMMAND_HEADER	0xF9
-#define SRP_RESPONSE_HEADER	0xFB
+#define SRP_HEADER_SIZE     1
+#define SRP_SEQUENCE_SIZE   1
+#define SRP_FCS_SIZE        2
+#define CCSRL_HEADER_SIZE   1
+#define SRP_COMMAND_HEADER  0xF9
+#define SRP_RESPONSE_HEADER 0xFB
 #define NSRP_RESPONSE_HEADER 0xF7
 #define MINIMUM_FRAME_SIZE  SRP_HEADER_SIZE+SRP_FCS_SIZE
-#define DEFAULT_CCSRL_SIZE	256
+#define DEFAULT_CCSRL_SIZE  256
 #define INTERMEDIATE_CCSRL_CHUNK 0x00
 #define LAST_CCSRL_CHUNK 0xFF
 #define DEFAULT_SEND_QUEUE_SIZE 24
@@ -90,7 +90,7 @@
 
 /* Timer definition */
 #define N400_DEFAULT_MAX_COUNTER 100
-#define T401_PRIMARY 	WNSRP_WINDOW /* Primary SRP timer id, set it to the WNSRP window, id for the WNSRP timers will be the array index */
+#define T401_PRIMARY    WNSRP_WINDOW /* Primary SRP timer id, set it to the WNSRP window, id for the WNSRP timers will be the array index */
 #define T401_RESOLUTION 10  // Set SRP timeout to 100ms
 #define T401_VALUE_DEFAULT 2 // Sets the default T401 timeout to 200ms
 
@@ -226,14 +226,14 @@ class SRP : public OsclTimerObserver
         /* structures used by SRP class */
 
         enum SrpStatus {STS_IDLE = 0, STS_WAIT_RESPONSE, MAX_STATUS};
-        enum SrpEvent {EV_NOP = 0,			/* Unknown Event */
-                       EV_PDU,				/* PDU message */
-                       EV_COMMAND,			/* PRIMITIVE(DATA-COMMAND) */
-                       EV_RESPONSE,			/* PRIMITIVE(DATA-RESPONSE) */
-                       EV_NSRP_RESPONSE,	/* PRIMITIVE NSRP(DATA-RESPONSE) */
-                       EV_TIMEOUT,			/* Response wait timeout */
-                       EV_WNSRP_COMMAND,	/* WNSRP(DATA-COMMAND) */
-                       EV_WNSRP_RESPONSE,	/* WNSRP(DATA-RESPONSE) */
+        enum SrpEvent {EV_NOP = 0,          /* Unknown Event */
+                       EV_PDU,              /* PDU message */
+                       EV_COMMAND,          /* PRIMITIVE(DATA-COMMAND) */
+                       EV_RESPONSE,         /* PRIMITIVE(DATA-RESPONSE) */
+                       EV_NSRP_RESPONSE,    /* PRIMITIVE NSRP(DATA-RESPONSE) */
+                       EV_TIMEOUT,          /* Response wait timeout */
+                       EV_WNSRP_COMMAND,    /* WNSRP(DATA-COMMAND) */
+                       EV_WNSRP_RESPONSE,   /* WNSRP(DATA-RESPONSE) */
                        MAX_EVENT
                   };
         enum SrpAction {ACTION_NOP = 0, ACTION_0_1, ACTION_0_2, ACTION_1_1, ACTION_1_3, ACTION_1_4};
@@ -366,7 +366,7 @@ class SRP : public OsclTimerObserver
 
                 OsclTimer<OsclMemAllocator> T401Timer;
                 int32 timerID;
-                int	N400Counter;
+                int N400Counter;
                 bool isTimerActive;
                 PVMFSharedMediaDataPtr pPkt;
         };
@@ -517,15 +517,15 @@ class SRP : public OsclTimerObserver
         static const SRP::SrpAction iSrpStateTable[MAX_STATUS][MAX_EVENT];
 
         /* Counter data */
-        int	iN400MaxCounter;
+        int iN400MaxCounter;
 
         /* WNSRP counter data */
-        int	iN402MaxCounter;
-        int	iN402Counter;
+        int iN402MaxCounter;
+        int iN402Counter;
 
         /* CRC data */
         CRC iCrc;
-        uint32	iCrcData;
+        uint32  iCrcData;
 
         /* Queue data */
         Oscl_Vector<PVMFSharedMediaDataPtr, OsclMemAllocator> iSrpWaitQueue;
@@ -535,11 +535,11 @@ class SRP : public OsclTimerObserver
         uint32 iRecvSeqNumber;
 
         /* Status data */
-        SrpStatus	iStatus;
+        SrpStatus   iStatus;
         WnsrpStatus iCurWnsrpStatus;
 
         /* Timer data */
-        int	iT401TimerValue;
+        int iT401TimerValue;
 
         /* Commands that have not been acknowledged yet */
         SRPRespTimer iSrpCommandSave;
@@ -557,7 +557,7 @@ class SRP : public OsclTimerObserver
 
 
         /* WWU_CCSRL: add end */
-        bool iFirstCmd;	/* WWU_RB8 */
+        bool iFirstCmd; /* WWU_RB8 */
 
         PVMFPortInterface *iLLPortOut;
         PVMFPortInterface *iLLPortIn;

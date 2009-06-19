@@ -177,7 +177,7 @@ pvplayer_async_test_downloadbase::~pvplayer_async_test_downloadbase()
 
 void pvplayer_async_test_downloadbase::PrintMetadata()
 {
-    for (uint32 i = 0;i < iMetadataValueList.size();i++)
+    for (uint32 i = 0; i < iMetadataValueList.size(); i++)
     {
         if (!iMetadataValueList[i].key)
         {
@@ -193,7 +193,7 @@ void pvplayer_async_test_downloadbase::PrintMetadata()
             OSCL_HeapString<OsclMemAllocator> ostr;
             char buf[2];
             buf[1] = '\0';
-            for (uint32 j = 0;;j++)
+            for (uint32 j = 0;; j++)
             {
                 if (iMetadataValueList[i].value.pWChar_value[j] == '\0')
                     break;
@@ -304,7 +304,7 @@ void pvplayer_async_test_downloadbase::Run()
             iKeyStringSetAsync = _STRLIT_CHAR("x-pvmf/net/user-agent;valtype=wchar*;mode=download");
             iKVPSetAsync.key = iKeyStringSetAsync.get_str();
 
-//			OSCL_wHeapString<OsclMemAllocator> userAgent(_STRLIT_WCHAR("PVPLAYER 18akljfaljfa"));
+//          OSCL_wHeapString<OsclMemAllocator> userAgent(_STRLIT_WCHAR("PVPLAYER 18akljfaljfa"));
             OSCL_wHeapString<OsclMemAllocator> userAgent(_STRLIT_WCHAR("PVPLAYER 18.07.00.02"));
             iKVPSetAsync.value.pWChar_value = userAgent.get_str();
             iErrorKVP = NULL;
@@ -693,7 +693,7 @@ void pvplayer_async_test_downloadbase::Run()
             iObserver->TestCompleted(*iTestCase);
         }
         break;
-        case STATE_CANCELALL:	//Added for the derived class pvplayer_async_test_cnclall_prtcl_rllovr
+        case STATE_CANCELALL:   //Added for the derived class pvplayer_async_test_cnclall_prtcl_rllovr
         {
             fprintf(iTestMsgOutputFile, "***CancelAllCommands...\n");
             OSCL_TRY(error, iCancelAllCmdId = iPlayer->CancelAllCommands((OsclAny*) & iContextObject));
@@ -1876,7 +1876,7 @@ void pvplayer_async_test_3gppdlnormal::CreateDataSource()
     }
     oscl_wchar wbuf[2];
     wbuf[1] = '\0';
-    for (uint32 i = 0;i < url.get_size();i++)
+    for (uint32 i = 0; i < url.get_size(); i++)
     {
         wbuf[0] = (oscl_wchar)url.get_cstr()[i];
         iDownloadURL += wbuf;
@@ -2045,7 +2045,7 @@ void pvplayer_async_test_ppbnormal::CreateDataSource()
     }
     oscl_wchar wbuf[2];
     wbuf[1] = '\0';
-    for (uint32 i = 0;i < url.get_size();i++)
+    for (uint32 i = 0; i < url.get_size(); i++)
     {
         wbuf[0] = (oscl_wchar)url.get_cstr()[i];
         iDownloadURL += wbuf;
@@ -2134,7 +2134,7 @@ void pvplayer_async_test_3gppdlnormal_dlthenplay::CreateDataSource()
     }
     oscl_wchar wbuf[2];
     wbuf[1] = '\0';
-    for (uint32 i = 0;i < url.get_size();i++)
+    for (uint32 i = 0; i < url.get_size(); i++)
     {
         wbuf[0] = (oscl_wchar)url.get_cstr()[i];
         iDownloadURL += wbuf;
@@ -2216,7 +2216,7 @@ void pvplayer_async_test_3gppdlnormal_dlonly::CreateDataSource()
     }
     oscl_wchar wbuf[2];
     wbuf[1] = '\0';
-    for (uint32 i = 0;i < url.get_size();i++)
+    for (uint32 i = 0; i < url.get_size(); i++)
     {
         wbuf[0] = (oscl_wchar)url.get_cstr()[i];
         iDownloadURL += wbuf;
@@ -2319,7 +2319,7 @@ void pvplayer_async_test_3gppdlcancelduringinit::Run()
             }
             oscl_wchar wbuf[2];
             wbuf[1] = '\0';
-            for (uint32 i = 0;i < url.get_size();i++)
+            for (uint32 i = 0; i < url.get_size(); i++)
             {
                 wbuf[0] = (oscl_wchar)url.get_cstr()[i];
                 iDownloadURL += wbuf;
@@ -2765,7 +2765,7 @@ void pvplayer_async_test_3gppdlcancelduringinitdelay::Run()
             }
             oscl_wchar wbuf[2];
             wbuf[1] = '\0';
-            for (uint32 i = 0;i < url.get_size();i++)
+            for (uint32 i = 0; i < url.get_size(); i++)
             {
                 wbuf[0] = (oscl_wchar)url.get_cstr()[i];
                 iDownloadURL += wbuf;
@@ -3184,7 +3184,7 @@ void pvplayer_async_test_3gppdlcontenttoolarge::CreateDataSource()
     }
     oscl_wchar wbuf[2];
     wbuf[1] = '\0';
-    for (uint32 i = 0;i < url.get_size();i++)
+    for (uint32 i = 0; i < url.get_size(); i++)
     {
         wbuf[0] = (oscl_wchar)url.get_cstr()[i];
         iDownloadURL += wbuf;
@@ -3260,7 +3260,7 @@ void pvplayer_async_test_3gppdlContentTruncated::CreateDataSource()
     }
     oscl_wchar wbuf[2];
     wbuf[1] = '\0';
-    for (uint32 i = 0;i < url.get_size();i++)
+    for (uint32 i = 0; i < url.get_size(); i++)
     {
         wbuf[0] = (oscl_wchar)url.get_cstr()[i];
         iDownloadURL += wbuf;
@@ -3325,7 +3325,7 @@ void pvplayer_async_test_3gppdlContentTruncated::CreateDataSinkAudio()
 
 void pvplayer_async_test_ppb_base::PrintMetadata()
 {
-    for (uint32 i = 0;i < iMetadataValueList.size();i++)
+    for (uint32 i = 0; i < iMetadataValueList.size(); i++)
     {
         if (!iMetadataValueList[i].key)
         {
@@ -3341,7 +3341,7 @@ void pvplayer_async_test_ppb_base::PrintMetadata()
             OSCL_HeapString<OsclMemAllocator> ostr;
             char buf[2];
             buf[1] = '\0';
-            for (uint32 j = 0;;j++)
+            for (uint32 j = 0;; j++)
             {
                 if (iMetadataValueList[i].value.pWChar_value[j] == '\0')
                     break;
@@ -4242,12 +4242,12 @@ void pvplayer_async_test_ppb_base::CommandCompleted(const PVCmdResponse& aRespon
                     if (iEOSStopPlay)
                     {
                         iState = STATE_STOP_TWICE;
-                        RunIfNotReady(3*1000*1000);	// Play for 3 seconds
+                        RunIfNotReady(3*1000*1000); // Play for 3 seconds
                     }
                     else if (iShoutcastPlayStopPlay)
                     {
                         iState = STATE_STOP_TWICE;
-                        RunIfNotReady(iSCListenTime);	// Play for another minute
+                        RunIfNotReady(iSCListenTime);   // Play for another minute
                     }
                 }
             }
@@ -5056,7 +5056,7 @@ void pvplayer_async_test_ppb_base::HandleInformationalEvent(const PVAsyncInforma
                 if (eventuuid == infomsguuid)
                 {
                     Oscl_Vector<PvmiKvp, OsclMemAllocator> kvpVector = eventMsg->GetMetadataVector();
-                    for (uint32 i = 0;i < kvpVector.size();i++)
+                    for (uint32 i = 0; i < kvpVector.size(); i++)
                     {
                         //arora
                         if (oscl_strstr(kvpVector[i].key, "valtype=char*"))
@@ -5070,7 +5070,7 @@ void pvplayer_async_test_ppb_base::HandleInformationalEvent(const PVAsyncInforma
                             OSCL_HeapString<OsclMemAllocator> ostr;
                             char buf[2];
                             buf[1] = '\0';
-                            for (uint32 j = 0;;j++)
+                            for (uint32 j = 0;; j++)
                             {
                                 if (kvpVector[i].value.pWChar_value[j] == '\0')
                                     break;
@@ -5300,7 +5300,7 @@ void pvplayer_async_test_PDLPauseResumeAfterUnderFlow::CreateDataSource()
     }
     oscl_wchar wbuf[2];
     wbuf[1] = '\0';
-    for (uint32 i = 0;i < url.get_size();i++)
+    for (uint32 i = 0; i < url.get_size(); i++)
     {
         wbuf[0] = (oscl_wchar)url.get_cstr()[i];
         iDownloadURL += wbuf;

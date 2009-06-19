@@ -57,7 +57,7 @@ class Oscl_Vector_Allocator : public Oscl_DefAlloc
         _OsclBasicAllocator iDefAlloc;
 };
 
-/**	Added a new class with similar functionality but a different fail mechanism
+/** Added a new class with similar functionality but a different fail mechanism
 *   than the oscl_try & oscl_leave methods
 *   New class so that we need not make private members of oscl_vector as protected
 *   These routines can be used without oscl initializations,

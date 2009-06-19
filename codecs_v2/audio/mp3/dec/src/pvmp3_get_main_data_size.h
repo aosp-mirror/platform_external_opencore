@@ -87,7 +87,7 @@ extern "C"
 #endif
 
     int32 pvmp3_get_main_data_size(mp3Header *info,
-                                   tmp3dec_file  *pVars);
+    tmp3dec_file  *pVars);
 
 #ifdef __cplusplus
 }

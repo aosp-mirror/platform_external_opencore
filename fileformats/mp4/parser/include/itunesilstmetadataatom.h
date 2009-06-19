@@ -151,7 +151,7 @@ class ITunesILstMetaDataAtom
         // Genre
         OSCL_wHeapString<OsclMemAllocator> _gnreString; // Customized String of Genre
         uint16 _gnreID; // Genre ID
-        bool	_gnreVersion; // Whether gnre is String or ID Number
+        bool    _gnreVersion; // Whether gnre is String or ID Number
 
         // 4 byte String representing Year, when song was recorded.
         OSCL_wHeapString<OsclMemAllocator> _day;

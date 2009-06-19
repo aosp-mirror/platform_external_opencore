@@ -16,8 +16,8 @@
  * -------------------------------------------------------------------
  */
 /*
-	This PVA_FF_SampleEntry Class is the base class for the HinstSampleEntry,
-	PVA_FF_VisualSampleEntry, PVA_FF_AudioSampleEntry. and PVA_FF_MpegSampleEntry classes.
+    This PVA_FF_SampleEntry Class is the base class for the HinstSampleEntry,
+    PVA_FF_VisualSampleEntry, PVA_FF_AudioSampleEntry. and PVA_FF_MpegSampleEntry classes.
 */
 
 #ifndef __FileTypeAtom_H__

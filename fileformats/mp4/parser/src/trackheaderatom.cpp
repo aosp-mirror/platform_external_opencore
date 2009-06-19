@@ -36,12 +36,12 @@
 TrackHeaderAtom::TrackHeaderAtom(MP4_FF_FILE *fp, uint32 size, uint32 type)
         : FullAtom(fp, size, type)
 {
-    _layer			= 0;
-    _alternateGroup	= 0;
-    _width			= 0;
-    _height		    = 0;
-    _tx			    = 0;
-    _ty			    = 0;
+    _layer          = 0;
+    _alternateGroup = 0;
+    _width          = 0;
+    _height         = 0;
+    _tx             = 0;
+    _ty             = 0;
 
     if (_success)
     {

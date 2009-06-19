@@ -49,11 +49,11 @@ struct QueueElement
 
 typedef struct QueueType
 {
-    QueueElement* pFirst;	/** Queue Front */
-    QueueElement* pLast;	/** Queue Rear (last filled element of queue) */
-    OMX_S32 NumElem;		/** Number of elements currently in the queue */
-    OMX_S32 NumElemAdded;	/** Number of elements added extra at run time*/
-}QueueType;
+    QueueElement* pFirst;   /** Queue Front */
+    QueueElement* pLast;    /** Queue Rear (last filled element of queue) */
+    OMX_S32 NumElem;        /** Number of elements currently in the queue */
+    OMX_S32 NumElemAdded;   /** Number of elements added extra at run time*/
+} QueueType;
 
 
 
@@ -78,4 +78,4 @@ OSCL_IMPORT_REF OMX_S32 GetQueueNumElem(QueueType* aQueue);
 /* Add new element in the queue if required */
 OSCL_IMPORT_REF OMX_BOOL AddQueueElem(QueueType* aQueue);
 
-#endif		//#ifndef PV_OMX_QUEUE_H_INCLUDED
+#endif      //#ifndef PV_OMX_QUEUE_H_INCLUDED

@@ -30,7 +30,7 @@
 typedef Oscl_Vector<uint32, OsclMemAllocator> uint32VecType;
 
 PVA_FF_FileTypeAtom::PVA_FF_FileTypeAtom()
-        :	PVA_FF_Atom(FILE_TYPE_ATOM)
+        :   PVA_FF_Atom(FILE_TYPE_ATOM)
 {
     _pCompatibleBrandVec = NULL;
 

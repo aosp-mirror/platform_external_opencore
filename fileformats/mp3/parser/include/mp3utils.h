@@ -51,7 +51,7 @@ class MP3_FF_FILE
             int32 ret = -1;
             ret = _fileServSession.Connect();
             if (ret == 0)
-                _fileServSessionConnected = true;	// connect success
+                _fileServSessionConnected = true;   // connect success
             else
                 _fileServSessionConnected = false;
 
@@ -72,9 +72,9 @@ class MP3_FF_FILE
             _Size = 0;
             auditCB = NULL;
             _streamID = 0;
-            if (_fileServSessionConnected == true) 		// Still connected
+            if (_fileServSessionConnected == true)      // Still connected
             {
-                _fileServSession.Close();				// return from Close is always 0.
+                _fileServSession.Close();               // return from Close is always 0.
                 _fileServSessionConnected = false;
             }
         }

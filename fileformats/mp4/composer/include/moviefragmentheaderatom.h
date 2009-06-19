@@ -28,7 +28,7 @@ class PVA_FF_MovieFragmentHeaderAtom : public PVA_FF_FullAtom
     public:
         PVA_FF_MovieFragmentHeaderAtom(uint32 sequenceNumber);
 
-        virtual	~PVA_FF_MovieFragmentHeaderAtom();
+        virtual ~PVA_FF_MovieFragmentHeaderAtom();
 
         uint32 getSequenceNumber();
 
@@ -36,7 +36,7 @@ class PVA_FF_MovieFragmentHeaderAtom : public PVA_FF_FullAtom
 
     private:
 
-        uint32	_sequenceNumber;
+        uint32  _sequenceNumber;
 
         virtual void recomputeSize();
 };

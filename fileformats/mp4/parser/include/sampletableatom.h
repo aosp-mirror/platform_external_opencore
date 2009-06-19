@@ -399,7 +399,7 @@ class SampleTableAtom : public Atom
             _trackStartTSOffset = ts;
         }
 
-        int32 updateFileSize(uint32	filesize);
+        int32 updateFileSize(uint32 filesize);
 
         uint32 getSampleDescriptionIndex()
         {
@@ -542,15 +542,15 @@ class SampleTableAtom : public Atom
 
     private:
 
-        TimeToSampleAtom		*_ptimeToSampleAtom;
-        CompositionOffsetAtom	*_pcompositionOffsetAtom;
+        TimeToSampleAtom        *_ptimeToSampleAtom;
+        CompositionOffsetAtom   *_pcompositionOffsetAtom;
         SampleDescriptionAtom *_psampleDescriptionAtom;
         SampleSizeAtom        *_psampleSizeAtom;
         SampleToChunkAtom     *_psampleToChunkAtom;
         ChunkOffsetAtom       *_pchunkOffsetAtom;
         AVCSampleDependencyType *_pavcSampleDependencyType;
-        AVCSampleToGroup		*_pavcSampleToGroup;
-        AVCSampleDependency		*_pavcSampleDependency;
+        AVCSampleToGroup        *_pavcSampleToGroup;
+        AVCSampleDependency     *_pavcSampleDependency;
 
         // Optional member atoms
         SyncSampleAtom        *_psyncSampleAtom;
@@ -568,8 +568,8 @@ class SampleTableAtom : public Atom
         OSCL_wHeapString<OsclMemAllocator> _filename;
         MP4_FF_FILE *_pinput;
 
-        uint32	_fileSize;
-        uint32	_IsUpdateFileSize;
+        uint32  _fileSize;
+        uint32  _IsUpdateFileSize;
 
         int32 _numAMRFramesPerSample;
 

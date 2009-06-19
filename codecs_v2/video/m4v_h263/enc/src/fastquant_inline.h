@@ -16,9 +16,9 @@
  * -------------------------------------------------------------------
  */
 /*********************************************************************************/
-/*  Filename: fastquant_inline.h														*/
-/*  Description: Implementation for in-line functions used in dct.cpp			*/
-/*  Modified:																	*/
+/*  Filename: fastquant_inline.h                                                        */
+/*  Description: Implementation for in-line functions used in dct.cpp           */
+/*  Modified:                                                                   */
 /*********************************************************************************/
 #ifndef _FASTQUANT_INLINE_H_
 #define _FASTQUANT_INLINE_H_
@@ -32,8 +32,8 @@ __inline int32 aan_scale(int32 q_value, int32 coeff, int32 round, int32 QPdiv2)
 {
     q_value = coeff * q_value + round;
     coeff = q_value >> 16;
-    if (coeff < 0)	coeff += QPdiv2;
-    else			coeff -= QPdiv2;
+    if (coeff < 0)  coeff += QPdiv2;
+    else            coeff -= QPdiv2;
 
     return coeff;
 }
@@ -43,14 +43,14 @@ __inline int32 coeff_quant(int32 coeff, int32 q_scale, int32 shift)
 {
     int32 q_value;
 
-    q_value = coeff * q_scale;		//q_value = -((-(coeff + QPdiv2)*q_scale)>>LSL);
-    q_value >>= shift;					//q_value = (((coeff - QPdiv2)*q_scale)>>LSL );
+    q_value = coeff * q_scale;      //q_value = -((-(coeff + QPdiv2)*q_scale)>>LSL);
+    q_value >>= shift;                  //q_value = (((coeff - QPdiv2)*q_scale)>>LSL );
     q_value += ((UInt)q_value >> 31); /* add one if negative */
 
     return q_value;
 }
 
-__inline int32 	coeff_clip(int32 q_value, int32 ac_clip)
+__inline int32  coeff_clip(int32 q_value, int32 ac_clip)
 {
     int32 coeff = q_value + ac_clip;
 
@@ -100,8 +100,8 @@ __inline int32 smulbb(int32 q_scale, int32 coeff)
 __inline int32 aan_dc_scale(int32 coeff, int32 QP)
 {
 
-    if (coeff < 0) 	coeff += (QP >> 1);
-    else			coeff -= (QP >> 1);
+    if (coeff < 0)  coeff += (QP >> 1);
+    else            coeff -= (QP >> 1);
 
     return coeff;
 }
@@ -134,14 +134,14 @@ __inline int32 coeff_dequant_mpeg(int32 q_value, int32 stepsize, int32 QP, int32
     {
         q_value = (coeff + 1) * stepsize;
         q_value >>= 4;
-        if (q_value > 2047)	q_value = 2047;
+        if (q_value > 2047) q_value = 2047;
     }
     else
     {
         q_value = (coeff - 1) * stepsize;
         q_value += 15;
         q_value >>= 4;
-        if (q_value < -2048)	q_value = -2048;
+        if (q_value < -2048)    q_value = -2048;
     }
 
     return q_value;
@@ -177,9 +177,9 @@ __inline int32 aan_scale(int32 q_value, int32 coeff,
     __asm
     {
         smlabb q_value, coeff, q_value, round
-        movs	   coeff, q_value, asr #16
-        addle	coeff, coeff, QPdiv2
-        subgt	coeff, coeff, QPdiv2
+        movs       coeff, q_value, asr #16
+        addle   coeff, coeff, QPdiv2
+        subgt   coeff, coeff, QPdiv2
     }
 
     return coeff;
@@ -191,9 +191,9 @@ __inline int32 coeff_quant(int32 coeff, int32 q_scale, int32 shift)
 
     __asm
     {
-        smulbb	q_value, q_scale, coeff    /*mov	coeff, coeff, lsl #14*/
-        mov 	coeff, q_value, asr shift	/*smull	tmp, coeff, q_scale, coeff*/
-        add	q_value, coeff, coeff, lsr #31
+        smulbb  q_value, q_scale, coeff    /*mov    coeff, coeff, lsl #14*/
+        mov     coeff, q_value, asr shift   /*smull tmp, coeff, q_scale, coeff*/
+        add q_value, coeff, coeff, lsr #31
     }
 
 
@@ -206,14 +206,14 @@ __inline int32 coeff_dequant(int32 q_value, int32 QPx2, int32 Addition, int32 tm
 
     __asm
     {
-        cmp		q_value, #0
-        smulbb	coeff, q_value, QPx2
-        sublt	coeff, coeff, Addition
-        addge	coeff, coeff, Addition
-        add		q_value, coeff, tmp
-        subs	q_value, q_value, #3840
-        subcss	q_value, q_value, #254
-        eorhi	coeff, tmp, coeff, asr #31
+        cmp     q_value, #0
+        smulbb  coeff, q_value, QPx2
+        sublt   coeff, coeff, Addition
+        addge   coeff, coeff, Addition
+        add     q_value, coeff, tmp
+        subs    q_value, q_value, #3840
+        subcss  q_value, q_value, #254
+        eorhi   coeff, tmp, coeff, asr #31
     }
 
     return coeff;
@@ -235,7 +235,7 @@ __inline int32 smulbb(int32 q_scale, int32 coeff)
 
     __asm
     {
-        smulbb	q_value, q_scale, coeff
+        smulbb  q_value, q_scale, coeff
     }
 
     return q_value;
@@ -247,17 +247,17 @@ __inline int32 coeff_dequant_mpeg(int32 q_value, int32 stepsize, int32 QP, int32
     int32 coeff;
     __asm
     {
-        movs	coeff, q_value, lsl #1
+        movs    coeff, q_value, lsl #1
         smulbb  stepsize, stepsize, QP
-        addgt	coeff, coeff, #1
-        sublt	coeff, coeff, #1
-        smulbb	q_value, coeff, stepsize
-        addlt	q_value, q_value, #15
-        mov		q_value, q_value, asr #4
-        add		coeff, q_value, tmp
-        subs	coeff, coeff, #0xf00
-        subcss	coeff, coeff, #0xfe
-        eorhi	q_value, tmp, q_value, asr #31
+        addgt   coeff, coeff, #1
+        sublt   coeff, coeff, #1
+        smulbb  q_value, coeff, stepsize
+        addlt   q_value, q_value, #15
+        mov     q_value, q_value, asr #4
+        add     coeff, q_value, tmp
+        subs    coeff, coeff, #0xf00
+        subcss  coeff, coeff, #0xfe
+        eorhi   q_value, tmp, q_value, asr #31
     }
 
     return q_value;
@@ -272,9 +272,9 @@ __inline int32 aan_scale(int32 q_value, int32 coeff,
     __asm
     {
         mla q_value, coeff, q_value, round
-        movs	   coeff, q_value, asr #16
-        addle	coeff, coeff, QPdiv2
-        subgt	coeff, coeff, QPdiv2
+        movs       coeff, q_value, asr #16
+        addle   coeff, coeff, QPdiv2
+        subgt   coeff, coeff, QPdiv2
     }
 
     return coeff;
@@ -286,9 +286,9 @@ __inline int32 coeff_quant(int32 coeff, int32 q_scale, int32 shift)
 
     __asm
     {
-        mul	q_value, q_scale, coeff    /*mov	coeff, coeff, lsl #14*/
-        mov 	coeff, q_value, asr shift	/*smull	tmp, coeff, q_scale, coeff*/
-        add	q_value, coeff, coeff, lsr #31
+        mul q_value, q_scale, coeff    /*mov    coeff, coeff, lsl #14*/
+        mov     coeff, q_value, asr shift   /*smull tmp, coeff, q_scale, coeff*/
+        add q_value, coeff, coeff, lsr #31
     }
 
 
@@ -302,14 +302,14 @@ __inline int32 coeff_dequant(int32 q_value, int32 QPx2, int32 Addition, int32 tm
 
     __asm
     {
-        cmp		q_value, #0
-        mul	coeff, q_value, QPx2
-        sublt	coeff, coeff, Addition
-        addge	coeff, coeff, Addition
-        add		q_value, coeff, tmp
-        subs	q_value, q_value, #3840
-        subcss	q_value, q_value, #254
-        eorhi	coeff, tmp, coeff, asr #31
+        cmp     q_value, #0
+        mul coeff, q_value, QPx2
+        sublt   coeff, coeff, Addition
+        addge   coeff, coeff, Addition
+        add     q_value, coeff, tmp
+        subs    q_value, q_value, #3840
+        subcss  q_value, q_value, #254
+        eorhi   coeff, tmp, coeff, asr #31
     }
 
     return coeff;
@@ -331,7 +331,7 @@ __inline int32 smulbb(int32 q_scale, int32 coeff)
 
     __asm
     {
-        mul	q_value, q_scale, coeff
+        mul q_value, q_scale, coeff
     }
 
     return q_value;
@@ -344,17 +344,17 @@ __inline int32 coeff_dequant_mpeg(int32 q_value, int32 stepsize, int32 QP, int32
     int32 coeff;
     __asm
     {
-        movs	coeff, q_value, lsl #1
+        movs    coeff, q_value, lsl #1
         mul  stepsize, stepsize, QP
-        addgt	coeff, coeff, #1
-        sublt	coeff, coeff, #1
-        mul	q_value, coeff, stepsize
-        addlt	q_value, q_value, #15
-        mov		q_value, q_value, asr #4
-        add		coeff, q_value, tmp
-        subs	coeff, coeff, #0xf00
-        subcss	coeff, coeff, #0xfe
-        eorhi	q_value, tmp, q_value, asr #31
+        addgt   coeff, coeff, #1
+        sublt   coeff, coeff, #1
+        mul q_value, coeff, stepsize
+        addlt   q_value, q_value, #15
+        mov     q_value, q_value, asr #4
+        add     coeff, q_value, tmp
+        subs    coeff, coeff, #0xf00
+        subcss  coeff, coeff, #0xfe
+        eorhi   q_value, tmp, q_value, asr #31
     }
 
     return q_value;
@@ -363,15 +363,15 @@ __inline int32 coeff_dequant_mpeg(int32 q_value, int32 stepsize, int32 QP, int32
 
 #endif
 
-__inline int32 	coeff_clip(int32 q_value, int32 ac_clip)
+__inline int32  coeff_clip(int32 q_value, int32 ac_clip)
 {
     int32 coeff;
 
     __asm
     {
         add     coeff, q_value, ac_clip
-        subs	coeff, coeff, ac_clip, lsl #1
-        eorhi	q_value, ac_clip, q_value, asr #31
+        subs    coeff, coeff, ac_clip, lsl #1
+        eorhi   q_value, ac_clip, q_value, asr #31
     }
 
     return q_value;
@@ -382,9 +382,9 @@ __inline int32 aan_dc_scale(int32 coeff, int32 QP)
 
     __asm
     {
-        cmp	  coeff, #0
-        addle	coeff, coeff, QP, asr #1
-        subgt	coeff, coeff, QP, asr #1
+        cmp   coeff, #0
+        addle   coeff, coeff, QP, asr #1
+        subgt   coeff, coeff, QP, asr #1
     }
 
     return coeff;
@@ -397,10 +397,10 @@ __inline int32 clip_2047(int32 q_value, int32 tmp)
 
     __asm
     {
-        add		coeff, q_value, tmp
-        subs	coeff, coeff, #0xf00
-        subcss	coeff, coeff, #0xfe
-        eorhi	q_value, tmp, q_value, asr #31
+        add     coeff, q_value, tmp
+        subs    coeff, coeff, #0xf00
+        subcss  coeff, coeff, #0xfe
+        eorhi   q_value, tmp, q_value, asr #31
     }
 
     return q_value;
@@ -412,13 +412,13 @@ __inline int32 coeff_dequant_mpeg_intra(int32 q_value, int32 tmp)
 
     __asm
     {
-        movs	q_value, q_value, lsl #1
-        addlt	q_value, q_value, #15
-        mov		q_value, q_value, asr #4
-        add		coeff, q_value, tmp
-        subs	coeff, coeff, #0xf00
-        subcss	coeff, coeff, #0xfe
-        eorhi	q_value, tmp, q_value, asr #31
+        movs    q_value, q_value, lsl #1
+        addlt   q_value, q_value, #15
+        mov     q_value, q_value, asr #4
+        add     coeff, q_value, tmp
+        subs    coeff, coeff, #0xf00
+        subcss  coeff, coeff, #0xfe
+        eorhi   q_value, tmp, q_value, asr #31
     }
 
     return q_value;

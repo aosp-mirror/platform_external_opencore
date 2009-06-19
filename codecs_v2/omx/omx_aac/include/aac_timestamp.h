@@ -56,4 +56,4 @@ class AacTimeStampCalc
         uint32 iSamplesPerFrame;
 };
 
-#endif	//#ifndef AAC_TIMESTAMP_H_INCLUDED
+#endif  //#ifndef AAC_TIMESTAMP_H_INCLUDED

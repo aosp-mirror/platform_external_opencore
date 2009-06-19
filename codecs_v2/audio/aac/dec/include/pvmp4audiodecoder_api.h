@@ -158,7 +158,7 @@ extern "C"
         AAC = 0,
         AACPLUS,
         ENH_AACPLUS
-    }STREAMTYPE;
+    } STREAMTYPE;
 
     /*----------------------------------------------------------------------------
     ; STRUCTURES TYPEDEF'S

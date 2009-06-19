@@ -80,7 +80,7 @@ extern "C"
 #endif
 
     void sbr_get_noise_floor_data(SBR_FRAME_DATA * h_frame_data,
-                                  BIT_BUFFER * hBitBuf);
+    BIT_BUFFER * hBitBuf);
 
 #ifdef __cplusplus
 }

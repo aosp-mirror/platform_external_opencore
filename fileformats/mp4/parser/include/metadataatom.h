@@ -331,7 +331,7 @@ class MetaDataAtom: public Atom
 
     private:
 
-        HandlerAtom	*_pHdlrAtom;
+        HandlerAtom *_pHdlrAtom;
         // User ilst Data
         ITunesILSTAtom* _pITunesILSTAtom;
         PVLogger *iLogger;

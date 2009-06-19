@@ -369,9 +369,9 @@ class PVMFSMRTSPUnicastNode: public PVMFSMFSPBaseNode
         PVMFMediaPresentationInfo iCompleteMediaPresetationInfo;
         PVMFMediaPresentationInfo iSelectedMediaPresetationInfo;
 
-        PVMFRTSPTrackInfoVector	iTrackInfoVec;
+        PVMFRTSPTrackInfoVector iTrackInfoVec;
         OsclSharedPtr<SDPInfo> iSdpInfo;
         bool oAutoReposition;
-        bool iPauseDenied;	//For live streaming sessions, pause is denied.
+        bool iPauseDenied;  //For live streaming sessions, pause is denied.
 };
 #endif

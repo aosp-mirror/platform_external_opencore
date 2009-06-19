@@ -49,8 +49,8 @@ terms listed above has been obtained from the copyright holder.
 ------------------------------------------------------------------------------
  FUNCTION DESCRIPTION
 
-  	Conversion of 16th-order 12.8kHz ISF vector
-  	into 20th-order 16kHz ISF vector
+    Conversion of 16th-order 12.8kHz ISF vector
+    into 20th-order 16kHz ISF vector
 
 ------------------------------------------------------------------------------
  REQUIREMENTS

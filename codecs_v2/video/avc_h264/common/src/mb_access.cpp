@@ -446,7 +446,7 @@ OSCL_EXPORT_REF void GetMotionVectorPredictor(AVCCommonObj *video, int encFlag)
                 video->mvd_l0[mbPartIdx][subMbPartIdx][0] = *mv++ - pmv_x;
                 video->mvd_l0[mbPartIdx][subMbPartIdx][1] = *mv++ - pmv_y;
             }
-            else	/* calculate original MV currMB->mvL0 */
+            else    /* calculate original MV currMB->mvL0 */
             {
                 pmv_x += video->mvd_l0[mbPartIdx][subMbPartIdx][0];
                 pmv_y += video->mvd_l0[mbPartIdx][subMbPartIdx][1];

@@ -86,8 +86,8 @@ int32 CCRGB16toYUV420:: Init(int32 Src_width, int32 Src_height, int32 Src_pitch,
     if ((iCr_Table = (uint8*)oscl_malloc(768 * 2)) == NULL)
         return 0;
 
-#define pv_max(a, b)	((a) >= (b) ? (a) : (b))
-#define pv_min(a, b)	((a) <= (b) ? (a) : (b))
+#define pv_max(a, b)    ((a) >= (b) ? (a) : (b))
+#define pv_min(a, b)    ((a) <= (b) ? (a) : (b))
 
     /* Table generation */
     for (i = 0; i < 384; i++)
@@ -125,7 +125,7 @@ int32 CCRGB16toYUV420::GetOutputBufferSize(void)
 {
     OSCL_ASSERT(_mInitialized == true);
 
-    return ((((_mSrc_width + 15) >> 4) << 4) * (((_mSrc_height + 15) >> 4) << 4) * 3 / 2);
+    return ((((_mSrc_width + 15) >> 4) << 4) *(((_mSrc_height + 15) >> 4) << 4) * 3 / 2);
 }
 
 
@@ -246,8 +246,8 @@ extern "C"
         jlimit = height_dst;
         ilimit = width_dst;
 
-#define ALPHA 413		// 413  = (int) ((0.0722/0.7152)* (2^12)) for B, 2^12 is for hitting 16bit range for SIMD calculation,
-#define BETA  1218		// 1218 = (int) ((0.2126/0.7152)* (2^12)) for R  5bit B/R => ALPHA and BETA < 2^11
+#define ALPHA 413       // 413  = (int) ((0.0722/0.7152)* (2^12)) for B, 2^12 is for hitting 16bit range for SIMD calculation,
+#define BETA  1218      // 1218 = (int) ((0.2126/0.7152)* (2^12)) for R  5bit B/R => ALPHA and BETA < 2^11
 #define SHIFT_INDEX1 9  // 9    = 12 - 3, 3 refers to the number of bits right shifted for 5 bit B/R in an 8-bit octet
 #define SHIFT_INDEX2 25 // 25   = 9  + 16
 
@@ -417,8 +417,8 @@ extern "C"
             pitch_src = -pitch_src;
         }
 
-#define ALPHA 413		// 413  = (int) ((0.0722/0.7152)* (2^12)) for B, 2^12 is for hitting 16bit range for SIMD calculation,
-#define BETA  1218		// 1218 = (int) ((0.2126/0.7152)* (2^12)) for R  5bit B/R => ALPHA and BETA < 2^11
+#define ALPHA 413       // 413  = (int) ((0.0722/0.7152)* (2^12)) for B, 2^12 is for hitting 16bit range for SIMD calculation,
+#define BETA  1218      // 1218 = (int) ((0.2126/0.7152)* (2^12)) for R  5bit B/R => ALPHA and BETA < 2^11
 #define SHIFT_INDEX1 9  // 9    = 12 - 3, 3 refers to the number of bits right shifted for 5 bit B/R in an 8-bit octet
 #define SHIFT_INDEX2 25 // 25   = 9  + 16
 

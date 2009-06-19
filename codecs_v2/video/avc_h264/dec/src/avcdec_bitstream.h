@@ -37,16 +37,16 @@ This file contains bitstream related functions.
 extern "C"
 {
 #endif
-#define BitstreamFlushBits(A,B) 	{(A)->bitcnt += (B); (A)->incnt -= (B); (A)->curr_word <<= (B);}
+#define BitstreamFlushBits(A,B)     {(A)->bitcnt += (B); (A)->incnt -= (B); (A)->curr_word <<= (B);}
 
     AVCDec_Status AVC_BitstreamFillCache(AVCDecBitstream *stream);
     /**
     This function populates bitstream structure.
     \param "stream" "Pointer to bitstream structure."
     \param "buffer" "Pointer to the bitstream buffer."
-    \param "size"	"Size of the buffer."
-    \param "nal_size"	"Size of the NAL unit."
-    \param "resetall"	"Flag for reset everything."
+    \param "size"   "Size of the buffer."
+    \param "nal_size"   "Size of the NAL unit."
+    \param "resetall"   "Flag for reset everything."
     \return "AVCDEC_SUCCESS for success and AVCDEC_FAIL for fail."
     */
     AVCDec_Status BitstreamInit(AVCDecBitstream *stream, uint8 *buffer, int size);
@@ -54,7 +54,7 @@ extern "C"
     /**
     This function reads next aligned word and remove the emulation prevention code
     if necessary.
-    \param "stream"	"Pointer to bitstream structure."
+    \param "stream" "Pointer to bitstream structure."
     \return "Next word."
     */
     uint BitstreamNextWord(AVCDecBitstream *stream);
@@ -63,10 +63,10 @@ extern "C"
     This function reads nBits bits from the current position and advance the pointer.
     \param "stream" "Pointer to bitstream structure."
     \param "nBits" "Number of bits to be read."
-    \param "code"	"Point to the read value."
+    \param "code"   "Point to the read value."
     \return "AVCDEC_SUCCESS if successed, AVCDEC_FAIL if number of bits
-    			is greater than the word-size, AVCDEC_PACKET_LOSS or
-    			AVCDEC_NO_DATA if callback to get data fails."
+                is greater than the word-size, AVCDEC_PACKET_LOSS or
+                AVCDEC_NO_DATA if callback to get data fails."
     */
     AVCDec_Status BitstreamReadBits(AVCDecBitstream *stream, int nBits, uint *code);
 
@@ -74,10 +74,10 @@ extern "C"
     This function shows nBits bits from the current position without advancing the pointer.
     \param "stream" "Pointer to bitstream structure."
     \param "nBits" "Number of bits to be read."
-    \param "code"	"Point to the read value."
+    \param "code"   "Point to the read value."
     \return "AVCDEC_SUCCESS if successed, AVCDEC_FAIL if number of bits
-    				is greater than the word-size, AVCDEC_NO_DATA if it needs
-    				to callback to get data."
+                    is greater than the word-size, AVCDEC_NO_DATA if it needs
+                    to callback to get data."
     */
     AVCDec_Status BitstreamShowBits(AVCDecBitstream *stream, int nBits, uint *code);
 
@@ -87,19 +87,19 @@ extern "C"
     \param "stream" "Pointer to bitstream structure."
     \param "nBits" "Number of bits to be read."
     \return "AVCDEC_SUCCESS if successed, AVCDEC_FAIL if number of bits
-    				is greater than the word-size It will not call back to get
-    			   more data. Users should call BitstreamShowBits to determine
-    			   how much they want to flush."
+                    is greater than the word-size It will not call back to get
+                   more data. Users should call BitstreamShowBits to determine
+                   how much they want to flush."
     */
 
     /**
     This function read 1 bit from the current position and advance the pointer.
     \param "stream" "Pointer to bitstream structure."
     \param "nBits" "Number of bits to be read."
-    \param "code"	"Point to the read value."
+    \param "code"   "Point to the read value."
     \return "AVCDEC_SUCCESS if successed, AVCDEC_FAIL if number of bits
-    			is greater than the word-size, AVCDEC_PACKET_LOSS or
-    			AVCDEC_NO_DATA if callback to get data fails."
+                is greater than the word-size, AVCDEC_PACKET_LOSS or
+                AVCDEC_NO_DATA if callback to get data fails."
     */
     AVCDec_Status BitstreamRead1Bit(AVCDecBitstream *stream, uint *code);
 

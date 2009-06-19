@@ -53,22 +53,22 @@ typedef enum
     PVMF_PORT_ACTIVITY_CONNECT, /**< Connection with another port is established */
     PVMF_PORT_ACTIVITY_DISCONNECT, /**< Connection with another port is disconnected */
     PVMF_PORT_ACTIVITY_OUTGOING_MSG, /**< Outgoing message received. The node needs to call Send
-	                              *  asynchronously to send this message to receiving port. */
+                                  *  asynchronously to send this message to receiving port. */
     PVMF_PORT_ACTIVITY_INCOMING_MSG, /**< Incoming message received. The node needs to call DequeueIncomingMsg
-	                              *  asynchronously to retrieve and handle the message. */
+                                  *  asynchronously to retrieve and handle the message. */
     PVMF_PORT_ACTIVITY_OUTGOING_QUEUE_BUSY, /**< Outgoing queue becomes busy and cannot receive more outgoing messages.
-	                                     *  The node should suspend calling QueueOutgoingMsg until receiving
-	                                     *  PORT_ACTIVITY_OUTGOING_QUEUE_READY event. */
+                                         *  The node should suspend calling QueueOutgoingMsg until receiving
+                                         *  PORT_ACTIVITY_OUTGOING_QUEUE_READY event. */
     PVMF_PORT_ACTIVITY_OUTGOING_QUEUE_READY, /**< After the outgoing queue size reaches its capacity, the port
-	                                      * would continue to process its outgoing queue, and when the size
-	                                      * decreases to below the specified threshold, the owner node would
-	                                      * be notified that it can resume queueing outgoing data to this port. */
+                                          * would continue to process its outgoing queue, and when the size
+                                          * decreases to below the specified threshold, the owner node would
+                                          * be notified that it can resume queueing outgoing data to this port. */
     PVMF_PORT_ACTIVITY_CONNECTED_PORT_BUSY, /**< Connected port is busy and cannot receive more incoming messages. The
-	                                     *  node should suspend calling Send to process the outgoing messages until
+                                         *  node should suspend calling Send to process the outgoing messages until
                                          *  receiving PORT_ACTIVITY_CONNECTED_PORT_READY event. */
     PVMF_PORT_ACTIVITY_CONNECTED_PORT_READY, /**< Connected port is ready to receive more incoming messages. The node
-	                                     *  resume calling Send to process its outgoing queue. */
-    PVMF_PORT_ACTIVITY_ERROR	/**< An error occurred in the port. */
+                                         *  resume calling Send to process its outgoing queue. */
+    PVMF_PORT_ACTIVITY_ERROR    /**< An error occurred in the port. */
 } PVMFPortActivityType;
 
 /** Structure containing the port activity and the port on which this activity occurred. */

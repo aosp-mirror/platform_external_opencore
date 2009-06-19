@@ -53,7 +53,7 @@ PVA_FF_TextSampleEntry::~PVA_FF_TextSampleEntry()
 
 void PVA_FF_TextSampleEntry::init()
 {
-    for (int i = 0;i < 6;i++)
+    for (int i = 0; i < 6; i++)
     {
         _reserved[i] = 0;
     }
@@ -61,7 +61,7 @@ void PVA_FF_TextSampleEntry::init()
     _preDefined1 = 0;
     _reserved1 = 0;
 
-    for (int j = 0;j < 3;j++)
+    for (int j = 0; j < 3; j++)
     {
         _predefined2[j] = 0;
     }

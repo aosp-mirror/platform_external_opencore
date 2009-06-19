@@ -69,7 +69,7 @@
 
 /* Specifically added for ASF file format where we need to get the codec-specific-info which
    is defined in pvmf_asfffparser_defs.h
-   However, this file can be included but as these are common engine test cases	and some
+   However, this file can be included but as these are common engine test cases and some
    other parsernode\parser library may use these test cases and in that case it will give
    the error "asfparserdefs.h cannot be opened" as it is not in that parsernode\parserlibrary
    code.
@@ -100,7 +100,7 @@ class PvmiCapabilityAndConfig;
  *             -# GetMetadataKeys()
  *             -# GetMetadataValues()
  *             -# Print out the metadata list
- *			   -# ReleaseMetadataValues()
+ *             -# ReleaseMetadataValues()
  *             -# AddDataSink() (video)
  *             -# AddDataSink() (audio)
  *             -# AddDataSink() (text)
@@ -110,12 +110,12 @@ class PvmiCapabilityAndConfig;
  *             -# GetMetadataKeys()
  *             -# GetMetadataValues()
  *             -# Print out the metadata list
- *			   -# ReleaseMetadataValues()
+ *             -# ReleaseMetadataValues()
  *             -# Stop()
  *             -# GetMetadataKeys()
  *             -# GetMetadataValues()
  *             -# Print out the metadata list
- *			   -# ReleaseMetadataValues()
+ *             -# ReleaseMetadataValues()
  *             -# RemoveDataSink() (video)
  *             -# RemoveDataSink() (audio)
  *             -# RemoveDataSink() (text)

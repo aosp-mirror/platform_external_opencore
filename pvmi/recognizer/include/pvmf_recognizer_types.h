@@ -43,11 +43,11 @@ typedef Oscl_Vector<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator> PVMFRec
 
 typedef enum _PVMFRecognizerConfidence
 {
-    PVMFRecognizerConfidenceNotCertain,		// 100% sure not the format
-    PVMFRecognizerConfidenceNotPossible,	// Maybe not the format
-    PVMFRecognizerConfidenceUnknown,		// Not sure one way or the other
-    PVMFRecognizerConfidencePossible,		// Maybe the format
-    PVMFRecognizerConfidenceCertain			// 100% sure of the format
+    PVMFRecognizerConfidenceNotCertain,     // 100% sure not the format
+    PVMFRecognizerConfidenceNotPossible,    // Maybe not the format
+    PVMFRecognizerConfidenceUnknown,        // Not sure one way or the other
+    PVMFRecognizerConfidencePossible,       // Maybe the format
+    PVMFRecognizerConfidenceCertain         // 100% sure of the format
 } PVMFRecognizerConfidence;
 
 
@@ -63,7 +63,7 @@ class PVMFRecognizerResult
         {
             iRecognizedFormat = aSrc.iRecognizedFormat;
             iRecognitionConfidence = aSrc.iRecognitionConfidence;
-            //	iRecognizerSubFormatList=aSrc.iRecognizerSubFormatList;
+            //  iRecognizerSubFormatList=aSrc.iRecognizerSubFormatList;
         };
 
         ~PVMFRecognizerResult()
@@ -75,7 +75,7 @@ class PVMFRecognizerResult
         // The confidence level of recognition
         PVMFRecognizerConfidence iRecognitionConfidence;
         // If the format is a container format, the format of content within
-//	Oscl_Vector<PVMFRecognizerResult, OsclMemAllocator> iRecognizerSubFormatList;
+//  Oscl_Vector<PVMFRecognizerResult, OsclMemAllocator> iRecognizerSubFormatList;
 };
 
 

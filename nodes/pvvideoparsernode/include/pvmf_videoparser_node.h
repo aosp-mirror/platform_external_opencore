@@ -61,7 +61,7 @@ typedef struct vidparser_port_property
 {
     PVMFFormatType format;
     OSCL_HeapString<OsclMemAllocator> mimetype;
-    int32		porttag;
+    int32       porttag;
 } VideoParserPortProperty;
 
 ////////////////////////////////////////////////////////////////////////////

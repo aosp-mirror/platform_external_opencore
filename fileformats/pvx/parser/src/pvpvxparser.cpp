@@ -79,7 +79,7 @@ OSCL_EXPORT_REF CPVXParser::CPVXParserStatus CPVXParser::ParsePVX(OsclMemoryFrag
         return CPVXParser_InvalidSize;
     }
 
-    FileLoc += 2;	// Skip the file size
+    FileLoc += 2;   // Skip the file size
 
     // Get video and audio IDs (2.0) OR PVX file version (Imperial) (2 bytes)
     if (FileLoc + 2 >= aBufferLen)
@@ -215,9 +215,9 @@ OSCL_EXPORT_REF CPVXParser::CPVXParserStatus CPVXParser::ParsePVX(OsclMemoryFrag
         FileLoc += 40;
     }
 
-    //	For proper implementation, URL size should be an offset from subscriber auth size
+    //  For proper implementation, URL size should be an offset from subscriber auth size
 
-    //	But following PVPlayer 2.0 PC/CE implementation
+    //  But following PVPlayer 2.0 PC/CE implementation
 
     // Get the URL size (2 bytes)
     if (FileLoc + 2 >= aBufferLen)
@@ -288,16 +288,16 @@ OSCL_EXPORT_REF CPVXParser::CPVXParserStatus CPVXParser::ParsePVX(OsclMemoryFrag
         aPVXInfo.iUserPlayback = (aPVXInfo.iFlags & 0x20 ? false : true);
         switch (aPVXInfo.iFlags & 0x18)
         {
-            case 0x08:	// Automatic after download complete
+            case 0x08:  // Automatic after download complete
                 aPVXInfo.iPlaybackControl = CPVXInfo::EAfterDownload;
                 break;
-            case 0x10:	// Play as soon as possible
+            case 0x10:  // Play as soon as possible
                 aPVXInfo.iPlaybackControl = CPVXInfo::EAsap;
                 break;
-            case 0x18:	// Reserved
+            case 0x18:  // Reserved
                 aPVXInfo.iPlaybackControl = CPVXInfo::EReserve;
                 break;
-            case 0x00:	// Not automatic
+            case 0x00:  // Not automatic
             default:
                 aPVXInfo.iPlaybackControl = CPVXInfo::ENoPlayback;
                 break;

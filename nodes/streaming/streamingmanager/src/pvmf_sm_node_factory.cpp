@@ -63,11 +63,11 @@ OSCL_EXPORT_REF bool PVMFStreamingManagerNodeFactory::DeleteStreamingManagerNode
 
     /*if(EPVMFNodeIdle == aNode->GetState())
     {
-    	if(aNode)
-    	{
-    		OSCL_DELETE(aNode);
-    		retval = true;
-    	}
+        if(aNode)
+        {
+            OSCL_DELETE(aNode);
+            retval = true;
+        }
     }*/
     return retval;
 }

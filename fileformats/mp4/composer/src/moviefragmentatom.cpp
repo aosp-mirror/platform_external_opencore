@@ -67,7 +67,7 @@ PVA_FF_MovieFragmentAtom::addTrackFragment(uint32 mediaType, uint32 codecType,
         uint32 trackId, uint32 timescale)
 {
 
-    PVA_FF_TrackFragmentAtom*	pTrafAtom;
+    PVA_FF_TrackFragmentAtom*   pTrafAtom;
     PV_MP4_FF_NEW(fp->auditCB, PVA_FF_TrackFragmentAtom, ((mediaType), (codecType),
                   (trackId), (_interleaveDuration), (timescale)), pTrafAtom);
 
@@ -105,7 +105,7 @@ PVA_FF_MovieFragmentAtom::addSampleToFragment(uint32 trackId, uint32 size,
         bool otrunStart)
 {
 
-    PVA_FF_TrackFragmentAtom*	pTrafAtom = getTrackFragment(trackId);
+    PVA_FF_TrackFragmentAtom*   pTrafAtom = getTrackFragment(trackId);
 
     pTrafAtom->addSampleToFragment(size, ts, flags, baseOffset, otrunStart);
 
@@ -116,7 +116,7 @@ PVA_FF_MovieFragmentAtom::addSampleToFragment(uint32 trackId, uint32 size,
 int32
 PVA_FF_MovieFragmentAtom::getTrackFragmentDuration(uint32 trackId)
 {
-    PVA_FF_TrackFragmentAtom*	pTrafAtom = getTrackFragment(trackId);
+    PVA_FF_TrackFragmentAtom*   pTrafAtom = getTrackFragment(trackId);
 
     return pTrafAtom->getFragmentDuration();
 }

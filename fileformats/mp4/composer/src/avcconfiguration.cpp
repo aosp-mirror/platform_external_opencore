@@ -58,7 +58,7 @@ void PVA_FF_AVCConfigurationAtom::setSample(void* samp, uint32 size)
 
         if (_lengthSize == 0)
         {
-            _lengthSize = NAL_UNIT_LENGTH;		// set length size of NAL units as 16 bits
+            _lengthSize = NAL_UNIT_LENGTH;      // set length size of NAL units as 16 bits
         }
         if (_numSequenceParameterSets == 0)
         {
@@ -72,7 +72,7 @@ void PVA_FF_AVCConfigurationAtom::setSample(void* samp, uint32 size)
         bool set_pc = false;
         uint8 profile_comp = 0x00;
 
-        for (int i = 0;i < _numSequenceParameterSets;i++)
+        for (int i = 0; i < _numSequenceParameterSets; i++)
         {
 
             oscl_memcpy(&_seqParameterSetLen, _sample, 2);
@@ -164,7 +164,7 @@ void PVA_FF_AVCConfigurationAtom::setSample(void* samp, uint32 size)
             _numPictureParameterSets = *(uint8*)_sample;
             _sample += sizeof(uint8);
         }
-        for (int j = 0;j < _numPictureParameterSets;j++)
+        for (int j = 0; j < _numPictureParameterSets; j++)
         {
 
 
@@ -251,13 +251,13 @@ PVA_FF_AVCConfigurationAtom::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
     }
     rendered += 1;
     numSps = _numSequenceParameterSets;
-    numSps |= 0xE0;				// first 3 bits are reserved
+    numSps |= 0xE0;             // first 3 bits are reserved
     if (!PVA_FF_AtomUtils::render8(fp, numSps))
     {
         return false;
     }
     rendered += 1;
-    for (int i = 0;i < _numSequenceParameterSets;i++)
+    for (int i = 0; i < _numSequenceParameterSets; i++)
     {
 
         PVA_FF_ParameterSet *pSet = (*_sequenceParameterSetVec)[i];
@@ -288,7 +288,7 @@ PVA_FF_AVCConfigurationAtom::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
     {
         return false;
     }
-    for (int j = 0;j < _numPictureParameterSets;j++)
+    for (int j = 0; j < _numPictureParameterSets; j++)
     {
 
         PVA_FF_ParameterSet *pSet = (*_pictureParameterSetVec)[j];
@@ -323,22 +323,22 @@ PVA_FF_AVCConfigurationAtom::recomputeSize()
 
     if (_sequenceParameterSetVec->size() >= _numSequenceParameterSets)
     {
-        for (int i = 0;i < _numSequenceParameterSets;i++)
+        for (int i = 0; i < _numSequenceParameterSets; i++)
         {
             PVA_FF_ParameterSet *pSet = (*_sequenceParameterSetVec)[i];
 
-            uint16	length = pSet->getParameterSetLength();
+            uint16  length = pSet->getParameterSetLength();
             size += 2;
             size += length;
         }
     }
     if (_pictureParameterSetVec->size() >= _numPictureParameterSets)
     {
-        for (int j = 0;j < _numPictureParameterSets;j++)
+        for (int j = 0; j < _numPictureParameterSets; j++)
         {
             PVA_FF_ParameterSet *pSet = (*_pictureParameterSetVec)[j];
 
-            uint16	length = pSet->getParameterSetLength();
+            uint16  length = pSet->getParameterSetLength();
             size += 2;
             size += length;
         }

@@ -74,13 +74,13 @@ class ITunesMetaDataAtom: public Atom
         virtual ~ITunesMetaDataAtom();
 
     protected:
-        uint64		_prefix;
-        uint64		INTEGER_PREFIX;
-        uint64		STRING_PREFIX;
-        uint64		IMAGE_PREFIX_PNG;
-        uint64		IMAGE_PREFIX_JFIF;
-        uint64		OTHER_PREFIX;
-        PVLogger	*iLogger;
+        uint64      _prefix;
+        uint64      INTEGER_PREFIX;
+        uint64      STRING_PREFIX;
+        uint64      IMAGE_PREFIX_PNG;
+        uint64      IMAGE_PREFIX_JFIF;
+        uint64      OTHER_PREFIX;
+        PVLogger    *iLogger;
 };
 
 
@@ -198,8 +198,8 @@ class ITunesGenreAtom: public ITunesMetaDataAtom
     private:
 // Genre of Song
         OSCL_wHeapString<OsclMemAllocator> _gnreString; // Customized String of Genre
-        uint16	_gnreID; // Genre ID
-        GnreVersion	_gnreVersion; // Whether gnre is String or Integer ID Number*/
+        uint16  _gnreID; // Genre ID
+        GnreVersion _gnreVersion; // Whether gnre is String or Integer ID Number*/
 };
 
 //************************************ Day Class Starts  **********************************
@@ -757,7 +757,7 @@ class ITunesILSTAtom : public Atom
         uint8 getTotalCDIdentifierData() const
         {
 
-            return	_iITunesCDIdentifierFreeFormDataAtomNum;
+            return  _iITunesCDIdentifierFreeFormDataAtomNum;
 
         }
 
@@ -797,74 +797,74 @@ class ITunesILSTAtom : public Atom
         ItunesNameAtom     *_pITunesNameAtom;
         Oscl_Vector<ItunesNameAtom*, OsclMemAllocator> *_pNameAtomVec;
         // Title/Name Atom
-        ITunesTitleAtom		*_pITunesTitleAtom;
+        ITunesTitleAtom     *_pITunesTitleAtom;
 
         //Track's subtitle
         ITunesTrackSubTitleAtom *_pITunesTrackSubTitleAtom;
 
         // Artist/Performer of the Song
-        ITunesArtistAtom		*_pITunesArtistAtom;
+        ITunesArtistAtom        *_pITunesArtistAtom;
 
         //Artist for the whole album (if different than the individual tracks)
-        ITunesAlbumArtistAtom		*_pITunesAlbumArtistAtom;
+        ITunesAlbumArtistAtom       *_pITunesAlbumArtistAtom;
 
         // Album of Song
-        ITunesAlbumAtom			*_pITunesAlbumAtom;
+        ITunesAlbumAtom         *_pITunesAlbumAtom;
 
         // Genre
-        ITunesGenreAtom			*_pITunesGenreAtom;
+        ITunesGenreAtom         *_pITunesGenreAtom;
 
         // 4 byte String representing Year, when song was recorded.
-        ITunesYearAtom			*_pITunesYearAtom;
+        ITunesYearAtom          *_pITunesYearAtom;
 
         // Tool/Encoder used for creation of this file.
-        ITunesToolAtom			*_pITunesToolAtom;
+        ITunesToolAtom          *_pITunesToolAtom;
 
         //Person or company that encoded the recording
         ITunesEncodedByAtom     *_pITunesEncodedByAtom;
 
         // Writer of the Song
-        ITunesWriterAtom		*_pITunesWriterAtom;
+        ITunesWriterAtom        *_pITunesWriterAtom;
 
         // Group data.
-        ITunesGroupAtom			*_pITunesGroupAtom;
+        ITunesGroupAtom         *_pITunesGroupAtom;
 
         // Comment
-        ITunesCommentAtom		*_pITunesCommentAtom;
+        ITunesCommentAtom       *_pITunesCommentAtom;
 
         // Track Number
-        ITunesTracktAtom		*_pITunesTracktAtom;
+        ITunesTracktAtom        *_pITunesTracktAtom;
 
         // Whether this file is the Part of Compilation or not.
-        ITunesCompileAtom		*_pITunesCompileAtom;
+        ITunesCompileAtom       *_pITunesCompileAtom;
 
         // Does song have explicit content?
         ITunesContentRatingAtom *_pITunesContentRatingAtom;
 
         // Number of Beats per Minute
-        ITunesTempoAtom			*_pITunesTempoAtom;
+        ITunesTempoAtom         *_pITunesTempoAtom;
 
-        ITunesCopyrightAtom		*_pITunesCopyrightAtom;
+        ITunesCopyrightAtom     *_pITunesCopyrightAtom;
 
-        ITunesDescriptionAtom	*_pITunesDescriptionAtom;
+        ITunesDescriptionAtom   *_pITunesDescriptionAtom;
 
 
         // Album Art Data- PNG Image data
         //PvmfApicStruct _PNGimageData;
-        ITunesCoverImageAtom	*_pITunesCoverImageAtom;
+        ITunesCoverImageAtom    *_pITunesCoverImageAtom;
 
         // Disk Number
-        ITunesDiskDatatAtom		*_pITunesDiskDatatAtom;
+        ITunesDiskDatatAtom     *_pITunesDiskDatatAtom;
 
         // Normalization Free Form Data
-        ITunesFreeFormDataAtom	*_pITunesNormalizationFreeFormDataAtom;
+        ITunesFreeFormDataAtom  *_pITunesNormalizationFreeFormDataAtom;
 
         // Normalization Free Form Tool Data
-        ITunesFreeFormDataAtom	*_pITunesNormalizationFreeFormDataToolAtom;
+        ITunesFreeFormDataAtom  *_pITunesNormalizationFreeFormDataToolAtom;
 
         // CD Identifier Free Form Data
         uint8 _iITunesCDIdentifierFreeFormDataAtomNum;
-        ITunesFreeFormDataAtom	*_pITunesCDIdentifierFreeFormDataAtom[MAX_CD_IDENTIFIER_FREE_DATA_ATOM];
+        ITunesFreeFormDataAtom  *_pITunesCDIdentifierFreeFormDataAtom[MAX_CD_IDENTIFIER_FREE_DATA_ATOM];
 
         //CD Track Number Free Form Data
         ITunesFreeFormDataAtom *_pITunesCDTrackNumberFreeFormDataAtom;
@@ -873,7 +873,7 @@ class ITunesILSTAtom : public Atom
         ITunesFreeFormDataAtom *_pITunesCDDB1FreeFormDataAtom;
 
         // Lyrics of the Song
-        ITunesLyricsAtom		*_pITunesLyricsAtom;
+        ITunesLyricsAtom        *_pITunesLyricsAtom;
 
         PVLogger *iLogger;
 };

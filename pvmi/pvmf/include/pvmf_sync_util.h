@@ -50,12 +50,12 @@ const int32 DEFAULT_LATE_MARGIN = 200;
 
 typedef enum
 {
-    PVMF_SYNC_EARLY = 0,	/**< Timestamp is earlier than the current clock by more than the early margin.*/
-    PVMF_SYNC_ON_TIME, 	/**< Timestamp is on time with regards to current clock. */
-    PVMF_SYNC_LATE,			/**< Timestamp is later than the current clock by more than the late margin. */
-    PVMF_SYNC_SKIPPED,		/**< Timestamp falls within the range of skipped media data timestamps. */
+    PVMF_SYNC_EARLY = 0,    /**< Timestamp is earlier than the current clock by more than the early margin.*/
+    PVMF_SYNC_ON_TIME,  /**< Timestamp is on time with regards to current clock. */
+    PVMF_SYNC_LATE,         /**< Timestamp is later than the current clock by more than the late margin. */
+    PVMF_SYNC_SKIPPED,      /**< Timestamp falls within the range of skipped media data timestamps. */
     PVMF_SYNC_SKIPPED_RENDER,/**< same as PVMF_SYNC_SKIPPED, but we want to render skipped data */
-    PVMF_SYNC_SKIP_COMPLETE	/**< Timestamp is the first media data timestamp after the skipped range. */
+    PVMF_SYNC_SKIP_COMPLETE /**< Timestamp is the first media data timestamp after the skipped range. */
 } PvmfSyncStatus;
 
 /**
@@ -101,8 +101,8 @@ class PvmfSyncUtil
          * @param aDuration Duration of the media data in milliseconds.
          * @param aMillisecondsEarly If return status is PVMF_SYNC_EARLY, the number of milliseconds to the
          *                           time to process the data is saved to this parameter
-         *		If return is PVMF_SYNC_LATE, the amount by which the frame was late is returned.
-         *		If return is PVMF_SYNC_SKIPPED, the delta from the frame TS to the skip mark is returned.
+         *      If return is PVMF_SYNC_LATE, the amount by which the frame was late is returned.
+         *      If return is PVMF_SYNC_SKIPPED, the delta from the frame TS to the skip mark is returned.
          * @return Synchronization status.
          */
         OSCL_IMPORT_REF PvmfSyncStatus SyncMediaData(PVMFTimestamp aDataTimestamp, uint32 aDuration, uint32& aMillisecondsEarly);

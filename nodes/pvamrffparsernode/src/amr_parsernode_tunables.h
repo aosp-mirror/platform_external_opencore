@@ -28,8 +28,8 @@
 #define PVAMRFF_MEDIADATA_CHUNKSIZE 128
 
 // Temporary until actual max track data size if used.
-#define MAXTRACKDATASIZE	1024
-#define MAX_PORTS			2
-#define NUM_AMR_FRAMES		10
+#define MAXTRACKDATASIZE    1024
+#define MAX_PORTS           2
+#define NUM_AMR_FRAMES      10
 
 #endif /*PVMF_AMRFFPARSER_TUNABLES_H_INCLUDED*/

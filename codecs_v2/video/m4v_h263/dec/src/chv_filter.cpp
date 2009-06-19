@@ -20,44 +20,44 @@
  INPUT AND OUTPUT DEFINITIONS
 
  Inputs:
-	[input_variable_name] = [description of the input to module, its type
-				 definition, and length (when applicable)]
+    [input_variable_name] = [description of the input to module, its type
+                 definition, and length (when applicable)]
 
  Local Stores/Buffers/Pointers Needed:
-	[local_store_name] = [description of the local store, its type
-			      definition, and length (when applicable)]
-	[local_buffer_name] = [description of the local buffer, its type
-			       definition, and length (when applicable)]
-	[local_ptr_name] = [description of the local pointer, its type
-			    definition, and length (when applicable)]
+    [local_store_name] = [description of the local store, its type
+                  definition, and length (when applicable)]
+    [local_buffer_name] = [description of the local buffer, its type
+                   definition, and length (when applicable)]
+    [local_ptr_name] = [description of the local pointer, its type
+                definition, and length (when applicable)]
 
  Global Stores/Buffers/Pointers Needed:
-	[global_store_name] = [description of the global store, its type
-			       definition, and length (when applicable)]
-	[global_buffer_name] = [description of the global buffer, its type
-				definition, and length (when applicable)]
-	[global_ptr_name] = [description of the global pointer, its type
-			     definition, and length (when applicable)]
+    [global_store_name] = [description of the global store, its type
+                   definition, and length (when applicable)]
+    [global_buffer_name] = [description of the global buffer, its type
+                definition, and length (when applicable)]
+    [global_ptr_name] = [description of the global pointer, its type
+                 definition, and length (when applicable)]
 
  Outputs:
-	[return_variable_name] = [description of data/pointer returned
-				  by module, its type definition, and length
-				  (when applicable)]
+    [return_variable_name] = [description of data/pointer returned
+                  by module, its type definition, and length
+                  (when applicable)]
 
  Pointers and Buffers Modified:
-	[variable_bfr_ptr] points to the [describe where the
-	  variable_bfr_ptr points to, its type definition, and length
-	  (when applicable)]
-	[variable_bfr] contents are [describe the new contents of
-	  variable_bfr]
+    [variable_bfr_ptr] points to the [describe where the
+      variable_bfr_ptr points to, its type definition, and length
+      (when applicable)]
+    [variable_bfr] contents are [describe the new contents of
+      variable_bfr]
 
  Local Stores Modified:
-	[local_store_name] = [describe new contents, its type
-			      definition, and length (when applicable)]
+    [local_store_name] = [describe new contents, its type
+                  definition, and length (when applicable)]
 
  Global Stores Modified:
-	[global_store_name] = [describe new contents, its type
-			       definition, and length (when applicable)]
+    [global_store_name] = [describe new contents, its type
+                   definition, and length (when applicable)]
 
 ------------------------------------------------------------------------------
  FUNCTION DESCRIPTION
@@ -84,21 +84,21 @@
      the resources used should be documented below.
 
  STACK USAGE: [stack count for this module] + [variable to represent
-		  stack usage for each subroutine called]
+          stack usage for each subroutine called]
 
      where: [stack usage variable] = stack usage for [subroutine
-		 name] (see [filename].ext)
+         name] (see [filename].ext)
 
  DATA MEMORY USED: x words
 
  PROGRAM MEMORY USED: x words
 
  CLOCK CYCLES: [cycle count equation for this module] + [variable
-		   used to represent cycle count for each subroutine
-		   called]
+           used to represent cycle count for each subroutine
+           called]
 
      where: [cycle count variable] = cycle count for [subroutine
-		name] (see [filename].ext)
+        name] (see [filename].ext)
 
 ------------------------------------------------------------------------------
 */
@@ -107,8 +107,8 @@
 /*----------------------------------------------------------------------------
 ; INCLUDES
 ----------------------------------------------------------------------------*/
-#include 	"mp4dec_lib.h"
-#include 	"post_proc.h"
+#include    "mp4dec_lib.h"
+#include    "post_proc.h"
 
 #define OSCL_DISABLE_WARNING_CONV_POSSIBLE_LOSS_OF_DATA
 #include "osclconfig_compiler_warnings.h"
@@ -146,27 +146,27 @@
 #ifdef PV_POSTPROC_ON
 
 /*************************************************************************
-	Function prototype : void CombinedHorzVertFilter(	uint8 *rec,
-														int width,
-														int height,
-														int *QP_store,
-														int chr,
-														uint8 *pp_mod)
-	Parameters	:
-		rec		:	pointer to the decoded frame buffer.
-		width	:	width of decoded frame.
-		height	:	height of decoded frame
-		QP_store:	pointer to the array of QP corresponding to the decoded frame.
-					It had only one value for each MB.
-		chr		:	luma or color indication
-					== 0 luma
-					== 1 color
-		pp_mod	:	The semphore used for deblocking
+    Function prototype : void CombinedHorzVertFilter(   uint8 *rec,
+                                                        int width,
+                                                        int height,
+                                                        int *QP_store,
+                                                        int chr,
+                                                        uint8 *pp_mod)
+    Parameters  :
+        rec     :   pointer to the decoded frame buffer.
+        width   :   width of decoded frame.
+        height  :   height of decoded frame
+        QP_store:   pointer to the array of QP corresponding to the decoded frame.
+                    It had only one value for each MB.
+        chr     :   luma or color indication
+                    == 0 luma
+                    == 1 color
+        pp_mod  :   The semphore used for deblocking
 
-	Remark		:	The function do the deblocking on decoded frames.
-					First based on the semaphore info., it is divided into hard and soft filtering.
-					To differentiate real and fake edge, it then check the difference with QP to
-					decide whether to do the filtering or not.
+    Remark      :   The function do the deblocking on decoded frames.
+                    First based on the semaphore info., it is divided into hard and soft filtering.
+                    To differentiate real and fake edge, it then check the difference with QP to
+                    decide whether to do the filtering or not.
 
 *************************************************************************/
 
@@ -199,71 +199,71 @@ void CombinedHorzVertFilter(
     pp_w = (width >> 3);
     pp_h = (height >> 3);
 
-    for (mbr = 0; mbr < pp_h; mbr += 2) 		/* row of blocks */
+    for (mbr = 0; mbr < pp_h; mbr += 2)         /* row of blocks */
     {
-        brwidth = mbr * pp_w;				/* number of blocks above current block row */
-        for (mbc = 0; mbc < pp_w; mbc += 2) 	/* col of blocks */
+        brwidth = mbr * pp_w;               /* number of blocks above current block row */
+        for (mbc = 0; mbc < pp_w; mbc += 2)     /* col of blocks */
         {
             if (!chr)
-                QP = QP_store[(brwidth>>2) + (mbc>>1)];	/* QP is per MB based value */
+                QP = QP_store[(brwidth>>2) + (mbc>>1)]; /* QP is per MB based value */
 
             /********* for each block **************/
             /****************** Horiz. Filtering ********************/
-            for (br = mbr + 1; br < mbr + 3; br++) 	/* 2x2 blocks */
+            for (br = mbr + 1; br < mbr + 3; br++)  /* 2x2 blocks */
             {
-                brwidth += pp_w;					/* number of blocks above & left current block row */
+                brwidth += pp_w;                    /* number of blocks above & left current block row */
                 /* the profile on ARM920T shows separate these two boundary check is faster than combine them */
-                if (br < pp_h)					/* boundary : don't do it on the lowest row block */
+                if (br < pp_h)                  /* boundary : don't do it on the lowest row block */
                     for (bc = mbc; bc < mbc + 2; bc++)
                     {
                         /****** check boundary for deblocking ************/
-                        if (bc < pp_w) 				/* boundary : don't do it on the most right col block */
+                        if (bc < pp_w)              /* boundary : don't do it on the most right col block */
                         {
                             ptr = rec + (brwidth << 6) + (bc << 3);
                             jVal0 = brwidth + bc;
-                            if (chr)	QP = QP_store[jVal0];
+                            if (chr)    QP = QP_store[jVal0];
 
-                            ptr_e = ptr + 8;		/* pointer to where the loop ends */
+                            ptr_e = ptr + 8;        /* pointer to where the loop ends */
 
                             if (((pp_mod[jVal0]&0x02)) && ((pp_mod[jVal0-pp_w]&0x02)))
                             {
                                 /* Horiz Hard filter */
                                 do
                                 {
-                                    jVal0 = *(ptr - width);		/* C */
-                                    jVal1 = *ptr;				/* D */
+                                    jVal0 = *(ptr - width);     /* C */
+                                    jVal1 = *ptr;               /* D */
                                     jVal2 = jVal1 - jVal0;
 
                                     if (((jVal2 > 0) && (jVal2 < (QP << 1)))
                                             || ((jVal2 < 0) && (jVal2 > -(QP << 1)))) /* (D-C) compared with 2QP */
                                     {
                                         /* differentiate between real and fake edge */
-                                        jVal0 = ((jVal0 + jVal1) >> 1);		/* (D+C)/2 */
-                                        *(ptr - width) = (uint8)(jVal0);	/*	C */
-                                        *ptr = (uint8)(jVal0);			/*	D */
+                                        jVal0 = ((jVal0 + jVal1) >> 1);     /* (D+C)/2 */
+                                        *(ptr - width) = (uint8)(jVal0);    /*  C */
+                                        *ptr = (uint8)(jVal0);          /*  D */
 
-                                        jVal0 = *(ptr - (width << 1));		/* B */
-                                        jVal1 = *(ptr + width);			/* E */
-                                        jVal2 = jVal1 - jVal0;		/* E-B */
+                                        jVal0 = *(ptr - (width << 1));      /* B */
+                                        jVal1 = *(ptr + width);         /* E */
+                                        jVal2 = jVal1 - jVal0;      /* E-B */
 
                                         if (jVal2 > 0)
                                         {
                                             jVal0 += ((jVal2 + 3) >> 2);
                                             jVal1 -= ((jVal2 + 3) >> 2);
-                                            *(ptr - (width << 1)) = (uint8)jVal0;		/*  store B */
-                                            *(ptr + width) = (uint8)jVal1;			/* store E */
+                                            *(ptr - (width << 1)) = (uint8)jVal0;       /*  store B */
+                                            *(ptr + width) = (uint8)jVal1;          /* store E */
                                         }
                                         else if (jVal2)
                                         {
                                             jVal0 -= ((3 - jVal2) >> 2);
                                             jVal1 += ((3 - jVal2) >> 2);
-                                            *(ptr - (width << 1)) = (uint8)jVal0;		/*  store B */
-                                            *(ptr + width) = (uint8)jVal1;			/* store E */
+                                            *(ptr - (width << 1)) = (uint8)jVal0;       /*  store B */
+                                            *(ptr + width) = (uint8)jVal1;          /* store E */
                                         }
 
-                                        jVal0 = *(ptr - (width << 1) - width);	/* A */
-                                        jVal1 = *(ptr + (width << 1));		/* F */
-                                        jVal2 = jVal1 - jVal0;				/* (F-A) */
+                                        jVal0 = *(ptr - (width << 1) - width);  /* A */
+                                        jVal1 = *(ptr + (width << 1));      /* F */
+                                        jVal2 = jVal1 - jVal0;              /* (F-A) */
 
                                         if (jVal2 > 0)
                                         {
@@ -287,36 +287,36 @@ void CombinedHorzVertFilter(
                             {
                                 do
                                 {
-                                    jVal0 = *(ptr - width);	/* B */
-                                    jVal1 = *ptr;			/* C */
-                                    jVal2 = jVal1 - jVal0;	/* C-B */
+                                    jVal0 = *(ptr - width); /* B */
+                                    jVal1 = *ptr;           /* C */
+                                    jVal2 = jVal1 - jVal0;  /* C-B */
 
                                     if (((jVal2 > 0) && (jVal2 < (QP)))
                                             || ((jVal2 < 0) && (jVal2 > -(QP)))) /* (C-B) compared with QP */
                                     {
 
-                                        jVal0 = ((jVal0 + jVal1) >> 1);		/* (B+C)/2 cannot overflow; ceil() */
-                                        *(ptr - width) = (uint8)(jVal0);	/* B = (B+C)/2 */
-                                        *ptr = (uint8)jVal0;			/* C = (B+C)/2 */
+                                        jVal0 = ((jVal0 + jVal1) >> 1);     /* (B+C)/2 cannot overflow; ceil() */
+                                        *(ptr - width) = (uint8)(jVal0);    /* B = (B+C)/2 */
+                                        *ptr = (uint8)jVal0;            /* C = (B+C)/2 */
 
-                                        jVal0 = *(ptr - (width << 1));		/* A */
-                                        jVal1 = *(ptr + width);			/* D */
-                                        jVal2 = jVal1 - jVal0;			/* D-A */
+                                        jVal0 = *(ptr - (width << 1));      /* A */
+                                        jVal1 = *(ptr + width);         /* D */
+                                        jVal2 = jVal1 - jVal0;          /* D-A */
 
 
                                         if (jVal2 > 0)
                                         {
                                             jVal1 -= ((jVal2 + 7) >> 3);
                                             jVal0 += ((jVal2 + 7) >> 3);
-                                            *(ptr - (width << 1)) = (uint8)jVal0;		/* A */
-                                            *(ptr + width) = (uint8)jVal1;			/* D */
+                                            *(ptr - (width << 1)) = (uint8)jVal0;       /* A */
+                                            *(ptr + width) = (uint8)jVal1;          /* D */
                                         }
                                         else if (jVal2)
                                         {
                                             jVal1 += ((7 - jVal2) >> 3);
                                             jVal0 -= ((7 - jVal2) >> 3);
-                                            *(ptr - (width << 1)) = (uint8)jVal0;		/* A */
-                                            *(ptr + width) = (uint8)jVal1;			/* D */
+                                            *(ptr - (width << 1)) = (uint8)jVal0;       /* A */
+                                            *(ptr + width) = (uint8)jVal1;          /* D */
                                         }
                                     }
                                 }
@@ -337,7 +337,7 @@ void CombinedHorzVertFilter(
                         {
                             ptr = rec + (brwidth << 6) + (bc << 3);
                             jVal0 = brwidth + bc;
-                            if (chr)	QP = QP_store[jVal0];
+                            if (chr)    QP = QP_store[jVal0];
 
                             ptr_e = ptr + (width << 3);
 
@@ -346,56 +346,56 @@ void CombinedHorzVertFilter(
                                 /* Vert Hard filter */
                                 do
                                 {
-                                    jVal1 = *ptr;		/* D */
-                                    jVal0 = *(ptr - 1);	/* C */
-                                    jVal2 = jVal1 - jVal0;	/* D-C */
+                                    jVal1 = *ptr;       /* D */
+                                    jVal0 = *(ptr - 1); /* C */
+                                    jVal2 = jVal1 - jVal0;  /* D-C */
 
                                     if (((jVal2 > 0) && (jVal2 < (QP << 1)))
                                             || ((jVal2 < 0) && (jVal2 > -(QP << 1))))
                                     {
-                                        jVal1 = (jVal0 + jVal1) >> 1;	/* (C+D)/2 */
-                                        *ptr		=	jVal1;
-                                        *(ptr - 1)	=	jVal1;
+                                        jVal1 = (jVal0 + jVal1) >> 1;   /* (C+D)/2 */
+                                        *ptr        =   jVal1;
+                                        *(ptr - 1)  =   jVal1;
 
-                                        jVal1 = *(ptr + 1);		/* E */
-                                        jVal0 = *(ptr - 2);		/* B */
-                                        jVal2 = jVal1 - jVal0;		/* E-B */
+                                        jVal1 = *(ptr + 1);     /* E */
+                                        jVal0 = *(ptr - 2);     /* B */
+                                        jVal2 = jVal1 - jVal0;      /* E-B */
 
                                         if (jVal2 > 0)
                                         {
-                                            jVal1 -= ((jVal2 + 3) >> 2);		/* E = E -(E-B)/4 */
-                                            jVal0 += ((jVal2 + 3) >> 2);		/* B = B +(E-B)/4 */
+                                            jVal1 -= ((jVal2 + 3) >> 2);        /* E = E -(E-B)/4 */
+                                            jVal0 += ((jVal2 + 3) >> 2);        /* B = B +(E-B)/4 */
                                             *(ptr + 1) = jVal1;
                                             *(ptr - 2) = jVal0;
                                         }
                                         else if (jVal2)
                                         {
-                                            jVal1 += ((3 - jVal2) >> 2);		/* E = E -(E-B)/4 */
-                                            jVal0 -= ((3 - jVal2) >> 2);		/* B = B +(E-B)/4 */
+                                            jVal1 += ((3 - jVal2) >> 2);        /* E = E -(E-B)/4 */
+                                            jVal0 -= ((3 - jVal2) >> 2);        /* B = B +(E-B)/4 */
                                             *(ptr + 1) = jVal1;
                                             *(ptr - 2) = jVal0;
                                         }
 
-                                        jVal1 = *(ptr + 2);		/* F */
-                                        jVal0 = *(ptr - 3);		/* A */
+                                        jVal1 = *(ptr + 2);     /* F */
+                                        jVal0 = *(ptr - 3);     /* A */
 
-                                        jVal2 = jVal1 - jVal0;			/* (F-A) */
+                                        jVal2 = jVal1 - jVal0;          /* (F-A) */
 
                                         if (jVal2 > 0)
                                         {
-                                            jVal1 -= ((jVal2 + 7) >> 3);	/* F -= (F-A)/8 */
-                                            jVal0 += ((jVal2 + 7) >> 3);	/* A += (F-A)/8 */
+                                            jVal1 -= ((jVal2 + 7) >> 3);    /* F -= (F-A)/8 */
+                                            jVal0 += ((jVal2 + 7) >> 3);    /* A += (F-A)/8 */
                                             *(ptr + 2) = jVal1;
                                             *(ptr - 3) = jVal0;
                                         }
                                         else if (jVal2)
                                         {
-                                            jVal1 -= ((jVal2 - 7) >> 3);	/* F -= (F-A)/8 */
-                                            jVal0 += ((jVal2 - 7) >> 3);	/* A += (F-A)/8 */
+                                            jVal1 -= ((jVal2 - 7) >> 3);    /* F -= (F-A)/8 */
+                                            jVal0 += ((jVal2 - 7) >> 3);    /* A += (F-A)/8 */
                                             *(ptr + 2) = jVal1;
                                             *(ptr - 3) = jVal0;
                                         }
-                                    }	/* end of ver hard filetering */
+                                    }   /* end of ver hard filetering */
                                 }
                                 while ((ptr += width) < ptr_e);
                             }
@@ -403,8 +403,8 @@ void CombinedHorzVertFilter(
                             {
                                 do
                                 {
-                                    jVal1 = *ptr;				/* C */
-                                    jVal0 = *(ptr - 1);			/* B */
+                                    jVal1 = *ptr;               /* C */
+                                    jVal0 = *(ptr - 1);         /* B */
                                     jVal2 = jVal1 - jVal0;
 
                                     if (((jVal2 > 0) && (jVal2 < (QP)))
@@ -412,25 +412,25 @@ void CombinedHorzVertFilter(
                                     {
 
                                         jVal1 = (jVal0 + jVal1 + 1) >> 1;
-                                        *ptr = jVal1;			/* C */
-                                        *(ptr - 1) = jVal1;		/* B */
+                                        *ptr = jVal1;           /* C */
+                                        *(ptr - 1) = jVal1;     /* B */
 
-                                        jVal1 = *(ptr + 1);		/* D */
-                                        jVal0 = *(ptr - 2);		/* A */
-                                        jVal2 = (jVal1 - jVal0);		/* D- A */
+                                        jVal1 = *(ptr + 1);     /* D */
+                                        jVal0 = *(ptr - 2);     /* A */
+                                        jVal2 = (jVal1 - jVal0);        /* D- A */
 
                                         if (jVal2 > 0)
                                         {
-                                            jVal1 -= (((jVal2) + 7) >> 3);		/* D -= (D-A)/8 */
-                                            jVal0 += (((jVal2) + 7) >> 3);		/* A += (D-A)/8 */
+                                            jVal1 -= (((jVal2) + 7) >> 3);      /* D -= (D-A)/8 */
+                                            jVal0 += (((jVal2) + 7) >> 3);      /* A += (D-A)/8 */
                                             *(ptr + 1) = jVal1;
                                             *(ptr - 2) = jVal0;
 
                                         }
                                         else if (jVal2)
                                         {
-                                            jVal1 += ((7 - (jVal2)) >> 3);		/* D -= (D-A)/8 */
-                                            jVal0 -= ((7 - (jVal2)) >> 3);		/* A += (D-A)/8 */
+                                            jVal1 += ((7 - (jVal2)) >> 3);      /* D -= (D-A)/8 */
+                                            jVal0 -= ((7 - (jVal2)) >> 3);      /* A += (D-A)/8 */
                                             *(ptr + 1) = jVal1;
                                             *(ptr - 2) = jVal0;
                                         }
@@ -476,71 +476,71 @@ void CombinedHorzVertFilter_NoSoftDeblocking(
     pp_w = (width >> 3);
     pp_h = (height >> 3);
 
-    for (mbr = 0; mbr < pp_h; mbr += 2) 		/* row of blocks */
+    for (mbr = 0; mbr < pp_h; mbr += 2)         /* row of blocks */
     {
-        brwidth = mbr * pp_w;				/* number of blocks above current block row */
-        for (mbc = 0; mbc < pp_w; mbc += 2) 	/* col of blocks */
+        brwidth = mbr * pp_w;               /* number of blocks above current block row */
+        for (mbc = 0; mbc < pp_w; mbc += 2)     /* col of blocks */
         {
             if (!chr)
-                QP = QP_store[(brwidth>>2) + (mbc>>1)];	/* QP is per MB based value */
+                QP = QP_store[(brwidth>>2) + (mbc>>1)]; /* QP is per MB based value */
 
             /********* for each block **************/
             /****************** Horiz. Filtering ********************/
-            for (br = mbr + 1; br < mbr + 3; br++) 	/* 2x2 blocks */
+            for (br = mbr + 1; br < mbr + 3; br++)  /* 2x2 blocks */
             {
-                brwidth += pp_w;					/* number of blocks above & left current block row */
+                brwidth += pp_w;                    /* number of blocks above & left current block row */
                 /* the profile on ARM920T shows separate these two boundary check is faster than combine them */
-                if (br < pp_h)					/* boundary : don't do it on the lowest row block */
+                if (br < pp_h)                  /* boundary : don't do it on the lowest row block */
                     for (bc = mbc; bc < mbc + 2; bc++)
                     {
                         /****** check boundary for deblocking ************/
-                        if (bc < pp_w) 				/* boundary : don't do it on the most right col block */
+                        if (bc < pp_w)              /* boundary : don't do it on the most right col block */
                         {
                             ptr = rec + (brwidth << 6) + (bc << 3);
                             jVal0 = brwidth + bc;
-                            if (chr)	QP = QP_store[jVal0];
+                            if (chr)    QP = QP_store[jVal0];
 
-                            ptr_e = ptr + 8;		/* pointer to where the loop ends */
+                            ptr_e = ptr + 8;        /* pointer to where the loop ends */
 
                             if (((pp_mod[jVal0]&0x02)) && ((pp_mod[jVal0-pp_w]&0x02)))
                             {
                                 /* Horiz Hard filter */
                                 do
                                 {
-                                    jVal0 = *(ptr - width);		/* C */
-                                    jVal1 = *ptr;				/* D */
+                                    jVal0 = *(ptr - width);     /* C */
+                                    jVal1 = *ptr;               /* D */
                                     jVal2 = jVal1 - jVal0;
 
                                     if (((jVal2 > 0) && (jVal2 < (QP << 1)))
                                             || ((jVal2 < 0) && (jVal2 > -(QP << 1)))) /* (D-C) compared with 2QP */
                                     {
                                         /* differentiate between real and fake edge */
-                                        jVal0 = ((jVal0 + jVal1) >> 1);		/* (D+C)/2 */
-                                        *(ptr - width) = (uint8)(jVal0);	/*	C */
-                                        *ptr = (uint8)(jVal0);			/*	D */
+                                        jVal0 = ((jVal0 + jVal1) >> 1);     /* (D+C)/2 */
+                                        *(ptr - width) = (uint8)(jVal0);    /*  C */
+                                        *ptr = (uint8)(jVal0);          /*  D */
 
-                                        jVal0 = *(ptr - (width << 1));		/* B */
-                                        jVal1 = *(ptr + width);			/* E */
-                                        jVal2 = jVal1 - jVal0;		/* E-B */
+                                        jVal0 = *(ptr - (width << 1));      /* B */
+                                        jVal1 = *(ptr + width);         /* E */
+                                        jVal2 = jVal1 - jVal0;      /* E-B */
 
                                         if (jVal2 > 0)
                                         {
                                             jVal0 += ((jVal2 + 3) >> 2);
                                             jVal1 -= ((jVal2 + 3) >> 2);
-                                            *(ptr - (width << 1)) = (uint8)jVal0;		/*  store B */
-                                            *(ptr + width) = (uint8)jVal1;			/* store E */
+                                            *(ptr - (width << 1)) = (uint8)jVal0;       /*  store B */
+                                            *(ptr + width) = (uint8)jVal1;          /* store E */
                                         }
                                         else if (jVal2)
                                         {
                                             jVal0 -= ((3 - jVal2) >> 2);
                                             jVal1 += ((3 - jVal2) >> 2);
-                                            *(ptr - (width << 1)) = (uint8)jVal0;		/*  store B */
-                                            *(ptr + width) = (uint8)jVal1;			/* store E */
+                                            *(ptr - (width << 1)) = (uint8)jVal0;       /*  store B */
+                                            *(ptr + width) = (uint8)jVal1;          /* store E */
                                         }
 
-                                        jVal0 = *(ptr - (width << 1) - width);	/* A */
-                                        jVal1 = *(ptr + (width << 1));		/* F */
-                                        jVal2 = jVal1 - jVal0;				/* (F-A) */
+                                        jVal0 = *(ptr - (width << 1) - width);  /* A */
+                                        jVal1 = *(ptr + (width << 1));      /* F */
+                                        jVal2 = jVal1 - jVal0;              /* (F-A) */
 
                                         if (jVal2 > 0)
                                         {
@@ -576,7 +576,7 @@ void CombinedHorzVertFilter_NoSoftDeblocking(
                         {
                             ptr = rec + (brwidth << 6) + (bc << 3);
                             jVal0 = brwidth + bc;
-                            if (chr)	QP = QP_store[jVal0];
+                            if (chr)    QP = QP_store[jVal0];
 
                             ptr_e = ptr + (width << 3);
 
@@ -585,56 +585,56 @@ void CombinedHorzVertFilter_NoSoftDeblocking(
                                 /* Vert Hard filter */
                                 do
                                 {
-                                    jVal1 = *ptr;		/* D */
-                                    jVal0 = *(ptr - 1);	/* C */
-                                    jVal2 = jVal1 - jVal0;	/* D-C */
+                                    jVal1 = *ptr;       /* D */
+                                    jVal0 = *(ptr - 1); /* C */
+                                    jVal2 = jVal1 - jVal0;  /* D-C */
 
                                     if (((jVal2 > 0) && (jVal2 < (QP << 1)))
                                             || ((jVal2 < 0) && (jVal2 > -(QP << 1))))
                                     {
-                                        jVal1 = (jVal0 + jVal1) >> 1;	/* (C+D)/2 */
-                                        *ptr		=	jVal1;
-                                        *(ptr - 1)	=	jVal1;
+                                        jVal1 = (jVal0 + jVal1) >> 1;   /* (C+D)/2 */
+                                        *ptr        =   jVal1;
+                                        *(ptr - 1)  =   jVal1;
 
-                                        jVal1 = *(ptr + 1);		/* E */
-                                        jVal0 = *(ptr - 2);		/* B */
-                                        jVal2 = jVal1 - jVal0;		/* E-B */
+                                        jVal1 = *(ptr + 1);     /* E */
+                                        jVal0 = *(ptr - 2);     /* B */
+                                        jVal2 = jVal1 - jVal0;      /* E-B */
 
                                         if (jVal2 > 0)
                                         {
-                                            jVal1 -= ((jVal2 + 3) >> 2);		/* E = E -(E-B)/4 */
-                                            jVal0 += ((jVal2 + 3) >> 2);		/* B = B +(E-B)/4 */
+                                            jVal1 -= ((jVal2 + 3) >> 2);        /* E = E -(E-B)/4 */
+                                            jVal0 += ((jVal2 + 3) >> 2);        /* B = B +(E-B)/4 */
                                             *(ptr + 1) = jVal1;
                                             *(ptr - 2) = jVal0;
                                         }
                                         else if (jVal2)
                                         {
-                                            jVal1 += ((3 - jVal2) >> 2);		/* E = E -(E-B)/4 */
-                                            jVal0 -= ((3 - jVal2) >> 2);		/* B = B +(E-B)/4 */
+                                            jVal1 += ((3 - jVal2) >> 2);        /* E = E -(E-B)/4 */
+                                            jVal0 -= ((3 - jVal2) >> 2);        /* B = B +(E-B)/4 */
                                             *(ptr + 1) = jVal1;
                                             *(ptr - 2) = jVal0;
                                         }
 
-                                        jVal1 = *(ptr + 2);		/* F */
-                                        jVal0 = *(ptr - 3);		/* A */
+                                        jVal1 = *(ptr + 2);     /* F */
+                                        jVal0 = *(ptr - 3);     /* A */
 
-                                        jVal2 = jVal1 - jVal0;			/* (F-A) */
+                                        jVal2 = jVal1 - jVal0;          /* (F-A) */
 
                                         if (jVal2 > 0)
                                         {
-                                            jVal1 -= ((jVal2 + 7) >> 3);	/* F -= (F-A)/8 */
-                                            jVal0 += ((jVal2 + 7) >> 3);	/* A += (F-A)/8 */
+                                            jVal1 -= ((jVal2 + 7) >> 3);    /* F -= (F-A)/8 */
+                                            jVal0 += ((jVal2 + 7) >> 3);    /* A += (F-A)/8 */
                                             *(ptr + 2) = jVal1;
                                             *(ptr - 3) = jVal0;
                                         }
                                         else if (jVal2)
                                         {
-                                            jVal1 -= ((jVal2 - 7) >> 3);	/* F -= (F-A)/8 */
-                                            jVal0 += ((jVal2 - 7) >> 3);	/* A += (F-A)/8 */
+                                            jVal1 -= ((jVal2 - 7) >> 3);    /* F -= (F-A)/8 */
+                                            jVal0 += ((jVal2 - 7) >> 3);    /* A += (F-A)/8 */
                                             *(ptr + 2) = jVal1;
                                             *(ptr - 3) = jVal0;
                                         }
-                                    }	/* end of ver hard filetering */
+                                    }   /* end of ver hard filetering */
                                 }
                                 while ((ptr += width) < ptr_e);
                             }

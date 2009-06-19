@@ -56,20 +56,20 @@
 
 /***********************************************************HeaderBegin*******
 *
-* File:	putvlc.c
+* File: putvlc.c
 *
-* Author:	Robert Danielsen, Telenor R&D
-* Created:	07.07.96
+* Author:   Robert Danielsen, Telenor R&D
+* Created:  07.07.96
 *
 * Description: Functions for writing to bitstream
 *
-* Notes: 	Same kind of tables as in the MPEG-2 software simulation
-*		group software.
+* Notes:    Same kind of tables as in the MPEG-2 software simulation
+*       group software.
 *
 * Modified:
-*	28.10.96 Robert Danielsen: Added PutCoeff_Intra(), renamed
-*			PutCoeff() to PutCoeff_Inter().
-*	06.11.96 Robert Danielsen: Added PutMCBPC_sep()
+*   28.10.96 Robert Danielsen: Added PutCoeff_Intra(), renamed
+*           PutCoeff() to PutCoeff_Inter().
+*   06.11.96 Robert Danielsen: Added PutMCBPC_sep()
 *      01.05.97 Luis Ducla-Soares: added PutCoeff_Intra_RVLC() and
 *                                  PutCoeff_Inter_RVLC().
 *
@@ -285,8 +285,8 @@ PutCBPY(Int cbpy, Char intra, BitstreamEncVideo *bitstream)
 
 /* 5/16/01, break up function for last and not-last coefficient */
 /* Note:::: I checked the ARM assembly for if( run > x && run < y) type
-	of code, they do a really good job compiling it to if( (UInt)(run-x) < y-x).
-	No need to hand-code it!!!!!, 6/1/2001 */
+    of code, they do a really good job compiling it to if( (UInt)(run-x) < y-x).
+    No need to hand-code it!!!!!, 6/1/2001 */
 
 Int PutCoeff_Inter(Int run, Int level, BitstreamEncVideo *bitstream)
 {
@@ -866,12 +866,12 @@ Int PutLevelCoeff_Intra_Last(Int run, Int level, BitstreamEncVideo *bitstream)
 
 
 /* ======================================================================== */
-/*	Function : MBVlcEncode()	     										*/
-/*	Date     : 09/10/2000													*/
-/*	Purpose  : Encode GOV Header											*/
-/*	In/out   :																*/
-/*	Return   :																*/
-/*	Modified : 5/21/01, break up into smaller functions 					*/
+/*  Function : MBVlcEncode()                                                */
+/*  Date     : 09/10/2000                                                   */
+/*  Purpose  : Encode GOV Header                                            */
+/*  In/out   :                                                              */
+/*  Return   :                                                              */
+/*  Modified : 5/21/01, break up into smaller functions                     */
 /* ======================================================================== */
 #ifndef H263_ONLY
 /**************************************/
@@ -890,13 +890,13 @@ void MBVlcEncodeDataPar_I_VOP(
     int i;
     UChar Mode = video->headerInfo.Mode[video->mbnum];
     UChar CBP;
-//	MacroBlock *MB=video->outputMB;
+//  MacroBlock *MB=video->outputMB;
     Int mbnum = video->mbnum;
     Int intraDC_decision, DC;
-//	int temp;
+//  int temp;
     Int dquant; /* 3/15/01 */
     RunLevelBlock *RLB = video->RLB;
-    BlockCodeCoeffPtr BlockCodeCoeff =	(BlockCodeCoeffPtr) blkCodePtr;
+    BlockCodeCoeffPtr BlockCodeCoeff = (BlockCodeCoeffPtr) blkCodePtr;
 
     /* DC and AC Prediction, 5/28/01, compute CBP, intraDC_decision*/
     DCACPred(video, Mode, &intraDC_decision, video->QP_prev);
@@ -937,15 +937,15 @@ void MBVlcEncodeDataPar_I_VOP(
             if (video->RLB[i].s[0])
                 DC = -DC;
             if (i < 4)
-                /*temp =*/ IntraDC_dpcm(DC, 1, bs1);		/* dct_dc_size_luminance, */
-            else									/* dct_dc_differential, and */
-                /*temp =*/ IntraDC_dpcm(DC, 0, bs1);		/* marker bit */
+                /*temp =*/ IntraDC_dpcm(DC, 1, bs1);        /* dct_dc_size_luminance, */
+            else                                    /* dct_dc_differential, and */
+                /*temp =*/ IntraDC_dpcm(DC, 0, bs1);        /* marker bit */
         }
     }
 
     /* SECOND PART: ALL TO BS2*/
 
-    BitstreamPut1Bits(bs2, video->acPredFlag[video->mbnum]);	/* ac_pred_flag */
+    BitstreamPut1Bits(bs2, video->acPredFlag[video->mbnum]);    /* ac_pred_flag */
 
     /*temp=*/
     PutCBPY(CBP >> 2, (Char)(1), bs2); /* cbpy */
@@ -953,7 +953,7 @@ void MBVlcEncodeDataPar_I_VOP(
 
     /* THIRD PART:  ALL TO BS3*/
     /* MB_CodeCoeff(video,bs3); */ /* 5/22/01, replaced with below */
-    for (i = 0;i < 6;i++)
+    for (i = 0; i < 6; i++)
     {
         if (CBP&(1 << (5 - i)))
             (*BlockCodeCoeff)(&(RLB[i]), bs3, 1 - intraDC_decision, ncoefblck[i], Mode);/* Code Intra AC*/
@@ -980,13 +980,13 @@ void MBVlcEncodeDataPar_P_VOP(
     UChar Mode = video->headerInfo.Mode[mbnum];
     Int QP_tmp = video->QPMB[mbnum];
     UChar CBP;
-//	MacroBlock *MB=video->outputMB;
+//  MacroBlock *MB=video->outputMB;
     Int intra, intraDC_decision, DC;
     Int pmvx, pmvy;
-//	int temp;
+//  int temp;
     Int dquant; /* 3/15/01 */
     RunLevelBlock *RLB = video->RLB;
-    BlockCodeCoeffPtr BlockCodeCoeff =	(BlockCodeCoeffPtr) blkCodePtr;
+    BlockCodeCoeffPtr BlockCodeCoeff = (BlockCodeCoeffPtr) blkCodePtr;
 
     intra = (Mode == MODE_INTRA || Mode == MODE_INTRA_Q);
 
@@ -1054,11 +1054,11 @@ void MBVlcEncodeDataPar_P_VOP(
     {
         find_pmvs(video, 0, &pmvx, &pmvy); /* Get predicted motion vectors */
         WriteMVcomponent(video->currVop->fcodeForward, video->mot[mbnum][0].x - pmvx, bs1); /* Write x to bitstream */
-        WriteMVcomponent(video->currVop->fcodeForward, video->mot[mbnum][0].y - pmvy, bs1);		/* Write y to bitstream */
+        WriteMVcomponent(video->currVop->fcodeForward, video->mot[mbnum][0].y - pmvy, bs1);     /* Write y to bitstream */
     }
     else if (Mode == MODE_INTER4V)
     {
-        for (i = 1;i < 5;i++)
+        for (i = 1; i < 5; i++)
         {
             find_pmvs(video, i, &pmvx, &pmvy);
             WriteMVcomponent(video->currVop->fcodeForward, video->mot[mbnum][i].x - pmvx, bs1);
@@ -1072,7 +1072,7 @@ void MBVlcEncodeDataPar_P_VOP(
 
     if (intra)
     {
-        BitstreamPut1Bits(bs2, video->acPredFlag[video->mbnum]);	/* ac_pred_flag */
+        BitstreamPut1Bits(bs2, video->acPredFlag[video->mbnum]);    /* ac_pred_flag */
         /*temp=*/
         PutCBPY(CBP >> 2, (Char)(Mode == MODE_INTRA || Mode == MODE_INTRA_Q), bs2); /* cbpy */
 
@@ -1087,14 +1087,14 @@ void MBVlcEncodeDataPar_P_VOP(
                 if (video->RLB[i].s[0])
                     DC = -DC;
                 if (i < 4)
-                    /*temp =*/ IntraDC_dpcm(DC, 1, bs2);		/* dct_dc_size_luminance, */
-                else									/* dct_dc_differential, and */
-                    /*temp =*/ IntraDC_dpcm(DC, 0, bs2);		/* marker bit */
+                    /*temp =*/ IntraDC_dpcm(DC, 1, bs2);        /* dct_dc_size_luminance, */
+                else                                    /* dct_dc_differential, and */
+                    /*temp =*/ IntraDC_dpcm(DC, 0, bs2);        /* marker bit */
             }
         }
 
-        /****************************/	/* THIRD PART: ALL TO BS3 */
-        for (i = 0;i < 6;i++)
+        /****************************/  /* THIRD PART: ALL TO BS3 */
+        for (i = 0; i < 6; i++)
         {
             if (CBP&(1 << (5 - i)))
                 (*BlockCodeCoeff)(&(RLB[i]), bs3, 1 - intraDC_decision, ncoefblck[i], Mode);/* Code Intra AC*/
@@ -1108,8 +1108,8 @@ void MBVlcEncodeDataPar_P_VOP(
             /*  MAY NEED TO CHANGE DQUANT HERE  */
             BitstreamPutBits(bs2, 2, dquant);  /* dquant, 3/15/01*/
 
-        /****************************/	/* THIRD PART: ALL TO BS3 */
-        for (i = 0;i < 6;i++)
+        /****************************/  /* THIRD PART: ALL TO BS3 */
+        for (i = 0; i < 6; i++)
         {
             if (CBP&(1 << (5 - i)))
                 (*BlockCodeCoeff)(&(RLB[i]), bs3, 0, ncoefblck[i], Mode);/* Code Intra AC*/
@@ -1121,7 +1121,7 @@ void MBVlcEncodeDataPar_P_VOP(
 #endif /* H263_ONLY */
 /****************************************************************************************/
 /* Short Header/Combined Mode with or without Error Resilience I-VOP and P-VOP Encoding */
-/* 5/21/01, B-VOP is not implemented yet!!!!											*/
+/* 5/21/01, B-VOP is not implemented yet!!!!                                            */
 /****************************************************************************************/
 
 void MBVlcEncodeCombined_I_VOP(
@@ -1131,20 +1131,20 @@ void MBVlcEncodeCombined_I_VOP(
 {
 
     BitstreamEncVideo *bs1 = video->bitstream1;
-//	BitstreamEncVideo *bs2 = video->bitstream2;
-//	BitstreamEncVideo *bs3 = video->bitstream3;
+//  BitstreamEncVideo *bs2 = video->bitstream2;
+//  BitstreamEncVideo *bs3 = video->bitstream3;
     int i;
     UChar Mode = video->headerInfo.Mode[video->mbnum];
     UChar CBP = video->headerInfo.CBP[video->mbnum];
-//	MacroBlock *MB=video->outputMB;
+//  MacroBlock *MB=video->outputMB;
     Int mbnum = video->mbnum;
     Int intraDC_decision;
-//	int temp;
+//  int temp;
     Int dquant; /* 3/15/01 */
     RunLevelBlock *RLB = video->RLB;
     Int DC;
     Int shortVideoHeader = video->vol[video->currLayer]->shortVideoHeader;
-    BlockCodeCoeffPtr BlockCodeCoeff =	(BlockCodeCoeffPtr) blkCodePtr;
+    BlockCodeCoeffPtr BlockCodeCoeff = (BlockCodeCoeffPtr) blkCodePtr;
 
     /* DC and AC Prediction, 5/28/01, compute CBP, intraDC_decision*/
 
@@ -1177,11 +1177,11 @@ void MBVlcEncodeCombined_I_VOP(
     else
         dquant = (PV_ABS(dquant) - 1);
 
-    PutMCBPC_Intra(CBP, Mode, bs1);	/* mcbpc I_VOP */
+    PutMCBPC_Intra(CBP, Mode, bs1); /* mcbpc I_VOP */
 
     if (!video->vol[video->currLayer]->shortVideoHeader)
     {
-        BitstreamPut1Bits(bs1, video->acPredFlag[video->mbnum]);	/* ac_pred_flag */
+        BitstreamPut1Bits(bs1, video->acPredFlag[video->mbnum]);    /* ac_pred_flag */
     }
 
     /*temp=*/
@@ -1203,9 +1203,9 @@ void MBVlcEncodeCombined_I_VOP(
             if (RLB[i].s[0])
                 DC = -DC;
             if (DC != 128)
-                BitstreamPutBits(bs1, 8, DC);	/* intra_dc_size_luminance */
+                BitstreamPutBits(bs1, 8, DC);   /* intra_dc_size_luminance */
             else
-                BitstreamPutBits(bs1, 8, 255);			/* intra_dc_size_luminance */
+                BitstreamPutBits(bs1, 8, 255);          /* intra_dc_size_luminance */
             if (CBP&(1 << (5 - i)))
                 (*BlockCodeCoeff)(&(RLB[i]), bs1, 1, ncoefblck[i], Mode); /* Code short header Intra AC*/
         }
@@ -1220,9 +1220,9 @@ void MBVlcEncodeCombined_I_VOP(
                 DC = -DC;
 
             if (i < 4)
-                /*temp =*/ IntraDC_dpcm(DC, 1, bs1);		/* dct_dc_size_luminance, */
-            else												/* dct_dc_differential, and */
-                /*temp =*/ IntraDC_dpcm(DC, 0, bs1);		/* marker bit */
+                /*temp =*/ IntraDC_dpcm(DC, 1, bs1);        /* dct_dc_size_luminance, */
+            else                                                /* dct_dc_differential, and */
+                /*temp =*/ IntraDC_dpcm(DC, 0, bs1);        /* marker bit */
             if (CBP&(1 << (5 - i)))
                 (*BlockCodeCoeff)(&(RLB[i]), bs1, 1, ncoefblck[i], Mode);/* Code Intra AC */
         }
@@ -1247,17 +1247,17 @@ void MBVlcEncodeCombined_P_VOP(
 {
 
     BitstreamEncVideo *bs1 = video->bitstream1;
-//	BitstreamEncVideo *bs2 = video->bitstream2;
-//	BitstreamEncVideo *bs3 = video->bitstream3;
+//  BitstreamEncVideo *bs2 = video->bitstream2;
+//  BitstreamEncVideo *bs3 = video->bitstream3;
     int i;
     Int mbnum = video->mbnum;
     UChar Mode = video->headerInfo.Mode[mbnum];
     Int QP_tmp = video->QPMB[mbnum];
     UChar CBP ;
-//	MacroBlock *MB=video->outputMB;
+//  MacroBlock *MB=video->outputMB;
     Int intra, intraDC_decision;
     Int pmvx, pmvy;
-//	int temp;
+//  int temp;
     Int dquant; /* 3/15/01 */
     RunLevelBlock *RLB = video->RLB;
     Int DC;
@@ -1319,11 +1319,11 @@ void MBVlcEncodeCombined_P_VOP(
     video->QP_prev = video->QPMB[mbnum];
     video->usePrevQP = 1;
 
-    PutMCBPC_Inter(CBP, Mode, bs1);	/* mcbpc P_VOP */
+    PutMCBPC_Inter(CBP, Mode, bs1); /* mcbpc P_VOP */
 
     if (!video->vol[video->currLayer]->shortVideoHeader && intra)
     {
-        BitstreamPut1Bits(bs1, video->acPredFlag[video->mbnum]);	/* ac_pred_flag */
+        BitstreamPut1Bits(bs1, video->acPredFlag[video->mbnum]);    /* ac_pred_flag */
     }
 
     /*temp=*/
@@ -1341,11 +1341,11 @@ void MBVlcEncodeCombined_P_VOP(
         {
             find_pmvs(video, 0, &pmvx, &pmvy); /* Get predicted motion vectors */
             WriteMVcomponent(video->currVop->fcodeForward, video->mot[mbnum][0].x - pmvx, bs1); /* Write x to bitstream */
-            WriteMVcomponent(video->currVop->fcodeForward, video->mot[mbnum][0].y - pmvy, bs1);		/* Write y to bitstream */
+            WriteMVcomponent(video->currVop->fcodeForward, video->mot[mbnum][0].y - pmvy, bs1);     /* Write y to bitstream */
         }
         else if (Mode == MODE_INTER4V)
         {
-            for (i = 1;i < 5;i++)
+            for (i = 1; i < 5; i++)
             {
                 find_pmvs(video, i, &pmvx, &pmvy);
                 WriteMVcomponent(video->currVop->fcodeForward, video->mot[mbnum][i].x - pmvx, bs1);
@@ -1369,9 +1369,9 @@ void MBVlcEncodeCombined_P_VOP(
                 if (RLB[i].s[0])
                     DC = -DC;
                 if (DC != 128)
-                    BitstreamPutBits(bs1, 8, DC);	/* intra_dc_size_luminance */
+                    BitstreamPutBits(bs1, 8, DC);   /* intra_dc_size_luminance */
                 else
-                    BitstreamPutBits(bs1, 8, 255);			/* intra_dc_size_luminance */
+                    BitstreamPutBits(bs1, 8, 255);          /* intra_dc_size_luminance */
                 if (CBP&(1 << (5 - i)))
                     (*BlockCodeCoeff)(&(RLB[i]), bs1, 1, ncoefblck[i], Mode); /* Code short header Intra AC*/
             }
@@ -1386,9 +1386,9 @@ void MBVlcEncodeCombined_P_VOP(
                     DC = -DC;
 
                 if (i < 4)
-                    /*temp =*/ IntraDC_dpcm(DC, 1, bs1);		/* dct_dc_size_luminance, */
-                else												/* dct_dc_differential, and */
-                    /*temp =*/ IntraDC_dpcm(DC, 0, bs1);		/* marker bit */
+                    /*temp =*/ IntraDC_dpcm(DC, 1, bs1);        /* dct_dc_size_luminance, */
+                else                                                /* dct_dc_differential, and */
+                    /*temp =*/ IntraDC_dpcm(DC, 0, bs1);        /* marker bit */
                 if (CBP&(1 << (5 - i)))
                     (*BlockCodeCoeff)(&(RLB[i]), bs1, 1, ncoefblck[i], Mode);/* Code Intra AC */
             }
@@ -1405,7 +1405,7 @@ void MBVlcEncodeCombined_P_VOP(
     }
     else   /* Shortheader or Combined INTER Mode AC coefficients */
     {
-        for (i = 0;i < 6;i++)
+        for (i = 0; i < 6; i++)
         {
             if (CBP&(1 << (5 - i)))
                 (*BlockCodeCoeff)(&(RLB[i]), bs1, 0, ncoefblck[i], Mode);/* Code Inter AC*/
@@ -1417,13 +1417,13 @@ void MBVlcEncodeCombined_P_VOP(
 }
 
 /* ======================================================================== */
-/*	Function : BlockCodeCoeff()											*/
-/*	Date     : 09/18/2000													*/
-/*	Purpose  : VLC Encode  AC/DC coeffs										*/
-/*	In/out   :																*/
-/*	Return   :																*/
-/*	Modified :	5/16/01  grouping BitstreamPutBits calls					*/
-/*				5/22/01  break up function								*/
+/*  Function : BlockCodeCoeff()                                         */
+/*  Date     : 09/18/2000                                                   */
+/*  Purpose  : VLC Encode  AC/DC coeffs                                     */
+/*  In/out   :                                                              */
+/*  Return   :                                                              */
+/*  Modified :  5/16/01  grouping BitstreamPutBits calls                    */
+/*              5/22/01  break up function                              */
 /* ======================================================================== */
 #ifndef NO_RVLC
 /*****************/
@@ -1438,12 +1438,12 @@ Void BlockCodeCoeff_RVLC(RunLevelBlock *RLB, BitstreamEncVideo *bs, Int j_start,
     Int intra = (Mode == MODE_INTRA || Mode == MODE_INTRA_Q);
 
     /* Not Last Coefficient */
-    for (i = j_start; i < j_stop - 1;i++)
+    for (i = j_start; i < j_stop - 1; i++)
     {
         run = RLB->run[i];
         level = RLB->level[i];
-        //if(i==63||RLB->run[i+1] == -1)	/* Don't Code Last Coefficient Here */
-        //	break;
+        //if(i==63||RLB->run[i+1] == -1)    /* Don't Code Last Coefficient Here */
+        //  break;
         /*ENCODE RUN LENGTH */
         if (level < 28 && run < 39)
         {
@@ -1505,19 +1505,19 @@ Void BlockCodeCoeff_ShortHeader(RunLevelBlock *RLB, BitstreamEncVideo *bs, Int j
 {
     int length = 0;
     int i;
-//	int temp;
+//  int temp;
     Int level;
     Int run;
 
     OSCL_UNUSED_ARG(Mode);
 
     /* Not Last Coefficient */
-    for (i = j_start; i < j_stop - 1;i++)
+    for (i = j_start; i < j_stop - 1; i++)
     {
         run = RLB->run[i];
         level = RLB->level[i];
-//		if(i==63 ||RLB->run[i+1] == -1)	/* Don't Code Last Coefficient Here */
-//			break;
+//      if(i==63 ||RLB->run[i+1] == -1) /* Don't Code Last Coefficient Here */
+//          break;
         /*ENCODE RUN LENGTH */
         if (level < 13)
         {
@@ -1589,7 +1589,7 @@ Void BlockCodeCoeff_Normal(RunLevelBlock *RLB, BitstreamEncVideo *bs, Int j_star
     else
         PutCoeff = &PutCoeff_Inter;
 
-    for (i = j_start; i < j_stop - 1;i++)
+    for (i = j_start; i < j_stop - 1; i++)
     {
         run = RLB->run[i];
         level = RLB->level[i];
@@ -1770,16 +1770,16 @@ Void BlockCodeCoeff_Normal(RunLevelBlock *RLB, BitstreamEncVideo *bs, Int j_star
 
 #endif /* H263_ONLY */
 /* ======================================================================== */
-/*	Function : RUNLevel														*/
-/*	Date     : 09/20/2000													*/
-/*	Purpose  : Get the Coded Block Pattern for each block					*/
-/*	In/out   :																*/
-/*		Int* qcoeff		Quantized DCT coefficients
-		Int Mode		Coding Mode
-		Int ncoeffs		Number of coefficients								*/
-/*	Return   :																*/
-/*		Int CBP			Coded Block Pattern									*/
-/*	Modified :																*/
+/*  Function : RUNLevel                                                     */
+/*  Date     : 09/20/2000                                                   */
+/*  Purpose  : Get the Coded Block Pattern for each block                   */
+/*  In/out   :                                                              */
+/*      Int* qcoeff     Quantized DCT coefficients
+        Int Mode        Coding Mode
+        Int ncoeffs     Number of coefficients                              */
+/*  Return   :                                                              */
+/*      Int CBP         Coded Block Pattern                                 */
+/*  Modified :                                                              */
 /* ======================================================================== */
 
 void RunLevel(VideoEncData *video, Int intra, Int intraDC_decision, Int ncoefblck[])
@@ -1803,7 +1803,7 @@ void RunLevel(VideoEncData *video, Int intra, Int intraDC_decision, Int ncoefblc
     {
 
         if (intraDC_decision != 0)
-            intra = 0;				/* DC/AC in Run/Level */
+            intra = 0;              /* DC/AC in Run/Level */
 
         for (i = 0; i < 6 ; i++)
         {
@@ -1890,7 +1890,7 @@ void RunLevel(VideoEncData *video, Int intra, Int intraDC_decision, Int ncoefblc
     }
     else
     {
-//		zz = (Int *) zigzag_inv;  no need to use it, default
+//      zz = (Int *) zigzag_inv;  no need to use it, default
 
         if (CBP)
         {
@@ -1900,11 +1900,11 @@ void RunLevel(VideoEncData *video, Int intra, Int intraDC_decision, Int ncoefblc
                 idx = 0;
 
                 if ((CBP >> (5 - i)) & 1)
-                {	/* 7/30/01 */
+                {   /* 7/30/01 */
                     /* Use bitmapzz to find the Run,Level,Sign symbols */
                     bitmapzz = video->bitmapzz[i];
                     dataBlock = MB->block[i];
-                    nc	= ncoefblck[i];
+                    nc  = ncoefblck[i];
 
                     idx = zero_run_search(bitmapzz, dataBlock, RLB, nc);
                 }
@@ -1946,7 +1946,7 @@ Int IntraDC_dpcm(Int val, Int lum, BitstreamEncVideo *bitstream)
     Int n_bits;
     Int absval, size = 0;
 
-    absval = (val < 0) ? -val : val; 	/* abs(val) */
+    absval = (val < 0) ? -val : val;    /* abs(val) */
 
 
     /* compute dct_dc_size */
@@ -1959,11 +1959,11 @@ Int IntraDC_dpcm(Int val, Int lum, BitstreamEncVideo *bitstream)
     }
 
     if (lum)
-    {	/* luminance */
+    {   /* luminance */
         n_bits = PutDCsize_lum(size, bitstream);
     }
     else
-    {	/* chrominance */
+    {   /* chrominance */
         n_bits = PutDCsize_chrom(size, bitstream);
     }
 
@@ -1985,30 +1985,30 @@ Int IntraDC_dpcm(Int val, Int lum, BitstreamEncVideo *bitstream)
             BitstreamPut1Bits(bitstream, 1);
     }
 
-    return n_bits;	/* # bits for intra_dc dpcm */
+    return n_bits;  /* # bits for intra_dc dpcm */
 
 }
 
 /* ======================================================================== */
-/*	Function : DC_AC_PRED													*/
-/*	Date     : 09/24/2000													*/
-/*	Purpose  : DC and AC encoding of Intra Blocks							*/
-/*	In/out   :																*/
-/*		VideoEncData	*video
-		UChar			Mode												*/
-/*	Return   :																*/
-/*																			*/
+/*  Function : DC_AC_PRED                                                   */
+/*  Date     : 09/24/2000                                                   */
+/*  Purpose  : DC and AC encoding of Intra Blocks                           */
+/*  In/out   :                                                              */
+/*      VideoEncData    *video
+        UChar           Mode                                                */
+/*  Return   :                                                              */
+/*                                                                          */
 /* ======================================================================== */
 Int cal_dc_scalerENC(Int QP, Int type) ;
 
 
 #define PREDICT_AC  for (m = 0; m < 7; m++){ \
-						tmp = DCAC[0]*QPtmp;\
-						if(tmp<0)	tmp = (tmp-(QP/2))/QP;\
-						else		tmp = (tmp+(QP/2))/QP;\
-						pred[m] = tmp;\
-						DCAC++;\
-					}
+                        tmp = DCAC[0]*QPtmp;\
+                        if(tmp<0)   tmp = (tmp-(QP/2))/QP;\
+                        else        tmp = (tmp+(QP/2))/QP;\
+                        pred[m] = tmp;\
+                        DCAC++;\
+                    }
 
 
 Void DCACPred(VideoEncData *video, UChar Mode, Int *intraDC_decision, Int intraDCVlcQP)
@@ -2018,7 +2018,7 @@ Void DCACPred(VideoEncData *video, UChar Mode, Int *intraDC_decision, Int intraD
     typeDCStore *DC_store = video->predDC + mbnum;
     typeDCACStore *DCAC_row = video->predDCAC_row;
     typeDCACStore *DCAC_col = video->predDCAC_col;
-    Short	*DCAC;
+    Short   *DCAC;
     UChar Mode_top, Mode_left;
 
     Vol *currVol = video->vol[video->currLayer];
@@ -2047,7 +2047,7 @@ Void DCACPred(VideoEncData *video, UChar Mode, Int *intraDC_decision, Int intraD
     static const Int B_Xtab[6] = {0, 1, 0, 1, 2, 3};
     static const Int B_Ytab[6] = {0, 0, 1, 1, 2, 3};
 
-    Int direction[6];		/* 0: HORIZONTAL, 1: VERTICAL */
+    Int direction[6];       /* 0: HORIZONTAL, 1: VERTICAL */
     Int block_A, block_B, block_C;
     Int grad_hor, grad_ver, DC_pred;
     Short pred[7], *predptr;
@@ -2057,9 +2057,9 @@ Void DCACPred(VideoEncData *video, UChar Mode, Int *intraDC_decision, Int intraD
     Int diff, QPtmp;
     Int newCBP[6];
     UChar mask1[6] = {0x20, 0x10, 0x8, 0x4, 0x2, 0x1};
-//	UChar mask2[6] = {0x1f,0x2f,0x37,0x3b,0x3d,0x3e};
+//  UChar mask2[6] = {0x1f,0x2f,0x37,0x3b,0x3d,0x3e};
 
-    Int y_offset, x_offset, x_tab, y_tab, z_tab;	/* speedup coefficients */
+    Int y_offset, x_offset, x_tab, y_tab, z_tab;    /* speedup coefficients */
     Int b_xtab, b_ytab;
 
     video->zz_direction = 0;
@@ -2111,8 +2111,8 @@ Void DCACPred(VideoEncData *video, UChar Mode, Int *intraDC_decision, Int intraD
     for (comp = 0; comp < 6; comp++)
     {
 
-        if (Ypos[comp] != 0)		y_offset = -nMBPerRow;
-        else					y_offset = 0;
+        if (Ypos[comp] != 0)        y_offset = -nMBPerRow;
+        else                    y_offset = 0;
         x_offset = Xpos[comp];
         x_tab = Xtab[comp];
         y_tab = Ytab[comp];
@@ -2132,7 +2132,7 @@ Void DCACPred(VideoEncData *video, UChar Mode, Int *intraDC_decision, Int intraD
 
         QPtmp = qcoeff[0] * dc_scale; /* DC value */
 
-        if (QPtmp > 2047)	/* 10/10/01, add clipping (bug fixed) */
+        if (QPtmp > 2047)   /* 10/10/01, add clipping (bug fixed) */
             DC_store[0][comp] = 2047;
         else if (QPtmp < -2048)
             DC_store[0][comp] = -2048;
@@ -2144,13 +2144,13 @@ Void DCACPred(VideoEncData *video, UChar Mode, Int *intraDC_decision, Int intraD
         /**************************************************************/
 
         if ((x_pos == 0) && y_pos == 0)
-        {	/* top left corner */
+        {   /* top left corner */
             block_A = (comp == 1 || comp == 3) ? DC_store[0][x_tab] : mid_grey;
             block_B = (comp == 3) ? DC_store[x_offset][z_tab] : mid_grey;
             block_C = (comp == 2 || comp == 3) ? DC_store[0][y_tab] : mid_grey;
         }
         else if (x_pos == 0)
-        {	/* left edge */
+        {   /* left edge */
             block_A = (comp == 1 || comp == 3) ? DC_store[0][x_tab] : mid_grey;
             block_B = ((comp == 1 && (slice_nb[mbnum] == slice_nb[mbnum-nMBPerRow])) || comp == 3) ?
                       DC_store[y_offset+x_offset][z_tab] : mid_grey;
@@ -2207,7 +2207,7 @@ Void DCACPred(VideoEncData *video, UChar Mode, Int *intraDC_decision, Int intraD
             /* Find AC prediction  */
             /***********************/
 
-            if ((x_pos == 0) && y_pos == 0) 	/* top left corner */
+            if ((x_pos == 0) && y_pos == 0)     /* top left corner */
             {
                 if (direction[comp] == 0)
                 {
@@ -2254,7 +2254,7 @@ Void DCACPred(VideoEncData *video, UChar Mode, Int *intraDC_decision, Int intraD
                     }
                 }
             }
-            else if (x_pos == 0) 	/* left edge */
+            else if (x_pos == 0)    /* left edge */
             {
                 if (direction[comp] == 0)
                 {
@@ -2406,34 +2406,34 @@ Void DCACPred(VideoEncData *video, UChar Mode, Int *intraDC_decision, Int intraD
             /************************************/
             newCBP[comp] = 0;
 
-            if (direction[comp] == 0)  	/* Horizontal, left COLUMN of block A */
+            if (direction[comp] == 0)   /* Horizontal, left COLUMN of block A */
             {
                 DCAC = pcoeff + comp * 7; /* re-use DCAC as local var */
                 qcoeff += 8;
                 for (m = 0; m < 7; m++)
                 {
                     QPtmp = qcoeff[m<<3];
-                    if (QPtmp > 0)	S1 += QPtmp;
-                    else		S1 -= QPtmp;
+                    if (QPtmp > 0)  S1 += QPtmp;
+                    else        S1 -= QPtmp;
                     QPtmp -= predptr[m];
                     DCAC[m] = QPtmp; /* save prediction residue to pcoeff*/
-                    if (QPtmp)	newCBP[comp] = 1;
+                    if (QPtmp)  newCBP[comp] = 1;
                     diff = PV_ABS(QPtmp);
                     S2 += diff;
                 }
             }
-            else  			/* Vertical, top ROW of block C */
+            else            /* Vertical, top ROW of block C */
             {
                 qcoeff++;
                 DCAC = pcoeff + comp * 7; /* re-use DCAC as local var */
                 for (m = 0; m < 7; m++)
                 {
                     QPtmp = qcoeff[m];
-                    if (QPtmp > 0)	S1 += QPtmp;
-                    else		S1 -= QPtmp;
+                    if (QPtmp > 0)  S1 += QPtmp;
+                    else        S1 -= QPtmp;
                     QPtmp -= predptr[m];
                     DCAC[m] = QPtmp; /* save prediction residue to pcoeff*/
-                    if (QPtmp)	newCBP[comp] = 1;
+                    if (QPtmp)  newCBP[comp] = 1;
                     diff = PV_ABS(QPtmp);
                     S2 += diff;
                 }
@@ -2532,7 +2532,7 @@ Void DCACPred(VideoEncData *video, UChar Mode, Int *intraDC_decision, Int intraD
 Void find_pmvs(VideoEncData *video, Int block, Int *mvx, Int *mvy)
 {
     Vol *currVol = video->vol[video->currLayer];
-//	UChar *Mode = video->headerInfo.Mode; /* modes for MBs */
+//  UChar *Mode = video->headerInfo.Mode; /* modes for MBs */
     UChar *slice_nb = video->sliceNo;
     Int nMBPerRow = currVol->nMBPerRow;
     Int mbnum = video->mbnum;
@@ -2544,22 +2544,22 @@ Void find_pmvs(VideoEncData *video, Int block, Int *mvx, Int *mvy)
     Int   vec1, vec2, vec3;
     Int   rule1, rule2, rule3;
     MOT   **motdata = video->mot;
-    Int	  x = mbnum % nMBPerRow;
-    Int	  y = mbnum / nMBPerRow;
+    Int   x = mbnum % nMBPerRow;
+    Int   y = mbnum / nMBPerRow;
 
     /*
-    	In a previous version, a MB vector (block = 0) was predicted the same way
-    	as block 1, which is the most likely interpretation of the VM.
+        In a previous version, a MB vector (block = 0) was predicted the same way
+        as block 1, which is the most likely interpretation of the VM.
 
-    	Therefore, if we have advanced pred. mode, and if all MBs around have
-    	only one 16x16 vector each, we chose the appropiate block as if these
-    	MBs have 4 vectors.
+        Therefore, if we have advanced pred. mode, and if all MBs around have
+        only one 16x16 vector each, we chose the appropiate block as if these
+        MBs have 4 vectors.
 
-    	This different prediction affects only 16x16 vectors of MBs with
-    	transparent blocks.
+        This different prediction affects only 16x16 vectors of MBs with
+        transparent blocks.
 
-    	In the current version, we choose for the 16x16 mode the first
-    	non-transparent block in the surrounding MBs
+        In the current version, we choose for the 16x16 mode the first
+        non-transparent block in the surrounding MBs
     */
 
     switch (block)
@@ -2629,7 +2629,7 @@ Void find_pmvs(VideoEncData *video, Int block, Int *mvx, Int *mvy)
     {
         /* according to the motion encoding, we must choose a first non-transparent
         block in the surrounding MBs (16-mode)
-        	*/
+            */
 
         if (x > 0 && slice_nb[mbnum] == slice_nb[mbnum-1])
             rule1 = 0;

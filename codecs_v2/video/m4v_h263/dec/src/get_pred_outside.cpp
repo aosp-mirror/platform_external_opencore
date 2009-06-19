@@ -20,43 +20,43 @@
  INPUT AND OUTPUT DEFINITIONS
 
  Inputs:
-	xpos = x half-pixel of (x,y) coordinates within a VOP; motion
-	       compensated coordinates; native data type
-	ypos = y half-pixel of (x,y) coordinates within a VOP; motion
-	       compensated coordinates; native data type
-	comp = pointer to 8-bit compensated prediction values within a VOP;
-	       computed by this module (i/o); full-pel resolution; 8-bit data
-	c_prev = pointer to previous 8-bit prediction values within a VOP;
-		 values range from (0-255); full-pel resolution; 8-bit data
-	sh_d = pointer to residual values used to compensate the predicted
-	       value; values range from (-512 to 511); full-pel resolution;
-	       native data type
-	width = width of the VOP in pixels (x axis); full-pel resolution;
-		native data type
-	height = height of the VOP in pixels (y axis); full-pel resolution;
-		 native data type
-	rnd1 = rounding value for case when one dimension uses half-pel
-	       resolution; native data type
-	rnd2 = rounding value for case when two dimensions uses half-pel
-	       resolution; native data type
+    xpos = x half-pixel of (x,y) coordinates within a VOP; motion
+           compensated coordinates; native data type
+    ypos = y half-pixel of (x,y) coordinates within a VOP; motion
+           compensated coordinates; native data type
+    comp = pointer to 8-bit compensated prediction values within a VOP;
+           computed by this module (i/o); full-pel resolution; 8-bit data
+    c_prev = pointer to previous 8-bit prediction values within a VOP;
+         values range from (0-255); full-pel resolution; 8-bit data
+    sh_d = pointer to residual values used to compensate the predicted
+           value; values range from (-512 to 511); full-pel resolution;
+           native data type
+    width = width of the VOP in pixels (x axis); full-pel resolution;
+        native data type
+    height = height of the VOP in pixels (y axis); full-pel resolution;
+         native data type
+    rnd1 = rounding value for case when one dimension uses half-pel
+           resolution; native data type
+    rnd2 = rounding value for case when two dimensions uses half-pel
+           resolution; native data type
 
  Outputs:
-	returns 1
+    returns 1
 
  Local Stores/Buffers/Pointers Needed:
-	None
+    None
 
  Global Stores/Buffers/Pointers Needed:
-	None
+    None
 
  Pointers and Buffers Modified:
-	comp = buffer contains newly computed compensated prediction values
+    comp = buffer contains newly computed compensated prediction values
 
  Local Stores Modified:
-	None
+    None
 
  Global Stores Modified:
-	None
+    None
 
 ------------------------------------------------------------------------------
  FUNCTION DESCRIPTION
@@ -110,150 +110,150 @@
 #include "mp4dec_lib.h"
 #include "motion_comp.h"
 
-#define PAD_CORNER {	temp = *prev; \
-			temp |= (temp<<8);  \
-			temp |= (temp<<16); \
-			*((uint32*)ptr) = temp; \
-			*((uint32*)(ptr+4)) = temp;  \
-			*((uint32*)(ptr+=16)) = temp;  \
-			*((uint32*)(ptr+4)) = temp;  \
-			*((uint32*)(ptr+=16)) = temp;  \
-			*((uint32*)(ptr+4)) = temp;  \
-			*((uint32*)(ptr+=16)) = temp;  \
-			*((uint32*)(ptr+4)) = temp;  \
-			*((uint32*)(ptr+=16)) = temp;  \
-			*((uint32*)(ptr+4)) = temp;  \
-			*((uint32*)(ptr+=16)) = temp;  \
-			*((uint32*)(ptr+4)) = temp;  \
-			*((uint32*)(ptr+=16)) = temp;  \
-			*((uint32*)(ptr+4)) = temp;  \
-			*((uint32*)(ptr+=16)) = temp;  \
-			*((uint32*)(ptr+4)) = temp;  }
+#define PAD_CORNER {    temp = *prev; \
+            temp |= (temp<<8);  \
+            temp |= (temp<<16); \
+            *((uint32*)ptr) = temp; \
+            *((uint32*)(ptr+4)) = temp;  \
+            *((uint32*)(ptr+=16)) = temp;  \
+            *((uint32*)(ptr+4)) = temp;  \
+            *((uint32*)(ptr+=16)) = temp;  \
+            *((uint32*)(ptr+4)) = temp;  \
+            *((uint32*)(ptr+=16)) = temp;  \
+            *((uint32*)(ptr+4)) = temp;  \
+            *((uint32*)(ptr+=16)) = temp;  \
+            *((uint32*)(ptr+4)) = temp;  \
+            *((uint32*)(ptr+=16)) = temp;  \
+            *((uint32*)(ptr+4)) = temp;  \
+            *((uint32*)(ptr+=16)) = temp;  \
+            *((uint32*)(ptr+4)) = temp;  \
+            *((uint32*)(ptr+=16)) = temp;  \
+            *((uint32*)(ptr+4)) = temp;  }
 
 #define PAD_ROW  {  temp = *((uint32*)prev); \
-					temp2 = *((uint32*)(prev+4)); \
-			*((uint32*)ptr) =  temp;\
-			*((uint32*)(ptr+4)) =  temp2; \
-			*((uint32*)(ptr+=16)) = temp; \
-			*((uint32*)(ptr+4)) = temp2;\
-			*((uint32*)(ptr+=16)) = temp; \
-			*((uint32*)(ptr+4)) = temp2;\
-			*((uint32*)(ptr+=16)) = temp; \
-			*((uint32*)(ptr+4)) = temp2;\
-			*((uint32*)(ptr+=16)) = temp; \
-			*((uint32*)(ptr+4)) = temp2;\
-			*((uint32*)(ptr+=16)) = temp; \
-			*((uint32*)(ptr+4)) = temp2;\
-			*((uint32*)(ptr+=16)) = temp; \
-			*((uint32*)(ptr+4)) = temp2;\
-			*((uint32*)(ptr+=16)) = temp; \
-			*((uint32*)(ptr+4)) = temp2;}
+                    temp2 = *((uint32*)(prev+4)); \
+            *((uint32*)ptr) =  temp;\
+            *((uint32*)(ptr+4)) =  temp2; \
+            *((uint32*)(ptr+=16)) = temp; \
+            *((uint32*)(ptr+4)) = temp2;\
+            *((uint32*)(ptr+=16)) = temp; \
+            *((uint32*)(ptr+4)) = temp2;\
+            *((uint32*)(ptr+=16)) = temp; \
+            *((uint32*)(ptr+4)) = temp2;\
+            *((uint32*)(ptr+=16)) = temp; \
+            *((uint32*)(ptr+4)) = temp2;\
+            *((uint32*)(ptr+=16)) = temp; \
+            *((uint32*)(ptr+4)) = temp2;\
+            *((uint32*)(ptr+=16)) = temp; \
+            *((uint32*)(ptr+4)) = temp2;\
+            *((uint32*)(ptr+=16)) = temp; \
+            *((uint32*)(ptr+4)) = temp2;}
 
-#define PAD_EXTRA_4x8			{	temp = *((uint32*)(prev+8)); \
-				*((uint32*)ptr) =  temp; \
-				*((uint32*)(ptr+=16)) = temp; \
-				*((uint32*)(ptr+=16)) = temp; \
-				*((uint32*)(ptr+=16)) = temp; \
-				*((uint32*)(ptr+=16)) = temp; \
-				*((uint32*)(ptr+=16)) = temp; \
-				*((uint32*)(ptr+=16)) = temp; \
-				*((uint32*)(ptr+=16)) = temp; }
+#define PAD_EXTRA_4x8           {   temp = *((uint32*)(prev+8)); \
+                *((uint32*)ptr) =  temp; \
+                *((uint32*)(ptr+=16)) = temp; \
+                *((uint32*)(ptr+=16)) = temp; \
+                *((uint32*)(ptr+=16)) = temp; \
+                *((uint32*)(ptr+=16)) = temp; \
+                *((uint32*)(ptr+=16)) = temp; \
+                *((uint32*)(ptr+=16)) = temp; \
+                *((uint32*)(ptr+=16)) = temp; }
 
-#define PAD_COL	{ temp = *prev; \
-			temp|=(temp<<8);  temp|=(temp<<16); \
-			*((uint32*)ptr) = temp; \
-			*((uint32*)(ptr+4)) = temp; \
-			temp = *(prev+=16); \
-			temp|=(temp<<8);  temp|=(temp<<16); \
-			*((uint32*)(ptr+=16)) = temp; \
-			*((uint32*)(ptr+4)) = temp; \
-			temp = *(prev+=16); \
-			temp|=(temp<<8);  temp|=(temp<<16); \
-			*((uint32*)(ptr+=16)) = temp; \
-			*((uint32*)(ptr+4)) = temp; \
-			temp = *(prev+=16); \
-			temp|=(temp<<8);  temp|=(temp<<16); \
-			*((uint32*)(ptr+=16)) = temp; \
-			*((uint32*)(ptr+4)) = temp; \
-			temp = *(prev+=16); \
-			temp|=(temp<<8);  temp|=(temp<<16); \
-			*((uint32*)(ptr+=16)) = temp; \
-			*((uint32*)(ptr+4)) = temp; \
-			temp = *(prev+=16); \
-			temp|=(temp<<8);  temp|=(temp<<16); \
-			*((uint32*)(ptr+=16)) = temp; \
-			*((uint32*)(ptr+4)) = temp; \
-			temp = *(prev+=16); \
-			temp|=(temp<<8);  temp|=(temp<<16); \
-			*((uint32*)(ptr+=16)) = temp; \
-			*((uint32*)(ptr+4)) = temp; \
-			temp = *(prev+=16); \
-			temp|=(temp<<8);  temp|=(temp<<16); \
-			*((uint32*)(ptr+=16)) = temp; \
-			*((uint32*)(ptr+4)) = temp;}
+#define PAD_COL { temp = *prev; \
+            temp|=(temp<<8);  temp|=(temp<<16); \
+            *((uint32*)ptr) = temp; \
+            *((uint32*)(ptr+4)) = temp; \
+            temp = *(prev+=16); \
+            temp|=(temp<<8);  temp|=(temp<<16); \
+            *((uint32*)(ptr+=16)) = temp; \
+            *((uint32*)(ptr+4)) = temp; \
+            temp = *(prev+=16); \
+            temp|=(temp<<8);  temp|=(temp<<16); \
+            *((uint32*)(ptr+=16)) = temp; \
+            *((uint32*)(ptr+4)) = temp; \
+            temp = *(prev+=16); \
+            temp|=(temp<<8);  temp|=(temp<<16); \
+            *((uint32*)(ptr+=16)) = temp; \
+            *((uint32*)(ptr+4)) = temp; \
+            temp = *(prev+=16); \
+            temp|=(temp<<8);  temp|=(temp<<16); \
+            *((uint32*)(ptr+=16)) = temp; \
+            *((uint32*)(ptr+4)) = temp; \
+            temp = *(prev+=16); \
+            temp|=(temp<<8);  temp|=(temp<<16); \
+            *((uint32*)(ptr+=16)) = temp; \
+            *((uint32*)(ptr+4)) = temp; \
+            temp = *(prev+=16); \
+            temp|=(temp<<8);  temp|=(temp<<16); \
+            *((uint32*)(ptr+=16)) = temp; \
+            *((uint32*)(ptr+4)) = temp; \
+            temp = *(prev+=16); \
+            temp|=(temp<<8);  temp|=(temp<<16); \
+            *((uint32*)(ptr+=16)) = temp; \
+            *((uint32*)(ptr+4)) = temp;}
 
 /* copy 8x8 block */
-#define COPY_BLOCK  {			*((uint32*)ptr) = *((uint32*)prev); \
-			*((uint32*)(ptr+4)) = *((uint32*)(prev+4)); \
-			*((uint32*)(ptr+=16)) = *((uint32*)(prev+=width)); \
-			*((uint32*)(ptr+4)) = *((uint32*)(prev+4)); \
-			*((uint32*)(ptr+=16)) = *((uint32*)(prev+=width)); \
-			*((uint32*)(ptr+4)) = *((uint32*)(prev+4)); \
-			*((uint32*)(ptr+=16)) = *((uint32*)(prev+=width)); \
-			*((uint32*)(ptr+4)) = *((uint32*)(prev+4)); \
-			*((uint32*)(ptr+=16)) = *((uint32*)(prev+=width)); \
-			*((uint32*)(ptr+4)) = *((uint32*)(prev+4)); \
-			*((uint32*)(ptr+=16)) = *((uint32*)(prev+=width)); \
-			*((uint32*)(ptr+4)) = *((uint32*)(prev+4)); \
-			*((uint32*)(ptr+=16)) = *((uint32*)(prev+=width)); \
-			*((uint32*)(ptr+4)) = *((uint32*)(prev+4)); \
-			*((uint32*)(ptr+=16)) = *((uint32*)(prev+=width)); \
-			*((uint32*)(ptr+4)) = *((uint32*)(prev+4));  }
+#define COPY_BLOCK  {           *((uint32*)ptr) = *((uint32*)prev); \
+            *((uint32*)(ptr+4)) = *((uint32*)(prev+4)); \
+            *((uint32*)(ptr+=16)) = *((uint32*)(prev+=width)); \
+            *((uint32*)(ptr+4)) = *((uint32*)(prev+4)); \
+            *((uint32*)(ptr+=16)) = *((uint32*)(prev+=width)); \
+            *((uint32*)(ptr+4)) = *((uint32*)(prev+4)); \
+            *((uint32*)(ptr+=16)) = *((uint32*)(prev+=width)); \
+            *((uint32*)(ptr+4)) = *((uint32*)(prev+4)); \
+            *((uint32*)(ptr+=16)) = *((uint32*)(prev+=width)); \
+            *((uint32*)(ptr+4)) = *((uint32*)(prev+4)); \
+            *((uint32*)(ptr+=16)) = *((uint32*)(prev+=width)); \
+            *((uint32*)(ptr+4)) = *((uint32*)(prev+4)); \
+            *((uint32*)(ptr+=16)) = *((uint32*)(prev+=width)); \
+            *((uint32*)(ptr+4)) = *((uint32*)(prev+4)); \
+            *((uint32*)(ptr+=16)) = *((uint32*)(prev+=width)); \
+            *((uint32*)(ptr+4)) = *((uint32*)(prev+4));  }
 
-#define COPY_12x8		{		*((uint32*)ptr) = *((uint32*)prev); \
-			*((uint32*)(ptr+4)) = *((uint32*)(prev+4)); \
-			*((uint32*)(ptr+8)) = *((uint32*)(prev+8)); \
-			*((uint32*)(ptr+=16)) = *((uint32*)(prev+=width)); \
-			*((uint32*)(ptr+4)) = *((uint32*)(prev+4)); \
-			*((uint32*)(ptr+8)) = *((uint32*)(prev+8)); \
-			*((uint32*)(ptr+=16)) = *((uint32*)(prev+=width)); \
-			*((uint32*)(ptr+4)) = *((uint32*)(prev+4)); \
-			*((uint32*)(ptr+8)) = *((uint32*)(prev+8)); \
-			*((uint32*)(ptr+=16)) = *((uint32*)(prev+=width)); \
-			*((uint32*)(ptr+4)) = *((uint32*)(prev+4)); \
-			*((uint32*)(ptr+8)) = *((uint32*)(prev+8)); \
-			*((uint32*)(ptr+=16)) = *((uint32*)(prev+=width)); \
-			*((uint32*)(ptr+4)) = *((uint32*)(prev+4)); \
-			*((uint32*)(ptr+8)) = *((uint32*)(prev+8)); \
-			*((uint32*)(ptr+=16)) = *((uint32*)(prev+=width)); \
-			*((uint32*)(ptr+4)) = *((uint32*)(prev+4)); \
-			*((uint32*)(ptr+8)) = *((uint32*)(prev+8)); \
-			*((uint32*)(ptr+=16)) = *((uint32*)(prev+=width)); \
-			*((uint32*)(ptr+4)) = *((uint32*)(prev+4)); \
-			*((uint32*)(ptr+8)) = *((uint32*)(prev+8)); \
-			*((uint32*)(ptr+=16)) = *((uint32*)(prev+=width)); \
-			*((uint32*)(ptr+4)) = *((uint32*)(prev+4)); \
-			*((uint32*)(ptr+8)) = *((uint32*)(prev+8)); }
+#define COPY_12x8       {       *((uint32*)ptr) = *((uint32*)prev); \
+            *((uint32*)(ptr+4)) = *((uint32*)(prev+4)); \
+            *((uint32*)(ptr+8)) = *((uint32*)(prev+8)); \
+            *((uint32*)(ptr+=16)) = *((uint32*)(prev+=width)); \
+            *((uint32*)(ptr+4)) = *((uint32*)(prev+4)); \
+            *((uint32*)(ptr+8)) = *((uint32*)(prev+8)); \
+            *((uint32*)(ptr+=16)) = *((uint32*)(prev+=width)); \
+            *((uint32*)(ptr+4)) = *((uint32*)(prev+4)); \
+            *((uint32*)(ptr+8)) = *((uint32*)(prev+8)); \
+            *((uint32*)(ptr+=16)) = *((uint32*)(prev+=width)); \
+            *((uint32*)(ptr+4)) = *((uint32*)(prev+4)); \
+            *((uint32*)(ptr+8)) = *((uint32*)(prev+8)); \
+            *((uint32*)(ptr+=16)) = *((uint32*)(prev+=width)); \
+            *((uint32*)(ptr+4)) = *((uint32*)(prev+4)); \
+            *((uint32*)(ptr+8)) = *((uint32*)(prev+8)); \
+            *((uint32*)(ptr+=16)) = *((uint32*)(prev+=width)); \
+            *((uint32*)(ptr+4)) = *((uint32*)(prev+4)); \
+            *((uint32*)(ptr+8)) = *((uint32*)(prev+8)); \
+            *((uint32*)(ptr+=16)) = *((uint32*)(prev+=width)); \
+            *((uint32*)(ptr+4)) = *((uint32*)(prev+4)); \
+            *((uint32*)(ptr+8)) = *((uint32*)(prev+8)); \
+            *((uint32*)(ptr+=16)) = *((uint32*)(prev+=width)); \
+            *((uint32*)(ptr+4)) = *((uint32*)(prev+4)); \
+            *((uint32*)(ptr+8)) = *((uint32*)(prev+8)); }
 
 /*----------------------------------------------------------------------------
 ; FUNCTION CODE
 ----------------------------------------------------------------------------*/
 int GetPredOutside(
-    int xpos,		/* i */
-    int ypos,		/* i */
-    uint8 *c_prev,		/* i */
-    uint8 *pred_block,		/* i */
-    int width,		/* i */
-    int height,		/* i */
-    int rnd1,		/* i */
+    int xpos,       /* i */
+    int ypos,       /* i */
+    uint8 *c_prev,      /* i */
+    uint8 *pred_block,      /* i */
+    int width,      /* i */
+    int height,     /* i */
+    int rnd1,       /* i */
     int pred_width
 )
 {
     /*----------------------------------------------------------------------------
     ; Define all local variables
     ----------------------------------------------------------------------------*/
-    uint8	*prev;		/* pointers to adjacent pixels in the    */
-    uint8	pred[256];	/* storage for padded pixel values, 16x16 */
+    uint8   *prev;      /* pointers to adjacent pixels in the    */
+    uint8   pred[256];  /* storage for padded pixel values, 16x16 */
     uint8   *ptr;
     int xoffset;
     uint32 temp, temp2;

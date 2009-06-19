@@ -65,7 +65,7 @@
 #define DEF_NUM_MEDIA_DATA 100
 #define SKEW_CHECK_INTERVAL 2000
 #define PARSING_JITTER_DURATION 200
-#define	PVDEBUG_LOG_BITSTREAM_PKT(iDebug, comp, pkt) \
+#define PVDEBUG_LOG_BITSTREAM_PKT(iDebug, comp, pkt) \
 {\
 uint8* ptrbuf = pkt->GetMediaPtr();\
 PVDEBUG_LOG_BITSTREAM(iDebug, (comp, ptrbuf, pkt->GetMediaSize()) );\
@@ -110,9 +110,9 @@ class LogicalChannelObserver
 };
 
 class H223LogicalChannel : public PvmfPortBaseImpl,
-            public PVMFPortActivityHandler,
-            public PvmiCapabilityAndConfig,
-            public virtual LogicalChannelInfo
+        public PVMFPortActivityHandler,
+        public PvmiCapabilityAndConfig,
+        public virtual LogicalChannelInfo
 {
     public:
         H223LogicalChannel(TPVChannelId num,

@@ -41,7 +41,7 @@ PVA_FF_AVCSampleEntry::~PVA_FF_AVCSampleEntry()
 void
 PVA_FF_AVCSampleEntry::init(uint8 profile, uint8 profileComp, uint8 level)
 {
-    for (int i = 0;i < 6;i++)
+    for (int i = 0; i < 6; i++)
     {
         _reserved[i] = 0;
     }
@@ -49,7 +49,7 @@ PVA_FF_AVCSampleEntry::init(uint8 profile, uint8 profileComp, uint8 level)
     _preDefined1 = 0;
     _reserved1 = 0;
 
-    for (int j = 0;j < 3;j++)
+    for (int j = 0; j < 3; j++)
     {
         _predefined2[j] = 0;
     }
@@ -60,7 +60,7 @@ PVA_FF_AVCSampleEntry::init(uint8 profile, uint8 profileComp, uint8 level)
     _vertResolution = 0x00480000;
     _reserved2 = 0;
     _predefined3 = 1;
-    for (int k = 0;k < 32;k++)
+    for (int k = 0; k < 32; k++)
     {
         _compressorName[k] = 0;
     }
@@ -130,7 +130,7 @@ PVA_FF_AVCSampleEntry::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
         return false;
     }
     rendered  += 2;
-    for (int j = 0; j < 3;j++)
+    for (int j = 0; j < 3; j++)
     {
         if (!PVA_FF_AtomUtils::render32(fp, _predefined2[j]))
         {
@@ -217,7 +217,7 @@ PVA_FF_AVCSampleEntry::recomputeSize()
     size += sizeof(_dataReferenceIndex);
     size  += sizeof(_preDefined1);
     size  += sizeof(_reserved1);
-    for (int j = 0; j < 3;j++)
+    for (int j = 0; j < 3; j++)
     {
         size += sizeof(_predefined2[j]);
     }

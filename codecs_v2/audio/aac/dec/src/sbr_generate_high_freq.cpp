@@ -117,10 +117,10 @@ extern "C"
 #endif
 
     void high_freq_coeff_LC(Int32 sourceBufferReal[][32],
-                            Int32 *alphar[2],
-                            Int32 *degreeAlias,
-                            Int32 *v_k_master,
-                            Int32 *scratch_mem);
+    Int32 *alphar[2],
+    Int32 *degreeAlias,
+    Int32 *v_k_master,
+    Int32 *scratch_mem);
 
 
     void high_freq_generation_LC(Int32 sourceBufferReal[][32],

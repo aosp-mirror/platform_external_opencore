@@ -37,7 +37,7 @@ MovieExtendsAtom::MovieExtendsAtom(MP4_FF_FILE *fp,
                                    uint32 type)
         : Atom(fp, size, type)
 {
-    _pMovieExtendsHeaderAtom		= NULL;
+    _pMovieExtendsHeaderAtom        = NULL;
 
     PV_MP4_FF_NEW(fp->auditCB, trackExtendsAtomVecType, (), _pTrackExtendsAtomVec);
 

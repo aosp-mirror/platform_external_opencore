@@ -157,14 +157,14 @@ void if2_to_ets(
 
     if (frame_type_3gpp < AMR_SID)
     {
-        for (j = 4;j < 8;j++)
+        for (j = 4; j < 8; j++)
         {
             ets_output_ptr[reorderBits[frame_type_3gpp][x++]] =
                 (if2_input_ptr[0] >> j) & 0x01;
         }
         for (i = 1; i < numCompressedBytes[frame_type_3gpp]; i++)
         {
-            for (j = 0;j < 8;j++)
+            for (j = 0; j < 8; j++)
             {
                 if (x >= numOfBits[frame_type_3gpp])
                 {
@@ -177,14 +177,14 @@ void if2_to_ets(
     }
     else
     {
-        for (j = 4;j < 8;j++)
+        for (j = 4; j < 8; j++)
         {
             ets_output_ptr[x++] =
                 (if2_input_ptr[0] >> j) & 0x01;
         }
         for (i = 1; i < numCompressedBytes[frame_type_3gpp]; i++)
         {
-            for (j = 0;j < 8;j++)
+            for (j = 0; j < 8; j++)
             {
                 ets_output_ptr[x++] =
                     (if2_input_ptr[i] >> j) & 0x01;

@@ -54,8 +54,8 @@ class FileTypeAtom : public Atom
         }
 
     private:
-        uint32 	_pMajorBrand;
-        uint32	_pVersion;
+        uint32  _pMajorBrand;
+        uint32  _pVersion;
         Oscl_Vector<uint32, OsclMemAllocator> *_pCompatible_brand;
 };
 

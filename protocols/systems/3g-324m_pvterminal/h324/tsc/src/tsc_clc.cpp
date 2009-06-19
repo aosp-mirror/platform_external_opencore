@@ -33,7 +33,7 @@
 /*  amendment                                                                */
 /*              Copyright (C) 1996 NTT DoCoMo                                */
 /*****************************************************************************/
-#include	"tsc_clc.h"
+#include    "tsc_clc.h"
 #include    "tsc_sub.h"     /* Sub Routine Information Header                */
 #include    "h245def.h"
 

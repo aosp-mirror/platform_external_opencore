@@ -61,7 +61,7 @@ class PVMFCPMStatusObserver
     public:
         /**
          * Handle an event that has been generated.
-         * @param "aResponse"	"The response to a previously issued command."
+         * @param "aResponse"   "The response to a previously issued command."
          */
         virtual void CPMCommandCompleted(const PVMFCmdResp& aResponse) = 0;
         virtual ~PVMFCPMStatusObserver() {}

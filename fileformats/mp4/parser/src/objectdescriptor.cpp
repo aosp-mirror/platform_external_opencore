@@ -85,7 +85,7 @@ ObjectDescriptor::ObjectDescriptor(MP4_FF_FILE *fp, bool all)
 
                 //check for the next byte to see if it is a tag or 0 for ES_ID
                 tag = AtomUtils::peekNextNthBytes(fp,  0);
-                if (tag == 0)	//ES_ID, old version
+                if (tag == 0)   //ES_ID, old version
                 {
                     uint32 esid;
                     for (int32 i = 0; i < delta; i += 4)

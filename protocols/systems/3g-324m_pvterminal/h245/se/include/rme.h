@@ -159,14 +159,14 @@ class RME : public SEBase
     private:
         void StatusWrite(uint8 status)
         {
-            if (status&0x01)  	                  /* Incoming */
+            if (status&0x01)                      /* Incoming */
             {
 #ifdef PVANALYZER
                 StatusShow(Status2, status);
 #endif
                 Status2 = status;
             }
-            else  			                       /* Outgoing */
+            else                                   /* Outgoing */
             {
 #ifdef PVANALYZER
                 StatusShow(Status, status);

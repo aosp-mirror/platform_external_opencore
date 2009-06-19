@@ -437,8 +437,8 @@ class OsclRefCounterMTSA : public OsclRefCounter
 };
 
 /**
-	Implementation of an Oscl_DefAlloc class with a
-	built-in ref counter.
+    Implementation of an Oscl_DefAlloc class with a
+    built-in ref counter.
  */
 template<class DefAlloc>
 class Oscl_DefAllocWithRefCounter: public OsclRefCounter, public DefAlloc

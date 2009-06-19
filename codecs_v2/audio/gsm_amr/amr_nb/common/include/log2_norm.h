@@ -41,7 +41,7 @@ terms listed above has been obtained from the copyright holder.
 
  Description: Moved _cplusplus #ifdef after Include section.
 
- Who:						Date:
+ Who:                       Date:
  Description:
 
 ------------------------------------------------------------------------------
@@ -55,15 +55,15 @@ terms listed above has been obtained from the copyright holder.
 /*----------------------------------------------------------------------------
 ; CONTINUE ONLY IF NOT ALREADY DEFINED
 ----------------------------------------------------------------------------*/
-#ifndef	LOG2_NORM_H
-#define	LOG2_NORM_H
+#ifndef LOG2_NORM_H
+#define LOG2_NORM_H
 
-#define log2_h "$Id $"				/* Used by legacy code */
+#define log2_h "$Id $"              /* Used by legacy code */
 
 /*----------------------------------------------------------------------------
 ; INCLUDES
 ----------------------------------------------------------------------------*/
-#include	"typedef.h"
+#include    "typedef.h"
 
 /*--------------------------------------------------------------------------*/
 #ifdef __cplusplus

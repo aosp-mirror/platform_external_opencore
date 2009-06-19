@@ -63,8 +63,8 @@ in "vlc_tab.c".
 ; CONTINUE ONLY IF NOT ALREADY DEFINED
 ----------------------------------------------------------------------------*/
 
-#ifndef	max_level_H
-#define	max_level_H
+#ifndef max_level_H
+#define max_level_H
 
 /*----------------------------------------------------------------------------
 ; INCLUDES

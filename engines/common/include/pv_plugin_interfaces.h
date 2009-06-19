@@ -40,10 +40,10 @@
  * These are the UIDs of the categories that should be returned via the MAsyncEventHandler
  * interface for the async event callbacks.
  **/
-const TInt KPVUidDataSrcPrime	= 0xFFFFFF08;
-const TInt KPVUidDataSrcPlay	= 0xFFFFFF09;
-const TInt KPVUidDataSrcPause	= 0xFFFFFF0A;
-const TInt KPVUidDataSrcStop	= 0xFFFFFF0B;
+const TInt KPVUidDataSrcPrime   = 0xFFFFFF08;
+const TInt KPVUidDataSrcPlay    = 0xFFFFFF09;
+const TInt KPVUidDataSrcPause   = 0xFFFFFF0A;
+const TInt KPVUidDataSrcStop    = 0xFFFFFF0B;
 
 /**
  * MPVDataSourceBase Error Codes
@@ -58,10 +58,10 @@ const TInt KPVUidDataSrcStop	= 0xFFFFFF0B;
  * These are the UIDs of the categories that should be returned via the MAsyncEventHandler
  * interface for the async event callbacks.
  **/
-const TInt KPVUidDataSinkPrime	= 0xFFFFFF0C;
-const TInt KPVUidDataSinkPlay	= 0xFFFFFF0D;
-const TInt KPVUidDataSinkPause	= 0xFFFFFF0E;
-const TInt KPVUidDataSinkStop	= 0xFFFFFF0F;
+const TInt KPVUidDataSinkPrime  = 0xFFFFFF0C;
+const TInt KPVUidDataSinkPlay   = 0xFFFFFF0D;
+const TInt KPVUidDataSinkPause  = 0xFFFFFF0E;
+const TInt KPVUidDataSinkStop   = 0xFFFFFF0F;
 
 
 /**
@@ -196,17 +196,17 @@ class MPVDataSourceBase
          * to fill a buffer.  The data source must call the BufferFilledL member on aConsumer when it has filled
          * the buffer with data - the data source can either make this callback synchronously or asynchronously.
          *
-         * @param	"aBuffer"
-         *			The buffer that needs filling with data
+         * @param   "aBuffer"
+         *          The buffer that needs filling with data
          *
-         * @param	"aConsumer"
-         *			The data sink that consumes the data. The data source needs this to make the BufferFilledL
-         *			callback on aConsumer when the data source has completed filling the aBuffer.
+         * @param   "aConsumer"
+         *          The data sink that consumes the data. The data source needs this to make the BufferFilledL
+         *          callback on aConsumer when the data source has completed filling the aBuffer.
          *
-         * @param	"aMediaId"
-         *			This identifies the type of media eg audio or video and the stream id.
-         *			This parameter is required in cases where the source can supply data
-         * 			of more than one media type and/or multiple strams of data eg a multimedia file
+         * @param   "aMediaId"
+         *          This identifies the type of media eg audio or video and the stream id.
+         *          This parameter is required in cases where the source can supply data
+         *          of more than one media type and/or multiple strams of data eg a multimedia file
          */
         virtual void FillBufferL(CMMFBuffer* aBuffer, MPVDataSinkBase* aConsumer, TMediaId /*aMediaId*/) = 0;
 
@@ -218,8 +218,8 @@ class MPVDataSourceBase
          * to empty a buffer by calling the data sinks EmptyBufferL.
          * When the data source gets this callback it knows that the buffer has been emptied and can be reused
          *
-         * @param	"aBuffer"
-         *			The buffer that has been emptied by a data sink and is now available for reuse
+         * @param   "aBuffer"
+         *          The buffer that has been emptied by a data sink and is now available for reuse
          */
         virtual void BufferEmptiedL(CMMFBuffer* aBuffer) = 0;
 
@@ -228,7 +228,7 @@ class MPVDataSourceBase
          *
          * This is a pure virtual function that each derived class must implement.
          *
-         * @return	ETrue if the data source can create a buffer else EFalse
+         * @return  ETrue if the data source can create a buffer else EFalse
          */
         virtual TBool CanCreateSourceBuffer() = 0;
 
@@ -237,18 +237,18 @@ class MPVDataSourceBase
          *
          * This is a pure virtual function that each derived class must implement.
          *
-         * @param	"aMediaId"
-         *			This identifies the type of media eg audio or video and the stream id.
-         *			This parameter is required in cases where the source can supply data
-         * 			of more than one media type and/or multiple strams of data eg a multimedia file
+         * @param   "aMediaId"
+         *          This identifies the type of media eg audio or video and the stream id.
+         *          This parameter is required in cases where the source can supply data
+         *          of more than one media type and/or multiple strams of data eg a multimedia file
          *
-         * @param	"aReference"
-         *			This must be written to by the method to indicate whether the created buffer is
-         *			a 'reference' buffer.  A 'reference' buffer is a buffer that is owned by the source
-         *			and should be used in preference to the sink buffer provided the sink buffer
-         *			is also not a reference buffer
+         * @param   "aReference"
+         *          This must be written to by the method to indicate whether the created buffer is
+         *          a 'reference' buffer.  A 'reference' buffer is a buffer that is owned by the source
+         *          and should be used in preference to the sink buffer provided the sink buffer
+         *          is also not a reference buffer
          * .
-         * @return	The created buffer
+         * @return  The created buffer
          */
         virtual CMMFBuffer* CreateSourceBufferL(TMediaId /*aMediaId*/, TBool &/*aReference*/)
         {
@@ -263,20 +263,20 @@ class MPVDataSourceBase
          * This can be used in preference to the above CreateSourceBufferL method in cases where
          * the source buffer creation has a dependancy on the sink buffer
          *
-         * @param	"aMediaId"
-         *			This identifies the type of media eg audio or video and the stream id.
-         *			This parameter is required in cases where the source can supply data
-         * 			of more than one media type and/or multiple strams of data eg a multimedia file
+         * @param   "aMediaId"
+         *          This identifies the type of media eg audio or video and the stream id.
+         *          This parameter is required in cases where the source can supply data
+         *          of more than one media type and/or multiple strams of data eg a multimedia file
          *
-         * @param	"aSinkBuffer"
-         *			The sink buffer the nature of which may influence the creation of the source buffer
+         * @param   "aSinkBuffer"
+         *          The sink buffer the nature of which may influence the creation of the source buffer
          *
-         * @param	"aReference"
-         *			This must be written to by the method to indicate whether the created buffer is
-         *			a 'reference' buffer.  A 'reference' buffer is a buffer that is owned by the source
-         *			and should be used in preference to the sink buffer provided the sink buffer is not a reference buffer
+         * @param   "aReference"
+         *          This must be written to by the method to indicate whether the created buffer is
+         *          a 'reference' buffer.  A 'reference' buffer is a buffer that is owned by the source
+         *          and should be used in preference to the sink buffer provided the sink buffer is not a reference buffer
          * .
-         * @return	The created buffer
+         * @return  The created buffer
          */
         virtual CMMFBuffer* CreateSourceBufferL(TMediaId /*aMediaId*/, CMMFBuffer& /*aSinkBuffer*/, TBool &/*aReference*/)
         {
@@ -296,13 +296,13 @@ class MPVDataSourceBase
          * initialisation is required and/or the data source can create any asynchronous events.
          *
          *
-         * @param	"aEventHandler"
-         *			This is an MAsyncEventHandler to handle asynchronous events that occur during the
-         *			transfer of multimedia data.  The event handler must be in the same thread as the data transfer
-         * 			thread - hence the reason it is passed in the SourceThreadLogon as opposed to say the constructor.
+         * @param   "aEventHandler"
+         *          This is an MAsyncEventHandler to handle asynchronous events that occur during the
+         *          transfer of multimedia data.  The event handler must be in the same thread as the data transfer
+         *          thread - hence the reason it is passed in the SourceThreadLogon as opposed to say the constructor.
          *
          *
-         * @return	KErrNone if successful, otherwise a system wide error code.
+         * @return  KErrNone if successful, otherwise a system wide error code.
          */
         virtual TInt SourceThreadLogon(MAsyncEventHandler& /*aEventHandler*/)
         {
@@ -388,17 +388,17 @@ class MPVDataSinkBase
          * to empty a buffer.  The data sink must call the BufferEmptiedL member on aSupplier when it has emptied
          * the buffer of it's data - the data sink can either make this callback synchronously or asynchronously.
          *
-         * @param	"aBuffer"
-         *			The full buffer that needs emptying of it's data
+         * @param   "aBuffer"
+         *          The full buffer that needs emptying of it's data
          *
-         * @param	"aSupplier"
-         *			The data source that supplied the data. The data sink needs this to make the BufferEmptiedL
-         *			callback on aSupplier to indicate to the data source that the data sink has finished with the buffer.
+         * @param   "aSupplier"
+         *          The data source that supplied the data. The data sink needs this to make the BufferEmptiedL
+         *          callback on aSupplier to indicate to the data source that the data sink has finished with the buffer.
          *
-         * @param	"aMediaId"
-         *			This identifies the type of media eg audio or video and the stream id.
-         *			This parameter is required in cases where the source can supply data
-         * 			of more than one media type and/or multiple strams of data
+         * @param   "aMediaId"
+         *          This identifies the type of media eg audio or video and the stream id.
+         *          This parameter is required in cases where the source can supply data
+         *          of more than one media type and/or multiple strams of data
          */
         virtual void EmptyBufferL(CMMFBuffer* aBuffer, MPVDataSourceBase* aSupplier, TMediaId /*aMediaId*/) = 0;
 
@@ -410,8 +410,8 @@ class MPVDataSinkBase
          * to fill a buffer by calling the data sources FillBufferL.
          * When the data sink gets this callback it knows that the buffer has been filled and is ready to be emptied
          *
-         * @param	"aBuffer"
-         *			The buffer that has been filled by a data source and is now available for processing
+         * @param   "aBuffer"
+         *          The buffer that has been filled by a data source and is now available for processing
          */
         virtual void BufferFilledL(CMMFBuffer* aBuffer) = 0;
 
@@ -420,7 +420,7 @@ class MPVDataSinkBase
          *
          * This is a pure virtual function that each derived class must implement.
          *
-         * @return	ETrue if the data sink can create a buffer else EFalse
+         * @return  ETrue if the data sink can create a buffer else EFalse
          */
         virtual TBool CanCreateSinkBuffer() = 0;
 
@@ -429,18 +429,18 @@ class MPVDataSinkBase
          *
          * This is a pure virtual function that each derived class must implement.
          *
-         * @param	"aMediaId"
-         *			This identifies the type of media eg audio or video and the stream id.
-         *			This parameter is required in cases where the source can supply data
-         * 			of more than one media type and/or multiple strams of data.
+         * @param   "aMediaId"
+         *          This identifies the type of media eg audio or video and the stream id.
+         *          This parameter is required in cases where the source can supply data
+         *          of more than one media type and/or multiple strams of data.
          *
-         * @param	"aReference"
-         *			This must be written to by the method to indicate whether the created buffer is
-         *			a 'reference' buffer.  A 'reference' buffer is a buffer that is owned by the sink
-         *			and should be used in preference to the source buffer provided the source buffer
-         *			is also not a reference buffer.
+         * @param   "aReference"
+         *          This must be written to by the method to indicate whether the created buffer is
+         *          a 'reference' buffer.  A 'reference' buffer is a buffer that is owned by the sink
+         *          and should be used in preference to the source buffer provided the source buffer
+         *          is also not a reference buffer.
          * .
-         * @return	The created buffer
+         * @return  The created buffer
          */
         virtual CMMFBuffer* CreateSinkBufferL(TMediaId /*aMediaId*/, TBool &/*aReference*/)
         {
@@ -459,13 +459,13 @@ class MPVDataSinkBase
          * initialisation is required and/or the data sink can create any asynchronous events.
          *
          *
-         * @param	"aEventHandler"
-         *			This is an MAsyncEventHandler to handle asynchronous events that occur during the
-         *			transfer of multimedia data.  The event handler must be in the same thread as the data transfer
-         * 			thread - hence the reason it is passed in the SinkThreadLogon as opposed to say the constructor.
+         * @param   "aEventHandler"
+         *          This is an MAsyncEventHandler to handle asynchronous events that occur during the
+         *          transfer of multimedia data.  The event handler must be in the same thread as the data transfer
+         *          thread - hence the reason it is passed in the SinkThreadLogon as opposed to say the constructor.
          *
          *
-         * @return	KErrNone if successful, otherwise a system wide error code.
+         * @return  KErrNone if successful, otherwise a system wide error code.
          */
         virtual TInt SinkThreadLogon(MAsyncEventHandler& /*aEventHandler*/)
         {
@@ -568,9 +568,9 @@ class MPVDataSink : public MPVPluginBase, public MPVDataSinkBase
  * and Sinks.
  */
 class MPVDataSourceAndSink :
-            public MPVPluginBase,
-            public MPVDataSourceBase,
-            public MPVDataSinkBase
+        public MPVPluginBase,
+        public MPVDataSourceBase,
+        public MPVDataSinkBase
 {
     public:
         MPVDataSourceAndSink(TUid aSourceType, TUid aSinkType) :

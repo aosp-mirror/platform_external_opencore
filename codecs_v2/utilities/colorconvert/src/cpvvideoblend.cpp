@@ -68,16 +68,16 @@ OSCL_EXPORT_REF int32 CPVVideoBlend::InitInputBlend(PVDimension *frameSize, PVRo
 
     switch (rotation)
     {
-        case Rotation0	:
+        case Rotation0  :
             rot = 0;
             break;
-        case Rotation90	:
+        case Rotation90 :
             rot = 3;
             break;
-        case Rotation180	:
+        case Rotation180    :
             rot = 2;
             break;
-        case Rotation270	:
+        case Rotation270    :
             rot = 1;
             break;
     }
@@ -166,8 +166,8 @@ OSCL_EXPORT_REF int32 CPVVideoBlend :: BlendInput(PVBlendFrame *pCameraInput, PV
     if (pBitmap != NULL)
     {
         inputRGB = pBitmap->pBuffer;
-        width_src	 = pBitmap->width;
-        height_src	 = pBitmap->height;
+        width_src    = pBitmap->width;
+        height_src   = pBitmap->height;
         colorkey = pBitmap->color_key;
         pitch_src = width_src; // equal to the source width
 
@@ -185,7 +185,7 @@ OSCL_EXPORT_REF int32 CPVVideoBlend :: BlendInput(PVBlendFrame *pCameraInput, PV
             return 0;
         }
 
-        if (pCameraInput != NULL)	// use color key when camera input is present
+        if (pCameraInput != NULL)   // use color key when camera input is present
         {
             BitmapInput->SetColorkey(colorkey);
         }
@@ -246,16 +246,16 @@ OSCL_EXPORT_REF int32 CPVVideoBlend :: InitOutputBlend(PVDimension *srcDecodeFrm
         Rotation = rotateMirrorForEncFrm; // for clockwise rotation CC16.lib supports counter clock wise rotation
         switch (Rotation)
         {
-            case 0	:
+            case 0  :
                 Rotation = 0;
                 break;
-            case 1	:
+            case 1  :
                 Rotation = 3;
                 break;
-            case 2	:
+            case 2  :
                 Rotation = 2;
                 break;
-            case 3	:
+            case 3  :
                 Rotation = 1;
                 break;
             case 4  :
@@ -270,7 +270,7 @@ OSCL_EXPORT_REF int32 CPVVideoBlend :: InitOutputBlend(PVDimension *srcDecodeFrm
             case 7  :
                 Rotation = 5;
                 break;
-            default	:
+            default :
                 break;
         }
 

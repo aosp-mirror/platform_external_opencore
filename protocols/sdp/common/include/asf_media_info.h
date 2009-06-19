@@ -97,7 +97,7 @@ class asf_mediaInfo : public mediaInfo
         /*
         inline void setProfileLevelID(int pID)
         {
-        	profileLevelID = pID;
+            profileLevelID = pID;
         };
         */
         inline void setStreamID(int ID)
@@ -141,7 +141,7 @@ class asf_mediaInfo : public mediaInfo
         {
             return lang.get_cstr();
         };
-//	inline int getProfileLevelID(){return profileLevelID;};
+//  inline int getProfileLevelID(){return profileLevelID;};
 
         inline const unsigned char *getAsfHeader(int*size)
         {
@@ -150,8 +150,8 @@ class asf_mediaInfo : public mediaInfo
 
         inline int getVOLLength()
         {
-            //	return VOLHeaderSize;
-            return 	decoderSpecificInfoSize;
+            //  return VOLHeaderSize;
+            return  decoderSpecificInfoSize;
         };
 
         inline unsigned char *getVOLHeader()

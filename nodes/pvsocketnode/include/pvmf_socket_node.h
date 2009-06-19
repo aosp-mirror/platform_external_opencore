@@ -182,8 +182,8 @@ class PVMFSocketNodeMemPool
         //For TCP [MSHTTP Streaming], size of the memory pool for Data is determined only after receiving ASF header from the streaming server
         //therefore, to persist the response of the Server before completion of receiving the ASF header, an internal shared buffer allocator is created.
         PVMFResizableSimpleMediaMsgAlloc* iMediaMsgAllocator;
-        OsclMemPoolResizableAllocator*	iSharedBufferAlloc;
-        OsclMemPoolResizableAllocator*	iInternalAlloc;//[MSHTTP Streaming Specific specific]
+        OsclMemPoolResizableAllocator*  iSharedBufferAlloc;
+        OsclMemPoolResizableAllocator*  iInternalAlloc;//[MSHTTP Streaming Specific specific]
 
         // Allocator for multiple receives[ for UDP only, will be created and used only when SNODE_ENABLE_UDP_MULTI_PACKET is defined].
         PVMFMediaFragGroupCombinedAlloc<PVMFSocketNodeAllocator>* iMediaFragGroupAlloc;
@@ -210,7 +210,7 @@ struct SOCKET_ADDR
     OsclNetworkAddress iLocalAdd;
     OsclNetworkAddress iRemoteAdd;
 
-    OSCL_HeapString<PVMFSocketNodeAllocator> iRemoteHost;	//could be either DNS or ip address
+    OSCL_HeapString<PVMFSocketNodeAllocator> iRemoteHost;   //could be either DNS or ip address
 
     //each socket maps to a port, hence a port tag is needed for unique identification
     int32 iTag;
@@ -577,7 +577,7 @@ class SocketPortConfig : public OsclMemPoolFixedChunkAllocatorObserver, public O
             iUDPSocket = NULL;
             iTCPSocket = NULL;
             iDNS = NULL;
-            iMemPool	= NULL;
+            iMemPool    = NULL;
             iContainer = NULL;
             iTag = PVMF_SOCKET_NODE_PORT_TYPE_UNKNOWN;
             iRTP = false;
@@ -592,8 +592,8 @@ class SocketPortConfig : public OsclMemPoolFixedChunkAllocatorObserver, public O
         SocketPortState iState;
 
         PVMFSocketPort *iPVMFPort;
-        SOCKET_ADDR	iAddr;
-        uint32	iSockId;
+        SOCKET_ADDR iAddr;
+        uint32  iSockId;
         OsclUDPSocket* iUDPSocket;
         OsclTCPSocket* iTCPSocket;
         OsclDNS *iDNS;
@@ -729,11 +729,11 @@ class PVMFDnsCache
 ** The Socket Node
 */
 class PVMFSocketNode
-            : public PVInterface
-            , public PVMFNodeInterface
-            , public OsclActiveObject
-            , public OsclSocketObserver
-            , public OsclDNSObserver
+        : public PVInterface
+        , public PVMFNodeInterface
+        , public OsclActiveObject
+        , public OsclSocketObserver
+        , public OsclDNSObserver
 {
     public:
         OSCL_IMPORT_REF PVMFSocketNode(int32 aPriority);
@@ -898,7 +898,7 @@ class PVMFSocketNode
         void HandleRecvComplete(SocketPortConfig& tmpSockConfig, PVMFStatus, PVMFSocketActivity*, bool);
         void HandleRecvFromComplete(SocketPortConfig& tmpSockConfig, PVMFStatus, PVMFSocketActivity*, bool);
 
-        OsclSocketServ	*iSockServ;
+        OsclSocketServ  *iSockServ;
 
         const int TIMEOUT_CONNECT;
         const int TIMEOUT_SEND;
@@ -917,7 +917,7 @@ class PVMFSocketNode
         * Oscl DNS Handling
         **********************************************/
 
-        PVMFDnsCache	iDnsCache;
+        PVMFDnsCache    iDnsCache;
 
         /*********************************************
         * Port Data Handling

@@ -26,10 +26,10 @@ uint32 num_sad_Blk = 0;
 uint32 num_sad_MB_call = 0;
 uint32 num_sad_Blk_call = 0;
 
-#define NUM_SAD_MB_CALL()		num_sad_MB_call++
-#define NUM_SAD_MB()			num_sad_MB++
-#define NUM_SAD_BLK_CALL()		num_sad_Blk_call++
-#define NUM_SAD_BLK()			num_sad_Blk++
+#define NUM_SAD_MB_CALL()       num_sad_MB_call++
+#define NUM_SAD_MB()            num_sad_MB++
+#define NUM_SAD_BLK_CALL()      num_sad_Blk_call++
+#define NUM_SAD_BLK()           num_sad_Blk++
 
 #else
 
@@ -49,14 +49,14 @@ int AVCSAD_MB_HTFM(uint8 *ref,uint8 *blk,int dmin,int lx,void *extra_info)
 
 
 /*==================================================================
-	Function:	SAD_Macroblock
-	Date:		09/07/2000
-	Purpose:	Compute SAD 16x16 between blk and ref.
-	To do:		Uniform subsampling will be inserted later!
-				Hypothesis Testing Fast Matching to be used later!
-	Changes:
-	11/7/00:	implemented MMX
-	1/24/01:	implemented SSE
+    Function:   SAD_Macroblock
+    Date:       09/07/2000
+    Purpose:    Compute SAD 16x16 between blk and ref.
+    To do:      Uniform subsampling will be inserted later!
+                Hypothesis Testing Fast Matching to be used later!
+    Changes:
+    11/7/00:    implemented MMX
+    1/24/01:    implemented SSE
 ==================================================================*/
 /********** C ************/
 int AVCSAD_Macroblock_C(uint8 *ref, uint8 *blk, int dmin_lx, void *extra_info)
@@ -76,15 +76,15 @@ int AVCSAD_Macroblock_C(uint8 *ref, uint8 *blk, int dmin_lx, void *extra_info)
 
 #ifdef HTFM   /* HTFM with uniform subsampling implementation 2/28/01 */
 /*===============================================================
-	Function:	AVCAVCSAD_MB_HTFM_Collect and AVCSAD_MB_HTFM
-	Date:		3/2/1
-	Purpose:	Compute the SAD on a 16x16 block using
-				uniform subsampling and hypothesis testing fast matching
-				for early dropout. SAD_MB_HP_HTFM_Collect is to collect
-				the statistics to compute the thresholds to be used in
-				SAD_MB_HP_HTFM.
-	Input/Output:
-	Changes:
+    Function:   AVCAVCSAD_MB_HTFM_Collect and AVCSAD_MB_HTFM
+    Date:       3/2/1
+    Purpose:    Compute the SAD on a 16x16 block using
+                uniform subsampling and hypothesis testing fast matching
+                for early dropout. SAD_MB_HP_HTFM_Collect is to collect
+                the statistics to compute the thresholds to be used in
+                SAD_MB_HP_HTFM.
+    Input/Output:
+    Changes:
   ===============================================================*/
 
 int AVCAVCSAD_MB_HTFM_Collect(uint8 *ref, uint8 *blk, int dmin_lx, void *extra_info)

@@ -190,8 +190,8 @@ class Oscl_Linked_List_Base
  * Oscl Linked List Class
  */
 template <class LLClass, class Alloc> class Oscl_Linked_List
-            : public Oscl_Linked_List_Base
-            , public Oscl_Opaque_Type_Alloc_LL
+        : public Oscl_Linked_List_Base
+        , public Oscl_Opaque_Type_Alloc_LL
 {
 
     public:

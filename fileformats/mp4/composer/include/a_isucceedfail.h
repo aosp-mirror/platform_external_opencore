@@ -25,7 +25,7 @@
 
 #include "oscl_types.h"
 
-typedef enum {  DEFAULT_ERROR	= -1,
+typedef enum {  DEFAULT_ERROR   = -1,
                 EVERYTHING_FINE,
                 READ_FAILED,
                 READ_USER_DATA_ATOM_FAILED,

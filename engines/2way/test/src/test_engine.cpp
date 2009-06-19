@@ -821,7 +821,7 @@ int local_main(FILE* filehandle, cmd_line *command_line)
             {
                 fprintf(fileoutput, "ERROR: Leak info is incomplete.\n");
             }
-            for (uint32 i = 0;i < leakinfo;i++)
+            for (uint32 i = 0; i < leakinfo; i++)
             {
                 fprintf(fileoutput, "Leak Info:\n");
                 fprintf(fileoutput, "  allocNum %d\n", info[i].allocNum);

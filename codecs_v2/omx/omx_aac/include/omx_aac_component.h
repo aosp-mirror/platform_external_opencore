@@ -16,8 +16,8 @@
  * -------------------------------------------------------------------
  */
 /**
-	@file omx_aac_component.h
-	OpenMax decoder_component component.
+    @file omx_aac_component.h
+    OpenMax decoder_component component.
 
 */
 

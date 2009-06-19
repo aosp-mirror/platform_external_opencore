@@ -29,7 +29,7 @@
 #include "oscl_error.h"
 
 // **************************************************************
-//					 CHeapRep Implementation
+//                   CHeapRep Implementation
 // **************************************************************
 
 OSCL_EXPORT_REF void CHeapRep::set_rep(CHeapRep*& aRep, Oscl_DefAlloc& aAlloc, const char* cp, uint32 len)
@@ -246,8 +246,8 @@ OSCL_EXPORT_REF void CHeapRep::remove_ref(Oscl_DefAlloc &alloc)
 }
 
 // **************************************************************
-//					 OSCL_HeapStringA Implementation
-//					 OSCL_wHeapStringA Implementation
+//                   OSCL_HeapStringA Implementation
+//                   OSCL_wHeapStringA Implementation
 // **************************************************************
 
 void OSCL_HeapStringA::set_rep(const chartype* cp, uint32 len)
@@ -615,7 +615,7 @@ OSCL_EXPORT_REF OSCL_wHeapStringA& OSCL_wHeapStringA::operator=(const chartype *
 }
 
 // **************************************************************
-//				   CStackRep Implementation
+//                 CStackRep Implementation
 // **************************************************************
 
 OSCL_EXPORT_REF void CStackRep::set(const char* cp, uint32 len)
@@ -666,7 +666,7 @@ OSCL_EXPORT_REF void CStackRep::append(const oscl_wchar* cp, uint32 alen)
 }
 
 // **************************************************************
-//				  CFastRep Implementation
+//                CFastRep Implementation
 // **************************************************************
 
 OSCL_EXPORT_REF void CFastRep::set_r(const char* cp, uint32 len)
@@ -729,8 +729,8 @@ OSCL_EXPORT_REF void CFastRep::append(const oscl_wchar* cp, uint32 len)
 }
 
 // **************************************************************
-//					 OSCL_FastString Implementation
-//					 OSCL_wFastString Implementation
+//                   OSCL_FastString Implementation
+//                   OSCL_wFastString Implementation
 // **************************************************************
 void OSCL_FastString::set_rep(const chartype* cp)
 {
@@ -825,7 +825,7 @@ OSCL_EXPORT_REF void OSCL_FastString::set(chartype* cp, uint32 maxlen)
 {
     //set string to new writable buffer.
     //make sure buffer is null-terminated
-    for (uint32 i = 0;i <= maxlen;i++)
+    for (uint32 i = 0; i <= maxlen; i++)
     {
         if (cp[i] == '\0')
         {
@@ -840,7 +840,7 @@ OSCL_EXPORT_REF void OSCL_wFastString::set(chartype* cp, uint32 maxlen)
 {
     //set string to new writable buffer.
     //make sure buffer is null-terminated
-    for (uint32 i = 0;i <= maxlen;i++)
+    for (uint32 i = 0; i <= maxlen; i++)
     {
         if (cp[i] == '\0')
         {

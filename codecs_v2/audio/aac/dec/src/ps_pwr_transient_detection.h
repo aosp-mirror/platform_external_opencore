@@ -82,9 +82,9 @@ extern "C"
 #endif
 
     void ps_pwr_transient_detection(STRUCT_PS_DEC *h_ps_dec,
-                                    Int32 *rIntBufferLeft,
-                                    Int32 *iIntBufferLeft,
-                                    Int32 aTransRatio[]);
+    Int32 *rIntBufferLeft,
+    Int32 *iIntBufferLeft,
+    Int32 aTransRatio[]);
 
 #ifdef __cplusplus
 }

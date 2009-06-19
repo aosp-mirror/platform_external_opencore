@@ -27,8 +27,8 @@ class UnitTest_TAlloc
         typedef T           * pointer;
         typedef const T     * const_pointer;
         typedef uint32      size_type;
-        typedef T&			reference;
-        typedef const T&	const_reference;
+        typedef T&          reference;
+        typedef const T&    const_reference;
 
         virtual ~UnitTest_TAlloc() {};
 

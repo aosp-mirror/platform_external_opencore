@@ -107,9 +107,9 @@ typedef struct
 
 // The base class for all pvframemetadata utility asynchronous tests
 class pvframemetadata_async_test_base : public OsclTimerObject,
-            public PVCommandStatusObserver,
-            public PVInformationalEventObserver,
-            public PVErrorEventObserver
+        public PVCommandStatusObserver,
+        public PVInformationalEventObserver,
+        public PVErrorEventObserver
 {
     public:
         pvframemetadata_async_test_base(PVFrameMetadataAsyncTestParam aTestParam) :
@@ -211,7 +211,7 @@ class pvframemetadata_async_test_base : public OsclTimerObject,
 
 // test_base-based class which will run async tests on pvFrameMetadata utility
 class pvframemetadata_utility_test : public test_case,
-            public pvframemetadata_async_test_observer
+        public pvframemetadata_async_test_observer
 {
     public:
         pvframemetadata_utility_test(char *aFileName, PVMFFormatType aFileType, int32 aFirstTest, int32 aLastTest, int32 aLogLevel);

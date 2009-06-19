@@ -16,9 +16,9 @@
  * -------------------------------------------------------------------
  */
 /*********************************************************************************/
-/*  Filename: sad_mb_offset.h														*/
-/*  Description: Implementation for in-line functions used in dct.cpp			*/
-/*  Modified:																	*/
+/*  Filename: sad_mb_offset.h                                                       */
+/*  Description: Implementation for in-line functions used in dct.cpp           */
+/*  Modified:                                                                   */
 /*********************************************************************************/
 
 #if !defined(PV_ARM_GCC_V4) && !defined(PV_ARM_GCC_V5) /* ARM GNU COMPILER  */
@@ -33,7 +33,7 @@ __inline int32 sad_mb_offset1(UChar *ref, UChar *blk, Int lx, Int dmin)
 {
     int32 x4, x5, x6, x8, x9, x10, x11, x12, x14;
 
-    //	x5 = (x4<<8) - x4;
+    //  x5 = (x4<<8) - x4;
     x4 = x5 = 0;
     x6 = 0xFFFF00FF;
     x9 = 0x80808080; /* const. */
@@ -51,13 +51,13 @@ LOOP_SAD1:
 #endif
     /****** process 8 pixels ******/
     x10 = *((uint32*)(ref += lx)); /* D C B A */
-    x11 = *((uint32*)(ref + 4));	/* H G F E */
-    x12 = *((uint32*)(ref + 8));	/* L K J I */
+    x11 = *((uint32*)(ref + 4));    /* H G F E */
+    x12 = *((uint32*)(ref + 8));    /* L K J I */
 
     x10 = ((uint32)x10 >> SHIFT); /* 0 0 0 D */
-    x10 = x10 | (x11 << (32 - SHIFT));		  /* G F E D */
+    x10 = x10 | (x11 << (32 - SHIFT));        /* G F E D */
     x11 = ((uint32)x11 >> SHIFT); /* 0 0 0 H */
-    x11 = x11 | (x12 << (32 - SHIFT));		  /* K J I H */
+    x11 = x11 | (x12 << (32 - SHIFT));        /* K J I H */
 
     x12 = *((uint32*)(blk += 16));
     x14 = *((uint32*)(blk + 4));
@@ -77,13 +77,13 @@ LOOP_SAD1:
 
     /****** process 8 pixels ******/
     x10 = *((uint32*)(ref + 8)); /* D C B A */
-    x11 = *((uint32*)(ref + 12));	/* H G F E */
-    x12 = *((uint32*)(ref + 16));	/* L K J I */
+    x11 = *((uint32*)(ref + 12));   /* H G F E */
+    x12 = *((uint32*)(ref + 16));   /* L K J I */
 
     x10 = ((uint32)x10 >> SHIFT); /* mvn x10, x10, lsr #24  = 0xFF 0xFF 0xFF ~D */
-    x10 = x10 | (x11 << (32 - SHIFT));		  /* bic x10, x10, x11, lsl #8 = ~G ~F ~E ~D */
+    x10 = x10 | (x11 << (32 - SHIFT));        /* bic x10, x10, x11, lsl #8 = ~G ~F ~E ~D */
     x11 = ((uint32)x11 >> SHIFT); /* 0xFF 0xFF 0xFF ~H */
-    x11 = x11 | (x12 << (32 - SHIFT));		  /* ~K ~J ~I ~H */
+    x11 = x11 | (x12 << (32 - SHIFT));        /* ~K ~J ~I ~H */
 
     x12 = *((uint32*)(blk + 8));
     x14 = *((uint32*)(blk + 12));
@@ -111,11 +111,11 @@ LOOP_SAD1:
         if (--x8)
         {
 #if (NUMBER==3)
-            goto		 LOOP_SAD3;
+            goto         LOOP_SAD3;
 #elif (NUMBER==2)
-            goto		 LOOP_SAD2;
+            goto         LOOP_SAD2;
 #elif (NUMBER==1)
-            goto		 LOOP_SAD1;
+            goto         LOOP_SAD1;
 #endif
         }
 
@@ -163,14 +163,14 @@ LOOP_SAD1:
         MVN      x11, x11, lsr #SHIFT;
         BIC      x11, x11, x12, lsl #(32-SHIFT);
 
-        LDR		 x12, [blk,#8];
+        LDR      x12, [blk, #8];
     }
 
     /* process x11 & x14 */
-    x11 = sad_4pixelN(x11,x14,x9);
+    x11 = sad_4pixelN(x11, x14, x9);
 
     /* process x12 & x10 */
-    x10 = sad_4pixelN(x10,x12,x9);
+    x10 = sad_4pixelN(x10, x12, x9);
 
     sum_accumulate;
 
@@ -178,15 +178,15 @@ LOOP_SAD1:
         /****** process 8 pixels ******/
         LDR      x11, [ref, #4];
         LDR      x12, [ref, #8];
-        LDR	 x10, [ref], lx ;
-        LDR	 x14, [blk, #4];
+        LDR  x10, [ref], lx ;
+        LDR  x14, [blk, #4];
 
-        MVN      x10,x10,lsr #SHIFT;
-        BIC      x10,x10,x11,lsl #(32-SHIFT);
-        MVN      x11,x11,lsr #SHIFT;
-        BIC      x11,x11,x12,lsl #(32-SHIFT);
+        MVN      x10, x10, lsr #SHIFT;
+        BIC      x10, x10, x11, lsl #(32-SHIFT);
+        MVN      x11, x11, lsr #SHIFT;
+        BIC      x11, x11, x12, lsl #(32-SHIFT);
 
-        LDR      x12,[blk], #16;
+        LDR      x12, [blk], #16;
     }
 
     /* process x11 & x14 */
@@ -206,11 +206,11 @@ LOOP_SAD1:
         RSBS     x11, dmin, x10, lsr #16
         ADDLSS   x8, x8, #INC_X8
 #if (NUMBER==3)
-        BLS		 LOOP_SAD3;
+        BLS      LOOP_SAD3;
 #elif (NUMBER==2)
-        BLS		 LOOP_SAD2;
+BLS      LOOP_SAD2;
 #elif (NUMBER==1)
-        BLS		 LOOP_SAD1;
+BLS      LOOP_SAD1;
 #endif
     }
 
@@ -229,7 +229,7 @@ __inline int32 sad_mb_offset1(UChar *ref, UChar *blk, Int lx, Int dmin)
 {
     int32 x4, x5, x6, x8, x9, x10, x11, x12, x14;
 
-    //	x5 = (x4<<8) - x4;
+    //  x5 = (x4<<8) - x4;
     x4 = x5 = 0;
     x6 = 0xFFFF00FF;
     x9 = 0x80808080; /* const. */
@@ -246,8 +246,8 @@ LOOP_SAD1:
 #endif
     /****** process 8 pixels ******/
     x10 = *((uint32*)(ref += lx)); /* D C B A */
-    x11 = *((uint32*)(ref + 4));	/* H G F E */
-    x12 = *((uint32*)(ref + 8));	/* L K J I */
+    x11 = *((uint32*)(ref + 4));    /* H G F E */
+    x12 = *((uint32*)(ref + 8));    /* L K J I */
 
     int32 shift = SHIFT;
     int32 shift2 = 32 - SHIFT;
@@ -270,8 +270,8 @@ LOOP_SAD1:
 
     /****** process 8 pixels ******/
     x10 = *((uint32*)(ref + 8)); /* D C B A */
-    x11 = *((uint32*)(ref + 12));	/* H G F E */
-    x12 = *((uint32*)(ref + 16));	/* L K J I */
+    x11 = *((uint32*)(ref + 12));   /* H G F E */
+    x12 = *((uint32*)(ref + 16));   /* L K J I */
 
     asm volatile("ldr  %3, [%4, #4]\n\t"
                  "mvn  %0, %0, lsr %5\n\t"
@@ -300,11 +300,11 @@ LOOP_SAD1:
         if (--x8)
         {
 #if (NUMBER==3)
-            goto		 LOOP_SAD3;
+            goto         LOOP_SAD3;
 #elif (NUMBER==2)
-            goto		 LOOP_SAD2;
+goto         LOOP_SAD2;
 #elif (NUMBER==1)
-            goto		 LOOP_SAD1;
+goto         LOOP_SAD1;
 #endif
         }
 

@@ -24,7 +24,7 @@
  REVISION HISTORY
 
  Description:  Change the input argument, no shifts information from long fft_rx4
-			   , do not have to check for shifts.
+               , do not have to check for shifts.
 
  Date: 10/18/2002
  Description:

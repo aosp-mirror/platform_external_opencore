@@ -52,14 +52,14 @@ const static int mpeg_nqmat_def[64]  =
 #endif
 
 /* ======================================================================== */
-/*	Function : CalcNumBits()												*/
-/*	Purpose  :																*/
-/*	In/out   :																*/
-/*	Return   : Calculate the minimum number of bits required to				*/
-/*				represent x.												*/
-/*	Note     : This is an equivalent implementation of						*/
-/*						(long)ceil(log((double)x)/log(2.0))					*/
-/*	Modified :																*/
+/*  Function : CalcNumBits()                                                */
+/*  Purpose  :                                                              */
+/*  In/out   :                                                              */
+/*  Return   : Calculate the minimum number of bits required to             */
+/*              represent x.                                                */
+/*  Note     : This is an equivalent implementation of                      */
+/*                      (long)ceil(log((double)x)/log(2.0))                 */
+/*  Modified :                                                              */
 /* ======================================================================== */
 int CalcNumBits(uint x)
 {
@@ -74,14 +74,14 @@ int CalcNumBits(uint x)
 *
 * -- DecodeVolHeader -- Decode the header of a VOL
 *
-*	04/10/2000 : initial modification to the new PV-Decoder Lib format.
+*   04/10/2000 : initial modification to the new PV-Decoder Lib format.
 *   10/12/2001 : reject non compliant bitstreams
 *
 ***********************************************************CommentEnd********/
 PV_STATUS DecodeVOLHeader(VideoDecData *video, int layer)
 {
     PV_STATUS status;
-    Vol	*currVol;
+    Vol *currVol;
     BitstreamDecVideo *stream;
     uint32 tmpvar, vol_shape;
     uint32 startCode;
@@ -94,8 +94,8 @@ PV_STATUS DecodeVOLHeader(VideoDecData *video, int layer)
 #endif
     /*  There's a "currLayer" variable inside videoDecData.          */
     /*   However, we don't maintain it until we decode frame data.  04/05/2000 */
-    currVol	= video->vol[layer];
-    stream	= currVol->bitstream;
+    currVol = video->vol[layer];
+    stream  = currVol->bitstream;
     currVol->moduloTimeBase = 0;
 
     /* Determine which start code for the decoder to begin with */
@@ -108,7 +108,7 @@ PV_STATUS DecodeVOLHeader(VideoDecData *video, int layer)
         (void) BitstreamReadBits32HC(stream);
         tmpvar = (uint32) BitstreamReadBits16(stream,  8); /* profile */
 #ifndef PV_TOLERATE_VOL_ERRORS
-        if (layer)														/*    */
+        if (layer)                                                      /*    */
         {
             /* support SSPL0-2  */
             if (tmpvar != 0x10 && tmpvar != 0x11 && tmpvar != 0x12 &&
@@ -225,17 +225,17 @@ PV_STATUS DecodeVOLHeader(VideoDecData *video, int layer)
     }
     else
     {
-        /*		tmpvar = 0;   */                                             /*  10/12/01 */
+        /*      tmpvar = 0;   */                                             /*  10/12/01 */
         status = BitstreamShowBits32(stream, 27, &tmpvar);     /* uncomment this line if you want
-																     to start decoding with a
-																	 video_object_start_code */
+                                                                     to start decoding with a
+                                                                     video_object_start_code */
     }
 
     if (tmpvar == VO_START_CODE)
     {
         /*****
         *
-        *	Read the VOL header entries from the bitstream
+        *   Read the VOL header entries from the bitstream
         *
         *****/
         /* video_object_start_code                         */
@@ -287,7 +287,7 @@ decode_vol:
 #ifdef PV_TOLERATE_VOL_ERRORS
         if (tmpvar == 0)
         {
-            if (layer)														/*    */
+            if (layer)                                                      /*    */
             {
                 /* support SSPL0-2  */
                 if (profile != 0x10 && profile != 0x11 && profile != 0x12)
@@ -345,7 +345,7 @@ decode_vol:
         /*  03/10/99 */
         if (tmpvar)
         {
-            /* chroma_format					*/
+            /* chroma_format                    */
             tmpvar = BitstreamReadBits16(stream, 2);
             if (tmpvar != 1) return PV_FAIL;
             /* low_delay  */
@@ -408,7 +408,7 @@ decode_vol:
 
         /* round up to a multiple of MB_SIZE.   08/09/2000 */
         video->width = (video->width + 15) & -16;
-//		video->displayWidth += (video->displayWidth & 0x1);  /* displayed image should be even size */
+//      video->displayWidth += (video->displayWidth & 0x1);  /* displayed image should be even size */
 
         /* marker bit */
         if (!BitstreamRead1Bits(stream)) return PV_FAIL;
@@ -418,7 +418,7 @@ decode_vol:
 
         /* round up to a multiple of MB_SIZE.   08/09/2000 */
         video->height = (video->height + 15) & -16;
-//		video->displayHeight += (video->displayHeight & 0x1); /* displayed image should be even size */
+//      video->displayHeight += (video->displayHeight & 0x1); /* displayed image should be even size */
         if (!BitstreamRead1Bits(stream)) return PV_FAIL;
 
         /*  03/10/99 */
@@ -492,7 +492,7 @@ decode_vol:
                 }
                 while ((qmat[*(zigzag_inv+i)] != 0) && (++i < 64));
 
-                for (j = i;j < 64;j++)
+                for (j = i; j < 64; j++)
                     qmat[*(zigzag_inv+j)] = qmat[*(zigzag_inv+i-1)];
             }
             else
@@ -515,7 +515,7 @@ decode_vol:
                 }
                 while ((qmat[*(zigzag_inv+i)] != 0) && (++i < 64));
 
-                for (j = i;j < 64;j++)
+                for (j = i; j < 64; j++)
                     qmat[*(zigzag_inv+j)] = qmat[*(zigzag_inv+i-1)];
             }
             else
@@ -733,7 +733,7 @@ decode_vol:
 *
 * -- DecodeGOV -- Decodes the Group of VOPs from bitstream
 *
-*	04/20/2000  initial modification to the new PV-Decoder Lib format.
+*   04/20/2000  initial modification to the new PV-Decoder Lib format.
 *
 ***********************************************************CommentEnd********/
 PV_STATUS DecodeGOVHeader(BitstreamDecVideo *stream, uint32 *time_base)
@@ -762,12 +762,12 @@ PV_STATUS DecodeGOVHeader(BitstreamDecVideo *stream, uint32 *time_base)
     /* We have to check the timestamp here.  If the sync timestamp is */
     /*    earlier than the previous timestamp or longer than 60 sec.  */
     /*    after the previous timestamp, assume the GOV header is      */
-    /*    corrupted.								 05/12/2000     */
+    /*    corrupted.                                 05/12/2000     */
     *time_base = time_s;   /*  02/27/2002 */
-//	*time_base = *time_base/1000;
-//	tmpvar = time_s - *time_base;
-//	if (tmpvar <= 60) *time_base = time_s;
-//	else return PV_FAIL;
+//  *time_base = *time_base/1000;
+//  tmpvar = time_s - *time_base;
+//  if (tmpvar <= 60) *time_base = time_s;
+//  else return PV_FAIL;
 
     tmpvar = (uint32) BitstreamRead1Bits(stream);
     closed_gov = tmpvar;
@@ -796,8 +796,8 @@ PV_STATUS DecodeGOVHeader(BitstreamDecVideo *stream, uint32 *time_base)
 *
 * -- DecodeVopHeader -- Decodes the VOPheader information from the bitstream
 *
-*	04/12/2000  Initial port to the new PV decoder library format.
-*	05/10/2000  Error resilient decoding of vop header.
+*   04/12/2000  Initial port to the new PV decoder library format.
+*   05/10/2000  Error resilient decoding of vop header.
 *
 ***********************************************************CommentEnd********/
 PV_STATUS DecodeVOPHeader(VideoDecData *video, Vop *currVop, Bool use_ext_timestamp)
@@ -809,7 +809,7 @@ PV_STATUS DecodeVOPHeader(VideoDecData *video, Vop *currVop, Bool use_ext_timest
     int time_base;
 
     /*****
-    *	Read the VOP header from the bitstream (No shortVideoHeader Mode here!)
+    *   Read the VOP header from the bitstream (No shortVideoHeader Mode here!)
     *****/
     BitstreamShowBits32HC(stream, &tmpvar);
 
@@ -817,13 +817,13 @@ PV_STATUS DecodeVOPHeader(VideoDecData *video, Vop *currVop, Bool use_ext_timest
     if (tmpvar == GROUP_START_CODE)
     {
         tmpvar = BitstreamReadBits32HC(stream);
-//		rewindBitstream(stream, START_CODE_LENGTH); /* for backward compatibility */
+//      rewindBitstream(stream, START_CODE_LENGTH); /* for backward compatibility */
         status = DecodeGOVHeader(stream, &tmpvar);
         if (status != PV_SUCCESS)
         {
             return status;
         }
-//		use_ext_timestamp = TRUE;   /*  02/08/2002 */
+//      use_ext_timestamp = TRUE;   /*  02/08/2002 */
         /* We should have a VOP header following the GOV header.  03/15/2001 */
         BitstreamShowBits32HC(stream, &tmpvar);
     }
@@ -906,40 +906,40 @@ PV_STATUS DecodeVOPHeader(VideoDecData *video, Vop *currVop, Bool use_ext_timest
     {
         if (currVol->complexity_estMethod < 2)   /*   OCT 2002 */
         {
-            if ((currVol->complexity.text_1 >> 3) & 0x1)	/* intra		*/
+            if ((currVol->complexity.text_1 >> 3) & 0x1)    /* intra        */
                 BitstreamReadBits16(stream, 8);
-            if (currVol->complexity.text_1 & 0x1)			/* not_coded	*/
+            if (currVol->complexity.text_1 & 0x1)           /* not_coded    */
                 BitstreamReadBits16(stream, 8);
-            if ((currVol->complexity.text_2 >> 3) & 0x1)	/* dct_coefs	*/
+            if ((currVol->complexity.text_2 >> 3) & 0x1)    /* dct_coefs    */
                 BitstreamReadBits16(stream, 8);
-            if ((currVol->complexity.text_2 >> 2) & 0x1)	/* dct_lines	*/
+            if ((currVol->complexity.text_2 >> 2) & 0x1)    /* dct_lines    */
                 BitstreamReadBits16(stream, 8);
-            if ((currVol->complexity.text_2 >> 1) & 0x1)	/* vlc_symbols	*/
+            if ((currVol->complexity.text_2 >> 1) & 0x1)    /* vlc_symbols  */
                 BitstreamReadBits16(stream, 8);
-            if (currVol->complexity.text_2 & 0x1)			/* vlc_bits		*/
+            if (currVol->complexity.text_2 & 0x1)           /* vlc_bits     */
                 BitstreamReadBits16(stream, 4);
 
             if (currVop->predictionType != I_VOP)
             {
-                if ((currVol->complexity.text_1 >> 2) & 0x1)	/* inter	*/
+                if ((currVol->complexity.text_1 >> 2) & 0x1)    /* inter    */
                     BitstreamReadBits16(stream, 8);
-                if ((currVol->complexity.text_1 >> 1) & 0x1)	/* inter_4v */
+                if ((currVol->complexity.text_1 >> 1) & 0x1)    /* inter_4v */
                     BitstreamReadBits16(stream, 8);
-                if ((currVol->complexity.mc >> 5) & 0x1)		/* apm		*/
+                if ((currVol->complexity.mc >> 5) & 0x1)        /* apm      */
                     BitstreamReadBits16(stream, 8);
-                if ((currVol->complexity.mc >> 4) & 0x1)		/* npm		*/
+                if ((currVol->complexity.mc >> 4) & 0x1)        /* npm      */
                     BitstreamReadBits16(stream, 8);
                 /* interpolate_mc_q */
-                if ((currVol->complexity.mc >> 2) & 0x1)		/* forw_back_mc_q */
+                if ((currVol->complexity.mc >> 2) & 0x1)        /* forw_back_mc_q */
                     BitstreamReadBits16(stream, 8);
-                if ((currVol->complexity.mc >> 1) & 0x1)		/* halfpel2	*/
+                if ((currVol->complexity.mc >> 1) & 0x1)        /* halfpel2 */
                     BitstreamReadBits16(stream, 8);
-                if (currVol->complexity.mc & 0x1)				/* halfpel4	*/
+                if (currVol->complexity.mc & 0x1)               /* halfpel4 */
                     BitstreamReadBits16(stream, 8);
             }
             if (currVop->predictionType == B_VOP)
             {
-                if ((currVol->complexity.mc >> 3) & 0x1)		/* interpolate_mc_q */
+                if ((currVol->complexity.mc >> 3) & 0x1)        /* interpolate_mc_q */
                     BitstreamReadBits16(stream, 8);
             }
         }
@@ -1006,9 +1006,9 @@ return_point:
 *
 * -- VideoPlaneWithShortHeader -- Decodes the short_video_header information from the bitstream
 * Modified :
-			 04/23/2001.  Remove the codes related to the
-			     "first pass" decoding.  We use a different function
-				 to set up the decoder now.
+             04/23/2001.  Remove the codes related to the
+                 "first pass" decoding.  We use a different function
+                 to set up the decoder now.
 ***********************************************************CommentEnd********/
 PV_STATUS DecodeShortHeader(VideoDecData *video, Vop *currVop)
 {
@@ -1418,7 +1418,7 @@ PV_STATUS DecodeShortHeader(VideoDecData *video, Vop *currVop)
     }
 
     /* Recalculate number of macroblocks per row & col since */
-    /*  the frame size can change.			 04/23/2001.   */
+    /*  the frame size can change.           04/23/2001.   */
     video->nMBinGOB = video->nMBPerRow = video->width / MB_SIZE;
     video->nGOBinVop = video->nMBPerCol = video->height / MB_SIZE;
     video->nTotalMB = video->nMBPerRow * video->nMBPerCol;
@@ -1476,7 +1476,7 @@ PV_STATUS DecodeShortHeader(VideoDecData *video, Vop *currVop)
             goto return_point;
         }
 
-        //	if (currVol->nBitsForMBID //
+        //  if (currVol->nBitsForMBID //
         if (BitstreamReadBits16(stream, video->nBitsForMBID))
         {
             status = PV_FAIL;             /* no ASO, RS support for Annex K */
@@ -1511,14 +1511,14 @@ return_point:
 *
 * -- PV_DecodeVop -- Decodes the VOP information from the bitstream
 *
-*	04/12/2000
-*					Initial port to the new PV decoder library format.
-*					This function is different from the one in MoMuSys MPEG-4
-*					visual decoder.  We handle combined mode with or withput
-*					error resilience and H.263 mode through the sam path now.
+*   04/12/2000
+*                   Initial port to the new PV decoder library format.
+*                   This function is different from the one in MoMuSys MPEG-4
+*                   visual decoder.  We handle combined mode with or withput
+*                   error resilience and H.263 mode through the sam path now.
 *
-*	05/04/2000
-*					Added temporal scalability to the decoder.
+*   05/04/2000
+*                   Added temporal scalability to the decoder.
 *
 ***********************************************************CommentEnd********/
 PV_STATUS PV_DecodeVop(VideoDecData *video)
@@ -1528,7 +1528,7 @@ PV_STATUS PV_DecodeVop(VideoDecData *video)
     uint32 tmpvar;
 
     /*****
-    *	Do scalable or non-scalable decoding of the current VOP
+    *   Do scalable or non-scalable decoding of the current VOP
     *****/
 
     if (!currVol->scalability)
@@ -1549,7 +1549,7 @@ PV_STATUS PV_DecodeVop(VideoDecData *video)
     {
 #ifdef DO_NOT_FOLLOW_STANDARD
         /* according to the standard, only combined mode is allowed */
-        /*    in the enhancement layer.			 06/01/2000.		*/
+        /*    in the enhancement layer.          06/01/2000.        */
         if (currVol->dataPartitioning)
         {
             /* Data partitioning mode comes here */
@@ -1614,7 +1614,7 @@ PV_STATUS PV_DecodeVop(VideoDecData *video)
 *
 * -- CalcVopDisplayTime -- calculate absolute time when VOP is to be displayed
 *
-*	04/12/2000 Initial port to the new PV decoder library format.
+*   04/12/2000 Initial port to the new PV decoder library format.
 *
 ***********************************************************CommentEnd********/
 uint32 CalcVopDisplayTime(Vol *currVol, Vop *currVop, int shortVideoHeader)
@@ -1623,7 +1623,7 @@ uint32 CalcVopDisplayTime(Vol *currVol, Vop *currVop, int shortVideoHeader)
 
 
     /*****
-    *	Calculate the time when the VOP is to be displayed next
+    *   Calculate the time when the VOP is to be displayed next
     *****/
 
     if (!shortVideoHeader)

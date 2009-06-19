@@ -25,17 +25,17 @@
 #define OSCL_DISABLE_WARNING_CONDITIONAL_IS_CONSTANT
 #include "osclconfig_compiler_warnings.h"
 /* ======================================================================== */
-/*	Function : DecodeFrameDataPartMode()									*/
-/*	Purpose  : Decode a frame of MPEG4 bitstream in datapartitioning mode.	*/
-/*	In/out   :																*/
-/*	Return   :																*/
-/*	Modified :																*/
-/*																			*/
-/*		04/25/2000 : Rewrite the data partitioning path completely	*/
-/*							 according to the pseudo codes in MPEG-4		*/
-/*							 standard.										*/
-/*	Modified : 09/18/2000 add fast VlcDecode+Dequant					*/
-/*             04/17/2001 cleanup										*/
+/*  Function : DecodeFrameDataPartMode()                                    */
+/*  Purpose  : Decode a frame of MPEG4 bitstream in datapartitioning mode.  */
+/*  In/out   :                                                              */
+/*  Return   :                                                              */
+/*  Modified :                                                              */
+/*                                                                          */
+/*      04/25/2000 : Rewrite the data partitioning path completely  */
+/*                           according to the pseudo codes in MPEG-4        */
+/*                           standard.                                      */
+/*  Modified : 09/18/2000 add fast VlcDecode+Dequant                    */
+/*             04/17/2001 cleanup                                       */
 /* ======================================================================== */
 PV_STATUS DecodeFrameDataPartMode(VideoDecData *video)
 {
@@ -55,13 +55,13 @@ PV_STATUS DecodeFrameDataPartMode(VideoDecData *video)
     switch (vopType)
     {
         case I_VOP :
-//		oscl_memset(Mode, MODE_INTRA, sizeof(uint8)*nTotalMB);
+//      oscl_memset(Mode, MODE_INTRA, sizeof(uint8)*nTotalMB);
             resync_marker_length = 17;
             break;
         case P_VOP :
             oscl_memset(video->motX, 0, sizeof(MOT)*4*nTotalMB);
             oscl_memset(video->motY, 0, sizeof(MOT)*4*nTotalMB);
-//		oscl_memset(Mode, MODE_INTER, sizeof(uint8)*nTotalMB);
+//      oscl_memset(Mode, MODE_INTER, sizeof(uint8)*nTotalMB);
             resync_marker_length = 16 + currVop->fcodeForward;
             break;
         default :
@@ -71,7 +71,7 @@ PV_STATUS DecodeFrameDataPartMode(VideoDecData *video)
 
     /** Initialize sliceNo ***/
     mbnum = slice_counter = 0;
-//	oscl_memset(video->sliceNo, 0, sizeof(uint8)*nTotalMB);
+//  oscl_memset(video->sliceNo, 0, sizeof(uint8)*nTotalMB);
 
     do
     {
@@ -128,13 +128,13 @@ PV_STATUS DecodeFrameDataPartMode(VideoDecData *video)
 
 
 /* ======================================================================== */
-/*	Function : DecodeDataPart_I_VideoPacket()								*/
-/*	Date     : 04/25/2000													*/
-/*	Purpose  : Decode Data Partitioned Mode Video Packet in I-VOP			*/
-/*	In/out   :																*/
-/*	Return   : PV_SUCCESS if successed, PV_FAIL if failed.					*/
-/*	Modified : 09/18/2000 add fast VlcDecode+Dequant					*/
-/*             04/01/2001 fixed MB_stuffing, removed unnecessary code	*/
+/*  Function : DecodeDataPart_I_VideoPacket()                               */
+/*  Date     : 04/25/2000                                                   */
+/*  Purpose  : Decode Data Partitioned Mode Video Packet in I-VOP           */
+/*  In/out   :                                                              */
+/*  Return   : PV_SUCCESS if successed, PV_FAIL if failed.                  */
+/*  Modified : 09/18/2000 add fast VlcDecode+Dequant                    */
+/*             04/01/2001 fixed MB_stuffing, removed unnecessary code   */
 /* ======================================================================== */
 PV_STATUS DecodeDataPart_I_VideoPacket(VideoDecData *video, int slice_counter)
 {
@@ -291,15 +291,15 @@ PV_STATUS DecodeDataPart_I_VideoPacket(VideoDecData *video, int slice_counter)
 
 
 /* ======================================================================== */
-/*	Function : DecodeDataPart_P_VideoPacket()								*/
-/*	Date     : 04/25/2000													*/
-/*	Purpose  : Decode Data Partitioned Mode Video Packet in P-VOP			*/
-/*	In/out   :																*/
-/*	Return   : PV_SUCCESS if successed, PV_FAIL if failed.					*/
-/*	Modified :	 09/18/2000,  fast VlcDecode+Dequant 				    	*/
-/*				04/13/2001,  fixed MB_stuffing, new ACDC pred structure,  */
-/*								cleanup                                     */
-/*				08/07/2001,  remove MBzero								*/
+/*  Function : DecodeDataPart_P_VideoPacket()                               */
+/*  Date     : 04/25/2000                                                   */
+/*  Purpose  : Decode Data Partitioned Mode Video Packet in P-VOP           */
+/*  In/out   :                                                              */
+/*  Return   : PV_SUCCESS if successed, PV_FAIL if failed.                  */
+/*  Modified :   09/18/2000,  fast VlcDecode+Dequant                        */
+/*              04/13/2001,  fixed MB_stuffing, new ACDC pred structure,  */
+/*                              cleanup                                     */
+/*              08/07/2001,  remove MBzero                              */
 /* ======================================================================== */
 PV_STATUS DecodeDataPart_P_VideoPacket(VideoDecData *video, int slice_counter)
 {
@@ -374,7 +374,7 @@ PV_STATUS DecodeDataPart_P_VideoPacket(VideoDecData *video, int slice_counter)
         }
         /* have we reached the end of the video packet or vop? */
         status = BitstreamShowBits32(stream, MOTION_MARKER_COMB_LENGTH, &tmpvar);
-        /*		if (status != PV_SUCCESS && status != PV_END_OF_BUFFER) return status;  */
+        /*      if (status != PV_SUCCESS && status != PV_END_OF_BUFFER) return status;  */
     }
     while (tmpvar != MOTION_MARKER_COMB && video->mbnum < nTotalMB);
 
@@ -440,7 +440,7 @@ PV_STATUS DecodeDataPart_P_VideoPacket(VideoDecData *video, int slice_counter)
         }
 
         video->headerInfo.CBP[mbnum] |= (uint8)(CBPY << 2);
-        if (intra_MB || MBtype == MODE_INTER_Q)						/*  04/26/01 */
+        if (intra_MB || MBtype == MODE_INTER_Q)                     /*  04/26/01 */
         {
             status = GetMBheaderDataPart_DQUANT_DC(video, &QP);
             if (status != PV_SUCCESS) return status;
@@ -505,14 +505,14 @@ PV_STATUS DecodeDataPart_P_VideoPacket(VideoDecData *video, int slice_counter)
 
 
 /* ======================================================================== */
-/*	Function : GetMBheaderDataPart_DQUANT_DC()								*/
-/*	Date     : 04/26/2000													*/
-/*	Purpose  : Decode DQUANT and DC in Data Partitioned Mode for both		*/
-/*			   I-VOP and P-VOP.												*/
-/*	In/out   :																*/
-/*	Return   : PV_SUCCESS if successed, PV_FAIL if failed.					*/
-/*	Modified : 02/13/2001 new ACDC prediction structure,		*/
-/*                                       cleanup							*/
+/*  Function : GetMBheaderDataPart_DQUANT_DC()                              */
+/*  Date     : 04/26/2000                                                   */
+/*  Purpose  : Decode DQUANT and DC in Data Partitioned Mode for both       */
+/*             I-VOP and P-VOP.                                             */
+/*  In/out   :                                                              */
+/*  Return   : PV_SUCCESS if successed, PV_FAIL if failed.                  */
+/*  Modified : 02/13/2001 new ACDC prediction structure,        */
+/*                                       cleanup                            */
 /* ======================================================================== */
 PV_STATUS GetMBheaderDataPart_DQUANT_DC(VideoDecData *video, int16 *QP)
 {
@@ -569,7 +569,7 @@ PV_STATUS GetMBheaderDataPart_DQUANT_DC(VideoDecData *video, int16 *QP)
 
 
 /***********************************************************CommentBegin******
-*		04/25/2000 : Initial modification to the new PV Lib format.
+*       04/25/2000 : Initial modification to the new PV Lib format.
 *       04/17/2001 : new ACDC pred structure
 ***********************************************************CommentEnd********/
 PV_STATUS GetMBheaderDataPart_P(VideoDecData *video)
@@ -645,7 +645,7 @@ PV_STATUS GetMBData_DataPart(VideoDecData *video)
 
 
     /*****
-    *	  Decoding of the 6 blocks (depending on transparent pattern)
+    *     Decoding of the 6 blocks (depending on transparent pattern)
     *****/
 #ifdef PV_POSTPROC_ON
     if (video->postFilterType != PV_NO_POST_PROC)
@@ -660,7 +660,7 @@ PV_STATUS GetMBData_DataPart(VideoDecData *video)
     }
 #endif
 
-    /*	oscl_memset(mblock->block, 0, sizeof(typeMBStore));    Aug 9,2005 */
+    /*  oscl_memset(mblock->block, 0, sizeof(typeMBStore));    Aug 9,2005 */
 
     if (mode & INTRA_MASK) /* MODE_INTRA || mode == MODE_INTRA_Q */
     {
@@ -678,7 +678,7 @@ PV_STATUS GetMBData_DataPart(VideoDecData *video)
 
         for (comp = 0; comp < 6; comp++)
         {
-            dataBlock = mblock->block[comp];	/*, 10/20/2000 */
+            dataBlock = mblock->block[comp];    /*, 10/20/2000 */
 
             dataBlock[0] = (*DC)[comp];
 
@@ -698,7 +698,7 @@ PV_STATUS GetMBData_DataPart(VideoDecData *video)
             no_coeff[comp] = ncoeffs[comp];
             /*  modified to new semaphore for post-proc */
             // Future work:: can be combined in the dequant function
-            // @todo Deblocking Semaphore for INTRA	block
+            // @todo Deblocking Semaphore for INTRA block
 #ifdef PV_POSTPROC_ON
             if (video->postFilterType != PV_NO_POST_PROC)
                 *pp_mod[comp] = (uint8) PostProcSemaphore(dataBlock);

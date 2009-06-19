@@ -37,7 +37,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 // The following data structures are designed to remove conditional(e.g.long switch or   //
-// if-else statments) using polymorphism, or remove type code with class				 //
+// if-else statments) using polymorphism, or remove type code with class                 //
 ///////////////////////////////////////////////////////////////////////////////////////////
 class H264PayloadParser;
 
@@ -60,8 +60,8 @@ class H264PayloadParserUtility
         * shared with the derived classes
         *
         * @param aMediaDataOut, output media data impl object
-        * @param nal_type,		 input nal type to avoid uncessary parsing operation
-        * @param aMemFragIn,	 input memory fragment
+        * @param nal_type,       input nal type to avoid uncessary parsing operation
+        * @param aMemFragIn,     input memory fragment
         * @param rtp_payload_ptr_offset, the offset of rtp payload pointer for the input memory fragment, which can be modified
         * @return RTP_PAYLOAD_PARSER_RET_CODE return code
         **/
@@ -75,8 +75,8 @@ class H264PayloadParserUtility
          * The function is designed to be non-pure virtual and the base classe provides the default implementation.
          *
          * @param aMediaDataOut, output media data impl object
-          * @param nal_type,		 input nal type to avoid uncessary parsing operation
-         * @param aMemFragIn,	 input memory fragment
+          * @param nal_type,         input nal type to avoid uncessary parsing operation
+         * @param aMemFragIn,    input memory fragment
          **/
         virtual void setMarkerInfo(IPayloadParser::Payload& aIn, IPayloadParser::Payload& aOut, const uint8 nal_type);
 
@@ -84,8 +84,8 @@ class H264PayloadParserUtility
          * Set the timestamp for the output media data object
          * The function is designed to be non-pure virtual and the base class provides the default implementation.
          *
-         * @param accessUnit,	 output media data object
-          * @param nal_type,		 input nal type to avoid uncessary parsing operation
+         * @param accessUnit,    output media data object
+          * @param nal_type,         input nal type to avoid uncessary parsing operation
          * @param rtp_timestamp, input RTP timestamp
          **/
         virtual void setMediaDataTimestamp(IPayloadParser::Payload& aOut, const uint8 nal_type, const uint32 rtp_timestamp);
@@ -94,8 +94,8 @@ class H264PayloadParserUtility
          * Set the sequence number for the output media data object
          * The function is designed to be non-pure virtual and the base class provides the default implementation.
          *
-         * @param accessUnit,	 output media data object
-          * @param nal_type,		 input nal type to avoid uncessary parsing operation
+         * @param accessUnit,    output media data object
+          * @param nal_type,         input nal type to avoid uncessary parsing operation
          * @param rtp_timestamp, input RTP timestamp
          **/
         virtual void setSeqNum(IPayloadParser::Payload& aOut, const uint8 nal_type, const uint32 seq_number)
@@ -122,14 +122,14 @@ class H264PayloadParserUtility
          * Get the pointer and length of the output memory fragment for the given input memory fragment
          * The function is designed to be pure virtual so that each derived classes must implement this function
          *
-         * @param aMemFragIn,	 input memory fragment
-         * @param nal_type,		 input nal type to avoid uncessary parsing operation
-         * @param aMemFragPtr,	 output memory fragment pointer
-         * @param aMemFragLen,	 output memory fragment length
+         * @param aMemFragIn,    input memory fragment
+         * @param nal_type,      input nal type to avoid uncessary parsing operation
+         * @param aMemFragPtr,   output memory fragment pointer
+         * @param aMemFragLen,   output memory fragment length
          * @param rtp_payload_ptr_offset, the offset of rtp payload pointer for the input memory fragment, which can be modified
          * @return RTP_PAYLOAD_PARSER_RET_CODE return code
          **/
-        virtual	PayloadParserStatus getMemFragPtrLen(OsclRefCounterMemFrag &aMemFragIn, const uint8 nal_type,
+        virtual PayloadParserStatus getMemFragPtrLen(OsclRefCounterMemFrag &aMemFragIn, const uint8 nal_type,
                 uint8* &aMemFragPtr, uint32 &aMemFragLen,
                 uint32 &rtp_payload_ptr_offset) = 0;
 

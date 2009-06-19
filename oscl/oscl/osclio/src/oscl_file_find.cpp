@@ -152,8 +152,8 @@ OSCL_EXPORT_REF const char *Oscl_FileFind::FindFirst(const char *directory, cons
     {
         if (oscl_strglob(pEnt->d_name, pattern) &&
                 oscl_strcmp(pEnt->d_name, ".") &&
-                oscl_strcmp(pEnt->d_name, ".."))	// excluded out '.' and '..' from readdir
-        {	// pattern matched
+                oscl_strcmp(pEnt->d_name, ".."))    // excluded out '.' and '..' from readdir
+        {   // pattern matched
             buf[0] = *nullchar;
             oscl_strcat(buf, pathname);
             oscl_strcat(buf, pEnt->d_name);
@@ -410,7 +410,7 @@ bool Oscl_FileFind::setpathanddelimiter(const chartype* directory)
 // globmatch matches pattern strings p from str, follows linux glob.c man spec.
 static bool oscl_strglob(const char *str, const char *p)
 {
-#define NEGATE	'^'			/* std cset negation char */
+#define NEGATE  '^'         /* std cset negation char */
     int negate;
     int match;
     int c;
@@ -466,7 +466,7 @@ static bool oscl_strglob(const char *str, const char *p)
                 {
                     if (!*p)
                         return false;
-                    if (*p == '-')  	/* c-c */
+                    if (*p == '-')      /* c-c */
                     {
                         if (!*++p)
                             return false;
@@ -476,14 +476,14 @@ static bool oscl_strglob(const char *str, const char *p)
                                     (*str > c && *str < *p))
                                 match = true;
                         }
-                        else  		/* c-] */
+                        else        /* c-] */
                         {
                             if (*str >= c)
                                 match = true;
                             break;
                         }
                     }
-                    else  			/* cc or c] */
+                    else            /* cc or c] */
                     {
                         if (c == *str)
                             match = true;

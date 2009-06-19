@@ -20,7 +20,7 @@
 #include "h245_deleter.h"
 #include "h245_copier.h"
 #include "oscl_mem.h"
-#ifndef	_h324utils_h
+#ifndef _h324utils_h
 #include "h324utils.h"
 #endif
 #define ON 1
@@ -79,7 +79,7 @@ PS_MultiplexEntryDescriptor MuxTableMgr::GetControlDescriptor(uint16 mux_entry_n
     desc->size_of_elementList = 1;
     desc->elementList = (PS_MultiplexElement)OSCL_DEFAULT_MALLOC(sizeof(S_MultiplexElement));
 
-    PS_MultiplexElement elem = 	desc->elementList;
+    PS_MultiplexElement elem =  desc->elementList;
     elem->muxType.index = 0; /* logical channel, 1 = sub-elem list */
     elem->muxType.logicalChannelNumber = 0;
     elem->muxType.size = 1; /* size of element list */
@@ -99,7 +99,7 @@ OsclAny MuxTableMgr::AddIncomingControlDescriptor()
 
 void MuxTableMgr::AddControlDescriptor(CPVMultiplexEntryDescriptorVector& descriptors)
 {
-//	PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"MuxTableMgr::AddControlDescriptor\n"));
+//  PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"MuxTableMgr::AddControlDescriptor\n"));
     PS_MultiplexEntryDescriptor h245_desc = GetControlDescriptor(SRP_MUX_ENTRY_NUMBER);
     CPVMultiplexEntryDescriptor* descriptor = CPVMultiplexEntryDescriptor::NewL(h245_desc, 128);
     descriptors.push_back(descriptor);

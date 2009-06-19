@@ -16,9 +16,9 @@
  * -------------------------------------------------------------------
  */
 /*********************************************************************************/
-/*  Filename: sad_halfpel_inline.h														*/
-/*  Description: Implementation for in-line functions used in dct.cpp			*/
-/*  Modified:																	*/
+/*  Filename: sad_halfpel_inline.h                                                      */
+/*  Description: Implementation for in-line functions used in dct.cpp           */
+/*  Modified:                                                                   */
 /*********************************************************************************/
 
 #ifndef _SAD_HALFPEL_INLINE_H_
@@ -55,9 +55,9 @@ extern "C"
     {
         __asm
         {
-            rsbs	tmp, tmp, tmp2, asr #1 ;
-            rsbmi	tmp, tmp, #0 ;
-            add		sad, sad, tmp ;
+            rsbs    tmp, tmp, tmp2, asr #1 ;
+            rsbmi   tmp, tmp, #0 ;
+            add     sad, sad, tmp ;
         }
 
         return sad;
@@ -67,9 +67,9 @@ extern "C"
     {
         __asm
         {
-            rsbs	tmp, tmp2, tmp, asr #2 ;
-            rsbmi	tmp, tmp, #0 ;
-            add		sad, sad, tmp ;
+            rsbs    tmp, tmp2, tmp, asr #2 ;
+            rsbmi   tmp, tmp, #0 ;
+            add     sad, sad, tmp ;
         }
 
         return sad;

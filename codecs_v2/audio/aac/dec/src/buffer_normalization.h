@@ -41,8 +41,8 @@
 /*----------------------------------------------------------------------------
 ; CONTINUE ONLY IF NOT ALREADY DEFINED
 ----------------------------------------------------------------------------*/
-#ifndef	BUFFER_NORMALIZATION_H
-#define	BUFFER_NORMALIZATION_H
+#ifndef BUFFER_NORMALIZATION_H
+#define BUFFER_NORMALIZATION_H
 
 /*----------------------------------------------------------------------------
 ; INCLUDES
@@ -90,4 +90,4 @@ void buffer_normalization(
 /*----------------------------------------------------------------------------
 ; END
 ----------------------------------------------------------------------------*/
-#endif	/* BUFFER_NORMALIZATION_H */
+#endif  /* BUFFER_NORMALIZATION_H */

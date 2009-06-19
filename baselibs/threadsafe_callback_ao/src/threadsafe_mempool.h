@@ -119,7 +119,7 @@ class ThreadSafeMemPoolFixedChunkAllocator: public OsclMemPoolFixedChunkAllocato
 
         // For thread-safe applications, e.g. when one thread does allocate() and the other deallocate()
         // the mempool needs to create a mutex object
-        //	- Each sensitive shared data access is then protected by this lock to ensure thread-safety
+        //  - Each sensitive shared data access is then protected by this lock to ensure thread-safety
         OsclMutex iMemPoolMutex;
 
         bool iCheckNextAvailableFreeChunk;

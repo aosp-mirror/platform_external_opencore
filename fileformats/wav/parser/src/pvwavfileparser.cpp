@@ -99,14 +99,14 @@ OSCL_EXPORT_REF PV_Wav_Parser::~PV_Wav_Parser()
 }
 
 /* ======================================================================== */
-/*	Function : ReadData()                                               */
-/*	Author   :                                                          */
-/*	Date     :                                                          */
-/*	Purpose  : Read data from file in a buffer                          */
-/*	In/out   :                                                          */
-/*	Return   : Result of read operation                                 */
-/*	Note     :                                                          */
-/*	Modified :                                                          */
+/*  Function : ReadData()                                               */
+/*  Author   :                                                          */
+/*  Date     :                                                          */
+/*  Purpose  : Read data from file in a buffer                          */
+/*  In/out   :                                                          */
+/*  Return   : Result of read operation                                 */
+/*  Note     :                                                          */
+/*  Modified :                                                          */
 /* ======================================================================== */
 PVWavParserReturnCode PV_Wav_Parser::ReadData(uint8* buff, uint32 size, uint32& bytesread)
 {
@@ -156,14 +156,14 @@ OSCL_EXPORT_REF void PV_Wav_Parser::CleanupWAVFile(void)
 
 
 /* ======================================================================== */
-/*	Function : InitWavParser()                                          */
-/*	Author   :                                                          */
-/*	Date     :                                                          */
-/*	Purpose  : Initialize WAVE Parser                                   */
-/*	In/out   :                                                          */
-/*	Return   : Result of reading the WAV file                           */
-/*	Note     :                                                          */
-/*	Modified :                                                          */
+/*  Function : InitWavParser()                                          */
+/*  Author   :                                                          */
+/*  Date     :                                                          */
+/*  Purpose  : Initialize WAVE Parser                                   */
+/*  In/out   :                                                          */
+/*  Return   : Result of reading the WAV file                           */
+/*  Note     :                                                          */
+/*  Modified :                                                          */
 /* ======================================================================== */
 OSCL_EXPORT_REF PVWavParserReturnCode PV_Wav_Parser::InitWavParser(OSCL_wString& aClip, Oscl_FileServer* aFileSession)
 {
@@ -334,14 +334,14 @@ OSCL_EXPORT_REF PVWavParserReturnCode PV_Wav_Parser::InitWavParser(OSCL_wString&
 
     pBuffer = &iBuffer[0];
 
-    AudioFormat = (unsigned short)(((*(pBuffer + 1)) << 8) | (*pBuffer));	// Save AudioFormat (PCM = 1)
+    AudioFormat = (unsigned short)(((*(pBuffer + 1)) << 8) | (*pBuffer));   // Save AudioFormat (PCM = 1)
     xLawTable = NULL;
 
-    NumChannels = (unsigned short)(((*(pBuffer + 3)) << 8) | (*(pBuffer + 2)));	// Save Number of Channels
-    SampleRate = (((*(pBuffer + 7)) << 24) | ((*(pBuffer + 6)) << 16) | ((*(pBuffer + 5)) << 8) | (*(pBuffer + 4)));	//	Save Sampling rate
-    ByteRate = (((*(pBuffer + 11)) << 24) | ((*(pBuffer + 10)) << 16) | ((*(pBuffer + 9)) << 8) | (*(pBuffer + 8)));	//	Save ByteRate ( == SampleRate*NumChannels*BitsPerSample/8)
-    BlockAlign = (unsigned short)(((*(pBuffer + 13)) << 8) | (*(pBuffer + 12)));	//	Save BlockAlign	( == NumChannels*BitsPerSample/8)
-    BitsPerSample = (unsigned short)(((*(pBuffer + 15)) << 8) | (*(pBuffer + 14))); //	Save BitsPerSample	(8 bits == 8, 16 bits == 16 etc.)
+    NumChannels = (unsigned short)(((*(pBuffer + 3)) << 8) | (*(pBuffer + 2))); // Save Number of Channels
+    SampleRate = (((*(pBuffer + 7)) << 24) | ((*(pBuffer + 6)) << 16) | ((*(pBuffer + 5)) << 8) | (*(pBuffer + 4)));    //  Save Sampling rate
+    ByteRate = (((*(pBuffer + 11)) << 24) | ((*(pBuffer + 10)) << 16) | ((*(pBuffer + 9)) << 8) | (*(pBuffer + 8)));    //  Save ByteRate ( == SampleRate*NumChannels*BitsPerSample/8)
+    BlockAlign = (unsigned short)(((*(pBuffer + 13)) << 8) | (*(pBuffer + 12)));    //  Save BlockAlign ( == NumChannels*BitsPerSample/8)
+    BitsPerSample = (unsigned short)(((*(pBuffer + 15)) << 8) | (*(pBuffer + 14))); //  Save BitsPerSample  (8 bits == 8, 16 bits == 16 etc.)
     BytesPerSample = (BitsPerSample + 7) / 8;  // compute (ceil(BitsPerSample/8))
 
     // Check for SubChunk_Size (It should be 16 for PCM)
@@ -425,7 +425,7 @@ OSCL_EXPORT_REF PVWavParserReturnCode PV_Wav_Parser::InitWavParser(OSCL_wString&
     if (!NumChannels || !NumSamples || !SampleRate || !BitsPerSample || !BytesPerSample || !ByteRate)
     {
         CleanupWAVFile();
-        return PVWAVPARSER_UNSUPPORTED_FORMAT;	//any error fom parse will be handled as PVMFFailure at corresponsding node level
+        return PVWAVPARSER_UNSUPPORTED_FORMAT;  //any error fom parse will be handled as PVMFFailure at corresponsding node level
     }
 
     return PVWAVPARSER_OK;
@@ -433,14 +433,14 @@ OSCL_EXPORT_REF PVWavParserReturnCode PV_Wav_Parser::InitWavParser(OSCL_wString&
 
 
 /* ======================================================================== */
-/*	Function : GetPCMData()                                             */
-/*	Author   :                                                          */
-/*	Date     :                                                          */
-/*	Purpose  : Copy specified number of samples to output buffer        */
-/*	In/out   :                                                          */
-/*	Return   : Result of read operation                                 */
-/*	Note     :                                                          */
-/*	Modified :                                                          */
+/*  Function : GetPCMData()                                             */
+/*  Author   :                                                          */
+/*  Date     :                                                          */
+/*  Purpose  : Copy specified number of samples to output buffer        */
+/*  In/out   :                                                          */
+/*  Return   : Result of read operation                                 */
+/*  Note     :                                                          */
+/*  Modified :                                                          */
 /* ======================================================================== */
 OSCL_EXPORT_REF PVWavParserReturnCode PV_Wav_Parser::GetPCMData(uint8* inBuff, uint32 inBufSize, uint32 NumberOfSamples, uint32& NumSamplesRead)
 {
@@ -504,14 +504,14 @@ OSCL_EXPORT_REF PVWavParserReturnCode PV_Wav_Parser::GetPCMData(uint8* inBuff, u
 
 
 /* ======================================================================== */
-/*	Function : RetrieveFileInfo()                                       */
-/*	Author   :                                                          */
-/*	Date     :                                                          */
-/*	Purpose  :                                                          */
-/*	In/out   :                                                          */
-/*	Return   : true / false                                             */
-/*	Note     :                                                          */
-/*	Modified :                                                          */
+/*  Function : RetrieveFileInfo()                                       */
+/*  Author   :                                                          */
+/*  Date     :                                                          */
+/*  Purpose  :                                                          */
+/*  In/out   :                                                          */
+/*  Return   : true / false                                             */
+/*  Note     :                                                          */
+/*  Modified :                                                          */
 /* ======================================================================== */
 OSCL_EXPORT_REF bool PV_Wav_Parser::RetrieveFileInfo(PVWAVFileInfo& aInfo)
 {
@@ -558,14 +558,14 @@ OSCL_EXPORT_REF bool PV_Wav_Parser::SetOutputToUncompressedPCM(void)
 }
 
 /* ======================================================================== */
-/*	Function : SeekPCMSample()                                          */
-/*	Author   :                                                          */
-/*	Date     :                                                          */
-/*	Purpose  :                                                          */
-/*	In/out   :                                                          */
-/*	Return   : Result of seek operation                                 */
-/*	Note     :                                                          */
-/*	Modified :                                                          */
+/*  Function : SeekPCMSample()                                          */
+/*  Author   :                                                          */
+/*  Date     :                                                          */
+/*  Purpose  :                                                          */
+/*  In/out   :                                                          */
+/*  Return   : Result of seek operation                                 */
+/*  Note     :                                                          */
+/*  Modified :                                                          */
 /* ======================================================================== */
 OSCL_EXPORT_REF PVWavParserReturnCode PV_Wav_Parser::SeekPCMSample(uint32 SampleNumber)
 {

@@ -18,10 +18,10 @@
 // -*- c++ -*-
 // = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 
-//				 O S C L_ S T R I N G	C L A S S
+//               O S C L_ S T R I N G   C L A S S
 
-//	  This file contains a standardized set of string containers that
-//	  can be used in place of character arrays.
+//    This file contains a standardized set of string containers that
+//    can be used in place of character arrays.
 
 // = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 
@@ -34,7 +34,7 @@
 /*!
  * \file oscl_string.h
  * \brief Provides a standardized set of string containers that
- *	  can be used in place of character arrays.
+ *    can be used in place of character arrays.
  *
  */
 
@@ -52,8 +52,8 @@
 #endif
 
 /**
-	A common base class for string classes with
-	"char" character format
+    A common base class for string classes with
+    "char" character format
 */
 class OSCL_EXPORT_REF OSCL_String : public HeapBase
 
@@ -62,31 +62,31 @@ class OSCL_EXPORT_REF OSCL_String : public HeapBase
         typedef char chartype;
 
         /**
-        	This function returns the string size not including
-        	the null-terminator.
+            This function returns the string size not including
+            the null-terminator.
         */
         virtual uint32 get_size() const = 0;
 
         /**
-        	This function returns the maximum available storage size,
-        	not including null terminator.	The maximum size may be
-        	larger than the current string size.
+            This function returns the maximum available storage size,
+            not including null terminator.  The maximum size may be
+            larger than the current string size.
         */
         virtual uint32 get_maxsize() const = 0;
 
         /**
-        	This function returns the C-style string for read access.
+            This function returns the C-style string for read access.
         */
         virtual const chartype* get_cstr() const = 0;
 
         /**
-        	This function returns true if the string is writable.
+            This function returns true if the string is writable.
         */
         OSCL_IMPORT_REF virtual bool is_writable() const;
 
         /**
-        	This function returns the C-style string for write access.
-        	If the string is not writable it returns NULL.
+            This function returns the C-style string for write access.
+            If the string is not writable it returns NULL.
         */
         virtual chartype* get_str() const = 0;
 
@@ -95,26 +95,26 @@ class OSCL_EXPORT_REF OSCL_String : public HeapBase
         OSCL_IMPORT_REF OSCL_String& operator=(const OSCL_String& src);
 
         /** Assignment operator
-        	@param: null-terminated string
+            @param: null-terminated string
         */
         OSCL_IMPORT_REF OSCL_String& operator=(const chartype* cstr);
 
         /** Append operator.
-        	This operator appends the input string to this object.
-        	The string may be truncated to fit available storage.
+            This operator appends the input string to this object.
+            The string may be truncated to fit available storage.
         */
         OSCL_IMPORT_REF OSCL_String& operator+=(const OSCL_String& src);
 
         /** Append operator.
-        	This operator appends the input string to this object.
-        	The string may be truncated to fit available storage.
-        	@param: null-terminated string
+            This operator appends the input string to this object.
+            The string may be truncated to fit available storage.
+            @param: null-terminated string
         */
         OSCL_IMPORT_REF OSCL_String& operator+=(const chartype* cstr);
 
         /** Append operator.
-        	This operator appends the input character to this object.
-        	The string may be truncated to fit available storage.
+            This operator appends the input character to this object.
+            The string may be truncated to fit available storage.
         */
         OSCL_IMPORT_REF OSCL_String& operator+=(const chartype c);
 
@@ -128,47 +128,47 @@ class OSCL_EXPORT_REF OSCL_String : public HeapBase
         OSCL_IMPORT_REF bool operator>= (const OSCL_String& src) const;
 
         /** Comparison operator
-        	@param: null-terminated string
+            @param: null-terminated string
         */
         OSCL_IMPORT_REF bool operator== (const chartype* cstr) const;
 
         /**
-        	This is subscript notation to access a character
-        	at the given position.
-        	If the index is outside the current size range then the
-        	function leaves.
+            This is subscript notation to access a character
+            at the given position.
+            If the index is outside the current size range then the
+            function leaves.
         */
         OSCL_IMPORT_REF chartype operator[](uint32 index) const;
 
         /**
-        	This function returns the character at the given position.
-        	If the index is outside the current size range then the
-        	function leaves.
+            This function returns the character at the given position.
+            If the index is outside the current size range then the
+            function leaves.
         */
         OSCL_IMPORT_REF virtual chartype read(uint32 index)const;
 
         /**
-        	This function performs a hash operation on the string.
-        	If the string is not writable, the function leaves.
+            This function performs a hash operation on the string.
+            If the string is not writable, the function leaves.
         */
         OSCL_IMPORT_REF virtual int8 hash() const;
 
         /**
-        	This function stores a character at the specified position.
-        	If the string is not writable, the function leaves.
-        	If the index is outside the current size range then the
-        	function leaves.
+            This function stores a character at the specified position.
+            If the string is not writable, the function leaves.
+            If the index is outside the current size range then the
+            function leaves.
         */
-        OSCL_IMPORT_REF virtual void write(uint32 index,chartype c);
+        OSCL_IMPORT_REF virtual void write(uint32 index, chartype c);
 
         /**
-        	This function replaces characters at the specified offset
-        	within the current string.
-        	If the string is not writable, the function leaves.
-        	The characters may be truncted to fit the current storage.
-        	@param offset: the offset into the existing string buffer
-        	@param length: number of characters to copy.
-        	@param ptr: character buffer, not necessarily null-terminated.
+            This function replaces characters at the specified offset
+            within the current string.
+            If the string is not writable, the function leaves.
+            The characters may be truncted to fit the current storage.
+            @param offset: the offset into the existing string buffer
+            @param length: number of characters to copy.
+            @param ptr: character buffer, not necessarily null-terminated.
         */
         OSCL_IMPORT_REF virtual void write(uint32 offset, uint32 length, const chartype* buf);
 
@@ -187,13 +187,13 @@ class OSCL_EXPORT_REF OSCL_String : public HeapBase
         */
 
         /** Set string representation to input
-        	null-terminated string.
+            null-terminated string.
         */
         virtual void set_rep(const chartype* cstr) = 0;
 
         /** Append the input null-terminated string to the current
-        	string.  The string may be truncated to fit the available
-        	storage.
+            string.  The string may be truncated to fit the available
+            storage.
         */
         virtual void append_rep(const chartype* cstr) = 0;
 
@@ -202,22 +202,22 @@ class OSCL_EXPORT_REF OSCL_String : public HeapBase
         virtual void set_rep(const OSCL_String& src) = 0;
 
         /** Append the input string to the current string.
-        	The string may be truncated to fit the available storage.
+            The string may be truncated to fit the available storage.
         */
         virtual void append_rep(const OSCL_String& src) = 0;
 
         /** Update the length of the string.  This function
-        	will only be called when the string is writable.
+            will only be called when the string is writable.
         */
         virtual void set_len(uint32 len) = 0;
 };
 
 /**
-	A common base class for string classes with
-	wide character (oscl_wchar) format.
-	OSCL_wString and OSCL_String are identical except
-	for the character format.
-	For descriptions, see OSCL_String.
+    A common base class for string classes with
+    wide character (oscl_wchar) format.
+    OSCL_wString and OSCL_String are identical except
+    for the character format.
+    For descriptions, see OSCL_String.
 */
 class OSCL_EXPORT_REF OSCL_wString
 {
@@ -255,7 +255,7 @@ class OSCL_EXPORT_REF OSCL_wString
 
         OSCL_IMPORT_REF virtual int8 hash() const;
 
-        OSCL_IMPORT_REF virtual void write(uint32 index,chartype c);
+        OSCL_IMPORT_REF virtual void write(uint32 index, chartype c);
         OSCL_IMPORT_REF virtual void write(uint32 offset, uint32 length, const chartype* buf);
 
 #ifdef T_ARM
@@ -278,6 +278,6 @@ class OSCL_EXPORT_REF OSCL_wString
         virtual void set_len(uint32 len) = 0;
 };
 
-#endif	 // OSCL_STRING_H_INCLUDED
+#endif   // OSCL_STRING_H_INCLUDED
 
 /*! @} */

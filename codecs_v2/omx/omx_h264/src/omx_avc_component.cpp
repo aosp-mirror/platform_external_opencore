@@ -82,7 +82,7 @@ OSCL_EXPORT_REF OMX_ERRORTYPE AvcOmxComponentDestructor(OMX_IN OMX_HANDLETYPE pH
 #if DYNAMIC_LOAD_OMX_AVC_COMPONENT
 class OsclSharedLibraryInterface;
 class AvcOmxSharedLibraryInterface: public OsclSharedLibraryInterface,
-            public OmxSharedLibraryInterface
+        public OmxSharedLibraryInterface
 
 {
     public:
@@ -118,13 +118,13 @@ extern "C"
 {
     OSCL_EXPORT_REF OsclAny* PVGetInterface()
     {
-      return (OsclAny*) OSCL_NEW(AvcOmxSharedLibraryInterface,());
+        return (OsclAny*) OSCL_NEW(AvcOmxSharedLibraryInterface, ());
     }
-    
+
     OSCL_EXPORT_REF void PVReleaseInterface(OsclSharedLibraryInterface* aInstance)
     {
-          AvcOmxSharedLibraryInterface* module = (AvcOmxSharedLibraryInterface*)aInstance;
-          OSCL_DELETE(module);
+        AvcOmxSharedLibraryInterface* module = (AvcOmxSharedLibraryInterface*)aInstance;
+        OSCL_DELETE(module);
     }
 }
 
@@ -348,9 +348,9 @@ OMX_ERRORTYPE OpenmaxAvcAO::ConstructComponent(OMX_PTR pAppData, OMX_PTR pProxy)
 
 
 /** This function is called by the omx core when the component
-	* is disposed by the IL client with a call to FreeHandle().
-	* \param Component, the component to be disposed
-	*/
+    * is disposed by the IL client with a call to FreeHandle().
+    * \param Component, the component to be disposed
+    */
 
 OMX_ERRORTYPE OpenmaxAvcAO::DestroyComponent()
 {
@@ -528,18 +528,18 @@ void OpenmaxAvcAO::DecodeWithoutMarker()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OpenmaxAvcAO : DecodeWithoutMarker IN"));
 
-    QueueType*				pInputQueue  = ipPorts[OMX_PORT_INPUTPORT_INDEX]->pBufferQueue;
-    QueueType*				pOutputQueue = ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->pBufferQueue;
-    ComponentPortType*	pOutPort =     ipPorts[OMX_PORT_OUTPUTPORT_INDEX];
-    OMX_COMPONENTTYPE *		pHandle =      &iOmxComponent;
+    QueueType*              pInputQueue  = ipPorts[OMX_PORT_INPUTPORT_INDEX]->pBufferQueue;
+    QueueType*              pOutputQueue = ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->pBufferQueue;
+    ComponentPortType*  pOutPort =     ipPorts[OMX_PORT_OUTPUTPORT_INDEX];
+    OMX_COMPONENTTYPE *     pHandle =      &iOmxComponent;
 
-    OMX_U8*					pOutBuffer;
-    OMX_U32					OutputLength;
-    OMX_U8*					pTempInBuffer;
-    OMX_U32					TempInLength;
-    OMX_BOOL				MarkerFlag = OMX_FALSE;
-    OMX_TICKS				TempTimestamp;
-    OMX_BOOL				ResizeNeeded = OMX_FALSE;
+    OMX_U8*                 pOutBuffer;
+    OMX_U32                 OutputLength;
+    OMX_U8*                 pTempInBuffer;
+    OMX_U32                 TempInLength;
+    OMX_BOOL                MarkerFlag = OMX_FALSE;
+    OMX_TICKS               TempTimestamp;
+    OMX_BOOL                ResizeNeeded = OMX_FALSE;
 
     OMX_U32 TempInputBufferSize = (2 * sizeof(uint8) * (ipPorts[OMX_PORT_INPUTPORT_INDEX]->PortParam.nBufferSize));
     OMX_U32 CurrWidth =  ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.format.video.nFrameWidth;
@@ -573,7 +573,7 @@ void OpenmaxAvcAO::DecodeWithoutMarker()
             }
 
             //Do not proceed if the output buffer can't fit the YUV data
-            if (ipOutputBuffer->nAllocLen < (OMX_U32)(((CurrWidth + 15)&(~15)) * ((CurrHeight + 15)&(~15)) * 3 / 2))
+            if (ipOutputBuffer->nAllocLen < (OMX_U32)(((CurrWidth + 15)&(~15)) *((CurrHeight + 15)&(~15)) * 3 / 2))
             {
                 ipOutputBuffer->nFilledLen = 0;
                 ReturnOutputBuffer(ipOutputBuffer, pOutPort);
@@ -735,14 +735,14 @@ void OpenmaxAvcAO::DecodeWithMarker()
     QueueType* pInputQueue = ipPorts[OMX_PORT_INPUTPORT_INDEX]->pBufferQueue;
     QueueType* pOutputQueue = ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->pBufferQueue;
 
-    ComponentPortType*	pInPort = ipPorts[OMX_PORT_INPUTPORT_INDEX];
-    ComponentPortType*	pOutPort = ipPorts[OMX_PORT_OUTPUTPORT_INDEX];
+    ComponentPortType*  pInPort = ipPorts[OMX_PORT_INPUTPORT_INDEX];
+    ComponentPortType*  pOutPort = ipPorts[OMX_PORT_OUTPUTPORT_INDEX];
 
-    OMX_U8*					pOutBuffer;
-    OMX_U32					OutputLength;
-    OMX_BOOL				MarkerFlag = OMX_TRUE;
-    OMX_BOOL				Status;
-    OMX_BOOL				ResizeNeeded = OMX_FALSE;
+    OMX_U8*                 pOutBuffer;
+    OMX_U32                 OutputLength;
+    OMX_BOOL                MarkerFlag = OMX_TRUE;
+    OMX_BOOL                Status;
+    OMX_BOOL                ResizeNeeded = OMX_FALSE;
 
     OMX_U32 CurrWidth =  ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.format.video.nFrameWidth;
     OMX_U32 CurrHeight = ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.format.video.nFrameHeight;
@@ -769,7 +769,7 @@ void OpenmaxAvcAO::DecodeWithMarker()
             }
 
             //Do not proceed if the output buffer can't fit the YUV data
-            if (ipOutputBuffer->nAllocLen < (OMX_U32)(((CurrWidth + 15)&(~15)) * ((CurrHeight + 15)&(~15)) * 3 / 2))
+            if (ipOutputBuffer->nAllocLen < (OMX_U32)(((CurrWidth + 15)&(~15)) *((CurrHeight + 15)&(~15)) * 3 / 2))
             {
                 ipOutputBuffer->nFilledLen = 0;
                 ReturnOutputBuffer(ipOutputBuffer, pOutPort);

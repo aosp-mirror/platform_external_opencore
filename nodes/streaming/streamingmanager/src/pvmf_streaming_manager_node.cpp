@@ -277,7 +277,7 @@ OSCL_EXPORT_REF PVMFCommandId PVMFStreamingManagerNode::QueryInterface(PVMFSessi
     {
         if (!iSMFSPlugin)
             OSCL_LEAVE(OsclErrInvalidState);
-        return 	iSMFSPlugin->QueryInterface(aSessId, aUuid, aInterfacePtr, aContext);
+        return  iSMFSPlugin->QueryInterface(aSessId, aUuid, aInterfacePtr, aContext);
     }
     else
     {

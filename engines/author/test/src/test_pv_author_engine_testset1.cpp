@@ -913,7 +913,7 @@ void pvauthor_async_test_miscellaneous::SetAuthoringDuration()
             if (bVideoTrack && (iTestInputs[ii].iType == iVideoInputType))
             {
                 PvmiMIOFileInput* mioFileIp = OSCL_STATIC_CAST(PvmiMIOFileInput*, iTestInputs[ii].iMediaInput);
-                videoDuration =	mioFileIp->GetStreamDuration();
+                videoDuration = mioFileIp->GetStreamDuration();
             }
             else if (bAudioTrack && (iTestInputs[ii].iType == iAudioInputType))
             {

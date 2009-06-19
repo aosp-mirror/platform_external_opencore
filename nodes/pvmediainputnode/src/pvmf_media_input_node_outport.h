@@ -63,11 +63,11 @@
 class PvmfMediaInputNode;
 
 class PvmfMediaInputNodeOutPort : public OsclTimerObject,
-            public OsclMemPoolFixedChunkAllocatorObserver,
-            public PvmfPortBaseImpl,
-            public PvmiMediaTransfer,
-            public PVMFPortActivityHandler,
-            public PvmiCapabilityAndConfig
+        public OsclMemPoolFixedChunkAllocatorObserver,
+        public PvmfPortBaseImpl,
+        public PvmiMediaTransfer,
+        public PVMFPortActivityHandler,
+        public PvmiCapabilityAndConfig
 {
     public:
         PvmfMediaInputNodeOutPort(PvmfMediaInputNode* aNode, const char* aName = NULL);

@@ -718,7 +718,7 @@ void PVMFFileOutputNode::HandlePortActivity(const PVMFPortActivity &aActivity)
             //Purge any port activity events already queued
             //for this port.
             {
-                for (uint32 i = 0;i < iPortActivityQueue.size();)
+                for (uint32 i = 0; i < iPortActivityQueue.size();)
                 {
                     if (iPortActivityQueue[i].iPort == aActivity.iPort)
                         iPortActivityQueue.erase(&iPortActivityQueue[i]);
@@ -1534,7 +1534,7 @@ void PVMFFileOutputNode::DoFlush(PVMFFileOutputNodeCommand& aCmd)
 
             //Notify all ports to suspend their input
             {
-                for (uint32 i = 0;i < iPortVector.size();i++)
+                for (uint32 i = 0; i < iPortVector.size(); i++)
                     iPortVector[i]->SuspendInput();
             }
 

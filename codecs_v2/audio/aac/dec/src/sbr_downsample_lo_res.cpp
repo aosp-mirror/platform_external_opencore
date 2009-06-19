@@ -86,7 +86,7 @@ Copyright (c) ISO/IEC 2002.
 
 
 #include    "sbr_downsample_lo_res.h"
-#include	"sbr_constants.h"
+#include    "sbr_constants.h"
 
 /*----------------------------------------------------------------------------
 ; MACROS

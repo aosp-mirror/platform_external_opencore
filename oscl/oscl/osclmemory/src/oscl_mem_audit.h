@@ -446,7 +446,7 @@ class MM_Audit_Imp
     public:
 
         /**
-        *	Constructor, create the root node in statistics table
+        *   Constructor, create the root node in statistics table
         */
         MM_Audit_Imp();
 
@@ -473,27 +473,27 @@ class MM_Audit_Imp
         OSCL_IMPORT_REF bool MM_deallocate(void *pMemBlockIn);
 
         /**
-        *	API to get memory statistics through context string(tag)
+        *   API to get memory statistics through context string(tag)
         *   @returns statistics pointer if operation succeeds
         */
         OSCL_IMPORT_REF MM_Stats_t * MM_GetStats(const char * const  tagIn);
 
         /**
-        *	API to get memory statistics in detail through context string(tag) including its subtree
-        *	@returns statistics pointer array and actual number of nodes if operation succeeds
+        *   API to get memory statistics in detail through context string(tag) including its subtree
+        *   @returns statistics pointer array and actual number of nodes if operation succeeds
         */
         OSCL_IMPORT_REF uint32 MM_GetStatsInDepth(const char *  tagIn, MM_Stats_CB *array_ptr, uint32 max_nodes);
 
         /**
-        *	API to get the number of tree nodes including the tag node and its subtree
-        *	@param tagIn input tag
-        *	@returns the number of tree nodes ; 0 means no tag node
+        *   API to get the number of tree nodes including the tag node and its subtree
+        *   @param tagIn input tag
+        *   @returns the number of tree nodes ; 0 means no tag node
         */
         OSCL_IMPORT_REF uint32 MM_GetTreeNodes(const char *  tagIn);
 
         /**
-        *	API to add a node and zero out its counters; Note that this tag should be re-used
-        *	@param tagIn input tag
+        *   API to add a node and zero out its counters; Note that this tag should be re-used
+        *   @param tagIn input tag
         *   @returns true if operation succeeds;
         */
         OSCL_IMPORT_REF bool MM_AddTag(const char * tagIn)
@@ -502,18 +502,18 @@ class MM_Audit_Imp
         };
 
         /**
-        *	API to add a node and zero out its counters;
+        *   API to add a node and zero out its counters;
         *    Note that this tag should be re-used
-        *	@param tagIn input tag
+        *   @param tagIn input tag
         *   @returns pointer to OsclMemStatsNode which should be passed to MM_allocate
         */
         OSCL_IMPORT_REF const OsclMemStatsNode* MM_GetTagNode(const char * tagIn);
 
 
         /**
-        *	API to add a node and zero out its counters;
+        *   API to add a node and zero out its counters;
         *   Note that this tag should be re-used
-        *	@param tagIn input tag
+        *   @param tagIn input tag
         *   @returns true if operation succeeds;
         */
         OSCL_IMPORT_REF const OsclMemStatsNode* MM_GetExistingTag(const char * tagIn);
@@ -532,9 +532,9 @@ class MM_Audit_Imp
         OSCL_IMPORT_REF void MM_ReleaseAllocNodeInfo(MM_AllocQueryInfo* info);
 
         /**
-        *	API to query the list of alloc nodes.  It copies the information
+        *   API to query the list of alloc nodes.  It copies the information
         *    into the provided output array.
-        *	@param output_array the array where the data will be written
+        *   @param output_array the array where the data will be written
         *    @param max_array_size the max number of output array elements
         *    @param offset the offset into the alloc node list from which the
         *     data should begin.
@@ -544,14 +544,14 @@ class MM_Audit_Imp
                 uint32 max_array_size, uint32 offset);
 
         /**
-        * 	API to check the input pointer is a valid pointer to a chunk of memory
-        *	@param ptrIn input pointer to be validated
+        *   API to check the input pointer is a valid pointer to a chunk of memory
+        *   @param ptrIn input pointer to be validated
         *   @returns true if operation succeeds;
         */
         OSCL_IMPORT_REF bool MM_Validate(const void *ptrIn);
 
         /**
-        *	API to get the current allocation number
+        *   API to get the current allocation number
         *   @returns the current allocation number
         */
         uint32 MM_GetAllocNo(void)
@@ -560,7 +560,7 @@ class MM_Audit_Imp
         }
 
         /**
-        *	API to get the overhead statistics for the
+        *   API to get the overhead statistics for the
         *   memory used by the mm_audit class.
         */
         void MM_GetOverheadStats(MM_AuditOverheadStats& stats)
@@ -570,7 +570,7 @@ class MM_Audit_Imp
         }
 
         /**
-        *	API to get the number of allocation nodes (records)
+        *   API to get the number of allocation nodes (records)
         *   for allocations that are being tracked individually.
         */
         uint32 MM_GetNumAllocNodes()
@@ -579,7 +579,7 @@ class MM_Audit_Imp
         };
 
         /**
-        *	API to get the operating mode of the mm_audit class.
+        *   API to get the operating mode of the mm_audit class.
         */
         uint32 MM_GetMode(void)
         {
@@ -587,7 +587,7 @@ class MM_Audit_Imp
         }
 
         /**
-        *	API to get the prefill pattern.  The pattern is used
+        *   API to get the prefill pattern.  The pattern is used
         *    to fill the memory before returning it to the caller.
         */
         uint8 MM_GetPrefillPattern(void)
@@ -596,7 +596,7 @@ class MM_Audit_Imp
         }
 
         /**
-        *	API to get the postfill pattern.  The pattern is used
+        *   API to get the postfill pattern.  The pattern is used
         *    to fill the memory before freeing it.
         */
         uint32 MM_GetPostfillPattern(void)
@@ -605,37 +605,37 @@ class MM_Audit_Imp
         }
 
         /**
-        *	API to set the operating mode of the mm_audit class.
+        *   API to set the operating mode of the mm_audit class.
         */
         OSCL_IMPORT_REF void MM_SetMode(uint32 inMode);
 
         /**
-        *	API to set the prefill pattern.
+        *   API to set the prefill pattern.
         */
         OSCL_IMPORT_REF void MM_SetPrefillPattern(uint8 pattern);
 
         /**
-        *	API to set the postfill pattern.
+        *   API to set the postfill pattern.
         */
         OSCL_IMPORT_REF void MM_SetPostfillPattern(uint8 pattern);
 
         /**
-        * 	API to set the maximum tag level,i.e. tag level for a.b.c.d = 4
-        *	@param level input tag level to be set
+        *   API to set the maximum tag level,i.e. tag level for a.b.c.d = 4
+        *   @param level input tag level to be set
         */
         OSCL_IMPORT_REF void MM_SetTagLevel(uint32 level);
 
         /**
-        *	API to insert allocation failure deterministically according to allocation number associated with tag
-        *	@param tagIn input tag
-        *	@param alloc_number allocation number associated with tag
+        *   API to insert allocation failure deterministically according to allocation number associated with tag
+        *   @param tagIn input tag
+        *   @param alloc_number allocation number associated with tag
         *   @returns true if operation succeeds;
         */
         OSCL_IMPORT_REF bool MM_SetFailurePoint(const char * tagIn, uint32 alloc_number);
 
         /**
-        *	API to cancel the allocation failure point associated with tag
-        *	@param tagIn input tag
+        *   API to cancel the allocation failure point associated with tag
+        *   @param tagIn input tag
         */
         OSCL_IMPORT_REF void MM_UnsetFailurePoint(const char * tagIn);
 
@@ -746,7 +746,7 @@ class MM_Audit_Imp
         OsclMemStatsNode *mpStatsNode;
         /**
         * a MAP container, mTagTree (key=Tag, value=node addr),
-        *	is for fast search in memory statistics table given the input Tag
+        *   is for fast search in memory statistics table given the input Tag
         */
         OsclTagTreeType          mTagTree;
         /**
@@ -776,7 +776,7 @@ class OsclMemAudit
 {
     public:
         /**
-        *	Constructor, create the root node in statistics table
+        *   Constructor, create the root node in statistics table
         */
         OsclMemAudit()
         {
@@ -834,7 +834,7 @@ class OsclMemAudit
         };
 
         /**
-        *	API to get memory statistics through context string(tag)
+        *   API to get memory statistics through context string(tag)
         *   @returns statistics pointer if operation succeeds
         */
         MM_Stats_t * MM_GetStats(const char * const  tagIn)
@@ -849,8 +849,8 @@ class OsclMemAudit
         };
 
         /**
-        *	API to get memory statistics in detail through context string(tag) including its subtree
-        *	@returns statistics pointer array and actual number of nodes if operation succeeds
+        *   API to get memory statistics in detail through context string(tag) including its subtree
+        *   @returns statistics pointer array and actual number of nodes if operation succeeds
         */
         uint32 MM_GetStatsInDepth(const char *  tagIn, MM_Stats_CB *array_ptr, uint32 max_nodes)
         {
@@ -864,9 +864,9 @@ class OsclMemAudit
         };
 
         /**
-        *	API to get the number of tree nodes including the tag node and its subtree
-        *	@param tagIn input tag
-        *	@returns the number of tree nodes ; 0 means no tag node
+        *   API to get the number of tree nodes including the tag node and its subtree
+        *   @param tagIn input tag
+        *   @returns the number of tree nodes ; 0 means no tag node
         */
         uint32 MM_GetTreeNodes(const char *  tagIn)
         {
@@ -880,8 +880,8 @@ class OsclMemAudit
         };
 
         /**
-        *	API to add a node and zero out its counters; Note that this tag should be re-used
-        *	@param tagIn input tag
+        *   API to add a node and zero out its counters; Note that this tag should be re-used
+        *   @param tagIn input tag
         *   @returns true if operation succeeds;
         */
         bool MM_AddTag(const char * tagIn)
@@ -890,9 +890,9 @@ class OsclMemAudit
         };
 
         /**
-        *	API to add a node and zero out its counters;
+        *   API to add a node and zero out its counters;
         *    Note that this tag should be re-used
-        *	@param tagIn input tag
+        *   @param tagIn input tag
         *   @returns pointer to OsclMemStatsNode which should be passed to MM_allocate
         */
         const OsclMemStatsNode* MM_GetTagNode(const char * tagIn)
@@ -908,9 +908,9 @@ class OsclMemAudit
 
 
         /**
-        *	API to add a node and zero out its counters;
+        *   API to add a node and zero out its counters;
         *   Note that this tag should be re-used
-        *	@param tagIn input tag
+        *   @param tagIn input tag
         *   @returns true if operation succeeds;
         */
         const OsclMemStatsNode* MM_GetExistingTag(const char * tagIn)
@@ -931,9 +931,9 @@ class OsclMemAudit
         };
 
         /**
-        *	API to query the list of alloc nodes.  It copies the information
+        *   API to query the list of alloc nodes.  It copies the information
         *    into the provided output array.
-        *	@param output_array the array where the data will be written
+        *   @param output_array the array where the data will be written
         *    @param max_array_size the max number of output array elements
         *    @param offset the offset into the alloc node list from which the
         *     data should begin.
@@ -961,8 +961,8 @@ class OsclMemAudit
         }
 
         /**
-        * 	API to check the input pointer is a valid pointer to a chunk of memory
-        *	@param ptrIn input pointer to be validated
+        *   API to check the input pointer is a valid pointer to a chunk of memory
+        *   @param ptrIn input pointer to be validated
         *   @returns true if operation succeeds;
         */
         bool MM_Validate(const void *ptrIn)
@@ -977,7 +977,7 @@ class OsclMemAudit
         };
 
         /**
-        *	API to get the current allocation number
+        *   API to get the current allocation number
         *   @returns the current allocation number
         */
         uint32 MM_GetAllocNo(void)
@@ -986,7 +986,7 @@ class OsclMemAudit
         };
 
         /**
-        *	API to get the overhead statistics for the
+        *   API to get the overhead statistics for the
         *   memory used by the mm_audit class.
         */
         void MM_GetOverheadStats(MM_AuditOverheadStats& stats)
@@ -995,7 +995,7 @@ class OsclMemAudit
         };
 
         /**
-        *	API to get the number of allocation nodes (records)
+        *   API to get the number of allocation nodes (records)
         *   for allocations that are being tracked individually.
         */
         uint32 MM_GetNumAllocNodes()
@@ -1004,7 +1004,7 @@ class OsclMemAudit
         };
 
         /**
-        *	API to get the operating mode of the mm_audit class.
+        *   API to get the operating mode of the mm_audit class.
         */
         uint32 MM_GetMode(void)
         {
@@ -1012,7 +1012,7 @@ class OsclMemAudit
         };
 
         /**
-        *	API to get the prefill pattern.  The pattern is used
+        *   API to get the prefill pattern.  The pattern is used
         *    to fill the memory before returning it to the caller.
         */
         uint8 MM_GetPrefillPattern(void)
@@ -1021,7 +1021,7 @@ class OsclMemAudit
         };
 
         /**
-        *	API to get the postfill pattern.  The pattern is used
+        *   API to get the postfill pattern.  The pattern is used
         *    to fill the memory before freeing it.
         */
         uint32 MM_GetPostfillPattern(void)
@@ -1030,7 +1030,7 @@ class OsclMemAudit
         };
 
         /**
-        *	API to set the operating mode of the mm_audit class.
+        *   API to set the operating mode of the mm_audit class.
         */
         void MM_SetMode(uint32 inMode)
         {
@@ -1043,7 +1043,7 @@ class OsclMemAudit
         };
 
         /**
-        *	API to set the prefill pattern.
+        *   API to set the prefill pattern.
         */
         void MM_SetPrefillPattern(uint8 pattern)
         {
@@ -1056,7 +1056,7 @@ class OsclMemAudit
         };
 
         /**
-        *	API to set the postfill pattern.
+        *   API to set the postfill pattern.
         */
         void MM_SetPostfillPattern(uint8 pattern)
         {
@@ -1069,8 +1069,8 @@ class OsclMemAudit
         };
 
         /**
-        * 	API to set the maximum tag level,i.e. tag level for a.b.c.d = 4
-        *	@param level input tag level to be set
+        *   API to set the maximum tag level,i.e. tag level for a.b.c.d = 4
+        *   @param level input tag level to be set
         */
         void MM_SetTagLevel(uint32 level)
         {
@@ -1083,9 +1083,9 @@ class OsclMemAudit
         };
 
         /**
-        *	API to insert allocation failure deterministically according to allocation number associated with tag
-        *	@param tagIn input tag
-        *	@param alloc_number allocation number associated with tag
+        *   API to insert allocation failure deterministically according to allocation number associated with tag
+        *   @param tagIn input tag
+        *   @param alloc_number allocation number associated with tag
         *   @returns true if operation succeeds;
         */
         bool MM_SetFailurePoint(const char * tagIn, uint32 alloc_number)
@@ -1101,8 +1101,8 @@ class OsclMemAudit
 
 
         /**
-        *	API to cancel the allocation failure point associated with tag
-        *	@param tagIn input tag
+        *   API to cancel the allocation failure point associated with tag
+        *   @param tagIn input tag
         */
         void MM_UnsetFailurePoint(const char * tagIn)
         {
@@ -1124,7 +1124,7 @@ class OsclMemAudit
         }
 
         /**
-        *	API to obtain mem lock ptr
+        *   API to obtain mem lock ptr
         *
         */
 

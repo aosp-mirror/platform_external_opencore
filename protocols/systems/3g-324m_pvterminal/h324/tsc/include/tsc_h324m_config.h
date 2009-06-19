@@ -42,8 +42,8 @@ class CPVCmnInterfaceCmdMessage;
 class TSC_324m;
 
 class H324MConfig : public OsclActiveObject,
-            public H324MConfigInterface,
-            public TSC_324mObserver
+        public H324MConfigInterface,
+        public TSC_324mObserver
 {
     public:
         H324MConfig(TSC_324m* aH324M, bool aUseAO);
@@ -128,10 +128,10 @@ class H324MConfig : public OsclActiveObject,
 
 
 class H324MConfigProxied :
-            public H324MConfigInterface,
-            public PVProxiedInterfaceServer,
-            public PVProxiedInterfaceClient,
-            public H324MConfigObserver
+        public H324MConfigInterface,
+        public PVProxiedInterfaceServer,
+        public PVProxiedInterfaceClient,
+        public H324MConfigObserver
 {
     public:
         H324MConfigProxied(H324MConfigInterface *aH324MConfigIF, PVMainProxy *aMainProxy);

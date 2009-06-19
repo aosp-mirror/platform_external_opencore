@@ -130,12 +130,12 @@ class PVMFSourceContextDataCommon : public PVInterface
     private:
         void MyCopy(const PVMFSourceContextDataCommon& aSrc)
         {
-            iFileHandle				= aSrc.iFileHandle;
-            iPreviewMode			= aSrc.iPreviewMode;
-            iIntent					= aSrc.iIntent;
-            iDRMLicenseProxyName	= aSrc.iDRMLicenseProxyName;
-            iDRMLicenseProxyPort	= aSrc.iDRMLicenseProxyPort;
-            iContentAccessFactory	= aSrc.iContentAccessFactory;
+            iFileHandle             = aSrc.iFileHandle;
+            iPreviewMode            = aSrc.iPreviewMode;
+            iIntent                 = aSrc.iIntent;
+            iDRMLicenseProxyName    = aSrc.iDRMLicenseProxyName;
+            iDRMLicenseProxyPort    = aSrc.iDRMLicenseProxyPort;
+            iContentAccessFactory   = aSrc.iContentAccessFactory;
             iRecognizerDataStreamFactory = aSrc.iRecognizerDataStreamFactory;
         };
 };
@@ -208,11 +208,11 @@ class PVMFSourceContextDataStreaming : public PVInterface
     private:
         void MyCopy(const PVMFSourceContextDataStreaming& aSrc)
         {
-            iStreamStatsLoggingURL	= aSrc.iStreamStatsLoggingURL;
-            iProxyName				= aSrc.iProxyName;
-            iProxyPort				= aSrc.iProxyPort;
-            iUserID					= aSrc.iUserID;
-            iUserPasswd				= aSrc.iUserPasswd;
+            iStreamStatsLoggingURL  = aSrc.iStreamStatsLoggingURL;
+            iProxyName              = aSrc.iProxyName;
+            iProxyPort              = aSrc.iProxyPort;
+            iUserID                 = aSrc.iUserID;
+            iUserPasswd             = aSrc.iUserPasswd;
         };
 };
 
@@ -266,23 +266,23 @@ class PVMFSourceContextDataDownloadHTTP : public PVInterface
         }
         int32 iRefCounter;
 
-        bool	bIsNewSession;				//true if the downloading a new file
+        bool    bIsNewSession;              //true if the downloading a new file
         //false if keep downloading a partial downloading file
-        OSCL_wHeapString<OsclMemAllocator> iConfigFileName;		//download config file
-        OSCL_wHeapString<OsclMemAllocator> iDownloadFileName;	//local file name of the downloaded clip
-        uint32	iMaxFileSize;				//the max size of the file.
-        OSCL_HeapString<OsclMemAllocator> iProxyName;			//HTTP proxy name, either ip or dns
-        int32	iProxyPort;					//HTTP proxy port
+        OSCL_wHeapString<OsclMemAllocator> iConfigFileName;     //download config file
+        OSCL_wHeapString<OsclMemAllocator> iDownloadFileName;   //local file name of the downloaded clip
+        uint32  iMaxFileSize;               //the max size of the file.
+        OSCL_HeapString<OsclMemAllocator> iProxyName;           //HTTP proxy name, either ip or dns
+        int32   iProxyPort;                 //HTTP proxy port
 
-        typedef enum 		// For Download only
+        typedef enum        // For Download only
         {
-            ENoPlayback			= 0,
+            ENoPlayback         = 0,
             EAfterDownload,
             EAsap,
             ENoSaveToFile,
             EReserve
         } TPVPlaybackControl;
-        TPVPlaybackControl	iPlaybackControl;
+        TPVPlaybackControl  iPlaybackControl;
 
         // Optional UserID and UserAuthentication (e.g. password) string
         // used for HTTP basic/digest authentication
@@ -292,14 +292,14 @@ class PVMFSourceContextDataDownloadHTTP : public PVInterface
     private:
         void MyCopy(const PVMFSourceContextDataDownloadHTTP& aSrc)
         {
-            bIsNewSession		= aSrc.bIsNewSession;
-            iConfigFileName		= aSrc.iConfigFileName;
-            iDownloadFileName	= aSrc.iDownloadFileName;
-            iMaxFileSize		= aSrc.iMaxFileSize;
-            iProxyName			= aSrc.iProxyName;
-            iProxyPort			= aSrc.iProxyPort;
-            iUserID				= aSrc.iUserID;
-            iUserPasswd			= aSrc.iUserPasswd;
+            bIsNewSession       = aSrc.bIsNewSession;
+            iConfigFileName     = aSrc.iConfigFileName;
+            iDownloadFileName   = aSrc.iDownloadFileName;
+            iMaxFileSize        = aSrc.iMaxFileSize;
+            iProxyName          = aSrc.iProxyName;
+            iProxyPort          = aSrc.iProxyPort;
+            iUserID             = aSrc.iUserID;
+            iUserPasswd         = aSrc.iUserPasswd;
         };
 };
 
@@ -355,15 +355,15 @@ class PVMFSourceContextDataDownloadPVX : public PVInterface
         }
         int32 iRefCounter;
 
-        bool	bIsNewSession;				//true if the downloading a new file
+        bool    bIsNewSession;              //true if the downloading a new file
         //false if keep downloading a partial downloading file
-        OSCL_wHeapString<OsclMemAllocator> iConfigFileName;		//download config file
-        OSCL_wHeapString<OsclMemAllocator> iDownloadFileName;	//local file name of the downloaded clip
-        uint32	iMaxFileSize;				//the max size of the file.
-        OSCL_HeapString<OsclMemAllocator> iProxyName;			//HTTP proxy name, either ip or dns
-        int32	iProxyPort;					//HTTP proxy port
+        OSCL_wHeapString<OsclMemAllocator> iConfigFileName;     //download config file
+        OSCL_wHeapString<OsclMemAllocator> iDownloadFileName;   //local file name of the downloaded clip
+        uint32  iMaxFileSize;               //the max size of the file.
+        OSCL_HeapString<OsclMemAllocator> iProxyName;           //HTTP proxy name, either ip or dns
+        int32   iProxyPort;                 //HTTP proxy port
 
-        CPVXInfo *iPvxInfo;					//class which contains all the info in the .pvx file except the URL
+        CPVXInfo *iPvxInfo;                 //class which contains all the info in the .pvx file except the URL
 
     private:
         void MyCopy(const PVMFSourceContextDataDownloadPVX& aSrc)
@@ -421,15 +421,15 @@ class PVMFSourceContextDataPVR : public PVInterface
         }
 
 
-//	void SetLiveBufferSizeInSeconds(uint32 aLiveBufferSizeInSeconds)
-//	{
-//		iLiveBufferSizeInSeconds = aLiveBufferSizeInSeconds;
-//	}
+//  void SetLiveBufferSizeInSeconds(uint32 aLiveBufferSizeInSeconds)
+//  {
+//      iLiveBufferSizeInSeconds = aLiveBufferSizeInSeconds;
+//  }
 
-//	uint32 LiveBufferSizeInSeconds()
-//	{
-//		return iLiveBufferSizeInSeconds;
-//	}
+//  uint32 LiveBufferSizeInSeconds()
+//  {
+//      return iLiveBufferSizeInSeconds;
+//  }
 
         /* From PVInterface */
         void addRef()

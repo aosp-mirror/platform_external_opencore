@@ -92,7 +92,7 @@ class PVMFPortVector: public PVMFPortIter
         void Erase(vec_element_ptr elem)
         {//erase an element
             if (elem)
-            {	//must explicitly call port destructor, since
+            {   //must explicitly call port destructor, since
                 //vec elements are pointers.
                 Oscl_TAlloc<vec_element_deref, Alloc> talloc;
                 talloc.destruct_and_dealloc(*elem);
@@ -101,7 +101,7 @@ class PVMFPortVector: public PVMFPortIter
         }
         void Reconstruct()
         {//erase all elements & reconstruct the vector.
-            for (uint32 i = 0;i < iVec.size();i++)
+            for (uint32 i = 0; i < iVec.size(); i++)
                 Erase(&iVec[i]);
             iVec.clear();
             iVec.reserve(iNres);
@@ -131,7 +131,7 @@ class PVMFPortVector: public PVMFPortIter
 
         vec_element_ptr FindByValue(vec_element &elem)
         {//find an element by its value
-            for (uint32 i = 0;i < iVec.size();i++)
+            for (uint32 i = 0; i < iVec.size(); i++)
                 if (iVec[i] == elem)
                     return &iVec[i];
             return NULL;
@@ -496,7 +496,7 @@ class PVMFNodeCommandQueue
 
         vec_element_ptr FindById(PVMFCommandId aId, uint32 aOffset = 0)
         {//find an element by its command id
-            for (uint32 i = aOffset;i < iVec.size();i++)
+            for (uint32 i = aOffset; i < iVec.size(); i++)
                 if (iVec[i].iId == aId)
                     return &iVec[i];
             return NULL;

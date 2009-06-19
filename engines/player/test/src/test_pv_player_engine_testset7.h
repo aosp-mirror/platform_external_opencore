@@ -66,9 +66,9 @@ class PVPlayerDataSinkFilename;
 class PvmfFileOutputNodeConfigInterface;
 class PvmiCapabilityAndConfig;
 
-#define	FIRST_PAUSE_AFTER_START_LOCAL 10
+#define FIRST_PAUSE_AFTER_START_LOCAL 10
 #define PAUSE_RESUME_INTERVAL_LOCAL 1
-#define	SEQUENTIAL_PAUSE_INTERVAL_LOCAL 5
+#define SEQUENTIAL_PAUSE_INTERVAL_LOCAL 5
 
 /*!
  *  A test case to test playback of specified source with file output media IO node. Also tests out call to retrieve
@@ -1390,7 +1390,7 @@ class pvplayer_async_test_mediaionode_repositionduringprepared : public pvplayer
  *             -# Start()
  *             -# WAIT 5 sec.
  *             -# SetPlaybackRange(20 sec, indeterminate)
- *			   -# WAIT 5 sec.
+ *             -# WAIT 5 sec.
  *             -# Stop()
  *             -# Prepare()
  *             -# Start()
@@ -2146,7 +2146,7 @@ class pvplayer_async_test_mediaionode_backwardplayback : public pvplayer_async_t
  *             (play backward for 10 seconds)
  *             -# SetPlaybackRate(3x)
  *             (play forward for 10 seconds)
- *			   -# SetPlaybackRate(1x)
+ *             -# SetPlaybackRate(1x)
  *             (play until EOS)
  *             -# Stop()
  *             -# RemoveDataSink() (video)
@@ -2251,7 +2251,7 @@ class pvplayer_async_test_mediaionode_backwardforwardplayback : public pvplayer_
  *             -# SetPlaybackRate(-4x)
  *             -# Resume()
  *             -# SetPlaybackRate(1x) (After 20 secs of resume)
-				  (normal play until EOS)
+                  (normal play until EOS)
  *             -# Stop()
  *             -# RemoveDataSink() (video)
  *             -# RemoveDataSink() (audio)
@@ -2472,7 +2472,7 @@ class pvplayer_async_test_mediaionode_multiplepausesetplaybackrateresume : publi
  *             -# SetPlaybackRate(-4x)
  *             -# Resume() (Fast backward till BOS)
  *             -# SetPlaybackRate(1x)
-				  (normal play until EOS)
+                  (normal play until EOS)
  *             -# Stop()
  *             -# RemoveDataSink() (video)
  *             -# RemoveDataSink() (audio)

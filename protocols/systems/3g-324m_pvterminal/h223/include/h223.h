@@ -16,8 +16,8 @@
  * -------------------------------------------------------------------
  */
 /*
- * File:	h223.h
- * Comment:	H223 internal structure, global variable, and function declarations
+ * File:    h223.h
+ * Comment: H223 internal structure, global variable, and function declarations
  */
 
 #ifndef _h223_H
@@ -37,4 +37,4 @@ extern "C"
 #ifdef __cplusplus
 }
 #endif
-#endif	/* _h223_H */
+#endif  /* _h223_H */

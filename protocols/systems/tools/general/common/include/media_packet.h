@@ -59,7 +59,7 @@ class MediaPacket : public Packet
     protected:
         MediaPacket() : cur_pos(NULL), end_pos(NULL), cur_frag_num(0)/*, next(NULL)*/ {};
     private:
-//	MediaPacket *next;
+//  MediaPacket *next;
         TimeValue time_val;
         friend class MediaPacketAllocator;
         friend class MediaPacketPoolAllocator;

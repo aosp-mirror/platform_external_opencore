@@ -70,7 +70,7 @@ char *pv_mime_string_append_type(char *mimestring, char *string, char* newstring
     }
     else // mimestring[i] == ';'
     {
-        if (i > 0)	// skip if i==0 (mimestring==";...")
+        if (i > 0)  // skip if i==0 (mimestring==";...")
             // (is that an error case we shd flag?)
         {
             oscl_strncpy(newstring, mimestring, i - 1);
@@ -209,7 +209,7 @@ OSCL_EXPORT_REF int pv_mime_strcmp(const char *mimestring1, const char *mimestri
 
     // Iterate through the strings doing case-insensitive matching until the
     // the first non-matching character or a terminating character.
-    for (i = 0;mimestring1[i] != '\0' && oscl_tolower(mimestring1[i]) == oscl_tolower(mimestring2[i]);i++)
+    for (i = 0; mimestring1[i] != '\0' && oscl_tolower(mimestring1[i]) == oscl_tolower(mimestring2[i]); i++)
     {
         if ((mimestring1[i] == MIME_PARAM_DELIMITER_CHAR) ||
                 (mimestring2[i] == MIME_PARAM_DELIMITER_CHAR))
@@ -264,7 +264,7 @@ OSCL_EXPORT_REF int pv_mime_strcmp(const char *mimestring1, const char *mimestri
         return RETVAL_NO_MATCH;
     }
     else
-    {	// must be len2 < len1
+    {   // must be len2 < len1
         // see comments on previous case for how to check for prefix condition
         if (mimestring1[i] == MIME_SUBTYPE_DELIMITER_CHAR)
         {
@@ -311,7 +311,7 @@ OSCL_EXPORT_REF int pv_mime_strstr(char *mimestring1, char *mimestring2)
     }
 
     //match str2 against any sub-set of str1.
-    for (int n = 0;n < n1;n++)
+    for (int n = 0; n < n1; n++)
     {
         char* str = NULL;
         pv_mime_string_extract_type(n, str1, str);
@@ -359,7 +359,7 @@ OSCL_EXPORT_REF int pv_mime_string_extract_param(int compnumber, char *mimestrin
                 if (compnumber == count)
                 {
                     string = &mimestring[start];
-                    return (j -start);
+                    return (j - start);
 
                 }
                 else
@@ -375,7 +375,7 @@ OSCL_EXPORT_REF int pv_mime_string_extract_param(int compnumber, char *mimestrin
         if (compnumber == count && mimestring[j] == '\0')
         {
             string = &mimestring[start];
-            return (j -start);
+            return (j - start);
         }
         return 0;
     }
@@ -399,7 +399,7 @@ OSCL_EXPORT_REF int pv_mime_string_extract_type(int compnumber, char *mimestring
             if (compnumber == count)
             {
                 string = &mimestring[start];
-                return (j -start);
+                return (j - start);
             }
             else
             {
@@ -423,7 +423,7 @@ OSCL_EXPORT_REF int pv_mime_string_extract_type(int compnumber, char *mimestring
     if (compnumber == count && mimestring[j] == '\0')
     {
         string = &mimestring[start];
-        return (j -start);
+        return (j - start);
     }
 
     return 0;

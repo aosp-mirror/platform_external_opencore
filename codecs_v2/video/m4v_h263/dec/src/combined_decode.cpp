@@ -24,21 +24,21 @@
 #define OSCL_DISABLE_WARNING_CONDITIONAL_IS_CONSTANT
 #include "osclconfig_compiler_warnings.h"
 /* ======================================================================== */
-/* 	Function : DecodeFrameCombinedMode()									*/
-/* 	Purpose  : Decode a frame of MPEG4 bitstream in combined mode.			*/
-/* 	In/out   :																*/
-/* 	Return   :																*/
-/* 	Modified :																*/
-/*																			*/
-/* 		03/30/2000 : Cleaned up and optimized the code.				*/
-/* 		03/31/2000 : Added proper handling of MB stuffing.			*/
-/* 		04/13/2000 : Rewrote this combined mode path completely		*/
-/* 							 so that it handles "Combined Mode With Error	*/
-/* 							 Resilience."  Now the code resembles the		*/
-/* 							 pseudo codes in MPEG-4 standard better.		*/
-/*		10/13/2000 : Add fast VLC+dequant							*/
+/*  Function : DecodeFrameCombinedMode()                                    */
+/*  Purpose  : Decode a frame of MPEG4 bitstream in combined mode.          */
+/*  In/out   :                                                              */
+/*  Return   :                                                              */
+/*  Modified :                                                              */
+/*                                                                          */
+/*      03/30/2000 : Cleaned up and optimized the code.             */
+/*      03/31/2000 : Added proper handling of MB stuffing.          */
+/*      04/13/2000 : Rewrote this combined mode path completely     */
+/*                           so that it handles "Combined Mode With Error   */
+/*                           Resilience."  Now the code resembles the       */
+/*                           pseudo codes in MPEG-4 standard better.        */
+/*      10/13/2000 : Add fast VLC+dequant                           */
 /*      04/13/2001 : fix MB_stuffing                               */
-/*		08/07/2001 : remove MBzero									*/
+/*      08/07/2001 : remove MBzero                                  */
 /* ======================================================================== */
 PV_STATUS DecodeFrameCombinedMode(VideoDecData *video)
 {
@@ -65,14 +65,14 @@ PV_STATUS DecodeFrameCombinedMode(VideoDecData *video)
     switch (currVop->predictionType)
     {
         case I_VOP :
-//		oscl_memset(Mode, MODE_INTRA, sizeof(uint8)*nTotalMB);
+//      oscl_memset(Mode, MODE_INTRA, sizeof(uint8)*nTotalMB);
             resync_marker_length = 17;
             stuffing_length = 9;
             break;
         case P_VOP :
             oscl_memset(video->motX, 0, sizeof(MOT)*4*nTotalMB);
             oscl_memset(video->motY, 0, sizeof(MOT)*4*nTotalMB);
-//		oscl_memset(Mode, MODE_INTER, sizeof(uint8)*nTotalMB);
+//      oscl_memset(Mode, MODE_INTER, sizeof(uint8)*nTotalMB);
             resync_marker_length = 16 + currVop->fcodeForward;
             stuffing_length = 10;
             break;
@@ -113,7 +113,7 @@ PV_STATUS DecodeFrameCombinedMode(VideoDecData *video)
 
     /** Initialize sliceNo ***/
     mbnum = slice_counter = 0;
-//	oscl_memset(video->sliceNo, 0, sizeof(uint8)*nTotalMB);
+//  oscl_memset(video->sliceNo, 0, sizeof(uint8)*nTotalMB);
     QP = video->currVop->quantizer;
 
     do
@@ -131,7 +131,7 @@ PV_STATUS DecodeFrameCombinedMode(VideoDecData *video)
         }
         else
         {
-            video->QP_CHR = QP;		/* ANNEX_T */
+            video->QP_CHR = QP;     /* ANNEX_T */
         }
 #endif
         /* remove any stuffing bits */
@@ -334,14 +334,14 @@ PV_STATUS DecodeFrameCombinedMode(VideoDecData *video)
 
 
 /* ============================================================================ */
-/* 	Function : GetMBHeader()													*/
-/* 	Purpose  : Decode MB header, not_coded, mcbpc, ac_pred_flag, cbpy, dquant.	*/
-/* 	In/out   :																	*/
-/* 	Return   :																	*/
-/* 	Modified :																	*/
-/*																				*/
-/* 		3/29/00 : Changed the returned value and optimized the code.	*/
-/*      4/01/01 : new ACDC prediction structure							*/
+/*  Function : GetMBHeader()                                                    */
+/*  Purpose  : Decode MB header, not_coded, mcbpc, ac_pred_flag, cbpy, dquant.  */
+/*  In/out   :                                                                  */
+/*  Return   :                                                                  */
+/*  Modified :                                                                  */
+/*                                                                              */
+/*      3/29/00 : Changed the returned value and optimized the code.    */
+/*      4/01/01 : new ACDC prediction structure                         */
 /* ============================================================================ */
 PV_STATUS GetMBheader(VideoDecData *video, int16 *QP)
 {
@@ -514,15 +514,15 @@ PV_STATUS GetMBheader(VideoDecData *video, int16 *QP)
 
 
 /***********************************************************CommentBegin******
-*		3/10/00  : initial modification to the
-*				 new PV-Decoder Lib format.
-*		4/2/2000 : Cleanup and error-handling modification.  This
-*					function has been divided into several sub-functions for
-*					better coding style and maintainance reason.  I also
-*					greatly shrunk the code size here.
-*		9/18/2000 : VlcDecode+Dequant optimization *
-*		4/01/2001 : new ACDC prediction structure
-*		3/29/2002 : removed GetIntraMB and GetInterMB
+*       3/10/00  : initial modification to the
+*                new PV-Decoder Lib format.
+*       4/2/2000 : Cleanup and error-handling modification.  This
+*                   function has been divided into several sub-functions for
+*                   better coding style and maintainance reason.  I also
+*                   greatly shrunk the code size here.
+*       9/18/2000 : VlcDecode+Dequant optimization *
+*       4/01/2001 : new ACDC prediction structure
+*       3/29/2002 : removed GetIntraMB and GetInterMB
 ***********************************************************CommentEnd********/
 PV_STATUS GetMBData(VideoDecData *video)
 {
@@ -556,7 +556,7 @@ PV_STATUS GetMBData(VideoDecData *video)
     int32 offset = (int32)(y_pos << 4) * width + (x_pos << 4);
 
     /* Decode each 8-by-8 blocks. comp 0 ~ 3 are luminance blocks, 4 ~ 5 */
-    /*	are chrominance blocks.   04/03/2000.                          */
+    /*  are chrominance blocks.   04/03/2000.                          */
 #ifdef PV_POSTPROC_ON
     if (video->postFilterType != PV_NO_POST_PROC)
     {
@@ -570,7 +570,7 @@ PV_STATUS GetMBData(VideoDecData *video)
     }
 #endif
 
-    /*	oscl_memset(mblock->block, 0, sizeof(typeMBStore));    Aug 9,2005 */
+    /*  oscl_memset(mblock->block, 0, sizeof(typeMBStore));    Aug 9,2005 */
 
     if (mode & INTRA_MASK) /* MODE_INTRA || MODE_INTRA_Q */
     {
@@ -588,7 +588,7 @@ PV_STATUS GetMBData(VideoDecData *video)
 
         for (comp = 0; comp < 6; comp++)
         {
-            dataBlock = mblock->block[comp];	/* 10/20/2000 */
+            dataBlock = mblock->block[comp];    /* 10/20/2000 */
 
             if (video->shortVideoHeader)
             {
@@ -654,7 +654,7 @@ PV_STATUS GetMBData(VideoDecData *video)
         MBlockIDCT(video);
     }
     else      /* INTER modes */
-    {	/*  moved it here Aug 15, 2005 */
+    {   /*  moved it here Aug 15, 2005 */
         /* decode the motion vector (if there are any) */
         status = PV_GetMBvectors(video, mode);
         if (status != PV_SUCCESS)
@@ -687,7 +687,7 @@ PV_STATUS GetMBData(VideoDecData *video)
             else
             {
                 /* no IDCT for all zeros blocks  03/28/2002 */
-                /*				BlockIDCT();				*/
+                /*              BlockIDCT();                */
 #ifdef PV_POSTPROC_ON
                 if (video->postFilterType != PV_NO_POST_PROC)
                     *pp_mod[comp] = 0;
@@ -695,7 +695,7 @@ PV_STATUS GetMBData(VideoDecData *video)
             }
         }
 
-        video->QPMB[mbnum] = video->QP_CHR;		/* ANNEX_T */
+        video->QPMB[mbnum] = video->QP_CHR;     /* ANNEX_T */
 
 
 
@@ -717,7 +717,7 @@ PV_STATUS GetMBData(VideoDecData *video)
         else
         {
             /* no IDCT for all zeros blocks  03/28/2002 */
-            /*				BlockIDCT();				*/
+            /*              BlockIDCT();                */
 #ifdef PV_POSTPROC_ON
             if (video->postFilterType != PV_NO_POST_PROC)
                 *pp_mod[4] = 0;
@@ -741,7 +741,7 @@ PV_STATUS GetMBData(VideoDecData *video)
         else
         {
             /* no IDCT for all zeros blocks  03/28/2002 */
-            /*				BlockIDCT();				*/
+            /*              BlockIDCT();                */
 #ifdef PV_POSTPROC_ON
             if (video->postFilterType != PV_NO_POST_PROC)
                 *pp_mod[5] = 0;
@@ -769,7 +769,7 @@ PV_STATUS GetMBData(VideoDecData *video)
             else
             {
                 /* no IDCT for all zeros blocks  03/28/2002 */
-                /*				BlockIDCT();				*/
+                /*              BlockIDCT();                */
 #ifdef PV_POSTPROC_ON
                 if (video->postFilterType != PV_NO_POST_PROC)
                     *pp_mod[comp] = 0;
@@ -795,7 +795,7 @@ PV_STATUS GetMBData(VideoDecData *video)
         else
         {
             /* no IDCT for all zeros blocks  03/28/2002 */
-            /*				BlockIDCT();				*/
+            /*              BlockIDCT();                */
 #ifdef PV_POSTPROC_ON
             if (video->postFilterType != PV_NO_POST_PROC)
                 *pp_mod[4] = 0;
@@ -819,7 +819,7 @@ PV_STATUS GetMBData(VideoDecData *video)
         else
         {
             /* no IDCT for all zeros blocks  03/28/2002 */
-            /*				BlockIDCT();				*/
+            /*              BlockIDCT();                */
 #ifdef PV_POSTPROC_ON
             if (video->postFilterType != PV_NO_POST_PROC)
                 *pp_mod[5] = 0;

@@ -85,7 +85,7 @@ extern "C"
 #endif
 
     uint32 getNbits(tmp3Bits *pMainData,
-                    int32 neededBits);
+    int32 neededBits);
 
     uint16 getUpTo9bits(tmp3Bits *pMainData,
                         int32 neededBits);

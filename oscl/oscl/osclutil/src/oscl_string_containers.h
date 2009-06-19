@@ -18,10 +18,10 @@
 // -*- c++ -*-
 // = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 
-//				 O S C L_ S T R I N G _ C O N T A I N E R S
+//               O S C L_ S T R I N G _ C O N T A I N E R S
 //
-//	  This file contains a standardized set of string containers that
-//	  can be used in place of character arrays.
+//    This file contains a standardized set of string containers that
+//    can be used in place of character arrays.
 
 // = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 
@@ -34,7 +34,7 @@
 /*!
  * \file oscl_string_containers.h
  * \brief Provides a standardized set of string containers that
- *	  can be used in place of character arrays.
+ *    can be used in place of character arrays.
  *
  */
 
@@ -72,20 +72,20 @@
 #endif
 
 /**
-	OSCL_HeapString is a simple string class, compatible with
-	regular character array strings.
+    OSCL_HeapString is a simple string class, compatible with
+    regular character array strings.
 
-	The string array is variable length, is allocated from the heap,
-	and is modifiable.
-	A copy-on-write mechanism is used to minimize unnecessary copying when
-	multiple instances of a string are created for reading.
-	Allocated memory is automatically freed by the class destructor when
-	the last string referencing the memory is destroyed.
+    The string array is variable length, is allocated from the heap,
+    and is modifiable.
+    A copy-on-write mechanism is used to minimize unnecessary copying when
+    multiple instances of a string are created for reading.
+    Allocated memory is automatically freed by the class destructor when
+    the last string referencing the memory is destroyed.
 
-	The class HAS NO thread synchronization built-in, so it is NOT MT-SAFE.
-	External locks should be used if the class is to be shared across threads.
+    The class HAS NO thread synchronization built-in, so it is NOT MT-SAFE.
+    External locks should be used if the class is to be shared across threads.
 
-	@param Alloc: memory allocator, derived from Oscl_DefAlloc.
+    @param Alloc: memory allocator, derived from Oscl_DefAlloc.
 */
 template <class Alloc>
 class OSCL_HeapString : public OSCL_String
@@ -94,30 +94,30 @@ class OSCL_HeapString : public OSCL_String
         typedef OSCL_String::chartype chartype;
 
         /**
-        	The default constructor creates an empty string.
+            The default constructor creates an empty string.
         */
         OSCL_HeapString();
 
         /**
-        	Creates a heap string that contains a copy of the input
-        	string.
-        	@param src: input string.
+            Creates a heap string that contains a copy of the input
+            string.
+            @param src: input string.
         */
         OSCL_HeapString(const OSCL_HeapString& src);
         OSCL_HeapString(const OSCL_String& src);
 
         /**
-        	Creates a heap string that contains a copy of the input
-        	string.
-        	@param cp: null-terminated string.
+            Creates a heap string that contains a copy of the input
+            string.
+            @param cp: null-terminated string.
         */
         OSCL_HeapString(const chartype* cstr);
 
         /**
-        	Creates a heap string that contains a copy of the input
-        	string or character array.
-        	@param src: character array, not necessarily null-terminated.
-        	@param length: number of characters to copy.
+            Creates a heap string that contains a copy of the input
+            string or character array.
+            @param src: character array, not necessarily null-terminated.
+            @param length: number of characters to copy.
         */
         OSCL_HeapString(const chartype* buf, uint32 length);
 
@@ -137,10 +137,10 @@ class OSCL_HeapString : public OSCL_String
         OSCL_HeapString& operator=(const chartype* cstr);
 
         /**
-        	Set the contents of this string to a new string or
-        	character array.
-        	@param buf: string or character array.
-        	@param length: number of characters to copy.
+            Set the contents of this string to a new string or
+            character array.
+            @param buf: string or character array.
+            @param length: number of characters to copy.
         */
         void set(const chartype* buf, uint32 length);
 
@@ -162,9 +162,9 @@ class OSCL_HeapString : public OSCL_String
 };
 
 /**
-	OSCL_wHeapString is identical to OSCL_HeapString
-	except that it uses wide-character format.
-	For descriptions, see OSCL_HeapString.
+    OSCL_wHeapString is identical to OSCL_HeapString
+    except that it uses wide-character format.
+    For descriptions, see OSCL_HeapString.
 */
 template <class Alloc>
 class OSCL_wHeapString : public OSCL_wString
@@ -209,26 +209,26 @@ class OSCL_wHeapString : public OSCL_wString
 };
 
 /**
-	OSCL_HeapStringA is a simple string class, compatible with
-	regular character array strings.  It is similar to
-	OSCL_HeapString, except that the allocator is passed at
-	run-time instead of compile-time.
-	The allocator pointer is passed in the constructor, and
-	may be a reference-counted object.
-	If the allocator is not a reference-counted object then it must
-	persist over the lifetime of all OSCL_HeapStringA objects that use it.
-	If no allocator is provided, then an OsclMemAllocator
-	will be used.
+    OSCL_HeapStringA is a simple string class, compatible with
+    regular character array strings.  It is similar to
+    OSCL_HeapString, except that the allocator is passed at
+    run-time instead of compile-time.
+    The allocator pointer is passed in the constructor, and
+    may be a reference-counted object.
+    If the allocator is not a reference-counted object then it must
+    persist over the lifetime of all OSCL_HeapStringA objects that use it.
+    If no allocator is provided, then an OsclMemAllocator
+    will be used.
 
-	The string array is variable length, is allocated from the heap,
-	and is modifiable.
-	A copy-on-write mechanism is used to minimize unnecessary copying when
-	multiple instances of a string are created for reading.
-	Allocated memory is automatically freed by the class destructor when
-	the last string referencing the memory is destroyed.
+    The string array is variable length, is allocated from the heap,
+    and is modifiable.
+    A copy-on-write mechanism is used to minimize unnecessary copying when
+    multiple instances of a string are created for reading.
+    Allocated memory is automatically freed by the class destructor when
+    the last string referencing the memory is destroyed.
 
-	The class HAS NO thread synchronization built-in, so it is NOT MT-SAFE.
-	External locks should be used if the class is to be shared across threads.
+    The class HAS NO thread synchronization built-in, so it is NOT MT-SAFE.
+    External locks should be used if the class is to be shared across threads.
 
 */
 class OSCL_HeapStringA : public OSCL_String
@@ -238,48 +238,48 @@ class OSCL_HeapStringA : public OSCL_String
 
 
         /**
-        	The default constructor creates an empty string.
-        	@param: (optional) allocator or reference-counted allocator.
-        	@param: (optional) reference counter associated with allocator object.
-        	If no allocator is provided, this this object will use
-        	an OsclMemAllocator.
+            The default constructor creates an empty string.
+            @param: (optional) allocator or reference-counted allocator.
+            @param: (optional) reference counter associated with allocator object.
+            If no allocator is provided, this this object will use
+            an OsclMemAllocator.
         */
         OSCL_IMPORT_REF OSCL_HeapStringA();
         OSCL_IMPORT_REF OSCL_HeapStringA(Oscl_DefAlloc *alloc, OsclRefCounter *ref = NULL);
 
         /**
-        	Creates a heap string that contains a copy of the input
-        	string.
-        	@param src: input string.
-        	@param: (optional) allocator or reference-counted allocator.
-        	@param: (optional) reference counter associated with allocator object.
-        	If no allocator is provided, this this object will use
-        	an OsclMemAllocator.
+            Creates a heap string that contains a copy of the input
+            string.
+            @param src: input string.
+            @param: (optional) allocator or reference-counted allocator.
+            @param: (optional) reference counter associated with allocator object.
+            If no allocator is provided, this this object will use
+            an OsclMemAllocator.
         */
         OSCL_IMPORT_REF OSCL_HeapStringA(const OSCL_HeapStringA& src);
         OSCL_IMPORT_REF OSCL_HeapStringA(const OSCL_HeapStringA& src, Oscl_DefAlloc *alloc, OsclRefCounter *ref = NULL);
         OSCL_IMPORT_REF OSCL_HeapStringA(const OSCL_String& src, Oscl_DefAlloc *alloc = NULL, OsclRefCounter *ref = NULL);
 
         /**
-        	Creates a heap string that contains a copy of the input
-        	string.
-        	@param cp: null-terminated string.
-        	@param: (optional) allocator or reference-counted allocator.
-        	@param: (optional) reference counter associated with allocator object.
-        	If no allocator is provided, this this object will use
-        	an OsclMemAllocator.
+            Creates a heap string that contains a copy of the input
+            string.
+            @param cp: null-terminated string.
+            @param: (optional) allocator or reference-counted allocator.
+            @param: (optional) reference counter associated with allocator object.
+            If no allocator is provided, this this object will use
+            an OsclMemAllocator.
         */
         OSCL_IMPORT_REF OSCL_HeapStringA(const chartype* cstr, Oscl_DefAlloc *alloc = NULL, OsclRefCounter *ref = NULL);
 
         /**
-        	Creates a heap string that contains a copy of the input
-        	string or character array.
-        	@param src: character array, not necessarily null-terminated.
-        	@param length: number of characters to copy.
-        	@param: (optional) allocator or reference-counted allocator.
-        	@param: (optional) reference counter associated with allocator object.
-        	If no allocator is provided, this this object will use
-        	an OsclMemAllocator.
+            Creates a heap string that contains a copy of the input
+            string or character array.
+            @param src: character array, not necessarily null-terminated.
+            @param length: number of characters to copy.
+            @param: (optional) allocator or reference-counted allocator.
+            @param: (optional) reference counter associated with allocator object.
+            If no allocator is provided, this this object will use
+            an OsclMemAllocator.
         */
         OSCL_IMPORT_REF OSCL_HeapStringA(const chartype* buf, uint32 length, Oscl_DefAlloc *alloc = NULL, OsclRefCounter *ref = NULL);
 
@@ -299,10 +299,10 @@ class OSCL_HeapStringA : public OSCL_String
         OSCL_IMPORT_REF OSCL_HeapStringA& operator=(const chartype* cstr);
 
         /**
-        	Set the contents of this string to a new string or
-        	character array.
-        	@param buf: string or character array.
-        	@param length: number of characters to copy.
+            Set the contents of this string to a new string or
+            character array.
+            @param buf: string or character array.
+            @param length: number of characters to copy.
         */
         OSCL_IMPORT_REF void set(const chartype* buf, uint32 length);
 
@@ -326,9 +326,9 @@ class OSCL_HeapStringA : public OSCL_String
 };
 
 /**
-	OSCL_wHeapStringA is identical to OSCL_HeapStringA
-	except that it uses wide-character format.
-	For descriptions, see OSCL_HeapStringA.
+    OSCL_wHeapStringA is identical to OSCL_HeapStringA
+    except that it uses wide-character format.
+    For descriptions, see OSCL_HeapStringA.
 */
 class OSCL_wHeapStringA : public OSCL_wString
 {
@@ -378,17 +378,17 @@ class OSCL_wHeapStringA : public OSCL_wString
 
 
 /**
-	OSCL_StackString is a simple string class, compatible with
-	regular character array strings.
+    OSCL_StackString is a simple string class, compatible with
+    regular character array strings.
 
-	The string array is fixed length, is allocated from the stack,
-	and is modifiable.	Operations that update the string will automatically
-	truncate it to fit the fixed size storage.
-	This is recommended for use for short strings (<255).
-	Use OSCL_HeapString for very large strings to avoid stack overflow.
+    The string array is fixed length, is allocated from the stack,
+    and is modifiable.  Operations that update the string will automatically
+    truncate it to fit the fixed size storage.
+    This is recommended for use for short strings (<255).
+    Use OSCL_HeapString for very large strings to avoid stack overflow.
 
-	@param C: type of character.
-	@param MaxBufSize: maximum string length not including null terminator.
+    @param C: type of character.
+    @param MaxBufSize: maximum string length not including null terminator.
 */
 template <uint32 MaxBufSize>
 class OSCL_StackString : public OSCL_String
@@ -401,22 +401,22 @@ class OSCL_StackString : public OSCL_String
         OSCL_StackString();
 
         /** Creates an OSCL_StackString with a copy of the input string.
-        	The string may be truncated to fit the available storage.
-        	@param src: input string.
+            The string may be truncated to fit the available storage.
+            @param src: input string.
         */
         OSCL_StackString(const OSCL_StackString& src);
         OSCL_StackString(const OSCL_String& src);
 
         /** Creates an OSCL_StackString with a copy of the input string.
-        	The string may be truncated to fit the available storage.
-        	@param cp: a null-terminated string.
+            The string may be truncated to fit the available storage.
+            @param cp: a null-terminated string.
         */
         OSCL_StackString(const chartype* cstr);
 
         /** Creates an OSCL_StackString with a copy of the input string.
-        	The string may be truncated to fit the available storage.
-        	@param src: a character array, not necessarily null-terminated.
-        	@param length: the number of characters to copy.
+            The string may be truncated to fit the available storage.
+            @param src: a character array, not necessarily null-terminated.
+            @param length: the number of characters to copy.
         */
         OSCL_StackString(const chartype* buf, uint32 length);
 
@@ -436,10 +436,10 @@ class OSCL_StackString : public OSCL_String
         OSCL_StackString& operator=(const chartype* cstr);
 
         /**
-        	Set the contents of this string to a new string or
-        	character array.
-        	@param buf: string or character array.
-        	@param length: number of characters to copy.
+            Set the contents of this string to a new string or
+            character array.
+            @param buf: string or character array.
+            @param length: number of characters to copy.
         */
         void set(const chartype* buf, uint32 length);
 
@@ -459,9 +459,9 @@ class OSCL_StackString : public OSCL_String
 };
 
 /**
-	OSCL_wStackString is identical to OSCL_StackString
-	except that it uses wide-character format.
-	For descriptions, see OSCL_StackString.
+    OSCL_wStackString is identical to OSCL_StackString
+    except that it uses wide-character format.
+    For descriptions, see OSCL_StackString.
 */
 template <uint32 MaxBufSize>
 class OSCL_wStackString : public OSCL_wString
@@ -504,18 +504,18 @@ class OSCL_wStackString : public OSCL_wString
 };
 
 /**
-	OSCL_FastString is a simple string class, compatible with
-	regular character array strings.
+    OSCL_FastString is a simple string class, compatible with
+    regular character array strings.
 
-	This class does not allocate internal memory for the string but acts as
-	a container for a user-defined buffer. This means no copying of the string
-	is done and provides a faster way of manipulating strings.
-	Depending on initialization, this container provides either read-only
-	or read-write access to the string.
+    This class does not allocate internal memory for the string but acts as
+    a container for a user-defined buffer. This means no copying of the string
+    is done and provides a faster way of manipulating strings.
+    Depending on initialization, this container provides either read-only
+    or read-write access to the string.
 
-	Implementation assumes the input string is null-terminated.
+    Implementation assumes the input string is null-terminated.
 
-	@param C: type of character.
+    @param C: type of character.
 */
 class OSCL_FastString : public OSCL_String
 {
@@ -523,31 +523,31 @@ class OSCL_FastString : public OSCL_String
         typedef OSCL_String::chartype chartype;
 
         /**
-        	Default constructor.
+            Default constructor.
         */
         OSCL_IMPORT_REF OSCL_FastString();
 
         /**
-        	Creates a fast string that contains a copy of the input
-        	string.
-        	The string inherits the writable-ness of the source string.
-        	@param src: input string.
+            Creates a fast string that contains a copy of the input
+            string.
+            The string inherits the writable-ness of the source string.
+            @param src: input string.
         */
         OSCL_IMPORT_REF OSCL_FastString(const OSCL_FastString& src);
 
         /**
-        	Create the string and initialize it to contain the input string.
-        	The string is not writable.
-        	@param: null-terminated string.
+            Create the string and initialize it to contain the input string.
+            The string is not writable.
+            @param: null-terminated string.
         */
         OSCL_IMPORT_REF OSCL_FastString(const chartype* cstr);
 
         /**
-        	Create the string and initialize it to contain the input string.
-        	The string is writable.
-        	@param cp: null-terminated string.
-        	@param maxlen: maximum size of storage at cp, not incl null terminator.
-        	If input string is not null-terminated, the function leaves.
+            Create the string and initialize it to contain the input string.
+            The string is writable.
+            @param cp: null-terminated string.
+            @param maxlen: maximum size of storage at cp, not incl null terminator.
+            If input string is not null-terminated, the function leaves.
         */
         OSCL_IMPORT_REF OSCL_FastString(chartype* buf, uint32 maxlen);
 
@@ -566,16 +566,16 @@ class OSCL_FastString : public OSCL_String
         OSCL_IMPORT_REF OSCL_FastString& operator=(const chartype* cstr);
 
         /**
-        	This function can be used to reassign the string to a new
-        	writable string.
-        	If input string is not null-terminated, the function leaves.
+            This function can be used to reassign the string to a new
+            writable string.
+            If input string is not null-terminated, the function leaves.
         */
         OSCL_IMPORT_REF void set(chartype* cstr, uint32 maxlen);
 
         /**
-        	This function can be used to refresh the string size in case the
-        	contents of the string buffer have been modified since the
-        	container was created.
+            This function can be used to refresh the string size in case the
+            contents of the string buffer have been modified since the
+            container was created.
         */
         OSCL_IMPORT_REF void set_length();
 
@@ -593,9 +593,9 @@ class OSCL_FastString : public OSCL_String
 };
 
 /**
-	OSCL_wFastString is identical to OSCL_FastString
-	except that it uses wide-character format.
-	For descriptions, see OSCL_FastString.
+    OSCL_wFastString is identical to OSCL_FastString
+    except that it uses wide-character format.
+    For descriptions, see OSCL_FastString.
 */
 class OSCL_wFastString : public OSCL_wString
 {
@@ -636,8 +636,8 @@ class OSCL_wFastString : public OSCL_wString
 
 
 // **************************************************************
-//					 OSCL_HeapString<Alloc> Implementation
-//					 OSCL_wHeapString<Alloc> Implementation
+//                   OSCL_HeapString<Alloc> Implementation
+//                   OSCL_wHeapString<Alloc> Implementation
 // **************************************************************
 
 template<class Alloc>
@@ -993,8 +993,8 @@ OSCL_wHeapString<Alloc>& OSCL_wHeapString<Alloc>::operator=(const chartype * cp)
 }
 
 // **************************************************************
-//				   OSCL_StackString<MaxBufSize> Implementation
-//				   OSCL_wStackString<MaxBufSize> Implementation
+//                 OSCL_StackString<MaxBufSize> Implementation
+//                 OSCL_wStackString<MaxBufSize> Implementation
 // **************************************************************
 template<uint32 MaxBufSize>
 void OSCL_StackString<MaxBufSize>::set_rep(const chartype* cp)
@@ -1274,6 +1274,6 @@ OSCL_wStackString<MaxBufSize>& OSCL_wStackString<MaxBufSize>::operator=(const ch
     return (*this);
 }
 
-#endif	 // OSCL_STRING_H_INCLUDED
+#endif   // OSCL_STRING_H_INCLUDED
 
 /*! @} */

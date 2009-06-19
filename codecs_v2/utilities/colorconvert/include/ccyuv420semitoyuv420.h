@@ -34,7 +34,7 @@
 #include " colorconv_config.h"
 #endif
 
-#define SWAP_4(x)	((x<<24) | ((x&0xFF00)<<8) | ((x>>8)&0xFF00) | (x>>24))
+#define SWAP_4(x)   ((x<<24) | ((x&0xFF00)<<8) | ((x>>8)&0xFF00) | (x>>24))
 
 
 class CCYUV420SEMItoYUV420 : public ColorConvertBase
@@ -46,19 +46,19 @@ class CCYUV420SEMItoYUV420 : public ColorConvertBase
         OSCL_IMPORT_REF ~CCYUV420SEMItoYUV420();
 
         /**
-        	*	@brief The function initializes necessary lookup tables and verify the capability of the library before starting the operation.
+            *   @brief The function initializes necessary lookup tables and verify the capability of the library before starting the operation.
 
-        	*	@param Src_width specifies the width in pixel from the source to be color converted.
-        	*	@param Src_height specifies the height in pixel from the source to be color converted.
-        	*	@param Src_pitch is the actual memory width or stride of the source.
-        	*	@param Dst_width specifies the width in pixel of the output.
-        	*	@param Dst_height specifies the height in pixel of the output.
-        	*	@param Dst_pitch is the stride size of the destination memory.
-        	*	@param nRotation specifies whether rotation is to be applied. The value can be one of the followings
-        	*	Rotation0, Rotation90,Rotation180, Rotation270
-        	*	When rotation is chosen, the Dst_width and Dst_height is still relative to the source coordinate,
-        	*	i.e., to rotate a QCIF image, the output width will be 144 and height will be 176.
-        	*	@return  Returns 1 if success, 0 if fail, i.e.,if output dimensions are different from the input dimensions,hence no scaling.
+            *   @param Src_width specifies the width in pixel from the source to be color converted.
+            *   @param Src_height specifies the height in pixel from the source to be color converted.
+            *   @param Src_pitch is the actual memory width or stride of the source.
+            *   @param Dst_width specifies the width in pixel of the output.
+            *   @param Dst_height specifies the height in pixel of the output.
+            *   @param Dst_pitch is the stride size of the destination memory.
+            *   @param nRotation specifies whether rotation is to be applied. The value can be one of the followings
+            *   Rotation0, Rotation90,Rotation180, Rotation270
+            *   When rotation is chosen, the Dst_width and Dst_height is still relative to the source coordinate,
+            *   i.e., to rotate a QCIF image, the output width will be 144 and height will be 176.
+            *   @return  Returns 1 if success, 0 if fail, i.e.,if output dimensions are different from the input dimensions,hence no scaling.
         */
 
         int32 Init(int32 Src_width,
@@ -70,7 +70,7 @@ class CCYUV420SEMItoYUV420 : public ColorConvertBase
                    int32 nRotation = 0);
 
         /**
-        *	@brief As opposed to the definition defined in cczoomrotationbase.h, this function
+        *   @brief As opposed to the definition defined in cczoomrotationbase.h, this function
         sets the memory height of the YUV buffer which is the output instead of the input.
         */
 
@@ -81,35 +81,35 @@ class CCYUV420SEMItoYUV420 : public ColorConvertBase
 
 
         /**
-        	*	@brief This function specifies whether the output will use the attribute specified
-        	*	in the Init(.) function or perform regular color conversion without scaling or rotation.
-        	*	@param nMode When set to 0, 1-to-1 color conversion only is done. When NMode is 1,
-        	*	the output is be of the size and orientation specified in Init().
-        	*	@return 0 if fails (capability not supported or not initialized), 1 if success.
+            *   @brief This function specifies whether the output will use the attribute specified
+            *   in the Init(.) function or perform regular color conversion without scaling or rotation.
+            *   @param nMode When set to 0, 1-to-1 color conversion only is done. When NMode is 1,
+            *   the output is be of the size and orientation specified in Init().
+            *   @return 0 if fails (capability not supported or not initialized), 1 if success.
         */
         int32 SetMode(int32 nMode);
 
         /**
-        	*	@brief These functions convert input YUV420SEMI into corresponding YUV420 output.
-        	*	@param inyuv is a pointer to an input buffer.
-        	*	@param outyuv  is a pointer to an output buffer of Y plane assuming that the U and V planes are contiguous to the Y plane.
-        	*	@return This function return 1 if success, 0 if fail.
+            *   @brief These functions convert input YUV420SEMI into corresponding YUV420 output.
+            *   @param inyuv is a pointer to an input buffer.
+            *   @param outyuv  is a pointer to an output buffer of Y plane assuming that the U and V planes are contiguous to the Y plane.
+            *   @return This function return 1 if success, 0 if fail.
         */
         int32 Convert(uint8 *inyuv, uint8 *outyuv);
 
         /**
-        	*	@brief These functions convert input YUV420SEMI into corresponding YUV420 output.
-        	*	@param yuvBuf is an array of pointers to Y,U and V plane in increasing order.
-        	*	@param outyuvBuf is a pointer to an output buffer.
-        	*	@return This function return 1 if success, 0 if fail in the case of the rgbBuf
-        	*	and/or yuvBuf[0] address are not word-aligned (multiple of 4).
+            *   @brief These functions convert input YUV420SEMI into corresponding YUV420 output.
+            *   @param yuvBuf is an array of pointers to Y,U and V plane in increasing order.
+            *   @param outyuvBuf is a pointer to an output buffer.
+            *   @return This function return 1 if success, 0 if fail in the case of the rgbBuf
+            *   and/or yuvBuf[0] address are not word-aligned (multiple of 4).
         */
         int32 Convert(uint8 *inyuvBuf, uint8 **outyuvBuf);
 
 
         /**
-        	* @brief This function gives the size of the output YUV420 buffer
-        	* @return buffer size in bytes
+            * @brief This function gives the size of the output YUV420 buffer
+            * @return buffer size in bytes
         **/
         int32 GetOutputBufferSize(void);
 

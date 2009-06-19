@@ -1910,16 +1910,16 @@ PVMFMemoryBufferWriteDataStreamImpl::Reposition(PvmiDataStreamSession aSessionID
         {
             if (smallest < iFilePtrPos)
             {
-        	uint32 firstTempOffset = 0;
-        	uint32 lastTempOffset = 0;
-        	iTempCache->GetFileOffsets(firstTempOffset, lastTempOffset);
-        	uint32 bytesToWait = aOffset - lastTempOffset;
+                uint32 firstTempOffset = 0;
+                uint32 lastTempOffset = 0;
+                iTempCache->GetFileOffsets(firstTempOffset, lastTempOffset);
+                uint32 bytesToWait = aOffset - lastTempOffset;
 
-        	if (bytesToWait <= PV_MBDS_FWD_SEEKING_NO_GET_REQUEST_THRESHOLD)
-        	{
-        	    LOGDEBUG((0, "Ln %d Do nothing. found %d smalltest %d bytesToWait", __LINE__, found, smallest, bytesToWait));
-        	    return status;
-        	}
+                if (bytesToWait <= PV_MBDS_FWD_SEEKING_NO_GET_REQUEST_THRESHOLD)
+                {
+                    LOGDEBUG((0, "Ln %d Do nothing. found %d smalltest %d bytesToWait", __LINE__, found, smallest, bytesToWait));
+                    return status;
+                }
             }
 
             if ((smallest >= iFilePtrPos) &&

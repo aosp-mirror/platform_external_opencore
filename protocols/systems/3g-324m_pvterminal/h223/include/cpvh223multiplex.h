@@ -59,8 +59,8 @@ class CPVH223MultiplexObserver
 };
 
 class CPVH223Multiplex :  public LowerLayerObserver,
-            public H223PduParcomObserver,
-            public LogicalChannelObserver
+        public H223PduParcomObserver,
+        public LogicalChannelObserver
 {
     public:
         CPVH223Multiplex(TPVLoopbackMode aLoopbackMode);

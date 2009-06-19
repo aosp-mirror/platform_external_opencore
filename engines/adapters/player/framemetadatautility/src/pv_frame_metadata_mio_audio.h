@@ -84,9 +84,9 @@ class PVFMAudioMIOActiveTimingSupport: public PvmiClockExtensionInterface
 // This class constitutes the Media IO component
 
 class PVFMAudioMIO : public OsclTimerObject,
-            public PvmiMIOControl,
-            public PvmiMediaTransfer,
-            public PvmiCapabilityAndConfig
+        public PvmiMIOControl,
+        public PvmiMediaTransfer,
+        public PvmiCapabilityAndConfig
 {
     public:
         PVFMAudioMIO();

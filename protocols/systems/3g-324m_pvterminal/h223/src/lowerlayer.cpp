@@ -409,7 +409,7 @@ PVMFStatus H223LowerLayer::Mux()
         uint16 max_size = (uint16)(iSendPduSz + H223_SEND_PDU_SIZE_EXTRA);
         for (unsigned pktnum = 0; pktnum < iSendPacketList.size(); pktnum++)
         {
-            for (unsigned frag_num = 0;frag_num < iSendPacketList[pktnum]->getNumFragments();frag_num++)
+            for (unsigned frag_num = 0; frag_num < iSendPacketList[pktnum]->getNumFragments(); frag_num++)
             {
                 OsclRefCounterMemFrag frag;
                 iSendPacketList[pktnum]->getMediaFragment(frag_num, frag);
@@ -598,12 +598,12 @@ void H223LowerLayer::DoStuffing(TPVH223Level level,
 }
 
 /***********************************************************************
-  function name	       :CheckLevel
+  function name        :CheckLevel
   function outline     :
   function discription :CheckLevel( pData, size )
-  input data		   :pData Pointer to data to use
-  output data		   :size  Size of data
-  draw time		       :'96.07.09
+  input data           :pData Pointer to data to use
+  output data          :size  Size of data
+  draw time            :'96.07.09
 *************************************************************************/
 #define STUFFING_BUF_SZ 8
 #define SYNC_DETECT_TOLERANCE_BITS 2
@@ -791,7 +791,7 @@ PVMFStatus H223LowerLayer::PutData(PVMFSharedMediaMsgPtr aMsg)
 
 int32 H223LowerLayer::GetTimestamp()
 {
-    return (iLastMuxTime -iStartMuxTime).to_msec();
+    return (iLastMuxTime - iStartMuxTime).to_msec();
 }
 
 void H223LowerLayer::UpdatePduSize()

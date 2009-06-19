@@ -347,7 +347,7 @@ class PVDlCfgFile
         uint8 *iTmpBuf;
 
         Oscl_FileServer iFileServer;
-        Oscl_File	*iFile;
+        Oscl_File   *iFile;
 
         //memory allocator type for this node.
         typedef OsclMemAllocator PVDlCfgFileAllocator;
@@ -359,14 +359,14 @@ class PVDlCfgFile
         //if proxy is in use, it is the proxy address
         OSCL_HeapString<PVDlCfgFileAllocator> iProxyName;
         //if proxy is in use, it is the proxy address len
-        uint32	iProxyPort;
+        uint32  iProxyPort;
 
         //client only downloads the clip which is smaller than this size
         uint32 iMaxAllowedFileSize;
         //the file size after it is completly downloaded.
-        uint32	iOverallFileSize;
+        uint32  iOverallFileSize;
         //for FastTrack, this would be the accumulated bytes downloaded
-        uint32	iCurrentFileSize;
+        uint32  iCurrentFileSize;
         //flag of whether to have content length for the previous download
         // boolean variable, but intentionally choose uint32 instead of bool, for consistency with other variables
         uint32 iHasContentLength;
@@ -375,7 +375,7 @@ class PVDlCfgFile
         int32 iSendTimeout;
         int32 iRecvTimeout;
 
-        uint32	iRangeStartTime; //in ms
+        uint32  iRangeStartTime; //in ms
 
         OSCL_HeapString<PVDlCfgFileAllocator> iPlayerVersion;
         OSCL_HeapString<PVDlCfgFileAllocator> iUserAgent;
@@ -393,7 +393,7 @@ class PVDlCfgFile
 
         const uint32 iMagic32;
         const uint32 iVersion;
-        uint32	iFlag;
+        uint32  iFlag;
         const uint32 iTotalFixedHeaderSize; //bytes from iMagic32 to iSignLen in bytes
         const uint32 PVDL_CFG_FILE_CACHE_BUF;
         PVLogger* iLogger;

@@ -15,11 +15,11 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*	File: pvm4vencoder.h                                                        */
-/*	Purpose:																	*/
-/*	Date:																		*/
-/*	Revision History:															*/
-/**	This file contains MP4 encoder related classes, structures and enumerations. */
+/*  File: pvm4vencoder.h                                                        */
+/*  Purpose:                                                                    */
+/*  Date:                                                                       */
+/*  Revision History:                                                           */
+/** This file contains MP4 encoder related classes, structures and enumerations. */
 
 #ifndef __PVM4VENCODER_H
 #define __PVM4VENCODER_H
@@ -30,25 +30,25 @@
 #include "ccrgb12toyuv420.h"
 #include "ccyuv420semitoyuv420.h"
 
-#define KCVEIMaxOutputBuffer	10
-#define VISUAL_OBJECT_SEQUENCE_START_CODE 	0x01B0
-#define VISUAL_OBJECT_SEQUENCE_END_CODE 	0x01B1
+#define KCVEIMaxOutputBuffer    10
+#define VISUAL_OBJECT_SEQUENCE_START_CODE   0x01B0
+#define VISUAL_OBJECT_SEQUENCE_END_CODE     0x01B1
 #define VISUAL_OBJECT_START_CODE   0x01B5
-#define VO_START_CODE 		    0x8
+#define VO_START_CODE           0x8
 #define VO_HEADER_LENGTH        32
 #define VOL_START_CODE 0x12
 #define VOL_START_CODE_LENGTH 28
 
-#define GROUP_START_CODE	0x01B3
+#define GROUP_START_CODE    0x01B3
 #define GROUP_START_CODE_LENGTH  32
 
-#define VOP_ID_CODE_LENGTH		5
-#define VOP_TEMP_REF_CODE_LENGTH	16
+#define VOP_ID_CODE_LENGTH      5
+#define VOP_TEMP_REF_CODE_LENGTH    16
 
-#define USER_DATA_START_CODE	    0x01B2
+#define USER_DATA_START_CODE        0x01B2
 #define USER_DATA_START_CODE_LENGTH 32
 
-#define SHORT_VIDEO_START_MARKER		0x20
+#define SHORT_VIDEO_START_MARKER        0x20
 #define SHORT_VIDEO_START_MARKER_LENGTH  22
 
 
@@ -138,7 +138,7 @@ class CPVM4VEncoder : public CommonVideoEncoder
 
         CPVM4VEncoder();
         bool Construct(int32 aThreadId);
-#ifdef	YUV_INPUT
+#ifdef  YUV_INPUT
         void CopyToYUVIn(uint8 *YUV, int width, int height, int width_16, int height_16);
 #endif
 
@@ -165,34 +165,34 @@ class CPVM4VEncoder : public CommonVideoEncoder
         virtual void DoCancel(void);
         MPVCVEIObserver *iObserver;
 
-        int		iSrcWidth;
-        int		iSrcHeight;
-        int		iSrcFrameRate;
-        int		iFrameOrientation;
-        int		iEncWidth[4];
-        int		iEncHeight[4];
-        float	iEncFrameRate[4];
-        TPVVideoFormat 	iVideoFormat;
+        int     iSrcWidth;
+        int     iSrcHeight;
+        int     iSrcFrameRate;
+        int     iFrameOrientation;
+        int     iEncWidth[4];
+        int     iEncHeight[4];
+        float   iEncFrameRate[4];
+        TPVVideoFormat  iVideoFormat;
 
         /* variables needed in operation */
         VideoEncControls iEncoderControl;
-        bool	iInitialized;
+        bool    iInitialized;
         uint8   *iYUVIn;
-        uint8	*iVideoIn;
-        uint8	*iVideoOut;
+        uint8   *iVideoIn;
+        uint8   *iVideoOut;
         TPVVideoOutputData *iOutputData[KCVEIMaxOutputBuffer];
-        int32		iNumOutputData;
-        uint32		iTimeStamp;
-        uint32		iNextModTime;
-        uint8	*iOverrunBuffer;
-        int		iOBSize;
+        int32       iNumOutputData;
+        uint32      iTimeStamp;
+        uint32      iNextModTime;
+        uint8   *iOverrunBuffer;
+        int     iOBSize;
 
         /* Tables in color coversion */
         uint8  *iY_Table;
         uint16 *iCb_Table, *iCr_Table, *ipCb_Table, *ipCr_Table;
 
 
-        int		iNumLayer;
+        int     iNumLayer;
 };
 
 #endif

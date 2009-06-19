@@ -284,7 +284,7 @@ template <class ChainClass, uint32 max_frags> inline BufferState *  BufFragGroup
 
 
 template <class ChainClass, uint32 max_frags, uint32 local_bufsize> class MediaData :
-            public BufFragGroup<ChainClass, max_frags>
+        public BufFragGroup<ChainClass, max_frags>
 {
 
     public:

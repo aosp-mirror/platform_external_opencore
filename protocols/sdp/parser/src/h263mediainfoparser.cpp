@@ -288,7 +288,7 @@ SDPH263MediaInfoParser::parseMediaInfo(const char *buff, const int index, SDPInf
                         sptr = eptr;
                         sptr = skip_whitespace(sptr , line_end_ptr);
 
-                        for (;*eptr != '-' ; ++eptr);
+                        for (; *eptr != '-' ; ++eptr);
 
                         if (!PV_atoi(sptr, 'd', eptr - sptr, width))
                         {
@@ -362,7 +362,7 @@ SDPH263MediaInfoParser::parseMediaInfo(const char *buff, const int index, SDPInf
             //if sample rate is zero override with defaults
             Oscl_Vector<PayloadSpecificInfoTypeBase*, SDPParserAlloc> payloadSpecificInfoVector =
                 h263V->getPayloadSpecificInfoVector();
-            for (int ii = 0; ii < (int)payloadSpecificInfoVector.size();ii++)
+            for (int ii = 0; ii < (int)payloadSpecificInfoVector.size(); ii++)
             {
                 if (payloadSpecificInfoVector[ii]->getSampleRate() == 0)
                 {

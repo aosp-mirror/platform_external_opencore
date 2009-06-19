@@ -29,7 +29,7 @@
 
 #define TEST_TIMEOUT_FACTOR 8  //take into account AVC encoder and symbian emulator
 class pv_mediainput_async_test_opencomposestop: public pvauthor_async_test_base,
-            public PvmiConfigAndCapabilityCmdObserver
+        public PvmiConfigAndCapabilityCmdObserver
 {
     public:
         pv_mediainput_async_test_opencomposestop(PVAuthorAsyncTestParam aTestParam, PVMediaInputTestParam aMediaParam, bool aPauseResumeEnable,
@@ -172,33 +172,33 @@ class pv_mediainput_async_test_opencomposestop: public pvauthor_async_test_base,
 
         // Author engine related variables
         PVAuthorEngineInterface* iAuthor;
-        OsclAny*				 iComposer;
-        OsclAny*				 iFileParser;
-        PVInterface*			 iComposerConfig;
-        PVInterface*			 iAudioEncoderConfig;
-        PVInterface*			 iVideoEncoderConfig;
-        PVInterface*			 iOutputSizeAndDurationConfig;
-        PVMIOControlComp		 iMIOComponent;
-        uint32					 iPendingCmds;
+        OsclAny*                 iComposer;
+        OsclAny*                 iFileParser;
+        PVInterface*             iComposerConfig;
+        PVInterface*             iAudioEncoderConfig;
+        PVInterface*             iVideoEncoderConfig;
+        PVInterface*             iOutputSizeAndDurationConfig;
+        PVMIOControlComp         iMIOComponent;
+        uint32                   iPendingCmds;
         PVLogger*                iLogger;
         bool                     iPauseResumeEnable;
         uint                     iRemoveDataSourceDone;
         uint32                   iTestDuration;
-        bool					 iAddAudioMediaTrack;
-        bool					 iAddVideoMediaTrack;
+        bool                     iAddAudioMediaTrack;
+        bool                     iAddVideoMediaTrack;
         Oscl_FileServer          iFileServer;
-        uint32					 iAuthoringCount;
+        uint32                   iAuthoringCount;
         FILE*                    iFile;
-        bool					 iRealTimeAuthoring;
+        bool                     iRealTimeAuthoring;
         PvmiCapabilityAndConfig* iAuthorCapConfigIF;
-        PvmiKvp					 iKVPSetAsync;
-        OSCL_StackString<64>	 iKeyStringSetAsync;
-        PvmiKvp*				 iErrorKVP;
-        uint32					 iVideoBitrate;
-        uint32					 iAudioBitrate;
-        OsclFloat 				 iFrameRate;
-        uint32					 iSamplingRate;
-        bool					 iUseExtrnFileDesc;
+        PvmiKvp                  iKVPSetAsync;
+        OSCL_StackString<64>     iKeyStringSetAsync;
+        PvmiKvp*                 iErrorKVP;
+        uint32                   iVideoBitrate;
+        uint32                   iAudioBitrate;
+        OsclFloat                iFrameRate;
+        uint32                   iSamplingRate;
+        bool                     iUseExtrnFileDesc;
 
 };
 
