@@ -18,7 +18,7 @@
 // -*- c++ -*-
 // = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 
-//				Oscl Registry Types
+//              Oscl Registry Types
 
 // = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 
@@ -63,6 +63,6 @@ class OsclRegistryAccessElement
 
 
 
-#endif	 // OSCL_REGISTRY_TYPES_H_INCLUDED
+#endif   // OSCL_REGISTRY_TYPES_H_INCLUDED
 
 /*! @} */

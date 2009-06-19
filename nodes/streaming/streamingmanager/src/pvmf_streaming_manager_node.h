@@ -50,7 +50,7 @@ typedef PVMFGenericNodeCommand <OsclMemAllocator> PVMFStreamingManagerNodeComman
 typedef PVMFNodeCommandQueue<PVMFStreamingManagerNodeCommand, OsclMemAllocator> PVMFStreamingManagerNodeCmdQ;
 
 /* Default vector reserve size */
-#define PVMF_STREAMING_MANAGER_NODE_COMMAND_ID_START	9000
+#define PVMF_STREAMING_MANAGER_NODE_COMMAND_ID_START    9000
 #define PVMF_STREAMING_MANAGER_VECTOR_RESERVE 10
 
 ///////////////////////////////////////////////
@@ -66,8 +66,8 @@ enum TPVMFStreamingManagerNodeCommand
 };
 
 class PVMFStreamingManagerNode : public PVMFNodeInterface,
-            public OsclActiveObject,
-            public PVMFDataSourceInitializationExtensionInterface
+        public OsclActiveObject,
+        public PVMFDataSourceInitializationExtensionInterface
 {
     public:
         OSCL_IMPORT_REF static PVMFStreamingManagerNode* New(int32 aPriority);
@@ -157,7 +157,7 @@ class PVMFStreamingManagerNode : public PVMFNodeInterface,
         PVMFDataSourceInitializationExtensionInterface* iFSPDataSourceInitializationIntf;
         PVMFSMFSPRegistry* iSMFSPRegistry;
         PVMFSMFSPBaseNode* iSMFSPlugin;
-        PVUuid			iFSPUuid;
+        PVUuid          iFSPUuid;
         PVMFNodeSession iUpstreamSession;
         PVLogger * iLogger;
 };

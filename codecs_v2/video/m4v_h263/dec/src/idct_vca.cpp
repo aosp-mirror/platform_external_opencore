@@ -23,7 +23,7 @@
 
 /****************************************************************
 *       vca_idct.c : created 6/1/99 for several options
-*					  of hard-coded reduced idct function (using nz_coefs)
+*                     of hard-coded reduced idct function (using nz_coefs)
 ******************************************************************/
 
 /*****************************************************/

@@ -18,7 +18,7 @@
 
 /*! \file pvlogger_c.h
     \brief This file contains basic logger interfaces for common use across platforms.
-	   C-callable version
+       C-callable version
 
     This is the main entry point header file for the logger library.  It should be
     the only one users directly include.
@@ -82,8 +82,8 @@ extern "C"
 //Example Usage:
 
 #if (PVLOGGER_C_INST_LEVEL > PVLOGMSG_C_INST_LLDBG)
-			if(pvLogger_IsActive(logger ,PVLOGMSG_C_ERR))
-				pvLogger_LogMsgString( logger ,  0 ,"Some message, value %d", intvalue );
+            if(pvLogger_IsActive(logger ,PVLOGMSG_C_ERR))
+                pvLogger_LogMsgString( logger ,  0 ,"Some message, value %d", intvalue );
 
 #endif
 */

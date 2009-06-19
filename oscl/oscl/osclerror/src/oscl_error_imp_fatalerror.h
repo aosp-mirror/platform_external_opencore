@@ -54,8 +54,8 @@
 //leave will abort the program, but it's needed
 //to compile.
 #define _PV_TRAP(__r,__s) \
-	__r=OsclErrNone;\
-	{__s;}
+    __r=OsclErrNone;\
+    {__s;}
 
 //_PV_TRAP_NO_TLS
 //_r is leave code, _s is statements.
@@ -63,8 +63,8 @@
 //leave will abort the program, but it's needed
 //to compile.
 #define _PV_TRAP_NO_TLS(__tr,__r,__s) \
-	__r=OsclErrNone;\
-	{__s;}
+    __r=OsclErrNone;\
+    {__s;}
 
 
 

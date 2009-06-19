@@ -39,9 +39,9 @@
 //
 //  PVMFInfoBufferingStatus: Download progress report in percent complete.
 //
-//	PVMFInfoBufferingComplete: Download is complete.
+//  PVMFInfoBufferingComplete: Download is complete.
 //
-//	PVMFInfoDataReady: OK to begin playback.
+//  PVMFInfoDataReady: OK to begin playback.
 //
 //  PVMFInfoEndOfData: End of track detected by parser node.
 //

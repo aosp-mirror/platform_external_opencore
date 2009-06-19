@@ -152,10 +152,10 @@ PVMFStatus PVMFDummyFileOutputNode::ThreadLogon()
             iLogger = PVLogger::GetLoggerObject("PVMFDummyFileOutputNode");
             SetState(EPVMFNodeIdle);
             return PVMFSuccess;
-            // break;	This break statement was removed to avoid compiler warning for Unreachable Code
+            // break;   This break statement was removed to avoid compiler warning for Unreachable Code
         default:
             return PVMFErrInvalidState;
-            // break;	This break statement was removed to avoid compiler warning for Unreachable Code
+            // break;   This break statement was removed to avoid compiler warning for Unreachable Code
     }
 }
 
@@ -172,11 +172,11 @@ PVMFStatus PVMFDummyFileOutputNode::ThreadLogoff()
             iLogger = NULL;
             SetState(EPVMFNodeCreated);
             return PVMFSuccess;
-            // break;	This break statement was removed to avoid compiler warning for Unreachable Code
+            // break;   This break statement was removed to avoid compiler warning for Unreachable Code
 
         default:
             return PVMFErrInvalidState;
-            // break;	This break statement was removed to avoid compiler warning for Unreachable Code
+            // break;   This break statement was removed to avoid compiler warning for Unreachable Code
     }
 }
 
@@ -634,7 +634,7 @@ void PVMFDummyFileOutputNode::HandlePortActivity(const PVMFPortActivity &aActivi
             //Purge any port activity events already queued
             //for this port.
             {
-                for (uint32 i = 0;i < iPortActivityQueue.size();)
+                for (uint32 i = 0; i < iPortActivityQueue.size();)
                 {
                     if (iPortActivityQueue[i].iPort == aActivity.iPort)
                         iPortActivityQueue.erase(&iPortActivityQueue[i]);
@@ -863,7 +863,7 @@ bool PVMFDummyFileOutputNode::ProcessPortActivity()
         case PVMF_PORT_ACTIVITY_OUTGOING_MSG:
         default:
             return false;
-            // break;	This statement was removed to avoid compiler warning for Unreachable Code
+            // break;   This statement was removed to avoid compiler warning for Unreachable Code
     }
 
     return true;
@@ -1205,7 +1205,7 @@ void PVMFDummyFileOutputNode::DoFlush(PVMFDummyFileOutputNodeCommand& aCmd)
 
             //Notify all ports to suspend their input
             {
-                for (uint32 i = 0;i < iPortVector.size();i++)
+                for (uint32 i = 0; i < iPortVector.size(); i++)
                     iPortVector[i]->SuspendInput();
             }
 

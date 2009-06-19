@@ -24,9 +24,9 @@
 #include "oscl_uuid.h"
 
 #define CONFIG_FILE_EXTENSION "*.cfg"
-#define OSCL_NUMBER_OF_CONFIG_FILES	16
+#define OSCL_NUMBER_OF_CONFIG_FILES 16
 
-OSCL_EXPORT_REF	OsclLibStatus OsclLibraryUtil::SetupLibraryEnv(const char* aEnvName, const char* aEnvValue)
+OSCL_EXPORT_REF OsclLibStatus OsclLibraryUtil::SetupLibraryEnv(const char* aEnvName, const char* aEnvValue)
 {
     // currently only MSWIN is supported;
     // Linux is not implemented since its library search path needs to be set at compilation time

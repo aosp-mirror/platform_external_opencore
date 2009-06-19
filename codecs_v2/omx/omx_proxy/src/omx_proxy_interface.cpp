@@ -829,7 +829,7 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OMX_APIENTRY GlobalProxyComponentGetHandle(
     OMX_IN  OMX_STRING cComponentName,
     OMX_IN  OMX_PTR pAppData,
     OMX_IN  OMX_CALLBACKTYPE* pCallBacks,
-    OMX_IN	OMX_PTR	pProxy)
+    OMX_IN  OMX_PTR pProxy)
 {
     OMX_ERRORTYPE ErrorType = OMX_ErrorNone;
     int32 error;

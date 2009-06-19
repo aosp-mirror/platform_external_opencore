@@ -90,7 +90,7 @@ OSCL_EXPORT_REF OMX_ERRORTYPE AacOmxComponentDestructor(OMX_IN OMX_HANDLETYPE pH
 
 #if DYNAMIC_LOAD_OMX_AAC_COMPONENT
 class AacOmxSharedLibraryInterface: public OsclSharedLibraryInterface,
-            public OmxSharedLibraryInterface
+        public OmxSharedLibraryInterface
 
 {
     public:
@@ -126,12 +126,12 @@ extern "C"
 {
     OSCL_EXPORT_REF OsclAny* PVGetInterface()
     {
-      return (OsclAny*) OSCL_NEW(AacOmxSharedLibraryInterface, ());
+        return (OsclAny*) OSCL_NEW(AacOmxSharedLibraryInterface, ());
     }
-     OSCL_EXPORT_REF void PVReleaseInterface(OsclSharedLibraryInterface* aInstance)
+    OSCL_EXPORT_REF void PVReleaseInterface(OsclSharedLibraryInterface* aInstance)
     {
-          AacOmxSharedLibraryInterface* module = (AacOmxSharedLibraryInterface*)aInstance;
-          OSCL_DELETE(module);
+        AacOmxSharedLibraryInterface* module = (AacOmxSharedLibraryInterface*)aInstance;
+        OSCL_DELETE(module);
     }
 }
 

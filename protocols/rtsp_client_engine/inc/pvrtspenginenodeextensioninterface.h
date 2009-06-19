@@ -82,34 +82,34 @@ enum PVRTSPStreamingType
 
 struct StreamInfo
 {
-    int32	iSDPStreamId;
+    int32   iSDPStreamId;
 
     bool    ssrcIsSet;
-    uint32	iSSRC;
+    uint32  iSSRC;
 
-    uint32	iCliRTCPPort;
-    uint32	iCliRTPPort;
+    uint32  iCliRTCPPort;
+    uint32  iCliRTPPort;
 
     //As a default, RTCP packets are sent
     //on the first available channel higher than the RTP channel.
     //for UDP as transport, they are just the UDP port number
     //for TCP as transport, they are the interleaved channel ID
-    uint32	iSerRTPPort;
-    uint32	iSerRTCPPort;
+    uint32  iSerRTPPort;
+    uint32  iSerRTCPPort;
 
-    bool	rtptimeIsSet;
-    uint32	rtptime;
+    bool    rtptimeIsSet;
+    uint32  rtptime;
 
-    bool	seqIsSet;
-    uint32	seq;
+    bool    seqIsSet;
+    uint32  seq;
 
-    bool	b3gppAdaptationIsSet;
-    uint32	iBufSize;	//bytes
-    uint32	iTargetTime;	//ms
+    bool    b3gppAdaptationIsSet;
+    uint32  iBufSize;   //bytes
+    uint32  iTargetTime;    //ms
 
-    OsclNameString<PVNETWORKADDRESS_LEN>	iSerIpAddr;
+    OsclNameString<PVNETWORKADDRESS_LEN>    iSerIpAddr;
 
-    OSCL_HeapString<OsclMemAllocator>	iMediaURI;
+    OSCL_HeapString<OsclMemAllocator>   iMediaURI;
 };
 
 class PVRTSPEngineNodeServerInfo
@@ -129,7 +129,7 @@ class PVRTSPEngineNodeServerInfo
         bool iIsPVServer;
         uint32 iRoundTripDelayInMS;
         OSCL_HeapString<OsclMemAllocator> iServerName;
-        uint32 	iServerVersionNumber;
+        uint32  iServerVersionNumber;
 };
 
 #define PVRTSPENGINENODE_DEFAULT_KEEP_ALIVE_INTERVAL 55
@@ -197,7 +197,7 @@ class PVRTSPEngineNodeExtensionInterface : public PVInterface
          * This API is to set the keep-alive mechanism for rtsp client.
          *
          * @param aTimeout The interval in milliseconds of sending the RTSP keep-alive commands.
-         *	0 to use server defined timeout value.
+         *  0 to use server defined timeout value.
          * @param aUseSetParameter true to use SET_PARAMETER; false to use OPTIONS
          * @param aKeepAliveInPlay Turns on/off the sending RTSP keep-alive commands during PLAY
          * @returns Completion status

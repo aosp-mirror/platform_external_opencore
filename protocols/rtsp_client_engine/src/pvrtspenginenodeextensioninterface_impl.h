@@ -31,7 +31,7 @@
 #endif
 
 class PVRTSPEngineNodeExtensionInterfaceImpl : public PVInterfaceImpl<PVRTSPEngineNodeAllocator>,
-            public PVRTSPEngineNodeExtensionInterface
+        public PVRTSPEngineNodeExtensionInterface
 {
     public:
         ~PVRTSPEngineNodeExtensionInterfaceImpl();
@@ -91,7 +91,7 @@ class PVRTSPEngineNodeExtensionInterfaceImpl : public PVInterfaceImpl<PVRTSPEngi
          * This API is to set the keep-alive mechanism for rtsp client.
          *
          * @param aTimeout The interval in milliseconds of sending the RTSP keep-alive commands.
-         *	0 to use server defined timeout value.
+         *  0 to use server defined timeout value.
          * @param aUseSetParameter true to use SET_PARAMETER; false to use OPTIONS
          * @param aKeepAliveInPlay Turns on/off the sending RTSP keep-alive commands during PLAY
          * @returns Completion status

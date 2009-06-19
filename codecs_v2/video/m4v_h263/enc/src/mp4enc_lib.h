@@ -18,8 +18,8 @@
 #ifndef _MP4ENC_LIB_H_
 #define _MP4ENC_LIB_H_
 
-#include "mp4def.h"		// typedef
-#include "mp4lib_int.h"	// main video structure
+#include "mp4def.h"     // typedef
+#include "mp4lib_int.h" // main video structure
 
 #ifdef __cplusplus
 extern "C"
@@ -156,7 +156,7 @@ extern "C"
     Int SAD_Block_MMX(UChar *ref, UChar *blk, Int dmin, Int lx, void *extra_info);
     Int SAD_Block_SSE(UChar *ref, UChar *blk, Int dmin, Int lx, void *extra_info);
 
-#ifdef HTFM	/* Hypothesis Testing Fast Matching */
+#ifdef HTFM /* Hypothesis Testing Fast Matching */
     Int SAD_MB_HP_HTFM_Collectxhyh(UChar *ref, UChar *blk, Int dmin_x, void *extra_info);
     Int SAD_MB_HP_HTFM_Collectyh(UChar *ref, UChar *blk, Int dmin_x, void *extra_info);
     Int SAD_MB_HP_HTFM_Collectxh(UChar *ref, UChar *blk, Int dmin_x, void *extra_info);
@@ -183,9 +183,9 @@ extern "C"
     PV_STATUS RC_MBUpdateStat(VideoEncData *video, rateControl *rc, Int Bi, Int Hi);
     PV_STATUS RC_Cleanup(rateControl *rc[], Int numLayers);
 
-    Int		  RC_GetSkipNextFrame(VideoEncData *video, Int currLayer);
-    Int		  RC_GetRemainingVops(VideoEncData *video, Int currLayer);
-    void	  RC_ResetSkipNextFrame(VideoEncData *video, Int currLayer);
+    Int       RC_GetSkipNextFrame(VideoEncData *video, Int currLayer);
+    Int       RC_GetRemainingVops(VideoEncData *video, Int currLayer);
+    void      RC_ResetSkipNextFrame(VideoEncData *video, Int currLayer);
     PV_STATUS RC_UpdateBuffer(VideoEncData *video, Int currLayer, Int num_skip);
     PV_STATUS RC_UpdateBXRCParams(void *input);
 

@@ -213,7 +213,7 @@ int SDP_Parser::validate_media_line(const char *start, const char *end, Oscl_Vec
             {
                 applicationFlag = true;
             }
-            else	//don't support this media. so skip the section
+            else    //don't support this media. so skip the section
                 return 0;
         }
 
@@ -719,7 +719,7 @@ SDP_ERROR_CODE SDP_Parser::parseSDP(const char *sdpText, int text_length, SDPInf
                             OSCL_DELETE((mediaParser));
                         }
                         mediaParser = NULL;
-                    }	// End of for
+                    }   // End of for
                 }
                 if (rtpmap_lines == 0) // no rtpmap found in media
                 {
@@ -1007,7 +1007,7 @@ SDP_Parser::convertToMilliSec(RtspRangeType range , int &startTime, int &stopTim
             stopTime = 0;
             return -1;
         }
-        // break;	This statement was removed to avoid compiler warning for Unreachable Code
+        // break;   This statement was removed to avoid compiler warning for Unreachable Code
 
         default:
         {
@@ -1015,7 +1015,7 @@ SDP_Parser::convertToMilliSec(RtspRangeType range , int &startTime, int &stopTim
             stopTime = 0;
             return -1;
         }
-        // break;	This statement was removed to avoid compiler warning for Unreachable Code
+        // break;   This statement was removed to avoid compiler warning for Unreachable Code
     }
     return 0;
 }

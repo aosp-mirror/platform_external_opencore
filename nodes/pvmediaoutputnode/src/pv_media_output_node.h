@@ -131,7 +131,7 @@ class PVMediaOutputNodeCmd: public PVMFGenericNodeCommand<OsclMemAllocator>
             iEventCode = aCmd.iEventCode;
         }
         bool caninterrupt()
-        {	//this routine identifies commands that can interrupt current command.
+        {   //this routine identifies commands that can interrupt current command.
             return (iCmd == PVMF_GENERIC_NODE_CANCELALLCOMMANDS
                     || iCmd == PVMF_GENERIC_NODE_CANCELCOMMAND);
         }
@@ -149,10 +149,10 @@ typedef PVMFNodeCommandQueue<PVMediaOutputNodeCmd, OsclMemAllocator> PVMediaOutp
  * class PVMediaOutputNode is a node wrapper around the io interface
  */
 class PVMediaOutputNode : public OsclActiveObject,
-            public PVMFNodeInterface,
-            public PvmiMIOObserver,
-            public PvmfNodesSyncControlInterface,
-            public PvmiCapabilityAndConfig
+        public PVMFNodeInterface,
+        public PvmiMIOObserver,
+        public PvmfNodesSyncControlInterface,
+        public PvmiCapabilityAndConfig
 {
     public:
         static PVMFNodeInterface* Create(PvmiMIOControl* aIOInterfacePtr);

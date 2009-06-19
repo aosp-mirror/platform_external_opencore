@@ -92,13 +92,13 @@ class TextSampleEntry : public SampleEntry
         virtual uint8 getObjectTypeIndication() const;
 
     private:
-        uint32 	        _displayFlags;
-        int8  	        _horzJustification;
-        int8  	        _vertJustification;
-        uint8 		    *_pBackgroundRGBA;
-        BoxRecord 	    *_pBoxRecord;
-        StyleRecord 	*_pStyleRecord;
-        FontTableAtom	*_pFontTableAtom;
+        uint32          _displayFlags;
+        int8            _horzJustification;
+        int8            _vertJustification;
+        uint8           *_pBackgroundRGBA;
+        BoxRecord       *_pBoxRecord;
+        StyleRecord     *_pStyleRecord;
+        FontTableAtom   *_pFontTableAtom;
 };
 
 

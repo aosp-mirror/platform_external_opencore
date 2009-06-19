@@ -204,19 +204,19 @@ class OsclDoubleRunner
 
 //Some handy macros
 #define QUE_ITER_BEGIN(_type,_qname)\
-	if (!_qname.IsEmpty())\
-	{\
-		OsclDoubleRunner <_type> iter(_qname);\
-		_type *item;\
-		for (iter.SetToHead(); ;iter++)\
-		{\
-			item=iter;\
+    if (!_qname.IsEmpty())\
+    {\
+        OsclDoubleRunner <_type> iter(_qname);\
+        _type *item;\
+        for (iter.SetToHead(); ;iter++)\
+        {\
+            item=iter;\
  
 #define QUE_ITER_END(_qname)\
-			if (_qname.IsTail(item))\
-				break;\
-		}\
-	}
+            if (_qname.IsTail(item))\
+                break;\
+        }\
+    }
 
 #endif
 

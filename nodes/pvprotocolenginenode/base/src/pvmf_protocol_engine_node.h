@@ -104,19 +104,19 @@ class SDPInfoContainer;
 class AutoCleanup;
 
 class PVMFProtocolEngineNode :  public PVMFNodeInterface,
-            public OsclTimerObject,
-            public PVMFDataSourceInitializationExtensionInterface,
-            public PVMIDatastreamuserInterface,
-            public PVMFProtocolEngineNodeExtensionInterface,
-            public PVMFDownloadProgressInterface,
-            public PVMFTrackSelectionExtensionInterface,
-            public PVMFProtocolEngineNodeMSHTTPStreamingExtensionInterface,
-            public ProtocolObserver,
-            public PVMFProtocolEngineNodeOutputObserver,
-            public OsclTimerObserver,
-            public PvmiDataStreamRequestObserver,
-            public EventReporterObserver,
-            public ProtocolContainerObserver
+        public OsclTimerObject,
+        public PVMFDataSourceInitializationExtensionInterface,
+        public PVMIDatastreamuserInterface,
+        public PVMFProtocolEngineNodeExtensionInterface,
+        public PVMFDownloadProgressInterface,
+        public PVMFTrackSelectionExtensionInterface,
+        public PVMFProtocolEngineNodeMSHTTPStreamingExtensionInterface,
+        public ProtocolObserver,
+        public PVMFProtocolEngineNodeOutputObserver,
+        public OsclTimerObserver,
+        public PvmiDataStreamRequestObserver,
+        public EventReporterObserver,
+        public ProtocolContainerObserver
 
 {
     public:
@@ -349,7 +349,7 @@ class PVMFProtocolEngineNode :  public PVMFNodeInterface,
         void ProtocolStateComplete(const ProtocolStateCompleteInfo &aInfo);
         void OutputDataAvailable(OUTPUT_DATA_QUEUE &aOutputQueue, ProtocolEngineOutputDataSideInfo &aSideInfo);
         void ProtocolStateError(int32 aErrorCode); // server response error or other internal fatal error
-        bool GetBufferForRequest(PVMFSharedMediaDataPtr &aMediaData);	// to contruct HTTP request
+        bool GetBufferForRequest(PVMFSharedMediaDataPtr &aMediaData);   // to contruct HTTP request
         void ProtocolRequestAvailable(uint32 aRequestType = ProtocolRequestType_Normaldata); // need to send to port
 
         // From PVMFProtocolEngineNodeOutputObserver

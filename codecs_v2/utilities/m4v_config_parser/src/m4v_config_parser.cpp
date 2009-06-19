@@ -427,7 +427,7 @@ int16 iDecodeShortHeader(mp4StreamType *psBits,
                          int32 *display_height)
 {
     uint32 codeword;
-    int32	extended_PTYPE = 0;
+    int32   extended_PTYPE = 0;
     int32 UFEP = 0;
     int32 custom_PFMT = 0;
 
@@ -553,7 +553,7 @@ int16 iDecodeShortHeader(mp4StreamType *psBits,
         if (codeword) return MP4_INVALID_VOL_PARAM;
         ReadBits(psBits, 3, &codeword);
         ReadBits(psBits, 3, &codeword);
-        if (codeword) return MP4_INVALID_VOL_PARAM; 			/* RPS, ISD, AIV */
+        if (codeword) return MP4_INVALID_VOL_PARAM;             /* RPS, ISD, AIV */
         ReadBits(psBits, 1, &codeword);
         ReadBits(psBits, 4, &codeword);
         if (codeword != 8) return MP4_INVALID_VOL_PARAM;
@@ -620,7 +620,7 @@ int16 ShowBits(
         if (dataBytePos > pStream->numBytes - 4)
         {
             pStream->bitBuf = 0;
-            for (i = 0;i < pStream->numBytes - dataBytePos;i++)
+            for (i = 0; i < pStream->numBytes - dataBytePos; i++)
             {
                 pStream->bitBuf |= pStream->data[dataBytePos+i];
                 pStream->bitBuf <<= 8;
@@ -972,7 +972,7 @@ int16 DecodeSPS(mp4StreamType *psBits, int32 *width, int32 *height, int32 *displ
         *display_height = *height - 2 * (top_offset + bottom_offset);
     }
 
-    /*	no need to check further */
+    /*  no need to check further */
 #if USE_LATER
     ReadBits(psBits, 1, &temp);
     if (temp)
@@ -1023,22 +1023,22 @@ int32 DecodeVUI(mp4StreamType *psBits)
             ReadBits(psBits, 8, &temp); /* matrix coefficients */
         }
     }
-    ReadBits(psBits, 1, &temp);/*	chroma_loc_info_present_flag */
+    ReadBits(psBits, 1, &temp);/*   chroma_loc_info_present_flag */
     if (temp)
     {
         ue_v(psBits, &temp); /*  chroma_sample_loc_type_top_field */
         ue_v(psBits, &temp); /*  chroma_sample_loc_type_bottom_field */
     }
 
-    ReadBits(psBits, 1, &temp); /*	timing_info_present_flag*/
+    ReadBits(psBits, 1, &temp); /*  timing_info_present_flag*/
     if (temp)
     {
         ReadBits(psBits, 32, &temp32); /*  num_unit_in_tick*/
-        ReadBits(psBits, 32, &temp32); /*	time_scale */
-        ReadBits(psBits, 1, &temp); /*	fixed_frame_rate_flag */
+        ReadBits(psBits, 32, &temp32); /*   time_scale */
+        ReadBits(psBits, 1, &temp); /*  fixed_frame_rate_flag */
     }
 
-    ReadBits(psBits, 1, &temp); /*	nal_hrd_parameters_present_flag */
+    ReadBits(psBits, 1, &temp); /*  nal_hrd_parameters_present_flag */
     if (temp)
     {
         if (!DecodeHRD(psBits))
@@ -1046,7 +1046,7 @@ int32 DecodeVUI(mp4StreamType *psBits)
             return 1;
         }
     }
-    ReadBits(psBits, 1, &temp32); /*	vcl_hrd_parameters_present_flag*/
+    ReadBits(psBits, 1, &temp32); /*    vcl_hrd_parameters_present_flag*/
     if (temp32)
     {
         if (!DecodeHRD(psBits))
@@ -1056,10 +1056,10 @@ int32 DecodeVUI(mp4StreamType *psBits)
     }
     if (temp || temp32)
     {
-        ReadBits(psBits, 1, &temp);		/*	low_delay_hrd_flag */
+        ReadBits(psBits, 1, &temp);     /*  low_delay_hrd_flag */
     }
-    ReadBits(psBits, 1, &temp); /*	pic_struct_present_flag */
-    status = ReadBits(psBits, 1, &temp); /*	_restriction_flag */
+    ReadBits(psBits, 1, &temp); /*  pic_struct_present_flag */
+    status = ReadBits(psBits, 1, &temp); /* _restriction_flag */
     if (status != 0) // buffer overrun
     {
         return 1;
@@ -1067,13 +1067,13 @@ int32 DecodeVUI(mp4StreamType *psBits)
 
     if (temp)
     {
-        ReadBits(psBits, 1, &temp); /*	motion_vectors_over_pic_boundaries_flag */
-        ue_v(psBits, &temp); /*	max_bytes_per_pic_denom */
-        ue_v(psBits, &temp); /*	max_bits_per_mb_denom */
-        ue_v(psBits, &temp); /*	log2_max_mv_length_horizontal */
-        ue_v(psBits, &temp); /*	log2_max_mv_length_vertical */
-        ue_v(psBits, &temp); /*	num_reorder_frames */
-        ue_v(psBits, &temp); /*	max_dec_frame_buffering */
+        ReadBits(psBits, 1, &temp); /*  motion_vectors_over_pic_boundaries_flag */
+        ue_v(psBits, &temp); /* max_bytes_per_pic_denom */
+        ue_v(psBits, &temp); /* max_bits_per_mb_denom */
+        ue_v(psBits, &temp); /* log2_max_mv_length_horizontal */
+        ue_v(psBits, &temp); /* log2_max_mv_length_vertical */
+        ue_v(psBits, &temp); /* num_reorder_frames */
+        ue_v(psBits, &temp); /* max_dec_frame_buffering */
     }
 
     return 0; // 0 for success
@@ -1088,18 +1088,18 @@ int32 DecodeHRD(mp4StreamType *psBits)
     int32 status;
 
     ue_v(psBits, &cpb_cnt_minus1);
-    ReadBits(psBits, 4, &temp); /*	bit_rate_scale */
-    ReadBits(psBits, 4, &temp); /*	cpb_size_scale */
+    ReadBits(psBits, 4, &temp); /*  bit_rate_scale */
+    ReadBits(psBits, 4, &temp); /*  cpb_size_scale */
     for (i = 0; i <= cpb_cnt_minus1; i++)
     {
-        ue_v(psBits, &temp); /*	bit_rate_value_minus1[i] */
-        ue_v(psBits, &temp); /*	cpb_size_value_minus1[i] */
-        ue_v(psBits, &temp); /*	cbr_flag[i] */
+        ue_v(psBits, &temp); /* bit_rate_value_minus1[i] */
+        ue_v(psBits, &temp); /* cpb_size_value_minus1[i] */
+        ue_v(psBits, &temp); /* cbr_flag[i] */
     }
-    ReadBits(psBits, 5, &temp); /*	initial_cpb_removal_delay_length_minus1 */
-    ReadBits(psBits, 5, &temp); /*	cpb_removal_delay_length_minus1 */
-    ReadBits(psBits, 5, &temp); /*	dpb_output_delay_length_minus1 */
-    status = ReadBits(psBits, 5, &temp); /*	time_offset_length	*/
+    ReadBits(psBits, 5, &temp); /*  initial_cpb_removal_delay_length_minus1 */
+    ReadBits(psBits, 5, &temp); /*  cpb_removal_delay_length_minus1 */
+    ReadBits(psBits, 5, &temp); /*  dpb_output_delay_length_minus1 */
+    status = ReadBits(psBits, 5, &temp); /* time_offset_length  */
 
     if (status != 0) // buffer overrun
     {
@@ -1195,7 +1195,7 @@ void Parser_EBSPtoRBSP(uint8 *nal_unit, int32 *size)
 
     count = 0;
     j = i++;
-    for (;i < *size; i++)
+    for (; i < *size; i++)
     {
         if (count == 2 && nal_unit[i] == 0x03)
         {

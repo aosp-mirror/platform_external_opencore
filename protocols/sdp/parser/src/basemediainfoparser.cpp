@@ -77,7 +77,7 @@ SDPBaseMediaInfoParser::baseMediaInfoParser(const char* buff,
                     Oscl_Vector<int, SDPParserAlloc> alt_track = mediaStr->getalternateTrackId();
                     bool found = false;
 
-                    for (int ss = 0; ss < (int)alt_track.size();ss++)
+                    for (int ss = 0; ss < (int)alt_track.size(); ss++)
                     {
                         if (alt_track[ss] == (int)id)
                             found = true;
@@ -766,7 +766,7 @@ SDPBaseMediaInfoParser::baseMediaInfoParser(const char* buff,
                         //check if id is already present
                         Oscl_Vector<int, SDPParserAlloc> alt_track = mediaStr->getalternateTrackId();
                         bool found = false;
-                        for (int ss = 0; ss < (int)alt_track.size();ss++)
+                        for (int ss = 0; ss < (int)alt_track.size(); ss++)
                         {
                             if (alt_track[ss] == (int)id)
                                 found = true;
@@ -961,7 +961,7 @@ SDPBaseMediaInfoParser::baseMediaInfoParser(const char* buff,
                     {
                         uint32 address;
                         const char *addrend = sptr;
-                        for (;*addrend != '.';++addrend);
+                        for (; *addrend != '.'; ++addrend);
 
                         if (!PV_atoi(sptr, 'd', addrend - sptr, address))
                         {

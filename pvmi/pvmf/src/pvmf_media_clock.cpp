@@ -59,7 +59,7 @@ OSCL_EXPORT_REF PVMFMediaClock::~PVMFMediaClock()
 
 void PVMFMediaClock::CleanCallbackInfImplObjects()
 {
-    for (uint32 ii = 0;ii < iMediaClockSetCallbackObjects.size();ii++)
+    for (uint32 ii = 0; ii < iMediaClockSetCallbackObjects.size(); ii++)
     {
         if (iMediaClockSetCallbackObjects[ii]->iNotificationInterfaceDestroyedCallback)
         {
@@ -109,7 +109,7 @@ OSCL_EXPORT_REF void PVMFMediaClock::DestroyMediaClockNotificationsInterface(PVM
     if (!iTimersPriQueue.empty())
     {
         Oscl_Vector<PVMFMediaClockTimerQueueElement, OsclMemAllocator> qVector = iTimersPriQueue.vec();
-        for (uint32 ii = 0;ii < qVector.size();ii++)
+        for (uint32 ii = 0; ii < qVector.size(); ii++)
         {
             if (qVector[ii].pInterfaceObject == aInf)
             {
@@ -123,7 +123,7 @@ OSCL_EXPORT_REF void PVMFMediaClock::DestroyMediaClockNotificationsInterface(PVM
         if (!iTimersPriQueueNPT.empty())
         {
             Oscl_Vector<PVMFMediaClockTimerQueueElement, OsclMemAllocator> qVector = iTimersPriQueueNPT.vec();
-            for (uint32 ii = 0;ii < qVector.size();ii++)
+            for (uint32 ii = 0; ii < qVector.size(); ii++)
             {
                 if (qVector[ii].pInterfaceObject == aInf)
                 {
@@ -137,7 +137,7 @@ OSCL_EXPORT_REF void PVMFMediaClock::DestroyMediaClockNotificationsInterface(PVM
         if (!iTimersPriQueueNPTBackwards.empty())
         {
             Oscl_Vector<PVMFMediaClockTimerQueueElement, OsclMemAllocator> qVector = iTimersPriQueueNPTBackwards.vec();
-            for (uint32 ii = 0;ii < qVector.size();ii++)
+            for (uint32 ii = 0; ii < qVector.size(); ii++)
             {
                 if (qVector[ii].pInterfaceObject == aInf)
                 {
@@ -154,7 +154,7 @@ OSCL_EXPORT_REF void PVMFMediaClock::DestroyMediaClockNotificationsInterface(PVM
     PVMFMediaClockNotificationsInterfaceImpl* ifaceImpl = NULL;
 
     ifaceImpl = OSCL_STATIC_CAST(PVMFMediaClockNotificationsInterfaceImpl*, aInf);
-    for (uint32 ii = 0;ii < iMediaClockSetCallbackObjects.size();ii++)
+    for (uint32 ii = 0; ii < iMediaClockSetCallbackObjects.size(); ii++)
     {
         if (iMediaClockSetCallbackObjects[ii] == ifaceImpl)
         {
@@ -218,7 +218,7 @@ void PVMFMediaClock::AdjustLatenciesOfSinks()
     //find the minimum and maximum latencies
     uint32 minLatency = iMediaClockSetCallbackObjects[0]->iLatency;
     uint32 maxLatency = iMediaClockSetCallbackObjects[0]->iLatency;
-    for (ii = 0;ii < size - 1;ii++)
+    for (ii = 0; ii < size - 1; ii++)
     {
         if (iMediaClockSetCallbackObjects[ii+1]->iLatency > iMediaClockSetCallbackObjects[ii]->iLatency)
         {
@@ -240,7 +240,7 @@ void PVMFMediaClock::AdjustLatenciesOfSinks()
     }
 
     //set adjusted-latencies and latency-delays
-    for (ii = 0;ii < size;ii++)
+    for (ii = 0; ii < size; ii++)
     {
         iMediaClockSetCallbackObjects[ii]->iAdjustedLatency =
             iMediaClockSetCallbackObjects[ii]->iLatency - minLatency;
@@ -586,7 +586,7 @@ OSCL_EXPORT_REF void PVMFMediaClock::SetClockObserver(PVMFMediaClockObserver& aO
 
 OSCL_EXPORT_REF void PVMFMediaClock::RemoveClockObserver(PVMFMediaClockObserver& aObserver)
 {
-    for (uint32 i = 0;i < iClockObservers.size();i++)
+    for (uint32 i = 0; i < iClockObservers.size(); i++)
     {
         if (iClockObservers[i] == &aObserver)
             iClockObservers.erase(&iClockObservers[i]);
@@ -603,7 +603,7 @@ void PVMFMediaClock::SetClockState(PVMFMediaClockState aState)
     //If this is clock start, we need to send start notification after adjusting latency
     if (RUNNING == iState)
     {
-        for (uint32 ii = 0;ii < iMediaClockSetCallbackObjects.size();ii++)
+        for (uint32 ii = 0; ii < iMediaClockSetCallbackObjects.size(); ii++)
         {
             if (iMediaClockSetCallbackObjects[ii]->iClockStateObserver != NULL)
             {
@@ -622,7 +622,7 @@ void PVMFMediaClock::SetClockState(PVMFMediaClockState aState)
     }
     else
     {
-        for (uint32 ii = 0;ii < iMediaClockSetCallbackObjects.size();ii++)
+        for (uint32 ii = 0; ii < iMediaClockSetCallbackObjects.size(); ii++)
         {
             if (iMediaClockSetCallbackObjects[ii]->iClockStateObserver != NULL)
             {
@@ -1052,21 +1052,21 @@ void PVMFMediaClock::ClockCountUpdated()
     Run();
 
     //notify all observers that the clock count was updated.
-    for (uint32 i = 0;i < iClockObservers.size();i++)
+    for (uint32 i = 0; i < iClockObservers.size(); i++)
         iClockObservers[i]->ClockCountUpdated();
 }
 
 void PVMFMediaClock::ClockAdjusted()
 {
     //notify all observers that the clock was adjusted
-    for (uint32 i = 0;i < iClockObservers.size();i++)
+    for (uint32 i = 0; i < iClockObservers.size(); i++)
         iClockObservers[i]->ClockAdjusted();
 }
 
 void PVMFMediaClock::ClockTimebaseUpdated()
 {
     //notify all observers that the clock timebase was updated.
-    for (uint32 i = 0;i < iClockObservers.size();i++)
+    for (uint32 i = 0; i < iClockObservers.size(); i++)
     {
         PVMFMediaClockObserver* obs = iClockObservers[i];
         obs->ClockTimebaseUpdated();
@@ -1685,7 +1685,7 @@ PVMFStatus PVMFMediaClock::CancelNPTClockTransitionEvent(uint32 aClockTransition
         return status;
     }
 
-    for (uint32 ii = 0;ii < iNPTTransitionEventQueue.size();ii++)
+    for (uint32 ii = 0; ii < iNPTTransitionEventQueue.size(); ii++)
     {
         if (iNPTTransitionEventQueue[ii].eventID == aClockTransitionEventID)
             iNPTTransitionEventQueue.erase(&iNPTTransitionEventQueue[ii]);
@@ -1708,7 +1708,7 @@ void PVMFMediaClock::ProcessCallBack(uint32 aCallBackID, PVTimeComparisonUtils::
     //if event is NPT transition
     if (aContextData == (void*)&iNPTTransitionEventQueue)
     {
-        for (uint32 ii = 0;ii < iNPTTransitionEventQueue.size();ii++)
+        for (uint32 ii = 0; ii < iNPTTransitionEventQueue.size(); ii++)
         {
             if (iNPTTransitionEventQueue[ii].eventID == aCallBackID)
             {
@@ -1722,7 +1722,7 @@ void PVMFMediaClock::ProcessCallBack(uint32 aCallBackID, PVTimeComparisonUtils::
     //if event is clock-start notification
     else if (aContextData == (void*)&iClockStartNotificationEventQueue)
     {
-        for (uint32 ii = 0;ii < iClockStartNotificationEventQueue.size();ii++)
+        for (uint32 ii = 0; ii < iClockStartNotificationEventQueue.size(); ii++)
         {
             if (iClockStartNotificationEventQueue[ii].eventID == aCallBackID)
             {

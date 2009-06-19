@@ -22,12 +22,12 @@
 #include "oscl_stdstring.h"
 
 /* ======================================================================== */
-/*	Function : PV_atoi(char *buf,char new_format)							*/
-/*	Date     : 02/22/2001													*/
-/*	Purpose  : Extracts an integer from the input string.					*/
-/*	In/out   :																*/
-/*	Return   :																*/
-/*	Modified :																*/
+/*  Function : PV_atoi(char *buf,char new_format)                           */
+/*  Date     : 02/22/2001                                                   */
+/*  Purpose  : Extracts an integer from the input string.                   */
+/*  In/out   :                                                              */
+/*  Return   :                                                              */
+/*  Modified :                                                              */
 /* ======================================================================== */
 OSCL_EXPORT_REF bool PV_atoi(const char *buf, const char new_format, uint32& value)
 {
@@ -223,15 +223,15 @@ OSCL_EXPORT_REF bool PV_atoi(const char *buf, const char new_format, int length,
 
 
 /* ======================================================================== */
-/*	Function : skip_whitespace                                          */
-/*	Date     : 1/1/2000				                    */
-/*	Purpose  : Skips over any leading whitespace (i.e., a space or      */
+/*  Function : skip_whitespace                                          */
+/*  Date     : 1/1/2000                                 */
+/*  Purpose  : Skips over any leading whitespace (i.e., a space or      */
 /*                 horizontal tab character) in the input string and        */
 /*                 returns the pointer to the first non-whitespace          */
 /*                 character.                                               */
-/*	In/out   :						            */
-/*	Return   : pointer to first non-whitespace character                */
-/*	Modified :							    */
+/*  In/out   :                                  */
+/*  Return   : pointer to first non-whitespace character                */
+/*  Modified :                              */
 /* ======================================================================== */
 
 OSCL_EXPORT_REF const char* skip_whitespace(const char *ptr)
@@ -267,17 +267,17 @@ OSCL_EXPORT_REF char * skip_whitespace(char * ptr)
 
 
 /* ======================================================================== */
-/*	Function : skip_whitespace                                          */
-/*	Date     : 1/1/2000				                    */
-/*	Purpose  : Skips over any leading whitespace (i.e., a space or      */
+/*  Function : skip_whitespace                                          */
+/*  Date     : 1/1/2000                                 */
+/*  Purpose  : Skips over any leading whitespace (i.e., a space or      */
 /*                 horizontal tab character) in the input string and        */
 /*                 returns the pointer to the first non-whitespace          */
 /*                 character.  The input string is represented by           */
 /*                 starting and ending pointers and does not need to be     */
 /*                 NULL terminated.                                         */
-/*	In/out   :						            */
-/*	Return   : pointer to first non-whitespace character                */
-/*	Modified :							    */
+/*  In/out   :                                  */
+/*  Return   : pointer to first non-whitespace character                */
+/*  Modified :                              */
 /* ======================================================================== */
 
 OSCL_EXPORT_REF const char* skip_whitespace(const char *start, const char *end)
@@ -297,18 +297,18 @@ OSCL_EXPORT_REF const char* skip_whitespace(const char *start, const char *end)
 
 
 /* ======================================================================== */
-/*	Function : skip_to_whitespace                                       */
-/*	Date     : 1/1/2001				                    */
-/*	Purpose  : Skips to the first whitespace character (i.e., a space   */
+/*  Function : skip_to_whitespace                                       */
+/*  Date     : 1/1/2001                                 */
+/*  Purpose  : Skips to the first whitespace character (i.e., a space   */
 /*                 or horizontal tab character or line terminator) in the   */
 /*                 input string and returns the pointer to the first        */
 /*                 non-whitespace character.                                */
 /*                 The input string is represented by                       */
 /*                 starting and ending pointers and does not need to be     */
 /*                 NULL terminated.                                         */
-/*	In/out   :						            */
-/*	Return   : pointer to first non-whitespace character                */
-/*	Modified :							    */
+/*  In/out   :                                  */
+/*  Return   : pointer to first non-whitespace character                */
+/*  Modified :                              */
 /* ======================================================================== */
 
 OSCL_EXPORT_REF const char* skip_to_whitespace(const char *start, const char *end)
@@ -328,17 +328,17 @@ OSCL_EXPORT_REF const char* skip_to_whitespace(const char *start, const char *en
 }
 
 /* ======================================================================== */
-/*	Function : skip_to_line_term                                        */
-/*	Date     : 9/15/2001				                    */
-/*	Purpose  : Skips over any characters to the next line terminator    */
+/*  Function : skip_to_line_term                                        */
+/*  Date     : 9/15/2001                                    */
+/*  Purpose  : Skips over any characters to the next line terminator    */
 /*                 (i.e., \r and \n) and                                    */
 /*                 returns the pointer to the line term character.          */
 /*                 The input string is represented by                       */
 /*                 starting and ending pointers and does not need to be     */
 /*                 NULL terminated.                                         */
-/*	In/out   :						            */
-/*	Return   : pointer to line terminator character                     */
-/*	Modified :							    */
+/*  In/out   :                                  */
+/*  Return   : pointer to line terminator character                     */
+/*  Modified :                              */
 /* ======================================================================== */
 
 OSCL_EXPORT_REF const char * skip_to_line_term(const char *start, const char *end)
@@ -357,18 +357,18 @@ OSCL_EXPORT_REF const char * skip_to_line_term(const char *start, const char *en
 
 
 /* ======================================================================== */
-/*	Function : skip_whitespace_and_line_term                            */
-/*	Date     : 9/15/2001				                    */
-/*	Purpose  : Skips over any leading whitespace (i.e., a space or      */
+/*  Function : skip_whitespace_and_line_term                            */
+/*  Date     : 9/15/2001                                    */
+/*  Purpose  : Skips over any leading whitespace (i.e., a space or      */
 /*                 horizontal tab character) or line terminator (i.e., \r   */
 /*                 and \n) and                                              */
 /*                 returns the pointer to the first non-whitespace          */
 /*                 character.  The input string is represented by           */
 /*                 starting and ending pointers and does not need to be     */
 /*                 NULL terminated.                                         */
-/*	In/out   :						            */
-/*	Return   : pointer to first non-whitespace character                */
-/*	Modified :							    */
+/*  In/out   :                                  */
+/*  Return   : pointer to first non-whitespace character                */
+/*  Modified :                              */
 /* ======================================================================== */
 
 OSCL_EXPORT_REF const char* skip_whitespace_and_line_term(const char *start, const char *end)
@@ -391,15 +391,15 @@ OSCL_EXPORT_REF const char* skip_whitespace_and_line_term(const char *start, con
 
 
 /* ======================================================================== */
-/*	Function : extract_string                                           */
-/*	Date     : 1/1/2000				                    */
-/*	Purpose  : Extracts string of a maximum size after skipping any     */
+/*  Function : extract_string                                           */
+/*  Date     : 1/1/2000                                 */
+/*  Purpose  : Extracts string of a maximum size after skipping any     */
 /*                 leading whitespace.  The input string is represented by  */
 /*                 starting and ending pointers and does not need to be     */
 /*                 NULL terminated.                                         */
-/*	In/out   :						            */
-/*	Return   : length of the extracted string        		    */
-/*	Modified :							    */
+/*  In/out   :                                  */
+/*  Return   : length of the extracted string                   */
+/*  Modified :                              */
 /* ======================================================================== */
 
 
@@ -446,13 +446,13 @@ OSCL_EXPORT_REF int extract_string(const char * start, const char *end, char *ou
 }
 
 /* ======================================================================== */
-/*	Function : extract_string                                           */
-/*	Date     : 1/1/2000				                    */
-/*	Purpose  : Extracts string of a maximum size after skipping any     */
+/*  Function : extract_string                                           */
+/*  Date     : 1/1/2000                                 */
+/*  Purpose  : Extracts string of a maximum size after skipping any     */
 /*                 leading whitespace.                                      */
-/*	In/out   :						            */
-/*	Return   : length of the extracted string        		    */
-/*	Modified :							    */
+/*  In/out   :                                  */
+/*  Return   : length of the extracted string                   */
+/*  Modified :                              */
 /* ======================================================================== */
 
 OSCL_EXPORT_REF int extract_string(const char * in_ptr, char *outstring, int maxsize)
@@ -498,13 +498,13 @@ OSCL_EXPORT_REF int extract_string(const char * in_ptr, char *outstring, int max
 }
 
 /* ======================================================================== */
-/*	Function : PV_atof(char *buf, OsclFloat& value)							*/
-/*	Purpose  : Converts a character string to a float. The string			*/
+/*  Function : PV_atof(char *buf, OsclFloat& value)                         */
+/*  Purpose  : Converts a character string to a float. The string           */
 /*             argument has the following form:                             */
 /*             [whitespace] [sign] [digits] [.digits]                       */
-/*	In/out   :																*/
-/*	Return   :																*/
-/*	Modified :																*/
+/*  In/out   :                                                              */
+/*  Return   :                                                              */
+/*  Modified :                                                              */
 /* ======================================================================== */
 OSCL_EXPORT_REF bool PV_atof(const char *buf, OsclFloat& value)
 {
@@ -551,7 +551,7 @@ OSCL_EXPORT_REF bool PV_atof(const char *buf, int length, OsclFloat& value)
                 }
             }
             else
-                return false;	// Non-numeric char so stopping
+                return false;   // Non-numeric char so stopping
         }
         else
         {

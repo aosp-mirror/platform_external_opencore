@@ -34,10 +34,10 @@
 
 #define UInt32ToFourChar(num, characters) \
 { \
-	characters[3] = (num & 0xFF); \
-	characters[2] = (num & 0xFF00)>>8; \
-	characters[1] = (num & 0xFF0000)>>16; \
-	characters[0] = (num & 0xFF000000)>>24; \
+    characters[3] = (num & 0xFF); \
+    characters[2] = (num & 0xFF00)>>8; \
+    characters[1] = (num & 0xFF0000)>>16; \
+    characters[0] = (num & 0xFF000000)>>24; \
 }
 
 typedef Oscl_Vector<AssestInfoKeyWord*, OsclMemAllocator> assestInfoKeyWordVecType;

@@ -113,17 +113,17 @@ static const char* const RtspMethodStringPLSS[] =
 #define RtspRequestMethodStringPlaylistPlay "PLAYLIST_PLAY"
 #endif
 
-#define	RTSPVersionString  "RTSP/1.0"
-#define	RTSPVersionString_len  8
+#define RTSPVersionString  "RTSP/1.0"
+#define RTSPVersionString_len  8
 
-#define	HTTPVersion_1_0_String  "HTTP/1.0"
-#define	HTTPVersion_1_1_String  "HTTP/1.1"
-#define	HTTPVersionString_len  8
+#define HTTPVersion_1_0_String  "HTTP/1.0"
+#define HTTPVersion_1_1_String  "HTTP/1.1"
+#define HTTPVersionString_len  8
 
-const char CHAR_CR 		  = 13;
-const char CHAR_LF 		  = 10;
-const char CHAR_NULL 	  = 0;
-const char CHAR_COLON	  =	':';
+const char CHAR_CR        = 13;
+const char CHAR_LF        = 10;
+const char CHAR_NULL      = 0;
+const char CHAR_COLON     = ':';
 const char CHAR_DOLLAR  = '$';
 const char CHAR_SPACE   = ' ';
 const char CHAR_SLASH   = '/';

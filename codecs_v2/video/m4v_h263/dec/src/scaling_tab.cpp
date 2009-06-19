@@ -20,9 +20,9 @@
 ; INCLUDES
 ----------------------------------------------------------------------------*/
 
-#include	"mp4dec_api.h"
-#include	"mp4def.h"
-#include	"scaling.h"
+#include    "mp4dec_api.h"
+#include    "mp4def.h"
+#include    "scaling.h"
 /*----------------------------------------------------------------------------
 ; MACROS
 ; Define module specific macros here

@@ -90,7 +90,7 @@ InitialObjectDescriptor::InitialObjectDescriptor(MP4_FF_FILE *fp)
 
             uint8  tag;
             tag = AtomUtils::peekNextByte(fp);
-            if (tag == 0)	//ES_ID, old version
+            if (tag == 0)   //ES_ID, old version
             {
                 for (int32 i = 0; i < delta; i++)
                 {

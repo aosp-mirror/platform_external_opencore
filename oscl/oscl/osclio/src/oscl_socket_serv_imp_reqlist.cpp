@@ -100,7 +100,7 @@ void OsclSocketServRequestList::GetNewRequests()
     Oscl_Vector<OsclSocketRequest*, OsclMemAllocator>::iterator it;
 
     //go through the new requests list and move them to the active requests list.
-    for (it = iAddRequests.begin();it != iAddRequests.end();it++)
+    for (it = iAddRequests.begin(); it != iAddRequests.end(); it++)
     {
         OsclSocketServRequestQElem elem(*it);
         iActiveRequests.push_back(elem);
@@ -109,9 +109,9 @@ void OsclSocketServRequestList::GetNewRequests()
 
     //now go through cancel requests and set cancel flags
     //in the corresponding active requests.
-    for (it = iCancelRequests.begin();it != iCancelRequests.end();it++)
+    for (it = iCancelRequests.begin(); it != iCancelRequests.end(); it++)
     {
-        for (uint32 i = 0;i < iActiveRequests.size();i++)
+        for (uint32 i = 0; i < iActiveRequests.size(); i++)
         {
             if (iActiveRequests[i].iSocketRequest == *it)
             {

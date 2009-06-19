@@ -258,14 +258,14 @@ class MSD : public SEBase, public OsclTimerObserver
         {
             State = state;
 
-            if (State == IDLE)	Print("    State -> IDLE\n");
+            if (State == IDLE)  Print("    State -> IDLE\n");
             else if (State == OUTGOING_AWAITING_RESPONSE) Print("    State -> OUTGOING_AWAITING_RESPONSE\n");
             else if (State == INCOMING_AWAITING_RESPONSE) Print("    State -> INCOMING_AWAITING_RESPONSE\n");
         }
 
         MSDState GetState()
         {
-            if (State == IDLE)	Print("    State == IDLE\n");
+            if (State == IDLE)  Print("    State == IDLE\n");
             else if (State == OUTGOING_AWAITING_RESPONSE) Print("    State == OUTGOING_AWAITING_RESPONSE\n");
             else if (State == INCOMING_AWAITING_RESPONSE) Print("    State == INCOMING_AWAITING_RESPONSE\n");
 

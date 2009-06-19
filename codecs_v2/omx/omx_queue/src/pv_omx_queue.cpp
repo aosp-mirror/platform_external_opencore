@@ -93,7 +93,7 @@ OSCL_EXPORT_REF void QueueDeinit(QueueType* aQueue)
 
     pTempQElement = aQueue->pFirst;
 
-    for (ii = 0; ii < QueueElemCount	; ii++)
+    for (ii = 0; ii < QueueElemCount    ; ii++)
     {
         if (pTempQElement != NULL)
         {

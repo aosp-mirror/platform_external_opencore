@@ -61,7 +61,7 @@ class ChunkOffsetAtom : public FullAtom
         int32 _mediaType;
         uint32 _currentDataOffset;
         MP4_FF_FILE *_fileptr;
-        uint32	_parsed_entry_cnt;
+        uint32  _parsed_entry_cnt;
 
         MP4_FF_FILE *_curr_fptr;
         uint32 *_stbl_fptr_vec;

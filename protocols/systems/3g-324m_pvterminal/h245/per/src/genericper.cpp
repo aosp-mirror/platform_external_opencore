@@ -711,11 +711,11 @@ void SkipAllExtensions(PS_InStream stream)
 
     size = GetNormSmallLength(stream);  /* Length of SigMap */
     /* Read sigmap, counting number of significant extensions */
-    for (i = 0;i < size;++i)
+    for (i = 0; i < size; ++i)
     {
         num_to_skip += ReadBits(1, stream);
     }
-    for (i = 0;i < num_to_skip;++i)
+    for (i = 0; i < num_to_skip; ++i)
     {
         SkipOneExtension(stream);
     }
@@ -737,7 +737,7 @@ uint16 GetChoiceIndex(uint32 rootnum, uint8 extmarker, PS_InStream stream)
     uint16 index;
 
     extension = 0;
-    if (extmarker) 			/* Get extension bit */
+    if (extmarker)          /* Get extension bit */
     {
         extension = ReadBits(1, stream);
     }
@@ -779,7 +779,7 @@ PS_UnknownSigMap GetUnknownSigMap(PS_InStream stream)
 
     x->size = (uint16) GetNormSmallLength(stream);
     x->optionFlags = (uint8*) OSCL_DEFAULT_MALLOC(x->size * sizeof(uint8));
-    for (i = 0;i < x->size;++i)
+    for (i = 0; i < x->size; ++i)
     {
         x->optionFlags[i] = ReadBits(1, stream);
     }
@@ -848,14 +848,14 @@ uint32 SkipUnreadExtensions(PS_UnknownSigMap map, PS_InStream stream)
 
     /* Compute the number of extensions to skip */
     numExtensions = 0;
-    for (i = 0;i < map->size;++i)
+    for (i = 0; i < map->size; ++i)
     {
         numExtensions += map->optionFlags[i];
     }
     numExtensions -= map->extensionsRead;
 
     /* Skip remaining extensions */
-    for (i = 0;i < numExtensions;++i)
+    for (i = 0; i < numExtensions; ++i)
     {
         SkipOneExtension(stream);
     }
@@ -907,7 +907,7 @@ void WriteBits(uint32 number, uint8 bits, PS_OutStream stream)
     temp = (uint8)(bits << (8 - number));
     (stream->buildByte) |= (temp >> (stream->bitIndex));
 
-    if (BitSize > 8)  				          /* Appended size > 8 bits */
+    if (BitSize > 8)                          /* Appended size > 8 bits */
     {
         stream->bitIndex = 8;
         WriteRemainingBits(stream);
@@ -915,7 +915,7 @@ void WriteBits(uint32 number, uint8 bits, PS_OutStream stream)
         stream->bitIndex = (uint16)(BitSize - 8);
         return;
     }
-    else if (BitSize < 8)  			      /* Appended size < 8 bits */
+    else if (BitSize < 8)                 /* Appended size < 8 bits */
     {
         stream->bitIndex = BitSize;
         return;
@@ -1256,12 +1256,12 @@ void PutUnboundedInteger(uint32 value, PS_OutStream stream)
 // =========================================================
 void PutExtendedInteger(uint32 lower, uint32 upper, uint32 value, PS_OutStream stream)
 {
-    if (value > upper) 				// Extension ON
+    if (value > upper)              // Extension ON
     {
         WriteBits(1, 1, stream);
         PutUnboundedInteger(value, stream);
     }
-    else 							// Extension OFF
+    else                            // Extension OFF
     {
         WriteBits(1, 0, stream);
         PutInteger(lower, upper, value, stream);

@@ -74,14 +74,14 @@ class OsclProcStatus
 
         enum eOsclProcError
         {
-            SUCCESS_ERROR = 0,					// Function returned succesfully
-            OTHER_ERROR,						// Function returned some error
-            TOO_MANY_THREADS_ERROR,			    // Cannot create another thread
-            BAD_THREADID_ADDR_ERROR,			// The address for the thread id is not correct
-            MAX_THRDS_REACHED_ERROR,			// No more threads can be created in the system
-            INVALID_THREAD_ID_ERROR,			// Invalid thread identifier
-            NOT_ENOUGH_MEMORY_ERROR,			// Not enough storage is available to process this command
-            OUTOFMEMORY_ERROR,					// Not enough storage is available to complete this operation
+            SUCCESS_ERROR = 0,                  // Function returned succesfully
+            OTHER_ERROR,                        // Function returned some error
+            TOO_MANY_THREADS_ERROR,             // Cannot create another thread
+            BAD_THREADID_ADDR_ERROR,            // The address for the thread id is not correct
+            MAX_THRDS_REACHED_ERROR,            // No more threads can be created in the system
+            INVALID_THREAD_ID_ERROR,            // Invalid thread identifier
+            NOT_ENOUGH_MEMORY_ERROR,            // Not enough storage is available to process this command
+            OUTOFMEMORY_ERROR,                  // Not enough storage is available to complete this operation
             NOT_ENOUGH_RESOURCES_ERROR,         // Not Enough resources available
             THREAD_1_INACTIVE_ERROR,            // The signal handler cannot be set
             ALREADY_SUSPENDED_ERROR,            // Thread is already suspended

@@ -22,7 +22,7 @@
 #include "osclconfig.h"
 
 class DownloadNodesInterface: public OsclSharedLibraryInterface,
-            public NodeSharedLibraryInterface
+        public NodeSharedLibraryInterface
 {
     public:
         DownloadNodesInterface() {};

@@ -201,7 +201,7 @@ class CPVCmnAsyncEvent : public CPVCmnInterfaceObserverMessage
 {
     public:
         CPVCmnAsyncEvent(TPVCmnEventType aEventType, TPVCmnExclusivePtr aExclusivePtr, const uint8 *aLocalBuffer = NULL, uint32 aLocalBufSize = 0, TPVCmnResponseType aResponseType = NULL) :
-                CPVCmnInterfaceObserverMessage(aResponseType),	iEventType(aEventType), iExclusivePtr(aExclusivePtr)
+                CPVCmnInterfaceObserverMessage(aResponseType),  iEventType(aEventType), iExclusivePtr(aExclusivePtr)
         {
             if (aLocalBuffer)
             {

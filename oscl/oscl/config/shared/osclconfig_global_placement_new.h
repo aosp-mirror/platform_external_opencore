@@ -22,7 +22,7 @@
 //for use in configurations without a native placement new
 //operator definition.
 
-inline void* operator new(size_t,void* ptr)
+inline void* operator new(size_t, void* ptr)
 {
     return ptr;
 }

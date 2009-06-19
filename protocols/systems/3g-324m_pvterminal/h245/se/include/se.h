@@ -40,24 +40,24 @@
 /************************************************************************/
 /*  Headerfile Include                                                  */
 /************************************************************************/
-#include	"oscl_base.h"
-#include	"oscl_timer.h"
+#include    "oscl_base.h"
+#include    "oscl_timer.h"
 #include    "oscl_mem.h"
 #include    "oscl_shared_ptr.h"
 #include    "h245inf.h"
 #include    "h245msg.h"
-#include	"msd.h"
-#include	"blc.h"
-#include	"lc.h"
-#include	"clc.h"
-#include	"ce.h"
-#include	"mt.h"
-#include	"rtd.h"
-#include	"ml.h"
-#include	"mr.h"
-#include	"rme.h"
-#include	"annex.h"
-#include	"lcentry.h"
+#include    "msd.h"
+#include    "blc.h"
+#include    "lc.h"
+#include    "clc.h"
+#include    "ce.h"
+#include    "mt.h"
+#include    "rtd.h"
+#include    "ml.h"
+#include    "mr.h"
+#include    "rme.h"
+#include    "annex.h"
+#include    "lcentry.h"
 
 class H245;
 class PER;
@@ -300,9 +300,9 @@ class PVLogger;
 #define     EVENT_PTV_IDC_FC            EVENT_IDC     | 0X00160000  /* FLOWCONTROL */
 #define     EVENT_MSG_IDC_FC            EVENT_IDC     | 0X00170000  /* FlowControl */
 
-#define		ITN_ERR_CODE_0000			0X00000000  /* Information Type Error ( Information Type ) */
-#define		ITN_ERR_CODE_0001			0X00000001  /* Information Id Error ( Information Id ) */
-#define		ITN_ERR_CODE_0002			0X00000002  /* Status Error ( Event Number | Status ) */
+#define     ITN_ERR_CODE_0000           0X00000000  /* Information Type Error ( Information Type ) */
+#define     ITN_ERR_CODE_0001           0X00000001  /* Information Id Error ( Information Id ) */
+#define     ITN_ERR_CODE_0002           0X00000002  /* Status Error ( Event Number | Status ) */
 
 /************************************************************************/
 /*  Event No Table Type Definition                                      */
@@ -391,12 +391,12 @@ class SE : public OsclTimerObserver
         CNF MyCNF;
         CMD MyCMD;
         IDC MyIDC;
-        CE	MyCE;
+        CE  MyCE;
         MT  MyMT;
-        RTD	MyRTD;
-        MR	MyMR;
+        RTD MyRTD;
+        MR  MyMR;
         RME MyRME;
-        ML	MyML;  // Caution: MLSE is not implemented for Two-Way.
+        ML  MyML;  // Caution: MLSE is not implemented for Two-Way.
 
         LCEntryList LCBLCOutgoing;
         LCEntryList LCBLCIncoming;

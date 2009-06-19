@@ -301,8 +301,8 @@ class PVMFMediaLayerPortContainer
  */
 class PVMFMediaLayerNode;
 class PVMFMediaLayerPort : public PvmfPortBaseImpl,
-            public PvmiCapabilityAndConfig,
-            public OsclMemPoolFixedChunkAllocatorObserver
+        public PvmiCapabilityAndConfig,
+        public OsclMemPoolFixedChunkAllocatorObserver
 {
     public:
         /**
@@ -354,7 +354,7 @@ class PVMFMediaLayerPort : public PvmfPortBaseImpl,
 
         /* Implement pure virtuals from PvmiCapabilityAndConfig interface */
         PVMFStatus getParametersSync(PvmiMIOSession aSession, PvmiKeyType aIdentifier,
-                                     PvmiKvp*& aParameters, int& num_parameter_elements,	PvmiCapabilityContext aContext);
+                                     PvmiKvp*& aParameters, int& num_parameter_elements,    PvmiCapabilityContext aContext);
         PVMFStatus releaseParameters(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
         void setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters,
                                int num_elements, PvmiKvp * & aRet_kvp);

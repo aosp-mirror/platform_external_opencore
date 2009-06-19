@@ -26,51 +26,51 @@
 #define QCIF_MBS 99
 #define QCIF_BS (4*QCIF_MBS)
 #define QCIF_MB_ROWS 11
-extern uint8				IMEM_sliceNo[QCIF_MBS];
-extern uint8				IMEM_acPredFlag[QCIF_MBS];
-extern uint8				IMEM_headerInfo_Mode[QCIF_MBS];
-extern uint8				IMEM_headerInfo_CBP[QCIF_MBS];
-extern int					IMEM_headerInfo_QPMB[QCIF_MBS];
-extern MacroBlock			IMEM_mblock;
-extern MOT					IMEM_motX[QCIF_BS];
-extern MOT					IMEM_motY[QCIF_BS];
-extern BitstreamDecVideo	IMEM_BitstreamDecVideo[4];
-extern typeDCStore			IMEM_predDC[QCIF_MBS];
-extern typeDCACStore		IMEM_predDCAC_col[QCIF_MB_ROWS+1];
+extern uint8                IMEM_sliceNo[QCIF_MBS];
+extern uint8                IMEM_acPredFlag[QCIF_MBS];
+extern uint8                IMEM_headerInfo_Mode[QCIF_MBS];
+extern uint8                IMEM_headerInfo_CBP[QCIF_MBS];
+extern int                  IMEM_headerInfo_QPMB[QCIF_MBS];
+extern MacroBlock           IMEM_mblock;
+extern MOT                  IMEM_motX[QCIF_BS];
+extern MOT                  IMEM_motY[QCIF_BS];
+extern BitstreamDecVideo    IMEM_BitstreamDecVideo[4];
+extern typeDCStore          IMEM_predDC[QCIF_MBS];
+extern typeDCACStore        IMEM_predDCAC_col[QCIF_MB_ROWS+1];
 
-extern VideoDecData			IMEM_VideoDecData[1];
-extern Vop					IMEM_currVop[1];
-extern Vop					IMEM_prevVop[1];
-extern PIXEL				IMEM_currVop_yChan[QCIF_MBS*128*3];
-extern PIXEL				IMEM_prevVop_yChan[QCIF_MBS*128*3];
-extern uint8				IMEM_pstprcTypCur[6*QCIF_MBS];
-extern uint8				IMEM_pstprcTypPrv[6*QCIF_MBS];
+extern VideoDecData         IMEM_VideoDecData[1];
+extern Vop                  IMEM_currVop[1];
+extern Vop                  IMEM_prevVop[1];
+extern PIXEL                IMEM_currVop_yChan[QCIF_MBS*128*3];
+extern PIXEL                IMEM_prevVop_yChan[QCIF_MBS*128*3];
+extern uint8                IMEM_pstprcTypCur[6*QCIF_MBS];
+extern uint8                IMEM_pstprcTypPrv[6*QCIF_MBS];
 
 
-extern Vop					IMEM_vopHEADER[2];
-extern Vol					IMEM_VOL[2];
-extern Vop					IMEM_vopHeader[2][1];
-extern Vol					IMEM_vol[2][1];
+extern Vop                  IMEM_vopHEADER[2];
+extern Vol                  IMEM_VOL[2];
+extern Vop                  IMEM_vopHeader[2][1];
+extern Vol                  IMEM_vol[2][1];
 
 #endif
 
 /* ======================================================================== */
-/*	Function : PVInitVideoDecoder()											*/
-/*	Date     : 04/11/2000, 08/29/2000										*/
-/*	Purpose  : Initialization of the MPEG-4 video decoder library.			*/
-/*			   The return type is Bool instead of PV_STATUS because			*/
-/*			   we don't want to expose PV_STATUS to (outside) programmers	*/
-/*			   that use our decoder library SDK.							*/
-/*	In/out   :																*/
-/*	Return   : PV_TRUE if successed, PV_FALSE if failed.					*/
-/*	Modified :																*/
+/*  Function : PVInitVideoDecoder()                                         */
+/*  Date     : 04/11/2000, 08/29/2000                                       */
+/*  Purpose  : Initialization of the MPEG-4 video decoder library.          */
+/*             The return type is Bool instead of PV_STATUS because         */
+/*             we don't want to expose PV_STATUS to (outside) programmers   */
+/*             that use our decoder library SDK.                            */
+/*  In/out   :                                                              */
+/*  Return   : PV_TRUE if successed, PV_FALSE if failed.                    */
+/*  Modified :                                                              */
 /* ======================================================================== */
 OSCL_EXPORT_REF Bool PVInitVideoDecoder(VideoDecControls *decCtrl, uint8 *volbuf[],
                                         int32 *volbuf_size, int nLayers, int width, int height, MP4DecodingMode mode)
 {
     VideoDecData *video = (VideoDecData *) decCtrl->videoDecoderData;
     Bool status = PV_TRUE;
-    int	idx;
+    int idx;
     BitstreamDecVideo *stream;
 
 
@@ -284,7 +284,7 @@ Bool PVAllocVideoData(VideoDecControls *decCtrl, int width, int height, int nLay
 {
     VideoDecData *video = (VideoDecData *) decCtrl->videoDecoderData;
     Bool status = PV_TRUE;
-    int	nTotalMB;
+    int nTotalMB;
     int nMBPerRow;
     int32 size;
 
@@ -508,7 +508,7 @@ Bool PVAllocVideoData(VideoDecControls *decCtrl, int width, int height, int nLay
         video->prevEnhcVop->timeStamp = 0;
     }
     video->concealFrame = video->prevVop->yChan;               /*  07/07/2001 */
-    decCtrl->outputFrame = video->prevVop->yChan;			   /*  06/19/2002 */
+    decCtrl->outputFrame = video->prevVop->yChan;              /*  06/19/2002 */
 #endif
 
     /* always start from base layer */
@@ -517,12 +517,12 @@ Bool PVAllocVideoData(VideoDecControls *decCtrl, int width, int height, int nLay
 }
 
 /* ======================================================================== */
-/*	Function : PVResetVideoDecoder()										*/
-/*	Date     : 01/14/2002													*/
-/*	Purpose  : Reset video timestamps										*/
-/*	In/out   :																*/
-/*	Return   : PV_TRUE if successed, PV_FALSE if failed.					*/
-/*	Modified :																*/
+/*  Function : PVResetVideoDecoder()                                        */
+/*  Date     : 01/14/2002                                                   */
+/*  Purpose  : Reset video timestamps                                       */
+/*  In/out   :                                                              */
+/*  Return   : PV_TRUE if successed, PV_FALSE if failed.                    */
+/*  Modified :                                                              */
 /* ======================================================================== */
 Bool PVResetVideoDecoder(VideoDecControls *decCtrl)
 {
@@ -544,16 +544,16 @@ Bool PVResetVideoDecoder(VideoDecControls *decCtrl)
 
 
 /* ======================================================================== */
-/*	Function : PVCleanUpVideoDecoder()										*/
-/*	Date     : 04/11/2000, 08/29/2000										*/
-/*	Purpose  : Cleanup of the MPEG-4 video decoder library.					*/
-/*	In/out   :																*/
-/*	Return   : PV_TRUE if successed, PV_FALSE if failed.					*/
-/*	Modified :																*/
+/*  Function : PVCleanUpVideoDecoder()                                      */
+/*  Date     : 04/11/2000, 08/29/2000                                       */
+/*  Purpose  : Cleanup of the MPEG-4 video decoder library.                 */
+/*  In/out   :                                                              */
+/*  Return   : PV_TRUE if successed, PV_FALSE if failed.                    */
+/*  Modified :                                                              */
 /* ======================================================================== */
 OSCL_EXPORT_REF Bool PVCleanUpVideoDecoder(VideoDecControls *decCtrl)
 {
-    int	idx;
+    int idx;
     VideoDecData *video = (VideoDecData *) decCtrl->videoDecoderData;
 #ifdef DEC_INTERNAL_MEMORY_OPT
     if (video)
@@ -564,16 +564,16 @@ OSCL_EXPORT_REF Bool PVCleanUpVideoDecoder(VideoDecControls *decCtrl)
 #endif
 
         video->acPredFlag       = NULL;
-        video->sliceNo			= NULL;
-        video->motX				= NULL;
-        video->motY				= NULL;
-        video->mblock			= NULL;
-        video->QPMB				= NULL;
-        video->predDC			= NULL;
-        video->predDCAC_row		= NULL;
-        video->predDCAC_col		= NULL;
-        video->headerInfo.Mode	= NULL;
-        video->headerInfo.CBP	= NULL;
+        video->sliceNo          = NULL;
+        video->motX             = NULL;
+        video->motY             = NULL;
+        video->mblock           = NULL;
+        video->QPMB             = NULL;
+        video->predDC           = NULL;
+        video->predDCAC_row     = NULL;
+        video->predDCAC_col     = NULL;
+        video->headerInfo.Mode  = NULL;
+        video->headerInfo.CBP   = NULL;
         if (video->numberOfLayers > 1)
         {
             if (video->prevEnhcVop)
@@ -706,15 +706,15 @@ OSCL_EXPORT_REF Bool PVCleanUpVideoDecoder(VideoDecControls *decCtrl)
     return PV_TRUE;
 }
 /* ======================================================================== */
-/*	Function : PVGetVideoDimensions()										*/
-/*	Date     : 040505														*/
-/*	Purpose  :																*/
-/*	In/out   :																*/
-/*	Return   : the display_width and display_height of						*/
-/*			the frame in the current layer.									*/
-/*	Note     : This is not a macro or inline function because we do			*/
-/*				not want to expose our internal data structure.				*/
-/*	Modified :																*/
+/*  Function : PVGetVideoDimensions()                                       */
+/*  Date     : 040505                                                       */
+/*  Purpose  :                                                              */
+/*  In/out   :                                                              */
+/*  Return   : the display_width and display_height of                      */
+/*          the frame in the current layer.                                 */
+/*  Note     : This is not a macro or inline function because we do         */
+/*              not want to expose our internal data structure.             */
+/*  Modified :                                                              */
 /* ======================================================================== */
 OSCL_EXPORT_REF void PVGetVideoDimensions(VideoDecControls *decCtrl, int32 *display_width, int32 *display_height)
 {
@@ -724,13 +724,13 @@ OSCL_EXPORT_REF void PVGetVideoDimensions(VideoDecControls *decCtrl, int32 *disp
 }
 
 /* ======================================================================== */
-/*	Function : PVGetVideoTimeStamp()										*/
-/*	Date     : 04/27/2000, 08/29/2000										*/
-/*	Purpose  :																*/
-/*	In/out   :																*/
-/*	Return   : current time stamp in millisecond.							*/
-/*	Note     :																*/
-/*	Modified :																*/
+/*  Function : PVGetVideoTimeStamp()                                        */
+/*  Date     : 04/27/2000, 08/29/2000                                       */
+/*  Purpose  :                                                              */
+/*  In/out   :                                                              */
+/*  Return   : current time stamp in millisecond.                           */
+/*  Note     :                                                              */
+/*  Modified :                                                              */
 /* ======================================================================== */
 uint32 PVGetVideoTimeStamp(VideoDecControls *decCtrl)
 {
@@ -740,13 +740,13 @@ uint32 PVGetVideoTimeStamp(VideoDecControls *decCtrl)
 
 
 /* ======================================================================== */
-/*	Function : PVSetPostProcType()											*/
-/*	Date     : 07/07/2000													*/
-/*	Purpose  :																*/
-/*	In/out   :																*/
-/*	Return   : Set post-processing filter type.								*/
-/*	Note     :																*/
-/*	Modified : . 08/29/2000 changes the name for consistency.				*/
+/*  Function : PVSetPostProcType()                                          */
+/*  Date     : 07/07/2000                                                   */
+/*  Purpose  :                                                              */
+/*  In/out   :                                                              */
+/*  Return   : Set post-processing filter type.                             */
+/*  Note     :                                                              */
+/*  Modified : . 08/29/2000 changes the name for consistency.               */
 /* ======================================================================== */
 OSCL_EXPORT_REF void PVSetPostProcType(VideoDecControls *decCtrl, int mode)
 {
@@ -756,19 +756,19 @@ OSCL_EXPORT_REF void PVSetPostProcType(VideoDecControls *decCtrl, int mode)
 
 
 /* ======================================================================== */
-/*	Function : PVGetDecBitrate()											*/
-/*	Date     : 08/23/2000													*/
-/*	Purpose  :																*/
-/*	In/out   :																*/
-/*	Return   : This function returns the average bits per second.			*/
-/*	Note     :																*/
-/*	Modified :																*/
+/*  Function : PVGetDecBitrate()                                            */
+/*  Date     : 08/23/2000                                                   */
+/*  Purpose  :                                                              */
+/*  In/out   :                                                              */
+/*  Return   : This function returns the average bits per second.           */
+/*  Note     :                                                              */
+/*  Modified :                                                              */
 /* ======================================================================== */
 int PVGetDecBitrate(VideoDecControls *decCtrl)
 {
     VideoDecData *video = (VideoDecData *)decCtrl->videoDecoderData;
-    int		idx;
-    int32	sum = 0;
+    int     idx;
+    int32   sum = 0;
 
     for (idx = 0; idx < BITRATE_AVERAGE_WINDOW; idx++)
     {
@@ -780,13 +780,13 @@ int PVGetDecBitrate(VideoDecControls *decCtrl)
 
 
 /* ======================================================================== */
-/*	Function : PVGetDecFramerate()											*/
-/*	Date     : 08/23/2000													*/
-/*	Purpose  :																*/
-/*	In/out   :																*/
-/*	Return   : This function returns the average frame per 10 second.		*/
-/*	Note     : The fps can be calculated by PVGetDecFramerate()/10			*/
-/*	Modified :																*/
+/*  Function : PVGetDecFramerate()                                          */
+/*  Date     : 08/23/2000                                                   */
+/*  Purpose  :                                                              */
+/*  In/out   :                                                              */
+/*  Return   : This function returns the average frame per 10 second.       */
+/*  Note     : The fps can be calculated by PVGetDecFramerate()/10          */
+/*  Modified :                                                              */
 /* ======================================================================== */
 int PVGetDecFramerate(VideoDecControls *decCtrl)
 {
@@ -796,13 +796,13 @@ int PVGetDecFramerate(VideoDecControls *decCtrl)
 }
 
 /* ======================================================================== */
-/*	Function : PVGetOutputFrame()											*/
-/*	Date     : 05/07/2001													*/
-/*	Purpose  :																*/
-/*	In/out   :																*/
-/*	Return   : This function returns the pointer to the output frame		*/
-/*	Note     :																*/
-/*	Modified :																*/
+/*  Function : PVGetOutputFrame()                                           */
+/*  Date     : 05/07/2001                                                   */
+/*  Purpose  :                                                              */
+/*  In/out   :                                                              */
+/*  Return   : This function returns the pointer to the output frame        */
+/*  Note     :                                                              */
+/*  Modified :                                                              */
 /* ======================================================================== */
 uint8 *PVGetDecOutputFrame(VideoDecControls *decCtrl)
 {
@@ -810,13 +810,13 @@ uint8 *PVGetDecOutputFrame(VideoDecControls *decCtrl)
 }
 
 /* ======================================================================== */
-/*	Function : PVGetLayerID()												*/
-/*	Date     : 07/09/2001													*/
-/*	Purpose  :																*/
-/*	In/out   :																*/
-/*	Return   : This function returns decoded frame layer id	(BASE/ENHANCE)  */
-/*	Note     :																*/
-/*	Modified :																*/
+/*  Function : PVGetLayerID()                                               */
+/*  Date     : 07/09/2001                                                   */
+/*  Purpose  :                                                              */
+/*  In/out   :                                                              */
+/*  Return   : This function returns decoded frame layer id (BASE/ENHANCE)  */
+/*  Note     :                                                              */
+/*  Modified :                                                              */
 /* ======================================================================== */
 int PVGetLayerID(VideoDecControls *decCtrl)
 {
@@ -824,13 +824,13 @@ int PVGetLayerID(VideoDecControls *decCtrl)
     return video->currLayer;
 }
 /* ======================================================================== */
-/*	Function : PVGetDecMemoryUsage()										*/
-/*	Date     : 08/23/2000													*/
-/*	Purpose  :																*/
-/*	In/out   :																*/
-/*	Return   : This function returns the amount of memory used.				*/
-/*	Note     :																*/
-/*	Modified :																*/
+/*  Function : PVGetDecMemoryUsage()                                        */
+/*  Date     : 08/23/2000                                                   */
+/*  Purpose  :                                                              */
+/*  In/out   :                                                              */
+/*  Return   : This function returns the amount of memory used.             */
+/*  Note     :                                                              */
+/*  Modified :                                                              */
 /* ======================================================================== */
 int32 PVGetDecMemoryUsage(VideoDecControls *decCtrl)
 {
@@ -840,14 +840,14 @@ int32 PVGetDecMemoryUsage(VideoDecControls *decCtrl)
 
 
 /* ======================================================================== */
-/*	Function : PVGetDecBitstreamMode()										*/
-/*	Date     : 08/23/2000													*/
-/*	Purpose  :																*/
-/*	In/out   :																*/
-/*	Return   : This function returns the decoding mode of the baselayer		*/
-/*				bitstream.													*/
-/*	Note     :																*/
-/*	Modified :																*/
+/*  Function : PVGetDecBitstreamMode()                                      */
+/*  Date     : 08/23/2000                                                   */
+/*  Purpose  :                                                              */
+/*  In/out   :                                                              */
+/*  Return   : This function returns the decoding mode of the baselayer     */
+/*              bitstream.                                                  */
+/*  Note     :                                                              */
+/*  Modified :                                                              */
 /* ======================================================================== */
 OSCL_EXPORT_REF MP4DecodingMode PVGetDecBitstreamMode(VideoDecControls *decCtrl)
 {
@@ -864,13 +864,13 @@ OSCL_EXPORT_REF MP4DecodingMode PVGetDecBitstreamMode(VideoDecControls *decCtrl)
 
 
 /* ======================================================================== */
-/*	Function : PVExtractVolHeader()											*/
-/*	Date     : 08/29/2000													*/
-/*	Purpose  :																*/
-/*	In/out   :																*/
-/*	Return   : Extract vol header of the bitstream from buffer[].			*/
-/*	Note     :																*/
-/*	Modified :																*/
+/*  Function : PVExtractVolHeader()                                         */
+/*  Date     : 08/29/2000                                                   */
+/*  Purpose  :                                                              */
+/*  In/out   :                                                              */
+/*  Return   : Extract vol header of the bitstream from buffer[].           */
+/*  Note     :                                                              */
+/*  Modified :                                                              */
 /* ======================================================================== */
 Bool PVExtractVolHeader(uint8 *video_buffer, uint8 *vol_header, int32 *vol_header_size)
 {
@@ -912,13 +912,13 @@ quit:
 
 
 /* ======================================================================== */
-/*	Function : PVLocateFrameHeader()										*/
-/*	Date     : 04/8/2005													*/
-/*	Purpose  :																*/
-/*	In/out   :																*/
-/*	Return   : Return the offset to the first SC in the buffer				*/
-/*	Note     :																*/
-/*	Modified :																*/
+/*  Function : PVLocateFrameHeader()                                        */
+/*  Date     : 04/8/2005                                                    */
+/*  Purpose  :                                                              */
+/*  In/out   :                                                              */
+/*  Return   : Return the offset to the first SC in the buffer              */
+/*  Note     :                                                              */
+/*  Modified :                                                              */
 /* ======================================================================== */
 int32 PVLocateFrameHeader(uint8 *ptr, int32 size)
 {
@@ -947,13 +947,13 @@ int32 PVLocateFrameHeader(uint8 *ptr, int32 size)
 
 
 /* ======================================================================== */
-/*	Function : PVLocateH263FrameHeader()									*/
-/*	Date     : 04/8/2005													*/
-/*	Purpose  :																*/
-/*	In/out   :																*/
-/*	Return   : Return the offset to the first SC in the buffer				*/
-/*	Note     :																*/
-/*	Modified :																*/
+/*  Function : PVLocateH263FrameHeader()                                    */
+/*  Date     : 04/8/2005                                                    */
+/*  Purpose  :                                                              */
+/*  In/out   :                                                              */
+/*  Return   : Return the offset to the first SC in the buffer              */
+/*  Note     :                                                              */
+/*  Modified :                                                              */
 /* ======================================================================== */
 int32 PVLocateH263FrameHeader(uint8 *ptr, int32 size)
 {
@@ -983,15 +983,15 @@ int32 PVLocateH263FrameHeader(uint8 *ptr, int32 size)
 
 
 /* ======================================================================== */
-/*	Function : PVDecodeVideoFrame()											*/
-/*	Date     : 08/29/2000													*/
-/*	Purpose  : Decode one video frame and return a YUV-12 image.			*/
-/*	In/out   :																*/
-/*	Return   :																*/
-/*	Note     :																*/
-/*	Modified : 04/17/2001 removed PV_EOS, PV_END_OF_BUFFER				*/
-/*			 : 08/22/2002 break up into 2 functions PVDecodeVopHeader and */
-/*							PVDecodeVopBody									*/
+/*  Function : PVDecodeVideoFrame()                                         */
+/*  Date     : 08/29/2000                                                   */
+/*  Purpose  : Decode one video frame and return a YUV-12 image.            */
+/*  In/out   :                                                              */
+/*  Return   :                                                              */
+/*  Note     :                                                              */
+/*  Modified : 04/17/2001 removed PV_EOS, PV_END_OF_BUFFER              */
+/*           : 08/22/2002 break up into 2 functions PVDecodeVopHeader and */
+/*                          PVDecodeVopBody                                 */
 /* ======================================================================== */
 OSCL_EXPORT_REF Bool PVDecodeVideoFrame(VideoDecControls *decCtrl, uint8 *buffer[],
                                         uint32 timestamp[], int32 buffer_size[], uint use_ext_timestamp[], uint8 *currYUV)
@@ -1012,14 +1012,14 @@ OSCL_EXPORT_REF Bool PVDecodeVideoFrame(VideoDecControls *decCtrl, uint8 *buffer
 }
 
 /* ======================================================================== */
-/*	Function : PVDecodeVopHeader()											*/
-/*	Date     : 08/22/2002													*/
-/*	Purpose  : Determine target layer and decode vop header, modified from	*/
-/*				original PVDecodeVideoFrame.								*/
-/*	In/out   :																*/
-/*	Return   :																*/
-/*	Note     :																*/
-/*	Modified :																*/
+/*  Function : PVDecodeVopHeader()                                          */
+/*  Date     : 08/22/2002                                                   */
+/*  Purpose  : Determine target layer and decode vop header, modified from  */
+/*              original PVDecodeVideoFrame.                                */
+/*  In/out   :                                                              */
+/*  Return   :                                                              */
+/*  Note     :                                                              */
+/*  Modified :                                                              */
 /* ======================================================================== */
 Bool PVDecodeVopHeader(VideoDecControls *decCtrl, uint8 *buffer[],
                        uint32 timestamp[], int32 buffer_size[], VopHeaderInfo *header_info, uint use_ext_timestamp [], uint8 *currYUV)
@@ -1103,8 +1103,8 @@ Bool PVDecodeVopHeader(VideoDecControls *decCtrl, uint8 *buffer[],
         currVol = video->vol[target_layer];
         video->bitstream = stream = currVol->bitstream;
 
-        /* We need to decode the vop header if external timestamp	*/
-        /*    is provided.    10/04/2000							*/
+        /* We need to decode the vop header if external timestamp   */
+        /*    is provided.    10/04/2000                            */
         if (vopHeader[target_layer]->timeStamp < 0)
         {
             stream = video->vol[target_layer]->bitstream;
@@ -1142,8 +1142,8 @@ Bool PVDecodeVopHeader(VideoDecControls *decCtrl, uint8 *buffer[],
             {
                 if (PVSearchNextH263Frame(stream) != PV_SUCCESS)
                 {
-                    /* There is no vop header in the buffer,	*/
-                    /*   clean bitstream buffer.	 2/5/2001	*/
+                    /* There is no vop header in the buffer,    */
+                    /*   clean bitstream buffer.     2/5/2001   */
                     buffer_size[0] = 0;
                     if (video->initialized == PV_FALSE)
                     {
@@ -1157,7 +1157,7 @@ Bool PVDecodeVopHeader(VideoDecControls *decCtrl, uint8 *buffer[],
             if (use_ext_timestamp[0])
             {
                 /* MTB for H263 is absolute TR */
-                /* following line is equivalent to 	round((timestamp[0]*30)/1001);   11/13/2001 */
+                /* following line is equivalent to  round((timestamp[0]*30)/1001);   11/13/2001 */
                 video->vol[0]->moduloTimeBase = 30 * ((timestamp[0] + 17) / 1001) + (30 * ((timestamp[0] + 17) % 1001) / 1001);
                 vopHeader[0]->timeStamp = timestamp[0];
             }
@@ -1171,8 +1171,8 @@ Bool PVDecodeVopHeader(VideoDecControls *decCtrl, uint8 *buffer[],
                 /* Try to find a VOP header in the buffer.   08/30/2000. */
                 if (PVSearchNextM4VFrame(stream) != PV_SUCCESS)
                 {
-                    /* There is no vop header in the buffer,	*/
-                    /*   clean bitstream buffer.	 2/5/2001	*/
+                    /* There is no vop header in the buffer,    */
+                    /*   clean bitstream buffer.     2/5/2001   */
                     buffer_size[0] = 0;
                     return PV_FALSE;
                 }
@@ -1223,25 +1223,25 @@ Bool PVDecodeVopHeader(VideoDecControls *decCtrl, uint8 *buffer[],
 
 
 /* ======================================================================== */
-/*	Function : PVDecodeVopBody()											*/
-/*	Date     : 08/22/2002													*/
-/*	Purpose  : Decode vop body after the header is decoded, modified from	*/
-/*				original PVDecodeVideoFrame.								*/
-/*	In/out   :																*/
-/*	Return   :																*/
-/*	Note     :																*/
-/*	Modified :																*/
+/*  Function : PVDecodeVopBody()                                            */
+/*  Date     : 08/22/2002                                                   */
+/*  Purpose  : Decode vop body after the header is decoded, modified from   */
+/*              original PVDecodeVideoFrame.                                */
+/*  In/out   :                                                              */
+/*  Return   :                                                              */
+/*  Note     :                                                              */
+/*  Modified :                                                              */
 /* ======================================================================== */
 Bool PVDecodeVopBody(VideoDecControls *decCtrl, int32 buffer_size[])
 {
     PV_STATUS status = PV_FAIL;
     VideoDecData *video = (VideoDecData *) decCtrl->videoDecoderData;
-    int	target_layer = video->currLayer;
+    int target_layer = video->currLayer;
     Vol *currVol = video->vol[target_layer];
     Vop *currVop = video->currVop;
     Vop *prevVop = video->prevVop;
     Vop *tempVopPtr;
-    int bytes_consumed = 0;	/* Record how many bits we used in the buffer.   04/24/2001 */
+    int bytes_consumed = 0; /* Record how many bits we used in the buffer.   04/24/2001 */
 
     int idx;
 
@@ -1260,8 +1260,8 @@ Bool PVDecodeVopBody(VideoDecControls *decCtrl, int32 buffer_size[])
         {
             /* If we only consume part of the bits in the buffer, take those */
             /*  out.     04/24/2001 */
-            /*			oscl_memcpy(buffer[target_layer], buffer[target_layer]+bytes_consumed,
-            				(buffer_size[target_layer]-=bytes_consumed)); */
+            /*          oscl_memcpy(buffer[target_layer], buffer[target_layer]+bytes_consumed,
+                            (buffer_size[target_layer]-=bytes_consumed)); */
             buffer_size[target_layer] -= bytes_consumed;
         }
         else
@@ -1373,7 +1373,7 @@ Bool PVDecodeVopBody(VideoDecControls *decCtrl, int32 buffer_size[])
     video->prevTimestamp[idx] = currVop->timeStamp;
 
     /* restore video->prevVop after PV_DecodeVop().   04/24/2001 */
-//	if (currVop->refSelectCode == 0) video->prevVop = prevVop;
+//  if (currVop->refSelectCode == 0) video->prevVop = prevVop;
     video->prevVop = prevVop;
 
     /* Estimate the frame rate.   08/23/2000 */
@@ -1396,8 +1396,8 @@ Bool PVDecodeVopBody(VideoDecControls *decCtrl, int32 buffer_size[])
     {
         /* If we only consume part of the bits in the buffer, take those */
         /*  out.     04/24/2001 */
-        /*		oscl_memcpy(buffer[target_layer], buffer[target_layer]+bytes_consumed,
-        			(buffer_size[target_layer]-=bytes_consumed)); */
+        /*      oscl_memcpy(buffer[target_layer], buffer[target_layer]+bytes_consumed,
+                    (buffer_size[target_layer]-=bytes_consumed)); */
         buffer_size[target_layer] -= bytes_consumed;
     }
     else
@@ -1411,7 +1411,7 @@ Bool PVDecodeVopBody(VideoDecControls *decCtrl, int32 buffer_size[])
 
         case PV_END_OF_VOP :
             /* we may want to differenciate PV_END_OF_VOP and PV_SUCCESS */
-            /*    in the future.     05/10/2000						 */
+            /*    in the future.     05/10/2000                      */
 
         case PV_SUCCESS :
             /* Nohting is wrong :). */
@@ -1456,20 +1456,20 @@ OSCL_EXPORT_REF void PVSetReferenceYUV(VideoDecControls *decCtrl, uint8 *YUV)
     oscl_memset(video->prevVop->yChan, 16, sizeof(uint8)*decCtrl->size);     /*  10/31/01 */
     oscl_memset(video->prevVop->uChan, 128, sizeof(uint8)*decCtrl->size / 2);
     video->concealFrame = video->prevVop->yChan;               /*  07/07/2001 */
-    decCtrl->outputFrame = video->prevVop->yChan;			   /*  06/19/2002 */
+    decCtrl->outputFrame = video->prevVop->yChan;              /*  06/19/2002 */
 }
 #endif
 
 
 /* ======================================================================== */
-/*	Function : VideoDecoderErrorDetected()									*/
-/*	Date     : 06/20/2000													*/
-/*	Purpose  :																*/
-/*	In/out   :																*/
-/*	Return   : This function will be called everytime an error int the		*/
-/*				bitstream is detected.										*/
-/*	Note     :																*/
-/*	Modified :																*/
+/*  Function : VideoDecoderErrorDetected()                                  */
+/*  Date     : 06/20/2000                                                   */
+/*  Purpose  :                                                              */
+/*  In/out   :                                                              */
+/*  Return   : This function will be called everytime an error int the      */
+/*              bitstream is detected.                                      */
+/*  Note     :                                                              */
+/*  Modified :                                                              */
 /* ======================================================================== */
 uint VideoDecoderErrorDetected(VideoDecData * video)
 {
@@ -1482,16 +1482,16 @@ uint VideoDecoderErrorDetected(VideoDecData * video)
 #include <stdio.h>
 #include <stdarg.h>
 /* ======================================================================== */
-/*	Function : m4vdec_dprintf()												*/
-/*	Date     : 08/15/2000													*/
-/*	Purpose  : This is a function that logs messages in the mpeg4 video		*/
-/*			   decoder.  We can call the standard PacketVideo PVMessage		*/
-/*			   from inside this function if necessary.						*/
-/*	In/out   :																*/
-/*	Return   :																*/
-/*	Note     : To turn on the logging, LOG_MP4DEC_MESSAGE must be defined	*/
-/*				when compiling this file (only this file).					*/
-/*	Modified :																*/
+/*  Function : m4vdec_dprintf()                                             */
+/*  Date     : 08/15/2000                                                   */
+/*  Purpose  : This is a function that logs messages in the mpeg4 video     */
+/*             decoder.  We can call the standard PacketVideo PVMessage     */
+/*             from inside this function if necessary.                      */
+/*  In/out   :                                                              */
+/*  Return   :                                                              */
+/*  Note     : To turn on the logging, LOG_MP4DEC_MESSAGE must be defined   */
+/*              when compiling this file (only this file).                  */
+/*  Modified :                                                              */
 /* ======================================================================== */
 void m4vdec_dprintf(char *format, ...)
 {
@@ -1512,13 +1512,13 @@ void m4vdec_dprintf(char *format, ...)
 
 
 /* ======================================================================== */
-/*	Function : IsIntraFrame()												*/
-/*	Date     : 05/29/2000													*/
-/*	Purpose  :																*/
-/*	In/out   :																*/
-/*	Return   : The most recently decoded frame is an Intra frame.			*/
-/*	Note     :																*/
-/*	Modified :																*/
+/*  Function : IsIntraFrame()                                               */
+/*  Date     : 05/29/2000                                                   */
+/*  Purpose  :                                                              */
+/*  In/out   :                                                              */
+/*  Return   : The most recently decoded frame is an Intra frame.           */
+/*  Note     :                                                              */
+/*  Modified :                                                              */
 /* ======================================================================== */
 Bool IsIntraFrame(VideoDecControls *decCtrl)
 {
@@ -1527,13 +1527,13 @@ Bool IsIntraFrame(VideoDecControls *decCtrl)
 }
 
 /* ======================================================================== */
-/*	Function : PVDecPostProcess()											*/
-/*	Date     : 01/09/2002													*/
-/*	Purpose  : PostProcess one video frame and return a YUV-12 image.		*/
-/*	In/out   :																*/
-/*	Return   :																*/
-/*	Note     :																*/
-/*	Modified :																*/
+/*  Function : PVDecPostProcess()                                           */
+/*  Date     : 01/09/2002                                                   */
+/*  Purpose  : PostProcess one video frame and return a YUV-12 image.       */
+/*  In/out   :                                                              */
+/*  Return   :                                                              */
+/*  Note     :                                                              */
+/*  Modified :                                                              */
 /* ======================================================================== */
 void PVDecPostProcess(VideoDecControls *decCtrl, uint8 *outputYUV)
 {
@@ -1581,15 +1581,15 @@ void PVDecPostProcess(VideoDecControls *decCtrl, uint8 *outputYUV)
 
 
 /* ======================================================================== */
-/*	Function : PVDecSetReference(VideoDecControls *decCtrl, uint8 *refYUV,	*/
-/*								int32 timestamp)							*/
-/*	Date     : 07/22/2003													*/
-/*	Purpose  : Get YUV reference frame from external source.				*/
-/*	In/out   : YUV 4-2-0 frame containing new reference frame in the same	*/
-/*	 : dimension as original, i.e., doesn't have to be multiple of 16 !!!.	*/
-/*	Return   :																*/
-/*	Note     :																*/
-/*	Modified :																*/
+/*  Function : PVDecSetReference(VideoDecControls *decCtrl, uint8 *refYUV,  */
+/*                              int32 timestamp)                            */
+/*  Date     : 07/22/2003                                                   */
+/*  Purpose  : Get YUV reference frame from external source.                */
+/*  In/out   : YUV 4-2-0 frame containing new reference frame in the same   */
+/*   : dimension as original, i.e., doesn't have to be multiple of 16 !!!.  */
+/*  Return   :                                                              */
+/*  Note     :                                                              */
+/*  Modified :                                                              */
 /* ======================================================================== */
 Bool PVDecSetReference(VideoDecControls *decCtrl, uint8 *refYUV, uint32 timestamp)
 {
@@ -1622,15 +1622,15 @@ Bool PVDecSetReference(VideoDecControls *decCtrl, uint8 *refYUV, uint32 timestam
 }
 
 /* ======================================================================== */
-/*	Function : PVDecSetEnhReference(VideoDecControls *decCtrl, uint8 *refYUV,	*/
-/*								int32 timestamp)							*/
-/*	Date     : 07/23/2003													*/
-/*	Purpose  : Get YUV enhance reference frame from external source.		*/
-/*	In/out   : YUV 4-2-0 frame containing new reference frame in the same	*/
-/*	 : dimension as original, i.e., doesn't have to be multiple of 16 !!!.	*/
-/*	Return   :																*/
-/*	Note     :																*/
-/*	Modified :																*/
+/*  Function : PVDecSetEnhReference(VideoDecControls *decCtrl, uint8 *refYUV,   */
+/*                              int32 timestamp)                            */
+/*  Date     : 07/23/2003                                                   */
+/*  Purpose  : Get YUV enhance reference frame from external source.        */
+/*  In/out   : YUV 4-2-0 frame containing new reference frame in the same   */
+/*   : dimension as original, i.e., doesn't have to be multiple of 16 !!!.  */
+/*  Return   :                                                              */
+/*  Note     :                                                              */
+/*  Modified :                                                              */
 /* ======================================================================== */
 Bool PVDecSetEnhReference(VideoDecControls *decCtrl, uint8 *refYUV, uint32 timestamp)
 {
@@ -1665,13 +1665,13 @@ Bool PVDecSetEnhReference(VideoDecControls *decCtrl, uint8 *refYUV, uint32 times
 
 
 /* ======================================================================== */
-/*	Function : PVGetVolInfo()												*/
-/*	Date     : 08/06/2003													*/
-/*	Purpose  : Get the vol info(only base-layer).							*/
-/*	In/out   :																*/
-/*	Return   :																*/
-/*	Note     :																*/
-/*	Modified : 06/24/2004													*/
+/*  Function : PVGetVolInfo()                                               */
+/*  Date     : 08/06/2003                                                   */
+/*  Purpose  : Get the vol info(only base-layer).                           */
+/*  In/out   :                                                              */
+/*  Return   :                                                              */
+/*  Note     :                                                              */
+/*  Modified : 06/24/2004                                                   */
 /* ======================================================================== */
 Bool PVGetVolInfo(VideoDecControls *decCtrl, VolInfo *pVolInfo)
 {
@@ -1686,8 +1686,8 @@ Bool PVGetVolInfo(VideoDecControls *decCtrl, VolInfo *pVolInfo)
     pVolInfo->shortVideoHeader = (int32)((VideoDecData *)(decCtrl->videoDecoderData))->shortVideoHeader;
     pVolInfo->dataPartitioning = (int32)currVol->dataPartitioning;
     pVolInfo->errorResDisable  = (int32)currVol->errorResDisable;
-    pVolInfo->useReverseVLC	   = (int32)currVol->useReverseVLC;
-    pVolInfo->scalability	   = (int32)currVol->scalability;
+    pVolInfo->useReverseVLC    = (int32)currVol->useReverseVLC;
+    pVolInfo->scalability      = (int32)currVol->scalability;
     pVolInfo->nbitsTimeIncRes  = (int32)currVol->nbitsTimeIncRes;
     pVolInfo->profile_level_id = (int32)currVol->profile_level_id;
 

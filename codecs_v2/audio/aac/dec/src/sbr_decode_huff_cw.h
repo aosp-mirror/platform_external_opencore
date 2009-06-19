@@ -79,7 +79,7 @@ extern "C"
 #endif
 
     Int32 sbr_decode_huff_cw(SbrHuffman h,
-                             BIT_BUFFER * hBitBuf);
+    BIT_BUFFER * hBitBuf);
 
 #ifdef __cplusplus
 }

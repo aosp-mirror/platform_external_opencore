@@ -23,7 +23,7 @@
 #endif
 
 #include <stdio.h> //sprintf
-#include <time.h>	  // OSCL clock
+#include <time.h>     // OSCL clock
 #include <sys/time.h> // timeval
 
 #define OSCL_CLOCK_HAS_DRIFT_CORRECTION 0

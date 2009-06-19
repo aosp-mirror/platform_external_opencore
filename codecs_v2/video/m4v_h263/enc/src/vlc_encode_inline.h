@@ -26,7 +26,7 @@ __inline  Int zero_run_search(UInt *bitmapzz, Short *dataBlock, RunLevelBlock *R
     UInt end, match;
 
     idx = 0;
-    j	= 0;
+    j   = 0;
     run = 0;
     match = 1 << 31;
     if (nc > 32)
@@ -119,7 +119,7 @@ __inline  Int zero_run_search(UInt *bitmapzz, Short *dataBlock, RunLevelBlock *R
 
     idx = 0;
     run = 0;
-    j	= -1;
+    j   = -1;
     __asm
     {
         ldr match, [bitmapzz]
@@ -133,14 +133,14 @@ __inline  Int zero_run_search(UInt *bitmapzz, Short *dataBlock, RunLevelBlock *R
         __asm
         {
             mov end, #0x80000000
-            mov end, end, lsr run	/* mask*/
-            bic match, match, end		/* remove it from bitmap */
+            mov end, end, lsr run   /* mask*/
+            bic match, match, end       /* remove it from bitmap */
             mov run, run, lsl #1  /* 05/09/02 */
             ldrsh level, [dataBlock, run] /*  load data */
             strh zzorder, [dataBlock, run] /* reset output */
             add j, j, #1
-            rsb run, j, run, lsr #1	/* delta run */
-            add	j, j, run			/* current position */
+            rsb run, j, run, lsr #1 /* delta run */
+            add j, j, run           /* current position */
         }
         if (level < 0)
         {
@@ -174,15 +174,15 @@ __inline  Int zero_run_search(UInt *bitmapzz, Short *dataBlock, RunLevelBlock *R
         __asm
         {
             mov end, #0x80000000
-            mov end, end, lsr run	/* mask*/
-            bic match, match, end		/* remove it from bitmap */
-            add run, run, #32		/* current position */
-            mov	run, run, lsl #1	/* 09/02/05 */
+            mov end, end, lsr run   /* mask*/
+            bic match, match, end       /* remove it from bitmap */
+            add run, run, #32       /* current position */
+            mov run, run, lsl #1    /* 09/02/05 */
             ldrsh level, [dataBlock, run] /*  load data */
             strh  zzorder, [dataBlock, run] /* reset output */
             add j, j, #1
-            rsb	run, j, run, lsr #1		/* delta run */
-            add	j, j, run			/* current position */
+            rsb run, j, run, lsr #1     /* delta run */
+            add j, j, run           /* current position */
         }
         if (level < 0)
         {
@@ -233,7 +233,7 @@ __inline  Int zero_run_search(UInt *bitmapzz, Short *dataBlock, RunLevelBlock *R
 
     idx = 0;
     run = 0;
-    j	= -1;
+    j   = -1;
     match = *bitmapzz;
     run = m4v_enc_clz(match);
 

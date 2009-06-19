@@ -29,12 +29,12 @@
 ------------------------------------------------------------------------------
  INPUT AND OUTPUT DEFINITIONS
 
-	INPUT
+    INPUT
 
 
-	OUTPUT
+    OUTPUT
 
-	errorCode, noError if successful
+    errorCode, noError if successful
 
 ------------------------------------------------------------------------------
  FUNCTION DESCRIPTION

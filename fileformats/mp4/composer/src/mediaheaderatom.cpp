@@ -81,7 +81,7 @@ PVA_FF_MediaHeaderAtom::updateLastTSEntry(uint32 ts)
 {
 
     setDuration(ts);
-    _deltaTS = 0;	// made 0 so that duration can not be updated before rendoring
+    _deltaTS = 0;   // made 0 so that duration can not be updated before rendoring
     // in movie fragment mode
 }
 

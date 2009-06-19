@@ -18,10 +18,10 @@
 #include "pvdl_config_file.h"
 #include "pvmf_protocolengine_node_tunables.h"
 
-#define PVDLCONFIGFILE_VECTOR_RESERVE_NUMBER	4
-#define PVDLCONFIGFILE_TEMPORARY_BUFFER_SIZE	4096
-#define PVDLCONFIGFILE_FIXED_HEADER_SIZE		100 // 96+4
-#define PVDLCONFIGFILE_FILE_CACHE_BUFFER_SIZE	1024
+#define PVDLCONFIGFILE_VECTOR_RESERVE_NUMBER    4
+#define PVDLCONFIGFILE_TEMPORARY_BUFFER_SIZE    4096
+#define PVDLCONFIGFILE_FIXED_HEADER_SIZE        100 // 96+4
+#define PVDLCONFIGFILE_FILE_CACHE_BUFFER_SIZE   1024
 
 
 OSCL_EXPORT_REF PVDlCfgFile::PVDlCfgFile()
@@ -92,11 +92,11 @@ OSCL_EXPORT_REF void PVDlCfgFile::SetDownloadType(bool aIsFastTrack)
 {
     if (aIsFastTrack)
     {
-        iFlag	|= 0x1;
+        iFlag   |= 0x1;
     }
     else
     {
-        iFlag	&= (~0x1);
+        iFlag   &= (~0x1);
     }
 }
 
@@ -107,14 +107,14 @@ OSCL_EXPORT_REF bool PVDlCfgFile::IsFastTrack(void)
 
 OSCL_EXPORT_REF void PVDlCfgFile::SetDonwloadComplete(void)
 {
-    iFlag	|=	0x2;
+    iFlag   |=  0x2;
 }
 
 OSCL_EXPORT_REF void PVDlCfgFile::SetPlaybackMode(TPVDLPlaybackMode aPlaybackMode)
 {
-    iFlag	&=	(~0xC);	//clear
+    iFlag   &= (~0xC);  //clear
     uint32 playbackModeBit = OSCL_STATIC_CAST(uint32, aPlaybackMode);
-    iFlag	|=	(playbackModeBit << 2);
+    iFlag   |= (playbackModeBit << 2);
 }
 
 OSCL_EXPORT_REF PVDlCfgFile::TPVDLPlaybackMode PVDlCfgFile::GetPlaybackMode(void)
@@ -358,7 +358,7 @@ OSCL_EXPORT_REF int32 PVDlCfgFile::LoadConfig(void)
         iFlag = *tmpPtr++;
         uint32 aUrlLen = *tmpPtr++;
 
-        uint32 aHostNameLen = *tmpPtr++;	//if proxy is in use, it is the proxy address len
+        uint32 aHostNameLen = *tmpPtr++;    //if proxy is in use, it is the proxy address len
         iProxyPort = *tmpPtr++;
 
         //client only downloads the clip which is smaller than this size
@@ -563,42 +563,42 @@ OSCL_EXPORT_REF int32 PVDlCfgFile::LoadConfig(void)
 void PVDlCfgFile::composeFixedHeader(uint8 *aBuf)
 {
     uint32 *tmpPtr = OSCL_STATIC_CAST(uint32*, aBuf);
-    *tmpPtr++ = 	iMagic32;
-    *tmpPtr++ = 	iVersion;
+    *tmpPtr++ =     iMagic32;
+    *tmpPtr++ =     iVersion;
 
     //flag for download type 3gpp/fasttrack, download complete, and playback modes
-    *tmpPtr++ = 	iFlag;
-    *tmpPtr++ = 	iUrl.get_size();
-    *tmpPtr++ = 	iProxyName.get_size();	//if proxy is in use, it is the proxy address len
-    *tmpPtr++ = 	iProxyPort;
+    *tmpPtr++ =     iFlag;
+    *tmpPtr++ =     iUrl.get_size();
+    *tmpPtr++ =     iProxyName.get_size();  //if proxy is in use, it is the proxy address len
+    *tmpPtr++ =     iProxyPort;
 
     //client only downloads the clip which is smaller than this size
-    *tmpPtr++ = 	iMaxAllowedFileSize;
+    *tmpPtr++ =     iMaxAllowedFileSize;
     //the file size after it is completly downloaded.
-    *tmpPtr++ = 	iOverallFileSize;
+    *tmpPtr++ =     iOverallFileSize;
     //for FastTrack, this would be the accumulated bytes downloaded
-    *tmpPtr++ = 	iCurrentFileSize;
+    *tmpPtr++ =     iCurrentFileSize;
     // flag of whether to have content length for the previous download
-    *tmpPtr++ =		iHasContentLength;
+    *tmpPtr++ =     iHasContentLength;
 
-    *tmpPtr++ = 	iConnectTimeout;
-    *tmpPtr++ = 	iSendTimeout;
-    *tmpPtr++ = 	iRecvTimeout;
+    *tmpPtr++ =     iConnectTimeout;
+    *tmpPtr++ =     iSendTimeout;
+    *tmpPtr++ =     iRecvTimeout;
 
     //FastTrack only
-    *tmpPtr++ = 	iRangeStartTime; //in ms
-    *tmpPtr++ = 	iSelectedTrackIDs.size();
+    *tmpPtr++ =     iRangeStartTime; //in ms
+    *tmpPtr++ =     iSelectedTrackIDs.size();
 
-    *tmpPtr++ = 	iPlayerVersion.get_size();
-    *tmpPtr++ = 	iUserAgent.get_size();
-    *tmpPtr++ = 	iUserNetwork.get_size();
-    *tmpPtr++ = 	iDeviceInfo.get_size();
-    *tmpPtr++ = 	iUserId.get_size();
-    *tmpPtr++ = 	iUserAuth.get_size();
-    *tmpPtr++ = 	iExpiration.get_size();
-    *tmpPtr++ = 	iAppString.get_size();
-    *tmpPtr++ = 	iFiller.get_size();
-    *tmpPtr++ = 	iSign.get_size();
+    *tmpPtr++ =     iPlayerVersion.get_size();
+    *tmpPtr++ =     iUserAgent.get_size();
+    *tmpPtr++ =     iUserNetwork.get_size();
+    *tmpPtr++ =     iDeviceInfo.get_size();
+    *tmpPtr++ =     iUserId.get_size();
+    *tmpPtr++ =     iUserAuth.get_size();
+    *tmpPtr++ =     iExpiration.get_size();
+    *tmpPtr++ =     iAppString.get_size();
+    *tmpPtr++ =     iFiller.get_size();
+    *tmpPtr++ =     iSign.get_size();
 }
 
 

@@ -87,8 +87,8 @@ extern "C"
 #endif
 
     Int32 ps_read_data(STRUCT_PS_DEC *ps_dec,
-                       BIT_BUFFER * hBitBuf,
-                       Int32 nBitsLeft);
+    BIT_BUFFER * hBitBuf,
+    Int32 nBitsLeft);
 
 #ifdef __cplusplus
 }

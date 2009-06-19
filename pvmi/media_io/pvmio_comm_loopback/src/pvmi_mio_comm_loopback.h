@@ -152,9 +152,9 @@ class PvmiMIOCommLoopbackMediaData
 
 
 class PvmiMIOCommLoopback : public OsclTimerObject,
-            public PvmiMIOControl,
-            public PvmiMediaTransfer,
-            public PvmiCapabilityAndConfig
+        public PvmiMIOControl,
+        public PvmiMediaTransfer,
+        public PvmiCapabilityAndConfig
 {
     public:
         PvmiMIOCommLoopback(const PvmiMIOCommLoopbackSettings& aSettings);

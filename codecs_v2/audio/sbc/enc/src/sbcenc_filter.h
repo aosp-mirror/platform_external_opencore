@@ -15,8 +15,8 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-#ifndef		__FILTER__
-#define		__FILTER__
+#ifndef     __FILTER__
+#define     __FILTER__
 
 #include "oscl_types.h"
 
@@ -121,9 +121,9 @@ __inline Int MULT(Int a, Int b, Int shift)
 
 #else
 
-#define FMULT(a, b)	(Int)(((Int64)(a) *  (b)) >> 15) //Output is kept in Q15 format.
-#define FMULT_1(a, b)	(Int)(((Int64)(a) *  (b)) >> 30) //Output is kept in Q15 format.
-#define FMULT_2(a, b)	(Int)(((Int64)(a) *  (b)) >> 16)
+#define FMULT(a, b) (Int)(((Int64)(a) *  (b)) >> 15) //Output is kept in Q15 format.
+#define FMULT_1(a, b)   (Int)(((Int64)(a) *  (b)) >> 30) //Output is kept in Q15 format.
+#define FMULT_2(a, b)   (Int)(((Int64)(a) *  (b)) >> 16)
 
 #endif
 

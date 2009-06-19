@@ -41,10 +41,10 @@
 /************************************************************************/
 /*  Headerfile Include                                                  */
 /************************************************************************/
-#include	"oscl_base.h"
-#include	"oscl_time.h"
+#include    "oscl_base.h"
+#include    "oscl_time.h"
 #include    "h245pri.h"
-#include	"sebase.h"
+#include    "sebase.h"
 
 /************************************************************************/
 /*  Definition                                                          */

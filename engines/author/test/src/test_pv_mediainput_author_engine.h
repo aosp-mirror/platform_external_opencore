@@ -45,7 +45,7 @@
 typedef struct _PVMediaInputTestParam
 {
     FILE* iFile;
-    PVMFFormatType	iInputFormat;
+    PVMFFormatType  iInputFormat;
     OSCL_HeapString<OsclMemAllocator> iIPFileInfo;
     OSCL_HeapString<OsclMemAllocator> iOPFileInfo;
     OSCL_HeapString<OsclMemAllocator> iVideoEncInfo;
@@ -57,7 +57,7 @@ typedef struct _PVMediaInputTestParam
     uint32 iAudioBitrate;
     OsclFloat iFrameRate;
     uint32 iSamplingRate;
-}PVMediaInputTestParam;
+} PVMediaInputTestParam;
 
 typedef struct _PVMediaInputAuthorEngineTestParam
 {
@@ -66,7 +66,7 @@ typedef struct _PVMediaInputAuthorEngineTestParam
     bool iAsap;
     PVMediaInputTestParam iMediainputParam;
 
-}PVMediaInputAuthorEngineTestParam;
+} PVMediaInputAuthorEngineTestParam;
 
 class PVMIOControlComp
 {
@@ -263,21 +263,21 @@ class PVMIOControlComp
 
         }
 
-        PVAviFile*						   iPVAviFile;
-        PV_Wav_Parser*					   iPVWavFile;
+        PVAviFile*                         iPVAviFile;
+        PV_Wav_Parser*                     iPVWavFile;
         PVLogger*                          iLogger;
         Oscl_Vector < PVMFNodeInterface*,
         OsclMemAllocator >    iMIONode;
         Oscl_Vector < PvmiMIOControl*,
         OsclMemAllocator >    iMediaInput;
-        uint32							   iLoopDuration;
-        OsclFloat						   iFileDuration;
+        uint32                             iLoopDuration;
+        OsclFloat                          iFileDuration;
 };
 
 
 class PVMediaInputAuthorEngineTest: public test_case,
-            public pvauthor_async_test_observer,
-            public PVLoggerSchedulerSetup
+        public pvauthor_async_test_observer,
+        public PVLoggerSchedulerSetup
 {
     public:
         PVMediaInputAuthorEngineTest(PVMediaInputAuthorEngineTestParam aTestParam):
@@ -296,7 +296,7 @@ class PVMediaInputAuthorEngineTest: public test_case,
         virtual void test();
         virtual void CompleteTest(test_case& arTC);
         void RunTestCases();
-        bool	 Set_Default_Params(int32 aTestnum, PVMediaInputTestParam& aMediaInputParam);
+        bool     Set_Default_Params(int32 aTestnum, PVMediaInputTestParam& aMediaInputParam);
         void Print_TestCase_Name(int32 aTestnum);
 
     private:
@@ -304,7 +304,7 @@ class PVMediaInputAuthorEngineTest: public test_case,
         int32                     iFirstTest;
         int32                     iLastTest;
         int32                     iNextTestCase;
-        bool					  iAsap;
+        bool                      iAsap;
         FILE*                     iFile;
         // For test results
         int                       iTotalSuccess;

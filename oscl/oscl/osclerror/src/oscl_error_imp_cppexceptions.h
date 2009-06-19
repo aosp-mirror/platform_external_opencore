@@ -56,28 +56,28 @@ class internalLeave
 //_PV_TRAP catches Leaves.
 //_r is the leave code, _s are statements to execute
 #define _PV_TRAP(__r,__s)\
-	__r=OsclErrNone;\
-	{\
-		OsclErrorTrapImp* __tr=OsclErrorTrapImp::Trap();\
-		if(!__tr){__s;}else{\
-		try{__s;}\
-		catch(internalLeave __lv)\
-		{__lv.a=__r=__tr->iLeave;}\
-		__tr->UnTrap();}\
-	}
+    __r=OsclErrNone;\
+    {\
+        OsclErrorTrapImp* __tr=OsclErrorTrapImp::Trap();\
+        if(!__tr){__s;}else{\
+        try{__s;}\
+        catch(internalLeave __lv)\
+        {__lv.a=__r=__tr->iLeave;}\
+        __tr->UnTrap();}\
+    }
 
 //_PV_TRAP_NO_TLS catches Leaves.
 //_r is the leave code, _s are statements to execute
 #define _PV_TRAP_NO_TLS(__trapimp,__r,__s)\
-	__r=OsclErrNone;\
-	{\
-		OsclErrorTrapImp* __tr=OsclErrorTrapImp::TrapNoTls(__trapimp);\
-		if(!__tr){__s;}else{\
-		try{__s;}\
-		catch(internalLeave __lv)\
-		{__lv.a=__r=__tr->iLeave;}\
-		__tr->UnTrap();}\
-	}
+    __r=OsclErrNone;\
+    {\
+        OsclErrorTrapImp* __tr=OsclErrorTrapImp::TrapNoTls(__trapimp);\
+        if(!__tr){__s;}else{\
+        try{__s;}\
+        catch(internalLeave __lv)\
+        {__lv.a=__r=__tr->iLeave;}\
+        __tr->UnTrap();}\
+    }
 
 
 #endif // OSCL_ERROR_IMP_CPPEXCEPTIONS_H_INCLUDED

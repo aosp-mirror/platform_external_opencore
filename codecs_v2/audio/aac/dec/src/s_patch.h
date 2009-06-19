@@ -81,9 +81,9 @@ Copyright (c) ISO/IEC 2002.
 ----------------------------------------------------------------------------*/
 #define MAX_NUM_PATCHES   6
 
-#define		SBR_NUM_COLUMNS	     38
-#define		SBR_NUM_BANDS	     48
-#define		SBR_NUM_BANDS_OVR_4	(SBR_NUM_BANDS>>2)
+#define     SBR_NUM_COLUMNS      38
+#define     SBR_NUM_BANDS        48
+#define     SBR_NUM_BANDS_OVR_4 (SBR_NUM_BANDS>>2)
 
 /*----------------------------------------------------------------------------
 ; EXTERNAL VARIABLES REFERENCES

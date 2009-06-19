@@ -34,16 +34,16 @@ enum HTTPVersion
 // HTTPMethod enum
 enum HTTPMethod
 {
-    HTTP_METHOD_GET = 0,			// both HTTP 1.0 and HTTP 1.1
-    HTTP_METHOD_HEAD,			// both HTTP 1.0 and HTTP 1.1
-    HTTP_METHOD_POST,			// both HTTP 1.0 and HTTP 1.1
-    HTTP_METHOD_DELETE,			// both HTTP 1.0 and HTTP 1.1
-    HTTP_METHOD_LINK,			// HTTP 1.0 only
-    HTTP_METHOD_UNLINK,			// HTTP 1.0 only
-    HTTP_METHOD_OPTIONS,		// HTTP 1.1 only
-    HTTP_METHOD_PUT,			// HTTP 1.1 only
-    HTTP_METHOD_TRACE,			// HTTP 1.1 only
-    HTTP_METHOD_CONNECT,		// HTTP 1.1 only
+    HTTP_METHOD_GET = 0,            // both HTTP 1.0 and HTTP 1.1
+    HTTP_METHOD_HEAD,           // both HTTP 1.0 and HTTP 1.1
+    HTTP_METHOD_POST,           // both HTTP 1.0 and HTTP 1.1
+    HTTP_METHOD_DELETE,         // both HTTP 1.0 and HTTP 1.1
+    HTTP_METHOD_LINK,           // HTTP 1.0 only
+    HTTP_METHOD_UNLINK,         // HTTP 1.0 only
+    HTTP_METHOD_OPTIONS,        // HTTP 1.1 only
+    HTTP_METHOD_PUT,            // HTTP 1.1 only
+    HTTP_METHOD_TRACE,          // HTTP 1.1 only
+    HTTP_METHOD_CONNECT,        // HTTP 1.1 only
 };
 
 // forward declaration
@@ -80,7 +80,7 @@ class HTTPComposer
          * The flag aNeedReplaceOldValue tells the library whether to replace the old value with the new value for the same field, if there is,
          * For HTTP, there is a typical situation where multiple same fields can be set at the same time, for example, field "Pragma". The
          * user can set all the implementation specifics for one "Pragma", or multiple "Pragma". So by default, if we run into the same
-         * field, we won't replace the old value with the new value unless the user requires to do it.		 *
+         * field, we won't replace the old value with the new value unless the user requires to do it.       *
          * @param aNewFieldName, input field name
          * @param aNewFieldValue, input field value name
          * @param aNeedReplaceOldValue, flag of whether the new value replaces the old value

@@ -130,7 +130,7 @@ class MultiplexEntrySendMgr : public HeapBase
         void T104TimerStart(void) ;
         void T104TimerStop(void) ;
 
-        MTEntries		iOutMTEntries;
+        MTEntries       iOutMTEntries;
         MultiplexEntrySendUtility* iUtil;
         int32            iSn;
         uint32           iStatus;
@@ -185,7 +185,7 @@ class MT : public SEBase, public MultiplexEntrySendUtility, public OsclTimerObse
 
         void StatusWrite(uint8 status)
         {
-            if (status & 0x01)  	                  /* Incoming */
+            if (status & 0x01)                        /* Incoming */
             {
 #ifdef PVANALYZER /* --------SE Analyzer Tool -------- */
                 StatusShow(Status2, status);
@@ -234,11 +234,11 @@ class MT : public SEBase, public MultiplexEntrySendUtility, public OsclTimerObse
             TmrSqcNumber++;
         }
 
-        uint8			Status2;
+        uint8           Status2;
         int32             OutSqc;
         int32             InSqc;
         int32             TmrSqcNumber;
-        MTEntries		InMTEntries;
+        MTEntries       InMTEntries;
         PendingMtSendMap iPendingMtSend;
         OsclTimer<OsclMemAllocator> iTimer;
 };

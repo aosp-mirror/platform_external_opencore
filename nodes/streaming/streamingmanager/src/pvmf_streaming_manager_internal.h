@@ -78,27 +78,27 @@
 
 #define PVMF_STREAMING_MANAGER_NEW(auditCB,T,params,ptr)\
 {\
-	ptr = OSCL_NEW(T,params);\
+    ptr = OSCL_NEW(T,params);\
 }
 
 #define PVMF_STREAMING_MANAGER_DELETE(auditCB,T,ptr)\
 {\
-	OSCL_DELETE(ptr);\
+    OSCL_DELETE(ptr);\
 }
 
 #define PVMF_STREAMING_MANAGER_TEMPLATED_DELETE(auditCB, T, Tsimple, ptr)\
 {\
-	OSCL_DELETE(ptr);\
+    OSCL_DELETE(ptr);\
 }
 
 #define PV_STREAMING_MANAGER_ARRAY_NEW(auditCB, T, count, ptr)\
 {\
-	ptr = OSCL_ARRAY_NEW(T, count);\
+    ptr = OSCL_ARRAY_NEW(T, count);\
 }
 
 #define PV_STREAMING_MANAGER_ARRAY_DELETE(auditCB, ptr)\
 {\
-	OSCL_ARRAY_DELETE(ptr);\
+    OSCL_ARRAY_DELETE(ptr);\
 }
 
 template <class T> class PVMFSMSharedPtrAlloc: public OsclDestructDealloc
@@ -316,7 +316,7 @@ class PVMFSMASFHeaderInfo
             iASFPreRollDuration = 0;
             iASFBroadCastFlag   = 0;
             iASFStreamRate      = PVMF_STREAMING_MAANGER_NODE_DEFAULT_STREAM_SPEED;
-            iASFDRMProtected	= false;
+            iASFDRMProtected    = false;
         };
 
         virtual ~PVMFSMASFHeaderInfo()
@@ -336,7 +336,7 @@ class PVMFSMASFHeaderInfo
         uint64        iASFPreRollDuration;
         uint8         iASFBroadCastFlag;
         uint32        iASFStreamRate;
-        bool		  iASFDRMProtected;
+        bool          iASFDRMProtected;
 };
 
 class PVMFSMSessionSourceInfo
@@ -361,14 +361,14 @@ class PVMFSMSessionSourceInfo
 class PVMFStreamingManagerNode;
 
 class PVMFStreamingManagerExtensionInterfaceImpl :
-            public PVInterfaceImpl<PVMFStreamingManagerNodeAllocator>,
-            public PVMFDataSourceInitializationExtensionInterface,
-            public PVMFTrackSelectionExtensionInterface,
-            public PVMFStreamingManagerExtensionInterface,
-            public PvmfDataSourcePlaybackControlInterface,
-            public PVMFMetadataExtensionInterface,
-            public PvmiCapabilityAndConfig,
-            public PVMFCPMPluginLicenseInterface
+        public PVInterfaceImpl<PVMFStreamingManagerNodeAllocator>,
+        public PVMFDataSourceInitializationExtensionInterface,
+        public PVMFTrackSelectionExtensionInterface,
+        public PVMFStreamingManagerExtensionInterface,
+        public PvmfDataSourcePlaybackControlInterface,
+        public PVMFMetadataExtensionInterface,
+        public PvmiCapabilityAndConfig,
+        public PVMFCPMPluginLicenseInterface
 {
     public:
         PVMFStreamingManagerExtensionInterfaceImpl(PVMFStreamingManagerNode*,

@@ -74,7 +74,7 @@ class TSC_blc
                        PS_DataType pDataTypeReverse,
                        PS_H223LogicalChannelParameters pH223ParamsReverse);
         void BlcEtbRps(TPVChannelId, TPVChannelId);
-        TPVDirection BlcRlsReq(int32, uint32, uint32);	// add cause parameter
+        TPVDirection BlcRlsReq(int32, uint32, uint32);  // add cause parameter
     private:
         H245* iH245;
         TSC_statemanager& iTSCstatemanager;

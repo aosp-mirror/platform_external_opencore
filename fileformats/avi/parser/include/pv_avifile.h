@@ -335,5 +335,5 @@ class PVAviFile: public PVAviFileParserStatus
 
 };
 
-#endif		//#ifndef PV_AVIFILE_H_INCLUDED
+#endif      //#ifndef PV_AVIFILE_H_INCLUDED
 

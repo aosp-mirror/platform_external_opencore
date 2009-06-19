@@ -160,7 +160,7 @@ typedef struct vbriHeader_tag
     int32 fTableEntry;
     int32 *TOC;
     int32 sampleRate;
-}VBRIHeaderType;
+} VBRIHeaderType;
 
 
 typedef enum VBRType

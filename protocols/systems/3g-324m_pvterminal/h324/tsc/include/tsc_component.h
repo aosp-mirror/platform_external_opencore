@@ -73,7 +73,7 @@ class TSC_clc;
 
 
 class TSC_component : public OsclTimerObserver,
-            public PVMFComponentInterface
+        public PVMFComponentInterface
 {
     public:
         TSC_component(TSC_statemanager& aTSCStateManager,
@@ -112,7 +112,7 @@ class TSC_component : public OsclTimerObserver,
             return iVideoLayer;
         }
 
-        void ClipCodecs(PS_TerminalCapabilitySet pTcs);			// (RAN-32K)
+        void ClipCodecs(PS_TerminalCapabilitySet pTcs);         // (RAN-32K)
 
         // mux descriptors
         CPVMultiplexEntryDescriptor* GenerateSingleDescriptor(uint8 entry_num, TPVChannelId lcn1);
@@ -292,7 +292,7 @@ class TSC_component : public OsclTimerObserver,
         bool iAllowAl3Video;
         bool iAllowAl1Audio;
         bool iAllowAl2Audio;
-        bool iAllowAl3Audio;		/*   (These are sent in outgoing CE) */
+        bool iAllowAl3Audio;        /*   (These are sent in outgoing CE) */
         bool iUseAl1Video;
         bool iUseAl2Video;
         bool iUseAl3Video;
@@ -314,14 +314,14 @@ class TSC_component : public OsclTimerObserver,
         /* AL2 with/without sequence numbers */
         bool iAl2WithSn;
 
-        unsigned iRemoteAl1Audio;			/* Remote terminal */
-        unsigned iRemoteAl2Audio;			/* Remote terminal */
-        unsigned iRemoteAl3Audio;			/*   (These are received in incoming CE) */
-        unsigned iRemoteAl1Video;			/* Remote terminal */
-        unsigned iRemoteAl2Video;			/* Remote terminal */
-        unsigned iRemoteAl3Video;			/*   (These are received in incoming CE) */
+        unsigned iRemoteAl1Audio;           /* Remote terminal */
+        unsigned iRemoteAl2Audio;           /* Remote terminal */
+        unsigned iRemoteAl3Audio;           /*   (These are received in incoming CE) */
+        unsigned iRemoteAl1Video;           /* Remote terminal */
+        unsigned iRemoteAl2Video;           /* Remote terminal */
+        unsigned iRemoteAl3Video;           /*   (These are received in incoming CE) */
 
-        TPVAdaptationLayer iVideoLayer;			/* Layer to use, decided by local terminal */
+        TPVAdaptationLayer iVideoLayer;         /* Layer to use, decided by local terminal */
         /*   (0=undetermined, 2=AL2, 3=AL3) */
         OsclSharedPtr<S_TerminalCapabilitySet> iRemoteTcs;
 

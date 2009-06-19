@@ -21,16 +21,16 @@
 #include "m4venc_oscl.h"
 
 //#define PRINT_MV
-#define MIN_GOP 1	/* minimum size of GOP,  1/23/01, need to be tested */
+#define MIN_GOP 1   /* minimum size of GOP,  1/23/01, need to be tested */
 
-#define CANDIDATE_DISTANCE	0 /* distance candidate from one another to consider as a distinct one */
+#define CANDIDATE_DISTANCE  0 /* distance candidate from one another to consider as a distinct one */
 /* shouldn't be more than 3 */
 
-#define ZERO_MV_PREF	0 /* 0: bias (0,0)MV before full-pel search, lowest complexity*/
+#define ZERO_MV_PREF    0 /* 0: bias (0,0)MV before full-pel search, lowest complexity*/
 /* 1: bias (0,0)MV after full-pel search, before half-pel, highest comp */
 /* 2: bias (0,0)MV after half-pel, high comp, better PSNR */
 
-#define RASTER_REFRESH	/* instead of random INTRA refresh, do raster scan,  2/26/01 */
+#define RASTER_REFRESH  /* instead of random INTRA refresh, do raster scan,  2/26/01 */
 
 #ifdef RASTER_REFRESH
 #define TARGET_REFRESH_PER_REGION 4 /* , no. MB per frame to be INTRA refreshed */
@@ -40,14 +40,14 @@
 
 #define ALL_CAND_EQUAL  10  /*  any number greater than 5 will work */
 
-#define NumPixelMB	256		/*  number of pixels used in SAD calculation */
+#define NumPixelMB  256     /*  number of pixels used in SAD calculation */
 
-#define DEF_8X8_WIN	3	/* search region for 8x8 MVs around the 16x16 MV */
+#define DEF_8X8_WIN 3   /* search region for 8x8 MVs around the 16x16 MV */
 #define MB_Nb  256
 
-#define PREF_NULL_VEC 129	/* for zero vector bias */
-#define PREF_16_VEC 129		/* 1MV bias versus 4MVs*/
-#define PREF_INTRA	512		/* bias for INTRA coding */
+#define PREF_NULL_VEC 129   /* for zero vector bias */
+#define PREF_16_VEC 129     /* 1MV bias versus 4MVs*/
+#define PREF_INTRA  512     /* bias for INTRA coding */
 
 const static Int tab_exclude[9][9] =  // [last_loc][curr_loc]
 {
@@ -73,7 +73,7 @@ extern "C"
 #endif
 
     void MBMotionSearch(VideoEncData *video, UChar *cur, UChar *best_cand[],
-                        Int i0, Int j0, Int type_pred, Int fullsearch, Int *hp_guess);
+    Int i0, Int j0, Int type_pred, Int fullsearch, Int *hp_guess);
 
     Int  fullsearch(VideoEncData *video, Vol *currVol, UChar *ref, UChar *cur,
                     Int *imin, Int *jmin, Int ilow, Int ihigh, Int jlow, Int jhigh);
@@ -96,19 +96,19 @@ extern "C"
 
 /***************************************/
 /*  2/28/01, for HYPOTHESIS TESTING */
-#ifdef HTFM		/* defined in mp4def.h */
+#ifdef HTFM     /* defined in mp4def.h */
 #ifdef __cplusplus
 extern "C"
 {
 #endif
     void CalcThreshold(double pf, double exp_lamda[], Int nrmlz_th[]);
-    void	HTFMPrepareCurMB(VideoEncData *video, HTFM_Stat *htfm_stat, UChar *cur);
+    void    HTFMPrepareCurMB(VideoEncData *video, HTFM_Stat *htfm_stat, UChar *cur);
 #ifdef __cplusplus
 }
 #endif
 
 
-#define HTFM_Pf  0.25	/* 3/2/1, probability of false alarm, can be varied from 0 to 0.5 */
+#define HTFM_Pf  0.25   /* 3/2/1, probability of false alarm, can be varied from 0 to 0.5 */
 /***************************************/
 #endif
 
@@ -127,10 +127,10 @@ ULong num_hp_not_zero = 0;
 
 
 /*==================================================================
-	Function:	MotionEstimation
-	Date:		10/3/2000
-	Purpose:	Go through all macroblock for motion search and
-				determine scene change detection.
+    Function:   MotionEstimation
+    Date:       10/3/2000
+    Purpose:    Go through all macroblock for motion search and
+                determine scene change detection.
 ====================================================================*/
 
 void MotionEstimation(VideoEncData *video)
@@ -138,7 +138,7 @@ void MotionEstimation(VideoEncData *video)
     UChar use_4mv = video->encParams->MV8x8_Enabled;
     Vol *currVol = video->vol[video->currLayer];
     Vop *currVop = video->currVop;
-    VideoEncFrameIO	*currFrame = video->input;
+    VideoEncFrameIO *currFrame = video->input;
     Int i, j, comp;
     Int mbwidth = currVol->nMBPerRow;
     Int mbheight = currVol->nMBPerCol;
@@ -155,8 +155,8 @@ void MotionEstimation(VideoEncData *video)
     Int mbnum, offset;
     UChar *cur, *best_cand[5];
     Int sad8 = 0, sad16 = 0;
-    Int totalSAD = 0;	/* average SAD for rate control */
-    Int	skip_halfpel_4mv;
+    Int totalSAD = 0;   /* average SAD for rate control */
+    Int skip_halfpel_4mv;
     Int f_code_p, f_code_n, max_mag = 0, min_mag = 0;
     Int type_pred;
     Int xh[5] = {0, 0, 0, 0, 0};
@@ -176,13 +176,13 @@ void MotionEstimation(VideoEncData *video)
     FILE *fp_debug;
 #endif
 
-//	FILE *fstat;
-//	static int frame_num = 0;
+//  FILE *fstat;
+//  static int frame_num = 0;
 
     offset = 0;
 
     if (video->currVop->predictionType == I_VOP)
-    {	/* compute the SAV */
+    {   /* compute the SAV */
         mbnum = 0;
         cur = currFrame->yChan;
 
@@ -206,7 +206,7 @@ void MotionEstimation(VideoEncData *video)
 
         ResetIntraUpdate(intraArray, totalMB);
 
-        return 	;
+        return  ;
     }
 
     /* 09/20/05 */
@@ -310,7 +310,7 @@ void MotionEstimation(VideoEncData *video)
                     /* choose between INTRA or INTER */
                     (*ChooseMode)(mode_mb, cur, width, ((sad8 < sad16) ? sad8 : sad16));
                 }
-                else 	/* INTRA update, use for prediction 3/23/01 */
+                else    /* INTRA update, use for prediction 3/23/01 */
                 {
                     mot_mb[0].x = mot_mb[0].y = 0;
                 }
@@ -372,7 +372,7 @@ void MotionEstimation(VideoEncData *video)
                         }
 #endif /* NO_INTER4V */
                     }
-                    else	/* HalfPel_Enabled ==0  */
+                    else    /* HalfPel_Enabled ==0  */
                     {
 #ifndef NO_INTER4V
                         //if(sad16 < sad8-PREF_16_VEC)
@@ -382,7 +382,7 @@ void MotionEstimation(VideoEncData *video)
                         }
 #endif
                     }
-#if (ZERO_MV_PREF==2)	/* use mot_mb[7].sad as d0 computed in MBMotionSearch*/
+#if (ZERO_MV_PREF==2)   /* use mot_mb[7].sad as d0 computed in MBMotionSearch*/
                     /******************************************************/
                     if (mot_mb[7].sad - PREF_NULL_VEC < sad16 && mot_mb[7].sad - PREF_NULL_VEC < sad8)
                     {
@@ -394,7 +394,7 @@ void MotionEstimation(VideoEncData *video)
 #endif
                     if (*mode_mb == MODE_INTER)
                     {
-                        if (mot_mb[0].x == 0 && mot_mb[0].y == 0)	/* use zero vector */
+                        if (mot_mb[0].x == 0 && mot_mb[0].y == 0)   /* use zero vector */
                             mot_mb[0].sad += PREF_NULL_VEC; /* add back the bias */
 
                         mot_mb[1].sad = mot_mb[2].sad = mot_mb[3].sad = mot_mb[4].sad = (mot_mb[0].sad + 2) >> 2;
@@ -443,7 +443,7 @@ void MotionEstimation(VideoEncData *video)
                             min_mag = mot_mb[comp].y;
                     }
                 }
-                else 	/* MODE_INTRA */
+                else    /* MODE_INTRA */
                 {
 #ifdef PRINT_MV
                     fp_debug = fopen("c:\\bitstream\\mv1_debug.txt", "a");
@@ -465,7 +465,7 @@ void MotionEstimation(VideoEncData *video)
             {
                 /******** scene change detected *******************/
                 currVop->predictionType = I_VOP;
-                M4VENC_MEMSET(Mode, MODE_INTRA, sizeof(UChar)*totalMB);	/* set this for MB level coding*/
+                M4VENC_MEMSET(Mode, MODE_INTRA, sizeof(UChar)*totalMB); /* set this for MB level coding*/
                 currVop->quantizer = video->encParams->InitQuantIvop[video->currLayer];
 
                 /* compute the SAV for rate control & fast DCT */
@@ -502,7 +502,7 @@ void MotionEstimation(VideoEncData *video)
         type_pred++; /* second pass */
     }
 
-    video->sumMAD = (float)totalSAD / (float)NumPixelMB;	/* avg SAD */
+    video->sumMAD = (float)totalSAD / (float)NumPixelMB;    /* avg SAD */
 
     /* find f_code , 10/27/2000 */
     f_code_p = 1;
@@ -556,7 +556,7 @@ void InitHTFM(VideoEncData *video, HTFM_Stat *htfm_stat, double *newvar, Int *co
         {
             newvar[i] = 0.0;
         }
-//		video->functionPointer->SAD_MB_PADDING = &SAD_MB_PADDING_HTFM_Collect;
+//      video->functionPointer->SAD_MB_PADDING = &SAD_MB_PADDING_HTFM_Collect;
         video->functionPointer->SAD_Macroblock = &SAD_MB_HTFM_Collect;
         video->functionPointer->SAD_MB_HalfPel[0] = NULL;
         video->functionPointer->SAD_MB_HalfPel[1] = &SAD_MB_HP_HTFM_Collectxh;
@@ -568,7 +568,7 @@ void InitHTFM(VideoEncData *video, HTFM_Stat *htfm_stat, double *newvar, Int *co
     }
     else
     {
-//		video->functionPointer->SAD_MB_PADDING = &SAD_MB_PADDING_HTFM;
+//      video->functionPointer->SAD_MB_PADDING = &SAD_MB_PADDING_HTFM;
         video->functionPointer->SAD_Macroblock = &SAD_MB_HTFM;
         video->functionPointer->SAD_MB_HalfPel[0] = NULL;
         video->functionPointer->SAD_MB_HalfPel[1] = &SAD_MB_HP_HTFMxh;
@@ -657,7 +657,7 @@ void CalcThreshold(double pf, double exp_lamda[], Int nrmlz_th[])
     /* parametric PREMODELling */
     for (i = 0; i < 15; i++)
     {
-        //	  printf("%g ",exp_lamda[i]);
+        //    printf("%g ",exp_lamda[i]);
         if (pf < 0.5)
             temp[i] = 1 / exp_lamda[i] * M4VENC_LOG(2 * pf);
         else
@@ -671,7 +671,7 @@ void CalcThreshold(double pf, double exp_lamda[], Int nrmlz_th[])
     return ;
 }
 
-void	HTFMPrepareCurMB(VideoEncData *video, HTFM_Stat *htfm_stat, UChar *cur)
+void    HTFMPrepareCurMB(VideoEncData *video, HTFM_Stat *htfm_stat, UChar *cur)
 {
     void* tmp = (void*)(video->currYMB);
     ULong *htfmMB = (ULong*)tmp;
@@ -736,7 +736,7 @@ void	HTFMPrepareCurMB(VideoEncData *video, HTFM_Stat *htfm_stat, UChar *cur)
 
 #endif
 
-void	PrepareCurMB(VideoEncData *video, UChar *cur)
+void    PrepareCurMB(VideoEncData *video, UChar *cur)
 {
     void* tmp = (void*)(video->currYMB);
     ULong *currYMB = (ULong*)tmp;
@@ -758,12 +758,12 @@ void	PrepareCurMB(VideoEncData *video, UChar *cur)
 
 
 /*==================================================================
-	Function:	MBMotionSearch
-	Date:		09/06/2000
-	Purpose:	Perform motion estimation for a macroblock.
-				Find 1MV and 4MVs in half-pels resolutions.
-				Using ST1 algorithm provided by Chalidabhongse and Kuo
-				CSVT March'98.
+    Function:   MBMotionSearch
+    Date:       09/06/2000
+    Purpose:    Perform motion estimation for a macroblock.
+                Find 1MV and 4MVs in half-pels resolutions.
+                Using ST1 algorithm provided by Chalidabhongse and Kuo
+                CSVT March'98.
 
 ==================================================================*/
 
@@ -788,7 +788,7 @@ void MBMotionSearch(VideoEncData *video, UChar *cur, UChar *best_cand[],
     Int comp;
     Int i, j, imin, jmin, ilow, ihigh, jlow, jhigh, iorg, jorg;
     Int d, dmin, dn[9];
-#if (ZERO_MV_PREF==1)	/* compute (0,0) MV at the end */
+#if (ZERO_MV_PREF==1)   /* compute (0,0) MV at the end */
     Int d0;
 #endif
     Int k;
@@ -851,13 +851,13 @@ void MBMotionSearch(VideoEncData *video, UChar *cur, UChar *best_cand[],
         mot[mbnum][0].sad = dmin;
         mot[mbnum][0].x = (imin - i0) << 1;
         mot[mbnum][0].y = (jmin - j0) << 1;
-        imin0 = imin << 1;	/* 16x16 MV in half-pel resolution */
+        imin0 = imin << 1;  /* 16x16 MV in half-pel resolution */
         jmin0 = jmin << 1;
         best_cand[0] = ncand;
     }
     else
-    {	/* 4/7/01, modified this testing for fullsearch the top row to only upto (0,3) MB */
-        /*			  upto 30% complexity saving with the same complexity */
+    {   /* 4/7/01, modified this testing for fullsearch the top row to only upto (0,3) MB */
+        /*            upto 30% complexity saving with the same complexity */
         if (video->forwardRefVop->predictionType == I_VOP && j0 == 0 && i0 <= 64 && type_pred != 1)
         {
             *hp_guess = 0; /* no guess for fast half-pel */
@@ -927,7 +927,7 @@ void MBMotionSearch(VideoEncData *video, UChar *cur, UChar *best_cand[],
             {
                 ncand = ref + i0 + j0 * lx; /* use (0,0) MV as initial value */
                 mot[mbnum][7].sad = dmin = (*SAD_Macroblock)(ncand, cur, (65535 << 16) | lx, extra_info);
-#if (ZERO_MV_PREF==1)	/* compute (0,0) MV at the end */
+#if (ZERO_MV_PREF==1)   /* compute (0,0) MV at the end */
                 d0 = dmin;
 #endif
                 imin = i0;
@@ -941,7 +941,7 @@ void MBMotionSearch(VideoEncData *video, UChar *cur, UChar *best_cand[],
             /******************* local refinement ***************************/
             center_again = 0;
             last_loc = new_loc = 0;
-            //			ncand = ref + jmin*lx + imin;  /* center of the search */
+            //          ncand = ref + jmin*lx + imin;  /* center of the search */
             step = 0;
             dn[0] = dmin;
             while (!center_again && step <= max_step)
@@ -959,7 +959,7 @@ void MBMotionSearch(VideoEncData *video, UChar *cur, UChar *best_cand[],
                 for (k = 2; k <= 8; k += 2)
                 {
                     if (!tab_exclude[last_loc][k]) /* exclude last step computation */
-                    {		/* not already computed */
+                    {       /* not already computed */
                         if (i >= ilow && i <= ihigh && j >= jlow && j <= jhigh)
                         {
                             d = (*SAD_Macroblock)(cand, cur, (dmin << 16) | lx, extra_info);
@@ -1013,7 +1013,7 @@ void MBMotionSearch(VideoEncData *video, UChar *cur, UChar *best_cand[],
 
         }
 
-#if (ZERO_MV_PREF==1)	/* compute (0,0) MV at the end */
+#if (ZERO_MV_PREF==1)   /* compute (0,0) MV at the end */
         if (d0 - PREF_NULL_VEC < dmin)
         {
             ncand = ref + i0 + j0 * lx;
@@ -1025,7 +1025,7 @@ void MBMotionSearch(VideoEncData *video, UChar *cur, UChar *best_cand[],
         mot[mbnum][0].sad = dmin;
         mot[mbnum][0].x = (imin - i0) << 1;
         mot[mbnum][0].y = (jmin - j0) << 1;
-        imin0 = imin << 1;	/* 16x16 MV in half-pel resolution */
+        imin0 = imin << 1;  /* 16x16 MV in half-pel resolution */
         jmin0 = jmin << 1;
         best_cand[0] = ncand;
     }
@@ -1047,7 +1047,7 @@ void MBMotionSearch(VideoEncData *video, UChar *cur, UChar *best_cand[],
             i0 = iorg + ((comp & 1) << 3);
             j0 = jorg + ((comp & 2) << 2);
 
-            imin = (imin0 >> 1) + ((comp & 1) << 3);	/* starting point from 16x16 MV */
+            imin = (imin0 >> 1) + ((comp & 1) << 3);    /* starting point from 16x16 MV */
             jmin = (jmin0 >> 1) + ((comp & 2) << 2);
             ncand = ref + imin + jmin * lx;
 
@@ -1069,7 +1069,7 @@ void MBMotionSearch(VideoEncData *video, UChar *cur, UChar *best_cand[],
 
             SAD_Block = video->functionPointer->SAD_Block;
 
-            if (FS_en)	/* fullsearch enable, center around 16x16 MV */
+            if (FS_en)  /* fullsearch enable, center around 16x16 MV */
             {
                 dmin =  fullsearchBlk(video, currVol, ncand, cur8, &imin, &jmin, ilow, ihigh, jlow, jhigh, range);
                 ncand = ref + imin + jmin * lx;
@@ -1079,7 +1079,7 @@ void MBMotionSearch(VideoEncData *video, UChar *cur, UChar *best_cand[],
                 mot[mbnum][comp+1].y = (jmin - j0) << 1;
                 best_cand[comp+1] = ncand;
             }
-            else	/* no fullsearch, do local search */
+            else    /* no fullsearch, do local search */
             {
                 /* starting point from 16x16 */
                 dmin = (*SAD_Block)(ncand, cur8, 65536, lx, extra_info);
@@ -1100,7 +1100,7 @@ void MBMotionSearch(VideoEncData *video, UChar *cur, UChar *best_cand[],
                     for (k = 2; k <= 8; k += 2)
                     {
                         if (!tab_exclude[last_loc][k]) /* exclude last step computation */
-                        {		/* not already computed */
+                        {       /* not already computed */
                             if (i >= ilow && i <= ihigh && j >= jlow && j <= jhigh)
                             {
                                 d = (*SAD_Block)(cand, cur8, dmin, lx, extra_info);
@@ -1130,7 +1130,7 @@ void MBMotionSearch(VideoEncData *video, UChar *cur, UChar *best_cand[],
                             if (!center_again)
                             {
                                 k = -1; /* start diagonal search */
-                                if (j <= height - 1 && j > 0)	cand -= lx;
+                                if (j <= height - 1 && j > 0)   cand -= lx;
                                 j--;
                             }
                         }
@@ -1168,12 +1168,12 @@ void MBMotionSearch(VideoEncData *video, UChar *cur, UChar *best_cand[],
 
 
 /*===============================================================================
-	Function:	fullsearch
-	Date:		09/16/2000
-	Purpose:	Perform full-search motion estimation over the range of search
-				region in a spiral-outward manner.
-	Input/Output:	VideoEncData, current Vol, previou Vop, pointer to the left corner of
-				current VOP, current coord (also output), boundaries.
+    Function:   fullsearch
+    Date:       09/16/2000
+    Purpose:    Perform full-search motion estimation over the range of search
+                region in a spiral-outward manner.
+    Input/Output:   VideoEncData, current Vol, previou Vop, pointer to the left corner of
+                current VOP, current coord (also output), boundaries.
 ===============================================================================*/
 
 Int fullsearch(VideoEncData *video, Vol *currVol, UChar *prev, UChar *cur,
@@ -1183,14 +1183,14 @@ Int fullsearch(VideoEncData *video, Vol *currVol, UChar *prev, UChar *cur,
     UChar *cand;
     Int i, j, k, l;
     Int d, dmin;
-    Int i0 = *imin;	/* current position */
+    Int i0 = *imin; /* current position */
     Int j0 = *jmin;
     Int(*SAD_Macroblock)(UChar*, UChar*, Int, void*) = video->functionPointer->SAD_Macroblock;
     void *extra_info = video->sad_extra_info;
-//	UChar h263_mode = video->encParams->H263_Enabled;
+//  UChar h263_mode = video->encParams->H263_Enabled;
     Int lx = video->currVop->pitch; /* with padding */
 
-    Int	offset = i0 + j0 * lx;
+    Int offset = i0 + j0 * lx;
 
     OSCL_UNUSED_ARG(currVol);
 
@@ -1256,12 +1256,12 @@ Int fullsearch(VideoEncData *video, Vol *currVol, UChar *prev, UChar *cur,
 
 #ifndef NO_INTER4V
 /*===============================================================================
-	Function:	fullsearchBlk
-	Date:		01/9/2001
-	Purpose:	Perform full-search motion estimation of an 8x8 block over the range
-				of search region in a spiral-outward manner centered at the 16x16 MV.
-	Input/Output:	VideoEncData, MB coordinate, pointer to the initial MV on the
-				reference, pointer to coor of current block, search range.
+    Function:   fullsearchBlk
+    Date:       01/9/2001
+    Purpose:    Perform full-search motion estimation of an 8x8 block over the range
+                of search region in a spiral-outward manner centered at the 16x16 MV.
+    Input/Output:   VideoEncData, MB coordinate, pointer to the initial MV on the
+                reference, pointer to coor of current block, search range.
 ===============================================================================*/
 Int fullsearchBlk(VideoEncData *video, Vol *currVol, UChar *cent, UChar *cur,
                   Int *imin, Int *jmin, Int ilow, Int ihigh, Int jlow, Int jhigh, Int range)
@@ -1341,12 +1341,12 @@ Int fullsearchBlk(VideoEncData *video, Vol *currVol, UChar *cent, UChar *cur,
 #endif /* NO_INTER4V */
 
 /*===============================================================================
-	Function:	CandidateSelection
-	Date:		09/16/2000
-	Purpose:	Fill up the list of candidate using spatio-temporal correlation
-				among neighboring blocks.
-	Input/Output:	type_pred = 0: first pass, 1: second pass, or no SCD
-	Modified:	 09/23/01, get rid of redundant candidates before passing back.
+    Function:   CandidateSelection
+    Date:       09/16/2000
+    Purpose:    Fill up the list of candidate using spatio-temporal correlation
+                among neighboring blocks.
+    Input/Output:   type_pred = 0: first pass, 1: second pass, or no SCD
+    Modified:    09/23/01, get rid of redundant candidates before passing back.
 ===============================================================================*/
 
 void CandidateSelection(Int *mvx, Int *mvy, Int *num_can, Int imb, Int jmb,
@@ -1365,7 +1365,7 @@ void CandidateSelection(Int *mvx, Int *mvy, Int *num_can, Int imb, Int jmb,
     if (video->forwardRefVop->predictionType == P_VOP)
     {
         /* Spatio-Temporal Candidate (five candidates) */
-        if (type_pred == 0)	/* first pass */
+        if (type_pred == 0) /* first pass */
         {
             pmot = &mot[mbnum][0]; /* same coordinate previous frame */
             mvx[(*num_can)] = (pmot->x) >> 1;
@@ -1409,7 +1409,7 @@ void CandidateSelection(Int *mvx, Int *mvy, Int *num_can, Int imb, Int jmb,
                 mvy[(*num_can)++] = (pmot->y) >> 1;
             }
         }
-        else	/* second pass */
+        else    /* second pass */
             /* original ST1 algorithm */
         {
             pmot = &mot[mbnum][0]; /* same coordinate previous frame */
@@ -1444,7 +1444,7 @@ void CandidateSelection(Int *mvx, Int *mvy, Int *num_can, Int imb, Int jmb,
     }
     else  /* only Spatial Candidate (four candidates)*/
     {
-        if (type_pred == 0)	/*first pass*/
+        if (type_pred == 0) /*first pass*/
         {
             if (imb > 1)  /* neighbor two blocks away to the left */
             {
@@ -1565,10 +1565,10 @@ void CandidateSelection(Int *mvx, Int *mvy, Int *num_can, Int imb, Int jmb,
 }
 
 /*===========================================================================
-	Function:	RasterIntraUpdate
-	Date:		2/26/01
-	Purpose:	To raster-scan assign INTRA-update .
-				N macroblocks are updated (also was programmable).
+    Function:   RasterIntraUpdate
+    Date:       2/26/01
+    Purpose:    To raster-scan assign INTRA-update .
+                N macroblocks are updated (also was programmable).
 ===========================================================================*/
 void RasterIntraUpdate(UChar *intraArray, UChar *Mode, Int totalMB, Int numRefresh)
 {
@@ -1603,9 +1603,9 @@ void RasterIntraUpdate(UChar *intraArray, UChar *Mode, Int totalMB, Int numRefre
 }
 
 /*===========================================================================
-	Function:	ResetIntraUpdate
-	Date:		11/28/00
-	Purpose:	Reset already intra updated flags to all zero
+    Function:   ResetIntraUpdate
+    Date:       11/28/00
+    Purpose:    Reset already intra updated flags to all zero
 ===========================================================================*/
 
 void ResetIntraUpdate(UChar *intraArray, Int totalMB)
@@ -1615,9 +1615,9 @@ void ResetIntraUpdate(UChar *intraArray, Int totalMB)
 }
 
 /*===========================================================================
-	Function:	ResetIntraUpdateRegion
-	Date:		12/1/00
-	Purpose:	Reset already intra updated flags in one region to all zero
+    Function:   ResetIntraUpdateRegion
+    Date:       12/1/00
+    Purpose:    Reset already intra updated flags in one region to all zero
 ===========================================================================*/
 void ResetIntraUpdateRegion(UChar *intraArray, Int start_i, Int rwidth,
                             Int start_j, Int rheight, Int mbwidth, Int mbheight)
@@ -1639,9 +1639,9 @@ void ResetIntraUpdateRegion(UChar *intraArray, Int start_i, Int rwidth,
 }
 
 /*************************************************************
-	Function:	MoveNeighborSAD
-	Date:		3/27/01
-	Purpose:	Move neighboring SAD around when center has shifted
+    Function:   MoveNeighborSAD
+    Date:       3/27/01
+    Purpose:    Move neighboring SAD around when center has shifted
 *************************************************************/
 
 void MoveNeighborSAD(Int dn[], Int new_loc)

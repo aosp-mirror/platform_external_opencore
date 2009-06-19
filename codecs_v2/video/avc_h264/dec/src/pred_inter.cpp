@@ -19,8 +19,8 @@
 #include "oscl_mem.h"
 
 
-#define CLIP_RESULT(x) 		if((uint)x > 0xFF){ \
-			     x = 0xFF & (~(x>>31));}
+#define CLIP_RESULT(x)      if((uint)x > 0xFF){ \
+                 x = 0xFF & (~(x>>31));}
 
 /* (blkwidth << 2) + (dy << 1) + dx */
 static void (*const ChromaMC_SIMD[8])(uint8 *, int , int , int , uint8 *, int, int , int) =
@@ -243,7 +243,7 @@ void LumaMotionComp(uint8 *ref, int picwidth, int picheight,
                     int blkwidth, int blkheight)
 {
     int dx, dy;
-    uint8 temp[24][24];	/* for padding, make the size multiple of 4 for packing */
+    uint8 temp[24][24]; /* for padding, make the size multiple of 4 for packing */
     int temp2[21][21]; /* for intermediate results */
     uint8 *ref2;
 
@@ -459,10 +459,10 @@ void CreatePad(uint8 *ref, int picwidth, int picheight, int x_pos, int y_pos,
     }
     else if (x_pos + blkwidth > picwidth)
     {
-        x_inc0 = 1;	 /* increasing */
+        x_inc0 = 1;  /* increasing */
         x_mid = ((picwidth > x_pos) ? picwidth - x_pos - 1 : 0);  /* clip negative to zero, encode fool proof! */
     }
-    else	/* normal case */
+    else    /* normal case */
     {
         x_inc0 = 1;
         x_mid = blkwidth; /* just one run */
@@ -480,7 +480,7 @@ void CreatePad(uint8 *ref, int picwidth, int picheight, int x_pos, int y_pos,
     else  if (y_pos + blkheight > picheight)
     {
         y_inc1 = (x_inc0 ? - x_mid : -blkwidth + x_mid); /* saturate */
-        y_inc0 = picwidth + y_inc1;					/* increasing */
+        y_inc0 = picwidth + y_inc1;                 /* increasing */
         y_mid = ((picheight > y_pos) ? picheight - 1 - y_pos : 0);
     }
     else  /* normal case */
@@ -571,30 +571,30 @@ void HorzInterp1MC(uint8 *in, int inpitch, uint8 *out, int outpitch,
             tmp = (uint32)(p_ref + blkwidth);
             r0 = p_ref[0];
             r1 = p_ref[2];
-            r0 |= (r1 << 16);			/* 0,c,0,a */
+            r0 |= (r1 << 16);           /* 0,c,0,a */
             r1 = p_ref[1];
             r2 = p_ref[3];
-            r1 |= (r2 << 16);			/* 0,d,0,b */
+            r1 |= (r2 << 16);           /* 0,d,0,b */
             while ((uint32)p_ref < tmp)
             {
-                r2 = *(p_ref += 4);	/* move pointer to e */
+                r2 = *(p_ref += 4); /* move pointer to e */
                 r3 = p_ref[2];
-                r2 |= (r3 << 16);			/* 0,g,0,e */
+                r2 |= (r3 << 16);           /* 0,g,0,e */
                 r3 = p_ref[1];
                 r4 = p_ref[3];
-                r3 |= (r4 << 16);			/* 0,h,0,f */
+                r3 |= (r4 << 16);           /* 0,h,0,f */
 
-                r4 = r0 + r3;		/* c+h, a+f */
-                r5 = r0 + r1;	/* c+d, a+b */
-                r6 = r2 + r3;	/* g+h, e+f */
+                r4 = r0 + r3;       /* c+h, a+f */
+                r5 = r0 + r1;   /* c+d, a+b */
+                r6 = r2 + r3;   /* g+h, e+f */
                 r5 >>= 16;
-                r5 |= (r6 << 16);	/* e+f, c+d */
-                r4 += r5 * 20;		/* c+20*e+20*f+h, a+20*c+20*d+f */
-                r4 += 0x100010;	/* +16, +16 */
-                r5 = r1 + r2;		/* d+g, b+e */
-                r4 -= r5 * 5;		/* c-5*d+20*e+20*f-5*g+h, a-5*b+20*c+20*d-5*e+f */
+                r5 |= (r6 << 16);   /* e+f, c+d */
+                r4 += r5 * 20;      /* c+20*e+20*f+h, a+20*c+20*d+f */
+                r4 += 0x100010; /* +16, +16 */
+                r5 = r1 + r2;       /* d+g, b+e */
+                r4 -= r5 * 5;       /* c-5*d+20*e+20*f-5*g+h, a-5*b+20*c+20*d-5*e+f */
                 r4 >>= 5;
-                r13 |= r4;		/* check clipping */
+                r13 |= r4;      /* check clipping */
 
                 r5 = p_ref[dx+2];
                 r6 = p_ref[dx+4];
@@ -603,21 +603,21 @@ void HorzInterp1MC(uint8 *in, int inpitch, uint8 *out, int outpitch,
                 r4 += 0x10001;
                 r4 = (r4 >> 1) & 0xFF00FF;
 
-                r5 = p_ref[4];	/* i */
+                r5 = p_ref[4];  /* i */
                 r6 = (r5 << 16);
                 r5 = r6 | (r2 >> 16);/* 0,i,0,g */
-                r5 += r1;		/* d+i, b+g */ /* r5 not free */
+                r5 += r1;       /* d+i, b+g */ /* r5 not free */
                 r1 >>= 16;
                 r1 |= (r3 << 16); /* 0,f,0,d */ /* r1 has changed */
-                r1 += r2;		/* f+g, d+e */
-                r5 += 20 * r1;	/* d+20f+20g+i, b+20d+20e+g */
+                r1 += r2;       /* f+g, d+e */
+                r5 += 20 * r1;  /* d+20f+20g+i, b+20d+20e+g */
                 r0 >>= 16;
                 r0 |= (r2 << 16); /* 0,e,0,c */ /* r0 has changed */
-                r0 += r3;		/* e+h, c+f */
+                r0 += r3;       /* e+h, c+f */
                 r5 += 0x100010; /* 16,16 */
-                r5 -= r0 * 5;		/* d-5e+20f+20g-5h+i, b-5c+20d+20e-5f+g */
+                r5 -= r0 * 5;       /* d-5e+20f+20g-5h+i, b-5c+20d+20e-5f+g */
                 r5 >>= 5;
-                r13 |= r5;		/* check clipping */
+                r13 |= r5;      /* check clipping */
 
                 r0 = p_ref[dx+3];
                 r1 = p_ref[dx+5];
@@ -626,18 +626,18 @@ void HorzInterp1MC(uint8 *in, int inpitch, uint8 *out, int outpitch,
                 r5 += 0x10001;
                 r5 = (r5 >> 1) & 0xFF00FF;
 
-                r4 |= (r5 << 8);	/* pack them together */
+                r4 |= (r5 << 8);    /* pack them together */
                 *p_cur++ = r4;
                 r1 = r3;
                 r0 = r2;
             }
             p_cur += curr_offset; /* move to the next line */
-            p_ref += ref_offset;  /*	ref_offset = inpitch-blkwidth; */
+            p_ref += ref_offset;  /*    ref_offset = inpitch-blkwidth; */
 
-            if (r13&0xFF000700)	/* need clipping */
+            if (r13&0xFF000700) /* need clipping */
             {
                 /* move back to the beginning of the line */
-                p_ref -= (ref_offset + blkwidth);	/* input */
+                p_ref -= (ref_offset + blkwidth);   /* input */
                 p_cur -= (outpitch >> 2);
 
                 tmp = (uint32)(p_ref + blkwidth);
@@ -653,9 +653,9 @@ void HorzInterp1MC(uint8 *in, int inpitch, uint8 *out, int outpitch,
                     r5 = *p_ref++;
                     result = (r0 + r5);
                     r0 = (r1 + r4);
-                    result -= (r0 * 5);//result -= r0; 	result -= (r0<<2);
+                    result -= (r0 * 5);//result -= r0;  result -= (r0<<2);
                     r0 = (r2 + r3);
-                    result += (r0 * 20);//result += (r0<<4);	result += (r0<<2);
+                    result += (r0 * 20);//result += (r0<<4);    result += (r0<<2);
                     result = (result + 16) >> 5;
                     CLIP_RESULT(result)
                     /* 3/4 pel,  no need to clip */
@@ -665,9 +665,9 @@ void HorzInterp1MC(uint8 *in, int inpitch, uint8 *out, int outpitch,
                     r0 = *p_ref++;
                     result = (r1 + r0);
                     r1 = (r2 + r5);
-                    result -= (r1 * 5);//result -= r1; 	result -= (r1<<2);
+                    result -= (r1 * 5);//result -= r1;  result -= (r1<<2);
                     r1 = (r3 + r4);
-                    result += (r1 * 20);//result += (r1<<4);	result += (r1<<2);
+                    result += (r1 * 20);//result += (r1<<4);    result += (r1<<2);
                     result = (result + 16) >> 5;
                     CLIP_RESULT(result)
                     /* 3/4 pel,  no need to clip */
@@ -678,9 +678,9 @@ void HorzInterp1MC(uint8 *in, int inpitch, uint8 *out, int outpitch,
                     r1 = *p_ref++;
                     result = (r2 + r1);
                     r2 = (r3 + r0);
-                    result -= (r2 * 5);//result -= r2; 	result -= (r2<<2);
+                    result -= (r2 * 5);//result -= r2;  result -= (r2<<2);
                     r2 = (r4 + r5);
-                    result += (r2 * 20);//result += (r2<<4);	result += (r2<<2);
+                    result += (r2 * 20);//result += (r2<<4);    result += (r2<<2);
                     result = (result + 16) >> 5;
                     CLIP_RESULT(result)
                     /* 3/4 pel,  no need to clip */
@@ -691,9 +691,9 @@ void HorzInterp1MC(uint8 *in, int inpitch, uint8 *out, int outpitch,
                     r2 = *p_ref++;
                     result = (r3 + r2);
                     r3 = (r4 + r1);
-                    result -= (r3 * 5);//result -= r3; 	result -= (r3<<2);
+                    result -= (r3 * 5);//result -= r3;  result -= (r3<<2);
                     r3 = (r5 + r0);
-                    result += (r3 * 20);//result += (r3<<4);	result += (r3<<2);
+                    result += (r3 * 20);//result += (r3<<4);    result += (r3<<2);
                     result = (result + 16) >> 5;
                     CLIP_RESULT(result)
                     /* 3/4 pel,  no need to clip */
@@ -704,7 +704,7 @@ void HorzInterp1MC(uint8 *in, int inpitch, uint8 *out, int outpitch,
                     p_ref -= 5;  /* offset back to the middle of filter */
                 }
                 p_cur += curr_offset;  /* move to the next line */
-                p_ref += ref_offset;	/* move to the next line */
+                p_ref += ref_offset;    /* move to the next line */
             }
         }
     }
@@ -717,61 +717,61 @@ void HorzInterp1MC(uint8 *in, int inpitch, uint8 *out, int outpitch,
             tmp = (uint32)(p_ref + blkwidth);
             r0 = p_ref[0];
             r1 = p_ref[2];
-            r0 |= (r1 << 16);			/* 0,c,0,a */
+            r0 |= (r1 << 16);           /* 0,c,0,a */
             r1 = p_ref[1];
             r2 = p_ref[3];
-            r1 |= (r2 << 16);			/* 0,d,0,b */
+            r1 |= (r2 << 16);           /* 0,d,0,b */
             while ((uint32)p_ref < tmp)
             {
-                r2 = *(p_ref += 4);	/* move pointer to e */
+                r2 = *(p_ref += 4); /* move pointer to e */
                 r3 = p_ref[2];
-                r2 |= (r3 << 16);			/* 0,g,0,e */
+                r2 |= (r3 << 16);           /* 0,g,0,e */
                 r3 = p_ref[1];
                 r4 = p_ref[3];
-                r3 |= (r4 << 16);			/* 0,h,0,f */
+                r3 |= (r4 << 16);           /* 0,h,0,f */
 
-                r4 = r0 + r3;		/* c+h, a+f */
-                r5 = r0 + r1;	/* c+d, a+b */
-                r6 = r2 + r3;	/* g+h, e+f */
+                r4 = r0 + r3;       /* c+h, a+f */
+                r5 = r0 + r1;   /* c+d, a+b */
+                r6 = r2 + r3;   /* g+h, e+f */
                 r5 >>= 16;
-                r5 |= (r6 << 16);	/* e+f, c+d */
-                r4 += r5 * 20;		/* c+20*e+20*f+h, a+20*c+20*d+f */
-                r4 += 0x100010;	/* +16, +16 */
-                r5 = r1 + r2;		/* d+g, b+e */
-                r4 -= r5 * 5;		/* c-5*d+20*e+20*f-5*g+h, a-5*b+20*c+20*d-5*e+f */
+                r5 |= (r6 << 16);   /* e+f, c+d */
+                r4 += r5 * 20;      /* c+20*e+20*f+h, a+20*c+20*d+f */
+                r4 += 0x100010; /* +16, +16 */
+                r5 = r1 + r2;       /* d+g, b+e */
+                r4 -= r5 * 5;       /* c-5*d+20*e+20*f-5*g+h, a-5*b+20*c+20*d-5*e+f */
                 r4 >>= 5;
-                r13 |= r4;		/* check clipping */
-                r4 &= 0xFF00FF;	/* mask */
+                r13 |= r4;      /* check clipping */
+                r4 &= 0xFF00FF; /* mask */
 
-                r5 = p_ref[4];	/* i */
+                r5 = p_ref[4];  /* i */
                 r6 = (r5 << 16);
                 r5 = r6 | (r2 >> 16);/* 0,i,0,g */
-                r5 += r1;		/* d+i, b+g */ /* r5 not free */
+                r5 += r1;       /* d+i, b+g */ /* r5 not free */
                 r1 >>= 16;
                 r1 |= (r3 << 16); /* 0,f,0,d */ /* r1 has changed */
-                r1 += r2;		/* f+g, d+e */
-                r5 += 20 * r1;	/* d+20f+20g+i, b+20d+20e+g */
+                r1 += r2;       /* f+g, d+e */
+                r5 += 20 * r1;  /* d+20f+20g+i, b+20d+20e+g */
                 r0 >>= 16;
                 r0 |= (r2 << 16); /* 0,e,0,c */ /* r0 has changed */
-                r0 += r3;		/* e+h, c+f */
+                r0 += r3;       /* e+h, c+f */
                 r5 += 0x100010; /* 16,16 */
-                r5 -= r0 * 5;		/* d-5e+20f+20g-5h+i, b-5c+20d+20e-5f+g */
+                r5 -= r0 * 5;       /* d-5e+20f+20g-5h+i, b-5c+20d+20e-5f+g */
                 r5 >>= 5;
-                r13 |= r5;		/* check clipping */
-                r5 &= 0xFF00FF;	/* mask */
+                r13 |= r5;      /* check clipping */
+                r5 &= 0xFF00FF; /* mask */
 
-                r4 |= (r5 << 8);	/* pack them together */
+                r4 |= (r5 << 8);    /* pack them together */
                 *p_cur++ = r4;
                 r1 = r3;
                 r0 = r2;
             }
             p_cur += curr_offset; /* move to the next line */
-            p_ref += ref_offset;  /*	ref_offset = inpitch-blkwidth; */
+            p_ref += ref_offset;  /*    ref_offset = inpitch-blkwidth; */
 
-            if (r13&0xFF000700)	/* need clipping */
+            if (r13&0xFF000700) /* need clipping */
             {
                 /* move back to the beginning of the line */
-                p_ref -= (ref_offset + blkwidth);	/* input */
+                p_ref -= (ref_offset + blkwidth);   /* input */
                 p_cur -= (outpitch >> 2);
 
                 tmp = (uint32)(p_ref + blkwidth);
@@ -787,9 +787,9 @@ void HorzInterp1MC(uint8 *in, int inpitch, uint8 *out, int outpitch,
                     r5 = *p_ref++;
                     result = (r0 + r5);
                     r0 = (r1 + r4);
-                    result -= (r0 * 5);//result -= r0; 	result -= (r0<<2);
+                    result -= (r0 * 5);//result -= r0;  result -= (r0<<2);
                     r0 = (r2 + r3);
-                    result += (r0 * 20);//result += (r0<<4);	result += (r0<<2);
+                    result += (r0 * 20);//result += (r0<<4);    result += (r0<<2);
                     result = (result + 16) >> 5;
                     CLIP_RESULT(result)
                     pkres  = result;
@@ -797,9 +797,9 @@ void HorzInterp1MC(uint8 *in, int inpitch, uint8 *out, int outpitch,
                     r0 = *p_ref++;
                     result = (r1 + r0);
                     r1 = (r2 + r5);
-                    result -= (r1 * 5);//result -= r1; 	result -= (r1<<2);
+                    result -= (r1 * 5);//result -= r1;  result -= (r1<<2);
                     r1 = (r3 + r4);
-                    result += (r1 * 20);//result += (r1<<4);	result += (r1<<2);
+                    result += (r1 * 20);//result += (r1<<4);    result += (r1<<2);
                     result = (result + 16) >> 5;
                     CLIP_RESULT(result)
                     pkres  |= (result << 8);
@@ -807,9 +807,9 @@ void HorzInterp1MC(uint8 *in, int inpitch, uint8 *out, int outpitch,
                     r1 = *p_ref++;
                     result = (r2 + r1);
                     r2 = (r3 + r0);
-                    result -= (r2 * 5);//result -= r2; 	result -= (r2<<2);
+                    result -= (r2 * 5);//result -= r2;  result -= (r2<<2);
                     r2 = (r4 + r5);
-                    result += (r2 * 20);//result += (r2<<4);	result += (r2<<2);
+                    result += (r2 * 20);//result += (r2<<4);    result += (r2<<2);
                     result = (result + 16) >> 5;
                     CLIP_RESULT(result)
                     pkres  |= (result << 16);
@@ -817,13 +817,13 @@ void HorzInterp1MC(uint8 *in, int inpitch, uint8 *out, int outpitch,
                     r2 = *p_ref++;
                     result = (r3 + r2);
                     r3 = (r4 + r1);
-                    result -= (r3 * 5);//result -= r3; 	result -= (r3<<2);
+                    result -= (r3 * 5);//result -= r3;  result -= (r3<<2);
                     r3 = (r5 + r0);
-                    result += (r3 * 20);//result += (r3<<4);	result += (r3<<2);
+                    result += (r3 * 20);//result += (r3<<4);    result += (r3<<2);
                     result = (result + 16) >> 5;
                     CLIP_RESULT(result)
                     pkres  |= (result << 24);
-                    *p_cur++ = pkres;	/* write 4 pixels */
+                    *p_cur++ = pkres;   /* write 4 pixels */
                     p_ref -= 5;
                 }
                 p_cur += curr_offset; /* move to the next line */
@@ -868,9 +868,9 @@ void HorzInterp2MC(int *in, int inpitch, uint8 *out, int outpitch,
                 r5 = *p_ref++;
                 result = (r0 + r5);
                 r0 = (r1 + r4);
-                result -= (r0 * 5);//result -= r0; 	result -= (r0<<2);
+                result -= (r0 * 5);//result -= r0;  result -= (r0<<2);
                 r0 = (r2 + r3);
-                result += (r0 * 20);//result += (r0<<4);	result += (r0<<2);
+                result += (r0 * 20);//result += (r0<<4);    result += (r0<<2);
                 result = (result + 512) >> 10;
                 CLIP_RESULT(result)
                 result2 = ((p_ref[dx] + 16) >> 5);
@@ -882,9 +882,9 @@ void HorzInterp2MC(int *in, int inpitch, uint8 *out, int outpitch,
                 r0 = *p_ref++;
                 result = (r1 + r0);
                 r1 = (r2 + r5);
-                result -= (r1 * 5);//result -= r1; 	result -= (r1<<2);
+                result -= (r1 * 5);//result -= r1;  result -= (r1<<2);
                 r1 = (r3 + r4);
-                result += (r1 * 20);//result += (r1<<4);	result += (r1<<2);
+                result += (r1 * 20);//result += (r1<<4);    result += (r1<<2);
                 result = (result + 512) >> 10;
                 CLIP_RESULT(result)
                 result2 = ((p_ref[dx] + 16) >> 5);
@@ -897,9 +897,9 @@ void HorzInterp2MC(int *in, int inpitch, uint8 *out, int outpitch,
                 r1 = *p_ref++;
                 result = (r2 + r1);
                 r2 = (r3 + r0);
-                result -= (r2 * 5);//result -= r2; 	result -= (r2<<2);
+                result -= (r2 * 5);//result -= r2;  result -= (r2<<2);
                 r2 = (r4 + r5);
-                result += (r2 * 20);//result += (r2<<4);	result += (r2<<2);
+                result += (r2 * 20);//result += (r2<<4);    result += (r2<<2);
                 result = (result + 512) >> 10;
                 CLIP_RESULT(result)
                 result2 = ((p_ref[dx] + 16) >> 5);
@@ -912,9 +912,9 @@ void HorzInterp2MC(int *in, int inpitch, uint8 *out, int outpitch,
                 r2 = *p_ref++;
                 result = (r3 + r2);
                 r3 = (r4 + r1);
-                result -= (r3 * 5);//result -= r3; 	result -= (r3<<2);
+                result -= (r3 * 5);//result -= r3;  result -= (r3<<2);
                 r3 = (r5 + r0);
-                result += (r3 * 20);//result += (r3<<4);	result += (r3<<2);
+                result += (r3 * 20);//result += (r3<<4);    result += (r3<<2);
                 result = (result + 512) >> 10;
                 CLIP_RESULT(result)
                 result2 = ((p_ref[dx] + 16) >> 5);
@@ -927,7 +927,7 @@ void HorzInterp2MC(int *in, int inpitch, uint8 *out, int outpitch,
                 p_ref -= 3;  /* offset back to the middle of filter */
             }
             p_cur += curr_offset;  /* move to the next line */
-            p_ref += ref_offset;	/* move to the next line */
+            p_ref += ref_offset;    /* move to the next line */
         }
     }
     else
@@ -947,9 +947,9 @@ void HorzInterp2MC(int *in, int inpitch, uint8 *out, int outpitch,
                 r5 = *p_ref++;
                 result = (r0 + r5);
                 r0 = (r1 + r4);
-                result -= (r0 * 5);//result -= r0; 	result -= (r0<<2);
+                result -= (r0 * 5);//result -= r0;  result -= (r0<<2);
                 r0 = (r2 + r3);
-                result += (r0 * 20);//result += (r0<<4);	result += (r0<<2);
+                result += (r0 * 20);//result += (r0<<4);    result += (r0<<2);
                 result = (result + 512) >> 10;
                 CLIP_RESULT(result)
                 pkres  = result;
@@ -957,9 +957,9 @@ void HorzInterp2MC(int *in, int inpitch, uint8 *out, int outpitch,
                 r0 = *p_ref++;
                 result = (r1 + r0);
                 r1 = (r2 + r5);
-                result -= (r1 * 5);//result -= r1; 	result -= (r1<<2);
+                result -= (r1 * 5);//result -= r1;  result -= (r1<<2);
                 r1 = (r3 + r4);
-                result += (r1 * 20);//result += (r1<<4);	result += (r1<<2);
+                result += (r1 * 20);//result += (r1<<4);    result += (r1<<2);
                 result = (result + 512) >> 10;
                 CLIP_RESULT(result)
                 pkres  |= (result << 8);
@@ -967,9 +967,9 @@ void HorzInterp2MC(int *in, int inpitch, uint8 *out, int outpitch,
                 r1 = *p_ref++;
                 result = (r2 + r1);
                 r2 = (r3 + r0);
-                result -= (r2 * 5);//result -= r2; 	result -= (r2<<2);
+                result -= (r2 * 5);//result -= r2;  result -= (r2<<2);
                 r2 = (r4 + r5);
-                result += (r2 * 20);//result += (r2<<4);	result += (r2<<2);
+                result += (r2 * 20);//result += (r2<<4);    result += (r2<<2);
                 result = (result + 512) >> 10;
                 CLIP_RESULT(result)
                 pkres  |= (result << 16);
@@ -977,9 +977,9 @@ void HorzInterp2MC(int *in, int inpitch, uint8 *out, int outpitch,
                 r2 = *p_ref++;
                 result = (r3 + r2);
                 r3 = (r4 + r1);
-                result -= (r3 * 5);//result -= r3; 	result -= (r3<<2);
+                result -= (r3 * 5);//result -= r3;  result -= (r3<<2);
                 r3 = (r5 + r0);
-                result += (r3 * 20);//result += (r3<<4);	result += (r3<<2);
+                result += (r3 * 20);//result += (r3<<4);    result += (r3<<2);
                 result = (result + 512) >> 10;
                 CLIP_RESULT(result)
                 pkres  |= (result << 24);
@@ -987,7 +987,7 @@ void HorzInterp2MC(int *in, int inpitch, uint8 *out, int outpitch,
                 p_ref -= 3;  /* offset back to the middle of filter */
             }
             p_cur += curr_offset;  /* move to the next line */
-            p_ref += ref_offset;	/* move to the next line */
+            p_ref += ref_offset;    /* move to the next line */
         }
     }
 
@@ -998,7 +998,7 @@ void HorzInterp3MC(uint8 *in, int inpitch, int *out, int outpitch,
                    int blkwidth, int blkheight)
 {
     uint8 *p_ref;
-    int	  *p_cur;
+    int   *p_cur;
     uint32 tmp;
     int result, curr_offset, ref_offset;
     int j, r0, r1, r2, r3, r4, r5;
@@ -1023,35 +1023,35 @@ void HorzInterp3MC(uint8 *in, int inpitch, int *out, int outpitch,
             r5 = *p_ref++;
             result = (r0 + r5);
             r0 = (r1 + r4);
-            result -= (r0 * 5);//result -= r0; 	result -= (r0<<2);
+            result -= (r0 * 5);//result -= r0;  result -= (r0<<2);
             r0 = (r2 + r3);
-            result += (r0 * 20);//result += (r0<<4);	result += (r0<<2);
+            result += (r0 * 20);//result += (r0<<4);    result += (r0<<2);
             *p_cur++ = result;
             /* second pixel */
             r0 = *p_ref++;
             result = (r1 + r0);
             r1 = (r2 + r5);
-            result -= (r1 * 5);//result -= r1; 	result -= (r1<<2);
+            result -= (r1 * 5);//result -= r1;  result -= (r1<<2);
             r1 = (r3 + r4);
-            result += (r1 * 20);//result += (r1<<4);	result += (r1<<2);
+            result += (r1 * 20);//result += (r1<<4);    result += (r1<<2);
             *p_cur++ = result;
             /* third pixel */
             r1 = *p_ref++;
             result = (r2 + r1);
             r2 = (r3 + r0);
-            result -= (r2 * 5);//result -= r2; 	result -= (r2<<2);
+            result -= (r2 * 5);//result -= r2;  result -= (r2<<2);
             r2 = (r4 + r5);
-            result += (r2 * 20);//result += (r2<<4);	result += (r2<<2);
+            result += (r2 * 20);//result += (r2<<4);    result += (r2<<2);
             *p_cur++ = result;
             /* fourth pixel */
             r2 = *p_ref++;
             result = (r3 + r2);
             r3 = (r4 + r1);
-            result -= (r3 * 5);//result -= r3; 	result -= (r3<<2);
+            result -= (r3 * 5);//result -= r3;  result -= (r3<<2);
             r3 = (r5 + r0);
-            result += (r3 * 20);//result += (r3<<4);	result += (r3<<2);
+            result += (r3 * 20);//result += (r3<<4);    result += (r3<<2);
             *p_cur++ = result;
-            p_ref -= 3;	/* move back to the middle of the filter */
+            p_ref -= 3; /* move back to the middle of the filter */
         }
         p_cur += curr_offset; /* move to the next line */
         p_ref += ref_offset;
@@ -1110,7 +1110,7 @@ void VertInterp1MC(uint8 *in, int inpitch, uint8 *out, int outpitch,
                 r8 = (r2 >> 8) & 0xFF00FF;
                 r2 &= 0xFF00FF;
 
-                r1 = *((uint32*)(p_ref - inpitch));	/* r1, r7, ref[0] */
+                r1 = *((uint32*)(p_ref - inpitch)); /* r1, r7, ref[0] */
                 r7 = (r1 >> 8) & 0xFF00FF;
                 r1 &= 0xFF00FF;
                 r1 += r2;
@@ -1167,7 +1167,7 @@ void VertInterp1MC(uint8 *in, int inpitch, uint8 *out, int outpitch,
 
                     tmp = (uint32)(p_ref + ref_offset); /* limit */
                     while ((uint32)p_ref < tmp)
-                    {							/* loop un-rolled */
+                    {                           /* loop un-rolled */
                         r0 = *(p_ref - (inpitch << 1));
                         r1 = *(p_ref - inpitch);
                         r2 = *p_ref;
@@ -1177,9 +1177,9 @@ void VertInterp1MC(uint8 *in, int inpitch, uint8 *out, int outpitch,
                         r5 = *(p_ref += inpitch);
                         result = (r0 + r5);
                         r0 = (r1 + r4);
-                        result -= (r0 * 5);//result -= r0; 	result -= (r0<<2);
+                        result -= (r0 * 5);//result -= r0;  result -= (r0<<2);
                         r0 = (r2 + r3);
-                        result += (r0 * 20);//result += (r0<<4);	result += (r0<<2);
+                        result += (r0 * 20);//result += (r0<<4);    result += (r0<<2);
                         result = (result + 16) >> 5;
                         CLIP_RESULT(result)
                         /* 3/4 pel,  no need to clip */
@@ -1190,9 +1190,9 @@ void VertInterp1MC(uint8 *in, int inpitch, uint8 *out, int outpitch,
                         r0 = *(p_ref += inpitch);
                         result = (r1 + r0);
                         r1 = (r2 + r5);
-                        result -= (r1 * 5);//result -= r1; 	result -= (r1<<2);
+                        result -= (r1 * 5);//result -= r1;  result -= (r1<<2);
                         r1 = (r3 + r4);
-                        result += (r1 * 20);//result += (r1<<4);	result += (r1<<2);
+                        result += (r1 * 20);//result += (r1<<4);    result += (r1<<2);
                         result = (result + 16) >> 5;
                         CLIP_RESULT(result)
                         /* 3/4 pel,  no need to clip */
@@ -1203,9 +1203,9 @@ void VertInterp1MC(uint8 *in, int inpitch, uint8 *out, int outpitch,
                         r1 = *(p_ref += inpitch);
                         result = (r2 + r1);
                         r2 = (r3 + r0);
-                        result -= (r2 * 5);//result -= r2; 	result -= (r2<<2);
+                        result -= (r2 * 5);//result -= r2;  result -= (r2<<2);
                         r2 = (r4 + r5);
-                        result += (r2 * 20);//result += (r2<<4);	result += (r2<<2);
+                        result += (r2 * 20);//result += (r2<<4);    result += (r2<<2);
                         result = (result + 16) >> 5;
                         CLIP_RESULT(result)
                         /* 3/4 pel,  no need to clip */
@@ -1216,9 +1216,9 @@ void VertInterp1MC(uint8 *in, int inpitch, uint8 *out, int outpitch,
                         r2 = *(p_ref += inpitch);
                         result = (r3 + r2);
                         r3 = (r4 + r1);
-                        result -= (r3 * 5);//result -= r3; 	result -= (r3<<2);
+                        result -= (r3 * 5);//result -= r3;  result -= (r3<<2);
                         r3 = (r5 + r0);
-                        result += (r3 * 20);//result += (r3<<4);	result += (r3<<2);
+                        result += (r3 * 20);//result += (r3<<4);    result += (r3<<2);
                         result = (result + 16) >> 5;
                         CLIP_RESULT(result)
                         /* 3/4 pel,  no need to clip */
@@ -1258,7 +1258,7 @@ void VertInterp1MC(uint8 *in, int inpitch, uint8 *out, int outpitch,
                 r8 = (r2 >> 8) & 0xFF00FF;
                 r2 &= 0xFF00FF;
 
-                r1 = *((uint32*)(p_ref - inpitch));	/* r1, r7, ref[0] */
+                r1 = *((uint32*)(p_ref - inpitch)); /* r1, r7, ref[0] */
                 r7 = (r1 >> 8) & 0xFF00FF;
                 r1 &= 0xFF00FF;
                 r1 += r2;
@@ -1305,7 +1305,7 @@ void VertInterp1MC(uint8 *in, int inpitch, uint8 *out, int outpitch,
                     p_cur -= outpitch;  /* compensate for the first offset */
                     tmp = (uint32)(p_ref + ref_offset); /* limit */
                     while ((uint32)p_ref < tmp)
-                    {							/* loop un-rolled */
+                    {                           /* loop un-rolled */
                         r0 = *(p_ref - (inpitch << 1));
                         r1 = *(p_ref - inpitch);
                         r2 = *p_ref;
@@ -1315,9 +1315,9 @@ void VertInterp1MC(uint8 *in, int inpitch, uint8 *out, int outpitch,
                         r5 = *(p_ref += inpitch);
                         result = (r0 + r5);
                         r0 = (r1 + r4);
-                        result -= (r0 * 5);//result -= r0; 	result -= (r0<<2);
+                        result -= (r0 * 5);//result -= r0;  result -= (r0<<2);
                         r0 = (r2 + r3);
-                        result += (r0 * 20);//result += (r0<<4);	result += (r0<<2);
+                        result += (r0 * 20);//result += (r0<<4);    result += (r0<<2);
                         result = (result + 16) >> 5;
                         CLIP_RESULT(result)
                         *(p_cur += outpitch) = result;
@@ -1325,9 +1325,9 @@ void VertInterp1MC(uint8 *in, int inpitch, uint8 *out, int outpitch,
                         r0 = *(p_ref += inpitch);
                         result = (r1 + r0);
                         r1 = (r2 + r5);
-                        result -= (r1 * 5);//result -= r1; 	result -= (r1<<2);
+                        result -= (r1 * 5);//result -= r1;  result -= (r1<<2);
                         r1 = (r3 + r4);
-                        result += (r1 * 20);//result += (r1<<4);	result += (r1<<2);
+                        result += (r1 * 20);//result += (r1<<4);    result += (r1<<2);
                         result = (result + 16) >> 5;
                         CLIP_RESULT(result)
                         *(p_cur += outpitch) = result;
@@ -1335,9 +1335,9 @@ void VertInterp1MC(uint8 *in, int inpitch, uint8 *out, int outpitch,
                         r1 = *(p_ref += inpitch);
                         result = (r2 + r1);
                         r2 = (r3 + r0);
-                        result -= (r2 * 5);//result -= r2; 	result -= (r2<<2);
+                        result -= (r2 * 5);//result -= r2;  result -= (r2<<2);
                         r2 = (r4 + r5);
-                        result += (r2 * 20);//result += (r2<<4);	result += (r2<<2);
+                        result += (r2 * 20);//result += (r2<<4);    result += (r2<<2);
                         result = (result + 16) >> 5;
                         CLIP_RESULT(result)
                         *(p_cur += outpitch) = result;
@@ -1345,9 +1345,9 @@ void VertInterp1MC(uint8 *in, int inpitch, uint8 *out, int outpitch,
                         r2 = *(p_ref += inpitch);
                         result = (r3 + r2);
                         r3 = (r4 + r1);
-                        result -= (r3 * 5);//result -= r3; 	result -= (r3<<2);
+                        result -= (r3 * 5);//result -= r3;  result -= (r3<<2);
                         r3 = (r5 + r0);
-                        result += (r3 * 20);//result += (r3<<4);	result += (r3<<2);
+                        result += (r3 * 20);//result += (r3<<4);    result += (r3<<2);
                         result = (result + 16) >> 5;
                         CLIP_RESULT(result)
                         *(p_cur += outpitch) = result;
@@ -1382,7 +1382,7 @@ void VertInterp2MC(uint8 *in, int inpitch, int *out, int outpitch,
 
         tmp = (uint32)(p_ref + ref_offset); /* limit */
         while ((uint32)p_ref < tmp)
-        {							/* loop un-rolled */
+        {                           /* loop un-rolled */
             r0 = *(p_ref - (inpitch << 1));
             r1 = *(p_ref - inpitch);
             r2 = *p_ref;
@@ -1392,33 +1392,33 @@ void VertInterp2MC(uint8 *in, int inpitch, int *out, int outpitch,
             r5 = *(p_ref += inpitch);
             result = (r0 + r5);
             r0 = (r1 + r4);
-            result -= (r0 * 5);//result -= r0; 	result -= (r0<<2);
+            result -= (r0 * 5);//result -= r0;  result -= (r0<<2);
             r0 = (r2 + r3);
-            result += (r0 * 20);//result += (r0<<4);	result += (r0<<2);
+            result += (r0 * 20);//result += (r0<<4);    result += (r0<<2);
             *(p_cur += outpitch) = result;
             /* second pixel */
             r0 = *(p_ref += inpitch);
             result = (r1 + r0);
             r1 = (r2 + r5);
-            result -= (r1 * 5);//result -= r1; 	result -= (r1<<2);
+            result -= (r1 * 5);//result -= r1;  result -= (r1<<2);
             r1 = (r3 + r4);
-            result += (r1 * 20);//result += (r1<<4);	result += (r1<<2);
+            result += (r1 * 20);//result += (r1<<4);    result += (r1<<2);
             *(p_cur += outpitch) = result;
             /* third pixel */
             r1 = *(p_ref += inpitch);
             result = (r2 + r1);
             r2 = (r3 + r0);
-            result -= (r2 * 5);//result -= r2; 	result -= (r2<<2);
+            result -= (r2 * 5);//result -= r2;  result -= (r2<<2);
             r2 = (r4 + r5);
-            result += (r2 * 20);//result += (r2<<4);	result += (r2<<2);
+            result += (r2 * 20);//result += (r2<<4);    result += (r2<<2);
             *(p_cur += outpitch) = result;
             /* fourth pixel */
             r2 = *(p_ref += inpitch);
             result = (r3 + r2);
             r3 = (r4 + r1);
-            result -= (r3 * 5);//result -= r3; 	result -= (r3<<2);
+            result -= (r3 * 5);//result -= r3;  result -= (r3<<2);
             r3 = (r5 + r0);
-            result += (r3 * 20);//result += (r3<<4);	result += (r3<<2);
+            result += (r3 * 20);//result += (r3<<4);    result += (r3<<2);
             *(p_cur += outpitch) = result;
             p_ref -= (inpitch << 1);  /* move back to center of the filter of the next one */
         }
@@ -1452,7 +1452,7 @@ void VertInterp3MC(int *in, int inpitch, uint8 *out, int outpitch,
 
             tmp = (uint32)(p_ref + ref_offset); /* limit */
             while ((uint32)p_ref < tmp)
-            {							/* loop un-rolled */
+            {                           /* loop un-rolled */
                 r0 = *(p_ref - (inpitch << 1));
                 r1 = *(p_ref - inpitch);
                 r2 = *p_ref;
@@ -1462,9 +1462,9 @@ void VertInterp3MC(int *in, int inpitch, uint8 *out, int outpitch,
                 r5 = *(p_ref += inpitch);
                 result = (r0 + r5);
                 r0 = (r1 + r4);
-                result -= (r0 * 5);//result -= r0; 	result -= (r0<<2);
+                result -= (r0 * 5);//result -= r0;  result -= (r0<<2);
                 r0 = (r2 + r3);
-                result += (r0 * 20);//result += (r0<<4);	result += (r0<<2);
+                result += (r0 * 20);//result += (r0<<4);    result += (r0<<2);
                 result = (result + 512) >> 10;
                 CLIP_RESULT(result)
                 result2 = ((p_ref[dy] + 16) >> 5);
@@ -1477,9 +1477,9 @@ void VertInterp3MC(int *in, int inpitch, uint8 *out, int outpitch,
                 r0 = *(p_ref += inpitch);
                 result = (r1 + r0);
                 r1 = (r2 + r5);
-                result -= (r1 * 5);//result -= r1; 	result -= (r1<<2);
+                result -= (r1 * 5);//result -= r1;  result -= (r1<<2);
                 r1 = (r3 + r4);
-                result += (r1 * 20);//result += (r1<<4);	result += (r1<<2);
+                result += (r1 * 20);//result += (r1<<4);    result += (r1<<2);
                 result = (result + 512) >> 10;
                 CLIP_RESULT(result)
                 result2 = ((p_ref[dy] + 16) >> 5);
@@ -1492,9 +1492,9 @@ void VertInterp3MC(int *in, int inpitch, uint8 *out, int outpitch,
                 r1 = *(p_ref += inpitch);
                 result = (r2 + r1);
                 r2 = (r3 + r0);
-                result -= (r2 * 5);//result -= r2; 	result -= (r2<<2);
+                result -= (r2 * 5);//result -= r2;  result -= (r2<<2);
                 r2 = (r4 + r5);
-                result += (r2 * 20);//result += (r2<<4);	result += (r2<<2);
+                result += (r2 * 20);//result += (r2<<4);    result += (r2<<2);
                 result = (result + 512) >> 10;
                 CLIP_RESULT(result)
                 result2 = ((p_ref[dy] + 16) >> 5);
@@ -1507,9 +1507,9 @@ void VertInterp3MC(int *in, int inpitch, uint8 *out, int outpitch,
                 r2 = *(p_ref += inpitch);
                 result = (r3 + r2);
                 r3 = (r4 + r1);
-                result -= (r3 * 5);//result -= r3; 	result -= (r3<<2);
+                result -= (r3 * 5);//result -= r3;  result -= (r3<<2);
                 r3 = (r5 + r0);
-                result += (r3 * 20);//result += (r3<<4);	result += (r3<<2);
+                result += (r3 * 20);//result += (r3<<4);    result += (r3<<2);
                 result = (result + 512) >> 10;
                 CLIP_RESULT(result)
                 result2 = ((p_ref[dy] + 16) >> 5);
@@ -1532,7 +1532,7 @@ void VertInterp3MC(int *in, int inpitch, uint8 *out, int outpitch,
 
             tmp = (uint32)(p_ref + ref_offset); /* limit */
             while ((uint32)p_ref < tmp)
-            {							/* loop un-rolled */
+            {                           /* loop un-rolled */
                 r0 = *(p_ref - (inpitch << 1));
                 r1 = *(p_ref - inpitch);
                 r2 = *p_ref;
@@ -1542,9 +1542,9 @@ void VertInterp3MC(int *in, int inpitch, uint8 *out, int outpitch,
                 r5 = *(p_ref += inpitch);
                 result = (r0 + r5);
                 r0 = (r1 + r4);
-                result -= (r0 * 5);//result -= r0; 	result -= (r0<<2);
+                result -= (r0 * 5);//result -= r0;  result -= (r0<<2);
                 r0 = (r2 + r3);
-                result += (r0 * 20);//result += (r0<<4);	result += (r0<<2);
+                result += (r0 * 20);//result += (r0<<4);    result += (r0<<2);
                 result = (result + 512) >> 10;
                 CLIP_RESULT(result)
                 *(p_cur += outpitch) = result;
@@ -1552,9 +1552,9 @@ void VertInterp3MC(int *in, int inpitch, uint8 *out, int outpitch,
                 r0 = *(p_ref += inpitch);
                 result = (r1 + r0);
                 r1 = (r2 + r5);
-                result -= (r1 * 5);//result -= r1; 	result -= (r1<<2);
+                result -= (r1 * 5);//result -= r1;  result -= (r1<<2);
                 r1 = (r3 + r4);
-                result += (r1 * 20);//result += (r1<<4);	result += (r1<<2);
+                result += (r1 * 20);//result += (r1<<4);    result += (r1<<2);
                 result = (result + 512) >> 10;
                 CLIP_RESULT(result)
                 *(p_cur += outpitch) = result;
@@ -1562,9 +1562,9 @@ void VertInterp3MC(int *in, int inpitch, uint8 *out, int outpitch,
                 r1 = *(p_ref += inpitch);
                 result = (r2 + r1);
                 r2 = (r3 + r0);
-                result -= (r2 * 5);//result -= r2; 	result -= (r2<<2);
+                result -= (r2 * 5);//result -= r2;  result -= (r2<<2);
                 r2 = (r4 + r5);
-                result += (r2 * 20);//result += (r2<<4);	result += (r2<<2);
+                result += (r2 * 20);//result += (r2<<4);    result += (r2<<2);
                 result = (result + 512) >> 10;
                 CLIP_RESULT(result)
                 *(p_cur += outpitch) = result;
@@ -1572,9 +1572,9 @@ void VertInterp3MC(int *in, int inpitch, uint8 *out, int outpitch,
                 r2 = *(p_ref += inpitch);
                 result = (r3 + r2);
                 r3 = (r4 + r1);
-                result -= (r3 * 5);//result -= r3; 	result -= (r3<<2);
+                result -= (r3 * 5);//result -= r3;  result -= (r3<<2);
                 r3 = (r5 + r0);
-                result += (r3 * 20);//result += (r3<<4);	result += (r3<<2);
+                result += (r3 * 20);//result += (r3<<4);    result += (r3<<2);
                 result = (result + 512) >> 10;
                 CLIP_RESULT(result)
                 *(p_cur += outpitch) = result;
@@ -1606,12 +1606,12 @@ void DiagonalInterpMC(uint8 *in1, uint8 *in2, int inpitch,
     /* perform horizontal interpolation */
     /* not word-aligned */
     /* It is faster to read 1 byte at time to avoid calling CreateAlign */
-    /*	if(((uint32)p_ref)&0x3)
-    	{
-    		CreateAlign(p_ref,inpitch,0,&tmp_in[0][0],blkwidth+8,blkheight);
-    		p_ref = &tmp_in[0][0];
-    		ref_offset = 24-blkwidth;
-    	}*/
+    /*  if(((uint32)p_ref)&0x3)
+        {
+            CreateAlign(p_ref,inpitch,0,&tmp_in[0][0],blkwidth+8,blkheight);
+            p_ref = &tmp_in[0][0];
+            ref_offset = 24-blkwidth;
+        }*/
 
     p_tmp = (uint32*) & (tmp_res[0][0]);
     for (j = blkheight; j > 0; j--)
@@ -1619,72 +1619,72 @@ void DiagonalInterpMC(uint8 *in1, uint8 *in2, int inpitch,
         r13 = 0;
         tmp = (uint32)(p_ref + blkwidth);
 
-        //r0 = *((uint32*)p_ref);	/* d,c,b,a */
-        //r1 = (r0>>8)&0xFF00FF;	/* 0,d,0,b */
-        //r0 &= 0xFF00FF;			/* 0,c,0,a */
+        //r0 = *((uint32*)p_ref);   /* d,c,b,a */
+        //r1 = (r0>>8)&0xFF00FF;    /* 0,d,0,b */
+        //r0 &= 0xFF00FF;           /* 0,c,0,a */
         /* It is faster to read 1 byte at a time,  */
         r0 = p_ref[0];
         r1 = p_ref[2];
-        r0 |= (r1 << 16);			/* 0,c,0,a */
+        r0 |= (r1 << 16);           /* 0,c,0,a */
         r1 = p_ref[1];
         r2 = p_ref[3];
-        r1 |= (r2 << 16);			/* 0,d,0,b */
+        r1 |= (r2 << 16);           /* 0,d,0,b */
 
         while ((uint32)p_ref < tmp)
         {
             //r2 = *((uint32*)(p_ref+=4));/* h,g,f,e */
             //r3 = (r2>>8)&0xFF00FF;  /* 0,h,0,f */
-            //r2 &= 0xFF00FF;			/* 0,g,0,e */
+            //r2 &= 0xFF00FF;           /* 0,g,0,e */
             /* It is faster to read 1 byte at a time,  */
             r2 = *(p_ref += 4);
             r3 = p_ref[2];
-            r2 |= (r3 << 16);			/* 0,g,0,e */
+            r2 |= (r3 << 16);           /* 0,g,0,e */
             r3 = p_ref[1];
             r4 = p_ref[3];
-            r3 |= (r4 << 16);			/* 0,h,0,f */
+            r3 |= (r4 << 16);           /* 0,h,0,f */
 
-            r4 = r0 + r3;		/* c+h, a+f */
-            r5 = r0 + r1;	/* c+d, a+b */
-            r6 = r2 + r3;	/* g+h, e+f */
+            r4 = r0 + r3;       /* c+h, a+f */
+            r5 = r0 + r1;   /* c+d, a+b */
+            r6 = r2 + r3;   /* g+h, e+f */
             r5 >>= 16;
-            r5 |= (r6 << 16);	/* e+f, c+d */
-            r4 += r5 * 20;		/* c+20*e+20*f+h, a+20*c+20*d+f */
-            r4 += 0x100010;	/* +16, +16 */
-            r5 = r1 + r2;		/* d+g, b+e */
-            r4 -= r5 * 5;		/* c-5*d+20*e+20*f-5*g+h, a-5*b+20*c+20*d-5*e+f */
+            r5 |= (r6 << 16);   /* e+f, c+d */
+            r4 += r5 * 20;      /* c+20*e+20*f+h, a+20*c+20*d+f */
+            r4 += 0x100010; /* +16, +16 */
+            r5 = r1 + r2;       /* d+g, b+e */
+            r4 -= r5 * 5;       /* c-5*d+20*e+20*f-5*g+h, a-5*b+20*c+20*d-5*e+f */
             r4 >>= 5;
-            r13 |= r4;		/* check clipping */
-            r4 &= 0xFF00FF;	/* mask */
+            r13 |= r4;      /* check clipping */
+            r4 &= 0xFF00FF; /* mask */
 
-            r5 = p_ref[4];	/* i */
+            r5 = p_ref[4];  /* i */
             r6 = (r5 << 16);
             r5 = r6 | (r2 >> 16);/* 0,i,0,g */
-            r5 += r1;		/* d+i, b+g */ /* r5 not free */
+            r5 += r1;       /* d+i, b+g */ /* r5 not free */
             r1 >>= 16;
             r1 |= (r3 << 16); /* 0,f,0,d */ /* r1 has changed */
-            r1 += r2;		/* f+g, d+e */
-            r5 += 20 * r1;	/* d+20f+20g+i, b+20d+20e+g */
+            r1 += r2;       /* f+g, d+e */
+            r5 += 20 * r1;  /* d+20f+20g+i, b+20d+20e+g */
             r0 >>= 16;
             r0 |= (r2 << 16); /* 0,e,0,c */ /* r0 has changed */
-            r0 += r3;		/* e+h, c+f */
+            r0 += r3;       /* e+h, c+f */
             r5 += 0x100010; /* 16,16 */
-            r5 -= r0 * 5;		/* d-5e+20f+20g-5h+i, b-5c+20d+20e-5f+g */
+            r5 -= r0 * 5;       /* d-5e+20f+20g-5h+i, b-5c+20d+20e-5f+g */
             r5 >>= 5;
-            r13 |= r5;		/* check clipping */
-            r5 &= 0xFF00FF;	/* mask */
+            r13 |= r5;      /* check clipping */
+            r5 &= 0xFF00FF; /* mask */
 
-            r4 |= (r5 << 8);	/* pack them together */
+            r4 |= (r5 << 8);    /* pack them together */
             *p_tmp++ = r4;
             r1 = r3;
             r0 = r2;
         }
         p_tmp += ((24 - blkwidth) >> 2); /* move to the next line */
-        p_ref += ref_offset;  /*	ref_offset = inpitch-blkwidth; */
+        p_ref += ref_offset;  /*    ref_offset = inpitch-blkwidth; */
 
-        if (r13&0xFF000700)	/* need clipping */
+        if (r13&0xFF000700) /* need clipping */
         {
             /* move back to the beginning of the line */
-            p_ref -= (ref_offset + blkwidth);	/* input */
+            p_ref -= (ref_offset + blkwidth);   /* input */
             p_tmp -= 6; /* intermediate output */
             tmp = (uint32)(p_ref + blkwidth);
             while ((uint32)p_ref < tmp)
@@ -1698,9 +1698,9 @@ void DiagonalInterpMC(uint8 *in1, uint8 *in2, int inpitch,
                 r5 = *p_ref++;
                 result = (r0 + r5);
                 r0 = (r1 + r4);
-                result -= (r0 * 5);//result -= r0; 	result -= (r0<<2);
+                result -= (r0 * 5);//result -= r0;  result -= (r0<<2);
                 r0 = (r2 + r3);
-                result += (r0 * 20);//result += (r0<<4);	result += (r0<<2);
+                result += (r0 * 20);//result += (r0<<4);    result += (r0<<2);
                 result = (result + 16) >> 5;
                 CLIP_RESULT(result)
                 pkres = result;
@@ -1708,9 +1708,9 @@ void DiagonalInterpMC(uint8 *in1, uint8 *in2, int inpitch,
                 r0 = *p_ref++;
                 result = (r1 + r0);
                 r1 = (r2 + r5);
-                result -= (r1 * 5);//result -= r1; 	result -= (r1<<2);
+                result -= (r1 * 5);//result -= r1;  result -= (r1<<2);
                 r1 = (r3 + r4);
-                result += (r1 * 20);//result += (r1<<4);	result += (r1<<2);
+                result += (r1 * 20);//result += (r1<<4);    result += (r1<<2);
                 result = (result + 16) >> 5;
                 CLIP_RESULT(result)
                 pkres |= (result << 8);
@@ -1718,9 +1718,9 @@ void DiagonalInterpMC(uint8 *in1, uint8 *in2, int inpitch,
                 r1 = *p_ref++;
                 result = (r2 + r1);
                 r2 = (r3 + r0);
-                result -= (r2 * 5);//result -= r2; 	result -= (r2<<2);
+                result -= (r2 * 5);//result -= r2;  result -= (r2<<2);
                 r2 = (r4 + r5);
-                result += (r2 * 20);//result += (r2<<4);	result += (r2<<2);
+                result += (r2 * 20);//result += (r2<<4);    result += (r2<<2);
                 result = (result + 16) >> 5;
                 CLIP_RESULT(result)
                 pkres |= (result << 16);
@@ -1728,9 +1728,9 @@ void DiagonalInterpMC(uint8 *in1, uint8 *in2, int inpitch,
                 r2 = *p_ref++;
                 result = (r3 + r2);
                 r3 = (r4 + r1);
-                result -= (r3 * 5);//result -= r3; 	result -= (r3<<2);
+                result -= (r3 * 5);//result -= r3;  result -= (r3<<2);
                 r3 = (r5 + r0);
-                result += (r3 * 20);//result += (r3<<4);	result += (r3<<2);
+                result += (r3 * 20);//result += (r3<<4);    result += (r3<<2);
                 result = (result + 16) >> 5;
                 CLIP_RESULT(result)
                 pkres |= (result << 24);
@@ -1739,7 +1739,7 @@ void DiagonalInterpMC(uint8 *in1, uint8 *in2, int inpitch,
                 p_ref -= 5;
             }
             p_tmp += ((24 - blkwidth) >> 2); /* move to the next line */
-            p_ref += ref_offset;  /*	ref_offset = inpitch-blkwidth; */
+            p_ref += ref_offset;  /*    ref_offset = inpitch-blkwidth; */
         }
     }
 
@@ -1769,17 +1769,17 @@ void DiagonalInterpMC(uint8 *in1, uint8 *in2, int inpitch,
         while ((uint32)p_ref < tmp)  /* the loop un-rolled  */
         {
             /* Read 1 byte at a time is too slow, too many read and pack ops, need to call CreateAlign,  */
-            /*p_ref8 = p_ref-(inpitch<<1);			r0 = p_ref8[0];			r1 = p_ref8[2];
-            r0 |= (r1<<16);			r6 = p_ref8[1];			r1 = p_ref8[3];
-            r6 |= (r1<<16);			p_ref+=inpitch; */
+            /*p_ref8 = p_ref-(inpitch<<1);          r0 = p_ref8[0];         r1 = p_ref8[2];
+            r0 |= (r1<<16);         r6 = p_ref8[1];         r1 = p_ref8[3];
+            r6 |= (r1<<16);         p_ref+=inpitch; */
             r0 = *((uint32*)(p_ref - (inpitch << 1))); /* load 4 bytes */
             p_ref += inpitch;
             r6 = (r0 >> 8) & 0xFF00FF; /* second and fourth byte */
             r0 &= 0xFF00FF;
 
             /*p_ref8 = p_ref+(inpitch<<1);
-            r1 = p_ref8[0];			r7 = p_ref8[2];			r1 |= (r7<<16);
-            r7 = p_ref8[1];			r2 = p_ref8[3];			r7 |= (r2<<16);*/
+            r1 = p_ref8[0];         r7 = p_ref8[2];         r1 |= (r7<<16);
+            r7 = p_ref8[1];         r2 = p_ref8[3];         r7 |= (r2<<16);*/
             r1 = *((uint32*)(p_ref + (inpitch << 1)));  /* r1, r7, ref[3] */
             r7 = (r1 >> 8) & 0xFF00FF;
             r1 &= 0xFF00FF;
@@ -1787,16 +1787,16 @@ void DiagonalInterpMC(uint8 *in1, uint8 *in2, int inpitch,
             r0 += r1;
             r6 += r7;
 
-            /*r2 = p_ref[0];			r8 = p_ref[2];			r2 |= (r8<<16);
-            r8 = p_ref[1];			r1 = p_ref[3];			r8 |= (r1<<16);*/
+            /*r2 = p_ref[0];            r8 = p_ref[2];          r2 |= (r8<<16);
+            r8 = p_ref[1];          r1 = p_ref[3];          r8 |= (r1<<16);*/
             r2 = *((uint32*)p_ref); /* r2, r8, ref[1] */
             r8 = (r2 >> 8) & 0xFF00FF;
             r2 &= 0xFF00FF;
 
-            /*p_ref8 = p_ref-inpitch;			r1 = p_ref8[0];			r7 = p_ref8[2];
-            r1 |= (r7<<16);			r1 += r2;			r7 = p_ref8[1];
-            r2 = p_ref8[3];			r7 |= (r2<<16);*/
-            r1 = *((uint32*)(p_ref - inpitch));	/* r1, r7, ref[0] */
+            /*p_ref8 = p_ref-inpitch;           r1 = p_ref8[0];         r7 = p_ref8[2];
+            r1 |= (r7<<16);         r1 += r2;           r7 = p_ref8[1];
+            r2 = p_ref8[3];         r7 |= (r2<<16);*/
+            r1 = *((uint32*)(p_ref - inpitch)); /* r1, r7, ref[0] */
             r7 = (r1 >> 8) & 0xFF00FF;
             r1 &= 0xFF00FF;
             r1 += r2;
@@ -1808,15 +1808,15 @@ void DiagonalInterpMC(uint8 *in1, uint8 *in2, int inpitch,
             r0 += 0x100010;
             r6 += 0x100010;
 
-            /*p_ref8 = p_ref-(inpitch<<1);			r2 = p_ref8[0];			r8 = p_ref8[2];
-            r2 |= (r8<<16);			r8 = p_ref8[1];			r1 = p_ref8[3];			r8 |= (r1<<16);*/
+            /*p_ref8 = p_ref-(inpitch<<1);          r2 = p_ref8[0];         r8 = p_ref8[2];
+            r2 |= (r8<<16);         r8 = p_ref8[1];         r1 = p_ref8[3];         r8 |= (r1<<16);*/
             r2 = *((uint32*)(p_ref - (inpitch << 1))); /* r2, r8, ref[-1] */
             r8 = (r2 >> 8) & 0xFF00FF;
             r2 &= 0xFF00FF;
 
-            /*p_ref8 = p_ref+inpitch;			r1 = p_ref8[0];			r7 = p_ref8[2];
-            r1 |= (r7<<16);			r1 += r2;			r7 = p_ref8[1];
-            r2 = p_ref8[3];			r7 |= (r2<<16);*/
+            /*p_ref8 = p_ref+inpitch;           r1 = p_ref8[0];         r7 = p_ref8[2];
+            r1 |= (r7<<16);         r1 += r2;           r7 = p_ref8[1];
+            r2 = p_ref8[3];         r7 |= (r2<<16);*/
             r1 = *((uint32*)(p_ref + inpitch)); /* r1, r7, ref[2] */
             r7 = (r1 >> 8) & 0xFF00FF;
             r1 &= 0xFF00FF;
@@ -1871,9 +1871,9 @@ void DiagonalInterpMC(uint8 *in1, uint8 *in2, int inpitch,
                     r5 = *(p_ref += inpitch);
                     result = (r0 + r5);
                     r0 = (r1 + r4);
-                    result -= (r0 * 5);//result -= r0; 	result -= (r0<<2);
+                    result -= (r0 * 5);//result -= r0;  result -= (r0<<2);
                     r0 = (r2 + r3);
-                    result += (r0 * 20);//result += (r0<<4);	result += (r0<<2);
+                    result += (r0 * 20);//result += (r0<<4);    result += (r0<<2);
                     result = (result + 16) >> 5;
                     CLIP_RESULT(result)
                     tmp_result = *(p_tmp8 += 24);  /* modify pointer before loading */
@@ -1884,9 +1884,9 @@ void DiagonalInterpMC(uint8 *in1, uint8 *in2, int inpitch,
                     r0 = *(p_ref += inpitch);
                     result = (r1 + r0);
                     r1 = (r2 + r5);
-                    result -= (r1 * 5);//result -= r1; 	result -= (r1<<2);
+                    result -= (r1 * 5);//result -= r1;  result -= (r1<<2);
                     r1 = (r3 + r4);
-                    result += (r1 * 20);//result += (r1<<4);	result += (r1<<2);
+                    result += (r1 * 20);//result += (r1<<4);    result += (r1<<2);
                     result = (result + 16) >> 5;
                     CLIP_RESULT(result)
                     tmp_result = *(p_tmp8 += 24);  /* intermediate result */
@@ -1897,9 +1897,9 @@ void DiagonalInterpMC(uint8 *in1, uint8 *in2, int inpitch,
                     r1 = *(p_ref += inpitch);
                     result = (r2 + r1);
                     r2 = (r3 + r0);
-                    result -= (r2 * 5);//result -= r2; 	result -= (r2<<2);
+                    result -= (r2 * 5);//result -= r2;  result -= (r2<<2);
                     r2 = (r4 + r5);
-                    result += (r2 * 20);//result += (r2<<4);	result += (r2<<2);
+                    result += (r2 * 20);//result += (r2<<4);    result += (r2<<2);
                     result = (result + 16) >> 5;
                     CLIP_RESULT(result)
                     tmp_result = *(p_tmp8 += 24);  /* intermediate result */
@@ -1910,9 +1910,9 @@ void DiagonalInterpMC(uint8 *in1, uint8 *in2, int inpitch,
                     r2 = *(p_ref += inpitch);
                     result = (r3 + r2);
                     r3 = (r4 + r1);
-                    result -= (r3 * 5);//result -= r3; 	result -= (r3<<2);
+                    result -= (r3 * 5);//result -= r3;  result -= (r3<<2);
                     r3 = (r5 + r0);
-                    result += (r3 * 20);//result += (r3<<4);	result += (r3<<2);
+                    result += (r3 * 20);//result += (r3<<4);    result += (r3<<2);
                     result = (result + 16) >> 5;
                     CLIP_RESULT(result)
                     tmp_result = *(p_tmp8 += 24);  /* intermediate result */
@@ -2055,7 +2055,7 @@ void ChromaDiagonalMC_SIMD(uint8 *pRef, int srcPitch, int dx, int dy,
         out += (32 - blkwidth);
     }
 
-//	pRef -= srcPitch*(blkheight+1);
+//  pRef -= srcPitch*(blkheight+1);
     ref = temp;
 
     for (j = 0; j < blkwidth; j += 4)

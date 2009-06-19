@@ -20,43 +20,43 @@
  INPUT AND OUTPUT DEFINITIONS
 
  Inputs:
-	xpos = x half-pixel of (x,y) coordinates within a VOP; motion
-	       compensated coordinates; native type
-	ypos = y half-pixel of (x,y) coordinates within a VOP; motion
-	       compensated coordinates; native type
-	comp = pointer to 8-bit compensated prediction values within a VOP;
-		computed by this module (i/o); full-pel resolution
-	c_prev = pointer to previous 8-bit prediction values within a VOP;
-		  values range from (0-255); full-pel resolution
-	sh_d = pointer to residual values used to compensate the predicted
-		value; values range from (-512 to 511); full-pel resolution
-	width = width of the VOP in pixels (x axis); full-pel resolution
-	rnd1 = rounding value for case when one dimension uses half-pel
-	       resolution
-	rnd2 = rounding value for case when two dimensions uses half-pel
-	       resolution
-	CBP = flag indicating whether residual is all zeros
-	      (0 -> all zeros, 1 -> not all zeros)
+    xpos = x half-pixel of (x,y) coordinates within a VOP; motion
+           compensated coordinates; native type
+    ypos = y half-pixel of (x,y) coordinates within a VOP; motion
+           compensated coordinates; native type
+    comp = pointer to 8-bit compensated prediction values within a VOP;
+        computed by this module (i/o); full-pel resolution
+    c_prev = pointer to previous 8-bit prediction values within a VOP;
+          values range from (0-255); full-pel resolution
+    sh_d = pointer to residual values used to compensate the predicted
+        value; values range from (-512 to 511); full-pel resolution
+    width = width of the VOP in pixels (x axis); full-pel resolution
+    rnd1 = rounding value for case when one dimension uses half-pel
+           resolution
+    rnd2 = rounding value for case when two dimensions uses half-pel
+           resolution
+    CBP = flag indicating whether residual is all zeros
+          (0 -> all zeros, 1 -> not all zeros)
         outside_flag = flag indicating whether motion vector is outside the
-		       VOP (0 -> inside, 1 -> outside)
+               VOP (0 -> inside, 1 -> outside)
 
  Outputs:
-	returns 1
+    returns 1
 
  Local Stores/Buffers/Pointers Needed:
-	None
+    None
 
  Global Stores/Buffers/Pointers Needed:
-	None
+    None
 
  Pointers and Buffers Modified:
-	comp = buffer contains newly computed compensated prediction values
+    comp = buffer contains newly computed compensated prediction values
 
  Local Stores Modified:
-	None
+    None
 
  Global Stores Modified:
-	None
+    None
 
 ------------------------------------------------------------------------------
  FUNCTION DESCRIPTION
@@ -81,14 +81,14 @@
 #include "osclconfig_compiler_warnings.h"
 
 int GetPredAdvancedBy0x0(
-    uint8 *prev,		/* i */
-    uint8 *pred_block,		/* i */
-    int width,		/* i */
+    uint8 *prev,        /* i */
+    uint8 *pred_block,      /* i */
+    int width,      /* i */
     int pred_width_rnd /* i */
 )
 {
-    uint	i;		/* loop variable */
-    int	offset, offset2;
+    uint    i;      /* loop variable */
+    int offset, offset2;
     uint32  pred_word, word1, word2;
     int tmp;
 
@@ -119,7 +119,7 @@ int GetPredAdvancedBy0x0(
             word1 = *((uint32*)prev); /* read 4 bytes, b4 b3 b2 b1 */
             word2 = *((uint32*)(prev += 4));  /* read 4 bytes, b8 b7 b6 b5 */
             word1 >>= 8; /* 0 b4 b3 b2 */
-            pred_word = word1 | (word2 << 24);	/* b5 b4 b3 b2 */
+            pred_word = word1 | (word2 << 24);  /* b5 b4 b3 b2 */
             *((uint32*)(pred_block += offset2)) = pred_word;
 
             word1 = *((uint32*)(prev += 4)); /* b12 b11 b10 b9 */
@@ -141,7 +141,7 @@ int GetPredAdvancedBy0x0(
             word1 = *((uint32*)prev); /* read 4 bytes, b4 b3 b2 b1 */
             word2 = *((uint32*)(prev += 4));  /* read 4 bytes, b8 b7 b6 b5 */
             word1 >>= 16; /* 0 0 b4 b3 */
-            pred_word = word1 | (word2 << 16);	/* b6 b5 b4 b3 */
+            pred_word = word1 | (word2 << 16);  /* b6 b5 b4 b3 */
             *((uint32*)(pred_block += offset2)) = pred_word;
 
             word1 = *((uint32*)(prev += 4)); /* b12 b11 b10 b9 */
@@ -164,7 +164,7 @@ int GetPredAdvancedBy0x0(
             word1 = *((uint32*)prev); /* read 4 bytes, b4 b3 b2 b1 */
             word2 = *((uint32*)(prev += 4));  /* read 4 bytes, b8 b7 b6 b5 */
             word1 >>= 24; /* 0 0 0 b4 */
-            pred_word = word1 | (word2 << 8);	/* b7 b6 b5 b4 */
+            pred_word = word1 | (word2 << 8);   /* b7 b6 b5 b4 */
             *((uint32*)(pred_block += offset2)) = pred_word;
 
             word1 = *((uint32*)(prev += 4)); /* b12 b11 b10 b9 */
@@ -181,14 +181,14 @@ int GetPredAdvancedBy0x0(
 
 /**************************************************************************/
 int GetPredAdvancedBy0x1(
-    uint8 *prev,		/* i */
-    uint8 *pred_block,		/* i */
-    int width,		/* i */
+    uint8 *prev,        /* i */
+    uint8 *pred_block,      /* i */
+    int width,      /* i */
     int pred_width_rnd /* i */
 )
 {
-    uint	i;		/* loop variable */
-    int	offset, offset2;
+    uint    i;      /* loop variable */
+    int offset, offset2;
     uint32 word1, word2, word3, word12;
     int tmp;
     int rnd1;
@@ -510,14 +510,14 @@ int GetPredAdvancedBy0x1(
 
 /**************************************************************************/
 int GetPredAdvancedBy1x0(
-    uint8 *prev,		/* i */
-    uint8 *pred_block,		/* i */
-    int width,		/* i */
+    uint8 *prev,        /* i */
+    uint8 *pred_block,      /* i */
+    int width,      /* i */
     int pred_width_rnd /* i */
 )
 {
-    uint	i;		/* loop variable */
-    int	offset, offset2;
+    uint    i;      /* loop variable */
+    int offset, offset2;
     uint32  word1, word2, word3, word12, word22;
     int tmp;
     int rnd1;
@@ -576,7 +576,7 @@ int GetPredAdvancedBy1x0(
             {
                 word1 = *((uint32*)(prev += 4));
                 word2 = *((uint32*)(prev + width));
-                word3 = word1 & word2;	/* rnd1 = 0; */
+                word3 = word1 & word2;  /* rnd1 = 0; */
                 word1 &= mask;
                 word3 &= (~mask); /* 0x1010101, check last bit */
                 word2 &= mask;
@@ -586,7 +586,7 @@ int GetPredAdvancedBy1x0(
                 *((uint32*)(pred_block += offset2)) = word1;
                 word1 = *((uint32*)(prev += 4));
                 word2 = *((uint32*)(prev + width));
-                word3 = word1 & word2;	/* rnd1 = 0; */
+                word3 = word1 & word2;  /* rnd1 = 0; */
                 word1 &= mask;
                 word3 &= (~mask); /* 0x1010101, check last bit */
                 word2 &= mask;
@@ -857,14 +857,14 @@ int GetPredAdvancedBy1x0(
 
 /**********************************************************************************/
 int GetPredAdvancedBy1x1(
-    uint8 *prev,		/* i */
-    uint8 *pred_block,		/* i */
-    int width,		/* i */
+    uint8 *prev,        /* i */
+    uint8 *pred_block,      /* i */
+    int width,      /* i */
     int pred_width_rnd /* i */
 )
 {
-    uint	i;		/* loop variable */
-    int	offset, offset2;
+    uint    i;      /* loop variable */
+    int offset, offset2;
     uint32  x1, x2, x1m, x2m, y1, y2, y1m, y2m; /* new way */
     int tmp;
     int rnd1, rnd2;

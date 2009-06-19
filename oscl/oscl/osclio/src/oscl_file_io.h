@@ -30,7 +30,7 @@
 
 /*! \file oscl_file_io.h
     \brief The file oscl_file_io.h defines the class Oscl_File.  This is the
-	public API to the basic file I/O operations.
+    public API to the basic file I/O operations.
 */
 
 

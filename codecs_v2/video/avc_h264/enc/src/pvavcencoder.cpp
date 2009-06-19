@@ -343,7 +343,7 @@ OSCL_EXPORT_REF TAVCEI_RETVAL PVAVCEncoder::GetParameterSet(uint8 *paramSet, int
         return EAVCEI_INPUT_ERROR;
     }
 
-    avcStatus =	PVAVCEncodeNAL(&iAvcHandle, paramSet, &aSize, aNALType);
+    avcStatus = PVAVCEncodeNAL(&iAvcHandle, paramSet, &aSize, aNALType);
 
     if (avcStatus == AVCENC_WRONG_STATE)
     {
@@ -723,7 +723,7 @@ OSCL_EXPORT_REF OsclFloat PVAVCEncoder::GetEncodeFrameRate(int32 aLayer)
 
 #ifdef YUV_INPUT
 /* ///////////////////////////////////////////////////////////////////////// */
-/* Copy from YUV input to YUV frame inside M4VEnc lib						*/
+/* Copy from YUV input to YUV frame inside M4VEnc lib                       */
 /* When input is not YUV, the color conv will write it directly to iVideoInOut. */
 /* ///////////////////////////////////////////////////////////////////////// */
 
@@ -845,7 +845,7 @@ void PVAVCEncoder::CopyToYUVIn(uint8 *YUV, int width, int height, int width_16, 
     }
     else
     {
-        for (y_ind = 0; y_ind < (jlimit - 1) ;y_ind++)
+        for (y_ind = 0; y_ind < (jlimit - 1) ; y_ind++)
         {
             oscl_memcpy(yChan, y, ilimit);
             oscl_memset(yChan + ilimit, 16, ioffset); /* pad with zero */
@@ -863,7 +863,7 @@ void PVAVCEncoder::CopyToYUVIn(uint8 *YUV, int width, int height, int width_16, 
     }
     else
     {
-        for (y_ind = 0; y_ind < (jlimit >> 1) - 1;y_ind++)
+        for (y_ind = 0; y_ind < (jlimit >> 1) - 1; y_ind++)
         {
             oscl_memcpy(uChan, u, ilimit >> 1);
             oscl_memcpy(vChan, v, ilimit >> 1);

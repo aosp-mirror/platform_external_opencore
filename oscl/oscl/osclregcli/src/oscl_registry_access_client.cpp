@@ -74,13 +74,12 @@ OSCL_EXPORT_REF void OsclRegistryAccessClient::Close()
         OSCL_DELETE(iTlsImpl);
         iTlsImpl = NULL;
     }
-    else
-        if (iGlobalImpl)
-        {
-            iGlobalImpl->Close();
-            OSCL_DELETE(iGlobalImpl);
-            iGlobalImpl = NULL;
-        }
+    else if (iGlobalImpl)
+    {
+        iGlobalImpl->Close();
+        OSCL_DELETE(iGlobalImpl);
+        iGlobalImpl = NULL;
+    }
 }
 
 OSCL_EXPORT_REF OsclComponentFactory OsclRegistryAccessClient::GetFactory(OSCL_String& aReg)
@@ -88,12 +87,11 @@ OSCL_EXPORT_REF OsclComponentFactory OsclRegistryAccessClient::GetFactory(OSCL_S
     if (iTlsImpl)
         return iTlsImpl->GetFactory(aReg);
 
-    else
-        if (iGlobalImpl)
-            return iGlobalImpl->GetFactory(aReg);
+    else if (iGlobalImpl)
+        return iGlobalImpl->GetFactory(aReg);
 
-        else
-            return NULL;
+    else
+        return NULL;
 }
 
 OSCL_EXPORT_REF void OsclRegistryAccessClient::GetFactories(OSCL_String& aReg, Oscl_Vector<OsclRegistryAccessElement, OsclMemAllocator>& aVec)
@@ -101,9 +99,8 @@ OSCL_EXPORT_REF void OsclRegistryAccessClient::GetFactories(OSCL_String& aReg, O
     if (iTlsImpl)
         iTlsImpl->GetFactories(aReg, aVec);
 
-    else
-        if (iGlobalImpl)
-            iGlobalImpl->GetFactories(aReg, aVec);
+    else if (iGlobalImpl)
+        iGlobalImpl->GetFactories(aReg, aVec);
 
 }
 

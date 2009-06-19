@@ -48,9 +48,9 @@ OSCL_COND_IMPORT_REF void _OSCL_Abort();
 
 //! OSCL_ASSERT macro evaluates an expression and when the result is false, prints a diagnostic message and aborts the program.
 /*!
-	\param expr is the expression to be evaluated
-	\param filename is the name of the current source file
-	\param line_number is the line number in the current source file
+    \param expr is the expression to be evaluated
+    \param filename is the name of the current source file
+    \param line_number is the line number in the current source file
 */
 #if (!defined(NDEBUG) || (OSCL_ASSERT_ALWAYS))
 OSCL_IMPORT_REF void OSCL_Assert(const char *expr, const char *filename, int line_number);

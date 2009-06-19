@@ -27,28 +27,28 @@ This file contains application function interfaces to the AVC decoder library.
 #include "avcdec_bitstream.h"
 
 /* ======================================================================== */
-/*	Function : EBSPtoRBSP()													*/
-/*	Date     : 11/4/2003													*/
-/*	Purpose  : Convert EBSP to RBSP and overwrite it.						*/
-/*			   Assuming that forbidden_zero, nal_ref_idc and nal_unit_type	*/
-/*			(first byte), has been taken out of the nal_unit.				*/
-/*	In/out   :																*/
-/*	Return   :																*/
-/*	Modified :																*/
+/*  Function : EBSPtoRBSP()                                                 */
+/*  Date     : 11/4/2003                                                    */
+/*  Purpose  : Convert EBSP to RBSP and overwrite it.                       */
+/*             Assuming that forbidden_zero, nal_ref_idc and nal_unit_type  */
+/*          (first byte), has been taken out of the nal_unit.               */
+/*  In/out   :                                                              */
+/*  Return   :                                                              */
+/*  Modified :                                                              */
 /* ======================================================================== */
 /**
-@pseudocode	"
-	NumBytesInRBSP = 0;
-	for(i=0:i< *size; i++){
-		if(i+2 < *size && next_bits(24)==0x000003){
-			rbsp_byte[NumBytesInRBSP++];
-			rbsp_byte[NumBytesInRBSP++];
-			i+=2;
-			emulation_prevention_three_byte (0x03)
-		}
-		else
-			rbsp_byte[NumBytesInRBSP++];
-	}"
+@pseudocode "
+    NumBytesInRBSP = 0;
+    for(i=0:i< *size; i++){
+        if(i+2 < *size && next_bits(24)==0x000003){
+            rbsp_byte[NumBytesInRBSP++];
+            rbsp_byte[NumBytesInRBSP++];
+            i+=2;
+            emulation_prevention_three_byte (0x03)
+        }
+        else
+            rbsp_byte[NumBytesInRBSP++];
+    }"
 */
 AVCDec_Status EBSPtoRBSP(uint8 *nal_unit, int *size)
 {
@@ -79,22 +79,22 @@ AVCDec_Status EBSPtoRBSP(uint8 *nal_unit, int *size)
 }
 
 /* ======================================================================== */
-/*	Function : PVAVCAnnexBGetNALUnit()										*/
-/*	Date     : 11/3/2003													*/
-/*	Purpose  : Parse a NAL from byte stream format.						 	*/
-/*	In/out   :																*/
-/*	Return   : AVCDEC_SUCCESS if succeed, AVC_FAIL if fail.					*/
-/*	Modified :																*/
+/*  Function : PVAVCAnnexBGetNALUnit()                                      */
+/*  Date     : 11/3/2003                                                    */
+/*  Purpose  : Parse a NAL from byte stream format.                         */
+/*  In/out   :                                                              */
+/*  Return   : AVCDEC_SUCCESS if succeed, AVC_FAIL if fail.                 */
+/*  Modified :                                                              */
 /* ======================================================================== */
 /**
 @pseudocode "
-	byte_stream_nal_unit(NumBytesInNalunit){
-	while(next_bits(24) != 0x000001)
-		zero_byte
-	if(more_data_in_byte_stream()){
-		start_code_prefix_one_3bytes // equal 0x000001
-		nal_unit(NumBytesInNALunit)
-	}
+    byte_stream_nal_unit(NumBytesInNalunit){
+    while(next_bits(24) != 0x000001)
+        zero_byte
+    if(more_data_in_byte_stream()){
+        start_code_prefix_one_3bytes // equal 0x000001
+        nal_unit(NumBytesInNALunit)
+    }
    }"
 */
 OSCL_EXPORT_REF AVCDec_Status PVAVCAnnexBGetNALUnit(uint8 *bitstream, uint8 **nal_unit,
@@ -155,12 +155,12 @@ OSCL_EXPORT_REF AVCDec_Status PVAVCAnnexBGetNALUnit(uint8 *bitstream, uint8 **na
 }
 
 /* ======================================================================== */
-/*	Function : PVAVCGetNALType()											*/
-/*	Date     : 11/4/2003													*/
-/*	Purpose  : Sniff NAL type from the bitstream						 	*/
-/*	In/out   :																*/
-/*	Return   : AVCDEC_SUCCESS if succeed, AVC_FAIL if fail.					*/
-/*	Modified :																*/
+/*  Function : PVAVCGetNALType()                                            */
+/*  Date     : 11/4/2003                                                    */
+/*  Purpose  : Sniff NAL type from the bitstream                            */
+/*  In/out   :                                                              */
+/*  Return   : AVCDEC_SUCCESS if succeed, AVC_FAIL if fail.                 */
+/*  Modified :                                                              */
 /* ======================================================================== */
 OSCL_EXPORT_REF AVCDec_Status PVAVCDecGetNALType(uint8 *bitstream, int size,
         int *nal_type, int *nal_ref_idc)
@@ -180,15 +180,15 @@ OSCL_EXPORT_REF AVCDec_Status PVAVCDecGetNALType(uint8 *bitstream, int size,
 }
 
 /* ======================================================================== */
-/*	Function : PVAVCDecSeqParamSet()										*/
-/*	Date     : 11/4/2003													*/
-/*	Purpose  : Initialize sequence, memory allocation if necessary.			*/
-/*	In/out   :																*/
-/*	Return   : AVCDEC_SUCCESS if succeed, AVC_FAIL if fail.					*/
-/*	Modified :																*/
+/*  Function : PVAVCDecSeqParamSet()                                        */
+/*  Date     : 11/4/2003                                                    */
+/*  Purpose  : Initialize sequence, memory allocation if necessary.         */
+/*  In/out   :                                                              */
+/*  Return   : AVCDEC_SUCCESS if succeed, AVC_FAIL if fail.                 */
+/*  Modified :                                                              */
 /* ======================================================================== */
 
-OSCL_EXPORT_REF AVCDec_Status	PVAVCDecSeqParamSet(AVCHandle *avcHandle, uint8 *nal_unit,
+OSCL_EXPORT_REF AVCDec_Status   PVAVCDecSeqParamSet(AVCHandle *avcHandle, uint8 *nal_unit,
         int nal_size)
 {
     AVCDec_Status status;
@@ -268,7 +268,7 @@ OSCL_EXPORT_REF AVCDec_Status	PVAVCDecSeqParamSet(AVCHandle *avcHandle, uint8 *n
         video->currPicParams = NULL;
 
         /* There are 32 pointers to sequence param set, seqParams.
-        		There are 255 pointers to picture param set, picParams.*/
+                There are 255 pointers to picture param set, picParams.*/
         for (i = 0; i < 32; i++)
             decvid->seqParams[i] = NULL;
 
@@ -312,13 +312,13 @@ OSCL_EXPORT_REF AVCDec_Status	PVAVCDecSeqParamSet(AVCHandle *avcHandle, uint8 *n
 }
 
 /* ======================================================================== */
-/*	Function : PVAVCDecGetSeqInfo()											*/
-/*	Date     : 11/4/2003													*/
-/*	Purpose  : Get sequence parameter info. after SPS NAL is decoded.	 	*/
-/*	In/out   :																*/
-/*	Return   : AVCDEC_SUCCESS if succeed, AVC_FAIL if fail.					*/
-/*	Modified :																*/
-/*	12/20/03:  change input argument, use structure instead.				*/
+/*  Function : PVAVCDecGetSeqInfo()                                         */
+/*  Date     : 11/4/2003                                                    */
+/*  Purpose  : Get sequence parameter info. after SPS NAL is decoded.       */
+/*  In/out   :                                                              */
+/*  Return   : AVCDEC_SUCCESS if succeed, AVC_FAIL if fail.                 */
+/*  Modified :                                                              */
+/*  12/20/03:  change input argument, use structure instead.                */
 /* ======================================================================== */
 
 OSCL_EXPORT_REF AVCDec_Status PVAVCDecGetSeqInfo(AVCHandle *avcHandle, AVCDecSPSInfo *seqInfo)
@@ -374,18 +374,18 @@ OSCL_EXPORT_REF AVCDec_Status PVAVCDecGetSeqInfo(AVCHandle *avcHandle, AVCDecSPS
 }
 
 /* ======================================================================== */
-/*	Function : PVAVCDecPicParamSet()										*/
-/*	Date     : 11/4/2003													*/
-/*	Purpose  : Initialize picture						 					*/
-/*			   create reference picture list.								*/
-/*	In/out   :																*/
-/*	Return   : AVCDEC_SUCCESS if succeed, AVC_FAIL if fail.					*/
-/*	Modified :																*/
+/*  Function : PVAVCDecPicParamSet()                                        */
+/*  Date     : 11/4/2003                                                    */
+/*  Purpose  : Initialize picture                                           */
+/*             create reference picture list.                               */
+/*  In/out   :                                                              */
+/*  Return   : AVCDEC_SUCCESS if succeed, AVC_FAIL if fail.                 */
+/*  Modified :                                                              */
 /* ======================================================================== */
 /**
 Since PPS doesn't contain much data, most of the picture initialization will
 be done after decoding the slice header in PVAVCDecodeSlice. */
-OSCL_EXPORT_REF AVCDec_Status	PVAVCDecPicParamSet(AVCHandle *avcHandle, uint8 *nal_unit,
+OSCL_EXPORT_REF AVCDec_Status   PVAVCDecPicParamSet(AVCHandle *avcHandle, uint8 *nal_unit,
         int nal_size)
 {
     AVCDec_Status status;
@@ -426,7 +426,7 @@ OSCL_EXPORT_REF AVCDec_Status	PVAVCDecPicParamSet(AVCHandle *avcHandle, uint8 *n
     return AVCDEC_SUCCESS;
 }
 
-OSCL_EXPORT_REF AVCDec_Status	PVAVCDecSEI(AVCHandle *avcHandle, uint8 *nal_unit,
+OSCL_EXPORT_REF AVCDec_Status   PVAVCDecSEI(AVCHandle *avcHandle, uint8 *nal_unit,
         int nal_size)
 {
     OSCL_UNUSED_ARG(avcHandle);
@@ -436,12 +436,12 @@ OSCL_EXPORT_REF AVCDec_Status	PVAVCDecSEI(AVCHandle *avcHandle, uint8 *nal_unit,
     return AVCDEC_SUCCESS;
 }
 /* ======================================================================== */
-/*	Function : PVAVCDecodeSlice()											*/
-/*	Date     : 11/4/2003													*/
-/*	Purpose  : Decode one NAL unit.										 	*/
-/*	In/out   :																*/
-/*	Return   : See enum AVCDec_Status for return values.					*/
-/*	Modified :																*/
+/*  Function : PVAVCDecodeSlice()                                           */
+/*  Date     : 11/4/2003                                                    */
+/*  Purpose  : Decode one NAL unit.                                         */
+/*  In/out   :                                                              */
+/*  Return   : See enum AVCDec_Status for return values.                    */
+/*  Modified :                                                              */
 /* ======================================================================== */
 OSCL_EXPORT_REF AVCDec_Status PVAVCDecodeSlice(AVCHandle *avcHandle, uint8 *buffer,
         int buf_size)
@@ -521,7 +521,7 @@ OSCL_EXPORT_REF AVCDec_Status PVAVCDecodeSlice(AVCHandle *avcHandle, uint8 *buff
                 ConcealSlice(decvid, video->PicSizeInMbs - video->numMBs, video->PicSizeInMbs);  // Conceal
                 video->numMBs = 0;
 
-                //				DeblockPicture(video);   // No need to deblock
+                //              DeblockPicture(video);   // No need to deblock
 
                 /* 3.2 Decoded frame reference marking. */
                 /* 3.3 Put the decoded picture in output buffers */
@@ -543,7 +543,7 @@ OSCL_EXPORT_REF AVCDec_Status PVAVCDecodeSlice(AVCHandle *avcHandle, uint8 *buff
 
         if (!video->currSeqParams->gaps_in_frame_num_value_allowed_flag)
         {   /* no gaps allowed, frame_num has to increase by one only */
-            /*			if(sliceHdr->frame_num != (video->PrevRefFrameNum + 1)%video->MaxFrameNum) */
+            /*          if(sliceHdr->frame_num != (video->PrevRefFrameNum + 1)%video->MaxFrameNum) */
             if (video->sliceHdr->frame_num != video->PrevRefFrameNum && video->sliceHdr->frame_num != (video->PrevRefFrameNum + 1) % video->MaxFrameNum)
             {
                 // Conceal missing MBs of previously decoded frame
@@ -623,7 +623,7 @@ OSCL_EXPORT_REF AVCDec_Status PVAVCDecodeSlice(AVCHandle *avcHandle, uint8 *buff
             }
         }
         /* if there's gap in the frame_num, we have to fill in the gap with
-        	imaginary frames that won't get used for short-term ref. */
+            imaginary frames that won't get used for short-term ref. */
         /* see fill_frame_num_gap() in JM */
 
 
@@ -636,7 +636,7 @@ OSCL_EXPORT_REF AVCDec_Status PVAVCDecodeSlice(AVCHandle *avcHandle, uint8 *buff
         if (video->nal_ref_idc == 0)
         {
             video->currPic->isReference = FALSE;
-            video->currFS->IsOutputted |= 0x02;		/* The MASK 0x02 means not needed for reference, or returned */
+            video->currFS->IsOutputted |= 0x02;     /* The MASK 0x02 means not needed for reference, or returned */
             /* node need to check for freeing of this buffer */
         }
 
@@ -711,12 +711,12 @@ OSCL_EXPORT_REF AVCDec_Status PVAVCDecodeSlice(AVCHandle *avcHandle, uint8 *buff
 }
 
 /* ======================================================================== */
-/*	Function : PVAVCDecGetOutput()											*/
-/*	Date     : 11/3/2003													*/
-/*	Purpose  : Get the next picture according to PicOrderCnt.	 	 		*/
-/*	In/out   :																*/
-/*	Return   : AVCFrameIO structure									 		*/
-/*	Modified :																*/
+/*  Function : PVAVCDecGetOutput()                                          */
+/*  Date     : 11/3/2003                                                    */
+/*  Purpose  : Get the next picture according to PicOrderCnt.               */
+/*  In/out   :                                                              */
+/*  Return   : AVCFrameIO structure                                         */
+/*  Modified :                                                              */
 /* ======================================================================== */
 
 OSCL_EXPORT_REF AVCDec_Status PVAVCDecGetOutput(AVCHandle *avcHandle, int *indx, int *release, AVCFrameIO *output)
@@ -891,14 +891,14 @@ OSCL_EXPORT_REF AVCDec_Status PVAVCDecGetOutput(AVCHandle *avcHandle, int *indx,
 
 
 /* ======================================================================== */
-/*	Function : PVAVCDecReset()												*/
-/*	Date     : 03/04/2004													*/
-/*	Purpose  : Reset decoder, prepare it for a new IDR frame.		 	 	*/
-/*	In/out   :																*/
-/*	Return   :	void														*/
-/*	Modified :																*/
+/*  Function : PVAVCDecReset()                                              */
+/*  Date     : 03/04/2004                                                   */
+/*  Purpose  : Reset decoder, prepare it for a new IDR frame.               */
+/*  In/out   :                                                              */
+/*  Return   :  void                                                        */
+/*  Modified :                                                              */
 /* ======================================================================== */
-OSCL_EXPORT_REF void	PVAVCDecReset(AVCHandle *avcHandle)
+OSCL_EXPORT_REF void    PVAVCDecReset(AVCHandle *avcHandle)
 {
     AVCDecObject *decvid = (AVCDecObject*) avcHandle->AVCObject;
     AVCCommonObj *video;
@@ -943,12 +943,12 @@ OSCL_EXPORT_REF void	PVAVCDecReset(AVCHandle *avcHandle)
 
 
 /* ======================================================================== */
-/*	Function : PVAVCCleanUpDecoder()										*/
-/*	Date     : 11/4/2003													*/
-/*	Purpose  : Clean up the decoder, free all memories allocated.	 	 	*/
-/*	In/out   :																*/
-/*	Return   :	void														*/
-/*	Modified :																*/
+/*  Function : PVAVCCleanUpDecoder()                                        */
+/*  Date     : 11/4/2003                                                    */
+/*  Purpose  : Clean up the decoder, free all memories allocated.           */
+/*  In/out   :                                                              */
+/*  Return   :  void                                                        */
+/*  Modified :                                                              */
 /* ======================================================================== */
 
 OSCL_EXPORT_REF void PVAVCCleanUpDecoder(AVCHandle *avcHandle)

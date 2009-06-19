@@ -565,7 +565,7 @@ uint8 PV_LATM_Parser::composeMultipleFrame(PVMFSharedMediaDataPtr& mediaDataIn)
         myData = multiFrameBuf;
 
         uint32 outPtrPos = 0;
-        for (i = 0;i <= sMC->numSubFrames;i++)
+        for (i = 0; i <= sMC->numSubFrames; i++)
         {
             framesize = 0;
             do
@@ -668,7 +668,7 @@ OSCL_EXPORT_REF uint8 * PV_LATM_Parser::ParseStreamMuxConfig(uint8* decoderSpeci
     //streamMuxConfig * sMC;
     sMC = (streamMuxConfig *) oscl_calloc(1, sizeof(streamMuxConfig));
     if (sMC == NULL)
-    {		// unlikely: calloc failure
+    {       // unlikely: calloc failure
         return NULL;
     }
 
@@ -730,7 +730,7 @@ OSCL_EXPORT_REF uint8 * PV_LATM_Parser::ParseStreamMuxConfig(uint8* decoderSpeci
                 return NULL;
             }
 
-            for (lay = 0;lay <= numLayer;lay++)
+            for (lay = 0; lay <= numLayer; lay++)
             {
                 //  can only be one numLayer (RFC3016)
                 if (prog == 0 && lay == 0)
@@ -995,7 +995,7 @@ OSCL_EXPORT_REF uint8 * PV_LATM_Parser::ParseStreamMuxConfig(uint8* decoderSpeci
                     }
                     else
                     {
-                        for (count = 0;count < ASCLen;count++)
+                        for (count = 0; count < ASCLen; count++)
                         {
                             ASCPtr[count] = (uint8)BufferReadBits(decoderSpecificConfig, &ASCPos, 8);
                         }
@@ -1227,7 +1227,7 @@ uint8 PV_LATM_Parser::composeMultipleFrame(uint8* aData, uint32 aDataLen, uint32
         myData = multiFrameBuf;
 
         uint32 outPtrPos = 0;
-        for (i = 0;i <= sMC->numSubFrames;i++)
+        for (i = 0; i <= sMC->numSubFrames; i++)
         {
             framesize = 0;
             do

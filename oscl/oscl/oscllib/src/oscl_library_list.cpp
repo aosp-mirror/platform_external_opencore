@@ -28,7 +28,7 @@
 #define CLOSE_PAREN ')'
 #define QUOTE '"'
 #define COMMA ','
-#define OSCL_NUMBER_OF_SHARED_LIBS	16
+#define OSCL_NUMBER_OF_SHARED_LIBS  16
 #define BUFFER_SIZE 256
 
 

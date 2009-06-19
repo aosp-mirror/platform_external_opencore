@@ -23,7 +23,7 @@
 #define TEST_DURATION 10000
 
 class test_base : public engine_test,
-            public H324MConfigObserver
+        public H324MConfigObserver
 {
     public:
 

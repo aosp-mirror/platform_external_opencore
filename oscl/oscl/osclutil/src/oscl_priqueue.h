@@ -85,7 +85,7 @@ class OsclPriorityQueueBase
         //return delta from "first" to "last" expressed as a number of T elements.
         int delta_T(OsclAny*first, OsclAny*last)
         {
-            return ((int)last -(int)first) / pVec->sizeof_T;
+            return ((int)last - (int)first) / pVec->sizeof_T;
         }
 
         Oscl_Opaque_Type_Compare* pOpaqueType;
@@ -113,7 +113,7 @@ class Container = Oscl_Vector<Qelem, Alloc>,
 class Compare = OsclCompareLess<Qelem> >
 
 class OsclPriorityQueue : public OsclPriorityQueueBase
-            , public Oscl_Opaque_Type_Compare
+        , public Oscl_Opaque_Type_Compare
 {
 
     public:
@@ -198,7 +198,7 @@ class OsclPriorityQueue : public OsclPriorityQueueBase
         int validate()
         {
             unsigned int ch;
-            for (unsigned int par = 0;par < c.size();par++)
+            for (unsigned int par = 0; par < c.size(); par++)
             {
                 ch = 2 * par + 1;
                 if (ch < c.size() && comp.compare(c[par], c[ch]))

@@ -134,32 +134,32 @@ class OsclJump
 //_PV_TRAP macro catches leaves.
 //_r is leave code, _s is statements to execute.
 #define _PV_TRAP(__r,__s)\
-	__r=OsclErrNone;\
-	{\
-		OsclErrorTrapImp* __trap=OsclErrorTrapImp::Trap();\
-		if(!__trap){__s;}else{\
-		int __tr=setjmp(*(__trap->iJumpData->Top()));\
-		if (__tr==0)\
-		{__s;}\
-		else if (__tr==internalLeave)\
-		{__r=__trap->iLeave;}\
-		__trap->UnTrap();}\
-	}
+    __r=OsclErrNone;\
+    {\
+        OsclErrorTrapImp* __trap=OsclErrorTrapImp::Trap();\
+        if(!__trap){__s;}else{\
+        int __tr=setjmp(*(__trap->iJumpData->Top()));\
+        if (__tr==0)\
+        {__s;}\
+        else if (__tr==internalLeave)\
+        {__r=__trap->iLeave;}\
+        __trap->UnTrap();}\
+    }
 
 //Same as _PV_TRAP but avoids a TLS lookup.
 // __trapimp is the OsclErrorTrapImp* for the calling thread.
 #define _PV_TRAP_NO_TLS(__trapimp,__r,__s)\
-	__r=OsclErrNone;\
-	{\
-		OsclErrorTrapImp* __trap=OsclErrorTrapImp::TrapNoTls(__trapimp);\
-		if(!__trap){__s;}else{\
-		int __tr=setjmp(*(__trap->iJumpData->Top()));\
-		if (__tr==0)\
-		{__s;}\
-		else if (__tr==internalLeave)\
-		{__r=__trap->iLeave;}\
-		__trap->UnTrap();}\
-	}
+    __r=OsclErrNone;\
+    {\
+        OsclErrorTrapImp* __trap=OsclErrorTrapImp::TrapNoTls(__trapimp);\
+        if(!__trap){__s;}else{\
+        int __tr=setjmp(*(__trap->iJumpData->Top()));\
+        if (__tr==0)\
+        {__s;}\
+        else if (__tr==internalLeave)\
+        {__r=__trap->iLeave;}\
+        __trap->UnTrap();}\
+    }
 
 
 #endif // OSCL_ERROR_IMP_JUMPS_H_INCLUDED

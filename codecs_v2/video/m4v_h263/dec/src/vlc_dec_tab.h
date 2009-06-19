@@ -57,32 +57,32 @@
 *****************************************************************************
 ***********************************************************HeaderBegin*******
 *
-* File:	vlc_dec_tab.h
+* File: vlc_dec_tab.h
 *
-* Author:	Paulo Nunes (IST) - Paulo.Nunes@it.ist.utl.pt
-* Created:	1-Mar-96
+* Author:   Paulo Nunes (IST) - Paulo.Nunes@it.ist.utl.pt
+* Created:  1-Mar-96
 *
 * Description: This file contains the VLC tables for module which deals
-*		with VLC decoding.
+*       with VLC decoding.
 *
-* Notes: 	This file was created based on tmndecode
-* 		Written by Karl Olav Lillevold <kol@nta.no>,
-*		1995 Telenor R&D.
-* 		Donated to the Momusys-project as background code by
-*		Telenor.
+* Notes:    This file was created based on tmndecode
+*       Written by Karl Olav Lillevold <kol@nta.no>,
+*       1995 Telenor R&D.
+*       Donated to the Momusys-project as background code by
+*       Telenor.
 *
-*		based on mpeg2decode, (C) 1994, MPEG Software Simulation Group
-*		and mpeg2play, (C) 1994 Stefan Eckart
+*       based on mpeg2decode, (C) 1994, MPEG Software Simulation Group
+*       and mpeg2play, (C) 1994 Stefan Eckart
 *                         <stefan@lis.e-technik.tu-muenchen.de>
 *
 *
-* Modified:	 9-May-96 Paulo Nunes: Reformatted. New headers.
-*		14-May-96 Paulo Nunes: Changed TMNMVtabs according to VM2.1.
-*	04.11.96 Robert Danielsen: Added three new tables for coding
-*			of Intra luminance coefficients (VM 4.0)
+* Modified:  9-May-96 Paulo Nunes: Reformatted. New headers.
+*       14-May-96 Paulo Nunes: Changed TMNMVtabs according to VM2.1.
+*   04.11.96 Robert Danielsen: Added three new tables for coding
+*           of Intra luminance coefficients (VM 4.0)
 *      01.05.97 Luis Ducla-Soares: added VM7.0 Reversible VLC tables (RVLC).
 *      13.05.97 Minhua Zhou: added VlC tables for CBPYtab2 CBPYtab3,
-*	revised  CBPYtab
+*   revised  CBPYtab
 *
 ***********************************************************HeaderEnd*********
 
@@ -96,8 +96,8 @@ resides in "vlc_tab.c".
 /*----------------------------------------------------------------------------
 ; CONTINUE ONLY IF NOT ALREADY DEFINED
 ----------------------------------------------------------------------------*/
-#ifndef	vlc_dec_tab_H
-#define	vlc_dec_tab_H
+#ifndef vlc_dec_tab_H
+#define vlc_dec_tab_H
 
 /*----------------------------------------------------------------------------
 ; INCLUDES

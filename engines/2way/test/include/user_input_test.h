@@ -22,7 +22,7 @@
 #include "tsc_h324m_config_interface.h"
 
 class user_input_test : public test_base//,
-            //public H324MConfigObserver
+        //public H324MConfigObserver
 {
     public:
         user_input_test(bool aUseProxy, bool aIsDTMF) : test_base(PVMF_MIME_AMR_IF2, PVMF_MIME_AMR_IF2, PVMF_MIME_YUV420, PVMF_MIME_YUV420, aUseProxy),

@@ -102,7 +102,7 @@ class TscSrpBuffer : /*public SimpleStackElement, */public OsclTimerObserver
         {
             TscSrpBufferStopped,
             TscSrpBufferStarted
-        }TscSrpBufferState;
+        } TscSrpBufferState;
 
         static TscSrpBuffer* NewL();
 

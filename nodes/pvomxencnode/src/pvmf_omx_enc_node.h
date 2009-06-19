@@ -138,7 +138,7 @@
 typedef struct OutputBufCtrlStruct
 {
     OMX_BUFFERHEADERTYPE *pBufHdr;
-}OutputBufCtrlStruct;
+} OutputBufCtrlStruct;
 
 typedef struct InputBufCtrlStruct
 {
@@ -191,9 +191,9 @@ OMX_ERRORTYPE CallbackFillBufferDoneEnc(OMX_OUT OMX_HANDLETYPE aComponent,
 /////////////////////////
 /////////////////////////
 // CUSTOM DEALLOCATOR FOR MEDIA DATA SHARED PTR WRAPPER:
-//						1) Deallocates the underlying output buffer
-//						2) Deallocates the pvci buffer wrapper and the rest of accompanying structures
-//					  Deallocator is created as part of the wrapper, and travels with the buffer wrapper
+//                      1) Deallocates the underlying output buffer
+//                      2) Deallocates the pvci buffer wrapper and the rest of accompanying structures
+//                    Deallocator is created as part of the wrapper, and travels with the buffer wrapper
 
 class PVOMXEncBufferSharedPtrWrapperCombinedCleanupDA : public OsclDestructDealloc
 {
@@ -476,28 +476,28 @@ typedef struct PV_VideoEncodeParam
 
     /** Specifies an  ID that will be used to specify this encoder while returning
     the bitstream in asynchronous mode. */
-    uint32				iEncodeID;
+    uint32              iEncodeID;
 
 
     /** Specifies whether base only (iNumLayer = 1) or base + enhancement layer
     (iNumLayer =2 ) is to be used. */
-    int32				iNumLayer;
+    int32               iNumLayer;
 
     /** Specifies the width in pixels of the encoded frames. IFrameWidth[0] is for
     base layer and iFrameWidth[1] is for enhanced layer. */
-    int 				iFrameWidth[MAX_LAYER];
+    int                 iFrameWidth[MAX_LAYER];
 
     /** Specifies the height in pixels of the encoded frames. IFrameHeight[0] is for
     base layer and iFrameHeight[1] is for enhanced layer. */
-    int					iFrameHeight[MAX_LAYER];
+    int                 iFrameHeight[MAX_LAYER];
 
     /** Specifies the cumulative bit rate in bit per second. IBitRate[0] is for base
     layer and iBitRate[1] is for base+enhanced layer.*/
-    int 				iBitRate[MAX_LAYER];
+    int                 iBitRate[MAX_LAYER];
 
     /** Specifies the cumulative frame rate in frame per second. IFrameRate[0] is for
     base layer and iFrameRate[1] is for base+enhanced layer. */
-    float 				iFrameRate[MAX_LAYER];
+    float               iFrameRate[MAX_LAYER];
 
     /** Specifies the rate control algorithm among one of the following constant Q,
     CBR and VBR.  The structure EncRateControlType is defined above.*/
@@ -506,51 +506,51 @@ typedef struct PV_VideoEncodeParam
     /** Specifies the initial quantization parameter for the first I-frame. If constant Q
     rate control is used, this QP will be used for all the I-frames. This number must be
     set between 1 and 31, otherwise, Initialize() will fail. */
-    int					iIquant[2];
+    int                 iIquant[2];
 
     /** Specifies the initial quantization parameter for the first P-frame. If constant Q
     rate control is used, this QP will be used for all the P-frames. This number must be
     set between 1 and 31, otherwise, Initialize() will fail. */
-    int					iPquant[2];
+    int                 iPquant[2];
 
     /** Specifies the initial quantization parameter for the first B-frame. If constant Q
     rate control is used, this QP will be used for all the B-frames. This number must be
     set between 1 and 31, otherwise, Initialize() will fail. */
-    int					iBquant[2];
+    int                 iBquant[2];
 
 
     /** Specifies the maximum number of P-frames between 2 INTRA frames. An INTRA mode is
     forced to a frame once this interval is reached. When there is only one I-frame is present
     at the beginning of the clip, iIFrameInterval should be set to -1. */
-    int32				iIFrameInterval;
+    int32               iIFrameInterval;
 
     /** According to iIFrameInterval setting, the minimum number of intra MB per frame is
     optimally calculated for error resiliency. However, when iIFrameInterval is set to -1,
     iNumIntraMBRefresh must be specified to guarantee the minimum number of intra
     macroblocks per frame.*/
-    uint32				iNumIntraMBRefresh;
+    uint32              iNumIntraMBRefresh;
 
     /** Specifies automatic scene detection where I-frame will be used the the first frame
     in a new scene. */
-    bool				iSceneDetection;
+    bool                iSceneDetection;
 
     /** Specifies the packet size in bytes which represents the number of bytes between two resync markers.
     For EI_M4V_DOWNLOAD and EI_H263, if iPacketSize is set to 0, there will be no resync markers in the bitstream.
     For EI_M4V_STREAMING is parameter must be set to a value greater than 0. For AVC, this value specifies
     the packet size in bytes which represents the desired number of bytes per NAL.
     If this number is set to 0, the AVC encoder will encode the entire slice group as one NAL. */
-    uint32				iPacketSize;
+    uint32              iPacketSize;
 
     /** Specifies the VBV buffer size which determines the end-to-end delay between the
     encoder and the decoder.  The size is in unit of seconds. For download application,
     the buffer size can be larger than the streaming application. For 2-way application,
     this buffer shall be kept minimal. For a special case, in VBR mode, iBufferDelay will
     be set to -1 to allow buffer underflow. */
-    float				iBufferDelay;
+    float               iBufferDelay;
 
 
     /** Specifies the duration of the clip in millisecond.*/
-    int32				iClipDuration;
+    int32               iClipDuration;
 
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -560,50 +560,50 @@ typedef struct PV_VideoEncodeParam
     /** Specifies the profile and level used to encode the bitstream. When present,
     other settings will be checked against the range allowable by this target profile
     and level. Fail may be returned from the Initialize call. */
-    EncM4VProfileLevel	iProfileLevel;
+    EncM4VProfileLevel  iProfileLevel;
 
     /** Specifies the picture quality factor on the scale of 1 to 10. It trades off
     the picture quality with the frame rate. Higher frame quality means lower frame rate.
     Lower frame quality for higher frame rate.*/
-    int32				iFrameQuality;
+    int32               iFrameQuality;
 
 
     /** Enable the use of iFrameQuality to determine the frame rate. If it is false,
     the encoder will try to meet the specified frame rate regardless of the frame quality.*/
-    bool				iEnableFrameQuality;
+    bool                iEnableFrameQuality;
 
 
     /** Specifies the type of the access whether it is streaming, EI_H263, EI_M4V_STREAMING
     (data partitioning mode) or download, EI_M4V_DOWNLOAD (combined mode).*/
-    EncContentType		iContentType;
+    EncContentType      iContentType;
 
 
     /** Specifies high quality but also high complexity mode for rate control. */
-    bool				iRDOptimal;
+    bool                iRDOptimal;
 
 
     /** Specifies the search range in pixel unit for motion vector. The range of the
     motion vector will be of dimension [-iSearchRange.5, +iSearchRange.0]. */
-    int32				iSearchRange;
+    int32               iSearchRange;
 
     /** Specifies the use of 8x8 motion vectors. */
-    bool				iMV8x8;
+    bool                iMV8x8;
 
     /** Specifies the use of half-pel motion vectors. */
-    bool				iMVHalfPel;
+    bool                iMVHalfPel;
 
     /** Specifies whether the current frame skipping decision is allowed after encoding
     the current frame. If there is no memory of what has been coded for the current frame,
     iNoCurrentSkip has to be on. */
-    bool				iNoCurrentSkip;
+    bool                iNoCurrentSkip;
 
     /** Specifies that no frame skipping is allowed. Frame skipping is a tool used to
     control the average number of bits spent to meet the target bit rate. */
-    bool				iNoFrameSkip;
+    bool                iNoFrameSkip;
 
     /** Specifies whether RVLC (reversible VLC) is to be used or not.
     */
-    bool				iRVLCEnable;
+    bool                iRVLCEnable;
 
 ////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////// H264 specific parameters ///////////////////////////////
@@ -612,23 +612,23 @@ typedef struct PV_VideoEncodeParam
     /** Specifies the targeted profile, and will also specifies available tools for iEncMode.
     If default is used, encoder will choose its own preferred profile. If autodetect is used, encoder
     will check other settings and choose the right profile that doesn't have any conflicts. */
-    EncAVCProfile		iAVCProfile;
+    EncAVCProfile       iAVCProfile;
 
     /** Specifies the target level  When present,
     other settings will be checked against the range allowable by this target level.
     Fail will returned upon Initialize call. If not known, users must set it to autodetect. Encoder will
     calculate the right level that doesn't conflict with other settings. */
-    EncAVCLevel			iAVCLevel;
+    EncAVCLevel         iAVCLevel;
 
     /** Specifies the encoding mode. This translates to the complexity of encoding modes and
     error resilient tools. This is for future use - enc mode will be used to set other parameters to appropriate
     values.
     */
 
-    EncEncodingMode		iEncMode;
+    EncEncodingMode     iEncMode;
 
     /** Specifies that SPS and PPS are retrieved first and sent out-of-band */
-    //bool				iOutOfBandParamSet;
+    //bool              iOutOfBandParamSet;
 
 
 } PV_VideoEncodeParam;
@@ -639,19 +639,19 @@ typedef struct PV_VideoEncodeParam
 typedef struct PV_VideoInputFormat
 {
     /** Contains the width in pixels of the input frame. */
-    int32 			iFrameWidth;
+    int32           iFrameWidth;
 
     /** Contains the height in pixels of the input frame. */
-    int32			iFrameHeight;
+    int32           iFrameHeight;
 
     /** Contains the input frame rate in the unit of frame per second. */
-    float			iFrameRate;
+    float           iFrameRate;
 
     /** Contains Frame Orientation. Used for RGB input. 1 means Bottom_UP RGB, 0 means Top_Down RGB, -1 for video formats other than RGB*/
-    int				iFrameOrientation;
+    int             iFrameOrientation;
 
     /** Contains the format of the input video, e.g., YUV 4:2:0, UYVY, RGB24, etc. */
-    EncVideoInputFormat 	iVideoFormat;
+    EncVideoInputFormat     iVideoFormat;
 } PV_VideoInputFormat;
 
 
@@ -682,7 +682,7 @@ typedef struct PV_AudioEncodeParam
     uint32  iOutputBitrate;
 
     //
-    uint32	iMaxNumOutputFramesPerBuffer;
+    uint32  iMaxNumOutputFramesPerBuffer;
 
 
 } PV_AudioEncodeParam;
@@ -754,7 +754,7 @@ struct PVOMXEncNodeKeyStringData
 
 
 // Key string info at the base level ("x-pvmf/encoder/video")
-//								  or ("x-pvmf/encoder/audio")
+//                                or ("x-pvmf/encoder/audio")
 
 #ifdef _TEST_AE_ERROR_HANDLING
 #define PVOMXENCNODECONFIG_BASE_NUMKEYS 8
@@ -779,8 +779,8 @@ const PVOMXEncNodeKeyStringData PVOMXEncNodeConfigBaseKeys[PVOMXENCNODECONFIG_BA
 enum BaseKeys_IndexMapType
 {
     SAMPLING_RATE = 0, // audio
-    CHANNELS,			// audio
-    ENCODING_MODE		// avc
+    CHANNELS,           // audio
+    ENCODING_MODE       // avc
 #ifdef _TEST_AE_ERROR_HANDLING
     , ERROR_START_INIT
     , ERROR_ENCODE
@@ -830,7 +830,7 @@ typedef enum
     PV_MPEG_VIDEO_ADVANCE_SIMPLE_PROFILE,
     PV_MPEG_VIDEO_FINE_GRANUALITY_SCALABLE_PROFILE,
     PV_MPEG_VIDEO_RESERVED_PROFILE
-}PVMF_MPEGVideoProfileType;
+} PVMF_MPEGVideoProfileType;
 
 typedef enum
 {
@@ -842,7 +842,7 @@ typedef enum
     PV_MPEG_VIDEO_LEVEL5,
     PV_MPEG_VIDEO_LEVEL_UNKNOWN
 
-}PVMF_MPEGVideoLevelType;
+} PVMF_MPEGVideoLevelType;
 
 /////////////////////////////////////////////////////////////////////////////////////////
 
@@ -859,14 +859,14 @@ typedef PVMFNodeCommandQueue<PVMFOMXEncNodeCommand, PVMFOMXEncNodeAllocator> PVM
 
 
 class PVMFOMXEncNode
-            : public OsclActiveObject
-            , public PVMFNodeInterface
-            , public OsclMemPoolFixedChunkAllocatorObserver
-            , public PVMFOMXEncNodeExtensionInterface
-            , public PVMFMetadataExtensionInterface
-            , public PvmiCapabilityAndConfig
-            , public PVMp4H263EncExtensionInterface
-            , public PVAudioEncExtensionInterface
+        : public OsclActiveObject
+        , public PVMFNodeInterface
+        , public OsclMemPoolFixedChunkAllocatorObserver
+        , public PVMFOMXEncNodeExtensionInterface
+        , public PVMFMetadataExtensionInterface
+        , public PvmiCapabilityAndConfig
+        , public PVMp4H263EncExtensionInterface
+        , public PVAudioEncExtensionInterface
 {
     public:
         PVMFOMXEncNode(int32 aPriority);
@@ -922,27 +922,27 @@ class PVMFOMXEncNode
         //********** CB Functions to serve OpenMAX Encoder
 
         //Process callback functions. They will be executed in testapp thread context
-        //	These callbacks are used only in the Multithreaded component case
+        //  These callbacks are used only in the Multithreaded component case
         OsclReturnCode ProcessCallbackEventHandler_MultiThreaded(OsclAny* P);
         OsclReturnCode ProcessCallbackEmptyBufferDone_MultiThreaded(OsclAny* P);
         OsclReturnCode ProcessCallbackFillBufferDone_MultiThreaded(OsclAny* P);
 
         //Callback objects - again, these are used only in the case of Multithreaded component
-        EventHandlerThreadSafeCallbackAOEnc*	 iThreadSafeHandlerEventHandler;
+        EventHandlerThreadSafeCallbackAOEnc*     iThreadSafeHandlerEventHandler;
         EmptyBufferDoneThreadSafeCallbackAOEnc* iThreadSafeHandlerEmptyBufferDone;
         FillBufferDoneThreadSafeCallbackAOEnc*  iThreadSafeHandlerFillBufferDone;
 
         OMX_CALLBACKTYPE       iCallbacks; // structure that contains callback ptrs.
         // OMX CALLBACKS
         // 1) AO OMX component running in the same thread as the OMX node
-        //	In this case, the callbacks can be called directly from the component
-        //	The callback: OMX Component->CallbackEventHandler->EventHandlerProcessing
-        //	The callback can perform do RunIfNotReady
+        //  In this case, the callbacks can be called directly from the component
+        //  The callback: OMX Component->CallbackEventHandler->EventHandlerProcessing
+        //  The callback can perform do RunIfNotReady
 
         // 2) Multithreaded component
-        //	In this case, the callback is made using the threadsafe callback (TSCB) AO
-        //	Component thread : OMX Component->CallbackEventHandler->TSCB(ReceiveEvent)
-        //  Node thread		 : TSCB(ProcessEvent)->ProcessCallbackEventHandler_MultiThreaded->EventHandlerProcessing
+        //  In this case, the callback is made using the threadsafe callback (TSCB) AO
+        //  Component thread : OMX Component->CallbackEventHandler->TSCB(ReceiveEvent)
+        //  Node thread      : TSCB(ProcessEvent)->ProcessCallbackEventHandler_MultiThreaded->EventHandlerProcessing
 
 
         //==============================================================================
@@ -983,9 +983,9 @@ class PVMFOMXEncNode
         PVMFStatus verifyParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int aNumElements);
 
         // Virtual functions of PVMp4H263EncExtensionInterface
-//	OSCL_IMPORT_REF void addRef();
-//	OSCL_IMPORT_REF void removeRef();
-//	OSCL_IMPORT_REF bool queryInterface(const PVUuid& uuid, PVInterface*& iface);
+//  OSCL_IMPORT_REF void addRef();
+//  OSCL_IMPORT_REF void removeRef();
+//  OSCL_IMPORT_REF bool queryInterface(const PVUuid& uuid, PVInterface*& iface);
         OSCL_IMPORT_REF bool SetNumLayers(uint32 aNumLayers);
         OSCL_IMPORT_REF bool SetOutputBitRate(uint32 aLayer, uint32 aBitRate);
         OSCL_IMPORT_REF bool SetOutputFrameSize(uint32 aLayer, uint32 aWidth, uint32 aHeight);
@@ -1077,19 +1077,19 @@ class PVMFOMXEncNode
         bool CreateOutMemPool(uint32 num);
         bool CreateInputMemPool(uint32 num);
         bool ProvideBuffersToComponent(OsclMemPoolFixedChunkAllocator *aMemPool, // allocator
-                                       uint32 aAllocSize,	 // size to allocate from pool (hdr only or hdr+ buffer)
+                                       uint32 aAllocSize,    // size to allocate from pool (hdr only or hdr+ buffer)
                                        uint32 aNumBuffers,    // number of buffers
                                        uint32 aActualBufferSize, // aactual buffer size
                                        uint32 aPortIndex,      // port idx
-                                       bool aUseBufferOK,	// can component use OMX_UseBuffer?
-                                       bool	aIsThisInputBuffer // is this input or output
+                                       bool aUseBufferOK,   // can component use OMX_UseBuffer?
+                                       bool aIsThisInputBuffer // is this input or output
                                       );
 
         bool FreeBuffersFromComponent(OsclMemPoolFixedChunkAllocator *aMemPool, // allocator
-                                      uint32 aAllocSize,	 // size to allocate from pool (hdr only or hdr+ buffer)
+                                      uint32 aAllocSize,     // size to allocate from pool (hdr only or hdr+ buffer)
                                       uint32 aNumBuffers,    // number of buffers
                                       uint32 aPortIndex,      // port idx
-                                      bool	aIsThisInputBuffer		// is this input or output
+                                      bool  aIsThisInputBuffer      // is this input or output
                                      );
 
         OsclSharedPtr<class PVMFMediaDataImpl> WrapOutputBuffer(uint8 *pData, uint32 aDataLen, OsclAny *pContext);
@@ -1187,7 +1187,7 @@ class PVMFOMXEncNode
         // INPUT BUFFER RELATED MEMBERS
         OsclMemPoolFixedChunkAllocator *iInBufMemoryPool;
         uint32 iOMXComponentInputBufferSize; // size of input buffer that the component sees (negotiated with the component)
-        uint32 iInputAllocSize; 	// size of input buffer to allocate (OMX_ALLOCATE_BUFFER =  size of buf header )
+        uint32 iInputAllocSize;     // size of input buffer to allocate (OMX_ALLOCATE_BUFFER =  size of buf header )
         // (OMX_USE_BUFFER = size of buf header + iOMXCoponentInputBufferSize)
         uint32 iNumInputBuffers; // total num of input buffers (negotiated with component)
 
@@ -1199,13 +1199,13 @@ class PVMFOMXEncNode
         bool iInputBuffersFreed;
 
         // input buffer fragmentation etc.
-        uint32 iCopyPosition;				// for copying memfrag data into a buffer
+        uint32 iCopyPosition;               // for copying memfrag data into a buffer
         uint32 iFragmentSizeRemainingToCopy;
-        bool	iIsNewDataFragment;
+        bool    iIsNewDataFragment;
 
         // input data info
         uint32 iCurrFragNum;
-        uint32 iCodecSeqNum;	// sequence number tracking
+        uint32 iCodecSeqNum;    // sequence number tracking
         uint32 iInPacketSeqNum;
 
         uint32 iInTimestamp;
@@ -1248,12 +1248,12 @@ class PVMFOMXEncNode
             EPVMFOMXEncNodeProcessingState_WaitForOutputBuffer,   //wait state for avalible media output buffer
             EPVMFOMXEncNodeProcessingState_WaitForOutputPort,     //wait state, output port is busy
             EPVMFOMXEncNodeProcessingState_WaitForOutgoingQueue,   //wait state, outgoing queue
-            EPVMFOMXEncNodeProcessingState_PortReconfig,			// Dynamic Port Reconfiguration - step 1
-            EPVMFOMXEncNodeProcessingState_WaitForBufferReturn,		//	step 2
-            EPVMFOMXEncNodeProcessingState_WaitForPortDisable,		// Dynamic Port Reconfiguration - step 3
-            EPVMFOMXEncNodeProcessingState_PortReEnable,			// Dynamic Port Reconfiguration - step 4
-            EPVMFOMXEncNodeProcessingState_WaitForPortEnable,		// step 5
-            EPVMFOMXEncNodeProcessingState_Stopping				// when STOP command is issued, the node has to wait for component to transition into
+            EPVMFOMXEncNodeProcessingState_PortReconfig,            // Dynamic Port Reconfiguration - step 1
+            EPVMFOMXEncNodeProcessingState_WaitForBufferReturn,     //  step 2
+            EPVMFOMXEncNodeProcessingState_WaitForPortDisable,      // Dynamic Port Reconfiguration - step 3
+            EPVMFOMXEncNodeProcessingState_PortReEnable,            // Dynamic Port Reconfiguration - step 4
+            EPVMFOMXEncNodeProcessingState_WaitForPortEnable,       // step 5
+            EPVMFOMXEncNodeProcessingState_Stopping             // when STOP command is issued, the node has to wait for component to transition into
             // idle state. The buffers keep coming back , the node is rescheduled
             // to run. Prevent the node from sending buffers back
         } PVMFOMXEncNode_ProcessingState;
@@ -1277,7 +1277,7 @@ class PVMFOMXEncNode
         bool iIsEOSReceivedFromComponent;
 
         // Send Fsi configuration flag
-        bool	sendYuvFsi;
+        bool    sendYuvFsi;
 
         // Width of encoded frame
         int32 iYUVWidth;
@@ -1360,7 +1360,7 @@ class PVMFOMXEncNode
         OsclMemoryFragment iSPSs[PVMF_AVCENC_NODE_SPS_VECTOR_RESERVE]; // just ptrs
         OsclMemoryFragment iPPSs[PVMF_AVCENC_NODE_PPS_VECTOR_RESERVE]; // just ptrs
         int   iNumSPSs;
-        int	  iNumPPSs;
+        int   iNumPPSs;
         bool iSpsPpsSequenceOver;
         OsclSharedPtr<PVMFMediaDataImpl> iPreviousMediaData;
         bool iFirstNAL;

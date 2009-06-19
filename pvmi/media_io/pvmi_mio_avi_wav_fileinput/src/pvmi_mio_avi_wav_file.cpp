@@ -1490,13 +1490,13 @@ PVMFStatus PvmiMIOAviWavFile::DoRead()
                     senddata = true;
                 }
 
-            }	// 	if (iSettings.iRecModeSyncWithClock)
+            }   //  if (iSettings.iRecModeSyncWithClock)
             else
             {
                 senddata = true;
             }
         }   // while (!senddata)
-    }	//	if (!iWaitingOnClock)
+    }   //  if (!iWaitingOnClock)
 
     iWaitingOnClock = false;
 

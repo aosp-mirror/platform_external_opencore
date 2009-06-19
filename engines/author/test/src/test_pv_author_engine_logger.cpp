@@ -60,11 +60,11 @@ OSCL_EXPORT_REF bool PVAELogger::ParseConfigFile(const oscl_wchar *pwszConfigFil
         return false;
 
     int32 iStatus = 0;
-    PVLogger		 *loggernode = NULL;
+    PVLogger         *loggernode = NULL;
 
     bool bFileExists = false;
     Oscl_FileServer fs;
-    Oscl_File		filehandle;
+    Oscl_File       filehandle;
 
     // read configuration file pvaelogger.txt in working directory
     fs.Connect();
@@ -85,7 +85,7 @@ OSCL_EXPORT_REF bool PVAELogger::ParseConfigFile(const oscl_wchar *pwszConfigFil
     uint32 lastlineterminator = 0, firstline = 0;
 
     PVLoggerAppender *appender = NULL;
-    OsclRefCounter	 *refCounter = NULL;
+    OsclRefCounter   *refCounter = NULL;
     OsclSharedPtr<PVLoggerAppender> sharedAppenderPtr;
 
     bool bEof = false;
@@ -288,8 +288,8 @@ OSCL_EXPORT_REF bool PVAELogger::MakeStdErrAppender()
 {
     int32 iStatus;
     PVLoggerAppender *appender   = NULL;
-    OsclRefCounter	 *refCounter = NULL;
-    PVLogger		 *loggernode = NULL;
+    OsclRefCounter   *refCounter = NULL;
+    PVLogger         *loggernode = NULL;
 
     typedef StdErrAppender<TimeAndIdLayout, 1024> typeStdErrAppender;
     OSCL_TRY(iStatus,

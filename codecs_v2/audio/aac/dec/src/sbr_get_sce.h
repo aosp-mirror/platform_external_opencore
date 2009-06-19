@@ -84,9 +84,9 @@ extern "C"
 #endif
 
     SBR_ERROR sbr_get_sce(SBR_FRAME_DATA * hFrameData,
-                          BIT_BUFFER * hBitBuf
+    BIT_BUFFER * hBitBuf
 #ifdef PARAMETRICSTEREO
-                          , HANDLE_PS_DEC hParametricStereoDec
+    , HANDLE_PS_DEC hParametricStereoDec
 #endif
                          );
 

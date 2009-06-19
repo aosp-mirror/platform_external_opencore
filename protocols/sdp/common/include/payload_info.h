@@ -104,13 +104,13 @@ class PayloadSpecificInfoTypeBase
             return profileLevelID;
         };
 
-        uint32	payloadNumber;
-        uint32	sampleRate;
-        uint32	noOfChannels;
-        int		maxBufferSize;
-        int		profileLevelID;
+        uint32  payloadNumber;
+        uint32  sampleRate;
+        uint32  noOfChannels;
+        int     maxBufferSize;
+        int     profileLevelID;
         OsclSharedPtr<uint8> configHeader;
-        uint32	configSize;
+        uint32  configSize;
 
 };
 

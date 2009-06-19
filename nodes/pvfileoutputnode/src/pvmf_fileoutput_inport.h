@@ -60,10 +60,10 @@ class PVMFFileOutputNode;
 #define PVMF_FILE_OUTPUT_PORT_INPUT_FORMATS_VALTYPE "x-pvmf/port/formattype;valtype=char*"
 
 class PVMFFileOutputInPort : public PvmfPortBaseImpl
-            , public PvmiCapabilityAndConfig
-            , public PvmfSyncUtilDataQueueObserver
-            , public OsclTimerObject
-            , public PvmfNodesSyncControlInterface
+        , public PvmiCapabilityAndConfig
+        , public PvmfSyncUtilDataQueueObserver
+        , public OsclTimerObject
+        , public PvmfNodesSyncControlInterface
 {
     public:
         PVMFFileOutputInPort(int32 aTag, PVMFNodeInterface* aNode);

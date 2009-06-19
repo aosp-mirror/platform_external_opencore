@@ -37,15 +37,15 @@ static const uint32 msk[33] =
 
 
 /* ======================================================================== */
-/*	Function : BitstreamFillCache()											*/
-/*	Date     : 08/29/2000													*/
-/*	Purpose  : Read more bitstream data into buffer & the 24-byte cache.	*/
-/*				This function is different from BitstreamFillBuffer in		*/
-/*				that the buffer is the frame-based buffer provided by		*/
-/*				the application.											*/
-/*	In/out   :																*/
-/*	Return   : PV_SUCCESS if successed, PV_FAIL if failed.					*/
-/*	Modified : 4/16/01  : removed return of PV_END_OF_BUFFER				*/
+/*  Function : BitstreamFillCache()                                         */
+/*  Date     : 08/29/2000                                                   */
+/*  Purpose  : Read more bitstream data into buffer & the 24-byte cache.    */
+/*              This function is different from BitstreamFillBuffer in      */
+/*              that the buffer is the frame-based buffer provided by       */
+/*              the application.                                            */
+/*  In/out   :                                                              */
+/*  Return   : PV_SUCCESS if successed, PV_FAIL if failed.                  */
+/*  Modified : 4/16/01  : removed return of PV_END_OF_BUFFER                */
 /* ======================================================================== */
 PV_STATUS BitstreamFillCache(BitstreamDecVideo *stream)
 {
@@ -77,7 +77,7 @@ PV_STATUS BitstreamFillCache(BitstreamDecVideo *stream)
 
         stream->next_word = 0;
 
-        for (i = 0; i < stream->data_end_pos - stream->read_point;i++)
+        for (i = 0; i < stream->data_end_pos - stream->read_point; i++)
         {
             stream->next_word |= (v[i] << ((3 - i) << 3));
         }
@@ -115,12 +115,12 @@ PV_STATUS BitstreamFillCache(BitstreamDecVideo *stream)
 
 
 /* ======================================================================== */
-/*	Function : BitstreamReset()												*/
-/*	Date     : 08/29/2000													*/
-/*	Purpose  : Initialize the bitstream buffer for frame-based decoding.	*/
-/*	In/out   :																*/
-/*	Return   :																*/
-/*	Modified :																*/
+/*  Function : BitstreamReset()                                             */
+/*  Date     : 08/29/2000                                                   */
+/*  Purpose  : Initialize the bitstream buffer for frame-based decoding.    */
+/*  In/out   :                                                              */
+/*  Return   :                                                              */
+/*  Modified :                                                              */
 /* ======================================================================== */
 void BitstreamReset(BitstreamDecVideo *stream, uint8 *buffer, int32 buffer_size)
 {
@@ -132,18 +132,18 @@ void BitstreamReset(BitstreamDecVideo *stream, uint8 *buffer, int32 buffer_size)
 
 
 /* ======================================================================== */
-/*	Function : BitstreamOpen()												*/
-/*	Purpose  : Initialize the bitstream data structure.						*/
-/*	In/out   :																*/
-/*	Return   :																*/
-/*	Modified :																*/
+/*  Function : BitstreamOpen()                                              */
+/*  Purpose  : Initialize the bitstream data structure.                     */
+/*  In/out   :                                                              */
+/*  Return   :                                                              */
+/*  Modified :                                                              */
 /* ======================================================================== */
 int BitstreamOpen(BitstreamDecVideo *stream, int layer)
 {
     OSCL_UNUSED_ARG(layer);
     int buffer_size = 0;
     /* set up linear bitstream buffer */
-//	stream->currentBytePos = 0;
+//  stream->currentBytePos = 0;
     stream->data_end_pos = 0;
 
     stream->incnt = 0;
@@ -156,11 +156,11 @@ int BitstreamOpen(BitstreamDecVideo *stream, int layer)
 
 
 /* ======================================================================== */
-/*	Function : BitstreamClose()												*/
-/*	Purpose  : Cleanup the bitstream data structure.						*/
-/*	In/out   :																*/
-/*	Return   :																*/
-/*	Modified :																*/
+/*  Function : BitstreamClose()                                             */
+/*  Purpose  : Cleanup the bitstream data structure.                        */
+/*  In/out   :                                                              */
+/*  Return   :                                                              */
+/*  Modified :                                                              */
 /* ======================================================================== */
 void BitstreamClose(BitstreamDecVideo * stream)
 {
@@ -209,11 +209,11 @@ PV_STATUS BitstreamShowBits32(BitstreamDecVideo *stream, int nbits, uint32 *code
 
 #ifndef PV_BS_INLINE
 /*========================================================================= */
-/*	Function:   BitstreamShowBits16()										*/
-/*	Date:		12/18/2000													*/
-/*	Purpose:	To see the next "nbits"(nbits<=16) bitstream bits           */
+/*  Function:   BitstreamShowBits16()                                       */
+/*  Date:       12/18/2000                                                  */
+/*  Purpose:    To see the next "nbits"(nbits<=16) bitstream bits           */
 /*              without advancing the read pointer                          */
-/*		                                         							*/
+/*                                                                          */
 /* =========================================================================*/
 PV_STATUS BitstreamShowBits16(BitstreamDecVideo *stream, int nbits, uint *code)
 {
@@ -232,11 +232,11 @@ PV_STATUS BitstreamShowBits16(BitstreamDecVideo *stream, int nbits, uint *code)
 
 
 /*========================================================================= */
-/*	Function:   BitstreamShow15Bits()									    */
-/*	Date:		01/23/2001													*/
-/*	Purpose:	To see the next 15 bitstream bits                           */
+/*  Function:   BitstreamShow15Bits()                                       */
+/*  Date:       01/23/2001                                                  */
+/*  Purpose:    To see the next 15 bitstream bits                           */
 /*              without advancing the read pointer                          */
-/*		                                         							*/
+/*                                                                          */
 /* =========================================================================*/
 PV_STATUS BitstreamShow15Bits(BitstreamDecVideo *stream, uint *code)
 {
@@ -251,10 +251,10 @@ PV_STATUS BitstreamShow15Bits(BitstreamDecVideo *stream, uint *code)
     return status;
 }
 /*========================================================================= */
-/*	Function: BitstreamShow13Bits											*/
-/*	Date:		050923												*/
-/*	Purpose:	Faciliate and speed up showing 13 bit from bitstream		*/
-/*				used in VlcTCOEFF decoding									*/
+/*  Function: BitstreamShow13Bits                                           */
+/*  Date:       050923                                              */
+/*  Purpose:    Faciliate and speed up showing 13 bit from bitstream        */
+/*              used in VlcTCOEFF decoding                                  */
 /*  Modified:                            */
 /* =========================================================================*/
 PV_STATUS BitstreamShow13Bits(BitstreamDecVideo *stream, uint *code)
@@ -289,7 +289,7 @@ uint BitstreamReadBits16_INLINE(BitstreamDecVideo *stream, int nbits)
 uint BitstreamRead1Bits_INLINE(BitstreamDecVideo *stream)
 {
     PV_STATUS status = PV_SUCCESS;
-    uint	code;
+    uint    code;
 
 
     if (stream->incnt < 1)
@@ -306,10 +306,10 @@ uint BitstreamRead1Bits_INLINE(BitstreamDecVideo *stream)
 #endif
 
 /* ======================================================================== */
-/*	Function : BitstreamReadBits16()						        		*/
-/*	Purpose  : Read bits (nbits <=16) from bitstream buffer.				*/
-/*	In/out   :																*/
-/*	Return   :																*/
+/*  Function : BitstreamReadBits16()                                        */
+/*  Purpose  : Read bits (nbits <=16) from bitstream buffer.                */
+/*  In/out   :                                                              */
+/*  Return   :                                                              */
 /* ======================================================================== */
 uint BitstreamReadBits16(BitstreamDecVideo *stream, int nbits)
 {
@@ -326,16 +326,16 @@ uint BitstreamReadBits16(BitstreamDecVideo *stream, int nbits)
 }
 
 /* ======================================================================== */
-/*	Function : BitstreamRead1Bits()											*/
-/*	Date     : 10/23/2000													*/
-/*	Purpose  : Faciliate and speed up reading 1 bit from bitstream.			*/
-/*	In/out   :																*/
-/*	Return   :																*/
+/*  Function : BitstreamRead1Bits()                                         */
+/*  Date     : 10/23/2000                                                   */
+/*  Purpose  : Faciliate and speed up reading 1 bit from bitstream.         */
+/*  In/out   :                                                              */
+/*  Return   :                                                              */
 /* ======================================================================== */
 
 uint BitstreamRead1Bits(BitstreamDecVideo *stream)
 {
-    uint	code;
+    uint    code;
 
     if (stream->incnt < 1)
     {
@@ -349,11 +349,11 @@ uint BitstreamRead1Bits(BitstreamDecVideo *stream)
 }
 
 /* ======================================================================== */
-/*	Function : PV_BitstreamFlushBitsCheck()									*/
-/*	Purpose  : Flush nbits bits from bitstream buffer. Check for cache		*/
-/*	In/out   :																*/
-/*	Return   :																*/
-/*	Modified :																*/
+/*  Function : PV_BitstreamFlushBitsCheck()                                 */
+/*  Purpose  : Flush nbits bits from bitstream buffer. Check for cache      */
+/*  In/out   :                                                              */
+/*  Return   :                                                              */
+/*  Modified :                                                              */
 /* ======================================================================== */
 PV_STATUS PV_BitstreamFlushBitsCheck(BitstreamDecVideo *stream, int nbits)
 {
@@ -377,10 +377,10 @@ PV_STATUS PV_BitstreamFlushBitsCheck(BitstreamDecVideo *stream, int nbits)
 }
 
 /* ======================================================================== */
-/*	Function : BitstreamReadBits32()						       			*/
-/*	Purpose  : Read bits from bitstream buffer.								*/
-/*	In/out   :																*/
-/*	Return   :																*/
+/*  Function : BitstreamReadBits32()                                        */
+/*  Purpose  : Read bits from bitstream buffer.                             */
+/*  In/out   :                                                              */
+/*  Return   :                                                              */
 /* ======================================================================== */
 uint32 BitstreamReadBits32(BitstreamDecVideo *stream, int nbits)
 {
@@ -408,12 +408,12 @@ uint32 BitstreamReadBits32HC(BitstreamDecVideo *stream)
 }
 
 /* ======================================================================== */
-/*	Function : BitstreamCheckEndBuffer()									*/
-/*	Date     : 03/30/2001													*/
-/*	Purpose  : Check to see if we are at the end of buffer      			*/
-/*	In/out   :																*/
-/*	Return   :																*/
-/*	Modified :																*/
+/*  Function : BitstreamCheckEndBuffer()                                    */
+/*  Date     : 03/30/2001                                                   */
+/*  Purpose  : Check to see if we are at the end of buffer                  */
+/*  In/out   :                                                              */
+/*  Return   :                                                              */
+/*  Modified :                                                              */
 /* ======================================================================== */
 PV_STATUS BitstreamCheckEndBuffer(BitstreamDecVideo *stream)
 {
@@ -507,11 +507,11 @@ PV_STATUS BitstreamByteAlignNoForceStuffing(BitstreamDecVideo *stream)
 
 
 /* ==================================================================== */
-/*	Function : getPointer()												*/
-/*	Date     : 10/98													*/
-/*	Purpose  : get current position of file pointer						*/
-/*	In/out   :															*/
-/*	Return   :															*/
+/*  Function : getPointer()                                             */
+/*  Date     : 10/98                                                    */
+/*  Purpose  : get current position of file pointer                     */
+/*  In/out   :                                                          */
+/*  Return   :                                                          */
 /* ==================================================================== */
 int32 getPointer(BitstreamDecVideo *stream)
 {
@@ -557,13 +557,13 @@ PV_STATUS movePointerTo(BitstreamDecVideo *stream, int32 pos)
 
 
 /* ======================================================================== */
-/*	Function : validStuffing()												*/
-/*	Date     : 04/11/2000													*/
-/*	Purpose  : Check whether we have valid stuffing at current position.	*/
-/*	In/out   :																*/
-/*	Return   : PV_TRUE if successed, PV_FALSE if failed.					*/
-/*	Modified : 12/18/2000 : changed the pattern type to uint	*/
-/*             04/01/2001 : removed PV_END_OF_BUFFER						*/
+/*  Function : validStuffing()                                              */
+/*  Date     : 04/11/2000                                                   */
+/*  Purpose  : Check whether we have valid stuffing at current position.    */
+/*  In/out   :                                                              */
+/*  Return   : PV_TRUE if successed, PV_FALSE if failed.                    */
+/*  Modified : 12/18/2000 : changed the pattern type to uint    */
+/*             04/01/2001 : removed PV_END_OF_BUFFER                        */
 /* ======================================================================== */
 Bool validStuffing(BitstreamDecVideo *stream)
 {
@@ -596,12 +596,12 @@ Bool validStuffing_h263(BitstreamDecVideo *stream)
 
 
 /* ======================================================================== */
-/*	Function : PVSearchNextH263Frame()										*/
-/*	Date     : 04/08/2005													*/
-/*	Purpose  : search for 0x00 0x00 0x80									*/
-/*	In/out   :																*/
-/*	Return   : PV_SUCCESS if succeeded	or PV_END_OF_VOP if failed			*/
-/*	Modified :																*/
+/*  Function : PVSearchNextH263Frame()                                      */
+/*  Date     : 04/08/2005                                                   */
+/*  Purpose  : search for 0x00 0x00 0x80                                    */
+/*  In/out   :                                                              */
+/*  Return   : PV_SUCCESS if succeeded  or PV_END_OF_VOP if failed          */
+/*  Modified :                                                              */
 /* ======================================================================== */
 PV_STATUS PVSearchNextH263Frame(BitstreamDecVideo *stream)
 {
@@ -623,13 +623,13 @@ PV_STATUS PVSearchNextH263Frame(BitstreamDecVideo *stream)
 
 
 /* ======================================================================== */
-/*	Function : PVSearchNextM4VFrame()										*/
-/*	Date     : 04/08/2005													*/
-/*	Purpose  : search for 0x00 0x00 0x01 and move the pointer to the		*/
-/*	beginning of the start code			 									*/
-/*	In/out   :																*/
-/*	Return   : PV_SUCCESS if succeeded	or PV_END_OF_VOP if failed			*/
-/*	Modified :																*/
+/*  Function : PVSearchNextM4VFrame()                                       */
+/*  Date     : 04/08/2005                                                   */
+/*  Purpose  : search for 0x00 0x00 0x01 and move the pointer to the        */
+/*  beginning of the start code                                             */
+/*  In/out   :                                                              */
+/*  Return   : PV_SUCCESS if succeeded  or PV_END_OF_VOP if failed          */
+/*  Modified :                                                              */
 /* ======================================================================== */
 
 PV_STATUS PVSearchNextM4VFrame(BitstreamDecVideo *stream)
@@ -675,12 +675,12 @@ void PVLocateH263FrameBoundary(BitstreamDecVideo *stream)
 }
 
 /* ======================================================================== */
-/*	Function : quickSearchVideoPacketHeader()			    */
-/*	Date     : 05/08/2000						    */
-/*	Purpose  : Quick search for the next video packet header	    */
-/*	In/out   :							    */
-/*	Return   : PV_TRUE if successed, PV_FALSE if failed.		    */
-/*	Modified :							    */
+/*  Function : quickSearchVideoPacketHeader()               */
+/*  Date     : 05/08/2000                           */
+/*  Purpose  : Quick search for the next video packet header        */
+/*  In/out   :                              */
+/*  Return   : PV_TRUE if successed, PV_FALSE if failed.            */
+/*  Modified :                              */
 /* ======================================================================== */
 PV_STATUS quickSearchVideoPacketHeader(BitstreamDecVideo *stream, int marker_length)
 {
@@ -731,7 +731,7 @@ PV_STATUS quickSearchH263SliceHeader(BitstreamDecVideo *stream)
 }
 #endif
 /* ======================================================================== */
-/*			The following functions are for Error Concealment.				*/
+/*          The following functions are for Error Concealment.              */
 /* ======================================================================== */
 
 /****************************************************/
@@ -747,16 +747,16 @@ the 1 bit after them are all 1's.
 // 4 bits. The MSB is bit #1, the LSB is bit #4.
 const int lastOne[] =
 {
-    0,	4,	3,	4,	2,	4,	3,	4,
-    1,	4,	3,	4,	2,	4,	3,	4
+    0,  4,  3,  4,  2,  4,  3,  4,
+    1,  4,  3,  4,  2,  4,  3,  4
 };
 
 //  Table used for quick search of markers. Gives the last `0' in
 // 4 bits. The MSB is bit #1, the LSB is bit #4.
 /*const int lastZero[]=
 {
-	4,	3,	4,	2,	4,	3,	4,	1,
-		4,	3,	4,	2,	4,	3,	4,	0
+    4,  3,  4,  2,  4,  3,  4,  1,
+        4,  3,  4,  2,  4,  3,  4,  0
 };
 */
 //  Table used for quick search of markers. Gives the first `0' in
@@ -777,12 +777,12 @@ const int firstOne[] =
 
 
 /* ======================================================================== */
-/*	Function : quickSearchMarkers()											*/
-/*	Date     : 01/25/99														*/
-/*	Purpose  : Quick search for Motion marker								*/
-/*	In/out   :																*/
-/*	Return   : Boolean true of false										*/
-/*	Modified : 12/18/2000 : 32-bit version                    */
+/*  Function : quickSearchMarkers()                                         */
+/*  Date     : 01/25/99                                                     */
+/*  Purpose  : Quick search for Motion marker                               */
+/*  In/out   :                                                              */
+/*  Return   : Boolean true of false                                        */
+/*  Modified : 12/18/2000 : 32-bit version                    */
 /* ======================================================================== */
 PV_STATUS quickSearchMotionMarker(BitstreamDecVideo *stream)
 // MM: (11111000000000001)
@@ -863,17 +863,17 @@ PV_STATUS quickSearchMotionMarker(BitstreamDecVideo *stream)
 }
 
 /* ======================================================================== */
-/*	Function : quickSearchDCM()												*/
-/*	Date     : 01/22/99														*/
-/*	Purpose  : Quick search for DC Marker									*/
-/*				We are not using the fastest algorithm possible.  What this */
-/*				function does is to locate 11 consecutive 0's and then      */
-/*				check if the 7 bits before them and the 1 bit after them    */
-/*				are correct.  (actually the first part of it, i.e. 16 0's	*/
-/*				and a 1.													*/
-/*	In/out   :																*/
-/*	Return   : Boolean true of false										*/
-/*	Modified : 12/18/2000 : 32-bit version                    */
+/*  Function : quickSearchDCM()                                             */
+/*  Date     : 01/22/99                                                     */
+/*  Purpose  : Quick search for DC Marker                                   */
+/*              We are not using the fastest algorithm possible.  What this */
+/*              function does is to locate 11 consecutive 0's and then      */
+/*              check if the 7 bits before them and the 1 bit after them    */
+/*              are correct.  (actually the first part of it, i.e. 16 0's   */
+/*              and a 1.                                                    */
+/*  In/out   :                                                              */
+/*  Return   : Boolean true of false                                        */
+/*  Modified : 12/18/2000 : 32-bit version                    */
 /* ======================================================================== */
 PV_STATUS quickSearchDCM(BitstreamDecVideo *stream)
 // DCM: (110 1011 0000 0000 0001)
@@ -943,12 +943,12 @@ PV_STATUS quickSearchDCM(BitstreamDecVideo *stream)
 }
 
 /* ======================================================================== */
-/*	Function : quickSearchGOBHeader()	0000 0000 0000 0000 1				*/
-/*	Date     : 07/06/01														*/
-/*	Purpose  : Quick search of GOBHeader (not byte aligned)         		*/
-/*	In/out   :																*/
-/*	Return   : Integer value indicates type of marker found					*/
-/*	Modified :																*/
+/*  Function : quickSearchGOBHeader()   0000 0000 0000 0000 1               */
+/*  Date     : 07/06/01                                                     */
+/*  Purpose  : Quick search of GOBHeader (not byte aligned)                 */
+/*  In/out   :                                                              */
+/*  Return   : Integer value indicates type of marker found                 */
+/*  Modified :                                                              */
 /* ======================================================================== */
 PV_STATUS quickSearchGOBHeader(BitstreamDecVideo *stream)
 {

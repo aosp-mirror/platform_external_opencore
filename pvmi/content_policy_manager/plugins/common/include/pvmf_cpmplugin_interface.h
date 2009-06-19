@@ -53,7 +53,7 @@ class PVMFCPMPluginCmdStatusObserver
     public:
         /**
          * Handle an event that has been generated.
-         * @param "aResponse"	"The response to a previously issued command."
+         * @param "aResponse"   "The response to a previously issued command."
          */
         virtual void CPMPluginCommandCompleted(const PVMFCmdResp& aResponse) = 0;
         virtual ~PVMFCPMPluginCmdStatusObserver() {}
@@ -251,7 +251,7 @@ class PVMFCPMPluginInterface
         virtual void ReportCmdCompleteEvent(PVMFSessionId s,
                                             PVMFCmdResp &resp)
         {
-            for (uint32 i = 0;i < iSessions.size();i++)
+            for (uint32 i = 0; i < iSessions.size(); i++)
             {
                 if (iSessions[i].iId == s)
                 {

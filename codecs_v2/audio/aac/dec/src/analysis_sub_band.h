@@ -59,9 +59,9 @@ extern "C"
 
 
     void analysis_sub_band_LC(Int32 vec[64],
-                              Int32 cosine_total[],
-                              Int32 maxBand,
-                              Int32 scratch_mem[][64]);
+    Int32 cosine_total[],
+    Int32 maxBand,
+    Int32 scratch_mem[][64]);
 
 #ifdef HQ_SBR
 

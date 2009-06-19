@@ -53,7 +53,7 @@ class PVA_FF_AssetInfoTitleAtom : public PVA_FF_FullAtom
             _title = aTitle;
             recomputeSize();
         }
-        virtual	void recomputeSize();
+        virtual void recomputeSize();
     private:
         uint16 _langCode;
         uint16  _byteOrderMask;
@@ -243,7 +243,7 @@ class PVA_FF_AssetInfoClassificationAtom : public PVA_FF_FullAtom
             recomputeSize();
         }
 
-        virtual	void recomputeSize();
+        virtual void recomputeSize();
     private:
         uint16 _langCode;
         uint16  _byteOrderMask;

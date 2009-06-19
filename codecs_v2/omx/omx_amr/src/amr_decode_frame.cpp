@@ -28,14 +28,14 @@
 #define ETS_INPUT_FRAME_SIZE 500
 
 //Compressed audio formats
-#define PV_AMR_IETF					0
-#define PV_AMR_IF2					1
+#define PV_AMR_IETF                 0
+#define PV_AMR_IF2                  1
 #define PV_AMR_ETS                  2
 #define PV_AMR_IETF_COMBINED        3
 
 //WB modes
 #define PV_AMRWB_IETF_PAYLOAD        4
-#define PV_AMRWB_IETF		         5
+#define PV_AMRWB_IETF                5
 
 
 // decoder returns -1 if there is an error in decoding a frame
@@ -47,63 +47,63 @@
 // Find frame size for each frame type
 static const OMX_S32 WBIETFFrameSize[16] =
 {
-    18		// AMR-WB 6.60 Kbps
-    , 24		// AMR-WB 8.85 Kbps
-    , 33		// AMR-WB 12.65 Kbps
-    , 37		// AMR-WB 14.25 Kbps
-    , 41		// AMR-WB 15.85 Kbps
-    , 47		// AMR-WB 18.25 Kbps
-    , 51		// AMR-WB 19.85 Kbps
-    , 59		// AMR-WB 23.05 Kbps
-    , 61		// AMR-WB 23.85 Kbps
-    , 6		// AMR-WB SID
+    18      // AMR-WB 6.60 Kbps
+    , 24        // AMR-WB 8.85 Kbps
+    , 33        // AMR-WB 12.65 Kbps
+    , 37        // AMR-WB 14.25 Kbps
+    , 41        // AMR-WB 15.85 Kbps
+    , 47        // AMR-WB 18.25 Kbps
+    , 51        // AMR-WB 19.85 Kbps
+    , 59        // AMR-WB 23.05 Kbps
+    , 61        // AMR-WB 23.85 Kbps
+    , 6     // AMR-WB SID
     , 1
     , 1
     , 1
     , 1
-    , 1		// WBAMR Frame No Data
-    , 1		// WBAMR Frame No Data
+    , 1     // WBAMR Frame No Data
+    , 1     // WBAMR Frame No Data
 };
 
 //////////////////////////////////////////////////////////////////////////////////
 static const OMX_S32 IETFFrameSize[16] =
 {
-    13		// AMR 4.75 Kbps
-    , 14		// AMR 5.15 Kbps
-    , 16		// AMR 5.90 Kbps
-    , 18		// AMR 6.70 Kbps
-    , 20		// AMR 7.40 Kbps
-    , 21		// AMR 7.95 Kbps
-    , 27		// AMR 10.2 Kbps
-    , 32		// AMR 12.2 Kbps
-    , 6		// GsmAmr comfort noise
-    , 7		// Gsm-Efr comfort noise
-    , 6		// IS-641 comfort noise
-    , 6		// Pdc-Efr comfort noise
-    , 1		// future use; 0 length but set to 1 to skip the frame type byte
-    , 1		// future use; 0 length but set to 1 to skip the frame type byte
-    , 1		// future use; 0 length but set to 1 to skip the frame type byte
-    , 1		// AMR Frame No Data
+    13      // AMR 4.75 Kbps
+    , 14        // AMR 5.15 Kbps
+    , 16        // AMR 5.90 Kbps
+    , 18        // AMR 6.70 Kbps
+    , 20        // AMR 7.40 Kbps
+    , 21        // AMR 7.95 Kbps
+    , 27        // AMR 10.2 Kbps
+    , 32        // AMR 12.2 Kbps
+    , 6     // GsmAmr comfort noise
+    , 7     // Gsm-Efr comfort noise
+    , 6     // IS-641 comfort noise
+    , 6     // Pdc-Efr comfort noise
+    , 1     // future use; 0 length but set to 1 to skip the frame type byte
+    , 1     // future use; 0 length but set to 1 to skip the frame type byte
+    , 1     // future use; 0 length but set to 1 to skip the frame type byte
+    , 1     // AMR Frame No Data
 };
 
 static const OMX_S32 IF2FrameSize[16] =
 {
-    13		// AMR 4.75 Kbps
-    , 14		// AMR 5.15 Kbps
-    , 16		// AMR 5.90 Kbps
-    , 18		// AMR 6.70 Kbps
-    , 19		// AMR 7.40 Kbps
-    , 21		// AMR 7.95 Kbps
-    , 26		// AMR 10.2 Kbps
-    , 31		// AMR 12.2 Kbps
-    , 6		// AMR Frame SID
-    , 6		// AMR Frame GSM EFR SID
-    , 6		// AMR Frame TDMA EFR SID
-    , 6		// AMR Frame PDC EFR SID
-    , 1		// future use; 0 length but set to 1 to skip the frame type byte
-    , 1		// future use; 0 length but set to 1 to skip the frame type byte
-    , 1		// future use; 0 length but set to 1 to skip the frame type byte
-    , 1		// AMR Frame No Data
+    13      // AMR 4.75 Kbps
+    , 14        // AMR 5.15 Kbps
+    , 16        // AMR 5.90 Kbps
+    , 18        // AMR 6.70 Kbps
+    , 19        // AMR 7.40 Kbps
+    , 21        // AMR 7.95 Kbps
+    , 26        // AMR 10.2 Kbps
+    , 31        // AMR 12.2 Kbps
+    , 6     // AMR Frame SID
+    , 6     // AMR Frame GSM EFR SID
+    , 6     // AMR Frame TDMA EFR SID
+    , 6     // AMR Frame PDC EFR SID
+    , 1     // future use; 0 length but set to 1 to skip the frame type byte
+    , 1     // future use; 0 length but set to 1 to skip the frame type byte
+    , 1     // future use; 0 length but set to 1 to skip the frame type byte
+    , 1     // AMR Frame No Data
 };
 
 OmxAmrDecoder::OmxAmrDecoder()
@@ -257,7 +257,7 @@ void OmxAmrDecoder::ResetDecoder()
 void OmxAmrDecoder::GetStartPointsForIETFCombinedMode
 (OMX_U8* aPtrIn, OMX_U32 aLength, OMX_U8* &aTocPtr, OMX_S32* aNumOfBytes)
 {
-    OMX_U8 Fbit		= 0x80;
+    OMX_U8 Fbit     = 0x80;
     OMX_U32 FrameCnt = 0;
 
     /* Count number of frames */

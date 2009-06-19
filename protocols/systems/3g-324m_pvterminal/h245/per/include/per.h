@@ -62,8 +62,8 @@ class PER
     private:
         bool Decode(int& nBytes, uint8* pBuffer, uint16& GetSize, uint8*& pData,
                     uint8& MsgType1, uint8& MsgType2);
-        void MultiSysCtrlMessage_encode(uint16*, uint8*	*, uint8*, uint8, uint8);
-        int MultiSysCtrlMessage_decode(uint8*, uint16*, uint8*	*, uint8*, uint8*);
+        void MultiSysCtrlMessage_encode(uint16*, uint8* *, uint8*, uint8, uint8);
+        int MultiSysCtrlMessage_decode(uint8*, uint16*, uint8*  *, uint8*, uint8*);
         void RequestMessage_encode(uint8*, uint8, PS_OutStream);
         void ResponseMessage_encode(uint8*, uint8, PS_OutStream);
         void CommandMessage_encode(uint8*, uint8, PS_OutStream);

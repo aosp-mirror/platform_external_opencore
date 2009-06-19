@@ -162,17 +162,17 @@ void TSC_324m::CERejectIndication(CESource source, CECause cause, CEDirection di
     OSCL_UNUSED_ARG(cause);
 
     /* WWUAPI: four scenarios can cause this function being called
-    	1. INCOMING SE gets TCS again while in AWAITING RESPONSE state
-    	   We send out CE RPS as soon as we receive a TCS.  It means the other temrinal
-    	   is a whacky terminal sending out successive TCS's.  Maybe we just use the most
-    	   recent TCS ?
-    	2. OUTGOING SE gets REJECT while in AWAITING RESPONSE state
-    	   End Session and reset.
-    	3. TIMEOUT for OUTGOING SE
-    	   End Session and reset if we are in PhaseD_CSUP
-    	4. INCOMING SE gets RELEASE while in AWAITING RESPONSE
-    	   We took too much time to send a response and remote SE timed out.
-    	   End Session and reset
+        1. INCOMING SE gets TCS again while in AWAITING RESPONSE state
+           We send out CE RPS as soon as we receive a TCS.  It means the other temrinal
+           is a whacky terminal sending out successive TCS's.  Maybe we just use the most
+           recent TCS ?
+        2. OUTGOING SE gets REJECT while in AWAITING RESPONSE state
+           End Session and reset.
+        3. TIMEOUT for OUTGOING SE
+           End Session and reset if we are in PhaseD_CSUP
+        4. INCOMING SE gets RELEASE while in AWAITING RESPONSE
+           We took too much time to send a response and remote SE timed out.
+           End Session and reset
        We need a fat brain in the future to handle all these unusual cases.
        Here we just do nothing.
     */
@@ -199,7 +199,7 @@ void TSC_324m::CERejectIndication(CESource source, CECause cause, CEDirection di
                 {
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                                     (0, "TSC_324m: Starting CE Send.\n"));
-                    CEStart();		/* INITIATE CE-SEND */
+                    CEStart();      /* INITIATE CE-SEND */
                 }
                 else  /* Retried enough. Call setup failed */
                 {
@@ -224,7 +224,7 @@ void TSC_324m::CERejectIndication(CESource source, CECause cause, CEDirection di
 }
 
 ////////////////////////////////////////////////////////////////////////////
-// ExtractTcsParameters()						(RAN-32K)
+// ExtractTcsParameters()                       (RAN-32K)
 //
 // This routine takes the incoming TerminalCapabilitySet
 //   and extracts the following useful parameters:
@@ -312,7 +312,7 @@ void TSC_324m::ExtractTcsParameters(PS_TerminalCapabilitySet pTcs)
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                         (0, "TSC_324m: Remote video caps Option of Capability Table is ON, size(%d)\n",
                          pTcs->size_of_capabilityTable));
-        for (i = 0;i < pTcs->size_of_capabilityTable;++i)
+        for (i = 0; i < pTcs->size_of_capabilityTable; ++i)
         {
             pCapEntry = pTcs->capabilityTable + i;
             if (pCapEntry->option_of_capability)

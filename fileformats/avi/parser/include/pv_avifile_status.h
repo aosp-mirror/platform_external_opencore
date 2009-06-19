@@ -22,8 +22,8 @@
 #include "pvlogger.h"
 #endif
 
-#define PVAVIFILE_LOGERROR(m)	 PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iLogger,PVLOGMSG_ERR,m)
-#define PVAVIFILE_LOGINFO(m)	 PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iLogger,PVLOGMSG_INFO,m)
+#define PVAVIFILE_LOGERROR(m)    PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iLogger,PVLOGMSG_ERR,m)
+#define PVAVIFILE_LOGINFO(m)     PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iLogger,PVLOGMSG_INFO,m)
 
 typedef enum
 {
@@ -50,7 +50,7 @@ typedef enum
     PV_AVI_FILE_PARSER_WRONG_BIT_COUNT           = 19,
     PV_AVI_FILE_PARSER_SEEK_ERROR                = 20
 
-}PV_AVI_FILE_PARSER_ERROR_TYPE;
+} PV_AVI_FILE_PARSER_ERROR_TYPE;
 
 
 //stores file parser status
@@ -87,9 +87,9 @@ class PVAviFileParserStatus
     protected:
 
         PV_AVI_FILE_PARSER_ERROR_TYPE   iError;
-        PVLogger*						iLogger;
+        PVLogger*                       iLogger;
 
 };
 
-#endif	//#ifndef PV_AVIFILE_STATUS
+#endif  //#ifndef PV_AVIFILE_STATUS
 

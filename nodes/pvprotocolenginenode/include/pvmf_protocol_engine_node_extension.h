@@ -60,7 +60,7 @@
 enum HttpVersion
 {
     HTTP_V10 = 0, // Http version 1.0
-    HTTP_V11	// Http version 1.1
+    HTTP_V11    // Http version 1.1
 };
 
 enum HttpMethod
@@ -120,7 +120,7 @@ class PVMFProtocolEngineNodeExtensionInterface : public PVInterface
          *
          * @param aUserAgent wide-character string of user agent
          * @param aOverwritable, flag to show whether the input user agent will replace or append the default one
-         *		  aOverwritable=true => replace
+         *        aOverwritable=true => replace
          * @return true if user agent is set successfully, else false.
          */
         virtual bool SetUserAgent(OSCL_wString &aUserAgent, const bool isOverwritable = true) = 0;
@@ -205,13 +205,13 @@ class PVMFProtocolEngineNodeMSHTTPStreamingParams
         // copy constructor
         PVMFProtocolEngineNodeMSHTTPStreamingParams(const PVMFProtocolEngineNodeMSHTTPStreamingParams &x)
         {
-            iStreamRate					= x.iStreamRate;
-            iStreamByteOffset			= x.iStreamByteOffset;
-            iStreamStartTimeInMS		= x.iStreamStartTimeInMS;
-            iMaxStreamDurationInMS		= x.iMaxStreamDurationInMS;
-            iStreamStartPacketNumber	= x.iStreamStartPacketNumber;
-            iPacketGrouping				= x.iPacketGrouping;
-            iNumStreams					= x.iNumStreams;
+            iStreamRate                 = x.iStreamRate;
+            iStreamByteOffset           = x.iStreamByteOffset;
+            iStreamStartTimeInMS        = x.iStreamStartTimeInMS;
+            iMaxStreamDurationInMS      = x.iMaxStreamDurationInMS;
+            iStreamStartPacketNumber    = x.iStreamStartPacketNumber;
+            iPacketGrouping             = x.iPacketGrouping;
+            iNumStreams                 = x.iNumStreams;
             iPlayBackMode               = x.iPlayBackMode;
             iStreamIDList               = x.iStreamIDList;
             iStreamPlayBackModeList     = x.iStreamPlayBackModeList;
@@ -220,13 +220,13 @@ class PVMFProtocolEngineNodeMSHTTPStreamingParams
         // assignment operator
         PVMFProtocolEngineNodeMSHTTPStreamingParams& operator=(const PVMFProtocolEngineNodeMSHTTPStreamingParams& x)
         {
-            iStreamRate					= x.iStreamRate;
-            iStreamByteOffset			= x.iStreamByteOffset;
-            iStreamStartTimeInMS		= x.iStreamStartTimeInMS;
-            iMaxStreamDurationInMS		= x.iMaxStreamDurationInMS;
-            iStreamStartPacketNumber	= x.iStreamStartPacketNumber;
-            iPacketGrouping				= x.iPacketGrouping;
-            iNumStreams					= x.iNumStreams;
+            iStreamRate                 = x.iStreamRate;
+            iStreamByteOffset           = x.iStreamByteOffset;
+            iStreamStartTimeInMS        = x.iStreamStartTimeInMS;
+            iMaxStreamDurationInMS      = x.iMaxStreamDurationInMS;
+            iStreamStartPacketNumber    = x.iStreamStartPacketNumber;
+            iPacketGrouping             = x.iPacketGrouping;
+            iNumStreams                 = x.iNumStreams;
             iPlayBackMode               = x.iPlayBackMode;
             iStreamIDList               = x.iStreamIDList;
             iStreamPlayBackModeList     = x.iStreamPlayBackModeList;
@@ -340,7 +340,7 @@ class PVMFProtocolEngineNodeMSHTTPStreamingExtensionInterface : public PVInterfa
          *
          * @param aUserAgent wide-character string of user agent
          * @param aOverwritable, flag to show whether the input user agent will replace or append the default one
-         *		  aOverwritable=true => replace
+         *        aOverwritable=true => replace
          * @return true if user agent is set successfully, else false.
          */
         virtual bool SetUserAgent(OSCL_wString &aUserAgent, const bool isOverwritable = true) = 0;

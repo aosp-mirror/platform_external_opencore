@@ -16,10 +16,10 @@
  * -------------------------------------------------------------------
  */
 /*
- * File:	crccheck_cpp.h
- * Author:	RussellHayashida (rhayashida@packetvideo.com)
- * Date:	February 13, 2002
- * Comment:	crc check function declarations
+ * File:    crccheck_cpp.h
+ * Author:  RussellHayashida (rhayashida@packetvideo.com)
+ * Date:    February 13, 2002
+ * Comment: crc check function declarations
  */
 
 #ifndef _CRCCHECK_CPP_H
@@ -28,9 +28,9 @@
 #include "oscl_base.h"
 #include "media_packet.h"
 #include "pvmf_media_data_impl.h"
-#define	NO_ERR	    0
-#define	CRC_ERR	    1
-#define	SN_ERR	    2
+#define NO_ERR      0
+#define CRC_ERR     1
+#define SN_ERR      2
 
 class CRC
 {
@@ -45,8 +45,8 @@ class CRC
         OSCL_IMPORT_REF uint16 Crc16Check(Packet *pPkt);
         OSCL_IMPORT_REF uint16 Crc16Check(OsclSharedPtr<PVMFMediaDataImpl>& mediaData, bool hasCRC = false);
 
-        uint16	CrcTbl8[256];
-        uint16	CrcTbl16[256];
+        uint16  CrcTbl8[256];
+        uint16  CrcTbl16[256];
 };
 
-#endif	/* _CRCCHECK_H */
+#endif  /* _CRCCHECK_H */

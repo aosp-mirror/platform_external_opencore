@@ -84,8 +84,8 @@ extern "C"
 #endif
 
     Int32 ps_init_stereo_mixing(STRUCT_PS_DEC *pms,
-                                Int32 env,
-                                Int32 usb);
+    Int32 env,
+    Int32 usb);
 
 #ifdef __cplusplus
 }

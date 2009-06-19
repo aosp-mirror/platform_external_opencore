@@ -442,8 +442,8 @@ OSCL_EXPORT_REF void PVCommsIONode::RequestCompleted(const PVMFCmdResp& aRespons
                     {
                         return;
                     }
-                    else	if (cmd.iControlContext == &iMediaInputContext &&
-                             iMediaInputContext.iControl == iMediaOutputContext.iControl)
+                    else    if (cmd.iControlContext == &iMediaInputContext &&
+                                iMediaInputContext.iControl == iMediaOutputContext.iControl)
                     {
                         // if we have a single object that supports both input and
                         // output, the context's controls will be identical, and
@@ -1501,7 +1501,7 @@ void PVCommsIONode::MioConfigured(int32 aPortTag)
     if (iInterfaceState == EPVMFNodeStarted)
     {
         PVCommsIONodeCmd cmd;
-//		cmd.iControlContext = ContextFromTag(aPortTag);
+//      cmd.iControlContext = ContextFromTag(aPortTag);
         cmd.PVCommsIONodeCmdBase::Construct(0, PVMF_COMMSIONODE_STARTMIO, NULL);
         QueueCommandL(cmd);
     }
@@ -1556,7 +1556,7 @@ void PVCommsIONode::ReportInfoEvent(PVMFEventType aEventType, OsclAny* aEventDat
 bool PVCommsIONode::PortQueuesEmpty()
 {
     uint32 i;
-    for (i = 0;i < iPortVector.size();i++)
+    for (i = 0; i < iPortVector.size(); i++)
     {
         if (iPortVector[i]->IncomingMsgQueueSize() > 0
                 || iPortVector[i]->OutgoingMsgQueueSize() > 0)
@@ -1606,10 +1606,10 @@ MIOControlContextSet PVCommsIONode::ContextSetFromTag(int32 aTag)
 /*
 PvmiCapabilityAndConfig *PVCommsIONode::GetConfig(int32 aPortTag)
 {
-	MIOControlContextElement *context = ContextSetFromTag(aPortTag);
-	if (context)
-		return context->iMediaIOConfig;
-	return NULL;
+    MIOControlContextElement *context = ContextSetFromTag(aPortTag);
+    if (context)
+        return context->iMediaIOConfig;
+    return NULL;
 }
 */
 bool PVCommsIONode::CreateMediaTransfer(int32 aPortTag, PvmiMediaTransfer *&aInputTransfer, PvmiMediaTransfer *&aOutputTransfer)

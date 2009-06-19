@@ -261,8 +261,8 @@ bool StringKeyValueStore::removeKeyValuePair(const StrCSumPtrLen &aKey)
 void StringKeyValueStore::clear()
 {
     iTotalNumberOfKeyValuePairs = 0;
-    iTotalKeyValueLength		= 0;
-    iNumConflicts				= 0;
+    iTotalKeyValueLength        = 0;
+    iNumConflicts               = 0;
 
     // clear field key and value tables
     uint32 i;

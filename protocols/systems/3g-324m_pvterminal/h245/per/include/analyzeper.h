@@ -53,10 +53,10 @@
 
 #include "genericper.h"
 
-#define ANALYZER_PERE	0x0002	// (assume tags are fixed)
-#define ANALYZER_PEREH	0x0004
-#define ANALYZER_PERD	0x0008
-#define ANALYZER_PERDH	0x0010
+#define ANALYZER_PERE   0x0002  // (assume tags are fixed)
+#define ANALYZER_PEREH  0x0004
+#define ANALYZER_PERD   0x0008
+#define ANALYZER_PERDH  0x0010
 
 /*=========================================================*/
 

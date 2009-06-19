@@ -41,14 +41,14 @@
 #define OUTPUT_TRANSFER_MODEL_VAL ".../output/transfer_model;valtype=uin32"
 
 // Logging macros
-#define LOGDATAPATH(x)	PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iDatapathLogger, PVLOGMSG_INFO, x);
+#define LOGDATAPATH(x)  PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iDatapathLogger, PVLOGMSG_INFO, x);
 #define LOG_STACK_TRACE(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, m);
 #define LOG_DEBUG(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, m);
 #define LOG_ERR(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iLogger,PVLOGMSG_ERR,m);
 
-#define IS_INPUT_PORT 		(iTag&PVMF_COMMSIO_NODE_INPUT_PORT_TAG)
+#define IS_INPUT_PORT       (iTag&PVMF_COMMSIO_NODE_INPUT_PORT_TAG)
 
-#define IS_OUTPUT_PORT     	(iTag&PVMF_COMMSIO_NODE_OUTPUT_PORT_TAG)
+#define IS_OUTPUT_PORT      (iTag&PVMF_COMMSIO_NODE_OUTPUT_PORT_TAG)
 
 
 ////////////////////////////////////////////////////////////////////////////
@@ -388,7 +388,7 @@ void PVCommsIONodePort::writeComplete(PVMFStatus status, PVMFCommandId aCmdId, O
         //asynchronous completion
         //do any memory cleanup
         uint32 i;
-        for (i = 0;i < iCleanupQueue.size();i++)
+        for (i = 0; i < iCleanupQueue.size(); i++)
         {
             if (iCleanupQueue[i].iCmdId == aCmdId)
             {

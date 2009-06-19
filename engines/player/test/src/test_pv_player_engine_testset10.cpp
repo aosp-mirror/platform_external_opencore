@@ -2068,7 +2068,7 @@ void pvplayer_async_test_genericdelete::HandleInformationalEvent(const PVAsyncIn
             iNumBufferingComplete++;
             //we should only get one of these.
             //if(iNumBufferingComplete==2)
-            //	PVPATB_TEST_IS_TRUE(false);
+            //  PVPATB_TEST_IS_TRUE(false);
             if (iNumBufferingComplete == 1)
             {
                 if (iState == STATE_WAIT_FOR_BUFFCOMPLETE)
@@ -2221,8 +2221,8 @@ void pvplayer_async_test_genericdelete::HandleInformationalEvent(const PVAsyncIn
             iNumUnderflow++;
             //we should not get underflow before data ready
             if(iNumUnderflow==1
-            	&& iNumDataReady==0)
-            	PVPATB_TEST_IS_TRUE(false);
+                && iNumDataReady==0)
+                PVPATB_TEST_IS_TRUE(false);
             */
             break;
         case PVMFInfoContentLength:

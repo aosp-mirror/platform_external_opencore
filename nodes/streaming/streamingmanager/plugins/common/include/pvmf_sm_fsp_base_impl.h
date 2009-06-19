@@ -96,17 +96,17 @@ class PVMFSMFSPChildNodeErrorHandler;
 #define PVMF_STREAMING_MANAGER_INTERNAL_CMDQ_SIZE 40
 
 class PVMFSMFSPBaseNode : public PVMFNodeInterface,
-            public OsclActiveObject,
-            public PvmiCapabilityAndConfig,
-            public PVMFDataSourceInitializationExtensionInterface,
-            public PVMFTrackSelectionExtensionInterface,
-            public PvmfDataSourcePlaybackControlInterface,
-            public PVMFMetadataExtensionInterface,
-            public PVMFCPMPluginLicenseInterface,
-            public PVMFNodeErrorEventObserver,
-            public PVMFNodeInfoEventObserver,
-            public PVMFNodeCmdStatusObserver,
-            public PVMFCPMStatusObserver
+        public OsclActiveObject,
+        public PvmiCapabilityAndConfig,
+        public PVMFDataSourceInitializationExtensionInterface,
+        public PVMFTrackSelectionExtensionInterface,
+        public PvmfDataSourcePlaybackControlInterface,
+        public PVMFMetadataExtensionInterface,
+        public PVMFCPMPluginLicenseInterface,
+        public PVMFNodeErrorEventObserver,
+        public PVMFNodeInfoEventObserver,
+        public PVMFNodeCmdStatusObserver,
+        public PVMFCPMStatusObserver
 {
         friend class PVMFSMFSPChildNodeErrorHandler;
     public:
@@ -176,7 +176,7 @@ class PVMFSMFSPBaseNode : public PVMFNodeInterface,
                 OsclAny* context = NULL);
 
         //Pure virtual(s) from following classes should be implemented in feature specific derived classes
-        //(i)	 PVMFDataSourceInitializationExtensionInterface
+        //(i)    PVMFDataSourceInitializationExtensionInterface
         //(ii)   PVMFTrackSelectionExtensionInterface
 
         /* From PvmfDataSourcePlaybackControlInterface */
@@ -262,7 +262,7 @@ class PVMFSMFSPBaseNode : public PVMFNodeInterface,
         virtual void HandleNodeErrorEvent(const PVMFAsyncEvent& aEvent);
 
         //Pure virtual(s) from following classes should be implemented in feature specific derived classes
-        //(i)	 PVMFNodeInfoEventObserver
+        //(i)    PVMFNodeInfoEventObserver
         //(ii)   PVMFNodeCmdStatusObserver
 
         //For streaming of protected content PVMFCPM plugin is required.
@@ -274,7 +274,7 @@ class PVMFSMFSPBaseNode : public PVMFNodeInterface,
         void Construct();
 
         //Pure virtuals to be implemented in the derived classes
-        virtual bool ProcessCommand(PVMFSMFSPBaseNodeCommand&) = 0;	//FSP concrete implementation need to implement it.
+        virtual bool ProcessCommand(PVMFSMFSPBaseNodeCommand&) = 0; //FSP concrete implementation need to implement it.
         virtual bool IsFSPInternalCmd(PVMFCommandId aId) = 0;
         virtual void PopulateDRMInfo() = 0;
         virtual bool RequestUsageComplete() = 0;
@@ -325,10 +325,10 @@ class PVMFSMFSPBaseNode : public PVMFNodeInterface,
         /**
         * Assumption: When this function is called, cancel all command is present in the input Q.
         *             Cancellion of the API's will be attempted till the point CancelAllCommand is issued.
-        *			  No attempt will be made to cancel any of the async command that are queued after
-        *			  making call to CancelAllCommand.
+        *             No attempt will be made to cancel any of the async command that are queued after
+        *             making call to CancelAllCommand.
         * Command completion status values:
-        *			  PVMFErrNoMemory, PVMFSuccess, PVMFFailure
+        *             PVMFErrNoMemory, PVMFSuccess, PVMFFailure
         */
         virtual void DoCancelAllCommands(PVMFSMFSPBaseNodeCommand&);
         void DoCancelAllPendingCommands(PVMFSMFSPBaseNodeCommand& aCmd);
@@ -337,10 +337,10 @@ class PVMFSMFSPBaseNode : public PVMFNodeInterface,
         /**
         * Assumption: When this function is called, cancel all command is present in the input Q.
         *             Cancellion of the API's will be attempted till the point CancelAllCommand is issued.
-        *			  No attempt will be made to cancel any of the async command that are queued after
-        *			  making call to CancelAllCommand.
+        *             No attempt will be made to cancel any of the async command that are queued after
+        *             making call to CancelAllCommand.
         * Command completion status values:
-        *			  PVMFErrNoMemory, PVMFSuccess, PVMFFailure
+        *             PVMFErrNoMemory, PVMFSuccess, PVMFFailure
         */
         virtual void DoCancelCommand(PVMFSMFSPBaseNodeCommand&);
 
@@ -397,8 +397,8 @@ class PVMFSMFSPBaseNode : public PVMFNodeInterface,
         PVMFSMFSPChildNodeContainer* getChildNodeContainer(int32 tag);
         virtual void ResetNodeParams(bool aReleaseMemmory = true);
 
-        uint32	iNoOfValuesIteratedForValueVect;
-        uint32	iNoOfValuesPushedInValueVect;
+        uint32  iNoOfValuesIteratedForValueVect;
+        uint32  iNoOfValuesPushedInValueVect;
 
         PVMFNodeCapability iCapability;
 
@@ -593,7 +593,7 @@ class PVMFSMFSPChildNodeErrorHandler
         enum SMFSPChildNodeErrorHandlerState
         {
             SMFSP_ERRHANDLER_IDLE,
-            SMFSP_ERRHANDLER_WAITING_FOR_CANCEL_COMPLETION,	//when er occurs for cancel command we do not queue cancel due to err
+            SMFSP_ERRHANDLER_WAITING_FOR_CANCEL_COMPLETION, //when er occurs for cancel command we do not queue cancel due to err
             SMFSP_ERRHANDLER_WAITING_FOR_CANCEL_DUE_TO_ERR_COMPLETION,
             SMFSP_ERRHANDLER_WAITING_FOR_RESET_DUE_TO_ERR_COMPLETION
         };

@@ -21,10 +21,10 @@
 /*     -------------------------------------------------------------------       */
 /*********************************************************************************/
 /*
-	This IMediaBuffer Class is the interface that consumers of MediaBuffers will
-	use.  This includes PVPlayer and PVServer.  It is mainly used when retrieving
-	Mpeg-4 data from file and returning a data buffer to either PVPlayer or
-	PVServer.
+    This IMediaBuffer Class is the interface that consumers of MediaBuffers will
+    use.  This includes PVPlayer and PVServer.  It is mainly used when retrieving
+    Mpeg-4 data from file and returning a data buffer to either PVPlayer or
+    PVServer.
 */
 
 

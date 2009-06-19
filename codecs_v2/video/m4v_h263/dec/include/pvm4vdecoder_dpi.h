@@ -73,49 +73,49 @@ class PVM4VDecoder_DPI : public PVVideoDecoderInterface
 
 ////// not implemeneted/////////////////////////////////////////////////////////////////////////////////////////////////////////////
         IMPORT_C bool  GetVolInfo(VolInfo* pVolInfo) {};
-        IMPORT_C void	DecPostProcess(uint8 *YUV) {};
+        IMPORT_C void   DecPostProcess(uint8 *YUV) {};
         IMPORT_C void  DecSetEnhReference(uint8 *refYUV, uint32 timestamp) {};
-        IMPORT_C void	SetReferenceYUV(uint8 *YUV) {};
+        IMPORT_C void   SetReferenceYUV(uint8 *YUV) {};
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        IMPORT_C void 	GetVideoDimensions(int32 *display_width, int32 *display_height)
+        IMPORT_C void   GetVideoDimensions(int32 *display_width, int32 *display_height)
         {
             *display_width = GetVideoWidth();
             *display_height = GetVideoHeight();
         };
 
 #ifdef USING_SYNC_2STEP
-        IMPORT_C bool	getSynchResponse(uint32 timestamp[], int32 buffer_size[]);
-        IMPORT_C bool	DSPDecoderBusy();
+        IMPORT_C bool   getSynchResponse(uint32 timestamp[], int32 buffer_size[]);
+        IMPORT_C bool   DSPDecoderBusy();
 #endif
 
-        IMPORT_C int32	GetVideoWidth(void);
-        IMPORT_C int32	GetVideoHeight(void);
-        IMPORT_C int32	DPIFreeVideoDecCtrls(void);
+        IMPORT_C int32  GetVideoWidth(void);
+        IMPORT_C int32  GetVideoHeight(void);
+        IMPORT_C int32  DPIFreeVideoDecCtrls(void);
 
-        IMPORT_C void	CleanUpVideoDecoder(void);
-        IMPORT_C bool	IsIFrame(void);
+        IMPORT_C void   CleanUpVideoDecoder(void);
+        IMPORT_C bool   IsIFrame(void);
 
-        IMPORT_C void	SetPostProcType(int32 aMode);
+        IMPORT_C void   SetPostProcType(int32 aMode);
 
         IMPORT_C bool  DecodeVideoFrame(uint8 *bitstream[], uint32 *timestamp, int32 *buffer_size, uint *use_ext_ts, uint8 *YUV);
         IMPORT_C bool  DecodeVideoFrame(uint8 *bitstream[], uint32 *timestamp, int32 *buffer_size, uint *use_ext_ts, uint8 *YUV, TRequestStatus *aRequestStatus);
         IMPORT_C bool  DecodeVideoFrameAsyncResp(uint32 timestamp[], int32 buffer_size[]);
 
-        IMPORT_C bool	DecodeStillVideoFrame(uint8 *buffer, int32 buf_size, uint8 *YUV);
+        IMPORT_C bool   DecodeStillVideoFrame(uint8 *buffer, int32 buf_size, uint8 *YUV);
 
-        IMPORT_C bool	GetStillVideoFrameSize(uint8 *buffer, int32 buf_size, int32 *width, int32 *height);
+        IMPORT_C bool   GetStillVideoFrameSize(uint8 *buffer, int32 buf_size, int32 *width, int32 *height);
 
         IMPORT_C uint8*  GetDecOutputFrame(void);
         IMPORT_C void    GetDecOutputFrame(uint8*);
 
         IMPORT_C uint8*  CopyDecOutputFrameToSharedMemBuf(void);
 
-        IMPORT_C bool	ResetVideoDecoder(void);
+        IMPORT_C bool   ResetVideoDecoder(void);
 
         IMPORT_C TDspPointer DPIAllocVideoDecCtrls(void);
 
-        IMPORT_C uint32	GetVideoTimestamp(void);
+        IMPORT_C uint32 GetVideoTimestamp(void);
 
         IMPORT_C uint32 GetProfileAndLevel(void);
 
@@ -123,7 +123,7 @@ class PVM4VDecoder_DPI : public PVVideoDecoderInterface
 
         // only port the API's used in PVPlayer 2.0
 
-        IMPORT_C bool	ExtractVolHeader(uint8 *video_buffer, uint8 *vol_header, int32 *vol_header_size);
+        IMPORT_C bool   ExtractVolHeader(uint8 *video_buffer, uint8 *vol_header, int32 *vol_header_size);
 
         IMPORT_C void DecSetReference(uint8 *refYUV, uint32 timestamp);
 

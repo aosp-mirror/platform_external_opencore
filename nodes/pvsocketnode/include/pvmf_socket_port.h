@@ -69,7 +69,7 @@ class PVMFSocketNode;
 class SocketPortConfig;
 
 class PVMFSocketPort : public PvmfPortBaseImpl,
-            public PvmiCapabilityAndConfigPortFormatImpl
+        public PvmiCapabilityAndConfigPortFormatImpl
 {
     public:
         /**
@@ -118,7 +118,7 @@ class PVMFSocketPort : public PvmfPortBaseImpl,
         }
 
         PVMFStatus getParametersSync(PvmiMIOSession aSession, PvmiKeyType aIdentifier,
-                                     PvmiKvp*& aParameters, int& num_parameter_elements,	PvmiCapabilityContext aContext);
+                                     PvmiKvp*& aParameters, int& num_parameter_elements,    PvmiCapabilityContext aContext);
         void setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters,
                                int num_elements, PvmiKvp * & aRet_kvp);
         PVMFStatus releaseParameters(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);

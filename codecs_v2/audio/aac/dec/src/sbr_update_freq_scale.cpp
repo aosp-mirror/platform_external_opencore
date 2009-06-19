@@ -264,7 +264,7 @@ void sbr_update_freq_scale(Int32 * v_k_master,
 
         k2_diff = usb - k2_achived;
 
-        for (i = 0;i < numBands;i++)
+        for (i = 0; i < numBands; i++)
         {
             diff_tot[i] = dk;
         }

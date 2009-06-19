@@ -40,7 +40,7 @@ terms listed above has been obtained from the copyright holder.
 
  Description: Put "extern" back.
 
- Who: 						Date:
+ Who:                       Date:
  Description:
 
 ------------------------------------------------------------------------------

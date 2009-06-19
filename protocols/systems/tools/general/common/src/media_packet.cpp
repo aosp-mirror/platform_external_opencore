@@ -26,7 +26,7 @@ OSCL_EXPORT_REF MediaFragment* MediaPacket::GetMediaFragment(int32 idx, MediaFra
 {
     BufferState * state = GetBufferState(idx);
     /*if(!state)
-    	return NULL;*/
+        return NULL;*/
     fragment.Set(*GetFragment(idx), state);
     return &fragment;
 }

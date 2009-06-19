@@ -19,7 +19,7 @@
 #include "h324utils.h"
 #include "h223.h"
 
-#define HDLC	0x7e
+#define HDLC    0x7e
 #define NUM_ZERO_BIT_INSERTION_BUFFERS 32
 
 Level0PduParcom::Level0PduParcom()
@@ -75,7 +75,7 @@ Level0PduParcom::GetStuffing(uint8* pPdu, uint32 max_size, uint8 mux_code)
     {
         pos += AppendTxOctet(HDLC, pos);
     }
-    return (uint16)(pos -pPdu);
+    return (uint16)(pos - pPdu);
 }
 
 PVMFStatus Level0PduParcom::CompletePdu(OsclSharedPtr<PVMFMediaDataImpl>& pdu, int8 MuxTblNum, uint8 pm)
@@ -148,7 +148,7 @@ uint16 Level0PduParcom::AppendTxOctet(uint8 octet, uint8* pos)
         iTxCheck0 = 0;
     }
     write_pos += AppendTxBits0(8, octet, write_pos);
-    return (uint16)(write_pos -pos);
+    return (uint16)(write_pos - pos);
 }
 
 /* Writes out bits to the output stream */
@@ -194,7 +194,7 @@ uint16 Level0PduParcom::Insert0Octet(uint8 octet, uint16 num_bits_from_octet, ui
         iTxCheck0 >>= bits_consumed;
         iTxCheck0Pos -= bits_consumed;
     }
-    return (uint16)(write_pos -out_buffer);
+    return (uint16)(write_pos - out_buffer);
 }
 
 /* Zero bit insertion from a buffer */
@@ -206,7 +206,7 @@ Level0PduParcom::Insert0(uint8* chunk, int chunk_size, uint8* out_buffer)
     {
         pos += Insert0Octet(chunk[bytenum], 8, pos);
     }
-    return (uint16)(pos -out_buffer);
+    return (uint16)(pos - out_buffer);
 }
 
 /* Does more than the name implies.  It searches for the next flag, and if a valid pdu is found, does zero bit removal
@@ -338,7 +338,7 @@ void Level0PduParcom::Remove0Octet(uint8 cur_byte, int num_bits_from_octet)
             if ((iRecvByte0 & 0x1F) == 0x1F)
             {
                 //PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"Level0PduParcom::Remove0Octet - skipping 0\n"));
-//				OSCL_ASSERT( (iRecvByte0 & 0x20) == 0);
+//              OSCL_ASSERT( (iRecvByte0 & 0x20) == 0);
                 if ((iRecvByte0&0x20) != 0)
                 {
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "Level0PduParcom::Remove0Octet - Bitstream error.\n"));

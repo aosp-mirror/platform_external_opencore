@@ -20,7 +20,7 @@
 #include "oscl_utf8conv.h" // for oscl_UnicodeToUTF8
 
 ////////////////////////////////////////////////////////////////////////////////////
-//////	pvHttpDownloadInput implementation
+//////  pvHttpDownloadInput implementation
 ////////////////////////////////////////////////////////////////////////////////////
 bool pvHttpDownloadInput::getValidMediaData(INPUT_DATA_QUEUE &aDataInQueue, PVMFSharedMediaDataPtr &aMediaData, bool &isEOS)
 {
@@ -64,7 +64,7 @@ bool pvHttpDownloadInput::isValidInput()
     return true;
 }
 
-//////	INetURI implementation
+//////  INetURI implementation
 ////////////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF bool INetURI::setURI(OSCL_wString &aUri, const bool aRedirectURI)
 {
@@ -137,7 +137,7 @@ bool INetURI::parseURL(OSCL_String &aUrl8, OSCL_String &aSerAdd, int32 &aSerPort
 }
 
 ////////////////////////////////////////////////////////////////////////////////////
-//////	HttpParsingBasicObject implementation
+//////  HttpParsingBasicObject implementation
 ////////////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF int32 HttpParsingBasicObject::parseResponse(INPUT_DATA_QUEUE &aDataQueue)
 {
@@ -305,7 +305,7 @@ bool HttpParsingBasicObject::saveOutputData(RefCountHTTPEntityUnit &entityUnit, 
     aTotalEntityDataSize = 0;
     int32 err = 0;
     OSCL_TRY(err,
-             for (uint32 i = 0; i < entityUnit.getEntityUnit().getNumFragments();i++)
+             for (uint32 i = 0; i < entityUnit.getEntityUnit().getNumFragments(); i++)
 {
     OsclRefCounterMemFrag memfrag;
     entityUnit.getEntityUnit().getMemFrag(i, memfrag);
@@ -342,11 +342,11 @@ int32 HttpParsingBasicObject::checkParsingDone(const int32 parsingStatus)
             if (status == PROCESS_SUCCESS_END_OF_MESSAGE_TRUNCATED) return status;
         }
     }
-    if (parsingStatus == HTTPParser::PARSE_STATUS_LINE_SHOW_NOT_SUCCESSFUL)		  return PARSE_STATUS_LINE_SHOW_NOT_SUCCESSFUL; // status code >= 300
-    if (parsingStatus == HTTPParser::PARSE_SUCCESS_END_OF_MESSAGE)				  return PARSE_SUCCESS_END_OF_MESSAGE;
+    if (parsingStatus == HTTPParser::PARSE_STATUS_LINE_SHOW_NOT_SUCCESSFUL)       return PARSE_STATUS_LINE_SHOW_NOT_SUCCESSFUL; // status code >= 300
+    if (parsingStatus == HTTPParser::PARSE_SUCCESS_END_OF_MESSAGE)                return PARSE_SUCCESS_END_OF_MESSAGE;
     if (parsingStatus == HTTPParser::PARSE_SUCCESS_END_OF_MESSAGE_WITH_EXTRA_DATA) return PARSE_SUCCESS_END_OF_MESSAGE_WITH_EXTRA_DATA;
-    if (parsingStatus == HTTPParser::PARSE_NEED_MORE_DATA)						  return PARSE_NEED_MORE_DATA;
-    if (parsingStatus == HTTPParser::PARSE_SUCCESS_END_OF_INPUT)					  return PARSE_SUCCESS_END_OF_INPUT;
+    if (parsingStatus == HTTPParser::PARSE_NEED_MORE_DATA)                        return PARSE_NEED_MORE_DATA;
+    if (parsingStatus == HTTPParser::PARSE_SUCCESS_END_OF_INPUT)                      return PARSE_SUCCESS_END_OF_INPUT;
 
     // HTTPParser::PARSE_SUCCESS or HTTPParser::PARSE_HEADER_AVAILABLE
     return PARSE_SUCCESS;
@@ -546,7 +546,7 @@ int32 HttpParsingBasicObject::isNewContentRangeInfoMatchingCurrentOne(const uint
 
 
 ////////////////////////////////////////////////////////////////////////////////////
-//////	ProtocolState implementation
+//////  ProtocolState implementation
 ////////////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF int32 ProtocolState::processMicroState(INPUT_DATA_QUEUE &aDataQueue)
 {

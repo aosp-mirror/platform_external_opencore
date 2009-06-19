@@ -47,7 +47,7 @@ void Intra16DCTrans(int16 *block, int Qq, int Rq)
     inout = block;
 
     if (Qq >= 2)  /* this way should be faster than JM */
-    {			/* they use (((m4*scale)<<(QPy/6))+2)>>2 for both cases. */
+    {           /* they use (((m4*scale)<<(QPy/6))+2)>>2 for both cases. */
         Qq -= 2;
         for (j = 0; j < 4; j++)
         {
@@ -91,7 +91,7 @@ void itrans(int16 *block, uint8 *pred, uint8 *cur, int width)
 {
     int e0, e1, e2, e3; /* note, at every step of the calculation, these values */
     /* shall never exceed 16bit sign value, but we don't check */
-    int i;			 /* to save the cycles. */
+    int i;           /* to save the cycles. */
     int16 *inout;
 
     inout = block;
@@ -171,7 +171,7 @@ void ictrans(int16 *block, uint8 *pred, uint8 *cur, int width)
 {
     int e0, e1, e2, e3; /* note, at every step of the calculation, these values */
     /* shall never exceed 16bit sign value, but we don't check */
-    int i;			 /* to save the cycles. */
+    int i;           /* to save the cycles. */
     int16 *inout;
 
     inout = block;

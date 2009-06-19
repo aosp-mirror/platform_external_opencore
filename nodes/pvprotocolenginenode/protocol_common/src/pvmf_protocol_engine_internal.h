@@ -70,7 +70,7 @@
 #define PVMF_PROTOCOL_ENGINE_LOGBIN(iPortLogger, m) PVLOGGER_LOGBIN(PVLOGMSG_INST_LLDBG, iPortLogger, PVLOGMSG_ERR, m);
 #define PVMF_PROTOCOL_ENGINE_LOGINFODATAPATH(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG,iDataPathLogger,PVLOGMSG_INFO,m);
 #define PVMF_PROTOCOL_ENGINE_LOGERRINFODATAPATH(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG,iDataPathErrLogger,PVLOGMSG_INFO,m);
-#define	NODEDATAPATHLOGGER_TAG "datapath.sourcenode.protocolenginenode"
+#define NODEDATAPATHLOGGER_TAG "datapath.sourcenode.protocolenginenode"
 #define DATAPATHLOGGER_TAG "protocolenginenode.protocolengine"
 #define DATAPATHERRLOGGER_TAG "datapath.sourcenode.protocolenginenode"
 
@@ -83,39 +83,39 @@ enum pvHttpProcessingMicroState
 
 enum ProcessingStateReturnCodes
 {
-    PROCESS_SUCCESS							 = 0,
-    PROCESS_SUCCESS_END_OF_MESSAGE			 = 1,
+    PROCESS_SUCCESS                          = 0,
+    PROCESS_SUCCESS_END_OF_MESSAGE           = 1,
     PROCESS_SUCCESS_END_OF_MESSAGE_WITH_EXTRA_DATA = 2,
     PROCESS_SUCCESS_END_OF_MESSAGE_TRUNCATED = 3,
     PROCESS_SUCCESS_END_OF_MESSAGE_BY_SERVER_DISCONNECT = 4,
-    PROCESS_SUCCESS_GOT_EOS					 = 5,
-    PROCESS_OUTPUT_PORT_IS_BUSY				 = 6,
-    PROCESS_WAIT_FOR_INCOMING_DATA			 = 7,
+    PROCESS_SUCCESS_GOT_EOS                  = 5,
+    PROCESS_OUTPUT_PORT_IS_BUSY              = 6,
+    PROCESS_WAIT_FOR_INCOMING_DATA           = 7,
 
     // info from server
-    PROCESS_SERVER_RESPONSE_ERROR			 = 10,  // status code of the first http response line >= 300
+    PROCESS_SERVER_RESPONSE_ERROR            = 10,  // status code of the first http response line >= 300
 
     // errors
-    PROCESS_ERROR_FIRST						 = -100,
-    PROCESS_GENERAL_ERROR					 = PROCESS_ERROR_FIRST - 1,
-    PROCESS_INPUT_OUTPUT_NOT_READY			 = PROCESS_ERROR_FIRST - 2,		// input(uri) or output(port or data stream) for the http parcom object is not ready
-    PROCESS_BAD_URL							 = PROCESS_ERROR_FIRST - 3,
-    PROCESS_MEDIA_DATA_CREATE_FAILURE		 = PROCESS_ERROR_FIRST - 4,		// createMediaData() fails
+    PROCESS_ERROR_FIRST                      = -100,
+    PROCESS_GENERAL_ERROR                    = PROCESS_ERROR_FIRST - 1,
+    PROCESS_INPUT_OUTPUT_NOT_READY           = PROCESS_ERROR_FIRST - 2,     // input(uri) or output(port or data stream) for the http parcom object is not ready
+    PROCESS_BAD_URL                          = PROCESS_ERROR_FIRST - 3,
+    PROCESS_MEDIA_DATA_CREATE_FAILURE        = PROCESS_ERROR_FIRST - 4,     // createMediaData() fails
     PROCESS_COMPOSE_HTTP_REQUEST_BUFFER_SIZE_NOT_MATCH_REQUEST_SIZE = PROCESS_ERROR_FIRST - 5,
-    PROCESS_COMPOSE_HTTP_REQUEST_FAILURE	 = PROCESS_ERROR_FIRST - 6,		// fail in composing http request, iComposer->compose() fails
-    PROCESS_PARSE_HTTP_RESPONSE_FAILURE		 = PROCESS_ERROR_FIRST - 7,		// fail in parsing response
-    PROCESS_DATA_STREAM_OPEN_FAILURE		 = PROCESS_ERROR_FIRST - 8,		// fail in data stream OpenSession()
-    PROCESS_OUTPUT_TO_DATA_STREAM_FAILURE	 = PROCESS_ERROR_FIRST - 9,		// fail in write data to data stream object
-    PROCESS_MEMORY_ALLOCATION_FAILURE		 = PROCESS_ERROR_FIRST - 10,
-    PROCESS_HTTP_VERSION_NOT_SUPPORTED	     = PROCESS_ERROR_FIRST - 11,
-    PROCESS_ASF_HEADER_SIZE_EXCEED_LIMIT	 = PROCESS_ERROR_FIRST - 12,
+    PROCESS_COMPOSE_HTTP_REQUEST_FAILURE     = PROCESS_ERROR_FIRST - 6,     // fail in composing http request, iComposer->compose() fails
+    PROCESS_PARSE_HTTP_RESPONSE_FAILURE      = PROCESS_ERROR_FIRST - 7,     // fail in parsing response
+    PROCESS_DATA_STREAM_OPEN_FAILURE         = PROCESS_ERROR_FIRST - 8,     // fail in data stream OpenSession()
+    PROCESS_OUTPUT_TO_DATA_STREAM_FAILURE    = PROCESS_ERROR_FIRST - 9,     // fail in write data to data stream object
+    PROCESS_MEMORY_ALLOCATION_FAILURE        = PROCESS_ERROR_FIRST - 10,
+    PROCESS_HTTP_VERSION_NOT_SUPPORTED       = PROCESS_ERROR_FIRST - 11,
+    PROCESS_ASF_HEADER_SIZE_EXCEED_LIMIT     = PROCESS_ERROR_FIRST - 12,
     PROCESS_CHUNKED_TRANSFER_ENCODING_NOT_SUPPORT = PROCESS_ERROR_FIRST - 13,
-    PROCESS_TIMEOUT_SERVER_NO_RESPONCE	     = PROCESS_ERROR_FIRST - 14,
-    PROCESS_TIMEOUT_SERVER_INACTIVITY		 = PROCESS_ERROR_FIRST - 15,
-    PROCESS_CONTENT_LENGTH_NOT_MATCH		 = PROCESS_ERROR_FIRST - 16,
-    PROCESS_CONTENT_RANGE_INFO_NOT_MATCH	 = PROCESS_ERROR_FIRST - 17,
-    PROCESS_OUTPUT_TO_OUTPUT_PORT_FAILURE	 = PROCESS_ERROR_FIRST - 18,
-    PROCESS_REACHED_MAXIMUM_SIZE_LIMITATION	 = PROCESS_ERROR_FIRST - 19
+    PROCESS_TIMEOUT_SERVER_NO_RESPONCE       = PROCESS_ERROR_FIRST - 14,
+    PROCESS_TIMEOUT_SERVER_INACTIVITY        = PROCESS_ERROR_FIRST - 15,
+    PROCESS_CONTENT_LENGTH_NOT_MATCH         = PROCESS_ERROR_FIRST - 16,
+    PROCESS_CONTENT_RANGE_INFO_NOT_MATCH     = PROCESS_ERROR_FIRST - 17,
+    PROCESS_OUTPUT_TO_OUTPUT_PORT_FAILURE    = PROCESS_ERROR_FIRST - 18,
+    PROCESS_REACHED_MAXIMUM_SIZE_LIMITATION  = PROCESS_ERROR_FIRST - 19
 
 };
 
@@ -126,13 +126,13 @@ enum ProtocolType
     MS_HTTP_STREAMING
 };
 
-#define DEFAULT_HTTP_PORT_NUMBER		80
-#define NUM_PROGRESSIVE_DOWNLOAD_STATE	2
-#define NUM_FASTTRACK_DOWNLOAD_STATE	2
-#define NUM_MS_STREAMING_STATE			5
+#define DEFAULT_HTTP_PORT_NUMBER        80
+#define NUM_PROGRESSIVE_DOWNLOAD_STATE  2
+#define NUM_FASTTRACK_DOWNLOAD_STATE    2
+#define NUM_MS_STREAMING_STATE          5
 #define MAX_NUM_RUNTIME_MS_STREAMING_STATE 16
-#define DEFAULT_VECTOR_RESERVE_NUMBER	4
-#define DEFAULT_CLIENT_GUID				_STRLIT_CHAR("{70CD3310-1598-CE7E-919A-456A4E6E26A0}")
+#define DEFAULT_VECTOR_RESERVE_NUMBER   4
+#define DEFAULT_CLIENT_GUID             _STRLIT_CHAR("{70CD3310-1598-CE7E-919A-456A4E6E26A0}")
 #define MAX_NUM_EOS_MESSAGES_FOR_SAME_REQUEST 2
 #define MIN_URL_LENGTH 1
 #define DEFAULT_MS_HTTP_STREAMING_SERVER_VERSION 9
@@ -140,9 +140,9 @@ enum ProtocolType
 #define DEFAULT_MS_STREAMING_ACCEL_DURATION 10000
 
 // mask for checking HTTP methods for each extension header
-#define MASK_HTTPGET_EXTENSIONHEADER	0x1	// bit 0 for HTTP GET
-#define MASK_HTTPPOST_EXTENSIONHEADER	0x2	// bit 1 for HTTP POST
-#define MASK_HTTPHEAD_EXTENSIONHEADER	0x4	// bit 2 for HTTP HEAD
+#define MASK_HTTPGET_EXTENSIONHEADER    0x1 // bit 0 for HTTP GET
+#define MASK_HTTPPOST_EXTENSIONHEADER   0x2 // bit 1 for HTTP POST
+#define MASK_HTTPHEAD_EXTENSIONHEADER   0x4 // bit 2 for HTTP HEAD
 
 // sequence number for different type packet, used in ProtocolEngineOutputDataSideInfo
 #define ASF_HEADER_SEQNUM  0xffffffff
@@ -152,8 +152,8 @@ typedef Oscl_Vector<PVMFSharedMediaMsgPtr, OsclMemAllocator> INPUT_DATA_QUEUE;
 typedef Oscl_Vector<OsclRefCounterMemFrag, OsclMemAllocator> OUTPUT_DATA_QUEUE;
 
 #define PE_isDigit(c) ((c) >= 48 && (c) <= 57)
-#define PROTOCOLENGINE_REDIRECT_STATUS_CODE_START	300
-#define PROTOCOLENGINE_REDIRECT_STATUS_CODE_END		399
+#define PROTOCOLENGINE_REDIRECT_STATUS_CODE_START   300
+#define PROTOCOLENGINE_REDIRECT_STATUS_CODE_END     399
 
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -250,8 +250,8 @@ class OsclRefCounterMemFragAlloc
 
             if (!iGenAlloc) return allocateSA(requested_size);
 
-            uint32 aligned_cleanup_size	= oscl_mem_aligned_size(sizeof(OsclRefCounterMemFragCleanupDA));
-            uint32 aligned_refcnt_size	= oscl_mem_aligned_size(sizeof(OsclRefCounterDA));
+            uint32 aligned_cleanup_size = oscl_mem_aligned_size(sizeof(OsclRefCounterMemFragCleanupDA));
+            uint32 aligned_refcnt_size  = oscl_mem_aligned_size(sizeof(OsclRefCounterDA));
             uint32 aligned_class_size   = oscl_mem_aligned_size(sizeof(OsclMemoryFragment));
 
             uint32 total_size = aligned_refcnt_size + aligned_cleanup_size + aligned_class_size + requested_size;
@@ -348,57 +348,57 @@ class PVProtocolEngineMSHttpStreamingParams
         // copy constructor
         PVProtocolEngineMSHttpStreamingParams(const PVMFProtocolEngineNodeMSHTTPStreamingParams &x)
         {
-            iStreamRate					= x.iStreamRate;
-            iStreamByteOffset			= x.iStreamByteOffset;
-            iStreamStartTimeInMS		= x.iStreamStartTimeInMS;
-            iMaxStreamDurationInMS		= x.iMaxStreamDurationInMS;
-            iStreamStartPacketNumber	= x.iStreamStartPacketNumber;
-            iPacketGrouping				= x.iPacketGrouping;
-            iNumStreams					= x.iNumStreams;
-            iPlayBackMode				= x.iPlayBackMode;
-            iStreamIDList				= x.iStreamIDList;
-            iStreamPlayBackModeList		= x.iStreamPlayBackModeList;
+            iStreamRate                 = x.iStreamRate;
+            iStreamByteOffset           = x.iStreamByteOffset;
+            iStreamStartTimeInMS        = x.iStreamStartTimeInMS;
+            iMaxStreamDurationInMS      = x.iMaxStreamDurationInMS;
+            iStreamStartPacketNumber    = x.iStreamStartPacketNumber;
+            iPacketGrouping             = x.iPacketGrouping;
+            iNumStreams                 = x.iNumStreams;
+            iPlayBackMode               = x.iPlayBackMode;
+            iStreamIDList               = x.iStreamIDList;
+            iStreamPlayBackModeList     = x.iStreamPlayBackModeList;
         }
 
         // assignment operator
         PVProtocolEngineMSHttpStreamingParams& operator=(const PVMFProtocolEngineNodeMSHTTPStreamingParams& x)
         {
-            iStreamRate					= x.iStreamRate;
-            iStreamByteOffset			= x.iStreamByteOffset;
-            iStreamStartTimeInMS		= x.iStreamStartTimeInMS;
-            iMaxStreamDurationInMS		= x.iMaxStreamDurationInMS;
-            iStreamStartPacketNumber	= x.iStreamStartPacketNumber;
-            iPacketGrouping				= x.iPacketGrouping;
-            iNumStreams					= x.iNumStreams;
-            iPlayBackMode				= x.iPlayBackMode;
-            iStreamIDList				= x.iStreamIDList;
-            iStreamPlayBackModeList		= x.iStreamPlayBackModeList;
+            iStreamRate                 = x.iStreamRate;
+            iStreamByteOffset           = x.iStreamByteOffset;
+            iStreamStartTimeInMS        = x.iStreamStartTimeInMS;
+            iMaxStreamDurationInMS      = x.iMaxStreamDurationInMS;
+            iStreamStartPacketNumber    = x.iStreamStartPacketNumber;
+            iPacketGrouping             = x.iPacketGrouping;
+            iNumStreams                 = x.iNumStreams;
+            iPlayBackMode               = x.iPlayBackMode;
+            iStreamIDList               = x.iStreamIDList;
+            iStreamPlayBackModeList     = x.iStreamPlayBackModeList;
             return *this;
         }
 
         PVProtocolEngineMSHttpStreamingParams& operator=(const PVProtocolEngineMSHttpStreamingParams& x)
         {
-            iStreamRate					= x.iStreamRate;
-            iStreamByteOffset			= x.iStreamByteOffset;
-            iStreamStartTimeInMS		= x.iStreamStartTimeInMS;
-            iMaxStreamDurationInMS		= x.iMaxStreamDurationInMS;
-            iStreamStartPacketNumber	= x.iStreamStartPacketNumber;
-            iPacketGrouping				= x.iPacketGrouping;
-            iHttpVersion				= x.iHttpVersion;
-            iPlayBackMode				= x.iPlayBackMode;
-            iNumStreams					= x.iNumStreams;
-            iMaxASFHeaderSize			= x.iMaxASFHeaderSize;
-            iUserAgent					= x.iUserAgent;
-            iUserID						= x.iUserID;
-            iUserPasswd					= x.iUserPasswd;
-            iStreamIDList				= x.iStreamIDList;
-            iStreamPlayBackModeList		= x.iStreamPlayBackModeList;
-            iStreamExtensionHeaderKeys		= x.iStreamExtensionHeaderKeys;
-            iStreamExtensionHeaderValues	= x.iStreamExtensionHeaderValues;
-            iMethodMaskForExtensionHeaders	= x.iMethodMaskForExtensionHeaders;
+            iStreamRate                 = x.iStreamRate;
+            iStreamByteOffset           = x.iStreamByteOffset;
+            iStreamStartTimeInMS        = x.iStreamStartTimeInMS;
+            iMaxStreamDurationInMS      = x.iMaxStreamDurationInMS;
+            iStreamStartPacketNumber    = x.iStreamStartPacketNumber;
+            iPacketGrouping             = x.iPacketGrouping;
+            iHttpVersion                = x.iHttpVersion;
+            iPlayBackMode               = x.iPlayBackMode;
+            iNumStreams                 = x.iNumStreams;
+            iMaxASFHeaderSize           = x.iMaxASFHeaderSize;
+            iUserAgent                  = x.iUserAgent;
+            iUserID                     = x.iUserID;
+            iUserPasswd                 = x.iUserPasswd;
+            iStreamIDList               = x.iStreamIDList;
+            iStreamPlayBackModeList     = x.iStreamPlayBackModeList;
+            iStreamExtensionHeaderKeys      = x.iStreamExtensionHeaderKeys;
+            iStreamExtensionHeaderValues    = x.iStreamExtensionHeaderValues;
+            iMethodMaskForExtensionHeaders  = x.iMethodMaskForExtensionHeaders;
             iExtensionHeadersPurgeOnRedirect = x.iExtensionHeadersPurgeOnRedirect;
-            iAccelBitrate					= x.iAccelBitrate;
-            iAccelDuration					= x.iAccelDuration;
+            iAccelBitrate                   = x.iAccelBitrate;
+            iAccelDuration                  = x.iAccelDuration;
             iMaxHttpStreamingSize           = x.iMaxHttpStreamingSize;
             return *this;
         }
@@ -519,11 +519,11 @@ class INetURI
         // assignment operator
         INetURI& operator=(const INetURI& x)
         {
-            iURI			= x.iURI;
-            iHostName		= x.iHostName;
-            iHostPort		= x.iHostPort;
+            iURI            = x.iURI;
+            iHostName       = x.iHostName;
+            iHostPort       = x.iHostPort;
             iUseRelativeURI = x.iUseRelativeURI;
-            iRedirectURI	= x.iRedirectURI;
+            iRedirectURI    = x.iRedirectURI;
             return *this;
         }
 
@@ -576,12 +576,12 @@ struct BandwidthEstimationInfo
     // clear()
     void clear()
     {
-        iFirstMediaDataTsPerRequest		= 0;
-        iFirstMediaDataSizePerRequest	= 0;
-        iTotalSizePerRequest			= 0;
-        iLatestMediaDataTimestamp		= 0;
-        iPrevHttpHeaderParsed			= false;
-        iMediaDataFragPtr				= NULL;
+        iFirstMediaDataTsPerRequest     = 0;
+        iFirstMediaDataSizePerRequest   = 0;
+        iTotalSizePerRequest            = 0;
+        iLatestMediaDataTimestamp       = 0;
+        iPrevHttpHeaderParsed           = false;
+        iMediaDataFragPtr               = NULL;
     }
 
     // update
@@ -671,7 +671,7 @@ class HttpParsingBasicObject
         OSCL_IMPORT_REF int32 isNewContentRangeInfoMatchingCurrentOne(const uint32 aPrevContentLength);
         bool isDownloadReallyHappen() const
         {
-            return (iTotalDLHttpBodySize -iTotalDLSizeForPrevEOS > 0);
+            return (iTotalDLHttpBodySize - iTotalDLSizeForPrevEOS > 0);
         }
         uint32 getLatestMediaDataTimestamp() const
         {
@@ -700,28 +700,28 @@ class HttpParsingBasicObject
         // return codes for parseResponse function
         enum PARSE_RETURN_CODES
         {
-            PARSE_SUCCESS						 = 0,
-            PARSE_HEADER_AVAILABLE				 = 1,	// HTTP header is parsed
-            PARSE_SUCCESS_END_OF_MESSAGE         = 2,	// success with end of the message (get data with the size of content-length)
+            PARSE_SUCCESS                        = 0,
+            PARSE_HEADER_AVAILABLE               = 1,   // HTTP header is parsed
+            PARSE_SUCCESS_END_OF_MESSAGE         = 2,   // success with end of the message (get data with the size of content-length)
             PARSE_SUCCESS_END_OF_MESSAGE_WITH_EXTRA_DATA = 3, // success with end of the message (get data with the size of content-length), but with extran data appended
-            PARSE_SUCCESS_END_OF_INPUT           = 4,	// success with end of the input
-            PARSE_NEED_MORE_DATA				 = 5,	// no ouput or could have output, need more data
-            PARSE_STATUS_LINE_SHOW_NOT_SUCCESSFUL = 6,	// parse the first http status line,
+            PARSE_SUCCESS_END_OF_INPUT           = 4,   // success with end of the input
+            PARSE_NEED_MORE_DATA                 = 5,   // no ouput or could have output, need more data
+            PARSE_STATUS_LINE_SHOW_NOT_SUCCESSFUL = 6,  // parse the first http status line,
             // got status code >= 300, 3xx=>redirection, 4xx=>client error, 5xx=>server error
             // note that this is return code when parser just finishes parsing the first line,
             // user can continue calling parse function to get the complete http header
 
-            PARSE_NO_INPUT_DATA					 = 10,  // input data queue has no data or eos
-            PARSE_EOS_INPUT_DATA				 = 11,
+            PARSE_NO_INPUT_DATA                  = 10,  // input data queue has no data or eos
+            PARSE_EOS_INPUT_DATA                 = 11,
 
             // errors
-            PARSE_GENERAL_ERROR					 = -1,
-            PARSE_SYNTAX_ERROR					 = -2,	// syntax is not understandable
+            PARSE_GENERAL_ERROR                  = -1,
+            PARSE_SYNTAX_ERROR                   = -2,  // syntax is not understandable
             PARSE_HTTP_VERSION_NOT_SUPPORTED     = -3,
             PARSE_TRANSFER_ENCODING_NOT_SUPPORTED = -4,
-            PARSE_CONTENT_RANGE_INFO_NOT_MATCH   = -5,	// range info in the request doesn't match content-range info from the response
-            PARSE_CONTENT_LENGTH_NOT_MATCH		 = -6,	// content-length info from the response doesn't match from the content-length in config file
-            PARSE_BAD_URL						 = -7	// bad url causes server to shut down the connection, so view first (server)
+            PARSE_CONTENT_RANGE_INFO_NOT_MATCH   = -5,  // range info in the request doesn't match content-range info from the response
+            PARSE_CONTENT_LENGTH_NOT_MATCH       = -6,  // content-length info from the response doesn't match from the content-length in config file
+            PARSE_BAD_URL                        = -7   // bad url causes server to shut down the connection, so view first (server)
             // response (from socket node) being EOS as bad url
         };
 
@@ -758,7 +758,7 @@ class HttpParsingBasicObject
 
     private:
         // constructor
-        HttpParsingBasicObject() :	iParser(NULL),
+        HttpParsingBasicObject() :  iParser(NULL),
                 iObserver(NULL),
                 iOutputQueue(NULL),
                 iNumRetry(MAX_NUM_EOS_MESSAGES_FOR_SAME_REQUEST)

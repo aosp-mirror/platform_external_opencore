@@ -42,9 +42,9 @@
 
 ////////////////////////////////////////////////////////////////////////////
 PVMp4FFComposerPort::PVMp4FFComposerPort(int32 aTag, PVMp4FFComposerNode* aNode, int32 aPriority, const char* aName)
-        :	PvmfPortBaseImpl(aTag, this,
-                           PVMF_MP4FFCN_PORT_CAPACITY, PVMF_MP4FFCN_PORT_RESERVE, PVMF_MP4FFCN_PORT_THRESHOLD,
-                           PVMF_MP4FFCN_PORT_CAPACITY, PVMF_MP4FFCN_PORT_RESERVE, PVMF_MP4FFCN_PORT_THRESHOLD, aName),
+        :   PvmfPortBaseImpl(aTag, this,
+                             PVMF_MP4FFCN_PORT_CAPACITY, PVMF_MP4FFCN_PORT_RESERVE, PVMF_MP4FFCN_PORT_THRESHOLD,
+                             PVMF_MP4FFCN_PORT_CAPACITY, PVMF_MP4FFCN_PORT_RESERVE, PVMF_MP4FFCN_PORT_THRESHOLD, aName),
         OsclActiveObject(aPriority, "PVMp4FFComposerPort"),
         iNode(aNode),
         iTrackId(0),
@@ -65,7 +65,7 @@ PVMp4FFComposerPort::~PVMp4FFComposerPort()
 {
     if (memfrag_sps)
     {
-        for (uint32 i = 0;i < iNode->memvector_sps.size();i++)
+        for (uint32 i = 0; i < iNode->memvector_sps.size(); i++)
         {
             OSCL_FREE(iNode->memvector_sps[i]->ptr);
         }
@@ -82,7 +82,7 @@ PVMp4FFComposerPort::~PVMp4FFComposerPort()
 
     if (memfrag_pps)
     {
-        for (uint32 i = 0;i < iNode->memvector_pps.size();i++)
+        for (uint32 i = 0; i < iNode->memvector_pps.size(); i++)
         {
             OSCL_FREE(iNode->memvector_pps[i]->ptr);
         }
@@ -352,7 +352,7 @@ OSCL_EXPORT_REF void PVMp4FFComposerPort::setParametersSync(PvmiMIOSession sessi
     if (iFormat == PVMF_MIME_H264_VIDEO_MP4)
     {
         //this code is specific to H264 file format
-        for (int32 i = 0;i < num_elements;i++)//assuming the memory is allocated for key
+        for (int32 i = 0; i < num_elements; i++)//assuming the memory is allocated for key
         {
             if (pv_mime_strcmp(parameters->key, VIDEO_AVC_OUTPUT_SPS_CUR_VALUE) == 0)
             {
@@ -360,7 +360,7 @@ OSCL_EXPORT_REF void PVMp4FFComposerPort::setParametersSync(PvmiMIOSession sessi
                 memfrag_sps->len = parameters->capacity;
                 memfrag_sps->ptr = (uint8*)(OSCL_MALLOC(sizeof(uint8) * memfrag_sps->len));
                 oscl_memcpy((void*)memfrag_sps->ptr, (const void*)parameters->value.key_specific_value, memfrag_sps->len);
-                iNode->memvector_sps.push_back(memfrag_sps);	//storing SPS in the vector
+                iNode->memvector_sps.push_back(memfrag_sps);    //storing SPS in the vector
                 iNode->iNum_SPS_Set += 1;
             }
             if (pv_mime_strcmp(parameters->key, VIDEO_AVC_OUTPUT_PPS_CUR_VALUE) == 0)
@@ -369,14 +369,14 @@ OSCL_EXPORT_REF void PVMp4FFComposerPort::setParametersSync(PvmiMIOSession sessi
                 memfrag_pps->len = parameters->capacity;
                 memfrag_pps->ptr = (uint8*)(OSCL_MALLOC(sizeof(uint8) * memfrag_pps->len));
                 oscl_memcpy((void*)memfrag_pps->ptr, (const void*)parameters->value.key_specific_value, memfrag_pps->len);
-                iNode->memvector_pps.push_back(memfrag_pps);	//storing PPS in the vector
+                iNode->memvector_pps.push_back(memfrag_pps);    //storing PPS in the vector
                 iNode->iNum_PPS_Set += 1;
             }
         }
     }
     if (iFormat == PVMF_MIME_3GPP_TIMEDTEXT)
     {
-        for (int32 i = 0;i < num_elements;i++)//assuming the memory is allocated for keys
+        for (int32 i = 0; i < num_elements; i++)//assuming the memory is allocated for keys
         {
             if (pv_mime_strcmp(parameters->key, TIMED_TEXT_OUTPUT_CONFIG_INFO_CUR_VALUE) == 0)
             {

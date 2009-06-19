@@ -75,7 +75,7 @@ class PVMFTrackInfo : public HeapBase
             iDurationValue       = aSourceTrackInfo.iDurationValue;
             iDurationTimeScale   = aSourceTrackInfo.iDurationTimeScale;
             iTrackBitRate        = aSourceTrackInfo.iTrackBitRate;
-            iTrackFrameRate		 = aSourceTrackInfo.iTrackFrameRate;
+            iTrackFrameRate      = aSourceTrackInfo.iTrackFrameRate;
             iTrackConfigInfo     = aSourceTrackInfo.iTrackConfigInfo;
             iDependsOn           = aSourceTrackInfo.iDependsOn;
             iHasAlternates       = aSourceTrackInfo.iHasAlternates;

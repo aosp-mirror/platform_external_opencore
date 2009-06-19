@@ -507,7 +507,7 @@ void build_CN_param(
 
     pTemp = &window_200_40[*pSeed & 0x7F];
 
-    for (i = 0; i < n_param;i++)
+    for (i = 0; i < n_param; i++)
     {
         temp = ~(0xFFFF << param_size_table[i]);
         parm[i] = *pTemp++ & temp;

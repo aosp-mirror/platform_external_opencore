@@ -25,7 +25,7 @@
 
 
 ////////////////////////////////////////////////////////////////////////////////////
-//////	ProgressiveStreamingContainer implementation
+//////  ProgressiveStreamingContainer implementation
 ////////////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF ProgressiveStreamingContainer::ProgressiveStreamingContainer(PVMFProtocolEngineNode *aNode) :
         ProgressiveDownloadContainer(aNode), iEnableInfoUpdate(true)
@@ -37,16 +37,16 @@ OSCL_EXPORT_REF bool ProgressiveStreamingContainer::createProtocolObjects()
 {
     if (!ProtocolContainer::createProtocolObjects()) return false;
 
-    iProtocol		 = OSCL_NEW(ProgressiveStreaming, ());
-    iNodeOutput		 = OSCL_NEW(pvProgressiveStreamingOutput, (iNode));
+    iProtocol        = OSCL_NEW(ProgressiveStreaming, ());
+    iNodeOutput      = OSCL_NEW(pvProgressiveStreamingOutput, (iNode));
     iDownloadControl  = OSCL_NEW(progressiveStreamingControl, ());
     iDownloadProgess  = OSCL_NEW(ProgressiveStreamingProgress, ());
-    iEventReport		 = OSCL_NEW(progressiveStreamingEventReporter, (iNode));
+    iEventReport         = OSCL_NEW(progressiveStreamingEventReporter, (iNode));
     iCfgFileContainer = OSCL_NEW(PVProgressiveStreamingCfgFileContainer, (iDownloadSource));
-    iUserAgentField	 = OSCL_NEW(UserAgentFieldForProgDownload, ());
-    iDownloadSource	 = OSCL_NEW(PVMFDownloadDataSourceContainer, ());
+    iUserAgentField  = OSCL_NEW(UserAgentFieldForProgDownload, ());
+    iDownloadSource  = OSCL_NEW(PVMFDownloadDataSourceContainer, ());
 
-    if (!iProtocol		|| !iNodeOutput  || !iDownloadControl  ||
+    if (!iProtocol      || !iNodeOutput  || !iDownloadControl  ||
             !iDownloadProgess || !iEventReport || !iCfgFileContainer ||
             !iUserAgentField  || !iDownloadSource) return false;
 
@@ -186,7 +186,7 @@ OSCL_EXPORT_REF bool ProgressiveStreamingContainer::doInfoUpdate(const uint32 do
 }
 
 ////////////////////////////////////////////////////////////////////////////////////
-//////	pvProgressiveStreamingOutput implementation
+//////  pvProgressiveStreamingOutput implementation
 ///////////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF pvProgressiveStreamingOutput::pvProgressiveStreamingOutput(PVMFProtocolEngineNodeOutputObserver *aObserver) :
         pvHttpDownloadOutput(aObserver),
@@ -315,7 +315,7 @@ OSCL_EXPORT_REF bool pvProgressiveStreamingOutput::seekDataStream(const uint32 a
 
 
 ////////////////////////////////////////////////////////////////////////////////////
-//////	progressiveStreamingControl implementation
+//////  progressiveStreamingControl implementation
 ////////////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF progressiveStreamingControl::progressiveStreamingControl() : progressiveDownloadControl()
 {
@@ -345,7 +345,7 @@ OSCL_EXPORT_REF void progressiveStreamingControl::clearPerRequest()
 
 
 ////////////////////////////////////////////////////////////////////////////////////
-//////	ProgressiveStreamingProgress implementation
+//////  ProgressiveStreamingProgress implementation
 ////////////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF bool ProgressiveStreamingProgress::calculateDownloadPercent(uint32 &aDownloadProgressPercent)
 {
@@ -362,7 +362,7 @@ OSCL_EXPORT_REF bool ProgressiveStreamingProgress::calculateDownloadPercent(uint
 }
 
 ////////////////////////////////////////////////////////////////////////////////////
-//////	progressiveStreamingEventReporter implementation
+//////  progressiveStreamingEventReporter implementation
 ////////////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF void progressiveStreamingEventReporter::reportBufferStatusEvent(int aDownloadPercent)
 {
@@ -402,5 +402,5 @@ uint32 progressiveStreamingEventReporter::getBufferFullness()
         aBufferEmptiness = aCacheFilledSize * 100 / aCacheSize;
     }
 
-    return 100 -aBufferEmptiness;
+    return 100 - aBufferEmptiness;
 }

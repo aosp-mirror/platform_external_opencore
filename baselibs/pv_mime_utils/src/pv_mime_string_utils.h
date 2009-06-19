@@ -50,9 +50,9 @@
 /**
  * Append new type to mime string
  *
- * @param mimestring	original mime string
- * @param string	string to append to mime string.
- * @param newstring	address where the newly appended string will get stored
+ * @param mimestring    original mime string
+ * @param string    string to append to mime string.
+ * @param newstring address where the newly appended string will get stored
  *
  * @return              new mime string
  */
@@ -62,9 +62,9 @@ char * pv_mime_string_append_type(char *mimestring, char *string, char* newstrin
 /**
  * Append new parametre to mime string
  *
- * @param mimestring	original mime string
- * @param string	string to append to mime string.
- * @param newstring	address where the newly appended string will get stored
+ * @param mimestring    original mime string
+ * @param string    string to append to mime string.
+ * @param newstring address where the newly appended string will get stored
  *
  * @return              new mime string
  */
@@ -76,7 +76,7 @@ char * pv_mime_string_append_param(char *mimestring, char *string, char* newstri
  * a case in-sensitive search is performed to locate a string in mimestring.
  *
  * @param mimestring    original mime string
- * @param string		string to search in mime string.
+ * @param string        string to search in mime string.
  * @param stringaddr    address of mimestring starting from string
  *
  * @return              length of the rest of the string.
@@ -99,12 +99,12 @@ OSCL_IMPORT_REF int pv_mime_string_parse_param(char *mimestring, char *string, c
  * compare two strings (case in-sensitive comparision)
  *
  * @param mimestring1   string to compare.
- * @param mimestring2	string to compare.
+ * @param mimestring2   string to compare.
  *
  * @return -1  no match
- *			0  if exact match
- *		    1  if first string is prefix of second string.
- *		    2  if second string is prefix of first string.
+ *          0  if exact match
+ *          1  if first string is prefix of second string.
+ *          2  if second string is prefix of first string.
 
  */
 OSCL_IMPORT_REF int pv_mime_strcmp(const char *mimestring1, const char *mimestring2);
@@ -113,10 +113,10 @@ OSCL_IMPORT_REF int pv_mime_strcmp(const char *mimestring1, const char *mimestri
  * compare two strings (case in-sensitive comparision)
  *
  * @param mimestring1   string to compare.
- * @param mimestring2	string to compare.
+ * @param mimestring2   string to compare.
  *
  * @return 0  if exact match
- *		   1  if one string is sub-string of another string.
+ *         1  if one string is sub-string of another string.
  *        -1  no match
  */
 OSCL_IMPORT_REF int pv_mime_strstr(char *mimestring1, char *mimestring2);
@@ -125,7 +125,7 @@ OSCL_IMPORT_REF int pv_mime_strstr(char *mimestring1, char *mimestring2);
  * Extract a type from mime string.
  *
  * @param compnumber     position of the component (0-based index).
- * @param mimestring	 mime string.
+ * @param mimestring     mime string.
  * @param string         address of rest of mime string starting from compnumber.
  *
  * @return               length of the component.

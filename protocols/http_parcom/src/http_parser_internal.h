@@ -38,17 +38,17 @@
 #define HTTP_ENTITY_UNIT_POOLNUM  4
 #define DEFAULT_MAX_LINE_BUFFER_SIZE 512
 #define DATA_QUEUE_VECTOR_RESERVE_SIZE 4
-#define GOOD_HTTP_STATUS_CODE_START_FROM100	100
-#define GOOD_HTTP_STATUS_CODE_START_FROM200	200
-#define GOOD_HTTP_STATUS_CODE_END_AT299		299
-#define HTTP_STATUS_CODE_204_NO_CONTENT		204
+#define GOOD_HTTP_STATUS_CODE_START_FROM100 100
+#define GOOD_HTTP_STATUS_CODE_START_FROM200 200
+#define GOOD_HTTP_STATUS_CODE_END_AT299     299
+#define HTTP_STATUS_CODE_204_NO_CONTENT     204
 
 
 enum HTTPContentType
 {
-    HTTP_CONTENT_NORMAL = 0,					// no chunk header info
-    HTTP_CONTENT_NULTIPART,					// for Content-Type : multipart/byteranges
-    HTTP_CONTENT_CHUNKED_TRANSFER_ENCODING	// for Transfer-Encoding : chunked
+    HTTP_CONTENT_NORMAL = 0,                    // no chunk header info
+    HTTP_CONTENT_NULTIPART,                 // for Content-Type : multipart/byteranges
+    HTTP_CONTENT_CHUNKED_TRANSFER_ENCODING  // for Transfer-Encoding : chunked
 };
 
 #define LOGINFO(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG,iLogger,PVLOGMSG_INFO,m);
@@ -60,8 +60,8 @@ enum HTTPContentType
 // on header parsing and entity body parsing
 struct HTTPContentInfoInternal
 {
-    uint32 iContentLength;		// for "Content-Length"
-    uint32 iContentRangeLeft;	// for "Content-Range"
+    uint32 iContentLength;      // for "Content-Length"
+    uint32 iContentRangeLeft;   // for "Content-Range"
     uint32 iContentRangeRight;
 
     // constructor
@@ -99,7 +99,7 @@ struct HTTPContentInfoInternal
     // operator "="
     HTTPContentInfoInternal &operator=(const HTTPContentInfoInternal& x)
     {
-        iContentLength	   = x.iContentLength;
+        iContentLength     = x.iContentLength;
         iContentRangeLeft  = x.iContentRangeLeft;
         iContentRangeRight = x.iContentRangeRight;
         iContentType       = x.iContentType;
@@ -128,7 +128,7 @@ private:
 private:
     HTTPContentType iContentType;
     char *iBoundaryBuffer;
-    StrPtrLen iBoundary;	// for "Content-Type : multipart/byteranges"
+    StrPtrLen iBoundary;    // for "Content-Type : multipart/byteranges"
 };
 
 
@@ -208,7 +208,7 @@ class HTTPParserInput
         Oscl_Vector<RefCounterMemoryFragment, OsclMemAllocator> iDataOutQueue; // RefCounterMemoryFragment defined in http_parcom_internal.h
         uint32 iDataInQueueMemFragOffset;
         HTTPMemoryFragment iHTTPMemFrag; // hold the input data fragment being processed
-        char *iLineBuffer;				 // concatenate multiple fragments of each header line
+        char *iLineBuffer;               // concatenate multiple fragments of each header line
         uint32 iLineBufferSize;
         uint32 iLineBufferOccupied;
 };
@@ -332,9 +332,9 @@ class HTTPParserHeaderObject : public HTTPParserBaseObject
         // reset
         void reset()
         {
-            iStatusCode				= 0; //200;
-            iHttpVersionNum			= 0;
-            iHeaderParsed			= false;
+            iStatusCode             = 0; //200;
+            iHttpVersionNum         = 0;
+            iHeaderParsed           = false;
             iHeaderFirstLineParsed  = false;
             iResponseParsedComplete = false;
             if (iKeyValueStore) iKeyValueStore->clear();

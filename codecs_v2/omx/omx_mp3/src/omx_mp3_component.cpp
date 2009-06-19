@@ -81,7 +81,7 @@ OSCL_EXPORT_REF OMX_ERRORTYPE Mp3OmxComponentDestructor(OMX_IN OMX_HANDLETYPE pH
 }
 #if DYNAMIC_LOAD_OMX_MP3_COMPONENT
 class Mp3OmxSharedLibraryInterface: public OsclSharedLibraryInterface,
-            public OmxSharedLibraryInterface
+        public OmxSharedLibraryInterface
 {
     public:
         OsclAny *QueryOmxComponentInterface(const OsclUuid& aOmxTypeId, const OsclUuid& aInterfaceId)
@@ -116,13 +116,13 @@ extern "C"
 {
     OSCL_EXPORT_REF OsclAny* PVGetInterface()
     {
-	return (OsclAny*) OSCL_NEW(Mp3OmxSharedLibraryInterface, ());
+        return (OsclAny*) OSCL_NEW(Mp3OmxSharedLibraryInterface, ());
     }
 
     OSCL_EXPORT_REF void PVReleaseInterface(OsclSharedLibraryInterface* aInstance)
     {
-          Mp3OmxSharedLibraryInterface* module = (Mp3OmxSharedLibraryInterface*)aInstance;
-          OSCL_DELETE(module);
+        Mp3OmxSharedLibraryInterface* module = (Mp3OmxSharedLibraryInterface*)aInstance;
+        OSCL_DELETE(module);
     }
 }
 
@@ -323,8 +323,8 @@ OMX_ERRORTYPE OpenmaxMp3AO::ConstructComponent(OMX_PTR pAppData, OMX_PTR pProxy)
 
 
 /** This function is called by the omx core when the component
-	* is disposed by the IL client with a call to FreeHandle().
-	*/
+    * is disposed by the IL client with a call to FreeHandle().
+    */
 
 OMX_ERRORTYPE OpenmaxMp3AO::DestroyComponent()
 {
@@ -408,8 +408,8 @@ void OpenmaxMp3AO::ProcessData()
     ComponentPortType* pOutPort = ipPorts[OMX_PORT_OUTPUTPORT_INDEX];
     OMX_COMPONENTTYPE* pHandle = &iOmxComponent;
 
-    OMX_U8*	pOutBuffer;
-    OMX_U32	OutputLength;
+    OMX_U8* pOutBuffer;
+    OMX_U32 OutputLength;
     OMX_S32 DecodeReturn;
     OMX_BOOL ResizeNeeded = OMX_FALSE;
 
@@ -561,7 +561,7 @@ void OpenmaxMp3AO::ProcessData()
             }
 
             // set the flag to disable further processing until Client reacts to this
-            //	by doing dynamic port reconfiguration
+            //  by doing dynamic port reconfiguration
             iResizePending = OMX_TRUE;
 
             /* Do not return the output buffer generated yet, store it locally
@@ -841,7 +841,7 @@ void OpenmaxMp3AO::DoSilenceInsertion()
 {
     QueueType* pOutputQueue = ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->pBufferQueue;
     ComponentPortType* pOutPort = ipPorts[OMX_PORT_OUTPUTPORT_INDEX];
-    OMX_U8*	pOutBuffer = NULL;
+    OMX_U8* pOutBuffer = NULL;
 
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OpenmaxMp3AO : DoSilenceInsertion IN"));

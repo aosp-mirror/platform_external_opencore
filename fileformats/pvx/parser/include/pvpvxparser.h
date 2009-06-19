@@ -56,12 +56,12 @@
 #include "oscl_utf8conv.h"
 #endif
 
-#define MAX_PVXUSERID_LEN			256
-#define MAX_PVXAPPSPECIFICSTRING_LEN		256
-#define MAX_PVXSESSIONID_LEN			36
-#define MAX_PVXEXPIRYTIMESTAMP_LEN		20
-#define MAX_PVXRANDOMFILLER_LEN			16
-#define MAX_PVXDIGITALSIGNATURE_LEN		40
+#define MAX_PVXUSERID_LEN           256
+#define MAX_PVXAPPSPECIFICSTRING_LEN        256
+#define MAX_PVXSESSIONID_LEN            36
+#define MAX_PVXEXPIRYTIMESTAMP_LEN      20
+#define MAX_PVXRANDOMFILLER_LEN         16
+#define MAX_PVXDIGITALSIGNATURE_LEN     40
 
 class CPVXInfo
 {
@@ -79,14 +79,14 @@ class CPVXInfo
 
         typedef enum
         {
-            ENoAction			= 0,
+            ENoAction           = 0,
             ECloseApp,
             ENextUrl
         } TPVEndOfClipAction;
 
-        typedef enum 		// For Download only
+        typedef enum        // For Download only
         {
-            ENoPlayback			= 0,
+            ENoPlayback         = 0,
             EAfterDownload,
             EAsap,
             EReserve
@@ -100,9 +100,9 @@ class CPVXInfo
         bool iDownload;
         bool iPurge;
         bool iRandomPos;
-        TPVPlaybackControl	iPlaybackControl;
+        TPVPlaybackControl  iPlaybackControl;
         bool iUserPlayback;
-        TPVEndOfClipAction	iEndOfClip;
+        TPVEndOfClipAction  iEndOfClip;
         OSCL_wHeapStringA iLaunchURL;
 };
 

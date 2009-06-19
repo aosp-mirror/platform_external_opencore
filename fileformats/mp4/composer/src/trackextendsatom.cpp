@@ -31,7 +31,7 @@ PVA_FF_TrackExtendsAtom::PVA_FF_TrackExtendsAtom(uint32 mediaType,
 
     _trackId  = trackId;
 
-    _defaultSampleDescriptionIndex = 0;		// all flags are kept 0
+    _defaultSampleDescriptionIndex = 0;     // all flags are kept 0
     _defaultSampleDuration = 0;
     _defaultSampleSize = 0;
     _defaultSampleFlags = 0;

@@ -1033,7 +1033,7 @@ PVMFStatus PvmiMIOFileInput::DoInit()
         offset = offset + 4;
 
         //iLogFile.Seek( offset, Oscl_File::SEEKSET );  //the information
-        iLogFile.Read(&bitrate, sizeof(char), 4);		//present in the log file
+        iLogFile.Read(&bitrate, sizeof(char), 4);       //present in the log file
         offset = offset + 4;
 
         //iLogFile.Seek( offset, Oscl_File::SEEKSET );
@@ -1505,7 +1505,7 @@ PVMFStatus PvmiMIOFileInput::DoRead()
                     return PVMFFailure;
                 }
             }
-            else	//EOS Reached
+            else    //EOS Reached
             {
                 //free the allocated data buffer
                 iMediaBufferMemPool->deallocate(data);
@@ -1760,7 +1760,7 @@ int32 PvmiMIOFileInput::LocateM4VFrameHeader(uint8* video_buffer, int32 vop_size
     }
     while (start_code != 0xb6 /* VOP */ && start_code != 0xb3 /* GOV */);
 
-    return idx -3;
+    return idx - 3;
 }
 
 
@@ -1800,7 +1800,7 @@ int32 PvmiMIOFileInput::LocateH263FrameHeader(uint8 *video_buffer, int32 vop_siz
     }
     while ((video_buffer[idx] & 0xfc) != 0x80);
 
-    return idx -2;
+    return idx - 2;
 }
 
 ////////////////////////////////////////////////////////////////////////////

@@ -25,7 +25,7 @@
 #include "osclconfig.h"
 
 class StreamingNodesInterface: public OsclSharedLibraryInterface,
-            public NodeSharedLibraryInterface
+        public NodeSharedLibraryInterface
 {
     public:
         StreamingNodesInterface() {};

@@ -67,12 +67,12 @@ class OmxAmrEncoder
 
         //Encoding Settings parameters
 
-        int32*			 ipSizeArrayForOutputFrames;
-        uint32			 iNextStartTime;
-        uint32			 iMaxNumOutputFramesPerBuffer;
-        uint32			 iOneInputFrameLength;
-        uint32			 iMaxInputSize;
-        PVMFFormatType	 iOutputFormat;
+        int32*           ipSizeArrayForOutputFrames;
+        uint32           iNextStartTime;
+        uint32           iMaxNumOutputFramesPerBuffer;
+        uint32           iOneInputFrameLength;
+        uint32           iMaxInputSize;
+        PVMFFormatType   iOutputFormat;
 
         OMX_S32 iAmrInitFlag;
 
@@ -80,5 +80,5 @@ class OmxAmrEncoder
 
 
 
-#endif	//#ifndef AMR_ENC_H_INCLUDED
+#endif  //#ifndef AMR_ENC_H_INCLUDED
 

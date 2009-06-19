@@ -82,19 +82,19 @@ class IMpeg4File : public ISucceedFail
         // MEDIA DATA APIS
 
         /* Returns media samples for the requested tracks
-           id:	The track ID of the track from which the method is to retrieve the samples.
-           buf:	A pointer to the buffer into which to place the sample.
-           size:	The size of the data buffer
-           index:	An output parameter which is the index of the sample entry to which the returned sample refers.
-           return:	The size in bytes of the data placed into the provided buffer.  If the buffer is not large enough, the return value is the negative of the size that is needed.
+           id:  The track ID of the track from which the method is to retrieve the samples.
+           buf: A pointer to the buffer into which to place the sample.
+           size:    The size of the data buffer
+           index:   An output parameter which is the index of the sample entry to which the returned sample refers.
+           return:  The size in bytes of the data placed into the provided buffer.  If the buffer is not large enough, the return value is the negative of the size that is needed.
         */
         virtual int32 getNextMediaSample(uint32 id, uint8 *buf, uint32 &size, uint32 &index, uint32 &SampleOffset) = 0;
 
         virtual int32 getMediaSample(uint32 id, uint32 sampleNumber, uint8 *buf, int32 &size, uint32 &index, uint32 &SampleOffset) = 0;
 
-        virtual	int32 getOffsetByTime(uint32 id, uint32 ts, int32* sampleFileOffset, uint32 jitterbuffersize) = 0;
+        virtual int32 getOffsetByTime(uint32 id, uint32 ts, int32* sampleFileOffset, uint32 jitterbuffersize) = 0;
 
-        virtual int32 updateFileSize(uint32	filesize) = 0;
+        virtual int32 updateFileSize(uint32 filesize) = 0;
 
         virtual MP4_ERROR_CODE getKeyMediaSampleNumAt(uint32 aTrackId,
                 uint32 aKeySampleNum,
@@ -111,8 +111,8 @@ class IMpeg4File : public ISucceedFail
                                             GAU    *pgau) = 0;
 
         /* Returns the timestamp for the previously returned media samples from the requested track
-           id:	The track ID of the track from which the method is to retrieve the sample timestamp.
-           return:	The timestamp of the most recently return media sample in the "media timescale"
+           id:  The track ID of the track from which the method is to retrieve the sample timestamp.
+           return:  The timestamp of the most recently return media sample in the "media timescale"
         */
         virtual uint32 getMediaTimestampForCurrentSample(uint32 id) = 0;
 
@@ -120,8 +120,8 @@ class IMpeg4File : public ISucceedFail
         // META DATA APIS
 
         // From PVUserDataAtom 'pvmm'
-        virtual OSCL_wString& getPVVersion(MP4FFParserOriginalCharEnc &charType) = 0;		// return _version string
-        virtual OSCL_wHeapString<OsclMemAllocator> getCreationDate(MP4FFParserOriginalCharEnc &charType) = 0;	// return _creationDate string
+        virtual OSCL_wString& getPVVersion(MP4FFParserOriginalCharEnc &charType) = 0;       // return _version string
+        virtual OSCL_wHeapString<OsclMemAllocator> getCreationDate(MP4FFParserOriginalCharEnc &charType) = 0;   // return _creationDate string
 
         // from 'ftyp' atom
         virtual uint32 getCompatibiltyMajorBrand() = 0;
@@ -280,7 +280,7 @@ class IMpeg4File : public ISucceedFail
 
         virtual AVCSampleEntry* getAVCSampleEntry(uint32 trackID, uint32 index = 0) = 0;
 
-        virtual	uint32 getAVCNALLengthSize(uint32 trackID, uint32 index = 0) = 0;
+        virtual uint32 getAVCNALLengthSize(uint32 trackID, uint32 index = 0) = 0;
 
         /*
          * @param Oscl_File* filePtr - File pointer to the MP4/3GP
@@ -438,7 +438,7 @@ class IMpeg4File : public ISucceedFail
         virtual OSCL_wHeapString<OsclMemAllocator> getITunesCDTrackNumberData() const = 0;
         virtual OSCL_wHeapString<OsclMemAllocator> getITunesCDDB1Data() const = 0;
         virtual OSCL_wHeapString<OsclMemAllocator> getITunesLyrics() const = 0;
-        virtual	uint8 getITunesTotalCDIdentifierData() const = 0;
+        virtual uint8 getITunesTotalCDIdentifierData() const = 0;
         virtual bool IsMovieFragmentsPresent() const = 0;
         //Returns the Subtitle of individual track
         virtual OSCL_wHeapString<OsclMemAllocator> getITunesTrackSubTitle() const = 0;

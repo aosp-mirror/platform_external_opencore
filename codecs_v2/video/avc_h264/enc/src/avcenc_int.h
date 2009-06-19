@@ -32,7 +32,7 @@ and necessary type defitionitions and enumerations.
 #endif
 
 /* Definition for the structures below */
-#define DEFAULT_ATTR	0 /* default memory attribute */
+#define DEFAULT_ATTR    0 /* default memory attribute */
 #define MAX_INPUT_FRAME 30 /* some arbitrary number, it can be much higher than this. */
 #define MAX_REF_FRAME  16 /* max size of the RefPicList0 and RefPicList1 */
 #define MAX_REF_PIC_LIST 33
@@ -129,13 +129,13 @@ automatically inserted as the RBSP is recorded.
 typedef struct tagEncBitstream
 {
     uint8 *bitstreamBuffer; /* pointer to buffer memory   */
-    int buf_size;		/* size of the buffer memory */
-    int write_pos;		/* next position to write to bitstreamBuffer  */
+    int buf_size;       /* size of the buffer memory */
+    int write_pos;      /* next position to write to bitstreamBuffer  */
     int count_zeros;   /* count number of consecutive zero */
-    uint current_word;	/* byte-swapped (MSB left) current word to write to buffer */
+    uint current_word;  /* byte-swapped (MSB left) current word to write to buffer */
     int bit_left;      /* number of bit left in current_word */
     uint8   *overrunBuffer;  /* extra output buffer to prevent current skip due to output buffer overrun*/
-    int		oBSize;		/* size of allocated overrun buffer */
+    int     oBSize;     /* size of allocated overrun buffer */
     void   *encvid; /* pointer to the main object */
 
 } AVCEncBitstream;
@@ -159,45 +159,45 @@ typedef struct tagRDInfo
 typedef struct tagMultiPass
 {
     /* multipass rate control data */
-    int target_bits;	/* target bits for current frame, = rc->T */
-    int actual_bits;	/* actual bits for current frame obtained after encoding, = rc->Rc*/
-    int QP;				/* quantization level for current frame, = rc->Qc*/
-    int prev_QP;		/* quantization level for previous frame */
-    int prev_prev_QP;	/* quantization level for previous frame before last*/
-    OsclFloat mad;			/* mad for current frame, = video->avgMAD*/
-    int bitrate;		/* bitrate for current frame */
-    OsclFloat framerate;	/* framerate for current frame*/
+    int target_bits;    /* target bits for current frame, = rc->T */
+    int actual_bits;    /* actual bits for current frame obtained after encoding, = rc->Rc*/
+    int QP;             /* quantization level for current frame, = rc->Qc*/
+    int prev_QP;        /* quantization level for previous frame */
+    int prev_prev_QP;   /* quantization level for previous frame before last*/
+    OsclFloat mad;          /* mad for current frame, = video->avgMAD*/
+    int bitrate;        /* bitrate for current frame */
+    OsclFloat framerate;    /* framerate for current frame*/
 
-    int nRe_Quantized;	/* control variable for multipass encoding, */
+    int nRe_Quantized;  /* control variable for multipass encoding, */
     /* 0 : first pass */
     /* 1 : intermediate pass(quantization and VLC loop only) */
     /* 2 : final pass(de-quantization, idct, etc) */
     /* 3 : macroblock level rate control */
 
-    int encoded_frames;		/* counter for all encoded frames */
-    int re_encoded_frames;	/* counter for all multipass encoded frames*/
-    int re_encoded_times;	/* counter for all times of multipass frame encoding */
+    int encoded_frames;     /* counter for all encoded frames */
+    int re_encoded_frames;  /* counter for all multipass encoded frames*/
+    int re_encoded_times;   /* counter for all times of multipass frame encoding */
 
     /* Multiple frame prediction*/
-    RDInfo **pRDSamples;		/* pRDSamples[30][32], 30->30fps, 32 -> 5 bit quantizer, 32 candidates*/
-    int framePos;				/* specific position in previous multiple frames*/
-    int frameRange;				/* number of overall previous multiple frames */
-    int samplesPerFrame[30];	/* number of samples per frame, 30->30fps */
+    RDInfo **pRDSamples;        /* pRDSamples[30][32], 30->30fps, 32 -> 5 bit quantizer, 32 candidates*/
+    int framePos;               /* specific position in previous multiple frames*/
+    int frameRange;             /* number of overall previous multiple frames */
+    int samplesPerFrame[30];    /* number of samples per frame, 30->30fps */
 
     /* Bit allocation for scene change frames and high motion frames */
     OsclFloat sum_mad;
-    int counter_BTsrc;	/* BT = Bit Transfer, bit transfer from low motion frames or less complicatedly compressed frames */
-    int counter_BTdst;	/* BT = Bit Transfer, bit transfer to scene change frames or high motion frames or more complicatedly compressed frames */
+    int counter_BTsrc;  /* BT = Bit Transfer, bit transfer from low motion frames or less complicatedly compressed frames */
+    int counter_BTdst;  /* BT = Bit Transfer, bit transfer to scene change frames or high motion frames or more complicatedly compressed frames */
     OsclFloat sum_QP;
-    int diff_counter;	/* diff_counter = -diff_counter_BTdst, or diff_counter_BTsrc */
+    int diff_counter;   /* diff_counter = -diff_counter_BTdst, or diff_counter_BTsrc */
 
     /* For target bitrate or framerate update */
-    OsclFloat target_bits_per_frame;		/* = C = bitrate/framerate */
-    OsclFloat target_bits_per_frame_prev;	/* previous C */
-    OsclFloat aver_mad;						/* so-far average mad could replace sum_mad */
-    OsclFloat aver_mad_prev;				/* previous average mad */
-    int   overlapped_win_size;			/* transition period of time */
-    int   encoded_frames_prev;			/* previous encoded_frames */
+    OsclFloat target_bits_per_frame;        /* = C = bitrate/framerate */
+    OsclFloat target_bits_per_frame_prev;   /* previous C */
+    OsclFloat aver_mad;                     /* so-far average mad could replace sum_mad */
+    OsclFloat aver_mad_prev;                /* previous average mad */
+    int   overlapped_win_size;          /* transition period of time */
+    int   encoded_frames_prev;          /* previous encoded_frames */
 } MultiPass;
 
 
@@ -205,7 +205,7 @@ typedef struct tagdataPointArray
 {
     int Qp;
     int Rp;
-    OsclFloat Mp;	/* for MB-based RC */
+    OsclFloat Mp;   /* for MB-based RC */
     struct tagdataPointArray *next;
     struct tagdataPointArray *prev;
 } dataPointArray;
@@ -217,26 +217,26 @@ typedef struct tagAVCRateControl
     /* bitrate-robustness tradeoff */
     uint scdEnable; /* enable scene change detection */
     int idrPeriod;  /* IDR period in number of frames */
-    int	intraMBRate;   /* intra MB refresh rate per frame */
-    uint dpEnable;	/* enable data partitioning */
+    int intraMBRate;   /* intra MB refresh rate per frame */
+    uint dpEnable;  /* enable data partitioning */
 
     /* quality-complexity tradeoff */
     uint subPelEnable;  /* enable quarter pel search */
-    int	mvRange;	/* motion vector search range in +/- pixel */
+    int mvRange;    /* motion vector search range in +/- pixel */
     uint subMBEnable;  /* enable sub MB prediction mode (4x4, 4x8, 8x4) */
     uint rdOptEnable;  /* enable RD-opt mode selection */
     uint twoPass; /* flag for 2 pass encoding ( for future )*/
     uint bidirPred; /* bi-directional prediction for B-frame. */
 
     uint rcEnable;  /* enable rate control, '1' on, '0' const QP */
-    int initQP;	/* initial QP */
+    int initQP; /* initial QP */
 
     /* note the following 3 params are for HRD, these triplets can be a series
     of triplets as the generalized HRD allows. SEI message must be generated in this case. */
     /* We no longer have to differentiate between CBR and VBR. The users to the
     AVC encoder lib will do the mapping from CBR/VBR to these parameters. */
-    int32 bitRate;	/* target bit rate for the overall clip in bits/second*/
-    int32 cpbSize;	/* coded picture buffer size in bytes */
+    int32 bitRate;  /* target bit rate for the overall clip in bits/second*/
+    int32 cpbSize;  /* coded picture buffer size in bytes */
     int32 initDelayOffset; /* initial CBP removal delay in bits */
 
     OsclFloat frame_rate; /* frame rate */
@@ -246,48 +246,48 @@ typedef struct tagAVCRateControl
     /* Then internal parameters for the operation */
     uint first_frame; /* a flag for the first frame */
     int lambda_mf; /* for example */
-    int totalSAD;	 /* SAD of current frame */
+    int totalSAD;    /* SAD of current frame */
 
     /*******************************************/
     /* this part comes from MPEG4 rate control */
-    int alpha;	/* weight for I frame */
-    int	Rs; 	/*bit rate for the sequence (or segment) e.g., 24000 bits/sec */
-    int Rc;		/*bits used for the current frame. It is the bit count obtained after encoding. */
-    int Rp;		/*bits to be removed from the buffer per picture. */
+    int alpha;  /* weight for I frame */
+    int Rs;     /*bit rate for the sequence (or segment) e.g., 24000 bits/sec */
+    int Rc;     /*bits used for the current frame. It is the bit count obtained after encoding. */
+    int Rp;     /*bits to be removed from the buffer per picture. */
     /*? is this the average one, or just the bits coded for the previous frame */
-    int Rps;	/*bit to be removed from buffer per src frame */
-    OsclFloat Ts; 	/*number of seconds for the sequence  (or segment). e.g., 10 sec */
+    int Rps;    /*bit to be removed from buffer per src frame */
+    OsclFloat Ts;   /*number of seconds for the sequence  (or segment). e.g., 10 sec */
     OsclFloat Ep;
-    OsclFloat Ec;	/*mean absolute difference for the current frame after motion compensation.*/
+    OsclFloat Ec;   /*mean absolute difference for the current frame after motion compensation.*/
     /*If the macroblock is intra coded, the original spatial pixel values are summed.*/
-    int Qc;		/*quantization level used for the current frame. */
-    int Nr;		/*number of P frames remaining for encoding.*/
-    int Rr;	/*number of bits remaining for encoding this sequence (or segment).*/
+    int Qc;     /*quantization level used for the current frame. */
+    int Nr;     /*number of P frames remaining for encoding.*/
+    int Rr; /*number of bits remaining for encoding this sequence (or segment).*/
     int Rr_Old;
-    int T;		/*target bit to be used for the current frame.*/
-    int S;		/*number of bits used for encoding the previous frame.*/
-    int Hc;	/*header and motion vector bits used in the current frame. It includes all the 	information except to the residual information.*/
-    int Hp;	/*header and motion vector bits used in the previous frame. It includes all the 	information except to the residual information.*/
-    int Ql;	/*quantization level used in the previous frame */
-    int Bs;	/*buffer size e.g., R/2 */
-    int B;		/*current buffer level e.g., R/4 - start from the middle of the buffer */
+    int T;      /*target bit to be used for the current frame.*/
+    int S;      /*number of bits used for encoding the previous frame.*/
+    int Hc; /*header and motion vector bits used in the current frame. It includes all the  information except to the residual information.*/
+    int Hp; /*header and motion vector bits used in the previous frame. It includes all the     information except to the residual information.*/
+    int Ql; /*quantization level used in the previous frame */
+    int Bs; /*buffer size e.g., R/2 */
+    int B;      /*current buffer level e.g., R/4 - start from the middle of the buffer */
     OsclFloat X1;
     OsclFloat X2;
     OsclFloat X11;
-    OsclFloat M;			/*safe margin for the buffer */
-    OsclFloat smTick;	 /*ratio of src versus enc frame rate */
-    double remnant;	 /*remainder frame of src/enc frame for fine frame skipping */
-    int timeIncRes;	/* vol->timeIncrementResolution */
+    OsclFloat M;            /*safe margin for the buffer */
+    OsclFloat smTick;    /*ratio of src versus enc frame rate */
+    double remnant;  /*remainder frame of src/enc frame for fine frame skipping */
+    int timeIncRes; /* vol->timeIncrementResolution */
 
     dataPointArray   *end; /*quantization levels for the past (20) frames */
 
-    int		frameNumber; /* ranging from 0 to 20 nodes*/
-    int		w;
-    int		Nr_Original;
-    int		Nr_Old, Nr_Old2;
-    int		skip_next_frame;
-    int		Qdep;		/* smooth Q adjustment */
-    int		VBR_Enabled;
+    int     frameNumber; /* ranging from 0 to 20 nodes*/
+    int     w;
+    int     Nr_Original;
+    int     Nr_Old, Nr_Old2;
+    int     skip_next_frame;
+    int     Qdep;       /* smooth Q adjustment */
+    int     VBR_Enabled;
 
     int totalFrameNumber; /* total coded frames, for debugging!!*/
 
@@ -297,7 +297,7 @@ typedef struct tagAVCRateControl
     int NumberofHeaderBits;
     int NumberofTextureBits;
     int numMBHeaderBits;
-    int	numMBTextureBits;
+    int numMBTextureBits;
     double *MADofMB;
     int32 bitsPerFrame;
 
@@ -308,10 +308,10 @@ typedef struct tagAVCRateControl
     int     TMN_W;
     int     TMN_TH;
     int     VBV_fullness;
-    int		max_BitVariance_num; /* the number of the maximum bit variance within the given buffer with the unit of 10% of bitrate/framerate*/
-    int		encoded_frames; /* counter for all encoded frames */
-    int		low_bound;				/* bound for underflow detection, usually low_bound=-Bs/2, but could be changed in H.263 mode */
-    int		VBV_fullness_offset;    /* offset of VBV_fullness, usually is zero, but can be changed in H.263 mode*/
+    int     max_BitVariance_num; /* the number of the maximum bit variance within the given buffer with the unit of 10% of bitrate/framerate*/
+    int     encoded_frames; /* counter for all encoded frames */
+    int     low_bound;              /* bound for underflow detection, usually low_bound=-Bs/2, but could be changed in H.263 mode */
+    int     VBV_fullness_offset;    /* offset of VBV_fullness, usually is zero, but can be changed in H.263 mode*/
     /* End BX */
 
 } AVCRateControl;
@@ -370,71 +370,71 @@ typedef struct tagEncObject
 
     AVCCommonObj *common;
 
-    AVCEncBitstream		*bitstream; /* for current NAL */
+    AVCEncBitstream     *bitstream; /* for current NAL */
     uint8   *overrunBuffer;  /* extra output buffer to prevent current skip due to output buffer overrun*/
-    int		oBSize;		/* size of allocated overrun buffer */
+    int     oBSize;     /* size of allocated overrun buffer */
 
     /* rate control */
-    AVCRateControl		*rateCtrl; /* pointer to the rate control structure */
+    AVCRateControl      *rateCtrl; /* pointer to the rate control structure */
 
     /* encoding operation */
-    AVCEnc_State		enc_state; /* encoding state */
+    AVCEnc_State        enc_state; /* encoding state */
 
-    AVCFrameIO			*currInput; /* pointer to the current input frame */
+    AVCFrameIO          *currInput; /* pointer to the current input frame */
 
-    int					currSliceGroup; /* currently encoded slice group id */
+    int                 currSliceGroup; /* currently encoded slice group id */
 
-    int		level[24][16], run[24][16]; /* scratch memory */
+    int     level[24][16], run[24][16]; /* scratch memory */
     int     leveldc[16], rundc[16]; /* for DC component */
-    int		levelcdc[16], runcdc[16]; /* for chroma DC component */
-    int		numcoefcdc[2]; /* number of coefficient for chroma DC */
-    int		numcoefdc;		/* number of coefficients for DC component */
+    int     levelcdc[16], runcdc[16]; /* for chroma DC component */
+    int     numcoefcdc[2]; /* number of coefficient for chroma DC */
+    int     numcoefdc;      /* number of coefficients for DC component */
 
     int     qp_const;
-    int		qp_const_c;
+    int     qp_const_c;
     /********* intra prediction scratch memory **********************/
     uint8   pred_i16[AVCNumI16PredMode][256]; /* save prediction for MB */
     uint8   pred_i4[AVCNumI4PredMode][16];  /* save prediction for blk */
-    uint8	pred_ic[AVCNumIChromaMode][128];  /* for 2 chroma */
+    uint8   pred_ic[AVCNumIChromaMode][128];  /* for 2 chroma */
 
-    int		mostProbableI4Mode[16]; /* in raster scan order */
+    int     mostProbableI4Mode[16]; /* in raster scan order */
     /********* motion compensation related variables ****************/
-    AVCMV	*mot16x16;			/* Saved motion vectors for 16x16 block*/
-    AVCMV(*mot16x8)[2];		/* Saved motion vectors for 16x8 block*/
-    AVCMV(*mot8x16)[2];		/* Saved motion vectors for 8x16 block*/
-    AVCMV(*mot8x8)[4];		/* Saved motion vectors for 8x8 block*/
+    AVCMV   *mot16x16;          /* Saved motion vectors for 16x16 block*/
+    AVCMV(*mot16x8)[2];     /* Saved motion vectors for 16x8 block*/
+    AVCMV(*mot8x16)[2];     /* Saved motion vectors for 8x16 block*/
+    AVCMV(*mot8x8)[4];      /* Saved motion vectors for 8x8 block*/
 
     /********* subpel position **************************************/
     uint32  subpel_pred[SUBPEL_PRED_BLK_SIZE/*<<2*/]; /* all 16 sub-pel positions  */
-    uint8   *hpel_cand[9];		/* pointer to half-pel position */
-    int		best_hpel_pos;			/* best position */
-    uint8   qpel_cand[8][24*16];		/* pointer to quarter-pel position */
-    int		best_qpel_pos;
+    uint8   *hpel_cand[9];      /* pointer to half-pel position */
+    int     best_hpel_pos;          /* best position */
+    uint8   qpel_cand[8][24*16];        /* pointer to quarter-pel position */
+    int     best_qpel_pos;
     uint8   *bilin_base[9][4];    /* pointer to 4 position at top left of bilinear quarter-pel */
 
     /* need for intra refresh rate */
-    uint8   *intraSearch;		/* Intra Array for MBs to be intra searched */
+    uint8   *intraSearch;       /* Intra Array for MBs to be intra searched */
     uint    firstIntraRefreshMBIndx; /* keep track for intra refresh */
 
-    int     i4_sad;				/* temporary for i4 mode SAD */
-    int		*min_cost;			/* Minimum cost for the all MBs */
-    int		lambda_mode;		/* Lagrange parameter for mode selection */
-    int		lambda_motion;		/* Lagrange parameter for MV selection */
+    int     i4_sad;             /* temporary for i4 mode SAD */
+    int     *min_cost;          /* Minimum cost for the all MBs */
+    int     lambda_mode;        /* Lagrange parameter for mode selection */
+    int     lambda_motion;      /* Lagrange parameter for MV selection */
 
-    uint8	*mvbits_array;		/* Table for bits spent in the cost funciton */
-    uint8	*mvbits;			/* An offset to the above array. */
+    uint8   *mvbits_array;      /* Table for bits spent in the cost funciton */
+    uint8   *mvbits;            /* An offset to the above array. */
 
     /* to speedup the SAD calculation */
     void *sad_extra_info;
-    uint8 currYMB[256];		/* interleaved current macroblock in HTFM order */
+    uint8 currYMB[256];     /* interleaved current macroblock in HTFM order */
 
 #ifdef HTFM
-    int nrmlz_th[48];		/* Threshold for fast SAD calculation using HTFM */
+    int nrmlz_th[48];       /* Threshold for fast SAD calculation using HTFM */
     HTFM_Stat htfm_stat;    /* For statistics collection */
 #endif
 
     /* statistics */
-    int	numIntraMB;			/* keep track of number of intra MB */
+    int numIntraMB;         /* keep track of number of intra MB */
 
     /* encoding complexity control */
     uint fullsearch_enable; /* flag to enable full-pel full-search */
@@ -446,17 +446,17 @@ typedef struct tagEncObject
     AVCPicParamSet extPPS; /* for external PPS */
 
     /* time control */
-    uint32	prevFrameNum;	/* previous frame number starting from modTimeRef */
-    uint32	modTimeRef;		/* Reference modTime update every I-Vop*/
+    uint32  prevFrameNum;   /* previous frame number starting from modTimeRef */
+    uint32  modTimeRef;     /* Reference modTime update every I-Vop*/
     uint32  wrapModTime;    /* Offset to modTime Ref, rarely used */
 
-    uint	prevProcFrameNum;  /* previously processed frame number, could be skipped */
-    uint	prevCodedFrameNum;	/* previously encoded frame number */
+    uint    prevProcFrameNum;  /* previously processed frame number, could be skipped */
+    uint    prevCodedFrameNum;  /* previously encoded frame number */
     /* POC related variables */
-    uint32	dispOrdPOCRef;		/* reference POC is displayer order unit. */
+    uint32  dispOrdPOCRef;      /* reference POC is displayer order unit. */
 
     /* Function pointers */
-    AVCEncFuncPtr *functionPointer;	/* store pointers to platform specific functions */
+    AVCEncFuncPtr *functionPointer; /* store pointers to platform specific functions */
 
     /* Application control data */
     AVCHandle *avcHandle;

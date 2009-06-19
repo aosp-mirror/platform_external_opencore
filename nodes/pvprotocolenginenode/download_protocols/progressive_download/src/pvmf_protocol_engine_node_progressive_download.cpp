@@ -25,7 +25,7 @@
 
 
 ////////////////////////////////////////////////////////////////////////////////////
-//////	ProgessiveDownloadContainer implementation
+//////  ProgessiveDownloadContainer implementation
 ////////////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF ProgressiveDownloadContainer::ProgressiveDownloadContainer(PVMFProtocolEngineNode *aNode) :
         DownloadContainer(aNode),
@@ -39,16 +39,16 @@ OSCL_EXPORT_REF bool ProgressiveDownloadContainer::createProtocolObjects()
 {
     if (!ProtocolContainer::createProtocolObjects()) return false;
 
-    iProtocol		  = OSCL_NEW(ProgressiveDownload, ());
-    iNodeOutput		  = OSCL_NEW(pvHttpDownloadOutput, (iNode));
+    iProtocol         = OSCL_NEW(ProgressiveDownload, ());
+    iNodeOutput       = OSCL_NEW(pvHttpDownloadOutput, (iNode));
     iDownloadControl  = OSCL_NEW(progressiveDownloadControl, ());
     iDownloadProgess  = OSCL_NEW(ProgressiveDownloadProgress, ());
-    iEventReport	  = OSCL_NEW(downloadEventReporter, (iNode));
+    iEventReport      = OSCL_NEW(downloadEventReporter, (iNode));
     iCfgFileContainer = OSCL_NEW(PVProgressiveDownloadCfgFileContainer, (iDownloadSource));
-    iUserAgentField	  = OSCL_NEW(UserAgentFieldForProgDownload, ());
-    iDownloadSource	  = OSCL_NEW(PVMFDownloadDataSourceContainer, ());
+    iUserAgentField   = OSCL_NEW(UserAgentFieldForProgDownload, ());
+    iDownloadSource   = OSCL_NEW(PVMFDownloadDataSourceContainer, ());
 
-    if (!iProtocol		|| !iNodeOutput  || !iDownloadControl  ||
+    if (!iProtocol      || !iNodeOutput  || !iDownloadControl  ||
             !iDownloadProgess || !iEventReport || !iCfgFileContainer ||
             !iUserAgentField  || !iDownloadSource) return false;
 
@@ -97,7 +97,7 @@ OSCL_EXPORT_REF bool ProgressiveDownloadContainer::initProtocol_SetConfigInfo()
 
 
 ////////////////////////////////////////////////////////////////////////////////////
-//////	progressiveDownloadControl implementation
+//////  progressiveDownloadControl implementation
 ////////////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF bool progressiveDownloadControl::isDlAlgoPreConditionMet(const uint32 aDownloadRate,
         const uint32 aDurationMsec,
@@ -116,8 +116,8 @@ OSCL_EXPORT_REF bool progressiveDownloadControl::isDlAlgoPreConditionMet(const u
 }
 
 // ret_val: 0,  success,
-//			1,  playback rate is not close to clip bitrate, but the information is all available
-//			-1, related information, e.g. duration=0, size2time conversion is not available, is not available
+//          1,  playback rate is not close to clip bitrate, but the information is all available
+//          -1, related information, e.g. duration=0, size2time conversion is not available, is not available
 OSCL_EXPORT_REF int32 progressiveDownloadControl::isPlaybackRateCloseToClipBitrate(const uint32 aDurationMsec,
         const uint32 aCurrDownloadSize,
         const uint32 aFileSize)
@@ -130,8 +130,8 @@ OSCL_EXPORT_REF int32 progressiveDownloadControl::isPlaybackRateCloseToClipBitra
     {
 
         if (aNPTInMS == 0) return 1;
-        if (iClipByterate == 0) iClipByterate = divisionInMilliSec(aFileSize, aDurationMsec);	// aFileSize*1000/aDurationMsec
-        uint32 aInstantByterate = divisionInMilliSec(aCurrDownloadSize, aNPTInMS);			// aCurrDownloadSize*1000/aNPTInMS
+        if (iClipByterate == 0) iClipByterate = divisionInMilliSec(aFileSize, aDurationMsec);   // aFileSize*1000/aDurationMsec
+        uint32 aInstantByterate = divisionInMilliSec(aCurrDownloadSize, aNPTInMS);          // aCurrDownloadSize*1000/aNPTInMS
         LOGINFODATAPATH((0, "progressiveDownloadControl::isPlaybackRateCloseToClipBitrate, check Instant rate=%d(currDLSize=%d, NPTTimeMs=%d), clip bitrate=%d",
                          (aInstantByterate << 3), aCurrDownloadSize, aNPTInMS, (iClipByterate << 3)));
         uint32 diffByterate = (aInstantByterate >= iClipByterate ? aInstantByterate - iClipByterate : iClipByterate - aInstantByterate);
@@ -282,7 +282,7 @@ OSCL_EXPORT_REF bool progressiveDownloadControl::updateDownloadClock()
 
 
 ////////////////////////////////////////////////////////////////////////////////////
-//////	ProgressiveDownloadProgress implementation
+//////  ProgressiveDownloadProgress implementation
 ////////////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF void ProgressiveDownloadProgress::setSupportObject(OsclAny *aDLSupportObject, DownloadControlSupportObjectType aType)
 {
@@ -394,7 +394,7 @@ OSCL_EXPORT_REF void ProgressiveDownloadProgress::reset()
 }
 
 ////////////////////////////////////////////////////////////////////////////////////
-//////	UserAgentField implementation
+//////  UserAgentField implementation
 ////////////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF UserAgentFieldForProgDownload::UserAgentFieldForProgDownload(OSCL_wString &aUserAgent, const bool isOverwritable) :
         UserAgentField(aUserAgent, isOverwritable)
@@ -416,7 +416,7 @@ OSCL_EXPORT_REF void UserAgentFieldForProgDownload::getDefaultUserAgent(OSCL_Str
 
 
 ////////////////////////////////////////////////////////////////////////////////////
-//////	PVProgressiveDownloadCfgFileContainer implementation
+//////  PVProgressiveDownloadCfgFileContainer implementation
 ////////////////////////////////////////////////////////////////////////////////////
 
 OSCL_EXPORT_REF PVMFStatus PVProgressiveDownloadCfgFileContainer::configCfgFile(OSCL_String &aUrl)
@@ -432,7 +432,7 @@ OSCL_EXPORT_REF PVMFStatus PVProgressiveDownloadCfgFileContainer::configCfgFile(
     iCfgFileObj->SetUserAgent(user_agent);
 
     // user-id and password
-    if (iDataSource->iUserID.get_size() > 0)	  iCfgFileObj->SetUserId(iDataSource->iUserID);
+    if (iDataSource->iUserID.get_size() > 0)      iCfgFileObj->SetUserId(iDataSource->iUserID);
     if (iDataSource->iUserPasswd.get_size() > 0) iCfgFileObj->SetUserAuth(iDataSource->iUserPasswd);
 
     iCfgFileObj->SetDownloadType(false);//not fasttrack

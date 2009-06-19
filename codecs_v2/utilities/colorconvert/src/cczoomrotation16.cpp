@@ -26,15 +26,15 @@
 
 #define OFFSET_5_0  2
 #define OFFSET_6_0  (1+1024)
-#define	OFFSET_5_1  6
-#define	OFFSET_6_1  (3+1024)
+#define OFFSET_5_1  6
+#define OFFSET_6_1  (3+1024)
 
 #else  //for the rounding case (no dither)
 
 #define OFFSET_5_0  0 // Set to zero for performance4
 #define OFFSET_6_0  (0+1024) //(2+1024)
-#define	OFFSET_5_1  0 //4
-#define	OFFSET_6_1  (0+1024) //(2+1024)
+#define OFFSET_5_1  0 //4
+#define OFFSET_6_1  (0+1024) //(2+1024)
 
 #endif
 
@@ -155,21 +155,21 @@ int32  ColorConvert16::SetYuvFullRange(bool range)
 }
 
 
-int32 ColorConvert16::SetMode(int32 nMode)	//nMode : 0 Off, 1 On
+int32 ColorConvert16::SetMode(int32 nMode)  //nMode : 0 Off, 1 On
 {
     OSCL_ASSERT(_mInitialized == true);
 
     if (nMode == 0)
     {
-        //		mPtrYUV2RGB = cc16Rotate;
-        //		_mState		= 1;
-        mPtrYUV2RGB	=	&ColorConvert16::get_frame16;
-        _mState		=	0;
+        //      mPtrYUV2RGB = cc16Rotate;
+        //      _mState     = 1;
+        mPtrYUV2RGB =   &ColorConvert16::get_frame16;
+        _mState     =   0;
         _mDisp.src_pitch = _mSrc_pitch  ;
         _mDisp.dst_pitch = _mDst_pitch  ;
-        _mDisp.src_width = _mSrc_width	;
+        _mDisp.src_width = _mSrc_width  ;
         _mDisp.src_height = _mSrc_height ;
-        _mDisp.dst_width = _mSrc_width	;
+        _mDisp.dst_width = _mSrc_width  ;
         _mDisp.dst_height = _mSrc_height ;
     }
     else
@@ -182,7 +182,7 @@ int32 ColorConvert16::SetMode(int32 nMode)	//nMode : 0 Off, 1 On
             }
             else /* zoom only */
             {
-                mPtrYUV2RGB	=	&ColorConvert16::cc16ZoomIn;
+                mPtrYUV2RGB =   &ColorConvert16::cc16ZoomIn;
             }
         }
         else
@@ -193,15 +193,15 @@ int32 ColorConvert16::SetMode(int32 nMode)	//nMode : 0 Off, 1 On
             }
             else /* no zoom, no rotate, SetMode(1) = SetMode(0) */
             {
-                mPtrYUV2RGB	=	&ColorConvert16::get_frame16;
+                mPtrYUV2RGB =   &ColorConvert16::get_frame16;
             }
         }
-        _mState		=	nMode;
+        _mState     =   nMode;
         _mDisp.src_pitch = _mSrc_pitch  ;
-        _mDisp.dst_pitch = _mDst_pitch	;
-        _mDisp.src_width = _mSrc_width	;
+        _mDisp.dst_pitch = _mDst_pitch  ;
+        _mDisp.src_width = _mSrc_width  ;
         _mDisp.src_height = _mSrc_height ;
-        _mDisp.dst_width = _mDst_width	;
+        _mDisp.dst_width = _mDst_width  ;
         _mDisp.dst_height = _mDst_height ;
     }
 
@@ -213,7 +213,7 @@ int32 ColorConvert16::GetOutputBufferSize(void)
 {
     OSCL_ASSERT(_mInitialized == true);
 
-    return	_mState ? (_mDst_height*_mDst_pitch*2) : (_mSrc_width*_mSrc_height*2);
+    return  _mState ? (_mDst_height*_mDst_pitch*2) : (_mSrc_width*_mSrc_height*2);
 }
 
 
@@ -251,9 +251,9 @@ int32 ColorConvert16::Convert(uint8 *yuvBuf, uint8 *rgbBuf)
         return 0;
     }
 
-    TmpYuvBuf[0]	=	yuvBuf;
-    TmpYuvBuf[1]	=	yuvBuf + (_mSrc_pitch) * (_mSrc_mheight);
-    TmpYuvBuf[2]	=	TmpYuvBuf[1] + (_mSrc_pitch * _mSrc_mheight) / 4;
+    TmpYuvBuf[0]    =   yuvBuf;
+    TmpYuvBuf[1]    =   yuvBuf + (_mSrc_pitch) * (_mSrc_mheight);
+    TmpYuvBuf[2]    =   TmpYuvBuf[1] + (_mSrc_pitch * _mSrc_mheight) / 4;
 
     (*this.*mPtrYUV2RGB)(TmpYuvBuf, rgbBuf, &_mDisp, (uint8 *)mCoefTbl);
 
@@ -277,7 +277,7 @@ int32 ColorConvert16::get_frame16(uint8 **src, uint8 *dst, DisplayProperties *di
     disp_prop[6] = (_mRotation > 0 ? 1 : 0);
     disp_prop[7] = _mIsFlip;
 
-    if (disp_prop[6] ^ disp_prop[7])	/* flip and rotate 180*/
+    if (disp_prop[6] ^ disp_prop[7])    /* flip and rotate 180*/
     {
         return cc16Reverse(src, dst, disp_prop, coff_tbl);
     }
@@ -291,26 +291,26 @@ int32 cc16(uint8 **src, uint8 *dst, int32 *disp, uint8 *coff_tbl)
 {
 
     uint8 *pCb, *pCr;
-    uint16	*pY;
-    uint16	*pDst;
-    int32		src_pitch, dst_pitch, src_width;
-    int32		Y, Cb, Cr, Cg;
-    int32		deltaY, deltaDst, deltaCbCr;
-    int32		row, col;
-    int32		tmp0, tmp1, tmp2;
-    uint32	rgb;
+    uint16  *pY;
+    uint16  *pDst;
+    int32       src_pitch, dst_pitch, src_width;
+    int32       Y, Cb, Cr, Cg;
+    int32       deltaY, deltaDst, deltaCbCr;
+    int32       row, col;
+    int32       tmp0, tmp1, tmp2;
+    uint32  rgb;
     uint8 *clip = coff_tbl + 400;
     int32  cc1 = (*((int32*)(clip - 400)));
     int32  cc3 = (*((int32*)(clip - 396)));
     int32  cc2 = (*((int32*)(clip - 392)));
     int32  cc4 = (*((int32*)(clip - 388)));
 
-    src_pitch	=	disp[0];
-    dst_pitch	=	disp[1];
-    src_width	=	disp[2];
+    src_pitch   =   disp[0];
+    dst_pitch   =   disp[1];
+    src_width   =   disp[2];
 
     if (disp[6]) /* rotate 180 and flip */
-    {	/* move the starting point to the bottom-left corner of the picture */
+    {   /* move the starting point to the bottom-left corner of the picture */
         deltaY = src_pitch * (disp[3] - 1);
         pY = (uint16*)(src[0] + deltaY);
         deltaY = (src_pitch >> 1) * ((disp[3] >> 1) - 1);
@@ -322,16 +322,16 @@ int32 cc16(uint8 **src, uint8 *dst, int32 *disp, uint8 *coff_tbl)
     }
     else
     {
-        deltaY		=	(src_pitch << 1) - src_width;
-        deltaCbCr	=	(src_pitch - src_width) >> 1;
+        deltaY      = (src_pitch << 1) - src_width;
+        deltaCbCr   = (src_pitch - src_width) >> 1;
         pY = (uint16 *) src[0];
         src_pitch >>= 1;
         pCb = src[1];
         pCr = src[2];
     }
 
-    deltaDst	=	(dst_pitch << 1) - src_width;
-    pDst =	(uint16 *)dst;
+    deltaDst    = (dst_pitch << 1) - src_width;
+    pDst = (uint16 *)dst;
 
     for (row = disp[3]; row > 0; row -= 2)
     {
@@ -345,91 +345,91 @@ int32 cc16(uint8 **src, uint8 *dst, int32 *disp, uint8 *coff_tbl)
 
             Cb -= 128;
             Cr -= 128;
-            Cg	=	Cr * cc1;
-            Cr	*= cc3;
+            Cg  =   Cr * cc1;
+            Cr  *= cc3;
 
-            Cg	+=	Cb * cc2;
-            Cb	*=  cc4;
+            Cg  +=  Cb * cc2;
+            Cb  *=  cc4;
 
             tmp0    = (Y & 0xFF);   //Low endian    left pixel
-            tmp0	+= OFFSET_5_0;
+            tmp0    += OFFSET_5_0;
 
-            tmp1	=	tmp0 - (Cg >> 16);
-            tmp2	=	tmp0 + (Cb >> 16);
-            tmp0	=	tmp0 + (Cr >> 16);
+            tmp1    =   tmp0 - (Cg >> 16);
+            tmp2    =   tmp0 + (Cb >> 16);
+            tmp0    =   tmp0 + (Cr >> 16);
 
-            tmp0	=	clip[tmp0];
-            tmp1	=	clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
-            tmp2	=	clip[tmp2];
+            tmp0    =   clip[tmp0];
+            tmp1    =   clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
+            tmp2    =   clip[tmp2];
             //RGB_565
 
-            rgb		=	tmp1 | (tmp0 << 6);
-            rgb		=	tmp2 | (rgb << 5);
+            rgb     =   tmp1 | (tmp0 << 6);
+            rgb     =   tmp2 | (rgb << 5);
 
             Y   = (Y >> 8) & 0xFF;
 
-            Y	+= OFFSET_5_1;
-            tmp1	=	(Y) - (Cg >> 16);
-            tmp2	=	(Y) + (Cb >> 16);
-            tmp0	=	(Y) + (Cr >> 16);
+            Y   += OFFSET_5_1;
+            tmp1    = (Y) - (Cg >> 16);
+            tmp2    = (Y) + (Cb >> 16);
+            tmp0    = (Y) + (Cr >> 16);
 
-            tmp0	=	clip[tmp0];
-            tmp1	=	clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
-            tmp2	=	clip[tmp2];
+            tmp0    =   clip[tmp0];
+            tmp1    =   clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
+            tmp2    =   clip[tmp2];
 
             //RGB_565
 
-            tmp0	=	tmp1 | (tmp0 << 6);
-            tmp0	=	tmp2 | (tmp0 << 5);
+            tmp0    =   tmp1 | (tmp0 << 6);
+            tmp0    =   tmp2 | (tmp0 << 5);
 
-            rgb		|=	(tmp0 << 16);
+            rgb     |= (tmp0 << 16);
 
-            *((uint32*)(pDst + dst_pitch))	= rgb;
+            *((uint32*)(pDst + dst_pitch))  = rgb;
 
             //load the top two pixels
             Y = *pY++;
 
             tmp0    = (Y & 0xFF);   //Low endian    left pixel
-            tmp0	+= OFFSET_5_1;
+            tmp0    += OFFSET_5_1;
 
-            tmp1	=	tmp0 - (Cg >> 16);
-            tmp2	=	tmp0 + (Cb >> 16);
-            tmp0	=	tmp0 + (Cr >> 16);
+            tmp1    =   tmp0 - (Cg >> 16);
+            tmp2    =   tmp0 + (Cb >> 16);
+            tmp0    =   tmp0 + (Cr >> 16);
 
-            tmp0	=	clip[tmp0];
-            tmp1	=	clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
-            tmp2	=	clip[tmp2];
+            tmp0    =   clip[tmp0];
+            tmp1    =   clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
+            tmp2    =   clip[tmp2];
             //RGB_565
 
-            rgb		=	tmp1 | (tmp0 << 6);
-            rgb		=	tmp2 | (rgb << 5);
+            rgb     =   tmp1 | (tmp0 << 6);
+            rgb     =   tmp2 | (rgb << 5);
 
             Y   = (Y >> 8) & 0xFF;
 
-            Y	+= OFFSET_5_0;
-            tmp1	=	(Y) - (Cg >> 16);
-            tmp2	=	(Y) + (Cb >> 16);
-            tmp0	=	(Y) + (Cr >> 16);
+            Y   += OFFSET_5_0;
+            tmp1    = (Y) - (Cg >> 16);
+            tmp2    = (Y) + (Cb >> 16);
+            tmp0    = (Y) + (Cr >> 16);
 
-            tmp0	=	clip[tmp0];
-            tmp1	=	clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
-            tmp2	=	clip[tmp2];
+            tmp0    =   clip[tmp0];
+            tmp1    =   clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
+            tmp2    =   clip[tmp2];
 
             //RGB_565
 
-            tmp0	=	tmp1 | (tmp0 << 6);
-            tmp0	=	tmp2 | (tmp0 << 5);
+            tmp0    =   tmp1 | (tmp0 << 6);
+            tmp0    =   tmp2 | (tmp0 << 5);
 
-            rgb		|=	(tmp0 << 16);
-            *((uint32 *)pDst)	= rgb;
+            rgb     |= (tmp0 << 16);
+            *((uint32 *)pDst)   = rgb;
             pDst += 2;
 
         }//end of COL
 
-        pY	+=	(deltaY >> 1);
-        pCb	+=	deltaCbCr;
-        pCr	+=	deltaCbCr;
-        pDst +=	(deltaDst);	//coz pDst defined as UINT *
+        pY  += (deltaY >> 1);
+        pCb +=  deltaCbCr;
+        pCr +=  deltaCbCr;
+        pDst += (deltaDst); //coz pDst defined as UINT *
     }
     return 1;
 }
@@ -437,29 +437,29 @@ int32 cc16(uint8 **src, uint8 *dst, int32 *disp, uint8 *coff_tbl)
 int32 cc16Reverse(uint8 **src, uint8 *dst, int32 *disp, uint8 *coff_tbl)
 {
     uint8 *pCb, *pCr;
-    uint16	*pY;
-    uint16	*pDst;
-    int32		src_pitch, dst_pitch, src_width;
-    int32		Y, Cb, Cr, Cg;
-    int32		deltaY, deltaDst, deltaCbCr;
-    int		row, col;
-    int32		tmp0, tmp1, tmp2;
-    uint32	rgb;
+    uint16  *pY;
+    uint16  *pDst;
+    int32       src_pitch, dst_pitch, src_width;
+    int32       Y, Cb, Cr, Cg;
+    int32       deltaY, deltaDst, deltaCbCr;
+    int     row, col;
+    int32       tmp0, tmp1, tmp2;
+    uint32  rgb;
     uint8 *clip = coff_tbl + 400;
-    //	int32		mRotation;
-    int	nextrow, mIsFlip;
+    //  int32       mRotation;
+    int nextrow, mIsFlip;
     int32  cc1 = (*((int32*)(clip - 400)));
     int32  cc3 = (*((int32*)(clip - 396)));
     int32  cc2 = (*((int32*)(clip - 392)));
     int32  cc4 = (*((int32*)(clip - 388)));
 
 
-    src_pitch	=	disp[0];
-    dst_pitch	=	disp[1];
-    src_width	=	disp[2];
-    mIsFlip		=   disp[7];
+    src_pitch   =   disp[0];
+    dst_pitch   =   disp[1];
+    src_width   =   disp[2];
+    mIsFlip     =   disp[7];
 
-    deltaDst	=	(dst_pitch << 1) - src_width;
+    deltaDst    = (dst_pitch << 1) - src_width;
 
     if (disp[6]) /* rotation, only */
     {  /* move the starting point to the bottom-right corner of the picture */
@@ -469,10 +469,10 @@ int32 cc16Reverse(uint8 **src, uint8 *dst, int32 *disp, uint8 *coff_tbl)
         pCb = src[1] + nextrow + (src_width >> 1) - 1;
         pCr = src[2] + nextrow + (src_width >> 1) - 1;
         nextrow = -(src_pitch >> 1);
-        deltaY		=	src_width - (src_pitch << 1);
-        deltaCbCr	=	(src_width - src_pitch) >> 1;
+        deltaY      =   src_width - (src_pitch << 1);
+        deltaCbCr   = (src_width - src_pitch) >> 1;
     }
-    else	/* flip only */
+    else    /* flip only */
     {   /* move the starting point to the top-right corner of the picture */
         pY = (uint16 *)(src[0] + src_width - 2);
         pCb = src[1] + (src_width >> 1) - 1;
@@ -482,7 +482,7 @@ int32 cc16Reverse(uint8 **src, uint8 *dst, int32 *disp, uint8 *coff_tbl)
         deltaCbCr = (src_width + src_pitch) >> 1;
     }
 
-    pDst =	(uint16 *)dst;
+    pDst = (uint16 *)dst;
 
     for (row = disp[3]; row > 0; row -= 2)
     {
@@ -493,98 +493,98 @@ int32 cc16Reverse(uint8 **src, uint8 *dst, int32 *disp, uint8 *coff_tbl)
             Cb = *pCb--;
             Cr = *pCr--;
             //load the bottom two pixels
-            //Y	=	*(((uint16 *)pY)+src_pitch);
-            //Y	=	*((uint16 *)(((uint16 *)pY) + src_pitch));
+            //Y =   *(((uint16 *)pY)+src_pitch);
+            //Y =   *((uint16 *)(((uint16 *)pY) + src_pitch));
             Y = pY[nextrow];
 
             Cb -= 128;
             Cr -= 128;
-            //Cg	=	Cr*JCoeff[0];//*((int32*)(clip - 40))
-            Cg	=	Cr * cc1;
-            Cr	*= cc3;
+            //Cg    =   Cr*JCoeff[0];//*((int32*)(clip - 40))
+            Cg  =   Cr * cc1;
+            Cr  *= cc3;
 
-            Cg	+=	Cb * cc2;
-            Cb	*=  cc4;
+            Cg  +=  Cb * cc2;
+            Cb  *=  cc4;
 
             tmp0    = (Y & 0xFF);   //Low endian    left pixel
-            tmp0	+= OFFSET_5_0;
+            tmp0    += OFFSET_5_0;
 
-            tmp1	=	tmp0 - (Cg >> 16);
-            tmp2	=	tmp0 + (Cb >> 16);
-            tmp0	=	tmp0 + (Cr >> 16);
+            tmp1    =   tmp0 - (Cg >> 16);
+            tmp2    =   tmp0 + (Cb >> 16);
+            tmp0    =   tmp0 + (Cr >> 16);
 
-            tmp0	=	clip[tmp0];
-            tmp1	=	clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
-            tmp2	=	clip[tmp2];
+            tmp0    =   clip[tmp0];
+            tmp1    =   clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
+            tmp2    =   clip[tmp2];
             //RGB_565
 
-            rgb		=	tmp1 | (tmp0 << 6);
-            rgb		=	tmp2 | (rgb << 5);
+            rgb     =   tmp1 | (tmp0 << 6);
+            rgb     =   tmp2 | (rgb << 5);
 
             Y   = (Y >> 8) & 0xFF;
 
-            Y	+= OFFSET_5_1;
-            tmp1	=	(Y) - (Cg >> 16);
-            tmp2	=	(Y) + (Cb >> 16);
-            tmp0	=	(Y) + (Cr >> 16);
+            Y   += OFFSET_5_1;
+            tmp1    = (Y) - (Cg >> 16);
+            tmp2    = (Y) + (Cb >> 16);
+            tmp0    = (Y) + (Cr >> 16);
 
-            tmp0	=	clip[tmp0];
-            tmp1	=	clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
-            tmp2	=	clip[tmp2];
+            tmp0    =   clip[tmp0];
+            tmp1    =   clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
+            tmp2    =   clip[tmp2];
             //RGB_565
 
-            tmp0	=	tmp1 | (tmp0 << 6);
-            tmp0	=	tmp2 | (tmp0 << 5);
+            tmp0    =   tmp1 | (tmp0 << 6);
+            tmp0    =   tmp2 | (tmp0 << 5);
 
             rgb = (rgb << 16) | tmp0;
 
-            *((uint32*)(pDst + dst_pitch))	= rgb;
+            *((uint32*)(pDst + dst_pitch))  = rgb;
 
             //load the top two pixels
-            //Y	=	*((uint16 *)pY)++;
+            //Y =   *((uint16 *)pY)++;
             Y = *pY--;
 
             tmp0    = (Y & 0xFF);   //Low endian    left pixel
-            tmp0	+= OFFSET_5_1;
+            tmp0    += OFFSET_5_1;
 
-            tmp1	=	tmp0 - (Cg >> 16);
-            tmp2	=	tmp0 + (Cb >> 16);
-            tmp0	=	tmp0 + (Cr >> 16);
+            tmp1    =   tmp0 - (Cg >> 16);
+            tmp2    =   tmp0 + (Cb >> 16);
+            tmp0    =   tmp0 + (Cr >> 16);
 
-            tmp0	=	clip[tmp0];
-            tmp1	=	clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
-            tmp2	=	clip[tmp2];
+            tmp0    =   clip[tmp0];
+            tmp1    =   clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
+            tmp2    =   clip[tmp2];
             //RGB_565
 
-            rgb		=	tmp1 | (tmp0 << 6);
-            rgb		=	tmp2 | (rgb << 5);
+            rgb     =   tmp1 | (tmp0 << 6);
+            rgb     =   tmp2 | (rgb << 5);
 
             Y   = (Y >> 8) & 0xFF;
 
-            Y	+= OFFSET_5_0;
-            tmp1	=	(Y) - (Cg >> 16);
-            tmp2	=	(Y) + (Cb >> 16);
-            tmp0	=	(Y) + (Cr >> 16);
+            Y   += OFFSET_5_0;
+            tmp1    = (Y) - (Cg >> 16);
+            tmp2    = (Y) + (Cb >> 16);
+            tmp0    = (Y) + (Cr >> 16);
 
-            tmp0	=	clip[tmp0];
-            tmp1	=	clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
-            tmp2	=	clip[tmp2];
+            tmp0    =   clip[tmp0];
+            tmp1    =   clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
+            tmp2    =   clip[tmp2];
 
-            tmp0	=	tmp1 | (tmp0 << 6);
-            tmp0	=	tmp2 | (tmp0 << 5);
+            tmp0    =   tmp1 | (tmp0 << 6);
+            tmp0    =   tmp2 | (tmp0 << 5);
 
-            rgb	 = (rgb << 16) | tmp0;
+            rgb  = (rgb << 16) | tmp0;
 
-            //			*( (unsigned int32 *)pDst)++	= rgb;
-            *((uint32 *)pDst)	= rgb;
+            //          *( (unsigned int32 *)pDst)++    = rgb;
+            *((uint32 *)pDst)   = rgb;
             pDst += 2;
 
         }//end of COL
 
-        pY	+=	(deltaY >> 1);
-        pCb	+=	deltaCbCr;
-        pCr	+=	deltaCbCr;
-        pDst +=	(deltaDst);	//coz pDst defined as UINT *
+        pY  += (deltaY >> 1);
+        pCb +=  deltaCbCr;
+        pCr +=  deltaCbCr;
+        pDst += (deltaDst); //coz pDst defined as UINT *
     }
     return 1;
 }
@@ -600,9 +600,9 @@ int32 ColorConvert16::cc16Rotate(uint8 **src, uint8 *dst, DisplayProperties *dis
     int32 src_pitch, dst_pitch, src_width, src_height;
     int32 deltaY, deltaCbCr, deltaDst;
 
-    src_pitch	=	disp->src_pitch;
-    dst_pitch	=   disp->dst_pitch;
-    src_width	=	disp->src_width;
+    src_pitch   =   disp->src_pitch;
+    dst_pitch   =   disp->dst_pitch;
+    src_width   =   disp->src_width;
     src_height  =   disp->src_height;
 
     deltaY = (src_pitch << 1) - src_width;
@@ -611,9 +611,9 @@ int32 ColorConvert16::cc16Rotate(uint8 **src, uint8 *dst, DisplayProperties *dis
     if (_mRotation == CCROTATE_CLKWISE)
     {
         if (!_mIsFlip)
-        {	// go from upper-right down and left
+        {   // go from upper-right down and left
             dst += ((src_height - 1) << 1);
-            deltaDst  =	 -(dst_pitch * src_width) - 2;
+            deltaDst  =  -(dst_pitch * src_width) - 2;
 
             return cc16rotate_N(src, dst, src_pitch, dst_pitch, src_width, src_height, deltaY,
                                 deltaCbCr, deltaDst, COFF_TBL);
@@ -629,7 +629,7 @@ int32 ColorConvert16::cc16Rotate(uint8 **src, uint8 *dst, DisplayProperties *dis
     else  // rotate counterclockwise
     {
         if (!_mIsFlip)
-        {	// go from bottom-left to up right
+        {   // go from bottom-left to up right
             dst += (((src_width - 1) * dst_pitch) << 1);
             deltaDst = (dst_pitch * src_width + 2);
             dst_pitch = -dst_pitch;
@@ -638,7 +638,7 @@ int32 ColorConvert16::cc16Rotate(uint8 **src, uint8 *dst, DisplayProperties *dis
                                 deltaCbCr, deltaDst, COFF_TBL);
         }
         else
-        {	// go from bottom right to top and left
+        {   // go from bottom right to top and left
             dst += (((src_height - 1) << 1) + (((src_width - 1) * dst_pitch) << 1));
             deltaDst = (dst_pitch * src_width - 2);
             dst_pitch = -dst_pitch;
@@ -655,12 +655,12 @@ int32 cc16rotate_P(uint8 **src, uint8 *dst, int32 src_pitch, int32 dst_pitch, in
 {
 #if CCROTATE
     uint8 *pCb, *pCr;
-    uint16	*pY;
-    uint16	*pDst;
-    int32		Y, Cb, Cr, Cg;
-    int32		row, col;
-    int32		tmp0, tmp1, tmp2;
-    uint32	rgb;
+    uint16  *pY;
+    uint16  *pDst;
+    int32       Y, Cb, Cr, Cg;
+    int32       row, col;
+    int32       tmp0, tmp1, tmp2;
+    uint32  rgb;
     uint8 *clip = coeff_tbl + 400;
     int32  cc1 = (*((int32*)(clip - 400)));
     int32  cc3 = (*((int32*)(clip - 396)));
@@ -672,7 +672,7 @@ int32 cc16rotate_P(uint8 **src, uint8 *dst, int32 src_pitch, int32 dst_pitch, in
     pCb = src[1];
     pCr = src[2];
 
-    pDst =	(uint16 *)dst;
+    pDst = (uint16 *)dst;
 
     for (row = src_height; row > 0; row -= 2)
     {
@@ -687,87 +687,87 @@ int32 cc16rotate_P(uint8 **src, uint8 *dst, int32 src_pitch, int32 dst_pitch, in
 
             Cb -= 128;
             Cr -= 128;
-            Cg	=	Cr * cc1;
-            Cr	*= cc3;
+            Cg  =   Cr * cc1;
+            Cr  *= cc3;
 
-            Cg	+=	Cb * cc2;
-            Cb	*=  cc4;
+            Cg  +=  Cb * cc2;
+            Cb  *=  cc4;
 
             tmp0    = (Y & 0xFF);   //Low endian    left pixel
-            tmp0	+= OFFSET_5_0;
+            tmp0    += OFFSET_5_0;
 
-            tmp1	=	tmp0 - (Cg >> 16);
-            tmp2	=	tmp0 + (Cb >> 16);
-            tmp0	=	tmp0 + (Cr >> 16);
+            tmp1    =   tmp0 - (Cg >> 16);
+            tmp2    =   tmp0 + (Cb >> 16);
+            tmp0    =   tmp0 + (Cr >> 16);
 
-            tmp0	=	clip[tmp0];
-            tmp1	=	clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
-            tmp2	=	clip[tmp2];
+            tmp0    =   clip[tmp0];
+            tmp1    =   clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
+            tmp2    =   clip[tmp2];
             //RGB_565
 
-            rgb		=	tmp1 | (tmp0 << 6);
-            rgb		=	tmp2 | (rgb << 5);
+            rgb     =   tmp1 | (tmp0 << 6);
+            rgb     =   tmp2 | (rgb << 5);
 
             *(pDst += 1) = rgb;
 
             Y   = (Y >> 8);
-            Y	+= OFFSET_5_1;
+            Y   += OFFSET_5_1;
 
-            tmp1	=	(Y) - (Cg >> 16);
-            tmp2	=	(Y) + (Cb >> 16);
-            tmp0	=	(Y) + (Cr >> 16);
+            tmp1    = (Y) - (Cg >> 16);
+            tmp2    = (Y) + (Cb >> 16);
+            tmp0    = (Y) + (Cr >> 16);
 
-            tmp0	=	clip[tmp0];
-            tmp1	=	clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
-            tmp2	=	clip[tmp2];
+            tmp0    =   clip[tmp0];
+            tmp1    =   clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
+            tmp2    =   clip[tmp2];
             //RGB_565
 
-            tmp0	=	tmp1 | (tmp0 << 6);
-            tmp0	=	tmp2 | (tmp0 << 5);
+            tmp0    =   tmp1 | (tmp0 << 6);
+            tmp0    =   tmp2 | (tmp0 << 5);
 
-            *(pDst += dst_pitch)	= tmp0;
+            *(pDst += dst_pitch)    = tmp0;
 
             //load the top two pixels
             Y = *pY++;
 
-            tmp0	= (Y >> 8); //Low endian	right pixel
-            tmp0	+= OFFSET_5_0;
+            tmp0    = (Y >> 8); //Low endian    right pixel
+            tmp0    += OFFSET_5_0;
 
-            tmp1	=	tmp0 - (Cg >> 16);
-            tmp2	=	tmp0 + (Cb >> 16);
-            tmp0	=	tmp0 + (Cr >> 16);
+            tmp1    =   tmp0 - (Cg >> 16);
+            tmp2    =   tmp0 + (Cb >> 16);
+            tmp0    =   tmp0 + (Cr >> 16);
 
-            tmp0	=	clip[tmp0];
-            tmp1	=	clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
-            tmp2	=	clip[tmp2];
+            tmp0    =   clip[tmp0];
+            tmp1    =   clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
+            tmp2    =   clip[tmp2];
 
-            rgb		=	tmp1 | (tmp0 << 6);
-            rgb		=	tmp2 | (rgb << 5);
+            rgb     =   tmp1 | (tmp0 << 6);
+            rgb     =   tmp2 | (rgb << 5);
             *(pDst -= 1)   =   rgb;
 
             tmp0   = Y & 0xFF;
-            tmp0	+= OFFSET_5_1;
+            tmp0    += OFFSET_5_1;
 
-            tmp1	=	(tmp0) - (Cg >> 16);
-            tmp2	=	(tmp0) + (Cb >> 16);
-            tmp0	=	(tmp0) + (Cr >> 16);
+            tmp1    = (tmp0) - (Cg >> 16);
+            tmp2    = (tmp0) + (Cb >> 16);
+            tmp0    = (tmp0) + (Cr >> 16);
 
-            tmp0	=	clip[tmp0];
-            tmp1	=	clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
-            tmp2	=	clip[tmp2];
+            tmp0    =   clip[tmp0];
+            tmp1    =   clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
+            tmp2    =   clip[tmp2];
 
-            tmp0	=	tmp1 | (tmp0 << 6);
-            tmp0	=	tmp2 | (tmp0 << 5);
+            tmp0    =   tmp1 | (tmp0 << 6);
+            tmp0    =   tmp2 | (tmp0 << 5);
 
             pDst[-dst_pitch] = tmp0;
             pDst += dst_pitch;
 
         }//end of COL
 
-        pY	+=	(deltaY >> 1);
-        pCb	+=	deltaCbCr;
-        pCr	+=	deltaCbCr;
-        pDst +=	(deltaDst);	//coz pDst defined as UINT *
+        pY  += (deltaY >> 1);
+        pCb +=  deltaCbCr;
+        pCr +=  deltaCbCr;
+        pDst += (deltaDst); //coz pDst defined as UINT *
     }
     return 1;
 #else
@@ -791,12 +791,12 @@ int32 cc16rotate_N(uint8 **src, uint8 *dst, int32 src_pitch, int32 dst_pitch, in
 {
 #if CCROTATE
     uint8 *pCb, *pCr;
-    uint16	*pY;
-    uint16	*pDst;
-    int32		Y, Cb, Cr, Cg;
-    int32		row, col;
-    int32		tmp0, tmp1, tmp2;
-    uint32	rgb;
+    uint16  *pY;
+    uint16  *pDst;
+    int32       Y, Cb, Cr, Cg;
+    int32       row, col;
+    int32       tmp0, tmp1, tmp2;
+    uint32  rgb;
     uint8 *clip = coeff_tbl + 400;
     int32  cc1 = (*((int32*)(clip - 400)));
     int32  cc3 = (*((int32*)(clip - 396)));
@@ -808,7 +808,7 @@ int32 cc16rotate_N(uint8 **src, uint8 *dst, int32 src_pitch, int32 dst_pitch, in
     pCb = src[1];
     pCr = src[2];
 
-    pDst =	(uint16 *)dst;
+    pDst = (uint16 *)dst;
 
     for (row = src_height; row > 0; row -= 2)
     {
@@ -823,87 +823,87 @@ int32 cc16rotate_N(uint8 **src, uint8 *dst, int32 src_pitch, int32 dst_pitch, in
 
             Cb -= 128;
             Cr -= 128;
-            Cg	=	Cr * cc1;
-            Cr	*= cc3;
+            Cg  =   Cr * cc1;
+            Cr  *= cc3;
 
-            Cg	+=	Cb * cc2;
-            Cb	*=  cc4;
+            Cg  +=  Cb * cc2;
+            Cb  *=  cc4;
 
             tmp0    = (Y & 0xFF);   //Low endian    left pixel
-            tmp0	+= OFFSET_5_0;
+            tmp0    += OFFSET_5_0;
 
-            tmp1	=	tmp0 - (Cg >> 16);
-            tmp2	=	tmp0 + (Cb >> 16);
-            tmp0	=	tmp0 + (Cr >> 16);
+            tmp1    =   tmp0 - (Cg >> 16);
+            tmp2    =   tmp0 + (Cb >> 16);
+            tmp0    =   tmp0 + (Cr >> 16);
 
-            tmp0	=	clip[tmp0];
-            tmp1	=	clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
-            tmp2	=	clip[tmp2];
+            tmp0    =   clip[tmp0];
+            tmp1    =   clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
+            tmp2    =   clip[tmp2];
             //RGB_565
 
-            rgb		=	tmp1 | (tmp0 << 6);
-            rgb		=	tmp2 | (rgb << 5);
+            rgb     =   tmp1 | (tmp0 << 6);
+            rgb     =   tmp2 | (rgb << 5);
 
             *(pDst -= 1) = rgb;
 
             Y   = (Y >> 8) & 0xFF;
 
-            Y	+= OFFSET_5_1;
-            tmp1	=	(Y) - (Cg >> 16);
-            tmp2	=	(Y) + (Cb >> 16);
-            tmp0	=	(Y) + (Cr >> 16);
+            Y   += OFFSET_5_1;
+            tmp1    = (Y) - (Cg >> 16);
+            tmp2    = (Y) + (Cb >> 16);
+            tmp0    = (Y) + (Cr >> 16);
 
-            tmp0	=	clip[tmp0];
-            tmp1	=	clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
-            tmp2	=	clip[tmp2];
+            tmp0    =   clip[tmp0];
+            tmp1    =   clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
+            tmp2    =   clip[tmp2];
             //RGB_565
 
-            tmp0	=	tmp1 | (tmp0 << 6);
-            tmp0	=	tmp2 | (tmp0 << 5);
+            tmp0    =   tmp1 | (tmp0 << 6);
+            tmp0    =   tmp2 | (tmp0 << 5);
 
-            *(pDst += dst_pitch)	= tmp0;
+            *(pDst += dst_pitch)    = tmp0;
 
             //load the top two pixels
             Y = *pY++;
 
             tmp0    = (Y >> 8) & 0xFF; //Low endian    right pixel
-            tmp0	+= OFFSET_5_0;
+            tmp0    += OFFSET_5_0;
 
-            tmp1	=	tmp0 - (Cg >> 16);
-            tmp2	=	tmp0 + (Cb >> 16);
-            tmp0	=	tmp0 + (Cr >> 16);
+            tmp1    =   tmp0 - (Cg >> 16);
+            tmp2    =   tmp0 + (Cb >> 16);
+            tmp0    =   tmp0 + (Cr >> 16);
 
-            tmp0	=	clip[tmp0];
-            tmp1	=	clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
-            tmp2	=	clip[tmp2];
+            tmp0    =   clip[tmp0];
+            tmp1    =   clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
+            tmp2    =   clip[tmp2];
 
-            rgb		=	tmp1 | (tmp0 << 6);
-            rgb		=	tmp2 | (rgb << 5);
+            rgb     =   tmp1 | (tmp0 << 6);
+            rgb     =   tmp2 | (rgb << 5);
             *(pDst += 1)   =   rgb;
 
             Y   = (Y & 0xFF);
 
-            Y	+= OFFSET_5_1;
-            tmp1	=	(Y) - (Cg >> 16);
-            tmp2	=	(Y) + (Cb >> 16);
-            tmp0	=	(Y) + (Cr >> 16);
+            Y   += OFFSET_5_1;
+            tmp1    = (Y) - (Cg >> 16);
+            tmp2    = (Y) + (Cb >> 16);
+            tmp0    = (Y) + (Cr >> 16);
 
-            tmp0	=	clip[tmp0];
-            tmp1	=	clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
-            tmp2	=	clip[tmp2];
+            tmp0    =   clip[tmp0];
+            tmp1    =   clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
+            tmp2    =   clip[tmp2];
 
-            tmp0	=	tmp1 | (tmp0 << 6);
-            tmp0	=	tmp2 | (tmp0 << 5);
+            tmp0    =   tmp1 | (tmp0 << 6);
+            tmp0    =   tmp2 | (tmp0 << 5);
 
             pDst[-dst_pitch] = tmp0;
             pDst += dst_pitch;
 
         }//end of COL
 
-        pY	+=	(deltaY >> 1);
-        pCb	+=	deltaCbCr;
-        pCr	+=	deltaCbCr;
-        pDst +=	(deltaDst);	//coz pDst defined as UINT *
+        pY  += (deltaY >> 1);
+        pCb +=  deltaCbCr;
+        pCr +=  deltaCbCr;
+        pDst += (deltaDst); //coz pDst defined as UINT *
     }
     return 1;
 #else
@@ -1020,14 +1020,14 @@ int32 cc16scaling128x96(uint8 **src, uint8 *dst, int32 *disp, uint8 *coff_tbl)
 {
 #if CCSCALING
     uint8 *pCb, *pCr;
-    uint16	*pY;
-    uint16	*pDst;
-    int32		src_pitch, dst_pitch, src_width, nextrow;
-    int32		Y, Cb, Cr, Cg;
-    int32		deltaY, deltaCbCr;
-    int32		row, col;
-    int32		tmp0, tmp1, tmp2;
-    uint32	rgb;
+    uint16  *pY;
+    uint16  *pDst;
+    int32       src_pitch, dst_pitch, src_width, nextrow;
+    int32       Y, Cb, Cr, Cg;
+    int32       deltaY, deltaCbCr;
+    int32       row, col;
+    int32       tmp0, tmp1, tmp2;
+    uint32  rgb;
     uint8 *clip = coff_tbl + 400;
     int32  cc1 = (*((int32*)(clip - 400)));
     int32  cc3 = (*((int32*)(clip - 396)));
@@ -1039,14 +1039,14 @@ int32 cc16scaling128x96(uint8 **src, uint8 *dst, int32 *disp, uint8 *coff_tbl)
     int32 tmp02, tmp01;
 #endif
 
-    src_pitch	=	disp[0];
-    dst_pitch	=	disp[1];
-    src_width	=	disp[2];
+    src_pitch   =   disp[0];
+    dst_pitch   =   disp[1];
+    src_width   =   disp[2];
 
     if (((disp[6] == 1) && (disp[7] == 1)) || ((disp[6] == 0) && (disp[7] == 0)))
     {
         if (disp[6])/* rotate 180 and flip */
-        {	/* move the starting point to the bottom-left corner of the picture */
+        {   /* move the starting point to the bottom-left corner of the picture */
             deltaY = src_pitch * (disp[3] - 1);
             pY = (uint16*)(src[0] + deltaY);
             deltaY = (src_pitch >> 1) * ((disp[3] >> 1) - 1);
@@ -1058,8 +1058,8 @@ int32 cc16scaling128x96(uint8 **src, uint8 *dst, int32 *disp, uint8 *coff_tbl)
         }
         else // no rotate,no flip
         {
-            deltaY		=	(src_pitch << 1) - src_width;
-            deltaCbCr	=	(src_pitch - src_width) >> 1;
+            deltaY      = (src_pitch << 1) - src_width;
+            deltaCbCr   = (src_pitch - src_width) >> 1;
             pY = (uint16 *) src[0];
             src_pitch >>= 1;
             pCb = src[1];
@@ -1079,26 +1079,26 @@ int32 cc16scaling128x96(uint8 **src, uint8 *dst, int32 *disp, uint8 *coff_tbl)
 
                 Cb -= 128;
                 Cr -= 128;
-                Cg	=	Cr * cc1;
-                Cr	*= cc3;
+                Cg  =   Cr * cc1;
+                Cr  *= cc3;
 
-                Cg	+=	Cb * cc2;
-                Cb	*=  cc4;
+                Cg  +=  Cb * cc2;
+                Cb  *=  cc4;
 
                 tmp0    = (Y & 0xFF);   //Low endian    left pixel
-                tmp0	+= OFFSET_5_0;
+                tmp0    += OFFSET_5_0;
 
-                tmp1	=	tmp0 - (Cg >> 16);
-                tmp2	=	tmp0 + (Cb >> 16);
-                tmp0	=	tmp0 + (Cr >> 16);
+                tmp1    =   tmp0 - (Cg >> 16);
+                tmp2    =   tmp0 + (Cb >> 16);
+                tmp0    =   tmp0 + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
+                tmp2    =   clip[tmp2];
                 //RGB_565
 
-                rgb		=	tmp1 | (tmp0 << 6);
-                rgb		=	tmp2 | (rgb << 5);
+                rgb     =   tmp1 | (tmp0 << 6);
+                rgb     =   tmp2 | (rgb << 5);
                 *((pDst + (dst_pitch << 1))) = rgb;
 #ifndef INTERPOLATE
                 *((pDst + (dst_pitch << 1) + 1)) = rgb;
@@ -1106,26 +1106,26 @@ int32 cc16scaling128x96(uint8 **src, uint8 *dst, int32 *disp, uint8 *coff_tbl)
 
                 Y   = (Y >> 8) & 0xFF;
 
-                Y	+= OFFSET_5_1;
-                tmp1	=	(Y) - (Cg >> 16);
-                tmp2	=	(Y) + (Cb >> 16);
-                tmp0	=	(Y) + (Cr >> 16);
+                Y   += OFFSET_5_1;
+                tmp1    = (Y) - (Cg >> 16);
+                tmp2    = (Y) + (Cb >> 16);
+                tmp0    = (Y) + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
+                tmp2    =   clip[tmp2];
                 //RGB_565
 
-                tmp0	=	tmp1 | (tmp0 << 6);
+                tmp0    =   tmp1 | (tmp0 << 6);
 #ifdef INTERPOLATE
-                tmp02	=	tmp2 | (tmp0 << 5);
+                tmp02   =   tmp2 | (tmp0 << 5);
                 *(pDst + (dst_pitch << 1) + 2) = tmp02;
                 *((pDst + (dst_pitch << 1) + 1)) = (((((tmp02      & 0x1F)  + (rgb     & 0x1F)) / 2) & 0x1F)
                                                     | ((((((tmp02 >> 5) & 0x3F)  + ((rgb >> 5) & 0x3F)) / 2) & 0x3F) << 5)
                                                     | ((((((tmp02 >> 11) & 0x1F)  + ((rgb >> 11) & 0x1F)) / 2) & 0x1F) << 11));
                 pI2 = ((pDst + (dst_pitch << 1) + 3));
 #else
-                tmp0	=	tmp2 | (tmp0 << 5);
+                tmp0    =   tmp2 | (tmp0 << 5);
                 *(pDst + (dst_pitch << 1) + 2) = tmp0;
                 *(pDst + (dst_pitch << 1) + 3) = tmp0;
 #endif
@@ -1133,18 +1133,18 @@ int32 cc16scaling128x96(uint8 **src, uint8 *dst, int32 *disp, uint8 *coff_tbl)
                 Y = *pY++;
 
                 tmp0    = (Y & 0xFF);   //Low endian    left pixel
-                tmp0	+= OFFSET_5_1;
+                tmp0    += OFFSET_5_1;
 
-                tmp1	=	tmp0 - (Cg >> 16);
-                tmp2	=	tmp0 + (Cb >> 16);
-                tmp0	=	tmp0 + (Cr >> 16);
+                tmp1    =   tmp0 - (Cg >> 16);
+                tmp2    =   tmp0 + (Cb >> 16);
+                tmp0    =   tmp0 + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
+                tmp2    =   clip[tmp2];
 
-                rgb		=	tmp1 | (tmp0 << 6);
-                rgb		=	tmp2 | (rgb << 5);
+                rgb     =   tmp1 | (tmp0 << 6);
+                rgb     =   tmp2 | (rgb << 5);
 
                 *((pDst)) = rgb;
 #ifndef INTERPOLATE
@@ -1152,26 +1152,26 @@ int32 cc16scaling128x96(uint8 **src, uint8 *dst, int32 *disp, uint8 *coff_tbl)
 #endif
                 Y   = (Y >> 8) & 0xFF;
 
-                Y	+= OFFSET_5_0;
-                tmp1	=	(Y) - (Cg >> 16);
-                tmp2	=	(Y) + (Cb >> 16);
-                tmp0	=	(Y) + (Cr >> 16);
+                Y   += OFFSET_5_0;
+                tmp1    = (Y) - (Cg >> 16);
+                tmp2    = (Y) + (Cb >> 16);
+                tmp0    = (Y) + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
+                tmp2    =   clip[tmp2];
 
-                tmp0	=	tmp1 | (tmp0 << 6);
+                tmp0    =   tmp1 | (tmp0 << 6);
 #ifdef INTERPOLATE
-                tmp01	=	tmp2 | (tmp0 << 5);
-                *(pDst + 2)	= tmp01;
+                tmp01   =   tmp2 | (tmp0 << 5);
+                *(pDst + 2) = tmp01;
                 *((pDst + 1)) = (((((tmp01      & 0x1F)  + (rgb     & 0x1F)) / 2) & 0x1F)
                                  | ((((((tmp01 >> 5) & 0x3F)  + ((rgb >> 5) & 0x3F)) / 2) & 0x3F) << 5)
                                  | ((((((tmp01 >> 11) & 0x1F)  + ((rgb >> 11) & 0x1F)) / 2) & 0x1F) << 11));
                 pU2 = (pDst + 3);
 #else
-                tmp0	=	tmp2 | (tmp0 << 5);
-                *(pDst + 2)	= tmp0;
+                tmp0    =   tmp2 | (tmp0 << 5);
+                *(pDst + 2) = tmp0;
                 *(pDst + 3) = tmp0;
 #endif
                 pDst += 4;
@@ -1183,26 +1183,26 @@ int32 cc16scaling128x96(uint8 **src, uint8 *dst, int32 *disp, uint8 *coff_tbl)
 
                 Cb -= 128;
                 Cr -= 128;
-                Cg	=	Cr * cc1;
-                Cr	*= cc3;
+                Cg  =   Cr * cc1;
+                Cr  *= cc3;
 
-                Cg	+=	Cb * cc2;
-                Cb	*=  cc4;
+                Cg  +=  Cb * cc2;
+                Cb  *=  cc4;
 
                 tmp0    = (Y & 0xFF);   //Low endian    left pixel
-                tmp0	+= OFFSET_5_0;
+                tmp0    += OFFSET_5_0;
 
-                tmp1	=	tmp0 - (Cg >> 16);
-                tmp2	=	tmp0 + (Cb >> 16);
-                tmp0	=	tmp0 + (Cr >> 16);
+                tmp1    =   tmp0 - (Cg >> 16);
+                tmp2    =   tmp0 + (Cb >> 16);
+                tmp0    =   tmp0 + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
+                tmp2    =   clip[tmp2];
                 //RGB_565
 
-                rgb		=	tmp1 | (tmp0 << 6);
-                rgb		=	tmp2 | (rgb << 5);
+                rgb     =   tmp1 | (tmp0 << 6);
+                rgb     =   tmp2 | (rgb << 5);
 
                 *((pDst + (dst_pitch << 1))) = rgb;
 #ifdef INTERPOLATE
@@ -1215,26 +1215,26 @@ int32 cc16scaling128x96(uint8 **src, uint8 *dst, int32 *disp, uint8 *coff_tbl)
 
                 Y   = (Y >> 8) & 0xFF;
 
-                Y	+= OFFSET_5_1;
-                tmp1	=	(Y) - (Cg >> 16);
-                tmp2	=	(Y) + (Cb >> 16);
-                tmp0	=	(Y) + (Cr >> 16);
+                Y   += OFFSET_5_1;
+                tmp1    = (Y) - (Cg >> 16);
+                tmp2    = (Y) + (Cb >> 16);
+                tmp0    = (Y) + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
+                tmp2    =   clip[tmp2];
                 //RGB_565
 
-                tmp0	=	tmp1 | (tmp0 << 6);
+                tmp0    =   tmp1 | (tmp0 << 6);
 #ifdef INTERPOLATE
-                tmp02	=	tmp2 | (tmp0 << 5);
+                tmp02   =   tmp2 | (tmp0 << 5);
                 *(pDst + (dst_pitch << 1) + 2) = tmp02;
                 *((pDst + (dst_pitch << 1) + 1)) = (((((tmp02      & 0x1F)  + (rgb     & 0x1F)) / 2) & 0x1F)
                                                     | ((((((tmp02 >> 5) & 0x3F)  + ((rgb >> 5) & 0x3F)) / 2) & 0x3F) << 5)
                                                     | ((((((tmp02 >> 11) & 0x1F)  + ((rgb >> 11) & 0x1F)) / 2) & 0x1F) << 11));
                 pI2 = (pDst + (dst_pitch << 1) + 3);
 #else
-                tmp0	=	tmp2 | (tmp0 << 5);
+                tmp0    =   tmp2 | (tmp0 << 5);
                 *(pDst + (dst_pitch << 1) + 2) = tmp0;
                 *(pDst + (dst_pitch << 1) + 3) = tmp0;
 #endif
@@ -1242,18 +1242,18 @@ int32 cc16scaling128x96(uint8 **src, uint8 *dst, int32 *disp, uint8 *coff_tbl)
                 Y = *pY++;
 
                 tmp0    = (Y & 0xFF);   //Low endian    left pixel
-                tmp0	+= OFFSET_5_1;
+                tmp0    += OFFSET_5_1;
 
-                tmp1	=	tmp0 - (Cg >> 16);
-                tmp2	=	tmp0 + (Cb >> 16);
-                tmp0	=	tmp0 + (Cr >> 16);
+                tmp1    =   tmp0 - (Cg >> 16);
+                tmp2    =   tmp0 + (Cb >> 16);
+                tmp0    =   tmp0 + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
+                tmp2    =   clip[tmp2];
 
-                rgb		=	tmp1 | (tmp0 << 6);
-                rgb		=	tmp2 | (rgb << 5);
+                rgb     =   tmp1 | (tmp0 << 6);
+                rgb     =   tmp2 | (rgb << 5);
 
                 *((pDst)) = rgb;
 #ifdef INTERPOLATE
@@ -1265,26 +1265,26 @@ int32 cc16scaling128x96(uint8 **src, uint8 *dst, int32 *disp, uint8 *coff_tbl)
 #endif
                 Y   = (Y >> 8) & 0xFF;
 
-                Y	+= OFFSET_5_0;
-                tmp1	=	(Y) - (Cg >> 16);
-                tmp2	=	(Y) + (Cb >> 16);
-                tmp0	=	(Y) + (Cr >> 16);
+                Y   += OFFSET_5_0;
+                tmp1    = (Y) - (Cg >> 16);
+                tmp2    = (Y) + (Cb >> 16);
+                tmp0    = (Y) + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
+                tmp2    =   clip[tmp2];
 
-                tmp0	=	tmp1 | (tmp0 << 6);
+                tmp0    =   tmp1 | (tmp0 << 6);
 #ifdef INTERPOLATE
-                tmp01	=	tmp2 | (tmp0 << 5);
-                *(pDst + 2)	= tmp01;
+                tmp01   =   tmp2 | (tmp0 << 5);
+                *(pDst + 2) = tmp01;
                 *((pDst + 1)) = (((((tmp01      & 0x1F)  + (rgb     & 0x1F)) / 2) & 0x1F)
                                  | ((((((tmp01 >> 5) & 0x3F)  + ((rgb >> 5) & 0x3F)) / 2) & 0x3F) << 5)
                                  | ((((((tmp01 >> 11) & 0x1F)  + ((rgb >> 11) & 0x1F)) / 2) & 0x1F) << 11));
                 pU2 = (pDst + 3);
 #else
-                tmp0	=	tmp2 | (tmp0 << 5);
-                *(pDst + 2)	= tmp0;
+                tmp0    =   tmp2 | (tmp0 << 5);
+                *(pDst + 2) = tmp0;
                 *(pDst + 3) = tmp0;
 #endif
                 pDst += 4;
@@ -1296,26 +1296,26 @@ int32 cc16scaling128x96(uint8 **src, uint8 *dst, int32 *disp, uint8 *coff_tbl)
 
                 Cb -= 128;
                 Cr -= 128;
-                Cg	=	Cr * cc1;
-                Cr	*= cc3;
+                Cg  =   Cr * cc1;
+                Cr  *= cc3;
 
-                Cg	+=	Cb * cc2;
-                Cb	*=  cc4;
+                Cg  +=  Cb * cc2;
+                Cb  *=  cc4;
 
                 tmp0    = (Y & 0xFF);   //Low endian    left pixel
-                tmp0	+= OFFSET_5_0;
+                tmp0    += OFFSET_5_0;
 
-                tmp1	=	tmp0 - (Cg >> 16);
-                tmp2	=	tmp0 + (Cb >> 16);
-                tmp0	=	tmp0 + (Cr >> 16);
+                tmp1    =   tmp0 - (Cg >> 16);
+                tmp2    =   tmp0 + (Cb >> 16);
+                tmp0    =   tmp0 + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
+                tmp2    =   clip[tmp2];
                 //RGB_565
 
-                rgb		=	tmp1 | (tmp0 << 6);
-                rgb		=	tmp2 | (rgb << 5);
+                rgb     =   tmp1 | (tmp0 << 6);
+                rgb     =   tmp2 | (rgb << 5);
 
                 *((pDst + (dst_pitch << 1))) = rgb;
 #ifdef INTERPOLATE
@@ -1327,26 +1327,26 @@ int32 cc16scaling128x96(uint8 **src, uint8 *dst, int32 *disp, uint8 *coff_tbl)
 #endif
                 Y   = (Y >> 8) & 0xFF;
 
-                Y	+= OFFSET_5_1;
-                tmp1	=	(Y) - (Cg >> 16);
-                tmp2	=	(Y) + (Cb >> 16);
-                tmp0	=	(Y) + (Cr >> 16);
+                Y   += OFFSET_5_1;
+                tmp1    = (Y) - (Cg >> 16);
+                tmp2    = (Y) + (Cb >> 16);
+                tmp0    = (Y) + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
+                tmp2    =   clip[tmp2];
                 //RGB_565
 
-                tmp0	=	tmp1 | (tmp0 << 6);
+                tmp0    =   tmp1 | (tmp0 << 6);
 #ifdef INTERPOLATE
-                tmp02	=	tmp2 | (tmp0 << 5);
+                tmp02   =   tmp2 | (tmp0 << 5);
                 *(pDst + (dst_pitch << 1) + 2) = tmp02;
                 *((pDst + (dst_pitch << 1) + 1)) = (((((tmp02      & 0x1F)  + (rgb     & 0x1F)) / 2) & 0x1F)
                                                     | ((((((tmp02 >> 5) & 0x3F)  + ((rgb >> 5) & 0x3F)) / 2) & 0x3F) << 5)
                                                     | ((((((tmp02 >> 11) & 0x1F)  + ((rgb >> 11) & 0x1F)) / 2) & 0x1F) << 11));
                 pI2 = (pDst + (dst_pitch << 1) + 3);
 #else
-                tmp0	=	tmp2 | (tmp0 << 5);
+                tmp0    =   tmp2 | (tmp0 << 5);
                 *(pDst + (dst_pitch << 1) + 2) = tmp0;
                 *(pDst + (dst_pitch << 1) + 3) = tmp0;
 #endif
@@ -1354,18 +1354,18 @@ int32 cc16scaling128x96(uint8 **src, uint8 *dst, int32 *disp, uint8 *coff_tbl)
                 Y = *pY++;
 
                 tmp0    = (Y & 0xFF);   //Low endian    left pixel
-                tmp0	+= OFFSET_5_1;
+                tmp0    += OFFSET_5_1;
 
-                tmp1	=	tmp0 - (Cg >> 16);
-                tmp2	=	tmp0 + (Cb >> 16);
-                tmp0	=	tmp0 + (Cr >> 16);
+                tmp1    =   tmp0 - (Cg >> 16);
+                tmp2    =   tmp0 + (Cb >> 16);
+                tmp0    =   tmp0 + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
+                tmp2    =   clip[tmp2];
 
-                rgb		=	tmp1 | (tmp0 << 6);
-                rgb		=	tmp2 | (rgb << 5);
+                rgb     =   tmp1 | (tmp0 << 6);
+                rgb     =   tmp2 | (rgb << 5);
 
                 *((pDst)) = rgb;
 #ifdef INTERPOLATE
@@ -1377,26 +1377,26 @@ int32 cc16scaling128x96(uint8 **src, uint8 *dst, int32 *disp, uint8 *coff_tbl)
 #endif
                 Y   = (Y >> 8) & 0xFF;
 
-                Y	+= OFFSET_5_0;
-                tmp1	=	(Y) - (Cg >> 16);
-                tmp2	=	(Y) + (Cb >> 16);
-                tmp0	=	(Y) + (Cr >> 16);
+                Y   += OFFSET_5_0;
+                tmp1    = (Y) - (Cg >> 16);
+                tmp2    = (Y) + (Cb >> 16);
+                tmp0    = (Y) + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
+                tmp2    =   clip[tmp2];
 
-                tmp0	=	tmp1 | (tmp0 << 6);
+                tmp0    =   tmp1 | (tmp0 << 6);
 #ifdef INTERPOLATE
-                tmp01	=	tmp2 | (tmp0 << 5);
-                *(pDst + 2)	= tmp01;
+                tmp01   =   tmp2 | (tmp0 << 5);
+                *(pDst + 2) = tmp01;
                 *((pDst + 1)) = (((((tmp01      & 0x1F)  + (rgb     & 0x1F)) / 2) & 0x1F)
                                  | ((((((tmp01 >> 5) & 0x3F)  + ((rgb >> 5) & 0x3F)) / 2) & 0x3F) << 5)
                                  | ((((((tmp01 >> 11) & 0x1F)  + ((rgb >> 11) & 0x1F)) / 2) & 0x1F) << 11));
                 pU2 = (pDst + 3);
 #else
-                tmp0	=	tmp2 | (tmp0 << 5);
-                *(pDst + 2)	= tmp0;
+                tmp0    =   tmp2 | (tmp0 << 5);
+                *(pDst + 2) = tmp0;
                 *(pDst + 3) = tmp0;
 #endif
                 pDst += 4;
@@ -1408,26 +1408,26 @@ int32 cc16scaling128x96(uint8 **src, uint8 *dst, int32 *disp, uint8 *coff_tbl)
 
                 Cb -= 128;
                 Cr -= 128;
-                Cg	=	Cr * cc1;
-                Cr	*= cc3;
+                Cg  =   Cr * cc1;
+                Cr  *= cc3;
 
-                Cg	+=	Cb * cc2;
-                Cb	*=  cc4;
+                Cg  +=  Cb * cc2;
+                Cb  *=  cc4;
 
                 tmp0    = (Y & 0xFF);   //Low endian    left pixel
-                tmp0	+= OFFSET_5_0;
+                tmp0    += OFFSET_5_0;
 
-                tmp1	=	tmp0 - (Cg >> 16);
-                tmp2	=	tmp0 + (Cb >> 16);
-                tmp0	=	tmp0 + (Cr >> 16);
+                tmp1    =   tmp0 - (Cg >> 16);
+                tmp2    =   tmp0 + (Cb >> 16);
+                tmp0    =   tmp0 + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
+                tmp2    =   clip[tmp2];
                 //RGB_565
 
-                rgb		=	tmp1 | (tmp0 << 6);
-                rgb		=	tmp2 | (rgb << 5);
+                rgb     =   tmp1 | (tmp0 << 6);
+                rgb     =   tmp2 | (rgb << 5);
                 *((pDst + (dst_pitch << 1))) = rgb;
 #ifdef INTERPOLATE
                 *pI2 = (((((tmp02      & 0x1F)  + (rgb     & 0x1F)) / 2) & 0x1F)
@@ -1439,18 +1439,18 @@ int32 cc16scaling128x96(uint8 **src, uint8 *dst, int32 *disp, uint8 *coff_tbl)
 
                 Y   = (Y >> 8) & 0xFF;
 
-                Y	+= OFFSET_5_1;
-                tmp1	=	(Y) - (Cg >> 16);
-                tmp2	=	(Y) + (Cb >> 16);
-                tmp0	=	(Y) + (Cr >> 16);
+                Y   += OFFSET_5_1;
+                tmp1    = (Y) - (Cg >> 16);
+                tmp2    = (Y) + (Cb >> 16);
+                tmp0    = (Y) + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
+                tmp2    =   clip[tmp2];
                 //RGB_565
 
-                tmp0	=	tmp1 | (tmp0 << 6);
-                tmp0	=	tmp2 | (tmp0 << 5);
+                tmp0    =   tmp1 | (tmp0 << 6);
+                tmp0    =   tmp2 | (tmp0 << 5);
 
                 *(pDst + (dst_pitch << 1) + 2) = tmp0;
 #ifdef INTERPOLATE
@@ -1462,18 +1462,18 @@ int32 cc16scaling128x96(uint8 **src, uint8 *dst, int32 *disp, uint8 *coff_tbl)
                 Y = *pY++;
 
                 tmp0    = (Y & 0xFF);   //Low endian    left pixel
-                tmp0	+= OFFSET_5_1;
+                tmp0    += OFFSET_5_1;
 
-                tmp1	=	tmp0 - (Cg >> 16);
-                tmp2	=	tmp0 + (Cb >> 16);
-                tmp0	=	tmp0 + (Cr >> 16);
+                tmp1    =   tmp0 - (Cg >> 16);
+                tmp2    =   tmp0 + (Cb >> 16);
+                tmp0    =   tmp0 + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
+                tmp2    =   clip[tmp2];
 
-                rgb		=	tmp1 | (tmp0 << 6);
-                rgb		=	tmp2 | (rgb << 5);
+                rgb     =   tmp1 | (tmp0 << 6);
+                rgb     =   tmp2 | (rgb << 5);
 
                 *((pDst)) = rgb;
 #ifdef INTERPOLATE
@@ -1485,19 +1485,19 @@ int32 cc16scaling128x96(uint8 **src, uint8 *dst, int32 *disp, uint8 *coff_tbl)
 #endif
                 Y   = (Y >> 8) & 0xFF;
 
-                Y	+= OFFSET_5_0;
-                tmp1	=	(Y) - (Cg >> 16);
-                tmp2	=	(Y) + (Cb >> 16);
-                tmp0	=	(Y) + (Cr >> 16);
+                Y   += OFFSET_5_0;
+                tmp1    = (Y) - (Cg >> 16);
+                tmp2    = (Y) + (Cb >> 16);
+                tmp0    = (Y) + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
+                tmp2    =   clip[tmp2];
 
-                tmp0	=	tmp1 | (tmp0 << 6);
-                tmp0	=	tmp2 | (tmp0 << 5);
+                tmp0    =   tmp1 | (tmp0 << 6);
+                tmp0    =   tmp2 | (tmp0 << 5);
 
-                *(pDst + 2)	= tmp0;
+                *(pDst + 2) = tmp0;
 #ifdef INTERPOLATE
                 *((pDst + 1)) = (((((tmp0      & 0x1F)  + (rgb     & 0x1F)) / 2) & 0x1F)
                                  | ((((((tmp0 >> 5) & 0x3F)  + ((rgb >> 5) & 0x3F)) / 2) & 0x3F) << 5)
@@ -1507,9 +1507,9 @@ int32 cc16scaling128x96(uint8 **src, uint8 *dst, int32 *disp, uint8 *coff_tbl)
 
             }//end of COL
 
-            pY	+=	(deltaY >> 1);
-            pCb	+=	deltaCbCr;
-            pCr	+=	deltaCbCr;
+            pY  += (deltaY >> 1);
+            pCb +=  deltaCbCr;
+            pCr +=  deltaCbCr;
 
             pDst -= (disp[4]);
 #ifdef INTERPOLATE
@@ -1518,7 +1518,7 @@ int32 cc16scaling128x96(uint8 **src, uint8 *dst, int32 *disp, uint8 *coff_tbl)
             {
                 pIn = pDst - dst_pitch;
                 pNext = pIn - dst_pitch;
-                for (i = 0;i < disp[4]; i++)
+                for (i = 0; i < disp[4]; i++)
                 {
                     int32 curr = pDst[i];
                     int32 below = pNext[i];
@@ -1531,7 +1531,7 @@ int32 cc16scaling128x96(uint8 **src, uint8 *dst, int32 *disp, uint8 *coff_tbl)
 
             pNext = pDst + (dst_pitch * 2);
             pIn = pDst + dst_pitch;
-            for (i = 0;i < disp[4]; i++)
+            for (i = 0; i < disp[4]; i++)
             {
                 int32 curr = pDst[i];
                 int32 below = pNext[i];
@@ -1554,7 +1554,7 @@ int32 cc16scaling128x96(uint8 **src, uint8 *dst, int32 *disp, uint8 *coff_tbl)
             if (row & 0x7)
             {
                 oscl_memcpy(pDst + dst_pitch, pDst, (disp[4] << 1));
-                pDst +=	dst_pitch;	//coz pDst defined as UINT *
+                pDst += dst_pitch;  //coz pDst defined as UINT *
             }
             pDst += dst_pitch;
 #endif
@@ -1571,8 +1571,8 @@ int32 cc16scaling128x96(uint8 **src, uint8 *dst, int32 *disp, uint8 *coff_tbl)
             pCb = src[1] + nextrow + (src_width >> 1) - 1;
             pCr = src[2] + nextrow + (src_width >> 1) - 1;
             nextrow = -(src_pitch >> 1);
-            deltaY		=	src_width - (src_pitch << 1);
-            deltaCbCr	=	(src_width - src_pitch) >> 1;
+            deltaY      =   src_width - (src_pitch << 1);
+            deltaCbCr   = (src_width - src_pitch) >> 1;
         }
         else /* flip only */
         {
@@ -1596,99 +1596,99 @@ int32 cc16scaling128x96(uint8 **src, uint8 *dst, int32 *disp, uint8 *coff_tbl)
 
                 Cb -= 128;
                 Cr -= 128;
-                Cg	=	Cr * cc1;
-                Cr	*= cc3;
+                Cg  =   Cr * cc1;
+                Cr  *= cc3;
 
-                Cg	+=	Cb * cc2;
-                Cb	*=  cc4;
+                Cg  +=  Cb * cc2;
+                Cb  *=  cc4;
 
-                tmp0	=	(Y >> 8) & 0xFF;	//Low endian	left pixel
-                tmp0	+= OFFSET_5_1;
+                tmp0    = (Y >> 8) & 0xFF;      //Low endian    left pixel
+                tmp0    += OFFSET_5_1;
 
-                tmp1	=	tmp0 - (Cg >> 16);
-                tmp2	=	tmp0 + (Cb >> 16);
-                tmp0	=	tmp0 + (Cr >> 16);
+                tmp1    =   tmp0 - (Cg >> 16);
+                tmp2    =   tmp0 + (Cb >> 16);
+                tmp0    =   tmp0 + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
+                tmp2    =   clip[tmp2];
                 //RGB_565
 
-                rgb		=	tmp1 | (tmp0 << 6);
-                rgb		=	tmp2 | (rgb << 5);
+                rgb     =   tmp1 | (tmp0 << 6);
+                rgb     =   tmp2 | (rgb << 5);
                 *((pDst + (dst_pitch << 1))) = rgb;
 #ifndef INTERPOLATE
                 *((pDst + (dst_pitch << 1) + 1)) = rgb;
 #endif
 
-                Y	    =   Y & 0xFF;
-                Y	+= OFFSET_5_0;
-                tmp1	=	(Y) - (Cg >> 16);
-                tmp2	=	(Y) + (Cb >> 16);
-                tmp0	=	(Y) + (Cr >> 16);
+                Y       =   Y & 0xFF;
+                Y   += OFFSET_5_0;
+                tmp1    = (Y) - (Cg >> 16);
+                tmp2    = (Y) + (Cb >> 16);
+                tmp0    = (Y) + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
+                tmp2    =   clip[tmp2];
                 //RGB_565
 
-                tmp0	=	tmp1 | (tmp0 << 6);
+                tmp0    =   tmp1 | (tmp0 << 6);
 #ifdef INTERPOLATE
-                tmp02	=	tmp2 | (tmp0 << 5);
+                tmp02   =   tmp2 | (tmp0 << 5);
                 *(pDst + (dst_pitch << 1) + 2) = tmp02;
                 *((pDst + (dst_pitch << 1) + 1)) = (((((tmp02      & 0x1F)  + (rgb     & 0x1F)) / 2) & 0x1F)
                                                     | ((((((tmp02 >> 5) & 0x3F)  + ((rgb >> 5) & 0x3F)) / 2) & 0x3F) << 5)
                                                     | ((((((tmp02 >> 11) & 0x1F)  + ((rgb >> 11) & 0x1F)) / 2) & 0x1F) << 11));
                 pI2 = ((pDst + (dst_pitch << 1) + 3));
 #else
-                tmp0	=	tmp2 | (tmp0 << 5);
+                tmp0    =   tmp2 | (tmp0 << 5);
                 *(pDst + (dst_pitch << 1) + 2) = tmp0;
                 *(pDst + (dst_pitch << 1) + 3) = tmp0;
 #endif
                 //load the top two pixels
                 Y = *pY--;
 
-                tmp0	=	(Y >> 8) & 0xFF;	//Low endian	left pixel
-                //tmp0	=	*pY++;
-                tmp0	+= OFFSET_5_0;
+                tmp0    = (Y >> 8) & 0xFF;      //Low endian    left pixel
+                //tmp0  =   *pY++;
+                tmp0    += OFFSET_5_0;
 
-                tmp1	=	tmp0 - (Cg >> 16);
-                tmp2	=	tmp0 + (Cb >> 16);
-                tmp0	=	tmp0 + (Cr >> 16);
+                tmp1    =   tmp0 - (Cg >> 16);
+                tmp2    =   tmp0 + (Cb >> 16);
+                tmp0    =   tmp0 + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
+                tmp2    =   clip[tmp2];
 
-                rgb		=	tmp1 | (tmp0 << 6);
-                rgb		=	tmp2 | (rgb << 5);
+                rgb     =   tmp1 | (tmp0 << 6);
+                rgb     =   tmp2 | (rgb << 5);
 
                 *((pDst)) = rgb;
 #ifndef INTERPOLATE
                 *((pDst + 1)) = rgb;
 #endif
 
-                Y	    =   Y & 0xFF;
-                Y	+= OFFSET_5_1;
-                tmp1	=	(Y) - (Cg >> 16);
-                tmp2	=	(Y) + (Cb >> 16);
-                tmp0	=	(Y) + (Cr >> 16);
+                Y       =   Y & 0xFF;
+                Y   += OFFSET_5_1;
+                tmp1    = (Y) - (Cg >> 16);
+                tmp2    = (Y) + (Cb >> 16);
+                tmp0    = (Y) + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
+                tmp2    =   clip[tmp2];
 
-                tmp0	=	tmp1 | (tmp0 << 6);
+                tmp0    =   tmp1 | (tmp0 << 6);
 #ifdef INTERPOLATE
-                tmp01	=	tmp2 | (tmp0 << 5);
-                *(pDst + 2)	= tmp01;
+                tmp01   =   tmp2 | (tmp0 << 5);
+                *(pDst + 2) = tmp01;
                 *((pDst + 1)) = (((((tmp01      & 0x1F)  + (rgb     & 0x1F)) / 2) & 0x1F)
                                  | ((((((tmp01 >> 5) & 0x3F)  + ((rgb >> 5) & 0x3F)) / 2) & 0x3F) << 5)
                                  | ((((((tmp01 >> 11) & 0x1F)  + ((rgb >> 11) & 0x1F)) / 2) & 0x1F) << 11));
                 pU2 = (pDst + 3);
 #else
-                tmp0	=	tmp2 | (tmp0 << 5);
-                *(pDst + 2)	= tmp0;
+                tmp0    =   tmp2 | (tmp0 << 5);
+                *(pDst + 2) = tmp0;
                 *(pDst + 3) = tmp0;
 #endif
                 pDst += 4;
@@ -1700,26 +1700,26 @@ int32 cc16scaling128x96(uint8 **src, uint8 *dst, int32 *disp, uint8 *coff_tbl)
 
                 Cb -= 128;
                 Cr -= 128;
-                Cg	=	Cr * cc1;
-                Cr	*= cc3;
+                Cg  =   Cr * cc1;
+                Cr  *= cc3;
 
-                Cg	+=	Cb * cc2;
-                Cb	*=  cc4;
+                Cg  +=  Cb * cc2;
+                Cb  *=  cc4;
 
-                tmp0	=	(Y >> 8) & 0xFF;	//Low endian	left pixel
-                tmp0	+= OFFSET_5_1;
+                tmp0    = (Y >> 8) & 0xFF;      //Low endian    left pixel
+                tmp0    += OFFSET_5_1;
 
-                tmp1	=	tmp0 - (Cg >> 16);
-                tmp2	=	tmp0 + (Cb >> 16);
-                tmp0	=	tmp0 + (Cr >> 16);
+                tmp1    =   tmp0 - (Cg >> 16);
+                tmp2    =   tmp0 + (Cb >> 16);
+                tmp0    =   tmp0 + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_1- OFFSET_5_1];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_1- OFFSET_5_1];
+                tmp2    =   clip[tmp2];
                 //RGB_565
 
-                rgb		=	tmp1 | (tmp0 << 6);
-                rgb		=	tmp2 | (rgb << 5);
+                rgb     =   tmp1 | (tmp0 << 6);
+                rgb     =   tmp2 | (rgb << 5);
                 *((pDst + (dst_pitch << 1))) = rgb;
 #ifdef INTERPOLATE
                 *pI2 = (((((tmp02      & 0x1F)  + (rgb     & 0x1F)) / 2) & 0x1F)
@@ -1728,27 +1728,27 @@ int32 cc16scaling128x96(uint8 **src, uint8 *dst, int32 *disp, uint8 *coff_tbl)
 #else
                 *((pDst + (dst_pitch << 1) + 1)) = rgb;
 #endif
-                Y	    =   Y & 0xFF;
-                Y	+= OFFSET_5_0;
-                tmp1	=	(Y) - (Cg >> 16);
-                tmp2	=	(Y) + (Cb >> 16);
-                tmp0	=	(Y) + (Cr >> 16);
+                Y       =   Y & 0xFF;
+                Y   += OFFSET_5_0;
+                tmp1    = (Y) - (Cg >> 16);
+                tmp2    = (Y) + (Cb >> 16);
+                tmp0    = (Y) + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
+                tmp2    =   clip[tmp2];
                 //RGB_565
 
-                tmp0	=	tmp1 | (tmp0 << 6);
+                tmp0    =   tmp1 | (tmp0 << 6);
 #ifdef INTERPOLATE
-                tmp02	=	tmp2 | (tmp0 << 5);
+                tmp02   =   tmp2 | (tmp0 << 5);
                 *(pDst + (dst_pitch << 1) + 2) = tmp02;
                 *((pDst + (dst_pitch << 1) + 1)) = (((((tmp02      & 0x1F)  + (rgb     & 0x1F)) / 2) & 0x1F)
                                                     | ((((((tmp02 >> 5) & 0x3F)  + ((rgb >> 5) & 0x3F)) / 2) & 0x3F) << 5)
                                                     | ((((((tmp02 >> 11) & 0x1F)  + ((rgb >> 11) & 0x1F)) / 2) & 0x1F) << 11));
                 pI2 = (pDst + (dst_pitch << 1) + 3);
 #else
-                tmp0	=	tmp2 | (tmp0 << 5);
+                tmp0    =   tmp2 | (tmp0 << 5);
                 *(pDst + (dst_pitch << 1) + 2) = tmp0;
                 *(pDst + (dst_pitch << 1) + 3) = tmp0;
 #endif
@@ -1756,20 +1756,20 @@ int32 cc16scaling128x96(uint8 **src, uint8 *dst, int32 *disp, uint8 *coff_tbl)
                 //load the top two pixels
                 Y = *pY--;
 
-                tmp0	=	(Y >> 8) & 0xFF;	//Low endian	left pixel
-                //tmp0	=	*pY++;
-                tmp0	+= OFFSET_5_0;
+                tmp0    = (Y >> 8) & 0xFF;      //Low endian    left pixel
+                //tmp0  =   *pY++;
+                tmp0    += OFFSET_5_0;
 
-                tmp1	=	tmp0 - (Cg >> 16);
-                tmp2	=	tmp0 + (Cb >> 16);
-                tmp0	=	tmp0 + (Cr >> 16);
+                tmp1    =   tmp0 - (Cg >> 16);
+                tmp2    =   tmp0 + (Cb >> 16);
+                tmp0    =   tmp0 + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
+                tmp2    =   clip[tmp2];
 
-                rgb		=	tmp1 | (tmp0 << 6);
-                rgb		=	tmp2 | (rgb << 5);
+                rgb     =   tmp1 | (tmp0 << 6);
+                rgb     =   tmp2 | (rgb << 5);
 
                 *((pDst)) = rgb;
 #ifdef INTERPOLATE
@@ -1780,27 +1780,27 @@ int32 cc16scaling128x96(uint8 **src, uint8 *dst, int32 *disp, uint8 *coff_tbl)
                 *((pDst + 1)) = rgb;
 #endif
 
-                Y	    =   Y & 0xFF;
-                Y	+= OFFSET_5_1;
-                tmp1	=	(Y) - (Cg >> 16);
-                tmp2	=	(Y) + (Cb >> 16);
-                tmp0	=	(Y) + (Cr >> 16);
+                Y       =   Y & 0xFF;
+                Y   += OFFSET_5_1;
+                tmp1    = (Y) - (Cg >> 16);
+                tmp2    = (Y) + (Cb >> 16);
+                tmp0    = (Y) + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
+                tmp2    =   clip[tmp2];
 
-                tmp0	=	tmp1 | (tmp0 << 6);
+                tmp0    =   tmp1 | (tmp0 << 6);
 #ifdef INTERPOLATE
-                tmp01	=	tmp2 | (tmp0 << 5);
-                *(pDst + 2)	= tmp01;
+                tmp01   =   tmp2 | (tmp0 << 5);
+                *(pDst + 2) = tmp01;
                 *((pDst + 1)) = (((((tmp01      & 0x1F)  + (rgb     & 0x1F)) / 2) & 0x1F)
                                  | ((((((tmp01 >> 5) & 0x3F)  + ((rgb >> 5) & 0x3F)) / 2) & 0x3F) << 5)
                                  | ((((((tmp01 >> 11) & 0x1F)  + ((rgb >> 11) & 0x1F)) / 2) & 0x1F) << 11));
                 pU2 = (pDst + 3);
 #else
-                tmp0	=	tmp2 | (tmp0 << 5);
-                *(pDst + 2)	= tmp0;
+                tmp0    =   tmp2 | (tmp0 << 5);
+                *(pDst + 2) = tmp0;
                 *(pDst + 3) = tmp0;
 #endif
                 pDst += 4;
@@ -1812,26 +1812,26 @@ int32 cc16scaling128x96(uint8 **src, uint8 *dst, int32 *disp, uint8 *coff_tbl)
 
                 Cb -= 128;
                 Cr -= 128;
-                Cg	=	Cr * cc1;
-                Cr	*= cc3;
+                Cg  =   Cr * cc1;
+                Cr  *= cc3;
 
-                Cg	+=	Cb * cc2;
-                Cb	*=  cc4;
+                Cg  +=  Cb * cc2;
+                Cb  *=  cc4;
 
-                tmp0	=	(Y >> 8) & 0xFF;	//Low endian	left pixel
-                tmp0	+= OFFSET_5_1;
+                tmp0    = (Y >> 8) & 0xFF;      //Low endian    left pixel
+                tmp0    += OFFSET_5_1;
 
-                tmp1	=	tmp0 - (Cg >> 16);
-                tmp2	=	tmp0 + (Cb >> 16);
-                tmp0	=	tmp0 + (Cr >> 16);
+                tmp1    =   tmp0 - (Cg >> 16);
+                tmp2    =   tmp0 + (Cb >> 16);
+                tmp0    =   tmp0 + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_1- OFFSET_5_1];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_1- OFFSET_5_1];
+                tmp2    =   clip[tmp2];
                 //RGB_565
 
-                rgb		=	tmp1 | (tmp0 << 6);
-                rgb		=	tmp2 | (rgb << 5);
+                rgb     =   tmp1 | (tmp0 << 6);
+                rgb     =   tmp2 | (rgb << 5);
                 *((pDst + (dst_pitch << 1))) = rgb;
 #ifdef INTERPOLATE
                 *pI2 = (((((tmp02      & 0x1F)  + (rgb     & 0x1F)) / 2) & 0x1F)
@@ -1841,27 +1841,27 @@ int32 cc16scaling128x96(uint8 **src, uint8 *dst, int32 *disp, uint8 *coff_tbl)
                 *((pDst + (dst_pitch << 1) + 1)) = rgb;
 #endif
 
-                Y	    =   Y & 0xFF;
-                Y	+= OFFSET_5_0;
-                tmp1	=	(Y) - (Cg >> 16);
-                tmp2	=	(Y) + (Cb >> 16);
-                tmp0	=	(Y) + (Cr >> 16);
+                Y       =   Y & 0xFF;
+                Y   += OFFSET_5_0;
+                tmp1    = (Y) - (Cg >> 16);
+                tmp2    = (Y) + (Cb >> 16);
+                tmp0    = (Y) + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
+                tmp2    =   clip[tmp2];
                 //RGB_565
 
-                tmp0	=	tmp1 | (tmp0 << 6);
+                tmp0    =   tmp1 | (tmp0 << 6);
 #ifdef INTERPOLATE
-                tmp02	=	tmp2 | (tmp0 << 5);
+                tmp02   =   tmp2 | (tmp0 << 5);
                 *(pDst + (dst_pitch << 1) + 2) = tmp02;
                 *((pDst + (dst_pitch << 1) + 1)) = (((((tmp02      & 0x1F)  + (rgb     & 0x1F)) / 2) & 0x1F)
                                                     | ((((((tmp02 >> 5) & 0x3F)  + ((rgb >> 5) & 0x3F)) / 2) & 0x3F) << 5)
                                                     | ((((((tmp02 >> 11) & 0x1F)  + ((rgb >> 11) & 0x1F)) / 2) & 0x1F) << 11));
                 pI2 = (pDst + (dst_pitch << 1) + 3);
 #else
-                tmp0	=	tmp2 | (tmp0 << 5);
+                tmp0    =   tmp2 | (tmp0 << 5);
                 *(pDst + (dst_pitch << 1) + 2) = tmp0;
                 *(pDst + (dst_pitch << 1) + 3) = tmp0;
 #endif
@@ -1869,20 +1869,20 @@ int32 cc16scaling128x96(uint8 **src, uint8 *dst, int32 *disp, uint8 *coff_tbl)
                 //load the top two pixels
                 Y = *pY--;
 
-                tmp0	=	(Y >> 8) & 0xFF;	//Low endian	left pixel
-                //tmp0	=	*pY++;
-                tmp0	+= OFFSET_5_0;
+                tmp0    = (Y >> 8) & 0xFF;      //Low endian    left pixel
+                //tmp0  =   *pY++;
+                tmp0    += OFFSET_5_0;
 
-                tmp1	=	tmp0 - (Cg >> 16);
-                tmp2	=	tmp0 + (Cb >> 16);
-                tmp0	=	tmp0 + (Cr >> 16);
+                tmp1    =   tmp0 - (Cg >> 16);
+                tmp2    =   tmp0 + (Cb >> 16);
+                tmp0    =   tmp0 + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
+                tmp2    =   clip[tmp2];
 
-                rgb		=	tmp1 | (tmp0 << 6);
-                rgb		=	tmp2 | (rgb << 5);
+                rgb     =   tmp1 | (tmp0 << 6);
+                rgb     =   tmp2 | (rgb << 5);
 
                 *((pDst)) = rgb;
 #ifdef INTERPOLATE
@@ -1893,27 +1893,27 @@ int32 cc16scaling128x96(uint8 **src, uint8 *dst, int32 *disp, uint8 *coff_tbl)
                 *((pDst + 1)) = rgb;
 #endif
 
-                Y	    =   Y & 0xFF;
-                Y	+= OFFSET_5_1;
-                tmp1	=	(Y) - (Cg >> 16);
-                tmp2	=	(Y) + (Cb >> 16);
-                tmp0	=	(Y) + (Cr >> 16);
+                Y       =   Y & 0xFF;
+                Y   += OFFSET_5_1;
+                tmp1    = (Y) - (Cg >> 16);
+                tmp2    = (Y) + (Cb >> 16);
+                tmp0    = (Y) + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
+                tmp2    =   clip[tmp2];
 
-                tmp0	=	tmp1 | (tmp0 << 6);
+                tmp0    =   tmp1 | (tmp0 << 6);
 #ifdef INTERPOLATE
-                tmp01	=	tmp2 | (tmp0 << 5);
-                *(pDst + 2)	= tmp01;
+                tmp01   =   tmp2 | (tmp0 << 5);
+                *(pDst + 2) = tmp01;
                 *((pDst + 1)) = (((((tmp01      & 0x1F)  + (rgb     & 0x1F)) / 2) & 0x1F)
                                  | ((((((tmp01 >> 5) & 0x3F)  + ((rgb >> 5) & 0x3F)) / 2) & 0x3F) << 5)
                                  | ((((((tmp01 >> 11) & 0x1F)  + ((rgb >> 11) & 0x1F)) / 2) & 0x1F) << 11));
                 pU2 = (pDst + 3);
 #else
-                tmp0	=	tmp2 | (tmp0 << 5);
-                *(pDst + 2)	= tmp0;
+                tmp0    =   tmp2 | (tmp0 << 5);
+                *(pDst + 2) = tmp0;
                 *(pDst + 3) = tmp0;
 #endif
                 pDst += 4;
@@ -1925,26 +1925,26 @@ int32 cc16scaling128x96(uint8 **src, uint8 *dst, int32 *disp, uint8 *coff_tbl)
 
                 Cb -= 128;
                 Cr -= 128;
-                Cg	=	Cr * cc1;
-                Cr	*= cc3;
+                Cg  =   Cr * cc1;
+                Cr  *= cc3;
 
-                Cg	+=	Cb * cc2;
-                Cb	*=  cc4;
+                Cg  +=  Cb * cc2;
+                Cb  *=  cc4;
 
-                tmp0	=	(Y >> 8) & 0xFF;	//Low endian	left pixel
-                tmp0	+= OFFSET_5_1;
+                tmp0    = (Y >> 8) & 0xFF;      //Low endian    left pixel
+                tmp0    += OFFSET_5_1;
 
-                tmp1	=	tmp0 - (Cg >> 16);
-                tmp2	=	tmp0 + (Cb >> 16);
-                tmp0	=	tmp0 + (Cr >> 16);
+                tmp1    =   tmp0 - (Cg >> 16);
+                tmp2    =   tmp0 + (Cb >> 16);
+                tmp0    =   tmp0 + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_1- OFFSET_5_1];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_1- OFFSET_5_1];
+                tmp2    =   clip[tmp2];
                 //RGB_565
 
-                rgb		=	tmp1 | (tmp0 << 6);
-                rgb		=	tmp2 | (rgb << 5);
+                rgb     =   tmp1 | (tmp0 << 6);
+                rgb     =   tmp2 | (rgb << 5);
                 *((pDst + (dst_pitch << 1))) = rgb;
 #ifdef INTERPOLATE
                 *pI2 = (((((tmp02      & 0x1F)  + (rgb     & 0x1F)) / 2) & 0x1F)
@@ -1954,19 +1954,19 @@ int32 cc16scaling128x96(uint8 **src, uint8 *dst, int32 *disp, uint8 *coff_tbl)
                 *((pDst + (dst_pitch << 1) + 1)) = rgb;
 #endif
 
-                Y	    =   Y & 0xFF;
-                Y	+= OFFSET_5_0;
-                tmp1	=	(Y) - (Cg >> 16);
-                tmp2	=	(Y) + (Cb >> 16);
-                tmp0	=	(Y) + (Cr >> 16);
+                Y       =   Y & 0xFF;
+                Y   += OFFSET_5_0;
+                tmp1    = (Y) - (Cg >> 16);
+                tmp2    = (Y) + (Cb >> 16);
+                tmp0    = (Y) + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
+                tmp2    =   clip[tmp2];
                 //RGB_565
 
-                tmp0	=	tmp1 | (tmp0 << 6);
-                tmp0	=	tmp2 | (tmp0 << 5);
+                tmp0    =   tmp1 | (tmp0 << 6);
+                tmp0    =   tmp2 | (tmp0 << 5);
 
                 *(pDst + (dst_pitch << 1) + 2) = tmp0;
 #ifdef INTERPOLATE
@@ -1977,20 +1977,20 @@ int32 cc16scaling128x96(uint8 **src, uint8 *dst, int32 *disp, uint8 *coff_tbl)
                 //load the top two pixels
                 Y = *pY--;
 
-                tmp0	=	(Y >> 8) & 0xFF;	//Low endian	left pixel
-                //tmp0	=	*pY++;
-                tmp0	+= OFFSET_5_0;
+                tmp0    = (Y >> 8) & 0xFF;      //Low endian    left pixel
+                //tmp0  =   *pY++;
+                tmp0    += OFFSET_5_0;
 
-                tmp1	=	tmp0 - (Cg >> 16);
-                tmp2	=	tmp0 + (Cb >> 16);
-                tmp0	=	tmp0 + (Cr >> 16);
+                tmp1    =   tmp0 - (Cg >> 16);
+                tmp2    =   tmp0 + (Cb >> 16);
+                tmp0    =   tmp0 + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
+                tmp2    =   clip[tmp2];
 
-                rgb		=	tmp1 | (tmp0 << 6);
-                rgb		=	tmp2 | (rgb << 5);
+                rgb     =   tmp1 | (tmp0 << 6);
+                rgb     =   tmp2 | (rgb << 5);
 
                 *((pDst)) = rgb;
 #ifdef INTERPOLATE
@@ -2001,20 +2001,20 @@ int32 cc16scaling128x96(uint8 **src, uint8 *dst, int32 *disp, uint8 *coff_tbl)
                 *((pDst + 1)) = rgb;
 #endif
 
-                Y	    =   Y & 0xFF;
-                Y	+= OFFSET_5_1;
-                tmp1	=	(Y) - (Cg >> 16);
-                tmp2	=	(Y) + (Cb >> 16);
-                tmp0	=	(Y) + (Cr >> 16);
+                Y       =   Y & 0xFF;
+                Y   += OFFSET_5_1;
+                tmp1    = (Y) - (Cg >> 16);
+                tmp2    = (Y) + (Cb >> 16);
+                tmp0    = (Y) + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
+                tmp2    =   clip[tmp2];
 
-                tmp0	=	tmp1 | (tmp0 << 6);
-                tmp0	=	tmp2 | (tmp0 << 5);
+                tmp0    =   tmp1 | (tmp0 << 6);
+                tmp0    =   tmp2 | (tmp0 << 5);
 
-                *(pDst + 2)	= tmp0;
+                *(pDst + 2) = tmp0;
 #ifdef INTERPOLATE
                 *((pDst + 1)) = (((((tmp0      & 0x1F)  + (rgb     & 0x1F)) / 2) & 0x1F)
                                  | ((((((tmp0 >> 5) & 0x3F)  + ((rgb >> 5) & 0x3F)) / 2) & 0x3F) << 5)
@@ -2024,9 +2024,9 @@ int32 cc16scaling128x96(uint8 **src, uint8 *dst, int32 *disp, uint8 *coff_tbl)
 
             }//end of COL
 
-            pY	+=	(deltaY >> 1);
-            pCb	+=	deltaCbCr;
-            pCr	+=	deltaCbCr;
+            pY  += (deltaY >> 1);
+            pCb +=  deltaCbCr;
+            pCr +=  deltaCbCr;
 
             pDst -= (disp[4]);
 #ifdef INTERPOLATE
@@ -2035,7 +2035,7 @@ int32 cc16scaling128x96(uint8 **src, uint8 *dst, int32 *disp, uint8 *coff_tbl)
             {
                 pIn = pDst - dst_pitch;
                 pNext = pIn - dst_pitch;
-                for (i = 0;i < disp[4]; i++)
+                for (i = 0; i < disp[4]; i++)
                 {
                     int32 curr = pDst[i];
                     int32 below = pNext[i];
@@ -2048,7 +2048,7 @@ int32 cc16scaling128x96(uint8 **src, uint8 *dst, int32 *disp, uint8 *coff_tbl)
 
             pNext = pDst + (dst_pitch * 2);
             pIn = pDst + dst_pitch;
-            for (i = 0;i < disp[4]; i++)
+            for (i = 0; i < disp[4]; i++)
             {
                 int32 curr = pDst[i];
                 int32 below = pNext[i];
@@ -2071,7 +2071,7 @@ int32 cc16scaling128x96(uint8 **src, uint8 *dst, int32 *disp, uint8 *coff_tbl)
             if (row & 0x7)
             {
                 oscl_memcpy(pDst + dst_pitch, pDst, (disp[4] << 1));
-                pDst +=	dst_pitch;	//coz pDst defined as UINT *
+                pDst += dst_pitch;  //coz pDst defined as UINT *
             }
             pDst += dst_pitch;
 #endif
@@ -2094,18 +2094,18 @@ int32 cc16scaledown(uint8 **src, uint8 *dst, int32 *disp,
                     uint8 *coff_tbl, uint8 *_mRowPix, uint8 *_mColPix)
 {
 #if CCSCALING
-    /*	1. move the dst pointer to the line above the border
+    /*  1. move the dst pointer to the line above the border
     2. do 2 line conversion
     3. copy both up & down
-    	*/
+        */
     uint8 *pCb, *pCr;
-    uint8	*pY;
-    uint16	*pDst;
-    int32		src_pitch, dst_pitch, src_width;
-    int32		Y, Cb, Cr, Cg;
-    int32		deltaY, dst_width, deltaCbCr, src_inc;
-    int32		row, col;
-    int32		tmp0, tmp1, tmp2;
+    uint8   *pY;
+    uint16  *pDst;
+    int32       src_pitch, dst_pitch, src_width;
+    int32       Y, Cb, Cr, Cg;
+    int32       deltaY, dst_width, deltaCbCr, src_inc;
+    int32       row, col;
+    int32       tmp0, tmp1, tmp2;
     uint8 *clip = coff_tbl + 400;
     uint8 *rowpix, *colpix;
     int32  cc1 = (*((int32*)(clip - 400)));
@@ -2113,9 +2113,9 @@ int32 cc16scaledown(uint8 **src, uint8 *dst, int32 *disp,
     int32  cc2 = (*((int32*)(clip - 392)));
     int32  cc4 = (*((int32*)(clip - 388)));
 
-    src_pitch	=	disp[0];
-    dst_pitch	=	disp[1];
-    src_width	=	disp[2];
+    src_pitch   =   disp[0];
+    dst_pitch   =   disp[1];
+    src_width   =   disp[2];
 
 
     if (((disp[6] == 0) && (disp[7] == 1)) || ((disp[6] == 1) && (disp[7] == 0)))  // rotate 0 and flip || // rotate 180 and  no flip
@@ -2128,8 +2128,8 @@ int32 cc16scaledown(uint8 **src, uint8 *dst, int32 *disp,
             deltaY = (src_pitch >> 1) * ((disp[3] >> 1) - 1);
             pCb = src[1] + deltaY + (src_width >> 1) - 1;
             pCr = src[2] + deltaY + (src_width >> 1) - 1;
-            deltaY		=	src_width - (src_pitch << 1);
-            deltaCbCr	=	(src_width - src_pitch) >> 1;
+            deltaY      =   src_width - (src_pitch << 1);
+            deltaCbCr   = (src_width - src_pitch) >> 1;
             src_pitch = -src_pitch;
         }
         else /* flip only */
@@ -2146,7 +2146,7 @@ int32 cc16scaledown(uint8 **src, uint8 *dst, int32 *disp,
     }
     else // rotate 180 and flip ||  no rotate, no flip
     {
-        if (disp[6])	// rotate 180 and flip
+        if (disp[6])    // rotate 180 and flip
         {
             /* move the starting point to the bottom-left corner of the picture */
             deltaY = src_pitch * (disp[3] - 1);
@@ -2160,9 +2160,9 @@ int32 cc16scaledown(uint8 **src, uint8 *dst, int32 *disp,
         }
         else  // no rotate, no flip
         {
-            deltaY		=	(src_pitch << 1) - src_width;
-            deltaCbCr	=	(src_pitch - src_width) >> 1;
-            dst_width	=	disp[4];
+            deltaY      = (src_pitch << 1) - src_width;
+            deltaCbCr   = (src_pitch - src_width) >> 1;
+            dst_width   =   disp[4];
             pY = src[0];
             pCb = src[1];
             pCr = src[2];
@@ -2177,7 +2177,7 @@ int32 cc16scaledown(uint8 **src, uint8 *dst, int32 *disp,
 
     for (row = disp[3] - 1; row >= 0; row -= 2)
     {/* decrement index, _mColPix[.] is
-		symmetric to increment index */
+        symmetric to increment index */
         if (colpix[-1] + colpix[0] == 0)
         {
             pCb += (src_pitch >> 1);
@@ -2193,7 +2193,7 @@ int32 cc16scaledown(uint8 **src, uint8 *dst, int32 *disp,
         {
             for (col = src_width - 2; col >= 0; col -= 2)
             { /* decrement index, _mRowPix[.] is
-				symmetric to increment index */
+                symmetric to increment index */
 
                 Cb = *pCb;
                 (pCb += src_inc);
@@ -2202,62 +2202,62 @@ int32 cc16scaledown(uint8 **src, uint8 *dst, int32 *disp,
 
                 Cb -= 128;
                 Cr -= 128;
-                Cg	=	Cr * cc1;
-                Cr	*= cc3;
+                Cg  =   Cr * cc1;
+                Cr  *= cc3;
 
-                Cg	+=	Cb * cc2;
-                Cb	*=  cc4;
+                Cg  +=  Cb * cc2;
+                Cb  *=  cc4;
 
                 if (*rowpix) /* compute this pixel */
                 {
-                    Y	=	*pY;
-                    (pY += src_inc);						//upper left
+                    Y   =   *pY;
+                    (pY += src_inc);                        //upper left
 
-                    tmp1	=	Y - (Cg >> 16);
-                    tmp2	=	Y + (Cb >> 16);
-                    tmp0	=	Y + (Cr >> 16);
+                    tmp1    =   Y - (Cg >> 16);
+                    tmp2    =   Y + (Cb >> 16);
+                    tmp0    =   Y + (Cr >> 16);
 
-                    tmp0	=	clip[tmp0];
-                    tmp1	=	clip[tmp1 + 1024];
-                    tmp2	=	clip[tmp2];
+                    tmp0    =   clip[tmp0];
+                    tmp1    =   clip[tmp1 + 1024];
+                    tmp2    =   clip[tmp2];
 
                     //RGB_565
-                    tmp0	=	tmp1 | (tmp0 << 6);
-                    tmp0	=	tmp2 | (tmp0 << 5);
+                    tmp0    =   tmp1 | (tmp0 << 6);
+                    tmp0    =   tmp2 | (tmp0 << 5);
 
-                    *(pDst)	= (uint16)tmp0;
+                    *(pDst) = (uint16)tmp0;
 
                 }
                 else  /* if(_mRowPix[col]) */
                 {
                     pY += src_inc;
                 }
-                pDst	+= *rowpix--;
+                pDst    += *rowpix--;
 
                 if (*rowpix) /* compute this pixel */
                 {
-                    Y	=	*pY;
-                    (pY += src_inc);							//upper right
+                    Y   =   *pY;
+                    (pY += src_inc);                            //upper right
 
-                    tmp1	=	Y - (Cg >> 16);
-                    tmp2	=	Y + (Cb >> 16);
-                    tmp0	=	Y + (Cr >> 16);
+                    tmp1    =   Y - (Cg >> 16);
+                    tmp2    =   Y + (Cb >> 16);
+                    tmp0    =   Y + (Cr >> 16);
 
-                    tmp0	=	clip[tmp0];
-                    tmp1	=	clip[tmp1 + 1024];
-                    tmp2	=	clip[tmp2];
+                    tmp0    =   clip[tmp0];
+                    tmp1    =   clip[tmp1 + 1024];
+                    tmp2    =   clip[tmp2];
 
-                    tmp0	=	tmp1 | (tmp0 << 6);
-                    tmp0	=	tmp2 | (tmp0 << 5);
+                    tmp0    =   tmp1 | (tmp0 << 6);
+                    tmp0    =   tmp2 | (tmp0 << 5);
 
-                    *(pDst)	= (uint16)tmp0;
+                    *(pDst) = (uint16)tmp0;
                 }
                 else  /* if(_mRowPix[col+1]) */
                 {
                     pY += src_inc;
                 }
 
-                pDst	+= *rowpix--;
+                pDst    += *rowpix--;
             }//end of COL
 
         }  // one line not skipped
@@ -2267,7 +2267,7 @@ int32 cc16scaledown(uint8 **src, uint8 *dst, int32 *disp,
         {
             for (col = src_width - 2; col >= 0; col -= 2)
             { /* decrement index, _mRowPix[.] is
-				symmetric to increment index */
+                symmetric to increment index */
 
                 Cb = *pCb;
                 (pCb += src_inc);
@@ -2276,109 +2276,109 @@ int32 cc16scaledown(uint8 **src, uint8 *dst, int32 *disp,
 
                 Cb -= 128;
                 Cr -= 128;
-                Cg	=	Cr * cc1;
-                Cr	*= cc3;
+                Cg  =   Cr * cc1;
+                Cr  *= cc3;
 
-                Cg	+=	Cb * cc2;
-                Cb	*=  cc4;
+                Cg  +=  Cb * cc2;
+                Cb  *=  cc4;
 
                 if (*rowpix) /* compute this pixel */
                 {
-                    Y	=	pY[src_pitch];						//lower left
+                    Y   =   pY[src_pitch];                      //lower left
 
                     Y += OFFSET_5_1;
-                    tmp1	=	Y - (Cg >> 16);
-                    tmp2	=	Y + (Cb >> 16);
-                    tmp0	=	Y + (Cr >> 16);
+                    tmp1    =   Y - (Cg >> 16);
+                    tmp2    =   Y + (Cb >> 16);
+                    tmp0    =   Y + (Cr >> 16);
 
-                    tmp0	=	clip[tmp0];
-                    tmp1	=	clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
-                    tmp2	=	clip[tmp2];
+                    tmp0    =   clip[tmp0];
+                    tmp1    =   clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
+                    tmp2    =   clip[tmp2];
 
                     //RGB_565
-                    tmp0	=	tmp1 | (tmp0 << 6);
-                    tmp0	=	tmp2 | (tmp0 << 5);
+                    tmp0    =   tmp1 | (tmp0 << 6);
+                    tmp0    =   tmp2 | (tmp0 << 5);
 
-                    *(pDst + dst_pitch)	= (uint16)tmp0;
+                    *(pDst + dst_pitch) = (uint16)tmp0;
 
-                    Y	=	*pY;
-                    (pY += src_inc);						//upper left
+                    Y   =   *pY;
+                    (pY += src_inc);                        //upper left
 
                     Y += OFFSET_5_0;
-                    tmp1	=	Y - (Cg >> 16);
-                    tmp2	=	Y + (Cb >> 16);
-                    tmp0	=	Y + (Cr >> 16);
+                    tmp1    =   Y - (Cg >> 16);
+                    tmp2    =   Y + (Cb >> 16);
+                    tmp0    =   Y + (Cr >> 16);
 
-                    tmp0	=	clip[tmp0];
-                    tmp1	=	clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
-                    tmp2	=	clip[tmp2];
+                    tmp0    =   clip[tmp0];
+                    tmp1    =   clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
+                    tmp2    =   clip[tmp2];
 
                     //RGB_565
-                    tmp0	=	tmp1 | (tmp0 << 6);
-                    tmp0	=	tmp2 | (tmp0 << 5);
+                    tmp0    =   tmp1 | (tmp0 << 6);
+                    tmp0    =   tmp2 | (tmp0 << 5);
 
-                    *(pDst)	= (uint16)tmp0;
+                    *(pDst) = (uint16)tmp0;
 
                 }
                 else  /* if(_mRowPix[col]) */
                 {
                     pY += src_inc;
                 }
-                pDst	+= *rowpix--;
+                pDst    += *rowpix--;
 
                 if (*rowpix) /* compute this pixel */
                 {
-                    Y	=	pY[src_pitch];						//lower left
+                    Y   =   pY[src_pitch];                      //lower left
 
                     Y += OFFSET_5_0;
-                    tmp1	=	Y - (Cg >> 16);
-                    tmp2	=	Y + (Cb >> 16);
-                    tmp0	=	Y + (Cr >> 16);
+                    tmp1    =   Y - (Cg >> 16);
+                    tmp2    =   Y + (Cb >> 16);
+                    tmp0    =   Y + (Cr >> 16);
 
-                    tmp0	=	clip[tmp0];
-                    tmp1	=	clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
-                    tmp2	=	clip[tmp2];
+                    tmp0    =   clip[tmp0];
+                    tmp1    =   clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
+                    tmp2    =   clip[tmp2];
 
                     //RGB_565
-                    tmp0	=	tmp1 | (tmp0 << 6);
-                    tmp0	=	tmp2 | (tmp0 << 5);
+                    tmp0    =   tmp1 | (tmp0 << 6);
+                    tmp0    =   tmp2 | (tmp0 << 5);
 
-                    *(pDst + dst_pitch)	= (uint16)tmp0;
+                    *(pDst + dst_pitch) = (uint16)tmp0;
 
-                    Y	=	*pY;
-                    (pY += src_inc);							//upper right
+                    Y   =   *pY;
+                    (pY += src_inc);                            //upper right
 
                     Y += OFFSET_5_1;
-                    tmp1	=	Y - (Cg >> 16);
-                    tmp2	=	Y + (Cb >> 16);
-                    tmp0	=	Y + (Cr >> 16);
+                    tmp1    =   Y - (Cg >> 16);
+                    tmp2    =   Y + (Cb >> 16);
+                    tmp0    =   Y + (Cr >> 16);
 
-                    tmp0	=	clip[tmp0];
-                    tmp1	=	clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
-                    tmp2	=	clip[tmp2];
+                    tmp0    =   clip[tmp0];
+                    tmp1    =   clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
+                    tmp2    =   clip[tmp2];
 
-                    tmp0	=	tmp1 | (tmp0 << 6);
-                    tmp0	=	tmp2 | (tmp0 << 5);
+                    tmp0    =   tmp1 | (tmp0 << 6);
+                    tmp0    =   tmp2 | (tmp0 << 5);
 
-                    *(pDst)	= (uint16)tmp0;
+                    *(pDst) = (uint16)tmp0;
                 }
                 else  /* if(_mRowPix[col+1]) */
                 {
                     pY += src_inc;
                 }
 
-                pDst	+= *rowpix--;
+                pDst    += *rowpix--;
             }//end of COL
 
             pDst += dst_pitch;
 
         }
 
-        pY	+=	(deltaY);
-        pCb	+=	deltaCbCr;
-        pCr	+=	deltaCbCr;
+        pY  += (deltaY);
+        pCb +=  deltaCbCr;
+        pCr +=  deltaCbCr;
 
-        pDst	+=	dst_pitch - disp[4];
+        pDst    +=  dst_pitch - disp[4];
         colpix -= 2;
 
     }
@@ -2400,28 +2400,28 @@ int32 cc16scalingHalf(uint8 **src, uint8 *dst, int32 *disp, uint8 *coff_tbl)
 {
 #if CCSCALING
     uint8 *pCb, *pCr;
-    uint16	*pY;
-    uint16	*pDst;
-    int32		src_pitch, dst_pitch, src_width, nextrow;
-    int32		Y, Cb, Cr, Cg;
-    int32		deltaY, deltaCbCr;
-    int32		row, col;
-    int32		tmp0, tmp1, tmp2;
-    uint32	rgb;
+    uint16  *pY;
+    uint16  *pDst;
+    int32       src_pitch, dst_pitch, src_width, nextrow;
+    int32       Y, Cb, Cr, Cg;
+    int32       deltaY, deltaCbCr;
+    int32       row, col;
+    int32       tmp0, tmp1, tmp2;
+    uint32  rgb;
     uint8 *clip = coff_tbl + 400;
     int32  cc1 = (*((int32*)(clip - 400)));
     int32  cc3 = (*((int32*)(clip - 396)));
     int32  cc2 = (*((int32*)(clip - 392)));
     int32  cc4 = (*((int32*)(clip - 388)));
 
-    src_pitch	=	disp[0];
-    dst_pitch	=	disp[1];
-    src_width	=	disp[2];
+    src_pitch   =   disp[0];
+    dst_pitch   =   disp[1];
+    src_width   =   disp[2];
 
     if (((disp[6] == 1) && (disp[7] == 1)) || ((disp[6] == 0) && (disp[7] == 0)))
     {
         if (disp[6])/* rotate 180 and flip */
-        {	/* move the starting point to the bottom-left corner of the picture */
+        {   /* move the starting point to the bottom-left corner of the picture */
             deltaY = src_pitch * (disp[3] - 1);
             pY = (uint16*)(src[0] + deltaY);
             deltaY = (src_pitch >> 1) * ((disp[3] >> 1) - 1);
@@ -2433,8 +2433,8 @@ int32 cc16scalingHalf(uint8 **src, uint8 *dst, int32 *disp, uint8 *coff_tbl)
         }
         else // no rotate,no flip
         {
-            deltaY		=	(src_pitch << 1) - src_width;
-            deltaCbCr	=	(src_pitch - src_width) >> 1;
+            deltaY      = (src_pitch << 1) - src_width;
+            deltaCbCr   = (src_pitch - src_width) >> 1;
             pY = (uint16 *) src[0];
             src_pitch >>= 1;
             pCb = src[1];
@@ -2453,30 +2453,30 @@ int32 cc16scalingHalf(uint8 **src, uint8 *dst, int32 *disp, uint8 *coff_tbl)
 
                 Cb -= 128;
                 Cr -= 128;
-                Cg	=	Cr * cc1;
-                Cr	*= cc3;
+                Cg  =   Cr * cc1;
+                Cr  *= cc3;
 
-                Cg	+=	Cb * cc2;
-                Cb	*=  cc4;
-                tmp0	=	Y & 0xFF;	//Low endian	left pixel
-                tmp1	=	tmp0 - (Cg >> 16);
-                tmp2	=	tmp0 + (Cb >> 16);
-                tmp0	=	tmp0 + (Cr >> 16);
+                Cg  +=  Cb * cc2;
+                Cb  *=  cc4;
+                tmp0    =   Y & 0xFF;   //Low endian    left pixel
+                tmp1    =   tmp0 - (Cg >> 16);
+                tmp2    =   tmp0 + (Cb >> 16);
+                tmp0    =   tmp0 + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + 1024];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + 1024];
+                tmp2    =   clip[tmp2];
 
 
-                rgb		=	tmp1 | (tmp0 << 6);
-                rgb		=	tmp2 | (rgb << 5);
+                rgb     =   tmp1 | (tmp0 << 6);
+                rgb     =   tmp2 | (rgb << 5);
 
                 *pDst++ = rgb;
             }//end of COL
 
-            pY	+=	(deltaY >> 1);
-            pCb	+=	deltaCbCr;
-            pCr	+=	deltaCbCr;
+            pY  += (deltaY >> 1);
+            pCb +=  deltaCbCr;
+            pCr +=  deltaCbCr;
             pDst -= (disp[4]);
             pDst += dst_pitch;
         }
@@ -2492,8 +2492,8 @@ int32 cc16scalingHalf(uint8 **src, uint8 *dst, int32 *disp, uint8 *coff_tbl)
             pCb = src[1] + nextrow + (src_width >> 1) - 1;
             pCr = src[2] + nextrow + (src_width >> 1) - 1;
             nextrow = -(src_pitch >> 1);
-            deltaY		=	src_width - (src_pitch << 1);
-            deltaCbCr	=	(src_width - src_pitch) >> 1;
+            deltaY      =   src_width - (src_pitch << 1);
+            deltaCbCr   = (src_width - src_pitch) >> 1;
         }
         else /* flip only */
         {
@@ -2516,29 +2516,29 @@ int32 cc16scalingHalf(uint8 **src, uint8 *dst, int32 *disp, uint8 *coff_tbl)
 
                 Cb -= 128;
                 Cr -= 128;
-                Cg	=	Cr * cc1;
-                Cr	*= cc3;
+                Cg  =   Cr * cc1;
+                Cr  *= cc3;
 
-                Cg	+=	Cb * cc2;
-                Cb	*=  cc4;
-                tmp0	=	Y & 0xFF;	//Low endian	left pixel
-                tmp1	=	tmp0 - (Cg >> 16);
-                tmp2	=	tmp0 + (Cb >> 16);
-                tmp0	=	tmp0 + (Cr >> 16);
+                Cg  +=  Cb * cc2;
+                Cb  *=  cc4;
+                tmp0    =   Y & 0xFF;   //Low endian    left pixel
+                tmp1    =   tmp0 - (Cg >> 16);
+                tmp2    =   tmp0 + (Cb >> 16);
+                tmp0    =   tmp0 + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + 1024];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + 1024];
+                tmp2    =   clip[tmp2];
 
-                rgb		=	tmp1 | (tmp0 << 6);
-                rgb		=	tmp2 | (rgb << 5);
+                rgb     =   tmp1 | (tmp0 << 6);
+                rgb     =   tmp2 | (rgb << 5);
 
                 *pDst++ = rgb;
             }//end of COL
 
-            pY	+=	(deltaY >> 1);
-            pCb	+=	deltaCbCr;
-            pCr	+=	deltaCbCr;
+            pY  += (deltaY >> 1);
+            pCb +=  deltaCbCr;
+            pCr +=  deltaCbCr;
 
             pDst -= (disp[4]);
             pDst += dst_pitch;
@@ -2562,30 +2562,30 @@ int32 cc16scaling34(uint8 **src, uint8 *dst,
 {
 #if CCSCALING
     uint8 *pCb, *pCr;
-    uint16	*pY;
-    uint16	*pDst;
-    int32		src_pitch, dst_pitch, src_width;
-    int32		Y, Cb, Cr, Cg;
-    int32		deltaY, deltaDst, deltaCbCr;
-    int32		row, col;
-    int32		tmp0, tmp1, tmp2;
-    uint32	rgb;
+    uint16  *pY;
+    uint16  *pDst;
+    int32       src_pitch, dst_pitch, src_width;
+    int32       Y, Cb, Cr, Cg;
+    int32       deltaY, deltaDst, deltaCbCr;
+    int32       row, col;
+    int32       tmp0, tmp1, tmp2;
+    uint32  rgb;
     uint8 *clip = coff_tbl + 400;
     int32  cc1 = (*((int32*)(clip - 400)));
     int32  cc3 = (*((int32*)(clip - 396)));
     int32  cc2 = (*((int32*)(clip - 392)));
     int32  cc4 = (*((int32*)(clip - 388)));
 
-    src_pitch	=	disp[0];
-    dst_pitch	=	disp[1];
-    src_width	=	disp[2];
+    src_pitch   =   disp[0];
+    dst_pitch   =   disp[1];
+    src_width   =   disp[2];
 
     if (((disp[6] == 0) && (disp[7] == 1)) || ((disp[6] == 1) && (disp[7] == 0))) /* rotate 180 and  no flip, rotate 0 and  flip *///Ankur
     {
         if (disp[6] == 0)
         {
-            deltaY		=	(src_pitch << 1) - src_width;
-            deltaCbCr	=	(src_pitch - src_width) >> 1;
+            deltaY      = (src_pitch << 1) - src_width;
+            deltaCbCr   = (src_pitch - src_width) >> 1;
             pY = (uint16 *) src[0];
             src_pitch >>= 1;
             pCb = src[1];
@@ -2604,8 +2604,8 @@ int32 cc16scaling34(uint8 **src, uint8 *dst,
             src_pitch = -(src_pitch >> 1);
         }
 
-        pDst =	(uint16 *)dst + disp[4] - 1;
-        deltaDst	=	(dst_pitch << 1) + disp[4]; /* disp[4] is dst_width */
+        pDst = (uint16 *)dst + disp[4] - 1;
+        deltaDst    = (dst_pitch << 1) + disp[4];   /* disp[4] is dst_width */
 
         for (row = disp[3]; row > 0; row -= 2)
         {
@@ -2617,139 +2617,139 @@ int32 cc16scaling34(uint8 **src, uint8 *dst,
                 Cr = *pCr++;
                 Cb -= 128;
                 Cr -= 128;
-                Cg	=	Cr * cc1;
-                Cr	*= cc3;
+                Cg  =   Cr * cc1;
+                Cr  *= cc3;
 
-                Cg	+=	Cb * cc2;
-                Cb	*=  cc4;
+                Cg  +=  Cb * cc2;
+                Cb  *=  cc4;
 
                 if (!(row&0x2)) /* do the bottom row every other times */
                 {
                     //load the bottom two pixels
                     Y = pY[src_pitch];
 
-                    tmp0	=	Y & 0xFF;	//Low endian	left pixel
-                    tmp0	+= OFFSET_5_0;
+                    tmp0    =   Y & 0xFF;   //Low endian    left pixel
+                    tmp0    += OFFSET_5_0;
 
-                    tmp1	=	tmp0 - (Cg >> 16);
-                    tmp2	=	tmp0 + (Cb >> 16);
-                    tmp0	=	tmp0 + (Cr >> 16);
+                    tmp1    =   tmp0 - (Cg >> 16);
+                    tmp2    =   tmp0 + (Cb >> 16);
+                    tmp0    =   tmp0 + (Cr >> 16);
 
-                    tmp0	=	clip[tmp0];
-                    tmp1	=	clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
-                    tmp2	=	clip[tmp2];
+                    tmp0    =   clip[tmp0];
+                    tmp1    =   clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
+                    tmp2    =   clip[tmp2];
                     //RGB_565
 
-                    rgb		=	tmp1 | (tmp0 << 6);
-                    rgb		=	tmp2 | (rgb << 5);
+                    rgb     =   tmp1 | (tmp0 << 6);
+                    rgb     =   tmp2 | (rgb << 5);
                     *(pDst + dst_pitch) = rgb;  /* save left pixel, have to save separately */
 
-                    Y	>>=	8;
-                    Y	+= OFFSET_5_1;
-                    tmp1	=	(Y) - (Cg >> 16);
-                    tmp2	=	(Y) + (Cb >> 16);
-                    tmp0	=	(Y) + (Cr >> 16);
+                    Y   >>= 8;
+                    Y   += OFFSET_5_1;
+                    tmp1    = (Y) - (Cg >> 16);
+                    tmp2    = (Y) + (Cb >> 16);
+                    tmp0    = (Y) + (Cr >> 16);
 
-                    tmp0	=	clip[tmp0];
-                    tmp1	=	clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
-                    tmp2	=	clip[tmp2];
+                    tmp0    =   clip[tmp0];
+                    tmp1    =   clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
+                    tmp2    =   clip[tmp2];
                     //RGB_565
-                    tmp0	=	tmp1 | (tmp0 << 6);
-                    tmp0	=	tmp2 | (tmp0 << 5);
+                    tmp0    =   tmp1 | (tmp0 << 6);
+                    tmp0    =   tmp2 | (tmp0 << 5);
 
                     *(pDst + dst_pitch - 1) = tmp0; /* save right pixel */
                 }
                 //load the top two pixels
                 Y = *pY++;
 
-                tmp0	=	Y & 0xFF;	//Low endian	left pixel
-                tmp0	+= OFFSET_5_1;
+                tmp0    =   Y & 0xFF;   //Low endian    left pixel
+                tmp0    += OFFSET_5_1;
 
-                tmp1	=	tmp0 - (Cg >> 16);
-                tmp2	=	tmp0 + (Cb >> 16);
-                tmp0	=	tmp0 + (Cr >> 16);
+                tmp1    =   tmp0 - (Cg >> 16);
+                tmp2    =   tmp0 + (Cb >> 16);
+                tmp0    =   tmp0 + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
+                tmp2    =   clip[tmp2];
 
-                rgb		=	tmp1 | (tmp0 << 6);
-                rgb		=	tmp2 | (rgb << 5);
-                *pDst--	=	rgb;	/* save left pixel */
+                rgb     =   tmp1 | (tmp0 << 6);
+                rgb     =   tmp2 | (rgb << 5);
+                *pDst-- =   rgb;    /* save left pixel */
 
-                Y	>>=	8;
+                Y   >>= 8;
 
-                Y	+= OFFSET_5_0;
-                tmp1	=	(Y) - (Cg >> 16);
-                tmp2	=	(Y) + (Cb >> 16);
-                tmp0	=	(Y) + (Cr >> 16);
+                Y   += OFFSET_5_0;
+                tmp1    = (Y) - (Cg >> 16);
+                tmp2    = (Y) + (Cb >> 16);
+                tmp0    = (Y) + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
+                tmp2    =   clip[tmp2];
 
-                tmp0	=	tmp1 | (tmp0 << 6);
-                tmp0	=	tmp2 | (tmp0 << 5);
+                tmp0    =   tmp1 | (tmp0 << 6);
+                tmp0    =   tmp2 | (tmp0 << 5);
 
-                *pDst--	= tmp0;	/* save right pixel */
+                *pDst-- = tmp0; /* save right pixel */
 
                 /* now do another 4 pixels but drop 2 pixels in the last column */
                 Cb = *pCb++;
                 Cr = *pCr++;
                 Cb -= 128;
                 Cr -= 128;
-                Cg	=	Cr * cc1;
-                Cr	*= cc3;
+                Cg  =   Cr * cc1;
+                Cr  *= cc3;
 
-                Cg	+=	Cb * cc2;
-                Cb	*=  cc4;
+                Cg  +=  Cb * cc2;
+                Cb  *=  cc4;
                 //load the bottom two pixels
                 if (!(row&0x2)) /* do the bottom row every other times */
                 {
                     Y = pY[src_pitch];
 
-                    tmp0	=	Y & 0xFF;	//Low endian	left pixel
-                    tmp0	+= OFFSET_5_0;
+                    tmp0    =   Y & 0xFF;   //Low endian    left pixel
+                    tmp0    += OFFSET_5_0;
 
-                    tmp1	=	tmp0 - (Cg >> 16);
-                    tmp2	=	tmp0 + (Cb >> 16);
-                    tmp0	=	tmp0 + (Cr >> 16);
+                    tmp1    =   tmp0 - (Cg >> 16);
+                    tmp2    =   tmp0 + (Cb >> 16);
+                    tmp0    =   tmp0 + (Cr >> 16);
 
-                    tmp0	=	clip[tmp0];
-                    tmp1	=	clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
-                    tmp2	=	clip[tmp2];
+                    tmp0    =   clip[tmp0];
+                    tmp1    =   clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
+                    tmp2    =   clip[tmp2];
                     //RGB_565
 
-                    rgb		=	tmp1 | (tmp0 << 6);
-                    rgb		=	tmp2 | (rgb << 5);
+                    rgb     =   tmp1 | (tmp0 << 6);
+                    rgb     =   tmp2 | (rgb << 5);
 
                     *(pDst + dst_pitch) = rgb;  /* save only one pixel, 2 bytes */
                 }
                 //load the top two pixels
                 Y = *pY++;
 
-                tmp0	=	Y & 0xFF;	//Low endian	left pixel
-                tmp0	+= OFFSET_5_1;
+                tmp0    =   Y & 0xFF;   //Low endian    left pixel
+                tmp0    += OFFSET_5_1;
 
-                tmp1	=	tmp0 - (Cg >> 16);
-                tmp2	=	tmp0 + (Cb >> 16);
-                tmp0	=	tmp0 + (Cr >> 16);
+                tmp1    =   tmp0 - (Cg >> 16);
+                tmp2    =   tmp0 + (Cb >> 16);
+                tmp0    =   tmp0 + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
+                tmp2    =   clip[tmp2];
 
-                rgb		=	tmp1 | (tmp0 << 6);
-                rgb		=	tmp2 | (rgb << 5);
+                rgb     =   tmp1 | (tmp0 << 6);
+                rgb     =   tmp2 | (rgb << 5);
 
-                *pDst	= rgb;
+                *pDst   = rgb;
                 pDst--; /* save only one pixel, 2 bytes */
             }//end of COL
 
-            pY	+=	(deltaY >> 1);
-            pCb	+=	deltaCbCr;
-            pCr	+=	deltaCbCr;
-            pDst +=	(deltaDst);	//coz pDst defined as UINT *
+            pY  += (deltaY >> 1);
+            pCb +=  deltaCbCr;
+            pCr +=  deltaCbCr;
+            pDst += (deltaDst); //coz pDst defined as UINT *
             if (row&0x2)
             {
                 pDst -= dst_pitch;
@@ -2772,16 +2772,16 @@ int32 cc16scaling34(uint8 **src, uint8 *dst,
         }
         else // no rotation,no flip
         {
-            deltaY		=	(src_pitch << 1) - src_width;
-            deltaCbCr	=	(src_pitch - src_width) >> 1;
+            deltaY      = (src_pitch << 1) - src_width;
+            deltaCbCr   = (src_pitch - src_width) >> 1;
             pY = (uint16 *) src[0];
             src_pitch >>= 1;
             pCb = src[1];
             pCr = src[2];
         }
 
-        deltaDst	=	(dst_pitch << 1) - disp[4]; /* disp[4] is dst_width */
-        pDst =	(uint16 *)dst;
+        deltaDst    = (dst_pitch << 1) - disp[4];   /* disp[4] is dst_width */
+        pDst = (uint16 *)dst;
 
         for (row = disp[3]; row > 0; row -= 2)
         {
@@ -2793,138 +2793,138 @@ int32 cc16scaling34(uint8 **src, uint8 *dst,
                 Cr = *pCr++;
                 Cb -= 128;
                 Cr -= 128;
-                Cg	=	Cr * cc1;
-                Cr	*= cc3;
+                Cg  =   Cr * cc1;
+                Cr  *= cc3;
 
-                Cg	+=	Cb * cc2;
-                Cb	*=  cc4;
+                Cg  +=  Cb * cc2;
+                Cb  *=  cc4;
 
                 if (!(row&0x2)) /* do the bottom row every other times */
-                {	//load the bottom two pixels
+                {   //load the bottom two pixels
                     Y = pY[src_pitch];
 
-                    tmp0	=	Y & 0xFF;	//Low endian	left pixel
-                    tmp0	+= OFFSET_5_0;
+                    tmp0    =   Y & 0xFF;   //Low endian    left pixel
+                    tmp0    += OFFSET_5_0;
 
-                    tmp1	=	tmp0 - (Cg >> 16);
-                    tmp2	=	tmp0 + (Cb >> 16);
-                    tmp0	=	tmp0 + (Cr >> 16);
+                    tmp1    =   tmp0 - (Cg >> 16);
+                    tmp2    =   tmp0 + (Cb >> 16);
+                    tmp0    =   tmp0 + (Cr >> 16);
 
-                    tmp0	=	clip[tmp0];
-                    tmp1	=	clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
-                    tmp2	=	clip[tmp2];
+                    tmp0    =   clip[tmp0];
+                    tmp1    =   clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
+                    tmp2    =   clip[tmp2];
                     //RGB_565
 
-                    rgb		=	tmp1 | (tmp0 << 6);
-                    rgb		=	tmp2 | (rgb << 5);
+                    rgb     =   tmp1 | (tmp0 << 6);
+                    rgb     =   tmp2 | (rgb << 5);
                     *(pDst + dst_pitch) = rgb;  /* save left pixel, have to save separately */
 
-                    Y	>>=	8;
-                    Y	+= OFFSET_5_1;
-                    tmp1	=	(Y) - (Cg >> 16);
-                    tmp2	=	(Y) + (Cb >> 16);
-                    tmp0	=	(Y) + (Cr >> 16);
+                    Y   >>= 8;
+                    Y   += OFFSET_5_1;
+                    tmp1    = (Y) - (Cg >> 16);
+                    tmp2    = (Y) + (Cb >> 16);
+                    tmp0    = (Y) + (Cr >> 16);
 
-                    tmp0	=	clip[tmp0];
-                    tmp1	=	clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
-                    tmp2	=	clip[tmp2];
+                    tmp0    =   clip[tmp0];
+                    tmp1    =   clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
+                    tmp2    =   clip[tmp2];
                     //RGB_565
-                    tmp0	=	tmp1 | (tmp0 << 6);
-                    tmp0	=	tmp2 | (tmp0 << 5);
+                    tmp0    =   tmp1 | (tmp0 << 6);
+                    tmp0    =   tmp2 | (tmp0 << 5);
 
                     *(pDst + dst_pitch + 1) = tmp0; /* save right pixel */
                 }
                 //load the top two pixels
                 Y = *pY++;
 
-                tmp0	=	Y & 0xFF;	//Low endian	left pixel
-                tmp0	+= OFFSET_5_1;
+                tmp0    =   Y & 0xFF;   //Low endian    left pixel
+                tmp0    += OFFSET_5_1;
 
-                tmp1	=	tmp0 - (Cg >> 16);
-                tmp2	=	tmp0 + (Cb >> 16);
-                tmp0	=	tmp0 + (Cr >> 16);
+                tmp1    =   tmp0 - (Cg >> 16);
+                tmp2    =   tmp0 + (Cb >> 16);
+                tmp0    =   tmp0 + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
+                tmp2    =   clip[tmp2];
 
 
-                rgb		=	tmp1 | (tmp0 << 6);
-                rgb		=	tmp2 | (rgb << 5);
-                *pDst++	=	rgb;	/* save left pixel */
+                rgb     =   tmp1 | (tmp0 << 6);
+                rgb     =   tmp2 | (rgb << 5);
+                *pDst++ =   rgb;    /* save left pixel */
 
-                Y	>>=	8;
-                Y	+= OFFSET_5_0;
-                tmp1	=	(Y) - (Cg >> 16);
-                tmp2	=	(Y) + (Cb >> 16);
-                tmp0	=	(Y) + (Cr >> 16);
+                Y   >>= 8;
+                Y   += OFFSET_5_0;
+                tmp1    = (Y) - (Cg >> 16);
+                tmp2    = (Y) + (Cb >> 16);
+                tmp0    = (Y) + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
+                tmp2    =   clip[tmp2];
 
-                tmp0	=	tmp1 | (tmp0 << 6);
-                tmp0	=	tmp2 | (tmp0 << 5);
+                tmp0    =   tmp1 | (tmp0 << 6);
+                tmp0    =   tmp2 | (tmp0 << 5);
 
-                *pDst++	= tmp0;	/* save right pixel */
+                *pDst++ = tmp0; /* save right pixel */
 
                 /* now do another 4 pixels but drop 2 pixels in the last column */
                 Cb = *pCb++;
                 Cr = *pCr++;
                 Cb -= 128;
                 Cr -= 128;
-                Cg	=	Cr * cc1;
-                Cr	*= cc3;
+                Cg  =   Cr * cc1;
+                Cr  *= cc3;
 
-                Cg	+=	Cb * cc2;
-                Cb	*=  cc4;
+                Cg  +=  Cb * cc2;
+                Cb  *=  cc4;
                 //load the bottom two pixels
                 if (!(row&0x2)) /* do the bottom row every other times */
                 {
                     Y = pY[src_pitch];
 
-                    tmp0	=	Y & 0xFF;	//Low endian	left pixel
-                    tmp0	+= OFFSET_5_0;
+                    tmp0    =   Y & 0xFF;   //Low endian    left pixel
+                    tmp0    += OFFSET_5_0;
 
-                    tmp1	=	tmp0 - (Cg >> 16);
-                    tmp2	=	tmp0 + (Cb >> 16);
-                    tmp0	=	tmp0 + (Cr >> 16);
+                    tmp1    =   tmp0 - (Cg >> 16);
+                    tmp2    =   tmp0 + (Cb >> 16);
+                    tmp0    =   tmp0 + (Cr >> 16);
 
-                    tmp0	=	clip[tmp0];
-                    tmp1	=	clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
-                    tmp2	=	clip[tmp2];
+                    tmp0    =   clip[tmp0];
+                    tmp1    =   clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
+                    tmp2    =   clip[tmp2];
                     //RGB_565
 
-                    rgb		=	tmp1 | (tmp0 << 6);
-                    rgb		=	tmp2 | (rgb << 5);
+                    rgb     =   tmp1 | (tmp0 << 6);
+                    rgb     =   tmp2 | (rgb << 5);
 
                     *(pDst + dst_pitch) = rgb;  /* save only one pixel, 2 bytes */
                 }
                 //load the top two pixels
                 Y = *pY++;
 
-                tmp0	=	Y & 0xFF;	//Low endian	left pixel
-                tmp0	+= OFFSET_5_1;
+                tmp0    =   Y & 0xFF;   //Low endian    left pixel
+                tmp0    += OFFSET_5_1;
 
-                tmp1	=	tmp0 - (Cg >> 16);
-                tmp2	=	tmp0 + (Cb >> 16);
-                tmp0	=	tmp0 + (Cr >> 16);
+                tmp1    =   tmp0 - (Cg >> 16);
+                tmp2    =   tmp0 + (Cb >> 16);
+                tmp0    =   tmp0 + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
+                tmp2    =   clip[tmp2];
 
-                rgb		=	tmp1 | (tmp0 << 6);
-                rgb		=	tmp2 | (rgb << 5);
+                rgb     =   tmp1 | (tmp0 << 6);
+                rgb     =   tmp2 | (rgb << 5);
 
-                *pDst	= rgb;
+                *pDst   = rgb;
                 pDst++; /* save only one pixel, 2 bytes */
             }//end of COL
 
-            pY	+=	(deltaY >> 1);
-            pCb	+=	deltaCbCr;
-            pCr	+=	deltaCbCr;
-            pDst +=	(deltaDst);	//coz pDst defined as UINT *
+            pY  += (deltaY >> 1);
+            pCb +=  deltaCbCr;
+            pCr +=  deltaCbCr;
+            pDst += (deltaDst); //coz pDst defined as UINT *
             if (row&0x2)
             {
                 pDst -= dst_pitch;
@@ -2946,51 +2946,51 @@ int32 cc16scaleup(uint8 **src, uint8 *dst, int32 *disp,
                   uint8 *coff_tbl, uint8 *_mRowPix, uint8 *_mColPix)
 {
 #if CCSCALING
-    /*	1. move the dst pointer to the line above the border
+    /*  1. move the dst pointer to the line above the border
     2. do 2 line conversion
     3. copy both up & down
-    	*/
+        */
     uint8 *pCb, *pCr;
-    uint16	*pY;
-    uint16	*pDst;
-    int32		src_pitch, dst_pitch, src_width;
-    int32		Y,	Cb, Cr, Cg;
-    int32		deltaY, dst_width, deltaCbCr;
-    int32		row, col;
-    int32	tmp0, tmp1, tmp2, temp;
-    uint32	rgb;
+    uint16  *pY;
+    uint16  *pDst;
+    int32       src_pitch, dst_pitch, src_width;
+    int32       Y,  Cb, Cr, Cg;
+    int32       deltaY, dst_width, deltaCbCr;
+    int32       row, col;
+    int32   tmp0, tmp1, tmp2, temp;
+    uint32  rgb;
     uint8 *clip = coff_tbl + 400;
-    int32		offset;
+    int32       offset;
     uint8 *rowpix, *colpix;
     int32  cc1 = (*((int32*)(clip - 400)));
     int32  cc3 = (*((int32*)(clip - 396)));
     int32  cc2 = (*((int32*)(clip - 392)));
     int32  cc4 = (*((int32*)(clip - 388)));
 
-    src_pitch	=	disp[0];
-    dst_pitch	=	disp[1];
-    src_width	=	disp[2];
+    src_pitch   =   disp[0];
+    dst_pitch   =   disp[1];
+    src_width   =   disp[2];
 
 #ifdef INTERPOLATE
     int i;
-    uint32	copyline = 0;	//maru
-    uint16	*prev_pDst = 0;	//maru
-    int32	prev_offset = 0;	//maru
+    uint32  copyline = 0;   //maru
+    uint16  *prev_pDst = 0; //maru
+    int32   prev_offset = 0;    //maru
 #endif
 
     if (((disp[6] == 0) && (disp[7] == 1)) || ((disp[6] == 1) && (disp[7] == 0))) /* rotate 180 and  no flip || rotate 0 and  with flip */ //Ankur
     {
         if (disp[6] == 0) /*rotate 0 and  with flip */
-            pDst =	(uint16 *)dst + disp[4] - 1;
+            pDst = (uint16 *)dst + disp[4] - 1;
         else /* rotate 180 and  no flip */
         {
-            pDst =	((uint16 *)dst) + disp[1] * (disp[5] - 1) + disp[4] - 1;
+            pDst = ((uint16 *)dst) + disp[1] * (disp[5] - 1) + disp[4] - 1;
             dst_pitch = -dst_pitch;
         }
 
-        deltaY		=	(src_pitch << 1) - src_width;
-        deltaCbCr	=	(src_pitch - src_width) >> 1;
-        dst_width	=	disp[4];
+        deltaY      = (src_pitch << 1) - src_width;
+        deltaCbCr   = (src_pitch - src_width) >> 1;
+        dst_width   =   disp[4];
         pY = (uint16*)src[0];
         pCb = src[1];
         pCr = src[2];
@@ -2999,53 +2999,53 @@ int32 cc16scaleup(uint8 **src, uint8 *dst, int32 *disp,
 
         for (row = disp[3] - 1; row >= 0; row -= 2)
         {/* decrement index, _mColPix[.] is
-			symmetric to increment index */
+            symmetric to increment index */
             rowpix = _mRowPix + src_width - 1;
 
             for (col = src_width - 2; col >= 0; col -= 2)
             { /* decrement index, _mRowPix[.] is
-				symmetric to increment index */
+                symmetric to increment index */
                 Cb = *pCb++;
                 Cr = *pCr++;
                 Y = pY[src_pitch];
 
                 Cb -= 128;
                 Cr -= 128;
-                Cg	=	Cr * cc1;
-                Cr	*= cc3;
+                Cg  =   Cr * cc1;
+                Cr  *= cc3;
 
-                Cg	+=	Cb * cc2;
-                Cb	*=  cc4;
+                Cg  +=  Cb * cc2;
+                Cb  *=  cc4;
 
-                tmp0	=	Y & 0xFF;			//bottom left
-                tmp0	+= OFFSET_5_0;
+                tmp0    =   Y & 0xFF;           //bottom left
+                tmp0    += OFFSET_5_0;
 
-                tmp1	=	tmp0 - (Cg >> 16);
-                tmp2	=	tmp0 + (Cb >> 16);
-                tmp0	=	tmp0 + (Cr >> 16);
+                tmp1    =   tmp0 - (Cg >> 16);
+                tmp2    =   tmp0 + (Cb >> 16);
+                tmp0    =   tmp0 + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
-                tmp2	=	clip[tmp2];
-
-                //RGB_565
-
-                rgb	=	tmp1 | (tmp0 << 6);
-                rgb	=	tmp2 | (rgb << 5);
-
-                Y	>>= 8;						//bottom right
-                Y	+= OFFSET_5_1;
-                tmp1	=	(Y) - (Cg >> 16);
-                tmp2	=	(Y) + (Cb >> 16);
-                tmp0	=	(Y) + (Cr >> 16);
-
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
+                tmp2    =   clip[tmp2];
 
                 //RGB_565
-                tmp0	=	tmp1 | (tmp0 << 6);
-                tmp0	=	tmp2 | (tmp0 << 5);
+
+                rgb =   tmp1 | (tmp0 << 6);
+                rgb =   tmp2 | (rgb << 5);
+
+                Y   >>= 8;                      //bottom right
+                Y   += OFFSET_5_1;
+                tmp1    = (Y) - (Cg >> 16);
+                tmp2    = (Y) + (Cb >> 16);
+                tmp0    = (Y) + (Cr >> 16);
+
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
+                tmp2    =   clip[tmp2];
+
+                //RGB_565
+                tmp0    =   tmp1 | (tmp0 << 6);
+                tmp0    =   tmp2 | (tmp0 << 5);
 
                 pDst += dst_pitch;
                 temp = rowpix[0] + rowpix[-1];
@@ -3131,34 +3131,34 @@ int32 cc16scaleup(uint8 **src, uint8 *dst, int32 *disp,
                 pDst -= dst_pitch;
 
                 Y = *pY++;
-                tmp0	=		Y & 0xFF;		//top left
-                tmp0	+= OFFSET_5_1;
+                tmp0    =       Y & 0xFF;       //top left
+                tmp0    += OFFSET_5_1;
 
-                tmp1	=	tmp0 - (Cg >> 16);
-                tmp2	=	tmp0 + (Cb >> 16);
-                tmp0	=	tmp0 + (Cr >> 16);
+                tmp1    =   tmp0 - (Cg >> 16);
+                tmp2    =   tmp0 + (Cb >> 16);
+                tmp0    =   tmp0 + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
+                tmp2    =   clip[tmp2];
 
 
-                rgb	=	tmp1 | (tmp0 << 6);
-                rgb	=	tmp2 | (rgb << 5);
+                rgb =   tmp1 | (tmp0 << 6);
+                rgb =   tmp2 | (rgb << 5);
 
-                Y	>>=	8;					//top right
+                Y   >>= 8;                  //top right
 
-                Y	+= OFFSET_5_0;
-                tmp1	=	(Y) - (Cg >> 16);
-                tmp2	=	(Y) + (Cb >> 16);
-                tmp0	=	(Y) + (Cr >> 16);
+                Y   += OFFSET_5_0;
+                tmp1    = (Y) - (Cg >> 16);
+                tmp2    = (Y) + (Cb >> 16);
+                tmp0    = (Y) + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
+                tmp2    =   clip[tmp2];
 
-                tmp0	=	tmp1 | (tmp0 << 6);
-                tmp0	=	tmp2 | (tmp0 << 5);
+                tmp0    =   tmp1 | (tmp0 << 6);
+                tmp0    =   tmp2 | (tmp0 << 5);
                 if (temp == 2)
                 {
                     *pDst = rgb;
@@ -3240,49 +3240,49 @@ int32 cc16scaleup(uint8 **src, uint8 *dst, int32 *disp,
 
             }//end of COL
 
-            pY	+=	(deltaY >> 1);
-            pCb	+=	deltaCbCr;
-            pCr	+=	deltaCbCr;
+            pY  += (deltaY >> 1);
+            pCb +=  deltaCbCr;
+            pCr +=  deltaCbCr;
 
             pDst++; // goes back to the beginning of the line
 
 #ifdef INTERPOLATE
 
-            if (copyline&0x1)  	//Maruyama comment:BLACK line in SubQCIF.bmp
+            if (copyline&0x1)   //Maruyama comment:BLACK line in SubQCIF.bmp
             {
                 oscl_memcpy(prev_pDst + offset,             prev_pDst + dst_pitch, dst_width*2);
             }
-            if (copyline&0x2) 	//Maruyama comment:BLUE line in SubQCIF.bmp
+            if (copyline&0x2)   //Maruyama comment:BLUE line in SubQCIF.bmp
             {
                 for (i = 0 ; i < dst_width ; i++)
                 {
                     int32 coltemp;
                     int32 pretemp = *(prev_pDst + dst_pitch + i);
-                    //				int32 curtemp = *(pDst+dst_pitch+i);
+                    //              int32 curtemp = *(pDst+dst_pitch+i);
                     int32 curtemp = *(pDst + i);
                     coltemp   = (((((pretemp      & 0x1F)  + (curtemp     & 0x1F)) / 2) & 0x1F)
                                  | ((((((pretemp >> 5) & 0x3F)  + ((curtemp >> 5) & 0x3F)) / 2) & 0x3F) << 5)
                                  | ((((((pretemp >> 11) & 0x1F)  + ((curtemp >> 11) & 0x1F)) / 2) & 0x1F) << 11));
                     *(prev_pDst + prev_offset + dst_pitch + i) = (uint16)coltemp;
-                    //				*(prev_pDst+prev_offset+dst_pitch+i) = 0x1F;
+                    //              *(prev_pDst+prev_offset+dst_pitch+i) = 0x1F;
                 }
             }
 
             if (copyline&0x4)
             {
-                for (i = 0 ; i < dst_width ; i++)  	//Maruyama comment:Not appeared in SubQCIF.bmp
+                for (i = 0 ; i < dst_width ; i++)   //Maruyama comment:Not appeared in SubQCIF.bmp
                 {
                     int32 coltemp;
                     int32 pretemp = *(prev_pDst + dst_pitch + i);
-                    //				int32 curtemp = *(pDst+dst_pitch+i);
+                    //              int32 curtemp = *(pDst+dst_pitch+i);
                     int32 curtemp = *(pDst + i);
                     coltemp   = (((((pretemp      & 0x1F)  + (curtemp     & 0x1F)) / 2) & 0x1F)
                                  | ((((((pretemp >> 5) & 0x3F)  + ((curtemp >> 5) & 0x3F)) / 2) & 0x3F) << 5)
                                  | ((((((pretemp >> 11) & 0x1F)  + ((curtemp >> 11) & 0x1F)) / 2) & 0x1F) << 11));
                     *(prev_pDst + prev_offset + dst_pitch + i) = (uint16)coltemp;
-                    //				*(prev_pDst+prev_offset+dst_pitch+i) = 0x3F<<5;
+                    //              *(prev_pDst+prev_offset+dst_pitch+i) = 0x3F<<5;
                 }
-                for (i = 0 ; i < dst_width ; i++)  	//Maruyama comment:Not appeared in SubQCIF.bmp
+                for (i = 0 ; i < dst_width ; i++)   //Maruyama comment:Not appeared in SubQCIF.bmp
                 {
                     int32 coltemp;
                     int32 pretemp = *(prev_pDst + dst_pitch + i);
@@ -3291,11 +3291,11 @@ int32 cc16scaleup(uint8 **src, uint8 *dst, int32 *disp,
                                  | ((((((pretemp >> 5) & 0x3F)  + ((curtemp >> 5) & 0x3F)) / 2) & 0x3F) << 5)
                                  | ((((((pretemp >> 11) & 0x1F)  + ((curtemp >> 11) & 0x1F)) / 2) & 0x1F) << 11));
                     *(prev_pDst + prev_offset + dst_pitch*2 + i) = (uint16)coltemp;
-                    //				*(prev_pDst+prev_offset+dst_pitch*2+i) = 0x1F<<11;
+                    //              *(prev_pDst+prev_offset+dst_pitch*2+i) = 0x1F<<11;
                 }
             }
 
-            if (copyline&0x8) 	//Maruyama comment:WHITE line in SubQCIF.bmp
+            if (copyline&0x8)   //Maruyama comment:WHITE line in SubQCIF.bmp
             {
                 for (i = 0 ; i < dst_width ; i++)
                 {
@@ -3306,25 +3306,25 @@ int32 cc16scaleup(uint8 **src, uint8 *dst, int32 *disp,
                                  | ((((((pretemp >> 5) & 0x3F)  + ((curtemp >> 5) & 0x3F)) / 2) & 0x3F) << 5)
                                  | ((((((pretemp >> 11) & 0x1F)  + ((curtemp >> 11) & 0x1F)) / 2) & 0x1F) << 11));
                     *(prev_pDst + dst_pitch + i) = (uint16)coltemp;
-                    //				*(prev_pDst+dst_pitch+i) = 0xFFFF;
+                    //              *(prev_pDst+dst_pitch+i) = 0xFFFF;
                 }
             }
 
             if (copyline&0x10)
             {
-                for (i = 0 ; i < dst_width ; i++)  	//Maruyama comment:Not appeared in SubQCIF.bmp
+                for (i = 0 ; i < dst_width ; i++)   //Maruyama comment:Not appeared in SubQCIF.bmp
                 {
                     int32 coltemp;
                     int32 pretemp = *(prev_pDst + i);
-                    //				int32 curtemp = *(pDst+i);
+                    //              int32 curtemp = *(pDst+i);
                     int32 curtemp = *(pDst - dst_pitch + i);
                     coltemp   = (((((pretemp      & 0x1F)  + (curtemp     & 0x1F)) / 2) & 0x1F)
                                  | ((((((pretemp >> 5) & 0x3F)  + ((curtemp >> 5) & 0x3F)) / 2) & 0x3F) << 5)
                                  | ((((((pretemp >> 11) & 0x1F)  + ((curtemp >> 11) & 0x1F)) / 2) & 0x1F) << 11));
                     *(prev_pDst + dst_pitch + i) = (uint16)coltemp;
-                    //				*(prev_pDst+dst_pitch+i) = 0x1F|(0x3F<<5);
+                    //              *(prev_pDst+dst_pitch+i) = 0x1F|(0x3F<<5);
                 }
-                for (i = 0 ; i < dst_width ; i++)  	//Maruyama comment:Not appeared in SubQCIF.bmp
+                for (i = 0 ; i < dst_width ; i++)   //Maruyama comment:Not appeared in SubQCIF.bmp
                 {
                     int32 coltemp;
                     int32 pretemp = *(prev_pDst + i);
@@ -3333,7 +3333,7 @@ int32 cc16scaleup(uint8 **src, uint8 *dst, int32 *disp,
                                  | ((((((pretemp >> 5) & 0x3F)  + ((curtemp >> 5) & 0x3F)) / 2) & 0x3F) << 5)
                                  | ((((((pretemp >> 11) & 0x1F)  + ((curtemp >> 11) & 0x1F)) / 2) & 0x1F) << 11));
                     *(prev_pDst + dst_pitch*2 + i) = (uint16)coltemp;
-                    //				*(prev_pDst+dst_pitch*2+i) = 0x1F|(0x1F<<11);
+                    //              *(prev_pDst+dst_pitch*2+i) = 0x1F|(0x1F<<11);
                 }
             }
 #endif
@@ -3341,16 +3341,16 @@ int32 cc16scaleup(uint8 **src, uint8 *dst, int32 *disp,
             offset = (colpix[0] * dst_pitch);
 
 #ifdef INTERPOLATE
-            copyline = 0;	//maru
-            prev_pDst = pDst;	//maru
-            prev_offset = offset;	//maru
+            copyline = 0;   //maru
+            prev_pDst = pDst;   //maru
+            prev_offset = offset;   //maru
 #endif
             if (colpix[-1] && colpix[0] != 1)
             {
 #ifndef INTERPOLATE
                 oscl_memcpy(pDst + offset,             pDst + dst_pitch, dst_width*2);
 #else
-                copyline |= 0x1;	//maru
+                copyline |= 0x1;    //maru
 #endif
             }
             if (colpix[-1] == 2)
@@ -3358,7 +3358,7 @@ int32 cc16scaleup(uint8 **src, uint8 *dst, int32 *disp,
 #ifndef INTERPOLATE
                 oscl_memcpy(pDst + offset + dst_pitch,   pDst + dst_pitch, dst_width*2);
 #else
-                copyline |= 0x2;	//maru
+                copyline |= 0x2;    //maru
 #endif
             }
             else if (colpix[-1] == 3)
@@ -3367,7 +3367,7 @@ int32 cc16scaleup(uint8 **src, uint8 *dst, int32 *disp,
                 oscl_memcpy(pDst + offset + dst_pitch,   pDst + dst_pitch, dst_width*2);
                 oscl_memcpy(pDst + offset + dst_pitch*2, pDst + dst_pitch, dst_width*2);
 #else
-                copyline |= 0x4;	//maru
+                copyline |= 0x4;    //maru
 #endif
             }
             //copy up
@@ -3376,7 +3376,7 @@ int32 cc16scaleup(uint8 **src, uint8 *dst, int32 *disp,
 #ifndef INTERPOLATE
                 oscl_memcpy(pDst + dst_pitch,          pDst,           dst_width*2);
 #else
-                copyline |= 0x8;	//maru
+                copyline |= 0x8;    //maru
 #endif
             }
             else if (colpix[0] == 3)
@@ -3385,21 +3385,21 @@ int32 cc16scaleup(uint8 **src, uint8 *dst, int32 *disp,
                 oscl_memcpy(pDst + dst_pitch,          pDst,           dst_width*2);
                 oscl_memcpy(pDst + dst_pitch*2,        pDst,           dst_width*2);
 #else
-                copyline |= 0x10;	//maru
+                copyline |= 0x10;   //maru
 #endif
             }
 
-            pDst	+=	dst_pitch * (colpix[-1] + colpix[0]) + dst_width - 1;
+            pDst    +=  dst_pitch * (colpix[-1] + colpix[0]) + dst_width - 1;
             colpix -= 2;
         }//end of row
 
 #ifdef INTERPOLATE
 
-        if (copyline&0x1)  	//Maruyama comment:BLACK line in SubQCIF.bmp
+        if (copyline&0x1)   //Maruyama comment:BLACK line in SubQCIF.bmp
         {
             oscl_memcpy(prev_pDst + offset,             prev_pDst + dst_pitch, dst_width*2);
         }
-        if (copyline&0x2) 	//Maruyama comment:BLUE line in SubQCIF.bmp
+        if (copyline&0x2)   //Maruyama comment:BLUE line in SubQCIF.bmp
         {
             oscl_memcpy(prev_pDst + offset + dst_pitch,   prev_pDst + dst_pitch, dst_width*2);
         }
@@ -3423,73 +3423,73 @@ int32 cc16scaleup(uint8 **src, uint8 *dst, int32 *disp,
             pCr = src[2] + (deltaY >> 0);
             deltaY = -src_width - (src_pitch << 1);
             deltaCbCr = -((src_width + src_pitch) >> 1);
-            dst_width	=	disp[4];
+            dst_width   =   disp[4];
             src_pitch >>= 1;
             src_pitch = -src_pitch;
         }
         else
-        {	// only scale up, no rotation ,no flip
-            deltaY		=	(src_pitch << 1) - src_width;
-            deltaCbCr	=	(src_pitch - src_width) >> 1;
-            dst_width	=	disp[4];
+        {   // only scale up, no rotation ,no flip
+            deltaY      = (src_pitch << 1) - src_width;
+            deltaCbCr   = (src_pitch - src_width) >> 1;
+            dst_width   =   disp[4];
             src_pitch >>= 1;
             pY = (uint16*)src[0];
             pCb = src[1];
             pCr = src[2];
         }
 
-        pDst =	(uint16 *)dst;
+        pDst = (uint16 *)dst;
         colpix = _mColPix + disp[3] - 1;
 
         for (row = disp[3] - 1; row >= 0; row -= 2)
         {/* decrement index, _mColPix[.] is
-			symmetric to increment index */
+            symmetric to increment index */
             rowpix = _mRowPix + src_width - 1;
 
             for (col = src_width - 2; col >= 0; col -= 2)
             { /* decrement index, _mRowPix[.] is
-				symmetric to increment index */
+                symmetric to increment index */
                 Cb = *pCb++;
                 Cr = *pCr++;
                 Y = pY[src_pitch];
 
                 Cb -= 128;
                 Cr -= 128;
-                Cg	=	Cr * cc1;
-                Cr	*= cc3;
+                Cg  =   Cr * cc1;
+                Cr  *= cc3;
 
-                Cg	+=	Cb * cc2;
-                Cb	*=  cc4;
+                Cg  +=  Cb * cc2;
+                Cb  *=  cc4;
 
-                tmp0	=	Y & 0xFF;			//bottom left
-                tmp0	+= OFFSET_5_0;
+                tmp0    =   Y & 0xFF;           //bottom left
+                tmp0    += OFFSET_5_0;
 
-                tmp1	=	tmp0 - (Cg >> 16);
-                tmp2	=	tmp0 + (Cb >> 16);
-                tmp0	=	tmp0 + (Cr >> 16);
+                tmp1    =   tmp0 - (Cg >> 16);
+                tmp2    =   tmp0 + (Cb >> 16);
+                tmp0    =   tmp0 + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
-                tmp2	=	clip[tmp2];
-
-                //RGB_565
-
-                rgb	=	tmp1 | (tmp0 << 6);
-                rgb	=	tmp2 | (rgb << 5);
-
-                Y	>>= 8;						//bottom right
-                Y	+= OFFSET_5_1;
-                tmp1	=	(Y) - (Cg >> 16);
-                tmp2	=	(Y) + (Cb >> 16);
-                tmp0	=	(Y) + (Cr >> 16);
-
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
+                tmp2    =   clip[tmp2];
 
                 //RGB_565
-                tmp0	=	tmp1 | (tmp0 << 6);
-                tmp0	=	tmp2 | (tmp0 << 5);
+
+                rgb =   tmp1 | (tmp0 << 6);
+                rgb =   tmp2 | (rgb << 5);
+
+                Y   >>= 8;                      //bottom right
+                Y   += OFFSET_5_1;
+                tmp1    = (Y) - (Cg >> 16);
+                tmp2    = (Y) + (Cb >> 16);
+                tmp0    = (Y) + (Cr >> 16);
+
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
+                tmp2    =   clip[tmp2];
+
+                //RGB_565
+                tmp0    =   tmp1 | (tmp0 << 6);
+                tmp0    =   tmp2 | (tmp0 << 5);
 
                 pDst += dst_pitch;
                 temp = rowpix[0] + rowpix[-1];
@@ -3575,32 +3575,32 @@ int32 cc16scaleup(uint8 **src, uint8 *dst, int32 *disp,
                 pDst -= dst_pitch;
 
                 Y = *pY++;
-                tmp0	=		Y & 0xFF;		//top left
-                tmp0	+= OFFSET_5_1;
+                tmp0    =       Y & 0xFF;       //top left
+                tmp0    += OFFSET_5_1;
 
-                tmp1	=	tmp0 - (Cg >> 16);
-                tmp2	=	tmp0 + (Cb >> 16);
-                tmp0	=	tmp0 + (Cr >> 16);
+                tmp1    =   tmp0 - (Cg >> 16);
+                tmp2    =   tmp0 + (Cb >> 16);
+                tmp0    =   tmp0 + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
+                tmp2    =   clip[tmp2];
 
-                rgb	=	tmp1 | (tmp0 << 6);
-                rgb	=	tmp2 | (rgb << 5);
+                rgb =   tmp1 | (tmp0 << 6);
+                rgb =   tmp2 | (rgb << 5);
 
-                Y	>>=	8;					//top right
-                Y	+= OFFSET_5_0;
-                tmp1	=	(Y) - (Cg >> 16);
-                tmp2	=	(Y) + (Cb >> 16);
-                tmp0	=	(Y) + (Cr >> 16);
+                Y   >>= 8;                  //top right
+                Y   += OFFSET_5_0;
+                tmp1    = (Y) - (Cg >> 16);
+                tmp2    = (Y) + (Cb >> 16);
+                tmp0    = (Y) + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
+                tmp2    =   clip[tmp2];
 
-                tmp0	=	tmp1 | (tmp0 << 6);
-                tmp0	=	tmp2 | (tmp0 << 5);
+                tmp0    =   tmp1 | (tmp0 << 6);
+                tmp0    =   tmp2 | (tmp0 << 5);
                 if (temp == 2)
                 {
                     *pDst = (uint16)rgb;
@@ -3682,49 +3682,49 @@ int32 cc16scaleup(uint8 **src, uint8 *dst, int32 *disp,
 
             }//end of COL
 
-            pY	+=	(deltaY >> 1);
-            pCb	+=	deltaCbCr;
-            pCr	+=	deltaCbCr;
+            pY  += (deltaY >> 1);
+            pCb +=  deltaCbCr;
+            pCr +=  deltaCbCr;
 
-            pDst -=	(disp[4]);	//goes back to the beginning of the line;
+            pDst -= (disp[4]);  //goes back to the beginning of the line;
 
 #ifdef INTERPOLATE
 
-            if (copyline&0x1)  	//Maruyama comment:BLACK line in SubQCIF.bmp
+            if (copyline&0x1)   //Maruyama comment:BLACK line in SubQCIF.bmp
             {
                 oscl_memcpy(prev_pDst + offset,             prev_pDst + dst_pitch, dst_width*2);
             }
-            if (copyline&0x2) 	//Maruyama comment:BLUE line in SubQCIF.bmp
+            if (copyline&0x2)   //Maruyama comment:BLUE line in SubQCIF.bmp
             {
                 for (i = 0 ; i < dst_width ; i++)
                 {
                     int32 coltemp;
                     int32 pretemp = *(prev_pDst + dst_pitch + i);
-                    //				int32 curtemp = *(pDst+dst_pitch+i);
+                    //              int32 curtemp = *(pDst+dst_pitch+i);
                     int32 curtemp = *(pDst + i);
                     coltemp   = (((((pretemp      & 0x1F)  + (curtemp     & 0x1F)) / 2) & 0x1F)
                                  | ((((((pretemp >> 5) & 0x3F)  + ((curtemp >> 5) & 0x3F)) / 2) & 0x3F) << 5)
                                  | ((((((pretemp >> 11) & 0x1F)  + ((curtemp >> 11) & 0x1F)) / 2) & 0x1F) << 11));
                     *(prev_pDst + prev_offset + dst_pitch + i) = (uint16)coltemp;
-                    //				*(prev_pDst+prev_offset+dst_pitch+i) = 0x1F;
+                    //              *(prev_pDst+prev_offset+dst_pitch+i) = 0x1F;
                 }
             }
 
             if (copyline&0x4)
             {
-                for (i = 0 ; i < dst_width ; i++)  	//Maruyama comment:Not appeared in SubQCIF.bmp
+                for (i = 0 ; i < dst_width ; i++)   //Maruyama comment:Not appeared in SubQCIF.bmp
                 {
                     int32 coltemp;
                     int32 pretemp = *(prev_pDst + dst_pitch + i);
-                    //				int32 curtemp = *(pDst+dst_pitch+i);
+                    //              int32 curtemp = *(pDst+dst_pitch+i);
                     int32 curtemp = *(pDst + i);
                     coltemp   = (((((pretemp      & 0x1F)  + (curtemp     & 0x1F)) / 2) & 0x1F)
                                  | ((((((pretemp >> 5) & 0x3F)  + ((curtemp >> 5) & 0x3F)) / 2) & 0x3F) << 5)
                                  | ((((((pretemp >> 11) & 0x1F)  + ((curtemp >> 11) & 0x1F)) / 2) & 0x1F) << 11));
                     *(prev_pDst + prev_offset + dst_pitch + i) = (uint16)coltemp;
-                    //				*(prev_pDst+prev_offset+dst_pitch+i) = 0x3F<<5;
+                    //              *(prev_pDst+prev_offset+dst_pitch+i) = 0x3F<<5;
                 }
-                for (i = 0 ; i < dst_width ; i++)  	//Maruyama comment:Not appeared in SubQCIF.bmp
+                for (i = 0 ; i < dst_width ; i++)   //Maruyama comment:Not appeared in SubQCIF.bmp
                 {
                     int32 coltemp;
                     int32 pretemp = *(prev_pDst + dst_pitch + i);
@@ -3733,11 +3733,11 @@ int32 cc16scaleup(uint8 **src, uint8 *dst, int32 *disp,
                                  | ((((((pretemp >> 5) & 0x3F)  + ((curtemp >> 5) & 0x3F)) / 2) & 0x3F) << 5)
                                  | ((((((pretemp >> 11) & 0x1F)  + ((curtemp >> 11) & 0x1F)) / 2) & 0x1F) << 11));
                     *(prev_pDst + prev_offset + dst_pitch*2 + i) = (uint16)coltemp;
-                    //				*(prev_pDst+prev_offset+dst_pitch*2+i) = 0x1F<<11;
+                    //              *(prev_pDst+prev_offset+dst_pitch*2+i) = 0x1F<<11;
                 }
             }
 
-            if (copyline&0x8) 	//Maruyama comment:WHITE line in SubQCIF.bmp
+            if (copyline&0x8)   //Maruyama comment:WHITE line in SubQCIF.bmp
             {
                 for (i = 0 ; i < dst_width ; i++)
                 {
@@ -3748,25 +3748,25 @@ int32 cc16scaleup(uint8 **src, uint8 *dst, int32 *disp,
                                  | ((((((pretemp >> 5) & 0x3F)  + ((curtemp >> 5) & 0x3F)) / 2) & 0x3F) << 5)
                                  | ((((((pretemp >> 11) & 0x1F)  + ((curtemp >> 11) & 0x1F)) / 2) & 0x1F) << 11));
                     *(prev_pDst + dst_pitch + i) = (uint16)coltemp;
-                    //				*(prev_pDst+dst_pitch+i) = 0xFFFF;
+                    //              *(prev_pDst+dst_pitch+i) = 0xFFFF;
                 }
             }
 
             if (copyline&0x10)
             {
-                for (i = 0 ; i < dst_width ; i++)  	//Maruyama comment:Not appeared in SubQCIF.bmp
+                for (i = 0 ; i < dst_width ; i++)   //Maruyama comment:Not appeared in SubQCIF.bmp
                 {
                     int32 coltemp;
                     int32 pretemp = *(prev_pDst + i);
-                    //				int32 curtemp = *(pDst+i);
+                    //              int32 curtemp = *(pDst+i);
                     int32 curtemp = *(pDst - dst_pitch + i);
                     coltemp   = (((((pretemp      & 0x1F)  + (curtemp     & 0x1F)) / 2) & 0x1F)
                                  | ((((((pretemp >> 5) & 0x3F)  + ((curtemp >> 5) & 0x3F)) / 2) & 0x3F) << 5)
                                  | ((((((pretemp >> 11) & 0x1F)  + ((curtemp >> 11) & 0x1F)) / 2) & 0x1F) << 11));
                     *(prev_pDst + dst_pitch + i) = (uint16)coltemp;
-                    //				*(prev_pDst+dst_pitch+i) = 0x1F|(0x3F<<5);
+                    //              *(prev_pDst+dst_pitch+i) = 0x1F|(0x3F<<5);
                 }
-                for (i = 0 ; i < dst_width ; i++)  	//Maruyama comment:Not appeared in SubQCIF.bmp
+                for (i = 0 ; i < dst_width ; i++)   //Maruyama comment:Not appeared in SubQCIF.bmp
                 {
                     int32 coltemp;
                     int32 pretemp = *(prev_pDst + i);
@@ -3775,7 +3775,7 @@ int32 cc16scaleup(uint8 **src, uint8 *dst, int32 *disp,
                                  | ((((((pretemp >> 5) & 0x3F)  + ((curtemp >> 5) & 0x3F)) / 2) & 0x3F) << 5)
                                  | ((((((pretemp >> 11) & 0x1F)  + ((curtemp >> 11) & 0x1F)) / 2) & 0x1F) << 11));
                     *(prev_pDst + dst_pitch*2 + i) = (uint16)coltemp;
-                    //				*(prev_pDst+dst_pitch*2+i) = 0x1F|(0x1F<<11);
+                    //              *(prev_pDst+dst_pitch*2+i) = 0x1F|(0x1F<<11);
                 }
             }
 #endif
@@ -3783,16 +3783,16 @@ int32 cc16scaleup(uint8 **src, uint8 *dst, int32 *disp,
             offset = (colpix[0] * dst_pitch);
 
 #ifdef INTERPOLATE
-            copyline = 0;	//maru
-            prev_pDst = pDst;	//maru
-            prev_offset = offset;	//maru
+            copyline = 0;   //maru
+            prev_pDst = pDst;   //maru
+            prev_offset = offset;   //maru
 #endif
             if (colpix[-1] && colpix[0] != 1)
             {
 #ifndef INTERPOLATE
                 oscl_memcpy(pDst + offset, pDst + dst_pitch, dst_width*2);
 #else
-                copyline |= 0x1;	//maru
+                copyline |= 0x1;    //maru
 #endif
             }
             if (colpix[-1] == 2)
@@ -3800,7 +3800,7 @@ int32 cc16scaleup(uint8 **src, uint8 *dst, int32 *disp,
 #ifndef INTERPOLATE
                 oscl_memcpy(pDst + offset + dst_pitch, pDst + dst_pitch, dst_width*2);
 #else
-                copyline |= 0x2;	//maru
+                copyline |= 0x2;    //maru
 #endif
             }
             else if (colpix[-1] == 3)
@@ -3809,7 +3809,7 @@ int32 cc16scaleup(uint8 **src, uint8 *dst, int32 *disp,
                 oscl_memcpy(pDst + offset + dst_pitch, pDst + dst_pitch, dst_width*2);
                 oscl_memcpy(pDst + offset + dst_pitch*2, pDst + dst_pitch, dst_width*2);
 #else
-                copyline |= 0x4;	//maru
+                copyline |= 0x4;    //maru
 #endif
             }
 
@@ -3819,7 +3819,7 @@ int32 cc16scaleup(uint8 **src, uint8 *dst, int32 *disp,
 #ifndef INTERPOLATE
                 oscl_memcpy(pDst + dst_pitch, pDst, dst_width*2);
 #else
-                copyline |= 0x8;	//maru
+                copyline |= 0x8;    //maru
 #endif
             }
             else if (colpix[0] == 3)
@@ -3828,20 +3828,20 @@ int32 cc16scaleup(uint8 **src, uint8 *dst, int32 *disp,
                 oscl_memcpy(pDst + dst_pitch, pDst, dst_width*2);
                 oscl_memcpy(pDst + dst_pitch*2, pDst, dst_width*2);
 #else
-                copyline |= 0x10;	//maru
+                copyline |= 0x10;   //maru
 #endif
             }
 
-            pDst	+=	dst_pitch * (colpix[-1] + colpix[0]);
+            pDst    +=  dst_pitch * (colpix[-1] + colpix[0]);
             colpix -= 2;
         }//end of row
 
 #ifdef INTERPOLATE
-        if (copyline&0x1)  	//Maruyama comment:BLACK line in SubQCIF.bmp
+        if (copyline&0x1)   //Maruyama comment:BLACK line in SubQCIF.bmp
         {
             oscl_memcpy(prev_pDst + offset,             prev_pDst + dst_pitch, dst_width*2);
         }
-        if (copyline&0x2) 	//Maruyama comment:BLUE line in SubQCIF.bmp
+        if (copyline&0x2)   //Maruyama comment:BLUE line in SubQCIF.bmp
         {
             oscl_memcpy(prev_pDst + offset + dst_pitch, prev_pDst + dst_pitch, dst_width*2);
         }
@@ -3873,16 +3873,16 @@ int32 cc16scaling54(uint8 **src, uint8 *dst,
 {
 #if CCSCALING
     uint8 *pCb, *pCr;
-    uint16	*pY;
-    uint16	*pDst;
-    int32		src_pitch, dst_pitch, src_width;
-    int32		Y, Cb, Cr, Cg;
-    int32		deltaY, deltaDst, deltaCbCr;
-    int32		row, col;
-    int32		tmp0, tmp1, tmp2;
+    uint16  *pY;
+    uint16  *pDst;
+    int32       src_pitch, dst_pitch, src_width;
+    int32       Y, Cb, Cr, Cg;
+    int32       deltaY, deltaDst, deltaCbCr;
+    int32       row, col;
+    int32       tmp0, tmp1, tmp2;
     uint32 rgb1, rgb2;
     int32  tmp01, tmp02;
-    uint32	rgb;
+    uint32  rgb;
     uint8 *clip = coff_tbl + 400;
     int32  cc1 = (*((int32*)(clip - 400)));
     int32  cc3 = (*((int32*)(clip - 396)));
@@ -3893,9 +3893,9 @@ int32 cc16scaling54(uint8 **src, uint8 *dst,
     uint16 *pFifth, *previous, *current;
 #endif
 
-    src_pitch	=	disp[0];
-    dst_pitch	=	disp[1];
-    src_width	=	disp[2];
+    src_pitch   =   disp[0];
+    dst_pitch   =   disp[1];
+    src_width   =   disp[2];
 
 
     if (((disp[6] == 1) && (disp[7] == 0)) || ((disp[6] == 0) && (disp[7] == 1))) /* rotate 180, no flip  || rotate 0 and flip */
@@ -3913,16 +3913,16 @@ int32 cc16scaling54(uint8 **src, uint8 *dst,
         }
         else
         {
-            deltaY		=	(src_pitch << 1) - src_width;
-            deltaCbCr	=	(src_pitch - src_width) >> 1;
+            deltaY      = (src_pitch << 1) - src_width;
+            deltaCbCr   = (src_pitch - src_width) >> 1;
             pY = (uint16 *) src[0];
             src_pitch >>= 1;
             pCb = src[1];
             pCr = src[2];
         }
 
-        deltaDst	=	(dst_pitch << 1) + disp[4] - 1; /* disp[4] is dst_width */
-        pDst =	(uint16 *)dst + disp[4] - 1;
+        deltaDst    = (dst_pitch << 1) + disp[4] - 1;   /* disp[4] is dst_width */
+        pDst = (uint16 *)dst + disp[4] - 1;
         for (row = disp[3]; row > 0; row -= 2)
         {
 
@@ -3934,42 +3934,42 @@ int32 cc16scaling54(uint8 **src, uint8 *dst,
 
                 Cb -= 128;
                 Cr -= 128;
-                Cg	=	Cr * cc1;
-                Cr	*= cc3;
+                Cg  =   Cr * cc1;
+                Cr  *= cc3;
 
-                Cg	+=	Cb * cc2;
-                Cb	*=  cc4;
+                Cg  +=  Cb * cc2;
+                Cb  *=  cc4;
                 //load the bottom two pixels
                 Y = pY[src_pitch];
 
-                tmp0	=	Y & 0xFF;	//Low endian	left pixel
-                tmp0	+= OFFSET_5_0;
+                tmp0    =   Y & 0xFF;   //Low endian    left pixel
+                tmp0    += OFFSET_5_0;
 
-                tmp1	=	tmp0 - (Cg >> 16);
-                tmp2	=	tmp0 + (Cb >> 16);
-                tmp0	=	tmp0 + (Cr >> 16);
+                tmp1    =   tmp0 - (Cg >> 16);
+                tmp2    =   tmp0 + (Cb >> 16);
+                tmp0    =   tmp0 + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
+                tmp2    =   clip[tmp2];
                 //RGB_565
 
-                rgb		=	tmp1 | (tmp0 << 6);
-                rgb		=	tmp2 | (rgb << 5);
+                rgb     =   tmp1 | (tmp0 << 6);
+                rgb     =   tmp2 | (rgb << 5);
                 *(pDst + dst_pitch) = rgb;  // i1 = p1;/* save left pixel, have to save separately */
 
-                Y	>>=	8;
-                Y	+= OFFSET_5_1;
-                tmp1	=	(Y) - (Cg >> 16);
-                tmp2	=	(Y) + (Cb >> 16);
-                tmp0	=	(Y) + (Cr >> 16);
+                Y   >>= 8;
+                Y   += OFFSET_5_1;
+                tmp1    = (Y) - (Cg >> 16);
+                tmp2    = (Y) + (Cb >> 16);
+                tmp0    = (Y) + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
+                tmp2    =   clip[tmp2];
                 //RGB_565
-                tmp0	=	tmp1 | (tmp0 << 6);
-                tmp02	=	tmp2 | (tmp0 << 5);
+                tmp0    =   tmp1 | (tmp0 << 6);
+                tmp02   =   tmp2 | (tmp0 << 5);
 
 #ifdef INTERPOLATE
                 *(pDst + dst_pitch - 1) = (((((tmp02 & 0x1F) * 3  + (rgb & 0x1F) + 2) / 4) & 0x1F)
@@ -3982,35 +3982,35 @@ int32 cc16scaling54(uint8 **src, uint8 *dst,
                 //load the top two pixels
                 Y = *pY++;
 
-                tmp0	=	Y & 0xFF;	//Low endian	left pixel
-                tmp0	+= OFFSET_5_1;
+                tmp0    =   Y & 0xFF;   //Low endian    left pixel
+                tmp0    += OFFSET_5_1;
 
-                tmp1	=	tmp0 - (Cg >> 16);
-                tmp2	=	tmp0 + (Cb >> 16);
-                tmp0	=	tmp0 + (Cr >> 16);
+                tmp1    =   tmp0 - (Cg >> 16);
+                tmp2    =   tmp0 + (Cb >> 16);
+                tmp0    =   tmp0 + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
+                tmp2    =   clip[tmp2];
 
 
-                rgb		=	tmp1 | (tmp0 << 6);
-                rgb		=	tmp2 | (rgb << 5);
-                *pDst-- =	rgb; // i1 = p1;	/* save left pixel */
+                rgb     =   tmp1 | (tmp0 << 6);
+                rgb     =   tmp2 | (rgb << 5);
+                *pDst-- =   rgb; // i1 = p1;    /* save left pixel */
 
-                Y	>>=	8;
+                Y   >>= 8;
 
-                Y	+= OFFSET_5_0;
-                tmp1	=	(Y) - (Cg >> 16);
-                tmp2	=	(Y) + (Cb >> 16);
-                tmp0	=	(Y) + (Cr >> 16);
+                Y   += OFFSET_5_0;
+                tmp1    = (Y) - (Cg >> 16);
+                tmp2    = (Y) + (Cb >> 16);
+                tmp0    = (Y) + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
+                tmp2    =   clip[tmp2];
 
-                tmp0	=	tmp1 | (tmp0 << 6);
-                tmp01	=	tmp2 | (tmp0 << 5);
+                tmp0    =   tmp1 | (tmp0 << 6);
+                tmp01   =   tmp2 | (tmp0 << 5);
 
 #ifdef INTERPOLATE
                 *(pDst--) = (((((tmp01 & 0x1F) * 3  + (rgb & 0x1F) + 2) / 4) & 0x1F)
@@ -4018,7 +4018,7 @@ int32 cc16scaling54(uint8 **src, uint8 *dst,
                              | ((((((tmp01 >> 11) & 0x1F) * 3  + ((rgb >> 11) & 0x1F)  + 2) / 4) & 0x1F) << 11));
                 //i2 = (p1 + 3*p2 + 2)>>2;
 #else
-                *pDst--	= tmp01;	/* save right pixel */
+                *pDst-- = tmp01;    /* save right pixel */
 #endif
                 /* now do another 4 pixels add 1 pixels in the last column */
                 Cb = *pCb++;
@@ -4026,28 +4026,28 @@ int32 cc16scaling54(uint8 **src, uint8 *dst,
 
                 Cb -= 128;
                 Cr -= 128;
-                Cg	=	Cr * cc1;
-                Cr	*= cc3;
+                Cg  =   Cr * cc1;
+                Cr  *= cc3;
 
-                Cg	+=	Cb * cc2;
-                Cb	*=  cc4;
+                Cg  +=  Cb * cc2;
+                Cb  *=  cc4;
                 //load the bottom two pixels
                 Y = pY[src_pitch];
 
-                tmp0	=	Y & 0xFF;	//Low endian	left pixel
-                tmp0	+= OFFSET_5_0;
+                tmp0    =   Y & 0xFF;   //Low endian    left pixel
+                tmp0    += OFFSET_5_0;
 
-                tmp1	=	tmp0 - (Cg >> 16);
-                tmp2	=	tmp0 + (Cb >> 16);
-                tmp0	=	tmp0 + (Cr >> 16);
+                tmp1    =   tmp0 - (Cg >> 16);
+                tmp2    =   tmp0 + (Cb >> 16);
+                tmp0    =   tmp0 + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
+                tmp2    =   clip[tmp2];
                 //RGB_565
 
-                rgb		=	tmp1 | (tmp0 << 6);
-                rgb2		=	tmp2 | (rgb << 5);
+                rgb     =   tmp1 | (tmp0 << 6);
+                rgb2        =   tmp2 | (rgb << 5);
 
 #ifdef INTERPOLATE
                 // i3 = (p2 + p3 + 1)>>1;
@@ -4058,18 +4058,18 @@ int32 cc16scaling54(uint8 **src, uint8 *dst,
                 *(pDst + dst_pitch) = rgb2;  /* save left pixel, have to save separately */
 #endif
 
-                Y	>>=	8;
-                Y	+= OFFSET_5_1;
-                tmp1	=	(Y) - (Cg >> 16);
-                tmp2	=	(Y) + (Cb >> 16);
-                tmp0	=	(Y) + (Cr >> 16);
+                Y   >>= 8;
+                Y   += OFFSET_5_1;
+                tmp1    = (Y) - (Cg >> 16);
+                tmp2    = (Y) + (Cb >> 16);
+                tmp0    = (Y) + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
+                tmp2    =   clip[tmp2];
                 //RGB_565
-                tmp0	=	tmp1 | (tmp0 << 6);
-                tmp0	=	tmp2 | (tmp0 << 5);
+                tmp0    =   tmp1 | (tmp0 << 6);
+                tmp0    =   tmp2 | (tmp0 << 5);
 
 #ifdef INTERPOLATE
                 //i4 = (3*p3 + p4 + 2)>>2;
@@ -4084,56 +4084,56 @@ int32 cc16scaling54(uint8 **src, uint8 *dst,
                 //load the top two pixels
                 Y = *pY++;
 
-                tmp0	=	Y & 0xFF;	//Low endian	left pixel
-                tmp0	+= OFFSET_5_1;
+                tmp0    =   Y & 0xFF;   //Low endian    left pixel
+                tmp0    += OFFSET_5_1;
 
-                tmp1	=	tmp0 - (Cg >> 16);
-                tmp2	=	tmp0 + (Cb >> 16);
-                tmp0	=	tmp0 + (Cr >> 16);
+                tmp1    =   tmp0 - (Cg >> 16);
+                tmp2    =   tmp0 + (Cb >> 16);
+                tmp0    =   tmp0 + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
+                tmp2    =   clip[tmp2];
 
 
-                rgb		=	tmp1 | (tmp0 << 6);
-                rgb1	=	tmp2 | (rgb << 5);
+                rgb     =   tmp1 | (tmp0 << 6);
+                rgb1    =   tmp2 | (rgb << 5);
 
 #ifdef INTERPOLATE
                 *pDst-- = (((((tmp01 & 0x1F)  + (rgb1 & 0x1F) + 1) / 2) & 0x1F)
                            | ((((((tmp01 >> 5) & 0x3F)  + ((rgb1 >> 5) & 0x3F)  + 1) / 2) & 0x3F) << 5)
                            | ((((((tmp01 >> 11) & 0x1F)  + ((rgb1 >> 11) & 0x1F)  + 1) / 2) & 0x1F) << 11));
 #else
-                *pDst--	=	rgb1;	/* save left pixel */
+                *pDst-- =   rgb1;   /* save left pixel */
 #endif
 
-                Y	>>=	8;
-                Y	+= OFFSET_5_0;
-                tmp1	=	(Y) - (Cg >> 16);
-                tmp2	=	(Y) + (Cb >> 16);
-                tmp0	=	(Y) + (Cr >> 16);
+                Y   >>= 8;
+                Y   += OFFSET_5_0;
+                tmp1    = (Y) - (Cg >> 16);
+                tmp2    = (Y) + (Cb >> 16);
+                tmp0    = (Y) + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
+                tmp2    =   clip[tmp2];
 
-                tmp0	=	tmp1 | (tmp0 << 6);
-                tmp0	=	tmp2 | (tmp0 << 5);
+                tmp0    =   tmp1 | (tmp0 << 6);
+                tmp0    =   tmp2 | (tmp0 << 5);
 
 #ifdef INTERPOLATE
-                *pDst-- =	(((((tmp0 & 0x1F)  + (rgb1 & 0x1F) * 3 + 1) / 4) & 0x1F)
+                *pDst-- = (((((tmp0 & 0x1F)  + (rgb1 & 0x1F) * 3 + 1) / 4) & 0x1F)
                            | ((((((tmp0 >> 5) & 0x3F)  + ((rgb1 >> 5) & 0x3F) * 3  + 1) / 4) & 0x3F) << 5)
                            | ((((((tmp0 >> 11) & 0x1F)  + ((rgb1 >> 11) & 0x1F) * 3  + 1) / 4) & 0x1F) << 11));
 #else
-                *pDst--	= tmp0;	/* save right pixel */
+                *pDst-- = tmp0; /* save right pixel */
 #endif
-                *pDst--	= tmp0;	/* save right pixel */
+                *pDst-- = tmp0; /* save right pixel */
 
             }//end of COL
 
-            pY	+=	(deltaY >> 1);
-            pCb	+=	deltaCbCr;
-            pCr	+=	deltaCbCr;
+            pY  += (deltaY >> 1);
+            pCb +=  deltaCbCr;
+            pCr +=  deltaCbCr;
             pDst++; // go back to the beginning of the line
             if (!(row&0x3))
             {
@@ -4142,9 +4142,9 @@ int32 cc16scaling54(uint8 **src, uint8 *dst,
 #ifdef INTERPOLATE
                 previous = pDst - dst_pitch;
 
-                for (i = 0; i < disp[4]; i++)	// linear interpolation
+                for (i = 0; i < disp[4]; i++)   // linear interpolation
                 {
-                    int32	last = previous[i];
+                    int32   last = previous[i];
                     int32 curr = pDst[i];
                     pDst[i] = (((((last      & 0x1F)  + (curr     & 0x1F)) / 2) & 0x1F)
                                | ((((((last >> 5) & 0x3F)  + ((curr >> 5) & 0x3F)) / 2) & 0x3F) << 5)
@@ -4153,7 +4153,7 @@ int32 cc16scaling54(uint8 **src, uint8 *dst,
 #endif
             }
 
-            pDst +=	(deltaDst);	//coz pDst defined as UINT *
+            pDst += (deltaDst); //coz pDst defined as UINT *
         }
     }
     else
@@ -4172,8 +4172,8 @@ int32 cc16scaling54(uint8 **src, uint8 *dst,
         }
         else // no rotation,no flip,only scale
         {
-            deltaY		=	(src_pitch << 1) - src_width;
-            deltaCbCr	=	(src_pitch - src_width) >> 1;
+            deltaY      = (src_pitch << 1) - src_width;
+            deltaCbCr   = (src_pitch - src_width) >> 1;
             pY = (uint16 *) src[0];
             src_pitch >>= 1;
             pCb = src[1];
@@ -4181,8 +4181,8 @@ int32 cc16scaling54(uint8 **src, uint8 *dst,
 
         }
 
-        deltaDst	=	(dst_pitch << 1) - disp[4]; /* disp[4] is dst_width */
-        pDst =	(uint16 *)dst;
+        deltaDst    = (dst_pitch << 1) - disp[4];   /* disp[4] is dst_width */
+        pDst = (uint16 *)dst;
 
         for (row = disp[3]; row > 0; row -= 2)
         {
@@ -4194,43 +4194,43 @@ int32 cc16scaling54(uint8 **src, uint8 *dst,
                 Cr = *pCr++;
                 Cb -= 128;
                 Cr -= 128;
-                Cg	=	Cr * cc1;
-                Cr	*= cc3;
+                Cg  =   Cr * cc1;
+                Cr  *= cc3;
 
-                Cg	+=	Cb * cc2;
-                Cb	*=  cc4;
+                Cg  +=  Cb * cc2;
+                Cb  *=  cc4;
 
                 //load the bottom two pixels
                 Y = pY[src_pitch];
 
-                tmp0	=	Y & 0xFF;	//Low endian	left pixel
-                tmp0	+= OFFSET_5_0;
+                tmp0    =   Y & 0xFF;   //Low endian    left pixel
+                tmp0    += OFFSET_5_0;
 
-                tmp1	=	tmp0 - (Cg >> 16);
-                tmp2	=	tmp0 + (Cb >> 16);
-                tmp0	=	tmp0 + (Cr >> 16);
+                tmp1    =   tmp0 - (Cg >> 16);
+                tmp2    =   tmp0 + (Cb >> 16);
+                tmp0    =   tmp0 + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
+                tmp2    =   clip[tmp2];
                 //RGB_565
 
-                rgb		=	tmp1 | (tmp0 << 6);
-                rgb		=	tmp2 | (rgb << 5);
+                rgb     =   tmp1 | (tmp0 << 6);
+                rgb     =   tmp2 | (rgb << 5);
                 *(pDst + dst_pitch) = rgb;  /* save left pixel, have to save separately */
 
-                Y	>>=	8;
-                Y	+= OFFSET_5_1;
-                tmp1	=	(Y) - (Cg >> 16);
-                tmp2	=	(Y) + (Cb >> 16);
-                tmp0	=	(Y) + (Cr >> 16);
+                Y   >>= 8;
+                Y   += OFFSET_5_1;
+                tmp1    = (Y) - (Cg >> 16);
+                tmp2    = (Y) + (Cb >> 16);
+                tmp0    = (Y) + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
+                tmp2    =   clip[tmp2];
                 //RGB_565
-                tmp0	=	tmp1 | (tmp0 << 6);
-                tmp02	=	tmp2 | (tmp0 << 5);
+                tmp0    =   tmp1 | (tmp0 << 6);
+                tmp02   =   tmp2 | (tmp0 << 5);
 
 #ifdef INTERPOLATE
                 *(pDst + dst_pitch + 1) = (((((tmp02 & 0x1F) * 3  + (rgb & 0x1F) + 2) / 4) & 0x1F)
@@ -4243,36 +4243,36 @@ int32 cc16scaling54(uint8 **src, uint8 *dst,
                 //load the top two pixels
                 Y = *pY++;
 
-                tmp0	=	Y & 0xFF;	//Low endian	left pixel
-                tmp0	+= OFFSET_5_1;
+                tmp0    =   Y & 0xFF;   //Low endian    left pixel
+                tmp0    += OFFSET_5_1;
 
-                tmp1	=	tmp0 - (Cg >> 16);
-                tmp2	=	tmp0 + (Cb >> 16);
-                tmp0	=	tmp0 + (Cr >> 16);
+                tmp1    =   tmp0 - (Cg >> 16);
+                tmp2    =   tmp0 + (Cb >> 16);
+                tmp0    =   tmp0 + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
+                tmp2    =   clip[tmp2];
 
 
-                rgb		=	tmp1 | (tmp0 << 6);
-                rgb		=	tmp2 | (rgb << 5);
+                rgb     =   tmp1 | (tmp0 << 6);
+                rgb     =   tmp2 | (rgb << 5);
 
-                *pDst++	=	rgb;	/* save left pixel */
+                *pDst++ =   rgb;    /* save left pixel */
 
-                Y	>>=	8;
+                Y   >>= 8;
 
-                Y	+= OFFSET_5_0;
-                tmp1	=	(Y) - (Cg >> 16);
-                tmp2	=	(Y) + (Cb >> 16);
-                tmp0	=	(Y) + (Cr >> 16);
+                Y   += OFFSET_5_0;
+                tmp1    = (Y) - (Cg >> 16);
+                tmp2    = (Y) + (Cb >> 16);
+                tmp0    = (Y) + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
+                tmp2    =   clip[tmp2];
 
-                tmp0	=	tmp1 | (tmp0 << 6);
-                tmp01	=	tmp2 | (tmp0 << 5);
+                tmp0    =   tmp1 | (tmp0 << 6);
+                tmp01   =   tmp2 | (tmp0 << 5);
 
 #ifdef INTERPOLATE
                 *(pDst++) = (((((tmp01 & 0x1F) * 3  + (rgb & 0x1F) + 2) / 4) & 0x1F)
@@ -4280,7 +4280,7 @@ int32 cc16scaling54(uint8 **src, uint8 *dst,
                              | ((((((tmp01 >> 11) & 0x1F) * 3  + ((rgb >> 11) & 0x1F)  + 2) / 4) & 0x1F) << 11));
                 //i2 = (p1 + 3*p2 + 2)>>2;
 #else
-                *pDst++	= tmp01;	/* save right pixel */
+                *pDst++ = tmp01;    /* save right pixel */
 #endif
                 /* now do another 4 pixels add 1 pixels in the last column */
                 Cb = *pCb++;
@@ -4288,28 +4288,28 @@ int32 cc16scaling54(uint8 **src, uint8 *dst,
 
                 Cb -= 128;
                 Cr -= 128;
-                Cg	=	Cr * cc1;
-                Cr	*= cc3;
+                Cg  =   Cr * cc1;
+                Cr  *= cc3;
 
-                Cg	+=	Cb * cc2;
-                Cb	*=  cc4;
+                Cg  +=  Cb * cc2;
+                Cb  *=  cc4;
                 //load the bottom two pixels
                 Y = pY[src_pitch];
 
-                tmp0	=	Y & 0xFF;	//Low endian	left pixel
-                tmp0	+= OFFSET_5_0;
+                tmp0    =   Y & 0xFF;   //Low endian    left pixel
+                tmp0    += OFFSET_5_0;
 
-                tmp1	=	tmp0 - (Cg >> 16);
-                tmp2	=	tmp0 + (Cb >> 16);
-                tmp0	=	tmp0 + (Cr >> 16);
+                tmp1    =   tmp0 - (Cg >> 16);
+                tmp2    =   tmp0 + (Cb >> 16);
+                tmp0    =   tmp0 + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
+                tmp2    =   clip[tmp2];
                 //RGB_565
 
-                rgb		=	tmp1 | (tmp0 << 6);
-                rgb2		=	tmp2 | (rgb << 5);
+                rgb     =   tmp1 | (tmp0 << 6);
+                rgb2        =   tmp2 | (rgb << 5);
 #ifdef INTERPOLATE
                 // i3 = (p2 + p3 + 1)>>1;
                 *(pDst + dst_pitch) = (((((tmp02 & 0x1F)  + (rgb2 & 0x1F) + 1) / 2) & 0x1F)
@@ -4318,18 +4318,18 @@ int32 cc16scaling54(uint8 **src, uint8 *dst,
 #else
                 *(pDst + dst_pitch) = rgb2;  /* save left pixel, have to save separately */
 #endif
-                Y	>>=	8;
-                Y	+= OFFSET_5_1;
-                tmp1	=	(Y) - (Cg >> 16);
-                tmp2	=	(Y) + (Cb >> 16);
-                tmp0	=	(Y) + (Cr >> 16);
+                Y   >>= 8;
+                Y   += OFFSET_5_1;
+                tmp1    = (Y) - (Cg >> 16);
+                tmp2    = (Y) + (Cb >> 16);
+                tmp0    = (Y) + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
+                tmp2    =   clip[tmp2];
                 //RGB_565
-                tmp0	=	tmp1 | (tmp0 << 6);
-                tmp0	=	tmp2 | (tmp0 << 5);
+                tmp0    =   tmp1 | (tmp0 << 6);
+                tmp0    =   tmp2 | (tmp0 << 5);
 
 #ifdef INTERPOLATE
                 *(pDst + dst_pitch + 1) = (((((tmp0 & 0x1F)  + (rgb2 & 0x1F) * 3 + 1) / 4) & 0x1F)
@@ -4342,62 +4342,62 @@ int32 cc16scaling54(uint8 **src, uint8 *dst,
                 //load the top two pixels
                 Y = *pY++;
 
-                tmp0	=	Y & 0xFF;	//Low endian	left pixel
-                tmp0	+= OFFSET_5_1;
+                tmp0    =   Y & 0xFF;   //Low endian    left pixel
+                tmp0    += OFFSET_5_1;
 
-                tmp1	=	tmp0 - (Cg >> 16);
-                tmp2	=	tmp0 + (Cb >> 16);
-                tmp0	=	tmp0 + (Cr >> 16);
+                tmp1    =   tmp0 - (Cg >> 16);
+                tmp2    =   tmp0 + (Cb >> 16);
+                tmp0    =   tmp0 + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
+                tmp2    =   clip[tmp2];
 
 
-                rgb		=	tmp1 | (tmp0 << 6);
-                rgb1		=	tmp2 | (rgb << 5);
+                rgb     =   tmp1 | (tmp0 << 6);
+                rgb1        =   tmp2 | (rgb << 5);
 #ifdef INTERPOLATE
                 *pDst++ = (((((tmp01 & 0x1F)  + (rgb1 & 0x1F) + 1) / 2) & 0x1F)
                            | ((((((tmp01 >> 5) & 0x3F)  + ((rgb1 >> 5) & 0x3F)  + 1) / 2) & 0x3F) << 5)
                            | ((((((tmp01 >> 11) & 0x1F)  + ((rgb1 >> 11) & 0x1F)  + 1) / 2) & 0x1F) << 11));
 #else
-                *pDst++	=	rgb1;	/* save left pixel */
+                *pDst++ =   rgb1;   /* save left pixel */
 #endif
-                Y	>>=	8;
-                Y	+= OFFSET_5_0;
-                tmp1	=	(Y) - (Cg >> 16);
-                tmp2	=	(Y) + (Cb >> 16);
-                tmp0	=	(Y) + (Cr >> 16);
+                Y   >>= 8;
+                Y   += OFFSET_5_0;
+                tmp1    = (Y) - (Cg >> 16);
+                tmp2    = (Y) + (Cb >> 16);
+                tmp0    = (Y) + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
+                tmp2    =   clip[tmp2];
 
-                tmp0	=	tmp1 | (tmp0 << 6);
-                tmp0	=	tmp2 | (tmp0 << 5);
+                tmp0    =   tmp1 | (tmp0 << 6);
+                tmp0    =   tmp2 | (tmp0 << 5);
 
 #ifdef INTERPOLATE
-                *pDst++ =	(((((tmp0 & 0x1F)  + (rgb1 & 0x1F) * 3 + 1) / 4) & 0x1F)
+                *pDst++ = (((((tmp0 & 0x1F)  + (rgb1 & 0x1F) * 3 + 1) / 4) & 0x1F)
                            | ((((((tmp0 >> 5) & 0x3F)  + ((rgb1 >> 5) & 0x3F) * 3  + 1) / 4) & 0x3F) << 5)
                            | ((((((tmp0 >> 11) & 0x1F)  + ((rgb1 >> 11) & 0x1F) * 3  + 1) / 4) & 0x1F) << 11));
 #else
-                *pDst++	= tmp0;	/* save right pixel */
+                *pDst++ = tmp0; /* save right pixel */
 #endif
-                *pDst++	= tmp0;	/* save right pixel */ // Ankur
+                *pDst++ = tmp0; /* save right pixel */ // Ankur
             }//end of COL
 
-            pY	+=	(deltaY >> 1);
-            pCb	+=	deltaCbCr;
-            pCr	+=	deltaCbCr;
-            pDst +=	(deltaDst);	//coz pDst defined as UINT *
+            pY  += (deltaY >> 1);
+            pCb +=  deltaCbCr;
+            pCr +=  deltaCbCr;
+            pDst += (deltaDst); //coz pDst defined as UINT *
 
             /************
-            	interpolating 3rd row in between
-            	row1
-            	row2
-            	inter1
-            	row3
-            	row4
+                interpolating 3rd row in between
+                row1
+                row2
+                inter1
+                row3
+                row4
             **************/
 
             if (!(row&0x3))
@@ -4416,9 +4416,9 @@ int32 cc16scaling54(uint8 **src, uint8 *dst,
                 previous = pFifth - dst_pitch;
                 current = pDst - (dst_pitch * 2);
 
-                for (i = 0; i < disp[4]; i++)	// linear interpolation
+                for (i = 0; i < disp[4]; i++)   // linear interpolation
                 {
-                    int32	last = previous[i];
+                    int32   last = previous[i];
                     int32 curr = current[i];
                     pFifth[i] = (((((last      & 0x1F)  + (curr     & 0x1F)) / 2) & 0x1F)
                                  | ((((((last >> 5) & 0x3F)  + ((curr >> 5) & 0x3F)) / 2) & 0x3F) << 5)
@@ -4448,14 +4448,14 @@ int32 cc16scaling43(uint8 **src, uint8 *dst,
 {
 #if CCSCALING
     uint8 *pCb, *pCr;
-    uint16	*pY;
-    uint16	*pDst;
-    int32		src_pitch, dst_pitch, src_width;
-    int32		Y, Cb, Cr, Cg;
-    int32		deltaY, deltaCbCr;
-    int32		row, col;
-    int32		tmp0, tmp1, tmp2;
-    uint32	rgb;
+    uint16  *pY;
+    uint16  *pDst;
+    int32       src_pitch, dst_pitch, src_width;
+    int32       Y, Cb, Cr, Cg;
+    int32       deltaY, deltaCbCr;
+    int32       row, col;
+    int32       tmp0, tmp1, tmp2;
+    uint32  rgb;
     uint8 *clip = coff_tbl + 400;
     int32 col3, row3;
     int32  cc1 = (*((int32*)(clip - 400)));
@@ -4465,28 +4465,28 @@ int32 cc16scaling43(uint8 **src, uint8 *dst,
 
 #ifdef INTERPOLATE
     int i;
-    uint32	copyline = 0;	//maru
-    uint16	*prev_pDst = 0;	//maru
-    int32	prev_offset = 0;	//maru
+    uint32  copyline = 0;   //maru
+    uint16  *prev_pDst = 0; //maru
+    int32   prev_offset = 0;    //maru
 #endif
 
-    src_pitch	=	disp[0];
-    dst_pitch	=	disp[1];
-    src_width	=	disp[2];
+    src_pitch   =   disp[0];
+    dst_pitch   =   disp[1];
+    src_width   =   disp[2];
 
     if (((disp[6] == 0 && disp[7] == 1)) || ((disp[6] == 1) && (disp[7] == 0)))  /* rotate 0 and flip // rotate 180, no flip*/
     {
         if (disp[6] == 0)
         {
-            deltaY		=	(src_pitch << 1) - src_width;
-            deltaCbCr	=	(src_pitch - src_width) >> 1;
+            deltaY      = (src_pitch << 1) - src_width;
+            deltaCbCr   = (src_pitch - src_width) >> 1;
             pY = (uint16 *) src[0];
             src_pitch >>= 1;
             pCb = src[1];
             pCr = src[2];
         }
         else
-        {	/* move the starting point to the bottom-left corner of the picture */
+        {   /* move the starting point to the bottom-left corner of the picture */
             deltaY = src_pitch * (disp[3] - 1);
             pY = (uint16*)(src[0] + deltaY);
             deltaY = (src_pitch >> 1) * ((disp[3] >> 1) - 1);
@@ -4497,7 +4497,7 @@ int32 cc16scaling43(uint8 **src, uint8 *dst,
             src_pitch = -(src_pitch >> 1);
         }
 
-        pDst =	((uint16 *)dst) + disp[4] - 1;
+        pDst = ((uint16 *)dst) + disp[4] - 1;
         row3 = 2;
         for (row = disp[3]; row > 0; row -= 2)
         {
@@ -4513,43 +4513,43 @@ int32 cc16scaling43(uint8 **src, uint8 *dst,
                 Cr = *pCr++;
                 Cb -= 128;
                 Cr -= 128;
-                Cg	=	Cr * cc1;
-                Cr	*= cc3;
+                Cg  =   Cr * cc1;
+                Cr  *= cc3;
 
-                Cg	+=	Cb * cc2;
-                Cb	*=  cc4;
+                Cg  +=  Cb * cc2;
+                Cb  *=  cc4;
 
                 //load the bottom two pixels
                 Y = pY[src_pitch];
 
-                tmp0	=	Y & 0xFF;	//Low endian	left pixel
-                tmp0	+= OFFSET_5_0;
+                tmp0    =   Y & 0xFF;   //Low endian    left pixel
+                tmp0    += OFFSET_5_0;
 
-                tmp1	=	tmp0 - (Cg >> 16);
-                tmp2	=	tmp0 + (Cb >> 16);
-                tmp0	=	tmp0 + (Cr >> 16);
+                tmp1    =   tmp0 - (Cg >> 16);
+                tmp2    =   tmp0 + (Cb >> 16);
+                tmp0    =   tmp0 + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
+                tmp2    =   clip[tmp2];
                 //RGB_565
 
-                rgb		=	tmp1 | (tmp0 << 6);
-                rgb		=	tmp2 | (rgb << 5);
+                rgb     =   tmp1 | (tmp0 << 6);
+                rgb     =   tmp2 | (rgb << 5);
                 *(pDst += dst_pitch) = rgb;  /* save left pixel, have to save separately */
 
-                Y	>>=	8;
-                Y	+= OFFSET_5_1;
-                tmp1	=	(Y) - (Cg >> 16);
-                tmp2	=	(Y) + (Cb >> 16);
-                tmp0	=	(Y) + (Cr >> 16);
+                Y   >>= 8;
+                Y   += OFFSET_5_1;
+                tmp1    = (Y) - (Cg >> 16);
+                tmp2    = (Y) + (Cb >> 16);
+                tmp0    = (Y) + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
+                tmp2    =   clip[tmp2];
                 //RGB_565
-                tmp0	=	tmp1 | (tmp0 << 6);
-                tmp0	=	tmp2 | (tmp0 << 5);
+                tmp0    =   tmp1 | (tmp0 << 6);
+                tmp0    =   tmp2 | (tmp0 << 5);
 
                 if (col3 == 0)
                 {
@@ -4587,36 +4587,36 @@ int32 cc16scaling43(uint8 **src, uint8 *dst,
                 //load the top two pixels
                 Y = *pY++;
 
-                tmp0	=	Y & 0xFF;	//Low endian	left pixel
-                tmp0	+= OFFSET_5_1;
+                tmp0    =   Y & 0xFF;   //Low endian    left pixel
+                tmp0    += OFFSET_5_1;
 
-                tmp1	=	tmp0 - (Cg >> 16);
-                tmp2	=	tmp0 + (Cb >> 16);
-                tmp0	=	tmp0 + (Cr >> 16);
+                tmp1    =   tmp0 - (Cg >> 16);
+                tmp2    =   tmp0 + (Cb >> 16);
+                tmp0    =   tmp0 + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
+                tmp2    =   clip[tmp2];
 
 
-                rgb		=	tmp1 | (tmp0 << 6);
-                rgb		=	tmp2 | (rgb << 5);
+                rgb     =   tmp1 | (tmp0 << 6);
+                rgb     =   tmp2 | (rgb << 5);
 
-                Y	>>=	8;
-                Y	+= OFFSET_5_0;
-                tmp1	=	(Y) - (Cg >> 16);
-                tmp2	=	(Y) + (Cb >> 16);
-                tmp0	=	(Y) + (Cr >> 16);
+                Y   >>= 8;
+                Y   += OFFSET_5_0;
+                tmp1    = (Y) - (Cg >> 16);
+                tmp2    = (Y) + (Cb >> 16);
+                tmp0    = (Y) + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
+                tmp2    =   clip[tmp2];
 
-                tmp0	=	tmp1 | (tmp0 << 6);
-                tmp0	=	tmp2 | (tmp0 << 5);
+                tmp0    =   tmp1 | (tmp0 << 6);
+                tmp0    =   tmp2 | (tmp0 << 5);
 
 #ifndef INTERPOLATE
-                *(pDst -= dst_pitch)	=	rgb;	/* save left pixel */
+                *(pDst -= dst_pitch)    =   rgb;    /* save left pixel */
                 if (col3 == 0)
                 {
                     pDst[1] = rgb; /* repeat this pixel */
@@ -4624,7 +4624,7 @@ int32 cc16scaling43(uint8 **src, uint8 *dst,
 #else
                 if (col3 != 0)
                 {
-                    *(pDst -= dst_pitch)	=	rgb;	/* save left pixel */
+                    *(pDst -= dst_pitch)    =   rgb;    /* save left pixel */
                 }
                 else
                 {
@@ -4635,15 +4635,15 @@ int32 cc16scaling43(uint8 **src, uint8 *dst,
                 }
 #endif
 #ifndef INTERPOLATE
-                *(--pDst)	= tmp0;	/* save right pixel */
+                *(--pDst)   = tmp0; /* save right pixel */
                 if (col3 == 1)
                 {
-                    *(--pDst)	= tmp0;	/* save right pixel */
+                    *(--pDst)   = tmp0; /* save right pixel */
                 }
 #else
                 if (col3 != 1)
                 {
-                    *(--pDst)	= tmp0;	/* save right pixel */
+                    *(--pDst)   = tmp0; /* save right pixel */
                 }
                 else
                 {
@@ -4660,44 +4660,44 @@ int32 cc16scaling43(uint8 **src, uint8 *dst,
                 Cr = *pCr++;
                 Cb -= 128;
                 Cr -= 128;
-                Cg	=	Cr * cc1;
-                Cr	*= cc3;
+                Cg  =   Cr * cc1;
+                Cr  *= cc3;
 
-                Cg	+=	Cb * cc2;
-                Cb	*=  cc4;
+                Cg  +=  Cb * cc2;
+                Cb  *=  cc4;
 
                 //load the bottom two pixels
                 Y = pY[src_pitch];
 
-                tmp0	=	Y & 0xFF;	//Low endian	left pixel
-                tmp0	+= OFFSET_5_0;
+                tmp0    =   Y & 0xFF;   //Low endian    left pixel
+                tmp0    += OFFSET_5_0;
 
-                tmp1	=	tmp0 - (Cg >> 16);
-                tmp2	=	tmp0 + (Cb >> 16);
-                tmp0	=	tmp0 + (Cr >> 16);
+                tmp1    =   tmp0 - (Cg >> 16);
+                tmp2    =   tmp0 + (Cb >> 16);
+                tmp0    =   tmp0 + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
+                tmp2    =   clip[tmp2];
                 //RGB_565
 
-                rgb		=	tmp1 | (tmp0 << 6);
-                rgb		=	tmp2 | (rgb << 5);
+                rgb     =   tmp1 | (tmp0 << 6);
+                rgb     =   tmp2 | (rgb << 5);
                 *(pDst += dst_pitch) = rgb;  /* save left pixel, have to save separately */
 
-                Y	>>=	8;
-                Y	+= OFFSET_5_1;
-                tmp1	=	(Y) - (Cg >> 16);
-                tmp2	=	(Y) + (Cb >> 16);
-                tmp0	=	(Y) + (Cr >> 16);
+                Y   >>= 8;
+                Y   += OFFSET_5_1;
+                tmp1    = (Y) - (Cg >> 16);
+                tmp2    = (Y) + (Cb >> 16);
+                tmp0    = (Y) + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
+                tmp2    =   clip[tmp2];
 
                 //RGB_565
-                tmp0	=	tmp1 | (tmp0 << 6);
-                tmp0	=	tmp2 | (tmp0 << 5);
+                tmp0    =   tmp1 | (tmp0 << 6);
+                tmp0    =   tmp2 | (tmp0 << 5);
 
                 if (col3 == 2)
                 {
@@ -4733,35 +4733,35 @@ int32 cc16scaling43(uint8 **src, uint8 *dst,
                 //load the top two pixels
                 Y = *pY++;
 
-                tmp0	=	Y & 0xFF;	//Low endian	left pixel
-                tmp0	+= OFFSET_5_1;
+                tmp0    =   Y & 0xFF;   //Low endian    left pixel
+                tmp0    += OFFSET_5_1;
 
-                tmp1	=	tmp0 - (Cg >> 16);
-                tmp2	=	tmp0 + (Cb >> 16);
-                tmp0	=	tmp0 + (Cr >> 16);
+                tmp1    =   tmp0 - (Cg >> 16);
+                tmp2    =   tmp0 + (Cb >> 16);
+                tmp0    =   tmp0 + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
+                tmp2    =   clip[tmp2];
 
 
-                rgb		=	tmp1 | (tmp0 << 6);
-                rgb		=	tmp2 | (rgb << 5);
+                rgb     =   tmp1 | (tmp0 << 6);
+                rgb     =   tmp2 | (rgb << 5);
 
-                Y	>>=	8;
-                Y	+= OFFSET_5_0;
-                tmp1	=	(Y) - (Cg >> 16);
-                tmp2	=	(Y) + (Cb >> 16);
-                tmp0	=	(Y) + (Cr >> 16);
+                Y   >>= 8;
+                Y   += OFFSET_5_0;
+                tmp1    = (Y) - (Cg >> 16);
+                tmp2    = (Y) + (Cb >> 16);
+                tmp0    = (Y) + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
+                tmp2    =   clip[tmp2];
 
-                tmp0	=	tmp1 | (tmp0 << 6);
-                tmp0	=	tmp2 | (tmp0 << 5);
+                tmp0    =   tmp1 | (tmp0 << 6);
+                tmp0    =   tmp2 | (tmp0 << 5);
 #ifndef INTERPOLATE
-                *(pDst -= dst_pitch)	=	rgb;	/* save left pixel */
+                *(pDst -= dst_pitch)    =   rgb;    /* save left pixel */
                 if (col3 == 2)
                 {
                     pDst[1] = rgb; /* repeat this pixel */
@@ -4769,34 +4769,34 @@ int32 cc16scaling43(uint8 **src, uint8 *dst,
 #else
                 if (col3 != 2)
                 {
-                    *(pDst -= dst_pitch)	=	rgb;	/* save left pixel */
+                    *(pDst -= dst_pitch)    =   rgb;    /* save left pixel */
                 }
                 else
                 {
-                    *(pDst -= dst_pitch)	=	(((((tmp0      & 0x1F)  + (rgb     & 0x1F)) / 2) & 0x1F)
-                                            | ((((((tmp0 >> 5) & 0x3F)  + ((rgb >> 5) & 0x3F)) / 2) & 0x3F) << 5)
-                                            | ((((((tmp0 >> 11) & 0x1F)  + ((rgb >> 11) & 0x1F)) / 2) & 0x1F) << 11));
+                    *(pDst -= dst_pitch)    = (((((tmp0      & 0x1F)  + (rgb     & 0x1F)) / 2) & 0x1F)
+                                               | ((((((tmp0 >> 5) & 0x3F)  + ((rgb >> 5) & 0x3F)) / 2) & 0x3F) << 5)
+                                               | ((((((tmp0 >> 11) & 0x1F)  + ((rgb >> 11) & 0x1F)) / 2) & 0x1F) << 11));
                     pDst[1] = rgb;
                 }
 #endif
 
 #ifndef INTERPOLATE
-                *(--pDst)	= tmp0;	/* save right pixel */
+                *(--pDst)   = tmp0; /* save right pixel */
                 if (col3 == 0)
                 {
-                    *(--pDst)	= tmp0;
+                    *(--pDst)   = tmp0;
                 }
 #else
                 if (col3 != 0)
                 {
-                    *(--pDst)	= tmp0;	/* save right pixel */
+                    *(--pDst)   = tmp0; /* save right pixel */
                 }
                 else
                 {
-                    *(--pDst)	= (((((tmp0      & 0x1F)  + (rgb     & 0x1F)) / 2) & 0x1F)
-                                 | ((((((tmp0 >> 5) & 0x3F)  + ((rgb >> 5) & 0x3F)) / 2) & 0x3F) << 5)
-                                 | ((((((tmp0 >> 11) & 0x1F)  + ((rgb >> 11) & 0x1F)) / 2) & 0x1F) << 11));
-                    *(--pDst)	= tmp0;	/* save right pixel */
+                    *(--pDst)   = (((((tmp0      & 0x1F)  + (rgb     & 0x1F)) / 2) & 0x1F)
+                                   | ((((((tmp0 >> 5) & 0x3F)  + ((rgb >> 5) & 0x3F)) / 2) & 0x3F) << 5)
+                                   | ((((((tmp0 >> 11) & 0x1F)  + ((rgb >> 11) & 0x1F)) / 2) & 0x1F) << 11));
+                    *(--pDst)   = tmp0; /* save right pixel */
                 }
 #endif
 
@@ -4809,9 +4809,9 @@ int32 cc16scaling43(uint8 **src, uint8 *dst,
                 }
             }//end of COL
 
-            pY	+=	(deltaY >> 1);
-            pCb	+=	deltaCbCr;
-            pCr	+=	deltaCbCr;
+            pY  += (deltaY >> 1);
+            pCb +=  deltaCbCr;
+            pCr +=  deltaCbCr;
             if (row3 == 1)
             {
                 dst_pitch >>= 1;
@@ -4881,14 +4881,14 @@ int32 cc16scaling43(uint8 **src, uint8 *dst,
         }
         else // no rotation,no flip
         {
-            deltaY		=	(src_pitch << 1) - src_width;
-            deltaCbCr	=	(src_pitch - src_width) >> 1;
+            deltaY      = (src_pitch << 1) - src_width;
+            deltaCbCr   = (src_pitch - src_width) >> 1;
             pY = (uint16 *) src[0];
             src_pitch >>= 1;
             pCb = src[1];
             pCr = src[2];
         }
-        pDst =	(uint16 *)dst;
+        pDst = (uint16 *)dst;
         row3 = 2;
 
         for (row = disp[3]; row > 0; row -= 2)
@@ -4906,43 +4906,43 @@ int32 cc16scaling43(uint8 **src, uint8 *dst,
                 Cr = *pCr++;
                 Cb -= 128;
                 Cr -= 128;
-                Cg	=	Cr * cc1;
-                Cr	*= cc3;
+                Cg  =   Cr * cc1;
+                Cr  *= cc3;
 
-                Cg	+=	Cb * cc2;
-                Cb	*=  cc4;
+                Cg  +=  Cb * cc2;
+                Cb  *=  cc4;
 
                 //load the bottom two pixels
                 Y = pY[src_pitch];
 
-                tmp0	=	Y & 0xFF;	//Low endian	left pixel
-                tmp0	+= OFFSET_5_0;
+                tmp0    =   Y & 0xFF;   //Low endian    left pixel
+                tmp0    += OFFSET_5_0;
 
-                tmp1	=	tmp0 - (Cg >> 16);
-                tmp2	=	tmp0 + (Cb >> 16);
-                tmp0	=	tmp0 + (Cr >> 16);
+                tmp1    =   tmp0 - (Cg >> 16);
+                tmp2    =   tmp0 + (Cb >> 16);
+                tmp0    =   tmp0 + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
+                tmp2    =   clip[tmp2];
                 //RGB_565
 
-                rgb		=	tmp1 | (tmp0 << 6);
-                rgb		=	tmp2 | (rgb << 5);
+                rgb     =   tmp1 | (tmp0 << 6);
+                rgb     =   tmp2 | (rgb << 5);
                 *(pDst += dst_pitch) = rgb;  /* save left pixel, have to save separately */
 
-                Y	>>=	8;
-                Y	+= OFFSET_5_1;
-                tmp1	=	(Y) - (Cg >> 16);
-                tmp2	=	(Y) + (Cb >> 16);
-                tmp0	=	(Y) + (Cr >> 16);
+                Y   >>= 8;
+                Y   += OFFSET_5_1;
+                tmp1    = (Y) - (Cg >> 16);
+                tmp2    = (Y) + (Cb >> 16);
+                tmp0    = (Y) + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
+                tmp2    =   clip[tmp2];
                 //RGB_565
-                tmp0	=	tmp1 | (tmp0 << 6);
-                tmp0	=	tmp2 | (tmp0 << 5);
+                tmp0    =   tmp1 | (tmp0 << 6);
+                tmp0    =   tmp2 | (tmp0 << 5);
 
                 if (col3 == 0)
                 {
@@ -4977,35 +4977,35 @@ int32 cc16scaling43(uint8 **src, uint8 *dst,
                 //load the top two pixels
                 Y = *pY++;
 
-                tmp0	=	Y & 0xFF;	//Low endian	left pixel
-                tmp0	+= OFFSET_5_1;
+                tmp0    =   Y & 0xFF;   //Low endian    left pixel
+                tmp0    += OFFSET_5_1;
 
-                tmp1	=	tmp0 - (Cg >> 16);
-                tmp2	=	tmp0 + (Cb >> 16);
-                tmp0	=	tmp0 + (Cr >> 16);
+                tmp1    =   tmp0 - (Cg >> 16);
+                tmp2    =   tmp0 + (Cb >> 16);
+                tmp0    =   tmp0 + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
+                tmp2    =   clip[tmp2];
 
 
-                rgb		=	tmp1 | (tmp0 << 6);
-                rgb		=	tmp2 | (rgb << 5);
-                Y	>>=	8;
-                Y	+= OFFSET_5_0;
-                tmp1	=	(Y) - (Cg >> 16);
-                tmp2	=	(Y) + (Cb >> 16);
-                tmp0	=	(Y) + (Cr >> 16);
+                rgb     =   tmp1 | (tmp0 << 6);
+                rgb     =   tmp2 | (rgb << 5);
+                Y   >>= 8;
+                Y   += OFFSET_5_0;
+                tmp1    = (Y) - (Cg >> 16);
+                tmp2    = (Y) + (Cb >> 16);
+                tmp0    = (Y) + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
+                tmp2    =   clip[tmp2];
 
-                tmp0	=	tmp1 | (tmp0 << 6);
-                tmp0	=	tmp2 | (tmp0 << 5);
+                tmp0    =   tmp1 | (tmp0 << 6);
+                tmp0    =   tmp2 | (tmp0 << 5);
 
 #ifndef INTERPOLATE
-                *(pDst -= dst_pitch)	=	rgb;	/* save left pixel */
+                *(pDst -= dst_pitch)    =   rgb;    /* save left pixel */
                 if (col3 == 0)
                 {
                     pDst[-1] = rgb; /* repeat this pixel */
@@ -5013,7 +5013,7 @@ int32 cc16scaling43(uint8 **src, uint8 *dst,
 #else
                 if (col3 != 0)
                 {
-                    *(pDst -= dst_pitch)	=	rgb;	/* save left pixel */
+                    *(pDst -= dst_pitch)    =   rgb;    /* save left pixel */
                 }
                 else
                 {
@@ -5025,15 +5025,15 @@ int32 cc16scaling43(uint8 **src, uint8 *dst,
 #endif
 
 #ifndef INTERPOLATE
-                *(++pDst)	= tmp0;	/* save right pixel */
+                *(++pDst)   = tmp0; /* save right pixel */
                 if (col3 == 1)
                 {
-                    *(++pDst)	= tmp0;	/* save right pixel */
+                    *(++pDst)   = tmp0; /* save right pixel */
                 }
 #else
                 if (col3 != 1)
                 {
-                    *(++pDst)	= tmp0;	/* save right pixel */
+                    *(++pDst)   = tmp0; /* save right pixel */
                 }
                 else
                 {
@@ -5049,45 +5049,45 @@ int32 cc16scaling43(uint8 **src, uint8 *dst,
                 Cr = *pCr++;
                 Cb -= 128;
                 Cr -= 128;
-                Cg	=	Cr * cc1;
-                Cr	*= cc3;
+                Cg  =   Cr * cc1;
+                Cr  *= cc3;
 
-                Cg	+=	Cb * cc2;
-                Cb	*=  cc4;
+                Cg  +=  Cb * cc2;
+                Cb  *=  cc4;
 
                 //load the bottom two pixels
                 Y = pY[src_pitch];
 
-                tmp0	=	Y & 0xFF;	//Low endian	left pixel
-                tmp0	+= OFFSET_5_0;
+                tmp0    =   Y & 0xFF;   //Low endian    left pixel
+                tmp0    += OFFSET_5_0;
 
-                tmp1	=	tmp0 - (Cg >> 16);
-                tmp2	=	tmp0 + (Cb >> 16);
-                tmp0	=	tmp0 + (Cr >> 16);
+                tmp1    =   tmp0 - (Cg >> 16);
+                tmp2    =   tmp0 + (Cb >> 16);
+                tmp0    =   tmp0 + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
+                tmp2    =   clip[tmp2];
 
                 //RGB_565
 
-                rgb		=	tmp1 | (tmp0 << 6);
-                rgb		=	tmp2 | (rgb << 5);
+                rgb     =   tmp1 | (tmp0 << 6);
+                rgb     =   tmp2 | (rgb << 5);
 
                 *(pDst += dst_pitch) = rgb;
 
-                Y	>>=	8;
-                Y	+= OFFSET_5_1;
-                tmp1	=	(Y) - (Cg >> 16);
-                tmp2	=	(Y) + (Cb >> 16);
-                tmp0	=	(Y) + (Cr >> 16);
+                Y   >>= 8;
+                Y   += OFFSET_5_1;
+                tmp1    = (Y) - (Cg >> 16);
+                tmp2    = (Y) + (Cb >> 16);
+                tmp0    = (Y) + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
+                tmp2    =   clip[tmp2];
                 //RGB_565
-                tmp0	=	tmp1 | (tmp0 << 6);
-                tmp0	=	tmp2 | (tmp0 << 5);
+                tmp0    =   tmp1 | (tmp0 << 6);
+                tmp0    =   tmp2 | (tmp0 << 5);
                 if (col3 == 2)
                 {
 #ifndef INTERPOLATE
@@ -5121,35 +5121,35 @@ int32 cc16scaling43(uint8 **src, uint8 *dst,
                 //load the top two pixels
                 Y = *pY++;
 
-                tmp0	=	Y & 0xFF;	//Low endian	left pixel
-                tmp0	+= OFFSET_5_1;
+                tmp0    =   Y & 0xFF;   //Low endian    left pixel
+                tmp0    += OFFSET_5_1;
 
-                tmp1	=	tmp0 - (Cg >> 16);
-                tmp2	=	tmp0 + (Cb >> 16);
-                tmp0	=	tmp0 + (Cr >> 16);
+                tmp1    =   tmp0 - (Cg >> 16);
+                tmp2    =   tmp0 + (Cb >> 16);
+                tmp0    =   tmp0 + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
+                tmp2    =   clip[tmp2];
 
 
-                rgb		=	tmp1 | (tmp0 << 6);
-                rgb		=	tmp2 | (rgb << 5);
+                rgb     =   tmp1 | (tmp0 << 6);
+                rgb     =   tmp2 | (rgb << 5);
 
-                Y	>>=	8;
-                Y	+= OFFSET_5_0;
-                tmp1	=	(Y) - (Cg >> 16);
-                tmp2	=	(Y) + (Cb >> 16);
-                tmp0	=	(Y) + (Cr >> 16);
+                Y   >>= 8;
+                Y   += OFFSET_5_0;
+                tmp1    = (Y) - (Cg >> 16);
+                tmp2    = (Y) + (Cb >> 16);
+                tmp0    = (Y) + (Cr >> 16);
 
-                tmp0	=	clip[tmp0];
-                tmp1	=	clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
-                tmp2	=	clip[tmp2];
+                tmp0    =   clip[tmp0];
+                tmp1    =   clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
+                tmp2    =   clip[tmp2];
 
-                tmp0	=	tmp1 | (tmp0 << 6);
-                tmp0	=	tmp2 | (tmp0 << 5);
+                tmp0    =   tmp1 | (tmp0 << 6);
+                tmp0    =   tmp2 | (tmp0 << 5);
 #ifndef INTERPOLATE
-                *(pDst -= dst_pitch)	=	rgb;	/* save left pixel */
+                *(pDst -= dst_pitch)    =   rgb;    /* save left pixel */
                 if (col3 == 2)
                 {
                     pDst[-1] = rgb; /* repeat this pixel */
@@ -5157,34 +5157,34 @@ int32 cc16scaling43(uint8 **src, uint8 *dst,
 #else
                 if (col3 != 2)
                 {
-                    *(pDst -= dst_pitch)	=	rgb;	/* save left pixel */
+                    *(pDst -= dst_pitch)    =   rgb;    /* save left pixel */
                 }
                 else
                 {
-                    *(pDst -= dst_pitch)	=	(((((tmp0      & 0x1F)  + (rgb     & 0x1F)) / 2) & 0x1F)
-                                            | ((((((tmp0 >> 5) & 0x3F)  + ((rgb >> 5) & 0x3F)) / 2) & 0x3F) << 5)
-                                            | ((((((tmp0 >> 11) & 0x1F)  + ((rgb >> 11) & 0x1F)) / 2) & 0x1F) << 11));
+                    *(pDst -= dst_pitch)    = (((((tmp0      & 0x1F)  + (rgb     & 0x1F)) / 2) & 0x1F)
+                                               | ((((((tmp0 >> 5) & 0x3F)  + ((rgb >> 5) & 0x3F)) / 2) & 0x3F) << 5)
+                                               | ((((((tmp0 >> 11) & 0x1F)  + ((rgb >> 11) & 0x1F)) / 2) & 0x1F) << 11));
                     pDst[-1] = rgb;
                 }
 #endif
 
 #ifndef INTERPOLATE
-                *(++pDst)	= tmp0;	/* save right pixel */
+                *(++pDst)   = tmp0; /* save right pixel */
                 if (col3 == 0)
                 {
-                    *(++pDst)	= tmp0;	/* save right pixel */
+                    *(++pDst)   = tmp0; /* save right pixel */
                 }
 #else
                 if (col3 != 0)
                 {
-                    *(++pDst)	= tmp0;	/* save right pixel */
+                    *(++pDst)   = tmp0; /* save right pixel */
                 }
                 else
                 {
-                    *(++pDst)	= (((((tmp0      & 0x1F)  + (rgb     & 0x1F)) / 2) & 0x1F)
-                                 | ((((((tmp0 >> 5) & 0x3F)  + ((rgb >> 5) & 0x3F)) / 2) & 0x3F) << 5)
-                                 | ((((((tmp0 >> 11) & 0x1F)  + ((rgb >> 11) & 0x1F)) / 2) & 0x1F) << 11));
-                    *(++pDst)	= tmp0;	/* save right pixel */
+                    *(++pDst)   = (((((tmp0      & 0x1F)  + (rgb     & 0x1F)) / 2) & 0x1F)
+                                   | ((((((tmp0 >> 5) & 0x3F)  + ((rgb >> 5) & 0x3F)) / 2) & 0x3F) << 5)
+                                   | ((((((tmp0 >> 11) & 0x1F)  + ((rgb >> 11) & 0x1F)) / 2) & 0x1F) << 11));
+                    *(++pDst)   = tmp0; /* save right pixel */
                 }
 #endif
                 pDst++;
@@ -5196,9 +5196,9 @@ int32 cc16scaling43(uint8 **src, uint8 *dst,
                 }
             }//end of COL
 
-            pY	+=	(deltaY >> 1);
-            pCb	+=	deltaCbCr;
-            pCr	+=	deltaCbCr;
+            pY  += (deltaY >> 1);
+            pCb +=  deltaCbCr;
+            pCr +=  deltaCbCr;
             if (row3 == 1)
             {
                 dst_pitch >>= 1;
@@ -5295,30 +5295,30 @@ int32 cc16sc_rotate(uint8 **src, uint8 *dst, int32 *disp,
                     uint8 *_mColPix, bool _mIsRotateClkwise, int32 flip) // ankur
 {
 #if (CCROTATE && CCSCALING)
-    /*	1. move the dst pointer to the line above the border
+    /*  1. move the dst pointer to the line above the border
     2. do 2 line conversion
     3. copy both up & down
-    	*/
+        */
     uint8 *pCb, *pCr;
-    uint8	*pY;
-    uint16	*pDst;
-    int32		src_pitch, dst_pitch, src_width;
-    int32		Y, Cb, Cr, Cg;
-    int32		deltaY, dst_width, deltaCbCr, dst_inc, dst_start_pos;
-    int32		row, col;
-    int32		tmp0, tmp1, tmp2;
-    uint32	rgb;
+    uint8   *pY;
+    uint16  *pDst;
+    int32       src_pitch, dst_pitch, src_width;
+    int32       Y, Cb, Cr, Cg;
+    int32       deltaY, dst_width, deltaCbCr, dst_inc, dst_start_pos;
+    int32       row, col;
+    int32       tmp0, tmp1, tmp2;
+    uint32  rgb;
     uint8 *clip = coff_tbl + 400;
-    int32		offset;
+    int32       offset;
     int32  cc1 = (*((int32*)(clip - 400)));
     int32  cc3 = (*((int32*)(clip - 396)));
     int32  cc2 = (*((int32*)(clip - 392)));
     int32  cc4 = (*((int32*)(clip - 388)));
 
-    src_pitch	=	disp[0];
-    dst_pitch	=	disp[1];
-    src_width	=	disp[2];
-    dst_width	=  disp[4];
+    src_pitch   =   disp[0];
+    dst_pitch   =   disp[1];
+    src_width   =   disp[2];
+    dst_width   =  disp[4];
 
 #ifdef INTERPOLATE
     int32 prgb1;
@@ -5329,13 +5329,13 @@ int32 cc16sc_rotate(uint8 **src, uint8 *dst, int32 *disp,
 
     if (_mIsRotateClkwise)
     {
-        deltaY		=  src_pitch * disp[3] + 2;
-        deltaCbCr	= ((src_pitch * disp[3]) >> 2) + 1;
+        deltaY      =  src_pitch * disp[3] + 2;
+        deltaCbCr   = ((src_pitch * disp[3]) >> 2) + 1;
     }
     else // rotate counterclockwise
     {
-        deltaY		=  -(src_pitch * disp[3] + 2);
-        deltaCbCr	=  -(((src_pitch * disp[3]) >> 2) + 1);
+        deltaY      =  -(src_pitch * disp[3] + 2);
+        deltaCbCr   =  -(((src_pitch * disp[3]) >> 2) + 1);
     }
 
     // map origin of the destination to the source
@@ -5377,7 +5377,7 @@ int32 cc16sc_rotate(uint8 **src, uint8 *dst, int32 *disp,
         dst_inc = -1;
     }
 
-    pDst =	(uint16 *)dst + dst_start_pos;
+    pDst = (uint16 *)dst + dst_start_pos;
 
     for (row = src_width - 1; row > 0; row -= 2)
     { /* decrement index, _mColPix[.] is symmetric to increment index */
@@ -5401,103 +5401,103 @@ int32 cc16sc_rotate(uint8 **src, uint8 *dst, int32 *disp,
 
                 Cb -= 128;
                 Cr -= 128;
-                Cg	=	Cr * cc1;
-                Cr	*= cc3;
+                Cg  =   Cr * cc1;
+                Cr  *= cc3;
 
-                Cg	+=	Cb * cc2;
-                Cb	*=  cc4;
+                Cg  +=  Cb * cc2;
+                Cb  *=  cc4;
 
                 if (_mRowPix[col]) /* compute this pixel */
                 {
-                    tmp0	=   pY[read_idx];		//bottom left
+                    tmp0    =   pY[read_idx];       //bottom left
 
-                    tmp0	+= OFFSET_5_0;
+                    tmp0    += OFFSET_5_0;
 
-                    tmp1	=	tmp0 - (Cg >> 16);
-                    tmp2	=	tmp0 + (Cb >> 16);
-                    tmp0	=	tmp0 + (Cr >> 16);
+                    tmp1    =   tmp0 - (Cg >> 16);
+                    tmp2    =   tmp0 + (Cb >> 16);
+                    tmp0    =   tmp0 + (Cr >> 16);
 
-                    tmp0	=	clip[tmp0];
-                    tmp1	=	clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
-                    tmp2	=	clip[tmp2];
-
-                    //RGB_565
-
-                    rgb		=	tmp1 | (tmp0 << 6);
-                    rgb		=	tmp2 | (rgb << 5);
-
-                    Y	=	*pY;
-                    pY += tmp_src_pitch; 	//upper left
-
-                    Y	+= OFFSET_5_1;
-                    tmp1	=	(Y) - (Cg >> 16);
-                    tmp2	=	(Y) + (Cb >> 16);
-                    tmp0	=	(Y) + (Cr >> 16);
-
-                    tmp0	=	clip[tmp0];
-                    tmp1	=	clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
-                    tmp2	=	clip[tmp2];
+                    tmp0    =   clip[tmp0];
+                    tmp1    =   clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
+                    tmp2    =   clip[tmp2];
 
                     //RGB_565
-                    tmp0	=	tmp1 | (tmp0 << 6);
-                    tmp0	=	tmp2 | (tmp0 << 5);
 
-                    *(pDst)	=	(uint16)tmp0;
+                    rgb     =   tmp1 | (tmp0 << 6);
+                    rgb     =   tmp2 | (rgb << 5);
 
-                } /*	if(_mRowPix[col])  */
+                    Y   =   *pY;
+                    pY += tmp_src_pitch;    //upper left
+
+                    Y   += OFFSET_5_1;
+                    tmp1    = (Y) - (Cg >> 16);
+                    tmp2    = (Y) + (Cb >> 16);
+                    tmp0    = (Y) + (Cr >> 16);
+
+                    tmp0    =   clip[tmp0];
+                    tmp1    =   clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
+                    tmp2    =   clip[tmp2];
+
+                    //RGB_565
+                    tmp0    =   tmp1 | (tmp0 << 6);
+                    tmp0    =   tmp2 | (tmp0 << 5);
+
+                    *(pDst) = (uint16)tmp0;
+
+                } /*    if(_mRowPix[col])  */
                 else
                 {
                     pY += tmp_src_pitch;
                 }
 
-                pDst	+= (dst_inc > 0 ? _mRowPix[col] : -_mRowPix[col]);
+                pDst    += (dst_inc > 0 ? _mRowPix[col] : -_mRowPix[col]);
 
                 if (_mRowPix[col+1]) /* compute this pixel */
                 {
-                    tmp0	=   pY[read_idx];			//bottom right
+                    tmp0    =   pY[read_idx];           //bottom right
 
-                    tmp0	+= OFFSET_5_1;
+                    tmp0    += OFFSET_5_1;
 
-                    tmp1	=	tmp0 - (Cg >> 16);
-                    tmp2	=	tmp0 + (Cb >> 16);
-                    tmp0	=	tmp0 + (Cr >> 16);
+                    tmp1    =   tmp0 - (Cg >> 16);
+                    tmp2    =   tmp0 + (Cb >> 16);
+                    tmp0    =   tmp0 + (Cr >> 16);
 
-                    tmp0	=	clip[tmp0];
-                    tmp1	=	clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
-                    tmp2	=	clip[tmp2];
+                    tmp0    =   clip[tmp0];
+                    tmp1    =   clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
+                    tmp2    =   clip[tmp2];
 
 
-                    rgb		=	tmp1 | (tmp0 << 6);
-                    rgb		=	tmp2 | (rgb << 5);
+                    rgb     =   tmp1 | (tmp0 << 6);
+                    rgb     =   tmp2 | (rgb << 5);
 
-                    Y	=	*pY;
-                    pY += tmp_src_pitch;		//upper right
+                    Y   =   *pY;
+                    pY += tmp_src_pitch;        //upper right
 
-                    Y	+= OFFSET_5_0;
-                    tmp1	=	(Y) - (Cg >> 16);
-                    tmp2	=	(Y) + (Cb >> 16);
-                    tmp0	=	(Y) + (Cr >> 16);
+                    Y   += OFFSET_5_0;
+                    tmp1    = (Y) - (Cg >> 16);
+                    tmp2    = (Y) + (Cb >> 16);
+                    tmp0    = (Y) + (Cr >> 16);
 
-                    tmp0	=	clip[tmp0];
-                    tmp1	=	clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
-                    tmp2	=	clip[tmp2];
+                    tmp0    =   clip[tmp0];
+                    tmp1    =   clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
+                    tmp2    =   clip[tmp2];
 
-                    tmp0	=	tmp1 | (tmp0 << 6);
-                    tmp0	=	tmp2 | (tmp0 << 5);
+                    tmp0    =   tmp1 | (tmp0 << 6);
+                    tmp0    =   tmp2 | (tmp0 << 5);
 
-                    *(pDst)	=	(uint16)tmp0;
-                }/*	if(_mRowPix[col])  */
+                    *(pDst) = (uint16)tmp0;
+                }/* if(_mRowPix[col])  */
                 else
                 {
                     pY += tmp_src_pitch;
                 }
-                pDst	+= (dst_inc > 0 ? _mRowPix[col+1] : -_mRowPix[col+1]);
+                pDst    += (dst_inc > 0 ? _mRowPix[col+1] : -_mRowPix[col+1]);
             }//end of COL
             //oscl_memcpy() both up & down
 
-            pY	+=	(deltaY);
-            pCb +=	deltaCbCr;
-            pCr +=	deltaCbCr;
+            pY  += (deltaY);
+            pCb +=  deltaCbCr;
+            pCr +=  deltaCbCr;
 
             pDst += dst_pitch;
 
@@ -5528,46 +5528,46 @@ int32 cc16sc_rotate(uint8 **src, uint8 *dst, int32 *disp,
 
                 Cb -= 128;
                 Cr -= 128;
-                Cg	=	Cr * cc1;
-                Cr	*= cc3;
+                Cg  =   Cr * cc1;
+                Cr  *= cc3;
 
-                Cg	+=	Cb * cc2;
-                Cb	*=  cc4;
+                Cg  +=  Cb * cc2;
+                Cb  *=  cc4;
 
                 if (_mRowPix[col]) /* compute this pixel */
                 {
-                    tmp0	=   pY[read_idx];		//bottom left
+                    tmp0    =   pY[read_idx];       //bottom left
 
-                    tmp0	+= OFFSET_5_0;
+                    tmp0    += OFFSET_5_0;
 
-                    tmp1	=	tmp0 - (Cg >> 16);
-                    tmp2	=	tmp0 + (Cb >> 16);
-                    tmp0	=	tmp0 + (Cr >> 16);
+                    tmp1    =   tmp0 - (Cg >> 16);
+                    tmp2    =   tmp0 + (Cb >> 16);
+                    tmp0    =   tmp0 + (Cr >> 16);
 
-                    tmp0	=	clip[tmp0];
-                    tmp1	=	clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
-                    tmp2	=	clip[tmp2];
-
-                    //RGB_565
-
-                    rgb		=	tmp1 | (tmp0 << 6);
-                    rgb		=	tmp2 | (rgb << 5);
-
-                    Y	=	*pY;
-                    pY += tmp_src_pitch; 	//upper left
-
-                    Y	+= OFFSET_5_1;
-                    tmp1	=	(Y) - (Cg >> 16);
-                    tmp2	=	(Y) + (Cb >> 16);
-                    tmp0	=	(Y) + (Cr >> 16);
-
-                    tmp0	=	clip[tmp0];
-                    tmp1	=	clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
-                    tmp2	=	clip[tmp2];
+                    tmp0    =   clip[tmp0];
+                    tmp1    =   clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
+                    tmp2    =   clip[tmp2];
 
                     //RGB_565
-                    tmp0	=	tmp1 | (tmp0 << 6);
-                    tmp0	=	tmp2 | (tmp0 << 5);
+
+                    rgb     =   tmp1 | (tmp0 << 6);
+                    rgb     =   tmp2 | (rgb << 5);
+
+                    Y   =   *pY;
+                    pY += tmp_src_pitch;    //upper left
+
+                    Y   += OFFSET_5_1;
+                    tmp1    = (Y) - (Cg >> 16);
+                    tmp2    = (Y) + (Cb >> 16);
+                    tmp0    = (Y) + (Cr >> 16);
+
+                    tmp0    =   clip[tmp0];
+                    tmp1    =   clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
+                    tmp2    =   clip[tmp2];
+
+                    //RGB_565
+                    tmp0    =   tmp1 | (tmp0 << 6);
+                    tmp0    =   tmp2 | (tmp0 << 5);
 
 #ifdef INTERPOLATE
                     prgb3 = rgb;
@@ -5577,103 +5577,103 @@ int32 cc16sc_rotate(uint8 **src, uint8 *dst, int32 *disp,
                     if (_mRowPix[col] == 2)
                     {
 #ifdef INTERPOLATE
-                        *(pDst + dst_pitch)	=	(((((prgb1      & 0x1F)  + (rgb     & 0x1F)) / 2) & 0x1F)
+                        *(pDst + dst_pitch) = (((((prgb1      & 0x1F)  + (rgb     & 0x1F)) / 2) & 0x1F)
                                                | ((((((prgb1 >> 5) & 0x3F)  + ((rgb >> 5) & 0x3F)) / 2) & 0x3F) << 5)
                                                | ((((((prgb1 >> 11) & 0x1F)  + ((rgb >> 11) & 0x1F)) / 2) & 0x1F) << 11));
 
-                        *(pDst + dst_pitch + dst_inc)	=	(uint16)rgb;
+                        *(pDst + dst_pitch + dst_inc)   = (uint16)rgb;
 
-                        *(pDst)	=	(((((prgb2      & 0x1F)  + (tmp0     & 0x1F)) / 2) & 0x1F)
+                        *(pDst) = (((((prgb2      & 0x1F)  + (tmp0     & 0x1F)) / 2) & 0x1F)
                                    | ((((((prgb2 >> 5) & 0x3F)  + ((tmp0 >> 5) & 0x3F)) / 2) & 0x3F) << 5)
                                    | ((((((prgb2 >> 11) & 0x1F)  + ((tmp0 >> 11) & 0x1F)) / 2) & 0x1F) << 11));
 
-                        *(pDst + dst_inc)	= (uint16)tmp0;
+                        *(pDst + dst_inc)   = (uint16)tmp0;
 
 #else
-                        *(pDst + dst_pitch)			=	(uint16)rgb;
-                        *(pDst + dst_pitch + dst_inc)	=	(uint16)rgb;
-                        *(pDst)						= (uint16)tmp0;
-                        *(pDst + dst_inc)				= (uint16)tmp0;
+                        *(pDst + dst_pitch)         = (uint16)rgb;
+                        *(pDst + dst_pitch + dst_inc)   = (uint16)rgb;
+                        *(pDst)                     = (uint16)tmp0;
+                        *(pDst + dst_inc)               = (uint16)tmp0;
 #endif
                     }
                     else if (_mRowPix[col] == 3)
                     {
 #ifdef INTERPOLATE
-                        *(pDst + dst_pitch)	=	(((((prgb1      & 0x1F)  + (rgb     & 0x1F) * 2) / 3) & 0x1F)
+                        *(pDst + dst_pitch) = (((((prgb1      & 0x1F)  + (rgb     & 0x1F) * 2) / 3) & 0x1F)
                                                | ((((((prgb1 >> 5) & 0x3F)  + ((rgb >> 5) & 0x3F) * 2) / 3) & 0x3F) << 5)
                                                | ((((((prgb1 >> 11) & 0x1F)  + ((rgb >> 11) & 0x1F) * 2) / 3) & 0x1F) << 11));
 
-                        *((pDst + dst_pitch + dst_inc))	= (((((prgb1      & 0x1F) * 2 + (rgb     & 0x1F)) / 3) & 0x1F)
+                        *((pDst + dst_pitch + dst_inc)) = (((((prgb1      & 0x1F) * 2 + (rgb     & 0x1F)) / 3) & 0x1F)
                                                            | ((((((prgb1 >> 5) & 0x3F) * 2 + ((rgb >> 5) & 0x3F)) / 3) & 0x3F) << 5)
                                                            | ((((((prgb1 >> 11) & 0x1F) * 2 + ((rgb >> 11) & 0x1F)) / 3) & 0x1F) << 11));
 
-                        *((pDst + dst_pitch + (dst_inc << 1)))	= (uint16)rgb ;
+                        *((pDst + dst_pitch + (dst_inc << 1)))  = (uint16)rgb ;
 
-                        *(pDst)	=	(((((prgb2      & 0x1F)  + (tmp0     & 0x1F) * 2) / 3) & 0x1F)
+                        *(pDst) = (((((prgb2      & 0x1F)  + (tmp0     & 0x1F) * 2) / 3) & 0x1F)
                                    | ((((((prgb2 >> 5) & 0x3F)  + ((tmp0 >> 5) & 0x3F) * 2) / 3) & 0x3F) << 5)
                                    | ((((((prgb2 >> 11) & 0x1F)  + ((tmp0 >> 11) & 0x1F) * 2) / 3) & 0x1F) << 11));
 
-                        *((pDst + dst_inc))	=	(((((prgb2      & 0x1F) * 2 + (tmp0     & 0x1F)) / 3) & 0x1F)
+                        *((pDst + dst_inc)) = (((((prgb2      & 0x1F) * 2 + (tmp0     & 0x1F)) / 3) & 0x1F)
                                                | ((((((prgb2 >> 5) & 0x3F) * 2 + ((tmp0 >> 5) & 0x3F)) / 3) & 0x3F) << 5)
                                                | ((((((prgb2 >> 11) & 0x1F) * 2 + ((tmp0 >> 11) & 0x1F)) / 3) & 0x1F) << 11));
 
-                        *((pDst + (dst_inc << 1)))	= (uint16)tmp0;
+                        *((pDst + (dst_inc << 1)))  = (uint16)tmp0;
 #else
-                        *(pDst + dst_pitch)	=	(uint16)rgb;
-                        *((pDst + dst_pitch + dst_inc))	= (uint16)rgb ;
-                        *((pDst + dst_pitch + (dst_inc << 1)))	= (uint16)rgb ;
+                        *(pDst + dst_pitch) = (uint16)rgb;
+                        *((pDst + dst_pitch + dst_inc)) = (uint16)rgb ;
+                        *((pDst + dst_pitch + (dst_inc << 1)))  = (uint16)rgb ;
 
-                        *(pDst)	=	(uint16)tmp0;
-                        *((pDst + dst_inc))	= (uint16)tmp0;
-                        *((pDst + (dst_inc << 1)))	= (uint16)tmp0;
+                        *(pDst) = (uint16)tmp0;
+                        *((pDst + dst_inc)) = (uint16)tmp0;
+                        *((pDst + (dst_inc << 1)))  = (uint16)tmp0;
 #endif
                     }
                     else
                     {
-                        *(pDst + dst_pitch)	=	(uint16)rgb;
-                        *(pDst)	=	(uint16)tmp0;
+                        *(pDst + dst_pitch) = (uint16)rgb;
+                        *(pDst) = (uint16)tmp0;
                     }
 
-                } /*	if(_mRowPix[col])  */
+                } /*    if(_mRowPix[col])  */
                 else
                 {
                     pY += tmp_src_pitch;
                 }
 
-                pDst	+= (dst_inc > 0 ? _mRowPix[col] : -_mRowPix[col]);
+                pDst    += (dst_inc > 0 ? _mRowPix[col] : -_mRowPix[col]);
 
                 if (_mRowPix[col+1]) /* compute this pixel */
                 {
-                    tmp0	=   pY[read_idx];			//bottom right
+                    tmp0    =   pY[read_idx];           //bottom right
 
-                    tmp0	+= OFFSET_5_1;
+                    tmp0    += OFFSET_5_1;
 
-                    tmp1	=	tmp0 - (Cg >> 16);
-                    tmp2	=	tmp0 + (Cb >> 16);
-                    tmp0	=	tmp0 + (Cr >> 16);
+                    tmp1    =   tmp0 - (Cg >> 16);
+                    tmp2    =   tmp0 + (Cb >> 16);
+                    tmp0    =   tmp0 + (Cr >> 16);
 
-                    tmp0	=	clip[tmp0];
-                    tmp1	=	clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
-                    tmp2	=	clip[tmp2];
+                    tmp0    =   clip[tmp0];
+                    tmp1    =   clip[tmp1 + OFFSET_6_1 - OFFSET_5_1];
+                    tmp2    =   clip[tmp2];
 
 
-                    rgb		=	tmp1 | (tmp0 << 6);
-                    rgb		=	tmp2 | (rgb << 5);
+                    rgb     =   tmp1 | (tmp0 << 6);
+                    rgb     =   tmp2 | (rgb << 5);
 
-                    Y	=	*pY;
-                    pY += tmp_src_pitch;		//upper right
+                    Y   =   *pY;
+                    pY += tmp_src_pitch;        //upper right
 
-                    Y	+= OFFSET_5_0;
-                    tmp1	=	(Y) - (Cg >> 16);
-                    tmp2	=	(Y) + (Cb >> 16);
-                    tmp0	=	(Y) + (Cr >> 16);
+                    Y   += OFFSET_5_0;
+                    tmp1    = (Y) - (Cg >> 16);
+                    tmp2    = (Y) + (Cb >> 16);
+                    tmp0    = (Y) + (Cr >> 16);
 
-                    tmp0	=	clip[tmp0];
-                    tmp1	=	clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
-                    tmp2	=	clip[tmp2];
+                    tmp0    =   clip[tmp0];
+                    tmp1    =   clip[tmp1 + OFFSET_6_0 - OFFSET_5_0];
+                    tmp2    =   clip[tmp2];
 
-                    tmp0	=	tmp1 | (tmp0 << 6);
-                    tmp0	=	tmp2 | (tmp0 << 5);
+                    tmp0    =   tmp1 | (tmp0 << 6);
+                    tmp0    =   tmp2 | (tmp0 << 5);
 
 #ifdef INTERPOLATE
                     prgb1 = rgb;
@@ -5682,78 +5682,78 @@ int32 cc16sc_rotate(uint8 **src, uint8 *dst, int32 *disp,
                     if (_mRowPix[col+1] == 2)
                     {
 #ifdef INTERPOLATE
-                        *(pDst + dst_pitch)	=	(((((prgb3      & 0x1F)  + (rgb     & 0x1F)) / 2) & 0x1F)
+                        *(pDst + dst_pitch) = (((((prgb3      & 0x1F)  + (rgb     & 0x1F)) / 2) & 0x1F)
                                                | ((((((prgb3 >> 5) & 0x3F)  + ((rgb >> 5) & 0x3F)) / 2) & 0x3F) << 5)
                                                | ((((((prgb3 >> 11) & 0x1F)  + ((rgb >> 11) & 0x1F)) / 2) & 0x1F) << 11));
 
-                        *(pDst + dst_pitch + dst_inc)	=	(uint16)rgb;
+                        *(pDst + dst_pitch + dst_inc)   = (uint16)rgb;
 
-                        *(pDst)	=	(((((prgb4      & 0x1F)  + (tmp0     & 0x1F)) / 2) & 0x1F)
+                        *(pDst) = (((((prgb4      & 0x1F)  + (tmp0     & 0x1F)) / 2) & 0x1F)
                                    | ((((((prgb4 >> 5) & 0x3F)  + ((tmp0 >> 5) & 0x3F)) / 2) & 0x3F) << 5)
                                    | ((((((prgb4 >> 11) & 0x1F)  + ((tmp0 >> 11) & 0x1F)) / 2) & 0x1F) << 11));
 
-                        *(pDst + dst_inc)	= (uint16)tmp0;
+                        *(pDst + dst_inc)   = (uint16)tmp0;
 
 #else
-                        *(pDst + dst_pitch)			=	(uint16)rgb;
-                        *(pDst + dst_pitch + dst_inc)	=	(uint16)rgb;
-                        *(pDst)						= (uint16)tmp0;
-                        *(pDst + dst_inc)				= (uint16)tmp0;
+                        *(pDst + dst_pitch)         = (uint16)rgb;
+                        *(pDst + dst_pitch + dst_inc)   = (uint16)rgb;
+                        *(pDst)                     = (uint16)tmp0;
+                        *(pDst + dst_inc)               = (uint16)tmp0;
 #endif
                     }
                     else if (_mRowPix[col+1] == 3)
                     {
 #ifdef INTERPOLATE
-                        *(pDst + dst_pitch)	=	(((((prgb3      & 0x1F)  + (rgb     & 0x1F) * 2) / 3) & 0x1F)
+                        *(pDst + dst_pitch) = (((((prgb3      & 0x1F)  + (rgb     & 0x1F) * 2) / 3) & 0x1F)
                                                | ((((((prgb3 >> 5) & 0x3F)  + ((rgb >> 5) & 0x3F) * 2) / 3) & 0x3F) << 5)
                                                | ((((((prgb3 >> 11) & 0x1F)  + ((rgb >> 11) & 0x1F) * 2) / 3) & 0x1F) << 11));
 
-                        *((pDst + dst_pitch + dst_inc))	= (((((prgb3      & 0x1F) * 2 + (rgb     & 0x1F)) / 3) & 0x1F)
+                        *((pDst + dst_pitch + dst_inc)) = (((((prgb3      & 0x1F) * 2 + (rgb     & 0x1F)) / 3) & 0x1F)
                                                            | ((((((prgb3 >> 5) & 0x3F) * 2 + ((rgb >> 5) & 0x3F)) / 3) & 0x3F) << 5)
                                                            | ((((((prgb3 >> 11) & 0x1F) * 2 + ((rgb >> 11) & 0x1F)) / 3) & 0x1F) << 11));
 
-                        *((pDst + dst_pitch + (dst_inc << 1)))	= (uint16)rgb ;
+                        *((pDst + dst_pitch + (dst_inc << 1)))  = (uint16)rgb ;
 
-                        *(pDst)	=	(((((prgb4      & 0x1F)  + (tmp0     & 0x1F) * 2) / 3) & 0x1F)
+                        *(pDst) = (((((prgb4      & 0x1F)  + (tmp0     & 0x1F) * 2) / 3) & 0x1F)
                                    | ((((((prgb4 >> 5) & 0x3F)  + ((tmp0 >> 5) & 0x3F) * 2) / 3) & 0x3F) << 5)
                                    | ((((((prgb4 >> 11) & 0x1F)  + ((tmp0 >> 11) & 0x1F) * 2) / 3) & 0x1F) << 11));
 
-                        *((pDst + dst_inc))	=	(((((prgb4      & 0x1F) * 2 + (tmp0     & 0x1F)) / 3) & 0x1F)
+                        *((pDst + dst_inc)) = (((((prgb4      & 0x1F) * 2 + (tmp0     & 0x1F)) / 3) & 0x1F)
                                                | ((((((prgb4 >> 5) & 0x3F) * 2 + ((tmp0 >> 5) & 0x3F)) / 3) & 0x3F) << 5)
                                                | ((((((prgb4 >> 11) & 0x1F) * 2 + ((tmp0 >> 11) & 0x1F)) / 3) & 0x1F) << 11));
 
-                        *((pDst + (dst_inc << 1)))	= (uint16)tmp0;
+                        *((pDst + (dst_inc << 1)))  = (uint16)tmp0;
 #else
-                        *(pDst + dst_pitch)	=	(uint16)rgb;
-                        *((pDst + dst_pitch + dst_inc))	= (uint16)rgb ;
-                        *((pDst + dst_pitch + (dst_inc << 1)))	= (uint16)rgb ;
+                        *(pDst + dst_pitch) = (uint16)rgb;
+                        *((pDst + dst_pitch + dst_inc)) = (uint16)rgb ;
+                        *((pDst + dst_pitch + (dst_inc << 1)))  = (uint16)rgb ;
 
-                        *(pDst)	=	(uint16)tmp0;
-                        *((pDst + dst_inc))	= (uint16)tmp0;
-                        *((pDst + (dst_inc << 1)))	= (uint16)tmp0;
+                        *(pDst) = (uint16)tmp0;
+                        *((pDst + dst_inc)) = (uint16)tmp0;
+                        *((pDst + (dst_inc << 1)))  = (uint16)tmp0;
 #endif
                     }
                     else
                     {
-                        *(pDst + dst_pitch)	=	(uint16)rgb;
-                        *(pDst)	=	(uint16)tmp0;
+                        *(pDst + dst_pitch) = (uint16)rgb;
+                        *(pDst) = (uint16)tmp0;
                     }
-                }/*	if(_mRowPix[col])  */
+                }/* if(_mRowPix[col])  */
                 else
                 {
                     pY += tmp_src_pitch;
                 }
-                pDst	+= (dst_inc > 0 ? _mRowPix[col+1] : -_mRowPix[col+1]);
+                pDst    += (dst_inc > 0 ? _mRowPix[col+1] : -_mRowPix[col+1]);
             }//end of COL
             //oscl_memcpy() both up & down
 
-            pY	+=	(deltaY);
-            pCb +=	deltaCbCr;
-            pCr +=	deltaCbCr;
+            pY  += (deltaY);
+            pCb +=  deltaCbCr;
+            pCr +=  deltaCbCr;
 
             if (dst_inc > 0)
             {
-                pDst -=	(dst_width); //goes back to the beginning of the line;
+                pDst -= (dst_width); //goes back to the beginning of the line;
             }
             else
             {
@@ -5786,7 +5786,7 @@ int32 cc16sc_rotate(uint8 **src, uint8 *dst, int32 *disp,
                 }
             }
 
-            pDst +=	dst_pitch * (_mColPix[row-1] + _mColPix[row]);
+            pDst += dst_pitch * (_mColPix[row-1] + _mColPix[row]);
             if (dst_inc < 0)
             {
                 pDst += (dst_width - 1);

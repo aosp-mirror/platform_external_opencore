@@ -27,7 +27,7 @@
               2. Moved #define NUM_RECONSTRUCTED_SFB to ltp_common_internal.h
 
  Description: Modified prototype based on review comments for new version
-	      long_term_synthesis.c.
+          long_term_synthesis.c.
 
  Who:                                   Date:
  Description:

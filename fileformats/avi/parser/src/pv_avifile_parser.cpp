@@ -204,7 +204,7 @@ PVAviFileParser::ParseFile()
             PVAVIFILE_LOGINFO((0, "PVAviFileParser::ParseFile: Found MOVI Chunk"));
 
             iMovieChunkSize = listSize - CHUNK_SIZE;
-            iMovieChunkStartOffset = ipFilePtr->Tell();		//get movi chunk start offset.
+            iMovieChunkStartOffset = ipFilePtr->Tell();     //get movi chunk start offset.
             iSampleOffset = iMovieChunkStartOffset;
             ipFilePtr->Seek(iMovieChunkSize, Oscl_File::SEEKCUR);
 
@@ -293,7 +293,7 @@ PVAviFileParser::ParseFile()
             break;
         }
 
-    }	//while (bytesRead <= iFileSize)
+    }   //while (bytesRead <= iFileSize)
 
     return iError;
 }

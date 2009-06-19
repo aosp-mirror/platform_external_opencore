@@ -39,7 +39,7 @@ terms listed above has been obtained from the copyright holder.
 
  Description: Moved _cplusplus #ifdef after Include section.
 
- Who:						Date:
+ Who:                       Date:
  Description:
 
 ------------------------------------------------------------------------------
@@ -54,8 +54,8 @@ terms listed above has been obtained from the copyright holder.
 /*----------------------------------------------------------------------------
 ; CONTINUE ONLY IF NOT ALREADY DEFINED
 ----------------------------------------------------------------------------*/
-#ifndef	L_EXTRACT_H
-#define	L_EXTRACT_H
+#ifndef L_EXTRACT_H
+#define L_EXTRACT_H
 
 /*----------------------------------------------------------------------------
 ; INCLUDES
@@ -101,9 +101,9 @@ extern "C"
     ; Function Prototype declaration
     ----------------------------------------------------------------------------*/
     void L_Extract(Word32 L_var,
-                   Word16 *pL_var_hi,
-                   Word16 *pL_var_lo,
-                   Flag   *pOverflow);
+    Word16 *pL_var_hi,
+    Word16 *pL_var_lo,
+    Flag   *pOverflow);
 
     /*----------------------------------------------------------------------------
     ; END

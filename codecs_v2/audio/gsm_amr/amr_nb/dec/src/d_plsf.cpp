@@ -44,7 +44,7 @@ terms listed above has been obtained from the copyright holder.
  The d_plsf related structure is no longer dynamically allocated.
 
  Description: Removed q_plsf_5.tab from Include section and added
-			  q_plsf_5_tbl.h to Include section. Changed "mean_lsf"
+              q_plsf_5_tbl.h to Include section. Changed "mean_lsf"
               to "mean_lsf_5" in D_plsf_reset().
 
  Description:  Replaced OSCL mem type functions and eliminated include

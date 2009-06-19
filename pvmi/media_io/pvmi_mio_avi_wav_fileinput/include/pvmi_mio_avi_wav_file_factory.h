@@ -89,7 +89,7 @@ class PvmiMIOAviWavFileSettings
         // General settings
         PVMFFormatType  iMediaFormat;
         OSCL_HeapString<OsclMemAllocator> iMimeType;
-        uint32			iNumLoops;
+        uint32          iNumLoops;
         bool iRecModeSyncWithClock;
         uint32 iStreamNumber;
 
@@ -106,7 +106,7 @@ class PvmiMIOAviWavFileSettings
         uint32 iByteRate;
         uint32 iFrameDuration;
         uint32 iDataBufferSize;
-        bool	        iPicBottomUp;
+        bool            iPicBottomUp;
 };
 
 /**
@@ -117,7 +117,7 @@ typedef enum
 {
     FILE_FORMAT_WAV,
     FILE_FORMAT_AVI
-}FileFormatType;
+} FileFormatType;
 
 /**
  * Factory class for PvmiMIOAviWavFile

@@ -188,8 +188,8 @@ class PVMFMediaLayerNodeExtensionInterface : public PVInterface
 class PVMFMediaLayerNode;
 
 class PVMFMediaLayerNodeExtensionInterfaceImpl :
-            public PVInterfaceImpl<PVMFMediaLayerNodeAllocator>,
-            public PVMFMediaLayerNodeExtensionInterface
+        public PVInterfaceImpl<PVMFMediaLayerNodeAllocator>,
+        public PVMFMediaLayerNodeExtensionInterface
 {
     public:
         PVMFMediaLayerNodeExtensionInterfaceImpl(PVMFMediaLayerNode*);
@@ -254,11 +254,11 @@ class PVMFMediaLayerNodeExtensionInterfaceImpl :
 class PVLogger;
 
 class PVMFMediaLayerNode : public PVInterface,
-            public PVMFNodeInterface,
-            public OsclActiveObject,
-            public PVMFNodeErrorEventObserver,
-            public PVMFNodeInfoEventObserver,
-            public PVMFNodeCmdStatusObserver
+        public PVMFNodeInterface,
+        public OsclActiveObject,
+        public PVMFNodeErrorEventObserver,
+        public PVMFNodeInfoEventObserver,
+        public PVMFNodeCmdStatusObserver
 {
     public:
         OSCL_IMPORT_REF PVMFMediaLayerNode(int32 aPriority);
@@ -329,7 +329,7 @@ class PVMFMediaLayerNode : public PVInterface,
         /**
          * Handle an event that has been generated.
          *
-         * @param "aResponse"	"The response to a previously issued command."
+         * @param "aResponse"   "The response to a previously issued command."
          */
         virtual void NodeCommandCompleted(const PVMFCmdResp& aResponse)
         {

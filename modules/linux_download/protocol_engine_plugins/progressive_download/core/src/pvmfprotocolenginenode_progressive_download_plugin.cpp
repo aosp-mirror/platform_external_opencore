@@ -21,7 +21,7 @@
 
 
 class ProgressiveDownloadPluginInterface: public OsclSharedLibraryInterface,
-            public ProtocolEngineNodeSharedLibraryInterface
+        public ProtocolEngineNodeSharedLibraryInterface
 {
     public:
         ProgressiveDownloadPluginInterface() {};

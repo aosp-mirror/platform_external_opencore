@@ -743,7 +743,7 @@ void OsclSocketI::ProcessRecvFrom(OsclSocketServRequestQElem* aElem)
         //without waiting.
         bool loop;
         uint32 loopcount;
-        for (loop = true, loopcount = 0;loop;loopcount++)
+        for (loop = true, loopcount = 0; loop; loopcount++)
         {
             loop = false;
 

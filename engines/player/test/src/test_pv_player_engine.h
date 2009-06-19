@@ -206,9 +206,9 @@ class PVPlayerTestMioFactory
 
 // The base class for all pvplayer engine asynchronous tests
 class pvplayer_async_test_base : public OsclTimerObject,
-            public PVCommandStatusObserver,
-            public PVInformationalEventObserver,
-            public PVErrorEventObserver
+        public PVCommandStatusObserver,
+        public PVInformationalEventObserver,
+        public PVErrorEventObserver
 {
     public:
         pvplayer_async_test_base(PVPlayerAsyncTestParam aTestParam) :
@@ -328,7 +328,7 @@ class pvplayer_async_test_base : public OsclTimerObject,
 
 // test_base-based class which will run async tests on pvPlayer engine
 class pvplayer_engine_test : public test_case,
-            public pvplayer_async_test_observer
+        public pvplayer_async_test_observer
 {
     public:
         pvplayer_engine_test(char *aFileName, PVMFFormatType aFileType, int32 aFirstTest, int32 aLastTest,
@@ -478,7 +478,7 @@ class pvplayer_engine_test : public test_case,
             ProgPlaybackMP4StartPauseSeekResumeTwiceTest, //154
             ProgPlaybackMP4SeekStartTest, //155
             ProgPlaybackMP4StartPauseSeekResumeLoopTest, //156
-            ProgPlaybackMP4SeekForwardStepLoopTest,	//157
+            ProgPlaybackMP4SeekForwardStepLoopTest, //157
             ProgPlaybackPlayStopPlayTest, //158
             ProgPlaybackMP4SeekToBOCAfterDownloadCompleteTest, //159
             ProgPlaybackMP4SeekInCacheAfterDownloadCompleteTest, //160
@@ -562,7 +562,7 @@ class pvplayer_engine_test : public test_case,
 
             //Multiple CPM Plugins
             OpenPlayStop_MultiCPMTest, //893
-            StreamingLongPauseSeekTest,	//894
+            StreamingLongPauseSeekTest, //894
 
             GenericReset_AddDataSource = 900,
             GenericReset_Init,
@@ -626,10 +626,10 @@ class pvplayer_engine_test : public test_case,
 
             // ACCESS DRM plugin tests
             FirstAccessCPMTest = 960,
-            QueryEngine_AccessCPMTest,			//961
-            OpenPlayStop_AccessCPMTest, 		//962
-            PlayStopPlayStop_AccessCPMTest,		//963
-            StartupMeasurement_AccessCPMTest, 	//964
+            QueryEngine_AccessCPMTest,          //961
+            OpenPlayStop_AccessCPMTest,         //962
+            PlayStopPlayStop_AccessCPMTest,     //963
+            StartupMeasurement_AccessCPMTest,   //964
             LastAccessCPMTest,
 
             GenericNetworkDisconnect_AddDataSource = 1051,
@@ -995,7 +995,7 @@ class pvplayer_engine_test : public test_case,
             /*
              * 1607:        Jump to live after pause
              * Description: This test case jumps to live session (not buffer) after a pause.
-             *				The above step is repeated several times, after pausing for a random duration.
+             *              The above step is repeated several times, after pausing for a random duration.
              * Inputs:      1. Repeat count
              *              2. Pause duration range
              */
@@ -1028,7 +1028,7 @@ class pvplayer_engine_test : public test_case,
              * 1611:        PVR Repositioning test
              * Description: This test case does a sequence of repositioning requests within the live buffer.
              *              The followed sequence is: start, pause, resume, repositioning sequence, stop.
-            				The repos. sequence consists of 6 repositioning requests back and forward.
+                            The repos. sequence consists of 6 repositioning requests back and forward.
              */
             PVR_MLB_StreamingPauseResumeRepositionStopTest, //1611
 
@@ -1036,7 +1036,7 @@ class pvplayer_engine_test : public test_case,
             * 1612:        PVR Repositioning test
             * Description: This test case does a sequence of repositioning requests within the live buffer.
             *              The followed sequence is: start, pause, repositioning, resume. This sequence is
-               			done six times, followed by a stop.
+                        done six times, followed by a stop.
             */
             PVR_MLB_StreamingPauseRepositionResumeStopTest, //1612
 
@@ -1116,7 +1116,7 @@ class pvplayer_engine_test : public test_case,
             /*
              * 1637:        Jump to live after pause
              * Description: This test case jumps to live session (not buffer) after a pause.
-             *				The above step is repeated several times, after pausing for a random duration.
+             *              The above step is repeated several times, after pausing for a random duration.
              * Inputs:      1. Repeat count
              *              2. Pause duration range
              */
@@ -1150,7 +1150,7 @@ class pvplayer_engine_test : public test_case,
              * 1641:        PVR Repositioning test
              * Description: This test case does a sequence of repositioning requests within the live buffer.
              *              The followed sequence is: start, pause, resume, repositioning sequence, stop.
-            				The repos. sequence consists of 6 repositioning requests back and forward.
+                            The repos. sequence consists of 6 repositioning requests back and forward.
              */
             PVR_FSLB_StreamingPauseResumeRepositionStopTest, //1641
 
@@ -1158,7 +1158,7 @@ class pvplayer_engine_test : public test_case,
             * 1642:        PVR Repositioning test
             * Description: This test case does a sequence of repositioning requests within the live buffer.
             *              The followed sequence is: start, pause, repositioning, resume. This sequence is
-               			done six times, followed by a stop.
+                        done six times, followed by a stop.
             */
             PVR_FSLB_StreamingPauseRepositionResumeStopTest, //1642
 

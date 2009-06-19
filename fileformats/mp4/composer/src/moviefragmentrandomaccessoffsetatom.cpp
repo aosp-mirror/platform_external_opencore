@@ -51,7 +51,7 @@ PVA_FF_MfroAtom::recomputeSize()
 {
     int32 size = getDefaultSize();
 
-    size += 4;	// atom size
+    size += 4;  // atom size
 
     _size = size;
 

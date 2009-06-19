@@ -32,7 +32,7 @@
 
 inline int _strlen(const char* s)
 {
-    for (int i = 0; ;i++)
+    for (int i = 0; ; i++)
     {
         if (s[i] == '\0')
             return i;

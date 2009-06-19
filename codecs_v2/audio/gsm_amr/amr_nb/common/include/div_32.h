@@ -102,9 +102,9 @@ extern "C"
     ; Function Prototype declaration
     ----------------------------------------------------------------------------*/
     Word32 Div_32(Word32 L_num,
-                  Word16 L_denom_hi,
-                  Word16 L_denom_lo,
-                  Flag   *pOverflow) ;
+    Word16 L_denom_hi,
+    Word16 L_denom_lo,
+    Flag   *pOverflow) ;
 
     /*----------------------------------------------------------------------------
     ; END

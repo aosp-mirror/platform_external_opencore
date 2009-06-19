@@ -381,7 +381,7 @@ OMX_ERRORTYPE AvcEncoder_OMX::AvcEncInit(OMX_VIDEO_PORTDEFINITIONTYPE aInputPara
 
     aEncOption.initQP = aQuantType.nQpP;
 
-    aEncOption.init_CBP_removal_delay = 1600;	//Default value
+    aEncOption.init_CBP_removal_delay = 1600;   //Default value
     aEncOption.CPB_size = ((uint32)(2 * aEncOption.bitrate));
     if (OMX_VIDEO_PictureTypeI == aEncodeAvcParam.nAllowedPictureTypes) // I-only
     {
@@ -417,7 +417,7 @@ OMX_ERRORTYPE AvcEncoder_OMX::AvcEncInit(OMX_VIDEO_PORTDEFINITIONTYPE aInputPara
         aEncOption.auto_scd = AVC_OFF;
     }
 
-    aEncOption.out_of_band_param_set = AVC_ON;		//Default value
+    aEncOption.out_of_band_param_set = AVC_ON;      //Default value
 
     /* default values */
     aEncOption.poc_type = 2;
@@ -428,7 +428,7 @@ OMX_ERRORTYPE AvcEncoder_OMX::AvcEncInit(OMX_VIDEO_PORTDEFINITIONTYPE aInputPara
     aEncOption.num_ref_in_cycle = 0;
     aEncOption.offset_poc_ref = NULL;
 
-    aEncOption.num_ref_frame = 1;	//We only support this value
+    aEncOption.num_ref_frame = 1;   //We only support this value
 
     //Since FMO is disabled in our case, num of slice group is always 1
 #if (defined(TEST_FULL_AVC_FRAME_MODE) || defined(TEST_FULL_AVC_FRAME_MODE_SC))
@@ -437,7 +437,7 @@ OMX_ERRORTYPE AvcEncoder_OMX::AvcEncInit(OMX_VIDEO_PORTDEFINITIONTYPE aInputPara
     aEncOption.use_overrun_buffer = AVC_OFF; // since we are to be outputing full frame buffers
 #else
     aEncOption.num_slice_group = 1;
-    aEncOption.fmo_type = 0;	//Disabled in this case
+    aEncOption.fmo_type = 0;    //Disabled in this case
     aEncOption.use_overrun_buffer = AVC_ON;
 #endif
 
@@ -646,7 +646,7 @@ AVCEnc_Status AvcEncoder_OMX::AvcEncodeVideo(OMX_U8* aOutBuffer,
 {
     AVCEnc_Status AvcStatus;
     AVCEnc_Status ReturnValue;
-    AVCEnc_Status	SetInputStatus = AVCENC_SUCCESS;
+    AVCEnc_Status   SetInputStatus = AVCENC_SUCCESS;
     AVCFrameIO recon;
     uint Size;
     int  NALType = 0;
@@ -654,7 +654,7 @@ AVCEnc_Status AvcEncoder_OMX::AvcEncodeVideo(OMX_U8* aOutBuffer,
     if (OMX_FALSE == iSpsPpsHeaderFlag)
     {
         Size = *aOutputLength;
-        AvcStatus =	PVAVCEncodeNAL(&iAvcHandle, aOutBuffer, &Size, &NALType);
+        AvcStatus = PVAVCEncodeNAL(&iAvcHandle, aOutBuffer, &Size, &NALType);
 
         //No more SPS and PPS NAL's to come, mark the header flag as true
         if (AVCENC_WRONG_STATE == AvcStatus)
@@ -691,7 +691,7 @@ AVCEnc_Status AvcEncoder_OMX::AvcEncodeVideo(OMX_U8* aOutBuffer,
         SetInputStatus = AvcEncodeSendInput(aInBuffer, aInBufSize, aInTimeStamp);
     }
 
-    if ((AVCENC_SUCCESS == SetInputStatus) || (AVCENC_NEW_IDR == SetInputStatus))		//success
+    if ((AVCENC_SUCCESS == SetInputStatus) || (AVCENC_NEW_IDR == SetInputStatus))       //success
     {
         Size = *aOutputLength;
 
@@ -730,7 +730,7 @@ AVCEnc_Status AvcEncoder_OMX::AvcEncodeVideo(OMX_U8* aOutBuffer,
 
             ReturnValue = AVCENC_PICTURE_READY;
 
-            iReadyForNextFrame = OMX_TRUE;	//ready to receive another set of input frame
+            iReadyForNextFrame = OMX_TRUE;  //ready to receive another set of input frame
 
             AvcStatus = PVAVCEncGetRecon(&iAvcHandle, &recon);
             if (AVCENC_SUCCESS == AvcStatus)
@@ -741,13 +741,13 @@ AVCEnc_Status AvcEncoder_OMX::AvcEncodeVideo(OMX_U8* aOutBuffer,
         else if (AVCENC_SKIPPED_PICTURE == AvcStatus)
         {
             *aOutputLength = 0;
-            iReadyForNextFrame = OMX_TRUE;	//ready to receive another set of input frame
+            iReadyForNextFrame = OMX_TRUE;  //ready to receive another set of input frame
             return AVCENC_SKIPPED_PICTURE;
         }
         else
         {
             *aOutputLength = 0;
-            iReadyForNextFrame = OMX_TRUE;	//ready to receive another set of input frame
+            iReadyForNextFrame = OMX_TRUE;  //ready to receive another set of input frame
             return AVCENC_FAIL;
         }
 
@@ -907,7 +907,7 @@ void AvcEncoder_OMX::AVC_FrameUnbind(int indx)
 {
     /*if (indx < iNumFrames)
     {
-    	iFrameUsed[indx] = false;
+        iFrameUsed[indx] = false;
     }*/
 
     OSCL_UNUSED_ARG(indx);
@@ -919,7 +919,7 @@ int AvcEncoder_OMX::AVC_FrameBind(int indx, uint8** yuv)
 {
     /*if ((iFrameUsed[indx]==true) || (indx >= iNumFrames))
     {
-    	return 0; // already in used
+        return 0; // already in used
     }
     iFrameUsed[indx] = true;*/
 
@@ -930,7 +930,7 @@ int AvcEncoder_OMX::AVC_FrameBind(int indx, uint8** yuv)
 
 
 /* ///////////////////////////////////////////////////////////////////////// */
-/* Copy from YUV input to YUV frame inside AvcEnc lib						*/
+/* Copy from YUV input to YUV frame inside AvcEnc lib                       */
 /* When input is not YUV, the color conv will write it directly to iVideoInOut. */
 /* ///////////////////////////////////////////////////////////////////////// */
 
@@ -1052,7 +1052,7 @@ void AvcEncoder_OMX::CopyToYUVIn(uint8 *YUV, int width, int height, int width_16
     }
     else
     {
-        for (y_ind = 0; y_ind < (jlimit - 1) ;y_ind++)
+        for (y_ind = 0; y_ind < (jlimit - 1) ; y_ind++)
         {
             oscl_memcpy(yChan, y, ilimit);
             oscl_memset(yChan + ilimit, 16, ioffset); /* pad with zero */
@@ -1070,7 +1070,7 @@ void AvcEncoder_OMX::CopyToYUVIn(uint8 *YUV, int width, int height, int width_16
     }
     else
     {
-        for (y_ind = 0; y_ind < (jlimit >> 1) - 1;y_ind++)
+        for (y_ind = 0; y_ind < (jlimit >> 1) - 1; y_ind++)
         {
             oscl_memcpy(uChan, u, ilimit >> 1);
             oscl_memcpy(vChan, v, ilimit >> 1);

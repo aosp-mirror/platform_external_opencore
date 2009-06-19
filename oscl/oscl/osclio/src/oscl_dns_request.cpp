@@ -115,7 +115,7 @@ TOsclThreadFuncRet OSCL_THREAD_DECL OsclDNSRequest::ThreadFunc(TOsclThreadFuncAr
     if (arg)
         ((DNSRequestParam*)arg)->InThread();
 
-    OSCL_UNUSED_RETURN(0);		// Exit doesn't return
+    OSCL_UNUSED_RETURN(0);      // Exit doesn't return
 }
 
 #endif //PV_DNS_IS_THREAD

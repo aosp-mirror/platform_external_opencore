@@ -361,22 +361,22 @@ class PVA_FF_MovieAtom : public PVA_FF_Atom, public PVA_FF_ISucceedFail
         int32 _fileType;
 
 
-        PVA_FF_AssetInfoTitleAtom			*_pAssetInfoTitleAtom;
-        PVA_FF_AssetInfoDescAtom			*_pAssetInfoDescAtom;
-        PVA_FF_AssetInfoCopyRightAtom		*_pAssetInfoCopyRightAtom;
-        PVA_FF_AssetInfoPerformerAtom		*_pAssetInfoPerformerAtom;
-        PVA_FF_AssetInfoAuthorAtom			*_pAssetInfoAuthorAtom;
-        PVA_FF_AssetInfoGenreAtom			*_pAssetInfoGenreAtom;
-        PVA_FF_AssetInfoRatingAtom			*_pAssetInfoRatingAtom;
-        PVA_FF_AssetInfoClassificationAtom	*_pAssetInfoClassificationAtom;
-        PVA_FF_AssetInfoKeyWordsAtom		*_pAssetInfoKeyWordsAtom;
-        PVA_FF_AssetInfoLocationInfoAtom	*_pAssetInfoLocationInfoAtom;
-        PVA_FF_AssetInfoAlbumAtom			*_pAssetInfoKeyAlbumAtom;
-        PVA_FF_AssetInfoRecordingYearAtom	*_pAssetInfoKeyRecordingYearAtom;
+        PVA_FF_AssetInfoTitleAtom           *_pAssetInfoTitleAtom;
+        PVA_FF_AssetInfoDescAtom            *_pAssetInfoDescAtom;
+        PVA_FF_AssetInfoCopyRightAtom       *_pAssetInfoCopyRightAtom;
+        PVA_FF_AssetInfoPerformerAtom       *_pAssetInfoPerformerAtom;
+        PVA_FF_AssetInfoAuthorAtom          *_pAssetInfoAuthorAtom;
+        PVA_FF_AssetInfoGenreAtom           *_pAssetInfoGenreAtom;
+        PVA_FF_AssetInfoRatingAtom          *_pAssetInfoRatingAtom;
+        PVA_FF_AssetInfoClassificationAtom  *_pAssetInfoClassificationAtom;
+        PVA_FF_AssetInfoKeyWordsAtom        *_pAssetInfoKeyWordsAtom;
+        PVA_FF_AssetInfoLocationInfoAtom    *_pAssetInfoLocationInfoAtom;
+        PVA_FF_AssetInfoAlbumAtom           *_pAssetInfoKeyAlbumAtom;
+        PVA_FF_AssetInfoRecordingYearAtom   *_pAssetInfoKeyRecordingYearAtom;
 
         // Movie Fragment : Atoms needed in movie fragment mode
-        PVA_FF_MovieExtendsAtom				*_pMovieExtendsAtom;
-        bool								_oMovieFragmentEnabled;
+        PVA_FF_MovieExtendsAtom             *_pMovieExtendsAtom;
+        bool                                _oMovieFragmentEnabled;
 };
 
 

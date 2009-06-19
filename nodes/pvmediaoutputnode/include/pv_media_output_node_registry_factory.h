@@ -32,7 +32,7 @@
 ** A factory class for use with the PVMF Node Registry
 */
 class PVMFMediaOutputNodeRegistryFactory: public PVMFNodeCreationInterface
-            , public PvmiCapabilityAndConfig
+        , public PvmiCapabilityAndConfig
 {
     public:
         /*
@@ -70,7 +70,7 @@ class PVMFMediaOutputNodeRegistryFactory: public PVMFNodeCreationInterface
 
         //from PvmiCapabilityAndConfig interface
         PVMFStatus getParametersSync(PvmiMIOSession , PvmiKeyType ,
-                                     PvmiKvp*& , int& ,	PvmiCapabilityContext)
+                                     PvmiKvp*& , int& , PvmiCapabilityContext)
         {
             return PVMFFailure;//nothing available yet.
         }

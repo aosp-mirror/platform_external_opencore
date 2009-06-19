@@ -77,7 +77,7 @@ PVA_FF_AssetInfoGenreAtom::PVA_FF_AssetInfoGenreAtom()
 PVA_FF_AssetInfoRatingAtom::PVA_FF_AssetInfoRatingAtom()
         : PVA_FF_FullAtom(ASSET_INFO_RATING_ATOM, 0, 0)
 {
-    _ratingInfo		=	(_STRLIT(""));
+    _ratingInfo     = (_STRLIT(""));
     _ratingEntity    =   RATING_ENTITY_UNKNOWN;
     _ratingCriteria  =   RATING_CRITERIA_UNKNOWN;
     _langCode = LANGUAGE_CODE_UNKNOWN;
@@ -88,9 +88,9 @@ PVA_FF_AssetInfoRatingAtom::PVA_FF_AssetInfoRatingAtom()
 PVA_FF_AssetInfoClassificationAtom::PVA_FF_AssetInfoClassificationAtom()
         : PVA_FF_FullAtom(ASSET_INFO_CLSF_ATOM, 0, 0)
 {
-    _classificationInfo		=	(_STRLIT(""));
+    _classificationInfo     = (_STRLIT(""));
     _classificationEntity    =   0;
-    _classificationTable		=   0;
+    _classificationTable        =   0;
     _langCode = LANGUAGE_CODE_UNKNOWN;
     _byteOrderMask = BYTE_ORDER_MASK;
     recomputeSize();
@@ -129,7 +129,7 @@ PVA_FF_AssetInfoKeyWordsAtom::~PVA_FF_AssetInfoKeyWordsAtom()
 {
     if (_pKeyWordVect != NULL)
     {
-        for (uint32 idx = 0; idx < _pKeyWordVect->size();idx++)
+        for (uint32 idx = 0; idx < _pKeyWordVect->size(); idx++)
         {
             if ((*_pKeyWordVect)[idx] != NULL)
             {
@@ -149,7 +149,7 @@ PVA_FF_AssetInfoKeyWordStruct::PVA_FF_AssetInfoKeyWordStruct(
 {
     OSCL_UNUSED_ARG(aKeyWordBinarySize);
     _byteOrderMask = BYTE_ORDER_MASK;
-    _keyWordInfo	= aKeyWordInfo;
+    _keyWordInfo    = aKeyWordInfo;
     _keyWordSize = ((_keyWordInfo.get_size() + 1) * 2) + sizeof(_byteOrderMask);;// 1 for the NULL entry
 
 }
@@ -157,11 +157,11 @@ PVA_FF_AssetInfoKeyWordStruct::PVA_FF_AssetInfoKeyWordStruct(
 PVA_FF_AssetInfoLocationInfoAtom::PVA_FF_AssetInfoLocationInfoAtom()
         : PVA_FF_FullAtom(ASSET_INFO_LOCINFO_ATOM, 0, 0)
 {
-    _locationInfoRole		= 0;
-    _locationInfoLongitude	= 0;
-    _locationInfoLatitude	= 0;
-    _locationInfoAltitude	= 0;
-    _locationInfoName	    = (_STRLIT(""));
+    _locationInfoRole       = 0;
+    _locationInfoLongitude  = 0;
+    _locationInfoLatitude   = 0;
+    _locationInfoAltitude   = 0;
+    _locationInfoName       = (_STRLIT(""));
     _locationInfoAstrBody    = (_STRLIT(""));
     _locationInfoAddNotes    = (_STRLIT(""));
     _byteOrderMask = BYTE_ORDER_MASK;
@@ -510,7 +510,7 @@ bool PVA_FF_AssetInfoRatingAtom::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *
 
 void PVA_FF_AssetInfoClassificationAtom::recomputeSize()
 {
-    _size =	getDefaultSize();
+    _size = getDefaultSize();
 
     _size += sizeof(_langCode);
     _size += sizeof(_classificationEntity);
@@ -680,7 +680,7 @@ bool PVA_FF_AssetInfoKeyWordsAtom::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP
 
 void PVA_FF_AssetInfoLocationInfoAtom::recomputeSize()
 {
-    _size =	getDefaultSize();
+    _size = getDefaultSize();
     _size += sizeof(_langCode);
     _size += sizeof(_locationInfoRole);
     _size += sizeof(_locationInfoLongitude);

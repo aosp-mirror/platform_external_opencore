@@ -344,11 +344,11 @@ class PVMFWAVFFParserOutPort;
 class PVLogger;
 
 class PVMFWAVFFParserNode : public OsclTimerObject,
-            public PVMFNodeInterface,
-            public PVMFDataSourceInitializationExtensionInterface,
-            public PVMFTrackSelectionExtensionInterface,
-            public PvmfDataSourcePlaybackControlInterface,
-            public PVMFMetadataExtensionInterface
+        public PVMFNodeInterface,
+        public PVMFDataSourceInitializationExtensionInterface,
+        public PVMFTrackSelectionExtensionInterface,
+        public PvmfDataSourcePlaybackControlInterface,
+        public PVMFMetadataExtensionInterface
 {
     public:
         PVMFWAVFFParserNode(int32 aPriority = OsclActiveObject::EPriorityNominal);

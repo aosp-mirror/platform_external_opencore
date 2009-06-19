@@ -28,7 +28,7 @@
 #include "oscl_scheduler_ao.h"
 
 class CPVInterfaceProxyNotifier :
-            public OsclActiveObject
+        public OsclActiveObject
 {
     public:
         CPVInterfaceProxyNotifier(CPVInterfaceProxy *aProxy, int32 pri) :

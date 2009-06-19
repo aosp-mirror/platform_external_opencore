@@ -45,7 +45,7 @@ terms listed above has been obtained from the copyright holder.
 
 
  Description: Changed function prototype; pointer to  overflow flag is passed
-			  in as a parameter. Updated template
+              in as a parameter. Updated template
 
  Description: Moved _cplusplus #ifdef after Include section.
 
@@ -60,13 +60,13 @@ terms listed above has been obtained from the copyright holder.
 ------------------------------------------------------------------------------
 */
 
-#ifndef	S10_8PF_H
-#define	S10_8PF_H
+#ifndef S10_8PF_H
+#define S10_8PF_H
 
 /*----------------------------------------------------------------------------
 ; INCLUDES
 ----------------------------------------------------------------------------*/
-#include	"basicop_malloc.h"
+#include    "basicop_malloc.h"
 #include    "cnst.h"
 
 /*--------------------------------------------------------------------------*/

@@ -219,7 +219,7 @@ void SocketNodeStats::Log(PVMFPortVector<PVMFSocketPort, PVMFSocketNodeAllocator
     PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF, iLogger, PVLOGMSG_ERR,
                     (0, "SocketNodeStats: %8d Num Bind", iNumBind));
 
-    for (uint32 i = 0;i < aPortVec.size();i++)
+    for (uint32 i = 0; i < aPortVec.size(); i++)
     {
         if (aPortVec[i]->iConfig)
             aPortVec[i]->iConfig->iPortStats.Log(iLogger, aPortVec[i]->iConfig->iMime);
@@ -428,11 +428,11 @@ OSCL_EXPORT_REF PVMFStatus PVMFSocketNode::ThreadLogoff()
 #endif
             return PVMFSuccess;
         }
-        // break;	This break statement was removed to avoid compiler warning for Unreachable Code
+        // break;   This break statement was removed to avoid compiler warning for Unreachable Code
 
         default:
             return PVMFErrInvalidState;
-            // break;	This break statement was removed to avoid compiler warning for Unreachable Code
+            // break;   This break statement was removed to avoid compiler warning for Unreachable Code
     }
 }
 
@@ -580,7 +580,7 @@ void PVMFSocketNode::HandlePortActivity(const PVMFPortActivity &aActivity)
             PVMFSocketPort* sockPort = OSCL_STATIC_CAST(PVMFSocketPort*, aActivity.iPort);
             OSCL_ASSERT(sockPort && sockPort->iConfig);
             SocketPortConfig& aSockConfig = *sockPort->iConfig;
-            aSockConfig.CreateAllocators(iMaxTcpRecvBufferSize * (iMaxTcpRecvBufferCount - 1), iMaxTcpRecvBufferCount - 1, iMaxTcpRecvBufferSize, 1);
+            aSockConfig.CreateAllocators(iMaxTcpRecvBufferSize *(iMaxTcpRecvBufferCount - 1), iMaxTcpRecvBufferCount - 1, iMaxTcpRecvBufferSize, 1);
 #if(ENABLE_SOCKET_NODE_STATS)
             aSockConfig.iPortStats.iNumPortEventConnect++;
 #endif
@@ -726,7 +726,7 @@ PVMFStatus PVMFSocketNode::AllocateConsecutivePorts(PvmfMimeString* aPortConfig,
     SocketPortConfig* lower_sock_config = OSCL_NEW(SocketPortConfig, ());
     SocketPortConfig* higher_sock_config = OSCL_NEW(SocketPortConfig, ());
 
-    for (int maxNumOfBind = UDP_PORT_RANGE;maxNumOfBind >= 0;maxNumOfBind--)
+    for (int maxNumOfBind = UDP_PORT_RANGE; maxNumOfBind >= 0; maxNumOfBind--)
     {
         OSCL_HeapString<OsclMemAllocator> rtpportConfigWithMime;
         rtpportConfigWithMime += aPortConfig->get_cstr();
@@ -2298,7 +2298,7 @@ void PVMFSocketNode::HandleRecvFromComplete(SocketPortConfig& aSockConfig, PVMFS
             OsclRefCounterMemFrag singleFrag;
             aSockConfig.iPendingRecvMediaData->getMediaFragment(0, singleFrag);
 
-            for (uint32 i = 0;i < aSockConfig.iRecvFromPacketLen.size();dataPtr += aSockConfig.iRecvFromPacketLen[i++])
+            for (uint32 i = 0; i < aSockConfig.iRecvFromPacketLen.size(); dataPtr += aSockConfig.iRecvFromPacketLen[i++])
             {
                 PVMF_SOCKETNODE_LOGDATATRAFFIC_I((0, "PVMFSocketNode::HandleRecvFromComplete: Fragment %d Len %d - SockId=%d, Mime=%s"
                                                   , i, aSockConfig.iRecvFromPacketLen[i], aSockConfig.iSockId, aSockConfig.iMime.get_str()));
@@ -2841,7 +2841,7 @@ void PVMFSocketNode::SequenceComplete(SocketPortConfig& aSockConfig, PVMFStatus 
                     && iCurrentCmdQueue.front().iCmd == PVMF_GENERIC_NODE_FLUSH)
             {
                 //Flush is done when all input ports are empty.
-                for (uint32 i = 0;i < iPortVector.size();i++)
+                for (uint32 i = 0; i < iPortVector.size(); i++)
                 {
                     if (iPortVector[i]->IncomingMsgQueueSize() > 0)
                         return;//keep waiting
@@ -3600,7 +3600,7 @@ PVMFStatus PVMFSocketNode::DoStart(PVMFSocketNodeCommand& aCmd)
     ChangeExternalState(EPVMFNodeStarted);
 
     PVMFStatus status = PVMFSuccess;
-    for (uint32 i = 0;i < iPortVector.size();i++)
+    for (uint32 i = 0; i < iPortVector.size(); i++)
     {
         SocketPortConfig* sockConfig = iPortVector[i]->iConfig;
         if (sockConfig)
@@ -3666,7 +3666,7 @@ PVMFStatus PVMFSocketNode::DoStopNodeActivity()
         return PVMFPending; //keep waiting on completion (in SequenceComplete)
 
     //Notify all PVMF ports to suspend their input, and discard any current messages.
-    for (uint32 i = 0;i < iPortVector.size();i++)
+    for (uint32 i = 0; i < iPortVector.size(); i++)
     {
         iPortVector[i]->SuspendInput();
         iPortVector[i]->ClearMsgQueues();
@@ -3675,7 +3675,7 @@ PVMFStatus PVMFSocketNode::DoStopNodeActivity()
     //Stop socket activity on all ports.
     {
         uint32 nPortsPending = 0;
-        for (uint32 i = 0;i < iPortVector.size();i++)
+        for (uint32 i = 0; i < iPortVector.size(); i++)
         {
             SocketPortConfig* portConfig = iPortVector[i]->iConfig;
             if (portConfig)
@@ -3736,7 +3736,7 @@ PVMFStatus PVMFSocketNode::DoFlush(PVMFSocketNodeCommand& aCmd)
     //wait on completion of processing of current input.
     PVMFStatus status = PVMFSuccess;
     {
-        for (uint32 i = 0;i < iPortVector.size();i++)
+        for (uint32 i = 0; i < iPortVector.size(); i++)
         {
             iPortVector[i]->SuspendInput();
             if (status != PVMFPending
@@ -3829,7 +3829,7 @@ PVMFStatus PVMFSocketNode::DoCancelAllCommands(PVMFSocketNodeCommand& aCmd)
 
     //Cancel all other pending commands, except for this one which is
     //element 0 in the queue
-    for (uint32 i = 1;i < iPendingCmdQueue.size();i++)
+    for (uint32 i = 1; i < iPendingCmdQueue.size(); i++)
         CommandComplete(iPendingCmdQueue, iPendingCmdQueue[i], PVMFErrCancelled);
 
     //May need to wait on completion of StopNodeActivity.
@@ -3872,7 +3872,7 @@ PVMFStatus PVMFSocketNode::DoCancelCurrentCommand(PVMFSocketNodeCmdQ& aCmdQ, PVM
             //to cancel a flush, just discard all remaining port messages
             //and keep waiting on completion of current message.
         {
-            for (uint32 i = 0;i < iPortVector.size();i++)
+            for (uint32 i = 0; i < iPortVector.size(); i++)
                 iPortVector[i]->ClearMsgQueues();
         }
         return PVMFPending;//keep waiting on flush completion in SequenceComplete.
@@ -4133,7 +4133,7 @@ SocketPortConfig* PVMFSocketNode::FindSocketPortConfig(SOCKET_ADDR& aSockAddr)
 {
     uint32 i;
     //search the allocated port vector
-    for (i = 0;i < iAllocatedPortVector.size();i++)
+    for (i = 0; i < iAllocatedPortVector.size(); i++)
     {
         if (iAllocatedPortVector[i]
                 && MatchSocketAddr(aSockAddr, *iAllocatedPortVector[i]))
@@ -4145,7 +4145,7 @@ SocketPortConfig* PVMFSocketNode::FindSocketPortConfig(SOCKET_ADDR& aSockAddr)
         }
     }
     //search the port vector
-    for (i = 0;i < iPortVector.size();i++)
+    for (i = 0; i < iPortVector.size(); i++)
     {
         if (iPortVector[i]->iConfig
                 && MatchSocketAddr(aSockAddr, *iPortVector[i]->iConfig))
@@ -4171,7 +4171,7 @@ bool PVMFSocketNode::MatchSocketAddr(SOCKET_ADDR& aSockAddr, SocketPortConfig& a
 //Lookup the socket port config entry, given a socket ID.
 SocketPortConfig* PVMFSocketNode::FindSocketPortConfig(uint32 aId)
 {
-    for (uint32 i = 0;i < iPortVector.size();i++)
+    for (uint32 i = 0; i < iPortVector.size(); i++)
     {
         if (iPortVector[i]->iConfig
                 && iPortVector[i]->iConfig->iSockId == aId)
@@ -4480,7 +4480,7 @@ bool PVMFSocketNode::ParseTransportConfig(char *aPortConfig,
         return false;//invalid protocol.
 
     //for future extension
-    aSockConfig.iLocalAdd.ipAddr.Set("0.0.0.0");	//INADDR_ANY
+    aSockConfig.iLocalAdd.ipAddr.Set("0.0.0.0");    //INADDR_ANY
 
     aSockConfig.iRemoteAdd.ipAddr.Set("");
 
@@ -4513,8 +4513,8 @@ bool PVMFSocketNode::ParseTransportConfig(char *aPortConfig,
         OsclRand random_num;
         random_num.Seed(my_seed);
         int32 first = random_num.Rand();
-        uint32 myport = (first & 0x1FFF) + 0x2000;	//start from 8192
-        aSockConfig.iLocalAdd.port = (myport >> 1) << 1;	//start from even;
+        uint32 myport = (first & 0x1FFF) + 0x2000;  //start from 8192
+        aSockConfig.iLocalAdd.port = (myport >> 1) << 1;    //start from even;
     }
     OSCL_StackString<128> client_port("client_port=");
     tmpHead = OSCL_CONST_CAST(char*, oscl_strstr(head, client_port.get_cstr()));

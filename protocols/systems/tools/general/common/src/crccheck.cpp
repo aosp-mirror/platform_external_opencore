@@ -16,17 +16,17 @@
  * -------------------------------------------------------------------
  */
 /*
- * File:	crccheck.cpp
- * Author:	Russell Hayashida (rhayashida@packetvideo.com)
- * Date:	February 13, 2002
- * Comment:	CRC procedures
+ * File:    crccheck.cpp
+ * Author:  Russell Hayashida (rhayashida@packetvideo.com)
+ * Date:    February 13, 2002
+ * Comment: CRC procedures
  */
 
 #include "crccheck_cpp.h"
 #include <limits.h>
 
-#define CRC_X8 0xe0		/* X8+X2+X+1( 0x107 <-> 0xe0 ) */
-#define CRC_X 0x8408U	/* X16+X12+X5+1 ( 0x11021 <-> 0x8408 )  */
+#define CRC_X8 0xe0     /* X8+X2+X+1( 0x107 <-> 0xe0 ) */
+#define CRC_X 0x8408U   /* X16+X12+X5+1 ( 0x11021 <-> 0x8408 )  */
 
 
 //Initialize both tables.
@@ -41,7 +41,7 @@ OSCL_EXPORT_REF CRC::CRC()
         for (j =  0 ; j < CHAR_BIT ; j ++)
         {
             if (Crc & 1)
-                Crc = (uint8)((Crc >> 1) ^ CRC_X8);	       /* Generator Polynomial		    */
+                Crc = (uint8)((Crc >> 1) ^ CRC_X8);        /* Generator Polynomial          */
             else
                 Crc >>= 1;
         }
@@ -49,7 +49,7 @@ OSCL_EXPORT_REF CRC::CRC()
     }
 
 
-    uint16	n, m, Crc16;
+    uint16  n, m, Crc16;
 
     for (n = 0 ; n <= UCHAR_MAX ; n++)
     {
@@ -57,18 +57,18 @@ OSCL_EXPORT_REF CRC::CRC()
         for (m =  0 ; m < CHAR_BIT ; m++)
         {
             if (Crc16 & 1)
-                Crc16 = (uint16)((Crc16 >> 1) ^ CRC_X);		       /* Genarator Polynomial		    */
+                Crc16 = (uint16)((Crc16 >> 1) ^ CRC_X);            /* Genarator Polynomial          */
             else
                 Crc16 >>= 1;
         }
-        CrcTbl16[ n ] = Crc16;		    /* CRC Infomaiton Set		    */
+        CrcTbl16[ n ] = Crc16;          /* CRC Infomaiton Set           */
     }
 }
 
 
 OSCL_EXPORT_REF uint8 CRC::Crc8Check(uint8 *pAlPdu, int16 Size)
 {
-    uint8	crc;
+    uint8   crc;
 
     crc = 0;
     while (--Size >= 0)
@@ -80,9 +80,9 @@ OSCL_EXPORT_REF uint8 CRC::Crc8Check(uint8 *pAlPdu, int16 Size)
 
 OSCL_EXPORT_REF uint8 CRC::Crc8Check(Packet *pPkt)
 {
-    uint8	crc;
-    uint8	*pData = NULL;
-    int32	fragIdx, curSize, dataSize;
+    uint8   crc;
+    uint8   *pData = NULL;
+    int32   fragIdx, curSize, dataSize;
     BufferFragment* frag = NULL;
 
     crc = 0;
@@ -106,9 +106,9 @@ OSCL_EXPORT_REF uint8 CRC::Crc8Check(Packet *pPkt)
 
 OSCL_EXPORT_REF uint8 CRC::Crc8Check(OsclSharedPtr<PVMFMediaDataImpl>& mediaData, bool hasCRC)
 {
-    uint8	crc;
-    uint8	*pData = NULL;
-    int32	fragIdx, curSize, dataSize;
+    uint8   crc;
+    uint8   *pData = NULL;
+    int32   fragIdx, curSize, dataSize;
     OsclRefCounterMemFrag frag;
 
     crc = 0;
@@ -141,7 +141,7 @@ OSCL_EXPORT_REF uint8 CRC::Crc8Check(OsclSharedPtr<PVMFMediaDataImpl>& mediaData
 
 OSCL_EXPORT_REF uint16 CRC::Crc16Check(uint8 *pAlPdu, int16 Size)
 {
-    uint16	crc;
+    uint16  crc;
 
     crc = 0xffffU;
     while (--Size >= 0)
@@ -158,9 +158,9 @@ OSCL_EXPORT_REF uint16 CRC::Crc16Check(uint8 *pAlPdu, int16 Size)
 
 OSCL_EXPORT_REF uint16 CRC::Crc16Check(Packet *pPkt)
 {
-    uint16	crc;
-    uint8	*pData = NULL;
-    int32	fragIdx, curSize, dataSize;
+    uint16  crc;
+    uint8   *pData = NULL;
+    int32   fragIdx, curSize, dataSize;
     BufferFragment* frag = NULL;
 
     crc = 0xffffU;
@@ -190,9 +190,9 @@ OSCL_EXPORT_REF uint16 CRC::Crc16Check(Packet *pPkt)
 
 OSCL_EXPORT_REF uint16 CRC::Crc16Check(OsclSharedPtr<PVMFMediaDataImpl>& mediaData, bool hasCRC)
 {
-    uint16	crc;
-    uint8	*pData = NULL;
-    int32	fragIdx, curSize, dataSize;
+    uint16  crc;
+    uint8   *pData = NULL;
+    int32   fragIdx, curSize, dataSize;
     OsclRefCounterMemFrag frag;
 
     crc = 0xffffU;

@@ -32,8 +32,8 @@
 #include "atomutils.h"
 #include "atomdefs.h"
 
-#define DEFAULT_MAX_NUM_SAMPLES_PER_CHUNK				 20
-#define DEFAULT_MAX_CHUNK_DATA_SIZE					  10240; // 10KB
+#define DEFAULT_MAX_NUM_SAMPLES_PER_CHUNK                20
+#define DEFAULT_MAX_CHUNK_DATA_SIZE                   10240; // 10KB
 
 // Stream-in ctor
 // Create and return a new SampleToChunkAtom by reading in from an ifstream
@@ -626,10 +626,10 @@ SampleToChunkAtom::getFirstSampleNumInChunk(uint32 chunkNum)
 
     uint32 firstChunkCurrentRun = 0; // chunk number of first chunk in this run
     uint32 firstChunkNextRun = 0; // chunk number of first chunk in next run
-    uint32 firstSample = 0;	// number of first sample in the run of chunks in which chunk 'chunkNum' lies
+    uint32 firstSample = 0; // number of first sample in the run of chunks in which chunk 'chunkNum' lies
     // once we find the correct run, this value holds the sample number of the first
     // sample in chunk 'chunkNum'
-    uint32 samplesInRun = 0;	// Number of samples in the entire run of chunks (not just in each chunk)
+    uint32 samplesInRun = 0;    // Number of samples in the entire run of chunks (not just in each chunk)
 
     for (uint32 i = 0; i < _entryCount; i++)
     {

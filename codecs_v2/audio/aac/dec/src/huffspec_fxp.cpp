@@ -74,8 +74,8 @@
               (1) delete unused codes
 
  Description: (1) Change the interface to decode huffman codeword.
-			  (2) Move the scaling inside the inverse quantization.
-			  (3) Change scaling factor accuracy to 10 bits.
+              (2) Move the scaling inside the inverse quantization.
+              (3) Change scaling factor accuracy to 10 bits.
 
  Description:
               (1) delete unused variable max_fac
@@ -224,7 +224,7 @@
 ----------------------------------------------------------------------------*/
 #include    "pv_audio_type_defs.h"
 #include    "aac_mem_funcs.h"
-#include	"esc_iquant_scaling.h"
+#include    "esc_iquant_scaling.h"
 #include    "huffman.h"
 #include    "unpack_idx.h"
 #include    "pulse_nc.h"
@@ -324,7 +324,7 @@ Int huffspec_fxp(
     Int     *pSfbStart;
     Int     *pSfb;
     Int16     *pQuantSpec;        /* probably could be short */
-    Int		max = 0;
+    Int     max = 0;
     /* rescaling parameters */
     Int     nsfb;
     Int     tot_sfb;

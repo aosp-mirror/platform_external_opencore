@@ -567,12 +567,12 @@ PvmfMediaInputNode::~PvmfMediaInputNode()
     while (!iCurrentCommand.empty())
     {
         CommandComplete(iCurrentCommand, iCurrentCommand.front(), PVMFFailure);
-//		iCurrentCommand.Erase(&iCurrentCommand.front());
+//      iCurrentCommand.Erase(&iCurrentCommand.front());
     }
     while (!iInputCommands.empty())
     {
         CommandComplete(iInputCommands, iInputCommands.front(), PVMFFailure);
-//		iInputCommands.Erase(&iInputCommands.front());
+//      iInputCommands.Erase(&iInputCommands.front());
     }
 }
 
@@ -1187,7 +1187,7 @@ PVMFStatus PvmfMediaInputNode::DoReset(PvmfMediaInputNodeCmd& aCmd)
 
     if (IsAdded())
     {
-        for (uint32 i = 0;i< iOutPortVector.size();i++)
+        for (uint32 i = 0; i < iOutPortVector.size(); i++)
         {
             iOutPortVector[i]->Stop();
             iOutPortVector[i]->Disconnect();
@@ -1572,7 +1572,7 @@ void PvmfMediaInputNode::ReportInfoEvent(PVMFEventType aEventType, OsclAny* aEve
 bool PvmfMediaInputNode::PortQueuesEmpty()
 {
     uint32 i;
-    for (i = 0;i < iOutPortVector.size();i++)
+    for (i = 0; i < iOutPortVector.size(); i++)
     {
         if (iOutPortVector[i]->IncomingMsgQueueSize() > 0
                 || iOutPortVector[i]->OutgoingMsgQueueSize() > 0)

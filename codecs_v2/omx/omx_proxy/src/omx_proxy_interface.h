@@ -77,9 +77,9 @@ class ThreadSafeMemPoolFixedChunkAllocator;
 #define SET_PARAMS 1
 #define GET_CONFIG 2
 #define SET_CONFIG 3
-#define GET_EXT	   4
-#define GET_ST	   5
-#define USE_BUF	   6
+#define GET_EXT    4
+#define GET_ST     5
+#define USE_BUF    6
 #define ALLOC_BUF  7
 #define FREE_BUF   8
 #define SET_CALL   9
@@ -94,9 +94,9 @@ class ThreadSafeMemPoolFixedChunkAllocator;
 void CreateAppenders();
 
 class ProxyApplication_OMX
-            : public PVProxiedEngine_OMX
-            , public PVProxiedInterfaceServer_OMX
-            , public PVProxiedInterfaceClient_OMX
+        : public PVProxiedEngine_OMX
+        , public PVProxiedInterfaceServer_OMX
+        , public PVProxiedInterfaceClient_OMX
 {
     public:
         OSCL_IMPORT_REF ProxyApplication_OMX();
@@ -568,7 +568,7 @@ OMX_API OMX_ERRORTYPE OMX_APIENTRY GlobalProxyComponentGetHandle(
     OMX_OUT OMX_HANDLETYPE* pHandle,
     OMX_IN  OMX_STRING cComponentName, OMX_IN  OMX_PTR pAppData,
     OMX_IN  OMX_CALLBACKTYPE* pCallBacks,
-    OMX_IN	OMX_PTR pProxy);
+    OMX_IN  OMX_PTR pProxy);
 
 OMX_API OMX_ERRORTYPE OMX_APIENTRY GlobalProxyComponentFreeHandle(
     OMX_IN OMX_HANDLETYPE hComponent);

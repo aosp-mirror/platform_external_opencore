@@ -575,7 +575,7 @@ class CPV2WayNodeContextData
         }
 
         CPV2WayNodeCommandObserver *iObserver;
-        PVMFNodeInterface	*iNode;
+        PVMFNodeInterface   *iNode;
         void *iContextData;
 };
 
@@ -703,16 +703,16 @@ class CPV2WayNodeConfigurationObserver
 };
 
 class CPV324m2Way : OsclActiveObject,
-            public CPV2WayInterface,
-            public PVMFNodeCmdStatusObserver,
-            public PVMFNodeInfoEventObserver,
-            public PVMFNodeErrorEventObserver,
-            public CPV2WayNodeCommandObserver,
-            public CPV2WayNodeConfigurationObserver,
+        public CPV2WayInterface,
+        public PVMFNodeCmdStatusObserver,
+        public PVMFNodeInfoEventObserver,
+        public PVMFNodeErrorEventObserver,
+        public CPV2WayNodeCommandObserver,
+        public CPV2WayNodeConfigurationObserver,
 #ifndef NO_2WAY_324
-            public TSCObserver,
+        public TSCObserver,
 #endif
-            public OsclTimerObserver
+        public OsclTimerObserver
 {
     public:
         OSCL_IMPORT_REF static CPV324m2Way *NewL(PVMFNodeInterface* aTsc,

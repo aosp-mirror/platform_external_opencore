@@ -799,7 +799,7 @@ void PVMFDummyFileInputNode::DoInit(PVMFFileInputNodeCommand& aCmd)
             if (status == PVMFSuccess)
                 SetState(EPVMFNodeInitialized);
             //else
-            //	SetState(EPVMFNodeError);
+            //  SetState(EPVMFNodeError);
 
             CommandComplete(iInputCommands, aCmd, status);
         }
@@ -869,7 +869,7 @@ void PVMFDummyFileInputNode::DoStart(PVMFFileInputNodeCommand& aCmd)
                 SetState(EPVMFNodeStarted);
             }
             //else
-            //	SetState(EPVMFNodeError);
+            //  SetState(EPVMFNodeError);
 
             break;
 
@@ -934,7 +934,7 @@ void PVMFDummyFileInputNode::DoFlush(PVMFFileInputNodeCommand& aCmd)
 
             //Notify all ports to suspend their input
             {
-                for (uint32 i = 0;i < iPortVector.size();i++)
+                for (uint32 i = 0; i < iPortVector.size(); i++)
                     iPortVector[i]->SuspendInput();
             }
 
@@ -1146,8 +1146,8 @@ void PVMFDummyFileInputNode::Run()
 {
     /*
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-    	(0, "0x%x PVMFDummyFileInputNode::Run: ENTER - iInputCommands.size=%d, iPortActivityQueue.size=%d",
-    	this, iInputCommands.size(), iPortActivityQueue.size()));
+        (0, "0x%x PVMFDummyFileInputNode::Run: ENTER - iInputCommands.size=%d, iPortActivityQueue.size=%d",
+        this, iInputCommands.size(), iPortActivityQueue.size()));
     */
 
     //Process commands.
@@ -1672,5 +1672,5 @@ int32 PVMFDummyFileInputNode::LocateH263FrameHeader(uint8 *video_buffer, int32 v
     }
     while ((video_buffer[idx] & 0xfc) != 0x80);
 
-    return idx -2;
+    return idx - 2;
 }

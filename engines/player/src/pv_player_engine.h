@@ -876,19 +876,19 @@ class PVPlayerWatchdogTimerObserver
 
 
 class PVPlayerEngine : public OsclTimerObject,
-            public PVPlayerInterface,
-            public PvmiCapabilityAndConfig,
-            public PVMFNodeCmdStatusObserver,
-            public PVMFNodeInfoEventObserver,
-            public PVMFNodeErrorEventObserver,
-            public PVPlayerDatapathObserver,
-            public OsclTimerObserver,
-            public PVPlayerLicenseAcquisitionInterface,
-            public PVPlayerRecognizerRegistryObserver,
-            public PVPlayerWatchdogTimerObserver,
-            public PVPlayerTrackSelectionInterface,
-            public PVMFMediaClockNotificationsObs,
-            public ThreadSafeQueueObserver
+        public PVPlayerInterface,
+        public PvmiCapabilityAndConfig,
+        public PVMFNodeCmdStatusObserver,
+        public PVMFNodeInfoEventObserver,
+        public PVMFNodeErrorEventObserver,
+        public PVPlayerDatapathObserver,
+        public OsclTimerObserver,
+        public PVPlayerLicenseAcquisitionInterface,
+        public PVPlayerRecognizerRegistryObserver,
+        public PVPlayerWatchdogTimerObserver,
+        public PVPlayerTrackSelectionInterface,
+        public PVMFMediaClockNotificationsObs,
+        public ThreadSafeQueueObserver
 {
     public:
         static PVPlayerEngine* New(PVCommandStatusObserver *aCmdObserver,
@@ -1563,8 +1563,8 @@ class PVPlayerEngine : public OsclTimerObject,
 
         struct PVPlayerEngineUuidNodeMapping
         {
-            PVUuid			iUuid;
-            PVMFNodeInterface*	iNode;
+            PVUuid          iUuid;
+            PVMFNodeInterface*  iNode;
             PVPlayerEngineUuidNodeMapping(PVUuid aUuid, PVMFNodeInterface* aNode):
                     iUuid(aUuid), iNode(aNode) {}
         };

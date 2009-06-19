@@ -57,7 +57,7 @@ AVCSampleDependencyType::AVCSampleDependencyType(MP4_FF_FILE *fp, uint32 size, u
                 return;
             }
 
-            for (uint32 idx = 0; idx < sample_count;idx++)
+            for (uint32 idx = 0; idx < sample_count; idx++)
             {
                 if (!AtomUtils::read8(fp, _reserved[idx]))
                 {

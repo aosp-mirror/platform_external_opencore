@@ -43,7 +43,7 @@ const PVMFStatus PVMFSuccessOutgoingMsgSent = 10;
 
 
 class PVMFProtocolEnginePort : public PvmfPortBaseImpl,
-            public PvmiCapabilityAndConfigPortFormatImpl
+        public PvmiCapabilityAndConfigPortFormatImpl
 {
     public:
         PVMFProtocolEnginePort(int32 aTag,

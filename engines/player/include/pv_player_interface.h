@@ -327,7 +327,7 @@ class PVPlayerInterface
          *          Reference to the player data source to be used for playback
          * @param aContextData
          *          Optional opaque data that will be passed back to the user with the command response
-         * @leave	This method can leave with one of the following error codes
+         * @leave   This method can leave with one of the following error codes
          *          OsclErrNotSupported if the format of the source is incompatible with what the SDK can handle
          *          OsclErrInvalidState if invoked in the incorrect state
          *          OsclErrNoMemory if the SDK failed to allocate memory during this operation
@@ -405,7 +405,7 @@ class PVPlayerInterface
          * @param aContextData
          *         Optional opaque data that will be passed back to the user with the command response
          * @param aMetadataValuesCopiedInCallBack
-         *	       Boolean to let engine know if metadata values are copied by User of SDK in command complete callback.
+         *         Boolean to let engine know if metadata values are copied by User of SDK in command complete callback.
          *         By default the SDK assumes this to be the case. If this argument is set to false by the caller,
          *         then SDK assumes that user will call ReleaseMetaDataValues at a later point.
          * @leave This method can leave with one of the following error codes

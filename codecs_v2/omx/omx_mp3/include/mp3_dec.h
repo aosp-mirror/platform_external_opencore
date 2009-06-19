@@ -60,5 +60,5 @@ class Mp3Decoder
 
 
 
-#endif	//#ifndef MP3_DEC_H_INCLUDED
+#endif  //#ifndef MP3_DEC_H_INCLUDED
 

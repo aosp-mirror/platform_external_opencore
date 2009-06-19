@@ -142,14 +142,14 @@ const Word16 inter_6_pred_lt[FIR_SIZE] =
     flag3 = flag to indicate the upsampling rate; if set, upsampling
             rate is 3, otherwise, upsampling rate is 6 (Word16)
 
-	pOverflow = pointer to overflow (Flag)
+    pOverflow = pointer to overflow (Flag)
 
  Returns:
     None
 
  Outputs:
     exc buffer contains the newly formed adaptive codebook excitation
-	pOverflow -> 1 if the add operation resulted in overflow
+    pOverflow -> 1 if the add operation resulted in overflow
 
  Global Variables Used:
     inter_6_pred_lt = (1/6) resolution interpolation filter table (Word16)

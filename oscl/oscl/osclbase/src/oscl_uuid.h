@@ -95,10 +95,10 @@ struct OsclUuid
             sptr = aUuidString;
             ++sptr; //Increment over the starting parantheses '('
             eptr = sptr;
-            for (int i = 0;i < uuidStrLen - 1 ; ++i)
+            for (int i = 0; i < uuidStrLen - 1 ; ++i)
             {
                 if ((*eptr != PV_CHAR_COMMA) && (*eptr != PV_CHAR_CLOSE_BRACKET)) //Increment the pointer unless you get to the ","
-                {								//The comma signifies the beginning of the new OsclUuid parameter
+                {                               //The comma signifies the beginning of the new OsclUuid parameter
                     ++eptr;
                 }
                 else

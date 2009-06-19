@@ -100,7 +100,7 @@ class pv_mediainput_async_test_errorhandling: public pvauthor_async_test_base
             uint8 mode;
             uint32 duration;
             uint32 track_no;
-        }key_type;
+        } key_type;
 
     private:
         // Methods to create test input nodes and add to author engine
@@ -155,28 +155,28 @@ class pv_mediainput_async_test_errorhandling: public pvauthor_async_test_base
 
         // Author engine related variables
         PVAuthorEngineInterface* iAuthor;
-        OsclAny*				 iComposer;
-        OsclAny*				 iFileParser;
-        PVInterface*			 iComposerConfig;
-        PVInterface*			 iAudioEncoderConfig;
-        PVInterface*			 iVideoEncoderConfig;
-        PVMIOControlComp		 iMIOComponent;
-        uint32					 iPendingCmds;
+        OsclAny*                 iComposer;
+        OsclAny*                 iFileParser;
+        PVInterface*             iComposerConfig;
+        PVInterface*             iAudioEncoderConfig;
+        PVInterface*             iVideoEncoderConfig;
+        PVMIOControlComp         iMIOComponent;
+        uint32                   iPendingCmds;
         PVLogger*                iLogger;
         bool                     iPauseResumeEnable;
         uint                     iRemoveDataSourceDone;
         uint32                   iTestDuration;
-        bool					 iAddAudioMediaTrack;
-        bool					 iAddVideoMediaTrack;
+        bool                     iAddAudioMediaTrack;
+        bool                     iAddVideoMediaTrack;
         Oscl_FileServer          iFileServer;
-        uint32					 iTestErrorType;
+        uint32                   iTestErrorType;
         PvmiCapabilityAndConfig* iAuthorCapConfigIF;
         PvmiCapabilityAndConfig* iAuthorCapConfigIF1;
-        PvmiMIOControl*			 iMediaIOControl;
+        PvmiMIOControl*          iMediaIOControl;
         PvmiKvp* iErrorKVP;
-        FILE*	                 iFile;
+        FILE*                    iFile;
         PVInterface*             iOutputSizeAndDurationConfig;
-        PVAECmdType				 iCheckState;
+        PVAECmdType              iCheckState;
 };
 
 #endif

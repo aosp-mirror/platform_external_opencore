@@ -17,7 +17,7 @@
  */
 #include "pvmf_protocol_engine_progressive_download.h"
 
-//////	ProgressiveDownloadState_HEAD implementation ////////////////////////////
+//////  ProgressiveDownloadState_HEAD implementation ////////////////////////////
 OSCL_EXPORT_REF void ProgressiveDownloadState_HEAD::setRequestBasics()
 {
     iComposer->setMethod(HTTP_METHOD_HEAD);
@@ -57,7 +57,7 @@ OSCL_EXPORT_REF int32 ProgressiveDownloadState_HEAD::OutputDataAvailable(OUTPUT_
     return HttpParsingBasicObject::PARSE_SUCCESS;
 }
 
-//////	ProgressiveDownloadState_GET implementation ////////////////////////////
+//////  ProgressiveDownloadState_GET implementation ////////////////////////////
 OSCL_EXPORT_REF int32 ProgressiveDownloadState_GET::processMicroStateGetResponsePreCheck()
 {
     int32 status = DownloadState::processMicroStateGetResponsePreCheck();
@@ -159,7 +159,7 @@ OSCL_EXPORT_REF int32 ProgressiveDownloadState_GET::OutputDataAvailable(OUTPUT_D
         iDataSideInfo.set(ProtocolEngineOutputDataType_HttpHeader);
         iObserver->OutputDataAvailable(*aOutputQueue, iDataSideInfo);
     }
-    else  	// output data to data stream object
+    else    // output data to data stream object
     {
         if (iParser->getDownloadSize() > iCfgFile->GetCurrentFileSize())
         {
@@ -217,7 +217,7 @@ OSCL_EXPORT_REF void ProgressiveDownloadState_GET::updateOutputDataQueue(OUTPUT_
         }
         if (memFrag.len > 0) aOutputQueue->push_front(refCountMemFrag);
 
-        LOGINFODATAPATH((0, "ProgressiveDownloadState_GET::updateOutputDataQueue() after processing start fragment: aOutputQueue->size=%d",	aOutputQueue->size()));
+        LOGINFODATAPATH((0, "ProgressiveDownloadState_GET::updateOutputDataQueue() after processing start fragment: aOutputQueue->size=%d", aOutputQueue->size()));
     }
 
     // get end fragment especially for truncated content case
@@ -308,7 +308,7 @@ OSCL_EXPORT_REF void ProgressiveDownloadState_GET::getEndFragmentInNewDownloadDa
 }
 
 ////////////////////////////////////////////////////////////////////////////////////
-//////	ProgressiveStreamingState implementation
+//////  ProgressiveStreamingState implementation
 ////////////////////////////////////////////////////////////////////////////////////
 
 OSCL_EXPORT_REF int32 ProgressiveStreamingState_GET::checkParsingStatus(int32 parsingStatus)

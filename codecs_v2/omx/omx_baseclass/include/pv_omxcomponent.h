@@ -16,8 +16,8 @@
  * -------------------------------------------------------------------
  */
 /**
-	@file pv_omxcomponent.h
-	OpenMax decoder_component base header file.
+    @file pv_omxcomponent.h
+    OpenMax decoder_component base header file.
 
 */
 
@@ -57,7 +57,7 @@ typedef struct ComponentPrivateType
 {
     OMX_HANDLETYPE CompHandle;
 
-}ComponentPrivateType;
+} ComponentPrivateType;
 
 /**
  * This is the Component template from which all
@@ -86,37 +86,37 @@ typedef struct ComponentPortType
     OMX_BOOL IsPortFlushed;
 
     //AUDIO SPECIFIC PARAMETERS
-    OMX_AUDIO_PARAM_PORTFORMATTYPE	AudioParam;
-    OMX_AUDIO_PARAM_PCMMODETYPE		AudioPcmMode;
-    OMX_AUDIO_PARAM_WMATYPE			AudioWmaParam;
-    OMX_AUDIO_PARAM_MP3TYPE			AudioMp3Param;
-    OMX_AUDIO_CONFIG_EQUALIZERTYPE	AudioEqualizerType;
-    OMX_AUDIO_PARAM_AACPROFILETYPE	AudioAacParam;
-    OMX_AUDIO_PARAM_AMRTYPE			AudioAmrParam;
+    OMX_AUDIO_PARAM_PORTFORMATTYPE  AudioParam;
+    OMX_AUDIO_PARAM_PCMMODETYPE     AudioPcmMode;
+    OMX_AUDIO_PARAM_WMATYPE         AudioWmaParam;
+    OMX_AUDIO_PARAM_MP3TYPE         AudioMp3Param;
+    OMX_AUDIO_CONFIG_EQUALIZERTYPE  AudioEqualizerType;
+    OMX_AUDIO_PARAM_AACPROFILETYPE  AudioAacParam;
+    OMX_AUDIO_PARAM_AMRTYPE         AudioAmrParam;
 
     //VIDEO SPECIFIC PARAMETERS
-    OMX_VIDEO_PARAM_PORTFORMATTYPE	 VideoParam[OMX_PORT_NUMBER_FORMATS_SUPPORTED];
+    OMX_VIDEO_PARAM_PORTFORMATTYPE   VideoParam[OMX_PORT_NUMBER_FORMATS_SUPPORTED];
     OMX_VIDEO_PARAM_PROFILELEVELTYPE ProfileLevel;
-    OMX_VIDEO_PARAM_MPEG4TYPE		 VideoMpeg4;
-    OMX_VIDEO_PARAM_H263TYPE		 VideoH263;
-    OMX_VIDEO_PARAM_AVCTYPE			 VideoAvc;
-    OMX_VIDEO_PARAM_WMVTYPE			 VideoWmv;
+    OMX_VIDEO_PARAM_MPEG4TYPE        VideoMpeg4;
+    OMX_VIDEO_PARAM_H263TYPE         VideoH263;
+    OMX_VIDEO_PARAM_AVCTYPE          VideoAvc;
+    OMX_VIDEO_PARAM_WMVTYPE          VideoWmv;
 
     //VIDEO ENCODER SPECIFIC PARAMETERS
-    OMX_CONFIG_ROTATIONTYPE				VideoOrientationType;
+    OMX_CONFIG_ROTATIONTYPE             VideoOrientationType;
     OMX_VIDEO_PARAM_ERRORCORRECTIONTYPE VideoErrorCorrection;
-    OMX_VIDEO_PARAM_BITRATETYPE			VideoRateType;		//Only for rate control type in mpeg4
-    OMX_VIDEO_PARAM_QUANTIZATIONTYPE	VideoQuantType;
-    OMX_VIDEO_PARAM_VBSMCTYPE			VideoBlockMotionSize;
-    OMX_VIDEO_PARAM_MOTIONVECTORTYPE	VideoMotionVector;
-    OMX_VIDEO_PARAM_INTRAREFRESHTYPE	VideoIntraRefresh;
-    OMX_VIDEO_PARAM_AVCSLICEFMO			AvcSliceFMO;
+    OMX_VIDEO_PARAM_BITRATETYPE         VideoRateType;      //Only for rate control type in mpeg4
+    OMX_VIDEO_PARAM_QUANTIZATIONTYPE    VideoQuantType;
+    OMX_VIDEO_PARAM_VBSMCTYPE           VideoBlockMotionSize;
+    OMX_VIDEO_PARAM_MOTIONVECTORTYPE    VideoMotionVector;
+    OMX_VIDEO_PARAM_INTRAREFRESHTYPE    VideoIntraRefresh;
+    OMX_VIDEO_PARAM_AVCSLICEFMO         AvcSliceFMO;
 
-    OMX_CONFIG_FRAMERATETYPE			VideoConfigFrameRateType;
-    OMX_VIDEO_CONFIG_BITRATETYPE		VideoConfigBitRateType;
+    OMX_CONFIG_FRAMERATETYPE            VideoConfigFrameRateType;
+    OMX_VIDEO_CONFIG_BITRATETYPE        VideoConfigBitRateType;
 
     //This will be used to dynamically request the Iframe using SetConfig API
-    OMX_CONFIG_INTRAREFRESHVOPTYPE		VideoIFrame;
+    OMX_CONFIG_INTRAREFRESHVOPTYPE      VideoIFrame;
 
     OMX_U32  ActualNumPortFormatsSupported;
 
@@ -438,8 +438,8 @@ class OSCL_IMPORT_REF OmxComponentBase : public OsclActiveObject
         void ResetAfterFlush(OMX_S32 PortIndex);
 
         //Flag to call BufferMgmtFunction in the RunL() when the component state is executing
-        OMX_BOOL				iBufferExecuteFlag;
-        ComponentPrivateType*	ipAppPriv;
+        OMX_BOOL                iBufferExecuteFlag;
+        ComponentPrivateType*   ipAppPriv;
 
 
     protected:
@@ -448,43 +448,43 @@ class OSCL_IMPORT_REF OmxComponentBase : public OsclActiveObject
 
         OSCL_IMPORT_REF void Run();
 
-        OMX_CALLBACKTYPE*	ipCallbacks;
-        OMX_PTR				iCallbackData;
-        OMX_STATETYPE		iState;
+        OMX_CALLBACKTYPE*   ipCallbacks;
+        OMX_PTR             iCallbackData;
+        OMX_STATETYPE       iState;
 
         CoreDescriptorType* ipCoreDescriptor;
-        OMX_U32				iNumInputBuffer;
+        OMX_U32             iNumInputBuffer;
 
-        OMX_U8*				ipFrameDecodeBuffer;
-        OMX_BOOL			iPartialFrameAssembly;
-        OMX_BOOL			iIsInputBufferEnded;
-        OMX_BOOL			iEndofStream;
-        OMX_U8*				ipTempInputBuffer;
-        OMX_U32				iTempInputBufferLength;
-        OMX_COMPONENTTYPE*	ipTargetComponent;
-        OMX_PTR				iTargetMarkData;
-        OMX_COMPONENTTYPE*	ipTempTargetComponent;
-        OMX_PTR				iTempTargetMarkData;
-        OMX_BOOL			iMarkPropagate;
-        OMX_BOOL			iNewInBufferRequired;
-        OMX_BOOL			iNewOutBufRequired;
-        OMX_U32				iTempConsumedLength;
-        OMX_U32				iOutBufferCount;
-        OMX_BOOL			iCodecReady;
-        OMX_U8*				ipInputCurrBuffer;
-        OMX_U32				iInputCurrBufferSize;
-        OMX_U32				iInputCurrLength;
-        OMX_S32				iFrameCount;
-        OMX_BOOL			iStateTransitionFlag;
+        OMX_U8*             ipFrameDecodeBuffer;
+        OMX_BOOL            iPartialFrameAssembly;
+        OMX_BOOL            iIsInputBufferEnded;
+        OMX_BOOL            iEndofStream;
+        OMX_U8*             ipTempInputBuffer;
+        OMX_U32             iTempInputBufferLength;
+        OMX_COMPONENTTYPE*  ipTargetComponent;
+        OMX_PTR             iTargetMarkData;
+        OMX_COMPONENTTYPE*  ipTempTargetComponent;
+        OMX_PTR             iTempTargetMarkData;
+        OMX_BOOL            iMarkPropagate;
+        OMX_BOOL            iNewInBufferRequired;
+        OMX_BOOL            iNewOutBufRequired;
+        OMX_U32             iTempConsumedLength;
+        OMX_U32             iOutBufferCount;
+        OMX_BOOL            iCodecReady;
+        OMX_U8*             ipInputCurrBuffer;
+        OMX_U32             iInputCurrBufferSize;
+        OMX_U32             iInputCurrLength;
+        OMX_S32             iFrameCount;
+        OMX_BOOL            iStateTransitionFlag;
 
-        OMX_BOOL				iEndOfFrameFlag;
-        OMX_BUFFERHEADERTYPE*	ipInputBuffer;
-        OMX_BUFFERHEADERTYPE*	ipOutputBuffer;
-        OMX_U32					iOutputFrameLength;
-        OMX_COMPONENTTYPE		iOmxComponent;	// structure
-        OMX_U32					iNumPorts;
-        OMX_U32					iCompressedFormatPortNum;
-        OMX_PTR					ipComponentProxy;
+        OMX_BOOL                iEndOfFrameFlag;
+        OMX_BUFFERHEADERTYPE*   ipInputBuffer;
+        OMX_BUFFERHEADERTYPE*   ipOutputBuffer;
+        OMX_U32                 iOutputFrameLength;
+        OMX_COMPONENTTYPE       iOmxComponent;  // structure
+        OMX_U32                 iNumPorts;
+        OMX_U32                 iCompressedFormatPortNum;
+        OMX_PTR                 ipComponentProxy;
 
         PV_OMXComponentCapabilityFlagsType iPVCapabilityFlags;
 
@@ -504,24 +504,24 @@ class OSCL_IMPORT_REF OmxComponentBase : public OsclActiveObject
         //This field holds the private data associated with a mark request, if any
         OMX_MARKTYPE* ipMark;
 
-        OMX_BOOL				iEosProcessing;
-        OMX_BOOL				iFirstFragment;
-        OMX_TICKS				iFrameTimestamp;
-        OMX_BOOL				iRepositionFlag;
-        OMX_U32					iSamplesPerFrame;
-        OMX_BOOL				iSilenceInsertionInProgress;
-        OMX_U32					iSilenceFramesNeeded;
-        OMX_U32					iOutputMilliSecPerFrame;
-        OMX_BOOL				iIsFirstOutputFrame;
-        OMX_S32					iInputBufferRemainingBytes;
-        OMX_BOOL				iResizePending;
-        OMX_U8*					ipTempOutBufferForPortReconfig;
-        OMX_U32					iSizeOutBufferForPortReconfig;
-        OMX_BOOL				iSendOutBufferAfterPortReconfigFlag;
-        OMX_TICKS				iTimestampOutBufferForPortReconfig;
+        OMX_BOOL                iEosProcessing;
+        OMX_BOOL                iFirstFragment;
+        OMX_TICKS               iFrameTimestamp;
+        OMX_BOOL                iRepositionFlag;
+        OMX_U32                 iSamplesPerFrame;
+        OMX_BOOL                iSilenceInsertionInProgress;
+        OMX_U32                 iSilenceFramesNeeded;
+        OMX_U32                 iOutputMilliSecPerFrame;
+        OMX_BOOL                iIsFirstOutputFrame;
+        OMX_S32                 iInputBufferRemainingBytes;
+        OMX_BOOL                iResizePending;
+        OMX_U8*                 ipTempOutBufferForPortReconfig;
+        OMX_U32                 iSizeOutBufferForPortReconfig;
+        OMX_BOOL                iSendOutBufferAfterPortReconfigFlag;
+        OMX_TICKS               iTimestampOutBufferForPortReconfig;
 
 
-        OMX_BOOL				iIsAudioComponent;
+        OMX_BOOL                iIsAudioComponent;
 
 
 };
@@ -571,4 +571,4 @@ class OSCL_IMPORT_REF OmxComponentVideo : public OmxComponentBase
 };
 
 
-#endif		//#ifndef PV_OMXCOMPONENT_H_INCLUDED
+#endif      //#ifndef PV_OMXCOMPONENT_H_INCLUDED

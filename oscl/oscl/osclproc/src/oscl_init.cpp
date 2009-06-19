@@ -146,7 +146,7 @@ static void _OsclMemCleanup(FILE* aFile)
                 {
                     fprintf(aFile, "ERROR: Leak info is incomplete.\n");
                 }
-                for (uint32 i = 0;i < leakinfo;i++)
+                for (uint32 i = 0; i < leakinfo; i++)
                 {
                     fprintf(aFile, "Leak Info:\n");
                     fprintf(aFile, "  allocNum %d\n", info[i].allocNum);

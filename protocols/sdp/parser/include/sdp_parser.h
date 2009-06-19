@@ -29,13 +29,13 @@
 #include "sdp_memory.h"
 #include "pvlogger.h"
 
-const int MAX_PAYLOAD = 10;			/*Defined arbitrarily*/
+const int MAX_PAYLOAD = 10;         /*Defined arbitrarily*/
 const int MAX_STRING_LEN = 256;
 
 typedef struct _SDPTrackInfo
 {
-    mbchar codec_type[MAX_STRING_LEN];	/* MIME type of the data */
-    int bitrate;				                /* data rate in kbps     */
+    mbchar codec_type[MAX_STRING_LEN];  /* MIME type of the data */
+    int bitrate;                                /* data rate in kbps     */
     int trackID;
     uint8 majorVersion;
     uint8 minorVersion;
@@ -45,7 +45,7 @@ typedef struct _playTime
 {
     int startTime;
     int stopTime;
-}playTime;
+} playTime;
 
 typedef struct _movieInfo
 {
@@ -54,7 +54,7 @@ typedef struct _movieInfo
     mbchar movieName[MAX_STRING_LEN];
     mbchar creationDate[MAX_STRING_LEN];
     playTime duration;
-}movieInfo;
+} movieInfo;
 
 class SDP_Parser
 {
@@ -62,7 +62,7 @@ class SDP_Parser
         PVLogger* iLogger;
         SDPMediaParserRegistry *& _pSDPMediaParserRegistry;
         int mediaArrayIndex;
-        SDP_ERROR_CODE(*sessionParser)(const char *sdp_text, int length, SDPInfo& sdp);	/*Used to parse session information*/
+        SDP_ERROR_CODE(*sessionParser)(const char *sdp_text, int length, SDPInfo& sdp); /*Used to parse session information*/
         bool applicationFlag;
 
         bool parse_rtpmap(const char *start, const char *end, int& rtp_payload,

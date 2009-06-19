@@ -426,7 +426,7 @@ SDP_ERROR_CODE parseSDPSessionInfo(const char *sdp_text, int length, SDPInfo *sd
                 session->setCAddress(memFrag);
                 uint32 address;
                 const char *addrend = sptr;
-                for (;*addrend != '.';++addrend);
+                for (; *addrend != '.'; ++addrend);
 
                 PV_atoi(sptr, 'd', addrend - sptr, address);
 
@@ -1479,7 +1479,7 @@ SDP_ERROR_CODE parseSDPSessionInfo(const char *sdp_text, int length, SDPInfo *sd
                     if (oscl_strncmp(sptr, "OMADRMv2:", oscl_strlen("OMADRMv2:")))
                     {
 
-                        for (;*eptr != ':' ; ++eptr);
+                        for (; *eptr != ':' ; ++eptr);
                         session->setKeyMethod(sptr, eptr - sptr);
 
                     }

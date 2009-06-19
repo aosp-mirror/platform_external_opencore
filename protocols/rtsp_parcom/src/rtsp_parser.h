@@ -75,10 +75,10 @@ class RTSPParser
 
         InternalState internalState;
 
-        char 		mainBuffer[ RTSP_PARSER_BUFFER_SIZE + 3 ];
+        char        mainBuffer[ RTSP_PARSER_BUFFER_SIZE + 3 ];
         char *  mainBufferEntry;
-        char * 	mainBufferSpace;
-        int 		mainBufferSizeUsed;
+        char *  mainBufferSpace;
+        int         mainBufferSizeUsed;
 
         RTSPIncomingMessage * requestStruct;
 
@@ -98,15 +98,15 @@ class RTSPParser
         StrPtrLen         fields[ RTSP_HUGE_NUMBER_OF_FIELDS_IN_PARSER ];
         uint32            numFieldsUsed;
 
-        void		continueProcessing();
-        void		lookForEndOfRequest();
+        void        continueProcessing();
+        void        lookForEndOfRequest();
         void    lookForResync();
         void    skipOverEntityBody();
         void    startFillingOutEntityBody();
         void    dealWithLineContinuations(RTSPIncomingMessage *);
         void    dealWithFieldRepetitions(RTSPIncomingMessage *);
-        void	skipOverEmbeddedData();
-        void	startFillingOutEmbeddedData();
+        void    skipOverEmbeddedData();
+        void    startFillingOutEmbeddedData();
 
     public:
 

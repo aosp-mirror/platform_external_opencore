@@ -35,16 +35,16 @@
 #endif
 
 #define KEYVALUESTORE_HASH_TABLE_SIZE_FOR_KEYS 1000
-#define KEYVALUESTORE_MAX_SIZE 4000					// same as the RTSP parcom, but this size shouldn't include entity body size, which the composer library has no control
-#define KEYVALUESTORE_VECTOR_RESERVE_VALUE 10		// for iStrCSumPtrLenWrapperVector.reserve()
+#define KEYVALUESTORE_MAX_SIZE 4000                 // same as the RTSP parcom, but this size shouldn't include entity body size, which the composer library has no control
+#define KEYVALUESTORE_VECTOR_RESERVE_VALUE 10       // for iStrCSumPtrLenWrapperVector.reserve()
 
 
 // This StrCSumPtrLen wrapper wraps StrCSumPtrLen with the following new features.
 // (1) changed checksum calculation algorithm to make checksum as an identifier to differentiate different StrCSumPtrLen object.
-//	   This will be used in quick string comparison/search for field key of HTTP header.
-//	   Note that in StrCSumPtrLen, the checksum is calulated as the sum of the ASCII codes of all string charaters (lowercase).
+//     This will be used in quick string comparison/search for field key of HTTP header.
+//     Note that in StrCSumPtrLen, the checksum is calulated as the sum of the ASCII codes of all string charaters (lowercase).
 //     And this is not quite efficient. The modified version is contrained within 500 (see the following getChecksum()), with tiny
-//	   performance loss.
+//     performance loss.
 // (2) support simplified link list. This is mainly used for multiple same header field cases (i.e. same field key, but multiple field
 //     values).
 

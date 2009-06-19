@@ -61,7 +61,7 @@ typedef enum
 } PVMFOMXEncPortType;
 
 class PVMFOMXEncPort : public PvmfPortBaseImpl
-            , public PvmiCapabilityAndConfigPortFormatImpl
+        , public PvmiCapabilityAndConfigPortFormatImpl
 {
     public:
         PVMFOMXEncPort(int32 aTag, PVMFNodeInterface* aNode, const char*);

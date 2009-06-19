@@ -33,37 +33,37 @@ terms listed above has been obtained from the copyright holder.
  REVISION HISTORY
 
  Description: Created separate file for the extract_l function. Sync'ed up
-	      with the current template and fixed tabs.
+          with the current template and fixed tabs.
 
  Description: Removed conditional code that updates WMOPS counter
 
- Who: 						Date:
+ Who:                       Date:
  Description:
 
 ------------------------------------------------------------------------------
  INPUT AND OUTPUT DEFINITIONS
 
  Inputs:
-	L_var1 = 32 bit long signed integer (Word32 ) whose value falls
-	         in the range : 0x8000 0000 <= L_var1 <= 0x7fff ffff.
+    L_var1 = 32 bit long signed integer (Word32 ) whose value falls
+             in the range : 0x8000 0000 <= L_var1 <= 0x7fff ffff.
 
  Local Stores/Buffers/Pointers Needed:
-	None
+    None
 
  Global Stores/Buffers/Pointers Needed:
-	None
+    None
 
  Outputs:
-	L_var1 = Most significant word of input (Word16)
+    L_var1 = Most significant word of input (Word16)
 
  Pointers and Buffers Modified:
-	None
+    None
 
  Local Stores Modified:
-	None
+    None
 
  Global Stores Modified:
-	None
+    None
 
 ------------------------------------------------------------------------------
  FUNCTION DESCRIPTION
@@ -100,21 +100,21 @@ Word16 extract_l (Word32 L_var1)
      the resources used should be documented below.
 
  STACK USAGE: [stack count for this module] + [variable to represent
-		  stack usage for each subroutine called]
+          stack usage for each subroutine called]
 
      where: [stack usage variable] = stack usage for [subroutine
-		 name] (see [filename].ext)
+         name] (see [filename].ext)
 
  DATA MEMORY USED: x words
 
  PROGRAM MEMORY USED: x words
 
  CLOCK CYCLES: [cycle count equation for this module] + [variable
-		   used to represent cycle count for each subroutine
-		   called]
+           used to represent cycle count for each subroutine
+           called]
 
      where: [cycle count variable] = cycle count for [subroutine
-		name] (see [filename].ext)
+        name] (see [filename].ext)
 
 ------------------------------------------------------------------------------
 */
@@ -123,7 +123,7 @@ Word16 extract_l (Word32 L_var1)
 /*----------------------------------------------------------------------------
 ; INCLUDES
 ----------------------------------------------------------------------------*/
-#include	"basic_op.h"
+#include    "basic_op.h"
 
 /*----------------------------------------------------------------------------
 ; MACROS

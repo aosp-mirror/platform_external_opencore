@@ -25,7 +25,7 @@ typedef enum
 {
     PACKET_IO_SUCCESS = 0,
     PACKET_IO_FAILURE
-}TPvPacketIoStatus;
+} TPvPacketIoStatus;
 
 class PacketInputObserver
 {

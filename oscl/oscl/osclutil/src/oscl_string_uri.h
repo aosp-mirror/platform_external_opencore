@@ -51,37 +51,37 @@
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Function prototypes
 /*!
-	\brief unescape any of the special escape sequence in the uri string
+    \brief unescape any of the special escape sequence in the uri string
 
-	       The function scans the string and replaces each escape sequence with its corresponding
+           The function scans the string and replaces each escape sequence with its corresponding
            character. It stops at the first null character, or the max_byte value.
            It returns false if the string contains any illegal escape sequence or the output
            buffer is not big enough. The out_buf_len value indicates the needed buffer length
            or the index of the byte that causes the error respectively.
 
-	\param str_buf_in		Ptr to an input string
+    \param str_buf_in       Ptr to an input string
     \param str_buf_out      Ptr to an output buffer which stores the modified string
     \param max_out_buf_bytes The size of str_buf_out.
     \param max_bytes        The maximum number of bytes to read.
                             It is the length of str_buf_in.
     \param out_buf_len      The length of the result string (not including the null character)
-	\return					It returns true if succeeds, otherwise false.
+    \return                 It returns true if succeeds, otherwise false.
 
 */
 OSCL_IMPORT_REF bool  oscl_str_unescape_uri(const char *str_buf_in, char *str_buf_out, uint32 max_out_buf_bytes, uint32 max_bytes, uint32& out_buf_len);
 /*!
-	\brief unescape any of the special escape sequence in the uri string
+    \brief unescape any of the special escape sequence in the uri string
 
-	       The function scans the string and replaces each escape sequence with its corresponding
+           The function scans the string and replaces each escape sequence with its corresponding
            character. It stops at the first null character, or the max_byte value.
            It returns false if the string contains any illegal escape sequence or the output
            buffer is not big enough. The out_buf_len value indicates the needed buffer length
            or the index of the byte that causes the error respectively.
 
-	\param oscl_str_in		Ptr to an input OSCL_String
+    \param oscl_str_in      Ptr to an input OSCL_String
     \param oscl_str_out     Ptr to an output OSCL_String which stores the modified string
     \param out_buf_len      The length of the result string (not including the null character)
-	\return					It returns true if succeeds, otherwise false.
+    \return                 It returns true if succeeds, otherwise false.
 */
 //Old Definition
 //bool  oscl_str_unescape_uri(const OSCL_String<char>& oscl_str_in, OSCL_String<char>& oscl_str_out, uint32& out_buf_len);

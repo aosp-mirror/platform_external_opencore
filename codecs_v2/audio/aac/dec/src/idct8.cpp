@@ -121,21 +121,21 @@ void idct_8(Int32 vec[])
     tmp1 =  vec[0] + tmp5;
     tmp5 =  vec[0] - tmp5;
 
-    tmp3 = fxp_mul32_by_16(vec[2] << 1, Qfmt15(0.54119610014620F));		/* (1/(2*cos(2*phi)));*/
-    tmp7 = fxp_mul32_Q29(vec[6], Qfmt(1.30656296487638F));		/* (1/(2*cos(6*phi)));*/
+    tmp3 = fxp_mul32_by_16(vec[2] << 1, Qfmt15(0.54119610014620F));     /* (1/(2*cos(2*phi)));*/
+    tmp7 = fxp_mul32_Q29(vec[6], Qfmt(1.30656296487638F));      /* (1/(2*cos(6*phi)));*/
 
-    tmp0  = fxp_mul32_by_16((tmp3 - tmp7) << 1, Qfmt15(0.70710678118655F));	/* (1/(2*cos(2*phi)));  */
+    tmp0  = fxp_mul32_by_16((tmp3 - tmp7) << 1, Qfmt15(0.70710678118655F)); /* (1/(2*cos(2*phi)));  */
     tmp7 = (tmp3 + tmp7) + tmp0;
 
     vec[0] = tmp1 + tmp7;
-    tmp2 = fxp_mul32_by_16(vec[1] << 1, Qfmt15(0.50979557910416F));		/* (1/(2*cos(  phi)));*/
+    tmp2 = fxp_mul32_by_16(vec[1] << 1, Qfmt15(0.50979557910416F));     /* (1/(2*cos(  phi)));*/
     vec[1] = tmp5 + tmp0;
     vec[2] = tmp5 - tmp0;
-    tmp4 = fxp_mul32_by_16(vec[3] << 1, Qfmt15(0.60134488693505F));		/* (1/(2*cos(3*phi)));*/
+    tmp4 = fxp_mul32_by_16(vec[3] << 1, Qfmt15(0.60134488693505F));     /* (1/(2*cos(3*phi)));*/
     vec[3] = tmp1 - tmp7;
 
-    tmp6 = fxp_mul32_by_16(vec[5] << 1, Qfmt15(0.89997622313642F));		/* (1/(2*cos(5*phi)));*/
-    tmp8 = fxp_mul32_Q29(vec[7], Qfmt(2.56291544774151F));		/* (1/(2*cos(7*phi)));*/
+    tmp6 = fxp_mul32_by_16(vec[5] << 1, Qfmt15(0.89997622313642F));     /* (1/(2*cos(5*phi)));*/
+    tmp8 = fxp_mul32_Q29(vec[7], Qfmt(2.56291544774151F));      /* (1/(2*cos(7*phi)));*/
 
     tmp7  =  tmp2 + tmp8;
     tmp5  = fxp_mul32_by_16((tmp2 - tmp8) << 1, Qfmt15(0.54119610014620F));

@@ -139,7 +139,7 @@ OSCL_EXPORT_REF void PV8601ToRFC822(PV8601timeStrBuf pv8601_buffer, CtimeStrBuf 
 
     sprintf(ctime_buffer,
             "%s %s %2d %02d:%02d:%02d %04d",
-            days[DayIndexFromDate(year,mon,day)],
+            days[DayIndexFromDate(year, mon, day)],
             months[mon-1],
             day, hour, min, sec, year);
 

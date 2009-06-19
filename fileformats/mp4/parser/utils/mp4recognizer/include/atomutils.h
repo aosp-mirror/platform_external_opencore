@@ -66,7 +66,7 @@
 
 typedef Oscl_File* MP4_FF_FILE_REFERENCE;
 
-#define DEFAULT_ATOM_SIZE 8	//need to change when they use various size field
+#define DEFAULT_ATOM_SIZE 8 //need to change when they use various size field
 #define PVMF_MP4FFPARSER_LOGDIAGNOSTICS(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG,iDiagnosticsLogger,PVLOGMSG_INFO,m);
 #define PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG,iStateVarLogger,PVLOGMSG_INFO,m);
 #define PVMF_MP4FFPARSER_LOGPARSEDINFO(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG,iParsedDataLogger,PVLOGMSG_INFO,m);
@@ -91,23 +91,23 @@ OSCL_DELETE(ptr);\
 
 #define PV_MP4_FF_ARRAY_MALLOC(auditCB,T,count,ptr)\
 {\
-	ptr = (T*)OSCL_MALLOC(count);\
+    ptr = (T*)OSCL_MALLOC(count);\
 }
 
 
 #define PV_MP4_ARRAY_FREE(auditCB,ptr)\
 {\
-	OSCL_FREE(ptr);\
+    OSCL_FREE(ptr);\
 }
 
 #define PV_MP4_FF_ARRAY_NEW(auditCB, T, count, ptr)\
 {\
-	ptr = OSCL_ARRAY_NEW(T, count);\
+    ptr = OSCL_ARRAY_NEW(T, count);\
 }
 
 #define PV_MP4_ARRAY_DELETE(auditCB, ptr)\
 {\
-	OSCL_ARRAY_DELETE(ptr);\
+    OSCL_ARRAY_DELETE(ptr);\
 }
 
 

@@ -157,7 +157,7 @@ a reasonable tolerance for fixed point errors.
 
     for (i=0; i<order; i++)
     {
-		sin_result[i+1] =
+        sin_result[i+1] =
         (Real)sin( coef[i] / ((coef[i] >= 0) ? iqfac : iqfac_m) );
     }
 
@@ -165,22 +165,22 @@ a reasonable tolerance for fixed point errors.
     for (m=1; m<=order; m++)
     {
 
-	    b[0] = lpc[0];
-		for (i=1; i<m; i++)
+        b[0] = lpc[0];
+        for (i=1; i<m; i++)
         {
-		    b[i] = sin_result[m] * lpc[m-i];
+            b[i] = sin_result[m] * lpc[m-i];
             b[i] += lpc[i];
         }
 
-		b[m] = sin_result[m];
+        b[m] = sin_result[m];
 
 
-		for (i=0; i<=m; i++)
+        for (i=0; i<=m; i++)
         {
-		    lpc[i] = b[i];
+            lpc[i] = b[i];
         }
 
-	}
+    }
 
     return;
 
@@ -325,7 +325,7 @@ Int tns_decode_coef(
 
 
     /*
-     *	Conversion to LPC coefficients
+     *  Conversion to LPC coefficients
      */
 
     do
@@ -352,9 +352,9 @@ Int tns_decode_coef(
             mult_high = fxp_mul32_Q31(*(temp_ptr--), sin_result);
 
             /*
-             *	pB[i] = pA[i] + sin_result * pA[m-i]
+             *  pB[i] = pA[i] + sin_result * pA[m-i]
              *
-             *	(mult_high <<1)  eliminates extra sign bit
+             *  (mult_high <<1)  eliminates extra sign bit
              */
 
             *(pB++) =  *(pA++) + (mult_high << 1);

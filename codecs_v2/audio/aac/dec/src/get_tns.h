@@ -42,7 +42,7 @@
  the combination of the get_tns and tns_setup_filter routines.  Also, moved
  pInputStream to be the 2nd parameter, for a slight optimization.
 
- Who:						Date:
+ Who:                       Date:
  Description:
 
 ------------------------------------------------------------------------------

@@ -16,8 +16,8 @@
  * -------------------------------------------------------------------
  */
 /**
-	@file omx_mpeg4_component.h
-	OpenMax decoder_component component.
+    @file omx_mpeg4_component.h
+    OpenMax decoder_component component.
 
 */
 
@@ -84,13 +84,13 @@ class OpenmaxMpeg4AO : public OmxComponentVideo
 
         void ReadBits(OMX_U8* aStream, uint8 aNumBits, uint32* aOutData);
 
-        OMX_BOOL				iUseExtTimestamp;
+        OMX_BOOL                iUseExtTimestamp;
         Mpeg4Decoder_OMX* ipMpegDecoderObject;
         OMX_S32 iDecMode;
 
         //Parameters required for H.263 source format parsing
         OMX_U32 iH263DataBitPos;
-        OMX_U32	iH263BitPos;
+        OMX_U32 iH263BitPos;
         OMX_U32 iH263BitBuf;
 };
 

@@ -15,7 +15,7 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-#ifndef	_h324utils_h
+#ifndef _h324utils_h
 #define _h324utils_h
 #include "pvt_params.h"
 #include "h245def.h"
@@ -189,7 +189,7 @@ a  += b;
 #if defined(LOG_STATISTICS)
 #define PV_STAT_INCR_COND(a, b, c)\
 if(c){\
-	a  += b;\
+    a  += b;\
 }
 #else
 #define PV_STAT_INCR_COND(a, b, c)
@@ -199,12 +199,12 @@ if(c){\
 #define PV_STAT_SET_TIME(a, cond)\
 {\
 if(cond == 0){\
-	TimeValue timenow;\
-	a = timenow;\
+    TimeValue timenow;\
+    a = timenow;\
 }\
 }
 #else
 #define PV_STAT_SET_TIME(a, cond)
 #endif
 
-#endif	/* _h324utils_h */
+#endif  /* _h324utils_h */

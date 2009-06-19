@@ -95,9 +95,9 @@ class PVFirewallPacketExchanger
         {
             iRTPSessionInfoForFirewallExchange.ipRTPDataJitterBufferPort = aRTPSessionInfo.ipRTPDataJitterBufferPort;
             iRTPSessionInfoForFirewallExchange.iSSRC = aRTPSessionInfo.iSSRC;
-            ipMediaDataAlloc	=	NULL;
-            ipMediaDataImplAlloc	=	NULL;
-            ipMediaMsgAlloc	=	NULL;
+            ipMediaDataAlloc    =   NULL;
+            ipMediaDataImplAlloc    =   NULL;
+            ipMediaMsgAlloc =   NULL;
         }
         void Construct();
         void CreateMemAllocators();
@@ -112,7 +112,7 @@ class PVFirewallPacketExchanger
         /* Memory pool for simple media data */
         OsclMemPoolFixedChunkAllocator* ipMediaMsgAlloc;
 
-        RTPSessionInfoForFirewallExchange	iRTPSessionInfoForFirewallExchange;
+        RTPSessionInfoForFirewallExchange   iRTPSessionInfoForFirewallExchange;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -148,11 +148,11 @@ class PVFirewallPacketExchangeImpl: public PVMFJBEventNotifierObserver
         bool iCallBackPending;
         uint32 iNumAttemptsDone;
 
-        PVMFJBEventNotifier&	irEventNotifier;
-        PVMFJitterBufferMiscObserver*	ipObserver;
+        PVMFJBEventNotifier&    irEventNotifier;
+        PVMFJitterBufferMiscObserver*   ipObserver;
         PVMFJitterBufferFireWallPacketInfo iFireWallPacketExchangeInfo;
         Oscl_Vector<PVFirewallPacketExchanger*, OsclMemAllocator> iFirewallPacketExchangers;
-        PVLogger*	ipDataPathLoggerFireWall;
+        PVLogger*   ipDataPathLoggerFireWall;
 };
 
 #endif//end of PVMF_JB_FIREWALL_PKTS_IMPL_H_INCLUDED

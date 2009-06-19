@@ -51,7 +51,7 @@ class PVMFNodeInterface;
 
 
 class PVCmnCmdRespMsg : public CPVCmnInterfaceObserverMessage,
-            public PVCmdResponse
+        public PVCmdResponse
 {
     public:
         PVCmnCmdRespMsg() : CPVCmnInterfaceObserverMessage(0),
@@ -77,7 +77,7 @@ class PVCmnCmdRespMsg : public CPVCmnInterfaceObserverMessage,
 };
 
 class PVCmnAsyncEventMsg : public CPVCmnInterfaceObserverMessage,
-            public PVAsyncInformationalEvent
+        public PVAsyncInformationalEvent
 {
     public:
         PVCmnAsyncEventMsg() : CPVCmnInterfaceObserverMessage(1)
@@ -100,7 +100,7 @@ class PVCmnAsyncEventMsg : public CPVCmnInterfaceObserverMessage,
 };
 
 class PVCmnAsyncErrorEvent: public CPVCmnInterfaceObserverMessage,
-            public PVAsyncErrorEvent
+        public PVAsyncErrorEvent
 {
     public:
         PVCmnAsyncErrorEvent() : CPVCmnInterfaceObserverMessage(2)
@@ -127,13 +127,13 @@ class PVCmnAsyncErrorEvent: public CPVCmnInterfaceObserverMessage,
  * delete instances of this class
  **/
 class CPV2WayProxyAdapter :
-            public CPV2WayInterface,
-            public PVProxiedEngine,
-            public PVCommandStatusObserver,
-            public PVInformationalEventObserver,
-            public PVErrorEventObserver,
-            public PVProxiedInterfaceClient,
-            public PVProxiedInterfaceServer
+        public CPV2WayInterface,
+        public PVProxiedEngine,
+        public PVCommandStatusObserver,
+        public PVInformationalEventObserver,
+        public PVErrorEventObserver,
+        public PVProxiedInterfaceClient,
+        public PVProxiedInterfaceServer
 {
     public:
         static CPV2WayProxyAdapter* New(TPVTerminalType aTerminalType,

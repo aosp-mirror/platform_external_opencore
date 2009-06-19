@@ -365,7 +365,7 @@ AVCEnc_Status EncodeSliceHeader(AVCEncObject *encvid, AVCEncBitstream *stream)
     }
     if (currSPS->pic_order_cnt_type == 1 && !currSPS->delta_pic_order_always_zero_flag)
     {
-        status = se_v(stream, sliceHdr->delta_pic_order_cnt[0]);	/* 32 bits */
+        status = se_v(stream, sliceHdr->delta_pic_order_cnt[0]);    /* 32 bits */
         if (currPPS->pic_order_present_flag && !sliceHdr->field_pic_flag)
         {
             status = se_v(stream, sliceHdr->delta_pic_order_cnt[1]); /* 32 bits */
@@ -415,7 +415,7 @@ AVCEnc_Status EncodeSliceHeader(AVCEncObject *encvid, AVCEncBitstream *stream)
     if ((currPPS->weighted_pred_flag && (slice_type == AVC_P_SLICE || slice_type == AVC_SP_SLICE)) ||
             (currPPS->weighted_bipred_idc == 1 && slice_type == AVC_B_SLICE))
     {
-        //		pred_weight_table(); // not supported !!
+        //      pred_weight_table(); // not supported !!
         return AVCENC_PRED_WEIGHT_TAB_FAIL;
     }
 
@@ -431,10 +431,10 @@ AVCEnc_Status EncodeSliceHeader(AVCEncObject *encvid, AVCEncBitstream *stream)
     if (currPPS->entropy_coding_mode_flag && slice_type != AVC_I_SLICE && slice_type != AVC_SI_SLICE)
     {
         return AVCENC_CABAC_FAIL;
-        /*		ue_v(stream,&(sliceHdr->cabac_init_idc));
-        		if(sliceHdr->cabac_init_idc > 2){
-        			// not supported !!!!
-        		}*/
+        /*      ue_v(stream,&(sliceHdr->cabac_init_idc));
+                if(sliceHdr->cabac_init_idc > 2){
+                    // not supported !!!!
+                }*/
     }
 
     status = se_v(stream, sliceHdr->slice_qp_delta);
@@ -524,14 +524,14 @@ AVCEnc_Status ref_pic_list_reordering(AVCCommonObj *video, AVCEncBitstream *stre
                     status = ue_v(stream, sliceHdr->abs_diff_pic_num_minus1_l0[i]);
                     /* this check should be in InitSlice(), if we ever use it */
                     /*if(sliceHdr->reordering_of_pic_nums_idc_l0[i] == 0 &&
-                    	sliceHdr->abs_diff_pic_num_minus1_l0[i] > video->MaxPicNum/2 -1)
+                        sliceHdr->abs_diff_pic_num_minus1_l0[i] > video->MaxPicNum/2 -1)
                     {
-                    	return AVCENC_REF_PIC_REORDER_FAIL; // out of range
+                        return AVCENC_REF_PIC_REORDER_FAIL; // out of range
                     }
                     if(sliceHdr->reordering_of_pic_nums_idc_l0[i] == 1 &&
-                    	sliceHdr->abs_diff_pic_num_minus1_l0[i] > video->MaxPicNum/2 -2)
+                        sliceHdr->abs_diff_pic_num_minus1_l0[i] > video->MaxPicNum/2 -2)
                     {
-                    	return AVCENC_REF_PIC_REORDER_FAIL; // out of range
+                        return AVCENC_REF_PIC_REORDER_FAIL; // out of range
                     }*/
                 }
                 else if (sliceHdr->reordering_of_pic_nums_idc_l0[i] == 2)
@@ -559,14 +559,14 @@ AVCEnc_Status ref_pic_list_reordering(AVCCommonObj *video, AVCEncBitstream *stre
                     status = ue_v(stream, sliceHdr->abs_diff_pic_num_minus1_l1[i]);
                     /* This check should be in InitSlice() if we ever use it
                     if(sliceHdr->reordering_of_pic_nums_idc_l1[i] == 0 &&
-                    	sliceHdr->abs_diff_pic_num_minus1_l1[i] > video->MaxPicNum/2 -1)
+                        sliceHdr->abs_diff_pic_num_minus1_l1[i] > video->MaxPicNum/2 -1)
                     {
-                    	return AVCENC_REF_PIC_REORDER_FAIL; // out of range
+                        return AVCENC_REF_PIC_REORDER_FAIL; // out of range
                     }
                     if(sliceHdr->reordering_of_pic_nums_idc_l1[i] == 1 &&
-                    	sliceHdr->abs_diff_pic_num_minus1_l1[i] > video->MaxPicNum/2 -2)
+                        sliceHdr->abs_diff_pic_num_minus1_l1[i] > video->MaxPicNum/2 -2)
                     {
-                    	return AVCENC_REF_PIC_REORDER_FAIL; // out of range
+                        return AVCENC_REF_PIC_REORDER_FAIL; // out of range
                     }*/
                 }
                 else if (sliceHdr->reordering_of_pic_nums_idc_l1[i] == 2)
@@ -650,12 +650,12 @@ AVCEnc_Status InitPOC(AVCEncObject *encvid)
     AVCCommonObj *video = encvid->common;
     AVCSeqParamSet *currSPS = video->currSeqParams;
     AVCSliceHeader *sliceHdr = video->sliceHdr;
-    AVCFrameIO	*currInput = encvid->currInput;
+    AVCFrameIO  *currInput = encvid->currInput;
     int i;
 
     switch (currSPS->pic_order_cnt_type)
     {
-        case 0:	/* POC MODE 0 , subclause 8.2.1.1 */
+        case 0: /* POC MODE 0 , subclause 8.2.1.1 */
             /* encoding part */
             if (video->nal_unit_type == AVC_NALTYPE_IDR)
             {
@@ -716,7 +716,7 @@ AVCEnc_Status InitPOC(AVCEncObject *encvid)
             /* calculate FrameNumOffset */
             if (video->nal_unit_type == AVC_NALTYPE_IDR)
             {
-                encvid->dispOrdPOCRef = currInput->disp_order;	/* reset the reference point */
+                encvid->dispOrdPOCRef = currInput->disp_order;  /* reset the reference point */
                 video->prevFrameNumOffset = 0;
                 video->FrameNumOffset = 0;
             }
@@ -823,7 +823,7 @@ AVCEnc_Status InitPOC(AVCEncObject *encvid)
                 {
                     return AVCENC_CONSECUTIVE_NONREF;
                 }
-                encvid->dispOrdPOCRef = 1;	/* act as a flag for non ref */
+                encvid->dispOrdPOCRef = 1;  /* act as a flag for non ref */
             }
             else
             {

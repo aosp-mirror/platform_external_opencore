@@ -87,8 +87,8 @@ extern "C"
 #endif
 
     void pvmp3_equalizer(int32 *inData,
-                         e_equalization equalizerType,
-                         int32 *pt_work_buff);
+    e_equalization equalizerType,
+    int32 *pt_work_buff);
 
 #ifdef __cplusplus
 }

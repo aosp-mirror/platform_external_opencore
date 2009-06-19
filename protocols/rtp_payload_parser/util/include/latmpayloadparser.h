@@ -15,21 +15,21 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-/*	=====================================================================	*/
-/*	File: LATMPayloadParser.h												*/
-/*	Description:															*/
-/*																			*/
-/*		RTP packet payload parser.                                          */
-/*																			*/
-/*	Rev:   0.2																*/
-/*	=====================================================================	*/
-/*																			*/
-/*	Revision History:														*/
-/*																			*/
-/*	Rev:																	*/
-/*	Date:																	*/
-/*	Description:															*/
-/*																			*/
+/*  =====================================================================   */
+/*  File: LATMPayloadParser.h                                               */
+/*  Description:                                                            */
+/*                                                                          */
+/*      RTP packet payload parser.                                          */
+/*                                                                          */
+/*  Rev:   0.2                                                              */
+/*  =====================================================================   */
+/*                                                                          */
+/*  Revision History:                                                       */
+/*                                                                          */
+/*  Rev:                                                                    */
+/*  Date:                                                                   */
+/*  Description:                                                            */
+/*                                                                          */
 /* //////////////////////////////////////////////////////////////////////// */
 
 #ifndef _LATMPAYLOADPARSER_H_
@@ -53,12 +53,12 @@
 
 
 //status return type used by PayloadParser class API, up to 16-bit map
-#define FRAME_ERROR     					0x10	//error during composing
-#define FRAME_INCOMPLETE					0x01	//frame incomplete
-#define FRAME_COMPLETE					    0x80	//frame complete
+#define FRAME_ERROR                         0x10    //error during composing
+#define FRAME_INCOMPLETE                    0x01    //frame incomplete
+#define FRAME_COMPLETE                      0x80    //frame complete
 
 // Don't understand the organization of the status codes so using available bit
-#define FRAME_OUTPUTNOTAVAILABLE			0x20	//memory for parser output data not available
+#define FRAME_OUTPUTNOTAVAILABLE            0x20    //memory for parser output data not available
 
 
 
@@ -96,7 +96,7 @@ typedef struct _streamMuxConfig
     uint32 * audioSpecificConfigSizePtr;
 
     uint32 parseResult;
-}streamMuxConfig;
+} streamMuxConfig;
 
 
 //////////////////////////////////AAC LATM parser
@@ -130,20 +130,20 @@ class PV_LATM_Parser
 
 
     private:
-        uint32	last_timestamp;
-        uint32	last_sequence_num;
+        uint32  last_timestamp;
+        uint32  last_sequence_num;
         uint32  last_mbit;
-        uint8*	next_frame;			//next audio data
-        int8	frame;			// number of frames in this packet
-        int16	offset; 		//for multiple frame in a packet
-        bool	framestart; 	//start a frame yet
-        int32	bufsize;		//original buffer size
-        int32	framesize;	// current composing frame size
+        uint8*  next_frame;         //next audio data
+        int8    frame;          // number of frames in this packet
+        int16   offset;         //for multiple frame in a packet
+        bool    framestart;     //start a frame yet
+        int32   bufsize;        //original buffer size
+        int32   framesize;  // current composing frame size
 
         int32   currLen;
         bool    firstBlock;
         int32   bytesRead;
-        bool	myBool;
+        bool    myBool;
         int32   frameNum;
         int32   compositenumframes;
 

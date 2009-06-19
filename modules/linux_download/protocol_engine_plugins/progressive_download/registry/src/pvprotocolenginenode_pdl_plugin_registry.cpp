@@ -116,7 +116,7 @@ bool ProtocolEngineNodeProgressiveDownloadContainerLoader::DeleteProgressiveDown
 
 
 class ProtocolEngineNodeProgressiveDownloadContainerRegistryPopulatorInterface: public OsclSharedLibraryInterface,
-            public PVMFProtocolEngineNodeRegistryPopulatorInterface
+        public PVMFProtocolEngineNodeRegistryPopulatorInterface
 {
     public:
         ProtocolEngineNodeProgressiveDownloadContainerRegistryPopulatorInterface() {};

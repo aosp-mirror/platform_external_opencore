@@ -332,7 +332,7 @@ bool HTTPContentInfoInternal::parseContentType(const StrPtrLen &aContentType)
             ((ptr[6] | OSCL_ASCII_CASE_MAGIC_BIT) == 'a') &&
             ((ptr[7] | OSCL_ASCII_CASE_MAGIC_BIT) == 'r') &&
             ((ptr[8] | OSCL_ASCII_CASE_MAGIC_BIT) == 't') &&
-            (ptr[9]								  == '/') &&
+            (ptr[9]                               == '/') &&
             ((ptr[10] | OSCL_ASCII_CASE_MAGIC_BIT) == 'b') &&
             ((ptr[11] | OSCL_ASCII_CASE_MAGIC_BIT) == 'y') &&
             ((ptr[12] | OSCL_ASCII_CASE_MAGIC_BIT) == 't') &&
@@ -737,9 +737,9 @@ int32 HTTPParserInput::checkNextLine(HTTPMemoryFragment &aInputDataStream)
     {
         if (streamLength > 1 &&
                 (ptr[1] == HTTP_CHAR_CR || ptr[1] == HTTP_CHAR_LF) &&
-                ptr[1] != ptr[0]) ptr++;	// avoid double CR or double LF, should treat it as different lines
+                ptr[1] != ptr[0]) ptr++;    // avoid double CR or double LF, should treat it as different lines
         // Note that double CR(CRLFCRLF) or double LF (CRLFCRLF, or LFLF) means end of HTTP header
-        return ptr -start_ptr + 1;
+        return ptr - start_ptr + 1;
     }
 
     return 0; // no complete key-value pair available
@@ -788,7 +788,7 @@ int32 HTTPParserBaseObject::parseHeaderFields(HTTPMemoryFragment &aInputLineData
     if (status < 0)
     {
         LOGINFO((0, "HTTPParserBaseObject::parseHeaderFields() : Syntax Error founded!!"));
-        return HTTPParser::PARSE_SYNTAX_ERROR;	   // no divider characters found!
+        return HTTPParser::PARSE_SYNTAX_ERROR;     // no divider characters found!
     }
 
     // exception handling (no key or no value case)
@@ -894,9 +894,9 @@ int32 HTTPParserBaseObject::getNextFieldKeyValuePair(HTTPMemoryFragment &aInputD
 }
 
 // return value: 0 normal,
-//				 1 end of header,
-//				 2 ignore (for CRLF, to handle CRLF split into separate fragments)
-//				-1 error
+//               1 end of header,
+//               2 ignore (for CRLF, to handle CRLF split into separate fragments)
+//              -1 error
 int32 HTTPParserBaseObject::parseNextValueItem(HTTPMemoryFragment &aInputDataStream, char *&valueItemPtr, uint32 &valueItemLength, const bool isKeyItem)
 {
     char dividerChar0 = (isKeyItem ? HTTP_CHAR_COLON : HTTP_CHAR_CR);
@@ -1067,7 +1067,7 @@ int32 HTTPParserHeaderObject::parseFirstLine(HTTPMemoryFragment &aInputDataStrea
             ((ptr[1] | OSCL_ASCII_CASE_MAGIC_BIT) == 't') &&
             ((ptr[2] | OSCL_ASCII_CASE_MAGIC_BIT) == 't') &&
             ((ptr[3] | OSCL_ASCII_CASE_MAGIC_BIT) == 'p') &&
-            (ptr[4]								 == '/'))
+            (ptr[4]                              == '/'))
     {
         ptr += 5; // size of "http/"
         if (!checkHTTPVersion(ptr))

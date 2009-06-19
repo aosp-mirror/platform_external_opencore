@@ -21,7 +21,7 @@
 
 
 ////////////////////////////////////////////////////////////////////////////////////
-//////	DownloadContainer implementation
+//////  DownloadContainer implementation
 ////////////////////////////////////////////////////////////////////////////////////
 
 // constructor
@@ -171,8 +171,8 @@ OSCL_EXPORT_REF bool DownloadContainer::handleContentRangeUnmatch()
 
     DownloadOutputConfig config;
     config.isNeedOpenDataStream = true;
-    config.isRangeSupport		= false;
-    config.isResumeDownload		= true;
+    config.isRangeSupport       = false;
+    config.isResumeDownload     = true;
     if (iNodeOutput->initialize((OsclAny*)(&config)) != PVMFSuccess) return false;
     iNodeOutput->discardData(true); // true means closing and reopening the data stream object
     iEventReport->startRealDataflow();
@@ -187,8 +187,8 @@ OSCL_EXPORT_REF bool DownloadContainer::downloadUpdateForHttpHeaderAvailable()
         // for resume download session, open data stream with append mode
         DownloadOutputConfig config;
         config.isNeedOpenDataStream = true;
-        config.isRangeSupport		= true;
-        config.isResumeDownload		= true;
+        config.isRangeSupport       = true;
+        config.isResumeDownload     = true;
         iNodeOutput->setCurrentOutputSize(iProtocol->getDownloadSize());
         iDownloadControl->setPrevDownloadSize(iProtocol->getDownloadSize());
         if (iNodeOutput->initialize((OsclAny*)(&config)) != PVMFSuccess) return false;
@@ -324,7 +324,7 @@ OSCL_EXPORT_REF void DownloadContainer::setEventReporterSupportObjects()
 }
 
 ////////////////////////////////////////////////////////////////////////////////////
-//////	pvHttpDownloadOutput implementation
+//////  pvHttpDownloadOutput implementation
 ////////////////////////////////////////////////////////////////////////////////////
 
 // constructor
@@ -369,7 +369,7 @@ OSCL_EXPORT_REF void pvHttpDownloadOutput::setOutputObject(OsclAny* aOutputObjec
 OSCL_EXPORT_REF uint32 pvHttpDownloadOutput::writeToDataStream(OUTPUT_DATA_QUEUE &aOutputQueue)
 {
     uint32 totalFragSize = 0, i;
-    for (i = 0; i < aOutputQueue.size();i++)
+    for (i = 0; i < aOutputQueue.size(); i++)
     {
         uint32 fragSize = aOutputQueue[i].getMemFragSize();
         if (!writeToDataStream((uint8*)(aOutputQueue[i].getMemFragPtr()), fragSize)) return ~0;
@@ -463,7 +463,7 @@ OSCL_EXPORT_REF uint32 pvHttpDownloadOutput::getMaxAvailableOutputSize()
 }
 
 ////////////////////////////////////////////////////////////////////////////////////
-//////	pvDownloadControl implementation
+//////  pvDownloadControl implementation
 ////////////////////////////////////////////////////////////////////////////////////
 
 OSCL_EXPORT_REF pvDownloadControl::pvDownloadControl() :
@@ -491,15 +491,15 @@ OSCL_EXPORT_REF void pvDownloadControl::clear()
 
 OSCL_EXPORT_REF void pvDownloadControl::clearBody()
 {
-    iPlaybackUnderflow			 = true;
-    iDownloadComplete			 = false;
-    iRequestResumeNotification	 = false;
-    iCurrentNPTReadPosition		 = 0;
-    iPlaybackByteRate			 = 0;
-    iClipByterate				 = 0;
-    iPrevDownloadSize			 = 0;
-    iDlAlgoPreConditionMet		 = false;
-    iSetFileSize				 = false;
+    iPlaybackUnderflow           = true;
+    iDownloadComplete            = false;
+    iRequestResumeNotification   = false;
+    iCurrentNPTReadPosition      = 0;
+    iPlaybackByteRate            = 0;
+    iClipByterate                = 0;
+    iPrevDownloadSize            = 0;
+    iDlAlgoPreConditionMet       = false;
+    iSetFileSize                 = false;
     iSendDownloadCompleteNotification = false;
 }
 
@@ -593,12 +593,12 @@ OSCL_EXPORT_REF void pvDownloadControl::setSupportObject(OsclAny *aDLSupportObje
 
 // check whether to make resume notification; if needed, then make resume notification
 // Return value: 1 means making resume notification normally (underflow->auto resume),
-//				 2 means making resume notification for download complete
-//				 0 means anything else
+//               2 means making resume notification for download complete
+//               0 means anything else
 OSCL_EXPORT_REF int32 pvDownloadControl::checkResumeNotification(const bool aDownloadComplete)
 {
     //LOGINFODATAPATH((0, "pvDownloadControl::checkResumeNotification() IN, iPlaybackUnderflow=%d, iRequestResumeNotification=%d, aDownloadComplete=%d",
-    //	(uint32)iPlaybackUnderflow, (uint32)iRequestResumeNotification, (uint32)aDownloadComplete));
+    //  (uint32)iPlaybackUnderflow, (uint32)iRequestResumeNotification, (uint32)aDownloadComplete));
 
     // short-cut: download complete
     // check sending file size, protocol info or download complete notification
@@ -785,7 +785,7 @@ OSCL_EXPORT_REF bool pvDownloadControl::checkAutoResumeAlgoWithConstraint(const 
     LOGINFODATAPATH((0, "pvDownloadControl::isResumePlayback()->checkAutoResumeAlgowithConstraint(), algorithm: RemainingDownloadSize < 0.0009 * dl_rate * remaining_playback_time: remaining_dl_size= %d, dl_rate=%dByte/s,  playback_remaining_time=%dms",
                      aRemainingDownloadSize, aDownloadRate, aDurationMsec - playbackTimeMec32));
     // the basic algorithm is, remaining download time (remaining download size/download rate) <
-    //						   remaining playback time (duration - current playback time) * 0.9
+    //                         remaining playback time (duration - current playback time) * 0.9
 
     uint32 newDurationMsec = aDurationMsec;
     if (!checkNewDuration(aDurationMsec, newDurationMsec)) return false;
@@ -916,7 +916,7 @@ OSCL_EXPORT_REF void pvDownloadControl::cancelResumeNotification()
 
 
 ////////////////////////////////////////////////////////////////////////////////////
-//////	DownloadProgress implementation
+//////  DownloadProgress implementation
 ////////////////////////////////////////////////////////////////////////////////////
 // constructor
 OSCL_EXPORT_REF DownloadProgress::DownloadProgress() :
@@ -932,8 +932,8 @@ OSCL_EXPORT_REF void DownloadProgress::reset()
     //for progress reports
     iCurrProgressPercent  = 0;
     iPrevProgressPercent  = 0;
-    iDownloadNPTTime	  = 0;
-    iDurationMsec		  = 0;
+    iDownloadNPTTime      = 0;
+    iDurationMsec         = 0;
 }
 
 OSCL_EXPORT_REF void DownloadProgress::setSupportObject(OsclAny *aDLSupportObject, DownloadControlSupportObjectType aType)
@@ -1010,7 +1010,7 @@ OSCL_EXPORT_REF uint32 DownloadProgress::getClipDuration()
 }
 
 ////////////////////////////////////////////////////////////////////////////////////
-//////	PVMFDownloadDataSourceContainer implementation
+//////  PVMFDownloadDataSourceContainer implementation
 ////////////////////////////////////////////////////////////////////////////////////
 PVMFDownloadDataSourceContainer::PVMFDownloadDataSourceContainer(OsclAny* aSourceData)
 {
@@ -1064,58 +1064,58 @@ bool PVMFDownloadDataSourceContainer::addSource(OsclAny* aSourceData)
 
 void PVMFDownloadDataSourceContainer::copy(const PVMFDownloadDataSourceHTTP& aSourceData)
 {
-    iHasDataSource	  = true;
-    iIsNewSession	  = aSourceData.bIsNewSession;
-    iMaxFileSize	  = aSourceData.iMaxFileSize;
+    iHasDataSource    = true;
+    iIsNewSession     = aSourceData.bIsNewSession;
+    iMaxFileSize      = aSourceData.iMaxFileSize;
     iPlaybackControl  = (uint32)convert(aSourceData.iPlaybackControl);
     if (aSourceData.iPlaybackControl == PVMFDownloadDataSourceHTTP::ENoSaveToFile) iIsNewSession = true; // always use new download session for progressive streaming
     iConfigFileName   = aSourceData.iConfigFileName;
     iDownloadFileName = aSourceData.iDownloadFileName;
-    iProxyName		  = aSourceData.iProxyName;
-    iProxyPort		  = aSourceData.iProxyPort;
-    iPvxInfo		  = NULL;
+    iProxyName        = aSourceData.iProxyName;
+    iProxyPort        = aSourceData.iProxyPort;
+    iPvxInfo          = NULL;
 }
 
 void PVMFDownloadDataSourceContainer::copy(const PVMFDownloadDataSourcePVX& aSourceData)
 {
-    iHasDataSource	  = true;
-    iIsNewSession	  = aSourceData.bIsNewSession;
-    iMaxFileSize	  = aSourceData.iMaxFileSize;
+    iHasDataSource    = true;
+    iIsNewSession     = aSourceData.bIsNewSession;
+    iMaxFileSize      = aSourceData.iMaxFileSize;
     iPlaybackControl  = 0;
     iConfigFileName   = aSourceData.iConfigFileName;
     iDownloadFileName = aSourceData.iDownloadFileName;
-    iProxyName		  = aSourceData.iProxyName;
-    iProxyPort		  = aSourceData.iProxyPort;
-    iPvxInfo		  = &aSourceData.iPvxInfo;
+    iProxyName        = aSourceData.iProxyName;
+    iProxyPort        = aSourceData.iProxyPort;
+    iPvxInfo          = &aSourceData.iPvxInfo;
 }
 
 void PVMFDownloadDataSourceContainer::copy(const PVMFSourceContextDataDownloadHTTP& aSourceData)
 {
-    iHasDataSource	  = true;
-    iIsNewSession	  = aSourceData.bIsNewSession;
-    iMaxFileSize	  = aSourceData.iMaxFileSize;
+    iHasDataSource    = true;
+    iIsNewSession     = aSourceData.bIsNewSession;
+    iMaxFileSize      = aSourceData.iMaxFileSize;
     iPlaybackControl  = (uint32)aSourceData.iPlaybackControl;
     if (aSourceData.iPlaybackControl == PVMFSourceContextDataDownloadHTTP::ENoSaveToFile) iIsNewSession = true; // always use new download session for progressive streaming
     iConfigFileName   = aSourceData.iConfigFileName;
     iDownloadFileName = aSourceData.iDownloadFileName;
-    iProxyName		  = aSourceData.iProxyName;
-    iProxyPort		  = aSourceData.iProxyPort;
-    iUserID			  = aSourceData.iUserID;
-    iUserPasswd		  = aSourceData.iUserPasswd;
-    iPvxInfo		  = NULL;
+    iProxyName        = aSourceData.iProxyName;
+    iProxyPort        = aSourceData.iProxyPort;
+    iUserID           = aSourceData.iUserID;
+    iUserPasswd       = aSourceData.iUserPasswd;
+    iPvxInfo          = NULL;
 }
 
 void PVMFDownloadDataSourceContainer::copy(const PVMFSourceContextDataDownloadPVX& aSourceData)
 {
-    iHasDataSource	  = true;
-    iIsNewSession	  = aSourceData.bIsNewSession;
-    iMaxFileSize	  = aSourceData.iMaxFileSize;
+    iHasDataSource    = true;
+    iIsNewSession     = aSourceData.bIsNewSession;
+    iMaxFileSize      = aSourceData.iMaxFileSize;
     iPlaybackControl  = 0;
     iConfigFileName   = aSourceData.iConfigFileName;
     iDownloadFileName = aSourceData.iDownloadFileName;
-    iProxyName		  = aSourceData.iProxyName;
-    iProxyPort		  = aSourceData.iProxyPort;
-    iPvxInfo		  = aSourceData.iPvxInfo;
+    iProxyName        = aSourceData.iProxyName;
+    iProxyPort        = aSourceData.iProxyPort;
+    iPvxInfo          = aSourceData.iPvxInfo;
 }
 
 PVMFSourceContextDataDownloadHTTP::TPVPlaybackControl PVMFDownloadDataSourceContainer::convert(const PVMFDownloadDataSourceHTTP::TPVPlaybackControl aPlaybackControl)
@@ -1140,7 +1140,7 @@ PVMFSourceContextDataDownloadHTTP::TPVPlaybackControl PVMFDownloadDataSourceCont
 
 
 ////////////////////////////////////////////////////////////////////////////////////
-//////	PVDlCfgFileContainer implementation
+//////  PVDlCfgFileContainer implementation
 ////////////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF PVMFStatus PVDlCfgFileContainer::createCfgFile(OSCL_String &aUrl)
 {
@@ -1228,7 +1228,7 @@ OSCL_EXPORT_REF PVMFStatus PVDlCfgFileContainer::configCfgFile(OSCL_String &aUrl
 
 
 ////////////////////////////////////////////////////////////////////////////////////
-//////	downloadEventReporter implementation
+//////  downloadEventReporter implementation
 ////////////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF downloadEventReporter::downloadEventReporter(EventReporterObserver *aObserver) :
         EventReporter(aObserver),
@@ -1244,15 +1244,15 @@ OSCL_EXPORT_REF downloadEventReporter::downloadEventReporter(EventReporterObserv
 
 OSCL_EXPORT_REF void downloadEventReporter::clear()
 {
-    iSendBufferStartInfoEvent		= false;
-    iSendBufferCompleteInfoEvent	= false;
+    iSendBufferStartInfoEvent       = false;
+    iSendBufferCompleteInfoEvent    = false;
     iSendMovieAtomCompleteInfoEvent = false;
-    iSendInitialDataReadyEvent		= false;
-    iSendContentLengthEvent			= false;
-    iSendContentTruncateEvent		= false;
-    iSendContentTypeEvent			= false;
-    iSendUnexpectedDataEvent		= false;
-    iSendServerDisconnectEvent		= false;
+    iSendInitialDataReadyEvent      = false;
+    iSendContentLengthEvent         = false;
+    iSendContentTruncateEvent       = false;
+    iSendContentTypeEvent           = false;
+    iSendUnexpectedDataEvent        = false;
+    iSendServerDisconnectEvent      = false;
     iPrevDownloadProgress = 0;
 
     EventReporter::clear();
@@ -1511,8 +1511,8 @@ OSCL_EXPORT_REF bool downloadEventReporter::checkContentTruncated(const uint32 d
 }
 
 // return code: 0 - no truncation,
-//				1 - truncation (download size >= maximum file size)
-//				2 - truncation (download size < content length, server disconnect)
+//              1 - truncation (download size >= maximum file size)
+//              2 - truncation (download size < content length, server disconnect)
 OSCL_EXPORT_REF int32 downloadEventReporter::isDownloadFileTruncated(const uint32 downloadStatus)
 {
     // 1. connection shutdown case with content length

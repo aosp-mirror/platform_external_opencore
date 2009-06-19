@@ -20,35 +20,35 @@
  INPUT AND OUTPUT DEFINITIONS
 
  Inputs:
-	input_ptr = pointer to the buffer containing values of type UChar
-		    in a 2D block of data.
-	min_ptr = pointer to the minimum value of type Int to be found in a
-		  square block of size BLKSIZE contained in 2D block of data.
-	max_ptr = pointer to the maximum value of type Int to be found in a
-		  square block of size BLKSIZE contained in 2D block of data.
-	incr = value of type Int representing the width of 2D block of data.
+    input_ptr = pointer to the buffer containing values of type UChar
+            in a 2D block of data.
+    min_ptr = pointer to the minimum value of type Int to be found in a
+          square block of size BLKSIZE contained in 2D block of data.
+    max_ptr = pointer to the maximum value of type Int to be found in a
+          square block of size BLKSIZE contained in 2D block of data.
+    incr = value of type Int representing the width of 2D block of data.
 
  Local Stores/Buffers/Pointers Needed:
-	None
+    None
 
  Global Stores/Buffers/Pointers Needed:
-	None
+    None
 
  Outputs:
-	None
+    None
 
  Pointers and Buffers Modified:
-	min_ptr points to the found minimum value in the square block of
-	size BLKSIZE contained in 2D block of data.
+    min_ptr points to the found minimum value in the square block of
+    size BLKSIZE contained in 2D block of data.
 
-	max_ptr points to the found maximum value in the square block of
-	size BLKSIZE contained in 2D block of data.
+    max_ptr points to the found maximum value in the square block of
+    size BLKSIZE contained in 2D block of data.
 
  Local Stores Modified:
-	None
+    None
 
  Global Stores Modified:
-	None
+    None
 
 ------------------------------------------------------------------------------
  FUNCTION DESCRIPTION
@@ -58,18 +58,18 @@
  represents a 2D block of data that is larger than BLKSIZE * BLKSIZE.
  This is illustrated below.
 
-	mem loc x + 00h -> o o o o o o o o o o o o o o o o
-	mem loc x + 10h -> o o o o o X X X X X X X X o o o
-	mem loc x + 20h -> o o o o o X X X X X X X X o o o
-	mem loc x + 30h -> o o o o o X X X X X X X X o o o
-	mem loc x + 40h -> o o o o o X X X X X X X X o o o
-	mem loc x + 50h -> o o o o o X X X X X X X X o o o
-	mem loc x + 60h -> o o o o o X X X X X X X X o o o
-	mem loc x + 70h -> o o o o o X X X X X X X X o o o
-	mem loc x + 80h -> o o o o o X X X X X X X X o o o
-	mem loc x + 90h -> o o o o o o o o o o o o o o o o
-	mem loc x + A0h -> o o o o o o o o o o o o o o o o
-	mem loc x + B0h -> o o o o o o o o o o o o o o o o
+    mem loc x + 00h -> o o o o o o o o o o o o o o o o
+    mem loc x + 10h -> o o o o o X X X X X X X X o o o
+    mem loc x + 20h -> o o o o o X X X X X X X X o o o
+    mem loc x + 30h -> o o o o o X X X X X X X X o o o
+    mem loc x + 40h -> o o o o o X X X X X X X X o o o
+    mem loc x + 50h -> o o o o o X X X X X X X X o o o
+    mem loc x + 60h -> o o o o o X X X X X X X X o o o
+    mem loc x + 70h -> o o o o o X X X X X X X X o o o
+    mem loc x + 80h -> o o o o o X X X X X X X X o o o
+    mem loc x + 90h -> o o o o o o o o o o o o o o o o
+    mem loc x + A0h -> o o o o o o o o o o o o o o o o
+    mem loc x + B0h -> o o o o o o o o o o o o o o o o
 
 For illustration purposes, the diagram assumes that BLKSIZE is equal to 8
 but this is not a requirement. In this diagram, the buffer starts at
@@ -91,7 +91,7 @@ found and the location pointed to by max_ptr contains the maximum value found.
 /*----------------------------------------------------------------------------
 ; INCLUDES
 ----------------------------------------------------------------------------*/
-#include 	"mp4dec_lib.h"
+#include    "mp4dec_lib.h"
 #include    "post_proc.h"
 
 /*----------------------------------------------------------------------------
@@ -138,14 +138,14 @@ void  FindMaxMin(
     /*----------------------------------------------------------------------------
     ; Define all local variables
     ----------------------------------------------------------------------------*/
-    register	uint	i, j;
-    register	int	min, max;
+    register    uint    i, j;
+    register    int min, max;
 
     /*----------------------------------------------------------------------------
     ; Function body here
     ----------------------------------------------------------------------------*/
     max = min = *input_ptr;
-    /*	incr = incr - BLKSIZE; */   /*  09/06/2001, already passed in as width - BLKSIZE */
+    /*  incr = incr - BLKSIZE; */   /*  09/06/2001, already passed in as width - BLKSIZE */
 
     for (i = BLKSIZE; i > 0; i--)
     {

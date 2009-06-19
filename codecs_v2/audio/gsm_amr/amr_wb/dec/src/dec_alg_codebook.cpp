@@ -165,7 +165,7 @@ void dec_2p_2N1(int32 index, int16 N, int16 offset, int16 pos[])
         }
         else
         {
-            pos2 += NB_POS;      /* pos2 += NB_POS;	 */
+            pos2 += NB_POS;      /* pos2 += NB_POS;  */
         }
     }
     else

@@ -1038,7 +1038,7 @@ bool MP3Parser::DecodeVBRIHeader(uint8 *VbriBuffer, VBRIHeaderType &vbriHDType,
 
     vbriHDType.TOC = OSCL_ARRAY_NEW(int32, vbriHDType.entriesTOC + 1);
 
-    for (i = 0;i <= (vbriHDType.entriesTOC);i++)
+    for (i = 0; i <= (vbriHDType.entriesTOC); i++)
     {
         vbriHDType.TOC[i] = ReadBuffer(pBuf, vbriHDType.sTableEntry, pos) * vbriHDType.scale;
     }

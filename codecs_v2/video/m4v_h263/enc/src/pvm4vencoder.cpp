@@ -197,11 +197,11 @@ void CPVM4VEncoder::Run()
                 RunIfNotReady(50);
                 break;
             }
-            oindx	=	--iNumOutputData;						/* last-in first-out */
-            Size	=	iOutputData[oindx]->iBitStreamSize;
-            iOutputData[oindx]->iExternalTimeStamp	= iTimeStamp;
-            iOutputData[oindx]->iVideoTimeStamp		= iTimeStamp;
-            iOutputData[oindx]->iFrame				= iVideoOut;
+            oindx   =   --iNumOutputData;                       /* last-in first-out */
+            Size    =   iOutputData[oindx]->iBitStreamSize;
+            iOutputData[oindx]->iExternalTimeStamp  = iTimeStamp;
+            iOutputData[oindx]->iVideoTimeStamp     = iTimeStamp;
+            iOutputData[oindx]->iFrame              = iVideoOut;
 
             if (iNumLayer == -1)
             {
@@ -395,7 +395,7 @@ TCVEI_RETVAL CPVM4VEncoder::ParseFSI(uint8* aFSIBuff, int FSILength, VideoEncOpt
         ReadBits(psBits, 1, &codeword);
         if (codeword != 0) goto FREE_PS_BITS_AND_FAIL;
 
-        //		video_object_layer_shape
+        //      video_object_layer_shape
         ReadBits(psBits, 2, &codeword);
         if (codeword != 0) goto FREE_PS_BITS_AND_FAIL;
 
@@ -403,7 +403,7 @@ TCVEI_RETVAL CPVM4VEncoder::ParseFSI(uint8* aFSIBuff, int FSILength, VideoEncOpt
         ReadBits(psBits, 1, &codeword);
         if (codeword != 1) goto FREE_PS_BITS_AND_FAIL;
 
-        //	vop_time_increment_resolution
+        //  vop_time_increment_resolution
         ReadBits(psBits, 16, &codeword);
         aEncOption->timeIncRes = codeword;
 
@@ -412,7 +412,7 @@ TCVEI_RETVAL CPVM4VEncoder::ParseFSI(uint8* aFSIBuff, int FSILength, VideoEncOpt
         if (codeword != 1)
             goto FREE_PS_BITS_AND_FAIL;
 
-        //		fixed_vop_rate
+        //      fixed_vop_rate
         ReadBits(psBits, 1, &codeword);
         if (codeword != 0) goto FREE_PS_BITS_AND_FAIL;
 
@@ -538,10 +538,10 @@ int16 CPVM4VEncoder::iDecodeShortHeader(mp4StreamType *psBits, VideoEncOptions *
     int *width, *height;
 
     //Default values
-    aEncOption->quantType[0] =	0;
+    aEncOption->quantType[0] =  0;
     aEncOption->rvlcEnable = PV_OFF;
-    aEncOption->packetSize = 0;		// Since, by default resync_marker_disable = 1;
-    aEncOption->encMode = SHORT_HEADER;		// NO error resilience
+    aEncOption->packetSize = 0;     // Since, by default resync_marker_disable = 1;
+    aEncOption->encMode = SHORT_HEADER;     // NO error resilience
     width = &(aEncOption->encWidth[0]);
     height = &(aEncOption->encHeight[0]);
 
@@ -632,7 +632,7 @@ int16 CPVM4VEncoder::ShowBits(
         if (dataBytePos > pStream->numBytes - 4)
         {
             pStream->bitBuf = 0;
-            for (i = 0;i < pStream->numBytes - dataBytePos;i++)
+            for (i = 0; i < pStream->numBytes - dataBytePos; i++)
             {
                 pStream->bitBuf |= pStream->data[dataBytePos+i];
                 pStream->bitBuf <<= 8;
@@ -769,9 +769,9 @@ OSCL_EXPORT_REF TCVEI_RETVAL CPVM4VEncoder::Initialize(TPVVideoInputFormat *aVid
 
     int i;
     TCVEI_RETVAL status;
-    MP4EncodingMode	ENC_Mode ;
+    MP4EncodingMode ENC_Mode ;
     ParamEncMode RvlcMode = PV_OFF; /* default no RVLC */
-    Int	quantType[2] = {0, 0};		/* default H.263 quant*/
+    Int quantType[2] = {0, 0};      /* default H.263 quant*/
     VideoEncOptions aEncOption; /* encoding options */
 
     iState = EIdle ; // stop encoding
@@ -780,7 +780,7 @@ OSCL_EXPORT_REF TCVEI_RETVAL CPVM4VEncoder::Initialize(TPVVideoInputFormat *aVid
     iOverrunBuffer = NULL;
     iOBSize = 0;
 
-    if (aEncParam->iContentType == 	ECVEI_STREAMING)
+    if (aEncParam->iContentType ==  ECVEI_STREAMING)
     {
         ENC_Mode = DATA_PARTITIONING_MODE;
     }
@@ -915,7 +915,7 @@ OSCL_EXPORT_REF TCVEI_RETVAL CPVM4VEncoder::Initialize(TPVVideoInputFormat *aVid
             return ECVEI_FAIL;
 
     }
-    else	// All default Settings
+    else    // All default Settings
     {
         aEncOption.encMode = ENC_Mode;
         aEncOption.packetSize = aEncParam->iPacketSize;
@@ -1272,7 +1272,7 @@ OSCL_EXPORT_REF TCVEI_RETVAL CPVM4VEncoder::SetIntraMBRefresh(int32 aNumMBRefres
 
 #ifdef YUV_INPUT
 /* ///////////////////////////////////////////////////////////////////////// */
-/* Copy from YUV input to YUV frame inside M4VEnc lib						*/
+/* Copy from YUV input to YUV frame inside M4VEnc lib                       */
 /* When input is not YUV, the color conv will write it directly to iVideoInOut. */
 /* ///////////////////////////////////////////////////////////////////////// */
 
@@ -1394,7 +1394,7 @@ void CPVM4VEncoder::CopyToYUVIn(uint8 *YUV, Int width, Int height, Int width_16,
     }
     else
     {
-        for (y_ind = 0; y_ind < (jlimit - 1) ;y_ind++)
+        for (y_ind = 0; y_ind < (jlimit - 1) ; y_ind++)
         {
             oscl_memcpy(yChan, y, ilimit);
             oscl_memset(yChan + ilimit, 16, ioffset); /* pad with zero */
@@ -1412,7 +1412,7 @@ void CPVM4VEncoder::CopyToYUVIn(uint8 *YUV, Int width, Int height, Int width_16,
     }
     else
     {
-        for (y_ind = 0; y_ind < (jlimit >> 1) - 1;y_ind++)
+        for (y_ind = 0; y_ind < (jlimit >> 1) - 1; y_ind++)
         {
             oscl_memcpy(uChan, u, ilimit >> 1);
             oscl_memcpy(vChan, v, ilimit >> 1);

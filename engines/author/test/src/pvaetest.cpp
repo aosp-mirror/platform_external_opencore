@@ -485,7 +485,7 @@ bool FindAudioConfigFile(cmd_line* aCommandLine, OSCL_HeapString<OsclMemAllocato
     // Searcgh for the "-audioconfigfile" argument
     // go through the each argument
 
-    for (int iFileSearch = 0;iFileSearch < count;iFileSearch++)
+    for (int iFileSearch = 0; iFileSearch < count; iFileSearch++)
     {
         char argstr[128];
         // Convert to UTF8 if necessary
@@ -547,7 +547,7 @@ bool FindAudioConfigFile(cmd_line* aCommandLine, OSCL_HeapString<OsclMemAllocato
 bool FindVideoConfigFile(cmd_line* aCommandLine, OSCL_HeapString<OsclMemAllocator>& aFileNameVideoConfig, FILE *aFile)
 {
     OSCL_UNUSED_ARG(aFile);
-    int	iFileArgument = 0;
+    int iFileArgument = 0;
     bool iFileFound = false;
     bool cmdline_iswchar = aCommandLine->is_wchar();
 
@@ -617,7 +617,7 @@ bool FindVideoConfigFile(cmd_line* aCommandLine, OSCL_HeapString<OsclMemAllocato
 bool FindAVIConfigFile(cmd_line* aCommandLine, OSCL_HeapString<OsclMemAllocator>& aFileNameAVIConfig, FILE *aFile)
 {
     OSCL_UNUSED_ARG(aFile);
-    int	iFileArgument = 0;
+    int iFileArgument = 0;
     bool iFileFound = false;
     bool cmdline_iswchar = aCommandLine->is_wchar();
 
@@ -981,7 +981,7 @@ void FindTextSourceFile(cmd_line* aCommandLine, OSCL_HeapString<OsclMemAllocator
 }
 //This functions finds the name of output input file from command line specified with switch -output <filename>
 //Sets the name of output file in reference parameter
-void FindOutputFile(cmd_line* aCommandLine,	OSCL_HeapString<OsclMemAllocator>& aOutputFileNameInfo, FILE* aFile)
+void FindOutputFile(cmd_line* aCommandLine, OSCL_HeapString<OsclMemAllocator>& aOutputFileNameInfo, FILE* aFile)
 {
     int iFileArgument = 0;
     bool iFileFound = false;
@@ -1060,7 +1060,7 @@ void FindOutputFile(cmd_line* aCommandLine,	OSCL_HeapString<OsclMemAllocator>& a
 //To run a range of tests by enum ID:
 //  -test 17 29
 //if -test is not specified in the command line, it assumes running tests from 0 to CompressedNormalTestEnd-1
-void FindTestRange(cmd_line *aCommandLine,	int32 &iFirstTest, int32 &iLastTest, FILE *aFile)
+void FindTestRange(cmd_line *aCommandLine,  int32 &iFirstTest, int32 &iLastTest, FILE *aFile)
 {
     //default is to run all tests.
     iFirstTest = 0;
@@ -1775,7 +1775,7 @@ int local_main(FILE* filehandle, cmd_line* command_line)
                     {
                         fprintf(file, "ERROR: Leak info is incomplete.\n");
                     }
-                    for (uint32 ii = 0;ii < leakinfo;ii++)
+                    for (uint32 ii = 0; ii < leakinfo; ii++)
                     {
                         fprintf(file, "Leak Info:\n");
                         fprintf(file, "  allocNum %d\n", info[ii].allocNum);
@@ -1877,7 +1877,7 @@ void FindAuthoringTime(cmd_line* aCmdLine, uint32& aAuthoringTime, FILE* aFile)
 }
 
 // Pull out source file name from arguments
-//	-source sometestfile.mp4
+//  -source sometestfile.mp4
 //
 //
 void FindSourceFile(cmd_line* command_line, OSCL_HeapString<OsclMemAllocator> &aFileNameInfo, PVMFFormatType &aInputFileFormatType, FILE *aFile)
@@ -2272,13 +2272,13 @@ int RunCompressedTest(cmd_line *aCommandLine, int32 &iFirstTest, int32 &iLastTes
         FindOutputFile(aCommandLine, outputfilenameinfo, file);
     }
 
-    PVAETestInputType aAudioInputType = INVALID_INPUT_TYPE;	// param1
-    PVAETestInputType aVideoInputType = INVALID_INPUT_TYPE;	// param2
-    PVAETestInputType aTextInputType = INVALID_INPUT_TYPE;	// param3
-    OSCL_HeapString<OsclMemAllocator> aComposerMimeType = NULL;	// param3
-    OSCL_HeapString<OsclMemAllocator> aAudioEncoderMimeType = NULL;	// param4
-    OSCL_HeapString<OsclMemAllocator> aVideoEncoderMimeType = NULL;	// param5
-    OSCL_HeapString<OsclMemAllocator> aTextEncoderMimeType = NULL;	// param6
+    PVAETestInputType aAudioInputType = INVALID_INPUT_TYPE; // param1
+    PVAETestInputType aVideoInputType = INVALID_INPUT_TYPE; // param2
+    PVAETestInputType aTextInputType = INVALID_INPUT_TYPE;  // param3
+    OSCL_HeapString<OsclMemAllocator> aComposerMimeType = NULL; // param3
+    OSCL_HeapString<OsclMemAllocator> aAudioEncoderMimeType = NULL; // param4
+    OSCL_HeapString<OsclMemAllocator> aVideoEncoderMimeType = NULL; // param5
+    OSCL_HeapString<OsclMemAllocator> aTextEncoderMimeType = NULL;  // param6
 
     //If -audio , -video, -text and -output tags are not specified, we will assume hard coded input and output filenames(So no need to check validity of args)
     if (!((audiofilenameinfo == NULL) && (videofilenameinfo == NULL) && (textfilenameinfo == NULL) && (outputfilenameinfo == NULL)))
@@ -2305,15 +2305,15 @@ int RunCompressedTest(cmd_line *aCommandLine, int32 &iFirstTest, int32 &iLastTes
 
     OSCL_TRY(err,
 
-             PVAuthorEngineTestSuite* testSuite 	= new PVAuthorEngineTestSuite(file, iFirstTest, iLastTest,
+             PVAuthorEngineTestSuite* testSuite     = new PVAuthorEngineTestSuite(file, iFirstTest, iLastTest,
                      audiofilenameinfo.get_cstr(), videofilenameinfo.get_cstr(), textfilenameinfo.get_cstr(),
-                     outputfilenameinfo.get_cstr(),	aAVTConfig,
+                     outputfilenameinfo.get_cstr(), aAVTConfig,
                      aAudioInputType, aVideoInputType, aTextInputType,
                      aComposerMimeType.get_cstr(), aAudioEncoderMimeType.get_cstr(), aVideoEncoderMimeType.get_cstr(), aTextEncoderMimeType.get_cstr(), AuthoringTime);
 
              testSuite->run_test();
              //if (runTestErr != OSCL_ERR_NONE)
-             //	fprintf(file, "ERROR: Leave Occurred! Reason %d \n", runTestErr);
+             // fprintf(file, "ERROR: Leave Occurred! Reason %d \n", runTestErr);
 
              text_test_interpreter interp;
              _STRING rs = interp.interpretation(testSuite->last_result());

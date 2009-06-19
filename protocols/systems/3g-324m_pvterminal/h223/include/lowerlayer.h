@@ -93,10 +93,10 @@ class LowerLayerObserver
 
 /* Lower layer which binds to Network IO */
 class H223LowerLayer : public PvmfPortBaseImpl,
-            public PVMFPortActivityHandler,
-            public OsclTimerObject,
-            public OsclTimerObserver,
-            public H223PduParcomObserver
+        public PVMFPortActivityHandler,
+        public OsclTimerObject,
+        public OsclTimerObserver,
+        public H223PduParcomObserver
 {
     public:
         H223LowerLayer(int32 aPortTag, TPVLoopbackMode aLoopbackMode);

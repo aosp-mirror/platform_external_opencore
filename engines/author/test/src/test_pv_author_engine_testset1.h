@@ -204,7 +204,7 @@ class pvauthor_async_test_miscellaneous: public pvauthor_async_test_base
         OSCL_wHeapString<OsclMemAllocator> iDescriptionString;
         OSCL_wHeapString<OsclMemAllocator> iRatingString;
         OSCL_wHeapString<OsclMemAllocator> iAlbumTitle;
-        uint16							   iRecordingYear;
+        uint16                             iRecordingYear;
 
         AVTConfig iAVTConfig;
         Oscl_Vector<PVAETestInput, OsclMemAllocator> iTestInputs;

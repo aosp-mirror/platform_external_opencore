@@ -127,7 +127,7 @@ OSCL_EXPORT_REF int32 pv_audio_config_parser(pvAudioConfigParserInputs *aInputs,
 
 #if !defined(BUILD_WMALSL)
                 bBitStreamSupported = false;
-#endif	// BUILD_WMALSL	
+#endif  // BUILD_WMALSL 
 
                 // more limits according to the current PV WMA implementation
                 // do not supoprt multi-channel
@@ -138,7 +138,7 @@ OSCL_EXPORT_REF int32 pv_audio_config_parser(pvAudioConfigParserInputs *aInputs,
                 }
 
                 // do not support 24-bit
-                if	(aOutputs->BitsPerSample > 16)
+                if (aOutputs->BitsPerSample > 16)
                 {
                     bBitStreamSupported = false;
                     break;
@@ -163,7 +163,7 @@ OSCL_EXPORT_REF int32 pv_audio_config_parser(pvAudioConfigParserInputs *aInputs,
                 AvgBytesPerSec  = dwdata;
 
                 tp = aInputs->inPtr + 14;
-                LoadWORD(wdata , tp);	//iValidBitsPerSample
+                LoadWORD(wdata , tp);   //iValidBitsPerSample
                 // Round up to the byte to get the container size
                 aOutputs->BitsPerSample = 8 * ((wdata + 7) / 8);
 
@@ -175,7 +175,7 @@ OSCL_EXPORT_REF int32 pv_audio_config_parser(pvAudioConfigParserInputs *aInputs,
 #if !defined(BUILD_WMAPRO)
                 bBitStreamSupported = false;
                 break;
-#endif	// BUILD_WMAPRO
+#endif  // BUILD_WMAPRO
 
 #if !defined(BUILD_WMAPROPLUS)
                 if (0 != (AdvancedEncodeOpt & ENCOPT4_PLUSVER))
@@ -183,7 +183,7 @@ OSCL_EXPORT_REF int32 pv_audio_config_parser(pvAudioConfigParserInputs *aInputs,
                     bBitStreamSupported = false;
                     break;
                 }
-#endif	// BUILD_WMAPROPLUS
+#endif  // BUILD_WMAPROPLUS
 
                 // more limits according to the current PV WMA implementation
                 // do not supoprt multi-channel
@@ -194,7 +194,7 @@ OSCL_EXPORT_REF int32 pv_audio_config_parser(pvAudioConfigParserInputs *aInputs,
                 }
 
                 // do not support 24-bit
-                if	(aOutputs->BitsPerSample > 16)
+                if (aOutputs->BitsPerSample > 16)
                 {
                     bBitStreamSupported = false;
                     break;
@@ -209,7 +209,7 @@ OSCL_EXPORT_REF int32 pv_audio_config_parser(pvAudioConfigParserInputs *aInputs,
                 }
 
                 // only decode PLUSV1 (not including PLUSV1ALT)
-                if	(ENCOPT4_PLUSV1 != (AdvancedEncodeOpt & ENCOPT4_PLUSVER))
+                if (ENCOPT4_PLUSV1 != (AdvancedEncodeOpt & ENCOPT4_PLUSVER))
                 {
                     bBitStreamSupported = false;
                     break;

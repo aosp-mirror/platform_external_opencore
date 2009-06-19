@@ -19,8 +19,8 @@
 #define PV_OMXDEFS_H_INCLUDED
 
 /** Maximum number of base_component component instances */
-//#define MAX_SUPPORTED_COMPONENTS 10 		// e.g. 10 = PV -MP4, PV-H263, PV-AVC, PV-WMV, PV-AAC, PV-AMR, PV-MP3, ...
-#define MAX_SUPPORTED_COMPONENTS 15 		// e.g. 10 = PV -MP4, PV-H263, PV-AVC, PV-WMV, PV-AAC, PV-AMR, PV-MP3, ...
+//#define MAX_SUPPORTED_COMPONENTS 10       // e.g. 10 = PV -MP4, PV-H263, PV-AVC, PV-WMV, PV-AAC, PV-AMR, PV-MP3, ...
+#define MAX_SUPPORTED_COMPONENTS 15         // e.g. 10 = PV -MP4, PV-H263, PV-AVC, PV-WMV, PV-AAC, PV-AMR, PV-MP3, ...
 #define MAX_INSTANTIATED_COMPONENTS 7
 
 //#define INSERT_NAL_START_CODE
@@ -71,9 +71,9 @@
 */
 #define BUFFER_FREE 0
 
-#define PORT_IS_BEING_FLUSHED(port)				(port->IsPortFlushed == OMX_FALSE)
-#define PORT_IS_ENABLED(port)					(port->PortParam.bEnabled == OMX_TRUE)
-#define PORT_IS_POPULATED(port)					(port->PortParam.bPopulated == OMX_TRUE)
+#define PORT_IS_BEING_FLUSHED(port)             (port->IsPortFlushed == OMX_FALSE)
+#define PORT_IS_ENABLED(port)                   (port->PortParam.bEnabled == OMX_TRUE)
+#define PORT_IS_POPULATED(port)                 (port->PortParam.bPopulated == OMX_TRUE)
 
 
 /** this flag specifies that the message send is a command */

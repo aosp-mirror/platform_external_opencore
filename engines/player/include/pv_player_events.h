@@ -169,7 +169,7 @@ typedef enum
      pvPlayer sends this event when the playback has reached
      the specified end time and playback has been paused.
      **/
-    PVPlayerInfoEndTimeReached	= 8192,
+    PVPlayerInfoEndTimeReached  = 8192,
 
     /**
      pvPlayer sends this event when reporting periodic playback

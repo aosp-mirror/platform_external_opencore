@@ -31,7 +31,7 @@ PVFMVideoMIO::PVFMVideoMIO() :
 void PVFMVideoMIO::InitData()
 {
     iVideoFormat = PVMF_MIME_FORMAT_UNKNOWN;
-	iVideoSubFormat = PVMF_MIME_FORMAT_UNKNOWN;
+    iVideoSubFormat = PVMF_MIME_FORMAT_UNKNOWN;
     iVideoHeightValid = false;
     iVideoWidthValid = false;
     iVideoDisplayHeightValid = false;
@@ -551,7 +551,7 @@ PVMFCommandId PVFMVideoMIO::CancelCommand(PVMFCommandId aCmdId, const OsclAny* a
 
     // See if the response is still queued.
     PVMFStatus status = PVMFFailure;
-    for (uint32 i = 0;i < iCommandResponseQueue.size();i++)
+    for (uint32 i = 0; i < iCommandResponseQueue.size(); i++)
     {
         if (iCommandResponseQueue[i].iCmdId == aCmdId)
         {
@@ -730,12 +730,12 @@ PVMFCommandId PVFMVideoMIO::writeAsync(uint8 aFormatType, int32 aFormatIndex, ui
                                     iVideoDisplayWidth = (uint32)(iVideoDisplayWidth * fScale);
                                     iVideoDisplayHeight = (uint32)(iVideoDisplayHeight * fScale);
 
-				    // It is possible that width and height becomes odd numbers after
-				    // scaling them down. These values might be used by ColorConverter
-				    // for ColorConversion which expects even parameters. Make these
-				    // parameters multiple of 2.
-				    iVideoDisplayWidth = ((iVideoDisplayWidth+1)&(~1));
-				    iVideoDisplayHeight = ((iVideoDisplayHeight+1)&(~1));
+                                    // It is possible that width and height becomes odd numbers after
+                                    // scaling them down. These values might be used by ColorConverter
+                                    // for ColorConversion which expects even parameters. Make these
+                                    // parameters multiple of 2.
+                                    iVideoDisplayWidth = ((iVideoDisplayWidth + 1) & (~1));
+                                    iVideoDisplayHeight = ((iVideoDisplayHeight + 1) & (~1));
                                 }
 
                                 if (iFrameRetrievalInfo.iUseFrameIndex == true &&
@@ -830,13 +830,13 @@ PVMFStatus PVFMVideoMIO::CopyVideoFrameData(uint8* aSrcBuffer, uint32 aSrcSize, 
         }
 
         if (iVideoSubFormat == PVMF_MIME_YUV420_SEMIPLANAR_YVU)
-		{
-			PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, 
-				(0, "PVFMVideoMIO::CopyVideoFrameData() SubFormat is YUV SemiPlanar, Convert to YUV planar first"));
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVFMVideoMIO::CopyVideoFrameData() SubFormat is YUV SemiPlanar, Convert to YUV planar first"));
             convertYUV420SPtoYUV420(aSrcBuffer, aDestBuffer, aSrcSize);
-        } 
-		else 
-		{
+        }
+        else
+        {
             oscl_memcpy(aDestBuffer, aSrcBuffer, aSrcSize);
         }
         aDestSize = aSrcSize;
@@ -978,7 +978,7 @@ void PVFMVideoMIO::cancelCommand(PVMFCommandId  command_id)
     // In this implementation, the write commands are executed immediately when received so it isn't
     // really possible to cancel. Just report completion immediately.
 
-    for (uint32 i = 0;i < iWriteResponseQueue.size();i++)
+    for (uint32 i = 0; i < iWriteResponseQueue.size(); i++)
     {
         if (iWriteResponseQueue[i].iCmdId == command_id)
         {
@@ -1003,7 +1003,7 @@ void PVFMVideoMIO::cancelAllCommands()
     // In this implementaiton, the write commands are executed immediately when received so it isn't
     // really possible to cancel. Just report completion immediately.
 
-    for (uint32 i = 0;i < iWriteResponseQueue.size();i++)
+    for (uint32 i = 0; i < iWriteResponseQueue.size(); i++)
     {
         //report completion
         if (iPeer)
@@ -1137,7 +1137,7 @@ void PVFMVideoMIO::setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParamete
 
     aRet_kvp = NULL;
 
-    for (int32 i = 0;i < num_elements;i++)
+    for (int32 i = 0; i < num_elements; i++)
     {
         //Check against known video parameter keys...
         if (pv_mime_strcmp(aParameters[i].key, MOUT_VIDEO_FORMAT_KEY) == 0)
@@ -1171,13 +1171,13 @@ void PVFMVideoMIO::setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParamete
         }
         else if (pv_mime_strcmp(aParameters[i].key, PVMF_FORMAT_SPECIFIC_INFO_KEY) == 0)
         {
-            //	iOutputFile.Write(aParameters[i].value.pChar_value, sizeof(uint8), (int32)aParameters[i].capacity);
+            //  iOutputFile.Write(aParameters[i].value.pChar_value, sizeof(uint8), (int32)aParameters[i].capacity);
         }
         else if (pv_mime_strcmp(aParameters[i].key, MOUT_VIDEO_SUBFORMAT_KEY) == 0)
         {
             iVideoSubFormat = aParameters[i].value.pChar_value;
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0,"PVFMVideoMIO::setParametersSync() Video SubFormat Key, Value %s", iVideoSubFormat.getMIMEStrPtr()));
+                            (0, "PVFMVideoMIO::setParametersSync() Video SubFormat Key, Value %s", iVideoSubFormat.getMIMEStrPtr()));
         }
         else
         {
@@ -1349,7 +1349,10 @@ void PVFMVideoMIO::Run()
     }
 }
 
-static inline void* byteOffset(void* p, uint32 offset) { return (void*)((uint8*)p + offset); }
+static inline void* byteOffset(void* p, uint32 offset)
+{
+    return (void*)((uint8*)p + offset);
+}
 
 // convert a frame in YUV420 semiplanar format with VU ordering to YUV420 planar format
 void PVFMVideoMIO::convertYUV420SPtoYUV420(void* src, void* dst, uint32 len)
@@ -1364,12 +1367,13 @@ void PVFMVideoMIO::convertYUV420SPtoYUV420(void* src, void* dst, uint32 len)
     uint16* pv = (uint16*)byteOffset(pu, y_plane_size / 4);
 
     int count = y_plane_size / 8;
-    do 
-	{
+    do
+    {
         uint32 uvuv = *p++;
-        *pu++ = (uint16) (((uvuv >> 8) & 0xff) | ((uvuv >> 16) & 0xff00));
-        *pv++ = (uint16) ((uvuv & 0xff) | ((uvuv >> 8) & 0xff00));
-    } while (--count);
+        *pu++ = (uint16)(((uvuv >> 8) & 0xff) | ((uvuv >> 16) & 0xff00));
+        *pv++ = (uint16)((uvuv & 0xff) | ((uvuv >> 8) & 0xff00));
+    }
+    while (--count);
 }
 
 

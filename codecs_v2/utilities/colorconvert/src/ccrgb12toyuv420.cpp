@@ -86,8 +86,8 @@ int32 CCRGB12toYUV420:: Init(int32 Src_width, int32 Src_height, int32 Src_pitch,
     if ((iCr_Table = (uint8*)oscl_malloc(768 * 2)) == NULL)
         return 0;
 
-#define pv_max(a, b)	((a) >= (b) ? (a) : (b))
-#define pv_min(a, b)	((a) <= (b) ? (a) : (b))
+#define pv_max(a, b)    ((a) >= (b) ? (a) : (b))
+#define pv_min(a, b)    ((a) <= (b) ? (a) : (b))
 
     /* Table generation */
     for (i = 0; i < 384; i++)
@@ -124,7 +124,7 @@ int32 CCRGB12toYUV420::GetOutputBufferSize(void)
     OSCL_ASSERT(_mInitialized == true);
 
     // only return value for _mState = 0 case
-    return ((((_mSrc_width + 15) >> 4) << 4) * (((_mSrc_height + 15) >> 4) << 4) * 3 / 2);
+    return ((((_mSrc_width + 15) >> 4) << 4) *(((_mSrc_height + 15) >> 4) << 4) * 3 / 2);
 }
 
 

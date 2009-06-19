@@ -50,9 +50,9 @@ extern "C"
     {
         __asm
         {
-            rsbs	tmp, tmp, tmp2, asr #1 ;
-            rsbmi	tmp, tmp, #0 ;
-            add		sad, sad, tmp ;
+            rsbs    tmp, tmp, tmp2, asr #1 ;
+            rsbmi   tmp, tmp, #0 ;
+            add     sad, sad, tmp ;
         }
 
         return sad;
@@ -62,9 +62,9 @@ extern "C"
     {
         __asm
         {
-            rsbs	tmp, tmp2, tmp, asr #2 ;
-            rsbmi	tmp, tmp, #0 ;
-            add		sad, sad, tmp ;
+            rsbs    tmp, tmp2, tmp, asr #2 ;
+            rsbmi   tmp, tmp, #0 ;
+            add     sad, sad, tmp ;
         }
 
         return sad;

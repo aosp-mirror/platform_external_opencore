@@ -79,14 +79,14 @@ enum PVMFMediaOutputNodePortMediaTimeStatus
 #define THRESHOLD_FOR_DROPPED_VIDEO_FRAMES 120
 
 class PVMediaOutputNodePort : public OsclTimerObject
-            , public PvmfPortBaseImpl
-            , public PvmfNodesSyncControlInterface
-            , public PvmiMediaTransfer
-            , public PVMFPortActivityHandler
-            , public PvmiCapabilityAndConfig
-            , public PVMFMediaClockObserver
-            , public PVMFMediaClockStateObserver
-            , public PVMFMediaClockNotificationsObs
+        , public PvmfPortBaseImpl
+        , public PvmfNodesSyncControlInterface
+        , public PvmiMediaTransfer
+        , public PVMFPortActivityHandler
+        , public PvmiCapabilityAndConfig
+        , public PVMFMediaClockObserver
+        , public PVMFMediaClockStateObserver
+        , public PVMFMediaClockNotificationsObs
 {
     public:
         PVMediaOutputNodePort(PVMediaOutputNode* aNode);
@@ -158,7 +158,7 @@ class PVMediaOutputNodePort : public OsclTimerObject
 
         // Implement pure virtuals from PvmiCapabilityAndConfig interface
         OSCL_IMPORT_REF virtual PVMFStatus getParametersSync(PvmiMIOSession aSession, PvmiKeyType aIdentifier,
-                PvmiKvp*& aParameters, int& num_parameter_elements,	PvmiCapabilityContext aContext);
+                PvmiKvp*& aParameters, int& num_parameter_elements, PvmiCapabilityContext aContext);
         OSCL_IMPORT_REF virtual PVMFStatus releaseParameters(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
         OSCL_IMPORT_REF virtual void setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters,
                 int num_elements, PvmiKvp * & aRet_kvp);

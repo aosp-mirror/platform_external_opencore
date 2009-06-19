@@ -18,8 +18,8 @@
 #include "mp4dec_lib.h"
 
 /* ====================================================================== /
-	Function : PutSKIPPED_MB()
-	Date     : 04/03/2000
+    Function : PutSKIPPED_MB()
+    Date     : 04/03/2000
 / ====================================================================== */
 
 void PutSKIPPED_MB(uint8 *comp, uint8 *prev, int width)
@@ -79,8 +79,8 @@ void PutSKIPPED_MB(uint8 *comp, uint8 *prev, int width)
 
 
 /* ====================================================================== /
-	Function : PutSKIPPED_B()
-	Date     : 04/03/2000
+    Function : PutSKIPPED_B()
+    Date     : 04/03/2000
 / ====================================================================== */
 
 void PutSKIPPED_B(uint8 *comp, uint8 *prev, int width)

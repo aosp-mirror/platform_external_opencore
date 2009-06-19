@@ -440,7 +440,7 @@ void PVAuthorEngineNodeUtility::CompleteUtilityCmd(const PVAENodeUtilCmd& aCmd, 
     {
         LOG_ERR((0, "PVAuthorEngineNodeUtility::CompleteUtilityCmd: Error - Observer not set"));
         OSCL_LEAVE(OsclErrGeneral);
-        // return;	This statement was removed to avoid compiler warning for Unreachable Code
+        // return;  This statement was removed to avoid compiler warning for Unreachable Code
     }
 
     if (iCmdQueue.empty() || aCmd.iType != iCmdQueue[0].iType)
@@ -448,7 +448,7 @@ void PVAuthorEngineNodeUtility::CompleteUtilityCmd(const PVAENodeUtilCmd& aCmd, 
         LOG_ERR((0, "PVAuthorEngineNodeUtility::CompleteUtilityCmd: Error - Empty command queue or mismatched command"));
         PVMFAsyncEvent event(PVMFErrorEvent, PVMFFailure, NULL, NULL);
         iObserver->NodeUtilErrorEvent(event);
-	return;
+        return;
     }
 
     // Remove command from queue

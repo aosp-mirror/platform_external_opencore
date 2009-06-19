@@ -591,7 +591,7 @@ bool OsclAsyncFile::FindDataBuffer(OsclAsyncFileBuffer*& aDataBuffer, int32& aBu
 
     // length to copy from second buffer
     int32 lengthToCopy;
-    if	(tmpDataBuffer2->Length() + availableData >= aSize)
+    if (tmpDataBuffer2->Length() + availableData >= aSize)
         lengthToCopy = aSize - availableData;
     else
         return false; //shouldn't happen
@@ -649,7 +649,7 @@ void OsclAsyncFile::UpdateReading()
 
 int32 OsclAsyncFile::BytesReadAhead()
 {
-    // Get the maximum offset of the last element in the linked	buffer array
+    // Get the maximum offset of the last element in the linked buffer array
     int32 index = iLinkedDataBufferArray.size() - 1;
     if (index == -1)
     {
@@ -701,7 +701,7 @@ int32 OsclAsyncFile::SortDataBuffers()
                         //note: there's no insert in oscl vector-- push to end then
                         //bubble down to desired spot.
                         iSortedDataBufferArray.push_back(tmpDataBuffer);
-                        for (uint32 k = (uint32)iSortedDataBufferArray.size() - 1;k > j;k--)
+                        for (uint32 k = (uint32)iSortedDataBufferArray.size() - 1; k > j; k--)
                         {
                             OsclAsyncFileBuffer* temp = iSortedDataBufferArray[k-1];
                             iSortedDataBufferArray[k-1] = iSortedDataBufferArray[k];
@@ -977,48 +977,47 @@ void OsclAsyncFile::StartNextRead(TOsclFileOffset aPosToReadFrom)
             iReadPtr.Set((uint8*)(ptrCurrentBuffer.Ptr() + ptrCurrentBuffer.Length()), 0, iKAsyncReadBufferSize);
         }
     }
-    else
-        if (aPosToReadFrom == iSyncFilePosition)
+    else if (aPosToReadFrom == iSyncFilePosition)
+    {
+        // update the async file pointer to the desired location
+        int32 result = iNativeFile.Seek(aPosToReadFrom, Oscl_File::SEEKSET);
+        if (result != 0)
         {
-            // update the async file pointer to the desired location
-            int32 result = iNativeFile.Seek(aPosToReadFrom, Oscl_File::SEEKSET);
-            if (result != 0)
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                                (0, "OsclAsyncFile(0x%x)::StartNextRead Seek failed, return %d, offset %d ", this, result, aPosToReadFrom));
-                return;
-            }
-
-            // we need to swap the file pointers
-            TOsclFileOffset tmpPosition = iSyncFilePosition;
-            iSyncFilePosition = iAsyncFilePosition;
-            iAsyncFilePosition = tmpPosition;
-
-            // We need a new buffer
-            bool availableBuffer = GetNextDataBuffer(iDataBufferInUse, aPosToReadFrom);
-            if (!availableBuffer)
-            {
-                // This is an error condition. There should always be a buffer available
-                OSCL_ASSERT(0);
-                return;
-            }
-            // we link the new buffer as soon as we get it
-            iLinkedDataBufferArray.push_back(iDataBufferInUse);
-            iDataBufferInUse->SetOffset(aPosToReadFrom);
-            // Initialize the read pointer (iReadPtr)
-            OsclBuf* readBuffer = iDataBufferInUse->Buffer();
-            OsclPtr ptrCurrentBuffer = readBuffer->Des();
-            // reset length
-            ptrCurrentBuffer.SetLength(0);
-            iDataBufferInUse->UpdateData();
-            iReadPtr.Set((uint8*)ptrCurrentBuffer.Ptr(), 0, iKAsyncReadBufferSize);
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                            (0, "OsclAsyncFile(0x%x)::StartNextRead Seek failed, return %d, offset %d ", this, result, aPosToReadFrom));
+            return;
         }
-        else
+
+        // we need to swap the file pointers
+        TOsclFileOffset tmpPosition = iSyncFilePosition;
+        iSyncFilePosition = iAsyncFilePosition;
+        iAsyncFilePosition = tmpPosition;
+
+        // We need a new buffer
+        bool availableBuffer = GetNextDataBuffer(iDataBufferInUse, aPosToReadFrom);
+        if (!availableBuffer)
         {
-            // This case should never happen.. check it out
+            // This is an error condition. There should always be a buffer available
             OSCL_ASSERT(0);
             return;
         }
+        // we link the new buffer as soon as we get it
+        iLinkedDataBufferArray.push_back(iDataBufferInUse);
+        iDataBufferInUse->SetOffset(aPosToReadFrom);
+        // Initialize the read pointer (iReadPtr)
+        OsclBuf* readBuffer = iDataBufferInUse->Buffer();
+        OsclPtr ptrCurrentBuffer = readBuffer->Des();
+        // reset length
+        ptrCurrentBuffer.SetLength(0);
+        iDataBufferInUse->UpdateData();
+        iReadPtr.Set((uint8*)ptrCurrentBuffer.Ptr(), 0, iKAsyncReadBufferSize);
+    }
+    else
+    {
+        // This case should never happen.. check it out
+        OSCL_ASSERT(0);
+        return;
+    }
 
     // Issue the asynchronous read request.
 
@@ -1055,16 +1054,14 @@ int32 OsclAsyncFile::Seek(TOsclFileOffset offset, Oscl_File::seek_type origin)
     {
         iFilePosition += offset;
     }
-    else
-        if (origin == Oscl_File::SEEKSET)
-        {
-            iFilePosition = offset;
-        }
-        else
-            if (origin == Oscl_File::SEEKEND)
-            {
-                iFilePosition = iFileSize + offset;
-            }
+    else if (origin == Oscl_File::SEEKSET)
+    {
+        iFilePosition = offset;
+    }
+    else if (origin == Oscl_File::SEEKEND)
+    {
+        iFilePosition = iFileSize + offset;
+    }
 
     //some sanity checks.
     OSCL_ASSERT(iFilePosition >= 0);

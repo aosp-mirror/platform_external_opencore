@@ -89,12 +89,12 @@ extern "C"
 
 
     void ps_all_pass_fract_delay_filter_type_I(UInt32 *delayBufIndex,
-            Int32 sb_delay,
-            const Int32 *ppFractDelayPhaseFactorSer,
-            Int32 ***pppRealDelayRBufferSer,
-            Int32 ***pppImagDelayRBufferSer,
-            Int32 *rIn,
-            Int32 *iIn);
+    Int32 sb_delay,
+    const Int32 *ppFractDelayPhaseFactorSer,
+    Int32 ***pppRealDelayRBufferSer,
+    Int32 ***pppImagDelayRBufferSer,
+    Int32 *rIn,
+    Int32 *iIn);
 
 
     void ps_all_pass_fract_delay_filter_type_II(UInt32 *delayBufIndex,

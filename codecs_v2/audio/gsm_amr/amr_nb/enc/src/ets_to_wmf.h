@@ -108,8 +108,8 @@ extern "C"
     ----------------------------------------------------------------------------*/
 
     void ets_to_wmf(enum Frame_Type_3GPP frame_type_3gpp,
-                    Word16   *ets_input_ptr,
-                    UWord8   *wmf_output_ptr);
+    Word16   *ets_input_ptr,
+    UWord8   *wmf_output_ptr);
 
 
 

@@ -220,13 +220,13 @@ PVA_FF_Mpeg4File::init(int32 mediaType,
     _oChunkStart = false;
 
     // Movie Fragments flags initialised
-    _oMovieFragmentEnabled		= false;
-    _oComposeMoofAtom			= false;
-    _movieFragmentDuration		= DEFAULT_MOVIE_FRAGMENT_DURATION_IN_MS;
-    _pCurrentMoofAtom			= NULL;
-    _pCurrentMediaDataAtom		= NULL;
-    _currentMoofOffset			= 0;
-    _sequenceNumber				= 0;
+    _oMovieFragmentEnabled      = false;
+    _oComposeMoofAtom           = false;
+    _movieFragmentDuration      = DEFAULT_MOVIE_FRAGMENT_DURATION_IN_MS;
+    _pCurrentMoofAtom           = NULL;
+    _pCurrentMediaDataAtom      = NULL;
+    _currentMoofOffset          = 0;
+    _sequenceNumber             = 0;
 
 
     _aFs = osclFileServerSession;
@@ -243,24 +243,24 @@ PVA_FF_Mpeg4File::init(int32 mediaType,
     _initialUserDataSize     = 0;
     _oDirectRenderEnabled    = false;
 
-    _oSetTitleDone			= false;
-    _oSetAuthorDone			= false;
-    _oSetCopyrightDone		= false;
-    _oSetDescriptionDone	= false;
-    _oSetRatingDone			= false;
-    _oSetCreationDateDone	= false;
-    _oSetPerformerDone		= false;
-    _oSetRatingDone			= false;
-    _oSetGenreDone			= false;
-    _oSetClassificationDone	= false;
-    _oSetLocationInfoDone	= false;
-    _oSetAlbumDone			= false;
-    _oSetRecordingYearDone	= false;
+    _oSetTitleDone          = false;
+    _oSetAuthorDone         = false;
+    _oSetCopyrightDone      = false;
+    _oSetDescriptionDone    = false;
+    _oSetRatingDone         = false;
+    _oSetCreationDateDone   = false;
+    _oSetPerformerDone      = false;
+    _oSetRatingDone         = false;
+    _oSetGenreDone          = false;
+    _oSetClassificationDone = false;
+    _oSetLocationInfoDone   = false;
+    _oSetAlbumDone          = false;
+    _oSetRecordingYearDone  = false;
 
 
     _totalTempFileRemoval = false;
     _oUserDataUpFront     = true;
-    _oIsFileOpen		  = false;
+    _oIsFileOpen          = false;
     _oFirstSampleEditMode = false;
 
     _fileAuthoringFlags = fileAuthoringFlags;
@@ -447,7 +447,7 @@ PVA_FF_Mpeg4File::addTrack(int32 mediaType,
     PVA_FF_TrackAtom *pmediatrack = NULL;
     _codecType = codecType;
     PVA_FF_MediaDataAtom *mda = NULL;
-    PVA_FF_InterLeaveBuffer	*pInterLeaveBuffer = NULL;
+    PVA_FF_InterLeaveBuffer *pInterLeaveBuffer = NULL;
 
     if (!_oInterLeaveEnabled)
     {
@@ -733,13 +733,13 @@ PVA_FF_Mpeg4File::setMovieFragmentDuration(uint32 duration)
 uint32
 PVA_FF_Mpeg4File::getMovieFragmentDuration()
 {
-    return	_movieFragmentDuration;
+    return  _movieFragmentDuration;
 }
 
 
 bool
 PVA_FF_Mpeg4File::addSampleToTrack(uint32 trackID,
-                                   Oscl_Vector <OsclMemoryFragment, OsclMemAllocator>& fragmentList,	// vector which contains either NALs or a sample
+                                   Oscl_Vector <OsclMemoryFragment, OsclMemAllocator>& fragmentList,    // vector which contains either NALs or a sample
                                    uint32 ts, uint8 flags)
 {
     PVA_FF_TrackAtom *mediaTrack;
@@ -766,7 +766,7 @@ PVA_FF_Mpeg4File::addSampleToTrack(uint32 trackID,
             // compose AVC sample
             for (uint32 ii = 0; ii < fragmentList.size(); ii++)
             {
-                size += (fragmentList[ii].len + 4);	// length + '2' size of NAL unit length field
+                size += (fragmentList[ii].len + 4); // length + '2' size of NAL unit length field
             }
         }
         // all memory fragments in the vector combines into one sample
@@ -1025,8 +1025,8 @@ PVA_FF_Mpeg4File::setRating(PVA_FF_UNICODE_STRING_PARAM ratingInfo,
     if (!_oSetRatingDone)
     {
         _oSetRatingDone = true;
-        _ratingInfo		= ratingInfo;
-        _ratingEntity	= ratingEntity;
+        _ratingInfo     = ratingInfo;
+        _ratingEntity   = ratingEntity;
         _ratingCriteria = ratingCriteria;
         if (_pmovieAtom != NULL)
         {
@@ -1082,9 +1082,9 @@ PVA_FF_Mpeg4File::setClassification(PVA_FF_UNICODE_STRING_PARAM classificationIn
     if (!_oSetClassificationDone)
     {
         _oSetClassificationDone = true;
-        _classificationInfo		= classificationInfo;
-        _classificationEntity	= classificationEntity;
-        _classificationTable	= classificationTable;
+        _classificationInfo     = classificationInfo;
+        _classificationEntity   = classificationEntity;
+        _classificationTable    = classificationTable;
 
         if (_pmovieAtom != NULL)
         {
@@ -1098,8 +1098,8 @@ PVA_FF_Mpeg4File::setKeyWord(uint8 keyWordSize, PVA_FF_UNICODE_HEAP_STRING keyWo
 {
     OSCL_UNUSED_ARG(langCode);
 
-    _keyWordSize	 = keyWordSize;
-    _keyWordInfo	 = keyWordInfo;
+    _keyWordSize     = keyWordSize;
+    _keyWordInfo     = keyWordInfo;
 
     if (_pmovieAtom != NULL)
     {
@@ -1112,14 +1112,14 @@ PVA_FF_Mpeg4File::setLocationInfo(PvmfAssetInfo3GPPLocationStruct *ptr_loc_struc
 {
     if (!_oSetLocationInfoDone)
     {
-        _oSetLocationInfoDone		= true;
-        _locationName			= ptr_loc_struct->_location_name;
-        _locationInfoAstrBody	= ptr_loc_struct->_astronomical_body;
-        _locationInfoAddNotes	= ptr_loc_struct->_additional_notes;
-        _locationInfoRole		= ptr_loc_struct->_role;
-        _locationInfoLongitude	= ptr_loc_struct->_longitude;
-        _locationInfoAltitude	= ptr_loc_struct->_altitude;
-        _locationInfoLatitude	= ptr_loc_struct->_latitude;
+        _oSetLocationInfoDone       = true;
+        _locationName           = ptr_loc_struct->_location_name;
+        _locationInfoAstrBody   = ptr_loc_struct->_astronomical_body;
+        _locationInfoAddNotes   = ptr_loc_struct->_additional_notes;
+        _locationInfoRole       = ptr_loc_struct->_role;
+        _locationInfoLongitude  = ptr_loc_struct->_longitude;
+        _locationInfoAltitude   = ptr_loc_struct->_altitude;
+        _locationInfoLatitude   = ptr_loc_struct->_latitude;
 
         if (_pmovieAtom != NULL)
         {
@@ -2259,7 +2259,7 @@ PVA_FF_Mpeg4File::flushInterLeaveBuffer(uint32 trackID)
     else
     {
         // add remaining samples as last TRUN in current track fragment
-        PVA_FF_TrackFragmentAtom	*pCurrentTrackFragment;
+        PVA_FF_TrackFragmentAtom    *pCurrentTrackFragment;
         pCurrentTrackFragment = _pCurrentMoofAtom->getTrackFragment(trackID);
 
         // Set trun end time to the last sample TS
@@ -2279,16 +2279,16 @@ PVA_FF_Mpeg4File::flushInterLeaveBuffer(uint32 trackID)
 
         for (ii = 0; ii < numBufferedSamples; ii++)
         {
-            uint32	sampleTS   = (*tsVec)[ii];
-            uint32	sampleSize = (*sizeVec)[ii];
-            uint8	sampleFlag = (*flagsVec)[ii];
-            uint32	mediaType  = mediaTrack->getMediaType();
+            uint32  sampleTS   = (*tsVec)[ii];
+            uint32  sampleSize = (*sizeVec)[ii];
+            uint8   sampleFlag = (*flagsVec)[ii];
+            uint32  mediaType  = mediaTrack->getMediaType();
 
             // Add to moof atom (in turn adds to tracks)
             _pCurrentMoofAtom->addSampleToFragment(trackID, sampleSize, sampleTS,
                                                    sampleFlag,
-                                                   _baseOffset,		// update data offset for each new trun
-                                                   _oTrunStart);		// determine to add new trun or not
+                                                   _baseOffset,     // update data offset for each new trun
+                                                   _oTrunStart);        // determine to add new trun or not
 
             // update movie duration in MVEX atom
             _pmovieAtom->updateMovieFragmentDuration(trackID, sampleTS);
@@ -2616,7 +2616,7 @@ PVA_FF_Mpeg4File::addMediaSampleInterleave(uint32 trackID,
             _oComposeMoofAtom = true;
 
             // allocate Moof movie fragments
-            PVA_FF_MovieFragmentAtom	*pMoofAtom;
+            PVA_FF_MovieFragmentAtom    *pMoofAtom;
             _sequenceNumber++;
             PV_MP4_FF_NEW(fp->auditCB, PVA_FF_MovieFragmentAtom, (_sequenceNumber,
                           _movieFragmentDuration,
@@ -2793,7 +2793,7 @@ PVA_FF_Mpeg4File::addMediaSampleInterleave(uint32 trackID,
     else
     {
         // add data in movie fragment
-        uint32	trackFragmentDuration = _pCurrentMoofAtom->getTrackFragmentDuration(trackID);
+        uint32  trackFragmentDuration = _pCurrentMoofAtom->getTrackFragmentDuration(trackID);
 
         // check if Movie Fragment duration is reached for current fragment
         if (trackFragmentDuration < _movieFragmentDuration)
@@ -2801,7 +2801,7 @@ PVA_FF_Mpeg4File::addMediaSampleInterleave(uint32 trackID,
             // add fragment to the current track fragment
 
             //check for interleaving in current track fragment
-            PVA_FF_TrackFragmentAtom	*pCurrentTrackFragment;
+            PVA_FF_TrackFragmentAtom    *pCurrentTrackFragment;
             pCurrentTrackFragment = _pCurrentMoofAtom->getTrackFragment(trackID);
 
             if (!pInterLeaveBuffer->checkInterLeaveBufferSpace(size))
@@ -2833,8 +2833,8 @@ PVA_FF_Mpeg4File::addMediaSampleInterleave(uint32 trackID,
                     // Add to moof atom (in turn adds to tracks)
                     _pCurrentMoofAtom->addSampleToFragment(trackID, sampleSize, sampleTS,
                                                            sampleFlag,
-                                                           _baseOffset,		// update data offset for each new trun
-                                                           _oTrunStart);		// determine to add new trun or not
+                                                           _baseOffset,     // update data offset for each new trun
+                                                           _oTrunStart);        // determine to add new trun or not
 
                     // update movie duration in MVEX atom
                     _pmovieAtom->updateMovieFragmentDuration(trackID, sampleTS);
@@ -3000,7 +3000,7 @@ PVA_FF_Mpeg4File::addMediaSampleInterleave(uint32 trackID,
                             PVA_FF_TrackAtom* pTrack = (*trefVec)[trefVecIndex];
                             uint32 trackID = pTrack->getTrackID();
 
-                            PVA_FF_TrackFragmentAtom	*pCurrentTrackFragment;
+                            PVA_FF_TrackFragmentAtom    *pCurrentTrackFragment;
                             pCurrentTrackFragment = _pCurrentMoofAtom->getTrackFragment(trackID);
 
                             PVA_FF_InterLeaveBuffer *pInterLeaveBuffer = getInterLeaveBuffer(trackID);
@@ -3022,7 +3022,7 @@ PVA_FF_Mpeg4File::addMediaSampleInterleave(uint32 trackID,
             PV_MP4_FF_DELETE(NULL, PVA_FF_MovieFragmentAtom, _pCurrentMoofAtom);
 
             // allocate new fragment
-            PVA_FF_MovieFragmentAtom	*pMoofAtom;
+            PVA_FF_MovieFragmentAtom    *pMoofAtom;
             _sequenceNumber++;
             PV_MP4_FF_NEW(fp->auditCB, PVA_FF_MovieFragmentAtom, (_sequenceNumber,
                           _movieFragmentDuration,
@@ -3359,8 +3359,8 @@ PVA_FF_Mpeg4File::renderMoovAtom()
     {
         return false;
     }
-    _directRenderFileOffset = PVA_FF_AtomUtils::getCurrentFilePosition(&fp);	// hereafter movie fragments are written
-    _baseOffset = _directRenderFileOffset;	// base offset is used to set base data offset of Moof
+    _directRenderFileOffset = PVA_FF_AtomUtils::getCurrentFilePosition(&fp);    // hereafter movie fragments are written
+    _baseOffset = _directRenderFileOffset;  // base offset is used to set base data offset of Moof
 
 
     // store target file handle used to write further movie fragments
@@ -3397,15 +3397,15 @@ PVA_FF_Mpeg4File::renderMovieFragments()
         return false;
     }
 
-    _directRenderFileOffset = PVA_FF_AtomUtils::getCurrentFilePosition(&fp);	// hereafter further movie fragments are written
-    _baseOffset = _directRenderFileOffset;	// base offset is used to set base data offset of Moof
+    _directRenderFileOffset = PVA_FF_AtomUtils::getCurrentFilePosition(&fp);    // hereafter further movie fragments are written
+    _baseOffset = _directRenderFileOffset;  // base offset is used to set base data offset of Moof
 
     return true;
 }
 
 
 void
-PVA_FF_Mpeg4File::addInterLeaveBuffer(PVA_FF_InterLeaveBuffer	*pInterLeaveBuffer)
+PVA_FF_Mpeg4File::addInterLeaveBuffer(PVA_FF_InterLeaveBuffer   *pInterLeaveBuffer)
 {
     if (_oInterLeaveEnabled)
     {
@@ -3419,7 +3419,7 @@ PVA_FF_Mpeg4File::addInterLeaveBuffer(PVA_FF_InterLeaveBuffer	*pInterLeaveBuffer
 
 
 PVA_FF_InterLeaveBuffer*
-PVA_FF_Mpeg4File::getInterLeaveBuffer(uint32	trackID)
+PVA_FF_Mpeg4File::getInterLeaveBuffer(uint32    trackID)
 {
     if (_pInterLeaveBufferVec->size() > 0)
     {

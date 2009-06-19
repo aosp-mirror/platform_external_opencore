@@ -47,7 +47,7 @@ terms listed above has been obtained from the copyright holder.
      int16 signal[],             input signal / output is divided by 16
      int16 lg,                   lenght of signal
      int16 mem[]                 in/out: memory (size=30)
-	 int16 x[]                   scratch mem ( size= 60)
+     int16 x[]                   scratch mem ( size= 60)
 
 ------------------------------------------------------------------------------
  FUNCTION DESCRIPTION

@@ -30,9 +30,9 @@
 #endif
 
 //Logger macros
-#define PVMF_SOCKETNODE_LOGSTACKTRACE(m)	PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iLogger,PVLOGMSG_STACK_TRACE,m);
-#define PVMF_SOCKETNODE_LOGINFO(m)			PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iLogger,PVLOGMSG_INFO,m);
-#define PVMF_SOCKETNODE_LOGERROR(m)			PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iLogger,PVLOGMSG_ERR,m);
+#define PVMF_SOCKETNODE_LOGSTACKTRACE(m)    PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iLogger,PVLOGMSG_STACK_TRACE,m);
+#define PVMF_SOCKETNODE_LOGINFO(m)          PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iLogger,PVLOGMSG_INFO,m);
+#define PVMF_SOCKETNODE_LOGERROR(m)         PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iLogger,PVLOGMSG_ERR,m);
 
 //memory allocator type for this node.
 typedef OsclMemAllocator PVMFSocketNodeAllocator;
@@ -213,7 +213,7 @@ class SocketPortConfig : public OsclMemPoolFixedChunkAllocatorObserver
             iPVMFPort = NULL;
             iSockId = 0;
             iTCPSocket = NULL;
-            iMemPool	= NULL;
+            iMemPool    = NULL;
             iContainer = NULL;
             iTag = PVMF_CLIENTSERVER_SOCKET_NODE_PORT_TYPE_UNKNOWN;
         };
@@ -226,7 +226,7 @@ class SocketPortConfig : public OsclMemPoolFixedChunkAllocatorObserver
         SocketPortState iState;
 
         PVMFClientServerSocketPort *iPVMFPort;
-        uint32	iSockId;
+        uint32  iSockId;
         OsclTCPSocket* iTCPSocket;
 
         //socket pending request and state
@@ -250,9 +250,9 @@ class SocketPortConfig : public OsclMemPoolFixedChunkAllocatorObserver
 /*
 ** The Socket Node
 */
-class PVMFClientServerSocketNode  :	public PVMFNodeInterface
-            , public OsclActiveObject
-            , public OsclSocketObserver
+class PVMFClientServerSocketNode  : public PVMFNodeInterface
+        , public OsclActiveObject
+        , public OsclSocketObserver
 {
     public:
 
@@ -412,7 +412,7 @@ class PVMFClientServerSocketNode  :	public PVMFNodeInterface
 
         void HandleRecvComplete(PVMFStatus, PVMFSocketActivity*, bool);
 
-        OsclSocketServ	*iSockServ;
+        OsclSocketServ  *iSockServ;
 
         const int TIMEOUT_CONNECT;
         const int TIMEOUT_SEND;

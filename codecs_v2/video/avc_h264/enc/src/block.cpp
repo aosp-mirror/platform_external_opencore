@@ -36,10 +36,10 @@ void trans(uint8 *cur, int pitch, uint8 *predBlock, int16 *dataBlock)
         r2 = cur[2] - predBlock[2];
         r3 = cur[3] - predBlock[3];
 
-        r0 += r3;			//ptr[0] + ptr[3];
-        r3 = r0 - (r3 << 1);	//ptr[0] - ptr[3];
-        r1 += r2;			//ptr[1] + ptr[2];
-        r2 = r1 - (r2 << 1);	//ptr[1] - ptr[2];
+        r0 += r3;           //ptr[0] + ptr[3];
+        r3 = r0 - (r3 << 1);    //ptr[0] - ptr[3];
+        r1 += r2;           //ptr[1] + ptr[2];
+        r2 = r1 - (r2 << 1);    //ptr[1] - ptr[2];
 
         ptr[0] = r0 + r1;
         ptr[2] = r0 - r1;
@@ -102,10 +102,10 @@ int dct_luma(AVCEncObject *encvid, int blkidx, uint8 *cur, uint8 *org, int *coef
         r2 = org[2] - pred[2];
         r3 = org[3] - pred[3];
 
-        r0 += r3;			//ptr[0] + ptr[3];
-        r3 = r0 - (r3 << 1);	//ptr[0] - ptr[3];
-        r1 += r2;			//ptr[1] + ptr[2];
-        r2 = r1 - (r2 << 1);	//ptr[1] - ptr[2];
+        r0 += r3;           //ptr[0] + ptr[3];
+        r3 = r0 - (r3 << 1);    //ptr[0] - ptr[3];
+        r1 += r2;           //ptr[1] + ptr[2];
+        r2 = r1 - (r2 << 1);    //ptr[1] - ptr[2];
 
         coef[0] = r0 + r1;
         coef[2] = r0 - r1;
@@ -384,10 +384,10 @@ void dct_luma_16x16(AVCEncObject *encvid, uint8 *curL, uint8 *orgL)
             r2 = *orgL++ - *pred++;
             r3 = *orgL++ - *pred++;
 
-            r0 += r3;			//ptr[0] + ptr[3];
-            r3 = r0 - (r3 << 1);	//ptr[0] - ptr[3];
-            r1 += r2;			//ptr[1] + ptr[2];
-            r2 = r1 - (r2 << 1);	//ptr[1] - ptr[2];
+            r0 += r3;           //ptr[0] + ptr[3];
+            r3 = r0 - (r3 << 1);    //ptr[0] - ptr[3];
+            r1 += r2;           //ptr[1] + ptr[2];
+            r2 = r1 - (r2 << 1);    //ptr[1] - ptr[2];
 
             *coef++ = r0 + r1;
             *coef++ = (r3 << 1) + r2;
@@ -520,7 +520,7 @@ void dct_luma_16x16(AVCEncObject *encvid, uint8 *curL, uint8 *orgL)
         coef -= 256;
 
         if (Qq >= 2)  /* this way should be faster than JM */
-        {			/* they use (((m4*scale)<<(QPy/6))+2)>>2 for both cases. */
+        {           /* they use (((m4*scale)<<(QPy/6))+2)>>2 for both cases. */
             Qq -= 2;
             for (j = 0; j < 4; j++)
             {
@@ -603,7 +603,7 @@ void dct_luma_16x16(AVCEncObject *encvid, uint8 *curL, uint8 *orgL)
                 }
                 lev >>= q_bits;
                 if (lev)
-                {	/* dequant */
+                {   /* dequant */
                     quant = dequant_coefres[Rq][k];
                     if (data > 0)
                     {
@@ -762,10 +762,10 @@ void dct_chroma(AVCEncObject *encvid, uint8 *curC, uint8 *orgC, int cr)
             r2 = *orgC++ - *pred++;
             r3 = *orgC++ - *pred++;
 
-            r0 += r3;			//ptr[0] + ptr[3];
-            r3 = r0 - (r3 << 1);	//ptr[0] - ptr[3];
-            r1 += r2;			//ptr[1] + ptr[2];
-            r2 = r1 - (r2 << 1);	//ptr[1] - ptr[2];
+            r0 += r3;           //ptr[0] + ptr[3];
+            r3 = r0 - (r3 << 1);    //ptr[0] - ptr[3];
+            r1 += r2;           //ptr[1] + ptr[2];
+            r2 = r1 - (r2 << 1);    //ptr[1] - ptr[2];
 
             *coef++ = r0 + r1;
             *coef++ = (r3 << 1) + r2;
@@ -1121,7 +1121,7 @@ int TransQuantIntra16DC(AVCEncObject *encvid)
     int16 *ptr = block;
     int r0, r1, r2, r3, j;
     int Qq = video->QPy_div_6;
-    int	Rq = video->QPy_mod_6;
+    int Rq = video->QPy_mod_6;
     int q_bits, qp_const, quant;
     int data, lev, zero_run;
     int k, ncoeff, idx;

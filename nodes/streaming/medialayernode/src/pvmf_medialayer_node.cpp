@@ -1353,7 +1353,7 @@ void PVMFMediaLayerNode::DoFlush(PVMFMediaLayerNodeCommand& aCmd)
             }
             iInputCommands.Erase(&aCmd);
             /* Notify all ports to suspend their input */
-            for (uint32 i = 0;i < iPortVector.size();i++)
+            for (uint32 i = 0; i < iPortVector.size(); i++)
                 iPortVector[i]->SuspendInput();
         }
         break;
@@ -3277,7 +3277,7 @@ void PVMFMediaLayerNode::setInPortReposFlag(PVMFPortInterface* aPort, uint32 aSe
     // sequence generator keeps track of current sequence numbers. update it for all streams
 
     for (OsclUintVector::iterator itStream = vecStreamsRequiringAdjustment.begin();
-            itStream != vecStreamsRequiringAdjustment.end();++itStream)
+            itStream != vecStreamsRequiringAdjustment.end(); ++itStream)
     {
         portContainerPtr->iPayLoadParser->Reposition(true, *itStream, vecMinSeqNum[*itStream]);
     }

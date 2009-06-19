@@ -20,8 +20,8 @@
 #include "pvmf_media_msg_format_ids.h"
 
 
-#define MPLOGDATAPATH(x)	PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iDatapathLogger, PVLOGMSG_DEBUG, x);
-#define MPLOGDATAPATH_ERR(x)	PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iDatapathLogger, PVLOGMSG_ERROR, x);
+#define MPLOGDATAPATH(x)    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iDatapathLogger, PVLOGMSG_DEBUG, x);
+#define MPLOGDATAPATH_ERR(x)    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iDatapathLogger, PVLOGMSG_ERROR, x);
 
 
 OSCL_EXPORT_REF PVMFMemPoolFixedChunkAllocator::PVMFMemPoolFixedChunkAllocator(const char* name, const uint32 numchunk, const uint32 chunksize, Oscl_DefAlloc* gen_alloc)

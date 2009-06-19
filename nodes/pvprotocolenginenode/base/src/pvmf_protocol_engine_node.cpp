@@ -648,7 +648,7 @@ PVMFStatus PVMFProtocolEngineNode::DoReset(PVMFProtocolEngineNodeCommand& aCmd)
 
     // Logoff and go back to Created state.
     SetState(EPVMFNodeIdle);
-    PVMFStatus	status = ThreadLogoff();
+    PVMFStatus  status = ThreadLogoff();
     CommandComplete(iInputCommands, aCmd, status);
     return status;
 }
@@ -686,7 +686,7 @@ PVMFStatus PVMFProtocolEngineNode::DoRequestPort(PVMFProtocolEngineNodeCommand& 
             CommandComplete(iInputCommands, aCmd, PVMFFailure);
             return PVMFFailure;
         }
-        // break;	This statement was removed to avoid compiler warning for Unreachable Code
+        // break;   This statement was removed to avoid compiler warning for Unreachable Code
     }
 
     //Allocate a new port
@@ -717,13 +717,13 @@ PVMFStatus PVMFProtocolEngineNode::DoRequestPort(PVMFProtocolEngineNodeCommand& 
                                                    DEFAULT_READY_TO_RECEIVE_THRESHOLD_PERCENT,
                                                    "ProtocolEngineIn(Protocol)");
 
-            if (tag == PVMF_PROTOCOLENGINENODE_PORT_TYPE_INPUT)		iPortInForData = port;
-            if (tag == PVMF_PROTOCOLENGINENODE_PORT_TYPE_FEEDBACK)	iPortInForLogging = port;
+            if (tag == PVMF_PROTOCOLENGINENODE_PORT_TYPE_INPUT)     iPortInForData = port;
+            if (tag == PVMF_PROTOCOLENGINENODE_PORT_TYPE_FEEDBACK)  iPortInForLogging = port;
             break;
 
         case PVMF_PROTOCOLENGINENODE_PORT_TYPE_OUTPUT:
             port = new(ptr) PVMFProtocolEnginePort(tag, this,
-                                                   0, 0, 0,	// input queue isn't needed.
+                                                   0, 0, 0, // input queue isn't needed.
                                                    DEFAULT_DATA_QUEUE_CAPACITY,
                                                    DEFAULT_DATA_QUEUE_CAPACITY,
                                                    DEFAULT_READY_TO_RECEIVE_THRESHOLD_PERCENT,
@@ -772,9 +772,9 @@ PVMFStatus PVMFProtocolEngineNode::DoReleasePort(PVMFProtocolEngineNodeCommand& 
     PVMFProtocolEnginePort** portPtr = iPortVector.FindByValue(port);
     if (portPtr)
     {
-        if (*portPtr == iPortInForData)	iPortInForData = NULL;
+        if (*portPtr == iPortInForData) iPortInForData = NULL;
         if (*portPtr == iPortInForLogging) iPortInForLogging = NULL;
-        if (*portPtr == iPortOut)			iPortOut = NULL;
+        if (*portPtr == iPortOut)           iPortOut = NULL;
 
         Clear(true);
 
@@ -883,7 +883,7 @@ void PVMFProtocolEngineNode::PassInObjects()
 PVMFStatus PVMFProtocolEngineNode::DoPrepare(PVMFProtocolEngineNodeCommand& aCmd)
 {
     LOGINFO((0, "PVMFProtocolEngineNode::DoPrepare()"));
-    if (!iProtocolContainer)	return PVMFFailure;
+    if (!iProtocolContainer)    return PVMFFailure;
 
     PVMFStatus status = PVMFSuccess; //PVMFPending;
     PassInObjects();
@@ -951,7 +951,7 @@ PVMFStatus PVMFProtocolEngineNode::DoStart(PVMFProtocolEngineNodeCommand& aCmd)
             iProtocolContainer->startDataFlowByCommand();
             return PVMFPending;
 
-            // break;	This statement was removed to avoid compiler warning for Unreachable Code
+            // break;   This statement was removed to avoid compiler warning for Unreachable Code
         }
 
         /*
@@ -1103,7 +1103,7 @@ PVMFStatus PVMFProtocolEngineNode::DoFlush(PVMFProtocolEngineNodeCommand& aCmd)
             iInputCommands.Erase(&aCmd);
 
             //Notify all ports to suspend their input
-            for (uint32 i = 0;i < iPortVector.size();i++)
+            for (uint32 i = 0; i < iPortVector.size(); i++)
             {
                 iPortVector[i]->SuspendInput();
             }
@@ -1114,7 +1114,7 @@ PVMFStatus PVMFProtocolEngineNode::DoFlush(PVMFProtocolEngineNodeCommand& aCmd)
         default:
             CommandComplete(iInputCommands, aCmd, PVMFErrInvalidState);
             return PVMFErrInvalidState;
-            // break;	This statement was removed to avoid compiler warning for Unreachable Code
+            // break;   This statement was removed to avoid compiler warning for Unreachable Code
     }
     return PVMFSuccess;
 }
@@ -1154,7 +1154,7 @@ PVMFStatus PVMFProtocolEngineNode::DoCancelAllCommands(PVMFProtocolEngineNodeCom
     //finally, report cancel complete.
     CommandComplete(iInputCommands, aCmd, PVMFSuccess);
     if (iInterfacingObjectContainer) iInterfacingObjectContainer->setCancelCmdHappened();
-	if (iInterfacingObjectContainer) iInterfacingObjectContainer->setInputDataUnwanted();
+    if (iInterfacingObjectContainer) iInterfacingObjectContainer->setInputDataUnwanted();
     return PVMFSuccess;
 }
 
@@ -1200,7 +1200,7 @@ PVMFStatus PVMFProtocolEngineNode::DoCancelCommand(PVMFProtocolEngineNodeCommand
     CommandComplete(iInputCommands, aCmd, PVMFSuccess);
     // set cancel cmd happened flag for stop command processing
     if (iInterfacingObjectContainer) iInterfacingObjectContainer->setCancelCmdHappened();
-	if (iInterfacingObjectContainer) iInterfacingObjectContainer->setInputDataUnwanted();
+    if (iInterfacingObjectContainer) iInterfacingObjectContainer->setInputDataUnwanted();
     return PVMFSuccess;
 }
 
@@ -1324,7 +1324,7 @@ void PVMFProtocolEngineNode::HandlePortActivity(const PVMFPortActivity &aActivit
             //Purge any port activity events already queued
             //for this port.
             {
-                for (uint32 i = 0;i < iPortActivityQueue.size();)
+                for (uint32 i = 0; i < iPortActivityQueue.size();)
                 {
                     if (iPortActivityQueue[i].iPort == aActivity.iPort)
                     {
@@ -1520,9 +1520,9 @@ void PVMFProtocolEngineNode::QueueActivityIncomingMessage(const PVMFStatus aStat
 PVMFStatus PVMFProtocolEngineNode::ProcessIncomingMsg(PVMFPortInterface* aPort)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "PVMFProtocolEngineNode::ProcessIncomingMsg() aPort=0x%x, IncomingMsgQueueSize=%d, iProcessingState=%d", 
-					aPort, aPort->IncomingMsgQueueSize(), iProcessingState));
-    
+                    (0, "PVMFProtocolEngineNode::ProcessIncomingMsg() aPort=0x%x, IncomingMsgQueueSize=%d, iProcessingState=%d",
+                     aPort, aPort->IncomingMsgQueueSize(), iProcessingState));
+
     // Called by the AO to process one buffer off the port's
     // incoming data queue.  This routine will dequeue and dispatch the data.
     // for pause, don't dequeue the message
@@ -1929,7 +1929,7 @@ void PVMFProtocolEngineNode::HandleRunFlush()
         uint32 i;
         //Debug check-- all the port queues should be empty at
         //this point.
-        for (i = 0;i < iPortVector.size();i++)
+        for (i = 0; i < iPortVector.size(); i++)
         {
             if (iPortVector[i]->IncomingMsgQueueSize() > 0
                     || iPortVector[i]->OutgoingMsgQueueSize() > 0)
@@ -1941,7 +1941,7 @@ void PVMFProtocolEngineNode::HandleRunFlush()
         //Flush is complete.  Go to prepared state.
         SetState(EPVMFNodePrepared);
         //resume port input so the ports can be re-started.
-        for (i = 0;i < iPortVector.size();i++)
+        for (i = 0; i < iPortVector.size(); i++)
         {
             iPortVector[i]->ResumeInput();
         }
@@ -1974,11 +1974,11 @@ bool PVMFProtocolEngineNode::HandleProcessingState()
 
 // ** init/prepar/start/seek/bitstreamSwitch command trigger the data flow (class NormalDataFlowHandler),
 // ** multple events based on the callbacks from protocol engine
-//		-- http header available (class HttpHeaderAvailableHandler) to complete start command
-//		-- first data packet available (class FirstPacketAvailableHandler) to complete seek/bitstreamSwitch command
-//		-- normal data packet available (class NormalDataAvailableHandler) to pass down to node output object, and then output data packets
-//		-- protocol state complete (class ProtocolStateCompleteHandler) to complete init/prepare command
-//		-- protocol state error (class ProtocolStateErrorHandler) to handle all the errors from protocol engine
+//      -- http header available (class HttpHeaderAvailableHandler) to complete start command
+//      -- first data packet available (class FirstPacketAvailableHandler) to complete seek/bitstreamSwitch command
+//      -- normal data packet available (class NormalDataAvailableHandler) to pass down to node output object, and then output data packets
+//      -- protocol state complete (class ProtocolStateCompleteHandler) to complete init/prepare command
+//      -- protocol state error (class ProtocolStateErrorHandler) to handle all the errors from protocol engine
 
 // ** timer out event (will go to ProtocolStateErrorHandler) to complete any pending commands or report error event
 // ** end of data processing, especially for after download complete, parser node still send resume request, (class EndOfDataProcessingHandler)
@@ -2216,7 +2216,7 @@ void PVMFProtocolEngineNode::DeleteProtocolObjects()
 
 void PVMFProtocolEngineNode::DeleteRestObjects()
 {
-    if (iPortConfigFSInfoAlloc)		OSCL_DELETE(iPortConfigFSInfoAlloc);
+    if (iPortConfigFSInfoAlloc)     OSCL_DELETE(iPortConfigFSInfoAlloc);
     iPortConfigFSInfoAlloc = NULL;
 
     for (uint32 i = 0; i < EVENT_HANDLER_TOTAL; i++)
@@ -2226,13 +2226,13 @@ void PVMFProtocolEngineNode::DeleteRestObjects()
     }
 
     iInterfacingObjectContainer = NULL;
-    iNodeTimer					= NULL;
-    iProtocol					= NULL;
-    iNodeOutput					= NULL;
-    iDownloadControl			= NULL;
-    iDownloadProgess			= NULL;
-    iUserAgentField				= NULL;
-    iEventReport				= NULL;
+    iNodeTimer                  = NULL;
+    iProtocol                   = NULL;
+    iNodeOutput                 = NULL;
+    iDownloadControl            = NULL;
+    iDownloadProgess            = NULL;
+    iUserAgentField             = NULL;
+    iEventReport                = NULL;
 }
 
 void PVMFProtocolEngineNode::ClearPorts(const bool aNeedDelete)
@@ -2251,7 +2251,7 @@ void PVMFProtocolEngineNode::ClearPorts(const bool aNeedDelete)
             PVMFProtocolEnginePort* port = iPortVector.front();
             iPortVector.Erase(&iPortVector.front());
 
-            if (port == iPortInForData)	iPortInForData = NULL;
+            if (port == iPortInForData) iPortInForData = NULL;
             if (port == iPortInForLogging) iPortInForLogging = NULL;
             if (port == iPortOut) iPortOut = NULL;
         }
@@ -2740,20 +2740,20 @@ void PVMFProtocolEngineNode::ErasePendingCmd(PVMFProtocolEngineNodeCommand *aCmd
 
 void PVMFProtocolEngineNode::GetObjects()
 {
-    iProtocol			= (HttpBasedProtocol*)iProtocolContainer->getObject(NodeObjectType_Protocol);
-    iNodeOutput			= (PVMFProtocolEngineNodeOutput*)iProtocolContainer->getObject(NodeObjectType_Output);
-    iDownloadControl	= (DownloadControlInterface*)iProtocolContainer->getObject(NodeObjectType_DownloadControl);
-    iDownloadProgess	= (DownloadProgressInterface*)iProtocolContainer->getObject(NodeObjectType_DownloadProgress);
-    iEventReport		= (EventReporter*)iProtocolContainer->getObject(NodeObjectType_EventReport);
-    iCfgFileContainer	= (PVDlCfgFileContainer*)iProtocolContainer->getObject(NodeObjectType_DlCfgFileContainer);
-    iDownloadSource		= (PVMFDownloadDataSourceContainer*)iProtocolContainer->getObject(NodeObjectType_DataSourceContainer);
-    iNodeTimer			= (PVMFProtocolEngineNodeTimer*)iProtocolContainer->getObject(NodeObjectType_Timer);
+    iProtocol           = (HttpBasedProtocol*)iProtocolContainer->getObject(NodeObjectType_Protocol);
+    iNodeOutput         = (PVMFProtocolEngineNodeOutput*)iProtocolContainer->getObject(NodeObjectType_Output);
+    iDownloadControl    = (DownloadControlInterface*)iProtocolContainer->getObject(NodeObjectType_DownloadControl);
+    iDownloadProgess    = (DownloadProgressInterface*)iProtocolContainer->getObject(NodeObjectType_DownloadProgress);
+    iEventReport        = (EventReporter*)iProtocolContainer->getObject(NodeObjectType_EventReport);
+    iCfgFileContainer   = (PVDlCfgFileContainer*)iProtocolContainer->getObject(NodeObjectType_DlCfgFileContainer);
+    iDownloadSource     = (PVMFDownloadDataSourceContainer*)iProtocolContainer->getObject(NodeObjectType_DataSourceContainer);
+    iNodeTimer          = (PVMFProtocolEngineNodeTimer*)iProtocolContainer->getObject(NodeObjectType_Timer);
     iInterfacingObjectContainer = (InterfacingObjectContainer*)iProtocolContainer->getObject(NodeObjectType_InterfacingObjectContainer);
-    iUserAgentField		= (UserAgentField*)iProtocolContainer->getObject(NodeObjectType_UseAgentField);
+    iUserAgentField     = (UserAgentField*)iProtocolContainer->getObject(NodeObjectType_UseAgentField);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////
-//////	PVProtocolEngineNodeInternalEventHandler implementation
+//////  PVProtocolEngineNodeInternalEventHandler implementation
 ////////////////////////////////////////////////////////////////////////////////////
 
 PVProtocolEngineNodeInternalEventHandler::PVProtocolEngineNodeInternalEventHandler(PVMFProtocolEngineNode *aNode) : iNode(aNode)

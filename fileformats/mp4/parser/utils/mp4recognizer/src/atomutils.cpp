@@ -81,7 +81,7 @@ AtomUtils::read32(MP4_FF_FILE *fp, uint32 &data)
     if (retVal < N)
         return false;
 
-    for (int32 i = 0;i < N;i++)
+    for (int32 i = 0; i < N; i++)
         data = (data << 8) | bytes[i];
 
     return true;
@@ -105,10 +105,10 @@ AtomUtils::read32read32(MP4_FF_FILE *fp, uint32 &data1, uint32 &data2)
         return false;
 
     int32 i;
-    for (i = 0;i < 4;i++)
+    for (i = 0; i < 4; i++)
         data1 = (data1 << 8) | bytes[i];
 
-    for (i = 4;i < 8;i++)
+    for (i = 4; i < 8; i++)
         data2 = (data2 << 8) | bytes[i];
 
     return true;
@@ -129,7 +129,7 @@ AtomUtils::read24(MP4_FF_FILE *fp, uint32 &data)
     if (retVal < N)
         return false;
 
-    for (int32 i = 0;i < N;i++)
+    for (int32 i = 0; i < N; i++)
         data = (data << 8) | bytes[i];
 
     return true;
@@ -150,7 +150,7 @@ AtomUtils::read16(MP4_FF_FILE *fp, uint16 &data)
     if (retVal < N)
         return false;
 
-    for (int32 i = 0;i < N;i++)
+    for (int32 i = 0; i < N; i++)
         data = (uint16)((data << 8) | (uint16) bytes[i]);
 
     return true;
@@ -174,10 +174,10 @@ AtomUtils::read16read16(MP4_FF_FILE *fp, uint16 &data1, uint16 &data2)
         return false;
 
     int32 i;
-    for (i = 0;i < 2;i++)
+    for (i = 0; i < 2; i++)
         data1 = (uint16)((data1 << 8) | (uint16) bytes[i]);
 
-    for (i = 2;i < 4;i++)
+    for (i = 2; i < 4; i++)
         data2 = (uint16)((data2 << 8) | (uint16) bytes[i]);
 
     return true;
@@ -662,7 +662,7 @@ AtomUtils::getNextAtomType(MP4_FF_FILE *fp, uint32 &size, uint32 &type)
             type == ITUNES_MEAN_ATOM ||
             type == ITUNES_FREE_FORM_DATA_NAME_ATOM ||
             type == ITUNES_COPYRIGHT_ATOM ||
-            type == ITUNES_DESCRIPTION_ATOM	||
+            type == ITUNES_DESCRIPTION_ATOM ||
             type == ITUNES_CONTENT_RATING_ATOM ||
             type == ITUNES_ARTIST1_ATOM ||
             type == ITUNES_ARTIST2_ATOM ||
@@ -763,7 +763,7 @@ OSCL_EXPORT_REF void AtomUtils::seekToEnd(MP4_FF_FILE *fp)
 
 OSCL_EXPORT_REF void AtomUtils::rewindFilePointerByN(MP4_FF_FILE *fp, uint32 n)
 {
-    fp->_pvfile.Seek((-1 * (int32) n), Oscl_File::SEEKCUR);
+    fp->_pvfile.Seek((-1 *(int32) n), Oscl_File::SEEKCUR);
 }
 
 OSCL_EXPORT_REF int32 AtomUtils::getCurrentFilePosition(MP4_FF_FILE *fp)
@@ -827,7 +827,7 @@ AtomUtils::read32(uint8 *&buf, uint32 &data)
     const int32 N = 4;
     data = 0;
 
-    for (int32 i = 0;i < N;i++)
+    for (int32 i = 0; i < N; i++)
         data = (data << 8) | buf[i];
 
     buf += N;
@@ -844,10 +844,10 @@ AtomUtils::read32read32(uint8 *&buf, uint32 &data1, uint32 &data2)
     data2 = 0;
 
     int32 i;
-    for (i = 0;i < 4;i++)
+    for (i = 0; i < 4; i++)
         data1 = (data1 << 8) | buf[i];
 
-    for (i = 4;i < 8;i++)
+    for (i = 4; i < 8; i++)
         data2 = (data2 << 8) | buf[i];
 
     buf += N;
@@ -861,7 +861,7 @@ AtomUtils::read16(uint8 *&buf, uint16 &data)
     const int32 N = 2;
     data = 0;
 
-    for (int32 i = 0;i < N;i++)
+    for (int32 i = 0; i < N; i++)
         data = (uint16)((data << 8) | (uint16) buf[i]);
 
     buf += N;

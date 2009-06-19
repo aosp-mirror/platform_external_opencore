@@ -43,7 +43,7 @@ typedef enum
 {
     EHeaderErr = 0,
     ESizeErr
-}EMuxPduError;
+} EMuxPduError;
 
 class H223PduParcomObserver
 {

@@ -25,7 +25,7 @@
 #include "zigzag.h"
 #include "scaling.h"
 
-void	doDCACPrediction(
+void    doDCACPrediction(
     VideoDecData *video,
     int comp,
     int16 *q_block,
@@ -37,7 +37,7 @@ void	doDCACPrediction(
     ----------------------------------------------------------------------------*/
     int i;
     int mbnum = video->mbnum;
-    int	nMBPerRow = video->nMBPerRow;
+    int nMBPerRow = video->nMBPerRow;
     int x_pos = video->mbnum_col;
     int y_pos = video->mbnum_row;
     int16 *AC_tmp;
@@ -70,10 +70,10 @@ void	doDCACPrediction(
     static const int B_Xtab[6] = {0, 1, 0, 1, 2, 3};
     static const int B_Ytab[6] = {0, 0, 1, 1, 2, 3};
 
-//	int *direction;		/* 0: HORIZONTAL, 1: VERTICAL */
+//  int *direction;     /* 0: HORIZONTAL, 1: VERTICAL */
     int block_A, block_B, block_C;
     int DC_pred;
-    int y_offset, x_offset, x_tab, y_tab, z_tab;	/* speedup coefficients */
+    int y_offset, x_offset, x_tab, y_tab, z_tab;    /* speedup coefficients */
     int b_xtab, b_ytab;
 
     if (!comp && x_pos && !(video->headerInfo.Mode[mbnum-1]&INTRA_MASK)) /* not intra */
@@ -100,13 +100,13 @@ void	doDCACPrediction(
     /* Find the direction of prediction and the DC prediction */
 
     if (x_pos == 0 && y_pos == 0)
-    {	/* top left corner */
+    {   /* top left corner */
         block_A = (comp == 1 || comp == 3) ? flag_0 = TRUE, DC_store[0][x_tab] : mid_gray;
         block_B = (comp == 3) ? DC_store[x_offset][z_tab] : mid_gray;
         block_C = (comp == 2 || comp == 3) ? flag_1 = TRUE, DC_store[0][y_tab] : mid_gray;
     }
     else if (x_pos == 0)
-    {	/* left edge */
+    {   /* left edge */
         up_bnd   = Pos0[comp] && slice_nb[mbnum] == slice_nb[mbnum-nMBPerRow];
 
         block_A = (comp == 1 || comp == 3) ? flag_0 = TRUE, DC_store[0][x_tab] : mid_gray;
@@ -195,7 +195,7 @@ void	doDCACPrediction(
     /* Now predict the DC coefficient */
     QP_tmp = (comp < 4) ? video->mblock->DCScalarLum : video->mblock->DCScalarChr;
     q_block[0] += (int16)((DC_pred + (QP_tmp >> 1)) * scale[QP_tmp] >> 18);
-//		q_block[0] += (DC_pred+(QP_tmp>>1))/QP_tmp;
+//      q_block[0] += (DC_pred+(QP_tmp>>1))/QP_tmp;
 
     /*----------------------------------------------------------------------------
     ; Return nothing or data or data pointer
@@ -203,7 +203,7 @@ void	doDCACPrediction(
     return;
 }
 #ifdef PV_ANNEX_IJKT_SUPPORT
-void	doDCACPrediction_I(
+void    doDCACPrediction_I(
     VideoDecData *video,
     int comp,
     int16 *q_block
@@ -213,7 +213,7 @@ void	doDCACPrediction_I(
     ; Define all local variables
     ----------------------------------------------------------------------------*/
     int mbnum = video->mbnum;
-    int	nMBPerRow = video->nMBPerRow;
+    int nMBPerRow = video->nMBPerRow;
     int x_pos = video->mbnum_col;
     int y_pos = video->mbnum_row;
     int16 *AC_tmp;
@@ -241,9 +241,9 @@ void	doDCACPrediction_I(
     static const int B_Xtab[6] = {0, 1, 0, 1, 2, 3};
     static const int B_Ytab[6] = {0, 0, 1, 1, 2, 3};
 
-//	int *direction;		/* 0: HORIZONTAL, 1: VERTICAL */
+//  int *direction;     /* 0: HORIZONTAL, 1: VERTICAL */
     int block_A, block_C;
-    int y_offset, x_offset, x_tab, y_tab;	/* speedup coefficients */
+    int y_offset, x_offset, x_tab, y_tab;   /* speedup coefficients */
     int b_xtab, b_ytab;
     y_offset = Ypos[comp] * nMBPerRow;
     x_offset = Xpos[comp];
@@ -259,12 +259,12 @@ void	doDCACPrediction_I(
     /* Find the direction of prediction and the DC prediction */
 
     if (x_pos == 0 && y_pos == 0)
-    {	/* top left corner */
+    {   /* top left corner */
         block_A = (comp == 1 || comp == 3) ? flag_0 = TRUE, DC_store[0][x_tab] : mid_gray;
         block_C = (comp == 2 || comp == 3) ? flag_1 = TRUE, DC_store[0][y_tab] : mid_gray;
     }
     else if (x_pos == 0)
-    {	/* left edge */
+    {   /* left edge */
         up_bnd   = (Pos0[comp] && slice_nb[mbnum] == slice_nb[mbnum-nMBPerRow])
                    && (mode[mbnum-nMBPerRow] == MODE_INTRA || mode[mbnum-nMBPerRow] == MODE_INTRA_Q);;
 

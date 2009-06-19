@@ -195,21 +195,21 @@ void fft_rx4_long(
     Int32      *peak_value)
 
 {
-    Int		n1;
-    Int		n2;
-    Int		j;
-    Int		k;
-    Int		i;
+    Int     n1;
+    Int     n2;
+    Int     j;
+    Int     k;
+    Int     i;
 
-    Int32  	t1;
-    Int32  	t2;
-    Int32  	r1;
-    Int32  	r2;
-    Int32  	r3;
-    Int32  	r4;
-    Int32  	s1;
-    Int32  	s2;
-    Int32  	s3;
+    Int32   t1;
+    Int32   t2;
+    Int32   r1;
+    Int32   r2;
+    Int32   r3;
+    Int32   r4;
+    Int32   s1;
+    Int32   s2;
+    Int32   s3;
     Int32   *pData1;
     Int32   *pData2;
     Int32   *pData3;
@@ -220,9 +220,9 @@ void fft_rx4_long(
     Int32   temp4;
     Int32   max;
 
-    Int32  	exp_jw1;
-    Int32  	exp_jw2;
-    Int32  	exp_jw3;
+    Int32   exp_jw1;
+    Int32   exp_jw2;
+    Int32   exp_jw3;
 
 
 

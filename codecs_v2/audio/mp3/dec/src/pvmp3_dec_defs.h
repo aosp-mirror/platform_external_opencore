@@ -72,10 +72,10 @@
 
 /* MPEG Header Definitions - ID Bit Values */
 
-#define	MPEG_1      		0
-#define	MPEG_2      		1
-#define	MPEG_2_5      		2
-#define	INVALID_VERSION     -1
+#define MPEG_1              0
+#define MPEG_2              1
+#define MPEG_2_5            2
+#define INVALID_VERSION     -1
 
 /* MPEG Header Definitions - Mode Values */
 

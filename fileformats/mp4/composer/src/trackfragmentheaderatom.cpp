@@ -80,24 +80,24 @@ PVA_FF_TrackFragmentHeaderAtom::recomputeSize()
     int32 size = getDefaultSize();
 
     // add size various fields
-    size += 4;	// track Id
+    size += 4;  // track Id
 
     uint32 flags = getFlags();
 
     if (flags & 0x000001)
-        size += 8;	// base data offset
+        size += 8;  // base data offset
 
     if (flags & 0x000002)
-        size += 4;	// description index
+        size += 4;  // description index
 
     if (flags & 0x000008)
-        size += 4;	// sample duration
+        size += 4;  // sample duration
 
     if (flags & 0x000010)
-        size += 4;	// sample size
+        size += 4;  // sample size
 
     if (flags & 0x000020)
-        size += 4;	// sample flags
+        size += 4;  // sample flags
 
     _size = size;
 

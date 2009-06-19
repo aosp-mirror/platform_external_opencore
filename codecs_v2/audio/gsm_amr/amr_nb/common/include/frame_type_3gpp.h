@@ -37,7 +37,7 @@ terms listed above has been obtained from the copyright holder.
 
  Description: Added #ifdef __cplusplus after Include section.
 
- Who:						Date:
+ Who:                       Date:
  Description:
 
 ------------------------------------------------------------------------------
@@ -48,8 +48,8 @@ terms listed above has been obtained from the copyright holder.
 ------------------------------------------------------------------------------
 */
 
-#ifndef	FRAME_TYPE_3GPP_H
-#define	FRAME_TYPE_3GPP_H
+#ifndef FRAME_TYPE_3GPP_H
+#define FRAME_TYPE_3GPP_H
 
 /*----------------------------------------------------------------------------
 ; INCLUDES

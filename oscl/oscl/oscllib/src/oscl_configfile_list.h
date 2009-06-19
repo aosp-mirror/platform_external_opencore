@@ -113,7 +113,7 @@ class OsclLibraryUtil
          *
          * @returns OsclLibStatus
          **/
-        OSCL_IMPORT_REF	static OsclLibStatus SetupLibraryEnv(const char* aEnvName, const char* aEnvValue);
+        OSCL_IMPORT_REF static OsclLibStatus SetupLibraryEnv(const char* aEnvName, const char* aEnvValue);
 };
 
 #endif //OSCL_LIBRARY_LIST_H_INCLUDED

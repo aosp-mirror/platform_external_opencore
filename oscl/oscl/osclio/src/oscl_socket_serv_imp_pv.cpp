@@ -387,7 +387,7 @@ class PVServiStats
             _OsclBasicAllocator alloc;
             OsclAny* ptr = alloc.allocate(PV_SERVI_STATS_SIZE * sizeof(PVServiStats));
             PVServiStats* ptr2 = (PVServiStats*)ptr;
-            for (uint32 i = 0;i < PV_SERVI_STATS_SIZE;i++)
+            for (uint32 i = 0; i < PV_SERVI_STATS_SIZE; i++)
             {
                 new(ptr2++) PVServiStats();
             }
@@ -662,7 +662,7 @@ void OsclSocketServI::ProcessSocketRequests()
     //Make a pass through the open request list and cancel or process each request.
     START_SERVI_STATS2(EServiProc_Loop);
     uint32 i;
-    for (i = 0;i < iSockServRequestList.iActiveRequests.size();i++)
+    for (i = 0; i < iSockServRequestList.iActiveRequests.size(); i++)
     {
         OsclSocketServRequestQElem* elem = &iSockServRequestList.iActiveRequests[i];
 
@@ -757,7 +757,7 @@ void OsclSocketServI::ProcessSocketRequests()
     LOGSERV((0, "OsclSocketServI::ProcessSocketRequests Clearing select set"));
 
     //Now make a pass to either delete the request or collate the select flags.
-    for (i = 0;i < iSockServRequestList.iActiveRequests.size();)
+    for (i = 0; i < iSockServRequestList.iActiveRequests.size();)
     {
         OsclSocketServRequestQElem* elem = &iSockServRequestList.iActiveRequests[i];
 
@@ -1156,7 +1156,7 @@ static TOsclThreadFuncRet OSCL_THREAD_DECL sockthreadmain2(TOsclThreadFuncArg ar
     OSCL_wHeapString<OsclMemAllocator> filename;
     oscl_wchar fileid[2];
     fileid[1] = (oscl_wchar)'\0';
-    for (char c = 'A';c <= 'Z';c++)
+    for (char c = 'A'; c <= 'Z'; c++)
     {
         filename = LOGFILENAME;
         fileid[0] = (oscl_wchar)c;
@@ -1214,68 +1214,68 @@ void OsclSocketServI::Run()
     END_SERVI_STATS(EServiRun_Reschedule);
 
 #else
-    //select loop implementation.
+//select loop implementation.
 
-    //loop 2x so we can complete some requests in one call.
-    for (uint32 i = 0;i < 2;i++)
+//loop 2x so we can complete some requests in one call.
+for (uint32 i = 0; i < 2; i++)
+{
+    //Process active requests.
+    START_SERVI_STATS(EServiRun_Proc);
+    ProcessSocketRequests(iNhandles, iNfds);
+    END_SERVI_STATS(EServiRun_Proc);
+
+    //Make the select call if needed.
+    if (iNfds > 1)
     {
-        //Process active requests.
-        START_SERVI_STATS(EServiRun_Proc);
-        ProcessSocketRequests(iNhandles, iNfds);
-        END_SERVI_STATS(EServiRun_Proc);
-
-        //Make the select call if needed.
-        if (iNfds > 1)
+        START_SERVI_STATS(EServiRun_Select);
+        //use a delay of zero since we're essentially polling for socket activity.
+        //note the select call may update this value so it must be set prior to each call.
+        timeval timeout;
+        timeout.tv_sec = 0;
+        timeout.tv_usec = 0;
+        bool ok;
+        OsclSocketSelect(iNfds, iReadset, iWriteset, iExceptset, timeout, ok, iServError, iNhandles);
+        END_SERVI_STATS(EServiRun_Select);
+        if (!ok)
         {
-            START_SERVI_STATS(EServiRun_Select);
-            //use a delay of zero since we're essentially polling for socket activity.
-            //note the select call may update this value so it must be set prior to each call.
-            timeval timeout;
-            timeout.tv_sec = 0;
-            timeout.tv_usec = 0;
-            bool ok;
-            OsclSocketSelect(iNfds, iReadset, iWriteset, iExceptset, timeout, ok, iServError, iNhandles);
-            END_SERVI_STATS(EServiRun_Select);
-            if (!ok)
-            {
-                //a select error is fatal.
-                StopServImp();//stop the AO
-                iServState = OsclSocketServI::ESocketServ_Error;
-                return;
-            }
-
-            if (iNhandles)
-            {
-                ADD_STATS(EOsclSocketServ_SelectActivity);
-            }
-            else
-            {
-                ADD_STATS(EOsclSocketServ_SelectNoActivity);
-            }
+            //a select error is fatal.
+            StopServImp();//stop the AO
+            iServState = OsclSocketServI::ESocketServ_Error;
+            return;
         }
-    }
 
-    //Re-schedule
-    START_SERVI_STATS(EServiRun_Reschedule);
-    if (!iSockServRequestList.iActiveRequests.empty())
-    {
         if (iNhandles)
         {
-            // Re-schedule ASAP when we have socket activity.
-            ADD_STATS(EOsclSocketServ_SelectRescheduleAsap);
-            RunIfNotReady();
+            ADD_STATS(EOsclSocketServ_SelectActivity);
         }
         else
         {
-            // Re-schedule after a delay for continued monitoring
-            // of active requests.
-            // Note: new requests will interrupt this polling interval
-            // and schedule ASAP.
-            ADD_STATS(EOsclSocketServ_SelectReschedulePoll);
-            RunIfNotReady(1000*PV_SOCKET_SERVER_AO_INTERVAL_MSEC);
+            ADD_STATS(EOsclSocketServ_SelectNoActivity);
         }
     }
-    END_SERVI_STATS(EServiRun_Reschedule);
+}
+
+//Re-schedule
+START_SERVI_STATS(EServiRun_Reschedule);
+if (!iSockServRequestList.iActiveRequests.empty())
+{
+    if (iNhandles)
+    {
+        // Re-schedule ASAP when we have socket activity.
+        ADD_STATS(EOsclSocketServ_SelectRescheduleAsap);
+        RunIfNotReady();
+    }
+    else
+    {
+        // Re-schedule after a delay for continued monitoring
+        // of active requests.
+        // Note: new requests will interrupt this polling interval
+        // and schedule ASAP.
+        ADD_STATS(EOsclSocketServ_SelectReschedulePoll);
+        RunIfNotReady(1000*PV_SOCKET_SERVER_AO_INTERVAL_MSEC);
+    }
+}
+END_SERVI_STATS(EServiRun_Reschedule);
 
 #endif //PV_SOCKET_SERVER_SELECT
 }

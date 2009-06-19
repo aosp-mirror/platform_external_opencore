@@ -37,7 +37,7 @@
 #endif
 
 #define OSCL_HAS_EXCEPTIONS                     1
-#define OSCL_HAS_ERRNO_H		                1
+#define OSCL_HAS_ERRNO_H                        1
 #define OSCL_HAS_SYMBIAN_ERRORTRAP      0
 #define OSCL_HAS_SETJMP_H 1
 

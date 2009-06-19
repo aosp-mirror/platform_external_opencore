@@ -35,7 +35,7 @@
 */
 
 class PVMFMediaFileOutputRegistryFactory: public PVMFMediaIOCreationInterface
-            , public PvmiCapabilityAndConfig
+        , public PvmiCapabilityAndConfig
 {
     public:
         /*
@@ -66,7 +66,7 @@ class PVMFMediaFileOutputRegistryFactory: public PVMFMediaIOCreationInterface
 
         //from PvmiCapabilityAndConfig interface
         PVMFStatus getParametersSync(PvmiMIOSession , PvmiKeyType ,
-                                     PvmiKvp*& , int& ,	PvmiCapabilityContext)
+                                     PvmiKvp*& , int& , PvmiCapabilityContext)
         {
             return PVMFFailure;//nothing available yet.
         }

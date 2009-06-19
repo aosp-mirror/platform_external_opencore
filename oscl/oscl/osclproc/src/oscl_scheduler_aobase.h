@@ -55,7 +55,7 @@
 /*
  * Macro for zeroizing the memory of a newly created object
  *
- * @param ptr   pointer	to the newly created object
+ * @param ptr   pointer to the newly created object
  *
  * @param size  size of the memory
  */

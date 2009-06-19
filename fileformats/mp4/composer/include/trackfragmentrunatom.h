@@ -22,17 +22,17 @@
 #include "a_atomdefs.h"
 #include "atomutils.h"
 
-#define TRACK_RUN_ATOM_FLAGS	0x00000701	// flag specify that only data offset, sample duration,
+#define TRACK_RUN_ATOM_FLAGS    0x00000701  // flag specify that only data offset, sample duration,
 // sample size and sample flags are present
 
-#define KEY_FRAME_ENTRY				0x010000
+#define KEY_FRAME_ENTRY             0x010000
 
 struct PVA_FF_TrackRunSample
 {
-    uint32		sampleDuration;
-    uint32		sampleSize;
-    uint32		sampleFlags;
-    uint32		sampleCompositionTimeOffset;	// not in use
+    uint32      sampleDuration;
+    uint32      sampleSize;
+    uint32      sampleFlags;
+    uint32      sampleCompositionTimeOffset;    // not in use
 };
 
 class PVA_FF_TrackFragmentRunAtom : public PVA_FF_FullAtom
@@ -43,10 +43,10 @@ class PVA_FF_TrackFragmentRunAtom : public PVA_FF_FullAtom
 
         virtual ~PVA_FF_TrackFragmentRunAtom();
 
-        void	setFlags(uint32 flags);
-        void	setDataOffset(uint32 offset);
-        void	addSample(uint32 size, uint32 ts, uint8 flags);
-        void	updateLastTSEntry(uint32 ts);
+        void    setFlags(uint32 flags);
+        void    setDataOffset(uint32 offset);
+        void    addSample(uint32 size, uint32 ts, uint8 flags);
+        void    updateLastTSEntry(uint32 ts);
 
         virtual bool renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP* fp);
         uint32 getSampleCount() const
@@ -55,13 +55,13 @@ class PVA_FF_TrackFragmentRunAtom : public PVA_FF_FullAtom
         }
     private:
 
-        uint32		_currentTimestamp;
-        uint8		_firstEntry;
+        uint32      _currentTimestamp;
+        uint8       _firstEntry;
 
-        uint32		_sampleCount;
-        uint32		_dataOffset;
-        uint32		_firstSampleFlags;
-        bool		_lastTSupdated;
+        uint32      _sampleCount;
+        uint32      _dataOffset;
+        uint32      _firstSampleFlags;
+        bool        _lastTSupdated;
 
         Oscl_Vector<PVA_FF_TrackRunSample, OsclMemAllocator>* _psampleEntriesVec;
 

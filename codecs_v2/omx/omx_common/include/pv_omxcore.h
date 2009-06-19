@@ -105,7 +105,7 @@
 #endif
 #endif
 
-#define MAX_ROLES_SUPPORTED	3
+#define MAX_ROLES_SUPPORTED 3
 
 #ifdef __cplusplus
 extern "C"
@@ -113,9 +113,9 @@ extern "C"
 #endif
 
     OSCL_IMPORT_REF OMX_ERRORTYPE OMX_GetComponentsOfRole(
-        OMX_IN		OMX_STRING role,
-        OMX_INOUT	OMX_U32	*pNumComps,
-        OMX_INOUT	OMX_U8	**compNames);
+        OMX_IN      OMX_STRING role,
+        OMX_INOUT   OMX_U32 *pNumComps,
+        OMX_INOUT   OMX_U8  **compNames);
 
     OSCL_IMPORT_REF OMX_ERRORTYPE OMX_APIENTRY OMX_ComponentNameEnum(
         OMX_OUT OMX_STRING cComponentName,
@@ -190,9 +190,9 @@ class ComponentRegistrationType
 {
     public:
         // name of the component used as identifier
-        OMX_STRING		ComponentName;
-        OMX_STRING		RoleString[MAX_ROLES_SUPPORTED];
-        OMX_U32			NumberOfRolesSupported;
+        OMX_STRING      ComponentName;
+        OMX_STRING      RoleString[MAX_ROLES_SUPPORTED];
+        OMX_U32         NumberOfRolesSupported;
         // pointer to factory function to be called when component needs to be instantiated
         OMX_ERRORTYPE(*FunctionPtrCreateComponent)(OMX_OUT OMX_HANDLETYPE* pHandle, OMX_IN  OMX_PTR pAppData,
                 OMX_PTR pProxy, OMX_STRING aOmxLibName, OMX_PTR &aOmxLib, OMX_PTR aOsclUuid, OMX_U32 &aRefCount);

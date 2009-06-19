@@ -23,16 +23,16 @@
 /* 3/29/01 fast half-pel search based on neighboring guess */
 /* value ranging from 0 to 4, high complexity (more accurate) to
    low complexity (less accurate) */
-#define HP_DISTANCE_TH		2  /* half-pel distance threshold */
+#define HP_DISTANCE_TH      2  /* half-pel distance threshold */
 
-#define PREF_16_VEC 129		/* 1MV bias versus 4MVs*/
+#define PREF_16_VEC 129     /* 1MV bias versus 4MVs*/
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
     void GenerateSearchRegion(UChar *searchPadding, UChar *ref, Int width, Int height,
-                              Int ilow, Int ihigh, Int jlow, Int jhigh);
+    Int ilow, Int ihigh, Int jlow, Int jhigh);
 
     void InterpDiag(UChar *prev, Int lx, UChar *pred_block);
     void InterpHorz(UChar *prev, Int lx, UChar *pred_block);
@@ -57,17 +57,17 @@ const static Int distance_tab[9][9] =   /* [hp_guess][k] */
 
 
 /*=====================================================================
-	Function:	FindHalfPelMB
-	Date:		10/7/2000
-	Purpose:	Find half pel resolution MV surrounding the full-pel MV
+    Function:   FindHalfPelMB
+    Date:       10/7/2000
+    Purpose:    Find half pel resolution MV surrounding the full-pel MV
 =====================================================================*/
 
 void FindHalfPelMB(VideoEncData *video, UChar *cur, MOT *mot, UChar *ncand,
                    Int xpos, Int ypos, Int *xhmin, Int *yhmin, Int hp_guess)
 {
-//	hp_mem = ULong *vertArray; /* 20x17 */
-//			 ULong *horzArray; /* 20x16 */
-//			 ULong *diagArray; /* 20x17 */
+//  hp_mem = ULong *vertArray; /* 20x17 */
+//           ULong *horzArray; /* 20x16 */
+//           ULong *diagArray; /* 20x17 */
     Int dmin, d;
 
     Int xh, yh;
@@ -174,10 +174,10 @@ void FindHalfPelMB(VideoEncData *video, UChar *cur, MOT *mot, UChar *ncand,
 
 #ifndef NO_INTER4V
 /*=====================================================================
-	Function:	FindHalfPelBlk
-	Date:		10/7/2000
-	Purpose:	Find half pel resolution MV surrounding the full-pel MV
-				And decide between 1MV or 4MV mode
+    Function:   FindHalfPelBlk
+    Date:       10/7/2000
+    Purpose:    Find half pel resolution MV surrounding the full-pel MV
+                And decide between 1MV or 4MV mode
 =====================================================================*/
 ///// THIS FUNCTION IS NOT WORKING!!! NEED TO BE RIVISITED
 

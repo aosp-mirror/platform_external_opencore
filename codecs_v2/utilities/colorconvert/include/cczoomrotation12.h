@@ -28,9 +28,9 @@
 #endif
 
 /**
-*	This class is for 12 bit color conversion. The APIs usage is the same as ColorConvertBase.
+*   This class is for 12 bit color conversion. The APIs usage is the same as ColorConvertBase.
 *   The output format for RGB is 4-4-4 bits with the first 4 bits unused.
-*	OUTPUT_RGB_565 can be defined if the output format is wanted to be of 5-6-5 format.
+*   OUTPUT_RGB_565 can be defined if the output format is wanted to be of 5-6-5 format.
 */
 class ColorConvert12: public ColorConvertBase
 {
@@ -40,7 +40,7 @@ class ColorConvert12: public ColorConvertBase
 
         int32 Init(int32 Src_width, int32 Src_height, int32 Src_pitch, int32 Dst_width, int32 Dst_height, int32 Dst_pitch, int32 nRotation = 0);
         int32 SetYuvFullRange(bool range);
-        int32 SetMode(int32 nMode);	//nMode : 0 Off, 1 On
+        int32 SetMode(int32 nMode); //nMode : 0 Off, 1 On
         int32 Convert(uint8 **srcBuf, uint8 *destBuf);
         int32 Convert(uint8 *srcBuf, uint8 *destBuf);
         int32 GetOutputBufferSize(void);

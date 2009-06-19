@@ -256,8 +256,8 @@ class AssetInfoRatingAtom : public FullAtom
 
     private:
         OSCL_wHeapString<OsclMemAllocator> _defaultRating;
-        uint32				  _ratingEntity;
-        uint32				  _ratingCriteria;
+        uint32                _ratingEntity;
+        uint32                _ratingCriteria;
         AssestInfoBaseParser* _pAssetInfoBaseParser;
 };
 
@@ -295,8 +295,8 @@ class AssetInfoClassificationAtom : public FullAtom
 
     private:
         OSCL_wHeapString<OsclMemAllocator> _defaultClassification;
-        uint32				  _classificationEntity;
-        uint16				  _classificationTable;
+        uint32                _classificationEntity;
+        uint16                _classificationTable;
         AssestInfoBaseParser* _pAssetInfoBaseParser;
 };
 
@@ -337,8 +337,8 @@ class AssetInfoKeyWordAtom : public FullAtom
         OSCL_wString& getKeyWordAt(int32 index);
 
     private:
-        uint16				          _langCode;
-        uint8						  _keyWordCount;
+        uint16                        _langCode;
+        uint8                         _keyWordCount;
         Oscl_Vector<AssestInfoKeyWord *, OsclMemAllocator> *_pAssetInfoKeyWordVec;
         OSCL_wHeapString<OsclMemAllocator> _defaultKeyWord;
 };
@@ -360,10 +360,10 @@ class AssetInfoLocationAtom : public FullAtom
         OSCL_wHeapString<OsclMemAllocator> _astronomical_body;
         OSCL_wHeapString<OsclMemAllocator> _additional_notes;
 
-        uint8				  _role;
-        uint32				  _longitude;
-        uint32				  _latitude;
-        uint32				  _altitude;
+        uint8                 _role;
+        uint32                _longitude;
+        uint32                _latitude;
+        uint32                _altitude;
         MP4FFParserOriginalCharEnc _charType;
         uint16 _langCode;
         PvmfAssetInfo3GPPLocationStruct *_pLocationStruct;
@@ -395,8 +395,8 @@ class AssetInfoAlbumAtom : public FullAtom
     private:
 
         OSCL_wHeapString<OsclMemAllocator> _defaultNotice;
-        uint8				  _trackNumber;
-        uint16				  _langCode;
+        uint8                 _trackNumber;
+        uint16                _langCode;
         MP4FFParserOriginalCharEnc _charType;
 };
 

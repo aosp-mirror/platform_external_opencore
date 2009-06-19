@@ -35,33 +35,33 @@ EBSP to RBSP conversion in bitstream. */
 const static uint8 trailing_bits[9] = {0, 0x1, 0x2, 0x4, 0x8, 0x10, 0x20, 0x40, 0x80};
 
 /* ======================================================================== */
-/*	Function : BitstreamInit()												*/
-/*	Date     : 11/4/2003													*/
-/*	Purpose  : Populate bitstream structure with bitstream buffer and size 	*/
-/*			   it also initializes internal data							*/
-/*	In/out   :																*/
-/*	Return   : AVCDEC_SUCCESS if successed, AVCDEC_FAIL if failed.				*/
-/*	Modified :																*/
+/*  Function : BitstreamInit()                                              */
+/*  Date     : 11/4/2003                                                    */
+/*  Purpose  : Populate bitstream structure with bitstream buffer and size  */
+/*             it also initializes internal data                            */
+/*  In/out   :                                                              */
+/*  Return   : AVCDEC_SUCCESS if successed, AVCDEC_FAIL if failed.              */
+/*  Modified :                                                              */
 /* ======================================================================== */
 /* |--------|--------|----~~~~~-----|---------|---------|---------|
-   ^                                          ^read_pos			  ^data_end_pos
-   bitstreamBuffer					<--------->
-									current_word
+   ^                                          ^read_pos           ^data_end_pos
+   bitstreamBuffer                  <--------->
+                                    current_word
 
    |xxxxxxxxxxxxx----|  = current_word 32 or 16 bits
     <------------>
-	 bit_left
+     bit_left
  ======================================================================== */
 
 
 /* ======================================================================== */
-/*	Function : BitstreamNextWord()											*/
-/*	Date     : 12/4/2003													*/
-/*	Purpose  : Read up to machine word.										*/
-/*	In/out   :																*/
-/*	Return   : Next word with emulation prevention code removed. Everything
-	in the bitstream structure got modified except current_word				*/
-/*	Modified :																*/
+/*  Function : BitstreamNextWord()                                          */
+/*  Date     : 12/4/2003                                                    */
+/*  Purpose  : Read up to machine word.                                     */
+/*  In/out   :                                                              */
+/*  Return   : Next word with emulation prevention code removed. Everything
+    in the bitstream structure got modified except current_word             */
+/*  Modified :                                                              */
 /* ======================================================================== */
 
 AVCDec_Status BitstreamInit(AVCDecBitstream *stream, uint8 *buffer, int size)
@@ -83,12 +83,12 @@ AVCDec_Status BitstreamInit(AVCDecBitstream *stream, uint8 *buffer, int size)
     return AVCDEC_SUCCESS;
 }
 /* ======================================================================== */
-/*	Function : AVC_BitstreamFillCache()											*/
-/*	Date     : 1/1/2005														*/
-/*	Purpose  : Read up to machine word.										*/
-/*	In/out   :																*/
-/*	Return   : Read in 4 bytes of input data								*/
-/*	Modified :																*/
+/*  Function : AVC_BitstreamFillCache()                                         */
+/*  Date     : 1/1/2005                                                     */
+/*  Purpose  : Read up to machine word.                                     */
+/*  In/out   :                                                              */
+/*  Return   : Read in 4 bytes of input data                                */
+/*  Modified :                                                              */
 /* ======================================================================== */
 
 AVCDec_Status AVC_BitstreamFillCache(AVCDecBitstream *stream)
@@ -121,7 +121,7 @@ AVCDec_Status AVC_BitstreamFillCache(AVCDecBitstream *stream)
 
         stream->next_word = 0;
 
-        for (i = 0; i < stream->data_end_pos - stream->read_pos;i++)
+        for (i = 0; i < stream->data_end_pos - stream->read_pos; i++)
         {
             stream->next_word |= (v[i] << ((3 - i) << 3));
         }
@@ -158,14 +158,14 @@ AVCDec_Status AVC_BitstreamFillCache(AVCDecBitstream *stream)
 
 }
 /* ======================================================================== */
-/*	Function : BitstreamReadBits()											*/
-/*	Date     : 11/4/2003													*/
-/*	Purpose  : Read up to machine word.										*/
-/*	In/out   :																*/
-/*	Return   : AVCDEC_SUCCESS if successed, AVCDEC_FAIL if number of bits	*/
-/*				is greater than the word-size, AVCDEC_PACKET_LOSS or		*/
-/*				AVCDEC_NO_DATA if callback to get data fails.				*/
-/*	Modified :																*/
+/*  Function : BitstreamReadBits()                                          */
+/*  Date     : 11/4/2003                                                    */
+/*  Purpose  : Read up to machine word.                                     */
+/*  In/out   :                                                              */
+/*  Return   : AVCDEC_SUCCESS if successed, AVCDEC_FAIL if number of bits   */
+/*              is greater than the word-size, AVCDEC_PACKET_LOSS or        */
+/*              AVCDEC_NO_DATA if callback to get data fails.               */
+/*  Modified :                                                              */
 /* ======================================================================== */
 AVCDec_Status BitstreamReadBits(AVCDecBitstream *stream, int nBits, uint *code)
 {
@@ -182,14 +182,14 @@ AVCDec_Status BitstreamReadBits(AVCDecBitstream *stream, int nBits, uint *code)
 
 
 /* ======================================================================== */
-/*	Function : BitstreamShowBits()											*/
-/*	Date     : 11/4/2003													*/
-/*	Purpose  : Show up to machine word without advancing the pointer.		*/
-/*	In/out   :																*/
-/*	Return   : AVCDEC_SUCCESS if successed, AVCDEC_FAIL if number of bits	*/
-/*				is greater than the word-size, AVCDEC_NO_DATA if it needs	*/
-/*				to callback to get data.									*/
-/*	Modified :																*/
+/*  Function : BitstreamShowBits()                                          */
+/*  Date     : 11/4/2003                                                    */
+/*  Purpose  : Show up to machine word without advancing the pointer.       */
+/*  In/out   :                                                              */
+/*  Return   : AVCDEC_SUCCESS if successed, AVCDEC_FAIL if number of bits   */
+/*              is greater than the word-size, AVCDEC_NO_DATA if it needs   */
+/*              to callback to get data.                                    */
+/*  Modified :                                                              */
 /* ======================================================================== */
 AVCDec_Status BitstreamShowBits(AVCDecBitstream *stream, int nBits, uint *code)
 {
@@ -205,14 +205,14 @@ AVCDec_Status BitstreamShowBits(AVCDecBitstream *stream, int nBits, uint *code)
 }
 
 /* ======================================================================== */
-/*	Function : BitstreamRead1Bit()											*/
-/*	Date     : 11/4/2003													*/
-/*	Purpose  : Read 1 bit from the bitstream.								*/
-/*	In/out   :																*/
-/*	Return   : AVCDEC_SUCCESS if successed, AVCDEC_FAIL if number of bits	*/
-/*				is greater than the word-size, AVCDEC_PACKET_LOSS or		*/
-/*				AVCDEC_NO_DATA if callback to get data fails.				*/
-/*	Modified :																*/
+/*  Function : BitstreamRead1Bit()                                          */
+/*  Date     : 11/4/2003                                                    */
+/*  Purpose  : Read 1 bit from the bitstream.                               */
+/*  In/out   :                                                              */
+/*  Return   : AVCDEC_SUCCESS if successed, AVCDEC_FAIL if number of bits   */
+/*              is greater than the word-size, AVCDEC_PACKET_LOSS or        */
+/*              AVCDEC_NO_DATA if callback to get data fails.               */
+/*  Modified :                                                              */
 /* ======================================================================== */
 
 AVCDec_Status BitstreamRead1Bit(AVCDecBitstream *stream, uint *code)

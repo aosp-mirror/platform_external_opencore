@@ -27,7 +27,7 @@
 #include "pv_avifile_parser_utils.h"
 #endif
 
-#ifndef	PV_AVIFILE_STREAMLIST_H_INCLUDED
+#ifndef PV_AVIFILE_STREAMLIST_H_INCLUDED
 #include "pv_avifile_streamlist.h"
 #endif
 
@@ -253,13 +253,13 @@ class PVAviFileHeader: public PVAviFileParserStatus
         PV_AVI_FILE_PARSER_ERROR_TYPE       ParseMainHeader(PVFile *aFp);
 
         //File Main Header
-        PVAviFileMainHeaderStruct		    iMainHeader;
-        uint32								iHeaderTotalSize;
+        PVAviFileMainHeaderStruct           iMainHeader;
+        uint32                              iHeaderTotalSize;
 
         //vector to store stream specific info.
         //Index of the vector corresponds to stream number
         Oscl_Vector < PVAviFileStreamlist,
-        OsclMemAllocator >		iStreamList;
+        OsclMemAllocator >      iStreamList;
 
 };
 

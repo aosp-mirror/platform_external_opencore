@@ -61,7 +61,7 @@ class UnitTest_HeapBase
             return unit_test_allocator::allocate(aSize);
         }
 
-        static void* operator new(size_t ,void* aPtr)
+        static void* operator new(size_t , void* aPtr)
         {
             return aPtr;
         }

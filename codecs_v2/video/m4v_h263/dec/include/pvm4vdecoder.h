@@ -46,12 +46,12 @@ class PVM4VDecoder : public PVVideoDecoderInterface
         specifies the elementary bitstream type (0:H.263 and 1:M4V).  This function shall be called before any other
         API's are used.
          */
-        virtual bool	InitVideoDecoder(uint8 *volbuf[], int32 *volbuf_size, int32 nLayers, int32* iWidth, int32* iHeight, int *mode);
+        virtual bool    InitVideoDecoder(uint8 *volbuf[], int32 *volbuf_size, int32 nLayers, int32* iWidth, int32* iHeight, int *mode);
 
         /**
         This function frees all the memory used by the decoder library.
          */
-        virtual void	CleanUpVideoDecoder(void);
+        virtual void    CleanUpVideoDecoder(void);
 
         /**
         This function takes the compressed bitstreams of a multiple layer video and decodes the next YUV 4:2:0 frame to
@@ -77,30 +77,30 @@ class PVM4VDecoder : public PVVideoDecoderInterface
         the frame following the current frame this buffer can be recycled or freed.
 
          */
-        virtual bool	DecodeVideoFrame(uint8 *bitstream[], uint32 *timestamp, int32 *buffer_size, uint *use_ext_timestamp, uint8 *yuv);
+        virtual bool    DecodeVideoFrame(uint8 *bitstream[], uint32 *timestamp, int32 *buffer_size, uint *use_ext_timestamp, uint8 *yuv);
 
         /**
         This function sets the reference frame for the decoder. The user should allocate the memory for the reference
         frame. The size of the reference frame is determined after calling the GetVideoDimensions( ) api. The size
         should be set to ((display_height + 15)/16)*16  x ((display_width + 15)/16)*16.
          */
-        virtual void	SetReferenceYUV(uint8 *YUV);
+        virtual void    SetReferenceYUV(uint8 *YUV);
 
         /**
         This function returns the display width and height of the video bitstream.
          */
-        virtual void	GetVideoDimensions(int32 *display_width, int32 *display_height);
+        virtual void    GetVideoDimensions(int32 *display_width, int32 *display_height);
 
         /**
         This function sets the postprocessing type to be used. pp_mode =0 is no postprocessing, pp_mode=1 is deblocking
         only, pp_mode=3 is deblocking + deringing.
          */
-        virtual void	SetPostProcType(int32 mode);
+        virtual void    SetPostProcType(int32 mode);
 
         /**
         This function returns the timestamp of the most recently decoded video frame.
          */
-        virtual uint32	GetVideoTimestamp(void);
+        virtual uint32  GetVideoTimestamp(void);
 
         /**
         This function is used to get VOL header info.Currently only used to get profile and level info.
@@ -120,7 +120,7 @@ class PVM4VDecoder : public PVVideoDecoderInterface
         /**
         This function checks whether the last decoded frame is an INTRA frame or not.
          */
-        virtual bool	IsIFrame(void);
+        virtual bool    IsIFrame(void);
 
         /**
         This function performs postprocessing on the current decoded frame and writes the postprocessed frame to the
@@ -128,7 +128,7 @@ class PVM4VDecoder : public PVVideoDecoderInterface
         case the postprocessing is done in an internal yuv frame buffer. The pointer to his buffer can be obtained by
         the next GetDecOutputFrame( ) api.
          */
-        virtual void	DecPostProcess(uint8 *YUV);
+        virtual void    DecPostProcess(uint8 *YUV);
 
         /**
         This function returns the pointer to the frame to be displayed.
@@ -138,7 +138,7 @@ class PVM4VDecoder : public PVVideoDecoderInterface
         /**
         This function is not used.
          */
-        virtual bool	ResetVideoDecoder(void);
+        virtual bool    ResetVideoDecoder(void);
 
         /**
         This function is not used.

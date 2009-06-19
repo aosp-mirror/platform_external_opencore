@@ -74,7 +74,7 @@ class VirtualBuffer
         operator TBufferAccess*()
         {
             return pCurrFragPos;
-        }; 	// cast
+        };  // cast
         VirtualBuffer& operator++();                        // prefix increment
         VirtualBuffer operator++(int);                      // postfix increment
         VirtualBuffer& operator+=(const int increment);     // addition

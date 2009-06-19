@@ -29,7 +29,7 @@
 
 /*! \file oscl_opaque_type.h
     \brief The file oscl_opaque_type.h defines pure virtual classes for working
-	   with opaque types.
+       with opaque types.
 */
 
 #ifndef OSCL_OPAQUE_TYPE_H_INCLUDED

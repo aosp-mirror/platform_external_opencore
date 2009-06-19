@@ -488,7 +488,7 @@ void pv_mediainput_async_test_errorhandling::Cleanup()
         iAuthor = NULL;
     }
 
-//	iMIOComponent.DeleteInputNode();
+//  iMIOComponent.DeleteInputNode();
     iOutputFileName = NULL;
     iFileServer.Close();
 }
@@ -684,7 +684,7 @@ void pv_mediainput_async_test_errorhandling::CommandCompleted(const PVCmdRespons
     */
     if (iCheckState != iState) // Current command and the response state doesn't match
     {
-//		fprintf(iFile, "ERROR: The current state and the response's state doesn't match *******\n");
+//      fprintf(iFile, "ERROR: The current state and the response's state doesn't match *******\n");
         return;
     }
     switch (iState)
@@ -879,7 +879,7 @@ void pv_mediainput_async_test_errorhandling::CommandCompleted(const PVCmdRespons
             {
                 // Pause failed
                 if ((ErrorHandling_MediaInputNode_StateFailure_EPause_SendMIORequest == iTestErrorType) ||
-                        (ErrorHandling_MediaInputNode_Node_Cmd_Pause == iTestErrorType)	||
+                        (ErrorHandling_MediaInputNode_Node_Cmd_Pause == iTestErrorType) ||
                         (ErrorHandling_MP4Composer_Node_Cmd_Pause == iTestErrorType) ||
                         (ErrorHandling_VideoEncodeNode_Node_Cmd_Pause == iTestErrorType) ||
                         (ErrorHandling_AudioEncodeNode_Node_Cmd_Pause == iTestErrorType) ||
@@ -1100,7 +1100,7 @@ bool pv_mediainput_async_test_errorhandling::CapConfigSync1()
     {
         paramkey = _STRLIT_CHAR("x-pvmf/encoder/audio/error_start_init;valtype=bool");
     }
-    else if ((ErrorHandling_AVCVideoEncodeFailed == iTestErrorType))			          //To fail AVCEncNode on Encode
+    else if ((ErrorHandling_AVCVideoEncodeFailed == iTestErrorType))                      //To fail AVCEncNode on Encode
     {
         paramkey = _STRLIT_CHAR("x-pvmf/encoder/video/error-encode;mode=frames;valtype=uint32");
         paramkvp.value.uint32_value = 1;
@@ -1118,7 +1118,7 @@ bool pv_mediainput_async_test_errorhandling::CapConfigSync1()
         paramkvp.value.uint32_value = 1;
 
     }
-    else if ((ErrorHandling_AVCVideoEncode5FramesFailed == iTestErrorType))		//To fail AVCEncNode on Encode 5 frames
+    else if ((ErrorHandling_AVCVideoEncode5FramesFailed == iTestErrorType))     //To fail AVCEncNode on Encode 5 frames
 
     {
         paramkey = _STRLIT_CHAR("x-pvmf/encoder/video/error-encode;mode=frames;valtype=uint32");

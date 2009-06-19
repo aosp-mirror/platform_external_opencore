@@ -76,9 +76,9 @@ enum PVPDPState
 class PVLogger;
 
 class PVPlayerDatapath : public OsclTimerObject,
-            public PVMFNodeCmdStatusObserver,
-            public PVMFNodeInfoEventObserver,
-            public PVMFNodeErrorEventObserver
+        public PVMFNodeCmdStatusObserver,
+        public PVMFNodeInfoEventObserver,
+        public PVMFNodeErrorEventObserver
 {
     public:
         PVPlayerDatapath();

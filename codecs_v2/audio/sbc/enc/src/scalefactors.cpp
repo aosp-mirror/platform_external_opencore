@@ -133,9 +133,9 @@ void compute_scalefactors(enc_state_t *state)
 
     if (sbc->channel_mode == CM_JOINT_STEREO)
     {
-        Int		sb_sample_j_0[16], sb_sample_j_1[16];
+        Int     sb_sample_j_0[16], sb_sample_j_1[16];
         UWord32 tmp1, tmp2, tmp3, tmp4;
-        Int		*ptr1, *ptr2, tmp5, tmp6;
+        Int     *ptr1, *ptr2, tmp5, tmp6;
 
         sbc->join = 0;
         for (sb = 0; sb < sbc->subbands - 1; sb++)

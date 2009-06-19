@@ -30,14 +30,14 @@
 
 /********************************************************************************************
  For YUV422 to YUV420 conversion, the Input YUV422 data can be in three forms:-
-	ENDIAN_1 :
-		Cb1 Y1 Cr1 Y2 Cb2 Y3 Cr2 Y4 .....
+    ENDIAN_1 :
+        Cb1 Y1 Cr1 Y2 Cb2 Y3 Cr2 Y4 .....
 
-	ENDIAN_2 :
-		Y2 Cr1 Y1 Cb1 Y4 Cr2 Y3 Cb2 ....
+    ENDIAN_2 :
+        Y2 Cr1 Y1 Cb1 Y4 Cr2 Y3 Cb2 ....
 
-	ENDIAN_3 :
-		Y1 Cr1 Y2 Cb1 Y3 Cr2 Y4 Cb2 ....
+    ENDIAN_3 :
+        Y1 Cr1 Y2 Cb1 Y3 Cr2 Y4 Cb2 ....
 
 *********************************************************************************************/
 /* Set one of the following to 1  depending on your requirement */

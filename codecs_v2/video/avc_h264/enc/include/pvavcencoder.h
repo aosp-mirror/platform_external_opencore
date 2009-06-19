@@ -57,9 +57,9 @@ class PVAVCEncoder : public PVAVCEncoderInterface
         OSCL_IMPORT_REF virtual OsclFloat GetEncodeFrameRate(int32 aLayer);
 
         /* for avc encoder lib callback functions */
-        int		AVC_DPBAlloc(uint frame_size_in_mbs, uint num_buffers);
-        int		AVC_FrameBind(int indx, uint8** yuv);
-        void	AVC_FrameUnbind(int indx);
+        int     AVC_DPBAlloc(uint frame_size_in_mbs, uint num_buffers);
+        int     AVC_FrameBind(int indx, uint8** yuv);
+        void    AVC_FrameUnbind(int indx);
 
     private:
 
@@ -67,7 +67,7 @@ class PVAVCEncoder : public PVAVCEncoderInterface
         bool Construct(void);
         TAVCEI_RETVAL Init(TAVCEIInputFormat *aVidInFormat, TAVCEIEncodeParam *aEncParam, AVCEncParams& aEncOption);
 
-#ifdef	YUV_INPUT
+#ifdef  YUV_INPUT
         void CopyToYUVIn(uint8* YUV, int width, int height, int width_16, int height_16);
 #endif
 
@@ -80,8 +80,8 @@ class PVAVCEncoder : public PVAVCEncoderInterface
         void Check3GPPCompliance(TAVCEIEncodeParam* aEncParam, int* aEncWidth, int* aEncHeight);
 #endif
 
-        AVCProfile	mapProfile(TAVCEIProfile in);
-        AVCLevel	mapLevel(TAVCEILevel out);
+        AVCProfile  mapProfile(TAVCEIProfile in);
+        AVCLevel    mapLevel(TAVCEILevel out);
 
         /* internal enum */
         enum TAVCEncState
@@ -91,47 +91,47 @@ class PVAVCEncoder : public PVAVCEncoderInterface
             EEncoding
         };
 
-        TAVCEncState	iState;
-        uint32		iId;
+        TAVCEncState    iState;
+        uint32      iId;
 
         /* Pure virtuals from OsclActiveObject implemented in this derived class */
-        int		iSrcWidth;
-        int		iSrcHeight;
-        int		iFrameOrientation;
-        OsclFloat		iSrcFrameRate;
-        int		iEncWidth;
-        int		iEncHeight;
-        OsclFloat	iEncFrameRate;
-        TAVCEIVideoFormat 	iVideoFormat;
+        int     iSrcWidth;
+        int     iSrcHeight;
+        int     iFrameOrientation;
+        OsclFloat       iSrcFrameRate;
+        int     iEncWidth;
+        int     iEncHeight;
+        OsclFloat   iEncFrameRate;
+        TAVCEIVideoFormat   iVideoFormat;
 
         /* variables needed in operation */
         AVCHandle iAvcHandle;
         AVCFrameIO iVidIn;
-        uint8*	iYUVIn;
-        uint8*	iVideoIn;
-        uint8*	iVideoOut;
-        uint32	iTimeStamp;
+        uint8*  iYUVIn;
+        uint8*  iVideoIn;
+        uint8*  iVideoOut;
+        uint32  iTimeStamp;
         uint32  iPacketSize;
-        uint8*	iOverrunBuffer;
-        int		iOBSize;
+        uint8*  iOverrunBuffer;
+        int     iOBSize;
         AVCEnc_Status iEncStatus;
-        bool	iIDR;
-        int		iDispOrd;
+        bool    iIDR;
+        int     iDispOrd;
 
-        uint8*	iDPB;
-        bool*	iFrameUsed;
+        uint8*  iDPB;
+        bool*   iFrameUsed;
         uint8** iFramePtr;
-        int		iNumFrames;
+        int     iNumFrames;
 
         /* Tables in color coversion */
-        uint8 *	iY_Table;
-        uint16*	iCb_Table;
-        uint16*	iCr_Table;
-        uint16*	ipCb_Table;
-        uint16*	ipCr_Table;
+        uint8 * iY_Table;
+        uint16* iCb_Table;
+        uint16* iCr_Table;
+        uint16* ipCb_Table;
+        uint16* ipCr_Table;
 
 
-        int		iNumLayer;
+        int     iNumLayer;
 };
 
 #endif

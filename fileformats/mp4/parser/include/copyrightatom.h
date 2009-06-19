@@ -49,7 +49,7 @@ class CopyRightAtom : public FullAtom
         }
 
     private:
-        uint16 	     _language_code; // (15bits) padded with a single bit when rendering
+        uint16       _language_code; // (15bits) padded with a single bit when rendering
         OSCL_wHeapString<OsclMemAllocator>  _copyRightNotice;
 };
 

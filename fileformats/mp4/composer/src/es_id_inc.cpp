@@ -17,8 +17,8 @@
  */
 /*
     This ESID_Inc Class contains information on the Elementary Stream that will
-	be replaced when streaming to a client.  The file format replaces the actual
-	ES_Descriptor with this object that references the actual descriptor.
+    be replaced when streaming to a client.  The file format replaces the actual
+    ES_Descriptor with this object that references the actual descriptor.
 */
 
 #define IMPLEMENT_ES_ID_Inc

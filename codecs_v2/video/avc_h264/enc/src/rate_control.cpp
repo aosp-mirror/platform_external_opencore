@@ -102,7 +102,7 @@ AVCEnc_Status RCDetermineFrameNum(AVCEncObject *encvid, AVCRateControl *rateCtrl
             return AVCENC_FAIL;  /* frame skip required to maintain the target bit rate. */
         }
 
-        RCUpdateBuffer(video, rateCtrl, frameInc - rateCtrl->skip_next_frame);	/* in case more frames dropped */
+        RCUpdateBuffer(video, rateCtrl, frameInc - rateCtrl->skip_next_frame);  /* in case more frames dropped */
 
         *frameNum = currFrameNum;
 
@@ -209,7 +209,7 @@ AVCEnc_Status InitRateControlModule(AVCHandle *avcHandle)
             {
                 goto CLEANUP_RC;
             }
-            for (j = 0; j < 32; j++)	oscl_memset(&(rateCtrl->pMP->pRDSamples[i][j]), 0, sizeof(RDInfo));
+            for (j = 0; j < 32; j++)    oscl_memset(&(rateCtrl->pMP->pRDSamples[i][j]), 0, sizeof(RDInfo));
         }
         rateCtrl->pMP->frameRange = (int)(rateCtrl->frame_rate * 1.0); /* 1.0s time frame*/
         rateCtrl->pMP->frameRange = AVC_MAX(rateCtrl->pMP->frameRange, 5);
@@ -272,14 +272,12 @@ AVCEnc_Status InitRateControlModule(AVCHandle *avcHandle)
         {
             if (bpp <= L1)
                 qp = 35;
+            else if (bpp <= L2)
+                qp = 25;
+            else if (bpp <= L3)
+                qp = 20;
             else
-                if (bpp <= L2)
-                    qp = 25;
-                else
-                    if (bpp <= L3)
-                        qp = 20;
-                    else
-                        qp = 15;
+                qp = 15;
             rateCtrl->initQP = qp;
         }
 
@@ -361,7 +359,7 @@ void RCInitFrameQP(AVCEncObject *encvid)
         rateCtrl->numFrameBits = 0; // reset
 
         /* update pMP->framePos */
-        if (++pMP->framePos == pMP->frameRange)	pMP->framePos = 0;
+        if (++pMP->framePos == pMP->frameRange) pMP->framePos = 0;
 
         if (rateCtrl->T == 0)
         {
@@ -378,8 +376,8 @@ void RCInitFrameQP(AVCEncObject *encvid)
         pMP->target_bits = rateCtrl->T;
         pMP->QP  = video->QPy;
 
-        pMP->mad =	(OsclFloat)rateCtrl->totalSAD / video->PicSizeInMbs;//ComputeFrameMAD(video, rateCtrl);
-        if (pMP->mad < MAD_MIN)	pMP->mad = MAD_MIN; /* MAD_MIN is defined as 1 in mp4def.h */
+        pMP->mad = (OsclFloat)rateCtrl->totalSAD / video->PicSizeInMbs; //ComputeFrameMAD(video, rateCtrl);
+        if (pMP->mad < MAD_MIN) pMP->mad = MAD_MIN; /* MAD_MIN is defined as 1 in mp4def.h */
 
         pMP->bitrate = rateCtrl->bitRate; /* calculated in RCVopQPSetting */
         pMP->framerate = rateCtrl->frame_rate;
@@ -393,7 +391,7 @@ void RCInitFrameQP(AVCEncObject *encvid)
         video->QPy = rateCtrl->initQP;
     }
 
-//	printf(" %d ",video->QPy);
+//  printf(" %d ",video->QPy);
 
     if (video->CurrPicNum == 0 && encvid->outOfBandParamSet == FALSE)
     {
@@ -402,7 +400,7 @@ void RCInitFrameQP(AVCEncObject *encvid)
     }
 
     // need this for motion estimation
-    encvid->lambda_mode = QP2QUANT[AVC_MAX(0,video->QPy-SHIFT_QP)];
+    encvid->lambda_mode = QP2QUANT[AVC_MAX(0, video->QPy-SHIFT_QP)];
     encvid->lambda_motion = LAMBDA_FACTOR(encvid->lambda_mode);
     return ;
 }
@@ -421,7 +419,7 @@ void calculateQuantizer_Multipass(AVCEncObject *encvid, AVCCommonObj *video,
 
     if (rateCtrl->T <= 0 || rateCtrl->totalSAD == 0)
     {
-        if (rateCtrl->T < 0)	rateCtrl->Qc = RC_MAX_QUANT;
+        if (rateCtrl->T < 0)    rateCtrl->Qc = RC_MAX_QUANT;
         return;
     }
 
@@ -429,7 +427,7 @@ void calculateQuantizer_Multipass(AVCEncObject *encvid, AVCCommonObj *video,
     /* current frame QP estimation */
     curr_target = rateCtrl->T;
     curr_mad = (OsclFloat)rateCtrl->totalSAD / video->PicSizeInMbs;
-    if (curr_mad < MAD_MIN)	curr_mad = MAD_MIN; /* MAD_MIN is defined as 1 in mp4def.h */
+    if (curr_mad < MAD_MIN) curr_mad = MAD_MIN; /* MAD_MIN is defined as 1 in mp4def.h */
     curr_RD  = (OsclFloat)curr_target / curr_mad;
 
     if (rateCtrl->skip_next_frame == -1) // previous was skipped
@@ -488,7 +486,7 @@ void calculateQuantizer_Multipass(AVCEncObject *encvid, AVCCommonObj *video,
         }
         else
         {
-            //		rateCtrl->Qc =(Int)(prev_QP * M4VENC_SQRT(prev_RD/curr_RD) + 0.9);
+            //      rateCtrl->Qc =(Int)(prev_QP * M4VENC_SQRT(prev_RD/curr_RD) + 0.9);
 
             if (prev_RD / curr_RD > 0.5 && prev_RD / curr_RD < 2.0)
                 Qstep = (int)(prev_QP * (oscl_sqrt(prev_RD / curr_RD) + prev_RD / curr_RD) / 2.0 + 0.9); /* Quadratic and linear approximation */
@@ -499,13 +497,13 @@ void calculateQuantizer_Multipass(AVCEncObject *encvid, AVCCommonObj *video,
         // When mad is already low, lower bound on Qc doesn't have to be small.
         // Note, this doesn't work well for low complexity clip encoded at high bit rate
         // it doesn't hit the target bit rate due to this QP lower bound.
-        ///	if((curr_mad < 8) && (rateCtrl->Qc < 12))	rateCtrl->Qc = 12;
-        //	else	if((curr_mad < 128) && (rateCtrl->Qc < 3)) rateCtrl->Qc = 3;
+        /// if((curr_mad < 8) && (rateCtrl->Qc < 12))   rateCtrl->Qc = 12;
+        //  else    if((curr_mad < 128) && (rateCtrl->Qc < 3)) rateCtrl->Qc = 3;
 
         rateCtrl->Qc = Qstep2QP(Qstep);
 
         if (rateCtrl->Qc < RC_MIN_QUANT) rateCtrl->Qc = RC_MIN_QUANT;
-        if (rateCtrl->Qc > RC_MAX_QUANT)	rateCtrl->Qc = RC_MAX_QUANT;
+        if (rateCtrl->Qc > RC_MAX_QUANT)    rateCtrl->Qc = RC_MAX_QUANT;
     }
 
     /* active bit resource protection */
@@ -543,7 +541,7 @@ void targetBitCalculation(AVCEncObject *encvid, AVCCommonObj *video, AVCRateCont
     /* ---------------------------------------------------------------------------------------------------*/
     /* target calculation */
     curr_mad = (OsclFloat)rateCtrl->totalSAD / video->PicSizeInMbs;
-    if (curr_mad < MAD_MIN)	curr_mad = MAD_MIN; /* MAD_MIN is defined as 1 in mp4def.h */
+    if (curr_mad < MAD_MIN) curr_mad = MAD_MIN; /* MAD_MIN is defined as 1 in mp4def.h */
     diff_counter_BTsrc = diff_counter_BTdst = 0;
     pMP->diff_counter = 0;
 
@@ -600,7 +598,7 @@ void targetBitCalculation(AVCEncObject *encvid, AVCCommonObj *video, AVCRateCont
                 curr_mad <= pMP->aver_mad_prev*1.1 && pMP->counter_BTsrc < pMP->counter_BTdst)
             diff_counter_BTsrc = 1;
 
-        if (--pMP->overlapped_win_size <= 0)	pMP->overlapped_win_size = 0;
+        if (--pMP->overlapped_win_size <= 0)    pMP->overlapped_win_size = 0;
     }
 
 
@@ -612,8 +610,8 @@ void targetBitCalculation(AVCEncObject *encvid, AVCCommonObj *video, AVCRateCont
 
     /* Second, set another upper bound for current bit allocation: 4-5*bitrate/framerate */
     bound = 50;
-//	if(video->encParams->RC_Type == CBR_LOWDELAY)
-//  not necessary		bound = 10;  -- For Low delay */
+//  if(video->encParams->RC_Type == CBR_LOWDELAY)
+//  not necessary       bound = 10;  -- For Low delay */
 
     diff_counter_BTsrc =  AVC_MIN(diff_counter_BTsrc, bound);
     diff_counter_BTdst =  AVC_MIN(diff_counter_BTdst, bound);
@@ -624,7 +622,7 @@ void targetBitCalculation(AVCEncObject *encvid, AVCCommonObj *video, AVCRateCont
     curr_counter_diff = prev_counter_diff + (diff_counter_BTdst - diff_counter_BTsrc);
 
     if (AVC_ABS(prev_counter_diff) >= rateCtrl->max_BitVariance_num || AVC_ABS(curr_counter_diff) >= rateCtrl->max_BitVariance_num)
-    {	//diff_counter_BTsrc = diff_counter_BTdst = 0;
+    {   //diff_counter_BTsrc = diff_counter_BTdst = 0;
 
         if (curr_counter_diff > rateCtrl->max_BitVariance_num && diff_counter_BTdst)
         {
@@ -705,7 +703,7 @@ void RCInitChromaQP(AVCEncObject *encvid)
 
     video->QPy_div_6 = (currMB->QPy * 43) >> 8;
     video->QPy_mod_6 = currMB->QPy - 6 * video->QPy_div_6;
-    currMB->QPc = video->QPc = mapQPi2QPc[AVC_CLIP3(0,51,currMB->QPy + video->currPicParams->chroma_qp_index_offset)];
+    currMB->QPc = video->QPc = mapQPi2QPc[AVC_CLIP3(0, 51, currMB->QPy + video->currPicParams->chroma_qp_index_offset)];
     video->QPc_div_6 = (video->QPc * 43) >> 8;
     video->QPc_mod_6 = video->QPc - 6 * video->QPc_div_6;
 
@@ -713,11 +711,11 @@ void RCInitChromaQP(AVCEncObject *encvid)
     q_bits = 4 + video->QPy_div_6;
     if (video->slice_type == AVC_I_SLICE)
     {
-        encvid->qp_const = 682 << q_bits;		// intra
+        encvid->qp_const = 682 << q_bits;       // intra
     }
     else
     {
-        encvid->qp_const = 342 << q_bits;		// inter
+        encvid->qp_const = 342 << q_bits;       // inter
     }
 
     q_bits = 4 + video->QPc_div_6;
@@ -730,7 +728,7 @@ void RCInitChromaQP(AVCEncObject *encvid)
         encvid->qp_const_c = 342 << q_bits;    // inter
     }
 
-    encvid->lambda_mode = QP2QUANT[AVC_MAX(0,currMB->QPy-SHIFT_QP)];
+    encvid->lambda_mode = QP2QUANT[AVC_MAX(0, currMB->QPy-SHIFT_QP)];
     encvid->lambda_motion = LAMBDA_FACTOR(encvid->lambda_mode);
 
     return ;
@@ -833,8 +831,8 @@ AVCEnc_Status RCUpdateFrame(AVCEncObject *encvid)
         rateCtrl->T = pMP->target_bits = rateCtrl->TMN_TH - rateCtrl->TMN_W;
         pMP->diff_counter -= diff_BTCounter;
 
-        rateCtrl->Rc = rateCtrl->numFrameBits;	/* Total Bits for current frame */
-        rateCtrl->Hc = rateCtrl->NumberofHeaderBits;	/* Total Bits in Header and Motion Vector */
+        rateCtrl->Rc = rateCtrl->numFrameBits;  /* Total Bits for current frame */
+        rateCtrl->Hc = rateCtrl->NumberofHeaderBits;    /* Total Bits in Header and Motion Vector */
 
         /* BX_RC */
         updateRateControl(rateCtrl, nal_type);
@@ -862,7 +860,7 @@ void AVCSaveRDSamples(MultiPass *pMP, int counter_samples)
 
 void updateRateControl(AVCRateControl *rateCtrl, int nal_type)
 {
-    int	 frame_bits;
+    int  frame_bits;
     MultiPass *pMP = rateCtrl->pMP;
 
     /* BX rate contro\l */
@@ -906,7 +904,7 @@ double ComputeFrameMAD(AVCCommonObj *video, AVCRateControl *rateCtrl)
     double TotalMAD;
     int i;
     TotalMAD = 0.0;
-    for (i = 0;i < (int)video->PicSizeInMbs;i++)
+    for (i = 0; i < (int)video->PicSizeInMbs; i++)
         TotalMAD += rateCtrl->MADofMB[i];
     TotalMAD /= video->PicSizeInMbs;
     return TotalMAD;

@@ -55,8 +55,8 @@ terms listed above has been obtained from the copyright holder.
 
 ------------------------------------------------------------------------------
 */
-#ifndef	_QGAIN475_H_
-#define	_QGAIN475_H_
+#ifndef _QGAIN475_H_
+#define _QGAIN475_H_
 #define qgain475_h "$Id $"
 
 /*----------------------------------------------------------------------------

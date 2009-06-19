@@ -80,7 +80,7 @@ MediaBufferManager::freeBuf(MediaBuffer *buf)
 
     int32 i = 0;
     MediaBuffer **x;
-    for (x = _pusedBufVec->begin();x < _pusedBufVec->end(); x++)
+    for (x = _pusedBufVec->begin(); x < _pusedBufVec->end(); x++)
     {
         MediaBuffer *used = (MediaBuffer*)(*_pusedBufVec)[i];
         if (used == buf)

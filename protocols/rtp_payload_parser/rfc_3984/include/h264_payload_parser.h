@@ -80,16 +80,16 @@ class H264PayloadParser : public IPayloadParser
         /**
          * Parse RTP payload in pass-through mode, basically treat all the input rtp packet as NALU packet
          * without extra parsing.
-         * @param aRtpPacket,	input rtp packet
-         * @param accessUnit,	output media data
+         * @param aRtpPacket,   input rtp packet
+         * @param accessUnit,   output media data
          * @return RTP_PAYLOAD_PARSER_RET_CODE code
          **/
         /**
           * Parse RTP payload for non-interleaved mode(including single NAL unit mode)
           *
-          * @param aRtpPacket,	input rtp packet
-           * @param nal_type,		input nal type to avoid uncessary parsing operation
-          * @param accessUnit,	output media data
+          * @param aRtpPacket,  input rtp packet
+           * @param nal_type,       input nal type to avoid uncessary parsing operation
+          * @param accessUnit,  output media data
           * @return RTP_PAYLOAD_PARSER_RET_CODE code
           **/
         PayloadParserStatus parseRTPPayload_For_Non_InterleavedMode(const Payload& inputPacket,
@@ -110,9 +110,9 @@ class H264PayloadParser : public IPayloadParser
          * message for the input RTP packet, and thus make sure the priority queue always buffers the same number of
          * NAL units after the initial buffering.
          *
-         * @param aRtpPacket,	input rtp packet
-          * @param nal_type,		input nal type to avoid uncessary parsing operation
-         * @param accessUnit,	output media data
+         * @param aRtpPacket,   input rtp packet
+          * @param nal_type,        input nal type to avoid uncessary parsing operation
+         * @param accessUnit,   output media data
          * @return RTP_PAYLOAD_PARSER_RET_CODE code
          **/
         PayloadParserStatus parseRTPPayload_For_InterleavedMode(const Payload& inputPacket, uint8 nal_type,
@@ -122,10 +122,10 @@ class H264PayloadParser : public IPayloadParser
          * Parse RTP payload to generate single output media message synchronously, which is used for both non-interleaved mode
          * and interleaved mode.
          *
-         * @param aRtpPacket,	input rtp packet
-          * @param nal_type,		input nal type to avoid uncessary parsing operation
-         * @param accessUnit,	output media data
-         * @param rtp_payload_ptr_offset,	the offset of the rtp payload parser pointer, especially used for handling MTAP packet
+         * @param aRtpPacket,   input rtp packet
+          * @param nal_type,        input nal type to avoid uncessary parsing operation
+         * @param accessUnit,   output media data
+         * @param rtp_payload_ptr_offset,   the offset of the rtp payload parser pointer, especially used for handling MTAP packet
          * @return RTP_PAYLOAD_PARSER_RET_CODE code
          **/
         PayloadParserStatus parseRTPPayload_For_SingleMessageOutput(const Payload& inputPacket, uint8 nal_type,
@@ -135,7 +135,7 @@ class H264PayloadParser : public IPayloadParser
         /**
          * Check if data queue flush is needed
          *
-         * @param aRtpPacket,	input rtp packet
+         * @param aRtpPacket,   input rtp packet
          * @return true => data queue flush is needed
          **/
         inline bool isFlushNeeded(const Payload& rtpPacket);
@@ -152,7 +152,7 @@ class H264PayloadParser : public IPayloadParser
          * Check if the current packetization mode is interleaved mode. Right now use interleaving depth, later we may have a better
          * way. That's why I keep this as a function
          *
-           * @param nal_type,	input nal type to avoid uncessary parsing operation
+           * @param nal_type,   input nal type to avoid uncessary parsing operation
          * @return true => interleave mode ; false => non-interleaved mode
          **/
         bool isInterleaveMode()
@@ -162,23 +162,23 @@ class H264PayloadParser : public IPayloadParser
 
         /**
          * For interleave mode, there are the required nal types (STAP-B, MTAPs, FU-B/FU-A),
-         * @param nal_type,		input nal type to avoid uncessary parsing operation
+         * @param nal_type,     input nal type to avoid uncessary parsing operation
          * @return true => required nal type using in interleave mode ;
          *         false => not required nal type which is probably not usde in interleave mode
          **/
         bool isRequiredTypeForInterleaveMode(const uint8 nal_type)
         {
-            return (nal_type == H264_RTP_PAYLOAD_STAP_B ||	// STAP-B(Single-Time Aggregation Packet with DON(Decoding Order Number)
-                    nal_type == H264_RTP_PAYLOAD_MTAP16 ||	// MTAP16(Multi-Time Aggregation Packet with 16-bit time stamp offset
-                    nal_type == H264_RTP_PAYLOAD_MTAP24 ||	// MTAP24(Multi-Time Aggregation Packet with 24-bit time stamp offset
-                    nal_type == H264_RTP_PAYLOAD_FU_B   ||	// FU-B(Fragmentation Unit with DON(Decoding Order Number))
+            return (nal_type == H264_RTP_PAYLOAD_STAP_B ||  // STAP-B(Single-Time Aggregation Packet with DON(Decoding Order Number)
+                    nal_type == H264_RTP_PAYLOAD_MTAP16 ||  // MTAP16(Multi-Time Aggregation Packet with 16-bit time stamp offset
+                    nal_type == H264_RTP_PAYLOAD_MTAP24 ||  // MTAP24(Multi-Time Aggregation Packet with 24-bit time stamp offset
+                    nal_type == H264_RTP_PAYLOAD_FU_B   ||  // FU-B(Fragmentation Unit with DON(Decoding Order Number))
                     (nal_type == H264_RTP_PAYLOAD_FU_A && isInterleaveMode()));  // FU-A(Fragmentation Unit without DON follows the first FU-B
         }
 
         /**
          * For interleave mode, besides the required nal types (STAP-B, MTAPs, FU-B/FU-A),
          * there are exceptional nal types that can be used for interleave mode, e.g. SPS and PPS
-         * @param nal_type,		input nal type to avoid uncessary parsing operation
+         * @param nal_type,     input nal type to avoid uncessary parsing operation
          * @return true => exceptional nal type using in interleave mode ;
          *         false => not exceptional nal type which is prohibited in interleave mode
          **/
@@ -197,8 +197,8 @@ class H264PayloadParser : public IPayloadParser
         /**
          * Check if the current input packet is the same as the previous input for the return code: RTP_PAYLOAD_PARSER_INPUT_NOT_EXHAUSTED
          *
-         * @param aRtpPacket,	input rtp packet
-          * @param nal_type,		input nal type to avoid uncessary parsing operation
+         * @param aRtpPacket,   input rtp packet
+          * @param nal_type,        input nal type to avoid uncessary parsing operation
          * @return true => ignore the current packet ; false => will use this packet
          **/
         inline bool isCurrRTPPacketIgnored(const Payload& inputPacket, const uint8 nal_type);
@@ -208,11 +208,11 @@ class H264PayloadParser : public IPayloadParser
          * used up, then we need to exit. In addition, get the actual utility object based on the input nal type. This utility object is used to
          * get marker info, timestamp and memory fragment for different nal types. Here I used polymorphism to address the multiple-type based handling.
          *
-         * @param aRtpPacket,	input rtp packet
-          * @param nal_type,		input nal type to avoid uncessary parsing operation
-         * @param aMediaDataIn,	output media data imp object
-         * @param aMemFragIn,	output memory fragment to hold the actual payload
-         * @param rtp_payload_ptr_offset,	the offset of the rtp payload parser pointer, used to check if the rtp payload is parsed all
+         * @param aRtpPacket,   input rtp packet
+          * @param nal_type,        input nal type to avoid uncessary parsing operation
+         * @param aMediaDataIn, output media data imp object
+         * @param aMemFragIn,   output memory fragment to hold the actual payload
+         * @param rtp_payload_ptr_offset,   the offset of the rtp payload parser pointer, used to check if the rtp payload is parsed all
          * @return true => ignore the current packet ; false => will use this packet
          **/
         inline bool getInputSetup(const Payload& inputPacket, const uint8 nal_type,
@@ -220,9 +220,9 @@ class H264PayloadParser : public IPayloadParser
         /**
          * Create utility table, iUtilityTable. In order to remove run-time overhead of dynamic creation, we create the utility objects (4) all upfront
          * Basically, iUtilityTable[0] => STAP packet handling
-         *			  iUtilityTable[1] => FU packet handling
-         *			  iUtilityTable[2] => MTAP packet handling
-         *			  iUtilityTable[3] => NALU(or undefined nal type) packet handling
+         *            iUtilityTable[1] => FU packet handling
+         *            iUtilityTable[2] => MTAP packet handling
+         *            iUtilityTable[3] => NALU(or undefined nal type) packet handling
          *
          * @return true => success ; false => failure
          **/
@@ -246,11 +246,11 @@ class H264PayloadParser : public IPayloadParser
 
         // These two variables are "global" for all utility objects to remove static variables defined in h264_payload_parser_utility.h
         uint32 iTimestampForFU;
-        uint32 iIsFragmentedBitMask; // bit 1-0:	0 completed NAL
-        //				1 starting FU
-        //				2 intermediate FU
-        //				3 ending FU
-        // bit 2:	0 = FU-A 1 = FU-B
+        uint32 iIsFragmentedBitMask; // bit 1-0:    0 completed NAL
+        //              1 starting FU
+        //              2 intermediate FU
+        //              3 ending FU
+        // bit 2:   0 = FU-A 1 = FU-B
         // bit 10-3:FU header: S E R Type
         // >=bit11: counter for intermediate FUs
 };

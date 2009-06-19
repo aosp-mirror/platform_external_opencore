@@ -52,7 +52,7 @@ OsclSocketStats::OsclSocketStats()
     iLogger = PVLogger::GetLoggerObject("OsclSocketStats");
     iSock = NULL;
     iServ = NULL;
-    for (uint32 i = 0;i < OsclSocketStats_NUM_ACTIVE_REQUESTS;i++)
+    for (uint32 i = 0; i < OsclSocketStats_NUM_ACTIVE_REQUESTS; i++)
     {
         iLastCompletionTime[i] = (-1);
         iExcessPollEvents[i] = 0;
@@ -108,7 +108,7 @@ void OsclSocketStats::Log(TPVSocketFxn aFxn)
     {
         int32 len = 0;
         iLogStr[0] = '\0';
-        for (uint32 i = 0;i < iEvents[aFxn].size();i++)
+        for (uint32 i = 0; i < iEvents[aFxn].size(); i++)
         {
             if (PV_SOCKET_STR_LEN - len <= 0)
                 break;
@@ -140,7 +140,7 @@ void OsclSocketStats::Log(TPVSocketFxn aFxn)
         int32 len = 0;
         iLogStr[0] = '\0';
         int32 lastIndex = (-1);
-        for (uint32 i = 0;i < iPollEvents[aFxn].size();i++)
+        for (uint32 i = 0; i < iPollEvents[aFxn].size(); i++)
         {
             if (PV_SOCKET_STR_LEN - len <= 0)
                 break;
@@ -183,7 +183,7 @@ void OsclSocketStats::Log()
     {
         int32 len = 0;
         iLogStr[0] = '\0';
-        for (uint32 i = 0;i < iEvents[0].size();i++)
+        for (uint32 i = 0; i < iEvents[0].size(); i++)
         {
             if (PV_SOCKET_STR_LEN - len <= 0)
                 break;
@@ -211,7 +211,7 @@ void OsclSocketStats::Log()
 
 void OsclSocketStats::LogAndDump()
 {
-    for (uint32 i = 0;i < OsclSocketStats_NUM_ACTIVE_REQUESTS;i++)
+    for (uint32 i = 0; i < OsclSocketStats_NUM_ACTIVE_REQUESTS; i++)
     {
         if (iEvents[i].size()
                 || iPollEvents[i].size())
@@ -289,7 +289,7 @@ void OsclSocketServStats::Log(TOsclSocketServStatEvent aEvent)
 
 void OsclSocketServStats::Clear()
 {
-    for (uint32 i = 0;i < EOsclSocketServ_LastEvent;i++)
+    for (uint32 i = 0; i < EOsclSocketServ_LastEvent; i++)
         iEvents[i] = 0;
 }
 
@@ -299,7 +299,7 @@ void OsclSocketServStats::LogAndDump()
         return;
     LOGINFOMED((0, "OsclSocketStats(Serv=0x%x): ---Begin Stats--------", iServ));
     ShowTuneables();
-    for (uint32 i = 0;i < EOsclSocketServ_LastEvent;i++)
+    for (uint32 i = 0; i < EOsclSocketServ_LastEvent; i++)
         Log((TOsclSocketServStatEvent)i);
     LOGINFOMED((0, "OsclSocketStats(Serv=0x%x): ---End Stats----------", iServ));
     Clear();

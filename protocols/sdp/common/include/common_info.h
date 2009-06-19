@@ -26,10 +26,10 @@
 #include "sdp_memory.h"
 #include "pvmi_kvp.h"
 
-#define MAX_METRICS_NAME	7
-#define ASSET_NAME_SIZE		13
-#define MAX_ALTERNATIVES	16
-#define ALT_SIZE			128
+#define MAX_METRICS_NAME    7
+#define ASSET_NAME_SIZE     13
+#define MAX_ALTERNATIVES    16
+#define ALT_SIZE            128
 
 
 //code in basemediainfoparser.cpp depends on FIRST_STATIC_PAYLOAD == 0
@@ -108,7 +108,7 @@ class AssetInfoType
         {
             URL = NULL;
             int ii;
-            for (ii = 0;ii < ASSET_NAME_SIZE;ii++)
+            for (ii = 0; ii < ASSET_NAME_SIZE; ii++)
             {
                 Box[ii] = NULL;
             }
@@ -122,7 +122,7 @@ class AssetInfoType
             oClassificationPresent = false;
             oKeyWordsPresent = false;
             iNumKeyWords = 0;
-            for (ii = 0;ii < MAX_ASSET_INFO_KEYWORDS; ii++)
+            for (ii = 0; ii < MAX_ASSET_INFO_KEYWORDS; ii++)
             {
                 KeyWords[ii] = NULL;
             }
@@ -187,7 +187,7 @@ class AssetInfoType
         {
             URL = a.URL;
             int ii = 0;
-            for (ii = 0;ii < ASSET_NAME_SIZE; ii++)
+            for (ii = 0; ii < ASSET_NAME_SIZE; ii++)
             {
                 Box[ii] = a.Box[ii];
             }
@@ -201,7 +201,7 @@ class AssetInfoType
             oClassificationPresent = a.oClassificationPresent;
             oKeyWordsPresent = a.oKeyWordsPresent;
             iNumKeyWords = a.iNumKeyWords;
-            for (ii = 0;ii < MAX_ASSET_INFO_KEYWORDS; ii++)
+            for (ii = 0; ii < MAX_ASSET_INFO_KEYWORDS; ii++)
             {
                 KeyWords[ii] = a.KeyWords[ii];
             }
@@ -218,7 +218,7 @@ class AssetInfoType
 struct altGpBWType
 {
 
-    uint32 group;	//4 bits represent one alt-id hence "group" can represent
+    uint32 group;   //4 bits represent one alt-id hence "group" can represent
     //a group of 8 alt-ids. e.g for a=alt-group=BW:AS:28=1,2,4,5
     //group represent 1,2,4,5. Hence group=0x5421
     uint32 val;
@@ -228,7 +228,7 @@ struct altGpBWType
 struct altGpLANGType
 {
 
-    uint32 group;	//4 bits represent one alt-id hence "group" can represent
+    uint32 group;   //4 bits represent one alt-id hence "group" can represent
     //a group of 8 alt-ids. e.g for a=alt-group=LANG:RFC3066:en-US=1,2,4,5
     //group represent 1,2,4,5. Hence group=0x5421
     OSCL_HeapString<SDPParserAlloc> val;
@@ -241,6 +241,6 @@ typedef struct _connectionInfo
     OSCL_HeapString<SDPParserAlloc> connectionAddress;
 
 
-}connectionInfo;
+} connectionInfo;
 
 #endif

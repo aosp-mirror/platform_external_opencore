@@ -54,7 +54,7 @@ typedef enum _PVMFDataSourcePositionMode
     PVMF_SET_DATA_SOURCE_POSITION_MODE_NOW = 0,
     PVMF_SET_DATA_SOURCE_POSITION_END_OF_CURRENT_PLAY_ELEMENT = 1,
     PVMF_SET_DATA_SOURCE_POSITION_MODE_END_OF_CURRENT_PLAY_SESSION = 2,
-}PVMFDataSourcePositionMode;
+} PVMFDataSourcePositionMode;
 
 class PVMFDataSourcePositionParams
 {
@@ -77,7 +77,7 @@ class PVMFDataSourcePositionParams
         PVMFTimestamp              iActualMediaDataTS;
         bool                       iSeekToSyncPoint;
         uint32                     iStreamID;
-        char*					   iPlaylistUri;
+        char*                      iPlaylistUri;
 };
 
 

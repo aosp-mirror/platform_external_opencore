@@ -200,7 +200,7 @@ TrackAtom::TrackAtom(MP4_FF_FILE *fp,
                 count -= _ptrackHeader->getSize();
             }
             else if (atomType == MEDIA_ATOM)
-            {	// mdia
+            {   // mdia
                 if (_pmediaAtom != NULL)
                 {
                     _success = false;

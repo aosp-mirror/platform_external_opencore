@@ -212,7 +212,7 @@ class LCEntry
         }
 
 #ifdef PVANALYZER /* --------SE Analyzer Tool -------- */
-#define ANALYZER_SE 0x0020		// (Assume tag is fixed)
+#define ANALYZER_SE 0x0020      // (Assume tag is fixed)
         void StatusShow(uint8 oldStatus, uint8 newStatus)
         {
             void Show245(uint16 tag, uint16 indent, char* inString);

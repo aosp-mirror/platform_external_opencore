@@ -40,10 +40,10 @@
 /************************************************************************/
 /*  Headerfile Include                                                  */
 /************************************************************************/
-#include	"h245pri.h"
-#include	"semsgque.h"
-#include	"lcentry.h"
-#include	"lcblccmn.h"
+#include    "h245pri.h"
+#include    "semsgque.h"
+#include    "lcentry.h"
+#include    "lcblccmn.h"
 
 
 /************************************************************************/
@@ -185,7 +185,7 @@ void LCBLCCmn::MsgOpenAckSend(uint16 forwardLcn, PS_ReverseData p_ReverseData)
                 sizeof(S_ForwardMultiplexAckParameters)) ;
 
     // EncryptionSync is OFF
-    openLogicalChannelAck.option_of_encryptionSync = false;	/* IMP20 */
+    openLogicalChannelAck.option_of_encryptionSync = false; /* IMP20 */
 
     h245Msg.Type1 = H245_MSG_RPS ;
     h245Msg.Type2 = MSGTYP_LCBLC_OP_ACK ;
@@ -475,11 +475,11 @@ void LCBLCCmn::PtvRlsIdcSend(uint32 forwardLcn, PS_Source p_Source , PS_OlcRejec
     S_InfHeader            infHeader ;
     S_SourceCause_LcBlc    sourceCause_LcBlc ;
 
-    if (p_Source->index == 0)	/* Source == User */
+    if (p_Source->index == 0)   /* Source == User */
     {
         sourceCause_LcBlc.Source = Src_USER ;
     }
-    else						/* Source == LCSE */
+    else                        /* Source == LCSE */
     {
         if (reverseLcn == -1)  /* Uni-Directional */
         {

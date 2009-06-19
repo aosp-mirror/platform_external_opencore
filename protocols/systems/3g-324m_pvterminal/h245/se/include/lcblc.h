@@ -321,7 +321,7 @@ class LCBLC : public SEBase, public SETimerObserver
         {
             State = state;
 
-            if (State == RELEASED)	Print("State -> RELEASED\n");
+            if (State == RELEASED)  Print("State -> RELEASED\n");
             else if (State == AWAITING_ESTABLISHMENT) Print("State -> AWAITING_ESTABLISHMENT\n");
             else if (State == ESTABLISHED) Print("State -> ESTABLISHED\n");
             else if (State == AWAITING_RELEASE) Print("State -> AWAITING_RELEASE\n");
@@ -329,7 +329,7 @@ class LCBLC : public SEBase, public SETimerObserver
 
         LCBLCState GetState()
         {
-            if (State == RELEASED)	Print("State == RELEASED\n");
+            if (State == RELEASED)  Print("State == RELEASED\n");
             else if (State == AWAITING_ESTABLISHMENT) Print("State == AWAITING_ESTABLISHMENT\n");
             else if (State == ESTABLISHED) Print("State == ESTABLISHED\n");
             else if (State == AWAITING_RELEASE) Print("State == AWAITING_RELEASE\n");

@@ -146,7 +146,7 @@ const uint32 KNumPCMFrames  = 2; // 10
 #define DELETE_VIDEO_ENC_NODE(n) PVVideoEncMDFNodeFactory::Delete(n)
 #else
 #ifndef PV2WAY_USE_OMX
-#define	CREATE_VIDEO_ENC_NODE()  PVMFVideoEncNodeFactory::CreateVideoEncNode()
+#define CREATE_VIDEO_ENC_NODE()  PVMFVideoEncNodeFactory::CreateVideoEncNode()
 #define DELETE_VIDEO_ENC_NODE(n) PVMFVideoEncNodeFactory::DeleteVideoEncNode(n)
 #endif // PV2WAY_USE_OMX
 #endif
@@ -156,15 +156,15 @@ const uint32 KNumPCMFrames  = 2; // 10
 #define DELETE_VIDEO_DEC_NODE(n) OSCL_DELETE(n)
 #else
 #ifdef PV2WAY_USE_OMX
-#define	CREATE_OMX_VIDEO_DEC_NODE()  PVMFOMXVideoDecNodeFactory::CreatePVMFOMXVideoDecNode()
+#define CREATE_OMX_VIDEO_DEC_NODE()  PVMFOMXVideoDecNodeFactory::CreatePVMFOMXVideoDecNode()
 #define DELETE_OMX_VIDEO_DEC_NODE(n) PVMFOMXVideoDecNodeFactory::DeletePVMFOMXVideoDecNode(n)
 #endif // PV2WAY_USE_OMX
-#define	CREATE_VIDEO_DEC_NODE()  PVMFVideoDecNodeFactory::CreatePVMFVideoDecNode()
+#define CREATE_VIDEO_DEC_NODE()  PVMFVideoDecNodeFactory::CreatePVMFVideoDecNode()
 #define DELETE_VIDEO_DEC_NODE(n) PVMFVideoDecNodeFactory::DeletePVMFVideoDecNode(n)
 #endif
 
 #ifdef PV2WAY_USE_OMX
-#define	CREATE_OMX_ENC_NODE()  PVMFOMXEncNodeFactory::CreatePVMFOMXEncNode()
+#define CREATE_OMX_ENC_NODE()  PVMFOMXEncNodeFactory::CreatePVMFOMXEncNode()
 #define DELETE_OMX_ENC_NODE(n) PVMFOMXEncNodeFactory::DeletePVMFOMXEncNode(n);
 #endif // PV2WAY_USE_OMX
 
@@ -1691,16 +1691,16 @@ PVCommandId CPV324m2Way::Connect(const PV2WayConnectOptions& aOptions,
     }
 
     /*
-    	// start enc datapaths that are already created
-    	if (iAudioEncDatapath->GetState() != EClosed)
-    	{
-    		iAudioEncDatapath->CheckOpen();
-    	}
-    	if (iVideoEncDatapath->GetState() != EClosed)
-    	{
-    		iVideoEncDatapath->CheckOpen();
-    	}
-    	*/
+        // start enc datapaths that are already created
+        if (iAudioEncDatapath->GetState() != EClosed)
+        {
+            iAudioEncDatapath->CheckOpen();
+        }
+        if (iVideoEncDatapath->GetState() != EClosed)
+        {
+            iVideoEncDatapath->CheckOpen();
+        }
+        */
     return iCommandId++;
 }
 
@@ -1832,7 +1832,7 @@ void CPV324m2Way::CheckState()
 
 void CPV324m2Way::CheckInit()
 {
-//	PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0,"CPV324m2Way::CheckInit state %d, video enc node state %d, interface state %d\n", iState, ((PVMFNodeInterface *)iVideoEncNode)->GetState(), iVideoEncNodeInterface.iState));
+//  PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0,"CPV324m2Way::CheckInit state %d, video enc node state %d, interface state %d\n", iState, ((PVMFNodeInterface *)iVideoEncNode)->GetState(), iVideoEncNodeInterface.iState));
     int32 error;
 
     if (((PVMFNodeInterface *)iTscNode)->GetState() == EPVMFNodeIdle)
@@ -1866,8 +1866,8 @@ void CPV324m2Way::CheckConnect()
     if ((iMuxDatapath->GetState() == EOpened) && iIsStackConnected)
     {
         /* Increase video encoder bitrate if required */
-        //	PVMp4H263EncExtensionInterface *ptr = (PVMp4H263EncExtensionInterface *) iVideoEncNodeInterface.iInterface;
-        //	ptr->SetOutputBitRate(0, VIDEO_ENCODER_BITRATE);
+        //  PVMp4H263EncExtensionInterface *ptr = (PVMp4H263EncExtensionInterface *) iVideoEncNodeInterface.iInterface;
+        //  ptr->SetOutputBitRate(0, VIDEO_ENCODER_BITRATE);
         SetState(EConnected);
 
         iConnectInfo->status = PVMFSuccess;
@@ -2298,7 +2298,7 @@ void CPV324m2Way::HandleSinkNodeCmd(PV2WayNodeCmdType aType,
         case PV2WAY_NODE_CMD_QUERY_INTERFACE:
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
-                for (uint32 ii = 0; ii < iSinkNodeList.size();ii++)
+                for (uint32 ii = 0; ii < iSinkNodeList.size(); ii++)
                 {
                     if ((aNode == iSinkNodeList[ii].iSinkNode) &&
                             (aResponse.GetCmdId() == iSinkNodeList[ii].iNodeInterface.iId))
@@ -2964,7 +2964,7 @@ void CPV324m2Way::SetDefaults()
     iClock.Stop();
 
     /* Delete the list of sink/source nodes */
-    for (i = 0;i < iSourceNodes.size();i++)
+    for (i = 0; i < iSourceNodes.size(); i++)
     {
         TPV2WayNode* lNode = iSourceNodes[i];
         OSCL_DELETE(lNode);
@@ -2973,7 +2973,7 @@ void CPV324m2Way::SetDefaults()
     iSourceNodes.clear();
     iSourceNodes.destroy();
 
-    for (i = 0;i < iSinkNodes.size();i++)
+    for (i = 0; i < iSinkNodes.size(); i++)
     {
         TPV2WayNode* lNode = iSinkNodes[i] ;
         OSCL_DELETE(lNode);
@@ -3302,7 +3302,7 @@ void CPV324m2Way::Dispatch(TPV2WayEventInfo* aEventInfo)
 bool CPV324m2Way::IsNodeInList(Oscl_Vector<TPV2WayNode*, OsclMemAllocator>& aList,
                                PVMFNodeInterface* aNode)
 {
-    for (uint32 i = 0;i < aList.size();i++)
+    for (uint32 i = 0; i < aList.size(); i++)
     {
         TPV2WayNode* lNode = aList[i];
         if (lNode && lNode->iNode == aNode)
@@ -3324,7 +3324,7 @@ bool CPV324m2Way::IsSinkNode(PVMFNodeInterface* aNode)
 TPV2WayNode* CPV324m2Way::GetTPV2WayNode(Oscl_Vector<TPV2WayNode*, OsclMemAllocator>& aList,
         PVMFNodeInterface* aNode)
 {
-    for (uint32 i = 0;i < aList.size();i++)
+    for (uint32 i = 0; i < aList.size(); i++)
     {
         TPV2WayNode* lNode = aList[i];
         if (lNode && lNode->iNode == aNode)
@@ -3336,7 +3336,7 @@ TPV2WayNode* CPV324m2Way::GetTPV2WayNode(Oscl_Vector<TPV2WayNode*, OsclMemAlloca
 TPV2WayNode* CPV324m2Way::RemoveTPV2WayNode(Oscl_Vector<TPV2WayNode*, OsclMemAllocator>& aList,
         PVMFNodeInterface* aNode)
 {
-    for (uint32 i = 0;i < aList.size();i++)
+    for (uint32 i = 0; i < aList.size(); i++)
     {
         TPV2WayNode* lNode = aList[i];
         if (lNode && lNode->iNode == aNode)
@@ -3847,7 +3847,7 @@ PVMFStatus CPV324m2Way::ConfigureNode(CPVDatapathNode *aNode)
 
                 if (remote_caps)
                 {
-                    for (uint16 i = 0; i < remote_caps->GetNumCapabilityItems();i++)
+                    for (uint16 i = 0; i < remote_caps->GetNumCapabilityItems(); i++)
                     {
                         CPvtMediaCapability * RemoteCapItem =
                             remote_caps->GetCapabilityItem(i);
@@ -4799,7 +4799,7 @@ PVMFCommandId CPV324m2Way::SendNodeCmdL(PV2WayNodeCmdType aCmd,
 
         case PV2WAY_NODE_CMD_SKIP_MEDIA_DATA:
         {
-            for (uint32 ii = 0;ii < iSinkNodeList.size();ii++)
+            for (uint32 ii = 0; ii < iSinkNodeList.size(); ii++)
             {
                 if ((aNode == iSinkNodeList[ii].iSinkNode)
                         && (iSinkNodeList[ii].iNodeInterface.iState ==
@@ -5134,7 +5134,7 @@ void CPV324m2Way::CheckRecordFileInit()
                     (0, "CPV324m2Way::CheckRecordFileInit ff composer node state %d\n",
                      iFFComposerNode->GetState()));
 
-//	int32 error;
+//  int32 error;
     return;
 }
 
@@ -5144,7 +5144,7 @@ void CPV324m2Way::CheckRecordFileReset()
                     (0, "CPV324m2Way::CheckRecordFileReset audio rec state %d, video rec state %d\n",
                      iAudioRecDatapath->GetState(), iVideoRecDatapath->GetState()));
 
-//	int32 error;
+//  int32 error;
     return;
 }
 

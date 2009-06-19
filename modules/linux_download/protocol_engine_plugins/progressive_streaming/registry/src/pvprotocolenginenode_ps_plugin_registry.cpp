@@ -117,7 +117,7 @@ bool ProtocolEngineNodeProgressiveStreamingContainerLoader::DeleteProgressiveStr
 }
 
 class ProtocolEngineNodeProgressiveStreamingContainerRegistryPopulatorInterface: public OsclSharedLibraryInterface,
-            public PVMFProtocolEngineNodeRegistryPopulatorInterface
+        public PVMFProtocolEngineNodeRegistryPopulatorInterface
 {
     public:
         ProtocolEngineNodeProgressiveStreamingContainerRegistryPopulatorInterface() {};

@@ -61,10 +61,10 @@ class PV2WayTrackInfoImpl : public PV2WayTrackInfoInterface
         /*
              Returns the code and space UUID for this info message
 
-        	 @param aCode Reference to an integer which will be filled in with event code
-        	 @param aUuid Reference to a PVUuid which will be filled in with UUID assocated to event code
+             @param aCode Reference to an integer which will be filled in with event code
+             @param aUuid Reference to a PVUuid which will be filled in with UUID assocated to event code
 
-        	 @return None
+             @return None
           */
         virtual void GetCodeUUID(int32& aCode, PVUuid& aUuid)
         {

@@ -92,9 +92,9 @@ class GauObject
         //! low-level getting data function
         int32 updateGauPtr();
         /**
-        *	@brief  Purposely make this function private to prevent the mis-use of this function
-        *			Note this function should not be called twice consecutively
-        *	@return the pointer of the sample we need, NULL for error
+        *   @brief  Purposely make this function private to prevent the mis-use of this function
+        *           Note this function should not be called twice consecutively
+        *   @return the pointer of the sample we need, NULL for error
         */
         BSInfo *getPrevSample();
 
@@ -123,29 +123,29 @@ class GauObject
         OSCL_IMPORT_REF uint32 getTrackID();
 
         /**
-        *	@brief  Hide all the GAU operation to get the next sample from the current bitstream
-        *	@return the pointer of the sample we need, NULL for error
+        *   @brief  Hide all the GAU operation to get the next sample from the current bitstream
+        *   @return the pointer of the sample we need, NULL for error
         */
         OSCL_IMPORT_REF BSInfo *getNextSample();
         /**
-        *	@brief  Hide all the GAU operation to get the sample immediately before a certain timestamp
-        *			from the current bitstream
-        *	@param  tsIn is the requested point refering to the sample
-        *	@return the pointer of the sample we need, NULL for error
+        *   @brief  Hide all the GAU operation to get the sample immediately before a certain timestamp
+        *           from the current bitstream
+        *   @param  tsIn is the requested point refering to the sample
+        *   @return the pointer of the sample we need, NULL for error
         */
         OSCL_IMPORT_REF BSInfo *getPreviousSampleAt(uint32 tsIn);
         /**
-        *	@brief  Hide all the GAU operation to get the sample at or immediately after a certain timestamp
-        *			from the current bitstream
-        *	@param  tsIn is the requested point refering to the sample
-        *	@return the pointer of the sample we need, NULL for error
+        *   @brief  Hide all the GAU operation to get the sample at or immediately after a certain timestamp
+        *           from the current bitstream
+        *   @param  tsIn is the requested point refering to the sample
+        *   @return the pointer of the sample we need, NULL for error
         */
         OSCL_IMPORT_REF BSInfo *getNextSampleAt(uint32 tsIn = 0);
         /**
-        *	@brief  Hide all the GAU operation to get the next I frame from the current bitstream, whose timestamp >= tsIn
-        *	@param  tsIn is the requested point refering to the sample
-        *	@param  bH263Stream is flag showing whether the input bitstream is H263 bitstream
-        *	@return the pointer of the sample we need, NULL for error
+        *   @brief  Hide all the GAU operation to get the next I frame from the current bitstream, whose timestamp >= tsIn
+        *   @param  tsIn is the requested point refering to the sample
+        *   @param  bH263Stream is flag showing whether the input bitstream is H263 bitstream
+        *   @return the pointer of the sample we need, NULL for error
         */
         OSCL_IMPORT_REF BSInfo *GauObject::getNextIFrame(uint32 tsIn = 0, bool bH263Stream = false);
 

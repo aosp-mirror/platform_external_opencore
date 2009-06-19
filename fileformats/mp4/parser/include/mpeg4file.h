@@ -105,7 +105,7 @@ class Mpeg4File : public IMpeg4File, public Parentable
                   uint32 parsingMode = 0); // Stream-in Constructor
         virtual ~Mpeg4File();
 
-        int32 updateFileSize(uint32	filesize)
+        int32 updateFileSize(uint32 filesize)
         {
             if (_pmovieAtom != NULL)
             {
@@ -220,7 +220,7 @@ class Mpeg4File : public IMpeg4File, public Parentable
                                           bool bResetToIFrame,
                                           bool bBeforeRequestedTime);
 
-        virtual int32	querySyncFrameBeforeTime(uint32 time, uint16 numTracks, uint32 *trackList)
+        virtual int32   querySyncFrameBeforeTime(uint32 time, uint16 numTracks, uint32 *trackList)
         {
             if (_pmovieAtom == NULL)
             {
@@ -243,7 +243,7 @@ class Mpeg4File : public IMpeg4File, public Parentable
         {
             if (_pFileTypeAtom != NULL)
             {
-                return	_pFileTypeAtom->getMajorBrand();
+                return  _pFileTypeAtom->getMajorBrand();
             }
             else
             {

@@ -131,7 +131,7 @@ class Oscl_FileFind
         typedef enum
         {
             FILE_TYPE = 0, /* file */
-            DIR_TYPE,	   /* directory */
+            DIR_TYPE,      /* directory */
             INVALID_TYPE   /* no element available */
         } element_type;
 

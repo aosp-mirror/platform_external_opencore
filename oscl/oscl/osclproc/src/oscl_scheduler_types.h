@@ -27,11 +27,11 @@
 
 /** This file defines the OsclExecBase, OsclTimerBase, and OsclExecSchedulerBase
     classes.  These are the base classes for PV AOs and PV Scheduler.
-	We want the PV exec objects to be usable with either a PV scheduler
-	or a non-PV native Symbian scheduler.  We also want the PV scheduler to be
-	usable with non-PV exec objects.  Therefore, the PV scheduler and AO classes
-	derived from Symbian classes on Symbian platforms. On non-Symbian platforms,
-	the PV classes derive from classes with a similar API to the Symbian classes.
+    We want the PV exec objects to be usable with either a PV scheduler
+    or a non-PV native Symbian scheduler.  We also want the PV scheduler to be
+    usable with non-PV exec objects.  Therefore, the PV scheduler and AO classes
+    derived from Symbian classes on Symbian platforms. On non-Symbian platforms,
+    the PV classes derive from classes with a similar API to the Symbian classes.
   */
 
 #ifndef OSCL_SCHEDULER_TYPES_H_INCLUDED

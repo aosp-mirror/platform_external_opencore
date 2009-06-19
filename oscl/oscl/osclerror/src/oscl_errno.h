@@ -53,40 +53,40 @@
 */
 //! This function determines if a particular system saves the error number that occurs on a system call
 /*!
-	\return This method returns false on systems that do not save the
-	error number that occurs on a system call in a global variable.
-	Returns true for systems that do save the error number
+    \return This method returns false on systems that do not save the
+    error number that occurs on a system call in a global variable.
+    Returns true for systems that do save the error number
 */
 OSCL_IMPORT_REF bool OSCL_IsErrnoSupported();
 
 //! This function returns the value of the system's global error number variable
 /*!
-	\return Returns 0 for system's that do not have this functionality
-	The value of the error number variable does not change until the user
-	calls SetLastError or if another system call occurs that changes the value
-	Supported Platforms: Win32/wince, Unix
-	Unsupported Platforms : Symbian
+    \return Returns 0 for system's that do not have this functionality
+    The value of the error number variable does not change until the user
+    calls SetLastError or if another system call occurs that changes the value
+    Supported Platforms: Win32/wince, Unix
+    Unsupported Platforms : Symbian
 */
 OSCL_IMPORT_REF int OSCL_GetLastError();
 
 //! This function sets the last error code for the system
 /*!
-	\param newVal This value represents the new value for the global error number
-	This method can be used to reset the error number after having retrieved it
-	using GetLastError.
-	Supported Platforms: Win32/wince, Unix
-	Unsupported Platforms : Symbian
+    \param newVal This value represents the new value for the global error number
+    This method can be used to reset the error number after having retrieved it
+    using GetLastError.
+    Supported Platforms: Win32/wince, Unix
+    Unsupported Platforms : Symbian
 */
 OSCL_IMPORT_REF bool OSCL_SetLastError(int newVal);
 
 //! This function maps an error number to an error-message string.
 /*!
-	\param errnum This value represents the error number to map
-	\return This method returns a pointer to a string containing the
-	system error-message. It returns NULL for systems that do not have
-	this functionality
-	Supported Platforms: Win32/wince, Unix
-	Unsupported Platforms : Symbian
+    \param errnum This value represents the error number to map
+    \return This method returns a pointer to a string containing the
+    system error-message. It returns NULL for systems that do not have
+    this functionality
+    Supported Platforms: Win32/wince, Unix
+    Unsupported Platforms : Symbian
 */
 OSCL_IMPORT_REF char *OSCL_StrError(int errnum);
 

@@ -69,7 +69,7 @@ OSCL_EXPORT_REF ThreadSafeCallbackAO::ThreadSafeCallbackAO(void *aObserver, uint
     Q = NULL;
 
     OSCL_TRY(err,
-             queue_init_status = QueueInit(aDepth);	//create the Q
+             queue_init_status = QueueInit(aDepth); //create the Q
              mutex_init_status = Mutex.Create(); // Create Mutex
              sema_init_status  = RemoteThreadCtrlSema.Create(aDepth);
 
@@ -167,26 +167,26 @@ OSCL_EXPORT_REF void ThreadSafeCallbackAO::Run()
 //////////////// EXAMPLE CODE (For CALLING THE GENERIC API):
 
 // typedef struct event_data{
-//		int d1;
-//		char *d2;
-//		uint32 d3;
-//		} event_data;
+//      int d1;
+//      char *d2;
+//      uint32 d3;
+//      } event_data;
 
 //int ActualCallbackAPI(int p1, char * p2, uint32 p3)
 //{
-//		// pack all parameters
-//		event_data *pED = malloc(sizeof(event_data));
-//		pED->d1 = p1;
-//		pED->d2 = p2;
-//		pED->d3 = p3;
-//		OsclAny *P = (OsclAny *) pED:
-//			// call the generic callback API:
-//		PVMFStatus stat = ReceiveEvent(P);
-//		// check the status
-//		if(stat == PVMFSuccess)
-//			return OK;
-//		else
-//			return ERROR;
+//      // pack all parameters
+//      event_data *pED = malloc(sizeof(event_data));
+//      pED->d1 = p1;
+//      pED->d2 = p2;
+//      pED->d3 = p3;
+//      OsclAny *P = (OsclAny *) pED:
+//          // call the generic callback API:
+//      PVMFStatus stat = ReceiveEvent(P);
+//      // check the status
+//      if(stat == PVMFSuccess)
+//          return OK;
+//      else
+//          return ERROR;
 //}
 //
 

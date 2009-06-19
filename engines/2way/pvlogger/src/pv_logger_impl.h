@@ -69,20 +69,20 @@
 class PVLoggerConfigFile
 {
         /*  To change the logging settings without the need to compile the test application
-        	Let us read the logging settings from the file instead of hard coding them over here
-        	The name of the config file is pvlogger.ini
-        	The format of entries in it is like
-        	First entry will decide if the file appender has to be used or error appender will be used.
-        	0 -> ErrAppender will be used
-        	1 -> File Appender will be used
+            Let us read the logging settings from the file instead of hard coding them over here
+            The name of the config file is pvlogger.ini
+            The format of entries in it is like
+            First entry will decide if the file appender has to be used or error appender will be used.
+            0 -> ErrAppender will be used
+            1 -> File Appender will be used
 
             Entries after this will decide the module whose logging has to be taken.For example, contents of one sample config file could be
-        	1
-        	1,2wayEngine
+            1
+            1,2wayEngine
             8,3g324m.h245user
-        	(pls note that no space is allowed between loglevel and logger tag)
-        	This means, we intend to have logging of level 1 for the module 2wayEngine
-        	and of level 8 for the 3g324m h245user on file.
+            (pls note that no space is allowed between loglevel and logger tag)
+            This means, we intend to have logging of level 1 for the module 2wayEngine
+            and of level 8 for the 3g324m h245user on file.
         */
     public:
 

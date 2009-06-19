@@ -53,7 +53,7 @@ void PVMFRTSPPort::Construct()
 {
     iLogger = PVLogger::GetLoggerObject("PVMFRTSPPort");
     oscl_memset(&iStats, 0, sizeof(PvmfPortBaseImplStats));
-//	iNumFramesGenerated=0;
+//  iNumFramesGenerated=0;
     iNumFramesConsumed = 0;
     PvmiCapabilityAndConfigPortFormatImpl::Construct(
         PVMF_RTSP_PORT_IO_FORMATS
@@ -69,7 +69,7 @@ PVMFRTSPPort::~PVMFRTSPPort()
 ////////////////////////////////////////////////////////////////////////////
 bool PVMFRTSPPort::IsFormatSupported(PVMFFormatType aFmt)
 {
-//	return (aFmt==PVMF_INET_UDP)||(aFmt==PVMF_INET_TCP);
+//  return (aFmt==PVMF_INET_UDP)||(aFmt==PVMF_INET_TCP);
     if (aFmt == PVMF_MIME_INET_TCP)
     {
         return true;

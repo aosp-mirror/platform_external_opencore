@@ -62,8 +62,8 @@ class PVMFJitterBufferMiscObserver
 };
 
 class PVMFJitterBufferMisc: public PVRTCPProtoImplementorObserver
-            , public PVMFJBEventNotifierObserver
-            , public PvmfJBSessionDurationTimerObserver
+        , public PVMFJBEventNotifierObserver
+        , public PvmfJBSessionDurationTimerObserver
 {
     public:
         OSCL_IMPORT_REF static PVMFJitterBufferMisc* New(PVMFJitterBufferMiscObserver* aObserver, PVMFMediaClock& aClientPlaybackClock, Oscl_Vector<PVMFJitterBufferPortParams*, OsclMemAllocator>& aPortParamsQueue);
@@ -174,8 +174,8 @@ class PVMFJitterBufferMisc: public PVRTCPProtoImplementorObserver
             PVMF_JB_LOGCLOCK_SESSION_DURATION((0, "PVMFJBN::ComputeCurrentSessionDurationMonitoringInterval - TotalDuration=%d, ElapsedDuration=%d, CurrMonitoringInterval=%d", totalSessionDuration, elapsedSessionDuration, interval));
         }
 
-        PVMFMediaClock&		irClientPlaybackClock;		//Reference to the client playback clock passed on by its observer.
-        PVMFJitterBufferMiscObserver*	ipObserver;
+        PVMFMediaClock&     irClientPlaybackClock;      //Reference to the client playback clock passed on by its observer.
+        PVMFJitterBufferMiscObserver*   ipObserver;
         Oscl_Vector<PVMFJitterBufferPortParams*, OsclMemAllocator>& irPortParamsQueue;
 
         Oscl_Vector<RTPSessionInfoForFirewallExchange, OsclMemAllocator> iRTPExchangeInfosForFirewallExchange;
@@ -198,31 +198,31 @@ class PVMFJitterBufferMisc: public PVRTCPProtoImplementorObserver
         Oscl_Vector<RTCPParams, OsclMemAllocator> iRTCPParamsVect;
 
         //Sesion Info
-        uint32	iSessionDuration;
-        bool	iStreamingSessionExpired;
-        bool	iPlayDurationAvailable;
-        bool	iBroadcastSession;
+        uint32  iSessionDuration;
+        bool    iStreamingSessionExpired;
+        bool    iPlayDurationAvailable;
+        bool    iBroadcastSession;
 
         bool UseSessionDurationTimerForEOS();
         bool iUseSessionDurationTimerForEOS;
 
         uint32  iPlayStartTimeInMS;
         uint32  iPlayStopTimeInMS;
-        bool	iPlayStopTimeAvailable;
+        bool    iPlayStopTimeAvailable;
 
-        bool	iFireWallPacketsExchangeEnabled;
+        bool    iFireWallPacketsExchangeEnabled;
 
         bool   iEstimatedServerClockUpdateCallbackPending;
         uint32 iEstimatedServerClockUpdateCallbackId;
 
-        PvmfJBSessionDurationTimer*		ipSessionDurationTimer;
-        PVMFJBEventNotifier*			ipEventNotifier;
-        PVRTCPProtoImplementor*			ipRTCPProtoImplementator;
-        PVFirewallPacketExchangeImpl*	ipFireWallPacketExchangerImpl;
+        PvmfJBSessionDurationTimer*     ipSessionDurationTimer;
+        PVMFJBEventNotifier*            ipEventNotifier;
+        PVRTCPProtoImplementor*         ipRTCPProtoImplementator;
+        PVFirewallPacketExchangeImpl*   ipFireWallPacketExchangerImpl;
 
-        PVMFMediaClock*		ipEstimatedServerClock;		//Estimation of the estimated server clock.
-        PVMFMediaClock*		ipWallClock;				//A continously increasing clock.
-        PVMFMediaClock*		ipNonDecreasingClock;		//Always increasing clock but may not be continous (may get pasued in between depending on the state of the streaming session)
+        PVMFMediaClock*     ipEstimatedServerClock;     //Estimation of the estimated server clock.
+        PVMFMediaClock*     ipWallClock;                //A continously increasing clock.
+        PVMFMediaClock*     ipNonDecreasingClock;       //Always increasing clock but may not be continous (may get pasued in between depending on the state of the streaming session)
         PVMFTimebase_Tickcount iEstimatedServerClockTimeBase;
         PVMFTimebase_Tickcount iWallClockTimeBase;
         PVMFTimebase_Tickcount iNonDecreasingTimeBase;

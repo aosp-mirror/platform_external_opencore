@@ -35,7 +35,7 @@ class SDPInfoComparison
         // Fuction call to compare the 2 sdpInfo passed and put the common results into the
         // first sdpInfo
         // sdp1 - first Input sdp, this is base sdpinfo, meaning local capabiity sdpinfo
-        //			the port is used for sdpOut
+        //          the port is used for sdpOut
         // sdp2 - second Input sdp
         // result - int - 0 for success -ve for unsuccessful
         OSCL_IMPORT_REF static int

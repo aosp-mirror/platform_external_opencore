@@ -32,7 +32,7 @@ class PVA_FF_UserDataAtom : public PVA_FF_Atom, public PVA_FF_ISucceedFail
 {
 
     public:
-        PVA_FF_UserDataAtom(); 				// Constructor
+        PVA_FF_UserDataAtom();              // Constructor
         virtual ~PVA_FF_UserDataAtom();
 
         void addAtom(PVA_FF_Atom* atom);

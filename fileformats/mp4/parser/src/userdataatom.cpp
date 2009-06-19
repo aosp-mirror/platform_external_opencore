@@ -560,7 +560,7 @@ UserDataAtom::~UserDataAtom()
 }
 
 
-CopyRightAtom	*
+CopyRightAtom   *
 UserDataAtom::getCopyRightAtomAt(int32 index)
 {
     if ((_pCopyRightAtomArray->size() == 0) ||

@@ -68,9 +68,9 @@ extern "C"
 
 
     void calc_sbr_synfilterbank_LC(Int32 * Sr,
-                                   Int16 * timeSig,
-                                   Int16   V[1280],
-                                   bool bDownSampleSBR);
+    Int16 * timeSig,
+    Int16   V[1280],
+    bool bDownSampleSBR);
 
 #ifdef HQ_SBR
 

@@ -61,21 +61,21 @@ int32 CCRGB24toRGB16::SetYuvFullRange(bool range)
     return 1;  // do nothing here.
 }
 
-int32 CCRGB24toRGB16::SetMode(int32 nMode)	//nMode : 0 Off, 1 On
+int32 CCRGB24toRGB16::SetMode(int32 nMode)  //nMode : 0 Off, 1 On
 {
     OSCL_ASSERT(_mInitialized == true);
 
     if (nMode == 0)
     {
-        //		mPtrConv = cc16Rotate;
-        //		_mState		= 1;
-        mPtrConv	=	&CCRGB24toRGB16::getframe;
-        _mState		=	0;
+        //      mPtrConv = cc16Rotate;
+        //      _mState     = 1;
+        mPtrConv    =   &CCRGB24toRGB16::getframe;
+        _mState     =   0;
         _mDisp.src_pitch = _mSrc_pitch  ;
         _mDisp.dst_pitch = _mSrc_width  ;
-        _mDisp.src_width = _mSrc_width	;
+        _mDisp.src_width = _mSrc_width  ;
         _mDisp.src_height = _mSrc_height ;
-        _mDisp.dst_width = _mSrc_width	;
+        _mDisp.dst_width = _mSrc_width  ;
         _mDisp.dst_height = _mSrc_height ;
     }
     else
@@ -91,7 +91,7 @@ int32 CCRGB24toRGB16::SetMode(int32 nMode)	//nMode : 0 Off, 1 On
             else /* zoom only */
 #endif
             {
-                mPtrConv	=	&CCRGB24toRGB16::zoom;
+                mPtrConv    =   &CCRGB24toRGB16::zoom;
             }
         }
         else
@@ -105,15 +105,15 @@ int32 CCRGB24toRGB16::SetMode(int32 nMode)	//nMode : 0 Off, 1 On
             else /* no zoom, no rotate, SetMode(1) = SetMode(0) */
 #endif
             {
-                mPtrConv	=	&CCRGB24toRGB16::getframe;
+                mPtrConv    =   &CCRGB24toRGB16::getframe;
             }
         }
-        _mState		=	nMode;
+        _mState     =   nMode;
         _mDisp.src_pitch = _mSrc_pitch  ;
-        _mDisp.dst_pitch = _mDst_pitch	;
-        _mDisp.src_width = _mSrc_width	;
+        _mDisp.dst_pitch = _mDst_pitch  ;
+        _mDisp.src_width = _mSrc_width  ;
         _mDisp.src_height = _mSrc_height ;
-        _mDisp.dst_width = _mDst_width	;
+        _mDisp.dst_width = _mDst_width  ;
         _mDisp.dst_height = _mDst_height ;
     }
 
@@ -128,11 +128,11 @@ int32 CCRGB24toRGB16::GetOutputBufferSize(void)
     if (_mIsZoom)
     {
         // for zoom, need extra line of RGB_FORMAT buffer for processing otherwise memory will corrupt.
-        return	_mState ? ((_mDst_height + 2)*_mDst_pitch*2) : (_mSrc_width*_mSrc_height*2);
+        return  _mState ? ((_mDst_height + 2)*_mDst_pitch*2) : (_mSrc_width*_mSrc_height*2);
     }
     else
     {
-        return	_mState ? ((_mDst_height)*_mDst_pitch*2) : (_mSrc_width*_mSrc_height*2);
+        return  _mState ? ((_mDst_height)*_mDst_pitch*2) : (_mSrc_width*_mSrc_height*2);
     }
 }
 
@@ -185,7 +185,7 @@ int32 CCRGB24toRGB16::getframe(uint8 *src, uint8 *dst, DisplayProperties *disp)
     disp_prop[6] = (_mRotation > 0 ? 1 : 0);
     disp_prop[7] = _mIsFlip;
 
-    if (disp_prop[6] ^ disp_prop[7])	/* either flip or rotate 180*/
+    if (disp_prop[6] ^ disp_prop[7])    /* either flip or rotate 180*/
     {
 #if (!CCROTATE)
         return 0;
@@ -201,33 +201,33 @@ int32 CCRGB24toRGB16::getframe(uint8 *src, uint8 *dst, DisplayProperties *disp)
 
 int32 normal(uint8 *src, uint8 *dst, int32 *disp)
 {
-    uint8	*pSrc;
-    uint16	*pDst;
-    int32		src_pitch, dst_pitch, src_width, src_height;
-    int32		half1, half2;
-    int32		deltaSrc, deltaDst;
-    int32		row, col;
-    uint32		rgb, tmp0;
+    uint8   *pSrc;
+    uint16  *pDst;
+    int32       src_pitch, dst_pitch, src_width, src_height;
+    int32       half1, half2;
+    int32       deltaSrc, deltaDst;
+    int32       row, col;
+    uint32      rgb, tmp0;
 
-    src_pitch	=	disp[0];
-    dst_pitch	=	disp[1];
-    src_width	=	disp[2];
+    src_pitch   =   disp[0];
+    dst_pitch   =   disp[1];
+    src_width   =   disp[2];
     src_height  =   disp[3];
 
     if (disp[6]) /* rotate 180 and flip */
-    {	/* move the starting point to the bottom-left corner of the picture */
+    {   /* move the starting point to the bottom-left corner of the picture */
         deltaSrc = src_pitch * (src_height - 1) * 3;
         pSrc = (uint8*)(src + deltaSrc);
         deltaSrc = -(src_width + src_pitch) * 3;
     }
     else
     {
-        deltaSrc	=	(src_pitch - src_width) * 3;
+        deltaSrc    = (src_pitch - src_width) * 3;
         pSrc =  src;
     }
 
-    deltaDst	=	(dst_pitch - src_width);
-    pDst =	(uint16 *)dst;
+    deltaDst    = (dst_pitch - src_width);
+    pDst = (uint16 *)dst;
 
     for (row = src_height; row > 0; row--)
     {
@@ -242,26 +242,26 @@ int32 normal(uint8 *src, uint8 *dst, int32 *disp)
 #if RGB_FORMAT
             rgb = half1 & 0xF8;  /* get 5 bits of R0 */
             half1 = (half1 >> 5) & 0x7E0;  /* get 6 bits of G0 */
-            rgb = (rgb << 8) | half1;				/*  R0, G0 */
-            half1 = (half2 >> 3) & 0x1F;		/* get 5 bits of B0 */
-            rgb |= half1;			/*  R0,G0,B0 */
+            rgb = (rgb << 8) | half1;               /*  R0, G0 */
+            half1 = (half2 >> 3) & 0x1F;        /* get 5 bits of B0 */
+            rgb |= half1;           /*  R0,G0,B0 */
 
             half1 = *((uint16*)(pSrc += 2)); /* read 2 bytes, B1 G1 */
 
-            half2 &= 0xF800;			/* get 5 bits of R1 */
-            tmp0 = half1 & 0xFC;			/* get 6 bits of G1 */
+            half2 &= 0xF800;            /* get 5 bits of R1 */
+            tmp0 = half1 & 0xFC;            /* get 6 bits of G1 */
             tmp0 = (tmp0 << 3) | half2;  /* R1 G1 */
-            tmp0 |= (half1 >> 11);		/* R1 G1 B1 */
+            tmp0 |= (half1 >> 11);      /* R1 G1 B1 */
 #else //BGR
             rgb = half2 & 0xF8;  /* get 5 bits of R0 */
             tmp0 = (half1 >> 5) & 0x7E0;  /* get 6 bits of G0 */
-            rgb = (rgb << 8) | tmp0;				/*  R0, G0 */
-            half1 = (half1 >> 3) & 0x1F;		/* get 5 bits of B0 */
-            rgb |= half1;			/*  R0,G0,B0 */
+            rgb = (rgb << 8) | tmp0;                /*  R0, G0 */
+            half1 = (half1 >> 3) & 0x1F;        /* get 5 bits of B0 */
+            rgb |= half1;           /*  R0,G0,B0 */
 
             half1 = *((uint16*)(pSrc += 2)); /* read 2 bytes, R1 G1 */
 
-            tmp0 = half1 & 0xF800;		/* get 5 bits of R1 */
+            tmp0 = half1 & 0xF800;      /* get 5 bits of R1 */
             half1 = (half1 << 3) & 0x7C0;  /* get G1 in the middle */
             tmp0 |= half1;             /* R1 G1 */
             tmp0 |= (half2 >> 11);     /* R1 G1 B1 */
@@ -284,31 +284,31 @@ int32 normal(uint8 *src, uint8 *dst, int32 *disp)
 #if CCROTATE
 int32 reverse(uint8 *src, uint8 *dst, int32 *disp)
 {
-    uint8	*pSrc;
-    uint16	*pDst;
-    int32		src_pitch, dst_pitch, src_width, src_height;
-    int32		half1, half2;
-    int32		deltaSrc, deltaDst;
-    int32		row, col;
-    uint32		rgb, tmp0;
-    int	nextrow, mIsFlip;
+    uint8   *pSrc;
+    uint16  *pDst;
+    int32       src_pitch, dst_pitch, src_width, src_height;
+    int32       half1, half2;
+    int32       deltaSrc, deltaDst;
+    int32       row, col;
+    uint32      rgb, tmp0;
+    int nextrow, mIsFlip;
 
-    src_pitch	=	disp[0];
-    dst_pitch	=	disp[1];
-    src_width	=	disp[2];
+    src_pitch   =   disp[0];
+    dst_pitch   =   disp[1];
+    src_width   =   disp[2];
     src_height  =   disp[3];
-    mIsFlip		=   disp[7];
+    mIsFlip     =   disp[7];
 
-    deltaDst	=	(dst_pitch - src_width);
-    pDst =	(uint16 *)dst;
+    deltaDst    = (dst_pitch - src_width);
+    pDst = (uint16 *)dst;
 
     if (disp[6]) /* rotation, only */
     {  /* move the starting point to the bottom-right corner of the picture */
         nextrow = src_pitch * src_height * 3;
         pSrc = (src + nextrow - 6);
-        deltaSrc	=	(src_width - src_pitch) * 3;
+        deltaSrc    = (src_width - src_pitch) * 3;
     }
-    else	/* flip only */
+    else    /* flip only */
     {   /* move the starting point to the top-right corner of the picture */
         pSrc = (src + src_width * 3 - 6);
         deltaSrc = (src_width + src_pitch) * 3;
@@ -327,26 +327,26 @@ int32 reverse(uint8 *src, uint8 *dst, int32 *disp)
 #if RGB_FORMAT
             rgb = half1 & 0xF8;  /* get 5 bits of R0 */
             half1 = (half1 >> 5) & 0x7E0;  /* get 6 bits of G0 */
-            rgb = (rgb << 8) | half1;				/*  R0, G0 */
-            half1 = (half2 >> 3) & 0x1F;		/* get 5 bits of B0 */
-            rgb |= half1;			/*  R0,G0,B0 */
+            rgb = (rgb << 8) | half1;               /*  R0, G0 */
+            half1 = (half2 >> 3) & 0x1F;        /* get 5 bits of B0 */
+            rgb |= half1;           /*  R0,G0,B0 */
 
             half1 = *((uint16*)(pSrc += 2)); /* read 2 bytes, B1 G1 */
 
-            half2 &= 0xF800;			/* get 5 bits of R1 */
-            tmp0 = half1 & 0xFC;			/* get 6 bits of G1 */
+            half2 &= 0xF800;            /* get 5 bits of R1 */
+            tmp0 = half1 & 0xFC;            /* get 6 bits of G1 */
             tmp0 = (tmp0 << 3) | half2;  /* R1 G1 */
-            tmp0 |= (half1 >> 11);		/* R1 G1 B1 */
+            tmp0 |= (half1 >> 11);      /* R1 G1 B1 */
 #else //BGR
             rgb = half2 & 0xF8;  /* get 5 bits of R0 */
             tmp0 = (half1 >> 5) & 0x7E0;  /* get 6 bits of G0 */
-            rgb = (rgb << 8) | tmp0;				/*  R0, G0 */
-            half1 = (half1 >> 3) & 0x1F;		/* get 5 bits of B0 */
-            rgb |= half1;			/*  R0,G0,B0 */
+            rgb = (rgb << 8) | tmp0;                /*  R0, G0 */
+            half1 = (half1 >> 3) & 0x1F;        /* get 5 bits of B0 */
+            rgb |= half1;           /*  R0,G0,B0 */
 
             half1 = *((uint16*)(pSrc += 2)); /* read 2 bytes, R1 G1 */
 
-            tmp0 = half1 & 0xF800;		/* get 5 bits of R1 */
+            tmp0 = half1 & 0xF800;      /* get 5 bits of R1 */
             half1 = (half1 << 3) & 0x7C0;  /* get G1 in the middle */
             tmp0 |= half1;             /* R1 G1 */
             tmp0 |= (half2 >> 11);     /* R1 G1 B1 */
@@ -417,23 +417,23 @@ int32 CCRGB24toRGB16::zoom(uint8 *src, uint8 *dst, DisplayProperties *disp)
 #if CCSCALING
 int32 scaledown(uint8*src, uint8 *dst, int32 *disp, uint8 *_mRowPix, uint8 *_mColPix)
 {
-    uint8	*pSrc;
-    uint16	*pDst;
-    int32	src_pitch, dst_pitch, src_width, src_height, dst_width;
-    int32	half1, half2;
-    int32	deltaSrc;
-    int32	row, col;
-    uint32	rgb, R0, G0, B0, R1, G1, B1, R2, G2, B2;
-    int		temp, denom, row_interp;
-    int		 mIsFlip;
+    uint8   *pSrc;
+    uint16  *pDst;
+    int32   src_pitch, dst_pitch, src_width, src_height, dst_width;
+    int32   half1, half2;
+    int32   deltaSrc;
+    int32   row, col;
+    uint32  rgb, R0, G0, B0, R1, G1, B1, R2, G2, B2;
+    int     temp, denom, row_interp;
+    int      mIsFlip;
     uint8 *rowpix, *colpix;
 
-    src_pitch	=	disp[0];
-    dst_pitch	=	disp[1];
-    src_width	=	disp[2];
+    src_pitch   =   disp[0];
+    dst_pitch   =   disp[1];
+    src_width   =   disp[2];
     src_height  =   disp[3];
     dst_width   =   disp[4];
-    mIsFlip		=   disp[7];
+    mIsFlip     =   disp[7];
 
     if ((disp[6] ^ mIsFlip) == 1) /* rotate 180 and  no flip || rotate 0 and  with flip */
     {
@@ -448,20 +448,20 @@ int32 scaledown(uint8*src, uint8 *dst, int32 *disp, uint8 *_mRowPix, uint8 *_mCo
             pSrc = (src + src_width * 3 - 6);
             deltaSrc = (src_width + src_pitch) * 3;
         }
-        pDst =	(uint16 *)dst;
+        pDst = (uint16 *)dst;
         colpix = _mColPix + src_height - 1;
         row_interp = 0;
 
         for (row = src_height; row > 0; row--)
         {/* decrement index, _mColPix[.] is
-			symmetric to increment index */
+            symmetric to increment index */
 
-            /*	if(*colpix--==0)
-            	{
-            		pSrc+=src_width*3;
-            		pSrc+=deltaSrc;
-            		continue;
-            	}*/
+            /*  if(*colpix--==0)
+                {
+                    pSrc+=src_width*3;
+                    pSrc+=deltaSrc;
+                    continue;
+                }*/
 
             rowpix = _mRowPix + src_width - 1;
             denom = 1;
@@ -469,7 +469,7 @@ int32 scaledown(uint8*src, uint8 *dst, int32 *disp, uint8 *_mRowPix, uint8 *_mCo
 
             for (col = src_width; col > 0; col -= 2)
             { /* decrement index, _mRowPix[.] is
-				symmetric to increment index */
+                symmetric to increment index */
 
                 half1 = *((uint16*)(pSrc));  /* read 2 bytes, G0 R0 or G0 B0 */
                 half2 = *((uint16*)(pSrc += 2)); /* read 2 bytes, R1 B0 or B1 R0 */
@@ -579,25 +579,25 @@ int32 scaledown(uint8*src, uint8 *dst, int32 *disp, uint8 *_mRowPix, uint8 *_mCo
             deltaSrc = -(src_pitch + src_width) * 3;
         }
         else
-        {	// only scale down, no rotation ,no flip
-            deltaSrc	=	(src_pitch - src_width) * 3;
+        {   // only scale down, no rotation ,no flip
+            deltaSrc    = (src_pitch - src_width) * 3;
             pSrc = src;
         }
 
-        pDst =	(uint16 *)dst;
+        pDst = (uint16 *)dst;
         colpix = _mColPix + src_height - 1;
         row_interp = 0;
 
         for (row = src_height; row > 0; row--)
         {/* decrement index, _mColPix[.] is
-			symmetric to increment index */
+            symmetric to increment index */
 
-            /*	if(*colpix--==0)
-            	{
-            		pSrc+=src_width*3;
-            		pSrc+=deltaSrc;
-            		continue;
-            	}*/
+            /*  if(*colpix--==0)
+                {
+                    pSrc+=src_width*3;
+                    pSrc+=deltaSrc;
+                    continue;
+                }*/
 
             rowpix = _mRowPix + src_width - 1;
             denom = 1;
@@ -605,7 +605,7 @@ int32 scaledown(uint8*src, uint8 *dst, int32 *disp, uint8 *_mRowPix, uint8 *_mCo
 
             for (col = src_width; col > 0; col -= 2)
             { /* decrement index, _mRowPix[.] is
-				symmetric to increment index */
+                symmetric to increment index */
 
                 half1 = *((uint16*)(pSrc));  /* read 2 bytes, G0 R0 or G0 B0 */
                 half2 = *((uint16*)(pSrc += 2)); /* read 2 bytes, R1 B0 or B1 R0 */
@@ -711,23 +711,23 @@ int32 scaledown(uint8*src, uint8 *dst, int32 *disp, uint8 *_mRowPix, uint8 *_mCo
 
 int32 scaleup(uint8*src, uint8 *dst, int32 *disp, uint8 *_mRowPix, uint8 *_mColPix)
 {
-    uint8	*pSrc = NULL;
-    uint16	*pDst = NULL, *pTop = NULL, *pLine = NULL;
-    int32	src_pitch, dst_pitch, src_width, src_height, dst_width;
-    int32	half1, half2;
-    int32	deltaSrc;
-    int32	row, col;
-    uint32	rgb, tmp, R0, G0, B0, R1, G1, B1, R2, G2, B2;
-    int		temp;
-    int	nextrow, mIsFlip;
+    uint8   *pSrc = NULL;
+    uint16  *pDst = NULL, *pTop = NULL, *pLine = NULL;
+    int32   src_pitch, dst_pitch, src_width, src_height, dst_width;
+    int32   half1, half2;
+    int32   deltaSrc;
+    int32   row, col;
+    uint32  rgb, tmp, R0, G0, B0, R1, G1, B1, R2, G2, B2;
+    int     temp;
+    int nextrow, mIsFlip;
     uint8 *rowpix, *colpix;
 
-    src_pitch	=	disp[0];
-    dst_pitch	=	disp[1];
-    src_width	=	disp[2];
+    src_pitch   =   disp[0];
+    dst_pitch   =   disp[1];
+    src_width   =   disp[2];
     src_height  =   disp[3];
     dst_width   =   disp[4];
-    mIsFlip		=   disp[7];
+    mIsFlip     =   disp[7];
 
     if (((disp[6] == 0) && (mIsFlip == 1)) || ((disp[6] == 1) && (mIsFlip == 0))) /* rotate 180 and  no flip || rotate 0 and  with flip */
     {
@@ -743,17 +743,17 @@ int32 scaleup(uint8*src, uint8 *dst, int32 *disp, uint8 *_mRowPix, uint8 *_mColP
             deltaSrc = (src_width + src_pitch) * 3;
         }
 
-        pDst =	(uint16 *)dst;
+        pDst = (uint16 *)dst;
         colpix = _mColPix + disp[3] - 1;
 
         for (row = src_height; row > 0; row--)
         {/* decrement index, _mColPix[.] is
-			symmetric to increment index */
+            symmetric to increment index */
             rowpix = _mRowPix + src_width - 1;
 
             for (col = src_width; col > 0; col -= 2)
             { /* decrement index, _mRowPix[.] is
-				symmetric to increment index */
+                symmetric to increment index */
 
                 half1 = *((uint16*)(pSrc));  /* read 2 bytes, G0 R0 or G0 B0 */
                 half2 = *((uint16*)(pSrc += 2)); /* read 2 bytes, R1 B0 or B1 R0 */
@@ -980,22 +980,22 @@ int32 scaleup(uint8*src, uint8 *dst, int32 *disp, uint8 *_mRowPix, uint8 *_mColP
             deltaSrc = -(src_pitch + src_width) * 3;
         }
         else
-        {	// only scale up, no rotation ,no flip
-            deltaSrc	=	(src_pitch - src_width) * 3;
+        {   // only scale up, no rotation ,no flip
+            deltaSrc    = (src_pitch - src_width) * 3;
             pSrc = src;
         }
 
-        pDst =	(uint16 *)dst;
+        pDst = (uint16 *)dst;
         colpix = _mColPix + src_height - 1;
 
         for (row = src_height; row > 0; row--)
         {/* decrement index, _mColPix[.] is
-			symmetric to increment index */
+            symmetric to increment index */
             rowpix = _mRowPix + src_width - 1;
 
             for (col = src_width; col > 0; col -= 2)
             { /* decrement index, _mRowPix[.] is
-				symmetric to increment index */
+                symmetric to increment index */
 
                 half1 = *((uint16*)(pSrc));  /* read 2 bytes, G0 R0 or G0 B0 */
                 half2 = *((uint16*)(pSrc += 2)); /* read 2 bytes, R1 B0 or B1 R0 */

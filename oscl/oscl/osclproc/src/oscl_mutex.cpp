@@ -188,7 +188,7 @@ OsclProcStatus::eOsclProcError OsclMutex::ErrorMapping(int32 Error)
         case EFAULT  :
             return  OsclProcStatus::INVALID_POINTER_ERROR;
         case EBUSY:
-            return 	OsclProcStatus::MUTEX_LOCKED_ERROR;
+            return  OsclProcStatus::MUTEX_LOCKED_ERROR;
         default:
             return OsclProcStatus::OTHER_ERROR;
     }

@@ -34,9 +34,9 @@ terms listed above has been obtained from the copyright holder.
  REVISION HISTORY
 
  Description: Deleted inclusion of files that were not part of the original
-	      oper_32b.h file.
+          oper_32b.h file.
 
- Who:						Date:
+ Who:                       Date:
  Description:
 
 ------------------------------------------------------------------------------
@@ -50,8 +50,8 @@ terms listed above has been obtained from the copyright holder.
 /*----------------------------------------------------------------------------
 ; CONTINUE ONLY IF NOT ALREADY DEFINED
 ----------------------------------------------------------------------------*/
-#ifndef	OPER_32B_H
-#define	OPER_32B_H
+#ifndef OPER_32B_H
+#define OPER_32B_H
 
 /*----------------------------------------------------------------------------
 ; INCLUDES

@@ -700,116 +700,116 @@ class PVMFJitterBuffer
     public:
         virtual ~PVMFJitterBuffer() {}
         /**
-        	This API will be called when Streaming will be started, i.e. when
-        	we are attempting to set up the transport for communication with the server
-        	(firewall packet xchange) So, the jitter buffer should be in a state to
-        	start accepting the *valid* packets from the server.
-        	This API will start/initialize the estimation of the server clock
-        	aka estimated server clock.
-        	Can Leave: No
+            This API will be called when Streaming will be started, i.e. when
+            we are attempting to set up the transport for communication with the server
+            (firewall packet xchange) So, the jitter buffer should be in a state to
+            start accepting the *valid* packets from the server.
+            This API will start/initialize the estimation of the server clock
+            aka estimated server clock.
+            Can Leave: No
         */
         virtual void StreamingSessionStarted() = 0;
 
         /**
-        	This API will be called when Streaming will be paused, i.e. we expect the server to stop
-        	sending the data. Because of async nature of the SDK, there may be possibility of receiving
-        	some data from the server. So, Jb will continue to accept any valid data.
-        	Can Leave: No
+            This API will be called when Streaming will be paused, i.e. we expect the server to stop
+            sending the data. Because of async nature of the SDK, there may be possibility of receiving
+            some data from the server. So, Jb will continue to accept any valid data.
+            Can Leave: No
         */
         virtual void StreamingSessionPaused() = 0;
 
         /**
-        	This API will be called when Streaming session is considered terminated (from server/client),
-        	Jb will not accept any packet from the server after this call and will flush itself.
-        	Can Leave: No
+            This API will be called when Streaming session is considered terminated (from server/client),
+            Jb will not accept any packet from the server after this call and will flush itself.
+            Can Leave: No
         */
         virtual void StreamingSessionStopped() = 0;
 
         /**
-        	To have smooth playback, jitter buffer needs to have sufficient amount of data ahead of the
-        	current playback position. As data flows out of the jitter buffer, the occupancy of the jitter
-        	buffer will decrease. To order to have sufficient data in it, jitter buffer will go into
-        	rebuffering once differnce between the estimated server clock and playback clock becomes
-        	less than *RebufferingThreshold*. The value of this "RebufferingThreshold" is
-        	initialized/modified by this API.
-        	params:
-        	aRebufferingThresholdInMilliSeconds:[in] uint32
-        	Can Leave: No
-        	Constraint:
-        	This value ought to be less than "Delay/Duration" specified by "SetDurationInMilliSeconds" API
+            To have smooth playback, jitter buffer needs to have sufficient amount of data ahead of the
+            current playback position. As data flows out of the jitter buffer, the occupancy of the jitter
+            buffer will decrease. To order to have sufficient data in it, jitter buffer will go into
+            rebuffering once differnce between the estimated server clock and playback clock becomes
+            less than *RebufferingThreshold*. The value of this "RebufferingThreshold" is
+            initialized/modified by this API.
+            params:
+            aRebufferingThresholdInMilliSeconds:[in] uint32
+            Can Leave: No
+            Constraint:
+            This value ought to be less than "Delay/Duration" specified by "SetDurationInMilliSeconds" API
         */
         virtual void SetRebufferingThresholdInMilliSeconds(uint32 aRebufferingThresholdInMilliSeconds) = 0;
 
         /**
-        	To have smooth playback, before letting any data out of it, jitter buffer accumulates sufficient
-        	amount of data ahead of the current playback position.
-        	The amoount of data that Jb should acculate is discated by this API.
-        	"aDuration" specifies the amount of data(in millisec) Jb should accumuate before letting any data out of it.
-        	params:
-        	aDuration:[in] uint32
-        	Can Leave: No
-        	Constraint:
-        	This value ought to be more than "RebufferingThreshold" specified by "SetRebufferingThresholdInMilliSeconds" API
+            To have smooth playback, before letting any data out of it, jitter buffer accumulates sufficient
+            amount of data ahead of the current playback position.
+            The amoount of data that Jb should acculate is discated by this API.
+            "aDuration" specifies the amount of data(in millisec) Jb should accumuate before letting any data out of it.
+            params:
+            aDuration:[in] uint32
+            Can Leave: No
+            Constraint:
+            This value ought to be more than "RebufferingThreshold" specified by "SetRebufferingThresholdInMilliSeconds" API
         */
         virtual void SetDurationInMilliSeconds(uint32 aDuration) = 0;
 
         /**
-        	This API will reset any EOS flag signalled by the user of the JB.
-        	This will reinitialize the streaming segment.
-        	Jitter buffer will go into transition state and will remian in that state unless
-        	SetPlayRange API is called on it.
-        	Jitter buffer will neither accept nor let out any packet out of it.
-        	Can Leave: No
-        	Constraint: N/A
+            This API will reset any EOS flag signalled by the user of the JB.
+            This will reinitialize the streaming segment.
+            Jitter buffer will go into transition state and will remian in that state unless
+            SetPlayRange API is called on it.
+            Jitter buffer will neither accept nor let out any packet out of it.
+            Can Leave: No
+            Constraint: N/A
         */
         virtual void PrepareForRepositioning() = 0;
 
         /**
-        	Provides the observer with the mime type of the data that is persisted in JB.
+            Provides the observer with the mime type of the data that is persisted in JB.
         */
         virtual const char* GetMimeType() const = 0;
 
         /**
-        	Will let the observer of JB the current state of the JB.
-        	Can Leave: No
-        	Constraint: N/A
+            Will let the observer of JB the current state of the JB.
+            Can Leave: No
+            Constraint: N/A
         */
         virtual PVMFJitterBufferDataState GetState() const = 0;
 
         /**
-        	This API will set the state of the Jitter buffer.
-        	Param(s):[in] aState
-        	Can Leave: No
-        	Constraint: N/A
+            This API will set the state of the Jitter buffer.
+            Param(s):[in] aState
+            Can Leave: No
+            Constraint: N/A
         */
         virtual void SetJitterBufferState(PVMFJitterBufferDataState aState) = 0;
 
         /**
-        	Jitter buffer maintains the pointers to the chunks of the data retrieved from the server.
-        	The chunks of memory that are used to persist the data retrieved from the server are allocated
-        	by the allocator created in some other component (in socket node for RTSP and the HTTP streaming)
-        	Jitter buffer need to know the occupancy of the memory pool for saving itself from overflowing.
-        	SetJitterBufferChunkAllocator provides jitter buffer the access to the allocator that allocates
-        	chunks for persisting the media.
-        	Param(s):[in] aDataBufferAllocator
-        	Can Leave: No
-        	Constraint: N/A
+            Jitter buffer maintains the pointers to the chunks of the data retrieved from the server.
+            The chunks of memory that are used to persist the data retrieved from the server are allocated
+            by the allocator created in some other component (in socket node for RTSP and the HTTP streaming)
+            Jitter buffer need to know the occupancy of the memory pool for saving itself from overflowing.
+            SetJitterBufferChunkAllocator provides jitter buffer the access to the allocator that allocates
+            chunks for persisting the media.
+            Param(s):[in] aDataBufferAllocator
+            Can Leave: No
+            Constraint: N/A
         */
         virtual void SetJitterBufferChunkAllocator(OsclMemPoolResizableAllocator* aDataBufferAllocator) = 0;
 
         /**
-        	This API provides the info about the memory pool that is allocated for persisting the media
-        	from the server.
-        	Param(s):[in] uint32 aSize				- Size of memory pool
-                     [in] uint32 aResizeSize		- If Jb needed to be extented, this will specify the mempool
-        											  chunk that will be added up to the existing mempool.
-                     [in] uint32 aMaxNumResizes		- Specifies the max number of times memory chunks of size
-        											  "aResizeSize" can be appended to the mempool.
-                     [in] uint32 aExpectedNumberOfBlocksPerBuffer	- Specifies the estimated max number of chunks
-        											  of media that are expected to be in the Jitter buffer at
-        											  any instant of time.
-        	Can Leave: No
-        	Constraint: N/A
+            This API provides the info about the memory pool that is allocated for persisting the media
+            from the server.
+            Param(s):[in] uint32 aSize              - Size of memory pool
+                     [in] uint32 aResizeSize        - If Jb needed to be extented, this will specify the mempool
+                                                      chunk that will be added up to the existing mempool.
+                     [in] uint32 aMaxNumResizes     - Specifies the max number of times memory chunks of size
+                                                      "aResizeSize" can be appended to the mempool.
+                     [in] uint32 aExpectedNumberOfBlocksPerBuffer   - Specifies the estimated max number of chunks
+                                                      of media that are expected to be in the Jitter buffer at
+                                                      any instant of time.
+            Can Leave: No
+            Constraint: N/A
         */
         virtual void SetJitterBufferMemPoolInfo(uint32 aSize,
                                                 uint32 aResizeSize,
@@ -817,18 +817,18 @@ class PVMFJitterBuffer
                                                 uint32 aExpectedNumberOfBlocksPerBuffer) = 0;
 
         /**
-        	This API provides the let the observer of JB know about the memory pool stats that is allocated
-        	for persisting the media received from the server.
-        	Param(s):[out] uint32 aSize				- Size of memory pool
-                     [out] uint32 aResizeSize		- If Jb needed to be extented, this will specify the mempool
-        											  chunk that will be added up to the existing mempool.
-                     [out] uint32 aMaxNumResizes		- Specifies the max number of times memory chunks of size
-        											  "aResizeSize" can be appended to the mempool.
-                     [out] uint32 aExpectedNumberOfBlocksPerBuffer	- Specifies the estimated max number of chunks
-        											  of media that are expected to be in the Jitter buffer at
-        											  any instant of time.
-        	Can Leave: No
-        	Constraint: N/A
+            This API provides the let the observer of JB know about the memory pool stats that is allocated
+            for persisting the media received from the server.
+            Param(s):[out] uint32 aSize             - Size of memory pool
+                     [out] uint32 aResizeSize       - If Jb needed to be extented, this will specify the mempool
+                                                      chunk that will be added up to the existing mempool.
+                     [out] uint32 aMaxNumResizes        - Specifies the max number of times memory chunks of size
+                                                      "aResizeSize" can be appended to the mempool.
+                     [out] uint32 aExpectedNumberOfBlocksPerBuffer  - Specifies the estimated max number of chunks
+                                                      of media that are expected to be in the Jitter buffer at
+                                                      any instant of time.
+            Can Leave: No
+            Constraint: N/A
         */
         virtual void GetJitterBufferMemPoolInfo(uint32& aSize,
                                                 uint32& aResizeSize,
@@ -837,85 +837,85 @@ class PVMFJitterBuffer
 
 
         /**
-        	Registers the packet with the jitter buffer.
-        	If inplace processing is false, then each fragment in the media msg is treated as a separate packet
-        	and is internally wrapped in separate media msg by this functions and persisted in the jitter buffer.
-        	This method may fail with the return value PVMF_JITTER_BUFFER_ADD_PKT_INSUFFICIENT_MEMORY
-        	In this case, the user of the jitter buffer is expected to make async call NotifyFreeSpaceAvailable
-        	call with the jitter buffer and wait for JitterBufferFreeSpaceAvailable callback before
-        	requesting to register the packet again.
-        	Param(s):[in] PVMFSharedMediaMsgPtr& aMsg - Media msg to be registered with the JB
-        	Can Leave: No
-        	Constraint: N/A
+            Registers the packet with the jitter buffer.
+            If inplace processing is false, then each fragment in the media msg is treated as a separate packet
+            and is internally wrapped in separate media msg by this functions and persisted in the jitter buffer.
+            This method may fail with the return value PVMF_JITTER_BUFFER_ADD_PKT_INSUFFICIENT_MEMORY
+            In this case, the user of the jitter buffer is expected to make async call NotifyFreeSpaceAvailable
+            call with the jitter buffer and wait for JitterBufferFreeSpaceAvailable callback before
+            requesting to register the packet again.
+            Param(s):[in] PVMFSharedMediaMsgPtr& aMsg - Media msg to be registered with the JB
+            Can Leave: No
+            Constraint: N/A
         */
         virtual PVMFJitterBufferRegisterMediaMsgStatus RegisterMediaMsg(PVMFSharedMediaMsgPtr& aMsg) = 0;
 
         /**
-        	Specifies the initialization of new streaming segement.
+            Specifies the initialization of new streaming segement.
         */
         virtual bool QueueBOSCommand(uint32 aStreamId) = 0;
 
         /**
-        	Specifies the termination of the streaming.
-        	Param(s):[out] PVMFSharedMediaMsgPtr& aMsg - Cmd Msg signifying EOS
-        			 [out] aCmdPacket: 	aMsg is considered to be valid if aCmdPacket is true
-        	Can Leave: No
-        	Constraint: N/A
+            Specifies the termination of the streaming.
+            Param(s):[out] PVMFSharedMediaMsgPtr& aMsg - Cmd Msg signifying EOS
+                     [out] aCmdPacket:  aMsg is considered to be valid if aCmdPacket is true
+            Can Leave: No
+            Constraint: N/A
         */
         virtual PVMFStatus GenerateAndSendEOSCommand(PVMFSharedMediaMsgPtr& aMediaOutMsg, bool& aCmdPacket) = 0;
 
         /**
-        	Specifies if sufficient amount of data is available with the jitter buffer.
-        	Delay is considered to be established:
-        		- If estimated server clock is ahead of playback clock by duration specified by
-        		"SetDurationInMilliSeconds"
-        		- or, EOS is signalled by the user of the JB
-        		- and JB is not in *transition* state.
+            Specifies if sufficient amount of data is available with the jitter buffer.
+            Delay is considered to be established:
+                - If estimated server clock is ahead of playback clock by duration specified by
+                "SetDurationInMilliSeconds"
+                - or, EOS is signalled by the user of the JB
+                - and JB is not in *transition* state.
 
-        	Param(s):[out] uint32& aClockDiff - Difference between the estimated server clock and client playback clock
-        	Can Leave: No
-        	Constraint: N/A
+            Param(s):[out] uint32& aClockDiff - Difference between the estimated server clock and client playback clock
+            Can Leave: No
+            Constraint: N/A
 
         */
         virtual bool IsDelayEstablished(uint32& aClockDiff) = 0;
 
         /**
-        	This API will provide the user of the Jitter buffer with the media msg from the Jitter buffer.
-        	The packet retrieved from Jb can be
-        	- media packet
-        	- command packet
-        	Param(s):[out] PVMFSharedMediaMsgPtr& aMediaMsgPtr - Media data retrieved from the jitter buffer
-        			 [out] bool& aCmdPacket - retrieved pkt from Jb is command packet
-        	Can Leave: No
-        	Constraint: N/A
-        	Return value:PVMFStatus [PVMFSuccess/PVMFErrNotReady]
-        			PVMFSuccess: If it is possible to retieve the media msg from the JB
-        			PVMFErrNotReady: If packet cannot be retrieved from the Jb as of now.
-        			User is Jb is expected to requet a callback via NotifyCanRetrievePacket API to get notification
-        			about the readiness of JB to send out the packet.
+            This API will provide the user of the Jitter buffer with the media msg from the Jitter buffer.
+            The packet retrieved from Jb can be
+            - media packet
+            - command packet
+            Param(s):[out] PVMFSharedMediaMsgPtr& aMediaMsgPtr - Media data retrieved from the jitter buffer
+                     [out] bool& aCmdPacket - retrieved pkt from Jb is command packet
+            Can Leave: No
+            Constraint: N/A
+            Return value:PVMFStatus [PVMFSuccess/PVMFErrNotReady]
+                    PVMFSuccess: If it is possible to retieve the media msg from the JB
+                    PVMFErrNotReady: If packet cannot be retrieved from the Jb as of now.
+                    User is Jb is expected to requet a callback via NotifyCanRetrievePacket API to get notification
+                    about the readiness of JB to send out the packet.
         */
         virtual PVMFStatus RetrievePacket(PVMFSharedMediaMsgPtr& aMediaMsgPtr, bool& aCmdPacket) = 0;
 
         virtual PVMFStatus SetInputPacketHeaderPreparsed(bool aPreParsed) = 0;
 
         /**
-        	Request the JB to signal when user can retrieve the packet from it.
+            Request the JB to signal when user can retrieve the packet from it.
         */
         virtual void NotifyCanRetrievePacket() = 0;
 
         /**
-        	Cancel the previously made request(if any) with the jitter buffer.
+            Cancel the previously made request(if any) with the jitter buffer.
         */
         virtual void CancelNotifyCanRetrievePacket() = 0;
 
 
         /**
-        	Returns the PVMFJitterBufferStats structure.
+            Returns the PVMFJitterBufferStats structure.
         */
         virtual PVMFJitterBufferStats& getJitterBufferStats() = 0;
 
         /**
-        	Cleans up the jitter buffer. All the data in the Jb is considered invalid and
+            Cleans up the jitter buffer. All the data in the Jb is considered invalid and
         */
         virtual void FlushJitterBuffer() = 0;
 
@@ -925,8 +925,8 @@ class PVMFJitterBuffer
 
 
         /**
-        	This function returns the mts of the next packet that is expected to be retrieved
-        	from the jitter buffer.
+            This function returns the mts of the next packet that is expected to be retrieved
+            from the jitter buffer.
         */
         virtual PVMFTimestamp peekNextElementTimeStamp() = 0;
 
@@ -936,24 +936,24 @@ class PVMFJitterBuffer
         virtual PVMFTimestamp peekMaxElementTimeStamp() = 0;
 
         /**
-        	Returns true if there is no media in the JB to be retrieved.
-        	else returns false
+            Returns true if there is no media in the JB to be retrieved.
+            else returns false
         */
         virtual bool IsEmpty() = 0;
 
         /**
-        	Signals that EOS is received, and no media data is expected anymore.
+            Signals that EOS is received, and no media data is expected anymore.
         */
         virtual void SetEOS(bool aVal) = 0;
 
         /**
-        	Checks if EOS is received.
+            Checks if EOS is received.
         */
         virtual bool GetEOS() = 0;
 
         /**
-        	This function is used to specify the play range, i.e. session params for the
-        	current streaming segment
+            This function is used to specify the play range, i.e. session params for the
+            current streaming segment
         */
         virtual void SetPlayRange(int32 aStartTimeInMS, bool aPlayAfterSeek, bool aStopTimeAvailable = false, int32 aStopTimeInMS = 0) = 0;
 
@@ -967,15 +967,15 @@ class PVMFJitterBuffer
         virtual void PurgeElementsWithTimestampLessThan(PVMFTimestamp aTS) = 0;
 
         /**
-        	Sets the mode of processing the input packets.
-        	If "aInPlaceProcessing" boolean if set to true means that media msg wrappers
-        	that carry the RTP packets from upstream node can be reused.
-        	If "aInPlaceProcessing" boolean if set to false, then inside "RegisterPacket"
-        	We allocate a new media msg wrapper and transfer the memory fragments from "inputDataPacket"
-        	to "dataPacket".
-        	If there are multiple media packets in "inputDataPacket" then we have to allocate new
-        	media msg wrappers for each one of these. So "aInPlaceProcessing" cannot be true if
-        	downstream node packs multiple media packets in a single media msg.
+            Sets the mode of processing the input packets.
+            If "aInPlaceProcessing" boolean if set to true means that media msg wrappers
+            that carry the RTP packets from upstream node can be reused.
+            If "aInPlaceProcessing" boolean if set to false, then inside "RegisterPacket"
+            We allocate a new media msg wrapper and transfer the memory fragments from "inputDataPacket"
+            to "dataPacket".
+            If there are multiple media packets in "inputDataPacket" then we have to allocate new
+            media msg wrappers for each one of these. So "aInPlaceProcessing" cannot be true if
+            downstream node packs multiple media packets in a single media msg.
         */
         virtual void SetInPlaceProcessingMode(bool aInPlaceProcessingMode) = 0;
 
@@ -992,19 +992,19 @@ class PVMFJitterBuffer
         virtual void SetBroadCastSession() = 0;
 
         /**
-        	This function is only implemented for RTSP based streaming to set the source identifier.
+            This function is only implemented for RTSP based streaming to set the source identifier.
         */
         virtual void setSSRC(uint32 aSSRC) = 0;
 
         /**
-        	This function is only implemented for RTSP based streaming to get the source identifier.
+            This function is only implemented for RTSP based streaming to get the source identifier.
         */
         virtual uint32 GetSSRC() const = 0;
 
         /**
-        	This function is specific to the RTSP based streaming.
-        	This is used to set the RTP info.
-        	RTP info is genreally obtained in response to the play request sent to the 3GPP server
+            This function is specific to the RTSP based streaming.
+            This is used to set the RTP info.
+            RTP info is genreally obtained in response to the play request sent to the 3GPP server
         */
         /**
         */
@@ -1015,7 +1015,7 @@ class PVMFJitterBuffer
         virtual PVMFRTPInfoParams& GetRTPInfoParams() = 0;
 
         /**
-        	This functiosn is RTSP streaming specific and is used to detrmine the interarriavl jitter
+            This functiosn is RTSP streaming specific and is used to detrmine the interarriavl jitter
         */
         virtual uint32 getInterArrivalJitter() = 0;
 
@@ -1060,8 +1060,8 @@ typedef enum
 } PVMFJBPacketParsingAndStatUpdationStatus;
 
 class PVMFJitterBufferImpl : public PVMFJitterBuffer
-            , public OsclMemPoolFixedChunkAllocatorObserver
-            , public PVMFJBEventNotifierObserver
+        , public OsclMemPoolFixedChunkAllocatorObserver
+        , public PVMFJBEventNotifierObserver
 {
     public:
         OSCL_IMPORT_REF virtual ~PVMFJitterBufferImpl();
@@ -1134,7 +1134,7 @@ class PVMFJitterBufferImpl : public PVMFJitterBuffer
             STREAMINGSTATE_STARTED,
             STREAMINGSTATE_PAUSED,
             STREAMINGSTATE_STOPPED
-        }StreamingState;
+        } StreamingState;
 
 
         virtual bool IsSeqTsValidForPkt(uint32 aSeqNum, uint32 aTs, PVMFJitterBufferStats& jbStats) = 0;
@@ -1181,13 +1181,13 @@ class PVMFJitterBufferImpl : public PVMFJitterBuffer
         PVMFSharedMediaDataPtr firstDataPacket;
         Oscl_Vector<PVMFSharedMediaDataPtr, OsclMemAllocator> iFirstDataPackets;
 
-        StreamingState	  iStreamingState;
-        bool	iPlayingAfterSeek;
-        bool	iReportCanRetrievePacket;
+        StreamingState    iStreamingState;
+        bool    iPlayingAfterSeek;
+        bool    iReportCanRetrievePacket;
 
-        bool	iInPlaceProcessing;
-        bool	iOnePacketPerFragment;
-        bool	iOnePacketPerMediaMsg;
+        bool    iInPlaceProcessing;
+        bool    iOnePacketPerFragment;
+        bool    iOnePacketPerMediaMsg;
 
         uint32 iLastPacketOutTs;
 
@@ -1202,21 +1202,21 @@ class PVMFJitterBufferImpl : public PVMFJitterBuffer
         int32 iStartTimeInMS;
         int32 iStopTimeInMS;
         bool iPlayStopTimeAvailable;
-        bool	iBroadCastSession;
+        bool    iBroadCastSession;
 
         PVMFTimestamp iMaxAdjustedRTPTS;
 
-        bool	iSessionDurationExpired;
-        uint32	iDurationInMilliSeconds;
-        uint32	iRebufferingThresholdInMilliSeconds;
+        bool    iSessionDurationExpired;
+        uint32  iDurationInMilliSeconds;
+        uint32  iRebufferingThresholdInMilliSeconds;
 
         uint64 iMonotonicTimeStamp;
         uint32 iFirstSeqNum;
         typedef PVMFDynamicCircularArray<OsclMemAllocator> PVMFDynamicCircularArrayType;
         PVMFDynamicCircularArrayType* iJitterBuffer;
         Oscl_Vector<PVMFRTPInfoParams, OsclMemAllocator> iRTPInfoParamsVec;
-        bool	iEOSSignalled;
-        bool	iEOSSent;
+        bool    iEOSSignalled;
+        bool    iEOSSent;
         uint32 iStreamID;
         PVMFTimestamp iMaxAdjustedTS; //[iMaxAdjustedRTPTS]
         PVMFTimestamp iPrevAdjustedTS;//[iPrevAdjustedRTPTS]
@@ -1224,9 +1224,9 @@ class PVMFJitterBufferImpl : public PVMFJitterBuffer
         PVMFMediaClock& irClientPlayBackClock;
         PVMFJBEventNotifier& irJBEventNotifier;
         OSCL_HeapString<OsclMemAllocator> irMimeType;
-        bool&	irDelayEstablished;
-        int&	irJitterDelayPercent;
-        PVMFJitterBufferDataState&	irDataState;
+        bool&   irDelayEstablished;
+        int&    irJitterDelayPercent;
+        PVMFJitterBufferDataState&  irDataState;
         bool iInProcessingMode;
         bool iHeaderPreParsed;
 
@@ -1241,9 +1241,9 @@ class PVMFJitterBufferImpl : public PVMFJitterBuffer
         uint32 iInterArrivalJitter;
         bool   oFirstPacket;
 
-        OsclRefCounterMemFrag		iTrackConfig;
+        OsclRefCounterMemFrag       iTrackConfig;
         uint32 iTimeScale;
-        MediaClockConverter*		ipMediaClockConverter;
+        MediaClockConverter*        ipMediaClockConverter;
 
         uint32 SSRCLock;
         bool   oSSRCFromSetUpResponseAvailable;

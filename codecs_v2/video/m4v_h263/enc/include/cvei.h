@@ -16,31 +16,31 @@
  * -------------------------------------------------------------------
  */
 /*********************************************************************************/
-/*	File: cvei.h                                                                */
-/*	Purpose:																	*/
-/*	Date:																		*/
-/*	Revision History:															*/
-/**	@introduction 	Common Video Encoder Interface (CVEI) is intended to be used by
-	application developers who want to create a multimedia application with video
-	encoding feature. CVEI is designed such that new video encoder algorithms or
-	modules can be plugged in seamlessly without user interaction. In other words,
-	any changes to the CVEI library are transparent to the users. Users can still
-	use the same set of APIs for new encoding tools.
+/*  File: cvei.h                                                                */
+/*  Purpose:                                                                    */
+/*  Date:                                                                       */
+/*  Revision History:                                                           */
+/** @introduction   Common Video Encoder Interface (CVEI) is intended to be used by
+    application developers who want to create a multimedia application with video
+    encoding feature. CVEI is designed such that new video encoder algorithms or
+    modules can be plugged in seamlessly without user interaction. In other words,
+    any changes to the CVEI library are transparent to the users. Users can still
+    use the same set of APIs for new encoding tools.
 
-	@requirement	CVEI will take an input frame in one of several format supported
-	by PV and encode it to an MPEG4 bitstream. It will also return a reconstructed
-	image in YUV 4:2:0 format. Currently the input format supported are YUV 4:2:0,
-	RGB24 and UYVY 4:2:2.
+    @requirement    CVEI will take an input frame in one of several format supported
+    by PV and encode it to an MPEG4 bitstream. It will also return a reconstructed
+    image in YUV 4:2:0 format. Currently the input format supported are YUV 4:2:0,
+    RGB24 and UYVY 4:2:2.
 
-	CVEI is designed such that it is simple to use. It should hides implementation
-	dependency  from the users. In this version, we decided that the operation will
-	be synchronous, i.e., the encoding will be a blocked call. Asynchronous operation
-	will be in the level above CVEI, i.e., in Author Engine Video Module which will
-	take care of capturing device as well.
+    CVEI is designed such that it is simple to use. It should hides implementation
+    dependency  from the users. In this version, we decided that the operation will
+    be synchronous, i.e., the encoding will be a blocked call. Asynchronous operation
+    will be in the level above CVEI, i.e., in Author Engine Video Module which will
+    take care of capturing device as well.
 
-	@brief	The following classes are used to interface with codecs. Their names
-	are CPVxxxVideoEncoder where xxx is codec specific such as MPEG4, H263, H26L,
-	etc. All of them are subclasses of CPVCommonVideoEncoder.
+    @brief  The following classes are used to interface with codecs. Their names
+    are CPVxxxVideoEncoder where xxx is codec specific such as MPEG4, H263, H26L,
+    etc. All of them are subclasses of CPVCommonVideoEncoder.
 */
 /*********************************************************************************/
 
@@ -140,122 +140,122 @@ struct TPVVideoEncodeParam
 {
     /** Specifies an  ID that will be used to specify this encoder while returning
     the bitstream in asynchronous mode. */
-    uint32				iEncodeID;
+    uint32              iEncodeID;
 
     /** Specifies whether base only (iNumLayer = 1) or base + enhancement layer
     (iNumLayer =2 ) is to be used. */
-    int32				iNumLayer;
+    int32               iNumLayer;
 
     /** Specifies the width in pixels of the encoded frames. IFrameWidth[0] is for
     base layer and iFrameWidth[1] is for enhanced layer. */
-    int 				iFrameWidth[MAX_LAYER];
+    int                 iFrameWidth[MAX_LAYER];
 
     /** Specifies the height in pixels of the encoded frames. IFrameHeight[0] is for
     base layer and iFrameHeight[1] is for enhanced layer. */
-    int					iFrameHeight[MAX_LAYER];
+    int                 iFrameHeight[MAX_LAYER];
 
     /** Specifies the cumulative bit rate in bit per second. IBitRate[0] is for base
     layer and iBitRate[1] is for base+enhanced layer.*/
-    int 				iBitRate[MAX_LAYER];
+    int                 iBitRate[MAX_LAYER];
 
     /** Specifies the cumulative frame rate in frame per second. IFrameRate[0] is for
     base layer and iFrameRate[1] is for base+enhanced layer. */
-    float 				iFrameRate[MAX_LAYER];
+    float               iFrameRate[MAX_LAYER];
 
     /** Specifies the picture quality factor on the scale of 1 to 10. It trades off
     the picture quality with the frame rate. Higher frame quality means lower frame rate.
     Lower frame quality for higher frame rate.*/
-    int32				iFrameQuality;
+    int32               iFrameQuality;
 
     /** Enable the use of iFrameQuality to determine the frame rate. If it is false,
     the encoder will try to meet the specified frame rate regardless of the frame quality.*/
-    bool				iEnableFrameQuality;
+    bool                iEnableFrameQuality;
 
     /** Specifies the maximum number of P-frames between 2 INTRA frames. An INTRA mode is
     forced to a frame once this interval is reached. When there is only one I-frame is present
     at the beginning of the clip, iIFrameInterval should be set to -1. */
-    int32				iIFrameInterval;
+    int32               iIFrameInterval;
 
     /** According to iIFrameInterval setting, the minimum number of intra MB per frame is
     optimally calculated for error resiliency. However, when iIFrameInterval is set to -1,
     iNumIntraMBRefresh must be specified to guarantee the minimum number of intra
     macroblocks per frame.*/
-    uint32				iNumIntraMBRefresh;
+    uint32              iNumIntraMBRefresh;
 
     /** Specifies the VBV buffer size which determines the end-to-end delay between the
     encoder and the decoder.  The size is in unit of seconds. For download application,
     the buffer size can be larger than the streaming application. For 2-way application,
     this buffer shall be kept minimal. For a special case, in VBR mode, iBufferDelay will
     be set to -1 to allow buffer underflow. */
-    float				iBufferDelay;
+    float               iBufferDelay;
 
     /** Specifies the type of the access whether it is streaming, CVEI_STREAMING
     (data partitioning mode) or download, CVEI_DOWNLOAD (combined mode).*/
-    TPVContentType		iContentType;
+    TPVContentType      iContentType;
 
     /** Specifies the rate control algorithm among one of the following constant Q,
     CBR and VBR.  The structure TMP4RateControlType is defined below.*/
     TMP4RateControlType iRateControlType;
 
     /** Specifies high quality but also high complexity mode for rate control. */
-    bool				iRDOptimal;
+    bool                iRDOptimal;
 
     /** Specifies the initial quantization parameter for the first I-frame. If constant Q
     rate control is used, this QP will be used for all the I-frames. This number must be
     set between 1 and 31, otherwise, Initialize() will fail. */
-    int					iIquant[2];
+    int                 iIquant[2];
 
     /** Specifies the initial quantization parameter for the first P-frame. If constant Q
     rate control is used, this QP will be used for all the P-frames. This number must be
     set between 1 and 31, otherwise, Initialize() will fail. */
-    int					iPquant[2];
+    int                 iPquant[2];
 
     /** Specifies the initial quantization parameter for the first B-frame. If constant Q
     rate control is used, this QP will be used for all the B-frames. This number must be
     set between 1 and 31, otherwise, Initialize() will fail. */
-    int					iBquant[2];
+    int                 iBquant[2];
 
     /** Specifies the search range in pixel unit for motion vector. The range of the
     motion vector will be of dimension [-iSearchRange.5, +iSearchRange.0]. */
-    int32				iSearchRange;
+    int32               iSearchRange;
 
     /** Specifies the use of 8x8 motion vectors. */
-    bool				iMV8x8;
+    bool                iMV8x8;
 
     /** Specifies the use of half-pel motion vectors. */
-    bool				iMVHalfPel;
+    bool                iMVHalfPel;
 
     /** Specifies automatic scene detection where I-frame will be used the the first frame
     in a new scene. */
-    bool				iSceneDetection;
+    bool                iSceneDetection;
 
     /** Specifies the packet size in bytes which represents the number of bytes between two resync markers.
     For ECVEI_DOWNLOAD and ECVEI_H263, if iPacketSize is set to 0, there will be no resync markers in the bitstream.
     For ECVEI_STREAMING is parameter must be set to a value greater than 0.*/
-    uint32				iPacketSize;
+    uint32              iPacketSize;
 
     /** Specifies whether the current frame skipping decision is allowed after encoding
     the current frame. If there is no memory of what has been coded for the current frame,
     iNoCurrentSkip has to be on. */
-    bool				iNoCurrentSkip;
+    bool                iNoCurrentSkip;
 
     /** Specifies that no frame skipping is allowed. Frame skipping is a tool used to
     control the average number of bits spent to meet the target bit rate. */
-    bool				iNoFrameSkip;
+    bool                iNoFrameSkip;
 
     /** Specifies the duration of the clip in millisecond.*/
-    int32				iClipDuration;
+    int32               iClipDuration;
 
     /** Specifies the profile and level used to encode the bitstream. When present,
     other settings will be checked against the range allowable by this target profile
     and level. Fail may be returned from the Initialize call. */
-    TPVM4VProfileLevel	iProfileLevel;
+    TPVM4VProfileLevel  iProfileLevel;
 
     /** Specifies FSI Buffer input */
-    uint8*				iFSIBuff;
+    uint8*              iFSIBuff;
 
     /** Specifies FSI Buffer Length */
-    int				iFSIBuffLength;
+    int             iFSIBuffLength;
 
 
 };
@@ -265,55 +265,55 @@ struct TPVVideoEncodeParam
 struct TPVVideoInputFormat
 {
     /** Contains the width in pixels of the input frame. */
-    int32 			iFrameWidth;
+    int32           iFrameWidth;
 
     /** Contains the height in pixels of the input frame. */
-    int32			iFrameHeight;
+    int32           iFrameHeight;
 
     /** Contains the input frame rate in the unit of frame per second. */
-    float			iFrameRate;
+    float           iFrameRate;
 
     /** Contains Frame Orientation. Used for RGB input. 1 means Bottom_UP RGB, 0 means Top_Down RGB, -1 for video formats other than RGB*/
-    int				iFrameOrientation;
+    int             iFrameOrientation;
 
     /** Contains the format of the input video, e.g., YUV 4:2:0, UYVY, RGB24, etc. */
-    TPVVideoFormat 	iVideoFormat;
+    TPVVideoFormat  iVideoFormat;
 };
 
 
-/**	Contains the input data information */
+/** Contains the input data information */
 struct TPVVideoInputData
 {
     /** Pointer to an input frame buffer in input source format.*/
-    uint8 	 	*iSource;
+    uint8       *iSource;
 
     /** The corresponding time stamp of the input frame. */
-    uint32		iTimeStamp;
+    uint32      iTimeStamp;
 };
 
 /** Contains the output data information */
 struct TPVVideoOutputData
 {
     /** Pointer to the reconstructed frame buffer in YUV 4:2:0 domain. */
-    uint8		 	*iFrame;
+    uint8           *iFrame;
 
     /** The number of layer encoded, 0 for base, 1 for enhanced. */
-    int32			iLayerNumber;
+    int32           iLayerNumber;
 
     /** Pointer to the encoded bitstream buffer. */
-    uint8			*iBitStream;
+    uint8           *iBitStream;
 
     /** The size in bytes of iBStream. */
-    int32			iBitStreamSize;
+    int32           iBitStreamSize;
 
     /** The time stamp of the encoded frame according to the bitstream. */
-    uint32			iVideoTimeStamp;
+    uint32          iVideoTimeStamp;
 
     /** The time stamp of the encoded frame as given before the encoding. */
-    uint32			iExternalTimeStamp;
+    uint32          iExternalTimeStamp;
 
     /** The hint track information. */
-    MP4HintTrack	iHintTrack;
+    MP4HintTrack    iHintTrack;
 };
 
 /** An observer class for callbacks to report the status of the CVEI */
@@ -326,14 +326,14 @@ class MPVCVEIObserver
         virtual ~MPVCVEIObserver() {}
 };
 
-/**	This class is the base class for codec specific interface class.
+/** This class is the base class for codec specific interface class.
 The users must maintain an instance of the codec specific class throughout
 the encoding session.
 */
 class CommonVideoEncoder : public OsclTimerObject
 {
     public:
-        /**	Constructor for CVEI class. */
+        /** Constructor for CVEI class. */
         CommonVideoEncoder() : OsclTimerObject(OsclActiveObject::EPriorityNominal, "PVEncoder") {};
 
         /** Initialization function to set the input video format and the
@@ -346,18 +346,18 @@ class CommonVideoEncoder : public OsclTimerObject
 
         /** Add a buffer to the queue of output buffers for output bitstream in
         asynchronous encoding mode. */
-        virtual	 TCVEI_RETVAL AddBuffer(TPVVideoOutputData *aVidOut) = 0;
+        virtual  TCVEI_RETVAL AddBuffer(TPVVideoOutputData *aVidOut) = 0;
 
         /** This function sends in an input video data structure containing a source
         frame and the associated timestamp. The encoded bitstream will be returned by
         observer callback.
         The above 3 APIs only replace EncodeFrame() API. Other APIs such as initialization
         and update parameters remain the same. */
-        virtual	 TCVEI_RETVAL Encode(TPVVideoInputData *aVidIn) = 0;
+        virtual  TCVEI_RETVAL Encode(TPVVideoInputData *aVidIn) = 0;
 
         /** This function returns the maximum VBV buffer size such that the
-        	application can allocate a buffer that guarantees to fit one frame.*/
-        virtual	 int32 GetBufferSize() = 0;
+            application can allocate a buffer that guarantees to fit one frame.*/
+        virtual  int32 GetBufferSize() = 0;
 
         /** This function returns the VOL header part (starting from the VOS header)
         of the encoded bitstream. This function must be called after Initialize.
@@ -421,8 +421,8 @@ class CommonVideoEncoder : public OsclTimerObject
         /** This function returns the target encoded frame rate of a specific layer. */
         virtual  float GetEncodeFrameRate(int32 aLayer) = 0;
     protected:
-        virtual	void Run(void) = 0;
-        virtual	void DoCancel(void) = 0;
+        virtual void Run(void) = 0;
+        virtual void DoCancel(void) = 0;
         /* internal enum */
         enum TCVEIState
         {
@@ -430,8 +430,8 @@ class CommonVideoEncoder : public OsclTimerObject
             EEncode
         };
 
-        TCVEIState	iState;
-        uint32		iId;
+        TCVEIState  iState;
+        uint32      iId;
 };
 
 #endif

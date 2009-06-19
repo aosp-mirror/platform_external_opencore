@@ -91,10 +91,10 @@ class TrackAtom : public Atom
         virtual ~TrackAtom();
 
         /* Returns media samples
-        buf:	A pointer to the data buffer into which to place the media sample.
-        size:	The size of the data buffer
-        index:	An output parameter which is the index of the sample entry to which the returned sample refers.  If zero, will return based on the index set by the previous call to getNextMediaSample().
-        return:	The size in bytes of the data placed into the provided buffer.  If the buffer is not large enough, the return value is the negative of the size that is needed.
+        buf:    A pointer to the data buffer into which to place the media sample.
+        size:   The size of the data buffer
+        index:  An output parameter which is the index of the sample entry to which the returned sample refers.  If zero, will return based on the index set by the previous call to getNextMediaSample().
+        return: The size in bytes of the data placed into the provided buffer.  If the buffer is not large enough, the return value is the negative of the size that is needed.
         */
         int32 getNextMediaSample(uint8 *buf, int32 &size, uint32 &index, uint32 &SampleOffset)
         {
@@ -161,7 +161,7 @@ class TrackAtom : public Atom
             return _pmediaAtom->getMediaSample(sampleNumber, buf, size, index, SampleOffset);
         }
 
-        int32 updateFileSize(uint32	filesize)
+        int32 updateFileSize(uint32 filesize)
         {
             if (_pmediaAtom != NULL)
             {

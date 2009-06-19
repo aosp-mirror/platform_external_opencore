@@ -40,7 +40,7 @@
                4. Fixed tabs.
 
  Description: Replace some instances of getbits to get9_n_lessbits
-			  when the number of bits read is 9 or less.
+              when the number of bits read is 9 or less.
 
  Who:                                   Date:
  Description:

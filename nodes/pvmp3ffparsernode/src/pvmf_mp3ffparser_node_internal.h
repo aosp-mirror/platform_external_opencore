@@ -90,7 +90,7 @@ class PVMFMP3FFParserNodeCommand : public PVMFMP3FFParserNodeCommandBase
         }
 
         // Constructor and parser for QueryDataSourcePosition
-        void Construct(PVMFSessionId aSessionId, int32 cmd, PVMFTimestamp aTargetNPT, PVMFTimestamp* aActualNPT,	bool aSeekToSyncPoint, const OsclAny*aContext)
+        void Construct(PVMFSessionId aSessionId, int32 cmd, PVMFTimestamp aTargetNPT, PVMFTimestamp* aActualNPT,    bool aSeekToSyncPoint, const OsclAny*aContext)
         {
             PVMFMP3FFParserNodeCommandBase::Construct(aSessionId, cmd, aContext);
             iParam1 = (OsclAny*)aTargetNPT;

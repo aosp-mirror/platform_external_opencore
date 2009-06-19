@@ -15,8 +15,8 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-#include 	"mp4dec_lib.h"
-#include 	"post_proc.h"
+#include    "mp4dec_lib.h"
+#include    "post_proc.h"
 
 #ifdef PV_POSTPROC_ON
 
@@ -70,7 +70,7 @@ void CombinedHorzVertRingFilter(
         for (mbc = 0; mbc < pp_w; mbc += 2)
         {
             /* if the data is luminance info, get the correct
-             		* quantization paramenter. One parameter per macroblock */
+                    * quantization paramenter. One parameter per macroblock */
             if (!chr)
             {
                 /* brwidth/4 is the macroblock number and mbc/2 is the macroblock col number*/
@@ -78,7 +78,7 @@ void CombinedHorzVertRingFilter(
             }
 
             /****************** Horiz. Filtering ********************/
-            /* Process four blocks for the filtering 		*/
+            /* Process four blocks for the filtering        */
             /********************************************************/
             /* Loop over two rows of blocks */
             for (br = mbr + 1; br < mbr + 3; br++)    /* br is the row counter in blocks */
@@ -242,12 +242,12 @@ void CombinedHorzVertRingFilter(
 
 
             /****************** Vert. Filtering *********************/
-            /* Process four blocks for the filtering 		*/
+            /* Process four blocks for the filtering        */
             /********************************************************/
             /* Loop over two rows of blocks */
-            for (br = mbr; br < mbr + 2; br++)		/* br is the row counter in blocks */
+            for (br = mbr; br < mbr + 2; br++)      /* br is the row counter in blocks */
             {
-                for (bc = mbc + 1; bc < mbc + 3; bc++)	/* bc is the column counter in blocks */
+                for (bc = mbc + 1; bc < mbc + 3; bc++)  /* bc is the column counter in blocks */
                 {
                     /****** check boundary for deblocking ************/
                     /* Execute if the row and column counters are within the area */
@@ -399,7 +399,7 @@ void CombinedHorzVertRingFilter(
             brwidth -= (pp_w << 1);
 
             /****************** Deringing ***************************/
-            /* Process four blocks for the filtering 		*/
+            /* Process four blocks for the filtering        */
             /********************************************************/
             /* Loop over two rows of blocks */
             for (br = mbr; br < mbr + 2; br++)
@@ -515,7 +515,7 @@ void CombinedHorzVertRingFilter(
                                 {
 
                                     /* if the data is chrominance info, get the correct
-                                    					 * quantization paramenter. One parameter per block. */
+                                                         * quantization paramenter. One parameter per block. */
                                     if (chr)
                                     {
                                         QP = QP_store[index];

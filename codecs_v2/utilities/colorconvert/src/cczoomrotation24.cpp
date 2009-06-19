@@ -100,19 +100,19 @@ int32 ColorConvert24::SetYuvFullRange(bool range)
     return 1;
 }
 
-int32 ColorConvert24::SetMode(int32 nMode)	//iMode : 0 Off, 1 On
+int32 ColorConvert24::SetMode(int32 nMode)  //iMode : 0 Off, 1 On
 {
     OSCL_ASSERT(_mInitialized == true);
 
     if (nMode == 0)
     {
-        mPtrYUV2RGB	=	&ColorConvert24::get_frame24;
-        _mState		=	0;
+        mPtrYUV2RGB =   &ColorConvert24::get_frame24;
+        _mState     =   0;
         _mDisp.src_pitch = _mSrc_pitch  ;
         _mDisp.dst_pitch = _mSrc_width  ;
-        _mDisp.src_width = _mSrc_width	;
+        _mDisp.src_width = _mSrc_width  ;
         _mDisp.src_height = _mSrc_height ;
-        _mDisp.dst_width = _mSrc_width	;
+        _mDisp.dst_width = _mSrc_width  ;
         _mDisp.dst_height = _mSrc_height ;
     }
     else
@@ -125,7 +125,7 @@ int32 ColorConvert24::SetMode(int32 nMode)	//iMode : 0 Off, 1 On
             }
             else /* zoom only */
             {
-                mPtrYUV2RGB	=	&ColorConvert24::cc24ZoomIn;
+                mPtrYUV2RGB =   &ColorConvert24::cc24ZoomIn;
             }
         }
         else
@@ -136,15 +136,15 @@ int32 ColorConvert24::SetMode(int32 nMode)	//iMode : 0 Off, 1 On
             }
             else /* no zoom, no rotate, SetMode(1) = SetMode(0) */
             {
-                mPtrYUV2RGB	=	&ColorConvert24::get_frame24;
+                mPtrYUV2RGB =   &ColorConvert24::get_frame24;
             }
         }
-        _mState		=	nMode;
+        _mState     =   nMode;
         _mDisp.src_pitch = _mSrc_pitch  ;
-        _mDisp.dst_pitch = _mDst_pitch	;
-        _mDisp.src_width = _mSrc_width	;
+        _mDisp.dst_pitch = _mDst_pitch  ;
+        _mDisp.src_width = _mSrc_width  ;
         _mDisp.src_height = _mSrc_height ;
-        _mDisp.dst_width = _mDst_width	;
+        _mDisp.dst_width = _mDst_width  ;
         _mDisp.dst_height = _mDst_height ;
     }
 
@@ -157,11 +157,11 @@ int32 ColorConvert24::GetOutputBufferSize(void)
     // for zoom, need extra line of RGB buffer for processing otherwise memory will corrupt.
     if (_mIsZoom)
     {
-        return	_mState ? ((_mDst_height + 1)*_mDst_pitch*3) : (_mSrc_width*_mSrc_height*3);
+        return  _mState ? ((_mDst_height + 1)*_mDst_pitch*3) : (_mSrc_width*_mSrc_height*3);
     }
     else
     {
-        return	_mState ? ((_mDst_height)*_mDst_pitch*3) : (_mSrc_width*_mSrc_height*3);
+        return  _mState ? ((_mDst_height)*_mDst_pitch*3) : (_mSrc_width*_mSrc_height*3);
     }
 }
 
@@ -201,9 +201,9 @@ int32 ColorConvert24::Convert(uint8 *yuvBuf, uint8 *rgbBuf)
         return 0;
     }
 
-    TmpYuvBuf[0]	=	yuvBuf;
-    TmpYuvBuf[1]	=	yuvBuf + (_mSrc_pitch) * (_mSrc_mheight);
-    TmpYuvBuf[2]	=	TmpYuvBuf[1] + (_mSrc_pitch * _mSrc_mheight) / 4;
+    TmpYuvBuf[0]    =   yuvBuf;
+    TmpYuvBuf[1]    =   yuvBuf + (_mSrc_pitch) * (_mSrc_mheight);
+    TmpYuvBuf[2]    =   TmpYuvBuf[1] + (_mSrc_pitch * _mSrc_mheight) / 4;
     (*this.*mPtrYUV2RGB)(TmpYuvBuf, rgbBuf, &_mDisp, (uint8 *)mClip);
 
     return 1;
@@ -224,11 +224,11 @@ int32 ColorConvert24::get_frame24(uint8 **src, uint8 *dst, DisplayProperties *di
     disp_prop[6] = (_mRotation > 0 ? 1 : 0);
     disp_prop[7] = _mIsFlip;
 
-//	if(disp_prop[6]^disp_prop[7])	/* flip and rotate 180*/
-//	{
-//		return 0 ;//not yet implemented cc24Reverse(src,dst,disp_prop,coff_tbl);
-//	}
-//	else
+//  if(disp_prop[6]^disp_prop[7])   /* flip and rotate 180*/
+//  {
+//      return 0 ;//not yet implemented cc24Reverse(src,dst,disp_prop,coff_tbl);
+//  }
+//  else
     {
         return cc24(src, dst, disp_prop, clip);
     }
@@ -240,19 +240,19 @@ int32 cc24(uint8 **src, uint8 *dst, int32 *disp, uint8 *clip)
 {
     uint8 *pCb, *pCr;
     uint16 *pY;
-    uint8	*pDst;
-    int32	src_pitch, dst_pitch, dst_pitch3, src_width;
-    int32	Y, Cb, Cr, Cg;
-    int32	deltaY, deltaDst, deltaCbCr;
-    int32	row, col;
-    int32	tmp0, tmp1, tmp2, rgb, rgb2;
+    uint8   *pDst;
+    int32   src_pitch, dst_pitch, dst_pitch3, src_width;
+    int32   Y, Cb, Cr, Cg;
+    int32   deltaY, deltaDst, deltaCbCr;
+    int32   row, col;
+    int32   tmp0, tmp1, tmp2, rgb, rgb2;
 
-    src_pitch	=	disp[0];
-    dst_pitch	=	disp[1];
-    src_width	=	disp[2];
+    src_pitch   =   disp[0];
+    dst_pitch   =   disp[1];
+    src_width   =   disp[2];
 
     if (disp[6]) /* rotate 180 and flip */
-    {	/* move the starting point to the bottom-left corner of the picture */
+    {   /* move the starting point to the bottom-left corner of the picture */
         deltaY = src_pitch * (disp[3] - 1);
         pY = (uint16*)(src[0] + deltaY);
         deltaY = (src_pitch >> 1) * ((disp[3] >> 1) - 1);
@@ -264,18 +264,18 @@ int32 cc24(uint8 **src, uint8 *dst, int32 *disp, uint8 *clip)
     }
     else
     {
-        deltaY		=	(src_pitch << 1) - src_width;
-        deltaCbCr	=	(src_pitch - src_width) >> 1;
+        deltaY      = (src_pitch << 1) - src_width;
+        deltaCbCr   = (src_pitch - src_width) >> 1;
         pY = (uint16 *)src[0];
         pCb = src[1];
         pCr = src[2];
         src_pitch >>= 1;
     }
 
-    deltaDst	=	((dst_pitch << 1) - src_width) * 3;
-    pDst =	dst;
+    deltaDst    = ((dst_pitch << 1) - src_width) * 3;
+    pDst =  dst;
 
-    dst_pitch3	=	3 * dst_pitch;
+    dst_pitch3  =   3 * dst_pitch;
 
     for (row = disp[3]; row > 0; row -= 2)
     {
@@ -287,98 +287,98 @@ int32 cc24(uint8 **src, uint8 *dst, int32 *disp, uint8 *clip)
             Cr = *pCr++;
 
             //load the bottom two pixels
-            //Y	=	*(((uint16 *)pY)+src_pitch);
-            Y	=	pY[src_pitch];
+            //Y =   *(((uint16 *)pY)+src_pitch);
+            Y   =   pY[src_pitch];
 
             Cb -= 128;
             Cr -= 128;
-            Cg	=	Cr * (*((int32*)(clip - 400)));
-            Cg	+=	Cb * (*((int32*)(clip - 392)));
+            Cg  =   Cr * (*((int32*)(clip - 400)));
+            Cg  +=  Cb * (*((int32*)(clip - 392)));
 
-            Cr	*=	(*((int32*)(clip - 396)));
-            Cb	*=	(*((int32*)(clip - 388)));
+            Cr  *= (*((int32*)(clip - 396)));
+            Cb  *= (*((int32*)(clip - 388)));
 
-            tmp0	=	(Y << 16) & 0xFF0000;	//Low endian	left pixel
-            tmp1	=	tmp0 - Cg;
-            tmp2	=	tmp0 + Cb;
-            tmp0	=	tmp0 + Cr;
+            tmp0    = (Y << 16) & 0xFF0000;     //Low endian    left pixel
+            tmp1    =   tmp0 - Cg;
+            tmp2    =   tmp0 + Cb;
+            tmp0    =   tmp0 + Cr;
 
-            tmp0	=	clip[tmp0>>16];
-            tmp1	=	clip[tmp1>>16];
-            tmp2	=	clip[tmp2>>16];
+            tmp0    =   clip[tmp0>>16];
+            tmp1    =   clip[tmp1>>16];
+            tmp2    =   clip[tmp2>>16];
 #if RGB_FORMAT
-            rgb	=	tmp0 | (tmp1 << 8); /* r1 & g1 */
+            rgb =   tmp0 | (tmp1 << 8); /* r1 & g1 */
 #else
-            rgb	=	tmp2 | (tmp1 << 8); /* b1 & g1 */
+            rgb =   tmp2 | (tmp1 << 8); /* b1 & g1 */
 #endif
             Y   = (Y << 8) & 0xFF0000;
 #if RGB_FORMAT
-            tmp0	=	Y + Cr;
-            tmp0	=	clip[tmp0>>16];
-            rgb		|= (tmp0 << 24);
-            rgb		|= (tmp2 << 16); // tmp2 | (tmp0<<8); /* b1 & r2 */
-            tmp2	=	Y + Cb;
-            tmp2	=	clip[tmp2>>16];
+            tmp0    =   Y + Cr;
+            tmp0    =   clip[tmp0>>16];
+            rgb     |= (tmp0 << 24);
+            rgb     |= (tmp2 << 16); // tmp2 | (tmp0<<8); /* b1 & r2 */
+            tmp2    =   Y + Cb;
+            tmp2    =   clip[tmp2>>16];
 #else
-            tmp2	=	Y + Cb;
-            tmp2	=	clip[tmp2>>16];
-            rgb		|= (tmp2 << 24);
-            rgb		|= (tmp0 << 16); //tmp0 | (tmp2<<8); /* r1 & b2 */
-            tmp0	=	Y + Cr;
-            tmp0	=	clip[tmp0>>16];
+            tmp2    =   Y + Cb;
+            tmp2    =   clip[tmp2>>16];
+            rgb     |= (tmp2 << 24);
+            rgb     |= (tmp0 << 16); //tmp0 | (tmp2<<8); /* r1 & b2 */
+            tmp0    =   Y + Cr;
+            tmp0    =   clip[tmp0>>16];
 #endif
-            *((uint32 *)(pDst + dst_pitch3))	=   rgb;
+            *((uint32 *)(pDst + dst_pitch3))    =   rgb;
 
-            tmp1	=	Y - Cg;
-            tmp1	=	clip[tmp1>>16];
+            tmp1    =   Y - Cg;
+            tmp1    =   clip[tmp1>>16];
 #if RGB_FORMAT
-            rgb2	=	tmp1 | (tmp2 << 8); /* g2 & b2 */
+            rgb2    =   tmp1 | (tmp2 << 8); /* g2 & b2 */
 #else
-            rgb2	=	tmp1 | (tmp0 << 8); /* g2 & r2 */
+            rgb2    =   tmp1 | (tmp0 << 8); /* g2 & r2 */
 #endif
             //load the top two pixels
-            Y	=	*pY++;
+            Y   =   *pY++;
 
-            tmp0	=	(Y << 16) & 0xFF0000;	//Low endian	left pixel
-            tmp1	=	tmp0 - Cg;
-            tmp2	=	tmp0 + Cb;
-            tmp0	=	tmp0 + Cr;
+            tmp0    = (Y << 16) & 0xFF0000;     //Low endian    left pixel
+            tmp1    =   tmp0 - Cg;
+            tmp2    =   tmp0 + Cb;
+            tmp0    =   tmp0 + Cr;
 
-            tmp0	=	clip[tmp0>>16];
-            tmp1	=	clip[tmp1>>16];
-            tmp2	=	clip[tmp2>>16];
+            tmp0    =   clip[tmp0>>16];
+            tmp1    =   clip[tmp1>>16];
+            tmp2    =   clip[tmp2>>16];
 
 #if RGB_FORMAT
-            rgb	=	tmp0 | (tmp1 << 8); /* r1 & g1 */
+            rgb =   tmp0 | (tmp1 << 8); /* r1 & g1 */
 #else
-            rgb	=	tmp2 | (tmp1 << 8); /* b1 & g1 */
+            rgb =   tmp2 | (tmp1 << 8); /* b1 & g1 */
 #endif
             Y   = (Y << 8) & 0xFF0000;
 
 #if RGB_FORMAT
-            tmp0	=	Y + Cr;
-            tmp0	=	clip[tmp0>>16];
+            tmp0    =   Y + Cr;
+            tmp0    =   clip[tmp0>>16];
             rgb     |= (tmp0 << 24);
-            rgb		|= (tmp2 << 16); //tmp2 | (tmp0<<8); /* r1 & b2 */
-            tmp2	=	Y + Cb;
-            tmp2	=	clip[tmp2>>16];
+            rgb     |= (tmp2 << 16); //tmp2 | (tmp0<<8); /* r1 & b2 */
+            tmp2    =   Y + Cb;
+            tmp2    =   clip[tmp2>>16];
 #else
-            tmp2	=	Y + Cb;
-            tmp2	=	clip[tmp2>>16];
-            rgb		|= (tmp2 << 24);
-            rgb		|= (tmp0 << 16); //tmp0 | (tmp2<<8); /* b1 & r2 */
-            tmp0	=	Y + Cr;
-            tmp0	=	clip[tmp0>>16];
+            tmp2    =   Y + Cb;
+            tmp2    =   clip[tmp2>>16];
+            rgb     |= (tmp2 << 24);
+            rgb     |= (tmp0 << 16); //tmp0 | (tmp2<<8); /* b1 & r2 */
+            tmp0    =   Y + Cr;
+            tmp0    =   clip[tmp0>>16];
 #endif
-            *((uint32 *)(pDst))	=   rgb;
+            *((uint32 *)(pDst)) =   rgb;
 
-            tmp1	=	Y - Cg;
-            tmp1	=	clip[tmp1>>16];
+            tmp1    =   Y - Cg;
+            tmp1    =   clip[tmp1>>16];
 
 #if RGB_FORMAT
-            rgb	=	tmp1 | (tmp2 << 8); /* g2 & b2 */
+            rgb =   tmp1 | (tmp2 << 8); /* g2 & b2 */
 #else
-            rgb	=	tmp1 | (tmp0 << 8); /* g2 & r2 */
+            rgb =   tmp1 | (tmp0 << 8); /* g2 & r2 */
 #endif
 
             //// next 2x2 pixels
@@ -387,117 +387,117 @@ int32 cc24(uint8 **src, uint8 *dst, int32 *disp, uint8 *clip)
             Cr = *pCr++;
 
             //load the bottom two pixels
-            //Y	=	*(((uint16 *)pY)+src_pitch);
-            Y	=	pY[src_pitch];
+            //Y =   *(((uint16 *)pY)+src_pitch);
+            Y   =   pY[src_pitch];
 
             Cb -= 128;
             Cr -= 128;
-            Cg	=	Cr * (*((int32*)(clip - 400)));
-            Cg	+=	Cb * (*((int32*)(clip - 392)));
+            Cg  =   Cr * (*((int32*)(clip - 400)));
+            Cg  +=  Cb * (*((int32*)(clip - 392)));
 
-            Cr	*=	(*((int32*)(clip - 396)));
-            Cb	*=	(*((int32*)(clip - 388)));
+            Cr  *= (*((int32*)(clip - 396)));
+            Cb  *= (*((int32*)(clip - 388)));
 
-            tmp0	=	(Y << 16) & 0xFF0000;	//Low endian	left pixel
-            tmp1	=	tmp0 - Cg;
-            tmp2	=	tmp0 + Cb;
-            tmp0	=	tmp0 + Cr;
+            tmp0    = (Y << 16) & 0xFF0000;     //Low endian    left pixel
+            tmp1    =   tmp0 - Cg;
+            tmp2    =   tmp0 + Cb;
+            tmp0    =   tmp0 + Cr;
 
-            tmp0	=	clip[tmp0>>16];
-            tmp1	=	clip[tmp1>>16];
-            tmp2	=	clip[tmp2>>16];
+            tmp0    =   clip[tmp0>>16];
+            tmp1    =   clip[tmp1>>16];
+            tmp2    =   clip[tmp2>>16];
 #if RGB_FORMAT
-            rgb2	|= (tmp1 << 24);
-            rgb2	|= (tmp0 << 16);
-            //rgb	=	tmp0 | (tmp1<<8); /* r3 & g3 */
+            rgb2    |= (tmp1 << 24);
+            rgb2    |= (tmp0 << 16);
+            //rgb   =   tmp0 | (tmp1<<8); /* r3 & g3 */
 #else
-            rgb2	|= (tmp1 << 24);
-            rgb2	|= (tmp2 << 16);
-            //rgb	=	tmp2 | (tmp1<<8); /* b3 & g3 */
+            rgb2    |= (tmp1 << 24);
+            rgb2    |= (tmp2 << 16);
+            //rgb   =   tmp2 | (tmp1<<8); /* b3 & g3 */
 #endif
             *((uint32 *)(pDst + dst_pitch3 + 4)) = rgb2;
 
             Y   = (Y << 8) & 0xFF0000;
 #if RGB_FORMAT
-            tmp0	=	Y + Cr;
-            tmp0	=	clip[tmp0>>16];
-            rgb2	=	tmp2 | (tmp0 << 8); /* b3 & r4 */
-            tmp2	=	Y + Cb;
-            tmp2	=	clip[tmp2>>16];
+            tmp0    =   Y + Cr;
+            tmp0    =   clip[tmp0>>16];
+            rgb2    =   tmp2 | (tmp0 << 8); /* b3 & r4 */
+            tmp2    =   Y + Cb;
+            tmp2    =   clip[tmp2>>16];
 #else
-            tmp2	=	Y + Cb;
-            tmp2	=	clip[tmp2>>16];
-            rgb2	=	tmp0 | (tmp2 << 8); /* r3 & b4 */
-            tmp0	=	Y + Cr;
-            tmp0	=	clip[tmp0>>16];
+            tmp2    =   Y + Cb;
+            tmp2    =   clip[tmp2>>16];
+            rgb2    =   tmp0 | (tmp2 << 8); /* r3 & b4 */
+            tmp0    =   Y + Cr;
+            tmp0    =   clip[tmp0>>16];
 #endif
-            tmp1	=	Y - Cg;
-            tmp1	=	clip[tmp1>>16];
+            tmp1    =   Y - Cg;
+            tmp1    =   clip[tmp1>>16];
 #if RGB_FORMAT
-            rgb2	|= (tmp2 << 24);
-            rgb2	|= (tmp1 << 16); //	tmp1|(tmp2<<8); /* g2 & b2 */
+            rgb2    |= (tmp2 << 24);
+            rgb2    |= (tmp1 << 16); // tmp1|(tmp2<<8); /* g2 & b2 */
 #else
-            rgb2	|= (tmp0 << 24);
-            rgb2	|= (tmp1 << 16); // tmp1|(tmp0<<8); /* g2 & r2 */
+            rgb2    |= (tmp0 << 24);
+            rgb2    |= (tmp1 << 16); // tmp1|(tmp0<<8); /* g2 & r2 */
 #endif
             *((uint32 *)(pDst + dst_pitch3 + 8)) = rgb2;
 
             //load the top two pixels
-            Y	=	*pY++;
+            Y   =   *pY++;
 
-            tmp0	=	(Y << 16) & 0xFF0000;	//Low endian	left pixel
-            tmp1	=	tmp0 - Cg;
-            tmp2	=	tmp0 + Cb;
-            tmp0	=	tmp0 + Cr;
+            tmp0    = (Y << 16) & 0xFF0000;     //Low endian    left pixel
+            tmp1    =   tmp0 - Cg;
+            tmp2    =   tmp0 + Cb;
+            tmp0    =   tmp0 + Cr;
 
-            tmp0	=	clip[tmp0>>16];
-            tmp1	=	clip[tmp1>>16];
-            tmp2	=	clip[tmp2>>16];
+            tmp0    =   clip[tmp0>>16];
+            tmp1    =   clip[tmp1>>16];
+            tmp2    =   clip[tmp2>>16];
 
 #if RGB_FORMAT
-            rgb		|=	(tmp1 << 24);
-            rgb		|=	(tmp0 << 16);//tmp0 | (tmp1<<8); /* r1 & g1 */
+            rgb     |= (tmp1 << 24);
+            rgb     |= (tmp0 << 16); //tmp0 | (tmp1<<8); /* r1 & g1 */
 #else
-            rgb		|=	(tmp1 << 24);
-            rgb		|=	(tmp2 << 16);//tmp2 | (tmp1<<8); /* b1 & g1 */
+            rgb     |= (tmp1 << 24);
+            rgb     |= (tmp2 << 16); //tmp2 | (tmp1<<8); /* b1 & g1 */
 #endif
             *((uint32*)(pDst + 4)) = rgb;
 
             Y   = (Y << 8) & 0xFF0000;
 
 #if RGB_FORMAT
-            tmp0	=	Y + Cr;
-            tmp0	=	clip[tmp0>>16];
-            rgb		=	tmp2 | (tmp0 << 8); /* r1 & b2 */
-            tmp2	=	Y + Cb;
-            tmp2	=	clip[tmp2>>16];
+            tmp0    =   Y + Cr;
+            tmp0    =   clip[tmp0>>16];
+            rgb     =   tmp2 | (tmp0 << 8); /* r1 & b2 */
+            tmp2    =   Y + Cb;
+            tmp2    =   clip[tmp2>>16];
 #else
-            tmp2	=	Y + Cb;
-            tmp2	=	clip[tmp2>>16];
-            rgb		=	tmp0 | (tmp2 << 8); /* b1 & r2 */
-            tmp0	=	Y + Cr;
-            tmp0	=	clip[tmp0>>16];
+            tmp2    =   Y + Cb;
+            tmp2    =   clip[tmp2>>16];
+            rgb     =   tmp0 | (tmp2 << 8); /* b1 & r2 */
+            tmp0    =   Y + Cr;
+            tmp0    =   clip[tmp0>>16];
 #endif
 
-            tmp1	=	Y - Cg;
-            tmp1	=	clip[tmp1>>16];
+            tmp1    =   Y - Cg;
+            tmp1    =   clip[tmp1>>16];
 
 #if RGB_FORMAT
-            rgb		|=	(tmp2 << 24);
-            rgb		|=	(tmp1 << 16); //tmp1|(tmp2<<8); /* g2 & b2 */
+            rgb     |= (tmp2 << 24);
+            rgb     |= (tmp1 << 16);  //tmp1|(tmp2<<8); /* g2 & b2 */
 #else
-            rgb		|=	(tmp0 << 24);
-            rgb		|=	(tmp1 << 16); //tmp1|(tmp0<<8); /* g2 & r2 */
+            rgb     |= (tmp0 << 24);
+            rgb     |= (tmp1 << 16);  //tmp1|(tmp0<<8); /* g2 & r2 */
 #endif
             *((uint32*)(pDst + 8)) = rgb;
 
             pDst += 12;
         }//end of COL
 
-        pY	+=	(deltaY >> 1);
-        pCb	+=	deltaCbCr;
-        pCr	+=	deltaCbCr;
-        pDst +=	(deltaDst);	//coz pDst defined as UINT *
+        pY  += (deltaY >> 1);
+        pCb +=  deltaCbCr;
+        pCr +=  deltaCbCr;
+        pDst += (deltaDst); //coz pDst defined as UINT *
     }
 
     return 1;
@@ -512,33 +512,33 @@ int32 ColorConvert24::cc24Rotate(uint8 **src, uint8 *dst, DisplayProperties *dis
     uint8 *pCb, *pCr;
     uint8 *pY;
     uint8 *pDst;
-    int32		src_pitch, dst_pitch, src_width, dst_pitch3;
-    int32		Y, Cb, Cr, Cg;
-    int32		deltaY, deltaDst, deltaCbCr;
-    int32		row, col;
-    int32		tmp0, tmp1, tmp2;
+    int32       src_pitch, dst_pitch, src_width, dst_pitch3;
+    int32       Y, Cb, Cr, Cg;
+    int32       deltaY, deltaDst, deltaCbCr;
+    int32       row, col;
+    int32       tmp0, tmp1, tmp2;
     int32 half_src_pitch, read_idx, tmp_src_pitch;
 
-    src_pitch	=	disp->src_pitch;
-    dst_pitch	=	disp->dst_pitch;
-    src_width	=	disp->src_width;
+    src_pitch   =   disp->src_pitch;
+    dst_pitch   =   disp->dst_pitch;
+    src_width   =   disp->src_width;
 
-    deltaDst	=	3 * ((dst_pitch << 1) - disp->dst_width); // 3*((dst_pitch<<1) - src_height)
+    deltaDst    =   3 * ((dst_pitch << 1) - disp->dst_width); // 3*((dst_pitch<<1) - src_height)
 
     if (_mRotation == CCROTATE_CLKWISE)
-    {	// go from top-left to bottom-left
-        deltaY		=  src_pitch * disp->src_height + 2;
-        deltaCbCr	= ((src_pitch * disp->src_height) >> 2) + 1;
+    {   // go from top-left to bottom-left
+        deltaY      =  src_pitch * disp->src_height + 2;
+        deltaCbCr   = ((src_pitch * disp->src_height) >> 2) + 1;
     }
     else  // rotate counterclockwise
     {   // go from bottom-right back to top-right
-        deltaY		=  -(src_pitch * disp->src_height + 2);
-        deltaCbCr	=  -(((src_pitch * disp->src_height) >> 2) + 1);
+        deltaY      =  -(src_pitch * disp->src_height + 2);
+        deltaCbCr   =  -(((src_pitch * disp->src_height) >> 2) + 1);
     }
 
     // map origin of the destination to the source
     if (_mRotation == CCROTATE_CLKWISE)
-    {	// goto bottom-left
+    {   // goto bottom-left
         pY = src[0] + src_pitch * (disp->src_height - 1);
         pCb = src[1] + ((src_pitch >> 1) * ((disp->src_height >> 1) - 1));
         pCr = src[2] + ((src_pitch >> 1) * ((disp->src_height >> 1) - 1));
@@ -563,9 +563,9 @@ int32 ColorConvert24::cc24Rotate(uint8 **src, uint8 *dst, DisplayProperties *dis
         tmp_src_pitch = src_pitch;
     }
 
-    pDst =	dst;
+    pDst =  dst;
 
-    dst_pitch3	=	3 * dst_pitch;
+    dst_pitch3  =   3 * dst_pitch;
 
     for (row = src_width; row > 0; row -= 2)
     {
@@ -580,96 +580,96 @@ int32 ColorConvert24::cc24Rotate(uint8 **src, uint8 *dst, DisplayProperties *dis
 
             Cb -= 128;
             Cr -= 128;
-            Cg	=	Cr * (*((int32*)(clip - 400)));
-            Cg	+=	Cb * (*((int32*)(clip - 392)));
+            Cg  =   Cr * (*((int32*)(clip - 400)));
+            Cg  +=  Cb * (*((int32*)(clip - 392)));
 
-            Cr	*=	(*((int32*)(clip - 396)));
-            Cb	*=	(*((int32*)(clip - 388)));
+            Cr  *= (*((int32*)(clip - 396)));
+            Cb  *= (*((int32*)(clip - 388)));
 
             //process the bottom two pixels in RGB plane
-            tmp0	=	pY[read_idx]; /* top-left pixel */
+            tmp0    =   pY[read_idx]; /* top-left pixel */
 
-            tmp1	=	(tmp0 << 16) - Cg;
-            tmp2	=	(tmp0 << 16) + Cb;
-            tmp0	=	(tmp0 << 16) + Cr;
+            tmp1    = (tmp0 << 16) - Cg;
+            tmp2    = (tmp0 << 16) + Cb;
+            tmp0    = (tmp0 << 16) + Cr;
 
-            tmp0	=	clip[tmp0>>16];
-            tmp1	=	clip[tmp1>>16];
-            tmp2	=	clip[tmp2>>16];
+            tmp0    =   clip[tmp0>>16];
+            tmp1    =   clip[tmp1>>16];
+            tmp2    =   clip[tmp2>>16];
 
 #if RGB_FORMAT
-            *((uint16 *)(pDst + dst_pitch3))	=	tmp0 | (tmp1 << 8); /* r1 & g1 */
+            *((uint16 *)(pDst + dst_pitch3))    =   tmp0 | (tmp1 << 8); /* r1 & g1 */
 #else
-            *((uint16 *)(pDst + dst_pitch3))	=	tmp2 | (tmp1 << 8); /* b1 & g1 */
+            *((uint16 *)(pDst + dst_pitch3))    =   tmp2 | (tmp1 << 8); /* b1 & g1 */
 #endif
-            Y		=	pY[read_idx+tmp_src_pitch];  /* bottom-left pixel */
+            Y       =   pY[read_idx+tmp_src_pitch];  /* bottom-left pixel */
 #if RGB_FORMAT
-            tmp0	=	(Y << 16) + Cr;
-            tmp0	=	clip[tmp0>>16];
-            *((uint16 *)(pDst + dst_pitch3 + 2))	=   tmp2 | (tmp0 << 8); /* b1 & r2 */
-            tmp2	=	(Y << 16) + Cb;
-            tmp2	=	clip[tmp2>>16];
+            tmp0    = (Y << 16) + Cr;
+            tmp0    =   clip[tmp0>>16];
+            *((uint16 *)(pDst + dst_pitch3 + 2))    =   tmp2 | (tmp0 << 8); /* b1 & r2 */
+            tmp2    = (Y << 16) + Cb;
+            tmp2    =   clip[tmp2>>16];
 #else
-            tmp2	=	(Y << 16) + Cb;
-            tmp2	=	clip[tmp2>>16];
-            *((uint16 *)(pDst + dst_pitch3 + 2))	=   tmp0 | (tmp2 << 8); /* r1 & b2 */
-            tmp0	=	(Y << 16) + Cr;
-            tmp0	=	clip[tmp0>>16];
+            tmp2    = (Y << 16) + Cb;
+            tmp2    =   clip[tmp2>>16];
+            *((uint16 *)(pDst + dst_pitch3 + 2))    =   tmp0 | (tmp2 << 8); /* r1 & b2 */
+            tmp0    = (Y << 16) + Cr;
+            tmp0    =   clip[tmp0>>16];
 #endif
-            tmp1	=	(Y << 16) - Cg;
-            tmp1	=	clip[tmp1>>16];
+            tmp1    = (Y << 16) - Cg;
+            tmp1    =   clip[tmp1>>16];
 
 #if RGB_FORMAT
-            *((uint16*)(pDst + dst_pitch3 + 4))	=	tmp1 | (tmp2 << 8); /* g2 & b2 */
+            *((uint16*)(pDst + dst_pitch3 + 4)) =   tmp1 | (tmp2 << 8); /* g2 & b2 */
 #else
-            *((uint16*)(pDst + dst_pitch3 + 4))	=	tmp1 | (tmp0 << 8); /* g2 & r2 */
+            *((uint16*)(pDst + dst_pitch3 + 4)) =   tmp1 | (tmp0 << 8); /* g2 & r2 */
 #endif
             //process the top two pixels in RGB plane
 
-            tmp0	=	*pY; /*upper-right pixel */
-            tmp1	=	(tmp0 << 16) - Cg;
-            tmp2	=	(tmp0 << 16) + Cb;
-            tmp0	=	(tmp0 << 16) + Cr;
+            tmp0    =   *pY; /*upper-right pixel */
+            tmp1    = (tmp0 << 16) - Cg;
+            tmp2    = (tmp0 << 16) + Cb;
+            tmp0    = (tmp0 << 16) + Cr;
 
-            tmp0	=	clip[tmp0>>16];
-            tmp1	=	clip[tmp1>>16];
-            tmp2	=	clip[tmp2>>16];
+            tmp0    =   clip[tmp0>>16];
+            tmp1    =   clip[tmp1>>16];
+            tmp2    =   clip[tmp2>>16];
 
 #if RGB_FORMAT
-            *((uint16 *)pDst)	=	tmp0 | (tmp1 << 8); /* r1 & g1 */
+            *((uint16 *)pDst)   =   tmp0 | (tmp1 << 8); /* r1 & g1 */
 #else
-            *((uint16 *)pDst)	=	tmp2 | (tmp1 << 8); /* b1 & g1 */
+            *((uint16 *)pDst)   =   tmp2 | (tmp1 << 8); /* b1 & g1 */
 #endif
-            Y		=	pY[tmp_src_pitch]; /* bottom-right pixel */
+            Y       =   pY[tmp_src_pitch]; /* bottom-right pixel */
             pY += (tmp_src_pitch << 1);
 #if RGB_FORMAT
-            tmp0	=	(Y << 16) + Cr;
-            tmp0	=	clip[tmp0>>16];
-            *((uint16 *)(pDst + 2))	=   tmp2 | (tmp0 << 8); /* b1 & r2 */
-            tmp2	=	(Y << 16) + Cb;
-            tmp2	=	clip[tmp2>>16];
+            tmp0    = (Y << 16) + Cr;
+            tmp0    =   clip[tmp0>>16];
+            *((uint16 *)(pDst + 2)) =   tmp2 | (tmp0 << 8); /* b1 & r2 */
+            tmp2    = (Y << 16) + Cb;
+            tmp2    =   clip[tmp2>>16];
 #else
-            tmp2	=	(Y << 16) + Cb;
-            tmp2	=	clip[tmp2>>16];
-            *((uint16 *)(pDst + 2))	=   tmp0 | (tmp2 << 8); /* r1 & b2 */
-            tmp0	=	(Y << 16) + Cr;
-            tmp0	=	clip[tmp0>>16];
+            tmp2    = (Y << 16) + Cb;
+            tmp2    =   clip[tmp2>>16];
+            *((uint16 *)(pDst + 2)) =   tmp0 | (tmp2 << 8); /* r1 & b2 */
+            tmp0    = (Y << 16) + Cr;
+            tmp0    =   clip[tmp0>>16];
 #endif
-            tmp1	=	(Y << 16) - Cg;
-            tmp1	=	clip[tmp1>>16];
+            tmp1    = (Y << 16) - Cg;
+            tmp1    =   clip[tmp1>>16];
 #if RGB_FORMAT
-            *((uint16*)(pDst + 4))	=	tmp1 | (tmp2 << 8); /* g2 & r2 */
+            *((uint16*)(pDst + 4))  =   tmp1 | (tmp2 << 8); /* g2 & r2 */
 #else
-            *((uint16*)(pDst + 4))	=	tmp1 | (tmp0 << 8); /* g2 & b2 */
+            *((uint16*)(pDst + 4))  =   tmp1 | (tmp0 << 8); /* g2 & b2 */
 #endif
             pDst += 6;
 
         }//end of COL
 
-        pY	+=	deltaY;
-        pCb	+=	deltaCbCr;
-        pCr	+=	deltaCbCr;
-        pDst +=	(deltaDst);
+        pY  +=  deltaY;
+        pCb +=  deltaCbCr;
+        pCr +=  deltaCbCr;
+        pDst += (deltaDst);
     }
 
     return 1;
@@ -737,7 +737,7 @@ int32 cc24scaling(uint8 **src, uint8 *dst, int *disp,
 
     for (row = disp[3] - 1; row >= 0; row -= 2)
     {/* decrement index, _mColPix[.] is
-													 symmetric to increment index */
+                                                     symmetric to increment index */
         if ((_mColPix[row-1] == 0) && (_mColPix[row] == 0))
         {
             pCb += (src_pitch >> 1);
@@ -748,7 +748,7 @@ int32 cc24scaling(uint8 **src, uint8 *dst, int *disp,
 
         for (col = src_width - 2; col >= 0; col -= 2)
         { /* decrement index, _mRowPix[.] is
-													 symmetric to increment index */
+                                                     symmetric to increment index */
 
             Cb = *pCb++;
             Cr = *pCr++;
@@ -756,36 +756,36 @@ int32 cc24scaling(uint8 **src, uint8 *dst, int *disp,
             //load the bottom two pixels
             Cb -= 128;
             Cr -= 128;
-            Cg	=	Cr * (*((int32*)(clip - 400)));
-            Cg	+=	Cb * (*((int32*)(clip - 392)));
+            Cg  =   Cr * (*((int32*)(clip - 400)));
+            Cg  +=  Cb * (*((int32*)(clip - 392)));
 
-            Cr	*=	(*((int32*)(clip - 396)));
-            Cb	*=	(*((int32*)(clip - 388)));
+            Cr  *= (*((int32*)(clip - 396)));
+            Cb  *= (*((int32*)(clip - 388)));
 
-            if (_mRowPix[col])	/* compute this pixel */
+            if (_mRowPix[col])  /* compute this pixel */
             {
-                tmp0	=	pY[src_pitch];			//bottom left
+                tmp0    =   pY[src_pitch];          //bottom left
 
-                tmp1	=	(tmp0 << 16) - Cg;
-                tmp2	=	(tmp0 << 16) + Cb;
-                tmp0	=	(tmp0 << 16) + Cr;
+                tmp1    = (tmp0 << 16) - Cg;
+                tmp2    = (tmp0 << 16) + Cb;
+                tmp0    = (tmp0 << 16) + Cr;
 
-                tmp0	=	clip[tmp0>>16];
-                tmp1	=	clip[tmp1>>16];
-                tmp2	=	clip[tmp2>>16];
+                tmp0    =   clip[tmp0>>16];
+                tmp1    =   clip[tmp1>>16];
+                tmp2    =   clip[tmp2>>16];
 #if RGB_FORMAT
                 rgb = tmp0 | (tmp1 << 8) | (tmp2 << 16);
 #else
                 rgb = tmp2 | (tmp1 << 8) | (tmp0 << 16);
 #endif
-                Y	=	*pY++;						//upper left
-                tmp1	=	(Y << 16) - Cg;
-                tmp2	=	(Y << 16) + Cb;
-                tmp0	=	(Y << 16) + Cr;
+                Y   =   *pY++;                      //upper left
+                tmp1    = (Y << 16) - Cg;
+                tmp2    = (Y << 16) + Cb;
+                tmp0    = (Y << 16) + Cr;
 
-                tmp0	=	clip[tmp0>>16];
-                tmp1	=	clip[tmp1>>16];
-                tmp2	=	clip[tmp2>>16];
+                tmp0    =   clip[tmp0>>16];
+                tmp1    =   clip[tmp1>>16];
+                tmp2    =   clip[tmp2>>16];
 #if RGB_FORMAT
                 tmp2 = ((tmp2 << 16) | (tmp1 << 8) | tmp0);
 #else
@@ -794,25 +794,25 @@ int32 cc24scaling(uint8 **src, uint8 *dst, int *disp,
                 if (((uint)pDst)&1) /* not word-aligned */
                 {
 
-                    *(pDst + dst_pitch3)	=	rgb & 0xFF; /* b */
+                    *(pDst + dst_pitch3)    =   rgb & 0xFF; /* b */
                     *((uint16*)(pDst + dst_pitch3 + 1)) = rgb >> 8; /* gr */
                     *pDst = tmp2 & 0xFF;  /* b */
                     *((uint16*)(pDst + 1)) = tmp2 >> 8; /* gr */
 
                     if (_mRowPix[col] == 2)
                     {
-                        *((uint16*)(pDst + dst_pitch3 + 3))	=	rgb & 0xFFFF; /* bg */
+                        *((uint16*)(pDst + dst_pitch3 + 3)) =   rgb & 0xFFFF; /* bg */
                         *(pDst + dst_pitch3 + 5) = rgb >> 16; /* r */
-                        *((uint16*)(pDst + 3))	=	tmp2 & 0xFFFF; /* bg */
+                        *((uint16*)(pDst + 3))  =   tmp2 & 0xFFFF; /* bg */
                         *(pDst + 5) = tmp2 >> 16; /* r */
 
                     }
                     else if (_mRowPix[col] == 3)
                     {
-                        *((uint16*)(pDst + dst_pitch3 + 3))	=	rgb & 0xFFFF; /* bg */
+                        *((uint16*)(pDst + dst_pitch3 + 3)) =   rgb & 0xFFFF; /* bg */
                         *((uint16*)(pDst + dst_pitch3 + 5)) = (uint16)((rgb << 8) | (rgb >> 16)); /* rb */
                         *((uint16*)(pDst + dst_pitch3 + 7)) =   rgb >> 8;  /* gr */
-                        *((uint16*)(pDst + 3))	=	tmp2 & 0xFFFF; /* bg */
+                        *((uint16*)(pDst + 3))  =   tmp2 & 0xFFFF; /* bg */
                         *((uint16*)(pDst + 5)) = (uint16)((tmp2 << 8) | (tmp2 >> 16)); /* rb */
                         *((uint16*)(pDst + 7)) =   tmp2 >> 8;  /* gr */
                     }
@@ -821,32 +821,32 @@ int32 cc24scaling(uint8 **src, uint8 *dst, int *disp,
                 {
                     if (_mRowPix[col] == 2)
                     {
-                        *((uint16*)(pDst + dst_pitch3))	=	rgb & 0xFFFF; /* bg */
-                        *((uint16*)(pDst + dst_pitch3 + 2))	=	(uint16)((rgb << 8) | (rgb >> 16)); /* rb */
+                        *((uint16*)(pDst + dst_pitch3)) =   rgb & 0xFFFF; /* bg */
+                        *((uint16*)(pDst + dst_pitch3 + 2)) = (uint16)((rgb << 8) | (rgb >> 16));   /* rb */
                         *((uint16*)(pDst + dst_pitch3 + 4)) = rgb >> 8 ; /* gr */
-                        *((uint16*)(pDst))	=	tmp2 & 0xFFFF; /* bg */
-                        *((uint16*)(pDst + 2)) =	(uint16)((tmp2 << 8) | (tmp2 >> 16)); /* rb */
+                        *((uint16*)(pDst))  =   tmp2 & 0xFFFF; /* bg */
+                        *((uint16*)(pDst + 2)) = (uint16)((tmp2 << 8) | (tmp2 >> 16));    /* rb */
                         *((uint16*)(pDst + 4)) = tmp2 >> 8 ; /* gr */
                     }
                     else if (_mRowPix[col] == 3)
                     {
-                        *((uint16*)(pDst + dst_pitch3))	=	rgb & 0xFFFF; /* bg */
-                        *((uint16*)(pDst + dst_pitch3 + 2))	=	(uint16)((rgb << 8) | (rgb >> 16)); /* rb */
+                        *((uint16*)(pDst + dst_pitch3)) =   rgb & 0xFFFF; /* bg */
+                        *((uint16*)(pDst + dst_pitch3 + 2)) = (uint16)((rgb << 8) | (rgb >> 16));   /* rb */
                         *((uint16*)(pDst + dst_pitch3 + 4)) = rgb >> 8 ; /* gr */
                         *((uint16*)(pDst + dst_pitch3 + 6)) = rgb & 0xFFFF; /* bg */
                         *(pDst + dst_pitch3 + 8) = rgb >> 16; /* r */
-                        *((uint16*)(pDst))	=	tmp2 & 0xFFFF; /* bg */
-                        *((uint16*)(pDst + 2)) =	(uint16)((tmp2 << 8) | (tmp2 >> 16)); /* rb */
+                        *((uint16*)(pDst))  =   tmp2 & 0xFFFF; /* bg */
+                        *((uint16*)(pDst + 2)) = (uint16)((tmp2 << 8) | (tmp2 >> 16));    /* rb */
                         *((uint16*)(pDst + 4)) = tmp2 >> 8 ; /* gr */
                         *((uint16*)(pDst + 6)) = tmp2 & 0xFFFF; /* bg */
                         *(pDst + 8) = tmp2 >> 16; /* r */
                     }
                     else
                     {
-                        *((uint16*)(pDst + dst_pitch3))	=	rgb & 0xFFFF; /* bg */
-                        *(pDst + dst_pitch3 + 2)	=	rgb >> 16; /* r */
-                        *((uint16*)(pDst))	=	tmp2 & 0xFFFF; /* bg */
-                        *(pDst + 2)	=	tmp2 >> 16; /* r */
+                        *((uint16*)(pDst + dst_pitch3)) =   rgb & 0xFFFF; /* bg */
+                        *(pDst + dst_pitch3 + 2)    =   rgb >> 16; /* r */
+                        *((uint16*)(pDst))  =   tmp2 & 0xFFFF; /* bg */
+                        *(pDst + 2) =   tmp2 >> 16; /* r */
                     }
                 }
             }
@@ -857,31 +857,31 @@ int32 cc24scaling(uint8 **src, uint8 *dst, int *disp,
 
             pDst += _mRowPix[col] + _mRowPix[col] + _mRowPix[col];
 
-            if (_mRowPix[col+1]) 	/* compute this pixel */
+            if (_mRowPix[col+1])    /* compute this pixel */
             {
                 //load the top two pixels
-                tmp0	=	pY[src_pitch];		//bottom right
+                tmp0    =   pY[src_pitch];      //bottom right
 
-                tmp1	=	(tmp0 << 16) - Cg;
-                tmp2	=	(tmp0 << 16) + Cb;
-                tmp0	=	(tmp0 << 16) + Cr;
+                tmp1    = (tmp0 << 16) - Cg;
+                tmp2    = (tmp0 << 16) + Cb;
+                tmp0    = (tmp0 << 16) + Cr;
 
-                tmp0	=	clip[tmp0>>16];
-                tmp1	=	clip[tmp1>>16];
-                tmp2	=	clip[tmp2>>16];
+                tmp0    =   clip[tmp0>>16];
+                tmp1    =   clip[tmp1>>16];
+                tmp2    =   clip[tmp2>>16];
 #if RGB_FORMAT
                 rgb = tmp0 | (tmp1 << 8) | (tmp2 << 16);
 #else
                 rgb = tmp2 | (tmp1 << 8) | (tmp0 << 16);
 #endif
-                Y	=	*pY++;							//upper right
-                tmp1	=	(Y << 16) - Cg;
-                tmp2	=	(Y << 16) + Cb;
-                tmp0	=	(Y << 16) + Cr;
+                Y   =   *pY++;                          //upper right
+                tmp1    = (Y << 16) - Cg;
+                tmp2    = (Y << 16) + Cb;
+                tmp0    = (Y << 16) + Cr;
 
-                tmp0	=	clip[tmp0>>16];
-                tmp1	=	clip[tmp1>>16];
-                tmp2	=	clip[tmp2>>16];
+                tmp0    =   clip[tmp0>>16];
+                tmp1    =   clip[tmp1>>16];
+                tmp2    =   clip[tmp2>>16];
 #if RGB_FORMAT
                 tmp2 = ((tmp2 << 16) | (tmp1 << 8) | tmp0);
 #else
@@ -890,25 +890,25 @@ int32 cc24scaling(uint8 **src, uint8 *dst, int *disp,
                 if (((uint)pDst)&1) /* not word-aligned */
                 {
 
-                    *(pDst + dst_pitch3)	=	rgb & 0xFF; /* r */
+                    *(pDst + dst_pitch3)    =   rgb & 0xFF; /* r */
                     *((uint16*)(pDst + dst_pitch3 + 1)) = rgb >> 8; /* gb */
                     *pDst = tmp2 & 0xFF;  /* r */
                     *((uint16*)(pDst + 1)) = rgb >> 8; /* gb */
 
                     if (_mRowPix[col+1] == 2)
                     {
-                        *((uint16*)(pDst + dst_pitch3 + 3))	=	rgb & 0xFFFF; /* rg */
+                        *((uint16*)(pDst + dst_pitch3 + 3)) =   rgb & 0xFFFF; /* rg */
                         *(pDst + dst_pitch3 + 5) = rgb >> 16; /* b */
-                        *((uint16*)(pDst + 3))	=	tmp2 & 0xFFFF; /* rg */
+                        *((uint16*)(pDst + 3))  =   tmp2 & 0xFFFF; /* rg */
                         *(pDst + 5) = tmp2 >> 16; /* b */
 
                     }
                     else if (_mRowPix[col+1] == 3)
                     {
-                        *((uint16*)(pDst + dst_pitch3 + 3))	=	rgb & 0xFFFF; /* rg */
+                        *((uint16*)(pDst + dst_pitch3 + 3)) =   rgb & 0xFFFF; /* rg */
                         *((uint16*)(pDst + dst_pitch3 + 5)) = (uint16)((rgb << 8) | (rgb >> 16)); /* br */
                         *((uint16*)(pDst + dst_pitch3 + 7)) =   rgb >> 8;  /* gb */
-                        *((uint16*)(pDst + 3))	=	tmp2 & 0xFFFF; /* rg */
+                        *((uint16*)(pDst + 3))  =   tmp2 & 0xFFFF; /* rg */
                         *((uint16*)(pDst + 5)) = (uint16)((tmp2 << 8) | (tmp2 >> 16)); /* br */
                         *((uint16*)(pDst + 7)) =   tmp2 >> 8;  /* gb */
                     }
@@ -917,32 +917,32 @@ int32 cc24scaling(uint8 **src, uint8 *dst, int *disp,
                 {
                     if (_mRowPix[col+1] == 2)
                     {
-                        *((uint16*)(pDst + dst_pitch3))	=	rgb & 0xFFFF; /* rg */
-                        *((uint16*)(pDst + dst_pitch3 + 2))	=	(uint16)((rgb << 8) | (rgb >> 16)); /* br */
+                        *((uint16*)(pDst + dst_pitch3)) =   rgb & 0xFFFF; /* rg */
+                        *((uint16*)(pDst + dst_pitch3 + 2)) = (uint16)((rgb << 8) | (rgb >> 16));   /* br */
                         *((uint16*)(pDst + dst_pitch3 + 4)) = rgb >> 8 ; /* gb */
-                        *((uint16*)(pDst))	=	tmp2 & 0xFFFF; /* rg */
-                        *((uint16*)(pDst + 2)) =	(uint16)((tmp2 << 8) | (tmp2 >> 16)); /* br */
+                        *((uint16*)(pDst))  =   tmp2 & 0xFFFF; /* rg */
+                        *((uint16*)(pDst + 2)) = (uint16)((tmp2 << 8) | (tmp2 >> 16));    /* br */
                         *((uint16*)(pDst + 4)) = tmp2 >> 8 ; /* gb */
                     }
                     else if (_mRowPix[col+1] == 3)
                     {
-                        *((uint16*)(pDst + dst_pitch3))	=	rgb & 0xFFFF; /* rg */
-                        *((uint16*)(pDst + dst_pitch3 + 2))	=	(uint16)((rgb << 8) | (rgb >> 16)); /* br */
+                        *((uint16*)(pDst + dst_pitch3)) =   rgb & 0xFFFF; /* rg */
+                        *((uint16*)(pDst + dst_pitch3 + 2)) = (uint16)((rgb << 8) | (rgb >> 16));   /* br */
                         *((uint16*)(pDst + dst_pitch3 + 4)) = rgb >> 8 ; /* gb */
                         *((uint16*)(pDst + dst_pitch3 + 6)) = rgb & 0xFFFF; /* rg */
                         *(pDst + dst_pitch3 + 8) = rgb >> 16; /* b */
-                        *((uint16*)(pDst))	=	tmp2 & 0xFFFF; /* rg */
-                        *((uint16*)(pDst + 2)) =	(uint16)((tmp2 << 8) | (tmp2 >> 16)); /* br */
+                        *((uint16*)(pDst))  =   tmp2 & 0xFFFF; /* rg */
+                        *((uint16*)(pDst + 2)) = (uint16)((tmp2 << 8) | (tmp2 >> 16));    /* br */
                         *((uint16*)(pDst + 4)) = tmp2 >> 8 ; /* gb */
                         *((uint16*)(pDst + 6)) = tmp2 & 0xFFFF; /* rg */
                         *(pDst + 8) = tmp2 >> 16; /* b */
                     }
                     else
                     {
-                        *((uint16*)(pDst + dst_pitch3))	=	rgb & 0xFFFF; /* rg */
-                        *(pDst + dst_pitch3 + 2)	=	rgb >> 16; /* b */
-                        *((uint16*)(pDst))	=	tmp2 & 0xFFFF; /* rg */
-                        *(pDst + 2)	=	tmp2 >> 16; /* b */
+                        *((uint16*)(pDst + dst_pitch3)) =   rgb & 0xFFFF; /* rg */
+                        *(pDst + dst_pitch3 + 2)    =   rgb >> 16; /* b */
+                        *((uint16*)(pDst))  =   tmp2 & 0xFFFF; /* rg */
+                        *(pDst + 2) =   tmp2 >> 16; /* b */
                     }
                 }
             }
@@ -951,14 +951,14 @@ int32 cc24scaling(uint8 **src, uint8 *dst, int *disp,
                 pY++;
             }
 
-            pDst	+= _mRowPix[col+1] + _mRowPix[col+1] + _mRowPix[col+1];
+            pDst    += _mRowPix[col+1] + _mRowPix[col+1] + _mRowPix[col+1];
         }//end of COL
 
-        pY	+=	deltaY;
-        pCb	+=	deltaCbCr;
-        pCr	+=	deltaCbCr;
+        pY  +=  deltaY;
+        pCb +=  deltaCbCr;
+        pCr +=  deltaCbCr;
 
-        pDst -=	(dst_width3);	//goes back to the beginning of the line;
+        pDst -= (dst_width3);   //goes back to the beginning of the line;
 
         //copy down
         offset = (_mColPix[row] * dst_pitch3);
@@ -1083,13 +1083,13 @@ int32 cc24sc_rotate(uint8 **src, uint8 *dst, int *disp,
         tmp_src_pitch = src_pitch;
     }
 
-    pDst =	dst;
+    pDst =  dst;
 
-    dst_pitch3	=	3 * dst_pitch;
+    dst_pitch3  =   3 * dst_pitch;
 
     for (row = src_width - 1; row > 0; row -= 2)
     { /* decrement index, _mColPix[.] is
-													 symmetric to increment index */
+                                                     symmetric to increment index */
         if ((_mColPix[row-1] == 0) && (_mColPix[row] == 0))
         {
             pCb += read_idx;
@@ -1100,7 +1100,7 @@ int32 cc24sc_rotate(uint8 **src, uint8 *dst, int *disp,
 
         for (col = disp[3] - 2; col >= 0; col -= 2)
         {/* decrement index, _mRowPix[.] is
-													 symmetric to increment index */
+                                                     symmetric to increment index */
 
             Cb = *pCb;
             pCb += half_src_pitch;
@@ -1110,39 +1110,39 @@ int32 cc24sc_rotate(uint8 **src, uint8 *dst, int *disp,
             //load the bottom two pixels
             Cb -= 128;
             Cr -= 128;
-            Cg	=	Cr * (*((int32*)(clip - 400)));
-            Cg	+=	Cb * (*((int32*)(clip - 392)));
+            Cg  =   Cr * (*((int32*)(clip - 400)));
+            Cg  +=  Cb * (*((int32*)(clip - 392)));
 
-            Cr	*=	(*((int32*)(clip - 396)));
-            Cb	*=	(*((int32*)(clip - 388)));
+            Cr  *= (*((int32*)(clip - 396)));
+            Cb  *= (*((int32*)(clip - 388)));
 
-            if (_mRowPix[col]) 	/* compute this pixel */
+            if (_mRowPix[col])  /* compute this pixel */
             {
 
-                tmp0	=	pY[read_idx];		// bottom left
+                tmp0    =   pY[read_idx];       // bottom left
 
-                tmp1	=	(tmp0 << 16) - Cg;
-                tmp2	=	(tmp0 << 16) + Cb;
-                tmp0	=	(tmp0 << 16) + Cr;
+                tmp1    = (tmp0 << 16) - Cg;
+                tmp2    = (tmp0 << 16) + Cb;
+                tmp0    = (tmp0 << 16) + Cr;
 
-                tmp0	=	clip[tmp0>>16];
-                tmp1	=	clip[tmp1>>16];
-                tmp2	=	clip[tmp2>>16];
+                tmp0    =   clip[tmp0>>16];
+                tmp1    =   clip[tmp1>>16];
+                tmp2    =   clip[tmp2>>16];
 #if RGB_FORMAT
                 rgb = tmp0 | (tmp1 << 8) | (tmp2 << 16);
 #else
                 rgb = tmp2 | (tmp1 << 8) | (tmp0 << 16);
 #endif
-                Y	=	*pY;
-                pY += tmp_src_pitch;	// upper right
+                Y   =   *pY;
+                pY += tmp_src_pitch;    // upper right
 
-                tmp1	=	(Y << 16) - Cg;
-                tmp2	=	(Y << 16) + Cb;
-                tmp0	=	(Y << 16) + Cr;
+                tmp1    = (Y << 16) - Cg;
+                tmp2    = (Y << 16) + Cb;
+                tmp0    = (Y << 16) + Cr;
 
-                tmp0	=	clip[tmp0>>16];
-                tmp1	=	clip[tmp1>>16];
-                tmp2	=	clip[tmp2>>16];
+                tmp0    =   clip[tmp0>>16];
+                tmp1    =   clip[tmp1>>16];
+                tmp2    =   clip[tmp2>>16];
 #if RGB_FORMAT
                 tmp2 = ((tmp2 << 16) | (tmp1 << 8) | tmp0);
 #else
@@ -1151,25 +1151,25 @@ int32 cc24sc_rotate(uint8 **src, uint8 *dst, int *disp,
                 if (((uint)pDst)&1) /* not word-aligned */
                 {
 
-                    *(pDst + dst_pitch3)	=	rgb & 0xFF; /* b */
+                    *(pDst + dst_pitch3)    =   rgb & 0xFF; /* b */
                     *((uint16*)(pDst + dst_pitch3 + 1)) = rgb >> 8; /* gr */
                     *pDst = tmp2 & 0xFF;  /* b */
                     *((uint16*)(pDst + 1)) = tmp2 >> 8; /* gr */
 
                     if (_mRowPix[col] == 2)
                     {
-                        *((uint16*)(pDst + dst_pitch3 + 3))	=	rgb & 0xFFFF; /* bg */
+                        *((uint16*)(pDst + dst_pitch3 + 3)) =   rgb & 0xFFFF; /* bg */
                         *(pDst + dst_pitch3 + 5) = rgb >> 16; /* r */
-                        *((uint16*)(pDst + 3))	=	tmp2 & 0xFFFF; /* bg */
+                        *((uint16*)(pDst + 3))  =   tmp2 & 0xFFFF; /* bg */
                         *(pDst + 5) = tmp2 >> 16; /* r */
 
                     }
                     else if (_mRowPix[col] == 3)
                     {
-                        *((uint16*)(pDst + dst_pitch3 + 3))	=	rgb & 0xFFFF; /* bg */
+                        *((uint16*)(pDst + dst_pitch3 + 3)) =   rgb & 0xFFFF; /* bg */
                         *((uint16*)(pDst + dst_pitch3 + 5)) = (uint16)((rgb << 8) | (rgb >> 16)); /* rb */
                         *((uint16*)(pDst + dst_pitch3 + 7)) =   rgb >> 8;  /* gr */
-                        *((uint16*)(pDst + 3))	=	tmp2 & 0xFFFF; /* bg */
+                        *((uint16*)(pDst + 3))  =   tmp2 & 0xFFFF; /* bg */
                         *((uint16*)(pDst + 5)) = (uint16)((tmp2 << 8) | (tmp2 >> 16)); /* rb */
                         *((uint16*)(pDst + 7)) =   tmp2 >> 8;  /* gr */
                     }
@@ -1178,69 +1178,69 @@ int32 cc24sc_rotate(uint8 **src, uint8 *dst, int *disp,
                 {
                     if (_mRowPix[col] == 2)
                     {
-                        *((uint16*)(pDst + dst_pitch3))	=	rgb & 0xFFFF; /* bg */
-                        *((uint16*)(pDst + dst_pitch3 + 2))	=	(uint16)((rgb << 8) | (rgb >> 16)); /* rb */
+                        *((uint16*)(pDst + dst_pitch3)) =   rgb & 0xFFFF; /* bg */
+                        *((uint16*)(pDst + dst_pitch3 + 2)) = (uint16)((rgb << 8) | (rgb >> 16));   /* rb */
                         *((uint16*)(pDst + dst_pitch3 + 4)) = rgb >> 8 ; /* gr */
-                        *((uint16*)(pDst))	=	tmp2 & 0xFFFF; /* bg */
-                        *((uint16*)(pDst + 2)) =	(uint16)((tmp2 << 8) | (tmp2 >> 16)); /* rb */
+                        *((uint16*)(pDst))  =   tmp2 & 0xFFFF; /* bg */
+                        *((uint16*)(pDst + 2)) = (uint16)((tmp2 << 8) | (tmp2 >> 16));    /* rb */
                         *((uint16*)(pDst + 4)) = tmp2 >> 8 ; /* gr */
                     }
                     else if (_mRowPix[col] == 3)
                     {
-                        *((uint16*)(pDst + dst_pitch3))	=	rgb & 0xFFFF; /* bg */
-                        *((uint16*)(pDst + dst_pitch3 + 2))	=	(uint16)((rgb << 8) | (rgb >> 16)); /* rb */
+                        *((uint16*)(pDst + dst_pitch3)) =   rgb & 0xFFFF; /* bg */
+                        *((uint16*)(pDst + dst_pitch3 + 2)) = (uint16)((rgb << 8) | (rgb >> 16));   /* rb */
                         *((uint16*)(pDst + dst_pitch3 + 4)) = rgb >> 8 ; /* gr */
                         *((uint16*)(pDst + dst_pitch3 + 6)) = rgb & 0xFFFF; /* bg */
                         *(pDst + dst_pitch3 + 8) = rgb >> 16; /* r */
-                        *((uint16*)(pDst))	=	tmp2 & 0xFFFF; /* bg */
-                        *((uint16*)(pDst + 2)) =	(uint16)((tmp2 << 8) | (tmp2 >> 16)); /* rb */
+                        *((uint16*)(pDst))  =   tmp2 & 0xFFFF; /* bg */
+                        *((uint16*)(pDst + 2)) = (uint16)((tmp2 << 8) | (tmp2 >> 16));    /* rb */
                         *((uint16*)(pDst + 4)) = tmp2 >> 8 ; /* gr */
                         *((uint16*)(pDst + 6)) = tmp2 & 0xFFFF; /* bg */
                         *(pDst + 8) = tmp2 >> 16; /* r */
                     }
                     else
                     {
-                        *((uint16*)(pDst + dst_pitch3))	=	rgb & 0xFFFF; /* bg */
-                        *(pDst + dst_pitch3 + 2)	=	rgb >> 16; /* r */
-                        *((uint16*)(pDst))	=	tmp2 & 0xFFFF; /* bg */
-                        *(pDst + 2)	=	tmp2 >> 16; /* r */
+                        *((uint16*)(pDst + dst_pitch3)) =   rgb & 0xFFFF; /* bg */
+                        *(pDst + dst_pitch3 + 2)    =   rgb >> 16; /* r */
+                        *((uint16*)(pDst))  =   tmp2 & 0xFFFF; /* bg */
+                        *(pDst + 2) =   tmp2 >> 16; /* r */
                     }
                 }
             }
             else  /* if(_mRowPix[col]) */
             {
-                pY += tmp_src_pitch;	// upper right
+                pY += tmp_src_pitch;    // upper right
             }
 
             pDst += _mRowPix[col] + _mRowPix[col] + _mRowPix[col];
 
-            if (_mRowPix[col+1]) 	/* compute this pixel */
+            if (_mRowPix[col+1])    /* compute this pixel */
             {
                 //load the top two pixels
-                tmp0	=	pY[read_idx];	//bottom right
+                tmp0    =   pY[read_idx];   //bottom right
 
-                tmp1	=	(tmp0 << 16) - Cg;
-                tmp2	=	(tmp0 << 16) + Cb;
-                tmp0	=	(tmp0 << 16) + Cr;
+                tmp1    = (tmp0 << 16) - Cg;
+                tmp2    = (tmp0 << 16) + Cb;
+                tmp0    = (tmp0 << 16) + Cr;
 
-                tmp0	=	clip[tmp0>>16];
-                tmp1	=	clip[tmp1>>16];
-                tmp2	=	clip[tmp2>>16];
+                tmp0    =   clip[tmp0>>16];
+                tmp1    =   clip[tmp1>>16];
+                tmp2    =   clip[tmp2>>16];
 #if RGB_FORMAT
                 rgb = tmp0 | (tmp1 << 8) | (tmp2 << 16);
 #else
                 rgb = tmp2 | (tmp1 << 8) | (tmp0 << 16);
 #endif
-                Y	=	*pY;
-                pY += tmp_src_pitch;					//upper right
+                Y   =   *pY;
+                pY += tmp_src_pitch;                    //upper right
 
-                tmp1	=	(Y << 16) - Cg;
-                tmp2	=	(Y << 16) + Cb;
-                tmp0	=	(Y << 16) + Cr;
+                tmp1    = (Y << 16) - Cg;
+                tmp2    = (Y << 16) + Cb;
+                tmp0    = (Y << 16) + Cr;
 
-                tmp0	=	clip[tmp0>>16];
-                tmp1	=	clip[tmp1>>16];
-                tmp2	=	clip[tmp2>>16];
+                tmp0    =   clip[tmp0>>16];
+                tmp1    =   clip[tmp1>>16];
+                tmp2    =   clip[tmp2>>16];
 #if RGB_FORMAT
                 tmp2 = ((tmp2 << 16) | (tmp1 << 8) | tmp0);
 #else
@@ -1249,25 +1249,25 @@ int32 cc24sc_rotate(uint8 **src, uint8 *dst, int *disp,
                 if (((uint)pDst)&1) /* not word-aligned */
                 {
 
-                    *(pDst + dst_pitch3)	=	rgb & 0xFF; /* r */
+                    *(pDst + dst_pitch3)    =   rgb & 0xFF; /* r */
                     *((uint16*)(pDst + dst_pitch3 + 1)) = rgb >> 8; /* gb */
                     *pDst = tmp2 & 0xFF;  /* r */
                     *((uint16*)(pDst + 1)) = rgb >> 8; /* gb */
 
                     if (_mRowPix[col+1] == 2)
                     {
-                        *((uint16*)(pDst + dst_pitch3 + 3))	=	rgb & 0xFFFF; /* rg */
+                        *((uint16*)(pDst + dst_pitch3 + 3)) =   rgb & 0xFFFF; /* rg */
                         *(pDst + dst_pitch3 + 5) = rgb >> 16; /* b */
-                        *((uint16*)(pDst + 3))	=	tmp2 & 0xFFFF; /* rg */
+                        *((uint16*)(pDst + 3))  =   tmp2 & 0xFFFF; /* rg */
                         *(pDst + 5) = tmp2 >> 16; /* b */
 
                     }
                     else if (_mRowPix[col+1] == 3)
                     {
-                        *((uint16*)(pDst + dst_pitch3 + 3))	=	rgb & 0xFFFF; /* rg */
+                        *((uint16*)(pDst + dst_pitch3 + 3)) =   rgb & 0xFFFF; /* rg */
                         *((uint16*)(pDst + dst_pitch3 + 5)) = (uint16)((rgb << 8) | (rgb >> 16)); /* br */
                         *((uint16*)(pDst + dst_pitch3 + 7)) =   rgb >> 8;  /* gb */
-                        *((uint16*)(pDst + 3))	=	tmp2 & 0xFFFF; /* rg */
+                        *((uint16*)(pDst + 3))  =   tmp2 & 0xFFFF; /* rg */
                         *((uint16*)(pDst + 5)) = (uint16)((tmp2 << 8) | (tmp2 >> 16)); /* br */
                         *((uint16*)(pDst + 7)) =   tmp2 >> 8;  /* gb */
                     }
@@ -1276,47 +1276,47 @@ int32 cc24sc_rotate(uint8 **src, uint8 *dst, int *disp,
                 {
                     if (_mRowPix[col+1] == 2)
                     {
-                        *((uint16*)(pDst + dst_pitch3))	=	rgb & 0xFFFF; /* rg */
-                        *((uint16*)(pDst + dst_pitch3 + 2))	=	(uint16)((rgb << 8) | (rgb >> 16)); /* br */
+                        *((uint16*)(pDst + dst_pitch3)) =   rgb & 0xFFFF; /* rg */
+                        *((uint16*)(pDst + dst_pitch3 + 2)) = (uint16)((rgb << 8) | (rgb >> 16));   /* br */
                         *((uint16*)(pDst + dst_pitch3 + 4)) = rgb >> 8 ; /* gb */
-                        *((uint16*)(pDst))	=	tmp2 & 0xFFFF; /* rg */
-                        *((uint16*)(pDst + 2)) =	(uint16)((tmp2 << 8) | (tmp2 >> 16)); /* br */
+                        *((uint16*)(pDst))  =   tmp2 & 0xFFFF; /* rg */
+                        *((uint16*)(pDst + 2)) = (uint16)((tmp2 << 8) | (tmp2 >> 16));    /* br */
                         *((uint16*)(pDst + 4)) = tmp2 >> 8 ; /* gb */
                     }
                     else if (_mRowPix[col+1] == 3)
                     {
-                        *((uint16*)(pDst + dst_pitch3))	=	rgb & 0xFFFF; /* rg */
-                        *((uint16*)(pDst + dst_pitch3 + 2))	=	(uint16)((rgb << 8) | (rgb >> 16)); /* br */
+                        *((uint16*)(pDst + dst_pitch3)) =   rgb & 0xFFFF; /* rg */
+                        *((uint16*)(pDst + dst_pitch3 + 2)) = (uint16)((rgb << 8) | (rgb >> 16));   /* br */
                         *((uint16*)(pDst + dst_pitch3 + 4)) = rgb >> 8 ; /* gb */
                         *((uint16*)(pDst + dst_pitch3 + 6)) = rgb & 0xFFFF; /* rg */
                         *(pDst + dst_pitch3 + 8) = rgb >> 16; /* b */
-                        *((uint16*)(pDst))	=	tmp2 & 0xFFFF; /* rg */
-                        *((uint16*)(pDst + 2)) =	(uint16)((tmp2 << 8) | (tmp2 >> 16)); /* br */
+                        *((uint16*)(pDst))  =   tmp2 & 0xFFFF; /* rg */
+                        *((uint16*)(pDst + 2)) = (uint16)((tmp2 << 8) | (tmp2 >> 16));    /* br */
                         *((uint16*)(pDst + 4)) = tmp2 >> 8 ; /* gb */
                         *((uint16*)(pDst + 6)) = tmp2 & 0xFFFF; /* rg */
                         *(pDst + 8) = tmp2 >> 16; /* b */
                     }
                     else
                     {
-                        *((uint16*)(pDst + dst_pitch3))	=	rgb & 0xFFFF; /* rg */
-                        *(pDst + dst_pitch3 + 2)	=	rgb >> 16; /* b */
-                        *((uint16*)(pDst))	=	tmp2 & 0xFFFF; /* rg */
-                        *(pDst + 2)	=	tmp2 >> 16; /* b */
+                        *((uint16*)(pDst + dst_pitch3)) =   rgb & 0xFFFF; /* rg */
+                        *(pDst + dst_pitch3 + 2)    =   rgb >> 16; /* b */
+                        *((uint16*)(pDst))  =   tmp2 & 0xFFFF; /* rg */
+                        *(pDst + 2) =   tmp2 >> 16; /* b */
                     }
                 }
             }
             else  /* if(_mRowPix[col]) */
             {
-                pY += tmp_src_pitch;	// upper right
+                pY += tmp_src_pitch;    // upper right
             }
 
-            pDst	+= _mRowPix[col+1] + _mRowPix[col+1] + _mRowPix[col+1];
+            pDst    += _mRowPix[col+1] + _mRowPix[col+1] + _mRowPix[col+1];
         }//end of COL
 
-        pY	+=	deltaY;
-        pCb +=	deltaCbCr;
-        pCr +=	deltaCbCr;
-        pDst -=	(dst_width3);	//goes back to the beginning of the line;
+        pY  +=  deltaY;
+        pCb +=  deltaCbCr;
+        pCr +=  deltaCbCr;
+        pDst -= (dst_width3);   //goes back to the beginning of the line;
 
         //copy down
         offset = (_mColPix[row] * dst_pitch3);

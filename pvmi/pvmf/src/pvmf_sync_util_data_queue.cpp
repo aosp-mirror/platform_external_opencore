@@ -33,7 +33,7 @@
 #define DISABLE_AV_SYNC 0
 
 
-#define LOGDATAPATH(x)	PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iDatapathLogger, PVLOGMSG_INFO, x);
+#define LOGDATAPATH(x)  PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iDatapathLogger, PVLOGMSG_INFO, x);
 
 
 #define LOGDIAGNOSTICS(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF,iDiagnosticsLogger,PVLOGMSG_INFO,m);
@@ -574,7 +574,7 @@ OSCL_EXPORT_REF PVMFStatus PvmfSyncUtilDataQueue::SynchronizeData(uint32*aDroppe
                                     (0, "PvmfSyncUtilDataQueue::SynchronizeData: On Time %d", iDataQueue[0]->getTimestamp()));
                     return PVMFSuccess;
                 }
-                // break;	This statement was removed to avoid compiler warning for Unreachable Code
+                // break;   This statement was removed to avoid compiler warning for Unreachable Code
 
             case PVMF_SYNC_EARLY:
                 // For media command, ignore the synchronization except for EOS media command
@@ -604,7 +604,7 @@ OSCL_EXPORT_REF PVMFStatus PvmfSyncUtilDataQueue::SynchronizeData(uint32*aDroppe
                     iObserver->ScheduleProcessData(this, millisecondsEarly);
                     return PVMFPending;
                 }
-                // break;	This statement was removed to avoid compiler warning for Unreachable Code
+                // break;   This statement was removed to avoid compiler warning for Unreachable Code
 
             case PVMF_SYNC_LATE:
                 // For media command, ignore the synchronization
@@ -654,7 +654,7 @@ OSCL_EXPORT_REF PVMFStatus PvmfSyncUtilDataQueue::SynchronizeData(uint32*aDroppe
                                     (0, "PvmfSyncUtilDataQueue::SynchronizeData: Process late frame ASAP, TS %d,%s", iDataQueue[0]->getTimestamp(), iName.get_cstr()));
                     return PVMFSuccess;
                 }
-                // break;	This statement was removed to avoid compiler warning for Unreachable Code
+                // break;   This statement was removed to avoid compiler warning for Unreachable Code
 
             case PVMF_SYNC_SKIPPED_RENDER:
             {

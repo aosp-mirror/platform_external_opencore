@@ -509,16 +509,16 @@ class UserDataAtom : public Atom
 
         AssetInfoTitleAtom          *getAssetInfoTitleAtomAt(int32 index);
         AssetInfoDescAtom           *getAssetInfoDescAtomAt(int32 index);
-        CopyRightAtom	            *getCopyRightAtomAt(int32 index);
+        CopyRightAtom               *getCopyRightAtomAt(int32 index);
         AssetInfoPerformerAtom      *getAssetInfoPerformerAtomAt(int32 index);
         AssetInfoAuthorAtom         *getAssetInfoAuthorAtomAt(int32 index);
         AssetInfoGenreAtom          *getAssetInfoGenreAtomAt(int32 index);
         AssetInfoRatingAtom         *getAssetInfoRatingAtomAt(int32 index);
         AssetInfoClassificationAtom *getAssetInfoClassificationAtomAt(int32 index);
         AssetInfoKeyWordAtom        *getAssetInfoKeyWordAtomAt(int32 index);
-        AssetInfoLocationAtom		*getAssetInfoLocationAtomAt(int32 index);
-        AssetInfoAlbumAtom			*getAssetInfoAlbumAtomAt(int32 index);
-        AssetInfoRecordingYearAtom	*getAssetInfoRecordingYearAtomAt(int32 index);
+        AssetInfoLocationAtom       *getAssetInfoLocationAtomAt(int32 index);
+        AssetInfoAlbumAtom          *getAssetInfoAlbumAtomAt(int32 index);
+        AssetInfoRecordingYearAtom  *getAssetInfoRecordingYearAtomAt(int32 index);
 
     private:
         PVUserDataAtom* _pPVUserDataAtom;
@@ -530,18 +530,18 @@ class UserDataAtom : public Atom
         PVContentTypeAtom* _pPVContentTypeAtom;
 
 
-        Oscl_Vector<AssetInfoTitleAtom*, OsclMemAllocator>		     *_pAssetInfoTitleAtomArray;
-        Oscl_Vector<AssetInfoDescAtom*, OsclMemAllocator>		     *_pAssetInfoDescAtomArray;
-        Oscl_Vector<CopyRightAtom*, OsclMemAllocator>			     *_pCopyRightAtomArray;
+        Oscl_Vector<AssetInfoTitleAtom*, OsclMemAllocator>           *_pAssetInfoTitleAtomArray;
+        Oscl_Vector<AssetInfoDescAtom*, OsclMemAllocator>            *_pAssetInfoDescAtomArray;
+        Oscl_Vector<CopyRightAtom*, OsclMemAllocator>                *_pCopyRightAtomArray;
         Oscl_Vector<AssetInfoPerformerAtom*, OsclMemAllocator>        *_pAssetInfoPerformerAtomArray;
-        Oscl_Vector<AssetInfoAuthorAtom*, OsclMemAllocator>	         *_pAssetInfoAuthorAtomArray;
-        Oscl_Vector<AssetInfoGenreAtom*, OsclMemAllocator>		     *_pAssetInfoGenreAtomArray;
-        Oscl_Vector<AssetInfoRatingAtom*, OsclMemAllocator>   		 *_pAssetInfoRatingAtomArray;
+        Oscl_Vector<AssetInfoAuthorAtom*, OsclMemAllocator>          *_pAssetInfoAuthorAtomArray;
+        Oscl_Vector<AssetInfoGenreAtom*, OsclMemAllocator>           *_pAssetInfoGenreAtomArray;
+        Oscl_Vector<AssetInfoRatingAtom*, OsclMemAllocator>          *_pAssetInfoRatingAtomArray;
         Oscl_Vector<AssetInfoClassificationAtom*, OsclMemAllocator>   *_pAssetInfoClassificationAtomArray;
-        Oscl_Vector<AssetInfoKeyWordAtom*, OsclMemAllocator>		     *_pAssetInfoKeyWordAtomArray;
-        Oscl_Vector<AssetInfoLocationAtom*, OsclMemAllocator>		 *_pAssetInfoLocationAtomArray;
-        Oscl_Vector<AssetInfoAlbumAtom*, OsclMemAllocator>			 *_pAssetInfoAlbumAtomArray;
-        Oscl_Vector<AssetInfoRecordingYearAtom*, OsclMemAllocator>		 *_pAssetInfoRecordingYearArray;
+        Oscl_Vector<AssetInfoKeyWordAtom*, OsclMemAllocator>             *_pAssetInfoKeyWordAtomArray;
+        Oscl_Vector<AssetInfoLocationAtom*, OsclMemAllocator>        *_pAssetInfoLocationAtomArray;
+        Oscl_Vector<AssetInfoAlbumAtom*, OsclMemAllocator>           *_pAssetInfoAlbumAtomArray;
+        Oscl_Vector<AssetInfoRecordingYearAtom*, OsclMemAllocator>       *_pAssetInfoRecordingYearArray;
 };
 
 #endif  // USERDATAATOM_H_INCLUDED

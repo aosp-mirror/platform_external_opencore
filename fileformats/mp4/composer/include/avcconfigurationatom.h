@@ -57,7 +57,7 @@ class PVA_FF_AVCConfigurationAtom : public PVA_FF_Atom
 
 
                         uint8* temp = sample;
-                        for (int32 i = 0;i < _parameterSetLength;i++)
+                        for (int32 i = 0; i < _parameterSetLength; i++)
                         {
                             _pParameterSet[i] = temp[i];
                         }

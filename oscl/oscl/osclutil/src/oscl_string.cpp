@@ -34,8 +34,8 @@ OSCL_DLL_ENTRY_POINT_DEFAULT()
 #endif
 
 // **************************************************************
-//					 OSCL_String Implementation
-//					 OSCL_wString Implementation
+//                   OSCL_String Implementation
+//                   OSCL_wString Implementation
 // **************************************************************
 
 OSCL_EXPORT_REF OSCL_String::OSCL_String()

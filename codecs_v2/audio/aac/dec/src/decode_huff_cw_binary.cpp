@@ -179,8 +179,8 @@
 #define    MASK_IDX    (0x1FF)
 #define    MASK_RIGHT  (0xFE00)
 
-#define	   UPPER16		(16)
-#define	   MASK_LOW16   (0xFFFF)
+#define    UPPER16      (16)
+#define    MASK_LOW16   (0xFFFF)
 /*----------------------------------------------------------------------------
 ; LOCAL FUNCTION DEFINITIONS
 ; Function Prototype declaration

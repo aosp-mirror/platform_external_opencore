@@ -591,13 +591,13 @@ void H324MConfig::SetObserver(H324MConfigObserver* aObserver)
 void H324MConfig::Run()
 {
     unsigned i = 0;
-    for (i = 0;i < iPendingResponses.size();i++)
+    for (i = 0; i < iPendingResponses.size(); i++)
     {
         iObserver->H324MConfigCommandCompletedL(iPendingResponses[i]);
     }
     iPendingResponses.clear();
 
-    for (i = 0;i < iPendingEvents.size();i++)
+    for (i = 0; i < iPendingEvents.size(); i++)
     {
         iObserver->H324MConfigHandleInformationalEventL(iPendingEvents[i]);
     }

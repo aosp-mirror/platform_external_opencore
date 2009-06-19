@@ -60,8 +60,8 @@ class ThreadSafeCallbackAO: public OsclActiveObject
         {
             QElement* pFirst; // queue head
 
-            uint32 index_in;			// index of element to be queued next
-            uint32 index_out;		// index of element to be de-queued next
+            uint32 index_in;            // index of element to be queued next
+            uint32 index_out;       // index of element to be de-queued next
             uint32 NumElem;         // Number of elements currently in the queue
             uint32 MaxNumElements;  // Maximum number of queue elements (i.e, queue depth)
         };

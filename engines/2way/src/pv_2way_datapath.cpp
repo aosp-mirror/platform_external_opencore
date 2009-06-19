@@ -903,7 +903,7 @@ void CPV2WayDatapath::CheckOpen()
     }
 
 //Connect is done when both ports in a port pair are requested
-//	//If reached this point then all ports have been allocated and datapath is deemed open, connect ports and notify upper layer.
+//  //If reached this point then all ports have been allocated and datapath is deemed open, connect ports and notify upper layer.
 
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "CPV2WayDatapath::CheckOpen open complete\n"));

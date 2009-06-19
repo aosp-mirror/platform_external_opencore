@@ -122,7 +122,7 @@ PVMFSMRTSPUnicastNode::PVMFSMRTSPUnicastNode(int32 aPriority): PVMFSMFSPBaseNode
 {
     iJitterBufferDurationInMilliSeconds = DEFAULT_JITTER_BUFFER_DURATION_IN_MS;
     oAutoReposition = false;
-    iPauseDenied	= false;
+    iPauseDenied    = false;
     ResetNodeParams(false);
 }
 
@@ -647,7 +647,7 @@ bool PVMFSMRTSPUnicastNode::ProcessCommand(PVMFSMFSPBaseNodeCommand& aCmd)
         break;
 
         /* internal commands common to all types of streaming*/
-        case PVMF_SMFSP_NODE_CONSTRUCT_SESSION:	//to construct the graph
+        case PVMF_SMFSP_NODE_CONSTRUCT_SESSION: //to construct the graph
         {
             PVMFStatus status = DoGraphConstruct();
             if (status != PVMFPending)
@@ -1056,7 +1056,7 @@ uint32 PVMFSMRTSPUnicastNode::GetJitterBufferMemPoolSize(PVMFJitterBufferNodePor
                 {
                     sizeInBytes = MIN_RTP_SOCKET_MEM_POOL_SIZE_IN_BYTES;
                 }
-                sizeInBytes += (2 * MAX_SOCKET_BUFFER_SIZE);		//eq. to SNODE_UDP_MULTI_MAX_BYTES_PER_RECV + MAX_UDP_PACKET_SIZE used in socket node
+                sizeInBytes += (2 * MAX_SOCKET_BUFFER_SIZE);        //eq. to SNODE_UDP_MULTI_MAX_BYTES_PER_RECV + MAX_UDP_PACKET_SIZE used in socket node
             }
 
         }
@@ -1066,7 +1066,7 @@ uint32 PVMFSMRTSPUnicastNode::GetJitterBufferMemPoolSize(PVMFJitterBufferNodePor
             if (durationInSec > 0)
             {
                 sizeInBytes = MIN_RTP_SOCKET_MEM_POOL_SIZE_IN_BYTES;
-                sizeInBytes += (2 * MAX_SOCKET_BUFFER_SIZE);		//eq. to SNODE_UDP_MULTI_MAX_BYTES_PER_RECV + MAX_UDP_PACKET_SIZE used in socket node
+                sizeInBytes += (2 * MAX_SOCKET_BUFFER_SIZE);        //eq. to SNODE_UDP_MULTI_MAX_BYTES_PER_RECV + MAX_UDP_PACKET_SIZE used in socket node
             }
         }
         break;
@@ -1333,8 +1333,8 @@ bool PVMFSMRTSPUnicastNode::ReserveSockets()
         OsclRand random_num;
         random_num.Seed(my_seed);
         int32 first = random_num.Rand();
-        uint32 myport = (first & 0x1FFF) + 0x2000;	//start from 8192
-        startPortNum = (myport >> 1) << 1;	//start from even
+        uint32 myport = (first & 0x1FFF) + 0x2000;  //start from 8192
+        startPortNum = (myport >> 1) << 1;  //start from even
     }
 
     for (it = iTrackInfoVec.begin();
@@ -1879,7 +1879,7 @@ void PVMFSMRTSPUnicastNode::DoStart(PVMFSMFSPBaseNodeCommand& aCmd)
                 getChildNodeContainer(PVMF_SM_FSP_RTSP_SESSION_CONTROLLER_NODE);
             if (sessionControllerNodeContainer)
             {
-                PVRTSPEngineNodeExtensionInterface*	rtspExtIntf =
+                PVRTSPEngineNodeExtensionInterface* rtspExtIntf =
                     OSCL_STATIC_CAST(PVRTSPEngineNodeExtensionInterface*, sessionControllerNodeContainer->iExtensions.front());
                 if (rtspExtIntf)
                     rtspExtIntf->UpdateSessionCompletionStatus(isSessionDurationExpired);
@@ -1940,7 +1940,7 @@ void PVMFSMRTSPUnicastNode::DoStart(PVMFSMFSPBaseNodeCommand& aCmd)
                 getChildNodeContainer(PVMF_SM_FSP_RTSP_SESSION_CONTROLLER_NODE);
             if (sessionControllerNodeContainer)
             {
-                PVRTSPEngineNodeExtensionInterface*	rtspExtIntf =
+                PVRTSPEngineNodeExtensionInterface* rtspExtIntf =
                     OSCL_STATIC_CAST(PVRTSPEngineNodeExtensionInterface*, sessionControllerNodeContainer->iExtensions.front());
                 if (rtspExtIntf)
                     rtspExtIntf->UpdateSessionCompletionStatus(isSessionDurationExpired);
@@ -2066,7 +2066,7 @@ void PVMFSMRTSPUnicastNode::DoPause(PVMFSMFSPBaseNodeCommand& aCmd)
                 getChildNodeContainer(PVMF_SM_FSP_RTSP_SESSION_CONTROLLER_NODE);
             if (sessionControllerNodeContainer)
             {
-                PVRTSPEngineNodeExtensionInterface*	rtspExtIntf =
+                PVRTSPEngineNodeExtensionInterface* rtspExtIntf =
                     OSCL_STATIC_CAST(PVRTSPEngineNodeExtensionInterface*, sessionControllerNodeContainer->iExtensions.front());
                 if (rtspExtIntf)
                     rtspExtIntf->UpdateSessionCompletionStatus(isSessionDurationExpired);
@@ -3309,7 +3309,7 @@ PVMFStatus PVMFSMRTSPUnicastNode::SetSourceInitializationData(OSCL_wString& aSou
                                 PVRTSPEngineNodeExtensionInterface* rtspExtIntf =
                                     (PVRTSPEngineNodeExtensionInterface*)(iSessionControllerNodeContainer->iExtensions[0]);
                                 if (rtspExtIntf)
-                                {	//the proxyname doesn't need to be unicode
+                                {   //the proxyname doesn't need to be unicode
                                     OsclMemAllocator alloc;
                                     char *buf = (char*)alloc.allocate(sContext->iProxyName.get_size() + 1);
                                     if (!buf)
@@ -3949,7 +3949,7 @@ void PVMFSMRTSPUnicastNode::DoSetDataSourcePosition(PVMFSMFSPBaseNodeCommand& aC
 
             /*
              * SetDataSource from a prepared state could mean two things:
-             *	- In Play-Stop-Play usecase engine does a SetDataSourcePosition
+             *  - In Play-Stop-Play usecase engine does a SetDataSourcePosition
              *    to get the start media TS to set its playback clock
              *  - Engine is trying to do a play with a non-zero start offset
              */
@@ -5786,7 +5786,7 @@ PVMFStatus PVMFSMRTSPUnicastNode::DoRepositioningStart3GPPStreaming()
         getChildNodeContainer(PVMF_SM_FSP_RTSP_SESSION_CONTROLLER_NODE);
     if (sessionControllerNodeContainer)
     {
-        PVRTSPEngineNodeExtensionInterface*	rtspExtIntf =
+        PVRTSPEngineNodeExtensionInterface* rtspExtIntf =
             OSCL_STATIC_CAST(PVRTSPEngineNodeExtensionInterface*, sessionControllerNodeContainer->iExtensions.front());
         if (rtspExtIntf)
             rtspExtIntf->UpdateSessionCompletionStatus(isSessionDurationExpired);
@@ -5879,7 +5879,7 @@ bool PVMFSMRTSPUnicastNode::DoRepositioningPause3GPPStreaming()
         getChildNodeContainer(PVMF_SM_FSP_RTSP_SESSION_CONTROLLER_NODE);
     if (sessionControllerNodeContainer)
     {
-        PVRTSPEngineNodeExtensionInterface*	rtspExtIntf =
+        PVRTSPEngineNodeExtensionInterface* rtspExtIntf =
             OSCL_STATIC_CAST(PVRTSPEngineNodeExtensionInterface*, sessionControllerNodeContainer->iExtensions.front());
         if (rtspExtIntf)
             rtspExtIntf->UpdateSessionCompletionStatus(isSessionDurationExpired);
@@ -6450,7 +6450,7 @@ void PVMFSMRTSPUnicastNode::DoSetDataSourcePositionOverflow(PVMFSMFSPBaseNodeCom
             /*
             * Implies an open ended session or invalid request time
             * - no pause or reposition
-            	*/
+                */
             PVMF_SM_RTSP_LOGERROR((0, "StreamingManagerNode:DoSetDataSourcePositionOverflow - Invalid Args"));
             CommandComplete(iInputCommands, aCmd, PVMFFailure);
             return;

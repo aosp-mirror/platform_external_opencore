@@ -15,8 +15,8 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-#ifndef	idct_h
-#define	idct_h
+#ifndef idct_h
+#define idct_h
 
 /*----------------------------------------------------------------------------
 ; INCLUDES

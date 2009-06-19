@@ -123,11 +123,11 @@ class TSC_capability
         // -------------------------------------------------
         // Parameters extracted from incoming TCS (RAN-32K)
         // -------------------------------------------------
-        uint32 iTcsIn_H263_sqcifMPI;		// Units 1/30 second
-        uint32 iTcsIn_H263_qcifMPI;		// Units 1/30 second
-        uint32 iTcsIn_H263_cifMPI;		// Units 1/30 second
-        uint32 iTcsIn_H263_4cifMPI;		// Units 1/30 second
-        uint32 iTcsIn_H263_16cifMPI;		// Units 1/30 second
+        uint32 iTcsIn_H263_sqcifMPI;        // Units 1/30 second
+        uint32 iTcsIn_H263_qcifMPI;     // Units 1/30 second
+        uint32 iTcsIn_H263_cifMPI;      // Units 1/30 second
+        uint32 iTcsIn_H263_4cifMPI;     // Units 1/30 second
+        uint32 iTcsIn_H263_16cifMPI;        // Units 1/30 second
 
 
         /* Video resolutions */

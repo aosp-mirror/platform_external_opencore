@@ -111,10 +111,10 @@ class engine_timer;
 
 //test function oscl_str_is_valid_utf8
 class engine_test : public test_case,
-            public OsclActiveObject,
-            public PVCommandStatusObserver,
-            public PVInformationalEventObserver,
-            public PVErrorEventObserver
+        public OsclActiveObject,
+        public PVCommandStatusObserver,
+        public PVInformationalEventObserver,
+        public PVErrorEventObserver
 {
     public:
         engine_test(bool aUseProxy = false,

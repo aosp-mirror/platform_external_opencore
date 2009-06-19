@@ -20,44 +20,44 @@
  INPUT AND OUTPUT DEFINITIONS
 
  Inputs:
-	[input_variable_name] = [description of the input to module, its type
-				 definition, and length (when applicable)]
+    [input_variable_name] = [description of the input to module, its type
+                 definition, and length (when applicable)]
 
  Local Stores/Buffers/Pointers Needed:
-	[local_store_name] = [description of the local store, its type
-			      definition, and length (when applicable)]
-	[local_buffer_name] = [description of the local buffer, its type
-			       definition, and length (when applicable)]
-	[local_ptr_name] = [description of the local pointer, its type
-			    definition, and length (when applicable)]
+    [local_store_name] = [description of the local store, its type
+                  definition, and length (when applicable)]
+    [local_buffer_name] = [description of the local buffer, its type
+                   definition, and length (when applicable)]
+    [local_ptr_name] = [description of the local pointer, its type
+                definition, and length (when applicable)]
 
  Global Stores/Buffers/Pointers Needed:
-	[global_store_name] = [description of the global store, its type
-			       definition, and length (when applicable)]
-	[global_buffer_name] = [description of the global buffer, its type
-				definition, and length (when applicable)]
-	[global_ptr_name] = [description of the global pointer, its type
-			     definition, and length (when applicable)]
+    [global_store_name] = [description of the global store, its type
+                   definition, and length (when applicable)]
+    [global_buffer_name] = [description of the global buffer, its type
+                definition, and length (when applicable)]
+    [global_ptr_name] = [description of the global pointer, its type
+                 definition, and length (when applicable)]
 
  Outputs:
-	[return_variable_name] = [description of data/pointer returned
-				  by module, its type definition, and length
-				  (when applicable)]
+    [return_variable_name] = [description of data/pointer returned
+                  by module, its type definition, and length
+                  (when applicable)]
 
  Pointers and Buffers Modified:
-	[variable_bfr_ptr] points to the [describe where the
-	  variable_bfr_ptr points to, its type definition, and length
-	  (when applicable)]
-	[variable_bfr] contents are [describe the new contents of
-	  variable_bfr]
+    [variable_bfr_ptr] points to the [describe where the
+      variable_bfr_ptr points to, its type definition, and length
+      (when applicable)]
+    [variable_bfr] contents are [describe the new contents of
+      variable_bfr]
 
  Local Stores Modified:
-	[local_store_name] = [describe new contents, its type
-			      definition, and length (when applicable)]
+    [local_store_name] = [describe new contents, its type
+                  definition, and length (when applicable)]
 
  Global Stores Modified:
-	[global_store_name] = [describe new contents, its type
-			       definition, and length (when applicable)]
+    [global_store_name] = [describe new contents, its type
+                   definition, and length (when applicable)]
 
 ------------------------------------------------------------------------------
  FUNCTION DESCRIPTION
@@ -84,21 +84,21 @@
      the resources used should be documented below.
 
  STACK USAGE: [stack count for this module] + [variable to represent
-		  stack usage for each subroutine called]
+          stack usage for each subroutine called]
 
      where: [stack usage variable] = stack usage for [subroutine
-		 name] (see [filename].ext)
+         name] (see [filename].ext)
 
  DATA MEMORY USED: x words
 
  PROGRAM MEMORY USED: x words
 
  CLOCK CYCLES: [cycle count equation for this module] + [variable
-		   used to represent cycle count for each subroutine
-		   called]
+           used to represent cycle count for each subroutine
+           called]
 
      where: [cycle count variable] = cycle count for [subroutine
-		name] (see [filename].ext)
+        name] (see [filename].ext)
 
 ------------------------------------------------------------------------------
 */
@@ -107,10 +107,10 @@
 /*----------------------------------------------------------------------------
 ; INCLUDES
 ----------------------------------------------------------------------------*/
-#include 	"mp4dec_lib.h"
-#include 	"vlc_decode.h"
-#include 	"bitstream.h"
-#include 	"zigzag.h"
+#include    "mp4dec_lib.h"
+#include    "vlc_decode.h"
+#include    "bitstream.h"
+#include    "zigzag.h"
 
 /*----------------------------------------------------------------------------
 ; MACROS

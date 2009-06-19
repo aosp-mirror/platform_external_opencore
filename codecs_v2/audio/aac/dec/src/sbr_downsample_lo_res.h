@@ -80,9 +80,9 @@ extern "C"
 #endif
 
     void  sbr_downsample_lo_res(Int32 v_result[],
-                                Int32 num_result,
-                                Int   freqBandTableRef[],
-                                Int32 num_Ref);
+    Int32 num_result,
+    Int   freqBandTableRef[],
+    Int32 num_Ref);
 
 #ifdef __cplusplus
 }

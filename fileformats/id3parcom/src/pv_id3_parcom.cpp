@@ -599,7 +599,7 @@ OSCL_EXPORT_REF bool PVID3ParCom::IsID3V2Present(PVFile* aFile, uint32& aTagSize
 
 OSCL_EXPORT_REF PVMFStatus PVID3ParCom::LookForV2_4Footer(uint32 aBuffSz, uint32 aFileOffset)
 {
-    if (iTagAtBof)	//already found tag. no need to search from the end.
+    if (iTagAtBof)  //already found tag. no need to search from the end.
         return PVMFFailure;
 
     uint32 footer_location = SearchTagV2_4(aBuffSz, aFileOffset);
@@ -640,7 +640,7 @@ uint32 PVID3ParCom::SearchTagV2_4(uint32 aBuffSz, uint32 aFileOffset)
         return 0;
 
     uint8 *buff = (uint8 *)oscl_malloc(aBuffSz);
-    if (! buff)		// malloc might fail
+    if (! buff)     // malloc might fail
         return 0;
 
     int remaining_bytes = 0;
@@ -669,7 +669,7 @@ uint32 PVID3ParCom::SearchTagV2_4(uint32 aBuffSz, uint32 aFileOffset)
             return 0;
         }
 
-        for (int i = 0; i < remaining_bytes;i++)
+        for (int i = 0; i < remaining_bytes; i++)
         {
             if (oscl_memcmp(buff + i, ID3_V2_4_TAG_FOOTER, ID3V2_TAG_NUM_BYTES_ID) == 0)
             {
@@ -697,7 +697,7 @@ uint32 PVID3ParCom::SearchTagV2_4(uint32 aBuffSz, uint32 aFileOffset)
             return 0;
         }
 
-        for (uint i = 0; i < aBuffSz;i++)
+        for (uint i = 0; i < aBuffSz; i++)
         {
             if (oscl_memcmp(buff + i, ID3_V2_4_TAG_FOOTER, ID3V2_TAG_NUM_BYTES_ID) == 0)
             {
@@ -1258,10 +1258,13 @@ int PVID3ParCom::ReadTagID3V2(PVID3Version aVersion)
             }
             else if ((frameType == PV_ID3_FRAME_APIC) || (frameType == PV_ID3_FRAME_PIC))
             {
-                if (currFrameLength > 3000000) {
+                if (currFrameLength > 3000000)
+                {
                     // TODO: scale down album art to something manageable right here
                     LOG_DEBUG((0, "PVID3ParCom::ReadTagID3V2: skipping > 3MB album art"));
-                } else {
+                }
+                else
+                {
                     if (ReadAlbumArtFrame(frameType, unicodeCheck, currFrameLength)  != PVMFSuccess)
                     {
                         LOG_ERR((0, "PVID3ParCom::ReadTagID3V2: Error - ReadAPICFrame failed"));
@@ -1428,11 +1431,11 @@ uint32 PVID3ParCom::ValidateFrameLengthV2_4(uint32 aFrameSize)
         bIsNonSyncSafeFrameValid = ValidateFrameV2_4(frameTypeUsingNonSyncSafeSize, false);
 
         // - Give more priority to non-syncsafe VALID frame ID,
-        //		than syncsafe candidate frame ID (frame validation is true for both)
+        //      than syncsafe candidate frame ID (frame validation is true for both)
         // - In case, we have frame validation true for both syncsafe and non-syncsafe size,
-        //		we will use default syncsafe representation
+        //      we will use default syncsafe representation
         // - In case, we have frame validation false for both syncsafe and non-syncsafe size,
-        //		we will use default syncsafe representation
+        //      we will use default syncsafe representation
         if (bIsSyncSafeFrameValid && frameTypeUsingSyncSafeSize != PV_ID3_FRAME_CANDIDATE)
         {
             // syncsafe representation
@@ -1518,7 +1521,7 @@ bool  PVID3ParCom::ReadFrameData(uint8 unicodeCheck, PVID3FrameType frameType, u
     {
         // This frame's text strings are Unicode (UTF-8)
         iID3TagInfo.iTextType = PV_ID3_CHARSET_UTF8;
-        HandleID3V2FrameDataUTF8(frameType,	pos, currFrameLength - 1);
+        HandleID3V2FrameDataUTF8(frameType, pos, currFrameLength - 1);
     }
     return true;
 }
@@ -1852,7 +1855,7 @@ PVID3ParCom::PVID3FrameType PVID3ParCom::FrameSupportedID3V2(PVID3Version aVersi
     {
         ID3V2FrameTypeReturnValue = FrameSupportedID3V2_2();
     }
-    else	//for v2.3 & v2.4
+    else    //for v2.3 & v2.4
     {
         uint8 endTestBuf[ID3V2_FRAME_NUM_BYTES_ID] = {0};
 
@@ -2106,7 +2109,7 @@ PVID3ParCom::PVID3FrameType PVID3ParCom::FrameSupportedID3V2_2(void)
 // FUNCTION DESCRIPTION
 //
 //  This function moves unicode data sotred in uint8 buffer to wchar buffer.
-//	The endian is taken care of by this function as well.
+//  The endian is taken care of by this function as well.
 //
 //------------------------------------------------------------------------------
 uint32 PVID3ParCom::EightBitToWideCharBufferTransfer(const uint8 * aPtrFrameData8,
@@ -2181,7 +2184,7 @@ uint32 PVID3ParCom::EightBitToWideCharBufferTransfer(const uint8 * aPtrFrameData
 
 uint32 PVID3ParCom::ConvertToSyncSafeInt(uint32 src)
 {
-    uint32	dest = (src & 0x0FE00000) << 3;
+    uint32  dest = (src & 0x0FE00000) << 3;
     dest |= (src & 0x001FC000) << 2;
     dest |= (src & 0x00003f80) << 1;
     dest |= (src & 0x0000007f);
@@ -2605,7 +2608,7 @@ PVMFStatus PVID3ParCom::ReadStringValueFrame(PVID3FrameType aFrameType, PVID3Cha
                 return PVMFErrNoMemory;
             }
             oscl_memset(ptrFrameData, 0, aValueSize + 2);
-            uint32 wchar_size = sizeof(oscl_wchar);	//for platforms where wchar is 4 bytes.
+            uint32 wchar_size = sizeof(oscl_wchar); //for platforms where wchar is 4 bytes.
             // Allocate key-value pair
             OSCL_TRY(err, kvpPtr = AllocateKvp(keyStr, PVMI_KVPVALTYPE_WCHARPTR, (wchar_size / 2) * (aValueSize + 2), truncate););
             if (OsclErrNone != err || !kvpPtr)
@@ -2817,8 +2820,8 @@ PVID3ParCom::readNullTerminatedAsciiString(PVFile* aInputFile, OSCL_HeapString<O
 PVMFStatus PVID3ParCom::ReadAlbumArtFrame(PVID3FrameType aFrameType, uint8 unicode, uint32 aFrameSize)
 {
     PvmfApicStruct* aApicStruct = NULL;
-    uint8	picType;
-    uint32	dataLen;
+    uint8   picType;
+    uint32  dataLen;
     OSCL_HeapString<OsclMemAllocator> ImageFormat;
     bool pic_as_url = false;
     bool truncate = false;
@@ -3351,7 +3354,7 @@ PVMFStatus PVID3ParCom::ConvertUnicodeDataToApic(char* aMimeTypeID3, oscl_wchar*
 }
 
 PVMFStatus PVID3ParCom::GetAlbumArtInfo(PVID3FrameType aFrameType, uint32 aFrameSize, OSCL_HeapString<OsclMemAllocator> &aImageFormat,
-                                        uint8 &aPicType, OSCL_HeapString<OsclMemAllocator> &aDescription, 	uint32 &aDataLen)
+                                        uint8 &aPicType, OSCL_HeapString<OsclMemAllocator> &aDescription,   uint32 &aDataLen)
 {
     uint8 image_format[4] = {0};
     PVMFStatus status = 0;
@@ -4074,7 +4077,7 @@ PVMFStatus PVID3ParCom::ComposeID3v2Tag(OsclRefCounterMemFrag& aTag)
             LOG_ERR((0, "PVID3ParCom::ComposeID3v2Tag: Error - GetID3v2FrameDataSize failed. status=%d", status));
             return status;
         }
-//		syncSafeInt = ConvertToSyncSafeInt(frameDataSize);
+//      syncSafeInt = ConvertToSyncSafeInt(frameDataSize);
         syncSafeInt = frameDataSize;
 
         if (iVersion == PV_ID3_V2_2)

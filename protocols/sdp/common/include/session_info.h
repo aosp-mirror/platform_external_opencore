@@ -19,9 +19,9 @@
 #ifndef SESSION_INFO_H
 #define SESSION_INFO_H
 
-#define FRESH_TOKEN_SIZE	30
-#define OMADRM_ENC_KEY_DATA_SIZE	50
-#define AUTH_TAG_SIZE	30
+#define FRESH_TOKEN_SIZE    30
+#define OMADRM_ENC_KEY_DATA_SIZE    50
+#define AUTH_TAG_SIZE   30
 
 
 #include "oscl_types.h"
@@ -48,7 +48,7 @@ typedef struct _originatorInfo
 
 
 
-}originatorInfo;
+} originatorInfo;
 
 
 
@@ -56,7 +56,7 @@ typedef struct _sessionTime
 {
     uint64 sessionStartTime;
     uint64 sessionStopTime;
-}sessionTime;
+} sessionTime;
 enum EndOfClipAction { DEFAULT, CLOSE_PLAYER, LAUNCH_URL, DO_NOTHING };
 enum VideoOnlyStatus { ALLOWED, NOT_ALLOWED, NOT_PRESENT };
 
@@ -152,10 +152,10 @@ class sessionDescription
         //End additions
 
         // added for RM
-        uint32							SdpplinVersion;
-        uint32							Flags;
-        uint32							IsRealDataType;
-        uint32							StreamCount;
+        uint32                          SdpplinVersion;
+        uint32                          Flags;
+        uint32                          IsRealDataType;
+        uint32                          StreamCount;
         OSCL_HeapString<SDPParserAlloc> ASMRuleBook;
         OSCL_HeapString<SDPParserAlloc> Title;
         OSCL_HeapString<SDPParserAlloc> Keywords;
@@ -1351,7 +1351,7 @@ class sessionDescription
             connectInfo.connectionAddress = sourceSessionDescription.connectInfo.connectionAddress;
             creationDate = sourceSessionDescription.creationDate;
             randomAccessDenied = sourceSessionDescription.randomAccessDenied;
-            eTag = 	sourceSessionDescription.eTag;
+            eTag =  sourceSessionDescription.eTag;
             randomFiller = sourceSessionDescription.randomFiller;
             digitalSignature = sourceSessionDescription.digitalSignature;
             launchURL = sourceSessionDescription.launchURL;
@@ -1363,14 +1363,14 @@ class sessionDescription
             phoneNumber = sourceSessionDescription.phoneNumber;
             encryptionKey = sourceSessionDescription.encryptionKey;
             bitrate = sourceSessionDescription.bitrate;
-            rtcpBWSender = 	sourceSessionDescription.rtcpBWSender;
+            rtcpBWSender =  sourceSessionDescription.rtcpBWSender;
             rtcpBWReceiver = sourceSessionDescription.rtcpBWReceiver;
             BWtias = sourceSessionDescription.BWtias;
             asfHeaderPtr = sourceSessionDescription.asfHeaderPtr;
             asfHeaderSize = sourceSessionDescription.asfHeaderSize;
             asfTrue = sourceSessionDescription.asfTrue;
             qoeMetrics = sourceSessionDescription.qoeMetrics;
-            Keywords = 	sourceSessionDescription.Keywords;
+            Keywords =  sourceSessionDescription.Keywords;
             intKeyData = sourceSessionDescription.intKeyData;
             intKeyContentIdURI = sourceSessionDescription.intKeyContentIdURI;
             intKeyRightIssuerURI = sourceSessionDescription.intKeyRightIssuerURI;

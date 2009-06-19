@@ -28,7 +28,7 @@
 enum TAVCEI_RETVAL
 {
     EAVCEI_SUCCESS,
-    EAVCEI_FAIL,	// upon receiving fail, encoder should be reset
+    EAVCEI_FAIL,    // upon receiving fail, encoder should be reset
 
     /** Encode return values */
     EAVCEI_FRAME_DROP,    // current frame is dropped, send in a new frame with new timestamp
@@ -37,7 +37,7 @@ enum TAVCEI_RETVAL
 
     /** GetOutput return values */
     EAVCEI_MORE_DATA,  // there are more data to be retrieve (multiple fragments of a NAL)
-    EAVCEI_MORE_NAL		// there is more NAL to be retrieved
+    EAVCEI_MORE_NAL     // there is more NAL to be retrieved
 
 } ;
 
@@ -135,53 +135,53 @@ struct TAVCEIEncodeParam
 {
     /** Specifies an  ID that will be used to specify this encoder while returning
     the bitstream in asynchronous mode. */
-    uint32				iEncodeID;
+    uint32              iEncodeID;
 
     /** Specifies the targeted profile, and will also specifies available tools for iEncMode.
     If default is used, encoder will choose its own preferred profile. If autodetect is used, encoder
     will check other settings and choose the right profile that doesn't have any conflicts. */
-    TAVCEIProfile		iProfile;
+    TAVCEIProfile       iProfile;
 
     /** Specifies the target level  When present,
     other settings will be checked against the range allowable by this target level.
     Fail will returned upon Initialize call. If not known, users must set it to autodetect. Encoder will
     calculate the right level that doesn't conflict with other settings. */
-    TAVCEILevel			iLevel;
+    TAVCEILevel         iLevel;
 
     /** Specifies whether base only (iNumLayer = 1) or base + enhancement layer
     (iNumLayer =2 ) is to be used. */
-    int32				iNumLayer;
+    int32               iNumLayer;
 
     /** Specifies the width in pixels of the encoded frames. IFrameWidth[0] is for
     base layer and iFrameWidth[1] is for enhanced layer. */
-    int 				iFrameWidth[AVC_MAX_LAYER];
+    int                 iFrameWidth[AVC_MAX_LAYER];
 
     /** Specifies the height in pixels of the encoded frames. IFrameHeight[0] is for
     base layer and iFrameHeight[1] is for enhanced layer. */
-    int					iFrameHeight[AVC_MAX_LAYER];
+    int                 iFrameHeight[AVC_MAX_LAYER];
 
     /** Specifies the cumulative bit rate in bit per second. IBitRate[0] is for base
     layer and iBitRate[1] is for base+enhanced layer.*/
-    int 				iBitRate[AVC_MAX_LAYER];
+    int                 iBitRate[AVC_MAX_LAYER];
 
     /** Specifies the cumulative frame rate in frame per second. IFrameRate[0] is for
     base layer and iFrameRate[1] is for base+enhanced layer. */
-    OsclFloat 				iFrameRate[AVC_MAX_LAYER];
+    OsclFloat               iFrameRate[AVC_MAX_LAYER];
 
     /** Specifies the encoding mode. This translates to the complexity of encoding modes and
     error resilient tools.
     */
-    TAVCEIEncodingMode	iEncMode;
+    TAVCEIEncodingMode  iEncMode;
 
     /** Specifies that SPS and PPS are retrieved first and sent out-of-band */
-    bool				iOutOfBandParamSet;
+    bool                iOutOfBandParamSet;
 
     /** Specifies the desired output format. */
     TAVCEIOutputFormat  iOutputFormat;
 
     /** Specifies the packet size in bytes which represents the desired number of bytes per NAL.
     If this number is set to 0, the encoder will encode the entire slice group as one NAL. */
-    uint32				iPacketSize;
+    uint32              iPacketSize;
 
     /** Specifies the rate control algorithm among one of the following constant Q,
     CBR and VBR. .*/
@@ -192,48 +192,48 @@ struct TAVCEIEncodeParam
     the buffer size can be larger than the streaming application. For 2-way application,
     this buffer shall be kept minimal. For a special case, in VBR mode, iBufferDelay will
     be set to -1 to allow buffer underflow. */
-    float				iBufferDelay;
+    float               iBufferDelay;
 
     /** Specifies the initial quantization parameter for the first I-frame. If constant Q
     rate control is used, this QP will be used for all the I-frames. This number must be
     set between 1 and 31, otherwise, Initialize() will fail. */
-    int					iIquant[AVC_MAX_LAYER];
+    int                 iIquant[AVC_MAX_LAYER];
 
     /** Specifies the initial quantization parameter for the first P-frame. If constant Q
     rate control is used, this QP will be used for all the P-frames. This number must be
     set between 1 and 31, otherwise, Initialize() will fail. */
-    int					iPquant[AVC_MAX_LAYER];
+    int                 iPquant[AVC_MAX_LAYER];
 
     /** Specifies the initial quantization parameter for the first B-frame. If constant Q
     rate control is used, this QP will be used for all the B-frames. This number must be
     set between 1 and 31, otherwise, Initialize() will fail. */
-    int					iBquant[AVC_MAX_LAYER];
+    int                 iBquant[AVC_MAX_LAYER];
 
     /** Specifies automatic scene detection where I-frame will be used the the first frame
     in a new scene. */
-    bool				iSceneDetection;
+    bool                iSceneDetection;
 
     /** Specifies the maximum period in seconds between 2 INTRA frames. An INTRA mode is
     forced to a frame once this interval is reached. When there is only one I-frame is present
     at the beginning of the clip, iIFrameInterval should be set to -1. For all I-frames coding
     this number should be set to 0. */
-    int32				iIFrameInterval;
+    int32               iIFrameInterval;
 
     /** According to iIFrameInterval setting, the minimum number of intra MB per frame is
     optimally calculated for error resiliency. However, when iIFrameInterval is set to -1,
     iNumIntraMBRefresh must be specified to guarantee the minimum number of intra
     macroblocks per frame.*/
-    uint32				iNumIntraMBRefresh;
+    uint32              iNumIntraMBRefresh;
 
 
     /** Specifies the duration of the clip in millisecond, needed for VBR encode. Set to 0 if unknown.*/
-    int32				iClipDuration;
+    int32               iClipDuration;
 
     /** Specify FSI Buffer input */
-    uint8*				iFSIBuff;
+    uint8*              iFSIBuff;
 
     /** Specify FSI Buffer Length */
-    int					iFSIBuffLength;
+    int                 iFSIBuffLength;
 
 };
 
@@ -242,69 +242,69 @@ struct TAVCEIEncodeParam
 struct TAVCEIInputFormat
 {
     /** Contains the width in pixels of the input frame. */
-    int32 			iFrameWidth;
+    int32           iFrameWidth;
 
     /** Contains the height in pixels of the input frame. */
-    int32			iFrameHeight;
+    int32           iFrameHeight;
 
     /** Contains the input frame rate in the unit of frame per second. */
-    OsclFloat			iFrameRate;
+    OsclFloat           iFrameRate;
 
     /** Contains Frame Orientation. Used for RGB input. 1 means Bottom_UP RGB, 0 means Top_Down RGB, -1 for video formats other than RGB*/
-    int				iFrameOrientation;
+    int             iFrameOrientation;
 
     /** Contains the format of the input video, e.g., YUV 4:2:0, UYVY, RGB24, etc. */
-    TAVCEIVideoFormat 	iVideoFormat;
+    TAVCEIVideoFormat   iVideoFormat;
 };
 
 
-/**	Contains the input data information */
+/** Contains the input data information */
 struct TAVCEIInputData
 {
     /** Pointer to an input frame buffer in input source format.*/
-    uint8* 	 	iSource;
+    uint8*      iSource;
 
     /** The corresponding time stamp of the input frame. */
-    uint32		iTimeStamp;
+    uint32      iTimeStamp;
 };
 
 /** Contains the output data information */
 struct TAVCEIOutputData
 {
     /** Pointer to the encoded bitstream buffer. */
-    uint8*			iBitstream;
+    uint8*          iBitstream;
 
     /** The size in bytes of iBStream. */
-    int32			iBitstreamSize;
+    int32           iBitstreamSize;
 
     /** The time stamp of the encoded frame according to the bitstream. */
-    uint32			iTimeStamp;
+    uint32          iTimeStamp;
 
     /** Set to true if this is a fragment of a NAL */
-    bool			iFragment;
+    bool            iFragment;
 
     /** Set to true if this is the last fragment of a NAL*/
-    bool			iLastFragment;
+    bool            iLastFragment;
 
     /** Set to true if this is a key frame */
-    bool			iKeyFrame;
+    bool            iKeyFrame;
 
     /** Set to true if this is the last NAL of a frame */
-    bool			iLastNAL;
+    bool            iLastNAL;
 
     /** Pointer to the reconstructed frame buffer in YUV 4:2:0 domain. */
-    uint8		 	*iFrame;
+    uint8           *iFrame;
 };
 
 
-/** \brief	This class is the base class for codec specific interface class.
+/** \brief  This class is the base class for codec specific interface class.
 The users must maintain an instance of the codec specific class throughout
 the encoding session.
 */
 class PVAVCEncoderInterface
 {
     public:
-        /**	\brief Constructor for PVAVCEncoderInterface class. */
+        /** \brief Constructor for PVAVCEncoderInterface class. */
         virtual ~PVAVCEncoderInterface() {};
 
         /** \brief Initialization function to set the input video format and the
@@ -325,7 +325,7 @@ class PVAVCEncoderInterface
         \parm  aVidIn contains one frame and other information of input.
         \return one of these, SUCCESS, FRAME_DROP, NOT_READY, INPUT_ERROR, FAIL
         */
-        virtual	 TAVCEI_RETVAL Encode(TAVCEIInputData* aVidIn) = 0;
+        virtual  TAVCEI_RETVAL Encode(TAVCEIInputData* aVidIn) = 0;
 
         /** \brief This function returns an array of parameter sets (either SPS or PPS, as specified by NAL TYPE
         in the first byte.
@@ -337,14 +337,14 @@ class PVAVCEncoderInterface
         virtual  TAVCEI_RETVAL GetParameterSet(uint8* paramSet, int32* size, int *nalType) = 0;
 
         /** \brief This function returns a compressed bitstream.
-        \parm	aVidOut is the structure to contain the output information.
-        \return	one of these, SUCCESS, MORE_DATA, NOT_READY, INPUT_ERROR, FAIL */
+        \parm   aVidOut is the structure to contain the output information.
+        \return one of these, SUCCESS, MORE_DATA, NOT_READY, INPUT_ERROR, FAIL */
         virtual  TAVCEI_RETVAL GetOutput(TAVCEIOutputData* aVidOut, int *aRemainingBytes) = 0;
 
         /** This function is used to flush all the unencoded frames store inside the encoder (if there exist).
         It is used for random re-positioning. Or free all the input. Note that if users want to flush output
         also, it has to retrieve all the output by calling GetOutput.
-        \return	 SUCCESS or NOT_READY (if the current frame is being used). */
+        \return  SUCCESS or NOT_READY (if the current frame is being used). */
         virtual  TAVCEI_RETVAL FlushInput() = 0;
 
         /** This function cleanup the AVCEI allocated resources.

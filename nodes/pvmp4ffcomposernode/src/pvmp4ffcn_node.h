@@ -114,18 +114,19 @@ typedef PVMFPortVector<PVMp4FFComposerPort, PVMp4FFCNAlloc> PVMp4FFCNPortVector;
 #ifdef ANDROID
 #include <utils/RefBase.h>
 
-namespace android {
+namespace android
+{
 class FragmentWriter;
 }
 #endif
 
 ////////////////////////////////////////////////////////////////////////////
 class PVMp4FFComposerNode : public PVMFNodeInterface,
-            public OsclActiveObject,
-            public PVMp4FFCNTrackConfigInterface,
-            public PVMp4FFCNClipConfigInterface,
-            public PvmfComposerSizeAndDurationInterface,
-            public PvmiCapabilityAndConfig
+        public OsclActiveObject,
+        public PVMp4FFCNTrackConfigInterface,
+        public PVMp4FFCNClipConfigInterface,
+        public PvmfComposerSizeAndDurationInterface,
+        public PvmiCapabilityAndConfig
 {
     public:
         PVMp4FFComposerNode(int32 aPriority);

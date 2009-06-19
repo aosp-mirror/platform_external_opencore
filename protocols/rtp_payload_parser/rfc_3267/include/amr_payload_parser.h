@@ -54,12 +54,12 @@ class AMRPayloadParser : public IPayloadParser
 
         };
 
-        AMR_TYPE		amr_type;
-        uint16			modeSet;
-        uint16			channels;
-        bool			octetAligned;
-        bool			crc;
-        bool			interleave;
+        AMR_TYPE        amr_type;
+        uint16          modeSet;
+        uint16          channels;
+        bool            octetAligned;
+        bool            crc;
+        bool            interleave;
 };
 
 #endif //AMR_PAYLOAD_PARSER_H

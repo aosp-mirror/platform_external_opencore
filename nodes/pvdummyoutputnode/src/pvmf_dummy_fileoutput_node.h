@@ -79,8 +79,8 @@
 #endif
 
 // Macros for AMR header
-#define	AMR_HEADER		"#!AMR\n"
-#define AMR_HEADER_SIZE	6
+#define AMR_HEADER      "#!AMR\n"
+#define AMR_HEADER_SIZE 6
 
 ////////////////////////////////////////////////////////////////////////////
 class PVMFFileOutputAlloc : public Oscl_DefAlloc
@@ -158,11 +158,11 @@ typedef PVMFNodeCommandQueue<PVMFDummyFileOutputNodeCommand, PVMFDummyFileOutput
 #define PVMF_BASEMIMETYPE "pvxxx"
 
 ////////////////////////////////////////////////////////////////////////////
-class PVMFDummyFileOutputNode :	public OsclActiveObject, public PVMFNodeInterface,
-            public PVMFDummyFileOutputNodeConfigInterface,
-            public PvmfComposerSizeAndDurationInterface,
-            public PvmfNodesSyncControlInterface,
-            public PvmiCapabilityAndConfig
+class PVMFDummyFileOutputNode : public OsclActiveObject, public PVMFNodeInterface,
+        public PVMFDummyFileOutputNodeConfigInterface,
+        public PvmfComposerSizeAndDurationInterface,
+        public PvmfNodesSyncControlInterface,
+        public PvmiCapabilityAndConfig
 {
     public:
         PVMFDummyFileOutputNode(int32 aPriority);

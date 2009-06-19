@@ -84,10 +84,10 @@ void PVCmnAsyncErrorEvent::Set(PVEventType aEventType,
 }
 
 CPV2WayProxyAdapter *CPV2WayProxyAdapter::New(TPVTerminalType aTerminalType,
-                                              PVCommandStatusObserver* aCmdStatusObserver,
-                                              PVInformationalEventObserver *aInfoEventObserver,
-                                              PVErrorEventObserver *aErrorEventObserver)
-        //called by the factory to create a new proxied 2way interface.
+        PVCommandStatusObserver* aCmdStatusObserver,
+        PVInformationalEventObserver *aInfoEventObserver,
+        PVErrorEventObserver *aErrorEventObserver)
+//called by the factory to create a new proxied 2way interface.
 {
     int32 error;
     CPV2WayProxyAdapter* aRet = OSCL_NEW(CPV2WayProxyAdapter, ());
@@ -177,7 +177,7 @@ CPV2WayProxyAdapter::~CPV2WayProxyAdapter()
 //
 
 OSCL_EXPORT_REF void CPV2WayProxyAdapter::DeleteTerminal(PVLogger *aLogger)
-        //called by proxy base class to delete terminal under the PV thread.
+//called by proxy base class to delete terminal under the PV thread.
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, aLogger, PVLOGMSG_STACK_TRACE, (0, "CPV2WayProxyAdapter::DeleteTerminal-in"));
     if (iterminalEngine)
@@ -187,13 +187,13 @@ OSCL_EXPORT_REF void CPV2WayProxyAdapter::DeleteTerminal(PVLogger *aLogger)
 }
 
 OSCL_EXPORT_REF void CPV2WayProxyAdapter::CreateTerminal(PVLogger *aLogger)
-        //called by proxy base class to create terminal under the PV thread.
+//called by proxy base class to create terminal under the PV thread.
 {
     OSCL_UNUSED_ARG(aLogger);
     iterminalEngine =  CPV2WayEngineFactory::CreateTerminal(PV_324M,
-                                                            this,//observers
-                                                            this,
-                                                            this);
+                       this,//observers
+                       this,
+                       this);
 }
 
 OSCL_EXPORT_REF void CPV2WayProxyAdapter::CreateLoggerAppenders()
@@ -213,7 +213,7 @@ OSCL_EXPORT_REF void CPV2WayProxyAdapter::PVThreadLogoff(PVMainProxy &proxy)
 }
 
 OSCL_EXPORT_REF void CPV2WayProxyAdapter::CleanupMessage(CPVCmnInterfaceCmdMessage *cmdMsg, PVLogger *aLogger)
-        //Cleanup an un-processed command message that was passed to SendAPI.
+//Cleanup an un-processed command message that was passed to SendAPI.
 {
     OSCL_UNUSED_ARG(aLogger);
     if (cmdMsg)
@@ -221,14 +221,14 @@ OSCL_EXPORT_REF void CPV2WayProxyAdapter::CleanupMessage(CPVCmnInterfaceCmdMessa
 }
 
 OSCL_EXPORT_REF void CPV2WayProxyAdapter::CleanupNotification(CPVCmnInterfaceObserverMessage *obsMsg, PVLogger *aLogger)
-        //Cleanup an un-processed notifier message that was passed to NotifyCaller
+//Cleanup an un-processed notifier message that was passed to NotifyCaller
 {
     OSCL_UNUSED_ARG(aLogger);
     OSCL_UNUSED_ARG(obsMsg);
 }
 
 OSCL_EXPORT_REF void CPV2WayProxyAdapter::ProcessMessage(CPVCmnInterfaceCmdMessage *aMsg, PVLogger *aLogger)
-        //called in the PV thread to field a command.
+//called in the PV thread to field a command.
 {
     OSCL_UNUSED_ARG(aLogger);
     if (!aMsg)
@@ -270,7 +270,7 @@ OSCL_EXPORT_REF void CPV2WayProxyAdapter::HandleCommand(TPVProxyMsgId aMsgId, Os
 }
 
 OSCL_EXPORT_REF void CPV2WayProxyAdapter::CleanupNotification(TPVProxyMsgId aId,
-                                                              OsclAny* aMsg)
+        OsclAny* aMsg)
 {
     OSCL_UNUSED_ARG(aId);
     OSCL_UNUSED_ARG(aMsg);
@@ -278,7 +278,7 @@ OSCL_EXPORT_REF void CPV2WayProxyAdapter::CleanupNotification(TPVProxyMsgId aId,
 }
 
 OSCL_EXPORT_REF void CPV2WayProxyAdapter::ProcessNotification(CPVCmnInterfaceObserverMessage *aMsg, PVLogger *aLogger)
-        //called in the app thread to notify observer.
+//called in the app thread to notify observer.
 {
     int32 err = 0;
     OSCL_TRY(err, ProcessNotificationL(aMsg););
@@ -347,8 +347,8 @@ PVCommandId CPV2WayProxyAdapter::Reset(OsclAny* aContextData)
 }
 
 PVCommandId CPV2WayProxyAdapter::AddDataSource(PVTrackId aTrackId,
-                                               PVMFNodeInterface& aDataSource,
-                                               OsclAny* aContextData)
+        PVMFNodeInterface& aDataSource,
+        OsclAny* aContextData)
 {
     PV2WayMessageAddDataSource *msg = OSCL_NEW(PV2WayMessageAddDataSource, (aTrackId, aDataSource, aContextData));
     if (msg == NULL)
@@ -369,8 +369,8 @@ PVCommandId CPV2WayProxyAdapter::RemoveDataSource(PVMFNodeInterface& aDataSource
 }
 
 PVCommandId CPV2WayProxyAdapter::AddDataSink(PVTrackId aTrackId,
-                                             PVMFNodeInterface& aDataSink,
-                                             OsclAny* aContextData)
+        PVMFNodeInterface& aDataSink,
+        OsclAny* aContextData)
 {
     PV2WayMessageAddDataSink *msg = OSCL_NEW(PV2WayMessageAddDataSink, (aTrackId, aDataSink, aContextData));
     if (msg == NULL)
@@ -391,8 +391,8 @@ PVCommandId CPV2WayProxyAdapter::RemoveDataSink(PVMFNodeInterface& aDataSink, Os
 }
 
 PVCommandId CPV2WayProxyAdapter::Connect(const PV2WayConnectOptions& aOptions,
-                                         PVMFNodeInterface* aCommServer,
-                                         OsclAny* aContextData)
+        PVMFNodeInterface* aCommServer,
+        OsclAny* aContextData)
 {
     PV2WayMessageConnect *msg = OSCL_NEW(PV2WayMessageConnect, (aOptions, aCommServer, aContextData));
     if (msg == NULL)
@@ -568,7 +568,7 @@ PVCommandId CPV2WayProxyAdapter::GetLogLevel(const char *aTag, int32 &aLogLevel,
 
 
 PVCommandId CPV2WayProxyAdapter::QueryUUID(const PvmfMimeString& aMimeType, Oscl_Vector<PVUuid, BasicAlloc>& aUuids,
-                                           bool aExactUuidsOnly, OsclAny* aContextData)
+        bool aExactUuidsOnly, OsclAny* aContextData)
 {
     PV2WayMessageQueryUUID *msg = OSCL_NEW(PV2WayMessageQueryUUID, (aMimeType, aUuids, aExactUuidsOnly, aContextData));
     if (msg == NULL)
@@ -690,7 +690,7 @@ void CPV2WayProxyAdapter::CommandCompleted(const PVCmdResponse& aResponse)
 //
 
 void CPV2WayProxyAdapter::ProcessMessageL(CPVCmnInterfaceCmdMessage *aMsg)
-        //called in the PV thread to field a command.
+//called in the PV thread to field a command.
 {
     int32 error = 0;
     //Call the engine, passing the command message pointer as the context data.
@@ -701,35 +701,35 @@ void CPV2WayProxyAdapter::ProcessMessageL(CPVCmnInterfaceCmdMessage *aMsg)
     switch (aMsg->GetType())
     {
         case PVT_COMMAND_INIT:
-            {
-                OSCL_TRY(error, iterminalEngine->Init(
-                                 OSCL_STATIC_CAST(PV2WayMessageInit *, aMsg)->iInitInfo,
-                                 aMsg));
-            }
-            break;
+        {
+            OSCL_TRY(error, iterminalEngine->Init(
+                         OSCL_STATIC_CAST(PV2WayMessageInit *, aMsg)->iInitInfo,
+                         aMsg));
+        }
+        break;
         case PVT_COMMAND_GET_SDK_INFO:
-            {
-                OSCL_TRY(error, iterminalEngine->GetSDKInfo(
-                                 OSCL_STATIC_CAST(PV2WayMessageGetSDKInfo *, aMsg)->iSDKInfo,
-                                 aMsg));
-            }
-            break;
+        {
+            OSCL_TRY(error, iterminalEngine->GetSDKInfo(
+                         OSCL_STATIC_CAST(PV2WayMessageGetSDKInfo *, aMsg)->iSDKInfo,
+                         aMsg));
+        }
+        break;
 
         case PVT_COMMAND_GET_SDK_MODULE_INFO:
-            {
-                OSCL_TRY(error, iterminalEngine->GetSDKModuleInfo(
-                                 OSCL_STATIC_CAST(PV2WayMessageGetSDKModuleInfo* , aMsg)->iSDKModuleInfo,
-                                 aMsg));
-            }
-            break;
+        {
+            OSCL_TRY(error, iterminalEngine->GetSDKModuleInfo(
+                         OSCL_STATIC_CAST(PV2WayMessageGetSDKModuleInfo* , aMsg)->iSDKModuleInfo,
+                         aMsg));
+        }
+        break;
 
         case PVT_COMMAND_GET_PV2WAY_STATE:
-            {
-                OSCL_TRY(error, iterminalEngine->GetState(
-                                 OSCL_STATIC_CAST(PV2WayMessageGetPV2WayState*, aMsg)->iState,
-                                 aMsg));
-            }
-            break;
+        {
+            OSCL_TRY(error, iterminalEngine->GetState(
+                         OSCL_STATIC_CAST(PV2WayMessageGetPV2WayState*, aMsg)->iState,
+                         aMsg));
+        }
+        break;
 
         case PVT_COMMAND_RESET:
             OSCL_TRY(error, iterminalEngine->Reset(aMsg));
@@ -737,35 +737,35 @@ void CPV2WayProxyAdapter::ProcessMessageL(CPVCmnInterfaceCmdMessage *aMsg)
 
         case PVT_COMMAND_ADD_DATA_SOURCE:
             OSCL_TRY(error, iterminalEngine->AddDataSource(
-                             OSCL_STATIC_CAST(PV2WayMessageAddDataSource *, aMsg)->iTrackId,
-                             OSCL_STATIC_CAST(PV2WayMessageAddDataSource *, aMsg)->iDataSource,
-                             aMsg));
+                         OSCL_STATIC_CAST(PV2WayMessageAddDataSource *, aMsg)->iTrackId,
+                         OSCL_STATIC_CAST(PV2WayMessageAddDataSource *, aMsg)->iDataSource,
+                         aMsg));
             break;
 
         case PVT_COMMAND_REMOVE_DATA_SOURCE:
             OSCL_TRY(error, iterminalEngine->RemoveDataSource(
-                             OSCL_STATIC_CAST(PV2WayMessageRemoveDataSource*, aMsg)->iDataSource,
-                             aMsg));
+                         OSCL_STATIC_CAST(PV2WayMessageRemoveDataSource*, aMsg)->iDataSource,
+                         aMsg));
             break;
 
         case PVT_COMMAND_ADD_DATA_SINK:
             OSCL_TRY(error, iterminalEngine->AddDataSink(
-                             OSCL_STATIC_CAST(PV2WayMessageAddDataSink *, aMsg)->iTrackId,
-                             OSCL_STATIC_CAST(PV2WayMessageAddDataSink *, aMsg)->iDataSink,
-                             aMsg));
+                         OSCL_STATIC_CAST(PV2WayMessageAddDataSink *, aMsg)->iTrackId,
+                         OSCL_STATIC_CAST(PV2WayMessageAddDataSink *, aMsg)->iDataSink,
+                         aMsg));
             break;
 
         case PVT_COMMAND_REMOVE_DATA_SINK:
             OSCL_TRY(error, iterminalEngine->RemoveDataSink(
-                             OSCL_STATIC_CAST(PV2WayMessageRemoveDataSink* , aMsg)->iDataSink,
-                             aMsg));
+                         OSCL_STATIC_CAST(PV2WayMessageRemoveDataSink* , aMsg)->iDataSink,
+                         aMsg));
             break;
 
         case PVT_COMMAND_CONNECT:
             OSCL_TRY(error, iterminalEngine->Connect(
-                             OSCL_STATIC_CAST(PV2WayMessageConnect *, aMsg)->iConnectOptions,
-                             OSCL_STATIC_CAST(PV2WayMessageConnect *, aMsg)->iCommServer,
-                             aMsg));
+                         OSCL_STATIC_CAST(PV2WayMessageConnect *, aMsg)->iConnectOptions,
+                         OSCL_STATIC_CAST(PV2WayMessageConnect *, aMsg)->iCommServer,
+                         aMsg));
             break;
 
         case PVT_COMMAND_DISCONNECT:
@@ -774,69 +774,69 @@ void CPV2WayProxyAdapter::ProcessMessageL(CPVCmnInterfaceCmdMessage *aMsg)
 
         case PVT_COMMAND_PAUSE:
             OSCL_TRY(error, iterminalEngine->Pause(
-                             OSCL_STATIC_CAST(PV2WayMessagePause* , aMsg)->iDirection,
-                             OSCL_STATIC_CAST(PV2WayMessagePause* , aMsg)->iTrackId,
-                             aMsg));
+                         OSCL_STATIC_CAST(PV2WayMessagePause* , aMsg)->iDirection,
+                         OSCL_STATIC_CAST(PV2WayMessagePause* , aMsg)->iTrackId,
+                         aMsg));
             break;
 
         case PVT_COMMAND_RESUME:
             OSCL_TRY(error, iterminalEngine->Resume(
-                             OSCL_STATIC_CAST(PV2WayMessagePause* , aMsg)->iDirection,
-                             OSCL_STATIC_CAST(PV2WayMessagePause* , aMsg)->iTrackId,
-                             aMsg));
+                         OSCL_STATIC_CAST(PV2WayMessagePause* , aMsg)->iDirection,
+                         OSCL_STATIC_CAST(PV2WayMessagePause* , aMsg)->iTrackId,
+                         aMsg));
             break;
 
         case PVT_COMMAND_SET_LOG_APPENDER:
-            {
-                OSCL_TRY(error, iterminalEngine->SetLogAppender(
-                                 OSCL_STATIC_CAST(PV2WayMessageSetLogAppender*, aMsg)->iTag,
-                                 OSCL_STATIC_CAST(PV2WayMessageSetLogAppender*, aMsg)->iAppender,
-                                 aMsg));
-            }
-            break;
+        {
+            OSCL_TRY(error, iterminalEngine->SetLogAppender(
+                         OSCL_STATIC_CAST(PV2WayMessageSetLogAppender*, aMsg)->iTag,
+                         OSCL_STATIC_CAST(PV2WayMessageSetLogAppender*, aMsg)->iAppender,
+                         aMsg));
+        }
+        break;
 
         case PVT_COMMAND_REMOVE_LOG_APPENDER:
-            {
-                OSCL_TRY(error, iterminalEngine->RemoveLogAppender(
-                                 OSCL_STATIC_CAST(PV2WayMessageRemoveLogAppender*, aMsg)->iTag,
-                                 OSCL_STATIC_CAST(PV2WayMessageRemoveLogAppender*, aMsg)->iAppender,
-                                 aMsg));
-            }
-            break;
+        {
+            OSCL_TRY(error, iterminalEngine->RemoveLogAppender(
+                         OSCL_STATIC_CAST(PV2WayMessageRemoveLogAppender*, aMsg)->iTag,
+                         OSCL_STATIC_CAST(PV2WayMessageRemoveLogAppender*, aMsg)->iAppender,
+                         aMsg));
+        }
+        break;
 
         case PVT_COMMAND_SET_LOG_LEVEL:
             OSCL_TRY(error, iterminalEngine->SetLogLevel(
-                             OSCL_STATIC_CAST(PV2WayMessageSetLogLevel*, aMsg)->iTag,
-                             OSCL_STATIC_CAST(PV2WayMessageSetLogLevel*, aMsg)->iLevel,
-                             OSCL_STATIC_CAST(PV2WayMessageSetLogLevel*, aMsg)->iSetSubtree,
-                             aMsg));
+                         OSCL_STATIC_CAST(PV2WayMessageSetLogLevel*, aMsg)->iTag,
+                         OSCL_STATIC_CAST(PV2WayMessageSetLogLevel*, aMsg)->iLevel,
+                         OSCL_STATIC_CAST(PV2WayMessageSetLogLevel*, aMsg)->iSetSubtree,
+                         aMsg));
             break;
 
         case PVT_COMMAND_GET_LOG_LEVEL:
             OSCL_TRY(error, iterminalEngine->GetLogLevel(
-                             OSCL_STATIC_CAST(PV2WayMessageGetLogLevel*, aMsg)->iTag,
-                             OSCL_STATIC_CAST(PV2WayMessageGetLogLevel*, aMsg)->iLogLevel,
-                             aMsg));
+                         OSCL_STATIC_CAST(PV2WayMessageGetLogLevel*, aMsg)->iTag,
+                         OSCL_STATIC_CAST(PV2WayMessageGetLogLevel*, aMsg)->iLogLevel,
+                         aMsg));
             break;
 
         case PVT_COMMAND_QUERY_UUID:
             OSCL_TRY(error, iterminalEngine->QueryUUID(
-                             OSCL_STATIC_CAST(PV2WayMessageQueryUUID*, aMsg)->iMimeType,
-                             OSCL_STATIC_CAST(PV2WayMessageQueryUUID*, aMsg)->iUuids,
-                             OSCL_STATIC_CAST(PV2WayMessageQueryUUID*, aMsg)->iExactUuidsOnly,
-                             aMsg));
+                         OSCL_STATIC_CAST(PV2WayMessageQueryUUID*, aMsg)->iMimeType,
+                         OSCL_STATIC_CAST(PV2WayMessageQueryUUID*, aMsg)->iUuids,
+                         OSCL_STATIC_CAST(PV2WayMessageQueryUUID*, aMsg)->iExactUuidsOnly,
+                         aMsg));
             break;
 
         case PVT_COMMAND_QUERY_INTERFACE:
             OSCL_TRY(error, iterminalEngine->QueryInterface(
-                             OSCL_STATIC_CAST(PV2WayMessageQueryInterface*, aMsg)->iUuid,
-                             OSCL_STATIC_CAST(PV2WayMessageQueryInterface*, aMsg)->iInterfacePtr,
-                             aMsg));
+                         OSCL_STATIC_CAST(PV2WayMessageQueryInterface*, aMsg)->iUuid,
+                         OSCL_STATIC_CAST(PV2WayMessageQueryInterface*, aMsg)->iInterfacePtr,
+                         aMsg));
             break;
 
         case PVT_COMMAND_CANCEL_ALL_COMMANDS:
             OSCL_TRY(error, iterminalEngine->CancelAllCommands(
-                             aMsg));
+                         aMsg));
             break;
     }
 
@@ -859,7 +859,7 @@ void CPV2WayProxyAdapter::ProcessMessageL(CPVCmnInterfaceCmdMessage *aMsg)
 //
 
 void CPV2WayProxyAdapter::ProcessNotificationL(CPVCmnInterfaceObserverMessage *aMsg)
-        //called in the app thread to notify observer.
+//called in the app thread to notify observer.
 {
     int32 err = 0;
 
@@ -869,49 +869,49 @@ void CPV2WayProxyAdapter::ProcessNotificationL(CPVCmnInterfaceObserverMessage *a
     switch (aMsg->GetResponseType())
     {
         case 0:
-            {
-                PVCmnCmdRespMsg *resp = (PVCmnCmdRespMsg*)aMsg;
+        {
+            PVCmnCmdRespMsg *resp = (PVCmnCmdRespMsg*)aMsg;
 
-                //Get the command message that prompted this
-                //response.  The pointer is in the context data.
-                CPVCmnInterfaceCmdMessage *cmd = (CPVCmnInterfaceCmdMessage*)resp->GetContext();
+            //Get the command message that prompted this
+            //response.  The pointer is in the context data.
+            CPVCmnInterfaceCmdMessage *cmd = (CPVCmnInterfaceCmdMessage*)resp->GetContext();
 
-                //Create a new response with the original command ID and
-                //original context data.
-                resp->SetId(cmd->GetCommandId());
-                resp->SetContextData(cmd->GetContextData());
-                OSCL_TRY(err, iCmdStatusObserver->CommandCompleted(*resp));
-                //ignore any leave from the observer function.
+            //Create a new response with the original command ID and
+            //original context data.
+            resp->SetId(cmd->GetCommandId());
+            resp->SetContextData(cmd->GetContextData());
+            OSCL_TRY(err, iCmdStatusObserver->CommandCompleted(*resp));
+            //ignore any leave from the observer function.
 
-                //discard command message.
-                OSCL_DELETE(cmd);
+            //discard command message.
+            OSCL_DELETE(cmd);
 
-                FreeCmdMsg(resp);
-            }
-            break;
+            FreeCmdMsg(resp);
+        }
+        break;
 
         case 1:
-            {
-                PVCmnAsyncEventMsg *event = (PVCmnAsyncEventMsg*) aMsg;
+        {
+            PVCmnAsyncEventMsg *event = (PVCmnAsyncEventMsg*) aMsg;
 
-                OSCL_TRY(err, iInfoEventObserver->HandleInformationalEvent(*event););
-                //ignore any leave from the observer function.
+            OSCL_TRY(err, iInfoEventObserver->HandleInformationalEvent(*event););
+            //ignore any leave from the observer function.
 
-                FreeEventMsg((PVCmnAsyncEventMsg *) aMsg);
+            FreeEventMsg((PVCmnAsyncEventMsg *) aMsg);
 
-            }
-            break;
+        }
+        break;
 
         case 2:
-            {
-                PVCmnAsyncErrorEvent *event = (PVCmnAsyncErrorEvent *) aMsg;
+        {
+            PVCmnAsyncErrorEvent *event = (PVCmnAsyncErrorEvent *) aMsg;
 
-                OSCL_TRY(err, iErrorEventObserver->HandleErrorEvent(*event););
-                //ignore any leave from the observer function.
+            OSCL_TRY(err, iErrorEventObserver->HandleErrorEvent(*event););
+            //ignore any leave from the observer function.
 
-                FreeErrorMsg((PVCmnAsyncErrorEvent *) aMsg);
-            }
-            break;
+            FreeErrorMsg((PVCmnAsyncErrorEvent *) aMsg);
+        }
+        break;
 
         default:
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "CPV2WayProxyAdapter::ProcessNotificationL unknown response (%d)", aMsg->GetResponseType()));

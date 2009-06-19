@@ -28,12 +28,12 @@ extern "C"
 #endif
 
     /**************************************************************************/
-    /*	Function:	BlockDCT_AANwSub
-    	Date:		7/31/01
-    	Input:
-    	Output:		out[64] ==> next block
-    	Purpose:	Do subtraction for zero MV first
-    	Modified:
+    /*  Function:   BlockDCT_AANwSub
+        Date:       7/31/01
+        Input:
+        Output:     out[64] ==> next block
+        Purpose:    Do subtraction for zero MV first
+        Modified:
     **************************************************************************/
 
     Void BlockDCT_AANwSub(Short *out, UChar *cur, UChar *pred, Int width)
@@ -43,7 +43,7 @@ extern "C"
         Int round;
         Int k12 = 0x022A02D4;
         Int k14 = 0x0188053A;
-        Int	abs_sum;
+        Int abs_sum;
         Int mask;
         Int tmp, tmp2;
         Int ColTh;
@@ -57,7 +57,7 @@ extern "C"
         {
             /* assuming the block is word-aligned */
             mask = 0x1FE;
-            tmp = *((Int*) cur);	/* contains 4 pixels */
+            tmp = *((Int*) cur);    /* contains 4 pixels */
             tmp2 = *((Int*) pred); /* prediction 4 pixels */
             k0 = tmp2 & 0xFF;
             k1 = mask & (tmp << 1);
@@ -71,7 +71,7 @@ extern "C"
             k3 = (tmp2 >> 24) & 0xFF;
             k4 = mask & (tmp >> 23);
             k3 = k4 - (k3 << 1);
-            tmp = *((Int*)(cur + 4));	/* another 4 pixels */
+            tmp = *((Int*)(cur + 4));   /* another 4 pixels */
             tmp2 = *((Int*)(pred + 4));
             k4 = tmp2 & 0xFF;
             k5 = mask & (tmp << 1);
@@ -125,8 +125,8 @@ extern "C"
             k2 = k2 + k3;
             k3 = (k3 << 1) - k2;
             /********/
-            dst[2] = k2;		/* col. 2 */
-            k3 <<= 1;		/* scale up col. 6 */
+            dst[2] = k2;        /* col. 2 */
+            k3 <<= 1;       /* scale up col. 6 */
             dst[6] = k3; /* col. 6 */
             /* fdct_3 */
             /* ROTATE k4,k6,392,946, FDCT_SHIFT */
@@ -146,14 +146,14 @@ extern "C"
             k4 = k4 + k7;
             k7 = (k7 << 1) - k4;
             k5 = k5 + k6;
-            k4 <<= 1;		/* scale up col.5 */
+            k4 <<= 1;       /* scale up col.5 */
             k6 = k5 - (k6 << 1);
             /********/
-            dst[5] = k4;	/* col. 5 */
-            k6 <<= 2;		/* scale up col. 7 */
-            dst[1] = k5;	/* col. 1 */
-            dst[7] = k6;	/* col. 7 */
-            dst[3] = k7;	/* col. 3 */
+            dst[5] = k4;    /* col. 5 */
+            k6 <<= 2;       /* scale up col. 7 */
+            dst[1] = k5;    /* col. 1 */
+            dst[7] = k6;    /* col. 7 */
+            dst[3] = k7;    /* col. 3 */
             dst += 8;
         }
         while (dst < out);
@@ -219,7 +219,7 @@ extern "C"
             /*****************/
             k2 = k2 + k3;
             k3 = (k3 << 1) - k2;
-            k3 <<= 1;		/* scale up col. 6 */
+            k3 <<= 1;       /* scale up col. 6 */
             /********/
             out[48] = k3;   /* row 6 */
             out[16] = k2;   /* row 2 */
@@ -241,14 +241,14 @@ extern "C"
             k4 = k4 + k7;
             k7 = (k7 << 1) - k4;
             k5 = k5 + k6;
-            k4 <<= 1;		/* scale up col. 5 */
+            k4 <<= 1;       /* scale up col. 5 */
             k6 = k5 - (k6 << 1);
             /********/
             out[24] = k7 ;    /* row 3 */
-            k6 <<= 2;		/* scale up col. 7 */
-            out[56] = k6 ;	 /* row 7 */
-            out[8] = k5 ;	 /* row 1 */
-            out[40] = k4 ;	 /* row 5 */
+            k6 <<= 2;       /* scale up col. 7 */
+            out[56] = k6 ;   /* row 7 */
+            out[8] = k5 ;    /* row 1 */
+            out[40] = k4 ;   /* row 5 */
             out++;
         }
         while ((UInt)out < (UInt)dst) ;
@@ -257,12 +257,12 @@ extern "C"
     }
 
     /**************************************************************************/
-    /*	Function:	Block4x4DCT_AANwSub
-    	Date:		7/31/01
-    	Input:
-    	Output:		out[64] ==> next block
-    	Purpose:	Do subtraction for zero MV first before 4x4 DCT
-    	Modified:
+    /*  Function:   Block4x4DCT_AANwSub
+        Date:       7/31/01
+        Input:
+        Output:     out[64] ==> next block
+        Purpose:    Do subtraction for zero MV first before 4x4 DCT
+        Modified:
     **************************************************************************/
 
     Void Block4x4DCT_AANwSub(Short *out, UChar *cur, UChar *pred, Int width)
@@ -274,7 +274,7 @@ extern "C"
         Int k14 = 0x0188053A;
         Int mask;
         Int tmp, tmp2;
-        Int	abs_sum;
+        Int abs_sum;
         Int ColTh;
 
         dst = out + 64 ;
@@ -286,7 +286,7 @@ extern "C"
         {
             /* assuming the block is word-aligned */
             mask = 0x1FE;
-            tmp = *((Int*) cur);	/* contains 4 pixels */
+            tmp = *((Int*) cur);    /* contains 4 pixels */
             tmp2 = *((Int*) pred); /* prediction 4 pixels */
             k0 = tmp2 & 0xFF;
             k1 = mask & (tmp << 1);
@@ -300,7 +300,7 @@ extern "C"
             k3 = (tmp2 >> 24) & 0xFF;
             k4 = mask & (tmp >> 23);
             k3 = k4 - (k3 << 1);
-            tmp = *((Int*)(cur + 4));	/* another 4 pixels */
+            tmp = *((Int*)(cur + 4));   /* another 4 pixels */
             tmp2 = *((Int*)(pred + 4));
             k4 = tmp2 & 0xFF;
             k5 = mask & (tmp << 1);
@@ -351,7 +351,7 @@ extern "C"
             /*****************/
             k2 = k2 + k3;
             /********/
-            dst[2] = k2;		/* col. 2 */
+            dst[2] = k2;        /* col. 2 */
             /* fdct_3 */
             /* ROTATE k4,k6,392,946, FDCT_SHIFT */
             /* assume FAST MULTIPLY */
@@ -370,8 +370,8 @@ extern "C"
             k7 = k7 - k4;
             k5 = k5 + k6;
             /********/
-            dst[1] = k5;		/* col. 1 */
-            dst[3] = k7;		/* col. 3 */
+            dst[1] = k5;        /* col. 1 */
+            dst[3] = k7;        /* col. 3 */
             dst += 8;
         }
         while (dst < out);
@@ -433,7 +433,7 @@ extern "C"
             /*****************/
             k2 = k2 + k3;
             /********/
-            out[16] = k2;			/* row 2 */
+            out[16] = k2;           /* row 2 */
             /* fdct_3 */
             /* ROTATE k4,k6,392,946, FDCT_SHIFT */
             /* assume FAST MULTIPLY */
@@ -452,8 +452,8 @@ extern "C"
             k7 = k7 - k4 ;
             k5 = k5 + k6;
             /********/
-            out[24] = k7 ;		/* row 3 */
-            out[8] = k5 ;		/* row 1 */
+            out[24] = k7 ;      /* row 3 */
+            out[8] = k5 ;       /* row 1 */
             out++;
         }
         while ((UInt)out < (UInt)dst) ;
@@ -462,12 +462,12 @@ extern "C"
     }
 
     /**************************************************************************/
-    /*	Function:	Block2x2DCT_AANwSub
-    	Date:		7/31/01
-    	Input:
-    	Output:		out[64] ==> next block
-    	Purpose:	Do subtraction for zero MV first before 2x2 DCT
-    	Modified:
+    /*  Function:   Block2x2DCT_AANwSub
+        Date:       7/31/01
+        Input:
+        Output:     out[64] ==> next block
+        Purpose:    Do subtraction for zero MV first before 2x2 DCT
+        Modified:
     **************************************************************************/
 
 
@@ -480,7 +480,7 @@ extern "C"
         Int k14 = 0x018803B2;
         Int mask;
         Int tmp, tmp2;
-        Int	abs_sum;
+        Int abs_sum;
         Int ColTh;
 
         dst = out + 64 ;
@@ -492,7 +492,7 @@ extern "C"
         {
             /* assuming the block is word-aligned */
             mask = 0x1FE;
-            tmp = *((Int*) cur);	/* contains 4 pixels */
+            tmp = *((Int*) cur);    /* contains 4 pixels */
             tmp2 = *((Int*) pred); /* prediction 4 pixels */
             k0 = tmp2 & 0xFF;
             k1 = mask & (tmp << 1);
@@ -506,7 +506,7 @@ extern "C"
             k3 = (tmp2 >> 24) & 0xFF;
             k4 = mask & (tmp >> 23);
             k3 = k4 - (k3 << 1);
-            tmp = *((Int*)(cur + 4));	/* another 4 pixels */
+            tmp = *((Int*)(cur + 4));   /* another 4 pixels */
             tmp2 = *((Int*)(pred + 4));
             k4 = tmp2 & 0xFF;
             k5 = mask & (tmp << 1);
@@ -608,7 +608,7 @@ extern "C"
 
             k0 = k0 + k1;
             /**********/
-            out[0] = k0;		/* row 0 */
+            out[0] = k0;        /* row 0 */
             /* fdct_2 */
             k4 = k4 + k5;
             k5 = k5 + k6;
@@ -633,7 +633,7 @@ extern "C"
             k5 = k5 + k7;
             k5 = k5 + k6;
             /********/
-            out[8] = k5 ;		/* row 1 */
+            out[8] = k5 ;       /* row 1 */
             out++;
         }
         while ((UInt)out < (UInt)dst) ;
@@ -642,12 +642,12 @@ extern "C"
     }
 
     /**************************************************************************/
-    /*	Function:	BlockDCT_AANIntra
-    	Date:		8/9/01
-    	Input:		rec
-    	Output:		out[64] ==> next block
-    	Purpose:	Input directly from rec frame.
-    	Modified:
+    /*  Function:   BlockDCT_AANIntra
+        Date:       8/9/01
+        Input:      rec
+        Output:     out[64] ==> next block
+        Purpose:    Input directly from rec frame.
+        Modified:
     **************************************************************************/
 
     Void BlockDCT_AANIntra(Short *out, UChar *cur, UChar *dummy2, Int width)
@@ -657,7 +657,7 @@ extern "C"
         Int round;
         Int k12 = 0x022A02D4;
         Int k14 = 0x0188053A;
-        Int	abs_sum;
+        Int abs_sum;
         Int mask;
         Int *curInt, tmp;
         Int ColTh;
@@ -673,12 +673,12 @@ extern "C"
         {
             mask = 0x1FE;
             curInt = (Int*) cur;
-            tmp = curInt[0];	/* contains 4 pixels */
+            tmp = curInt[0];    /* contains 4 pixels */
             k0 = mask & (tmp << 1);
             k1 = mask & (tmp >> 7);
             k2 = mask & (tmp >> 15);
             k3 = mask & (tmp >> 23);
-            tmp = curInt[1];	/* another 4 pixels */
+            tmp = curInt[1];    /* another 4 pixels */
             k4 =  mask & (tmp << 1);
             k5 =  mask & (tmp >> 7);
             k6 =  mask & (tmp >> 15);
@@ -721,8 +721,8 @@ extern "C"
             k2 = k2 + k3;
             k3 = (k3 << 1) - k2;
             /********/
-            dst[2] = k2;		/* col. 2 */
-            k3 <<= 1;		/* scale up col. 6 */
+            dst[2] = k2;        /* col. 2 */
+            k3 <<= 1;       /* scale up col. 6 */
             dst[6] = k3; /* col. 6 */
             /* fdct_3 */
             /* ROTATE k4,k6,392,946, FDCT_SHIFT */
@@ -742,14 +742,14 @@ extern "C"
             k4 = k4 + k7;
             k7 = (k7 << 1) - k4;
             k5 = k5 + k6;
-            k4 <<= 1;		/* scale up col.5 */
+            k4 <<= 1;       /* scale up col.5 */
             k6 = k5 - (k6 << 1);
             /********/
-            dst[5] = k4;	/* col. 5 */
-            k6 <<= 2;		/* scale up col. 7 */
-            dst[1] = k5;	/* col. 1 */
-            dst[7] = k6;	/* col. 7 */
-            dst[3] = k7;	/* col. 3 */
+            dst[5] = k4;    /* col. 5 */
+            k6 <<= 2;       /* scale up col. 7 */
+            dst[1] = k5;    /* col. 1 */
+            dst[7] = k6;    /* col. 7 */
+            dst[3] = k7;    /* col. 3 */
             dst += 8;
         }
         while (dst < out);
@@ -815,7 +815,7 @@ extern "C"
             /*****************/
             k2 = k2 + k3;
             k3 = (k3 << 1) - k2;
-            k3 <<= 1;		/* scale up col. 6 */
+            k3 <<= 1;       /* scale up col. 6 */
             /********/
             out[48] = k3;   /* row 6 */
             out[16] = k2;   /* row 2 */
@@ -837,14 +837,14 @@ extern "C"
             k4 = k4 + k7;
             k7 = (k7 << 1) - k4;
             k5 = k5 + k6;
-            k4 <<= 1;		/* scale up col. 5 */
+            k4 <<= 1;       /* scale up col. 5 */
             k6 = k5 - (k6 << 1);
             /********/
             out[24] = k7 ;    /* row 3 */
-            k6 <<= 2;		/* scale up col. 7 */
-            out[56] = k6 ;	 /* row 7 */
-            out[8] = k5 ;	 /* row 1 */
-            out[40] = k4 ;	 /* row 5 */
+            k6 <<= 2;       /* scale up col. 7 */
+            out[56] = k6 ;   /* row 7 */
+            out[8] = k5 ;    /* row 1 */
+            out[40] = k4 ;   /* row 5 */
             out++;
         }
         while ((UInt)out < (UInt)dst) ;
@@ -853,12 +853,12 @@ extern "C"
     }
 
     /**************************************************************************/
-    /*	Function:	Block4x4DCT_AANIntra
-    	Date:		8/9/01
-    	Input:		prev
-    	Output:		out[64] ==> next block
-    	Purpose:	Input directly from prev frame. output 2x2 DCT
-    	Modified:
+    /*  Function:   Block4x4DCT_AANIntra
+        Date:       8/9/01
+        Input:      prev
+        Output:     out[64] ==> next block
+        Purpose:    Input directly from prev frame. output 2x2 DCT
+        Modified:
     **************************************************************************/
 
     Void Block4x4DCT_AANIntra(Short *out, UChar *cur, UChar *dummy2, Int width)
@@ -870,7 +870,7 @@ extern "C"
         Int k14 = 0x0188053A;
         Int mask;
         Int *curInt, tmp;
-        Int	abs_sum;
+        Int abs_sum;
         Int ColTh;
 
         OSCL_UNUSED_ARG(dummy2);
@@ -884,12 +884,12 @@ extern "C"
         {
             mask = 0x1FE;
             curInt = (Int*) cur;
-            tmp = curInt[0];	/* contains 4 pixels */
+            tmp = curInt[0];    /* contains 4 pixels */
             k0 = mask & (tmp << 1);
             k1 = mask & (tmp >> 7);
             k2 = mask & (tmp >> 15);
             k3 = mask & (tmp >> 23);
-            tmp = curInt[1];	/* another 4 pixels */
+            tmp = curInt[1];    /* another 4 pixels */
             k4 =  mask & (tmp << 1);
             k5 =  mask & (tmp >> 7);
             k6 =  mask & (tmp >> 15);
@@ -929,7 +929,7 @@ extern "C"
             /*****************/
             k2 = k2 + k3;
             /********/
-            dst[2] = k2;		/* col. 2 */
+            dst[2] = k2;        /* col. 2 */
             /* fdct_3 */
             /* ROTATE k4,k6,392,946, FDCT_SHIFT */
             /* assume FAST MULTIPLY */
@@ -948,8 +948,8 @@ extern "C"
             k7 = k7 - k4;
             k5 = k5 + k6;
             /********/
-            dst[1] = k5;		/* col. 1 */
-            dst[3] = k7;		/* col. 3 */
+            dst[1] = k5;        /* col. 1 */
+            dst[3] = k7;        /* col. 3 */
             dst += 8;
         }
         while (dst < out);
@@ -1011,7 +1011,7 @@ extern "C"
             /*****************/
             k2 = k2 + k3;
             /********/
-            out[16] = k2;			/* row 2 */
+            out[16] = k2;           /* row 2 */
             /* fdct_3 */
             /* ROTATE k4,k6,392,946, FDCT_SHIFT */
             /* assume FAST MULTIPLY */
@@ -1030,8 +1030,8 @@ extern "C"
             k7 = k7 - k4 ;
             k5 = k5 + k6;
             /********/
-            out[24] = k7 ;		/* row 3 */
-            out[8] = k5 ;		/* row 1 */
+            out[24] = k7 ;      /* row 3 */
+            out[8] = k5 ;       /* row 1 */
             out++;
         }
         while ((UInt)out < (UInt)dst) ;
@@ -1040,12 +1040,12 @@ extern "C"
     }
 
     /**************************************************************************/
-    /*	Function:	Block2x2DCT_AANIntra
-    	Date:		8/9/01
-    	Input:		prev
-    	Output:		out[64] ==> next block
-    	Purpose:	Input directly from prev frame. output 2x2 DCT
-    	Modified:
+    /*  Function:   Block2x2DCT_AANIntra
+        Date:       8/9/01
+        Input:      prev
+        Output:     out[64] ==> next block
+        Purpose:    Input directly from prev frame. output 2x2 DCT
+        Modified:
     **************************************************************************/
 
     Void Block2x2DCT_AANIntra(Short *out, UChar *cur, UChar *dummy2, Int width)
@@ -1057,7 +1057,7 @@ extern "C"
         Int k14 = 0x018803B2;
         Int mask;
         Int *curInt, tmp;
-        Int	abs_sum;
+        Int abs_sum;
         Int ColTh;
 
         OSCL_UNUSED_ARG(dummy2);
@@ -1071,12 +1071,12 @@ extern "C"
         {
             mask = 0x1FE;
             curInt = (Int*) cur;
-            tmp = curInt[0];	/* contains 4 pixels */
+            tmp = curInt[0];    /* contains 4 pixels */
             k0 = mask & (tmp << 1);
             k1 = mask & (tmp >> 7);
             k2 = mask & (tmp >> 15);
             k3 = mask & (tmp >> 23);
-            tmp = curInt[1];	/* another 4 pixels */
+            tmp = curInt[1];    /* another 4 pixels */
             k4 =  mask & (tmp << 1);
             k5 =  mask & (tmp >> 7);
             k6 =  mask & (tmp >> 15);
@@ -1168,7 +1168,7 @@ extern "C"
 
             k0 = k0 + k1;
             /**********/
-            out[0] = k0;		/* row 0 */
+            out[0] = k0;        /* row 0 */
             /* fdct_2 */
             k4 = k4 + k5;
             k5 = k5 + k6;
@@ -1193,7 +1193,7 @@ extern "C"
             k5 = k5 + k7;
             k5 = k5 + k6;
             /********/
-            out[8] = k5 ;		/* row 1 */
+            out[8] = k5 ;       /* row 1 */
             out++;
         }
         while ((UInt)out < (UInt)dst) ;
@@ -1201,12 +1201,12 @@ extern "C"
         return ;
     }
     /**************************************************************************/
-    /*	Function:	Block1x1DCTwSub
-    	Date:		8/9/01
-    	Input:		block
-    	Output:		y
-    	Purpose:	Compute DC value only
-    	Modified:
+    /*  Function:   Block1x1DCTwSub
+        Date:       8/9/01
+        Input:      block
+        Output:     y
+        Purpose:    Compute DC value only
+        Modified:
     **************************************************************************/
     void Block1x1DCTwSub(Short *out, UChar *cur, UChar *pred, Int width)
     {
@@ -1238,12 +1238,12 @@ extern "C"
     }
 
     /**************************************************************************/
-    /*	Function:	Block1x1DCTIntra
-    	Date:		8/9/01
-    	Input:		prev
-    	Output:		out
-    	Purpose:	Compute DC value only
-    	Modified:
+    /*  Function:   Block1x1DCTIntra
+        Date:       8/9/01
+        Input:      prev
+        Output:     out
+        Purpose:    Compute DC value only
+        Modified:
     **************************************************************************/
     void Block1x1DCTIntra(Short *out, UChar *cur, UChar *dummy2, Int width)
     {

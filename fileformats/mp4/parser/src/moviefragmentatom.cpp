@@ -44,11 +44,11 @@ MovieFragmentAtom::MovieFragmentAtom(MP4_FF_FILE *fp,
 
         : Atom(fp, size, type)
 {
-    _pMovieFragmentHeaderAtom		= NULL;
-    _pTrackFragmentAtom				= NULL;
-    _pMovieFragmentCurrentOffset	= 0;
-    _pMovieFragmentBaseOffset		= 0;
-    _currentTrackFragmentOffset		= 0;
+    _pMovieFragmentHeaderAtom       = NULL;
+    _pTrackFragmentAtom             = NULL;
+    _pMovieFragmentCurrentOffset    = 0;
+    _pMovieFragmentBaseOffset       = 0;
+    _currentTrackFragmentOffset     = 0;
     _trafIndex = 0;
 
     parseTrafCompletely = true;

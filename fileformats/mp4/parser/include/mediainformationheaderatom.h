@@ -21,11 +21,11 @@
 /*     -------------------------------------------------------------------       */
 /*********************************************************************************/
 /*
-	This MediaInformationHeaderAtom Class is an abstract base class for the
-	atoms VideoMediaHeaderAton, AudioMediaHeaderAtom, HintMediaHeaderAtom,
-	and Mpeg4MediaHeaderAtom.  This class onbly contains one pure virtual method
-	getMediaHeaderType() that will return what type of mediaInformationHeader
-	this atom is.
+    This MediaInformationHeaderAtom Class is an abstract base class for the
+    atoms VideoMediaHeaderAton, AudioMediaHeaderAtom, HintMediaHeaderAtom,
+    and Mpeg4MediaHeaderAtom.  This class onbly contains one pure virtual method
+    getMediaHeaderType() that will return what type of mediaInformationHeader
+    this atom is.
 */
 
 

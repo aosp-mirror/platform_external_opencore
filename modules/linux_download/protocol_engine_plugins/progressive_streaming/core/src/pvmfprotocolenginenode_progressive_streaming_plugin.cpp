@@ -21,7 +21,7 @@
 
 
 class ProgressiveStreamingPluginInterface: public OsclSharedLibraryInterface,
-            public ProtocolEngineNodeSharedLibraryInterface
+        public ProtocolEngineNodeSharedLibraryInterface
 {
     public:
         ProgressiveStreamingPluginInterface() {};

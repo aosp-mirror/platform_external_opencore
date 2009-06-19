@@ -57,7 +57,7 @@ int32  ColorConvertYUV420SEMI::SetYuvFullRange(bool range)
 }
 
 
-int32 ColorConvertYUV420SEMI::SetMode(int32 nMode)	//iMode : 0 Off, 1 On
+int32 ColorConvertYUV420SEMI::SetMode(int32 nMode)  //iMode : 0 Off, 1 On
 {
     OSCL_UNUSED_ARG(nMode);
     OSCL_ASSERT(_mInitialized == true);
@@ -69,7 +69,7 @@ int32 ColorConvertYUV420SEMI::GetOutputBufferSize(void)
 {
     OSCL_ASSERT(_mInitialized == true);
 
-    return	_mState ? ((_mDst_height*_mDst_pitch*3) / 2) : ((_mSrc_width*_mSrc_height*3) / 2);
+    return  _mState ? ((_mDst_height*_mDst_pitch*3) / 2) : ((_mSrc_width*_mSrc_height*3) / 2);
 }
 
 
@@ -117,11 +117,11 @@ int32 ColorConvertYUV420SEMI::Convert(uint8 **yuvBuf, uint8 *rgbBuf)
     {
         for (j = _mSrc_width >> 2; j > 0; j--)
         {
-            tempU = *inCb++;	//U0
-            tempV = *inCr++;	//V0
+            tempU = *inCb++;    //U0
+            tempV = *inCr++;    //V0
             temp = tempU | (tempV << 8) ; //V0U0
-            tempU = *inCb++;	//U1
-            tempV = *inCr++;	//V1
+            tempU = *inCb++;    //U1
+            tempV = *inCr++;    //V1
             tempU = tempU | (tempV << 8) ; //V1U1
             temp |= (tempU << 16); //V1U1V0U0
             *outYUV420SEMI++ = temp;
@@ -148,9 +148,9 @@ int32 ColorConvertYUV420SEMI::Convert(uint8 *yuvBuf, uint8 *rgbBuf)
         return 0;
     }
 
-    TmpYuvBuf[0]	=	yuvBuf;
-    TmpYuvBuf[1]	=	yuvBuf + (_mSrc_pitch) * (_mSrc_mheight);
-    TmpYuvBuf[2]	=	TmpYuvBuf[1] + (_mSrc_pitch * _mSrc_mheight) / 4;
+    TmpYuvBuf[0]    =   yuvBuf;
+    TmpYuvBuf[1]    =   yuvBuf + (_mSrc_pitch) * (_mSrc_mheight);
+    TmpYuvBuf[2]    =   TmpYuvBuf[1] + (_mSrc_pitch * _mSrc_mheight) / 4;
 
     return (Convert(TmpYuvBuf, rgbBuf));
 }

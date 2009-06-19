@@ -22,8 +22,8 @@
 ; INCLUDES
 ----------------------------------------------------------------------------*/
 #include "oscl_mem.h"
-#include "mp4def.h"	/* typedef */
-#include "mp4lib_int.h"	/* main video structure */
+#include "mp4def.h" /* typedef */
+#include "mp4lib_int.h" /* main video structure */
 
 /*----------------------------------------------------------------------------
 ; MACROS
@@ -83,15 +83,15 @@ extern "C"
     PV_STATUS PV_DecodePredictedIntraDC(int compnum, BitstreamDecVideo *stream,
                                         int16 *IntraDC_delta);
 
-    void	doDCACPrediction(VideoDecData *video, int comp, int16 *q_block,
-                          int *direction);
+    void    doDCACPrediction(VideoDecData *video, int comp, int16 *q_block,
+                             int *direction);
 
 #ifdef PV_ANNEX_IJKT_SUPPORT
-    void	doDCACPrediction_I(VideoDecData *video, int comp, int16 *q_block);
+    void    doDCACPrediction_I(VideoDecData *video, int comp, int16 *q_block);
 #endif
     /*--------------------------------------------------------------------------*/
     /* defined in block_idct.c */
-    void MBlockIDCTAdd(VideoDecData *video,	int nz_coefs[]);
+    void MBlockIDCTAdd(VideoDecData *video, int nz_coefs[]);
 
     void BlockIDCT(uint8 *dst, uint8 *pred, int16 *blk, int width, int nzcoefs,
                    uint8 *bitmapcol, uint8 bitmaprow);
@@ -130,76 +130,76 @@ extern "C"
     /*--------------------------------------------------------------------------*/
     /* defined in chrominance_pred.c */
     void chrominance_pred(
-        int xpred,			/* i */
-        int ypred,			/* i */
-        uint8 *cu_prev,		/* i */
-        uint8 *cv_prev,		/* i */
-        uint8 *pred_block,	/* i */
-        int width_uv,		/* i */
-        int height_uv,		/* i */
+        int xpred,          /* i */
+        int ypred,          /* i */
+        uint8 *cu_prev,     /* i */
+        uint8 *cv_prev,     /* i */
+        uint8 *pred_block,  /* i */
+        int width_uv,       /* i */
+        int height_uv,      /* i */
         int round1
     );
 
     /*--------------------------------------------------------------------------*/
     /* defined in luminance_pred_mode_inter.c */
     void luminance_pred_mode_inter(
-        int xpred,			/* i */
-        int ypred,			/* i */
-        uint8 *c_prev,		/* i */
-        uint8 *pred_block,	/* i */
-        int width,			/* i */
-        int height,			/* i */
+        int xpred,          /* i */
+        int ypred,          /* i */
+        uint8 *c_prev,      /* i */
+        uint8 *pred_block,  /* i */
+        int width,          /* i */
+        int height,         /* i */
         int round1
     );
 
     /*--------------------------------------------------------------------------*/
     /* defined in luminance_pred_mode_inter4v.c */
     void luminance_pred_mode_inter4v(
-        int xpos,			/* i */
-        int ypos,			/* i */
-        MOT *px,			/* i */
-        MOT *py,			/* i */
-        uint8 *c_prev,		/* i */
-        uint8 *pred_block,	/* i */
-        int width,			/* i */
-        int height,			/* i */
-        int round1,			/* i */
-        int mvwidth,			/* i */
-        int *xsum_ptr,			/* i/o */
-        int *ysum_ptr			/* i/o */
+        int xpos,           /* i */
+        int ypos,           /* i */
+        MOT *px,            /* i */
+        MOT *py,            /* i */
+        uint8 *c_prev,      /* i */
+        uint8 *pred_block,  /* i */
+        int width,          /* i */
+        int height,         /* i */
+        int round1,         /* i */
+        int mvwidth,            /* i */
+        int *xsum_ptr,          /* i/o */
+        int *ysum_ptr           /* i/o */
     );
 
     /*--------------------------------------------------------------------------*/
     /* defined in pp_semaphore_chroma_inter.c */
 #ifdef PV_POSTPROC_ON
     void pp_semaphore_chroma_inter(
-        int	xpred,		/* i */
-        int	ypred,		/* i */
-        uint8   *pp_dec_u,	/* i/o */
-        uint8   *pstprcTypPrv,	/* i */
-        int	dx,		/* i */
-        int	dy,		/* i */
-        int	mvwidth,	/* i */
-        int	height,		/* i */
-        int32	size,		/* i */
-        int	mv_loc,		/* i */
-        uint8   msk_deblock	/* i */
+        int xpred,      /* i */
+        int ypred,      /* i */
+        uint8   *pp_dec_u,  /* i/o */
+        uint8   *pstprcTypPrv,  /* i */
+        int dx,     /* i */
+        int dy,     /* i */
+        int mvwidth,    /* i */
+        int height,     /* i */
+        int32   size,       /* i */
+        int mv_loc,     /* i */
+        uint8   msk_deblock /* i */
     );
 
     /*--------------------------------------------------------------------------*/
     /* defined in pp_semaphore_luma.c */
     uint8 pp_semaphore_luma(
-        int	xpred,		/* i */
-        int	ypred,		/* i */
-        uint8   *pp_dec_y,	/* i/o */
-        uint8   *pstprcTypPrv,	/* i */
-        int	*ll,		/* i */
-        int	*mv_loc,	/* i/o */
-        int	dx,		/* i */
-        int	dy,		/* i */
-        int	mvwidth,	/* i */
-        int	width,		/* i */
-        int	height		/* i */
+        int xpred,      /* i */
+        int ypred,      /* i */
+        uint8   *pp_dec_y,  /* i/o */
+        uint8   *pstprcTypPrv,  /* i */
+        int *ll,        /* i */
+        int *mv_loc,    /* i/o */
+        int dx,     /* i */
+        int dy,     /* i */
+        int mvwidth,    /* i */
+        int width,      /* i */
+        int height      /* i */
     );
 #endif
     /*--------------------------------------------------------------------------*/
@@ -216,30 +216,30 @@ extern "C"
     /*--------------------------------------------------------------------------*/
     /* defined in get_pred_adv_b_add.c */
     int GetPredAdvancedBy0x0(
-        uint8 *c_prev,		/* i */
-        uint8 *pred_block,		/* i */
-        int width,		/* i */
+        uint8 *c_prev,      /* i */
+        uint8 *pred_block,      /* i */
+        int width,      /* i */
         int pred_width_rnd /* i */
     );
 
     int GetPredAdvancedBy0x1(
-        uint8 *c_prev,		/* i */
-        uint8 *pred_block,		/* i */
-        int width,		/* i */
+        uint8 *c_prev,      /* i */
+        uint8 *pred_block,      /* i */
+        int width,      /* i */
         int pred_width_rnd /* i */
     );
 
     int GetPredAdvancedBy1x0(
-        uint8 *c_prev,		/* i */
-        uint8 *pred_block,		/* i */
-        int width,		/* i */
+        uint8 *c_prev,      /* i */
+        uint8 *pred_block,      /* i */
+        int width,      /* i */
         int pred_width_rnd /* i */
     );
 
     int GetPredAdvancedBy1x1(
-        uint8 *c_prev,		/* i */
-        uint8 *pred_block,		/* i */
-        int width,		/* i */
+        uint8 *c_prev,      /* i */
+        uint8 *pred_block,      /* i */
+        int width,      /* i */
         int pred_width_rnd /* i */
     );
 
@@ -281,7 +281,7 @@ extern "C"
     /*--------------------------------------------------------------------------*/
     /* defined in post_proc.c */
 #ifdef PV_ANNEX_IJKT_SUPPORT
-    void H263_Deblock(uint8 *rec, 	int width, int height, int16 *QP_store, uint8 *mode, int chr, int T);
+    void H263_Deblock(uint8 *rec,   int width, int height, int16 *QP_store, uint8 *mode, int chr, int T);
 #endif
     int  PostProcSemaphore(int16 *q_block);
     void PostFilter(VideoDecData *video, int filer_type, uint8 *output);

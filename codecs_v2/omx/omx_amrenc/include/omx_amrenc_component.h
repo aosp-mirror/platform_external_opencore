@@ -16,8 +16,8 @@
  * -------------------------------------------------------------------
  */
 /**
-	@file omx_amrenc_component.h
-	OpenMax encoder component file.
+    @file omx_amrenc_component.h
+    OpenMax encoder component file.
 */
 
 #ifndef OMX_AMRENC_COMPONENT_H_INCLUDED
@@ -32,9 +32,9 @@
 #endif
 
 
-#define INPUT_BUFFER_SIZE_AMR_ENC (320 * MAX_NUM_OUTPUT_FRAMES_PER_BUFFER)	//3200
+#define INPUT_BUFFER_SIZE_AMR_ENC (320 * MAX_NUM_OUTPUT_FRAMES_PER_BUFFER)  //3200
 
-#define OUTPUT_BUFFER_SIZE_AMR_ENC (MAX_NUM_OUTPUT_FRAMES_PER_BUFFER * MAX_AMR_FRAME_SIZE)	//10 * 32 = 320
+#define OUTPUT_BUFFER_SIZE_AMR_ENC (MAX_NUM_OUTPUT_FRAMES_PER_BUFFER * MAX_AMR_FRAME_SIZE)  //10 * 32 = 320
 
 #define NUMBER_INPUT_BUFFER_AMR_ENC  5
 #define NUMBER_OUTPUT_BUFFER_AMR_ENC  2
@@ -65,11 +65,11 @@ class OmxComponentAmrEncoderAO : public OmxComponentAudio
 
     private:
 
-        OMX_U32			iInputFrameLength;
-        OMX_U32			iMaxNumberOutputFrames;
-        OMX_U32			iActualNumberOutputFrames;
+        OMX_U32         iInputFrameLength;
+        OMX_U32         iMaxNumberOutputFrames;
+        OMX_U32         iActualNumberOutputFrames;
 
-        OMX_TICKS		iCurrentTimestamp;
+        OMX_TICKS       iCurrentTimestamp;
         OmxAmrEncoder*  ipAmrEnc;
 };
 

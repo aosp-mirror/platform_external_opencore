@@ -237,7 +237,7 @@ uint32 TSC_324m::VendorIdRecv(PS_ControlMsgHeader  pReceiveInf)
 //-----------------------------------------------------------------------------
 void TSC_324m::Tsc_UII_DTMF(uint8 dtmf_value, uint16 dtmf_duration)
 {
-    S_ControlMsgHeader			 infHeader;
+    S_ControlMsgHeader           infHeader;
     PS_UserInputIndication       pUserInputIndication;
 
     // Allocate the UII structure
@@ -273,7 +273,7 @@ void TSC_324m::Tsc_UII_DTMF(uint8 dtmf_value, uint16 dtmf_duration)
 
 void TSC_324m::Tsc_UII_Alphanumeric(const uint8* str, uint16 str_len)
 {
-    S_ControlMsgHeader			 infHeader;
+    S_ControlMsgHeader           infHeader;
     PS_UserInputIndication       pUserInputIndication;
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "TSC_324m:Tsc_UII_Alphanumeric - len(%d)", str_len));

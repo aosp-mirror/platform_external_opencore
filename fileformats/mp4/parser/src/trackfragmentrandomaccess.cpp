@@ -212,7 +212,7 @@ TrackFragmentRandomAccessAtom ::TrackFragmentRandomAccessAtom(MP4_FF_FILE *fp, u
             _mp4ErrorCode = READ_TRACK_FRAGMENT_RANDOM_ACCESS_ATOM_FAILED;
             return;
         }
-        for (uint32 idx = 0; idx < _entry_count ;idx++)
+        for (uint32 idx = 0; idx < _entry_count ; idx++)
         {
             TFRAEntries *pTFRAEntries = NULL;
             PV_MP4_FF_NEW(fp->auditCB, TFRAEntries, (fp, _version, _length_size_of_traf_num,

@@ -20,15 +20,15 @@
 #include "zigzag.h"
 
 
-typedef	PV_STATUS(*VlcDecFuncP)(BitstreamDecVideo *stream, Tcoef *pTcoef);
-static const uint8 AC_rowcol[64] = {	0, 0, 0, 0, 0, 0, 0, 0,
-                                     0, 1, 1, 1, 1, 1, 1, 1,
-                                     0, 1, 1, 1, 1, 1, 1, 1,
-                                     0, 1, 1, 1, 1, 1, 1, 1,
-                                     0, 1, 1, 1, 1, 1, 1, 1,
-                                     0, 1, 1, 1, 1, 1, 1, 1,
-                                     0, 1, 1, 1, 1, 1, 1, 1,
-                                     0, 1, 1, 1, 1, 1, 1, 1,
+typedef PV_STATUS(*VlcDecFuncP)(BitstreamDecVideo *stream, Tcoef *pTcoef);
+static const uint8 AC_rowcol[64] = {    0, 0, 0, 0, 0, 0, 0, 0,
+                                        0, 1, 1, 1, 1, 1, 1, 1,
+                                        0, 1, 1, 1, 1, 1, 1, 1,
+                                        0, 1, 1, 1, 1, 1, 1, 1,
+                                        0, 1, 1, 1, 1, 1, 1, 1,
+                                        0, 1, 1, 1, 1, 1, 1, 1,
+                                        0, 1, 1, 1, 1, 1, 1, 1,
+                                        0, 1, 1, 1, 1, 1, 1, 1,
                                    };
 static const uint8 mask[8] = /*  for fast bitmap */
     {128, 64, 32, 16, 8, 4, 2, 1};
@@ -38,12 +38,12 @@ static const uint8 mask[8] = /*  for fast bitmap */
 /***********************************************************CommentBegin******
 *
 * -- VlcDequantMpegBlock -- Decodes the DCT coefficients of one 8x8 block and perform
-			dequantization using Mpeg mode.
-	Date:		08/08/2000
+            dequantization using Mpeg mode.
+    Date:       08/08/2000
 
-	Modified:	   3/21/01
-				Added pre IDCT clipping, new ACDC prediction structure, ACDC prediction clipping,
-				16-bit int case, removed multiple zigzaging
+    Modified:      3/21/01
+                Added pre IDCT clipping, new ACDC prediction structure, ACDC prediction clipping,
+                16-bit int case, removed multiple zigzaging
 ******************************************************************************/
 
 #ifdef PV_SUPPORT_MAIN_PROFILE
@@ -115,9 +115,9 @@ int VlcDequantMpegIntraBlock(void *vid, int comp, int switched,
             if (return_status != PV_SUCCESS)
             {
                 last = 1;/*  11/1/2000 let it slips undetected, just like
-						 in original version */
+                         in original version */
                 i = VLC_ERROR;
-                ACpred_flag = 0;	/* no of coefficients should not get reset   03/07/2002 */
+                ACpred_flag = 0;    /* no of coefficients should not get reset   03/07/2002 */
                 break;
             }
 
@@ -125,8 +125,8 @@ int VlcDequantMpegIntraBlock(void *vid, int comp, int switched,
             last = run_level.last;
             if (i >= 64)
             {
-                /*	i = NCOEFF_BLOCK; */	/*  11/1/00 */
-                ACpred_flag = 0;	/* no of coefficients should not get reset   03/07/2002 */
+                /*  i = NCOEFF_BLOCK; */    /*  11/1/00 */
+                ACpred_flag = 0;    /* no of coefficients should not get reset   03/07/2002 */
                 i = VLC_NO_LAST_BIT;
                 last = 1;
                 break;
@@ -373,10 +373,10 @@ int VlcDequantMpegIntraBlock(void *vid, int comp, int switched,
 /***********************************************************CommentBegin******
 *
 * -- VlcDequantMpegInterBlock -- Decodes the DCT coefficients of one 8x8 block and perform
-			dequantization using Mpeg mode for INTER block.
-	Date:		08/08/2000
-	Modified:	           3/21/01
-				clean up, added clipping, 16-bit int case, new ACDC prediction
+            dequantization using Mpeg mode for INTER block.
+    Date:       08/08/2000
+    Modified:              3/21/01
+                clean up, added clipping, 16-bit int case, new ACDC prediction
 ******************************************************************************/
 
 
@@ -420,9 +420,9 @@ int VlcDequantMpegInterBlock(void *vid, int comp,
         if (return_status != PV_SUCCESS)
         {
             last = 1;/*  11/1/2000 let it slips undetected, just like
-					 in original version */
+                     in original version */
             i = VLC_ERROR;
-            sum = 1;	/* no of coefficients should not get reset   03/07/2002 */
+            sum = 1;    /* no of coefficients should not get reset   03/07/2002 */
             break;
         }
 
@@ -430,11 +430,11 @@ int VlcDequantMpegInterBlock(void *vid, int comp,
         last = run_level.last;
         if (i >= 64)
         {
-            /*	i = NCOEFF_BLOCK; */	/*  11/1/00 */
+            /*  i = NCOEFF_BLOCK; */    /*  11/1/00 */
             //return VLC_NO_LAST_BIT;
             i = VLC_NO_LAST_BIT;
             last = 1;
-            sum = 1;	/* no of coefficients should not get reset   03/07/2002 */
+            sum = 1;    /* no of coefficients should not get reset   03/07/2002 */
             break;
         }
 
@@ -492,10 +492,10 @@ int VlcDequantMpegInterBlock(void *vid, int comp,
 /***********************************************************CommentBegin******
 *
 * -- VlcDequantIntraH263Block -- Decodes the DCT coefficients of one 8x8 block and perform
-			dequantization in H.263 mode for INTRA block.
-	Date:		08/08/2000
-	Modified:	            3/21/01
-				clean up, added clipping, 16-bit int case, removed multiple zigzaging
+            dequantization in H.263 mode for INTRA block.
+    Date:       08/08/2000
+    Modified:               3/21/01
+                clean up, added clipping, 16-bit int case, removed multiple zigzaging
 ******************************************************************************/
 
 
@@ -561,7 +561,7 @@ int VlcDequantH263IntraBlock(VideoDecData *video, int comp, int switched,
             if (return_status != PV_SUCCESS)
             {
                 last = 1;/* 11/1/2000 let it slips undetected, just like
-						 in original version */
+                         in original version */
                 i = VLC_ERROR;
                 ACpred_flag = 0;   /* no of coefficients should not get reset   03/07/2002 */
                 break;
@@ -571,7 +571,7 @@ int VlcDequantH263IntraBlock(VideoDecData *video, int comp, int switched,
             last = run_level.last;
             if (i >= 64)
             {
-                ACpred_flag = 0;	/* no of coefficients should not get reset   03/07/2002 */
+                ACpred_flag = 0;    /* no of coefficients should not get reset   03/07/2002 */
                 i = VLC_NO_LAST_BIT;
                 last = 1;
                 break;
@@ -591,7 +591,7 @@ int VlcDequantH263IntraBlock(VideoDecData *video, int comp, int switched,
             }
 
 
-            if (AC_rowcol[k])	/*  10/25/2000 */
+            if (AC_rowcol[k])   /*  10/25/2000 */
             {
                 temp = (int32)QP * (2 * datablock[k] + sgn_coeff) - sgn_coeff + (QP & 1) * sgn_coeff;
                 if (temp > 2047) temp = 2047;            /*  03/14/01 */
@@ -858,13 +858,13 @@ int VlcDequantH263IntraBlock_SH(VideoDecData *video, int comp, uint8 *bitmapcol,
         if ((CBP & (1 << (5 - comp))) == 0)
         {
 #ifdef FAST_IDCT
-        bitmapcol[0] = 128;
-        bitmapcol[1] = bitmapcol[2] = bitmapcol[3] = bitmapcol[4] = bitmapcol[5] = bitmapcol[6] = bitmapcol[7] = 0;
+            bitmapcol[0] = 128;
+            bitmapcol[1] = bitmapcol[2] = bitmapcol[3] = bitmapcol[4] = bitmapcol[5] = bitmapcol[6] = bitmapcol[7] = 0;
 #endif
-        datablock[0] <<= 3;  /* no need to clip */
-        return 1;//ncoeffs;
-    }
-    else
+            datablock[0] <<= 3;  /* no need to clip */
+            return 1;//ncoeffs;
+        }
+        else
         {
             /* enter the zero run decoding loop */
             do
@@ -873,7 +873,7 @@ int VlcDequantH263IntraBlock_SH(VideoDecData *video, int comp, uint8 *bitmapcol,
                 if (return_status != PV_SUCCESS)
                 {
                     last = 1;/*  11/1/2000 let it slips undetected, just like
-							 in original version */
+                             in original version */
                     i = VLC_ERROR;
                     break;
                 }
@@ -882,7 +882,7 @@ int VlcDequantH263IntraBlock_SH(VideoDecData *video, int comp, uint8 *bitmapcol,
                 last = run_level.last;
                 if (i >= 64)
                 {
-                    /*	i = NCOEFF_BLOCK; */	/*  11/1/00 */
+                    /*  i = NCOEFF_BLOCK; */    /*  11/1/00 */
                     i = VLC_NO_LAST_BIT;
                     last = 1;
                     break;
@@ -946,7 +946,7 @@ int VlcDequantH263IntraBlock_SH(VideoDecData *video, int comp, uint8 *bitmapcol,
                 if (return_status != PV_SUCCESS)
                 {
                     last = 1;/*  11/1/2000 let it slips undetected, just like
-								 in original version */
+                                 in original version */
                     i = VLC_ERROR;
                     ACpred_flag = 0;   /* no of coefficients should not get reset   03/07/2002 */
                     break;
@@ -956,8 +956,8 @@ int VlcDequantH263IntraBlock_SH(VideoDecData *video, int comp, uint8 *bitmapcol,
                 last = run_level.last;
                 if (i >= 64)
                 {
-                    /*					i = NCOEFF_BLOCK; */	/*  11/1/00 */
-                    ACpred_flag = 0;	/* no of coefficients should not get reset   03/07/2002 */
+                    /*                  i = NCOEFF_BLOCK; */    /*  11/1/00 */
+                    ACpred_flag = 0;    /* no of coefficients should not get reset   03/07/2002 */
                     i = VLC_NO_LAST_BIT;
                     last = 1;
                     break;
@@ -990,7 +990,7 @@ int VlcDequantH263IntraBlock_SH(VideoDecData *video, int comp, uint8 *bitmapcol,
         if (ACpred_flag)
         {
             i = NCOEFF_BLOCK;
-            for (k = 1;k < 8; k++)
+            for (k = 1; k < 8; k++)
             {
                 if (datablock[k])
                 {
@@ -1056,10 +1056,10 @@ int VlcDequantH263IntraBlock_SH(VideoDecData *video, int comp, uint8 *bitmapcol,
 /***********************************************************CommentBegin******
 *
 * -- VlcDequantInterH263Block -- Decodes the DCT coefficients of one 8x8 block and perform
-			dequantization in H.263 mode for INTER block.
-	Date:		08/08/2000
-	Modified:	          3/21/01
-				clean up, added clipping, 16-bit int case
+            dequantization in H.263 mode for INTER block.
+    Date:       08/08/2000
+    Modified:             3/21/01
+                clean up, added clipping, 16-bit int case
 ******************************************************************************/
 
 
@@ -1100,7 +1100,7 @@ int VlcDequantH263InterBlock(VideoDecData *video, int comp,
 
 
             last = 1;/*  11/1/2000 let it slips undetected, just like
-					 in original version */
+                     in original version */
             i = -1;
             break;
         }

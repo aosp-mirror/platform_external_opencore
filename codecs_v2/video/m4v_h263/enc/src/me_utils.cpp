@@ -20,17 +20,17 @@
 #include "mp4lib_int.h"
 #include "m4venc_oscl.h"
 
-#define VOP_OFFSET	((lx<<4)+16)  /* for offset to image area */
-#define CVOP_OFFSET	((lx<<2)+8)
+#define VOP_OFFSET  ((lx<<4)+16)  /* for offset to image area */
+#define CVOP_OFFSET ((lx<<2)+8)
 
-#define PREF_INTRA	512		/* bias for INTRA coding */
+#define PREF_INTRA  512     /* bias for INTRA coding */
 
 /*===============================================================
-	Function:	ChooseMode
-	Date:		09/21/2000
-	Purpose:	Choosing between INTRA or INTER
-	Input/Output: Pointer to the starting point of the macroblock.
-	Note:
+    Function:   ChooseMode
+    Date:       09/21/2000
+    Purpose:    Choosing between INTRA or INTER
+    Input/Output: Pointer to the starting point of the macroblock.
+    Note:
 ===============================================================*/
 void ChooseMode_C(UChar *Mode, UChar *cur, Int lx, Int min_SAD)
 {
@@ -76,7 +76,7 @@ void ChooseMode_C(UChar *Mode, UChar *cur, Int lx, Int min_SAD)
             tmp = *p - MB_mean;
             p += 2;
             if (tmp > 0) A += tmp;
-            else	A -= tmp;
+            else    A -= tmp;
         }
 
         if (A >= Th)
@@ -97,12 +97,12 @@ void ChooseMode_C(UChar *Mode, UChar *cur, Int lx, Int min_SAD)
 
 
 /*===============================================================
-	Function:	GetHalfPelMBRegion
-	Date:		09/17/2000
-	Purpose:	Interpolate the search region for half-pel search
-	Input/Output:	Center of the search, Half-pel memory, width
-	Note:		rounding type should be parameterized.
-			    Now fixed it to zero!!!!!!
+    Function:   GetHalfPelMBRegion
+    Date:       09/17/2000
+    Purpose:    Interpolate the search region for half-pel search
+    Input/Output:   Center of the search, Half-pel memory, width
+    Note:       rounding type should be parameterized.
+                Now fixed it to zero!!!!!!
 
 ===============================================================*/
 
@@ -152,13 +152,13 @@ void GetHalfPelMBRegion_C(UChar *cand, UChar *hmem, Int lx)
 }
 
 /*===============================================================
-   Function:	GetHalfPelBlkRegion
-   Date:		09/20/2000
-   Purpose:	Interpolate the search region for half-pel search
-   			in 4MV mode.
-   Input/Output:	Center of the search, Half-pel memory, width
-   Note:		rounding type should be parameterized.
-   		    Now fixed it to zero!!!!!!
+   Function:    GetHalfPelBlkRegion
+   Date:        09/20/2000
+   Purpose: Interpolate the search region for half-pel search
+            in 4MV mode.
+   Input/Output:    Center of the search, Half-pel memory, width
+   Note:        rounding type should be parameterized.
+            Now fixed it to zero!!!!!!
 
 ===============================================================*/
 
@@ -209,10 +209,10 @@ void GetHalfPelBlkRegion(UChar *cand, UChar *hmem, Int lx)
 
 
 /*=====================================================================
-	Function:	PaddingEdge
-	Date:		09/16/2000
-	Purpose:	Pad edge of a Vop
-	Modification: 09/20/05.
+    Function:   PaddingEdge
+    Date:       09/16/2000
+    Purpose:    Pad edge of a Vop
+    Modification: 09/20/05.
 =====================================================================*/
 
 void  PaddingEdge(Vop *refVop)
@@ -300,15 +300,15 @@ void  PaddingEdge(Vop *refVop)
 }
 
 /*===================================================================
-	Function:	ComputeMBSum
-	Date:		10/28/2000
-	Purpose:	Compute sum of absolute value (SAV) of blocks in a macroblock
-				in INTRA mode needed for rate control. Thus, instead of
-				computing the SAV, we can compute first order moment or
-				variance .
+    Function:   ComputeMBSum
+    Date:       10/28/2000
+    Purpose:    Compute sum of absolute value (SAV) of blocks in a macroblock
+                in INTRA mode needed for rate control. Thus, instead of
+                computing the SAV, we can compute first order moment or
+                variance .
 
-	11/28/00:	 add MMX
-	9/3/01:		 do parallel comp for C function.
+    11/28/00:    add MMX
+    9/3/01:      do parallel comp for C function.
 ===================================================================*/
 void ComputeMBSum_C(UChar *cur, Int lx, MOT *mot_mb)
 {
@@ -317,12 +317,12 @@ void ComputeMBSum_C(UChar *cur, Int lx, MOT *mot_mb)
     Int sad1 = 0, sad2 = 0, sad3 = 0, sad4 = 0;
     Int tmp, tmp2, mask = 0x00FF00FF;
 
-    cInt = (Int*)cur;	/* make sure this is word-align */
+    cInt = (Int*)cur;   /* make sure this is word-align */
     cInt2 = (Int*)(cur + (lx << 3));
     j = 8;
     while (j--)
     {
-        tmp = cInt[3];	/* load 4 pixels at a time */
+        tmp = cInt[3];  /* load 4 pixels at a time */
         tmp2 = tmp & mask;
         tmp = (tmp >> 8) & mask;
         tmp += tmp2;

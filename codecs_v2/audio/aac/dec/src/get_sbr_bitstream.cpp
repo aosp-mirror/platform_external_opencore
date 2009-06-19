@@ -29,22 +29,22 @@
 ------------------------------------------------------------------------------
  INPUT AND OUTPUT DEFINITIONS
 
-	INPUT
+    INPUT
 
-	SBRDECODER self,
-	SBRBITSTREAM * stream,
-	float *timeData,
-	int numChannels
+    SBRDECODER self,
+    SBRBITSTREAM * stream,
+    float *timeData,
+    int numChannels
 
-	OUTPUT
+    OUTPUT
 
-	errorCode, noError if successful
+    errorCode, noError if successful
 
 ------------------------------------------------------------------------------
  FUNCTION DESCRIPTION
 
         sbr decoder processing, set up SBR decoder phase 2 in case of
-		different cotrol data
+        different cotrol data
 
 ------------------------------------------------------------------------------
  REQUIREMENTS
@@ -96,7 +96,7 @@ Copyright (c) ISO/IEC 2002.
 
 #include "get_sbr_bitstream.h"
 #include "pv_audio_type_defs.h"
-#include	"sbr_crc_check.h"
+#include    "sbr_crc_check.h"
 
 /*----------------------------------------------------------------------------
 ; MACROS

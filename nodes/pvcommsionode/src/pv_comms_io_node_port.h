@@ -71,10 +71,10 @@
 class PVCommsIONode;
 
 class PVCommsIONodePort : public OsclTimerObject,
-            public PvmfPortBaseImpl,
-            public PvmiMediaTransfer,
-            public PVMFPortActivityHandler,
-            public PvmiCapabilityAndConfig
+        public PvmfPortBaseImpl,
+        public PvmiMediaTransfer,
+        public PVMFPortActivityHandler,
+        public PvmiCapabilityAndConfig
 {
     public:
         PVCommsIONodePort(int32 aPortTag, PVCommsIONode* aNode);
@@ -115,7 +115,7 @@ class PVCommsIONodePort : public OsclTimerObject,
         void writeComplete(PVMFStatus aStatus, PVMFCommandId  write_cmd_id, OsclAny* aContext);
         PVMFCommandId readAsync(uint8* data, uint32 max_data_len, OsclAny* aContext = NULL,
                                 int32* formats = NULL, uint16 num_formats = 0);
-//	void readComplete(PVMFStatus aStatus, PVMFCommandId  read_cmd_id, int32 format_index,
+//  void readComplete(PVMFStatus aStatus, PVMFCommandId  read_cmd_id, int32 format_index,
         //uint32 seq_num, uint32 flags, const PVMFTimestamp& timestamp, OsclAny* aContext);
         void readComplete(PVMFStatus aStatus, PVMFCommandId  read_cmd_id, int32 format_index,
                           const PvmiMediaXferHeader& data_header_info, OsclAny* aContext);

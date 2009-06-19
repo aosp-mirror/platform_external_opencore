@@ -25,14 +25,14 @@
 PV_STATUS EncodeGOBHeader(VideoEncData *video, Int GOB_number, Int quant_scale, Int bs1stream);
 
 /* ======================================================================== */
-/*	Function : EncodeFrameCombinedMode()									*/
-/*	Date     : 09/01/2000													*/
-/*	History  :																*/
-/*	Purpose  : Encode a frame of MPEG4 bitstream in Combined mode.			*/
-/*	In/out   :																*/
-/*	Return   :	PV_SUCCESS if successful else PV_FAIL						*/
-/*	Modified :																*/
-/*																			*/
+/*  Function : EncodeFrameCombinedMode()                                    */
+/*  Date     : 09/01/2000                                                   */
+/*  History  :                                                              */
+/*  Purpose  : Encode a frame of MPEG4 bitstream in Combined mode.          */
+/*  In/out   :                                                              */
+/*  Return   :  PV_SUCCESS if successful else PV_FAIL                       */
+/*  Modified :                                                              */
+/*                                                                          */
 /* ======================================================================== */
 PV_STATUS EncodeFrameCombinedMode(VideoEncData *video)
 {
@@ -43,7 +43,7 @@ PV_STATUS EncodeFrameCombinedMode(VideoEncData *video)
     Int width = currVop->width; /* has to be Vop, for multiple of 16 */
     Int lx = currVop->pitch; /* with padding */
     Int offset = 0;
-    Int	ind_x, ind_y;
+    Int ind_x, ind_y;
     Int start_packet_header = 0;
     UChar *QPMB = video->QPMB;
     Int QP;
@@ -65,7 +65,7 @@ PV_STATUS EncodeFrameCombinedMode(VideoEncData *video)
 
     numHeaderBits = BitstreamGetPos(bs1);
 
-    /* determine type of quantization	*/
+    /* determine type of quantization   */
 #ifndef NO_MPEG_QUANT
     if (currVol->quantType == 0)
         CodeMB = &CodeMB_H263;
@@ -104,32 +104,32 @@ PV_STATUS EncodeFrameCombinedMode(VideoEncData *video)
 
     video->usePrevQP = 0;
 
-    for (ind_y = 0;ind_y < currVol->nMBPerCol;ind_y++) 	/* Col MB Loop */
+    for (ind_y = 0; ind_y < currVol->nMBPerCol; ind_y++)    /* Col MB Loop */
     {
 
         video->outputMB->mb_y = ind_y; /*  5/28/01 */
 
-        if (currVol->shortVideoHeader) 	/* ShortVideoHeader Mode */
+        if (currVol->shortVideoHeader)  /* ShortVideoHeader Mode */
         {
 
-            if (slice_counter && GOB_Header_Interval && (ind_y % GOB_Header_Interval == 0))  	/* Encode GOB Header */
+            if (slice_counter && GOB_Header_Interval && (ind_y % GOB_Header_Interval == 0))     /* Encode GOB Header */
             {
-                QP = QPMB[mbnum];	 /* Get quant_scale */
+                QP = QPMB[mbnum];    /* Get quant_scale */
                 video->header_bits -= BitstreamGetPos(currVol->stream); /* Header Bits */
-                status = EncodeGOBHeader(video, slice_counter, QP, 0);	//ind_y		/* Encode GOB Header */
+                status = EncodeGOBHeader(video, slice_counter, QP, 0);  //ind_y     /* Encode GOB Header */
                 video->header_bits += BitstreamGetPos(currVol->stream); /* Header Bits */
                 curr_slice_counter = slice_counter;
             }
         }
 
-        for (ind_x = 0;ind_x < currVol->nMBPerRow;ind_x++)  /* Row MB Loop */
+        for (ind_x = 0; ind_x < currVol->nMBPerRow; ind_x++)  /* Row MB Loop */
         {
             video->outputMB->mb_x = ind_x; /*  5/28/01 */
             video->mbnum = mbnum;
             QP = QPMB[mbnum];   /* always read new QP */
 
             if (GOB_Header_Interval)
-                video->sliceNo[mbnum] = curr_slice_counter;	/* Update MB slice number */
+                video->sliceNo[mbnum] = curr_slice_counter; /* Update MB slice number */
             else
                 video->sliceNo[mbnum] = slice_counter;
 
@@ -141,8 +141,8 @@ PV_STATUS EncodeFrameCombinedMode(VideoEncData *video)
 #ifndef H263_ONLY
             if (start_packet_header)
             {
-                slice_counter++;						/* Increment slice counter */
-                video->sliceNo[mbnum] = slice_counter;	/* Update MB slice number*/
+                slice_counter++;                        /* Increment slice counter */
+                video->sliceNo[mbnum] = slice_counter;  /* Update MB slice number*/
                 video->header_bits -= BitstreamGetPos(bs1); /* Header Bits */
                 video->QP_prev = currVop->quantizer;
                 status = EncodeVideoPacketHeader(video, mbnum, video->QP_prev, 0);
@@ -197,8 +197,8 @@ PV_STATUS EncodeFrameCombinedMode(VideoEncData *video)
             }
             else
 #endif /* H263_ONLY */
-            {	/* ShortVideoHeader Mode */
-                status = BitstreamAppendEnc(currVol->stream, bs1);	/* Initialize to 0 */
+            {   /* ShortVideoHeader Mode */
+                status = BitstreamAppendEnc(currVol->stream, bs1);  /* Initialize to 0 */
                 /* continue even if status == PV_END_OF_BUF, to get the stats */
 
                 BitstreamEncReset(bs1);
@@ -231,7 +231,7 @@ PV_STATUS EncodeFrameCombinedMode(VideoEncData *video)
             {
                 video->header_bits += BitstreamMpeg4ByteAlignStuffing(bs1);/* Byte Align  */
 
-                status = BitstreamAppendPacket(currVol->stream, bs1);	/* Put Packet to Buffer */
+                status = BitstreamAppendPacket(currVol->stream, bs1);   /* Put Packet to Buffer */
                 /* continue even if status == PV_END_OF_BUF, to get the stats */
 
                 BitstreamEncReset(bs1);
@@ -239,7 +239,7 @@ PV_STATUS EncodeFrameCombinedMode(VideoEncData *video)
         }
         else   /* No Resync Markers */
         {
-            video->header_bits += BitstreamMpeg4ByteAlignStuffing(currVol->stream);	/* Byte Align */
+            video->header_bits += BitstreamMpeg4ByteAlignStuffing(currVol->stream); /* Byte Align */
         }
     }
 #endif /* H263_ONLY */
@@ -249,15 +249,15 @@ PV_STATUS EncodeFrameCombinedMode(VideoEncData *video)
 
 #ifndef NO_SLICE_ENCODE
 /* ======================================================================== */
-/*	Function : EncodeSliceCombinedMode()									*/
-/*	Date     : 04/19/2002													*/
-/*	History  :																*/
-/*	Purpose  : Encode a slice of MPEG4 bitstream in Combined mode and save	*/
-/*				the current MB to continue next time it is called.			*/
-/*	In/out   :																*/
-/*	Return   :	PV_SUCCESS if successful else PV_FAIL						*/
-/*	Modified :																*/
-/*																			*/
+/*  Function : EncodeSliceCombinedMode()                                    */
+/*  Date     : 04/19/2002                                                   */
+/*  History  :                                                              */
+/*  Purpose  : Encode a slice of MPEG4 bitstream in Combined mode and save  */
+/*              the current MB to continue next time it is called.          */
+/*  In/out   :                                                              */
+/*  Return   :  PV_SUCCESS if successful else PV_FAIL                       */
+/*  Modified :                                                              */
+/*                                                                          */
 /* ======================================================================== */
 PV_STATUS EncodeSliceCombinedMode(VideoEncData *video)
 {
@@ -270,11 +270,11 @@ PV_STATUS EncodeSliceCombinedMode(VideoEncData *video)
     Int nTotalMB = currVol->nTotalMB;
     Int width = currVop->width; /* has to be Vop, for multiple of 16 */
     Int lx = currVop->pitch; /* , with padding */
-//	rateControl *rc = encParams->rc[video->currLayer];
+//  rateControl *rc = encParams->rc[video->currLayer];
     UChar *QPMB = video->QPMB;
     Int QP;
-    Int	ind_x = video->outputMB->mb_x, ind_y = video->outputMB->mb_y;
-    Int offset = video->offset;					/* get current MB location */
+    Int ind_x = video->outputMB->mb_x, ind_y = video->outputMB->mb_y;
+    Int offset = video->offset;                 /* get current MB location */
     Int mbnum = video->mbnum, slice_counter = video->sliceNo[mbnum]; /* get current MB location */
     Int firstMB = mbnum;
     Int start_packet_header = 0;
@@ -282,7 +282,7 @@ PV_STATUS EncodeSliceCombinedMode(VideoEncData *video)
     Int packet_size = encParams->ResyncPacketsize - 1;
     Int resync_marker = ((!currVol->shortVideoHeader) && (!currVol->ResyncMarkerDisable));
     BitstreamEncVideo *bs1 = video->bitstream1;
-    Int	byteCount = 0, byteCount1 = 0, bitCount = 0;
+    Int byteCount = 0, byteCount1 = 0, bitCount = 0;
     Int numHeaderBits = 0;
     approxDCT fastDCTfunction;
     Int ncoefblck[6] = {64, 64, 64, 64, 64, 64}; /* for FastCodeMB,  5/18/2001 */
@@ -320,9 +320,9 @@ PV_STATUS EncodeSliceCombinedMode(VideoEncData *video)
 
     /* Re-assign fast functions on every slice, don't have to put it in the memory */
     QP = QPMB[mbnum];
-    if (mbnum > 0)	 video->QP_prev = QPMB[mbnum-1];
+    if (mbnum > 0)   video->QP_prev = QPMB[mbnum-1];
 
-    /* determine type of quantization	*/
+    /* determine type of quantization   */
 #ifndef NO_MPEG_QUANT
     if (currVol->quantType == 0)
         CodeMB = &CodeMB_H263;
@@ -370,7 +370,7 @@ PV_STATUS EncodeSliceCombinedMode(VideoEncData *video)
 
 #ifdef H263_GOB_CHANGES
             video->header_bits -= BitstreamGetPos(bs1); /* Header Bits */
-            status = EncodeGOBHeader(video, slice_counter, QP, 1);	//ind_y	   /* Encode GOB Header */
+            status = EncodeGOBHeader(video, slice_counter, QP, 1);  //ind_y    /* Encode GOB Header */
             video->header_bits += BitstreamGetPos(bs1); /* Header Bits */
 #endif
             goto JUMP_IN_SH;
@@ -386,17 +386,17 @@ PV_STATUS EncodeSliceCombinedMode(VideoEncData *video)
         }
     }
 
-    for (ind_y = 0;ind_y < currVol->nMBPerCol;ind_y++) 	/* Col MB Loop */
+    for (ind_y = 0; ind_y < currVol->nMBPerCol; ind_y++)    /* Col MB Loop */
     {
 
         video->outputMB->mb_y = ind_y; /*  5/28/01, do not remove */
 
-        for (ind_x = 0;ind_x < currVol->nMBPerRow;ind_x++)  /* Row MB Loop */
+        for (ind_x = 0; ind_x < currVol->nMBPerRow; ind_x++)  /* Row MB Loop */
         {
 
             video->outputMB->mb_x = ind_x; /*  5/28/01, do not remove */
             video->mbnum = mbnum;
-            video->sliceNo[mbnum] = slice_counter;		/* Update MB slice number */
+            video->sliceNo[mbnum] = slice_counter;      /* Update MB slice number */
 JUMP_IN_SH:
             /****************************************************************************************/
             /* MB Prediction:Put into MC macroblock, substract from currVop, put in predMB */
@@ -408,9 +408,9 @@ JUMP_IN:
 #ifndef H263_ONLY
             if (start_packet_header)
             {
-                slice_counter++;						/* Increment slice counter */
-                video->sliceNo[mbnum] = slice_counter;	/* Update MB slice number*/
-                video->QP_prev = currVop->quantizer;						/* store QP */
+                slice_counter++;                        /* Increment slice counter */
+                video->sliceNo[mbnum] = slice_counter;  /* Update MB slice number*/
+                video->QP_prev = currVop->quantizer;                        /* store QP */
                 num_bits = BitstreamGetPos(bs1);
                 status = EncodeVideoPacketHeader(video, mbnum, video->QP_prev, 1);
                 numHeaderBits = BitstreamGetPos(bs1) - num_bits;
@@ -556,20 +556,20 @@ JUMP_IN:
                     video->end_of_buf = 1;
                     start_packet_header = 1;
                 }
-                else 	/* for short_header scooch back to previous GOB */
+                else    /* for short_header scooch back to previous GOB */
                 {
                     num_bits = ((bs1->byteCount - byteCount) << 3);
                     //num_bits = ((bs1->byteCount<<3) + bs1->bitCount) - ((byteCount<<3) + bitCount);
                     BitstreamRepos(bs1, byteCount, 0);
                     //BitstreamRepos(bs1,byteCount,bitCount);
-//					k = currVol->stream->byteCount; /* save state before appending */
+//                  k = currVol->stream->byteCount; /* save state before appending */
                     status = BitstreamAppendPacketNoOffset(currVol->stream, bs1);
                     BitstreamFlushBits(bs1, num_bits);
-//					if(mbnum == nTotalMB || k + bs1->byteCount >= currVol->stream->bufferSize){
+//                  if(mbnum == nTotalMB || k + bs1->byteCount >= currVol->stream->bufferSize){
                     /* last GOB or current one with larger size will be returned next run */
-//						status = PV_END_OF_BUF;
-//						video->end_of_buf = 1;
-//					}
+//                      status = PV_END_OF_BUF;
+//                      video->end_of_buf = 1;
+//                  }
                     start_packet_header = 1;
                     if (mbnum == nTotalMB) /* there's one more GOB to packetize for the next round */
                     {
@@ -596,7 +596,7 @@ JUMP_IN:
                 bitCount = bitCount & 0x7;
 #ifdef H263_GOB_CHANGES
                 video->header_bits -= BitstreamGetPos(bs1); /* Header Bits */
-                status = EncodeGOBHeader(video, slice_counter, QP, 1);		   /* Encode GOB Header */
+                status = EncodeGOBHeader(video, slice_counter, QP, 1);         /* Encode GOB Header */
                 video->header_bits += BitstreamGetPos(bs1); /* Header Bits */
 #endif
             }
@@ -614,7 +614,7 @@ JUMP_IN:
 
                 video->header_bits += BitstreamMpeg4ByteAlignStuffing(bs1);/* Byte Align  */
 
-                status = BitstreamAppendPacketNoOffset(currVol->stream, bs1);	/* Put Packet to Buffer */
+                status = BitstreamAppendPacketNoOffset(currVol->stream, bs1);   /* Put Packet to Buffer */
                 if (status == PV_END_OF_BUF)
                 {
                     video->end_of_buf = 1;
@@ -627,7 +627,7 @@ JUMP_IN:
         }
         else   /* No Resync Markers */
         {
-            video->header_bits += BitstreamMpeg4ByteAlignStuffing(bs1);	/* Byte Align */
+            video->header_bits += BitstreamMpeg4ByteAlignStuffing(bs1); /* Byte Align */
             status = BitstreamAppendPacketNoOffset(currVol->stream, bs1); /* Initialize to 0 */
             if (status == PV_END_OF_BUF)
             {
@@ -668,14 +668,14 @@ JUMP_IN:
 #endif  /* NO_SLICE_ENCODE */
 
 /* ======================================================================== */
-/*	Function : EncodeGOBHeader()											*/
-/*	Date     : 09/05/2000													*/
-/*	History  :																*/
-/*	Purpose  : Encode a frame of MPEG4 bitstream in Combined mode.			*/
-/*	In/out   :																*/
-/*	Return   :	PV_SUCCESS if successful else PV_FAIL						*/
-/*	Modified :																*/
-/*																			*/
+/*  Function : EncodeGOBHeader()                                            */
+/*  Date     : 09/05/2000                                                   */
+/*  History  :                                                              */
+/*  Purpose  : Encode a frame of MPEG4 bitstream in Combined mode.          */
+/*  In/out   :                                                              */
+/*  Return   :  PV_SUCCESS if successful else PV_FAIL                       */
+/*  Modified :                                                              */
+/*                                                                          */
 /* ======================================================================== */
 
 PV_STATUS EncodeGOBHeader(VideoEncData *video, Int GOB_number, Int quant_scale, Int bs1stream)
@@ -684,9 +684,9 @@ PV_STATUS EncodeGOBHeader(VideoEncData *video, Int GOB_number, Int quant_scale, 
     BitstreamEncVideo *stream = (bs1stream ? video->bitstream1 : video->vol[video->currLayer]->stream);
 
     status = BitstreamPutGT16Bits(stream, 17, GOB_RESYNC_MARKER); /* gob_resync_marker */
-    status = BitstreamPutBits(stream, 5, GOB_number);			/* Current gob_number */
+    status = BitstreamPutBits(stream, 5, GOB_number);           /* Current gob_number */
     status = BitstreamPutBits(stream, 2, video->currVop->gobFrameID); /* gob_frame_id */
-    status = BitstreamPutBits(stream, 5, quant_scale);				/* quant_scale */
+    status = BitstreamPutBits(stream, 5, quant_scale);              /* quant_scale */
     return status;
 }
 

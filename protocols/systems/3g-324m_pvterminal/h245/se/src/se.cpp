@@ -40,11 +40,11 @@
 /*  Headerfile Include                                                  */
 /************************************************************************/
 #include    "h245pri.h"
-#include	"oscl_timer.h"
+#include    "oscl_timer.h"
 #include    "semsgque.h"
 #include    "se.h"
 #include    "msd.h"
-#include	"blc.h"
+#include    "blc.h"
 #include    "lc.h"
 #include    "clc.h"
 #include    "annex.h"
@@ -54,12 +54,12 @@
 #include    "ml.h"
 #include    "mr.h"
 #include    "rme.h"
-#include	"h245.h"
+#include    "h245.h"
 #include    "oscl_snprintf.h"
 #include    "pvlogger.h"
 
 /* PVANALYZER */
-#define ANALYZER_SE 0x0020		// (Assume tag is fixed)
+#define ANALYZER_SE 0x0020      // (Assume tag is fixed)
 void Show245(uint16 tag, uint16 indent, char *inString);
 
 /************************************************************************/
@@ -634,8 +634,8 @@ void SE::Dispatch(uint32 Event_No , OsclSharedPtr<uint8> pParameter , uint32 Sup
                   uint8* EncodedMsg, uint32 EncodedMsgSize)
 {
     uint8                   Se_Status ;
-    uint8					Se_Status2;
-    LCEntry*				pLCEntry;
+    uint8                   Se_Status2;
+    LCEntry*                pLCEntry;
     uint8                   Directional ;
     PS_ForwardReverseParam  p_ForwardReverseParam ;
     PS_OpenLogicalChannel   p_OpenLogicalChannel ;
@@ -940,7 +940,7 @@ void SE::Dispatch(uint32 Event_No , OsclSharedPtr<uint8> pParameter , uint32 Sup
                     break ;
                 case    EVENT_PTV_LCBLC_RLS_REQ : /* RELEASE.request */
                     Print("Received LCBLC Release.Request\n");
-                    if (((uint8*)pParameter) != NULL)  	/* WWU_VOAL2: incoming SE */
+                    if (((uint8*)pParameter) != NULL)   /* WWU_VOAL2: incoming SE */
                     {
                         pLCEntry = LCBLCIncoming.GetLCEntry(Supplement_1);
                         if (pLCEntry != NULL)
@@ -948,7 +948,7 @@ void SE::Dispatch(uint32 Event_No , OsclSharedPtr<uint8> pParameter , uint32 Sup
                             Print("    Using existing Logical Channel Entry : Incoming %d %d\n", pLCEntry->FwdLcnRead(), pLCEntry->RvsLcnRead());
                         }
                     }
-                    else  				/* WWU_VOAL2: outgoing SE */
+                    else                /* WWU_VOAL2: outgoing SE */
                     {
                         pLCEntry = LCBLCOutgoing.GetLCEntry(Supplement_1);
                         if (pLCEntry != NULL)
@@ -1650,7 +1650,7 @@ void SE::Dispatch(uint32 Event_No , OsclSharedPtr<uint8> pParameter , uint32 Sup
             break ;
         case    EVENT_MTSE : /* Multiplex Table Signalling Entity */
             /* Multiplex Table Status Read */
-            Se_Status2 = MyMT.StatusRead2() ;	/* WWU_H245_TWOWAY */
+            Se_Status2 = MyMT.StatusRead2() ;   /* WWU_H245_TWOWAY */
             switch (Event_No)  /* Event No Check */
             {
                 case    EVENT_PTV_MT_TRF_REQ : /* TRANSFER.request */
@@ -1727,7 +1727,7 @@ void SE::Dispatch(uint32 Event_No , OsclSharedPtr<uint8> pParameter , uint32 Sup
         case    EVENT_RMESE : /* Request Multiplex Entry Signalling Entity */
             /* Request Multiplex Entry Status Read */
             Se_Status = MyRME.StatusRead() ;
-            Se_Status2 = MyRME.StatusRead2() ;	/* H245_TWOWAY */
+            Se_Status2 = MyRME.StatusRead2() ;  /* H245_TWOWAY */
             /* Note: Se_Status is OUTGOING, Se_Status2 is INCOMING */
             switch (Event_No)  /* Event No Check */
             {

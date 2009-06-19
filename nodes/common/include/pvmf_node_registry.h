@@ -524,7 +524,7 @@ class PVMFMediaIORegistryEntry: public PVMFComponentRegistryEntry
 */
 
 
-typedef	Oscl_Vector<PVMFNodeRegistryEntry*, OsclMemAllocator> PVMFNodeList;
+typedef Oscl_Vector<PVMFNodeRegistryEntry*, OsclMemAllocator> PVMFNodeList;
 
 class PVMFNodeRegistry
 {
@@ -588,7 +588,7 @@ class PVMFNodeRegistry
 ** The media I/O registry
 */
 
-typedef	Oscl_Vector<PVMFMediaIORegistryEntry*, OsclMemAllocator> PVMFMediaIOList;
+typedef Oscl_Vector<PVMFMediaIORegistryEntry*, OsclMemAllocator> PVMFMediaIOList;
 
 class PVMFMediaIORegistry
 {

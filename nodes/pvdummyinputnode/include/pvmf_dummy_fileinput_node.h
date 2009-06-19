@@ -77,9 +77,9 @@ typedef enum
 class PVLogger;
 
 class PVMFDummyFileInputNode : public PVMFNodeInterface,
-            public OsclTimerObject,
-            public PVMFFileInputNodeExtensionInterface
-            , public OsclMemPoolFixedChunkAllocatorObserver
+        public OsclTimerObject,
+        public PVMFFileInputNodeExtensionInterface
+        , public OsclMemPoolFixedChunkAllocatorObserver
 {
     public:
         OSCL_IMPORT_REF PVMFDummyFileInputNode(PVMFFileInputSettings* aSettings, int32 aPriority);

@@ -44,5 +44,5 @@ class PVAviFileParserUtils
 };
 
 
-#endif	//#ifndef PV_AVIFILE_PARSER_UTILS_H_INCLUDED
+#endif  //#ifndef PV_AVIFILE_PARSER_UTILS_H_INCLUDED
 

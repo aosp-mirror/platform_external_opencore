@@ -308,7 +308,7 @@ class PVMFRecRegImplCommandCompareLess
  * use this class.
  **/
 class PVMFRecognizerRegistryImpl : public OsclTimerObject,
-            public PvmiDataStreamObserver
+        public PvmiDataStreamObserver
 {
     public:
         PVMFRecognizerRegistryImpl();

@@ -18,10 +18,10 @@
 // -*- c++ -*-
 // = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 
-//				 O S C L_ S T R I N G _ R E P
+//               O S C L_ S T R I N G _ R E P
 //
-//	  This file contains a standardized set of string containers that
-//	  can be used in place of character arrays.
+//    This file contains a standardized set of string containers that
+//    can be used in place of character arrays.
 
 // = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 
@@ -125,6 +125,6 @@ class CFastRep
 };
 
 
-#endif	 // OSCL_STRING_REP_H_INCLUDED
+#endif   // OSCL_STRING_REP_H_INCLUDED
 
 /*! @} */

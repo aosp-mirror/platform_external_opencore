@@ -68,8 +68,8 @@ class avi_test : public engine_test
         bool start_async_test();
         PVMFFormatType iAudSrcFormatType, iAudSinkFormatType;
         PVMFFormatType iVidSrcFormatType, iVidSinkFormatType;
-        PVAviFile*	iPVAviFile;
-        OsclAny*				 iFileParser;
+        PVAviFile*  iPVAviFile;
+        OsclAny*                 iFileParser;
         Oscl_FileServer          iFileServer;
         uint32 iAudioNum;
         uint32 iVideoNum;

@@ -141,7 +141,7 @@ AVCEnc_Status AVCEncodeSlice(AVCEncObject *encvid)
             ue_v(stream, video->mb_skip_run);
             video->mb_skip_run = 0;
         }
-        else	/* shouldn't happen */
+        else    /* shouldn't happen */
         {
             status = AVCENC_FAIL;
         }
@@ -156,7 +156,7 @@ AVCEnc_Status EncodeMB(AVCEncObject *encvid)
     AVCEnc_Status status = AVCENC_SUCCESS;
     AVCCommonObj *video = encvid->common;
     AVCPictureData *currPic = video->currPic;
-    AVCFrameIO	*currInput = encvid->currInput;
+    AVCFrameIO  *currInput = encvid->currInput;
     AVCMacroblock *currMB = video->currMB;
     AVCMacroblock *MB_A, *MB_B;
     AVCEncBitstream *stream = encvid->bitstream;
@@ -300,9 +300,9 @@ AVCEnc_Status EncodeMB(AVCEncObject *encvid)
         // now we do IDCT
         MBInterIdct(video, curL, currMB, picPitch);
 
-//		video->pred_block = video->pred + 256;
+//      video->pred_block = video->pred + 256;
     }
-    else	/* Intra prediction */
+    else    /* Intra prediction */
     {
         encvid->numIntraMB++;
 
@@ -326,7 +326,7 @@ AVCEnc_Status EncodeMB(AVCEncObject *encvid)
 
     /* 4.1 if there's nothing in there, video->mb_skip_run++ */
     /* 4.2 if coded, check if there is a run of skipped MB, encodes it,
-    		set video->QPyprev = currMB->QPy; */
+            set video->QPyprev = currMB->QPy; */
 
     /* 5. vlc encode */
 
@@ -502,9 +502,9 @@ AVCEnc_Status EncodeMB(AVCEncObject *encvid)
     RCPostMB(video, rateCtrl, start_text_bits - start_mb_bits,
              num_bits - start_text_bits);
 
-//	num_bits -= start_mb_bits;
-//	fprintf(fdebug,"MB #%d: %d bits\n",CurrMbAddr,num_bits);
-//	fclose(fdebug);
+//  num_bits -= start_mb_bits;
+//  fprintf(fdebug,"MB #%d: %d bits\n",CurrMbAddr,num_bits);
+//  fclose(fdebug);
     return status;
 }
 
@@ -555,9 +555,9 @@ AVCEnc_Status EncodeMBHeader(AVCMacroblock *currMB, AVCEncObject *encvid)
     AVCCommonObj *video = encvid->common;
     AVCEncBitstream *stream = encvid->bitstream;
 
-    if (currMB->CBP > 47)	/* chroma CBP is 11 */
+    if (currMB->CBP > 47)   /* chroma CBP is 11 */
     {
-        currMB->CBP -= 16;	/* remove the 5th bit from the right */
+        currMB->CBP -= 16;  /* remove the 5th bit from the right */
     }
 
     mb_type = InterpretMBType(currMB, video->slice_type);
@@ -604,8 +604,8 @@ uint InterpretMBType(AVCMacroblock *currMB, int slice_type)
 {
     int CBP_chrom;
     int mb_type;// part1, part2, part3;
-//	const static int MapParts2Type[2][3][3]={{{4,8,12},{10,6,14},{16,18,20}},
-//	{{5,9,13},{11,7,15},{17,19,21}}};
+//  const static int MapParts2Type[2][3][3]={{{4,8,12},{10,6,14},{16,18,20}},
+//  {{5,9,13},{11,7,15},{17,19,21}}};
 
     if (currMB->mb_intra)
     {
@@ -634,7 +634,7 @@ uint InterpretMBType(AVCMacroblock *currMB, int slice_type)
     }
     else
     {  /* P-MB *//* note that the order of the enum AVCMBMode cannot be changed
-		since we use it here. */
+        since we use it here. */
         mb_type = currMB->mbMode - AVC_P16;
     }
 
@@ -646,37 +646,37 @@ uint InterpretMBType(AVCMacroblock *currMB, int slice_type)
         }
     }
     // following codes have not been tested yet, not needed.
-    /*	else if(slice_type == AVC_B_SLICE)
-    	{
-    		if(currMB->mbMode == AVC_BDirect16)
-    		{
-    			mb_type = 0;
-    		}
-    		else if(currMB->mbMode == AVC_P16)
-    		{
-    			mb_type = currMB->MBPartPredMode[0][0] + 1; // 1 or 2
-    		}
-    		else if(currMB->mbMode == AVC_P8)
-    		{
-    			mb_type = 26;
-    		}
-    		else if(currMB->mbMode == AVC_P8ref0)
-    		{
-    			mb_type = 27;
-    		}
-    		else
-    		{
-    			part1 = currMB->mbMode - AVC_P16x8;
-    			part2 = currMB->MBPartPredMode[0][0];
-    			part3 = currMB->MBPartPredMode[1][0];
-    			mb_type = MapParts2Type[part1][part2][part3];
-    		}
-    	}
+    /*  else if(slice_type == AVC_B_SLICE)
+        {
+            if(currMB->mbMode == AVC_BDirect16)
+            {
+                mb_type = 0;
+            }
+            else if(currMB->mbMode == AVC_P16)
+            {
+                mb_type = currMB->MBPartPredMode[0][0] + 1; // 1 or 2
+            }
+            else if(currMB->mbMode == AVC_P8)
+            {
+                mb_type = 26;
+            }
+            else if(currMB->mbMode == AVC_P8ref0)
+            {
+                mb_type = 27;
+            }
+            else
+            {
+                part1 = currMB->mbMode - AVC_P16x8;
+                part2 = currMB->MBPartPredMode[0][0];
+                part3 = currMB->MBPartPredMode[1][0];
+                mb_type = MapParts2Type[part1][part2][part3];
+            }
+        }
 
-    	if(slice_type == AVC_SI_SLICE)
-    	{
-    		mb_type++;
-    	}
+        if(slice_type == AVC_SI_SLICE)
+        {
+            mb_type++;
+        }
     */
     return (uint)mb_type;
 }
@@ -711,8 +711,8 @@ AVCEnc_Status mb_pred(AVCCommonObj *video, AVCMacroblock *currMB, AVCEncBitstrea
 
         /* see subclause 7.4.5.1 for the range of ref_idx_lX */
         max_ref_idx = sliceHdr->num_ref_idx_l0_active_minus1;
-        /*		if(video->MbaffFrameFlag && currMB->mb_field_decoding_flag)
-        			max_ref_idx = 2*sliceHdr->num_ref_idx_l0_active_minus1 + 1;
+        /*      if(video->MbaffFrameFlag && currMB->mb_field_decoding_flag)
+                    max_ref_idx = 2*sliceHdr->num_ref_idx_l0_active_minus1 + 1;
         */
         /* decode ref index for L0 */
         if (sliceHdr->num_ref_idx_l0_active_minus1 > 0)
@@ -730,8 +730,8 @@ AVCEnc_Status mb_pred(AVCCommonObj *video, AVCMacroblock *currMB, AVCEncBitstrea
 
         /* see subclause 7.4.5.1 for the range of ref_idx_lX */
         max_ref_idx = sliceHdr->num_ref_idx_l1_active_minus1;
-        /*		if(video->MbaffFrameFlag && currMB->mb_field_decoding_flag)
-        			max_ref_idx = 2*sliceHdr->num_ref_idx_l1_active_minus1 + 1;
+        /*      if(video->MbaffFrameFlag && currMB->mb_field_decoding_flag)
+                    max_ref_idx = 2*sliceHdr->num_ref_idx_l1_active_minus1 + 1;
         */
         /* decode ref index for L1 */
         if (sliceHdr->num_ref_idx_l1_active_minus1 > 0)
@@ -792,10 +792,10 @@ AVCEnc_Status sub_mb_pred(AVCCommonObj *video, AVCMacroblock *currMB, AVCEncBits
         InterpretSubMBTypeP(currMB, sub_mb_type);
     }
     /* no need to check for B-slice
-    	else if(slice_type == AVC_B_SLICE)
-    	{
-    		InterpretSubMBTypeB(currMB,sub_mb_type);
-    	}*/
+        else if(slice_type == AVC_B_SLICE)
+        {
+            InterpretSubMBTypeB(currMB,sub_mb_type);
+        }*/
 
     for (mbPartIdx = 0; mbPartIdx < 4; mbPartIdx++)
     {
@@ -804,8 +804,8 @@ AVCEnc_Status sub_mb_pred(AVCCommonObj *video, AVCMacroblock *currMB, AVCEncBits
 
     /* see subclause 7.4.5.1 for the range of ref_idx_lX */
     max_ref_idx = sliceHdr->num_ref_idx_l0_active_minus1;
-    /* 	if(video->MbaffFrameFlag && currMB->mb_field_decoding_flag)
-    		max_ref_idx = 2*sliceHdr->num_ref_idx_l0_active_minus1 + 1; */
+    /*  if(video->MbaffFrameFlag && currMB->mb_field_decoding_flag)
+            max_ref_idx = 2*sliceHdr->num_ref_idx_l0_active_minus1 + 1; */
 
     for (mbPartIdx = 0; mbPartIdx < 4; mbPartIdx++)
     {
@@ -820,8 +820,8 @@ AVCEnc_Status sub_mb_pred(AVCCommonObj *video, AVCMacroblock *currMB, AVCEncBits
     }
     /* see subclause 7.4.5.1 for the range of ref_idx_lX */
     max_ref_idx = sliceHdr->num_ref_idx_l1_active_minus1;
-    /*	if(video->MbaffFrameFlag && currMB->mb_field_decoding_flag)
-    		max_ref_idx = 2*sliceHdr->num_ref_idx_l1_active_minus1 + 1;*/
+    /*  if(video->MbaffFrameFlag && currMB->mb_field_decoding_flag)
+            max_ref_idx = 2*sliceHdr->num_ref_idx_l1_active_minus1 + 1;*/
 
     if (sliceHdr->num_ref_idx_l1_active_minus1 > 0)
     {
@@ -887,12 +887,12 @@ void InterpretSubMBTypeB(AVCMacroblock *mblock, uint *sub_mb_type)
 {
     int i;
     /* see enum AVCMBType declaration */
-    /*	const static AVCSubMBMode map2subMbMode[13] = {AVC_BDirect8,AVC_8x8,AVC_8x8,
-    		AVC_8x8,AVC_8x4,AVC_4x8,AVC_8x4,AVC_4x8,AVC_8x4,AVC_4x8,AVC_4x4,AVC_4x4,AVC_4x4};
-    	const static int map2subPartWidth[13] = {4,8,8,8,8,4,8,4,8,4,4,4,4};
-    	const static int map2subPartHeight[13] = {4,8,8,8,4,8,4,8,4,8,4,4,4};
-    	const static int map2numSubPart[13] = {4,1,1,1,2,2,2,2,2,2,4,4,4};
-    	const static int map2predMode[13] = {3,0,1,2,0,0,1,1,2,2,0,1,2};*/
+    /*  const static AVCSubMBMode map2subMbMode[13] = {AVC_BDirect8,AVC_8x8,AVC_8x8,
+            AVC_8x8,AVC_8x4,AVC_4x8,AVC_8x4,AVC_4x8,AVC_8x4,AVC_4x8,AVC_4x4,AVC_4x4,AVC_4x4};
+        const static int map2subPartWidth[13] = {4,8,8,8,8,4,8,4,8,4,4,4,4};
+        const static int map2subPartHeight[13] = {4,8,8,8,4,8,4,8,4,8,4,4,4};
+        const static int map2numSubPart[13] = {4,1,1,1,2,2,2,2,2,2,4,4,4};
+        const static int map2predMode[13] = {3,0,1,2,0,0,1,1,2,2,0,1,2};*/
 
     for (i = 0; i < 4 ; i++)
     {
@@ -921,12 +921,12 @@ void InterpretSubMBTypeB(AVCMacroblock *mblock, uint *sub_mb_type)
 AVCEnc_Status EncodeIntra4x4Mode(AVCCommonObj *video, AVCMacroblock *currMB, AVCEncBitstream *stream)
 {
     int intra4x4PredModeA = 0;
-    int	intra4x4PredModeB, predIntra4x4PredMode;
+    int intra4x4PredModeB, predIntra4x4PredMode;
     int component, SubBlock_indx, block_x, block_y;
     int dcOnlyPredictionFlag;
-    uint	flag;
-    int		rem = 0;
-    int		mode;
+    uint    flag;
+    int     rem = 0;
+    int     mode;
     int bindx = 0;
 
     for (component = 0; component < 4; component++) /* partition index */

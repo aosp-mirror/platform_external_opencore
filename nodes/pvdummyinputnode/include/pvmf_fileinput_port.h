@@ -59,7 +59,7 @@
  * same flow-control scheme.
  */
 class PVMFFileDummyInputPort : public PvmfPortBaseImpl,
-            public PvmiCapabilityAndConfig
+        public PvmiCapabilityAndConfig
 {
     public:
         /**

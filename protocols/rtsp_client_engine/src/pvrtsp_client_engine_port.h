@@ -73,7 +73,7 @@ class PVRTSPEngineNode;
 #define PVMF_RTSP_NODE_PORT_VECTOR_RESERVE 10
 
 class PVMFRTSPPort : public PvmfPortBaseImpl,
-            public PvmiCapabilityAndConfigPortFormatImpl
+        public PvmiCapabilityAndConfigPortFormatImpl
 {
     public:
         /**
@@ -124,17 +124,17 @@ class PVMFRTSPPort : public PvmfPortBaseImpl,
         }
 
         PVMFStatus getParametersSync(PvmiMIOSession aSession, PvmiKeyType aIdentifier,
-                                     PvmiKvp*& aParameters, int& num_parameter_elements,	PvmiCapabilityContext aContext);
+                                     PvmiKvp*& aParameters, int& num_parameter_elements,    PvmiCapabilityContext aContext);
         void setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters,
                                int num_elements, PvmiKvp * & aRet_kvp);
         PVMFStatus releaseParameters(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
 
         OsclSharedPtr<OsclMemAllocator> iAllocSharedPtr;
 
-        int32	iSdpTrackID;
-        bool	bIsMedia;
-        bool	bIsChannelIDSet;
-        uint32	iChannelID;
+        int32   iSdpTrackID;
+        bool    bIsMedia;
+        bool    bIsChannelIDSet;
+        uint32  iChannelID;
         int     iRdtStreamId;
     private:
         void Construct();

@@ -850,7 +850,7 @@ PV2WayMediaType GetMediaType(PS_DataType pDataType)
 }
 
 // =======================================================
-// GetSimpleAudioType()						(RAN-32K)
+// GetSimpleAudioType()                     (RAN-32K)
 //
 // This routine takes the value from p324->GetAudioType()
 //   (an H324AudType_t enum) and maps it onto a
@@ -927,8 +927,8 @@ unsigned GetFormatSpecificInfo(PS_DataType dataType,
     fsi = NULL;
 
     if (!dataType ||
-            (dataType->index != 2) ||				// videoData
-            (dataType->videoData->index != 5))	// genericVideoCapability
+            (dataType->index != 2) ||               // videoData
+            (dataType->videoData->index != 5))  // genericVideoCapability
         return ret;
 
     if (dataType->videoData->genericVideoCapability->option_of_nonCollapsing)
@@ -951,7 +951,7 @@ unsigned GetFormatSpecificInfo(PS_DataType dataType,
     for (uint32 ii = 0; ii < size; ++ii)
     {
         parameter = parameter_list + ii;
-        if ((parameter->parameterIdentifier.index == 0) &&	// standard
+        if ((parameter->parameterIdentifier.index == 0) &&  // standard
                 (parameter->parameterValue.index == 6)) // OctetString
         {
             config = parameter->parameterValue.octetString;
@@ -960,7 +960,7 @@ unsigned GetFormatSpecificInfo(PS_DataType dataType,
 
     bool is_filler_fsi = IsFillerFsi(config->data, config->size);
     if (config != NULL && !is_filler_fsi)
-    {		// Found valid decoderConfig
+    {       // Found valid decoderConfig
         ret = config->size;
         fsi = config->data;
     }
@@ -992,7 +992,7 @@ PS_Capability LookupCapability(PS_TerminalCapabilitySet pTcs,
 bool IsTransmitOnlyAltCapSet(PS_TerminalCapabilitySet pTcs,
                              PS_AlternativeCapabilitySet pAltCapSet)
 {
-    for (uint32 ii = 0;ii < pAltCapSet->size; ++ii)
+    for (uint32 ii = 0; ii < pAltCapSet->size; ++ii)
     {
         uint32 entry = pAltCapSet->item[ii];
         PS_Capability pCapability = LookupCapability(pTcs,
@@ -1008,7 +1008,7 @@ bool IsTransmitOnlyAltCapSet(PS_TerminalCapabilitySet pTcs,
 }
 
 // =======================================================
-// VerifyCodecs()							(RAN-32K)
+// VerifyCodecs()                           (RAN-32K)
 //
 // This routine checks an outgoing audio/video combination
 //   against the capabilities of the remote terminal.

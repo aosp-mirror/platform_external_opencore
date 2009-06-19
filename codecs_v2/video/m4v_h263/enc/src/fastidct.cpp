@@ -19,23 +19,23 @@
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
- Who:	Date: July/2001
- Description:	1. Optimized BlockIDCT bitmap checking.
-				2. Rearranged functions.
-				3. Do column IDCT first, then row IDCT.
-				4. Combine motion comp and IDCT, require
-				   two sets of row IDCTs one for INTRA
-				   and one for INTER.
+ Who:   Date: July/2001
+ Description:   1. Optimized BlockIDCT bitmap checking.
+                2. Rearranged functions.
+                3. Do column IDCT first, then row IDCT.
+                4. Combine motion comp and IDCT, require
+                   two sets of row IDCTs one for INTRA
+                   and one for INTER.
                 5. Add AAN IDCT
 
- Who:	Date: 8/16/01
-				1. Increase the input precision to 8 bits, i.e. change RDCTBITS
-				   to 11, have to comment out all in-line assembly since 16 bit
-					multiplication doesn't work. Try to use diffent precision with
-					32 bit mult. but hasn't finished. Turns out that without in-line
-					assembly the performance doesn't change much (only 1%).
+ Who:   Date: 8/16/01
+                1. Increase the input precision to 8 bits, i.e. change RDCTBITS
+                   to 11, have to comment out all in-line assembly since 16 bit
+                    multiplication doesn't work. Try to use diffent precision with
+                    32 bit mult. but hasn't finished. Turns out that without in-line
+                    assembly the performance doesn't change much (only 1%).
  Who:   Date: 9/04/05
-				1. Replace AAN IDCT with Chen's IDCT to accommodate 16 bit data type.
+                1. Replace AAN IDCT with Chen's IDCT to accommodate 16 bit data type.
 
 */
 #include "oscl_base_macros.h" // for OSCL_UNUSED_ARG
@@ -44,23 +44,23 @@
 #include "mp4lib_int.h"
 #include "dct.h"
 
-#define ADD_CLIP	{ \
-			tmp = *rec + tmp; \
-		if((UInt)tmp > mask) tmp = mask&(~(tmp>>31)); \
-		*rec++ = tmp;	\
-		}
+#define ADD_CLIP    { \
+            tmp = *rec + tmp; \
+        if((UInt)tmp > mask) tmp = mask&(~(tmp>>31)); \
+        *rec++ = tmp;   \
+        }
 
-#define INTRA_CLIP	{ \
-		if((UInt)tmp > mask) tmp = mask&(~(tmp>>31)); \
-		*rec++ = tmp;	\
-		}
+#define INTRA_CLIP  { \
+        if((UInt)tmp > mask) tmp = mask&(~(tmp>>31)); \
+        *rec++ = tmp;   \
+        }
 
 
-#define CLIP_RESULT(x) 		if((UInt)x > 0xFF){x = 0xFF & (~(x>>31));}
-#define ADD_AND_CLIP1(x)	x += (pred_word&0xFF); CLIP_RESULT(x);
-#define ADD_AND_CLIP2(x)	x += ((pred_word>>8)&0xFF); CLIP_RESULT(x);
-#define ADD_AND_CLIP3(x)	x += ((pred_word>>16)&0xFF); CLIP_RESULT(x);
-#define ADD_AND_CLIP4(x)	x += ((pred_word>>24)&0xFF); CLIP_RESULT(x);
+#define CLIP_RESULT(x)      if((UInt)x > 0xFF){x = 0xFF & (~(x>>31));}
+#define ADD_AND_CLIP1(x)    x += (pred_word&0xFF); CLIP_RESULT(x);
+#define ADD_AND_CLIP2(x)    x += ((pred_word>>8)&0xFF); CLIP_RESULT(x);
+#define ADD_AND_CLIP3(x)    x += ((pred_word>>16)&0xFF); CLIP_RESULT(x);
+#define ADD_AND_CLIP4(x)    x += ((pred_word>>24)&0xFF); CLIP_RESULT(x);
 
 
 void idct_col0(Short *blk)
@@ -1840,20 +1840,20 @@ void idct_rowzmv(Short *blk, UChar *rec, UChar *pred, Int lx)
 ;  End Function: idctcol
 ----------------------------------------------------------------------------*/
 /* ======================================================================== */
-/*	Function : BlockIDCTMotionComp												*/
-/*	Date     : 10/16/2000													*/
-/*	Purpose  : fast IDCT routine									*/
-/*	In/out   :																*/
-/*		Int* coeff_in	Dequantized coefficient
-		Int block_out	output IDCT coefficient
-		Int maxval		clip value											*/
-/*	Modified :	 7/31/01, add checking for all-zero and DC-only block.	*/
-/*				do 8 columns at a time										*/
-/*				 8/2/01, do column first then row-IDCT.					*/
-/*				 8/2/01, remove clipping (included in motion comp).		*/
-/*				 8/7/01, combine with motion comp.						*/
-/*				 8/8/01, use AAN IDCT										*/
-/*				 9/4/05, use Chen's IDCT and 16 bit block					*/
+/*  Function : BlockIDCTMotionComp                                              */
+/*  Date     : 10/16/2000                                                   */
+/*  Purpose  : fast IDCT routine                                    */
+/*  In/out   :                                                              */
+/*      Int* coeff_in   Dequantized coefficient
+        Int block_out   output IDCT coefficient
+        Int maxval      clip value                                          */
+/*  Modified :   7/31/01, add checking for all-zero and DC-only block.  */
+/*              do 8 columns at a time                                      */
+/*               8/2/01, do column first then row-IDCT.                 */
+/*               8/2/01, remove clipping (included in motion comp).     */
+/*               8/7/01, combine with motion comp.                      */
+/*               8/8/01, use AAN IDCT                                       */
+/*               9/4/05, use Chen's IDCT and 16 bit block                   */
 /* ======================================================================== */
 void BlockIDCTMotionComp(Short *block, UChar *bitmapcol, UChar bitmaprow,
                          Int dctMode, UChar *rec, UChar *pred, Int lx_intra)
@@ -1868,7 +1868,7 @@ void BlockIDCTMotionComp(Short *block, UChar *bitmapcol, UChar bitmaprow,
     Int lx = lx_intra >> 1;
     Int intra = (lx_intra & 1);
 
-    /*	all-zero block */
+    /*  all-zero block */
     if (dctMode == 0 || bitmaprow == 0)
     {
         if (intra)
@@ -1991,7 +1991,7 @@ void BlockIDCTMotionComp(Short *block, UChar *bitmapcol, UChar bitmaprow,
         }
     }
 
-    for (i = 0;i < dctMode;i++)
+    for (i = 0; i < dctMode; i++)
     {
         bmap = (Int)bitmapcol[i];
         if (bmap)

@@ -78,7 +78,7 @@ const PVOMXBaseDecNodeKeyStringData PVOMXAudioDecNodeConfigRenderKeys[PVOMXAUDIO
 #define PVMF_BASEMIMETYPE "pvxxx"
 
 class PVMFOMXAudioDecNode
-            : public PVMFOMXBaseDecNode
+        : public PVMFOMXBaseDecNode
 
 {
     public:
@@ -135,11 +135,11 @@ class PVMFOMXAudioDecNode
 
         // Audio parameters
         // the output buffer size is calculated from the parameters below
-        uint32 iPCMSamplingRate;		// typically 8,16,22.05,32,44.1, 48 khz
-        uint32 iNumberOfAudioChannels;	// can be 1 or 2
-        uint32 iSamplesPerFrame;		// number of samples per 1 frame of data (if known) per channel
-        uint32 iNumBytesPerFrame;		// depends on number of samples/channel and number of channels
-        uint32 iMilliSecPerFrame;		//
+        uint32 iPCMSamplingRate;        // typically 8,16,22.05,32,44.1, 48 khz
+        uint32 iNumberOfAudioChannels;  // can be 1 or 2
+        uint32 iSamplesPerFrame;        // number of samples per 1 frame of data (if known) per channel
+        uint32 iNumBytesPerFrame;       // depends on number of samples/channel and number of channels
+        uint32 iMilliSecPerFrame;       //
 
 
         // LATM parser for AAC

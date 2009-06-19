@@ -85,7 +85,7 @@ bool composeURL(const char *baseURL, const char *relativeURL, char *completeURL,
         {
             OSCL_ARRAY_DELETE(copyOfBaseURL);
             return false;
-            // break;	This statement was removed to avoid compiler warning for Unreachable Code
+            // break;   This statement was removed to avoid compiler warning for Unreachable Code
 
         }
     }
@@ -108,7 +108,7 @@ const char* findRelativeURL(const char *aURL)
                 return &(aURL[i]);
             }
             else
-            {//	"//"
+            {// "//"
                 i++;
             }
         }

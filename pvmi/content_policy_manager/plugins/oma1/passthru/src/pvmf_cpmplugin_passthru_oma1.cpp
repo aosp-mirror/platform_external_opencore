@@ -152,7 +152,7 @@ OSCL_EXPORT_REF PVMFCPMPassThruPlugInOMA1::PVMFCPMPassThruPlugInOMA1(bool aFailA
     iMetaData[EForwardLockOMA1].iQuery = PVMF_DRM_INFO_IS_FORWARD_LOCKED_QUERY;
     iMetaData[EForwardLockOMA1].iValue = PVMF_DRM_INFO_IS_FORWARD_LOCKED_VALUE;
 
-    for (uint32 i = 0;i < ELicLastOMA1;i++)
+    for (uint32 i = 0; i < ELicLastOMA1; i++)
     {
         iMetaData[i].iKvp.key = iMetaData[i].iValue.get_str();
         iMetaData[i].iKvp.length = 0;
@@ -324,11 +324,11 @@ PVMFCPMPassThruPlugInOMA1::SetSourceInitializationData(OSCL_wString& aSourceURL,
         /*
         if(aSourceData)
         {
-        	iFileHandle=((PVMFLocalDataSource*)aSourceData)->iFileHandle;
+            iFileHandle=((PVMFLocalDataSource*)aSourceData)->iFileHandle;
         }
         else
         {
-        	iFileHandle=NULL;
+            iFileHandle=NULL;
         }
         */
         if (iSourceInitDataNotSupported)
@@ -849,7 +849,7 @@ OSCL_EXPORT_REF uint32 PVMFCPMPassThruPlugInOMA1::GetNumMetadataKeys(char* aQuer
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "PVMFCPMPassThruPlugInOMA1::GetNumMetadataKeys() called"));
     uint32 total = 0;
-    for (uint32 i = 0;i < ELicLastOMA1;i++)
+    for (uint32 i = 0; i < ELicLastOMA1; i++)
     {
         if (iMetaData[i].iValid)
         {
@@ -876,9 +876,9 @@ OSCL_EXPORT_REF uint32 PVMFCPMPassThruPlugInOMA1::GetNumMetadataValues(PVMFMetad
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "PVMFCPMPassThruPlugInOMA1::GetNumMetadataValues() called"));
     uint32 total = 0;
-    for (uint32 i = 0;i < aKeyList.size();i++)
+    for (uint32 i = 0; i < aKeyList.size(); i++)
     {
-        for (uint32 j = 0;j < ELicLastOMA1;j++)
+        for (uint32 j = 0; j < ELicLastOMA1; j++)
         {
             if (iMetaData[j].iValid
                     && iMetaData[j].iQuery == aKeyList[i])
@@ -914,7 +914,7 @@ OSCL_EXPORT_REF PVMFCommandId PVMFCPMPassThruPlugInOMA1::GetNodeMetadataKeys(PVM
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "PVMFCPMPassThruPlugInOMA1::GetNodeMetadataKeys() called"));
     int32 total = 0;
-    for (uint32 i = aStartingKeyIndex;i < ELicLastOMA1;i++)
+    for (uint32 i = aStartingKeyIndex; i < ELicLastOMA1; i++)
     {
         if (iMetaData[i].iValid)
         {
@@ -961,9 +961,9 @@ OSCL_EXPORT_REF PVMFCommandId PVMFCPMPassThruPlugInOMA1::GetNodeMetadataValues(P
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "PVMFCPMPassThruPlugInOMA1::GetNodeMetadataValues() called"));
     int32 total = 0;
-    for (uint32 j = 0;j < aKeyList.size();j++)
+    for (uint32 j = 0; j < aKeyList.size(); j++)
     {
-        for (int32 i = aStartingValueIndex;i < ELicLastOMA1;i++)
+        for (int32 i = aStartingValueIndex; i < ELicLastOMA1; i++)
         {
             if (iMetaData[i].iValid)
             {

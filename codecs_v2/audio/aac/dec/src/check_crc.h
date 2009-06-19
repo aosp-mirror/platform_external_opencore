@@ -108,8 +108,8 @@ extern "C"
     ----------------------------------------------------------------------------*/
 
     void check_crc(HANDLE_CRC hCrcBuf,
-                   UInt32 bValue,
-                   Int32 nBits);
+    UInt32 bValue,
+    Int32 nBits);
 
 
 #ifdef __cplusplus

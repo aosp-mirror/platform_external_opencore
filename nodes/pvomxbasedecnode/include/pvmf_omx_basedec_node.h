@@ -115,7 +115,7 @@
 typedef struct OutputBufCtrlStruct
 {
     OMX_BUFFERHEADERTYPE *pBufHdr;
-}OutputBufCtrlStruct;
+} OutputBufCtrlStruct;
 
 #if 0
 typedef struct InputBufCtrlStruct
@@ -126,12 +126,12 @@ typedef struct InputBufCtrlStruct
 #else
 class InputBufCtrlStruct
 {
-public:
-    InputBufCtrlStruct():pBufHdr(NULL) {}
+    public:
+        InputBufCtrlStruct(): pBufHdr(NULL) {}
 
-public:
-    OMX_BUFFERHEADERTYPE *pBufHdr;
-    PVMFSharedMediaDataPtr pMediaData;
+    public:
+        OMX_BUFFERHEADERTYPE *pBufHdr;
+        PVMFSharedMediaDataPtr pMediaData;
 };
 #endif
 
@@ -175,9 +175,9 @@ const unsigned char NAL_START_CODE[4] = {0, 0, 0, 1};
 /////////////////////////
 /////////////////////////
 // CUSTOM DEALLOCATOR FOR MEDIA DATA SHARED PTR WRAPPER:
-//						1) Deallocates the underlying output buffer
-//						2) Deallocates the pvci buffer wrapper and the rest of accompanying structures
-//					  Deallocator is created as part of the wrapper, and travels with the buffer wrapper
+//                      1) Deallocates the underlying output buffer
+//                      2) Deallocates the pvci buffer wrapper and the rest of accompanying structures
+//                    Deallocator is created as part of the wrapper, and travels with the buffer wrapper
 
 class PVOMXDecBufferSharedPtrWrapperCombinedCleanupDA : public OsclDestructDealloc
 {
@@ -350,12 +350,12 @@ typedef PVMFNodeCommandQueue<PVMFOMXBaseDecNodeCommand, PVMFOMXBaseDecNodeAlloca
 
 
 class PVMFOMXBaseDecNode
-            : public OsclActiveObject
-            , public PVMFNodeInterface
-            , public OsclMemPoolFixedChunkAllocatorObserver
-            , public PVMFOMXBaseDecNodeExtensionInterface
-            , public PVMFMetadataExtensionInterface
-            , public PvmiCapabilityAndConfig
+        : public OsclActiveObject
+        , public PVMFNodeInterface
+        , public OsclMemPoolFixedChunkAllocatorObserver
+        , public PVMFOMXBaseDecNodeExtensionInterface
+        , public PVMFMetadataExtensionInterface
+        , public PvmiCapabilityAndConfig
 
 {
     public:
@@ -411,27 +411,27 @@ class PVMFOMXBaseDecNode
         //********** CB Functions to serve OpenMAX Decoder
 
         //Process callback functions. They will be executed in testapp thread context
-        //	These callbacks are used only in the Multithreaded component case
+        //  These callbacks are used only in the Multithreaded component case
         OSCL_IMPORT_REF OsclReturnCode ProcessCallbackEventHandler_MultiThreaded(OsclAny* P);
         OSCL_IMPORT_REF OsclReturnCode ProcessCallbackEmptyBufferDone_MultiThreaded(OsclAny* P);
         OSCL_IMPORT_REF OsclReturnCode ProcessCallbackFillBufferDone_MultiThreaded(OsclAny* P);
 
         //Callback objects - again, these are used only in the case of Multithreaded component
-        EventHandlerThreadSafeCallbackAO*	 iThreadSafeHandlerEventHandler;
+        EventHandlerThreadSafeCallbackAO*    iThreadSafeHandlerEventHandler;
         EmptyBufferDoneThreadSafeCallbackAO* iThreadSafeHandlerEmptyBufferDone;
         FillBufferDoneThreadSafeCallbackAO*  iThreadSafeHandlerFillBufferDone;
 
         OMX_CALLBACKTYPE       iCallbacks; // structure that contains callback ptrs.
         // OMX CALLBACKS
         // 1) AO OMX component running in the same thread as the OMX node
-        //	In this case, the callbacks can be called directly from the component
-        //	The callback: OMX Component->CallbackEventHandler->EventHandlerProcessing
-        //	The callback can perform do RunIfNotReady
+        //  In this case, the callbacks can be called directly from the component
+        //  The callback: OMX Component->CallbackEventHandler->EventHandlerProcessing
+        //  The callback can perform do RunIfNotReady
 
         // 2) Multithreaded component
-        //	In this case, the callback is made using the threadsafe callback (TSCB) AO
-        //	Component thread : OMX Component->CallbackEventHandler->TSCB(ReceiveEvent)
-        //  Node thread		 : TSCB(ProcessEvent)->ProcessCallbackEventHandler_MultiThreaded->EventHandlerProcessing
+        //  In this case, the callback is made using the threadsafe callback (TSCB) AO
+        //  Component thread : OMX Component->CallbackEventHandler->TSCB(ReceiveEvent)
+        //  Node thread      : TSCB(ProcessEvent)->ProcessCallbackEventHandler_MultiThreaded->EventHandlerProcessing
 
 
         //==============================================================================
@@ -531,19 +531,19 @@ class PVMFOMXBaseDecNode
         OSCL_IMPORT_REF bool CreateOutMemPool(uint32 num);
         OSCL_IMPORT_REF bool CreateInputMemPool(uint32 num);
         OSCL_IMPORT_REF bool ProvideBuffersToComponent(OsclMemPoolFixedChunkAllocator *aMemPool, // allocator
-                uint32 aAllocSize,	 // size to allocate from pool (hdr only or hdr+ buffer)
+                uint32 aAllocSize,   // size to allocate from pool (hdr only or hdr+ buffer)
                 uint32 aNumBuffers,    // number of buffers
                 uint32 aActualBufferSize, // aactual buffer size
                 uint32 aPortIndex,      // port idx
-                bool aUseBufferOK,	// can component use OMX_UseBuffer?
-                bool	aIsThisInputBuffer // is this input or output
+                bool aUseBufferOK,  // can component use OMX_UseBuffer?
+                bool    aIsThisInputBuffer // is this input or output
                                                       );
 
         bool FreeBuffersFromComponent(OsclMemPoolFixedChunkAllocator *aMemPool, // allocator
-                                      uint32 aAllocSize,	 // size to allocate from pool (hdr only or hdr+ buffer)
+                                      uint32 aAllocSize,     // size to allocate from pool (hdr only or hdr+ buffer)
                                       uint32 aNumBuffers,    // number of buffers
                                       uint32 aPortIndex,      // port idx
-                                      bool	aIsThisInputBuffer		// is this input or output
+                                      bool  aIsThisInputBuffer      // is this input or output
                                      );
 
         OsclSharedPtr<class PVMFMediaDataImpl> WrapOutputBuffer(uint8 *pData, uint32 aDataLen, OsclAny *pContext);
@@ -630,7 +630,7 @@ class PVMFOMXBaseDecNode
         // INPUT BUFFER RELATED MEMBERS
         OsclMemPoolFixedChunkAllocator *iInBufMemoryPool;
         uint32 iOMXComponentInputBufferSize; // size of input buffer that the component sees (negotiated with the component)
-        uint32 iInputAllocSize; 	// size of input buffer to allocate (OMX_ALLOCATE_BUFFER =  size of buf header )
+        uint32 iInputAllocSize;     // size of input buffer to allocate (OMX_ALLOCATE_BUFFER =  size of buf header )
         // (OMX_USE_BUFFER = size of buf header + iOMXCoponentInputBufferSize)
         uint32 iNumInputBuffers; // total num of input buffers (negotiated with component)
 
@@ -642,23 +642,23 @@ class PVMFOMXBaseDecNode
         bool iInputBuffersFreed;
 
         // input buffer fragmentation etc.
-        uint32 iCopyPosition;				// for copying memfrag data into a buffer
+        uint32 iCopyPosition;               // for copying memfrag data into a buffer
         uint32 iFragmentSizeRemainingToCopy;
-        bool	iIsNewDataFragment;
+        bool    iIsNewDataFragment;
         // partial frame assembly logic flags
-        bool	iFirstPieceOfPartialFrame;
-        bool	iObtainNewInputBuffer;
-        bool	iKeepDroppingMsgsUntilMarkerBit;
-        bool	iFirstDataMsgAfterBOS;
+        bool    iFirstPieceOfPartialFrame;
+        bool    iObtainNewInputBuffer;
+        bool    iKeepDroppingMsgsUntilMarkerBit;
+        bool    iFirstDataMsgAfterBOS;
         InputBufCtrlStruct *iInputBufferUnderConstruction;
-        bool	iIncompleteFrame;
+        bool    iIncompleteFrame;
 
         OSCL_IMPORT_REF void DropCurrentBufferUnderConstruction();
         OSCL_IMPORT_REF void SendIncompleteBufferUnderConstruction();
 
         // input data info
         uint32 iCurrFragNum;
-        uint32 iCodecSeqNum;	// sequence number tracking
+        uint32 iCodecSeqNum;    // sequence number tracking
         uint32 iInPacketSeqNum;
 
         uint32 iInTimestamp;
@@ -701,15 +701,15 @@ class PVMFOMXBaseDecNode
             EPVMFOMXBaseDecNodeProcessingState_WaitForOutputBuffer,   //wait state for avalible media output buffer
             EPVMFOMXBaseDecNodeProcessingState_WaitForOutputPort,     //wait state, output port is busy
             EPVMFOMXBaseDecNodeProcessingState_WaitForOutgoingQueue,   //wait state, outgoing queue
-            EPVMFOMXBaseDecNodeProcessingState_PortReconfig,			// Dynamic Port Reconfiguration - step 1
-            EPVMFOMXBaseDecNodeProcessingState_WaitForBufferReturn,		//	step 2
-            EPVMFOMXBaseDecNodeProcessingState_WaitForPortDisable,		// Dynamic Port Reconfiguration - step 3
-            EPVMFOMXBaseDecNodeProcessingState_PortReEnable,			// Dynamic Port Reconfiguration - step 4
-            EPVMFOMXBaseDecNodeProcessingState_WaitForPortEnable,		// step 5
-            EPVMFOMXBaseDecNodeProcessingState_Stopping,				// when STOP command is issued, the node has to wait for component to transition into
+            EPVMFOMXBaseDecNodeProcessingState_PortReconfig,            // Dynamic Port Reconfiguration - step 1
+            EPVMFOMXBaseDecNodeProcessingState_WaitForBufferReturn,     //  step 2
+            EPVMFOMXBaseDecNodeProcessingState_WaitForPortDisable,      // Dynamic Port Reconfiguration - step 3
+            EPVMFOMXBaseDecNodeProcessingState_PortReEnable,            // Dynamic Port Reconfiguration - step 4
+            EPVMFOMXBaseDecNodeProcessingState_WaitForPortEnable,       // step 5
+            EPVMFOMXBaseDecNodeProcessingState_Stopping,                // when STOP command is issued, the node has to wait for component to transition into
             // idle state. The buffers keep coming back , the node is rescheduled
             // to run. Prevent the node from sending buffers back
-            EPVMFOMXBaseDecNodeProcessingState_Pausing					// when PAUSE command is issued, the node has to wait for component to transition into
+            EPVMFOMXBaseDecNodeProcessingState_Pausing                  // when PAUSE command is issued, the node has to wait for component to transition into
             // paused state.
             // Video: This prevents the node from sending buffers back
             // Audio: The buffers may still keep coming back , the node is rescheduled
@@ -742,7 +742,7 @@ class PVMFOMXBaseDecNode
         bool iIsEOSReceivedFromComponent;
 
         // Send Fsi configuration flag
-        bool	sendFsi;
+        bool    sendFsi;
 
         // Pointer to input data fragment
         uint8* iBitstreamBuffer;

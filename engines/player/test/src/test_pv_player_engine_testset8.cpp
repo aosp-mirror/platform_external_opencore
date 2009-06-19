@@ -888,41 +888,41 @@ void pvplayer_async_test_printmetadata::PrintCodecSpecificInfo(char* aData, uint
 
     if (INDEX_CODEC_SPECIFIC_INFO_AUDIO == aIndex)
     {
-        uint16 CodecId = ((*(aData + 0))		 & 0x000000FF)
+        uint16 CodecId = ((*(aData + 0))         & 0x000000FF)
                          + (((*(aData + 1)) << 8)  & 0x0000FF00);
 
         fprintf(iTestMsgOutputFile, "	CodecId:%d \n", CodecId);
 
-        uint16 NumChannels = ((*(aData + 2))		 & 0x000000FF)
+        uint16 NumChannels = ((*(aData + 2))         & 0x000000FF)
                              + (((*(aData + 3)) << 8)  & 0x0000FF00);
 
         fprintf(iTestMsgOutputFile, "	NumChannels:%d \n", NumChannels);
 
-        uint32 SamplesPerSecond = ((*(aData + 4))		  & 0x000000FF)
+        uint32 SamplesPerSecond = ((*(aData + 4))         & 0x000000FF)
                                   + (((*(aData + 5)) << 8)  & 0x0000FF00)
                                   + (((*(aData + 6)) << 16) & 0x00FF0000)
                                   + (((*(aData + 7)) << 24) & 0xFF000000);
 
         fprintf(iTestMsgOutputFile, "	SamplesPerSecond:%d \n", SamplesPerSecond);
 
-        uint32 AvgNumBytesPerSecond = ((*(aData + 8))		   & 0x000000FF)
+        uint32 AvgNumBytesPerSecond = ((*(aData + 8))          & 0x000000FF)
                                       + (((*(aData + 9)) << 8)   & 0x0000FF00)
                                       + (((*(aData + 10)) << 16) & 0x00FF0000)
                                       + (((*(aData + 11)) << 24) & 0xFF000000);
 
         fprintf(iTestMsgOutputFile, "	AvgNumBytesPerSecond:%d \n", AvgNumBytesPerSecond);
 
-        uint16 BlockAlignment = ((*(aData + 12))		 & 0x000000FF)
+        uint16 BlockAlignment = ((*(aData + 12))         & 0x000000FF)
                                 + (((*(aData + 13)) << 8)  & 0x0000FF00);
 
         fprintf(iTestMsgOutputFile, "	BlockAlignment:%d \n", BlockAlignment);
 
-        uint16 BitsPerSample = ((*(aData + 14))		    & 0x000000FF)
+        uint16 BitsPerSample = ((*(aData + 14))         & 0x000000FF)
                                + (((*(aData + 15)) << 8)  & 0x0000FF00);
 
         fprintf(iTestMsgOutputFile, "	BitsPerSample:%d \n", BitsPerSample);
 
-        uint16 CodecSpecificDataSize = ((*(aData + 16))		    & 0x000000FF)
+        uint16 CodecSpecificDataSize = ((*(aData + 16))         & 0x000000FF)
                                        + (((*(aData + 17)) << 8)  & 0x0000FF00);
 
         fprintf(iTestMsgOutputFile, "	CodecSpecificDataSize:%d \n", CodecSpecificDataSize);
@@ -940,13 +940,13 @@ void pvplayer_async_test_printmetadata::PrintCodecSpecificInfo(char* aData, uint
     }
     else if (INDEX_CODEC_SPECIFIC_INFO_VIDEO == aIndex)
     {
-        uint32 ImageWidth = ((*(aData + 0))		    & 0x000000FF)
+        uint32 ImageWidth = ((*(aData + 0))         & 0x000000FF)
                             + (((*(aData + 1)) << 8)  & 0x0000FF00)
                             + (((*(aData + 2)) << 16) & 0x00FF0000)
                             + (((*(aData + 3)) << 24) & 0xFF000000);
         fprintf(iTestMsgOutputFile, "	ImageWidth:%d \n", ImageWidth);
 
-        uint32 Imageheight = ((*(aData + 4))		 & 0x000000FF)
+        uint32 Imageheight = ((*(aData + 4))         & 0x000000FF)
                              + (((*(aData + 5)) << 8)  & 0x0000FF00)
                              + (((*(aData + 6)) << 16) & 0x00FF0000)
                              + (((*(aData + 7)) << 24) & 0xFF000000);
@@ -955,75 +955,75 @@ void pvplayer_async_test_printmetadata::PrintCodecSpecificInfo(char* aData, uint
         uint8 ReservedFlags = ((*(aData + 8)) & 0x000000FF);
         fprintf(iTestMsgOutputFile, "	ReservedFlags:%d \n", ReservedFlags);
 
-        uint16 FormatDataSize = ((*(aData + 9))		     & 0x000000FF)
+        uint16 FormatDataSize = ((*(aData + 9))          & 0x000000FF)
                                 + (((*(aData + 10)) << 8)  & 0x0000FF00);
 
         fprintf(iTestMsgOutputFile, "	FormatDataSize:%d \n", FormatDataSize);
 
-        uint32 FormatDataFormatDataSize = ((*(aData + 11))		   & 0x000000FF)
+        uint32 FormatDataFormatDataSize = ((*(aData + 11))         & 0x000000FF)
                                           + (((*(aData + 12)) << 8)  & 0x0000FF00)
                                           + (((*(aData + 13)) << 16) & 0x00FF0000)
                                           + (((*(aData + 14)) << 24) & 0xFF000000);
         fprintf(iTestMsgOutputFile, "	FormatDataFormatDataSize:%d \n", FormatDataFormatDataSize);
 
-        uint32 FormatDataImageWidth = ((*(aData + 15))		   & 0x000000FF)
+        uint32 FormatDataImageWidth = ((*(aData + 15))         & 0x000000FF)
                                       + (((*(aData + 16)) << 8)  & 0x0000FF00)
                                       + (((*(aData + 17)) << 16) & 0x00FF0000)
                                       + (((*(aData + 18)) << 24) & 0xFF000000);
         fprintf(iTestMsgOutputFile, "	FormatDataImageWidth:%d \n", FormatDataImageWidth);
 
-        uint32 FormatDataImageHeight = ((*(aData + 19))			& 0x000000FF)
+        uint32 FormatDataImageHeight = ((*(aData + 19))         & 0x000000FF)
                                        + (((*(aData + 20)) << 8)  & 0x0000FF00)
                                        + (((*(aData + 21)) << 16) & 0x00FF0000)
                                        + (((*(aData + 22)) << 24) & 0xFF000000);
         fprintf(iTestMsgOutputFile, "	FormatDataImageHeight:%d \n", FormatDataImageHeight);
 
-        uint16 FormatDataReserved = ((*(aData + 23))		 & 0x000000FF)
+        uint16 FormatDataReserved = ((*(aData + 23))         & 0x000000FF)
                                     + (((*(aData + 24)) << 8)  & 0x0000FF00);
 
         fprintf(iTestMsgOutputFile, "	FormatDataReserved:%d \n", FormatDataReserved);
 
-        uint16 FormatDataBitsPerPixelCount = ((*(aData + 25))		  & 0x000000FF)
+        uint16 FormatDataBitsPerPixelCount = ((*(aData + 25))         & 0x000000FF)
                                              + (((*(aData + 26)) << 8)  & 0x0000FF00);
 
         fprintf(iTestMsgOutputFile, "	FormatDataBitsPerPixelCount:%d \n", FormatDataBitsPerPixelCount);
 
-        uint32 FormatDataCompressionId = ((*(aData + 27))		  & 0x000000FF)
+        uint32 FormatDataCompressionId = ((*(aData + 27))         & 0x000000FF)
                                          + (((*(aData + 28)) << 8)  & 0x0000FF00)
                                          + (((*(aData + 29)) << 16) & 0x00FF0000)
                                          + (((*(aData + 30)) << 24) & 0xFF000000);
 
         fprintf(iTestMsgOutputFile, "	FormatDataCompressionId:%d \n", FormatDataCompressionId);
 
-        uint32 FormatDataImageSize = ((*(aData + 31))		  & 0x000000FF)
+        uint32 FormatDataImageSize = ((*(aData + 31))         & 0x000000FF)
                                      + (((*(aData + 32)) << 8)  & 0x0000FF00)
                                      + (((*(aData + 33)) << 16) & 0x00FF0000)
                                      + (((*(aData + 34)) << 24) & 0xFF000000);
 
         fprintf(iTestMsgOutputFile, "	FormatDataImageSize:%d \n", FormatDataImageSize);
 
-        uint32 FormatDataHorizontalPixelsPerMeter = ((*(aData + 35))		 & 0x000000FF)
+        uint32 FormatDataHorizontalPixelsPerMeter = ((*(aData + 35))         & 0x000000FF)
                 + (((*(aData + 36)) << 8)  & 0x0000FF00)
                 + (((*(aData + 37)) << 16) & 0x00FF0000)
                 + (((*(aData + 38)) << 24) & 0xFF000000);
 
         fprintf(iTestMsgOutputFile, "	FormatDataHorizontalPixelsPerMeter:%d \n", FormatDataHorizontalPixelsPerMeter);
 
-        uint32 FormatDataVerticalPixelsPerMeter = ((*(aData + 39))		   & 0x000000FF)
+        uint32 FormatDataVerticalPixelsPerMeter = ((*(aData + 39))         & 0x000000FF)
                 + (((*(aData + 40)) << 8)  & 0x0000FF00)
                 + (((*(aData + 41)) << 16) & 0x00FF0000)
                 + (((*(aData + 42)) << 24) & 0xFF000000);
 
         fprintf(iTestMsgOutputFile, "	FormatDataVerticalPixelsPerMeter:%d \n", FormatDataVerticalPixelsPerMeter);
 
-        uint32 FormatDataColorsUsedCount = ((*(aData + 43))		    & 0x000000FF)
+        uint32 FormatDataColorsUsedCount = ((*(aData + 43))         & 0x000000FF)
                                            + (((*(aData + 44)) << 8)  & 0x0000FF00)
                                            + (((*(aData + 45)) << 16) & 0x00FF0000)
                                            + (((*(aData + 46)) << 24) & 0xFF000000);
 
         fprintf(iTestMsgOutputFile, "	FormatDataColorsUsedCount:%d \n", FormatDataColorsUsedCount);
 
-        uint32 FormatDataImportantColorsCount = ((*(aData + 47))		 & 0x000000FF)
+        uint32 FormatDataImportantColorsCount = ((*(aData + 47))         & 0x000000FF)
                                                 + (((*(aData + 48)) << 8)  & 0x0000FF00)
                                                 + (((*(aData + 49)) << 16) & 0x00FF0000)
                                                 + (((*(aData + 50)) << 24) & 0xFF000000);
@@ -1086,9 +1086,9 @@ void pvplayer_async_test_printmetadata::PrintMetadataInfo()
     CodecSpecificInfo  sCSI[MAX_CODEC_SPECIFIC_INFO_SUPPORTED];
     for (jj = 0; jj < MAX_CODEC_SPECIFIC_INFO_SUPPORTED; jj++)
     {
-        sCSI[jj].CodecSpecificInfoIndex		= -1;
-        sCSI[jj].MetadataKeyIndex			= -1;
-        sCSI[jj].ValueIndex					= -1;
+        sCSI[jj].CodecSpecificInfoIndex     = -1;
+        sCSI[jj].MetadataKeyIndex           = -1;
+        sCSI[jj].ValueIndex                 = -1;
     }
 
     fprintf(iTestMsgOutputFile, "Metadata key list (count=%d):\n", iMetadataKeyList.size());

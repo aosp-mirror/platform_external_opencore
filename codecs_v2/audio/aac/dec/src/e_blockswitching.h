@@ -70,31 +70,31 @@ typedef enum
     /*
      * block switching
      */
-    LN			= 2048,
-    SN			= 256,
-    LN2			= LN / 2,
-    SN2			= SN / 2,
-    LN4			= LN / 4,
-    SN4			= SN / 4,
-    NSHORT		= LN / SN,
-    MAX_SBK		= NSHORT,
+    LN          = 2048,
+    SN          = 256,
+    LN2         = LN / 2,
+    SN2         = SN / 2,
+    LN4         = LN / 4,
+    SN4         = SN / 4,
+    NSHORT      = LN / SN,
+    MAX_SBK     = NSHORT,
     MAX_WIN     = MAX_SBK,
 
-    ONLY_LONG_WINDOW	= 0,
+    ONLY_LONG_WINDOW    = 0,
     LONG_START_WINDOW,
     EIGHT_SHORT_WINDOW,
     LONG_STOP_WINDOW,
     NUM_WIN_SEQ,
 
-    WLONG		= ONLY_LONG_WINDOW,
+    WLONG       = ONLY_LONG_WINDOW,
     WSTART,
     WSHORT,
     WSTOP,
 
-    MAXBANDS		= 16 * NSHORT,	/* max number of scale factor bands */
-    MAXFAC		= 121,		/* maximum scale factor */
-    MIDFAC		= (MAXFAC - 1) / 2,
-    SF_OFFSET		= 100		/* global gain must be positive */
+    MAXBANDS        = 16 * NSHORT,  /* max number of scale factor bands */
+    MAXFAC      = 121,      /* maximum scale factor */
+    MIDFAC      = (MAXFAC - 1) / 2,
+    SF_OFFSET       = 100       /* global gain must be positive */
 } eBlockSwitching;
 
 /*----------------------------------------------------------------------------

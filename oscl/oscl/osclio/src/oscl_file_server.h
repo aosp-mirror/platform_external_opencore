@@ -30,7 +30,7 @@
 
 /*! \file oscl_file_server.h
     \brief The file oscl_file_server.h defines the class Oscl_FileServer.
-	This is the porting layer for file server implementations.
+    This is the porting layer for file server implementations.
 */
 
 #ifndef OSCL_FILE_SERVER_H_INCLUDED

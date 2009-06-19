@@ -103,11 +103,11 @@ extern "C"
     ----------------------------------------------------------------------------*/
 
     static inline Word32 Mac_32(Word32 L_var3,
-                                Word16 L_var1_hi,
-                                Word16 L_var1_lo,
-                                Word16 L_var2_hi,
-                                Word16 L_var2_lo,
-                                Flag *pOverflow)
+    Word16 L_var1_hi,
+    Word16 L_var1_lo,
+    Word16 L_var2_hi,
+    Word16 L_var2_lo,
+    Flag *pOverflow)
     {
         Word16  product;
 

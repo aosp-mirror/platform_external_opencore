@@ -56,4 +56,4 @@ class Mp3TimeStampCalc
         uint32 iSamplesPerFrame;
 };
 
-#endif	//#ifndef MP3_TIMESTAMP_H_INCLUDED
+#endif  //#ifndef MP3_TIMESTAMP_H_INCLUDED

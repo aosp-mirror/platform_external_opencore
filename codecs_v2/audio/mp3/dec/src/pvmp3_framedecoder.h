@@ -88,7 +88,7 @@ extern "C"
 
 
     ERROR_CODE pvmp3_framedecoder(tPVMP3DecoderExternal *pExt,
-                                  void                  *pMem);
+    void                  *pMem);
 
 
 

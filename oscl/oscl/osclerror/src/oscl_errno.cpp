@@ -24,4 +24,4 @@
 #ifndef OSCL_COMBINED_DLL
 #include "oscl_dll.h"
 OSCL_DLL_ENTRY_POINT_DEFAULT()
-#endif	// OSCL_COMBINED_DLL
+#endif  // OSCL_COMBINED_DLL

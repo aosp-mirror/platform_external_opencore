@@ -44,7 +44,7 @@
               list
 
  Description: Added function definition for table specific huffman decoding
-			  functions.
+              functions.
 
  Who:                                         Date:
  Description:

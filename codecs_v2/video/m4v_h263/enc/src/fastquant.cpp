@@ -23,7 +23,7 @@
 
 
 const static UChar imask[8] = {128, 64, 32, 16, 8, 4, 2, 1};
-#define SIGN0(a)    	( ((a)<0) ? -1 : (((a)>0) ? 1  : 0) )
+#define SIGN0(a)        ( ((a)<0) ? -1 : (((a)>0) ? 1  : 0) )
 
 /* variable bit precision quantization scale */
 /* used to avoid using 32-bit multiplication */
@@ -40,9 +40,9 @@ const static Short scaleArrayV[32] = {0, 16384, 8192, 5462,  /* 15 */
 /* scale for dc_scaler and qmat, note, no value smaller than 8 */
 const static Short scaleArrayV2[47] = {0, 0, 0, 0, 0, 0, 0, 0, /* 15 */
                                        4096, 3641, 3277, 2979, 2731, 2521, 2341, 2185,
-                                       4096, 3856, 3641, 3450, 3277, 3121, 2979, 2850,	/* 16 */
+                                       4096, 3856, 3641, 3450, 3277, 3121, 2979, 2850,  /* 16 */
                                        2731, 2622, 2521, 2428, 2341, 2260, 2185, 2115,
-                                       4096, 3972, 3856, 3745, 3641, 3543, 3450, 3361,	/* 17 */
+                                       4096, 3972, 3856, 3745, 3641, 3543, 3450, 3361,  /* 17 */
                                        3277, 3197, 3121, 3049, 2979, 2913, 2850
                                       };
 
@@ -76,15 +76,15 @@ const static UShort ZZTab[64] =
 //#include <math.h>
 
 /* ======================================================================== */
-/*	Function : cal_dc_scalerENC							   				    */
-/*	Date     : 01/25/2000													*/
-/*	Purpose  : calculation of DC quantization scale according to the
- 			   incoming Q and type;							 				*/
-/*	In/out   :																*/
-/*		Int Qp		Quantizer												*/
-/*	Return   :																*/
-/*			DC Scaler														*/
-/*	Modified :																*/
+/*  Function : cal_dc_scalerENC                                             */
+/*  Date     : 01/25/2000                                                   */
+/*  Purpose  : calculation of DC quantization scale according to the
+               incoming Q and type;                                         */
+/*  In/out   :                                                              */
+/*      Int Qp      Quantizer                                               */
+/*  Return   :                                                              */
+/*          DC Scaler                                                       */
+/*  Modified :                                                              */
 /* ======================================================================== */
 /* ======================================================================== */
 Int cal_dc_scalerENC(Int QP, Int type)
@@ -119,31 +119,31 @@ Int cal_dc_scalerENC(Int QP, Int type)
  Function: BlckQuantDequantH263
  Date:     June 15, 1999
  Purpose:  Combine BlockQuantH263 and BlockDequantH263ENC
- Input:	  coeff=> DCT coefficient
+ Input:   coeff=> DCT coefficient
  Output:  qcoeff=> quantized coefficient
           rcoeff=> reconstructed coefficient
-		  return CBP for this block
-		  4/2/01,  correct dc_scaler for short_header mode.
-		  5/14/01,
-		  changed the division into LUT multiplication/shift and other
-		  modifications to speed up fastQuant/DeQuant (check for zero 1st, rowq LUT,
-		  fast bitmaprow mask and borrowed Addition method instead of ifs from , ).
-		  6/25/01,
-		  Further optimization (~100K/QCIF), need more testing/comment before integration.
+          return CBP for this block
+          4/2/01,  correct dc_scaler for short_header mode.
+          5/14/01,
+          changed the division into LUT multiplication/shift and other
+          modifications to speed up fastQuant/DeQuant (check for zero 1st, rowq LUT,
+          fast bitmaprow mask and borrowed Addition method instead of ifs from , ).
+          6/25/01,
+          Further optimization (~100K/QCIF), need more testing/comment before integration.
 
-		  7/4/01,  break up Inter / Intra function and merge for different cases.
-		  7/22/01,  combine AAN scaling here and reordering.
-		  7/24/01, , reorder already done in FDCT, the input here is in the next block and
-			it's the
-			transpose of the raster scan. Output the same order (for proof of concenpt).
-		  8/1/01, , change FDCT to do row/column FDCT without reordering, input is still
-			in the next block. The reconstructed DCT output is current block in normal
-			order. The quantized output is in zigzag scan order for INTER, row/column for
-			INTRA. Use bitmapzz for zigzag RunLevel for INTER.  The quantization is done
-			in column/row scanning order.
-		  8/2/01, , change IDCT to do column/row, change bitmaprow/col to the opposite.
-		  8/3/01, , add clipping to the reconstructed coefficient [-2047,2047]
-		  9/4/05, , removed scaling for AAN IDCT, use Chen IDCT instead.
+          7/4/01,  break up Inter / Intra function and merge for different cases.
+          7/22/01,  combine AAN scaling here and reordering.
+          7/24/01, , reorder already done in FDCT, the input here is in the next block and
+            it's the
+            transpose of the raster scan. Output the same order (for proof of concenpt).
+          8/1/01, , change FDCT to do row/column FDCT without reordering, input is still
+            in the next block. The reconstructed DCT output is current block in normal
+            order. The quantized output is in zigzag scan order for INTER, row/column for
+            INTRA. Use bitmapzz for zigzag RunLevel for INTER.  The quantization is done
+            in column/row scanning order.
+          8/2/01, , change IDCT to do column/row, change bitmaprow/col to the opposite.
+          8/3/01, , add clipping to the reconstructed coefficient [-2047,2047]
+          9/4/05, , removed scaling for AAN IDCT, use Chen IDCT instead.
  ********************************************************************/
 
 Int BlockQuantDequantH263Inter(Short *rcoeff, Short *qcoeff, struct QPstruct *QuantParam,
@@ -161,7 +161,7 @@ Int BlockQuantDequantH263Inter(Short *rcoeff, Short *qcoeff, struct QPstruct *Qu
     Int shift = 15 + (QPx2 >> 4);
     Int *temp;
     UChar *bcolptr = bitmapcol;
-    Int ac_clip;	/* quantized coeff bound */
+    Int ac_clip;    /* quantized coeff bound */
 
     OSCL_UNUSED_ARG(comp);
     OSCL_UNUSED_ARG(dummy);
@@ -218,8 +218,8 @@ Int BlockQuantDequantH263Inter(Short *rcoeff, Short *qcoeff, struct QPstruct *Qu
             {
 NONZERO1:
                 /* scaling */
-                q_value = AANScale[i];	/* load scale AAN */
-                zz = ZZTab[i];	/* zigzag order */
+                q_value = AANScale[i];  /* load scale AAN */
+                zz = ZZTab[i];  /* zigzag order */
 
                 coeff = aan_scale(q_value, coeff, round, QPdiv2);
                 q_value = coeff_quant(coeff, q_scale, shift);
@@ -239,8 +239,8 @@ NONZERO1:
                     rcoeff[i-64] = coeff;
 
                     (*bcolptr) |= imask[i>>3];
-                    if ((zz >> 1) > 31)	bitmapzz[1] |= (1 << (63 - (zz >> 1)));
-                    else		bitmapzz[0] |= (1 << (31 - (zz >> 1)));
+                    if ((zz >> 1) > 31) bitmapzz[1] |= (1 << (63 - (zz >> 1)));
+                    else        bitmapzz[0] |= (1 << (31 - (zz >> 1)));
                 }
                 i += 8;
                 coeff = rcoeff[i];
@@ -279,7 +279,7 @@ Int BlockQuantDequantH263Intra(Short *rcoeff, Short *qcoeff, struct QPstruct *Qu
     Int q_scale = scaleArrayV[QuantParam->QP];
     Int shift = 15 + (QPx2 >> 4);
     UChar *bmcolptr = bitmapcol;
-    Int ac_clip;	/* quantized coeff bound */
+    Int ac_clip;    /* quantized coeff bound */
 
     OSCL_UNUSED_ARG(bitmapzz);
     OSCL_UNUSED_ARG(comp);
@@ -325,8 +325,8 @@ Int BlockQuantDequantH263Intra(Short *rcoeff, Short *qcoeff, struct QPstruct *Qu
         {
             q_value = round + (coeff << 12);
             coeff = q_value >> 16;
-            if (coeff >= 0)	coeff += (dc_scaler >> 1) ;
-            else			coeff -= (dc_scaler >> 1) ;
+            if (coeff >= 0) coeff += (dc_scaler >> 1) ;
+            else            coeff -= (dc_scaler >> 1) ;
             q_value = scaleArrayV2[dc_scaler];
             coeff = coeff * q_value;
             coeff >>= (15 + (dc_scaler >> 4));
@@ -376,15 +376,15 @@ Int BlockQuantDequantH263Intra(Short *rcoeff, Short *qcoeff, struct QPstruct *Qu
             }
             else
             {
-NONZERO2:	/* scaling */
+NONZERO2:   /* scaling */
                 q_value = AANScale[i]; /*  09/02/05 */
 
                 /* scale aan */
                 q_value = smlabb(q_value, coeff, round);
                 coeff = q_value >> 16;
                 /* quant */
-                q_value = smulbb(q_scale, coeff); /*mov		q_value, coeff, lsl #14 */
-                /*smull	tmp, coeff, q_value, q_scale*/
+                q_value = smulbb(q_scale, coeff); /*mov     q_value, coeff, lsl #14 */
+                /*smull tmp, coeff, q_value, q_scale*/
                 q_value >>= shift;
                 q_value += ((UInt)q_value >> 31); /* add 1 if negative */
 
@@ -408,7 +408,7 @@ NONZERO2:	/* scaling */
         }
         while (i < (dctMode << 3)) ;
 
-        //qcoeff++;	/* next column */
+        //qcoeff++; /* next column */
         bmcolptr++;
         //rcoeff++;
         i += (1 - (dctMode << 3)); //i = 0;
@@ -435,7 +435,7 @@ NONZERO2:	/* scaling */
  Date:     5/3/2001
  Purpose:   H.263 quantization mode, only for DC component
  6/25/01,
-		  Further optimization (~100K/QCIF), need more testing/comment before integration.
+          Further optimization (~100K/QCIF), need more testing/comment before integration.
 
  ********************************************************************/
 Int BlockQuantDequantH263DCInter(Short *rcoeff, Short *qcoeff, struct QPstruct *QuantParam,
@@ -447,7 +447,7 @@ Int BlockQuantDequantH263DCInter(Short *rcoeff, Short *qcoeff, struct QPstruct *
     Int QPx2plus = QuantParam->QPx2plus;
     Int Addition = QuantParam->Addition;
     Int shift = 15 + (QP >> 3);
-    Int ac_clip;	/* quantized coeff bound */
+    Int ac_clip;    /* quantized coeff bound */
     Int tmp;
 
     OSCL_UNUSED_ARG(dummy);
@@ -502,8 +502,8 @@ Int BlockQuantDequantH263DCIntra(Short *rcoeff, Short *qcoeff, struct QPstruct *
     *bitmaprow = 0;
     coeff = rcoeff[0];
 
-    if (coeff >= 0)	coeff += (dc_scaler >> 1) ;
-    else			coeff -= (dc_scaler >> 1) ;
+    if (coeff >= 0) coeff += (dc_scaler >> 1) ;
+    else            coeff -= (dc_scaler >> 1) ;
     tmp = scaleArrayV2[dc_scaler];
     tmp = coeff * tmp;
     tmp >>= (15 + (dc_scaler >> 4));
@@ -530,15 +530,15 @@ Int BlockQuantDequantH263DCIntra(Short *rcoeff, Short *qcoeff, struct QPstruct *
  Function: BlckQuantDequantMPEG
  Date:     June 15, 1999
  Purpose:  Combine BlockQuantMPEG and BlockDequantMPEGENC
- Input:	  coeff=> DCT coefficient
+ Input:   coeff=> DCT coefficient
  Output:  qcoeff=> quantized coefficient
           rcoeff=> reconstructed coefficient
  Modified:  7/5/01, break up function for Intra/Inter
-		  8/3/01,  update with changes from H263 quant mode.
- 		  8/3/01,  add clipping to the reconstructed coefficient [-2048,2047]
-		  8/6/01,  optimize using multiplicative lookup-table.
-					 can be further optimized using ARM assembly, e.g.,
-					 clipping, 16-bit mult., etc !!!!!!!!!!!!!
+          8/3/01,  update with changes from H263 quant mode.
+          8/3/01,  add clipping to the reconstructed coefficient [-2048,2047]
+          8/6/01,  optimize using multiplicative lookup-table.
+                     can be further optimized using ARM assembly, e.g.,
+                     clipping, 16-bit mult., etc !!!!!!!!!!!!!
  ********************************************************************/
 
 Int BlockQuantDequantMPEGInter(Short *rcoeff, Short *qcoeff, Int QP, Int *qmat,
@@ -578,18 +578,18 @@ Int BlockQuantDequantMPEGInter(Short *rcoeff, Short *qcoeff, Int QP, Int *qmat,
         }
         do
         {
-            q_value = AANScale[i];	/*  09/02/05 scaling for AAN*/
+            q_value = AANScale[i];  /*  09/02/05 scaling for AAN*/
             /* aan scaling */
             q_value = smlabb(q_value, coeff, round);
 
             coeff = q_value >> 16;
 
             stepsize = qmat[i];
-//			if(coeff>0)		coeff = (16*coeff + (stepsize/2)) / stepsize;
-//			else			coeff = (16*coeff - (stepsize/2)) / stepsize;
+//          if(coeff>0)     coeff = (16*coeff + (stepsize/2)) / stepsize;
+//          else            coeff = (16*coeff - (stepsize/2)) / stepsize;
             coeff <<= 4;
-            if (coeff >= 0)	coeff += (stepsize >> 1) ;
-            else			coeff -= (stepsize >> 1) ;
+            if (coeff >= 0) coeff += (stepsize >> 1) ;
+            else            coeff -= (stepsize >> 1) ;
             q_value = scaleArrayV2[stepsize];
             /* mpeg quant table scale */
             coeff = smulbb(coeff, q_value);
@@ -604,13 +604,13 @@ Int BlockQuantDequantMPEGInter(Short *rcoeff, Short *qcoeff, Int QP, Int *qmat,
             }
             else
             {
-//				q_value = coeff/(QPx2);
+//              q_value = coeff/(QPx2);
                 q_value = coeff_quant(coeff, q_scale, shift);
 
-                if (q_value) 				/* dequant */
+                if (q_value)                /* dequant */
                 {
 
-                    zz = ZZTab[i];	/* zigzag order */
+                    zz = ZZTab[i];  /* zigzag order */
 
                     tmp = 2047;
 
@@ -626,8 +626,8 @@ Int BlockQuantDequantMPEGInter(Short *rcoeff, Short *qcoeff, Int QP, Int *qmat,
 
                     sum += q_value;
                     (*bcolptr) |= imask[i>>3];
-                    if ((zz >> 1) > 31)	bitmapzz[1] |= (1 << (63 - (zz >> 1)));
-                    else		bitmapzz[0] |= (1 << (31 - (zz >> 1)));
+                    if ((zz >> 1) > 31) bitmapzz[1] |= (1 << (63 - (zz >> 1)));
+                    else        bitmapzz[0] |= (1 << (31 - (zz >> 1)));
                 }
                 i += 8;
             }
@@ -707,10 +707,10 @@ Int BlockQuantDequantMPEGIntra(Short *rcoeff, Short *qcoeff, Int QP, Int *qmat,
     {
         q_value = round + (coeff << 12);
         coeff = q_value >> 16;
-        /*if (coeff >= 0)	coeff = (coeff + (dc_scaler/2)) / dc_scaler;
-        else			coeff = (coeff - (dc_scaler/2)) / dc_scaler;*/
-        if (coeff >= 0)	coeff += (dc_scaler >> 1) ;
-        else			coeff -= (dc_scaler >> 1) ;
+        /*if (coeff >= 0)   coeff = (coeff + (dc_scaler/2)) / dc_scaler;
+        else            coeff = (coeff - (dc_scaler/2)) / dc_scaler;*/
+        if (coeff >= 0) coeff += (dc_scaler >> 1) ;
+        else            coeff -= (dc_scaler >> 1) ;
         q_value = scaleArrayV2[dc_scaler];
 
         /* mpeg quant table scale */
@@ -756,11 +756,11 @@ Int BlockQuantDequantMPEGIntra(Short *rcoeff, Short *qcoeff, Int QP, Int *qmat,
             coeff = q_value >> 16;
 
             stepsize = qmat[i];
-            /*if(coeff>0)		coeff = (16*coeff + (stepsize/2)) / stepsize;
-            else			coeff = (16*coeff - (stepsize/2)) / stepsize;*/
+            /*if(coeff>0)       coeff = (16*coeff + (stepsize/2)) / stepsize;
+            else            coeff = (16*coeff - (stepsize/2)) / stepsize;*/
             coeff <<= 4;
-            if (coeff >= 0)	coeff += (stepsize >> 1) ;
-            else			coeff -= (stepsize >> 1) ;
+            if (coeff >= 0) coeff += (stepsize >> 1) ;
+            else            coeff -= (stepsize >> 1) ;
             q_value = scaleArrayV2[stepsize];
 
             /* scale mpeg quant */
@@ -866,11 +866,11 @@ Int BlockQuantDequantMPEGDCInter(Short *rcoeff, Short *qcoeff, Int QP, Int *qmat
     coeff = rcoeff[0];
     stepsize = qmat[0];
 
-    /*if(coeff>0)		coeff = (16*coeff + (stepsize/2)) / stepsize;
-    else			coeff = (16*coeff - (stepsize/2)) / stepsize;*/
+    /*if(coeff>0)       coeff = (16*coeff + (stepsize/2)) / stepsize;
+    else            coeff = (16*coeff - (stepsize/2)) / stepsize;*/
     coeff <<= 4;
-    if (coeff >= 0)	coeff += (stepsize >> 1) ;
-    else			coeff -= (stepsize >> 1) ;
+    if (coeff >= 0) coeff += (stepsize >> 1) ;
+    else            coeff -= (stepsize >> 1) ;
     q_value = scaleArrayV2[stepsize];
 
     coeff = smulbb(coeff, q_value);
@@ -885,7 +885,7 @@ Int BlockQuantDequantMPEGDCInter(Short *rcoeff, Short *qcoeff, Int QP, Int *qmat
     }
     else
     {
-//		q_value = coeff/(QPx2);
+//      q_value = coeff/(QPx2);
         q_value = coeff_quant(coeff, q_scale, shift);
 
         if (q_value)
@@ -906,7 +906,7 @@ Int BlockQuantDequantMPEGDCInter(Short *rcoeff, Short *qcoeff, Int QP, Int *qmat
             /* Mismatch control,  5/3/01 */
             if ((q_value&0x1) == 0)
             {
-                rcoeff[63] = 1;	/* after scaling it remains the same */
+                rcoeff[63] = 1; /* after scaling it remains the same */
                 bitmapcol[7] |= 1;
                 (*bitmaprow) |= 1;
             }
@@ -930,10 +930,10 @@ Int BlockQuantDequantMPEGDCIntra(Short *rcoeff, Short *qcoeff, Int QP, Int *qmat
     *bitmaprow = 0;
     coeff = rcoeff[0];
 
-    /*if (coeff >= 0)	tmp = (coeff + dc_scaler/2) / dc_scaler;
-    else			tmp = (coeff - dc_scaler/2) / dc_scaler;*/
-    if (coeff >= 0)	coeff += (dc_scaler >> 1) ;
-    else			coeff -= (dc_scaler >> 1) ;
+    /*if (coeff >= 0)   tmp = (coeff + dc_scaler/2) / dc_scaler;
+    else            tmp = (coeff - dc_scaler/2) / dc_scaler;*/
+    if (coeff >= 0) coeff += (dc_scaler >> 1) ;
+    else            coeff -= (dc_scaler >> 1) ;
     tmp = scaleArrayV2[dc_scaler];
 
     tmp = smulbb(tmp, coeff);

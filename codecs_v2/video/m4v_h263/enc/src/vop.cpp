@@ -29,12 +29,12 @@ PV_STATUS EncodeVop_BXRC(VideoEncData *video);
 PV_STATUS EncodeVop_NoME(VideoEncData *video);
 
 /* ======================================================================== */
-/*	Function : DecodeVop()													*/
-/*	Date     : 08/23/2000													*/
-/*	Purpose  : Encode VOP Header											*/
-/*	In/out   :																*/
-/*	Return   :																*/
-/*	Modified :																*/
+/*  Function : DecodeVop()                                                  */
+/*  Date     : 08/23/2000                                                   */
+/*  Purpose  : Encode VOP Header                                            */
+/*  In/out   :                                                              */
+/*  Return   :                                                              */
+/*  Modified :                                                              */
 /* ======================================================================== */
 PV_STATUS EncodeVop(VideoEncData *video)
 {
@@ -43,10 +43,10 @@ PV_STATUS EncodeVop(VideoEncData *video)
     Int currLayer = video->currLayer;
     Vol *currVol = video->vol[currLayer];
     Vop *currVop = video->currVop;
-//	BitstreamEncVideo *stream=video->bitstream1;
+//  BitstreamEncVideo *stream=video->bitstream1;
     UChar *Mode = video->headerInfo.Mode;
     rateControl **rc = video->rc;
-//	UInt time=0;
+//  UInt time=0;
 
     /*******************/
     /* Initialize mode */
@@ -72,7 +72,7 @@ PV_STATUS EncodeVop(VideoEncData *video)
     /* compute MVs, scene change detection, edge padding, */
     /* intra refresh, compute block activity */
     /*********************/
-    MotionEstimation(video);	/* do ME for the whole frame */
+    MotionEstimation(video);    /* do ME for the whole frame */
 
     /***************************/
     /* rate Control (assign QP) */
@@ -111,14 +111,14 @@ PV_STATUS EncodeVop(VideoEncData *video)
 }
 
 /* ======================================================================== */
-/*	Function : EncodeVop_NoME()												*/
-/*	Date     : 08/28/2001													*/
-/*	History  :																*/
-/*	Purpose  : EncodeVop without motion est.								*/
-/*	In/out   :																*/
-/*	Return   :																*/
-/*	Modified :																*/
-/*																			*/
+/*  Function : EncodeVop_NoME()                                             */
+/*  Date     : 08/28/2001                                                   */
+/*  History  :                                                              */
+/*  Purpose  : EncodeVop without motion est.                                */
+/*  In/out   :                                                              */
+/*  Return   :                                                              */
+/*  Modified :                                                              */
+/*                                                                          */
 /* ======================================================================== */
 
 PV_STATUS EncodeVop_NoME(VideoEncData *video)
@@ -126,7 +126,7 @@ PV_STATUS EncodeVop_NoME(VideoEncData *video)
     Vop *currVop = video->currVop;
     Vol *currVol = video->vol[video->currLayer];
     BitstreamEncVideo *stream = video->bitstream1;
-    Int time = 0;	/* follows EncodeVop value */
+    Int time = 0;   /* follows EncodeVop value */
     PV_STATUS status = PV_SUCCESS;
 
     if (currVol->shortVideoHeader) /* Short Video Header = 1 */
@@ -140,7 +140,7 @@ PV_STATUS EncodeVop_NoME(VideoEncData *video)
 
     }
 #ifndef H263_ONLY
-    else 	/* Short Video Header = 0 */
+    else    /* Short Video Header = 0 */
     {
 
         if (currVol->GOVStart && currVop->predictionType == I_VOP)
@@ -179,14 +179,14 @@ PV_STATUS EncodeVop_NoME(VideoEncData *video)
 
 #ifndef NO_SLICE_ENCODE
 /* ======================================================================== */
-/*	Function : EncodeSlice()												*/
-/*	Date     : 04/19/2002													*/
-/*	History  :																*/
-/*	Purpose  : Encode one slice.											*/
-/*	In/out   :																*/
-/*	Return   :																*/
-/*	Modified :																*/
-/*																			*/
+/*  Function : EncodeSlice()                                                */
+/*  Date     : 04/19/2002                                                   */
+/*  History  :                                                              */
+/*  Purpose  : Encode one slice.                                            */
+/*  In/out   :                                                              */
+/*  Return   :                                                              */
+/*  Modified :                                                              */
+/*                                                                          */
 /* ======================================================================== */
 
 PV_STATUS EncodeSlice(VideoEncData *video)
@@ -195,7 +195,7 @@ PV_STATUS EncodeSlice(VideoEncData *video)
     Int currLayer = video->currLayer;
     Vol *currVol = video->vol[currLayer];
     BitstreamEncVideo *stream = video->bitstream1; /* different from frame-based */
-    Int time = 0;	/* follows EncodeVop value */
+    Int time = 0;   /* follows EncodeVop value */
     PV_STATUS status = PV_SUCCESS;
     rateControl **rc = video->rc;
 
@@ -213,7 +213,7 @@ PV_STATUS EncodeSlice(VideoEncData *video)
 
     }
 #ifndef H263_ONLY
-    else 	/* Short Video Header = 0 */
+    else    /* Short Video Header = 0 */
     {
 
         if (video->mbnum == 0)
@@ -266,21 +266,21 @@ PV_STATUS EncodeSlice(VideoEncData *video)
 
 #ifndef H263_ONLY
 /* ======================================================================== */
-/*	Function : EncodeGOVHeader()											*/
-/*	Date     : 08/23/2000													*/
-/*	Purpose  : Encode GOV Header											*/
-/*	In/out   :																*/
-/*	Return   :																*/
-/*	Modified :																*/
+/*  Function : EncodeGOVHeader()                                            */
+/*  Date     : 08/23/2000                                                   */
+/*  Purpose  : Encode GOV Header                                            */
+/*  In/out   :                                                              */
+/*  Return   :                                                              */
+/*  Modified :                                                              */
 /* ======================================================================== */
 PV_STATUS EncodeGOVHeader(BitstreamEncVideo *stream, UInt seconds)
 {
     PV_STATUS status;
-//	int temp;
+//  int temp;
     UInt tmpvar;
 
     /********************************/
-    /* Group_of_VideoObjectPlane()	*/
+    /* Group_of_VideoObjectPlane()  */
     /********************************/
 
     status = BitstreamPutGT16Bits(stream, 32, GROUP_START_CODE);
@@ -342,12 +342,12 @@ PV_STATUS EncodeVopNotCoded(VideoEncData *video, UChar *bstream, Int *size, ULon
 #endif
 
 /* ======================================================================== */
-/*	Function : EncodeVOPHeader()											*/
-/*	Date     : 08/23/2000													*/
-/*	Purpose  : Encode VOP Header											*/
-/*	In/out   :																*/
-/*	Return   :																*/
-/*	Modified :																*/
+/*  Function : EncodeVOPHeader()                                            */
+/*  Date     : 08/23/2000                                                   */
+/*  Purpose  : Encode VOP Header                                            */
+/*  In/out   :                                                              */
+/*  Return   :                                                              */
+/*  Modified :                                                              */
 /* ======================================================================== */
 
 PV_STATUS EncodeVOPHeader(BitstreamEncVideo *stream, Vol *currVol, Vop *currVop)
@@ -357,7 +357,7 @@ PV_STATUS EncodeVOPHeader(BitstreamEncVideo *stream, Vol *currVol, Vop *currVop)
 
     int MTB = currVol->moduloTimeBase;
     /************************/
-    /* VideoObjectPlane()	*/
+    /* VideoObjectPlane()   */
     /************************/
 
     status = BitstreamPutGT16Bits(stream, 32, VOP_START_CODE); /*Start Code for VOP*/
@@ -401,12 +401,12 @@ PV_STATUS EncodeVOPHeader(BitstreamEncVideo *stream, Vol *currVol, Vop *currVop)
 }
 #endif /* H263_ONLY */
 /* ======================================================================== */
-/*	Function : EncodeShortHeader()											*/
-/*	Date     : 08/23/2000													*/
-/*	Purpose  : Encode VOP Header											*/
-/*	In/out   :																*/
-/*	Return   :																*/
-/*	Modified :																*/
+/*  Function : EncodeShortHeader()                                          */
+/*  Date     : 08/23/2000                                                   */
+/*  Purpose  : Encode VOP Header                                            */
+/*  In/out   :                                                              */
+/*  Return   :                                                              */
+/*  Modified :                                                              */
 /* ======================================================================== */
 
 PV_STATUS EncodeShortHeader(BitstreamEncVideo *stream, Vop *currVop)
@@ -491,20 +491,20 @@ PV_STATUS EncodeShortHeader(BitstreamEncVideo *stream, Vop *currVop)
 
 #ifndef H263_ONLY
 /* ======================================================================== */
-/*	Function : EncodeVideoPacketHeader()									*/
-/*	Date     : 09/05/2000													*/
-/*	History  :																*/
-/*	Purpose  : Encode a frame of MPEG4 bitstream in Combined mode.			*/
-/*	In/out   :																*/
-/*	Return   :																*/
-/*	Modified : 04/25/2002 								*/
-/*			   Add bitstream structure as input argument					*/
-/*																			*/
+/*  Function : EncodeVideoPacketHeader()                                    */
+/*  Date     : 09/05/2000                                                   */
+/*  History  :                                                              */
+/*  Purpose  : Encode a frame of MPEG4 bitstream in Combined mode.          */
+/*  In/out   :                                                              */
+/*  Return   :                                                              */
+/*  Modified : 04/25/2002                               */
+/*             Add bitstream structure as input argument                    */
+/*                                                                          */
 /* ======================================================================== */
 PV_STATUS EncodeVideoPacketHeader(VideoEncData *video, int MB_number,
                                   int quant_scale, Int insert)
 {
-//	PV_STATUS status=PV_SUCCESS;
+//  PV_STATUS status=PV_SUCCESS;
     int fcode;
     Vop *currVop = video->currVop;
     Vol *currVol = video->vol[video->currLayer];
@@ -523,11 +523,11 @@ PV_STATUS EncodeVideoPacketHeader(VideoEncData *video, int MB_number,
 
 
     if (currVop->predictionType == I_VOP)
-        BitstreamPutGT16Bits(bs, 17, 1);	/* resync_marker I_VOP */
+        BitstreamPutGT16Bits(bs, 17, 1);    /* resync_marker I_VOP */
     else if (currVop->predictionType == P_VOP)
     {
         fcode = currVop->fcodeForward;
-        BitstreamPutGT16Bits(bs, 16 + fcode, 1);	/* resync_marker P_VOP */
+        BitstreamPutGT16Bits(bs, 16 + fcode, 1);    /* resync_marker P_VOP */
 
     }
     else
@@ -535,7 +535,7 @@ PV_STATUS EncodeVideoPacketHeader(VideoEncData *video, int MB_number,
         fcode = currVop->fcodeForward;
         if (currVop->fcodeBackward > fcode)
             fcode = currVop->fcodeBackward;
-        BitstreamPutGT16Bits(bs, 16 + fcode, 1);	/* resync_marker B_VOP */
+        BitstreamPutGT16Bits(bs, 16 + fcode, 1);    /* resync_marker B_VOP */
     }
 
     BitstreamPutBits(bs, currVol->nBitsForMBID, MB_number); /* resync_marker */

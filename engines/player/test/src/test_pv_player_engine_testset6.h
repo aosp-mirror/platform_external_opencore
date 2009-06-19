@@ -319,7 +319,7 @@ class pvplayer_async_test_streamingopenplaystop : public pvplayer_async_test_bas
         OSCL_StackString<128> iKeyStringSetAsync;
         OSCL_StackString<128> iURLToTest404;
         OSCL_StackString<128> iURLToTest415;
-        bool	iPauseDenied;	//governed by the pause-denied metadata
+        bool    iPauseDenied;   //governed by the pause-denied metadata
         uint32 iTotalValuesRetrieved;
         uint32 iStartingIndex;
         const uint32 iBlockSize;

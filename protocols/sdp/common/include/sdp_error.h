@@ -63,14 +63,14 @@ typedef enum
 //----------------------------------------------------------------------
 // Global Data Declarations
 //----------------------------------------------------------------------
-#define MAXIMUM_OUTPUT_STRING_SIZE	1000
-#define SDP_INT_STRING_LENGTH	9
-#define SDP_FLOAT_STRING_LENGTH	10
+#define MAXIMUM_OUTPUT_STRING_SIZE  1000
+#define SDP_INT_STRING_LENGTH   9
+#define SDP_FLOAT_STRING_LENGTH 10
 #define SDP_CR_LF 2
 #define SDP_SPACE 1
 #define MAX_PARSERS_SUPPORTED 9
 #define MAX_CODEC_MODE_LIST 13
-#define MAX_PAYLOADS 10		/*Defined arbitrarily*/
+#define MAX_PAYLOADS 10     /*Defined arbitrarily*/
 
 //======================================================================
 //  CLASS DEFINITIONS and FUNCTION DECLARATIONS

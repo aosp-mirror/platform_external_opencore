@@ -83,13 +83,13 @@ SampleSizeAtom::SampleSizeAtom(MP4_FF_FILE *fp,
         uint32 entrySize = (4);
 
         if (_sampleSize == 0)
-        {	//samples have different size
+        {   //samples have different size
             if ((_sampleCount*entrySize) > dataSize)
             {
                 _success = false;
             }
             else
-            {	//the entry is valid
+            {   //the entry is valid
 
                 if (_parsing_mode == 1)
                 {

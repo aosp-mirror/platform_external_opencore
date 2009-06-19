@@ -152,9 +152,9 @@ class PvmiMIOFileInputMediaData
 };
 
 class PvmiMIOFileInput : public OsclTimerObject,
-            public PvmiMIOControl,
-            public PvmiMediaTransfer,
-            public PvmiCapabilityAndConfig
+        public PvmiMIOControl,
+        public PvmiMediaTransfer,
+        public PvmiCapabilityAndConfig
 
 {
     public:

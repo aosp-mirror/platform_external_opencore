@@ -1226,7 +1226,7 @@ OSCL_EXPORT_REF uint8* CAMRFileParser::getCodecSpecificInfo()
 
     bool bHeaderIncluded = true;
     ipBSO->getNextFrame(iAMRFrameBuffer, iAMRFrameHeaderBuffer[1], bHeaderIncluded);
-    return 	iAMRFrameHeaderBuffer;
+    return  iAMRFrameHeaderBuffer;
 }
 
 

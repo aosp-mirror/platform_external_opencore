@@ -249,7 +249,7 @@ AVCSampleEntry::createDecoderSpecificInfo(MP4_FF_FILE *fp)
 
         uint8* info = (uint8*)(oscl_malloc(sizeof(uint8) * len));
         if (!info)
-            return false;	// malloc failed (unlikely)
+            return false;   // malloc failed (unlikely)
         uint8* destPtr = info;
         if (numSPS > 0)
         {

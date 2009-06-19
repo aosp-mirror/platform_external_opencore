@@ -121,7 +121,7 @@ PVMFStatus PVMFFileOutputNode::GetConfigParameter(PvmiKvp*& aParameters, int& aN
     // Copy the requested info
     switch (aIndex)
     {
-        case PARAMETER1:	// "parameter1"
+        case PARAMETER1:    // "parameter1"
             if (PVMI_KVPATTR_CUR == aReqattr)
             {
                 // Return current value
@@ -137,7 +137,7 @@ PVMFStatus PVMFFileOutputNode::GetConfigParameter(PvmiKvp*& aParameters, int& aN
             }
             break;
 
-        case PARAMETER2:	// "parameter2"
+        case PARAMETER2:    // "parameter2"
             if (PVMI_KVPATTR_CUR == aReqattr)
             {
                 // Return current value
@@ -238,7 +238,7 @@ PVMFStatus PVMFFileOutputNode::VerifyAndSetConfigParameter(PvmiKvp& aParameter, 
 }
 
 ////////////////////////////////////////////////////////////////////////////
-//					PvmiCapConfigInterface Virtual Functions
+//                  PvmiCapConfigInterface Virtual Functions
 ////////////////////////////////////////////////////////////////////////////
 
 void PVMFFileOutputNode::createContext(PvmiMIOSession aSession,

@@ -1834,7 +1834,7 @@ OSCL_EXPORT_REF bool CAACFileParser::RetrieveFileInfo(TPVAacFileInfo& aInfo)
 // INPUT AND OUTPUT DEFINITIONS
 //
 //  Inputs:
-//		aID3MetaData: pointer to data structure for the output.
+//      aID3MetaData: pointer to data structure for the output.
 //
 //  Outputs:
 //    None
@@ -2271,7 +2271,7 @@ CAACFileParser::GetNextBundledAccessUnits(uint32 *aNumSamples,
                 // update infomation
                 aGau->info[0].len = bytestoread;
                 aGau->info[0].ts = 0xFFFFFFFF; // Unknown timestamp
-//				aGau->info[0].ts=(int32)(((OsclFloat)(iTotalNumFramesRead++) * 1024000.0) / (OsclFloat)iAACSampleFrequency); // BX
+//              aGau->info[0].ts=(int32)(((OsclFloat)(iTotalNumFramesRead++) * 1024000.0) / (OsclFloat)iAACSampleFrequency); // BX
                 bytesReadInGau += bytestoread;
                 *aNumSamples += 1;
             }

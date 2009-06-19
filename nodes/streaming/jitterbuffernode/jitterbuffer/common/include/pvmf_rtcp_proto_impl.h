@@ -82,8 +82,8 @@
 #define DEFAULT_RTCP_MEM_POOL_BUFFERS 4
 #define RTCP_RAND_SEED 666
 
-#define MIN_RTSP_SERVER_INACTIVITY_TIMEOUT_IN_SEC	1
-#define MAX_RTSP_SERVER_INACTIVITY_TIMEOUT_IN_SEC	300
+#define MIN_RTSP_SERVER_INACTIVITY_TIMEOUT_IN_SEC   1
+#define MAX_RTSP_SERVER_INACTIVITY_TIMEOUT_IN_SEC   300
 
 // RTCP INTERVAL related
 #define DEFAULT_RTCP_INTERVAL_USEC 1000000
@@ -153,15 +153,15 @@ class PVMFRTCPStats
 
 
 
-        uint64	lastSenderReportNTP;
-        uint32	lastSenderReportRTP;
-        uint32	lastSenderReportTS;
-        uint64	lastSenderReportRecvTime;
-        int32	packetLossUptoThisRR;
+        uint64  lastSenderReportNTP;
+        uint32  lastSenderReportRTP;
+        uint32  lastSenderReportTS;
+        uint64  lastSenderReportRecvTime;
+        int32   packetLossUptoThisRR;
         int32   maxSeqNumRecievedUptoThisRR;
-        uint64	lastRRGenTime;
+        uint64  lastRRGenTime;
         uint32  iLastSenderReportSSRC;
-        float	avg_rtcp_compound_pkt_size;
+        float   avg_rtcp_compound_pkt_size;
         bool    oSRRecvd;
         bool    oRTCPByeRecvd;
 };
@@ -175,10 +175,10 @@ class RTPRateAdaptationInfo
                 , iRateAdaptationFreeBufferSpaceInBytes(0)
         {
         }
-        bool	iRateAdaptation;
-        uint32	iRateAdaptationFeedBackFrequency;
-        uint32	iRateAdaptationRTCPRRCount;
-        uint32	iRateAdaptationFreeBufferSpaceInBytes;
+        bool    iRateAdaptation;
+        uint32  iRateAdaptationFeedBackFrequency;
+        uint32  iRateAdaptationRTCPRRCount;
+        uint32  iRateAdaptationFreeBufferSpaceInBytes;
 };
 
 class PVRTCPChannelController;
@@ -262,29 +262,29 @@ class PVRTCPChannelController: public PvmfRtcpTimerObserver
         PVMFStatus ComposeFeedBackPacket();
         uint32 CalcRtcpInterval();
         PVMFStatus GenerateRTCPRR();
-        PVMFResizableSimpleMediaMsgAlloc*	CreateRTCPRRBufAllocReSize();
+        PVMFResizableSimpleMediaMsgAlloc*   CreateRTCPRRBufAllocReSize();
 
-        PVRTCPChannelControllerObserver*	ipObserver;
-        PVMFJitterBuffer&					irRTPDataJitterBuffer;
-        PVMFPortInterface*					ipFeedbackPort;
-        PVMFMediaClock&						irClientPlayBackClock;
-        PVMFMediaClock&						irRTCPClock;
+        PVRTCPChannelControllerObserver*    ipObserver;
+        PVMFJitterBuffer&                   irRTPDataJitterBuffer;
+        PVMFPortInterface*                  ipFeedbackPort;
+        PVMFMediaClock&                     irClientPlayBackClock;
+        PVMFMediaClock&                     irRTCPClock;
 
-        RTPRateAdaptationInfo				iRTPChannelRateAdaptationInfo;
-        PVMFRTCPStats						iRTCPStats;
-        int									iNumSenders;
-        uint32								iRR;
-        uint32								iRS;
-        bool								iRtcpBwConfigured;
-        bool								iInitialRTCPIntervalComputation;
-        uint32								iRTCPIntervalInMicroSeconds;
-        bool								iInitialRTCPPacket;
-        PvmfRtcpTimer*						ipRTCPTimer;
-        OsclRand							iRandGen;
-        MediaClockConverter*				ipMediaClockConverter;
+        RTPRateAdaptationInfo               iRTPChannelRateAdaptationInfo;
+        PVMFRTCPStats                       iRTCPStats;
+        int                                 iNumSenders;
+        uint32                              iRR;
+        uint32                              iRS;
+        bool                                iRtcpBwConfigured;
+        bool                                iInitialRTCPIntervalComputation;
+        uint32                              iRTCPIntervalInMicroSeconds;
+        bool                                iInitialRTCPPacket;
+        PvmfRtcpTimer*                      ipRTCPTimer;
+        OsclRand                            iRandGen;
+        MediaClockConverter*                ipMediaClockConverter;
 
-        PVLogger*							ipRTCPDataPathLoggerIn;
-        PVLogger*							ipRTCPDataPathLoggerOut;
+        PVLogger*                           ipRTCPDataPathLoggerIn;
+        PVLogger*                           ipRTCPDataPathLoggerOut;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -350,18 +350,18 @@ class PVRTCPProtoImplementor: public PVRTCPChannelControllerObserver
         bool ProcessRTCPSRforAVSync();
         void Construct();
 
-        const bool						iBroadcastSession;
-        PVMFMediaClock&					irClientPlayBackClock;
-        PVMFMediaClock&					irRTCPClock;
-        PVRTCPProtoImplementorObserver*	ipObserver;
+        const bool                      iBroadcastSession;
+        PVMFMediaClock&                 irClientPlayBackClock;
+        PVMFMediaClock&                 irRTCPClock;
+        PVRTCPProtoImplementorObserver* ipObserver;
 
-        bool							iPerformRTCPBasedAVSync;
-        bool							iRTCPAVSyncProcessed;
-        bool							iPlayStopTimeAvailable;
-        Oscl_Vector<PVRTCPChannelController*, OsclMemAllocator>	iPVRTCPChannelController;
+        bool                            iPerformRTCPBasedAVSync;
+        bool                            iRTCPAVSyncProcessed;
+        bool                            iPlayStopTimeAvailable;
+        Oscl_Vector<PVRTCPChannelController*, OsclMemAllocator> iPVRTCPChannelController;
 
-        PVLogger*	ipRTCPDataPathLoggerIn;
-        PVLogger*	ipRTCPAVSyncLogger;
+        PVLogger*   ipRTCPDataPathLoggerIn;
+        PVLogger*   ipRTCPAVSyncLogger;
 };
 
 #endif

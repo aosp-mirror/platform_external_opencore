@@ -16,9 +16,9 @@
  * -------------------------------------------------------------------
  */
 /*********************************************************************************/
-/*  Filename: sad_inline.h														*/
-/*  Description: Implementation for in-line functions used in dct.cpp			*/
-/*  Modified:																	*/
+/*  Filename: sad_inline.h                                                      */
+/*  Description: Implementation for in-line functions used in dct.cpp           */
+/*  Modified:                                                                   */
 /*********************************************************************************/
 #ifndef _SAD_INLINE_H_
 #define _SAD_INLINE_H_
@@ -43,16 +43,16 @@ extern "C"
     {
         int32 x7;
 
-        x7 = src2 ^ src1;		/* check odd/even combination */
+        x7 = src2 ^ src1;       /* check odd/even combination */
         if ((uint32)src2 >= (uint32)src1)
         {
-            src1 = src2 - src1;		/* subs */
+            src1 = src2 - src1;     /* subs */
         }
         else
         {
             src1 = src1 - src2;
         }
-        x7 = x7 ^ src1;		/* only odd bytes need to add carry */
+        x7 = x7 ^ src1;     /* only odd bytes need to add carry */
         x7 = mask & ((uint32)x7 >> 1);
         x7 = (x7 << 8) - x7;
         src1 = src1 + (x7 >> 7); /* add 0xFF to the negative byte, add back carry */
@@ -93,7 +93,7 @@ extern "C"
         if (x8 == 1)
             goto SadMBOffset1;
 
-//	x5 = (x4<<8)-x4; /* x5 = x4*255; */
+//  x5 = (x4<<8)-x4; /* x5 = x4*255; */
         x4 = x5 = 0;
 
         x6 = 0xFFFF00FF;
@@ -178,9 +178,9 @@ SadMBOffset1:
     {
         __asm
         {
-            rsbs	tmp, tmp, tmp2 ;
-            rsbmi	tmp, tmp, #0 ;
-            add		sad, sad, tmp ;
+            rsbs    tmp, tmp, tmp2 ;
+            rsbmi   tmp, tmp, #0 ;
+            add     sad, sad, tmp ;
         }
 
         return sad;
@@ -192,13 +192,13 @@ SadMBOffset1:
 
         __asm
         {
-            EOR		x7, src2, src1;		/* check odd/even combination */
-            SUBS	src1, src2, src1;
-            EOR		x7, x7, src1;
-            AND		x7, mask, x7, lsr #1;
-            ORRCC	x7, x7, #0x80000000;
-            RSB		x7, x7, x7, lsl #8;
-            ADD		src1, src1, x7, asr #7;   /* add 0xFF to the negative byte, add back carry */
+            EOR     x7, src2, src1;     /* check odd/even combination */
+            SUBS    src1, src2, src1;
+            EOR     x7, x7, src1;
+            AND     x7, mask, x7, lsr #1;
+            ORRCC   x7, x7, #0x80000000;
+            RSB     x7, x7, x7, lsl #8;
+            ADD     src1, src1, x7, asr #7;   /* add 0xFF to the negative byte, add back carry */
             EOR     src1, src1, x7, asr #7;   /* take absolute value of negative byte */
         }
 
@@ -211,9 +211,9 @@ SadMBOffset1:
 
         __asm
         {
-            EOR      x7, src2, src1;		/* check odd/even combination */
+            EOR      x7, src2, src1;        /* check odd/even combination */
             ADDS     src1, src2, src1;
-            EOR      x7, x7, src1;		/* only odd bytes need to add carry */
+            EOR      x7, x7, src1;      /* only odd bytes need to add carry */
             ANDS     x7, mask, x7, rrx;
             RSB      x7, x7, x7, lsl #8;
             SUB      src1, src1, x7, asr #7;  /* add 0xFF to the negative byte, add back carry */
@@ -223,12 +223,12 @@ SadMBOffset1:
         return src1;
     }
 
-#define sum_accumulate  __asm{ 		SBC      x5, x5, x10;  /* accumulate low bytes */ \
-		BIC      x10, x6, x10;   /* x10 & 0xFF00FF00 */ \
-		ADD      x4, x4, x10,lsr #8;   /* accumulate high bytes */ \
-		SBC      x5, x5, x11;    /* accumulate low bytes */ \
-		BIC      x11, x6, x11;   /* x11 & 0xFF00FF00 */ \
-		ADD      x4, x4, x11,lsr #8; } /* accumulate high bytes */
+#define sum_accumulate  __asm{      SBC      x5, x5, x10;  /* accumulate low bytes */ \
+        BIC      x10, x6, x10;   /* x10 & 0xFF00FF00 */ \
+        ADD      x4, x4, x10,lsr #8;   /* accumulate high bytes */ \
+        SBC      x5, x5, x11;    /* accumulate low bytes */ \
+        BIC      x11, x6, x11;   /* x11 & 0xFF00FF00 */ \
+        ADD      x4, x4, x11,lsr #8; } /* accumulate high bytes */
 
 
 #define NUMBER 3
@@ -263,12 +263,12 @@ SadMBOffset1:
 
         __asm
         {
-            MOVS	x8, ref, lsl #31 ;
-            BHI		SadMBOffset3;
-            BCS		SadMBOffset2;
-            BMI		SadMBOffset1;
+            MOVS    x8, ref, lsl #31 ;
+            BHI     SadMBOffset3;
+            BCS     SadMBOffset2;
+            BMI     SadMBOffset1;
 
-            MVN		x6, #0xFF00;
+            MVN     x6, #0xFF00;
         }
 LOOP_SAD0:
         /****** process 8 pixels ******/
@@ -293,10 +293,10 @@ LOOP_SAD0:
         __asm
         {
             /****** process 8 pixels ******/
-            LDR		x11, [ref,#4];
-            LDR		x10, [ref], lx ;
-            LDR		x14, [blk,#4];
-            LDR		x12, [blk], #16 ;
+            LDR     x11, [ref, #4];
+            LDR     x10, [ref], lx ;
+            LDR     x14, [blk, #4];
+            LDR     x12, [blk], #16 ;
         }
 
         /* process x11 & x14 */
@@ -322,7 +322,7 @@ LOOP_SAD0:
             /****************/
             RSBS    x11, dmin, x10, lsr #16;
             ADDLSS  x8, x8, #0x10000001;
-            BLS		LOOP_SAD0;
+            BLS     LOOP_SAD0;
         }
 
         return ((uint32)x10 >> 16);
@@ -412,13 +412,13 @@ SadMBOffset1:
     }
 
 #define sum_accumulate asm volatile("sbc  %0, %0, %1\n\t" \
-	                            "bic  %1, %4, %1\n\t" \
-	                            "add  %2, %2, %1, lsr #8\n\t" \
-	                            "sbc  %0, %0, %3\n\t" \
-	                            "bic  %3, %4, %3\n\t" \
-	                            "add  %2, %2, %3, lsr #8" \
-	                            :"+r"(x5), "+r"(x10), "+r"(x4), "+r"(x11) \
-	                            :"r"(x6));
+                                "bic  %1, %4, %1\n\t" \
+                                "add  %2, %2, %1, lsr #8\n\t" \
+                                "sbc  %0, %0, %3\n\t" \
+                                "bic  %3, %4, %3\n\t" \
+                                "add  %2, %2, %3, lsr #8" \
+                                :"+r"(x5), "+r"(x10), "+r"(x4), "+r"(x11) \
+                                :"r"(x6));
 
 #define NUMBER 3
 #define SHIFT 24

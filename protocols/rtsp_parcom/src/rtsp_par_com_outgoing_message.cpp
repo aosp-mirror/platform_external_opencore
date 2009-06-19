@@ -493,7 +493,7 @@ RTSPOutgoingMessage::compose()
         }
 
         default:
-        {	// cannot encode an unknown type of message
+        {   // cannot encode an unknown type of message
 
             return false;
         }
@@ -579,18 +579,18 @@ RTSPOutgoingMessage::compose()
     // hard code these for now, later should have a general supported field build that adds on entries as needed
     if(methodEosIsSet)
     {
-    	if(comPvServerPlaylistIsSet)
-    	{
-    		oscl_snprintf( fullRequestBufferSpace, RTSP_MAX_FULL_REQUEST_SIZE-1,
-    			"Supported: com.pv.server_playlist,method.eos%c%c",
-    			CHAR_CR, CHAR_LF );
-    	}
-    	else
-    	{
-    		oscl_snprintf( fullRequestBufferSpace, RTSP_MAX_FULL_REQUEST_SIZE-1,
-    			"Supported: method.eos%c%c",
-    			CHAR_CR, CHAR_LF );
-    	}
+        if(comPvServerPlaylistIsSet)
+        {
+            oscl_snprintf( fullRequestBufferSpace, RTSP_MAX_FULL_REQUEST_SIZE-1,
+                "Supported: com.pv.server_playlist,method.eos%c%c",
+                CHAR_CR, CHAR_LF );
+        }
+        else
+        {
+            oscl_snprintf( fullRequestBufferSpace, RTSP_MAX_FULL_REQUEST_SIZE-1,
+                "Supported: method.eos%c%c",
+                CHAR_CR, CHAR_LF );
+        }
     }
     int addSize = oscl_strlen( fullRequestBufferSpace );
     fullRequestBufferSizeUsed += addSize;

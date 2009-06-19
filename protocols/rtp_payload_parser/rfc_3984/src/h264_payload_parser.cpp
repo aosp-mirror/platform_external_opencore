@@ -178,7 +178,7 @@ OSCL_EXPORT_REF uint32 H264PayloadParser::GetMinCurrTimestamp()
 }
 
 /***************************************************************************************
-*******************************	PRIVATE SECTION ****************************************
+******************************* PRIVATE SECTION ****************************************
 ****************************************************************************************/
 
 PayloadParserStatus
@@ -215,8 +215,8 @@ H264PayloadParser::parseRTPPayload_For_InterleavedMode(const Payload& inputPacke
             PayloadParserStatus ret_val =
                 parseRTPPayload_For_SingleMessageOutput(inputPacket, nal_type, vParsedPayloads, rtp_payload_ptr_offset);
 
-            if (ret_val == PayloadParserStatus_DataNotReady) break;		// processing is complete
-            if (ret_val != PayloadParserStatus_Success) return ret_val;	// error happens
+            if (ret_val == PayloadParserStatus_DataNotReady) break;     // processing is complete
+            if (ret_val != PayloadParserStatus_Success) return ret_val; // error happens
 
             // push into the prority queue
             if (!iIMP->queue(inputPacket, nal_type, iIsFragmentedBitMask))
@@ -502,10 +502,10 @@ H264PayloadParserUtilityForFU::getMemFragPtrLen(
 
     uint32 fu_type = iParser->getFragmentedBitMask() & 0x03;
 
-    // RTP payload offset:  1 starting FU-A		(fu_type == 1 && nal_type == H264_RTP_PAYLOAD_FU_A)
-    //						2 non-starting FU-A	(fu_type != 1 && nal_type == H264_RTP_PAYLOAD_FU_A)
-    //						3 starting FU-B		(fu_type == 1 && nal_type == H264_RTP_PAYLOAD_FU_B)
-    //						4 non-starting FU-B (fu_type != 1 && nal_type == H264_RTP_PAYLOAD_FU_B)
+    // RTP payload offset:  1 starting FU-A     (fu_type == 1 && nal_type == H264_RTP_PAYLOAD_FU_A)
+    //                      2 non-starting FU-A (fu_type != 1 && nal_type == H264_RTP_PAYLOAD_FU_A)
+    //                      3 starting FU-B     (fu_type == 1 && nal_type == H264_RTP_PAYLOAD_FU_B)
+    //                      4 non-starting FU-B (fu_type != 1 && nal_type == H264_RTP_PAYLOAD_FU_B)
     uint32 offset = 1 + (uint32)(fu_type != 1) + ((uint32)(nal_type == H264_RTP_PAYLOAD_FU_B) << 1);
 
 
@@ -537,7 +537,7 @@ void H264PayloadParserUtilityForFU::setMarkerInfo(IPayloadParser::Payload& aIn,
     uint8* rtp_payload_ptr = (uint8*)(aIn.vfragments[0].getMemFragPtr());
     if (rtp_payload_ptr[1] & FU_S_BIT_MASK)  // check S bit of FU header
     {
-        aFragmentedBitMask = 1;	// starting FU
+        aFragmentedBitMask = 1; // starting FU
     }
     else if (rtp_payload_ptr[1] & FU_E_BIT_MASK)  // check E bit of FU header
     {

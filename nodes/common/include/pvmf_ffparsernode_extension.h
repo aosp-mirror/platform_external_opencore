@@ -50,7 +50,7 @@
 #define KPVMFFFParserNodeExtensionUuid  PVUuid(0x72B76D8C,0xB4CC,0x4887,0xB1,0x0B,0x7E,0xE6,0x48,0x47,0xB2,0x05)
 
 // Defines
-#define PVMFFFPARSERNODE_MAX_NUM_TRACKS	6
+#define PVMFFFPARSERNODE_MAX_NUM_TRACKS 6
 
 // Structs
 struct PVMFFFParserNodeTrackInfo

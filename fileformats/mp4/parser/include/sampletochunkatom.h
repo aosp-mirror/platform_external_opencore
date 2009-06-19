@@ -142,7 +142,7 @@ class SampleToChunkAtom : public FullAtom
         uint32 _parsing_mode;
 
         MP4_FF_FILE *_fileptr;
-        uint32	_parsed_entry_cnt;
+        uint32  _parsed_entry_cnt;
         MP4_FF_FILE *_curr_fptr;
         uint32 *_stbl_fptr_vec;
         uint32 _stbl_buff_size;

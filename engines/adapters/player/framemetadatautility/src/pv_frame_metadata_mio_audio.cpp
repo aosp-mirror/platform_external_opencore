@@ -414,7 +414,7 @@ PVMFCommandId PVFMAudioMIO::CancelCommand(PVMFCommandId aCmdId, const OsclAny* a
 
     // See if the response is still queued.
     PVMFStatus status = PVMFFailure;
-    for (uint32 i = 0;i < iCommandResponseQueue.size();i++)
+    for (uint32 i = 0; i < iCommandResponseQueue.size(); i++)
     {
         if (iCommandResponseQueue[i].iCmdId == aCmdId)
         {
@@ -657,7 +657,7 @@ void PVFMAudioMIO::cancelCommand(PVMFCommandId  command_id)
     // In this implementation, the write commands are executed immediately when received so it isn't
     // really possible to cancel. Just report completion immediately.
 
-    for (uint32 i = 0;i < iWriteResponseQueue.size();i++)
+    for (uint32 i = 0; i < iWriteResponseQueue.size(); i++)
     {
         if (iWriteResponseQueue[i].iCmdId == command_id)
         {
@@ -682,7 +682,7 @@ void PVFMAudioMIO::cancelAllCommands()
     // In this implementaiton, the write commands are executed immediately when received so it isn't
     // really possible to cancel. Just report completion immediately.
 
-    for (uint32 i = 0;i < iWriteResponseQueue.size();i++)
+    for (uint32 i = 0; i < iWriteResponseQueue.size(); i++)
     {
         //report completion
         if (iPeer)
@@ -807,7 +807,7 @@ void PVFMAudioMIO::setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParamete
 
     aRet_kvp = NULL;
 
-    for (int32 i = 0;i < num_elements;i++)
+    for (int32 i = 0; i < num_elements; i++)
     {
         //Check against known audio parameter keys...
         if (pv_mime_strcmp(aParameters[i].key, MOUT_AUDIO_FORMAT_KEY) == 0)
@@ -829,7 +829,7 @@ void PVFMAudioMIO::setParametersSync(PvmiMIOSession aSession, PvmiKvp* aParamete
         }
         else if (pv_mime_strcmp(aParameters[i].key, PVMF_FORMAT_SPECIFIC_INFO_KEY) == 0)
         {
-            //	iOutputFile.Write(aParameters[i].value.pChar_value, sizeof(uint8), (int32)aParameters[i].capacity);
+            //  iOutputFile.Write(aParameters[i].value.pChar_value, sizeof(uint8), (int32)aParameters[i].capacity);
         }
         else
         {

@@ -67,8 +67,8 @@ struct SmpteTimeFormat
 struct NptSecFormat
 {
     uint32 sec;
-    uint32 milli_sec;	//added as a sub for floating counterpart.
-//	float frac_sec;
+    uint32 milli_sec;   //added as a sub for floating counterpart.
+//  float frac_sec;
 };
 
 struct NptHHMMSSFormat
@@ -94,7 +94,7 @@ struct NptTimeFormat
 
 struct PVNSPlaylistTimeFormat
 {
-//	mbchar iPlaylistUrl[1024];
+//  mbchar iPlaylistUrl[1024];
     uint32 iClipIndex;
     uint32 sec;
     uint32 milli_sec;
@@ -143,7 +143,7 @@ struct RtspRangeType
         SmpteTimeFormat smpte_start;
         NptTimeFormat npt_start;
         AbsTimeFormat abs_start;
-        PVNSPlaylistTimeFormat	playlist_start;
+        PVNSPlaylistTimeFormat  playlist_start;
     };
 
     bool end_is_set;
@@ -152,7 +152,7 @@ struct RtspRangeType
         SmpteTimeFormat smpte_end;
         NptTimeFormat npt_end;
         AbsTimeFormat abs_end;
-        PVNSPlaylistTimeFormat	playlist_end;
+        PVNSPlaylistTimeFormat  playlist_end;
     };
 
 //#ifdef RTSP_PLAYLIST_SUPPORT

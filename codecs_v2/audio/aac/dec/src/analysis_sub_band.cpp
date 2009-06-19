@@ -29,10 +29,10 @@
 ------------------------------------------------------------------------------
  INPUT AND OUTPUT DEFINITIONS
 
-    Int32 vec[],			Input vector, 32-bit
-	const Int32 *cosTerms,  Cosine Terms
-	Int   maxbands          number of bands used
-	Int32 *scratch_mem		Scratch memory
+    Int32 vec[],            Input vector, 32-bit
+    const Int32 *cosTerms,  Cosine Terms
+    Int   maxbands          number of bands used
+    Int32 *scratch_mem      Scratch memory
 
 
 ------------------------------------------------------------------------------

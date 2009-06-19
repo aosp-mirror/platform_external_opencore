@@ -268,12 +268,12 @@ SDPEVRCMediaInfoParser::parseMediaInfo(const char *buff, const int index, SDPInf
             return SDP_PAYLOAD_MISMATCH;
         }
 
-        if (evrcA->getCFieldStatus()	|| session->getCFieldStatus())
+        if (evrcA->getCFieldStatus()    || session->getCFieldStatus())
         {
             //if sample rate is zero override with defaults
             Oscl_Vector<PayloadSpecificInfoTypeBase*, SDPParserAlloc> payloadSpecificInfoVector =
                 evrcA->getPayloadSpecificInfoVector();
-            for (int ii = 0; ii < (int)payloadSpecificInfoVector.size();ii++)
+            for (int ii = 0; ii < (int)payloadSpecificInfoVector.size(); ii++)
             {
                 if (payloadSpecificInfoVector[ii]->getSampleRate() == 0)
                 {

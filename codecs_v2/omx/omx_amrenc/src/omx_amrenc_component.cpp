@@ -74,7 +74,7 @@ OMX_ERRORTYPE AmrEncOmxComponentDestructor(OMX_IN OMX_HANDLETYPE pHandle, OMX_PT
 
 #if DYNAMIC_LOAD_OMX_AMRENC_COMPONENT
 class AmrEncOmxSharedLibraryInterface:  public OsclSharedLibraryInterface,
-            public OmxSharedLibraryInterface
+        public OmxSharedLibraryInterface
 
 {
     public:
@@ -111,13 +111,13 @@ extern "C"
 {
     OSCL_EXPORT_REF OsclAny* PVGetInterface()
     {
-      return (OsclAny*) OSCL_NEW(AmrEncOmxSharedLibraryInterface, ());
+        return (OsclAny*) OSCL_NEW(AmrEncOmxSharedLibraryInterface, ());
     }
 
     OSCL_EXPORT_REF void PVReleaseInterface(OsclSharedLibraryInterface* aInstance)
     {
-          AmrEncOmxSharedLibraryInterface* module = (AmrEncOmxSharedLibraryInterface*)aInstance;
-          OSCL_DELETE(module);
+        AmrEncOmxSharedLibraryInterface* module = (AmrEncOmxSharedLibraryInterface*)aInstance;
+        OSCL_DELETE(module);
     }
 }
 
@@ -253,9 +253,9 @@ OMX_ERRORTYPE OmxComponentAmrEncoderAO::ConstructComponent(OMX_PTR pAppData, OMX
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->AudioAmrParam.nPortIndex = OMX_PORT_OUTPUTPORT_INDEX;
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->AudioAmrParam.nChannels = 1;
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->AudioAmrParam.nBitRate = 0;
-    ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->AudioAmrParam.eAMRBandMode = OMX_AUDIO_AMRBandModeNB7;	//AMRNB Mode 7 = 12200 bps
+    ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->AudioAmrParam.eAMRBandMode = OMX_AUDIO_AMRBandModeNB7;  //AMRNB Mode 7 = 12200 bps
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->AudioAmrParam.eAMRDTXMode = OMX_AUDIO_AMRDTXModeOnVAD1;
-    ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->AudioAmrParam.eAMRFrameFormat = OMX_AUDIO_AMRFrameFormatFSF;	//PVMF_AMR_IETF
+    ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->AudioAmrParam.eAMRFrameFormat = OMX_AUDIO_AMRFrameFormatFSF;    //PVMF_AMR_IETF
 
     iPortTypesParam.nPorts = 2;
     iPortTypesParam.nStartPortNumber = 0;
@@ -309,9 +309,9 @@ OMX_ERRORTYPE OmxComponentAmrEncoderAO::ConstructComponent(OMX_PTR pAppData, OMX
 
 
 /** This function is called by the omx core when the component
-	* is disposed by the IL client with a call to FreeHandle().
-	* \param Component, the component to be disposed
-	*/
+    * is disposed by the IL client with a call to FreeHandle().
+    * \param Component, the component to be disposed
+    */
 
 OMX_ERRORTYPE OmxComponentAmrEncoderAO::DestroyComponent()
 {
@@ -360,8 +360,8 @@ void OmxComponentAmrEncoderAO::ProcessData()
     ComponentPortType* pOutPort = ipPorts[OMX_PORT_OUTPUTPORT_INDEX];
     OMX_COMPONENTTYPE* pHandle  = &iOmxComponent;
 
-    OMX_U8*	 pOutBuffer;
-    OMX_U32	 OutputLength;
+    OMX_U8*  pOutBuffer;
+    OMX_U32  OutputLength;
     OMX_S32  EncodeReturn;
     OMX_U32  RemainderInputBytes = 0;
     OMX_TICKS OutputTimeStamp;
@@ -404,8 +404,8 @@ void OmxComponentAmrEncoderAO::ProcessData()
                 iActualNumberOutputFrames = omx_min(AllocNumberOutputFrames, iMaxNumberOutputFrames);
 
                 /* Keep the minimum of the two:
-                	-frames accomodated and
-                	-maximum frames defined by component */
+                    -frames accomodated and
+                    -maximum frames defined by component */
                 iOutputFrameLength = iActualNumberOutputFrames * MAX_AMR_FRAME_SIZE;
             }
         }

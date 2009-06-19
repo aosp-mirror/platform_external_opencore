@@ -18,12 +18,12 @@
 /*
 
  Description: Separated modules into one function per file and put into
- 	new template.
+    new template.
 
  Description: Optimizing C code and adding comments.  Also changing variable
-	names to make them more meaningful.
+    names to make them more meaningful.
 
- Who: 					Date:
+ Who:                   Date:
  Description:
 
 ------------------------------------------------------------------------------
@@ -31,49 +31,49 @@
 
  Inputs:
 
-	Rec_Y = pointer to 0th position in buffer containing luminance values
-		of type uint8.
-	y_start = value of y coordinate of type int that specifies the first
-		row of pixels to be used in the filter algorithm.
-	x_start = value of x coordinate of type int that specifies the first
-		column of pixels to be used in the filter algorithm.
-	y_blk_start = value of the y coordinate of type int that specifies the
-		row of pixels which contains the start of a block. The row
-		specified by y_blk_start+BLK_SIZE is the last row of pixels
-		that are used in the filter algorithm.
-	x_blk_start = value of the x coordinate of type int that specifies the
-		column of pixels which contains the start of a block.  The
-		column specified by x_blk_start+BLK_SIZE is the last column of
-		pixels that are used in the filter algorithm.
-	thr = value of type int that is compared to the elements in Rec_Y to
-		determine if a particular value in Rec_Y will be modified by
-		the filter or not
-	width = value of type int that specifies the width of the display
-		in pixels (or pels, equivalently).
-	max_diff = value of type int that specifies the value that may be added
-		or subtracted from the pixel in Rec_Y that is being filtered
-		if the filter algorithm decides to change that particular
-		pixel's luminance value.
+    Rec_Y = pointer to 0th position in buffer containing luminance values
+        of type uint8.
+    y_start = value of y coordinate of type int that specifies the first
+        row of pixels to be used in the filter algorithm.
+    x_start = value of x coordinate of type int that specifies the first
+        column of pixels to be used in the filter algorithm.
+    y_blk_start = value of the y coordinate of type int that specifies the
+        row of pixels which contains the start of a block. The row
+        specified by y_blk_start+BLK_SIZE is the last row of pixels
+        that are used in the filter algorithm.
+    x_blk_start = value of the x coordinate of type int that specifies the
+        column of pixels which contains the start of a block.  The
+        column specified by x_blk_start+BLK_SIZE is the last column of
+        pixels that are used in the filter algorithm.
+    thr = value of type int that is compared to the elements in Rec_Y to
+        determine if a particular value in Rec_Y will be modified by
+        the filter or not
+    width = value of type int that specifies the width of the display
+        in pixels (or pels, equivalently).
+    max_diff = value of type int that specifies the value that may be added
+        or subtracted from the pixel in Rec_Y that is being filtered
+        if the filter algorithm decides to change that particular
+        pixel's luminance value.
 
 
  Local Stores/Buffers/Pointers Needed:
-	None
+    None
 
  Global Stores/Buffers/Pointers Needed:
-	None
+    None
 
  Outputs:
-	None
+    None
 
  Pointers and Buffers Modified:
-	Buffer pointed to by Rec_Y is modified with the filtered
-	luminance values.
+    Buffer pointed to by Rec_Y is modified with the filtered
+    luminance values.
 
  Local Stores Modified:
-	None
+    None
 
  Global Stores Modified:
-	None
+    None
 
 ------------------------------------------------------------------------------
  FUNCTION DESCRIPTION
@@ -97,22 +97,22 @@
  (y_blk_start, x_blk_start).  The width and height of the block is BLKSIZE.
  (y_start,x_start) may be specified independently of (y_blk_start, x_blk_start).
 
-	(y_start,x_start)
+    (y_start,x_start)
  -----------|--------------------------
-	|   |	|	|	|
-	|   X	| pelu1	| pelu2	|
-	| pelu0	|	|	|
-	| 	|	|	|
+    |   |   |   |   |
+    |   X   | pelu1 | pelu2 |
+    | pelu0 |   |   |
+    |   |   |   |
  --------------------------------------
-	|	|	|	|
-	| pelc0	| pelc1	| pelc2	|
-	|	|	|	|
-	|	|	|	|
+    |   |   |   |
+    | pelc0 | pelc1 | pelc2 |
+    |   |   |   |
+    |   |   |   |
  --------------------------------------
-	|	|	|	|
-	| pell0	| pell1	| pell2	|
-	|	|	|	|
-	|	|	|	|
+    |   |   |   |
+    | pell0 | pell1 | pell2 |
+    |   |   |   |
+    |   |   |   |
  --------------------------------------
 
  The filtering of the luminance values is achieved by comparing the 9
@@ -145,21 +145,21 @@
      the resources used should be documented below.
 
  STACK USAGE: [stack count for this module] + [variable to represent
-		  stack usage for each subroutine called]
+          stack usage for each subroutine called]
 
      where: [stack usage variable] = stack usage for [subroutine
-		 name] (see [filename].ext)
+         name] (see [filename].ext)
 
  DATA MEMORY USED: x words
 
  PROGRAM MEMORY USED: x words
 
  CLOCK CYCLES: [cycle count equation for this module] + [variable
-		   used to represent cycle count for each subroutine
-		   called]
+           used to represent cycle count for each subroutine
+           called]
 
      where: [cycle count variable] = cycle count for [subroutine
-		name] (see [filename].ext)
+        name] (see [filename].ext)
 
 ------------------------------------------------------------------------------
 */
@@ -168,9 +168,9 @@
 /*----------------------------------------------------------------------------
 ; INCLUDES
 ----------------------------------------------------------------------------*/
-#include 	"mp4dec_lib.h"
-#include 	"post_proc.h"
-#include	"mp4def.h"
+#include    "mp4dec_lib.h"
+#include    "post_proc.h"
+#include    "mp4def.h"
 
 #define OSCL_DISABLE_WARNING_CONV_POSSIBLE_LOSS_OF_DATA
 #include "osclconfig_compiler_warnings.h"
@@ -210,14 +210,14 @@
 ; FUNCTION CODE
 ----------------------------------------------------------------------------*/
 void AdaptiveSmooth_NoMMX(
-    uint8 *Rec_Y, 		/* i/o 	*/
-    int y_start, 		/* i 	*/
-    int x_start, 		/* i 	*/
-    int y_blk_start, 	/* i 	*/
-    int x_blk_start,	/* i 	*/
-    int thr, 		/* i 	*/
-    int width, 		/* i 	*/
-    int max_diff		/* i 	*/
+    uint8 *Rec_Y,       /* i/o  */
+    int y_start,        /* i    */
+    int x_start,        /* i    */
+    int y_blk_start,    /* i    */
+    int x_blk_start,    /* i    */
+    int thr,        /* i    */
+    int width,      /* i    */
+    int max_diff        /* i    */
 )
 {
 
@@ -246,30 +246,30 @@ void AdaptiveSmooth_NoMMX(
     /*  first row
     */
     addr_v = (int32)(y_start + 1) * width;  /* y coord of 1st element in the row  /
-				     /containing pelc pixel	/	  */
+                     /containing pelc pixel /     */
     Rec_Y_ptr = &Rec_Y[addr_v + x_start];  /* initializing pointer to
-					       /  pelc0 position  */
-    sum_V_ptr = &sum_v[0];	/* initializing pointer to 0th element of array
-				/   that will contain weighted sums of pixel
-				/   luminance values */
+                           /  pelc0 position  */
+    sum_V_ptr = &sum_v[0];  /* initializing pointer to 0th element of array
+                /   that will contain weighted sums of pixel
+                /   luminance values */
     sign_V_ptr = &sign_v[0];  /*  initializing pointer to 0th element of
-				  /   array that will contain sums that indicate
-				  /    how many of the 9 pixels are above or below
-				  /    the threshold value (thr)	*/
+                  /   array that will contain sums that indicate
+                  /    how many of the 9 pixels are above or below
+                  /    the threshold value (thr)    */
     pelp = &oldrow[0];  /* initializing pointer to the 0th element of array
-			    /    that will contain current values of pelc that
-			    /	are saved and used as values of pelu when the
-			    /	next row of pixels are filtered */
+                /    that will contain current values of pelc that
+                /   are saved and used as values of pelu when the
+                /   next row of pixels are filtered */
 
     pelu = *(Rec_Y_ptr - width);  /* assigning value of pelu0 to pelu  */
     *pelp++ = pelc = *Rec_Y_ptr; /* assigning value of pelc0 to pelc and
-				     /	storing this value in pelp which
-				     /   will be used as value of pelu0 when
-				     /	next row is filtered */
+                     /  storing this value in pelp which
+                     /   will be used as value of pelu0 when
+                     /  next row is filtered */
     pell = *(Rec_Y_ptr + width);  /* assigning value of pell0 to pell */
     Rec_Y_ptr++; /* advancing pointer from pelc0 to pelc1 */
     *sum_V_ptr++ = pelu + (pelc << 1) + pell;  /* weighted sum of pelu0,
-						 /  pelc0 and pell0  */
+                         /  pelc0 and pell0  */
     /* sum of 0's and 1's (0 if pixel value is below thr, 1 if value
     /is above thr)  */
     *sign_V_ptr++ = INDEX(pelu, thr) + INDEX(pelc, thr) + INDEX(pell, thr);
@@ -277,13 +277,13 @@ void AdaptiveSmooth_NoMMX(
 
     pelu = *(Rec_Y_ptr - width);  /* assigning value of pelu1 to pelu */
     *pelp++ = pelc = *Rec_Y_ptr; /* assigning value of pelc1 to pelc and
-				     /	storing this value in pelp which
-				     /	will be used as the value of pelu1 when
-				     /	next row is filtered */
+                     /  storing this value in pelp which
+                     /  will be used as the value of pelu1 when
+                     /  next row is filtered */
     pell = *(Rec_Y_ptr + width);  /* assigning value of pell1 to pell */
     Rec_Y_ptr++;  /* advancing pointer from pelc1 to pelc2 */
     *sum_V_ptr++ = pelu + (pelc << 1) + pell; /* weighted sum of pelu1,
-						/ pelc1 and pell1  */
+                        / pelc1 and pell1  */
     /* sum of 0's and 1's (0 if pixel value is below thr, 1 if value
     /is above thr)  */
     *sign_V_ptr++ = INDEX(pelu, thr) + INDEX(pelc, thr) + INDEX(pell, thr);
@@ -296,11 +296,11 @@ void AdaptiveSmooth_NoMMX(
     for (col_cntr = (x_blk_start + BLKSIZE - 1) - x_start; col_cntr > 0; col_cntr--)
     {
         pelu = *(Rec_Y_ptr - width);  /* assigning value of pelu2 to
-					    /	pelu */
+                        /   pelu */
         *pelp++ = pelc = *Rec_Y_ptr; /* assigning value of pelc2 to pelc
-					     / and storing this value in pelp
-					     / which will be used	as value of pelu2
-					     / when next row is filtered */
+                         / and storing this value in pelp
+                         / which will be used   as value of pelu2
+                         / when next row is filtered */
         pell = *(Rec_Y_ptr + width); /* assigning value of pell2 to pell */
 
         /* weighted sum of pelu1, pelc1 and pell1  */
@@ -338,25 +338,25 @@ void AdaptiveSmooth_NoMMX(
                 sum = *Rec_Y_ptr + max_diff;
             }
             *Rec_Y_ptr++ = sum; /* assign value of sum to pelc1
-					     and advance pointer to pelc2 */
+                         and advance pointer to pelc2 */
         }
         Rec_Y_ptr++; /* advance pointer to new value of pelc2
-			     /   old pelc2 is now treated as pelc1*/
+                 /   old pelc2 is now treated as pelc1*/
         sum_V_ptr++; /* pointer is advanced so next weighted sum may
-			     /	be saved */
+                 /  be saved */
         sign_V_ptr++; /* pointer is advanced so next sum of 0's and
-			      /	1's may be saved  */
+                  / 1's may be saved  */
     }
 
     /* The nested loops below perform the filtering for the remaining rows */
 
     addr_v = (y_start + 2) * width;  /* advance addr_v to the next row
-					 /   (corresponding to pell0)*/
+                     /   (corresponding to pell0)*/
     /* The outer loop steps throught the rows.   */
-    for (row_cntr = (y_blk_start + BLKSIZE) - (y_start + 2);row_cntr > 0;row_cntr--)
+    for (row_cntr = (y_blk_start + BLKSIZE) - (y_start + 2); row_cntr > 0; row_cntr--)
     {
         Rec_Y_ptr = &Rec_Y[addr_v + x_start]; /* advance pointer to
-			/the old pell0, which has become the new pelc0 */
+            /the old pell0, which has become the new pelc0 */
         addr_v += width;  /* move addr_v down 1 row */
         sum_V_ptr = &sum_v[0];  /* re-initializing pointer */
         sign_V_ptr = &sign_v[0];  /* re-initilaizing pointer */
@@ -378,7 +378,7 @@ void AdaptiveSmooth_NoMMX(
         *sign_V_ptr++ = INDEX(pelu, thr) + INDEX(pelc, thr) +
                         INDEX(pell, thr);
         /* The inner loop steps through the columns */
-        for (col_cntr = (x_blk_start + BLKSIZE - 1) - x_start;col_cntr > 0;col_cntr--)
+        for (col_cntr = (x_blk_start + BLKSIZE - 1) - x_start; col_cntr > 0; col_cntr--)
         {
             pelu = *pelp; /* setting pelu2 to old value of pelc2 */
             *pelp++ = pelc = *Rec_Y_ptr;

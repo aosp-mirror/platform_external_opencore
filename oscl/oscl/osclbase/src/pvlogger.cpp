@@ -315,7 +315,7 @@ OSCL_EXPORT_REF PVLoggerRegistry::PVLoggerRegistry()
         PVLogger *logger = new(ptr) PVLogger(rootTag, PVLOGGER_LEVEL_UNINTIALIZED, true);
 
         // add logger to the tag tree
-        _loggerTree[OSCL_CONST_CAST(char*,(rootTag))] = logger;
+        _loggerTree[OSCL_CONST_CAST(char*, (rootTag))] = logger;
     }
 #endif
 };
@@ -375,7 +375,7 @@ OSCL_EXPORT_REF PVLogger *PVLoggerRegistry::CreatePVLogger(const char* tagIn, lo
     PVLogger *logger = new(ptr) PVLogger(tagIn, level, oAppenderInheritance);
 
     // add logger to the tag tree
-    _loggerTree[OSCL_CONST_CAST(char*,(tagIn))] = logger;
+    _loggerTree[OSCL_CONST_CAST(char*, (tagIn))] = logger;
 
     // how many levels deep is the node we just inserted?
     iter = _loggerTree.find(OSCL_CONST_CAST(char*, (tagIn)));

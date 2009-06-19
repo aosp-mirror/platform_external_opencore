@@ -149,8 +149,8 @@ bool Mp4NodesCoreLibraryLoader::DeleteMp4ParserNode(PVMFNodeInterface* aNode)
 }
 
 class Mp4NodesRegistryInterface: public OsclSharedLibraryInterface,
-            public NodeRegistryPopulatorInterface,
-            public RecognizerPopulatorInterface
+        public NodeRegistryPopulatorInterface,
+        public RecognizerPopulatorInterface
 {
     public:
         Mp4NodesRegistryInterface() {};

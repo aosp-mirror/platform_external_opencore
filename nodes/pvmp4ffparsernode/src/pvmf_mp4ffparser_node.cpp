@@ -75,9 +75,9 @@
 
 #include "oscl_exclusive_ptr.h"
 
-#define PVMF_MP4_MIME_FORMAT_AUDIO_UNKNOWN	"x-pvmf/audio/unknown"
-#define PVMF_MP4_MIME_FORMAT_VIDEO_UNKNOWN	"x-pvmf/video/unknown"
-#define PVMF_MP4_MIME_FORMAT_UNKNOWN		"x-pvmf/unknown-media/unknown"
+#define PVMF_MP4_MIME_FORMAT_AUDIO_UNKNOWN  "x-pvmf/audio/unknown"
+#define PVMF_MP4_MIME_FORMAT_VIDEO_UNKNOWN  "x-pvmf/video/unknown"
+#define PVMF_MP4_MIME_FORMAT_UNKNOWN        "x-pvmf/unknown-media/unknown"
 
 // Read Each Track Individually
 #define TRACK_NO_PER_RESET_PLAYBACK_CALL 1
@@ -163,7 +163,7 @@ PVMFMP4FFParserNode::PVMFMP4FFParserNode(int32 aPriority) :
     iMP4ParserNodeMetadataValueCount = 0;
     iCPMGetLicenseInterfaceCmdId     = 0;
     iCPMGetLicenseCmdId              = 0;
-    iCPMCancelGetLicenseCmdId		 = 0;
+    iCPMCancelGetLicenseCmdId        = 0;
 
     minTime = 0;
     avgTime = 0;
@@ -615,7 +615,7 @@ bool PVMFMP4FFParserNode::queryInterface(const PVUuid& uuid, PVInterface*& iface
     }
     else if (uuid == PVMI_CAPABILITY_AND_CONFIG_PVUUID)
     {
-        PvmiCapabilityAndConfig* myInterface = 	OSCL_STATIC_CAST(PvmiCapabilityAndConfig*, this);
+        PvmiCapabilityAndConfig* myInterface =  OSCL_STATIC_CAST(PvmiCapabilityAndConfig*, this);
         iface = OSCL_STATIC_CAST(PVInterface*, myInterface);
     }
     else if (uuid == PVMFCPMPluginLicenseInterfaceUuid)
@@ -3328,7 +3328,7 @@ PVMFStatus PVMFMP4FFParserNode::DoSetDataSourcePosition(PVMFMP4FFParserNodeComma
     int32 minFileOffset = 0x7FFFFFFF;
     if (0 != trackList[0])
     {
-        tempNPT = targetNPT;		// For logging Purpose
+        tempNPT = targetNPT;        // For logging Purpose
         tempTrackId = trackList[0];
         targetNPT = iMP4FileHandle->resetPlayback(targetNPT, (uint16)TRACK_NO_PER_RESET_PLAYBACK_CALL,
                     &tempTrackId, seektosyncpoint);
@@ -4313,7 +4313,7 @@ bool PVMFMP4FFParserNode::RetrieveTrackData(PVMP4FFNodeTrackPortInfo& aTrackPort
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO, (0, "PVMFMP4FFParserNode::RetrieveTrackData() No Resource Found"));
         aTrackPortInfo.iState = PVMP4FFNodeTrackPortInfo::TRACKSTATE_TRACKDATAPOOLEMPTY;
-        aTrackPortInfo.iTrackDataMemoryPool->notifyfreeblockavailable(aTrackPortInfo, aTrackPortInfo.iTrackMaxDataSize);	// Enable flag to receive event when next deallocate() is called on pool
+        aTrackPortInfo.iTrackDataMemoryPool->notifyfreeblockavailable(aTrackPortInfo, aTrackPortInfo.iTrackMaxDataSize);    // Enable flag to receive event when next deallocate() is called on pool
         return false;
     }
 
@@ -4330,7 +4330,7 @@ bool PVMFMP4FFParserNode::RetrieveTrackData(PVMP4FFNodeTrackPortInfo& aTrackPort
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO, (0, "PVMFMP4FFParserNode::RetrieveTrackData() Memory allocation for media data memory pool failed"));
         aTrackPortInfo.iState = PVMP4FFNodeTrackPortInfo::TRACKSTATE_MEDIADATAPOOLEMPTY;
-        aTrackPortInfo.iMediaDataMemPool->notifyfreechunkavailable(aTrackPortInfo);		// Enable flag to receive event when next deallocate() is called on pool
+        aTrackPortInfo.iMediaDataMemPool->notifyfreechunkavailable(aTrackPortInfo);     // Enable flag to receive event when next deallocate() is called on pool
         return false;
     }
 
@@ -5301,7 +5301,7 @@ bool PVMFMP4FFParserNode::GenerateAVCNALGroup(PVMP4FFNodeTrackPortInfo& aTrackPo
     OSCL_ASSERT(aMediaFragGroup.GetRep() != NULL);
 
     // Set End-of-NAL bit to 1 always - no NAL fragmentation for now
-    uint32	markerInfo = (mediaDataIn->getMarkerInfo()) | PVMF_MEDIA_DATA_MARKER_INFO_END_OF_NAL_BIT;
+    uint32  markerInfo = (mediaDataIn->getMarkerInfo()) | PVMF_MEDIA_DATA_MARKER_INFO_END_OF_NAL_BIT;
     aMediaFragGroup->setMarkerInfo(markerInfo);
 
     OsclRefCounterMemFrag memFragIn;
@@ -5573,7 +5573,7 @@ bool PVMFMP4FFParserNode::SendEndOfTrackCommand(PVMP4FFNodeTrackPortInfo& aTrack
         //EOS timestamp(aTrackPortInfo.iTimestamp)is considered while deciding the iResumeTimeStamp in the mediaoutput node
         //therefore its length should also be considered while making decision to forward or drop the packet
         //at the mediaoutput node.
-        sharedMediaCmdPtr->setDuration(PVMP4FF_DEFAULT_EOS_DURATION_IN_SEC * (aTrackPortInfo.iClockConverter->get_timescale()));
+        sharedMediaCmdPtr->setDuration(PVMP4FF_DEFAULT_EOS_DURATION_IN_SEC *(aTrackPortInfo.iClockConverter->get_timescale()));
     }
 
     PVMFSharedMediaMsgPtr mediaMsgOut;
@@ -5636,7 +5636,7 @@ void PVMFMP4FFParserNode::HandlePortActivity(const PVMFPortActivity &aActivity)
             //Purge any port activity events already queued
             //for this port.
             {
-                for (uint32 i = 0;i < iPortActivityQueue.size();)
+                for (uint32 i = 0; i < iPortActivityQueue.size();)
                 {
                     if (iPortActivityQueue[i].iPort == aActivity.iPort)
                     {
@@ -8448,7 +8448,7 @@ PVMFStatus PVMFMP4FFParserNode::GetVideoFrameHeight(uint32 aId, int32& aHeight, 
                         {
                             aDisplayHeight = display_height;
                         }
-                        aHeight	= height;
+                        aHeight = height;
                     }
                     iMP4FileHandle->resetPlayback();
                     OSCL_ARRAY_DELETE(sampleBuf);
@@ -8874,7 +8874,7 @@ PVMFMP4FFParserNode::CancelGetLicense(PVMFSessionId aSessionId, PVMFCommandId aC
 {
     PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC((0, "PVMFMP4FFParserNode::CancelGetLicense - called"));
     PVMFMP4FFParserNodeCommand cmd;
-    cmd.PVMFMP4FFParserNodeCommandBase::Construct(aSessionId, PVMP4FF_NODE_CMD_CANCEL_GET_LICENSE, aCmdId,	aContextData);
+    cmd.PVMFMP4FFParserNodeCommandBase::Construct(aSessionId, PVMP4FF_NODE_CMD_CANCEL_GET_LICENSE, aCmdId,  aContextData);
     return QueueCommandL(cmd);
 }
 

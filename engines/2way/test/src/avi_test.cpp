@@ -221,7 +221,7 @@ void avi_test::CommandCompleted(const PVCmdResponse& aResponse)
     else if (iDisCmdId == cmdId)
     {
         printf("Finished disconnecting \n");
-        //	destroy_sink_source();
+        //  destroy_sink_source();
         reset();
     }
     else if (iRstCmdId == cmdId)

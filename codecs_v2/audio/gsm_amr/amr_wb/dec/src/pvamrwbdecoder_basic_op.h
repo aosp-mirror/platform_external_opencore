@@ -237,7 +237,7 @@ __inline int32 shr_int32(int32 L_var1, int16 var2)
 #else
 
 #ifndef C_EQUIVALENT
-#define C_EQUIVALENT		// default to C_EQUIVALENT
+#define C_EQUIVALENT        // default to C_EQUIVALENT
 #endif
 
 #include "pvamrwbdecoder_basic_op_cequivalent.h"

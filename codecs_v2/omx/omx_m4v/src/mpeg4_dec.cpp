@@ -122,7 +122,7 @@ OMX_BOOL Mpeg4Decoder_OMX::Mp4DecodeVideo(OMX_U8* aOutBuffer, OMX_U32* aOutputLe
 
     //MaxSize = *aInBufSize;
 
-    if ((* (OMX_S32*)aInBufSize) <= 0)
+    if ((*(OMX_S32*)aInBufSize) <= 0)
     {
         return OMX_FALSE;
     }
@@ -226,12 +226,12 @@ OMX_S32 Mpeg4Decoder_OMX::InitializeVideoDecode(
 
     if (mode == MODE_H263)
     {
-	LOGE("PV SW DECODER is used for H.263");
+        LOGE("PV SW DECODER is used for H.263");
         CodecMode = H263_MODE;
     }
     else
     {
-	LOGE("PV SW DECODER is used for MPEG4");
+        LOGE("PV SW DECODER is used for MPEG4");
     }
 
     OK = PVInitVideoDecoder(&VideoCtrl, aBuffer, (int32*) aSize, 1,

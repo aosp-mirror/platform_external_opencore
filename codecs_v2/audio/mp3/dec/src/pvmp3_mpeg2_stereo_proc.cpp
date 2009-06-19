@@ -425,7 +425,7 @@ void pvmp3_mpeg2_stereo_proc(int32 xr[SUBBANDS_NUMBER*FILTERBANK_BANDS],
                             /* only sfb 12 in intensity mode, use factors corresponding to is_pos[12] == 0 */
                         {
                             (scalefac_R->s[j][12]) = 0;
-                            scalefac_IIP_buffer[36 + j] = 1;	/* the scf value 0 in sfb12 is "legal" */
+                            scalefac_IIP_buffer[36 + j] = 1;    /* the scf value 0 in sfb12 is "legal" */
                         }
                         /* if sfbTemp > sfb (no sfb in intensity mode): do nothing */
 
@@ -522,7 +522,7 @@ void pvmp3_mpeg2_stereo_proc(int32 xr[SUBBANDS_NUMBER*FILTERBANK_BANDS],
                         /* only sfb 12 in intensity mode, use factors corresponding to is_pos[12] == 0 */
                     {
                         (scalefac_R->s[j][12]) = 0;
-                        scalefac_IIP_buffer[36 + j] = 1;	/* the scf value 0 in sfb12 is "legal" */
+                        scalefac_IIP_buffer[36 + j] = 1;    /* the scf value 0 in sfb12 is "legal" */
                     }
                     /* if sfbTemp > sfb (no sfb in intensity mode): do nothing */
 
@@ -639,13 +639,13 @@ void pvmp3_mpeg2_stereo_proc(int32 xr[SUBBANDS_NUMBER*FILTERBANK_BANDS],
                 /* copy factors and legal/illegal information from sfb20 to sfb21 */
             {
                 (scalefac_R->l[21]) = (scalefac_R->l[20]);
-                scalefac_IIP_buffer[21] = scalefac_IIP_buffer[20];	/* legal/illegal in sfb 21 same as in sfb 20 */
+                scalefac_IIP_buffer[21] = scalefac_IIP_buffer[20];  /* legal/illegal in sfb 21 same as in sfb 20 */
             }
             else if (sfbTemp == 21)
                 /* only sfb 21 in intensity mode, is_pos[21] = 0 */
             {
                 (scalefac_R->l[21]) = 0;
-                scalefac_IIP_buffer[21] = 1;	/* the scf value 0 in sfb21 is "legal" */
+                scalefac_IIP_buffer[21] = 1;    /* the scf value 0 in sfb21 is "legal" */
             }
             /* if sfbTemp > 21 (no sfb in intensity mode): do nothing */
 

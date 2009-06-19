@@ -47,9 +47,9 @@
 #endif
 
 class PVMFBufferDataSource : public PvmfPortBaseImpl,
-            public OsclTimerObserver,
-            public PVMFPortActivityHandler,
-            public PvmiCapabilityAndConfig
+        public OsclTimerObserver,
+        public PVMFPortActivityHandler,
+        public PvmiCapabilityAndConfig
 {
     public:
         OSCL_IMPORT_REF PVMFBufferDataSource(int32 aPortTag,

@@ -85,21 +85,21 @@ static const uint32 INVALID_TRACK_ID = 0;
 // 'pvau' - Audio encoding with simple hint track
 
 
-static const int32 OBJ_DESCR_TAG			= 0x1;
-static const int32 INITIAL_OBJ_DESCR_TAG	= 0x2;
-static const int32 ES_DESCR_TAG			= 0x3;
-static const int32 DEC_CONFIG_DESCR_TAG	= 0x4;
-static const int32 DEC_SPEC_INFO_TAG		= 0x5;
-static const int32 SL_CONFIG_DESCR_TAG	= 0x6;
+static const int32 OBJ_DESCR_TAG            = 0x1;
+static const int32 INITIAL_OBJ_DESCR_TAG    = 0x2;
+static const int32 ES_DESCR_TAG         = 0x3;
+static const int32 DEC_CONFIG_DESCR_TAG = 0x4;
+static const int32 DEC_SPEC_INFO_TAG        = 0x5;
+static const int32 SL_CONFIG_DESCR_TAG  = 0x6;
 //
-static const int32 IPMP_DESCR_PTR_TAG		= 0xa;
-static const int32 IPMP_DESCR_TAG			= 0xb;
+static const int32 IPMP_DESCR_PTR_TAG       = 0xa;
+static const int32 IPMP_DESCR_TAG           = 0xb;
 //
-static const int32 ES_ID_INC_DESCR_TAG	= 0xe;
-static const int32 ES_ID_REF_DESCR_TAG	= 0xf;
+static const int32 ES_ID_INC_DESCR_TAG  = 0xe;
+static const int32 ES_ID_REF_DESCR_TAG  = 0xf;
 //
-static const int32 MP4_IOD_TAG	= 0x10;
-static const int32 MP4_OD_TAG	= 0x11;
+static const int32 MP4_IOD_TAG  = 0x10;
+static const int32 MP4_OD_TAG   = 0x11;
 
 
 
@@ -151,7 +151,7 @@ const uint32    FREE_SPACE_ATOM = FourCharConstToUint32('s', 'k', 'i', 'p');
 const uint32    USER_DATA_ATOM = FourCharConstToUint32('u', 'd', 't', 'a');
 const uint32    MEDIA_TYPE_AUDIO = FourCharConstToUint32('s', 'o', 'u', 'n');
 const uint32    MEDIA_TYPE_VISUAL = FourCharConstToUint32('v', 'i', 'd', 'e');
-const uint32	MEDIA_TYPE_TEXT = FourCharConstToUint32('t', 'e', 'x', 't');
+const uint32    MEDIA_TYPE_TEXT = FourCharConstToUint32('t', 'e', 'x', 't');
 
 const uint32    MPEG_SAMPLE_ENTRY = FourCharConstToUint32('m', 'p', '4', 's');
 const uint32    AUDIO_SAMPLE_ENTRY = FourCharConstToUint32('m', 'p', '4', 'a');
@@ -188,9 +188,9 @@ const uint32    ASSET_INFO_RATING_ATOM = FourCharConstToUint32('r', 't', 'n', 'g
 const uint32    ASSET_INFO_CLSF_ATOM = FourCharConstToUint32('c', 'l', 's', 'f');
 const uint32    ASSET_INFO_KEYWORD_ATOM = FourCharConstToUint32('k', 'y', 'w', 'd');
 const uint32    ASSET_INFO_LOCINFO_ATOM = FourCharConstToUint32('l', 'o', 'c', 'i');
-const uint32	ASSET_INFO_CPRT_ATOM =  FourCharConstToUint32('c', 'p', 'r', 't');
-const uint32	ASSET_INFO_ALBUM_TITLE_ATOM =  FourCharConstToUint32('a', 'l', 'b', 'm');
-const uint32	ASSET_INFO_RECORDING_YEAR_ATOM =  FourCharConstToUint32('y', 'r', 'r', 'c');
+const uint32    ASSET_INFO_CPRT_ATOM =  FourCharConstToUint32('c', 'p', 'r', 't');
+const uint32    ASSET_INFO_ALBUM_TITLE_ATOM =  FourCharConstToUint32('a', 'l', 'b', 'm');
+const uint32    ASSET_INFO_RECORDING_YEAR_ATOM =  FourCharConstToUint32('y', 'r', 'r', 'c');
 
 // Movie fragment atoms
 const uint32    MOVIE_EXTENDS_ATOM = FourCharConstToUint32('m', 'v', 'e', 'x');
@@ -279,9 +279,9 @@ typedef enum
  * Media data is authored in separate media atoms for each track
  * Temporary files are written to the same directory as the output file.
  */
-#define	PVMP4FF_SET_MEDIA_INTERLEAVE_MODE   0x00000001
+#define PVMP4FF_SET_MEDIA_INTERLEAVE_MODE   0x00000001
 
-#define	PVMP4FF_SET_META_DATA_UPFRONT_MODE  0x00000002
+#define PVMP4FF_SET_META_DATA_UPFRONT_MODE  0x00000002
 
 /**
  * This mode authors 3GPP Progressive Downloadable output files:
@@ -289,7 +289,7 @@ typedef enum
  * Media Data is interleaved. Temp files are used.
  * Temporary files are written to the same directory as the output file.
  */
-#define	PVMP4FF_3GPP_PROGRESSIVE_DOWNLOAD_MODE 0x00000003
+#define PVMP4FF_3GPP_PROGRESSIVE_DOWNLOAD_MODE 0x00000003
 
 /**
  * This mode authors 3GPP Downloadable output files:
@@ -297,9 +297,9 @@ typedef enum
  * Media Data is interleaved.
  * No temp files are used.
  */
-#define	PVMP4FF_3GPP_DOWNLOAD_MODE  0x00000009
+#define PVMP4FF_3GPP_DOWNLOAD_MODE  0x00000009
 
-#define	PVMP4FF_SET_FIRST_SAMPLE_EDIT_MODE  0x00000010
+#define PVMP4FF_SET_FIRST_SAMPLE_EDIT_MODE  0x00000010
 
 // movie fragment mode
 // 6th bit is now reserved movie fragment mode and last bit is reserved for interleaving

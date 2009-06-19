@@ -33,14 +33,14 @@
 #include "media_clock_converter.h"
 #include "time_comparison_utils.h"
 
-#define LOGDATAPATH(x)	PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iDatapathLogger, PVLOGMSG_INFO, x);
+#define LOGDATAPATH(x)  PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iDatapathLogger, PVLOGMSG_INFO, x);
 
-#define PVMF_MOPORT_LOGDATAPATH(x)	PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iDatapathLogger, PVLOGMSG_INFO, x);
-#define PVMF_MOPORT_LOGDATAPATH_IN(x)	PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iDatapathLoggerIn, PVLOGMSG_INFO, x);
-#define PVMF_MOPORT_LOGDATAPATH_OUT(x)	PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iDatapathLoggerOut, PVLOGMSG_INFO, x);
-#define PVMF_MOPORT_LOGREPOS(x)	PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iReposLogger, PVLOGMSG_INFO, x);
-#define PVMF_MOPORT_LOGDEBUG(x)	PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, x);
-#define PVMF_MOPORT_LOGERROR(x)	PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, x);
+#define PVMF_MOPORT_LOGDATAPATH(x)  PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iDatapathLogger, PVLOGMSG_INFO, x);
+#define PVMF_MOPORT_LOGDATAPATH_IN(x)   PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iDatapathLoggerIn, PVLOGMSG_INFO, x);
+#define PVMF_MOPORT_LOGDATAPATH_OUT(x)  PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iDatapathLoggerOut, PVLOGMSG_INFO, x);
+#define PVMF_MOPORT_LOGREPOS(x) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iReposLogger, PVLOGMSG_INFO, x);
+#define PVMF_MOPORT_LOGDEBUG(x) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, x);
+#define PVMF_MOPORT_LOGERROR(x) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, x);
 
 
 //for logging media data info
@@ -779,7 +779,7 @@ void PVMediaOutputNodePort::writeComplete(PVMFStatus status, PVMFCommandId aCmdI
         //do any memory cleanup
         bool oCmdIdFound = false;
         uint32 i;
-        for (i = 0;i < iCleanupQueue.size();i++)
+        for (i = 0; i < iCleanupQueue.size(); i++)
         {
             if (iCleanupQueue[i].iCmdId == aCmdId)
             {
@@ -1821,8 +1821,8 @@ void PVMediaOutputNodePort::HandlePortActivity(const PVMFPortActivity& aActivity
             {
                 PVMFSharedMediaMsgPtr peekMsgPtr;
                 bool oBos = false;
-		bool oMIOAlreadyConfigured = false;
-		oMIOAlreadyConfigured = oMIOComponentConfigured;
+                bool oMIOAlreadyConfigured = false;
+                oMIOAlreadyConfigured = oMIOComponentConfigured;
                 if (peekHead(peekMsgPtr, oBos))
                 {
                     /*
@@ -1933,58 +1933,58 @@ void PVMediaOutputNodePort::HandlePortActivity(const PVMFPortActivity& aActivity
                             uint32 iStreamID = iRecentStreamID;
                             iNode->ReportInfoEvent(PVMFInfoStartOfData, (OsclAny*)&iStreamID);
                             iSendStartOfDataEvent = false;
-			    // Now check if the media msg is EOS notification OR media data.
-			    // If EOS then need to do writeComplete for EOS without sending it downstream
-			    // This will happen in cases where the media output node is waiting on configuration,
-			    // but for some reason the upstream node does not have a config to send.
-			    // (Think of cases where we have empty tracks in a presentation OR reposition to EndofClip just after Prepare).
-			    // In such cases, if we get EOS we want to notify the Engine with InfoEndofData for the track
-			    // so that Engine does not wait for EndOfData from the track and be in a hang state.
-			    if (peekMsgPtr->getFormatID() == PVMF_MEDIA_CMD_EOS_FORMAT_ID)
-			    {
-				// There could be cases where MIO was already configured and then a reposition to End cmd
-				// was given to Engine. In this case again EOS will be the first msg after skip but in this
-				// case we want to send EOS downstream rather than sending InfoEndofData from here.
-				if (!oMIOAlreadyConfigured)
-				{
-				    // EOS is the first media msg received after Skip
-				    if (iCurrentMediaMsg.GetRep() != NULL)
-				    {
-					// This should never happen. We cannot have a media msg being processed in this condition.
-					// Just assert and return
-					OSCL_ASSERT(false);
-					PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::HPA: Processing previous msg iCurrentMediaMsg: 0x%x - Fmt=%s \
+                            // Now check if the media msg is EOS notification OR media data.
+                            // If EOS then need to do writeComplete for EOS without sending it downstream
+                            // This will happen in cases where the media output node is waiting on configuration,
+                            // but for some reason the upstream node does not have a config to send.
+                            // (Think of cases where we have empty tracks in a presentation OR reposition to EndofClip just after Prepare).
+                            // In such cases, if we get EOS we want to notify the Engine with InfoEndofData for the track
+                            // so that Engine does not wait for EndOfData from the track and be in a hang state.
+                            if (peekMsgPtr->getFormatID() == PVMF_MEDIA_CMD_EOS_FORMAT_ID)
+                            {
+                                // There could be cases where MIO was already configured and then a reposition to End cmd
+                                // was given to Engine. In this case again EOS will be the first msg after skip but in this
+                                // case we want to send EOS downstream rather than sending InfoEndofData from here.
+                                if (!oMIOAlreadyConfigured)
+                                {
+                                    // EOS is the first media msg received after Skip
+                                    if (iCurrentMediaMsg.GetRep() != NULL)
+                                    {
+                                        // This should never happen. We cannot have a media msg being processed in this condition.
+                                        // Just assert and return
+                                        OSCL_ASSERT(false);
+                                        PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::HPA: Processing previous msg iCurrentMediaMsg: 0x%x - Fmt=%s \
 						    when 1st media msg after skip is EOS, wrong, asserting",
-						    iCurrentMediaMsg.GetRep(), iSinkFormatString.get_str()));
-					return;
-				    }
-				    // Dequeue the Incoming msg and send EndofData
-				    if (DequeueIncomingMsg(iCurrentMediaMsg) == PVMFSuccess)
-				    {
-					PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::HPA - EOS Recvd - StreamID=%d, Seq=%d, TS=%d, Fmt=%s, Qs=%d",
-						    iCurrentMediaMsg->getStreamID(),
-						    iCurrentMediaMsg->getSeqNum(),
-						    iCurrentMediaMsg->getTimestamp(),
-						    iSinkFormatString.get_str(),
-						    IncomingMsgQueueSize()));
+                                                                 iCurrentMediaMsg.GetRep(), iSinkFormatString.get_str()));
+                                        return;
+                                    }
+                                    // Dequeue the Incoming msg and send EndofData
+                                    if (DequeueIncomingMsg(iCurrentMediaMsg) == PVMFSuccess)
+                                    {
+                                        PVMF_MOPORT_LOGDATAPATH((0, "PVMediaOutputNodePort::HPA - EOS Recvd - StreamID=%d, Seq=%d, TS=%d, Fmt=%s, Qs=%d",
+                                                                 iCurrentMediaMsg->getStreamID(),
+                                                                 iCurrentMediaMsg->getSeqNum(),
+                                                                 iCurrentMediaMsg->getTimestamp(),
+                                                                 iSinkFormatString.get_str(),
+                                                                 IncomingMsgQueueSize()));
 
-					uint32 eosStreamId = iCurrentMediaMsg->getStreamID();
+                                        uint32 eosStreamId = iCurrentMediaMsg->getStreamID();
 
-					iNode->ReportInfoEvent(PVMFInfoEndOfData, (OsclAny*)&eosStreamId);
+                                        iNode->ReportInfoEvent(PVMFInfoEndOfData, (OsclAny*)&eosStreamId);
 
-					iCurrentMediaMsg.Unbind();
-					iFragIndex = 0;
-				    }
-				    else
-				    {
-					PVMF_MOPORT_LOGERROR((0, "PVMediaOutputNodePort::HPA: DequeueIncomingMsg Failed - Fmt=%s",
-						    iSinkFormatString.get_str()));
-					OSCL_ASSERT(false);
-				    }
-				    return;
-				}
-			    }
-			}
+                                        iCurrentMediaMsg.Unbind();
+                                        iFragIndex = 0;
+                                    }
+                                    else
+                                    {
+                                        PVMF_MOPORT_LOGERROR((0, "PVMediaOutputNodePort::HPA: DequeueIncomingMsg Failed - Fmt=%s",
+                                                              iSinkFormatString.get_str()));
+                                        OSCL_ASSERT(false);
+                                    }
+                                    return;
+                                }
+                            }
+                        }
                         if (oProcessIncomingMessage)
                         {
                             //we are starting to process a new media msg

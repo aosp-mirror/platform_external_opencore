@@ -157,7 +157,7 @@ PVMFStatus PVMp4FFComposerNode::GetConfigParameter(PvmiKvp*& aParameters, int& a
     // Copy the requested info
     switch (aIndex)
     {
-        case PRESENTATION_TIMESCALE:	// "presentation-timescale"
+        case PRESENTATION_TIMESCALE:    // "presentation-timescale"
             if (PVMI_KVPATTR_CUR == aReqattr)
             {
                 // Return current value
@@ -173,7 +173,7 @@ PVMFStatus PVMp4FFComposerNode::GetConfigParameter(PvmiKvp*& aParameters, int& a
             }
             break;
 
-        case PV_CACHE_SIZE:	// "pv-cache-size"
+        case PV_CACHE_SIZE: // "pv-cache-size"
             if (PVMI_KVPATTR_CUR == aReqattr)
             {
                 // set any parameter here
@@ -416,7 +416,7 @@ PVMFStatus PVMp4FFComposerNode::VerifyAndSetConfigParameter(PvmiKvp& aParameter,
 }
 
 ////////////////////////////////////////////////////////////////////////////
-//					PvmiCapConfigInterface Virtual Functions
+//                  PvmiCapConfigInterface Virtual Functions
 ////////////////////////////////////////////////////////////////////////////
 
 void PVMp4FFComposerNode::createContext(PvmiMIOSession aSession,

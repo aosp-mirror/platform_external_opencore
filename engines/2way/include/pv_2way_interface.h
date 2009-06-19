@@ -96,7 +96,7 @@ class CPV2WayInterface
          *         A reference to a PVSDKInfo structure which contains the product label and date
          * @param aContextData
          *         Optional opaque data that will be passed back to the user with the command response
-         * @leave	This method can leave with one of the following error codes
+         * @leave   This method can leave with one of the following error codes
          *          PVMFErrNoMemory if the SDK failed to allocate memory during this operation
          * @returns A unique command id for asynchronous completion
          **/
@@ -114,7 +114,7 @@ class CPV2WayInterface
          *         up to the length of the buffer and truncated.
          * @param aContextData
          *         Optional opaque data that will be passed back to the user with the command response
-         * @leave	This method can leave with one of the following error codes
+         * @leave   This method can leave with one of the following error codes
          *          PVMFErrNoMemory if the SDK failed to allocate memory during this operation
          * @returns A unique command id for asynchronous completion
          **/
@@ -138,8 +138,8 @@ class CPV2WayInterface
          *          and sources to handle compressed and uncompressed formats.
          * @param aContextData
          *         Optional opaque data that will be passed back to the user with the command response
-         * @leave	This method can leave with one of the following error codes
-         *			PVMFErrArgument if more tx and rx codecs are set than engine can handle, or the mandatory codecs are not in the list.
+         * @leave   This method can leave with one of the following error codes
+         *          PVMFErrArgument if more tx and rx codecs are set than engine can handle, or the mandatory codecs are not in the list.
          *          PVMFErrNotSupported if the format of the sources/sinks is incomtible with what the SDK can handle
          *          PVMFErrInvalidState if invoked in the incorrect state
          *          PVMFErrNoMemory if the SDK failed to allocate memory during this operation
@@ -162,7 +162,7 @@ class CPV2WayInterface
          *
          * @param aContextData
          *         Optional opaque data that will be passed back to the user with the command response
-         * @leave	This method can leave with one of the following error codes
+         * @leave   This method can leave with one of the following error codes
          *          PVMFErrInvalidState if invoked in the incorrect state
          *          PVMFErrNoMemory if the SDK failed to allocate memory during this operation
          * @returns A unique command id for asynchronous completion
@@ -178,13 +178,13 @@ class CPV2WayInterface
          * a)raw media sources like camera, microphone etc.
          * b)sources of compressed data like file, combined capture and encode devices.
          *
-         	 * @param aTrackId
+             * @param aTrackId
          *          The outgoing track id
          * @param aDataSource
          *          Reference to the data source for this track
          * @param aContextData
          *          Optional opaque data that will be passed back to the user with the command response
-         * @leave	This method can leave with one of the following error codes
+         * @leave   This method can leave with one of the following error codes
          *          PVMFErrNotSupported if the format of the sources/sinks is incomtible with what the SDK can handle
          *          KPVErrInvalidState if invoked in the incorrect state
          *          KErrNoMemory if the SDK failed to allocate memory during this operation
@@ -252,7 +252,7 @@ class CPV2WayInterface
          * @param aOptions
          *         Optional additional information for call setup.
          * @param aCommServer
-         *		   An optional pointer to a comm server to provide comm source and sink end-points.
+         *         An optional pointer to a comm server to provide comm source and sink end-points.
          * @param aContextData
          *         Optional opaque data that will be passed back to the user with the command response
          *

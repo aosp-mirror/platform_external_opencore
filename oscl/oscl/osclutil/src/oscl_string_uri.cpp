@@ -30,10 +30,10 @@
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 /* ========================================================================
- *	Function : oscl_str_unescape_uri
- *	Date     : 11/04/2002
+ *  Function : oscl_str_unescape_uri
+ *  Date     : 11/04/2002
  *  Purpose  : see oscl_string_uri.h
- *	Modified :
+ *  Modified :
  * ========================================================================
  */
 OSCL_EXPORT_REF bool  oscl_str_unescape_uri(const char *str_buf_in, char *str_buf_out, uint32 max_out_buf_bytes, uint32 max_bytes, uint32& out_buf_len)
@@ -108,10 +108,10 @@ OSCL_EXPORT_REF bool  oscl_str_unescape_uri(const char *str_buf_in, char *str_bu
 }
 
 /* ========================================================================
- *	Function : oscl_str_unescape_uri
- *	Date     : 11/04/2002
+ *  Function : oscl_str_unescape_uri
+ *  Date     : 11/04/2002
  *  Purpose  : see oscl_string_uri.h
- *	Modified :
+ *  Modified :
  * ========================================================================
  */
 OSCL_EXPORT_REF bool  oscl_str_unescape_uri(const OSCL_String& srcString, OSCL_String& destString, uint32& out_buf_len)
@@ -130,7 +130,7 @@ OSCL_EXPORT_REF bool  oscl_str_unescape_uri(const OSCL_String& srcString, OSCL_S
     char buf[2];
     buf[1] = '\0';
 
-    for (int32 i = 0;srcStrLen > 0;)
+    for (int32 i = 0; srcStrLen > 0;)
     {
         if (src[i] == '%')
         {

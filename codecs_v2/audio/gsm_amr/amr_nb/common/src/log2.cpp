@@ -33,7 +33,7 @@ terms listed above has been obtained from the copyright holder.
  REVISION HISTORY
 
  Description: Updated template used to PV coding template. Moved Log2_norm
-	      function to its own file.
+          function to its own file.
 
  Description: Changed l_shl.c to l_shl.h in Include section.
 
@@ -47,7 +47,7 @@ terms listed above has been obtained from the copyright holder.
               2. Eliminated unused include files typedef.h and l_shl.h.
 
 
- Who: 						Date:
+ Who:                       Date:
  Description:
 
 ------------------------------------------------------------------------------
@@ -89,18 +89,18 @@ terms listed above has been obtained from the copyright holder.
  INPUT AND OUTPUT DEFINITIONS
 
  Inputs:
-	L_x = input value of type Word32
-	pExponent = pointer to the integer part of Log2 of type Word16 whose
-		   valid range is: 0 <= value <= 30
-	pFraction = pointer to the fractional part of Log2 of type Word16
-		   whose valid range is: 0 <= value < 1
+    L_x = input value of type Word32
+    pExponent = pointer to the integer part of Log2 of type Word16 whose
+           valid range is: 0 <= value <= 30
+    pFraction = pointer to the fractional part of Log2 of type Word16
+           whose valid range is: 0 <= value < 1
     pOverflow = pointer to overflow flag
 
 
  Outputs:
-	pExponent -> integer part of the newly calculated Log2
-	pFraction -> fractional part of the newly calculated Log2
-	pOverflow -> 1 if the log2() operation resulted in saturation
+    pExponent -> integer part of the newly calculated Log2
+    pFraction -> fractional part of the newly calculated Log2
+    pOverflow -> 1 if the log2() operation resulted in saturation
 
  Returns:
     None

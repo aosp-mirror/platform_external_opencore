@@ -138,7 +138,7 @@ PVA_FF_TrackHeaderAtom::updateLastTSEntry(uint32 ts)
 {
     uint32 duration = (uint32)((getTimeScale() / 1000.0f) * ts);
     setDuration(duration);
-    _deltaTS = 0;		// this will not increase the total duration
+    _deltaTS = 0;       // this will not increase the total duration
     // in movie fragmement mode as done before rendering
 }
 

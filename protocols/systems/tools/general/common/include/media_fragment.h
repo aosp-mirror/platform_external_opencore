@@ -79,11 +79,11 @@ class MediaFragment
 
         OsclAny Trim(uint8* ptr, int32 len)
         {
-//		if( (ptr >= _fragment.ptr && ptr < ((uint8*)_fragment.ptr+_fragment.len)) &&
-//			(((uint8*)ptr +len) <= ((uint8*)_fragment.ptr+_fragment.len)) ){
+//      if( (ptr >= _fragment.ptr && ptr < ((uint8*)_fragment.ptr+_fragment.len)) &&
+//          (((uint8*)ptr +len) <= ((uint8*)_fragment.ptr+_fragment.len)) ){
             _fragment.ptr = ptr;
             _fragment.len = len;
-//		}
+//      }
         }
 
         virtual BufferFragment* GetFragment()

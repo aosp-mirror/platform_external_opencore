@@ -87,8 +87,8 @@ extern "C"
         Int32       coef[],
         const Int   sfbWidth,
         Int  const pQFormat,
-        UInt16		scale,
-        Int			  maxInput);
+        UInt16      scale,
+        Int           maxInput);
 
 #ifdef __cplusplus
 }

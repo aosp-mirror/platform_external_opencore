@@ -24,8 +24,8 @@
 // content info exposed to user
 struct HTTPContentInfo
 {
-    uint32 iContentLength;		// for "Content-Length"
-    uint32 iContentRangeLeft;	// for "Content-Range"
+    uint32 iContentLength;      // for "Content-Length"
+    uint32 iContentRangeLeft;   // for "Content-Range"
     uint32 iContentRangeRight;
 
     // constructor

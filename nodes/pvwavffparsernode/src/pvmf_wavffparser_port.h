@@ -35,7 +35,7 @@ class PVMFWAVFFParserNode;
 class PVWAVFFNodeTrackPortInfo;
 
 class PVMFWAVFFParserOutPort : public PvmfPortBaseImpl
-            , public PvmiCapabilityAndConfigPortFormatImpl
+        , public PvmiCapabilityAndConfigPortFormatImpl
 {
     public:
         /**

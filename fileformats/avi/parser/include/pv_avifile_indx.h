@@ -74,9 +74,9 @@ class PVAviFileIdxChunk: public PVAviFileParserStatus
 
         Oscl_Vector < IndxTblVector,
         OsclMemAllocator >    iIndexTable;
-        uint32							 iIndexSize;
-        uint32							 iNumStreams;
-        bool							 iOffsetFrmMoviLst;
+        uint32                           iIndexSize;
+        uint32                           iNumStreams;
+        bool                             iOffsetFrmMoviLst;
 
 };
 

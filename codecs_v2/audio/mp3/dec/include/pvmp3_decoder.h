@@ -37,7 +37,7 @@
  */
 
 
-#define KMP3_MAX_OUTPUT_SIZE	4608
+#define KMP3_MAX_OUTPUT_SIZE    4608
 
 /*!
  *  \class  CPvMP3_Decoder "include/pvmp3_decoder.h"

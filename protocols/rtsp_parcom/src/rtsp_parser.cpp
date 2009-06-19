@@ -93,11 +93,11 @@ RTSPParser::getState()
 
     switch (internalState)
     {
-        case	IS_WAITING_FOR_REQUEST_MEMORY:
+        case    IS_WAITING_FOR_REQUEST_MEMORY:
             stateToReturn = WAITING_FOR_REQUEST_MEMORY;
             break;
 
-        case	IS_LOOKING_FOR_END_OF_REQUEST:
+        case    IS_LOOKING_FOR_END_OF_REQUEST:
         case  IS_CONTINUING_TO_FILL_OUT_ENTITY_BODY:
         case  IS_SKIPPING_OVER_ENTITY_BODY:
         case  IS_LOOKING_FOR_RESYNC:
@@ -120,7 +120,7 @@ RTSPParser::getState()
             break;
 
         case  IS_ERROR_REQUEST_TOO_BIG:
-        case 	IS_REQUEST_IS_READY:
+        case    IS_REQUEST_IS_READY:
             // both states are processed the same way,
             // except that the state returned is different
             //
@@ -256,7 +256,7 @@ RTSPParser::getDataBufferSpec()
     }
 
     else if (internalState == IS_CONTINUING_TO_FILL_OUT_ENTITY_BODY
-             ||	internalState == IS_CONTINUING_TO_FILL_OUT_EMBEDDED_DATA
+             || internalState == IS_CONTINUING_TO_FILL_OUT_EMBEDDED_DATA
             )
     {
 
@@ -306,7 +306,7 @@ void
 RTSPParser::lookForEndOfRequest()
 {
     // eorptr = mainBufferEntry;
-    uint32	 newMessageSize;
+    uint32   newMessageSize;
 
     *mainBufferSpace = CHAR_NULL;
 
@@ -360,11 +360,11 @@ RTSPParser::lookForEndOfRequest()
         for (/*eorptr = mainBufferEntry*/; eorptr < mainBufferSpace - 1; ++eorptr)
         {
             if (CHAR_LF == *eorptr || CHAR_CR == *eorptr)
-            {	// it's a possible
+            {   // it's a possible
 
                 // is it two newlines?
                 if (*eorptr == *(eorptr + 1))
-                {	// yes, CR-CR or LF-LF format
+                {   // yes, CR-CR or LF-LF format
 
                     found = true;
                     eorptr += 2;
@@ -374,7 +374,7 @@ RTSPParser::lookForEndOfRequest()
                          && (CHAR_CR == *(eorptr)) && (CHAR_LF == *(eorptr + 1))
                          && (CHAR_CR == *(eorptr + 2)) && (CHAR_LF == *(eorptr + 3))
                         )
-                {	// yes, MS-WINDOWS format
+                {   // yes, MS-WINDOWS format
 
                     found = true;
                     eorptr += 4;
@@ -469,7 +469,7 @@ RTSPParser::lookForEndOfRequest()
         int sizeUsedSoFar = mainBufferSpace - mainBufferEntry;
 
         if (RTSP_PARSER_BUFFER_SIZE == sizeUsedSoFar)
-        {	// we hit the parser's buffer size
+        {   // we hit the parser's buffer size
             internalState = IS_START_LOOKING_FOR_RESYNC;
             continueProcessing();
 
@@ -507,7 +507,7 @@ RTSPParser::registerDataBufferWritten(uint32 sizeWritten)
         return true;
     }
     else if (IS_CONTINUING_TO_FILL_OUT_ENTITY_BODY == internalState
-             ||	IS_CONTINUING_TO_FILL_OUT_EMBEDDED_DATA == internalState
+             || IS_CONTINUING_TO_FILL_OUT_EMBEDDED_DATA == internalState
             )
     { // the memory being filled out is Engine's entity body
         ebCurrentOffset += sizeWritten;

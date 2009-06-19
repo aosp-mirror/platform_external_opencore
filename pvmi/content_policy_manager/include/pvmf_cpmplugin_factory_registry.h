@@ -33,7 +33,7 @@ class OsclRegistryClient;
  *  this string, followed by "/", followed by the plugin mime-string,
  *  e.g. X-CPM-PLUGIN/SOMEVENDOR-OMA1
  */
-#define PVMF_MIME_CPM_PLUGIN  	"X-CPM-PLUGIN"
+#define PVMF_MIME_CPM_PLUGIN    "X-CPM-PLUGIN"
 
 /**
  * Content Policy Manager Plugin Factory Registry .

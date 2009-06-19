@@ -249,7 +249,7 @@ void PVA_FF_SampleDescriptionAtom::addTextDecoderSpecificInfo(PVA_FF_TextSampleD
                 }
                 else
                 {
-                    for (uint32 kk = 0;kk < _SDIndex.size();kk++)
+                    for (uint32 kk = 0; kk < _SDIndex.size(); kk++)
                     {
                         if (_SDIndex[kk] == pinfo->sdindex)
                         {

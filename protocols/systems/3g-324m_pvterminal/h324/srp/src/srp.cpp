@@ -31,11 +31,11 @@
 #include "pvlogger.h"
 
 /************************************************************************/
-/*  Constants			                                                */
+/*  Constants                                                           */
 /************************************************************************/
 const SRP::SrpAction SRP::iSrpStateTable[MAX_STATUS][MAX_EVENT] =
 {
-    /* Event No.		 0						1					2				3				4				5					6				7		*/
+    /* Event No.         0                      1                   2               3               4               5                   6               7       */
     /* Status 0 */ { SRP::ACTION_NOP,  SRP::ACTION_0_1, SRP::ACTION_0_2, SRP::ACTION_NOP,  SRP::ACTION_NOP, SRP::ACTION_NOP, SRP::ACTION_0_2, SRP::ACTION_NOP} ,
     /* Status 1 */ { SRP::ACTION_NOP,  SRP::ACTION_1_1, SRP::ACTION_0_2, SRP::ACTION_1_3,  SRP::ACTION_1_3, SRP::ACTION_1_4, SRP::ACTION_0_2, SRP::ACTION_1_3}
 };
@@ -408,8 +408,8 @@ OSCL_EXPORT_REF void SRP::SrpStop(void)
 /*  function name       : SrpGetEventNoFromAL1                          */
 /*  function outline    : decide event number from received PDU         */
 /*                                                          (H.223 AL1) */
-/*  function discription: INT SrpGetEventNoFromAL1(						*/
-/*									PVMFSharedMediaDataPtr pPkt )		*/
+/*  function discription: INT SrpGetEventNoFromAL1(                     */
+/*                                  PVMFSharedMediaDataPtr pPkt )       */
 /*  input data          : pPkt - pointer of received packet             */
 /*  output data         : event number                                  */
 /*  draw time           : '96.10.29                                     */
@@ -651,14 +651,14 @@ SRP::SrpEvent SRP::SrpGetEventNoFromAL1(PVMFSharedMediaDataPtr pPkt)
 }
 
 /************************************************************************/
-/*  function name       : SrpStateChange		                        */
+/*  function name       : SrpStateChange                                */
 /*  function outline    : decide function to call given the status and  */
-/*                        event											*/
-/*  function discription: INT SrpGetEventNoFromAL1( void *data )		*/
-/*  input data          : status - Status of Srp		                */
-/*						  event - Incoming event						*/
-/*						  data - optional state change data				*/
-/*  output data         : None			                                */
+/*                        event                                         */
+/*  function discription: INT SrpGetEventNoFromAL1( void *data )        */
+/*  input data          : status - Status of Srp                        */
+/*                        event - Incoming event                        */
+/*                        data - optional state change data             */
+/*  output data         : None                                          */
 /*  draw time           : '96.10.29                                     */
 /*----------------------------------------------------------------------*/
 /*  amendent career     :                                               */
@@ -811,7 +811,7 @@ void SRP::CrcCalc(uint8 *pData, int Size)
 /************************************************************************/
 uint16 SRP::CrcResultGet(void)
 {
-    int	BitCount;
+    int BitCount;
 
     for (BitCount = 0 ; BitCount < 16 ; BitCount++)  /* process for 16bit */
     {
@@ -857,7 +857,7 @@ void SRP::CrcSetToFrame(uint16 crc, uint8 *pFcs)
 /*  function name       : SrpCommandCreate                              */
 /*  function outline    : Create command frame                          */
 /*  function discription: void SrpCommandCreate(                        */
-/*                                    PVMFSharedMediaDataPtr pPkt )		*/
+/*                                    PVMFSharedMediaDataPtr pPkt )     */
 /*  input data          : pPkt - data packet to create SRP command frame*/
 /*  output data         : None                                          */
 /*  draw time           : '05.08.24                                     */
@@ -971,11 +971,11 @@ PVMFSharedMediaDataPtr SRP::SrpCommandCreate(PVMFSharedMediaDataPtr pPkt, uint8 
 /************************************************************************/
 /*  function name       : SrpCommandClear                               */
 /*  function outline    : Clear comand frame for re-transmittion        */
-/*  function discription: void SrpCommandClear(SRPRespTimer &timer)		*/
-/*  input data          : timer - response timer that hold frame to be	*/
-/*								  retransmitted.						*/
+/*  function discription: void SrpCommandClear(SRPRespTimer &timer)     */
+/*  input data          : timer - response timer that hold frame to be  */
+/*                                retransmitted.                        */
 /*  output data         : None                                          */
-/*  draw time           : '05.08.24	                                    */
+/*  draw time           : '05.08.24                                     */
 /*----------------------------------------------------------------------*/
 /*  amendent career     :                                               */
 /*                          Copyright (C) 2005 PacketVideo Corp.        */
@@ -1002,7 +1002,7 @@ void SRP::SrpCommandClear(uint32 seqNum)
 /*  function outline    : Create response frame                         */
 /*  function discription: void SrpResponseCreate( uint8 seqNum )        */
 /*  input data          : seqNum - Sequence number of response frame    */
-/*						  header - SRP response frame type				*/
+/*                        header - SRP response frame type              */
 /*  output data         : pointer to created response packet            */
 /*  draw time           : '96.10.29                                     */
 /*----------------------------------------------------------------------*/
@@ -1060,14 +1060,14 @@ PVMFSharedMediaDataPtr SRP::SrpResponseCreate(uint8 seqNum, uint8 header)
             *pEditPtr++ = header;
             *pEditPtr++ = seqNum;
             resp->setMediaFragFilledLen(0, SRP_HEADER_SIZE + SRP_FCS_SIZE + SRP_SEQUENCE_SIZE);
-            crc = iCrc.Crc16Check((uint8 *) frag.getMemFragPtr(), SRP_HEADER_SIZE + SRP_SEQUENCE_SIZE);	     /* 16bit CRC Infomation Create	    */
+            crc = iCrc.Crc16Check((uint8 *) frag.getMemFragPtr(), SRP_HEADER_SIZE + SRP_SEQUENCE_SIZE);      /* 16bit CRC Infomation Create     */
             break;
 
         case SRP_RESPONSE_HEADER:
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_VERBOSE, (0x40000020, "SRP::SrpResponseCreate - Sending SRP Response"));
             *pEditPtr++ = header;
             resp->setMediaFragFilledLen(0, SRP_HEADER_SIZE + SRP_FCS_SIZE);
-            crc = iCrc.Crc16Check((uint8 *) frag.getMemFragPtr(), SRP_HEADER_SIZE);	      /* 16bit CRC Infomation Create	    */
+            crc = iCrc.Crc16Check((uint8 *) frag.getMemFragPtr(), SRP_HEADER_SIZE);       /* 16bit CRC Infomation Create        */
             break;
 
         default:
@@ -1104,9 +1104,9 @@ PVMFSharedMediaDataPtr SRP::SrpResponseCreate(uint8 seqNum, uint8 header)
 /*  function name       : SrpMsgCopy                                    */
 /*  function outline    : Get SRP data from in packet and put it in the */
 /*                        out packet.                                   */
-/*  function discription: bool SrpMsgCopy(								*/
-/*										PVMFSharedMediaDataPtr inPkt)	*/
-/*  input data          : inPkt - Pointer to incoming packet.			*/
+/*  function discription: bool SrpMsgCopy(                              */
+/*                                      PVMFSharedMediaDataPtr inPkt)   */
+/*  input data          : inPkt - Pointer to incoming packet.           */
 /*                        outPkt - Pointer to outgoing packet.          */
 /*  output data         : None                                          */
 /*  draw time           : '96.10.29                                     */
@@ -1225,7 +1225,7 @@ bool SRP::CreateMediaData(PVMFSharedMediaDataPtr& srpPkt,
 /************************************************************************/
 /*  function name       : Srp_0_1                                       */
 /*  function outline    : PDU received in IDLE                          */
-/*  function discription: PVMFSharedMediaDataPtr Srp_0_1()				*/
+/*  function discription: PVMFSharedMediaDataPtr Srp_0_1()              */
 /*  input data          : pPkt - pointer of received packet from corder */
 /*  output data         : None                                          */
 /*  draw time           : '96.10.29                                     */
@@ -1313,8 +1313,8 @@ int SRP::Srp_0_1()
 /*  function name       : Srp_0_2                                       */
 /*  function outline    : SRP command received                          */
 /*                                    in IDLE or WAITING-RESPONSE       */
-/*  function discription: PVMFSharedMediaDataPtr Srp_0_2(				*/
-/*										PVMFSharedMediaDataPtr pPkt )   */
+/*  function discription: PVMFSharedMediaDataPtr Srp_0_2(               */
+/*                                      PVMFSharedMediaDataPtr pPkt )   */
 /*  input data          : pPkt - pointer of received packet from AL1C   */
 /*  output data         : None                                          */
 /*  draw time           : '96.10.29                                     */
@@ -1409,7 +1409,7 @@ int SRP::Srp_0_2(PVMFSharedMediaDataPtr pPkt, int event)
 /************************************************************************/
 /*  function name       : Srp_1_1                                       */
 /*  function outline    : PDU received from corder in WAITING-RESPONSE  */
-/*  function discription: PVMFSharedMediaDataPtr Srp_1_1()				*/
+/*  function discription: PVMFSharedMediaDataPtr Srp_1_1()              */
 /*  input data          : pPkt - pointer of received packet from corder */
 /*  output data         : None                                          */
 /*  draw time           : '96.10.29                                     */
@@ -1465,8 +1465,8 @@ int SRP::Srp_1_1()
 /************************************************************************/
 /*  function name       : Srp_1_3                                       */
 /*  function outline    : SRP response received in WAITING-RESPONSE     */
-/*  function discription: PVMFSharedMediaDataPtr Srp_1_3(				*/
-/*										PVMFSharedMediaDataPtr pPkt )   */
+/*  function discription: PVMFSharedMediaDataPtr Srp_1_3(               */
+/*                                      PVMFSharedMediaDataPtr pPkt )   */
 /*  input data          : pPkt - pointer of received packet from AL1C   */
 /*  output data         : None                                          */
 /*  draw time           : '96.10.29                                     */
@@ -1688,11 +1688,11 @@ int SRP::Srp_1_3(PVMFSharedMediaDataPtr pPkt, int event)
 /*  function name       : Srp_1_4                                       */
 /*  function outline    : Response wait timer timeout                   */
 /*                                            in WAITING-RESPONSE       */
-/*  function discription: PVMFSharedMediaDataPtr Srp_1_4(				*/
-/*										PVMFSharedMediaDataPtr pPkt,	*/
-/*										int32 id  )						*/
+/*  function discription: PVMFSharedMediaDataPtr Srp_1_4(               */
+/*                                      PVMFSharedMediaDataPtr pPkt,    */
+/*                                      int32 id  )                     */
 /*  input data          : pPkt - pointer of timeout information         */
-/*						  id - id of timer that timed out				*/
+/*                        id - id of timer that timed out               */
 /*  output data         : None                                          */
 /*  draw time           : '96.10.29                                     */
 /*----------------------------------------------------------------------*/
@@ -1785,8 +1785,8 @@ int SRP::Srp_1_4(int32 id)
 /************************************************************************/
 /*  function name       : SrpSendWaitGet                                */
 /*  function outline    : Get from queue for waiting transmittion       */
-/*  function discription: PVMFSharedMediaDataPtr SrpSendWaitGet(		*/
-/*														uint32 index)   */
+/*  function discription: PVMFSharedMediaDataPtr SrpSendWaitGet(        */
+/*                                                      uint32 index)   */
 /*  input data          : index - index of srp frags                    */
 /*  output data         : data pointer of waiting transmittion          */
 /*  draw time           : '05.08.25                                     */
@@ -1810,8 +1810,8 @@ PVMFSharedMediaDataPtr SRP::SrpSendWaitGet(uint32 index)
 /************************************************************************/
 /*  function name       : SrpSendWaitRemove                             */
 /*  function outline    : Remove from queue for waiting transmission    */
-/*  function discription: PVMFSharedMediaDataPtr SrpSendWaitRemove(		*/
-/*														uint32 index)	*/
+/*  function discription: PVMFSharedMediaDataPtr SrpSendWaitRemove(     */
+/*                                                      uint32 index)   */
 /*  input data          : index - index of srp frags                    */
 /*  output data         : data pointer of waiting transmittion          */
 /*  draw time           : '05.08.25                                     */
@@ -2031,7 +2031,7 @@ void SRP::SrpT401Stop(SRPRespTimer &timer)
 /*  input data          : TimerId - timer id                            */
 /*                        Param - timer parameter                       */
 /*  output data         : 0 - Reset timer  to fire again                */
-/*						  1 - Do not reset timer						*/
+/*                        1 - Do not reset timer                        */
 /*  draw time           : '96.10.29                                     */
 /*----------------------------------------------------------------------*/
 /*  amendent career     :                                               */
@@ -2051,9 +2051,9 @@ void SRP::TimeoutOccurred(int32 timerID, int32 param)
 
 
 /************************************************************************/
-/*  function name       : LowerLayerRx									*/
+/*  function name       : LowerLayerRx                                  */
 /*  function outline    : Lower Layer Receive                           */
-/*  function description: void LowerLayerRx(MediaPacket* pPkt)			*/
+/*  function description: void LowerLayerRx(MediaPacket* pPkt)          */
 /*  input data          : pPkt - pointer to incoming packet             */
 /*  output data         : None                                          */
 /*  draw time           : '96.10.29                                     */
@@ -2072,7 +2072,7 @@ void SRP::LowerLayerRx(PVMFSharedMediaDataPtr pPkt)
     OsclRefCounterMemFrag frag;
     data->getMediaFragment(0, frag);
     uint8* pos = (uint8*)frag.getMemFragPtr();
-    for (unsigned i = 0;i < pPkt->getNumFragments();i++)
+    for (unsigned i = 0; i < pPkt->getNumFragments(); i++)
     {
         OsclRefCounterMemFrag src_frag;
         pPkt->getMediaFragment(i, src_frag);
@@ -2097,9 +2097,9 @@ void SRP::LowerLayerRx(PVMFSharedMediaDataPtr pPkt)
 }
 
 /************************************************************************/
-/*  function name       : UpperLayerRx									*/
+/*  function name       : UpperLayerRx                                  */
 /*  function outline    : Upper Layer Receive                           */
-/*  function description: void UpperLayerRx(MediaPacket* pPkt)			*/
+/*  function description: void UpperLayerRx(MediaPacket* pPkt)          */
 /*  input data          : pPkt - pointer to incoming packet             */
 /*  output data         : None                                          */
 /*  draw time           : '96.10.29                                     */
@@ -2257,10 +2257,10 @@ bool SRP::Allocate(OsclSharedPtr<PVMFMediaDataImpl>& data, OsclRefCounterMemFrag
 }
 
 /************************************************************************/
-/*  function name       : UseNSRP								   		*/
+/*  function name       : UseNSRP                                       */
 /*  function outline    : Set use of NSRP response frames or not.       */
-/*  function description: void UseNSRP( bool aUseNsrp )					*/
-/*  input data          : None							                */
+/*  function description: void UseNSRP( bool aUseNsrp )                 */
+/*  input data          : None                                          */
 /*  output data         : None                                          */
 /*  draw time           : '05.08.23                                     */
 /*----------------------------------------------------------------------*/
@@ -2280,11 +2280,11 @@ void SRP::UseNSRP(bool aUseNsrp)
 }
 
 /************************************************************************/
-/*  function name       : DisableWNSRPSupport					   		*/
+/*  function name       : DisableWNSRPSupport                           */
 /*  function outline    : Disables all support for WNSRP.  Must be      */
-/*						  called before initailization.					*/
-/*  function description: void DisableWNSRPSupport()					*/
-/*  input data          : None							                */
+/*                        called before initailization.                 */
+/*  function description: void DisableWNSRPSupport()                    */
+/*  input data          : None                                          */
 /*  output data         : None                                          */
 /*  draw time           : '05.08.23                                     */
 /*----------------------------------------------------------------------*/
@@ -2305,10 +2305,10 @@ void SRP::DisableWNSRPSupport()
 }
 
 /************************************************************************/
-/*  function name       : SrpResetStats									*/
+/*  function name       : SrpResetStats                                 */
 /*  function outline    : Reset statistics                              */
-/*  function description: void SrpResetStats( void )					*/
-/*  input data          : None							                */
+/*  function description: void SrpResetStats( void )                    */
+/*  input data          : None                                          */
 /*  output data         : None                                          */
 /*  draw time           : '96.10.29                                     */
 /*----------------------------------------------------------------------*/
@@ -2322,9 +2322,9 @@ void SRP::SrpResetStats()
 }
 
 /************************************************************************/
-/*  function name       : SrpGetStats									*/
+/*  function name       : SrpGetStats                                   */
 /*  function outline    : Retrieve statistics                           */
-/*  function description: void SrpGetStats(SRPStats &aStats)			*/
+/*  function description: void SrpGetStats(SRPStats &aStats)            */
 /*  input data          : aStats - iStats object to fill                 */
 /*  output data         : None                                          */
 /*  draw time           : '96.10.29                                     */
@@ -2347,10 +2347,10 @@ void SRP::SrpGetStats(SRPStats &aStats)
 }
 
 /************************************************************************/
-/*  function name       : UpdateRespStats								*/
+/*  function name       : UpdateRespStats                               */
 /*  function outline    : Update response statistics                    */
-/*  function description: void UpdateRespStats()						*/
-/*  input data          : None							                */
+/*  function description: void UpdateRespStats()                        */
+/*  input data          : None                                          */
 /*  output data         : None                                          */
 /*  draw time           : '96.10.29                                     */
 /*----------------------------------------------------------------------*/
@@ -2379,10 +2379,10 @@ void SRP::UpdateRespStats()
 }
 
 /************************************************************************/
-/*  function name       : GetFreeWnsrpTimer								*/
+/*  function name       : GetFreeWnsrpTimer                             */
 /*  function outline    : Get free WNSRP response timer                 */
-/*  function description: SRPRespTimer *GetFreeWnsrpTimer()				*/
-/*  input data          : None							                */
+/*  function description: SRPRespTimer *GetFreeWnsrpTimer()             */
+/*  input data          : None                                          */
 /*  output data         : None                                          */
 /*  draw time           : '05.08.26                                     */
 /*----------------------------------------------------------------------*/
@@ -2402,11 +2402,11 @@ SRP::SRPRespTimer *SRP::GetFreeWnsrpTimer()
 }
 
 /************************************************************************/
-/*  function name       : FindActiveWnsrpTimer							*/
+/*  function name       : FindActiveWnsrpTimer                          */
 /*  function outline    : Get free WNSRP response timer                 */
-/*  function description: SRPRespTimer *FindActiveWnsrpTimer(			*/
-/*														int32 timerID)	*/
-/*  input data          : timerID - id of timer			                */
+/*  function description: SRPRespTimer *FindActiveWnsrpTimer(           */
+/*                                                      int32 timerID)  */
+/*  input data          : timerID - id of timer                         */
 /*  output data         : None                                          */
 /*  draw time           : '05.08.26                                     */
 /*----------------------------------------------------------------------*/
@@ -2427,12 +2427,12 @@ SRP::SRPRespTimer *SRP::FindActiveWnsrpTimer(int32 timerID)
 }
 
 /************************************************************************/
-/*  function name       : RemoveActiveWnsrpTimer						*/
+/*  function name       : RemoveActiveWnsrpTimer                        */
 /*  function outline    : Remove an timer from the active WNSRP timer   */
-/*						  list											*/
-/*  function description: void RemoveActiveWnsrpTimer(					*/
-/*												SRPRespTimer *timer)	*/
-/*  input data          : timer - timer to remove		                */
+/*                        list                                          */
+/*  function description: void RemoveActiveWnsrpTimer(                  */
+/*                                              SRPRespTimer *timer)    */
+/*  input data          : timer - timer to remove                       */
 /*  output data         : None                                          */
 /*  draw time           : '05.08.26                                     */
 /*----------------------------------------------------------------------*/
@@ -2462,10 +2462,10 @@ void SRP::RemoveActiveWnsrpTimer(SRPRespTimer *timer)
 
 
 /************************************************************************/
-/*  function name       : FreeRxFrag									*/
-/*  function outline    : Free a frag to the free list					*/
-/*  function description: void FreeRxFrag(SRPRxData *frag)				*/
-/*  input data          : timer - timer to remove		                */
+/*  function name       : FreeRxFrag                                    */
+/*  function outline    : Free a frag to the free list                  */
+/*  function description: void FreeRxFrag(SRPRxData *frag)              */
+/*  input data          : timer - timer to remove                       */
 /*  output data         : None                                          */
 /*  draw time           : '05.08.26                                     */
 /*----------------------------------------------------------------------*/
@@ -2484,10 +2484,10 @@ void SRP::FreeRxFrag(SRPRxData *frag)
 }
 
 /************************************************************************/
-/*  function name       : GetRxFrag										*/
-/*  function outline    : Remove an frag from the free list				*/
-/*  function description: SRPRxData *GetRxFrag()						*/
-/*  input data          : timer - timer to remove		                */
+/*  function name       : GetRxFrag                                     */
+/*  function outline    : Remove an frag from the free list             */
+/*  function description: SRPRxData *GetRxFrag()                        */
+/*  input data          : timer - timer to remove                       */
 /*  output data         : None                                          */
 /*  draw time           : '05.08.26                                     */
 /*----------------------------------------------------------------------*/
@@ -2510,11 +2510,11 @@ SRP::SRPRxData *SRP::GetRxFrag(void)
 }
 
 /************************************************************************/
-/*  function name       : AddPendingRxFrag								*/
+/*  function name       : AddPendingRxFrag                              */
 /*  function outline    : Add a rx frag to the pending list in order of */
-/*						  rx sequence number mod 256.					*/
-/*  function description: void AddPendingRxFrag(SRPRxData *frag)		*/
-/*  input data          : timer - timer to remove		                */
+/*                        rx sequence number mod 256.                   */
+/*  function description: void AddPendingRxFrag(SRPRxData *frag)        */
+/*  input data          : timer - timer to remove                       */
 /*  output data         : None                                          */
 /*  draw time           : '05.08.26                                     */
 /*----------------------------------------------------------------------*/
@@ -2560,12 +2560,12 @@ void SRP::AddPendingRxFrag(SRPRxData *frag)
 }
 
 /************************************************************************/
-/*  function name       : CheckRxSeqNum									*/
-/*  function outline    : Check Rx sequence number for against the		*/
-/*						  pending rx frags.								*/
-/*  function description: bool CheckRxSeqNum(uint32 seqNum,				*/
-/*														uint8 header)	*/
-/*  input data          : timer - timer to remove		                */
+/*  function name       : CheckRxSeqNum                                 */
+/*  function outline    : Check Rx sequence number for against the      */
+/*                        pending rx frags.                             */
+/*  function description: bool CheckRxSeqNum(uint32 seqNum,             */
+/*                                                      uint8 header)   */
+/*  input data          : timer - timer to remove                       */
 /*  output data         : None                                          */
 /*  draw time           : '05.08.26                                     */
 /*----------------------------------------------------------------------*/
@@ -2692,10 +2692,10 @@ bool SRP::CheckRxSeqNum(uint32 seqNum, uint8 header)
 }
 
 /************************************************************************/
-/*  function name       : CheckPendingRxList							*/
-/*  function outline    : Check pending rx list against sequence number	*/
-/*  function description: bool CheckRxSeqNum(uint32 seqNum)				*/
-/*  input data          : seqNum - sequence number to check	            */
+/*  function name       : CheckPendingRxList                            */
+/*  function outline    : Check pending rx list against sequence number */
+/*  function description: bool CheckRxSeqNum(uint32 seqNum)             */
+/*  input data          : seqNum - sequence number to check             */
 /*  output data         : None                                          */
 /*  draw time           : '05.08.26                                     */
 /*----------------------------------------------------------------------*/
@@ -2717,11 +2717,11 @@ bool SRP::CheckPendingRxList(uint32 seqNum)
 }
 
 /************************************************************************/
-/*  function name       : CheckWNSRPRetrans								*/
-/*  function outline    : Check Rx sequence number for WNSRP retrans	*/
-/*						  window.										*/
-/*  function description: bool CheckWNSRPRetrans(uint32 seqNum)			*/
-/*  input data          : timer - timer to remove		                */
+/*  function name       : CheckWNSRPRetrans                             */
+/*  function outline    : Check Rx sequence number for WNSRP retrans    */
+/*                        window.                                       */
+/*  function description: bool CheckWNSRPRetrans(uint32 seqNum)         */
+/*  input data          : timer - timer to remove                       */
 /*  output data         : None                                          */
 /*  draw time           : '05.08.26                                     */
 /*----------------------------------------------------------------------*/

@@ -71,9 +71,9 @@ struct PVMP4FFCNFormatSpecificConfig
 };
 
 class PVMp4FFComposerPort : public PvmfPortBaseImpl,
-            public PvmiCapabilityAndConfig,
-            public PVMFPortActivityHandler,
-            public OsclActiveObject
+        public PvmiCapabilityAndConfig,
+        public PVMFPortActivityHandler,
+        public OsclActiveObject
 {
     public:
         PVMp4FFComposerPort(int32 aTag, PVMp4FFComposerNode* aNode, int32 aPriority, const char* aName = NULL);

@@ -26,7 +26,7 @@ typedef enum _status
     PhaseA          ,
     PhaseB          ,
     PhaseC          ,
-    PhaseD_CSUP		,  /* Call Setup */
+    PhaseD_CSUP     ,  /* Call Setup */
     PhaseE_Comm     ,  /* Ongoing Communication */
     PhaseF_Clc      ,  /* Closing all outgoing LCNs */
     PhaseF_End      ,  /* End of Session */

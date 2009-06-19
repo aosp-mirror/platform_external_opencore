@@ -139,7 +139,7 @@ void connect_test::EncoderIFSucceeded()
 
 void connect_test::EncoderIFFailed()
 {
-//	test_is_true(false);
+//  test_is_true(false);
     reset();
 }
 

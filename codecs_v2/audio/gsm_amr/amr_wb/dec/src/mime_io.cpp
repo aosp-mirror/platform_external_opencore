@@ -707,15 +707,15 @@ void mime_unsorting(uint8 unsorted_bits[],
             /* set mode index */
             *mode = st->prev_mode;
             break;
-        case 14:		/* SPEECH_LOST */
+        case 14:        /* SPEECH_LOST */
             *frame_type = RX_SPEECH_LOST;
             *mode = st->prev_mode;
             break;
-        case 15:		/* NO_DATA */
+        case 15:        /* NO_DATA */
             *frame_type = RX_NO_DATA;
             *mode = st->prev_mode;
             break;
-        default:		/* replace frame with unused mode index by NO_DATA frame */
+        default:        /* replace frame with unused mode index by NO_DATA frame */
             *frame_type = RX_NO_DATA;
             *mode = st->prev_mode;
             break;

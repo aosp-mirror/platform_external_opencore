@@ -181,7 +181,7 @@ OMX_BOOL AvcDecoder_OMX::AvcDecodeVideo_OMX(OMX_U8* aOutBuffer, OMX_U32* aOutput
     *aResizeFlag = OMX_FALSE;
     OMX_U32 OldWidth, OldHeight;
 
-    OldWidth = 	aPortParam->format.video.nFrameWidth;
+    OldWidth =  aPortParam->format.video.nFrameWidth;
     OldHeight = aPortParam->format.video.nFrameHeight;
 
 
@@ -252,7 +252,7 @@ OMX_BOOL AvcDecoder_OMX::AvcDecodeVideo_OMX(OMX_U8* aOutBuffer, OMX_U32* aOutput
         aPortParam->format.video.nFrameWidth = crop_right - crop_left + 1;
         aPortParam->format.video.nFrameHeight = crop_bottom - crop_top + 1;
 
-        //if( (OldWidth != aPortParam->format.video.nFrameWidth) || (OldHeight !=	aPortParam->format.video.nFrameHeight))
+        //if( (OldWidth != aPortParam->format.video.nFrameWidth) || (OldHeight !=   aPortParam->format.video.nFrameHeight))
         // FORCE RESIZE ALWAYS FOR SPS
         *aResizeFlag = OMX_TRUE;
 
@@ -323,7 +323,7 @@ OMX_BOOL AvcDecoder_OMX::AvcDecodeVideo_OMX(OMX_U8* aOutBuffer, OMX_U32* aOutput
     //else
     //{
     //printf("\nNAL_type = %d, unsupported nal type or not sure what to do for this type\n", NalType);
-    //	return OMX_FALSE;
+    //  return OMX_FALSE;
     //}
     return OMX_TRUE;
 

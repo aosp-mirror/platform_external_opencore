@@ -46,9 +46,9 @@ class AacPayloadSpecificInfoType : public PayloadSpecificInfoTypeBase
         };
 
     private:
-        bool	aac_cpresent;
-        bool	aacplusSBRenabled;
-        int		configSize;
+        bool    aac_cpresent;
+        bool    aacplusSBRenabled;
+        int     configSize;
 };
 
 #endif

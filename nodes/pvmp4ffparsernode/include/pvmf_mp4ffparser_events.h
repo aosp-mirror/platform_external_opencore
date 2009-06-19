@@ -582,7 +582,7 @@ typedef enum
     /**
      MP4 file is pseudostreamable
      **/
-    PVMFMP4FFParserInfoPseudostreamableFile	= 8192,
+    PVMFMP4FFParserInfoPseudostreamableFile = 8192,
 
     /**
      MP4 file is non-pseudostreamable

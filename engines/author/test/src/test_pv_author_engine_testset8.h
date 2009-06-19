@@ -194,21 +194,21 @@ class pv_mediainput_async_test_delete: public pvauthor_async_test_base
 
         // Author engine related variables
         PVAuthorEngineInterface* iAuthor;
-        OsclAny*				 iComposer;
-        OsclAny*				 iFileParser;
-        PVInterface*			 iComposerConfig;
-        PVInterface*			 iAudioEncoderConfig;
-        PVInterface*			 iVideoEncoderConfig;
-        PVMIOControlComp		 iMIOComponent;
-        uint32					 iPendingCmds;
+        OsclAny*                 iComposer;
+        OsclAny*                 iFileParser;
+        PVInterface*             iComposerConfig;
+        PVInterface*             iAudioEncoderConfig;
+        PVInterface*             iVideoEncoderConfig;
+        PVMIOControlComp         iMIOComponent;
+        uint32                   iPendingCmds;
         PVLogger*                iLogger;
         bool                     iPauseResumeEnable;
         uint                     iRemoveDataSourceDone;
         uint32                   iTestDuration;
-        bool					 iAddAudioMediaTrack;
-        bool					 iAddVideoMediaTrack;
-        PVAECmdType				 iNextResetState;
-        PVAECmdType			     iCurrentResetState;
+        bool                     iAddAudioMediaTrack;
+        bool                     iAddVideoMediaTrack;
+        PVAECmdType              iNextResetState;
+        PVAECmdType              iCurrentResetState;
         Oscl_FileServer          iFileServer;
 };
 

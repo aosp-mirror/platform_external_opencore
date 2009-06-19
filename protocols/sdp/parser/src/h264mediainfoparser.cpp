@@ -679,7 +679,7 @@ SDP_ERROR_CODE SDPH264MediaInfoParser::parseParameterSets(const char* aParamSetB
     //if sample rate is zero override with defaults
     Oscl_Vector<PayloadSpecificInfoTypeBase*, SDPParserAlloc> payloadSpecificInfoVector =
         aH264MediaInfo->getPayloadSpecificInfoVector();
-    for (int ii = 0; ii < (int)payloadSpecificInfoVector.size();ii++)
+    for (int ii = 0; ii < (int)payloadSpecificInfoVector.size(); ii++)
     {
         if (payloadSpecificInfoVector[ii]->getSampleRate() == 0)
         {

@@ -82,8 +82,8 @@ terms listed above has been obtained from the copyright holder.
  INPUT AND OUTPUT DEFINITIONS
 
  Inputs:
-	L_var = 32 bit signed integer (Word32) whose value falls
-	       in the range : 0x8000 0000 <= L_32 <= 0x7fff ffff.
+    L_var = 32 bit signed integer (Word32) whose value falls
+           in the range : 0x8000 0000 <= L_32 <= 0x7fff ffff.
 
     pL_var_hi =  pointer to the most significant word of L_var (Word16).
 
@@ -94,8 +94,8 @@ terms listed above has been obtained from the copyright holder.
 
  Outputs:
     pOverflow -> 1 if the 32 bit add operation resulted in overflow
-	pL_var_hi -> MS word of L_32.
-	pL_var_lo -> LS word of L_32 shifted left by 1.
+    pL_var_hi -> MS word of L_32.
+    pL_var_lo -> LS word of L_32 shifted left by 1.
 
  Returns:
     None

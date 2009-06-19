@@ -21,12 +21,12 @@
 #include "avcenc_lib.h"
 
 /* ======================================================================== */
-/*	Function : PVAVCGetNALType()											*/
-/*	Date     : 11/4/2003													*/
-/*	Purpose  : Sniff NAL type from the bitstream						 	*/
-/*	In/out   :																*/
-/*	Return   : AVCENC_SUCCESS if succeed, AVCENC_FAIL if fail.				*/
-/*	Modified :																*/
+/*  Function : PVAVCGetNALType()                                            */
+/*  Date     : 11/4/2003                                                    */
+/*  Purpose  : Sniff NAL type from the bitstream                            */
+/*  In/out   :                                                              */
+/*  Return   : AVCENC_SUCCESS if succeed, AVCENC_FAIL if fail.              */
+/*  Modified :                                                              */
 /* ======================================================================== */
 OSCL_EXPORT_REF AVCEnc_Status PVAVCEncGetNALType(unsigned char *bitstream, int size,
         int *nal_type, int *nal_ref_idc)
@@ -47,13 +47,13 @@ OSCL_EXPORT_REF AVCEnc_Status PVAVCEncGetNALType(unsigned char *bitstream, int s
 
 
 /* ======================================================================== */
-/*	Function : PVAVCEncInitialize()											*/
-/*	Date     : 3/18/2004													*/
-/*	Purpose  : Initialize the encoder library, allocate memory and verify	*/
-/*				the profile/level support/settings.						 	*/
-/*	In/out   : Encoding parameters.											*/
-/*	Return   : AVCENC_SUCCESS for success.									*/
-/*	Modified :																*/
+/*  Function : PVAVCEncInitialize()                                         */
+/*  Date     : 3/18/2004                                                    */
+/*  Purpose  : Initialize the encoder library, allocate memory and verify   */
+/*              the profile/level support/settings.                         */
+/*  In/out   : Encoding parameters.                                         */
+/*  Return   : AVCENC_SUCCESS for success.                                  */
+/*  Modified :                                                              */
 /* ======================================================================== */
 OSCL_EXPORT_REF AVCEnc_Status PVAVCEncInitialize(AVCHandle *avcHandle, AVCEncParams *encParam,
         void* extSPS, void* extPPS)
@@ -234,7 +234,7 @@ OSCL_EXPORT_REF AVCEnc_Status PVAVCEncInitialize(AVCHandle *avcHandle, AVCEncPar
     encvid->functionPointer->SAD_MB_HalfPel[3] = &AVCSAD_MB_HalfPel_Cxhyh;
 
     /* initialize timing control */
-    encvid->modTimeRef = 0;		/* ALWAYS ASSUME THAT TIMESTAMP START FROM 0 !!!*/
+    encvid->modTimeRef = 0;     /* ALWAYS ASSUME THAT TIMESTAMP START FROM 0 !!!*/
     video->prevFrameNum = 0;
     encvid->prevCodedFrameNum = 0;
     encvid->dispOrdPOCRef = 0;
@@ -252,13 +252,13 @@ OSCL_EXPORT_REF AVCEnc_Status PVAVCEncInitialize(AVCHandle *avcHandle, AVCEncPar
 }
 
 /* ======================================================================== */
-/*	Function : PVAVCEncGetMaxOutputSize()							        */
-/*	Date     : 11/29/2008													*/
-/*	Purpose  : Return max output buffer size that apps should allocate for  */
-/*				output buffer.												*/
-/*	In/out   :																*/
-/*	Return   : AVCENC_SUCCESS for success.									*/
-/*	Modified :	 size														*/
+/*  Function : PVAVCEncGetMaxOutputSize()                                   */
+/*  Date     : 11/29/2008                                                   */
+/*  Purpose  : Return max output buffer size that apps should allocate for  */
+/*              output buffer.                                              */
+/*  In/out   :                                                              */
+/*  Return   : AVCENC_SUCCESS for success.                                  */
+/*  Modified :   size                                                       */
 /* ======================================================================== */
 
 OSCL_EXPORT_REF AVCEnc_Status PVAVCEncGetMaxOutputBufferSize(AVCHandle *avcHandle, int* size)
@@ -276,12 +276,12 @@ OSCL_EXPORT_REF AVCEnc_Status PVAVCEncGetMaxOutputBufferSize(AVCHandle *avcHandl
 }
 
 /* ======================================================================== */
-/*	Function : PVAVCEncSetInput()											*/
-/*	Date     : 4/18/2004													*/
-/*	Purpose  : To feed an unencoded original frame to the encoder library.	*/
-/*	In/out   :																*/
-/*	Return   : AVCENC_SUCCESS for success.									*/
-/*	Modified :																*/
+/*  Function : PVAVCEncSetInput()                                           */
+/*  Date     : 4/18/2004                                                    */
+/*  Purpose  : To feed an unencoded original frame to the encoder library.  */
+/*  In/out   :                                                              */
+/*  Return   : AVCENC_SUCCESS for success.                                  */
+/*  Modified :                                                              */
 /* ======================================================================== */
 OSCL_EXPORT_REF AVCEnc_Status PVAVCEncSetInput(AVCHandle *avcHandle, AVCFrameIO *input)
 {
@@ -368,12 +368,12 @@ RECALL_INITFRAME:
 }
 
 /* ======================================================================== */
-/*	Function : PVAVCEncodeNAL()												*/
-/*	Date     : 4/29/2004													*/
-/*	Purpose  : To encode one NAL/slice.										*/
-/*	In/out   :																*/
-/*	Return   : AVCENC_SUCCESS for success.									*/
-/*	Modified :																*/
+/*  Function : PVAVCEncodeNAL()                                             */
+/*  Date     : 4/29/2004                                                    */
+/*  Purpose  : To encode one NAL/slice.                                     */
+/*  In/out   :                                                              */
+/*  Return   : AVCENC_SUCCESS for success.                                  */
+/*  Modified :                                                              */
 /* ======================================================================== */
 OSCL_EXPORT_REF AVCEnc_Status PVAVCEncodeNAL(AVCHandle *avcHandle, unsigned char *buffer, unsigned int *buf_nal_size, int *nal_type)
 {
@@ -434,7 +434,7 @@ OSCL_EXPORT_REF AVCEnc_Status PVAVCEncodeNAL(AVCHandle *avcHandle, unsigned char
                 {
                     encvid->enc_state = AVCEnc_Analyzing_Frame;
                 }
-                else	// SetInput has been called before SPS and PPS.
+                else    // SetInput has been called before SPS and PPS.
                 {
                     encvid->enc_state = AVCEnc_Encoding_Frame;
                 }
@@ -521,12 +521,12 @@ OSCL_EXPORT_REF AVCEnc_Status PVAVCEncodeNAL(AVCHandle *avcHandle, unsigned char
 }
 
 /* ======================================================================== */
-/*	Function : PVAVCEncGetOverrunBuffer()									*/
-/*	Purpose  : To retrieve the overrun buffer. Check whether overrun buffer */
-/*				is used or not before returning								*/
-/*	In/out   :																*/
-/*	Return   : Pointer to the internal overrun buffer.						*/
-/*	Modified :																*/
+/*  Function : PVAVCEncGetOverrunBuffer()                                   */
+/*  Purpose  : To retrieve the overrun buffer. Check whether overrun buffer */
+/*              is used or not before returning                             */
+/*  In/out   :                                                              */
+/*  Return   : Pointer to the internal overrun buffer.                      */
+/*  Modified :                                                              */
 /* ======================================================================== */
 OSCL_EXPORT_REF uint8* PVAVCEncGetOverrunBuffer(AVCHandle* avcHandle)
 {
@@ -545,17 +545,17 @@ OSCL_EXPORT_REF uint8* PVAVCEncGetOverrunBuffer(AVCHandle* avcHandle)
 
 
 /* ======================================================================== */
-/*	Function : PVAVCEncGetRecon()											*/
-/*	Date     : 4/29/2004													*/
-/*	Purpose  : To retrieve the most recently encoded frame.					*/
-/*			    assume that user will make a copy if they want to hold on   */
-/*				to it. Otherwise, it is not guaranteed to be reserved.		*/
-/*				Most applications prefer to see original frame rather than  */
-/*				reconstructed frame. So, we are staying aware from complex  */
-/*				buffering mechanism. If needed, can be added later.			*/
-/*	In/out   :																*/
-/*	Return   : AVCENC_SUCCESS for success.									*/
-/*	Modified :																*/
+/*  Function : PVAVCEncGetRecon()                                           */
+/*  Date     : 4/29/2004                                                    */
+/*  Purpose  : To retrieve the most recently encoded frame.                 */
+/*              assume that user will make a copy if they want to hold on   */
+/*              to it. Otherwise, it is not guaranteed to be reserved.      */
+/*              Most applications prefer to see original frame rather than  */
+/*              reconstructed frame. So, we are staying aware from complex  */
+/*              buffering mechanism. If needed, can be added later.         */
+/*  In/out   :                                                              */
+/*  Return   : AVCENC_SUCCESS for success.                                  */
+/*  Modified :                                                              */
 /* ======================================================================== */
 OSCL_EXPORT_REF AVCEnc_Status PVAVCEncGetRecon(AVCHandle *avcHandle, AVCFrameIO *recon)
 {
@@ -591,14 +591,14 @@ OSCL_EXPORT_REF AVCEnc_Status PVAVCEncReleaseRecon(AVCHandle *avcHandle, AVCFram
 }
 
 /* ======================================================================== */
-/*	Function : PVAVCCleanUpEncoder()										*/
-/*	Date     : 4/18/2004													*/
-/*	Purpose  : To clean up memories allocated by PVAVCEncInitialize()		*/
-/*	In/out   :																*/
-/*	Return   : AVCENC_SUCCESS for success.									*/
-/*	Modified :																*/
+/*  Function : PVAVCCleanUpEncoder()                                        */
+/*  Date     : 4/18/2004                                                    */
+/*  Purpose  : To clean up memories allocated by PVAVCEncInitialize()       */
+/*  In/out   :                                                              */
+/*  Return   : AVCENC_SUCCESS for success.                                  */
+/*  Modified :                                                              */
 /* ======================================================================== */
-OSCL_EXPORT_REF void	PVAVCCleanUpEncoder(AVCHandle *avcHandle)
+OSCL_EXPORT_REF void    PVAVCCleanUpEncoder(AVCHandle *avcHandle)
 {
     AVCEncObject *encvid = (AVCEncObject*) avcHandle->AVCObject;
     AVCCommonObj *video;

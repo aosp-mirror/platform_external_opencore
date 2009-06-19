@@ -58,35 +58,35 @@ bool sdp_decodebase64(uint8* aInBuf, uint32 aInBufLen,
     int i;
     uint8 dtable[256];
 
-    for (i = 0;i < 255;i++)
+    for (i = 0; i < 255; i++)
     {
         dtable[i] = 0x80;
     }
-    for (i = 'A';i <= 'I';i++)
+    for (i = 'A'; i <= 'I'; i++)
     {
         dtable[i] = 0 + (i - 'A');
     }
-    for (i = 'J';i <= 'R';i++)
+    for (i = 'J'; i <= 'R'; i++)
     {
         dtable[i] = 9 + (i - 'J');
     }
-    for (i = 'S';i <= 'Z';i++)
+    for (i = 'S'; i <= 'Z'; i++)
     {
         dtable[i] = 18 + (i - 'S');
     }
-    for (i = 'a';i <= 'i';i++)
+    for (i = 'a'; i <= 'i'; i++)
     {
         dtable[i] = 26 + (i - 'a');
     }
-    for (i = 'j';i <= 'r';i++)
+    for (i = 'j'; i <= 'r'; i++)
     {
         dtable[i] = 35 + (i - 'j');
     }
-    for (i = 's';i <= 'z';i++)
+    for (i = 's'; i <= 'z'; i++)
     {
         dtable[i] = 44 + (i - 's');
     }
-    for (i = '0';i <= '9';i++)
+    for (i = '0'; i <= '9'; i++)
     {
         dtable[i] = 52 + (i - '0');
     }
@@ -100,7 +100,7 @@ bool sdp_decodebase64(uint8* aInBuf, uint32 aInBufLen,
     {
         uint8 a[4], b[4], o[3];
 
-        for (i = 0;i < 4;i++)
+        for (i = 0; i < 4; i++)
         {
             uint8 c = *(aInBuf++);
             read_count++;
@@ -242,7 +242,7 @@ bool parseQoEMetrics(const char *start_ptr, const char *end_ptr, QoEMetricsType 
         else
         {
             uint32 temp;
-            eptr = sptr;		//get length of range digit
+            eptr = sptr;        //get length of range digit
             for (; (*eptr != ';' && eptr < end_ptr); ++eptr);
 
             qoeMetrics.rateFmt = QoEMetricsType::VAL;
@@ -299,13 +299,13 @@ bool parseQoEMetrics(const char *start_ptr, const char *end_ptr, QoEMetricsType 
         else
         {
             uint32 len = OSCL_MIN((uint32)(eptr - sptr), oscl_strlen("."));
-            if (oscl_strncmp(sptr, ".", len) == 0)	//if floating point number
+            if (oscl_strncmp(sptr, ".", len) == 0)  //if floating point number
             {
                 if (!PV_atof(sptr, (int)(eptr - sptr), qoeMetrics.paramExtFdigit))
                     return false;
                 qoeMetrics.paramFmt = QoEMetricsType::FDIGIT;
             }
-            else	    		// hex digit
+            else                // hex digit
             {
                 uint32 temp;
                 if (PV_atoi(sptr, 'x', (int)(eptr - sptr), temp))

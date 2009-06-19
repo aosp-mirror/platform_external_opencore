@@ -94,7 +94,7 @@ class PVMFFileBufferDataStreamReadDataStreamFactoryImpl : public PVMFDataStreamF
 // PVMFFileBufferDataStreamWriteDataStreamFactoryImpl
 //////////////////////////////////////////////////////////////////////
 class PVMFFileBufferDataStreamWriteDataStreamFactoryImpl : public PVMFDataStreamFactory,
-            public PVMFDataStreamReadCapacityObserver
+        public PVMFDataStreamReadCapacityObserver
 {
     public:
         OSCL_IMPORT_REF PVMFFileBufferDataStreamWriteDataStreamFactoryImpl(OSCL_wString& aFileName);

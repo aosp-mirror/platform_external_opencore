@@ -37,10 +37,10 @@
  */
 typedef enum
 {
-    PVMF_COMPOSER_MAXFILESIZE_REACHED = 2048,	/**< Maximum file size reached */
-    PVMF_COMPOSER_MAXDURATION_REACHED,	/**< Maximum duration reached */
-    PVMF_COMPOSER_FILESIZE_PROGRESS,	/**< Recording progress report in terms of file size written */
-    PVMF_COMPOSER_DURATION_PROGRESS,		/**< Recording progress report in terms of duration recorded */
+    PVMF_COMPOSER_MAXFILESIZE_REACHED = 2048,   /**< Maximum file size reached */
+    PVMF_COMPOSER_MAXDURATION_REACHED,  /**< Maximum duration reached */
+    PVMF_COMPOSER_FILESIZE_PROGRESS,    /**< Recording progress report in terms of file size written */
+    PVMF_COMPOSER_DURATION_PROGRESS,        /**< Recording progress report in terms of duration recorded */
     PVMF_COMPOSER_EOS_REACHED
 } PVMFComposerSizeAndDurationEvent;
 

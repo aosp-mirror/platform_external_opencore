@@ -409,8 +409,8 @@ OSCL_EXPORT_REF OMX_BOOL OmxComponentBase::ParseFullAVCFramesIntoNALs(OMX_BUFFER
 }
 
 /** This function assembles multiple input buffers into
-	* one frame with the marker flag OMX_BUFFERFLAG_ENDOFFRAME set
-	*/
+    * one frame with the marker flag OMX_BUFFERFLAG_ENDOFFRAME set
+    */
 OMX_BOOL OmxComponentBase::AssemblePartialFrames(OMX_BUFFERHEADERTYPE* aInputBuffer)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OmxComponentBase : AssemblePartialFrames IN"));
@@ -660,9 +660,9 @@ OSCL_EXPORT_REF void OmxComponentBase::ReturnOutputBuffer(OMX_BUFFERHEADERTYPE* 
 
 
 /** Flushes all the buffers under processing by the given port.
-	* This function is called due to a state change of the component, typically
-	* @param PortIndex the ID of the port to be flushed
-	*/
+    * This function is called due to a state change of the component, typically
+    * @param PortIndex the ID of the port to be flushed
+    */
 
 OMX_ERRORTYPE OmxComponentBase::FlushPort(OMX_S32 PortIndex)
 {
@@ -761,8 +761,8 @@ void OmxComponentBase::DisableSinglePort(OMX_U32 PortIndex)
 
 
 /** Disables the specified port. This function is called due to a request by the IL client
-	* @param PortIndex the ID of the port to be disabled
-	*/
+    * @param PortIndex the ID of the port to be disabled
+    */
 OMX_ERRORTYPE OmxComponentBase::DisablePort(OMX_S32 PortIndex)
 {
 
@@ -825,8 +825,8 @@ void OmxComponentBase::EnableSinglePort(OMX_U32 PortIndex)
 }
 
 /** Enables the specified port. This function is called due to a request by the IL client
-	* @param PortIndex the ID of the port to be enabled
-	*/
+    * @param PortIndex the ID of the port to be enabled
+    */
 OMX_ERRORTYPE OmxComponentBase::EnablePort(OMX_S32 PortIndex)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OmxComponentBase : EnablePort IN"));
@@ -1454,9 +1454,9 @@ OMX_ERRORTYPE OmxComponentBase::FreeBuffer(
 
 
 /** Set Callbacks. It stores in the component private structure the pointers to the user application callbacs
-	* @param hComponent the handle of the component
-	* @param ipCallbacks the OpenMAX standard structure that holds the callback pointers
-	* @param pAppData a pointer to a private structure, not covered by OpenMAX standard, in needed
+    * @param hComponent the handle of the component
+    * @param ipCallbacks the OpenMAX standard structure that holds the callback pointers
+    * @param pAppData a pointer to a private structure, not covered by OpenMAX standard, in needed
     */
 
 OSCL_EXPORT_REF OMX_ERRORTYPE OmxComponentBase::BaseComponentSetCallbacks(
@@ -2617,10 +2617,10 @@ OMX_ERRORTYPE OmxComponentBase::FillThisBuffer(
 
 
 /** This is the central function for buffers processing and decoding.
-	* It is called through the Run() of active object when the component is in executing state
-	* and is signalled each time a new buffer is available on the given ports
-	* This function will process the input buffers & return output buffers
-	*/
+    * It is called through the Run() of active object when the component is in executing state
+    * and is signalled each time a new buffer is available on the given ports
+    * This function will process the input buffers & return output buffers
+    */
 
 OSCL_EXPORT_REF void OmxComponentBase::BufferMgmtFunction()
 {
@@ -2746,7 +2746,7 @@ OSCL_EXPORT_REF void OmxComponentBase::BufferMgmtFunction()
                 }
 
 
-            }	//end braces for if (ipInputBuffer->nFilledLen != 0)
+            }   //end braces for if (ipInputBuffer->nFilledLen != 0)
             else
             {
                 //Reschedule the AO if there are more buffers in queue
@@ -2760,8 +2760,8 @@ OSCL_EXPORT_REF void OmxComponentBase::BufferMgmtFunction()
                 ipInputBuffer = NULL;
             }
 
-        }	//end braces for if ((OMX_TRUE == iIsInputBufferEnded) && (GetQueueNumElem(pInputQueue) > 0))
-    }	//if (OMX_FALSE == iEndofStream)
+        }   //end braces for if ((OMX_TRUE == iIsInputBufferEnded) && (GetQueueNumElem(pInputQueue) > 0))
+    }   //if (OMX_FALSE == iEndofStream)
 
 
     //Component specific Encode/Decode routine
@@ -2776,7 +2776,7 @@ OSCL_EXPORT_REF OMX_BOOL OmxComponentBase::BufferMgmtWithoutMarker()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OmxComponentBase : BufferMgmtWithoutMarker IN"));
 
-    ComponentPortType*	pInPort = (ComponentPortType*) ipPorts[OMX_PORT_INPUTPORT_INDEX];
+    ComponentPortType*  pInPort = (ComponentPortType*) ipPorts[OMX_PORT_INPUTPORT_INDEX];
     QueueType* pInputQueue = ipPorts[OMX_PORT_INPUTPORT_INDEX]->pBufferQueue;
     OmxComponentBase* pOpenmaxAOType = (OmxComponentBase*) iOmxComponent.pComponentPrivate;
 
@@ -2979,7 +2979,7 @@ OSCL_EXPORT_REF void OmxComponentBase::ComponentBufferMgmtWithoutMarker()
 OSCL_EXPORT_REF void OmxComponentBase::TempInputBufferMgmtWithoutMarker()
 {
     OMX_COMPONENTTYPE* pHandle = &iOmxComponent;
-    ComponentPortType*	pInPort = (ComponentPortType*) ipPorts[OMX_PORT_INPUTPORT_INDEX];
+    ComponentPortType*  pInPort = (ComponentPortType*) ipPorts[OMX_PORT_INPUTPORT_INDEX];
     OMX_U32 TempInputBufferSize = iInputCurrBufferSize;
 
     if (iTempInputBufferLength < (TempInputBufferSize >> 1))
@@ -3648,13 +3648,13 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OmxComponentVideo::GetParameter(
     OMX_VIDEO_PARAM_WMVTYPE* pVideoWmv;
 
     //Video encoder configuration parameters
-    OMX_CONFIG_ROTATIONTYPE*			 pVideoRotation;
+    OMX_CONFIG_ROTATIONTYPE*             pVideoRotation;
     OMX_VIDEO_PARAM_ERRORCORRECTIONTYPE* pVideoErrCorr;
-    OMX_VIDEO_PARAM_BITRATETYPE*		 pVideoRateControl;
-    OMX_VIDEO_PARAM_QUANTIZATIONTYPE*	 pVideoQuant;
-    OMX_VIDEO_PARAM_VBSMCTYPE*			 pVideoBlock;
-    OMX_VIDEO_PARAM_MOTIONVECTORTYPE*	 pVideoMotionVector;
-    OMX_VIDEO_PARAM_INTRAREFRESHTYPE*	 pVideoIntraRefresh;
+    OMX_VIDEO_PARAM_BITRATETYPE*         pVideoRateControl;
+    OMX_VIDEO_PARAM_QUANTIZATIONTYPE*    pVideoQuant;
+    OMX_VIDEO_PARAM_VBSMCTYPE*           pVideoBlock;
+    OMX_VIDEO_PARAM_MOTIONVECTORTYPE*    pVideoMotionVector;
+    OMX_VIDEO_PARAM_INTRAREFRESHTYPE*    pVideoIntraRefresh;
 
     if (NULL == ComponentParameterStructure)
     {
@@ -3955,7 +3955,7 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OmxComponentVideo::GetParameter(
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OmxComponentVideo : GetParameter error Unsupported Index"));
             return OMX_ErrorUnsupportedIndex;
         }
-        // break;	This break statement was removed to avoid compiler warning for Unreachable Code
+        // break;   This break statement was removed to avoid compiler warning for Unreachable Code
     }
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OmxComponentVideo : GetParameter OUT"));
@@ -3987,13 +3987,13 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OmxComponentVideo::SetParameter(
     OMX_VIDEO_PARAM_AVCTYPE*     pVideoAvc;
 
     //Video encoder configuration parameters
-    OMX_CONFIG_ROTATIONTYPE*			 pVideoRotation;
+    OMX_CONFIG_ROTATIONTYPE*             pVideoRotation;
     OMX_VIDEO_PARAM_ERRORCORRECTIONTYPE* pVideoErrCorr;
-    OMX_VIDEO_PARAM_BITRATETYPE*		 pVideoRateControl;
-    OMX_VIDEO_PARAM_QUANTIZATIONTYPE*	 pVideoQuant;
-    OMX_VIDEO_PARAM_VBSMCTYPE*			 pVideoBlock;
-    OMX_VIDEO_PARAM_MOTIONVECTORTYPE*	 pVideoMotionVector;
-    OMX_VIDEO_PARAM_INTRAREFRESHTYPE*	 pVideoIntraRefresh;
+    OMX_VIDEO_PARAM_BITRATETYPE*         pVideoRateControl;
+    OMX_VIDEO_PARAM_QUANTIZATIONTYPE*    pVideoQuant;
+    OMX_VIDEO_PARAM_VBSMCTYPE*           pVideoBlock;
+    OMX_VIDEO_PARAM_MOTIONVECTORTYPE*    pVideoMotionVector;
+    OMX_VIDEO_PARAM_INTRAREFRESHTYPE*    pVideoIntraRefresh;
 
 
     ComponentPortType* pComponentPort;
@@ -4310,7 +4310,7 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OmxComponentVideo::SetParameter(
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OmxComponentVideo : SetParameter error Unsupported index"));
             return OMX_ErrorUnsupportedIndex;
         }
-        // break;	This break statement was removed to avoid compiler warning for Unreachable Code
+        // break;   This break statement was removed to avoid compiler warning for Unreachable Code
     }
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OmxComponentVideo : SetParameter OUT"));

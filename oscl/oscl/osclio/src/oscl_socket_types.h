@@ -76,7 +76,7 @@ class OsclNetworkAddress
         OsclNameString<PVNETWORKADDRESS_LEN> ipAddr;
 
         //Port number.
-        int	port;
+        int port;
         //@cmember equality comparison operator
         bool operator == (const OsclNetworkAddress & rhs) const
         {

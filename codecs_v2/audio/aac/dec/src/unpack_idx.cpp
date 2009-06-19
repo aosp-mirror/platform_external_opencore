@@ -18,9 +18,9 @@
 /*
 
  Pathname: ./src/unpack_idx.c
- Function:	unpack_idx
-			unpack_idx_sgn
-			unpack_idx_esc
+ Function:  unpack_idx
+            unpack_idx_sgn
+            unpack_idx_esc
 
 ------------------------------------------------------------------------------
  REVISION HISTORY
@@ -48,8 +48,8 @@
               (2) temp_spec is Int because the result never exceeds 16 bits
 
  Description: Break up and combine unpack index with sign bit reading and for
-			  special escape code. Parent function must know which one of the
-			  3 functions should be called.
+              special escape code. Parent function must know which one of the
+              3 functions should be called.
 
  Description: Put back if-statement to get the max.
 
@@ -73,8 +73,8 @@
 
     const Hcb *pHuffCodebook = Pointer to HuffmanCodebook information.
 
-  		  BITS  *pInputStream = Pointer to the bitstream buffer.
-		  Int *max			 = Pointer to maximum coefficient value.
+          BITS  *pInputStream = Pointer to the bitstream buffer.
+          Int *max           = Pointer to maximum coefficient value.
 
  Local Stores/Buffers/Pointers Needed:
     const UInt div_mod[18]   = An array with the values for 1/mod
@@ -264,12 +264,12 @@ __inline Int32 abs1(Int32 x)
     return (x);
 }
 
-#define pv_abs(x)	abs1(x)
+#define pv_abs(x)   abs1(x)
 
 
 #else
 
-#define pv_abs(x)	((x) > 0)? (x) : (-x)
+#define pv_abs(x)   ((x) > 0)? (x) : (-x)
 
 #endif
 
@@ -328,11 +328,11 @@ const Int div_mod[18] =   /*   mod   index  Q-format */
 ; FUNCTION CODE
 ----------------------------------------------------------------------------*/
 void unpack_idx(
-    Int16	quant_spec[],
-    Int	codeword_indx,
-    const Hcb	*pHuffCodebook,
+    Int16   quant_spec[],
+    Int codeword_indx,
+    const Hcb   *pHuffCodebook,
     BITS  *pInputStream,
-    Int	*max)
+    Int *max)
 {
     Int16 *pQuantSpec = &quant_spec[0];
     Int  temp_spec;
@@ -418,11 +418,11 @@ void unpack_idx(
 
 
 void unpack_idx_sgn(
-    Int16	quant_spec[],
-    Int	codeword_indx,
-    const Hcb	*pHuffCodebook,
+    Int16   quant_spec[],
+    Int codeword_indx,
+    const Hcb   *pHuffCodebook,
     BITS  *pInputStream,
-    Int	*max)
+    Int *max)
 {
     Int16 *pQuantSpec = &quant_spec[0];
     Int  temp_spec;
@@ -546,11 +546,11 @@ void unpack_idx_sgn(
 
 
 void unpack_idx_esc(
-    Int16	quant_spec[],
-    Int	codeword_indx,
-    const Hcb	*pHuffCodebook,
+    Int16   quant_spec[],
+    Int codeword_indx,
+    const Hcb   *pHuffCodebook,
     BITS  *pInputStream,
-    Int	*max)
+    Int *max)
 {
     Int  temp_spec;
     Int  sgn1 = 0, sgn2 = 0;

@@ -33,7 +33,7 @@
 
 
 ////////////////////////////////////////////////////////////////////////////////////
-//////	DownloadContainer
+//////  DownloadContainer
 ////////////////////////////////////////////////////////////////////////////////////
 class DownloadContainer : public ProtocolContainer
 {
@@ -92,7 +92,7 @@ class DownloadContainer : public ProtocolContainer
 };
 
 ////////////////////////////////////////////////////////////////////////////////////
-//////	pvHttpDownloadOutput
+//////  pvHttpDownloadOutput
 ////////////////////////////////////////////////////////////////////////////////////
 
 // This derived class adds data stream output
@@ -143,7 +143,7 @@ class pvHttpDownloadOutput : public PVMFProtocolEngineNodeOutput
 };
 
 ////////////////////////////////////////////////////////////////////////////////////
-//////	pvDownloadControl
+//////  pvDownloadControl
 ////////////////////////////////////////////////////////////////////////////////////
 
 // This class does auto-resume control and download progress update for event report
@@ -160,12 +160,12 @@ class pvDownloadControl : public DownloadControlInterface
 
 
         // set download control supporting objects:
-        //		PVMFFormatProgDownloadSupportInterface object,
-        //		PVMFDownloadProgressInterface object,
-        //		engine playback clock object,
-        //		protocol engine object,
-        //		DownloadProgressInterface object,	(to get the clip duraton)
-        //		PVMFProtocolEngineNodeOutput object
+        //      PVMFFormatProgDownloadSupportInterface object,
+        //      PVMFDownloadProgressInterface object,
+        //      engine playback clock object,
+        //      protocol engine object,
+        //      DownloadProgressInterface object,   (to get the clip duraton)
+        //      PVMFProtocolEngineNodeOutput object
         OSCL_IMPORT_REF void setSupportObject(OsclAny *aDLSupportObject, DownloadControlSupportObjectType aType);
 
         // From PVMFDownloadProgressInterface API pass down
@@ -174,8 +174,8 @@ class pvDownloadControl : public DownloadControlInterface
 
         // check whether to make resume notification; if needed, then make resume notification
         // Return value: 1 means making resume notification normally (underflow->auto resume),
-        //				 2 means making resume notification for download complete
-        //				 0 means anything else
+        //               2 means making resume notification for download complete
+        //               0 means anything else
         OSCL_IMPORT_REF virtual int32 checkResumeNotification(const bool aDownloadComplete = true);
 
         // From PVMFDownloadProgressInterface API
@@ -224,8 +224,8 @@ class pvDownloadControl : public DownloadControlInterface
         bool isInfoReady()
         {
             return !(iDlProgressClock.GetRep() == NULL ||
-                     iProtocol == NULL				 ||
-                     iDownloadProgress == NULL		 ||
+                     iProtocol == NULL               ||
+                     iDownloadProgress == NULL       ||
                      iNodeOutput == NULL);
         };
 
@@ -339,7 +339,7 @@ class pvDownloadControl : public DownloadControlInterface
 };
 
 ////////////////////////////////////////////////////////////////////////////////////
-//////	DownloadProgress
+//////  DownloadProgress
 ////////////////////////////////////////////////////////////////////////////////////
 class DownloadProgress : public DownloadProgressInterface
 {
@@ -353,11 +353,11 @@ class DownloadProgress : public DownloadProgressInterface
         }
 
         // set download progress supporting objects:
-        //		PVMFFormatProgDownloadSupportInterface object,
-        //		protocol engine object,
-        //		config file object,			(for progressive download only)
-        //		track selction container	(for fastrack download only)
-        //		PVMFProtocolEngineNodeOutput object (for fasttrack download only)
+        //      PVMFFormatProgDownloadSupportInterface object,
+        //      protocol engine object,
+        //      config file object,         (for progressive download only)
+        //      track selction container    (for fastrack download only)
+        //      PVMFProtocolEngineNodeOutput object (for fasttrack download only)
         OSCL_IMPORT_REF virtual void setSupportObject(OsclAny *aDLSupportObject, DownloadControlSupportObjectType aType);
 
         // updata download progress
@@ -372,7 +372,7 @@ class DownloadProgress : public DownloadProgressInterface
             iDurationMsec = aClipDurationMsec;
         }
 
-        virtual	void setDownloadProgressMode(DownloadProgressMode aMode = DownloadProgressMode_TimeBased)
+        virtual void setDownloadProgressMode(DownloadProgressMode aMode = DownloadProgressMode_TimeBased)
         {
             OSCL_UNUSED_ARG(aMode);
         }
@@ -399,7 +399,7 @@ class DownloadProgress : public DownloadProgressInterface
 
 
 ////////////////////////////////////////////////////////////////////////////////////
-//////	PVMFDownloadDataSourceContainer
+//////  PVMFDownloadDataSourceContainer
 ////////////////////////////////////////////////////////////////////////////////////
 
 // This container class wraps the data from all the download source data classes, i.e.,
@@ -409,19 +409,19 @@ class CPVXInfo;
 class PVMFDownloadDataSourceContainer
 {
     public:
-        bool iHasDataSource;									// true means the constainer is already filled in the data source
-        bool iIsNewSession;										// true if the downloading a new file, false if keep downloading a partial downloading file
-        uint32 iMaxFileSize;									// the max size of the file.
-        uint32 iPlaybackControl;								// correspond to PVMFDownloadDataSourceHTTP::TPVPlaybackControl, PVMFSourceContextDataDownloadHTTP::TPVPlaybackControl
-        OSCL_wHeapString<OsclMemAllocator> iConfigFileName;		// download config file
-        OSCL_wHeapString<OsclMemAllocator> iDownloadFileName;	// local file name of the downloaded clip
-        OSCL_HeapString<OsclMemAllocator>  iProxyName;			// HTTP proxy name, either ip or dns
-        uint32 iProxyPort;										// HTTP proxy port
-        OSCL_HeapString<OsclMemAllocator> iUserID;				// UserID string used for HTTP basic/digest authentication
-        OSCL_HeapString<OsclMemAllocator> iUserPasswd;			// password string used for HTTP basic/digest authentication
+        bool iHasDataSource;                                    // true means the constainer is already filled in the data source
+        bool iIsNewSession;                                     // true if the downloading a new file, false if keep downloading a partial downloading file
+        uint32 iMaxFileSize;                                    // the max size of the file.
+        uint32 iPlaybackControl;                                // correspond to PVMFDownloadDataSourceHTTP::TPVPlaybackControl, PVMFSourceContextDataDownloadHTTP::TPVPlaybackControl
+        OSCL_wHeapString<OsclMemAllocator> iConfigFileName;     // download config file
+        OSCL_wHeapString<OsclMemAllocator> iDownloadFileName;   // local file name of the downloaded clip
+        OSCL_HeapString<OsclMemAllocator>  iProxyName;          // HTTP proxy name, either ip or dns
+        uint32 iProxyPort;                                      // HTTP proxy port
+        OSCL_HeapString<OsclMemAllocator> iUserID;              // UserID string used for HTTP basic/digest authentication
+        OSCL_HeapString<OsclMemAllocator> iUserPasswd;          // password string used for HTTP basic/digest authentication
 
 
-        CPVXInfo *iPvxInfo;										// Fasttrack only, contains all the info in the .pvx file except the URL
+        CPVXInfo *iPvxInfo;                                     // Fasttrack only, contains all the info in the .pvx file except the URL
 
     public:
         // default constructor
@@ -443,12 +443,12 @@ class PVMFDownloadDataSourceContainer
 
         void clear()
         {
-            iHasDataSource	 = false;
-            iIsNewSession	 = true;
-            iMaxFileSize	 = 0;
+            iHasDataSource   = false;
+            iIsNewSession    = true;
+            iMaxFileSize     = 0;
             iPlaybackControl = 0;
-            iProxyPort		 = 0;
-            iPvxInfo		 = NULL;
+            iProxyPort       = 0;
+            iPvxInfo         = NULL;
         }
 
     private:
@@ -463,7 +463,7 @@ class PVMFDownloadDataSourceContainer
 
 
 ////////////////////////////////////////////////////////////////////////////////////
-//////	PVDlCfgFileContainer and its derived class definition
+//////  PVDlCfgFileContainer and its derived class definition
 ////////////////////////////////////////////////////////////////////////////////////
 class PVDlCfgFileContainer
 {
@@ -513,7 +513,7 @@ class PVDlCfgFileContainer
 };
 
 ////////////////////////////////////////////////////////////////////////////////////
-//////	downloadEventReporter
+//////  downloadEventReporter
 ////////////////////////////////////////////////////////////////////////////////////
 
 class downloadEventReporter : public EventReporter

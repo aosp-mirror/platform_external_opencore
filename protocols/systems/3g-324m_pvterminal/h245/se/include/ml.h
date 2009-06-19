@@ -43,7 +43,7 @@
 /************************************************************************/
 #include    <string.h>
 #include    "h245pri.h"
-#include	"sebase.h"
+#include    "sebase.h"
 
 /************************************************************************/
 /*  Definition                                                          */
@@ -145,8 +145,8 @@ class ML : public SEBase
         void T102TimerStart(void);
         void T102TimerStop(void);
 
-        int32		TmrSqcNumber;
-        uint8	Status;
+        int32       TmrSqcNumber;
+        uint8   Status;
         S_MlRequestType LoopType ;
 };
 #endif /* _SEML_ */

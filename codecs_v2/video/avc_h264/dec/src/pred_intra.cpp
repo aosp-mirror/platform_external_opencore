@@ -19,8 +19,8 @@
 #include "oscl_mem.h"
 
 #define CLIP_COMP  *comp++ = (uint8)(((uint)temp>0xFF)? 0xFF&(~(temp>>31)): temp)
-#define CLIP_RESULT(x) 		if((uint)x > 0xFF){ \
-			     x = 0xFF & (~(x>>31));}
+#define CLIP_RESULT(x)      if((uint)x > 0xFF){ \
+                 x = 0xFF & (~(x>>31));}
 
 
 /* We should combine the Intra4x4 functions with residual decoding and compensation  */
@@ -49,7 +49,7 @@ AVCStatus IntraMBPrediction(AVCCommonObj *video)
     pred = video->pred_block;
     video->pred_pitch = 20;
 #else
-    video->pred_block = curL;	/* point directly to the frame buffer */
+    video->pred_block = curL;   /* point directly to the frame buffer */
     video->pred_pitch = pitch;
 #endif
 
@@ -144,7 +144,7 @@ AVCStatus IntraMBPrediction(AVCCommonObj *video)
 #endif
         switch (currMB->i16Mode)
         {
-            case AVC_I16_Vertical:		/* Intra_16x16_Vertical */
+            case AVC_I16_Vertical:      /* Intra_16x16_Vertical */
                 /* check availability of top */
                 if (video->intraAvailB)
                 {
@@ -155,7 +155,7 @@ AVCStatus IntraMBPrediction(AVCCommonObj *video)
                     return AVC_FAIL;
                 }
                 break;
-            case AVC_I16_Horizontal:		/* Intra_16x16_Horizontal */
+            case AVC_I16_Horizontal:        /* Intra_16x16_Horizontal */
                 /* check availability of left */
                 if (video->intraAvailA)
                 {
@@ -166,10 +166,10 @@ AVCStatus IntraMBPrediction(AVCCommonObj *video)
                     return AVC_FAIL;
                 }
                 break;
-            case AVC_I16_DC:		/* Intra_16x16_DC */
+            case AVC_I16_DC:        /* Intra_16x16_DC */
                 Intra_16x16_DC(video, pitch);
                 break;
-            case AVC_I16_Plane:		/* Intra_16x16_Plane */
+            case AVC_I16_Plane:     /* Intra_16x16_Plane */
                 if (video->intraAvailA && video->intraAvailB && video->intraAvailD)
                 {
                     Intra_16x16_Plane(video, pitch);
@@ -258,10 +258,10 @@ AVCStatus IntraMBPrediction(AVCCommonObj *video)
     /* chrominance */
     switch (currMB->intra_chroma_pred_mode)
     {
-        case AVC_IC_DC:		/* Intra_Chroma_DC */
+        case AVC_IC_DC:     /* Intra_Chroma_DC */
             Intra_Chroma_DC(video, pitch, predCb, predCr);
             break;
-        case AVC_IC_Horizontal:		/* Intra_Chroma_Horizontal */
+        case AVC_IC_Horizontal:     /* Intra_Chroma_Horizontal */
             if (video->intraAvailA)
             {
                 /* check availability of left */
@@ -272,7 +272,7 @@ AVCStatus IntraMBPrediction(AVCCommonObj *video)
                 return AVC_FAIL;
             }
             break;
-        case AVC_IC_Vertical:		/* Intra_Chroma_Vertical */
+        case AVC_IC_Vertical:       /* Intra_Chroma_Vertical */
             if (video->intraAvailB)
             {
                 /* check availability of top */
@@ -283,7 +283,7 @@ AVCStatus IntraMBPrediction(AVCCommonObj *video)
                 return AVC_FAIL;
             }
             break;
-        case AVC_IC_Plane:		/* Intra_Chroma_Plane */
+        case AVC_IC_Plane:      /* Intra_Chroma_Plane */
             if (video->intraAvailA && video->intraAvailB && video->intraAvailD)
             {
                 /* check availability of top and left */
@@ -375,8 +375,8 @@ void SaveNeighborForIntraPred(AVCCommonObj *video, int offset)
 #ifdef USE_PRED_BLOCK
     pitch = 20;
     pred = video->pred + 384; /* bottom line for Y */
-    predCb = pred + 152;	/* bottom line for Cb */
-    predCr = predCb + 144;	/* bottom line for Cr */
+    predCb = pred + 152;    /* bottom line for Cb */
+    predCr = predCb + 144;  /* bottom line for Cr */
 #else
     pitch = currPic->pitch;
     tmp_word = offset + (pitch << 2) - (pitch >> 1);
@@ -411,9 +411,9 @@ void SaveNeighborForIntraPred(AVCCommonObj *video, int offset)
 
     /* now save last column */
 #ifdef USE_PRED_BLOCK
-    pred = video->pred + 99;	/* last column*/
+    pred = video->pred + 99;    /* last column*/
 #else
-    pred -= ((pitch << 4) - pitch - 15);	/* last column */
+    pred -= ((pitch << 4) - pitch - 15);    /* last column */
 #endif
     tmp_ptr = video->intra_pred_left;
     tmp_word = video->intra_pred_topleft;
@@ -566,7 +566,7 @@ AVCStatus Intra_4x4(AVCCommonObj *video, int block_x, int block_y, uint8 *comp)
 
     switch (currMB->i4Mode[(block_y << 2) + block_x])
     {
-        case AVC_I4_Vertical:		/* Intra_4x4_Vertical */
+        case AVC_I4_Vertical:       /* Intra_4x4_Vertical */
             if (block_y > 0 || video->intraAvailB)/* to prevent out-of-bound access*/
             {
                 Intra_4x4_Vertical(video,  block_offset);
@@ -577,7 +577,7 @@ AVCStatus Intra_4x4(AVCCommonObj *video, int block_x, int block_y, uint8 *comp)
             }
             break;
 
-        case AVC_I4_Horizontal:		/* Intra_4x4_Horizontal */
+        case AVC_I4_Horizontal:     /* Intra_4x4_Horizontal */
             if (block_x || video->intraAvailA)  /* to prevent out-of-bound access */
             {
                 Intra_4x4_Horizontal(video, pitch, block_offset);
@@ -588,7 +588,7 @@ AVCStatus Intra_4x4(AVCCommonObj *video, int block_x, int block_y, uint8 *comp)
             }
             break;
 
-        case AVC_I4_DC:		/* Intra_4x4_DC */
+        case AVC_I4_DC:     /* Intra_4x4_DC */
             availability.left = TRUE;
             availability.top = TRUE;
             if (!block_y)
@@ -602,7 +602,7 @@ AVCStatus Intra_4x4(AVCCommonObj *video, int block_x, int block_y, uint8 *comp)
             Intra_4x4_DC(video, pitch, block_offset, &availability);
             break;
 
-        case AVC_I4_Diagonal_Down_Left:		/* Intra_4x4_Diagonal_Down_Left */
+        case AVC_I4_Diagonal_Down_Left:     /* Intra_4x4_Diagonal_Down_Left */
             /* lookup table will be more appropriate for this case  */
             if (block_y == 0 && !video->intraAvailB)
             {
@@ -623,7 +623,7 @@ AVCStatus Intra_4x4(AVCCommonObj *video, int block_x, int block_y, uint8 *comp)
             Intra_4x4_Down_Left(video, block_offset, &availability);
             break;
 
-        case AVC_I4_Diagonal_Down_Right:		/* Intra_4x4_Diagonal_Down_Right */
+        case AVC_I4_Diagonal_Down_Right:        /* Intra_4x4_Diagonal_Down_Right */
             if ((block_y && block_x)  /* to prevent out-of-bound access */
                     || (block_y && video->intraAvailA)
                     || (block_x && video->intraAvailB)
@@ -637,7 +637,7 @@ AVCStatus Intra_4x4(AVCCommonObj *video, int block_x, int block_y, uint8 *comp)
             }
             break;
 
-        case AVC_I4_Vertical_Right:		/* Intra_4x4_Vertical_Right */
+        case AVC_I4_Vertical_Right:     /* Intra_4x4_Vertical_Right */
             if ((block_y && block_x)  /* to prevent out-of-bound access */
                     || (block_y && video->intraAvailA)
                     || (block_x && video->intraAvailB)
@@ -651,7 +651,7 @@ AVCStatus Intra_4x4(AVCCommonObj *video, int block_x, int block_y, uint8 *comp)
             }
             break;
 
-        case AVC_I4_Horizontal_Down:		/* Intra_4x4_Horizontal_Down */
+        case AVC_I4_Horizontal_Down:        /* Intra_4x4_Horizontal_Down */
             if ((block_y && block_x)  /* to prevent out-of-bound access */
                     || (block_y && video->intraAvailA)
                     || (block_x && video->intraAvailB)
@@ -665,7 +665,7 @@ AVCStatus Intra_4x4(AVCCommonObj *video, int block_x, int block_y, uint8 *comp)
             }
             break;
 
-        case AVC_I4_Vertical_Left:		/* Intra_4x4_Vertical_Left */
+        case AVC_I4_Vertical_Left:      /* Intra_4x4_Vertical_Left */
             /* lookup table may be more appropriate for this case  */
             if (block_y == 0 && !video->intraAvailB)
             {
@@ -686,7 +686,7 @@ AVCStatus Intra_4x4(AVCCommonObj *video, int block_x, int block_y, uint8 *comp)
             Intra_4x4_Vertical_Left(video,  block_offset, &availability);
             break;
 
-        case AVC_I4_Horizontal_Up:		/* Intra_4x4_Horizontal_Up */
+        case AVC_I4_Horizontal_Up:      /* Intra_4x4_Horizontal_Up */
             if (block_x || video->intraAvailA)
             {
                 Intra_4x4_Horizontal_Up(video, pitch, block_offset);
@@ -736,7 +736,7 @@ void Intra_4x4_Vertical(AVCCommonObj *video,  int block_offset)
 
 void Intra_4x4_Horizontal(AVCCommonObj *video, int pitch, int block_offset)
 {
-    uint8	*comp_ref = video->pintra_pred_left;
+    uint8   *comp_ref = video->pintra_pred_left;
     uint32 temp;
     int P;
     uint8 *pred = video->pred_block + block_offset;
@@ -771,7 +771,7 @@ void Intra_4x4_Horizontal(AVCCommonObj *video, int pitch, int block_offset)
 void Intra_4x4_DC(AVCCommonObj *video, int pitch, int block_offset,
                   AVCNeighborAvailability *availability)
 {
-    uint8	*comp_ref = video->pintra_pred_left;
+    uint8   *comp_ref = video->pintra_pred_left;
     uint32  temp;
     int DC;
     uint8 *pred = video->pred_block + block_offset;
@@ -825,7 +825,7 @@ void Intra_4x4_DC(AVCCommonObj *video, int pitch, int block_offset,
 void Intra_4x4_Down_Left(AVCCommonObj *video, int block_offset,
                          AVCNeighborAvailability *availability)
 {
-    uint8	*comp_refx = video->pintra_pred_top;
+    uint8   *comp_refx = video->pintra_pred_top;
     uint32 temp;
     int r0, r1, r2, r3, r4, r5, r6, r7;
     uint8 *pred = video->pred_block + block_offset;
@@ -932,7 +932,7 @@ void Intra_4x4_Diagonal_Down_Right(AVCCommonObj *video, int pitch, int
     comp_refy += pitch; /* re-use x2 instead of y3 */
     Q_y = (x1 + 2 * x0 + x2 + 2) >> 2;
 
-    x1 = *comp_refy;					/* re-use x1 instead of y4 */
+    x1 = *comp_refy;                    /* re-use x1 instead of y4 */
     R_y = (x0 + 2 * x2 + x1 + 2) >> 2;
 
     /* we can pack these  */
@@ -963,10 +963,10 @@ void Intra_4x4_Diagonal_Down_Right(AVCCommonObj *video, int pitch, int
     return ;
 }
 
-void	Intra_4x4_Diagonal_Vertical_Right(AVCCommonObj *video, int pitch, int block_offset)
+void    Intra_4x4_Diagonal_Vertical_Right(AVCCommonObj *video, int pitch, int block_offset)
 {
-    uint8	*comp_refx = video->pintra_pred_top;
-    uint8	*comp_refy = video->pintra_pred_left;
+    uint8   *comp_refx = video->pintra_pred_top;
+    uint8   *comp_refy = video->pintra_pred_left;
     uint32 temp;
     int P0, Q0, R0, S0, P1, Q1, R1, P2, Q2, D;
     int x0, x1, x2;
@@ -1036,8 +1036,8 @@ void	Intra_4x4_Diagonal_Vertical_Right(AVCCommonObj *video, int pitch, int block
 void Intra_4x4_Diagonal_Horizontal_Down(AVCCommonObj *video, int pitch,
                                         int block_offset)
 {
-    uint8	*comp_refx = video->pintra_pred_top;
-    uint8	*comp_refy = video->pintra_pred_left;
+    uint8   *comp_refx = video->pintra_pred_top;
+    uint8   *comp_refy = video->pintra_pred_left;
     uint32 temp;
     int P0, Q0, R0, S0, P1, Q1, R1, P2, Q2, D;
     int x0, x1, x2;
@@ -1065,7 +1065,7 @@ void Intra_4x4_Diagonal_Horizontal_Down(AVCCommonObj *video, int pitch,
     comp_refy += pitch; /* reuse x1 instead of y3 */
     R0 = x0 + x1 + 1;
 
-    x2 = *comp_refy;	/* reuse x2 instead of y4 */
+    x2 = *comp_refy;    /* reuse x2 instead of y4 */
     S0 = x1 + x2 + 1;
 
     P1 = (P0 + Q0) >> 2;
@@ -1108,7 +1108,7 @@ void Intra_4x4_Diagonal_Horizontal_Down(AVCCommonObj *video, int pitch,
 
 void Intra_4x4_Vertical_Left(AVCCommonObj *video, int block_offset, AVCNeighborAvailability *availability)
 {
-    uint8	*comp_refx = video->pintra_pred_top;
+    uint8   *comp_refx = video->pintra_pred_top;
     uint32 temp1, temp2;
     int x0, x1, x2, x3, x4, x5, x6;
     uint8 *pred = video->pred_block + block_offset;
@@ -1154,7 +1154,7 @@ void Intra_4x4_Vertical_Left(AVCCommonObj *video, int block_offset, AVCNeighborA
     *((uint32*)pred) = temp2;
     pred += pred_pitch;
 
-    temp1 = (temp1 >> 8) | ((x4 >> 1) << 24); 	/* rotate out old value */
+    temp1 = (temp1 >> 8) | ((x4 >> 1) << 24);   /* rotate out old value */
     *((uint32*)pred) = temp1;
     pred += pred_pitch;
 
@@ -1167,7 +1167,7 @@ void Intra_4x4_Vertical_Left(AVCCommonObj *video, int block_offset, AVCNeighborA
 
 void Intra_4x4_Horizontal_Up(AVCCommonObj *video, int pitch, int block_offset)
 {
-    uint8	*comp_refy = video->pintra_pred_left;
+    uint8   *comp_refy = video->pintra_pred_left;
     uint32 temp;
     int Q0, R0, Q1, D0, D1, P0, P1;
     int y0, y1, y2, y3;
@@ -1187,10 +1187,10 @@ void Intra_4x4_Horizontal_Up(AVCCommonObj *video, int pitch, int block_offset)
     P0 = ((y0 + y1 + 1) >> 1);
     P1 = ((y0 + (y1 << 1) + y2 + 2) >> 2);
 
-    temp = P0 | (P1 << 8);		// [P0 P1 Q0 Q1]
-    temp |= (Q0 << 16);		// [Q0 Q1 R0 DO]
-    temp |= (Q1 << 24);		// [R0 D0 D1 D1]
-    *((uint32*)pred) = temp;	  // [D1 D1 D1 D1]
+    temp = P0 | (P1 << 8);      // [P0 P1 Q0 Q1]
+    temp |= (Q0 << 16);     // [Q0 Q1 R0 DO]
+    temp |= (Q1 << 24);     // [R0 D0 D1 D1]
+    *((uint32*)pred) = temp;      // [D1 D1 D1 D1]
     pred += pred_pitch;
 
     D0 = (y2 + 3 * y3 + 2) >> 2;
@@ -1221,7 +1221,7 @@ void  Intra_16x16_Vertical(AVCCommonObj *video)
 {
     int i;
     uint32 temp1, temp2, temp3, temp4;
-    uint8	*comp_ref = video->pintra_pred_top;
+    uint8   *comp_ref = video->pintra_pred_top;
     uint8 *pred = video->pred_block;
     int pred_pitch = video->pred_pitch;
 
@@ -1622,12 +1622,12 @@ void  Intra_Chroma_Horizontal(AVCCommonObj *video, int pitch, uint8 *predCb, uin
 {
     int i;
     uint32 temp;
-    uint8	*comp_ref_cb_y = video->pintra_pred_left_cb;
-    uint8	*comp_ref_cr_y = video->pintra_pred_left_cr;
+    uint8   *comp_ref_cb_y = video->pintra_pred_left_cb;
+    uint8   *comp_ref_cr_y = video->pintra_pred_left_cr;
     uint8  *comp;
     int component, j;
-    int		pred_pitch = video->pred_pitch;
-    uint8	*pred;
+    int     pred_pitch = video->pred_pitch;
+    uint8   *pred;
 
     comp = comp_ref_cb_y;
     pred = predCb;
@@ -1654,13 +1654,13 @@ void  Intra_Chroma_Horizontal(AVCCommonObj *video, int pitch, uint8 *predCb, uin
 
 void  Intra_Chroma_Vertical(AVCCommonObj *video, uint8 *predCb, uint8 *predCr)
 {
-    uint32	temp1, temp2;
-    uint8	*comp_ref_cb_x = video->pintra_pred_top_cb;
-    uint8	*comp_ref_cr_x = video->pintra_pred_top_cr;
-    uint8	*comp_ref;
-    int		component, j;
-    int		pred_pitch = video->pred_pitch;
-    uint8	*pred;
+    uint32  temp1, temp2;
+    uint8   *comp_ref_cb_x = video->pintra_pred_top_cb;
+    uint8   *comp_ref_cr_x = video->pintra_pred_top_cr;
+    uint8   *comp_ref;
+    int     component, j;
+    int     pred_pitch = video->pred_pitch;
+    uint8   *pred;
 
     comp_ref = comp_ref_cb_x;
     pred = predCb;

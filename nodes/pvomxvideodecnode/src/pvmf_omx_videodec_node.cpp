@@ -34,11 +34,11 @@
 #include "OMX_Video.h"
 
 #define CONFIG_SIZE_AND_VERSION(param) \
-	    param.nSize=sizeof(param); \
-	    param.nVersion.s.nVersionMajor = SPECVERSIONMAJOR; \
-	    param.nVersion.s.nVersionMinor = SPECVERSIONMINOR; \
-	    param.nVersion.s.nRevision = SPECREVISION; \
-	    param.nVersion.s.nStep = SPECSTEP;
+        param.nSize=sizeof(param); \
+        param.nVersion.s.nVersionMajor = SPECVERSIONMAJOR; \
+        param.nVersion.s.nVersionMinor = SPECVERSIONMINOR; \
+        param.nVersion.s.nRevision = SPECREVISION; \
+        param.nVersion.s.nStep = SPECSTEP;
 
 
 #define PVOMXVIDEODEC_EXTRA_YUVBUFFER_POOLNUM 3
@@ -459,7 +459,7 @@ PVMFStatus PVMFOMXVideoDecNode::HandlePortReEnable()
 
 
         if (!ProvideBuffersToComponent(iOutBufMemoryPool, // allocator
-                                       iOutputAllocSize,	 // size to allocate from pool (hdr only or hdr+ buffer)
+                                       iOutputAllocSize,     // size to allocate from pool (hdr only or hdr+ buffer)
                                        iNumOutputBuffers, // number of buffers
                                        iOMXComponentOutputBufferSize, // actual buffer size
                                        iOutputPortIndex, // port idx
@@ -539,7 +539,7 @@ PVMFStatus PVMFOMXVideoDecNode::HandlePortReEnable()
         }
 
         if (!ProvideBuffersToComponent(iInBufMemoryPool, // allocator
-                                       iInputAllocSize,	 // size to allocate from pool (hdr only or hdr+ buffer)
+                                       iInputAllocSize,  // size to allocate from pool (hdr only or hdr+ buffer)
                                        iNumInputBuffers, // number of buffers
                                        iOMXComponentInputBufferSize, // actual buffer size
                                        iInputPortIndex, // port idx
@@ -598,7 +598,7 @@ bool PVMFOMXVideoDecNode::NegotiateComponentParameters(OMX_PTR aOutputParameters
 
 
     // loop through video ports starting from the starting index to find index of the first input port
-    for (ii = VideoPortParameters.nStartPortNumber ;ii < VideoPortParameters.nStartPortNumber + NumPorts; ii++)
+    for (ii = VideoPortParameters.nStartPortNumber ; ii < VideoPortParameters.nStartPortNumber + NumPorts; ii++)
     {
         // get port parameters, and determine if it is input or output
         // if there are more than 2 ports, the first one we encounter that has input direction is picked
@@ -635,7 +635,7 @@ bool PVMFOMXVideoDecNode::NegotiateComponentParameters(OMX_PTR aOutputParameters
 
 
     // loop through video ports starting from the starting index to find index of the first output port
-    for (ii = VideoPortParameters.nStartPortNumber ;ii < VideoPortParameters.nStartPortNumber + NumPorts; ii++)
+    for (ii = VideoPortParameters.nStartPortNumber ; ii < VideoPortParameters.nStartPortNumber + NumPorts; ii++)
     {
         // get port parameters, and determine if it is input or output
         // if there are more than 2 ports, the first one we encounter that has output direction is picked
@@ -1126,8 +1126,8 @@ bool PVMFOMXVideoDecNode::InitDecoder(PVMFSharedMediaDataPtr& DataIn)
 
 
     // NOTE: the component may not start decoding without providing the Output buffer to it,
-    //		here, we're sending input/config buffers.
-    //		Then, we'll go to ReadyToDecode state and send output as well
+    //      here, we're sending input/config buffers.
+    //      Then, we'll go to ReadyToDecode state and send output as well
 
     if (iInPort != NULL)
     {
@@ -2522,7 +2522,7 @@ PVMFStatus PVMFOMXVideoDecNode::DoCapConfigGetParametersSync(PvmiKeyType aIdenti
             // Copy the requested info
             switch (j)
             {
-                case 0:	// "width"
+                case 0: // "width"
                     // Return current value
                     aParameters[j].value.uint32_value = iNewWidth;
                     break;
@@ -2804,9 +2804,9 @@ PVMFStatus PVMFOMXVideoDecNode::DoCapConfigGetParametersSync(PvmiKeyType aIdenti
                     }
                 }
                 else if ((vdeccomp4ind == 0) || // "postproc_enable",
-                         (vdeccomp4ind == 1) ||	// "postproc_type"
-                         (vdeccomp4ind == 2) ||	// "dropframe_enable"
-                         (vdeccomp4ind == 5)	// "format_type"
+                         (vdeccomp4ind == 1) || // "postproc_type"
+                         (vdeccomp4ind == 2) || // "dropframe_enable"
+                         (vdeccomp4ind == 5)    // "format_type"
                         )
                 {
                     if (compcount == 4)
@@ -3023,7 +3023,7 @@ void PVMFOMXVideoDecNode::DoCapConfigSetParameters(PvmiKvp* aParameters, int aNu
 }
 
 /* This function finds a nal from the SC's, moves the bitstream pointer to the beginning of the NAL unit, returns the
-	size of the NAL, and at the same time, updates the remaining size in the bitstream buffer that is passed in */
+    size of the NAL, and at the same time, updates the remaining size in the bitstream buffer that is passed in */
 int32 PVMFOMXVideoDecNode::GetNAL_OMXNode(uint8** bitstream, int* size)
 {
     int i = 0;
@@ -3066,7 +3066,7 @@ int32 PVMFOMXVideoDecNode::GetNAL_OMXNode(uint8** bitstream, int* size)
     }
 
     *size -= i;
-    return (i -j);
+    return (i - j);
 }
 
 
@@ -3312,7 +3312,7 @@ PVMFStatus PVMFOMXVideoDecNode::DoGetVideoDecNodeParameter(PvmiKvp*& aParameters
     // Copy the requested info
     switch (aIndex)
     {
-        case 0:	// "postproc_enable"
+        case 0: // "postproc_enable"
             if (reqattr == PVMI_KVPATTR_CUR)
             {
                 // Return current value
@@ -3326,7 +3326,7 @@ PVMFStatus PVMFOMXVideoDecNode::DoGetVideoDecNodeParameter(PvmiKvp*& aParameters
 
             break;
 
-        case 1:	// "postproc_type"
+        case 1: // "postproc_type"
             if (reqattr == PVMI_KVPATTR_CUR)
             {
                 // Return current value
@@ -3340,7 +3340,7 @@ PVMFStatus PVMFOMXVideoDecNode::DoGetVideoDecNodeParameter(PvmiKvp*& aParameters
 
             break;
 
-        case 2:	// "dropframe_enable"
+        case 2: // "dropframe_enable"
             if (reqattr == PVMI_KVPATTR_CUR)
             {
                 // Return current value
@@ -3436,7 +3436,7 @@ PVMFStatus PVMFOMXVideoDecNode::DoGetH263DecoderParameter(PvmiKvp*& aParameters,
     // Copy the requested info
     switch (aIndex)
     {
-        case 0:	// "maxbitstreamframesize"
+        case 0: // "maxbitstreamframesize"
             if (reqattr == PVMI_KVPATTR_CUR)
             {
                 // Return current value
@@ -3464,7 +3464,7 @@ PVMFStatus PVMFOMXVideoDecNode::DoGetH263DecoderParameter(PvmiKvp*& aParameters,
             }
             break;
 
-        case 1:	// "maxdimension"
+        case 1: // "maxdimension"
         {
             range_uint32* rui32 = (range_uint32*)oscl_malloc(sizeof(range_uint32));
             if (rui32 == NULL)
@@ -3567,7 +3567,7 @@ PVMFStatus PVMFOMXVideoDecNode::DoGetM4VDecoderParameter(PvmiKvp*& aParameters, 
     // Copy the requested info
     switch (aIndex)
     {
-        case 0:	// "maxbitstreamframesize"
+        case 0: // "maxbitstreamframesize"
             if (reqattr == PVMI_KVPATTR_CUR)
             {
                 // Return current value
@@ -3595,7 +3595,7 @@ PVMFStatus PVMFOMXVideoDecNode::DoGetM4VDecoderParameter(PvmiKvp*& aParameters, 
             }
             break;
 
-        case 1:	// "maxdimension"
+        case 1: // "maxdimension"
         {
             range_uint32* rui32 = (range_uint32*)oscl_malloc(sizeof(range_uint32));
             if (rui32 == NULL)
@@ -3980,13 +3980,13 @@ PVMFStatus PVMFOMXVideoDecNode::GetProfileAndLevel(PVMF_MPEGVideoProfileType& aP
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFOMXVideoDecNode::GetProfileAndLevel() iVideoDecoder is Null"));
         aProfile = PV_MPEG_VIDEO_RESERVED_PROFILE;
-        aLevel	= PV_MPEG_VIDEO_LEVEL_UNKNOWN;
+        aLevel  = PV_MPEG_VIDEO_LEVEL_UNKNOWN;
         return PVMFFailure;
     }
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFOMXVideoDecNode::GetProfileAndLevel() iVideoDecoder is Null"));
     aProfile = PV_MPEG_VIDEO_RESERVED_PROFILE;
-    aLevel	= PV_MPEG_VIDEO_LEVEL_UNKNOWN;
+    aLevel  = PV_MPEG_VIDEO_LEVEL_UNKNOWN;
     // FOR NOW, JUST RETURN FAILURE, WE DON'T SUPPORT THIS FEATURE YET
     return PVMFFailure;
 
@@ -4013,7 +4013,7 @@ PVMFStatus PVMFOMXVideoDecNode::GetProfileAndLevel(PVMF_MPEGVideoProfileType& aP
 
 #define FOURCC_WMV3     mmioFOURCC_WMC('W','M','V','3')
 #define FOURCC_WMV2     mmioFOURCC_WMC('W','M','V','2')
-#define FOURCC_WMVA		mmioFOURCC_WMC('W','M','V','A')
+#define FOURCC_WMVA     mmioFOURCC_WMC('W','M','V','A')
 
 //For WMV3
 enum { NOT_WMV3 = -1, WMV3_SIMPLE_PROFILE, WMV3_MAIN_PROFILE, WMV3_PC_PROFILE, WMV3_SCREEN };
@@ -4066,7 +4066,7 @@ bool PVMFOMXVideoDecNode::VerifyParametersSync(PvmiMIOSession aSession, PvmiKvp*
         uint32 NewProfile, NewFrameRate, NewBitRate;
 
         // We are interested in the following (and will extract it)
-        //	1. Version (WMV9 or WMV8 etc.) (from format specific info)
+        //  1. Version (WMV9 or WMV8 etc.) (from format specific info)
         //  2. picture dimensions // from format specific info
         //  3. interlaced YUV411 /sprite content is not supported (from sequence header)
         //  4. framerate / bitrate information (from sequence header)
@@ -4173,22 +4173,22 @@ bool PVMFOMXVideoDecNode::VerifyParametersSync(PvmiMIOSession aSession, PvmiKvp*
                 if ((YUV411flag != 0) || (Spriteflag != 0))
                     return false;
 
-                YUV411				= (uint32)YUV411flag;
-                SpriteMode			= (uint32)Spriteflag;
-                LoopFilter			= (NewSeqHeader & 0x800) >> 11;
-                Xintra8Switch		= (NewSeqHeader & 0x400) >> 10;
-                MultiresEnabled		= (NewSeqHeader & 0x200) >> 9;
-                X16bitXform			= (NewSeqHeader & 0x100) >> 8;
-                UVHpelBilinear		= (NewSeqHeader & 0x800000) >> 23;
-                ExtendedMvMode		= (NewSeqHeader & 0x400000) >> 22;
-                DQuantCodingOn		= (NewSeqHeader & 0x300000) >> 20;
-                XformSwitch			= (NewSeqHeader & 0x80000) >> 19;
-                DCTTable_MB_ENABLED	= (NewSeqHeader & 0x40000) >> 18;
-                SequenceOverlap		= (NewSeqHeader & 0x20000) >> 17;
-                StartCode			= (NewSeqHeader & 0x10000) >> 16;
-                PreProcRange			= (NewSeqHeader & 0x80000000) >> 31;
-                NumBFrames			= (NewSeqHeader & 0x70000000) >> 28;
-                ExplicitSeqQuantizer	= (NewSeqHeader & 0x8000000) >> 27;
+                YUV411              = (uint32)YUV411flag;
+                SpriteMode          = (uint32)Spriteflag;
+                LoopFilter          = (NewSeqHeader & 0x800) >> 11;
+                Xintra8Switch       = (NewSeqHeader & 0x400) >> 10;
+                MultiresEnabled     = (NewSeqHeader & 0x200) >> 9;
+                X16bitXform         = (NewSeqHeader & 0x100) >> 8;
+                UVHpelBilinear      = (NewSeqHeader & 0x800000) >> 23;
+                ExtendedMvMode      = (NewSeqHeader & 0x400000) >> 22;
+                DQuantCodingOn      = (NewSeqHeader & 0x300000) >> 20;
+                XformSwitch         = (NewSeqHeader & 0x80000) >> 19;
+                DCTTable_MB_ENABLED = (NewSeqHeader & 0x40000) >> 18;
+                SequenceOverlap     = (NewSeqHeader & 0x20000) >> 17;
+                StartCode           = (NewSeqHeader & 0x10000) >> 16;
+                PreProcRange            = (NewSeqHeader & 0x80000000) >> 31;
+                NumBFrames          = (NewSeqHeader & 0x70000000) >> 28;
+                ExplicitSeqQuantizer    = (NewSeqHeader & 0x8000000) >> 27;
                 if (ExplicitSeqQuantizer)
                     Use3QPDZQuantizer = (NewSeqHeader & 0x4000000) >> 26;
                 else

@@ -107,7 +107,7 @@ Copyright (c) ISO/IEC 2002.
 ----------------------------------------------------------------------------*/
 #include    "pv_sqrt.h"
 
-#include	"pv_div.h"
+#include    "pv_div.h"
 #include    "fxp_mul32.h"
 #include    "pv_normalize.h"
 
@@ -126,20 +126,20 @@ extern "C"
 #endif
 
     void envelope_application_LC(Int32  *aBufR,
-                                 Int32  *nrg_gain_man,
-                                 Int32  *nrg_gain_exp,
-                                 Int32  *noise_level_man,
-                                 Int32  *noise_level_exp,
-                                 Int32  *nrg_tone_man,
-                                 Int32  *nrg_tone_exp,
-                                 Int32  band_nrg_tone_detector,
-                                 const Int32 *frame_info,
-                                 Int32  *harm_index,
-                                 Int32  *phase_index,
-                                 Int32  i,
-                                 Int32  lowSubband,
-                                 Int32  noSubbands,
-                                 Int32  noNoiseFlag);
+    Int32  *nrg_gain_man,
+    Int32  *nrg_gain_exp,
+    Int32  *noise_level_man,
+    Int32  *noise_level_exp,
+    Int32  *nrg_tone_man,
+    Int32  *nrg_tone_exp,
+    Int32  band_nrg_tone_detector,
+    const Int32 *frame_info,
+    Int32  *harm_index,
+    Int32  *phase_index,
+    Int32  i,
+    Int32  lowSubband,
+    Int32  noSubbands,
+    Int32  noNoiseFlag);
 
 
     void energy_estimation_LC(Int32 *aBufR,
@@ -840,7 +840,7 @@ void calc_sbr_envelope(SBR_FRAME_DATA *frameData,
                 }
             }
 
-            p_adj_exp += 1;	/* overflow bit-guard*/
+            p_adj_exp += 1; /* overflow bit-guard*/
 
             p_adj_man = 0;
 

@@ -42,8 +42,8 @@
 /*  Headerfile Include                                                  */
 /************************************************************************/
 #include    "h245pri.h"
-#include	"lcentry.h"
-#include	"sebase.h"
+#include    "lcentry.h"
+#include    "sebase.h"
 
 
 /************************************************************************/

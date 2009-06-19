@@ -30,11 +30,11 @@ PVA_FF_InterLeaveBuffer::PVA_FF_InterLeaveBuffer(uint32 mediaType,
     _trackId = trackId;
     _mediaType = mediaType;
     _codecType = codecType;
-    _lastChunkEndTime			=	0;
-    _maxInterLeaveBufferSize	=	0;
-    _currInterLeaveBufferSize	=	0;
-    _lastInterLeaveBufferTS		=	0;
-    _lastSampleTS				=	0;
+    _lastChunkEndTime           =   0;
+    _maxInterLeaveBufferSize    =   0;
+    _currInterLeaveBufferSize   =   0;
+    _lastInterLeaveBufferTS     =   0;
+    _lastSampleTS               =   0;
 
 
     // initialise interleaved buffers for audio or video track( max size)

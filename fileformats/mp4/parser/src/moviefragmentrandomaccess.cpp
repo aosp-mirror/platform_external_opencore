@@ -37,7 +37,7 @@ MovieFragmentRandomAccessAtom::MovieFragmentRandomAccessAtom(MP4_FF_FILE *fp,
         uint32 type)
         : Atom(fp, size, type)
 {
-    _pTrackFragmentRandomAccessAtomVec		= NULL;
+    _pTrackFragmentRandomAccessAtomVec      = NULL;
     _pMfraOffsetAtom = NULL;
 #if (DISABLE_REPOS_ON_CLIPS_HAVING_UNEQUAL_TFRA_ENTRY_COUNT)
     // This will store the entry count of TFRA for Video for Vonly,AVT,AV,VT clips and Audio TFRA entry count for Aonly,AT clips
@@ -169,7 +169,7 @@ int32 MovieFragmentRandomAccessAtom::getSyncSampleInfoClosestToTime(uint32 track
     for (uint32 idx = 0; idx < num_tfra; idx++)
     {
         TrackFragmentRandomAccessAtom *tfraAtom = (*_pTrackFragmentRandomAccessAtomVec)[idx];
-        if (! tfraAtom)		// (unlikely)
+        if (! tfraAtom)     // (unlikely)
             return -1;
         if (tfraAtom->getTrackID() == trackID)
         {
@@ -239,7 +239,7 @@ int32 MovieFragmentRandomAccessAtom::queryRepositionTime(uint32 trackID, int32 t
             {
                 uint32 entries = tfraAtom->_entry_count;
                 Oscl_Vector<TFRAEntries*, OsclMemAllocator>* tfraEntries = tfraAtom->getTrackFragmentRandomAccessEntries();
-                if (!tfraEntries)	// unlikely/error
+                if (!tfraEntries)   // unlikely/error
                     return closestTime;
                 int32 prevTime = 0;
                 for (uint32 idy = 0; idy < entries; idy++)
@@ -321,7 +321,7 @@ int32 MovieFragmentRandomAccessAtom::getTimestampForRandomAccessPoints(uint32 id
         if (*num == 0)
         {
             *num = tmp;
-            return 1;	//success. This is only the query mode.
+            return 1;   //success. This is only the query mode.
         }
 
         uint32 sampleToBeRead = *num;
@@ -340,7 +340,7 @@ int32 MovieFragmentRandomAccessAtom::getTimestampForRandomAccessPoints(uint32 id
         }
         *num = sampleToBeRead + samplesfromMoov;
 
-        return	1;	//success
+        return  1;  //success
     }
     return 0;
 }
@@ -427,6 +427,6 @@ int32 MovieFragmentRandomAccessAtom::getTimestampForRandomAccessPointsBeforeAfte
     else
         return 0;
 
-    return	1;	//success
+    return  1;  //success
 
 }

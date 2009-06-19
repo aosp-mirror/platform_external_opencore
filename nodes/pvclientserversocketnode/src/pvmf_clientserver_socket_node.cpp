@@ -671,7 +671,7 @@ OSCL_EXPORT_REF  void PVMFClientServerSocketNode::HandleSocketEvent(int32 aId, T
                     CancelSendOperation();
                 }
                 else
-                {	//shutdown
+                {   //shutdown
                     CloseSocketConnection();
                 }
                 break;
@@ -894,27 +894,27 @@ PVMFStatus PVMFClientServerSocketNode::DoReset(PVMFSocketNodeCommand& aCmd)
 PVMFStatus PVMFClientServerSocketNode::DoQueryUuid(PVMFSocketNodeCommand& aCmd)
 {
     OSCL_UNUSED_ARG(aCmd);
-    /*	//This node supports Query UUID from any state
+    /*  //This node supports Query UUID from any state
 
-    	OSCL_String* mimetype;
-    	Oscl_Vector<PVUuid, OsclMemAllocator> *uuidvec;
-    	bool exactmatch;
-    	aCmd.PVMFSocketNodeCommandBase::Parse(mimetype,uuidvec,exactmatch);
+        OSCL_String* mimetype;
+        Oscl_Vector<PVUuid, OsclMemAllocator> *uuidvec;
+        bool exactmatch;
+        aCmd.PVMFSocketNodeCommandBase::Parse(mimetype,uuidvec,exactmatch);
 
-    	//Try to match the input mimetype against any of
-    	//the custom interfaces for this node
+        //Try to match the input mimetype against any of
+        //the custom interfaces for this node
 
-    	//Match against custom interface1...
-    	if (*mimetype==PVMF_SOCKET_NODE_EXTENSION_INTERFACE_MIMETYPE
-    		//also match against base mimetypes for custom interface1,
-    		//unless exactmatch is set.
-    		|| (!exactmatch && *mimetype==PVMF_SOCKET_NODE_MIMETYPE)
-    		|| (!exactmatch && *mimetype==PVMF_SOCKET_NODE_BASEMIMETYPE))
-    	{
+        //Match against custom interface1...
+        if (*mimetype==PVMF_SOCKET_NODE_EXTENSION_INTERFACE_MIMETYPE
+            //also match against base mimetypes for custom interface1,
+            //unless exactmatch is set.
+            || (!exactmatch && *mimetype==PVMF_SOCKET_NODE_MIMETYPE)
+            || (!exactmatch && *mimetype==PVMF_SOCKET_NODE_BASEMIMETYPE))
+        {
 
-    		PVUuid uuid(PVMF_SOCKET_NODE_EXTENSION_INTERFACE_UUID);
-    		uuidvec->push_back(uuid);
-    	}*/
+            PVUuid uuid(PVMF_SOCKET_NODE_EXTENSION_INTERFACE_UUID);
+            uuidvec->push_back(uuid);
+        }*/
     return PVMFSuccess;
 }
 
@@ -1088,7 +1088,7 @@ PVMFStatus PVMFClientServerSocketNode::DoCancelAllCommands(PVMFSocketNodeCommand
 
     //Cancel all other pending commands, except for this one which is
     //element 0 in the queue
-    for (uint32 i = 1;i < iPendingCmdQueue.size();i++)
+    for (uint32 i = 1; i < iPendingCmdQueue.size(); i++)
         CommandComplete(iPendingCmdQueue, iPendingCmdQueue[i], PVMFErrCancelled);
 
     //May need to wait on completion of StopNodeActivity.
@@ -1111,7 +1111,7 @@ PVMFStatus PVMFClientServerSocketNode::DoCancelCurrentCommand(PVMFSocketNodeCmdQ
                 //SocketPortConfig* iSockConfig=iRequestedPort->iConfig;
                 if (iSockConfig)
                 {
-                    //	CancelConnectOperation();
+                    //  CancelConnectOperation();
                     return PVMFPending;//wait on the operation to complete
                     //in HandleSocketEvent or HandleDNSEvent
                 }
@@ -1203,7 +1203,7 @@ void SocketPortConfig::freechunkavailable(OsclAny* aContextData)
     //complete the "wait on memory" state
     if (iState.iRecvOperation == EPVSocketPortRecvOperation_WaitOnMemory)
     {
-        iContainer->RecvOperationComplete(PVMFSuccess, NULL);	//*this,
+        iContainer->RecvOperationComplete(PVMFSuccess, NULL);   //*this,
     }
 }
 
@@ -1274,7 +1274,7 @@ void SocketPortConfig::DoSetSocketPortMemAllocator(PVLogger* aLogger, OsclShared
 
         uint aligned_socket_alloc_size = oscl_mem_aligned_size(sizeof(PVMFSMSharedBufferAllocWithReSize));
 
-        uint aligned_refcnt_size = 	oscl_mem_aligned_size(sizeof(OsclRefCounterSA<PVMFSharedSocketDataBufferAllocCleanupSA>));
+        uint aligned_refcnt_size =  oscl_mem_aligned_size(sizeof(OsclRefCounterSA<PVMFSharedSocketDataBufferAllocCleanupSA>));
 
         OsclMemAllocator my_alloc;
         uint8 *my_ptr = (uint8*) my_alloc.ALLOCATE(aligned_refcnt_size + aligned_socket_alloc_size);
@@ -1664,7 +1664,7 @@ PVMFStatus PVMFClientServerSocketNode::StartRecvOperation()
             }
         }
     }
-    else	//for (iTCPSocket==NULL)
+    else    //for (iTCPSocket==NULL)
     {
         PVMF_SOCKETNODE_LOGERROR((0, "PVMFClientServerSocketNode::StartRecvOperation() Unexpected error, no socket"));
     }

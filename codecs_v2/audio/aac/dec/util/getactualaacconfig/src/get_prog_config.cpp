@@ -42,8 +42,8 @@
  Description:  update comments
 
  Description: Replace some instances of getbits to get9_n_lessbits
-			  when the number of bits read is 9 or less and get1bits
-			  when only 1 bit is read.
+              when the number of bits read is 9 or less and get1bits
+              when only 1 bit is read.
 
  Who:                                   Date:
  Description:

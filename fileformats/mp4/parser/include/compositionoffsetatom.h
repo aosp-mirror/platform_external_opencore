@@ -49,7 +49,7 @@
 #define PV_ERROR -1
 
 class CompositionOffsetAtom : public FullAtom,
-            public OsclTimerObject
+        public OsclTimerObject
 {
 
     public:
@@ -126,7 +126,7 @@ class CompositionOffsetAtom : public FullAtom,
         uint32 _curr_buff_number;
         uint32 _next_buff_number;
 
-        uint32	_parsed_entry_cnt;
+        uint32  _parsed_entry_cnt;
         uint32 _currGetSampleCount;
         int32 _currGetIndex;
         int32 _currGetTimeOffset;
