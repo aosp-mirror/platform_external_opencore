@@ -113,7 +113,7 @@ AuthorDriver::AuthorDriver()
     mAudioEncoder(AUDIO_ENCODER_DEFAULT),
     mSamplingRate(0),
     mNumberOfChannels(0),
-    mAudio_bitrate_setting(DEFAULT_AUDIO_BITRATE_SETTING),
+    mAudio_bitrate_setting(0),
     ifpOutput(NULL)
 {
     mSyncSem = new OsclSemaphore();
@@ -766,15 +766,10 @@ PVMFStatus AuthorDriver::setParamAudioEncodingBitrate(int64_t aAudioBitrate)
         return PVMFErrArgument;
     }
 
-    // Blindly set the bitrate according to the incoming value
+    // Set the audio bitrate
     mAudio_bitrate_setting = aAudioBitrate;
 
-
-    LOGV("setParamAudioEncodingBitrate() AMR_NB %d AMR_WB %d Audio Other %d\n",
-          DEFAULT_AMR_NARROW_BAND_BITRATE_SETTING,
-          DEFAULT_AMR_WIDE_BAND_BITRATE_SETTING,
-          mAudio_bitrate_setting);
-
+    LOGV("setParamAudioEncodingBitrate() %d", mAudio_bitrate_setting);
     return PVMFSuccess;
 }
 
@@ -1172,21 +1167,30 @@ void AuthorDriver::CommandCompleted(const PVCmdResponse& aResponse)
         {
             switch(mAudioEncoder) {
                 case AUDIO_ENCODER_AMR_NB:
-                    {
-                        config->SetMaxNumOutputFramesPerBuffer(10);
-                        config->SetOutputBitRate(DEFAULT_AMR_NARROW_BAND_BITRATE_SETTING);
-                    }
-                    break;
-
                 case AUDIO_ENCODER_AMR_WB:
                     {
+                        // Map the audio bitrate to an AMR discreet bitrate
+                        PVMF_GSMAMR_Rate mAMRBitrate;
+                        if(!MapAMRBitrate(mAudio_bitrate_setting, mAMRBitrate)) {
+                            LOGE("Failed to map the audio bitrate to an AMR bitrate!  Using the defaults.");
+                            if (mAudioEncoder == AUDIO_ENCODER_AMR_NB) {
+                                mAMRBitrate = DEFAULT_AMR_NARROW_BAND_BITRATE_SETTING;
+                            }
+                            else { // Else use the default wideband setting
+                               mAMRBitrate = DEFAULT_AMR_WIDE_BAND_BITRATE_SETTING;
+                            }
+                        }
+                        config->SetOutputBitRate(mAMRBitrate);
                         config->SetMaxNumOutputFramesPerBuffer(10);
-                        config->SetOutputBitRate(DEFAULT_AMR_WIDE_BAND_BITRATE_SETTING);
                     }
                     break;
 
                 case AUDIO_ENCODER_AAC:
                     {
+                        if (mAudio_bitrate_setting == 0) {
+                            // Audio bitrate wasnt set, use the default
+                            mAudio_bitrate_setting = DEFAULT_AUDIO_BITRATE_SETTING;
+                        }
                         config->SetOutputBitRate(mAudio_bitrate_setting);
                     }
                     break;
@@ -1221,6 +1225,39 @@ void AuthorDriver::CommandCompleted(const PVCmdResponse& aResponse)
     ac->comp(s, ac->cookie);
 
     delete ac;
+}
+
+bool AuthorDriver::MapAMRBitrate(int32 aAudioBitrate, PVMF_GSMAMR_Rate &anAMRBitrate)
+{
+    if ((mAudioEncoder != AUDIO_ENCODER_AMR_NB) &&
+            (mAudioEncoder != AUDIO_ENCODER_AMR_WB)) {
+        LOGE("AuthorDriver::MapAMRBitrate() encoder type is not AMR.");
+        return false;
+    }
+
+    // Default to AMR_NB
+    uint32 AMR_Index = 0;
+
+    // Is this ARM_WB?
+    if (mAudioEncoder == AUDIO_ENCODER_AMR_WB)
+    {
+        // Use the other side of the array
+        AMR_Index = 1;
+    }
+
+    uint32 jj;
+    for (jj = 0; jj < AMR_BITRATE_MAX_NUMBER_OF_ROWS; jj++)
+    {
+        if (aAudioBitrate < AMR_BITRATE_MAPPING_ARRAY[jj][AMR_Index].bitrate)
+        {
+            // Found a match!
+            anAMRBitrate = AMR_BITRATE_MAPPING_ARRAY[jj][AMR_Index].actual;
+            return true;
+        }
+    }
+
+    // Failed to map the bitrate.  Return false and use the defaults.
+    return false;
 }
 
 void AuthorDriver::HandleErrorEvent(const PVAsyncErrorEvent& aEvent)
