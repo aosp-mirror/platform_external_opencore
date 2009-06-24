@@ -37,6 +37,7 @@ using namespace android;
 // Define entry point for this DLL
 OSCL_DLL_ENTRY_POINT_DEFAULT()
 
+// camera MIO
 AndroidCameraInput::AndroidCameraInput()
     : OsclTimerObject(OsclActiveObject::EPriorityNominal, "AndroidCameraInput")
 {
@@ -63,6 +64,9 @@ AndroidCameraInput::AndroidCameraInput()
     mFlags = 0;
     iFrameQueue.reserve(5);
     iFrameQueueMutex.Create();
+
+    // setup callback listener
+    mListener = new AndroidCameraInputListener(this);
 }
 
 void AndroidCameraInput::ReleaseQueuedFrames()
@@ -87,7 +91,7 @@ AndroidCameraInput::~AndroidCameraInput()
 {
     LOGV("destructor");
     if (mCamera != NULL) {
-        mCamera->setRecordingCallback(NULL, this);
+        mCamera->setListener(NULL);
         ReleaseQueuedFrames();
         if ((mFlags & FLAGS_HOT_CAMERA) == 0) {
             LOGV("camera was cold when we started, stopping preview");
@@ -107,6 +111,7 @@ AndroidCameraInput::~AndroidCameraInput()
         LOGW("mHeap reference count is not zero?!");
     }
     iFrameQueueMutex.Close();
+    mListener.clear();
 }
 
 PVMFStatus AndroidCameraInput::connect(PvmiMIOSession& aSession,
@@ -848,20 +853,6 @@ void AndroidCameraInput::DoRequestCompleted(const AndroidCameraInputCmd& aCmd, P
     }
 }
 
-static void recording_frame_callback(const sp<IMemory>& frame, void *cookie)
-{
-    LOGV("recording_frame_callback");
-    AndroidCameraInput* input = (AndroidCameraInput*) cookie;
-
-    // this must not happen, and we can't release the frame if it does happen
-    if (!input) {
-        LOGE("Error - CameraInput has not been initialized");
-        return;
-    }
-    
-    input->postWriteAsync(frame);
-}
-
 PVMFStatus AndroidCameraInput::DoInit()
 {
     LOGV("DoInit()");
@@ -931,7 +922,7 @@ PVMFStatus AndroidCameraInput::DoStart()
     if (mCamera == NULL) {
         status = PVMFFailure;
     } else {
-        mCamera->setRecordingCallback(recording_frame_callback, this);
+        mCamera->setListener(mListener);
         if (mCamera->startRecording() != NO_ERROR) {
             status = PVMFFailure;
         } else {
@@ -957,7 +948,7 @@ PVMFStatus AndroidCameraInput::DoReset()
     iDataEventCounter = 0;
     if ( (iState == STATE_STARTED) || (iState == STATE_PAUSED) ) {
     if (mCamera != NULL) {
-        mCamera->setRecordingCallback(NULL, this);
+        mCamera->setListener(NULL);
         mCamera->stopRecording();
         ReleaseQueuedFrames();
     }
@@ -988,7 +979,7 @@ PVMFStatus AndroidCameraInput::DoStop(const AndroidCameraInputCmd& aCmd)
     LOGV("DoStop");
     iDataEventCounter = 0;
     if (mCamera != NULL) {
-    mCamera->setRecordingCallback(NULL, this);
+    mCamera->setListener(NULL);
     mCamera->stopRecording();
     ReleaseQueuedFrames();
     }
@@ -1161,5 +1152,13 @@ PVMFStatus AndroidCameraInput::postWriteAsync(const sp<IMemory>& frame)
     RunIfNotReady();
 
     return PVMFSuccess; 
+}
+
+// camera callback interface
+void AndroidCameraInputListener::postData(int32_t msgType, const sp<IMemory>& dataPtr)
+{
+    if ((mCameraInput != NULL) && (msgType == CAMERA_MSG_VIDEO_FRAME)) {
+        mCameraInput->postWriteAsync(dataPtr);
+    }
 }
 
