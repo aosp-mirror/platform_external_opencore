@@ -99,6 +99,13 @@ void AndroidAudioStream::setParametersSync(PvmiMIOSession aSession, PvmiKvp* aPa
         iAudioSamplingRateValid = false;
         iAudioNumChannelsValid  = false;
         iAudioFormat = PVMF_MIME_FORMAT_UNKNOWN;
+
+        // signal observer
+        iAudioThreadCreatedAndMIOConfigured = true;
+        if(iObserver){
+            LOGV("event PVMFMIOConfigurationComplete to peer");
+            iObserver->ReportInfoEvent(PVMFMIOConfigurationComplete);
+        }
     }
 }
 
