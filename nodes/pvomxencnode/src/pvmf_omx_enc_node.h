@@ -573,11 +573,6 @@ typedef struct PV_VideoEncodeParam
     bool                iEnableFrameQuality;
 
 
-    /** Specifies the type of the access whether it is streaming, EI_H263, EI_M4V_STREAMING
-    (data partitioning mode) or download, EI_M4V_DOWNLOAD (combined mode).*/
-    EncContentType      iContentType;
-
-
     /** Specifies high quality but also high complexity mode for rate control. */
     bool                iRDOptimal;
 
@@ -600,6 +595,18 @@ typedef struct PV_VideoEncodeParam
     /** Specifies that no frame skipping is allowed. Frame skipping is a tool used to
     control the average number of bits spent to meet the target bit rate. */
     bool                iNoFrameSkip;
+
+
+    /** Specify short header mode in MPEG4 */
+    bool                                iShortHeader;
+
+    /** Specifies whether data partitioning mode is used or not. Has no meaning if encoding H.263 or short header */
+    bool                                iDataPartitioning;
+
+
+    /** Specifies whether Resync markers are used or not Has no meaning if iDataPartitioning is on */
+    bool                                iResyncMarker;
+
 
     /** Specifies whether RVLC (reversible VLC) is to be used or not.
     */
@@ -1139,6 +1146,7 @@ class PVMFOMXEncNode
 
         bool ParseFullAVCFramesIntoNALs(OMX_BUFFERHEADERTYPE* aOutputBuffer);
         bool AVCAnnexBGetNALUnit(uint8 *bitstream, uint8 **nal_unit, int32 *size, bool getPtrOnly);
+        bool CheckM4vVopStartCode(uint8* data, int* len);
 
         friend class PVMFOMXEncPort;
 
