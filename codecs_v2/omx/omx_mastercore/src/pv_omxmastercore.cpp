@@ -98,7 +98,7 @@ typedef struct PVOMXCompHandles
 // affect other handles in other instances. In other words, for most purposes - it is safe to search through the array without
 // actually locking it - even if another
 // instance of the player/author modifies this array (by adding or deleting its own component handles) in the meanwhile.
-OMX_ERRORTYPE GetRegIndexForHandle(OMX_HANDLETYPE hComponent, OMX_U32 &index, OMXMasterCoreGlobalData *data)
+static OMX_ERRORTYPE GetRegIndexForHandle(OMX_HANDLETYPE hComponent, OMX_U32 &index, OMXMasterCoreGlobalData *data)
 {
     // we need to first find the handle among instantiated components
     // then we retrieve the core based on component handle
@@ -130,7 +130,7 @@ OMX_ERRORTYPE GetRegIndexForHandle(OMX_HANDLETYPE hComponent, OMX_U32 &index, OM
 }
 
 // ALL the standard OpenMAX IL core functions are implemented below
-static OMX_ERRORTYPE _OMX_Init(OMXMasterCoreGlobalData *data)
+static OMX_ERRORTYPE _OMX_MasterInit(OMXMasterCoreGlobalData *data)
 {
     OMX_ERRORTYPE Status = OMX_ErrorNone;
     OMX_U32 jj;
@@ -306,17 +306,17 @@ static OMX_ERRORTYPE _OMX_Init(OMXMasterCoreGlobalData *data)
 }
 
 //this routine is needed to avoid a longjmp clobber warning
-static void _Try_OMX_Init(int32& aError, OMX_ERRORTYPE& aStatus, OMXMasterCoreGlobalData *data)
+static void _Try_OMX_MasterInit(int32& aError, OMX_ERRORTYPE& aStatus, OMXMasterCoreGlobalData *data)
 {
-    OSCL_TRY(aError, aStatus = _OMX_Init(data););
+    OSCL_TRY(aError, aStatus = _OMX_MasterInit(data););
 }
 //this routine is needed to avoid a longjmp clobber warning
-static void _Try_OMX_Create(int32& aError, OMXMasterCoreGlobalData*& aData)
+static void _Try_OMX_MasterCreate(int32& aError, OMXMasterCoreGlobalData*& aData)
 {
     OSCL_TRY(aError, aData = OSCL_NEW(OMXMasterCoreGlobalData, ()););
 }
 
-OSCL_EXPORT_REF OMX_ERRORTYPE OMX_Init()
+OSCL_EXPORT_REF OMX_ERRORTYPE OMX_MasterInit()
 {
     OMX_ERRORTYPE status = OMX_ErrorNone;
 
@@ -342,7 +342,7 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OMX_Init()
     {
         //First call
         //create the OMX Master Core singleton data
-        _Try_OMX_Create(error, data);
+        _Try_OMX_MasterCreate(error, data);
         if (error != OsclErrNone)
         {
             status = OMX_ErrorInsufficientResources;//some leave happened.
@@ -351,7 +351,7 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OMX_Init()
         //If create succeeded, then init the OMX globals.
         if (status == OMX_ErrorNone)
         {
-            _Try_OMX_Init(error, status, data);
+            _Try_OMX_MasterInit(error, status, data);
             if (error != OsclErrNone)
             {
                 status = OMX_ErrorUndefined;//probably no memory.
@@ -377,7 +377,7 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OMX_Init()
 }
 
 
-static OMX_ERRORTYPE _OMX_Deinit(OMXMasterCoreGlobalData *data)
+static OMX_ERRORTYPE _OMX_MasterDeinit(OMXMasterCoreGlobalData *data)
 {
     OMX_U32 jj;
     OMX_ERRORTYPE Status = OMX_ErrorNone;
@@ -434,18 +434,18 @@ static OMX_ERRORTYPE _OMX_Deinit(OMXMasterCoreGlobalData *data)
 }
 
 //this routine is needed to avoid a longjmp clobber warning.
-static void _Try_OMX_Deinit(int32 &aError, OMX_ERRORTYPE& aStatus, OMXMasterCoreGlobalData* data)
+static void _Try_OMX_MasterDeinit(int32 &aError, OMX_ERRORTYPE& aStatus, OMXMasterCoreGlobalData* data)
 {
-    OSCL_TRY(aError, aStatus = _OMX_Deinit(data););
+    OSCL_TRY(aError, aStatus = _OMX_MasterDeinit(data););
 }
 
 //this routine is needed to avoid a longjmp clobber warning.
-static void _Try_Data_Cleanup(int32 &aError, OMXMasterCoreGlobalData* aData)
+static void _Try_Data_MasterCleanup(int32 &aError, OMXMasterCoreGlobalData* aData)
 {
     OSCL_TRY(aError, OSCL_DELETE(aData););
 }
 
-OSCL_EXPORT_REF OMX_ERRORTYPE OMX_Deinit()
+OSCL_EXPORT_REF OMX_ERRORTYPE OMX_MasterDeinit()
 {
     OMX_ERRORTYPE status = OMX_ErrorNone;
 
@@ -460,12 +460,12 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OMX_Deinit()
         {
 
             //Cleanup the OMX globals.
-            _Try_OMX_Deinit(error, status, data);
+            _Try_OMX_MasterDeinit(error, status, data);
             if (error != OsclErrNone)
                 status = OMX_ErrorUndefined;//some leave happened.
 
             //Regardless of the cleanup result, cleanup the OMX singleton.
-            _Try_Data_Cleanup(error, data);
+            _Try_Data_MasterCleanup(error, data);
             data = NULL;
             if (error != OsclErrNone)
                 status = OMX_ErrorUndefined;//some leave happened.
@@ -480,7 +480,7 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OMX_Deinit()
 }
 
 
-OSCL_EXPORT_REF OMX_ERRORTYPE OMX_APIENTRY OMX_ComponentNameEnum(
+OSCL_EXPORT_REF OMX_ERRORTYPE OMX_APIENTRY OMX_MasterComponentNameEnum(
     OMX_OUT OMX_STRING cComponentName,
     OMX_IN  OMX_U32 nNameLength,
     OMX_IN  OMX_U32 nIndex)
@@ -525,7 +525,7 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OMX_APIENTRY OMX_ComponentNameEnum(
     }
 }
 
-OSCL_EXPORT_REF OMX_ERRORTYPE OMX_APIENTRY   OMX_GetHandle(
+OSCL_EXPORT_REF OMX_ERRORTYPE OMX_APIENTRY   OMX_MasterGetHandle(
     OMX_OUT OMX_HANDLETYPE* pHandle,
     OMX_IN  OMX_STRING cComponentName,
     OMX_IN  OMX_PTR pAppData,
@@ -628,7 +628,7 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OMX_APIENTRY   OMX_GetHandle(
 
 }
 
-OSCL_EXPORT_REF OMX_ERRORTYPE OMX_APIENTRY OMX_FreeHandle(OMX_IN OMX_HANDLETYPE hComponent)
+OSCL_EXPORT_REF OMX_ERRORTYPE OMX_APIENTRY OMX_MasterFreeHandle(OMX_IN OMX_HANDLETYPE hComponent)
 {
     OMX_ERRORTYPE Status = OMX_ErrorNone;
     OMX_U32 RegIndex;
@@ -683,7 +683,7 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OMX_APIENTRY OMX_FreeHandle(OMX_IN OMX_HANDLETYPE 
     }
 }
 
-OSCL_EXPORT_REF OMX_ERRORTYPE OMX_SetupTunnel(
+OSCL_EXPORT_REF OMX_ERRORTYPE OMX_MasterSetupTunnel(
     OMX_IN  OMX_HANDLETYPE hOutput,
     OMX_IN  OMX_U32 nPortOutput,
     OMX_IN  OMX_HANDLETYPE hInput,
@@ -744,7 +744,7 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OMX_SetupTunnel(
     }
 }
 
-OSCL_EXPORT_REF OMX_ERRORTYPE OMX_GetContentPipe(
+OSCL_EXPORT_REF OMX_ERRORTYPE OMX_MasterGetContentPipe(
     OMX_OUT OMX_HANDLETYPE *hPipe,
     OMX_IN OMX_STRING szURI)
 {
@@ -783,7 +783,7 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OMX_GetContentPipe(
     return Status;
 }
 
-OSCL_EXPORT_REF OMX_ERRORTYPE OMX_GetComponentsOfRole(
+OSCL_EXPORT_REF OMX_ERRORTYPE OMX_MasterGetComponentsOfRole(
     OMX_IN      OMX_STRING role,
     OMX_INOUT   OMX_U32 *pNumComps,
     OMX_INOUT   OMX_U8  **compNames)
@@ -826,7 +826,7 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OMX_GetComponentsOfRole(
 }
 
 
-OSCL_EXPORT_REF OMX_ERRORTYPE OMX_GetRolesOfComponent(
+OSCL_EXPORT_REF OMX_ERRORTYPE OMX_MasterGetRolesOfComponent(
     OMX_IN      OMX_STRING compName,
     OMX_INOUT   OMX_U32* pNumRoles,
     OMX_OUT     OMX_U8** roles)
@@ -974,7 +974,7 @@ OMX_BOOL PV_OMXConfigParser(
     return OMX_TRUE;
 }
 
-OSCL_EXPORT_REF OMX_BOOL OMXConfigParser(
+OSCL_EXPORT_REF OMX_BOOL OMX_MasterConfigParser(
     OMX_PTR aInputParameters,
     OMX_PTR aOutputParameters)
 

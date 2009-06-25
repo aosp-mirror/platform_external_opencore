@@ -2963,7 +2963,7 @@ bool PVMFOMXAudioDecNode::VerifyParametersSync(PvmiMIOSession aSession, PvmiKvp*
     OMX_STRING *CompOfRole;
     //  uint32 ii;
     // call once to find out the number of components that can fit the role
-    OMX_GetComponentsOfRole(aInputParameters.cComponentRole, &num_comps, NULL);
+    OMX_MasterGetComponentsOfRole(aInputParameters.cComponentRole, &num_comps, NULL);
 
     if (num_comps > 0)
     {
@@ -2972,12 +2972,12 @@ bool PVMFOMXAudioDecNode::VerifyParametersSync(PvmiMIOSession aSession, PvmiKvp*
             CompOfRole[ii] = (OMX_STRING) oscl_malloc(PV_OMX_MAX_COMPONENT_NAME_LENGTH * sizeof(OMX_U8));
 
         // call 2nd time to get the component names
-        OMX_GetComponentsOfRole(aInputParameters.cComponentRole, &num_comps, (OMX_U8 **)CompOfRole);
+        OMX_MasterGetComponentsOfRole(aInputParameters.cComponentRole, &num_comps, (OMX_U8 **)CompOfRole);
 
         for (ii = 0; ii < num_comps; ii++)
         {
             aInputParameters.cComponentName = CompOfRole[ii];
-            status = OMXConfigParser(&aInputParameters, &aOutputParameters);
+            status = OMX_MasterConfigParser(&aInputParameters, &aOutputParameters);
             if (status == OMX_TRUE)
             {
                 break;
@@ -3105,7 +3105,7 @@ PVMFStatus PVMFOMXAudioDecNode::DoCapConfigVerifyParameters(PvmiKvp* aParameters
     OMX_STRING *CompOfRole;
     //  uint32 ii;
     // call once to find out the number of components that can fit the role
-    OMX_GetComponentsOfRole(aInputParameters.cComponentRole, &num_comps, NULL);
+    OMX_MasterGetComponentsOfRole(aInputParameters.cComponentRole, &num_comps, NULL);
 
     if (num_comps > 0)
     {
@@ -3114,12 +3114,12 @@ PVMFStatus PVMFOMXAudioDecNode::DoCapConfigVerifyParameters(PvmiKvp* aParameters
             CompOfRole[ii] = (OMX_STRING) oscl_malloc(PV_OMX_MAX_COMPONENT_NAME_LENGTH * sizeof(OMX_U8));
 
         // call 2nd time to get the component names
-        OMX_GetComponentsOfRole(aInputParameters.cComponentRole, &num_comps, (OMX_U8 **)CompOfRole);
+        OMX_MasterGetComponentsOfRole(aInputParameters.cComponentRole, &num_comps, (OMX_U8 **)CompOfRole);
 
         for (ii = 0; ii < num_comps; ii++)
         {
             aInputParameters.cComponentName = CompOfRole[ii];
-            status = OMXConfigParser(&aInputParameters, &aOutputParameters);
+            status = OMX_MasterConfigParser(&aInputParameters, &aOutputParameters);
             if (status == OMX_TRUE)
             {
                 break;

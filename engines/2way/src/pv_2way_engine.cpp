@@ -49,6 +49,7 @@
 
 #ifdef PV2WAY_USE_OMX
 #include "OMX_Core.h"
+#include "pv_omxcore.h"
 #include "pvmf_omx_videodec_factory.h"
 #include "pvmf_omx_enc_factory.h"
 #include "pvmf_omx_audiodec_factory.h"
@@ -315,7 +316,7 @@ CPV324m2Way::CPV324m2Way() :
 #endif
     iAddDataSourceVideoCmd = NULL;
 #ifdef PV2WAY_USE_OMX
-    OMX_Init();
+    OMX_MasterInit();
 #endif // PV2WAY_USE_OMX
 
     //creating timers
@@ -415,7 +416,7 @@ CPV324m2Way::~CPV324m2Way()
     }
 
 #ifdef PV2WAY_USE_OMX
-    OMX_Deinit();
+    OMX_MasterDeinit();
 #endif
 
     if (iEndSessionTimer)
