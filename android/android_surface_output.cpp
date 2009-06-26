@@ -68,7 +68,7 @@ status_t AndroidSurfaceOutput::setVideoSurface(const sp<ISurface>& surface)
     }
     mSurface = surface;
     // register buffers for the new surface
-    if ((mSurface != NULL) && (mFrameHeap != NULL)) {
+    if ((mSurface != NULL) && (mBufferHeap.heap != NULL)) {
         LOGV("registerBuffers from old surface");
         mSurface->registerBuffers(mBufferHeap);
     }
@@ -329,7 +329,7 @@ PVMFCommandId AndroidSurfaceOutput::Start(const OsclAny* aContext)
 void AndroidSurfaceOutput::postLastFrame()
 {
     // ignore if no surface or heap
-    if ((mSurface == NULL) || (mFrameHeap == NULL)) return;
+    if ((mSurface == NULL) || (mBufferHeap.heap == NULL)) return;
     mSurface->postBuffer(mFrameBuffers[mFrameBufferIndex]);
 }
 
@@ -970,14 +970,14 @@ OSCL_EXPORT_REF bool AndroidSurfaceOutput::initCheck()
     frameSize = frameWidth * frameHeight * 2;
 
     // create frame buffer heap and register with surfaceflinger
-    mFrameHeap = new MemoryHeapBase(frameSize * kBufferCount);
-    if (mFrameHeap->heapID() < 0) {
-    LOGE("Error creating frame buffer heap");
-    return false;
+    sp<MemoryHeapBase> heap = new MemoryHeapBase(frameSize * kBufferCount);
+    if (heap->heapID() < 0) {
+        LOGE("Error creating frame buffer heap");
+        return false;
     }
     
     mBufferHeap = ISurface::BufferHeap(displayWidth, displayHeight,
-            frameWidth, frameHeight, PIXEL_FORMAT_RGB_565, mFrameHeap);
+            frameWidth, frameHeight, PIXEL_FORMAT_RGB_565, heap);
     mSurface->registerBuffers(mBufferHeap);
 
     // create frame buffers
@@ -1006,9 +1006,9 @@ OSCL_EXPORT_REF bool AndroidSurfaceOutput::initCheck()
 OSCL_EXPORT_REF PVMFStatus AndroidSurfaceOutput::writeFrameBuf(uint8* aData, uint32 aDataLen, const PvmiMediaXferHeader& data_header_info)
 {
     // post to SurfaceFlinger
-    if ((mSurface != NULL) && (mFrameHeap != NULL)) {
+    if ((mSurface != NULL) && (mBufferHeap.heap != NULL)) {
         if (++mFrameBufferIndex == kBufferCount) mFrameBufferIndex = 0;
-        iColorConverter->Convert(aData, static_cast<uint8*>(mFrameHeap->base()) + mFrameBuffers[mFrameBufferIndex]);
+        iColorConverter->Convert(aData, static_cast<uint8*>(mBufferHeap.heap->base()) + mFrameBuffers[mFrameBufferIndex]);
         mSurface->postBuffer(mFrameBuffers[mFrameBufferIndex]);
     }
     return PVMFSuccess;
@@ -1032,8 +1032,8 @@ OSCL_EXPORT_REF void AndroidSurfaceOutput::closeFrameBuf()
     }
 
     // free heaps
-    LOGV("free mFrameHeap");
-    mFrameHeap.clear();
+    LOGV("free frame heap");
+    mBufferHeap.heap.clear();
 
     // free color converter
     if (iColorConverter != 0)

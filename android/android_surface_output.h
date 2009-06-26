@@ -307,7 +307,6 @@ protected:
     // frame buffer support
     static const int kBufferCount = 2;
     int                         mFrameBufferIndex;
-    sp<MemoryHeapBase>          mFrameHeap;
     ISurface::BufferHeap        mBufferHeap;
     size_t                      mFrameBuffers[kBufferCount];
 
