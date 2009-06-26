@@ -90,6 +90,8 @@ class PVFirewallPacketExchanger
         bool ComposeFirewallPacket(PVMFJitterBufferFireWallPacketFormat aFormat, uint32 aPacketCnt, PVMFPortInterface*& aRTPJitterBufferPort, PVMFSharedMediaMsgPtr& aSharedMediaMsg);
         bool IsFirewallPacketResponseValid(PVMFSharedMediaMsgPtr& aMsg);//not implementated as of now
         bool DecodeFirewallPacketResponse(PVMFSharedMediaMsgPtr& aMsg);//not implementated as of now
+        const RTPSessionInfoForFirewallExchange& GetRTPSessionInfo() const;
+        void SetRTPSessionInfo(const RTPSessionInfoForFirewallExchange& aRTPSessionInfo);
     private:
         PVFirewallPacketExchanger(const RTPSessionInfoForFirewallExchange& aRTPSessionInfo)
         {

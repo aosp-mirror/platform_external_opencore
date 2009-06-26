@@ -750,27 +750,40 @@ OSCL_EXPORT_REF bool PVMFJitterBufferMisc::SetPlayRange(int32 aStartTimeInMS, in
     return true;
 }
 
-OSCL_EXPORT_REF bool PVMFJitterBufferMisc::SetPortSSRC(PVMFPortInterface* aPort, uint32 aSSRC)
+OSCL_EXPORT_REF void PVMFJitterBufferMisc::SetPortSSRC(PVMFPortInterface* aPort, uint32 aSSRC)
 {
-    //Update with the JB
-    Oscl_Vector<PVMFJitterBufferPortParams*, OsclMemAllocator>::iterator iter;
-    for (iter = irPortParamsQueue.begin(); iter != irPortParamsQueue.end() ; iter++)
+    bool isUpdateRequest = false;
+
+    for (uint32 ii = 0; ii < iRTPExchangeInfosForFirewallExchange.size(); ii++)
     {
-        PVMFJitterBufferPortParams* pPortParam = *iter;
-        if (pPortParam && ((&pPortParam->irPort) == aPort))
+        if (aPort == iRTPExchangeInfosForFirewallExchange[ii].ipRTPDataJitterBufferPort)
         {
-            PVMFJitterBuffer* jitterBuffer = pPortParam->ipJitterBuffer;
-            if (jitterBuffer)
-            {
-                jitterBuffer->setSSRC(aSSRC);
-            }
+            isUpdateRequest = true;
+            iRTPExchangeInfosForFirewallExchange[ii].iSSRC = aSSRC;
+            ipFireWallPacketExchangerImpl->SetRTPSessionInfoForFirewallExchange(iRTPExchangeInfosForFirewallExchange[ii]);
             break;
         }
     }
-    //update port's ssrc with the Firewall controller
-    RTPSessionInfoForFirewallExchange rtpSessioninfo(aPort, aSSRC);
-    iRTPExchangeInfosForFirewallExchange.push_back(rtpSessioninfo);
-    return true;
+
+    if (!isUpdateRequest)
+    {
+        //Update with the JB
+        Oscl_Vector<PVMFJitterBufferPortParams*, OsclMemAllocator>::const_iterator iter;
+        for (iter = irPortParamsQueue.begin(); iter != irPortParamsQueue.end() ; ++iter)
+        {
+            if ( iter && (*iter) && (&((*iter)->irPort) == aPort))
+            {
+                if ((*iter)->ipJitterBuffer)
+                {
+                    (*iter)->ipJitterBuffer->setSSRC(aSSRC);
+                }
+                break;
+            }
+        }
+        //update port's ssrc with the Firewall controller
+        RTPSessionInfoForFirewallExchange rtpSessioninfo(aPort, aSSRC);
+        iRTPExchangeInfosForFirewallExchange.push_back(rtpSessioninfo);
+    }
 }
 
 OSCL_EXPORT_REF uint32 PVMFJitterBufferMisc::GetEstimatedServerClockValue()
@@ -792,13 +805,29 @@ OSCL_EXPORT_REF void PVMFJitterBufferMisc::SetServerInfo(PVMFJitterBufferFireWal
     {
         if (!ipFireWallPacketExchangerImpl)
         {
+            if (iRTPExchangeInfosForFirewallExchange.size() == 0)//We haven't got the exchange info for the firewall pkts yet, lets assume ssrc to be zero for all the feedback ports
+            {
+                Oscl_Vector<PVMFJitterBufferPortParams*, OsclMemAllocator>::iterator iter;
+                for (iter = irPortParamsQueue.begin(); iter != irPortParamsQueue.end(); ++iter)
+                {
+                    PVMFJitterBufferPortParams* portParams = *iter;
+                    if (portParams->iTag == PVMF_JITTER_BUFFER_PORT_TYPE_INPUT)
+                    {
+                        RTPSessionInfoForFirewallExchange rtpSessioninfo(&portParams->irPort, 0);
+                        iRTPExchangeInfosForFirewallExchange.push_back(rtpSessioninfo);
+                    }
+                }
+            }
+
             //create it and start firewall packet exchange
             ipFireWallPacketExchangerImpl = PVFirewallPacketExchangeImpl::New(aServerInfo, *ipEventNotifier, ipObserver);
             Oscl_Vector<RTPSessionInfoForFirewallExchange, OsclMemAllocator>::iterator iter;
+
             for (iter = iRTPExchangeInfosForFirewallExchange.begin(); iter != iRTPExchangeInfosForFirewallExchange.end(); iter++)
             {
                 ipFireWallPacketExchangerImpl->SetRTPSessionInfoForFirewallExchange(*iter);
             }
+
             ipFireWallPacketExchangerImpl->InitiateFirewallPacketExchange();
         }
         else
