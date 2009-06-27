@@ -693,8 +693,8 @@ OSCL_EXPORT_REF  PVMFStatus PVRTSPEngineNode::SetClientParameters(OSCL_wString& 
         //\engines\player\src\pv_player_sdkinfo.h
         //#define PVPLAYER_ENGINE_SDKINFO_LABEL "PVPLAYER 04.07.00.01"
         //iSessionInfo.iUserAgent = PVPLAYER_ENGINE_SDKINFO_LABEL;
-        //iSessionInfo.iUserAgent += (char*)tmpBuf;
-        iSessionInfo.iUserAgent = (char*)tmpBuf;
+        iSessionInfo.iUserAgent += (char*)tmpBuf;
+        //iSessionInfo.iUserAgent = (char*)tmpBuf;
     }
 
     if (aUserNetwork.get_size() > 0)
