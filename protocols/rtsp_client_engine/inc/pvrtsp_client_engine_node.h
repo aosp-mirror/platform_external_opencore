@@ -252,7 +252,7 @@ class SessionInfo
                 roundTripDelay(0),
                 iSessionCompleted(false)
         {
-            iUserAgent += _STRLIT_CHAR("PVPlayer4.0");
+            iUserAgent += _STRLIT_CHAR("PVPlayer ");
             iReqPlayRange.format = RtspRangeType::INVALID_RANGE;
         };
 

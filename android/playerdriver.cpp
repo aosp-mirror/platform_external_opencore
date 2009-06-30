@@ -628,13 +628,6 @@ int PlayerDriver::setupHttpStreamPost()
 
     int error = 0;
 
-    iKVPSetAsync.key = _STRLIT_CHAR("x-pvmf/net/user-agent;valtype=wchar*");
-    OSCL_wHeapString<OsclMemAllocator> userAgent = _STRLIT_WCHAR("CORE/6.506.4.1 OpenCORE/2.02 (Linux;Android 1.0)(AndroidMediaPlayer 1.0)");
-    iKVPSetAsync.value.pWChar_value=userAgent.get_str();
-    iErrorKVP=NULL;
-    OSCL_TRY(error, mPlayerCapConfig->setParametersSync(NULL, &iKVPSetAsync, 1, iErrorKVP));
-    OSCL_FIRST_CATCH_ANY(error, return -1);
-
     iKeyStringSetAsync=_STRLIT_CHAR("x-pvmf/net/http-timeout;valtype=uint32");
     iKVPSetAsync.key=iKeyStringSetAsync.get_str();
     iKVPSetAsync.value.uint32_value=20;
@@ -701,6 +694,21 @@ void PlayerDriver::handleInit(PlayerInit* command)
 
     if (mDownloadContextData) {
         setupHttpStreamPost();
+    }
+
+    {
+        PvmiKvp iKVPSetAsync;
+        PvmiKvp *iErrorKVP = NULL;
+
+        int error = 0;
+        iKVPSetAsync.key = _STRLIT_CHAR("x-pvmf/net/user-agent;valtype=wchar*");
+        OSCL_wHeapString<OsclMemAllocator> userAgent = _STRLIT_WCHAR("CORE/6.506.4.1 OpenCORE/2.02 (Linux;Android 2.0)(AndroidMediaPlayer 2.0)");
+        iKVPSetAsync.value.pWChar_value=userAgent.get_str();
+        iErrorKVP=NULL;
+        OSCL_TRY(error, mPlayerCapConfig->setParametersSync(NULL, &iKVPSetAsync, 1, iErrorKVP));
+        OSCL_FIRST_CATCH_ANY(error,
+                LOGE("handleInit- setParametersSync ERROR setting useragent");
+        );
     }
 
     OSCL_TRY(error, mPlayer->Init(command));
