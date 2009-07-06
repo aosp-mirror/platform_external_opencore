@@ -3429,6 +3429,19 @@ PVMFStatus PVMFMP4FFParserNode::DoSetDataSourcePosition(PVMFMP4FFParserNodeComma
     retValPerTrack = (int32*) OSCL_MALLOC(iNodeTrackPortList.size() * sizeof(int32));
     retNumSamplesPerTrack = (uint32*) OSCL_MALLOC(iNodeTrackPortList.size() * sizeof(uint32));
 
+    if ((trackTSAfterRepo == NULL) || (retValPerTrack == NULL) || (retNumSamplesPerTrack == NULL))
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                        (0, "PVMFMP4FFParserNode::DoSetDataSourcePosition() Memory alloc for array to keep the timestamp of the samples failed"));
+        OSCL_FREE(trackTSAfterRepo);
+        trackTSAfterRepo = NULL;
+        OSCL_FREE(retValPerTrack);
+        retValPerTrack = NULL;
+        OSCL_FREE(retNumSamplesPerTrack);
+        retNumSamplesPerTrack = NULL;
+        return PVMFErrNoMemory;
+    }
+
     for (i = 0; i < iNodeTrackPortList.size(); i++)
     {
         // Peek the next sample to get the duration of the last sample
@@ -3489,10 +3502,12 @@ PVMFStatus PVMFMP4FFParserNode::DoSetDataSourcePosition(PVMFMP4FFParserNodeComma
                 aEventCode = PVMFFFErrMisc;
             }
             OSCL_ARRAY_DELETE(trackList);
-            OSCL_DELETE(trackTSAfterRepo);
-            OSCL_DELETE(retValPerTrack);
-            OSCL_DELETE(retNumSamplesPerTrack);
+            OSCL_FREE(trackTSAfterRepo);
             trackTSAfterRepo = NULL;
+            OSCL_FREE(retValPerTrack);
+            retValPerTrack = NULL;
+            OSCL_FREE(retNumSamplesPerTrack);
+            retNumSamplesPerTrack = NULL;
             return PVMFErrResource;
         }
     }
@@ -3613,10 +3628,12 @@ PVMFStatus PVMFMP4FFParserNode::DoSetDataSourcePosition(PVMFMP4FFParserNodeComma
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::DoSetDataSourcePosition() Out"));
     OSCL_ARRAY_DELETE(trackList);
-    OSCL_DELETE(trackTSAfterRepo);
+    OSCL_FREE(trackTSAfterRepo);
     trackTSAfterRepo = NULL;
-    OSCL_DELETE(retValPerTrack);
-    OSCL_DELETE(retNumSamplesPerTrack);
+    OSCL_FREE(retValPerTrack);
+    retValPerTrack = NULL;
+    OSCL_FREE(retNumSamplesPerTrack);
+    retNumSamplesPerTrack = NULL;
     return PVMFSuccess;
 }
 
