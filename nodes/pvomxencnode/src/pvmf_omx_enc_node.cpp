@@ -5632,7 +5632,7 @@ void PVMFOMXEncNode::DoPrepare(PVMFOMXEncNodeCommand& aCmd)
             OMX_STRING *CompOfRole;
             OMX_S8 CompName[PV_OMX_MAX_COMPONENT_NAME_LENGTH];
             // call once to find out the number of components that can fit the role
-            OMX_GetComponentsOfRole(Role, &num_comps, NULL);
+            OMX_MasterGetComponentsOfRole(Role, &num_comps, NULL);
             uint32 ii;
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
@@ -5646,12 +5646,12 @@ void PVMFOMXEncNode::DoPrepare(PVMFOMXEncNodeCommand& aCmd)
                     CompOfRole[ii] = (OMX_STRING) oscl_malloc(PV_OMX_MAX_COMPONENT_NAME_LENGTH * sizeof(OMX_U8));
 
                 // call 2nd time to get the component names
-                OMX_GetComponentsOfRole(Role, &num_comps, (OMX_U8 **)CompOfRole);
+                OMX_MasterGetComponentsOfRole(Role, &num_comps, (OMX_U8 **)CompOfRole);
 
                 for (ii = 0; ii < num_comps; ii++)
                 {
                     // try to create component
-                    err = OMX_GetHandle(&iOMXEncoder, (OMX_STRING) CompOfRole[ii], (OMX_PTR) this, (OMX_CALLBACKTYPE *) & iCallbacks);
+                    err = OMX_MasterGetHandle(&iOMXEncoder, (OMX_STRING) CompOfRole[ii], (OMX_PTR) this, (OMX_CALLBACKTYPE *) & iCallbacks);
                     // if successful, no need to continue
                     if ((err == OMX_ErrorNone) && (iOMXEncoder != NULL))
                     {
@@ -5707,7 +5707,7 @@ void PVMFOMXEncNode::DoPrepare(PVMFOMXEncNodeCommand& aCmd)
 
             // find out how many roles the component supports
             OMX_U32 NumRoles;
-            err = OMX_GetRolesOfComponent((OMX_STRING)CompName, &NumRoles, NULL);
+            err = OMX_MasterGetRolesOfComponent((OMX_STRING)CompName, &NumRoles, NULL);
             if (err != OMX_ErrorNone)
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
@@ -7488,7 +7488,7 @@ bool PVMFOMXEncNode::DeleteOMXEncoder()
     if (iOMXEncoder != NULL)
     {
         /* Free Component handle. */
-        err = OMX_FreeHandle(iOMXEncoder);
+        err = OMX_MasterFreeHandle(iOMXEncoder);
         if (err != OMX_ErrorNone)
         {
             //Error condition report

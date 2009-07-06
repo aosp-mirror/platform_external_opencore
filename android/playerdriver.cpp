@@ -1003,8 +1003,8 @@ int PlayerDriver::playerThread()
         return -1;
     }
 
-    LOGV("OMX_Init");
-    OMX_Init();
+    LOGV("OMX_MasterInit");
+    OMX_MasterInit();
 
     LOGV("OsclScheduler::Init");
     OsclScheduler::Init("AndroidPVWrapper");
@@ -1067,7 +1067,7 @@ int PlayerDriver::playerThread()
     OsclScheduler::Cleanup();
     LOGV("OsclScheduler::Cleanup");
 
-    OMX_Deinit();
+    OMX_MasterDeinit();
     UninitializeForThread();
     return 0;
 }

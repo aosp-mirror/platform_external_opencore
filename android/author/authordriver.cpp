@@ -1039,8 +1039,8 @@ int AuthorDriver::authorThread()
         return -1;
     }
 
-    LOGV("OMX_Init");
-    OMX_Init();
+    LOGV("OMX_MasterInit");
+    OMX_MasterInit();
 
     OsclScheduler::Init("AndroidAuthorDriver");
     LOGV("Create author ...");
@@ -1085,7 +1085,7 @@ int AuthorDriver::authorThread()
    //moved below delete this, similar code on playerdriver.cpp caused a crash.
    //cleanup of oscl should happen at the end.
     OsclScheduler::Cleanup();
-    OMX_Deinit();
+    OMX_MasterDeinit();
     UninitializeForThread();
     return 0;
 }

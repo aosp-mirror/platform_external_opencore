@@ -293,5 +293,43 @@ class OMXGlobalData
 
 };
 
+    OSCL_IMPORT_REF OMX_ERRORTYPE OMX_MasterInit();
+    OSCL_IMPORT_REF OMX_ERRORTYPE OMX_MasterDeinit();
+
+    OSCL_IMPORT_REF OMX_ERRORTYPE OMX_MasterGetComponentsOfRole(
+        OMX_IN          OMX_STRING role,
+        OMX_INOUT       OMX_U32 *pNumComps,
+        OMX_INOUT       OMX_U8 **compNames);
+
+    OSCL_IMPORT_REF OMX_ERRORTYPE OMX_APIENTRY OMX_MasterComponentNameEnum(
+        OMX_OUT OMX_STRING cComponentName,
+        OMX_IN  OMX_U32 nNameLength,
+        OMX_IN  OMX_U32 nIndex);
+
+    OSCL_IMPORT_REF OMX_ERRORTYPE OMX_APIENTRY OMX_MasterFreeHandle(OMX_IN OMX_HANDLETYPE hComponent);
+
+    OSCL_IMPORT_REF OMX_ERRORTYPE OMX_APIENTRY OMX_MasterGetHandle(OMX_OUT OMX_HANDLETYPE* pHandle,
+            OMX_IN  OMX_STRING cComponentName,
+            OMX_IN  OMX_PTR pAppData,
+            OMX_IN  OMX_CALLBACKTYPE* pCallBacks);
+
+    OSCL_IMPORT_REF OMX_ERRORTYPE OMX_MasterGetRolesOfComponent(
+        OMX_IN      OMX_STRING compName,
+        OMX_INOUT   OMX_U32* pNumRoles,
+        OMX_OUT     OMX_U8** roles);
+
+    OSCL_IMPORT_REF OMX_BOOL OMX_MasterConfigParser(
+        OMX_PTR aInputParameters,
+        OMX_PTR aOutputParameters);
+
+    OSCL_IMPORT_REF OMX_ERRORTYPE OMX_MasterSetupTunnel(
+         OMX_IN  OMX_HANDLETYPE hOutput,
+         OMX_IN  OMX_U32 nPortOutput,
+         OMX_IN  OMX_HANDLETYPE hInput,
+         OMX_IN  OMX_U32 nPortInput);
+
+    OSCL_IMPORT_REF OMX_ERRORTYPE OMX_MasterGetContentPipe(
+         OMX_OUT OMX_HANDLETYPE *hPipe,
+         OMX_IN OMX_STRING szURI);
 
 #endif

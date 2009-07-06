@@ -3979,7 +3979,7 @@ void PVMFOMXBaseDecNode::DoPrepare(PVMFOMXBaseDecNodeCommand& aCmd)
                 }
             }
             // call once to find out the number of components that can fit the role
-            OMX_GetComponentsOfRole(aInputParameters.cComponentRole, &num_comps, NULL);
+            OMX_MasterGetComponentsOfRole(aInputParameters.cComponentRole, &num_comps, NULL);
             uint32 ii;
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
@@ -3993,12 +3993,12 @@ void PVMFOMXBaseDecNode::DoPrepare(PVMFOMXBaseDecNodeCommand& aCmd)
                     CompOfRole[ii] = (OMX_STRING) oscl_malloc(PV_OMX_MAX_COMPONENT_NAME_LENGTH * sizeof(OMX_U8));
 
                 // call 2nd time to get the component names
-                OMX_GetComponentsOfRole(aInputParameters.cComponentRole, &num_comps, (OMX_U8 **)CompOfRole);
+                OMX_MasterGetComponentsOfRole(aInputParameters.cComponentRole, &num_comps, (OMX_U8 **)CompOfRole);
 
                 for (ii = 0; ii < num_comps; ii++)
                 {
                     aInputParameters.cComponentName = CompOfRole[ii];
-                    status = OMXConfigParser(&aInputParameters, aOutputParameters);
+                    status = OMX_MasterConfigParser(&aInputParameters, aOutputParameters);
                     if (status == OMX_TRUE)
                     {
                         // but also needs to valid long enough to use it when getting the number of roles later on
@@ -4015,7 +4015,7 @@ void PVMFOMXBaseDecNode::DoPrepare(PVMFOMXBaseDecNodeCommand& aCmd)
                         else
 #endif
                             // try to create component
-                            err = OMX_GetHandle(&iOMXDecoder, (OMX_STRING) aInputParameters.cComponentName, (OMX_PTR) this, (OMX_CALLBACKTYPE *) & iCallbacks);
+                            err = OMX_MasterGetHandle(&iOMXDecoder, (OMX_STRING) aInputParameters.cComponentName, (OMX_PTR) this, (OMX_CALLBACKTYPE *) & iCallbacks);
                         // if successful, no need to continue
                         if ((err == OMX_ErrorNone) && (iOMXDecoder != NULL))
                         {
@@ -4077,7 +4077,7 @@ void PVMFOMXBaseDecNode::DoPrepare(PVMFOMXBaseDecNodeCommand& aCmd)
 
             // find out how many roles the component supports
             OMX_U32 NumRoles;
-            err = OMX_GetRolesOfComponent((OMX_STRING)CompName, &NumRoles, NULL);
+            err = OMX_MasterGetRolesOfComponent((OMX_STRING)CompName, &NumRoles, NULL);
             if (err != OMX_ErrorNone)
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
@@ -5119,7 +5119,7 @@ bool PVMFOMXBaseDecNode::DeleteOMXBaseDecoder()
     if (iOMXDecoder != NULL)
     {
         /* Free Component handle. */
-        err = OMX_FreeHandle(iOMXDecoder);
+        err = OMX_MasterFreeHandle(iOMXDecoder);
         if (err != OMX_ErrorNone)
         {
             //Error condition report

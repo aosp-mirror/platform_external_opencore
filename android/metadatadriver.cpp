@@ -100,7 +100,7 @@ int MetadataDriver::retrieverThread()
         return -1;
     }
 
-    OMX_Init();
+    OMX_MasterInit();
     OsclScheduler::Init("PVAuthorEngineWrapper");
     mState = STATE_CREATE;
     AddToScheduler();
@@ -110,7 +110,7 @@ int MetadataDriver::retrieverThread()
 
     mSyncSem->Signal();  // Signal that doSetDataSource() is done.
     OsclScheduler::Cleanup();
-    OMX_Deinit();
+    OMX_MasterDeinit();
     UninitializeForThread();
     return 0;
 }

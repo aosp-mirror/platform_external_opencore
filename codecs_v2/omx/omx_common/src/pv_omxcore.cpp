@@ -360,6 +360,14 @@ static void _Try_OMX_Create(int32& aError, OMXGlobalData*& aData)
     OSCL_TRY(aError, aData = OSCL_NEW(OMXGlobalData, ()););
 }
 
+#if (USE_DYNAMIC_LOAD_OMX_COMPONENTS == 0)
+// in case of static build - just redirect master omx core call to local pv core call
+OSCL_EXPORT_REF OMX_ERRORTYPE OMX_MasterInit()
+{
+    return OMX_Init();
+}
+#endif
+
 OSCL_EXPORT_REF OMX_ERRORTYPE OMX_Init()
 {
     OMX_ERRORTYPE status = OMX_ErrorNone;
@@ -535,6 +543,14 @@ static void _Try_Data_Cleanup(int32 &aError, OMXGlobalData* aData)
     OSCL_TRY(aError, OSCL_DELETE(aData););
 }
 
+#if (USE_DYNAMIC_LOAD_OMX_COMPONENTS == 0)
+// in case of static build - just redirect master omx core call to local pv core call
+OSCL_EXPORT_REF OMX_ERRORTYPE OMX_MasterDeinit()
+{
+    return OMX_Deinit();
+}
+#endif
+
 OSCL_EXPORT_REF OMX_ERRORTYPE OMX_Deinit()
 {
     OMX_ERRORTYPE status = OMX_ErrorNone;
@@ -630,6 +646,18 @@ static void _Cleanup_Component(ProxyApplication_OMX* aProxyTerm, OMX_OUT OMX_HAN
     }
 
     OsclSingletonRegistry::registerInstanceAndUnlock(data, OSCL_SINGLETON_ID_OMX, error);
+}
+#endif
+
+#if (USE_DYNAMIC_LOAD_OMX_COMPONENTS == 0)
+// in case of static build - just redirect master omx core call to local pv core call
+OSCL_EXPORT_REF OMX_ERRORTYPE OMX_APIENTRY OMX_MasterGetHandle(OMX_OUT OMX_HANDLETYPE* pHandle,
+        OMX_IN  OMX_STRING cComponentName,
+        OMX_IN  OMX_PTR pAppData,
+        OMX_IN  OMX_CALLBACKTYPE* pCallBacks)
+{
+
+    return OMX_GetHandle(pHandle,cComponentName,pAppData,pCallBacks);
 }
 #endif
 
@@ -872,6 +900,13 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OMX_APIENTRY OMX_GetHandle(OMX_OUT OMX_HANDLETYPE*
     return ErrorType;
 }
 
+#if (USE_DYNAMIC_LOAD_OMX_COMPONENTS == 0)
+// in case of static build - just redirect master omx core call to local pv core call
+OSCL_EXPORT_REF OMX_ERRORTYPE OMX_APIENTRY OMX_MasterFreeHandle(OMX_IN OMX_HANDLETYPE hComponent)
+{
+    return OMX_FreeHandle(hComponent);
+}
+#endif
 
 OSCL_EXPORT_REF OMX_ERRORTYPE OMX_APIENTRY OMX_FreeHandle(OMX_IN OMX_HANDLETYPE hComponent)
 {
@@ -968,6 +1003,17 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OMX_APIENTRY OMX_FreeHandle(OMX_IN OMX_HANDLETYPE 
 
 }
 
+#if (USE_DYNAMIC_LOAD_OMX_COMPONENTS == 0)
+// in case of static build - just redirect master omx core call to local pv core call
+OSCL_EXPORT_REF OMX_ERRORTYPE OMX_APIENTRY OMX_MasterComponentNameEnum(
+    OMX_OUT OMX_STRING cComponentName,
+    OMX_IN  OMX_U32 nNameLength,
+    OMX_IN  OMX_U32 nIndex)
+{
+    return OMX_ComponentNameEnum(cComponentName,nNameLength,nIndex);
+}
+#endif
+
 //This is a method to be called directly under testapp thread
 OSCL_EXPORT_REF OMX_ERRORTYPE OMX_APIENTRY OMX_ComponentNameEnum(
     OMX_OUT OMX_STRING cComponentName,
@@ -1005,6 +1051,18 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OMX_APIENTRY OMX_ComponentNameEnum(
 
 }
 
+#if (USE_DYNAMIC_LOAD_OMX_COMPONENTS == 0)
+// in case of static build - just redirect master omx core call to local pv core call
+OSCL_EXPORT_REF OMX_ERRORTYPE OMX_MasterSetupTunnel(
+    OMX_IN  OMX_HANDLETYPE hOutput,
+    OMX_IN  OMX_U32 nPortOutput,
+    OMX_IN  OMX_HANDLETYPE hInput,
+    OMX_IN  OMX_U32 nPortInput)
+{
+    return OMX_SetupTunnel(hOutput,nPortOutput,hInput,nPortInput);
+}
+#endif
+
 OSCL_EXPORT_REF OMX_ERRORTYPE OMX_SetupTunnel(
     OMX_IN  OMX_HANDLETYPE hOutput,
     OMX_IN  OMX_U32 nPortOutput,
@@ -1019,6 +1077,15 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OMX_SetupTunnel(
 }
 
 
+#if (USE_DYNAMIC_LOAD_OMX_COMPONENTS == 0)
+// in case of static build - just redirect master omx core call to local pv core call
+OSCL_EXPORT_REF OMX_ERRORTYPE OMX_MasterGetContentPipe(
+    OMX_OUT OMX_HANDLETYPE *hPipe,
+    OMX_IN OMX_STRING szURI)
+{
+    return OMX_GetContentPipe(hPipe,szURI);
+}
+#endif
 
 OSCL_EXPORT_REF OMX_ERRORTYPE OMX_GetContentPipe(
     OMX_OUT OMX_HANDLETYPE *hPipe,
@@ -1034,6 +1101,17 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OMX_GetContentPipe(
 /////////////// Given a compName, find the component and then return its role(s)
 ///////////////// It's the caller's responsibility to provide enough space for the role(s)
 ////////////////////////////////////////////////////////////////////////////
+#if (USE_DYNAMIC_LOAD_OMX_COMPONENTS == 0)
+// in case of static build - just redirect master omx core call to local pv core call
+OSCL_EXPORT_REF OMX_ERRORTYPE OMX_MasterGetRolesOfComponent(
+    OMX_IN      OMX_STRING compName,
+    OMX_INOUT   OMX_U32* pNumRoles,
+    OMX_OUT     OMX_U8** roles)
+{
+    return OMX_GetRolesOfComponent(compName, pNumRoles, roles);
+}
+#endif
+
 OSCL_EXPORT_REF OMX_ERRORTYPE OMX_GetRolesOfComponent(
     OMX_IN      OMX_STRING compName,
     OMX_INOUT   OMX_U32* pNumRoles,
@@ -1091,6 +1169,17 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OMX_GetRolesOfComponent(
 //////////// so it may need to make the call twice. Once to find number of components, and 2nd time
 //////////// to find their actual names
 //////////////////////////////////////////////////////////////////////////////////
+#if (USE_DYNAMIC_LOAD_OMX_COMPONENTS == 0)
+// in case of static build - just redirect master omx core call to local pv core call
+OSCL_EXPORT_REF OMX_ERRORTYPE OMX_MasterGetComponentsOfRole(
+    OMX_IN      OMX_STRING role,
+    OMX_INOUT   OMX_U32 *pNumComps,
+    OMX_INOUT   OMX_U8  **compNames)
+{
+    return OMX_GetComponentsOfRole(role, pNumComps, compNames);
+}
+#endif
+
 OSCL_EXPORT_REF OMX_ERRORTYPE OMX_GetComponentsOfRole(
     OMX_IN      OMX_STRING role,
     OMX_INOUT   OMX_U32 *pNumComps,

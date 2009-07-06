@@ -24,8 +24,18 @@
 #endif
 
 #include "pv_omx_config_parser.h"
+#include "pv_omxcore.h"
 
+#if (USE_DYNAMIC_LOAD_OMX_COMPONENTS == 0)
+// in case of static build - just redirect master omx core call to local pv core call
+OSCL_EXPORT_REF OMX_BOOL OMX_MasterConfigParser(
+    OMX_PTR aInputParameters,
+    OMX_PTR aOutputParameters)
 
+{
+    return OMXConfigParser(aInputParameters, aOutputParameters);
+}
+#endif
 
 OSCL_EXPORT_REF OMX_BOOL OMXConfigParser(
     OMX_PTR aInputParameters,
