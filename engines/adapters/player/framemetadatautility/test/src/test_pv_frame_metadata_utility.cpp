@@ -35,6 +35,7 @@
 #include "oscl_string_utils.h"
 
 #include "OMX_Core.h"
+#include "pv_omxcore.h"
 
 #ifndef DEFAULTSOURCEFILENAME
 #error // The default source file needs to be defined in config file
@@ -740,7 +741,7 @@ int local_main(FILE* filehandle, cmd_line* command_line)
     OsclBase::Init();
     OsclErrorTrap::Init();
     OsclMem::Init();
-    OMX_Init();
+    OMX_MasterInit();
 
     const int numArgs = 10; //change as per the number of args below
     char *argv[numArgs];
@@ -798,7 +799,7 @@ int local_main(FILE* filehandle, cmd_line* command_line)
     }
 
     //Cleanup
-    OMX_Deinit();
+    OMX_MasterDeinit();
 #if !(OSCL_BYPASS_MEMMGT)
     //Check for memory leaks before cleaning up OsclMem.
     OsclAuditCB auditCB;

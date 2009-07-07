@@ -34,6 +34,7 @@
 #include "unit_test_args.h"
 
 #include "OMX_Core.h"
+#include "pv_omxcore.h"
 
 void FindSourceFile( cmd_line* command_line,
                      OSCL_HeapString<OsclMemAllocator> &aFileNameInfo,
@@ -199,7 +200,7 @@ int local_main(cmd_line* command_line )
     OsclErrorTrap::Init();
     OsclMem::Init();
 
-    OMX_Init();
+    OMX_MasterInit();
 
     //Run the test under a trap
     int result = 0;
@@ -219,7 +220,7 @@ int local_main(cmd_line* command_line )
     }
 
     //Cleanup
-    OMX_Deinit();
+    OMX_MasterDeinit();
 
     OsclMem::Cleanup();
     OsclErrorTrap::Cleanup();
