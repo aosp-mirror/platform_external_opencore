@@ -144,6 +144,7 @@
 #endif
 
 #include "OMX_Core.h"
+#include "pv_omxcore.h"
 
 #ifndef OSCL_UTF8CONV_H
 #include "oscl_utf8conv.h"
@@ -1696,7 +1697,7 @@ int local_main(FILE *filehandle, cmd_line* command_line)
     OsclBase::Init();
     OsclErrorTrap::Init();
     OsclMem::Init();
-    OMX_Init();
+    OMX_MasterInit();
 
 
     {
@@ -1722,7 +1723,7 @@ int local_main(FILE *filehandle, cmd_line* command_line)
         fprintf(file, "Error!  Leave %d\n", err);
     }
     //Cleanup
-    OMX_Deinit();
+    OMX_MasterDeinit();
 
 #if !(OSCL_BYPASS_MEMMGT)
     //Check for memory leaks before cleaning up OsclMem.

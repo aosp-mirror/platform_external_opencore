@@ -41,6 +41,7 @@
 
 #if USE_OMX_ENC_NODE
 #include "OMX_Core.h"
+#include "pv_omxcore.h"
 #endif
 
 FILE* file;
@@ -1712,7 +1713,7 @@ int local_main(FILE* filehandle, cmd_line* command_line)
     OsclMem::Init();
 
 #if USE_OMX_ENC_NODE
-    OMX_Init();
+    OMX_MasterInit();
 #endif
 
     {
@@ -1739,7 +1740,7 @@ int local_main(FILE* filehandle, cmd_line* command_line)
         fprintf(file, "Error!  Leave %d\n", err);
     }
 #if USE_OMX_ENC_NODE
-    OMX_Deinit();
+    OMX_MasterDeinit();
 #endif
     //Cleanup
 #if !(OSCL_BYPASS_MEMMGT)
