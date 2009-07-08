@@ -1307,6 +1307,14 @@ void PlayerDriver::HandleInformationalEvent(const PVAsyncInformationalEvent& aEv
 
         case PVMFInfoContentTruncated:
             LOGE("Content is truncated.");
+            // FIXME:
+            // While streaming YouTube videos, we receive PVMFInfoContentTruncated event
+            // after some seek operation. PV is still looking into OpenCore to see whether
+            // there is any bug associated with it; Meanwhile, lets treat this as an error
+            // since after playerdriver receives this event, playback session cannot be
+            // recovered.
+            mPvPlayer->sendEvent(MEDIA_ERROR, ::android::MEDIA_ERROR_UNKNOWN,
+                                 PVMFInfoContentTruncated);
             break;
 
         /* Certain events we don't really care about, but don't
