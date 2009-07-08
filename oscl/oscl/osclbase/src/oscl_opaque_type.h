@@ -47,6 +47,8 @@
 class Oscl_Opaque_Type_Alloc
 {
     public:
+        virtual ~Oscl_Opaque_Type_Alloc() {}
+
         /**
          * Construct element at p using element at init_val as the initial value.
          * Both pointers must be non-NULL.
@@ -75,6 +77,8 @@ class Oscl_Opaque_Type_Alloc
 class Oscl_Opaque_Type_Compare
 {
     public:
+        virtual ~Oscl_Opaque_Type_Compare() {}
+
         /**
          * Swap element at "a" with element at "b".
          * Both pointers must be non-NULL.
@@ -100,6 +104,8 @@ class Oscl_Opaque_Type_Compare
 class Oscl_Opaque_Type_Alloc_LL
 {
     public:
+        virtual ~Oscl_Opaque_Type_Alloc_LL() {}
+
         /**
          * Construct element at p using element at init_val as the initial value.
          * Both pointers must be non-NULL.
