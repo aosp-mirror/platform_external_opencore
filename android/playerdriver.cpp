@@ -702,7 +702,20 @@ void PlayerDriver::handleInit(PlayerInit* command)
 
         int error = 0;
         iKVPSetAsync.key = _STRLIT_CHAR("x-pvmf/net/user-agent;valtype=wchar*");
-        OSCL_wHeapString<OsclMemAllocator> userAgent = _STRLIT_WCHAR("CORE/6.506.4.1 OpenCORE/2.02 (Linux;Android 2.0)(AndroidMediaPlayer 2.0)");
+        OSCL_wHeapString<OsclMemAllocator> userAgent = _STRLIT_WCHAR("CORE/6.506.4.1 OpenCORE/2.02 (Linux;Android ");
+
+#if (PROPERTY_VALUE_MAX < 8)
+#error "PROPERTY_VALUE_MAX must be at least 8"
+#endif
+        char value[PROPERTY_VALUE_MAX];
+        int len = property_get("ro.build.version.release", value, "Unknown");
+        if (len) {
+            LOGV("release string is %s len %d", value, len);
+            oscl_wchar output[len+ 1];
+            oscl_UTF8ToUnicode(value, len, output, len+1);
+            userAgent += output;
+        }
+        userAgent += _STRLIT_WCHAR(")");
         iKVPSetAsync.value.pWChar_value=userAgent.get_str();
         iErrorKVP=NULL;
         OSCL_TRY(error, mPlayerCapConfig->setParametersSync(NULL, &iKVPSetAsync, 1, iErrorKVP));
