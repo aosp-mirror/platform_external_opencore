@@ -115,7 +115,6 @@ enum PVMFMediaClockAdjustTimeStatus
 class PVMFMediaClockNotificationsObsBase
 {
     public:
-        virtual ~PVMFMediaClockNotificationsObsBase() {}
         /**
          * This event happens when the clock has been Reset or destroyed and notification
          * interface object that observer is using has been destroyed. Observer should

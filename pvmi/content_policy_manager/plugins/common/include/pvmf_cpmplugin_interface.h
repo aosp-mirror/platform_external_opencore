@@ -281,7 +281,6 @@ class OSCL_String;
 class PVMFCPMPluginRegistryPopulator
 {
     public:
-        virtual ~PVMFCPMPluginRegistryPopulator() {}
         /*
         ** GetFactoryAndMimeString.  Called by CPM framework to retrieve the plugin factory and
         **   plugin mimestring.  Note this will be called twice-- when creating the plugin and

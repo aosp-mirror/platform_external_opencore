@@ -78,7 +78,6 @@
 class Oscl_Alloc
 {
     public:
-        virtual ~Oscl_Alloc() {}
         virtual OsclAny* allocate(const uint32 size) = 0;
 
         //Allocator with file name and line number inputs to aid memory auditing.
@@ -124,7 +123,6 @@ class Oscl_DefAlloc : public Oscl_Alloc, public Oscl_Dealloc
 class OsclDestructDealloc
 {
     public:
-        virtual ~OsclDestructDealloc() {}
         virtual void destruct_and_dealloc(OsclAny* ptr) = 0;
 };
 

@@ -227,7 +227,6 @@ class PVMFPortActivity;
 class PVMFPortActivityHandler
 {
     public:
-        virtual ~PVMFPortActivityHandler() {}
         virtual void HandlePortActivity(const PVMFPortActivity &) = 0;
 };
 

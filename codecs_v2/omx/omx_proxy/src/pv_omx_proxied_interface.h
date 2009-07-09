@@ -55,7 +55,6 @@ typedef int32 TPVCommandId;
 class PVMainProxy_OMX
 {
     public:
-        virtual ~PVMainProxy_OMX() {}
 
         /**
         ** This call registers a proxied interface with the main
@@ -210,7 +209,6 @@ class PVMainProxy_OMX
 class PVProxiedEngine_OMX
 {
     public:
-        virtual ~PVProxiedEngine_OMX() {}
 
         /**
         ** Create PV logger appenders for the PV thread.
@@ -280,8 +278,6 @@ class PVProxiedInterface_OMX : public PVInterface
 class PVProxiedInterfaceServer_OMX
 {
     public:
-        virtual ~PVProxiedInterfaceServer_OMX() {}
-
         /**
         ** PVMainProxy calls this under the PV thread to process a
         ** command off the queue.
@@ -311,8 +307,6 @@ class PVProxiedInterfaceServer_OMX
 class PVProxiedInterfaceClient_OMX
 {
     public:
-        virtual ~PVProxiedInterfaceClient_OMX() {}
-
         /**
         ** PVMainProxy calls this to process a notification off the
         ** queue.
