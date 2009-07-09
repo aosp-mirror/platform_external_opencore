@@ -35,9 +35,6 @@
 // For instance, foo.h has 30 lines, "#pragma GCC system_header" is inserted at line 10,
 // from line 11 to the end of file, all compiler warnings are disabled.
 // However, this does not affect any files that include foo.h.
-// Currently, oscl_defalloc.h and oscl_mem.h uses #pragma GCC system_header
-// This is meant to be a temporary fix until the root cause of the compiler warnings
-// can be resolved properly
 //
 #ifdef __GNUC__
 #define OSCL_DISABLE_GCC_WARNING_SYSTEM_HEADER

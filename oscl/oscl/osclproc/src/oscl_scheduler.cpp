@@ -207,6 +207,8 @@ OSCL_EXPORT_REF void OsclScheduler::Cleanup()
 
 #endif
 
+OsclMemAllocator OsclExecSchedulerCommonBase::iDefAlloc;
+
 #if(PV_SCHED_ENABLE_PERF_LOGGING)
 void OsclExecSchedulerCommonBase::ResetLogPerf()
 {

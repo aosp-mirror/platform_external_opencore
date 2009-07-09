@@ -112,6 +112,11 @@ PVMp4FFComposerPort::~PVMp4FFComposerPort()
     }
     Disconnect();
     ClearMsgQueues();
+
+    // we need to clear the activity handler, since otherwise the PvmfPortBaseImpl destructor
+    // ends up calling back onto our HandlePortActivity method, which no longer exists because
+    // this objects's destructor has already been called.
+    SetActivityHandler(NULL);
 }
 
 ////////////////////////////////////////////////////////////////////////////

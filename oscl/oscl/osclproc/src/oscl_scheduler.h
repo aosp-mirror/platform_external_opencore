@@ -316,7 +316,8 @@ class OsclExecSchedulerCommonBase
 #endif
 
         Oscl_DefAlloc *iAlloc;//allocator for scheduler.
-        OsclMemAllocator iDefAlloc;//default allocator
+        // iDefAlloc is static because we need it to still be valid after ~OsclExecSchedulerCommonBase is called */
+        static OsclMemAllocator iDefAlloc;//default allocator
 
         friend class OsclActiveObject;
         friend class OsclTimerObject;
