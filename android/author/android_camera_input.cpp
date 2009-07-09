@@ -930,6 +930,7 @@ PVMFStatus AndroidCameraInput::DoStart()
             status = PVMFSuccess;
         }
     }
+    iStartTickCount = (uint32) (systemTime() / 1000000L);
     AddDataEventToQueue(iMilliSecondsPerDataEvent);
     return status;
 }
@@ -1088,7 +1089,7 @@ PVMFStatus AndroidCameraInput::SetCamera(const sp<android::ICamera>& camera)
     return PVMFSuccess;
 }
 
-PVMFStatus AndroidCameraInput::postWriteAsync(const sp<IMemory>& frame)
+PVMFStatus AndroidCameraInput::postWriteAsync(nsecs_t timestamp, const sp<IMemory>& frame)
 {
     LOGV("postWriteAsync");
 
@@ -1105,15 +1106,13 @@ PVMFStatus AndroidCameraInput::postWriteAsync(const sp<IMemory>& frame)
         return PVMFSuccess;
     }
 
-    // if first event, set timestamp to zero
-    if (iDataEventCounter == 0) {
-        iStartTickCount = systemTime(SYSTEM_TIME_MONOTONIC) / 1000000;
-        iTimeStamp = 0;
-    } else {
-        uint32 timeStamp = (systemTime(SYSTEM_TIME_MONOTONIC) / 1000000) - iStartTickCount;
+    // calculate timestamp as offset from start time
+    uint32 t = (uint32)(timestamp / 1000000L) - iStartTickCount;
+
     // Make sure that no two samples have the same timestamp
-        if (iTimeStamp != timeStamp) {
-            iTimeStamp = timeStamp;
+    if (iDataEventCounter != 0) {
+        if (iTimeStamp != t) {
+            iTimeStamp = t;
         } else {
             ++iTimeStamp;
         }
@@ -1157,8 +1156,12 @@ PVMFStatus AndroidCameraInput::postWriteAsync(const sp<IMemory>& frame)
 // camera callback interface
 void AndroidCameraInputListener::postData(int32_t msgType, const sp<IMemory>& dataPtr)
 {
+}
+
+void AndroidCameraInputListener::postDataTimestamp(nsecs_t timestamp, int32_t msgType, const sp<IMemory>& dataPtr)
+{
     if ((mCameraInput != NULL) && (msgType == CAMERA_MSG_VIDEO_FRAME)) {
-        mCameraInput->postWriteAsync(dataPtr);
+        mCameraInput->postWriteAsync(timestamp, dataPtr);
     }
 }
 
