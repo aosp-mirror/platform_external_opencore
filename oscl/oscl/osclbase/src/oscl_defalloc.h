@@ -85,6 +85,7 @@ class Oscl_Dealloc
 {
     public:
         virtual void deallocate(OsclAny* p) = 0;
+        virtual ~Oscl_Dealloc() {}
 };
 
 
