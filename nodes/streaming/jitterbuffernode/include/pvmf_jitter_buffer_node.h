@@ -164,6 +164,7 @@ class PVMFJitterBufferNode : public PVInterface,
         virtual void ProcessJBInfoEvent(PVMFAsyncEvent& aEvent);
         virtual void PacketReadyToBeRetrieved(OsclAny* aContext);
         virtual void EndOfStreamSignalled(OsclAny* aContext);
+        virtual void MediaTrackSSRCEstablished(PVMFJitterBuffer* aJitterBuffer, uint32 aSSRC);
 
         //PVMFJitterBufferMiscObserver
         virtual void MessageReadyToSend(PVMFPortInterface*& aPort, PVMFSharedMediaMsgPtr& aMessage);

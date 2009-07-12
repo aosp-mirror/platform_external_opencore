@@ -1030,8 +1030,22 @@ bool PVMFJitterBufferNode::PrepareForRepositioning(bool oUseExpectedClientClockV
 
 bool PVMFJitterBufferNode::SetPortSSRC(PVMFPortInterface* aPort, uint32 aSSRC)
 {
+    bool retval = false;
     PVMF_JBNODE_LOGINFO((0, "PVMFJitterBufferNode::SetPortSSRC aPort[%x], aSSRC[%d]", aPort, aSSRC));
-    return ipJitterBufferMisc->SetPortSSRC(aPort, aSSRC);
+    if(aPort)
+    {
+        Oscl_Vector<PVMFJitterBufferPortParams*, OsclMemAllocator>::const_iterator iter;
+        for (iter = iPortParamsQueue.begin(); iter != iPortParamsQueue.end() ; ++iter)
+        {
+            if (iter && (*iter) && (&((*iter)->irPort) == aPort))
+            {
+                retval = true;
+                ipJitterBufferMisc->SetPortSSRC(aPort, aSSRC);
+                break;
+            }
+        }
+    }
+    return retval;
 }
 
 bool PVMFJitterBufferNode::SetPortRTPParams(PVMFPortInterface* aPort,
@@ -3831,4 +3845,21 @@ void PVMFJitterBufferNode::ClockStateUpdated()
 void PVMFJitterBufferNode::NotificationsInterfaceDestroyed()
 {
     //noop
+}
+
+void PVMFJitterBufferNode::MediaTrackSSRCEstablished(PVMFJitterBuffer* aJitterBuffer, uint32 aSSRC)
+{
+    for (uint32 ii = 0; ii < iPortVector.size(); ii++)
+    {
+        PVMFJitterBufferPortParams* pPortParams = NULL;
+        bool bRet = getPortContainer(iPortVector[ii], pPortParams);
+        if (bRet)
+        {
+            if (pPortParams->iTag == PVMF_JITTER_BUFFER_PORT_TYPE_INPUT && pPortParams->ipJitterBuffer == aJitterBuffer)
+            {
+                ipJitterBufferMisc->SetPortSSRC(&pPortParams->irPort, aSSRC);
+                break;
+            }
+        }
+    }
 }

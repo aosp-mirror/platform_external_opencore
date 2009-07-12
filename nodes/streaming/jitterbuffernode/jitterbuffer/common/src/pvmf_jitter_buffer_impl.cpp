@@ -599,6 +599,7 @@ PVMFJitterBufferRegisterMediaMsgStatus PVMFJitterBufferImpl::AddPacket(PVMFShare
         {
             oSSRCFromSetUpResponseAvailable = true;
             SSRCLock = aDataPacket->getStreamID();
+            iObserver->MediaTrackSSRCEstablished(this, SSRCLock);
             PVMF_JB_LOGDATATRAFFIC_IN((0, "PVMFJitterBufferImpl::addPacket: Ser No SSRC, set to 1st pkt SSRC %d", SSRCLock));
         }
         /* Filter based on SSRC */

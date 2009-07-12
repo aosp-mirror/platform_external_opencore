@@ -685,13 +685,53 @@ class PVMFDynamicCircularArray
         PVLogger* ipDataPathLoggerOut;
 };
 
+class PVMFJitterBuffer;
+
 class PVMFJitterBufferObserver
 {
     public:
         virtual ~PVMFJitterBufferObserver() {}
+        /**
+            It is possible that the allocator used for allocating the memory
+            for packetizing the packets may run out of memory.In this case
+            RegisterMediaMsg will return the err code
+            "PVMF_JB_ERR_INSUFFICIENT_MEM_TO_PACKETIZE"
+            In this case user of the JB is expected to make the function call
+            "NotifyFreeSpaceAvailable". When allocator recovers some memory later,
+            then it makes callback to the JB observer using the func
+            "JitterBufferFreeSpaceAvailable"
+            aContext [out]: The value of this will be same as the one provided
+            by the owner of JB while creating the Jitter buffer, retieved via
+            [PVMFJitterBufferConstructParams::GetContextData()] in JB
+        */
         virtual void JitterBufferFreeSpaceAvailable(OsclAny* aContext) = 0;
+
+        /**
+            In case of RTSP streaming, SSRC of the session is retrieved
+            from the RTSP SetUp response.This SSRC is set with the JB by
+            its owner/observer using the function call "setSSRC"
+            However, if JB is not provided with the SSRC. Then JB looks thru the
+            RTP packets that are registered with it and establishes the SSRC for
+            the session. This SSRC is communicated to the observer of the JB using
+            the callback MediaTrackSSRCEstablished.
+            aJitterBuffer [out]: Pointer to the jitter buffer.
+            aSSRC[out]: SSRC assiciated with the RTP session.
+        */
+        virtual void MediaTrackSSRCEstablished(PVMFJitterBuffer* aJitterBuffer, uint32 aSSRC) = 0;
+
+        /**
+            JB uses this callback to notify the the JB user about some info event.
+        */
         virtual void ProcessJBInfoEvent(PVMFAsyncEvent& aEvent) = 0;
+
+        /**
+            Callback for the Async function NotifyCanRetrievePacket of the JB.
+        */
         virtual void PacketReadyToBeRetrieved(OsclAny* aContext) = 0;
+
+        /**
+            Notifies the user of the JB that EOS packet is provided to the JB.
+        */
         virtual void EndOfStreamSignalled(OsclAny* aContext) = 0;
 };
 
@@ -1031,8 +1071,22 @@ class PVMFJitterBuffer
         /**
         */
         virtual PVMFSharedMediaDataPtr& GetFirstDataPacket(void) = 0;
-
         /**
+            Jitter Buffer persists packets in it as PVMFSharedMediaDataPtr and
+            each MediaData is expected to include only one packet in it.
+            If the upstream node is providing multiple packets in the input
+            media msg while making the function call RegisterMediaMsg, then JB,
+            while registering packets in it is expected to retrieve packet(s)
+            from the Input Media Msg, repackage it into the individual media
+            data msgs and persist it with JB.
+            It is possible that the allocator used for allocating the memory
+            for packetizing the packets may run out of memory.In this case
+            RegisterMediaMsg will return the err code
+            "PVMF_JB_ERR_INSUFFICIENT_MEM_TO_PACKETIZE"
+            In this case user of the JB is expected to make the function call
+            "NotifyFreeSpaceAvailable". This function will set the callback with JB
+            to notify the JB observer about the availability of the memory with the
+            allocator.
         */
         virtual bool NotifyFreeSpaceAvailable() = 0;
 

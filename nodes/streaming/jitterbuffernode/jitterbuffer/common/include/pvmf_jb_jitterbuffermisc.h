@@ -105,7 +105,7 @@ class PVMFJitterBufferMisc: public PVRTCPProtoImplementorObserver
                                           bool aPlayAfterASeek,
                                           bool aStopTimeAvailable);
 
-        OSCL_IMPORT_REF bool SetPortSSRC(PVMFPortInterface* aPort, uint32 aSSRC);
+        OSCL_IMPORT_REF void SetPortSSRC(PVMFPortInterface* aPort, uint32 aSSRC);
 
         OSCL_IMPORT_REF uint32 GetEstimatedServerClockValue();
 
