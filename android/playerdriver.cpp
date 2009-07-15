@@ -1292,9 +1292,13 @@ void PlayerDriver::HandleInformationalEvent(const PVAsyncInformationalEvent& aEv
             break;
 
         case PVMFInfoVideoTrackFallingBehind:
-            // TODO: This event should not be passed to the user in the ERROR channel.
+            // FIXME:
+            // When this happens, sometimes, we only have audio but no video and it
+            // is not recoverable. We use the same approach as we did in previous
+            // releases, and send an error event instead of an informational event
+            // when this happens.
             LOGW("Video track fell behind");
-            mPvPlayer->sendEvent(MEDIA_INFO, ::android::MEDIA_INFO_VIDEO_TRACK_LAGGING,
+            mPvPlayer->sendEvent(MEDIA_ERROR, ::android::MEDIA_ERROR_UNKNOWN,
                                  PVMFInfoVideoTrackFallingBehind);
             break;
 
