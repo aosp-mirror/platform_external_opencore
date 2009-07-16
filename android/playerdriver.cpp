@@ -25,6 +25,7 @@
 #include <media/thread_init.h>
 #include <utils/threads.h>
 #include <utils/List.h>
+#include <utils/SortedVector.h>
 #include <cutils/properties.h>
 #include <binder/Parcel.h>
 
@@ -1731,6 +1732,17 @@ status_t PVPlayer::setLooping(int loop)
 // internally based on the double (opcode, handle).
 status_t PVPlayer::invoke(const Parcel& request, Parcel *reply)
 {
+    return INVALID_OPERATION;
+}
+
+
+// Called by the MediaPlayerService::Client to retrieve a set or all
+// the metadata (if request is empty).
+status_t PVPlayer::getMetadata(const SortedVector<MetadataType>& ids,
+                               Parcel *records) {
+    // FIXME: get the metadata about the stream. At this stage we are
+    // only interested about the liveness of the stream to
+    // enable/disable pause and seek in the UI.
     return INVALID_OPERATION;
 }
 
