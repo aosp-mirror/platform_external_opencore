@@ -1030,6 +1030,10 @@ bool PVMFOMXVideoDecNode::NegotiateComponentParameters(OMX_PTR aOutputParameters
     {
         iYUVFormat = PVMF_MIME_YUV422_PACKEDSEMIPLANAR; // Y and UV interleaved - sliced
     }
+    else if (iOMXVideoColorFormat == OMX_COLOR_FormatCbYCrY)
+    {
+        iYUVFormat = PVMF_MIME_YUV422_INTERLEAVED_UYVY; // Y, U, V interleaved
+    }
     else if (iOMXVideoColorFormat == 0x7FA30C00) // SPECIAL VALUE
     {
         iYUVFormat = PVMF_MIME_YUV420_SEMIPLANAR_YVU; // semiplanar with Y and VU interleaved
