@@ -20,6 +20,7 @@
 #include "pv_mime_string_utils.h"
 #include "oscl_snprintf.h"
 #include "cczoomrotationbase.h"
+#include "ccyuv422toyuv420.h"
 
 PVFMVideoMIO::PVFMVideoMIO() :
         OsclTimerObject(OsclActiveObject::EPriorityNominal, "PVFMVideoMIO")
@@ -820,7 +821,49 @@ PVMFStatus PVFMVideoMIO::CopyVideoFrameData(uint8* aSrcBuffer, uint32 aSrcSize, 
         return PVMFErrArgument;
     }
 
-    if (aSrcFormat == aDestFormat)
+    if ((iVideoSubFormat == PVMF_MIME_YUV422_INTERLEAVED_UYVY) &&
+            (aDestFormat == PVMF_MIME_YUV420))
+    {
+        int32 leavecode = 0;
+        CCYUV422toYUV420 *yuv_convert = NULL;
+
+        OSCL_TRY(leavecode, yuv_convert = (CCYUV422toYUV420*) CCYUV422toYUV420::New());
+
+        OSCL_FIRST_CATCH_ANY(leavecode,
+                             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFMVideoMIO::CopyVideoFrameData() YUV Color converter instantiation did a leave"));
+                             return PVMFErrNoResources;
+                            );
+
+        if (!(yuv_convert->Init((aSrcWidth + 1)&(~1), (aSrcHeight + 1)&(~1), (aSrcWidth + 1)&(~1),
+                                (aSrcWidth + 1)&(~1), (aSrcHeight + 1)&(~1), (aSrcWidth + 1)&(~1),
+                                CCROTATE_NONE)))
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFMVideoMIO::CopyVideoFrameData() YUV Color converter Init failed"));
+            OSCL_DELETE(yuv_convert);
+            return PVMFFailure;
+        }
+
+        uint32 yuvbufsize = (uint32)(yuv_convert->GetOutputBufferSize());
+        if (yuvbufsize > aDestSize)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFMVideoMIO::CopyVideoFrameData() Specified output YUV buffer does not have enough space. Needed %d Available %d", yuvbufsize, aDestSize));
+            // Specified buffer does not have enough space
+            OSCL_DELETE(yuv_convert);
+            return PVMFErrArgument;
+        }
+
+        if (yuv_convert->Convert(aSrcBuffer, aDestBuffer) == 0)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFMVideoMIO::CopyVideoFrameData() YUV Color conversion failed"));
+            OSCL_DELETE(yuv_convert);
+            return PVMFErrResource;
+        }
+
+        // Save the YUV frame size
+        aDestSize = yuvbufsize;
+        OSCL_DELETE(yuv_convert);
+    }
+    else if (aSrcFormat == aDestFormat)
     {
         // Same format so direct copy
         if (aDestSize < aSrcSize)
