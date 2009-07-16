@@ -962,12 +962,11 @@ bool PVMFOMXVideoDecNode::NegotiateComponentParameters(OMX_PTR aOutputParameters
                         (0, "PVMFOMXVideoDecNode::NegotiateComponentParameters() Problem getting video port format"));
         return false;
     }
-    // check if color format is valid
+    // check if color format is valid and set DeBlocking
     if (VideoPortFormat.eCompressionFormat == OMX_VIDEO_CodingUnused)
     {
         // color format is valid, so read it
         iOMXVideoColorFormat = VideoPortFormat.eColorFormat;
-
 
         // Now set the format to confirm parameters
         CONFIG_SIZE_AND_VERSION(VideoPortFormat);
@@ -1080,6 +1079,24 @@ bool PVMFOMXVideoDecNode::NegotiateComponentParameters(OMX_PTR aOutputParameters
         return false;
     }
 
+    if ((iOMXVideoCompressionFormat == OMX_VIDEO_CodingMPEG4) ||
+            (iOMXVideoCompressionFormat == OMX_VIDEO_CodingH263))
+    {
+        // Enable deblocking for these two video types
+        OMX_PARAM_DEBLOCKINGTYPE DeBlock;
+        CONFIG_SIZE_AND_VERSION(DeBlock);
+
+        DeBlock.nPortIndex = iOutputPortIndex;
+        DeBlock.bDeblocking = OMX_TRUE;
+
+        Err = OMX_SetParameter(iOMXDecoder, OMX_IndexParamCommonDeblocking, &DeBlock);
+        if (Err != OMX_ErrorNone)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVMFOMXVideoDecNode::NegotiateComponentParameters() Problem setting deblocking flag"));
+            // Dont return false in this case.  If enabling DeBlocking fails, just continue.
+        }
+    }
 
     CONFIG_SIZE_AND_VERSION(VideoPortFormat);
     VideoPortFormat.nPortIndex = iInputPortIndex;
