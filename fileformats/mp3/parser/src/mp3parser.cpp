@@ -665,10 +665,27 @@ MP3ErrorType MP3Parser::ParseMP3File(PVFile * fpUsed, bool aEnableCRC)
     iSamplesPerFrame = spfIndexTable[iMP3HeaderInfo.frameVer][iMP3HeaderInfo.layerID];
     iSamplingRate = srIndexTable[((iMP3HeaderInfo.frameVer)*4) + iMP3HeaderInfo.srIndex];
 
-    if ((mp3Type != EXINGType || !(iXingHeader.flags & TOC_FLAG)) && mp3Type != EVBRIType)
+    // If the mp3Type is XING or VBRI, then first check if they have a valid duration
+    // If the header has no valid duration then just mark the content to as a VBR content
+    if (mp3Type == EXINGType || mp3Type == EVBRIType)
     {
-        // if XING or VBRI Headers are not present then we need to build our own TOC for
-        // repositioning.
+        // Get the duration
+        uint32 clipduration = 0;
+        GetDurationFromVBRIHeader(clipduration);
+        if (clipduration == 0)
+        {
+            // not a valid duration, just set the clip to be VBR type
+            mp3Type = EVBRType;
+        }
+    }
+
+    // If XING or VBRI Headers are not present then we need to build our own TOC for
+    // repositioning.
+    // And even if XING header is present and TOC flags are not present we need to build
+    // our own TOC.
+    if ((mp3Type != EXINGType || !(iXingHeader.flags & TOC_FLAG)) &&
+            (mp3Type != EVBRIType))
+    {
         iTOC = OSCL_ARRAY_NEW(int32, MAX_TOC_ENTRY_COUNT + 1);
         oscl_memset(iTOC, 0, sizeof(iTOC));
     }
@@ -700,6 +717,7 @@ MP3ErrorType MP3Parser::ScanMP3File(PVFile * fpUsed, uint32 aFramesToScan)
     uint8 pFrameHeader[MP3_FRAME_HEADER_SIZE];
     int32 audioOffset = 0;
     uint32 seekOffset = 0;
+    MP3ErrorType status = MP3_ERROR_UNKNOWN;
     MP3HeaderType mp3HeaderInfo;
     MP3ConfigInfoType mp3ConfigInfo;
 
@@ -715,7 +733,16 @@ MP3ErrorType MP3Parser::ScanMP3File(PVFile * fpUsed, uint32 aFramesToScan)
 
     if (iTOCFilledCount == MAX_TOC_ENTRY_COUNT)
     {
-        FillTOCTable(0, 0);
+        status = FillTOCTable(0, 0);
+        if (status == MP3_ERROR_UNKNOWN)
+        {
+            // This will happen when FillTocTable returns error because of
+            // NULL TOCTable.
+            // Not a valid condition this should never happen, except if
+            // there was memory allocation failure during ParseMP3File.
+            // If happens return Duration Present to avoid any further ScanMp3File calls.
+            return MP3_DURATION_PRESENT;
+        }
         return MP3_SUCCESS;
     }
 
@@ -755,7 +782,16 @@ MP3ErrorType MP3Parser::ScanMP3File(PVFile * fpUsed, uint32 aFramesToScan)
             {
                 iDurationScanComplete = true;
             }
-            FillTOCTable(audioOffset, 0);
+            status = FillTOCTable(audioOffset, 0);
+            if (status == MP3_ERROR_UNKNOWN)
+            {
+                // This will happen when FillTocTable returns error because of
+                // NULL TOCTable.
+                // Not a valid condition this should never happen, except if
+                // there was memory allocation failure during ParseMP3File.
+                // If happens return Duration Present to avoid any further ScanMp3File calls.
+                return MP3_DURATION_PRESENT;
+            }
             return MP3_INSUFFICIENT_DATA;
         }
         firstHeader = SwapFileToHostByteOrderInt32(pFrameHeader);
@@ -776,7 +812,16 @@ MP3ErrorType MP3Parser::ScanMP3File(PVFile * fpUsed, uint32 aFramesToScan)
                 if (!MP3FileIO::readByteData(fpUsed, MP3_FRAME_HEADER_SIZE, pFrameHeader))
                 {
                     iDurationScanComplete = true;
-                    FillTOCTable(offset, iScanTimestamp);
+                    status = FillTOCTable(offset, iScanTimestamp);
+                    if (status == MP3_ERROR_UNKNOWN)
+                    {
+                        // This will happen when FillTocTable returns error because of
+                        // NULL TOCTable.
+                        // Not a valid condition this should never happen, except if
+                        // there was memory allocation failure during ParseMP3File.
+                        // If happens return Duration Present to avoid any further ScanMp3File calls.
+                        return MP3_DURATION_PRESENT;
+                    }
                     return MP3_INSUFFICIENT_DATA;
                 }
 
@@ -784,14 +829,32 @@ MP3ErrorType MP3Parser::ScanMP3File(PVFile * fpUsed, uint32 aFramesToScan)
                 if (! GetMP3Header(firstHeader, mp3HeaderInfo))
                 {
                     iDurationScanComplete = true;
-                    FillTOCTable(offset, iScanTimestamp);
+                    status = FillTOCTable(offset, iScanTimestamp);
+                    if (status == MP3_ERROR_UNKNOWN)
+                    {
+                        // This will happen when FillTocTable returns error because of
+                        // NULL TOCTable.
+                        // Not a valid condition this should never happen, except if
+                        // there was memory allocation failure during ParseMP3File.
+                        // If happens return Duration Present to avoid any further ScanMp3File calls.
+                        return MP3_DURATION_PRESENT;
+                    }
                     return MP3_FILE_HDR_READ_ERR;
                 }
             }
             else
             {
                 iDurationScanComplete = true;
-                FillTOCTable(offset, iScanTimestamp);
+                status = FillTOCTable(offset, iScanTimestamp);
+                if (status == MP3_ERROR_UNKNOWN)
+                {
+                    // This will happen when FillTocTable returns error because of
+                    // NULL TOCTable.
+                    // Not a valid condition this should never happen, except if
+                    // there was memory allocation failure during ParseMP3File.
+                    // If happens return Duration Present to avoid any further ScanMp3File calls.
+                    return MP3_DURATION_PRESENT;
+                }
                 return err;
             }
         }
@@ -799,7 +862,16 @@ MP3ErrorType MP3Parser::ScanMP3File(PVFile * fpUsed, uint32 aFramesToScan)
         if (!DecodeMP3Header(mp3HeaderInfo, mp3ConfigInfo, false))
         {
             iDurationScanComplete = true;
-            FillTOCTable(offset, iScanTimestamp);
+            status = FillTOCTable(offset, iScanTimestamp);
+            if (status == MP3_ERROR_UNKNOWN)
+            {
+                // This will happen when FillTocTable returns error because of
+                // NULL TOCTable.
+                // Not a valid condition this should never happen, except if
+                // there was memory allocation failure during ParseMP3File.
+                // If happens return Duration Present to avoid any further ScanMp3File calls.
+                return MP3_DURATION_PRESENT;
+            }
             return MP3_FILE_HDR_DECODE_ERR;
         }
 
@@ -825,7 +897,16 @@ MP3ErrorType MP3Parser::ScanMP3File(PVFile * fpUsed, uint32 aFramesToScan)
     }
 
     // After scan of frames we need to fill the TOC table
-    FillTOCTable(audioOffset, iScanTimestamp);
+    status = FillTOCTable(audioOffset, iScanTimestamp);
+    if (status == MP3_ERROR_UNKNOWN)
+    {
+        // This will happen when FillTocTable returns error because of
+        // NULL TOCTable.
+        // Not a valid condition this should never happen, except if
+        // there was memory allocation failure during ParseMP3File.
+        // If happens return Duration Present to avoid any further ScanMp3File calls.
+        return MP3_DURATION_PRESENT;
+    }
     iScanTimestamp = iScanTimestamp + frameDur;
 
     return MP3_SUCCESS;
@@ -2781,7 +2862,7 @@ MP3ErrorType MP3Parser::GetDurationFromVBRIHeader(uint32 &aClipDuration)
         return MP3_ERROR_UNKNOWN;
     }
 
-    iClipDurationFromVBRIHeader = iNumberOfFrames * iSamplesPerFrame / iSamplingRate * 1000;
+    iClipDurationFromVBRIHeader = (uint32)((OsclFloat)(iNumberOfFrames * iSamplesPerFrame) / iSamplingRate * 1000.00f);
     aClipDuration = iClipDurationFromVBRIHeader;
     return MP3_SUCCESS;
 }
@@ -2948,8 +3029,16 @@ void MP3Parser::GetDurationFromCompleteScan(uint32 &aClipDuration)
     aClipDuration = iClipDurationComputed;
 }
 
-void MP3Parser::FillTOCTable(uint32 aFilePos, uint32 aTimeStampToFrame)
+MP3ErrorType MP3Parser::FillTOCTable(uint32 aFilePos, uint32 aTimeStampToFrame)
 {
+    if (iTOC == NULL)
+    {
+        // Not a valid condition this should never happen, except if
+        // there was memory allocation failure during ParseMP3File.
+        // Just return Failure here to avoid any further calls of FillTOCTable
+        return MP3_ERROR_UNKNOWN;
+    }
+
     if (iDurationScanComplete)
     {
         iTOC[iTOCFilledCount] = aFilePos;
@@ -2958,7 +3047,7 @@ void MP3Parser::FillTOCTable(uint32 aFilePos, uint32 aTimeStampToFrame)
         {
             GetDurationFromCompleteScan(iBinWidth);
         }
-        return;
+        return MP3_SUCCESS;
     }
 
     if ((iTOCFilledCount < MAX_TOC_ENTRY_COUNT) && ((aTimeStampToFrame - iTimestampPrev) >= iBinWidth))
@@ -2985,8 +3074,8 @@ void MP3Parser::FillTOCTable(uint32 aFilePos, uint32 aTimeStampToFrame)
         iTimestampPrev = iTimestampPrev - iBinWidth;
         iBinWidth = 2 * iBinWidth;
         iTOCFilledCount = MAX_TOC_ENTRY_COUNT / 2;
-        return;
     }
+    return MP3_SUCCESS;
 }
 
 
