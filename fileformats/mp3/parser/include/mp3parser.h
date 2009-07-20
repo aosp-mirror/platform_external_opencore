@@ -415,7 +415,7 @@ class MP3Parser
 
         uint32 GetDurationFromMetadata();
 
-        void FillTOCTable(uint32 aFilePos, uint32 aTimeStampToFrame);
+        MP3ErrorType FillTOCTable(uint32 aFilePos, uint32 aTimeStampToFrame);
 
         //duration related values
         uint32 iClipDurationInMsec;
