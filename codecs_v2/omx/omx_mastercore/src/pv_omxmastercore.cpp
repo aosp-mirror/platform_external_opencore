@@ -903,6 +903,16 @@ OMX_BOOL PV_OMXConfigParser(
                 aInputs.iMimeType = PVMF_MIME_AMR;
 
             }
+            else if (0 == oscl_strcmp(pInputs->cComponentRole, (OMX_STRING)"audio_decoder.amrnb"))
+            {
+                aInputs.iMimeType = PVMF_MIME_AMR;
+
+            }
+            else if (0 == oscl_strcmp(pInputs->cComponentRole, (OMX_STRING)"audio_decoder.amrwb"))
+            {
+                aInputs.iMimeType = PVMF_MIME_AMRWB;
+
+            }
             else if (0 == oscl_strcmp(pInputs->cComponentRole, (OMX_STRING)"audio_decoder.mp3"))
             {
                 aInputs.iMimeType = PVMF_MIME_MP3;
