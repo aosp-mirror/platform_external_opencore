@@ -20,6 +20,7 @@
 #include "oscl_assert.h"
 #include "oscl_error_codes.h"
 
+_OsclBasicAllocator OsclErrorTrapImp::iDefAlloc;
 
 OsclErrorTrapImp::OsclErrorTrapImp(Oscl_DefAlloc *alloc, int32 &aError)
 {
@@ -307,6 +308,7 @@ void OsclTrapStack::Leaving()
     while (iTop && iTop->iTAny != TrapTop()->iTAny)
         PopDealloc();
 }
+
 
 
 

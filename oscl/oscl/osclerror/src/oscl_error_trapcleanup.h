@@ -259,7 +259,8 @@ class OsclErrorTrapImp
         }
 
         //default allocators.
-        _OsclBasicAllocator iDefAlloc;
+        // iDefAlloc is static because we need it to still be valid after ~OsclErrorTrapImp is called
+        static _OsclBasicAllocator iDefAlloc;
 
         friend class OsclErrorTrap;
         friend class OsclError;

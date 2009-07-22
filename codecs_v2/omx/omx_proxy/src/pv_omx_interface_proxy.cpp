@@ -51,6 +51,8 @@ OSCL_DLL_ENTRY_POINT_DEFAULT()
 //CPVInterfaceProxy_OMX
 //
 
+_OsclBasicAllocator CPVInterfaceProxy_OMX::iDefAlloc;
+
 OSCL_EXPORT_REF CPVInterfaceProxy_OMX * CPVInterfaceProxy_OMX::NewL(
     PVProxiedEngine_OMX& app
     , Oscl_DefAlloc *alloc
@@ -62,7 +64,7 @@ OSCL_EXPORT_REF CPVInterfaceProxy_OMX * CPVInterfaceProxy_OMX::NewL(
 //called under app thread context
 {
     // custom allocator not using TRY/LEAVE/TLS
-    oscl_allocator defallocL;
+    _OsclBasicAllocator defallocL;
     OsclAny *ptr = NULL;
     if (alloc)
     {

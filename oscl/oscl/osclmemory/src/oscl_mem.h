@@ -727,19 +727,6 @@ inline void operator delete[](void *aPtr)
 #define OSCL_DISABLE_WARNING_TRUNCATE_DEBUG_MESSAGE
 #include "osclconfig_compiler_warnings.h"
 
-// This macro is defined is osclconfig_compiler_warnings.h
-// This GCC #pragma turns off compiler warning for the rest of this header file
-// This needs to be done because with the GCC 4.1 toolchain, many compiler warnings
-// are generated because Oscl_MemAllocator and Oscl_MemBasicAllocator have virtual functions, but
-// no virtual destructor.
-// An attempt has been made to add the virtual destructors, however, it resulted
-// in run time crashes indicative of double freeing of memory.
-// This is a temporary fix, until the crashes are resolved.
-//
-#ifdef OSCL_DISABLE_GCC_WARNING_SYSTEM_HEADER
-#pragma GCC system_header
-#endif
-
 /** \class OsclMemAllocator
 ** A simple allocator class.  Configurable as to whether
 ** this goes through the memory manager or not.
