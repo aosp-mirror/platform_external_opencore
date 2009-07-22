@@ -85,7 +85,7 @@
 #define REALTIME_PLAYBACK_RATE 100000
 
 class PVMFMediaClock;
-
+class PVMFMediaClockNotificationsObs;
 
 /*
  * Enum for the time units used in OSCL Media Clock
@@ -110,6 +110,40 @@ enum PVMFMediaClockAdjustTimeStatus
     PVMF_MEDIA_CLOCK_ADJUST_ERR_INVALID_TIMEBASE_TIME,     // If Adjustment is older than latest adjustment
     PVMF_MEDIA_CLOCK_ADJUST_ERR_CORRUPT_CLOCK_TIME       // If Clock time arg passed is later than current time
 };
+
+enum PVMFMediaClockCheckTimeWindowStatus
+{
+    PVMF_MEDIA_CLOCK_MEDIA_EARLY_OUTSIDE_WINDOW_CALLBACK_SET,
+    PVMF_MEDIA_CLOCK_MEDIA_EARLY_WITHIN_WINDOW,
+    PVMF_MEDIA_CLOCK_MEDIA_ONTIME_WITHIN_WINDOW,
+    PVMF_MEDIA_CLOCK_MEDIA_LATE_WITHIN_WINDOW,
+    PVMF_MEDIA_CLOCK_MEDIA_LATE_OUTSIDE_WINDOW,
+    PVMF_MEDIA_CLOCK_MEDIA_ERROR
+};
+
+typedef struct _PVMFMediaClockCheckTimeWindowArgs
+{
+    /*IN*/
+    PVMFTimestamp aTimeStampToBeChecked;
+    /*IN*/
+    PVMFMediaClock_TimeUnits aUnits;
+    /*IN*/
+    uint32 aWindowEarlyMargin;
+    /*IN*/
+    uint32 aWindowLateMargin;
+    /*OUT*/
+    uint32 aDelta;
+    /*IN*/
+    uint32 aCallbackToleranceWindow;
+    /*IN*/
+    PVMFMediaClockNotificationsObs* aCallbackObserver;
+    /*IN*/
+    bool aThreadLock;
+    /*IN*/
+    const OsclAny* aContextData;
+    /*OUT*/
+    uint32 aCallBackID;
+} PVMFMediaClockCheckTimeWindowArgs;
 
 
 class PVMFMediaClockNotificationsObsBase
@@ -419,8 +453,10 @@ class PVMFMediaClockNotificationsInterface
          ** Synopsis:   Set a callback timer specifying an absolute time in clock for timer expiry.
          **
          ** Arguments :
-         ** @param      [absoluteTime]  -- absolute time in clock when callBack should be called.
-         **                                Units is msec.
+         ** @param      [absoluteTime]  -- Absolute time in clock when callBack should be called.
+         **                                Units is msec. If there is a latency associated with the
+         **                                calling module, then callback will fire when latency adjusted time
+         **                                reaches absoluteTime. PVMFMediaClock time may be different at that time.
          ** @param      [window]        -- Error tolerance available in callback time. If T is the desired
          **                                callback time and w is the allowed tolerance window, then callback
          **                                can come between T-w to T+w time.
@@ -505,7 +541,9 @@ class PVMFMediaClockNotificationsInterface
          **
          ** Arguments :
          ** @param      [absoluteTime]  -- absolute time in clock when callBack should be called.
-         **                                Units is msec.
+         **                                Units is msec. If there is a latency associated with the
+         **                                calling module, then callback will fire when latency adjusted NPT time
+         **                                reaches absoluteTime. PVMFMediaClock time may be different at that time.
          ** @param      [window]        -- Error tolerance available in callback time. If T is the desired
          **                                callback time and w is the allowed tolerance window, then callback
          **                                can come between T-w to T+w time.
@@ -571,7 +609,7 @@ class PVMFMediaClockNotificationsInterface
          ** Synopsis:   Cancel callback timer set with SetCallBackDeltaTime() or SetCallbackAbsoluteTime()
          **
          ** Arguments :
-         ** @param      [callbackID]    -- timer ID returned by SetCallBackDeltaTime()
+         ** @param  :    [callbackID]    -- timer ID returned by SetCallBackDeltaTime()
          **                                 or SetCallbackAbsoluteTime()
          ** @param  :   [aThreadLock]   -- whether this call needs to be threadsafe
          ** Returns:
@@ -611,6 +649,72 @@ class PVMFMediaClockNotificationsInterface
         *   @param aObserver: the observer implemenation
         */
         virtual OSCL_IMPORT_REF void RemoveClockStateObserver(PVMFMediaClockStateObserver& aObserver) = 0;
+
+        /*!*********************************************************************
+        **
+        ** Function: CheckTimeWindowAndSetCallback
+        **
+        ** Synopsis: Check if given timestamp falls within the given window of current time. Returns status of the
+        ** timestamp w.r.t current time. If the timestamp is early and is outside the given
+        ** window, a callback is automatically set. This API adjusts for
+        ** the latency associated with the calling module.
+        **
+        ** Arguments :
+        ** @param [aArgsStruct] -- Reference to a PVMFMediaClockCheckTimeWindowArgs structure. This structure
+        **  all the arguments for this API. For description of arguments, please see notes.
+        ** Returns:
+        ** @return PVMFMediaClockCheckTimeWindowStatus -- One of the following values from enum PVMFMediaClockCheckTimeWindowStatus
+        ** will be returned -
+        **  PVMF_MEDIA_CLOCK_MEDIA_EARLY_OUTSIDE_WINDOW_CALLBACK_SET,
+        **  PVMF_MEDIA_CLOCK_MEDIA_EARLY_WITHIN_WINDOW,
+        **  PVMF_MEDIA_CLOCK_MEDIA_ONTIME_WITHIN_WINDOW,
+        **  PVMF_MEDIA_CLOCK_MEDIA_LATE_WITHIN_WINDOW,
+        **  PVMF_MEDIA_CLOCK_MEDIA_LATE_OUTSIDE_WINDOW,
+        **  PVMF_MEDIA_CLOCK_MEDIA_ERROR
+        ** Notes: Following are the members of PVMFMediaClockCheckTimeWindowArgs structure.
+        ** [aTimeStampToBeChecked] -- Timestamp to be checked w.r.t. the current time.
+        ** [aWindowEarlyMargin] -- early margin of the window.
+        ** [aWindowLateMargin] -- late margin of the window.
+        ** [aDelta] -- This will return the difference between timestamp and current time
+        ** in positive form.
+        ** [aCallbackToleranceWindow] -- Error tolerance available in callback time. If T is the desired
+        ** callback time and w is the allowed tolerance window, then callback
+        ** can come between T-w to T+w time. This argument is used if callback
+        ** is set.
+        ** [aCallbackObserver] -- observer object to be called on timeout. This argument is used if
+        ** callback is set.
+        ** [aThreadLock] -- If threadLock is true, callback will be threadsafe otherwise
+        ** not. Making callback threadsafe might add overheads. This argument
+        ** is used if callback is set.
+        ** [aContextData] -- context pointer that will be returned back with the callback. This argument
+        ** is used if callback is set.
+        ** [callBackID] -- If callback is successfully set, this will contain a non-zero ID associated
+        ** with the callback. This ID can be used to identify the timer for cancellation.
+        **********************************************************************/
+
+        virtual PVMFMediaClockCheckTimeWindowStatus CheckTimeWindow(
+            PVMFMediaClockCheckTimeWindowArgs &aArgsStruct) = 0;
+
+
+        /*!*********************************************************************
+        **
+        ** Function: GetLatencyAdjustedCurrentTime32
+        **
+        ** Synopsis: Get the latency adjusted current clock time as an unsigned 32-bit integer in specified time units.
+        **
+        ** Arguments :
+        ** @param [aClockTime] -- A reference to an unsigned 32-bit integer to return current time in specified time units.
+        ** @param [aOverflow] -- A reference to a flag which is set if time value cannot fit in unsigned 32-bit integer.
+        ** @param [aUnits] -- The requested time units for aTime.
+        ** Returns:
+        ** @return NONE
+        ** Notes:
+        **
+        **********************************************************************/
+        virtual void GetLatencyAdjustedCurrentTime32(
+            /*OUT*/ uint32& aClockTime,
+            /*IN*/ bool& aOverflow,
+            /*IN*/ PVMFMediaClock_TimeUnits aUnits) = 0;
 
         virtual ~PVMFMediaClockNotificationsInterface() {}
 };
@@ -971,6 +1075,14 @@ class PVMFMediaClockNotificationsInterfaceImpl: public PVMFMediaClockNotificatio
 
         OSCL_IMPORT_REF void RemoveClockStateObserver(PVMFMediaClockStateObserver& aObserver);
 
+        OSCL_IMPORT_REF PVMFMediaClockCheckTimeWindowStatus CheckTimeWindow(
+            PVMFMediaClockCheckTimeWindowArgs &aArgs);
+
+        OSCL_IMPORT_REF void GetLatencyAdjustedCurrentTime32(
+            /*OUT*/ uint32& aClockTime,
+            /*IN*/ bool& aOverflow,
+            /*IN*/ PVMFMediaClock_TimeUnits aUnits);
+
         //End PVMFMediaClockNotificationsInterface
 
     protected:
@@ -980,10 +1092,6 @@ class PVMFMediaClockNotificationsInterfaceImpl: public PVMFMediaClockNotificatio
         friend class PVMFMediaClock;
         PVMFMediaClockStateObserver *iClockStateObserver;
         uint32 iLatency;
-        //this value is iLatency - min latency among all objects present.
-        uint32 iAdjustedLatency;
-        //This value is the delay after which clock start notification will be sent.
-        uint32 iLatencyDelayForClockStartNotification;
         PVMFMediaClock *iContainer;
         PVMFMediaClockNotificationsObsBase* iNotificationInterfaceDestroyedCallback;
 };
@@ -1324,7 +1432,7 @@ class PVMFMediaClock :  public OsclTimerObject,
             @param aCurrentTime: unsigned 32-bit integer in microsecond for the current clock time
             @param aCurrentTimebase: unsigned 32-bit integer in microsecond for the current timebase time
         */
-        virtual PVMFMediaClockAdjustTimeStatus AdjustClock(uint32& aObsTime, uint32& aObsTimebase, uint32& aAdjTime,
+        PVMFMediaClockAdjustTimeStatus AdjustClock(uint32& aObsTime, uint32& aObsTimebase, uint32& aAdjTime,
                 uint32& aCurrentTime, uint32& aCurrentTimebase);
 
         /**
@@ -1333,7 +1441,7 @@ class PVMFMediaClock :  public OsclTimerObject,
             @param aDstTime: unsigned 32-bit integer in microseconds to output the adjusted current clock time
             @param aTimebaseVal: unsigned 32-bit integer in microseconds of the current timebase time
         */
-        virtual void GetAdjustedRunningClockTime(uint32& aDstTime, uint32& aTimebaseVal);
+        void GetAdjustedRunningClockTime(uint32& aDstTime, uint32& aTimebaseVal);
 
         //Possible units for time keeping
         enum PVMFMediaClock_ClockUnit
@@ -1359,7 +1467,6 @@ class PVMFMediaClock :  public OsclTimerObject,
         PVMFMediaClockState iState;               // Internal state of the clock
 
         PVMFTimebase* iClockTimebase;             // Pointer to this clock's timebase
-
         //vector of clock observers.
         Oscl_Vector<PVMFMediaClockObserver*, OsclMemAllocator> iClockObservers;
 
@@ -1381,6 +1488,10 @@ class PVMFMediaClock :  public OsclTimerObject,
 
         //vector of PVMFMediaClockNotificationsInterfaceImpl objects. Each object represents a session
         Oscl_Vector<PVMFMediaClockNotificationsInterfaceImpl*, OsclMemAllocator> iMediaClockSetCallbackObjects;
+
+        //latency handling
+        uint32 iHighestLatency;
+        void UpdateHighestLatency(uint32 alatency);
 
         //callback related functions, members
 
@@ -1411,10 +1522,6 @@ class PVMFMediaClock :  public OsclTimerObject,
 
         //common CancelCallback() for regular and NPT timers
         PVMFStatus CommonCancelCallback(uint32 aCallbackID, bool aThreadLock, bool aIsNPT);
-
-        //This function adjusts latencies of all PVMFMediaClockNotificationsInterfaceImpl objects
-        //stored in the vector by subtracting largest common latency from all.
-        void AdjustLatenciesOfSinks();
 
         /**
         This is a generic function for doing fresh scheduling of PVMFMediaClock object
