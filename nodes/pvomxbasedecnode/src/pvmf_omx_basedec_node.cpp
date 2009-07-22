@@ -1934,6 +1934,16 @@ OSCL_EXPORT_REF bool PVMFOMXBaseDecNode::SendInputBufferToOMXComponent()
             current_msg_marker = iDataIn->getMarkerInfo() & PVMF_MEDIA_DATA_MARKER_INFO_M_BIT;
         }
 
+        //Force marker bit for AMR streaming formats (marker bit may not be set even though full frames are present)
+        if (iInPort && (
+                       (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_AMR) ||
+                       (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_AMRWB)
+                    ))
+        {
+            // FIXME: This could have unintended side effects if other bits in this value are used in the future
+            current_msg_marker = PVMF_MEDIA_DATA_MARKER_INFO_M_BIT;
+        }
+
         // check if this is the very first data msg
         if (iFirstDataMsgAfterBOS)
         {
