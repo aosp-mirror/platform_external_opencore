@@ -521,10 +521,10 @@ OSCL_EXPORT_REF bool PV_atof(const char *buf, int length, OsclFloat& value)
 
     for (i = 0; i < length; i++)
     {
-        if (buf[i] == ' ' || buf[i] == '\t')
+        if (buf[i] == ' ' || buf[i] == '\t' || buf[i] == '\r' || buf[i] == '\n')
         {
             if (digit_found)
-                break; // stop the conversion if the numeric value is ended with whitespace or tab (ie, "1.23  ")
+                break; // stop the conversion if the numeric value is ended with whitespace, tab, CR or LF (ie, "1.23  ")
             else
                 continue; // skip leading whitespace or tab
         }
