@@ -21,6 +21,7 @@
 
 #include <sys/prctl.h>
 #include <sys/resource.h>
+// TODO: I don't think the include below is needed.
 #include <media/mediaplayer.h>
 #include <media/thread_init.h>
 #include <utils/threads.h>
@@ -30,6 +31,7 @@
 #include <binder/Parcel.h>
 
 #include <media/MediaPlayerInterface.h>
+#include <media/Metadata.h>
 
 #include "playerdriver.h"
 #include <media/PVPlayer.h>
@@ -239,6 +241,9 @@ class PlayerDriver :
     void CommandCompleted(const PVCmdResponse& aResponse);
     void HandleErrorEvent(const PVAsyncErrorEvent& aEvent);
     void HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent);
+
+    bool prepareDone() const { return mPrepareDone; }
+    bool isLiveStreaming() const { return mIsLiveStreaming; }
 
   private:
     // Finish up a non-async code in such a way that
@@ -1737,13 +1742,30 @@ status_t PVPlayer::invoke(const Parcel& request, Parcel *reply)
 
 
 // Called by the MediaPlayerService::Client to retrieve a set or all
-// the metadata (if request is empty).
-status_t PVPlayer::getMetadata(const SortedVector<MetadataType>& ids,
+// the metadata if ids is empty.
+status_t PVPlayer::getMetadata(const media::Metadata::Filter& ids,
                                Parcel *records) {
-    // FIXME: get the metadata about the stream. At this stage we are
-    // only interested about the liveness of the stream to
-    // enable/disable pause and seek in the UI.
-    return INVALID_OPERATION;
+    using media::Metadata;
+
+    if (!mPlayerDriver || !mPlayerDriver->prepareDone()) {
+        return INVALID_OPERATION;
+    }
+
+    if (ids.size() != 0) {
+        LOGW("Metadata filtering not implemented, ignoring.");
+    }
+
+    Metadata metadata(records);
+    bool ok = true;
+
+    // Right now, we only communicate info about the liveness of the
+    // stream to enable/disable pause and seek in the UI.
+    const bool live = mPlayerDriver->isLiveStreaming();
+
+    ok = ok && metadata.appendBool(Metadata::kPauseAvailable, !live);
+    ok = ok && metadata.appendBool(Metadata::kSeekBackwardAvailable, !live);
+    ok = ok && metadata.appendBool(Metadata::kSeekForwardAvailable, !live);
+    return ok ? OK : UNKNOWN_ERROR;
 }
 
-}; // namespace android
+} // namespace android
