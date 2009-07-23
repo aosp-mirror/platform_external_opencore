@@ -1059,10 +1059,11 @@ int AndroidAudioInput::audin_thread_func() {
                         AudioRecord::RECORD_IIR_ENABLE;
 
     LOGV("create AudioRecord %p", this);
-    android::AudioRecord
-            * record = new android::AudioRecord(
+    AudioRecord
+            * record = new AudioRecord(
                     iAudioSource, iAudioSamplingRate,
-                    android::AudioSystem::PCM_16_BIT, iAudioNumChannels,
+                    android::AudioSystem::PCM_16_BIT,
+                    (iAudioNumChannels > 1) ? AudioSystem::CHANNEL_IN_STEREO : AudioSystem::CHANNEL_IN_MONO,
                     4*kBufferSize/iAudioNumChannels/sizeof(int16), flags);
     LOGV("AudioRecord created %p, this %p", record, this);
 
