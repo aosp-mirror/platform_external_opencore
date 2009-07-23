@@ -278,6 +278,9 @@ OSCL_EXPORT_REF OsclLibStatus OsclSharedLibrary::Close()
         // address of the symbol
         if (NULL == releaseInterface)
         {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, ipLogger, PVLOGMSG_ERR,
+                            (0, "OsclLib::Close: Could not access "
+                             "PVReleaseInterface symbol in library - Possible memory leak."));
             // check for errors
             const char* pErr = dlerror();
             if (NULL == pErr)
@@ -296,10 +299,12 @@ OSCL_EXPORT_REF OsclLibStatus OsclSharedLibrary::Close()
             }
             dlclose(ipHandle);
             pSharedLibInterface = NULL;
-            return OsclLibFail;
         }
-        releaseInterface(pSharedLibInterface);
-        pSharedLibInterface = NULL;
+        else
+        {
+            releaseInterface(pSharedLibInterface);
+            pSharedLibInterface = NULL;
+        }
     }
 
     if (ipHandle)

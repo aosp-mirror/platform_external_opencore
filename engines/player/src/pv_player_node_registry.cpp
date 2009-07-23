@@ -122,13 +122,17 @@ void PVPlayerNodeRegistry::AddLoadableModules(const OSCL_String& aConfigFilePath
             }
             else
             {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerNodeRegistry::AddLoadableModules() QueryInterface() of PV_NODE_POPULATOR_INTERFACE for library %s failed.", libList.GetLibraryPathAt(i).get_cstr()));
-
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_ERR,
+                                (0, "PVPlayerNodeRegistry::AddLoadableModules() QueryInterface() of PV_NODE_POPULATOR_INTERFACE for library %s failed.",
+                                libList.GetLibraryPathAt(i).get_cstr()));
             }
         }
         else
         {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerNodeRegistry::AddLoadableModules() LoadLib() of library %s failed.", libList.GetLibraryPathAt(i).get_cstr()));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_MLDBG, iLogger, PVLOGMSG_ERR,
+                            (0, "PVPlayerNodeRegistry::AddLoadableModules() LoadLib() of library %s failed.",
+                            libList.GetLibraryPathAt(i).get_cstr()));
+
         }
         lib->Close();
         OSCL_DELETE(lib);
