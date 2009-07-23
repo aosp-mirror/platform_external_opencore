@@ -1042,6 +1042,9 @@ class PVMFOMXEncNode
         uint32 GetOutputSamplingRate();
         uint32 GetOutputNumChannels();
 
+        // Capability exchange
+        PVMFNodeCapability iCapability;
+
     private:
         void CommandComplete(PVMFOMXEncNodeCmdQ& aCmdQ, PVMFOMXEncNodeCommand& aCmd, PVMFStatus aStatus, OsclAny* aEventData = NULL);
 
@@ -1323,9 +1326,6 @@ class PVMFOMXEncNode
 
         // Node configuration update
         //PVMFOMXEncNodeConfig iNodeConfig;
-
-        // Capability exchange
-        PVMFNodeCapability iCapability;
 
         // Reference counter for extension
         uint32 iExtensionRefCount;

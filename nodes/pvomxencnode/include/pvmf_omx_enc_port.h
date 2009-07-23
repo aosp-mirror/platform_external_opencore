@@ -204,9 +204,13 @@ class PVMFOMXEncInputFormatCompareLess
         {
             if (pv_mime_strcmp(aKvp->value.pChar_value, PVMF_MIME_YUV420) == 0)
             {
-                return 3;
+                return 4;
             }
             else if (pv_mime_strcmp(aKvp->value.pChar_value, PVMF_MIME_YUV422) == 0)
+            {
+                return 3;
+            }
+            else if (pv_mime_strcmp(aKvp->value.pChar_value, PVMF_MIME_YUV422_INTERLEAVED_UYVY) == 0)
             {
                 return 2;
             }
