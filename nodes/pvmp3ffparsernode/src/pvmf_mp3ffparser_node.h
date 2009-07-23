@@ -604,6 +604,7 @@ class PVMFMP3FFParserNode : public OsclTimerObject,
         void DataStreamInformationalEvent(const PVMFAsyncEvent& aEvent);
         void DataStreamErrorEvent(const PVMFAsyncEvent& aEvent);
         PVMFStatus CreateMP3FileObject(MP3ErrorType &aSuccess, PVMFCPMPluginAccessInterfaceFactory*aCPM);
+        PVMFStatus SetupParserObject();
         PVMFStatus PushBackCPMMetadataKeys(PVMFMetadataList *&aKeyListPtr, uint32 aLcv);
 
     protected:
