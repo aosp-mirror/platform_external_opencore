@@ -1112,30 +1112,14 @@ void AuthorDriver::CommandCompleted(const PVCmdResponse& aResponse)
     }
 
     if (ac->which == AUTHOR_SET_VIDEO_ENCODER) {
-        // Perform the cast to get the video config interface
-        PVMp4H263EncExtensionInterface *config = OSCL_STATIC_CAST(PVMp4H263EncExtensionInterface*,
-                                                                  mVideoEncoderConfig);
         switch(mVideoEncoder) {
-        case VIDEO_ENCODER_H263: {
+        case VIDEO_ENCODER_H263:
+        case VIDEO_ENCODER_MPEG_4_SP:
+        case VIDEO_ENCODER_H264: {
+            PVMp4H263EncExtensionInterface *config = OSCL_STATIC_CAST(PVMp4H263EncExtensionInterface*,
+                                                                      mVideoEncoderConfig);
             // TODO:
             // fix the hardcoded bit rate settings.
-            if (config) {
-                int bitrate_setting = 192000;
-                if (mVideoWidth >= 480) {
-                    bitrate_setting = 420000; // unstable
-                } else if (mVideoWidth >= 352) {
-                    bitrate_setting = 360000;
-                } else if (mVideoWidth >= 320) {
-                    bitrate_setting = 320000;
-                }
-                config->SetNumLayers(1);
-                config->SetOutputBitRate(0, bitrate_setting);
-                config->SetOutputFrameSize(0, mVideoWidth, mVideoHeight);
-                config->SetOutputFrameRate(0, mVideoFrameRate);
-                config->SetIFrameInterval(ANDROID_DEFAULT_I_FRAME_INTERVAL);
-            }
-        } break;
-        case VIDEO_ENCODER_MPEG_4_SP: {
             if (config) {
                 int bitrate_setting = 192000;
                 if (mVideoWidth >= 480) {

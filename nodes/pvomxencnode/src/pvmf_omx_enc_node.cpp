@@ -707,6 +707,7 @@ PVMFOMXEncNode::PVMFOMXEncNode(int32 aPriority) :
              // video input
              iCapability.iInputFormatCapability.push_back(PVMF_MIME_YUV420);
              iCapability.iInputFormatCapability.push_back(PVMF_MIME_YUV422);
+             iCapability.iInputFormatCapability.push_back(PVMF_MIME_YUV422_INTERLEAVED_UYVY);
              iCapability.iInputFormatCapability.push_back(PVMF_MIME_RGB24);
              iCapability.iInputFormatCapability.push_back(PVMF_MIME_RGB12);
 
@@ -829,7 +830,6 @@ PVMFOMXEncNode::PVMFOMXEncNode(int32 aPriority) :
     oscl_memset(&iVideoInputFormat, 0, sizeof(iVideoInputFormat));
 
     // set default values
-    iVideoInputFormat.iVideoFormat = EI_YUV420;
     iVideoInputFormat.iFrameWidth = DEFAULT_FRAME_WIDTH;
     iVideoInputFormat.iFrameHeight = DEFAULT_FRAME_HEIGHT;
     iVideoInputFormat.iFrameRate = (float)DEFAULT_FRAME_RATE;
@@ -2036,10 +2036,32 @@ bool PVMFOMXEncNode::NegotiateVideoComponentParameters()
 
     // first of all, check if the port supports the adequate port format
     OMX_VIDEO_PARAM_PORTFORMATTYPE Video_port_format;
+    OMX_COLOR_FORMATTYPE DesiredPortColorFormat;
 
-    //TODO: get color format from MIO. JJ 03/09/09
-    OMX_COLOR_FORMATTYPE DesiredPortColorFormat = OMX_COLOR_FormatYUV420SemiPlanar;
-    //OMX_COLOR_FORMATTYPE DesiredPortColorFormat = OMX_COLOR_FormatYUV420Planar;
+    if (iInFormat == PVMF_MIME_RGB24)
+    {
+        DesiredPortColorFormat = OMX_COLOR_Format24bitRGB888;
+    }
+    else if (iInFormat == PVMF_MIME_RGB12)
+    {
+        DesiredPortColorFormat = OMX_COLOR_Format12bitRGB444;
+    }
+    else if (iInFormat == PVMF_MIME_YUV420)
+    {
+        //TODO: get color format from MIO. JJ 03/09/09
+        DesiredPortColorFormat = OMX_COLOR_FormatYUV420SemiPlanar;
+        //DesiredPortColorFormat = OMX_COLOR_FormatYUV420Planar;
+    }
+    else if (iInFormat == PVMF_MIME_YUV422_INTERLEAVED_UYVY)
+    {
+        DesiredPortColorFormat = OMX_COLOR_FormatCbYCrY;
+    }
+    else
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXEncNode-%s::NegotiateVideoComponentParameters() Problem with input port %d color format", iNodeTypeId, iInputPortIndex));
+        return false;
+    }
 
     CONFIG_SIZE_AND_VERSION(Video_port_format);
 
@@ -2103,6 +2125,11 @@ bool PVMFOMXEncNode::NegotiateVideoComponentParameters()
         //TODO: get color format from MIO. JJ 03/09/09
         iParamPort.format.video.eColorFormat = OMX_COLOR_FormatYUV420SemiPlanar;
         //iParamPort.format.video.eColorFormat = OMX_COLOR_FormatYUV420Planar;
+    }
+    else if (iInFormat == PVMF_MIME_YUV422_INTERLEAVED_UYVY)
+    {
+        iOMXComponentInputBufferSize = iVideoInputFormat.iFrameWidth * iVideoInputFormat.iFrameHeight * 2;
+        iParamPort.format.video.eColorFormat = OMX_COLOR_FormatCbYCrY;
     }
     else
     {
@@ -8591,34 +8618,6 @@ PVMFStatus PVMFOMXEncNode::SetInputFormat(PVMFFormatType aFormat)
     }
 
     iInFormat = aFormat;
-
-    if (aFormat == PVMF_MIME_YUV420)
-    {
-        iVideoInputFormat.iVideoFormat = EI_YUV420;
-    }
-    else if (aFormat == PVMF_MIME_YUV422)
-    {
-        iVideoInputFormat.iVideoFormat = EI_UYVY;
-    }
-    else if (aFormat == PVMF_MIME_RGB24)
-    {
-        iVideoInputFormat.iVideoFormat = EI_RGB24;
-    }
-    else if (aFormat == PVMF_MIME_RGB12)
-    {
-        iVideoInputFormat.iVideoFormat = EI_RGB12;
-    }
-    else if (aFormat == PVMF_MIME_PCM16)
-    {
-        // nothing to do here, but don't fail
-    }
-    else
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "PVMFOMXEncNode-%s::SetInputFormat: Error - Unsupported format", iNodeTypeId));
-        return PVMFFailure;
-    }
-
     return PVMFSuccess;
 }
 

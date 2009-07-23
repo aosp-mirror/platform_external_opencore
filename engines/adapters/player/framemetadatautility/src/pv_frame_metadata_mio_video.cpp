@@ -68,6 +68,16 @@ void PVFMVideoMIO::InitData()
     iFrameRetrievalInfo.iTimeOffset = 0;
     iFrameRetrievalInfo.iFrameBuffer = NULL;
     iFrameRetrievalInfo.iBufferSize = NULL;
+
+    // Init the input format capabilities vector
+    iInputFormatCapability.clear();
+    iInputFormatCapability.push_back(PVMF_MIME_YUV420);
+    iInputFormatCapability.push_back(PVMF_MIME_YUV422);
+    iInputFormatCapability.push_back(PVMF_MIME_YUV422_INTERLEAVED_UYVY);
+    iInputFormatCapability.push_back(PVMF_MIME_RGB8);
+    iInputFormatCapability.push_back(PVMF_MIME_RGB12);
+    iInputFormatCapability.push_back(PVMF_MIME_RGB16);
+    iInputFormatCapability.push_back(PVMF_MIME_RGB24);
 }
 
 
@@ -1094,18 +1104,18 @@ PVMFStatus PVFMVideoMIO::getParametersSync(PvmiMIOSession aSession, PvmiKeyType 
         // This is a query for the list of supported formats.
         // This component supports all uncompressed video format
         // Generate a list of all the PVMF video formats...
-        int32 count = PVMF_SUPPORTED_UNCOMPRESSED_VIDEO_FORMATS_COUNT;
+        int32 count = iInputFormatCapability.size();
 
         aParameters = (PvmiKvp*)oscl_malloc(count * sizeof(PvmiKvp));
 
         if (aParameters)
         {
-            aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_YUV420;
-            aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_YUV422;
-            aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_RGB8;
-            aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_RGB12;
-            aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_RGB16;
-            aParameters[num_parameter_elements++].value.pChar_value = (char*)PVMF_MIME_RGB24;
+            num_parameter_elements = 0;
+            Oscl_Vector<PVMFFormatType, OsclMemAllocator>::iterator it;
+            for (it = iInputFormatCapability.begin(); it != iInputFormatCapability.end(); it++)
+            {
+                aParameters[num_parameter_elements++].value.pChar_value = OSCL_STATIC_CAST(char*, it->getMIMEStrPtr());
+            }
             return PVMFSuccess;
         }
         return PVMFErrNoMemory;
@@ -1304,19 +1314,16 @@ PVMFStatus PVFMVideoMIO::verifyParametersSync(PvmiMIOSession aSession, PvmiKvp* 
         if (pv_mime_strcmp(compstr, _STRLIT_CHAR("x-pvmf/media/format-type")) == 0)
         {
             //This component supports only uncompressed formats
-            if ((pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_YUV420) == 0) ||
-                    (pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_YUV422) == 0) ||
-                    (pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_RGB8) == 0) ||
-                    (pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_RGB12) == 0) ||
-                    (pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_RGB16) == 0) ||
-                    (pv_mime_strcmp(aParameters[paramind].value.pChar_value, PVMF_MIME_RGB24) == 0))
+            Oscl_Vector<PVMFFormatType, OsclMemAllocator>::iterator it;
+            for (it = iInputFormatCapability.begin(); it != iInputFormatCapability.end(); it++)
             {
-                return PVMFSuccess;
+                if (pv_mime_strcmp(aParameters[paramind].value.pChar_value, it->getMIMEStrPtr()) == 0)
+                {
+                    return PVMFSuccess;
+                }
             }
-            else
-            {
-                return PVMFErrNotSupported;
-            }
+            // Not found on the list of supported input formats
+            return PVMFErrNotSupported;
         }
     }
     // For all other parameters return success.

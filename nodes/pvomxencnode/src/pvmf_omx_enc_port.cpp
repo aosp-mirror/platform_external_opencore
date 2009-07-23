@@ -55,26 +55,24 @@ PVMFOMXEncPort::~PVMFOMXEncPort()
 ////////////////////////////////////////////////////////////////////////////
 bool PVMFOMXEncPort::IsFormatSupported(PVMFFormatType aFmt)
 {
-    if ((aFmt == PVMF_MIME_YUV420) ||
-            (aFmt == PVMF_MIME_YUV422) ||
-            (aFmt == PVMF_MIME_RGB12) ||
-            (aFmt == PVMF_MIME_RGB24) ||
-            (aFmt == PVMF_MIME_PCM16) ||
-            (aFmt == PVMF_MIME_H264_VIDEO_RAW) ||
-            (aFmt == PVMF_MIME_H264_VIDEO_MP4) ||
-            //(aFmt==PVMF_MIME_H264_VIDEO) ||
-            (aFmt == PVMF_MIME_M4V) ||
-            (aFmt == PVMF_MIME_H2631998) ||
-            (aFmt == PVMF_MIME_H2632000) ||
-            (aFmt == PVMF_MIME_AMR_IETF) ||
-            (aFmt == PVMF_MIME_AMRWB_IETF) ||
-            (aFmt == PVMF_MIME_AMR_IF2) ||
-            (aFmt == PVMF_MIME_ADTS) ||
-            (aFmt == PVMF_MIME_ADIF) ||
-            (aFmt == PVMF_MIME_MPEG4_AUDIO))
+    Oscl_Vector<PVMFFormatType, OsclMemAllocator>::iterator it;
+    for (it = iOMXNode->iCapability.iInputFormatCapability.begin();
+            it != iOMXNode->iCapability.iInputFormatCapability.end(); it++)
     {
-        return true;
+        if (aFmt == *it)
+        {
+            return true;
+        }
     }
+    for (it = iOMXNode->iCapability.iOutputFormatCapability.begin();
+            it != iOMXNode->iCapability.iOutputFormatCapability.end(); it++)
+    {
+        if (aFmt == *it)
+        {
+            return true;
+        }
+    }
+    // Not found in the input or output format capability lists
     return false;
 }
 
@@ -320,7 +318,7 @@ PVMFStatus PVMFOMXEncPort::GetInputParametersSync(PvmiKeyType identifier, PvmiKv
 
         if (pv_mime_strcmp(param1, param2) == 0)
         {
-            num_parameter_elements = 5;
+            num_parameter_elements = iOMXNode->iCapability.iInputFormatCapability.size();
             status = AllocateKvp(parameters, (OMX_STRING)INPUT_FORMATS_VALTYPE, num_parameter_elements);
             if (status != PVMFSuccess)
             {
@@ -328,11 +326,13 @@ PVMFStatus PVMFOMXEncPort::GetInputParametersSync(PvmiKeyType identifier, PvmiKv
                 return status;
             }
 
-            parameters[0].value.pChar_value = (char*)PVMF_MIME_YUV420;
-            parameters[1].value.pChar_value = (char*)PVMF_MIME_YUV422;
-            parameters[2].value.pChar_value = (char*)PVMF_MIME_RGB12;
-            parameters[3].value.pChar_value = (char*)PVMF_MIME_RGB24;
-            parameters[4].value.pChar_value = (char*)PVMF_MIME_PCM16;
+            uint32 ii = 0;
+            Oscl_Vector<PVMFFormatType, OsclMemAllocator>::iterator it;
+            for (it = iOMXNode->iCapability.iInputFormatCapability.begin();
+                    it != iOMXNode->iCapability.iInputFormatCapability.end(); it++)
+            {
+                parameters[ii++].value.pChar_value = OSCL_STATIC_CAST(char*, it->getMIMEStrPtr());
+            }
         }
     }
 
@@ -379,26 +379,20 @@ PVMFStatus PVMFOMXEncPort::GetOutputParametersSync(PvmiKeyType identifier, PvmiK
 
         if (pv_mime_strcmp(param1, param2) == 0)
         {
-            num_parameter_elements = 11;
+            num_parameter_elements = iOMXNode->iCapability.iOutputFormatCapability.size();
             status = AllocateKvp(parameters, (OMX_STRING)OUTPUT_FORMATS_VALTYPE, num_parameter_elements);
             if (status != PVMFSuccess)
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFOMXEncPort::GetOutputParametersSync: Error - AllocateKvp failed. status=%d", status));
+                return status;
             }
-            else
-            {
-                parameters[0].value.pChar_value = (char*)PVMF_MIME_H2631998;
-                parameters[1].value.pChar_value = (char*)PVMF_MIME_H2632000;
-                parameters[2].value.pChar_value = (char*)PVMF_MIME_M4V;
-                parameters[3].value.pChar_value = (char*)PVMF_MIME_H264_VIDEO_RAW;
-                parameters[4].value.pChar_value = (char*)PVMF_MIME_H264_VIDEO_MP4;
-                parameters[5].value.pChar_value = (char*)PVMF_MIME_AMR_IETF;
-                parameters[6].value.pChar_value = (char*)PVMF_MIME_AMRWB_IETF;
-                parameters[7].value.pChar_value = (char*)PVMF_MIME_AMR_IF2;
-                parameters[8].value.pChar_value = (char*)PVMF_MIME_ADTS;
-                parameters[9].value.pChar_value = (char*)PVMF_MIME_ADIF;
-                parameters[10].value.pChar_value = (char*)PVMF_MIME_MPEG4_AUDIO;
 
+            uint32 ii = 0;
+            Oscl_Vector<PVMFFormatType, OsclMemAllocator>::iterator it;
+            for (it = iOMXNode->iCapability.iOutputFormatCapability.begin();
+                    it != iOMXNode->iCapability.iOutputFormatCapability.end(); it++)
+            {
+                parameters[ii++].value.pChar_value = OSCL_STATIC_CAST(char*, it->getMIMEStrPtr());
             }
         }
     }
@@ -663,56 +657,47 @@ PVMFStatus PVMFOMXEncPort::VerifyAndSetParameter(PvmiKvp* aKvp, bool aSetParam)
     if (pv_mime_strcmp(aKvp->key, INPUT_FORMATS_VALTYPE) == 0 &&
             iTag == PVMF_OMX_ENC_NODE_PORT_TYPE_INPUT)
     {
-        if (pv_mime_strcmp(aKvp->value.pChar_value, PVMF_MIME_YUV420) == 0 ||
-                pv_mime_strcmp(aKvp->value.pChar_value, PVMF_MIME_YUV422) == 0 ||
-                pv_mime_strcmp(aKvp->value.pChar_value, PVMF_MIME_RGB12) == 0 ||
-                pv_mime_strcmp(aKvp->value.pChar_value, PVMF_MIME_RGB24) == 0 ||
-                pv_mime_strcmp(aKvp->value.pChar_value, PVMF_MIME_PCM16) == 0)
+        Oscl_Vector<PVMFFormatType, OsclMemAllocator>::iterator it;
+        for (it = iOMXNode->iCapability.iInputFormatCapability.begin();
+                it != iOMXNode->iCapability.iInputFormatCapability.end(); it++)
         {
-            if (aSetParam)
+            if (pv_mime_strcmp(aKvp->value.pChar_value, it->getMIMEStrPtr()) == 0)
             {
-                iFormat = aKvp->value.pChar_value;
-                if (iOMXNode->SetInputFormat(iFormat) != PVMFSuccess)
-                    return PVMFFailure;
+                if (aSetParam)
+                {
+                    iFormat = aKvp->value.pChar_value;
+                    if (iOMXNode->SetInputFormat(iFormat) != PVMFSuccess)
+                        return PVMFFailure;
+                }
+                return PVMFSuccess;
             }
-            return PVMFSuccess;
         }
-        else
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFOMXEncPort::VerifyAndSetParameter: Error - Input format %d not supported",
-                            aKvp->value.uint32_value));
-            return PVMFFailure;
-        }
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFOMXEncPort::VerifyAndSetParameter: Error - Input format %s not supported",
+                        aKvp->value.pChar_value));
+        return PVMFFailure;
     }
     else if (pv_mime_strcmp(aKvp->key, OUTPUT_FORMATS_VALTYPE) == 0 &&
              iTag == PVMF_OMX_ENC_NODE_PORT_TYPE_OUTPUT)
     {
-        if (pv_mime_strcmp(aKvp->value.pChar_value, PVMF_MIME_H2631998) == 0 ||
-                pv_mime_strcmp(aKvp->value.pChar_value, PVMF_MIME_H2632000) == 0 ||
-                pv_mime_strcmp(aKvp->value.pChar_value, PVMF_MIME_M4V) == 0 ||
-                pv_mime_strcmp(aKvp->value.pChar_value, PVMF_MIME_H264_VIDEO_RAW) == 0 ||
-                pv_mime_strcmp(aKvp->value.pChar_value, PVMF_MIME_H264_VIDEO_MP4) == 0 ||
-                pv_mime_strcmp(aKvp->value.pChar_value, PVMF_MIME_AMR_IETF) == 0 ||
-                pv_mime_strcmp(aKvp->value.pChar_value, PVMF_MIME_AMRWB_IETF) == 0 ||
-                pv_mime_strcmp(aKvp->value.pChar_value, PVMF_MIME_AMR_IF2) == 0 ||
-                pv_mime_strcmp(aKvp->value.pChar_value, PVMF_MIME_ADIF) == 0 ||
-                pv_mime_strcmp(aKvp->value.pChar_value, PVMF_MIME_ADTS) == 0 ||
-                pv_mime_strcmp(aKvp->value.pChar_value, PVMF_MIME_MPEG4_AUDIO) == 0)
+
+        Oscl_Vector<PVMFFormatType, OsclMemAllocator>::iterator it;
+        for (it = iOMXNode->iCapability.iInputFormatCapability.begin();
+                it != iOMXNode->iCapability.iInputFormatCapability.end(); it++)
         {
-            if (aSetParam)
+            if (pv_mime_strcmp(aKvp->value.pChar_value, it->getMIMEStrPtr()) == 0)
             {
-                iFormat = aKvp->value.pChar_value;
-                if (iOMXNode->SetCodecType(iFormat) != PVMFSuccess)
-                    return PVMFFailure;
+                if (aSetParam)
+                {
+                    iFormat = aKvp->value.pChar_value;
+                    if (iOMXNode->SetCodecType(iFormat) != PVMFSuccess)
+                        return PVMFFailure;
+                }
             }
             return PVMFSuccess;
         }
-        else
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFOMXEncPort::VerifyAndSetParameter: Error - Output format %d not supported",
-                            aKvp->value.pChar_value));
-            return PVMFFailure;
-        }
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFOMXEncPort::VerifyAndSetParameter: Error - Output format %s not supported",
+                        aKvp->value.pChar_value));
+        return PVMFFailure;
     }
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFOMXEncPort::VerifyAndSetParameter: Error - Unsupported parameter"));
@@ -752,21 +737,28 @@ PVMFStatus PVMFOMXEncPort::NegotiateInputSettings(PvmiCapabilityAndConfig* aConf
     PvmiKvp* selectedAudioKvp = NULL;
     for (int32 i = 0; i < numParams; i++)
     {
-        if (pv_mime_strcmp(kvp->value.pChar_value, PVMF_MIME_YUV420) == 0 ||
-                pv_mime_strcmp(kvp->value.pChar_value, PVMF_MIME_YUV422) == 0 ||
-                pv_mime_strcmp(kvp->value.pChar_value, PVMF_MIME_RGB12) == 0 ||
-                pv_mime_strcmp(kvp->value.pChar_value, PVMF_MIME_RGB24) == 0)
+        Oscl_Vector<PVMFFormatType, OsclMemAllocator>::iterator it;
+        for (it = iOMXNode->iCapability.iInputFormatCapability.begin(); it != iOMXNode->iCapability.iInputFormatCapability.end(); it++)
         {
-            videoFormat = kvp[i].value.pChar_value;
-            err = PushKVP(sortedKvp, &(kvp[i]));
-            OSCL_FIRST_CATCH_ANY(err,
-                                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFOMXEncPort::NegotiateInputSettings: Error - sortedKvp.push failed"));
-                                 return PVMFErrNoMemory;
-                                );
-        }
-        else if (pv_mime_strcmp(kvp->value.pChar_value, PVMF_MIME_PCM16) == 0)
-        {
-            selectedAudioKvp = &kvp[i];
+            // Is the format on the input list?
+            if (pv_mime_strcmp(kvp->value.pChar_value, it->getMIMEStrPtr()) == 0)
+            {
+                // Found.  Is it audio or video?
+                if (it->isAudio())
+                {
+                    // WARNING there should be only one entry for audio!
+                    selectedAudioKvp = &kvp[i];
+                }
+                else // Must be video
+                {
+                    videoFormat = kvp[i].value.pChar_value;
+                    err = PushKVP(sortedKvp, &(kvp[i]));
+                    OSCL_FIRST_CATCH_ANY(err,
+                                         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFOMXEncPort::NegotiateInputSettings: Error - sortedKvp.push failed"));
+                                         return PVMFErrNoMemory;
+                                        );
+                }
+            }
         }
     }
 

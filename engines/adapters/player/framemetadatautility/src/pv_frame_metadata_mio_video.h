@@ -44,10 +44,6 @@ class PVLogger;
 class PVMFMediaClock;
 class ColorConvertBase;
 
-// To maintain the count of supported uncompressed video formats.
-// Should be updated whenever new format is added
-#define PVMF_SUPPORTED_UNCOMPRESSED_VIDEO_FORMATS_COUNT 6
-
 class PVFMVideoMIOGetFrameObserver
 {
     public:
@@ -264,6 +260,8 @@ class PVFMVideoMIO : public OsclTimerObject,
             uint32 iFrameHeight;
         };
         PVFMVideoMIOFrameRetrieval iFrameRetrievalInfo;
+
+        Oscl_Vector<PVMFFormatType, OsclMemAllocator> iInputFormatCapability;
 };
 
 #endif // PV_FRAME_METADATA_MIO_VIDEO_H_INCLUDED
