@@ -1371,7 +1371,7 @@ PVMFStatus PVMFOMXBaseDecNode::HandleProcessingState()
                 break;
             }
 
-            if ((sState != OMX_StateExecuting) && (sState != OMX_StatePause))
+            if (((sState != OMX_StateExecuting) && (sState != OMX_StatePause)) || iStopCommandWasSentToComponent)
             {
 
                 // possibly as a consequence of a previously queued cmd to go to Idle state?
@@ -4549,10 +4549,10 @@ void PVMFOMXBaseDecNode::DoStop(PVMFOMXBaseDecNodeCommand& aCmd)
                     iProcessingState = EPVMFOMXBaseDecNodeProcessingState_Stopping;
 
                 // indicate that stop cmd was sent
-                if (iDynamicReconfigInProgress)
-                {
-                    iStopCommandWasSentToComponent = true;
-                }
+
+
+                iStopCommandWasSentToComponent = true;
+
 
 
             }
@@ -4664,10 +4664,9 @@ void PVMFOMXBaseDecNode::DoPause(PVMFOMXBaseDecNodeCommand& aCmd)
                     iProcessingState = EPVMFOMXBaseDecNodeProcessingState_Pausing;
 
                 // indicate that pause cmd was sent
-                if (iDynamicReconfigInProgress)
-                {
-                    iPauseCommandWasSentToComponent = true;
-                }
+
+                iPauseCommandWasSentToComponent = true;
+
 
                 err = OMX_SendCommand(iOMXDecoder, OMX_CommandStateSet, OMX_StatePause, NULL);
                 if (err != OMX_ErrorNone)
@@ -4817,6 +4816,16 @@ void PVMFOMXBaseDecNode::DoReset(PVMFOMXBaseDecNodeCommand& aCmd)
                         iIsEOSSentToComponent = false;
                         iIsEOSReceivedFromComponent = false;
 
+                        if (iOMXComponentUsesFullAVCFrames)
+                        {
+                            iNALCount = 0;
+                            oscl_memset(iNALSizeArray, 0, sizeof(uint32) * MAX_NAL_PER_FRAME); // 100 is max number of NALs
+                        }
+
+                        // reset dynamic port reconfig flags - no point continuing with port reconfig
+                        // if we start again - we'll have to do prepare and send new config etc.
+                        iSecondPortReportedChange = false;
+                        iDynamicReconfigInProgress = false;
 
                         iProcessingState = EPVMFOMXBaseDecNodeProcessingState_Idle;
 
@@ -5074,8 +5083,13 @@ void PVMFOMXBaseDecNode::DoReset(PVMFOMXBaseDecNodeCommand& aCmd)
             if (iOMXComponentUsesFullAVCFrames)
             {
                 iNALCount = 0;
-                oscl_memset(iNALSizeArray, 0, sizeof(uint32) * 100); // 100 is max number of NALs
+                oscl_memset(iNALSizeArray, 0, sizeof(uint32) * MAX_NAL_PER_FRAME); // 100 is max number of NALs
             }
+
+            // reset dynamic port reconfig flags - no point continuing with port reconfig
+            // if we start again - we'll have to do prepare and send new config etc.
+            iSecondPortReportedChange = false;
+            iDynamicReconfigInProgress = false;
 
             iProcessingState = EPVMFOMXBaseDecNodeProcessingState_Idle;
             //logoff & go back to Created state.
