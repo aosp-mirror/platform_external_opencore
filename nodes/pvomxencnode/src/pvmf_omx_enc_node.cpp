@@ -820,6 +820,17 @@ PVMFOMXEncNode::PVMFOMXEncNode(int32 aPriority) :
     iKeyFrameFlagOut = 0;
     iEndOfNALFlagOut = 0;
 
+    //if timescale value is 1 000 000 - it means that
+    //timestamp is expressed in units of 1/10^6 (i.e. microseconds)
+
+    iTimeScale = 1000000;
+    iInTimeScale = 1000;
+    iOutTimeScale = 1000;
+
+    iInputTimestampClock.set_timescale(iInTimeScale); // keep the timescale set to input timestamp
+
+
+
     // counts output frames (for logging)
     iFrameCounter = 0;
     iInFormat = PVMF_MIME_FORMAT_UNKNOWN;
@@ -897,6 +908,9 @@ PVMFOMXEncNode::PVMFOMXEncNode(int32 aPriority) :
     iErrorConfigHeader = false;
     iErrorEncodeFlag = 0;
 #endif
+
+    iInputTimestampClock.set_clock(iBOSTimestamp, 0);
+    iOMXTicksTimestamp = ConvertTimestampIntoOMXTicks(iInputTimestampClock);
 
     sendYuvFsi = true;
 
@@ -1338,6 +1352,10 @@ bool PVMFOMXEncNode::ProcessIncomingMsg(PVMFPortInterface* aPort)
         //store the stream id and time stamp of bos message
         iStreamID = mediaMsgOut->getStreamID();
         iBOSTimestamp = mediaMsgOut->getTimestamp();
+
+        iInputTimestampClock.set_clock(iBOSTimestamp, 0);
+        iOMXTicksTimestamp = ConvertTimestampIntoOMXTicks(iInputTimestampClock);
+
         iSendBOS = true;
 
 #ifdef _DEBUG
@@ -1398,6 +1416,11 @@ bool PVMFOMXEncNode::ProcessIncomingMsg(PVMFPortInterface* aPort)
         //store the stream id and time stamp of bos message
         iStreamID = msg->getStreamID();
         iBOSTimestamp = msg->getTimestamp();
+
+        // we need to initialize the timestamp here - so that updates later on are accurate (in terms of rollover etc)
+        iInputTimestampClock.set_clock(iBOSTimestamp, 0);
+        iOMXTicksTimestamp = ConvertTimestampIntoOMXTicks(iInputTimestampClock);
+
         iSendBOS = true;
 
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
@@ -3700,11 +3723,12 @@ bool PVMFOMXEncNode::SendEOSBufferToOMXComponent()
     input_buf->pBufHdr->nFilledLen = 0;
     input_buf->pBufHdr->nOffset = 0;
 
-    input_buf->pBufHdr->nTimeStamp = iEndOfDataTimestamp;
-    if (bIsQCOMOmxComp)
-    {
-        input_buf->pBufHdr->nTimeStamp = 1000 * iEndOfDataTimestamp;
-    }
+    iInputTimestampClock.update_clock(iEndOfDataTimestamp); // this will also take into consideration the rollover
+    // convert TS in input timescale into OMX_TICKS
+    iOMXTicksTimestamp = ConvertTimestampIntoOMXTicks(iInputTimestampClock);
+
+    input_buf->pBufHdr->nTimeStamp = iOMXTicksTimestamp;
+
 
     // set ptr to input_buf structure for Context (for when the buffer is returned)
     input_buf->pBufHdr->pAppPrivate = (OMX_PTR) input_buf;
@@ -3866,7 +3890,7 @@ bool PVMFOMXEncNode::SendInputBufferToOMXComponent()
             input_buf->pBufHdr->nFilledLen = frag.getMemFragSize();
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                            (0, "PVMFOMXEncNode-%s::SendInputBufferToOMXComponent() - Buffer 0x%x of size %d, %d frag out of tot. %d, TS=%d", iNodeTypeId, input_buf->pBufHdr->pBuffer, frag.getMemFragSize(), iCurrFragNum + 1, iDataIn->getNumFragments(), iInTimestamp));
+                            (0, "PVMFOMXEncNode-%s::SendInputBufferToOMXComponent() - Buffer 0x%x of size %d, %d frag out of tot. %d, TS=%d, Ticks=%L", iNodeTypeId, input_buf->pBufHdr->pBuffer, frag.getMemFragSize(), iCurrFragNum + 1, iDataIn->getNumFragments(), iInTimestamp, iOMXTicksTimestamp));
 
             iCurrFragNum++; // increment fragment number and move on to the next
 
@@ -3895,7 +3919,7 @@ bool PVMFOMXEncNode::SendInputBufferToOMXComponent()
                 input_buf->pBufHdr->nFilledLen = iFragmentSizeRemainingToCopy;
 
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                                (0, "PVMFOMXEncNode-%s::SendInputBufferToOMXComponent() - Copied %d bytes of fragment %d out of %d into buffer 0x%x of size %d, TS=%d ", iNodeTypeId, iFragmentSizeRemainingToCopy, iCurrFragNum + 1, iDataIn->getNumFragments(), input_buf->pBufHdr->pBuffer, input_buf->pBufHdr->nFilledLen, iInTimestamp));
+                                (0, "PVMFOMXEncNode-%s::SendInputBufferToOMXComponent() - Copied %d bytes of fragment %d out of %d into buffer 0x%x of size %d, TS=%d, Ticks=%L ", iNodeTypeId, iFragmentSizeRemainingToCopy, iCurrFragNum + 1, iDataIn->getNumFragments(), input_buf->pBufHdr->pBuffer, input_buf->pBufHdr->nFilledLen, iInTimestamp, iOMXTicksTimestamp));
 
                 iCopyPosition += iFragmentSizeRemainingToCopy;
                 iFragmentSizeRemainingToCopy = 0;
@@ -3911,7 +3935,7 @@ bool PVMFOMXEncNode::SendInputBufferToOMXComponent()
                             input_buf->pBufHdr->nAllocLen);
 
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                                (0, "PVMFOMXEncNode-%s::SendInputBufferToOMXComponent() - Frame cannot fit into input buffer ! Copied %d bytes of fragment %d out of %d into buffer 0x%x of size %d, TS=%d", iNodeTypeId, input_buf->pBufHdr->nAllocLen, iCurrFragNum + 1, iDataIn->getNumFragments(), input_buf->pBufHdr->pBuffer, input_buf->pBufHdr->nFilledLen, iInTimestamp));
+                                (0, "PVMFOMXEncNode-%s::SendInputBufferToOMXComponent() - Frame cannot fit into input buffer ! Copied %d bytes of fragment %d out of %d into buffer 0x%x of size %d, TS=%d, Ticks=%L", iNodeTypeId, input_buf->pBufHdr->nAllocLen, iCurrFragNum + 1, iDataIn->getNumFragments(), input_buf->pBufHdr->pBuffer, input_buf->pBufHdr->nFilledLen, iInTimestamp, iOMXTicksTimestamp));
 
                 input_buf->pBufHdr->nFilledLen = input_buf->pBufHdr->nAllocLen;
                 iCopyPosition += input_buf->pBufHdr->nAllocLen; // move current position within fragment forward
@@ -3926,7 +3950,15 @@ bool PVMFOMXEncNode::SendInputBufferToOMXComponent()
 
         // set buffer fields (this is the same regardless of whether the input is movable or not
         input_buf->pBufHdr->nOffset = 0;
-        input_buf->pBufHdr->nTimeStamp = iInTimestamp;
+
+
+        iInputTimestampClock.update_clock(iInTimestamp); // this will also take into consideration the timestamp rollover
+        // convert TS in input timescale into OMX_TICKS
+        iOMXTicksTimestamp = ConvertTimestampIntoOMXTicks(iInputTimestampClock);
+
+
+        input_buf->pBufHdr->nTimeStamp = iOMXTicksTimestamp;
+
 
         // set ptr to input_buf structure for Context (for when the buffer is returned)
         input_buf->pBufHdr->pAppPrivate = (OMX_PTR) input_buf;
@@ -5340,7 +5372,10 @@ bool PVMFOMXEncNode::QueueOutputBuffer(OsclSharedPtr<PVMFMediaDataImpl> &mediada
         mediaDataOut->setMediaFragFilledLen(0, aDataLen);
 
         // Set timestamp
-        mediaDataOut->setTimestamp(iTimeStampOut);
+        // first convert OMX_TICKS into output timescale
+        uint32 output_timestamp = ConvertOMXTicksIntoTimestamp(iTimeStampOut);
+
+        mediaDataOut->setTimestamp(output_timestamp);
 
         // Set Streamid
         mediaDataOut->setStreamID(iStreamID);
@@ -5348,7 +5383,7 @@ bool PVMFOMXEncNode::QueueOutputBuffer(OsclSharedPtr<PVMFMediaDataImpl> &mediada
         // Set sequence number
         mediaDataOut->setSeqNum(iSeqNum++);
 
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iDataPathLogger, PVLOGMSG_INFO, (0, ":PVMFOMXEncNode-%s::QueueOutputFrame(): - SeqNum=%d, TS=%d", iNodeTypeId, iSeqNum, iTimeStampOut));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iDataPathLogger, PVLOGMSG_INFO, (0, ":PVMFOMXEncNode-%s::QueueOutputFrame(): - SeqNum=%d, Ticks=%l TS=%d", iNodeTypeId, iSeqNum, iTimeStampOut, output_timestamp));
 
 
         // Check if Fsi needs to be sent (VOL header)
@@ -8195,7 +8230,7 @@ void PVMFOMXEncNode::LogDiagnostics()
         iDiagnosticsLogged = true;
         PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF, iDiagnosticsLogger, PVLOGMSG_INFO, (0, "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"));
         PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF, iDiagnosticsLogger, PVLOGMSG_INFO, (0, "PVMFOMXEncNode-%s - Number of Media Msgs Sent = %d", iNodeTypeId, iSeqNum));
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF, iDiagnosticsLogger, PVLOGMSG_INFO, (0, "PVMFOMXEncNode-%s - TS of last encoded msg = %d", iNodeTypeId, iTimeStampOut));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF, iDiagnosticsLogger, PVLOGMSG_INFO, (0, "PVMFOMXEncNode-%s - TS of last encoded msg = %d", iNodeTypeId, ConvertOMXTicksIntoTimestamp(iTimeStampOut)));
     }
 }
 
@@ -9944,3 +9979,79 @@ bool PVMFOMXEncNode::CheckM4vVopStartCode(uint8* data, int* len)
     return false;
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+OMX_TICKS PVMFOMXEncNode::ConvertTimestampIntoOMXTicks(const MediaClockConverter& src)
+{
+    // This is similar to mediaclockconverter set_value method - except without using the modulo for upper part of 64 bits
+
+    // Timescale value cannot be zero
+    OSCL_ASSERT(src.get_timescale() != 0);
+    if (src.get_timescale() == 0)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                        (0, "PVMFOMXEncNode-%s::ConvertTimestampIntoOMXTicks Input timescale is 0", iNodeTypeId));
+
+        SetState(EPVMFNodeError);
+        ReportErrorEvent(PVMFErrResourceConfiguration);
+        return (OMX_TICKS) 0;
+    }
+
+    OSCL_ASSERT(iTimeScale != 0);
+    if (0 == iTimeScale)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                        (0, "PVMFOMXEncNode-%s::ConvertTimestampIntoOMXTicks target timescale is 0", iNodeTypeId));
+
+        SetState(EPVMFNodeError);
+        ReportErrorEvent(PVMFErrResourceConfiguration);
+        return (OMX_TICKS) 0;
+    }
+
+    uint64 value = (uint64(src.get_wrap_count())) << 32;
+    value += src.get_current_timestamp();
+    // rounding up
+    value = (uint64(value) * iTimeScale + uint64(src.get_timescale() - 1)) / src.get_timescale();
+    return (OMX_TICKS) value;
+
+
+}
+////////////////////////////////////////////////////////////////////////////////////
+uint32 PVMFOMXEncNode::ConvertOMXTicksIntoTimestamp(const OMX_TICKS &src)
+{
+    // omx ticks use microsecond timescale (iTimeScale = 1000000)
+    // This is similar to mediaclockconverter set_value method
+
+    // Timescale value cannot be zero
+    OSCL_ASSERT(iOutTimeScale != 0);
+    if (0 == iOutTimeScale)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                        (0, "PVMFOMXEncNode-%s::ConvertOMXTicksIntoTimestamp Output timescale is 0", iNodeTypeId));
+
+        SetState(EPVMFNodeError);
+        ReportErrorEvent(PVMFErrResourceConfiguration);
+        return (uint32) 0;
+    }
+
+    OSCL_ASSERT(iTimeScale != 0);
+    if (0 == iTimeScale)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                        (0, "PVMFOMXEncNode-%s::ConvertOMXTicksIntoTimestamp target timescale is 0", iNodeTypeId));
+
+        SetState(EPVMFNodeError);
+        ReportErrorEvent(PVMFErrResourceConfiguration);
+        return (uint32) 0;
+    }
+
+    uint32 current_ts;
+
+    uint64 value = (uint64) src;
+
+    // rounding up
+    value = (uint64(value) * iOutTimeScale + uint64(iTimeScale - 1)) / iTimeScale;
+
+    current_ts = (uint32)(value & 0xFFFFFFFF);
+    return (uint32) current_ts;
+
+}

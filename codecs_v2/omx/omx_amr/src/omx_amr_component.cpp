@@ -29,9 +29,9 @@
 #endif
 
 #define OMX_HALFRANGE_THRESHOLD 0x7FFFFFFF
-/**** The duration of one output AMR frame (in ms) is fixed and equal to 20ms - needed for timestamp updates ****/
-/**** Note that AMR sampling rate is always 8khz, so a frame of 20 ms always corresponds to 160 (16-bit) samples = 320 bytes */
-#define OMX_AMR_DEC_FRAME_INTERVAL 20
+/**** The duration of one output AMR frame (in microsec) is fixed and equal to 20000 microsec - needed for timestamp updates ****/
+/**** Note that AMR sampling rate is always 8khz, so a frame of 20000 microsec always corresponds to 160 (16-bit) samples = 320 bytes */
+#define OMX_AMR_DEC_FRAME_INTERVAL 20000
 
 OSCL_DLL_ENTRY_POINT_DEFAULT()
 

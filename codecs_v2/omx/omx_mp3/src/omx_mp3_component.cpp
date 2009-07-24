@@ -300,7 +300,7 @@ OMX_ERRORTYPE OpenmaxMp3AO::ConstructComponent(OMX_PTR pAppData, OMX_PTR pProxy)
     oscl_memset(ipMp3Dec, 0, sizeof(Mp3Decoder));
 
     iSamplesPerFrame = DEFAULT_SAMPLES_PER_FRAME_MP3;
-    iOutputMilliSecPerFrame = iCurrentFrameTS.GetFrameDuration();
+    iOutputMicroSecPerFrame = iCurrentFrameTS.GetFrameDuration();
 
 #if PROXY_INTERFACE
 
@@ -556,7 +556,7 @@ void OpenmaxMp3AO::ProcessData()
                 iSamplesPerFrame = OutputLength / ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->AudioPcmMode.nChannels;
 
                 iCurrentFrameTS.SetParameters(ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->AudioPcmMode.nSamplingRate, iSamplesPerFrame);
-                iOutputMilliSecPerFrame = iCurrentFrameTS.GetFrameDuration();
+                iOutputMicroSecPerFrame = iCurrentFrameTS.GetFrameDuration();
 
             }
 
@@ -815,7 +815,7 @@ void OpenmaxMp3AO::CheckForSilenceInsertion()
     CurrTimestamp = iCurrentFrameTS.GetCurrentTimestamp();
     TimestampGap = iFrameTimestamp - CurrTimestamp;
 
-    if ((TimestampGap > OMX_HALFRANGE_THRESHOLD) || (TimestampGap < iOutputMilliSecPerFrame && iFrameCount > 0))
+    if ((TimestampGap > OMX_HALFRANGE_THRESHOLD) || (TimestampGap < iOutputMicroSecPerFrame && iFrameCount > 0))
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OpenmaxMp3AO : CheckForSilenceInsertion OUT - No need to insert silence"));
         return;
@@ -826,9 +826,9 @@ void OpenmaxMp3AO::CheckForSilenceInsertion()
     {
         iSilenceInsertionInProgress = OMX_TRUE;
         //Determine the number of silence frames to insert
-        if (0 != iOutputMilliSecPerFrame)
+        if (0 != iOutputMicroSecPerFrame)
         {
-            iSilenceFramesNeeded = TimestampGap / iOutputMilliSecPerFrame;
+            iSilenceFramesNeeded = TimestampGap / iOutputMicroSecPerFrame;
         }
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OpenmaxMp3AO : CheckForSilenceInsertion OUT - Silence Insertion required here"));
     }

@@ -49,10 +49,10 @@ class TInputAudioStream
         int32 iMode;
 
         // Start time when samples were taken
-        uint32 iStartTime;
+        uint64 iStartTime;
 
         // End time when samples were taken
-        uint32 iStopTime;
+        uint64 iStopTime;
 };
 
 

@@ -429,11 +429,12 @@ OMX_ERRORTYPE OmxComponentMpeg4EncAO::ConstructComponent(OMX_PTR pAppData, OMX_P
     if (iEncMode == MODE_MPEG4)
     {
         pOutPort->VideoParam[0].eCompressionFormat = OMX_VIDEO_CodingMPEG4;
-
+        oscl_strncpy((OMX_STRING)iComponentRole, (OMX_STRING)"video_encoder.mpeg4", OMX_MAX_STRINGNAME_SIZE);
     }
     else if (iEncMode == MODE_H263)
     {
         pOutPort->VideoParam[0].eCompressionFormat = OMX_VIDEO_CodingH263;
+        oscl_strncpy((OMX_STRING)iComponentRole, (OMX_STRING)"video_encoder.h263", OMX_MAX_STRINGNAME_SIZE);
     }
 
 

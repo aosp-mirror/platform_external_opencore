@@ -600,7 +600,9 @@ AVCEnc_Status AvcEncoder_OMX::AvcEncodeSendInput(OMX_U8*    aInBuffer,
     }
 
     /* assign with backward-P or B-Vop this timestamp must be re-ordered */
-    iTimeStamp = aInTimeStamp;
+    // Encoder uses 32 bit timestamps internally - keep track of 64 bit value as well
+    iTimeStamp = Oscl_Int64_Utils::get_uint64_lower32(aInTimeStamp / 1000); //timestamp in millisec
+    iTimeStamp64 = aInTimeStamp;
 
     iVidIn.height = ((iSrcHeight + 15) >> 4) << 4;
     iVidIn.pitch = ((iSrcWidth + 15) >> 4) << 4;
@@ -752,7 +754,7 @@ AVCEnc_Status AvcEncoder_OMX::AvcEncodeVideo(OMX_U8* aOutBuffer,
         }
 
         *aOutputLength = Size;
-        *aOutTimeStamp = iTimeStamp;
+        *aOutTimeStamp = iTimeStamp64;//timestamp in microsec
 
         return ReturnValue;
 

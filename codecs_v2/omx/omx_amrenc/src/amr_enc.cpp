@@ -151,7 +151,7 @@ OMX_BOOL OmxAmrEncoder::AmrEncInit(OMX_AUDIO_PARAM_PCMMODETYPE aPcmMode,
     ipSizeArrayForOutputFrames = (int32*) oscl_malloc(iMaxNumOutputFramesPerBuffer * sizeof(int32));
     oscl_memset(ipSizeArrayForOutputFrames, 0, iMaxNumOutputFramesPerBuffer * sizeof(int32));
 
-    iOneInputFrameLength = AMR_FRAME_LENGTH_IN_TIMESTAMP * ipEncProps->iInSamplingRate * ipEncProps->iInBitsPerSample / 8000;
+    iOneInputFrameLength = AMR_FRAME_LENGTH_IN_TIMESTAMP * ipEncProps->iInSamplingRate * ipEncProps->iInBitsPerSample / 8000000;
     iMaxInputSize = iMaxNumOutputFramesPerBuffer * iOneInputFrameLength;
 
     *aInputFrameLength = iOneInputFrameLength;
@@ -199,12 +199,14 @@ OMX_BOOL OmxAmrEncoder::AmrEncodeFrame(OMX_U8*    aOutputBuffer,
     TOutputAudioStream StreamOutput;
     int32 InputFrameNum;
 
+
     StreamOutput.iBitStreamBuffer = (uint8*) aOutputBuffer;
     StreamOutput.iNumSampleFrames = 0;
     StreamOutput.iSampleFrameSize = ipSizeArrayForOutputFrames;
 
     //Calculate the number of input frames to be encoded
     InputFrameNum = aInBufSize / iOneInputFrameLength;
+
 
     StreamInput.iSampleBuffer = (uint8*) aInBuffer;
     StreamInput.iSampleLength = (int32) aInBufSize;
@@ -237,7 +239,7 @@ OMX_BOOL OmxAmrEncoder::AmrEncodeFrame(OMX_U8*    aOutputBuffer,
         *aOutputLength += StreamOutput.iSampleFrameSize[ii];
     }
 
-    //Set the output buffer timestamp equal to the input buffer start time.
+
     *aOutTimeStamp = StreamInput.iStartTime;
 
     return OMX_TRUE;
