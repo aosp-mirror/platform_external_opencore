@@ -277,27 +277,23 @@ inline void * operator new(size_t aSize, const char *aFile, int aLine)
 };
 #endif
 
+#if(!OSCL_BYPASS_MEMMGT)
 inline void * operator new(size_t aSize)
 {
-#if(!OSCL_BYPASS_MEMMGT)
 #if(PVMEM_INST_LEVEL>0)
     return _oscl_default_audit_new(aSize, __FILE__, __LINE__);
 #else
     return _oscl_default_audit_new(aSize);
 #endif
-#else
-    return _oscl_default_new(aSize);
-#endif
 };
+#endif
 
+#if(!OSCL_BYPASS_MEMMGT)
 inline void operator delete(void *aPtr)
 {
-#if(!OSCL_BYPASS_MEMMGT)
     _oscl_audit_free(aPtr);
-#else
-    _oscl_free(aPtr);
-#endif
 };
+#endif
 
 #if(!OSCL_BYPASS_MEMMGT)
 inline void * operator new[](size_t aSize, const char *aFile, int aLine)
@@ -311,27 +307,23 @@ inline void * operator new[](size_t aSize, const char *aFile, int aLine)
 };
 #endif
 
+#if(!OSCL_BYPASS_MEMMGT)
 inline void * operator new[](size_t aSize)
 {
-#if(!OSCL_BYPASS_MEMMGT)
 #if(PVMEM_INST_LEVEL>0)
     return _oscl_default_audit_new(aSize, __FILE__, __LINE__);
 #else
     return _oscl_default_audit_new(aSize);
 #endif
-#else
-    return _oscl_default_new(aSize);
-#endif
 };
+#endif
 
+#if(!OSCL_BYPASS_MEMMGT)
 inline void operator delete[](void *aPtr)
 {
-#if(!OSCL_BYPASS_MEMMGT)
     _oscl_audit_free(aPtr);
-#else
-    _oscl_free(aPtr);
-#endif
 };
+#endif
 #endif //OSCL_HAS_GLOBAL_NEW_DELETE
 
 /**
