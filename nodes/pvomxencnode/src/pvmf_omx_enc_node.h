@@ -131,6 +131,10 @@
 #endif
 #endif
 
+#ifndef __MEDIA_CLOCK_CONVERTER_H
+#include "media_clock_converter.h"
+#endif
+
 #define PVMFOMXENCNODE_NUM_CMD_IN_POOL 8
 #define PVOMXENCMAXNUMDPBFRAMESPLUS1 17
 
@@ -1381,18 +1385,27 @@ class PVMFOMXEncNode
         uint32 iEndOfFrameFlagPrevious;
         uint32 iKeyFrameFlagPrevious;
         uint32 iEndOfNALFlagPrevious;
-        uint32 iTimeStampPrevious;
+        OMX_TICKS iTimeStampPrevious;
         uint32 iBufferLenPrevious;
 
         uint32 iEndOfFrameFlagOut;
         uint32 iKeyFrameFlagOut;
         uint32 iEndOfNALFlagOut;
-        uint32 iTimeStampOut;
+        OMX_TICKS iTimeStampOut;
         uint32 iBufferLenOut;
         OsclAny **out_ctrl_struct_ptr ;
         OsclAny **out_buff_hdr_ptr ;
         OsclAny **in_ctrl_struct_ptr ;
         OsclAny **in_buff_hdr_ptr ;
+        // timescale, timestamp conversions
+        uint32 iTimeScale;
+        uint32 iInTimeScale;
+        uint32 iOutTimeScale;
+
+        MediaClockConverter iInputTimestampClock;
+        OMX_TICKS iOMXTicksTimestamp;
+        OMX_TICKS ConvertTimestampIntoOMXTicks(const MediaClockConverter &src);
+        uint32 ConvertOMXTicksIntoTimestamp(const OMX_TICKS &src);
 
 
 

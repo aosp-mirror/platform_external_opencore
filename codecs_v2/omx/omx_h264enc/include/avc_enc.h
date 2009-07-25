@@ -43,6 +43,10 @@
 #include "ccyuv420semitoyuv420.h"
 #endif
 
+#ifndef OSCL_INT64_UTILS_H_INCLUDED
+#include "oscl_int64_utils.h"
+#endif
+
 class AvcEncoder_OMX
 {
     public:
@@ -89,6 +93,7 @@ class AvcEncoder_OMX
         void    AVC_FrameUnbind(int indx);
 
 
+
     private:
 
         void CopyToYUVIn(uint8* YUV, int width, int height, int width_16, int height_16);
@@ -109,6 +114,7 @@ class AvcEncoder_OMX
         uint8*  iVideoIn;
         uint8*  iVideoOut;
         uint32  iTimeStamp;
+        OMX_TICKS iTimeStamp64;
         OMX_BOOL    iIDR;
         int     iDispOrd;
 

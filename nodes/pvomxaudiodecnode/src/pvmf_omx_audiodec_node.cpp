@@ -227,6 +227,11 @@ bool PVMFOMXAudioDecNode::ProcessIncomingMsg(PVMFPortInterface* aPort)
         //store the stream id and time stamp of bos message
         iStreamID = mediaMsgOut->getStreamID();
         iBOSTimestamp = mediaMsgOut->getTimestamp();
+
+
+        iInputTimestampClock.set_clock(iBOSTimestamp, 0);
+        iOMXTicksTimestamp = ConvertTimestampIntoOMXTicks(iInputTimestampClock);
+
         iSendBOS = true;
 
 #ifdef _DEBUG
@@ -287,6 +292,11 @@ bool PVMFOMXAudioDecNode::ProcessIncomingMsg(PVMFPortInterface* aPort)
         //store the stream id and time stamp of bos message
         iStreamID = msg->getStreamID();
         iBOSTimestamp = msg->getTimestamp();
+
+
+        iInputTimestampClock.set_clock(iBOSTimestamp, 0);
+        iOMXTicksTimestamp = ConvertTimestampIntoOMXTicks(iInputTimestampClock);
+
         iSendBOS = true;
 
         // if new BOS arrives, and

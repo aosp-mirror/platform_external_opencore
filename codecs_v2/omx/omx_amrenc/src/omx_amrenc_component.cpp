@@ -288,6 +288,7 @@ OMX_ERRORTYPE OmxComponentAmrEncoderAO::ConstructComponent(OMX_PTR pAppData, OMX
     }
 
 
+
 #if PROXY_INTERFACE
 
     ((ProxyApplication_OMX*)ipComponentProxy)->ComponentSendCommand = BaseComponentSendCommand;
@@ -345,7 +346,13 @@ OMX_ERRORTYPE OmxComponentAmrEncoderAO::DestroyComponent()
 /* This routine will extract the input timestamp from the input buffer */
 void OmxComponentAmrEncoderAO::SyncWithInputTimestamp()
 {
-    iCurrentTimestamp = iFrameTimestamp;
+    // this is called when new input buffer is received
+    // and checked against internally kept (Current) timestamp
+// TODO:
+// If there is unprocessed data from previous buffer - need to adjust timestamp - but
+// timestamp adjustment should only be done once (if multiple PCM input buffers are received - prior to doing further processing)
+
+
 }
 
 

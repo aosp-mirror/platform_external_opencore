@@ -35,7 +35,9 @@
 #endif
 
 
-#define AMR_FRAME_LENGTH_IN_TIMESTAMP 20
+
+// frame length is 20 milliseconds i.e. 20000 omx ticks/microseconds
+#define AMR_FRAME_LENGTH_IN_TIMESTAMP 20000
 #define MAX_AMR_FRAME_SIZE 32
 #define MAX_NUM_OUTPUT_FRAMES_PER_BUFFER 10
 
@@ -58,6 +60,10 @@ class OmxAmrEncoder
                                 OMX_U32 aInBufSize,
                                 OMX_TICKS aInTimeStamp,
                                 OMX_TICKS* aOutTimeStamp);
+
+
+
+
 
     private:
 

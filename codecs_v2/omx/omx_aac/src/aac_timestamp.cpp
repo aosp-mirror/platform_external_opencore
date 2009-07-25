@@ -32,7 +32,7 @@ void AacTimeStampCalc::SetParameters(uint32 aFreq, uint32 aSamples)
 
 
 //Set the current timestamp equal to the input buffer timestamp
-void AacTimeStampCalc::SetFromInputTimestamp(uint32 aValue)
+void AacTimeStampCalc::SetFromInputTimestamp(OMX_TICKS aValue)
 {
     iCurrentTs = aValue;
     iCurrentSamples = 0;
@@ -41,19 +41,21 @@ void AacTimeStampCalc::SetFromInputTimestamp(uint32 aValue)
 
 void AacTimeStampCalc::UpdateTimestamp(uint32 aValue)
 {
+    // rollover is not considered. Since samples are reset to 0
+    // every time a new TS is applied to an output buffer - practically - rollover can't happen
     iCurrentSamples += aValue;
 }
 
 //Convert current samples into the output timestamp
-uint32 AacTimeStampCalc::GetConvertedTs()
+OMX_TICKS AacTimeStampCalc::GetConvertedTs()
 {
-    uint32 Value = iCurrentTs;
+    OMX_TICKS Value = iCurrentTs;
 
-    //Formula used: TS in ms = (samples * 1000/sampling_freq)
+    //Formula used: TS in OMX ticks = (samples * 10^6/sampling_freq)
     //Rounding added (add 0.5 to the result), extra check for divide by zero
     if (0 != iSamplingFreq)
     {
-        Value = iCurrentTs + (iCurrentSamples * 1000 + (iSamplingFreq / 2)) / iSamplingFreq;
+        Value = iCurrentTs + (((OMX_TICKS)iCurrentSamples * 1000000 + (iSamplingFreq >> 1)) / iSamplingFreq);
     }
 
     iCurrentTs = Value;
@@ -64,26 +66,26 @@ uint32 AacTimeStampCalc::GetConvertedTs()
 
 
 /* Do not update iCurrentTs value, just calculate & return the current timestamp */
-uint32 AacTimeStampCalc::GetCurrentTimestamp()
+OMX_TICKS AacTimeStampCalc::GetCurrentTimestamp()
 {
-    uint32 Value = iCurrentTs;
+    OMX_TICKS Value = iCurrentTs;
 
     if (0 != iSamplingFreq)
     {
-        Value = iCurrentTs + (iCurrentSamples * 1000 + (iSamplingFreq / 2)) / iSamplingFreq;
+        Value = iCurrentTs + (((OMX_TICKS)iCurrentSamples * 1000000 + (iSamplingFreq >> 1)) / iSamplingFreq);
     }
 
     return (Value);
 }
 
-//Calculate the timestamp of single frame
-uint32 AacTimeStampCalc::GetFrameDuration()
+//Calculate the duration of single frame (in omx ticks)
+OMX_TICKS AacTimeStampCalc::GetFrameDuration()
 {
-    uint32 Value = 0;
+    OMX_TICKS Value = 0;
 
     if (0 != iSamplingFreq)
     {
-        Value = (iSamplesPerFrame * 1000 + (iSamplingFreq / 2)) / iSamplingFreq;
+        Value = ((OMX_TICKS)iSamplesPerFrame * 1000000 + (iSamplingFreq >> 1)) / iSamplingFreq;
     }
 
     return (Value);
