@@ -73,6 +73,8 @@
 #define ANDROID_MIN_FRAME_RATE_FPS                 5
 #define ANDROID_MAX_FRAME_RATE_FPS                 20
 
+static const int32 MIN_VIDEO_BITRATE_SETTING = 192000;
+static const int32 MAX_VIDEO_BITRATE_SETTING = 420000;
 static const int32 MAX_AUDIO_BITRATE_SETTING = 320000; // Max bitrate??
 static const int32 MIN_AUDIO_BITRATE_SETTING = 1;      // Min bitrate??
 static const int32 DEFAULT_AUDIO_BITRATE_SETTING = 64000; // Default for all the other audio
@@ -315,6 +317,13 @@ private:
 
     PVMFStatus setParameter(const String8 &key, const String8 &value);
 
+    // Has no effect if called after video encoder is set
+    PVMFStatus setParamVideoEncodingBitrate(int64_t aVideoBitrate);
+
+    // Clips the intended video encoding bit rate so that it is within the
+    // supported range.
+    void clipVideoBitrate();
+
     // Used to map the incoming bitrate to the closest AMR bitrate
     bool MapAMRBitrate(int32 aAudioBitrate, PVMF_GSMAMR_Rate &anAMRBitrate);
 
@@ -355,6 +364,7 @@ private:
     int32            mSamplingRate;
     int32            mNumberOfChannels;
     int32            mAudio_bitrate_setting;
+    int32            mVideo_bitrate_setting;
 
     FILE*       ifpOutput;
 };
