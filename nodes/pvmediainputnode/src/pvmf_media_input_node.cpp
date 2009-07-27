@@ -132,10 +132,31 @@ OSCL_EXPORT_REF PVMFStatus PvmfMediaInputNode::ThreadLogoff()
 
     if (iMediaIOControl)
     {
+        //notify the media input component that peer cap-config is no longer usable
+        //we do this by calling setParameterSync with NULL
+        OsclMemAllocator alloc;
+        PvmiKvp kvp;
+        kvp.key = NULL;
+        uint32 keylen = oscl_strlen(PVMF_MEDIA_INPUT_NODE_CAP_CONFIG_INTERFACE_KEY) + 1; // +1 for \0
+        kvp.key = (PvmiKeyType)alloc.ALLOCATE(keylen);
+        if (kvp.key != NULL)
+        {
+            oscl_memset(kvp.key, 0, keylen);
+            oscl_strncpy(kvp.key,
+                         PVMF_MEDIA_INPUT_NODE_CAP_CONFIG_INTERFACE_KEY,
+                         keylen-1);
+            kvp.value.key_specific_value = NULL;
+            kvp.length = 1; //since we are just passing one pointer
+            kvp.capacity = kvp.length;
+            PvmiKvp* retKvp = NULL; // for return value
+            int32 err;
+            OSCL_TRY(err, iMediaIOConfig->setParametersSync(NULL, &kvp, 1, retKvp););
+            /* ignore the error for now */
+            alloc.deallocate((OsclAny*)(kvp.key));
+        }
         iMediaIOControl->ThreadLogoff();
         iMediaIOControl->disconnect(iMediaIOSession);
         //ignore any returned error.
-
         iMediaIOState = PvmfMediaInputNode::MIO_STATE_IDLE;
     }
 
@@ -412,9 +433,30 @@ OSCL_EXPORT_REF void PvmfMediaInputNode::RequestCompleted(const PVMFCmdResp& aRe
                 {
                     if (iMediaIOConfigPVI)
                     {
-
                         iMediaIOConfig = OSCL_STATIC_CAST(PvmiCapabilityAndConfig*, iMediaIOConfigPVI);
                         iMediaIOConfigPVI = NULL;
+                        //now attempt to provide the media input comp with the capconfig interface of the node
+                        OsclMemAllocator alloc;
+                        PvmiKvp kvp;
+                        kvp.key = NULL;
+                        uint32 keylen = oscl_strlen(PVMF_MEDIA_INPUT_NODE_CAP_CONFIG_INTERFACE_KEY) + 1; // +1 for \0
+                        kvp.key = (PvmiKeyType)alloc.ALLOCATE(keylen);
+                        if (kvp.key != NULL)
+                        {
+                            oscl_memset(kvp.key, 0, keylen);
+                            oscl_strncpy(kvp.key,
+                                         PVMF_MEDIA_INPUT_NODE_CAP_CONFIG_INTERFACE_KEY,
+                                         keylen-1);
+                            PvmiCapabilityAndConfig* capconfig = OSCL_STATIC_CAST(PvmiCapabilityAndConfig*, this);
+                            kvp.value.key_specific_value = (OsclAny*)(capconfig);
+                            kvp.length = 1; //since we are just passing one pointer
+                            kvp.capacity = kvp.length;
+                            PvmiKvp* retKvp = NULL; // for return value
+                            int32 err;
+                            OSCL_TRY(err, iMediaIOConfig->setParametersSync(NULL, &kvp, 1, retKvp););
+                            /* ignore the error for now */
+                            alloc.deallocate((OsclAny*)(kvp.key));
+                        }
                     }
                     else
                     {
