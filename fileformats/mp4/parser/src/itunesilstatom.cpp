@@ -1941,6 +1941,11 @@ ITunesILSTAtom::ITunesILSTAtom(MP4_FF_FILE *fp, uint32 size, uint32 type): Atom(
                 count -= _pITunesEncodedByAtom->getSize();
         }
 
+#if 0
+/* Disable this code for now, as there is an off-by-X bug in the free form atom
+ * parsing that causes subsequent atoms to be misparsed, which makes us not see
+ * metadata for some files purchased from the itunes music store
+ */
         else if (atomType == ITUNES_FREE_FORM_ATOM)
         {
 
@@ -2180,6 +2185,7 @@ ITunesILSTAtom::ITunesILSTAtom(MP4_FF_FILE *fp, uint32 size, uint32 type): Atom(
             } //End of While
 
         }
+#endif
         else if (atomType == ITUNES_ALBUM_ATOM)
         {
             PV_MP4_FF_NEW(fp->auditCB, ITunesAlbumAtom, (fp, atomsize, atomType), _pITunesAlbumAtom);
