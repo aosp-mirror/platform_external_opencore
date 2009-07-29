@@ -426,6 +426,36 @@ class PVMIDataStreamSyncInterface : public PVInterface
         }
 
         /**
+        * @brief Sets the data stream buffering capacity and trim margin.
+        *
+        * Currently, this is only implemented for the Memory Buffer Data
+        * Stream class (MBDS).
+        *
+        * Care should be taken when setting the capacity or trim margin of
+        * the MBDS for progressive playback to not set the capacity or trim
+        * margin higher than the socket node memory pool size.  Otherwise, the
+        * graph could deadlock with the socket node waiting for free memory
+        * fragments while the download manager waits for the MBDS to fill.
+        *
+        * The trim margin is the amount of data behind the read pointer that
+        * is kept in the cache for future reference.  The trim margin is
+        * useful when the data stream reader is randomly accessing the data
+        * stream contents.  If the reader only reads the data stream
+        * sequentially, the trim margin can be set to 0.
+        *
+        * @param[in]  aMinCapacity  Minimum capacity being requested.
+        * @param[in]  aTrimMargin   Amount of stale data to keep cached.
+        *
+        * @return PVDS_NOT_SUPPORTED   if data stream is not an MBDS.
+        *         PVDS_SUCCESS         if successful.
+        */
+        virtual PvmiDataStreamStatus SetBufferingCapacityAndTrimMargin(uint32 aMinCapacity, uint32 aTrimMargin)
+        {
+            //This method is currently only supported by Memory Buffer Data Streams.
+            return PVDS_NOT_SUPPORTED;
+        }
+
+        /**
         * Returns the data stream buffering capacity, if it is a memory buffer data stream (MBDS)
         * Used in progressive playback where MBDS has a finite cache size
         *
@@ -436,6 +466,23 @@ class PVMIDataStreamSyncInterface : public PVInterface
         {
             return 0;
         }
+
+
+        /**
+        * @brief Returns the data stream buffering trim margin; the amount of
+        *        "stale" data (data behind the current read position) that is
+        *        kept cached.
+        *
+        * Currently only implemented for Memory Buffer Data Streams (MBDS).
+        *
+        * @return buffering trim margin
+        *
+        */
+        virtual uint32 QueryBufferingTrimMargin()
+        {
+            return 0;
+        }
+
 
 
         /**
