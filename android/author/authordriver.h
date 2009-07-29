@@ -67,11 +67,18 @@
 // FIXME:
 // Platform-specic and temporal workaround to prevent video size
 // from being set too large
+
 #define ANDROID_MAX_ENCODED_FRAME_WIDTH            352
 #define ANDROID_MAX_ENCODED_FRAME_HEIGHT           288
+#define ANDROID_MIN_ENCODED_FRAME_WIDTH            176
+#define ANDROID_MIN_ENCODED_FRAME_HEIGHT           144
 
 #define ANDROID_MIN_FRAME_RATE_FPS                 5
 #define ANDROID_MAX_FRAME_RATE_FPS                 20
+
+static const int32 DEFAULT_VIDEO_FRAME_RATE  = 20;
+static const int32 DEFAULT_VIDEO_WIDTH       = 176;
+static const int32 DEFAULT_VIDEO_HEIGHT      = 144;
 
 static const int32 MIN_VIDEO_BITRATE_SETTING = 192000;
 static const int32 MAX_VIDEO_BITRATE_SETTING = 420000;
@@ -320,9 +327,13 @@ private:
     // Has no effect if called after video encoder is set
     PVMFStatus setParamVideoEncodingBitrate(int64_t aVideoBitrate);
 
-    // Clips the intended video encoding bit rate so that it is within the
-    // supported range.
+    // Clips the intended video encoding bit rate, frame rate, frame size
+    // (width and height) so that it is within the supported range.
     void clipVideoBitrate();
+    void clipVideoFrameRate();
+    void clipVideoFrameSize();
+    void clipVideoFrameWidth();
+    void clipVideoFrameHeight();
 
     // Used to map the incoming bitrate to the closest AMR bitrate
     bool MapAMRBitrate(int32 aAudioBitrate, PVMF_GSMAMR_Rate &anAMRBitrate);

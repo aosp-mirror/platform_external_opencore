@@ -582,22 +582,8 @@ void AuthorDriver::handleSetVideoSize(set_video_size_command *ac)
         return;
     }
 
-    // FIXME:
-    // Platform-specific and temporal workaround to prevent video size from being set too large
-    if (ac->width > ANDROID_MAX_ENCODED_FRAME_WIDTH) {
-        LOGW("Intended width(%d) exceeds the max allowed width(%d). Max width is used instead.", ac->width, ANDROID_MAX_ENCODED_FRAME_WIDTH);
-        mVideoWidth = ANDROID_MAX_ENCODED_FRAME_WIDTH;
-    } else {
-        mVideoWidth = ac->width;
-    }
-    if (ac->height > ANDROID_MAX_ENCODED_FRAME_HEIGHT) {
-        LOGW("Intended height(%d) exceeds the max allowed height(%d). Max height is used instead.", ac->height, ANDROID_MAX_ENCODED_FRAME_HEIGHT);
-        mVideoHeight = ANDROID_MAX_ENCODED_FRAME_HEIGHT;
-    } else {
-        mVideoHeight = ac->height;
-    }
-
-    ((AndroidCameraInput *)mVideoInputMIO)->SetFrameSize(mVideoWidth, mVideoHeight);
+    mVideoWidth = ac->width;
+    mVideoHeight = ac->height;
     FinishNonAsyncCommand(ac);
 }
 
@@ -609,16 +595,7 @@ void AuthorDriver::handleSetVideoFrameRate(set_video_frame_rate_command *ac)
         return;
     }
 
-    // FIXME:
-    // Platform-specific and temporal workaround to accept a reasonable frame rate range
-    if (ac->rate < ANDROID_MIN_FRAME_RATE_FPS) {
-    mVideoFrameRate = ANDROID_MIN_FRAME_RATE_FPS;
-    } else if (ac->rate > ANDROID_MAX_FRAME_RATE_FPS) {
-    mVideoFrameRate = ANDROID_MAX_FRAME_RATE_FPS;
-    } else {
     mVideoFrameRate = ac->rate;
-    }
-    ((AndroidCameraInput *)mVideoInputMIO)->SetFrameRate(mVideoFrameRate);
     FinishNonAsyncCommand(ac);
 }
 
@@ -928,6 +905,23 @@ void AuthorDriver::handleSetParameters(set_parameters_command *ac) {
 void AuthorDriver::handlePrepare(author_command *ac)
 {
     LOGV("handlePrepare");
+
+    // Set video encoding frame rate and video frame size if necessary
+    if (mVideoFrameRate == 0) {
+        mVideoFrameRate = DEFAULT_VIDEO_FRAME_RATE;
+    }
+    clipVideoFrameRate();
+    ((AndroidCameraInput *)mVideoInputMIO)->SetFrameRate(mVideoFrameRate);
+
+    if (mVideoWidth == 0) {
+        mVideoWidth = DEFAULT_VIDEO_WIDTH;
+    }
+    if (mVideoHeight == 0) {
+        mVideoHeight = DEFAULT_VIDEO_HEIGHT;
+    }
+    clipVideoFrameSize();
+    ((AndroidCameraInput *)mVideoInputMIO)->SetFrameSize(mVideoWidth, mVideoHeight);
+
     int error = 0;
     OSCL_TRY(error, mAuthor->Init(ac));
     OSCL_FIRST_CATCH_ANY(error, commandFailed(ac));
@@ -1165,13 +1159,13 @@ static bool getPropertyKeyForVideoEncoder(video_encoder encoder, char* name, siz
 {
     switch(encoder) {
         case VIDEO_ENCODER_MPEG_4_SP:
-            strncpy(name, "ro.media.enc.vid.m4v", len);
+            strncpy(name, "ro.media.enc.vid.m4v.", len);
             return true;
         case VIDEO_ENCODER_H264:
-            strncpy(name, "ro.media.enc.vid.h264", len);
+            strncpy(name, "ro.media.enc.vid.h264.", len);
             return true;
         case VIDEO_ENCODER_H263:
-            strncpy(name, "ro.media.enc.vid.h263", len);
+            strncpy(name, "ro.media.enc.vid.h263.", len);
             return true;
         default:
             LOGE("Failed to get system property key for video encoder(%d)", encoder);
@@ -1179,26 +1173,59 @@ static bool getPropertyKeyForVideoEncoder(video_encoder encoder, char* name, siz
     }
 }
 
-// Retrieves the advertised video bit rate range from system properties for the given encoder.
-// If the encoder is not found, or the bit rate range is not listed as a system property,
-// default hardcoded min and max bit rate will be used.
-static void getSupportedVideoBitRateRange(video_encoder encoder, int64& minBitRateBps, int64& maxBitRateBps)
+// Retrieves the advertised video property range from system properties for the given encoder.
+// If the encoder is not found, or the video property is not listed as a system property,
+// default hardcoded min and max values will be used.
+static void getSupportedPropertyRange(video_encoder encoder, const char* property, int64& min, int64& max)
 {
     char videoEncoderName[PROPERTY_KEY_MAX];
     bool propertyKeyExists = getPropertyKeyForVideoEncoder(encoder, videoEncoderName, PROPERTY_KEY_MAX - 1);
     if (propertyKeyExists) {
-        const char* bps = ".bps";  // Specify the specific property for the given video encoder
-        if ((strlen(videoEncoderName) + strlen(bps) + 1) < PROPERTY_KEY_MAX) {  // Valid key length
-            strcat(videoEncoderName, bps);
+        if ((strlen(videoEncoderName) + strlen(property) + 1) < PROPERTY_KEY_MAX) {  // Valid key length
+            strcat(videoEncoderName, property);
         } else {
             propertyKeyExists = false;
         }
     }
-    if (!propertyKeyExists || !getMinAndMaxValuesOfProperty(videoEncoderName, minBitRateBps, maxBitRateBps)) {
-        minBitRateBps = MIN_VIDEO_BITRATE_SETTING;
-        maxBitRateBps = MAX_VIDEO_BITRATE_SETTING;
-        LOGW("Use default video bit rate range [%lld %lld]", minBitRateBps, maxBitRateBps);
+    if (!propertyKeyExists || !getMinAndMaxValuesOfProperty(videoEncoderName, min, max)) {
+        if (strcmp(property, "bps") == 0) {
+            min = MIN_VIDEO_BITRATE_SETTING;
+            max = MAX_VIDEO_BITRATE_SETTING;
+        } else if (strcmp(property, "fps") == 0) {
+            min = ANDROID_MIN_FRAME_RATE_FPS;
+            max = ANDROID_MAX_FRAME_RATE_FPS;
+        } else if (strcmp(property, "width") == 0) {
+            min = ANDROID_MIN_ENCODED_FRAME_WIDTH;
+            max = ANDROID_MAX_ENCODED_FRAME_WIDTH;
+        } else if (strcmp(property, "height") == 0) {
+            min = ANDROID_MIN_ENCODED_FRAME_HEIGHT;
+            max = ANDROID_MAX_ENCODED_FRAME_HEIGHT;
+        } else {
+            LOGE("Unknown video property: %s", property);
+            min = max = 0;
+        }
+        LOGW("Use default video %s range [%lld %lld]", property, min, max);
     }
+}
+
+static void getSupportedVideoBitRateRange(video_encoder encoder, int64& minBitRateBps, int64& maxBitRateBps)
+{
+    getSupportedPropertyRange(encoder, "bps", minBitRateBps, maxBitRateBps);
+}
+
+static void getSupportedVideoFrameRateRange(video_encoder encoder, int64& minFrameRateFps, int64& maxFrameRateFps)
+{
+    getSupportedPropertyRange(encoder, "fps", minFrameRateFps, maxFrameRateFps);
+}
+
+static void getSupportedVideoFrameWidthRange(video_encoder encoder, int64& minWidth, int64& maxWidth)
+{
+    getSupportedPropertyRange(encoder, "width", minWidth, maxWidth);
+}
+
+static void getSupportedVideoFrameHeightRange(video_encoder encoder, int64& minHeight, int64& maxHeight)
+{
+    getSupportedPropertyRange(encoder, "height", minHeight, maxHeight);
 }
 
 // Clips the intented video encoding rate so that it is
@@ -1215,6 +1242,51 @@ void AuthorDriver::clipVideoBitrate()
         LOGW("Intended video encoding bit rate (%d bps) is too large and will be set to (%lld bps)", mVideo_bitrate_setting, maxBitrate);
         mVideo_bitrate_setting = maxBitrate;
     }
+}
+
+void AuthorDriver::clipVideoFrameRate()
+{
+    int64 minFrameRate, maxFrameRate;
+    getSupportedVideoFrameRateRange(mVideoEncoder, minFrameRate, maxFrameRate);
+    if (mVideoFrameRate < minFrameRate) {
+        LOGW("Intended video encoding frame rate (%d fps) is too small and will be set to (%lld fps)", mVideoFrameRate, minFrameRate);
+        mVideoFrameRate = minFrameRate;
+    } else if (mVideoFrameRate > maxFrameRate) {
+        LOGW("Intended video encoding frame rate (%d fps) is too large and will be set to (%lld fps)", mVideoFrameRate, maxFrameRate);
+        mVideoFrameRate = maxFrameRate;
+    }
+}
+
+void AuthorDriver::clipVideoFrameWidth()
+{
+    int64 minFrameWidth, maxFrameWidth;
+    getSupportedVideoFrameWidthRange(mVideoEncoder, minFrameWidth, maxFrameWidth);
+    if (mVideoWidth < minFrameWidth) {
+        LOGW("Intended video encoding frame width (%d) is too small and will be set to (%lld)", mVideoWidth, minFrameWidth);
+        mVideoWidth = minFrameWidth;
+    } else if (mVideoWidth > maxFrameWidth) {
+        LOGW("Intended video encoding frame width (%d) is too large and will be set to (%lld)", mVideoWidth, maxFrameWidth);
+        mVideoWidth = maxFrameWidth;
+    }
+}
+
+void AuthorDriver::clipVideoFrameHeight()
+{
+    int64 minFrameHeight, maxFrameHeight;
+    getSupportedVideoFrameHeightRange(mVideoEncoder, minFrameHeight, maxFrameHeight);
+    if (mVideoHeight < minFrameHeight) {
+        LOGW("Intended video encoding frame height (%d) is too small and will be set to (%lld)", mVideoHeight, minFrameHeight);
+        mVideoHeight = minFrameHeight;
+    } else if (mVideoHeight > maxFrameHeight) {
+        LOGW("Intended video encoding frame height (%d) is too large and will be set to (%lld)", mVideoHeight, maxFrameHeight);
+        mVideoHeight = maxFrameHeight;
+    }
+}
+
+void AuthorDriver::clipVideoFrameSize()
+{
+    clipVideoFrameWidth();
+    clipVideoFrameHeight();
 }
 
 void AuthorDriver::CommandCompleted(const PVCmdResponse& aResponse)
