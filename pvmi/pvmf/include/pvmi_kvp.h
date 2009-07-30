@@ -453,6 +453,11 @@ class PvmfAssetInfo3GPPLocationStruct
 // Key for signalling max number of outstanding media msgs
 #define PVMF_DATAPATH_PORT_MAX_NUM_MEDIA_MSGS_KEY "x-pvmf/datapath/port/max-num-media-msgs;valtype=uint32"
 
+// Key for media input node to provide its cap-config interface to media input compnent
+#define PVMF_MEDIA_INPUT_NODE_CAP_CONFIG_INTERFACE_KEY "x-pvmf/media-input-node/cap-config-interface;valtype=key_specific_value"
+
+// Key for media output node to provide its cap-config interface to media output compnent
+#define PVMF_MEDIA_OUTPUT_NODE_CAP_CONFIG_INTERFACE_KEY "x-pvmf/media-output-node/cap-config-interface;valtype=key_specific_value"
 
 // Keys for media output components -- Audio
 //

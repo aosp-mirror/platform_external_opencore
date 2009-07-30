@@ -2343,17 +2343,7 @@ PVMFStatus PVMp4FFComposerNode::ProcessIncomingMsg(PVMFPortInterface* aPort)
             {
                 iTrackId_Text = port->GetTrackId();
                 iformat_text = port->GetFormat();
-                OsclRefCounterMemFrag textconfiginfo;
-
-                if (mediaDataPtr->getFormatSpecificInfo(textconfiginfo) == false ||
-                        textconfiginfo.getMemFragSize() == 0)
-                {
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
-                                    (0, "PVMp4FFComposerNode::ProcessIncomingMsg: Error - VOL Header not available"));
-                    return PVMFFailure;
-                }
-                int32* pVal = (int32*)textconfiginfo.getMemFragPtr();
-                iText_sdIndex = *pVal;
+                GetTextSDIndex(mediaDataPtr->getSeqNum(), iText_sdIndex);
             }
             if (((port->GetFormat() == PVMF_MIME_AMR_IETF) ||
                     (port->GetFormat() == PVMF_MIME_AMRWB_IETF)) && mediaDataPtr->getErrorsFlag())
@@ -3150,3 +3140,22 @@ int32 PVMp4FFComposerNode::StoreCurrentCommand(PVMp4FFCNCmdQueue& aCurrentCmd, P
                         );
     return err;
 }
+
+void PVMp4FFComposerNode::GetTextSDIndex(uint32 aSampleNum, int32& aIndex)
+{
+    //default index is zero
+    aIndex = 0;
+    Oscl_Vector<PVA_FF_TextSampleDescInfo*, OsclMemAllocator>::iterator it;
+    for (it = textdecodervector.begin(); it != textdecodervector.end(); it++)
+    {
+        if ((aSampleNum >= (*it)->start_sample_num) &&
+                (aSampleNum <= (*it)->end_sample_num))
+        {
+            aIndex = (*it)->sdindex;
+            break;
+        }
+    }
+}
+
+
+
