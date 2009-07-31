@@ -396,7 +396,11 @@ class PVMFMemoryBufferReadDataStreamImpl : public PVMIDataStreamSyncInterface
 
         OSCL_IMPORT_REF PvmiDataStreamStatus SetSourceRequestObserver(PvmiDataStreamRequestObserver& aObserver);
 
+        OSCL_IMPORT_REF PvmiDataStreamStatus SetBufferingCapacityAndTrimMargin(uint32 aMinCapacity, uint32 aTrimMargin);
+
         OSCL_IMPORT_REF uint32 QueryBufferingCapacity();
+
+        OSCL_IMPORT_REF uint32 QueryBufferingTrimMargin();
 
         void SourceRequestCompleted(const PVMFCmdResp& aResponse)
         {
@@ -516,7 +520,11 @@ class PVMFMemoryBufferWriteDataStreamImpl : public PVMIDataStreamSyncInterface
 
         OSCL_IMPORT_REF PvmiDataStreamStatus MakePersistent(int32 aOffset, uint32 aSize);
 
+        OSCL_IMPORT_REF PvmiDataStreamStatus SetBufferingCapacityAndTrimMargin(uint32 aMinCapacity, uint32 aTrimMargin);
+
         OSCL_IMPORT_REF uint32 QueryBufferingCapacity();
+
+        OSCL_IMPORT_REF uint32 QueryBufferingTrimMargin();
 
         OSCL_IMPORT_REF PvmiDataStreamStatus SetReadPointerPosition(PvmiDataStreamSession aSessionID, uint32 aFilePosition);
 
