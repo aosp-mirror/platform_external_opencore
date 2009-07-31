@@ -84,7 +84,11 @@ typedef enum
 #define ANDROID_DEFAULT_FRAME_HEIGHT       240
 #define ANDROID_DEFAULT_FRAME_RATE         20.0
 #define ANDROID_DEFAULT_I_FRAME_INTERVAL 1  // encode one I frame every 1 second.
+#ifdef SHOLES_PROPERTY_OVERRIDES
+#define ANDROID_VIDEO_FORMAT       PVMF_MIME_YUV422_INTERLEAVED_YUYV
+#else
 #define ANDROID_VIDEO_FORMAT       PVMF_MIME_YUV420
+#endif
 
 //FIXME mime string now
 /*
