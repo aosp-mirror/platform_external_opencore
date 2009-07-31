@@ -1418,7 +1418,6 @@ class PVMFOMXEncNode
         uint32 iErrorEncodeFlag;
         uint32 iErrorDataPathStall;
 #endif
-        bool bIsQCOMOmxComp;
 };
 
 

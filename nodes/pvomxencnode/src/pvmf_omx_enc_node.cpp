@@ -655,8 +655,7 @@ PVMFOMXEncNode::PVMFOMXEncNode(int32 aPriority) :
         iAvgBitrateValue(0),
         iResetInProgress(false),
         iResetMsgSent(false),
-        iStopInResetMsgSent(false),
-        bIsQCOMOmxComp(false)
+        iStopInResetMsgSent(false)
 {
     iInterfaceState = EPVMFNodeCreated;
 
@@ -3848,10 +3847,6 @@ bool PVMFOMXEncNode::SendInputBufferToOMXComponent()
 
             iInPacketSeqNum = iDataIn->getSeqNum(); // remember input sequence number
             iInTimestamp = iDataIn->getTimestamp();
-            if (bIsQCOMOmxComp)
-            {
-                iInTimestamp *= 1000;
-            }
             iInDuration = iDataIn->getDuration();
             iInNumFrags = iDataIn->getNumFragments();
 
@@ -5241,10 +5236,6 @@ OMX_ERRORTYPE PVMFOMXEncNode::FillBufferDoneProcessing(OMX_OUT OMX_HANDLETYPE aC
                 MediaDataOut = MediaDataCurr;
                 // record timestamp, flags etc.
                 iTimeStampOut = aBuffer->nTimeStamp;
-                if (bIsQCOMOmxComp)
-                {
-                    iTimeStampOut /= 1000;
-                }
 
                 // check for Key Frame
                 iKeyFrameFlagOut = (aBuffer->nFlags & OMX_BUFFERFLAG_SYNCFRAME);
@@ -5795,16 +5786,6 @@ void PVMFOMXEncNode::DoPrepare(PVMFOMXEncNodeCommand& aCmd)
 
                 CommandComplete(iInputCommands, aCmd, PVMFErrResource);
                 return;
-            }
-
-            if ((0 == oscl_strcmp((char*)CompName, "OMX.qcom.video.encoder.h263"))
-                    || (0 == oscl_strcmp((char*)CompName, "OMX.qcom.video.encoder.mpeg4")))
-            {
-                bIsQCOMOmxComp = true;
-            }
-            else
-            {
-                bIsQCOMOmxComp = false;
             }
 
             // if the component supports multiple roles, call OMX_SetParameter
