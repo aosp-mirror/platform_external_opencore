@@ -41,8 +41,13 @@
 
 *********************************************************************************************/
 /* Set one of the following to 1  depending on your requirement */
+#ifdef SHOLES_PROPERTY_OVERRIDES
+#define ENDIAN_1 1
+#define ENDIAN_2 0
+#else
 #define ENDIAN_1 0
 #define ENDIAN_2 1
+#endif
 #define ENDIAN_3 0
 
 #endif // COLORCONV_CONFIG_H_INCLUDED
