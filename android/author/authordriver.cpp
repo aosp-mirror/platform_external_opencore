@@ -569,6 +569,24 @@ void AuthorDriver::handleSetVideoEncoder(set_video_encoder_command *ac)
     }
 
     mVideoEncoder = ac->ve;
+    // Set video encoding frame rate and video frame size only when the
+    // video input MIO is set.
+    if (mVideoInputMIO) {
+        if (mVideoFrameRate == 0) {
+            mVideoFrameRate = DEFAULT_VIDEO_FRAME_RATE;
+        }
+        clipVideoFrameRate();
+        ((AndroidCameraInput *)mVideoInputMIO)->SetFrameRate(mVideoFrameRate);
+
+        if (mVideoWidth == 0) {
+            mVideoWidth = DEFAULT_VIDEO_WIDTH;
+        }
+        if (mVideoHeight == 0) {
+            mVideoHeight = DEFAULT_VIDEO_HEIGHT;
+        }
+        clipVideoFrameSize();
+        ((AndroidCameraInput *)mVideoInputMIO)->SetFrameSize(mVideoWidth, mVideoHeight);
+    }
 
     OSCL_TRY(error, mAuthor->AddMediaTrack(*mVideoNode, iVideoEncoderMimeType, mSelectedComposer, mVideoEncoderConfig, ac));
     OSCL_FIRST_CATCH_ANY(error, commandFailed(ac));
@@ -905,26 +923,6 @@ void AuthorDriver::handleSetParameters(set_parameters_command *ac) {
 void AuthorDriver::handlePrepare(author_command *ac)
 {
     LOGV("handlePrepare");
-
-    // Set video encoding frame rate and video frame size only when the
-    // video input MIO is set.
-    if (mVideoInputMIO) {
-        if (mVideoFrameRate == 0) {
-            mVideoFrameRate = DEFAULT_VIDEO_FRAME_RATE;
-        }
-        clipVideoFrameRate();
-        ((AndroidCameraInput *)mVideoInputMIO)->SetFrameRate(mVideoFrameRate);
-
-        if (mVideoWidth == 0) {
-            mVideoWidth = DEFAULT_VIDEO_WIDTH;
-        }
-        if (mVideoHeight == 0) {
-            mVideoHeight = DEFAULT_VIDEO_HEIGHT;
-        }
-        clipVideoFrameSize();
-        ((AndroidCameraInput *)mVideoInputMIO)->SetFrameSize(mVideoWidth, mVideoHeight);
-    }
-
     int error = 0;
     OSCL_TRY(error, mAuthor->Init(ac));
     OSCL_FIRST_CATCH_ANY(error, commandFailed(ac));
