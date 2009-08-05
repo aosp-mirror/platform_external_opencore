@@ -50,7 +50,7 @@ class Mpeg4Decoder_OMX
 
         OMX_S32 GetVideoHeader(int32 aLayer, uint8 *aBuf, int32 aMaxSize);
 
-        OMX_S32 Mpeg4InitFlag;
+        OMX_BOOL Mpeg4InitCompleteFlag;
 
     private:
         MP4DecodingMode CodecMode;

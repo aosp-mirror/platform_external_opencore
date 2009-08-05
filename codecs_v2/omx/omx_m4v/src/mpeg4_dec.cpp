@@ -67,7 +67,7 @@ Mpeg4Decoder_OMX::Mpeg4Decoder_OMX()
 /* Initialization routine */
 OMX_ERRORTYPE Mpeg4Decoder_OMX::Mp4DecInit()
 {
-    Mpeg4InitFlag = 0;
+    Mpeg4InitCompleteFlag = OMX_FALSE;
     return OMX_ErrorNone;
 }
 
@@ -94,7 +94,7 @@ OMX_BOOL Mpeg4Decoder_OMX::Mp4DecodeVideo(OMX_U8* aOutBuffer, OMX_U32* aOutputLe
     OMX_S32 FrameSize, InputSize, InitSize;
     OMX_U8* pTempFrame, *pSrc[3];
 
-    if (Mpeg4InitFlag == 0)
+    if (Mpeg4InitCompleteFlag == OMX_FALSE)
     {
         if (!aMarkerFlag)
         {
@@ -109,7 +109,7 @@ OMX_BOOL Mpeg4Decoder_OMX::Mp4DecodeVideo(OMX_U8* aOutBuffer, OMX_U32* aOutputLe
                                              aInputBuf, (OMX_S32*)aInBufSize, MPEG4_MODE))
             return OMX_FALSE;
 
-        Mpeg4InitFlag = 1;
+        Mpeg4InitCompleteFlag = OMX_TRUE;
         aPortParam->format.video.nFrameWidth = iDisplay_Width;
         aPortParam->format.video.nFrameHeight = iDisplay_Height;
         if ((iDisplay_Width != OldWidth) || (iDisplay_Height != OldHeight))

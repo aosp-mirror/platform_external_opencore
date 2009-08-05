@@ -56,6 +56,7 @@ class AvcDecoder_OMX
             CurrInputTimestamp = 0;
             pDpbBuffer = NULL;
             FrameSize = 0;
+            iAvcActiveFlag = OMX_FALSE;
             oscl_memset(DisplayTimestampArray, 0, sizeof(OMX_TICKS)*AVC_DEC_TIMESTAMP_ARRAY_SIZE);
         };
 
@@ -69,6 +70,7 @@ class AvcDecoder_OMX
         OMX_TICKS       DisplayTimestampArray[AVC_DEC_TIMESTAMP_ARRAY_SIZE];
         OMX_TICKS       CurrInputTimestamp;
         OMX_U32         InputBytesConsumed;
+        OMX_BOOL        iAvcActiveFlag;
 
 
         OMX_ERRORTYPE AvcDecInit_OMX();

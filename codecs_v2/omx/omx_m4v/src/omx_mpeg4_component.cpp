@@ -599,8 +599,22 @@ void OpenmaxMpeg4AO::DecodeWithoutMarker()
         ipOutputBuffer->nOffset = 0;
 
         //If decoder returned error, report it to the client via a callback
-        if (!DecodeReturn && OMX_FALSE == iEndofStream)
+        if (!DecodeReturn && OMX_FALSE == ipMpegDecoderObject->Mpeg4InitCompleteFlag)
         {
+            // initialization error, stop playback
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OpenmaxMpeg4AO : DecodeWithoutMarker ErrorBadParameter callback send"));
+
+            (*(ipCallbacks->EventHandler))
+            (pHandle,
+             iCallbackData,
+             OMX_EventError,
+             OMX_ErrorBadParameter,
+             0,
+             NULL);
+        }
+        else if (!DecodeReturn && OMX_FALSE == iEndofStream)
+        {
+            // decoding error
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OpenmaxMpeg4AO : DecodeWithoutMarker ErrorStreamCorrupt callback send"));
 
             (*(ipCallbacks->EventHandler))
@@ -780,8 +794,22 @@ void OpenmaxMpeg4AO::DecodeWithMarker()
             ipOutputBuffer->nOffset = 0;
 
             //If decoder returned error, report it to the client via a callback
-            if (!DecodeReturn && OMX_FALSE == iEndofStream)
+            if (!DecodeReturn && OMX_FALSE == ipMpegDecoderObject->Mpeg4InitCompleteFlag)
             {
+                // initialization error, stop playback
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OpenmaxMpeg4AO : DecodeWithoutMarker ErrorBadParameter callback send"));
+
+                (*(ipCallbacks->EventHandler))
+                (pHandle,
+                 iCallbackData,
+                 OMX_EventError,
+                 OMX_ErrorBadParameter,
+                 0,
+                 NULL);
+            }
+            else if (!DecodeReturn && OMX_FALSE == iEndofStream)
+            {
+                // decode error
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OpenmaxMpeg4AO : DecodeWithMarker ErrorStreamCorrupt callback send"));
 
                 (*(ipCallbacks->EventHandler))
@@ -974,7 +1002,7 @@ OMX_ERRORTYPE OpenmaxMpeg4AO::ComponentInit()
                 Status = OMX_ErrorInsufficientResources;
             }
 
-            ipMpegDecoderObject->Mpeg4InitFlag = 1;
+            ipMpegDecoderObject->Mpeg4InitCompleteFlag = OMX_FALSE;
         }
         else
         {
