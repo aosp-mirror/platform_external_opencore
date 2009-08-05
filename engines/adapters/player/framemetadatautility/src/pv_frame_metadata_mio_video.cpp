@@ -911,6 +911,7 @@ PVMFStatus PVFMVideoMIO::CopyVideoFrameData(uint8* aSrcBuffer, uint32 aSrcSize, 
         if (iColorConverter && iCCRGBFormatType != aDestFormat)
         {
             DestroyYUVToRGBColorConverter(iColorConverter, iCCRGBFormatType);
+            iCCRGBFormatType = PVMF_MIME_FORMAT_UNKNOWN;
         }
 
         // Instantiate a new color converter if needed
@@ -928,7 +929,8 @@ PVMFStatus PVFMVideoMIO::CopyVideoFrameData(uint8* aSrcBuffer, uint32 aSrcSize, 
 
         if (!(iColorConverter->Init((aSrcWidth + 1)&(~1), (aSrcHeight + 1)&(~1), (aSrcWidth + 1)&(~1), aDestWidth, (aDestHeight + 1)&(~1), (aDestWidth + 1)&(~1), CCROTATE_NONE)))
         {
-            iColorConverter = NULL;
+            // Color converter failed Init
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFMVideoMIO::CopyVideoFrameData() iColorConverter failed init."));
             return PVMFFailure;
         }
 
@@ -941,7 +943,7 @@ PVMFStatus PVFMVideoMIO::CopyVideoFrameData(uint8* aSrcBuffer, uint32 aSrcSize, 
         {
             // Specified buffer does not have enough space
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFMVideoMIO::CopyVideoFrameData() Specified output RGB buffer does not have enough space. Needed %d Available %d", rgbbufsize, aDestSize));
-            return PVMFErrArgument;
+            return PVMFErrResource;
         }
 
         // Do the color conversion
