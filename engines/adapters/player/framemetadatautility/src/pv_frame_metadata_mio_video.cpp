@@ -20,7 +20,6 @@
 #include "pv_mime_string_utils.h"
 #include "oscl_snprintf.h"
 #include "cczoomrotationbase.h"
-#include "ccyuv422toyuv420.h"
 
 PVFMVideoMIO::PVFMVideoMIO() :
         OsclTimerObject(OsclActiveObject::EPriorityNominal, "PVFMVideoMIO")
@@ -78,6 +77,8 @@ void PVFMVideoMIO::InitData()
     iInputFormatCapability.push_back(PVMF_MIME_RGB12);
     iInputFormatCapability.push_back(PVMF_MIME_RGB16);
     iInputFormatCapability.push_back(PVMF_MIME_RGB24);
+
+    iYUV422toYUV420ColorConvert = NULL;
 }
 
 
@@ -130,6 +131,11 @@ PVFMVideoMIO::~PVFMVideoMIO()
     if (iColorConverter)
     {
         DestroyYUVToRGBColorConverter(iColorConverter, iCCRGBFormatType);
+    }
+
+    if (iYUV422toYUV420ColorConvert)
+    {
+        DestroyYUV422toYUV420ColorConvert();
     }
 }
 
@@ -827,58 +833,61 @@ PVMFStatus PVFMVideoMIO::CopyVideoFrameData(uint8* aSrcBuffer, uint32 aSrcSize, 
     if (aSrcBuffer == NULL || aSrcSize == 0 || aSrcFormat == PVMF_MIME_FORMAT_UNKNOWN ||
             aDestBuffer == NULL || aDestSize == 0 || aDestFormat == PVMF_MIME_FORMAT_UNKNOWN)
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFMVideoMIO::CopyVideoFrameData() Color converter instantiation did a leave"));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFMVideoMIO::CopyVideoFrameData() bad input arguments."));
         return PVMFErrArgument;
     }
 
     if ((iVideoSubFormat == PVMF_MIME_YUV422_INTERLEAVED_UYVY) &&
             (aDestFormat == PVMF_MIME_YUV420))
     {
-        int32 leavecode = 0;
-        CCYUV422toYUV420 *yuv_convert = NULL;
+        // Source is YUV 4:2:2 and dest is YUV 4:2:0
 
-        OSCL_TRY(leavecode, yuv_convert = (CCYUV422toYUV420*) CCYUV422toYUV420::New());
-
-        OSCL_FIRST_CATCH_ANY(leavecode,
-                             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFMVideoMIO::CopyVideoFrameData() YUV Color converter instantiation did a leave"));
-                             return PVMFErrNoResources;
-                            );
-
-        if (!(yuv_convert->Init((aSrcWidth + 1)&(~1), (aSrcHeight + 1)&(~1), (aSrcWidth + 1)&(~1),
-                                (aSrcWidth + 1)&(~1), (aSrcHeight + 1)&(~1), (aSrcWidth + 1)&(~1),
-                                CCROTATE_NONE)))
+        PVMFStatus status;
+        uint32 yuvbufsize;
+        if (!iYUV422toYUV420ColorConvert)
         {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFMVideoMIO::CopyVideoFrameData() YUV Color converter Init failed"));
-            OSCL_DELETE(yuv_convert);
-            return PVMFFailure;
+            status = CreateYUV422toYUV420ColorConvert();
+            if (status != PVMFSuccess)
+            {
+                // Failed to create the CC!
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFMVideoMIO::CopyVideoFrameData() Failed to create iYUV422toYUV420ColorConvert."));
+                return status;
+            }
         }
 
-        uint32 yuvbufsize = (uint32)(yuv_convert->GetOutputBufferSize());
+        // Init CC
+        status = InitYUV422toYUV420ColorConvert(aSrcWidth, aSrcHeight, aDestWidth, aDestHeight);
+        if (status != PVMFSuccess)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFMVideoMIO::CopyVideoFrameData() iYUV422toYUV420ColorConvert Init failed"));
+            return status;
+        }
+
+        yuvbufsize = (uint32)(iYUV422toYUV420ColorConvert->GetOutputBufferSize());
+
+        // Is the CC destination buffer smaller that the expected destination buffer size?
         if (yuvbufsize > aDestSize)
         {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFMVideoMIO::CopyVideoFrameData() Specified output YUV buffer does not have enough space. Needed %d Available %d", yuvbufsize, aDestSize));
-            // Specified buffer does not have enough space
-            OSCL_DELETE(yuv_convert);
-            return PVMFErrArgument;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFMVideoMIO::CopyVideoFrameData() Specified output YUV buffer does not have enough space. Needed %d Available %d.", yuvbufsize, aDestSize));
+            return PVMFErrResource;
         }
 
-        if (yuv_convert->Convert(aSrcBuffer, aDestBuffer) == 0)
+        // Convert
+        if (iYUV422toYUV420ColorConvert->Convert(aSrcBuffer, aDestBuffer) == 0)
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFMVideoMIO::CopyVideoFrameData() YUV Color conversion failed"));
-            OSCL_DELETE(yuv_convert);
             return PVMFErrResource;
         }
 
         // Save the YUV frame size
         aDestSize = yuvbufsize;
-        OSCL_DELETE(yuv_convert);
     }
     else if (aSrcFormat == aDestFormat)
     {
         // Same format so direct copy
         if (aDestSize < aSrcSize)
         {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFMVideoMIO::CopyVideoFrameData() Color converter instantiation did a leave"));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFMVideoMIO::CopyVideoFrameData() destination and source size differ"));
             return PVMFErrArgument;
         }
 
@@ -1428,4 +1437,33 @@ void PVFMVideoMIO::convertYUV420SPtoYUV420(void* src, void* dst, uint32 len)
     while (--count);
 }
 
+PVMFStatus PVFMVideoMIO::CreateYUV422toYUV420ColorConvert()
+{
+    int32 leavecode = 0;
+    OSCL_TRY(leavecode, iYUV422toYUV420ColorConvert = (CCYUV422toYUV420*) CCYUV422toYUV420::New());
+
+    OSCL_FIRST_CATCH_ANY(leavecode,
+                     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFMVideoMIO::CreateYUV422toYUV420ColorConvert() YUV Color converter instantiation did a leave"));
+                     return PVMFErrNoResources;
+                     );
+    return PVMFSuccess;
+}
+
+PVMFStatus PVFMVideoMIO::InitYUV422toYUV420ColorConvert(uint32 aSrcWidth, uint32 aSrcHeight, uint32 aDestWidth, uint32 aDestHeight)
+{
+    if (!(iYUV422toYUV420ColorConvert->Init((aSrcWidth + 1)&(~1), (aSrcHeight + 1)&(~1),
+                   (aSrcWidth + 1)&(~1),(aDestWidth + 1)&(~1), (aDestHeight + 1)&(~1),
+                   (aDestWidth + 1)&(~1), CCROTATE_NONE)))
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFMVideoMIO::InitYUV422toYUV420ColorConvert: YUV Color converter Init failed"));
+        return PVMFFailure;
+    }
+    return PVMFSuccess;
+}
+
+void PVFMVideoMIO::DestroyYUV422toYUV420ColorConvert()
+{
+    OSCL_DELETE(iYUV422toYUV420ColorConvert);
+    iYUV422toYUV420ColorConvert = NULL;
+}
 
