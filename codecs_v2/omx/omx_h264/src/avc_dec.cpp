@@ -254,9 +254,22 @@ OMX_BOOL AvcDecoder_OMX::AvcDecodeVideo_OMX(OMX_U8* aOutBuffer, OMX_U32* aOutput
         aPortParam->format.video.nFrameWidth = crop_right - crop_left + 1;
         aPortParam->format.video.nFrameHeight = crop_bottom - crop_top + 1;
 
-        //if( (OldWidth != aPortParam->format.video.nFrameWidth) || (OldHeight !=   aPortParam->format.video.nFrameHeight))
-        // FORCE RESIZE ALWAYS FOR SPS
-        *aResizeFlag = OMX_TRUE;
+        OMX_U32 min_stride = ((aPortParam->format.video.nFrameWidth + 15) & (~15));
+        OMX_U32 min_sliceheight = ((aPortParam->format.video.nFrameHeight + 15) & (~15));
+
+
+        aPortParam->format.video.nStride = min_stride;
+        aPortParam->format.video.nSliceHeight = min_sliceheight;
+
+
+        // finally, compute the new minimum buffer size.
+
+        // Decoder components always output YUV420 format
+        aPortParam->nBufferSize = (aPortParam->format.video.nSliceHeight * aPortParam->format.video.nStride * 3) >> 1;
+
+
+        if ((OldWidth != aPortParam->format.video.nFrameWidth) || (OldHeight !=  aPortParam->format.video.nFrameHeight))
+            *aResizeFlag = OMX_TRUE;
 
         (*iFrameCount)++;
 

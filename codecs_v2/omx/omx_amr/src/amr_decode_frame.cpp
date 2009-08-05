@@ -275,13 +275,9 @@ void OmxAmrDecoder::GetStartPointsForIETFCombinedMode
 /* Decode function for all the input formats */
 OMX_BOOL OmxAmrDecoder::AmrDecodeFrame(OMX_S16* aOutputBuffer,
                                        OMX_U32* aOutputLength, OMX_U8** aInBuffer,
-                                       OMX_U32* aInBufSize, OMX_S32* aIsFirstBuffer,
-                                       OMX_BOOL* aResizeFlag)
+                                       OMX_U32* aInBufSize, OMX_S32* aIsFirstBuffer)
 {
     OMX_BOOL Status = OMX_TRUE;
-
-    *aResizeFlag = OMX_FALSE;
-
     OMX_S32 ByteOffset, ii;
     TXFrameType  TxFrame;
 
@@ -527,13 +523,6 @@ OMX_BOOL OmxAmrDecoder::AmrDecodeFrame(OMX_S16* aOutputBuffer,
     }
 
     (*aIsFirstBuffer)++;
-
-    //After decoding the first frame, modify all the input & output port settings
-    if (1 == *aIsFirstBuffer)
-    {
-        //Set the Resize flag to send the port settings changed callback
-        *aResizeFlag = OMX_TRUE;
-    }
 
     return Status;
 }

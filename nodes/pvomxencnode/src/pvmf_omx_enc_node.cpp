@@ -2170,8 +2170,11 @@ bool PVMFOMXEncNode::NegotiateVideoComponentParameters()
         return false;
     }
 
-    //Set the input buffer size to the encoder component
-    iParamPort.nBufferSize = iOMXComponentInputBufferSize;
+    //The input buffer size is a read-only parameter and the encoder component needs to adjust it.
+    // We (the client) determine the size of the buffers based on width/height -
+    // the component doesn't know width/height yet
+
+    //iParamPort.nBufferSize = iOMXComponentInputBufferSize;
 
     // set the width and height of video frame and input framerate
 
@@ -3258,8 +3261,14 @@ bool PVMFOMXEncNode::NegotiateAudioComponentParameters()
         return false;
     }
 
-    //Set the input buffer size to the encoder component
-    iParamPort.nBufferSize = iOMXComponentInputBufferSize;
+    // The buffer size is a read only parameter. If the requested size is larger than what we wish to allocate -
+    // we'll allocate what the component desires
+
+    if (iParamPort.nBufferSize > iOMXComponentInputBufferSize)
+    {
+        iOMXComponentInputBufferSize = iParamPort.nBufferSize;
+    }
+
 
     // set Encoding type
 
