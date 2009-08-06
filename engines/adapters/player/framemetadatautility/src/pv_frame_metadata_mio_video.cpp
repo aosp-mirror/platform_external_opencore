@@ -856,7 +856,7 @@ PVMFStatus PVFMVideoMIO::CopyVideoFrameData(uint8* aSrcBuffer, uint32 aSrcSize, 
         }
 
         // Init CC
-        status = InitYUV422toYUV420ColorConvert(aSrcWidth, aSrcHeight, aDestWidth, aDestHeight);
+        status = InitYUV422toYUV420ColorConvert(aSrcWidth, aSrcHeight, aSrcWidth, aSrcHeight);
         if (status != PVMFSuccess)
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFMVideoMIO::CopyVideoFrameData() iYUV422toYUV420ColorConvert Init failed"));
