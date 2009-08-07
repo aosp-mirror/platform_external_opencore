@@ -637,8 +637,22 @@ void OpenmaxAvcAO::DecodeWithoutMarker()
         iTempInputBufferLength = TempInLength;
 
         //If decoder returned error, report it to the client via a callback
-        if (!iDecodeReturn && OMX_FALSE == iEndofStream)
+        if (!iDecodeReturn && OMX_FALSE == ipAvcDec->iAvcActiveFlag)
         {
+            // initialization error
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OpenmaxAvcAO : DecodeWithoutMarker ErrorBadParameter callback send"));
+
+            (*(ipCallbacks->EventHandler))
+            (pHandle,
+             iCallbackData,
+             OMX_EventError,
+             OMX_ErrorBadParameter,
+             0,
+             NULL);
+        }
+        else if (!iDecodeReturn && OMX_FALSE == iEndofStream)
+        {
+            // decoding error
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OpenmaxAvcAO : DecodeWithoutMarker ErrorStreamCorrupt callback send"));
 
             (*(ipCallbacks->EventHandler))
@@ -842,8 +856,22 @@ void OpenmaxAvcAO::DecodeWithMarker()
 
 
             //If decoder returned error, report it to the client via a callback
-            if (!iDecodeReturn && OMX_FALSE == iEndofStream)
+            if (!iDecodeReturn && OMX_FALSE == ipAvcDec->iAvcActiveFlag)
             {
+                // initialization error
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OpenmaxAvcAO : DecodeWithoutMarker ErrorBadParameter callback send"));
+
+                (*(ipCallbacks->EventHandler))
+                (pHandle,
+                 iCallbackData,
+                 OMX_EventError,
+                 OMX_ErrorBadParameter,
+                 0,
+                 NULL);
+            }
+            else if (!iDecodeReturn && OMX_FALSE == iEndofStream)
+            {
+                // decode error
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OpenmaxAvcAO : DecodeWithMarker ErrorStreamCorrupt callback send"));
 
                 (*(ipCallbacks->EventHandler))

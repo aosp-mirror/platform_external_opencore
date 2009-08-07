@@ -160,6 +160,8 @@ OMX_ERRORTYPE AvcDecoder_OMX::AvcDecInit_OMX()
     //Set up the cleanup object in order to do clean up work automatically
     pCleanObject = OSCL_NEW(AVCCleanupObject_OMX, (&AvcHandle));
 
+    iAvcActiveFlag = OMX_FALSE;
+
     return OMX_ErrorNone;
 }
 
@@ -271,6 +273,9 @@ OMX_BOOL AvcDecoder_OMX::AvcDecodeVideo_OMX(OMX_U8* aOutBuffer, OMX_U32* aOutput
     else if (AVC_NALTYPE_SLICE == (AVCNalUnitType) NalType ||
              AVC_NALTYPE_IDR == (AVCNalUnitType) NalType)
     {
+		if (!iAvcActiveFlag)
+			iAvcActiveFlag = OMX_TRUE;
+
         if ((Status = PVAVCDecodeSlice(&(AvcHandle), pNalBuffer, NalSize)) == AVCDEC_PICTURE_OUTPUT_READY)
         {
             FlushOutput_OMX(aOutBuffer, aOutputLength, aOutTimestamp, OldWidth, OldHeight);
