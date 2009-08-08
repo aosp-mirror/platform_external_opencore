@@ -112,6 +112,21 @@ OMX_BOOL Mpeg4Decoder_OMX::Mp4DecodeVideo(OMX_U8* aOutBuffer, OMX_U32* aOutputLe
         Mpeg4InitCompleteFlag = OMX_TRUE;
         aPortParam->format.video.nFrameWidth = iDisplay_Width;
         aPortParam->format.video.nFrameHeight = iDisplay_Height;
+
+        OMX_U32 min_stride = ((aPortParam->format.video.nFrameWidth + 15) & (~15));
+        OMX_U32 min_sliceheight = ((aPortParam->format.video.nFrameHeight + 15) & (~15));
+
+
+        aPortParam->format.video.nStride = min_stride;
+        aPortParam->format.video.nSliceHeight = min_sliceheight;
+
+
+        // finally, compute the new minimum buffer size.
+
+        // Decoder components always output YUV420 format
+        aPortParam->nBufferSize = (aPortParam->format.video.nSliceHeight * aPortParam->format.video.nStride * 3) >> 1;
+
+
         if ((iDisplay_Width != OldWidth) || (iDisplay_Height != OldHeight))
             *aResizeFlag = OMX_TRUE;
 
@@ -145,6 +160,20 @@ OMX_BOOL Mpeg4Decoder_OMX::Mp4DecodeVideo(OMX_U8* aOutBuffer, OMX_U32* aOutputLe
         iDisplay_Height = display_height;
         aPortParam->format.video.nFrameWidth = iDisplay_Width; // use non 16byte aligned values (display_width) for H263
         aPortParam->format.video.nFrameHeight = iDisplay_Height; // like in the case of M4V (PVGetVideoDimensions also returns display_width/height)
+
+        OMX_U32 min_stride = ((aPortParam->format.video.nFrameWidth + 15) & (~15));
+        OMX_U32 min_sliceheight = ((aPortParam->format.video.nFrameHeight + 15) & (~15));
+
+
+        aPortParam->format.video.nStride = min_stride;
+        aPortParam->format.video.nSliceHeight = min_sliceheight;
+
+        // finally, compute the new minimum buffer size.
+
+        // Decoder components always output YUV420 format
+        aPortParam->nBufferSize = (aPortParam->format.video.nSliceHeight * aPortParam->format.video.nStride * 3) >> 1;
+
+
         if ((iDisplay_Width != OldWidth) || (iDisplay_Height != OldHeight))
             *aResizeFlag = OMX_TRUE;
 
@@ -180,6 +209,19 @@ OMX_BOOL Mpeg4Decoder_OMX::Mp4DecodeVideo(OMX_U8* aOutBuffer, OMX_U32* aOutputLe
 
             aPortParam->format.video.nFrameWidth = iDisplay_Width;
             aPortParam->format.video.nFrameHeight = iDisplay_Height;
+
+            OMX_U32 min_stride = ((aPortParam->format.video.nFrameWidth + 15) & (~15));
+            OMX_U32 min_sliceheight = ((aPortParam->format.video.nFrameHeight + 15) & (~15));
+
+
+            aPortParam->format.video.nStride = min_stride;
+            aPortParam->format.video.nSliceHeight = min_sliceheight;
+
+            // finally, compute the new minimum buffer size.
+
+            // Decoder components always output YUV420 format
+            aPortParam->nBufferSize = (aPortParam->format.video.nSliceHeight * aPortParam->format.video.nStride * 3) >> 1;
+
             *aResizeFlag = OMX_TRUE;
         }
         FrameSize = (((iDisplay_Width + 15) >> 4) << 4) * (((iDisplay_Height + 15) >> 4) << 4);

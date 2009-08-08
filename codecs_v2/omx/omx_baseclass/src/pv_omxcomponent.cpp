@@ -4198,6 +4198,63 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OmxComponentVideo::SetParameter(
 
             oscl_memcpy(&ipPorts[PortIndex]->PortParam.format.video, &pPortDef->format.video, sizeof(OMX_VIDEO_PORTDEFINITIONTYPE));
 
+            // adjust the minimum buffer size of the uncompressed format based on width and height that may have been set
+            // In case of decoder - output port contains uncompressed data  - so outpu buffer size needs to be adjusted
+            // In case of encoder - input port contains uncompressed data - so input buffer size needs to be adjusted
+            // In both cases (encoder&decoder) - eCompressionFormat parameter on the appropriate port is set to OMX_VIDEO_CodingUnused
+
+            OMX_VIDEO_PORTDEFINITIONTYPE *videoformat = &(ipPorts[PortIndex]->PortParam.format.video);
+            if (videoformat->eCompressionFormat == OMX_VIDEO_CodingUnused)
+            {
+                // check if stride needs to be adjusted - stride should be at least the 16 byte aligned width
+                // WMV is special case that requires 4 bytes alignment
+
+                OMX_U32 min_stride = ((videoformat->nFrameWidth + 15) & (~15));
+                OMX_U32 min_sliceheight = ((videoformat->nFrameHeight + 15) & (~15));
+
+                if (oscl_strcmp("video/wmv", videoformat->cMIMEType) == 0)
+                {
+                    min_stride = ((videoformat->nFrameWidth + 3) & (~3));
+                    min_sliceheight = ((videoformat->nFrameHeight + 1) & (~1));
+                }
+
+
+                videoformat->nStride = min_stride;
+                videoformat->nSliceHeight = min_sliceheight;
+
+
+                // finally, compute the new minimum buffer size.
+
+                // Encoder components can have different formats - (rely on the client to provide the correct size)
+                if (OMX_PORT_OUTPUTPORT_INDEX == PortIndex)
+                {
+                    // Decoder components always output YUV420 format
+                    ipPorts[PortIndex]->PortParam.nBufferSize = (videoformat->nSliceHeight * videoformat->nStride * 3) >> 1;
+
+                }
+
+                if (OMX_PORT_INPUTPORT_INDEX == PortIndex)
+                {
+                    // Encoder components may have different formats
+                    if (videoformat->eColorFormat == OMX_COLOR_Format24bitRGB888)
+                    {
+                        ipPorts[PortIndex]->PortParam.nBufferSize = videoformat->nSliceHeight * videoformat->nStride * 3;
+                    }
+                    else if (videoformat->eColorFormat == OMX_COLOR_Format12bitRGB444)
+                    {
+                        ipPorts[PortIndex]->PortParam.nBufferSize = videoformat->nSliceHeight * videoformat->nStride * 2;
+
+                    }
+                    else if (videoformat->eColorFormat == OMX_COLOR_FormatYUV420Planar)
+                    {
+                        ipPorts[PortIndex]->PortParam.nBufferSize = (videoformat->nSliceHeight * videoformat->nStride * 3) >> 1;
+
+                    }
+
+                }
+
+            }
+
         }
         break;
 

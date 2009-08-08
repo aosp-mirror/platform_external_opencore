@@ -3636,7 +3636,7 @@ OMX_ERRORTYPE PVMFOMXBaseDecNode::EmptyBufferDoneProcessing(OMX_OUT OMX_HANDLETY
 
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "%s::EmptyBufferDoneProcessing: Release input buffer %x back to mempool", iName.Str(), pContext));
+                    (0, "%s::EmptyBufferDoneProcessing: Release input buffer %x back to mempool - pointing to buffer %x", iName.Str(), pContext, aBuffer->pBuffer));
 
     iInBufMemoryPool->deallocate((OsclAny *) pContext);
 
