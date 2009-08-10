@@ -335,6 +335,9 @@ private:
     void clipVideoFrameWidth();
     void clipVideoFrameHeight();
 
+    // Clips the intended AAC audio bitrate so that it is in the supported range
+    void clipAACAudioBitrate();
+
     // Used to map the incoming bitrate to the closest AMR bitrate
     bool MapAMRBitrate(int32 aAudioBitrate, PVMF_GSMAMR_Rate &anAMRBitrate);
 

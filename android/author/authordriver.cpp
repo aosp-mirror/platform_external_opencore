@@ -1290,6 +1290,28 @@ void AuthorDriver::clipVideoFrameSize()
     clipVideoFrameHeight();
 }
 
+void AuthorDriver::clipAACAudioBitrate()
+{
+    /*  ISO-IEC-13818-7 "Information technology.  Generic coding of moving
+     *   pictures and associated audio information.  Part 7: Advanced Audio
+     *   Coding (AAC)" section 8.2.2.3 defines a formula for the max audio
+     *   bitrate based on the audio sampling rate.
+     *   6144 (bit/block) / 1024 (samples/block) * sampling_freq * number_of_channels
+     *
+     *  This method is to calculate the max audio bitrate and clip the desired audio
+     *   bitrate if it exceeds its max.
+     */
+
+    int32 calculated_audio_bitrate = 6 * mSamplingRate * mNumberOfChannels;
+    if ((calculated_audio_bitrate > 0) &&
+        (mAudio_bitrate_setting > calculated_audio_bitrate))
+    {
+        // Clip the bitrate setting
+        LOGW("Intended audio bitrate (%d) exceeds max bitrate for sampling rate (%d).  Setting audio bitrate to its calculated max (%d)", mAudio_bitrate_setting, mSamplingRate, calculated_audio_bitrate);
+        mAudio_bitrate_setting = calculated_audio_bitrate;
+    }
+}
+
 void AuthorDriver::CommandCompleted(const PVCmdResponse& aResponse)
 {
     author_command *ac = (author_command *)aResponse.GetContext();
@@ -1363,6 +1385,7 @@ void AuthorDriver::CommandCompleted(const PVCmdResponse& aResponse)
                             // Audio bitrate wasnt set, use the default
                             mAudio_bitrate_setting = DEFAULT_AUDIO_BITRATE_SETTING;
                         }
+                        clipAACAudioBitrate();
                         config->SetOutputBitRate(mAudio_bitrate_setting);
                     }
                     break;
