@@ -2171,6 +2171,7 @@ void PVMp4FFComposerNode::DoReset(PVMp4FFCNCmd& aCmd)
     {
         if (iSampleInTrack)
         {
+            WriteDecoderSpecificInfo();
             status = RenderToFile();
             iSampleInTrack = false;
         }
@@ -3036,6 +3037,7 @@ PVMFStatus PVMp4FFComposerNode::CheckMaxFileSize(uint32 aFrameSize)
             // Finalized output file
             if (iSampleInTrack)
             {
+                WriteDecoderSpecificInfo();
                 iSampleInTrack = false;
                 if (RenderToFile() != PVMFSuccess)
                     return PVMFFailure;
@@ -3074,6 +3076,7 @@ PVMFStatus PVMp4FFComposerNode::CheckMaxDuration(uint32 aTimestamp)
             // Finalize output file
             if (iSampleInTrack)
             {
+                WriteDecoderSpecificInfo();
                 iSampleInTrack = false;
                 if (RenderToFile() != PVMFSuccess)
                     return PVMFFailure;
