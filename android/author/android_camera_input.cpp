@@ -1105,10 +1105,8 @@ PVMFStatus AndroidCameraInput::postWriteAsync(nsecs_t timestamp, const sp<IMemor
         return PVMFFailure;
     }
 
-    // release the received recording frame right way
-    // if recording has not been started yet or recording has already finished
     if((!iPeer) || (!isRecorderStarting()) || (iWriteState == EWriteBusy)) {
-        LOGV("Recording is not started, so recording frame is dropped");
+        LOGV("Recording is not ready (iPeer %p iState %d iWriteState %d), frame dropped", iPeer, iState, iWriteState);
         mCamera->releaseRecordingFrame(frame);
         return PVMFSuccess;
     }
