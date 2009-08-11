@@ -39,7 +39,8 @@ OSCL_DLL_ENTRY_POINT_DEFAULT()
 
 // camera MIO
 AndroidCameraInput::AndroidCameraInput()
-    : OsclTimerObject(OsclActiveObject::EPriorityNominal, "AndroidCameraInput")
+    : OsclTimerObject(OsclActiveObject::EPriorityNominal, "AndroidCameraInput"),
+    iWriteState(EWriteOK)
 {
     LOGV("constructor(%p)", this);
     iCmdIdCounter = 0;
@@ -469,14 +470,15 @@ void AndroidCameraInput::readComplete(PVMFStatus aStatus,
 void AndroidCameraInput::statusUpdate(uint32 status_flags)
 {
     LOGV("statusUpdate");
-    OSCL_UNUSED_ARG(status_flags);
-    // Ideally this routine should update the status of media input component.
-    // It should check then for the status. If media input buffer is consumed,
-    // media input object should be resheduled.
-    // Since the Media fileinput component is designed with single buffer, two
-    // asynchronous reads are not possible. So this function will not be
-    // requiredand hence not been implemented.
-    OSCL_LEAVE(OsclErrNotSupported);
+    if (status_flags != PVMI_MEDIAXFER_STATUS_WRITE)
+    {
+        OSCL_LEAVE(OsclErrNotSupported);
+    }
+    else
+    {
+        // Restart the flow of data
+        iWriteState = EWriteOK;
+    }
 }
 
 void AndroidCameraInput::cancelCommand(PVMFCommandId aCmdId)
@@ -737,6 +739,7 @@ void AndroidCameraInput::Run()
                 //release buffer immediately if write fails
                 mCamera->releaseRecordingFrame(data.iFrameBuffer);
                 iFrameQueue.erase(iFrameQueue.begin());
+                iWriteState = EWriteBusy;
                 break;
             }
         }
@@ -920,6 +923,7 @@ PVMFStatus AndroidCameraInput::DoStart()
 {
     LOGV("DoStart");
     PVMFStatus status = PVMFFailure;
+    iWriteState = EWriteOK;
     if (mCamera == NULL) {
         status = PVMFFailure;
     } else {
@@ -948,6 +952,7 @@ PVMFStatus AndroidCameraInput::DoReset()
 {
     LOGV("DoReset");
     iDataEventCounter = 0;
+    iWriteState = EWriteOK;
     if ( (iState == STATE_STARTED) || (iState == STATE_PAUSED) ) {
     if (mCamera != NULL) {
         mCamera->setListener(NULL);
@@ -980,6 +985,7 @@ PVMFStatus AndroidCameraInput::DoStop(const AndroidCameraInputCmd& aCmd)
 {
     LOGV("DoStop");
     iDataEventCounter = 0;
+    iWriteState = EWriteOK;
     if (mCamera != NULL) {
     mCamera->setListener(NULL);
     mCamera->stopRecording();
@@ -1101,7 +1107,7 @@ PVMFStatus AndroidCameraInput::postWriteAsync(nsecs_t timestamp, const sp<IMemor
 
     // release the received recording frame right way
     // if recording has not been started yet or recording has already finished
-    if((!iPeer) || (!isRecorderStarting()) ) {
+    if((!iPeer) || (!isRecorderStarting()) || (iWriteState == EWriteBusy)) {
         LOGV("Recording is not started, so recording frame is dropped");
         mCamera->releaseRecordingFrame(frame);
         return PVMFSuccess;

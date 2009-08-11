@@ -424,6 +424,9 @@ private:
 
     AndroidCameraInputState iState;
 
+    enum WriteState {EWriteBusy, EWriteOK};
+    WriteState iWriteState;
+
 };
 
 #ifdef HIDE_MIO_SYMBOLS
