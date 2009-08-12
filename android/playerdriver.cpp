@@ -76,9 +76,6 @@
 //for KMJ DRM Plugin
 #include "pvmf_local_data_source.h"
 #include "pvmf_recognizer_registry.h"
-#include "pvoma1_kmj_recognizer.h"
-#include "pvmf_cpmplugin_kmj_oma1.h"
-
 
 using namespace android;
 
