@@ -2438,7 +2438,7 @@ PVMFStatus PVID3ParCom::ConstructKvpKey(OSCL_String& aKey, PVID3FrameType aType,
             }
             break;
         case PV_ID3_FRAME_TRACK_NUMBER:
-            aKey += _STRLIT_CHAR(KVP_KEY_TRACK_NUMBER);
+            aKey += _STRLIT_CHAR(KVP_KEY_TRACKINFO_TRACK_NUMBER);
             if (aCharSet == PV_ID3_CHARSET_INVALID)
             {
                 // ID3 V1 track number is a uint32 value
@@ -3725,7 +3725,7 @@ PVMFStatus PVID3ParCom::GetFrameTypeFromKvp(const PvmiKvp& aKvp,
             aFrameID = _STRLIT_CHAR(ID3V2_2_FRAME_ID_ALBUM);
             aFrameType = PV_ID3_FRAME_ALBUM;
         }
-        else if (pv_mime_strcmp(aKvp.key, KVP_KEY_TRACK_NUMBER) == 0)
+        else if (pv_mime_strcmp(aKvp.key, KVP_KEY_TRACKINFO_TRACK_NUMBER) == 0)
         {
             aFrameID = _STRLIT_CHAR(ID3V2_2_FRAME_ID_TRACK_NUMBER);
             aFrameType = PV_ID3_FRAME_TRACK_NUMBER;
@@ -3818,7 +3818,7 @@ PVMFStatus PVID3ParCom::GetFrameTypeFromKvp(const PvmiKvp& aKvp,
             aFrameID = _STRLIT_CHAR(ID3_FRAME_ID_ALBUM);
             aFrameType = PV_ID3_FRAME_ALBUM;
         }
-        else if (pv_mime_strcmp(aKvp.key, KVP_KEY_TRACK_NUMBER) == 0)
+        else if (pv_mime_strcmp(aKvp.key, KVP_KEY_TRACKINFO_TRACK_NUMBER) == 0)
         {
             aFrameID = _STRLIT_CHAR(ID3_FRAME_ID_TRACK_NUMBER);
             aFrameType = PV_ID3_FRAME_TRACK_NUMBER;

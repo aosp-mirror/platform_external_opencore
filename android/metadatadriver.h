@@ -125,7 +125,7 @@ private:
     static const uint32 MAX_VIDEO_FRAME_SIZE = 640 * 480 * 4;  // Big enough?
     static const uint32 MAX_METADATA_STRING_LENGTH = 128;
     static const uint32 MAX_STRING_LENGTH = 512;
-    static const uint32 NUM_METADATA_KEYS = 21;
+    static const uint32 NUM_METADATA_KEYS = 22;
     static const char* METADATA_KEYS[NUM_METADATA_KEYS];
     static const char* ALBUM_ART_KEY;
 

@@ -281,10 +281,10 @@ static PVMFStatus reportM4ATags(IMpeg4File *mp4Input, MediaScannerClient& client
         }
     }
 
-    // Writer/Composer
+    // Writer
     if (oscl_UnicodeToUTF8(mp4Input->getITunesWriter().get_cstr(),
         mp4Input->getITunesWriter().get_size(),buffer,sizeof(buffer)) > 0)
-        if (!client.addStringTag("composer", buffer)) goto failure;
+        if (!client.addStringTag("writer", buffer)) goto failure;
 
     // Track Data
     trackNum = mp4Input->getITunesThisTrackNo();

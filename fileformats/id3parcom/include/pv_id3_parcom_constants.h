@@ -290,8 +290,8 @@
 #define KVP_KEY_YEAR_LEN 4
 #define KVP_KEY_COMMENT "comment"
 #define KVP_KEY_COMMENT_LEN 7
-#define KVP_KEY_TRACK_NUMBER "tracknumber"
-#define KVP_KEY_TRACK_NUMBER_LEN 11
+#define KVP_KEY_TRACKINFO_TRACK_NUMBER "track-info/track-number"
+#define KVP_KEY_TRACKINFO_TRACK_NUMBER_LEN 23
 #define KVP_KEY_GENRE "genre"
 #define KVP_KEY_GENRE_LEN 5
 #define KVP_KEY_COPYRIGHT "copyright"

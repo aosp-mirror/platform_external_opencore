@@ -31,7 +31,7 @@ using namespace android;
 const char* MetadataDriver::ALBUM_ART_KEY = "graphic";
 
 const char* MetadataDriver::METADATA_KEYS[NUM_METADATA_KEYS] = {
-        "tracknumber",
+        "track-info/track-number",
         "album",
         "artist",
         "author",
@@ -52,6 +52,7 @@ const char* MetadataDriver::METADATA_KEYS[NUM_METADATA_KEYS] = {
         "track-info/video/format",
         "track-info/video/height",
         "track-info/video/width",
+        "writer",
 };
 
 static void dumpkeystolog(PVPMetadataList list)
@@ -219,8 +220,6 @@ status_t MetadataDriver::extractMetadata(const char* key, char* value, uint32 va
                         return UNKNOWN_ERROR;
                     }
                     oscl_snprintf(value, length, "%s", mMetadataValueList[i].value.pChar_value);
-                    value[length] = '\0';
-                    LOGV("value of char: %s.", mMetadataValueList[i].value.pChar_value);
                     break;
                 }
                 case PVMI_KVPVALTYPE_WCHARPTR: {
@@ -230,43 +229,38 @@ status_t MetadataDriver::extractMetadata(const char* key, char* value, uint32 va
                         return UNKNOWN_ERROR;
                     }
                     length = oscl_UnicodeToUTF8(mMetadataValueList[i].value.pWChar_value, length, value, valueLength);
-                    value[length] = '\0';
-                    LOGV("value of wchar: %ls.", mMetadataValueList[i].value.pWChar_value);
                     break;
                 }
                 case PVMI_KVPVALTYPE_UINT32:
                     oscl_snprintf(value, valueLength, "%d", mMetadataValueList[i].value.uint32_value);
-                    value[valueLength] = '\0';
                     break;
 
                 case PVMI_KVPVALTYPE_INT32:
                     oscl_snprintf(value, valueLength, "%d", mMetadataValueList[i].value.int32_value);
-                    value[valueLength] = '\0';
                     break;
 
                 case PVMI_KVPVALTYPE_UINT8:
                     oscl_snprintf(value, valueLength, "%d", mMetadataValueList[i].value.uint8_value);
-                    value[valueLength] = '\0';
                     break;
 
                 case PVMI_KVPVALTYPE_FLOAT:
                     oscl_snprintf(value, valueLength, "%f", mMetadataValueList[i].value.float_value);
-                    value[valueLength] = '\0';
                     break;
 
                 case PVMI_KVPVALTYPE_DOUBLE:
                     oscl_snprintf(value, valueLength, "%f", mMetadataValueList[i].value.double_value);
-                    value[valueLength] = '\0';
                     break;
 
                 case PVMI_KVPVALTYPE_BOOL:
                     oscl_snprintf(value, valueLength, "%s", mMetadataValueList[i].value.bool_value? "true": "false");
-                    value[valueLength] = '\0';
                     break;
 
                 default:
                     return UNKNOWN_ERROR;
             }
+
+            LOGV("value is: %s.", value);
+
             break;
         }
     }
