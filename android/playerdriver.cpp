@@ -847,6 +847,19 @@ void PlayerDriver::handlePrepare(PlayerPrepare* command)
     OSCL_TRY(error, mPlayerCapConfig->setParametersSync(NULL, &iKVPSetAsync, 1, iErrorKVP));
     OSCL_TRY(error, mPlayer->Prepare(command));
     OSCL_FIRST_CATCH_ANY(error, commandFailed(command));
+
+    char value[PROPERTY_VALUE_MAX] = {"0"};
+    property_get("ro.com.android.disable_rtsp_nat", value, "0");
+    LOGV("disable natpkt - %s",value);
+    if (1 == atoi(value))
+    {
+        //disable firewall packet
+        iKeyStringSetAsync=_STRLIT_CHAR("x-pvmf/net/disable-firewall-packets;valtype=bool");
+        iKVPSetAsync.key=iKeyStringSetAsync.get_str();
+        iKVPSetAsync.value.bool_value = 1; //1 - disable
+        iErrorKVP=NULL;
+        OSCL_TRY(error,mPlayerCapConfig->setParametersSync(NULL, &iKVPSetAsync, 1, iErrorKVP));
+    }
 }
 
 void PlayerDriver::handleStart(PlayerStart* command)
