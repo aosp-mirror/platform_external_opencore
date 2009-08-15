@@ -305,6 +305,7 @@ class PlayerDriver :
     bool                    mSeekPending;
     bool                    mIsLiveStreaming;
     bool                    mEmulation;
+    bool                    mContentLengthKnown;
     void*                   mLibHandle;
 
     // video display surface
@@ -323,7 +324,8 @@ PlayerDriver::PlayerDriver(PVPlayer* pvPlayer) :
         mSeekComp(true),
         mSeekPending(false),
         mIsLiveStreaming(false),
-        mEmulation(false)
+        mEmulation(false),
+        mContentLengthKnown(false)
 {
     LOGV("constructor");
     mSyncSem = new OsclSemaphore();
@@ -459,6 +461,7 @@ void PlayerDriver::Run()
 {
     if (mDoLoop) {
         mEndOfData = false;
+        mContentLengthKnown = false;
         PVPPlaybackPosition begin, end;
         begin.iIndeterminate = false;
         begin.iPosUnit = PVPPBPOSUNIT_SEC;
@@ -1024,6 +1027,7 @@ void PlayerDriver::handleReset(PlayerReset* command)
     mIsLooping = false;
     mDoLoop = false;
     mEndOfData = false;
+    mContentLengthKnown = false;
 
     OSCL_TRY(error, mPlayer->Reset(command));
     OSCL_FIRST_CATCH_ANY(error, commandFailed(command));
@@ -1314,9 +1318,17 @@ void PlayerDriver::HandleInformationalEvent(const PVAsyncInformationalEvent& aEv
             {
                 const void *buffer = aEvent.GetLocalBuffer();
                 const size_t size = aEvent.GetLocalBufferSize();
-                int percentage;
 
-                if (GetBufferingPercentage(buffer, size, &percentage))
+                int percentage;
+                // For HTTP sessions, if PVMFInfoContentLength has been
+                // received, only then the buffering status is a percentage
+                // of content length. Otherwise, it is the total number of
+                // bytes downloaded.
+                // For RTSP session, the buffering status is a percentage
+                // of the data that needs to be downloaded to start/resume
+                // playback.
+                if ( (mContentLengthKnown || (getFormatType() == PVMF_MIME_DATA_SOURCE_RTSP_URL) ) &&
+                    (GetBufferingPercentage(buffer, size, &percentage)))
                 {
                     LOGD("buffering (%d)", percentage);
                     mPvPlayer->sendEvent(MEDIA_BUFFERING_UPDATE, percentage);
@@ -1384,12 +1396,15 @@ void PlayerDriver::HandleInformationalEvent(const PVAsyncInformationalEvent& aEv
                                  PVMFInfoContentTruncated);
             break;
 
+        case PVMFInfoContentLength:
+            mContentLengthKnown = true;
+            break;
+
         /* Certain events we don't really care about, but don't
          * want log spewage, so just no-op them here.
          */
         case PVMFInfoPositionStatus:
         case PVMFInfoBufferingComplete:
-        case PVMFInfoContentLength:
         case PVMFInfoContentType:
         case PVMFInfoUnderflow:
         case PVMFInfoDataDiscarded:
