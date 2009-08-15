@@ -1004,7 +1004,7 @@ OMX_ERRORTYPE OpenmaxMpeg4AO::ComponentInit()
                 Status = OMX_ErrorInsufficientResources;
             }
 
-            ipMpegDecoderObject->Mpeg4InitCompleteFlag = OMX_FALSE;
+            ipMpegDecoderObject->Mpeg4InitCompleteFlag = OMX_TRUE;
         }
         else
         {
