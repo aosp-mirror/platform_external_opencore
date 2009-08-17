@@ -403,8 +403,6 @@ private:
     int32                   mFrameHeight;
     float                   mFrameRate;
     sp<android::Camera>     mCamera;
-    sp<IMemoryHeap>         mHeap;
-    int32                   mFrameRefCount;
     int32                   mFlags;
 
     // callback interface

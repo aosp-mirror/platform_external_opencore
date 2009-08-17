@@ -56,12 +56,7 @@ AndroidCameraInput::AndroidCameraInput()
     mFrameHeight= ANDROID_DEFAULT_FRAME_HEIGHT;
     mFrameRate  = ANDROID_DEFAULT_FRAME_RATE;
     mCamera = NULL;
-    mHeap = 0;
 
-    // FIXME:
-    // mFrameRefCount is redundant. iSendMediaData.empty() can be used to
-    // determine if there are any frames pending in the encoder.
-    mFrameRefCount = 0;
     mFlags = 0;
     iFrameQueue.reserve(5);
     iFrameQueueMutex.Create();
@@ -107,9 +102,6 @@ AndroidCameraInput::~AndroidCameraInput()
         }
         mFlags = 0;
         mCamera.clear();
-    }
-    if (mFrameRefCount != 0) {
-        LOGW("mHeap reference count is not zero?!");
     }
     iFrameQueueMutex.Close();
     mListener.clear();
@@ -413,16 +405,6 @@ void AndroidCameraInput::writeComplete(PVMFStatus aStatus,
     LOGD("writeComplete: ID = %d, base = %p, offset = %ld, size = %d", heap->getHeapID(), heap->base(), offset, size);
 #endif
     mCamera->releaseRecordingFrame(data.iFrameBuffer);
-
-    if (mFrameRefCount) {
-        --mFrameRefCount;
-    }
-    //LOGV("@@@@@@@@@@@@@ decrementing frame reference count: %d @@@@@@@@@@@@", mFrameRefCount);
-    if (mFrameRefCount <= 0) {
-        //LOGV("decrement the reference count for mHeap");
-        mFrameRefCount = 0;
-        mHeap.clear();
-     }
 
     iSentMediaData.erase(iSentMediaData.begin());
     iFrameQueueMutex.Unlock();
@@ -731,11 +713,10 @@ void AndroidCameraInput::Run()
                 iFrameQueue.erase(iFrameQueue.begin());
                 data.iId = writeAsyncID;
                 iSentMediaData.push_back(data);
-                ++mFrameRefCount;
-                LOGV("Ln %d Run writeAsync mFrameRefCount %d writeAsyncID %d", __LINE__, mFrameRefCount, writeAsyncID);
+                LOGV("Ln %d Run writeAsync writeAsyncID %d", __LINE__, writeAsyncID);
             } else {
                 //FIXME resend the frame later if ( OsclErrBusy == error)
-                LOGE("Ln %d Run writeAsync error %d mFrameRefCount %d", __LINE__, error, mFrameRefCount);
+                LOGE("Ln %d Run writeAsync error %d", __LINE__, error);
                 //release buffer immediately if write fails
                 mCamera->releaseRecordingFrame(data.iFrameBuffer);
                 iFrameQueue.erase(iFrameQueue.begin());
@@ -1129,15 +1110,6 @@ PVMFStatus AndroidCameraInput::postWriteAsync(nsecs_t timestamp, const sp<IMemor
     sp<IMemoryHeap> heap = frame->getMemory(&offset, &size);
     LOGV("postWriteAsync: ID = %d, base = %p, offset = %p, size = %d pointer %p", heap->getHeapID(), heap->base(), offset, size, frame->pointer());
     //LOGV("postWriteAsync: ID = %d, base = %p, offset = %p, size = %d", heap->getHeapID(), heap->base(), offset, size);
-
-    //LOGV("@@@@@@@@@@@@@ incrementing reference count (%d) @@@@@@@@@@@@@@@", mFrameRefCount);
-    if (mHeap == 0) {
-        //LOGV("initialize the reference to frame heap memory");
-        mHeap = heap;
-    } else if (mHeap != heap) {
-        LOGE("mHeap != heap");
-        return PVMFFailure;
-    }
 
     // queue data to be sent to peer
     AndroidCameraInputMediaData data;
