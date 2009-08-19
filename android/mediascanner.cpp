@@ -119,9 +119,17 @@ static PVMFStatus parseMP3(const char *filename, MediaScannerClient& client)
         bool isIso88591 = false;
 
         // type should follow first semicolon
-        const char* type = strchr(key, ';') + 1;
-        if (type == 0) continue;
+        const char* type = strchr(key, ';');
+        if (type == NULL) continue;
+        type++;
 
+        char tracknumkeybuf[100];
+        if (strncmp(key, "track-info/track-number;", 24) == 0) {
+            // Java expects the track number key to be called "tracknumber", so
+            // construct a temporary one here.
+            snprintf(tracknumkeybuf, sizeof(tracknumkeybuf), "tracknumber;%s", type);
+            key = tracknumkeybuf;
+        }
         
         const char* value = framevector[i]->value.pChar_value;
 
