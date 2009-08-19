@@ -183,14 +183,37 @@ ERROR_CODE pvmp3_framedecoder(tPVMP3DecoderExternal *pExt,
 
     if (errorCode != NO_DECODING_ERROR)
     {
+        pExt->outputFrameSize = 0;
         return errorCode;
     }
+
+    pVars->num_channels = (info->mode == MPG_MD_MONO) ? 1 : 2;
+    pExt->num_channels = pVars->num_channels;
+
+    int32 outputFrameSize = (info->version_x == MPEG_1) ?
+                            2 * SUBBANDS_NUMBER * FILTERBANK_BANDS :
+                            SUBBANDS_NUMBER * FILTERBANK_BANDS;
+
+    outputFrameSize = (info->mode == MPG_MD_MONO) ? outputFrameSize : outputFrameSize << 1;
+
+
+    /*
+     *  Check if output buffer has enough room to hold output PCM
+     */
+    if (pExt->outputFrameSize >= outputFrameSize)
+    {
+        pExt->outputFrameSize = outputFrameSize;
+    }
+    else
+    {
+        pExt->outputFrameSize = 0;
+        return OUTPUT_BUFFER_TOO_SMALL;
+    }
+
 
     pChVars[ LEFT] = &pVars->perChan[ LEFT];
     pChVars[RIGHT] = &pVars->perChan[RIGHT];
 
-    pVars->num_channels = (info->mode == MPG_MD_MONO) ? 1 : 2;
-    pExt->num_channels = pVars->num_channels;
 
 
 
@@ -223,6 +246,7 @@ ERROR_CODE pvmp3_framedecoder(tPVMP3DecoderExternal *pExt,
 
         if (errorCode != NO_DECODING_ERROR)
         {
+            pExt->outputFrameSize = 0;
             return errorCode;
         }
 
@@ -257,6 +281,7 @@ ERROR_CODE pvmp3_framedecoder(tPVMP3DecoderExternal *pExt,
 
         if ((uint32)pVars->predicted_frame_size > pVars->inputStream.inputBufferCurrentLength)
         {
+            pExt->outputFrameSize = 0;
             return NO_ENOUGH_MAIN_DATA_ERROR;
         }
 
@@ -500,6 +525,8 @@ ERROR_CODE pvmp3_framedecoder(tPVMP3DecoderExternal *pExt,
          * The info on the header leads to an unsupported layer, more data
          * will not fix this, so this is a bad frame,
          */
+
+        pExt->outputFrameSize = 0;
         return UNSUPPORTED_LAYER;
     }
 
@@ -508,9 +535,6 @@ ERROR_CODE pvmp3_framedecoder(tPVMP3DecoderExternal *pExt,
     pExt->version = info->version_x;
     pExt->samplingRate = mp3_s_freq[info->version_x][info->sampling_frequency];
     pExt->bitRate = mp3_bitrate[pExt->version][info->bitrate_index];
-    pExt->outputFrameSize = (info->version_x == MPEG_1) ?
-                            2 * SUBBANDS_NUMBER * FILTERBANK_BANDS :
-                            SUBBANDS_NUMBER * FILTERBANK_BANDS;
 
 
     /*
@@ -519,6 +543,7 @@ ERROR_CODE pvmp3_framedecoder(tPVMP3DecoderExternal *pExt,
 
     if (pExt->inputBufferUsedLength > pExt->inputBufferCurrentLength)
     {
+        pExt->outputFrameSize = 0;
         errorCode = NO_ENOUGH_MAIN_DATA_ERROR;
     }
 
