@@ -307,6 +307,21 @@ typedef enum
 
 #define DEFAULT_MOVIE_FRAGMENT_DURATION_IN_MS 10000
 
+class PVMP4FFComposerAudioEncodeParams
+{
+    public:
+        PVMP4FFComposerAudioEncodeParams()
+        {
+            samplingRate = 0;
+            numberOfChannels = 2;
+            bitsPerSample = 16;
+        }
+
+        uint32 samplingRate;
+        uint32 numberOfChannels;
+        uint32 bitsPerSample;
+};
+
 #endif
 
 

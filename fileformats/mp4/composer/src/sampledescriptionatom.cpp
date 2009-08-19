@@ -804,3 +804,38 @@ PVA_FF_SampleDescriptionAtom::writeMaxSampleSize(MP4_AUTHOR_FF_FILE_IO_WRAP *_af
         }
     }
 }
+
+void
+PVA_FF_SampleDescriptionAtom::setAudioEncodeParams(PVMP4FFComposerAudioEncodeParams &audioParams)
+{
+    switch (_mediaType)
+    {
+        case MEDIA_TYPE_AUDIO:
+        {
+            if (_codecType == CODEC_TYPE_AAC_AUDIO)
+            {
+                PVA_FF_AudioSampleEntry *entry = (PVA_FF_AudioSampleEntry*) getSampleEntryAt(0);
+                if (entry)
+                {
+                    entry->setAudioEncodeParams(audioParams);
+                }
+            }
+            else if (_codecType == CODEC_TYPE_AMR_AUDIO ||
+                     _codecType == CODEC_TYPE_AMR_WB_AUDIO)
+            {
+                PVA_FF_AMRSampleEntry *entry = (PVA_FF_AMRSampleEntry *)(getSampleEntryAt(0));
+                if (entry)
+                {
+                    entry->setAudioEncodeParams(audioParams);
+                }
+            }
+        }
+        default:
+            break;
+    }
+}
+
+
+
+
+

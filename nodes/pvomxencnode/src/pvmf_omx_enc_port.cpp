@@ -554,6 +554,18 @@ PVMFStatus PVMFOMXEncPort::GetOutputParametersSync(PvmiKeyType identifier, PvmiK
 
         parameters[0].value.uint32_value = (uint32) iOMXNode->GetOutputNumChannels();
     }
+    else if (pv_mime_strcmp(identifier, AUDIO_OUTPUT_BITS_PER_SAMPLE_CUR_QUERY) == 0)
+    {
+        num_parameter_elements = 1;
+        status = AllocateKvp(parameters, (PvmiKeyType)AUDIO_OUTPUT_BITS_PER_SAMPLE_CUR_VALUE, num_parameter_elements);
+        if (status != PVMFSuccess)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFOMXEncPort::GetOutputParametersSync: Error - AllocateKvp failed. status=%d", status));
+            return status;
+        }
+
+        parameters[0].value.uint32_value = (uint32) iOMXNode->iAudioInputFormat.iInputBitsPerSample;
+    }
     else if ((pv_mime_strcmp(identifier, OUTPUT_TIMESCALE_CUR_QUERY) == 0) &&
              ((iFormat == PVMF_MIME_AMR_IETF) ||
               (iFormat == PVMF_MIME_AMRWB_IETF) ||

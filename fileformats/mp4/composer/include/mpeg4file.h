@@ -179,6 +179,9 @@ class PVA_FF_Mpeg4File : public PVA_FF_IMpeg4File, public PVA_FF_Parentable
         virtual void setVideoParams(uint32 trackID, float frate, uint16 interval,
                                     uint32 frame_width, uint32 frame_height);
 
+        virtual void setAudioEncodeParams(uint32 trackId,
+                                          PVMP4FFComposerAudioEncodeParams &audioParams);
+
 
         virtual void setH263ProfileLevel(uint32 trackID,
                                          uint8 profile,
