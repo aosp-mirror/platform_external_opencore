@@ -142,6 +142,11 @@ class PVA_FF_MediaAtom : public PVA_FF_Atom
             _pmediaInformation->setVideoParams(frame_width, frame_height);
         }
 
+        void setAudioEncodeParams(PVMP4FFComposerAudioEncodeParams &audioParams)
+        {
+            _pmediaInformation->setAudioEncodeParams(audioParams);
+        }
+
         void setH263ProfileLevel(uint8 profile, uint8 level)
         {
             _pmediaInformation->setH263ProfileLevel(profile, level);

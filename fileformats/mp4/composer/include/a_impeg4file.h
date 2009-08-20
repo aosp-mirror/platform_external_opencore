@@ -321,6 +321,9 @@ class PVA_FF_IMpeg4File : public PVA_FF_ISucceedFail
         virtual void setVideoParams(uint32 trackID, float frate, uint16 interval,
                                     uint32 frame_width, uint32 frame_height) = 0;
 
+        virtual void setAudioEncodeParams(uint32 trackId,
+                                          PVMP4FFComposerAudioEncodeParams &audioParams) = 0;
+
         virtual void setH263ProfileLevel(uint32 trackID,
                                          uint8 profile,
                                          uint8 level) = 0;

@@ -1806,9 +1806,16 @@ PVMFStatus PVMp4FFComposerNode::AddTrack(PVMp4FFComposerPort *aPort)
     switch (mediaType)
     {
         case MEDIA_TYPE_AUDIO:
+        {
             iMpeg4File->setTargetBitRate(trackId, config->iBitrate);
             iMpeg4File->setTimeScale(trackId, config->iTimescale);
+            PVMP4FFComposerAudioEncodeParams audioParams;
+            audioParams.numberOfChannels = config->iNumberOfChannels;
+            audioParams.samplingRate = config->iSamplingRate;
+            audioParams.bitsPerSample = config->iBitsPerSample;
+            iMpeg4File->setAudioEncodeParams(trackId, audioParams);
             break;
+        }
 
         case MEDIA_TYPE_VISUAL:
             switch (codecType)

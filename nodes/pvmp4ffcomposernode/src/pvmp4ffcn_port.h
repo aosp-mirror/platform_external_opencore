@@ -68,6 +68,11 @@ struct PVMP4FFCNFormatSpecificConfig
     // H263 configuration
     uint8 iH263Profile;
     uint8 iH263Level;
+
+    // Audio Encode Params
+    uint32 iNumberOfChannels;
+    uint32 iBitsPerSample;
+    uint32 iSamplingRate;
 };
 
 class PVMp4FFComposerPort : public PvmfPortBaseImpl,

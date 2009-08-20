@@ -410,6 +410,9 @@ class PvmfAssetInfo3GPPLocationStruct
 #define AUDIO_OUTPUT_NUM_CHANNELS_CUR_QUERY ".../num_channels;attr=cur"
 #define AUDIO_OUTPUT_NUM_CHANNELS_CUR_VALUE ".../num_channels;valtype=uint32"
 
+#define AUDIO_OUTPUT_BITS_PER_SAMPLE_CUR_QUERY ".../bits_per_sample;attr=cur"
+#define AUDIO_OUTPUT_BITS_PER_SAMPLE_CUR_VALUE ".../bits_per_sample;valtype=uint32"
+
 #define VIDEO_AVC_OUTPUT_SPS_CUR_QUERY ".../output/sps;attr=cur"
 #define VIDEO_AVC_OUTPUT_SPS_CUR_VALUE ".../output/sps;valtype=key_specific_value"
 
