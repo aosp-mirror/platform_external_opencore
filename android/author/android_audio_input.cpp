@@ -125,7 +125,7 @@ PVMFStatus AndroidAudioInput::connect(PvmiMIOSession& aSession, PvmiMIOObserver*
 
     if(!aObserver)
     {
-        LOGV("aObserver is NULL");
+        LOGE("connect: aObserver is NULL");
         return PVMFFailure;
     }
 
@@ -143,7 +143,7 @@ PVMFStatus AndroidAudioInput::disconnect(PvmiMIOSession aSession)
     uint32 index = (uint32)aSession;
     if(index >= iObservers.size())
     {
-        // Invalid session ID
+        LOGE("disconnect: Invalid session ID: %d", index);
         return PVMFFailure;
     }
 
@@ -167,7 +167,7 @@ PvmiMediaTransfer* AndroidAudioInput::createMediaTransfer(PvmiMIOSession& aSessi
     uint32 index = (uint32)aSession;
     if(index >= iObservers.size())
     {
-        LOGV("Invalid sessions ID: index %d, size%d", index, iObservers.size());
+        LOGE("Invalid sessions ID: index %d, size %d", index, iObservers.size());
         // Invalid session ID
         OSCL_LEAVE(OsclErrArgument);
         return NULL;
@@ -186,7 +186,7 @@ void AndroidAudioInput::deleteMediaTransfer(PvmiMIOSession& aSession,
     uint32 index = (uint32)aSession;
     if(!media_transfer || index >= iObservers.size())
     {
-        LOGV("Invalid sessions ID: index %d, size%d", index, iObservers.size());
+        LOGE("Invalid sessions ID: index %d, size %d", index, iObservers.size());
         // Invalid session ID
         OSCL_LEAVE(OsclErrArgument);
     }
@@ -232,7 +232,7 @@ PVMFCommandId AndroidAudioInput::Init(const OsclAny* aContext)
     LOGV("Init");
     if(iState != STATE_IDLE)
     {
-        LOGV("Invalid state");
+        LOGE("Init: Invalid state (%d)", iState);
         OSCL_LEAVE(OsclErrInvalidState);
         return -1;
     }
@@ -247,7 +247,7 @@ PVMFCommandId AndroidAudioInput::Start(const OsclAny* aContext)
     LOGV("Start");
     if(iState != STATE_INITIALIZED && iState != STATE_PAUSED)
     {
-        LOGV("Invalid state");
+        LOGE("Start: Invalid state (%d)", iState);
         OSCL_LEAVE(OsclErrInvalidState);
         return -1;
     }
@@ -261,7 +261,7 @@ PVMFCommandId AndroidAudioInput::Pause(const OsclAny* aContext)
     LOGV("Pause");
     if(iState != STATE_STARTED)
     {
-        LOGV("Invalid state");
+        LOGE("Pause: Invalid state (%d)", iState);
         OSCL_LEAVE(OsclErrInvalidState);
         return -1;
     }
@@ -275,7 +275,7 @@ PVMFCommandId AndroidAudioInput::Flush(const OsclAny* aContext)
     LOGV("Flush");
     if(iState != STATE_STARTED || iState != STATE_PAUSED)
     {
-        LOGV("Invalid state");
+        LOGE("Flush: Invalid state (%d)", iState);
         OSCL_LEAVE(OsclErrInvalidState);
         return -1;
     }
@@ -313,7 +313,7 @@ PVMFCommandId AndroidAudioInput::Stop(const OsclAny* aContext)
     LOGV("Stop %p", this);
     if(iState != STATE_STARTED && iState != STATE_PAUSED)
     {
-        LOGV("Invalid state");
+        LOGE("Stop: Invalid state (%d)", iState);
         OSCL_LEAVE(OsclErrInvalidState);
         return -1;
     }
@@ -366,6 +366,7 @@ void AndroidAudioInput::setPeer(PvmiMediaTransfer* aPeer)
     LOGV("setPeer");
     if(iPeer && aPeer)
     {
+        LOGE("setPeer failed: iPeer(%p) and aPeer(%p)", iPeer, aPeer);
         OSCL_LEAVE(OsclErrGeneral);
         return;
     }
@@ -468,6 +469,7 @@ void AndroidAudioInput::statusUpdate(uint32 status_flags)
     LOGV("statusUpdate");
     if (status_flags != PVMI_MEDIAXFER_STATUS_WRITE)
     {
+        LOGE("stateUpdate: unsupported status flags(%d)", status_flags);
         OSCL_LEAVE(OsclErrNotSupported);
     }
 }
@@ -578,6 +580,7 @@ PVMFStatus AndroidAudioInput::releaseParameters(PvmiMIOSession session,
     }
     else
     {
+        LOGE("Attempt to release NULL parameters");
         return PVMFFailure;
     }
 }
@@ -621,7 +624,7 @@ void AndroidAudioInput::setParametersSync(PvmiMIOSession session, PvmiKvp* param
         status = VerifyAndSetParameter(&(parameters[i]), true);
         if(status != PVMFSuccess)
         {
-            LOGV("VerifyAndSetParameter failed");
+            LOGE("VerifyAndSetParameter failed");
             ret_kvp = &(parameters[i]);
             OSCL_LEAVE(OsclErrArgument);
         }
@@ -669,7 +672,7 @@ bool AndroidAudioInput::setAudioSamplingRate(int32 iSamplingRate)
     if (iSamplingRate == 0)
     {
         // Setting sampling rate to zero will cause a crash
-        LOGV("AndroidAudioInput::setAudioSamplingRate() invalid sampling rate.  Return false.");
+        LOGE("AndroidAudioInput::setAudioSamplingRate() invalid sampling rate.  Return false.");
         return false;
     }
 
@@ -815,7 +818,7 @@ PVMFStatus AndroidAudioInput::DoInit()
         }
         iMediaBufferMemPool = OSCL_NEW(OsclMemPoolFixedChunkAllocator, (4));
         if(!iMediaBufferMemPool) {
-            LOGV("AndroidAudioInput::DoInit() unable to create memory pool.  Return PVMFErrNoMemory.");
+            LOGE("AndroidAudioInput::DoInit() unable to create memory pool.  Return PVMFErrNoMemory.");
             OSCL_LEAVE(OsclErrNoMemory);
         }
     );
@@ -840,7 +843,7 @@ PVMFStatus AndroidAudioInput::DoStart()
 
     if ( OsclProcStatus::SUCCESS_ERROR != ret)
     { // thread creation failed
-        LOGV("Failed to create thread");
+        LOGE("Failed to create thread (%d)", ret);
         iAudioThreadStartLock->unlock();
         return PVMFFailure;
     }
@@ -1215,10 +1218,12 @@ PVMFStatus AndroidAudioInput::AllocateKvp(PvmiKvp*& aKvp, PvmiKeyType aKey, int3
 
     OSCL_TRY(err,
             buf = (uint8*)iAlloc.allocate(aNumParams * (sizeof(PvmiKvp) + keyLen));
-            if(!buf)
-            OSCL_LEAVE(OsclErrNoMemory);
+            if(!buf) {
+                LOGE("Failed to allocate memory for Kvp");
+                OSCL_LEAVE(OsclErrNoMemory);
+            }
             );
-    OSCL_FIRST_CATCH_ANY(err, LOGV("allocation error"); return PVMFErrNoMemory;);
+    OSCL_FIRST_CATCH_ANY(err, LOGE("allocation error"); return PVMFErrNoMemory;);
 
     int32 i = 0;
     PvmiKvp* curKvp = aKvp = new (buf) PvmiKvp;
@@ -1245,6 +1250,7 @@ PVMFStatus AndroidAudioInput::VerifyAndSetParameter(PvmiKvp* aKvp, bool aSetPara
 {
     if(!aKvp)
     {
+        LOGE("aKvp is a NULL pointer");
         return PVMFFailure;
     }
 
@@ -1256,12 +1262,12 @@ PVMFStatus AndroidAudioInput::VerifyAndSetParameter(PvmiKvp* aKvp, bool aSetPara
         }
         else
         {
-            LOGV("unsupported format");
+            LOGE("unsupported format (%s) for key %s", aKvp->value.pChar_value, aKvp->key);
             return PVMFFailure;
         }
     }
 
-    LOGV("unsupported parameter");
+    LOGE("unsupported parameter: %s", aKvp->key);
     return PVMFFailure;
 }
 

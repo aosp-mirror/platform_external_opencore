@@ -907,9 +907,11 @@ PVMFStatus AndroidCameraInput::DoStart()
     iWriteState = EWriteOK;
     if (mCamera == NULL) {
         status = PVMFFailure;
+        LOGE("mCamera is not initialized yet");
     } else {
         mCamera->setListener(mListener);
         if (mCamera->startRecording() != NO_ERROR) {
+            LOGE("mCamera start recording failed");
             status = PVMFFailure;
         } else {
             iState = STATE_STARTED;
@@ -994,6 +996,7 @@ PVMFStatus AndroidCameraInput::AllocateKvp(PvmiKvp*& aKvp,
     OSCL_TRY(err,
         buf = (uint8*)iAlloc.allocate(aNumParams * (sizeof(PvmiKvp) + keyLen));
         if (!buf) {
+            LOGE("Failed to allocate memory to Kvp");
             OSCL_LEAVE(OsclErrNoMemory);
         }
     );
@@ -1108,8 +1111,7 @@ PVMFStatus AndroidCameraInput::postWriteAsync(nsecs_t timestamp, const sp<IMemor
     ssize_t offset = 0;
     size_t size = 0;
     sp<IMemoryHeap> heap = frame->getMemory(&offset, &size);
-    LOGV("postWriteAsync: ID = %d, base = %p, offset = %p, size = %d pointer %p", heap->getHeapID(), heap->base(), offset, size, frame->pointer());
-    //LOGV("postWriteAsync: ID = %d, base = %p, offset = %p, size = %d", heap->getHeapID(), heap->base(), offset, size);
+    LOGV("postWriteAsync: ID = %d, base = %p, offset = %ld, size = %d pointer %p", heap->getHeapID(), heap->base(), offset, size, frame->pointer());
 
     // queue data to be sent to peer
     AndroidCameraInputMediaData data;
