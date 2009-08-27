@@ -620,6 +620,7 @@ OmxComponentAmrEncoderAO::OmxComponentAmrEncoderAO()
         AddToScheduler();
     }
 
+    iCurrentTimestamp = 0;
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OmxComponentAmrEncoderAO : constructed"));
 }
 
