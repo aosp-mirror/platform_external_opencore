@@ -362,11 +362,11 @@ void PvmfMediaInputNode::setParametersSync(PvmiMIOSession aSession, PvmiKvp* aPa
         char* compstr = NULL;
         pv_mime_string_extract_type(0, aParameters[paramind].key, compstr);
 
-        if ((pv_mime_strcmp(compstr, _STRLIT_CHAR("x-pvmf/datasource")) == 0) &&
-                (compcount == 3))
+        if ((compcount == 3) &&
+                (pv_mime_strcmp(compstr, _STRLIT_CHAR("x-pvmf/datasource")) == 0))
         {
-            // First 2 components should be "x-pvmf/datasource" and there must
-            // be exactly 3 components
+            // There must be exactly 3 components and
+            // First 2 components should be "x-pvmf/datasource".
             // Verify and set the passed-in media input setting
             PVMFStatus retval = VerifyAndSetConfigParameter(aParameters[paramind], true);
             if (PVMFSuccess != retval)
@@ -374,6 +374,15 @@ void PvmfMediaInputNode::setParametersSync(PvmiMIOSession aSession, PvmiKvp* aPa
                 aRetKVP = &aParameters[paramind];
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PvmfMediaInputNode::setParametersSync() Setting parameter %d failed", paramind));
                 return;
+            }
+        }
+        else if ((compcount == 2) &&
+                 (pv_mime_strcmp(compstr, PVMF_AUTHORING_CLOCK_KEY) == 0))
+        {
+            //pass the clock to media input comp
+            if (iMediaIOConfig != NULL)
+            {
+                iMediaIOConfig->setParametersSync(NULL, aParameters, aNumElements, aRetKVP);
             }
         }
         else

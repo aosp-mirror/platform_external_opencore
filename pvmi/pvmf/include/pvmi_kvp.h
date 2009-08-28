@@ -447,6 +447,8 @@ class PvmfAssetInfo3GPPLocationStruct
 
 #define PVMF_CLIENT_PLAYBACK_CLOCK_KEY "x-pvmf/player-clock-pointer;valtype=key_specific_value"
 
+#define PVMF_AUTHORING_CLOCK_KEY "x-pvmf/authoring-clock-pointer;valtype=key_specific_value"
+
 // Keys for format bitrate info for any type of media
 #define PVMF_BITRATE_VALUE_KEY "x-pvmf/media/bit-rate;valtype=uint32"
 

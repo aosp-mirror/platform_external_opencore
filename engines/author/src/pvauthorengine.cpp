@@ -55,7 +55,6 @@
 
 #include "pv_author_sdkinfo.h"
 
-
 // Define entry point for this DLL
 OSCL_DLL_ENTRY_POINT_DEFAULT()
 
@@ -118,6 +117,11 @@ void PVAuthorEngine::Construct(PVCommandStatusObserver* aCmdStatusObserver,
     iPendingEvents.reserve(PVAE_NUM_PENDING_EVENTS);
 
     iNodeUtil.SetObserver(*this);
+
+    iAuthorClock.SetClockTimebase(iAuthorClockTimebase);
+    uint32 starttime = 0;
+    bool overflow = 0;
+    iAuthorClock.SetStartTime32(starttime, PVMF_MEDIA_CLOCK_MSEC, overflow);
 
     AddToScheduler();
     return;
@@ -616,9 +620,14 @@ void PVAuthorEngine::NodeUtilCommandCompleted(const PVMFCmdResp& aResponse)
 
         case PVAE_CMD_INIT:
             if (iNodeUtil.GetCommandQueueSize() > 0)
+            {
                 status = PVMFPending;
+            }
             else
+            {
                 SetPVAEState(PVAE_STATE_INITIALIZED); // Init done. Change state
+                SendAuthoringClockToDataSources();
+            }
             break;
 
         case PVAE_CMD_RESET:
@@ -649,9 +658,14 @@ void PVAuthorEngine::NodeUtilCommandCompleted(const PVMFCmdResp& aResponse)
         case PVAE_CMD_START:
         case PVAE_CMD_RESUME:
             if (iNodeUtil.GetCommandQueueSize() > 0)
+            {
                 status = PVMFPending;
+            }
             else
+            {
                 SetPVAEState(PVAE_STATE_RECORDING); // Start done. Change state
+                iAuthorClock.Start();
+            }
             break;
 
         case PVAE_CMD_PAUSE:
@@ -1375,6 +1389,9 @@ PVMFStatus PVAuthorEngine::DoReset(PVEngineCommand& aCmd)
             ResetNodeContainers();
             return PVMFSuccess;
         }
+        //Notify data sources to stop using author clock
+        iAuthorClock.Stop();
+        SendAuthoringClockToDataSources(true);
         ResetGraph();
     }
     return PVMFPending;
@@ -1410,6 +1427,8 @@ PVMFStatus PVAuthorEngine::DoPause(PVEngineCommand& aCmd)
     {
         return PVMFErrInvalidState;
     }
+
+    iAuthorClock.Pause();
 
     iNodeUtil.Pause(iDataSourceNodes);
     if (iEncoderNodes.size() > 0)
@@ -1448,6 +1467,7 @@ PVMFStatus PVAuthorEngine::DoStop(PVEngineCommand& aCmd)
     {
         case PVAE_STATE_RECORDING:
         case PVAE_STATE_PAUSED:
+            iAuthorClock.Stop();
             iNodeUtil.Flush(iDataSourceNodes);
             if (iEncoderNodes.size() > 0)
                 iNodeUtil.Flush(iEncoderNodes);
@@ -1514,7 +1534,6 @@ void PVAuthorEngine::ResetNodeContainers()
         PVAuthorEngineNodeFactoryUtility::Delete(uuid, node);
 
     }
-
     return;
 }
 
@@ -2883,3 +2902,53 @@ PVAuthorEngineInterface::GetSDKInfo
     aSdkInfo.iLabel = PVAUTHOR_ENGINE_SDKINFO_LABEL;
     aSdkInfo.iDate  = PVAUTHOR_ENGINE_SDKINFO_DATE;
 }
+
+PVMFStatus PVAuthorEngine::SendAuthoringClockToDataSources(bool aReset)
+{
+    // Create the kvp for the Authoring clock
+    OsclMemAllocator alloc;
+    PvmiKvp kvp;
+    kvp.key = NULL;
+    kvp.length = oscl_strlen(PVMF_AUTHORING_CLOCK_KEY) + 1; // +1 for \0
+    kvp.key = (PvmiKeyType)alloc.ALLOCATE(kvp.length);
+    if (kvp.key == NULL)
+    {
+        return PVMFErrNoMemory;
+    }
+    oscl_strncpy(kvp.key, PVMF_AUTHORING_CLOCK_KEY, kvp.length);
+    if (aReset)
+    {
+        kvp.value.key_specific_value = NULL;
+    }
+    else
+    {
+        kvp.value.key_specific_value = (OsclAny*)(&iAuthorClock);
+    }
+    kvp.capacity = 1;
+    PvmiKvp* retKvp = NULL; // for return value
+    int32 err;
+
+    for (uint index = 0; index < iDataSourceNodes.size(); index++)
+    {
+        //use data source node capconfig to pass the clock pointer to
+        //source nodes. if reset is true, we send NULL. author does this
+        //to notify that clock pointer should no longer be used
+        if (iDataSourceNodes[index]->iNodeCapConfigIF != NULL)
+        {
+            PvmiCapabilityAndConfig* dataSrcCapConfig =
+                OSCL_STATIC_CAST(PvmiCapabilityAndConfig*, iDataSourceNodes[index]->iNodeCapConfigIF);
+            OSCL_TRY(err, dataSrcCapConfig->setParametersSync(NULL, &kvp, 1, retKvp););
+            if (err != OsclErrNone)
+            {
+                /* ignore the error */
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                      (0, "PVAuthorEngine::SendAuthoringClockToDataSources() SetParameterSync for AuthorClock failed"));
+            }
+        }
+    }
+
+    alloc.deallocate((OsclAny*)(kvp.key));
+    return PVMFSuccess;
+}
+
+
