@@ -2928,23 +2928,26 @@ PVMFStatus PVAuthorEngine::SendAuthoringClockToDataSources(bool aReset)
     PvmiKvp* retKvp = NULL; // for return value
     int32 err;
 
-    for (uint index = 0; index < iDataSourceNodes.size(); index++)
+    OSCL_TRY (err,
+              for (uint index = 0; index < iDataSourceNodes.size(); index++)
+              {
+                  //use data source node capconfig to pass the clock pointer to
+                  //source nodes. if reset is true, we send NULL. author does this
+                  //to notify that clock pointer should no longer be used
+                  if (iDataSourceNodes[index]->iNodeCapConfigIF != NULL)
+                  {
+                      PvmiCapabilityAndConfig* dataSrcCapConfig =
+                          OSCL_STATIC_CAST(PvmiCapabilityAndConfig*, iDataSourceNodes[index]->iNodeCapConfigIF);
+                      dataSrcCapConfig->setParametersSync(NULL, &kvp, 1, retKvp);
+                  }
+              }
+             );
+
+    if (err != OsclErrNone)
     {
-        //use data source node capconfig to pass the clock pointer to
-        //source nodes. if reset is true, we send NULL. author does this
-        //to notify that clock pointer should no longer be used
-        if (iDataSourceNodes[index]->iNodeCapConfigIF != NULL)
-        {
-            PvmiCapabilityAndConfig* dataSrcCapConfig =
-                OSCL_STATIC_CAST(PvmiCapabilityAndConfig*, iDataSourceNodes[index]->iNodeCapConfigIF);
-            OSCL_TRY(err, dataSrcCapConfig->setParametersSync(NULL, &kvp, 1, retKvp););
-            if (err != OsclErrNone)
-            {
-                /* ignore the error */
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                      (0, "PVAuthorEngine::SendAuthoringClockToDataSources() SetParameterSync for AuthorClock failed"));
-            }
-        }
+        /* ignore the error */
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+            (0, "PVAuthorEngine::SendAuthoringClockToDataSources() SetParameterSync for AuthorClock failed"));
     }
 
     alloc.deallocate((OsclAny*)(kvp.key));
