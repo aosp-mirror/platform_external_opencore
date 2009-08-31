@@ -521,7 +521,7 @@ void OpenmaxMp3AO::ProcessData()
         //Mark buffer code ends here
 
         pOutBuffer = &ipOutputBuffer->pBuffer[ipOutputBuffer->nFilledLen];
-        OutputLength = 0;
+        OutputLength = (ipOutputBuffer->nAllocLen - ipOutputBuffer->nFilledLen) >> 1;
 
         /* Copy the left-over data from last input buffer that is stored in temporary
          * buffer to the next incoming buffer.
@@ -649,7 +649,8 @@ void OpenmaxMp3AO::ProcessData()
         {
             ipInputBuffer->nFilledLen = iInputCurrLength;
         }
-        else if (MP3DEC_INCOMPLETE_FRAME == DecodeReturn)
+        else if ((MP3DEC_INCOMPLETE_FRAME == DecodeReturn) ||
+                 (MP3DEC_OUTPUT_BUFFER_TOO_SMALL == DecodeReturn))
         {
             /* If decoder returns MP4AUDEC_INCOMPLETE_FRAME,
              * this indicates the input buffer contains less than a frame data
@@ -657,6 +658,7 @@ void OpenmaxMp3AO::ProcessData()
              */
             oscl_memcpy(ipTempInputBuffer, ipFrameDecodeBuffer, iInputCurrLength);
             iTempInputBufferLength = iInputCurrLength;
+
             ipInputBuffer->nFilledLen = 0;
             iInputCurrLength = 0;
         }
@@ -688,8 +690,12 @@ void OpenmaxMp3AO::ProcessData()
             iInputCurrLength = 0;
         }
 
-        //Send the output buffer back when it has become full
-        if ((ipOutputBuffer->nAllocLen - ipOutputBuffer->nFilledLen) < (iOutputFrameLength))
+        /*
+         *  Send the output buffer back when it has become full
+         *  or when there is not room to hold next decoded output
+         */
+        if ((ipOutputBuffer->nAllocLen - ipOutputBuffer->nFilledLen) < (iOutputFrameLength) ||
+                (MP3DEC_OUTPUT_BUFFER_TOO_SMALL == DecodeReturn))
         {
             ReturnOutputBuffer(ipOutputBuffer, pOutPort);
             ipOutputBuffer = NULL;

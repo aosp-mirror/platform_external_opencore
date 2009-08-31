@@ -161,6 +161,11 @@ Int Mp3Decoder::Mp3DecodeAudio(OMX_S16* aOutBuff,
         }
     }
 
+    /*
+     *  inform decoder how much more room is available in the output buffer
+     */
+    iMP3DecExt->outputFrameSize = (*aOutputLength);  /* in int16 samples */
+
     Status = iAudioMp3Decoder->ExecuteL(iMP3DecExt);
 
     if (MP3DEC_SUCCESS == Status)
@@ -176,7 +181,7 @@ Int Mp3Decoder::Mp3DecodeAudio(OMX_S16* aOutBuff,
             iInputUsedLength += iMP3DecExt->inputBufferUsedLength;
         }
 
-        *aOutputLength = iMP3DecExt->outputFrameSize * iMP3DecExt->num_channels;
+        *aOutputLength = iMP3DecExt->outputFrameSize;
 
         //After decoding the first frame, update all the input & output port settings
         if (0 == *aFrameCount)
@@ -191,29 +196,50 @@ Int Mp3Decoder::Mp3DecodeAudio(OMX_S16* aOutBuff,
 
             //Set the Resize flag to send the port settings changed callback
             *aResizeFlag = OMX_TRUE;
+
         }
-
-        (*aFrameCount)++;
-
-        return Status;
 
     }
     else if (Status == MP3DEC_INVALID_FRAME)
     {
         *aInBufSize = 0;
         iInputUsedLength = 0;
+        *aOutputLength = 0;
     }
     else if (Status == MP3DEC_INCOMPLETE_FRAME)
     {
         *aInputBuf += iInputUsedLength;
         iMP3DecExt->inputBufferUsedLength = 0;
         iInputUsedLength = 0;
+        *aOutputLength = 0;
     }
+    else if (Status == MP3DEC_OUTPUT_BUFFER_TOO_SMALL)
+    {
+        /*
+         *  This condition is only reached when the mp3 version has changed
+         *  (which is an abnormal condition)
+         */
+        *aInputBuf += iInputUsedLength;
+        iMP3DecExt->inputBufferUsedLength = 0;
+        iInputUsedLength = 0;
+        *aOutputLength = 0;
+        /*
+         *  Reseting the counter will force to recalculate timing parameters
+         *  ( this will eliminate any silence insertion gap, but may force changing
+         *  audio device parameters ( sampling freq, etc) in the middle of decoding
+         *  If this is allowed, reset the counter.
+         */
+//      (*aFrameCount) = -1;
+
+    }
+
     else
     {
         *aInputBuf += iInputUsedLength;
         iInputUsedLength = 0;
+        *aOutputLength = 0;
     }
+
 
     (*aFrameCount)++;
 
