@@ -235,6 +235,8 @@ static PVMFStatus reportM4ATags(IMpeg4File *mp4Input, MediaScannerClient& client
     uint32 timeScale;
     uint16 trackNum;
     uint16 totalTracks;
+    uint16 discNum;
+    uint16 totalDiscs;
     uint32 val;
 
     char buffer[MAX_STR_LEN];
@@ -299,6 +301,12 @@ static PVMFStatus reportM4ATags(IMpeg4File *mp4Input, MediaScannerClient& client
     totalTracks = mp4Input->getITunesTotalTracks();
     sprintf(buffer, "%d/%d", trackNum, totalTracks);
     if (!client.addStringTag("tracknumber", buffer)) goto failure;
+
+    // Disc number
+    discNum = mp4Input->getITunesThisDiskNo();
+    totalDiscs = mp4Input->getITunesTotalDisks();
+    sprintf(buffer, "%d/%d", discNum, totalDiscs);
+    if (!client.addStringTag("discnumber", buffer)) goto failure;
 
     // Duration
     duration = mp4Input->getMovieDuration();
