@@ -35,9 +35,9 @@ static const int kBufferSize = 2048;
 // Define entry point for this DLL
 OSCL_DLL_ENTRY_POINT_DEFAULT()
 
-// At the start of a recording we are going to mute the first 300ms in
+// At the start of a recording we are going to mute the first 600ms in
 // order to eliminate recording of the videorecorder signaltone.
-static const int32 AUTO_RAMP_START_MS = 300;
+static const int32 AUTO_RAMP_START_MS = 600;
 
 // After the initial mute we're going to linearly ramp up the volume
 // over the next 300ms.
