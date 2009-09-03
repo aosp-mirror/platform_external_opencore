@@ -27,12 +27,12 @@
 OmxComponentBase::OmxComponentBase() :
         OsclActiveObject(OsclActiveObject::EPriorityNominal, "OMXComponent")
 {
-    iLogger = PVLogger::GetLoggerObject("OmxComponentBase");
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OmxComponentBase : constructed"));
-
     //Flag to call BufferMgmtFunction in the Run() when the component state is executing
     iBufferExecuteFlag = OMX_FALSE;
     ipAppPriv = NULL;
+
+    iLogger = PVLogger::GetLoggerObject("OmxComponentBase");
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OmxComponentBase : constructed"));
 
     ipCallbacks = NULL;
     iCallbackData = NULL;
@@ -50,6 +50,9 @@ OmxComponentBase::OmxComponentBase() :
 
     ipTargetComponent = NULL;
     iTargetMarkData = NULL;
+    ipTempTargetComponent = NULL;
+    iTempTargetMarkData = NULL;
+
     iNewInBufferRequired = OMX_TRUE;
     iNewOutBufRequired = OMX_TRUE;
 
@@ -57,23 +60,19 @@ OmxComponentBase::OmxComponentBase() :
     iOutBufferCount = 0;
     iCodecReady = OMX_FALSE;
     ipInputCurrBuffer = NULL;
+    iInputCurrBufferSize = 0;
     iInputCurrLength = 0;
     iFrameCount = 0;
     iStateTransitionFlag = OMX_FALSE;
     iEndOfFrameFlag = OMX_FALSE;
     ipInputBuffer = NULL;
     ipOutputBuffer = NULL;
-    iInputCurrBufferSize = 0;
 
-    iEosProcessing = OMX_FALSE;
-    iFirstFragment = OMX_FALSE;
-    iResizePending = OMX_FALSE;
-    iFrameTimestamp = 0;
-    iIsFirstOutputFrame = OMX_TRUE;
-    iSilenceInsertionInProgress = OMX_FALSE;
-
+    iOutputFrameLength = 0;
     iNumPorts = 0;
     iCompressedFormatPortNum = OMX_PORT_INPUTPORT_INDEX;
+    ipComponentProxy = NULL;
+
     ipPorts = NULL;
 
     //Indicate whether component has been already initialized */
@@ -82,14 +81,24 @@ OmxComponentBase::OmxComponentBase() :
     iGroupPriority = 0;
     iGroupID = 0;
 
-    ipTempOutBufferForPortReconfig = NULL;
-    iSendOutBufferAfterPortReconfigFlag = OMX_FALSE;
-    iSizeOutBufferForPortReconfig = 0;
-
     iComponentRoleFlag = OMX_FALSE;
-
     ipMark = NULL;
 
+    iEosProcessing = OMX_FALSE;
+    iFirstFragment = OMX_FALSE;
+    iFrameTimestamp = 0;
+    iSamplesPerFrame = 0;
+    iSilenceInsertionInProgress = OMX_FALSE;
+    iSilenceFramesNeeded = 0;
+    iIsFirstOutputFrame = OMX_TRUE;
+    iInputBufferRemainingBytes = 0;
+    iResizePending = OMX_FALSE;
+
+    ipTempOutBufferForPortReconfig = NULL;
+    iSizeOutBufferForPortReconfig = 0;
+    iSendOutBufferAfterPortReconfigFlag = OMX_FALSE;
+    iTimestampOutBufferForPortReconfig = (OMX_TICKS)0;
+    iOutputMicroSecPerFrame = (OMX_TICKS)0;
 }
 
 
