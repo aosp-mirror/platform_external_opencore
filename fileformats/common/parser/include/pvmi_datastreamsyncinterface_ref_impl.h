@@ -131,7 +131,7 @@ class PVMIDataStreamSyncInterfaceRefImpl : public PVMIDataStreamSyncInterface
 
         uint32 GetContentLength()
         {
-            return 0;
+            return (uint32)iFileNumBytes;
         }
 
         uint32 QueryBufferingCapacity()
