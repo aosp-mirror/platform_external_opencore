@@ -283,6 +283,8 @@ OMX_ERRORTYPE OpenmaxMp3AO::ConstructComponent(OMX_PTR pAppData, OMX_PTR pProxy)
     pOutPort->AudioParam.nIndex = 0;
     pOutPort->AudioParam.eEncoding = OMX_AUDIO_CodingPCM;
 
+    oscl_strncpy((OMX_STRING)iComponentRole, (OMX_STRING)"audio_decoder.mp3", OMX_MAX_STRINGNAME_SIZE);
+
     iOutputFrameLength = OUTPUT_BUFFER_SIZE_MP3;
 
     if (ipMp3Dec)

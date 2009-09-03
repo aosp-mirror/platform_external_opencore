@@ -312,6 +312,8 @@ OMX_ERRORTYPE OpenmaxAvcAO::ConstructComponent(OMX_PTR pAppData, OMX_PTR pProxy)
     pOutPort->VideoParam[0].eCompressionFormat = OMX_VIDEO_CodingUnused;
     pOutPort->VideoParam[0].eColorFormat = OMX_COLOR_FormatYUV420Planar;
 
+    oscl_strncpy((OMX_STRING)iComponentRole, (OMX_STRING)"video_decoder.avc", OMX_MAX_STRINGNAME_SIZE);
+
     iDecodeReturn = OMX_FALSE;
 
     if (ipAvcDec)

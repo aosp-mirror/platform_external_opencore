@@ -445,6 +445,8 @@ OMX_ERRORTYPE OmxComponentAvcEncAO::ConstructComponent(OMX_PTR pAppData, OMX_PTR
     pOutPort->VideoIFrame.nPortIndex = OMX_PORT_OUTPUTPORT_INDEX;
     pOutPort->VideoIFrame.IntraRefreshVOP = OMX_FALSE;
 
+    oscl_strncpy((OMX_STRING)iComponentRole, (OMX_STRING)"video_encoder.avc", OMX_MAX_STRINGNAME_SIZE);
+
 
     //Construct the encoder object
     if (ipAvcEncoderObject)

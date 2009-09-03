@@ -361,9 +361,11 @@ OMX_ERRORTYPE OpenmaxMpeg4AO::ConstructComponent(OMX_PTR pAppData, OMX_PTR pProx
         ipPorts[OMX_PORT_INPUTPORT_INDEX]->ProfileLevel.nProfileIndex = 0;
         ipPorts[OMX_PORT_INPUTPORT_INDEX]->ProfileLevel.eProfile = OMX_VIDEO_MPEG4ProfileSimple;
         ipPorts[OMX_PORT_INPUTPORT_INDEX]->ProfileLevel.eLevel = OMX_VIDEO_MPEG4Level1;
+        oscl_strncpy((OMX_STRING)iComponentRole, (OMX_STRING)"video_decoder.mpeg4", OMX_MAX_STRINGNAME_SIZE);
     }
     else if (iDecMode == MODE_H263)
     {
+        oscl_strncpy((OMX_STRING)iComponentRole, (OMX_STRING)"video_decoder.h263", OMX_MAX_STRINGNAME_SIZE);
 
     }
 
