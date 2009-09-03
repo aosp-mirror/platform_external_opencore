@@ -616,6 +616,8 @@ status_t MediaScanner::doProcessDirectory(char *path, int pathRemaining, const c
         strcpy(fileSpot, ".nomedia");
         if (access(path, F_OK) == 0) {
             LOGD("found .nomedia, skipping directory\n");
+            fileSpot[0] = 0;
+            client.addNoMediaFolder(path);
             return OK;
         }
 
