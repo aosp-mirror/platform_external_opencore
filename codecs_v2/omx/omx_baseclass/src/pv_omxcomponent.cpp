@@ -3180,6 +3180,7 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OmxComponentAudio::GetParameter(
     OMX_PARAM_PORTDEFINITIONTYPE* pPortDef;
     OMX_PORT_PARAM_TYPE* pPortDomains;
     OMX_U32 PortIndex;
+    OMX_PARAM_COMPONENTROLETYPE* pCompRole;
 
     OMX_AUDIO_PARAM_PORTFORMATTYPE* pAudioPortFormat;
     OMX_AUDIO_PARAM_PCMMODETYPE* pAudioPcmMode;
@@ -3380,6 +3381,13 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OmxComponentAudio::GetParameter(
             }
             oscl_memcpy(pCap_flags, &iPVCapabilityFlags, sizeof(iPVCapabilityFlags));
 
+        }
+        break;
+        case OMX_IndexParamStandardComponentRole:
+        {
+            pCompRole = (OMX_PARAM_COMPONENTROLETYPE*) ComponentParameterStructure;
+            SetHeader(pCompRole, sizeof(OMX_PARAM_COMPONENTROLETYPE));
+            oscl_strncpy((OMX_STRING)pCompRole->cRole, (OMX_STRING)iComponentRole, OMX_MAX_STRINGNAME_SIZE);
         }
         break;
 
@@ -3692,6 +3700,8 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OmxComponentVideo::GetParameter(
     OMX_PARAM_PORTDEFINITIONTYPE* pPortDef;
     OMX_PORT_PARAM_TYPE* pPortDomains;
     OMX_U32 PortIndex;
+    OMX_PARAM_COMPONENTROLETYPE* pCompRole;
+
 
     OMX_VIDEO_PARAM_PORTFORMATTYPE* pVideoPortFormat;
     OMX_VIDEO_PARAM_PROFILELEVELTYPE* pProfileLevel;
@@ -4003,7 +4013,13 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OmxComponentVideo::GetParameter(
             SetHeader(pVideoIntraRefresh, sizeof(OMX_VIDEO_PARAM_INTRAREFRESHTYPE));
         }
         break;
-
+        case OMX_IndexParamStandardComponentRole:
+        {
+            pCompRole = (OMX_PARAM_COMPONENTROLETYPE*) ComponentParameterStructure;
+            SetHeader(pCompRole, sizeof(OMX_PARAM_COMPONENTROLETYPE));
+            oscl_strncpy((OMX_STRING)pCompRole->cRole, (OMX_STRING)iComponentRole, OMX_MAX_STRINGNAME_SIZE);
+        }
+        break;
         default:
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OmxComponentVideo : GetParameter error Unsupported Index"));

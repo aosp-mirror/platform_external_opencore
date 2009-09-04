@@ -280,6 +280,8 @@ OMX_ERRORTYPE OpenmaxAmrAO::ConstructComponent(OMX_PTR pAppData, OMX_PTR pProxy)
 
     iInputBufferRemainingBytes = 0;
 
+    oscl_strncpy((OMX_STRING)iComponentRole, (OMX_STRING)"audio_decoder.amrnb", OMX_MAX_STRINGNAME_SIZE);
+
     if (ipAmrDec)
     {
         OSCL_DELETE(ipAmrDec);

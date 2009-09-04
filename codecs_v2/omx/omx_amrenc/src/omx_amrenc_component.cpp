@@ -273,6 +273,8 @@ OMX_ERRORTYPE OmxComponentAmrEncoderAO::ConstructComponent(OMX_PTR pAppData, OMX
     pOutPort->AudioParam.nIndex = 0;
     pOutPort->AudioParam.eEncoding = OMX_AUDIO_CodingAMR;
 
+    oscl_strncpy((OMX_STRING)iComponentRole, (OMX_STRING)"audio_encoder.amrnb", OMX_MAX_STRINGNAME_SIZE);
+
     iInputBufferRemainingBytes = 0;
 
     if (ipAmrEnc)
