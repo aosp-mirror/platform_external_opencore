@@ -211,7 +211,7 @@ status_t MetadataDriver::extractMetadata(const char* key, char* value, uint32 va
     bool found = false;
     value[0] = '\0';
     for (uint32 i = 0, n = mMetadataValueList.size(); i < n; ++i) {
-        if (strcasestr(mMetadataValueList[i].key, key)) {
+        if (0 == strncasecmp(mMetadataValueList[i].key, key, strlen(key))) {
             found = true;
             switch(GetValTypeFromKeyString(mMetadataValueList[i].key)) {
                 case PVMI_KVPVALTYPE_CHARPTR: {
