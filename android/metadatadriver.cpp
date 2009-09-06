@@ -785,11 +785,12 @@ status_t PVMetadataRetriever::setMode(int mode)
     Mutex::Autolock lock(mLock);
     if (mMetadataDriver == 0) {
         LOGE("No MetadataDriver available");
-        return INVALID_OPERATION;
+        return NO_INIT;
     }
-    if (mode < 0x00 || mode > 0x03) {
+    if (mode < METADATA_MODE_NOOP ||
+        mode > METADATA_MODE_FRAME_CAPTURE_AND_METADATA_RETRIEVAL) {
         LOGE("set to invalid mode (%d)", mode);
-        return INVALID_OPERATION;
+        return BAD_VALUE;
     }
     return mMetadataDriver->setMode(mode);
 }
