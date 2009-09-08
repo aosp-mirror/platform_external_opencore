@@ -364,6 +364,7 @@ static PVMFStatus parseMP4(const char *filename, MediaScannerClient& client)
         uint32* tracks = new uint32[count];
         bool hasAudio = false;
         bool hasVideo = false;
+        uint32_t brand = mp4Input->getCompatibiltyMajorBrand();
         if (tracks) {
             mp4Input->getTrackIDList(tracks, count);
             for (int i = 0; i < count; ++i) {
@@ -371,9 +372,8 @@ static PVMFStatus parseMP4(const char *filename, MediaScannerClient& client)
                 OSCL_HeapString<OsclMemAllocator> streamtype;
                 mp4Input->getTrackMIMEType(tracks[i], streamtype);
                 char streamtypeutf8[128];
-        strncpy (streamtypeutf8, streamtype.get_str(), streamtype.get_size());
-                if (streamtypeutf8[0])
-        {                                                                           
+                strncpy (streamtypeutf8, streamtype.get_str(), streamtype.get_size());
+                if (streamtypeutf8[0]) {
                     if (strcmp(streamtypeutf8,"FORMATUNKNOWN") != 0) {
                             if (trackType ==  MEDIA_TYPE_AUDIO) {
                                 hasAudio = true;
@@ -388,15 +388,40 @@ static PVMFStatus parseMP4(const char *filename, MediaScannerClient& client)
 
             delete[] tracks;
         }
-
-        if (hasVideo) {
-            if (!client.setMimeType("video/mp4")) return PVMFFailure;
-        } else if (hasAudio) {
-            if (!client.setMimeType("audio/mp4")) return PVMFFailure;
-        } else {
-            iFs.Close();
-            IMpeg4File::DestroyMP4FileObject(mp4Input);
-            return PVMFFailure;
+        if (brand != 0) {  // if filetype exists, see whether it is 3gpp or mp4
+            char mime[5];
+            mime[0] = ((brand >> 24) & 0x00FF);
+            mime[1] = ((brand >> 16) & 0x00FF);
+            mime[2] = ((brand >>  8) & 0x00FF);
+            mime[3] = ((brand >>  0) & 0x00FF);
+            mime[4] = '\0';
+            LOGD("compatibility major brand: %d => %s", brand, mime);
+            if (mime[3] == '3' && mime[2] == 'g' && mime[1] == 'p') {  // 3gpp
+                if (hasVideo) {
+                    if (!client.setMimeType("video/3gpp")) return PVMFFailure;
+                } else if (hasAudio) {
+                   if (!client.setMimeType("audio/3gpp")) return PVMFFailure;
+                }
+            } else if (mime[3] == 'm' && mime[2] == 'p' && mime[1] == '4') {  // mp4
+                if (hasVideo) {
+                    if (!client.setMimeType("video/mp4")) return PVMFFailure;
+                } else if (hasAudio) {
+                    if (!client.setMimeType("audio/mp4")) return PVMFFailure;
+                }
+            } else {
+                brand = 0;
+            }
+        }
+        if (brand == 0) {  // otherwise, mark it as mp4 as previously
+            if (hasVideo) {
+                if (!client.setMimeType("video/mp4")) return PVMFFailure;
+            } else if (hasAudio) {
+                if (!client.setMimeType("audio/mp4")) return PVMFFailure;
+            } else {
+                iFs.Close();
+                IMpeg4File::DestroyMP4FileObject(mp4Input);
+                return PVMFFailure;
+            }
         }
 
         PVMFStatus result = reportM4ATags(mp4Input, client);
