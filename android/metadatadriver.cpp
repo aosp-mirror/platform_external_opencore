@@ -231,10 +231,28 @@ status_t MetadataDriver::extractMetadata(const char* key, char* value, uint32 va
                     length = oscl_UnicodeToUTF8(mMetadataValueList[i].value.pWChar_value, length, value, valueLength);
                     break;
                 }
-                case PVMI_KVPVALTYPE_UINT32:
-                    oscl_snprintf(value, valueLength, "%d", mMetadataValueList[i].value.uint32_value);
+                case PVMI_KVPVALTYPE_UINT32: {
+                    // FIXME:
+                    // This is an ugly hack since OpenCore returns duration in the following two formats:
+                    // 1. duration;valtype=uint32 (the duration is an integer representing milliseconds)
+                    // 2. duration;valtype=uint32;timescale=8000 (the duration is an integer representing the
+                    //    duration in a timescale of 8 kHz)
+                    // It would be nice to have OpenCore always return duration in the first format.
+                    // PV will study on fixing this to always return duration in the first format.
+                    // Until that fix is available, we still need to do this.
+                    const char* durKeyStr = "duration";
+                    const char* timeScaleStr = "timescale=";
+                    int timescale = 1000;
+                    if (strncasecmp(key, durKeyStr, strlen(durKeyStr)) == 0) {
+                        char *p;
+                        if ((p = strcasestr(mMetadataValueList[i].key, timeScaleStr)) != NULL) {
+                            timescale = atoi(p + strlen(timeScaleStr));
+                        }
+                    }
+                    int duration = (mMetadataValueList[i].value.uint32_value * 1000L) / timescale;
+                    oscl_snprintf(value, valueLength, "%d", duration);
                     break;
-
+                }
                 case PVMI_KVPVALTYPE_INT32:
                     oscl_snprintf(value, valueLength, "%d", mMetadataValueList[i].value.int32_value);
                     break;
