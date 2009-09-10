@@ -249,7 +249,7 @@ status_t MetadataDriver::extractMetadata(const char* key, char* value, uint32 va
                             timescale = atoi(p + strlen(timeScaleStr));
                         }
                     }
-                    int duration = (mMetadataValueList[i].value.uint32_value * 1000L) / timescale;
+                    int duration = (mMetadataValueList[i].value.uint32_value * 1000LL) / timescale;
                     oscl_snprintf(value, valueLength, "%d", duration);
                     break;
                 }
