@@ -355,16 +355,25 @@ OMX_ERRORTYPE OpenmaxMpeg4AO::ConstructComponent(OMX_PTR pAppData, OMX_PTR pProx
         //Default values for mpeg4 video param port
         ipPorts[OMX_PORT_INPUTPORT_INDEX]->VideoMpeg4.nPortIndex = OMX_PORT_INPUTPORT_INDEX;
         ipPorts[OMX_PORT_INPUTPORT_INDEX]->VideoMpeg4.eProfile = OMX_VIDEO_MPEG4ProfileSimple;
-        ipPorts[OMX_PORT_INPUTPORT_INDEX]->VideoMpeg4.eLevel = OMX_VIDEO_MPEG4Level1;
+        ipPorts[OMX_PORT_INPUTPORT_INDEX]->VideoMpeg4.eLevel = OMX_VIDEO_MPEG4Level3;
 
         ipPorts[OMX_PORT_INPUTPORT_INDEX]->ProfileLevel.nPortIndex = OMX_PORT_INPUTPORT_INDEX;
         ipPorts[OMX_PORT_INPUTPORT_INDEX]->ProfileLevel.nProfileIndex = 0;
         ipPorts[OMX_PORT_INPUTPORT_INDEX]->ProfileLevel.eProfile = OMX_VIDEO_MPEG4ProfileSimple;
-        ipPorts[OMX_PORT_INPUTPORT_INDEX]->ProfileLevel.eLevel = OMX_VIDEO_MPEG4Level1;
+        ipPorts[OMX_PORT_INPUTPORT_INDEX]->ProfileLevel.eLevel = OMX_VIDEO_MPEG4Level3;
         oscl_strncpy((OMX_STRING)iComponentRole, (OMX_STRING)"video_decoder.mpeg4", OMX_MAX_STRINGNAME_SIZE);
     }
     else if (iDecMode == MODE_H263)
     {
+        //Default values for h263 video param port
+        ipPorts[OMX_PORT_INPUTPORT_INDEX]->VideoH263.nPortIndex = OMX_PORT_INPUTPORT_INDEX;
+        ipPorts[OMX_PORT_INPUTPORT_INDEX]->VideoH263.eProfile = (OMX_VIDEO_H263PROFILETYPE) (OMX_VIDEO_H263ProfileBaseline | OMX_VIDEO_H263ProfileISWV2);
+        ipPorts[OMX_PORT_INPUTPORT_INDEX]->VideoH263.eLevel = OMX_VIDEO_H263Level45;
+
+        ipPorts[OMX_PORT_INPUTPORT_INDEX]->ProfileLevel.nPortIndex = OMX_PORT_INPUTPORT_INDEX;
+        ipPorts[OMX_PORT_INPUTPORT_INDEX]->ProfileLevel.nProfileIndex = 0;
+        ipPorts[OMX_PORT_INPUTPORT_INDEX]->ProfileLevel.eProfile = OMX_VIDEO_H263ProfileBaseline | OMX_VIDEO_H263ProfileISWV2;
+        ipPorts[OMX_PORT_INPUTPORT_INDEX]->ProfileLevel.eLevel = OMX_VIDEO_H263Level45;
         oscl_strncpy((OMX_STRING)iComponentRole, (OMX_STRING)"video_decoder.h263", OMX_MAX_STRINGNAME_SIZE);
 
     }
