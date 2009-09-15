@@ -395,14 +395,13 @@ static PVMFStatus parseMP4(const char *filename, MediaScannerClient& client)
             mime[2] = ((brand >>  8) & 0x00FF);
             mime[3] = ((brand >>  0) & 0x00FF);
             mime[4] = '\0';
-            LOGD("compatibility major brand: %d => %s", brand, mime);
-            if (mime[3] == '3' && mime[2] == 'g' && mime[1] == 'p') {  // 3gpp
+            if (mime[0] == '3' && mime[1] == 'g' && mime[2] == 'p') {  // 3gpp
                 if (hasVideo) {
                     if (!client.setMimeType("video/3gpp")) return PVMFFailure;
                 } else if (hasAudio) {
                    if (!client.setMimeType("audio/3gpp")) return PVMFFailure;
                 }
-            } else if (mime[3] == 'm' && mime[2] == 'p' && mime[1] == '4') {  // mp4
+            } else if (mime[0] == 'm' && mime[1] == 'p' && mime[2] == '4') {  // mp4
                 if (hasVideo) {
                     if (!client.setMimeType("video/mp4")) return PVMFFailure;
                 } else if (hasAudio) {
