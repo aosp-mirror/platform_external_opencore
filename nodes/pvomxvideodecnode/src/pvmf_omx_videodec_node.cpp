@@ -805,6 +805,109 @@ bool PVMFOMXVideoDecNode::NegotiateComponentParameters(OMX_PTR aOutputParameters
         iLastYUVHeight = iYUVHeight;
     }
 
+{
+    // Get video color format
+    OMX_VIDEO_PARAM_PORTFORMATTYPE VideoPortFormat;
+    // init to unknown
+    iOMXVideoColorFormat = OMX_COLOR_FormatUnused;
+    CONFIG_SIZE_AND_VERSION(VideoPortFormat);
+    VideoPortFormat.nPortIndex = iOutputPortIndex;
+
+    VideoPortFormat.nIndex = 0; // read the preferred format - first
+
+// doing this in a while loop while incrementing nIndex will get all supported formats
+// until component says OMX_ErrorNoMore
+// For now, we just use the preferred one (with nIndex=0) assuming it is supported at MIO
+
+    Err = OMX_GetParameter(iOMXDecoder, OMX_IndexParamVideoPortFormat, &VideoPortFormat);
+    if (Err != OMX_ErrorNone)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXVideoDecNode::NegotiateComponentParameters() Problem getting video port format"));
+        return false;
+    }
+    // check if color format is valid and set DeBlocking
+    if (VideoPortFormat.eCompressionFormat == OMX_VIDEO_CodingUnused)
+    {
+        // color format is valid, so read it
+        iOMXVideoColorFormat = VideoPortFormat.eColorFormat;
+
+        // Now set the format to confirm parameters
+        CONFIG_SIZE_AND_VERSION(VideoPortFormat);
+
+        Err = OMX_SetParameter(iOMXDecoder, OMX_IndexParamVideoPortFormat, &VideoPortFormat);
+        if (Err != OMX_ErrorNone)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVMFOMXVideoDecNode::NegotiateComponentParameters() Problem setting video port format"));
+            return false;
+        }
+    }
+
+    // now that we have the color format, interpret it
+    if (iOMXVideoColorFormat == OMX_COLOR_Format8bitRGB332)
+    {
+        iYUVFormat = PVMF_MIME_RGB8;
+    }
+    else if (iOMXVideoColorFormat == OMX_COLOR_Format12bitRGB444)
+    {
+        iYUVFormat = PVMF_MIME_RGB12;
+    }
+    else if (iOMXVideoColorFormat >= OMX_COLOR_Format16bitARGB4444 && iOMXVideoColorFormat <= OMX_COLOR_Format16bitBGR565)
+    {
+        iYUVFormat = PVMF_MIME_RGB16;
+    }
+    else if (iOMXVideoColorFormat >= OMX_COLOR_Format24bitRGB888 && iOMXVideoColorFormat <= OMX_COLOR_Format24bitARGB1887)
+    {
+        iYUVFormat = PVMF_MIME_RGB24;
+    }
+    else if (iOMXVideoColorFormat == OMX_COLOR_FormatYUV420Planar)
+    {
+        iYUVFormat = PVMF_MIME_YUV420_PLANAR; // Y, U, V are separate - entire planes
+    }
+    else if (iOMXVideoColorFormat == OMX_COLOR_FormatYUV420PackedPlanar)
+    {
+        iYUVFormat = PVMF_MIME_YUV420_PACKEDPLANAR; // each slice contains Y,U,V separate
+    }
+    else if (iOMXVideoColorFormat == OMX_COLOR_FormatYUV420SemiPlanar)
+    {
+        iYUVFormat = PVMF_MIME_YUV420_SEMIPLANAR; // Y and UV interleaved - entire planes
+    }
+    else if (iOMXVideoColorFormat == OMX_COLOR_FormatYUV420PackedSemiPlanar)
+    {
+        iYUVFormat = PVMF_MIME_YUV420_PACKEDSEMIPLANAR; // Y and UV interleaved - sliced
+    }
+    else if (iOMXVideoColorFormat == OMX_COLOR_FormatYUV422Planar)
+    {
+        iYUVFormat = PVMF_MIME_YUV422_PLANAR; // Y, U, V are separate - entire planes
+    }
+    else if (iOMXVideoColorFormat == OMX_COLOR_FormatYUV422PackedPlanar)
+    {
+        iYUVFormat = PVMF_MIME_YUV422_PACKEDPLANAR; // each slice contains Y,U,V separate
+    }
+    else if (iOMXVideoColorFormat == OMX_COLOR_FormatYUV422SemiPlanar)
+    {
+        iYUVFormat = PVMF_MIME_YUV422_SEMIPLANAR; // Y and UV interleaved - entire planes
+    }
+    else if (iOMXVideoColorFormat == OMX_COLOR_FormatYUV422PackedSemiPlanar)
+    {
+        iYUVFormat = PVMF_MIME_YUV422_PACKEDSEMIPLANAR; // Y and UV interleaved - sliced
+    }
+    else if (iOMXVideoColorFormat == OMX_COLOR_FormatCbYCrY)
+    {
+        iYUVFormat = PVMF_MIME_YUV422_INTERLEAVED_UYVY; // Y, U, V interleaved
+    }
+    else if (iOMXVideoColorFormat == 0x7FA30C00) // SPECIAL VALUE
+    {
+        iYUVFormat = PVMF_MIME_YUV420_SEMIPLANAR_YVU; // semiplanar with Y and VU interleaved
+    }
+    else
+    {
+        iYUVFormat = PVMF_MIME_FORMAT_UNKNOWN;
+        return false;
+    }
+}
+
     // Check if Fsi configuration need to be sent
     if (sendFsi)
     {
@@ -973,108 +1076,6 @@ bool PVMFOMXVideoDecNode::NegotiateComponentParameters(OMX_PTR aOutputParameters
     }
 
 
-
-    // Get video color format
-    OMX_VIDEO_PARAM_PORTFORMATTYPE VideoPortFormat;
-    // init to unknown
-    iOMXVideoColorFormat = OMX_COLOR_FormatUnused;
-    CONFIG_SIZE_AND_VERSION(VideoPortFormat);
-    VideoPortFormat.nPortIndex = iOutputPortIndex;
-
-    VideoPortFormat.nIndex = 0; // read the preferred format - first
-
-// doing this in a while loop while incrementing nIndex will get all supported formats
-// until component says OMX_ErrorNoMore
-// For now, we just use the preferred one (with nIndex=0) assuming it is supported at MIO
-
-    Err = OMX_GetParameter(iOMXDecoder, OMX_IndexParamVideoPortFormat, &VideoPortFormat);
-    if (Err != OMX_ErrorNone)
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXVideoDecNode::NegotiateComponentParameters() Problem getting video port format"));
-        return false;
-    }
-    // check if color format is valid and set DeBlocking
-    if (VideoPortFormat.eCompressionFormat == OMX_VIDEO_CodingUnused)
-    {
-        // color format is valid, so read it
-        iOMXVideoColorFormat = VideoPortFormat.eColorFormat;
-
-        // Now set the format to confirm parameters
-        CONFIG_SIZE_AND_VERSION(VideoPortFormat);
-
-        Err = OMX_SetParameter(iOMXDecoder, OMX_IndexParamVideoPortFormat, &VideoPortFormat);
-        if (Err != OMX_ErrorNone)
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                            (0, "PVMFOMXVideoDecNode::NegotiateComponentParameters() Problem setting video port format"));
-            return false;
-        }
-    }
-
-    // now that we have the color format, interpret it
-    if (iOMXVideoColorFormat == OMX_COLOR_Format8bitRGB332)
-    {
-        iYUVFormat = PVMF_MIME_RGB8;
-    }
-    else if (iOMXVideoColorFormat == OMX_COLOR_Format12bitRGB444)
-    {
-        iYUVFormat = PVMF_MIME_RGB12;
-    }
-    else if (iOMXVideoColorFormat >= OMX_COLOR_Format16bitARGB4444 && iOMXVideoColorFormat <= OMX_COLOR_Format16bitBGR565)
-    {
-        iYUVFormat = PVMF_MIME_RGB16;
-    }
-    else if (iOMXVideoColorFormat >= OMX_COLOR_Format24bitRGB888 && iOMXVideoColorFormat <= OMX_COLOR_Format24bitARGB1887)
-    {
-        iYUVFormat = PVMF_MIME_RGB24;
-    }
-    else if (iOMXVideoColorFormat == OMX_COLOR_FormatYUV420Planar)
-    {
-        iYUVFormat = PVMF_MIME_YUV420_PLANAR; // Y, U, V are separate - entire planes
-    }
-    else if (iOMXVideoColorFormat == OMX_COLOR_FormatYUV420PackedPlanar)
-    {
-        iYUVFormat = PVMF_MIME_YUV420_PACKEDPLANAR; // each slice contains Y,U,V separate
-    }
-    else if (iOMXVideoColorFormat == OMX_COLOR_FormatYUV420SemiPlanar)
-    {
-        iYUVFormat = PVMF_MIME_YUV420_SEMIPLANAR; // Y and UV interleaved - entire planes
-    }
-    else if (iOMXVideoColorFormat == OMX_COLOR_FormatYUV420PackedSemiPlanar)
-    {
-        iYUVFormat = PVMF_MIME_YUV420_PACKEDSEMIPLANAR; // Y and UV interleaved - sliced
-    }
-    else if (iOMXVideoColorFormat == OMX_COLOR_FormatYUV422Planar)
-    {
-        iYUVFormat = PVMF_MIME_YUV422_PLANAR; // Y, U, V are separate - entire planes
-    }
-    else if (iOMXVideoColorFormat == OMX_COLOR_FormatYUV422PackedPlanar)
-    {
-        iYUVFormat = PVMF_MIME_YUV422_PACKEDPLANAR; // each slice contains Y,U,V separate
-    }
-    else if (iOMXVideoColorFormat == OMX_COLOR_FormatYUV422SemiPlanar)
-    {
-        iYUVFormat = PVMF_MIME_YUV422_SEMIPLANAR; // Y and UV interleaved - entire planes
-    }
-    else if (iOMXVideoColorFormat == OMX_COLOR_FormatYUV422PackedSemiPlanar)
-    {
-        iYUVFormat = PVMF_MIME_YUV422_PACKEDSEMIPLANAR; // Y and UV interleaved - sliced
-    }
-    else if (iOMXVideoColorFormat == OMX_COLOR_FormatCbYCrY)
-    {
-        iYUVFormat = PVMF_MIME_YUV422_INTERLEAVED_UYVY; // Y, U, V interleaved
-    }
-    else if (iOMXVideoColorFormat == 0x7FA30C00) // SPECIAL VALUE
-    {
-        iYUVFormat = PVMF_MIME_YUV420_SEMIPLANAR_YVU; // semiplanar with Y and VU interleaved
-    }
-    else
-    {
-        iYUVFormat = PVMF_MIME_FORMAT_UNKNOWN;
-        return false;
-    }
-
     //Set input video format
     //This is need it since a single component could handle differents roles
 
@@ -1130,6 +1131,7 @@ bool PVMFOMXVideoDecNode::NegotiateComponentParameters(OMX_PTR aOutputParameters
         }
     }
 
+    OMX_VIDEO_PARAM_PORTFORMATTYPE VideoPortFormat;
     CONFIG_SIZE_AND_VERSION(VideoPortFormat);
     VideoPortFormat.nPortIndex = iInputPortIndex;
 
