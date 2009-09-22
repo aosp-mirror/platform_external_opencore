@@ -1645,7 +1645,10 @@ void PVMp4FFComposerNode::DoStart(PVMp4FFCNCmd& aCmd)
             iMpeg4File->setCopyright(iCopyright.iDataString, iCopyright.iLangCode);
             iMpeg4File->setDescription(iDescription.iDataString, iDescription.iLangCode);
             iMpeg4File->setRating(iRating.iDataString, iRating.iLangCode);
-            iMpeg4File->setCreationDate(iCreationDate);
+            if(iCreationDate.get_size() > 0)
+            {
+                iMpeg4File->setCreationDate(iCreationDate);
+            }
             iMpeg4File->setMovieFragmentDuration(iMovieFragmentDuration);
             iMpeg4File->setAlbumInfo(iAlbumTitle.iDataString, iAlbumTitle.iLangCode);
             iMpeg4File->setRecordingYear(iRecordingYear);

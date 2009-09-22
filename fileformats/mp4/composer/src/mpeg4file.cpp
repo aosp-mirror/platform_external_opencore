@@ -1309,10 +1309,13 @@ PVA_FF_Mpeg4File::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
         addCompatibleBrand(BRAND_3GPP5);
     }
 
-    uint32 time = convertCreationTime(_creationDate);
+    if( _oSetCreationDateDone )
+    {
+        uint32 time = convertCreationTime(_creationDate);
 
-    _pmovieAtom->getMutableMovieHeaderAtom().setCreationTime(time);
-    _pmovieAtom->getMutableMovieHeaderAtom().setModificationTime(time);
+        _pmovieAtom->getMutableMovieHeaderAtom().setCreationTime(time);
+        _pmovieAtom->getMutableMovieHeaderAtom().setModificationTime(time);
+    }
 
     if ((_o3GPPTrack == true) || (_oPVMMTrack == true) || (_oMPEGTrack == true))
     {
@@ -2487,7 +2490,6 @@ PVA_FF_Mpeg4File::prepareToEncode()
                 (_oSetCopyrightDone    == false) ||
                 (_oSetDescriptionDone  == false) ||
                 (_oSetRatingDone       == false) ||
-                (_oSetCreationDateDone == false) ||
                 (_pmediaDataAtomVec->size() == 0))
         {
             // Requirements for this API not met
