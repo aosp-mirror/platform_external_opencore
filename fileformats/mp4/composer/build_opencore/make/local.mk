@@ -54,6 +54,7 @@ SRCS := amrdecoderspecificinfo3gpp.cpp \
 	mediainformationheaderatom.cpp \
 	movieatom.cpp \
 	movieheaderatom.cpp \
+	mpeg4bitrateatom.cpp \
 	mpeg4file.cpp \
 	mpeg4mediaheaderatom.cpp \
 	mpegsampleentry.cpp \

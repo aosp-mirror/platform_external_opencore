@@ -64,7 +64,7 @@ class PVA_FF_SampleDescriptionAtom : public PVA_FF_FullAtom
         }
 
         // Stream properties
-        void setTargetBitrate(uint32 bitrate);
+        void setTargetBitrate(uint32 avgBitRate, uint32 maxBitRate, uint32 bufferSizeDB);
 
         void addSampleEntry(PVA_FF_SampleEntry *entry);
         void insertSampleEntryAt(int32 index, PVA_FF_SampleEntry *entry);

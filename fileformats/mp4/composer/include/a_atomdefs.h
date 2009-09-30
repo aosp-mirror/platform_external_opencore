@@ -175,6 +175,7 @@ const uint32    AMR_SPECIFIC_ATOM = FourCharConstToUint32('d', 'a', 'm', 'r');
 const uint32    H263_SPECIFIC_ATOM = FourCharConstToUint32('d', '2', '6', '3');
 const uint32    AVC_SAMPLE_ENTRY = FourCharConstToUint32('a', 'v', 'c', '1');
 const uint32    AVC_CONFIGURATION_BOX = FourCharConstToUint32('a', 'v', 'c', 'C');
+const uint32    MPEG4_BITRATE_BOX = FourCharConstToUint32('b', 't', 'r', 't');
 
 const uint32    BRAND_MMP4 = FourCharConstToUint32('m', 'm', 'p', '4');
 

@@ -320,10 +320,9 @@ PVA_FF_SampleDescriptionAtom::addDecoderSpecificInfo(PVA_FF_DecoderSpecificInfo 
     }
 }
 
-
 // Stream properties
 void
-PVA_FF_SampleDescriptionAtom::setTargetBitrate(uint32 bitrate)
+PVA_FF_SampleDescriptionAtom::setTargetBitrate(uint32 avgBitrate, uint32 maxBitRate, uint32 bufferSizeDB)
 {
     switch (_mediaType)
     {
@@ -333,25 +332,33 @@ PVA_FF_SampleDescriptionAtom::setTargetBitrate(uint32 bitrate)
             if (type == VIDEO_SAMPLE_ENTRY)
             {
                 PVA_FF_VisualSampleEntry *ventry = (PVA_FF_VisualSampleEntry*) getSampleEntryAt(0);
-                ventry->setTargetBitrate(bitrate);
+                ventry->setTargetBitrate(avgBitrate);
             }
             else if (type == H263_SAMPLE_ENTRY)
             {
                 PVA_FF_H263SampleEntry *hentry = (PVA_FF_H263SampleEntry*) getSampleEntryAt(0);
                 PVA_FF_H263SpecficAtom *pH263info =
                     (PVA_FF_H263SpecficAtom *)(hentry->get3GPPDecoderSpecificInfo());
-                pH263info->_ph263_decbitrateatom->setAvgBitrate(bitrate);
-                pH263info->_ph263_decbitrateatom->setMaxBitrate(bitrate);
+                pH263info->_ph263_decbitrateatom->setAvgBitrate(avgBitrate);
+                pH263info->_ph263_decbitrateatom->setMaxBitrate(avgBitrate);
+            }
+            else if (type == AVC_SAMPLE_ENTRY)
+            {
+                PVA_FF_AVCSampleEntry* videoentry = OSCL_STATIC_CAST(PVA_FF_AVCSampleEntry*, getSampleEntryAt(0));
+                if (videoentry)
+                {
+                    videoentry->setBitrate(bufferSizeDB, maxBitRate, avgBitrate);
+                }
             }
             break;
         }
         case MEDIA_TYPE_AUDIO:
         {
-            _currAudioBitrate = bitrate;
+            _currAudioBitrate = avgBitrate;
             if (_codecType == CODEC_TYPE_AAC_AUDIO)
             {
                 PVA_FF_AudioSampleEntry *entry = (PVA_FF_AudioSampleEntry*) getSampleEntryAt(0);
-                entry->setTargetBitrate(bitrate);
+                entry->setTargetBitrate(avgBitrate);
             }
             break;
         }
