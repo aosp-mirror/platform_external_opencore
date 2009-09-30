@@ -170,13 +170,13 @@ PVA_FF_MovieAtom::addTrackAtom(PVA_FF_TrackAtom *a)
 }
 
 void
-PVA_FF_MovieAtom::setTargetBitRate(uint32 trackID, uint32 bitrate)
+PVA_FF_MovieAtom::setTargetBitrate(uint32 trackID, uint32 avgBitRate, uint32 maxBitRate, uint32 bufferSizeDB)
 {
     PVA_FF_TrackAtom *track = getMediaTrack(trackID);
 
     if (track != NULL)
     {
-        track->setTargetBitrate(bitrate);
+        track->setTargetBitrate(avgBitRate, maxBitRate, bufferSizeDB);
     }
     return;
 }

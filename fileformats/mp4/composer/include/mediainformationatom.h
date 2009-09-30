@@ -49,9 +49,9 @@ class PVA_FF_MediaInformationAtom : public PVA_FF_Atom
         virtual ~PVA_FF_MediaInformationAtom();
 
         // Stream properties
-        void setTargetBitrate(uint32 bitrate)
+        void setTargetBitrate(uint32 avgBitRate, uint32 maxBitRate, uint32 bufferSizeDB)
         {
-            _psampleTableAtom->setTargetBitrate(bitrate);
+            _psampleTableAtom->setTargetBitrate(avgBitRate, maxBitRate, bufferSizeDB);
         }
 
         // Called to update the member atoms if they depend on the actual

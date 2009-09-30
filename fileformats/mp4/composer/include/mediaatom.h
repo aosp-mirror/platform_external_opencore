@@ -112,9 +112,9 @@ class PVA_FF_MediaAtom : public PVA_FF_Atom
         }
 
         // Stream properties
-        void setTargetBitrate(uint32 bitrate)
+        void setTargetBitrate(uint32 avgBitRate, uint32 maxBitRate, uint32 bufferSizeDB)
         {
-            _pmediaInformation->setTargetBitrate(bitrate);
+            _pmediaInformation->setTargetBitrate(avgBitRate, maxBitRate, bufferSizeDB);
         }
 
         // Rendering the PVA_FF_Atom in proper format (bitlengths, etc.) to an ostream

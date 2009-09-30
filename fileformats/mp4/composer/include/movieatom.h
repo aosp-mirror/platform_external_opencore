@@ -135,7 +135,7 @@ class PVA_FF_MovieAtom : public PVA_FF_Atom, public PVA_FF_ISucceedFail
                                         uint32 size,
                                         uint32 baseOffset);
 
-        void setTargetBitRate(uint32 trackID, uint32 bitrate);
+        void setTargetBitrate(uint32 trackID, uint32 avgBitRate, uint32 maxBitRate, uint32 bufferSizeDB);
         void setTimeScale(uint32 trackID, uint32 rate);
         int32 getCodecType(uint32 trackID);
 

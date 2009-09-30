@@ -629,9 +629,9 @@ PVA_FF_Mpeg4File::addTrackReference(uint32 currtrackID, int32 reftrackID)
 }
 
 void
-PVA_FF_Mpeg4File::setTargetBitRate(uint32 trackID, uint32 bitrate)
+PVA_FF_Mpeg4File::setTargetBitrate(uint32 trackID, uint32 avgBitRate, uint32 maxBitRate, uint32 bufferSizeDB)
 {
-    _pmovieAtom->setTargetBitRate(trackID, bitrate);
+    _pmovieAtom->setTargetBitrate(trackID, avgBitRate, maxBitRate, bufferSizeDB);
     return;
 }
 

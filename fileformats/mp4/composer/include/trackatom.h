@@ -182,10 +182,10 @@ class PVA_FF_TrackAtom : public PVA_FF_Atom, public PVA_FF_ISucceedFail
         }
 
         // Stream properties
-        void setTargetBitrate(uint32 bitrate)
+        void setTargetBitrate(uint32 avgBitRate, uint32 maxBitRate, uint32 bufferSizeDB)
         {
-            _trackTargetBitRate = bitrate;
-            _pmediaAtom->setTargetBitrate(bitrate);
+            _trackTargetBitRate = avgBitRate;
+            _pmediaAtom->setTargetBitrate(avgBitRate, maxBitRate, bufferSizeDB);
         }
 
         // Media timescale

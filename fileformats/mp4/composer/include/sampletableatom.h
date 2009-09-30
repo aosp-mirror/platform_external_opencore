@@ -101,9 +101,9 @@ class PVA_FF_SampleTableAtom : public PVA_FF_Atom
 
 
         // Stream properties
-        void setTargetBitrate(uint32 bitrate)
+        void setTargetBitrate(uint32 avgBitRate, uint32 maxBitRate, uint32 bufferSizeDB)
         {
-            _psampleDescriptionAtom->setTargetBitrate(bitrate);
+            _psampleDescriptionAtom->setTargetBitrate(avgBitRate, maxBitRate, bufferSizeDB);
         }
 
         // Gets for optional member atoms
