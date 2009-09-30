@@ -1175,8 +1175,22 @@ int AndroidAudioInput::audin_thread_func() {
                 // The difference in 2 will give the actual time
                 // of first audio capture.
                 uint32 systime = (uint32) (systemTime() / 1000000L);
-                // TODO: add audio hardware input latency here
-                uint32 recordLatency = record->latency();
+                uint32 recordLatency = 0;
+
+                // Get the latency now
+                size_t kernelBufferSize = 0;
+                status_t ret = AudioSystem::getInputBufferSize(iAudioSamplingRate,
+                                                               AudioSystem::PCM_16_BIT,
+                                                               iAudioNumChannels, &kernelBufferSize);
+
+                if (ret == NO_ERROR) {
+                    uint32 readBufferFrames = kBufferSize/2/iAudioNumChannels;
+                    uint32 kernelFrames = kernelBufferSize/2/iAudioNumChannels;
+                    recordLatency  = ((readBufferFrames - 1)/kernelFrames + 1) * (kernelFrames*1000)/iAudioSamplingRate;
+                } else {
+                    LOGE("AudioSystem::getInputBufferSize returned error");
+                }
+
                 iFirstFrameTs = systime - recordLatency;
                 LOGV("First Audio Frame received systime %d, recordLatency %d, iFirstFrameTs %d", systime, recordLatency, iFirstFrameTs);
             }
