@@ -199,6 +199,8 @@ class PVMFOMXVideoDecNode
         uint32 iM4VMaxBitstreamFrameSize;
         uint32 iM4VMaxWidth;
         uint32 iM4VMaxHeight;
+        uint32 iStride;
+        uint32 iSliceHeight;
 
         uint32 iNewWidth , iNewHeight;
 
