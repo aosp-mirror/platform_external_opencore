@@ -40,11 +40,12 @@
         param.nVersion.s.nStep = SPECSTEP;
 
 #define PVOMXBASEDEC_MEDIADATA_CHUNKSIZE 128
-#if 0
+
 #include <utils/Log.h>
 #undef LOG_TAG
-#define LOG_TAG "SW_BASE"
+#define LOG_TAG "OMXBaseNode"
 
+#if 0
 #undef PVLOGGER_LOGMSG
 #define PVLOGGER_LOGMSG(IL, LOGGER, LEVEL, MESSAGE) JJLOGE MESSAGE
 #define JJLOGE(id, ...) LOGE(__VA_ARGS__)
@@ -4031,6 +4032,7 @@ void PVMFOMXBaseDecNode::DoPrepare(PVMFOMXBaseDecNodeCommand& aCmd)
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                             (0, "%s::DoPrepare(): There are %d components of role %s ", iName.Str(), num_comps, aInputParameters.cComponentRole));
+            LOGI("There are %d components of role %s ", (int)num_comps, aInputParameters.cComponentRole);
 
             if (num_comps > 0)
             {
@@ -4068,12 +4070,14 @@ void PVMFOMXBaseDecNode::DoPrepare(PVMFOMXBaseDecNodeCommand& aCmd)
                         {
                             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                                             (0, "%s::DoPrepare(): Got Component %s handle ", iName.Str(), aInputParameters.cComponentName));
+                            LOGE("Got Component %s handle ", aInputParameters.cComponentName);
                             break;
                         }
                         else
                         {
                             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                                             (0, "%s::DoPrepare(): Cannot get component %s handle, try another component if available", iName.Str(), aInputParameters.cComponentName));
+                            LOGE("Cannot get component %s handle, try another component if available", aInputParameters.cComponentName);
                         }
                     }
                     else

@@ -130,7 +130,7 @@ static OMX_ERRORTYPE GetRegIndexForHandle(OMX_HANDLETYPE hComponent, OMX_U32 &in
 }
 
 // ALL the standard OpenMAX IL core functions are implemented below
-static OMX_ERRORTYPE _OMX_MasterInit(OMXMasterCoreGlobalData *data)
+static OMX_ERRORTYPE _OMX_MasterInit(OMXMasterCoreGlobalData *data, const char *aConfigFilePathName)
 {
     OMX_ERRORTYPE Status = OMX_ErrorNone;
     OMX_U32 jj;
@@ -146,7 +146,17 @@ static OMX_ERRORTYPE _OMX_MasterInit(OMXMasterCoreGlobalData *data)
 
     // Step 1
     OsclConfigFileList aCfgList;
-    OSCL_HeapString<OsclMemAllocator> configFilePath = PV_DYNAMIC_LOADING_CONFIG_FILE_PATH;
+    OSCL_HeapString<OsclMemAllocator> configFilePath;
+    if (aConfigFilePathName == NULL)
+    {
+        // use this as default unless path is provided
+        configFilePath = PV_DYNAMIC_LOADING_CONFIG_FILE_PATH;
+    }
+    else
+    {
+        configFilePath = aConfigFilePathName;
+    }
+
     aCfgList.Populate(configFilePath, OsclConfigFileList::ESortByName);
 
     // array of ptrs to various cores, one for every valid configuration
@@ -306,9 +316,9 @@ static OMX_ERRORTYPE _OMX_MasterInit(OMXMasterCoreGlobalData *data)
 }
 
 //this routine is needed to avoid a longjmp clobber warning
-static void _Try_OMX_MasterInit(int32& aError, OMX_ERRORTYPE& aStatus, OMXMasterCoreGlobalData *data)
+static void _Try_OMX_MasterInit(int32& aError, OMX_ERRORTYPE& aStatus, OMXMasterCoreGlobalData *data, const char *aConfigFilePathName)
 {
-    OSCL_TRY(aError, aStatus = _OMX_MasterInit(data););
+    OSCL_TRY(aError, aStatus = _OMX_MasterInit(data, aConfigFilePathName););
 }
 //this routine is needed to avoid a longjmp clobber warning
 static void _Try_OMX_MasterCreate(int32& aError, OMXMasterCoreGlobalData*& aData)
@@ -316,7 +326,7 @@ static void _Try_OMX_MasterCreate(int32& aError, OMXMasterCoreGlobalData*& aData
     OSCL_TRY(aError, aData = OSCL_NEW(OMXMasterCoreGlobalData, ()););
 }
 
-OSCL_EXPORT_REF OMX_ERRORTYPE OMX_MasterInit()
+static OMX_ERRORTYPE OMX_MasterInitPathName(const char *aConfigFilePathName)
 {
     OMX_ERRORTYPE status = OMX_ErrorNone;
 
@@ -351,7 +361,7 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OMX_MasterInit()
         //If create succeeded, then init the OMX globals.
         if (status == OMX_ErrorNone)
         {
-            _Try_OMX_MasterInit(error, status, data);
+            _Try_OMX_MasterInit(error, status, data, aConfigFilePathName);
             if (error != OsclErrNone)
             {
                 status = OMX_ErrorUndefined;//probably no memory.
@@ -376,6 +386,15 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OMX_MasterInit()
     return status;
 }
 
+OSCL_EXPORT_REF OMX_ERRORTYPE OMX_MasterInit()
+{
+    return OMX_MasterInitPathName(NULL);
+}
+
+OSCL_EXPORT_REF OMX_ERRORTYPE OMX_MasterInit(const char *aConfigFilePathName)
+{
+    return OMX_MasterInitPathName(aConfigFilePathName);
+}
 
 static OMX_ERRORTYPE _OMX_MasterDeinit(OMXMasterCoreGlobalData *data)
 {

@@ -55,6 +55,8 @@ const char* MetadataDriver::METADATA_KEYS[NUM_METADATA_KEYS] = {
         "writer",
 };
 
+const char *METADATACONFIGPATH = "/system/etc/fmu";
+
 static void dumpkeystolog(PVPMetadataList list)
 {
     LOGV("dumpkeystolog");
@@ -101,7 +103,7 @@ int MetadataDriver::retrieverThread()
         return -1;
     }
 
-    OMX_MasterInit();
+    OMX_MasterInit(METADATACONFIGPATH);
     OsclScheduler::Init("PVAuthorEngineWrapper");
     mState = STATE_CREATE;
     AddToScheduler();
@@ -403,7 +405,7 @@ status_t MetadataDriver::setDataSourceFd(
 
 status_t MetadataDriver::setDataSource(const char* srcUrl)
 {
-    LOGV("setDataSource");
+    LOGV("setDataSource %s",srcUrl);
 
     closeSharedFdIfNecessary();
 

@@ -366,6 +366,12 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OMX_MasterInit()
 {
     return OMX_Init();
 }
+
+OSCL_EXPORT_REF OMX_ERRORTYPE OMX_MasterInit(const char *aConfigFilePathName)
+{
+    OSCL_UNUSED_ARG(aConfigFilePathName);
+    return OMX_Init();
+}
 #endif
 
 OSCL_EXPORT_REF OMX_ERRORTYPE OMX_Init()

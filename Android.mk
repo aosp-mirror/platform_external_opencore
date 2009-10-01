@@ -8,6 +8,21 @@ include $(LOCAL_PATH)/Config.mk
 
 $(call add-prebuilt-files, ETC, pvplayer.cfg)
 
+######### Push pvplayer.cfg in /system/etc/fmu as well to be used for
+######### thumbnail extraction
+include $(CLEAR_VARS)
+
+LOCAL_MODULE := pvplayer.cfg
+
+LOCAL_MODULE_CLASS := ETC
+LOCAL_MODULE_PATH := $(TARGET_OUT_ETC)/fmu
+LOCAL_SRC_FILES := $(LOCAL_MODULE)
+
+include $(BUILD_PREBUILT)
+#########
+
+
+include $(CLEAR_VARS)
 
 include $(PV_TOP)/build_config/opencore_dynamic/Android_opencore_common.mk
 include $(PV_TOP)/build_config/opencore_dynamic/Android_opencore_author.mk
@@ -47,3 +62,4 @@ include $(PV_TOP)/engines/author/test/Android.mk
 endif
 
 endif
+
