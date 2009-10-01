@@ -52,6 +52,9 @@
 #define PVOMXENC_MEDIADATA_POOLNUM (PVOMXENCMAXNUMDPBFRAMESPLUS1 + PVOMXENC_EXTRA_YUVBUFFER_POOLNUM)
 #define PVOMXENC_MEDIADATA_CHUNKSIZE 128
 
+#include "utils/Log.h"
+#undef LOG_TAG
+#define LOG_TAG "PVOMXEncNode"
 
 const uint32 DEFAULT_VOL_HEADER_LENGTH = 28;
 const uint8 DEFAULT_VOL_HEADER[DEFAULT_VOL_HEADER_LENGTH] =
@@ -5739,6 +5742,7 @@ void PVMFOMXEncNode::DoPrepare(PVMFOMXEncNodeCommand& aCmd)
 
                         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                                         (0, "PVMFOMXEncNode-%s::DoPrepare(): Got Component %s handle ", iNodeTypeId, CompOfRole[ii]));
+                        LOGE("PVMFOMXEncNode-%s::DoPrepare(): Got Component %s handle ", iNodeTypeId, CompOfRole[ii]);
 
                         break;
                     }
@@ -5746,6 +5750,7 @@ void PVMFOMXEncNode::DoPrepare(PVMFOMXEncNodeCommand& aCmd)
                     {
                         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
                                         (0, "PVMFOMXEncNode-%s::DoPrepare(): Cannot get component %s handle, try another component if available", iNodeTypeId, CompOfRole[ii]));
+                        LOGE("PVMFOMXEncNode-%s::DoPrepare(): Cannot get component %s handle, try another component if available", iNodeTypeId, CompOfRole[ii]);
                     }
 
                 }

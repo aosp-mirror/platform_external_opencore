@@ -1413,7 +1413,12 @@ void AuthorDriver::CommandCompleted(const PVCmdResponse& aResponse)
     switch(s) {
         case PVMFSuccess: s = android::OK; break;
         case PVMFPending: *(char *)0 = 0; break; /* XXX assert */
-        default: s = android::UNKNOWN_ERROR;
+        default:
+            LOGE("Command %d completed with error %d",ac->which, s);
+            // s = android::UNKNOWN_ERROR;
+            // FIXME: Similar to mediaplayer, set the return status to
+            //        something android specific. For now, use PVMF
+            //        return codes as is.
     }
 
     // Call the user's requested completion function

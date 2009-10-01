@@ -102,6 +102,7 @@ PVAuthorEngine::PVAuthorEngine() :
 {
     iLogger = PVLogger::GetLoggerObject("PVAuthorEngine");
     iDoResetNodeContainers = false;
+    lastNodeCommandError = PVMFFailure;
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -567,7 +568,10 @@ void PVAuthorEngine::NodeUtilCommandCompleted(const PVMFCmdResp& aResponse)
             return;
         }
         else
+        {
+            lastNodeCommandError = aResponse.GetCmdStatus();
             SetPVAEState(PVAE_STATE_ERROR);
+        }
     }
     //RESET needs to be handled seperately, if the EngineState is ERROR, ignore all cmds till
     //there are more pending commands, else send out commandComplete Failure
@@ -579,7 +583,7 @@ void PVAuthorEngine::NodeUtilCommandCompleted(const PVMFCmdResp& aResponse)
         }
         else
         {
-            CompleteEngineCommand(cmd, PVMFFailure); //Send Failure to this command, engine is in error state
+            CompleteEngineCommand(cmd, lastNodeCommandError); //Send Failure to this command, engine is in error state
             return;
         }
     }
@@ -693,7 +697,7 @@ void PVAuthorEngine::NodeUtilCommandCompleted(const PVMFCmdResp& aResponse)
     {
         if (iState == PVAE_STATE_ERROR)
         {
-            CompleteEngineCommand(cmd, PVMFFailure);
+            CompleteEngineCommand(cmd, status);
         }
         else
         {
