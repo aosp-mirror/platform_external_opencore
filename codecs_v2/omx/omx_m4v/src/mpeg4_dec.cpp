@@ -28,6 +28,9 @@
 #define PVH263DEFAULTHEIGHT 288
 #define PVH263DEFAULTWIDTH 352
 
+#include <utils/Log.h>
+#undef LOG_TAG
+#define LOG_TAG "SW_DEC"
 // from m4v_config_parser.h
 OSCL_IMPORT_REF int16 iGetM4VConfigInfo(uint8 *buffer, int32 length, int32 *width, int32 *height, int32 *, int32 *);
 
@@ -265,7 +268,12 @@ OMX_S32 Mpeg4Decoder_OMX::InitializeVideoDecode(
 
     if (mode == MODE_H263)
     {
+        LOGE("PV SW DECODER is used for H.263");
         CodecMode = H263_MODE;
+    }
+    else
+    {
+        LOGE("PV SW DECODER is used for MPEG4");
     }
 
     OK = PVInitVideoDecoder(&VideoCtrl, aBuffer, (int32*) aSize, 1,

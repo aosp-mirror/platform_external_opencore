@@ -479,6 +479,11 @@ AVCStatus sliding_window_process(AVCHandle *avcHandle, AVCCommonObj *video, AVCD
         }
     }
 
+    if (numShortTerm <= 0)
+    {
+        return AVC_FAIL;
+    }
+
     while (numShortTerm + numLongTerm >= (int)video->currSeqParams->num_ref_frames)
     {
         /* get short-term ref frame with smallest PicOrderCnt */

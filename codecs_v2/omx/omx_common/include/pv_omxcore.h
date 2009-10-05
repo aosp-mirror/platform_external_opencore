@@ -295,7 +295,6 @@ class OMXGlobalData
 };
 
     OSCL_IMPORT_REF OMX_ERRORTYPE OMX_MasterInit();
-    OSCL_IMPORT_REF OMX_ERRORTYPE OMX_MasterInit(const char *aConfigFilePathName);
     OSCL_IMPORT_REF OMX_ERRORTYPE OMX_MasterDeinit();
 
     OSCL_IMPORT_REF OMX_ERRORTYPE OMX_MasterGetComponentsOfRole(
