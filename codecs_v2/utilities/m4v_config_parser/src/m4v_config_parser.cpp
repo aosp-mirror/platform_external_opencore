@@ -99,6 +99,23 @@ int16 SearchNextM4VFrame(mp4StreamType *psBits)
     return status;
 }
 
+int16 SearchVOLHeader(mp4StreamType *psBits)
+{
+    uint32 codeword = 0;
+    int16 status = 0;
+    do
+    {
+        /* Search for VOL_HEADER */
+        status = SearchNextM4VFrame(psBits); /* search 0x00 0x00 0x01 */
+        if (status != 0)
+            return MP4_INVALID_VOL_PARAM;
+
+        status = ReadBits(psBits, VOL_START_CODE_LENGTH, &codeword);
+    }
+    while ((codeword != VOL_START_CODE) && (status == 0));
+    return status;
+}
+
 OSCL_EXPORT_REF int16 iGetM4VConfigInfo(uint8 *buffer, int32 length, int32 *width, int32 *height, int32 *display_width, int32 *display_height)
 {
     int16 status;
@@ -153,7 +170,12 @@ OSCL_EXPORT_REF int16 iDecodeVOLHeader(mp4StreamType *psBits, int32 *width, int3
 
 
         ReadBits(psBits, 32, &codeword);
-        if (codeword != VISUAL_OBJECT_START_CODE) return MP4_INVALID_VOL_PARAM;
+        if (codeword != VISUAL_OBJECT_START_CODE)
+        {
+            if (SearchVOLHeader(psBits) != 0)
+                return MP4_INVALID_VOL_PARAM;
+            goto decode_vol;
+        }
 
         /*  is_visual_object_identifier            */
         ReadBits(psBits, 1, &codeword);
@@ -192,17 +214,8 @@ OSCL_EXPORT_REF int16 iDecodeVOLHeader(mp4StreamType *psBits, int32 *width, int3
         }
         else
         {
-            int16 status = 0;
-            do
-            {
-                /* Search for VOL_HEADER */
-                status = SearchNextM4VFrame(psBits); /* search 0x00 0x00 0x01 */
-                if (status != 0)
-                    return MP4_INVALID_VOL_PARAM;
-
-                status = ReadBits(psBits, VOL_START_CODE_LENGTH, &codeword);
-            }
-            while ((codeword != VOL_START_CODE) && (status == 0));
+            if (SearchVOLHeader(psBits) != 0)
+                return MP4_INVALID_VOL_PARAM;
             goto decode_vol;
         }
         /* next_start_code() */
@@ -236,17 +249,8 @@ OSCL_EXPORT_REF int16 iDecodeVOLHeader(mp4StreamType *psBits, int32 *width, int3
             }
             else
             {
-                int16 status = 0;
-                do
-                {
-                    /* Search for VOL_HEADER */
-                    status = SearchNextM4VFrame(psBits); /* search 0x00 0x00 0x01 */
-                    if (status != 0)
-                        return MP4_INVALID_VOL_PARAM;
-
-                    status = ReadBits(psBits, VOL_START_CODE_LENGTH, &codeword);
-                }
-                while ((codeword != VOL_START_CODE) && (status == 0));
+                if (SearchVOLHeader(psBits) != 0)
+                    return MP4_INVALID_VOL_PARAM;
                 goto decode_vol;
             }
         }
@@ -400,17 +404,8 @@ decode_vol:
         }
         else
         {
-            int16 status = 0;
-            do
-            {
-                /* Search for VOL_HEADER */
-                status = SearchNextM4VFrame(psBits); /* search 0x00 0x00 0x01 */
-                if (status != 0)
-                    return MP4_INVALID_VOL_PARAM;
-
-                status = ReadBits(psBits, VOL_START_CODE_LENGTH, &codeword);
-            }
-            while ((codeword != VOL_START_CODE) && (status == 0));
+            if (SearchVOLHeader(psBits) != 0)
+                return MP4_INVALID_VOL_PARAM;
             goto decode_vol;
         }
     }
