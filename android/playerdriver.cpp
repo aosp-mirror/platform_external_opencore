@@ -29,6 +29,7 @@
 #include <utils/SortedVector.h>
 #include <cutils/properties.h>
 #include <binder/Parcel.h>
+#include <utils/Timers.h>
 
 #include <media/MediaPlayerInterface.h>
 #include <media/Metadata.h>
@@ -87,6 +88,8 @@ using namespace android;
 static const char* MIO_LIBRARY_NAME = "libopencorehw.so";
 static const char* VIDEO_MIO_FACTORY_NAME = "createVideoMio";
 typedef AndroidSurfaceOutput* (*VideoMioFactory)();
+
+static const nsecs_t kBufferingUpdatePeriod = seconds(10);
 
 namespace {
 
@@ -307,6 +310,7 @@ class PlayerDriver :
     bool                    mEmulation;
     bool                    mContentLengthKnown;
     void*                   mLibHandle;
+    nsecs_t                 mLastBufferingLog;
 
     // video display surface
     android::sp<android::ISurface> mSurface;
@@ -866,6 +870,9 @@ void PlayerDriver::handleStart(PlayerStart* command)
 {
     int error = 0;
 
+    // reset logging
+    mLastBufferingLog = 0;
+
     // for video, set thread priority so we don't hog CPU
     if (mVideoOutputMIO) {
         int ret = setpriority(PRIO_PROCESS, 0, ANDROID_PRIORITY_DISPLAY);
@@ -1343,7 +1350,11 @@ void PlayerDriver::HandleInformationalEvent(const PVAsyncInformationalEvent& aEv
                 if ( (mContentLengthKnown || (getFormatType() == PVMF_MIME_DATA_SOURCE_RTSP_URL) ) &&
                     (GetBufferingPercentage(buffer, size, &percentage)))
                 {
-                    LOGD("buffering (%d)", percentage);
+                    nsecs_t now = systemTime();
+                    if (now - mLastBufferingLog > kBufferingUpdatePeriod) {
+                        LOGI("buffering (%d)", percentage);
+                        mLastBufferingLog = now;
+                    }
                     mPvPlayer->sendEvent(MEDIA_BUFFERING_UPDATE, percentage);
                 }
             }
