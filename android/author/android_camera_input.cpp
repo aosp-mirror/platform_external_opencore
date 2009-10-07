@@ -1064,7 +1064,11 @@ PVMFStatus AndroidCameraInput::VerifyAndSetParameter(PvmiKvp* aKvp,
     else if (pv_mime_strcmp(aKvp->key, PVMF_AUTHORING_CLOCK_KEY) == 0)
     {
         LOGV("AndroidCameraInput::VerifyAndSetParameter() PVMF_AUTHORING_CLOCK_KEY value %p", aKvp->value.key_specific_value);
-	iAuthorClock = (PVMFMediaClock*)aKvp->value.key_specific_value;
+        if( (NULL == aKvp->value.key_specific_value) && ( iAuthorClock ) )
+        {
+            RemoveDestroyClockObs();
+        }
+        iAuthorClock = (PVMFMediaClock*)aKvp->value.key_specific_value;
         return PVMFSuccess;
     }
 
@@ -1116,8 +1120,15 @@ PVMFStatus AndroidCameraInput::postWriteAsync(nsecs_t timestamp, const sp<IMemor
         return PVMFFailure;
     }
 
-    if((!iPeer) || (!isRecorderStarting()) || (iWriteState == EWriteBusy) || (iAuthorClock->GetState() != PVMFMediaClock::RUNNING)) {
-        LOGE("Recording is not ready (iPeer %p iState %d iWriteState %d iClockState %d), frame dropped", iPeer, iState, iWriteState, iAuthorClock->GetState());
+    if((!iPeer) || (!isRecorderStarting()) || (iWriteState == EWriteBusy) || (NULL == iAuthorClock) || (iAuthorClock->GetState() != PVMFMediaClock::RUNNING)) {
+        if( NULL == iAuthorClock )
+        {
+            LOGE("Recording is not ready (iPeer %p iState %d iWriteState %d iAuthorClock NULL), frame dropped", iPeer, iState, iWriteState);
+        }
+        else
+        {
+            LOGE("Recording is not ready (iPeer %p iState %d iWriteState %d iClockState %d), frame dropped", iPeer, iState, iWriteState, iAuthorClock->GetState());
+        }
         mCamera->releaseRecordingFrame(frame);
         return PVMFSuccess;
     }
