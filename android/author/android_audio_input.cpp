@@ -1360,6 +1360,10 @@ PVMFStatus AndroidAudioInput::VerifyAndSetParameter(PvmiKvp* aKvp, bool aSetPara
     else if (pv_mime_strcmp(aKvp->key, PVMF_AUTHORING_CLOCK_KEY) == 0)
     {
         LOGV("AndroidAudioInput::VerifyAndSetParameter() PVMF_AUTHORING_CLOCK_KEY value %p", aKvp->value.key_specific_value);
+        if( (NULL == aKvp->value.key_specific_value) && ( iAuthorClock ) )
+        {
+            RemoveDestroyClockStateObs();
+        }
         iAuthorClock = (PVMFMediaClock*) aKvp->value.key_specific_value;
         return PVMFSuccess;
     }
