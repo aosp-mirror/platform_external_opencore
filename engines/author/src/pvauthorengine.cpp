@@ -1469,6 +1469,8 @@ PVMFStatus PVAuthorEngine::DoStop(PVEngineCommand& aCmd)
 
     switch (GetPVAEState())
     {
+        case PVAE_STATE_INITIALIZED:
+            return PVMFSuccess;
         case PVAE_STATE_RECORDING:
         case PVAE_STATE_PAUSED:
             iAuthorClock.Stop();
