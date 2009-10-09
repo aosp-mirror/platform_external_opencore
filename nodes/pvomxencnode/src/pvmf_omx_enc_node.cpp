@@ -4576,6 +4576,7 @@ OMX_ERRORTYPE PVMFOMXEncNode::EventHandlerProcessing(OMX_OUT OMX_HANDLETYPE aCom
 
         case OMX_EventError:
         {
+            LOGE("Ln %d OMX_EventError nData1 %d nData2 %d", __LINE__, aData1, aData2);
 
             if (aData1 == (OMX_U32) OMX_ErrorStreamCorrupt)
             {
