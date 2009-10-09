@@ -6485,26 +6485,7 @@ void PVMFOMXEncNode::DoReset(PVMFOMXEncNodeCommand& aCmd)
                 err = OMX_GetState(iOMXEncoder, &sState);
                 if (err != OMX_ErrorNone)
                 {
-                    //Error condition report
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                    (0, "PVMFOMXEncNode-%s::DoReset(): Can't get State of encoder!", iNodeTypeId));
-                    if (iResetInProgress)
-                    {
-                        // cmd is in current q
-                        iResetInProgress = false;
-                        if ((iCurrentCommand.size() > 0) &&
-                                (iCurrentCommand.front().iCmd == PVMFOMXEncNodeCommand::PVOMXENC_NODE_CMD_RESET)
-                           )
-                        {
-                            CommandComplete(iCurrentCommand, iCurrentCommand.front(), PVMFErrResource);
-                        }
-
-                    }
-                    else
-                    {
-                        CommandComplete(iInputCommands, aCmd, PVMFErrResource);
-                    }
-                    return;
+                    sState = OMX_StateInvalid;
                 }
 
                 if (sState == OMX_StateLoaded)
@@ -6518,47 +6499,9 @@ void PVMFOMXEncNode::DoReset(PVMFOMXEncNodeCommand& aCmd)
                                         (0, "PVMFOMXEncNode-%s::DoReset() OMX comp is in loaded state. Wait for official callback to change variables etc.", iNodeTypeId));
                         return;
                     }
-                    else
-                    {
-                        //delete all ports and notify observer.
-                        if (iInPort)
-                        {
-                            OSCL_DELETE(((PVMFOMXEncPort*)iInPort));
-                            iInPort = NULL;
-                        }
-
-                        if (iOutPort)
-                        {
-                            OSCL_DELETE(((PVMFOMXEncPort*)iOutPort));
-                            iOutPort = NULL;
-                        }
-
-                        iDataIn.Unbind();
-
-
-                        // Reset the metadata key list
-                        iAvailableMetadataKeys.clear();
-
-                        iEndOfDataReached = false;
-                        iIsEOSSentToComponent = false;
-                        iIsEOSReceivedFromComponent = false;
-
-
-                        iProcessingState = EPVMFOMXEncNodeProcessingState_Idle;
-                        //logoff & go back to Created state.
-                        SetState(EPVMFNodeIdle);
-
-                        CommandComplete(iInputCommands, aCmd, PVMFSuccess);
-
-                        //CommandComplete(iInputCommands, aCmd, PVMFErrResource);
-                        return;
-                    }
                 }
-
-                if (sState == OMX_StateIdle)
+                else if (sState == OMX_StateIdle)
                 {
-
-
                     //this command is asynchronous.  move the command from
                     //the input command queue to the current command, where
                     //it will remain until it is completed.
@@ -6679,7 +6622,7 @@ void PVMFOMXEncNode::DoReset(PVMFOMXEncNodeCommand& aCmd)
                     return;
 
                 }
-                if ((sState == OMX_StateExecuting) || (sState == OMX_StatePause))
+                else if ((sState == OMX_StateExecuting) || (sState == OMX_StatePause))
                 {
                     //this command is asynchronous.  move the command from
                     //the input command queue to the current command, where
@@ -6756,29 +6699,16 @@ void PVMFOMXEncNode::DoReset(PVMFOMXEncNodeCommand& aCmd)
                             iProcessingState = EPVMFOMXEncNodeProcessingState_Stopping;
                     }
                     return;
-
                 }
                 else
                 {
                     //Error condition report
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                    (0, "PVMFOMXEncNode-%s::DoReset(): Encoder is not in the Idle state!", iNodeTypeId));
-                    if (iResetInProgress)
-                    {
-                        iResetInProgress = false;
-                        if ((iCurrentCommand.size() > 0) &&
-                                (iCurrentCommand.front().iCmd == PVMFOMXEncNodeCommand::PVOMXENC_NODE_CMD_RESET)
-                           )
-                        {
-                            CommandComplete(iCurrentCommand, iCurrentCommand.front(), PVMFErrInvalidState);
-                        }
-                    }
-                    else
-                    {
-                        CommandComplete(iInputCommands, aCmd, PVMFErrInvalidState);
-                    }
-                    break;
-                }//end of if (sState == OMX_StateIdle)
+                                    (0, "PVMFOMXEncNode-%s::DoReset(): Encoder is not in the Idle state! %d", iNodeTypeId, sState ));
+                    //do it here rather than relying on DTOR to avoid node reinit problems.
+                    DeleteOMXEncoder();
+                    //still return success.
+                }//end of if (sState == OMX_StateLoaded)
             }//end of if (iOMXEncoder != NULL)
 
             //delete all ports and notify observer.
