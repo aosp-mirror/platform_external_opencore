@@ -611,6 +611,15 @@ class PVMFMemoryBufferWriteDataStreamImpl : public PVMIDataStreamSyncInterface
             uint32 iNewFilePosition;
 
             bool iFlushCache;
+
+            RepositionRequestStruct():
+                iOutstanding(false),
+                iRequestCompleted(false),
+                iSuccess(PVDS_FAILURE),
+                iRepositionSessionID(-1),
+                iNewFilePosition(0),
+                iFlushCache(false)
+            {}
         };
 
         struct ReadFilePositionStruct

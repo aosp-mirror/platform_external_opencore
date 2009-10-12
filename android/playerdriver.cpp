@@ -329,7 +329,8 @@ PlayerDriver::PlayerDriver(PVPlayer* pvPlayer) :
         mSeekPending(false),
         mIsLiveStreaming(false),
         mEmulation(false),
-        mContentLengthKnown(false)
+        mContentLengthKnown(false),
+        mLastBufferingLog(0)
 {
     LOGV("constructor");
     mSyncSem = new OsclSemaphore();
