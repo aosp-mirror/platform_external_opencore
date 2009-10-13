@@ -4586,9 +4586,14 @@ OMX_ERRORTYPE PVMFOMXEncNode::EventHandlerProcessing(OMX_OUT OMX_HANDLETYPE aCom
                 ReportInfoEvent(PVMFInfoProcessingFailure, NULL);
 
             }
+            else if (aData1 == (OMX_U32) OMX_ErrorInvalidState)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                                (0, "PVMFOMXEncNode-%s::EventHandlerProcessing: OMX_EventError - OMX_ErrorInvalidState", iNodeTypeId));
+                HandleComponentStateChange(OMX_StateInvalid);
+            }
             else
             {
-
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
                                 (0, "PVMFOMXEncNode-%s::EventHandlerProcessing: OMX_EventError", iNodeTypeId));
                 // for now, any error from the component will be reported as error
@@ -4848,6 +4853,46 @@ void PVMFOMXEncNode::HandleComponentStateChange(OMX_U32 encoder_state)
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
                             (0, "PVMFOMXEncNode-%s::HandleComponentStateChange: OMX_StateInvalid reached", iNodeTypeId));
+            //Clearup encoder
+            DeleteOMXEncoder();
+
+            if (iCurrentCommand.size() > 0)
+            {//can NOT be CANCEL or CANCEL_ALL. Just to cmd completion for the rest
+                if (iCurrentCommand.front().iCmd == PVMFOMXEncNodeCommand::PVOMXENC_NODE_CMD_RESET)
+                {
+                    //delete all ports and notify observer.
+                    if (iInPort)
+                    {
+                        OSCL_DELETE(((PVMFOMXEncPort*)iInPort));
+                        iInPort = NULL;
+                    }
+
+                    if (iOutPort)
+                    {
+                        OSCL_DELETE(((PVMFOMXEncPort*)iOutPort));
+                        iOutPort = NULL;
+                    }
+
+                    iDataIn.Unbind();
+
+                    // Reset the metadata key list
+                    iAvailableMetadataKeys.clear();
+
+                    iEndOfDataReached = false;
+                    iIsEOSSentToComponent = false;
+                    iIsEOSReceivedFromComponent = false;
+
+                    iProcessingState = EPVMFOMXEncNodeProcessingState_Idle;
+                    //logoff & go back to Created state.
+                    SetState(EPVMFNodeIdle);
+                    CommandComplete(iCurrentCommand, iCurrentCommand.front(), PVMFSuccess);
+                }
+                else
+                {
+                    SetState(EPVMFNodeError);
+                    CommandComplete(iCurrentCommand, iCurrentCommand.front(), PVMFErrResource);
+                }
+            }
 
             break;
         }//end of case OMX_StateInvalid
