@@ -752,17 +752,17 @@ AssetInfoLocationAtom::~AssetInfoLocationAtom()
     {
         if (_pLocationStruct->_location_name != NULL)
         {
-            PV_MP4_FF_DELETE(NULL, oscl_wchar, _pLocationStruct->_location_name);
+            PV_MP4_ARRAY_DELETE(NULL, _pLocationStruct->_location_name);
             _pLocationStruct->_location_name = NULL;
         }
         if (_pLocationStruct->_astronomical_body != NULL)
         {
-            PV_MP4_FF_DELETE(NULL, oscl_wchar, _pLocationStruct->_astronomical_body);
+            PV_MP4_ARRAY_DELETE(NULL, _pLocationStruct->_astronomical_body);
             _pLocationStruct->_astronomical_body = NULL;
         }
         if (_pLocationStruct->_additional_notes != NULL)
         {
-            PV_MP4_FF_DELETE(NULL, oscl_wchar, _pLocationStruct->_additional_notes);
+            PV_MP4_ARRAY_DELETE(NULL, _pLocationStruct->_additional_notes);
             _pLocationStruct->_additional_notes = NULL;
         }
     }
