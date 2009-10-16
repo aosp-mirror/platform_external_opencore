@@ -1488,9 +1488,9 @@ OSCL_EXPORT_REF CAACFileParser::CAACFileParser(void) :
     iAACFileSize(0),
     iTotalNumFramesRead(0),
     iAACFormat(EAACUnrecognized),
+    iEndOfFileReached(false),
     iLogger(PVLogger::GetLoggerObject("pvaacparser")),
     iDiagnosticLogger(PVLogger::GetLoggerObject("playerdiagnostics.pvaac_parser")),
-    iEndOfFileReached(false),
     ipBSO(NULL)
 {
 }
