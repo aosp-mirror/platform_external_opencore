@@ -1163,6 +1163,7 @@ OMX_ERRORTYPE OmxComponentBase::UseBuffer(
             pBaseComponentPort->pBuffer[ii]->pAppPrivate = pAppPrivate;
             pBaseComponentPort->pBuffer[ii]->nTickCount = 0;
             pBaseComponentPort->pBuffer[ii]->nTimeStamp = 0;
+            pBaseComponentPort->pBuffer[ii]->hMarkTargetComponent = NULL;
             *ppBufferHdr = pBaseComponentPort->pBuffer[ii];
             if (OMX_DirInput == pBaseComponentPort->PortParam.eDir)
             {
