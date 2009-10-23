@@ -1117,3 +1117,45 @@ int32 PVMFOMXEncPort::PushKVP(OsclPriorityQueue<PvmiKvp*, OsclMemAllocator, Oscl
     return err;
 }
 
+bool PVMFOMXEncPort::pvmiGetBufferAllocatorSpecificInfoSync(PvmiKeyType aIdentifier, PvmiKvp*& aParameters, int& aNumParamElements)
+{
+    if ((iConnectedPort) && (iTag == PVMF_OMX_ENC_NODE_PORT_TYPE_INPUT))
+    {
+        OsclAny* temp = NULL;
+        iConnectedPort->QueryInterface(PVMI_CAPABILITY_AND_CONFIG_PVUUID, temp);
+
+        if (temp != NULL)
+        {
+            PvmiCapabilityAndConfig *config = (PvmiCapabilityAndConfig*)temp;
+
+            PVMFStatus status =
+                config->getParametersSync(NULL, (PvmiKeyType)aIdentifier, aParameters, aNumParamElements, NULL);
+
+            if (PVMFSuccess == status)
+            {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool PVMFOMXEncPort::releaseParametersSync(PvmiKvp*& aParameters, int& aNumParamElements)
+{
+    if ((iConnectedPort) && (iTag == PVMF_OMX_ENC_NODE_PORT_TYPE_INPUT))
+    {
+        OsclAny* temp = NULL;
+        iConnectedPort->QueryInterface(PVMI_CAPABILITY_AND_CONFIG_PVUUID, temp);
+
+        if (temp != NULL)
+        {
+            PvmiCapabilityAndConfig *config = (PvmiCapabilityAndConfig*)temp;
+
+            if (PVMFSuccess == config->releaseParameters(NULL, aParameters, aNumParamElements) )
+            {
+                return true;
+            }
+        }
+    }
+    return false;
+}

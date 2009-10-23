@@ -339,6 +339,14 @@ PVMFOMXEncNode::~PVMFOMXEncNode()
         iOutBufMemoryPool->removeRef();
         iOutBufMemoryPool = NULL;
     }
+
+    ipFixedSizeBufferAlloc = NULL;
+    if(ipExternalInputBufferAllocatorInterface)
+    {
+        ipExternalInputBufferAllocatorInterface->removeRef();
+        ipExternalInputBufferAllocatorInterface = NULL;
+    }
+
     if (iInBufMemoryPool)
     {
         iInBufMemoryPool->removeRef();
@@ -658,7 +666,9 @@ PVMFOMXEncNode::PVMFOMXEncNode(int32 aPriority) :
         iAvgBitrateValue(0),
         iResetInProgress(false),
         iResetMsgSent(false),
-        iStopInResetMsgSent(false)
+        iStopInResetMsgSent(false),
+        ipExternalInputBufferAllocatorInterface(NULL),
+        ipFixedSizeBufferAlloc(NULL)
 {
     iInterfaceState = EPVMFNodeCreated;
 
@@ -2198,11 +2208,81 @@ bool PVMFOMXEncNode::NegotiateVideoComponentParameters()
         iNumInputBuffers = iParamPort.nBufferCountMin;
 
 
+    /*  OMX_UseBuffer, ie. if OMX client instead of OMX component is to allocate buffers,
+    *   if the buffers are allocated in MIO, check MIO allocator the max number of buffers;
+    *   else (the buffer is allocated by OMX client itself) floor the number of buffers to  NUMBER_INPUT_BUFFER
+    *   validate with OMX component whether it is ok with the number decided above.
+    *   Note: the spec says in OMX_UseBuffer, the OMX client can decide number of input buffers.
+    */
+    if(iOMXComponentSupportsExternalInputBufferAlloc)
+    {
+        ipExternalInputBufferAllocatorInterface = NULL;
+        PvmiKvp* kvp = NULL;
+        int numKvp = 0;
+        PvmiKeyType aIdentifier = (PvmiKeyType)PVMF_BUFFER_ALLOCATOR_KEY;
+        int32 err, err1;
+        OSCL_TRY(err, ((PVMFOMXEncPort*)iInPort)->pvmiGetBufferAllocatorSpecificInfoSync(aIdentifier, kvp, numKvp););
+
+        if ((err == OsclErrNone) && (NULL != kvp))
+        {
+            ipExternalInputBufferAllocatorInterface = (PVInterface*) kvp->value.key_specific_value;
+
+            if (ipExternalInputBufferAllocatorInterface)
+            {
+                PVInterface* pTempPVInterfacePtr = NULL;
+
+                OSCL_TRY(err, ipExternalInputBufferAllocatorInterface->queryInterface(PVMFFixedSizeBufferAllocUUID, pTempPVInterfacePtr););
+
+                OSCL_TRY(err1, ((PVMFOMXEncPort*)iInPort)->releaseParametersSync(kvp, numKvp););
+                OSCL_FIRST_CATCH_ANY(err1,
+                        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                            (0, "PVMFOMXEncNode-%s::NegotiateComponentParameters() - Unable to Release Parameters", iNodeTypeId));
+                        );
+
+                if ((err == OsclErrNone) && (NULL != pTempPVInterfacePtr))
+                {
+                    ipFixedSizeBufferAlloc = OSCL_STATIC_CAST(PVMFFixedSizeBufferAlloc*, pTempPVInterfacePtr);
+
+                    uint32 iNumBuffers = ipFixedSizeBufferAlloc->getNumBuffers();
+                    uint32 iBufferSize = ipFixedSizeBufferAlloc->getBufferSize();
+
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                            (0, "PVMFOMXEncNode-%s iNumBuffers %d iBufferSize %d iOMXComponentInputBufferSize %d iParamPort.nBufferCountMin %d", iNodeTypeId, iNumBuffers , iBufferSize , iOMXComponentInputBufferSize, iParamPort.nBufferCountMin ) );
+
+                    //TODO should let camera decide number of buffers.
+                    if ((iNumBuffers < iParamPort.nBufferCountMin) || (iBufferSize < iOMXComponentInputBufferSize ))
+                    {
+                        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                            (0, "PVMFOMXEncNode-%s::NegotiateComponentParameters() - not enough buffer. Got %d x %d. Require %d x %d", iNodeTypeId, iNumBuffers , iBufferSize , iOMXComponentInputBufferSize, iParamPort.nBufferCountMin));
+                        ipFixedSizeBufferAlloc = NULL;
+
+                        ipExternalInputBufferAllocatorInterface->removeRef();
+                        ipExternalInputBufferAllocatorInterface = NULL;
+                    }
+                    else
+                    {
+                        iNumInputBuffers = iNumBuffers;
+                        iOMXComponentInputBufferSize = iBufferSize;
+                    }
+                }
+                else
+                {
+                    ipExternalInputBufferAllocatorInterface->removeRef();
+                    ipExternalInputBufferAllocatorInterface = NULL;
+
+                }
+            }
+        }
+    }
+
     // if component allows us to allocate buffers, we'll decide how many to allocate
     if (iOMXComponentSupportsExternalInputBufferAlloc && (iParamPort.nBufferCountMin < NUMBER_INPUT_BUFFER))
     {
+        if(NULL == ipFixedSizeBufferAlloc)
+        {
         // preset the number of input buffers
         iNumInputBuffers = NUMBER_INPUT_BUFFER;
+        }
     }
 
     // set the number of input buffer
@@ -3905,6 +3985,17 @@ bool PVMFOMXEncNode::SendInputBufferToOMXComponent()
             // set pointer to the data, length, offset
             input_buf->pBufHdr->pBuffer = (uint8 *)frag.getMemFragPtr();
             input_buf->pBufHdr->nFilledLen = frag.getMemFragSize();
+            {//TODO: check whether addRef() is needed for fsi
+                OsclRefCounterMemFrag fsifrag;
+                iDataIn->getFormatSpecificInfo(fsifrag);
+                if(sizeof(OsclAny*) != fsifrag.getMemFrag().len )
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_ERR,
+                            (0, "PVMFOMXEncNode-%s::SendInputBufferToOMXComponent() - ERROR buffer size %d", iNodeTypeId, fsifrag.getMemFrag().len ));
+                    return false;
+                }
+                oscl_memcpy(&(input_buf->pBufHdr->pPlatformPrivate), fsifrag.getMemFragPtr(), sizeof(OsclAny*) ); // restore ptr data from fsi
+            }
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                             (0, "PVMFOMXEncNode-%s::SendInputBufferToOMXComponent() - Buffer 0x%x of size %d, %d frag out of tot. %d, TS=%d, Ticks=%L", iNodeTypeId, input_buf->pBufHdr->pBuffer, frag.getMemFragSize(), iCurrFragNum + 1, iDataIn->getNumFragments(), iInTimestamp, iOMXTicksTimestamp));
@@ -3996,8 +4087,13 @@ bool PVMFOMXEncNode::SendInputBufferToOMXComponent()
 
         // in case of encoder, all input frames should be marked
         input_buf->pBufHdr->nFlags |= OMX_BUFFERFLAG_ENDOFFRAME;
-        OMX_EmptyThisBuffer(iOMXEncoder, input_buf->pBufHdr);
-
+        OMX_ERRORTYPE myret = OMX_EmptyThisBuffer(iOMXEncoder, input_buf->pBufHdr);
+        if(OMX_ErrorNone != myret )
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "PVMFOMXEncNode-%s::SendInputBufferToOMXComponent() OMX_EmptyThisBuffer ERROR %d", iNodeTypeId, myret));
+            return false;
+        }
 
         // if we sent all fragments to OMX component, decouple the input message from iDataIn
         // Input message is "decoupled", so that we can get a new message for processing into iDataIn
@@ -4432,6 +4528,11 @@ bool PVMFOMXEncNode::FreeBuffersFromComponent(OsclMemPoolFixedChunkAllocator *aM
             iNumOutstandingInputBuffers++;
             // get the buf hdr pointer
             InputBufCtrlStruct *temp = (InputBufCtrlStruct *) ctrl_struct_ptr[ii];
+
+            if(ipExternalInputBufferAllocatorInterface && ipFixedSizeBufferAlloc)
+            {
+                ipFixedSizeBufferAlloc->deallocate((OsclAny*) temp->pBufHdr->pBuffer);
+            }
             err = OMX_FreeBuffer(iOMXEncoder,
                                  aPortIndex,
                                  temp->pBufHdr);
@@ -4474,6 +4575,12 @@ bool PVMFOMXEncNode::FreeBuffersFromComponent(OsclMemPoolFixedChunkAllocator *aM
         in_ctrl_struct_ptr = NULL;
         in_buff_hdr_ptr = NULL;
         iInputBuffersFreed = true;
+
+        if(ipExternalInputBufferAllocatorInterface)
+        {
+            ipExternalInputBufferAllocatorInterface->removeRef();
+            ipExternalInputBufferAllocatorInterface = NULL;
+        }
     }
     else
     {

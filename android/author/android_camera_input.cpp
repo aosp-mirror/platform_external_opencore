@@ -37,13 +37,22 @@ using namespace android;
 // Define entry point for this DLL
 OSCL_DLL_ENTRY_POINT_DEFAULT()
 
+PVRefBufferAlloc::~PVRefBufferAlloc()
+{
+    if(numAllocated != 0)
+    {
+        LOGE("Ln %d ERROR PVRefBufferAlloc numAllocated %d",__LINE__, numAllocated );
+    }
+}
+
 // camera MIO
 AndroidCameraInput::AndroidCameraInput()
     : OsclTimerObject(OsclActiveObject::EPriorityNominal, "AndroidCameraInput"),
     iWriteState(EWriteOK),
     iAuthorClock(NULL),
     iClockNotificationsInf(NULL),
-    iAudioFirstFrameTs(0)
+    iAudioFirstFrameTs(0),
+    pPmemInfo(NULL)
 {
     LOGV("constructor(%p)", this);
     iCmdIdCounter = 0;
@@ -107,6 +116,11 @@ AndroidCameraInput::~AndroidCameraInput()
     }
     iFrameQueueMutex.Close();
     mListener.clear();
+    if(pPmemInfo)
+    {
+        delete pPmemInfo;
+        pPmemInfo = NULL;
+    }
 }
 
 PVMFStatus AndroidCameraInput::connect(PvmiMIOSession& aSession,
@@ -547,6 +561,23 @@ PVMFStatus AndroidCameraInput::getParametersSync(PvmiMIOSession session,
         // TODO:
         // is it okay to hardcode this as the timescale?
         params[0].value.uint32_value = 1000;
+    } else if (!pv_mime_strcmp(identifier, PVMF_BUFFER_ALLOCATOR_KEY)) {
+        /*
+         * if( camera MIO does NOT allocate YUV buffers )
+         * {
+         *      OSCL_LEAVE(OsclErrNotSupported);
+         *      return PVMFErrNotSupported;
+         * }
+         */
+
+        params = (PvmiKvp*)oscl_malloc(sizeof(PvmiKvp));
+        if (!params )
+        {
+            OSCL_LEAVE(OsclErrNoMemory);
+            return PVMFErrNoMemory;
+        }
+        params [0].value.key_specific_value = (PVInterface*)&mbufferAlloc;
+        status = PVMFSuccess;
     }
 
     return status;
@@ -994,6 +1025,11 @@ PVMFStatus AndroidCameraInput::DoStop(const AndroidCameraInputCmd& aCmd)
     mCamera->setListener(NULL);
     mCamera->stopRecording();
     ReleaseQueuedFrames();
+    if(pPmemInfo)
+    {
+        delete pPmemInfo;
+        pPmemInfo = NULL;
+    }
     }
     iState = STATE_STOPPED;
     return PVMFSuccess;
@@ -1175,6 +1211,28 @@ PVMFStatus AndroidCameraInput::postWriteAsync(nsecs_t timestamp, const sp<IMemor
     data.iXferHeader.flags = 0;
     data.iXferHeader.duration = 0;
     data.iXferHeader.stream_id = 0;
+
+    {//compose private data
+        //could size be zero?
+        if(NULL == pPmemInfo)
+        {
+            int iCalculateNoOfCameraPreviewBuffer = heap->getSize() / size;
+            LOGV("heap->getSize() = %d, size of each frame= %d, iCalculateNoOfCameraPreviewBuffer = %d", heap->getSize(), size, iCalculateNoOfCameraPreviewBuffer);
+            pPmemInfo = new CAMERA_PMEM_INFO[iCalculateNoOfCameraPreviewBuffer];
+            if(NULL == pPmemInfo)
+            {
+                LOGE("Failed to allocate the camera pmem info buffer array. iCalculateNoOfCameraPreviewBuffer %d",iCalculateNoOfCameraPreviewBuffer);
+                return PVMFFailure;
+            }
+        }
+
+        int iIndex = offset / size;
+        pPmemInfo[iIndex].pmem_fd = heap->getHeapID();
+        pPmemInfo[iIndex].offset = offset;
+        data.iXferHeader.private_data_ptr = ((OsclAny*)(&pPmemInfo[iIndex]));
+        LOGV("struct size %d, pmem_info - %x, &pmem_info[iIndex] - %x, iIndex =%d, pmem_info.pmem_fd = %d, pmem_info.offset = %d", sizeof(CAMERA_PMEM_INFO), pPmemInfo, &pPmemInfo[iIndex], iIndex, pPmemInfo[iIndex].pmem_fd, pPmemInfo[iIndex].offset );
+    }
+
     data.iFrameBuffer = frame;
     data.iFrameSize = size;
 
