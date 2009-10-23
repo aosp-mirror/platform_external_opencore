@@ -59,6 +59,8 @@
 #include "pvmf_media_input_data_buffer.h"
 #endif
 
+#include "pvmf_pool_buffer_allocator.h"
+
 // Forward declaration
 class PvmfMediaInputNode;
 
@@ -183,6 +185,7 @@ class PvmfMediaInputNodeOutPort : public OsclTimerObject,
         //logging
         OSCL_HeapString<OsclMemAllocator> iMimeType;
         PVLogger* iDataPathLogger;
+        PVMFBufferPoolAllocator iPrivateDataFsiFragmentAlloc;
 };
 
 #endif // PVMF_MEDIA_INPUT_NODE_INPORT_H_INCLUDED

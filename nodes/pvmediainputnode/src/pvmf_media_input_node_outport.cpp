@@ -65,6 +65,9 @@ PvmfMediaInputNodeOutPort::PvmfMediaInputNodeOutPort(PvmfMediaInputNode* aNode, 
     iMediaDataMemPool = OSCL_NEW(OsclMemPoolFixedChunkAllocator, (PVMIO_MEDIADATA_POOLNUM));
     iMediaDataAlloc = OSCL_NEW(PvmfMediaInputDataBufferAlloc, (iMediaDataAllocMemPool));
     iDataPathLogger = PVLogger::GetLoggerObject("datapath.sourcenode");
+
+    //OSCL_TRY(err, iPrivateDataFsiFragmentAlloc.size(4, sizeof(OsclAny *))); //TODO REMOVE THE HARDCODED VALUE
+    iPrivateDataFsiFragmentAlloc.size(4, sizeof(OsclAny *)); //TODO REMOVE THE HARDCODED VALUE
 #ifdef _TEST_AE_EROR_HANDLING
     iTimeStampJunk = 0x000FFFFF;
 #endif
@@ -405,6 +408,27 @@ PVMFCommandId PvmfMediaInputNodeOutPort::writeAsync(uint8 format_type, int32 for
             mediaData->setMediaFragFilledLen(0, data_len);
             mediaData->setStreamID(data_header_info.stream_id);
 
+            PVMFStatus status = PVMFFailure;
+            {
+                OsclRefCounterMemFrag privatedataFsiMemFrag;
+                OsclLeaveCode fsiErrorCode = OsclErrNone;
+
+                OSCL_TRY(fsiErrorCode, privatedataFsiMemFrag = iPrivateDataFsiFragmentAlloc.get(););
+
+                OSCL_FIRST_CATCH_ANY(fsiErrorCode,
+                        LOG_ERR((0, "Failed to allocate memory for  FSI for private data"));
+                        status = PVMFErrNoMemory;
+                        iNode->ReportErrorEvent(PVMFErrPortProcessing, (OsclAny*)status);
+                        OSCL_LEAVE(OsclErrNoMemory);
+                        return -1; // this is going to make everything go out of scope
+                        );
+
+                uint8 *fsiptr = (uint8*) privatedataFsiMemFrag.getMemFragPtr();
+                privatedataFsiMemFrag.getMemFrag().len = sizeof(OsclAny*);
+                oscl_memcpy(fsiptr, &(data_header_info.private_data_ptr), sizeof(OsclAny *)); // store ptr data into fsi
+                mediaData->setFormatSpecificInfo(privatedataFsiMemFrag);
+            }
+
             LOGDATATRAFFIC((0, "PvmfMediaInputNodeOutPort::writeAsync:"
                             "StreamID=%d, TS=%d, Len=%d, SN=%d, MimeType=%s",
                             data_header_info.stream_id,  data_header_info.timestamp, data_len,
@@ -412,7 +436,6 @@ PVMFCommandId PvmfMediaInputNodeOutPort::writeAsync(uint8 format_type, int32 for
             // Convert media data to MediaMsg
             PVMFSharedMediaMsgPtr mediaMsg;
             convertToPVMFMediaMsg(mediaMsg, mediaData);
-            PVMFStatus status;
 #ifdef _TEST_AE_ERROR_HANDLING
 
             if ((iNode->iErrorTrackID > 0) && (data_header_info.stream_id == (uint32)iNode->iErrorTrackID))

@@ -211,6 +211,11 @@ class PvmfMediaInputNode : public OsclActiveObject,
 
         // function used in getParametersSync of capability class
         PVMFStatus GetConfigParameter(PvmiKvp*& aParameters, int& aNumParamElements, int32 aIndex, PvmiKvpAttr reqattr);
+        // To support config interface
+        void QueryInterface(const PVUuid &aUuid, OsclAny*&aPtr)
+        {
+            aPtr = (aUuid == PVMI_CAPABILITY_AND_CONFIG_PVUUID) ? ((PvmiCapabilityAndConfig*)this) : NULL;
+        }
     private:
         typedef enum
         {
