@@ -371,17 +371,15 @@ static PVMFStatus parseMP4(const char *filename, MediaScannerClient& client)
                 uint32 trackType = mp4Input->getTrackMediaType(tracks[i]);
                 OSCL_HeapString<OsclMemAllocator> streamtype;
                 mp4Input->getTrackMIMEType(tracks[i], streamtype);
-                char streamtypeutf8[128];
-                strncpy (streamtypeutf8, streamtype.get_str(), streamtype.get_size());
-                if (streamtypeutf8[0]) {
-                    if (strcmp(streamtypeutf8,"FORMATUNKNOWN") != 0) {
+                if (streamtype.get_size()) {
+                    if (strcmp(streamtype.get_cstr(),"FORMATUNKNOWN") != 0) {
                             if (trackType ==  MEDIA_TYPE_AUDIO) {
                                 hasAudio = true;
                             } else if (trackType ==  MEDIA_TYPE_VISUAL) {
                                 hasVideo = true;
                             }
                     } else {
-                        //LOGI("@@@@@@@@ %100s: %s\n", filename, streamtypeutf8);
+                        //LOGI("@@@@@@@@ %100s: %s\n", filename, streamtype.get_cstr());
                     }
                 }
             }
