@@ -1426,6 +1426,8 @@ class InterfacingObjectContainer
         void setSocketReconnectCmdSent(const bool aSocketReconnectCmdSent = true)
         {
             iSocketReconnectCmdSent = aSocketReconnectCmdSent;
+            iCurrSocketConnection = true;
+            iPrevSocketConnection = true;
         }
         bool ignoreCurrentInputData() const
         {
