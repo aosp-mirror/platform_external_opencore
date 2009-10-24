@@ -66,8 +66,7 @@ PvmfMediaInputNodeOutPort::PvmfMediaInputNodeOutPort(PvmfMediaInputNode* aNode, 
     iMediaDataAlloc = OSCL_NEW(PvmfMediaInputDataBufferAlloc, (iMediaDataAllocMemPool));
     iDataPathLogger = PVLogger::GetLoggerObject("datapath.sourcenode");
 
-    //OSCL_TRY(err, iPrivateDataFsiFragmentAlloc.size(4, sizeof(OsclAny *))); //TODO REMOVE THE HARDCODED VALUE
-    iPrivateDataFsiFragmentAlloc.size(4, sizeof(OsclAny *)); //TODO REMOVE THE HARDCODED VALUE
+    iPrivateDataFsiFragmentAlloc.size(32, sizeof(OsclAny *)); //TODO REMOVE THE HARDCODED VALUE
 #ifdef _TEST_AE_EROR_HANDLING
     iTimeStampJunk = 0x000FFFFF;
 #endif
