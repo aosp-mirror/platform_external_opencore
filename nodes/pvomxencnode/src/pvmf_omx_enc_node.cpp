@@ -2254,7 +2254,7 @@ bool PVMFOMXEncNode::NegotiateVideoComponentParameters()
                     {
                         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
                             (0, "PVMFOMXEncNode-%s::NegotiateComponentParameters() - not enough buffer. Got %d x %d. Require %d x %d", iNodeTypeId, iNumBuffers , iBufferSize , iOMXComponentInputBufferSize, iParamPort.nBufferCountMin));
-                        ipFixedSizeBufferAlloc = NULL;
+                        //ipFixedSizeBufferAlloc = NULL;
 
                         ipExternalInputBufferAllocatorInterface->removeRef();
                         ipExternalInputBufferAllocatorInterface = NULL;
