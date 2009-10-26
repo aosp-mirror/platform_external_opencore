@@ -3574,6 +3574,46 @@ OSCL_EXPORT_REF void PVMFOMXBaseDecNode::HandleComponentStateChange(OMX_U32 deco
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
                             (0, "%s::HandleComponentStateChange: OMX_StateInvalid reached", iName.Str()));
+            //Cleanup encoder
+            DeleteOMXBaseDecoder();
+
+            if (iCurrentCommand.size() > 0)
+            {// CANNOT be CANCEL or CANCEL_ALL. Just to cmd completion for the reset
+                if (iCurrentCommand.front().iCmd == PVMFOMXBaseDecNodeCommand::PVOMXBASEDEC_NODE_CMD_RESET)
+                {
+                    //delete all ports and notify observer.
+                    if (iInPort)
+                    {
+                        OSCL_DELETE(((PVMFOMXDecPort*)iInPort));
+                        iInPort = NULL;
+                    }
+
+                    if (iOutPort)
+                    {
+                        OSCL_DELETE(((PVMFOMXDecPort*)iOutPort));
+                        iOutPort = NULL;
+                    }
+
+                    iDataIn.Unbind();
+
+                    // Reset the metadata key list
+                    iAvailableMetadataKeys.clear();
+
+                    iEndOfDataReached = false;
+                    iIsEOSSentToComponent = false;
+                    iIsEOSReceivedFromComponent = false;
+
+                    iProcessingState = EPVMFOMXBaseDecNodeProcessingState_Idle;
+                    //logoff & go back to Created state.
+                    SetState(EPVMFNodeIdle);
+                    CommandComplete(iCurrentCommand, iCurrentCommand.front(), PVMFSuccess);
+                }
+                else
+                {
+                    SetState(EPVMFNodeError);
+                    CommandComplete(iCurrentCommand, iCurrentCommand.front(), PVMFErrResource);
+                }
+            }
 
             break;
         }//end of case OMX_StateInvalid
@@ -4803,26 +4843,7 @@ void PVMFOMXBaseDecNode::DoReset(PVMFOMXBaseDecNodeCommand& aCmd)
                 err = OMX_GetState(iOMXDecoder, &sState);
                 if (err != OMX_ErrorNone)
                 {
-                    //Error condition report
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                    (0, "%s::DoReset(): Can't get State of decoder!", iName.Str()));
-                    if (iResetInProgress)
-                    {
-                        // cmd is in current q
-                        iResetInProgress = false;
-                        if ((iCurrentCommand.size() > 0) &&
-                                (iCurrentCommand.front().iCmd == PVMFOMXBaseDecNodeCommand::PVOMXBASEDEC_NODE_CMD_RESET)
-                           )
-                        {
-                            CommandComplete(iCurrentCommand, iCurrentCommand.front(), PVMFErrResource);
-                        }
-
-                    }
-                    else
-                    {
-                        CommandComplete(iInputCommands, aCmd, PVMFErrResource);
-                    }
-                    return;
+                    sState = OMX_StateInvalid;
                 }
 
                 if (sState == OMX_StateLoaded)
@@ -4836,58 +4857,9 @@ void PVMFOMXBaseDecNode::DoReset(PVMFOMXBaseDecNodeCommand& aCmd)
                                         (0, "%s::DoReset() OMX comp is in loaded state. Wait for official callback to change variables etc.", iName.Str()));
                         return;
                     }
-                    else
-                    {
-
-                        //CommandComplete(iInputCommands, aCmd, PVMFErrResource);
-                        //delete all ports and notify observer.
-                        if (iInPort)
-                        {
-                            OSCL_DELETE(((PVMFOMXDecPort*)iInPort));
-                            iInPort = NULL;
-                        }
-
-                        if (iOutPort)
-                        {
-                            OSCL_DELETE(((PVMFOMXDecPort*)iOutPort));
-                            iOutPort = NULL;
-                        }
-
-                        iDataIn.Unbind();
-
-
-                        // Reset the metadata key list
-                        iAvailableMetadataKeys.clear();
-
-                        iEndOfDataReached = false;
-                        iIsEOSSentToComponent = false;
-                        iIsEOSReceivedFromComponent = false;
-
-                        if (iOMXComponentUsesFullAVCFrames)
-                        {
-                            iNALCount = 0;
-                            oscl_memset(iNALSizeArray, 0, sizeof(uint32) * MAX_NAL_PER_FRAME); // 100 is max number of NALs
-                        }
-
-                        // reset dynamic port reconfig flags - no point continuing with port reconfig
-                        // if we start again - we'll have to do prepare and send new config etc.
-                        iSecondPortReportedChange = false;
-                        iDynamicReconfigInProgress = false;
-
-                        iProcessingState = EPVMFOMXBaseDecNodeProcessingState_Idle;
-
-                        SetState(EPVMFNodeIdle);
-
-                        CommandComplete(iInputCommands, aCmd, PVMFSuccess);
-
-                        return;
-                    }
                 }
-
-                if (sState == OMX_StateIdle)
+                else if (sState == OMX_StateIdle)
                 {
-
-
                     //this command is asynchronous.  move the command from
                     //the input command queue to the current command, where
                     //it will remain until it is completed.
@@ -5008,8 +4980,7 @@ void PVMFOMXBaseDecNode::DoReset(PVMFOMXBaseDecNodeCommand& aCmd)
                     return;
 
                 }
-
-                if ((sState == OMX_StateExecuting) || (sState == OMX_StatePause))
+                else if ((sState == OMX_StateExecuting) || (sState == OMX_StatePause))
                 {
                     //this command is asynchronous.  move the command from
                     //the input command queue to the current command, where
@@ -5085,23 +5056,11 @@ void PVMFOMXBaseDecNode::DoReset(PVMFOMXBaseDecNodeCommand& aCmd)
                 {
                     //Error condition report
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                    (0, "%s::DoReset(): Decoder is not in the Idle state!", iName.Str()));
-                    if (iResetInProgress)
-                    {
-                        iResetInProgress = false;
-                        if ((iCurrentCommand.size() > 0) &&
-                                (iCurrentCommand.front().iCmd == PVMFOMXBaseDecNodeCommand::PVOMXBASEDEC_NODE_CMD_RESET)
-                           )
-                        {
-                            CommandComplete(iCurrentCommand, iCurrentCommand.front(), PVMFErrInvalidState);
-                        }
-                    }
-                    else
-                    {
-                        CommandComplete(iInputCommands, aCmd, PVMFErrInvalidState);
-                    }
-                    break;
-                }//end of if (sState == OMX_StateIdle)
+                                    (0, "%s::DoReset(): Decoder is not in the Idle state! %d", iName.Str(), sState));
+                    //do it here rather than relying on DTOR to avoid node reinit problems.
+                    DeleteOMXBaseDecoder();
+                    //still return success.
+                }//end of if (sState == OMX_StateLoaded)
             }//end of if (iOMXDecoder != NULL)
 
             //delete all ports and notify observer.
