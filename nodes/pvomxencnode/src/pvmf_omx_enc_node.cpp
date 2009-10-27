@@ -3990,7 +3990,7 @@ bool PVMFOMXEncNode::SendInputBufferToOMXComponent()
                 iDataIn->getFormatSpecificInfo(fsifrag);
                 if(sizeof(OsclAny*) != fsifrag.getMemFrag().len )
                 {
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_ERR,
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
                             (0, "PVMFOMXEncNode-%s::SendInputBufferToOMXComponent() - ERROR buffer size %d", iNodeTypeId, fsifrag.getMemFrag().len ));
                     return false;
                 }
