@@ -1239,17 +1239,9 @@ void PVMFAACFFParserNode::DoReset(PVMFAACFFParserNodeCommand& aCmd)
         iDownloadProgressInterface->cancelResumeNotification();
     }
 
-    if (iFileHandle != NULL)
+    if ((iAACParser) && (iCPM))
     {
-        /* Indicates that the init was successfull */
-        if ((iCPM))
-        {
-            SendUsageComplete();
-        }
-        else
-        {
-            CompleteReset();
-        }
+        SendUsageComplete();
     }
     else
     {
