@@ -1840,7 +1840,7 @@ PVMFStatus PVMFWAVFFParserNode::GetMediaPresentationInfo(PVMFMediaPresentationIn
 
     uint32 duration_sec = wavinfo.NumSamples / wavinfo.SampleRate;
     uint32 duration_msec = wavinfo.NumSamples % wavinfo.SampleRate;
-    uint32 duration = (duration_msec * 1000) / wavinfo.NumSamples + duration_sec * 1000 ;
+    uint32 duration = (duration_msec * 1000) / wavinfo.SampleRate + duration_sec * 1000 ;
 
     aInfo.setDurationValue(duration);
     // Current version of WAV parser is limited to 1 channel
@@ -1998,7 +1998,7 @@ void PVMFWAVFFParserNode::DoSetDataSourcePosition(PVMFWAVFFNodeCommand& aCmd)
     // see if targetNPT is greater than or equal to clip duration.
     uint32 duration_sec = wavinfo.NumSamples / wavinfo.SampleRate;
     uint32 duration_msec = wavinfo.NumSamples % wavinfo.SampleRate;
-    uint32 duration = (duration_msec * 1000) / wavinfo.NumSamples + duration_sec * 1000 ;
+    uint32 duration = (duration_msec * 1000) / wavinfo.SampleRate + duration_sec * 1000 ;
     uint32 tempTargetNPT = targetNPT;
     if (tempTargetNPT >= duration)
     {
@@ -2581,7 +2581,7 @@ PVMFStatus PVMFWAVFFParserNode::DoGetNodeMetadataValue(PVMFWAVFFNodeCommand& aCm
                     {
                         uint32 duration_sec = wavinfo.NumSamples / wavinfo.SampleRate;
                         uint32 duration_msec = wavinfo.NumSamples % wavinfo.SampleRate;
-                        uint32 duration = (duration_msec * 1000) / wavinfo.NumSamples + duration_sec * 1000 ;
+                        uint32 duration = (duration_msec * 1000) / wavinfo.SampleRate + duration_sec * 1000 ;
                         KeyVal.value.uint32_value = duration;
                     }
                     // Set the length and capacity
