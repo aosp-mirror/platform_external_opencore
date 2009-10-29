@@ -2445,6 +2445,7 @@ bool PVMFOMXEncNode::NegotiateVideoComponentParameters()
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "PVMFOMXEncNode-%s::NegotiateVideoComponentParameters() Outport buffers %d size %d", iNodeTypeId, iNumOutputBuffers, iOMXComponentOutputBufferSize));
 
+    CONFIG_SIZE_AND_VERSION(InputRotationType);
     InputRotationType.nPortIndex = iInputPortIndex;
     Err = OMX_GetParameter(iOMXEncoder, OMX_IndexConfigCommonRotate, &InputRotationType);
     if (Err != OMX_ErrorNone)
