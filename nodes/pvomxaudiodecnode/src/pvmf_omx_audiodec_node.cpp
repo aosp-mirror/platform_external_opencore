@@ -1956,6 +1956,12 @@ OMX_ERRORTYPE PVMFOMXAudioDecNode::EventHandlerProcessing(OMX_OUT OMX_HANDLETYPE
                 ReportInfoEvent(PVMFInfoProcessingFailure, NULL);
 
             }
+            else if (aData1 == (OMX_U32) OMX_ErrorInvalidState)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                                (0, "PVMFOMXAudioDecNode::EventHandlerProcessing: OMX_EventError - OMX_ErrorInvalidState"));
+                HandleComponentStateChange(OMX_StateInvalid);
+            }
             else
             {
 
