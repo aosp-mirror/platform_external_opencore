@@ -804,6 +804,9 @@ PVMFCommandId AndroidAudioInput::AddCmdToQueue(AndroidAudioInputCmdType aType,
 ////////////////////////////////////////////////////////////////////////////
 void AndroidAudioInput::AddDataEventToQueue(uint32 aMicroSecondsToEvent)
 {
+    // If not added to the scheduler just return
+    if (!IsAdded())
+        return;
     AndroidAudioInputCmd cmd;
     cmd.iType = AI_DATA_WRITE_EVENT;
     iCmdQueue.push_back(cmd);
