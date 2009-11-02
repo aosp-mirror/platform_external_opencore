@@ -313,6 +313,10 @@ void AuthorDriver::handleSetAudioSource(set_audio_source_command *ac)
             commandFailed(ac);
             return;
         }
+        // force audio source to camcorder when recording video
+        if (mVideoInputMIO != NULL) {
+            mAudioInputMIO->setAudioSource(AUDIO_SOURCE_CAMCORDER);
+        }
     }
 
     OSCL_TRY(error, mAuthor->AddDataSource(*mAudioNode, ac));
@@ -335,6 +339,10 @@ void AuthorDriver::handleSetVideoSource(set_video_source_command *ac)
                 if (mCamera == 0 ||
                     (mCamera != 0 && cameraInput->SetCamera(mCamera) == PVMFSuccess)) {
                     mVideoInputMIO = cameraInput;
+                    // force audio source to camcorder when recording video
+                    if (mAudioInputMIO != NULL) {
+                        mAudioInputMIO->setAudioSource(AUDIO_SOURCE_CAMCORDER);
+                    }
                     break;
                 }
             }
