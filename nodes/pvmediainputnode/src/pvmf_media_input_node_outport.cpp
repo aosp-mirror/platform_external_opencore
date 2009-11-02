@@ -66,7 +66,7 @@ PvmfMediaInputNodeOutPort::PvmfMediaInputNodeOutPort(PvmfMediaInputNode* aNode, 
     iMediaDataAlloc = OSCL_NEW(PvmfMediaInputDataBufferAlloc, (iMediaDataAllocMemPool));
     iDataPathLogger = PVLogger::GetLoggerObject("datapath.sourcenode");
 
-    iPrivateDataFsiFragmentAlloc.size(32, sizeof(OsclAny *)); //TODO REMOVE THE HARDCODED VALUE
+    iNode->iPrivateDataFsiFragmentAlloc.size(32, sizeof(OsclAny *)); //TODO REMOVE THE HARDCODED VALUE
 #ifdef _TEST_AE_EROR_HANDLING
     iTimeStampJunk = 0x000FFFFF;
 #endif
@@ -412,7 +412,7 @@ PVMFCommandId PvmfMediaInputNodeOutPort::writeAsync(uint8 format_type, int32 for
                 OsclRefCounterMemFrag privatedataFsiMemFrag;
                 OsclLeaveCode fsiErrorCode = OsclErrNone;
 
-                OSCL_TRY(fsiErrorCode, privatedataFsiMemFrag = iPrivateDataFsiFragmentAlloc.get(););
+                OSCL_TRY(fsiErrorCode, privatedataFsiMemFrag = iNode->iPrivateDataFsiFragmentAlloc.get(););
 
                 OSCL_FIRST_CATCH_ANY(fsiErrorCode,
                         LOG_ERR((0, "Failed to allocate memory for  FSI for private data"));

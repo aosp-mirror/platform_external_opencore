@@ -331,6 +331,8 @@ class PvmfMediaInputNode : public OsclActiveObject,
         } TimeStamp_KSV;
         TimeStamp_KSV iErrorTimeStamp;
 #endif
+
+        PVMFBufferPoolAllocator iPrivateDataFsiFragmentAlloc;
 };
 
 #endif // PVMF_MEDIA_INPUT_NODE_H_INCLUDED
