@@ -2809,7 +2809,7 @@ bool PVMFOMXEncNode::SetH263EncoderParameters()
     H263Type.bPLUSPTYPEAllowed = OMX_FALSE;
     H263Type.bForceRoundingTypeToZero = OMX_FALSE;
     H263Type.nPictureHeaderRepetition = 0;
-    H263Type.nGOBHeaderInterval = 2;
+    H263Type.nGOBHeaderInterval = 0;
 
     Err = OMX_SetParameter(iOMXEncoder, OMX_IndexParamVideoH263, &H263Type);
     if (OMX_ErrorNone != Err)
