@@ -19,7 +19,6 @@
  * @file pvmp4ffcn_node.cpp
  * @brief Node for PV MPEG4 file format composer
  */
-#undef ANDROID
 #ifdef ANDROID
 // #define LOG_NDEBUG 0
 #define LOG_TAG "PvMp4Composer"
@@ -70,7 +69,7 @@ class FragmentWriter: public Thread
         FragmentWriter(PVMp4FFComposerNode *composer) :
                 Thread(kThreadCallJava), mSize(0), mEnd(mBuffer + kCapacity),
                 mFirst(mBuffer), mLast(mBuffer), mComposer(composer),
-                mPrevWriteStatus(PVMFPending), mTid(NULL), mDropped(0), mExitRequested(false) {}
+                mPrevWriteStatus(PVMFSuccess), mTid(NULL), mDropped(0), mExitRequested(false) {}
 
         virtual ~FragmentWriter()
         {
