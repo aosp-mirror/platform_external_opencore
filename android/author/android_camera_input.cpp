@@ -33,6 +33,7 @@
 
 using namespace android;
 
+static const int VIEW_FINDER_FREEZE_DETECTION_TOLERANCE = 250;  // ms
 
 // Define entry point for this DLL
 OSCL_DLL_ENTRY_POINT_DEFAULT()
@@ -420,6 +421,12 @@ void AndroidCameraInput::writeComplete(PVMFStatus aStatus,
     sp<IMemoryHeap> heap = data.iFrameBuffer->getMemory(&offset, &size);
     LOGD("writeComplete: ID = %d, base = %p, offset = %ld, size = %d", heap->getHeapID(), heap->base(), offset, size);
 #endif
+    // View finder freeze detection
+    // Note for low frame rate, we don't bother to log view finder freezes
+    int processingTimeInMs = (systemTime()/1000000L - iAudioFirstFrameTs) - data.iXferHeader.timestamp;
+    if (processingTimeInMs >= VIEW_FINDER_FREEZE_DETECTION_TOLERANCE && mFrameRate >= 10.0) {
+        LOGW("Frame %p takes too long (%d ms) to process", data.iFrameBuffer.get(), processingTimeInMs);
+    }
     mCamera->releaseRecordingFrame(data.iFrameBuffer);
 
     iSentMediaData.erase(iSentMediaData.begin());
