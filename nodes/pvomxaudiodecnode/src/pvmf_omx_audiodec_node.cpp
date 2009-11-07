@@ -34,6 +34,9 @@
 // needed for capability and config
 #include "pv_omx_config_parser.h"
 
+#include "utils/Log.h"
+#undef LOG_TAG
+#define LOG_TAG "PVOMXAudDecNode"
 
 #define CONFIG_SIZE_AND_VERSION(param) \
         param.nSize=sizeof(param); \
@@ -1947,7 +1950,7 @@ OMX_ERRORTYPE PVMFOMXAudioDecNode::EventHandlerProcessing(OMX_OUT OMX_HANDLETYPE
 
         case OMX_EventError:
         {
-
+            LOGE("Ln %d OMX_EventError nData1 %d nData2 %d", __LINE__, aData1, aData2);
             if (aData1 == (OMX_U32) OMX_ErrorStreamCorrupt)
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
