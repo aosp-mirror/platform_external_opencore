@@ -107,7 +107,15 @@ int MetadataDriver::retrieverThread()
     AddToScheduler();
     RunIfNotReady();
     OsclExecScheduler *sched = OsclExecScheduler::Current();
-    sched->StartScheduler();
+
+    {
+        OsclLeaveCode error = OsclErrNone;
+        OSCL_TRY(error, sched->StartScheduler());
+        OSCL_FIRST_CATCH_ANY(error,
+                // Some AO did a leave, log it
+                LOGE("Ln %d Player Engine AO did a leave, error=%d", __LINE__, error)
+                );
+    }
 
     mSyncSem->Signal();  // Signal that doSetDataSource() is done.
     OsclScheduler::Cleanup();
