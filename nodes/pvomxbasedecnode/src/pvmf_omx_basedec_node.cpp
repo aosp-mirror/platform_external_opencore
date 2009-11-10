@@ -3574,8 +3574,17 @@ OSCL_EXPORT_REF void PVMFOMXBaseDecNode::HandleComponentStateChange(OMX_U32 deco
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
                             (0, "%s::HandleComponentStateChange: OMX_StateInvalid reached", iName.Str()));
+            if (iOMXDecoder == NULL)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                        (0, "%s::HandleComponentStateChange: cleanup already done. Do nothing", iName.Str()));
+                return;
+            }
+
             //Cleanup encoder
             DeleteOMXBaseDecoder();
+            //Stop using OMX component
+            iProcessingState = EPVMFOMXBaseDecNodeProcessingState_Idle;
 
             if (iCurrentCommand.size() > 0)
             {// CANNOT be CANCEL or CANCEL_ALL. Just to cmd completion for the reset
@@ -3603,7 +3612,6 @@ OSCL_EXPORT_REF void PVMFOMXBaseDecNode::HandleComponentStateChange(OMX_U32 deco
                     iIsEOSSentToComponent = false;
                     iIsEOSReceivedFromComponent = false;
 
-                    iProcessingState = EPVMFOMXBaseDecNodeProcessingState_Idle;
                     //logoff & go back to Created state.
                     SetState(EPVMFNodeIdle);
                     CommandComplete(iCurrentCommand, iCurrentCommand.front(), PVMFSuccess);
@@ -3613,6 +3621,13 @@ OSCL_EXPORT_REF void PVMFOMXBaseDecNode::HandleComponentStateChange(OMX_U32 deco
                     SetState(EPVMFNodeError);
                     CommandComplete(iCurrentCommand, iCurrentCommand.front(), PVMFErrResource);
                 }
+            }
+            else
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                        (0, "%s::HandleComponentStateChange: ERROR state transition event while OMX client does NOT have any pending state transition request", iName.Str()));
+                SetState(EPVMFNodeError);
+                ReportErrorEvent(PVMFErrResourceConfiguration);
             }
 
             break;
