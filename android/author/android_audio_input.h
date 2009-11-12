@@ -298,6 +298,9 @@ public:
     /* Set the input number of channels */
     bool setAudioNumChannels(int32 iNumChannels);
 
+    /* Sets the audio input source */
+    bool setAudioSource(uint32 iSource);
+
     /* From PVMFMediaClockStateObserver and its base*/
     void ClockStateUpdated();
     void NotificationsInterfaceDestroyed();
