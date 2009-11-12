@@ -33,6 +33,10 @@
 #include "oscl_file_types.h"
 #include "oscl_file_handle.h"
 
+// FIXME:
+// Is 100 milliseconds a good choice for writing out a single
+// compressed video frame?
+static const int FILE_WRITER_SPEED_TOLERANCE_IN_MILLISECONDS = 100;
 
 OsclNativeFile::OsclNativeFile()
 {
@@ -325,7 +329,15 @@ uint32 OsclNativeFile::Write(const OsclAny *buffer, uint32 size, uint32 numeleme
 #endif
     if (iFile)
     {
-        return fwrite(buffer, OSCL_STATIC_CAST(int32, size), OSCL_STATIC_CAST(int32, numelements), iFile);
+        struct timeval startTimeVal, endTimeVal;
+        gettimeofday(&startTimeVal, NULL);
+        uint32 items = fwrite(buffer, OSCL_STATIC_CAST(int32, size), OSCL_STATIC_CAST(int32, numelements), iFile);
+        gettimeofday(&endTimeVal, NULL);
+        long long timeInMicroSeconds = (endTimeVal.tv_sec - startTimeVal.tv_sec) * 1000000LL + (endTimeVal.tv_usec - startTimeVal.tv_usec);
+        if (timeInMicroSeconds/1000 > FILE_WRITER_SPEED_TOLERANCE_IN_MILLISECONDS) {
+            LOGW("writing %d bytes takes too long (%lld micro seconds)", items, timeInMicroSeconds);
+        }
+        return items;
     }
     return 0;
 }
