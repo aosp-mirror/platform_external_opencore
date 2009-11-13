@@ -59,6 +59,8 @@
 #include "pvmf_media_input_data_buffer.h"
 #endif
 
+#include "pvmf_pool_buffer_allocator.h"
+
 // Forward declaration
 class PvmfMediaInputNode;
 
@@ -131,6 +133,11 @@ class PvmfMediaInputNodeOutPort : public OsclTimerObject,
         OSCL_IMPORT_REF uint32 getCapabilityMetric(PvmiMIOSession aSession);
         OSCL_IMPORT_REF PVMFStatus verifyParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements);
         void SendEndOfTrackCommand(const PvmiMediaXferHeader& data_header_info);
+
+        PVMFPortInterface* getConnectedPort() {
+            return iConnectedPort;
+       }
+
     private:
 
         void Run();
@@ -167,9 +174,6 @@ class PvmfMediaInputNodeOutPort : public OsclTimerObject,
         PvmiMediaTransfer* iPeer;
 
 
-        Oscl_Vector<int32, OsclMemAllocator> itext_sample_index;
-        Oscl_Vector<uint32, OsclMemAllocator> istart_text_sample;
-        Oscl_Vector<uint32, OsclMemAllocator> iend_text_sample;
 
         // Format specific info
         OsclRefCounterMemFrag iFormatSpecificInfo;

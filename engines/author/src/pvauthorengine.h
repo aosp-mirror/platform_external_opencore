@@ -52,6 +52,10 @@
 #ifndef PVMI_CONFIG_AND_CAPABILITY_H_INCLUDED
 #include "pvmi_config_and_capability.h"
 #endif
+#ifndef PVMF_MEDIA_CLOCK_H_INCLUDED
+#include "pvmf_media_clock.h"
+#endif
+
 #define K3gpComposerMimeType "/x-pvmf/ff-mux/3gp"
 #define KMP4ComposerMimeType "/x-pvmf/ff-mux/mp4"
 #define KAmrNbEncMimeType "/x-pvmf/audio/encode/amr-nb"
@@ -379,6 +383,13 @@ class PVAuthorEngine : public PVAuthorEngineInterface,
         PvmiConfigAndCapabilityCmdObserver *iCfgCapCmdObserver;
         int iAsyncNumElements;
         bool iDoResetNodeContainers;
+
+        //authoring clock related
+        PVMFTimebase_Tickcount iAuthorClockTimebase;
+        PVMFMediaClock iAuthorClock;
+        PVMFStatus SendAuthoringClockToDataSources(bool aReset = false);
+
+        PVMFStatus lastNodeCommandError;
 };
 
 

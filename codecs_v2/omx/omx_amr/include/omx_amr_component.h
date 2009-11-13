@@ -40,6 +40,9 @@
 #define NUMBER_INPUT_BUFFER_AMR  10
 #define NUMBER_OUTPUT_BUFFER_AMR  9
 
+// we are assuming 16 bits per sample
+#define AMR_NB_OUTPUT_FRAME_SIZE_IN_BYTES 320
+#define AMR_WB_OUTPUT_FRAME_SIZE_IN_BYTES 640
 
 class OpenmaxAmrAO : public OmxComponentAudio
 {

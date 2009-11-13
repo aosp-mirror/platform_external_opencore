@@ -56,18 +56,20 @@ public PVErrorEventObserver
 {
 public:
     // @param mode The intended mode of operations:
-    // 1. 0x00: Experimental - just add and remove data source.
-    // 2. 0x01: For capture frame/thumbnail only.
-    // 3. 0x02: For meta data retrieval only.
-    // 4. 0x03: For both frame capture and meta data retrieval.
-    // Only the LSB 2 bits of argument mode are checked.
+    // can be any of the following:
+    // METADATA_MODE_NOOP: Experimental - just add and remove data source.
+    // METADATA_MODE_FRAME_CAPTURE_ONLY: For capture frame/thumbnail only.
+    // METADATA_MODE_METADATA_RETRIEVAL_ONLY: For meta data retrieval only.
+    // METADATA_MODE_FRAME_CAPTURE_AND_METADATA_RETRIEVAL: For both frame
+    //     capture and meta data retrieval.
     explicit MetadataDriver(uint32 mode = 0x03);
     ~MetadataDriver();
 
     // Call this before setDataSource() so that the intended mode of
     // operation becomes effective.
     status_t setMode(int mode) {
-        if (mode < 0 || mode > 3) {
+        if (mode < METADATA_MODE_NOOP ||
+            mode > METADATA_MODE_FRAME_CAPTURE_AND_METADATA_RETRIEVAL) {
             return BAD_VALUE;
         }
         mMode = mode;
@@ -122,10 +124,10 @@ private:
     // We support get metadata, or get frame, or get both, or get neigther.
     static const uint32 GET_METADATA_ONLY    = (0x01 << 0);
     static const uint32 GET_FRAME_ONLY       = (0x01 << 1);
-    static const uint32 MAX_VIDEO_FRAME_SIZE = 640 * 480 * 4;  // Big enough?
+    static const uint32 MAX_VIDEO_FRAME_SIZE = 1280 * 720 * 4;  // Big enough?
     static const uint32 MAX_METADATA_STRING_LENGTH = 128;
     static const uint32 MAX_STRING_LENGTH = 512;
-    static const uint32 NUM_METADATA_KEYS = 21;
+    static const uint32 NUM_METADATA_KEYS = 22;
     static const char* METADATA_KEYS[NUM_METADATA_KEYS];
     static const char* ALBUM_ART_KEY;
 

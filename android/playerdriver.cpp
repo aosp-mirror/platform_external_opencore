@@ -21,13 +21,18 @@
 
 #include <sys/prctl.h>
 #include <sys/resource.h>
+// TODO: I don't think the include below is needed.
 #include <media/mediaplayer.h>
 #include <media/thread_init.h>
 #include <utils/threads.h>
 #include <utils/List.h>
+#include <utils/SortedVector.h>
 #include <cutils/properties.h>
+#include <binder/Parcel.h>
+#include <utils/Timers.h>
 
 #include <media/MediaPlayerInterface.h>
+#include <media/Metadata.h>
 
 #include "playerdriver.h"
 #include <media/PVPlayer.h>
@@ -72,9 +77,6 @@
 //for KMJ DRM Plugin
 #include "pvmf_local_data_source.h"
 #include "pvmf_recognizer_registry.h"
-#include "pvoma1_kmj_recognizer.h"
-#include "pvmf_cpmplugin_kmj_oma1.h"
-
 
 using namespace android;
 
@@ -86,6 +88,8 @@ using namespace android;
 static const char* MIO_LIBRARY_NAME = "libopencorehw.so";
 static const char* VIDEO_MIO_FACTORY_NAME = "createVideoMio";
 typedef AndroidSurfaceOutput* (*VideoMioFactory)();
+
+static const nsecs_t kBufferingUpdatePeriod = seconds(10);
 
 namespace {
 
@@ -230,12 +234,16 @@ class PlayerDriver :
     void handleGetPosition(PlayerGetPosition* command);
     void handleGetDuration(PlayerGetDuration* command);
     void handleGetStatus(PlayerGetStatus* command);
+    void handleCheckLiveStreaming(PlayerCheckLiveStreaming* cmd);
 
-    void endOfData();
-
+    //void endOfData();
+    PVMFFormatType getFormatType();
     void CommandCompleted(const PVCmdResponse& aResponse);
     void HandleErrorEvent(const PVAsyncErrorEvent& aEvent);
     void HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent);
+
+    bool prepareDone() const { return mPrepareDone; }
+    bool isLiveStreaming() const { return mIsLiveStreaming; }
 
   private:
     // Finish up a non-async code in such a way that
@@ -243,6 +251,7 @@ class PlayerDriver :
     void FinishSyncCommand(PlayerCommand* command);
 
     void handleGetDurationComplete(PlayerGetDuration* cmd);
+    void handleCheckLiveStreamingComplete(PlayerCheckLiveStreaming* cmd);
 
     int setupHttpStreamPre();
     int setupHttpStreamPost();
@@ -276,6 +285,9 @@ class PlayerDriver :
     PVPMetadataList mMetaKeyList;
     Oscl_Vector<PvmiKvp,OsclMemAllocator> mMetaValueList;
     int mNumMetaValues;
+    PVPMetadataList mCheckLiveKey;
+    Oscl_Vector<PvmiKvp,OsclMemAllocator> mCheckLiveValue;
+    int mCheckLiveMetaValues;
 
     // Semaphore used for synchronous commands.
     OsclSemaphore           *mSyncSem;
@@ -294,9 +306,11 @@ class PlayerDriver :
     int                     mRecentSeek;
     bool                    mSeekComp;
     bool                    mSeekPending;
-
+    bool                    mIsLiveStreaming;
     bool                    mEmulation;
+    bool                    mContentLengthKnown;
     void*                   mLibHandle;
+    nsecs_t                 mLastBufferingLog;
 
     // video display surface
     android::sp<android::ISurface> mSurface;
@@ -313,7 +327,10 @@ PlayerDriver::PlayerDriver(PVPlayer* pvPlayer) :
         mRecentSeek(0),
         mSeekComp(true),
         mSeekPending(false),
-        mEmulation(false)
+        mIsLiveStreaming(false),
+        mEmulation(false),
+        mContentLengthKnown(false),
+        mLastBufferingLog(0)
 {
     LOGV("constructor");
     mSyncSem = new OsclSemaphore();
@@ -439,7 +456,7 @@ status_t PlayerDriver::enqueueCommand(PlayerCommand* command)
 
 void PlayerDriver::FinishSyncCommand(PlayerCommand* command)
 {
-    command->complete(0, false);
+    command->complete(NO_ERROR, false);
     delete command;
 }
 
@@ -449,6 +466,7 @@ void PlayerDriver::Run()
 {
     if (mDoLoop) {
         mEndOfData = false;
+        mContentLengthKnown = false;
         PVPPlaybackPosition begin, end;
         begin.iIndeterminate = false;
         begin.iPosUnit = PVPPBPOSUNIT_SEC;
@@ -510,11 +528,26 @@ void PlayerDriver::Run()
                 break;
 
             case PlayerCommand::PLAYER_PAUSE:
-                handlePause(static_cast<PlayerPause*>(command));
+                {
+                    if(mIsLiveStreaming) {
+                        LOGW("Pause denied");
+                        FinishSyncCommand(command);
+                        return;
+                    }
+                    handlePause(static_cast<PlayerPause*>(command));
+                }
                 break;
 
             case PlayerCommand::PLAYER_SEEK:
-                handleSeek(static_cast<PlayerSeek*>(command));
+                {
+                    if(mIsLiveStreaming) {
+                        LOGW("Seek denied");
+                        mPvPlayer->sendEvent(MEDIA_SEEK_COMPLETE);
+                        FinishSyncCommand(command);
+                        return;
+                    }
+                    handleSeek(static_cast<PlayerSeek*>(command));
+                }
                 break;
 
             case PlayerCommand::PLAYER_GET_POSITION:
@@ -526,6 +559,10 @@ void PlayerDriver::Run()
                 handleGetStatus(static_cast<PlayerGetStatus*>(command));
                 FinishSyncCommand(command);
                 return;
+
+            case PlayerCommand::PLAYER_CHECK_LIVE_STREAMING:
+                handleCheckLiveStreaming(static_cast<PlayerCheckLiveStreaming*>(command));
+                break;
 
             case PlayerCommand::PLAYER_GET_DURATION:
                 handleGetDuration(static_cast<PlayerGetDuration*>(command));
@@ -568,14 +605,7 @@ void PlayerDriver::commandFailed(PlayerCommand* command)
     }
 
     LOGV("Command failed: %d", command->code());
-    // FIXME: Ignore seek failure because it might not work when streaming
-    if (mSeekPending) {
-        LOGV("Ignoring failed seek");
-        command->complete(NO_ERROR, false);
-        mSeekPending = false;
-    } else {
-        command->complete(UNKNOWN_ERROR, false);
-    }
+    command->complete(UNKNOWN_ERROR, false);
     delete command;
 }
 
@@ -680,7 +710,14 @@ void PlayerDriver::handleSetDataSource(PlayerSetDataSource* command)
             return;
         }
     } else {
-        mDataSource->SetDataSourceFormatType((const char*)PVMF_MIME_FORMAT_UNKNOWN); // Let PV figure it out
+        const char* ext = strrchr(url, '.');
+        if (ext && ( strcasecmp(ext, ".sdp") == 0) ) {
+            // For SDP files, currently there is no recognizer. So, to play from such files,
+            // there is a need to set the format type.
+            mDataSource->SetDataSourceFormatType((const char*)PVMF_MIME_DATA_SOURCE_SDP_FILE);
+        } else {
+            mDataSource->SetDataSourceFormatType((const char*)PVMF_MIME_FORMAT_UNKNOWN); // Let PV figure it out
+        }
     }
 
     OSCL_TRY(error, mPlayer->AddDataSource(*mDataSource, command));
@@ -815,11 +852,27 @@ void PlayerDriver::handlePrepare(PlayerPrepare* command)
     OSCL_TRY(error, mPlayerCapConfig->setParametersSync(NULL, &iKVPSetAsync, 1, iErrorKVP));
     OSCL_TRY(error, mPlayer->Prepare(command));
     OSCL_FIRST_CATCH_ANY(error, commandFailed(command));
+
+    char value[PROPERTY_VALUE_MAX] = {"0"};
+    property_get("ro.com.android.disable_rtsp_nat", value, "0");
+    LOGV("disable natpkt - %s",value);
+    if (1 == atoi(value))
+    {
+        //disable firewall packet
+        iKeyStringSetAsync=_STRLIT_CHAR("x-pvmf/net/disable-firewall-packets;valtype=bool");
+        iKVPSetAsync.key=iKeyStringSetAsync.get_str();
+        iKVPSetAsync.value.bool_value = 1; //1 - disable
+        iErrorKVP=NULL;
+        OSCL_TRY(error,mPlayerCapConfig->setParametersSync(NULL, &iKVPSetAsync, 1, iErrorKVP));
+    }
 }
 
 void PlayerDriver::handleStart(PlayerStart* command)
 {
     int error = 0;
+
+    // reset logging
+    mLastBufferingLog = 0;
 
     // for video, set thread priority so we don't hog CPU
     if (mVideoOutputMIO) {
@@ -915,6 +968,17 @@ void PlayerDriver::handleGetStatus(PlayerGetStatus* command)
     }
 }
 
+void PlayerDriver::handleCheckLiveStreaming(PlayerCheckLiveStreaming* command)
+{
+    LOGV("handleCheckLiveStreaming ...");
+    mCheckLiveKey.clear();
+    mCheckLiveKey.push_back(OSCL_HeapString<OsclMemAllocator>("pause-denied"));
+    mCheckLiveValue.clear();
+    int error = 0;
+    OSCL_TRY(error, mPlayer->GetMetadataValues(mCheckLiveKey, 0, 1, mCheckLiveMetaValues, mCheckLiveValue, command));
+    OSCL_FIRST_CATCH_ANY(error, commandFailed(command));
+}
+
 void PlayerDriver::handleGetDuration(PlayerGetDuration* command)
 {
     command->set(-1);
@@ -984,6 +1048,7 @@ void PlayerDriver::handleReset(PlayerReset* command)
     mIsLooping = false;
     mDoLoop = false;
     mEndOfData = false;
+    mContentLengthKnown = false;
 
     OSCL_TRY(error, mPlayer->Reset(command));
     OSCL_FIRST_CATCH_ANY(error, commandFailed(command));
@@ -993,6 +1058,11 @@ void PlayerDriver::handleQuit(PlayerQuit* command)
 {
     OsclExecScheduler *sched = OsclExecScheduler::Current();
     sched->StopScheduler();
+}
+
+PVMFFormatType PlayerDriver::getFormatType()
+{
+    return mDataSource->GetDataSourceFormatType();
 }
 
 /*static*/ int PlayerDriver::startPlayerThread(void *cookie)
@@ -1091,6 +1161,20 @@ int PlayerDriver::playerThread()
     ed->mSyncSem->Signal();
 }
 
+void PlayerDriver::handleCheckLiveStreamingComplete(PlayerCheckLiveStreaming* cmd)
+{
+    if (mCheckLiveValue.empty())
+        return;
+
+    const char* substr = oscl_strstr((char*)(mCheckLiveValue[0].key), _STRLIT_CHAR("pause-denied;valtype=bool"));
+    if (substr!=NULL) {
+        if ( mCheckLiveValue[0].value.bool_value == true ) {
+            LOGI("Live Streaming ... \n");
+            mIsLiveStreaming = true;
+        }
+    }
+}
+
 void PlayerDriver::handleGetDurationComplete(PlayerGetDuration* cmd)
 {
     cmd->set(-1);
@@ -1163,6 +1247,10 @@ void PlayerDriver::CommandCompleted(const PVCmdResponse& aResponse)
 
             case PlayerCommand::PLAYER_GET_DURATION:
                 handleGetDurationComplete(static_cast<PlayerGetDuration*>(command));
+                break;
+
+            case PlayerCommand::PLAYER_CHECK_LIVE_STREAMING:
+                handleCheckLiveStreamingComplete(static_cast<PlayerCheckLiveStreaming*>(command));
                 break;
 
             case PlayerCommand::PLAYER_PAUSE:
@@ -1251,11 +1339,23 @@ void PlayerDriver::HandleInformationalEvent(const PVAsyncInformationalEvent& aEv
             {
                 const void *buffer = aEvent.GetLocalBuffer();
                 const size_t size = aEvent.GetLocalBufferSize();
-                int percentage;
 
-                if (GetBufferingPercentage(buffer, size, &percentage))
+                int percentage;
+                // For HTTP sessions, if PVMFInfoContentLength has been
+                // received, only then the buffering status is a percentage
+                // of content length. Otherwise, it is the total number of
+                // bytes downloaded.
+                // For RTSP session, the buffering status is a percentage
+                // of the data that needs to be downloaded to start/resume
+                // playback.
+                if ( (mContentLengthKnown || (getFormatType() == PVMF_MIME_DATA_SOURCE_RTSP_URL) ) &&
+                    (GetBufferingPercentage(buffer, size, &percentage)))
                 {
-                    LOGD("buffering (%d)", percentage);
+                    nsecs_t now = systemTime();
+                    if (now - mLastBufferingLog > kBufferingUpdatePeriod) {
+                        LOGI("buffering (%d)", percentage);
+                        mLastBufferingLog = now;
+                    }
                     mPvPlayer->sendEvent(MEDIA_BUFFERING_UPDATE, percentage);
                 }
             }
@@ -1321,12 +1421,15 @@ void PlayerDriver::HandleInformationalEvent(const PVAsyncInformationalEvent& aEv
                                  PVMFInfoContentTruncated);
             break;
 
+        case PVMFInfoContentLength:
+            mContentLengthKnown = true;
+            break;
+
         /* Certain events we don't really care about, but don't
          * want log spewage, so just no-op them here.
          */
         case PVMFInfoPositionStatus:
         case PVMFInfoBufferingComplete:
-        case PVMFInfoContentLength:
         case PVMFInfoContentType:
         case PVMFInfoUnderflow:
         case PVMFInfoDataDiscarded:
@@ -1334,6 +1437,7 @@ void PlayerDriver::HandleInformationalEvent(const PVAsyncInformationalEvent& aEv
 
         default:
             LOGV("HandleInformationalEvent: type=%d UNHANDLED", status);
+            mPvPlayer->sendEvent(MEDIA_INFO, ::android::MEDIA_INFO_UNKNOWN, status);
             break;
     }
 }
@@ -1496,7 +1600,21 @@ status_t PVPlayer::prepare()
 
     // prepare
     LOGV("  prepare");
-    return mPlayerDriver->enqueueCommand(new PlayerPrepare(0,0));
+    return mPlayerDriver->enqueueCommand(new PlayerPrepare(check_for_live_streaming, this));
+
+
+}
+
+void PVPlayer::check_for_live_streaming(status_t s, void *cookie, bool cancelled)
+{
+    LOGV("check_for_live_streaming s=%d, cancelled=%d", s, cancelled);
+    if (s == NO_ERROR && !cancelled) {
+        PVPlayer *p = (PVPlayer*)cookie;
+        if ( (p->mPlayerDriver->getFormatType() == PVMF_MIME_DATA_SOURCE_RTSP_URL) ||
+             (p->mPlayerDriver->getFormatType() == PVMF_MIME_DATA_SOURCE_MS_HTTP_STREAMING_URL) ) {
+            p->mPlayerDriver->enqueueCommand(new PlayerCheckLiveStreaming( do_nothing, NULL));
+        }
+    }
 }
 
 void PVPlayer::run_init(status_t s, void *cookie, bool cancelled)
@@ -1536,7 +1654,7 @@ void PVPlayer::run_prepare(status_t s, void *cookie, bool cancelled)
     LOGV("run_prepare s=%d, cancelled=%d", s, cancelled);
     if (s == NO_ERROR && !cancelled) {
         PVPlayer *p = (PVPlayer*)cookie;
-        p->mPlayerDriver->enqueueCommand(new PlayerPrepare(do_nothing,0));
+        p->mPlayerDriver->enqueueCommand(new PlayerPrepare(check_for_live_streaming, cookie));
     }
 }
 
@@ -1553,7 +1671,7 @@ status_t PVPlayer::prepareAsync()
     } else {  // If data source has been already set.
         // No need to run a sequence of commands.
         // The only code needed to run is PLAYER_PREPARE.
-        ret = mPlayerDriver->enqueueCommand(new PlayerPrepare(do_nothing, NULL));
+        ret = mPlayerDriver->enqueueCommand(new PlayerPrepare(check_for_live_streaming, this));
     }
 
     return ret;
@@ -1643,4 +1761,56 @@ status_t PVPlayer::setLooping(int loop)
     return mPlayerDriver->enqueueCommand(new PlayerSetLoop(loop,0,0));
 }
 
-}; // namespace android
+// This is a stub for the direct invocation API.
+// From include/media/MediaPlayerInterface.h where the abstract method
+// is declared:
+//
+//   Invoke a generic method on the player by using opaque parcels
+//   for the request and reply.
+//   @param request Parcel that must start with the media player
+//   interface token.
+//   @param[out] reply Parcel to hold the reply data. Cannot be null.
+//   @return OK if the invocation was made successfully.
+//
+// This stub should be replaced with a concrete implementation.
+//
+// Typically the request parcel will contain an opcode to identify an
+// operation to be executed. There might also be a handle used to
+// create a session between the client and the player.
+//
+// The concrete implementation can then dispatch the request
+// internally based on the double (opcode, handle).
+status_t PVPlayer::invoke(const Parcel& request, Parcel *reply)
+{
+    return INVALID_OPERATION;
+}
+
+
+// Called by the MediaPlayerService::Client to retrieve a set or all
+// the metadata if ids is empty.
+status_t PVPlayer::getMetadata(const media::Metadata::Filter& ids,
+                               Parcel *records) {
+    using media::Metadata;
+
+    if (!mPlayerDriver || !mPlayerDriver->prepareDone()) {
+        return INVALID_OPERATION;
+    }
+
+    if (ids.size() != 0) {
+        LOGW("Metadata filtering not implemented, ignoring.");
+    }
+
+    Metadata metadata(records);
+    bool ok = true;
+
+    // Right now, we only communicate info about the liveness of the
+    // stream to enable/disable pause and seek in the UI.
+    const bool live = mPlayerDriver->isLiveStreaming();
+
+    ok = ok && metadata.appendBool(Metadata::kPauseAvailable, !live);
+    ok = ok && metadata.appendBool(Metadata::kSeekBackwardAvailable, !live);
+    ok = ok && metadata.appendBool(Metadata::kSeekForwardAvailable, !live);
+    return ok ? OK : UNKNOWN_ERROR;
+}
+
+} // namespace android

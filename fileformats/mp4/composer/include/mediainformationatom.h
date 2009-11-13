@@ -49,9 +49,9 @@ class PVA_FF_MediaInformationAtom : public PVA_FF_Atom
         virtual ~PVA_FF_MediaInformationAtom();
 
         // Stream properties
-        void setTargetBitrate(uint32 bitrate)
+        void setTargetBitrate(uint32 avgBitRate, uint32 maxBitRate, uint32 bufferSizeDB)
         {
-            _psampleTableAtom->setTargetBitrate(bitrate);
+            _psampleTableAtom->setTargetBitrate(avgBitRate, maxBitRate, bufferSizeDB);
         }
 
         // Called to update the member atoms if they depend on the actual
@@ -128,6 +128,11 @@ class PVA_FF_MediaInformationAtom : public PVA_FF_Atom
         void setVideoParams(uint32 frame_width, uint32 frame_height)
         {
             _psampleTableAtom->setVideoParams(frame_width, frame_height);
+        }
+
+        void setAudioEncodeParams(PVMP4FFComposerAudioEncodeParams &audioParams)
+        {
+            _psampleTableAtom->setAudioEncodeParams(audioParams);
         }
 
         void setH263ProfileLevel(uint8 profile, uint8 level)

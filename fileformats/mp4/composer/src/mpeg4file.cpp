@@ -629,9 +629,9 @@ PVA_FF_Mpeg4File::addTrackReference(uint32 currtrackID, int32 reftrackID)
 }
 
 void
-PVA_FF_Mpeg4File::setTargetBitRate(uint32 trackID, uint32 bitrate)
+PVA_FF_Mpeg4File::setTargetBitrate(uint32 trackID, uint32 avgBitRate, uint32 maxBitRate, uint32 bufferSizeDB)
 {
-    _pmovieAtom->setTargetBitRate(trackID, bitrate);
+    _pmovieAtom->setTargetBitrate(trackID, avgBitRate, maxBitRate, bufferSizeDB);
     return;
 }
 
@@ -1309,10 +1309,13 @@ PVA_FF_Mpeg4File::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
         addCompatibleBrand(BRAND_3GPP5);
     }
 
-    uint32 time = convertCreationTime(_creationDate);
+    if( _oSetCreationDateDone )
+    {
+        uint32 time = convertCreationTime(_creationDate);
 
-    _pmovieAtom->getMutableMovieHeaderAtom().setCreationTime(time);
-    _pmovieAtom->getMutableMovieHeaderAtom().setModificationTime(time);
+        _pmovieAtom->getMutableMovieHeaderAtom().setCreationTime(time);
+        _pmovieAtom->getMutableMovieHeaderAtom().setModificationTime(time);
+    }
 
     if ((_o3GPPTrack == true) || (_oPVMMTrack == true) || (_oMPEGTrack == true))
     {
@@ -2487,7 +2490,6 @@ PVA_FF_Mpeg4File::prepareToEncode()
                 (_oSetCopyrightDone    == false) ||
                 (_oSetDescriptionDone  == false) ||
                 (_oSetRatingDone       == false) ||
-                (_oSetCreationDateDone == false) ||
                 (_pmediaDataAtomVec->size() == 0))
         {
             // Requirements for this API not met
@@ -3431,3 +3433,20 @@ PVA_FF_Mpeg4File::getInterLeaveBuffer(uint32    trackID)
     }
     return NULL;
 }
+
+void
+PVA_FF_Mpeg4File::setAudioEncodeParams(uint32 trackId,
+                                       PVMP4FFComposerAudioEncodeParams &audioParams)
+{
+    PVA_FF_TrackAtom *trackAtom;
+    trackAtom = _pmovieAtom->getMediaTrack(trackId);
+
+    if (trackAtom != NULL)
+        trackAtom->setAudioEncodeParams(audioParams);
+
+    return;
+}
+
+
+
+

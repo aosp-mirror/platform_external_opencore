@@ -19,7 +19,6 @@
  * @file pvmp4ffcn_node.cpp
  * @brief Node for PV MPEG4 file format composer
  */
-#undef ANDROID
 #ifdef ANDROID
 // #define LOG_NDEBUG 0
 #define LOG_TAG "PvMp4Composer"
@@ -70,7 +69,7 @@ class FragmentWriter: public Thread
         FragmentWriter(PVMp4FFComposerNode *composer) :
                 Thread(kThreadCallJava), mSize(0), mEnd(mBuffer + kCapacity),
                 mFirst(mBuffer), mLast(mBuffer), mComposer(composer),
-                mPrevWriteStatus(PVMFPending), mTid(NULL), mDropped(0), mExitRequested(false) {}
+                mPrevWriteStatus(PVMFSuccess), mTid(NULL), mDropped(0), mExitRequested(false) {}
 
         virtual ~FragmentWriter()
         {
@@ -1645,7 +1644,10 @@ void PVMp4FFComposerNode::DoStart(PVMp4FFCNCmd& aCmd)
             iMpeg4File->setCopyright(iCopyright.iDataString, iCopyright.iLangCode);
             iMpeg4File->setDescription(iDescription.iDataString, iDescription.iLangCode);
             iMpeg4File->setRating(iRating.iDataString, iRating.iLangCode);
-            iMpeg4File->setCreationDate(iCreationDate);
+            if(iCreationDate.get_size() > 0)
+            {
+                iMpeg4File->setCreationDate(iCreationDate);
+            }
             iMpeg4File->setMovieFragmentDuration(iMovieFragmentDuration);
             iMpeg4File->setAlbumInfo(iAlbumTitle.iDataString, iAlbumTitle.iLangCode);
             iMpeg4File->setRecordingYear(iRecordingYear);
@@ -1806,9 +1808,16 @@ PVMFStatus PVMp4FFComposerNode::AddTrack(PVMp4FFComposerPort *aPort)
     switch (mediaType)
     {
         case MEDIA_TYPE_AUDIO:
-            iMpeg4File->setTargetBitRate(trackId, config->iBitrate);
+        {
+            iMpeg4File->setTargetBitrate(trackId, config->iBitrate);
             iMpeg4File->setTimeScale(trackId, config->iTimescale);
+            PVMP4FFComposerAudioEncodeParams audioParams;
+            audioParams.numberOfChannels = config->iNumberOfChannels;
+            audioParams.samplingRate = config->iSamplingRate;
+            audioParams.bitsPerSample = config->iBitsPerSample;
+            iMpeg4File->setAudioEncodeParams(trackId, audioParams);
             break;
+        }
 
         case MEDIA_TYPE_VISUAL:
             switch (codecType)
@@ -1818,7 +1827,7 @@ PVMFStatus PVMp4FFComposerNode::AddTrack(PVMp4FFComposerPort *aPort)
                     // Don't break here. Continue to set other video properties
                 case CODEC_TYPE_AVC_VIDEO:
                 case CODEC_TYPE_MPEG4_VIDEO:
-                    iMpeg4File->setTargetBitRate(trackId, config->iBitrate);
+                    iMpeg4File->setTargetBitrate(trackId, config->iBitrate, config->iBitrate, 0);
                     iMpeg4File->setTimeScale(trackId, config->iTimescale);
                     iMpeg4File->setVideoParams(trackId, (float)config->iFrameRate,
                                                (uint16)config->iIFrameInterval, config->iWidth, config->iHeight);
@@ -1826,7 +1835,7 @@ PVMFStatus PVMp4FFComposerNode::AddTrack(PVMp4FFComposerPort *aPort)
             }
             break;
         case MEDIA_TYPE_TEXT:
-            iMpeg4File->setTargetBitRate(trackId, config->iBitrate);
+            iMpeg4File->setTargetBitrate(trackId, config->iBitrate);
             iMpeg4File->setTimeScale(trackId, config->iTimescale);
             break;
 
@@ -2171,6 +2180,7 @@ void PVMp4FFComposerNode::DoReset(PVMp4FFCNCmd& aCmd)
     {
         if (iSampleInTrack)
         {
+            WriteDecoderSpecificInfo();
             status = RenderToFile();
             iSampleInTrack = false;
         }
@@ -2343,17 +2353,7 @@ PVMFStatus PVMp4FFComposerNode::ProcessIncomingMsg(PVMFPortInterface* aPort)
             {
                 iTrackId_Text = port->GetTrackId();
                 iformat_text = port->GetFormat();
-                OsclRefCounterMemFrag textconfiginfo;
-
-                if (mediaDataPtr->getFormatSpecificInfo(textconfiginfo) == false ||
-                        textconfiginfo.getMemFragSize() == 0)
-                {
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
-                                    (0, "PVMp4FFComposerNode::ProcessIncomingMsg: Error - VOL Header not available"));
-                    return PVMFFailure;
-                }
-                int32* pVal = (int32*)textconfiginfo.getMemFragPtr();
-                iText_sdIndex = *pVal;
+                GetTextSDIndex(mediaDataPtr->getSeqNum(), iText_sdIndex);
             }
             if (((port->GetFormat() == PVMF_MIME_AMR_IETF) ||
                     (port->GetFormat() == PVMF_MIME_AMRWB_IETF)) && mediaDataPtr->getErrorsFlag())
@@ -3046,6 +3046,7 @@ PVMFStatus PVMp4FFComposerNode::CheckMaxFileSize(uint32 aFrameSize)
             // Finalized output file
             if (iSampleInTrack)
             {
+                WriteDecoderSpecificInfo();
                 iSampleInTrack = false;
                 if (RenderToFile() != PVMFSuccess)
                     return PVMFFailure;
@@ -3084,6 +3085,7 @@ PVMFStatus PVMp4FFComposerNode::CheckMaxDuration(uint32 aTimestamp)
             // Finalize output file
             if (iSampleInTrack)
             {
+                WriteDecoderSpecificInfo();
                 iSampleInTrack = false;
                 if (RenderToFile() != PVMFSuccess)
                     return PVMFFailure;
@@ -3150,3 +3152,22 @@ int32 PVMp4FFComposerNode::StoreCurrentCommand(PVMp4FFCNCmdQueue& aCurrentCmd, P
                         );
     return err;
 }
+
+void PVMp4FFComposerNode::GetTextSDIndex(uint32 aSampleNum, int32& aIndex)
+{
+    //default index is zero
+    aIndex = 0;
+    Oscl_Vector<PVA_FF_TextSampleDescInfo*, OsclMemAllocator>::iterator it;
+    for (it = textdecodervector.begin(); it != textdecodervector.end(); it++)
+    {
+        if ((aSampleNum >= (*it)->start_sample_num) &&
+                (aSampleNum <= (*it)->end_sample_num))
+        {
+            aIndex = (*it)->sdindex;
+            break;
+        }
+    }
+}
+
+
+

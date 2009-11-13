@@ -827,6 +827,18 @@ PVMFMemoryBufferReadDataStreamImpl::SetSourceRequestObserver(PvmiDataStreamReque
 }
 
 
+OSCL_EXPORT_REF PvmiDataStreamStatus PVMFMemoryBufferReadDataStreamImpl::SetBufferingCapacityAndTrimMargin(uint32 aMinCapacity, uint32 aTrimMargin)
+{
+    if (NULL == iWriteDataStream)
+    {
+        LOGERROR((0,"PVMFMemoryBufferReadDataStreamImpl::SetBufferingCapacityAndTrimMargin failed - no write data stream.\n"));
+        return PVDS_FAILURE;
+    }
+
+    return iWriteDataStream->SetBufferingCapacityAndTrimMargin(aMinCapacity, aTrimMargin);
+}
+
+
 OSCL_EXPORT_REF uint32
 PVMFMemoryBufferReadDataStreamImpl::QueryBufferingCapacity()
 {
@@ -840,6 +852,21 @@ PVMFMemoryBufferReadDataStreamImpl::QueryBufferingCapacity()
     LOGTRACE((0, "PVMFMemoryBufferReadDataStreamImpl::QueryBufferingCapacity returning %d", capacity));
     return capacity;
 }
+
+
+OSCL_EXPORT_REF uint32 PVMFMemoryBufferReadDataStreamImpl::QueryBufferingTrimMargin()
+{
+    uint32 margin = 0;
+
+    if (NULL != iWriteDataStream)
+    {
+        margin = iWriteDataStream->QueryBufferingTrimMargin();
+    }
+
+    LOGTRACE((0, "PVMFMemoryBufferReadDataStreamImpl::QueryBufferingTrimMargin returning %d", margin));
+    return margin;
+}
+
 
 // The data to be made persistent may be already in the temp cache.
 // If so, copy the data from temp cache into perm cache.
@@ -2182,6 +2209,24 @@ PVMFMemoryBufferWriteDataStreamImpl::SourceRequestCompleted(const PVMFCmdResp& a
 }
 
 
+OSCL_EXPORT_REF PvmiDataStreamStatus PVMFMemoryBufferWriteDataStreamImpl::SetBufferingCapacityAndTrimMargin(uint32 aMinCapacity, uint32 aTrimMargin)
+{
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO, (2,"PVMFMemoryBufferWriteDataStreamImpl::SetBufferingCapacityAndTrimMargin capacity=%d trim margin=%d", aMinCapacity, aTrimMargin));
+
+    /*TODO: pvmi/pvmf/include/pvmi_data_stream_interface.h
+    if( ( aMinCapacity > SOCKET_NODE_MEMPOOL_SIZE) || ( aTrimMargin > SOCKET_NODE_MEMPOOL_SIZE) ){
+        LOGERROR((0, "PVMFMemoryBufferWriteDataStreamImpl::SetBufferingCapacityAndTrimMargin failed"));
+        return PVDS_FAILURE;
+    }
+    */
+    iTempCacheCapacity = aMinCapacity;
+    iTempCacheTrimThreshold = PV_MBDS_TEMP_CACHE_TRIM_THRESHOLD_PS(iTempCacheCapacity);
+    iTempCacheTrimMargin = (MBDS_STREAM_FORMAT_SHOUTCAST == iStreamFormat) ? PV_MBDS_TEMP_CACHE_TRIM_MARGIN_SC : aTrimMargin;
+
+    return PVDS_SUCCESS;
+}
+
+
 OSCL_EXPORT_REF uint32
 PVMFMemoryBufferWriteDataStreamImpl::QueryBufferingCapacity()
 {
@@ -2189,6 +2234,12 @@ PVMFMemoryBufferWriteDataStreamImpl::QueryBufferingCapacity()
 
     // return the minimum size of the cache/sliding window
     return iTempCacheCapacity;
+}
+
+OSCL_EXPORT_REF uint32 PVMFMemoryBufferWriteDataStreamImpl::QueryBufferingTrimMargin()
+{
+    LOGTRACE((0, "PVMFMemoryBufferWriteDataStreamImpl::QueryBufferingTrimMargin returning %d", iTempCacheTrimMargin));
+    return iTempCacheTrimMargin;
 }
 
 OSCL_EXPORT_REF PvmiDataStreamStatus

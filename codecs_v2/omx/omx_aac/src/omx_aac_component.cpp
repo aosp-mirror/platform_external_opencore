@@ -286,6 +286,8 @@ OMX_ERRORTYPE OpenmaxAacAO::ConstructComponent(OMX_PTR pAppData, OMX_PTR pProxy)
     pOutPort->AudioParam.nIndex = 0;
     pOutPort->AudioParam.eEncoding = OMX_AUDIO_CodingPCM;
 
+    oscl_strncpy((OMX_STRING)iComponentRole, (OMX_STRING)"audio_decoder.aac", OMX_MAX_STRINGNAME_SIZE);
+
     iOutputFrameLength = OUTPUT_BUFFER_SIZE_AAC;
 
     if (ipAacDec)
@@ -303,7 +305,7 @@ OMX_ERRORTYPE OpenmaxAacAO::ConstructComponent(OMX_PTR pAppData, OMX_PTR pProxy)
     oscl_memset(ipAacDec, 0, sizeof(OmxAacDecoder));
 
     iSamplesPerFrame = AACDEC_PCM_FRAME_SAMPLE_SIZE;
-    iOutputMilliSecPerFrame = iCurrentFrameTS.GetFrameDuration();
+    iOutputMicroSecPerFrame = iCurrentFrameTS.GetFrameDuration();
 
 #if PROXY_INTERFACE
 
@@ -566,7 +568,7 @@ void OpenmaxAacAO::ProcessData()
                 }
 
                 iCurrentFrameTS.SetParameters(ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->AudioPcmMode.nSamplingRate, iSamplesPerFrame);
-                iOutputMilliSecPerFrame = iCurrentFrameTS.GetFrameDuration();
+                iOutputMicroSecPerFrame = iCurrentFrameTS.GetFrameDuration();
 
             }
 
@@ -862,7 +864,7 @@ void OpenmaxAacAO::CheckForSilenceInsertion()
     CurrTimestamp = iCurrentFrameTS.GetCurrentTimestamp();
     TimestampGap = iFrameTimestamp - CurrTimestamp;
 
-    if ((TimestampGap > OMX_HALFRANGE_THRESHOLD) || (TimestampGap < iOutputMilliSecPerFrame && iFrameCount > 0))
+    if ((TimestampGap > OMX_HALFRANGE_THRESHOLD) || (TimestampGap < iOutputMicroSecPerFrame && iFrameCount > 0))
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OpenmaxAacAO : CheckForSilenceInsertion OUT - No need to insert silence"));
         return;
@@ -873,9 +875,9 @@ void OpenmaxAacAO::CheckForSilenceInsertion()
     {
         iSilenceInsertionInProgress = OMX_TRUE;
         //Determine the number of silence frames to insert
-        if (0 != iOutputMilliSecPerFrame)
+        if (0 != iOutputMicroSecPerFrame)
         {
-            iSilenceFramesNeeded = TimestampGap / iOutputMilliSecPerFrame;
+            iSilenceFramesNeeded = TimestampGap / iOutputMicroSecPerFrame;
         }
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OpenmaxAacAO : CheckForSilenceInsertion OUT - Silence Insertion required here"));
     }

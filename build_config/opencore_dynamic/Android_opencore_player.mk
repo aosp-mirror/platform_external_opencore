@@ -30,7 +30,7 @@ LOCAL_MODULE := libopencore_player
 
 -include $(PV_TOP)/Android_system_extras.mk
 
-LOCAL_SHARED_LIBRARIES +=   libopencore_common libopencore_net_support
+LOCAL_SHARED_LIBRARIES += libbinder libopencore_common libopencore_net_support
 
 include $(BUILD_SHARED_LIBRARY)
 include   $(PV_TOP)/pvmi/content_policy_manager/Android.mk

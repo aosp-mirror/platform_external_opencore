@@ -49,6 +49,10 @@
 #include "pvmf_mempool.h"
 #endif
 
+#ifndef PVMF_FIXEDSIZE_BUFFER_ALLOC_H_INCLUDED
+#include "pvmf_fixedsize_buffer_alloc.h"
+#endif
+
 #ifndef PVMF_SIMPLE_MEDIA_BUFFER_H_INCLUDED
 #include "pvmf_simple_media_buffer.h"
 #endif
@@ -129,6 +133,10 @@
 #ifndef PVMF_MEDIA_CLOCK_H_INCLUDED
 #include "pvmf_media_clock.h"
 #endif
+#endif
+
+#ifndef __MEDIA_CLOCK_CONVERTER_H
+#include "media_clock_converter.h"
 #endif
 
 #define PVMFOMXENCNODE_NUM_CMD_IN_POOL 8
@@ -1042,6 +1050,9 @@ class PVMFOMXEncNode
         uint32 GetOutputSamplingRate();
         uint32 GetOutputNumChannels();
 
+        // Capability exchange
+        PVMFNodeCapability iCapability;
+
     private:
         void CommandComplete(PVMFOMXEncNodeCmdQ& aCmdQ, PVMFOMXEncNodeCommand& aCmd, PVMFStatus aStatus, OsclAny* aEventData = NULL);
 
@@ -1324,9 +1335,6 @@ class PVMFOMXEncNode
         // Node configuration update
         //PVMFOMXEncNodeConfig iNodeConfig;
 
-        // Capability exchange
-        PVMFNodeCapability iCapability;
-
         // Reference counter for extension
         uint32 iExtensionRefCount;
 
@@ -1381,20 +1389,30 @@ class PVMFOMXEncNode
         uint32 iEndOfFrameFlagPrevious;
         uint32 iKeyFrameFlagPrevious;
         uint32 iEndOfNALFlagPrevious;
-        uint32 iTimeStampPrevious;
+        OMX_TICKS iTimeStampPrevious;
         uint32 iBufferLenPrevious;
 
         uint32 iEndOfFrameFlagOut;
         uint32 iKeyFrameFlagOut;
         uint32 iEndOfNALFlagOut;
-        uint32 iTimeStampOut;
+        OMX_TICKS iTimeStampOut;
         uint32 iBufferLenOut;
         OsclAny **out_ctrl_struct_ptr ;
         OsclAny **out_buff_hdr_ptr ;
         OsclAny **in_ctrl_struct_ptr ;
         OsclAny **in_buff_hdr_ptr ;
+        // timescale, timestamp conversions
+        uint32 iTimeScale;
+        uint32 iInTimeScale;
+        uint32 iOutTimeScale;
 
+        MediaClockConverter iInputTimestampClock;
+        OMX_TICKS iOMXTicksTimestamp;
+        OMX_TICKS ConvertTimestampIntoOMXTicks(const MediaClockConverter &src);
+        uint32 ConvertOMXTicksIntoTimestamp(const OMX_TICKS &src);
 
+        PVInterface* ipExternalInputBufferAllocatorInterface;
+        PVMFFixedSizeBufferAlloc* ipFixedSizeBufferAlloc;
 
 #ifdef _TEST_AE_ERROR_HANDLING
         bool   iErrorHandlingInit;
@@ -1405,7 +1423,6 @@ class PVMFOMXEncNode
         uint32 iErrorEncodeFlag;
         uint32 iErrorDataPathStall;
 #endif
-        bool bIsQCOMOmxComp;
 };
 
 

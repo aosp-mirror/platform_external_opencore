@@ -4,6 +4,11 @@ include $(CLEAR_VARS)
 # don't export mio symbols
 LOCAL_CFLAGS += -DHIDE_MIO_SYMBOLS
 
+# Temporary workaround
+ifeq ($(strip $(USE_SHOLES_PROPERTY)),true)
+LOCAL_CFLAGS += -DSHOLES_PROPERTY_OVERRIDES
+endif
+
 LOCAL_SRC_FILES := \
     authordriver.cpp \
     PVMediaRecorder.cpp \
@@ -28,7 +33,7 @@ LOCAL_C_INCLUDES := $(PV_INCLUDES) \
     libs/drm/mobile1/include \
     $(call include-path-for, graphics corecg)
 
-LOCAL_SHARED_LIBRARIES := libmedia
+LOCAL_SHARED_LIBRARIES := libmedia libbinder
 
 LOCAL_MODULE := libandroidpvauthor
 

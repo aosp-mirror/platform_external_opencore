@@ -43,8 +43,12 @@
 #include "ccyuv420semitoyuv420.h"
 #endif
 
+#ifndef OSCL_INT64_UTILS_H_INCLUDED
+#include "oscl_int64_utils.h"
+#endif
+
+
 const uint32 DEFAULT_VOL_HEADER_LENGTH = 28;
-const uint32 PVMFTIMESTAMP_LESSTHAN_THRESHOLD = 0x80000000;
 
 enum
 {
@@ -90,15 +94,13 @@ class Mpeg4Encoder_OMX
         OMX_ERRORTYPE Mp4EncDeinit();
 
 
+
     private:
 
         void CopyToYUVIn(uint8* YUV, int width, int height, int width_16, int height_16);
 
         /* RGB->YUV conversion */
         ColorConvertBase *ccRGBtoYUV;
-
-        //Routine to compare two timestamps a and b
-        OMX_BOOL LessThan(uint32& a, uint32& b, uint32 Threshold);
 
         VideoEncControls     iEncoderControl;
         OMX_BOOL             iInitialized;
@@ -111,7 +113,7 @@ class Mpeg4Encoder_OMX
         uint8*  iYUVIn;
         uint8*  iVideoIn;
         uint8*  iVideoOut;
-        uint32  iNextModTime;
+        OMX_TICKS  iNextModTime;
         MP4HintTrack iHintTrack;
         MP4EncodingMode ENC_Mode;
 
@@ -119,7 +121,7 @@ class Mpeg4Encoder_OMX
         OMX_U32 iVolHeaderSize;
         OMX_BOOL iVolHeaderFlag;
 
-        bool iSupport64bitTimestamp;
+
 
 };
 

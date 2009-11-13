@@ -488,6 +488,8 @@ class PVMp4FFComposerNode : public PVMFNodeInterface,
         uint32 iFileDuration;
         uint32 iErrorDataPathStall;
 #endif
+
+        void GetTextSDIndex(uint32 aSampleNum, int32& aIndex);
 };
 
 #endif // PVMP4FFC_NODE_H_INCLUDED

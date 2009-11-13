@@ -32,7 +32,7 @@ void Mp3TimeStampCalc::SetParameters(uint32 aFreq, uint32 aSamples)
 
 
 //Set the current timestamp equal to the input buffer timestamp
-void Mp3TimeStampCalc::SetFromInputTimestamp(uint32 aValue)
+void Mp3TimeStampCalc::SetFromInputTimestamp(OMX_TICKS aValue)
 {
     iCurrentTs = aValue;
     iCurrentSamples = 0;
@@ -45,15 +45,16 @@ void Mp3TimeStampCalc::UpdateTimestamp(uint32 aValue)
 }
 
 //Convert current samples into the output timestamp
-uint32 Mp3TimeStampCalc::GetConvertedTs()
+OMX_TICKS Mp3TimeStampCalc::GetConvertedTs()
 {
-    uint32 Value = iCurrentTs;
+    OMX_TICKS Value = iCurrentTs;
 
-    //Formula used: TS in ms = (samples * 1000/sampling_freq)
+    //Formula used: TS in microsec = (samples * 1000000/sampling_freq)
     //Rounding added (add 0.5 to the result), extra check for divide by zero
     if (0 != iSamplingFreq)
     {
-        Value = iCurrentTs + (iCurrentSamples * 1000 + (iSamplingFreq / 2)) / iSamplingFreq;
+
+        Value = iCurrentTs + ((OMX_TICKS)iCurrentSamples * 1000000 + (iSamplingFreq >> 1)) / iSamplingFreq;
     }
 
     iCurrentTs = Value;
@@ -63,26 +64,27 @@ uint32 Mp3TimeStampCalc::GetConvertedTs()
 }
 
 /* Do not update iCurrentTs value, just calculate & return the current timestamp */
-uint32 Mp3TimeStampCalc::GetCurrentTimestamp()
+OMX_TICKS Mp3TimeStampCalc::GetCurrentTimestamp()
 {
-    uint32 Value = iCurrentTs;
+    OMX_TICKS Value = iCurrentTs;
 
     if (0 != iSamplingFreq)
     {
-        Value = iCurrentTs + (iCurrentSamples * 1000 + (iSamplingFreq / 2)) / iSamplingFreq;
+        Value = iCurrentTs + ((OMX_TICKS)iCurrentSamples * 1000000 + (iSamplingFreq >> 1)) / iSamplingFreq;
+
     }
 
     return (Value);
 }
 
-//Calculate the duration in ms of single frame
-uint32 Mp3TimeStampCalc::GetFrameDuration()
+//Calculate the duration in microsec of single frame
+OMX_TICKS Mp3TimeStampCalc::GetFrameDuration()
 {
-    uint32 Value = 0;
+    OMX_TICKS Value = 0;
 
     if (0 != iSamplingFreq)
     {
-        Value = (iSamplesPerFrame * 1000 + (iSamplingFreq / 2)) / iSamplingFreq;
+        Value = ((OMX_TICKS)iSamplesPerFrame * 1000000 + (iSamplingFreq >> 1)) / iSamplingFreq;
     }
 
     return (Value);

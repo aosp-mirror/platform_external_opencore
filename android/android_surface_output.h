@@ -51,8 +51,8 @@
 #include <ui/ISurface.h>
 
 // interprocess shared memory support
-#include <utils/MemoryBase.h>
-#include <utils/MemoryHeapBase.h>
+#include <binder/MemoryBase.h>
+#include <binder/MemoryHeapBase.h>
 
 // color converter
 #include "cczoomrotation16.h"

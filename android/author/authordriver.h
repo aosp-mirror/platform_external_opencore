@@ -23,7 +23,10 @@
 #ifndef _AUTHORDRIVER_PRIV_H
 #define _AUTHORDRIVER_PRIV_H
 
-#include <utils.h>
+#include <utils/Log.h>
+#include <utils/threads.h>
+#include <utils/List.h>
+#include <utils/Errors.h>
 
 #include <ui/ICamera.h>
 
@@ -64,12 +67,21 @@
 // FIXME:
 // Platform-specic and temporal workaround to prevent video size
 // from being set too large
+
 #define ANDROID_MAX_ENCODED_FRAME_WIDTH            352
 #define ANDROID_MAX_ENCODED_FRAME_HEIGHT           288
+#define ANDROID_MIN_ENCODED_FRAME_WIDTH            176
+#define ANDROID_MIN_ENCODED_FRAME_HEIGHT           144
 
 #define ANDROID_MIN_FRAME_RATE_FPS                 5
 #define ANDROID_MAX_FRAME_RATE_FPS                 20
 
+static const int32 DEFAULT_VIDEO_FRAME_RATE  = 20;
+static const int32 DEFAULT_VIDEO_WIDTH       = 176;
+static const int32 DEFAULT_VIDEO_HEIGHT      = 144;
+
+static const int32 MIN_VIDEO_BITRATE_SETTING = 192000;
+static const int32 MAX_VIDEO_BITRATE_SETTING = 420000;
 static const int32 MAX_AUDIO_BITRATE_SETTING = 320000; // Max bitrate??
 static const int32 MIN_AUDIO_BITRATE_SETTING = 1;      // Min bitrate??
 static const int32 DEFAULT_AUDIO_BITRATE_SETTING = 64000; // Default for all the other audio
@@ -312,6 +324,20 @@ private:
 
     PVMFStatus setParameter(const String8 &key, const String8 &value);
 
+    // Has no effect if called after video encoder is set
+    PVMFStatus setParamVideoEncodingBitrate(int64_t aVideoBitrate);
+
+    // Clips the intended video encoding bit rate, frame rate, frame size
+    // (width and height) so that it is within the supported range.
+    void clipVideoBitrate();
+    void clipVideoFrameRate();
+    void clipVideoFrameSize();
+    void clipVideoFrameWidth();
+    void clipVideoFrameHeight();
+
+    // Clips the intended AAC audio bitrate so that it is in the supported range
+    void clipAACAudioBitrate();
+
     // Used to map the incoming bitrate to the closest AMR bitrate
     bool MapAMRBitrate(int32 aAudioBitrate, PVMF_GSMAMR_Rate &anAMRBitrate);
 
@@ -352,6 +378,7 @@ private:
     int32            mSamplingRate;
     int32            mNumberOfChannels;
     int32            mAudio_bitrate_setting;
+    int32            mVideo_bitrate_setting;
 
     FILE*       ifpOutput;
 };

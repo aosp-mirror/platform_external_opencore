@@ -51,8 +51,7 @@ class OmxAmrDecoder
 
         OMX_BOOL AmrDecodeFrame(OMX_S16* aOutputBuffer,
                                 OMX_U32* aOutputLength, OMX_U8** aInBuffer,
-                                OMX_U32* aInBufSize, OMX_S32* aIsFirstBuffer,
-                                OMX_BOOL* aResizeFlag);
+                                OMX_U32* aInBufSize, OMX_S32* aIsFirstBuffer);
 
         OMX_BOOL AmrDecodeSilenceFrame(OMX_S16* aOutputBuffer,
                                        OMX_U32* aOutputLength);

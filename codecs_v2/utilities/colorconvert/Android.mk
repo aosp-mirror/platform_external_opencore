@@ -21,6 +21,11 @@ LOCAL_MODULE := libcolorconvert
 
 LOCAL_CFLAGS := -DFALSE=false $(PV_CFLAGS)
 
+# Temporary workaround
+ifeq ($(strip $(USE_SHOLES_PROPERTY)),true)
+LOCAL_CFLAGS += -DSHOLES_PROPERTY_OVERRIDES
+endif
+
 LOCAL_ARM_MODE := arm
 
 LOCAL_STATIC_LIBRARIES := 

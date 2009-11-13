@@ -44,15 +44,7 @@ Mpeg4Encoder_OMX::Mpeg4Encoder_OMX()
     oscl_memcpy(iVolHeader, (OsclAny*)DEFAULT_VOL_HEADER, DEFAULT_VOL_HEADER_LENGTH);
     iVolHeaderSize = DEFAULT_VOL_HEADER_LENGTH;
 
-    // DV: first check whether compiler supports 64 bits
-    OMX_TICKS test_var = 0x80000000;
 
-    iSupport64bitTimestamp = false;
-
-    if (((test_var << 1) >> 1) == test_var)
-    {
-        iSupport64bitTimestamp = true;
-    }
 
 }
 
@@ -721,27 +713,10 @@ OMX_BOOL Mpeg4Encoder_OMX::Mp4EncodeVideo(OMX_U8*    aOutBuffer,
     Bool status;
     ULong modTime;
     Int nLayer = 0;
-    uint32 UpperTimeStamp = 0;
 
-
-
-    if (iSupport64bitTimestamp)
-    {
-        //Considering the difference in data types of aInTimeStamp and iNextModTime
-        OMX_U64 temp = 0x00000000FFFFFFFF;
-
-        UpperTimeStamp = (aInTimeStamp & (temp << 32)) >> 32;
-        if (UpperTimeStamp > 0)
-        {
-            //The data is more than 32 bits, save the upper 32 bits to be copied later in the output timestamp
-            aInTimeStamp = aInTimeStamp & 0x00000000FFFFFFFF;
-        }
-    }
-    // else, timestamp just remains what it is
-
-    // Time to encode if aInTimeStamp >= iNextModTime */
-    uint32 temp = (uint32)aInTimeStamp; /* for type-punned reference warning in the next line*/
-    if (OMX_TRUE == LessThan(iNextModTime, (uint32&)temp, PVMFTIMESTAMP_LESSTHAN_THRESHOLD))
+    // iNextModTime is in milliseconds (although it's a 64 bit value) whereas
+    // aInTimestamp is in microseconds
+    if ((iNextModTime * 1000) <= aInTimeStamp)
     {
         Size = *aOutputLength;
 
@@ -770,7 +745,7 @@ OMX_BOOL Mpeg4Encoder_OMX::Mp4EncodeVideo(OMX_U8*    aOutBuffer,
 
         vid_in.height = ((iSrcHeight + 15) >> 4) << 4;
         vid_in.pitch = ((iSrcWidth + 15) >> 4) << 4;
-        vid_in.timestamp = aInTimeStamp;
+        vid_in.timestamp = ((ULong) aInTimeStamp / 1000); //converting microsec to millisec
         vid_in.yChan = (UChar*)iVideoIn;
         vid_in.uChan = (UChar*)(iVideoIn + vid_in.height * vid_in.pitch);
         vid_in.vChan = vid_in.uChan + ((vid_in.height * vid_in.pitch) >> 2);
@@ -782,7 +757,7 @@ OMX_BOOL Mpeg4Encoder_OMX::Mp4EncodeVideo(OMX_U8*    aOutBuffer,
 
         if (status == PV_TRUE)
         {
-            iNextModTime = modTime;
+            iNextModTime = modTime; // this is time in milliseconds
 
             if ((nLayer >= 0) && ((OMX_U32) Size > *aOutputLength)) // overrun buffer is used by the encoder
             {
@@ -794,18 +769,7 @@ OMX_BOOL Mpeg4Encoder_OMX::Mp4EncodeVideo(OMX_U8*    aOutBuffer,
 
             if (Size > 0)
             {
-                *aOutTimeStamp = vid_out.timestamp;
-
-                if (iSupport64bitTimestamp)
-                {
-                    if (UpperTimeStamp > 0)
-                    {
-                        //Copy the upper 32 bits value back to the output timestamp
-                        OMX_S64 TempValue = UpperTimeStamp;
-                        TempValue = TempValue << 32;
-                        *aOutTimeStamp |= TempValue;
-                    }
-                }
+                *aOutTimeStamp = ((OMX_TICKS) vid_out.timestamp * 1000);  //converting millisec to microsec
 
                 PVGetHintTrack(&iEncoderControl, &iHintTrack);
                 if (0 == iHintTrack.CodeType)
@@ -1015,27 +979,4 @@ void Mpeg4Encoder_OMX::CopyToYUVIn(uint8 *YUV, Int width, Int height, Int width_
     }
 
     return ;
-}
-
-
-/**
- * Compares two timestamps and reports if the first occurred before (is less than)
- * the second value.
- * @param a first timestamp value in the comparison
- * @param b second timestamp value in the comparison
- * @return true if a < b, false otherwise.
- *
- */
-OMX_BOOL Mpeg4Encoder_OMX::LessThan(uint32& a, uint32& b,
-                                    uint32 Threshold = PVMFTIMESTAMP_LESSTHAN_THRESHOLD)
-{
-    uint32 c = b;
-    c -= a;
-
-    if (c < Threshold)
-    {
-        return OMX_TRUE;
-    }
-
-    return OMX_FALSE;
 }

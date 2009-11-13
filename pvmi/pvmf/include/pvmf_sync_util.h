@@ -45,8 +45,8 @@
 #include "pvmf_return_codes.h"
 #endif
 
-const int32 DEFAULT_EARLY_MARGIN = 200;
-const int32 DEFAULT_LATE_MARGIN = 200;
+const int32 DEFAULT_EARLY_MARGIN = 10;
+const int32 DEFAULT_LATE_MARGIN = 50;
 
 typedef enum
 {

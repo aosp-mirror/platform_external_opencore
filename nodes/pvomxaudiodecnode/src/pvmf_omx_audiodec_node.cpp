@@ -34,6 +34,9 @@
 // needed for capability and config
 #include "pv_omx_config_parser.h"
 
+#include "utils/Log.h"
+#undef LOG_TAG
+#define LOG_TAG "PVOMXAudDecNode"
 
 #define CONFIG_SIZE_AND_VERSION(param) \
         param.nSize=sizeof(param); \
@@ -227,6 +230,11 @@ bool PVMFOMXAudioDecNode::ProcessIncomingMsg(PVMFPortInterface* aPort)
         //store the stream id and time stamp of bos message
         iStreamID = mediaMsgOut->getStreamID();
         iBOSTimestamp = mediaMsgOut->getTimestamp();
+
+
+        iInputTimestampClock.set_clock(iBOSTimestamp, 0);
+        iOMXTicksTimestamp = ConvertTimestampIntoOMXTicks(iInputTimestampClock);
+
         iSendBOS = true;
 
 #ifdef _DEBUG
@@ -287,6 +295,11 @@ bool PVMFOMXAudioDecNode::ProcessIncomingMsg(PVMFPortInterface* aPort)
         //store the stream id and time stamp of bos message
         iStreamID = msg->getStreamID();
         iBOSTimestamp = msg->getTimestamp();
+
+
+        iInputTimestampClock.set_clock(iBOSTimestamp, 0);
+        iOMXTicksTimestamp = ConvertTimestampIntoOMXTicks(iInputTimestampClock);
+
         iSendBOS = true;
 
         // if new BOS arrives, and
@@ -1140,6 +1153,43 @@ bool PVMFOMXAudioDecNode::NegotiateComponentParameters(OMX_PTR aOutputParameters
     }
 
 
+    // in case of WMA - config parser decodes config info and produces reliable numchannels and sampling rate
+    // set these values now to prevent unnecessary port reconfig
+    if (aInputs.iMimeType == PVMF_MIME_WMA)
+    {
+        // First get the structure
+        OMX_AUDIO_PARAM_PCMMODETYPE Audio_Pcm_Param;
+        Audio_Pcm_Param.nPortIndex = iOutputPortIndex; // we're looking for output port params
+        CONFIG_SIZE_AND_VERSION(Audio_Pcm_Param);
+
+        Err = OMX_GetParameter(iOMXDecoder, OMX_IndexParamAudioPcm, &Audio_Pcm_Param);
+        if (Err != OMX_ErrorNone)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVMFOMXAudioDecNode::NegotiateComponentParameters() Problem negotiating PCM parameters with output port %d ", iOutputPortIndex));
+            return false;
+        }
+
+        // set the sampling rate obtained from config parser
+        Audio_Pcm_Param.nSamplingRate = iPCMSamplingRate; // can be set to 0 (if unknown)
+
+        // set number of channels obtained from config parser
+        Audio_Pcm_Param.nChannels = iNumberOfAudioChannels;     // should be 1 or 2
+
+        // Now, set the parameters
+        Audio_Pcm_Param.nPortIndex = iOutputPortIndex; // we're looking for output port params
+        CONFIG_SIZE_AND_VERSION(Audio_Pcm_Param);
+
+        Err = OMX_SetParameter(iOMXDecoder, OMX_IndexParamAudioPcm, &Audio_Pcm_Param);
+        if (Err != OMX_ErrorNone)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVMFOMXAudioDecNode::NegotiateComponentParameters() Problem Setting PCM parameters with output port %d ", iOutputPortIndex));
+            return false;
+        }
+
+    }
+
 
     // Codec specific info set/get: SamplingRate, formats etc.
     // NOTE: iParamPort is modified in the routine below - it is loaded from the component output port values
@@ -1900,7 +1950,7 @@ OMX_ERRORTYPE PVMFOMXAudioDecNode::EventHandlerProcessing(OMX_OUT OMX_HANDLETYPE
 
         case OMX_EventError:
         {
-
+            LOGE("Ln %d OMX_EventError nData1 %d nData2 %d", __LINE__, aData1, aData2);
             if (aData1 == (OMX_U32) OMX_ErrorStreamCorrupt)
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,

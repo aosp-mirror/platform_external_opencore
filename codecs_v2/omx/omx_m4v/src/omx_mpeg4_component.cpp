@@ -337,7 +337,9 @@ OMX_ERRORTYPE OpenmaxMpeg4AO::ConstructComponent(OMX_PTR pAppData, OMX_PTR pProx
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.format.video.eCompressionFormat = OMX_VIDEO_CodingUnused;
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.format.video.eColorFormat = OMX_COLOR_FormatYUV420Planar;
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.format.video.nFrameWidth = 176; //320; //176;
+    ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.format.video.nStride = 176;
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.format.video.nFrameHeight = 144; //240; //144;
+    ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.format.video.nSliceHeight = 144;
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.format.video.nBitrate = 64000;
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.format.video.xFramerate = (15 << 16);
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.eDir = OMX_DirOutput;
@@ -353,15 +355,26 @@ OMX_ERRORTYPE OpenmaxMpeg4AO::ConstructComponent(OMX_PTR pAppData, OMX_PTR pProx
         //Default values for mpeg4 video param port
         ipPorts[OMX_PORT_INPUTPORT_INDEX]->VideoMpeg4.nPortIndex = OMX_PORT_INPUTPORT_INDEX;
         ipPorts[OMX_PORT_INPUTPORT_INDEX]->VideoMpeg4.eProfile = OMX_VIDEO_MPEG4ProfileSimple;
-        ipPorts[OMX_PORT_INPUTPORT_INDEX]->VideoMpeg4.eLevel = OMX_VIDEO_MPEG4Level1;
+        ipPorts[OMX_PORT_INPUTPORT_INDEX]->VideoMpeg4.eLevel = OMX_VIDEO_MPEG4Level3;
 
         ipPorts[OMX_PORT_INPUTPORT_INDEX]->ProfileLevel.nPortIndex = OMX_PORT_INPUTPORT_INDEX;
         ipPorts[OMX_PORT_INPUTPORT_INDEX]->ProfileLevel.nProfileIndex = 0;
         ipPorts[OMX_PORT_INPUTPORT_INDEX]->ProfileLevel.eProfile = OMX_VIDEO_MPEG4ProfileSimple;
-        ipPorts[OMX_PORT_INPUTPORT_INDEX]->ProfileLevel.eLevel = OMX_VIDEO_MPEG4Level1;
+        ipPorts[OMX_PORT_INPUTPORT_INDEX]->ProfileLevel.eLevel = OMX_VIDEO_MPEG4Level3;
+        oscl_strncpy((OMX_STRING)iComponentRole, (OMX_STRING)"video_decoder.mpeg4", OMX_MAX_STRINGNAME_SIZE);
     }
     else if (iDecMode == MODE_H263)
     {
+        //Default values for h263 video param port
+        ipPorts[OMX_PORT_INPUTPORT_INDEX]->VideoH263.nPortIndex = OMX_PORT_INPUTPORT_INDEX;
+        ipPorts[OMX_PORT_INPUTPORT_INDEX]->VideoH263.eProfile = (OMX_VIDEO_H263PROFILETYPE) (OMX_VIDEO_H263ProfileBaseline | OMX_VIDEO_H263ProfileISWV2);
+        ipPorts[OMX_PORT_INPUTPORT_INDEX]->VideoH263.eLevel = OMX_VIDEO_H263Level45;
+
+        ipPorts[OMX_PORT_INPUTPORT_INDEX]->ProfileLevel.nPortIndex = OMX_PORT_INPUTPORT_INDEX;
+        ipPorts[OMX_PORT_INPUTPORT_INDEX]->ProfileLevel.nProfileIndex = 0;
+        ipPorts[OMX_PORT_INPUTPORT_INDEX]->ProfileLevel.eProfile = OMX_VIDEO_H263ProfileBaseline | OMX_VIDEO_H263ProfileISWV2;
+        ipPorts[OMX_PORT_INPUTPORT_INDEX]->ProfileLevel.eLevel = OMX_VIDEO_H263Level45;
+        oscl_strncpy((OMX_STRING)iComponentRole, (OMX_STRING)"video_decoder.h263", OMX_MAX_STRINGNAME_SIZE);
 
     }
 
@@ -540,7 +553,7 @@ void OpenmaxMpeg4AO::DecodeWithoutMarker()
         }
 
         //Do not proceed if the output buffer can't fit the YUV data
-        if (ipOutputBuffer->nAllocLen < (OMX_U32)((((CurrWidth + 15) >> 4) << 4) *(((CurrHeight + 15) >> 4) << 4) * 3 / 2))
+        if ((ipOutputBuffer->nAllocLen < (OMX_U32)((((CurrWidth + 15) >> 4) << 4) *(((CurrHeight + 15) >> 4) << 4) * 3 / 2)) && (OMX_TRUE == ipMpegDecoderObject->Mpeg4InitCompleteFlag))
         {
             ipOutputBuffer->nFilledLen = 0;
             ReturnOutputBuffer(ipOutputBuffer, pOutPort);
@@ -599,8 +612,22 @@ void OpenmaxMpeg4AO::DecodeWithoutMarker()
         ipOutputBuffer->nOffset = 0;
 
         //If decoder returned error, report it to the client via a callback
-        if (!DecodeReturn && OMX_FALSE == iEndofStream)
+        if (!DecodeReturn && OMX_FALSE == ipMpegDecoderObject->Mpeg4InitCompleteFlag)
         {
+            // initialization error, stop playback
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OpenmaxMpeg4AO : DecodeWithoutMarker ErrorBadParameter callback send"));
+
+            (*(ipCallbacks->EventHandler))
+            (pHandle,
+             iCallbackData,
+             OMX_EventError,
+             OMX_ErrorBadParameter,
+             0,
+             NULL);
+        }
+        else if (!DecodeReturn && OMX_FALSE == iEndofStream)
+        {
+            // decoding error
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OpenmaxMpeg4AO : DecodeWithoutMarker ErrorStreamCorrupt callback send"));
 
             (*(ipCallbacks->EventHandler))
@@ -733,7 +760,7 @@ void OpenmaxMpeg4AO::DecodeWithMarker()
         }
 
         //Do not proceed if the output buffer can't fit the YUV data
-        if (ipOutputBuffer->nAllocLen < (OMX_U32)((((CurrWidth + 15) >> 4) << 4) *(((CurrHeight + 15) >> 4) << 4) * 3 / 2))
+        if ((ipOutputBuffer->nAllocLen < (OMX_U32)((((CurrWidth + 15) >> 4) << 4) *(((CurrHeight + 15) >> 4) << 4) * 3 / 2)) && (OMX_TRUE == ipMpegDecoderObject->Mpeg4InitCompleteFlag))
         {
             ipOutputBuffer->nFilledLen = 0;
             ReturnOutputBuffer(ipOutputBuffer, pOutPort);
@@ -780,8 +807,22 @@ void OpenmaxMpeg4AO::DecodeWithMarker()
             ipOutputBuffer->nOffset = 0;
 
             //If decoder returned error, report it to the client via a callback
-            if (!DecodeReturn && OMX_FALSE == iEndofStream)
+            if (!DecodeReturn && OMX_FALSE == ipMpegDecoderObject->Mpeg4InitCompleteFlag)
             {
+                // initialization error, stop playback
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OpenmaxMpeg4AO : DecodeWithoutMarker ErrorBadParameter callback send"));
+
+                (*(ipCallbacks->EventHandler))
+                (pHandle,
+                 iCallbackData,
+                 OMX_EventError,
+                 OMX_ErrorBadParameter,
+                 0,
+                 NULL);
+            }
+            else if (!DecodeReturn && OMX_FALSE == iEndofStream)
+            {
+                // decode error
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OpenmaxMpeg4AO : DecodeWithMarker ErrorStreamCorrupt callback send"));
 
                 (*(ipCallbacks->EventHandler))
@@ -974,7 +1015,7 @@ OMX_ERRORTYPE OpenmaxMpeg4AO::ComponentInit()
                 Status = OMX_ErrorInsufficientResources;
             }
 
-            ipMpegDecoderObject->Mpeg4InitFlag = 1;
+            ipMpegDecoderObject->Mpeg4InitCompleteFlag = OMX_TRUE;
         }
         else
         {

@@ -40,10 +40,6 @@
 #include "pvmi_media_io_clock_extension.h"
 #endif
 
-// To maintain the count of supported uncompressed audio formats.
-// Should be updated whenever new format is added
-#define PVMF_SUPPORTED_UNCOMPRESSED_AUDIO_FORMATS_COUNT 6
-
 class PVLogger;
 class PVMFMediaClock;
 class ColorConvertBase;
@@ -227,6 +223,8 @@ class PVFMAudioMIO : public OsclTimerObject,
 
         // For logging
         PVLogger* iLogger;
+
+        Oscl_Vector<PVMFFormatType, OsclMemAllocator> iInputFormatCapability;
 
 };
 

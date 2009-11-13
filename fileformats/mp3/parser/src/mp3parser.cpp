@@ -481,58 +481,38 @@ MP3ErrorType MP3Parser::ParseMP3File(PVFile * fpUsed, bool aEnableCRC)
         StartOffset = iTagSize;
     }
 
-    errCode = MP3Utils::SeektoOffset(fp, StartOffset, Oscl_File::SEEKSET);
-    if (MP3_SUCCESS != errCode)
+    MP3ErrorType err = MP3Utils::SeektoOffset(fp, StartOffset, Oscl_File::SEEKSET);
+    if (MP3_SUCCESS != err)
     {
-        return errCode;
+        return err;
     }
 
-    if (!MP3FileIO::readByteData(fp, MP3_FRAME_HEADER_SIZE, (uint8 *)pFrameHeader))
+    uint32 seekOffset = 0;
+    err = mp3FindSync(StartOffset, seekOffset, fp);
+    if (err != MP3_SUCCESS)
+    {
+        // in eof scenario parser reports eof error to the user
+        // eof will be reported in case when no valid sync
+        // word is find in the maximum specified search limit
+        return err;
+    }
+
+    StartOffset += seekOffset;
+    err = MP3Utils::SeektoOffset(fp, StartOffset, Oscl_File::SEEKSET);
+    if (MP3_SUCCESS != err)
+    {
+        return err;
+    }
+
+    if (!MP3FileIO::readByteData(fp, MP3_FRAME_HEADER_SIZE, pFrameHeader))
     {
         return MP3_INSUFFICIENT_DATA;
     }
-
     firstHeader = SwapFileToHostByteOrderInt32(pFrameHeader);
 
-    /**
-     * If we don't find a valid MP3 Marker point we will attempt recovery.
-     * Either the ID3 parsing failed or the ID3 header(s) are incorrect.
-     * If this fails we won't be able to parse the rest of the file.
-     * Attempt recovery now
-     **/
     if (!GetMP3Header(firstHeader, iMP3HeaderInfo))
     {
-        uint32 seekOffset = 0;
-        MP3Utils::SeektoOffset(fp, 0 - MP3_FRAME_HEADER_SIZE, Oscl_File::SEEKCUR);
-        MP3ErrorType err = mp3FindSync(StartOffset, seekOffset, fp);
-        if (err == MP3_SUCCESS)
-        {
-            StartOffset += seekOffset;
-            MP3ErrorType err = MP3Utils::SeektoOffset(fp, seekOffset, Oscl_File::SEEKCUR);
-            if (MP3_SUCCESS != err)
-            {
-                return err;
-            }
-
-            if (!MP3FileIO::readByteData(fp, MP3_FRAME_HEADER_SIZE, pFrameHeader))
-            {
-                return MP3_INSUFFICIENT_DATA;
-            }
-            firstHeader = SwapFileToHostByteOrderInt32(pFrameHeader);
-
-            if (!GetMP3Header(firstHeader, iMP3HeaderInfo))
-            {
-                return MP3_FILE_HDR_READ_ERR;
-            }
-        }
-        else if (err == MP3_INSUFFICIENT_DATA ||
-                 err == MP3_END_OF_FILE)
-        {
-            // in eof scenario parser reports eof error to the user
-            // eof will be reported in case when no valid sync
-            // word is find in the maximum specified search limit
-            return err;
-        }
+        return MP3_FILE_HDR_READ_ERR;
     }
 
     if (!DecodeMP3Header(iMP3HeaderInfo, iMP3ConfigInfo, false))
@@ -545,7 +525,7 @@ MP3ErrorType MP3Parser::ParseMP3File(PVFile * fpUsed, bool aEnableCRC)
         ConfigSize = MP3_FRAME_HEADER_SIZE;
     }
 
-    int32 revSeek = 0 - MP3_FRAME_HEADER_SIZE;
+    int32 revSeek = 0 - MP3_FRAME_HEADER_SIZE - seekOffset;
     errCode = MP3Utils::SeektoOffset(fp, revSeek, Oscl_File::SEEKCUR);
     if (MP3_SUCCESS != errCode)
     {
@@ -692,7 +672,7 @@ MP3ErrorType MP3Parser::ParseMP3File(PVFile * fpUsed, bool aEnableCRC)
 
     iAvgBitrateInbps = iMP3ConfigInfo.BitRate;
     // Set the position to the position of the first MP3 frame
-    errCode = MP3Utils::SeektoOffset(fp, revSeek, Oscl_File::SEEKCUR);
+    errCode = MP3Utils::SeektoOffset(fp, revSeek + seekOffset, Oscl_File::SEEKCUR);
     if (MP3_SUCCESS != errCode)
     {
         return errCode;

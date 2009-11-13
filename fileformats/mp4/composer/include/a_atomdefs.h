@@ -175,6 +175,7 @@ const uint32    AMR_SPECIFIC_ATOM = FourCharConstToUint32('d', 'a', 'm', 'r');
 const uint32    H263_SPECIFIC_ATOM = FourCharConstToUint32('d', '2', '6', '3');
 const uint32    AVC_SAMPLE_ENTRY = FourCharConstToUint32('a', 'v', 'c', '1');
 const uint32    AVC_CONFIGURATION_BOX = FourCharConstToUint32('a', 'v', 'c', 'C');
+const uint32    MPEG4_BITRATE_BOX = FourCharConstToUint32('b', 't', 'r', 't');
 
 const uint32    BRAND_MMP4 = FourCharConstToUint32('m', 'm', 'p', '4');
 
@@ -248,7 +249,7 @@ typedef enum
 #define AMR_INTERLEAVE_BUFFER_SIZE    2048
 #define AMR_WB_INTERLEAVE_BUFFER_SIZE 4096
 #define AAC_INTERLEAVE_BUFFER_SIZE   12000  // Calc with 96 Kbps as max
-#define VIDEO_INTERLEAVE_BUFFER_SIZE 128000 // 2 x Bitrate @ 256 kbps
+#define VIDEO_INTERLEAVE_BUFFER_SIZE 256000
 #define TEXT_INTERLEAVE_BUFFER_SIZE  12000
 
 #define MAX_PV_BASE_SIMPLE_PROFILE_VOL_HEADER_SIZE 28
@@ -306,6 +307,21 @@ typedef enum
 #define PVMP4FF_MOVIE_FRAGMENT_MODE 0x00000021
 
 #define DEFAULT_MOVIE_FRAGMENT_DURATION_IN_MS 10000
+
+class PVMP4FFComposerAudioEncodeParams
+{
+    public:
+        PVMP4FFComposerAudioEncodeParams()
+        {
+            samplingRate = 0;
+            numberOfChannels = 2;
+            bitsPerSample = 16;
+        }
+
+        uint32 samplingRate;
+        uint32 numberOfChannels;
+        uint32 bitsPerSample;
+};
 
 #endif
 

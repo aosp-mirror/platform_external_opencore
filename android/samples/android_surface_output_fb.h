@@ -22,7 +22,7 @@
 #include "android_surface_output.h"
 
 // support for shared contiguous physical memory
-#include <utils/MemoryHeapPmem.h>
+#include <binder/MemoryHeapPmem.h>
 
 // data structures for tunneling buffers
 typedef struct PLATFORM_PRIVATE_PMEM_INFO

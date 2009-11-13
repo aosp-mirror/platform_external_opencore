@@ -110,6 +110,10 @@
 #include "pvmf_fixedsize_buffer_alloc.h"
 #endif
 
+#ifndef __MEDIA_CLOCK_CONVERTER_H
+#include "media_clock_converter.h"
+#endif
+
 #define MAX_NAL_PER_FRAME 100
 
 typedef struct OutputBufCtrlStruct
@@ -813,6 +817,15 @@ class PVMFOMXBaseDecNode
         PVInterface* ipExternalOutputBufferAllocatorInterface;
         PVMFFixedSizeBufferAlloc* ipFixedSizeBufferAlloc;
         bool iCompactFSISettingSucceeded;
+
+        // Timestamp, timescale, OMX Ticks related conversions
+        uint32 iInTimeScale;
+        uint32 iOutTimeScale;
+        uint32 iTimeScale;
+        MediaClockConverter iInputTimestampClock;
+        OMX_TICKS iOMXTicksTimestamp;
+        OSCL_IMPORT_REF OMX_TICKS ConvertTimestampIntoOMXTicks(const MediaClockConverter &src);
+        uint32 ConvertOMXTicksIntoTimestamp(const OMX_TICKS &src);
 
 };
 

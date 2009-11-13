@@ -711,18 +711,8 @@ void AndroidAudioMIOActiveTimingSupport::UpdateClock()
         updateClock32 = iFrameCount * iMsecsPerFrame;
         LOGV("sample clock = %u frameCount(%u) msecsPerFrame(%f)", updateClock32,iFrameCount,iMsecsPerFrame);
 
-        // startup - force clock backwards to compensate for latency
-        if (updateClock32 < iDriverLatency) {
-            LOGV("iStartTime = %u , iDriverLatency = %u",iStartTime, iDriverLatency);
-            correction = iStartTime - clockTime32;
-            LOGV("latency stall - forcing clock (correction = %d)",correction);
-        }
-
-        // normal play mode - check delta between PV engine clock and sample clock
-        else {
-            correction = (updateClock32 - iDriverLatency) - (clockTime32 - iStartTime);
-            LOGV("clock drift (correction = (updateClock32(%d)-iDriverLatency(%d))-(clockTime32(%d)-iStartTime(%d))= %d)",updateClock32,iDriverLatency,clockTime32,iStartTime,correction);
-        }
+        correction = updateClock32 - (clockTime32 - iStartTime);
+        LOGV("ADJ_CLK iDriverLatency %d old clock %d delta %d", iDriverLatency, clockTime32, correction);
 
         // do clock correction if drift exceeds threshold
         if (OSCL_ABS(correction) > iMinCorrection) {
@@ -732,7 +722,8 @@ void AndroidAudioMIOActiveTimingSupport::UpdateClock()
                 correction = -iMaxCorrection;
             }
             updateClock32 = clockTime32 + correction;
-            LOGV("drift correction = %d, new clock = %u", correction, updateClock32);
+            LOGV("ADJ_CLK old clock %d correction %d new clock %d", clockTime32, correction, updateClock32);
+
             PVMFMediaClockAdjustTimeStatus adjustmentstatus = 
             iClock->AdjustClockTime32(clockTime32, timeBaseTime32, updateClock32,PVMF_MEDIA_CLOCK_MSEC,overflowFlag);
 

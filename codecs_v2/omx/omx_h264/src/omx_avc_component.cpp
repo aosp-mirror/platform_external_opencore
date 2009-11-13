@@ -262,7 +262,9 @@ OMX_ERRORTYPE OpenmaxAvcAO::ConstructComponent(OMX_PTR pAppData, OMX_PTR pProxy)
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.format.video.eCompressionFormat = OMX_VIDEO_CodingUnused;
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.format.video.eColorFormat = OMX_COLOR_FormatYUV420Planar;
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.format.video.nFrameWidth = 176;
+    ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.format.video.nStride = 176;
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.format.video.nFrameHeight = 144;
+    ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.format.video.nSliceHeight = 144;
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.format.video.nBitrate = 64000;
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.format.video.xFramerate = (15 << 16);
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.eDir = OMX_DirOutput;
@@ -270,7 +272,7 @@ OMX_ERRORTYPE OpenmaxAvcAO::ConstructComponent(OMX_PTR pAppData, OMX_PTR pProxy)
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.nBufferCountActual = NUMBER_OUTPUT_BUFFER_AVC
             ;
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.nBufferCountMin = 1;
-    ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.nBufferSize = 176 * 144 * 3 / 2; //Don't use OUTPUT_BUFFER_SIZE_AVC, just use QCIF (as default)
+    ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.nBufferSize = OUTPUT_BUFFER_SIZE_AVC; //just use QCIF (as default)
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.bEnabled = OMX_TRUE;
     ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->PortParam.bPopulated = OMX_FALSE;
 
@@ -309,6 +311,8 @@ OMX_ERRORTYPE OpenmaxAvcAO::ConstructComponent(OMX_PTR pAppData, OMX_PTR pProxy)
     pOutPort->VideoParam[0].nIndex = 0;
     pOutPort->VideoParam[0].eCompressionFormat = OMX_VIDEO_CodingUnused;
     pOutPort->VideoParam[0].eColorFormat = OMX_COLOR_FormatYUV420Planar;
+
+    oscl_strncpy((OMX_STRING)iComponentRole, (OMX_STRING)"video_decoder.avc", OMX_MAX_STRINGNAME_SIZE);
 
     iDecodeReturn = OMX_FALSE;
 
@@ -573,7 +577,7 @@ void OpenmaxAvcAO::DecodeWithoutMarker()
             }
 
             //Do not proceed if the output buffer can't fit the YUV data
-            if (ipOutputBuffer->nAllocLen < (OMX_U32)(((CurrWidth + 15)&(~15)) *((CurrHeight + 15)&(~15)) * 3 / 2))
+            if ((ipOutputBuffer->nAllocLen < (OMX_U32)(((CurrWidth + 15)&(~15)) *((CurrHeight + 15)&(~15)) * 3 / 2)) && (OMX_TRUE == ipAvcDec->iAvcActiveFlag))
             {
                 ipOutputBuffer->nFilledLen = 0;
                 ReturnOutputBuffer(ipOutputBuffer, pOutPort);
@@ -637,8 +641,22 @@ void OpenmaxAvcAO::DecodeWithoutMarker()
         iTempInputBufferLength = TempInLength;
 
         //If decoder returned error, report it to the client via a callback
-        if (!iDecodeReturn && OMX_FALSE == iEndofStream)
+        if (!iDecodeReturn && OMX_FALSE == ipAvcDec->iAvcActiveFlag)
         {
+            // initialization error
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OpenmaxAvcAO : DecodeWithoutMarker ErrorBadParameter callback send"));
+
+            (*(ipCallbacks->EventHandler))
+            (pHandle,
+             iCallbackData,
+             OMX_EventError,
+             OMX_ErrorBadParameter,
+             0,
+             NULL);
+        }
+        else if (!iDecodeReturn && OMX_FALSE == iEndofStream)
+        {
+            // decoding error
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OpenmaxAvcAO : DecodeWithoutMarker ErrorStreamCorrupt callback send"));
 
             (*(ipCallbacks->EventHandler))
@@ -769,7 +787,7 @@ void OpenmaxAvcAO::DecodeWithMarker()
             }
 
             //Do not proceed if the output buffer can't fit the YUV data
-            if (ipOutputBuffer->nAllocLen < (OMX_U32)(((CurrWidth + 15)&(~15)) *((CurrHeight + 15)&(~15)) * 3 / 2))
+            if ((ipOutputBuffer->nAllocLen < (OMX_U32)(((CurrWidth + 15)&(~15)) *((CurrHeight + 15)&(~15)) * 3 / 2)) && (OMX_TRUE == ipAvcDec->iAvcActiveFlag))
             {
                 ipOutputBuffer->nFilledLen = 0;
                 ReturnOutputBuffer(ipOutputBuffer, pOutPort);
@@ -842,8 +860,22 @@ void OpenmaxAvcAO::DecodeWithMarker()
 
 
             //If decoder returned error, report it to the client via a callback
-            if (!iDecodeReturn && OMX_FALSE == iEndofStream)
+            if (!iDecodeReturn && OMX_FALSE == ipAvcDec->iAvcActiveFlag)
             {
+                // initialization error
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OpenmaxAvcAO : DecodeWithoutMarker ErrorBadParameter callback send"));
+
+                (*(ipCallbacks->EventHandler))
+                (pHandle,
+                 iCallbackData,
+                 OMX_EventError,
+                 OMX_ErrorBadParameter,
+                 0,
+                 NULL);
+            }
+            else if (!iDecodeReturn && OMX_FALSE == iEndofStream)
+            {
+                // decode error
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OpenmaxAvcAO : DecodeWithMarker ErrorStreamCorrupt callback send"));
 
                 (*(ipCallbacks->EventHandler))

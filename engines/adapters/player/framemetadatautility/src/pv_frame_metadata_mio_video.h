@@ -39,14 +39,13 @@
 #ifndef PVMI_MEDIA_IO_CLOCK_EXTENSION_H_INCLUDED
 #include "pvmi_media_io_clock_extension.h"
 #endif
+#ifndef CCYUV422TOYUV420_H_INCLUDED
+#include "ccyuv422toyuv420.h"
+#endif
 
 class PVLogger;
 class PVMFMediaClock;
 class ColorConvertBase;
-
-// To maintain the count of supported uncompressed video formats.
-// Should be updated whenever new format is added
-#define PVMF_SUPPORTED_UNCOMPRESSED_VIDEO_FORMATS_COUNT 6
 
 class PVFMVideoMIOGetFrameObserver
 {
@@ -169,6 +168,11 @@ class PVFMVideoMIO : public OsclTimerObject,
         PVMFStatus DestroyYUVToRGBColorConverter(ColorConvertBase*& aCC, PVMFFormatType aRGBFormatType);
         void convertYUV420SPtoYUV420(void* src, void* dst, uint32 len);
 
+        PVMFStatus CreateYUV422toYUV420ColorConvert();
+        PVMFStatus InitYUV422toYUV420ColorConvert(uint32 aSrcWidth, uint32 aSrcHeight,
+                                                  uint32 aDestWidth, uint32 aDestHeight);
+        void DestroyYUV422toYUV420ColorConvert();
+
         PvmiMediaTransfer* iPeer;
 
         // The PvmiMIOControl class observer.
@@ -264,6 +268,10 @@ class PVFMVideoMIO : public OsclTimerObject,
             uint32 iFrameHeight;
         };
         PVFMVideoMIOFrameRetrieval iFrameRetrievalInfo;
+
+        Oscl_Vector<PVMFFormatType, OsclMemAllocator> iInputFormatCapability;
+
+        CCYUV422toYUV420 *iYUV422toYUV420ColorConvert;
 };
 
 #endif // PV_FRAME_METADATA_MIO_VIDEO_H_INCLUDED

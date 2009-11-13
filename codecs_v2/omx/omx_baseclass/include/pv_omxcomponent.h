@@ -45,6 +45,7 @@
 #include "pv_omxcore.h"
 #endif
 
+
 #define OMX_PORT_INPUTPORT_INDEX OMX_DirInput
 #define OMX_PORT_OUTPUTPORT_INDEX OMX_DirOutput
 #define OMX_PORT_ALLPORT_INDEX -1
@@ -511,7 +512,6 @@ class OSCL_IMPORT_REF OmxComponentBase : public OsclActiveObject
         OMX_U32                 iSamplesPerFrame;
         OMX_BOOL                iSilenceInsertionInProgress;
         OMX_U32                 iSilenceFramesNeeded;
-        OMX_U32                 iOutputMilliSecPerFrame;
         OMX_BOOL                iIsFirstOutputFrame;
         OMX_S32                 iInputBufferRemainingBytes;
         OMX_BOOL                iResizePending;
@@ -519,6 +519,7 @@ class OSCL_IMPORT_REF OmxComponentBase : public OsclActiveObject
         OMX_U32                 iSizeOutBufferForPortReconfig;
         OMX_BOOL                iSendOutBufferAfterPortReconfigFlag;
         OMX_TICKS               iTimestampOutBufferForPortReconfig;
+        OMX_TICKS               iOutputMicroSecPerFrame;
 
 
         OMX_BOOL                iIsAudioComponent;

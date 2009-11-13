@@ -47,7 +47,7 @@
 #include "media/mediametadataretriever.h"
 
 #include <media/thread_init.h>
-#include <utils/string_array.h>
+#include <utils/StringArray.h>
 
 #define MAX_BUFF_SIZE   1024
 
@@ -119,9 +119,17 @@ static PVMFStatus parseMP3(const char *filename, MediaScannerClient& client)
         bool isIso88591 = false;
 
         // type should follow first semicolon
-        const char* type = strchr(key, ';') + 1;
-        if (type == 0) continue;
+        const char* type = strchr(key, ';');
+        if (type == NULL) continue;
+        type++;
 
+        char tracknumkeybuf[100];
+        if (strncmp(key, "track-info/track-number;", 24) == 0) {
+            // Java expects the track number key to be called "tracknumber", so
+            // construct a temporary one here.
+            snprintf(tracknumkeybuf, sizeof(tracknumkeybuf), "tracknumber;%s", type);
+            key = tracknumkeybuf;
+        }
         
         const char* value = framevector[i]->value.pChar_value;
 
@@ -227,6 +235,8 @@ static PVMFStatus reportM4ATags(IMpeg4File *mp4Input, MediaScannerClient& client
     uint32 timeScale;
     uint16 trackNum;
     uint16 totalTracks;
+    uint16 discNum;
+    uint16 totalDiscs;
     uint32 val;
 
     char buffer[MAX_STR_LEN];
@@ -281,16 +291,22 @@ static PVMFStatus reportM4ATags(IMpeg4File *mp4Input, MediaScannerClient& client
         }
     }
 
-    // Writer/Composer
+    // Writer
     if (oscl_UnicodeToUTF8(mp4Input->getITunesWriter().get_cstr(),
         mp4Input->getITunesWriter().get_size(),buffer,sizeof(buffer)) > 0)
-        if (!client.addStringTag("composer", buffer)) goto failure;
+        if (!client.addStringTag("writer", buffer)) goto failure;
 
     // Track Data
     trackNum = mp4Input->getITunesThisTrackNo();
     totalTracks = mp4Input->getITunesTotalTracks();
     sprintf(buffer, "%d/%d", trackNum, totalTracks);
     if (!client.addStringTag("tracknumber", buffer)) goto failure;
+
+    // Disc number
+    discNum = mp4Input->getITunesThisDiskNo();
+    totalDiscs = mp4Input->getITunesTotalDisks();
+    sprintf(buffer, "%d/%d", discNum, totalDiscs);
+    if (!client.addStringTag("discnumber", buffer)) goto failure;
 
     // Duration
     duration = mp4Input->getMovieDuration();
@@ -348,39 +364,61 @@ static PVMFStatus parseMP4(const char *filename, MediaScannerClient& client)
         uint32* tracks = new uint32[count];
         bool hasAudio = false;
         bool hasVideo = false;
+        uint32_t brand = mp4Input->getCompatibiltyMajorBrand();
         if (tracks) {
             mp4Input->getTrackIDList(tracks, count);
             for (int i = 0; i < count; ++i) {
                 uint32 trackType = mp4Input->getTrackMediaType(tracks[i]);
                 OSCL_HeapString<OsclMemAllocator> streamtype;
                 mp4Input->getTrackMIMEType(tracks[i], streamtype);
-                char streamtypeutf8[128];
-        strncpy (streamtypeutf8, streamtype.get_str(), streamtype.get_size());
-                if (streamtypeutf8[0])
-        {                                                                           
-                    if (strcmp(streamtypeutf8,"FORMATUNKNOWN") != 0) {
+                if (streamtype.get_size()) {
+                    if (strcmp(streamtype.get_cstr(),"FORMATUNKNOWN") != 0) {
                             if (trackType ==  MEDIA_TYPE_AUDIO) {
                                 hasAudio = true;
                             } else if (trackType ==  MEDIA_TYPE_VISUAL) {
                                 hasVideo = true;
                             }
                     } else {
-                        //LOGI("@@@@@@@@ %100s: %s\n", filename, streamtypeutf8);
+                        //LOGI("@@@@@@@@ %100s: %s\n", filename, streamtype.get_cstr());
                     }
                 }
             }
 
             delete[] tracks;
         }
-
-        if (hasVideo) {
-            if (!client.setMimeType("video/mp4")) return PVMFFailure;
-        } else if (hasAudio) {
-            if (!client.setMimeType("audio/mp4")) return PVMFFailure;
-        } else {
-            iFs.Close();
-            IMpeg4File::DestroyMP4FileObject(mp4Input);
-            return PVMFFailure;
+        if (brand != 0) {  // if filetype exists, see whether it is 3gpp or mp4
+            char mime[5];
+            mime[0] = ((brand >> 24) & 0x00FF);
+            mime[1] = ((brand >> 16) & 0x00FF);
+            mime[2] = ((brand >>  8) & 0x00FF);
+            mime[3] = ((brand >>  0) & 0x00FF);
+            mime[4] = '\0';
+            if (mime[0] == '3' && mime[1] == 'g' && mime[2] == 'p') {  // 3gpp
+                if (hasVideo) {
+                    if (!client.setMimeType("video/3gpp")) return PVMFFailure;
+                } else if (hasAudio) {
+                   if (!client.setMimeType("audio/3gpp")) return PVMFFailure;
+                }
+            } else if (mime[0] == 'm' && mime[1] == 'p' && mime[2] == '4') {  // mp4
+                if (hasVideo) {
+                    if (!client.setMimeType("video/mp4")) return PVMFFailure;
+                } else if (hasAudio) {
+                    if (!client.setMimeType("audio/mp4")) return PVMFFailure;
+                }
+            } else {
+                brand = 0;
+            }
+        }
+        if (brand == 0) {  // otherwise, mark it as mp4 as previously
+            if (hasVideo) {
+                if (!client.setMimeType("video/mp4")) return PVMFFailure;
+            } else if (hasAudio) {
+                if (!client.setMimeType("audio/mp4")) return PVMFFailure;
+            } else {
+                iFs.Close();
+                IMpeg4File::DestroyMP4FileObject(mp4Input);
+                return PVMFFailure;
+            }
         }
 
         PVMFStatus result = reportM4ATags(mp4Input, client);
@@ -560,7 +598,10 @@ status_t MediaScanner::processFile(const char *path, const char* mimeType, Media
         ( strcasecmp(extension, ".mid") == 0 || strcasecmp(extension, ".smf") == 0
         || strcasecmp(extension, ".imy") == 0)) {
         result = parseMidi(path, client);
-    } else if (extension && strcasecmp(extension, ".wma") == 0) {
+    } else if (extension &&
+       (strcasecmp(extension, ".wma") == 0 || strcasecmp(extension, ".aac") == 0)) {
+        //TODO: parseWMA needs to be renamed to reflect what it is really doing,
+        //ie. using OpenCORE frame metadata utility(FMU) to retrieve metadata.
         result = parseWMA(path, client);
     } else {
         result = PVMFFailure;
@@ -600,6 +641,8 @@ status_t MediaScanner::doProcessDirectory(char *path, int pathRemaining, const c
         strcpy(fileSpot, ".nomedia");
         if (access(path, F_OK) == 0) {
             LOGD("found .nomedia, skipping directory\n");
+            fileSpot[0] = 0;
+            client.addNoMediaFolder(path);
             return OK;
         }
 

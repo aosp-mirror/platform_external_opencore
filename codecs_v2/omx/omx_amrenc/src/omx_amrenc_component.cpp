@@ -273,6 +273,8 @@ OMX_ERRORTYPE OmxComponentAmrEncoderAO::ConstructComponent(OMX_PTR pAppData, OMX
     pOutPort->AudioParam.nIndex = 0;
     pOutPort->AudioParam.eEncoding = OMX_AUDIO_CodingAMR;
 
+    oscl_strncpy((OMX_STRING)iComponentRole, (OMX_STRING)"audio_encoder.amrnb", OMX_MAX_STRINGNAME_SIZE);
+
     iInputBufferRemainingBytes = 0;
 
     if (ipAmrEnc)
@@ -286,6 +288,7 @@ OMX_ERRORTYPE OmxComponentAmrEncoderAO::ConstructComponent(OMX_PTR pAppData, OMX
     {
         return OMX_ErrorInsufficientResources;
     }
+
 
 
 #if PROXY_INTERFACE
@@ -345,7 +348,13 @@ OMX_ERRORTYPE OmxComponentAmrEncoderAO::DestroyComponent()
 /* This routine will extract the input timestamp from the input buffer */
 void OmxComponentAmrEncoderAO::SyncWithInputTimestamp()
 {
-    iCurrentTimestamp = iFrameTimestamp;
+    // this is called when new input buffer is received
+    // and checked against internally kept (Current) timestamp
+// TODO:
+// If there is unprocessed data from previous buffer - need to adjust timestamp - but
+// timestamp adjustment should only be done once (if multiple PCM input buffers are received - prior to doing further processing)
+
+
 }
 
 
@@ -613,6 +622,7 @@ OmxComponentAmrEncoderAO::OmxComponentAmrEncoderAO()
         AddToScheduler();
     }
 
+    iCurrentTimestamp = 0;
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OmxComponentAmrEncoderAO : constructed"));
 }
 

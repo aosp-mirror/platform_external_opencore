@@ -24,18 +24,21 @@
 // Constructor
 PVA_FF_AVCSampleEntry::PVA_FF_AVCSampleEntry(uint8 profile, uint8 profileComp, uint8 level)
         : PVA_FF_SampleEntry(AVC_SAMPLE_ENTRY)
+        , _pMpeg4BitrateAtom(NULL)
 {
-
     init(profile, profileComp, level);
     recomputeSize();
-
-
 }
 
 // Destructor
 PVA_FF_AVCSampleEntry::~PVA_FF_AVCSampleEntry()
 {
     PV_MP4_FF_DELETE(NULL, PVA_FF_AVCConfigurationAtom, _pAVCConfigurationAtom);
+    if (_pMpeg4BitrateAtom)
+    {
+        PV_MP4_FF_DELETE(NULL, PVA_FF_AVCConfigurationAtom, _pMpeg4BitrateAtom);
+        _pMpeg4BitrateAtom = NULL;
+    }
 }
 
 void
@@ -69,7 +72,6 @@ PVA_FF_AVCSampleEntry::init(uint8 profile, uint8 profileComp, uint8 level)
     _predefined4 = -1;
 
     PV_MP4_FF_NEW(fp->auditCB, PVA_FF_AVCConfigurationAtom, (profile, profileComp, level), _pAVCConfigurationAtom);
-
 }
 
 void PVA_FF_AVCSampleEntry::setVideoParam(int16 width, int16 height)
@@ -77,6 +79,16 @@ void PVA_FF_AVCSampleEntry::setVideoParam(int16 width, int16 height)
     _width = width;
     _height = height;
 
+}
+
+void PVA_FF_AVCSampleEntry::setBitrate(uint32 bufferSizeDB, uint32 maxBitRate, uint32 avgBitRate)
+{//TODO: add validation for arguments
+    if (_pMpeg4BitrateAtom)
+    {
+        PV_MP4_FF_DELETE(NULL, PVA_FF_AVCConfigurationAtom, _pMpeg4BitrateAtom);
+        _pMpeg4BitrateAtom = NULL;
+    }
+    PV_MP4_FF_NEW(fp->auditCB, PVA_FF_Mpeg4Bitrate, (bufferSizeDB, maxBitRate, avgBitRate), _pMpeg4BitrateAtom);
 }
 
 void PVA_FF_AVCSampleEntry::addDecoderSpecificInfo(PVA_FF_DecoderSpecificInfo *pinfo)
@@ -200,6 +212,15 @@ PVA_FF_AVCSampleEntry::renderToFileStream(MP4_AUTHOR_FF_FILE_IO_WRAP *fp)
     }
     rendered += _pAVCConfigurationAtom->getSize();
 
+    if (_pMpeg4BitrateAtom)
+    {
+        if (!_pMpeg4BitrateAtom->renderToFileStream(fp))
+        {
+            return false;
+        }
+        rendered += _pMpeg4BitrateAtom->getSize();
+    }
+
     return true;
 }
 
@@ -231,6 +252,10 @@ PVA_FF_AVCSampleEntry::recomputeSize()
     size  += sizeof(_depth);
     size  += sizeof(_predefined4);
     size  += _pAVCConfigurationAtom->getSize();
+    if (_pMpeg4BitrateAtom)
+    {
+        size  += _pMpeg4BitrateAtom->getSize();
+    }
 
     _size = size;
     // Update size of parent

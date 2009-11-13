@@ -18,6 +18,9 @@
 #include "pvmf_omx_basedec_node.h"
 #include "pvlogger.h"
 #include "oscl_error_codes.h"
+#ifndef OSCL_INT64_UTILS_H_INCLUDED
+#include "oscl_int64_utils.h"
+#endif
 #include "pvmf_omx_basedec_port.h"
 #include "pv_mime_string_utils.h"
 #include "oscl_snprintf.h"
@@ -600,6 +603,17 @@ OSCL_EXPORT_REF PVMFOMXBaseDecNode::PVMFOMXBaseDecNode(int32 aPriority, const ch
 
     iOutTimeStamp = 0;
 
+    //if timescale value is 1 000 000 - it means that
+    //timestamp is expressed in units of 1/10^6 (i.e. microseconds)
+
+    iTimeScale = 1000000;
+    iInTimeScale = 1000;
+    iOutTimeScale = 1000;
+
+
+    iInputTimestampClock.set_timescale(iInTimeScale); // keep the timescale set to input timestamp
+
+
     // counts output frames (for logging)
     iFrameCounter = 0;
     iInputBufferUnderConstruction = NULL; // for partial frame assembly
@@ -1001,6 +1015,10 @@ OSCL_EXPORT_REF bool PVMFOMXBaseDecNode::ProcessIncomingMsg(PVMFPortInterface* a
         //store the stream id and time stamp of bos message
         iStreamID = mediaMsgOut->getStreamID();
         iBOSTimestamp = mediaMsgOut->getTimestamp();
+
+        iInputTimestampClock.set_clock(iBOSTimestamp, 0);
+        iOMXTicksTimestamp = ConvertTimestampIntoOMXTicks(iInputTimestampClock);
+
         iSendBOS = true;
 
         ((PVMFOMXDecPort*)aPort)->iNumFramesConsumed++;
@@ -1057,6 +1075,10 @@ OSCL_EXPORT_REF bool PVMFOMXBaseDecNode::ProcessIncomingMsg(PVMFPortInterface* a
         iStreamID = msg->getStreamID();
         iBOSTimestamp = msg->getTimestamp();
         iSendBOS = true;
+
+        // we need to initialize the timestamp here - so that updates later on are accurate (in terms of rollover etc)
+        iInputTimestampClock.set_clock(iBOSTimestamp, 0);
+        iOMXTicksTimestamp = ConvertTimestampIntoOMXTicks(iInputTimestampClock);
 
         // if new BOS arrives, and
         //if we're in the middle of a partial frame assembly
@@ -1371,7 +1393,7 @@ PVMFStatus PVMFOMXBaseDecNode::HandleProcessingState()
                 break;
             }
 
-            if ((sState != OMX_StateExecuting) && (sState != OMX_StatePause))
+            if (((sState != OMX_StateExecuting) && (sState != OMX_StatePause)) || iStopCommandWasSentToComponent)
             {
 
                 // possibly as a consequence of a previously queued cmd to go to Idle state?
@@ -1812,7 +1834,11 @@ bool PVMFOMXBaseDecNode::SendEOSBufferToOMXComponent()
     // THIS IS AN EMPTY BUFFER. FLAGS ARE THE ONLY IMPORTANT THING
     input_buf->pBufHdr->nFilledLen = 0;
     input_buf->pBufHdr->nOffset = 0;
-    input_buf->pBufHdr->nTimeStamp = iEndOfDataTimestamp;
+
+    iInputTimestampClock.update_clock(iEndOfDataTimestamp); // this will also take into consideration the rollover
+    // convert TS in input timescale into OMX_TICKS
+    iOMXTicksTimestamp = ConvertTimestampIntoOMXTicks(iInputTimestampClock);
+    input_buf->pBufHdr->nTimeStamp = iOMXTicksTimestamp;
 
     // set ptr to input_buf structure for Context (for when the buffer is returned)
     input_buf->pBufHdr->pAppPrivate = (OMX_PTR) input_buf;
@@ -1869,7 +1895,7 @@ OSCL_EXPORT_REF void PVMFOMXBaseDecNode::SendIncompleteBufferUnderConstruction()
         iInputBufferUnderConstruction->pBufHdr->nFlags |= OMX_BUFFERFLAG_ENDOFFRAME;
 
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "%s::SendIncompleteBufferUnderConstruction()  - Sending Incomplete Buffer 0x%x to OMX Component MARKER field set to %x, TS=%d", iName.Str(), iInputBufferUnderConstruction->pBufHdr->pBuffer, iInputBufferUnderConstruction->pBufHdr->nFlags, iInTimestamp));
+                        (0, "%s::SendIncompleteBufferUnderConstruction()  - Sending Incomplete Buffer 0x%x to OMX Component MARKER field set to %x, TS=%d, Ticks=%L", iName.Str(), iInputBufferUnderConstruction->pBufHdr->pBuffer, iInputBufferUnderConstruction->pBufHdr->nFlags, iInTimestamp, iOMXTicksTimestamp));
 
         OMX_EmptyThisBuffer(iOMXDecoder, iInputBufferUnderConstruction->pBufHdr);
 
@@ -1932,6 +1958,16 @@ OSCL_EXPORT_REF bool PVMFOMXBaseDecNode::SendInputBufferToOMXComponent()
         else
         {
             current_msg_marker = iDataIn->getMarkerInfo() & PVMF_MEDIA_DATA_MARKER_INFO_M_BIT;
+        }
+
+        //Force marker bit for AMR streaming formats (marker bit may not be set even though full frames are present)
+        if (iInPort && (
+                       (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_AMR) ||
+                       (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_AMRWB)
+                    ))
+        {
+            // FIXME: This could have unintended side effects if other bits in this value are used in the future
+            current_msg_marker = PVMF_MEDIA_DATA_MARKER_INFO_M_BIT;
         }
 
         // check if this is the very first data msg
@@ -2409,7 +2445,15 @@ OSCL_EXPORT_REF bool PVMFOMXBaseDecNode::SendInputBufferToOMXComponent()
 
         // set buffer fields (this is the same regardless of whether the input is movable or not
         input_buf->pBufHdr->nOffset = 0;
-        input_buf->pBufHdr->nTimeStamp = iInTimestamp;
+
+        iInputTimestampClock.update_clock(iInTimestamp); // this will also take into consideration the timestamp rollover
+
+        // convert TS in input timescale into OMX_TICKS
+        iOMXTicksTimestamp = ConvertTimestampIntoOMXTicks(iInputTimestampClock);
+
+        input_buf->pBufHdr->nTimeStamp = iOMXTicksTimestamp;
+
+
 
         // set ptr to input_buf structure for Context (for when the buffer is returned)
         input_buf->pBufHdr->pAppPrivate = (OMX_PTR) input_buf;
@@ -2525,7 +2569,7 @@ OSCL_EXPORT_REF bool PVMFOMXBaseDecNode::SendInputBufferToOMXComponent()
                 if (iCurrentMsgMarkerBit)
                 {
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                                    (0, "%s::SendInputBufferToOMXComponent() - END OF MESSAGE - Buffer 0x%x MARKER bit set to 1, TS=%d", iName.Str(), input_buf->pBufHdr->pBuffer, iInTimestamp));
+                                    (0, "%s::SendInputBufferToOMXComponent() - END OF MESSAGE - Buffer 0x%x MARKER bit set to 1, TS=%d, Ticks=%L", iName.Str(), input_buf->pBufHdr->pBuffer, iInTimestamp, iOMXTicksTimestamp));
 
                     input_buf->pBufHdr->nFlags |= OMX_BUFFERFLAG_ENDOFFRAME;
                     // once frame is complete, make sure you send it and obtain new buffer
@@ -2536,13 +2580,13 @@ OSCL_EXPORT_REF bool PVMFOMXBaseDecNode::SendInputBufferToOMXComponent()
                 {
 
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                                    (0, "%s::SendInputBufferToOMXComponent() - END OF MESSAGE - Buffer 0x%x MARKER bit set to 0, TS=%d", iName.Str(), input_buf->pBufHdr->pBuffer, iInTimestamp));
+                                    (0, "%s::SendInputBufferToOMXComponent() - END OF MESSAGE - Buffer 0x%x MARKER bit set to 0, TS=%d, Ticks=%L", iName.Str(), input_buf->pBufHdr->pBuffer, iInTimestamp, iOMXTicksTimestamp));
                 }
             }
             else
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                                (0, "%s::SendInputBufferToOMXComponent() - NOT END OF MESSAGE - Buffer 0x%x MARKER bit set to 0, TS=%d", iName.Str(), input_buf->pBufHdr->pBuffer, iInTimestamp));
+                                (0, "%s::SendInputBufferToOMXComponent() - NOT END OF MESSAGE - Buffer 0x%x MARKER bit set to 0, TS=%d, Ticks=%L", iName.Str(), input_buf->pBufHdr->pBuffer, iInTimestamp, iOMXTicksTimestamp));
             }
 
 
@@ -2577,7 +2621,7 @@ OSCL_EXPORT_REF bool PVMFOMXBaseDecNode::SendInputBufferToOMXComponent()
                 }
 
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                                (0, "%s::SendInputBufferToOMXComponent()  - Sending Buffer 0x%x to OMX Component MARKER field set to %x, TS=%d", iName.Str(), input_buf->pBufHdr->pBuffer, input_buf->pBufHdr->nFlags, iInTimestamp));
+                                (0, "%s::SendInputBufferToOMXComponent()  - Sending Buffer 0x%x to OMX Component MARKER field set to %x, TS=%d, Ticks=%L", iName.Str(), input_buf->pBufHdr->pBuffer, input_buf->pBufHdr->nFlags, iInTimestamp, iOMXTicksTimestamp));
 
                 OMX_EmptyThisBuffer(iOMXDecoder, input_buf->pBufHdr);
                 iInputBufferUnderConstruction = NULL; // this buffer is gone to OMX component now
@@ -2644,7 +2688,7 @@ OSCL_EXPORT_REF bool PVMFOMXBaseDecNode::AppendExtraDataToBuffer(InputBufCtrlStr
         if (aInputBuffer->pBufHdr->nAllocLen < (aInputBuffer->pBufHdr->nFilledLen + sizeOfExtraDataStruct + aDataLength + terminator.nSize + 6))
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                            (0, "%s::AppendExtraDataToBuffer()  - Error (not enough room in buffer) appending extra data to Buffer 0x%x to OMX Component, TS=%d", iName.Str(), aInputBuffer->pBufHdr->pBuffer, iInTimestamp));
+                            (0, "%s::AppendExtraDataToBuffer()  - Error (not enough room in buffer) appending extra data to Buffer 0x%x to OMX Component, TS=%d, Ticks=%L", iName.Str(), aInputBuffer->pBufHdr->pBuffer, iInTimestamp, iOMXTicksTimestamp));
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                             (0, "%s::AppendExtraDataToBuffer() Out", iName.Str()));
@@ -2667,7 +2711,7 @@ OSCL_EXPORT_REF bool PVMFOMXBaseDecNode::AppendExtraDataToBuffer(InputBufCtrlStr
         aInputBuffer->pBufHdr->nFlags |= OMX_BUFFERFLAG_EXTRADATA;
 
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "%s::AppendExtraDataToBuffer()  - Appending extra data to Buffer 0x%x to OMX Component, TS=%d", iName.Str(), aInputBuffer->pBufHdr->pBuffer, iInTimestamp));
+                        (0, "%s::AppendExtraDataToBuffer()  - Appending extra data to Buffer 0x%x to OMX Component, TS=%d, Ticks=%L", iName.Str(), aInputBuffer->pBufHdr->pBuffer, iInTimestamp, iOMXTicksTimestamp));
 
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                         (0, "%s::AppendExtraDataToBuffer() Out", iName.Str()));
@@ -2812,7 +2856,10 @@ OSCL_EXPORT_REF bool PVMFOMXBaseDecNode::SendConfigBufferToOMXComponent(uint8 *i
 
     // set buffer fields (this is the same regardless of whether the input is movable or not
     input_buf->pBufHdr->nOffset = 0;
-    input_buf->pBufHdr->nTimeStamp = iInTimestamp;
+
+    iInputTimestampClock.update_clock(iInTimestamp); // this will also take into consideration the timestamp rollover
+    iOMXTicksTimestamp = ConvertTimestampIntoOMXTicks(iInputTimestampClock); // make a conversion into OMX ticks
+    input_buf->pBufHdr->nTimeStamp = iOMXTicksTimestamp;
 
     // set ptr to input_buf structure for Context (for when the buffer is returned)
     input_buf->pBufHdr->pAppPrivate = (OMX_PTR) input_buf;
@@ -3582,14 +3629,14 @@ OMX_ERRORTYPE PVMFOMXBaseDecNode::EmptyBufferDoneProcessing(OMX_OUT OMX_HANDLETY
     //          in input message being released back to upstream mempool once all its fragments are returned
     //      in case of input buffers passed into component by copying, unbinding has no effect
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "%s::EmptyBufferDoneProcessing: Release input buffer with TS=%d (with %d refcount remaining of input message)", iName.Str(), aBuffer->nTimeStamp, (pContext->pMediaData).get_count() - 1));
+                    (0, "%s::EmptyBufferDoneProcessing: Release input buffer with Ticks=%d (with %d refcount remaining of input message)", iName.Str(), aBuffer->nTimeStamp, (pContext->pMediaData).get_count() - 1));
 
 
     (pContext->pMediaData).Unbind();
 
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "%s::EmptyBufferDoneProcessing: Release input buffer %x back to mempool", iName.Str(), pContext));
+                    (0, "%s::EmptyBufferDoneProcessing: Release input buffer %x back to mempool - pointing to buffer %x", iName.Str(), pContext, aBuffer->pBuffer));
 
     iInBufMemoryPool->deallocate((OsclAny *) pContext);
 
@@ -3654,7 +3701,7 @@ OMX_ERRORTYPE PVMFOMXBaseDecNode::FillBufferDoneProcessing(OMX_OUT OMX_HANDLETYP
         // move the data pointer based on offset info
         pBufdata += aBuffer->nOffset;
 
-        iOutTimeStamp = aBuffer->nTimeStamp;
+        iOutTimeStamp = ConvertOMXTicksIntoTimestamp(aBuffer->nTimeStamp);
 
         ipPrivateData = (OsclAny *) aBuffer->pPlatformPrivate; // record the pointer
 
@@ -4549,10 +4596,10 @@ void PVMFOMXBaseDecNode::DoStop(PVMFOMXBaseDecNodeCommand& aCmd)
                     iProcessingState = EPVMFOMXBaseDecNodeProcessingState_Stopping;
 
                 // indicate that stop cmd was sent
-                if (iDynamicReconfigInProgress)
-                {
-                    iStopCommandWasSentToComponent = true;
-                }
+
+
+                iStopCommandWasSentToComponent = true;
+
 
 
             }
@@ -4664,10 +4711,9 @@ void PVMFOMXBaseDecNode::DoPause(PVMFOMXBaseDecNodeCommand& aCmd)
                     iProcessingState = EPVMFOMXBaseDecNodeProcessingState_Pausing;
 
                 // indicate that pause cmd was sent
-                if (iDynamicReconfigInProgress)
-                {
-                    iPauseCommandWasSentToComponent = true;
-                }
+
+                iPauseCommandWasSentToComponent = true;
+
 
                 err = OMX_SendCommand(iOMXDecoder, OMX_CommandStateSet, OMX_StatePause, NULL);
                 if (err != OMX_ErrorNone)
@@ -4817,6 +4863,16 @@ void PVMFOMXBaseDecNode::DoReset(PVMFOMXBaseDecNodeCommand& aCmd)
                         iIsEOSSentToComponent = false;
                         iIsEOSReceivedFromComponent = false;
 
+                        if (iOMXComponentUsesFullAVCFrames)
+                        {
+                            iNALCount = 0;
+                            oscl_memset(iNALSizeArray, 0, sizeof(uint32) * MAX_NAL_PER_FRAME); // 100 is max number of NALs
+                        }
+
+                        // reset dynamic port reconfig flags - no point continuing with port reconfig
+                        // if we start again - we'll have to do prepare and send new config etc.
+                        iSecondPortReportedChange = false;
+                        iDynamicReconfigInProgress = false;
 
                         iProcessingState = EPVMFOMXBaseDecNodeProcessingState_Idle;
 
@@ -5074,8 +5130,13 @@ void PVMFOMXBaseDecNode::DoReset(PVMFOMXBaseDecNodeCommand& aCmd)
             if (iOMXComponentUsesFullAVCFrames)
             {
                 iNALCount = 0;
-                oscl_memset(iNALSizeArray, 0, sizeof(uint32) * 100); // 100 is max number of NALs
+                oscl_memset(iNALSizeArray, 0, sizeof(uint32) * MAX_NAL_PER_FRAME); // 100 is max number of NALs
             }
+
+            // reset dynamic port reconfig flags - no point continuing with port reconfig
+            // if we start again - we'll have to do prepare and send new config etc.
+            iSecondPortReportedChange = false;
+            iDynamicReconfigInProgress = false;
 
             iProcessingState = EPVMFOMXBaseDecNodeProcessingState_Idle;
             //logoff & go back to Created state.
@@ -5499,7 +5560,82 @@ bool PVMFOMXBaseDecNode::HandleRepositioning()
     return false;
 
 }
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+OSCL_EXPORT_REF OMX_TICKS PVMFOMXBaseDecNode::ConvertTimestampIntoOMXTicks(const MediaClockConverter& src)
+{
+    // This is similar to mediaclockconverter set_value method - except without using the modulo for upper part of 64 bits
 
+    // Timescale value cannot be zero
+    OSCL_ASSERT(src.get_timescale() != 0);
+    if (src.get_timescale() == 0)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                        (0, "%s::ConvertTimestampIntoOMXTicks Input timescale is 0", iName.Str()));
+
+        SetState(EPVMFNodeError);
+        ReportErrorEvent(PVMFErrResourceConfiguration);
+        return (OMX_TICKS) 0;
+    }
+
+    OSCL_ASSERT(iTimeScale != 0);
+    if (0 == iTimeScale)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                        (0, "%s::ConvertTimestampIntoOMXTicks target timescale is 0", iName.Str()));
+
+        SetState(EPVMFNodeError);
+        ReportErrorEvent(PVMFErrResourceConfiguration);
+        return (OMX_TICKS) 0;
+    }
+
+    uint64 value = (uint64(src.get_wrap_count())) << 32;
+    value += src.get_current_timestamp();
+    // rounding up
+    value = (uint64(value) * iTimeScale + uint64(src.get_timescale() - 1)) / src.get_timescale();
+    return (OMX_TICKS) value;
+
+
+}
+////////////////////////////////////////////////////////////////////////////////////
+uint32 PVMFOMXBaseDecNode::ConvertOMXTicksIntoTimestamp(const OMX_TICKS &src)
+{
+    // omx ticks use microsecond timescale (iTimeScale = 1000000)
+    // This is similar to mediaclockconverter set_value method
+
+    // Timescale value cannot be zero
+    OSCL_ASSERT(iOutTimeScale != 0);
+    if (0 == iOutTimeScale)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                        (0, "%s::ConvertOMXTicksIntoTimestamp Output timescale is 0", iName.Str()));
+
+        SetState(EPVMFNodeError);
+        ReportErrorEvent(PVMFErrResourceConfiguration);
+        return (uint32) 0;
+    }
+
+    OSCL_ASSERT(iTimeScale != 0);
+    if (0 == iTimeScale)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                        (0, "%s::ConvertOMXTicksIntoTimestamp target timescale is 0", iName.Str()));
+
+        SetState(EPVMFNodeError);
+        ReportErrorEvent(PVMFErrResourceConfiguration);
+        return (uint32) 0;
+    }
+
+    uint32 current_ts;
+
+    uint64 value = (uint64) src;
+
+    // rounding up
+    value = (uint64(value) * iOutTimeScale + uint64(iTimeScale - 1)) / iTimeScale;
+
+    current_ts = (uint32)(value & 0xFFFFFFFF);
+    return current_ts;
+
+}
 ///////////////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF void PVMFOMXBaseDecNode::setObserver(PvmiConfigAndCapabilityCmdObserver* aObserver)
 {

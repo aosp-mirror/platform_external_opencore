@@ -51,6 +51,9 @@
 #ifndef PVMF_SIMPLE_MEDIA_BUFFER_H_INCLUDED
 #include "pvmf_simple_media_buffer.h"
 #endif
+#ifndef PVMF_MEDIA_CLOCK_H_INCLUDED
+#include "pvmf_media_clock.h"
+#endif
 
 #ifdef HIDE_MIO_SYMBOLS
 #pragma GCC visibility push(hidden)
@@ -84,7 +87,11 @@ typedef enum
 #define ANDROID_DEFAULT_FRAME_HEIGHT       240
 #define ANDROID_DEFAULT_FRAME_RATE         20.0
 #define ANDROID_DEFAULT_I_FRAME_INTERVAL 1  // encode one I frame every 1 second.
+#ifdef SHOLES_PROPERTY_OVERRIDES
+#define ANDROID_VIDEO_FORMAT       PVMF_MIME_YUV422_INTERLEAVED_YUYV
+#else
 #define ANDROID_VIDEO_FORMAT       PVMF_MIME_YUV420
+#endif
 
 //FIXME mime string now
 /*
@@ -183,11 +190,105 @@ private:
     AndroidCameraInput* mCameraInput;
 };
 
+#ifndef PVMF_FIXEDSIZE_BUFFER_ALLOC_H_INCLUDED
+#include "pvmf_fixedsize_buffer_alloc.h"
+#endif
+
+/* A MIO allocater class for two purposes:
+ * 1. Provide the number of buffers MIO will use;
+ * 2. Allocate the buffers for OMX_UseBuffer for "buffer pre-announcement". In case MIO cannot
+ * provide the buffer address, a dummy address is used. The OMX component has to support
+ * movable buffer(iOMXComponentSupportsMovableInputBuffers) in that case.
+ */
+class PVRefBufferAlloc: public PVInterface, public PVMFFixedSizeBufferAlloc
+{
+    public:
+        PVRefBufferAlloc()
+            :refCount(0),
+            bufferSize(0),
+            maxBuffers(4), //QCOM camera will use 4 buffers, although it actually only has 3 right now.
+            numAllocated(0),
+            pMagicAddr( (OsclAny*)0xDEADBEEF )
+        {
+        }
+
+        virtual ~PVRefBufferAlloc();
+
+        virtual void addRef() {++refCount;};
+
+        virtual void removeRef()
+        {
+            --refCount;
+            if (refCount <= 0)
+            {//cleanup
+                LOGW("refCount %d", refCount );
+            }
+        }
+
+        virtual bool queryInterface(const PVUuid& uuid, PVInterface*& aInterface)
+        {
+            aInterface = NULL; // initialize aInterface to NULL in case uuid is not supported
+
+            if (PVMFFixedSizeBufferAllocUUID == uuid)
+            {
+                // Send back ptr to the allocator interface object
+                PVMFFixedSizeBufferAlloc* myInterface   = OSCL_STATIC_CAST(PVMFFixedSizeBufferAlloc*, this);
+                refCount++; // increment interface refcount before returning ptr
+                aInterface = OSCL_STATIC_CAST(PVInterface*, myInterface);
+                return true;
+            }
+
+            return false;
+        }
+
+        virtual OsclAny* allocate()
+        {
+            if (numAllocated < maxBuffers)
+            {
+                //MIO does NOT provide mem allocator impl.
+                //return dummy address for OMX buffer pre-announcement.
+                ++numAllocated;
+                return (OsclAny*)pMagicAddr;
+            }
+            return NULL;
+        }
+
+        virtual void deallocate(OsclAny* ptr)
+        {
+            if( pMagicAddr == ptr )
+            {
+                --numAllocated;
+            }
+            else
+            {
+                LOGE("Ln %d ERROR PVRefBufferAlloc ptr corrupted 0x%x numAllocated %d", __LINE__, ptr, numAllocated );
+            }
+        }
+
+        virtual uint32 getBufferSize()
+        {
+            return bufferSize;
+        }
+
+        virtual uint32 getNumBuffers()
+        {
+            return maxBuffers;
+        }
+
+    private:
+        int32 refCount;
+        int32 bufferSize;
+        int32 maxBuffers;
+        int32 numAllocated;
+        const OsclAny *pMagicAddr;
+};
+
 class AndroidCameraInput
     : public OsclTimerObject,
       public PvmiMIOControl,
       public PvmiMediaTransfer,
-      public PvmiCapabilityAndConfig
+      public PvmiCapabilityAndConfig,
+      public PVMFMediaClockStateObserver
 {
 public:
     AndroidCameraInput();
@@ -312,6 +413,10 @@ public:
 
     bool isRecorderStarting() { return iState==STATE_STARTED?true:false; }
 
+    /* From PVMFMediaClockStateObserver and its base */
+    void ClockStateUpdated();
+    void NotificationsInterfaceDestroyed();
+
 private:
     // release all queued recording frames that have not been
     // given the chance to be sent out.
@@ -356,6 +461,8 @@ private:
      */
     PVMFStatus VerifyAndSetParameter(PvmiKvp* aKvp, bool aSetParam=false);
 
+    void RemoveDestroyClockObs();
+
     // Command queue
     uint32 iCmdIdCounter;
     Oscl_Vector<AndroidCameraInputCmd, OsclMemAllocator> iCmdQueue;
@@ -369,7 +476,6 @@ private:
     bool iThreadLoggedOn;
 
     int32 iDataEventCounter;
-    int32 iStartTickCount;
 
     // Timing
     int32 iMilliSecondsPerDataEvent;
@@ -399,8 +505,6 @@ private:
     int32                   mFrameHeight;
     float                   mFrameRate;
     sp<android::Camera>     mCamera;
-    sp<IMemoryHeap>         mHeap;
-    int32                   mFrameRefCount;
     int32                   mFlags;
 
     // callback interface
@@ -419,6 +523,23 @@ private:
     };
 
     AndroidCameraInputState iState;
+
+    enum WriteState {EWriteBusy, EWriteOK};
+    WriteState iWriteState;
+
+    PVMFMediaClock *iAuthorClock;
+    PVMFMediaClockNotificationsInterface *iClockNotificationsInf;
+
+    uint32 iAudioFirstFrameTs;
+    PVRefBufferAlloc    mbufferAlloc;
+
+    // data structures for tunneling buffers
+    struct CAMERA_PMEM_INFO
+    {
+        /* pmem file descriptor */
+        uint32 pmem_fd;
+        uint32 offset;
+    } *pPmemInfo;
 
 };
 
