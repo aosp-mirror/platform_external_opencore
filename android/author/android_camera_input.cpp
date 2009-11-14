@@ -425,7 +425,7 @@ void AndroidCameraInput::writeComplete(PVMFStatus aStatus,
     // Note for low frame rate, we don't bother to log view finder freezes
     int processingTimeInMs = (systemTime()/1000000L - iAudioFirstFrameTs) - data.iXferHeader.timestamp;
     if (processingTimeInMs >= VIEW_FINDER_FREEZE_DETECTION_TOLERANCE && mFrameRate >= 10.0) {
-        LOGW("Frame %p takes too long (%d ms) to process", data.iFrameBuffer.get(), processingTimeInMs);
+        LOGW("Frame %p takes too long (%d ms) to process, staring at %d", data.iFrameBuffer.get(), processingTimeInMs, iAudioFirstFrameTs);
     }
     mCamera->releaseRecordingFrame(data.iFrameBuffer);
 
@@ -944,6 +944,7 @@ PVMFStatus AndroidCameraInput::DoStart()
 {
     LOGV("DoStart");
 
+    iAudioFirstFrameTs = 0;
     // Set the clock state observer
     if (iAuthorClock) {
         iAuthorClock->ConstructMediaClockNotificationsInterface(iClockNotificationsInf, *this);
@@ -988,7 +989,6 @@ PVMFStatus AndroidCameraInput::DoReset()
     // Remove and destroy the clock state observer
     RemoveDestroyClockObs();
     iDataEventCounter = 0;
-    iAudioFirstFrameTs = 0;
     iWriteState = EWriteOK;
     if ( (iState == STATE_STARTED) || (iState == STATE_PAUSED) ) {
     if (mCamera != NULL) {
@@ -1026,7 +1026,6 @@ PVMFStatus AndroidCameraInput::DoStop(const AndroidCameraInputCmd& aCmd)
     RemoveDestroyClockObs();
 
     iDataEventCounter = 0;
-    iAudioFirstFrameTs = 0;
     iWriteState = EWriteOK;
     if (mCamera != NULL) {
     mCamera->setListener(NULL);
