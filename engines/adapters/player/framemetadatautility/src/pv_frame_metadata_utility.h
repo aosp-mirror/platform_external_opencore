@@ -411,7 +411,8 @@ class PVFrameAndMetadataUtility : public OsclTimerObject,
         static PVFrameAndMetadataUtility* New(char *aOutputFormatMIMEType,
                                               PVCommandStatusObserver *aCmdObserver,
                                               PVErrorEventObserver *aErrorObserver,
-                                              PVInformationalEventObserver *aInfoObserver);
+                                              PVInformationalEventObserver *aInfoObserver,
+                                              bool aHwAccelerated = true);
         ~PVFrameAndMetadataUtility();
 
         // From PVFrameAndMetadataInterface
@@ -444,9 +445,10 @@ class PVFrameAndMetadataUtility : public OsclTimerObject,
         PVMFStatus verifyParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int aNumElements);
 
     private:
+        bool iHwAccelerated;
         PVMFBasicErrorInfoMessage* CreateBasicErrInfoMessage(PVMFErrorInfoMessageInterface* nextmsg, PVFMErrorEventType aErrEvent = PVFMErrPlayerEngine);
 
-        PVFrameAndMetadataUtility();
+        PVFrameAndMetadataUtility(bool aHwAccelerated);
         void Construct(char *aOutputFormatMIMEType,
                        PVCommandStatusObserver *aCmdObserver,
                        PVErrorEventObserver *aErrorObserver,

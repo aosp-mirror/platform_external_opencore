@@ -522,7 +522,7 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::SetDecoderNodeConfiguration(PVMFO
 /////////////////////////////////////////////////////////////////////////////
 // Class Constructor
 /////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFOMXBaseDecNode::PVMFOMXBaseDecNode(int32 aPriority, const char aAOName[]) :
+OSCL_EXPORT_REF PVMFOMXBaseDecNode::PVMFOMXBaseDecNode(int32 aPriority, const char aAOName[], bool accelerated) :
         OsclActiveObject(aPriority, aAOName),
         iInPort(NULL),
         iOutPort(NULL),
@@ -550,7 +550,8 @@ OSCL_EXPORT_REF PVMFOMXBaseDecNode::PVMFOMXBaseDecNode(int32 aPriority, const ch
         iResetInProgress(false),
         iResetMsgSent(false),
         iStopInResetMsgSent(false),
-        iCompactFSISettingSucceeded(false)
+        iCompactFSISettingSucceeded(false),
+        bHWAccelerated(accelerated? OMX_TRUE: OMX_FALSE)
 {
     iThreadSafeHandlerEventHandler = NULL;
     iThreadSafeHandlerEmptyBufferDone = NULL;
@@ -4062,7 +4063,7 @@ void PVMFOMXBaseDecNode::DoPrepare(PVMFOMXBaseDecNodeCommand& aCmd)
                         else
 #endif
                             // try to create component
-                            err = OMX_MasterGetHandle(&iOMXDecoder, (OMX_STRING) aInputParameters.cComponentName, (OMX_PTR) this, (OMX_CALLBACKTYPE *) & iCallbacks);
+                            err = OMX_MasterGetHandle(&iOMXDecoder, (OMX_STRING) aInputParameters.cComponentName, (OMX_PTR) this, (OMX_CALLBACKTYPE *) & iCallbacks, bHWAccelerated);
                         // if successful, no need to continue
                         if ((err == OMX_ErrorNone) && (iOMXDecoder != NULL))
                         {

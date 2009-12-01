@@ -150,7 +150,9 @@ void PVPlayerRegistryPopulator::RegisterAllNodes(PVPlayerNodeRegistryInterface* 
     nodeinfo.iNodeUUID = KPVMFOMXVideoDecNodeUuid;
     nodeinfo.iOutputType.clear();
     nodeinfo.iOutputType.push_back(PVMF_MIME_YUV420);
-    nodeinfo.iNodeCreateFunc = PVMFOMXVideoDecNodeFactory::CreatePVMFOMXVideoDecNode;
+    // Only CreatePVMFOMXVideoDecNode has a different funtional pointer type
+    // we do a cast here so that iNodeCreateFunc can be used uniformly for other types of nodes
+    nodeinfo.iNodeCreateFunc = (PVMFNodeInterface*(*)(int32))PVMFOMXVideoDecNodeFactory::CreatePVMFOMXVideoDecNode;
     nodeinfo.iNodeReleaseFunc = PVMFOMXVideoDecNodeFactory::DeletePVMFOMXVideoDecNode;
     aRegistry->RegisterNode(nodeinfo);
 #endif

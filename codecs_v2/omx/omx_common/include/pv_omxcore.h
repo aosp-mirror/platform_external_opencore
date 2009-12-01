@@ -312,7 +312,8 @@ class OMXGlobalData
     OSCL_IMPORT_REF OMX_ERRORTYPE OMX_APIENTRY OMX_MasterGetHandle(OMX_OUT OMX_HANDLETYPE* pHandle,
             OMX_IN  OMX_STRING cComponentName,
             OMX_IN  OMX_PTR pAppData,
-            OMX_IN  OMX_CALLBACKTYPE* pCallBacks);
+            OMX_IN  OMX_CALLBACKTYPE* pCallBacks,
+            OMX_IN  OMX_BOOL bHWAccelerated = OMX_TRUE);
 
     OSCL_IMPORT_REF OMX_ERRORTYPE OMX_MasterGetRolesOfComponent(
         OMX_IN      OMX_STRING compName,

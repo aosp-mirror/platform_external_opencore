@@ -96,10 +96,11 @@
 
 PVPlayerEngine* PVPlayerEngine::New(PVCommandStatusObserver* aCmdStatusObserver,
                                     PVErrorEventObserver *aErrorEventObserver,
-                                    PVInformationalEventObserver *aInfoEventObserver)
+                                    PVInformationalEventObserver *aInfoEventObserver,
+                                    bool aHwAccelerated)
 {
     PVPlayerEngine* engine = NULL;
-    engine = OSCL_NEW(PVPlayerEngine, ());
+    engine = OSCL_NEW(PVPlayerEngine, (aHwAccelerated));
     if (engine)
     {
         engine->Construct(aCmdStatusObserver,
@@ -1026,7 +1027,8 @@ bool PVPlayerEngine::queryInterface(const PVUuid& uuid, PVInterface*& iface)
 
 
 
-PVPlayerEngine::PVPlayerEngine() :
+PVPlayerEngine::PVPlayerEngine(bool aHwAccelerated) :
+        iHwAccelerated(aHwAccelerated),
         OsclTimerObject(OsclActiveObject::EPriorityNominal, "PVPlayerEngine"),
         iCommandId(0),
         iState(PVP_ENGINE_STATE_IDLE),
@@ -4459,7 +4461,7 @@ PVMFStatus PVPlayerEngine::DoSetupSourceNode(PVCommandId aCmdId, OsclAny* aCmdCo
             }
 
             int32 leavecode = 0;
-            OSCL_TRY(leavecode, iSourceNode = iPlayerNodeRegistry.CreateNode(foundUuids[0]));
+            OSCL_TRY(leavecode, iSourceNode = iPlayerNodeRegistry.CreateNode(foundUuids[0], true));
             OSCL_FIRST_CATCH_ANY(leavecode,
                                  PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoSetupDecNode() Error in creating SourceNode"));
                                  return PVMFFailure;);
@@ -6729,7 +6731,7 @@ PVMFStatus PVPlayerEngine::DoDecNodeQueryCapConfigIF(PVCommandId aCmdId, OsclAny
                             if (!foundUuids.empty())
                             {
                                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::DoDecNodeQueryCapConfigIF() Node found for %s, sink %s", currTrack->getTrackMimeType().get_str(), iSinkFormat.getMIMEStrPtr()));
-                                iTrackSelectionList[i].iTsDecNode = iPlayerNodeRegistry.CreateNode(foundUuids[0]);
+                                iTrackSelectionList[i].iTsDecNode = iPlayerNodeRegistry.CreateNode(foundUuids[0], iHwAccelerated);
 
                                 if (iTrackSelectionList[i].iTsDecNode != NULL)
                                 {

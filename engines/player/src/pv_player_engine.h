@@ -893,7 +893,8 @@ class PVPlayerEngine : public OsclTimerObject,
     public:
         static PVPlayerEngine* New(PVCommandStatusObserver *aCmdObserver,
                                    PVErrorEventObserver *aErrorObserver,
-                                   PVInformationalEventObserver *aInfoObserver);
+                                   PVInformationalEventObserver *aInfoObserver,
+                                   bool aHwAccelerated);
         ~PVPlayerEngine();
 
         // From PVPlayerInterface
@@ -967,7 +968,7 @@ class PVPlayerEngine : public OsclTimerObject,
         void PVPlayerWatchdogTimerEvent();
 
     private:
-        PVPlayerEngine();
+        PVPlayerEngine(bool aHwAccelerated);
         void Construct(PVCommandStatusObserver *aCmdObserver,
                        PVErrorEventObserver *aErrorObserver,
                        PVInformationalEventObserver *aInfoObserver);
@@ -1179,6 +1180,7 @@ class PVPlayerEngine : public OsclTimerObject,
         PVMFStatus DoVerifyAndSetPlayerParameter(PvmiKvp& aParameter, bool aSetParam);
         PVMFStatus DoVerifyAndSetPlayerProductInfoParameter(PvmiKvp& aParameter, bool aSetParam);
         PVMFStatus DoSetConfigSyncMargin(int32 aEarlyMargin, int32 aLateMargin, int32 aMediaType);
+        bool iHwAccelerated;
         int32 iCapConfigContext;
 
         // Engine datapath and related variables

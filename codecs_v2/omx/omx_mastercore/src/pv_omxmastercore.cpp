@@ -81,6 +81,7 @@ typedef struct PVOMXMasterRegistryStruct
 {
     OMX_U8 CompName[PV_OMX_MAX_COMPONENT_NAME_LENGTH];
     OMX_U8 CompRole[PV_OMX_MAX_COMPONENT_NAME_LENGTH];
+    OMX_BOOL bHWAccelerated;
     OMX_U32 OMXCoreIndex;
     OMX_U32 CompIndex;
 } PVOMXMasterRegistryStruct;
@@ -275,6 +276,11 @@ static OMX_ERRORTYPE _OMX_MasterInit(OMXMasterCoreGlobalData *data)
                             strncpy((OMX_STRING)pOMXMasterRegistry[master_index].CompRole, (OMX_STRING)ComponentRoles[role], PV_OMX_MAX_COMPONENT_NAME_LENGTH);
                             pOMXMasterRegistry[master_index].OMXCoreIndex = jj;
                             pOMXMasterRegistry[master_index].CompIndex = component_index;
+                            if (strstr(ComponentName, "OMX.PV.")) {
+                                pOMXMasterRegistry[master_index].bHWAccelerated = OMX_FALSE;
+                            } else {
+                                pOMXMasterRegistry[master_index].bHWAccelerated = OMX_TRUE;
+                            }
                             master_index++;
 
                         }
@@ -529,7 +535,8 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OMX_APIENTRY   OMX_MasterGetHandle(
     OMX_OUT OMX_HANDLETYPE* pHandle,
     OMX_IN  OMX_STRING cComponentName,
     OMX_IN  OMX_PTR pAppData,
-    OMX_IN  OMX_CALLBACKTYPE* pCallBacks)
+    OMX_IN  OMX_CALLBACKTYPE* pCallBacks,
+    OMX_BOOL bHWAccelerated)
 {
     OMX_ERRORTYPE Status = OMX_ErrorNone;
     OMX_U32 ii, kk;
@@ -561,8 +568,13 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OMX_APIENTRY   OMX_MasterGetHandle(
             // go through the list of supported components and find the component based on its name (identifier)
             if (!oscl_strcmp((OMX_STRING)pOMXMasterRegistry[ii].CompName, cComponentName))
             {
-                // found a matching name
-                break;
+                // when we are not requesting a HW accelelrated codec, we must find a software
+                // codec.
+                if (!bHWAccelerated) {
+                    if (!pOMXMasterRegistry[ii].bHWAccelerated) break;
+                } else {
+                    break;
+                }
             }
         }
         if (ii == (data->iTotalNumOMXComponents))
