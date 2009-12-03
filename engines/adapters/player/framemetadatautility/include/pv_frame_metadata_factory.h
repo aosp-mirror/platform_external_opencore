@@ -60,7 +60,8 @@ class PVFrameAndMetadataFactory
         OSCL_IMPORT_REF static PVFrameAndMetadataInterface* CreateFrameAndMetadataUtility(char *aOutputFormatMIMEType,
                 PVCommandStatusObserver* aCmdStatusObserver,
                 PVErrorEventObserver *aErrorEventObserver,
-                PVInformationalEventObserver *aInfoEventObserver);
+                PVInformationalEventObserver *aInfoEventObserver,
+                bool aHwAccelerate = true);
         /**
          * This function allows the application to delete an instance of a pvFrameAndMetadata utility
          * and reclaim all allocated resources.  An utility instance can be deleted only in
