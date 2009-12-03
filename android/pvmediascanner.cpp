@@ -16,7 +16,7 @@
  * -------------------------------------------------------------------
  */
 
-#include <media/mediascanner.h>
+#include "pvmediascanner.h"
 #include <stdio.h>
 
 
@@ -34,7 +34,6 @@
 #include "oscl_utf8conv.h"
 #include "imp3ff.h"
 #include "impeg4file.h"
-#include "autodetect.h"
 
 // Ogg Vorbis includes
 #include "ivorbiscodec.h"
@@ -47,7 +46,6 @@
 #include "media/mediametadataretriever.h"
 
 #include <media/thread_init.h>
-#include <utils/StringArray.h>
 
 #define MAX_BUFF_SIZE   1024
 
@@ -57,11 +55,8 @@
 #include <dirent.h>
 #include <errno.h>
 
-#include "unicode/ucnv.h"
-#include "unicode/ustring.h"
-
 #undef LOG_TAG
-#define LOG_TAG "MediaScanner"
+#define LOG_TAG "PVMediaScanner"
 #include "utils/Log.h"
 
 #define MAX_STR_LEN    1000
@@ -69,16 +64,9 @@
 
 namespace android {
 
+PVMediaScanner::PVMediaScanner() {}
 
-MediaScanner::MediaScanner()
-    :   mLocale(NULL)
-{
-}
-
-MediaScanner::~MediaScanner()
-{
-    free(mLocale);
-}
+PVMediaScanner::~PVMediaScanner() {}
 
 static PVMFStatus parseMP3(const char *filename, MediaScannerClient& client)
 {
@@ -574,12 +562,12 @@ static PVMFStatus parseWMA(const char *filename, MediaScannerClient& client)
     return PVMFSuccess;
 }
 
-status_t MediaScanner::processFile(const char *path, const char* mimeType, MediaScannerClient& client)
+status_t PVMediaScanner::processFile(const char *path, const char* mimeType, MediaScannerClient& client)
 {
     status_t result;
     InitializeForThread();
 
-    client.setLocale(mLocale);
+    client.setLocale(locale());
     client.beginFile();
     
     //LOGD("processFile %s mimeType: %s\n", path, mimeType);
@@ -610,155 +598,6 @@ status_t MediaScanner::processFile(const char *path, const char* mimeType, Media
     client.endFile();
 
     return result;
-}
-
-static bool fileMatchesExtension(const char* path, const char* extensions) {
-    char* extension = strrchr(path, '.');
-    if (!extension) return false;
-    ++extension;    // skip the dot
-    if (extension[0] == 0) return false;
-
-    while (extensions[0]) {
-        char* comma = strchr(extensions, ',');
-        size_t length = (comma ? comma - extensions : strlen(extensions));
-        if (length == strlen(extension) && strncasecmp(extension, extensions, length) == 0) return true;
-        extensions += length;
-        if (extensions[0] == ',') ++extensions;
-    }
-
-    return false;
-}
-
-status_t MediaScanner::doProcessDirectory(char *path, int pathRemaining, const char* extensions,
-        MediaScannerClient& client, ExceptionCheck exceptionCheck, void* exceptionEnv)
-{
-    // place to copy file or directory name
-    char* fileSpot = path + strlen(path);
-    struct dirent* entry;
-
-    // ignore directories that contain a  ".nomedia" file
-    if (pathRemaining >= 8 /* strlen(".nomedia") */ ) {
-        strcpy(fileSpot, ".nomedia");
-        if (access(path, F_OK) == 0) {
-            LOGD("found .nomedia, skipping directory\n");
-            fileSpot[0] = 0;
-            client.addNoMediaFolder(path);
-            return OK;
-        }
-
-        // restore path
-        fileSpot[0] = 0;
-    }
-
-    DIR* dir = opendir(path);
-    if (!dir) {
-        LOGD("opendir %s failed, errno: %d", path, errno);
-        return PVMFFailure;
-    }
-
-    while ((entry = readdir(dir))) {
-        const char* name = entry->d_name;
-
-        // ignore "." and ".."
-        if (name[0] == '.' && (name[1] == 0 || (name[1] == '.' && name[2] == 0))) {
-            continue;
-        }
-
-        int type = entry->d_type;
-        if (type == DT_UNKNOWN) {
-            // If the type is unknown, stat() the file instead.
-            // This is sometimes necessary when accessing NFS mounted filesystems, but
-            // could be needed in other cases well.
-            struct stat statbuf;
-            if (stat(path, &statbuf) == 0) {
-                if (S_ISREG(statbuf.st_mode)) {
-                    type = DT_REG;
-                } else if (S_ISDIR(statbuf.st_mode)) {
-                    type = DT_DIR;
-                }
-            } else {
-                LOGD("stat() failed for %s: %s", path, strerror(errno) );
-            }
-        }
-        if (type == DT_REG || type == DT_DIR) {
-            int nameLength = strlen(name);
-            bool isDirectory = (type == DT_DIR);
-
-            if (nameLength > pathRemaining || (isDirectory && nameLength + 1 > pathRemaining)) {
-                // path too long!
-                continue;
-            }
-
-            strcpy(fileSpot, name);
-            if (isDirectory) {
-                // ignore directories with a name that starts with '.'
-                // for example, the Mac ".Trashes" directory
-                if (name[0] == '.') continue;
-
-                strcat(fileSpot, "/");
-                int err = doProcessDirectory(path, pathRemaining - nameLength - 1, extensions, client, exceptionCheck, exceptionEnv);
-                if (err) {
-                    // pass exceptions up - ignore other errors
-                    if (exceptionCheck && exceptionCheck(exceptionEnv)) goto failure;
-                    LOGE("Error processing '%s' - skipping\n", path);
-                    continue;
-                }
-            } else if (fileMatchesExtension(path, extensions)) {
-                struct stat statbuf;
-                stat(path, &statbuf);
-                if (statbuf.st_size > 0) {
-                    client.scanFile(path, statbuf.st_mtime, statbuf.st_size);
-                }
-                if (exceptionCheck && exceptionCheck(exceptionEnv)) goto failure;
-            }
-        }
-    }
-
-    closedir(dir);
-    return OK;
-failure:
-    closedir(dir);
-    return -1;
-}
-
-status_t MediaScanner::processDirectory(const char *path, const char* extensions,
-        MediaScannerClient& client, ExceptionCheck exceptionCheck, void* exceptionEnv)
-{
-    InitializeForThread();
-
-    int pathLength = strlen(path);
-    if (pathLength >= PATH_MAX) {
-        return PVMFFailure;
-    }
-    char* pathBuffer = (char *)malloc(PATH_MAX + 1);
-    if (!pathBuffer) {
-        return PVMFFailure;
-    }
-
-    int pathRemaining = PATH_MAX - pathLength;
-    strcpy(pathBuffer, path);
-    if (pathBuffer[pathLength - 1] != '/') {
-        pathBuffer[pathLength] = '/';
-        pathBuffer[pathLength + 1] = 0;
-        --pathRemaining;
-    }
-
-    client.setLocale(mLocale);
-    status_t result = doProcessDirectory(pathBuffer, pathRemaining, extensions, client, exceptionCheck, exceptionEnv);
-
-    free(pathBuffer);
-    return result;
-}
-
-void MediaScanner::setLocale(const char* locale)
-{
-    if (mLocale) {
-        free(mLocale);
-        mLocale = NULL;
-    }
-    if (locale) {
-        mLocale = strdup(locale);
-    }
 }
 
 static char* doExtractAlbumArt(PvmfApicStruct* aApic)
@@ -869,7 +708,7 @@ static char* extractM4AAlbumArt(int fd)
 }
 
 
-char* MediaScanner::extractAlbumArt(int fd)
+char* PVMediaScanner::extractAlbumArt(int fd)
 {
     InitializeForThread();
 
@@ -885,206 +724,6 @@ char* MediaScanner::extractAlbumArt(int fd)
         // might be mp3
         return extractMP3AlbumArt(fd);
     }
-}
-
-MediaScannerClient::MediaScannerClient()
-    :   mNames(NULL),
-        mValues(NULL),
-        mLocaleEncoding(kEncodingNone)
-{
-}
-
-MediaScannerClient::~MediaScannerClient()
-{
-    delete mNames;
-    delete mValues;
-}
-
-void MediaScannerClient::setLocale(const char* locale)
-{
-    if (!locale) return;
-    
-    if (!strncmp(locale, "ja", 2))
-        mLocaleEncoding = kEncodingShiftJIS;
-    else if (!strncmp(locale, "ko", 2))
-        mLocaleEncoding = kEncodingEUCKR;
-    else if (!strncmp(locale, "zh", 2)) {
-        if (!strcmp(locale, "zh_CN")) {
-            // simplified chinese for mainland China
-            mLocaleEncoding = kEncodingGBK;
-        } else {
-            // assume traditional for non-mainland Chinese locales (Taiwan, Hong Kong, Singapore)
-            mLocaleEncoding = kEncodingBig5;
-        }
-    }
-}
-
-void MediaScannerClient::beginFile()
-{
-    mNames = new StringArray;
-    mValues = new StringArray;
-}
-
-bool MediaScannerClient::addStringTag(const char* name, const char* value)
-{
-    if (mLocaleEncoding != kEncodingNone) {
-        // don't bother caching strings that are all ASCII.
-        // call handleStringTag directly instead.
-        // check to see if value (which should be utf8) has any non-ASCII characters
-        bool nonAscii = false;
-        const char* chp = value;
-        char ch;
-        while ((ch = *chp++)) {
-            if (ch & 0x80) {
-                nonAscii = true;
-                break;
-            }
-        }
-
-        if (nonAscii) {
-            // save the strings for later so they can be used for native encoding detection
-            mNames->push_back(name);
-            mValues->push_back(value); 
-            return true;
-        }
-        // else fall through
-    }
-
-    // autodetection is not necessary, so no need to cache the values
-    // pass directly to the client instead
-    return handleStringTag(name, value);
-}
-
-static uint32_t possibleEncodings(const char* s)
-{
-    uint32_t result = kEncodingAll;
-    // if s contains a native encoding, then it was mistakenly encoded in utf8 as if it were latin-1
-    // so we need to reverse the latin-1 -> utf8 conversion to get the native chars back
-    uint8 ch1, ch2;
-    uint8* chp = (uint8 *)s;
-    
-    while ((ch1 = *chp++)) {
-        if (ch1 & 0x80) {
-            ch2 = *chp++;
-            ch1 = ((ch1 << 6) & 0xC0) | (ch2 & 0x3F);
-            // ch1 is now the first byte of the potential native char 
-            
-            ch2 = *chp++;
-            if (ch2 & 0x80)
-                ch2 = ((ch2 << 6) & 0xC0) | (*chp++ & 0x3F);
-            // ch2 is now the second byte of the potential native char
-            int ch = (int)ch1 << 8 | (int)ch2;
-            result &= findPossibleEncodings(ch);
-        }
-        // else ASCII character, which could be anything
-    }
-
-    return result;
-}
-
-void MediaScannerClient::convertValues(uint32_t encoding)
-{
-    const char* enc = NULL;
-    switch (encoding) {
-        case kEncodingShiftJIS:
-            enc = "shift-jis";
-            break;
-        case kEncodingGBK:
-            enc = "gbk";
-            break;
-        case kEncodingBig5:
-            enc = "Big5";
-            break;
-        case kEncodingEUCKR:
-            enc = "EUC-KR";
-            break;
-    }
-
-    if (enc) {
-        UErrorCode status = U_ZERO_ERROR;
-
-        UConverter *conv = ucnv_open(enc, &status);
-        if (U_FAILURE(status)) {
-            LOGE("could not create UConverter for %s\n", enc);
-            return;
-        }
-        UConverter *utf8Conv = ucnv_open("UTF-8", &status);
-        if (U_FAILURE(status)) {
-            LOGE("could not create UConverter for UTF-8\n");
-            ucnv_close(conv);
-            return;
-        }
-
-        // for each value string, convert from native encoding to UTF-8
-        for (int i = 0; i < mNames->size(); i++) {
-            // first we need to untangle the utf8 and convert it back to the original bytes
-            // since we are reducing the length of the string, we can do this in place
-            uint8* src = (uint8 *)mValues->getEntry(i);
-            int len = strlen((char *)src);
-            uint8* dest = src;
-
-            uint8 uch;
-            while ((uch = *src++)) {
-                if (uch & 0x80)
-                    *dest++ = ((uch << 6) & 0xC0) | (*src++ & 0x3F);
-                else
-                    *dest++ = uch;
-            }
-            *dest = 0;
-
-            // now convert from native encoding to UTF-8
-            const char* source = mValues->getEntry(i);
-            int targetLength = len * 3 + 1;
-            char* buffer = new char[targetLength];
-            if (!buffer)
-                break;
-            char* target = buffer;
-
-            ucnv_convertEx(utf8Conv, conv, &target, target + targetLength,
-                    &source, (const char *)dest, NULL, NULL, NULL, NULL, TRUE, TRUE, &status);
-            if (U_FAILURE(status)) {
-                LOGE("ucnv_convertEx failed: %d\n", status);
-                mValues->setEntry(i, "???");
-            } else {
-                // zero terminate
-                *target = 0;
-                mValues->setEntry(i, buffer);
-            }         
-
-            delete[] buffer;
-        }
-
-        ucnv_close(conv);
-        ucnv_close(utf8Conv);
-    }
-}
-
-void MediaScannerClient::endFile()
-{
-    if (mLocaleEncoding != kEncodingNone) {
-        int size = mNames->size();
-        uint32_t encoding = kEncodingAll;
-        
-        // compute a bit mask containing all possible encodings
-        for (int i = 0; i < mNames->size(); i++)
-            encoding &= possibleEncodings(mValues->getEntry(i));
-        
-        // if the locale encoding matches, then assume we have a native encoding.
-        if (encoding & mLocaleEncoding)
-            convertValues(mLocaleEncoding);
-        
-        // finally, push all name/value pairs to the client
-        for (int i = 0; i < mNames->size(); i++) {
-            if (!handleStringTag(mNames->getEntry(i), mValues->getEntry(i)))
-                break;
-        }
-    }
-    // else addStringTag() has done all the work so we have nothing to do
-    
-    delete mNames;
-    delete mValues;
-    mNames = NULL;
-    mValues = NULL;
 }
 
 }; // namespace android

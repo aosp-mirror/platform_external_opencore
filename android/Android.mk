@@ -2,11 +2,10 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := \
-    autodetect.cpp \
     metadatadriver.cpp \
     playerdriver.cpp \
     thread_init.cpp \
-    mediascanner.cpp \
+    pvmediascanner.cpp \
     android_surface_output.cpp \
     android_audio_output.cpp \
     android_audio_stream.cpp \
@@ -28,7 +27,6 @@ LOCAL_C_INCLUDES := $(PV_INCLUDES) \
     include/graphics \
     external/skia/include/corecg \
     external/tremor/Tremor \
-    external/icu4c/common \
     $(call include-path-for, graphics corecg)
 
 LOCAL_MODULE := libandroidpv
