@@ -563,21 +563,32 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OMX_APIENTRY   OMX_MasterGetHandle(
             return OMX_ErrorInsufficientResources;
         }
 
+        OMX_S32 hwCodecFoundWhenSoftwareCodecIsRequested = -1;
         for (ii = 0; ii < (data->iTotalNumOMXComponents); ii++)
         {
             // go through the list of supported components and find the component based on its name (identifier)
             if (!oscl_strcmp((OMX_STRING)pOMXMasterRegistry[ii].CompName, cComponentName))
             {
-                // when we are not requesting a HW accelelrated codec, we must find a software
-                // codec.
+                // when we are not requesting a HW accelelrated codec
+                // we prefer to find a software-based codec.
                 if (!bHWAccelerated) {
-                    if (!pOMXMasterRegistry[ii].bHWAccelerated) break;
+                    if (!pOMXMasterRegistry[ii].bHWAccelerated)
+                    {
+                        break;
+                    }
+                    else if (hwCodecFoundWhenSoftwareCodecIsRequested == -1)
+                    {
+                        // Store the first hardware-based codec found
+                        // In case we could not find any software-based codec, we will
+                        // use this hareware-based codec
+                        hwCodecFoundWhenSoftwareCodecIsRequested = ii;
+                    }
                 } else {
                     break;
                 }
             }
         }
-        if (ii == (data->iTotalNumOMXComponents))
+        if (ii == (data->iTotalNumOMXComponents) && hwCodecFoundWhenSoftwareCodecIsRequested == -1)
         {
             // could not find a component with the given name
             OsclSingletonRegistry::registerInstanceAndUnlock(data, OSCL_SINGLETON_ID_OMXMASTERCORE, error);
@@ -588,6 +599,10 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OMX_APIENTRY   OMX_MasterGetHandle(
                 return Status;
             }
             return OMX_ErrorComponentNotFound;
+        }
+        else if (hwCodecFoundWhenSoftwareCodecIsRequested != -1)
+        {
+            ii = hwCodecFoundWhenSoftwareCodecIsRequested;
         }
 
         // call the appropriate GetHandle for the component
