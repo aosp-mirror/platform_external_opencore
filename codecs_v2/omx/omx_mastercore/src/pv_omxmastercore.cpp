@@ -588,21 +588,26 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OMX_APIENTRY   OMX_MasterGetHandle(
                 }
             }
         }
-        if (ii == (data->iTotalNumOMXComponents) && hwCodecFoundWhenSoftwareCodecIsRequested == -1)
+        if (ii == (data->iTotalNumOMXComponents))
         {
-            // could not find a component with the given name
-            OsclSingletonRegistry::registerInstanceAndUnlock(data, OSCL_SINGLETON_ID_OMXMASTERCORE, error);
-            if (error)
+            if (hwCodecFoundWhenSoftwareCodecIsRequested == -1)
             {
-                //registry error
-                Status = OMX_ErrorUndefined;
-                return Status;
+                // could not find ANY component with the given name
+                OsclSingletonRegistry::registerInstanceAndUnlock(data, OSCL_SINGLETON_ID_OMXMASTERCORE, error);
+                if (error)
+                {
+                    //registry error
+                    Status = OMX_ErrorUndefined;
+                    return Status;
+                }
+                return OMX_ErrorComponentNotFound;
             }
-            return OMX_ErrorComponentNotFound;
-        }
-        else if (hwCodecFoundWhenSoftwareCodecIsRequested != -1)
-        {
-            ii = hwCodecFoundWhenSoftwareCodecIsRequested;
+            else
+            {
+                // we have not found a sw-based codec while requesting sw-based codecs.
+                // but we found a hw-based codec, and as a last resort, use it anyway.
+                ii = hwCodecFoundWhenSoftwareCodecIsRequested;
+            }
         }
 
         // call the appropriate GetHandle for the component
