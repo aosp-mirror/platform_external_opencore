@@ -168,7 +168,6 @@ LOCAL_COPY_HEADERS := \
 	include/decoder_aac.h \
  	include/e_tmp4audioobjecttype.h \
  	include/pv_audio_type_defs.h \
- 	include/pvmp4audiodecoder_api.h \
- 	include/../util/getactualaacconfig/include/getactualaacconfig.h
+ 	include/pvmp4audiodecoder_api.h
 
 include $(BUILD_STATIC_LIBRARY)
