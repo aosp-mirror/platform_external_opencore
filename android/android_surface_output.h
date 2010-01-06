@@ -314,6 +314,18 @@ protected:
     //This bool is set true when all necassary parameters have been received.
     bool iIsMIOConfigured;
 
+    /*
+     * The value of mNumberOfFramesToHold is hardware/platform specific.
+     * 1. On non-overlay based platforms, its value it set to 2
+     *    so as to avoid potential tearings oberved during video playback.
+     * 2. On overlay-based platforms, its value should be overwritten.
+     *    We have observed video decoder starvation when a value other than 1.
+     *
+     * We set the default value to 2 in this class. Please change its value
+     * accordingly in the derived class.
+     */
+    int mNumberOfFramesToHold;
+
 #ifdef PERFORMANCE_MEASUREMENTS_ENABLED
         PVProfile PVOmapVideoProfile;
 #endif

@@ -48,6 +48,7 @@ OSCL_EXPORT_REF AndroidSurfaceOutput::AndroidSurfaceOutput() :
     mPvPlayer = NULL;
     mEmulation = false;
     iEosReceived = false;
+    mNumberOfFramesToHold = 2;
 }
 
 status_t AndroidSurfaceOutput::set(PVPlayer* pvPlayer, const sp<ISurface>& surface, bool emulation)
@@ -935,7 +936,7 @@ void AndroidSurfaceOutput::Run()
         LOGV("Flushing buffers after EOS");
         processWriteResponseQueue(0);
     } else {
-        processWriteResponseQueue(2);
+        processWriteResponseQueue(mNumberOfFramesToHold);
     }
 }
 
