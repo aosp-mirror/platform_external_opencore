@@ -231,7 +231,7 @@ PVMFStatus PVPlayerNodeRegistry::QueryRegistry(PVMFFormatType& aInputType, PVMFF
 }
 
 
-PVMFNodeInterface* PVPlayerNodeRegistry::CreateNode(PVUuid& aUuid)
+PVMFNodeInterface* PVPlayerNodeRegistry::CreateNode(PVUuid& aUuid, bool aHwAccelerated)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerNodeRegistry::CreateNode() IN"));
     bool iFoundFlag = false;
@@ -266,8 +266,21 @@ PVMFNodeInterface* PVPlayerNodeRegistry::CreateNode(PVUuid& aUuid)
 #endif
         if (NULL != nodeInfo->iNodeCreateFunc)
         {
-            nodeInterface = (*(iType[NodeSearchCount].iNodeCreateFunc))(priority);
+            if (KPVMFOMXVideoDecNodeUuid == aUuid)
+            {
+                // FIXME:
+                // for now, we care about whether it is hardware-based or not only when it is a video decoder node.
+                // do a cast on the fucntion pointer
+                PVMFNodeInterface*(*aVideoDecNodeCreateFunc)(int32, bool);
+                aVideoDecNodeCreateFunc = (PVMFNodeInterface*(*)(int32, bool)) (iType[NodeSearchCount].iNodeCreateFunc);
+                nodeInterface = (*(aVideoDecNodeCreateFunc))(priority, aHwAccelerated);
+            }
+            else
+            {
+                nodeInterface = (*(iType[NodeSearchCount].iNodeCreateFunc))(priority);
+            }
         }
+
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerNodeRegistry::CreateNode() OUT"));
         return nodeInterface;
     }

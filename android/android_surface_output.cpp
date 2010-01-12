@@ -935,7 +935,7 @@ void AndroidSurfaceOutput::Run()
         LOGV("Flushing buffers after EOS");
         processWriteResponseQueue(0);
     } else {
-        processWriteResponseQueue(1);
+        processWriteResponseQueue(2);
     }
 }
 

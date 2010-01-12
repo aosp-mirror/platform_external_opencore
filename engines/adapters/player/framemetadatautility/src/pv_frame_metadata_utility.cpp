@@ -37,7 +37,7 @@ static const char PVFMUTIL_FRAMERETRIEVAL_TIMEOUT_KEY[] = "x-pvmf/fmu/timeout-fr
 #define PVFMUTIL_VIDEOFRAMEBUFFER_MEMPOOL_BUFFERSIZE PVFMUTIL_VIDEOFRAMEBUFFER_MAXSIZE*2
 
 PVFrameAndMetadataUtility* PVFrameAndMetadataUtility::New(char *aOutputFormatMIMEType, PVCommandStatusObserver *aCmdObserver,
-        PVErrorEventObserver *aErrorObserver, PVInformationalEventObserver *aInfoObserver)
+        PVErrorEventObserver *aErrorObserver, PVInformationalEventObserver *aInfoObserver, bool aHwAccelerated)
 {
     if (aOutputFormatMIMEType == NULL || aCmdObserver == NULL ||
             aErrorObserver == NULL || aInfoObserver == NULL)
@@ -47,7 +47,7 @@ PVFrameAndMetadataUtility* PVFrameAndMetadataUtility::New(char *aOutputFormatMIM
     }
 
     PVFrameAndMetadataUtility* util = NULL;
-    util = OSCL_NEW(PVFrameAndMetadataUtility, ());
+    util = OSCL_NEW(PVFrameAndMetadataUtility, (aHwAccelerated));
     if (util)
     {
         util->Construct(aOutputFormatMIMEType,
@@ -374,7 +374,8 @@ PVCommandId PVFrameAndMetadataUtility::RemoveDataSource(PVPlayerDataSource& aDat
 }
 
 
-PVFrameAndMetadataUtility::PVFrameAndMetadataUtility() :
+PVFrameAndMetadataUtility::PVFrameAndMetadataUtility(bool aHwAccelerated) :
+        iHwAccelerated(aHwAccelerated),
         OsclTimerObject(OsclActiveObject::EPriorityNominal, "PVFrameMetadataUtility"),
         iCommandId(0),
         iState(PVFM_UTILITY_STATE_IDLE),
@@ -433,7 +434,7 @@ void PVFrameAndMetadataUtility::Construct(char *aOutputFormatMIMEType, PVCommand
     iInfoEventObserver = aInfoObserver;
 
     // Create the player instance
-    iPlayer = PVPlayerFactory::CreatePlayer(this, this, this);
+    iPlayer = PVPlayerFactory::CreatePlayer(this, this, this, iHwAccelerated);
     OSCL_ASSERT(iPlayer != NULL);
 
     // Allocate memory for vectors
@@ -2615,7 +2616,7 @@ PVMFStatus PVFrameAndMetadataUtility::DoPlayerShutdownRestart(void)
     leavecode = 0;
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
                     (0, "PVFrameAndMetadataUtility::CreatePlayer Called Tick=%d", OsclTickCount::TickCount()));
-    OSCL_TRY(leavecode, iPlayer = PVPlayerFactory::CreatePlayer(this, this, this));
+    OSCL_TRY(leavecode, iPlayer = PVPlayerFactory::CreatePlayer(this, this, this, iHwAccelerated));
     OSCL_FIRST_CATCH_ANY(leavecode,
                          PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::DoPlayerShutdownRestart() Player engine could not be instantiated! Asserting"));
                          OSCL_ASSERT(false);

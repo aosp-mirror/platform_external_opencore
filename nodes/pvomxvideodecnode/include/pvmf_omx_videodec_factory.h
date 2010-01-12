@@ -49,7 +49,7 @@ class PVMFOMXVideoDecNodeFactory
          * @param aPriority The active object priority for the node. Default is standard priority if not specified
          * @returns A pointer to an instance of PVMFOMXVideoDecNode as PVMFNodeInterface reference or leaves if instantiation fails
          **/
-        OSCL_IMPORT_REF static PVMFNodeInterface* CreatePVMFOMXVideoDecNode(int32 aPriority = OsclActiveObject::EPriorityNominal);
+        OSCL_IMPORT_REF static PVMFNodeInterface* CreatePVMFOMXVideoDecNode(int32 aPriority = OsclActiveObject::EPriorityNominal, bool aHwAccelerated = true);
 
         /**
          * Deletes an instance of PVMFOMXVideoDecNode

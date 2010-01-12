@@ -363,7 +363,7 @@ class PVMFOMXBaseDecNode
 
 {
     public:
-        OSCL_IMPORT_REF PVMFOMXBaseDecNode(int32 aPriority, const char aAOName[]);
+        OSCL_IMPORT_REF PVMFOMXBaseDecNode(int32 aPriority, const char aAOName[], bool aHwAccelerated = true);
         OSCL_IMPORT_REF virtual ~PVMFOMXBaseDecNode();
 
         // From PVMFNodeInterface
@@ -826,7 +826,7 @@ class PVMFOMXBaseDecNode
         OMX_TICKS iOMXTicksTimestamp;
         OSCL_IMPORT_REF OMX_TICKS ConvertTimestampIntoOMXTicks(const MediaClockConverter &src);
         uint32 ConvertOMXTicksIntoTimestamp(const OMX_TICKS &src);
-
+        OMX_BOOL bHWAccelerated;
 };
 
 

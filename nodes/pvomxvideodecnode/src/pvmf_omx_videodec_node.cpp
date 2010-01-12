@@ -139,8 +139,8 @@ PVMFStatus PVMFOMXVideoDecNode::ThreadLogon()
 /////////////////////////////////////////////////////////////////////////////
 // Class Constructor
 /////////////////////////////////////////////////////////////////////////////
-PVMFOMXVideoDecNode::PVMFOMXVideoDecNode(int32 aPriority) :
-        PVMFOMXBaseDecNode(aPriority, "PVMFOMXVideoDecNode"),
+PVMFOMXVideoDecNode::PVMFOMXVideoDecNode(int32 aPriority, bool aHwAccelerated) :
+        PVMFOMXBaseDecNode(aPriority, "PVMFOMXVideoDecNode", aHwAccelerated),
         iH263MaxBitstreamFrameSize(PVOMXVIDEODECNODE_CONFIG_H263MAXBITSTREAMFRAMESIZE_DEF),
         iH263MaxWidth(PVOMXVIDEODECNODE_CONFIG_H263MAXWIDTH_DEF),
         iH263MaxHeight(PVOMXVIDEODECNODE_CONFIG_H263MAXHEIGHT_DEF),
