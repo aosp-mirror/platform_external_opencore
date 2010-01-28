@@ -1509,7 +1509,8 @@ PVPlayer::~PVPlayer()
 #endif
 }
 
-status_t PVPlayer::setDataSource(const char *url)
+status_t PVPlayer::setDataSource(
+        const char *url, const KeyedVector<String8, String8> *)
 {
     LOGV("setDataSource(%s)", url);
     if (mSharedFd >= 0) {
