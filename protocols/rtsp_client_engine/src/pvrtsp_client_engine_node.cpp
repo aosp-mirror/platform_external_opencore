@@ -2370,6 +2370,9 @@ bool PVRTSPEngineNode::parseURL(const char *aUrl)
     if (clip_name != NULL)
     {
         *clip_name++ = '\0';
+        if (clip_name <= server_port_ptr) {
+            server_port_ptr = NULL;  // ":" comes after "/", thus do not specify the port number
+        }
     }
 
     /* Locate the port number if provided. */
