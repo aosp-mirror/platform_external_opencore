@@ -29,7 +29,7 @@ LOCAL_C_INCLUDES := $(PV_INCLUDES) \
     $(PV_TOP)/nodes/pvmp4ffcomposernode/include \
     $(PV_TOP)/engines/player/include \
     $(PV_TOP)/nodes/common/include \
-    external/tremor/Tremor \
+    external/tremolo/Tremolo \
     libs/drm/mobile1/include \
     $(call include-path-for, graphics corecg)
 
