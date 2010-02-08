@@ -26,8 +26,15 @@ LOCAL_C_INCLUDES := $(PV_INCLUDES) \
     libs/drm/mobile1/include \
     include/graphics \
     external/skia/include/corecg \
-    external/tremor/Tremor \
     $(call include-path-for, graphics corecg)
+
+ifeq ($(TARGET_ARCH),arm)
+    LOCAL_C_INCLUDES += \
+        external/tremolo/Tremolo
+else
+    LOCAL_C_INCLUDES += \
+        external/tremor/Tremor
+endif
 
 LOCAL_MODULE := libandroidpv
 
