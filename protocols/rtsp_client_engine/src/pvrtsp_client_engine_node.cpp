@@ -2365,8 +2365,16 @@ bool PVRTSPEngineNode::parseURL(const char *aUrl)
     server_ip_ptr += 2;
 
     /* Locate the server name. */
+    /* URL spec: proto://[user[:pass]@]server[:port][[/path/to]/resource] */
     mbchar *server_port_ptr = OSCL_CONST_CAST(mbchar*, oscl_strstr(server_ip_ptr, ":"));
     mbchar *clip_name = OSCL_CONST_CAST(mbchar*, oscl_strstr(server_ip_ptr, "/"));
+    mbchar *at_ptr = OSCL_CONST_CAST(mbchar*, oscl_strstr(server_ip_ptr, "@"));
+    if (at_ptr > server_port_ptr &&                 // "@" is found
+        (!clip_name ||                              // no "/" is found
+         at_ptr < clip_name)) {                     // both "@" and "/" are found
+        // We just found :pass, not :port; search for :port after :pass
+        server_port_ptr = OSCL_CONST_CAST(mbchar*, oscl_strstr(at_ptr, ":"));
+    }
     if (clip_name != NULL)
     {
         *clip_name++ = '\0';
