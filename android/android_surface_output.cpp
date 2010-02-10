@@ -19,7 +19,7 @@
 //#define LOG_NDEBUG 0
 #define LOG_TAG "VideoMIO"
 #include <utils/Log.h>
-#include <ui/ISurface.h>
+#include <surfaceflinger/ISurface.h>
 
 #include "android_surface_output.h"
 #include <media/PVPlayer.h>

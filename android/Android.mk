@@ -38,7 +38,7 @@ endif
 
 LOCAL_MODULE := libandroidpv
 
-LOCAL_SHARED_LIBRARIES := libui libutils libbinder
+LOCAL_SHARED_LIBRARIES := libui libutils libbinder libsurfaceflinger_client libcamera_client
 LOCAL_STATIC_LIBRARIES := libosclbase libosclerror libosclmemory libosclutil
 
 LOCAL_LDLIBS +=

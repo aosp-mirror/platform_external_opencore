@@ -18,12 +18,12 @@
 //#define LOG_NDEBUG 0
 #define LOG_TAG "CameraInput"
 #include <utils/Log.h>
-#include <ui/CameraParameters.h>
+#include <camera/CameraParameters.h>
 #include <utils/Errors.h>
 #include <media/mediarecorder.h>
-#include <ui/ISurface.h>
-#include <ui/ICamera.h>
-#include <ui/Camera.h>
+#include <surfaceflinger/ISurface.h>
+#include <camera/ICamera.h>
+#include <camera/Camera.h>
 
 #include "pv_mime_string_utils.h"
 #include "oscl_dll.h"

@@ -28,7 +28,7 @@
 #include <utils/List.h>
 #include <utils/Errors.h>
 
-#include <ui/ICamera.h>
+#include <camera/ICamera.h>
 
 
 #include <media/mediarecorder.h>

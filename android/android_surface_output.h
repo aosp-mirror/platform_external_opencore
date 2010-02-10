@@ -48,7 +48,7 @@
 //#include <linux/videodev.h>
 
 // SurfaceFlinger
-#include <ui/ISurface.h>
+#include <surfaceflinger/ISurface.h>
 
 // interprocess shared memory support
 #include <binder/MemoryBase.h>

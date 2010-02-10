@@ -19,7 +19,7 @@
 #include <utils/Log.h>
 
 #include <media/PVMediaRecorder.h>
-#include <ui/ICamera.h>
+#include <camera/ICamera.h>
 #include "authordriver.h"
 
 namespace android {
