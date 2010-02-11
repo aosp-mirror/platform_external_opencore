@@ -14,6 +14,9 @@ LOCAL_WHOLE_STATIC_LIBRARIES := \
  	libpvmedialayernode \
  	libpvsdpparser
 
+# to solve circular dependency among the static libraries.
+LOCAL_STATIC_LIBRARIES := $(LOCAL_STATIC_LIBRARIES) $(LOCAL_WHOLE_STATIC_LIBRARIES)
+
 LOCAL_MODULE := libopencore_rtsp
 
 -include $(PV_TOP)/Android_platform_extras.mk
