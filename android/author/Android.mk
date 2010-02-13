@@ -30,15 +30,8 @@ LOCAL_C_INCLUDES := $(PV_INCLUDES) \
     $(PV_TOP)/engines/player/include \
     $(PV_TOP)/nodes/common/include \
     libs/drm/mobile1/include \
-    $(call include-path-for, graphics corecg)
-
-ifeq ($(TARGET_ARCH),arm)
-    LOCAL_C_INCLUDES += \
-        external/tremolo/Tremolo
-else
-    LOCAL_C_INCLUDES += \
-        external/tremor/Tremor
-endif
+    $(call include-path-for, graphics corecg) \
+    external/tremolo/Tremolo
 
 LOCAL_SHARED_LIBRARIES := libmedia libbinder
 
