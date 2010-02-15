@@ -236,6 +236,8 @@ private:
     set_parameters_command& operator=(const set_parameters_command&);
 };
 
+class MediaProfiles;
+
 class AuthorDriver :
 public OsclActiveObject,
 public PVCommandStatusObserver,
@@ -381,6 +383,7 @@ private:
     int32            mVideo_bitrate_setting;
 
     FILE*       ifpOutput;
+    MediaProfiles *mMediaProfiles;
 };
 
 class AuthorDriverWrapper
