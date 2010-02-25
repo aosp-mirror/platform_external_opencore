@@ -27,6 +27,7 @@
 #include "pv_omxcore.h"
 #include <sys/prctl.h>
 #include "pvmf_composer_size_and_duration.h"
+#include "pvmf_duration_infomessage.h"
 #include "android_camera_input.h"
 
 using namespace android;
@@ -1407,10 +1408,28 @@ void AuthorDriver::HandleInformationalEvent(const PVAsyncInformationalEvent& aEv
         LOGV("HandleInformationalEvent(%d)", event_type);
     }
 
-    mListener->notify(
-            MEDIA_RECORDER_EVENT_INFO,
-            GetMediaRecorderInfoCode(aEvent),
-            aEvent.GetEventType());
+    if (PVMFInfoOverflow == event_type && mVideoInputMIO) {
+        PVUuid infomsguuid = PVMFDurationInfoMessageInterfaceUUID;
+        PVMFDurationInfoMessageInterface* eventMsg = NULL;
+        PVInterface* infoExtInterface = aEvent.GetEventExtensionInterface();
+        if (infoExtInterface &&
+                infoExtInterface->queryInterface(infomsguuid, (PVInterface*&)eventMsg) && eventMsg) {
+            PVUuid eventuuid;
+            int32 infoCode;
+            eventMsg->GetCodeUUID(infoCode, eventuuid);
+            if (eventuuid == infomsguuid) {
+                uint32 duration = eventMsg->GetDuration();
+                ((AndroidCameraInput *)mVideoInputMIO)->setAudioLossDuration(duration);
+            }
+            eventMsg->removeRef();
+            eventMsg = NULL;
+        }
+    } else {
+        mListener->notify(
+                MEDIA_RECORDER_EVENT_INFO,
+                GetMediaRecorderInfoCode(aEvent),
+                aEvent.GetEventType());
+    }
 }
 
 status_t AuthorDriver::setListener(const sp<IMediaPlayerClient>& listener) {

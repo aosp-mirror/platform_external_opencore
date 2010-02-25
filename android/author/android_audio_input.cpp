@@ -23,6 +23,7 @@
 #include "android_audio_input.h"
 #include "pv_mime_string_utils.h"
 #include "oscl_dll.h"
+#include "pvmf_duration_infomessage.h"
 
 #include <media/AudioRecord.h>
 #include <sys/prctl.h>
@@ -1172,6 +1173,19 @@ int AndroidAudioInput::audin_thread_func() {
             uint8* data = iOSSRequestQueue[0];
             iOSSRequestQueue.erase(&iOSSRequestQueue[0]);
             iOSSRequestQueueLock.Unlock();
+
+            uint32 inputFramesLost = record->getInputFramesLost();
+            if (inputFramesLost > 0) {
+                uint32 dataDurationLost = inputFramesLost * 1000 / iAudioSamplingRate;
+                LOGW("Notifying %d observers of %u ms of lost audio", iObservers.size(), dataDurationLost);
+
+                for(uint32 i = 0; i < iObservers.size(); i++) {
+                    int32 leavecode = 0;
+                    PVMFDurationInfoMessage* eventMsg = NULL;
+                    OSCL_TRY(leavecode, eventMsg = OSCL_NEW(PVMFDurationInfoMessage, (dataDurationLost)));
+                    iObservers[i]->ReportInfoEvent(PVMFInfoOverflow, OSCL_STATIC_CAST(PVInterface*, eventMsg));
+                }
+            }
 
             int numOfBytes = record->read(data, kBufferSize);
             //LOGV("read %d bytes", numOfBytes);

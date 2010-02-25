@@ -53,6 +53,7 @@ AndroidCameraInput::AndroidCameraInput()
     iAuthorClock(NULL),
     iClockNotificationsInf(NULL),
     iAudioFirstFrameTs(0),
+    iAudioLossDuration(0),
     pPmemInfo(NULL)
 {
     LOGV("constructor(%p)", this);
@@ -72,6 +73,7 @@ AndroidCameraInput::AndroidCameraInput()
     mFlags = 0;
     iFrameQueue.reserve(5);
     iFrameQueueMutex.Create();
+    iAudioLossMutex.Create();
 
     // setup callback listener
     mListener = new AndroidCameraInputListener(this);
@@ -121,6 +123,7 @@ AndroidCameraInput::~AndroidCameraInput()
         mCamera.clear();
     }
     iFrameQueueMutex.Close();
+    iAudioLossMutex.Close();
     mListener.clear();
 }
 
@@ -423,7 +426,7 @@ void AndroidCameraInput::writeComplete(PVMFStatus aStatus,
 #endif
     // View finder freeze detection
     // Note for low frame rate, we don't bother to log view finder freezes
-    int processingTimeInMs = (systemTime()/1000000L - iAudioFirstFrameTs) - data.iXferHeader.timestamp;
+    int processingTimeInMs = (systemTime()/1000000L - (iAudioFirstFrameTs + iAudioLossDuration)) - data.iXferHeader.timestamp;
     if (processingTimeInMs >= VIEW_FINDER_FREEZE_DETECTION_TOLERANCE && mFrameRate >= 10.0) {
         LOGW("Frame %p takes too long (%d ms) to process, staring at %d", data.iFrameBuffer.get(), processingTimeInMs, iAudioFirstFrameTs);
     }
@@ -992,6 +995,7 @@ PVMFStatus AndroidCameraInput::DoReset()
     // Remove and destroy the clock state observer
     RemoveDestroyClockObs();
     iDataEventCounter = 0;
+    iAudioLossDuration = 0;
     iWriteState = EWriteOK;
     if ( (iState == STATE_STARTED) || (iState == STATE_PAUSED) ) {
     if (mCamera != NULL) {
@@ -1184,13 +1188,24 @@ PVMFStatus AndroidCameraInput::postWriteAsync(nsecs_t timestamp, const sp<IMemor
     if (iAudioFirstFrameTs == 0)
         iAudioFirstFrameTs = ts;
 
-    if (ts < iAudioFirstFrameTs) {
+    iAudioLossMutex.Lock();
+    if (ts < iAudioFirstFrameTs + iAudioLossDuration) {
         // Drop the frame
+        iAudioLossMutex.Unlock();
         mCamera->releaseRecordingFrame(frame);
         return PVMFSuccess;
     } else {
-         // calculate timestamp as offset from start time
-         ts -= iAudioFirstFrameTs;
+         // calculate timestamp as offset from start time plus lost audio
+         ts -= (iAudioFirstFrameTs + iAudioLossDuration);
+    }
+    iAudioLossMutex.Unlock();
+
+    // Determine how much video to drop so when we resync to the audio
+    // time we don't go into old video (we need increasing timestamps)
+    if (ts <= iTimeStamp) {
+        LOGD("Dropping video frame to catch up for audio ts %lu, dropUntil %lu", ts, iTimeStamp);
+        mCamera->releaseRecordingFrame(frame);
+        return PVMFSuccess;
     }
 
     // Make sure that no two samples have the same timestamp
@@ -1249,6 +1264,15 @@ PVMFStatus AndroidCameraInput::postWriteAsync(nsecs_t timestamp, const sp<IMemor
     return PVMFSuccess;
 }
 
+// Value is expected to be in ms
+void AndroidCameraInput::setAudioLossDuration(uint32 duration)
+{
+    iAudioLossMutex.Lock();
+    LOGD("Update for lost audio for %lu for existing duration %lu", duration, iAudioLossDuration);
+    iAudioLossDuration += duration;
+    iAudioLossMutex.Unlock();
+}
+
 // camera callback interface
 void AndroidCameraInputListener::postData(int32_t msgType, const sp<IMemory>& dataPtr)
 {
@@ -1288,6 +1312,5 @@ void AndroidCameraInput::RemoveDestroyClockObs()
         }
     }
 }
-
 
 

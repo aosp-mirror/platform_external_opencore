@@ -560,8 +560,12 @@ OSCL_EXPORT_REF void PvmfMediaInputNode::ReportErrorEvent(PVMFEventType aEventTy
 ////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF void PvmfMediaInputNode::ReportInfoEvent(PVMFEventType aEventType, PVInterface* aExtMsg)
 {
-    OSCL_UNUSED_ARG(aEventType);
-    OSCL_UNUSED_ARG(aExtMsg);
+    if (aEventType == PVMFInfoOverflow) {
+        PVMFNodeInterface::ReportInfoEvent(aEventType, NULL, aExtMsg);
+    } else {
+        OSCL_UNUSED_ARG(aEventType);
+        OSCL_UNUSED_ARG(aExtMsg);
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////
