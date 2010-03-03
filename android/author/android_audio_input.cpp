@@ -1190,9 +1190,15 @@ int AndroidAudioInput::audin_thread_func() {
             }
 
             int numOfBytes = record->read(data, kBufferSize);
-            //LOGV("read %d bytes", numOfBytes);
-            if (numOfBytes <= 0)
+            if (numOfBytes <= 0) {
+                // FIXME:
+                // When numOfBytes is not greater than 0, instead of terminating the audio
+                // recording thread immediately, wait for next incoming audio frame or stop/reset
+                // command to terminate the thread. Lets log the case to see whether the deadlock
+                // root cause is here. To resolve the problem, change the break to continue.
+                LOGW("numOfBytes (%d) <= 0.", numOfBytes);
                 break;
+            }
 
             if (iFirstFrameReceived == false) {
                 iFirstFrameReceived = true;
