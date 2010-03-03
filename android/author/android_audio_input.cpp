@@ -948,7 +948,7 @@ PVMFStatus AndroidAudioInput::DoPause()
 ////////////////////////////////////////////////////////////////////////////
 PVMFStatus AndroidAudioInput::DoReset()
 {
-    LOGV("DoReset");
+    LOGD("DoReset: E");
     // Remove and destroy the clock state observer
     RemoveDestroyClockStateObs();
     iExitAudioThread = true;
@@ -956,9 +956,9 @@ PVMFStatus AndroidAudioInput::DoReset()
     iFirstFrameReceived = false;
     iFirstFrameTs = 0;
     if(iAudioThreadStarted ){
-    iAudioThreadSem->Signal();
-    iAudioThreadTermSem->Wait();
-    iAudioThreadStarted = false;
+        iAudioThreadSem->Signal();
+        iAudioThreadTermSem->Wait();
+        iAudioThreadStarted = false;
     }
     while(!iCmdQueue.empty())
     {
@@ -979,6 +979,7 @@ PVMFStatus AndroidAudioInput::DoReset()
         iWriteResponseQueue.erase(&iWriteResponseQueue[0]);
     }
     iState = STATE_IDLE;
+    LOGD("DoReset: X");
     return PVMFSuccess;
 }
 
@@ -996,7 +997,7 @@ PVMFStatus AndroidAudioInput::DoFlush()
 ////////////////////////////////////////////////////////////////////////////
 PVMFStatus AndroidAudioInput::DoStop()
 {
-    LOGV("DoStop");
+    LOGD("DoStop: E");
 
     // Remove and destroy the clock state observer
     RemoveDestroyClockStateObs();
@@ -1007,10 +1008,11 @@ PVMFStatus AndroidAudioInput::DoStop()
     iFirstFrameTs = 0;
     iState = STATE_STOPPED;
     if(iAudioThreadStarted ){
-    iAudioThreadSem->Signal();
-    iAudioThreadTermSem->Wait();
-    iAudioThreadStarted = false;
+        iAudioThreadSem->Signal();
+        iAudioThreadTermSem->Wait();
+        iAudioThreadStarted = false;
     }
+    LOGD("DoStop: X");
     return PVMFSuccess;
 }
 

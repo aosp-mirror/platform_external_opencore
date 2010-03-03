@@ -991,7 +991,7 @@ PVMFStatus AndroidCameraInput::DoPause()
 // Does this work for reset?
 PVMFStatus AndroidCameraInput::DoReset()
 {
-    LOGV("DoReset");
+    LOGD("DoReset: E");
     // Remove and destroy the clock state observer
     RemoveDestroyClockObs();
     iDataEventCounter = 0;
@@ -1011,6 +1011,7 @@ PVMFStatus AndroidCameraInput::DoReset()
     }
     Cancel();
     iState = STATE_IDLE;
+    LOGD("DoReset: X");
     return PVMFSuccess;
 }
 
@@ -1027,7 +1028,7 @@ PVMFStatus AndroidCameraInput::DoFlush(const AndroidCameraInputCmd& aCmd)
 
 PVMFStatus AndroidCameraInput::DoStop(const AndroidCameraInputCmd& aCmd)
 {
-    LOGV("DoStop");
+    LOGD("DoStop: E");
 
     // Remove and destroy the clock state observer
     RemoveDestroyClockObs();
@@ -1040,6 +1041,7 @@ PVMFStatus AndroidCameraInput::DoStop(const AndroidCameraInputCmd& aCmd)
         ReleaseQueuedFrames();
     }
     iState = STATE_STOPPED;
+    LOGD("DoStop: X");
     return PVMFSuccess;
 }
 
